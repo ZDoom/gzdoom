@@ -107,6 +107,111 @@ CUSTOM_CVAR (Float, snd_sfxvolume, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOIN
 	}
 }
 
+class NullSoundRenderer : public SoundRenderer
+{
+public:
+	void SetSfxVolume (float volume)
+	{
+	}
+	void SetMusicVolume (float volume)
+	{
+	}
+	void LoadSound (sfxinfo_t *sfx)
+	{
+	}
+	void UnloadSound (sfxinfo_t *sfx)
+	{
+	}
+	unsigned int GetMSLength(sfxinfo_t *sfx)
+	{
+		// Return something that isn't 0. This is only used by some
+		// ambient sounds to specify a default minimum period.
+		return 250;
+	}
+	float GetOutputRate()
+	{
+		return 11025;	// Lies!
+	}
+
+	// Streaming sounds.
+	SoundStream *CreateStream (SoundStreamCallback callback, int buffbytes, int flags, int samplerate, void *userdata)
+	{
+		return NULL;
+	}
+	SoundStream *OpenStream (const char *filename, int flags, int offset, int length)
+	{
+		return NULL;
+	}
+
+	// Starts a sound. (No, not really.)
+	FSoundChan *StartSound (sfxinfo_t *sfx, float vol, int pitch, int chanflags, FSoundChan *reuse_chan)
+	{
+		return NULL;
+	}
+	FSoundChan *StartSound3D (sfxinfo_t *sfx, float vol, float distscale, int pitch, int priority, float pos[3], float vel[3], sector_t *sector, int channum, int chanflags, FSoundChan *reuse_chan)
+	{
+		return NULL;
+	}
+
+	// Stops a sound channel.
+	void StopSound (FSoundChan *chan)
+	{
+		if (chan != NULL)
+		{
+			S_ReturnChannel(chan);
+		}
+	}
+
+	// Returns position of sound on this channel, in samples.
+	unsigned int GetPosition(FSoundChan *chan)
+	{
+		return 0;
+	}
+
+	// Synchronizes following sound startups.
+	void Sync (bool sync)
+	{
+	}
+
+	// Pauses or resumes all sound effect channels.
+	void SetSfxPaused (bool paused)
+	{
+	}
+
+	// Pauses or resumes *every* channel, including environmental reverb.
+	void SetInactive(bool inactive)
+	{
+	}
+
+	// Updates the volume, separation, and pitch of a sound channel.
+	void UpdateSoundParams3D (FSoundChan *chan, float pos[3], float vel[3])
+	{
+	}
+
+	void UpdateListener ()
+	{
+	}
+	void UpdateSounds ()
+	{
+	}
+
+	bool IsValid ()
+	{
+		return true;
+	}
+	void PrintStatus ()
+	{
+		Printf("Null sound module active.\n");
+	}
+	void PrintDriversList ()
+	{
+		Printf("Null sound module uses no drivers.\n");
+	}
+	FString GatherStats ()
+	{
+		return "Null sound module has no stats.";
+	}
+};
 
 void I_InitSound ()
 {
@@ -115,6 +220,7 @@ void I_InitSound ()
 
 	if (nosound)
 	{
+		GSnd = new NullSoundRenderer;
 		I_InitMusic ();
 		return;
 	}
@@ -124,7 +230,7 @@ void I_InitSound ()
 	if (!GSnd->IsValid ())
 	{
 		delete GSnd;
-		GSnd = NULL;
+		GSnd = new NullSoundRenderer;
 		Printf (TEXTCOLOR_RED"Sound init failed. Using nosound.\n");
 	}
 	I_InitMusic ();
@@ -143,14 +249,7 @@ void I_ShutdownSound (void)
 
 CCMD (snd_status)
 {
-	if (GSnd == NULL)
-	{
-		Printf ("sound is not active\n");
-	}
-	else
-	{
-		GSnd->PrintStatus ();
-	}
+	GSnd->PrintStatus ();
 }
 
 CCMD (snd_reset)
@@ -169,26 +268,12 @@ CCMD (snd_reset)
 
 CCMD (snd_listdrivers)
 {
-	if (GSnd != NULL)
-	{
-		GSnd->PrintDriversList ();
-	}
-	else
-	{
-		Printf ("Sound is inactive.\n");
-	}
+	GSnd->PrintDriversList ();
 }
 
 ADD_STAT (sound)
 {
-	if (GSnd != NULL)
-	{
-		return GSnd->GatherStats ();
-	}
-	else
-	{
-		return "No sound";
-	}
+	return GSnd->GatherStats ();
 }
 
 SoundRenderer::SoundRenderer ()

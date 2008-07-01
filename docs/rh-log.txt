@@ -1,3 +1,11 @@
+June 30, 2008
+- Adjusted the noise debug table so that fractional volume levels do not
+  run into the adjacent columns.
+- Added a NullSoundRenderer so that most of the checks against a NULL GSnd
+  can be removed.
+- Fixed: Looping sounds must always successfully allocate a channel, even if
+  it's only a pre-evicted channel.
+
 June 30, 2008 (Changes by Graf Zahl)
 - Added A_ClearReFire code pointer for weapons. Preferably A_WeaponReady should
   reset this counter but that can't be done due to unwanted side effects with

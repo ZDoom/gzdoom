@@ -668,7 +668,7 @@ void D_Display ()
 		NoWipe = 10;
 	}
 
-	if (snd_drawoutput && GSnd != NULL)
+	if (snd_drawoutput)
 	{
 		GSnd->DrawWaveDebug(snd_drawoutput);
 	}

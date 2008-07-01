@@ -269,12 +269,6 @@ void TimiditySong::PrepTimidity ()
 	pipeSize = (timidity_pipe * timidity_frequency / 1000)
 		<< (timidity_stereo + !timidity_8bit);
 
-    if (GSnd == NULL)
-    { // Can't pipe if using no sound.
-        pipeSize = 0;
-    }
-
-	if (pipeSize != 0)
 	{
 #ifdef _WIN32
 		// Round pipe size up to nearest power of 2 to try and avoid partial

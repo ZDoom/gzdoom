@@ -1117,18 +1117,15 @@ input_mod::input_mod(DUH *myduh)
 	written = 0;
 	length = 0;
 	start_order = 0;
-	if (GSnd != NULL)
+	if (mod_samplerate != 0)
 	{
-		if (mod_samplerate != 0)
-		{
-			srate = mod_samplerate;
-		}
-		else
-		{
-			srate = (int)GSnd->GetOutputRate();
-		}
-		m_Stream = GSnd->CreateStream(read, 32*1024, SoundStream::Float, srate, this);
-    }
+		srate = mod_samplerate;
+	}
+	else
+	{
+		srate = (int)GSnd->GetOutputRate();
+	}
+	m_Stream = GSnd->CreateStream(read, 32*1024, SoundStream::Float, srate, this);
 	delta = 65536.0 / srate;
 }
 
@@ -1343,9 +1340,5 @@ FString input_mod::GetStats()
 
 extern "C" short *DUMBCALLBACK dumb_decode_vorbis(int outlen, const void *oggstream, int sizebytes)
 {
-	if (GSnd == NULL)
-	{
-		return NULL;
-	}
 	return GSnd->DecodeSample(outlen, oggstream, sizebytes, CODEC_Vorbis);
 }

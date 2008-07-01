@@ -774,13 +774,10 @@ static void S_ClearSoundData()
 {
 	unsigned int i;
 
-	if (GSnd != NULL)
+	S_StopAllChannels();
+	for (i = 0; i < S_sfx.Size(); ++i)
 	{
-		S_StopAllChannels();
-		for (i = 0; i < S_sfx.Size(); ++i)
-		{
-			GSnd->UnloadSound(&S_sfx[i]);
-		}
+		GSnd->UnloadSound(&S_sfx[i]);
 	}
 	S_sfx.Clear();
 

@@ -1486,7 +1486,6 @@ FSoundChan *FMODSoundRenderer::StartSound3D(sfxinfo_t *sfx, float vol, float dis
 		HandleChannelDelay(chan, reuse_chan, freq);
 		chan->setPaused(false);
 		FSoundChan *schan = CommonChannelSetup(chan, reuse_chan);
-		schan->DistanceScale = distscale;
 		return schan;
 	}
 

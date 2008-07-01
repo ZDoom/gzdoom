@@ -150,9 +150,9 @@ void S_NoiseDebug (void)
 	screen->DrawText (CR_GOLD, 120, y, "y", TAG_DONE);
 	screen->DrawText (CR_GOLD, 170, y, "z", TAG_DONE);
 	screen->DrawText (CR_GOLD, 220, y, "vol", TAG_DONE);
-	screen->DrawText (CR_GOLD, 250, y, "dist", TAG_DONE);
-	screen->DrawText (CR_GOLD, 290, y, "chan", TAG_DONE);
-	screen->DrawText (CR_GOLD, 330, y, "flags", TAG_DONE);
+	screen->DrawText (CR_GOLD, 260, y, "dist", TAG_DONE);
+	screen->DrawText (CR_GOLD, 300, y, "chan", TAG_DONE);
+	screen->DrawText (CR_GOLD, 340, y, "flags", TAG_DONE);
 	y += 8;
 
 	if (Channels == NULL)
@@ -187,7 +187,7 @@ void S_NoiseDebug (void)
 			screen->DrawText(color, 70, y, "---", TAG_DONE);	// X
 			screen->DrawText(color, 120, y, "---", TAG_DONE);	// Y
 			screen->DrawText(color, 170, y, "---", TAG_DONE);	// Z
-			screen->DrawText(color, 250, y, "---", TAG_DONE);	// Distance
+			screen->DrawText(color, 260, y, "---", TAG_DONE);	// Distance
 		}
 		else
 		{
@@ -209,21 +209,21 @@ void S_NoiseDebug (void)
 				FVector3 sound(ox, oy, oz);
 				sound /= FRACUNIT;
 				sprintf (temp, "%.0f", (sound - listener).Length());
-				screen->DrawText (color, 250, y, temp, TAG_DONE);
+				screen->DrawText (color, 260, y, temp, TAG_DONE);
 			}
 			else
 			{
-				screen->DrawText (color, 250, y, "---", TAG_DONE);
+				screen->DrawText (color, 260, y, "---", TAG_DONE);
 			}
 		}
 
 		// Volume
-		sprintf (temp, "%g", chan->Volume);
+		sprintf (temp, "%.2g", chan->Volume);
 		screen->DrawText (color, 220, y, temp, TAG_DONE);
 
 		// Channel
 		sprintf (temp, "%d", chan->EntChannel);
-		screen->DrawText (color, 290, y, temp, TAG_DONE);
+		screen->DrawText (color, 300, y, temp, TAG_DONE);
 
 		// Flags
 		sprintf (temp, "%s3%sZ%sI%sM%sN%sA%sL%sE",
@@ -235,7 +235,7 @@ void S_NoiseDebug (void)
 			(chan->ChanFlags & CHAN_AREA)			? TEXTCOLOR_GREEN : TEXTCOLOR_BLACK,
 			(chan->ChanFlags & CHAN_LOOP)			? TEXTCOLOR_GREEN : TEXTCOLOR_BLACK,
 			(chan->ChanFlags & CHAN_EVICTED)		? TEXTCOLOR_GREEN : TEXTCOLOR_BLACK);
-		screen->DrawText (color, 330, y, temp, TAG_DONE);
+		screen->DrawText (color, 340, y, temp, TAG_DONE);
 
 		y += 8;
 		if (chan->PrevChan == &Channels)
@@ -314,23 +314,11 @@ void S_Shutdown ()
 {
 	FSoundChan *chan, *next;
 
-	if (GSnd != NULL)
+	while (Channels != NULL)
 	{
-		while (Channels != NULL)
-		{
-			GSnd->StopSound(Channels);
-		}
-		GSnd->UpdateSounds();
+		GSnd->StopSound(Channels);
 	}
-	else
-	{
-		for (chan = Channels; chan != NULL; chan = next)
-		{
-			next = chan->NextChan;
-			delete chan;
-		}
-		Channels = NULL;
-	}
+	GSnd->UpdateSounds();
 	for (chan = FreeChannels; chan != NULL; chan = next)
 	{
 		next = chan->NextChan;
@@ -660,7 +648,7 @@ static FSoundChan *S_StartSound (fixed_t *pt, AActor *mover, sector_t *sec,
 	float pos[3];
 	float vel[3];
 
-	if (sound_id <= 0 || volume <= 0 || GSnd == NULL)
+	if (sound_id <= 0 || volume <= 0)
 		return NULL;
 
 	org_id = sound_id;
@@ -736,7 +724,9 @@ static FSoundChan *S_StartSound (fixed_t *pt, AActor *mover, sector_t *sec,
 
 	// If this is a singular sound, don't play it if it's already playing.
 	if (sfx->bSingular && S_CheckSingular(sound_id))
-		return NULL;
+	{
+		chanflags |= CHAN_EVICTED;
+	}
 
 	// If the sound is unpositioned or comes from the listener, it is
 	// never limited.
@@ -748,7 +738,17 @@ static FSoundChan *S_StartSound (fixed_t *pt, AActor *mover, sector_t *sec,
 	// If this sound doesn't like playing near itself, don't play it if
 	// that's what would happen.
 	if (near_limit > 0 && S_CheckSoundLimit(sfx, pos, near_limit))
+	{
+		chanflags |= CHAN_EVICTED;
+	}
+
+	// If the sound is blocked and not looped, return now. If the sound
+	// is blocked and looped, pretend to play it so that it can
+	// eventually play for real.
+	if ((chanflags & (CHAN_EVICTED | CHAN_LOOP)) == CHAN_EVICTED)
+	{
 		return NULL;
+	}
 
 	// Make sure the sound is loaded.
 	sfx = S_LoadSound(sfx);
@@ -817,14 +817,29 @@ static FSoundChan *S_StartSound (fixed_t *pt, AActor *mover, sector_t *sec,
 		pitch = NORM_PITCH;
 	}
 
-	if (attenuation > 0)
+	if (chanflags & CHAN_EVICTED)
+	{
+		chan = NULL;
+	}
+	else if (attenuation > 0)
 	{
 		chan = GSnd->StartSound3D (sfx, volume, attenuation, pitch, basepriority, pos, vel, sec, channel, chanflags, NULL);
-		chanflags |= CHAN_IS3D | CHAN_JUSTSTARTED;
 	}
 	else
 	{
 		chan = GSnd->StartSound (sfx, volume, pitch, chanflags, NULL);
+	}
+	if (chan == NULL && (chanflags & CHAN_LOOP))
+	{
+		chan = S_GetChannel(NULL);
+		chanflags |= CHAN_EVICTED;
+	}
+	if (attenuation > 0)
+	{
+		chanflags |= CHAN_IS3D | CHAN_JUSTSTARTED;
+	}
+	else
+	{
 		chanflags |= CHAN_LISTENERZ | CHAN_JUSTSTARTED;
 	}
 	if (chan != NULL)
@@ -844,6 +859,7 @@ static FSoundChan *S_StartSound (fixed_t *pt, AActor *mover, sector_t *sec,
 		chan->NearLimit = near_limit;
 		chan->Pitch = pitch;
 		chan->Priority = basepriority;
+		chan->DistanceScale = attenuation;
 		if (mover != NULL)
 		{
 			mover->SoundChans |= 1 << channel;
@@ -888,6 +904,11 @@ void S_RestartSound(FSoundChan *chan)
 
 		// If this sound doesn't like playing near itself, don't play it if
 		// that's what would happen.
+		if (chan->NearLimit > 0 && S_CheckSoundLimit(&S_sfx[chan->SoundID], pos, chan->NearLimit))
+		{
+			return;
+		}
+
 		ochan = GSnd->StartSound3D(sfx, chan->Volume, chan->DistanceScale, chan->Pitch,
 			chan->Priority, pos, vel, chan->Sector, chan->EntChannel, chan->ChanFlags, chan);
 	}
@@ -1079,10 +1100,6 @@ void S_StopSound (AActor *ent, int channel)
 
 void S_StopAllChannels ()
 {
-	if (GSnd == NULL)
-	{
-		return;
-	}
 	SN_StopAllSequences();
 	while (Channels != NULL)
 	{
@@ -1101,7 +1118,7 @@ void S_StopAllChannels ()
 
 void S_RelinkSound (AActor *from, AActor *to)
 {
-	if (from == NULL || GSnd == NULL)
+	if (from == NULL)
 		return;
 
 	for (FSoundChan *chan = Channels; chan != NULL; chan = chan->NextChan)
@@ -1197,10 +1214,7 @@ void S_PauseSound (bool notmusic)
 		I_PauseSong (mus_playing.handle);
 		MusicPaused = true;
 	}
-	if (GSnd != NULL)
-	{
-		GSnd->SetSfxPaused (true);
-	}
+	GSnd->SetSfxPaused (true);
 }
 
 //==========================================================================
@@ -1217,10 +1231,7 @@ void S_ResumeSound ()
 		I_ResumeSong (mus_playing.handle);
 		MusicPaused = false;
 	}
-	if (GSnd != NULL)
-	{
-		GSnd->SetSfxPaused (false);
-	}
+	GSnd->SetSfxPaused (false);
 }
 
 //==========================================================================
@@ -1243,7 +1254,7 @@ void S_EvictAllChannels()
 		if (!(chan->ChanFlags & CHAN_EVICTED))
 		{
 			chan->ChanFlags |= CHAN_EVICTED;
-			if (GSnd != NULL && chan->SysChannel != NULL)
+			if (chan->SysChannel != NULL)
 			{
 				GSnd->StopSound(chan);
 			}
@@ -1295,11 +1306,6 @@ void S_RestoreEvictedChannel(FSoundChan *chan)
 
 void S_RestoreEvictedChannels()
 {
-	if (GSnd == NULL)
-	{
-		return;
-	}
-
 	// Restart channels in the same order they were originally played.
 	S_RestoreEvictedChannel(Channels);
 }
@@ -1316,9 +1322,6 @@ void S_UpdateSounds (void *listener_p)
 	float pos[3], vel[3];
 
 	I_UpdateMusic();
-
-	if (GSnd == NULL)
-		return;
 
 	// [RH] Update music and/or playlist. I_QrySongPlaying() must be called
 	// to attempt to reconnect to broken net streams and to advance the
@@ -1441,10 +1444,7 @@ void S_SerializeSounds(FArchive &arc)
 {
 	FSoundChan *chan;
 
-	if (GSnd != NULL)
-	{
-		GSnd->Sync(true);
-	}
+	GSnd->Sync(true);
 
 	if (arc.IsStoring())
 	{
@@ -1490,11 +1490,8 @@ void S_SerializeSounds(FArchive &arc)
 		S_RestoreEvictedChannels();
 	}
 	DSeqNode::SerializeSequences(arc);
-	if (GSnd != NULL)
-	{
-		GSnd->Sync(false);
-		GSnd->UpdateSounds();
-	}
+	GSnd->Sync(false);
+	GSnd->UpdateSounds();
 }
 
 //==========================================================================

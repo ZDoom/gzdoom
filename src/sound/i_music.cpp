@@ -97,11 +97,8 @@ CUSTOM_CVAR (Float, snd_musicvolume, 0.5f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 		self = 1.f;
 	else
 	{
-		if (GSnd != NULL)
-		{
-			// Set general music volume.
-			GSnd->SetMusicVolume(clamp<float>(self * relative_volume, 0, 1));
-		}
+		// Set general music volume.
+		GSnd->SetMusicVolume(clamp<float>(self * relative_volume, 0, 1));
 		// For music not implemented through the digital sound system,
 		// let them know about the change.
 		if (currSong != NULL)
@@ -263,10 +260,6 @@ void *I_RegisterURLSong (const char *url)
 {
 	StreamSong *song;
 
-	if (GSnd == NULL)
-	{
-		return NULL;
-	}
 	song = new StreamSong(url, 0, 0);
 	if (song->IsValid())
 	{
@@ -328,73 +321,70 @@ void *I_RegisterSong (const char *filename, char *musiccache, int offset, int le
 	// Check for MUS format
 	if (id == MAKE_ID('M','U','S',0x1a))
 	{
-		if (GSnd != NULL)
+		/*	MUS are played as:
+		- OPL: 
+			- if explicitly selected by $mididevice 
+			- when snd_mididevice  is -3 and no midi device is set for the song
+
+		  Timidity: 
+			- if explicitly selected by $mididevice 
+			- when snd_mididevice  is -2 and no midi device is set for the song
+
+		  FMod:
+			- if explicitly selected by $mididevice 
+			- when snd_mididevice  is -1 and no midi device is set for the song
+			- as fallback when both OPL and Timidity failed unless snd_mididevice is >= 0
+
+		  MMAPI (Win32 only):
+			- if explicitly selected by $mididevice (non-Win32 redirects this to FMOD)
+			- when snd_mididevice  is >= 0 and no midi device is set for the song
+			- as fallback when both OPL and Timidity failed and snd_mididevice is >= 0
+		*/
+		if ((snd_mididevice == -3 && device == MDEV_DEFAULT) || device == MDEV_OPL)
 		{
-			/*	MUS are played as:
-			- OPL: 
-				- if explicitly selected by $mididevice 
-				- when snd_mididevice  is -3 and no midi device is set for the song
+			info = new MUSSong2 (file, musiccache, len, MIDI_OPL);
+		}
+		else if (device == MDEV_TIMIDITY || (device == MDEV_DEFAULT && snd_mididevice == -2))
+		{
+			info = new TimiditySong (file, musiccache, len);
+		}
+		else if (snd_mididevice == -4 && device == MDEV_DEFAULT)
+		{
+			info = new MUSSong2(file, musiccache, len, MIDI_Timidity);
+		}
+		if (info != NULL && !info->IsValid())
+		{
+			delete info;
+			info = NULL;
+			device = MDEV_DEFAULT;
+		}
+		if (info == NULL && (snd_mididevice == -1 || device == MDEV_FMOD) && device != MDEV_MMAPI)
+		{
+			TArray<BYTE> midi;
+			bool midi_made = false;
 
-			  Timidity: 
-				- if explicitly selected by $mididevice 
-				- when snd_mididevice  is -2 and no midi device is set for the song
-
-			  FMod:
-				- if explicitly selected by $mididevice 
-				- when snd_mididevice  is -1 and no midi device is set for the song
-				- as fallback when both OPL and Timidity failed unless snd_mididevice is >= 0
-
-			  MMAPI (Win32 only):
-				- if explicitly selected by $mididevice (non-Win32 redirects this to FMOD)
-				- when snd_mididevice  is >= 0 and no midi device is set for the song
-				- as fallback when both OPL and Timidity failed and snd_mididevice is >= 0
-			*/
-			if ((snd_mididevice == -3 && device == MDEV_DEFAULT) || device == MDEV_OPL)
+			if (file == NULL)
 			{
-				info = new MUSSong2 (file, musiccache, len, MIDI_OPL);
+				midi_made = ProduceMIDI((BYTE *)musiccache, midi);
 			}
-			else if (device == MDEV_TIMIDITY || (device == MDEV_DEFAULT && snd_mididevice == -2))
+			else
 			{
-				info = new TimiditySong (file, musiccache, len);
-			}
-			else if ((snd_mididevice == -4 && device == MDEV_DEFAULT) && GSnd != NULL)
-			{
-				info = new MUSSong2(file, musiccache, len, MIDI_Timidity);
-			}
-			if (info != NULL && !info->IsValid())
-			{
-				delete info;
-				info = NULL;
-				device = MDEV_DEFAULT;
-			}
-			if (info == NULL && (snd_mididevice == -1 || device == MDEV_FMOD) && device != MDEV_MMAPI)
-			{
-				TArray<BYTE> midi;
-				bool midi_made = false;
-
-				if (file == NULL)
+				BYTE *mus = new BYTE[len];
+				size_t did_read = fread(mus, 1, len, file);
+				if (did_read == (size_t)len)
 				{
-					midi_made = ProduceMIDI((BYTE *)musiccache, midi);
+					midi_made = ProduceMIDI(mus, midi);
 				}
-				else
+				fseek(file, -(long)did_read, SEEK_CUR);
+				delete[] mus;
+			}
+			if (midi_made)
+			{
+				info = new StreamSong((char *)&midi[0], -1, midi.Size());
+				if (!info->IsValid())
 				{
-					BYTE *mus = new BYTE[len];
-					size_t did_read = fread(mus, 1, len, file);
-					if (did_read == (size_t)len)
-					{
-						midi_made = ProduceMIDI(mus, midi);
-					}
-					fseek(file, -(long)did_read, SEEK_CUR);
-					delete[] mus;
-				}
-				if (midi_made)
-				{
-					info = new StreamSong((char *)&midi[0], -1, midi.Size());
-					if (!info->IsValid())
-					{
-						delete info;
-						info = NULL;
-					}
+					delete info;
+					info = NULL;
 				}
 			}
 		}
@@ -408,7 +398,6 @@ void *I_RegisterSong (const char *filename, char *musiccache, int offset, int le
 	// Check for MIDI format
 	else 
 	{
-
 		if (id == MAKE_ID('M','T','h','d'))
 		{
 			// This is a midi file
@@ -432,15 +421,15 @@ void *I_RegisterSong (const char *filename, char *musiccache, int offset, int le
 				- when snd_mididevice  is >= 0 and no midi device is set for the song
 				- as fallback when Timidity failed and snd_mididevice is >= 0
 			*/
-			if ((device == MDEV_OPL || (snd_mididevice == -3 && device == MDEV_DEFAULT)) && GSnd != NULL)
+			if (device == MDEV_OPL || (snd_mididevice == -3 && device == MDEV_DEFAULT))
 			{
 				info = new MIDISong2 (file, musiccache, len, MIDI_OPL);
 			}
-			else if ((device == MDEV_TIMIDITY || (snd_mididevice == -2 && device == MDEV_DEFAULT)) && GSnd != NULL)
+			else if (device == MDEV_TIMIDITY || (snd_mididevice == -2 && device == MDEV_DEFAULT))
 			{
 				info = new TimiditySong (file, musiccache, len);
 			}
-			else if ((snd_mididevice == -4 && device == MDEV_DEFAULT) && GSnd != NULL)
+			else if (snd_mididevice == -4 && device == MDEV_DEFAULT)
 			{
 				info = new MIDISong2(file, musiccache, len, MIDI_Timidity);
 			}
@@ -523,7 +512,7 @@ void *I_RegisterSong (const char *filename, char *musiccache, int offset, int le
 		// smaller than this can't possibly be a valid music file if it hasn't
 		// been identified already, so don't even bother trying to load it.
 		// Of course MIDIs shorter than 1024 bytes should pass.
-		if (info == NULL && GSnd != NULL && (len >= 1024 || id == MAKE_ID('M','T','h','d')))
+		if (info == NULL && (len >= 1024 || id == MAKE_ID('M','T','h','d')))
 		{
 			// Let FMOD figure out what it is.
 			if (file != NULL)

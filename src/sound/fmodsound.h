@@ -26,7 +26,7 @@ public:
 
 	// Starts a sound.
 	FSoundChan *StartSound (sfxinfo_t *sfx, float vol, int pitch, int chanflags, FSoundChan *reuse_chan);
-	FSoundChan *StartSound3D (sfxinfo_t *sfx, float vol, float distscale, int pitch, int priority, float pos[3], float vel[3], sector_t *sector, int channum, int chanflags, FSoundChan *reuse_chan);
+	FSoundChan *StartSound3D (sfxinfo_t *sfx, float vol, float distscale, int pitch, int priority, const FVector3 &pos, const FVector3 &vel, const sector_t *sector, int channum, int chanflags, FSoundChan *reuse_chan);
 
 	// Stops a sound channel.
 	void StopSound (FSoundChan *chan);
@@ -44,7 +44,7 @@ public:
 	void SetInactive (bool inactive);
 
 	// Updates the position of a sound channel.
-	void UpdateSoundParams3D (FSoundChan *chan, float pos[3], float vel[3]);
+	void UpdateSoundParams3D (FSoundChan *chan, const FVector3 &pos, const FVector3 &vel);
 
 	void UpdateListener ();
 	void UpdateSounds ();
@@ -69,7 +69,7 @@ private:
 
 	void HandleChannelDelay(FMOD::Channel *chan, FSoundChan *reuse_chan, float freq) const;
 	FSoundChan *CommonChannelSetup(FMOD::Channel *chan, FSoundChan *reuse_chan) const;
-	FMOD_MODE SetChanHeadSettings(FMOD::Channel *chan, sfxinfo_t *sfx, float pos[3], int channum, int chanflags, sector_t *sec, FMOD_MODE oldmode) const;
+	FMOD_MODE SetChanHeadSettings(FMOD::Channel *chan, sfxinfo_t *sfx, const FVector3 &pos, int channum, int chanflags, const sector_t *sec, FMOD_MODE oldmode) const;
 	void DoLoad (void **slot, sfxinfo_t *sfx);
 	void getsfx (sfxinfo_t *sfx);
 

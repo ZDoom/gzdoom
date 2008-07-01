@@ -2721,7 +2721,7 @@ FUNC(LS_SendToCommunicator)
 
 		if (it->CheckLocalView (consoleplayer))
 		{
-			S_StopSound ((fixed_t *)NULL, CHAN_VOICE);
+			S_StopSound (CHAN_VOICE);
 			S_Sound (CHAN_VOICE, name, 1, ATTN_NORM);
 			if (arg2 == 0)
 			{

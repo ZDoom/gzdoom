@@ -36,7 +36,6 @@
 #include "r_data.h"
 #include "p_setup.h"
 #include "sc_man.h"
-#include "vectors.h"
 #include "p_lnspec.h"
 #include "templates.h"
 #include "i_system.h"

@@ -43,7 +43,6 @@
 #include "s_sound.h"
 #include "cmdlib.h"
 #include "thingdef.h"
-#include "vectors.h"
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 

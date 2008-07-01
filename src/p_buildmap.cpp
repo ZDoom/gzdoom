@@ -12,7 +12,6 @@
 #include "v_palette.h"
 #include "w_wad.h"
 #include "templates.h"
-#include "vectors.h"
 #include "r_sky.h"
 #include "r_main.h"
 #include "r_defs.h"

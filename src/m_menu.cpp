@@ -2687,7 +2687,7 @@ void M_StartMessage (const char *string, void (*routine)(int), bool input)
 	}
 	if (input)
 	{
-		S_StopSound ((AActor *)NULL, CHAN_VOICE);
+		S_StopSound (CHAN_VOICE);
 		S_Sound (CHAN_VOICE, "menu/prompt", 1, ATTN_NONE);
 	}
 	return;

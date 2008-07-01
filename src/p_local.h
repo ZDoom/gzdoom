@@ -488,7 +488,6 @@ enum
 	PO_SPAWNHURT_TYPE
 };
 
-extern FPolyObj *polyobjs; // list of all poly-objects on the level
 extern int po_NumPolyobjs;
 extern polyspawns_t *polyspawns;	// [RH] list of polyobject things to spawn
 

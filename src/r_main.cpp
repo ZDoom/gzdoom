@@ -44,7 +44,6 @@
 #include "stats.h"
 #include "i_video.h"
 #include "i_system.h"
-#include "vectors.h"
 #include "a_sharedglobal.h"
 #include "r_translate.h"
 #include "p_3dmidtex.h"

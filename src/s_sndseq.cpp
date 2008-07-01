@@ -132,11 +132,11 @@ public:
 	void Serialize(FArchive &arc);
 	void MakeSound(int loop, FSoundID id)
 	{
-		S_Sound (&m_Poly->startSpot[0], CHAN_BODY|loop, id, clamp(m_Volume, 0.f, 1.f), m_Atten);
+		S_Sound (m_Poly, CHAN_BODY|loop, id, clamp(m_Volume, 0.f, 1.f), m_Atten);
 	}
 	bool IsPlaying()
 	{
-		return S_GetSoundPlayingInfo (&m_Poly->startSpot[0], m_CurrentSoundID);
+		return S_GetSoundPlayingInfo (m_Poly, m_CurrentSoundID);
 	}
 	void *Source()
 	{
@@ -165,7 +165,7 @@ public:
 	}
 	bool IsPlaying()
 	{
-		return S_GetSoundPlayingInfo (m_Sector->soundorg, m_CurrentSoundID);
+		return S_GetSoundPlayingInfo (m_Sector, m_CurrentSoundID);
 	}
 	void *Source()
 	{
@@ -423,7 +423,7 @@ IMPLEMENT_CLASS (DSeqPolyNode)
 void DSeqPolyNode::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
-	arc.SerializePointer (polyobjs, (BYTE **)&m_Poly, sizeof(*polyobjs));
+	arc << m_Poly;
 }
 
 IMPLEMENT_CLASS (DSeqSectorNode)
@@ -982,7 +982,7 @@ void DSeqActorNode::Destroy ()
 void DSeqSectorNode::Destroy ()
 {
 	if (m_StopSound >= 0)
-		S_StopSound (m_Sector->soundorg, Channel & 7);
+		S_StopSound (m_Sector, Channel & 7);
 	if (m_StopSound >= 1)
 		MakeSound (0, m_StopSound);
 	Super::Destroy();
@@ -991,7 +991,7 @@ void DSeqSectorNode::Destroy ()
 void DSeqPolyNode::Destroy ()
 {
 	if (m_StopSound >= 0)
-		S_StopSound (m_Poly->startSpot, CHAN_BODY);
+		S_StopSound (m_Poly, CHAN_BODY);
 	if (m_StopSound >= 1)
 		MakeSound (0, m_StopSound);
 	Super::Destroy();

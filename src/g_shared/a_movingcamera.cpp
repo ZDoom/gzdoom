@@ -36,7 +36,6 @@
 #include "info.h"
 #include "p_local.h"
 #include "p_lnspec.h"
-#include "vectors.h"
 
 /*
 == InterpolationPoint: node along a camera's path

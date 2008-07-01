@@ -53,7 +53,6 @@
 #include "i_system.h"
 #include "i_movie.h"
 #include "sbar.h"
-#include "vectors.h"
 #include "m_swap.h"
 #include "a_sharedglobal.h"
 #include "a_doomglobal.h"
@@ -4127,8 +4126,8 @@ int DLevelScript::RunScript ()
 				if (activationline)
 				{
 					S_Sound (
-						activationline->frontsector->soundorg,
-						CHAN_AUTO,
+						activationline->frontsector,
+						CHAN_AUTO,	// Not CHAN_AREA, because that'd probably break existing scripts.
 						lookup,
 						(float)(STACK(1)) / 127.f,
 						ATTN_NORM);

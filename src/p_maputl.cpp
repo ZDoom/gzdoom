@@ -39,7 +39,6 @@
 // State.
 #include "r_state.h"
 #include "templates.h"
-#include "vectors.h"
 
 static AActor *RoughBlockCheck (AActor *mo, int index);
 

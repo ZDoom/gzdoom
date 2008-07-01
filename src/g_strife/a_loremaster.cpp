@@ -5,7 +5,6 @@
 #include "p_enemy.h"
 #include "p_local.h"
 #include "s_sound.h"
-#include "vectors.h"
 
 static FRandom pr_atk1 ("FooMelee");
 

@@ -148,7 +148,7 @@ public:
 	{
 		return NULL;
 	}
-	FSoundChan *StartSound3D (sfxinfo_t *sfx, float vol, float distscale, int pitch, int priority, float pos[3], float vel[3], sector_t *sector, int channum, int chanflags, FSoundChan *reuse_chan)
+	FSoundChan *StartSound3D (sfxinfo_t *sfx, float vol, float distscale, int pitch, int priority, const FVector3 &pos, const FVector3 &vel, const sector_t *sector, int channum, int chanflags, FSoundChan *reuse_chan)
 	{
 		return NULL;
 	}
@@ -184,7 +184,7 @@ public:
 	}
 
 	// Updates the volume, separation, and pitch of a sound channel.
-	void UpdateSoundParams3D (FSoundChan *chan, float pos[3], float vel[3])
+	void UpdateSoundParams3D (FSoundChan *chan, const FVector3 &pos, const FVector3 &vel)
 	{
 	}
 

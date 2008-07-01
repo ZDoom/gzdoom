@@ -20,7 +20,6 @@
 #include "stats.h"
 #include "i_system.h"
 #include "s_sound.h"
-#include "vectors.h"
 #include "a_doomglobal.h"
 
 static FRandom pr_botdofire ("BotDoFire");

@@ -26,7 +26,6 @@
 #include <math.h>
 
 #include "templates.h"
-#include "vectors.h"
 
 #include "m_alloc.h"
 #include "m_bbox.h"

@@ -90,7 +90,7 @@ public:
 
 	// Starts a sound.
 	virtual FSoundChan *StartSound (sfxinfo_t *sfx, float vol, int pitch, int chanflags, FSoundChan *reuse_chan) = 0;
-	virtual FSoundChan *StartSound3D (sfxinfo_t *sfx, float vol, float distscale, int pitch, int priority, float pos[3], float vel[3], sector_t *sector, int channum, int chanflags, FSoundChan *reuse_chan) = 0;
+	virtual FSoundChan *StartSound3D (sfxinfo_t *sfx, float vol, float distscale, int pitch, int priority, const FVector3 &pos, const FVector3 &vel, const sector_t *sector, int channum, int chanflags, FSoundChan *reuse_chan) = 0;
 
 	// Stops a sound channel.
 	virtual void StopSound (FSoundChan *chan) = 0;
@@ -108,7 +108,7 @@ public:
 	virtual void SetInactive(bool inactive) = 0;
 
 	// Updates the volume, separation, and pitch of a sound channel.
-	virtual void UpdateSoundParams3D (FSoundChan *chan, float pos[3], float vel[3]) = 0;
+	virtual void UpdateSoundParams3D (FSoundChan *chan, const FVector3 &pos, const FVector3 &vel) = 0;
 
 	virtual void UpdateListener () = 0;
 	virtual void UpdateSounds () = 0;

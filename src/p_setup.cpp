@@ -48,7 +48,6 @@
 #include "c_console.h"
 #include "c_cvars.h"
 #include "p_acs.h"
-#include "vectors.h"
 #include "announcer.h"
 #include "wi_stuff.h"
 #include "stats.h"

@@ -167,26 +167,31 @@ extern int S_SoundCurveSize;
 
 // Information about one playing sound.
 struct sector_t;
+struct FPolyObj;
 struct FSoundChan
 {
 	void		*SysChannel;// Channel information from the system interface.
 	FSoundChan	*NextChan;	// Next channel in this list.
 	FSoundChan **PrevChan;	// Previous channel in this list.
-	AActor		*Mover;		// Used for velocity.
-	sector_t	*Sector;	// Sector for area sounds.
-	fixed_t		*Pt;		// Origin of sound.
 	sfxinfo_t	*SfxInfo;	// Sound information.
-	fixed_t		X,Y,Z;		// Origin if Mover is NULL.
+	QWORD_UNION	StartTime;	// Sound start time in DSP clocks.
 	FSoundID	SoundID;	// Sound ID of playing sound.
 	FSoundID	OrgID;		// Sound ID of sound used to start this channel.
 	float		Volume;
 	float		DistanceScale;
-	int			Pitch;		// Pitch variation.
 	int			ChanFlags;
+	SWORD		Pitch;		// Pitch variation.
 	BYTE		EntChannel;	// Actor's sound channel.
 	SBYTE		Priority;
 	SWORD		NearLimit;
-	QWORD_UNION	StartTime;	// Sound start time in DSP clocks.
+	BYTE		SourceType;
+	union
+	{
+		AActor	*Actor;				// Used for position and velocity.
+		const sector_t	*Sector;	// Sector for area sounds.
+		const FPolyObj	*Poly;		// Polyobject sound source.
+		float			 Point[3];	// Sound is not attached to any source.
+	};
 };
 extern FSoundChan *Channels;
 
@@ -219,9 +224,9 @@ void S_CacheSound (sfxinfo_t *sfx);
 // Start sound for thing at <ent>
 void S_Sound (int channel, FSoundID sfxid, float volume, float attenuation);
 void S_Sound (AActor *ent, int channel, FSoundID sfxid, float volume, float attenuation);
-void S_Sound (fixed_t *pt, int channel, FSoundID sfxid, float volume, float attenuation);
+void S_Sound (const FPolyObj *poly, int channel, FSoundID sfxid, float volume, float attenuation);
+void S_Sound (const sector_t *sec, int channel, FSoundID sfxid, float volume, float attenuation);
 void S_Sound (fixed_t x, fixed_t y, fixed_t z, int channel, FSoundID sfxid, float volume, float attenuation);
-void S_Sound (sector_t *sec, int channel, FSoundID sfxid, float volume, float attenuation);
 
 // sound channels
 // channel 0 never willingly overrides
@@ -249,8 +254,8 @@ void S_Sound (sector_t *sec, int channel, FSoundID sfxid, float volume, float at
 
 // modifier flags
 #define CHAN_LISTENERZ			8
-#define CHAN_IMMOBILE			16
-#define CHAN_MAYBE_LOCAL		32
+#define CHAN_MAYBE_LOCAL		16
+#define CHAN_UI					32	// Do not record sound in savegames.
 #define CHAN_NOPAUSE			64	// Do not pause this sound in menus.
 #define CHAN_AREA				128	// Sound plays from all around. Only valid with sector sounds.
 #define CHAN_LOOP				256
@@ -274,16 +279,22 @@ void S_CacheRandomSound (sfxinfo_t *sfx);
 // Checks if a copy of this sound is already playing.
 bool S_CheckSingular (int sound_id);
 
-// Stops a sound emanating from one of an entity's channels
+// Stops a sound emanating from one of an emitter's channels.
 void S_StopSound (AActor *ent, int channel);
-void S_StopSound (fixed_t *pt, int channel);
+void S_StopSound (const sector_t *sec, int channel);
+void S_StopSound (const FPolyObj *poly, int channel);
+
+// Stops an origin-less sound from playing from this channel.
+void S_StopSound (int channel);
 
 // Stop sound for all channels
 void S_StopAllChannels (void);
 
-// Is the sound playing on one of the entity's channels?
-bool S_GetSoundPlayingInfo (AActor *ent, int sound_id);
-bool S_GetSoundPlayingInfo (fixed_t *pt, int sound_id);
+// Is the sound playing on one of the emitter's channels?
+bool S_GetSoundPlayingInfo (const AActor *actor, int sound_id);
+bool S_GetSoundPlayingInfo (const sector_t *sector, int sound_id);
+bool S_GetSoundPlayingInfo (const FPolyObj *poly, int sound_id);
+
 bool S_IsActorPlayingSomething (AActor *actor, int channel, int sound_id);
 
 // Moves all sounds from one mobj to another

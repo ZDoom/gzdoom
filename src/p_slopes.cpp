@@ -33,7 +33,6 @@
 */
 
 #include "doomtype.h"
-#include "vectors.h"
 #include "p_local.h"
 #include "r_data.h"
 #include "cmdlib.h"

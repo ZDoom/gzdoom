@@ -43,7 +43,6 @@
 #include "st_start.h"
 #include "sc_man.h"
 #include "templates.h"
-#include "vectors.h"
 #include "r_translate.h"
 #include "bitmap.h"
 

@@ -486,7 +486,7 @@ struct sector_t
 	int			sky;
 	short		seqType;		// this sector's sound sequence
 
-	fixed_t		soundorg[3];	// origin for any sounds played by the sector
+	fixed_t		soundorg[2];	// origin for any sounds played by the sector
 	int 		validcount;		// if == validcount, already checked
 	AActor* 	thinglist;		// list of mobjs in sector
 
@@ -786,8 +786,19 @@ struct FPolyObj
 	~FPolyObj();
 	DInterpolation *SetInterpolation();
 	void StopInterpolation();
-
 };
+extern FPolyObj *polyobjs;		// list of all poly-objects on the level
+
+inline FArchive &operator<< (FArchive &arc, FPolyObj *&poly)
+{
+	return arc.SerializePointer (polyobjs, (BYTE **)&poly, sizeof(FPolyObj));
+}
+
+inline FArchive &operator<< (FArchive &arc, const FPolyObj *&poly)
+{
+	return arc.SerializePointer (polyobjs, (BYTE **)&poly, sizeof(FPolyObj));
+}
+
 
 //
 // BSP node.

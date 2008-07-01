@@ -39,6 +39,7 @@
 #include <limits.h>
 #include "zstring.h"
 #include "name.h"
+#include "vectors.h"
 
 // Since this file is included by everything, it seems an appropriate place
 // to check the NOASM/USEASM macros.

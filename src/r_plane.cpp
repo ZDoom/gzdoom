@@ -48,7 +48,6 @@
 
 #include "m_alloc.h"
 #include "v_video.h"
-#include "vectors.h"
 #include "a_sharedglobal.h"
 #include "c_console.h"
 

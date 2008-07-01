@@ -71,7 +71,6 @@
 #include "version.h"
 #include "m_menu.h"
 #include "statnums.h"
-#include "vectors.h"
 #include "sbarinfo.h"
 #include "r_translate.h"
 #include "p_lnspec.h"

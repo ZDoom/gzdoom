@@ -41,7 +41,6 @@
 #include "sc_man.h"
 #include "tarray.h"
 #include "templates.h"
-#include "vectors.h"
 #include "cmdlib.h"
 #include "i_system.h"
 #include "m_random.h"

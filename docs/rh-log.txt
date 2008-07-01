@@ -1,4 +1,12 @@
 June 30, 2008
+- Removed the S_Sound() variant that allows for pointing the origin at an
+  arbitrary point. It has been replaced with a variant that takes a polyobject
+  as a source, since that was the only use that couldn't be rewritten with the
+  other variants. This also fixes the bug that polyobject sounds were not
+  successfully saved and caused a crash when reloading the game. Note that
+  this is a significant change to how equality of sound sources is determined,
+  so some things may not behave quite the same as before. (Which would be a
+  bug, but hopefully everything still sounds the same.)
 - Adjusted the noise debug table so that fractional volume levels do not
   run into the adjacent columns.
 - Added a NullSoundRenderer so that most of the checks against a NULL GSnd

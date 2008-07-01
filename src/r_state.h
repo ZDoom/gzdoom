@@ -87,6 +87,11 @@ inline FArchive &operator<< (FArchive &arc, sector_t *&sec)
 	return arc.SerializePointer (sectors, (BYTE **)&sec, sizeof(*sectors));
 }
 
+inline FArchive &operator<< (FArchive &arc, const sector_t *&sec)
+{
+	return arc.SerializePointer (sectors, (BYTE **)&sec, sizeof(*sectors));
+}
+
 inline FArchive &operator<< (FArchive &arc, line_t *&line)
 {
 	return arc.SerializePointer (lines, (BYTE **)&line, sizeof(*lines));

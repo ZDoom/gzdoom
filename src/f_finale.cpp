@@ -349,7 +349,7 @@ void F_Ticker ()
 	}
 	else if (FinaleStage == 5 && FinaleCount > FinaleEndCount)
 	{
-		S_StopSound ((fixed_t *)NULL, CHAN_VOICE);
+		S_StopSound (CHAN_VOICE);
 		F_AdvanceSlideshow ();
 		FinaleCount = 0;
 	}

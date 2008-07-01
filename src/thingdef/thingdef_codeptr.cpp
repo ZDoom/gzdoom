@@ -60,7 +60,6 @@
 #include "p_local.h"
 #include "c_console.h"
 #include "doomerrors.h"
-#include "vectors.h"
 #include "a_sharedglobal.h"
 #include "a_doomglobal.h"
 #include "thingdef/thingdef.h"

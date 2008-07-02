@@ -517,15 +517,49 @@ bool gameisdead;
 
 // We should use ZDoom's internal formatting routine here so that the extended
 // format specifiers work here as well.
-// However, since throwing FStrings around causes some problems in VC++ the
-// error message is still copied to a local buffer.
-static void myvsnprintf(char *DstBuf, size_t MaxCount, const char * Format, va_list ArgList)
-{
-	FString formatstr;
 
-	formatstr.VFormat(Format, ArgList);
-	strncpy(DstBuf, formatstr.GetChars(), MaxCount);
-	DstBuf[MaxCount-1] = 0;
+struct snprintf_state
+{
+	char *buffer;
+	size_t maxlen;
+	size_t curlen;
+	bool overflow;
+};
+
+static int myvsnprintf_helper(void *data, const char *cstr, int cstr_len)
+{
+	snprintf_state *state = (snprintf_state *)data;
+
+	if (state->curlen + cstr_len > state->maxlen)
+	{
+		cstr_len = (int)(state->maxlen - state->curlen);
+		state->overflow = true;
+	}
+	if (cstr_len > 0)
+	{
+		memcpy(state->buffer + state->curlen, cstr, cstr_len);
+		state->curlen += cstr_len;
+	}
+	return cstr_len;
+}
+
+// Unlike the standard C library function snprintf, this one always writes
+// a terminating null character to the buffer.
+int myvsnprintf(char *buffer, size_t count, const char *format, va_list argptr)
+{
+	snprintf_state state = { buffer, count - 1, 0, false };
+	StringFormat::VWorker(myvsnprintf_helper, &state, format, argptr);
+	buffer[state.curlen] = '\0';
+	return state.overflow ? -1 : (int)state.curlen;
+}
+
+int mysnprintf(char *buffer, size_t count, const char *format, ...)
+{
+	va_list argptr;
+	va_start(argptr, format);
+	int len = myvsnprintf(buffer, count, format, argptr);
+	va_end(argptr);
+	return len;
 }
 
 void STACK_ARGS I_FatalError (const char *error, ...)

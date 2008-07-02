@@ -1,3 +1,7 @@
+July 2, 2008
+- Rewrote myvsnprintf to use the StringFormat routines directly so that no
+  additional memory needs to be allocated from the heap.
+
 July 1, 2008
 - Polyobject sounds now play from their lines, similar to the way sector
   sounds are handled.

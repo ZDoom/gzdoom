@@ -1,3 +1,11 @@
+July 1, 2008
+- Polyobject sounds now play from their lines, similar to the way sector
+  sounds are handled.
+- Why do polyobjects have a 3D start spot? Flattened it to 2D.
+- Moved the sector sound origin calculation out of fmodsound.cpp and into
+  s_sound.cpp so that the near sound limiting will use the correct sound
+  location for deciding on neighbors.
+
 June 30, 2008
 - Removed the S_Sound() variant that allows for pointing the origin at an
   arbitrary point. It has been replaced with a variant that takes a polyobject

@@ -1671,6 +1671,75 @@ bool PO_Busy (int polyobj)
 	}
 }
 
+//===========================================================================
+//
+// PO_ClosestPoint
+//
+// Given a point (x,y), returns the point (ox,oy) on the polyobject's walls
+// that is nearest to (x,y). Also returns the seg this point came from.
+//
+//===========================================================================
+
+void PO_ClosestPoint(const FPolyObj *poly, fixed_t fx, fixed_t fy, fixed_t &ox, fixed_t &oy, seg_t **seg)
+{
+	int i;
+	double x = fx, y = fy;
+	double bestdist = HUGE_VAL;
+	double bestx = 0, besty = 0;
+	seg_t *bestseg = NULL;
+
+	for (i = 0; i < poly->numsegs; ++i)
+	{
+		vertex_t *v1 = poly->segs[i]->v1;
+		vertex_t *v2 = poly->segs[i]->v2;
+		double a = v2->x - v1->x;
+		double b = v2->y - v1->y;
+		double den = a*a + b*b;
+		double ix, iy, dist;
+
+		if (den == 0)
+		{ // Line is actually a point!
+			ix = v1->x;
+			iy = v1->y;
+		}
+		else
+		{
+			double num = (x - v1->x) * a + (y - v1->y) * b;
+			double u = num / den;
+			if (u <= 0)
+			{
+				ix = v1->x;
+				iy = v1->y;
+			}
+			else if (u >= 1)
+			{
+				ix = v2->x;
+				iy = v2->y;
+			}
+			else
+			{
+				ix = v1->x + u * a;
+				iy = v1->y + u * b;
+			}
+		}
+		a = (ix - x);
+		b = (iy - y);
+		dist = a*a + b*b;
+		if (dist < bestdist)
+		{
+			bestdist = dist;
+			bestx = ix;
+			besty = iy;
+			bestseg = poly->segs[i];
+		}
+	}
+	ox = fixed_t(bestx);
+	oy = fixed_t(besty);
+	if (seg != NULL)
+	{
+		*seg = bestseg;
+	}
+}
 
 FPolyObj::~FPolyObj()
 {

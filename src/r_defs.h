@@ -769,7 +769,7 @@ struct FPolyObj
 	line_t		**lines;
 	int			numvertices;
 	vertex_t	**vertices;
-	fixed_t		startSpot[3];
+	fixed_t		startSpot[2];
 	vertex_t	*originalPts;	// used as the base for the rotations
 	vertex_t	*prevPts; 		// use to restore the old point values
 	angle_t		angle;

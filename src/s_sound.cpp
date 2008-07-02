@@ -104,7 +104,9 @@ static bool S_CheckSoundLimit(sfxinfo_t *sfx, const FVector3 &pos, int near_limi
 static void S_ActivatePlayList(bool goBack);
 static void CalcPosVel(const FSoundChan *chan, FVector3 *pos, FVector3 *vel);
 static void CalcPosVel(int type, const AActor *actor, const sector_t *sector, const FPolyObj *poly,
-	const FVector3 *pt, int constz, FVector3 *pos, FVector3 *vel);
+	const float pt[3], int channel, int chanflags, FVector3 *pos, FVector3 *vel);
+static void CalcSectorSoundOrg(const sector_t *sec, int channum, fixed_t *x, fixed_t *y, fixed_t *z);
+static void CalcPolyobjSoundOrg(const FPolyObj *poly, fixed_t *x, fixed_t *y, fixed_t *z);
 static FSoundChan *S_StartSound(AActor *mover, const sector_t *sec, const FPolyObj *poly,
 	const FVector3 *pt, int channel, FSoundID sound_id, float volume, float attenuation);
 static sfxinfo_t *S_LoadSound(sfxinfo_t *sfx);
@@ -212,7 +214,6 @@ void S_NoiseDebug (void)
 			// Distance
 			if (chan->DistanceScale > 0)
 			{
-				origin /= FRACUNIT;
 				sprintf (temp, "%.0f", (origin - listener).Length());
 				screen->DrawText (color, 260, y, temp, TAG_DONE);
 			}
@@ -606,78 +607,10 @@ void S_LinkChannel(FSoundChan *chan, FSoundChan **head)
 //
 //=========================================================================
 
-void CalcPosVel(const FSoundChan *chan, FVector3 *pos, FVector3 *vel)
+static void CalcPosVel(const FSoundChan *chan, FVector3 *pos, FVector3 *vel)
 {
-	if (pos != NULL)
-	{
-		fixed_t x, y, z;
-
-		switch (chan->SourceType)
-		{
-		case SOURCE_None:
-		default:
-			if (players[consoleplayer].camera != NULL)
-			{
-				x = players[consoleplayer].camera->x;
-				y = players[consoleplayer].camera->z;
-				z = players[consoleplayer].camera->y;
-			}
-			else
-			{
-				z = y = x = 0;
-			}
-			break;
-
-		case SOURCE_Actor:
-			x = chan->Actor->x;
-			y = chan->Actor->z;
-			z = chan->Actor->y;
-			break;
-
-		case SOURCE_Sector:
-			x = chan->Sector->soundorg[0];
-			y = players[consoleplayer].camera != NULL ? players[consoleplayer].camera->z : 0;
-			z = chan->Sector->soundorg[1];
-			break;
-
-		case SOURCE_Polyobj:
-			x = chan->Poly->startSpot[0];
-			y = chan->Poly->startSpot[2];
-			z = chan->Poly->startSpot[1];
-			break;
-
-		case SOURCE_Unattached:
-			pos->X = chan->Point[0];
-			pos->Y = !(chan->ChanFlags & CHAN_LISTENERZ) ? chan->Point[1]
-				: FIXED2FLOAT(players[consoleplayer].camera->z);
-			pos->Z = chan->Point[2];
-			break;
-		}
-		if (chan->SourceType != SOURCE_Unattached)
-		{
-			if (chan->ChanFlags & CHAN_LISTENERZ)
-			{
-				y = players[consoleplayer].camera != NULL ? players[consoleplayer].camera->z : 0;
-			}
-			pos->X = FIXED2FLOAT(x);
-			pos->Y = FIXED2FLOAT(y);
-			pos->Z = FIXED2FLOAT(z);
-		}
-	}
-	if (vel != NULL)
-	{
-		// Only actors maintain velocity information.
-		if (chan->SourceType == SOURCE_Actor)
-		{
-			vel->X = FIXED2FLOAT(chan->Actor->momx) * TICRATE;
-			vel->Y = FIXED2FLOAT(chan->Actor->momz) * TICRATE;
-			vel->Z = FIXED2FLOAT(chan->Actor->momy) * TICRATE;
-		}
-		else
-		{
-			vel->Zero();
-		}
-	}
+	CalcPosVel(chan->SourceType, chan->Actor, chan->Sector, chan->Poly, chan->Point,
+		chan->EntChannel, chan->ChanFlags, pos, vel);
 }
 
 //=========================================================================
@@ -689,26 +622,27 @@ void CalcPosVel(const FSoundChan *chan, FVector3 *pos, FVector3 *vel)
 //=========================================================================
 
 static void CalcPosVel(int type, const AActor *actor, const sector_t *sector,
-	const FPolyObj *poly, const FVector3 *pt, int constz, FVector3 *pos, FVector3 *vel)
+	const FPolyObj *poly, const float pt[3], int channum, int chanflags, FVector3 *pos, FVector3 *vel)
 {
 	if (pos != NULL)
 	{
 		fixed_t x, y, z;
 
+		if (players[consoleplayer].camera != NULL)
+		{
+			x = players[consoleplayer].camera->x;
+			y = players[consoleplayer].camera->z;
+			z = players[consoleplayer].camera->y;
+		}
+		else
+		{
+			z = y = x = 0;
+		}
+
 		switch (type)
 		{
 		case SOURCE_None:
 		default:
-			if (players[consoleplayer].camera != NULL)
-			{
-				x = players[consoleplayer].camera->x;
-				y = players[consoleplayer].camera->z;
-				z = players[consoleplayer].camera->y;
-			}
-			else
-			{
-				z = y = x = 0;
-			}
 			break;
 
 		case SOURCE_Actor:
@@ -718,26 +652,31 @@ static void CalcPosVel(int type, const AActor *actor, const sector_t *sector,
 			break;
 
 		case SOURCE_Sector:
-			x = sector->soundorg[0];
-			y = players[consoleplayer].camera != NULL ? players[consoleplayer].camera->z : 0;
-			z = sector->soundorg[1];
+			if (chanflags & CHAN_AREA)
+			{
+				CalcSectorSoundOrg(sector, channum, &x, &z, &y);
+			}
+			else
+			{
+				x = sector->soundorg[0];
+				z = sector->soundorg[1];
+				chanflags |= CHAN_LISTENERZ;
+			}
 			break;
 
 		case SOURCE_Polyobj:
-			x = poly->startSpot[0];
-			y = poly->startSpot[2];
-			z = poly->startSpot[1];
+			CalcPolyobjSoundOrg(poly, &x, &z, &y);
 			break;
 
 		case SOURCE_Unattached:
-			pos->X = pt->X;
-			pos->Y = !constz ? pt->Y : FIXED2FLOAT(players[consoleplayer].camera->z);
-			pos->Z = pt->Z;
+			pos->X = pt[0];
+			pos->Y = !(chanflags & CHAN_LISTENERZ) ? pt[1] : FIXED2FLOAT(players[consoleplayer].camera->z);
+			pos->Z = pt[2];
 			break;
 		}
 		if (type != SOURCE_Unattached)
 		{
-			if (constz)
+			if (chanflags & CHAN_LISTENERZ)
 			{
 				y = players[consoleplayer].camera != NULL ? players[consoleplayer].camera->z : 0;
 			}
@@ -760,6 +699,67 @@ static void CalcPosVel(int type, const AActor *actor, const sector_t *sector,
 			vel->Zero();
 		}
 	}
+}
+
+//==========================================================================
+//
+// CalcSectorSoundOrg
+//
+// Returns the perceived sound origin for a sector. If the listener is
+// inside the sector, then the origin is their location. Otherwise, the
+// origin is from the nearest wall on the sector.
+//
+//==========================================================================
+
+static void CalcSectorSoundOrg(const sector_t *sec, int channum, fixed_t *x, fixed_t *y, fixed_t *z)
+{
+	// Are we inside the sector? If yes, the closest point is the one we're on.
+	if (P_PointInSector(*x, *y) == sec)
+	{
+		*x = players[consoleplayer].camera->x;
+		*y = players[consoleplayer].camera->y;
+	}
+	else
+	{
+		// Find the closest point on the sector's boundary lines and use
+		// that as the perceived origin of the sound.
+		sec->ClosestPoint(*x, *y, *x, *y);
+	}
+
+	// Set sound vertical position based on channel.
+	if (channum == CHAN_FLOOR)
+	{
+		*z = MIN(sec->floorplane.ZatPoint(*x, *y), *z);
+	}
+	else if (channum == CHAN_CEILING)
+	{
+		*z = MAX(sec->ceilingplane.ZatPoint(*x, *y), *z);
+	}
+	else if (channum == CHAN_INTERIOR)
+	{
+		*z = clamp(*z, sec->floorplane.ZatPoint(*x, *y), sec->ceilingplane.ZatPoint(*x, *y));
+	}
+}
+
+//==========================================================================
+//
+// CalcPolySoundOrg
+//
+// Returns the perceived sound origin for a polyobject. This is similar to
+// CalcSectorSoundOrg, except there is no special case for being "inside"
+// a polyobject, so the sound literally comes from the polyobject's walls.
+// Vertical position of the sound always comes from the visible wall.
+//
+//==========================================================================
+
+static void CalcPolyobjSoundOrg(const FPolyObj *poly, fixed_t *x, fixed_t *y, fixed_t *z)
+{
+	seg_t *seg;
+	sector_t *sec;
+
+	PO_ClosestPoint(poly, *x, *y, *x, *y, &seg);
+	sec = seg->frontsector;
+	*z = clamp(*z, sec->floorplane.ZatPoint(*x, *y), sec->ceilingplane.ZatPoint(*x, *y));
 }
 
 //==========================================================================
@@ -811,23 +811,20 @@ static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyO
 
 	org_id = sound_id;
 	chanflags = channel & ~7;
+	channel &= 7;
 
-	CalcPosVel(type, actor, sec, poly, pt, chanflags & CHAN_LISTENERZ, &pos, &vel);
+	CalcPosVel(type, actor, sec, poly, &pt->X, channel, chanflags, &pos, &vel);
 
 	if (i_compatflags & COMPATF_MAGICSILENCE)
 	{ // For people who just can't play without a silent BFG.
 		channel = CHAN_WEAPON;
 	}
-	else
+	else if ((chanflags & CHAN_MAYBE_LOCAL) && (i_compatflags & COMPATF_SILENTPICKUP))
 	{
-		if ((channel & CHAN_MAYBE_LOCAL) && (i_compatflags & COMPATF_SILENTPICKUP))
+		if (actor != NULL && actor != players[consoleplayer].camera)
 		{
-			if (actor != NULL && actor != players[consoleplayer].camera)
-			{
-				return NULL;
-			}
+			return NULL;
 		}
-		channel &= 7;
 	}
 
 	sfx = &S_sfx[sound_id];

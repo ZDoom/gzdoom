@@ -1554,55 +1554,15 @@ FMOD_MODE FMODSoundRenderer::SetChanHeadSettings(FMOD::Channel *chan, sfxinfo_t 
 	cpos.X = FIXED2FLOAT(players[consoleplayer].camera->x);
 	cpos.Y = FIXED2FLOAT(players[consoleplayer].camera->z);
 	cpos.Z = FIXED2FLOAT(players[consoleplayer].camera->y);
-	mpos = pos;
 
-	if ((chanflags & CHAN_AREA) && sec != NULL)
+	if (chanflags & CHAN_AREA)
 	{
-		fixed_t ox = fixed_t(pos[0] * 65536);
-		fixed_t oy = fixed_t(pos[1] * 65536);
-		fixed_t cx, cy, cz;
 		float level, old_level;
-
-		// Are we inside the sector? If yes, the closest point is the one we're on.
-		if (P_PointInSector(players[consoleplayer].camera->x, players[consoleplayer].camera->y) == sec)
-		{
-			mpos[0] = cpos[0];
-			mpos[2] = cpos[2];
-			cx = players[consoleplayer].camera->x;
-			cy = players[consoleplayer].camera->y;
-		}
-		else
-		{
-			// Find the closest point on the sector's boundary lines and use
-			// that as the perceived origin of the sound.
-			sec->ClosestPoint(players[consoleplayer].camera->x, players[consoleplayer].camera->y, cx, cy);
-			mpos[0] = FIXED2FLOAT(cx);
-			mpos[2] = FIXED2FLOAT(cy);
-		}
-		// Set sound height based on channel.
-		if (channum == CHAN_FLOOR)
-		{
-			cz = MIN(sec->floorplane.ZatPoint(cx, cy), players[consoleplayer].camera->z);
-		}
-		else if (channum == CHAN_CEILING)
-		{
-			cz = MAX(sec->ceilingplane.ZatPoint(cx, cy), players[consoleplayer].camera->z);
-		}
-		else if (channum == CHAN_INTERIOR)
-		{
-			cz = clamp(players[consoleplayer].camera->z, sec->floorplane.ZatPoint(cx, cy),
-				sec->ceilingplane.ZatPoint(cx, cy));
-		}
-		else
-		{
-			cz = players[consoleplayer].camera->z;
-		}
-		mpos[1] = FIXED2FLOAT(cz);
 
 		// How far are we from the perceived sound origin? Within a certain
 		// short distance, we interpolate between 2D panning and full 3D panning.
 		const double interp_range = 32.0;
-		double dist_sqr = (cpos - mpos).LengthSquared();
+		double dist_sqr = (cpos - pos).LengthSquared();
 
 		if (dist_sqr == 0)
 		{
@@ -1628,7 +1588,7 @@ FMOD_MODE FMODSoundRenderer::SetChanHeadSettings(FMOD::Channel *chan, sfxinfo_t 
 		}
 		return oldmode;
 	}
-	else if (cpos == mpos)
+	else if (cpos == pos)
 	{ // Head relative
 		return (oldmode & ~FMOD_3D) | FMOD_2D;
 	}

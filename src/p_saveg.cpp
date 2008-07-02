@@ -474,14 +474,14 @@ void P_SerializePolyobjs (FArchive &arc)
 		for(i = 0, po = polyobjs; i < po_NumPolyobjs; i++, po++)
 		{
 			arc << po->tag << po->angle << po->startSpot[0] <<
-				po->startSpot[1] << po->startSpot[2] << po->interpolation;
+				po->startSpot[1] << po->interpolation;
   		}
 	}
 	else
 	{
 		int data;
 		angle_t angle;
-		fixed_t deltaX, deltaY, deltaZ;
+		fixed_t deltaX, deltaY;
 
 		arc << data;
 		if (data != ASEG_POLYOBJS)
@@ -501,10 +501,9 @@ void P_SerializePolyobjs (FArchive &arc)
 			}
 			arc << angle;
 			PO_RotatePolyobj (po->tag, angle);
-			arc << deltaX << deltaY << deltaZ << po->interpolation;
+			arc << deltaX << deltaY << po->interpolation;
 			deltaX -= po->startSpot[0];
 			deltaY -= po->startSpot[1];
-			deltaZ -= po->startSpot[2];
 			PO_MovePolyobj (po->tag, deltaX, deltaY, true);
 		}
 	}

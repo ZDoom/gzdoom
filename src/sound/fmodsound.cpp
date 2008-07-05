@@ -605,7 +605,7 @@ bool FMODSoundRenderer::Init()
 
 	int eval;
 
-	SFXPaused = false;
+	SFXPaused = 0;
 	DSPLocked = false;
 	MusicGroup = NULL;
 	SfxGroup = NULL;
@@ -1382,7 +1382,7 @@ FSoundChan *FMODSoundRenderer::StartSound(sfxinfo_t *sfx, float vol, int pitch, 
 			mode = (mode & ~FMOD_LOOP_OFF) | FMOD_LOOP_NORMAL;
 		}
 		chan->setMode(mode);
-		chan->setChannelGroup((!(chanflags & CHAN_NOPAUSE) && !SFXPaused) ? PausableSfx : SfxGroup);
+		chan->setChannelGroup((chanflags & (CHAN_UI | CHAN_NOPAUSE)) ? SfxGroup : PausableSfx);
 		if (freq != 0)
 		{
 			chan->setFrequency(freq);
@@ -1470,7 +1470,8 @@ FSoundChan *FMODSoundRenderer::StartSound3D(sfxinfo_t *sfx, float vol, float dis
 		}
 		mode = SetChanHeadSettings(chan, sfx, pos, channum, chanflags, sector, mode);
 		chan->setMode(mode);
-		chan->setChannelGroup((!(chanflags & CHAN_NOPAUSE) && !SFXPaused) ? PausableSfx : SfxGroup);
+		chan->setChannelGroup((chanflags & (CHAN_UI | CHAN_NOPAUSE)) ? SfxGroup : PausableSfx);
+
 		if (freq != 0)
 		{
 			chan->setFrequency(freq);
@@ -1508,9 +1509,9 @@ void FMODSoundRenderer::HandleChannelDelay(FMOD::Channel *chan, FSoundChan *reus
 		QWORD_UNION nowtime;
 		chan->getDelay(FMOD_DELAYTYPE_DSPCLOCK_START, &nowtime.Hi, &nowtime.Lo);
 
-		// If the DSP is locked, the sounds are being restored, and
+		// If CHAN_ABSTIME is set, the sound is being restored, and
 		// the channel's start time is actually its seek position.
-		if (DSPLocked)
+		if (reuse_chan->ChanFlags & CHAN_ABSTIME)
 		{
 			unsigned int seekpos = reuse_chan->StartTime.Lo;
 			if (seekpos > 0)
@@ -1518,6 +1519,7 @@ void FMODSoundRenderer::HandleChannelDelay(FMOD::Channel *chan, FSoundChan *reus
 				chan->setPosition(seekpos, FMOD_TIMEUNIT_PCM);
 			}
 			reuse_chan->StartTime.AsOne = QWORD(nowtime.AsOne - seekpos * OutputRate / freq);
+			reuse_chan->ChanFlags &= ~CHAN_ABSTIME;
 		}
 		else
 		{
@@ -1679,12 +1681,26 @@ unsigned int FMODSoundRenderer::GetPosition(FSoundChan *chan)
 //
 //==========================================================================
 
-void FMODSoundRenderer::SetSfxPaused(bool paused)
+void FMODSoundRenderer::SetSfxPaused(bool paused, int slot)
 {
-	if (SFXPaused != paused)
+	int oldslots = SFXPaused;
+
+	if (paused)
 	{
-		PausableSfx->setPaused(paused);
-		SFXPaused = paused;
+		SFXPaused |= 1 << slot;
+	}
+	else
+	{
+		SFXPaused &= ~(1 << slot);
+	}
+	Printf("%d\n", SFXPaused);
+	if (oldslots != 0 && SFXPaused == 0)
+	{
+		PausableSfx->setPaused(false);
+	}
+	else if (oldslots == 0 && SFXPaused != 0)
+	{
+		PausableSfx->setPaused(true);
 	}
 }
 

@@ -38,7 +38,7 @@ public:
 	void Sync (bool sync);
 
 	// Pauses or resumes all sound effect channels.
-	void SetSfxPaused (bool paused);
+	void SetSfxPaused (bool paused, int slot);
 
 	// Pauses or resumes *every* channel, including environmental reverb.
 	void SetInactive (bool inactive);
@@ -57,7 +57,7 @@ public:
 	void DrawWaveDebug(int mode);
 
 private:
-	bool SFXPaused;
+	int SFXPaused;
 	bool InitSuccess;
 	bool DSPLocked;
 	QWORD_UNION DSPClock;

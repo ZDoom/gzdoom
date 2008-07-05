@@ -102,7 +102,7 @@ public:
 	virtual void Sync (bool sync) = 0;
 
 	// Pauses or resumes all sound effect channels.
-	virtual void SetSfxPaused (bool paused) = 0;
+	virtual void SetSfxPaused (bool paused, int slot) = 0;
 
 	// Pauses or resumes *every* channel, including environmental reverb.
 	virtual void SetInactive(bool inactive) = 0;

@@ -523,17 +523,24 @@ struct snprintf_state
 	char *buffer;
 	size_t maxlen;
 	size_t curlen;
-	bool overflow;
+	int ideallen;
 };
 
 static int myvsnprintf_helper(void *data, const char *cstr, int cstr_len)
 {
 	snprintf_state *state = (snprintf_state *)data;
 
+	if (INT_MAX - state->ideallen > cstr_len)
+	{
+		state->ideallen = INT_MAX;
+	}
+	else
+	{
+		state->ideallen += cstr_len;
+	}
 	if (state->curlen + cstr_len > state->maxlen)
 	{
 		cstr_len = (int)(state->maxlen - state->curlen);
-		state->overflow = true;
 	}
 	if (cstr_len > 0)
 	{
@@ -543,14 +550,28 @@ static int myvsnprintf_helper(void *data, const char *cstr, int cstr_len)
 	return cstr_len;
 }
 
-// Unlike the standard C library function snprintf, this one always writes
-// a terminating null character to the buffer.
+// Unlike the MS CRT function snprintf, this one always writes a terminating
+// null character to the buffer. It also returns the full length of the string
+// that would have been output if the buffer had been large enough. In other
+// words, it follows BSD/Linux rules and not MS rules.
 int myvsnprintf(char *buffer, size_t count, const char *format, va_list argptr)
 {
-	snprintf_state state = { buffer, count - 1, 0, false };
+	size_t originalcount = count;
+	if (count != 0)
+	{
+		count--;
+	}
+	if (count > INT_MAX)
+	{
+		count = INT_MAX;
+	}
+	snprintf_state state = { buffer, count, 0, 0 };
 	StringFormat::VWorker(myvsnprintf_helper, &state, format, argptr);
-	buffer[state.curlen] = '\0';
-	return state.overflow ? -1 : (int)state.curlen;
+	if (originalcount > 0)
+	{
+		buffer[state.curlen] = '\0';
+	}
+	return state.ideallen;
 }
 
 int mysnprintf(char *buffer, size_t count, const char *format, ...)

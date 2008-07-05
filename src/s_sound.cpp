@@ -117,6 +117,7 @@ static bool		MusicPaused;		// whether music is paused
 static MusPlayingInfo mus_playing;	// music currently being played
 static FString	 LastSong;			// last music that was played
 static FPlayList *PlayList;
+static int		RestartEvictionsAt;	// do not restart evicted channels before this level.time
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -670,13 +671,13 @@ static void CalcPosVel(int type, const AActor *actor, const sector_t *sector,
 
 		case SOURCE_Unattached:
 			pos->X = pt[0];
-			pos->Y = !(chanflags & CHAN_LISTENERZ) ? pt[1] : FIXED2FLOAT(players[consoleplayer].camera->z);
+			pos->Y = !(chanflags & CHAN_LISTENERZ) ? pt[1] : FIXED2FLOAT(y);
 			pos->Z = pt[2];
 			break;
 		}
 		if (type != SOURCE_Unattached)
 		{
-			if (chanflags & CHAN_LISTENERZ)
+			if ((chanflags & CHAN_LISTENERZ) && players[consoleplayer].camera != NULL)
 			{
 				y = players[consoleplayer].camera != NULL ? players[consoleplayer].camera->z : 0;
 			}
@@ -932,7 +933,7 @@ static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyO
 	}
 
 	// If this actor is already playing something on the selected channel, stop it.
-	if ((actor == NULL && channel != CHAN_AUTO) || (actor != NULL && actor->SoundChans & (1 << channel)))
+	if (type != SOURCE_None && (actor == NULL && channel != CHAN_AUTO) || (actor != NULL && actor->SoundChans & (1 << channel)))
 	{
 		for (chan = Channels; chan != NULL; chan = chan->NextChan)
 		{
@@ -942,7 +943,6 @@ static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyO
 
 				switch (type)
 				{
-				case SOURCE_None:		foundit = true;						break;
 				case SOURCE_Actor:		foundit = (chan->Actor == actor);	break;
 				case SOURCE_Sector:		foundit = (chan->Sector == sec);	break;
 				case SOURCE_Polyobj:	foundit = (chan->Poly == poly);		break;
@@ -1453,7 +1453,7 @@ void S_PauseSound (bool notmusic)
 		I_PauseSong (mus_playing.handle);
 		MusicPaused = true;
 	}
-	GSnd->SetSfxPaused (true);
+	GSnd->SetSfxPaused (true, 0);
 }
 
 //==========================================================================
@@ -1470,7 +1470,7 @@ void S_ResumeSound ()
 		I_ResumeSong (mus_playing.handle);
 		MusicPaused = false;
 	}
-	GSnd->SetSfxPaused (false);
+	GSnd->SetSfxPaused (false, 0);
 }
 
 //==========================================================================
@@ -1588,7 +1588,11 @@ void S_UpdateSounds (void *listener_p)
 	GSnd->UpdateListener();
 	GSnd->UpdateSounds();
 
-	S_RestoreEvictedChannels();
+	if (level.time >= RestartEvictionsAt)
+	{
+		RestartEvictionsAt = 0;
+		S_RestoreEvictedChannels();
+	}
 }
 
 //==========================================================================
@@ -1668,8 +1672,9 @@ void S_SerializeSounds(FArchive &arc)
 		for (chan = Channels; chan != NULL; chan = chan->NextChan)
 		{
 			// If the sound is forgettable, this is as good a time as
-			// any to forget about it.
-			if (!(chan->ChanFlags & CHAN_FORGETTABLE))
+			// any to forget about it. And if it's a UI sound, it shouldn't
+			// be stored in the savegame.
+			if (!(chan->ChanFlags & (CHAN_FORGETTABLE | CHAN_UI)))
 			{
 				chans.Push(chan);
 			}
@@ -1697,9 +1702,16 @@ void S_SerializeSounds(FArchive &arc)
 			chan = S_GetChannel(NULL);
 			arc << *chan;
 			// Sounds always start out evicted when restored from a save.
-			chan->ChanFlags |= CHAN_EVICTED;
+			chan->ChanFlags |= CHAN_EVICTED | CHAN_ABSTIME;
 		}
-		S_RestoreEvictedChannels();
+		// The two tic delay is to make sure any screenwipes have finished.
+		// This needs to be two because the game is run for one tic before
+		// the wipe so that it can produce a screen to wipe to. So if we
+		// only waited one tic to restart the sounds, they would start
+		// playing before the wipe, and depending on the synchronization
+		// between the main thread and the mixer thread at the time, the
+		// sounds might be heard briefly before pausing for the wipe.
+		RestartEvictionsAt = level.time + 2;
 	}
 	DSeqNode::SerializeSequences(arc);
 	GSnd->Sync(false);

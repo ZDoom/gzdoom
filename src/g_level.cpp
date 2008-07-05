@@ -2819,7 +2819,6 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 	P_SerializeThinkers (arc, hubLoad);
 	P_SerializeWorld (arc);
 	P_SerializePolyobjs (arc);
-	P_SerializeSounds (arc);
 	StatusBar->Serialize (arc);
 	//SerializeInterpolations (arc);
 
@@ -2865,6 +2864,7 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 	{
 		P_SerializePlayers (arc);
 	}
+	P_SerializeSounds (arc);
 }
 
 // Archives the current level

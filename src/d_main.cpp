@@ -688,6 +688,7 @@ void D_Display ()
 		int wipestart, nowtime, tics;
 		bool done;
 
+		GSnd->SetSfxPaused(true, 1);
 		screen->WipeEndScreen ();
 
 		wipestart = I_GetTime (false);
@@ -707,6 +708,7 @@ void D_Display ()
 			NetUpdate ();
 		} while (!done);
 		screen->WipeCleanup();
+		GSnd->SetSfxPaused(false, 1);
 
 		Net_WriteByte (DEM_WIPEOFF);
 	}

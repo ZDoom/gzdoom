@@ -263,9 +263,10 @@ void S_Sound (fixed_t x, fixed_t y, fixed_t z, int channel, FSoundID sfxid, floa
 #define CHAN_PICKUP				(CHAN_ITEM|CHAN_MAYBE_LOCAL)
 
 #define CHAN_IS3D				1	// internal: Sound is 3D.
-#define CHAN_EVICTED			2	// internal: Looping sound was evicted.
-#define CHAN_FORGETTABLE		4	// internal: Forget sound data when sound stops.
+#define CHAN_EVICTED			2	// internal: Sound was evicted.
+#define CHAN_FORGETTABLE		4	// internal: Forget channel data when sound stops.
 #define CHAN_JUSTSTARTED		512	// internal: Sound has not been updated yet.
+#define CHAN_ABSTIME			1024// internal: Start time is absolute and does not depend on current time.
 
 // sound attenuation values
 #define ATTN_NONE				0.f	// full volume the entire level

@@ -31,6 +31,7 @@
 #include "doomstat.h"
 #include "sbar.h"
 #include "r_interpolate.h"
+#include "i_sound.h"
 
 extern gamestate_t wipegamestate;
 
@@ -71,6 +72,13 @@ void P_Ticker (void)
 
 	interpolator.UpdateInterpolations ();
 	r_NoInterpolate = true;
+
+	if (!demoplayback)
+	{
+		// This is a separate slot from the wipe in D_Display(), because this
+		// is delayed slightly due to latency. (Even on a singleplayer game!)
+		GSnd->SetSfxPaused(!!playerswiping, 2);
+	}
 
 	// run the tic
 	if (paused || (playerswiping && !demoplayback) || P_CheckTickerPaused())

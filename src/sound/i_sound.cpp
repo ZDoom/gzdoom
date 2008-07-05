@@ -174,7 +174,7 @@ public:
 	}
 
 	// Pauses or resumes all sound effect channels.
-	void SetSfxPaused (bool paused)
+	void SetSfxPaused (bool paused, int slot)
 	{
 	}
 

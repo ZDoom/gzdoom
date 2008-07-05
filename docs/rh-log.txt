@@ -1,4 +1,14 @@
+July 4, 2008
+- Fixed: Screenwipes now pause sounds, since there can be sounds playing
+  during it.
+- UI sounds are now omitted from savegames.
+- Fixed: Menu sounds had been restricted to one at a time again.
+- Moved the P_SerializeSounds() call to the end of G_SerializeLevel() so that
+  it will occur after the players are loaded.
+
 July 2, 2008
+- Added fixes from FreeBSD for 0-length and very large string buffers
+  passed to myvsnprintf.
 - Rewrote myvsnprintf to use the StringFormat routines directly so that no
   additional memory needs to be allocated from the heap.
 

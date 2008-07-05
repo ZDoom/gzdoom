@@ -1,4 +1,8 @@
 July 5, 2008 (Changes by Graf Zahl)
+- Changed: AInventory::Tick now only calls the super method if the item is not
+  owned. Having owned inventory items interact with the world is not supposed
+  to happen.
+- Fixed: case PCD_SECTORDAMAGE in p_acs.cpp was missing a terminating 'break'.
 - Fixed: When a weapon is destroyed, its sister weapon must also be destroyed.
 - Added a check for PUFFGETSOWNER to A_BFGSpray.
 - Moved the PUFFGETSOWNER check into P_SpawnPuff and removed the limitation

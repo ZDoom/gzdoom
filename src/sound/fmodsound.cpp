@@ -1693,7 +1693,7 @@ void FMODSoundRenderer::SetSfxPaused(bool paused, int slot)
 	{
 		SFXPaused &= ~(1 << slot);
 	}
-	Printf("%d\n", SFXPaused);
+	//Printf("%d\n", SFXPaused);
 	if (oldslots != 0 && SFXPaused == 0)
 	{
 		PausableSfx->setPaused(false);

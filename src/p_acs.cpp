@@ -5297,6 +5297,7 @@ int DLevelScript::RunScript ()
 					}
 				}
 			}
+			break;
 
 		case PCD_THINGDAMAGE2:
 			STACK(3) = P_Thing_Damage (STACK(3), activator, STACK(2), FName(FBehavior::StaticLookupString(STACK(1))));

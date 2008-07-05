@@ -446,7 +446,31 @@ END_DEFAULTS
 
 void AInventory::Tick ()
 {
-	Super::Tick ();
+	if (Owner == NULL)
+	{
+		// AActor::Tick is only handling interaction with the world
+		// and we don't want that for owned inventory items.
+		Super::Tick ();
+	}
+	else if (tics != -1)	// ... but at least we have to advance the states
+	{
+		tics--;
+				
+		// you can cycle through multiple states in a tic
+		// [RH] Use <= 0 instead of == 0 so that spawnstates
+		// of 0 tics work as expected.
+		if (tics <= 0)
+		{
+			assert (state != NULL);
+			if (state == NULL)
+			{
+				Destroy();
+				return;
+			}
+			if (!SetState (state->GetNextState()))
+				return; 		// freed itself
+		}
+	}
 	if (DropTime)
 	{
 		if (--DropTime == 0)

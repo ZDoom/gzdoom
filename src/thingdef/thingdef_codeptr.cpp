@@ -739,20 +739,20 @@ void A_CustomMissile(AActor * self)
 				self->x+=x;
 				self->y+=y;
 				self->z+=z;
-				missile = P_SpawnMissile(self, self->target, ti);
+				missile = P_SpawnMissileXYZ(self->x, self->y, self->z + 32*FRACUNIT, self, self->target, ti, false);
 				self->x-=x;
 				self->y-=y;
 				self->z-=z;
 				break;
 
 			case 1:
-				missile = P_SpawnMissileXYZ(self->x+x, self->y+y, self->z+SpawnHeight, self, self->target, ti);
+				missile = P_SpawnMissileXYZ(self->x+x, self->y+y, self->z+SpawnHeight, self, self->target, ti, false);
 				break;
 
 			case 2:
 				self->x+=x;
 				self->y+=y;
-				missile = P_SpawnMissileAngleZ(self, self->z+SpawnHeight, ti, self->angle, 0);
+				missile = P_SpawnMissileAngleZSpeed(self, self->z+SpawnHeight, ti, self->angle, 0, GetDefaultByType(ti)->Speed, self, false);
 				self->x-=x;
 				self->y-=y;
 
@@ -811,6 +811,7 @@ void A_CustomMissile(AActor * self)
 				{
 					missile->health=-2;
 				}
+				P_CheckMissileSpawn(missile);
 			}
 		}
 	}
@@ -2034,6 +2035,12 @@ void A_CheckFloor (AActor *self)
 void A_Stop (AActor *self)
 {
 	self->momx = self->momy = self->momz = 0;
+	if (self->player && self->player->mo == self && !(self->player->cheats & CF_PREDICTING))
+	{
+		self->player->mo->PlayIdle ();
+		self->player->momx = self->player->momy = 0;
+	}
+	
 }
 
 //===========================================================================

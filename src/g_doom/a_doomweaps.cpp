@@ -529,8 +529,12 @@ void A_BFGSpray (AActor *mo)
 		if (!linetarget)
 			continue;
 
-		Spawn (spraytype, linetarget->x, linetarget->y,
+		AActor *spray = Spawn (spraytype, linetarget->x, linetarget->y,
 			linetarget->z + (linetarget->height>>2), ALLOW_REPLACE);
+
+		if (spray && (spray->flags5 & MF5_PUFFGETSOWNER))
+			spray->target = mo->target;
+
 		
 		damage = 0;
 		for (j = 0; j < damagecnt; ++j)

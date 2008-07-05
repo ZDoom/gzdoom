@@ -57,7 +57,7 @@ void A_Tracer (AActor *self)
 		return;
 	
 	// spawn a puff of smoke behind the rocket
-	P_SpawnPuff (PClass::FindClass(NAME_BulletPuff), self->x, self->y, self->z, 0, 3);
+	P_SpawnPuff (self, PClass::FindClass(NAME_BulletPuff), self->x, self->y, self->z, 0, 3);
 		
 	smoke = Spawn ("RevenantTracerSmoke", self->x - self->momx,
 		self->y - self->momy, self->z, ALLOW_REPLACE);

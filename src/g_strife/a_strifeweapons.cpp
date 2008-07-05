@@ -934,7 +934,7 @@ void A_RocketInFlight (AActor *self)
 	AActor *trail;
 
 	S_Sound (self, CHAN_VOICE, "misc/missileinflight", 1, ATTN_NORM);
-	P_SpawnPuff (RUNTIME_CLASS(AMiniMissilePuff), self->x, self->y, self->z, self->angle - ANGLE_180, 2, PF_HITTHING);
+	P_SpawnPuff (self, RUNTIME_CLASS(AMiniMissilePuff), self->x, self->y, self->z, self->angle - ANGLE_180, 2, PF_HITTHING);
 	trail = Spawn<ARocketTrail> (self->x - self->momx, self->y - self->momy, self->z, ALLOW_REPLACE);
 	if (trail != NULL)
 	{

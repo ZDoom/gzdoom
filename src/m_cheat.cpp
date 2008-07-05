@@ -487,6 +487,11 @@ void GiveSpawner (player_t *player, const PClass *type, int amount)
 				item->Amount = MIN (amount, item->MaxAmount);
 			}
 		}
+		if(item->flags & MF_COUNTITEM) // Given items shouldn't count against the map's total,
+		{								// since they aren't added to the player's total.
+			level.total_items--;
+			item->flags &= ~MF_COUNTITEM;
+		} 
 		if (!item->TryPickup (player->mo))
 		{
 			item->Destroy ();

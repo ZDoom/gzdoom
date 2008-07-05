@@ -1,3 +1,15 @@
+July 5, 2008 (Changes by Graf Zahl)
+- Fixed: When a weapon is destroyed, its sister weapon must also be destroyed.
+- Added a check for PUFFGETSOWNER to A_BFGSpray.
+- Moved the PUFFGETSOWNER check into P_SpawnPuff and removed the limitation
+  to players only.
+- Fixed: P_SpawnMapThing still checked FMapThing::flags for the class bits 
+  instead of FMapThing::ClassFilter.
+- Fixed: A_CustomMissile must not let P_SpawnMissile call P_CheckMissileSpawn.
+  It must do this itself after setting the proper owner.
+- Fixed: CCMD(give) increased the total item count.
+- Fixed: A_Stop didn't set the player specific variables to 0.
+
 July 4, 2008
 - Fixed: Screenwipes now pause sounds, since there can be sounds playing
   during it.

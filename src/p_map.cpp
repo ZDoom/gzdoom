@@ -2642,7 +2642,7 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 		}
 		if (puffDefaults->flags3 & MF3_ALWAYSPUFF)
 		{ // Spawn the puff anyway
-			puff = P_SpawnPuff (pufftype, trace.X, trace.Y, trace.Z, angle - ANG180, 2, flags);
+			puff = P_SpawnPuff (t1, pufftype, trace.X, trace.Y, trace.Z, angle - ANG180, 2, flags);
 		}
 		else
 		{
@@ -2659,7 +2659,7 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 			if (trace.HitType != TRACE_HitWall || trace.Line->special != Line_Horizon)
 			{
 				fixed_t closer = trace.Distance - 4*FRACUNIT;
-				puff = P_SpawnPuff (pufftype, t1->x + FixedMul (vx, closer),
+				puff = P_SpawnPuff (t1, pufftype, t1->x + FixedMul (vx, closer),
 					t1->y + FixedMul (vy, closer),
 					shootz + FixedMul (vz, closer), angle - ANG90, 0, flags);
 			}
@@ -2714,7 +2714,7 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 				(trace.Actor->flags & MF_NOBLOOD) ||
 				(trace.Actor->flags2 & (MF2_INVULNERABLE|MF2_DORMANT)))
 			{
-				puff = P_SpawnPuff (pufftype, hitx, hity, hitz, angle - ANG180, 2, flags|PF_HITTHING);
+				puff = P_SpawnPuff (t1, pufftype, hitx, hity, hitz, angle - ANG180, 2, flags|PF_HITTHING);
 			}
 			if (!(GetDefaultByType(pufftype)->flags3&MF3_BLOODLESSIMPACT))
 			{
@@ -2761,7 +2761,7 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 				{ 
 					// Since the puff is the damage inflictor we need it here 
 					// regardless of whether it is displayed or not.
-					puff = P_SpawnPuff (pufftype, hitx, hity, hitz, angle - ANG180, 2, flags|PF_HITTHING|PF_TEMPORARY);
+					puff = P_SpawnPuff (t1, pufftype, hitx, hity, hitz, angle - ANG180, 2, flags|PF_HITTHING|PF_TEMPORARY);
 					killPuff = true;
 				}
 				P_DamageMobj (trace.Actor, puff ? puff : t1, t1, damage, damageType, flags);
@@ -2772,7 +2772,7 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 
 			if (puff == NULL)
 			{ // Spawn puff just to get a mass for the splash
-				puff = P_SpawnPuff (pufftype, hitx, hity, hitz, angle - ANG180, 2, flags|PF_HITTHING|PF_TEMPORARY);
+				puff = P_SpawnPuff (t1, pufftype, hitx, hity, hitz, angle - ANG180, 2, flags|PF_HITTHING|PF_TEMPORARY);
 				killPuff = true;
 			}
 			SpawnDeepSplash (t1, trace, puff, vx, vy, vz, shootz);
@@ -2783,9 +2783,6 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 		puff->Destroy();
 		puff = NULL;
 	}
-	// [BB] If the puff came from a player, set the target of the puff to this player.
-	if ( puff && (puff->flags5 & MF5_PUFFGETSOWNER) && t1 && t1->player )
-		puff->target = t1;
 	return puff;
 }
 
@@ -3066,7 +3063,7 @@ void P_RailAttack (AActor *source, int damage, int offset, int color1, int color
 		if ((RailHits[i].HitActor->flags & MF_NOBLOOD) ||
 			(RailHits[i].HitActor->flags2 & (MF2_DORMANT|MF2_INVULNERABLE)))
 		{
-			if (puffclass != NULL) P_SpawnPuff (puffclass, x, y, z, source->angle - ANG180, 1, PF_HITTHING);
+			if (puffclass != NULL) P_SpawnPuff (source, puffclass, x, y, z, source->angle - ANG180, 1, PF_HITTHING);
 		}
 		else
 		{

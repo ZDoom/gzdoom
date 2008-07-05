@@ -1116,6 +1116,8 @@ void APowerWeaponLevel2::InitEffect ()
 	if (!(sister->WeaponFlags & WIF_POWERED_UP))
 		return;
 
+	assert (sister->SisterWeapon == weapon);
+
 	Owner->player->ReadyWeapon = sister;
 
 	if (weapon->GetReadyState() != sister->GetReadyState())

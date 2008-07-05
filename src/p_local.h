@@ -100,7 +100,7 @@ enum EPuffFlags
 	PF_TEMPORARY = 4
 };
 
-AActor *P_SpawnPuff (const PClass *pufftype, fixed_t x, fixed_t y, fixed_t z, angle_t dir, int updown, int flags = 0);
+AActor *P_SpawnPuff (AActor *source, const PClass *pufftype, fixed_t x, fixed_t y, fixed_t z, angle_t dir, int updown, int flags = 0);
 void	P_SpawnBlood (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int damage, AActor *originator);
 void	P_BloodSplatter (fixed_t x, fixed_t y, fixed_t z, AActor *originator);
 void	P_BloodSplatter2 (fixed_t x, fixed_t y, fixed_t z, AActor *originator);
@@ -110,11 +110,11 @@ void	P_ExplodeMissile (AActor *missile, line_t *explodeline, AActor *target);
 
 AActor *P_SpawnMissile (AActor* source, AActor* dest, const PClass *type);
 AActor *P_SpawnMissileZ (AActor* source, fixed_t z, AActor* dest, const PClass *type);
-AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z, AActor *source, AActor *dest, const PClass *type);
+AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z, AActor *source, AActor *dest, const PClass *type, bool checkspawn = true);
 AActor *P_SpawnMissileAngle (AActor *source, const PClass *type, angle_t angle, fixed_t momz);
 AActor *P_SpawnMissileAngleSpeed (AActor *source, const PClass *type, angle_t angle, fixed_t momz, fixed_t speed);
 AActor *P_SpawnMissileAngleZ (AActor *source, fixed_t z, const PClass *type, angle_t angle, fixed_t momz);
-AActor *P_SpawnMissileAngleZSpeed (AActor *source, fixed_t z, const PClass *type, angle_t angle, fixed_t momz, fixed_t speed, AActor *owner=NULL);
+AActor *P_SpawnMissileAngleZSpeed (AActor *source, fixed_t z, const PClass *type, angle_t angle, fixed_t momz, fixed_t speed, AActor *owner=NULL, bool checkspawn = true);
 AActor *P_SpawnMissileZAimed (AActor *source, fixed_t z, AActor *dest, const PClass *type);
 
 AActor *P_SpawnPlayerMissile (AActor* source, const PClass *type);

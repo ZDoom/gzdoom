@@ -109,6 +109,23 @@ bool AWeapon::Use (bool pickup)
 
 //===========================================================================
 //
+// AWeapon :: Destroy
+//
+//===========================================================================
+
+FState *AWeapon::Destroy()
+{
+	if (SisterWeapon != NULL)
+	{
+		// avoid recursion
+		SisterWeapon->SisterWeapon = NULL;
+		SisterWeapon->Destroy();
+	}
+	Super::Destroy();
+}
+
+//===========================================================================
+//
 // AWeapon :: HandlePickup
 //
 // Try to leach ammo from the weapon if you have it already.
@@ -197,6 +214,7 @@ AInventory *AWeapon::CreateTossable ()
 		// If this weapon has a sister, remove it from the inventory too.
 		if (SisterWeapon != NULL)
 		{
+			SisterWeapon->SisterWeapon = NULL;
 			SisterWeapon->Destroy ();
 		}
 		// To avoid exploits, the tossed weapon must not have any ammo.

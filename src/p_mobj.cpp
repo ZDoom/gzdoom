@@ -3847,7 +3847,7 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 						mask = -1;
 				}
 			}
-			if (mask != -1 && (mthing->flags & mask) == 0)
+			if (mask != -1 && (mthing->ClassFilter & mask) == 0)
 			{
 				return NULL;
 			}
@@ -4040,13 +4040,14 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 // P_SpawnPuff
 //
 
-AActor *P_SpawnPuff (const PClass *pufftype, fixed_t x, fixed_t y, fixed_t z, angle_t dir, int updown, int flags)
+AActor *P_SpawnPuff (AActor *source, const PClass *pufftype, fixed_t x, fixed_t y, fixed_t z, angle_t dir, int updown, int flags)
 {
 	AActor *puff;
 
 	z += pr_spawnpuff.Random2 () << 10;
 
 	puff = Spawn (pufftype, x, y, z, ALLOW_REPLACE);
+	if (puff == NULL) return NULL;
 
 	// If a puff has a crash state and an actor was not hit,
 	// it will enter the crash state. This is used by the StrifeSpark
@@ -4080,6 +4081,10 @@ AActor *P_SpawnPuff (const PClass *pufftype, fixed_t x, fixed_t y, fixed_t z, an
 			S_Sound (puff, CHAN_BODY, puff->AttackSound, 1, ATTN_NORM);
 		}
 	}
+
+	// [BB] If the puff came from a player, set the target of the puff to this player.
+	if ( puff && (puff->flags5 & MF5_PUFFGETSOWNER))
+		puff->target = source;
 
 	return puff;
 }
@@ -4517,7 +4522,7 @@ AActor *P_SpawnMissileZ (AActor *source, fixed_t z, AActor *dest, const PClass *
 }
 
 AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z,
-	AActor *source, AActor *dest, const PClass *type)
+	AActor *source, AActor *dest, const PClass *type, bool checkspawn)
 {
 	if (dest == NULL)
 	{
@@ -4583,7 +4588,7 @@ AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z,
 
 	th->angle = R_PointToAngle2 (0, 0, th->momx, th->momy);
 
-	return P_CheckMissileSpawn (th) ? th : NULL;
+	return (!checkspawn || P_CheckMissileSpawn (th)) ? th : NULL;
 }
 
 //---------------------------------------------------------------------------
@@ -4646,7 +4651,7 @@ AActor *P_SpawnMissileAngleSpeed (AActor *source, const PClass *type,
 }
 
 AActor *P_SpawnMissileAngleZSpeed (AActor *source, fixed_t z,
-	const PClass *type, angle_t angle, fixed_t momz, fixed_t speed, AActor *owner)
+	const PClass *type, angle_t angle, fixed_t momz, fixed_t speed, AActor *owner, bool checkspawn)
 {
 	AActor *mo;
 	int defflags3 = GetDefaultByType (type)->flags3;
@@ -4671,7 +4676,7 @@ AActor *P_SpawnMissileAngleZSpeed (AActor *source, fixed_t z,
 	mo->momx = FixedMul (speed, finecosine[angle]);
 	mo->momy = FixedMul (speed, finesine[angle]);
 	mo->momz = momz;
-	return P_CheckMissileSpawn(mo) ? mo : NULL;
+	return (!checkspawn || P_CheckMissileSpawn(mo)) ? mo : NULL;
 }
 
 /*

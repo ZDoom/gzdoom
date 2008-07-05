@@ -113,7 +113,7 @@ bool AWeapon::Use (bool pickup)
 //
 //===========================================================================
 
-FState *AWeapon::Destroy()
+void AWeapon::Destroy()
 {
 	if (SisterWeapon != NULL)
 	{

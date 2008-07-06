@@ -1989,6 +1989,13 @@ static void PutSavePic (FILE *file, int width, int height)
 
 void G_DoSaveGame (bool okForQuicksave, FString filename, const char *description)
 {
+	// Do not even try, if we're not in a level. (Can happen after
+	// a demo finishes playback.)
+	if (lines == NULL || sectors == NULL)
+	{
+		return;
+	}
+
 	if (demoplayback)
 	{
 		filename = G_BuildSaveName ("demosave.zds", -1);

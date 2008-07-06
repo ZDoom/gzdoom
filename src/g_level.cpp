@@ -2860,10 +2860,7 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 	FCanvasTextureInfo::Serialize (arc);
 	AM_SerializeMarkers(arc);
 
-	if (!hubLoad)
-	{
-		P_SerializePlayers (arc);
-	}
+	P_SerializePlayers (arc, hubLoad);
 	P_SerializeSounds (arc);
 }
 

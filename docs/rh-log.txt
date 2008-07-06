@@ -1,3 +1,10 @@
+July 5, 2008
+- Added a check to G_DoSaveGame() to prevent saving when you're not actually
+  in a level.
+- Fixed: Serialized player data must always be loaded, even if it's simply to
+  be discarded, so that anything serialized after the players will load from
+  the correct position in the file when revisiting a hub map.
+
 July 5, 2008 (Changes by Graf Zahl)
 - Changed: AInventory::Tick now only calls the super method if the item is not
   owned. Having owned inventory items interact with the world is not supposed
@@ -16,7 +23,7 @@ July 5, 2008 (Changes by Graf Zahl)
 
 July 4, 2008
 - Fixed: Screenwipes now pause sounds, since there can be sounds playing
-  during it.
+  during them.
 - UI sounds are now omitted from savegames.
 - Fixed: Menu sounds had been restricted to one at a time again.
 - Moved the P_SerializeSounds() call to the end of G_SerializeLevel() so that

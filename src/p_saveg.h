@@ -39,7 +39,7 @@
 // Persistent storage/archiving.
 // These are the load / save game routines.
 // Also see farchive.(h|cpp)
-void P_SerializePlayers (FArchive &arc);
+void P_SerializePlayers (FArchive &arc, bool fakeload);
 void P_SerializeWorld (FArchive &arc);
 void P_SerializeThinkers (FArchive &arc, bool);
 void P_SerializePolyobjs (FArchive &arc);

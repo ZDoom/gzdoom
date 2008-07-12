@@ -10,17 +10,17 @@
 #include "gstrings.h"
 
 static FRandom pr_spectrespawn ("AlienSpectreSpawn");
-static FRandom pr_212e4 ("212e4");
+static FRandom pr_spectrechunk ("212e4");
 
 void A_SentinelBob (AActor *);
-void A_20538 (AActor *);
+void A_SpectreMelee (AActor *);
 void A_SpotLightning (AActor *);
-void A_212e4 (AActor *);
-void A_2134c (AActor *);
-void A_204d0 (AActor *);
-void A_204a4 (AActor *);
-void A_20314 (AActor *);
-void A_20334 (AActor *);
+void A_SpectreChunkSmall (AActor *);
+void A_SpectreChunkLarge (AActor *);
+void A_Spectre2Attack (AActor *);
+void A_Spectre4Attack (AActor *);
+void A_Spectre5Attack (AActor *);
+void A_Spectre3Attack (AActor *);
 void A_AlienSpectreDeath (AActor *);
 
 void A_AlertMonsters (AActor *);
@@ -51,7 +51,7 @@ FState AAlienSpectre1::States[] =
 
 #define S_ALIEN_MELEE (S_ALIEN_CHASE+11)		// 809
 	S_BRIGHT (ALN1, 'J',	4, A_FaceTarget,		&States[S_ALIEN_MELEE+1]),
-	S_BRIGHT (ALN1, 'I',	4, A_20538,				&States[S_ALIEN_MELEE+2]),
+	S_BRIGHT (ALN1, 'I',	4, A_SpectreMelee,		&States[S_ALIEN_MELEE+2]),
 	S_BRIGHT (ALN1, 'H',	4, NULL,				&States[S_ALIEN_CHASE+2]),
 
 #define S_ALIEN_MISSILE (S_ALIEN_MELEE+3)		// 812
@@ -63,20 +63,20 @@ FState AAlienSpectre1::States[] =
 	S_NORMAL (ALN1, 'J',	2, A_Pain,				&States[S_ALIEN_CHASE+6]),
 
 #define S_ALIEN_DIE (S_ALIEN_PAIN+1)			// 816
-	S_BRIGHT (AL1P, 'A',	6, A_212e4,				&States[S_ALIEN_DIE+1]),
+	S_BRIGHT (AL1P, 'A',	6, A_SpectreChunkSmall,	&States[S_ALIEN_DIE+1]),
 	S_BRIGHT (AL1P, 'B',	6, A_Scream,			&States[S_ALIEN_DIE+2]),
-	S_BRIGHT (AL1P, 'C',	6, A_212e4,				&States[S_ALIEN_DIE+3]),
+	S_BRIGHT (AL1P, 'C',	6, A_SpectreChunkSmall,	&States[S_ALIEN_DIE+3]),
 	S_BRIGHT (AL1P, 'D',	6, NULL,				&States[S_ALIEN_DIE+4]),
 	S_BRIGHT (AL1P, 'E',	6, NULL,				&States[S_ALIEN_DIE+5]),
-	S_BRIGHT (AL1P, 'F',	6, A_212e4,				&States[S_ALIEN_DIE+6]),
+	S_BRIGHT (AL1P, 'F',	6, A_SpectreChunkSmall,	&States[S_ALIEN_DIE+6]),
 	S_BRIGHT (AL1P, 'G',	6, NULL,				&States[S_ALIEN_DIE+7]),
-	S_BRIGHT (AL1P, 'H',	6, A_212e4,				&States[S_ALIEN_DIE+8]),
+	S_BRIGHT (AL1P, 'H',	6, A_SpectreChunkSmall,	&States[S_ALIEN_DIE+8]),
 	S_BRIGHT (AL1P, 'I',	6, NULL,				&States[S_ALIEN_DIE+9]),
 	S_BRIGHT (AL1P, 'J',	6, NULL,				&States[S_ALIEN_DIE+10]),
 	S_BRIGHT (AL1P, 'K',	6, NULL,				&States[S_ALIEN_DIE+11]),
 	S_BRIGHT (AL1P, 'L',	5, NULL,				&States[S_ALIEN_DIE+12]),
 	S_BRIGHT (AL1P, 'M',	5, NULL,				&States[S_ALIEN_DIE+13]),
-	S_BRIGHT (AL1P, 'N',	5, A_2134c,				&States[S_ALIEN_DIE+14]),
+	S_BRIGHT (AL1P, 'N',	5, A_SpectreChunkLarge,	&States[S_ALIEN_DIE+14]),
 	S_BRIGHT (AL1P, 'O',	5, NULL,				&States[S_ALIEN_DIE+15]),
 	S_BRIGHT (AL1P, 'P',	5, NULL,				&States[S_ALIEN_DIE+16]),
 	S_BRIGHT (AL1P, 'Q',	5, NULL,				&States[S_ALIEN_DIE+17]),
@@ -84,17 +84,17 @@ FState AAlienSpectre1::States[] =
 
 #define S_ALIEN2_MISSILE (S_ALIEN_DIE+18)		// 852
 	S_NORMAL (ALN1, 'F',	4, A_FaceTarget,		&States[S_ALIEN2_MISSILE+1]),
-	S_NORMAL (ALN1, 'I',	4, A_204d0,				&States[S_ALIEN2_MISSILE+2]),
+	S_NORMAL (ALN1, 'I',	4, A_Spectre2Attack,	&States[S_ALIEN2_MISSILE+2]),
 	S_NORMAL (ALN1, 'E',	4, NULL,				&States[S_ALIEN_CHASE+10]),
 
 #define S_ALIEN4_MISSILE (S_ALIEN2_MISSILE+3)	// 884
 	S_NORMAL (ALN1, 'F',	4, A_FaceTarget,		&States[S_ALIEN4_MISSILE+1]),
-	S_NORMAL (ALN1, 'I',	4, A_204a4,				&States[S_ALIEN4_MISSILE+2]),
+	S_NORMAL (ALN1, 'I',	4, A_Spectre4Attack,	&States[S_ALIEN4_MISSILE+2]),
 	S_NORMAL (ALN1, 'E',	4, NULL,				&States[S_ALIEN_CHASE+10]),
 
 #define S_ALIEN5_MISSILE (S_ALIEN4_MISSILE+3)	// 887
 	S_NORMAL (ALN1, 'F',	4, A_FaceTarget,		&States[S_ALIEN5_MISSILE+1]),
-	S_NORMAL (ALN1, 'I',	4, A_20314,				&States[S_ALIEN5_MISSILE+2]),
+	S_NORMAL (ALN1, 'I',	4, A_Spectre5Attack,	&States[S_ALIEN5_MISSILE+2]),
 	S_NORMAL (ALN1, 'E',	4, NULL,				&States[S_ALIEN_CHASE])
 };
 
@@ -195,12 +195,12 @@ FState AAlienSpectre3::States[] =
 
 #define S_ALIEN3_MELEE (S_ALIEN3_CHASE+11)	// 877
 	S_NORMAL (ALN1, 'J',	4, A_FaceTarget,		&States[S_ALIEN3_MELEE+1]),
-	S_NORMAL (ALN1, 'I',	4, A_20538,				&States[S_ALIEN3_MELEE+2]),
+	S_NORMAL (ALN1, 'I',	4, A_SpectreMelee,		&States[S_ALIEN3_MELEE+2]),
 	S_NORMAL (ALN1, 'C',	4, NULL,				&States[S_ALIEN3_CHASE+2]),
 
 #define S_ALIEN3_MISSILE (S_ALIEN3_MELEE+3)	// 880
 	S_NORMAL (ALN1, 'F',	4, A_FaceTarget,		&States[S_ALIEN3_MISSILE+1]),
-	S_NORMAL (ALN1, 'I',	4, A_20334,				&States[S_ALIEN3_MISSILE+2]),
+	S_NORMAL (ALN1, 'I',	4, A_Spectre3Attack,	&States[S_ALIEN3_MISSILE+2]),
 	S_NORMAL (ALN1, 'E',	4, NULL,				&States[S_ALIEN3_CHASE+10]),
 
 #define S_ALIEN3_PAIN (S_ALIEN3_MISSILE+3)	// 883
@@ -371,7 +371,7 @@ void A_SpawnSpectre5 (AActor *actor)
 	GenericSpectreSpawn (actor, RUNTIME_CLASS(AAlienSpectre5));
 }
 
-void A_212e4 (AActor *self)
+void A_SpectreChunkSmall (AActor *self)
 {
 	AActor *foo = Spawn<AAlienChunkSmall> (self->x, self->y, self->z + 10*FRACUNIT, ALLOW_REPLACE);
 
@@ -379,17 +379,17 @@ void A_212e4 (AActor *self)
 	{
 		int t;
 
-		t = pr_212e4() & 15;
-		foo->momx = (t - (pr_212e4() & 7)) << FRACBITS;
+		t = pr_spectrechunk() & 15;
+		foo->momx = (t - (pr_spectrechunk() & 7)) << FRACBITS;
 		
-		t = pr_212e4() & 15;
-		foo->momy = (t - (pr_212e4() & 7)) << FRACBITS;
+		t = pr_spectrechunk() & 15;
+		foo->momy = (t - (pr_spectrechunk() & 7)) << FRACBITS;
 
-		foo->momz = (pr_212e4() & 15) << FRACBITS;
+		foo->momz = (pr_spectrechunk() & 15) << FRACBITS;
 	}
 }
 
-void A_2134c (AActor *self)
+void A_SpectreChunkLarge (AActor *self)
 {
 	AActor *foo = Spawn<AAlienChunkLarge> (self->x, self->y, self->z + 10*FRACUNIT, ALLOW_REPLACE);
 
@@ -397,65 +397,61 @@ void A_2134c (AActor *self)
 	{
 		int t;
 
-		t = pr_212e4() & 7;
-		foo->momx = (t - (pr_212e4() & 15)) << FRACBITS;
+		t = pr_spectrechunk() & 7;
+		foo->momx = (t - (pr_spectrechunk() & 15)) << FRACBITS;
 		
-		t = pr_212e4() & 7;
-		foo->momy = (t - (pr_212e4() & 15)) << FRACBITS;
+		t = pr_spectrechunk() & 7;
+		foo->momy = (t - (pr_spectrechunk() & 15)) << FRACBITS;
 
-		foo->momz = (pr_212e4() & 7) << FRACBITS;
+		foo->momz = (pr_spectrechunk() & 7) << FRACBITS;
 	}
 
 }
 
-void A_204a4 (AActor *self)
+void A_Spectre4Attack (AActor *self)
 {
 	if (self->target != NULL)
 	{
-		AActor *missile = P_SpawnMissile (self, self->target, RUNTIME_CLASS(ASpectralLightningBigV2));
+		AActor *missile = P_SpawnMissileXYZ (self->x, self->y, self->z + 32*FRACUNIT, 
+							self, self->target, RUNTIME_CLASS(ASpectralLightningBigV2), false);
 		if (missile != NULL)
 		{
 			missile->tracer = self->target;
 			missile->health = -2;
+			P_CheckMissileSpawn(missile);
 		}
 	}
 }
 
-void A_204d0 (AActor *self)
+void A_Spectre2Attack (AActor *self)
 {
 	if (self->target != NULL)
 	{
-		AActor *missile = P_SpawnMissile (self, self->target, RUNTIME_CLASS(ASpectralLightningH3));
+		AActor *missile = P_SpawnMissileXYZ (self->x, self->y, self->z + 32*FRACUNIT, 
+							self, self->target, RUNTIME_CLASS(ASpectralLightningH3), false);
 		if (missile != NULL)
 		{
 			missile->health = -2;
+			P_CheckMissileSpawn(missile);
 		}
 	}
 }
 
-void A_20314 (AActor *self)
+void A_Spectre5Attack (AActor *self)
 {
 	if (self->target != NULL)
 	{
-		AActor *missile = P_SpawnMissile (self, self->target, RUNTIME_CLASS(ASpectralLightningBigBall2));
+		AActor *missile = P_SpawnMissileXYZ (self->x, self->y, self->z + 32*FRACUNIT, 
+							self, self->target, RUNTIME_CLASS(ASpectralLightningBigBall2), false);
 		if (missile != NULL)
 		{
 			missile->health = -2;
+			P_CheckMissileSpawn(missile);
 		}
 	}
 }
 
-void A_20424 (AActor *self)
-{
-	self->angle += ANGLE_90;
-	P_SpawnSubMissile (self, RUNTIME_CLASS(ASpectralLightningH3), self);
-	self->angle += ANGLE_180;
-	P_SpawnSubMissile (self, RUNTIME_CLASS(ASpectralLightningH3), self);
-	self->angle += ANGLE_90;
-	P_SpawnSubMissile (self, RUNTIME_CLASS(ASpectralLightningH3), self);
-}
-
-void A_20334 (AActor *self)
+void A_Spectre3Attack (AActor *self)
 {
 	if (self->target == NULL)
 		return;

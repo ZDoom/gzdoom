@@ -7,11 +7,12 @@
 #include "m_random.h"
 #include "a_strifeglobal.h"
 
-void A_201fc (AActor *);
+void A_SpectralLightning (AActor *);
 
 void A_AlertMonsters (AActor *);
 void A_Countdown (AActor *);
 void A_Tracer2 (AActor *);
+AActor *P_SpawnSubMissile (AActor *source, PClass *type, AActor *target);
 
 // Container for all spectral lightning deaths ------------------------------
 
@@ -96,13 +97,13 @@ END_DEFAULTS
 
 // Spectral Lightning (Horizontal #1) ---------------------------------------
 
-void A_2046c (AActor *);
+void A_SpectralLightningTail (AActor *);
 
 FState ASpectralLightningH1::States[] =
 {
 	S_BRIGHT (ZAP6, 'A', 4, NULL,				&States[1]),
-	S_BRIGHT (ZAP6, 'B', 4, A_2046c,			&States[2]),
-	S_BRIGHT (ZAP6, 'C', 4, A_2046c,			&States[0])
+	S_BRIGHT (ZAP6, 'B', 4, A_SpectralLightningTail,			&States[2]),
+	S_BRIGHT (ZAP6, 'C', 4, A_SpectralLightningTail,			&States[0])
 };
 
 IMPLEMENT_ACTOR (ASpectralLightningH1, Strife, -1, 0)
@@ -147,7 +148,7 @@ IMPLEMENT_ACTOR (ASpectralLightningHTail, Strife, -1, 0)
 	PROP_RenderStyle (STYLE_Add)
 END_DEFAULTS
 
-void A_2046c (AActor *self)
+void A_SpectralLightningTail (AActor *self)
 {
 	AActor *foo = Spawn<ASpectralLightningHTail> (self->x - self->momx, self->y - self->momy, self->z, ALLOW_REPLACE);
 
@@ -157,15 +158,15 @@ void A_2046c (AActor *self)
 
 // Spectral Lightning (Big Ball #1) -----------------------------------------
 
-void A_20424 (AActor *);
+void A_SpectralBigBallLightning (AActor *);
 
 FState ASpectralLightningBigBall1::States[] =
 {
-	S_BRIGHT (ZAP7, 'A', 4, A_20424,		&States[1]),
-	S_BRIGHT (ZAP7, 'B', 4, A_20424,		&States[2]),
-	S_BRIGHT (ZAP7, 'C', 6, A_20424,		&States[3]),
-	S_BRIGHT (ZAP7, 'D', 6, A_20424,		&States[4]),
-	S_BRIGHT (ZAP7, 'E', 6, A_20424,		&States[0]),
+	S_BRIGHT (ZAP7, 'A', 4, A_SpectralBigBallLightning,		&States[1]),
+	S_BRIGHT (ZAP7, 'B', 4, A_SpectralBigBallLightning,		&States[2]),
+	S_BRIGHT (ZAP7, 'C', 6, A_SpectralBigBallLightning,		&States[3]),
+	S_BRIGHT (ZAP7, 'D', 6, A_SpectralBigBallLightning,		&States[4]),
+	S_BRIGHT (ZAP7, 'E', 6, A_SpectralBigBallLightning,		&States[0]),
 };
 
 IMPLEMENT_ACTOR (ASpectralLightningBigBall1, Strife, -1, 0)
@@ -179,6 +180,18 @@ IMPLEMENT_ACTOR (ASpectralLightningBigBall1, Strife, -1, 0)
 	PROP_Flags4 (MF4_SPECTRAL|MF4_STRIFEDAMAGE)
 	PROP_MaxStepHeight (4)
 END_DEFAULTS
+
+
+void A_SpectralBigBallLightning (AActor *self)
+{
+	self->angle += ANGLE_90;
+	P_SpawnSubMissile (self, RUNTIME_CLASS(ASpectralLightningH3), self->target);
+	self->angle += ANGLE_180;
+	P_SpawnSubMissile (self, RUNTIME_CLASS(ASpectralLightningH3), self->target);
+	self->angle += ANGLE_90;
+	P_SpawnSubMissile (self, RUNTIME_CLASS(ASpectralLightningH3), self->target);
+}
+
 
 // Spectral Lightning (Big Ball #2 - less damaging) -------------------------
 
@@ -224,7 +237,7 @@ END_DEFAULTS
 FState ASpectralLightningSpot::States[] =
 {
 	S_BRIGHT (ZAP5, 'A', 4, A_Countdown,	&States[1]),
-	S_BRIGHT (ZAP5, 'B', 4, A_201fc,		&States[2]),
+	S_BRIGHT (ZAP5, 'B', 4, A_SpectralLightning,		&States[2]),
 	S_BRIGHT (ZAP5, 'C', 4, A_Countdown,	&States[3]),
 	S_BRIGHT (ZAP5, 'D', 4, A_Countdown,	&States[0]),
 };
@@ -275,7 +288,7 @@ END_DEFAULTS
 
 static FRandom pr_zap5 ("Zap5");
 
-void A_201fc (AActor *self)
+void A_SpectralLightning (AActor *self)
 {
 	AActor *flash;
 	fixed_t x, y;

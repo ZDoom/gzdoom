@@ -8,15 +8,19 @@
 
 static FRandom pr_entity ("Entity");
 
-void A_SpawnEntity (AActor *);
-void A_200e0 (AActor *);
-void A_20c74 (AActor *);
+void A_SpotLightning (AActor *);
 
-void A_20538 (AActor *);
-void A_212e4 (AActor *);
-void A_2134c (AActor *);
-void A_20334 (AActor *);
-void A_204d0 (AActor *);
+void A_SpawnEntity (AActor *);
+void A_EntityAttack (AActor *);
+void A_SpawnSubEntities (AActor *);
+
+void A_SpectreMelee (AActor *);
+void A_SpectreChunkSmall (AActor *);
+void A_SpectreChunkLarge (AActor *);
+void A_Spectre2Attack (AActor *);
+void A_Spectre3Attack (AActor *);
+void A_Spectre4Attack (AActor *);
+void A_Spectre5Attack (AActor *);
 void A_SentinelBob (AActor *);
 void A_TossGib (AActor *);
 
@@ -85,18 +89,18 @@ public:
 FState AEntityBoss::States[] =
 {
 #define S_ENTITY_SPAWN 0
-	S_NORMAL (MNAM, 'A', 100, NULL,		&States[S_ENTITY_SPAWN+1]),
-	S_BRIGHT (MNAM, 'B',  60, NULL,		&States[S_ENTITY_SPAWN+2]),
-	S_BRIGHT (MNAM, 'C',   4, NULL,		&States[S_ENTITY_SPAWN+3]),
-	S_BRIGHT (MNAM, 'D',   4, NULL,		&States[S_ENTITY_SPAWN+4]),
-	S_BRIGHT (MNAM, 'E',   4, NULL,		&States[S_ENTITY_SPAWN+5]),
-	S_BRIGHT (MNAM, 'F',   4, NULL,		&States[S_ENTITY_SPAWN+6]),
-	S_BRIGHT (MNAM, 'G',   4, NULL,		&States[S_ENTITY_SPAWN+7]),
-	S_BRIGHT (MNAM, 'H',   4, NULL,		&States[S_ENTITY_SPAWN+8]),
-	S_BRIGHT (MNAM, 'I',   4, NULL,		&States[S_ENTITY_SPAWN+9]),
-	S_BRIGHT (MNAM, 'J',   4, NULL,		&States[S_ENTITY_SPAWN+10]),
-	S_BRIGHT (MNAM, 'K',   4, NULL,		&States[S_ENTITY_SPAWN+11]),
-	S_BRIGHT (MNAM, 'L',   4, NULL,		&States[S_ENTITY_SPAWN+12]),
+	S_NORMAL (MNAM, 'A', 100, NULL,					&States[S_ENTITY_SPAWN+1]),
+	S_BRIGHT (MNAM, 'B',  60, NULL,					&States[S_ENTITY_SPAWN+2]),
+	S_BRIGHT (MNAM, 'C',   4, NULL,					&States[S_ENTITY_SPAWN+3]),
+	S_BRIGHT (MNAM, 'D',   4, NULL,					&States[S_ENTITY_SPAWN+4]),
+	S_BRIGHT (MNAM, 'E',   4, NULL,					&States[S_ENTITY_SPAWN+5]),
+	S_BRIGHT (MNAM, 'F',   4, NULL,					&States[S_ENTITY_SPAWN+6]),
+	S_BRIGHT (MNAM, 'G',   4, NULL,					&States[S_ENTITY_SPAWN+7]),
+	S_BRIGHT (MNAM, 'H',   4, NULL,					&States[S_ENTITY_SPAWN+8]),
+	S_BRIGHT (MNAM, 'I',   4, NULL,					&States[S_ENTITY_SPAWN+9]),
+	S_BRIGHT (MNAM, 'J',   4, NULL,					&States[S_ENTITY_SPAWN+10]),
+	S_BRIGHT (MNAM, 'K',   4, NULL,					&States[S_ENTITY_SPAWN+11]),
+	S_BRIGHT (MNAM, 'L',   4, NULL,					&States[S_ENTITY_SPAWN+12]),
 	S_BRIGHT (MNAL, 'A',   4, A_Look,				&States[S_ENTITY_SPAWN+13]),
 	S_BRIGHT (MNAL, 'B',   4, A_SentinelBob,		&States[S_ENTITY_SPAWN+12]),
 
@@ -115,25 +119,25 @@ FState AEntityBoss::States[] =
 
 #define S_ENTITY_MELEE (S_ENTITY_SEE+11)
 	S_BRIGHT (MNAL, 'J',   4, A_FaceTarget,			&States[S_ENTITY_MELEE+1]),
-	S_BRIGHT (MNAL, 'I',   4, A_20538,				&States[S_ENTITY_MELEE+2]),
+	S_BRIGHT (MNAL, 'I',   4, A_SpectreMelee,		&States[S_ENTITY_MELEE+2]),
 	S_BRIGHT (MNAL, 'C',   4, NULL,					&States[S_ENTITY_SEE+2]),
 
 #define S_ENTITY_MISSILE (S_ENTITY_MELEE+3)
 	S_BRIGHT (MNAL, 'F',   4, A_FaceTarget,			&States[S_ENTITY_MISSILE+1]),
-	S_BRIGHT (MNAL, 'I',   4, A_200e0,				&States[S_ENTITY_MISSILE+2]),
+	S_BRIGHT (MNAL, 'I',   4, A_EntityAttack,		&States[S_ENTITY_MISSILE+2]),
 	S_BRIGHT (MNAL, 'E',   4, NULL,					&States[S_ENTITY_SEE+10]),
 
 #define S_ENTITY_PAIN (S_ENTITY_MISSILE+3)
 	S_BRIGHT (MNAL, 'J',   2, A_Pain,				&States[S_ENTITY_SEE+6]),
 
 #define S_ENTITY_DIE (S_ENTITY_PAIN+1)
-	S_BRIGHT (MNAL, 'L',   7, A_212e4,				&States[S_ENTITY_DIE+1]),
+	S_BRIGHT (MNAL, 'L',   7, A_SpectreChunkSmall,	&States[S_ENTITY_DIE+1]),
 	S_BRIGHT (MNAL, 'M',   7, A_Scream,				&States[S_ENTITY_DIE+2]),
-	S_BRIGHT (MNAL, 'N',   7, A_212e4,				&States[S_ENTITY_DIE+3]),
-	S_BRIGHT (MNAL, 'O',   7, A_212e4,				&States[S_ENTITY_DIE+4]),
-	S_BRIGHT (MNAL, 'P',   7, A_2134c,				&States[S_ENTITY_DIE+5]),
-	S_BRIGHT (MNAL, 'Q',  64, A_212e4,				&States[S_ENTITY_DIE+6]),
-	S_BRIGHT (MNAL, 'Q',   6, A_20c74,				NULL),
+	S_BRIGHT (MNAL, 'N',   7, A_SpectreChunkSmall,	&States[S_ENTITY_DIE+3]),
+	S_BRIGHT (MNAL, 'O',   7, A_SpectreChunkSmall,	&States[S_ENTITY_DIE+4]),
+	S_BRIGHT (MNAL, 'P',   7, A_SpectreChunkLarge,	&States[S_ENTITY_DIE+5]),
+	S_BRIGHT (MNAL, 'Q',  64, A_SpectreChunkSmall,	&States[S_ENTITY_DIE+6]),
+	S_BRIGHT (MNAL, 'Q',   6, A_SpawnSubEntities,	NULL),
 };
 
 IMPLEMENT_ACTOR (AEntityBoss, Strife, 128, 0)
@@ -212,12 +216,12 @@ FState AEntitySecond::States[] =
 
 #define S_ENTITY2_MELEE (S_ENTITY2_SEE+6)
 	S_BRIGHT (MNAL, 'S',  4, A_FaceTarget,		&States[S_ENTITY2_MELEE+1]),
-	S_BRIGHT (MNAL, 'R',  4, A_20538,			&States[S_ENTITY2_MELEE+2]),
+	S_BRIGHT (MNAL, 'R',  4, A_SpectreMelee,	&States[S_ENTITY2_MELEE+2]),
 	S_BRIGHT (MNAL, 'T',  4, A_SentinelBob,		&States[S_ENTITY2_SEE+1]),
 
 #define S_ENTITY2_MISSILE (S_ENTITY2_MELEE+3)
 	S_BRIGHT (MNAL, 'W',  4, A_FaceTarget,		&States[S_ENTITY2_MISSILE+1]),
-	S_BRIGHT (MNAL, 'U',  4, A_204d0,			&States[S_ENTITY2_MISSILE+2]),
+	S_BRIGHT (MNAL, 'U',  4, A_Spectre2Attack,	&States[S_ENTITY2_MISSILE+2]),
 	S_BRIGHT (MNAL, 'V',  4, A_SentinelBob,		&States[S_ENTITY2_SEE+4]),
 
 #define S_ENTITY2_PAIN (S_ENTITY2_MISSILE+3)
@@ -286,62 +290,31 @@ void A_SubEntityDeath (AActor *self)
 	}
 }
 
-void A_200e0 (AActor *self)
+void A_EntityAttack (AActor *self)
 {
-	AActor *bar;
-
 	// Apparent Strife bug: Case 5 was unreachable because they used % 5 instead of % 6.
 	// I've fixed that by making case 1 duplicate it, since case 1 did nothing.
 	switch (pr_entity() % 5)
 	{
 	case 0:
-		if (self->target != NULL)
-		{
-			bar = Spawn<ASpectralLightningSpot> (self->x, self->y, ONFLOORZ, ALLOW_REPLACE);
-			bar->threshold = 25;
-			bar->target = self;
-			bar->tracer = self->target;
-			bar->health = -2;
-		}
+		A_SpotLightning(self);
 		break;
 
 	case 2:
-		if (self->target != NULL)
-		{
-			bar = P_SpawnMissile (self, self->target, RUNTIME_CLASS(ASpectralLightningH3));
-			if (bar != NULL)
-			{
-				bar->health = -2;
-			}
-		}
+		A_Spectre2Attack (self);
 		break;
 
 	case 3:
-		A_20334 (self);
+		A_Spectre3Attack (self);
 		break;
 
 	case 4:
-		if (self->target != NULL)
-		{
-			bar = P_SpawnMissile (self, self->target, RUNTIME_CLASS(ASpectralLightningBigV2));
-			if (bar != NULL)
-			{
-				bar->health = -2;
-				bar->tracer = self->target;
-			}
-		}
+		A_Spectre4Attack (self);
 		break;
 
 	case 1:
 	case 5:
-		if (self->target != NULL)
-		{
-			bar = P_SpawnMissile (self, self->target, RUNTIME_CLASS(ASpectralLightningBigBall2));
-			if (bar != NULL)
-			{
-				bar->health = -2;
-			}
-		}
+		A_Spectre5Attack (self);
 		break;
 	}
 }
@@ -358,7 +331,7 @@ void A_SpawnEntity (AActor *self)
 	}
 }
 
-void A_20c74 (AActor *selfa)
+void A_SpawnSubEntities (AActor *selfa)
 {
 	AEntityBoss *self = static_cast<AEntityBoss *>(selfa);
 	AEntitySecond *second;

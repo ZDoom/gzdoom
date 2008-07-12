@@ -1,4 +1,16 @@
 July 12, 2008 (Changes by Graf Zahl)
+- Fixed: Friendly spectral monsters should be able to hurt unfriendly ones
+  and vice versa.
+- Fixed: In deathmatch specral missiles spawned by players should hurt other
+  players.
+- Fixed: SpectralLightningBigBall didn't set the proper owner for the lightning
+  projectiles it spawned.
+- Changed the EntityBoss's attack function to call the equivalent spectre
+  functions instead of duplicating their code.
+- Gave many of Strife's code pointers that only had a number as name more
+  meaningful names. 
+- Fixed: All spectral attacks must set 'health' first before P_CheckMissileSpawn
+  is called.
 - Added a compatibility option to play sector sounds from the precalculated
   center because some maps apparently abuse the behavior to make the sound
   play somewhere where it can't be heard by the player to fake silent movement.

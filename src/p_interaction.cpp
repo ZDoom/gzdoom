@@ -920,12 +920,12 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 		{
 			if (player != NULL)
 			{
-				if (inflictor->health == -1)
+				if (!deathmatch && inflictor->health == -1)
 					return;
 			}
 			else if (target->flags4 & MF4_SPECTRAL)
 			{
-				if (inflictor->health == -2)
+				if (inflictor->health == -2 && !target->IsHostile(inflictor))
 					return;
 			}
 		}

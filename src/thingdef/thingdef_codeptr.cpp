@@ -236,10 +236,9 @@ static void DoAttack (AActor *self, bool domelee, bool domissile)
 		const PClass * ti=PClass::FindClass(MissileName);
 		if (ti) 
 		{
-			// Although there is a P_SpawnMissileZ function its
-			// aiming is much too bad to be of any use
+			// This seemingly senseless code is needed for proper aiming.
 			self->z+=MissileHeight-32*FRACUNIT;
-			AActor * missile = P_SpawnMissile (self, self->target, ti);
+			AActor * missile = P_SpawnMissileXYZ (self->x, self->y, self->z + 32*FRACUNIT, self, self->target, ti, false);
 			self->z-=MissileHeight-32*FRACUNIT;
 
 			if (missile)
@@ -254,6 +253,7 @@ static void DoAttack (AActor *self, bool domelee, bool domissile)
 				{
 					missile->health=-2;
 				}
+				P_CheckMissileSpawn(missile);
 			}
 		}
 	}
@@ -937,10 +937,9 @@ void A_CustomComboAttack (AActor *self)
 		const PClass * ti=PClass::FindClass(MissileName);
 		if (ti) 
 		{
-			// Although there is a P_SpawnMissileZ function its
-			// aiming is much too bad to be of any use
+			// This seemingly senseless code is needed for proper aiming.
 			self->z+=SpawnHeight-32*FRACUNIT;
-			AActor * missile = P_SpawnMissile (self, self->target, ti);
+			AActor * missile = P_SpawnMissileXYZ (self->x, self->y, self->z + 32*FRACUNIT, self, self->target, ti, false);
 			self->z-=SpawnHeight-32*FRACUNIT;
 
 			if (missile)
@@ -955,6 +954,7 @@ void A_CustomComboAttack (AActor *self)
 				{
 					missile->health=-2;
 				}
+				P_CheckMissileSpawn(missile);
 			}
 		}
 	}
@@ -1095,7 +1095,6 @@ void A_FireCustomMissile (AActor * self)
 				misl->momx = FixedMul (missilespeed, finecosine[an]);
 				misl->momy = FixedMul (missilespeed, finesine[an]);
 			}
-			if (misl->flags4&MF4_SPECTRAL) misl->health=-1;
 		}
 	}
 }

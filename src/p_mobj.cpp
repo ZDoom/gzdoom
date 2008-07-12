@@ -4773,6 +4773,9 @@ AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z,
 	MissileActor->momy = FixedMul (vy, speed);
 	MissileActor->momz = FixedMul (vz, speed);
 
+	if (MissileActor->flags4 & MF4_SPECTRAL)
+		MissileActor->health = -1;
+
 	if (P_CheckMissileSpawn (MissileActor))
 	{
 		return MissileActor;

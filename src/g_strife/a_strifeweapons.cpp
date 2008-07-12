@@ -1408,6 +1408,22 @@ AActor *P_SpawnSubMissile (AActor *source, PClass *type, AActor *target)
 	other->momx = FixedMul (other->Speed, finecosine[source->angle >> ANGLETOFINESHIFT]);
 	other->momy = FixedMul (other->Speed, finesine[source->angle >> ANGLETOFINESHIFT]);
 
+	if (other->flags4 & MF4_SPECTRAL)
+	{
+		if (source->flags & MF_MISSILE && source->flags4 & MF4_SPECTRAL)
+		{
+			other->health = source->health;
+		}
+		else if (target->player != NULL)
+		{
+			other->health = -1;
+		}
+		else
+		{
+			other->health = -2;
+		}
+	}
+
 	if (P_CheckMissileSpawn (other))
 	{
 		angle_t pitch = P_AimLineAttack (source, source->angle, 1024*FRACUNIT);
@@ -2226,7 +2242,6 @@ void A_FireSigil1 (AActor *actor)
 
 void A_FireSigil2 (AActor *actor)
 {
-	AActor *spot;
 	player_t *player = actor->player;
 
 	if (player == NULL || player->ReadyWeapon == NULL)
@@ -2235,11 +2250,7 @@ void A_FireSigil2 (AActor *actor)
 	P_DamageMobj (actor, actor, NULL, 2*4, 0, DMG_NO_ARMOR);
 	S_Sound (actor, CHAN_WEAPON, "weapons/sigilcharge", 1, ATTN_NORM);
 
-	spot = P_SpawnPlayerMissile (actor, RUNTIME_CLASS(ASpectralLightningH1));
-	if (spot != NULL)
-	{
-		spot->health = -1;
-	}
+	P_SpawnPlayerMissile (actor, RUNTIME_CLASS(ASpectralLightningH1));
 }
 
 //============================================================================
@@ -2267,7 +2278,6 @@ void A_FireSigil3 (AActor *actor)
 		spot = P_SpawnSubMissile (actor, RUNTIME_CLASS(ASpectralLightningBall1), actor);
 		if (spot != NULL)
 		{
-			spot->health = -1;
 			spot->z = actor->z + 32*FRACUNIT;
 		}
 	}
@@ -2299,7 +2309,6 @@ void A_FireSigil4 (AActor *actor)
 		if (spot != NULL)
 		{
 			spot->tracer = linetarget;
-			spot->health = -1;
 		}
 	}
 	else
@@ -2309,7 +2318,6 @@ void A_FireSigil4 (AActor *actor)
 		{
 			spot->momx += FixedMul (spot->Speed, finecosine[actor->angle >> ANGLETOFINESHIFT]);
 			spot->momy += FixedMul (spot->Speed, finesine[actor->angle >> ANGLETOFINESHIFT]);
-			spot->health = -1;
 		}
 	}
 }
@@ -2322,7 +2330,6 @@ void A_FireSigil4 (AActor *actor)
 
 void A_FireSigil5 (AActor *actor)
 {
-	AActor *spot;
 	player_t *player = actor->player;
 
 	if (player == NULL || player->ReadyWeapon == NULL)
@@ -2331,11 +2338,7 @@ void A_FireSigil5 (AActor *actor)
 	P_DamageMobj (actor, actor, NULL, 5*4, 0, DMG_NO_ARMOR);
 	S_Sound (actor, CHAN_WEAPON, "weapons/sigilcharge", 1, ATTN_NORM);
 
-	spot = P_SpawnPlayerMissile (actor, RUNTIME_CLASS(ASpectralLightningBigBall1));
-	if (spot != NULL)
-	{
-		spot->health = -1;
-	}
+	P_SpawnPlayerMissile (actor, RUNTIME_CLASS(ASpectralLightningBigBall1));
 }
 
 //============================================================================

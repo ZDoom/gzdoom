@@ -4170,9 +4170,18 @@ int DLevelScript::RunScript ()
 			lookup = FBehavior::StaticLookupString (STACK(2));
 			if (lookup != NULL)
 			{
-				S_Sound (activator, CHAN_AUTO,
-						 lookup,
-						 (float)(STACK(1)) / 127.f, ATTN_NORM);
+				if (activator != NULL)
+				{
+					S_Sound (activator, CHAN_AUTO,
+							 lookup,
+							 (float)(STACK(1)) / 127.f, ATTN_NORM);
+				}
+				else
+				{
+					S_Sound (CHAN_AUTO,
+							 lookup,
+							 (float)(STACK(1)) / 127.f, ATTN_NONE);
+				}
 			}
 			sp -= 2;
 			break;

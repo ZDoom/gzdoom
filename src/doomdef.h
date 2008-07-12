@@ -266,6 +266,7 @@ enum
 	COMPATF_BOOMSCROLL		= 1 << 15,	// Scrolling sectors are additive like in Boom
 	COMPATF_INVISIBILITY	= 1 << 16,	// Monsters can see semi-invisible players
 	COMPATF_SILENT_INSTANT_FLOORS = 1<<17,	// Instantly moving floors are not silent
+	COMPATF_SECTORSOUNDS	= 1 << 18,	// Sector sounds use original method for sound origin.
 };
 
 // phares 3/20/98:

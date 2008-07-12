@@ -90,7 +90,8 @@ void FStat::ToggleStat ()
 
 void FStat::PrintStat ()
 {
-	int y = SCREENHEIGHT - SmallFont->GetHeight();
+	int fontheight = ConFont->GetHeight() + 1;
+	int y = SCREENHEIGHT;
 	int count = 0;
 
 	screen->SetFont (ConFont);
@@ -99,9 +100,18 @@ void FStat::PrintStat ()
 		if (stat->m_Active)
 		{
 			FString stattext(stat->GetStats());
-			screen->DrawText (CR_GREEN, 5, y, stattext, TAG_DONE);
-			y -= SmallFont->GetHeight() + 1;
-			count++;
+
+			if (stattext.Len() > 0)
+			{
+				y -= fontheight;	// there's at least one line of text
+				for(unsigned i = 0; i < stattext.Len()-1; i++)
+				{
+					// Count number of linefeeds but ignore terminating ones.
+					if (stattext[i] == '\n') y -= fontheight;
+				}
+				screen->DrawText (CR_GREEN, 5, y, stattext, TAG_DONE);
+				count++;
+			}
 		}
 	}
 	screen->SetFont (SmallFont);

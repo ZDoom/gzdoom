@@ -1,3 +1,12 @@
+July 12, 2008 (Changes by Graf Zahl)
+- Added a compatibility option to play sector sounds from the precalculated
+  center because some maps apparently abuse the behavior to make the sound
+  play somewhere where it can't be heard by the player to fake silent movement.
+- Fixed: The S_Sound variant taking an actor must check if the actor is not
+  NULL.
+- Fixed: ACS's ActivatorSound must check if the activator is valid.
+- Changed stats drawing so that multi-line strings can be used.
+
 July 5, 2008
 - Added a check to G_DoSaveGame() to prevent saving when you're not actually
   in a level.

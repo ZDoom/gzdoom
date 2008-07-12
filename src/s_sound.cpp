@@ -714,17 +714,25 @@ static void CalcPosVel(int type, const AActor *actor, const sector_t *sector,
 
 static void CalcSectorSoundOrg(const sector_t *sec, int channum, fixed_t *x, fixed_t *y, fixed_t *z)
 {
-	// Are we inside the sector? If yes, the closest point is the one we're on.
-	if (P_PointInSector(*x, *y) == sec)
+	if (!(i_compatflags & COMPATF_SECTORSOUNDS))
 	{
-		*x = players[consoleplayer].camera->x;
-		*y = players[consoleplayer].camera->y;
+		// Are we inside the sector? If yes, the closest point is the one we're on.
+		if (P_PointInSector(*x, *y) == sec)
+		{
+			*x = players[consoleplayer].camera->x;
+			*y = players[consoleplayer].camera->y;
+		}
+		else
+		{
+			// Find the closest point on the sector's boundary lines and use
+			// that as the perceived origin of the sound.
+			sec->ClosestPoint(*x, *y, *x, *y);
+		}
 	}
 	else
 	{
-		// Find the closest point on the sector's boundary lines and use
-		// that as the perceived origin of the sound.
-		sec->ClosestPoint(*x, *y, *x, *y);
+		*x = sec->soundorg[0];
+		*y = sec->soundorg[1];
 	}
 
 	// Set sound vertical position based on channel.
@@ -1099,7 +1107,7 @@ void S_Sound (int channel, FSoundID sound_id, float volume, float attenuation)
 
 void S_Sound (AActor *ent, int channel, FSoundID sound_id, float volume, float attenuation)
 {
-	if (ent->Sector->Flags & SECF_SILENT)
+	if (ent == NULL || ent->Sector->Flags & SECF_SILENT)
 		return;
 	S_StartSound (ent, NULL, NULL, NULL, channel, sound_id, volume, attenuation);
 }

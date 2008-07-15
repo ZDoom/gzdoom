@@ -1,3 +1,7 @@
+July 15, 2008 (Changes by Graf Zahl)
+- Fixed: Strife's EntityBoss didn't copy friendliness information to the
+  sub-entities.
+
 July 12, 2008 (Changes by Graf Zahl)
 - Fixed: Friendly spectral monsters should be able to hurt unfriendly ones
   and vice versa.

@@ -326,7 +326,8 @@ void A_SpawnEntity (AActor *self)
 	if (entity != NULL)
 	{
 		entity->angle = self->angle;
-		entity->target = self->target;
+		entity->CopyFriendliness(self, true);
+		//entity->target = self->target;
 		entity->momz = 5*FRACUNIT;
 	}
 }
@@ -341,7 +342,8 @@ void A_SpawnSubEntities (AActor *selfa)
 	an = self->angle >> ANGLETOFINESHIFT;
 	second = Spawn<AEntitySecond> (self->SpawnX + FixedMul (secondRadius, finecosine[an]),
 		self->SpawnY + FixedMul (secondRadius, finesine[an]), self->SpawnZ, ALLOW_REPLACE);
-	second->target = self->target;
+	second->CopyFriendliness(self, true);
+	//second->target = self->target;
 	A_FaceTarget (second);
 	an = second->angle >> ANGLETOFINESHIFT;
 	second->momx += FixedMul (finecosine[an], 320000);
@@ -350,7 +352,8 @@ void A_SpawnSubEntities (AActor *selfa)
 	an = (self->angle + ANGLE_90) >> ANGLETOFINESHIFT;
 	second = Spawn<AEntitySecond> (self->SpawnX + FixedMul (secondRadius, finecosine[an]),
 		self->SpawnY + FixedMul (secondRadius, finesine[an]), self->SpawnZ, ALLOW_REPLACE);
-	second->target = self->target;
+	second->CopyFriendliness(self, true);
+	//second->target = self->target;
 	second->momx = FixedMul (secondRadius, finecosine[an]) << 2;
 	second->momy = FixedMul (secondRadius, finesine[an]) << 2;
 	A_FaceTarget (second);
@@ -358,7 +361,8 @@ void A_SpawnSubEntities (AActor *selfa)
 	an = (self->angle - ANGLE_90) >> ANGLETOFINESHIFT;
 	second = Spawn<AEntitySecond> (self->SpawnX + FixedMul (secondRadius, finecosine[an]),
 		self->SpawnY + FixedMul (secondRadius, finesine[an]), self->SpawnZ, ALLOW_REPLACE);
-	second->target = self->target;
+	second->CopyFriendliness(self, true);
+	//second->target = self->target;
 	second->momx = FixedMul (secondRadius, finecosine[an]) << 2;
 	second->momy = FixedMul (secondRadius, finesine[an]) << 2;
 	A_FaceTarget (second);

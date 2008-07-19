@@ -35,7 +35,7 @@ class Actor extends Thinker
 	action native A_SargAttack();
 	action native A_HeadAttack();
 	action native A_BruisAttack();
-	action native A_SkullAttack();
+	action native A_SkullAttack(optional eval float speed);
 	action native A_Metal();
 	action native A_SpidRefire();
 	action native A_BabyMetal();

@@ -1,3 +1,17 @@
+July 19, 2008 (Changes by Graf Zahl)
+- Fixed: When Heretic's Mace was replaced by a non-child class A_SpawnMace still 
+  treated it as a mace and wrote into some undefined memory.
+- Fixed: A_BishopMissileWeave didn't initialize special2 for proper movement.
+- Added a speed parameter to A_SkullAttack.
+- Fixed: Black as first or only blood color didn't work.
+- Fixed: Sounds played in wi_stuff.cpp and f_finale.cpp need the CHAN_UI flag.
+- Fixed: Spawning a player could play the *gasp sound.
+- Fixed: SBARINFO's health display didn't scale to the proper maximum.
+
+July 18, 2008 (Changes by Graf Zahl)
+- Added const char &operator[] (unsigned int index) to FString class.
+- Added Skulltag's Teleport_NoStop action special.
+
 July 15, 2008 (Changes by Graf Zahl)
 - Fixed: Strife's EntityBoss didn't copy friendliness information to the
   sub-entities.

@@ -207,7 +207,7 @@ void P_SpawnTeleportFog(fixed_t x, fixed_t y, fixed_t z, int spawnid)
 //
 
 bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, angle_t angle,
-				 bool useFog, bool sourceFog, bool keepOrientation)
+				 bool useFog, bool sourceFog, bool keepOrientation, bool bHaltMomentum)
 {
 	fixed_t oldx;
 	fixed_t oldy;
@@ -299,11 +299,13 @@ bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, angle_t angle,
 		if (thing->player)
 		{
 			// [RH] Zoom player's field of vision
-			if (telezoom && thing->player->mo == thing)
+			// [BC] && bHaltMomentum.
+			if (telezoom && thing->player->mo == thing && bHaltMomentum)
 				thing->player->FOV = MIN (175.f, thing->player->DesiredFOV + 45.f);
 		}
 	}
-	if (thing->player && (useFog || !keepOrientation))
+	// [BC] && bHaltMomentum.
+	if (thing->player && (useFog || !keepOrientation) && bHaltMomentum)
 	{
 		// Freeze player for about .5 sec
 		if (thing->Inventory == NULL || thing->Inventory->GetSpeedFactor() <= FRACUNIT)
@@ -315,7 +317,8 @@ bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, angle_t angle,
 		thing->momx = FixedMul (thing->Speed, finecosine[angle]);
 		thing->momy = FixedMul (thing->Speed, finesine[angle]);
 	}
-	else if (!keepOrientation) // no fog doesn't alter the player's momentum
+	// [BC] && bHaltMomentum.
+	else if (!keepOrientation && bHaltMomentum) // no fog doesn't alter the player's momentum
 	{
 		thing->momx = thing->momy = thing->momz = 0;
 		// killough 10/98: kill all bobbing momentum too
@@ -417,7 +420,7 @@ static AActor *SelectTeleDest (int tid, int tag)
 }
 
 bool EV_Teleport (int tid, int tag, line_t *line, int side, AActor *thing, bool fog,
-				  bool sourceFog, bool keepOrientation)
+				  bool sourceFog, bool keepOrientation, bool haltMomentum)
 {
 	AActor *searcher;
 	fixed_t z;
@@ -469,7 +472,7 @@ bool EV_Teleport (int tid, int tag, line_t *line, int side, AActor *thing, bool 
 	{
 		z = ONFLOORZ;
 	}
-	if (P_Teleport (thing, searcher->x, searcher->y, z, searcher->angle, fog, sourceFog, keepOrientation))
+	if (P_Teleport (thing, searcher->x, searcher->y, z, searcher->angle, fog, sourceFog, keepOrientation, haltMomentum))
 	{
 		// [RH] Lee Killough's changes for silent teleporters from BOOM
 		if (!fog && line && keepOrientation)

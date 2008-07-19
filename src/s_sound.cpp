@@ -2035,7 +2035,7 @@ CCMD (playsound)
 {
 	if (argv.argc() > 1)
 	{
-		S_Sound (CHAN_AUTO, argv[1], 1.f, ATTN_NONE);
+		S_Sound (CHAN_AUTO | CHAN_UI, argv[1], 1.f, ATTN_NONE);
 	}
 }
 

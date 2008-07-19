@@ -620,7 +620,7 @@ void F_CastTicker (void)
 				castnum = 0;
 			if (castorder[castnum].info->SeeSound)
 			{
-				S_Sound (CHAN_VOICE, castorder[castnum].info->SeeSound, 1, ATTN_NONE);
+				S_Sound (CHAN_VOICE | CHAN_UI, castorder[castnum].info->SeeSound, 1, ATTN_NONE);
 			}
 			caststate = castorder[castnum].info->SeeState;
 			// [RH] Skip monsters that have been hacked to no longer have attack states
@@ -655,7 +655,7 @@ void F_CastTicker (void)
 				if (atkstates[i].match == caststate)
 				{
 					S_StopAllChannels ();
-					S_Sound (CHAN_WEAPON, atkstates[i].sound, 1, ATTN_NONE);
+					S_Sound (CHAN_WEAPON | CHAN_UI, atkstates[i].sound, 1, ATTN_NONE);
 					break;
 				}
 			}
@@ -732,11 +732,12 @@ bool F_CastResponder (event_t* ev)
 		castattacking = false;
 		if (castnum == 16)
 		{
-			S_Sound (players[consoleplayer].mo, CHAN_VOICE, "*death", 1, ATTN_NONE);
+			int snd = S_FindSkinnedSound(players[consoleplayer].mo, "*death");
+			if (snd != 0) S_Sound (CHAN_VOICE | CHAN_UI, snd, 1, ATTN_NONE);
 		}
 		else if (castorder[castnum].info->DeathSound)
 		{
-			S_Sound (CHAN_VOICE, castorder[castnum].info->DeathSound, 1, ATTN_NONE);
+			S_Sound (CHAN_VOICE | CHAN_UI, castorder[castnum].info->DeathSound, 1, ATTN_NONE);
 		}
 	}
 		
@@ -992,7 +993,7 @@ void F_BunnyScroll (void)
 			stage = 6;
 		if (stage > laststage)
 		{
-			S_Sound (CHAN_WEAPON, "weapons/pistol", 1, ATTN_NONE);
+			S_Sound (CHAN_WEAPON | CHAN_UI, "weapons/pistol", 1, ATTN_NONE);
 			laststage = stage;
 		}
 
@@ -1074,28 +1075,28 @@ void F_AdvanceSlideshow ()
 		// Macil's speech on map 3 about the Programmer.
 	case 1:
 		FinaleFlat = "SS2F1";
-		S_Sound (CHAN_VOICE, "svox/mac10", 1, ATTN_NORM);
+		S_Sound (CHAN_VOICE | CHAN_UI, "svox/mac10", 1, ATTN_NORM);
 		FinalePart = 2;
 		FinaleEndCount = 9 * TICRATE;
 		break;
 
 	case 2:
 		FinaleFlat = "SS2F2";
-		S_Sound (CHAN_VOICE, "svox/mac11", 1, ATTN_NORM);
+		S_Sound (CHAN_VOICE | CHAN_UI, "svox/mac11", 1, ATTN_NORM);
 		FinalePart = 3;
 		FinaleEndCount = 10 * TICRATE;
 		break;
 
 	case 3:
 		FinaleFlat = "SS2F3";
-		S_Sound (CHAN_VOICE, "svox/mac12", 1, ATTN_NORM);
+		S_Sound (CHAN_VOICE | CHAN_UI, "svox/mac12", 1, ATTN_NORM);
 		FinalePart = 4;
 		FinaleEndCount = 12 * TICRATE;
 		break;
 
 	case 4:
 		FinaleFlat = "SS2F4";
-		S_Sound (CHAN_VOICE, "svox/mac13", 1, ATTN_NORM);
+		S_Sound (CHAN_VOICE | CHAN_UI, "svox/mac13", 1, ATTN_NORM);
 		FinalePart = -99;
 		FinaleEndCount = 17 * TICRATE;
 		break;
@@ -1103,28 +1104,28 @@ void F_AdvanceSlideshow ()
 		// Macil's speech on map 10 about the Sigil.
 	case 5:
 		FinaleFlat = "SS3F1";
-		S_Sound (CHAN_VOICE, "svox/mac16", 1, ATTN_NORM);
+		S_Sound (CHAN_VOICE | CHAN_UI, "svox/mac16", 1, ATTN_NORM);
 		FinalePart = 6;
 		FinaleEndCount = 10 * TICRATE;
 		break;
 
 	case 6:
 		FinaleFlat = "SS3F2";
-		S_Sound (CHAN_VOICE, "svox/mac17", 1, ATTN_NORM);
+		S_Sound (CHAN_VOICE | CHAN_UI, "svox/mac17", 1, ATTN_NORM);
 		FinalePart = 7;
 		FinaleEndCount = 12 * TICRATE;
 		break;
 
 	case 7:
 		FinaleFlat = "SS3F3";
-		S_Sound (CHAN_VOICE, "svox/mac18", 1, ATTN_NORM);
+		S_Sound (CHAN_VOICE | CHAN_UI, "svox/mac18", 1, ATTN_NORM);
 		FinalePart = 8;
 		FinaleEndCount = 12 * TICRATE;
 		break;
 
 	case 8:
 		FinaleFlat = "SS3F4";
-		S_Sound (CHAN_VOICE, "svox/mac19", 1, ATTN_NORM);
+		S_Sound (CHAN_VOICE | CHAN_UI, "svox/mac19", 1, ATTN_NORM);
 		FinaleEndCount = 11 * TICRATE;
 		FinalePart = -99;
 		break;
@@ -1133,21 +1134,21 @@ void F_AdvanceSlideshow ()
 	case 10:
 		FinaleFlat = "SS4F1";
 		S_StartMusic ("D_HAPPY");
-		S_Sound (CHAN_VOICE, "svox/rie01", 1, ATTN_NORM);
+		S_Sound (CHAN_VOICE | CHAN_UI, "svox/rie01", 1, ATTN_NORM);
 		FinaleEndCount = 13 * TICRATE;
 		FinalePart = 11;
 		break;
 
 	case 11:
 		FinaleFlat = "SS4F2";
-		S_Sound (CHAN_VOICE, "svox/bbx01", 1, ATTN_NORM);
+		S_Sound (CHAN_VOICE | CHAN_UI, "svox/bbx01", 1, ATTN_NORM);
 		FinaleEndCount = 11 * TICRATE;
 		FinalePart = 12;
 		break;
 
 	case 12:
 		FinaleFlat = "SS4F3";
-		S_Sound (CHAN_VOICE, "svox/bbx02", 1, ATTN_NORM);
+		S_Sound (CHAN_VOICE | CHAN_UI, "svox/bbx02", 1, ATTN_NORM);
 		FinaleEndCount = 14 * TICRATE;
 		FinalePart = 13;
 		break;
@@ -1162,21 +1163,21 @@ void F_AdvanceSlideshow ()
 	case 14:
 		S_StartMusic ("D_SAD");
 		FinaleFlat = "SS5F1";
-		S_Sound (CHAN_VOICE, "svox/ss501b", 1, ATTN_NORM);
+		S_Sound (CHAN_VOICE | CHAN_UI, "svox/ss501b", 1, ATTN_NORM);
 		FinalePart = 15;
 		FinaleEndCount = 11 * TICRATE;
 		break;
 
 	case 15:
 		FinaleFlat = "SS5F2";
-		S_Sound (CHAN_VOICE, "svox/ss502b", 1, ATTN_NORM);
+		S_Sound (CHAN_VOICE | CHAN_UI, "svox/ss502b", 1, ATTN_NORM);
 		FinalePart = 16;
 		FinaleEndCount = 10 * TICRATE;
 		break;
 
 	case 16:
 		FinaleFlat = "SS5F3";
-		S_Sound (CHAN_VOICE, "svox/ss503b", 1, ATTN_NORM);
+		S_Sound (CHAN_VOICE | CHAN_UI, "svox/ss503b", 1, ATTN_NORM);
 		FinalePart = -1;
 		FinaleEndCount = 11 * TICRATE;
 		break;
@@ -1185,21 +1186,21 @@ void F_AdvanceSlideshow ()
 	case 17:
 		S_StartMusic ("D_END");
 		FinaleFlat = "SS6F1";
-		S_Sound (CHAN_VOICE, "svox/ss601a", 1, ATTN_NORM);
+		S_Sound (CHAN_VOICE | CHAN_UI, "svox/ss601a", 1, ATTN_NORM);
 		FinaleEndCount = 8 * TICRATE;
 		FinalePart = 18;
 		break;
 
 	case 18:
 		FinaleFlat = "SS6F2";
-		S_Sound (CHAN_VOICE, "svox/ss602a", 1, ATTN_NORM);
+		S_Sound (CHAN_VOICE | CHAN_UI, "svox/ss602a", 1, ATTN_NORM);
 		FinalePart = 19;
 		FinaleEndCount = 8 * TICRATE;
 		break;
 
 	case 19:
 		FinaleFlat = "SS6F3";
-		S_Sound (CHAN_VOICE, "svox/ss603a", 1, ATTN_NORM);
+		S_Sound (CHAN_VOICE | CHAN_UI, "svox/ss603a", 1, ATTN_NORM);
 		FinalePart = -1;
 		FinaleEndCount = 9 * TICRATE;
 		break;

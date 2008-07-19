@@ -140,6 +140,9 @@ public:
 
 	const char *GetChars() const { return Chars; }
 	const char &operator[] (int index) const { return Chars[index]; }
+#if SIZE_MAX != UINT_MAX
+	const char &operator[] (unsigned int index) const { return Chars[index]; }
+#endif
 	const char &operator[] (size_t index) const { return Chars[index]; }
 
 	FString &operator = (const FString &other);

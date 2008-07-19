@@ -784,6 +784,12 @@ FUNC(LS_Teleport)
 	return EV_Teleport (arg0, arg1, ln, backSide, it, true, !arg2, false);
 }
 
+FUNC( LS_Teleport_NoStop )
+// Teleport_NoStop (tid, sectortag, bNoSourceFog)
+{
+	return EV_Teleport( arg0, arg1, ln, backSide, it, true, !arg2, false, false );
+}
+
 FUNC(LS_Teleport_NoFog)
 // Teleport_NoFog (tid, useang, sectortag)
 {

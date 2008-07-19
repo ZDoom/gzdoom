@@ -1537,6 +1537,13 @@ static void ActorBloodColor (FScanner &sc, AActor *defaults, Baggage &bag)
 	}
 	PalEntry pe = MAKERGB(r,g,b);
 	pe.a = CreateBloodTranslation(sc, pe);
+	if (DWORD(pe) == 0)
+	{
+		// If black is the first color being created it will create a value of 0
+		// which stands for 'no translation'
+		// Using (1,1,1) instead of (0,0,0) won't be noticable.
+		pe = MAKERGB(1,1,1);
+	}
 	bag.Info->Class->Meta.SetMetaInt (AMETA_BloodColor, pe);
 }
 

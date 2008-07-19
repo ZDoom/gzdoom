@@ -698,7 +698,7 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 					}
 					else //default to the class's health
 					{
-						max = CPlayer->mo->GetDefault()->health;
+						max = CPlayer->mo->GetMaxHealth() + CPlayer->stamina;
 					}
 				}
 				else if(cmd.flags == DRAWNUMBER_ARMOR)
@@ -938,7 +938,7 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 			case SBARINFO_DRAWGEM:
 			{
 				int value = (cmd.flags & DRAWGEM_ARMOR) ? armorAmount : health;
-				int max = 100;
+				int max = (cmd.flags & DRAWGEM_ARMOR) ? 100 : CPlayer->mo->GetMaxHealth() + CPlayer->stamina;
 				bool wiggle = false;
 				bool translate = !!(cmd.flags & DRAWGEM_TRANSLATABLE);
 				if(max != 0 || value < 0)

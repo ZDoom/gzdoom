@@ -121,7 +121,7 @@ void A_Mushroom (AActor *actor)
 	int i, j, n = actor->GetMissileDamage (0, 1);
 
 	const PClass *spawntype = NULL;
-	int index = CheckIndex (1, NULL);
+	int index = CheckIndex (2, NULL);
 	if (index >= 0) 
 	{
 		spawntype = PClass::FindClass((ENamedName)StateParameters[index]);

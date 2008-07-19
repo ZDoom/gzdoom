@@ -3611,7 +3611,7 @@ APlayerPawn *P_SpawnPlayer (FMapThing *mthing, bool tempplayer)
 	p->multicount = 0;
 	p->lastkilltime = 0;
 	p->BlendR = p->BlendG = p->BlendB = p->BlendA = 0.f;
-	p->mo->ResetAirSupply();
+	p->mo->ResetAirSupply(false);
 	p->Uncrouch();
 
 	p->momx = p->momy = 0;		// killough 10/98: initialize bobbing to 0.

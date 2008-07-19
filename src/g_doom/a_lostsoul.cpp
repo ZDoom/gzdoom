@@ -9,6 +9,7 @@
 #include "gi.h"
 #include "gstrings.h"
 #include "a_action.h"
+#include "thingdef/thingdef.h"
 
  FRandom pr_lost ("LostMissileRange");
 
@@ -23,20 +24,29 @@ void A_SkullAttack (AActor *self)
 	AActor *dest;
 	angle_t an;
 	int dist;
+	int n;
 
 	if (!self->target)
 		return;
 				
+	int index = CheckIndex (1, NULL);
+	if (index >= 0) 
+	{
+		n = FLOAT2FIXED(EvalExpressionF (StateParameters[index], self));
+		if (n == 0) n = SKULLSPEED;
+	}
+	else n = SKULLSPEED;
+
 	dest = self->target;		
 	self->flags |= MF_SKULLFLY;
 
 	S_Sound (self, CHAN_VOICE, self->AttackSound, 1, ATTN_NORM);
 	A_FaceTarget (self);
 	an = self->angle >> ANGLETOFINESHIFT;
-	self->momx = FixedMul (SKULLSPEED, finecosine[an]);
-	self->momy = FixedMul (SKULLSPEED, finesine[an]);
+	self->momx = FixedMul (n, finecosine[an]);
+	self->momy = FixedMul (n, finesine[an]);
 	dist = P_AproxDistance (dest->x - self->x, dest->y - self->y);
-	dist = dist / SKULLSPEED;
+	dist = dist / n;
 	
 	if (dist < 1)
 		dist = 1;

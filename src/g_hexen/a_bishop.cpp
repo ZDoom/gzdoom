@@ -285,6 +285,8 @@ void A_BishopMissileWeave (AActor *actor)
 	int weaveXY, weaveZ;
 	int angle;
 
+	if (actor->special2 == 0) actor->special2 = 16;
+
 	weaveXY = actor->special2 >> 16;
 	weaveZ = actor->special2 & 0xFFFF;
 	angle = (actor->angle + ANG90) >> ANGLETOFINESHIFT;

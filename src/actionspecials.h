@@ -131,6 +131,7 @@ DEFINE_SPECIAL(Floor_Waggle, 138, 5, 5)
 DEFINE_SPECIAL(Thing_SpawnFacing, 139, 2, 4)
 DEFINE_SPECIAL(Sector_ChangeSound, 140, 2, 2)
 
+DEFINE_SPECIAL(Teleport_NoStop, 154, 2, 3)
 // GZDoom/Vavoom specials 
 // Although ZDoom doesn't support them it's better to have them defined so that
 // WADs using them somewhere can at least be started without aborting due

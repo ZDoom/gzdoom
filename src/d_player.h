@@ -126,7 +126,7 @@ public:
 	float		BlueDamageFade;
 
 	bool UpdateWaterLevel (fixed_t oldz, bool splash);
-	bool ResetAirSupply ();
+	bool ResetAirSupply (bool playgasp = true);
 
 	int GetMaxHealth() const;
 };

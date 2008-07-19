@@ -920,11 +920,11 @@ bool APlayerPawn::UpdateWaterLevel (fixed_t oldz, bool splash)
 //
 //===========================================================================
 
-bool APlayerPawn::ResetAirSupply ()
+bool APlayerPawn::ResetAirSupply (bool playgasp)
 {
 	bool wasdrowning = (player->air_finished < level.time);
 
-	if (wasdrowning)
+	if (playgasp && wasdrowning)
 	{
 		S_Sound (this, CHAN_VOICE, "*gasp", 1, ATTN_NORM);
 	}

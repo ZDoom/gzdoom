@@ -701,6 +701,7 @@ visplane_t *R_CheckPlane (visplane_t *pl, int start, int stop)
 		new_pl->viewy = pl->viewy;
 		new_pl->viewz = pl->viewz;
 		new_pl->viewangle = pl->viewangle;
+		new_pl->sky = pl->sky;
 		pl = new_pl;
 		pl->minx = start;
 		pl->maxx = stop;

@@ -1,4 +1,5 @@
 July 20, 2008 (Changes by Graf Zahl)
+- Fixed: When copying visplanes the sky texture was forgotten.
 - converted the boss brain to DECORATE.
 - added an abstract base class for special map spots that are maintained in 
   lists and rewrote the boss brain, the mace and DSparil to use it.

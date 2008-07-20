@@ -291,6 +291,7 @@ actors/doom/archvile.txt					decorate/doom/archvile.txt
 actors/doom/cyberdemon.txt					decorate/doom/cyberdemon.txt
 actors/doom/spidermaster.txt				decorate/doom/spidermaster.txt
 actors/doom/keen.txt						decorate/doom/keen.txt
+actors/doom/bossbrain.txt					decorate/doom/bossbrain.txt
 
 actors/doom/deadthings.txt					decorate/doom/deadthings.txt
 actors/doom/doomammo.txt					decorate/doom/doomammo.txt

@@ -24,12 +24,6 @@ class APhoenixPuff : public AActor
 class ASorcerer2 : public AActor
 {
 	DECLARE_ACTOR (ASorcerer2, AActor)
-public:
-	void Serialize (FArchive &arc);
-	void BeginPlay ();
-
-	int NumBossSpots;
-	AActor *FirstBossSpot;
 };
 
 class AWizard : public AActor

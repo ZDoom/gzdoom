@@ -55,7 +55,7 @@ class ARandomSpawner : public AActor
 				if (di->Name != NAME_None)
 				{
 					n -= di->amount;
-					di = di->Next;
+					if (di->Next != NULL) di = di->Next; else n=0;
 				}
 			}
 			// So now we can spawn the dropped item.
@@ -72,12 +72,15 @@ class ARandomSpawner : public AActor
 				newmobj->args[4]    = args[4];
 				newmobj->SpawnFlags = SpawnFlags;
 				newmobj->HandleSpawnFlags();
+				newmobj->tid        = tid;
+				newmobj->AddToHash();
 				newmobj->momx = momx;
 				newmobj->momy = momy;
 				newmobj->momz = momz;
 				newmobj->CopyFriendliness(this, false);
 			}
 		}
+		Destroy();
 	}
 };
 

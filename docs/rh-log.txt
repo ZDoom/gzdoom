@@ -1,4 +1,8 @@
 July 20, 2008 (Changes by Graf Zahl)
+- converted the boss brain to DECORATE.
+- added an abstract base class for special map spots that are maintained in 
+  lists and rewrote the boss brain, the mace and DSparil to use it.
+- fixed: RandomSpawners didn't destroy themselves after finishing their work.
 - fixed: Textures marked as complex must not redirect to the base patch.
 - fixed: Alpha for composite textures was not applied.
 - fixed: The CentaurMash didn't inherit from the Centaur.

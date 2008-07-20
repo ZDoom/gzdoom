@@ -5,11 +5,6 @@
 #include "info.h"
 #include "d_player.h"
 
-class ABossBrain : public AActor
-{
-	DECLARE_ACTOR (ABossBrain, AActor)
-};
-
 class AScriptedMarine : public AActor
 {
 	DECLARE_ACTOR (AScriptedMarine, AActor)

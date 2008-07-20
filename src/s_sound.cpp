@@ -647,9 +647,12 @@ static void CalcPosVel(int type, const AActor *actor, const sector_t *sector,
 			break;
 
 		case SOURCE_Actor:
-			x = actor->x;
-			y = actor->z;
-			z = actor->y;
+			if (actor != NULL)
+			{
+				x = actor->x;
+				y = actor->z;
+				z = actor->y;
+			}
 			break;
 
 		case SOURCE_Sector:
@@ -691,9 +694,12 @@ static void CalcPosVel(int type, const AActor *actor, const sector_t *sector,
 		// Only actors maintain velocity information.
 		if (type == SOURCE_Actor)
 		{
-			vel->X = FIXED2FLOAT(actor->momx) * TICRATE;
-			vel->Y = FIXED2FLOAT(actor->momz) * TICRATE;
-			vel->Z = FIXED2FLOAT(actor->momy) * TICRATE;
+			if (actor != NULL)
+			{
+				vel->X = FIXED2FLOAT(actor->momx) * TICRATE;
+				vel->Y = FIXED2FLOAT(actor->momz) * TICRATE;
+				vel->Z = FIXED2FLOAT(actor->momy) * TICRATE;
+			}
 		}
 		else
 		{
@@ -1083,7 +1089,7 @@ void S_RestartSound(FSoundChan *chan)
 		// be set.
 		if (ochan->SourceType == SOURCE_Actor)
 		{
-			ochan->Actor->SoundChans |= 1 << ochan->EntChannel;
+			if (ochan->Actor != NULL) ochan->Actor->SoundChans |= 1 << ochan->EntChannel;
 		}
 	}
 }

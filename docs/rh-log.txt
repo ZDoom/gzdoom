@@ -1,3 +1,9 @@
+July 20, 2008 (Changes by Graf Zahl)
+- fixed: Textures marked as complex must not redirect to the base patch.
+- fixed: Alpha for composite textures was not applied.
+- fixed: The CentaurMash didn't inherit from the Centaur.
+- added some NULL pointer checks to the sound code.
+
 July 19, 2008 (Changes by Graf Zahl)
 - Fixed: When Heretic's Mace was replaced by a non-child class A_SpawnMace still 
   treated it as a mace and wrote into some undefined memory.

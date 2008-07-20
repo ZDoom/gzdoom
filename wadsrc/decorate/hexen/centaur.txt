@@ -102,7 +102,7 @@ ACTOR CentaurLeader : Centaur 115
 // The mashed centaur is only placed through ACS. Nowhere in the game source
 // is it ever referenced.
 
-ACTOR CentaurMash
+ACTOR CentaurMash : Centaur
 {
 	Game Hexen
 	SpawnID 103

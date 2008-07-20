@@ -574,7 +574,6 @@ int FMultiPatchTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rota
 				if (b.a == 0 && b.r != BLEND_NONE)
 				{
 					info.blend = EBlend(b.r);
-					inf = &info;
 				}
 				else if (b.a != 0)
 				{
@@ -584,7 +583,6 @@ int FMultiPatchTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rota
 						info.blendcolor[1] = b.g * FRACUNIT / 255;
 						info.blendcolor[2] = b.b * FRACUNIT / 255;
 						info.blend = BLEND_MODULATE;
-						inf = &info;
 					}
 					else
 					{
@@ -594,10 +592,9 @@ int FMultiPatchTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rota
 						info.blendcolor[2] = b.b * (FRACUNIT-info.blendcolor[3]);
 
 						info.blend = BLEND_OVERLAY;
-						inf = &info;
 					}
 				}
-				ret = Parts[i].Texture->CopyTrueColorPixels(bmp, x+Parts[i].OriginX, y+Parts[i].OriginY, Parts[i].Rotate, inf);
+				ret = Parts[i].Texture->CopyTrueColorPixels(bmp, x+Parts[i].OriginX, y+Parts[i].OriginY, Parts[i].Rotate, &info);
 			}
 		}
 		else
@@ -1121,7 +1118,6 @@ void FMultiPatchTexture::ParsePatch(FScanner &sc, TexPart & part)
 					part.Blend.a = clamp<int>(int(sc.Float*255), 1, 254);
 				}
 				else part.Blend.a = 255;
-				bComplex = true;
 			}
 			else if (sc.Compare("alpha"))
 			{
@@ -1230,7 +1226,8 @@ FMultiPatchTexture::FMultiPatchTexture (FScanner &sc, int usetype)
 			if (Parts->OriginX == 0 && Parts->OriginY == 0 &&
 				Parts->Texture->GetWidth() == Width &&
 				Parts->Texture->GetHeight() == Height &&
-				Parts->Rotate == 0)
+				Parts->Rotate == 0 && 
+				!bComplex)
 			{
 				bRedirect = true;
 			}

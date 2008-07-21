@@ -1,4 +1,6 @@
 July 21, 2008 (Changes by Graf Zahl)
+- Added MF4_BOSSDEATH to the Minotaur.
+- Fixed: The boss brain looped to the wrong state.
 - Converted Heretic's Staff, GoldWand, Crossbow and Gauntlets to DECORATE.
 - fixed: Morphing to a class without a face definition crashed.
 - Converted all of Heretic's actors except the weapons to DECORATE.

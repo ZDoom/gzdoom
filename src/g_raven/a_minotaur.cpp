@@ -110,7 +110,7 @@ FState AMinotaur::States[] =
 	S_NORMAL (MNTR, 'E',	5, NULL					    , &States[S_MNTR_FADEOUT+6]),
 	S_NORMAL (MNTR, 'E',	5, A_MinotaurFade1		    , &States[S_MNTR_FADEOUT+7]),
 	S_NORMAL (MNTR, 'E',	5, A_MinotaurFade0		    , &States[S_MNTR_FADEOUT+8]),
-	S_NORMAL (MNTR, 'E',   10, NULL					    , NULL),
+	S_NORMAL (MNTR, 'E',   10, A_BossDeath			    , NULL),
 };
 
 IMPLEMENT_ACTOR (AMinotaur, Heretic, 9, 0)
@@ -124,6 +124,7 @@ IMPLEMENT_ACTOR (AMinotaur, Heretic, 9, 0)
 	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_COUNTKILL|MF_DROPOFF)
 	PROP_Flags2 (MF2_FLOORCLIP|MF2_PASSMOBJ|MF2_BOSS|MF2_PUSHWALL)
 	PROP_Flags3 (MF3_NORADIUSDMG|MF3_DONTMORPH|MF3_NOTARGET)
+	PROP_Flags4 (MF4_BOSSDEATH)
 
 	PROP_SpawnState (S_MNTR_LOOK)
 	PROP_SeeState (S_MNTR_WALK)

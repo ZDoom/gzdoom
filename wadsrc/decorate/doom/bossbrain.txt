@@ -57,7 +57,7 @@ ACTOR BossEye 89
 	See:
 		SSWV A 181 A_BrainAwake
 		SSWV A 150 A_BrainSpit
-		Loop
+		Wait
 	}
 }
 

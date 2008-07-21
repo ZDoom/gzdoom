@@ -50,6 +50,7 @@
 #include "actors/heretic/heretickeys.txt"
 #include "actors/heretic/hereticdecorations.txt"
 #include "actors/heretic/hereticmisc.txt"
+#include "actors/heretic/hereticweaps.txt"
 #include "actors/heretic/mummy.txt"
 #include "actors/heretic/clink.txt"
 #include "actors/heretic/beast.txt"

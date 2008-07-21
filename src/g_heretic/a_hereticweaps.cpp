@@ -15,6 +15,7 @@
 #include "gi.h"
 #include "r_translate.h"
 #include "a_specialspot.h"
+#include "thingdef/thingdef.h"
 
 static FRandom pr_sap ("StaffAtkPL1");
 static FRandom pr_sap2 ("StaffAtkPL2");
@@ -41,10 +42,6 @@ static FRandom pr_fp2 ("FirePhoenixPL2");
 #define FLAME_THROWER_TICS (10*TICRATE)
 
 
-#define USE_GWND_AMMO_1 1
-#define USE_GWND_AMMO_2 1
-#define USE_CBOW_AMMO_1 1
-#define USE_CBOW_AMMO_2 1
 #define USE_BLSR_AMMO_1 1
 #define USE_BLSR_AMMO_2 5
 #define USE_SKRD_AMMO_1 1
@@ -64,139 +61,13 @@ END_DEFAULTS
 
 // --- Staff ----------------------------------------------------------------
 
-void A_StaffAttackPL1 (AActor *);
-void A_StaffAttackPL2 (AActor *);
-
-// Staff --------------------------------------------------------------------
-
-class AStaff : public AHereticWeapon
-{
-	DECLARE_ACTOR (AStaff, AHereticWeapon)
-};
-
-class AStaffPowered : public AStaff
-{
-	DECLARE_STATELESS_ACTOR (AStaffPowered, AStaff)
-};
-
-FState AStaff::States[] =
-{
-#define S_STAFFREADY 0
-	S_NORMAL (STFF, 'A',	1, A_WeaponReady				, &States[S_STAFFREADY]),
-
-#define S_STAFFDOWN (S_STAFFREADY+1)
-	S_NORMAL (STFF, 'A',	1, A_Lower						, &States[S_STAFFDOWN]),
-
-#define S_STAFFUP (S_STAFFDOWN+1)
-	S_NORMAL (STFF, 'A',	1, A_Raise						, &States[S_STAFFUP]),
-
-#define S_STAFFREADY2 (S_STAFFUP+1)
-	S_NORMAL (STFF, 'D',	4, A_WeaponReady				, &States[S_STAFFREADY2+1]),
-	S_NORMAL (STFF, 'E',	4, A_WeaponReady				, &States[S_STAFFREADY2+2]),
-	S_NORMAL (STFF, 'F',	4, A_WeaponReady				, &States[S_STAFFREADY2+0]),
-
-#define S_STAFFDOWN2 (S_STAFFREADY2+3)
-	S_NORMAL (STFF, 'D',	1, A_Lower						, &States[S_STAFFDOWN2]),
-
-#define S_STAFFUP2 (S_STAFFDOWN2+1)
-	S_NORMAL (STFF, 'D',	1, A_Raise						, &States[S_STAFFUP2]),
-
-#define S_STAFFATK1 (S_STAFFUP2+1)
-	S_NORMAL (STFF, 'B',	6, NULL 						, &States[S_STAFFATK1+1]),
-	S_NORMAL (STFF, 'C',	8, A_StaffAttackPL1 			, &States[S_STAFFATK1+2]),
-	S_NORMAL (STFF, 'B',	8, A_ReFire 					, &States[S_STAFFREADY]),
-
-#define S_STAFFATK2 (S_STAFFATK1+3)
-	S_NORMAL (STFF, 'G',	6, NULL 						, &States[S_STAFFATK2+1]),
-	S_NORMAL (STFF, 'H',	8, A_StaffAttackPL2 			, &States[S_STAFFATK2+2]),
-	S_NORMAL (STFF, 'G',	8, A_ReFire 					, &States[S_STAFFREADY2+0])
-};
-
-IMPLEMENT_ACTOR (AStaff, Heretic, -1, 0)
-	PROP_Weapon_SelectionOrder (3800)
-	PROP_Flags2Set(MF2_THRUGHOST)
-	PROP_Weapon_Flags (WIF_WIMPY_WEAPON|WIF_BOT_MELEE)
-	PROP_Weapon_UpState (S_STAFFUP)
-	PROP_Weapon_DownState (S_STAFFDOWN)
-	PROP_Weapon_ReadyState (S_STAFFREADY)
-	PROP_Weapon_AtkState (S_STAFFATK1)
-	PROP_Weapon_SisterType ("StaffPowered")
-END_DEFAULTS
-
-IMPLEMENT_STATELESS_ACTOR (AStaffPowered, Heretic, -1, 0)
-	PROP_Weapon_Flags (WIF_WIMPY_WEAPON|WIF_READYSNDHALF|WIF_POWERED_UP|WIF_BOT_MELEE|WIF_STAFF2_KICKBACK)
-	PROP_Weapon_UpState (S_STAFFUP2)
-	PROP_Weapon_DownState (S_STAFFDOWN2)
-	PROP_Weapon_ReadyState (S_STAFFREADY2)
-	PROP_Weapon_AtkState (S_STAFFATK2)
-	PROP_Weapon_ReadySound ("weapons/staffcrackle")
-	PROP_Weapon_SisterType ("Staff")
-END_DEFAULTS
-
-// Staff puff ---------------------------------------------------------------
-
-FState AStaffPuff::States[] =
-{
-	S_BRIGHT (PUF3, 'A',	4, NULL 						, &States[1]),
-	S_NORMAL (PUF3, 'B',	4, NULL 						, &States[2]),
-	S_NORMAL (PUF3, 'C',	4, NULL 						, &States[3]),
-	S_NORMAL (PUF3, 'D',	4, NULL 						, NULL)
-};
-
-IMPLEMENT_ACTOR (AStaffPuff, Heretic, -1, 0)
-	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
-	PROP_Flags3 (MF3_PUFFONACTORS)
-	PROP_RenderStyle (STYLE_Translucent)
-	PROP_Alpha (HR_SHADOW)
-	PROP_SpawnState (0)
-	PROP_AttackSound ("weapons/staffhit")
-END_DEFAULTS
-
-void AStaffPuff::BeginPlay ()
-{
-	Super::BeginPlay ();
-	momz = FRACUNIT;
-}
-
-// Staff puff 2 -------------------------------------------------------------
-
-class AStaffPuff2 : public AStaffPuff
-{
-	DECLARE_ACTOR (AStaffPuff2, AStaffPuff)
-public:
-	void BeginPlay ();
-};
-
-FState AStaffPuff2::States[] =
-{
-	S_BRIGHT (PUF4, 'A',	4, NULL 						, &States[1]),
-	S_BRIGHT (PUF4, 'B',	4, NULL 						, &States[2]),
-	S_BRIGHT (PUF4, 'C',	4, NULL 						, &States[3]),
-	S_BRIGHT (PUF4, 'D',	4, NULL 						, &States[4]),
-	S_BRIGHT (PUF4, 'E',	4, NULL 						, &States[5]),
-	S_BRIGHT (PUF4, 'F',	4, NULL 						, NULL)
-};
-
-IMPLEMENT_ACTOR (AStaffPuff2, Heretic, -1, 0)
-	PROP_SpawnState (0)
-	PROP_RenderStyle (STYLE_Add)
-	PROP_Alpha (OPAQUE)
-	PROP_AttackSound ("weapons/staffpowerhit")
-END_DEFAULTS
-
-void AStaffPuff2::BeginPlay ()
-{
-	Super::BeginPlay ();
-	momz = 0;
-}
-
 //----------------------------------------------------------------------------
 //
 // PROC A_StaffAttackPL1
 //
 //----------------------------------------------------------------------------
 
-void A_StaffAttackPL1 (AActor *actor)
+void A_StaffAttack (AActor *actor)
 {
 	angle_t angle;
 	int damage;
@@ -209,17 +80,23 @@ void A_StaffAttackPL1 (AActor *actor)
 		return;
 	}
 
+	int index = CheckIndex (2, NULL);
+	if (index < 0) return;
+
+	damage = EvalExpressionI (StateParameters[index], actor);
+	const PClass *puff = PClass::FindClass ((ENamedName)StateParameters[index+1]);
+
+
 	AWeapon *weapon = player->ReadyWeapon;
 	if (weapon != NULL)
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return;
 	}
-	damage = 5+(pr_sap()&15);
 	angle = actor->angle;
 	angle += pr_sap.Random2() << 18;
 	slope = P_AimLineAttack (actor, angle, MELEERANGE, &linetarget);
-	P_LineAttack (actor, angle, MELEERANGE, slope, damage, NAME_Melee, RUNTIME_CLASS(AStaffPuff), true);
+	P_LineAttack (actor, angle, MELEERANGE, slope, damage, NAME_Melee, puff, true);
 	if (linetarget)
 	{
 		//S_StartSound(player->mo, sfx_stfhit);
@@ -229,201 +106,6 @@ void A_StaffAttackPL1 (AActor *actor)
 	}
 }
 
-//----------------------------------------------------------------------------
-//
-// PROC A_StaffAttackPL2
-//
-//----------------------------------------------------------------------------
-
-void A_StaffAttackPL2 (AActor *actor)
-{
-	angle_t angle;
-	int damage;
-	int slope;
-	player_t *player;
-	AActor *linetarget;
-
-	if (NULL == (player = actor->player))
-	{
-		return;
-	}
-
-	AWeapon *weapon = player->ReadyWeapon;
-	if (weapon != NULL)
-	{
-		if (!weapon->DepleteAmmo (weapon->bAltFire))
-			return;
-	}
-	// P_inter.c:P_DamageMobj() handles target momentums
-	damage = 18+(pr_sap2()&63);
-	angle = actor->angle;
-	angle += pr_sap2.Random2() << 18;
-	slope = P_AimLineAttack (actor, angle, MELEERANGE, &linetarget);
-	P_LineAttack (actor, angle, MELEERANGE, slope, damage, NAME_Melee, RUNTIME_CLASS(AStaffPuff2), true);
-	if (linetarget)
-	{
-		//S_StartSound(player->mo, sfx_stfpow);
-		// turn to face target
-		actor->angle = R_PointToAngle2 (actor->x,
-			actor->y, linetarget->x, linetarget->y);
-	}
-}
-
-// --- Gold wand ------------------------------------------------------------
-
-void A_FireGoldWandPL1 (AActor *);
-void A_FireGoldWandPL2 (AActor *);
-
-// Gold wand ----------------------------------------------------------------
-
-class AGoldWand : public AHereticWeapon
-{
-	DECLARE_ACTOR (AGoldWand, AHereticWeapon)
-};
-
-class AGoldWandPowered : public AGoldWand
-{
-	DECLARE_STATELESS_ACTOR (AGoldWandPowered, AGoldWand)
-};
-
-FState AGoldWand::States[] =
-{
-#define S_GOLDWANDREADY 0
-	S_NORMAL (GWND, 'A',	1, A_WeaponReady				, &States[S_GOLDWANDREADY]),
-
-#define S_GOLDWANDDOWN (S_GOLDWANDREADY+1)
-	S_NORMAL (GWND, 'A',	1, A_Lower						, &States[S_GOLDWANDDOWN]),
-
-#define S_GOLDWANDUP (S_GOLDWANDDOWN+1)
-	S_NORMAL (GWND, 'A',	1, A_Raise						, &States[S_GOLDWANDUP]),
-
-#define S_GOLDWANDATK1 (S_GOLDWANDUP+1)
-	S_NORMAL (GWND, 'B',	3, NULL 						, &States[S_GOLDWANDATK1+1]),
-	S_NORMAL (GWND, 'C',	5, A_FireGoldWandPL1			, &States[S_GOLDWANDATK1+2]),
-	S_NORMAL (GWND, 'D',	3, NULL 						, &States[S_GOLDWANDATK1+3]),
-	S_NORMAL (GWND, 'D',	0, A_ReFire 					, &States[S_GOLDWANDREADY]),
-
-#define S_GOLDWANDATK2 (S_GOLDWANDATK1+4)
-	S_NORMAL (GWND, 'B',	3, NULL 						, &States[S_GOLDWANDATK2+1]),
-	S_NORMAL (GWND, 'C',	4, A_FireGoldWandPL2			, &States[S_GOLDWANDATK2+2]),
-	S_NORMAL (GWND, 'D',	3, NULL 						, &States[S_GOLDWANDATK2+3]),
-	S_NORMAL (GWND, 'D',	0, A_ReFire 					, &States[S_GOLDWANDREADY])
-};
-
-IMPLEMENT_ACTOR (AGoldWand, Heretic, -1, 0)
-	PROP_Flags5 (MF5_BLOODSPLATTER)
-	PROP_Weapon_SelectionOrder (2000)
-	PROP_Weapon_AmmoUse1 (USE_GWND_AMMO_1)
-	PROP_Weapon_AmmoGive1 (25)
-	PROP_Weapon_UpState (S_GOLDWANDUP)
-	PROP_Weapon_DownState (S_GOLDWANDDOWN)
-	PROP_Weapon_ReadyState (S_GOLDWANDREADY)
-	PROP_Weapon_AtkState (S_GOLDWANDATK1)
-	PROP_Weapon_YAdjust (5)
-	PROP_Weapon_MoveCombatDist (25000000)
-	PROP_Weapon_AmmoType1 ("GoldWandAmmo")
-	PROP_Weapon_SisterType ("GoldWandPowered")
-END_DEFAULTS
-
-IMPLEMENT_STATELESS_ACTOR (AGoldWandPowered, Heretic, -1, 0)
-	PROP_Weapon_Flags (WIF_POWERED_UP)
-	PROP_Weapon_AmmoUse1 (USE_GWND_AMMO_2)
-	PROP_Weapon_AmmoGive1 (0)
-	PROP_Weapon_AtkState (S_GOLDWANDATK2)
-	PROP_Weapon_SisterType ("GoldWand")
-END_DEFAULTS
-
-// Gold wand FX1 ------------------------------------------------------------
-
-class AGoldWandFX1 : public AActor
-{
-	DECLARE_ACTOR (AGoldWandFX1, AActor)
-};
-
-FState AGoldWandFX1::States[] =
-{
-#define S_GWANDFX1 0
-	S_BRIGHT (FX01, 'A',	6, NULL 						, &States[S_GWANDFX1+1]),
-	S_BRIGHT (FX01, 'B',	6, NULL 						, &States[S_GWANDFX1+0]),
-
-#define S_GWANDFXI1 (S_GWANDFX1+2)
-	S_BRIGHT (FX01, 'E',	3, NULL 						, &States[S_GWANDFXI1+1]),
-	S_BRIGHT (FX01, 'F',	3, NULL 						, &States[S_GWANDFXI1+2]),
-	S_BRIGHT (FX01, 'G',	3, NULL 						, &States[S_GWANDFXI1+3]),
-	S_BRIGHT (FX01, 'H',	3, NULL 						, NULL)
-};
-
-IMPLEMENT_ACTOR (AGoldWandFX1, Heretic, -1, 151)
-	PROP_RadiusFixed (10)
-	PROP_HeightFixed (6)
-	PROP_SpeedFixed (22)
-	PROP_Damage (2)
-	PROP_Flags (MF_NOBLOCKMAP|MF_MISSILE|MF_DROPOFF|MF_NOGRAVITY)
-	PROP_Flags2 (MF2_NOTELEPORT)
-	PROP_RenderStyle (STYLE_Add)
-
-	PROP_SpawnState (S_GWANDFX1)
-	PROP_DeathState (S_GWANDFXI1)
-
-	PROP_DeathSound ("weapons/wandhit")
-END_DEFAULTS
-
-// Gold wand FX2 ------------------------------------------------------------
-
-class AGoldWandFX2 : public AGoldWandFX1
-{
-	DECLARE_ACTOR (AGoldWandFX2, AGoldWandFX1)
-};
-
-FState AGoldWandFX2::States[] =
-{
-	S_BRIGHT (FX01, 'C',	6, NULL 						, &States[1]),
-	S_BRIGHT (FX01, 'D',	6, NULL 						, &States[0])
-};
-
-IMPLEMENT_ACTOR (AGoldWandFX2, Heretic, -1, 152)
-	PROP_SpeedFixed (18)
-	PROP_Damage (1)
-
-	PROP_SpawnState (0)
-
-	PROP_DeathSound ("")
-END_DEFAULTS
-
-// Gold wand puff 1 ---------------------------------------------------------
-
-class AGoldWandPuff1 : public AActor
-{
-	DECLARE_ACTOR (AGoldWandPuff1, AActor)
-};
-
-FState AGoldWandPuff1::States[] =
-{
-	S_BRIGHT (PUF2, 'A',	3, NULL 						, &States[1]),
-	S_BRIGHT (PUF2, 'B',	3, NULL 						, &States[2]),
-	S_BRIGHT (PUF2, 'C',	3, NULL 						, &States[3]),
-	S_BRIGHT (PUF2, 'D',	3, NULL 						, &States[4]),
-	S_BRIGHT (PUF2, 'E',	3, NULL 						, NULL)
-};
-
-IMPLEMENT_ACTOR (AGoldWandPuff1, Heretic, -1, 0)
-	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
-	PROP_Flags3 (MF3_PUFFONACTORS)
-	PROP_SpawnState (0)
-	PROP_RenderStyle (STYLE_Add)
-END_DEFAULTS
-
-// Gold wand puff 2 ---------------------------------------------------------
-
-class AGoldWandPuff2 : public AGoldWandFX1
-{
-	DECLARE_STATELESS_ACTOR (AGoldWandPuff2, AGoldWandFX1)
-};
-
-IMPLEMENT_STATELESS_ACTOR (AGoldWandPuff2, Heretic, -1, 0)
-	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
-	PROP_SpawnState (S_GWANDFXI1)
-END_DEFAULTS
 
 //----------------------------------------------------------------------------
 //
@@ -455,7 +137,7 @@ void A_FireGoldWandPL1 (AActor *actor)
 	{
 		angle += pr_fgw.Random2() << 18;
 	}
-	P_LineAttack (actor, angle, PLAYERMISSILERANGE, pitch, damage, NAME_None, RUNTIME_CLASS(AGoldWandPuff1));
+	P_LineAttack (actor, angle, PLAYERMISSILERANGE, pitch, damage, NAME_None, "GoldWandPuff1");
 	S_Sound (actor, CHAN_WEAPON, "weapons/wandhit", 1, ATTN_NORM);
 }
 
@@ -485,223 +167,19 @@ void A_FireGoldWandPL2 (AActor *actor)
 			return;
 	}
 	angle_t pitch = P_BulletSlope(actor);
-	momz = FixedMul (GetDefault<AGoldWandFX2>()->Speed,
+	momz = FixedMul (GetDefaultByName("GoldWandFX2")->Speed,
 		finetangent[FINEANGLES/4-((signed)pitch>>ANGLETOFINESHIFT)]);
-	P_SpawnMissileAngle (actor, RUNTIME_CLASS(AGoldWandFX2), actor->angle-(ANG45/8), momz);
-	P_SpawnMissileAngle (actor, RUNTIME_CLASS(AGoldWandFX2), actor->angle+(ANG45/8), momz);
+	P_SpawnMissileAngle (actor, PClass::FindClass("GoldWandFX2"), actor->angle-(ANG45/8), momz);
+	P_SpawnMissileAngle (actor, PClass::FindClass("GoldWandFX2"), actor->angle+(ANG45/8), momz);
 	angle = actor->angle-(ANG45/8);
 	for(i = 0; i < 5; i++)
 	{
 		damage = 1+(pr_fgw2()&7);
-		P_LineAttack (actor, angle, PLAYERMISSILERANGE, pitch, damage, NAME_None, RUNTIME_CLASS(AGoldWandPuff2));
+		P_LineAttack (actor, angle, PLAYERMISSILERANGE, pitch, damage, NAME_None, "GoldWandPuff2");
 		angle += ((ANG45/8)*2)/4;
 	}
 	S_Sound (actor, CHAN_WEAPON, "weapons/wandhit", 1, ATTN_NORM);
 }
-
-// --- Crossbow -------------------------------------------------------------
-
-void A_FireCrossbowPL1 (AActor *);
-void A_FireCrossbowPL2 (AActor *);
-void A_BoltSpark (AActor *);
-
-// Crossbow -----------------------------------------------------------------
-
-class ACrossbow : public AHereticWeapon
-{
-	DECLARE_ACTOR (ACrossbow, AHereticWeapon)
-};
-
-class ACrossbowPowered : public ACrossbow
-{
-	DECLARE_STATELESS_ACTOR (ACrossbowPowered, ACrossbow)
-};
-
-FState ACrossbow::States[] =
-{
-#define S_WBOW 0
-	S_NORMAL (WBOW, 'A',   -1, NULL 						, NULL),
-
-#define S_CRBOW (S_WBOW+1)
-	S_NORMAL (CRBW, 'A',	1, A_WeaponReady				, &States[S_CRBOW+1]),
-	S_NORMAL (CRBW, 'A',	1, A_WeaponReady				, &States[S_CRBOW+2]),
-	S_NORMAL (CRBW, 'A',	1, A_WeaponReady				, &States[S_CRBOW+3]),
-	S_NORMAL (CRBW, 'A',	1, A_WeaponReady				, &States[S_CRBOW+4]),
-	S_NORMAL (CRBW, 'A',	1, A_WeaponReady				, &States[S_CRBOW+5]),
-	S_NORMAL (CRBW, 'A',	1, A_WeaponReady				, &States[S_CRBOW+6]),
-	S_NORMAL (CRBW, 'B',	1, A_WeaponReady				, &States[S_CRBOW+7]),
-	S_NORMAL (CRBW, 'B',	1, A_WeaponReady				, &States[S_CRBOW+8]),
-	S_NORMAL (CRBW, 'B',	1, A_WeaponReady				, &States[S_CRBOW+9]),
-	S_NORMAL (CRBW, 'B',	1, A_WeaponReady				, &States[S_CRBOW+10]),
-	S_NORMAL (CRBW, 'B',	1, A_WeaponReady				, &States[S_CRBOW+11]),
-	S_NORMAL (CRBW, 'B',	1, A_WeaponReady				, &States[S_CRBOW+12]),
-	S_NORMAL (CRBW, 'C',	1, A_WeaponReady				, &States[S_CRBOW+13]),
-	S_NORMAL (CRBW, 'C',	1, A_WeaponReady				, &States[S_CRBOW+14]),
-	S_NORMAL (CRBW, 'C',	1, A_WeaponReady				, &States[S_CRBOW+15]),
-	S_NORMAL (CRBW, 'C',	1, A_WeaponReady				, &States[S_CRBOW+16]),
-	S_NORMAL (CRBW, 'C',	1, A_WeaponReady				, &States[S_CRBOW+17]),
-	S_NORMAL (CRBW, 'C',	1, A_WeaponReady				, &States[S_CRBOW+0]),
-
-#define S_CRBOWDOWN (S_CRBOW+18)
-	S_NORMAL (CRBW, 'A',	1, A_Lower						, &States[S_CRBOWDOWN]),
-
-#define S_CRBOWUP (S_CRBOWDOWN+1)
-	S_NORMAL (CRBW, 'A',	1, A_Raise						, &States[S_CRBOWUP]),
-
-#define S_CRBOWATK1 (S_CRBOWUP+1)
-	S_NORMAL (CRBW, 'D',	6, A_FireCrossbowPL1			, &States[S_CRBOWATK1+1]),
-	S_NORMAL (CRBW, 'E',	3, NULL 						, &States[S_CRBOWATK1+2]),
-	S_NORMAL (CRBW, 'F',	3, NULL 						, &States[S_CRBOWATK1+3]),
-	S_NORMAL (CRBW, 'G',	3, NULL 						, &States[S_CRBOWATK1+4]),
-	S_NORMAL (CRBW, 'H',	3, NULL 						, &States[S_CRBOWATK1+5]),
-	S_NORMAL (CRBW, 'A',	4, NULL 						, &States[S_CRBOWATK1+6]),
-	S_NORMAL (CRBW, 'B',	4, NULL 						, &States[S_CRBOWATK1+7]),
-	S_NORMAL (CRBW, 'C',	5, A_ReFire 					, &States[S_CRBOW+0]),
-
-#define S_CRBOWATK2 (S_CRBOWATK1+8)
-	S_NORMAL (CRBW, 'D',	5, A_FireCrossbowPL2			, &States[S_CRBOWATK2+1]),
-	S_NORMAL (CRBW, 'E',	3, NULL 						, &States[S_CRBOWATK2+2]),
-	S_NORMAL (CRBW, 'F',	2, NULL 						, &States[S_CRBOWATK2+3]),
-	S_NORMAL (CRBW, 'G',	3, NULL 						, &States[S_CRBOWATK2+4]),
-	S_NORMAL (CRBW, 'H',	2, NULL 						, &States[S_CRBOWATK2+5]),
-	S_NORMAL (CRBW, 'A',	3, NULL 						, &States[S_CRBOWATK2+6]),
-	S_NORMAL (CRBW, 'B',	3, NULL 						, &States[S_CRBOWATK2+7]),
-	S_NORMAL (CRBW, 'C',	4, A_ReFire 					, &States[S_CRBOW+0])
-};
-
-IMPLEMENT_ACTOR (ACrossbow, Heretic, 2001, 27)
-	PROP_Flags (MF_SPECIAL)
-	PROP_SpawnState (S_WBOW)
-
-	PROP_Weapon_SelectionOrder (800)
-	PROP_Weapon_AmmoUse1 (USE_CBOW_AMMO_1)
-	PROP_Weapon_AmmoGive1 (10)
-	PROP_Weapon_UpState (S_CRBOWUP)
-	PROP_Weapon_DownState (S_CRBOWDOWN)
-	PROP_Weapon_ReadyState (S_CRBOW)
-	PROP_Weapon_AtkState (S_CRBOWATK1)
-	PROP_Weapon_YAdjust (15)
-	PROP_Weapon_MoveCombatDist (24000000)
-	PROP_Weapon_AmmoType1 ("CrossbowAmmo")
-	PROP_Weapon_SisterType ("CrossbowPowered")
-	PROP_Weapon_ProjectileType ("CrossbowFX1")
-	PROP_Inventory_PickupMessage("$TXT_WPNCROSSBOW")
-END_DEFAULTS
-
-IMPLEMENT_STATELESS_ACTOR (ACrossbowPowered, Heretic, -1, 0)
-	PROP_Weapon_Flags (WIF_POWERED_UP)
-	PROP_Weapon_AmmoUse1 (USE_CBOW_AMMO_2)
-	PROP_Weapon_AmmoGive1 (0)
-	PROP_Weapon_AtkState (S_CRBOWATK2)
-	PROP_Weapon_SisterType ("Crossbow")
-	PROP_Weapon_ProjectileType ("CrossbowFX2")
-END_DEFAULTS
-
-// Crossbow FX1 -------------------------------------------------------------
-
-class ACrossbowFX1 : public AActor
-{
-	DECLARE_ACTOR (ACrossbowFX1, AActor)
-};
-
-FState ACrossbowFX1::States[] =
-{
-#define S_CRBOWFX1 0
-	S_BRIGHT (FX03, 'B',	1, NULL 						, &States[S_CRBOWFX1]),
-
-#define S_CRBOWFXI1 (S_CRBOWFX1+1)
-	S_BRIGHT (FX03, 'H',	8, NULL 						, &States[S_CRBOWFXI1+1]),
-	S_BRIGHT (FX03, 'I',	8, NULL 						, &States[S_CRBOWFXI1+2]),
-	S_BRIGHT (FX03, 'J',	8, NULL 						, NULL)
-};
-
-IMPLEMENT_ACTOR (ACrossbowFX1, Heretic, -1, 147)
-	PROP_RadiusFixed (11)
-	PROP_HeightFixed (8)
-	PROP_SpeedFixed (30)
-	PROP_Damage (10)
-	PROP_Flags (MF_NOBLOCKMAP|MF_MISSILE|MF_DROPOFF|MF_NOGRAVITY)
-	PROP_Flags2 (MF2_NOTELEPORT|MF2_PCROSS|MF2_IMPACT)
-	PROP_RenderStyle (STYLE_Add)
-
-	PROP_SpawnState (S_CRBOWFX1)
-	PROP_DeathState (S_CRBOWFXI1)
-
-	PROP_SeeSound ("weapons/bowshoot")
-	PROP_DeathSound ("weapons/bowhit")
-END_DEFAULTS
-
-// Crossbow FX2 -------------------------------------------------------------
-
-class ACrossbowFX2 : public ACrossbowFX1
-{
-	DECLARE_ACTOR (ACrossbowFX2, ACrossbowFX1)
-};
-
-FState ACrossbowFX2::States[] =
-{
-#define S_CRBOWFX2 0
-	S_BRIGHT (FX03, 'B',	1, A_BoltSpark					, &States[S_CRBOWFX2])
-};
-
-IMPLEMENT_ACTOR (ACrossbowFX2, Heretic, -1, 148)
-	PROP_SpeedFixed (32)
-	PROP_Damage (6)
-	PROP_RenderStyle (STYLE_Add)
-	PROP_SpawnState (S_CRBOWFX2)
-END_DEFAULTS
-
-// Crossbow FX3 -------------------------------------------------------------
-
-class ACrossbowFX3 : public ACrossbowFX1
-{
-	DECLARE_ACTOR (ACrossbowFX3, ACrossbowFX1)
-};
-
-FState ACrossbowFX3::States[] =
-{
-#define S_CRBOWFX3 0
-	S_BRIGHT (FX03, 'A',	1, NULL 						, &States[S_CRBOWFX3]),
-
-#define S_CRBOWFXI3 (S_CRBOWFX3+1)
-	S_BRIGHT (FX03, 'C',	8, NULL 						, &States[S_CRBOWFXI3+1]),
-	S_BRIGHT (FX03, 'D',	8, NULL 						, &States[S_CRBOWFXI3+2]),
-	S_BRIGHT (FX03, 'E',	8, NULL 						, NULL)
-};
-
-IMPLEMENT_ACTOR (ACrossbowFX3, Heretic, -1, 149)
-	PROP_SpeedFixed (20)
-	PROP_Damage (2)
-	PROP_FlagsClear (MF_NOBLOCKMAP)
-	PROP_Flags2 (MF2_WINDTHRUST|MF2_THRUGHOST|MF2_NOTELEPORT|MF2_PCROSS|MF2_IMPACT)
-	PROP_RenderStyle (STYLE_Add)
-
-	PROP_SpawnState (S_CRBOWFX3)
-	PROP_DeathState (S_CRBOWFXI3)
-
-	PROP_SeeSound ("")
-END_DEFAULTS
-
-// Crossbow FX4 -------------------------------------------------------------
-
-class ACrossbowFX4 : public AActor
-{
-	DECLARE_ACTOR (ACrossbowFX4, AActor)
-};
-
-FState ACrossbowFX4::States[] =
-{
-#define S_CRBOWFX4 0
-	S_BRIGHT (FX03, 'F',	8, NULL 						, &States[S_CRBOWFX4+1]),
-	S_BRIGHT (FX03, 'G',	8, NULL 						, NULL)
-};
-
-IMPLEMENT_ACTOR (ACrossbowFX4, Heretic, -1, 0)
-	PROP_Flags (MF_NOBLOCKMAP)
-	PROP_Gravity (FRACUNIT/8)
-	PROP_RenderStyle (STYLE_Add)
-	PROP_SpawnState (S_CRBOWFX4)
-END_DEFAULTS
 
 //----------------------------------------------------------------------------
 //
@@ -724,9 +202,9 @@ void A_FireCrossbowPL1 (AActor *actor)
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return;
 	}
-	P_SpawnPlayerMissile (actor, RUNTIME_CLASS(ACrossbowFX1));
-	P_SpawnPlayerMissile (actor, RUNTIME_CLASS(ACrossbowFX3), actor->angle-(ANG45/10));
-	P_SpawnPlayerMissile (actor, RUNTIME_CLASS(ACrossbowFX3), actor->angle+(ANG45/10));
+	P_SpawnPlayerMissile (actor, PClass::FindClass("CrossbowFX1"));
+	P_SpawnPlayerMissile (actor, PClass::FindClass("CrossbowFX3"), actor->angle-(ANG45/10));
+	P_SpawnPlayerMissile (actor, PClass::FindClass("CrossbowFX3"), actor->angle+(ANG45/10));
 }
 
 //----------------------------------------------------------------------------
@@ -750,29 +228,115 @@ void A_FireCrossbowPL2(AActor *actor)
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return;
 	}
-	P_SpawnPlayerMissile (actor, RUNTIME_CLASS(ACrossbowFX2));
-	P_SpawnPlayerMissile (actor, RUNTIME_CLASS(ACrossbowFX2), actor->angle-(ANG45/10));
-	P_SpawnPlayerMissile (actor, RUNTIME_CLASS(ACrossbowFX2), actor->angle+(ANG45/10));
-	P_SpawnPlayerMissile (actor, RUNTIME_CLASS(ACrossbowFX3), actor->angle-(ANG45/5));
-	P_SpawnPlayerMissile (actor, RUNTIME_CLASS(ACrossbowFX3), actor->angle+(ANG45/5));
+	P_SpawnPlayerMissile (actor, PClass::FindClass("CrossbowFX2"));
+	P_SpawnPlayerMissile (actor, PClass::FindClass("CrossbowFX2"), actor->angle-(ANG45/10));
+	P_SpawnPlayerMissile (actor, PClass::FindClass("CrossbowFX2"), actor->angle+(ANG45/10));
+	P_SpawnPlayerMissile (actor, PClass::FindClass("CrossbowFX3"), actor->angle-(ANG45/5));
+	P_SpawnPlayerMissile (actor, PClass::FindClass("CrossbowFX3"), actor->angle+(ANG45/5));
 }
 
-//----------------------------------------------------------------------------
+//---------------------------------------------------------------------------
 //
-// PROC A_BoltSpark
+// PROC A_GauntletAttack
 //
-//----------------------------------------------------------------------------
+//---------------------------------------------------------------------------
 
-void A_BoltSpark (AActor *bolt)
+void A_GauntletAttack (AActor *actor)
 {
-	AActor *spark;
+	angle_t angle;
+	int damage;
+	int slope;
+	int randVal;
+	fixed_t dist;
+	player_t *player;
+	const PClass *pufftype;
+	int power;
+	AActor *linetarget;
 
-	if (pr_boltspark() > 50)
+	if (NULL == (player = actor->player))
 	{
-		spark = Spawn<ACrossbowFX4> (bolt->x, bolt->y, bolt->z, ALLOW_REPLACE);
-		spark->x += pr_boltspark.Random2() << 10;
-		spark->y += pr_boltspark.Random2() << 10;
+		return;
 	}
+
+	int index = CheckIndex (1, NULL);
+	if (index < 0) return;
+
+	power = EvalExpressionI (StateParameters[index], actor);
+
+	AWeapon *weapon = player->ReadyWeapon;
+	if (weapon != NULL)
+	{
+		if (!weapon->DepleteAmmo (weapon->bAltFire))
+			return;
+	}
+	player->psprites[ps_weapon].sx = ((pr_gatk()&3)-2) * FRACUNIT;
+	player->psprites[ps_weapon].sy = WEAPONTOP + (pr_gatk()&3) * FRACUNIT;
+	angle = actor->angle;
+	if (power)
+	{
+		damage = pr_gatk.HitDice (2);
+		dist = 4*MELEERANGE;
+		angle += pr_gatk.Random2() << 17;
+		pufftype = PClass::FindClass("GauntletPuff2");
+	}
+	else
+	{
+		damage = pr_gatk.HitDice (2);
+		dist = MELEERANGE+1;
+		angle += pr_gatk.Random2() << 18;
+		pufftype = PClass::FindClass("GauntletPuff1");
+	}
+	slope = P_AimLineAttack (actor, angle, dist, &linetarget);
+	P_LineAttack (actor, angle, dist, slope, damage, NAME_Melee, pufftype);
+	if (!linetarget)
+	{
+		if (pr_gatk() > 64)
+		{
+			player->extralight = !player->extralight;
+		}
+		S_Sound (actor, CHAN_AUTO, "weapons/gauntletson", 1, ATTN_NORM);
+		return;
+	}
+	randVal = pr_gatk();
+	if (randVal < 64)
+	{
+		player->extralight = 0;
+	}
+	else if (randVal < 160)
+	{
+		player->extralight = 1;
+	}
+	else
+	{
+		player->extralight = 2;
+	}
+	if (power)
+	{
+		P_GiveBody (actor, damage>>1);
+		S_Sound (actor, CHAN_AUTO, "weapons/gauntletspowhit", 1, ATTN_NORM);
+	}
+	else
+	{
+		S_Sound (actor, CHAN_AUTO, "weapons/gauntletshit", 1, ATTN_NORM);
+	}
+	// turn to face target
+	angle = R_PointToAngle2 (actor->x, actor->y,
+		linetarget->x, linetarget->y);
+	if (angle-actor->angle > ANG180)
+	{
+		if ((int)(angle-actor->angle) < -ANG90/20)
+			actor->angle = angle+ANG90/21;
+		else
+			actor->angle -= ANG90/20;
+	}
+	else
+	{
+		if (angle-actor->angle > ANG90/20)
+			actor->angle = angle-ANG90/21;
+		else
+			actor->angle += ANG90/20;
+	}
+	actor->flags |= MF_JUSTATTACKED;
 }
 
 // --- Mace -----------------------------------------------------------------
@@ -1409,258 +973,6 @@ boom:
 		ball->gravity = FRACUNIT;
 		S_Sound (ball, CHAN_BODY, "weapons/maceexplode", 1, ATTN_NORM);
 	}
-}
-
-// --- Gauntlets ------------------------------------------------------------
-
-void A_GauntletAttack (AActor *);
-void A_GauntletSound (AActor *);
-
-// Gauntlets ----------------------------------------------------------------
-
-class AGauntlets : public AHereticWeapon
-{
-	DECLARE_ACTOR (AGauntlets, AHereticWeapon)
-};
-
-class AGauntletsPowered : public AGauntlets
-{
-	DECLARE_STATELESS_ACTOR (AGauntletsPowered, AGauntlets)
-};
-
-FState AGauntlets::States[] =
-{
-#define S_WGNT 0
-	S_NORMAL (WGNT, 'A',   -1, NULL 					, NULL),
-
-#define S_GAUNTLETREADY (S_WGNT+1)
-	S_NORMAL (GAUN, 'A',	1, A_WeaponReady			, &States[S_GAUNTLETREADY]),
-
-#define S_GAUNTLETDOWN (S_GAUNTLETREADY+1)
-	S_NORMAL (GAUN, 'A',	1, A_Lower					, &States[S_GAUNTLETDOWN]),
-
-#define S_GAUNTLETUP (S_GAUNTLETDOWN+1)
-	S_NORMAL (GAUN, 'A',	1, A_Raise					, &States[S_GAUNTLETUP]),
-
-#define S_GAUNTLETREADY2 (S_GAUNTLETUP+1)
-	S_NORMAL (GAUN, 'G',	4, A_WeaponReady			, &States[S_GAUNTLETREADY2+1]),
-	S_NORMAL (GAUN, 'H',	4, A_WeaponReady			, &States[S_GAUNTLETREADY2+2]),
-	S_NORMAL (GAUN, 'I',	4, A_WeaponReady			, &States[S_GAUNTLETREADY2+0]),
-
-#define S_GAUNTLETDOWN2 (S_GAUNTLETREADY2+3)
-	S_NORMAL (GAUN, 'G',	1, A_Lower					, &States[S_GAUNTLETDOWN2]),
-
-#define S_GAUNTLETUP2 (S_GAUNTLETDOWN2+1)
-	S_NORMAL (GAUN, 'G',	1, A_Raise					, &States[S_GAUNTLETUP2]),
-
-#define S_GAUNTLETATK1 (S_GAUNTLETUP2+1)
-	S_NORMAL (GAUN, 'B',	4, A_GauntletSound			, &States[S_GAUNTLETATK1+1]),
-	S_NORMAL (GAUN, 'C',	4, NULL 					, &States[S_GAUNTLETATK1+2]),
-	S_BRIGHT (GAUN, 'D',	4, A_GauntletAttack 		, &States[S_GAUNTLETATK1+3]),
-	S_BRIGHT (GAUN, 'E',	4, A_GauntletAttack 		, &States[S_GAUNTLETATK1+4]),
-	S_BRIGHT (GAUN, 'F',	4, A_GauntletAttack 		, &States[S_GAUNTLETATK1+5]),
-	S_NORMAL (GAUN, 'C',	4, A_ReFire 				, &States[S_GAUNTLETATK1+6]),
-	S_NORMAL (GAUN, 'B',	4, A_Light0 				, &States[S_GAUNTLETREADY]),
-
-#define S_GAUNTLETATK2 (S_GAUNTLETATK1+7)
-	S_NORMAL (GAUN, 'J',	4, A_GauntletSound			, &States[S_GAUNTLETATK2+1]),
-	S_NORMAL (GAUN, 'K',	4, NULL 					, &States[S_GAUNTLETATK2+2]),
-	S_BRIGHT (GAUN, 'L',	4, A_GauntletAttack 		, &States[S_GAUNTLETATK2+3]),
-	S_BRIGHT (GAUN, 'M',	4, A_GauntletAttack 		, &States[S_GAUNTLETATK2+4]),
-	S_BRIGHT (GAUN, 'N',	4, A_GauntletAttack 		, &States[S_GAUNTLETATK2+5]),
-	S_NORMAL (GAUN, 'K',	4, A_ReFire 				, &States[S_GAUNTLETATK2+6]),
-	S_NORMAL (GAUN, 'J',	4, A_Light0 				, &States[S_GAUNTLETREADY2+0])
-};
-
-IMPLEMENT_ACTOR (AGauntlets, Heretic, 2005, 32)
-	PROP_Flags (MF_SPECIAL)
-	PROP_Flags5 (MF5_BLOODSPLATTER)
-	PROP_SpawnState (S_WGNT)
-
-	PROP_Weapon_SelectionOrder (2300)
-	PROP_Weapon_Flags (WIF_WIMPY_WEAPON|WIF_BOT_MELEE)
-	PROP_Weapon_UpState (S_GAUNTLETUP)
-	PROP_Weapon_DownState (S_GAUNTLETDOWN)
-	PROP_Weapon_ReadyState (S_GAUNTLETREADY)
-	PROP_Weapon_AtkState (S_GAUNTLETATK1)
-	PROP_Weapon_HoldAtkState (S_GAUNTLETATK1+2)
-	PROP_Weapon_Kickback (0)
-	PROP_Weapon_YAdjust (15)
-	PROP_Weapon_UpSound ("weapons/gauntletsactivate")
-	PROP_Weapon_SisterType ("GauntletsPowered")
-	PROP_Inventory_PickupMessage("$TXT_WPNGAUNTLETS")
-END_DEFAULTS
-
-IMPLEMENT_STATELESS_ACTOR (AGauntletsPowered, Heretic, -1, 0)
-	PROP_Weapon_Flags (WIF_WIMPY_WEAPON|WIF_POWERED_UP|WIF_BOT_MELEE)
-	PROP_Weapon_UpState (S_GAUNTLETUP2)
-	PROP_Weapon_DownState (S_GAUNTLETDOWN2)
-	PROP_Weapon_ReadyState (S_GAUNTLETREADY2)
-	PROP_Weapon_AtkState (S_GAUNTLETATK2)
-	PROP_Weapon_HoldAtkState (S_GAUNTLETATK2+2)
-	PROP_Weapon_SisterType ("Gauntlets")
-END_DEFAULTS
-
-void A_GauntletSound (AActor *actor)
-{
-	// Play the sound for the initial gauntlet attack
-	S_Sound (actor, CHAN_WEAPON, "weapons/gauntletsuse", 1, ATTN_NORM);
-}
-
-// Gauntlet puff 1 ----------------------------------------------------------
-
-class AGauntletPuff1 : public AActor
-{
-	DECLARE_ACTOR (AGauntletPuff1, AActor)
-public:
-	void BeginPlay ();
-};
-
-FState AGauntletPuff1::States[] =
-{
-#define S_GAUNTLETPUFF1 0
-	S_BRIGHT (PUF1, 'A',	4, NULL 					, &States[S_GAUNTLETPUFF1+1]),
-	S_BRIGHT (PUF1, 'B',	4, NULL 					, &States[S_GAUNTLETPUFF1+2]),
-	S_BRIGHT (PUF1, 'C',	4, NULL 					, &States[S_GAUNTLETPUFF1+3]),
-	S_BRIGHT (PUF1, 'D',	4, NULL 					, NULL)
-};
-
-IMPLEMENT_ACTOR (AGauntletPuff1, Heretic, -1, 0)
-	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
-	PROP_Flags3 (MF3_PUFFONACTORS)
-	PROP_RenderStyle (STYLE_Translucent)
-	PROP_Alpha (HR_SHADOW)
-	PROP_SpawnState (S_GAUNTLETPUFF1)
-END_DEFAULTS
-
-void AGauntletPuff1::BeginPlay ()
-{
-	Super::BeginPlay ();
-	momz = FRACUNIT * 8 / 10;
-}
-
-// Gauntlett puff 2 ---------------------------------------------------------
-
-class AGauntletPuff2 : public AGauntletPuff1
-{
-	DECLARE_ACTOR (AGauntletPuff2, AGauntletPuff1)
-};
-
-FState AGauntletPuff2::States[] =
-{
-#define S_GAUNTLETPUFF2 0
-	S_BRIGHT (PUF1, 'E',	4, NULL 					, &States[S_GAUNTLETPUFF2+1]),
-	S_BRIGHT (PUF1, 'F',	4, NULL 					, &States[S_GAUNTLETPUFF2+2]),
-	S_BRIGHT (PUF1, 'G',	4, NULL 					, &States[S_GAUNTLETPUFF2+3]),
-	S_BRIGHT (PUF1, 'H',	4, NULL 					, NULL)
-};
-
-IMPLEMENT_ACTOR (AGauntletPuff2, Heretic, -1, 0)
-	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
-	PROP_RenderStyle (STYLE_Translucent)
-	PROP_Alpha (HR_SHADOW)
-
-	PROP_SpawnState (S_GAUNTLETPUFF2)
-END_DEFAULTS
-
-//---------------------------------------------------------------------------
-//
-// PROC A_GauntletAttack
-//
-//---------------------------------------------------------------------------
-
-void A_GauntletAttack (AActor *actor)
-{
-	angle_t angle;
-	int damage;
-	int slope;
-	int randVal;
-	fixed_t dist;
-	player_t *player;
-	const PClass *pufftype;
-	AInventory *power;
-	AActor *linetarget;
-
-	if (NULL == (player = actor->player))
-	{
-		return;
-	}
-
-	AWeapon *weapon = player->ReadyWeapon;
-	if (weapon != NULL)
-	{
-		if (!weapon->DepleteAmmo (weapon->bAltFire))
-			return;
-	}
-	player->psprites[ps_weapon].sx = ((pr_gatk()&3)-2) * FRACUNIT;
-	player->psprites[ps_weapon].sy = WEAPONTOP + (pr_gatk()&3) * FRACUNIT;
-	angle = actor->angle;
-	power = actor->FindInventory (RUNTIME_CLASS(APowerWeaponLevel2));
-	if (power)
-	{
-		damage = pr_gatk.HitDice (2);
-		dist = 4*MELEERANGE;
-		angle += pr_gatk.Random2() << 17;
-		pufftype = RUNTIME_CLASS(AGauntletPuff2);
-	}
-	else
-	{
-		damage = pr_gatk.HitDice (2);
-		dist = MELEERANGE+1;
-		angle += pr_gatk.Random2() << 18;
-		pufftype = RUNTIME_CLASS(AGauntletPuff1);
-	}
-	slope = P_AimLineAttack (actor, angle, dist, &linetarget);
-	P_LineAttack (actor, angle, dist, slope, damage, NAME_Melee, pufftype);
-	if (!linetarget)
-	{
-		if (pr_gatk() > 64)
-		{
-			player->extralight = !player->extralight;
-		}
-		S_Sound (actor, CHAN_AUTO, "weapons/gauntletson", 1, ATTN_NORM);
-		return;
-	}
-	randVal = pr_gatk();
-	if (randVal < 64)
-	{
-		player->extralight = 0;
-	}
-	else if (randVal < 160)
-	{
-		player->extralight = 1;
-	}
-	else
-	{
-		player->extralight = 2;
-	}
-	if (power)
-	{
-		P_GiveBody (actor, damage>>1);
-		S_Sound (actor, CHAN_AUTO, "weapons/gauntletspowhit", 1, ATTN_NORM);
-	}
-	else
-	{
-		S_Sound (actor, CHAN_AUTO, "weapons/gauntletshit", 1, ATTN_NORM);
-	}
-	// turn to face target
-	angle = R_PointToAngle2 (actor->x, actor->y,
-		linetarget->x, linetarget->y);
-	if (angle-actor->angle > ANG180)
-	{
-		if ((int)(angle-actor->angle) < -ANG90/20)
-			actor->angle = angle+ANG90/21;
-		else
-			actor->angle -= ANG90/20;
-	}
-	else
-	{
-		if (angle-actor->angle > ANG90/20)
-			actor->angle = angle-ANG90/21;
-		else
-			actor->angle += ANG90/20;
-	}
-	actor->flags |= MF_JUSTATTACKED;
 }
 
 // --- Blaster (aka Claw) ---------------------------------------------------

@@ -316,6 +316,7 @@ actors/heretic/hereticartifacts.txt			decorate/heretic/hereticartifacts.txt
 actors/heretic/heretickeys.txt				decorate/heretic/heretickeys.txt
 actors/heretic/hereticdecorations.txt		decorate/heretic/hereticdecorations.txt
 actors/heretic/hereticmisc.txt				decorate/heretic/hereticmisc.txt
+actors/heretic/hereticweaps.txt				decorate/heretic/hereticweaps.txt
 actors/heretic/mummy.txt					decorate/heretic/mummy.txt
 actors/heretic/clink.txt					decorate/heretic/clink.txt
 actors/heretic/beast.txt					decorate/heretic/beast.txt

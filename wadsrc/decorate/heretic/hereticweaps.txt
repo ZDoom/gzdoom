@@ -1,0 +1,476 @@
+/*
+ACTOR HereticWeapon : Weapon
+{
+	Weapon.Kickback 150
+}
+*/
+
+// Staff --------------------------------------------------------------------
+
+ACTOR Staff : HereticWeapon
+{
+	Weapon.SelectionOrder 3800
+	+THRUGHOST
+	+WIMPY_WEAPON
+	+MELEEWEAPON
+	Weapon.sisterweapon "StaffPowered"
+
+	action native A_StaffAttack (eval int damage, class<Actor> puff);
+
+	States
+	{
+	Ready:	
+		STFF A 1 A_WeaponReady
+		Loop
+	Deselect:
+		STFF A 1 A_Lower
+		Loop
+	Select:
+		STFF A 1 A_Raise
+		Loop
+	Fire:
+		STFF B 6
+		STFF C 8 A_StaffAttack(random[StaffAttack](5, 20), "StaffPuff")
+		STFF B 8 A_ReFire
+		Goto Ready
+	}
+}
+
+ACTOR StaffPowered : Staff
+{
+	Weapon.sisterweapon "Staff"
+	Weapon.ReadySound "weapons/staffcrackle"
+	+WEAPON.POWERED_UP
+	+WEAPON.READYSNDHALF
+	+WEAPON.STAFF2_KICKBACK
+	States
+	{
+	Ready:	
+		STFF DEF 4 A_WeaponReady
+		Loop
+	Deselect:
+		STFF D 1 A_Lower
+		Loop
+	Select:
+		STFF D 1 A_Raise
+		Loop
+	Fire:
+		STFF G 6
+		STFF H 8 A_StaffAttack(random[StaffAttack](18, 81), "StaffPuff2")
+		STFF G 8 A_ReFire
+		Goto Ready
+	}
+}
+
+
+// Staff puff ---------------------------------------------------------------
+
+ACTOR StaffPuff
+{
+	RenderStyle Translucent
+	Alpha 0.4
+	VSpeed 1
+	+NOBLOCKMAP
+	+NOGRAVITY
+	+PUFFONACTORS
+	AttackSound "weapons/staffhit"
+	States
+	{
+	Spawn:
+		PUF3 A 3 BRIGHT
+		PUF3 BCD 3
+		Stop
+	}
+}
+
+// Staff puff 2 -------------------------------------------------------------
+
+ACTOR StaffPuff2
+{
+	RenderStyle Add
+	+NOBLOCKMAP
+	+NOGRAVITY
+	+PUFFONACTORS
+	AttackSound "weapons/staffpowerhit"
+	States
+	{
+	Spawn:
+		PUF4 ABCDEF 4 BRIGHT
+		Stop
+	}
+}	
+
+
+
+// Gold wand ----------------------------------------------------------------
+
+ACTOR GoldWand : HereticWeapon
+{
+	+BLOODSPLATTER
+	Weapon.SelectionOrder 2000
+	Weapon.AmmoGive 25
+	Weapon.AmmoUse 1
+	Weapon.AmmoType "GoldWandAmmo"
+	Weapon.SisterWeapon "GoldWandPowered"
+	Weapon.YAdjust 5
+
+	action native A_FireGoldWandPL1 ();
+	
+	States
+	{
+	Ready:
+		GWND A 1 A_WeaponReady
+		Loop
+	Deselect:
+		GWND A 1 A_Lower
+		Loop
+	Select:
+		GWND A 1 A_Raise
+		Loop
+	Fire:
+		GWND B 3 
+		GWND C 5 A_FireGoldWandPL1
+		GWND D 3
+		GWND D 0 A_ReFire
+		Goto Ready
+	}
+}
+
+ACTOR GoldWandPowered : GoldWand
+{
+	+WEAPON.POWERED_UP
+	Weapon.AmmoGive 0
+	Weapon.SisterWeapon "GoldWand"
+
+	action native A_FireGoldWandPL2 ();
+
+	States
+	{
+	Fire:
+		GWND B 3 
+		GWND C 4 A_FireGoldWandPL2
+		GWND D 3
+		GWND D 0 A_ReFire
+		Goto Ready
+	}
+}
+	
+
+// Gold wand FX1 ------------------------------------------------------------
+
+ACTOR GoldWandFX1
+{
+	Game Heretic
+	SpawnID 151
+	Radius 10
+	Height 6
+	Speed 22
+	Damage 2
+	Projectile
+	RenderStyle Add
+	DeathSound "weapons/wandhit"
+	States
+	{
+	Spawn:
+		FX01 AB 6 BRIGHT
+		Loop
+	Death:
+		FX01 EFGH 3 BRIGHT
+		Stop
+	}
+}
+
+// Gold wand FX2 ------------------------------------------------------------
+
+ACTOR GoldWandFX2 : GoldWandFX1
+{
+	Game Heretic
+	SpawnID 152
+	Speed 18
+	Damage 1
+	DeathSound ""
+	States
+	{
+	Spawn:
+		FX01 CD 6 BRIGHT
+		Loop
+	}
+}
+
+// Gold wand puff 1 ---------------------------------------------------------
+
+ACTOR GoldWandPuff1
+{
+	+NOBLOCKMAP
+	+NOGRAVITY
+	+PUFFONACTORS
+	RenderStyle Add
+	States	{
+	Spawn:
+		PUF2 ABCDE 3 BRIGHT
+		Stop
+	}
+}
+
+// Gold wand puff 2 ---------------------------------------------------------
+
+ACTOR GoldWandPuff2 : GoldWandFX1
+{
+	Skip_Super
+	+NOBLOCKMAP
+	+NOGRAVITY
+	States
+	{
+	Spawn:
+		Goto Super::Death
+	}
+}
+
+
+// Crossbow -----------------------------------------------------------------
+
+ACTOR Crossbow : HereticWeapon 2001
+{
+	Game Heretic
+	SpawnID 27
+	Weapon.SelectionOrder 800
+	Weapon.AmmoUse 1
+	Weapon.AmmoGive 10
+	Weapon.AmmoType "CrossbowAmmo"
+	Weapon.SisterWeapon "CrossbowPowered"
+	Weapon.YAdjust 15
+	Inventory.PickupMessage "$TxT_WPNCROSSBOW"
+
+	action native A_FireCrossbowPL1 ();
+
+	States
+	{
+	Spawn:
+		WBOW A -1
+		Stop
+	Ready:
+		CRBW AAAAAABBBBBBCCCCCC 1 A_WeaponReady
+		Loop
+	Deselect:
+		CRBW A 1 A_Lower
+		Loop
+	Select:
+		CRBW A 1 A_Raise
+		Loop
+	Fire:
+		CRBW D 6 A_FireCrossbowPL1
+		CRBW EFGH 3
+		CRBW AB 4
+		CRBW C 5 A_ReFire
+		Goto Ready
+	}
+}
+
+
+ACTOR CrossbowPowered : Crossbow
+{
+	+WEAPON.POWERED_UP
+	Weapon.AmmoGive 0
+	Weapon.SisterWeapon "Crossbow"
+
+	action native A_FireCrossbowPL2();
+
+	States
+	{
+	Fire:
+		CRBW D 5 A_FireCrossbowPL2
+		CRBW E 3
+		CRBW F 2
+		CRBW G 3
+		CRBW H 2
+		CRBW A 3
+		CRBW B 3
+		CRBW C 4 A_ReFire
+		Goto Ready
+	}
+}
+
+
+// Crossbow FX1 -------------------------------------------------------------
+
+ACTOR CrossbowFX1
+{
+	Game Heretic
+	SpawnID 147
+	Radius 11
+	Height 8
+	Speed 30
+	Damage 10
+	Projectile
+	RenderStyle Add
+	SeeSound "weapons/bowshoot"
+	DeathSound "weapons/bowhit"
+	States
+	{
+	Spawn:
+		FX03 B 1 BRIGHT
+		Loop
+	Death:
+		FX03 HIJ 8 BRIGHT
+		Stop
+	}
+}
+
+
+// Crossbow FX2 -------------------------------------------------------------
+
+ACTOR CrossbowFX2 : CrossbowFX1
+{
+	Game Heretic
+	SpawnID 148
+	Speed 32
+	Damage 6
+	States
+	{
+	Spawn:
+		FX03 B 1 BRIGHT A_SpawnItemEx("CrossbowFX4", random2[BoltSpark]()*0.015625, random2[BoltSpark]()*0.015625, 0, 0,0,0,0,SXF_ABSOLUTEPOSITION, 50)
+		Loop
+	}
+}
+
+// Crossbow FX3 -------------------------------------------------------------
+
+ACTOR CrossbowFX3 : CrossbowFX1
+{
+	Game Heretic
+	SpawnID 149
+	Speed 20
+	Damage 2
+	SeeSound ""
+	-NOBLOCKMAP
+	+WINDTHRUST
+	+THRUGHOST
+	States
+	{
+	Spawn:
+		FX03 A 1 BRIGHT
+		Loop
+	Death:
+		FX03 CDE 8 BRIGHT
+		Stop
+	}
+}
+
+// Crossbow FX4 -------------------------------------------------------------
+
+ACTOR CrossbowFX4
+{
+	+NOBLOCKMAP
+	Gravity 0.125
+	RenderStyle Add
+	States
+	{
+	Spawn:
+		FX03 FG 8 BRIGHT
+		Stop
+	}
+}
+
+
+
+
+// Gauntlets ----------------------------------------------------------------
+
+ACTOR Gauntlets : Weapon 2005
+{
+	Game Heretic
+	SpawnID 32
+	+BLOODSPLATTER
+	Weapon.SelectionOrder 2300
+	+WEAPON.WIMPY_WEAPON
+	+WEAPON.MELEEWEAPON
+	Weapon.Kickback 0
+	Weapon.YAdjust 15
+	Weapon.UpSound "weapons/gauntletsactivate"
+	Weapon.SisterWeapon "GauntletsPowered"
+	Inventory.PickupMessage "$TxT_WPNGAUNTLETS"
+
+	action native A_GauntletAttack (eval int power);
+
+	States
+	{
+	Spawn:
+		WGNT A -1
+		Stop
+	Ready:
+		GAUN A 1 A_WeaponReady
+		Loop
+	Deselect:
+		GAUN A 1 A_Lower
+		Loop
+	Select:
+		GAUN A 1 A_Raise
+		Loop
+	Fire:
+		GAUN B 4 A_PlayWeaponSound("weapons/gauntletsuse")
+		GAUN C 4
+	Hold:
+		GAUN DEF 4 BRIGHT A_GauntletAttack(0)
+		GAUN C 4 A_ReFire
+		GAUN B 4 A_Light0
+		Goto Ready
+	}
+}
+
+
+ACTOR GauntletsPowered : Gauntlets
+{
+	+POWERED_UP
+	Weapon.SisterWeapon "Gauntlets"
+	States
+	{
+	Ready:
+		GAUN GHI 4 A_WeaponReady
+		Loop
+	Deselect:
+		GAUN G 1 A_Lower
+		Loop
+	Select:
+		GAUN G 1 A_Raise
+		Loop
+	Fire:
+		GAUN J 4 A_PlayWeaponSound("weapons/gauntletsuse")
+		GAUN K 4
+	Hold:
+		GAUN LMN 4 BRIGHT A_GauntletAttack(1)
+		GAUN K 4 A_ReFire
+		GAUN J 4 A_Light0
+		Goto Ready
+	}
+}
+
+
+// Gauntlet puff 1 ----------------------------------------------------------
+
+ACTOR GauntletPuff1
+{
+	+NOBLOCKMAP
+	+NOGRAVITY
+	+PUFFONACTORS
+	RenderStyle Translucent
+	Alpha 0.4
+	VSpeed 0.8
+	States
+	{
+		PUF1 ABCD 4 BRIGHT
+		Stop
+	}
+}
+
+// Gauntlett puff 2 ---------------------------------------------------------
+
+ACTOR GauntletPuff2 : GauntletPuff1
+{
+	States
+	{
+		PUF1 EFGH 4 BRIGHT
+		Stop
+	}
+}
+
+

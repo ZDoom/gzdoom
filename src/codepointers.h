@@ -145,6 +145,13 @@ ACTOR(WizAtk1)
 ACTOR(WizAtk2)
 ACTOR(WizAtk3)
 
+ACTOR(StaffAttack)
+ACTOR(FireGoldWandPL1)
+ACTOR(FireGoldWandPL2)
+ACTOR(FireCrossbowPL1)
+ACTOR(FireCrossbowPL2)
+ACTOR(GauntletAttack)
+
 
 // Special code pointers for Strife's player - not to be used elsewhere!
 ACTOR(ItBurnsItBurns)

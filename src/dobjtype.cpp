@@ -145,7 +145,14 @@ void PClass::StaticFreeData (PClass *type)
 			delete type->ActorInfo;
 			type->ActorInfo = NULL;
 		}
-		delete type;
+		if (type->bRuntimeClass != 2)
+		{
+			delete type;
+		}
+		else
+		{
+			type->Symbols.ReleaseSymbols();
+		}
 	}
 	else
 	{
@@ -289,6 +296,42 @@ PClass *PClass::CreateDerivedClass (FName name, unsigned int size)
 	}
 	return type;
 }
+
+// This is used by DECORATE to assign ActorInfos to internal classes
+void PClass::InitializeActorInfo ()
+{
+	Symbols.SetParentTable (&ParentClass->Symbols);
+	Defaults = new BYTE[Size];
+	if (ParentClass->Defaults != NULL) 
+	{
+		memcpy (Defaults, ParentClass->Defaults, Size);
+		if (Size > ParentClass->Size)
+		{
+			memset (Defaults + ParentClass->Size, 0, Size - ParentClass->Size);
+		}
+	}
+	else
+	{
+		memset (Defaults, 0, Size);
+	}
+
+	bRuntimeClass = 2;	// Class is internal but actor data external
+
+	FActorInfo *info = ActorInfo = new FActorInfo;
+	info->Class = this;
+	info->GameFilter = GAME_Any;
+	info->SpawnID = 0;
+	info->DoomEdNum = -1;
+	info->OwnedStates = NULL;
+	info->NumOwnedStates = 0;
+	info->Replacement = NULL;
+	info->Replacee = NULL;
+	info->StateList = NULL;
+	info->DamageFactors = NULL;
+	info->PainChances = NULL;
+	m_RuntimeActors.Push (this);
+}
+
 
 // Create the FlatPointers array, if it doesn't exist already.
 // It comprises all the Pointers from superclasses plus this class's own Pointers.

@@ -42,3 +42,67 @@ ACTOR ArtiInvisibility : PowerupGiver 75
 }
 
  
+// Tome of power ------------------------------------------------------------
+
+ACTOR ArtiTomeOfPower : PowerupGiver 86 native
+{
+	Game Heretic
+	SpawnID 134
+	+COUNTITEM
+	+FLOATBOB
+	+INVENTORY.PICKUPFLASH
+	Inventory.Icon "ARTIPWBK"
+	Powerup.Type Weaponlevel2
+	Inventory.PickupMessage "$TXT_ARTITOMEOFPOWER"
+	States
+	{
+	Spawn:
+		PWBK A 350
+		Loop
+	}
+}
+
+
+// Time bomb ----------------------------------------------------------------
+
+ACTOR ActivatedTimeBomb
+{
+	+NOGRAVITY
+	RenderStyle Translucent
+	Alpha 0.4
+	DeathSound "misc/timebomb"
+	
+	action native A_Timebomb();
+	
+	States
+	{
+	Spawn:
+		FBMB ABCD 10
+		FBMB E 6 A_Scream
+		XPL1 A 4 BRIGHT A_Timebomb
+		XPL1 BCDEF 4 BRIGHT
+		Stop
+	}
+}
+
+
+ACTOR ArtiTimeBomb : Inventory 34 native
+{
+	Game Heretic
+	SpawnID 72
+	+COUNTITEM
+	+FLOATBOB
+	+INVENTORY.PICKUPFLASH
+	+INVENTORY.INVBAR
+	+INVENTORY.FANCYPICKUPSOUND
+	Inventory.Icon "ARTIFBMB"
+	Inventory.PickupSound "misc/p_pkup"
+	Inventory.PickupMessage "$TXT_ARTIFIREBOMB"
+	Inventory.DefMaxAmount
+	States
+	{
+	Spawn:
+		FBMB E 350
+		Loop
+	}
+}

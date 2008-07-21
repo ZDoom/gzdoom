@@ -151,12 +151,15 @@ bool P_MorphPlayer (player_t *activator, player_t *p, const PClass *spawntype, i
 	// taking events, set up the face, if any;
 	// this is only needed for old-skool skins
 	// and for the original DOOM status bar.
-	if ((p == &players[consoleplayer]) && 
-		(strcmp(spawntype->Meta.GetMetaString (APMETA_Face), "None") != 0))
+	if (p == &players[consoleplayer])
 	{
-		StatusBar->SetFace(&skins[p->MorphedPlayerClass]);
-	}
+		const char *face = spawntype->Meta.GetMetaString (APMETA_Face);
 
+		if (face != NULL && strcmp(face, "None") != 0)
+		{
+			StatusBar->SetFace(&skins[p->MorphedPlayerClass]);
+		}
+	}
 	return true;
 }
 

@@ -1,3 +1,8 @@
+July 21, 2008 (Changes by Graf Zahl)
+- fixed: Morphing to a class without a face definition crashed.
+- Converted all of Heretic's actors except the weapons to DECORATE.
+- Added the option to define the ActorInfos for native classes in DECORATE.
+
 July 20, 2008 (Changes by Graf Zahl)
 - Fixed: When copying visplanes the sky texture was forgotten.
 - converted the boss brain to DECORATE.

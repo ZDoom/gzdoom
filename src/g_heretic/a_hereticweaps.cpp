@@ -2229,7 +2229,7 @@ END_DEFAULTS
 
 int AHornRodFX2::DoSpecialDamage (AActor *target, int damage)
 {
-	if (target->IsKindOf (RUNTIME_CLASS (ASorcerer2)) && pr_hrfx2() < 96)
+	if (target->IsKindOf (PClass::FindClass("Sorcerer2")) && pr_hrfx2() < 96)
 	{ // D'Sparil teleports away
 		P_DSparilTeleport (target);
 		return -1;
@@ -2665,7 +2665,7 @@ END_DEFAULTS
 
 int APhoenixFX1::DoSpecialDamage (AActor *target, int damage)
 {
-	if (target->IsKindOf (RUNTIME_CLASS (ASorcerer2)) && pr_pfx1() < 96)
+	if (target->IsKindOf (PClass::FindClass("Sorcerer2")) && pr_hrfx2() < 96)
 	{ // D'Sparil teleports away
 		P_DSparilTeleport (target);
 		return -1;

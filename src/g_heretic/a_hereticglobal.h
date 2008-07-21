@@ -21,18 +21,6 @@ class APhoenixPuff : public AActor
 	DECLARE_ACTOR (APhoenixPuff, AActor)
 };
 
-class ASorcerer2 : public AActor
-{
-	DECLARE_ACTOR (ASorcerer2, AActor)
-};
-
-class AWizard : public AActor
-{
-	DECLARE_ACTOR (AWizard, AActor)
-public:
-	void NoBlockingSet ();
-};
-
 void P_DSparilTeleport (AActor *actor);
 
 class AStaffPuff : public AActor

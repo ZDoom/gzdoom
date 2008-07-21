@@ -103,7 +103,7 @@ struct PClass
 	PClass				*HashNext;
 	FMetaTable			 Meta;
 	BYTE				*Defaults;
-	bool				 bRuntimeClass;	// class was defined at run-time, not compile-time
+	BYTE				 bRuntimeClass;	// class was defined at run-time, not compile-time
 	unsigned short		 ClassIndex;
 	PSymbolTable		 Symbols;
 
@@ -113,6 +113,7 @@ struct PClass
 	void InsertIntoHash ();
 	DObject *CreateNew () const;
 	PClass *CreateDerivedClass (FName name, unsigned int size);
+	void InitializeActorInfo ();
 	void BuildFlatPointers ();
 	void FreeStateList();
 

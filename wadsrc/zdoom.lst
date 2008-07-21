@@ -315,10 +315,17 @@ actors/heretic/hereticarmor.txt				decorate/heretic/hereticarmor.txt
 actors/heretic/hereticartifacts.txt			decorate/heretic/hereticartifacts.txt
 actors/heretic/heretickeys.txt				decorate/heretic/heretickeys.txt
 actors/heretic/hereticdecorations.txt		decorate/heretic/hereticdecorations.txt
+actors/heretic/hereticmisc.txt				decorate/heretic/hereticmisc.txt
 actors/heretic/mummy.txt					decorate/heretic/mummy.txt
 actors/heretic/clink.txt					decorate/heretic/clink.txt
 actors/heretic/beast.txt					decorate/heretic/beast.txt
 actors/heretic/snake.txt					decorate/heretic/snake.txt
+actors/heretic/hereticimp.txt				decorate/heretic/hereticimp.txt
+actors/heretic/knight.txt					decorate/heretic/knight.txt
+actors/heretic/wizard.txt					decorate/heretic/wizard.txt
+actors/heretic/ironlich.txt					decorate/heretic/ironlich.txt
+actors/heretic/dsparil.txt					decorate/heretic/dsparil.txt
+actors/heretic/chicken.txt					decorate/heretic/chicken.txt
 
 actors/hexen/fighterplayer.txt				decorate/hexen/fighterplayer.txt
 actors/hexen/clericplayer.txt               decorate/hexen/clericplayer.txt 

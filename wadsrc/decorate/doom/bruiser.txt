@@ -15,6 +15,7 @@ ACTOR BaronOfHell 3003
 	PainChance 50
 	Monster
 	+FLOORCLIP
+	+BOSSDEATH
 	SeeSound "baron/sight"
 	PainSound "baron/pain"
 	DeathSound "baron/death"
@@ -63,6 +64,7 @@ ACTOR HellKnight : BaronOfHell 69
 	Game Doom
 	SpawnID 113
 	Health 500
+	-BOSSDEATH
 	SeeSound "knight/sight"
 	ActiveSound "knight/active"
 	PainSound "knight/pain"

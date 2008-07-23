@@ -95,7 +95,7 @@ ACTOR MaceHefty : MaceAmmo 16
 {
 	Game Heretic
 	SpawnID 36
-	Inventory.PickupMessage "$TXT_AMMOMACE1"
+	Inventory.PickupMessage "$TXT_AMMOMACE2"
 	Inventory.Amount 100
 	States
 	{

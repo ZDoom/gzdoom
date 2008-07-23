@@ -158,7 +158,7 @@ ACTOR TeleGlitter2 : TeleGlitter1
 ACTOR Volcano 87
 {
 	Game Heretic
-	SpawnID 87
+	SpawnID 150
 	Radius 12
 	Height 20
 	+SOLID

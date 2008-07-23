@@ -47,11 +47,11 @@ typedef struct wbstartstruct_s
 	int			finished_ep;
 	int			next_ep;
 
-	char		current[9];	// [RH] Name of map just finished
-	char		next[9];	// next level, [RH] actual map name
+	FString		current;	// [RH] Name of map just finished
+	FString		next;		// next level, [RH] actual map name
 
-	char		lname0[9];
-	char		lname1[9];
+	FString		lname0;
+	FString		lname1;
 	
 	int			maxkills;
 	int			maxitems;

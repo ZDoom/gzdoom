@@ -315,9 +315,9 @@ bool CheckWildcards (const char *pattern, const char *text)
 
 // [RH] Print a GUID to a text buffer using the standard format.
 
-void FormatGUID (char *text, const GUID &guid)
+void FormatGUID (char *buffer, size_t buffsize, const GUID &guid)
 {
-	sprintf (text, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
+	mysnprintf (buffer, buffsize, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
 		(uint32)guid.Data1, guid.Data2, guid.Data3,
 		guid.Data4[0], guid.Data4[1],
 		guid.Data4[2], guid.Data4[3],
@@ -375,7 +375,7 @@ void CreatePath(const char * fn)
 
 	if (c!='\\' && c!='/') 
 	{
-		sprintf(name, "%s/", fn);
+		mysnprintf(name, countof(name), "%s/", fn);
 		DoCreatePath(name);
 	}
 	else DoCreatePath(fn);

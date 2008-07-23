@@ -53,6 +53,9 @@
 #include <shellapi.h>
 #include <uxtheme.h>
 #include <stddef.h>
+
+#define USE_WINDOWS_DWORD
+#include "doomtype.h"
 #include "resource.h"
 #include "version.h"
 #include "m_swap.h"
@@ -637,23 +640,24 @@ HANDLE WriteTextReport ()
 			break;
 		}
 	}
-	j = sprintf (CrashSummary, "Code: %08lX", CrashPointers.ExceptionRecord->ExceptionCode);
+	j = mysnprintf (CrashSummary, countof(CrashSummary), "Code: %08lX", CrashPointers.ExceptionRecord->ExceptionCode);
 	if ((size_t)i < sizeof(exceptions)/sizeof(exceptions[0]))
 	{
-		j += sprintf (CrashSummary + j, " (%s", exceptions[i].Text);
+		j += mysnprintf (CrashSummary + j, countof(CrashSummary) - j, " (%s", exceptions[i].Text);
 		if (CrashPointers.ExceptionRecord->ExceptionCode == EXCEPTION_ACCESS_VIOLATION)
 		{
 			// Pre-NT kernels do not seem to provide this information.
 			if (verinfo.dwPlatformId != VER_PLATFORM_WIN32_WINDOWS)
 			{
-				j += sprintf (CrashSummary + j, " - tried to %s address %08lX",
+				j += mysnprintf (CrashSummary + j, countof(CrashSummary) - j,
+					" - tried to %s address %08lX",
 					CrashPointers.ExceptionRecord->ExceptionInformation[0] ? "write" : "read",
 					CrashPointers.ExceptionRecord->ExceptionInformation[1]);
 			}
 		}
 		CrashSummary[j++] = ')';
 	}
-	j += sprintf (CrashSummary + j, "\r\nAddress: %p", CrashPointers.ExceptionRecord->ExceptionAddress);
+	j += mysnprintf (CrashSummary + j, countof(CrashSummary) - j, "\r\nAddress: %p", CrashPointers.ExceptionRecord->ExceptionAddress);
 	Writef (file, "%s\r\nFlags: %08X\r\n\r\n", CrashSummary, CrashPointers.ExceptionRecord->ExceptionFlags);
 
 	Writef (file, "Windows %s %d.%d Build %d %s\r\n\r\n",
@@ -1125,15 +1129,15 @@ static void DumpBytes (HANDLE file, BYTE *address)
 	{
 		if ((i & 15) == 0)
 		{
-			line_p += sprintf (line_p, "\r\n%p:", address);
+			line_p += mysnprintf (line_p, countof(line) - (line_p - line), "\r\n%p:", address);
 		}
 		if (SafeReadMemory (address, &peek, 1))
 		{
-			line_p += sprintf (line_p, " %02x", *address);
+			line_p += mysnprintf (line_p, countof(line) - (line_p - line), " %02x", *address);
 		}
 		else
 		{
-			line_p += sprintf (line_p, " --");
+			line_p += mysnprintf (line_p, countof(line) - (line_p - line), " --");
 		}
 		address++;
 	}
@@ -1918,12 +1922,13 @@ static DWORD CALLBACK StreamEditBinary (DWORD_PTR cookie, LPBYTE buffer, LONG cb
 	BYTE buf16[16];
 	DWORD read, i;
 	char *buff_p = (char *)buffer;
+	char *buff_end = (char *)buffer + cb;
 
 repeat:
 	switch (info->Stage)
 	{
 	case 0:		// Write prologue
-		buff_p += sprintf (buff_p, "{\\rtf1\\ansi\\deff0"
+		buff_p += mysnprintf (buff_p, buff_end - buff_p, "{\\rtf1\\ansi\\deff0"
 			"{\\colortbl ;\\red0\\green0\\blue80;\\red0\\green0\\blue0;\\red80\\green0\\blue80;}"
 			"\\viewkind4\\pard");
 		info->Stage++;
@@ -1939,19 +1944,19 @@ repeat:
 				goto repeat;
 			}
 			char *linestart = buff_p;
-			buff_p += sprintf (buff_p, "\\cf1 %08lx:\\cf2 ", info->Pointer);
+			buff_p += mysnprintf (buff_p, buff_end - buff_p, "\\cf1 %08lx:\\cf2 ", info->Pointer);
 			info->Pointer += read;
 
 			for (i = 0; i < read;)
 			{
 				if (i <= read - 4)
 				{
-					buff_p += sprintf (buff_p, " %08lx", *(DWORD *)&buf16[i]);
+					buff_p += mysnprintf (buff_p, buff_end - buff_p, " %08lx", *(DWORD *)&buf16[i]);
 					i += 4;
 				}
 				else
 				{
-					buff_p += sprintf (buff_p, " %02x", buf16[i]);
+					buff_p += mysnprintf (buff_p, buff_end - buff_p, " %02x", buf16[i]);
 					i += 1;
 				}
 			}
@@ -1959,7 +1964,7 @@ repeat:
 			{
 				*buff_p++ = ' ';
 			}
-			buff_p += sprintf (buff_p, "\\cf3 ");
+			buff_p += mysnprintf (buff_p, buff_end - buff_p, "\\cf3 ");
 			for (i = 0; i < read; ++i)
 			{
 				BYTE code = buf16[i];
@@ -1967,17 +1972,17 @@ repeat:
 				if (code == '\\' || code == '{' || code == '}') *buff_p++ = '\\';
 				*buff_p++ = code;
 			}
-			buff_p += sprintf (buff_p, "\\par\r\n");
+			buff_p += mysnprintf (buff_p, buff_end - buff_p, "\\par\r\n");
 		}
 		break;
 
 	case 2:		// Write epilogue
-		buff_p += sprintf (buff_p, "\\cf0 }");
+		buff_p += mysnprintf (buff_p, buff_end - buff_p, "\\cf0 }");
 		info->Stage = 4;
 		break;
 
 	case 3:		// Write epilogue for truncated file
-		buff_p += sprintf (buff_p, "--- Rest of file truncated ---\\cf0 }");
+		buff_p += mysnprintf (buff_p, buff_end - buff_p, "--- Rest of file truncated ---\\cf0 }");
 		info->Stage = 4;
 		break;
 
@@ -2015,11 +2020,11 @@ static void SetEditControl (HWND edit, HWND sizedisplay, int filenum)
 	size = GetFileSize (TarFiles[filenum].File, NULL);
 	if (size < 1024)
 	{
-		sprintf (sizebuf, "(%lu bytes)", size);
+		mysnprintf (sizebuf, countof(sizebuf), "(%lu bytes)", size);
 	}
 	else
 	{
-		sprintf (sizebuf, "(%lu KB)", size/1024);
+		mysnprintf (sizebuf, countof(sizebuf), "(%lu KB)", size/1024);
 	}
 	SetWindowText (sizedisplay, sizebuf);
 
@@ -2125,7 +2130,7 @@ static void UploadFail (HWND hDlg, const char *message, int reason)
 {
 	char buff[512];
 
-	sprintf (buff, "%s: %d", message, reason);
+	mysnprintf (buff, countof(buff), "%s: %d", message, reason);
 	SetWindowText (GetDlgItem (hDlg, IDC_BOINGSTATUS), buff);
 
 	if (reason >= 10000 && reason <= 11999)
@@ -2681,7 +2686,7 @@ static DWORD WINAPI UploadProc (LPVOID lpParam)
 						sizeof(MultipartBinaryHeader)-1 +
 						sizeof(MultipartHeaderGZip)-1 + fileLen +
 						sizeof(MultipartFooter)-1;
-		headerLen = sprintf (xferbuf, PostHeader, contentLength);
+		headerLen = mysnprintf (xferbuf, countof(xferbuf), PostHeader, contentLength);
 		bytesSent = send (sock, xferbuf, headerLen, 0);
 		if (bytesSent != headerLen)
 		{
@@ -2710,7 +2715,7 @@ static DWORD WINAPI UploadProc (LPVOID lpParam)
 			UploadFail (parm->hDlg, "Could not upload report", WSAGetLastError());
 			throw 1;
 		}
-		headerLen = sprintf (xferbuf, "Windows %08lX %p %X %08lX %08lX %08lX %08lX %08lX %s",
+		headerLen = mysnprintf (xferbuf, countof(xferbuf), "Windows %08lX %p %X %08lX %08lX %08lX %08lX %08lX %s",
 			CrashPointers.ExceptionRecord->ExceptionCode,
 			CrashPointers.ExceptionRecord->ExceptionAddress,
 			!!CrashPointers.ExceptionRecord->ExceptionInformation[0],
@@ -2746,7 +2751,7 @@ static DWORD WINAPI UploadProc (LPVOID lpParam)
 		}
 
 		// Send the report file.
-		headerLen = sprintf (xferbuf, "%s%s", MultipartBinaryHeader, MultipartHeaderZip);
+		headerLen = mysnprintf (xferbuf, countof(xferbuf), "%s%s", MultipartBinaryHeader, MultipartHeaderZip);
 
 		bytesSent = send (sock, xferbuf, headerLen, 0);
 		if (bytesSent == SOCKET_ERROR)
@@ -3059,7 +3064,7 @@ void DisplayCrashLog ()
 			GAMENAME" crashed but was unable to produce\n"
 			"detailed information about the crash.\n"
 			"\nThis is all that is available:\n\nCode=XXXXXXXX\nAddr=XXXXXXXX";
-		sprintf (ohPoo + sizeof(ohPoo) - 23, "%08lX\nAddr=%p", CrashCode, CrashAddress);
+		mysnprintf (ohPoo + countof(ohPoo) - 23, 23, "%08lX\nAddr=%p", CrashCode, CrashAddress);
 		MessageBox (NULL, ohPoo, GAMENAME" Very Fatal Error", MB_OK|MB_ICONSTOP);
 		if (WinHlp32 != NULL)
 		{

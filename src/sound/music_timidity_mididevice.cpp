@@ -468,10 +468,10 @@ int TimidityMIDIDevice::PlayTick()
 				};
 #ifdef _WIN32
 				char buffer[128];
-				sprintf(buffer, "C%02d: %11s %3d %3d\n", (status & 15) + 1, commands[(status >> 4) & 7], parm1, parm2);
+				mysnprintf(buffer, countof(buffer), "C%02d: %11s %3d %3d\n", (status & 15) + 1, commands[(status >> 4) & 7], parm1, parm2);
 				OutputDebugString(buffer);
 #else
-				fprintf(stderr, "C%02d: %11s %3d %3d\n", (status & 15) + 1, commands[(status >> 4) & 7], parm1, parm2);
+				//fprintf(stderr, "C%02d: %11s %3d %3d\n", (status & 15) + 1, commands[(status >> 4) & 7], parm1, parm2);
 #endif
 			}
 		}

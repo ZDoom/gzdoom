@@ -3,7 +3,7 @@
 ** A dynamically-allocated string class.
 **
 **---------------------------------------------------------------------------
-** Copyright 2005-2007 Randy Heit
+** Copyright 2005-2008 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without

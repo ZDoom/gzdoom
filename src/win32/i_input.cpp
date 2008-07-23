@@ -827,7 +827,7 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			}
 #ifdef _DEBUG
 			char foo[256];
-			sprintf (foo, "Session Change: %ld %d\n", lParam, wParam);
+			mysnprintf (foo, countof(foo), "Session Change: %ld %d\n", lParam, wParam);
 			OutputDebugString (foo);
 #endif
 		}
@@ -1064,7 +1064,7 @@ bool SetJoystickSection (bool create)
 
 	if (g_pJoy != NULL && SUCCEEDED(g_pJoy->GetDeviceInfo (&inst)))
 	{
-		FormatGUID (section + 9, inst.guidInstance);
+		FormatGUID (section + 9, countof(section) - 9, inst.guidInstance);
 		strcpy (section + 9 + 38, ".Axes");
 		return GameConfig->SetSection (section, create);
 	}

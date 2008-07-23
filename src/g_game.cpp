@@ -1960,13 +1960,13 @@ static void PutSaveComment (FILE *file)
 
 	// Get level name
 	//strcpy (comment, level.level_name);
-	sprintf(comment, "%s - %s", level.mapname, level.level_name);
+	mysnprintf(comment, countof(comment), "%s - %s", level.mapname, level.level_name);
 	len = (WORD)strlen (comment);
 	comment[len] = '\n';
 
 	// Append elapsed time
 	levelTime = level.time / TICRATE;
-	sprintf (comment+len+1, "time: %02d:%02d:%02d",
+	mysnprintf (comment + len + 1, countof(comment) - len - 1, "time: %02d:%02d:%02d",
 		levelTime/3600, (levelTime%3600)/60, levelTime%60);
 	comment[len+16] = 0;
 

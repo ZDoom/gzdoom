@@ -584,7 +584,7 @@ private:
 		{
 		case POP_Log:
 			// Draw the latest log message.
-			sprintf (buff, "%02d:%02d:%02d",
+			mysnprintf (buff, countof(buff), "%02d:%02d:%02d",
 				(level.time/TICRATE)/3600,
 				((level.time/TICRATE)%3600)/60,
 				(level.time/TICRATE)%60);

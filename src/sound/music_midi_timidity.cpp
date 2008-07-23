@@ -474,7 +474,7 @@ bool TimiditySong::LaunchTimidity ()
 						FORMAT_MESSAGE_IGNORE_INSERTS,
 						NULL, err, 0, (LPTSTR)&msgBuf, 0, NULL))
 	{
-		sprintf (hres, "%08lx", err);
+		mysnprintf (hres, countof(hres), "%08lx", err);
 		msgBuf = hres;
 	}
 

@@ -37,7 +37,7 @@
 
 BITS 32
 
-%include "src/valgrind.inc"
+%include "valgrind.inc"
 
 %define SPACEFILLER4	(0x44444444)
 

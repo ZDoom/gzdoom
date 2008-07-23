@@ -2718,7 +2718,7 @@ FUNC(LS_SendToCommunicator)
 	if (it != NULL && it->player != NULL && it->FindInventory(NAME_Communicator))
 	{
 		char name[32];									   
-		sprintf (name, "svox/voc%d", arg0);
+		mysnprintf (name, countof(name), "svox/voc%d", arg0);
 
 		if (!arg3)
 		{

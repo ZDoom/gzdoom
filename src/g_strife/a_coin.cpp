@@ -33,7 +33,7 @@ const char *ACoin::PickupMessage ()
 	{
 		static char msg[64];
 
-		sprintf (msg, GStrings("TXT_XGOLD"), Amount);
+		mysnprintf (msg, countof(msg), GStrings("TXT_XGOLD"), Amount);
 		return msg;
 	}
 }

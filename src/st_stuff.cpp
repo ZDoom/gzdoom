@@ -383,8 +383,8 @@ static bool Cht_ChangeLevel (cheatseq_t *cheat)
 static bool Cht_ChangeStartSpot (cheatseq_t *cheat)
 {
 	char cmd[64];
-	
-	sprintf (cmd, "changemap %s %c", level.mapname, cheat->Args[0]);
+
+	mysnprintf (cmd, countof(cmd), "changemap %s %c", level.mapname, cheat->Args[0]);
 	C_DoCommand (cmd);
 	return true;
 }

@@ -142,100 +142,6 @@ void FGameConfigFile::MigrateOldConfig ()
 	// Set default key bindings. These will be overridden
 	// by the bindings in the config file if it exists.
 	C_SetDefaultBindings ();
-
-#if 0	// Disabled for now, maybe forever.
-	int i;
-	char *execcommand;
-
-	i = strlen (GetPathName ()) + 8;
-	execcommand = new char[i];
-	sprintf (execcommand, "exec \"%s\"", GetPathName ());
-	execcommand[i-5] = 'c';
-	execcommand[i-4] = 'f';
-	execcommand[i-3] = 'g';
-	cvar_defflags = CVAR_ARCHIVE;
-	C_DoCommand (execcommand);
-	cvar_defflags = 0;
-	delete[] execcommand;
-
-	FBaseCVar *configver = FindCVar ("configver", NULL);
-	if (configver != NULL)
-	{
-		UCVarValue oldver = configver->GetGenericRep (CVAR_Float);
-
-		if (oldver.Float < 118.f)
-		{
-			C_DoCommand ("alias idclip noclip");
-			C_DoCommand ("alias idspispopd noclip");
-
-			if (oldver.Float < 117.2f)
-			{
-				dimamount = *dimamount * 0.25f;
-				if (oldver.Float <= 113.f)
-				{
-					C_DoCommand ("bind t messagemode; bind \\ +showscores;"
-								 "bind f12 spynext; bind sysrq screenshot");
-					if (C_GetBinding (KEY_F5) && !stricmp (C_GetBinding (KEY_F5), "menu_video"))
-					{
-						C_ChangeBinding ("menu_display", KEY_F5);
-					}
-				}
-			}
-		}
-		delete configver;
-	}
-	// Change all impulses to slot commands
-	for (i = 0; i < NUM_KEYS; i++)
-	{
-		char slotcmd[8] = "slot ";
-		char *bind, *numpart;
-
-		bind = C_GetBinding (i);
-		if (bind != NULL && strnicmp (bind, "impulse ", 8) == 0)
-		{
-			numpart = strchr (bind, ' ');
-			if (numpart != NULL && strlen (numpart) < 4)
-			{
-				strcpy (slotcmd + 5, numpart);
-				C_ChangeBinding (slotcmd, i);
-			}
-		}
-	}
-
-	// Migrate and delete some obsolete cvars
-	FBaseCVar *oldvar;
-	UCVarValue oldval;
-
-	oldvar = FindCVar ("autoexec", NULL);
-	if (oldvar != NULL)
-	{
-		oldval = oldvar->GetGenericRep (CVAR_String);
-		if (oldval.String[0])
-		{
-			SetSection ("Doom.AutoExec", true);
-			SetValueForKey ("Path", oldval.String, true);
-		}
-		delete oldvar;
-	}
-
-	oldvar = FindCVar ("def_patch", NULL);
-	if (oldvar != NULL)
-	{
-		oldval = oldvar->GetGenericRep (CVAR_String);
-		if (oldval.String[0])
-		{
-			SetSection ("Doom.DefaultDehacked", true);
-			SetValueForKey ("Path", oldval.String, true);
-		}
-		delete oldvar;
-	}
-
-	oldvar = FindCVar ("vid_noptc", NULL);
-	if (oldvar != NULL)
-	{
-		delete oldvar;
-	}
-#endif
 }
 
 void FGameConfigFile::DoGlobalSetup ()
@@ -334,15 +240,17 @@ void FGameConfigFile::DoGameSetup (const char *gamename)
 	{
 		MigrateOldConfig ();
 	}
-	subsection = section + sprintf (section, "%s.", gamename);
+	sublen = countof(section) - 1 - mysnprintf (section, countof(section), "%s.", gamename);
+	subsection = section + countof(section) - sublen - 1;
+	section[countof(section) - 1] = '\0';
 	
-	strcpy (subsection, "UnknownConsoleVariables");
+	strncpy (subsection, "UnknownConsoleVariables", sublen);
 	if (SetSection (section))
 	{
 		ReadCVars (0);
 	}
 
-	strcpy (subsection, "ConsoleVariables");
+	strncpy (subsection, "ConsoleVariables", sublen);
 	if (SetSection (section))
 	{
 		ReadCVars (0);
@@ -355,19 +263,19 @@ void FGameConfigFile::DoGameSetup (const char *gamename)
 
 	// The NetServerInfo section will be read when it's determined that
 	// a netgame is being played.
-	strcpy (subsection, "LocalServerInfo");
+	strncpy (subsection, "LocalServerInfo", sublen);
 	if (SetSection (section))
 	{
 		ReadCVars (0);
 	}
 
-	strcpy (subsection, "Player");
+	strncpy (subsection, "Player", sublen);
 	if (SetSection (section))
 	{
 		ReadCVars (0);
 	}
 
-	strcpy (subsection, "Bindings");
+	strncpy (subsection, "Bindings", sublen);
 	if (!SetSection (section))
 	{ // Config has no bindings for the given game
 		if (!bMigrating)
@@ -384,7 +292,7 @@ void FGameConfigFile::DoGameSetup (const char *gamename)
 		}
 	}
 
-	strcpy (subsection, "DoubleBindings");
+	strncpy (subsection, "DoubleBindings", sublen);
 	if (SetSection (section))
 	{
 		while (NextInSection (key, value))
@@ -393,7 +301,7 @@ void FGameConfigFile::DoGameSetup (const char *gamename)
 		}
 	}
 
-	strcpy (subsection, "ConsoleAliases");
+	strncpy (subsection, "ConsoleAliases", sublen);
 	if (SetSection (section))
 	{
 		const char *name = NULL;
@@ -415,7 +323,7 @@ void FGameConfigFile::DoGameSetup (const char *gamename)
 // Separated from DoGameSetup because it needs all the weapons properly defined
 void FGameConfigFile::DoWeaponSetup (const char *gamename)
 {
-	strcpy (subsection, "WeaponSlots");
+	strncpy (subsection, "WeaponSlots", sublen);
 
 	if (!SetSection (section) || !LocalWeapons.RestoreSlots (*this))
 	{
@@ -425,7 +333,7 @@ void FGameConfigFile::DoWeaponSetup (const char *gamename)
 
 void FGameConfigFile::ReadNetVars ()
 {
-	strcpy (subsection, "NetServerInfo");
+	strncpy (subsection, "NetServerInfo", sublen);
 	if (SetSection (section))
 	{
 		ReadCVars (0);
@@ -455,19 +363,20 @@ void FGameConfigFile::ArchiveGameData (const char *gamename)
 {
 	char section[32*3], *subsection;
 
-	subsection = section + sprintf (section, "%s.", gamename);
+	sublen = countof(section) - 1 - mysnprintf (section, countof(section), "%s.", gamename);
+	subsection = section + countof(section) - 1 - sublen;
 
-	strcpy (subsection, "Player");
+	strncpy (subsection, "Player", sublen);
 	SetSection (section, true);
 	ClearCurrentSection ();
 	C_ArchiveCVars (this, 4);
 
-	strcpy (subsection, "ConsoleVariables");
+	strncpy (subsection, "ConsoleVariables", sublen);
 	SetSection (section, true);
 	ClearCurrentSection ();
 	C_ArchiveCVars (this, 0);
 
-	strcpy (subsection, netgame ? "NetServerInfo" : "LocalServerInfo");
+	strncpy (subsection, netgame ? "NetServerInfo" : "LocalServerInfo", sublen);
 	if (!netgame || consoleplayer == 0)
 	{ // Do not overwrite this section if playing a netgame, and
 	  // this machine was not the initial host.
@@ -476,35 +385,35 @@ void FGameConfigFile::ArchiveGameData (const char *gamename)
 		C_ArchiveCVars (this, 5);
 	}
 
-	strcpy (subsection, "UnknownConsoleVariables");
+	strncpy (subsection, "UnknownConsoleVariables", sublen);
 	SetSection (section, true);
 	ClearCurrentSection ();
 	C_ArchiveCVars (this, 2);
 
-	strcpy (subsection, "ConsoleAliases");
+	strncpy (subsection, "ConsoleAliases", sublen);
 	SetSection (section, true);
 	ClearCurrentSection ();
 	C_ArchiveAliases (this);
 
-	M_SaveCustomKeys (this, section, subsection);
+	M_SaveCustomKeys (this, section, subsection, sublen);
 
 	strcpy (subsection, "Bindings");
 	SetSection (section, true);
 	ClearCurrentSection ();
 	C_ArchiveBindings (this, false);
 
-	strcpy (subsection, "DoubleBindings");
+	strncpy (subsection, "DoubleBindings", sublen);
 	SetSection (section, true);
 	ClearCurrentSection ();
 	C_ArchiveBindings (this, true);
 
 	if (WeaponSection.IsEmpty())
 	{
-		strcpy (subsection, "WeaponSlots");
+		strncpy (subsection, "WeaponSlots", sublen);
 	}
 	else
 	{
-		sprintf (subsection, "%s.WeaponSlots", WeaponSection.GetChars());
+		mysnprintf (subsection, sublen, "%s.WeaponSlots", WeaponSection.GetChars());
 	}
 	SetSection (section, true);
 	ClearCurrentSection ();
@@ -535,7 +444,7 @@ FString FGameConfigFile::GetConfigPath (bool tryProg)
 	if (pathval != NULL)
 		return FString(pathval);
 
-#ifndef unix
+#ifdef _WIN32
 	path = NULL;
 	HRESULT hr;
 
@@ -602,7 +511,7 @@ void FGameConfigFile::AddAutoexec (DArgs *list, const char *game)
 	const char *key;
 	const char *value;
 
-	sprintf (section, "%s.AutoExec", game);
+	mysnprintf (section, countof(section), "%s.AutoExec", game);
 
 	if (bMigrating)
 	{

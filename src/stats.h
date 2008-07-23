@@ -43,9 +43,13 @@ extern "C" double CyclesPerSecond;
 
 #define _interlockedbittestandset64			hackfixfor
 #define _interlockedbittestandreset64		x64compilation
+#define _interlockedbittestandset			wtfnmake
+#define _interlockedbittestandreset			doesittoo
 #include <intrin.h>
 #undef _interlockedbittestandset64
 #undef _interlockedbittestandreset64
+#undef _interlockedbittestandset
+#undef _interlockedbittestandreset
 
 typedef QWORD cycle_t;
 

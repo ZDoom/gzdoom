@@ -327,7 +327,8 @@ bool FCajunMaster::SpawnBot (const char *name, int color)
 		}
 		if (TEAMINFO_IsValidTeam (thebot->lastteam))
 		{ // Keep the bot on the same team when switching levels
-			sprintf (concat+strlen(concat), "\\team\\%d\n", thebot->lastteam);
+			mysnprintf (concat + strlen(concat), countof(concat) - strlen(concat),
+				"\\team\\%d\n", thebot->lastteam);
 		}
 		Net_WriteString (concat);
 	}
@@ -602,7 +603,7 @@ bool FCajunMaster::LoadBots ()
 						}
 					}
 					appendinfo (newinfo->info, "team");
-					sprintf (teamstr, "%d", teamnum);
+					mysnprintf (teamstr, countof(teamstr), "%d", teamnum);
 					appendinfo (newinfo->info, teamstr);
 					gotteam = true;
 					break;

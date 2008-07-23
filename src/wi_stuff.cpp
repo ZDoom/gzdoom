@@ -317,10 +317,10 @@ void WI_LoadBackground(bool isenterpic)
 		case GAME_Doom:
 			if (gamemode != commercial)
 			{
-				char * level = isenterpic? wbs->next : wbs->current;
+				const char *level = isenterpic ? wbs->next : wbs->current;
 				if (IsExMy(level))
 				{
-					sprintf(buffer, "$IN_EPI%c", level[1]);
+					mysnprintf(buffer, countof(buffer), "$IN_EPI%c", level[1]);
 					lumpname = buffer;
 				}
 			}
@@ -353,7 +353,7 @@ void WI_LoadBackground(bool isenterpic)
 			{
 				if (IsExMy(wbs->next))
 				{
-					sprintf(buffer, "$IN_HTC%c", wbs->next[1]);
+					mysnprintf(buffer, countof(buffer), "$IN_HTC%c", wbs->next[1]);
 					lumpname = buffer;
 				}
 			}
@@ -842,7 +842,7 @@ void WI_drawEL ()
 //
 //====================================================================
 
-int WI_MapToIndex (char *map)
+int WI_MapToIndex (const char *map)
 {
 	unsigned int i;
 
@@ -904,11 +904,11 @@ int WI_drawNum (int x, int y, int n, int digits, bool leadingzeros = true)
 
 	if (leadingzeros)
 	{
-		sprintf (text, "%07d", n);
+		mysnprintf (text, countof(text), "%07d", n);
 	}
 	else
 	{
-		sprintf (text, "%7d", n);
+		mysnprintf (text, countof(text), "%7d", n);
 		if (digits < 0)
 		{
 			text_p = strrchr (text, ' ');
@@ -1980,7 +1980,7 @@ void WI_loadData(void)
 
 		for (i = 0; i < 10; i++)
 		{ // numbers 0-9
-			sprintf (name, "WINUM%d", i);	 
+			mysnprintf (name, countof(name), "WINUM%d", i);	 
 			num[i] = TexMan[name];
 		}
 	}
@@ -2004,7 +2004,7 @@ void WI_loadData(void)
 
 		for (i = 0; i < 10; i++)
 		{
-			sprintf (name, "FONTB%d", 16 + i);
+			mysnprintf (name, countof(name), "FONTB%d", 16 + i);
 			num[i] = TexMan[name];
 		}
 	}

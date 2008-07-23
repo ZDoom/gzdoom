@@ -1174,7 +1174,7 @@ void C_DrawConsole (bool hw2d)
 				if (TickerLabel)
 				{
 					tickbegin = (int)strlen (TickerLabel) + 2;
-					sprintf (tickstr, "%s: ", TickerLabel);
+					mysnprintf (tickstr, countof(tickstr), "%s: ", TickerLabel);
 				}
 				if (tickend > 256 - ConFont->GetCharWidth(0x12))
 					tickend = 256 - ConFont->GetCharWidth(0x12);
@@ -1184,7 +1184,8 @@ void C_DrawConsole (bool hw2d)
 				tickstr[tickend + 2] = ' ';
 				if (TickerPercent)
 				{
-					sprintf (tickstr + tickend + 3, "%d%%", Scale (TickerAt, 100, TickerMax));
+					mysnprintf (tickstr + tickend + 3, countof(tickstr) - tickend - 3,
+						"%d%%", Scale (TickerAt, 100, TickerMax));
 				}
 				else
 				{

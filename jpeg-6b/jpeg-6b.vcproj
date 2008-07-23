@@ -406,6 +406,10 @@
 			</File>
 		</Filter>
 		<File
+			RelativePath=".\CMakeLists.txt"
+			>
+		</File>
+		<File
 			RelativePath=".\readme-zdoom.txt"
 			>
 		</File>

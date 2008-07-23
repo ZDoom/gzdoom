@@ -1379,7 +1379,7 @@ bool DoArbitrate (void *userdata)
 
 			stream = &netbuffer[4];
 			s = ReadString (&stream);
-			strncpy (startmap, s, 8);
+			startmap = FString(s, 8);
 			delete[] s;
 			rngseed = ReadLong (&stream);
 			C_ReadCVars (&stream);
@@ -1600,10 +1600,10 @@ void D_CheckNetGame (void)
 
 	if (Args->CheckParm ("-debugfile"))
 	{
-		char	filename[20];
-		sprintf (filename,"debug%i.txt",consoleplayer);
-		Printf ("debug output to: %s\n",filename);
-		debugfile = fopen (filename,"w");
+		char filename[20];
+		mysnprintf (filename, countof(filename), "debug%i.txt", consoleplayer);
+		Printf ("debug output to: %s\n", filename);
+		debugfile = fopen (filename, "w");
 	}
 
 	if (netgame)

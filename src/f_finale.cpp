@@ -997,7 +997,7 @@ void F_BunnyScroll (void)
 			laststage = stage;
 		}
 
-		sprintf (name, "END%d", (int)stage);
+		mysnprintf (name, countof(name), "END%d", (int)stage);
 		screen->DrawTexture (TexMan(name), (320-13*8)/2, (200-8*8)/2, DTA_320x200, true, TAG_DONE);
 	}
 }

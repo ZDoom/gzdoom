@@ -179,7 +179,7 @@ static void DrawHudNumber(int color, int num, int x, int y, int trans=0xc000)
 {
 	char text[15];
 
-	sprintf(text, "%d", num);
+	mysnprintf(text, countof(text), "%d", num);
 	DrawHudText(color, text, x, y, trans);
 }
 
@@ -206,7 +206,7 @@ static void DrawStatus(player_t * CPlayer, int x, int y)
 			DTA_KeepRatio, true,
 			DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, 0xc000, TAG_DONE);
 
-		sprintf(tempstr, "%i ", CPlayer->accuracy);
+		mysnprintf(tempstr, countof(tempstr), "%i ", CPlayer->accuracy);
 		screen->DrawText(hudcolor_stats, x+space, y, tempstr,
 			DTA_KeepRatio, true,
 			DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, 0xc000, TAG_DONE);
@@ -216,7 +216,7 @@ static void DrawStatus(player_t * CPlayer, int x, int y)
 			DTA_KeepRatio, true,
 			DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, 0xc000, TAG_DONE);
 
-		sprintf(tempstr, "%i ", CPlayer->stamina);
+		mysnprintf(tempstr, countof(tempstr), "%i ", CPlayer->stamina);
 		screen->DrawText(hudcolor_stats, x+space, y, tempstr,
 			DTA_KeepRatio, true,
 			DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, 0xc000, TAG_DONE);
@@ -235,7 +235,7 @@ static void DrawStatus(player_t * CPlayer, int x, int y)
 				DTA_KeepRatio, true,
 				DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, 0xc000, TAG_DONE);
 
-			sprintf(tempstr, "%i/%i ", multiplayer? CPlayer->secretcount : level.found_secrets, level.total_secrets);
+			mysnprintf(tempstr, countof(tempstr), "%i/%i ", multiplayer? CPlayer->secretcount : level.found_secrets, level.total_secrets);
 			screen->DrawText(hudcolor_stats, x+space, y, tempstr,
 				DTA_KeepRatio, true,
 				DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, 0xc000, TAG_DONE);
@@ -248,7 +248,7 @@ static void DrawStatus(player_t * CPlayer, int x, int y)
 				DTA_KeepRatio, true,
 				DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, 0xc000, TAG_DONE);
 
-			sprintf(tempstr, "%i/%i ", multiplayer? CPlayer->itemcount : level.found_items, level.total_items);
+			mysnprintf(tempstr, countof(tempstr), "%i/%i ", multiplayer? CPlayer->itemcount : level.found_items, level.total_items);
 			screen->DrawText(hudcolor_stats, x+space, y, tempstr,
 				DTA_KeepRatio, true,
 				DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, 0xc000, TAG_DONE);
@@ -261,7 +261,7 @@ static void DrawStatus(player_t * CPlayer, int x, int y)
 				DTA_KeepRatio, true,
 				DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, 0xc000, TAG_DONE);
 
-			sprintf(tempstr, "%i/%i ", multiplayer? CPlayer->killcount : level.killed_monsters, level.total_monsters);
+			mysnprintf(tempstr, countof(tempstr), "%i/%i ", multiplayer? CPlayer->killcount : level.killed_monsters, level.total_monsters);
 			screen->DrawText(hudcolor_stats, x+space, y, tempstr,
 				DTA_KeepRatio, true,
 				DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, 0xc000, TAG_DONE);
@@ -548,7 +548,7 @@ static int DrawAmmo(player_t * CPlayer, int x, int y)
 		int maxammo = inv->MaxAmount;
 		int ammo = ammoitem? ammoitem->Amount : 0;
 
-		sprintf(buf,"%3d/%3d", ammo,maxammo);
+		mysnprintf(buf, countof(buf), "%3d/%3d", ammo, maxammo);
 
 		int tex_width= clamp<int>(ConFont->StringWidth(buf)-def_width, 0, 1000);
 
@@ -692,7 +692,7 @@ static void DrawInventory(player_t * CPlayer, int x,int y)
 					{
 						char buffer[10];
 						int xx;
-						sprintf(buffer,"%d",rover->Amount);
+						mysnprintf(buffer, countof(buffer), "%d", rover->Amount);
 						if (rover->Amount>=1000) xx = 32 - IndexFont->StringWidth(buffer);
 						else xx = 22;
 
@@ -764,17 +764,17 @@ static void DrawCoordinates(player_t * CPlayer)
 	int xpos = vwidth - SmallFont->StringWidth("X: -00000")-6;
 	int ypos = 18;
 
-	sprintf(coordstr, "X: %d", x>>FRACBITS);
+	mysnprintf(coordstr, countof(coordstr), "X: %d", x>>FRACBITS);
 	screen->DrawText(hudcolor_xyco, xpos, ypos, coordstr,
 		DTA_KeepRatio, true,
 		DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
 
-	sprintf(coordstr, "Y: %d", y>>FRACBITS);
+	mysnprintf(coordstr, countof(coordstr), "Y: %d", y>>FRACBITS);
 	screen->DrawText(hudcolor_xyco, xpos, ypos+h, coordstr,
 		DTA_KeepRatio, true,
 		DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
 
-	sprintf(coordstr, "Z: %d", z>>FRACBITS);
+	mysnprintf(coordstr, countof(coordstr), "Z: %d", z>>FRACBITS);
 	screen->DrawText(hudcolor_xyco, xpos, ypos+2*h, coordstr,
 		DTA_KeepRatio, true,
 		DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
@@ -864,15 +864,15 @@ void DrawHUD()
 		if (am_showtotaltime)
 		{
 			seconds = level.totaltime / TICRATE;
-			sprintf(printstr, "%02i:%02i:%02i", seconds/3600, (seconds%3600)/60, seconds%60);
+			mysnprintf(printstr, countof(printstr), "%02i:%02i:%02i", seconds/3600, (seconds%3600)/60, seconds%60);
 			DrawHudText(hudcolor_ttim, printstr, hudwidth-length, bottom, FRACUNIT);
 			bottom -= fonth;
 		}
 
 		if (am_showtime)
 		{
-			seconds= level.time /TICRATE;
-			sprintf(printstr, "%02i:%02i:%02i", seconds/3600, (seconds%3600)/60, seconds%60);
+			seconds = level.time /TICRATE;
+			mysnprintf(printstr, countof(printstr), "%02i:%02i:%02i", seconds/3600, (seconds%3600)/60, seconds%60);
 			DrawHudText(hudcolor_time, printstr, hudwidth-length, bottom, FRACUNIT);
 			bottom -= fonth;
 
@@ -880,12 +880,12 @@ void DrawHUD()
 			if (level.clusterflags&CLUSTER_HUB)
 			{
 				seconds= level.maptime /TICRATE;
-				sprintf(printstr, "%02i:%02i:%02i", seconds/3600, (seconds%3600)/60, seconds%60);
+				mysnprintf(printstr, countof(printstr), "%02i:%02i:%02i", seconds/3600, (seconds%3600)/60, seconds%60);
 				DrawHudText(hudcolor_ltim, printstr, hudwidth-length, bottom, FRACUNIT);
 			}
 		}
 
-		sprintf(printstr,"%s: %s",level.mapname,level.level_name);
+		mysnprintf(printstr, countof(printstr), "%s: %s", level.mapname, level.level_name);
 		screen->DrawText(hudcolor_titl, 1, hudheight-fonth-1, printstr,
 			DTA_KeepRatio, true,
 			DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, TAG_DONE);

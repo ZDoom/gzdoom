@@ -170,6 +170,10 @@
 	</References>
 	<Files>
 		<File
+			RelativePath=".\CMakeLists.txt"
+			>
+		</File>
+		<File
 			RelativePath=".\fixrtext.c"
 			>
 		</File>

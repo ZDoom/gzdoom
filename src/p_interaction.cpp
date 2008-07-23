@@ -265,7 +265,7 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker)
 			attacker->player->frags[attacker->player - players]++;
 			self = attacker;
 			gender = self->player->userinfo.gender;
-			sprintf (gendermessage, "OB_FRIENDLY%c", '1' + (pr_obituary() & 3));
+			mysnprintf (gendermessage, countof(gendermessage), "OB_FRIENDLY%c", '1' + (pr_obituary() & 3));
 			message = GStrings(gendermessage);
 		}
 		else

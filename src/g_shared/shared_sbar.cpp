@@ -109,10 +109,10 @@ CUSTOM_CVAR (Int, crosshair, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 		num = -num;
 	}
 	size = (SCREENWIDTH < 640) ? 'S' : 'B';
-	sprintf (name, "XHAIR%c%d", size, num);
+	mysnprintf (name, countof(name), "XHAIR%c%d", size, num);
 	if ((lump = Wads.CheckNumForName (name, ns_graphics)) == -1)
 	{
-		sprintf (name, "XHAIR%c1", size);
+		mysnprintf (name, countof(name), "XHAIR%c1", size);
 		if ((lump = Wads.CheckNumForName (name, ns_graphics)) == -1)
 		{
 			strcpy (name, "XHAIRS1");
@@ -1155,7 +1155,7 @@ void DBaseStatusBar::Draw (EHudState state)
 		value = &CPlayer->mo->z;
 		for (i = 2, value = &CPlayer->mo->z; i >= 0; y -= height, --value, --i)
 		{
-			sprintf (line, "%c: %d", labels[i], *value >> FRACBITS);
+			mysnprintf (line, countof(line), "%c: %d", labels[i], *value >> FRACBITS);
 			screen->DrawText (CR_GREEN, xpos, y, line, 
 				DTA_KeepRatio, true,
 				DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, 				
@@ -1184,13 +1184,13 @@ void DBaseStatusBar::Draw (EHudState state)
 		y = 8;
 		if (am_showtime)
 		{
-			sprintf (line, "%02d:%02d:%02d", time/3600, (time%3600)/60, time%60);	// Time
+			mysnprintf (line, countof(line), "%02d:%02d:%02d", time/3600, (time%3600)/60, time%60);	// Time
 			screen->DrawText (CR_GREY, SCREENWIDTH - 80*CleanXfac, y, line, DTA_CleanNoMove, true, TAG_DONE);
 			y+=8*CleanYfac;
 		}
 		if (am_showtotaltime)
 		{
-			sprintf (line, "%02d:%02d:%02d", totaltime/3600, (totaltime%3600)/60, totaltime%60);	// Total time
+			mysnprintf (line, countof(line), "%02d:%02d:%02d", totaltime/3600, (totaltime%3600)/60, totaltime%60);	// Total time
 			screen->DrawText (CR_GREY, SCREENWIDTH - 80*CleanXfac, y, line, DTA_CleanNoMove, true, TAG_DONE);
 		}
 
@@ -1233,7 +1233,7 @@ void DBaseStatusBar::Draw (EHudState state)
 		i = 0;
 		if (cluster == NULL || !(cluster->flags & CLUSTER_HUB))
 		{
-			i = sprintf (line, "%s: ", level.mapname);
+			i = mysnprintf (line, countof(line), "%s: ", level.mapname);
 		}
 		line[i] = TEXTCOLOR_ESCAPE;
 		line[i+1] = CR_GREY + 'A';
@@ -1249,9 +1249,8 @@ void DBaseStatusBar::Draw (EHudState state)
 			// Draw monster count
 			if (am_showmonsters)
 			{
-				sprintf (line, "MONSTERS:"
-							   TEXTCOLOR_GREY " %d/%d",
-							   level.killed_monsters, level.total_monsters);
+				mysnprintf (line, countof(line), "MONSTERS:" TEXTCOLOR_GREY " %d/%d",
+					level.killed_monsters, level.total_monsters);
 				screen->DrawText (highlight, 8, y, line,
 					DTA_CleanNoMove, true, TAG_DONE);
 				y += height;
@@ -1260,9 +1259,8 @@ void DBaseStatusBar::Draw (EHudState state)
 			// Draw secret count
 			if (am_showsecrets)
 			{
-				sprintf (line, "SECRETS:"
-							   TEXTCOLOR_GREY " %d/%d",
-							   level.found_secrets, level.total_secrets);
+				mysnprintf (line, countof(line), "SECRETS:" TEXTCOLOR_GREY " %d/%d",
+					level.found_secrets, level.total_secrets);
 				screen->DrawText (highlight, 8, y, line,
 					DTA_CleanNoMove, true, TAG_DONE);
 				y += height;
@@ -1271,9 +1269,8 @@ void DBaseStatusBar::Draw (EHudState state)
 			// Draw item count
 			if (am_showitems)
 			{
-				sprintf (line, "ITEMS:"
-							   TEXTCOLOR_GREY " %d/%d",
-							   level.found_items, level.total_items);
+				mysnprintf (line, countof(line), "ITEMS:" TEXTCOLOR_GREY " %d/%d",
+					level.found_items, level.total_items);
 				screen->DrawText (highlight, 8, y, line,
 					DTA_CleanNoMove, true, TAG_DONE);
 			}
@@ -1661,16 +1658,16 @@ void DBaseStatusBar::AddFaceToImageCollectionActual (void *skn, FImageCollection
 	{
 		for (j = 0; j < ST_NUMSTRAIGHTFACES; j++)
 		{
-			sprintf (names[facenum++], "%sST%d%d", prefix, i, j);
+			mysnprintf (names[facenum++], countof(names[0]), "%sST%d%d", prefix, i, j);
 		}
-		sprintf (names[facenum++], "%sTR%d0", prefix, i);  // turn right
-		sprintf (names[facenum++], "%sTL%d0", prefix, i);  // turn left
-		sprintf (names[facenum++], "%sOUCH%d", prefix, i); // ouch!
-		sprintf (names[facenum++], "%sEVL%d", prefix, i);  // evil grin ;)
-		sprintf (names[facenum++], "%sKILL%d", prefix, i); // pissed off
+		mysnprintf (names[facenum++], countof(names[0]), "%sTR%d0", prefix, i);  // turn right
+		mysnprintf (names[facenum++], countof(names[0]), "%sTL%d0", prefix, i);  // turn left
+		mysnprintf (names[facenum++], countof(names[0]), "%sOUCH%d", prefix, i); // ouch!
+		mysnprintf (names[facenum++], countof(names[0]), "%sEVL%d", prefix, i);  // evil grin ;)
+		mysnprintf (names[facenum++], countof(names[0]), "%sKILL%d", prefix, i); // pissed off
 	}
-	sprintf (names[facenum++], "%sGOD0", prefix);
-	sprintf (names[facenum++], "%sDEAD0", prefix);
+	mysnprintf (names[facenum++], countof(names[0]), "%sGOD0", prefix);
+	mysnprintf (names[facenum++], countof(names[0]), "%sDEAD0", prefix);
 
 	images->Add (nameptrs, ST_NUMFACES, namespc);
 }

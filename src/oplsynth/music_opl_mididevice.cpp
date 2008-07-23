@@ -45,9 +45,9 @@
 
 // MACROS ------------------------------------------------------------------
 
-#if defined(_DEBUG) && defined(_WIN32)
+#if defined(_DEBUG) && defined(_WIN32) && defined(_MSC_VER)
 #define DEBUGOUT(m,c,s,t) \
-	{ char foo[128]; sprintf(foo, m, c, s, t); OutputDebugString(foo); }
+	{ char foo[128]; mysnprintf(foo, countof(foo), m, c, s, t); OutputDebugString(foo); }
 #else
 #define DEBUGOUT(m,c,s,t)
 #endif

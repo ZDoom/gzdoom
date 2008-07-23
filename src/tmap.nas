@@ -33,7 +33,7 @@
 
 BITS 32
 
-%include "src/valgrind.inc"
+%include "valgrind.inc"
 
 ; Segment/section definition macros. 
 

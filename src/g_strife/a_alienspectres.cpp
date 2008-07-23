@@ -577,7 +577,7 @@ void A_AlienSpectreDeath (AActor *self)
 	{
 		return;
 	}
-	sprintf (voc, "svox/voc%d", log);
+	mysnprintf (voc, countof(voc), "svox/voc%d", log);
 	S_Sound (CHAN_VOICE, voc, 1, ATTN_NORM);
 	player->player->SetLogNumber (log);
 }

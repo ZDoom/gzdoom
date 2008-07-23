@@ -1,3 +1,26 @@
+July 21, 2008
+- Converted most sprintf (and all wsprintf) calls to either mysnprintf or
+  FStrings, depending on the situation.
+- Changed the strings in the wbstartstruct to be FStrings.
+- Changed myvsnprintf() to output nothing if count is greater than INT_MAX.
+  This is so that I can use a series of mysnprintf() calls and advance the
+  pointer for each one. Once the pointer goes beyond the end of the buffer,
+  the count will go negative, but since it's an unsigned type it will be
+  seen as excessively huge instead. This should not be a problem, as there's
+  no reason for ZDoom to be using text buffers larger than 2 GB anywhere.
+- Ripped out the disabled bit from FGameConfigFile::MigrateOldConfig().
+- Changed CalcMapName() to return an FString instead of a pointer to a static
+  buffer.
+- Changed startmap in d_main.cpp into an FString.
+- Changed CheckWarpTransMap() to take an FString& as the first argument.
+- Changed d_mapname in g_level.cpp into an FString.
+- Changed DoSubstitution() in ct_chat.cpp to place the substitutions in an
+  FString.
+- Fixed: The MAPINFO parser wrote into the string buffer to construct a map
+  name when given a Hexen map number. This was fine with the old scanner
+  code, but only a happy coincidence prevents it from crashing with the new
+  code.
+
 July 21, 2008 (Changes by Graf Zahl)
 - Added MF4_BOSSDEATH to the Minotaur.
 - Fixed: The boss brain looped to the wrong state.
@@ -31,6 +54,31 @@ July 18, 2008 (Changes by Graf Zahl)
 - Added const char &operator[] (unsigned int index) to FString class.
 - Added Skulltag's Teleport_NoStop action special.
 
+July 17, 2008
+- Added the 'B' conversion specifier to StringFormat::VWorker() for printing
+  binary numbers.
+
+July 16, 2008
+- Added CMake support for building with MinGW, MSYS, and NMake. Linux support
+  is probably broken until I get around to booting into Linux again. Niceties
+  provided over the existing Makefiles they're replacing:
+  * All command-line builds can use the same build system, rather than having
+    a separate one for MinGW and another for Linux.
+  * Microsoft's NMake tool is supported as a target.
+  * Progress meters.
+  * Parallel makes work from a fresh checkout without needing to be primed
+    first with a single-threaded make.
+  * Porting to other architectures should be simplified, whenever that day
+    comes.
+
+July 15, 2008
+- Replaced the makewad tool with zipdir. This handles the dependency tracking
+  itself instead of generating an external makefile to do it, since I couldn't
+  figure out how to generate a makefile with an external tool and include it
+  with a CMake-generated makefile. Where makewad used a master list of files
+  to generate the package file, zipdir just zips the entire contents of one or
+  more directories.
+
 July 15, 2008 (Changes by Graf Zahl)
 - Fixed: Strife's EntityBoss didn't copy friendliness information to the
   sub-entities.
@@ -55,6 +103,10 @@ July 12, 2008 (Changes by Graf Zahl)
   NULL.
 - Fixed: ACS's ActivatorSound must check if the activator is valid.
 - Changed stats drawing so that multi-line strings can be used.
+
+July 9, 2008
+- Added the gdtoa package from netlib's fp library so that ZDoom's printf-style
+  formatting can be entirely independant of the CRT.
 
 July 5, 2008
 - Added a check to G_DoSaveGame() to prevent saving when you're not actually

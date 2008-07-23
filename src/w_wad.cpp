@@ -465,13 +465,10 @@ void FWadCollection::AddFile (const char *filename, const char * data, int lengt
 			// Rearrange the name and extension in a part of the lump record
 			// that I don't have any use for in order to cnstruct the fullname.
 			rff_p->Name[8] = '\0';
-			sprintf ((char *)rff_p->IDontKnow, "%s.", rff_p->Name);
-			rff_p->Name[0] = '\0';
+			strcpy ((char *)rff_p->IDontKnow, rff_p->Name);
+			strcat ((char *)rff_p->IDontKnow, ".");
 			strcat ((char *)rff_p->IDontKnow, rff_p->Extension);
 			lump_p->fullname = copystring ((char *)rff_p->IDontKnow);
-			if (strstr ((char *)rff_p->IDontKnow, "TILE"))
-				rff_p = rff_p;
-
 			lump_p++;
 		}
 		Printf (" (%u files)", header.rff.NumLumps);
@@ -715,7 +712,7 @@ void FWadCollection::AddFile (const char *filename, const char * data, int lengt
 	{
 		char path[256];
 
-		sprintf(path, "%s:", filename);
+		mysnprintf(path, countof(path), "%s:", filename);
 		char * wadstr = path+strlen(path);
 
 		for(unsigned int i = 0; i < EmbeddedWADs.Size(); i++)

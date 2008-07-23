@@ -241,7 +241,7 @@ void cht_DoCheat (player_t *player, int cheat)
 			int killcount = P_Massacre ();
 			// killough 3/22/98: make more intelligent about plural
 			// Ty 03/27/98 - string(s) *not* externalized
-			sprintf (msgbuild, "%d Monster%s Killed", killcount, killcount==1 ? "" : "s");
+			mysnprintf (msgbuild, countof(msgbuild), "%d Monster%s Killed", killcount, killcount==1 ? "" : "s");
 			msg = msgbuild;
 		}
 		break;

@@ -201,21 +201,21 @@ void S_NoiseDebug (void)
 		else
 		{
 			// X coordinate
-			sprintf (temp, "%.0f", origin.X);
+			mysnprintf (temp, countof(temp), "%.0f", origin.X);
 			screen->DrawText (color, 70, y, temp, TAG_DONE);
 
 			// Y coordinate
-			sprintf (temp, "%.0f", origin.Z);
+			mysnprintf (temp, countof(temp), "%.0f", origin.Z);
 			screen->DrawText (color, 120, y, temp, TAG_DONE);
 
 			// Z coordinate
-			sprintf (temp, "%.0f", origin.Y);
+			mysnprintf (temp, countof(temp), "%.0f", origin.Y);
 			screen->DrawText (color, 170, y, temp, TAG_DONE);
 
 			// Distance
 			if (chan->DistanceScale > 0)
 			{
-				sprintf (temp, "%.0f", (origin - listener).Length());
+				mysnprintf (temp, countof(temp), "%.0f", (origin - listener).Length());
 				screen->DrawText (color, 260, y, temp, TAG_DONE);
 			}
 			else
@@ -225,15 +225,15 @@ void S_NoiseDebug (void)
 		}
 
 		// Volume
-		sprintf (temp, "%.2g", chan->Volume);
+		mysnprintf (temp, countof(temp), "%.2g", chan->Volume);
 		screen->DrawText (color, 220, y, temp, TAG_DONE);
 
 		// Channel
-		sprintf (temp, "%d", chan->EntChannel);
+		mysnprintf (temp, countof(temp), "%d", chan->EntChannel);
 		screen->DrawText (color, 300, y, temp, TAG_DONE);
 
 		// Flags
-		sprintf (temp, "%s3%sZ%sU%sM%sN%sA%sL%sE",
+		mysnprintf (temp, countof(temp), "%s3%sZ%sU%sM%sN%sA%sL%sE",
 			(chan->ChanFlags & CHAN_IS3D)			? TEXTCOLOR_GREEN : TEXTCOLOR_BLACK,
 			(chan->ChanFlags & CHAN_LISTENERZ)		? TEXTCOLOR_GREEN : TEXTCOLOR_BLACK,
 			(chan->ChanFlags & CHAN_UI)				? TEXTCOLOR_GREEN : TEXTCOLOR_BLACK,
@@ -1770,13 +1770,13 @@ bool S_ChangeCDMusic (int track, unsigned int id, bool looping)
 {
 	char temp[32];
 
-	if (id)
+	if (id != 0)
 	{
-		sprintf (temp, ",CD,%d,%x", track, id);
+		mysnprintf (temp, countof(temp), ",CD,%d,%x", track, id);
 	}
 	else
 	{
-		sprintf (temp, ",CD,%d", track);
+		mysnprintf (temp, countof(temp), ",CD,%d", track);
 	}
 	return S_ChangeMusic (temp, 0, looping);
 }
@@ -2054,7 +2054,7 @@ CCMD (playsound)
 CCMD (idmus)
 {
 	level_info_t *info;
-	char *map;
+	FString map;
 	int l;
 
 	if (argv.argc() > 1)
@@ -2063,7 +2063,9 @@ CCMD (idmus)
 		{
 			l = atoi (argv[1]);
 			if (l <= 99)
+			{
 				map = CalcMapName (0, l);
+			}
 			else
 			{
 				Printf ("%s\n", GStrings("STSTR_NOMUS"));
@@ -2137,9 +2139,13 @@ CCMD (cd_play)
 	char musname[16];
 
 	if (argv.argc() == 1)
+	{
 		strcpy (musname, ",CD,");
+	}
 	else
-		sprintf (musname, ",CD,%d", atoi(argv[1]));
+	{
+		mysnprintf (musname, countof(musname), ",CD,%d", atoi(argv[1]));
+	}
 	S_ChangeMusic (musname, 0, true);
 }
 

@@ -819,7 +819,7 @@ void DFrameBuffer::DrawRateStuff ()
 			int chars;
 			int rate_x;
 
-			chars = sprintf (fpsbuff, "%2u ms (%3u fps)", howlong, LastCount);
+			chars = mysnprintf (fpsbuff, countof(fpsbuff), "%2u ms (%3u fps)", howlong, LastCount);
 			rate_x = Width - chars * 8;
 			Clear (rate_x, 0, Width, 8, 0, 0);
 			SetFont (ConFont);

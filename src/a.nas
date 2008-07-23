@@ -3,7 +3,7 @@
 ; See the included license file "BUILDLIC.TXT" for license info.
 ; This file has been modified from Ken Silverman's original release
 
-%include "src/valgrind.inc"
+%include "valgrind.inc"
 
 	SECTION .data
 

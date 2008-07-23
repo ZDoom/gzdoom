@@ -68,7 +68,7 @@ extern GameMission_t	gamemission;
 // Selected skill type, map etc.
 //
 
-extern	char			startmap[8];		// [RH] Actual map name now
+extern	FString			startmap;			// [RH] Actual map name now
 
 extern	bool 			autostart;
 

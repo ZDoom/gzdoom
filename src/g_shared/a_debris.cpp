@@ -41,7 +41,7 @@ void P_SpawnDirt (AActor *actor, fixed_t radius)
 	z = actor->z + (pr_dirt()<<9) + FRACUNIT;
 
 	char fmt[8];
-	sprintf(fmt, "Dirt%d", 1 + pr_dirt()%6);
+	mysnprintf(fmt, countof(fmt), "Dirt%d", 1 + pr_dirt()%6);
 	dtype = PClass::FindClass(fmt);
 	if (dtype)
 	{

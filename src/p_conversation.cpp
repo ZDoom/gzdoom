@@ -328,7 +328,7 @@ static FStrifeDialogueNode *ReadRetailNode (FileReader *lump, DWORD &prevSpeaker
 
 	// The speaker's voice for this node, if any.
 	speech.Backdrop[0] = 0; 	//speech.Sound[8] = 0;
-	sprintf (fullsound, "svox/%s", speech.Sound);
+	mysnprintf (fullsound, countof(fullsound), "svox/%s", speech.Sound);
 	node->SpeakerVoice = fullsound;
 
 	// The speaker's name, if any.
@@ -397,7 +397,7 @@ static FStrifeDialogueNode *ReadTeaserNode (FileReader *lump, DWORD &prevSpeaker
 	// The speaker's voice for this node, if any.
 	if (speech.VoiceNumber != 0)
 	{
-		sprintf (fullsound, "svox/voc%u", speech.VoiceNumber);
+		mysnprintf (fullsound, countof(fullsound), "svox/voc%u", speech.VoiceNumber);
 		node->SpeakerVoice = fullsound;
 	}
 	else
@@ -491,7 +491,7 @@ static void ParseReplies (FStrifeDialogueReply **replyptr, Response *responses)
 		{
 			char moneystr[128];
 
-			sprintf (moneystr, "%s for %u", rsp->Reply, rsp->Count[0]);
+			mysnprintf (moneystr, countof(moneystr), "%s for %u", rsp->Reply, rsp->Count[0]);
 			reply->Reply = copystring (moneystr);
 			reply->NeedsGold = true;
 		}
@@ -759,7 +759,7 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 		++i;
 	}
 	char goodbye[25];
-	sprintf(goodbye, "TXT_RANDOMGOODBYE_%d", 1+(pr_randomspeech() % NUM_RANDOM_GOODBYES));
+	mysnprintf(goodbye, countof(goodbye), "TXT_RANDOMGOODBYE_%d", 1+(pr_randomspeech() % NUM_RANDOM_GOODBYES));
 	item.label = (char*)GStrings[goodbye];
 	if (item.label == NULL) item.label = "Bye.";
 	item.b.position = i;
@@ -907,7 +907,7 @@ static void DrawConversationMenu ()
 		AInventory *coin = cp->ConversationPC->FindInventory (RUNTIME_CLASS(ACoin));
 		char goldstr[32];
 
-		sprintf (goldstr, "%d", coin != NULL ? coin->Amount : 0);
+		mysnprintf (goldstr, countof(goldstr), "%d", coin != NULL ? coin->Amount : 0);
 		screen->DrawText (CR_GRAY, 21, 191, goldstr, DTA_320x200, true,
 			DTA_FillColor, 0, DTA_Alpha, HR_SHADOW, TAG_DONE);
 		screen->DrawTexture (TexMan(((AInventory *)GetDefaultByType (RUNTIME_CLASS(ACoin)))->Icon),

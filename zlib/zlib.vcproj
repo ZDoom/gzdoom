@@ -440,6 +440,14 @@
 				>
 			</File>
 		</Filter>
+		<File
+			RelativePath=".\algorithm.txt"
+			>
+		</File>
+		<File
+			RelativePath=".\CMakeLists.txt"
+			>
+		</File>
 	</Files>
 	<Globals>
 	</Globals>

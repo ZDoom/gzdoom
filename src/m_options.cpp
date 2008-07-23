@@ -1417,7 +1417,7 @@ void M_InitVideoModesMenu ()
 		{
 			/*
 			Depths[currval].value = currval;
-			sprintf (name, "%d bit", i);
+			mysnprintf (name, countof(name), "%d bit", i);
 			Depths[currval].name = copystring (name);
 			*/
 			BitTranslate[currval++] = i;
@@ -1761,7 +1761,7 @@ void M_OptDrawer ()
 				{
 					char tbuf[16];
 
-					sprintf (tbuf, "%d.", item->b.position);
+					mysnprintf (tbuf, countof(tbuf), "%d.", item->b.position);
 					x = CurrentMenu->indent - SmallFont->StringWidth (tbuf);
 					screen->DrawText (CR_GREY, x, y, tbuf, DTA_Clean, true, TAG_DONE);
 				}
@@ -2054,10 +2054,10 @@ void M_OptDrawer ()
 			{
 				if (printed)
 				{
-					fillptr += sprintf (fillptr, "    ");
+					fillptr += mysnprintf (fillptr, countof(flagsblah) - (fillptr - flagsblah), "    ");
 				}
 				printed = true;
-				fillptr += sprintf (fillptr, "%s = %d", vars[i]->GetName (), **vars[i]);
+				fillptr += mysnprintf (fillptr, countof(flagsblah) - (fillptr - flagsblah), "%s = %d", vars[i]->GetName (), **vars[i]);
 			}
 		}
 		screen->DrawText (ValueColor,
@@ -3182,7 +3182,7 @@ static void BuildModesList (int hiwidth, int hiheight, int hi_bits)
 				if (/* hi_bits == showbits && */ width == hiwidth && height == hiheight)
 					ModesItems[i].e.highlight = ModesItems[i].a.selmode = c;
 				
-				sprintf (strtemp, "%dx%d%s", width, height, letterbox?TEXTCOLOR_BROWN" LB":"");
+				mysnprintf (strtemp, countof(strtemp), "%dx%d%s", width, height, letterbox?TEXTCOLOR_BROWN" LB":"");
 				ReplaceString (str, strtemp);
 			}
 			else
@@ -3279,7 +3279,7 @@ static void SetModesMenu (int w, int h, int bits)
 	{
 		char strtemp[64];
 
-		sprintf (strtemp, "TESTING %dx%dx%d", w, h, bits);
+		mysnprintf (strtemp, countof(strtemp), "TESTING %dx%dx%d", w, h, bits);
 		ModesItems[VM_ENTERLINE].label = copystring (strtemp);
 		ModesItems[VM_TESTLINE].label = "Please wait 5 seconds...";
 	}
@@ -3334,7 +3334,7 @@ void M_LoadKeys (const char *modname, bool dbl)
 	if (GameNames[gameinfo.gametype] == NULL)
 		return;
 
-	sprintf (section, "%s.%s%sBindings", GameNames[gameinfo.gametype], modname,
+	mysnprintf (section, countof(section), "%s.%s%sBindings", GameNames[gameinfo.gametype], modname,
 		dbl ? ".Double" : ".");
 	if (GameConfig->SetSection (section))
 	{
@@ -3365,7 +3365,7 @@ int M_DoSaveKeys (FConfigFile *config, char *section, int i, bool dbl)
 	return i;
 }
 
-void M_SaveCustomKeys (FConfigFile *config, char *section, char *subsection)
+void M_SaveCustomKeys (FConfigFile *config, char *section, char *subsection, size_t sublen)
 {
 	if (ControlsMenu.items == ControlsItems)
 		return;
@@ -3381,9 +3381,9 @@ void M_SaveCustomKeys (FConfigFile *config, char *section, char *subsection)
 		if (item->type == whitetext)
 		{
 			assert (item->e.command != NULL);
-			sprintf (subsection, "%s.Bindings", item->e.command);
+			mysnprintf (subsection, sublen, "%s.Bindings", item->e.command);
 			M_DoSaveKeys (config, section, (int)i, false);
-			sprintf (subsection, "%s.DoubleBindings", item->e.command);
+			mysnprintf (subsection, sublen, "%s.DoubleBindings", item->e.command);
 			i = M_DoSaveKeys (config, section, (int)i, true);
 		}
 		else

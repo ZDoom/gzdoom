@@ -1755,11 +1755,11 @@ static int PatchPars (int dummy)
 
 		if (moredata) {
 			// At least 3 items on this line, must be E?M? format
-			sprintf (mapname, "E%cM%c", *Line2, *space);
+			mysnprintf (mapname, countof(mapname), "E%cM%c", *Line2, *space);
 			par = atoi (moredata + 1);
 		} else {
 			// Only 2 items, must be MAP?? format
-			sprintf (mapname, "MAP%02d", atoi(Line2) % 100);
+			mysnprintf (mapname, countof(mapname), "MAP%02d", atoi(Line2) % 100);
 			par = atoi (space);
 		}
 
@@ -1939,7 +1939,7 @@ static int PatchText (int oldSize)
 	{		// Music names are never >6 chars
 		char musname[9];
 		level_info_t *info = LevelInfos;
-		sprintf (musname, "d_%s", oldStr);
+		mysnprintf (musname, countof(musname), "d_%s", oldStr);
 
 		while (info->level_name)
 		{
@@ -2577,7 +2577,7 @@ void FinishDehPatch ()
 
 		// Create a new class that will serve as the actual pickup
 		char typeNameBuilder[32];
-		sprintf (typeNameBuilder, "DehackedPickup%d", touchedIndex);
+		mysnprintf (typeNameBuilder, countof(typeNameBuilder), "DehackedPickup%d", touchedIndex);
 		PClass *subclass = RUNTIME_CLASS(ADehackedPickup)->CreateDerivedClass
 			(typeNameBuilder, sizeof(ADehackedPickup));
 		AActor *defaults2 = GetDefaultByType (subclass);

@@ -356,7 +356,7 @@ extern FWorldGlobalArray ACS_GlobalArrays[NUM_GLOBALVARS];
 extern bool savegamerestore;
 
 // mapname will be changed if it is a valid warptrans
-bool CheckWarpTransMap (char mapname[9], bool substitute);
+bool CheckWarpTransMap (FString &mapname, bool substitute);
 
 void G_InitNew (const char *mapname, bool bTitleLevel);
 
@@ -391,7 +391,7 @@ level_info_t *FindLevelInfo (const char *mapname);
 level_info_t *FindLevelByNum (int num);
 level_info_t *CheckLevelRedirect (level_info_t *info);
 
-char *CalcMapName (int episode, int level);
+FString CalcMapName (int episode, int level);
 
 void G_ParseMapInfo (void);
 void G_UnloadMapInfo ();

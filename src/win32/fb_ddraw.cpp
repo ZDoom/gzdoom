@@ -1164,7 +1164,7 @@ void DDrawFB::Update ()
 	}
 
 	unclock (BlitCycles);
-	LOG1 ("cycles = %d\n", BlitCycles);
+	LOG1 ("cycles = %llu\n", BlitCycles);
 
 	Buffer = NULL;
 	LockCount = 0;

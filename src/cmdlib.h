@@ -48,7 +48,7 @@ void	ReplaceString (char **ptr, const char *str);
 
 bool CheckWildcards (const char *pattern, const char *text);
 
-void FormatGUID (char *text, const GUID &guid);
+void FormatGUID (char *buffer, size_t buffsize, const GUID &guid);
 
 const char *myasctime ();
 

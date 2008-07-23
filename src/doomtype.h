@@ -153,23 +153,23 @@ enum
 //
 // Fixed point, 32bit as 16.16.
 //
-#define FRACBITS                        16
-#define FRACUNIT                        (1<<FRACBITS)
+#define FRACBITS						16
+#define FRACUNIT						(1<<FRACBITS)
 
-typedef SDWORD                          fixed_t;
-typedef DWORD                           dsfixed_t;              // fixedpt used by span drawer
+typedef SDWORD							fixed_t;
+typedef DWORD							dsfixed_t;				// fixedpt used by span drawer
 
-#define FIXED_MAX                       (signed)(0x7fffffff)
-#define FIXED_MIN                       (signed)(0x80000000)
+#define FIXED_MAX						(signed)(0x7fffffff)
+#define FIXED_MIN						(signed)(0x80000000)
 
 #define DWORD_MIN						((uint32)0)
 #define DWORD_MAX						((uint32)0xffffffff)
 
 
 #ifdef __GNUC__
-#define GCCPRINTF(stri,firstargi)       __attribute__((format(printf,stri,firstargi)))
-#define GCCFORMAT(stri)                         __attribute__((format(printf,stri,0)))
-#define GCCNOWARN                                       __attribute__((unused))
+#define GCCPRINTF(stri,firstargi)		__attribute__((format(printf,stri,firstargi)))
+#define GCCFORMAT(stri)					__attribute__((format(printf,stri,0)))
+#define GCCNOWARN						__attribute__((unused))
 #else
 #define GCCPRINTF(a,b)
 #define GCCFORMAT(a)
@@ -183,6 +183,10 @@ int STACK_ARGS Printf (const char *, ...) GCCPRINTF(1,2);
 
 // [RH] Same here:
 int STACK_ARGS DPrintf (const char *, ...) GCCPRINTF(1,2);
+
+extern "C" int mysnprintf(char *buffer, size_t count, const char *format, ...) GCCPRINTF(3,4);
+extern "C" int myvsnprintf(char *buffer, size_t count, const char *format, va_list argptr) GCCFORMAT(3);
+
 
 // game print flags
 enum

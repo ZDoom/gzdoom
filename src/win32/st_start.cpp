@@ -548,7 +548,7 @@ void FBasicStartupScreen :: NetProgress(int count)
 	{
 		char buf[16];
 
-		sprintf (buf, "%d/%d", NetCurPos, NetMaxPos);
+		mysnprintf (buf, countof(buf), "%d/%d", NetCurPos, NetMaxPos);
 		SetDlgItemText (NetStartPane, IDC_NETSTARTCOUNT, buf);
 		SendDlgItemMessage (NetStartPane, IDC_NETSTARTPROGRESS, PBM_SETPOS, MIN(NetCurPos, NetMaxPos), 0);
 	}

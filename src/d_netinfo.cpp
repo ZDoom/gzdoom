@@ -411,7 +411,7 @@ void D_UserInfoChanged (FBaseCVar *cvar)
 	if (4 + strlen(cvar->GetName()) + escaped_val.Len() > 256)
 		I_Error ("User info descriptor too big");
 
-	sprintf (foo, "\\%s\\%s", cvar->GetName(), escaped_val.GetChars());
+	mysnprintf (foo, countof(foo), "\\%s\\%s", cvar->GetName(), escaped_val.GetChars());
 
 	Net_WriteByte (DEM_UINFCHANGED);
 	Net_WriteString (foo);

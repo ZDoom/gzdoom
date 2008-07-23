@@ -1017,7 +1017,7 @@ static void S_AddSNDINFO (int lump)
 				char temp[16];
 
 				sc.MustGetNumber ();
-				sprintf (temp, "MAP%02d", sc.Number);
+				mysnprintf (temp, countof(temp), "MAP%02d", sc.Number);
 				info = FindLevelInfo (temp);
 				sc.MustGetString ();
 				if (info->mapname[0] && (!(info->flags & LEVEL_MUSICDEFINED)))

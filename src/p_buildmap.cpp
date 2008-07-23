@@ -373,7 +373,7 @@ static void LoadSectors (sectortype *bsec)
 		sec->floorplane.d = -sec->floortexz;
 		sec->floorplane.c = FRACUNIT;
 		sec->floorplane.ic = FRACUNIT;
-		sprintf (tnam, "BTIL%04d", LittleShort(bsec->floorpicnum));
+		mysnprintf (tnam, countof(tnam), "BTIL%04d", LittleShort(bsec->floorpicnum));
 		sec->floorpic = TexMan.GetTexture (tnam, FTexture::TEX_Build);
 		sec->SetXScale(sector_t::floor, (bsec->floorstat & 8) ? FRACUNIT*2 : FRACUNIT);
 		sec->SetYScale(sector_t::floor, (bsec->floorstat & 8) ? FRACUNIT*2 : FRACUNIT);
@@ -386,7 +386,7 @@ static void LoadSectors (sectortype *bsec)
 		sec->ceilingplane.d = sec->ceilingtexz;
 		sec->ceilingplane.c = -FRACUNIT;
 		sec->ceilingplane.ic = -FRACUNIT;
-		sprintf (tnam, "BTIL%04d", LittleShort(bsec->ceilingpicnum));
+		mysnprintf (tnam, countof(tnam), "BTIL%04d", LittleShort(bsec->ceilingpicnum));
 		sec->ceilingpic = TexMan.GetTexture (tnam, FTexture::TEX_Build);
 		if (bsec->ceilingstat & 1)
 		{
@@ -480,9 +480,9 @@ static void LoadWalls (walltype *walls, int numwalls, sectortype *bsec)
 		char tnam[9];
 		FTextureID overpic, pic;
 
-		sprintf (tnam, "BTIL%04d", LittleShort(walls[i].picnum));
+		mysnprintf (tnam, countof(tnam), "BTIL%04d", LittleShort(walls[i].picnum));
 		pic = TexMan.GetTexture (tnam, FTexture::TEX_Build);
-		sprintf (tnam, "BTIL%04d", LittleShort(walls[i].overpicnum));
+		mysnprintf (tnam, countof(tnam), "BTIL%04d", LittleShort(walls[i].overpicnum));
 		overpic = TexMan.GetTexture (tnam, FTexture::TEX_Build);
 
 		walls[i].x = LittleLong(walls[i].x);
@@ -807,7 +807,7 @@ void ACustomSprite::BeginPlay ()
 	char name[9];
 	Super::BeginPlay ();
 
-	sprintf (name, "BTIL%04d", (args[0] + args[1]*256) & 0xffff);
+	mysnprintf (name, countof(name), "BTIL%04d", (args[0] + args[1]*256) & 0xffff);
 	picnum = TexMan.GetTexture (name, FTexture::TEX_Build);
 
 	scaleX = args[2] * (FRACUNIT/64);

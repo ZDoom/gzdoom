@@ -900,7 +900,7 @@ const char *neterror (void)
 		case WSAEDISCON:			return "EDISCON";
 
 		default:
-			sprintf (neterr, "%d", code);
+			mysnprintf (neterr, countof(neterr), "%d", code);
 			return neterr;
 	}
 }

@@ -738,8 +738,8 @@ void FinishThingdef()
 	for(int i=0;i<31;i++)
 	{
 		char fmt[20];
-		sprintf(fmt, "QuestItem%d", i+1);
-		QuestItemClasses[i]=PClass::FindClass(fmt);
+		mysnprintf(fmt, countof(fmt), "QuestItem%d", i+1);
+		QuestItemClasses[i] = PClass::FindClass(fmt);
 	}
 
 }

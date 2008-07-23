@@ -356,7 +356,7 @@ void player_t::SetLogNumber (int num)
 	char lumpname[16];
 	int lumpnum;
 
-	sprintf (lumpname, "LOG%d", num);
+	mysnprintf (lumpname, countof(lumpname), "LOG%d", num);
 	lumpnum = Wads.CheckNumForName (lumpname);
 	if (lumpnum == -1)
 	{

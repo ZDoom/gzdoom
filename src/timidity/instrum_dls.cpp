@@ -784,7 +784,7 @@ static const char *SourceToString(USHORT usSource)
 		case CONN_SRC_CC93:
 			return "CC93";
 		default:
-			sprintf(unknown, "UNKNOWN (0x%04x)", usSource);
+			mysnprintf(unknown, countof(unknown), "UNKNOWN (0x%04x)", usSource);
 			return unknown;
 	}
 }
@@ -802,7 +802,7 @@ static const char *TransformToString(USHORT usTransform)
 		case CONN_TRN_SWITCH:
 			return "SWITCH";
 		default:
-			sprintf(unknown, "UNKNOWN (0x%04x)", usTransform);
+			mysnprintf(unknown, countof(unknown), "UNKNOWN (0x%04x)", usTransform);
 			return unknown;
 	}
 }
@@ -876,7 +876,7 @@ static const char *DestinationToString(USHORT usDestination)
 		case CONN_DST_FILTER_Q:
 			return "FILTER_Q";
 		default:
-			sprintf(unknown, "UNKNOWN (0x%04x)", usDestination);
+			mysnprintf(unknown, countof(unknown), "UNKNOWN (0x%04x)", usDestination);
 			return unknown;
 	}
 }

@@ -246,13 +246,13 @@ static int ListActionCommands (const char *pattern)
 	for (i = 0; i < NUM_ACTIONS; ++i)
 	{
 		if (pattern == NULL || CheckWildcards (pattern,
-			(sprintf (matcher, "+%s", ActionMaps[i].Name), matcher)))
+			(mysnprintf (matcher, countof(matcher), "+%s", ActionMaps[i].Name), matcher)))
 		{
 			Printf ("+%s\n", ActionMaps[i].Name);
 			count++;
 		}
 		if (pattern == NULL || CheckWildcards (pattern,
-			(sprintf (matcher, "-%s", ActionMaps[i].Name), matcher)))
+			(mysnprintf (matcher, countof(matcher), "-%s", ActionMaps[i].Name), matcher)))
 		{
 			Printf ("-%s\n", ActionMaps[i].Name);
 			count++;

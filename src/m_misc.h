@@ -41,7 +41,7 @@ void M_ScreenShot (const char *filename);
 void M_LoadDefaults ();
 
 bool M_SaveDefaults (const char *filename);
-void M_SaveCustomKeys (FConfigFile *config, char *section, char *subsection);
+void M_SaveCustomKeys (FConfigFile *config, char *section, char *subsection, size_t sublen);
 
 FString GetUserFile (const char *path, bool nodir=false);
 

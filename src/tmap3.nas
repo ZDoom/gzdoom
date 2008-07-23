@@ -1,4 +1,4 @@
-%include "src/valgrind.inc"
+%include "valgrind.inc"
 
 %ifdef M_TARGET_WATCOM
   SEGMENT DATA PUBLIC ALIGN=16 CLASS=DATA USE32

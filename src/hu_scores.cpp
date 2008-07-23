@@ -213,7 +213,7 @@ static void HU_DoDrawScores (player_t *player, player_t *sortedplayers[MAXPLAYER
 			if (teams[i].players)
 			{
 				char score[80];
-				sprintf (score, "%d", teams[i].score);
+				mysnprintf (score, countof(score), "%d", teams[i].score);
 
 				screen->SetFont (BigFont);
 				screen->DrawText (teams[i].GetTextColor (), scorexwidth, gamestate == GS_INTERMISSION ? y * 4 / 5 : y / 2, score,
@@ -277,9 +277,9 @@ static void HU_DrawTimeRemaining (int y)
 		seconds = timeleft / TICRATE;
 
 		if (hours)
-			sprintf (str, "Level ends in %02d:%02d:%02d", hours, minutes, seconds);
+			mysnprintf (str, countof(str), "Level ends in %02d:%02d:%02d", hours, minutes, seconds);
 		else
-			sprintf (str, "Level ends in %02d:%02d", minutes, seconds);
+			mysnprintf (str, countof(str), "Level ends in %02d:%02d", minutes, seconds);
 		
 		screen->DrawText (CR_GREY, SCREENWIDTH/2 - SmallFont->StringWidth (str)/2*CleanXfac,
 			y, str, DTA_CleanNoMove, true, TAG_DONE);
@@ -321,7 +321,7 @@ static void HU_DrawPlayer (player_t *player, bool highlight, int x, int y, int h
 			deathmatch ? color = sb_deathmatch_yourplayercolor : color = sb_cooperative_yourplayercolor;
 	}
 
-	sprintf (str, "%d", deathmatch ? player->fragcount : player->killcount);
+	mysnprintf (str, countof(str), "%d", deathmatch ? player->fragcount : player->killcount);
 
 	screen->DrawText (color, SCREENWIDTH / 4, y, player->playerstate == PST_DEAD && !deathmatch ? "DEAD" : str,
 		DTA_CleanNoMove, true, TAG_DONE);

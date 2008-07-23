@@ -343,6 +343,10 @@
 	</References>
 	<Files>
 		<File
+			RelativePath=".\CMakeLists.txt"
+			>
+		</File>
+		<File
 			RelativePath=".\dehsupp.c"
 			>
 		</File>

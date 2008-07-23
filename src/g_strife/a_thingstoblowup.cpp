@@ -84,7 +84,7 @@ void A_GiveQuestItem (AActor *self)
 
 	char messageid[64];
 
-	sprintf(messageid, "TXT_QUEST_%d", questitem);
+	mysnprintf(messageid, countof(messageid), "TXT_QUEST_%d", questitem);
 	const char * name = GStrings[messageid];
 
 	if (name != NULL)

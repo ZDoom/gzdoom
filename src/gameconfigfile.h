@@ -69,6 +69,7 @@ private:
 
 	char section[64];
 	char *subsection;
+	size_t sublen;
 };
 
 extern FString WeaponSection;

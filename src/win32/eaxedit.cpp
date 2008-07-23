@@ -196,7 +196,7 @@ LRESULT AddEnvToDropDown (HWND hCtl, bool showID, const ReverbContainer *env)
 
 	if (showID)
 	{
-		sprintf (buff, "(%3d,%3d) %s", HIBYTE(env->ID), LOBYTE(env->ID), env->Name);
+		mysnprintf (buff, countof(buff), "(%3d,%3d) %s", HIBYTE(env->ID), LOBYTE(env->ID), env->Name);
 		i = SendMessage (hCtl, CB_ADDSTRING, 0, (LPARAM)buff);
 	}
 	else
@@ -255,9 +255,9 @@ void SetIDEdits (HWND hDlg, WORD id)
 {
 	char text[4];
 
-	sprintf (text, "%d", HIBYTE(id));
+	mysnprintf (text, countof(text), "%d", HIBYTE(id));
 	SendMessage (GetDlgItem (hDlg, IDC_EDITID1), WM_SETTEXT, 0, (LPARAM)text);
-	sprintf (text, "%d", LOBYTE(id));
+	mysnprintf (text, countof(text), "%d", LOBYTE(id));
 	SendMessage (GetDlgItem (hDlg, IDC_EDITID2), WM_SETTEXT, 0, (LPARAM)text);
 }
 
@@ -406,11 +406,11 @@ LRESULT CALLBACK EditControlProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 				int vali = SendMessage (env->SliderHWND, TBM_GETPOS, 0, 0);
 				if (env->Float)
 				{
-					sprintf (buff, "%d.%03d", vali/1000, abs(vali%1000));
+					mysnprintf (buff, countof(buff), "%d.%03d", vali/1000, abs(vali%1000));
 				}
 				else
 				{
-					sprintf (buff, "%d", vali);
+					mysnprintf (buff, countof(buff), "%d", vali);
 				}
 				CallWindowProc (StdEditProc, hWnd, WM_SETTEXT, 0, (LPARAM)buff);
 				CallWindowProc (StdEditProc, hWnd, EM_SETSEL, 0, -1);
@@ -487,7 +487,7 @@ void UpdateControl (const EnvControl *control, int value, bool slider)
 	}
 	if (control->Float)
 	{
-		sprintf (buff, "%d.%03d", value/1000, abs(value%1000));
+		mysnprintf (buff, countof(buff), "%d.%03d", value/1000, abs(value%1000));
 		if (CurrentEnv != NULL)
 		{
 			CurrentEnv->Properties.*control->Float = float(value) / 1000.0;
@@ -495,7 +495,7 @@ void UpdateControl (const EnvControl *control, int value, bool slider)
 	}
 	else
 	{
-		sprintf (buff, "%d", value);
+		mysnprintf (buff, countof(buff), "%d", value);
 		if (CurrentEnv != NULL)
 		{
 			CurrentEnv->Properties.*control->Int = value;
@@ -542,10 +542,10 @@ void UpdateControls (ReverbContainer *env, HWND hDlg)
 	}
 	EnableWindow (GetDlgItem (hDlg, IDC_REVERT), !env->Builtin);
 
-	sprintf (buff, "%d", HIBYTE(env->ID));
+	mysnprintf (buff, countof(buff), "%d", HIBYTE(env->ID));
 	SendMessage (GetDlgItem (hDlg, IDC_ID1), WM_SETTEXT, 0, (LPARAM)buff);
 
-	sprintf (buff, "%d", LOBYTE(env->ID));
+	mysnprintf (buff, countof(buff), "%d", LOBYTE(env->ID));
 	SendMessage (GetDlgItem (hDlg, IDC_ID2), WM_SETTEXT, 0, (LPARAM)buff);
 
 	SavedProperties = env->Properties;
@@ -690,7 +690,7 @@ void SuggestNewName (const ReverbContainer *env, HWND hEdit)
 		{
 			len = 31 - numdigits;
 		}
-		sprintf (text + len, "%d", number);
+		mysnprintf (text + len, countof(text) - len, "%d", number);
 
 		probe = Environments;
 		while (probe != NULL)
@@ -829,7 +829,7 @@ INT_PTR CALLBACK NewEAXProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				static char foo[80];
 				ti.uId = 2;
 				ti.hwnd = GetDlgItem (hDlg, IDC_EDITID2);
-				sprintf (foo, "This ID is already used by \"%s\".", rev->Name);
+				mysnprintf (foo, countof(foo), "This ID is already used by \"%s\".", rev->Name);
 				ti.lpszText = foo;
 				ShowErrorTip (ToolTip, ti, hDlg, "Bad ID");
 			}

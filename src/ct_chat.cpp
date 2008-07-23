@@ -55,7 +55,7 @@ static void CT_ClearChatMessage ();
 static void CT_AddChar (char c);
 static void CT_BackSpace ();
 static void ShoveChatStr (const char *str, BYTE who);
-static bool DoSubstitution (char *out, const char *in);
+static bool DoSubstitution (FString &out, const char *in);
 
 static int len;
 static BYTE ChatQueue[QUEUESIZE];
@@ -309,7 +309,7 @@ static void CT_ClearChatMessage ()
 
 static void ShoveChatStr (const char *str, BYTE who)
 {
-	char substBuff[256];
+	FString substBuff;
 
 	if (str[0] == '/' &&
 		(str[1] == 'm' || str[1] == 'M') &&
@@ -341,20 +341,20 @@ static void ShoveChatStr (const char *str, BYTE who)
 //
 //===========================================================================
 
-static bool DoSubstitution (char *out, const char *in)
+static bool DoSubstitution (FString &out, const char *in)
 {
 	player_t *player = &players[consoleplayer];
 	AWeapon *weapon = player->ReadyWeapon;
 	const char *a, *b;
 
 	a = in;
-	while ((b = strchr (a, '$')))
+	out = "";
+	while ( (b = strchr(a, '$')) )
 	{
-		strncpy (out, a, b - a);
-		out += b - a;
+		out.AppendCStrPart(a, b - a);
 
 		a = ++b;
-		while (*b && isalpha (*b))
+		while (*b && isalpha(*b))
 		{
 			++b;
 		}
@@ -363,71 +363,69 @@ static bool DoSubstitution (char *out, const char *in)
 
 		if (len == 6)
 		{
-			if (strnicmp (a, "health", 6) == 0)
+			if (strnicmp(a, "health", 6) == 0)
 			{
-				out += sprintf (out, "%d", player->health);
+				out.AppendFormat("%d", player->health);
 			}
-			else if (strnicmp (a, "weapon", 6) == 0)
+			else if (strnicmp(a, "weapon", 6) == 0)
 			{
 				if (weapon == NULL)
 				{
-					out += sprintf (out, "no weapon");
+					out += "no weapon";
 				}
 				else
 				{
-					out += sprintf (out, "%s", weapon->GetClass()->TypeName.GetChars());
+					out += weapon->GetClass()->TypeName;
 				}
 			}
 		}
 		else if (len == 5)
 		{
-			if (strnicmp (a, "armor", 5) == 0)
+			if (strnicmp(a, "armor", 5) == 0)
 			{
 				AInventory *armor = player->mo->FindInventory<ABasicArmor>();
-				int armorpoints = armor != NULL ? armor->Amount : 0;
-				out += sprintf (out, "%d", armorpoints);
+				out.AppendFormat("%d", armor != NULL ? armor->Amount : 0);
 			}
 		}
 		else if (len == 9)
 		{
-			if (strnicmp (a, "ammocount", 9) == 0)
+			if (strnicmp(a, "ammocount", 9) == 0)
 			{
 				if (weapon == NULL)
 				{
-					out += sprintf (out, "0");
+					out += '0';
 				}
 				else
 				{
-					out += sprintf (out, "%d", weapon->Ammo1 != NULL ? weapon->Ammo1->Amount : 0);
+					out.AppendFormat("%d", weapon->Ammo1 != NULL ? weapon->Ammo1->Amount : 0);
 					if (weapon->Ammo2 != NULL)
 					{
-						out += sprintf (out, "/%d", weapon->Ammo2->Amount);
+						out.AppendFormat("/%d", weapon->Ammo2->Amount);
 					}
 				}
 			}
 		}
 		else if (len == 4)
 		{
-			if (strnicmp (a, "ammo", 4) == 0)
+			if (strnicmp(a, "ammo", 4) == 0)
 			{
 				if (weapon == NULL || weapon->Ammo1 == NULL)
 				{
-					out += sprintf (out, "no ammo");
+					out += "no ammo";
 				}
 				else
 				{
-					out += sprintf (out, "%s", weapon->Ammo1->GetClass()->TypeName.GetChars());
+					out.AppendFormat("%s", weapon->Ammo1->GetClass()->TypeName.GetChars());
 					if (weapon->Ammo2 != NULL)
 					{
-						out += sprintf (out, "/%s", weapon->Ammo2->GetClass()->TypeName.GetChars());
+						out.AppendFormat("/%s", weapon->Ammo2->GetClass()->TypeName.GetChars());
 					}
 				}
 			}
 		}
 		else if (len == 0)
 		{
-			*out++ = '$';
-			*out = 0;
+			out += '$';
 			if (*b == '$')
 			{
 				b++;
@@ -435,9 +433,8 @@ static bool DoSubstitution (char *out, const char *in)
 		}
 		else
 		{
-			*out++ = '$';
-			strncpy (out, a, len);
-			out += len;
+			out += '$';
+			out.AppendCStrPart(a, len);
 		}
 		a = b;
 	}
@@ -448,7 +445,7 @@ static bool DoSubstitution (char *out, const char *in)
 		return false;
 	}
 
-	strcpy (out, a);
+	out += a;
 	return true;
 }
 

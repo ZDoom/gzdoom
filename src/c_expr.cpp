@@ -351,7 +351,7 @@ static FStringProd *DoubleToString (FProduction *prod)
 	char buf[128];
 	FStringProd *newprod;
 
-	sprintf (buf, "%g", static_cast<FDoubleProd *>(prod)->Value);
+	mysnprintf (buf, countof(buf), "%g", static_cast<FDoubleProd *>(prod)->Value);
 	newprod = NewStringProd (buf);
 	M_Free (prod);
 	return newprod;

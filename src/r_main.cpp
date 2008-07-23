@@ -648,7 +648,7 @@ void R_SetWindow (int windowSize, int fullWidth, int fullHeight, int stHeight)
 		UCVarValue value;
 		char temp[16];
 
-		sprintf (temp, "%d x %d", viewwidth, viewheight);
+		mysnprintf (temp, countof(temp), "%d x %d", viewwidth, viewheight);
 		value.String = temp;
 		r_viewsize.ForceSet (value, CVAR_String);
 	}

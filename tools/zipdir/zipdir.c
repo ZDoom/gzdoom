@@ -31,7 +31,13 @@
 
 #include <sys/stat.h>
 #include <sys/types.h>
+#ifdef _WIN32
 #include <io.h>
+#define stat _stat
+#else
+#include <dirent.h>
+#include <fts.h>
+#endif
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
@@ -78,8 +84,11 @@ dir_tree_t *alloc_dir_tree(const char *dir);
 file_entry_t *alloc_file_entry(const char *prefix, const char *path, time_t last_written);
 void free_dir_tree(dir_tree_t *tree);
 void free_dir_trees(dir_tree_t *tree);
+#ifdef _WIN32
 void recurse_dir(dir_tree_t *tree, const char *dirpath);
 dir_tree_t *add_dir(const char *dirpath);
+#endif
+dir_tree_t *add_dirs(char **argv);
 int count_files(dir_tree_t *trees);
 int __cdecl sort_cmp(const void *a, const void *b);
 file_sorted_t *sort_files(dir_tree_t *trees, int num_files);
@@ -154,13 +163,17 @@ dir_tree_t *alloc_dir_tree(const char *dir)
 file_entry_t *alloc_file_entry(const char *prefix, const char *path, time_t last_written)
 {
 	file_entry_t *entry;
+	char *p;
 
 	entry = malloc(sizeof(file_entry_t) + strlen(prefix) + strlen(path) + 1);
 	if (entry != NULL)
 	{
 		strcpy(entry->path, prefix);
 		strcat(entry->path, path);
-		strlwr(entry->path);
+		for (p = entry->path; *p != '\0'; ++p)
+		{
+			*p = tolower(*p);
+		}
 		entry->next = NULL;
 		entry->time_write = last_written;
 	}
@@ -205,6 +218,8 @@ void free_dir_trees(dir_tree_t *tree)
 	}
 }
 
+#ifdef _WIN32
+
 //==========================================================================
 //
 // recurse_dir
@@ -214,8 +229,8 @@ void free_dir_trees(dir_tree_t *tree)
 void recurse_dir(dir_tree_t *tree, const char *dirpath)
 {
 	struct _finddata_t fileinfo;
-	char *dirmatch;
 	intptr_t handle;
+	char *dirmatch;
 
 	dirmatch = malloc(strlen(dirpath) + 2);
 	if (dirmatch == NULL)
@@ -291,6 +306,101 @@ dir_tree_t *add_dir(const char *dirpath)
 	}
 	return tree;
 }
+
+//==========================================================================
+//
+// add_dirs
+// Windows version
+//
+// Given NULL-terminated array of directory paths, create trees for them.
+//
+//==========================================================================
+
+dir_tree_t *add_dirs(char **argv)
+{
+	dir_tree_t *tree, *trees = NULL;
+
+	while (*argv != NULL)
+	{
+		for (s = *argv; *s != '\0'; ++s)
+		{
+			if (*s == '\\')
+			{
+				*s = '/';
+			}
+		}
+		tree = add_dir(*argv);
+		tree->next = trees;
+		trees = tree;
+		if (no_mem)
+		{
+			break;
+		}
+	}
+	return trees;
+}
+
+#else
+
+//==========================================================================
+//
+// add_dirs
+// 4.4BSD version
+//
+// Given NULL-terminated array of directory paths, create trees for them.
+//
+//==========================================================================
+
+dir_tree_t *add_dirs(char **argv)
+{
+	FTS *fts;
+	FTSENT *ent;
+	dir_tree_t *tree, *trees = NULL;
+	file_entry_t *file;
+
+	fts = fts_open(argv, FTS_LOGICAL, NULL);
+	if (fts == NULL)
+	{
+		fprintf(stderr, "Failed to start directory traversal: %s\n", strerror(errno));
+		return NULL;
+	}
+	while ((ent = fts_read(fts)) != NULL)
+	{
+		if (ent->fts_info == FTS_D && ent->fts_name[0] == '.')
+		{
+			// Skip hidden directories. (Prevents SVN bookkeeping
+			// info from being included.)
+			fts_set(fts, ent, FTS_SKIP);
+		}
+		if (ent->fts_info == FTS_D && ent->fts_level == 0)
+		{
+			tree = alloc_dir_tree(ent->fts_path);
+			if (tree == NULL)
+			{
+				no_mem = 1;
+				break;
+			}
+			tree->next = trees;
+			trees = tree;
+		}
+		if (ent->fts_info != FTS_F)
+		{
+			// We're only interested in remembering files.
+			continue;
+		}
+		file = alloc_file_entry("", ent->fts_path, ent->fts_statp->st_mtime);
+		if (file == NULL)
+		{
+			no_mem = 1;
+			break;
+		}
+		file->next = tree->files;
+		tree->files = file;
+	}
+	fts_close(fts);
+	return trees;
+}
+#endif
 
 //==========================================================================
 //
@@ -501,7 +611,7 @@ int __cdecl main (int argc, char **argv)
 	int i;
 	dir_tree_t *tree, *trees;
 	file_entry_t *file;
-	struct _stat zipstat;
+	struct stat zipstat;
 	int needwrite;
 	char *s;
 
@@ -511,31 +621,16 @@ int __cdecl main (int argc, char **argv)
 		return 1;
 	}
 
-	trees = NULL;
-	for (i = 2; i < argc; ++i)
+	trees = add_dirs(&argv[2]);
+	if(no_mem)
 	{
-#ifdef _WIN32
-		for (s = argv[i]; *s != '\0'; ++s)
-		{
-			if (*s == '\\')
-			{
-				*s = '/';
-			}
-		}
-#endif
-		tree = add_dir(argv[i]);
-		tree->next = trees;
-		trees = tree;
-		if(no_mem)
-		{
-			free_dir_trees(trees);
-			fprintf(stderr, "Out of memory.\n");
-			return 1;
-		}
+		free_dir_trees(trees);
+		fprintf(stderr, "Out of memory.\n");
+		return 1;
 	}
 
 	needwrite = 0;
-	if (_stat(argv[1], &zipstat) != 0)
+	if (stat(argv[1], &zipstat) != 0)
 	{
 		if (errno == ENOENT)
 		{

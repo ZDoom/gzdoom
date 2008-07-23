@@ -81,6 +81,7 @@ ACTOR HereticImpLeader : HereticImp 5
 {
 	Game Heretic
 	SpawnID 7
+	Health 80
 	-MISSILEMORE
 	AttackSound "himp/leaderattack"
 	States

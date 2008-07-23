@@ -675,7 +675,7 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 
 	if (pc->player == &players[consoleplayer])
 	{
-		S_Sound (CHAN_VOICE, "misc/chat", 1, ATTN_NONE);
+		S_Sound (CHAN_VOICE | CHAN_UI, gameinfo.chatSound, 1, ATTN_NONE);
 	}
 
 	npc->reactiontime = 2;

@@ -23,11 +23,4 @@ class APhoenixPuff : public AActor
 
 void P_DSparilTeleport (AActor *actor);
 
-class AStaffPuff : public AActor
-{
-	DECLARE_ACTOR (AStaffPuff, AActor)
-public:
-	void BeginPlay ();
-};
-
 #endif //__A_HERETICGLOBAL_H__

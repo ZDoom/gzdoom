@@ -924,7 +924,7 @@ void D_DoStrifeAdvanceDemo ()
 		pagetic = 10 * TICRATE/35;
 		pagename = "";	// PANEL0, but strife0.wad doesn't have it, so don't use it.
 		PageBlank = true;
-		S_Sound (CHAN_VOICE, "bishop/active", 1, ATTN_NORM);
+		S_Sound (CHAN_VOICE | CHAN_UI, "bishop/active", 1, ATTN_NORM);
 		break;
 
 	case 2:
@@ -935,38 +935,38 @@ void D_DoStrifeAdvanceDemo ()
 	case 3:
 		pagetic = 7 * TICRATE;
 		pagename = "PANEL1";
-		S_Sound (CHAN_VOICE, voices[0], 1, ATTN_NORM);
+		S_Sound (CHAN_VOICE | CHAN_UI, voices[0], 1, ATTN_NORM);
 		S_StartMusic ("d_intro");
 		break;
 
 	case 4:
 		pagetic = 9 * TICRATE;
 		pagename = "PANEL2";
-		S_Sound (CHAN_VOICE, voices[1], 1, ATTN_NORM);
+		S_Sound (CHAN_VOICE | CHAN_UI, voices[1], 1, ATTN_NORM);
 		break;
 
 	case 5:
 		pagetic = 12 * TICRATE;
 		pagename = "PANEL3";
-		S_Sound (CHAN_VOICE, voices[2], 1, ATTN_NORM);
+		S_Sound (CHAN_VOICE | CHAN_UI, voices[2], 1, ATTN_NORM);
 		break;
 
 	case 6:
 		pagetic = 11 * TICRATE;
 		pagename = "PANEL4";
-		S_Sound (CHAN_VOICE, voices[3], 1, ATTN_NORM);
+		S_Sound (CHAN_VOICE | CHAN_UI, voices[3], 1, ATTN_NORM);
 		break;
 
 	case 7:
 		pagetic = 10 * TICRATE;
 		pagename = "PANEL5";
-		S_Sound (CHAN_VOICE, voices[4], 1, ATTN_NORM);
+		S_Sound (CHAN_VOICE | CHAN_UI, voices[4], 1, ATTN_NORM);
 		break;
 
 	case 8:
 		pagetic = 16 * TICRATE;
 		pagename = "PANEL6";
-		S_Sound (CHAN_VOICE, voices[5], 1, ATTN_NORM);
+		S_Sound (CHAN_VOICE | CHAN_UI, voices[5], 1, ATTN_NORM);
 		break;
 
 	case 9:

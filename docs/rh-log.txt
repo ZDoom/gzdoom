@@ -1,3 +1,7 @@
+July 23, 2008 (Changes by Graf Zahl)
+- Fixed: Thew sounds of Strife's intro need CHAN_UI.
+- Changed all instances of playing the chat sounds to use CHAN_UI.
+
 July 21, 2008
 - Converted most sprintf (and all wsprintf) calls to either mysnprintf or
   FStrings, depending on the situation.

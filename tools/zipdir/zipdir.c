@@ -337,6 +337,7 @@ dir_tree_t *add_dirs(char **argv)
 		{
 			break;
 		}
+		argv++;
 	}
 	return trees;
 }

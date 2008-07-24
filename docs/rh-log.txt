@@ -1,5 +1,5 @@
 July 23, 2008 (Changes by Graf Zahl)
-- Fixed: Thew sounds of Strife's intro need CHAN_UI.
+- Fixed: The sounds of Strife's intro need CHAN_UI.
 - Changed all instances of playing the chat sounds to use CHAN_UI.
 
 July 21, 2008

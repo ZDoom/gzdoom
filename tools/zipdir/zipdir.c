@@ -319,6 +319,7 @@ dir_tree_t *add_dir(const char *dirpath)
 dir_tree_t *add_dirs(char **argv)
 {
 	dir_tree_t *tree, *trees = NULL;
+	char *s;
 
 	while (*argv != NULL)
 	{
@@ -608,12 +609,10 @@ int append_to_zip(zipFile zipfile, const file_sorted_t *file)
 
 int __cdecl main (int argc, char **argv)
 {
-	int i;
 	dir_tree_t *tree, *trees;
 	file_entry_t *file;
 	struct stat zipstat;
 	int needwrite;
-	char *s;
 
 	if (argc < 3)
 	{

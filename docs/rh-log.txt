@@ -1,4 +1,6 @@
 July 24, 2008
+- Correct the revision_check target so that it always checks the revision,
+  not just when src/svnrevision.h is not present.
 - Added Linux support for the CMakeLists. This meant downgrading them for
   CMake 2.4, since the distros don't seem to consider 2.6 stable yet.
   As a bonus, GTK+ is no longer a required dependency; now it's optional.

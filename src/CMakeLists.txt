@@ -256,13 +256,10 @@ endif( NOT MSVC )
 
 # Update svnrevision.h
 
-add_custom_command( OUTPUT ${CMAKE_SOURCE_DIR}/src/svnrevision.h
+add_custom_target( revision_check ALL
 	COMMAND ${CMAKE_BINARY_DIR}/tools/updaterevision/updaterevision . src/svnrevision.h
 	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 	DEPENDS updaterevision )
-
-add_custom_target( revision_check ALL
-	DEPENDS ${CMAKE_SOURCE_DIR}/src/svnrevision.h )
 
 # Libraries ZDoom needs
 

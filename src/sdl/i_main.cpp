@@ -40,7 +40,9 @@
 #include <signal.h>
 #include <new>
 #include <sys/param.h>
+#ifndef NO_GTK
 #include <gtk/gtk.h>
+#endif
 #include <locale.h>
 
 #include "doomerrors.h"
@@ -72,7 +74,9 @@ extern "C" int cc_install_handlers(int, int*, const char*, int(*)(char*, char*))
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
+#ifndef NO_GTK
 bool GtkAvailable;
+#endif
 
 // The command line arguments.
 DArgs *Args;
@@ -207,7 +211,9 @@ int main (int argc, char **argv)
 	seteuid (getuid ());
     std::set_new_handler (NewFailure);
 
+#ifndef NO_GTK
 	GtkAvailable = gtk_init_check (&argc, &argv);
+#endif
 	
 	setlocale (LC_ALL, "C");
 

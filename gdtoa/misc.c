@@ -896,5 +896,21 @@ void FREE_DTOA_LOCK(int n)
 	LeaveCriticalSection(&dtoa_lock[n]);
 }
 
+#else
+
+#include <pthread.h>
+
+static pthread_mutex_t dtoa_lock[2] = { PTHREAD_MUTEX_INITIALIZER, PTHREAD_MUTEX_INITIALIZER };
+
+void ACQUIRE_DTOA_LOCK(int n)
+{
+	pthread_mutex_lock(&dtoa_lock[n]);
+}
+
+void FREE_DTOA_LOCK(int n)
+{
+	pthread_mutex_unlock(&dtoa_lock[n]);
+}
+
 #endif
 #endif

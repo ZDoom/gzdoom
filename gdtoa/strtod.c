@@ -85,7 +85,7 @@ strtod
 	int rounding;
 #endif
 
-	_control87(_PC_53, _MCW_PC);
+	//_control87(_PC_53, _MCW_PC);
 	sign = nz0 = nz = decpt = 0;
 	dval(rv) = 0.;
 	for(s = s00;;s++) switch(*s) {

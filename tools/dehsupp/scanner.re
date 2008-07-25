@@ -122,7 +122,10 @@ ESC	= [\\] ([abfnrtv?'"\\] | "x" H+ | O+);
 
 	any
 		{
-		printf("unexpected character: %c\n", *s->tok);
+		if (*s->tok != '\r')
+		{
+			printf("unexpected character: %c (%#02x)\n", *s->tok, *s->tok);
+		}
 		goto std;
 		}
 */

@@ -947,7 +947,7 @@ static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyO
 	}
 
 	// If this actor is already playing something on the selected channel, stop it.
-	if (type != SOURCE_None && (actor == NULL && channel != CHAN_AUTO) || (actor != NULL && actor->SoundChans & (1 << channel)))
+	if (type != SOURCE_None && ((actor == NULL && channel != CHAN_AUTO) || (actor != NULL && actor->SoundChans & (1 << channel))))
 	{
 		for (chan = Channels; chan != NULL; chan = chan->NextChan)
 		{

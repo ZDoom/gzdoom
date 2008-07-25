@@ -1,5 +1,4 @@
 cmake_minimum_required( VERSION 2.4 )
-include( CheckIncludeFiles )
 include( CheckFunctionExists )
 include( CheckTypeSize )
 
@@ -8,11 +7,6 @@ set( PACKAGE_TARNAME re2c )
 set( PACKAGE_VERSION 0.12.3 )
 set( PACKAGE_STRING "re2c 0.12.3" )
 set( PACKAGE_BUGREPORT "re2c-general@lists.sourceforge.net" )
-
-set( PACKAGE ${PACKAGE_NAME} )
-set( VERSION ${PACKAGE_VERSION} )
-
-CHECK_INCLUDE_FILES( unistd.h HAVE_UNISTD_H )
 
 CHECK_FUNCTION_EXISTS( strdup HAVE_STRDUP )
 CHECK_FUNCTION_EXISTS( strndup HAVE_STRNDUP )

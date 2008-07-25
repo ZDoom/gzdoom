@@ -1,5 +1,6 @@
-cmake_minimum_required( VERSION 2.6 )
+cmake_minimum_required( VERSION 2.4 )
 include( CheckFunctionExists )
+include( FindPkgConfig )
 
 option( NO_ASM "Disable assembly code" )
 if( CMAKE_COMPILER_IS_GNUCXX )
@@ -85,6 +86,7 @@ else( WIN32 )
 		/usr/include
 		/opt/local/include
 		/opt/include )
+	set( FMOD_INC_PATH_SUFFIXES PATH_SUFFIXES fmodex )
 	set( NASM_NAMES nasm )
 	
 	# Non-Windows version also needs SDL
@@ -97,13 +99,13 @@ else( WIN32 )
 
 	# Use GTK+ for the IWAD picker, if available.
 	if( NOT NO_GTK )
-		find_package( GTK )
-		if( GTK_FOUND )
-			set( ZDOOM_LIBS ${ZDOOM_LIBS} ${GTK_LIBRARIES )
-			include_directories( "${GTK_LIBRARIES}" )
-		else( GTK_FOUND )
+		pkg_check_modules( GTK2 gtk+-2.0 )
+		if( GTK2_FOUND )
+			set( ZDOOM_LIBS ${ZDOOM_LIBS} ${GTK2_LIBRARIES} )
+			include_directories( ${GTK2_INCLUDE_DIRS} )
+		else( GTK2_FOUND )
 			set( NO_GTK ON )
-		endif( GTK_FOUND )
+		endif( GTK2_FOUND )
 	endif( NOT NO_GTK )
 	
 	if( NO_GTK )
@@ -255,7 +257,7 @@ endif( NOT MSVC )
 # Update svnrevision.h
 
 add_custom_command( OUTPUT ${CMAKE_SOURCE_DIR}/src/svnrevision.h
-	COMMAND updaterevision . src/svnrevision.h
+	COMMAND ${CMAKE_BINARY_DIR}/tools/updaterevision/updaterevision . src/svnrevision.h
 	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 	DEPENDS updaterevision )
 
@@ -300,6 +302,7 @@ else( WIN32 )
 	set( SYSTEM_SOURCES
 		sdl/crashcatcher.c
 		sdl/hardware.cpp
+		sdl/i_cd.cpp
 		sdl/i_input.cpp
 		sdl/i_main.cpp
 		sdl/i_movie.cpp
@@ -323,12 +326,12 @@ endif( NOT NO_ASM )
 
 add_custom_command( OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.c ${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.h
 	COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/xlat/xlat_parser.y .
-	COMMAND lemon xlat_parser.y
+	COMMAND ${CMAKE_BINARY_DIR}/tools/lemon/lemon xlat_parser.y
 	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 	DEPENDS lemon ${CMAKE_CURRENT_SOURCE_DIR}/xlat/xlat_parser.y )
 
 add_custom_command( OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/sc_man_scanner.h
-	COMMAND re2c --no-generation-date -s -o ${CMAKE_CURRENT_BINARY_DIR}/sc_man_scanner.h ${CMAKE_CURRENT_SOURCE_DIR}/sc_man_scanner.re
+	COMMAND ${CMAKE_BINARY_DIR}/tools/re2c/re2c --no-generation-date -s -o ${CMAKE_CURRENT_BINARY_DIR}/sc_man_scanner.h ${CMAKE_CURRENT_SOURCE_DIR}/sc_man_scanner.re
 	DEPENDS re2c ${CMAKE_CURRENT_SOURCE_DIR}/sc_man_scanner.re )
 
 include_directories( ${CMAKE_CURRENT_BINARY_DIR} )
@@ -680,8 +683,17 @@ include_directories( .
 
 add_dependencies( zdoom revision_check )
 
+# RUNTIME_OUTPUT_DIRECTORY does not exist in CMake 2.4.
+# Linux distributions are slow to adopt 2.6. :(
 set_target_properties( zdoom PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${ZDOOM_OUTPUT_DIR} )
 set_target_properties( zdoom PROPERTIES OUTPUT_NAME ${ZDOOM_EXE_NAME} )
+
+if( NOT WIN32 )
+	FILE( WRITE ${CMAKE_CURRENT_BINARY_DIR}/link-make "if [ ! -e ${ZDOOM_OUTPUT_DIR}/${ZDOOM_EXE_NAME} ]; then ln -sf ${CMAKE_CURRENT_BINARY_DIR}/${ZDOOM_EXE_NAME} ${ZDOOM_OUTPUT_DIR}/${ZDOOM_EXE_NAME}; fi" )
+	add_custom_command( TARGET zdoom POST_BUILD
+		COMMAND chmod +x ${CMAKE_CURRENT_BINARY_DIR}/link-make
+		COMMAND /bin/sh -c ${CMAKE_CURRENT_BINARY_DIR}/link-make )
+endif( NOT WIN32 )
 
 if( CMAKE_COMPILER_IS_GNUCXX )
 	# GCC misoptimizes this file

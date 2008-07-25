@@ -1,5 +1,4 @@
-cmake_minimum_required( VERSION 2.6 )
-project( dumb )
+cmake_minimum_required( VERSION 2.4 )
 
 # DUMB is much slower in a Debug build than a Release build, so we force a Release
 # build here, since we're not maintaining DUMB, only using it.

@@ -30,8 +30,10 @@
 #include <stdarg.h>
 #include <sys/types.h>
 #include <sys/time.h>
+#ifndef NO_GTK
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
+#endif
 
 #include "doomerrors.h"
 #include <math.h>
@@ -72,7 +74,9 @@ extern "C"
 	CPUInfo		CPU;
 }
 
+#ifndef NO_GTK
 extern bool GtkAvailable;
+#endif
 
 void CalculateCPUSpeed ();
 
@@ -342,6 +346,7 @@ void I_PrintStr (const char *cp)
 	fflush (stdout);
 }
 
+#ifndef NO_GTK
 // GtkTreeViews eats return keys. I want this to be like a Windows listbox
 // where pressing Return can still activate the default button.
 gint AllowDefault(GtkWidget *widget, GdkEventKey *event, gpointer func_data)
@@ -514,6 +519,7 @@ int I_PickIWad_Gtk (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 
 	return i;
 }
+#endif
 
 int I_PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 {
@@ -523,11 +529,13 @@ int I_PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 	{
 		return defaultiwad;
 	}
-	
+
+#ifndef NO_GTK
 	if (GtkAvailable)
 	{
 		return I_PickIWad_Gtk (wads, numwads, showwin, defaultiwad);
 	}
+#endif
 	
 	printf ("Please select a game wad (or 0 to exit):\n");
 	for (i = 0; i < numwads; ++i)

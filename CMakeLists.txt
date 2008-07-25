@@ -1,6 +1,6 @@
-cmake_minimum_required( VERSION 2.6 )
+cmake_minimum_required( VERSION 2.4 )
 
-set( ZDOOM_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR} CACHE PATH "Directory where zdoom.pk3 and the executable will be created" )
+set( ZDOOM_OUTPUT_DIR ${CMAKE_BINARY_DIR} CACHE PATH "Directory where zdoom.pk3 and the executable will be created" )
 set( ZDOOM_EXE_NAME "zdoom" CACHE FILEPATH "Name of the executable to create" )
 
 find_package( JPEG )

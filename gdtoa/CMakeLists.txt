@@ -1,5 +1,4 @@
-cmake_minimum_required( VERSION 2.6 )
-project( gdtoa )
+cmake_minimum_required( VERSION 2.4 )
 
 set( CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -D_DEBUG" )
 
@@ -15,12 +14,12 @@ add_definitions( -DINFNAN_CHECK -DMULTIPLE_THREADS )
 if( NOT MSVC )
 	add_executable( arithchk arithchk.c )
 	add_custom_command( OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/arith.h 
-		COMMAND arithchk >${CMAKE_CURRENT_BINARY_DIR}/arith.h
+		COMMAND ${CMAKE_CURRENT_BINARY_DIR}/arithchk >${CMAKE_CURRENT_BINARY_DIR}/arith.h
 		DEPENDS arithchk )
 
 	add_executable( qnan qnan.c arith.h )
 	add_custom_command( OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/gd_qnan.h
-		COMMAND qnan >${CMAKE_CURRENT_BINARY_DIR}/gd_qnan.h
+		COMMAND ${CMAKE_CURRENT_BINARY_DIR}/qnan >${CMAKE_CURRENT_BINARY_DIR}/gd_qnan.h
 		DEPENDS qnan )
 		
 	set( GEN_FP_FILES arith.h gd_qnan.h )

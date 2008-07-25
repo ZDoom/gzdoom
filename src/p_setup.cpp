@@ -2068,7 +2068,7 @@ void P_ProcessSideTextures(bool checktranmap, side_t *sd, sector_t *sec, mapside
 		// upper "texture" is light color
 		// lower "texture" is fog color
 		{
-			DWORD color, fog;
+			DWORD color = MAKERGB(255,255,255), fog = 0;
 			bool colorgood, foggood;
 
 			SetTextureNoErr (sd, side_t::bottom, &fog, msd->bottomtexture, &foggood);

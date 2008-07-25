@@ -1,5 +1,4 @@
-cmake_minimum_required( VERSION 2.6 )
-project( updaterevision )
+cmake_minimum_required( VERSION 2.4 )
 
 if( WIN32 )
 	if( CMAKE_COMPILER_IS_GNUC OR CMAKE_COMPILER_IS_GNUCXX )

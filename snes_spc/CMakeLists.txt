@@ -1,11 +1,15 @@
-cmake_minimum_required( VERSION 2.6 )
-project( snes_spc )
+cmake_minimum_required( VERSION 2.4 )
+include( CheckCXXCompilerFlag )
 
 # I don't plan on debugging this, so make it a release build.
 set( CMAKE_BUILD_TYPE "RelWithDebInfo" )
 
 if( CMAKE_COMPILER_IS_GNUCXX )
-	set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fomit-frame-pointer" )
+	set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fomit-frame-pointer -Wno-array-bounds" )
+	check_cxx_compiler_flag( -Wno-array-bounds HAVE_NO_ARRAY_BOUNDS )
+	if( HAVE_NO_ARRAY_BOUNDS )
+		set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-array-bounds" )
+	endif( HAVE_NO_ARRAY_BOUNDS )
 endif( CMAKE_COMPILER_IS_GNUCXX )
 
 add_library( snes_spc

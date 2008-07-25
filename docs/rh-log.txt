@@ -1,3 +1,9 @@
+July 24, 2008
+- Added Linux support for the CMakeLists. This meant downgrading them for
+  CMake 2.4, since the distros don't seem to consider 2.6 stable yet.
+  As a bonus, GTK+ is no longer a required dependency; now it's optional.
+- Made dehsupp ignore CR characters, so it doesn't spew warnings on Linux.
+
 July 23, 2008 (Changes by Graf Zahl)
 - Fixed: The sounds of Strife's intro need CHAN_UI.
 - Changed all instances of playing the chat sounds to use CHAN_UI.

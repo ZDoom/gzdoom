@@ -1,5 +1,7 @@
 July 24, 2008
-- Correct the revision_check target so that it always checks the revision,
+- Applied Blzut3's 5:4 SBARINFO patch. (At least I think that's what it's
+  for.)
+- Corrected the revision_check target so that it always checks the revision,
   not just when src/svnrevision.h is not present.
 - Added Linux support for the CMakeLists. This meant downgrading them for
   CMake 2.4, since the distros don't seem to consider 2.6 stable yet.

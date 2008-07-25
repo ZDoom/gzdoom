@@ -1168,13 +1168,18 @@ void DSBarInfo::DrawGraphic(FTexture* texture, int x, int y, int xOffset, int yO
 		y -= (texture->GetHeight()/2)-texture->TopOffset;
 	}
 
-	x += ST_X + xOffset;
-	y += ST_Y + yOffset;
-	int w = texture->GetScaledWidth();
-	int h = texture->GetScaledHeight() + y;
+   	// I'll handle the conversion from fixed to int myself for more control
+	fixed_t fx = (x + ST_X + xOffset) << FRACBITS;
+	fixed_t fy = (y + ST_Y + yOffset) << FRACBITS;
+	fixed_t fw = texture->GetScaledWidth() << FRACBITS;
+	fixed_t fh = texture->GetScaledHeight() << FRACBITS;
 	if(Scaled)
-		screen->VirtualToRealCoordsInt(x, y, w, h, 320, 200, true);
-	h -= y;
+		screen->VirtualToRealCoords(fx, fy, fw, fh, 320, 200, true);
+	x = fx >> FRACBITS;
+	y = fy >> FRACBITS;
+	// Round to nearest
+	int w = (fw + (FRACUNIT>>1)) >> FRACBITS;
+	int h = (fh + (FRACUNIT>>1)) >> FRACBITS;
 	screen->DrawTexture(texture, x, y,
 		DTA_DestWidth, w,
 		DTA_DestHeight, h,

@@ -60,7 +60,7 @@ ACTOR BeakPowered : Beak
 
 ACTOR ChickenPlayer : PlayerPawn native
 {
-	Health 30
+	Health 24
 	ReactionTime 0
 	PainChance 255
 	Radius 16

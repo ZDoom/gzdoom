@@ -99,6 +99,8 @@ EXTERN_CVAR (Int, snd_samplerate)
 EXTERN_CVAR (Bool, snd_pitched)
 EXTERN_CVAR (Int, snd_channels)
 
+extern int sfx_empty;
+
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 ReverbContainer *ForcedEnvironment;
@@ -1991,6 +1993,7 @@ void FMODSoundRenderer::DoLoad(void **slot, sfxinfo_t *sfx)
 	errcount = 0;
 	while (errcount < 2)
 	{
+		sample = NULL;
 		if (sfxdata != NULL)
 		{
 			delete[] sfxdata;
@@ -2052,6 +2055,11 @@ void FMODSoundRenderer::DoLoad(void **slot, sfxinfo_t *sfx)
 		{
 			exinfo.length = size;
 		}
+		if (exinfo.length == 0)
+		{
+			DPrintf("Sample has a length of 0\n");
+			break;
+		}
 		result = Sys->createSound((char *)sfxstart, samplemode, &exinfo, &sample);
 		if (result != FMOD_OK)
 		{
@@ -2094,7 +2102,7 @@ void FMODSoundRenderer::getsfx(sfxinfo_t *sfx)
 	// If the sound doesn't exist, replace it with the empty sound.
 	if (sfx->lumpnum == -1)
 	{
-		sfx->lumpnum = Wads.GetNumForName("dsempty", ns_sounds);
+		sfx->lumpnum = sfx_empty;
 	}
 	
 	// See if there is another sound already initialized with this lump. If so,
@@ -2109,6 +2117,11 @@ void FMODSoundRenderer::getsfx(sfxinfo_t *sfx)
 		}
 	}
 	DoLoad(&sfx->data, sfx);
+	// If the sound failed to load, make it the empty sound.
+	if (sfx->data == NULL)
+	{
+		sfx->lumpnum = sfx_empty;
+	}
 }
 
 //==========================================================================

@@ -1,4 +1,5 @@
 July 31, 2008
+- Fixed: Attempting to load 0-length sounds caused a crash.
 - Removed filename-lowercasing from zipdir.
 - Fixed: The ouch face fix was lost when SBARINFO mugshot became the only
   mugshot present.

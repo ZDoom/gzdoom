@@ -1,4 +1,6 @@
 July 31, 2008
+- Fixed: The ouch face fix was lost when SBARINFO mugshot became the only
+  mugshot present.
 - Fixed: Mace SpawnID was assigned to the MacePowered actor instead.
 - Fixed: Sorcerer2FX1's SpawnID was not restricted to Heretic.
 

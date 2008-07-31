@@ -376,7 +376,7 @@ int FMugShot::UpdateState(player_t *player, bool xdeath, bool animated_god_mode)
 				}
 			}
 			bool use_ouch = false;
-			if ((FaceHealth != -1 && player->health - FaceHealth > ST_MUCHPAIN) || bOuchActive)
+			if ((FaceHealth != -1 && FaceHealth - player->health > ST_MUCHPAIN) || bOuchActive)
 			{
 				use_ouch = true;
 				full_state_name = "ouch.";

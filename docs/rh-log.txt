@@ -1,3 +1,7 @@
+July 31, 2008
+- Fixed: Mace SpawnID was assigned to the MacePowered actor instead.
+- Fixed: Sorcerer2FX1's SpawnID was not restricted to Heretic.
+
 July 24, 2008
 - Applied Blzut3's 5:4 SBARINFO patch. (At least I think that's what it's
   for.)

@@ -188,6 +188,7 @@ ACTOR Sorcerer2
 
 ACTOR Sorcerer2FX1
 {
+	Game Heretic
 	SpawnID 145
 	Radius 10
 	Height 6

@@ -238,10 +238,13 @@ yy20:
 yy21:
 #line 124 "scanner.re"
 	{
-		printf("unexpected character: %c\n", *s->tok);
+		if (*s->tok != '\r')
+		{
+			printf("unexpected character: %c (%#02x)\n", *s->tok, *s->tok);
+		}
 		goto std;
 		}
-#line 245 "scanner.c"
+#line 248 "scanner.c"
 yy22:
 	++YYCURSOR;
 	yych = *YYCURSOR;
@@ -249,67 +252,67 @@ yy22:
 yy23:
 #line 99 "scanner.re"
 	{ goto std; }
-#line 253 "scanner.c"
+#line 256 "scanner.c"
 yy24:
 	++YYCURSOR;
 #line 101 "scanner.re"
 	{ RET(OR); }
-#line 258 "scanner.c"
+#line 261 "scanner.c"
 yy26:
 	++YYCURSOR;
 #line 102 "scanner.re"
 	{ RET(XOR); }
-#line 263 "scanner.c"
+#line 266 "scanner.c"
 yy28:
 	++YYCURSOR;
 #line 103 "scanner.re"
 	{ RET(AND); }
-#line 268 "scanner.c"
+#line 271 "scanner.c"
 yy30:
 	++YYCURSOR;
 #line 104 "scanner.re"
 	{ RET(MINUS); }
-#line 273 "scanner.c"
+#line 276 "scanner.c"
 yy32:
 	++YYCURSOR;
 #line 105 "scanner.re"
 	{ RET(PLUS); }
-#line 278 "scanner.c"
+#line 281 "scanner.c"
 yy34:
 	++YYCURSOR;
 #line 106 "scanner.re"
 	{ RET(MULTIPLY); }
-#line 283 "scanner.c"
+#line 286 "scanner.c"
 yy36:
 	++YYCURSOR;
 #line 108 "scanner.re"
 	{ RET(LPAREN); }
-#line 288 "scanner.c"
+#line 291 "scanner.c"
 yy38:
 	++YYCURSOR;
 #line 109 "scanner.re"
 	{ RET(RPAREN); }
-#line 293 "scanner.c"
+#line 296 "scanner.c"
 yy40:
 	++YYCURSOR;
 #line 110 "scanner.re"
 	{ RET(COMMA); }
-#line 298 "scanner.c"
+#line 301 "scanner.c"
 yy42:
 	++YYCURSOR;
 #line 111 "scanner.re"
 	{ RET(LBRACE); }
-#line 303 "scanner.c"
+#line 306 "scanner.c"
 yy44:
 	++YYCURSOR;
 #line 112 "scanner.re"
 	{ RET(RBRACE); }
-#line 308 "scanner.c"
+#line 311 "scanner.c"
 yy46:
 	++YYCURSOR;
 #line 113 "scanner.re"
 	{ RET(SEMICOLON); }
-#line 313 "scanner.c"
+#line 316 "scanner.c"
 yy48:
 	++YYCURSOR;
 #line 117 "scanner.re"
@@ -318,7 +321,7 @@ yy48:
 		s->pos = cursor; s->line++;
 		goto std;
 		}
-#line 322 "scanner.c"
+#line 325 "scanner.c"
 yy50:
 	yych = *++YYCURSOR;
 	goto yy21;
@@ -407,7 +410,7 @@ yy57:
 	++YYCURSOR;
 #line 97 "scanner.re"
 	{ RET(STRING); }
-#line 411 "scanner.c"
+#line 414 "scanner.c"
 yy59:
 	++YYCURSOR;
 	if(YYLIMIT == YYCURSOR) YYFILL(1);
@@ -561,7 +564,7 @@ yy73:
 yy84:
 #line 89 "scanner.re"
 	{ RET(RenderStyles); }
-#line 565 "scanner.c"
+#line 568 "scanner.c"
 yy85:
 	yych = *++YYCURSOR;
 	if(yych != 'r') goto yy72;
@@ -595,7 +598,7 @@ yy85:
 yy94:
 #line 88 "scanner.re"
 	{ RET(FirstState); }
-#line 599 "scanner.c"
+#line 602 "scanner.c"
 yy95:
 	yych = *++YYCURSOR;
 	if(yych != 'a') goto yy72;
@@ -629,7 +632,7 @@ yy95:
 yy104:
 #line 86 "scanner.re"
 	{ RET(DeathState); }
-#line 633 "scanner.c"
+#line 636 "scanner.c"
 yy105:
 	yych = *++YYCURSOR;
 	if(yych != 'i') goto yy72;
@@ -661,7 +664,7 @@ yy105:
 yy113:
 #line 85 "scanner.re"
 	{ RET(ThingBits); }
-#line 665 "scanner.c"
+#line 668 "scanner.c"
 yy114:
 	yych = *++YYCURSOR;
 	if(yych != 'f') goto yy72;
@@ -693,7 +696,7 @@ yy114:
 yy122:
 #line 84 "scanner.re"
 	{ RET(InfoNames); }
-#line 697 "scanner.c"
+#line 700 "scanner.c"
 yy123:
 	yych = *++YYCURSOR;
 	if(yych == 'u') goto yy142;
@@ -731,7 +734,7 @@ yy125:
 yy132:
 #line 82 "scanner.re"
 	{ RET(StateMap); }
-#line 735 "scanner.c"
+#line 738 "scanner.c"
 yy133:
 	yych = *++YYCURSOR;
 	if(yych != 'w') goto yy72;
@@ -763,7 +766,7 @@ yy133:
 yy141:
 #line 87 "scanner.re"
 	{ RET(SpawnState); }
-#line 767 "scanner.c"
+#line 770 "scanner.c"
 yy142:
 	yych = *++YYCURSOR;
 	if(yych != 'n') goto yy72;
@@ -791,7 +794,7 @@ yy142:
 yy148:
 #line 83 "scanner.re"
 	{ RET(SoundMap); }
-#line 795 "scanner.c"
+#line 798 "scanner.c"
 yy149:
 	yych = *++YYCURSOR;
 	if(yych != 'd') goto yy72;
@@ -823,7 +826,7 @@ yy149:
 yy157:
 #line 80 "scanner.re"
 	{ RET(CodePConv); }
-#line 827 "scanner.c"
+#line 830 "scanner.c"
 yy158:
 	yych = *++YYCURSOR;
 	if(yych != 'g') goto yy72;
@@ -866,7 +869,7 @@ yy161:
 yy169:
 #line 81 "scanner.re"
 	{ RET(OrgSprNames); }
-#line 870 "scanner.c"
+#line 873 "scanner.c"
 yy170:
 	yych = *++YYCURSOR;
 	if(yych != 'i') goto yy72;
@@ -894,7 +897,7 @@ yy170:
 yy176:
 #line 78 "scanner.re"
 	{ RET(OrgHeights); }
-#line 898 "scanner.c"
+#line 901 "scanner.c"
 yy177:
 	yych = *++YYCURSOR;
 	if(yych != 't') goto yy72;
@@ -923,7 +926,7 @@ yy177:
 yy183:
 #line 77 "scanner.re"
 	{ RET(Actions); }
-#line 927 "scanner.c"
+#line 930 "scanner.c"
 yy184:
 	yych = *++YYCURSOR;
 	if(yych != 'i') goto yy72;
@@ -947,7 +950,7 @@ yy184:
 yy188:
 #line 79 "scanner.re"
 	{ RET(ActionList); }
-#line 951 "scanner.c"
+#line 954 "scanner.c"
 yy189:
 	yych = *++YYCURSOR;
 	if(yych != 'i') goto yy72;
@@ -971,7 +974,7 @@ yy189:
 yy193:
 #line 76 "scanner.re"
 	{ RET(PRINT); }
-#line 975 "scanner.c"
+#line 978 "scanner.c"
 yy194:
 	yych = *++YYCURSOR;
 	if(yych != 'd') goto yy72;
@@ -993,7 +996,7 @@ yy194:
 yy197:
 #line 75 "scanner.re"
 	{ RET(ENDL); }
-#line 997 "scanner.c"
+#line 1000 "scanner.c"
 yy198:
 	++YYCURSOR;
 	if(YYLIMIT == YYCURSOR) YYFILL(1);
@@ -1004,7 +1007,7 @@ yy200:
 	++YYCURSOR;
 #line 67 "scanner.re"
 	{ goto comment; }
-#line 1008 "scanner.c"
+#line 1011 "scanner.c"
 yy202:
 	++YYCURSOR;
 #line 69 "scanner.re"
@@ -1013,14 +1016,14 @@ yy202:
 		s->tok = s->pos = cursor; s->line++;
 		goto std;
 		}
-#line 1017 "scanner.c"
+#line 1020 "scanner.c"
 }
-#line 128 "scanner.re"
+#line 131 "scanner.re"
 
 
 comment:
 
-#line 1024 "scanner.c"
+#line 1027 "scanner.c"
 {
 	YYCTYPE yych;
 	if((YYLIMIT - YYCURSOR) < 2) YYFILL(2);
@@ -1030,28 +1033,28 @@ comment:
 	++YYCURSOR;
 	if((yych = *YYCURSOR) == '/') goto yy211;
 yy207:
-#line 139 "scanner.re"
+#line 142 "scanner.re"
 	{ goto comment; }
-#line 1036 "scanner.c"
+#line 1039 "scanner.c"
 yy208:
 	++YYCURSOR;
-#line 134 "scanner.re"
+#line 137 "scanner.re"
 	{
 		if(cursor == s->eof) RET(EOI);
 		s->tok = s->pos = cursor; s->line++;
 		goto comment;
 		}
-#line 1045 "scanner.c"
+#line 1048 "scanner.c"
 yy210:
 	yych = *++YYCURSOR;
 	goto yy207;
 yy211:
 	++YYCURSOR;
-#line 132 "scanner.re"
+#line 135 "scanner.re"
 	{ goto std; }
-#line 1053 "scanner.c"
+#line 1056 "scanner.c"
 }
-#line 140 "scanner.re"
+#line 143 "scanner.re"
 
 }
 

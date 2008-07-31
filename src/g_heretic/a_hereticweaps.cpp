@@ -398,7 +398,7 @@ FState AMace::States[] =
 	S_NORMAL (MACE, 'A',	8, A_ReFire 			, &States[S_MACEREADY])
 };
 
-IMPLEMENT_ACTOR (AMace, Heretic, -1, 0)
+IMPLEMENT_ACTOR (AMace, Heretic, -1, 31)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (0)
 
@@ -419,7 +419,7 @@ IMPLEMENT_ACTOR (AMace, Heretic, -1, 0)
 	PROP_Inventory_PickupMessage("$TXT_WPNMACE")
 END_DEFAULTS
 
-IMPLEMENT_STATELESS_ACTOR (AMacePowered, Heretic, -1, 31)
+IMPLEMENT_STATELESS_ACTOR (AMacePowered, Heretic, -1, 0)
 	PROP_Weapon_Flags (WIF_POWERED_UP|WIF_BOT_REACTION_SKILL_THING|WIF_BOT_EXPLOSIVE)
 	PROP_Weapon_AmmoUse1 (USE_MACE_AMMO_2)
 	PROP_Weapon_AmmoGive1 (0)

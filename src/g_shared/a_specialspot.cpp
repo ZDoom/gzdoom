@@ -370,5 +370,3 @@ void ASpecialSpot::Destroy()
 	if (state != NULL) state->RemoveSpot(this);
 	Super::Destroy();
 }
-
-

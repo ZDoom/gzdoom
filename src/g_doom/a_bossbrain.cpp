@@ -251,4 +251,3 @@ void A_SpawnSound (AActor *self)
 	S_Sound (self, CHAN_BODY, "brain/cube", 1, ATTN_IDLE);
 	A_SpawnFly (self);
 }
-

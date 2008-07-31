@@ -163,17 +163,12 @@ dir_tree_t *alloc_dir_tree(const char *dir)
 file_entry_t *alloc_file_entry(const char *prefix, const char *path, time_t last_written)
 {
 	file_entry_t *entry;
-	char *p;
 
 	entry = malloc(sizeof(file_entry_t) + strlen(prefix) + strlen(path) + 1);
 	if (entry != NULL)
 	{
 		strcpy(entry->path, prefix);
 		strcat(entry->path, path);
-		for (p = entry->path; *p != '\0'; ++p)
-		{
-			*p = tolower(*p);
-		}
 		entry->next = NULL;
 		entry->time_write = last_written;
 	}

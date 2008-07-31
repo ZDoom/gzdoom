@@ -1,4 +1,5 @@
 July 31, 2008
+- Removed filename-lowercasing from zipdir.
 - Fixed: The ouch face fix was lost when SBARINFO mugshot became the only
   mugshot present.
 - Fixed: Mace SpawnID was assigned to the MacePowered actor instead.

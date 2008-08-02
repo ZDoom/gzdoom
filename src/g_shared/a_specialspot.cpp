@@ -146,6 +146,7 @@ struct FSpotList
 
 	ASpecialSpot *GetSpotWithMinDistance(fixed_t x, fixed_t y, fixed_t distance)
 	{
+		if (Spots.Size() == 0) return NULL;
 		int i = pr_spot() % Spots.Size();
 		int initial = i;
 
@@ -166,7 +167,7 @@ struct FSpotList
 
 	ASpecialSpot *GetRandomSpot(bool onlyfirst)
 	{
-		if (!numcalls)
+		if (Spots.Size() && !numcalls)
 		{
 			int i = pr_spot() % Spots.Size();
 			numcalls++;

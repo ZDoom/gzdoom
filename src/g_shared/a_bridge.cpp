@@ -2,6 +2,7 @@
 #include "info.h"
 #include "gi.h"
 #include "m_random.h"
+#include "thingdef/thingdef.h"
 
 static FRandom pr_orbit ("Orbit");
 
@@ -81,6 +82,63 @@ AT_GAME_SET (Bridge)
 	}
 }
 
+// Custom bridge --------------------------------------------------------
+/*
+	args[0]: Bridge radius, in mapunits
+	args[1]: Bridge height, in mapunits
+	args[2]: Amount of bridge balls (if 0: Doom bridge)
+	args[3]: Rotation speed of bridge balls, in byte angle per seconds, sorta:
+		Since an arg is only a byte, it can only go from 0 to 255, while ZDoom's
+		BAM go from 0 to 65535. Plus, it needs to be able to go either way. So,
+		up to 128, it goes counterclockwise; 129-255 is clockwise, substracting
+		256 from it to get the angle. A few example values:
+		  0: Hexen default
+	     11:  15° / seconds
+		 21:  30° / seconds
+		 32:  45° / seconds
+		 64:  90° / seconds
+		128: 180° / seconds
+		192: -90° / seconds
+		223: -45° / seconds
+		233: -30° / seconds
+		244: -15° / seconds
+		This value only matters if args[2] is not zero.
+	args[4]: Rotation radius of bridge balls, in bridge radius %.
+		If 0, use Hexen default: ORBIT_RADIUS, regardless of bridge radius.
+		This value only matters if args[2] is not zero.
+*/
+
+class ACustomBridge : public ABridge
+{
+	DECLARE_STATELESS_ACTOR (ACustomBridge, ABridge)
+public:
+	void BeginPlay ();
+};
+
+IMPLEMENT_STATELESS_ACTOR (ACustomBridge, Any, 9991, 0)
+	PROP_SpawnState (S_DBRIDGE)
+	PROP_SeeState (S_BRIDGE)
+	PROP_DeathState (S_FREE_BRIDGE)
+	PROP_Flags4 (MF4_ACTLIKEBRIDGE)
+	PROP_RenderStyle (STYLE_None)
+END_DEFAULTS
+
+void ACustomBridge::BeginPlay ()
+{
+	if (args[2]) // Hexen bridge if there are balls
+	{
+		SetState(FindState(FName("See")));
+		radius = args[0] ? args[0] << FRACBITS : 32 * FRACUNIT;
+		height = args[1] ? args[1] << FRACBITS : 2 * FRACUNIT;
+	}
+	else // No balls? Then a Doom bridge.
+	{
+		radius = args[0] ? args[0] << FRACBITS : 36 * FRACUNIT;
+		height = args[1] ? args[1] << FRACBITS : 4 * FRACUNIT;
+		RenderStyle = STYLE_Normal;
+	}
+}
+
 // Action functions for the non-Doom bridge --------------------------------
 
 #define ORBIT_RADIUS	15
@@ -100,21 +158,48 @@ void A_BridgeOrbit (AActor *self)
 	  // independantly of a Bridge actor.
 		return;
 	}
+	// Set default values
+	// Every five tics, Hexen moved the ball 3/256th of a revolution.
+	int rotationspeed  = ANGLE_45/32*3/5;
+	int rotationradius = ORBIT_RADIUS;
+	// If the bridge is custom, set non-default values if any.
+	if (self->target->IsKindOf(PClass::FindClass("CustomBridge")))
+	{
+		// Set angular speed; 1--128: counterclockwise rotation ~=1--180°; 129--255: clockwise rotation ~= 180--1°
+		if (self->target->args[3] > 128) rotationspeed = ANGLE_45/32 * (self->target->args[3]-256) / TICRATE;
+		else if (self->target->args[3] > 0) rotationspeed = ANGLE_45/32 * (self->target->args[3]) / TICRATE;
+		// Set rotation radius
+		if (self->target->args[4]) rotationradius = ((self->target->args[4] * self->target->radius) / (100 * FRACUNIT));
+	}
 	if (self->target->special1)
 	{
 		self->SetState (NULL);
 	}
-	// Every five tics, Hexen moved the ball 3/256th of a revolution.
-	self->angle += ANGLE_45/32*3/5;
-	self->x = self->target->x + ORBIT_RADIUS * finecosine[self->angle >> ANGLETOFINESHIFT];
-	self->y = self->target->y + ORBIT_RADIUS * finesine[self->angle >> ANGLETOFINESHIFT];
+	self->angle += rotationspeed;
+	self->x = self->target->x + rotationradius * finecosine[self->angle >> ANGLETOFINESHIFT];
+	self->y = self->target->y + rotationradius * finesine[self->angle >> ANGLETOFINESHIFT];
 	self->z = self->target->z;
 }
+
+
+static const PClass *GetBallType()
+{
+	const PClass *balltype = NULL;
+	int index=CheckIndex(1, NULL);
+	if (index>=0) 
+	{
+		balltype = PClass::FindClass((ENamedName)StateParameters[index]);
+	}
+	if (balltype == NULL) balltype = PClass::FindClass("BridgeBall");
+	return balltype;
+}
+
+
 
 void A_BridgeInit (AActor *self)
 {
 	angle_t startangle;
-	AActor *ball1, *ball2, *ball3;
+	AActor *ball;
 	fixed_t cx, cy, cz;
 
 	cx = self->x;
@@ -123,22 +208,16 @@ void A_BridgeInit (AActor *self)
 	startangle = pr_orbit() << 24;
 	self->special1 = 0;
 
-	// Spawn triad into world
-	ball1 = Spawn<ABridgeBall> (cx, cy, cz, ALLOW_REPLACE);
-	ball1->angle = startangle;
-	ball1->target = self;
-
-	ball2 = Spawn<ABridgeBall> (cx, cy, cz, ALLOW_REPLACE);
-	ball2->angle = startangle + ANGLE_45/32*85;
-	ball2->target = self;
-
-	ball3 = Spawn<ABridgeBall> (cx, cy, cz, ALLOW_REPLACE);
-	ball3->angle = startangle + (angle_t)ANGLE_45/32*170;
-	ball3->target = self;
-
-	A_BridgeOrbit (ball1);
-	A_BridgeOrbit (ball2);
-	A_BridgeOrbit (ball3);
+	// Spawn triad into world -- may be more than a triad now.
+	int ballcount = ((self->GetClass()==PClass::FindClass("Bridge") || (self->args[2]==0)) ? 3 : self->args[2]);
+	const PClass *balltype = GetBallType();
+	for (int i = 0; i < ballcount; i++)
+	{
+		ball = Spawn(balltype, cx, cy, cz, ALLOW_REPLACE);
+		ball->angle = startangle + (ANGLE_45/32) * (256/ballcount) * i;
+		ball->target = self;
+		A_BridgeOrbit(ball);
+	}
 }
 
 void A_BridgeRemove (AActor *self)

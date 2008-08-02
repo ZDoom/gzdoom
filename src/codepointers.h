@@ -166,3 +166,6 @@ ACTOR(ItBurnsItBurns)
 ACTOR(CrispyPlayer)
 ACTOR(DropFire)
 
+// Special code pointers for bridge things
+ACTOR(BridgeInit)
+ACTOR(BridgeOrbit)

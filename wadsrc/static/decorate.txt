@@ -77,6 +77,9 @@
 #include "actors/hexen/ettin.txt"
 #include "actors/hexen/centaur.txt"
 #include "actors/hexen/demons.txt"
+#include "actors/hexen/clericmace.txt"
+#include "actors/hexen/firedemon.txt"
+#include "actors/hexen/fog.txt"
 
 #include "actors/strife/strifeplayer.txt"
 #include "actors/strife/beggars.txt"

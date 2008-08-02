@@ -3538,7 +3538,8 @@ APlayerPawn *P_SpawnPlayer (FMapThing *mthing, bool tempplayer)
 		( p->playerstate == PST_REBORN ) &&
 		( deathmatch == false ) &&
 		( gameaction != ga_worlddone ) &&
-		( p->mo != NULL ))
+		( p->mo != NULL ) && 
+		( (p->mo->Sector->special & 255) != Damage_InstantDeath ))
 	{
 		spawn_x = p->mo->x;
 		spawn_y = p->mo->y;

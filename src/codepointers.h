@@ -152,6 +152,14 @@ ACTOR(FireCrossbowPL1)
 ACTOR(FireCrossbowPL2)
 ACTOR(GauntletAttack)
 
+WEAPON(CMaceAttack)
+ACTOR(FiredRocks)
+ACTOR(FiredChase)
+ACTOR(FiredAttack)
+ACTOR(FiredSplotch)
+ACTOR(SmBounce)
+ACTOR(FogSpawn)
+ACTOR(FogMove)
 
 // Special code pointers for Strife's player - not to be used elsewhere!
 ACTOR(ItBurnsItBurns)

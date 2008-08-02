@@ -335,7 +335,7 @@ AWeapon *AWeapon::AddWeapon (const PClass *weapontype)
 {
 	AWeapon *weap;
 
-	if (weapontype == NULL)
+	if (weapontype == NULL || !weapontype->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
 	{
 		return NULL;
 	}
@@ -604,6 +604,17 @@ bool FWeaponSlot::AddWeapon (const char *type)
 bool FWeaponSlot::AddWeapon (const PClass *type)
 {
 	int i;
+	
+	if (type == NULL)
+	{
+		return false;
+	}
+	
+	if (!type->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
+	{
+		Printf("Can't add non-weapon %s to weapon slots\n", type->TypeName.GetChars());
+		return false;
+	}
 
 	for (i = 0; i < MAX_WEAPONS_PER_SLOT; i++)
 	{
@@ -639,7 +650,7 @@ AWeapon *FWeaponSlot::PickWeapon (player_t *player)
 				{
 					AWeapon *weap = static_cast<AWeapon *> (player->mo->FindInventory (Weapons[j]));
 
-					if (weap != NULL && weap->CheckAmmo (AWeapon::EitherFire, false))
+					if (weap != NULL && weap->IsKindOf(RUNTIME_CLASS(AWeapon)) && weap->CheckAmmo (AWeapon::EitherFire, false))
 					{
 						return weap;
 					}
@@ -651,7 +662,7 @@ AWeapon *FWeaponSlot::PickWeapon (player_t *player)
 	{
 		AWeapon *weap = static_cast<AWeapon *> (player->mo->FindInventory (Weapons[i]));
 
-		if (weap != NULL && weap->CheckAmmo (AWeapon::EitherFire, false))
+		if (weap != NULL && weap->IsKindOf(RUNTIME_CLASS(AWeapon)) && weap->CheckAmmo (AWeapon::EitherFire, false))
 		{
 			return weap;
 		}

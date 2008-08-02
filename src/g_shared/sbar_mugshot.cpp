@@ -473,7 +473,7 @@ FTexture *FMugShot::GetFace(player_t *player, const char *default_face, int accu
 {
 	int angle = UpdateState(player, xdeath, animated_god_mode);
 	int level = 0;
-	while (player->health < (4-level) * (player->mo->GetMaxHealth()/5))
+	while (player->health < (accuracy-1-level) * (player->mo->GetMaxHealth()/accuracy))
 	{
 		level++;
 	}

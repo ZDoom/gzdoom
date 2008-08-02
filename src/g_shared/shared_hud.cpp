@@ -588,7 +588,7 @@ static void DrawOneWeapon(player_t * CPlayer, int x, int & y, AWeapon * weapon)
 	FState * state=NULL, *ReadyState;
 	
 	FTextureID AltIcon = GetHUDIcon(weapon->GetClass());
-	picnum = AltIcon.isValid()? AltIcon : weapon->Icon;
+	picnum = !AltIcon.isNull()? AltIcon : weapon->Icon;
 
 	if (picnum.isNull())
 	{

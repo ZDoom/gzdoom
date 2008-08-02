@@ -1,4 +1,6 @@
 August 2, 2008 (Changes by Graf Zahl)
+- Fixed: The mugshot drawe ignored the accuracy parameter.
+- Fixed: The Alt HUD's weapon drawer didn't check properly for invalid icons.
 - Added DECORATE conversions for Hexen's Cleric Mace, Firedemon and fog by
   Karate Chris.
 

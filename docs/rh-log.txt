@@ -1,4 +1,8 @@
 August 3, 2008 (Changes by Graf Zahl)
+- Converted the mace and all related actors to DECORATE and generalized
+  the spawn function that only spawns one mace per level.
+- Moved Mace respawning code into AInventory so that it works properly
+  for replacement actors.
 - Added more DECORATE conversions by Karate Chris.
 - Cleaned up the new bridge code and exported all related actors to
   DECORATE so that the exported code pointers can be used.

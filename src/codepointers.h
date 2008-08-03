@@ -107,6 +107,7 @@ ACTOR(DamageChildren)
 ACTOR(CheckForReload)
 ACTOR(ResetReloadCounter)
 ACTOR(ClearReFire)
+ACTOR(SpawnSingleItem)
 
 // Heretic stuff
 ACTOR(Feathers)
@@ -151,6 +152,13 @@ ACTOR(FireGoldWandPL2)
 ACTOR(FireCrossbowPL1)
 ACTOR(FireCrossbowPL2)
 ACTOR(GauntletAttack)
+ACTOR(FireMacePL1)
+ACTOR(FireMacePL2)
+ACTOR(MacePL1Check)
+ACTOR(MaceBallImpact)
+ACTOR(MaceBallImpact2)
+ACTOR(DeathBallImpact)
+
 
 WEAPON(CMaceAttack)
 ACTOR(FiredRocks)

@@ -474,3 +474,187 @@ ACTOR GauntletPuff2 : GauntletPuff1
 }
 
 
+// The mace itself ----------------------------------------------------------
+
+ACTOR Mace : HereticWeapon
+{
+	Game Heretic
+	SpawnID 31
+	Weapon.SelectionOrder 1400
+	Weapon.AmmoUse 1
+	Weapon.AmmoGive1 50
+	Weapon.YAdjust 15
+	Weapon.AmmoType "MaceAmmo"
+	Weapon.SisterWeapon "MacePowered"
+	Inventory.PickupMessage "$TxT_WPNMACE"
+	
+	action native A_FireMacePL1();
+	
+	States
+	{
+	Spawn:
+		WMCE A -1
+		Stop
+	Ready:
+		MACE A 1 A_WeaponReady
+		Loop
+	Deselect:
+		MACE A 1 A_Lower
+		Loop
+	Select:
+		MACE A 1 A_Raise
+		Loop
+	Fire:
+		MACE B 4
+	Hold:
+		MACE CDEF 3 A_FireMacePL1
+		MACE C 4 A_ReFire
+		MACE DEFB 4
+		Goto Ready
+	}
+}
+
+ACTOR MacePowered : Mace
+{
+	+WEAPON.POWERED_UP
+	Weapon.AmmoUse 5
+	Weapon.AmmoGive 0
+	Weapon.SisterWeapon "Mace"
+	
+	action native A_FireMacePL2();
+	
+	States
+	{
+	Fire:
+	Hold:	
+		MACE B 4
+		MACE D 4 A_FireMacePL2
+		MACE B 4
+		MACE A 8 A_ReFire
+		Goto Ready
+	}
+}
+
+// Mace FX1 -----------------------------------------------------------------
+
+ACTOR MaceFX1
+{
+	Game Heretic
+	SpawnID 154
+	Radius 8
+	Height 6
+	Speed 20
+	Damage 2
+	Projectile
+	+THRUGHOST
+	+HERETICBOUNCE
+	SeeSound "weapons/maceshoot"
+
+	action native A_MacePL1Check();
+	action native A_MaceBallImpact();
+
+	States
+	{
+	Spawn:
+		FX02 AB 4 A_MacePL1Check
+		Loop
+	Death:
+		FX02 F 4 BRIGHT A_MaceBallImpact
+		FX02 GHIJ 4 BRIGHT
+		Stop
+	}
+}
+
+// Mace FX2 -----------------------------------------------------------------
+
+ACTOR MaceFX2 : MaceFX1
+{
+	Game Heretic
+	SpawnID 156
+	Speed 10
+	Damage 6
+	Gravity 0.125
+	-NOGRAVITY
+	SeeSound ""
+
+	action native A_MaceBallImpact2();
+
+	States
+	{
+	Spawn:
+		FX02 CD 4
+		Loop
+	Death:
+		FX02 F 4 A_MaceBallImpact2
+		goto Super::Death+1
+	}
+}
+
+// Mace FX3 -----------------------------------------------------------------
+
+ACTOR MaceFX3 : MaceFX1
+{
+	Game Heretic
+	SpawnID 155
+	Speed 7
+	Damage 4
+	-NOGRAVITY
+	Gravity 0.125
+	States
+	{
+	Spawn:
+		FX02 AB 4
+		Loop
+	}
+}
+
+
+// Mace FX4 -----------------------------------------------------------------
+
+ACTOR MaceFX4 native
+{
+	Game Heretic
+	SpawnID 153
+	Radius 8
+	Height 6
+	Speed 7
+	Damage 18
+	Gravity 0.125
+	Projectile
+	-NOGRAVITY
+	+TELESTOMP
+	+THRUGHOST
+	+HERETICBOUNCE
+	SeeSound ""
+
+	action native A_DeathBallImpact();
+
+	States
+	{
+	Spawn:
+		FX02 E 99
+		Loop
+	Death:
+		FX02 C 4 A_DeathBallImpact
+		FX02 GHIJ 4 BRIGHT
+		Stop
+	}
+}
+
+
+// Mace spawn spot ----------------------------------------------------------
+
+ACTOR MaceSpawner : SpecialSpot 2002
+{
+	Game Heretic
+	+NOSECTOR
+	+NOBLOCKMAP
+	States
+	{
+	Spawn:
+		TNT1 A 1
+		TNT1 A -1 A_SpawnSingleItem("Mace", 64, 64, 0)
+		Stop
+	}
+}
+

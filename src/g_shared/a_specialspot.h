@@ -6,7 +6,7 @@
 
 class ASpecialSpot : public AActor
 {
-	DECLARE_STATELESS_ACTOR (ASpecialSpot, AActor)
+	DECLARE_CLASS (ASpecialSpot, AActor)
 
 public:
 

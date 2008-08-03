@@ -37,70 +37,6 @@ IMPLEMENT_ACTOR (AArtiDarkServant, Hexen, 86, 16)
 	PROP_Inventory_PickupMessage("$TXT_ARTISUMMON")
 END_DEFAULTS
 
-// Summoning Doll -----------------------------------------------------------
-
-class ASummoningDoll : public AActor
-{
-	DECLARE_ACTOR (ASummoningDoll, AActor)
-};
-
-FState ASummoningDoll::States[] =
-{
-#define S_SUMMON_FX1_1 0
-	S_NORMAL (SUMN, 'A',	4, NULL					    , &States[S_SUMMON_FX1_1]),
-
-#define S_SUMMON_FX2_1 (S_SUMMON_FX1_1+1)
-	S_NORMAL (SUMN, 'A',	4, NULL					    , &States[S_SUMMON_FX2_1+1]),
-	S_NORMAL (SUMN, 'A',	4, NULL					    , &States[S_SUMMON_FX2_1+2]),
-	S_NORMAL (SUMN, 'A',	4, A_Summon				    , NULL),
-};
-
-IMPLEMENT_ACTOR (ASummoningDoll, Hexen, -1, 0)
-	PROP_SpeedFixed (20)
-	PROP_Flags (MF_NOBLOCKMAP|MF_DROPOFF|MF_MISSILE)
-	PROP_Flags2 (MF2_NOTELEPORT)
-
-	PROP_SpawnState (S_SUMMON_FX1_1)
-	PROP_DeathState (S_SUMMON_FX2_1)
-END_DEFAULTS
-
-// Minotaur Smoke -----------------------------------------------------------
-
-class AMinotaurSmoke : public AActor
-{
-	DECLARE_ACTOR (AMinotaurSmoke, AActor)
-};
-
-FState AMinotaurSmoke::States[] =
-{
-	S_NORMAL (MNSM, 'A',	3, NULL					    , &States[1]),
-	S_NORMAL (MNSM, 'B',	3, NULL					    , &States[2]),
-	S_NORMAL (MNSM, 'C',	3, NULL					    , &States[3]),
-	S_NORMAL (MNSM, 'D',	3, NULL					    , &States[4]),
-	S_NORMAL (MNSM, 'E',	3, NULL					    , &States[5]),
-	S_NORMAL (MNSM, 'F',	3, NULL					    , &States[6]),
-	S_NORMAL (MNSM, 'G',	3, NULL					    , &States[7]),
-	S_NORMAL (MNSM, 'H',	3, NULL					    , &States[8]),
-	S_NORMAL (MNSM, 'I',	3, NULL					    , &States[9]),
-	S_NORMAL (MNSM, 'J',	3, NULL					    , &States[10]),
-	S_NORMAL (MNSM, 'K',	3, NULL					    , &States[11]),
-	S_NORMAL (MNSM, 'L',	3, NULL					    , &States[12]),
-	S_NORMAL (MNSM, 'M',	3, NULL					    , &States[13]),
-	S_NORMAL (MNSM, 'N',	3, NULL					    , &States[14]),
-	S_NORMAL (MNSM, 'O',	3, NULL					    , &States[15]),
-	S_NORMAL (MNSM, 'P',	3, NULL					    , &States[16]),
-	S_NORMAL (MNSM, 'Q',	3, NULL					    , NULL),
-};
-
-IMPLEMENT_ACTOR (AMinotaurSmoke, Hexen, -1, 0)
-	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
-	PROP_Flags2 (MF2_NOTELEPORT)
-	PROP_RenderStyle (STYLE_Translucent)
-	PROP_Alpha (HX_SHADOW)
-
-	PROP_SpawnState (0)
-END_DEFAULTS
-
 
 //============================================================================
 //
@@ -110,7 +46,7 @@ END_DEFAULTS
 
 bool AArtiDarkServant::Use (bool pickup)
 {
-	AActor *mo = P_SpawnPlayerMissile (Owner, RUNTIME_CLASS(ASummoningDoll));
+	AActor *mo = P_SpawnPlayerMissile (Owner, PClass::FindClass ("SummoningDoll"));
 	if (mo)
 	{
 		mo->target = Owner;
@@ -158,7 +94,7 @@ void A_Summon (AActor *actor)
 		}
 
 		// Make smoke puff
-		Spawn<AMinotaurSmoke> (actor->x, actor->y, actor->z, ALLOW_REPLACE);
+		Spawn ("MinotaurSmoke", actor->x, actor->y, actor->z, ALLOW_REPLACE);
 		S_Sound (actor, CHAN_VOICE, mo->ActiveSound, 1, ATTN_NORM);
 	}
 }

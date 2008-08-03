@@ -21,30 +21,6 @@ void A_PoisonBagCheck (AActor *);
 void A_CheckThrowBomb (AActor *);
 void A_CheckThrowBomb2 (AActor *);
 
-// Poison Bag (Flechette used by Cleric) ------------------------------------
-
-class APoisonBag : public AActor
-{
-	DECLARE_ACTOR (APoisonBag, AActor)
-};
-
-FState APoisonBag::States[] =
-{
-#define S_POISONBAG1 0
-	S_BRIGHT (PSBG, 'A',   18, NULL					    , &States[S_POISONBAG1+1]),
-	S_BRIGHT (PSBG, 'B',	4, NULL					    , &States[S_POISONBAG1+2]),
-	S_NORMAL (PSBG, 'C',	3, NULL					    , &States[S_POISONBAG1+3]),
-	S_NORMAL (PSBG, 'C',	1, A_PoisonBagInit		    , NULL),
-};
-
-IMPLEMENT_ACTOR (APoisonBag, Hexen, -1, 0)
-	PROP_RadiusFixed (5)
-	PROP_HeightFixed (5)
-	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
-
-	PROP_SpawnState (S_POISONBAG1)
-END_DEFAULTS
-
 // Fire Bomb (Flechette used by Mage) ---------------------------------------
 
 class AFireBomb : public AActor
@@ -83,58 +59,6 @@ IMPLEMENT_ACTOR (AFireBomb, Hexen, -1, 0)
 
 	PROP_SpawnState (S_FIREBOMB1)
 
-	PROP_DeathSound ("FlechetteExplode")
-END_DEFAULTS
-
-// Throwing Bomb (Flechette used by Fighter) --------------------------------
-
-class AThrowingBomb : public AActor
-{
-	DECLARE_ACTOR (AThrowingBomb, AActor)
-};
-
-FState AThrowingBomb::States[] =
-{
-#define S_THROWINGBOMB1 0
-	S_NORMAL (THRW, 'A',	4, A_CheckThrowBomb		    , &States[S_THROWINGBOMB1+1]),
-	S_NORMAL (THRW, 'B',	3, A_CheckThrowBomb		    , &States[S_THROWINGBOMB1+2]),
-	S_NORMAL (THRW, 'C',	3, A_CheckThrowBomb		    , &States[S_THROWINGBOMB1+3]),
-	S_NORMAL (THRW, 'D',	3, A_CheckThrowBomb		    , &States[S_THROWINGBOMB1+4]),
-	S_NORMAL (THRW, 'E',	3, A_CheckThrowBomb		    , &States[S_THROWINGBOMB1+5]),
-	S_NORMAL (THRW, 'F',	3, A_CheckThrowBomb2	    , &States[S_THROWINGBOMB1]),
-
-#define S_THROWINGBOMB7 (S_THROWINGBOMB1+6)
-	S_NORMAL (THRW, 'G',	6, A_CheckThrowBomb		    , &States[S_THROWINGBOMB7+1]),
-	S_NORMAL (THRW, 'F',	4, A_CheckThrowBomb		    , &States[S_THROWINGBOMB7+2]),
-	S_NORMAL (THRW, 'H',	6, A_CheckThrowBomb		    , &States[S_THROWINGBOMB7+3]),
-	S_NORMAL (THRW, 'F',	4, A_CheckThrowBomb		    , &States[S_THROWINGBOMB7+4]),
-	S_NORMAL (THRW, 'G',	6, A_CheckThrowBomb		    , &States[S_THROWINGBOMB7+5]),
-	S_NORMAL (THRW, 'F',	3, A_CheckThrowBomb		    , &States[S_THROWINGBOMB7+5]),
-
-#define S_THROWINGBOMB_X1 (S_THROWINGBOMB7+6)
-	S_BRIGHT (CFCF, 'Q',	4, A_NoGravity			    , &States[S_THROWINGBOMB_X1+1]),
-	S_BRIGHT (CFCF, 'R',	3, A_Scream				    , &States[S_THROWINGBOMB_X1+2]),
-	S_BRIGHT (CFCF, 'S',	4, A_Explode			    , &States[S_THROWINGBOMB_X1+3]),
-	S_BRIGHT (CFCF, 'T',	3, NULL					    , &States[S_THROWINGBOMB_X1+4]),
-	S_BRIGHT (CFCF, 'U',	4, NULL					    , &States[S_THROWINGBOMB_X1+5]),
-	S_BRIGHT (CFCF, 'W',	3, NULL					    , &States[S_THROWINGBOMB_X1+6]),
-	S_BRIGHT (CFCF, 'X',	4, NULL					    , &States[S_THROWINGBOMB_X1+7]),
-	S_BRIGHT (CFCF, 'Z',	3, NULL					    , NULL),
-};
-
-IMPLEMENT_ACTOR (AThrowingBomb, Hexen, -1, 0)
-	PROP_SpawnHealth (48)
-	PROP_SpeedFixed (12)
-	PROP_RadiusFixed (8)
-	PROP_HeightFixed (10)
-	PROP_DamageType (NAME_Fire)
-	PROP_Flags (MF_NOBLOCKMAP|MF_DROPOFF|MF_MISSILE)
-	PROP_Flags2 (MF2_HEXENBOUNCE)
-
-	PROP_SpawnState (S_THROWINGBOMB1)
-	PROP_DeathState (S_THROWINGBOMB_X1)
-
-	PROP_SeeSound ("FlechetteBounce")
 	PROP_DeathSound ("FlechetteExplode")
 END_DEFAULTS
 
@@ -184,7 +108,7 @@ bool AArtiPoisonBag1::Use (bool pickup)
 	angle_t angle = Owner->angle >> ANGLETOFINESHIFT;
 	AActor *mo;
 
-	mo = Spawn<APoisonBag> (
+	mo = Spawn ("PoisonBag",
 		Owner->x+16*finecosine[angle],
 		Owner->y+24*finesine[angle], Owner->z-
 		Owner->floorclip+8*FRACUNIT, ALLOW_REPLACE);
@@ -243,7 +167,7 @@ bool AArtiPoisonBag3::Use (bool pickup)
 {
 	AActor *mo;
 
-	mo = Spawn<AThrowingBomb> (Owner->x, Owner->y, 
+	mo = Spawn ("ThrowingBomb", Owner->x, Owner->y, 
 		Owner->z-Owner->floorclip+35*FRACUNIT + (Owner->player? Owner->player->crouchoffset : 0), ALLOW_REPLACE);
 	if (mo)
 	{
@@ -547,7 +471,7 @@ void A_CheckThrowBomb2 (AActor *actor)
 		TMulScale32 (actor->momx, actor->momx, actor->momy, actor->momy, actor->momz, actor->momz)
 		< (3*3)/(2*2))
 	{
-		actor->SetState (&AThrowingBomb::States[S_THROWINGBOMB7]);
+		actor->SetState (actor->SpawnState + 6);
 		actor->z = actor->floorz;
 		actor->momz = 0;
 		actor->flags2 &= ~MF2_BOUNCETYPE;

@@ -1,4 +1,5 @@
 August 3, 2008 (Changes by Graf Zahl)
+- Added more DECORATE conversions by Karate Chris.
 - Cleaned up the new bridge code and exported all related actors to
   DECORATE so that the exported code pointers can be used.
 - Separated Heretic's and Hexen's invulnerability items for stability 

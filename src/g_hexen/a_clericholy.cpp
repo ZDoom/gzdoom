@@ -913,3 +913,18 @@ void A_DropWraithvergePieces (AActor *actor)
 		}
 	}
 }
+
+//============================================================================
+//
+// A_ClericAttack
+// (for the ClericBoss)
+//
+//============================================================================
+
+void A_ClericAttack (AActor *actor)
+{
+	extern void A_CHolyAttack3 (AActor *actor);
+
+	if (!actor->target) return;
+	A_CHolyAttack3 (actor);
+}

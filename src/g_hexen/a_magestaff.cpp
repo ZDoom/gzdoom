@@ -345,41 +345,6 @@ bool AMageStaffFX2::SpecialBlastHandling (AActor *source, fixed_t strength)
 
 //============================================================================
 //
-// MStaffSpawn2 - for use by mage class boss
-//
-//============================================================================
-
-void MStaffSpawn2 (AActor *actor, angle_t angle)
-{
-	AActor *mo;
-
-	mo = P_SpawnMissileAngleZ (actor, actor->z+40*FRACUNIT,
-		RUNTIME_CLASS(AMageStaffFX2), angle, 0);
-	if (mo)
-	{
-		mo->target = actor;
-		mo->tracer = P_BlockmapSearch (mo, 10, FrontBlockCheck);
-	}
-}
-
-//============================================================================
-//
-// A_MStaffAttack2 - for use by mage class boss
-//
-//============================================================================
-
-void A_MStaffAttack2 (AActor *actor)
-{
-	angle_t angle;
-	angle = actor->angle;
-	MStaffSpawn2 (actor, angle);
-	MStaffSpawn2 (actor, angle-ANGLE_1*5);
-	MStaffSpawn2 (actor, angle+ANGLE_1*5);
-	S_Sound (actor, CHAN_WEAPON, "MageStaffFire", 1, ATTN_NORM);
-}
-
-//============================================================================
-//
 // MStaffSpawn
 //
 //============================================================================
@@ -534,3 +499,41 @@ static AActor *FrontBlockCheck (AActor *mo, int index)
 	}
 	return NULL;
 }
+
+//============================================================================
+//
+// MStaffSpawn2 - for use by mage class boss
+//
+//============================================================================
+
+void MStaffSpawn2 (AActor *actor, angle_t angle)
+{
+	AActor *mo;
+
+	mo = P_SpawnMissileAngleZ (actor, actor->z+40*FRACUNIT,
+		RUNTIME_CLASS(AMageStaffFX2), angle, 0);
+	if (mo)
+	{
+		mo->target = actor;
+		mo->tracer = P_BlockmapSearch (mo, 10, FrontBlockCheck);
+	}
+}
+
+//============================================================================
+//
+// A_MStaffAttack2 - for use by mage class boss
+//
+//============================================================================
+
+void A_MageAttack (AActor *actor)
+{
+	if (!actor->target) return;
+
+	angle_t angle;
+	angle = actor->angle;
+	MStaffSpawn2 (actor, angle);
+	MStaffSpawn2 (actor, angle-ANGLE_1*5);
+	MStaffSpawn2 (actor, angle+ANGLE_1*5);
+	S_Sound (actor, CHAN_WEAPON, "MageStaffFire", 1, ATTN_NORM);
+}
+

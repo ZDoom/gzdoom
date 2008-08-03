@@ -1,0 +1,67 @@
+
+// Poison Bag (Flechette used by Cleric) ------------------------------------
+
+ACTOR PoisonBag
+{
+	Game Hexen
+	Radius 5
+	Height 5
+	+NOBLOCKMAP +NOGRAVITY
+
+	action native A_PoisonBagInit();
+
+	States
+	{
+	Spawn:
+		PSBG A 18 Bright
+		PSBG B 4 Bright
+		PSBG C 3
+		PSBG C 1 A_PoisonBagInit
+		Stop
+	}
+}
+
+// Throwing Bomb (Flechette used by Fighter) --------------------------------
+
+ACTOR ThrowingBomb
+{
+	Game Hexen
+	Health 48
+	Speed 12
+	Radius 8
+	Height 10
+	DamageType "Fire"
+	+NOBLOCKMAP +DROPOFF +MISSILE
+	+HEXENBOUNCE
+	SeeSound "FlechetteBounce"
+	DeathSound "FlechetteExplode"
+
+	action native A_CheckThrowBomb();
+	action native A_CheckThrowBomb2();
+
+	States
+	{
+	Spawn:
+		THRW A 4 A_CheckThrowBomb
+		THRW BCDE 3 A_CheckThrowBomb
+		THRW F 3 A_CheckThrowBomb2
+		Loop
+		THRW G 6 A_CheckThrowBomb
+		THRW F 4 A_CheckThrowBomb
+		THRW H 6 A_CheckThrowBomb
+		THRW F 4 A_CheckThrowBomb
+		THRW G 6 A_CheckThrowBomb
+		THRW F 3 A_CheckThrowBomb
+		Wait
+	Death:
+		CFCF Q 4 Bright A_NoGravity
+		CFCF R 3 Bright A_Scream
+		CFCF S 4 Bright A_Explode
+		CFCF T 3 Bright
+		CFCF U 4 Bright
+		CFCF W 3 Bright
+		CFCF X 4 Bright
+		CFCF Z 3 Bright
+		Stop
+	}
+}

@@ -1,0 +1,41 @@
+
+// Summoning Doll -----------------------------------------------------------
+
+ACTOR SummoningDoll
+{
+	Game Hexen
+	Speed 20
+	+NOBLOCKMAP +DROPOFF +MISSILE
+	+NOTELEPORT
+
+	action native A_Summon();
+
+	States
+	{
+	Spawn:
+		SUMN A 4
+		Loop
+	Death:
+		SUMN AA 4
+		SUMN A 4 A_Summon
+		Stop
+	}
+}
+
+// Minotaur Smoke -----------------------------------------------------------
+
+ACTOR MinotaurSmoke
+{
+	Game Hexen
+	+NOBLOCKMAP +NOGRAVITY
+	+NOTELEPORT
+	RenderStyle Translucent
+	Alpha 0.6
+
+	States
+	{
+	Spawn:
+		MNSM ABCDEFGHIJKLMNOPQ 3
+		Stop
+	}
+}

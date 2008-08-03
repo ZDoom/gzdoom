@@ -327,24 +327,6 @@ void A_FSwordAttack (AActor *actor)
 
 //============================================================================
 //
-// A_FSwordAttack2
-//
-//============================================================================
-
-void A_FSwordAttack2 (AActor *actor)
-{
-	angle_t angle = actor->angle;
-
-	P_SpawnMissileAngle (actor, RUNTIME_CLASS(AFSwordMissile), angle+ANG45/4, 0);
-	P_SpawnMissileAngle (actor, RUNTIME_CLASS(AFSwordMissile), angle+ANG45/8, 0);
-	P_SpawnMissileAngle (actor, RUNTIME_CLASS(AFSwordMissile), angle,         0);
-	P_SpawnMissileAngle (actor, RUNTIME_CLASS(AFSwordMissile), angle-ANG45/8, 0);
-	P_SpawnMissileAngle (actor, RUNTIME_CLASS(AFSwordMissile), angle-ANG45/4, 0);
-	S_Sound (actor, CHAN_WEAPON, "FighterSwordFire", 1, ATTN_NORM);
-}
-
-//============================================================================
-//
 // A_FSwordFlames
 //
 //============================================================================
@@ -397,3 +379,24 @@ void AFighterWeaponPiece::BeginPlay ()
 	Super::BeginPlay ();
 	FourthWeaponClass = RUNTIME_CLASS(AFWeapQuietus);
 }
+
+//============================================================================
+//
+// A_FighterAttack
+//
+//============================================================================
+
+void A_FighterAttack (AActor *actor)
+{
+	if (!actor->target) return;
+
+	angle_t angle = actor->angle;
+
+	P_SpawnMissileAngle (actor, RUNTIME_CLASS(AFSwordMissile), angle+ANG45/4, 0);
+	P_SpawnMissileAngle (actor, RUNTIME_CLASS(AFSwordMissile), angle+ANG45/8, 0);
+	P_SpawnMissileAngle (actor, RUNTIME_CLASS(AFSwordMissile), angle,         0);
+	P_SpawnMissileAngle (actor, RUNTIME_CLASS(AFSwordMissile), angle-ANG45/8, 0);
+	P_SpawnMissileAngle (actor, RUNTIME_CLASS(AFSwordMissile), angle-ANG45/4, 0);
+	S_Sound (actor, CHAN_WEAPON, "FighterSwordFire", 1, ATTN_NORM);
+}
+

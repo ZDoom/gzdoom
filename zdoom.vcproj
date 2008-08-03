@@ -2305,10 +2305,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\g_hexen\a_clericboss.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\src\g_hexen\a_clericflame.cpp"
 				>
 			</File>
@@ -2330,10 +2326,6 @@
 			</File>
 			<File
 				RelativePath=".\src\g_hexen\a_fighteraxe.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\src\g_hexen\a_fighterboss.cpp"
 				>
 			</File>
 			<File
@@ -2382,10 +2374,6 @@
 			</File>
 			<File
 				RelativePath=".\src\g_hexen\a_korax.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\src\g_hexen\a_mageboss.cpp"
 				>
 			</File>
 			<File

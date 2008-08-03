@@ -1,3 +1,9 @@
+August 3, 2008 (Changes by Graf Zahl)
+- Cleaned up the new bridge code and exported all related actors to
+  DECORATE so that the exported code pointers can be used.
+- Separated Heretic's and Hexen's invulnerability items for stability 
+  reasons.
+
 August 2, 2008
 - Fixed spurious warnings on 32-bit VC++ debug builds.
 - Made the subsong (order) number a proper parameter to MusInfo::Play()

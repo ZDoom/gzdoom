@@ -1,3 +1,8 @@
+August 2, 2008
+- Fixed spurious warnings on 32-bit VC++ debug builds.
+- Made the subsong (order) number a proper parameter to MusInfo::Play()
+  instead of requiring a separate SetPosition() call to do it.
+
 August 2, 2008 (Changes by Graf Zahl)
 - Added Gez's submission for custom bridge things.
 - Fixed: ASpecialSpot must check the array's size before dividing by it.

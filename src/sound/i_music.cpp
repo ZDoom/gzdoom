@@ -121,7 +121,12 @@ MusInfo::~MusInfo ()
 {
 }
 
-bool MusInfo::SetPosition (int order)
+bool MusInfo::SetPosition (unsigned int ms)
+{
+	return false;
+}
+
+bool MusInfo::SetSubsong (int subsong)
 {
 	return false;
 }
@@ -197,7 +202,7 @@ void I_ShutdownMusic(void)
 }
 
 
-void I_PlaySong (void *handle, int _looping, float rel_vol)
+void I_PlaySong (void *handle, int _looping, float rel_vol, int subsong)
 {
 	MusInfo *info = (MusInfo *)handle;
 
@@ -206,7 +211,7 @@ void I_PlaySong (void *handle, int _looping, float rel_vol)
 
 	saved_relative_volume = relative_volume = rel_vol;
 	info->Stop ();
-	info->Play (_looping ? true : false);
+	info->Play (!!_looping, subsong);
 	info->m_NotStartedYet = false;
 	
 	if (info->m_Status == MusInfo::STATE_Playing)
@@ -256,7 +261,7 @@ void I_UnRegisterSong (void *handle)
 	}
 }
 
-void *I_RegisterURLSong (const char *url)
+MusInfo *I_RegisterURLSong (const char *url)
 {
 	StreamSong *song;
 
@@ -269,7 +274,7 @@ void *I_RegisterURLSong (const char *url)
 	return NULL;
 }
 
-void *I_RegisterSong (const char *filename, char *musiccache, int offset, int len, int device)
+MusInfo *I_RegisterSong (const char *filename, char *musiccache, int offset, int len, int device)
 {
 	FILE *file;
 	MusInfo *info = NULL;
@@ -539,7 +544,7 @@ void *I_RegisterSong (const char *filename, char *musiccache, int offset, int le
 	return info;
 }
 
-void *I_RegisterCDSong (int track, int id)
+MusInfo *I_RegisterCDSong (int track, int id)
 {
 	MusInfo *info = new CDSong (track, id);
 
@@ -635,7 +640,7 @@ CCMD (writeopl)
 			}
 			else
 			{
-				dumper->Play(false);
+				dumper->Play(false, 0);		// FIXME: Remember subsong.
 				delete dumper;
 			}
 		}
@@ -673,7 +678,7 @@ CCMD (writewave)
 			}
 			else
 			{
-				dumper->Play(false);
+				dumper->Play(false, 0);		// FIXME: Remember subsong
 				delete dumper;
 			}
 		}

@@ -54,14 +54,15 @@ void I_PauseSong (void *handle);
 void I_ResumeSong (void *handle);
 
 // Registers a song handle to song data.
-void *I_RegisterSong (const char *file, char * musiccache, int offset, int length, int device);
-void *I_RegisterCDSong (int track, int cdid = 0);
-void *I_RegisterURLSong (const char *url);
+class MusInfo;
+MusInfo *I_RegisterSong (const char *file, char * musiccache, int offset, int length, int device);
+MusInfo *I_RegisterCDSong (int track, int cdid = 0);
+MusInfo *I_RegisterURLSong (const char *url);
 
 // Called by anything that wishes to start music.
 //	Plays a song, and when the song is done,
 //	starts playing it again in an endless loop.
-void I_PlaySong (void *handle, int looping, float relative_vol=1.f);
+void I_PlaySong (void *handle, int looping, float relative_vol=1.f, int subsong=0);
 
 // Stops a song.
 void I_StopSong (void *handle);
@@ -74,5 +75,39 @@ bool I_SetSongPosition (void *handle, int order);
 
 // Is the song still playing?
 bool I_QrySongPlaying (void *handle);
+
+// The base music class. Everything is derived from this --------------------
+
+class MusInfo
+{
+public:
+	MusInfo ();
+	virtual ~MusInfo ();
+	virtual void MusicVolumeChanged();		// snd_musicvolume changed
+	virtual void TimidityVolumeChanged();	// timidity_mastervolume changed
+	virtual void Play (bool looping, int subsong) = 0;
+	virtual void Pause () = 0;
+	virtual void Resume () = 0;
+	virtual void Stop () = 0;
+	virtual bool IsPlaying () = 0;
+	virtual bool IsMIDI () const = 0;
+	virtual bool IsValid () const = 0;
+	virtual bool SetPosition (unsigned int ms);
+	virtual bool SetSubsong (int subsong);
+	virtual void Update();
+	virtual FString GetStats();
+	virtual MusInfo *GetOPLDumper(const char *filename);
+	virtual MusInfo *GetWaveDumper(const char *filename, int rate);
+
+	enum EState
+	{
+		STATE_Stopped,
+		STATE_Playing,
+		STATE_Paused
+	} m_Status;
+	bool m_Looping;
+	bool m_NotStartedYet;	// Song has been created but not yet played
+};
+
 
 #endif //__I_MUSIC_H__

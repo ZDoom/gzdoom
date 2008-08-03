@@ -1,12 +1,16 @@
 #include "i_musicinterns.h"
 
-void StreamSong::Play (bool looping)
+void StreamSong::Play (bool looping, int subsong)
 {
 	m_Status = STATE_Stopped;
 	m_Looping = looping;
 
 	if (m_Stream->Play (m_Looping, 1))
 	{
+		if (subsong != 0)
+		{
+			m_Stream->SetOrder (subsong);
+		}
 		m_Status = STATE_Playing;
 	}
 }
@@ -70,14 +74,25 @@ bool StreamSong::IsPlaying ()
 //
 // StreamSong :: SetPosition
 //
-// Sets the current order number for a MOD-type song, or the position in ms
-// for anything else.
+// Sets the position in ms.
 
-bool StreamSong::SetPosition(int order)
+bool StreamSong::SetPosition(unsigned int pos)
 {
 	if (m_Stream != NULL)
 	{
-		return m_Stream->SetPosition(order);
+		return m_Stream->SetPosition(pos);
+	}
+	else
+	{
+		return false;
+	}
+}
+
+bool StreamSong::SetSubsong(int subsong)
+{
+	if (m_Stream != NULL)
+	{
+		return m_Stream->SetOrder(subsong);
 	}
 	else
 	{

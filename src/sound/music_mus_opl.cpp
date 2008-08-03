@@ -52,7 +52,7 @@ bool OPLMUSSong::IsPlaying ()
 	return m_Status == STATE_Playing;
 }
 
-void OPLMUSSong::Play (bool looping)
+void OPLMUSSong::Play (bool looping, int subsong)
 {
 	m_Status = STATE_Stopped;
 	m_Looping = looping;

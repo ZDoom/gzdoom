@@ -85,7 +85,7 @@ CUSTOM_CVAR (Int, timidity_frequency, 22050, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 		self = 65000;
 }
 
-void TimiditySong::Play (bool looping)
+void TimiditySong::Play (bool looping, int subsong)
 {
 	m_Status = STATE_Stopped;
 	m_Looping = looping;

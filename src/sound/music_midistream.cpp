@@ -182,7 +182,7 @@ void MIDIStreamer::CheckCaps()
 //
 //==========================================================================
 
-void MIDIStreamer::Play(bool looping)
+void MIDIStreamer::Play(bool looping, int subsong)
 {
 	DWORD tid;
 

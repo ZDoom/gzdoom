@@ -45,8 +45,9 @@ class input_mod : public StreamSong
 public:
 	input_mod(DUH *myduh);
 	~input_mod();
-	bool SetPosition(int order);
-	void Play(bool looping);
+	//bool SetPosition(int ms);
+	bool SetSubsong(int subsong);
+	void Play(bool looping, int subsong);
 	FString GetStats();
 
 	FString Codec;
@@ -1153,11 +1154,12 @@ input_mod::~input_mod()
 //
 //==========================================================================
 
-void input_mod::Play(bool looping)
+void input_mod::Play(bool looping, int order)
 {
 	m_Status = STATE_Stopped;
 	m_Looping = looping;
 
+	start_order = order;
 	if (open2(0) && m_Stream->Play(m_Looping, 1))
 	{
 		m_Status = STATE_Playing;
@@ -1166,15 +1168,11 @@ void input_mod::Play(bool looping)
 
 //==========================================================================
 //
-// input_mod :: SetPosition
-//
-// FIXME: Pass the order number as a subsong parameter to Play, so we don't
-// need to start playback at one position and then immediately throw that
-// playback structure away and create a new one to go to the new order.
+// input_mod :: SetSubsong
 //
 //==========================================================================
 
-bool input_mod::SetPosition(int order)
+bool input_mod::SetSubsong(int order)
 {
 	if (order == start_order)
 	{

@@ -65,7 +65,8 @@ public:
 	virtual bool SetPaused(bool paused) = 0;
 	virtual unsigned int GetPosition() = 0;
 	virtual bool IsEnded() = 0;
-	virtual bool SetPosition(int pos);
+	virtual bool SetPosition(unsigned int pos);
+	virtual bool SetOrder(int order);
 	virtual FString GetStats();
 };
 

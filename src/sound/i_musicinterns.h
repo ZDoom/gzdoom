@@ -20,6 +20,7 @@
 #include "c_cvars.h"
 #include "mus2midi.h"
 #include "i_sound.h"
+#include "i_music.h"
 
 void I_InitMusicWin32 ();
 void I_ShutdownMusicWin32 ();
@@ -28,38 +29,6 @@ extern float relative_volume;
 
 EXTERN_CVAR (Float, timidity_mastervolume)
 
-
-// The base music class. Everything is derived from this --------------------
-
-class MusInfo
-{
-public:
-	MusInfo ();
-	virtual ~MusInfo ();
-	virtual void MusicVolumeChanged();		// snd_musicvolume changed
-	virtual void TimidityVolumeChanged();	// timidity_mastervolume changed
-	virtual void Play (bool looping) = 0;
-	virtual void Pause () = 0;
-	virtual void Resume () = 0;
-	virtual void Stop () = 0;
-	virtual bool IsPlaying () = 0;
-	virtual bool IsMIDI () const = 0;
-	virtual bool IsValid () const = 0;
-	virtual bool SetPosition (int order);
-	virtual void Update();
-	virtual FString GetStats();
-	virtual MusInfo *GetOPLDumper(const char *filename);
-	virtual MusInfo *GetWaveDumper(const char *filename, int rate);
-
-	enum EState
-	{
-		STATE_Stopped,
-		STATE_Playing,
-		STATE_Paused
-	} m_Status;
-	bool m_Looping;
-	bool m_NotStartedYet;	// Song has been created but not yet played
-};
 
 // A device that provides a WinMM-like MIDI streaming interface -------------
 
@@ -302,7 +271,7 @@ public:
 
 	void MusicVolumeChanged();
 	void TimidityVolumeChanged();
-	void Play(bool looping);
+	void Play(bool looping, int subsong);
 	void Pause();
 	void Resume();
 	void Stop();
@@ -441,14 +410,15 @@ class StreamSong : public MusInfo
 public:
 	StreamSong (const char *file, int offset, int length);
 	~StreamSong ();
-	void Play (bool looping);
+	void Play (bool looping, int subsong);
 	void Pause ();
 	void Resume ();
 	void Stop ();
 	bool IsPlaying ();
 	bool IsMIDI () const { return false; }
 	bool IsValid () const { return m_Stream != NULL; }
-	bool SetPosition (int order);
+	bool SetPosition (unsigned int pos);
+	bool SetSubsong (int subsong);
 	FString GetStats();
 
 protected:
@@ -464,7 +434,7 @@ class TimiditySong : public StreamSong
 public:
 	TimiditySong (FILE *file, char * musiccache, int length);
 	~TimiditySong ();
-	void Play (bool looping);
+	void Play (bool looping, int subsong);
 	void Stop ();
 	bool IsPlaying ();
 	bool IsValid () const { return CommandLine.Len() > 0; }
@@ -502,7 +472,7 @@ class OPLMUSSong : public StreamSong
 public:
 	OPLMUSSong (FILE *file, char *musiccache, int length);
 	~OPLMUSSong ();
-	void Play (bool looping);
+	void Play (bool looping, int subsong);
 	bool IsPlaying ();
 	bool IsValid () const;
 	void ResetChips ();
@@ -530,7 +500,7 @@ class CDSong : public MusInfo
 public:
 	CDSong (int track, int id);
 	~CDSong ();
-	void Play (bool looping);
+	void Play (bool looping, int subsong);
 	void Pause ();
 	void Resume ();
 	void Stop ();

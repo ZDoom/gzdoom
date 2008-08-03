@@ -1,7 +1,7 @@
 #include "i_musicinterns.h"
 #include "i_cd.h"
 
-void CDSong::Play (bool looping)
+void CDSong::Play (bool looping, int subsong)
 {
 	m_Status = STATE_Stopped;
 	m_Looping = looping;

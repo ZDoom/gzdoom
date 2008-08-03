@@ -454,21 +454,16 @@ public:
 		Volume = volume;
 	}
 
-	// Sets the current order number for a MOD-type song, or the position in ms
-	// for anything else.
-	bool SetPosition(int pos)
+	// Sets the position in ms.
+	bool SetPosition(unsigned int ms_pos)
 	{
-		FMOD_SOUND_TYPE type;
+		return FMOD_OK == Channel->setPosition(ms_pos, FMOD_TIMEUNIT_MS);
+	}
 
-		if (FMOD_OK == Stream->getFormat(&type, NULL, NULL, NULL) &&
-			(type == FMOD_SOUND_TYPE_IT ||
-			 type == FMOD_SOUND_TYPE_MOD ||
-			 type == FMOD_SOUND_TYPE_S3M ||
-			 type == FMOD_SOUND_TYPE_XM))
-		{
-			return FMOD_OK == Channel->setPosition(pos, FMOD_TIMEUNIT_MODORDER);
-		}
-		return FMOD_OK == Channel->setPosition(pos, FMOD_TIMEUNIT_MS);
+	// Sets the order number for MOD formats.
+	bool SetOrder(int order_pos)
+	{
+		return FMOD_OK == Channel->setPosition(order_pos, FMOD_TIMEUNIT_MODORDER);
 	}
 
 	FString GetStats()

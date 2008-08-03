@@ -139,8 +139,17 @@ public:
 	operator const char *() const { return Chars; }
 
 	const char *GetChars() const { return Chars; }
+
 	const char &operator[] (int index) const { return Chars[index]; }
+#if defined(_WIN32) && !defined(_WIN64) && defined(_MSC_VER)
+	// Compiling 32-bit Windows source with MSVC: size_t is typedefed to an
+	// unsigned int with the 64-bit portability warning attribute, so the
+	// prototype cannot substitute unsigned int for size_t, or you get
+	// spurious warnings.
+	const char &operator[] (size_t index) const { return Chars[index]; }
+#else
 	const char &operator[] (unsigned int index) const { return Chars[index]; }
+#endif
 	const char &operator[] (unsigned long index) const { return Chars[index]; }
 	const char &operator[] (unsigned long long index) const { return Chars[index]; }
 

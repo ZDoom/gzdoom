@@ -1284,7 +1284,7 @@ void A_SorcFX2Orbit (AActor *actor)
 void A_SpawnBishop(AActor *actor)
 {
 	AActor *mo;
-	mo = Spawn<ABishop> (actor->x, actor->y, actor->z, ALLOW_REPLACE);
+	mo = Spawn("Bishop", actor->x, actor->y, actor->z, ALLOW_REPLACE);
 	if (mo)
 	{
 		if (!P_TestMobjLocation(mo))

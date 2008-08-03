@@ -1,0 +1,156 @@
+
+// Bishop -------------------------------------------------------------------
+
+ACTOR Bishop 114
+{
+	Game Hexen
+	SpawnID 19
+	Health 130
+	Radius 22
+	Height 65
+	Speed 10
+	PainChance 110
+	Monster
+	+FLOAT +NOGRAVITY +NOBLOOD
+	+TELESTOMP
+	+DONTOVERLAP
+	+NOTARGETSWITCH
+	SeeSound "BishopSight"
+	AttackSound "BishopAttack"
+	PainSound "BishopPain"
+	DeathSound "BishopDeath"
+	ActiveSound "BishopActiveSounds"
+	Obituary"$OB_BISHOP"
+
+	action native A_BishopChase();
+	action native A_BishopDecide();
+	action native A_BishopDoBlur();
+	action native A_BishopSpawnBlur();
+	action native A_BishopPainBlur();
+	action native A_BishopAttack();
+	action native A_BishopAttack2();
+
+	States
+	{
+	Spawn:
+		BISH A 10 A_Look
+		Loop
+	See:
+		BISH A 2 A_Chase
+		BISH A 2 A_BishopChase
+		BISH A 2
+		BISH B 2 A_BishopChase
+		BISH B 2 A_Chase
+		BISH B 2 A_BishopChase
+		BISH A 1 A_BishopDecide
+		Loop
+	Blur:
+		BISH A 2 A_BishopDoBlur
+		BISH A 4 A_BishopSpawnBlur
+		Wait
+	Pain:
+		BISH C 6 A_Pain
+		BISH CCC 6 A_BishopPainBlur
+		BISH C 0
+		Goto See
+	Missile:
+		BISH A 3 A_FaceTarget
+		BISH DE 3 A_FaceTarget
+		BISH F 3 A_BishopAttack
+		BISH F 5 A_BishopAttack2
+		Wait
+	Death:
+		BISH G 6
+		BISH H 6 Bright A_Scream
+		BISH I 5 Bright A_NoBlocking
+		BISH J 5 BRIGHT A_Explode(random[BishopBoom](25,40))
+		BISH K 5 Bright
+		BISH LM 4 Bright
+		BISH N 4 A_SpawnItemEx("BishopPuff", 0,0,40, 0,0,0.5)
+		BISH O 4 A_QueueCorpse
+		BISH P -1
+		Stop
+	Ice:
+		BISH X 5 A_FreezeDeath
+		BISH X 1 A_FreezeDeathChunks
+		Wait
+	}
+}
+
+// Bishop puff --------------------------------------------------------------
+
+ACTOR BishopPuff
+{
+	Game Hexen
+	+NOBLOCKMAP +NOGRAVITY
+	RenderStyle Translucent
+	Alpha 0.6
+	States
+	{
+	Spawn:
+		BISH QRST 5
+		BISH UV 6
+		BISH W 5
+		Stop
+	}
+}
+
+// Bishop pain blur ---------------------------------------------------------
+
+ACTOR BishopPainBlur
+{
+	Game Hexen
+	+NOBLOCKMAP +NOGRAVITY
+	RenderStyle Translucent
+	Alpha 0.6
+	States
+	{
+	Spawn:
+		BISH C 8
+		Stop
+	}
+}
+
+// Bishop FX ----------------------------------------------------------------
+
+ACTOR BishopFX
+{
+	Game Hexen
+	Radius 10
+	Height 6
+	Speed 10
+	Damage 1
+	Projectile
+	+SEEKERMISSILE
+	-ACTIVATEIMPACT -ACTIVATEPCROSS
+	+STRIFEDAMAGE
+	RenderStyle Add
+	DeathSound "BishopMissileExplode"
+	States
+	{
+	Spawn:
+		BPFX ABAB 1 Bright A_BishopMissileWeave
+		BPFX B 0 Bright A_SeekerMissile(2,3)
+		Loop
+	Death:
+		BPFX CDEF 4 Bright
+		BPFX GH 3 Bright
+		Stop
+	}
+}
+
+// Bishop blur --------------------------------------------------------------
+
+ACTOR BishopBlur
+{
+	+NOBLOCKMAP +NOGRAVITY
+	RenderStyle Translucent
+	Alpha 0.6
+	States
+	{
+	Spawn:
+		BISH A 16
+		BISH A 8 A_SetTranslucent(0.4)
+		Stop
+	}
+}

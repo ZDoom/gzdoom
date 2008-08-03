@@ -1,0 +1,48 @@
+
+// Bat Spawner --------------------------------------------------------------
+
+ACTOR BatSpawner : SwitchableDecoration 10225
+{
+	Game Hexen
+	+NOBLOCKMAP +NOSECTOR +NOGRAVITY
+	RenderStyle None
+
+	action native A_BatSpawnInit();
+	action native A_BatSpawn();
+
+	States
+	{
+	Spawn:
+	Active:
+		TNT1 A 2
+		TNT1 A 2 A_BatSpawnInit
+		TNT1 A 2 A_BatSpawn
+		Wait
+	Inactive:
+		TNT1 A -1
+		Stop
+	}
+}
+
+// Bat ----------------------------------------------------------------------
+
+ACTOR Bat
+{
+	Speed 5
+	Radius 3
+	Height 3
+	+NOBLOCKMAP +NOGRAVITY +MISSILE
+	+NOTELEPORT +CANPASS
+
+	action native A_BatMove();
+
+	States
+	{
+	Spawn:
+		ABAT ABC 2 A_BatMove
+		Loop
+	Death:
+		ABAT A 2
+		Stop
+	}
+}

@@ -14,64 +14,14 @@
 
 class AArtiBlastRadius : public AInventory
 {
-	DECLARE_ACTOR (AArtiBlastRadius, AInventory)
+	DECLARE_CLASS (AArtiBlastRadius, AInventory)
 public:
 	bool Use (bool pickup);
 protected:
 	void BlastActor (AActor *victim, fixed_t strength);
 };
-FState AArtiBlastRadius::States[] =
-{
-	S_BRIGHT (BLST, 'A',	4, NULL					    , &States[1]),
-	S_BRIGHT (BLST, 'B',	4, NULL					    , &States[2]),
-	S_BRIGHT (BLST, 'C',	4, NULL					    , &States[3]),
-	S_BRIGHT (BLST, 'D',	4, NULL					    , &States[4]),
-	S_BRIGHT (BLST, 'E',	4, NULL					    , &States[5]),
-	S_BRIGHT (BLST, 'F',	4, NULL					    , &States[6]),
-	S_BRIGHT (BLST, 'G',	4, NULL					    , &States[7]),
-	S_BRIGHT (BLST, 'H',	4, NULL					    , &States[0]),
-};
 
-IMPLEMENT_ACTOR (AArtiBlastRadius, Hexen, 10110, 74)
-	PROP_Flags (MF_SPECIAL)
-	PROP_Flags2 (MF2_FLOATBOB)
-	PROP_SpawnState (0)
-	PROP_Inventory_DefMaxAmount
-	PROP_Inventory_PickupFlash (1)
-	PROP_Inventory_FlagsSet (IF_INVBAR|IF_FANCYPICKUPSOUND)
-	PROP_Inventory_Icon ("ARTIBLST")
-	PROP_Inventory_PickupSound ("misc/p_pkup")
-	PROP_Inventory_PickupMessage("$TXT_ARTIBLASTRADIUS")
-END_DEFAULTS
-
-// Blast Effect -------------------------------------------------------------
-
-class ABlastEffect : public AActor
-{
-	DECLARE_ACTOR (ABlastEffect, AActor)
-};
-
-FState ABlastEffect::States[] =
-{
-	S_NORMAL (RADE, 'A',    4, NULL                         , &States[1]),
-	S_NORMAL (RADE, 'B',    4, NULL                         , &States[2]),
-	S_NORMAL (RADE, 'C',    4, NULL                         , &States[3]),
-	S_NORMAL (RADE, 'D',    4, NULL                         , &States[4]),
-	S_NORMAL (RADE, 'E',    4, NULL                         , &States[5]),
-	S_NORMAL (RADE, 'F',    4, NULL                         , &States[6]),
-	S_NORMAL (RADE, 'G',    4, NULL                         , &States[7]),
-	S_NORMAL (RADE, 'H',    4, NULL                         , &States[8]),
-	S_NORMAL (RADE, 'I',    4, NULL                         , NULL)
-};
-
-IMPLEMENT_ACTOR (ABlastEffect, Any, -1, 0)
-	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY|MF_NOCLIP)
-	PROP_Flags2 (MF2_NOTELEPORT)
-	PROP_RenderStyle (STYLE_Translucent)
-	PROP_Alpha (TRANSLUC66)
-
-	PROP_SpawnState (0)
-END_DEFAULTS
+IMPLEMENT_CLASS (AArtiBlastRadius)
 
 //==========================================================================
 //
@@ -182,7 +132,7 @@ void AArtiBlastRadius::BlastActor (AActor *victim, fixed_t strength)
 		x = victim->x + FixedMul (victim->radius+FRACUNIT, finecosine[ang]);
 		y = victim->y + FixedMul (victim->radius+FRACUNIT, finesine[ang]);
 		z = victim->z - victim->floorclip + (victim->height>>1);
-		mo = Spawn<ABlastEffect> (x, y, z, ALLOW_REPLACE);
+		mo = Spawn ("BlastEffect", x, y, z, ALLOW_REPLACE);
 		if (mo)
 		{
 			mo->momx = victim->momx;

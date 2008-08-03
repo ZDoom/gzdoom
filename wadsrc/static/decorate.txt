@@ -87,6 +87,11 @@
 #include "actors/hexen/clericboss.txt"
 #include "actors/hexen/fighterboss.txt"
 #include "actors/hexen/mageboss.txt"
+#include "actors/hexen/bats.txt"
+#include "actors/hexen/bishop.txt"
+#include "actors/hexen/blastradius.txt"
+#include "actors/hexen/boostarmor.txt"
+#include "actors/hexen/clericflame.txt"
 
 #include "actors/strife/strifeplayer.txt"
 #include "actors/strife/beggars.txt"

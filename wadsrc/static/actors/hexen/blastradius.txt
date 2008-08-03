@@ -1,0 +1,35 @@
+
+ACTOR ArtiBlastRadius : Inventory 10110 native
+{
+	Game Hexen
+	SpawnID 74
+	+FLOATBOB
+	Inventory.DefMaxAmount
+	Inventory.PickupFlash 1
+	+INVBAR +FANCYPICKUPSOUND
+	Inventory.Icon "ARTIBLST"
+	Inventory.PickupSound "misc/p_pkup"
+	Inventory.PickupMessage "$TXT_ARTIBLASTRADIUS"
+	States
+	{
+	Spawn:
+		BLST ABCDEFGH 4 Bright
+		Loop
+	}
+}
+
+// Blast Effect -------------------------------------------------------------
+
+ACTOR BlastEffect
+{
+	+NOBLOCKMAP +NOGRAVITY +NOCLIP
+	+NOTELEPORT
+	RenderStyle Translucent
+	Alpha 0.666
+	States
+	{
+	Spawn:
+		RADE ABCDEFGHI 4
+		Stop
+	}
+}

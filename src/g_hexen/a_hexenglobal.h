@@ -19,13 +19,6 @@ public:
 	void BeginPlay ();
 };
 
-class ABishop : public AActor
-{
-	DECLARE_ACTOR (ABishop, AActor)
-public:
-	void GetExplodeParms (int &damage, int &distance, bool &hurtSource);
-};
-
 class AHeresiarch : public AActor
 {
 	DECLARE_ACTOR (AHeresiarch, AActor)

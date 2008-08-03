@@ -7,77 +7,6 @@
 static FRandom pr_batspawn ("BatSpawn");
 static FRandom pr_batmove ("BatMove");
 
-void A_BatSpawnInit (AActor *);
-void A_BatSpawn (AActor *);
-void A_BatMove (AActor *);
-
-// Bat Spawner --------------------------------------------------------------
-
-class ABatSpawner : public AActor
-{
-	DECLARE_ACTOR (ABatSpawner, AActor)
-public:
-	void Activate (AActor *activator);
-	void Deactivate (AActor *activator);
-};
-
-FState ABatSpawner::States[] =
-{
-#define S_SPAWNBATS1 0
-	S_NORMAL (TNT1, 'A',	2, NULL					    , &States[S_SPAWNBATS1+1]),
-	S_NORMAL (TNT1, 'A',	2, A_BatSpawnInit		    , &States[S_SPAWNBATS1+2]),
-	S_NORMAL (TNT1, 'A',	2, A_BatSpawn			    , &States[S_SPAWNBATS1+2]),
-
-#define S_SPAWNBATS_OFF (S_SPAWNBATS1+3)
-	S_NORMAL (TNT1, 'A',   -1, NULL					    , NULL)
-};
-
-IMPLEMENT_ACTOR (ABatSpawner, Hexen, 10225, 0)
-	PROP_Flags (MF_NOSECTOR|MF_NOBLOCKMAP|MF_NOGRAVITY)
-	PROP_RenderStyle (STYLE_None)
-
-	PROP_SpawnState (S_SPAWNBATS1)
-END_DEFAULTS
-
-void ABatSpawner::Activate (AActor *activator)
-{
-	SetState (&States[S_SPAWNBATS1]);
-}
-
-void ABatSpawner::Deactivate (AActor *activator)
-{
-	SetState (&States[S_SPAWNBATS_OFF]);
-}
-
-// Bat ----------------------------------------------------------------------
-
-class ABat : public AActor
-{
-	DECLARE_ACTOR (ABat, AActor)
-};
-
-FState ABat::States[] =
-{
-#define S_BAT1 0
-	S_NORMAL (ABAT, 'A',	2, A_BatMove			    , &States[S_BAT1+1]),
-	S_NORMAL (ABAT, 'B',	2, A_BatMove			    , &States[S_BAT1+2]),
-	S_NORMAL (ABAT, 'C',	2, A_BatMove			    , &States[S_BAT1]),
-
-#define S_BAT_DEATH (S_BAT1+3)
-	S_NORMAL (ABAT, 'A',	2, NULL					    , NULL),
-};
-
-IMPLEMENT_ACTOR (ABat, Hexen, -1, 0)
-	PROP_SpeedFixed (5)
-	PROP_RadiusFixed (3)
-	PROP_HeightFixed (3)
-	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY|MF_MISSILE)
-	PROP_Flags2 (MF2_NOTELEPORT|MF2_PASSMOBJ)
-
-	PROP_SpawnState (S_BAT1)
-	PROP_DeathState (S_BAT_DEATH)
-END_DEFAULTS
-
 //===========================================================================
 // Bat Spawner Variables
 //	special1	frequency counter
@@ -111,7 +40,7 @@ void A_BatSpawn (AActor *actor)
 	delta = actor->args[1];
 	if (delta==0) delta=1;
 	angle = actor->angle + (((pr_batspawn()%delta)-(delta>>1))<<24);
-	mo = P_SpawnMissileAngle (actor, RUNTIME_CLASS(ABat), angle, 0);
+	mo = P_SpawnMissileAngle (actor, PClass::FindClass ("Bat"), angle, 0);
 	if (mo)
 	{
 		mo->args[0] = pr_batspawn()&63;			// floatbob index

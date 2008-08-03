@@ -1,0 +1,22 @@
+
+// Boost Armor Artifact (Dragonskin Bracers) --------------------------------
+
+ACTOR ArtiBoostArmor : Inventory 8041 native
+{
+	Game Hexen
+	SpawnID 22
+	+COUNTITEM
+	+FLOATBOB
+	Inventory.DefMaxAmount
+	Inventory.PickupFlash 1
+	+INVBAR +FANCYPICKUPSOUND
+	Inventory.Icon "ARTIBRAC"
+	Inventory.PickupSound "misc/p_pkup"
+	Inventory.PickupMessage "$TXT_ARTIBOOSTARMOR"
+	States
+	{
+	Spawn:
+		BRAC ABCDEFGH 4 Bright
+		Loop
+	}
+}

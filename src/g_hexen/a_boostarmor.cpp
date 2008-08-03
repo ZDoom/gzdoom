@@ -10,35 +10,12 @@
 
 class AArtiBoostArmor : public AInventory
 {
-	DECLARE_ACTOR (AArtiBoostArmor, AInventory)
+	DECLARE_CLASS (AArtiBoostArmor, AInventory)
 public:
 	bool Use (bool pickup);
 };
 
-FState AArtiBoostArmor::States[] =
-{
-#define S_ARTI_ARMOR1 0
-	S_BRIGHT (BRAC, 'A',	4, NULL					    , &States[1]),
-	S_BRIGHT (BRAC, 'B',	4, NULL					    , &States[2]),
-	S_BRIGHT (BRAC, 'C',	4, NULL					    , &States[3]),
-	S_BRIGHT (BRAC, 'D',	4, NULL					    , &States[4]),
-	S_BRIGHT (BRAC, 'E',	4, NULL					    , &States[5]),
-	S_BRIGHT (BRAC, 'F',	4, NULL					    , &States[6]),
-	S_BRIGHT (BRAC, 'G',	4, NULL					    , &States[7]),
-	S_BRIGHT (BRAC, 'H',	4, NULL					    , &States[0]),
-};
-
-IMPLEMENT_ACTOR (AArtiBoostArmor, Hexen, 8041, 22)
-	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
-	PROP_Flags2 (MF2_FLOATBOB)
-	PROP_SpawnState (0)
-	PROP_Inventory_DefMaxAmount
-	PROP_Inventory_PickupFlash (1)
-	PROP_Inventory_FlagsSet (IF_INVBAR|IF_FANCYPICKUPSOUND)
-	PROP_Inventory_Icon ("ARTIBRAC")
-	PROP_Inventory_PickupSound ("misc/p_pkup")
-	PROP_Inventory_PickupMessage("$TXT_ARTIBOOSTARMOR")
-END_DEFAULTS
+IMPLEMENT_CLASS (AArtiBoostArmor)
 
 bool AArtiBoostArmor::Use (bool pickup)
 {

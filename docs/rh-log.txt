@@ -1,4 +1,6 @@
 August 3, 2008 (Changes by Graf Zahl)
+- Converted the PhoenixRod and associated classes to DECORATE to make
+  the Heretic conversion complete.
 - Converted the Minotaur's projectiles to DECORATE so that I can get
   rid of the AT_SPEED_SET code.
 - Converted Heretic's Blaster and SkullRod to DECORATE.

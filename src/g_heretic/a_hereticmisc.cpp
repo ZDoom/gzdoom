@@ -2,7 +2,6 @@
 #include "info.h"
 #include "p_enemy.h"
 #include "a_doomglobal.h"
-#include "a_hereticglobal.h"
 #include "a_pickups.h"
 #include "a_action.h"
 #include "m_random.h"

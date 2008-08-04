@@ -6,7 +6,6 @@
 #include "s_sound.h"
 #include "gi.h"
 #include "p_lnspec.h"
-#include "a_hereticglobal.h"
 #include "sbar.h"
 #include "statnums.h"
 #include "c_dispatch.h"

@@ -1,6 +1,5 @@
 #include "actor.h"
 #include "info.h"
-#include "a_hereticglobal.h"
 #include "p_local.h"
 #include "p_enemy.h"
 #include "a_action.h"

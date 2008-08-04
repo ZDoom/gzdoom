@@ -4,7 +4,6 @@
 #include "s_sound.h"
 #include "m_random.h"
 #include "a_pickups.h"
-#include "a_hereticglobal.h"
 #include "d_player.h"
 #include "p_pspr.h"
 #include "p_local.h"
@@ -39,6 +38,7 @@ static FRandom pr_fp2 ("FirePhoenixPL2");
 
 #define FLAME_THROWER_TICS (10*TICRATE)
 
+void P_DSparilTeleport (AActor *actor);
 
 #define USE_BLSR_AMMO_1 1
 #define USE_BLSR_AMMO_2 5
@@ -50,12 +50,6 @@ static FRandom pr_fp2 ("FirePhoenixPL2");
 #define USE_MACE_AMMO_2 5
 
 extern bool P_AutoUseChaosDevice (player_t *player);
-
-// Base Heretic weapon class ------------------------------------------------
-
-IMPLEMENT_STATELESS_ACTOR (AHereticWeapon, Heretic, -1, 0)
-	PROP_Weapon_Kickback (150)
-END_DEFAULTS
 
 // --- Staff ----------------------------------------------------------------
 
@@ -1172,19 +1166,9 @@ void A_HideInCeiling (AActor *actor)
 
 // --- Phoenix Rod ----------------------------------------------------------
 
-void A_FirePhoenixPL1 (AActor *);
-void A_InitPhoenixPL2 (AActor *);
-void A_FirePhoenixPL2 (AActor *);
-void A_ShutdownPhoenixPL2 (AActor *);
-void A_PhoenixPuff (AActor *);
-void A_FlameEnd (AActor *);
-void A_FloatPuff (AActor *);
-
-// Phoenix Rod --------------------------------------------------------------
-
-class APhoenixRod : public AHereticWeapon
+class APhoenixRod : public AWeapon
 {
-	DECLARE_ACTOR (APhoenixRod, AHereticWeapon)
+	DECLARE_CLASS (APhoenixRod, AWeapon)
 public:
 	void Serialize (FArchive &arc)
 	{
@@ -1196,113 +1180,32 @@ public:
 
 class APhoenixRodPowered : public APhoenixRod
 {
-	DECLARE_STATELESS_ACTOR (APhoenixRodPowered, APhoenixRod)
+	DECLARE_CLASS (APhoenixRodPowered, APhoenixRod)
 public:
 	void EndPowerup ();
 };
 
-FState APhoenixRod::States[] =
-{
-#define S_WPHX 0
-	S_NORMAL (WPHX, 'A',   -1, NULL 						, NULL),
-
-#define S_PHOENIXREADY (S_WPHX+1)
-	S_NORMAL (PHNX, 'A',	1, A_WeaponReady				, &States[S_PHOENIXREADY]),
-
-#define S_PHOENIXDOWN (S_PHOENIXREADY+1)
-	S_NORMAL (PHNX, 'A',	1, A_Lower						, &States[S_PHOENIXDOWN]),
-
-#define S_PHOENIXUP (S_PHOENIXDOWN+1)
-	S_NORMAL (PHNX, 'A',	1, A_Raise						, &States[S_PHOENIXUP]),
-
-#define S_PHOENIXATK1 (S_PHOENIXUP+1)
-	S_NORMAL (PHNX, 'B',	5, NULL 						, &States[S_PHOENIXATK1+1]),
-	S_NORMAL (PHNX, 'C',	7, A_FirePhoenixPL1 			, &States[S_PHOENIXATK1+2]),
-	S_NORMAL (PHNX, 'D',	4, NULL 						, &States[S_PHOENIXATK1+3]),
-	S_NORMAL (PHNX, 'B',	4, NULL 						, &States[S_PHOENIXATK1+4]),
-	S_NORMAL (PHNX, 'B',	0, A_ReFire 					, &States[S_PHOENIXREADY]),
-
-#define S_PHOENIXATK2 (S_PHOENIXATK1+5)
-	S_NORMAL (PHNX, 'B',	3, A_InitPhoenixPL2 			, &States[S_PHOENIXATK2+1]),
-	S_BRIGHT (PHNX, 'C',	1, A_FirePhoenixPL2 			, &States[S_PHOENIXATK2+2]),
-	S_NORMAL (PHNX, 'B',	4, A_ReFire 					, &States[S_PHOENIXATK2+3]),
-	S_NORMAL (PHNX, 'B',	4, A_ShutdownPhoenixPL2 		, &States[S_PHOENIXREADY])
-};
-
-IMPLEMENT_ACTOR (APhoenixRod, Heretic, 2003, 29)
-	PROP_Flags (MF_SPECIAL)
-	PROP_SpawnState (S_WPHX)
-
-	PROP_Weapon_Flags (WIF_NOAUTOFIRE|WIF_BOT_REACTION_SKILL_THING)
-	PROP_Weapon_SelectionOrder (2600)
-	PROP_Weapon_AmmoUse1 (USE_PHRD_AMMO_1)
-	PROP_Weapon_AmmoGive1 (2)
-	PROP_Weapon_UpState (S_PHOENIXUP)
-	PROP_Weapon_DownState (S_PHOENIXDOWN)
-	PROP_Weapon_ReadyState (S_PHOENIXREADY)
-	PROP_Weapon_AtkState (S_PHOENIXATK1)
-	PROP_Weapon_YAdjust (15)
-	PROP_Weapon_MoveCombatDist (18350080)
-	PROP_Weapon_AmmoType1 ("PhoenixRodAmmo")
-	PROP_Weapon_SisterType ("PhoenixRodPowered")
-	PROP_Weapon_ProjectileType ("PhoenixFX1")
-	PROP_Inventory_PickupMessage("$TXT_WPNPHOENIXROD")
-END_DEFAULTS
-
-IMPLEMENT_STATELESS_ACTOR (APhoenixRodPowered, Heretic, -1, 0)
-	PROP_Weapon_Flags (WIF_NOAUTOFIRE|WIF_POWERED_UP|WIF_BOT_MELEE)
-	PROP_Weapon_AmmoUse1 (USE_PHRD_AMMO_2)
-	PROP_Weapon_AmmoGive1 (0)
-	PROP_Weapon_AtkState (S_PHOENIXATK2)
-	PROP_Weapon_HoldAtkState (S_PHOENIXATK2+1)
-	PROP_Weapon_MoveCombatDist (0)
-	PROP_Weapon_SisterType ("PhoenixRod")
-	PROP_Weapon_ProjectileType ("PhoenixFX2")
-END_DEFAULTS
+IMPLEMENT_CLASS (APhoenixRod)
+IMPLEMENT_CLASS (APhoenixRodPowered)
 
 void APhoenixRodPowered::EndPowerup ()
 {
-	P_SetPsprite (Owner->player, ps_weapon, &APhoenixRod::States[S_PHOENIXREADY]);
+	P_SetPsprite (Owner->player, ps_weapon, SisterWeapon->GetReadyState());
 	DepleteAmmo (bAltFire);
 	Owner->player->refire = 0;
 	S_StopSound (Owner, CHAN_WEAPON);
 	Owner->player->ReadyWeapon = SisterWeapon;
 }
 
-// Phoenix FX 1 -------------------------------------------------------------
-
-FState APhoenixFX1::States[] =
+class APhoenixFX1 : public AActor
 {
-#define S_PHOENIXFX1 0
-	S_BRIGHT (FX04, 'A',	4, A_PhoenixPuff			, &States[S_PHOENIXFX1+0]),
-
-#define S_PHOENIXFXI1 (S_PHOENIXFX1+1)
-	S_BRIGHT (FX08, 'A',	6, A_Explode				, &States[S_PHOENIXFXI1+1]),
-	S_BRIGHT (FX08, 'B',	5, NULL 					, &States[S_PHOENIXFXI1+2]),
-	S_BRIGHT (FX08, 'C',	5, NULL 					, &States[S_PHOENIXFXI1+3]),
-	S_BRIGHT (FX08, 'D',	4, NULL 					, &States[S_PHOENIXFXI1+4]),
-	S_BRIGHT (FX08, 'E',	4, NULL 					, &States[S_PHOENIXFXI1+5]),
-	S_BRIGHT (FX08, 'F',	4, NULL 					, &States[S_PHOENIXFXI1+6]),
-	S_BRIGHT (FX08, 'G',	4, NULL 					, &States[S_PHOENIXFXI1+7]),
-	S_BRIGHT (FX08, 'H',	4, NULL 					, NULL)
+	DECLARE_CLASS (APhoenixFX1, AActor)
+public:
+	int DoSpecialDamage (AActor *target, int damage);
 };
 
-IMPLEMENT_ACTOR (APhoenixFX1, Heretic, -1, 163)
-	PROP_RadiusFixed (11)
-	PROP_HeightFixed (8)
-	PROP_SpeedFixed (20)
-	PROP_Damage (20)
-	PROP_DamageType (NAME_Fire)
-	PROP_Flags (MF_NOBLOCKMAP|MF_MISSILE|MF_DROPOFF|MF_NOGRAVITY)
-	PROP_Flags2 (MF2_THRUGHOST|MF2_NOTELEPORT|MF2_PCROSS|MF2_IMPACT)
-	PROP_RenderStyle (STYLE_Add)
 
-	PROP_SpawnState (S_PHOENIXFX1)
-	PROP_DeathState (S_PHOENIXFXI1)
-
-	PROP_SeeSound ("weapons/phoenixshoot")
-	PROP_DeathSound ("weapons/phoenixhit")
-END_DEFAULTS
+IMPLEMENT_CLASS (APhoenixFX1)
 
 int APhoenixFX1::DoSpecialDamage (AActor *target, int damage)
 {
@@ -1314,70 +1217,16 @@ int APhoenixFX1::DoSpecialDamage (AActor *target, int damage)
 	return damage;
 }
 
-// Phoenix puff -------------------------------------------------------------
-
-FState APhoenixPuff::States[] =
-{
-	S_NORMAL (FX04, 'B',	4, NULL 					, &States[1]),
-	S_NORMAL (FX04, 'C',	4, NULL 					, &States[2]),
-	S_NORMAL (FX04, 'D',	4, NULL 					, &States[3]),
-	S_NORMAL (FX04, 'E',	4, NULL 					, &States[4]),
-	S_NORMAL (FX04, 'F',	4, NULL 					, NULL),
-};
-
-IMPLEMENT_ACTOR (APhoenixPuff, Heretic, -1, 0)
-	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
-	PROP_Flags2 (MF2_NOTELEPORT|MF2_CANNOTPUSH)
-	PROP_RenderStyle (STYLE_Translucent)
-	PROP_Alpha (HR_SHADOW)
-
-	PROP_SpawnState (0)
-END_DEFAULTS
-
 // Phoenix FX 2 -------------------------------------------------------------
 
 class APhoenixFX2 : public AActor
 {
-	DECLARE_ACTOR (APhoenixFX2, AActor)
+	DECLARE_CLASS (APhoenixFX2, AActor)
 public:
 	int DoSpecialDamage (AActor *target, int damage);
 };
 
-FState APhoenixFX2::States[] =
-{
-#define S_PHOENIXFX2 0
-	S_BRIGHT (FX09, 'A',	2, NULL 					, &States[S_PHOENIXFX2+1]),
-	S_BRIGHT (FX09, 'B',	2, NULL 					, &States[S_PHOENIXFX2+2]),
-	S_BRIGHT (FX09, 'A',	2, NULL 					, &States[S_PHOENIXFX2+3]),
-	S_BRIGHT (FX09, 'B',	2, NULL 					, &States[S_PHOENIXFX2+4]),
-	S_BRIGHT (FX09, 'A',	2, NULL 					, &States[S_PHOENIXFX2+5]),
-	S_BRIGHT (FX09, 'B',	2, A_FlameEnd				, &States[S_PHOENIXFX2+6]),
-	S_BRIGHT (FX09, 'C',	2, NULL 					, &States[S_PHOENIXFX2+7]),
-	S_BRIGHT (FX09, 'D',	2, NULL 					, &States[S_PHOENIXFX2+8]),
-	S_BRIGHT (FX09, 'E',	2, NULL 					, &States[S_PHOENIXFX2+9]),
-	S_BRIGHT (FX09, 'F',	2, NULL 					, NULL),
-
-#define S_PHOENIXFXI2 (S_PHOENIXFX2+10)
-	S_BRIGHT (FX09, 'G',	3, NULL 					, &States[S_PHOENIXFXI2+1]),
-	S_BRIGHT (FX09, 'H',	3, A_FloatPuff				, &States[S_PHOENIXFXI2+2]),
-	S_BRIGHT (FX09, 'I',	4, NULL 					, &States[S_PHOENIXFXI2+3]),
-	S_BRIGHT (FX09, 'J',	5, NULL 					, &States[S_PHOENIXFXI2+4]),
-	S_BRIGHT (FX09, 'K',	5, NULL 					, NULL)
-};
-
-IMPLEMENT_ACTOR (APhoenixFX2, Heretic, -1, 0)
-	PROP_RadiusFixed (6)
-	PROP_HeightFixed (8)
-	PROP_SpeedFixed (10)
-	PROP_Damage (2)
-	PROP_DamageType (NAME_Fire)
-	PROP_Flags (MF_NOBLOCKMAP|MF_MISSILE|MF_DROPOFF|MF_NOGRAVITY)
-	PROP_Flags2 (MF2_NOTELEPORT|MF2_PCROSS|MF2_IMPACT)
-	PROP_RenderStyle (STYLE_Add)
-
-	PROP_SpawnState (S_PHOENIXFX2)
-	PROP_DeathState (S_PHOENIXFXI2)
-END_DEFAULTS
+IMPLEMENT_CLASS (APhoenixFX2)
 
 int APhoenixFX2::DoSpecialDamage (AActor *target, int damage)
 {
@@ -1430,13 +1279,13 @@ void A_PhoenixPuff (AActor *actor)
 
 	//[RH] Heretic never sets the target for seeking
 	//P_SeekerMissile (actor, ANGLE_1*5, ANGLE_1*10);
-	puff = Spawn<APhoenixPuff> (actor->x, actor->y, actor->z, ALLOW_REPLACE);
+	puff = Spawn("PhoenixPuff", actor->x, actor->y, actor->z, ALLOW_REPLACE);
 	angle = actor->angle + ANG90;
 	angle >>= ANGLETOFINESHIFT;
 	puff->momx = FixedMul (FRACUNIT*13/10, finecosine[angle]);
 	puff->momy = FixedMul (FRACUNIT*13/10, finesine[angle]);
 	puff->momz = 0;
-	puff = Spawn<APhoenixPuff> (actor->x, actor->y, actor->z, ALLOW_REPLACE);
+	puff = Spawn("PhoenixPuff", actor->x, actor->y, actor->z, ALLOW_REPLACE);
 	angle = actor->angle - ANG90;
 	angle >>= ANGLETOFINESHIFT;
 	puff->momx = FixedMul (FRACUNIT*13/10, finecosine[angle]);
@@ -1490,7 +1339,7 @@ void A_FirePhoenixPL2 (AActor *actor)
 	flamethrower = static_cast<APhoenixRod *> (player->ReadyWeapon);
 	if (flamethrower == NULL || --flamethrower->FlameCount == 0)
 	{ // Out of flame
-		P_SetPsprite (player, ps_weapon, &APhoenixRod::States[S_PHOENIXATK2+3]);
+		P_SetPsprite (player, ps_weapon, flamethrower->FindState("Powerdown"));
 		player->refire = 0;
 		S_StopSound (actor, CHAN_WEAPON);
 		return;
@@ -1501,7 +1350,7 @@ void A_FirePhoenixPL2 (AActor *actor)
 	z = actor->z + 26*FRACUNIT + finetangent[FINEANGLES/4-(actor->pitch>>ANGLETOFINESHIFT)];
 	z -= actor->floorclip;
 	slope = finetangent[FINEANGLES/4-(actor->pitch>>ANGLETOFINESHIFT)] + (FRACUNIT/10);
-	mo = Spawn<APhoenixFX2> (x, y, z, ALLOW_REPLACE);
+	mo = Spawn("PhoenixFX2", x, y, z, ALLOW_REPLACE);
 	mo->target = actor;
 	mo->angle = angle;
 	mo->momx = actor->momx + FixedMul (mo->Speed, finecosine[angle>>ANGLETOFINESHIFT]);

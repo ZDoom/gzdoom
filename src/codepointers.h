@@ -166,6 +166,13 @@ ACTOR(HideInCeiling)
 ACTOR(SkullRodStorm)
 ACTOR(RainImpact)
 ACTOR(MntrFloorFire)
+ACTOR(FirePhoenixPL1)
+ACTOR(InitPhoenixPL2)
+ACTOR(FirePhoenixPL2)
+ACTOR(ShutdownPhoenixPL2)
+ACTOR(PhoenixPuff)
+ACTOR(FlameEnd)
+ACTOR(FloatPuff)
 
 
 ACTOR(BatSpawnInit)

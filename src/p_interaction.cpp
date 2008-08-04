@@ -48,7 +48,6 @@
 #include "b_bot.h"	//Added by MC:
 
 #include "a_doomglobal.h"
-#include "a_hereticglobal.h"
 #include "ravenshared.h"
 #include "a_hexenglobal.h"
 #include "a_sharedglobal.h"
@@ -1151,7 +1150,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 			{ // Check for flame death
 				if (!inflictor ||
 					((target->health > -50) && (damage > 25)) ||
-					!inflictor->IsKindOf (RUNTIME_CLASS(APhoenixFX1)))
+					!(inflictor->flags5 & MF5_SPECIALFIREDAMAGE))
 				{
 					target->DamageType = NAME_Fire;
 				}

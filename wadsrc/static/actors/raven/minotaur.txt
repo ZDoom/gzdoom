@@ -1,0 +1,88 @@
+// Minotaur FX 1 ------------------------------------------------------------
+
+ACTOR MinotaurFX1
+{
+	Radius 10
+	Height 6
+	Speed 20
+	FastSpeed 26
+	Damage 3
+	DamageType Fire
+	Projectile
+	-ACTIVATEIMPACT
+	-ACTIVATEPCROSS
+	RenderStyle Add
+	States
+	{
+	Spawn:
+		FX12 AB 6 Bright
+		Loop
+	Death:
+		FX12 CDEFGH 5 Bright
+		Stop
+	}
+}
+
+
+// Minotaur FX 2 ------------------------------------------------------------
+
+ACTOR MinotaurFX2 : MinotaurFX1
+{
+	Radius 5
+	Height 12
+	Speed 14
+	FastSpeed 20
+	Damage 4
+	+FLOORHUGGER
+	ExplosionDamage 24
+	DeathSound "minotaur/fx2hit"
+	
+	action native A_MntrFloorFire();
+	
+	states
+	{
+	Spawn:
+		FX13 A 2 Bright A_MntrFloorFire
+		Loop
+	Death:
+		FX13 I 4 Bright A_Explode
+		FX13 JKLM 4 Bright
+		Stop
+	}
+}
+
+// Minotaur FX 3 ------------------------------------------------------------
+
+ACTOR MinotaurFX3 : MinotaurFX2
+{
+	Radius 8
+	Height 16
+	Speed 0
+	DeathSound "minotaur/fx3hit"
+	ExplosionDamage 128
+	States
+	{
+	Spawn:
+		FX13 DC 4 Bright
+		FX13 BCDE 5 Bright
+		FX13 FGH 4 Bright
+		Stop
+	}
+}
+
+// Minotaur Smoke Exit ------------------------------------------------------
+
+ACTOR MinotaurSmokeExit
+{
+	+NOBLOCKMAP
+	+NOTELEPORT
+	RenderStyle Translucent
+	Alpha 0.4
+	States
+	{
+	Spawn:
+		MNSM ABCDEFGHIJIHGFEDCBA 3
+		Stop
+	}
+}
+

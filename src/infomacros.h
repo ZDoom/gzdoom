@@ -69,7 +69,6 @@ typedef void (*voidfunc_)();
 
 #pragma data_seg(".areg$u")		// ActorInfo initializer list
 #pragma data_seg(".greg$u")		// AT_GAME_SET list
-#pragma data_seg(".sreg$u")		// AT_SPEED_SET list
 #pragma data_seg()
 
 #define DOOMEDNUMOF(actor) actor##ActorInfo.DoomEdNum
@@ -103,12 +102,6 @@ typedef void (*voidfunc_)();
 	extern void ns##_gs(); \
 	__declspec(allocate(".greg$u")) voidfunc_ ns##_gsr = ns##_gs; \
 	void ns##_gs ()
-
-// Define a function that gets called when the speed is changed.
-#define AT_SPEED_SET(ns,varname) \
-	extern void ns##_ss(EGameSpeed); \
-	__declspec(allocate(".sreg$u")) void (*ns##_gsr)(EGameSpeed) = ns##_ss; \
-	void ns##_ss (EGameSpeed varname)
 
 #else
 
@@ -150,11 +143,6 @@ extern void ApplyActorDefault (int defnum, int dataint);
 	void ns##_gs ()
 
 //typedef void (*speedfunc)(EGameSpeed);
-
-#define AT_SPEED_SET(ns,varname) \
-	extern void ns##_ss(EGameSpeed); \
-	void (*ns##_gsr)(EGameSpeed) __attribute__((section(SREG_SECTION))) = ns##_ss; \
-	void ns##_ss (EGameSpeed varname)
 
 #endif
 

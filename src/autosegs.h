@@ -40,12 +40,10 @@
 #define AREG_SECTION "__DATA,areg"
 #define CREG_SECTION "__DATA,creg"
 #define GREG_SECTION "__DATA,greg"
-#define SREG_SECTION "__DATA,sreg"
 #else
 #define AREG_SECTION "areg"
 #define CREG_SECTION "creg"
 #define GREG_SECTION "greg"
-#define SREG_SECTION "sreg"
 #endif
 #endif
 
@@ -59,10 +57,6 @@ extern REGINFO ARegTail;
 // List of AT_GAME_SET functions
 extern REGINFO GRegHead;
 extern REGINFO GRegTail;
-
-// List of AT_SPEED_SET functions
-extern REGINFO SRegHead;
-extern REGINFO SRegTail;
 
 // List of TypeInfos
 extern REGINFO CRegHead;

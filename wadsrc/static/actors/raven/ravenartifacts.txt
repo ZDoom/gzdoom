@@ -75,6 +75,7 @@ ACTOR ArtiInvulnerability : PowerupGiver 84
 	+FLOATBOB
 	+INVENTORY.PICKUPFLASH
 	Inventory.RespawnTics 4230
+	Inventory.Icon ARTIINVU
 	Inventory.PickupMessage "$TXT_ARTIINVULNERABILITY"
 	Powerup.Type Invulnerable
 	Powerup.Color GoldMap

@@ -658,3 +658,320 @@ ACTOR MaceSpawner : SpecialSpot 2002
 	}
 }
 
+
+// Blaster ------------------------------------------------------------------
+
+ACTOR Blaster : Weapon 53
+{
+	Game Heretic
+	SpawnID 28
+	+BLOODSPLATTER
+	Weapon.SelectionOrder 500
+	Weapon.AmmoUse 1
+	Weapon.AmmoGive 30
+	Weapon.YAdjust 15
+	Weapon.AmmoType "BlasterAmmo"
+	Weapon.SisterWeapon "BlasterPowered"
+	Inventory.PickupMessage "$TxT_WPNBLASTER"
+
+	action native A_FireBlasterPL1();
+
+	States
+	{
+	Spawn:
+		WBLS A -1
+		Stop
+	Ready:
+		BLSR A 1 A_WeaponReady
+		Loop
+	Deselect:
+		BLSR A 1 A_Lower
+		Loop
+	Select:
+		BLSR A 1 A_Raise
+		Loop
+	Fire:
+		BLSR BC 3
+	Hold:
+		BLSR D 2 A_FireBlasterPL1
+		BLSR CB 2
+		BLSR A 0 A_ReFire
+		Goto Ready
+	}
+}
+
+ACTOR BlasterPowered : Blaster
+{
+	+WEAPON.POWERED_UP
+	Weapon.AmmoUse 5
+	Weapon.AmmoGive 0
+	Weapon.SisterWeapon "Blaster"
+	States
+	{
+	Fire:
+		BLSR BC 0
+	Hold:
+		BLSR D 3 A_FireCustomMissile("BlasterFX1")
+		BLSR CB 4
+		BLSR A 0 A_ReFire
+		Goto Ready
+	}
+}
+
+// Blaster FX 1 -------------------------------------------------------------
+
+ACTOR BlasterFX1 native
+{
+	Radius 12
+	Height 8
+	Speed 184
+	Damage 2
+	Projectile
+	SeeSound "weapons/blastershoot"
+	DeathSound "weapons/blasterhit"
+	+SPAWNSOUNDSOURCE
+
+	action native A_SpawnRippers();
+
+	States
+	{
+	Spawn:
+		ACLO E 200
+		Loop
+	Death:
+		FX18 A 3 BRIGHT A_SpawnRippers
+		FX18 BCDEFG 4 BRIGHT
+		Stop
+	}
+}
+
+// Blaster smoke ------------------------------------------------------------
+
+ACTOR BlasterSmoke
+{
+	+NOBLOCKMAP
+	+NOGRAVITY
+	+NOTELEPORT
+	+CANNOTPUSH
+	RenderStyle Translucent
+	Alpha 0.4
+	States
+	{
+	Spawn:
+		FX18 HIJKL 4
+		Stop
+	}
+}
+
+// Ripper -------------------------------------------------------------------
+
+ACTOR Ripper native
+{
+	Game Heretic
+	SpawnID 157
+	Radius 8
+	Height 6
+	Speed 14
+	Damage 1
+	Projectile
+	+RIPPER
+	DeathSound "weapons/blasterpowhit"
+	States
+	{
+	Spawn:
+		FX18 M 4
+		FX18 N 5
+		Loop
+	Death:
+		FX18 OPQRS 4 BRIGHT
+		Stop
+	}
+}
+
+// Blaster Puff -------------------------------------------------------------
+
+ACTOR BlasterPuff
+{
+	+NOBLOCKMAP
+	+NOGRAVITY
+	+PUFFONACTORS
+	+NOTELEPORT
+	RenderStyle Add
+	States
+	{
+	Crash:
+		FX17 ABCDE 4 BRIGHT
+		Stop
+	Spawn:
+		FX17 FG 3 BRIGHT
+		FX17 HIJKL 4 BRIGHT
+		Stop
+	}
+}
+
+
+// Skull (Horn) Rod ---------------------------------------------------------
+
+ACTOR SkullRod : Weapon 2004
+{
+	Game Heretic
+	SpawnID 30
+	Weapon.SelectionOrder 200
+	Weapon.AmmoUse1 1
+	Weapon.AmmoGive1 50
+	Weapon.YAdjust 15
+	Weapon.AmmoType1 "SkullRodAmmo"
+	Weapon.SisterWeapon "SkullRodPowered"
+	Inventory.PickupMessage "$TxT_WPNSKULLROD"
+
+	action native A_FireSkullRodPL1();
+
+	States
+	{
+	Spawn:
+		WSKL A -1
+		Stop
+	Ready:
+		HROD A 1 A_WeaponReady
+		Loop
+	Deselect:
+		HROD A 1 A_Lower
+		Loop
+	Select:
+		HROD A 1 A_Raise
+		Loop
+	Fire:
+		HROD AB 4 A_FireSkullRodPL1
+		HROD B 0 A_ReFire
+		Goto Ready
+	}
+}
+
+ACTOR SkullRodPowered : SkullRod
+{
+	+WEAPON.POWERED_UP
+	Weapon.AmmoUse1 5
+	Weapon.AmmoGive1 0
+	Weapon.SisterWeapon "SkullRod"
+	States
+	{
+	Fire:
+		HROD C 2
+		HROD D 3
+		HROD E 2
+		HROD F 3
+		HROD G 4 A_FireCustomMissile("HornRodFX2")
+		HROD F 2
+		HROD E 3
+		HROD D 2
+		HROD C 2 A_ReFire
+		Goto Ready
+	}
+}
+
+// Horn Rod FX 1 ------------------------------------------------------------
+
+ACTOR HornRodFX1
+{
+	Game Heretic
+	SpawnID 160
+	Radius 12
+	Height 8
+	Speed 22
+	Damage 3
+	Projectile
+	+WINDTHRUST
+	-NOBLOCKMAP
+	RenderStyle Add
+	SeeSound "weapons/hornrodshoot"
+	DeathSound "weapons/hornrodhit"
+	States
+	{
+	Spawn:
+		FX00 AB 6 BRIGHT
+		Loop
+	Death:
+		FX00 HI 5 BRIGHT
+		FX00 JK 4 BRIGHT
+		FX00 LM 3 BRIGHT
+		Stop
+	}
+}
+
+
+// Horn Rod FX 2 ------------------------------------------------------------
+
+ACTOR HornRodFX2 native
+{
+	Radius 12
+	Height 8
+	Speed 22
+	Damage 10
+	Health 140
+	Projectile
+	RenderStyle Add
+	SeeSound "weapons/hornrodpowshoot"
+	DeathSound "weapons/hornrodpowhit"
+
+	action native A_AddPlayerRain();
+	action native A_HideInCeiling();
+	action native A_SkullRodStorm();
+
+	States
+	{
+	Spawn:
+		FX00 C 3 BRIGHT
+		FX00 D 3 BRIGHT A_SeekerMissile(10, 30)
+		FX00 E 3 BRIGHT
+		FX00 F 3 BRIGHT A_SeekerMissile(10, 30)
+		Loop
+	Death:
+		FX00 H 5 BRIGHT A_AddPlayerRain
+		FX00 I 5 BRIGHT
+		FX00 JK 4 BRIGHT
+		FX00 LM 3 BRIGHT
+		FX00 G 1 A_HideInCeiling
+		FX00 G 1 A_SkullRodStorm
+		Wait
+	}
+}
+
+// Rain pillar 1 ------------------------------------------------------------
+
+ACTOR RainPillar native
+{
+	Radius 5
+	Height 12
+	Speed 12
+	Damage 5
+	Mass 5
+	Projectile
+	-ACTIVATEPCROSS
+	-ACTIVATEIMPACT
+	RenderStyle Add
+
+	action native A_RainImpact();
+
+	States
+	{
+	Spawn:
+		FX22 A -1 BRIGHT
+		Stop
+	Death:
+		FX22 B 4 BRIGHT A_RainImpact
+		FX22 CDEF 4 BRIGHT
+		Stop
+	NotFloor:
+		FX22 GHI 4 BRIGHT
+		Stop
+	}
+}
+
+// Rain tracker "inventory" item --------------------------------------------
+
+ACTOR RainTracker : Inventory native
+{
+	+INVENTORY.UNDROPPABLE
+}
+
+

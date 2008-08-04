@@ -1784,11 +1784,6 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 	wantFast = !!G_SkillProperty(SKILLP_FastMonsters);
 	GameSpeed = wantFast ? SPEED_Fast : SPEED_Normal;
 
-	if (oldSpeed != GameSpeed)
-	{
-		FActorInfo::StaticSpeedSet ();
-	}
-
 	if (!savegamerestore)
 	{
 		if (!netgame)

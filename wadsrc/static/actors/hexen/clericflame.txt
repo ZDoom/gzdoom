@@ -3,6 +3,7 @@
 
 ACTOR CWeapFlame : ClericWeapon 8009
 {
+	Game Hexen
 	+NOGRAVITY
 	Weapon.SelectionOrder 1000
 	Weapon.AmmoUse 4
@@ -45,7 +46,6 @@ ACTOR CWeapFlame : ClericWeapon 8009
 
 ACTOR CFlameFloor
 {
-	Game Hexen
 	+NOBLOCKMAP +NOGRAVITY
 	RenderStyle Add
 	States
@@ -62,7 +62,6 @@ ACTOR CFlameFloor
 
 ACTOR FlamePuff
 {
-	Game Hexen
 	Radius 1
 	Height 1
 	+NOBLOCKMAP +NOGRAVITY

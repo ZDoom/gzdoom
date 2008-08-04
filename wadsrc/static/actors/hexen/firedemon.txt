@@ -220,8 +220,6 @@ ACTOR FireDemonMissile
 	Damage 1
 	DamageType "Fire"
 	Projectile
-	+FLOORCLIP
-	-BLOODSPLATTER
 	RenderStyle Add
 	DeathSound "FireDemonMissileHit"
 	States

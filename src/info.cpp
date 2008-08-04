@@ -344,22 +344,6 @@ void FActorInfo::RegisterIDs ()
 
 //==========================================================================
 //
-// Called when a new game is started, but only if the game
-// speed has changed.
-//
-//==========================================================================
-
-void FActorInfo::StaticSpeedSet ()
-{
-	TAutoSegIteratorNoArrow<void (*)(int), &SRegHead, &SRegTail> setters;
-	while (++setters != NULL)
-	{
-		((void (*)(int))setters) (GameSpeed);
-	}
-}
-
-//==========================================================================
-//
 //
 //==========================================================================
 

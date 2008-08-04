@@ -44,6 +44,7 @@
 #include "actors/raven/ravenartifacts.txt"
 #include "actors/raven/ravenhealth.txt"
 #include "actors/raven/ravenambient.txt"
+#include "actors/raven/minotaur.txt"
 
 #include "actors/heretic/hereticplayer.txt"
 #include "actors/heretic/hereticammo.txt"

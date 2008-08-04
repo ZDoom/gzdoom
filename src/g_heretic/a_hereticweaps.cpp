@@ -704,123 +704,17 @@ boom:
 	}
 }
 
-// --- Blaster (aka Claw) ---------------------------------------------------
-
-void A_FireBlasterPL1 (AActor *);
-void A_FireBlasterPL2 (AActor *);
-void A_SpawnRippers (AActor *);
-
-// Blaster ------------------------------------------------------------------
-
-class ABlaster : public AHereticWeapon
-{
-	DECLARE_ACTOR (ABlaster, AHereticWeapon)
-};
-
-class ABlasterPowered : public ABlaster
-{
-	DECLARE_STATELESS_ACTOR (ABlasterPowered, ABlaster)
-};
-
-FState ABlaster::States[] =
-{
-#define S_BLSR 0
-	S_NORMAL (WBLS, 'A',   -1, NULL 						, NULL),
-
-#define S_BLASTERREADY (S_BLSR+1)
-	S_NORMAL (BLSR, 'A',	1, A_WeaponReady				, &States[S_BLASTERREADY]),
-
-#define S_BLASTERDOWN (S_BLASTERREADY+1)
-	S_NORMAL (BLSR, 'A',	1, A_Lower						, &States[S_BLASTERDOWN]),
-
-#define S_BLASTERUP (S_BLASTERDOWN+1)
-	S_NORMAL (BLSR, 'A',	1, A_Raise						, &States[S_BLASTERUP]),
-
-#define S_BLASTERATK1 (S_BLASTERUP+1)
-	S_NORMAL (BLSR, 'B',	3, NULL 						, &States[S_BLASTERATK1+1]),
-	S_NORMAL (BLSR, 'C',	3, NULL 						, &States[S_BLASTERATK1+2]),
-	S_NORMAL (BLSR, 'D',	2, A_FireBlasterPL1 			, &States[S_BLASTERATK1+3]),
-	S_NORMAL (BLSR, 'C',	2, NULL 						, &States[S_BLASTERATK1+4]),
-	S_NORMAL (BLSR, 'B',	2, NULL 						, &States[S_BLASTERATK1+5]),
-	S_NORMAL (BLSR, 'A',	0, A_ReFire 					, &States[S_BLASTERREADY]),
-
-#define S_BLASTERATK2 (S_BLASTERATK1+6)
-	S_NORMAL (BLSR, 'B',	0, NULL 						, &States[S_BLASTERATK2+1]),
-	S_NORMAL (BLSR, 'C',	0, NULL 						, &States[S_BLASTERATK2+2]),
-	S_NORMAL (BLSR, 'D',	3, A_FireBlasterPL2 			, &States[S_BLASTERATK2+3]),
-	S_NORMAL (BLSR, 'C',	4, NULL 						, &States[S_BLASTERATK2+4]),
-	S_NORMAL (BLSR, 'B',	4, NULL 						, &States[S_BLASTERATK2+5]),
-	S_NORMAL (BLSR, 'A',	0, A_ReFire 					, &States[S_BLASTERREADY])
-};
-
-IMPLEMENT_ACTOR (ABlaster, Heretic, 53, 28)
-	PROP_Flags (MF_SPECIAL)
-	PROP_Flags5 (MF5_BLOODSPLATTER)
-	PROP_SpawnState (S_BLSR)
-
-	PROP_Weapon_SelectionOrder (500)
-	PROP_Weapon_AmmoUse1 (USE_BLSR_AMMO_1)
-	PROP_Weapon_AmmoGive1 (30)
-	PROP_Weapon_UpState (S_BLASTERUP)
-	PROP_Weapon_DownState (S_BLASTERDOWN)
-	PROP_Weapon_ReadyState (S_BLASTERREADY)
-	PROP_Weapon_AtkState (S_BLASTERATK1)
-	PROP_Weapon_HoldAtkState (S_BLASTERATK1+2)
-	PROP_Weapon_YAdjust (15)
-	PROP_Weapon_MoveCombatDist (27000000)
-	PROP_Weapon_AmmoType1 ("BlasterAmmo")
-	PROP_Weapon_SisterType ("BlasterPowered")
-	PROP_Inventory_PickupMessage("$TXT_WPNBLASTER")
-END_DEFAULTS
-
-IMPLEMENT_STATELESS_ACTOR (ABlasterPowered, Heretic, -1, 0)
-	PROP_Weapon_Flags (WIF_POWERED_UP)
-	PROP_Weapon_AmmoUse1 (USE_BLSR_AMMO_2)
-	PROP_Weapon_AmmoGive1 (0)
-	PROP_Weapon_AtkState (S_BLASTERATK2)
-	PROP_Weapon_HoldAtkState (S_BLASTERATK2+2)
-	PROP_Weapon_SisterType ("Blaster")
-	PROP_Weapon_ProjectileType ("BlasterFX1")
-END_DEFAULTS
 
 // Blaster FX 1 -------------------------------------------------------------
 
 class ABlasterFX1 : public AActor
 {
-	DECLARE_ACTOR (ABlasterFX1, AActor)
+	DECLARE_CLASS(ABlasterFX1, AActor)
 public:
 	void Tick ();
 	int DoSpecialDamage (AActor *target, int damage);
 };
 
-FState ABlasterFX1::States[] =
-{
-#define S_BLASTERFX1 0
-	S_NORMAL (ACLO, 'E',  200, NULL 					, &States[S_BLASTERFX1+0]),
-
-#define S_BLASTERFXI1 (S_BLASTERFX1+1)
-	S_BRIGHT (FX18, 'A',	3, A_SpawnRippers			, &States[S_BLASTERFXI1+1]),
-	S_BRIGHT (FX18, 'B',	3, NULL 					, &States[S_BLASTERFXI1+2]),
-	S_BRIGHT (FX18, 'C',	4, NULL 					, &States[S_BLASTERFXI1+3]),
-	S_BRIGHT (FX18, 'D',	4, NULL 					, &States[S_BLASTERFXI1+4]),
-	S_BRIGHT (FX18, 'E',	4, NULL 					, &States[S_BLASTERFXI1+5]),
-	S_BRIGHT (FX18, 'F',	4, NULL 					, &States[S_BLASTERFXI1+6]),
-	S_BRIGHT (FX18, 'G',	4, NULL 					, NULL)
-};
-
-IMPLEMENT_ACTOR (ABlasterFX1, Heretic, -1, 0)
-	PROP_RadiusFixed (12)
-	PROP_HeightFixed (8)
-	PROP_SpeedFixed (184)
-	PROP_Damage (2)
-	PROP_Flags (MF_NOBLOCKMAP|MF_MISSILE|MF_DROPOFF|MF_NOGRAVITY)
-	PROP_Flags2 (MF2_NOTELEPORT|MF2_PCROSS|MF2_IMPACT)
-
-	PROP_SpawnState (S_BLASTERFX1)
-	PROP_DeathState (S_BLASTERFXI1)
-
-	PROP_DeathSound ("weapons/blasterhit")
-END_DEFAULTS
 
 int ABlasterFX1::DoSpecialDamage (AActor *target, int damage)
 {
@@ -835,69 +729,18 @@ int ABlasterFX1::DoSpecialDamage (AActor *target, int damage)
 	return damage;
 }
 
-// Blaster smoke ------------------------------------------------------------
-
-class ABlasterSmoke : public AActor
-{
-	DECLARE_ACTOR (ABlasterSmoke, AActor)
-};
-
-FState ABlasterSmoke::States[] =
-{
-#define S_BLASTERSMOKE 0
-	S_NORMAL (FX18, 'H',	4, NULL 					, &States[S_BLASTERSMOKE+1]),
-	S_NORMAL (FX18, 'I',	4, NULL 					, &States[S_BLASTERSMOKE+2]),
-	S_NORMAL (FX18, 'J',	4, NULL 					, &States[S_BLASTERSMOKE+3]),
-	S_NORMAL (FX18, 'K',	4, NULL 					, &States[S_BLASTERSMOKE+4]),
-	S_NORMAL (FX18, 'L',	4, NULL 					, NULL)
-};
-
-IMPLEMENT_ACTOR (ABlasterSmoke, Heretic, -1, 0)
-	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
-	PROP_Flags2 (MF2_NOTELEPORT|MF2_CANNOTPUSH)
-	PROP_RenderStyle (STYLE_Translucent)
-	PROP_Alpha (HR_SHADOW)
-
-	PROP_SpawnState (S_BLASTERSMOKE)
-END_DEFAULTS
+IMPLEMENT_CLASS(ABlasterFX1)
 
 // Ripper -------------------------------------------------------------------
 
 class ARipper : public AActor
 {
-	DECLARE_ACTOR (ARipper, AActor)
+	DECLARE_CLASS (ARipper, AActor)
 public:
 	int DoSpecialDamage (AActor *target, int damage);
 };
 
-FState ARipper::States[] =
-{
-#define S_RIPPER 0
-	S_NORMAL (FX18, 'M',	4, NULL 					, &States[S_RIPPER+1]),
-	S_NORMAL (FX18, 'N',	5, NULL 					, &States[S_RIPPER+0]),
-
-#define S_RIPPERX (S_RIPPER+2)
-	S_BRIGHT (FX18, 'O',	4, NULL 					, &States[S_RIPPERX+1]),
-	S_BRIGHT (FX18, 'P',	4, NULL 					, &States[S_RIPPERX+2]),
-	S_BRIGHT (FX18, 'Q',	4, NULL 					, &States[S_RIPPERX+3]),
-	S_BRIGHT (FX18, 'R',	4, NULL 					, &States[S_RIPPERX+4]),
-	S_BRIGHT (FX18, 'S',	4, NULL 					, NULL)
-};
-
-IMPLEMENT_ACTOR (ARipper, Heretic, -1, 157)
-	PROP_RadiusFixed (8)
-	PROP_HeightFixed (6)
-	PROP_SpeedFixed (14)
-	PROP_Damage (1)
-	PROP_Flags (MF_NOBLOCKMAP|MF_MISSILE|MF_DROPOFF|MF_NOGRAVITY)
-	PROP_Flags2 (MF2_NOTELEPORT|MF2_RIP|MF2_PCROSS|MF2_IMPACT)
-	PROP_Flags3 (MF3_WARNBOT)
-
-	PROP_SpawnState (S_RIPPER)
-	PROP_DeathState (S_RIPPERX)
-
-	PROP_DeathSound ("weapons/blasterpowhit")
-END_DEFAULTS
+IMPLEMENT_CLASS(ARipper)
 
 int ARipper::DoSpecialDamage (AActor *target, int damage)
 {
@@ -911,41 +754,6 @@ int ARipper::DoSpecialDamage (AActor *target, int damage)
 	}
 	return damage;
 }
-
-// Blaster Puff -------------------------------------------------------------
-
-class ABlasterPuff : public AActor
-{
-	DECLARE_ACTOR (ABlasterPuff, AActor)
-};
-
-FState ABlasterPuff::States[] =
-{
-#define S_BLASTERPUFF1 0
-	S_BRIGHT (FX17, 'A',	4, NULL 					, &States[S_BLASTERPUFF1+1]),
-	S_BRIGHT (FX17, 'B',	4, NULL 					, &States[S_BLASTERPUFF1+2]),
-	S_BRIGHT (FX17, 'C',	4, NULL 					, &States[S_BLASTERPUFF1+3]),
-	S_BRIGHT (FX17, 'D',	4, NULL 					, &States[S_BLASTERPUFF1+4]),
-	S_BRIGHT (FX17, 'E',	4, NULL 					, NULL),
-
-#define S_BLASTERPUFF2 (S_BLASTERPUFF1+5)
-	S_BRIGHT (FX17, 'F',	3, NULL 					, &States[S_BLASTERPUFF2+1]),
-	S_BRIGHT (FX17, 'G',	3, NULL 					, &States[S_BLASTERPUFF2+2]),
-	S_BRIGHT (FX17, 'H',	4, NULL 					, &States[S_BLASTERPUFF2+3]),
-	S_BRIGHT (FX17, 'I',	4, NULL 					, &States[S_BLASTERPUFF2+4]),
-	S_BRIGHT (FX17, 'J',	4, NULL 					, &States[S_BLASTERPUFF2+5]),
-	S_BRIGHT (FX17, 'K',	4, NULL 					, &States[S_BLASTERPUFF2+6]),
-	S_BRIGHT (FX17, 'L',	4, NULL 					, NULL)
-};
-
-IMPLEMENT_ACTOR (ABlasterPuff, Heretic, -1, 0)
-	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
-	PROP_Flags3 (MF3_PUFFONACTORS)
-	PROP_RenderStyle (STYLE_Add)
-
-	PROP_SpawnState (S_BLASTERPUFF2)
-	PROP_CrashState (S_BLASTERPUFF1)
-END_DEFAULTS
 
 //----------------------------------------------------------------------------
 //
@@ -977,34 +785,8 @@ void A_FireBlasterPL1 (AActor *actor)
 	{
 		angle += pr_fb1.Random2() << 18;
 	}
-	P_LineAttack (actor, angle, PLAYERMISSILERANGE, pitch, damage, NAME_None, RUNTIME_CLASS(ABlasterPuff));
+	P_LineAttack (actor, angle, PLAYERMISSILERANGE, pitch, damage, NAME_None, "BlasterPuff");
 	S_Sound (actor, CHAN_WEAPON, "weapons/blastershoot", 1, ATTN_NORM);
-}
-
-//----------------------------------------------------------------------------
-//
-// PROC A_FireBlasterPL2
-//
-//----------------------------------------------------------------------------
-
-void A_FireBlasterPL2 (AActor *actor)
-{
-	player_t *player;
-
-	if (NULL == (player = actor->player))
-	{
-		return;
-	}
-
-	AWeapon *weapon = actor->player->ReadyWeapon;
-	if (weapon != NULL)
-	{
-		if (!weapon->DepleteAmmo (weapon->bAltFire))
-			return;
-	}
-	P_SpawnPlayerMissile (actor, RUNTIME_CLASS(ABlasterFX1));
-	S_Sound (actor, CHAN_WEAPON, "weapons/blastershoot", 1, ATTN_NORM);
-
 }
 
 //----------------------------------------------------------------------------
@@ -1085,7 +867,7 @@ void ABlasterFX1::Tick ()
 			}
 			if (changexy && (pr_bfx1t() < 64))
 			{
-				Spawn<ABlasterSmoke> (x, y, MAX<fixed_t> (z - 8 * FRACUNIT, floorz), ALLOW_REPLACE);
+				Spawn("BlasterSmoke", x, y, MAX<fixed_t> (z - 8 * FRACUNIT, floorz), ALLOW_REPLACE);
 			}
 		}
 	}
@@ -1105,168 +887,17 @@ void ABlasterFX1::Tick ()
 
 // --- Skull rod ------------------------------------------------------------
 
-void A_FireSkullRodPL1 (AActor *);
-void A_FireSkullRodPL2 (AActor *);
-void A_SkullRodPL2Seek (AActor *);
-void A_AddPlayerRain (AActor *);
-void A_HideInCeiling (AActor *);
-void A_SkullRodStorm (AActor *);
-void A_RainImpact (AActor *);
-
-// Skull (Horn) Rod ---------------------------------------------------------
-
-class ASkullRod : public AHereticWeapon
-{
-	DECLARE_ACTOR (ASkullRod, AHereticWeapon)
-};
-
-class ASkullRodPowered : public ASkullRod
-{
-	DECLARE_STATELESS_ACTOR (ASkullRodPowered, ASkullRod)
-};
-
-FState ASkullRod::States[] =
-{
-#define S_WSKL 0
-	S_NORMAL (WSKL, 'A',   -1, NULL 						, NULL),
-
-#define S_HORNRODREADY (S_WSKL+1)
-	S_NORMAL (HROD, 'A',	1, A_WeaponReady				, &States[S_HORNRODREADY]),
-
-#define S_HORNRODDOWN (S_HORNRODREADY+1)
-	S_NORMAL (HROD, 'A',	1, A_Lower						, &States[S_HORNRODDOWN]),
-
-#define S_HORNRODUP (S_HORNRODDOWN+1)
-	S_NORMAL (HROD, 'A',	1, A_Raise						, &States[S_HORNRODUP]),
-
-#define S_HORNRODATK1 (S_HORNRODUP+1)
-	S_NORMAL (HROD, 'A',	4, A_FireSkullRodPL1			, &States[S_HORNRODATK1+1]),
-	S_NORMAL (HROD, 'B',	4, A_FireSkullRodPL1			, &States[S_HORNRODATK1+2]),
-	S_NORMAL (HROD, 'B',	0, A_ReFire 					, &States[S_HORNRODREADY]),
-
-#define S_HORNRODATK2 (S_HORNRODATK1+3)
-	S_NORMAL (HROD, 'C',	2, NULL 						, &States[S_HORNRODATK2+1]),
-	S_NORMAL (HROD, 'D',	3, NULL 						, &States[S_HORNRODATK2+2]),
-	S_NORMAL (HROD, 'E',	2, NULL 						, &States[S_HORNRODATK2+3]),
-	S_NORMAL (HROD, 'F',	3, NULL 						, &States[S_HORNRODATK2+4]),
-	S_NORMAL (HROD, 'G',	4, A_FireSkullRodPL2			, &States[S_HORNRODATK2+5]),
-	S_NORMAL (HROD, 'F',	2, NULL 						, &States[S_HORNRODATK2+6]),
-	S_NORMAL (HROD, 'E',	3, NULL 						, &States[S_HORNRODATK2+7]),
-	S_NORMAL (HROD, 'D',	2, NULL 						, &States[S_HORNRODATK2+8]),
-	S_NORMAL (HROD, 'C',	2, A_ReFire 					, &States[S_HORNRODREADY])
-};
-
-IMPLEMENT_ACTOR (ASkullRod, Heretic, 2004, 30)
-	PROP_Flags (MF_SPECIAL)
-	PROP_SpawnState (S_WSKL)
-
-	PROP_Weapon_SelectionOrder (200)
-	PROP_Weapon_AmmoUse1 (USE_SKRD_AMMO_1)
-	PROP_Weapon_AmmoGive1 (50)
-	PROP_Weapon_UpState (S_HORNRODUP)
-	PROP_Weapon_DownState (S_HORNRODDOWN)
-	PROP_Weapon_ReadyState (S_HORNRODREADY)
-	PROP_Weapon_AtkState (S_HORNRODATK1)
-	PROP_Weapon_YAdjust (15)
-	PROP_Weapon_MoveCombatDist (27000000)
-	PROP_Weapon_AmmoType1 ("SkullRodAmmo")
-	PROP_Weapon_SisterType ("SkullRodPowered")
-	PROP_Weapon_ProjectileType ("HornRodFX1")
-	PROP_Inventory_PickupMessage("$TXT_WPNSKULLROD")
-END_DEFAULTS
-
-IMPLEMENT_STATELESS_ACTOR (ASkullRodPowered, Heretic, -1, 0)
-	PROP_Weapon_Flags (WIF_POWERED_UP)
-	PROP_Weapon_AmmoUse1 (USE_SKRD_AMMO_2)
-	PROP_Weapon_AmmoGive1 (0)
-	PROP_Weapon_AtkState (S_HORNRODATK2)
-	PROP_Weapon_SisterType ("SkullRod")
-	PROP_Weapon_ProjectileType ("HornRodFX2")
-END_DEFAULTS
-
-// Horn Rod FX 1 ------------------------------------------------------------
-
-class AHornRodFX1 : public AActor
-{
-	DECLARE_ACTOR (AHornRodFX1, AActor)
-};
-
-FState AHornRodFX1::States[] =
-{
-#define S_HRODFX1 0
-	S_BRIGHT (FX00, 'A',	6, NULL 					, &States[S_HRODFX1+1]),
-	S_BRIGHT (FX00, 'B',	6, NULL 					, &States[S_HRODFX1+0]),
-
-#define S_HRODFXI1 (S_HRODFX1+2)
-	S_BRIGHT (FX00, 'H',	5, NULL 					, &States[S_HRODFXI1+1]),
-	S_BRIGHT (FX00, 'I',	5, NULL 					, &States[S_HRODFXI1+2]),
-	S_BRIGHT (FX00, 'J',	4, NULL 					, &States[S_HRODFXI1+3]),
-	S_BRIGHT (FX00, 'K',	4, NULL 					, &States[S_HRODFXI1+4]),
-	S_BRIGHT (FX00, 'L',	3, NULL 					, &States[S_HRODFXI1+5]),
-	S_BRIGHT (FX00, 'M',	3, NULL 					, NULL)
-};
-
-IMPLEMENT_ACTOR (AHornRodFX1, Heretic, -1, 160)
-	PROP_RadiusFixed (12)
-	PROP_HeightFixed (8)
-	PROP_SpeedFixed (22)
-	PROP_Damage (3)
-	PROP_Flags (MF_MISSILE|MF_DROPOFF|MF_NOGRAVITY)
-	PROP_Flags2 (MF2_WINDTHRUST|MF2_NOTELEPORT|MF2_PCROSS|MF2_IMPACT)
-	PROP_Flags3 (MF3_WARNBOT)
-	PROP_RenderStyle (STYLE_Add)
-
-	PROP_SpawnState (S_HRODFX1)
-	PROP_DeathState (S_HRODFXI1)
-
-	PROP_SeeSound ("weapons/hornrodshoot")
-	PROP_DeathSound ("weapons/hornrodhit")
-END_DEFAULTS
 
 // Horn Rod FX 2 ------------------------------------------------------------
 
 class AHornRodFX2 : public AActor
 {
-	DECLARE_ACTOR (AHornRodFX2, AActor)
+	DECLARE_CLASS (AHornRodFX2, AActor)
 public:
 	int DoSpecialDamage (AActor *target, int damage);
 };
 
-FState AHornRodFX2::States[] =
-{
-#define S_HRODFX2 0
-	S_BRIGHT (FX00, 'C',	3, NULL 					, &States[S_HRODFX2+1]),
-	S_BRIGHT (FX00, 'D',	3, A_SkullRodPL2Seek		, &States[S_HRODFX2+2]),
-	S_BRIGHT (FX00, 'E',	3, NULL 					, &States[S_HRODFX2+3]),
-	S_BRIGHT (FX00, 'F',	3, A_SkullRodPL2Seek		, &States[S_HRODFX2+0]),
-
-#define S_HRODFXI2 (S_HRODFX2+4)
-	S_BRIGHT (FX00, 'H',	5, A_AddPlayerRain			, &States[S_HRODFXI2+1]),
-	S_BRIGHT (FX00, 'I',	5, NULL 					, &States[S_HRODFXI2+2]),
-	S_BRIGHT (FX00, 'J',	4, NULL 					, &States[S_HRODFXI2+3]),
-	S_BRIGHT (FX00, 'K',	3, NULL 					, &States[S_HRODFXI2+4]),
-	S_BRIGHT (FX00, 'L',	3, NULL 					, &States[S_HRODFXI2+5]),
-	S_BRIGHT (FX00, 'M',	3, NULL 					, &States[S_HRODFXI2+6]),
-	S_NORMAL (FX00, 'G',	1, A_HideInCeiling			, &States[S_HRODFXI2+7]),
-	S_NORMAL (FX00, 'G',	1, A_SkullRodStorm			, &States[S_HRODFXI2+7])
-};
-
-IMPLEMENT_ACTOR (AHornRodFX2, Heretic, -1, 0)
-	PROP_RadiusFixed (12)
-	PROP_HeightFixed (8)
-	PROP_SpeedFixed (22)
-	PROP_Damage (10)
-	PROP_SpawnHealth (4*35)
-	PROP_Flags (MF_NOBLOCKMAP|MF_MISSILE|MF_DROPOFF|MF_NOGRAVITY)
-	PROP_Flags2 (MF2_NOTELEPORT|MF2_PCROSS|MF2_IMPACT)
-	PROP_RenderStyle (STYLE_Add)
-
-	PROP_SpawnState (S_HRODFX2)
-	PROP_DeathState (S_HRODFXI2)
-
-	PROP_SeeSound ("weapons/hornrodshoot")
-	PROP_DeathSound ("weapons/hornrodpowhit")
-END_DEFAULTS
+IMPLEMENT_CLASS (AHornRodFX2)
 
 int AHornRodFX2::DoSpecialDamage (AActor *target, int damage)
 {
@@ -1282,41 +913,12 @@ int AHornRodFX2::DoSpecialDamage (AActor *target, int damage)
 
 class ARainPillar : public AActor
 {
-	DECLARE_ACTOR (ARainPillar, AActor)
+	DECLARE_CLASS (ARainPillar, AActor)
 public:
 	int DoSpecialDamage (AActor *target, int damage);
 };
 
-FState ARainPillar::States[] =
-{
-#define S_RAINPLR 0
-	S_BRIGHT (FX22, 'A',   -1, NULL 					, NULL),
-
-#define S_RAINPLRX (S_RAINPLR+1)
-	S_BRIGHT (FX22, 'B',	4, A_RainImpact 			, &States[S_RAINPLRX+1]),
-	S_BRIGHT (FX22, 'C',	4, NULL 					, &States[S_RAINPLRX+2]),
-	S_BRIGHT (FX22, 'D',	4, NULL 					, &States[S_RAINPLRX+3]),
-	S_BRIGHT (FX22, 'E',	4, NULL 					, &States[S_RAINPLRX+4]),
-	S_BRIGHT (FX22, 'F',	4, NULL 					, NULL),
-
-#define S_RAINAIRXPLR (S_RAINPLRX+5)
-	S_BRIGHT (FX22, 'G',	4, NULL 					, &States[S_RAINAIRXPLR+1]),
-	S_BRIGHT (FX22, 'H',	4, NULL 					, &States[S_RAINAIRXPLR+2]),
-	S_BRIGHT (FX22, 'I',	4, NULL 					, NULL),
-};
-
-IMPLEMENT_ACTOR (ARainPillar, Heretic, -1, 0)
-	PROP_RadiusFixed (5)
-	PROP_HeightFixed (12)
-	PROP_SpeedFixed (12)
-	PROP_Damage (5)
-	PROP_Flags (MF_NOBLOCKMAP|MF_MISSILE|MF_DROPOFF|MF_NOGRAVITY)
-	PROP_Flags2 (MF2_NOTELEPORT)
-	PROP_RenderStyle (STYLE_Add)
-
-	PROP_SpawnState (S_RAINPLR)
-	PROP_DeathState (S_RAINPLRX)
-END_DEFAULTS
+IMPLEMENT_CLASS (ARainPillar)
 
 int ARainPillar::DoSpecialDamage (AActor *target, int damage)
 {
@@ -1331,16 +933,14 @@ int ARainPillar::DoSpecialDamage (AActor *target, int damage)
 
 class ARainTracker : public AInventory
 {
-	DECLARE_STATELESS_ACTOR (ARainTracker, AInventory)
+	DECLARE_CLASS (ARainTracker, AInventory)
 public:
 	void Serialize (FArchive &arc);
 	AActor *Rain1, *Rain2;
 };
 
-IMPLEMENT_STATELESS_ACTOR (ARainTracker, Any, -1, 0)
-	PROP_Inventory_FlagsSet (IF_UNDROPPABLE)
-END_DEFAULTS
-
+IMPLEMENT_CLASS (ARainTracker)
+	
 void ARainTracker::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
@@ -1369,7 +969,7 @@ void A_FireSkullRodPL1 (AActor *actor)
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return;
 	}
-	mo = P_SpawnPlayerMissile (actor, RUNTIME_CLASS(AHornRodFX1));
+	mo = P_SpawnPlayerMissile (actor, PClass::FindClass("HornRodFX1"));
 	// Randomize the first frame
 	if (mo && pr_fsr1() > 128)
 	{
@@ -1551,7 +1151,7 @@ void A_RainImpact (AActor *actor)
 {
 	if (actor->z > actor->floorz)
 	{
-		actor->SetState (&ARainPillar::States[S_RAINAIRXPLR]);
+		actor->SetState (actor->FindState("NotFloor"));
 	}
 	else if (pr_impact() < 40)
 	{

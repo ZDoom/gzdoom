@@ -323,165 +323,6 @@ void AMinotaurFriend::NoBlockingSet ()
 	// Do not drop anything
 }
 
-// Minotaur FX 1 ------------------------------------------------------------
-
-class AMinotaurFX1 : public AActor
-{
-	DECLARE_ACTOR (AMinotaurFX1, AActor)
-};
-
-FState AMinotaurFX1::States[] =
-{
-#define S_MNTRFX1 0
-	S_BRIGHT (FX12, 'A',	6, NULL 						, &States[S_MNTRFX1+1]),
-	S_BRIGHT (FX12, 'B',	6, NULL 						, &States[S_MNTRFX1+0]),
-
-#define S_MNTRFXI1 (S_MNTRFX1+2)
-	S_BRIGHT (FX12, 'C',	5, NULL 						, &States[S_MNTRFXI1+1]),
-	S_BRIGHT (FX12, 'D',	5, NULL 						, &States[S_MNTRFXI1+2]),
-	S_BRIGHT (FX12, 'E',	5, NULL 						, &States[S_MNTRFXI1+3]),
-	S_BRIGHT (FX12, 'F',	5, NULL 						, &States[S_MNTRFXI1+4]),
-	S_BRIGHT (FX12, 'G',	5, NULL 						, &States[S_MNTRFXI1+5]),
-	S_BRIGHT (FX12, 'H',	5, NULL 						, NULL)
-};
-
-IMPLEMENT_ACTOR (AMinotaurFX1, Raven, -1, 0)
-	PROP_RadiusFixed (10)
-	PROP_HeightFixed (6)
-	PROP_SpeedFixed (20)
-	PROP_Damage (3)
-	PROP_DamageType (NAME_Fire)
-	PROP_Flags (MF_NOBLOCKMAP|MF_MISSILE|MF_DROPOFF|MF_NOGRAVITY)
-	PROP_Flags2 (MF2_NOTELEPORT)
-	PROP_RenderStyle (STYLE_Add)
-
-	PROP_SpawnState (S_MNTRFX1)
-	PROP_DeathState (S_MNTRFXI1)
-END_DEFAULTS
-
-AT_SPEED_SET (MinotaurFX1, speed)
-{
-	SimpleSpeedSetter (AMinotaurFX1, 20*FRACUNIT, 26*FRACUNIT, speed);
-}
-
-// Minotaur FX 2 ------------------------------------------------------------
-
-class AMinotaurFX2 : public AMinotaurFX1
-{
-	DECLARE_ACTOR (AMinotaurFX2, AMinotaurFX1)
-public:
-	void GetExplodeParms (int &damage, int &distance, bool &hurtSource)
-	{
-		damage = 24;
-	}
-};
-
-FState AMinotaurFX2::States[] =
-{
-#define S_MNTRFX2 0
-	S_NORMAL (FX13, 'A',	2, A_MntrFloorFire				, &States[S_MNTRFX2+0]),
-
-#define S_MNTRFXI2 (S_MNTRFX2+1)
-	S_BRIGHT (FX13, 'I',	4, A_Explode					, &States[S_MNTRFXI2+1]),
-	S_BRIGHT (FX13, 'J',	4, NULL 						, &States[S_MNTRFXI2+2]),
-	S_BRIGHT (FX13, 'K',	4, NULL 						, &States[S_MNTRFXI2+3]),
-	S_BRIGHT (FX13, 'L',	4, NULL 						, &States[S_MNTRFXI2+4]),
-	S_BRIGHT (FX13, 'M',	4, NULL 						, NULL)
-};
-
-IMPLEMENT_ACTOR (AMinotaurFX2, Raven, -1, 0)
-	PROP_RadiusFixed (5)
-	PROP_HeightFixed (12)
-	PROP_SpeedFixed (14)
-	PROP_Damage (4)
-	PROP_Flags3 (MF3_FLOORHUGGER)
-
-	PROP_SpawnState (S_MNTRFX2)
-	PROP_DeathState (S_MNTRFXI2)
-
-	PROP_DeathSound ("minotaur/fx2hit")
-END_DEFAULTS
-
-AT_SPEED_SET (MinotaurFX2, speed)
-{
-	SimpleSpeedSetter (AMinotaurFX2, 14*FRACUNIT, 20*FRACUNIT, speed);
-}
-
-// Minotaur FX 3 ------------------------------------------------------------
-
-class AMinotaurFX3 : public AMinotaurFX2
-{
-	DECLARE_ACTOR (AMinotaurFX3, AMinotaurFX2)
-public:
-	void GetExplodeParms (int &damage, int &distance, bool &hurtSource)
-	{
-		damage = 128;
-	}
-};
-
-FState AMinotaurFX3::States[] =
-{
-#define S_MNTRFX3 0
-	S_BRIGHT (FX13, 'D',	4, NULL 						, &States[S_MNTRFX3+1]),
-	S_BRIGHT (FX13, 'C',	4, NULL 						, &States[S_MNTRFX3+2]),
-	S_BRIGHT (FX13, 'B',	5, NULL 						, &States[S_MNTRFX3+3]),
-	S_BRIGHT (FX13, 'C',	5, NULL 						, &States[S_MNTRFX3+4]),
-	S_BRIGHT (FX13, 'D',	5, NULL 						, &States[S_MNTRFX3+5]),
-	S_BRIGHT (FX13, 'E',	5, NULL 						, &States[S_MNTRFX3+6]),
-	S_BRIGHT (FX13, 'F',	4, NULL 						, &States[S_MNTRFX3+7]),
-	S_BRIGHT (FX13, 'G',	4, NULL 						, &States[S_MNTRFX3+8]),
-	S_BRIGHT (FX13, 'H',	4, NULL 						, NULL)
-};
-
-IMPLEMENT_ACTOR (AMinotaurFX3, Raven, -1, 0)
-	PROP_RadiusFixed (8)
-	PROP_HeightFixed (16)
-	PROP_SpeedFixed (0)
-
-	PROP_SpawnState (S_MNTRFX3)
-
-	PROP_DeathSound ("minotaur/fx3hit")
-END_DEFAULTS
-
-// Minotaur Smoke Exit ------------------------------------------------------
-
-class AMinotaurSmokeExit : public AActor
-{
-	DECLARE_ACTOR (AMinotaurSmokeExit, AActor)
-};
-
-FState AMinotaurSmokeExit::States[] =
-{
-	S_NORMAL (MNSM, 'A',	3, NULL					    , &States[1]),
-	S_NORMAL (MNSM, 'B',	3, NULL					    , &States[2]),
-	S_NORMAL (MNSM, 'C',	3, NULL					    , &States[3]),
-	S_NORMAL (MNSM, 'D',	3, NULL					    , &States[4]),
-	S_NORMAL (MNSM, 'E',	3, NULL					    , &States[5]),
-	S_NORMAL (MNSM, 'F',	3, NULL					    , &States[6]),
-	S_NORMAL (MNSM, 'G',	3, NULL					    , &States[7]),
-	S_NORMAL (MNSM, 'H',	3, NULL					    , &States[8]),
-	S_NORMAL (MNSM, 'I',	3, NULL					    , &States[9]),
-	S_NORMAL (MNSM, 'J',	3, NULL					    , &States[10]),
-	S_NORMAL (MNSM, 'I',	3, NULL					    , &States[11]),
-	S_NORMAL (MNSM, 'H',	3, NULL					    , &States[12]),
-	S_NORMAL (MNSM, 'G',	3, NULL					    , &States[13]),
-	S_NORMAL (MNSM, 'F',	3, NULL					    , &States[14]),
-	S_NORMAL (MNSM, 'E',	3, NULL					    , &States[15]),
-	S_NORMAL (MNSM, 'D',	3, NULL					    , &States[16]),
-	S_NORMAL (MNSM, 'C',	3, NULL					    , &States[17]),
-	S_NORMAL (MNSM, 'B',	3, NULL					    , &States[18]),
-	S_NORMAL (MNSM, 'A',	3, NULL					    , NULL),
-};
-
-IMPLEMENT_ACTOR (AMinotaurSmokeExit, Hexen, -1, 0)
-	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
-	PROP_Flags2 (MF2_NOTELEPORT)
-	PROP_RenderStyle (STYLE_Translucent)
-	PROP_Alpha (HX_SHADOW)
-
-	PROP_SpawnState (0)
-END_DEFAULTS
-
 // Action functions for the minotaur ----------------------------------------
 
 //----------------------------------------------------------------------------
@@ -641,16 +482,20 @@ void A_MinotaurAtk2 (AActor *actor)
 		return;
 	}
 	z = actor->z + 40*FRACUNIT;
-	mo = P_SpawnMissileZ (actor, z, actor->target, RUNTIME_CLASS(AMinotaurFX1));
-	if (mo != NULL)
+	const PClass *fx = PClass::FindClass("MinotaurFX1");
+	if (fx)
 	{
-//		S_Sound (mo, CHAN_WEAPON, "minotaur/attack2", 1, ATTN_NORM);
-		momz = mo->momz;
-		angle = mo->angle;
-		P_SpawnMissileAngleZ (actor, z, RUNTIME_CLASS(AMinotaurFX1), angle-(ANG45/8), momz);
-		P_SpawnMissileAngleZ (actor, z, RUNTIME_CLASS(AMinotaurFX1), angle+(ANG45/8), momz);
-		P_SpawnMissileAngleZ (actor, z, RUNTIME_CLASS(AMinotaurFX1), angle-(ANG45/16), momz);
-		P_SpawnMissileAngleZ (actor, z, RUNTIME_CLASS(AMinotaurFX1), angle+(ANG45/16), momz);
+		mo = P_SpawnMissileZ (actor, z, actor->target, fx);
+		if (mo != NULL)
+		{
+//			S_Sound (mo, CHAN_WEAPON, "minotaur/attack2", 1, ATTN_NORM);
+			momz = mo->momz;
+			angle = mo->angle;
+			P_SpawnMissileAngleZ (actor, z, fx, angle-(ANG45/8), momz);
+			P_SpawnMissileAngleZ (actor, z, fx, angle+(ANG45/8), momz);
+			P_SpawnMissileAngleZ (actor, z, fx, angle-(ANG45/16), momz);
+			P_SpawnMissileAngleZ (actor, z, fx, angle+(ANG45/16), momz);
+		}
 	}
 }
 
@@ -688,7 +533,7 @@ void A_MinotaurAtk3 (AActor *actor)
 	}
 	else
 	{
-		mo = P_SpawnMissile (actor, actor->target, RUNTIME_CLASS(AMinotaurFX2));
+		mo = P_SpawnMissile (actor, actor->target, PClass::FindClass("MinotaurFX2"));
 		if (mo != NULL)
 		{
 			S_Sound (mo, CHAN_WEAPON, "minotaur/attack1", 1, ATTN_NORM);
@@ -715,7 +560,7 @@ void A_MntrFloorFire (AActor *actor)
 	actor->z = actor->floorz;
 	x = actor->x + (pr_fire.Random2 () << 10);
 	y = actor->y + (pr_fire.Random2 () << 10);
-	mo = Spawn<AMinotaurFX3> (x, y, ONFLOORZ, ALLOW_REPLACE);
+	mo = Spawn("MinotaurFX3", x, y, ONFLOORZ, ALLOW_REPLACE);
 	mo->target = actor->target;
 	mo->momx = 1; // Force block checking
 	P_CheckMissileSpawn (mo);
@@ -967,5 +812,5 @@ void A_SmokePuffEntry(mobj_t *actor)
 
 void A_SmokePuffExit (AActor *actor)
 {
-	Spawn<AMinotaurSmokeExit> (actor->x, actor->y, actor->z, ALLOW_REPLACE);
+	Spawn("MinotaurSmokeExit", actor->x, actor->y, actor->z, ALLOW_REPLACE);
 }

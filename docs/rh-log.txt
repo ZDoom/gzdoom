@@ -1,4 +1,7 @@
 August 3, 2008 (Changes by Graf Zahl)
+- Converted the Minotaur's projectiles to DECORATE so that I can get
+  rid of the AT_SPEED_SET code.
+- Converted Heretic's Blaster and SkullRod to DECORATE.
 - Converted the mace and all related actors to DECORATE and generalized
   the spawn function that only spawns one mace per level.
 - Moved Mace respawning code into AInventory so that it works properly

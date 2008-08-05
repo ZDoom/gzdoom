@@ -122,6 +122,8 @@ xx(MiniMissileLauncher)
 xx(StrifeGrenadeLauncher)
 xx(Mauler)
 
+xx(AcolyteBlue)
+
 xx(Chicken)
 xx(Pig)
 

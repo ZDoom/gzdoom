@@ -165,7 +165,7 @@ class Actor extends Thinker
 	action native A_CustomComboAttack(class<Actor> missiletype, eval float spawnheight, eval int damage, optional sound meleesound, optional name damagetype, optional evalnot bool bleed);
 	action native A_Burst(class<Actor> chunktype);
 	action native A_RadiusThrust(optional eval int force, optional eval int distance, optional evalnot bool affectsource);
-	action native A_Explode(optional eval int damage, optional eval int distance, optional evalnot bool hurtsource);
+	action native A_Explode(optional eval int damage, optional eval int distance, optional evalnot bool hurtsource, optional eval bool alert);
 	action native A_Stop();
 	action native A_Respawn(optional evalnot bool fog);
 	action native A_BarrelDestroy();
@@ -180,6 +180,7 @@ class Actor extends Thinker
 	action native A_Punch();
 	action native A_Feathers();
 	action native A_ClassBossHealth();
+	action native A_ShootGun();
 }
 
 class Inventory extends Actor

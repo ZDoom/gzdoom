@@ -1,4 +1,6 @@
 August 5, 2008 (Changes by Graf Zahl)
+- Converted Strife's Acolytes, Rebels, Sentinel, Reaver and Templar to
+  DECORATE.
 - Added DECORATE conversions for Hexen's Cleric weapons by Karate Chris.
 - Added a check to Zipdir that excludes files with a .orig extension. These
   can be left behind by patch.exe and create problems.

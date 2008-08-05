@@ -1,0 +1,203 @@
+
+// Base class for the acolytes ----------------------------------------------
+
+ACTOR Acolyte : StrifeHumanoid
+{
+	Health 70
+	PainChance 150
+	Speed 7
+	Radius 24
+	Height 64
+	Mass 400
+	Monster
+	+SEESDAGGERS
+	+NOSPLASHALERT
+	MinMissileChance 150
+	Tag "ACOLYTE"
+	SeeSound "acolyte/sight"
+	PainSound "acolyte/pain"
+	AttackSound "acolyte/rifle"
+	DeathSound "acolyte/death"
+	ActiveSound "acolyte/active"
+	Obituary "$OB_ACOLYTE"
+
+	action native A_BeShadowyFoe ();
+	action native A_AcolyteBits ();
+	action native A_AcolyteDie ();
+
+	States
+	{
+	Spawn:
+		AGRD A 5 A_Look2
+		Wait
+		AGRD B 8 A_ClearShadow
+		Loop
+		AGRD D 8
+		Loop
+		AGRD ABCDABCD 5 A_Wander
+		Loop
+	See:
+		AGRD A 6 A_AcolyteBits
+		AGRD BCD 6 A_Chase
+		Loop
+	Missile:
+		AGRD E 8 A_FaceTarget
+		AGRD FE 4 A_ShootGun
+		AGRD F 6 A_ShootGun
+		Goto See
+	Pain:
+		AGRD O 8 A_Pain
+		Goto See
+	Death:
+		AGRD G 4
+		AGRD H 4 A_Scream
+		AGRD I 4
+		AGRD J 3
+		AGRD K 3 A_NoBlocking
+		AGRD L 3
+		AGRD M 3 A_AcolyteDie
+		AGRD N 1400
+		Stop
+	XDeath:
+		GIBS A 5 A_NoBlocking
+		GIBS BC 5 A_TossGib
+		GIBS D 4 A_TossGib
+		GIBS E 4 A_XScream
+		GIBS F 4 A_TossGib
+		GIBS GH 4
+		GIBS I 5
+		GIBS J 5 A_AcolyteDie
+		GIBS K 5
+		GIBS L 1400
+		Stop
+	}
+}
+	
+
+// Acolyte 1 ----------------------------------------------------------------
+
+ACTOR AcolyteTan : Acolyte 3002
+{
+	Game Strife
+	ConversationID 53, 52, 53
+	+MISSILEMORE +MISSILEEVENMORE
+	DropItem "ClipOfBullets"
+}
+
+// Acolyte 2 ----------------------------------------------------------------
+
+ACTOR AcolyteRed : Acolyte 142
+{
+	Game Strife
+	ConversationID 54, 53, 54
+	+MISSILEMORE +MISSILEEVENMORE
+	Translation 0
+}
+
+// Acolyte 3 ----------------------------------------------------------------
+
+ACTOR AcolyteRust : Acolyte 143
+{
+	Game Strife
+	ConversationID 55, 54, 55
+	+MISSILEMORE +MISSILEEVENMORE
+	Translation 1
+}
+
+// Acolyte 4 ----------------------------------------------------------------
+
+ACTOR AcolyteGray : Acolyte 146
+{
+	Game Strife
+	ConversationID 56, 55, 56
+	+MISSILEMORE +MISSILEEVENMORE
+	Translation 2
+}
+
+// Acolyte 5 ----------------------------------------------------------------
+
+ACTOR AcolyteDGreen : Acolyte 147
+{
+	Game Strife
+	ConversationID 57, 56, 57
+	+MISSILEMORE +MISSILEEVENMORE
+	Translation 3
+}
+
+// Acolyte 6 ----------------------------------------------------------------
+
+ACTOR AcolyteGold : Acolyte 148
+{
+	Game Strife
+	ConversationID 58, 57, 58
+	+MISSILEMORE +MISSILEEVENMORE
+	Translation 4
+}
+
+// Acolyte 7 ----------------------------------------------------------------
+
+ACTOR AcolyteLGreen : Acolyte 232
+{
+	Game Strife
+	Health 60
+	ConversationID 59, -1, -1
+	Translation 5
+}
+
+// Acolyte 8 ----------------------------------------------------------------
+
+ACTOR AcolyteBlue : Acolyte 231
+{
+	Game Strife
+	Health 60
+	ConversationID 60, -1, -1
+	Translation 6
+}
+
+// Shadow Acolyte -----------------------------------------------------------
+
+ACTOR AcolyteShadow : Acolyte 58
+{
+	Game Strife
+	ConversationID 61, 58, 59
+	+MISSILEMORE
+	DropItem "ClipOfBullets"
+	States
+	{
+	See:
+		AGRD A 6 A_BeShadowyFoe
+		Goto Super::See+1
+	Pain:
+		AGRD O 0 A_SetShadow
+		AGRD O 8 A_Pain
+		Goto See
+	}
+}
+
+// Some guy turning into an acolyte -----------------------------------------
+
+ACTOR AcolyteToBe : Acolyte 201
+{
+	Game Strife
+	ConversationID 29, -1, -1
+	Health 61
+	Radius 20
+	Height 56
+	DeathSound "becoming/death"
+	-COUNTKILL
+	-ISMONSTER
+
+	action native A_HideDecepticon ();
+
+	States
+	{
+	Spawn:
+		ARMR A -1
+		Stop
+	Pain:
+		ARMR A -1 A_HideDecepticon
+		Stop
+	Death:
+		Goto XDeath
+	}
+}

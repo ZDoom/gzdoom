@@ -19,6 +19,7 @@ enum dirtype_t
 
 extern fixed_t xspeed[8], yspeed[8];
 
+void P_RecursiveSound (sector_t *sec, AActor *soundtarget, bool splash, int soundblocks);
 bool P_HitFriend (AActor *self);
 void P_NoiseAlert (AActor *target, AActor *emmiter, bool splash=false);
 bool P_CheckMeleeRange2 (AActor *actor);

@@ -457,6 +457,7 @@ ACTOR GauntletPuff1
 	VSpeed 0.8
 	States
 	{
+	Spawn:
 		PUF1 ABCD 4 BRIGHT
 		Stop
 	}
@@ -468,6 +469,7 @@ ACTOR GauntletPuff2 : GauntletPuff1
 {
 	States
 	{
+	Spawn:
 		PUF1 EFGH 4 BRIGHT
 		Stop
 	}

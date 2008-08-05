@@ -235,6 +235,16 @@ ACTOR(ClericAttack)
 ACTOR(FighterAttack)
 ACTOR(MageAttack)
 
+ACTOR(TemplarAttack)
+ACTOR(SentinelAttack)
+ACTOR(ReaverRanged)
+ACTOR(BeShadowyFoe)
+ACTOR(AcolyteBits)
+ACTOR(AcolyteDie)
+ACTOR(HideDecepticon)
+ACTOR(Beacon)
+ACTOR(ShootGun)
+
 // Special code pointers for Strife's player - not to be used elsewhere!
 ACTOR(ItBurnsItBurns)
 ACTOR(CrispyPlayer)

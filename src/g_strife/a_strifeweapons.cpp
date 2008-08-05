@@ -1371,7 +1371,7 @@ void A_FireMauler2 (AActor *self)
 //
 //============================================================================
 
-AActor *P_SpawnSubMissile (AActor *source, PClass *type, AActor *target);
+AActor *P_SpawnSubMissile (AActor *source, const PClass *type, AActor *target);
 
 void A_MaulerTorpedoWave (AActor *self)
 {
@@ -1393,7 +1393,7 @@ void A_MaulerTorpedoWave (AActor *self)
 	self->z = savedz;
 }
 
-AActor *P_SpawnSubMissile (AActor *source, PClass *type, AActor *target)
+AActor *P_SpawnSubMissile (AActor *source, const PClass *type, AActor *target)
 {
 	AActor *other = Spawn (type, source->x, source->y, source->z, ALLOW_REPLACE);
 
@@ -2212,7 +2212,7 @@ void A_FireSigil1 (AActor *actor)
 	P_BulletSlope (actor, &linetarget);
 	if (linetarget != NULL)
 	{
-		spot = Spawn<ASpectralLightningSpot> (linetarget->x, linetarget->y, ONFLOORZ, ALLOW_REPLACE);
+		spot = Spawn("SpectralLightningSpot", linetarget->x, linetarget->y, ONFLOORZ, ALLOW_REPLACE);
 		if (spot != NULL)
 		{
 			spot->tracer = linetarget;
@@ -2220,7 +2220,7 @@ void A_FireSigil1 (AActor *actor)
 	}
 	else
 	{
-		spot = Spawn<ASpectralLightningSpot> (actor->x, actor->y, actor->z, ALLOW_REPLACE);
+		spot = Spawn("SpectralLightningSpot", actor->x, actor->y, actor->z, ALLOW_REPLACE);
 		if (spot != NULL)
 		{
 			spot->momx += 28 * finecosine[actor->angle >> ANGLETOFINESHIFT];
@@ -2250,7 +2250,7 @@ void A_FireSigil2 (AActor *actor)
 	P_DamageMobj (actor, actor, NULL, 2*4, 0, DMG_NO_ARMOR);
 	S_Sound (actor, CHAN_WEAPON, "weapons/sigilcharge", 1, ATTN_NORM);
 
-	P_SpawnPlayerMissile (actor, RUNTIME_CLASS(ASpectralLightningH1));
+	P_SpawnPlayerMissile (actor, PClass::FindClass("SpectralLightningH1"));
 }
 
 //============================================================================
@@ -2275,7 +2275,7 @@ void A_FireSigil3 (AActor *actor)
 	for (i = 0; i < 20; ++i)
 	{
 		actor->angle += ANGLE_180/20;
-		spot = P_SpawnSubMissile (actor, RUNTIME_CLASS(ASpectralLightningBall1), actor);
+		spot = P_SpawnSubMissile (actor, PClass::FindClass("SpectralLightningBall1"), actor);
 		if (spot != NULL)
 		{
 			spot->z = actor->z + 32*FRACUNIT;
@@ -2305,7 +2305,7 @@ void A_FireSigil4 (AActor *actor)
 	P_BulletSlope (actor, &linetarget);
 	if (linetarget != NULL)
 	{
-		spot = P_SpawnPlayerMissile (actor, 0,0,0, RUNTIME_CLASS(ASpectralLightningBigV1), actor->angle, &linetarget);
+		spot = P_SpawnPlayerMissile (actor, 0,0,0, PClass::FindClass("SpectralLightningBigV1"), actor->angle, &linetarget);
 		if (spot != NULL)
 		{
 			spot->tracer = linetarget;
@@ -2313,7 +2313,7 @@ void A_FireSigil4 (AActor *actor)
 	}
 	else
 	{
-		spot = P_SpawnPlayerMissile (actor, RUNTIME_CLASS(ASpectralLightningBigV1));
+		spot = P_SpawnPlayerMissile (actor, PClass::FindClass("SpectralLightningBigV1"));
 		if (spot != NULL)
 		{
 			spot->momx += FixedMul (spot->Speed, finecosine[actor->angle >> ANGLETOFINESHIFT]);
@@ -2338,7 +2338,7 @@ void A_FireSigil5 (AActor *actor)
 	P_DamageMobj (actor, actor, NULL, 5*4, 0, DMG_NO_ARMOR);
 	S_Sound (actor, CHAN_WEAPON, "weapons/sigilcharge", 1, ATTN_NORM);
 
-	P_SpawnPlayerMissile (actor, RUNTIME_CLASS(ASpectralLightningBigBall1));
+	P_SpawnPlayerMissile (actor, PClass::FindClass("SpectralLightningBigBall1"));
 }
 
 //============================================================================

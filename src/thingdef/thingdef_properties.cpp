@@ -105,6 +105,7 @@ enum
 static flagdef ActorFlags[]=
 {
 	DEFINE_FLAG(MF, PICKUP, APlayerPawn, flags),
+	DEFINE_FLAG(MF, SPECIAL, APlayerPawn, flags),
 	DEFINE_FLAG(MF, SOLID, AActor, flags),
 	DEFINE_FLAG(MF, SHOOTABLE, AActor, flags),
 	DEFINE_FLAG(MF, NOSECTOR, AActor, flags),

@@ -98,8 +98,11 @@
 #include "actors/hexen/clericstaff.txt"
 
 #include "actors/strife/strifeplayer.txt"
+#include "actors/strife/spectral.txt"
 #include "actors/strife/acolyte.txt"
 #include "actors/strife/beggars.txt"
+#include "actors/strife/crusader.txt"
+#include "actors/strife/inquisitor.txt"
 #include "actors/strife/merchants.txt"
 #include "actors/strife/peasants.txt"
 #include "actors/strife/strifebishop.txt"

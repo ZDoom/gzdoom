@@ -1,4 +1,6 @@
 August 5, 2008 (Changes by Graf Zahl)
+- Converted Strife's Crusader, Inquisitor and spectral missiles to
+  DECORATE.
 - Converted Strife's Acolytes, Rebels, Sentinel, Reaver and Templar to
   DECORATE.
 - Added DECORATE conversions for Hexen's Cleric weapons by Karate Chris.

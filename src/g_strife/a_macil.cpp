@@ -164,7 +164,7 @@ void AMacil2::NoBlockingSet ()
 
 int AMacil2::TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, FName damagetype)
 {
-	if (inflictor != NULL && inflictor->IsKindOf (RUNTIME_CLASS(ASpectralLightningV1)))
+	if (inflictor != NULL && inflictor->GetClass()->TypeName == NAME_SpectralLightningV1)
 		return -1;
 
 	return Super::TakeSpecialDamage(inflictor, source, damage, damagetype);

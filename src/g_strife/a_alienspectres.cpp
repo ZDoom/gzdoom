@@ -26,7 +26,7 @@ void A_AlienSpectreDeath (AActor *);
 void A_AlertMonsters (AActor *);
 void A_Tracer2 (AActor *);
 
-AActor *P_SpawnSubMissile (AActor *source, PClass *type, AActor *target);
+AActor *P_SpawnSubMissile (AActor *source, const PClass *type, AActor *target);
 
 // Alien Spectre 1 -----------------------------------------------------------
 
@@ -351,11 +351,6 @@ static void GenericSpectreSpawn (AActor *actor, const PClass *type)
 	}
 }
 
-void A_SpawnSpectre1 (AActor *actor)
-{
-	GenericSpectreSpawn (actor, RUNTIME_CLASS(AAlienSpectre1));
-}
-
 void A_SpawnSpectre3 (AActor *actor)
 {
 	GenericSpectreSpawn (actor, RUNTIME_CLASS(AAlienSpectre3));
@@ -413,7 +408,7 @@ void A_Spectre4Attack (AActor *self)
 	if (self->target != NULL)
 	{
 		AActor *missile = P_SpawnMissileXYZ (self->x, self->y, self->z + 32*FRACUNIT, 
-							self, self->target, RUNTIME_CLASS(ASpectralLightningBigV2), false);
+			self, self->target, PClass::FindClass("SpectralLightningBigV2"), false);
 		if (missile != NULL)
 		{
 			missile->tracer = self->target;
@@ -428,7 +423,7 @@ void A_Spectre2Attack (AActor *self)
 	if (self->target != NULL)
 	{
 		AActor *missile = P_SpawnMissileXYZ (self->x, self->y, self->z + 32*FRACUNIT, 
-							self, self->target, RUNTIME_CLASS(ASpectralLightningH3), false);
+							self, self->target, PClass::FindClass("SpectralLightningH3"), false);
 		if (missile != NULL)
 		{
 			missile->health = -2;
@@ -442,7 +437,7 @@ void A_Spectre5Attack (AActor *self)
 	if (self->target != NULL)
 	{
 		AActor *missile = P_SpawnMissileXYZ (self->x, self->y, self->z + 32*FRACUNIT, 
-							self, self->target, RUNTIME_CLASS(ASpectralLightningBigBall2), false);
+							self, self->target, PClass::FindClass("SpectralLightningBigBall2"), false);
 		if (missile != NULL)
 		{
 			missile->health = -2;
@@ -456,7 +451,7 @@ void A_Spectre3Attack (AActor *self)
 	if (self->target == NULL)
 		return;
 
-	AActor *foo = Spawn<ASpectralLightningV2> (self->x, self->y, self->z + 32*FRACUNIT, ALLOW_REPLACE);
+	AActor *foo = Spawn("SpectralLightningV2", self->x, self->y, self->z + 32*FRACUNIT, ALLOW_REPLACE);
 
 	foo->momz = -12*FRACUNIT;
 	foo->target = self;
@@ -467,7 +462,7 @@ void A_Spectre3Attack (AActor *self)
 	for (int i = 0; i < 20; ++i)
 	{
 		self->angle += ANGLE_180 / 20;
-		P_SpawnSubMissile (self, RUNTIME_CLASS(ASpectralLightningBall2), self);
+		P_SpawnSubMissile (self, PClass::FindClass("SpectralLightningBall2"), self);
 	}
 	self->angle -= ANGLE_180 / 20 * 10;
 }
@@ -497,18 +492,20 @@ void A_AlienSpectreDeath (AActor *self)
 		return;
 	}
 
-	if (self->GetClass() == RUNTIME_CLASS(AAlienSpectre1))
+	switch (self->GetClass()->TypeName)
 	{
+	case NAME_AlienSpectre1:
 		EV_DoFloor (DFloor::floorLowerToLowest, NULL, 999, FRACUNIT, 0, 0, 0, false);
 		log = 95;
-	}
-	else if (self->GetClass() == RUNTIME_CLASS(AAlienSpectre2))
-	{
+		break;
+
+	case NAME_AlienSpectre2:
 		C_MidPrint(GStrings("TXT_KILLED_BISHOP"));
 		log = 74;
 		player->GiveInventoryType (QuestItemClasses[20]);
-	}
-	else if (self->GetClass() == RUNTIME_CLASS(AAlienSpectre3))
+		break;
+
+	case NAME_AlienSpectre3:
 	{
 		C_MidPrint(GStrings("TXT_KILLED_ORACLE"));
 		// If there are any Oracles still alive, kill them.
@@ -537,9 +534,10 @@ void A_AlienSpectreDeath (AActor *self)
 			log = 85;
 		}
 		EV_DoDoor (DDoor::doorOpen, NULL, NULL, 222, 8*FRACUNIT, 0, 0, 0);
+		break;
 	}
-	else if (self->GetClass() == RUNTIME_CLASS(AAlienSpectre4))
-	{
+
+	case NAME_AlienSpectre4:
 		C_MidPrint(GStrings("TXT_KILLED_MACIL"));
 		player->GiveInventoryType (QuestItemClasses[23]);
 		if (player->FindInventory (QuestItemClasses[24]) == NULL)
@@ -550,9 +548,9 @@ void A_AlienSpectreDeath (AActor *self)
 		{	// Back to the factory for another Sigil!
 			log = 106;
 		}
-	}
-	else if (self->GetClass() == RUNTIME_CLASS(AAlienSpectre5))
-	{
+		break;
+
+	case NAME_AlienSpectre5:
 		C_MidPrint(GStrings("TXT_KILLED_LOREMASTER"));
 		ASigil *sigil;
 
@@ -572,9 +570,9 @@ void A_AlienSpectreDeath (AActor *self)
 			log = 83;
 		}
 		EV_DoFloor (DFloor::floorLowerToLowest, NULL, 666, FRACUNIT, 0, 0, 0, false);
-	}
-	else
-	{
+		break;
+
+	default:
 		return;
 	}
 	mysnprintf (voc, countof(voc), "svox/voc%d", log);

@@ -123,6 +123,14 @@ xx(StrifeGrenadeLauncher)
 xx(Mauler)
 
 xx(AcolyteBlue)
+xx(SpectralLightningV1)
+
+// Strife's spectres
+xx(AlienSpectre1)
+xx(AlienSpectre2)
+xx(AlienSpectre3)
+xx(AlienSpectre4)
+xx(AlienSpectre5)
 
 xx(Chicken)
 xx(Pig)

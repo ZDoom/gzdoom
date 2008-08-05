@@ -181,6 +181,7 @@ class Actor extends Thinker
 	action native A_Feathers();
 	action native A_ClassBossHealth();
 	action native A_ShootGun();
+	action native A_RocketInFlight();
 }
 
 class Inventory extends Actor

@@ -79,12 +79,9 @@ ACTOR BishopMissile
 	States
 	{
 	Spawn:
-		MISS A 4 Bright
+		MISS A 4 Bright A_RocketInFlight
 		MISS B 3 Bright A_Tracer2
-		MISS A 0 Bright A_PlaySoundEx("misc/missileinflight", "Voice")
-		MISS A 0 Bright A_SpawnItemEx("MiniMissilePuff", 0,0, random2[BishopMissile]()*0.015625)
-		MISS A 4 Bright A_SpawnItemEx("RocketTrail", -momx,-momy,0, 0,0,1)
-		Goto Spawn+1
+		Loop
 	Death:
 		SMIS A 0 Bright A_SetTranslucent(1,1)
 		SMIS A 0 Bright A_StopSoundEx("Voice")

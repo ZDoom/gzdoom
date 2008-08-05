@@ -31,7 +31,7 @@ public:
 
 class AHolySpirit : public AActor
 {
-	DECLARE_ACTOR (AHolySpirit, AActor)
+	DECLARE_CLASS (AHolySpirit, AActor)
 public:
 	bool Slam (AActor *thing);
 	bool SpecialBlastHandling (AActor *source, fixed_t strength);

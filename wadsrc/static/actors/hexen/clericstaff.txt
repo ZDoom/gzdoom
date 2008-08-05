@@ -1,0 +1,95 @@
+
+// The Cleric's Serpent Staff -----------------------------------------------
+
+ACTOR CWeapStaff : ClericWeapon 10
+{
+	Game Hexen
+	SpawnID 32
+	Weapon.SelectionOrder 1600
+	Weapon.AmmoUse1 1
+	Weapon.AmmoGive1 25
+	Weapon.KickBack 150
+	Weapon.YAdjust 10
+	Weapon.AmmoType1 "Mana1"
+	Inventory.PickupMessage "$TXT_WEAPON_C2"
+
+	action native A_CStaffInitBlink();
+	action native A_CStaffCheckBlink();
+	action native A_CStaffCheck();
+	action native A_CStaffAttack();
+
+	States
+	{
+	Spawn:
+		WCSS A -1
+		Stop
+	Select:
+		CSSF C 1 A_Raise
+		Loop
+	Deselect:
+		CSSF B 3
+		CSSF C 4
+		CSSF C 1 A_Lower
+		Wait
+	Ready:
+		CSSF C 4
+		CSSF B 3 A_CStaffInitBlink
+		CSSF AAAAAAA 1 A_WeaponReady
+		CSSF A 1 A_CStaffCheckBlink
+		Goto Ready + 2
+	Fire:
+		CSSF A 1 Offset (0, 45) A_CStaffCheck
+		CSSF J 1 Offset (0, 50) A_CStaffAttack
+		CSSF J 2 Offset (0, 50)
+		CSSF J 2 Offset (0, 45)
+		CSSF A 2 Offset (0, 40)
+		CSSF A 2 Offset (0, 36)
+		Goto Ready + 2
+	Blink:
+		CSSF BBBCCCCCBBB 1 A_WeaponReady
+		Goto Ready + 2
+	Drain:
+		CSSF K 10 Offset (0, 36)
+		Goto Ready + 2
+	}
+}
+
+// Serpent Staff Missile ----------------------------------------------------
+
+ACTOR CStaffMissile native
+{
+	Speed 22
+	Radius 12
+	Height 10
+	Damage 5
+	RenderStyle Add
+	Projectile
+	DeathSound "ClericCStaffExplode"
+	States
+	{
+	Spawn:
+		CSSF DDEE 1 Bright A_CStaffMissileSlither
+		Loop
+	Death:
+		CSSF FG 4 Bright
+		CSSF HI 3 Bright
+		Stop
+	}
+}
+
+// Serpent Staff Puff -------------------------------------------------------
+
+ACTOR CStaffPuff
+{
+	+NOBLOCKMAP +NOGRAVITY
+	+PUFFONACTORS
+	RenderStyle Translucent
+	Alpha 0.6
+	SeeSound "ClericCStaffHitThing"
+	States
+	{
+	Spawn:
+		FHFX STUVW 4
+		Stop
+	}
+}

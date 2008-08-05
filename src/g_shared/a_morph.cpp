@@ -267,31 +267,34 @@ bool P_UndoPlayerMorph (player_t *activator, player_t *player, bool force)
 	// taking events, reset up the face, if any;
 	// this is only needed for old-skool skins
 	// and for the original DOOM status bar.
-	if ((player == &players[consoleplayer]) && 
-		(strcmp(pmo->GetClass()->Meta.GetMetaString (APMETA_Face), "None") != 0))
+	if ((player == &players[consoleplayer]))
 	{
-		// Assume root-level base skin to begin with
-		size_t skinindex = 0;
-		// If a custom skin was in use, then reload it
-		// or else the base skin for the player class.
-		if ((unsigned int)player->userinfo.skin >= PlayerClasses.Size () &&
-			(size_t)player->userinfo.skin < numskins)
+		const char *face = pmo->GetClass()->Meta.GetMetaString (APMETA_Face);
+		if (face != NULL && strcmp(face, "None") != 0)
 		{
-			skinindex = player->userinfo.skin;
-		}
-		else if (PlayerClasses.Size () > 1)
-		{
-			const PClass *whatami = player->mo->GetClass();
-			for (unsigned int i = 0; i < PlayerClasses.Size (); ++i)
+			// Assume root-level base skin to begin with
+			size_t skinindex = 0;
+			// If a custom skin was in use, then reload it
+			// or else the base skin for the player class.
+			if ((unsigned int)player->userinfo.skin >= PlayerClasses.Size () &&
+				(size_t)player->userinfo.skin < numskins)
 			{
-				if (PlayerClasses[i].Type == whatami)
+				skinindex = player->userinfo.skin;
+			}
+			else if (PlayerClasses.Size () > 1)
+			{
+				const PClass *whatami = player->mo->GetClass();
+				for (unsigned int i = 0; i < PlayerClasses.Size (); ++i)
 				{
-					skinindex = i;
-					break;
+					if (PlayerClasses[i].Type == whatami)
+					{
+						skinindex = i;
+						break;
+					}
 				}
 			}
+			StatusBar->SetFace(&skins[skinindex]);
 		}
-		StatusBar->SetFace(&skins[skinindex]);
 	}
 
 	angle = mo->angle >> ANGLETOFINESHIFT;

@@ -94,6 +94,8 @@
 #include "actors/hexen/blastradius.txt"
 #include "actors/hexen/boostarmor.txt"
 #include "actors/hexen/clericflame.txt"
+#include "actors/hexen/clericholy.txt"
+#include "actors/hexen/clericstaff.txt"
 
 #include "actors/strife/strifeplayer.txt"
 #include "actors/strife/beggars.txt"

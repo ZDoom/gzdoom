@@ -270,6 +270,13 @@ void recurse_dir(dir_tree_t *tree, const char *dirpath)
 			{
 				file_entry_t *entry;
 
+				if (strstr(fileinfo.name, ".orig"))
+				{
+					// .orig files are left behind by patch.exe and should never be
+					// added to zdoom.pk3
+					continue;
+				}
+
 				entry = alloc_file_entry(dirpath, fileinfo.name, fileinfo.time_write);
 				if (entry == NULL)
 				{

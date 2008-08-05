@@ -1,4 +1,9 @@
 August 5, 2008 (Changes by Graf Zahl)
+- Added DECORATE conversions for Hexen's Cleric weapons by Karate Chris.
+- Added a check to Zipdir that excludes files with a .orig extension. These
+  can be left behind by patch.exe and create problems.
+- fixed: Unmorphing from chicken caused a crash when reading non-existent
+  meta-data strings.
 - Converted the ScriptedMarines to DECORATE.
 - Fixed: DLightTransfer and DWallLightTransfer were declared as actors.
 

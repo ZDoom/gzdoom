@@ -512,14 +512,12 @@ add_executable( zdoom WIN32
 	g_hexen/a_blastradius.cpp
 	g_hexen/a_boostarmor.cpp
 	g_hexen/a_centaur.cpp
-	g_hexen/a_clericboss.cpp
 	g_hexen/a_clericflame.cpp
 	g_hexen/a_clericholy.cpp
 	g_hexen/a_clericmace.cpp
 	g_hexen/a_clericstaff.cpp
 	g_hexen/a_dragon.cpp
 	g_hexen/a_fighteraxe.cpp
-	g_hexen/a_fighterboss.cpp
 	g_hexen/a_fighterhammer.cpp
 	g_hexen/a_fighterplayer.cpp
 	g_hexen/a_fighterquietus.cpp
@@ -531,7 +529,6 @@ add_executable( zdoom WIN32
 	g_hexen/a_hexenspecialdecs.cpp
 	g_hexen/a_iceguy.cpp
 	g_hexen/a_korax.cpp
-	g_hexen/a_mageboss.cpp
 	g_hexen/a_magecone.cpp
 	g_hexen/a_magelightning.cpp
 	g_hexen/a_magestaff.cpp

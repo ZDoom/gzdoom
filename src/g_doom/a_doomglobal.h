@@ -7,7 +7,7 @@
 
 class AScriptedMarine : public AActor
 {
-	DECLARE_ACTOR (AScriptedMarine, AActor)
+	DECLARE_CLASS (AScriptedMarine, AActor)
 public:
 	enum EMarineWeapon
 	{
@@ -33,7 +33,11 @@ public:
 	void SetSprite (const PClass *source);
 	void Serialize (FArchive &arc);
 
+	int CurrentWeapon;
+
 protected:
+	bool GetWeaponStates(int weap, FState *&melee, FState *&missile);
+
 	int SpriteOverride;
 };
 

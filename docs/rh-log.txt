@@ -1,3 +1,7 @@
+August 5, 2008 (Changes by Graf Zahl)
+- Converted the ScriptedMarines to DECORATE.
+- Fixed: DLightTransfer and DWallLightTransfer were declared as actors.
+
 August 3, 2008 (Changes by Graf Zahl)
 - Converted the PhoenixRod and associated classes to DECORATE to make
   the Heretic conversion complete.

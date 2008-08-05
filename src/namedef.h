@@ -169,6 +169,18 @@ xx(Pickup)
 xx(Use)
 xx(Drop)
 
+xx(Fist)
+//xx(Berserk)
+xx(Chainsaw)
+xx(Pistol)
+xx(Shotgun)
+xx(SSG)
+xx(Chaingun)
+xx(Rocket)
+xx(Plasma)
+xx(BFG)
+//xx(Railgun)
+
 // Damage types
 //xx(Fire)		already defined above
 //xx(Ice)

@@ -39,6 +39,7 @@
 #include "actors/doom/doomdecorations.txt"
 #include "actors/doom/doomweapons.txt"
 #include "actors/doom/stealthmonsters.txt"
+#include "actors/doom/scriptedmarine.txt"
 
 #include "actors/raven/artiegg.txt"
 #include "actors/raven/ravenartifacts.txt"

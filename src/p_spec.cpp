@@ -647,7 +647,9 @@ CUSTOM_CVAR (Bool, forcewater, false, CVAR_ARCHIVE|CVAR_SERVERINFO)
 
 class DLightTransfer : public DThinker
 {
-	DECLARE_ACTOR (DLightTransfer, DThinker)
+	DECLARE_CLASS (DLightTransfer, DThinker)
+
+	DLightTransfer() {}
 public:
 	DLightTransfer (sector_t *srcSec, int target, bool copyFloor);
 	void Serialize (FArchive &arc);
@@ -729,7 +731,8 @@ class DWallLightTransfer : public DThinker
 		WLF_NOFAKECONTRAST=4
 	};
 
-	DECLARE_ACTOR (DWallLightTransfer, DThinker)
+	DECLARE_CLASS (DWallLightTransfer, DThinker)
+	DWallLightTransfer() {}
 public:
 	DWallLightTransfer (sector_t *srcSec, int target, BYTE flags);
 	void Serialize (FArchive &arc);

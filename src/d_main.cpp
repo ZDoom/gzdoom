@@ -33,7 +33,7 @@
 #include <sys/stat.h>
 #endif
 
-#ifdef HAVE_CPU_CONTROL
+#ifdef HAVE_FPU_CONTROL
 #include <fpu_control.h>
 #endif
 #include <float.h>
@@ -2081,7 +2081,8 @@ void D_DoomMain (void)
 	{
 		int cw;
 		_FPU_GETCW(cw);
-		_FPU_SETCW((cw & ~_FPU_EXTENDED) | _FPU_DOUBLE);
+		cw = (cw & ~_FPU_EXTENDED) | _FPU_DOUBLE;
+		_FPU_SETCW(cw);
 	}
 #elif defined(_PC_53)
 	_control87(_PC_53, _MCW_PC);

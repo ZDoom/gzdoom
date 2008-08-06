@@ -188,9 +188,11 @@ void DBaseStatusBar::Destroy ()
 //
 //---------------------------------------------------------------------------
 
-void DBaseStatusBar::SetScaled (bool scale)
+//[BL] Added force argument to have forcescaled mean forcescaled.
+void DBaseStatusBar::SetScaled (bool scale, bool force)
 {
-	Scaled = RelTop != 0 && (SCREENWIDTH != 320 && scale);
+	Scaled = (RelTop != 0 || force) && (SCREENWIDTH != 320 && scale);
+
 	if (!Scaled)
 	{
 		ST_X = (SCREENWIDTH - 320) / 2;

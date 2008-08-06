@@ -85,6 +85,7 @@ struct SBarInfoBlock
 {
 	TArray<SBarInfoCommand> commands;
 	bool forceScaled;
+	bool fullScreenOffsets;
 	int alpha;
 
 	SBarInfoBlock();
@@ -135,7 +136,7 @@ struct SBarInfo
 	void ParseSBarInfo(int lump);
 	void ParseSBarInfoBlock(FScanner &sc, SBarInfoBlock &block);
 	void ParseMugShotBlock(FScanner &sc, FMugShotState &state);
-	void getCoordinates(FScanner &sc, SBarInfoCommand &cmd); //retrieves the next two arguments as x and y.
+	void getCoordinates(FScanner &sc, SBarInfoCommand &cmd, bool fullScreenOffsets); //retrieves the next two arguments as x and y.
 	int getSignedInteger(FScanner &sc); //returns a signed integer.
 	int newImage(const char* patchname);
 	void Init();
@@ -150,11 +151,6 @@ extern SBarInfo *SBarInfoScript;
 
 
 // Enums used between the parser and the display
-enum //statusbar flags
-{
-	STATUSBARFLAG_FORCESCALED = 1,
-};
-
 enum //gametype flags
 {
 	GAMETYPE_SINGLEPLAYER = 1,
@@ -165,18 +161,19 @@ enum //gametype flags
 
 enum //drawimage flags
 {
-	DRAWIMAGE_PLAYERICON = 1,
-	DRAWIMAGE_AMMO1 = 2,
-	DRAWIMAGE_AMMO2 = 4,
-	DRAWIMAGE_INVENTORYICON = 8,
-	DRAWIMAGE_TRANSLATABLE = 16,
-	DRAWIMAGE_WEAPONSLOT = 32,
-	DRAWIMAGE_SWITCHABLE_AND = 64,
-	DRAWIMAGE_INVULNERABILITY = 128,
-	DRAWIMAGE_OFFSET_CENTER = 256,
-	DRAWIMAGE_ARMOR = 512,
-	DRAWIMAGE_WEAPONICON = 1024,
-	DRAWIMAGE_SIGIL = 2048,
+	DRAWIMAGE_PLAYERICON = 0x1,
+	DRAWIMAGE_AMMO1 = 0x2,
+	DRAWIMAGE_AMMO2 = 0x4,
+	DRAWIMAGE_INVENTORYICON = 0x8,
+	DRAWIMAGE_TRANSLATABLE = 0x10,
+	DRAWIMAGE_WEAPONSLOT = 0x20,
+	DRAWIMAGE_SWITCHABLE_AND = 0x40,
+	DRAWIMAGE_INVULNERABILITY = 0x80,
+	DRAWIMAGE_OFFSET_CENTER = 0x100,
+	DRAWIMAGE_ARMOR = 0x200,
+	DRAWIMAGE_WEAPONICON = 0x400,
+	DRAWIMAGE_SIGIL = 0x800,
+	DRAWIMAGE_KEYSLOT = 0x1000,
 };
 
 enum //drawnumber flags
@@ -344,14 +341,14 @@ public:
 	void SetMugShotState(const char* stateName, bool waitTillDone=false, bool reset=false);
 private:
 	void doCommands(SBarInfoBlock &block, int xOffset=0, int yOffset=0, int alpha=FRACUNIT);
-	void DrawGraphic(FTexture* texture, int x, int y, int xOffset, int yOffset, int alpha, bool translate=false, bool dim=false, bool center=false);
-	void DrawString(const char* str, int x, int y, int xOffset, int yOffset, int alpha, EColorRange translation, int spacing=0);
-	void DrawNumber(int num, int len, int x, int y, int xOffset, int yOffset, int alpha, EColorRange translation, int spacing=0, bool fillzeros=false);
-	void DrawFace(const char *defaultFace, int accuracy, bool xdth, bool animatedgodmode, int x, int y, int xOffset, int yOffset, int alpha);
+	void DrawGraphic(FTexture* texture, int x, int y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets, bool translate=false, bool dim=false, bool center=false);
+	void DrawString(const char* str, int x, int y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets, EColorRange translation, int spacing=0);
+	void DrawNumber(int num, int len, int x, int y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets, EColorRange translation, int spacing=0, bool fillzeros=false);
+	void DrawFace(const char *defaultFace, int accuracy, bool xdth, bool animatedgodmode, int x, int y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets);
 	int updateState(bool xdth, bool animatedgodmode);
-	void DrawInventoryBar(int type, int num, int x, int y, int xOffset, int yOffset, int alpha, bool alwaysshow,
+	void DrawInventoryBar(int type, int num, int x, int y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets, bool alwaysshow,
 		int counterx, int countery, EColorRange translation, bool drawArtiboxes, bool noArrows, bool alwaysshowcounter);
-	void DrawGem(FTexture* chain, FTexture* gem, int value, int x, int y, int xOffset, int yOffset, int alpha, int padleft, int padright, int chainsize,
+	void DrawGem(FTexture* chain, FTexture* gem, int value, int x, int y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets, int padleft, int padright, int chainsize,
 		bool wiggle, bool translate);
 	FRemapTable* getTranslation();
 

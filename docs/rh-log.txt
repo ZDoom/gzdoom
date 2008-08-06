@@ -1,3 +1,17 @@
+August 6, 2008 (SBARINfO update)
+- Added: fullscreenoffsets flag for status bars.  This changes the coordinate
+  system to be relative to the top left corner of the screen.  This is useful
+  for full screen status bars.
+- Changed: drawinventorybar will use the width of artibox or invcurs (strife)
+  to determine the spacing.  Let me know if this breaks any released mods.
+- Fixed: If a status bar height of 0 was specified in SBarInfo the wrong bar
+  would be shown.
+- Fixed: If a static inventory bar was used the user still had to press invuse
+  in order to get rid of the "overlay".
+- Fixed: forcescaled would not work if the height of the bar was 0.
+- Added: keyslot to drawswitchableimage.
+- Fixed: The transition effects for the log and keys popups were switched.
+
 August 5, 2008 (Changes by Graf Zahl)
 - Converted Strife's Crusader, Inquisitor and spectral missiles to
   DECORATE.

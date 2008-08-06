@@ -262,7 +262,7 @@ public:
 	DBaseStatusBar (int reltop);
 	void Destroy ();
 
-	void SetScaled (bool scale);
+	void SetScaled (bool scale, bool force=false);
 
 	void AttachMessage (DHUDMessage *msg, uint32 id=0);
 	DHUDMessage *DetachMessage (DHUDMessage *msg);

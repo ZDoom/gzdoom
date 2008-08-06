@@ -5,7 +5,7 @@ class AActor;
 
 class AMinotaur : public AActor
 {
-	DECLARE_ACTOR (AMinotaur, AActor)
+	DECLARE_CLASS (AMinotaur, AActor)
 public:
 	void NoBlockingSet ();
 	int DoSpecialDamage (AActor *target, int damage);
@@ -17,7 +17,7 @@ public:
 
 class AMinotaurFriend : public AMinotaur
 {
-	DECLARE_STATELESS_ACTOR (AMinotaurFriend, AMinotaur)
+	DECLARE_CLASS (AMinotaurFriend, AMinotaur)
 public:
 	int StartTime;
 

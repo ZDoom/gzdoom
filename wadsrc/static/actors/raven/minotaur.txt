@@ -1,3 +1,133 @@
+ACTOR Minotaur 9 native
+{
+	Game Heretic
+	Health 3000
+	Radius 28
+	Height 100
+	Mass 800
+	Speed 16
+	Damage 7
+	Painchance 25
+	Monster
+	+DROPOFF
+	+FLOORCLIP
+	+BOSS
+	+NORADIUSDMG
+	+DONTMORPH
+	+NOTARGET
+	+BOSSDEATH
+	SeeSound "minotaur/sight"
+	AttackSound "minotaur/attack1"
+	PainSound "minotaur/pain"
+	DeathSound "minotaur/death"
+	ActiveSound "minotaur/active"
+	DropItem "ArtiSuperHealth", 51
+	DropItem "PhoenixRodAmmo", 84, 10
+
+	action native A_MinotaurDecide();
+	action native A_MinotaurAtk1();
+	action native A_MinotaurAtk2();
+	action native A_MinotaurAtk3();
+	action native A_MinotaurCharge();
+	action native A_MntrFloorFire();
+	action native A_MinotaurLook();
+	action native A_MinotaurRoam();
+	action native A_MinotaurChase();
+	action native A_MinotaurDeath();
+
+	States
+	{
+	Spawn:
+		MNTR AB 10 A_MinotaurLook
+		Loop
+	Roam:
+		MNTR ABCD 5 A_MinotaurRoam
+		Loop
+	See:
+		MNTR ABCD 5 A_MinotaurChase
+		Loop
+	Melee:
+		MNTR V 10 A_FaceTarget
+		MNTR W 7 A_FaceTarget
+		MNTR X 12 A_MinotaurAtk1
+		Goto See
+	Missile:
+		MNTR V 10 A_MinotaurDecide
+		MNTR Y 4 A_FaceTarget
+		MNTR Z 9 A_MinotaurAtk2
+		Goto See
+	Hammer:
+		MNTR V 10 A_FaceTarget
+		MNTR W 7 A_FaceTarget
+		MNTR X 12 A_MinotaurAtk3
+		Goto See
+		MNTR X 12
+		Loop
+	Charge:
+		MNTR U 2 A_MinotaurCharge
+		Loop
+	Pain:
+		MNTR E 3
+		MNTR E 6 A_Pain
+		Goto See
+	Death:
+		MNTR F 6 A_MinotaurDeath
+		MNTR G 5
+		MNTR H 6 A_Scream
+		MNTR I 5
+		MNTR J 6
+		MNTR K 5
+		MNTR L 6
+		MNTR M 5 A_NoBlocking
+		MNTR N 6
+		MNTR O 5
+		MNTR P 6
+		MNTR Q 5
+		MNTR R 6
+		MNTR S 5
+		MNTR T -1 A_BossDeath
+		Stop
+	FadeOut:
+		MNTR E 6
+		MNTR E 2 A_Scream
+		MNTR E 5 A_SpawnItemEx("MinotaurSmokeExit")
+		MNTR E 5
+		MNTR E 5 A_NoBlocking
+		MNTR E 5
+		MNTR E 5 A_SetTranslucent(0.66, 0)
+		MNTR E 5 A_SetTranslucent(0.33, 0)
+		MNTR E 10 A_BossDeath
+		Stop
+	}
+}
+
+ACTOR MinotaurFriend : Minotaur native
+{
+	Game Hexen
+	Health 2500
+	-DROPOFF
+	-BOSS
+	-DONTMORPH
+	+FRIENDLY
+	+NOTARGETSWITCH
+	+STAYMORPHED
+	+TELESTOMP
+	+SUMMONEDMONSTER
+	RenderStyle Translucent
+	Alpha 0.3333
+	DropItem "None"
+	States
+	{
+	Spawn:
+		MNTR A 15
+		MNTR A 15 A_SetTranslucent(0.66, 0)
+		MNTR A 3 A_SetTranslucent(1, 0)
+		Goto Super::Spawn
+	Death:
+		Goto FadeOut
+	}
+}
+
 // Minotaur FX 1 ------------------------------------------------------------
 
 ACTOR MinotaurFX1

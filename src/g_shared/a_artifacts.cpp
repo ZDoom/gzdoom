@@ -345,25 +345,6 @@ IMPLEMENT_STATELESS_ACTOR (APowerInvulnerable, Any, -1, 0)
 	PROP_Inventory_Icon ("SPSHLD0")
 END_DEFAULTS
 
-// Need to set the default for each game here
-AT_GAME_SET(PowerInvulnerable)
-{
-	APowerInvulnerable * invul = GetDefault<APowerInvulnerable>();
-	switch (gameinfo.gametype)
-	{
-	case GAME_Doom:
-	case GAME_Strife:
-		invul->BlendColor = INVERSECOLOR;
-		break;
-
-	case GAME_Heretic:
-		invul->BlendColor = GOLDCOLOR;
-		break;
-
-	default:
-		break;
-	}
-}
 //===========================================================================
 //
 // APowerInvulnerable :: InitEffect

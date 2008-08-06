@@ -20,132 +20,18 @@ static FRandom pr_minotaurslam ("MinotaurSlam");
 static FRandom pr_minotaurroam ("MinotaurRoam");
 static FRandom pr_minotaurchase ("MinotaurChase");
 
-void A_MinotaurDecide (AActor *);
-void A_MinotaurAtk1 (AActor *);
-void A_MinotaurAtk2 (AActor *);
-void A_MinotaurAtk3 (AActor *);
-void A_MinotaurCharge (AActor *);
-void A_MntrFloorFire (AActor *);
-void A_MinotaurFade0 (AActor *);
-void A_MinotaurFade1 (AActor *);
-void A_MinotaurFade2 (AActor *);
 void A_MinotaurLook (AActor *);
-void A_MinotaurRoam (AActor *);
-void A_SmokePuffExit (AActor *);
-void A_MinotaurChase (AActor *);
 
 void P_MinotaurSlam (AActor *source, AActor *target);
 
-// Class definitions --------------------------------------------------------
-
-FState AMinotaur::States[] =
-{
-#define S_MNTR_LOOK 0
-	S_NORMAL (MNTR, 'A',   10, A_MinotaurLook				, &States[S_MNTR_LOOK+1]),
-	S_NORMAL (MNTR, 'B',   10, A_MinotaurLook				, &States[S_MNTR_LOOK+0]),
-
-#define S_MNTR_ROAM (S_MNTR_LOOK+2)
-	S_NORMAL (MNTR, 'A',	5, A_MinotaurRoam				, &States[S_MNTR_ROAM+1]),
-	S_NORMAL (MNTR, 'B',	5, A_MinotaurRoam				, &States[S_MNTR_ROAM+2]),
-	S_NORMAL (MNTR, 'C',	5, A_MinotaurRoam				, &States[S_MNTR_ROAM+3]),
-	S_NORMAL (MNTR, 'D',	5, A_MinotaurRoam				, &States[S_MNTR_ROAM]),
-
-#define S_MNTR_WALK (S_MNTR_ROAM+4)
-	S_NORMAL (MNTR, 'A',	5, A_MinotaurChase				, &States[S_MNTR_WALK+1]),
-	S_NORMAL (MNTR, 'B',	5, A_MinotaurChase				, &States[S_MNTR_WALK+2]),
-	S_NORMAL (MNTR, 'C',	5, A_MinotaurChase				, &States[S_MNTR_WALK+3]),
-	S_NORMAL (MNTR, 'D',	5, A_MinotaurChase				, &States[S_MNTR_WALK+0]),
-
-#define S_MNTR_ATK1 (S_MNTR_WALK+4)
-	S_NORMAL (MNTR, 'V',   10, A_FaceTarget 				, &States[S_MNTR_ATK1+1]),
-	S_NORMAL (MNTR, 'W',	7, A_FaceTarget 				, &States[S_MNTR_ATK1+2]),
-	S_NORMAL (MNTR, 'X',   12, A_MinotaurAtk1				, &States[S_MNTR_WALK+0]),
-
-#define S_MNTR_ATK2 (S_MNTR_ATK1+3)
-	S_NORMAL (MNTR, 'V',   10, A_MinotaurDecide 			, &States[S_MNTR_ATK2+1]),
-	S_NORMAL (MNTR, 'Y',	4, A_FaceTarget 				, &States[S_MNTR_ATK2+2]),
-	S_NORMAL (MNTR, 'Z',	9, A_MinotaurAtk2				, &States[S_MNTR_WALK+0]),
-
-#define S_MNTR_ATK3 (S_MNTR_ATK2+3)
-	S_NORMAL (MNTR, 'V',   10, A_FaceTarget 				, &States[S_MNTR_ATK3+1]),
-	S_NORMAL (MNTR, 'W',	7, A_FaceTarget 				, &States[S_MNTR_ATK3+2]),
-	S_NORMAL (MNTR, 'X',   12, A_MinotaurAtk3				, &States[S_MNTR_WALK+0]),
-	S_NORMAL (MNTR, 'X',   12, NULL 						, &States[S_MNTR_ATK3+0]),
-
-#define S_MNTR_ATK4 (S_MNTR_ATK3+4)
-	S_NORMAL (MNTR, 'U',	2, A_MinotaurCharge 			, &States[S_MNTR_ATK4+0]),
-
-#define S_MNTR_PAIN (S_MNTR_ATK4+1)
-	S_NORMAL (MNTR, 'E',	3, NULL 						, &States[S_MNTR_PAIN+1]),
-	S_NORMAL (MNTR, 'E',	6, A_Pain						, &States[S_MNTR_WALK+0]),
-
-#define S_MNTR_DIE (S_MNTR_PAIN+2)
-	S_NORMAL (MNTR, 'F',	6, NULL 						, &States[S_MNTR_DIE+1]),
-	S_NORMAL (MNTR, 'G',	5, NULL 						, &States[S_MNTR_DIE+2]),
-	S_NORMAL (MNTR, 'H',	6, A_Scream 					, &States[S_MNTR_DIE+3]),
-	S_NORMAL (MNTR, 'I',	5, NULL 						, &States[S_MNTR_DIE+4]),
-	S_NORMAL (MNTR, 'J',	6, NULL 						, &States[S_MNTR_DIE+5]),
-	S_NORMAL (MNTR, 'K',	5, NULL 						, &States[S_MNTR_DIE+6]),
-	S_NORMAL (MNTR, 'L',	6, NULL 						, &States[S_MNTR_DIE+7]),
-	S_NORMAL (MNTR, 'M',	5, A_NoBlocking 				, &States[S_MNTR_DIE+8]),
-	S_NORMAL (MNTR, 'N',	6, NULL 						, &States[S_MNTR_DIE+9]),
-	S_NORMAL (MNTR, 'O',	5, NULL 						, &States[S_MNTR_DIE+10]),
-	S_NORMAL (MNTR, 'P',	6, NULL 						, &States[S_MNTR_DIE+11]),
-	S_NORMAL (MNTR, 'Q',	5, NULL 						, &States[S_MNTR_DIE+12]),
-	S_NORMAL (MNTR, 'R',	6, NULL 						, &States[S_MNTR_DIE+13]),
-	S_NORMAL (MNTR, 'S',	5, NULL 						, &States[S_MNTR_DIE+14]),
-	S_NORMAL (MNTR, 'T',   -1, A_BossDeath					, NULL),
-
-#define S_MNTR_FADEIN (S_MNTR_DIE+15)
-	S_NORMAL (MNTR, 'A',   15, NULL					    , &States[S_MNTR_FADEIN+1]),
-	S_NORMAL (MNTR, 'A',   15, A_MinotaurFade1		    , &States[S_MNTR_FADEIN+2]),
-	S_NORMAL (MNTR, 'A',	3, A_MinotaurFade2		    , &States[S_MNTR_LOOK]),
-
-#define S_MNTR_FADEOUT (S_MNTR_FADEIN+3)
-	S_NORMAL (MNTR, 'E',	6, NULL					    , &States[S_MNTR_FADEOUT+1]),
-	S_NORMAL (MNTR, 'E',	2, A_Scream				    , &States[S_MNTR_FADEOUT+2]),
-	S_NORMAL (MNTR, 'E',	5, A_SmokePuffExit		    , &States[S_MNTR_FADEOUT+3]),
-	S_NORMAL (MNTR, 'E',	5, NULL					    , &States[S_MNTR_FADEOUT+4]),
-	S_NORMAL (MNTR, 'E',	5, A_NoBlocking			    , &States[S_MNTR_FADEOUT+5]),
-	S_NORMAL (MNTR, 'E',	5, NULL					    , &States[S_MNTR_FADEOUT+6]),
-	S_NORMAL (MNTR, 'E',	5, A_MinotaurFade1		    , &States[S_MNTR_FADEOUT+7]),
-	S_NORMAL (MNTR, 'E',	5, A_MinotaurFade0		    , &States[S_MNTR_FADEOUT+8]),
-	S_NORMAL (MNTR, 'E',   10, A_BossDeath			    , NULL),
-};
-
-IMPLEMENT_ACTOR (AMinotaur, Heretic, 9, 0)
-	PROP_SpawnHealth (3000)
-	PROP_RadiusFixed (28)
-	PROP_HeightFixed (100)
-	PROP_Mass (800)
-	PROP_SpeedFixed (16)
-	PROP_Damage (7)
-	PROP_PainChance (25)
-	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_COUNTKILL|MF_DROPOFF)
-	PROP_Flags2 (MF2_FLOORCLIP|MF2_PASSMOBJ|MF2_BOSS|MF2_PUSHWALL)
-	PROP_Flags3 (MF3_NORADIUSDMG|MF3_DONTMORPH|MF3_NOTARGET)
-	PROP_Flags4 (MF4_BOSSDEATH)
-
-	PROP_SpawnState (S_MNTR_LOOK)
-	PROP_SeeState (S_MNTR_WALK)
-	PROP_PainState (S_MNTR_PAIN)
-	PROP_MeleeState (S_MNTR_ATK1)
-	PROP_MissileState (S_MNTR_ATK2)
-	PROP_DeathState (S_MNTR_DIE)
-
-	PROP_SeeSound ("minotaur/sight")
-	PROP_AttackSound ("minotaur/attack1")
-	PROP_PainSound ("minotaur/pain")
-	PROP_DeathSound ("minotaur/death")
-	PROP_ActiveSound ("minotaur/active")
-END_DEFAULTS
+IMPLEMENT_CLASS(AMinotaur)
 
 void AMinotaur::Tick ()
 {
 	Super::Tick ();
 	
 	// The unfriendly Minotaur (Heretic's) is invulnerable while charging
-	if (!IsKindOf(RUNTIME_CLASS(AMinotaurFriend)))
+	if (!(flags5 & MF5_SUMMONEDMONSTER))
 	{
 		// Get MF_SKULLFLY bit and shift it so it matches MF2_INVULNERABLE
 		DWORD flying = (flags & MF_SKULLFLY) << 3;
@@ -185,45 +71,7 @@ int AMinotaur::DoSpecialDamage (AActor *target, int damage)
 
 // Minotaur Friend ----------------------------------------------------------
 
-IMPLEMENT_STATELESS_ACTOR (AMinotaurFriend, Hexen, -1, 0)
-	PROP_SpawnState (S_MNTR_FADEIN)
-	PROP_DeathState (S_MNTR_FADEOUT)
-	PROP_RenderStyle (STYLE_Translucent)
-	PROP_Alpha (OPAQUE/3)
-
-	PROP_SpawnHealth (2500)
-	PROP_FlagsClear (MF_DROPOFF|MF_COUNTKILL)
-	PROP_FlagsSet (MF_FRIENDLY)
-	PROP_Flags2Clear (MF2_BOSS)
-	PROP_Flags2Set (MF2_TELESTOMP)
-	PROP_Flags3Set (MF3_STAYMORPHED)
-	PROP_Flags3Clear (MF3_DONTMORPH)
-	PROP_Flags4 (MF4_NOTARGETSWITCH)
-END_DEFAULTS
-
-AT_GAME_SET (Minotaur)
-{
-	// Modify the Minotaur to accomodate the difference in Hexen's graphics.
-	// (Hexen's has fewer frames than Heretic's.) Sprites have not been loaded
-	// yet, so check the wad for their presence.
-	if (Wads.CheckNumForName ("MNTRZ1", ns_sprites) < 0 &&
-		Wads.CheckNumForName ("MNTRZ0", ns_sprites) < 0)
-	{
-		AMinotaur::States[S_MNTR_ATK1+0].SetFrame ('G');
-		AMinotaur::States[S_MNTR_ATK1+1].SetFrame ('H');
-		AMinotaur::States[S_MNTR_ATK1+2].SetFrame ('I');
-		AMinotaur::States[S_MNTR_ATK2+0].SetFrame ('G');
-		AMinotaur::States[S_MNTR_ATK2+1].SetFrame ('J');
-		AMinotaur::States[S_MNTR_ATK2+2].SetFrame ('K');
-		AMinotaur::States[S_MNTR_ATK3+0].SetFrame ('G');
-		AMinotaur::States[S_MNTR_ATK3+1].SetFrame ('H');
-		AMinotaur::States[S_MNTR_ATK3+2].SetFrame ('I');
-		AMinotaur::States[S_MNTR_ATK3+3].SetFrame ('I');
-		AMinotaur::States[S_MNTR_ATK4+0].SetFrame ('F');
-
-		RUNTIME_CLASS(AMinotaur)->ActorInfo->ChangeState(NAME_Death, &AMinotaur::States[S_MNTR_FADEOUT]);
-	}
-}
+IMPLEMENT_CLASS(AMinotaurFriend)
 
 void AMinotaurFriend::BeginPlay ()
 {
@@ -264,8 +112,7 @@ bool AMinotaurFriend::IsOkayToAttack (AActor *link)
 		{
 			return false;
 		}
-		if ((link->IsKindOf (RUNTIME_CLASS(AMinotaur))) &&
-			(link->tracer == tracer))
+		if ((link->flags5 & MF5_SUMMONEDMONSTER) &&	(link->tracer == tracer))
 		{
 			return false;
 		}
@@ -303,7 +150,7 @@ void AMinotaurFriend::Die (AActor *source, AActor *inflictor)
 
 		if (mo == NULL)
 		{
-			AInventory *power = tracer->FindInventory (RUNTIME_CLASS(APowerMinotaur));
+			AInventory *power = tracer->FindInventory (PClass::FindClass("PowerMinotaur"));
 			if (power != NULL)
 			{
 				power->Destroy ();
@@ -332,6 +179,13 @@ void AMinotaurFriend::NoBlockingSet ()
 // Melee attack.
 //
 //----------------------------------------------------------------------------
+
+void A_MinotaurDeath (AActor *actor)
+{
+	if (Wads.CheckNumForName ("MNTRF1", ns_sprites) < 0 &&
+		Wads.CheckNumForName ("MNTRF0", ns_sprites) < 0)
+		actor->SetState(actor->FindState ("FadeOut"));
+}
 
 void A_MinotaurAtk1 (AActor *actor)
 {
@@ -367,7 +221,7 @@ void A_MinotaurAtk1 (AActor *actor)
 
 void A_MinotaurDecide (AActor *actor)
 {
-	bool friendly = actor->IsKindOf(RUNTIME_CLASS(AMinotaurFriend));
+	bool friendly = !!(actor->flags5 & MF5_SUMMONEDMONSTER);
 	angle_t angle;
 	AActor *target;
 	int dist;
@@ -389,7 +243,7 @@ void A_MinotaurDecide (AActor *actor)
 		&& pr_minotaurdecide() < 150)
 	{ // Charge attack
 		// Don't call the state function right away
-		actor->SetStateNF (&AMinotaur::States[S_MNTR_ATK4]);
+		actor->SetStateNF (actor->FindState ("Charge"));
 		actor->flags |= MF_SKULLFLY;
 		if (!friendly)
 		{ // Heretic's Minotaur is invulnerable during charge attack
@@ -405,7 +259,7 @@ void A_MinotaurDecide (AActor *actor)
 		&& dist < 9*64*FRACUNIT
 		&& pr_minotaurdecide() < (friendly ? 100 : 220))
 	{ // Floor fire attack
-		actor->SetState (&AMinotaur::States[S_MNTR_ATK3]);
+		actor->SetState (actor->FindState ("Hammer"));
 		actor->special2 = 0;
 	}
 	else
@@ -466,7 +320,7 @@ void A_MinotaurAtk2 (AActor *actor)
 	angle_t angle;
 	fixed_t momz;
 	fixed_t z;
-	bool friendly = actor->IsKindOf(RUNTIME_CLASS(AMinotaurFriend));
+	bool friendly = !!(actor->flags5 & MF5_SUMMONEDMONSTER);
 
 	if (!actor->target)
 	{
@@ -511,7 +365,7 @@ void A_MinotaurAtk3 (AActor *actor)
 {
 	AActor *mo;
 	player_t *player;
-	bool friendly = actor->IsKindOf(RUNTIME_CLASS(AMinotaurFriend));
+	bool friendly = !!(actor->flags5 & MF5_SUMMONEDMONSTER);
 
 	if (!actor->target)
 	{
@@ -541,7 +395,7 @@ void A_MinotaurAtk3 (AActor *actor)
 	}
 	if (pr_minotauratk3() < 192 && actor->special2 == 0)
 	{
-		actor->SetState (&AMinotaur::States[S_MNTR_ATK3+3]);
+		actor->SetState (actor->FindState ("Hammer"));
 		actor->special2 = 1;
 	}
 }
@@ -602,25 +456,6 @@ void P_MinotaurSlam (AActor *source, AActor *target)
 // 	tracer			pointer to player that spawned it
 //----------------------------------------------------------------------------
 
-void A_MinotaurFade0 (AActor *actor)
-{
-	actor->RenderStyle = STYLE_Translucent;
-	actor->alpha = OPAQUE/3;
-}
-
-void A_MinotaurFade1 (AActor *actor)
-{
-	// Second level of transparency
-	actor->RenderStyle = STYLE_Translucent;
-	actor->alpha = OPAQUE*2/3;
-}
-
-void A_MinotaurFade2 (AActor *actor)
-{
-	// Make fully visible
-	actor->RenderStyle = STYLE_Normal;
-}
-
 //----------------------------------------------------------------------------
 //
 // A_MinotaurRoam
@@ -671,7 +506,6 @@ void A_MinotaurRoam (AActor *actor)
 
 void A_MinotaurLook (AActor *actor)
 {
-
 	if (!actor->IsKindOf(RUNTIME_CLASS(AMinotaurFriend)))
 	{
 		A_Look (actor);
@@ -722,8 +556,7 @@ void A_MinotaurLook (AActor *actor)
 			dist = P_AproxDistance (actor->x - mo->x, actor->y - mo->y);
 			if (dist > MINOTAUR_LOOK_DIST) continue;
 			if ((mo == master) || (mo == actor)) continue;
-			if ((mo->IsKindOf (RUNTIME_CLASS(AMinotaur))) &&
-				(mo->tracer == master)) continue;
+			if ((mo->flags5 & MF5_SUMMONEDMONSTER) && (mo->tracer == master)) continue;
 			actor->target = mo;
 			break;			// Found actor to attack
 		}
@@ -731,11 +564,11 @@ void A_MinotaurLook (AActor *actor)
 
 	if (actor->target)
 	{
-		actor->SetStateNF (&AMinotaur::States[S_MNTR_WALK]);
+		actor->SetStateNF (actor->SeeState);
 	}
 	else
 	{
-		actor->SetStateNF (&AMinotaur::States[S_MNTR_ROAM]);
+		actor->SetStateNF (actor->FindState ("Roam"));
 	}
 }
 
@@ -764,7 +597,7 @@ void A_MinotaurChase (AActor *actor)
 	if (!actor->target || (actor->target->health <= 0) ||
 		!(actor->target->flags&MF_SHOOTABLE))
 	{ // look for a new target
-		actor->SetState (&AMinotaur::States[S_MNTR_LOOK]);
+		actor->SetState (actor->FindState ("Spawn"));
 		return;
 	}
 
@@ -803,14 +636,3 @@ void A_MinotaurChase (AActor *actor)
 	}
 }
 
-/*
-void A_SmokePuffEntry(mobj_t *actor)
-{
-	P_SpawnMobj(actor->x, actor->y, actor->z, MT_MNTRSMOKE);
-}
-*/
-
-void A_SmokePuffExit (AActor *actor)
-{
-	Spawn("MinotaurSmokeExit", actor->x, actor->y, actor->z, ALLOW_REPLACE);
-}

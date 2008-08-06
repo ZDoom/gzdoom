@@ -1290,6 +1290,7 @@ void FWadCollection::ScanForFlatHack (int startlump)
 void FWadCollection::RenameSprites (int startlump)
 {
 	bool renameAll;
+	bool MNTRZfound = false;
 
 	static const DWORD HereticRenames[] =
 	{ MAKE_ID('H','E','A','D'), MAKE_ID('L','I','C','H'),		// Ironlich
@@ -1309,6 +1310,7 @@ void FWadCollection::RenameSprites (int startlump)
 	  MAKE_ID('W','A','T','R'), MAKE_ID('H','W','A','T'),		// Strife also has WATR
 	  MAKE_ID('G','I','B','S'), MAKE_ID('P','O','L','5'),		// RealGibs
 	  MAKE_ID('E','G','G','M'), MAKE_ID('P','R','K','M'),		// PorkFX
+	  MAKE_ID('I','N','V','U'), MAKE_ID('D','E','F','N'),		// Icon of the Defender
 	};
 
 	static const DWORD StrifeRenames[] =
@@ -1365,6 +1367,19 @@ void FWadCollection::RenameSprites (int startlump)
 		 *(((DWORD *)LumpInfo[i].name) + 1) != MAKE_ID('D',0,0,0);
 		++i)
 	{
+		if (!strncmp(LumpInfo[i].name, "MNTRZ", 5))
+		{
+			MNTRZfound = true;
+			break;
+		}
+	}
+
+	for (DWORD i = startlump + 1;
+		i < NumLumps && 
+		 *(DWORD *)LumpInfo[i].name != MAKE_ID('S','_','E','N') &&
+		 *(((DWORD *)LumpInfo[i].name) + 1) != MAKE_ID('D',0,0,0);
+		++i)
+	{
 		// Only sprites in the IWAD normally get renamed
 		if (renameAll || LumpInfo[i].wadnum == IWAD_FILENUM)
 		{
@@ -1373,6 +1388,24 @@ void FWadCollection::RenameSprites (int startlump)
 				if (*(DWORD *)LumpInfo[i].name == renames[j*2])
 				{
 					*(DWORD *)LumpInfo[i].name = renames[j*2+1];
+				}
+			}
+			if (gameinfo.gametype == GAME_Hexen)
+			{
+				if (CheckLumpName (i, "ARTIINVU"))
+				{
+					LumpInfo[i].name[4]='D'; LumpInfo[i].name[5]='E';
+					LumpInfo[i].name[6]='F'; LumpInfo[i].name[7]='N';
+				}
+			}
+		}
+		if (!MNTRZfound) //gameinfo.gametype == GAME_Hexen && LumpInfo[i].wadnum == IWAD_FILENUM)
+		{
+			if (*(DWORD *)LumpInfo[i].name == MAKE_ID('M', 'N', 'T', 'R'))
+			{
+				if (LumpInfo[i].name[4] >= 'F' && LumpInfo[i].name[4] <= 'K')
+				{
+					LumpInfo[i].name[4] += 'U' - 'F';
 				}
 			}
 		}

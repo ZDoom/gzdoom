@@ -3,6 +3,12 @@ August 6, 2008
   GCC defaults to extended precision instead, unlike Visual C++.
 
 August 6, 2008 (Changes by Graf Zahl)
+- Removed AT_GAME_SET(PowerInvulnerable) due to the problems it caused. The two
+  occurences in the code that depended on it were changed accordingly.
+  Invulnerability colormaps are now being set by the items exclusively.
+- Changed many checks for the friendly Minotaur to a new flag MF5_SUMMONEDMONSTER
+  so that it can hopefully be generalized to be usable elsewhere later.
+- Added Gez's submission for converting the Minotaur to DECORATE.
 - Fixed a few minor DECORATE bugs.
 - Changed coordinate storage for EntityBoss so that it works properly even
   when the pod is not used to spawn it.

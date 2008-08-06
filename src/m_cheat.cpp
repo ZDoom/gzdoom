@@ -222,10 +222,18 @@ void cht_DoCheat (player_t *player, int cheat)
 			item = player->mo->FindInventory (BeholdPowers[i]);
 			if (item == NULL)
 			{
-				player->mo->GiveInventoryType (BeholdPowers[i]);
-				if (cheat == CHT_BEHOLDS)
+				if (i != 0)
 				{
-					P_GiveBody (player->mo, -100);
+					player->mo->GiveInventoryType (BeholdPowers[i]);
+					if (cheat == CHT_BEHOLDS)
+					{
+						P_GiveBody (player->mo, -100);
+					}
+				}
+				else
+				{
+					// Let's give the item here so that the power doesn't need colormap information.
+					player->mo->GiveInventoryType(PClass::FindClass("InvulnerabilitySphere"));
 				}
 			}
 			else

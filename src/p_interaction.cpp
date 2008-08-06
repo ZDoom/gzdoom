@@ -1164,7 +1164,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 		{
 			target->DamageType = mod;
 		}
-		if (source && source->tracer && source->IsKindOf (RUNTIME_CLASS (AMinotaur)))
+		if (source && source->tracer && (source->flags5 & MF5_SUMMONEDMONSTER))
 		{ // Minotaur's kills go to his master
 			// Make sure still alive and not a pointer to fighter head
 			if (source->tracer->player && (source->tracer->player->mo == source->tracer))

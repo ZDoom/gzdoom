@@ -65,7 +65,7 @@ ACTOR ArtiFly : PowerupGiver 83
 	}
 }
 
-// Invulnerability Heretic ---------------------------------------------------
+// Invulnerability Heretic (Ring of invincibility) --------------------------
 
 ACTOR ArtiInvulnerability : PowerupGiver 84
 {
@@ -87,7 +87,7 @@ ACTOR ArtiInvulnerability : PowerupGiver 84
 	}
 }
 	
-// Invulnerability Hexen ----------------------------------------------------------
+// Invulnerability Hexen (Icon of the defender) -----------------------------
 
 ACTOR ArtiInvulnerability2 : PowerupGiver 84
 {
@@ -97,13 +97,13 @@ ACTOR ArtiInvulnerability2 : PowerupGiver 84
 	+FLOATBOB
 	+INVENTORY.PICKUPFLASH
 	Inventory.RespawnTics 4230
-	Inventory.Icon ARTIINVU
+	Inventory.Icon ARTIDEFN
 	Inventory.PickupMessage "$TXT_ARTIINVULNERABILITY2"
 	Powerup.Type Invulnerable
 	States
 	{
 	Spawn:
-		INVU ABCD 3
+		DEFN ABCD 3
 		Loop
 	}
 }

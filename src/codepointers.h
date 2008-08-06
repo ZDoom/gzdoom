@@ -191,6 +191,18 @@ ACTOR(PhoenixPuff)
 ACTOR(FlameEnd)
 ACTOR(FloatPuff)
 
+// Minotaur stuff
+ACTOR(MinotaurDecide)
+ACTOR(MinotaurAtk1)
+ACTOR(MinotaurAtk2)
+ACTOR(MinotaurAtk3)
+ACTOR(MinotaurCharge)
+ACTOR(MntrFloorFire)
+ACTOR(MinotaurLook)
+ACTOR(MinotaurRoam)
+ACTOR(MinotaurChase)
+ACTOR(MinotaurDeath)
+
 
 ACTOR(BatSpawnInit)
 ACTOR(BatSpawn)

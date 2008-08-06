@@ -796,11 +796,14 @@ AInventory *AActor::GiveInventoryType (const PClass *type)
 {
 	AInventory *item;
 
-	item = static_cast<AInventory *>(Spawn (type, 0,0,0, NO_REPLACE));
-	if (!item->TryPickup (this))
+	if (type != NULL)
 	{
-		item->Destroy ();
-		return NULL;
+		item = static_cast<AInventory *>(Spawn (type, 0,0,0, NO_REPLACE));
+		if (!item->TryPickup (this))
+		{
+			item->Destroy ();
+			return NULL;
+		}
 	}
 	return item;
 }
@@ -2439,8 +2442,7 @@ bool AActor::IsOkayToAttack (AActor *link)
 			{
 				return false;
 			}
-			if ((link->IsKindOf (RUNTIME_CLASS(AMinotaur))) &&
-				(link->tracer == this))
+			if ((link->flags5 & MF5_SUMMONEDMONSTER) && (link->tracer == this))
 			{
 				return false;
 			}

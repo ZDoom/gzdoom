@@ -245,6 +245,7 @@ static flagdef ActorFlags[]=
 	DEFINE_FLAG(MF5, NOTIMEFREEZE, AActor, flags5),
 	DEFINE_FLAG(MF5, PUFFGETSOWNER, AActor, flags5), // [BB] added PUFFGETSOWNER
 	DEFINE_FLAG(MF5, SPECIALFIREDAMAGE, AActor, flags5),
+	DEFINE_FLAG(MF5, SUMMONEDMONSTER, AActor, flags5),
 
 	// Effect flags
 	DEFINE_FLAG(FX, VISIBILITYPULSE, AActor, effects),

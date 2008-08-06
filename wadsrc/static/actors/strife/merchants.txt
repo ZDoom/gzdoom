@@ -27,7 +27,8 @@ ACTOR Merchant
 		Loop
 	See:
 	Pain:
-		MRPN A 3 A_AlertMonsters
+		MRPN A 1
+		MRPN A 2 A_AlertMonsters
 		MRPN B 3 A_Pain
 		MRPN C 3
 		MRPN D 9 Door_CloseWaitOpen(999, 64, 960)

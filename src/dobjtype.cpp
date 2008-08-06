@@ -394,6 +394,16 @@ void PClass::FreeStateList ()
 	}
 }
 
+const PClass *PClass::NativeClass() const
+{
+	const PClass *cls = this;
+
+	while (cls && cls->bRuntimeClass == 1)
+		cls = cls->ParentClass;
+
+	return cls;
+}
+
 // Symbol tables ------------------------------------------------------------
 
 PSymbol::~PSymbol()

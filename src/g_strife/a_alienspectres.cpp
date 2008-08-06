@@ -25,19 +25,9 @@ static void GenericSpectreSpawn (AActor *actor, const char *type)
 	}
 }
 
-void A_SpawnSpectre3 (AActor *actor)
-{
-	GenericSpectreSpawn (actor, "AlienSpectre3");
-}
-
 void A_SpawnSpectre4 (AActor *actor)
 {
 	GenericSpectreSpawn (actor, "AlienSpectre4");
-}
-
-void A_SpawnSpectre5 (AActor *actor)
-{
-	GenericSpectreSpawn (actor, "AlienSpectre5");
 }
 
 void A_SpectreChunkSmall (AActor *self)

@@ -116,6 +116,7 @@ struct PClass
 	void InitializeActorInfo ();
 	void BuildFlatPointers ();
 	void FreeStateList();
+	const PClass *NativeClass() const;
 
 	// Returns true if this type is an ancestor of (or same as) the passed type.
 	bool IsAncestorOf (const PClass *ti) const

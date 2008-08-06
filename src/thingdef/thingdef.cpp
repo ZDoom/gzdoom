@@ -393,7 +393,7 @@ static FActorInfo *CreateNewActor(FScanner &sc, FActorInfo **parentc, Baggage *b
 		{
 			sc.ScriptError("Unknown native class '%s'", typeName.GetChars());
 		}
-		else if (ti->ParentClass != parent)
+		else if (ti->ParentClass->NativeClass() != parent->NativeClass())
 		{
 			sc.ScriptError("Native class '%s' does not inherit from '%s'", 
 				typeName.GetChars(),parent->TypeName.GetChars());

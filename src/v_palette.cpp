@@ -288,7 +288,7 @@ void FPalette::MakeRemap (const DWORD *colors, BYTE *remap, const BYTE *useful, 
 			{
 				remap[workspace[i].PalEntry] = BestColor ((DWORD *)BaseColors,
 					RPART(workspace[i].Color), GPART(workspace[i].Color), BPART(workspace[i].Color),
-					0, 255);
+					1, 255);
 			}
 		}
 	}

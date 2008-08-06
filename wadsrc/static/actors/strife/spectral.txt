@@ -11,12 +11,8 @@ ACTOR SpectralMonster native
 	
 	action native A_SpectreChunkSmall ();
 	action native A_SpectreChunkLarge ();
-	action native A_Spectre2Attack ();
 	action native A_Spectre3Attack ();
-	action native A_Spectre4Attack ();
-	action native A_Spectre5Attack ();
 	action native A_SpotLightning ();
-
 }
 
 

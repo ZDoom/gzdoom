@@ -742,7 +742,8 @@ ACTOR BlasterFX1 native
 		Loop
 	Death:
 		FX18 A 3 BRIGHT A_SpawnRippers
-		FX18 BCDEFG 4 BRIGHT
+		FX18 B 3 BRIGHT
+		FX18 CDEFG 4 BRIGHT
 		Stop
 	}
 }
@@ -930,8 +931,8 @@ ACTOR HornRodFX2 native
 	Death:
 		FX00 H 5 BRIGHT A_AddPlayerRain
 		FX00 I 5 BRIGHT
-		FX00 JK 4 BRIGHT
-		FX00 LM 3 BRIGHT
+		FX00 J 4 BRIGHT
+		FX00 KLM 3 BRIGHT
 		FX00 G 1 A_HideInCeiling
 		FX00 G 1 A_SkullRodStorm
 		Wait

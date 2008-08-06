@@ -118,7 +118,6 @@ ACTOR FlamePuff2 : FlamePuff
 
 ACTOR CircleFlame
 {
-	Game Hexen
 	Radius 6
 	Damage 2
 	DamageType "Fire"

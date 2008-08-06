@@ -1,3 +1,9 @@
+August 6, 2008 (Changes by Graf Zahl)
+- Fixed a few minor DECORATE bugs.
+- Changed coordinate storage for EntityBoss so that it works properly even
+  when the pod is not used to spawn it.
+- Converted Strife's Spectres and Entity to DECORATE.
+
 August 6, 2008 (SBARINfO update)
 - Added: fullscreenoffsets flag for status bars.  This changes the coordinate
   system to be relative to the top left corner of the screen.  This is useful

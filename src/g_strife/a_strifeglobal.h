@@ -22,20 +22,6 @@ class AFlameMissile : public AActor
 	DECLARE_ACTOR (AFlameMissile, AActor)
 };
 
-class AAlienSpectre1 : public AActor
-{
-	DECLARE_ACTOR (AAlienSpectre1, AActor)
-public:
-	void Touch (AActor *toucher);
-};
-
-class AAlienSpectre3 : public AAlienSpectre1
-{
-	DECLARE_ACTOR (AAlienSpectre3, AAlienSpectre1)
-public:
-	void NoBlockingSet ();
-};
-
 class ADegninOre : public AInventory
 {
 	DECLARE_ACTOR (ADegninOre, AInventory)

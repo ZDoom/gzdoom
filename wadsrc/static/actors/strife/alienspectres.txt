@@ -1,0 +1,212 @@
+
+// Alien Spectre 1 -----------------------------------------------------------
+
+ACTOR AlienSpectre1 : SpectralMonster 129
+{
+	Game Strife
+	ConversationID 67,-1,-1
+	Health 1000
+	Painchance 250
+	Speed 12
+	Radius 64
+	Height 64
+	FloatSpeed 5
+	Mass 1000
+	MinMissileChance 150
+	RenderStyle Translucent
+	Alpha 0.666
+	SeeSound "alienspectre/sight"
+	AttackSound "alienspectre/blade"
+	PainSound "alienspectre/pain"
+	DeathSound "alienspectre/death"
+	ActiveSound "alienspectre/active"
+	+NOGRAVITY
+	+FLOAT
+	+SHADOW
+	+NOTDMATCH
+	+DONTMORPH
+	+NOBLOCKMONST
+	+INCOMBAT
+	+LOOKALLAROUND
+	+NOICEDEATH
+
+	action native A_AlienSpectreDeath ();
+
+	states
+	{
+	Spawn:
+		ALN1 A 10 A_Look
+		ALN1 B 10 A_SentinelBob
+		Loop
+	See:
+		ALN1 AB 4 Bright A_Chase
+		ALN1 C 4 Bright A_SentinelBob
+		ALN1 DEF 4 Bright A_Chase
+		ALN1 G 4 Bright A_SentinelBob
+		ALN1 HIJ 4 Bright A_Chase
+		ALN1 K 4 Bright A_SentinelBob
+		Loop
+	Melee:
+		ALN1 J 4 Bright A_FaceTarget
+		ALN1 I 4 Bright A_CustomMeleeAttack((random[SpectreMelee](0,255)&9)*5)
+		ALN1 H 4 Bright
+		Goto See
+	Missile:
+		ALN1 J 4 Bright A_FaceTarget
+		ALN1 I 4 Bright A_SpotLightning
+		ALN1 H 4 Bright
+		Goto See+10
+	Pain:
+		ALN1 J 2 A_Pain
+		Goto See+6
+	Death:
+		AL1P A 6 Bright A_SpectreChunkSmall
+		AL1P B 6 Bright A_Scream
+		AL1P C 6 Bright A_SpectreChunkSmall
+		AL1P DE 6 Bright
+		AL1P F 6 Bright A_SpectreChunkSmall
+		AL1P G 6 Bright
+		AL1P H 6 Bright A_SpectreChunkSmall
+		AL1P IJK 6 Bright
+		AL1P LM 5 Bright
+		AL1P N 5 Bright A_SpectreChunkLarge
+		AL1P OPQ 5 Bright
+		AL1P R 5 Bright A_AlienSpectreDeath
+		Stop
+	}
+}
+
+
+// Alien Spectre 2 -----------------------------------------------------------
+
+ACTOR AlienSpectre2 : AlienSpectre1 75
+{
+	Game Strife
+	ConversationID 70
+	Health 1200
+	Painchance 50
+	Radius 24
+	DropItem "Sigil2"
+	States
+	{
+	Missile:
+		ALN1 F 4 A_FaceTarget
+		ALN1 I 4 A_CustomMissile("SpectralLightningH3", 32, 0)
+		ALN1 E 4
+		Goto See+10
+	}
+}
+
+// Alien Spectre 3 ----------------------------------------------------------
+// This is the Oracle's personal spectre, so it's a little different.
+
+ACTOR AlienSpectre3 : AlienSpectre1 76
+{
+	Game Strife
+	ConversationID 71,-1,-1
+	Health 1500
+	Painchance 50
+	Radius 24
+	+SPAWNCEILING
+	DropItem "Sigil3"
+	states
+	{
+	Spawn:
+		ALN1 ABCDEFGHIJK 5
+		Loop
+	See:
+		ALN1 AB 5 A_Chase
+		ALN1 C 5 A_SentinelBob
+		ALN1 DEF 5 A_Chase
+		ALN1 G 5 A_SentinelBob
+		ALN1 HIJ 5 A_Chase
+		ALN1 K 5 A_SentinelBob
+		Loop
+	Melee:
+		ALN1 J 4 A_FaceTarget
+		ALN1 I 4 A_CustomMeleeAttack((random[SpectreMelee](0,255)&9)*5)
+		ALN1 C 4
+		Goto See+2
+	Missile:
+		ALN1 F 4 A_FaceTarget
+		ALN1 I 4 A_Spectre3Attack
+		ALN1 E 4
+		Goto See+10
+	Pain:
+		ALN1 J 2 A_Pain
+		Goto See+6
+	}
+}	
+
+
+// Alien Spectre 4 -----------------------------------------------------------
+
+ACTOR AlienSpectre4 : AlienSpectre1 167
+{
+	Game Strife
+	ConversationID 72,-1,-1
+	Health 1700
+	Painchance 50
+	Radius 24
+	DropItem "Sigil4"
+	States
+	{
+	Missile:
+		ALN1 F 4 A_FaceTarget
+		ALN1 I 4 A_CustomMissile("SpectralLightningBigV2", 32, 0)
+		ALN1 E 4
+		Goto See+10
+	}
+}
+
+
+// Alien Spectre 5 -----------------------------------------------------------
+
+ACTOR AlienSpectre5 : AlienSpectre1 168
+{
+	Game Strife
+	ConversationID 73,-1,-1
+	Health 2000
+	Painchance 50
+	Radius 24
+	DropItem "Sigil5"
+	States
+	{
+	Missile:
+		ALN1 F 4 A_FaceTarget
+		ALN1 I 4 A_CustomMissile("SpectralLightningBigBall2", 32, 0)
+		ALN1 E 4
+		Goto See+10
+	}
+}
+
+// Small Alien Chunk --------------------------------------------------------
+
+ACTOR AlienChunkSmall
+{
+	ConversationID 68,-1,-1
+	+NOBLOCKMAP
+	+NOCLIP
+	States
+	{
+	Spawn:
+		NODE ABCDEFG 6 Bright
+		Stop
+	}
+}
+
+// Large Alien Chunk --------------------------------------------------------
+
+ACTOR AlienChunkLarge
+{
+	ConversationID 69,-1,-1
+	+NOBLOCKMAP
+	+NOCLIP
+	States
+	{
+	Spawn:
+		MTHD ABCDEFGHIJK 5 Bright
+		Stop
+	}
+}
+

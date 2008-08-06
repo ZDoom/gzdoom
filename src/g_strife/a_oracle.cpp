@@ -59,7 +59,7 @@ void AOracle::NoBlockingSet ()
 
 void A_WakeOracleSpectre (AActor *self)
 {
-	TThinkerIterator<AAlienSpectre3> it;
+	TThinkerIterator<AActor> it(NAME_AlienSpectre3);
 	AActor *spectre = it.Next();
 
 	if (spectre != NULL)

@@ -1,3 +1,7 @@
+August 6, 2008
+- The x87 precision control is now explicitly set for double precision, since
+  GCC defaults to extended precision instead, unlike Visual C++.
+
 August 6, 2008 (Changes by Graf Zahl)
 - Fixed a few minor DECORATE bugs.
 - Changed coordinate storage for EntityBoss so that it works properly even

@@ -116,6 +116,12 @@ else( WIN32 )
 	if( NO_GTK )
 		add_definitions( -DNO_GTK=1 )
 	endif( NO_GTK )
+	
+	find_path( FPU_CONTROL_DIR fpu_control.h )
+	if( FPU_CONTROL_DIR )
+		include_directories( ${FPU_CONTROL_DIR} )
+		add_definitions( -DHAVE_FPU_CONTROL )
+	endif( FPU_CONTROL_DIR )
 endif( WIN32 )
 
 if( X64 )

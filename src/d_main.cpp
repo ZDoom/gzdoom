@@ -33,6 +33,11 @@
 #include <sys/stat.h>
 #endif
 
+#ifdef HAVE_CPU_CONTROL
+#include <fpu_control.h>
+#endif
+#include <float.h>
+
 #ifdef unix
 #include <unistd.h>
 #endif
@@ -2068,6 +2073,19 @@ void D_DoomMain (void)
 	const IWADInfo *iwad_info;
 
 	srand(I_MSTime());
+
+	// Set the FPU precision to 53 significant bits. This is the default
+	// for Visual C++, but not for GCC, so some slight math variances
+	// might crop up if we leave it alone.
+#if defined(_FPU_GETCW)
+	{
+		int cw;
+		_FPU_GETCW(cw);
+		_FPU_SETCW((cw & ~_FPU_EXTENDED) | _FPU_DOUBLE);
+	}
+#elif defined(_PC_53)
+	_control87(_PC_53, _MCW_PC);
+#endif
 
 	PClass::StaticInit ();
 	atterm (C_DeinitConsole);

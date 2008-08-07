@@ -14,8 +14,8 @@ ACTOR StrifePlayer : PlayerPawn
 	Player.StartItem "PunchDagger"
 
 	action native A_ItBurnsItBurns();
-	action native A_DropFire();
 	action native A_CrispyPlayer();
+	action native A_HandLower();
 	
 	States
 	{
@@ -71,6 +71,12 @@ ACTOR StrifePlayer : PlayerPawn
 		DISR GHIJ 4
 		MEAT D -1
 		Stop
+	Firehands:
+		WAVE ABCD 3
+		Loop
+	Firehandslower:
+		WAVE ABCD 3 A_HandLower
+		Loop
 	}
 }
 		

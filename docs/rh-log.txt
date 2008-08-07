@@ -1,4 +1,8 @@
 August 7, 2008 (Changes by Graf Zahl)
+- Changed: Macil doesn't need the StrifeHumanoid's special death states so he might
+  as well inherit directly from AActor.
+- Converted Strife's Coin, Oracle, Macil and StrifeHumanoid to DECORATE. Also moved
+  the burning hand states to StrifePlayer where they really belong.
 - Added Gez's dropammofactor submission with some necessary changes. Also merged
   redundant ammo multiplication code from P_DropItem and ADehackedPickup::TryPickup.
 - Restricted native action function definitions to zdoom.pk3.

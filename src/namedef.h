@@ -131,6 +131,7 @@ xx(AlienSpectre2)
 xx(AlienSpectre3)
 xx(AlienSpectre4)
 xx(AlienSpectre5)
+xx(Oracle)
 
 xx(Chicken)
 xx(Pig)

@@ -130,8 +130,8 @@ void A_AlienSpectreDeath (AActor *self)
 	{
 		C_MidPrint(GStrings("TXT_KILLED_ORACLE"));
 		// If there are any Oracles still alive, kill them.
-		TThinkerIterator<AOracle> it;
-		AOracle *oracle;
+		TThinkerIterator<AActor> it(NAME_Oracle);
+		AActor *oracle;
 
 		while ( (oracle = it.Next()) != NULL)
 		{

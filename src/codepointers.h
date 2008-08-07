@@ -110,6 +110,8 @@ ACTOR(ClearReFire)
 ACTOR(SpawnSingleItem)
 ACTOR(GiveQuestItem)
 ACTOR(Bang4Cloud)
+ACTOR(HandLower)
+ACTOR(WakeOracleSpectre)
 
 ACTOR(M_Refire)
 ACTOR(M_CheckAttack)

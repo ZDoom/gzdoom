@@ -853,110 +853,13 @@ void A_ClearSoundTarget (AActor *self)
 }
 
 
-// Fire Droplet -------------------------------------------------------------
-
-class AFireDroplet : public AActor
-{
-	DECLARE_ACTOR (AFireDroplet, AActor)
-};
-
-// [RH] I think these should be bright, even though they weren't in Strife.
-FState AFireDroplet::States[] =
-{
-	S_BRIGHT (FFOT, 'A', 9, NULL, &States[1]),
-	S_BRIGHT (FFOT, 'B', 9, NULL, &States[2]),
-	S_BRIGHT (FFOT, 'C', 9, NULL, &States[3]),
-	S_BRIGHT (FFOT, 'D', 9, NULL, NULL)
-};
-
-IMPLEMENT_ACTOR (AFireDroplet, Strife, -1, 0)
-	PROP_StrifeType (297)
-	PROP_SpawnState (0)
-	PROP_Flags (MF_NOBLOCKMAP|MF_NOCLIP)
-END_DEFAULTS
-
-// Humanoid Base Class ------------------------------------------------------
-
-void A_ItBurnsItBurns (AActor *);
-void A_DropFire (AActor *);
-void A_CrispyPlayer (AActor *);
-void A_HandLower (AActor *);
-void A_Yeargh (AActor *);
-
-FState AStrifeHumanoid::States[] =
-{
-#define S_FIREHANDS 0
-	S_BRIGHT (WAVE, 'A', 3, NULL,				&States[S_FIREHANDS+1]),
-	S_BRIGHT (WAVE, 'B', 3, NULL,				&States[S_FIREHANDS+2]),
-	S_BRIGHT (WAVE, 'C', 3, NULL,				&States[S_FIREHANDS+3]),
-	S_BRIGHT (WAVE, 'D', 3, NULL,				&States[S_FIREHANDS]),
-
-	// [RH] These weren't bright in Strife, but I think they should be.
-	// (After all, they are now a light source.)
-#define S_HUMAN_BURNDEATH (S_FIREHANDS+4)
-	S_BRIGHT (BURN, 'A', 3, A_ItBurnsItBurns,	&States[S_HUMAN_BURNDEATH+1]),
-	S_BRIGHT (BURN, 'B', 3, A_DropFire,			&States[S_HUMAN_BURNDEATH+2]),
-	S_BRIGHT (BURN, 'C', 3, A_Wander,			&States[S_HUMAN_BURNDEATH+3]),
-	S_BRIGHT (BURN, 'D', 3, A_NoBlocking,		&States[S_HUMAN_BURNDEATH+4]),
-	S_BRIGHT (BURN, 'E', 5, A_DropFire,			&States[S_HUMAN_BURNDEATH+5]),
-	S_BRIGHT (BURN, 'F', 5, A_Wander,			&States[S_HUMAN_BURNDEATH+6]),
-	S_BRIGHT (BURN, 'G', 5, A_Wander,			&States[S_HUMAN_BURNDEATH+7]),
-	S_BRIGHT (BURN, 'H', 5, A_Wander,			&States[S_HUMAN_BURNDEATH+8]),
-	S_BRIGHT (BURN, 'I', 5, A_DropFire,			&States[S_HUMAN_BURNDEATH+9]),
-	S_BRIGHT (BURN, 'J', 5, A_Wander,			&States[S_HUMAN_BURNDEATH+10]),
-	S_BRIGHT (BURN, 'K', 5, A_Wander,			&States[S_HUMAN_BURNDEATH+11]),
-	S_BRIGHT (BURN, 'L', 5, A_Wander,			&States[S_HUMAN_BURNDEATH+12]),
-	S_BRIGHT (BURN, 'M', 3, A_DropFire,			&States[S_HUMAN_BURNDEATH+13]),
-	S_BRIGHT (BURN, 'N', 3, NULL,				&States[S_HUMAN_BURNDEATH+14]),
-	S_BRIGHT (BURN, 'O', 5, NULL,				&States[S_HUMAN_BURNDEATH+15]),
-	S_BRIGHT (BURN, 'P', 5, NULL,				&States[S_HUMAN_BURNDEATH+16]),
-	S_BRIGHT (BURN, 'Q', 5, NULL,				&States[S_HUMAN_BURNDEATH+17]),
-	S_BRIGHT (BURN, 'P', 5, NULL,				&States[S_HUMAN_BURNDEATH+18]),
-	S_BRIGHT (BURN, 'Q', 5, NULL,				&States[S_HUMAN_BURNDEATH+19]),
-	S_BRIGHT (BURN, 'R', 7, NULL,				&States[S_HUMAN_BURNDEATH+20]),
-	S_BRIGHT (BURN, 'S', 7, NULL,				&States[S_HUMAN_BURNDEATH+21]),
-	S_BRIGHT (BURN, 'T', 7, NULL,				&States[S_HUMAN_BURNDEATH+22]),
-	S_BRIGHT (BURN, 'U', 7, NULL,				&States[S_HUMAN_BURNDEATH+23]),
-	S_BRIGHT (BURN, 'V',700,NULL,				NULL),
-
-#define S_HUMAN_ZAPDEATH (S_HUMAN_BURNDEATH+24)
-	S_NORMAL (DISR, 'A', 5, A_Yeargh,			&States[S_HUMAN_ZAPDEATH+1]),
-	S_NORMAL (DISR, 'B', 5, NULL,				&States[S_HUMAN_ZAPDEATH+2]),
-	S_NORMAL (DISR, 'C', 5, NULL,				&States[S_HUMAN_ZAPDEATH+3]),
-	S_NORMAL (DISR, 'D', 5, A_NoBlocking,		&States[S_HUMAN_ZAPDEATH+4]),
-	S_NORMAL (DISR, 'E', 5, NULL,				&States[S_HUMAN_ZAPDEATH+5]),
-	S_NORMAL (DISR, 'F', 5, NULL,				&States[S_HUMAN_ZAPDEATH+6]),
-	S_NORMAL (DISR, 'G', 4, NULL,				&States[S_HUMAN_ZAPDEATH+7]),
-	S_NORMAL (DISR, 'H', 4, NULL,				&States[S_HUMAN_ZAPDEATH+8]),
-	S_NORMAL (DISR, 'I', 4, NULL,				&States[S_HUMAN_ZAPDEATH+9]),
-	S_NORMAL (DISR, 'J', 4, NULL,				&States[S_HUMAN_ZAPDEATH+10]),
-	S_NORMAL (MEAT, 'D',700,NULL,				NULL),
-
-#define S_FIREHANDS2 (S_HUMAN_ZAPDEATH+11)
-	S_BRIGHT (WAVE, 'A', 3, A_HandLower,		&States[S_FIREHANDS2+1]),
-	S_BRIGHT (WAVE, 'B', 3, A_HandLower,		&States[S_FIREHANDS2+2]),
-	S_BRIGHT (WAVE, 'C', 3, A_HandLower,		&States[S_FIREHANDS2+3]),
-	S_BRIGHT (WAVE, 'D', 3, A_HandLower,		&States[S_FIREHANDS2]),
-};
-
-IMPLEMENT_ACTOR (AStrifeHumanoid, Any, -1, 0)
-	PROP_BDeathState (S_HUMAN_BURNDEATH)
-	PROP_EDeathState (S_HUMAN_ZAPDEATH)
-	PROP_MaxStepHeight (16)
-	PROP_MaxDropOffHeight (32)
-END_DEFAULTS
-
 void A_ItBurnsItBurns (AActor *self)
 {
-	FSoundID burnsound = "human/imonfire";
-	if (burnsound != 0)
-	{
-		self->DeathSound = burnsound;
-	}
-	A_Scream (self);
+	S_Sound (self, CHAN_VOICE, "human/imonfire", 1, ATTN_NORM);
+
 	if (self->player != NULL && self->player->mo == self)
 	{
-		P_SetPsprite (self->player, ps_weapon, &AStrifeHumanoid::States[S_FIREHANDS]);
+		P_SetPsprite (self->player, ps_weapon, self->FindState("FireHands"));
 		P_SetPsprite (self->player, ps_flash, NULL);
 		self->player->ReadyWeapon = NULL;
 		self->player->PendingWeapon = WP_NOCHANGE;
@@ -966,7 +869,7 @@ void A_ItBurnsItBurns (AActor *self)
 
 void A_DropFire (AActor *self)
 {
-	AActor *drop = Spawn<AFireDroplet> (self->x, self->y, self->z + 24*FRACUNIT, ALLOW_REPLACE);
+	AActor *drop = Spawn("FireDroplet", self->x, self->y, self->z + 24*FRACUNIT, ALLOW_REPLACE);
 	drop->momz = -FRACUNIT;
 	P_RadiusAttack (self, self, 64, 64, NAME_Fire, false);
 }
@@ -976,8 +879,9 @@ void A_CrispyPlayer (AActor *self)
 	if (self->player != NULL && self->player->mo == self)
 	{
 		self->player->playerstate = PST_DEAD;
-		P_SetPsprite (self->player, ps_weapon, &AStrifeHumanoid::States[S_FIREHANDS2 +
-			(self->player->psprites[ps_weapon].state - &AStrifeHumanoid::States[S_FIREHANDS])]);
+		P_SetPsprite (self->player, ps_weapon,
+			self->player->psprites[ps_weapon].state +
+			(self->FindState("FireHandsLower") - self->FindState("FireHands")));
 	}
 }
 
@@ -993,10 +897,4 @@ void A_HandLower (AActor *self)
 		}
 	}
 }
-
-void A_Yeargh (AActor *self)
-{
-	S_Sound (self, CHAN_VOICE, "misc/disruptordeath", 1, ATTN_NORM);
-}
-
 

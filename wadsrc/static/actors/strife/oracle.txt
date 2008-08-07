@@ -1,0 +1,34 @@
+
+// Oracle -------------------------------------------------------------------
+
+ACTOR Oracle 199 native
+{
+	Game Strife
+	ConversationID 65, 62, 63
+	Health 1
+	Radius 15
+	Height 56
+	Monster
+	+NOTDMATCH
+	+FIRERESIST
+	MaxDropoffHeight 32
+	Tag "Oracle"
+	DropItem "Meat"
+
+	action native A_WakeOracleSpectre ();
+
+	States
+	{
+	Spawn:
+		ORCL A -1
+		Stop
+	Death:
+		ORCL BCDEFGHIJK 5
+		ORCL L 5 A_NoBlocking
+		ORCL M 5
+		ORCL N 5 A_WakeOracleSpectre
+		ORCL OP 5
+		ORCL Q -1
+		Stop
+	}
+}

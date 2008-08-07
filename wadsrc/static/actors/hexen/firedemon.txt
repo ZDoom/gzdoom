@@ -3,6 +3,7 @@
 
 ACTOR FireDemon 10060
 {
+	Game Hexen
 	SpawnID 5
 	Health 80
 	ReactionTime 8

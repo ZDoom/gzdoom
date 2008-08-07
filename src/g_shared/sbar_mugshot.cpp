@@ -39,6 +39,7 @@
 #include "d_player.h"
 #include "d_event.h"
 #include "sbar.h"
+#include "sbarinfo.h"
 
 #define ST_RAMPAGEDELAY 		(2*TICRATE)
 #define ST_MUCHPAIN 			20
@@ -322,7 +323,7 @@ bool FMugShot::SetState(const char *state_name, bool wait_till_done, bool reset)
 //
 //===========================================================================
 
-int FMugShot::UpdateState(player_t *player, bool xdeath, bool animated_god_mode)
+int FMugShot::UpdateState(player_t *player, int stateflags)
 {
 	int 		i;
 	angle_t 	badguyangle;
@@ -331,7 +332,7 @@ int FMugShot::UpdateState(player_t *player, bool xdeath, bool animated_god_mode)
 
 	if (player->health > 0)
 	{
-		if (bEvilGrin)
+		if (bEvilGrin && !(stateflags & DRAWMUGSHOT_DISABLEGRIN))
 		{
 			if (player->bonuscount)
 			{
@@ -344,7 +345,9 @@ int FMugShot::UpdateState(player_t *player, bool xdeath, bool animated_god_mode)
 			}
 		}
 
-		if (player->damagecount)
+		if (player->damagecount && 
+			// Now go in if pain is disabled but we think ouch will be shown (and ouch is not disabled!)
+			(!(stateflags & DRAWMUGSHOT_DISABLEPAIN) || (((FaceHealth != -1 && FaceHealth - player->health > ST_MUCHPAIN) || bOuchActive) && !(stateflags & DRAWMUGSHOT_DISABLEOUCH))))
 		{
 			int damage_angle = 1;
 			if (player->attacker && player->attacker != player->mo)
@@ -376,7 +379,7 @@ int FMugShot::UpdateState(player_t *player, bool xdeath, bool animated_god_mode)
 				}
 			}
 			bool use_ouch = false;
-			if ((FaceHealth != -1 && FaceHealth - player->health > ST_MUCHPAIN) || bOuchActive)
+			if (((FaceHealth != -1 && FaceHealth - player->health > ST_MUCHPAIN) || bOuchActive) && !(stateflags & DRAWMUGSHOT_DISABLEOUCH))
 			{
 				use_ouch = true;
 				full_state_name = "ouch.";
@@ -403,7 +406,7 @@ int FMugShot::UpdateState(player_t *player, bool xdeath, bool animated_god_mode)
 			else
 			{
 				bool use_ouch = false;
-				if ((FaceHealth != -1 && player->health - FaceHealth > ST_MUCHPAIN) || bOuchActive)
+				if (((FaceHealth != -1 && player->health - FaceHealth > ST_MUCHPAIN) || bOuchActive) && !(stateflags & DRAWMUGSHOT_DISABLEOUCH))
 				{
 					use_ouch = true;
 					full_state_name = "ouch.";
@@ -421,7 +424,7 @@ int FMugShot::UpdateState(player_t *player, bool xdeath, bool animated_god_mode)
 			}
 		}
 
-		if (RampageTimer == ST_RAMPAGEDELAY)
+		if (RampageTimer == ST_RAMPAGEDELAY && !(stateflags & DRAWMUGSHOT_DISABLERAMPAGE))
 		{
 			SetState("rampage", !bNormal); //If we have nothing better to show, use the rampage face.
 			return 0;
@@ -432,7 +435,7 @@ int FMugShot::UpdateState(player_t *player, bool xdeath, bool animated_god_mode)
 			bool good;
 			if ((player->cheats & CF_GODMODE) || (player->mo != NULL && player->mo->flags2 & MF2_INVULNERABLE))
 			{
-				good = SetState(animated_god_mode ? "godanimated" : "god");
+				good = SetState((stateflags & DRAWMUGSHOT_ANIMATEDGODMODE) ? "godanimated" : "god");
 			}
 			else
 			{
@@ -446,7 +449,7 @@ int FMugShot::UpdateState(player_t *player, bool xdeath, bool animated_god_mode)
 	}
 	else
 	{
-		if (!xdeath || !(player->cheats & CF_EXTREMELYDEAD))
+		if (!(stateflags & DRAWMUGSHOT_XDEATHFACE) || !(player->cheats & CF_EXTREMELYDEAD))
 		{
 			full_state_name = "death.";
 		}
@@ -469,9 +472,9 @@ int FMugShot::UpdateState(player_t *player, bool xdeath, bool animated_god_mode)
 //
 //===========================================================================
 
-FTexture *FMugShot::GetFace(player_t *player, const char *default_face, int accuracy, bool xdeath, bool animated_god_mode)
+FTexture *FMugShot::GetFace(player_t *player, const char *default_face, int accuracy, int stateflags)
 {
-	int angle = UpdateState(player, xdeath, animated_god_mode);
+	int angle = UpdateState(player, stateflags);
 	int level = 0;
 	while (player->health < (accuracy-1-level) * (player->mo->GetMaxHealth()/accuracy))
 	{

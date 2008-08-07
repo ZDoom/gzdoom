@@ -202,8 +202,8 @@ struct FMugShot
 	FMugShot();
 	void Tick(player_t *player);
 	bool SetState(const char *state_name, bool wait_till_done=false, bool reset=false);
-	int UpdateState(player_t *player, bool xdeath, bool animated_god_mode);
-	FTexture *GetFace(player_t *player, const char *default_face, int accuracy, bool xdeath, bool animated_god_mode);
+	int UpdateState(player_t *player, int stateflags=0);
+	FTexture *GetFace(player_t *player, const char *default_face, int accuracy, int stateflags=0);
 
 	FMugShotState *CurrentState;
 	int RampageTimer;

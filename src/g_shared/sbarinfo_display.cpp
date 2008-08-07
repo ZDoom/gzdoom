@@ -546,7 +546,7 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 				if(cmd.flags & DRAWNUMBER_HEALTH)
 				{
 					value = health;
-					if(SBarInfoScript->lowerHealthCap && cmd.value < 0) //health shouldn't display negatives
+					if(SBarInfoScript->lowerHealthCap && value < 0) //health shouldn't display negatives
 					{
 						value = 0;
 					}
@@ -671,7 +671,8 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 					xdth = true;
 				if(cmd.flags & DRAWMUGSHOT_ANIMATEDGODMODE)
 					animatedgodmode = true;
-				DrawFace(cmd.string[0], cmd.special, xdth, animatedgodmode, cmd.x, cmd.y, xOffset, yOffset, alpha, block.fullScreenOffsets);
+				int stateflags = cmd.flags & (DRAWMUGSHOT_XDEATHFACE | DRAWMUGSHOT_ANIMATEDGODMODE | DRAWMUGSHOT_DISABLEGRIN | DRAWMUGSHOT_DISABLEOUCH | DRAWMUGSHOT_DISABLEPAIN | DRAWMUGSHOT_DISABLERAMPAGE);
+				DrawFace(cmd.string[0], cmd.special, stateflags, cmd.x, cmd.y, xOffset, yOffset, alpha, block.fullScreenOffsets);
 				break;
 			}
 			case SBARINFO_DRAWSELECTEDINVENTORY:
@@ -879,14 +880,24 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 				int x, y, w, h;
 				int cx, cy, cw, ch, cr, cb;
 
-				// Calc real screen coordinates for bar
-				x = cmd.x + ST_X + xOffset;
-				y = cmd.y + ST_Y + yOffset;
-				w = fg->GetScaledWidth();
-				h = fg->GetScaledHeight();
-				if (Scaled)
+				if(!block.fullScreenOffsets)
 				{
-					screen->VirtualToRealCoordsInt(x, y, w, h, 320, 200, true);
+					// Calc real screen coordinates for bar
+					x = cmd.x + ST_X + xOffset;
+					y = cmd.y + ST_Y + yOffset;
+					w = fg->GetScaledWidth();
+					h = fg->GetScaledHeight();
+					if (Scaled)
+					{
+						screen->VirtualToRealCoordsInt(x, y, w, h, 320, 200, true);
+					}
+				}
+				else
+				{
+					x = cmd.x + xOffset;
+					y = cmd.y + yOffset;
+					w = fg->GetScaledWidth();
+					h = fg->GetScaledHeight();
 				}
 
 				if(cmd.special3 != 0)
@@ -915,14 +926,24 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 					}
 				}
 
-				// Calc clipping rect for background
-				cx = cmd.x + ST_X + cmd.special3 + xOffset;
-				cy = cmd.y + ST_Y + cmd.special3 + yOffset;
-				cw = fg->GetScaledWidth() - fg->GetScaledLeftOffset() - cmd.special3 * 2;
-				ch = fg->GetScaledHeight() - fg->GetScaledTopOffset() - cmd.special3 * 2;
-				if (Scaled)
+				if(!block.fullScreenOffsets)
 				{
-					screen->VirtualToRealCoordsInt(cx, cy, cw, ch, 320, 200, true);
+					// Calc clipping rect for background
+					cx = cmd.x + ST_X + cmd.special3 + xOffset;
+					cy = cmd.y + ST_Y + cmd.special3 + yOffset;
+					cw = fg->GetScaledWidth() - fg->GetScaledLeftOffset() - cmd.special3 * 2;
+					ch = fg->GetScaledHeight() - fg->GetScaledTopOffset() - cmd.special3 * 2;
+					if (Scaled)
+					{
+						screen->VirtualToRealCoordsInt(cx, cy, cw, ch, 320, 200, true);
+					}
+				}
+				else
+				{
+					cx = cmd.x + cmd.special3 + xOffset;
+					cy = cmd.y + cmd.special3 + yOffset;
+					cw = fg->GetScaledWidth() - fg->GetScaledLeftOffset() - cmd.special3 * 2;
+					ch = fg->GetScaledHeight() - fg->GetScaledTopOffset() - cmd.special3 * 2;
 				}
 
 				if (horizontal)
@@ -1019,10 +1040,20 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 				};
 				bool vertical = !!(cmd.flags & DRAWSHADER_VERTICAL);
 				bool reverse = !!(cmd.flags & DRAWSHADER_REVERSE);
-				screen->DrawTexture (shaders[(vertical << 1) + reverse], ST_X+cmd.x+xOffset, ST_Y+cmd.y+yOffset,
-					DTA_DestWidth, cmd.special,
-					DTA_DestHeight, cmd.special2,
-					DTA_Bottom320x200, Scaled,
+				int x = cmd.x + xOffset;
+				int y = cmd.y + yOffset;
+				int w = cmd.special;
+				int h = cmd.special2;
+				if(!block.fullScreenOffsets)
+				{
+					x += ST_X;
+					y += ST_Y;
+					if(Scaled)
+						screen->VirtualToRealCoordsInt(x, y, w, h, 320, 200, true);
+				}
+				screen->DrawTexture (shaders[(vertical << 1) + reverse], x, y,
+					DTA_DestWidth, w,
+					DTA_DestHeight, h,
 					DTA_Alpha, alpha,
 					DTA_AlphaChannel, true,
 					DTA_FillColor, 0,
@@ -1219,11 +1250,14 @@ void DSBarInfo::DrawGraphic(FTexture* texture, int x, int y, int xOffset, int yO
 		y -= (texture->GetHeight()/2)-texture->TopOffset;
 	}
 
+	x += xOffset;
+	y += yOffset;
+	int w, h;
 	if(!fullScreenOffsets)
 	{
 		// I'll handle the conversion from fixed to int myself for more control
-		fixed_t fx = (x + ST_X + xOffset) << FRACBITS;
-		fixed_t fy = (y + ST_Y + yOffset) << FRACBITS;
+		fixed_t fx = (x + ST_X) << FRACBITS;
+		fixed_t fy = (y + ST_Y) << FRACBITS;
 		fixed_t fw = texture->GetScaledWidth() << FRACBITS;
 		fixed_t fh = texture->GetScaledHeight() << FRACBITS;
 		if(Scaled)
@@ -1231,27 +1265,21 @@ void DSBarInfo::DrawGraphic(FTexture* texture, int x, int y, int xOffset, int yO
 		x = fx >> FRACBITS;
 		y = fy >> FRACBITS;
 		// Round to nearest
-		int w = (fw + (FRACUNIT>>1)) >> FRACBITS;
-		int h = (fh + (FRACUNIT>>1)) >> FRACBITS;
-		screen->DrawTexture(texture, x, y,
-			DTA_DestWidth, w,
-			DTA_DestHeight, h,
-			DTA_Translation, translate ? getTranslation() : 0,
-			DTA_ColorOverlay, dim ? DIM_OVERLAY : 0,
-			DTA_Alpha, alpha,
-			TAG_DONE);
+		w = (fw + (FRACUNIT>>1)) >> FRACBITS;
+		h = (fh + (FRACUNIT>>1)) >> FRACBITS;
 	}
 	else
 	{
-		screen->DrawTexture(texture, x, y,
-			DTA_DestWidth, texture->GetScaledWidth(),
-			DTA_DestHeight, texture->GetScaledHeight(),
-			DTA_Translation, translate ? getTranslation() : 0,
-			DTA_ColorOverlay, dim ? DIM_OVERLAY : 0,
-			DTA_Alpha, alpha,
-			DTA_HUDRules, HUD_Normal,
-			TAG_DONE);
+		w = texture->GetScaledWidth();
+		h = texture->GetScaledHeight();
 	}
+	screen->DrawTexture(texture, x, y,
+		DTA_DestWidth, w,
+		DTA_DestHeight, h,
+		DTA_Translation, translate ? getTranslation() : 0,
+		DTA_ColorOverlay, dim ? DIM_OVERLAY : 0,
+		DTA_Alpha, alpha,
+		TAG_DONE);
 }
 
 void DSBarInfo::DrawString(const char* str, int x, int y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets, EColorRange translation, int spacing)
@@ -1278,31 +1306,25 @@ void DSBarInfo::DrawString(const char* str, int x, int y, int xOffset, int yOffs
 		}
 		if(SBarInfoScript->spacingCharacter == '\0') //If we are monospaced lets use the offset
 			x += (character->LeftOffset+1); //ignore x offsets since we adapt to character size
+
+		int rx, ry, rw, rh;
+		rx = x + xOffset;
+		ry = y + yOffset;
+		rw = character->GetScaledWidth();
+		rh = character->GetScaledHeight();
 		if(!fullScreenOffsets)
 		{
-			int rx = x + ST_X + xOffset;
-			int ry = y + ST_Y + yOffset;
-			int rw = character->GetScaledWidth();
-			int rh = character->GetScaledHeight();
+			rx += ST_X;
+			ry += ST_Y;
 			if(Scaled)
 				screen->VirtualToRealCoordsInt(rx, ry, rw, rh, 320, 200, true);
-			screen->DrawTexture(character, rx, ry,
-				DTA_DestWidth, rw,
-				DTA_DestHeight, rh,
-				DTA_Translation, drawingFont->GetColorTranslation(translation),
-				DTA_Alpha, alpha,
-				TAG_DONE);
 		}
-		else
-		{
-			screen->DrawTexture(character, x, y,
-				DTA_DestWidth, character->GetScaledWidth(),
-				DTA_DestHeight, character->GetScaledHeight(),
-				DTA_Translation, drawingFont->GetColorTranslation(translation),
-				DTA_Alpha, alpha,
-				DTA_HUDRules, HUD_Normal,
-				TAG_DONE);
-		}
+		screen->DrawTexture(character, rx, ry,
+			DTA_DestWidth, rw,
+			DTA_DestHeight, rh,
+			DTA_Translation, drawingFont->GetColorTranslation(translation),
+			DTA_Alpha, alpha,
+			TAG_DONE);
 		if(SBarInfoScript->spacingCharacter == '\0')
 			x += width + spacing - (character->LeftOffset+1);
 		else //width gets changed at the call to GetChar()
@@ -1341,9 +1363,9 @@ void DSBarInfo::DrawNumber(int num, int len, int x, int y, int xOffset, int yOff
 }
 
 //draws the mug shot
-void DSBarInfo::DrawFace(const char *defaultFace, int accuracy, bool xdth, bool animatedgodmode, int x, int y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets)
+void DSBarInfo::DrawFace(const char *defaultFace, int accuracy, int stateflags, int x, int y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets)
 {
-	FTexture *face = MugShot.GetFace(CPlayer, defaultFace, accuracy, xdth, animatedgodmode);
+	FTexture *face = MugShot.GetFace(CPlayer, defaultFace, accuracy, stateflags);
 	if (face != NULL)
 	{
 		DrawGraphic(face, x, y, xOffset, yOffset, alpha, fullScreenOffsets);

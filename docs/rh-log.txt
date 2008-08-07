@@ -1,3 +1,12 @@
+August 7, 2008 (Changes by Graf Zahl)
+- Fixed. The Firedemon was missing a game filter.
+
+August 7, 2008 (SBARINfO update)
+- Added: disablegrin, disableouch, disablepain, and disablerampage flags to
+  drawmugshot.
+- Fixed: LowerHealthCap did not work properly.
+- Fixed: Various bugs I noticed in the fullscreenoffsets code.
+
 August 6, 2008
 - The x87 precision control is now explicitly set for double precision, since
   GCC defaults to extended precision instead, unlike Visual C++.

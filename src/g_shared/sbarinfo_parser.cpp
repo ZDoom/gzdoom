@@ -657,11 +657,20 @@ void SBarInfo::ParseSBarInfoBlock(FScanner &sc, SBarInfoBlock &block)
 						cmd.flags |= DRAWMUGSHOT_XDEATHFACE;
 					else if(sc.Compare("animatedgodmode"))
 						cmd.flags |= DRAWMUGSHOT_ANIMATEDGODMODE;
+					else if(sc.Compare("disablegrin"))
+						cmd.flags |= DRAWMUGSHOT_DISABLEGRIN;
+					else if(sc.Compare("disableouch"))
+						cmd.flags |= DRAWMUGSHOT_DISABLEOUCH;
+					else if(sc.Compare("disablepain"))
+						cmd.flags |= DRAWMUGSHOT_DISABLEPAIN;
+					else if(sc.Compare("disablerampage"))
+						cmd.flags |= DRAWMUGSHOT_DISABLERAMPAGE;
 					else
 						sc.ScriptError("Unknown flag '%s'.", sc.String);
 					if(!sc.CheckToken('|'))
 						sc.MustGetToken(',');
 				}
+
 				this->getCoordinates(sc, cmd, block.fullScreenOffsets);
 				sc.MustGetToken(';');
 				break;

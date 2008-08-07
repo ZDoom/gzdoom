@@ -238,8 +238,12 @@ enum //drawshader flags
 
 enum //drawmugshot flags
 {
-	DRAWMUGSHOT_XDEATHFACE = 1,
-	DRAWMUGSHOT_ANIMATEDGODMODE = 2,
+	DRAWMUGSHOT_XDEATHFACE = 0x1,
+	DRAWMUGSHOT_ANIMATEDGODMODE = 0x2,
+	DRAWMUGSHOT_DISABLEGRIN = 0x4,
+	DRAWMUGSHOT_DISABLEOUCH = 0x8,
+	DRAWMUGSHOT_DISABLEPAIN = 0x10,
+	DRAWMUGSHOT_DISABLERAMPAGE = 0x20,
 };
 
 enum //drawkeybar flags
@@ -344,7 +348,7 @@ private:
 	void DrawGraphic(FTexture* texture, int x, int y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets, bool translate=false, bool dim=false, bool center=false);
 	void DrawString(const char* str, int x, int y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets, EColorRange translation, int spacing=0);
 	void DrawNumber(int num, int len, int x, int y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets, EColorRange translation, int spacing=0, bool fillzeros=false);
-	void DrawFace(const char *defaultFace, int accuracy, bool xdth, bool animatedgodmode, int x, int y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets);
+	void DrawFace(const char *defaultFace, int accuracy, int stateflags, int x, int y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets);
 	int updateState(bool xdth, bool animatedgodmode);
 	void DrawInventoryBar(int type, int num, int x, int y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets, bool alwaysshow,
 		int counterx, int countery, EColorRange translation, bool drawArtiboxes, bool noArrows, bool alwaysshowcounter);

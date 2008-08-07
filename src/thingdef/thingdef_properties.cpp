@@ -306,7 +306,6 @@ static flagdef WeaponFlags[] =
 	DEFINE_FLAG(WIF_BOT, BFG, AWeapon, WeaponFlags),
 	DEFINE_FLAG(WIF, CHEATNOTWEAPON, AWeapon, WeaponFlags),
 	DEFINE_FLAG(WIF, NO_AUTO_SWITCH, AWeapon, WeaponFlags),
-	DEFINE_FLAG(WIF, GIVEPARENT, AWeapon, WeaponFlags),
 	
 	DEFINE_DUMMY_FLAG(NOLMS),
 };

@@ -97,7 +97,6 @@ void A_NoBlocking (AActor *actor)
 	actor->Conversation = NULL;
 
 	// If the actor has attached metadata for items to drop, drop those.
-	// Otherwise, call NoBlockingSet() and let it decide what to drop.
 	if (!actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))	// [GRB]
 	{
 		FDropItem *di = GetDropItems(RUNTIME_TYPE(actor));
@@ -113,10 +112,6 @@ void A_NoBlocking (AActor *actor)
 				}
 				di = di->Next;
 			}
-		}
-		else
-		{
-			actor->NoBlockingSet ();
 		}
 	}
 }

@@ -20,6 +20,7 @@ void A_PoisonBagDamage (AActor *);
 void A_PoisonBagCheck (AActor *);
 void A_CheckThrowBomb (AActor *);
 void A_CheckThrowBomb2 (AActor *);
+void A_TimeBomb(AActor *self);
 
 // Fire Bomb (Flechette used by Mage) ---------------------------------------
 
@@ -27,11 +28,6 @@ class AFireBomb : public AActor
 {
 	DECLARE_ACTOR (AFireBomb, AActor)
 public:
-	void PreExplode ()
-	{
-		z += 32*FRACUNIT;
-		RenderStyle = STYLE_Normal;
-	}
 };
 
 FState AFireBomb::States[] =
@@ -42,7 +38,7 @@ FState AFireBomb::States[] =
 	S_NORMAL (PSBG, 'A',   10, NULL					    , &States[S_FIREBOMB1+3]),
 	S_NORMAL (PSBG, 'B',	4, NULL					    , &States[S_FIREBOMB1+4]),
 	S_NORMAL (PSBG, 'C',	4, A_Scream				    , &States[S_FIREBOMB1+5]),
-	S_BRIGHT (XPL1, 'A',	4, A_Explode			    , &States[S_FIREBOMB1+6]),
+	S_BRIGHT (XPL1, 'A',	4, A_TimeBomb			    , &States[S_FIREBOMB1+6]),
 	S_BRIGHT (XPL1, 'B',	4, NULL					    , &States[S_FIREBOMB1+7]),
 	S_BRIGHT (XPL1, 'C',	4, NULL					    , &States[S_FIREBOMB1+8]),
 	S_BRIGHT (XPL1, 'D',	4, NULL					    , &States[S_FIREBOMB1+9]),

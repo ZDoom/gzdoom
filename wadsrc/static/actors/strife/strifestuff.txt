@@ -1657,3 +1657,269 @@ ACTOR TargetPractice 208
 	}
 }
 
+// Force Field Guard --------------------------------------------------------
+
+ACTOR ForceFieldGuard 25 native
+{
+	Game Strife
+	ConversationID 0
+	Health 10
+	Radius 2
+	Height 1
+	Mass 10000
+	+SHOOTABLE
+	+NOSECTOR
+	+NOBLOOD
+	+INCOMBAT
+	States
+	{
+	Spawn:
+		TNT1 A -1
+		Stop
+	Death:
+		TNT1 A 1 A_RemoveForceField
+		Stop
+	}
+}
+
+// Kneeling Guy -------------------------------------------------------------
+
+ACTOR KneelingGuy 204
+{
+	Game Strife
+	ConversationID 37,-1,-1
+	Health 51
+	Painchance 255
+	Radius 6
+	Height 17
+	Mass 50000
+	+SOLID
+	+SHOOTABLE
+	+NOBLOOD
+	+ISMONSTER
+	+INCOMBAT
+	PainSound "misc/static"
+	DeathSound "misc/static"
+	ActiveSound "misc/chant"
+	states
+	{
+	Spawn:
+	See:
+		NEAL A 15 A_LoopActiveSound
+		NEAL B 40 A_LoopActiveSound
+		Loop
+	Pain:
+		NEAL C 5 A_SetShadow
+		NEAL B 4 A_Pain
+		NEAL C 5 A_ClearShadow
+		Goto Spawn
+	Wound:
+		NEAL B 6
+		NEAL C 13 A_GetHurt
+		Loop
+	Death:
+		NEAL D 5
+		NEAL E 5 A_Scream
+		NEAL F 6
+		NEAL G 5 A_NoBlocking
+		NEAL H 5
+		NEAL I 6
+		NEAL J -1
+		Stop
+	}
+
+
+}
+
+// Klaxon Warning Light -----------------------------------------------------
+
+ACTOR KlaxonWarningLight 24
+{
+	Game Strife
+	ConversationID 121,-1,-1
+	ReactionTime 60
+	Radius 5
+	+NOBLOCKMAP +AMBUSH
+	+SPAWNCEILING +NOGRAVITY
+	+FIXMAPTHINGPOS +NOSPLASHALERT
+	+SYNCHRONIZED
+	States
+	{
+	Spawn:
+		KLAX A 5 A_TurretLook
+		Loop
+	See:
+		KLAX B 6 A_KlaxonBlare
+		KLAX C 60
+		Loop
+	}
+
+}
+
+// CeilingTurret ------------------------------------------------------------
+
+ACTOR CeilingTurret 27
+{
+	Game Strife
+	ConversationID 122,-1,-1
+	Health 125
+	Speed 0
+	Painchance 0
+	Mass 10000000
+	Monster
+	+AMBUSH
+	+SPAWNCEILING
+	+NOGRAVITY
+	+NOBLOOD
+	+NOSPLASHALERT
+	+DONTFALL
+	MinMissileChance 150
+	DeathSound "turret/death"
+	States
+	{
+	Spawn:
+		TURT A 5 A_TurretLook
+		Loop
+	See:
+		TURT A 2 A_Chase
+		Loop
+	Missile:
+	Pain:
+		TURT B 4 A_ShootGun
+		TURT D 3 A_SentinelRefire
+		TURT A 4 A_SentinelRefire
+		Loop
+	Death:
+		BALL A 6 Bright A_Scream
+		BALL BCDE 6 Bright
+		TURT C -1
+		Stop
+	}
+}
+
+
+// Power Coupling -----------------------------------------------------------
+
+ACTOR PowerCoupling 220 native
+{
+	Game Strife
+	ConversationID 288,-1,-1
+	Health 40
+	Radius 17
+	Height 64
+	Mass 999999
+	+SOLID
+	+SHOOTABLE
+	+DROPPED
+	+NOBLOOD
+	+NOTDMATCH
+	+INCOMBAT
+	States
+	{
+	Spawn:
+		COUP AB 5
+		Loop
+	}
+}
+
+// Gibs for things that bleed -----------------------------------------------
+
+ACTOR Meat native
+{
+	+NOCLIP
+	States
+	{
+	Spawn:
+		MEAT A 700
+		Stop
+		MEAT B 700
+		Stop
+		MEAT C 700
+		Stop
+		MEAT D 700
+		Stop
+		MEAT E 700
+		Stop
+		MEAT F 700
+		Stop
+		MEAT G 700
+		Stop
+		MEAT H 700
+		Stop
+		MEAT I 700
+		Stop
+		MEAT J 700
+		Stop
+		MEAT K 700
+		Stop
+		MEAT L 700
+		Stop
+		MEAT M 700
+		Stop
+		MEAT N 700
+		Stop
+		MEAT O 700
+		Stop
+		MEAT P 700
+		Stop
+		MEAT Q 700
+		Stop
+		MEAT R 700
+		Stop
+		MEAT S 700
+		Stop
+		MEAT T 700
+		Stop
+	}
+}
+
+// Gibs for things that don't bleed -----------------------------------------
+
+ACTOR Junk : Meat
+{
+states
+{
+	Spawn:
+		JUNK A 700
+		Stop
+		JUNK B 700
+		Stop
+		JUNK C 700
+		Stop
+		JUNK D 700
+		Stop
+		JUNK E 700
+		Stop
+		JUNK F 700
+		Stop
+		JUNK G 700
+		Stop
+		JUNK H 700
+		Stop
+		JUNK I 700
+		Stop
+		JUNK J 700
+		Stop
+		JUNK K 700
+		Stop
+		JUNK L 700
+		Stop
+		JUNK M 700
+		Stop
+		JUNK N 700
+		Stop
+		JUNK O 700
+		Stop
+		JUNK P 700
+		Stop
+		JUNK Q 700
+		Stop
+		JUNK R 700
+		Stop
+		JUNK S 700
+		Stop
+		JUNK T 700
+		Stop
+	}
+}
+

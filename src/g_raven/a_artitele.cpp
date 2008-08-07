@@ -13,30 +13,12 @@ static FRandom pr_tele ("TeleportSelf");
 
 class AArtiTeleport : public AInventory
 {
-	DECLARE_ACTOR (AArtiTeleport, AInventory)
+	DECLARE_CLASS (AArtiTeleport, AInventory)
 public:
 	bool Use (bool pickup);
 };
 
-FState AArtiTeleport::States[] =
-{
-	S_NORMAL (ATLP, 'A',	4, NULL, &States[1]),
-	S_NORMAL (ATLP, 'B',	4, NULL, &States[2]),
-	S_NORMAL (ATLP, 'C',	4, NULL, &States[3]),
-	S_NORMAL (ATLP, 'B',	4, NULL, &States[0])
-};
-
-IMPLEMENT_ACTOR (AArtiTeleport, Raven, 36, 18)
-	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
-	PROP_Flags2 (MF2_FLOATBOB)
-	PROP_SpawnState (0)
-	PROP_Inventory_DefMaxAmount
-	PROP_Inventory_PickupFlash (1)
-	PROP_Inventory_FlagsSet (IF_INVBAR|IF_FANCYPICKUPSOUND)
-	PROP_Inventory_Icon ("ARTIATLP")
-	PROP_Inventory_PickupSound ("misc/p_pkup")
-	PROP_Inventory_PickupMessage("$TXT_ARTITELEPORT")
-END_DEFAULTS
+IMPLEMENT_CLASS (AArtiTeleport)
 
 bool AArtiTeleport::Use (bool pickup)
 {
@@ -82,7 +64,7 @@ bool AArtiTeleport::Use (bool pickup)
 
 bool P_AutoUseChaosDevice (player_t *player)
 {
-	AArtiTeleport *arti = player->mo->FindInventory<AArtiTeleport> ();
+	AInventory *arti = player->mo->FindInventory(PClass::FindClass("ArtiTeleport"));
 
 	if (arti != NULL)
 	{

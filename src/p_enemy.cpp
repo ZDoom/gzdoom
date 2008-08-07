@@ -237,10 +237,13 @@ bool AActor::CheckMeleeRange ()
 		return true;
 
 	// [RH] Don't melee things too far above or below actor.
-	if (pl->z > z + height)
-		return false;
-	if (pl->z + pl->height < z)
-		return false;
+	if (!(flags5 & MF5_NOVERTICALMELEERANGE))
+	{
+		if (pl->z > z + height)
+			return false;
+		if (pl->z + pl->height < z)
+			return false;
+	}
 		
 	if (!P_CheckSight (this, pl, 0))
 		return false;
@@ -2590,7 +2593,6 @@ void A_Explode (AActor *thing)
 	int distance = 128;
 	bool hurtSource = true;
 
-	thing->PreExplode ();
 	thing->GetExplodeParms (damage, distance, hurtSource);
 	P_RadiusAttack (thing, thing->target, damage, distance, thing->DamageType, hurtSource);
 	if (thing->z <= thing->floorz + (distance<<FRACBITS))

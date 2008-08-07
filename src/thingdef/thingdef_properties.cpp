@@ -246,6 +246,7 @@ static flagdef ActorFlags[]=
 	DEFINE_FLAG(MF5, PUFFGETSOWNER, AActor, flags5), // [BB] added PUFFGETSOWNER
 	DEFINE_FLAG(MF5, SPECIALFIREDAMAGE, AActor, flags5),
 	DEFINE_FLAG(MF5, SUMMONEDMONSTER, AActor, flags5),
+	DEFINE_FLAG(MF5, NOVERTICALMELEERANGE, AActor, flags5),
 
 	// Effect flags
 	DEFINE_FLAG(FX, VISIBILITYPULSE, AActor, effects),
@@ -305,7 +306,7 @@ static flagdef WeaponFlags[] =
 	DEFINE_FLAG(WIF_BOT, BFG, AWeapon, WeaponFlags),
 	DEFINE_FLAG(WIF, CHEATNOTWEAPON, AWeapon, WeaponFlags),
 	DEFINE_FLAG(WIF, NO_AUTO_SWITCH, AWeapon, WeaponFlags),
-	//WIF_BOT_REACTION_SKILL_THING = 1<<31, // I don't understand this
+	DEFINE_FLAG(WIF, GIVEPARENT, AWeapon, WeaponFlags),
 	
 	DEFINE_DUMMY_FLAG(NOLMS),
 };

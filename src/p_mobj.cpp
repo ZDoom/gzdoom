@@ -2334,10 +2334,6 @@ void AActor::Howl ()
 	}
 }
 
-void AActor::NoBlockingSet ()
-{
-}
-
 fixed_t AActor::GetSinkSpeed ()
 {
 	return FRACUNIT;

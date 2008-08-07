@@ -42,6 +42,7 @@
 #include "actors/doom/scriptedmarine.txt"
 
 #include "actors/raven/artiegg.txt"
+#include "actors/raven/artitele.txt"
 #include "actors/raven/ravenartifacts.txt"
 #include "actors/raven/ravenhealth.txt"
 #include "actors/raven/ravenambient.txt"
@@ -123,6 +124,7 @@
 #include "actors/strife/rebels.txt"
 #include "actors/strife/reaver.txt"
 #include "actors/strife/sentinel.txt"
+#include "actors/strife/stalker.txt"
 #include "actors/strife/strifeammo.txt"
 #include "actors/strife/strifearmor.txt"
 #include "actors/strife/strifeitems.txt"

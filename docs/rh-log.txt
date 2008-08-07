@@ -1,4 +1,12 @@
 August 7, 2008 (Changes by Graf Zahl)
+- Converted the rest of a_strifestuff.cpp to DECORATE.
+- Fixed: AStalker::CheckMeleeRange did not perform all checks of AActor::CheckMeleeRange.
+  I replaced this virtual override with a new flag MF5_NOVERTICALMELEERANGE so that
+  this feature can also be used by other actors.
+- Converted Strife's Stalker to DECORATE.
+- Converted ArtiTeleport to DECORATE.
+- Removed the NoBlockingSet method from AActor because everything using it has been
+  converted to DECORATE using DropItem instead.
 - Changed: Macil doesn't need the StrifeHumanoid's special death states so he might
   as well inherit directly from AActor.
 - Converted Strife's Coin, Oracle, Macil and StrifeHumanoid to DECORATE. Also moved

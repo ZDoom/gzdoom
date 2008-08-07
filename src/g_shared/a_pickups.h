@@ -278,7 +278,7 @@ enum
 	WIF_POWERED_UP =		0x00000400, // this is a tome-of-power'ed version of its sister
 
 	WIF_NO_AUTO_SWITCH =	0x00001000,	// never switch to this weapon when it's picked up
-	WIF_STAFF2_KICKBACK =	0x00002000, // the powered-up Heretic staff has special kickback
+	WIF_STAFF2_KICKBACK =	0x00002000, // the powered-up Heretic staff has special kickba
 
 	WIF_CHEATNOTWEAPON	=	1<<27,		// Give cheat considers this not a weapon (used by Sigil)
 

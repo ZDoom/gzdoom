@@ -389,28 +389,12 @@ void A_RemoveForceField (AActor *);
 
 class AForceFieldGuard : public AActor
 {
-	DECLARE_ACTOR (AForceFieldGuard, AActor)
+	DECLARE_CLASS (AForceFieldGuard, AActor)
 public:
 	int TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, FName damagetype);
 };
 
-FState AForceFieldGuard::States[] =
-{
-	S_NORMAL (TOKN, 'A', -1, NULL,					NULL),
-	S_NORMAL (XPRK, 'A',  1, A_RemoveForceField,	NULL)
-};
-
-IMPLEMENT_ACTOR (AForceFieldGuard, Strife, 25, 0)
-	PROP_StrifeType (0)
-	PROP_SpawnHealth (10)
-	PROP_SpawnState (0)
-	PROP_DeathState (1)
-	PROP_RadiusFixed (2)
-	PROP_HeightFixed (1)
-	PROP_Mass (10000)
-	PROP_Flags (MF_SHOOTABLE|MF_NOSECTOR)
-	PROP_Flags4 (MF4_INCOMBAT)
-END_DEFAULTS
+IMPLEMENT_CLASS (AForceFieldGuard)
 
 int AForceFieldGuard::TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, FName damagetype)
 {
@@ -452,59 +436,6 @@ void A_GetHurt (AActor *self)
 		self->Die (self->target, self->target);
 	}
 }
-
-class AKneelingGuy : public AActor
-{
-	DECLARE_ACTOR (AKneelingGuy, AActor)
-};
-
-FState AKneelingGuy::States[] =
-{
-#define S_KNEEL	0
-	S_NORMAL (NEAL, 'A',   15, A_LoopActiveSound,	&States[S_KNEEL+1]),
-	S_NORMAL (NEAL, 'B',   40, A_LoopActiveSound,	&States[S_KNEEL]),
-
-#define S_KNEEL_PAIN (S_KNEEL+2)
-	S_NORMAL (NEAL, 'C',	5, A_SetShadow,			&States[S_KNEEL_PAIN+1]),
-	S_NORMAL (NEAL, 'B',	4, A_Pain,				&States[S_KNEEL_PAIN+2]),
-	S_NORMAL (NEAL, 'C',	5, A_ClearShadow,		&States[S_KNEEL]),
-
-#define S_KNEEL_HURT (S_KNEEL_PAIN+3)
-	S_NORMAL (NEAL, 'B',	6, NULL,				&States[S_KNEEL_HURT+1]),
-	S_NORMAL (NEAL, 'C',   13, A_GetHurt,			&States[S_KNEEL_HURT]),
-
-#define S_KNEEL_DIE (S_KNEEL_HURT+2)
-	S_NORMAL (NEAL, 'D',	5, NULL,				&States[S_KNEEL_DIE+1]),
-	S_NORMAL (NEAL, 'E',	5, A_Scream,			&States[S_KNEEL_DIE+2]),
-	S_NORMAL (NEAL, 'F',	6, NULL,				&States[S_KNEEL_DIE+3]),
-	S_NORMAL (NEAL, 'G',	5, A_NoBlocking,		&States[S_KNEEL_DIE+4]),
-	S_NORMAL (NEAL,	'H',	5, NULL,				&States[S_KNEEL_DIE+5]),
-	S_NORMAL (NEAL, 'I',	6, NULL,				&States[S_KNEEL_DIE+6]),
-	S_NORMAL (NEAL, 'J',   -1, NULL,				NULL)
-};
-
-IMPLEMENT_ACTOR (AKneelingGuy, Strife, 204, 0)
-	PROP_SpawnState (S_KNEEL)
-	PROP_SeeState (S_KNEEL)
-	PROP_PainState (S_KNEEL_PAIN)
-	PROP_WoundState (S_KNEEL_HURT)
-	PROP_DeathState (S_KNEEL_DIE)
-
-	PROP_SpawnHealth (51)
-	PROP_PainChance (255)
-	PROP_RadiusFixed (6)
-	PROP_HeightFixed (17)
-	PROP_MassLong (50000)
-	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_NOBLOOD)
-	PROP_Flags3 (MF3_ISMONSTER)
-	PROP_Flags4 (MF4_INCOMBAT)
-	PROP_MinMissileChance (150)
-	PROP_StrifeType (37)
-
-	PROP_PainSound ("misc/static")
-	PROP_DeathSound ("misc/static")
-	PROP_ActiveSound ("misc/chant")
-END_DEFAULTS
 
 // Klaxon Warning Light -----------------------------------------------------
 
@@ -561,99 +492,16 @@ void A_KlaxonBlare (AActor *self)
 	}
 }
 
-class AKlaxonWarningLight : public AActor
-{
-	DECLARE_ACTOR (AKlaxonWarningLight, AActor)
-};
-
-FState AKlaxonWarningLight::States[] =
-{
-	S_NORMAL (KLAX, 'A',  5, A_TurretLook,	&States[0]),
-
-	S_NORMAL (KLAX, 'B',  6, A_KlaxonBlare,	&States[2]),
-	S_NORMAL (KLAX, 'C', 60, NULL,			&States[1])
-};
-
-IMPLEMENT_ACTOR (AKlaxonWarningLight, Strife, 24, 0)
-	PROP_SpawnState (0)
-	PROP_SeeState (1)
-	PROP_ReactionTime (60)
-	PROP_RadiusFixed(5)
-	PROP_Flags (MF_NOBLOCKMAP|MF_AMBUSH|MF_SPAWNCEILING|MF_NOGRAVITY)
-	PROP_Flags4 (MF4_FIXMAPTHINGPOS|MF4_NOSPLASHALERT|MF4_SYNCHRONIZED)
-	PROP_StrifeType (121)
-END_DEFAULTS
-
-// CeilingTurret ------------------------------------------------------------
-
-void A_ShootGun (AActor *);
-
-class ACeilingTurret : public AActor
-{
-	DECLARE_ACTOR (ACeilingTurret, AActor)
-};
-
-FState ACeilingTurret::States[] =
-{
-	S_NORMAL (TURT, 'A',  5, A_TurretLook,		&States[0]),
-
-	S_NORMAL (TURT, 'A',  2, A_Chase,			&States[1]),
-
-	S_NORMAL (TURT, 'B',  4, A_ShootGun,		&States[3]),
-	S_NORMAL (TURT, 'D',  3, A_SentinelRefire,	&States[4]),
-	S_NORMAL (TURT, 'A',  4, A_SentinelRefire,  &States[2]),
-
-	S_BRIGHT (BALL, 'A',  6, A_Scream,			&States[6]),
-	S_BRIGHT (BALL, 'B',  6, NULL,				&States[7]),
-	S_BRIGHT (BALL, 'C',  6, NULL,				&States[8]),
-	S_BRIGHT (BALL, 'D',  6, NULL,				&States[9]),
-	S_BRIGHT (BALL, 'E',  6, NULL,				&States[10]),
-	S_NORMAL (TURT, 'C', -1, NULL,				NULL)
-};
-
-IMPLEMENT_ACTOR (ACeilingTurret, Strife, 27, 0)
-	PROP_StrifeType (122)
-	PROP_SpawnHealth (125)
-	PROP_SpawnState (0)
-	PROP_SeeState (1)
-	PROP_PainState (2)
-	PROP_MissileState (2)
-	PROP_DeathState (5)
-	PROP_SpeedFixed (0)
-	PROP_PainChance (0)
-	PROP_MassLong (10000000)
-	PROP_Flags (MF_SHOOTABLE|MF_AMBUSH|MF_SPAWNCEILING|MF_NOGRAVITY|
-				MF_NOBLOOD|MF_COUNTKILL)
-	PROP_Flags4 (MF4_NOSPLASHALERT|MF4_DONTFALL)
-	PROP_MinMissileChance (150)
-	PROP_DeathSound ("turret/death")
-END_DEFAULTS
-
 // Power Coupling -----------------------------------------------------------
 
 class APowerCoupling : public AActor
 {
-	DECLARE_ACTOR (APowerCoupling, AActor)
+	DECLARE_CLASS (APowerCoupling, AActor)
 public:
 	void Die (AActor *source, AActor *inflictor);
 };
 
-FState APowerCoupling::States[] =
-{
-	S_NORMAL (COUP, 'A', 5, NULL, &States[1]),
-	S_NORMAL (COUP, 'B', 5, NULL, &States[0]),
-};
-
-IMPLEMENT_ACTOR (APowerCoupling, Strife, 220, 0)
-	PROP_SpawnState (0)
-	PROP_SpawnHealth (40)
-	PROP_RadiusFixed (17)
-	PROP_HeightFixed (64)
-	PROP_MassLong (999999)
-	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_DROPPED|MF_NOBLOOD|MF_NOTDMATCH)
-	PROP_Flags4 (MF4_INCOMBAT)
-	PROP_StrifeType (288)
-END_DEFAULTS
+IMPLEMENT_CLASS (APowerCoupling)
 
 void APowerCoupling::Die (AActor *source, AActor *inflictor)
 {
@@ -686,7 +534,7 @@ void APowerCoupling::Die (AActor *source, AActor *inflictor)
 
 class AMeat : public AActor
 {
-	DECLARE_ACTOR (AMeat, AActor)
+	DECLARE_CLASS (AMeat, AActor)
 public:
 	void BeginPlay ()
 	{
@@ -695,70 +543,7 @@ public:
 	}
 };
 
-FState AMeat::States[] =
-{
-	S_NORMAL (MEAT, 'A', 700, NULL, NULL),
-	S_NORMAL (MEAT, 'B', 700, NULL, NULL),
-	S_NORMAL (MEAT, 'C', 700, NULL, NULL),
-	S_NORMAL (MEAT, 'D', 700, NULL, NULL),
-	S_NORMAL (MEAT, 'E', 700, NULL, NULL),
-	S_NORMAL (MEAT, 'F', 700, NULL, NULL),
-	S_NORMAL (MEAT, 'G', 700, NULL, NULL),
-	S_NORMAL (MEAT, 'H', 700, NULL, NULL),
-	S_NORMAL (MEAT, 'I', 700, NULL, NULL),
-	S_NORMAL (MEAT, 'J', 700, NULL, NULL),
-	S_NORMAL (MEAT, 'K', 700, NULL, NULL),
-	S_NORMAL (MEAT, 'L', 700, NULL, NULL),
-	S_NORMAL (MEAT, 'M', 700, NULL, NULL),
-	S_NORMAL (MEAT, 'N', 700, NULL, NULL),
-	S_NORMAL (MEAT, 'O', 700, NULL, NULL),
-	S_NORMAL (MEAT, 'P', 700, NULL, NULL),
-	S_NORMAL (MEAT, 'Q', 700, NULL, NULL),
-	S_NORMAL (MEAT, 'R', 700, NULL, NULL),
-	S_NORMAL (MEAT, 'S', 700, NULL, NULL),
-	S_NORMAL (MEAT, 'T', 700, NULL, NULL)
-};
-
-IMPLEMENT_ACTOR (AMeat, Any, -1, 0)
-	PROP_SpawnState (0)
-	PROP_Flags (MF_NOCLIP)
-END_DEFAULTS
-
-// Gibs for things that don't bleed -----------------------------------------
-
-class AJunk : public AMeat
-{
-	DECLARE_ACTOR (AJunk, AMeat)
-};
-
-FState AJunk::States[] =
-{
-	S_NORMAL (JUNK, 'A', 700, NULL, NULL),
-	S_NORMAL (JUNK, 'B', 700, NULL, NULL),
-	S_NORMAL (JUNK, 'C', 700, NULL, NULL),
-	S_NORMAL (JUNK, 'D', 700, NULL, NULL),
-	S_NORMAL (JUNK, 'E', 700, NULL, NULL),
-	S_NORMAL (JUNK, 'F', 700, NULL, NULL),
-	S_NORMAL (JUNK, 'G', 700, NULL, NULL),
-	S_NORMAL (JUNK, 'H', 700, NULL, NULL),
-	S_NORMAL (JUNK, 'I', 700, NULL, NULL),
-	S_NORMAL (JUNK, 'J', 700, NULL, NULL),
-	S_NORMAL (JUNK, 'K', 700, NULL, NULL),
-	S_NORMAL (JUNK, 'L', 700, NULL, NULL),
-	S_NORMAL (JUNK, 'M', 700, NULL, NULL),
-	S_NORMAL (JUNK, 'N', 700, NULL, NULL),
-	S_NORMAL (JUNK, 'O', 700, NULL, NULL),
-	S_NORMAL (JUNK, 'P', 700, NULL, NULL),
-	S_NORMAL (JUNK, 'Q', 700, NULL, NULL),
-	S_NORMAL (JUNK, 'R', 700, NULL, NULL),
-	S_NORMAL (JUNK, 'S', 700, NULL, NULL),
-	S_NORMAL (JUNK, 'T', 700, NULL, NULL)
-};
-
-IMPLEMENT_ACTOR (AJunk, Any, -1, 0)
-	PROP_SpawnState (0)
-	PROP_Flags (MF_NOCLIP)
-END_DEFAULTS
+IMPLEMENT_CLASS (AMeat)
 
 //==========================================================================
 //
@@ -768,7 +553,7 @@ END_DEFAULTS
 
 void A_TossGib (AActor *self)
 {
-	const PClass *gibtype = (self->flags & MF_NOBLOOD) ? RUNTIME_CLASS(AJunk) : RUNTIME_CLASS(AMeat);
+	const char *gibtype = (self->flags & MF_NOBLOOD) ? "Junk" : "Meat";
 	AActor *gib = Spawn (gibtype, self->x, self->y, self->z + 24*FRACUNIT, ALLOW_REPLACE);
 	angle_t an;
 	int speed;

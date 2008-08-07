@@ -42,12 +42,6 @@ void AMinotaur::Tick ()
 	}
 }
 
-void AMinotaur::NoBlockingSet ()
-{
-	P_DropItem (this, "ArtiSuperHealth", 0, 51);
-	P_DropItem (this, "PhoenixRodAmmo", 10, 84);
-}
-
 bool AMinotaur::Slam (AActor *thing)
 {
 	// Slamming minotaurs shouldn't move non-creatures
@@ -163,11 +157,6 @@ bool AMinotaurFriend::OkayToSwitchTarget (AActor *other)
 {
 	if (other == tracer) return false;		// Do not target the master
 	return Super::OkayToSwitchTarget (other);
-}
-
-void AMinotaurFriend::NoBlockingSet ()
-{
-	// Do not drop anything
 }
 
 // Action functions for the minotaur ----------------------------------------

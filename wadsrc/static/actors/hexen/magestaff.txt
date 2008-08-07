@@ -1,0 +1,139 @@
+
+// Mage Weapon Piece --------------------------------------------------------
+
+ACTOR MageWeaponPiece : FourthWeaponPiece native
+{
+	Inventory.PickupMessage "$TXT_BLOODSCOURGE_PIECE"
+}
+
+// Mage Weapon Piece 1 ------------------------------------------------------
+
+ACTOR MWeaponPiece1 : MageWeaponPiece 21 native
+{
+	Game Hexen
+	SpawnID 37
+	+FLOATBOB
+	States
+	{
+	Spawn:
+		WMS1 A -1 Bright
+		Stop
+	}
+}
+
+// Mage Weapon Piece 2 ------------------------------------------------------
+
+ACTOR MWeaponPiece2 : MageWeaponPiece 22 native
+{
+	Game Hexen
+	SpawnID 38
+	+FLOATBOB
+	States
+	{
+	Spawn:
+		WMS2 A -1 Bright
+		Stop
+	}
+}
+
+// Mage Weapon Piece 3 ------------------------------------------------------
+
+ACTOR MWeaponPiece3 : MageWeaponPiece 23 native
+{
+	Game Hexen
+	SpawnID 39
+	+FLOATBOB
+	States
+	{
+	Spawn:
+		WMS3 A -1 Bright
+		Stop
+	}
+}
+
+// Bloodscourge Drop --------------------------------------------------------
+
+ACTOR BloodscourgeDrop
+{
+	action native A_DropBloodscourgePieces();
+
+	States
+	{
+	Spawn:
+		TNT1 A 1
+		TNT1 A 1 A_DropBloodscourgePieces
+		Stop
+	}
+}
+
+// The Mages's Staff (Bloodscourge) -----------------------------------------
+
+ACTOR MWeapBloodscourge : MageWeapon native
+{
+	Weapon.SelectionOrder 3100
+	Weapon.AmmoUse1 15
+	Weapon.AmmoUse2 15
+	Weapon.KickBack 150
+	Weapon.YAdjust 20
+	Weapon.AmmoType1 "Mana1"
+	Weapon.AmmoType2 "Mana2"
+	+WEAPON.PRIMARY_USES_BOTH
+	Inventory.PickupMessage "$TXT_WEAPON_M4"
+
+	action native A_MStaffAttack();
+	action native A_MStaffPalette();
+
+	States
+	{
+	Spawn:
+		TNT1 A -1
+		Stop
+	Select:
+		MSTF A 1 A_Raise
+		Loop
+	Deselect:
+		MSTF A 1 A_Lower
+		Loop
+	Ready:
+		MSTF AAAAAABBBBBBCCCCCCDDDDDDEEEEEEFFFFF 1 A_WeaponReady
+		Loop
+	Fire:
+		MSTF G 4 Offset (0, 40)
+		MSTF H 4 Bright Offset (0, 48) A_MStaffAttack
+		MSTF H 2 Bright Offset (0, 48) A_MStaffPalette
+		MSTF II 2 Offset (0, 48) A_MStaffPalette
+		MSTF I 1 Offset (0, 40)
+		MSTF J 5 Offset (0, 36)
+		Goto Ready
+	}
+}
+
+// Mage Staff FX2 (Bloodscourge) --------------------------------------------
+
+ACTOR MageStaffFX2 native
+{
+	Speed 18
+	Height 8
+	Damage 4
+	DamageType "Fire"
+	Projectile
+	+SEEKERMISSILE
+	+EXTREMEDEATH
+	DeathSound "MageStaffExplode"
+
+	action native A_MStaffTrack();
+	action native A_BeAdditive();
+
+	States
+	{
+	Spawn:
+		MSP2 ABCD 2 Bright A_MStaffTrack
+		Loop
+	Death:
+		MSP2 E 4 Bright A_BeAdditive
+		MSP2 F 5 Bright A_Explode (80, 192, 0)
+		MSP2 GH 5 Bright
+		MSP2 I 4 Bright
+		Stop
+	}
+}

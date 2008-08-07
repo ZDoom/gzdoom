@@ -5,7 +5,7 @@
 
 class ALightning : public AActor
 {
-	DECLARE_STATELESS_ACTOR (ALightning, AActor)
+	DECLARE_CLASS (ALightning, AActor)
 public:
 	int SpecialMissileHit (AActor *victim);
 };

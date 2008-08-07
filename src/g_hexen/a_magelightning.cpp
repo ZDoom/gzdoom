@@ -29,93 +29,9 @@ void A_LastZap (AActor *);
 void A_LightningRemove (AActor *);
 void A_FreeTargMobj (AActor *);
 
-// The Mage's Lightning Arc of Death ----------------------------------------
-
-class AMWeapLightning : public AMageWeapon
-{
-	DECLARE_ACTOR (AMWeapLightning, AMageWeapon)
-};
-
-FState AMWeapLightning::States[] =
-{
-#define S_MW_LIGHTNING1 0
-	S_BRIGHT (WMLG, 'A',	4, NULL					    , &States[S_MW_LIGHTNING1+1]),
-	S_BRIGHT (WMLG, 'B',	4, NULL					    , &States[S_MW_LIGHTNING1+2]),
-	S_BRIGHT (WMLG, 'C',	4, NULL					    , &States[S_MW_LIGHTNING1+3]),
-	S_BRIGHT (WMLG, 'D',	4, NULL					    , &States[S_MW_LIGHTNING1+4]),
-	S_BRIGHT (WMLG, 'E',	4, NULL					    , &States[S_MW_LIGHTNING1+5]),
-	S_BRIGHT (WMLG, 'F',	4, NULL					    , &States[S_MW_LIGHTNING1+6]),
-	S_BRIGHT (WMLG, 'G',	4, NULL					    , &States[S_MW_LIGHTNING1+7]),
-	S_BRIGHT (WMLG, 'H',	4, NULL					    , &States[S_MW_LIGHTNING1]),
-
-#define S_MLIGHTNINGREADY (S_MW_LIGHTNING1+8)
-	S_BRIGHT (MLNG, 'A',	1, A_WeaponReady		    , &States[S_MLIGHTNINGREADY+1]),
-	S_BRIGHT (MLNG, 'A',	1, A_WeaponReady		    , &States[S_MLIGHTNINGREADY+2]),
-	S_BRIGHT (MLNG, 'A',	1, A_WeaponReady		    , &States[S_MLIGHTNINGREADY+3]),
-	S_BRIGHT (MLNG, 'A',	1, A_WeaponReady		    , &States[S_MLIGHTNINGREADY+4]),
-	S_BRIGHT (MLNG, 'A',	1, A_WeaponReady		    , &States[S_MLIGHTNINGREADY+5]),
-	S_BRIGHT (MLNG, 'A',	1, A_LightningReady		    , &States[S_MLIGHTNINGREADY+6]),
-	S_BRIGHT (MLNG, 'B',	1, A_WeaponReady		    , &States[S_MLIGHTNINGREADY+7]),
-	S_BRIGHT (MLNG, 'B',	1, A_WeaponReady		    , &States[S_MLIGHTNINGREADY+8]),
-	S_BRIGHT (MLNG, 'B',	1, A_WeaponReady		    , &States[S_MLIGHTNINGREADY+9]),
-	S_BRIGHT (MLNG, 'B',	1, A_WeaponReady		    , &States[S_MLIGHTNINGREADY+10]),
-	S_BRIGHT (MLNG, 'B',	1, A_WeaponReady		    , &States[S_MLIGHTNINGREADY+11]),
-	S_BRIGHT (MLNG, 'B',	1, A_WeaponReady		    , &States[S_MLIGHTNINGREADY+12]),
-	S_BRIGHT (MLNG, 'C',	1, A_WeaponReady		    , &States[S_MLIGHTNINGREADY+13]),
-	S_BRIGHT (MLNG, 'C',	1, A_WeaponReady		    , &States[S_MLIGHTNINGREADY+14]),
-	S_BRIGHT (MLNG, 'C',	1, A_WeaponReady		    , &States[S_MLIGHTNINGREADY+15]),
-	S_BRIGHT (MLNG, 'C',	1, A_WeaponReady		    , &States[S_MLIGHTNINGREADY+16]),
-	S_BRIGHT (MLNG, 'C',	1, A_WeaponReady		    , &States[S_MLIGHTNINGREADY+17]),
-	S_BRIGHT (MLNG, 'C',	1, A_LightningReady		    , &States[S_MLIGHTNINGREADY+18]),
-	S_BRIGHT (MLNG, 'B',	1, A_WeaponReady		    , &States[S_MLIGHTNINGREADY+19]),
-	S_BRIGHT (MLNG, 'B',	1, A_WeaponReady		    , &States[S_MLIGHTNINGREADY+20]),
-	S_BRIGHT (MLNG, 'B',	1, A_WeaponReady		    , &States[S_MLIGHTNINGREADY+21]),
-	S_BRIGHT (MLNG, 'B',	1, A_WeaponReady		    , &States[S_MLIGHTNINGREADY+22]),
-	S_BRIGHT (MLNG, 'B',	1, A_WeaponReady		    , &States[S_MLIGHTNINGREADY+23]),
-	S_BRIGHT (MLNG, 'B',	1, A_WeaponReady		    , &States[S_MLIGHTNINGREADY]),
-
-#define S_MLIGHTNINGDOWN (S_MLIGHTNINGREADY+24)
-	S_BRIGHT (MLNG, 'A',	1, A_Lower				    , &States[S_MLIGHTNINGDOWN]),
-
-#define S_MLIGHTNINGUP (S_MLIGHTNINGDOWN+1)
-	S_BRIGHT (MLNG, 'A',	1, A_Raise				    , &States[S_MLIGHTNINGUP]),
-
-#define S_MLIGHTNINGATK (S_MLIGHTNINGUP+1)
-	S_BRIGHT (MLNG, 'D',	3, NULL					    , &States[S_MLIGHTNINGATK+1]),
-	S_BRIGHT (MLNG, 'E',	3, NULL					    , &States[S_MLIGHTNINGATK+2]),
-	S_BRIGHT (MLNG, 'F',	4, A_MLightningAttack	    , &States[S_MLIGHTNINGATK+3]),
-	S_BRIGHT (MLNG, 'G',	4, NULL					    , &States[S_MLIGHTNINGATK+4]),
-	S_BRIGHT (MLNG, 'H',	3, NULL					    , &States[S_MLIGHTNINGATK+5]),
-	S_BRIGHT (MLNG, 'I',	3, NULL					    , &States[S_MLIGHTNINGATK+6]),
-	S_BRIGHT2 (MLNG, 'I',	6, NULL					    , &States[S_MLIGHTNINGATK+7], 0, 199),
-	S_BRIGHT2 (MLNG, 'C',	2, NULL					    , &States[S_MLIGHTNINGATK+8], 0, 55),
-	S_BRIGHT2 (MLNG, 'B',	2, NULL					    , &States[S_MLIGHTNINGATK+9], 0, 50),
-	S_BRIGHT2 (MLNG, 'B',	2, NULL					    , &States[S_MLIGHTNINGATK+10], 0, 45),
-	S_BRIGHT2 (MLNG, 'B',	2, NULL					    , &States[S_MLIGHTNINGREADY], 0, 40),
-};
-
-IMPLEMENT_ACTOR (AMWeapLightning, Hexen, 8040, 0)
-	PROP_Flags (MF_SPECIAL|MF_NOGRAVITY)
-	PROP_SpawnState (S_MW_LIGHTNING1)
-
-	PROP_Weapon_SelectionOrder (1100)
-	PROP_Weapon_AmmoUse1 (5)
-	PROP_Weapon_AmmoGive1 (25)
-	PROP_Weapon_UpState (S_MLIGHTNINGUP)
-	PROP_Weapon_DownState (S_MLIGHTNINGDOWN)
-	PROP_Weapon_ReadyState (S_MLIGHTNINGREADY)
-	PROP_Weapon_AtkState (S_MLIGHTNINGATK)
-	PROP_Weapon_Kickback (0)
-	PROP_Weapon_YAdjust (20)
-	PROP_Weapon_MoveCombatDist (23000000)
-	PROP_Weapon_AmmoType1 ("Mana2")
-	PROP_Weapon_ProjectileType ("LightningFloor")
-	PROP_Inventory_PickupMessage("$TXT_WEAPON_M3")
-END_DEFAULTS
-
 // Lightning ----------------------------------------------------------------
 
-IMPLEMENT_ABSTRACT_ACTOR (ALightning)
+IMPLEMENT_CLASS(ALightning)
 
 int ALightning::SpecialMissileHit (AActor *thing)
 {
@@ -170,150 +86,16 @@ int ALightning::SpecialMissileHit (AActor *thing)
 	return 1; // lightning zaps through all sprites
 }
 
-// Ceiling Lightning --------------------------------------------------------
-
-class ALightningCeiling : public ALightning
-{
-	DECLARE_ACTOR (ALightningCeiling, ALightning)
-};
-
-FState ALightningCeiling::States[] =
-{
-#define S_LIGHTNING_CEILING1 0
-	S_BRIGHT (MLFX, 'A',	2, A_LightningZap		    , &States[S_LIGHTNING_CEILING1+1]),
-	S_BRIGHT (MLFX, 'B',	2, A_LightningClip		    , &States[S_LIGHTNING_CEILING1+2]),
-	S_BRIGHT (MLFX, 'C',	2, A_LightningClip		    , &States[S_LIGHTNING_CEILING1+3]),
-	S_BRIGHT (MLFX, 'D',	2, A_LightningClip		    , &States[S_LIGHTNING_CEILING1]),
-
-#define S_LIGHTNING_C_X1 (S_LIGHTNING_CEILING1+4)
-	S_BRIGHT (MLF2, 'A',	2, A_LightningRemove	    , &States[S_LIGHTNING_C_X1+1]),
-	S_BRIGHT (MLF2, 'B',	3, NULL					    , &States[S_LIGHTNING_C_X1+2]),
-	S_BRIGHT (MLF2, 'C',	3, NULL					    , &States[S_LIGHTNING_C_X1+3]),
-	S_BRIGHT (MLF2, 'D',	3, NULL					    , &States[S_LIGHTNING_C_X1+4]),
-	S_BRIGHT (MLF2, 'E',	3, NULL					    , &States[S_LIGHTNING_C_X1+5]),
-	S_BRIGHT (MLF2, 'K',	3, NULL					    , &States[S_LIGHTNING_C_X1+6]),
-	S_BRIGHT (MLF2, 'L',	3, NULL					    , &States[S_LIGHTNING_C_X1+7]),
-	S_BRIGHT (MLF2, 'M',	3, NULL					    , &States[S_LIGHTNING_C_X1+8]),
-	S_NORMAL (ACLO, 'E',   35, NULL					    , &States[S_LIGHTNING_C_X1+9]),
-	S_BRIGHT (MLF2, 'N',	3, NULL					    , &States[S_LIGHTNING_C_X1+10]),
-	S_BRIGHT (MLF2, 'O',	3, NULL					    , &States[S_LIGHTNING_C_X1+11]),
-	S_BRIGHT (MLF2, 'P',	4, NULL					    , &States[S_LIGHTNING_C_X1+12]),
-	S_BRIGHT (MLF2, 'Q',	3, NULL					    , &States[S_LIGHTNING_C_X1+13]),
-	S_BRIGHT (MLF2, 'P',	3, NULL					    , &States[S_LIGHTNING_C_X1+14]),
-	S_BRIGHT (MLF2, 'Q',	4, NULL					    , &States[S_LIGHTNING_C_X1+15]),
-	S_BRIGHT (MLF2, 'P',	3, NULL					    , &States[S_LIGHTNING_C_X1+16]),
-	S_BRIGHT (MLF2, 'O',	3, NULL					    , &States[S_LIGHTNING_C_X1+17]),
-	S_BRIGHT (MLF2, 'P',	3, NULL					    , &States[S_LIGHTNING_C_X1+18]),
-	S_BRIGHT (MLF2, 'P',	1, A_HideThing			    , &States[S_LIGHTNING_C_X1+19]),
-	S_NORMAL (ACLO, 'E', 1050, A_FreeTargMobj		    , NULL),
-};
-
-IMPLEMENT_ACTOR (ALightningCeiling, Hexen, -1, 0)
-	PROP_SpawnHealth (144)
-	PROP_SpeedFixed (25)
-	PROP_RadiusFixed (16)
-	PROP_HeightFixed (40)
-	PROP_Damage (8)
-	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY|MF_DROPOFF|MF_MISSILE)
-	PROP_Flags2 (MF2_NOTELEPORT|MF2_IMPACT|MF2_PCROSS)
-	PROP_Flags3 (MF3_CEILINGHUGGER)
-	PROP_RenderStyle (STYLE_Add)
-
-	PROP_SpawnState (S_LIGHTNING_CEILING1)
-	PROP_DeathState (S_LIGHTNING_C_X1)
-END_DEFAULTS
-
-// Floor Lightning ----------------------------------------------------------
-
-class ALightningFloor : public ALightning
-{
-	DECLARE_ACTOR (ALightningFloor, ALightning)
-};
-
-FState ALightningFloor::States[] =
-{
-#define S_LIGHTNING_FLOOR1 0
-	S_BRIGHT (MLFX, 'E',	2, A_LightningZap		    , &States[S_LIGHTNING_FLOOR1+1]),
-	S_BRIGHT (MLFX, 'F',	2, A_LightningClip		    , &States[S_LIGHTNING_FLOOR1+2]),
-	S_BRIGHT (MLFX, 'G',	2, A_LightningClip		    , &States[S_LIGHTNING_FLOOR1+3]),
-	S_BRIGHT (MLFX, 'H',	2, A_LightningClip		    , &States[S_LIGHTNING_FLOOR1]),
-
-#define S_LIGHTNING_F_X1 (S_LIGHTNING_FLOOR1+4)
-	S_BRIGHT (MLF2, 'F',	2, A_LightningRemove	    , &States[S_LIGHTNING_F_X1+1]),
-	S_BRIGHT (MLF2, 'G',	3, NULL					    , &States[S_LIGHTNING_F_X1+2]),
-	S_BRIGHT (MLF2, 'H',	3, NULL					    , &States[S_LIGHTNING_F_X1+3]),
-	S_BRIGHT (MLF2, 'I',	3, NULL					    , &States[S_LIGHTNING_F_X1+4]),
-	S_BRIGHT (MLF2, 'J',	3, NULL					    , &States[S_LIGHTNING_F_X1+5]),
-	S_BRIGHT (MLF2, 'K',	3, NULL					    , &States[S_LIGHTNING_F_X1+6]),
-	S_BRIGHT (MLF2, 'L',	3, NULL					    , &States[S_LIGHTNING_F_X1+7]),
-	S_BRIGHT (MLF2, 'M',	3, NULL					    , &States[S_LIGHTNING_F_X1+8]),
-	S_NORMAL (ACLO, 'E',   20, NULL					    , &States[S_LIGHTNING_F_X1+9]),
-	S_BRIGHT (MLF2, 'N',	3, NULL					    , &States[S_LIGHTNING_F_X1+10]),
-	S_BRIGHT (MLF2, 'O',	3, NULL					    , &States[S_LIGHTNING_F_X1+11]),
-	S_BRIGHT (MLF2, 'P',	4, NULL					    , &States[S_LIGHTNING_F_X1+12]),
-	S_BRIGHT (MLF2, 'Q',	3, NULL					    , &States[S_LIGHTNING_F_X1+13]),
-	S_BRIGHT (MLF2, 'P',	3, NULL					    , &States[S_LIGHTNING_F_X1+14]),
-	S_BRIGHT (MLF2, 'Q',	4, A_LastZap			    , &States[S_LIGHTNING_F_X1+15]),
-	S_BRIGHT (MLF2, 'P',	3, NULL					    , &States[S_LIGHTNING_F_X1+16]),
-	S_BRIGHT (MLF2, 'O',	3, NULL					    , &States[S_LIGHTNING_F_X1+17]),
-	S_BRIGHT (MLF2, 'P',	3, NULL					    , &States[S_LIGHTNING_F_X1+18]),
-	S_BRIGHT (MLF2, 'P',	1, A_HideThing			    , &ALightningCeiling::States[S_LIGHTNING_C_X1+19]),
-};
-
-IMPLEMENT_ACTOR (ALightningFloor, Hexen, -1, 0)
-	PROP_SpawnHealth (144)
-	PROP_SpeedFixed (25)
-	PROP_RadiusFixed (16)
-	PROP_HeightFixed (40)
-	PROP_Damage (8)
-	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY|MF_DROPOFF|MF_MISSILE)
-	PROP_Flags2 (MF2_NOTELEPORT|MF2_IMPACT|MF2_PCROSS)
-	PROP_Flags3 (MF3_FLOORHUGGER)
-	PROP_RenderStyle (STYLE_Add)
-
-	PROP_SpawnState (S_LIGHTNING_FLOOR1)
-	PROP_DeathState (S_LIGHTNING_F_X1)
-END_DEFAULTS
-
 // Lightning Zap ------------------------------------------------------------
 
 class ALightningZap : public AActor
 {
-	DECLARE_ACTOR (ALightningZap, AActor)
+	DECLARE_CLASS (ALightningZap, AActor)
 public:
 	int SpecialMissileHit (AActor *thing);
 };
 
-FState ALightningZap::States[] =
-{
-#define S_LIGHTNING_ZAP1 0
-	S_BRIGHT (MLFX, 'I',	2, A_ZapMimic			    , &States[S_LIGHTNING_ZAP1+1]),
-	S_BRIGHT (MLFX, 'J',	2, A_ZapMimic			    , &States[S_LIGHTNING_ZAP1+2]),
-	S_BRIGHT (MLFX, 'K',	2, A_ZapMimic			    , &States[S_LIGHTNING_ZAP1+3]),
-	S_BRIGHT (MLFX, 'L',	2, A_ZapMimic			    , &States[S_LIGHTNING_ZAP1+4]),
-	S_BRIGHT (MLFX, 'M',	2, A_ZapMimic			    , &States[S_LIGHTNING_ZAP1]),
-
-#define S_LIGHTNING_ZAP_X1 (S_LIGHTNING_ZAP1+5)
-	S_BRIGHT (MLFX, 'N',	2, NULL					    , &States[S_LIGHTNING_ZAP_X1+1]),
-	S_BRIGHT (MLFX, 'O',	2, NULL					    , &States[S_LIGHTNING_ZAP_X1+2]),
-	S_BRIGHT (MLFX, 'P',	2, NULL					    , &States[S_LIGHTNING_ZAP_X1+3]),
-	S_BRIGHT (MLFX, 'Q',	2, NULL					    , &States[S_LIGHTNING_ZAP_X1+4]),
-	S_BRIGHT (MLFX, 'R',	2, NULL					    , &States[S_LIGHTNING_ZAP_X1+5]),
-	S_BRIGHT (MLFX, 'S',	2, NULL					    , &States[S_LIGHTNING_ZAP_X1+6]),
-	S_BRIGHT (MLFX, 'T',	2, NULL					    , &States[S_LIGHTNING_ZAP_X1+7]),
-	S_BRIGHT (MLFX, 'U',	2, NULL					    , NULL),
-};
-
-IMPLEMENT_ACTOR (ALightningZap, Hexen, -1, 0)
-	PROP_RadiusFixed (15)
-	PROP_HeightFixed (35)
-	PROP_Damage (2)
-	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY|MF_DROPOFF|MF_MISSILE)
-	PROP_RenderStyle (STYLE_Add)
-
-	PROP_SpawnState (S_LIGHTNING_ZAP1)
-	PROP_DeathState (S_LIGHTNING_ZAP_X1+7)
-END_DEFAULTS
+IMPLEMENT_CLASS (ALightningZap)
 
 int ALightningZap::SpecialMissileHit (AActor *thing)
 {
@@ -486,8 +268,8 @@ void A_MLightningAttack2 (AActor *actor)
 {
 	AActor *fmo, *cmo;
 
-	fmo = P_SpawnPlayerMissile (actor, RUNTIME_CLASS(ALightningFloor));
-	cmo = P_SpawnPlayerMissile (actor, RUNTIME_CLASS(ALightningCeiling));
+	fmo = P_SpawnPlayerMissile (actor, PClass::FindClass ("LightningFloor"));
+	cmo = P_SpawnPlayerMissile (actor, PClass::FindClass ("LightningCeiling"));
 	if (fmo)
 	{
 		fmo->special1 = 0;
@@ -560,7 +342,7 @@ void A_LastZap (AActor *actor)
 	mo = Spawn<ALightningZap> (actor->x, actor->y, actor->z, ALLOW_REPLACE);
 	if (mo)
 	{
-		mo->SetState (&ALightningZap::States[S_LIGHTNING_ZAP_X1]);
+		mo->SetState (mo->FindState ("Death"));
 		mo->momz = 40*FRACUNIT;
 		mo->Damage = 0;
 	}

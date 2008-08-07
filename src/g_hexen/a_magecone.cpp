@@ -21,99 +21,16 @@ static FRandom pr_cone ("FireConePL1");
 void A_FireConePL1 (AActor *actor);
 void A_ShedShard (AActor *);
 
-// The Mage's Frost Cone ----------------------------------------------------
-
-class AMWeapFrost : public AMageWeapon
-{
-	DECLARE_ACTOR (AMWeapFrost, AMageWeapon)
-};
-
-FState AMWeapFrost::States[] =
-{
-#define S_COS1 0
-	S_BRIGHT (WMCS, 'A',	8, NULL					    , &States[S_COS1+1]),
-	S_BRIGHT (WMCS, 'B',	8, NULL					    , &States[S_COS1+2]),
-	S_BRIGHT (WMCS, 'C',	8, NULL					    , &States[S_COS1]),
-
-#define S_CONEREADY (S_COS1+3)
-	S_NORMAL (CONE, 'A',	1, A_WeaponReady		    , &States[S_CONEREADY]),
-
-#define S_CONEDOWN (S_CONEREADY+1)
-	S_NORMAL (CONE, 'A',	1, A_Lower				    , &States[S_CONEDOWN]),
-
-#define S_CONEUP (S_CONEDOWN+1)
-	S_NORMAL (CONE, 'A',	1, A_Raise				    , &States[S_CONEUP]),
-
-#define S_CONEATK (S_CONEUP+1)
-	S_NORMAL (CONE, 'B',	3, NULL					    , &States[S_CONEATK+1]),
-	S_NORMAL (CONE, 'C',	4, NULL					    , &States[S_CONEATK+2]),
-	S_NORMAL (CONE, 'D',	3, NULL					    , &States[S_CONEATK+3]),
-	S_NORMAL (CONE, 'E',	5, NULL					    , &States[S_CONEATK+4]),
-	S_NORMAL (CONE, 'F',	3, A_FireConePL1		    , &States[S_CONEATK+5]),
-	S_NORMAL (CONE, 'G',	3, NULL					    , &States[S_CONEATK+6]),
-	S_NORMAL (CONE, 'A',	9, NULL					    , &States[S_CONEATK+7]),
-	S_NORMAL (CONE, 'A',   10, A_ReFire				    , &States[S_CONEREADY]),
-};
-
-IMPLEMENT_ACTOR (AMWeapFrost, Hexen, 53, 36)
-	PROP_Flags (MF_SPECIAL)
-	PROP_Flags5 (MF5_BLOODSPLATTER)
-	PROP_SpawnState (S_COS1)
-
-	PROP_Weapon_SelectionOrder (1700)
-	PROP_Weapon_AmmoUse1 (3)
-	PROP_Weapon_AmmoGive1 (25)
-	PROP_Weapon_UpState (S_CONEUP)
-	PROP_Weapon_DownState (S_CONEDOWN)
-	PROP_Weapon_ReadyState (S_CONEREADY)
-	PROP_Weapon_AtkState (S_CONEATK)
-	PROP_Weapon_HoldAtkState (S_CONEATK+2)
-	PROP_Weapon_Kickback (150)
-	PROP_Weapon_YAdjust (20)
-	PROP_Weapon_MoveCombatDist (19000000)
-	PROP_Weapon_AmmoType1 ("Mana1")
-	PROP_Weapon_ProjectileType ("FrostMissile")
-	PROP_Inventory_PickupMessage("$TXT_WEAPON_M2")
-END_DEFAULTS
-
 // Frost Missile ------------------------------------------------------------
 
 class AFrostMissile : public AActor
 {
-	DECLARE_ACTOR (AFrostMissile, AActor)
+	DECLARE_CLASS (AFrostMissile, AActor)
 public:
 	int DoSpecialDamage (AActor *victim, int damage);
 };
 
-FState AFrostMissile::States[] =
-{
-	S_BRIGHT (SHRD, 'A',	2, NULL					    , &States[1]),
-	S_BRIGHT (SHRD, 'A',	3, A_ShedShard			    , &States[2]),
-	S_BRIGHT (SHRD, 'B',	3, NULL					    , &States[3]),
-	S_BRIGHT (SHRD, 'C',	3, NULL					    , &States[0]),
-
-#define S_SHARDFXE1_1 (4)
-	S_BRIGHT (SHEX, 'A',	5, NULL					    , &States[S_SHARDFXE1_1+1]),
-	S_BRIGHT (SHEX, 'B',	5, NULL					    , &States[S_SHARDFXE1_1+2]),
-	S_BRIGHT (SHEX, 'C',	5, NULL					    , &States[S_SHARDFXE1_1+3]),
-	S_BRIGHT (SHEX, 'D',	5, NULL					    , &States[S_SHARDFXE1_1+4]),
-	S_BRIGHT (SHEX, 'E',	5, NULL					    , NULL),
-};
-
-IMPLEMENT_ACTOR (AFrostMissile, Hexen, -1, 0)
-	PROP_SpeedFixed (25)
-	PROP_RadiusFixed (13)
-	PROP_HeightFixed (8)
-	PROP_Damage (1)
-	PROP_DamageType (NAME_Ice)
-	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY|MF_DROPOFF|MF_MISSILE)
-	PROP_Flags2 (MF2_NOTELEPORT|MF2_IMPACT|MF2_PCROSS)
-
-	PROP_SpawnState (0)
-	PROP_DeathState (S_SHARDFXE1_1)
-
-	PROP_DeathSound ("MageShardsExplode")
-END_DEFAULTS
+IMPLEMENT_CLASS (AFrostMissile)
 
 int AFrostMissile::DoSpecialDamage (AActor *victim, int damage)
 {
@@ -123,26 +40,6 @@ int AFrostMissile::DoSpecialDamage (AActor *victim, int damage)
 	}
 	return damage;
 }
-
-// Ice Shard ----------------------------------------------------------------
-
-class AIceShard : public AFrostMissile
-{
-	DECLARE_ACTOR (AIceShard, AFrostMissile)
-};
-
-FState AIceShard::States[] =
-{
-	S_BRIGHT (SHRD, 'A',	3, NULL					    , &States[1]),
-	S_BRIGHT (SHRD, 'B',	3, NULL					    , &States[2]),
-	S_BRIGHT (SHRD, 'C',	3, NULL					    , &States[0]),
-};
-
-IMPLEMENT_ACTOR (AIceShard, Hexen, -1, 65)
-	PROP_DamageType (NAME_Ice)
-	PROP_Flags2 (MF2_NOTELEPORT)
-	PROP_SpawnState (0)
-END_DEFAULTS
 
 //============================================================================
 //

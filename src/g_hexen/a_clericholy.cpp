@@ -68,7 +68,7 @@ void ACWeaponPiece1::BeginPlay ()
 
 class ACWeaponPiece2 : public AClericWeaponPiece
 {
-	DECLARE_ACTOR (ACWeaponPiece2, AClericWeaponPiece)
+	DECLARE_CLASS (ACWeaponPiece2, AClericWeaponPiece)
 public:
 	void BeginPlay ();
 };
@@ -85,7 +85,7 @@ void ACWeaponPiece2::BeginPlay ()
 
 class ACWeaponPiece3 : public AClericWeaponPiece
 {
-	DECLARE_ACTOR (ACWeaponPiece3, AClericWeaponPiece)
+	DECLARE_CLASS (ACWeaponPiece3, AClericWeaponPiece)
 public:
 	void BeginPlay ();
 };
@@ -102,7 +102,7 @@ void ACWeaponPiece3::BeginPlay ()
 
 class ACWeapWraithverge : public AClericWeapon
 {
-	DECLARE_ACTOR (ACWeapWraithverge, AClericWeapon)
+	DECLARE_CLASS (ACWeapWraithverge, AClericWeapon)
 public:
 	void Serialize (FArchive &arc)
 	{

@@ -1,4 +1,6 @@
 August 7, 2008 (Changes by Graf Zahl)
+- Added Gez's dropammofactor submission with some necessary changes. Also merged
+  redundant ammo multiplication code from P_DropItem and ADehackedPickup::TryPickup.
 - Fixed. The Firedemon was missing a game filter.
 
 August 7, 2008 (SBARINfO update)

@@ -70,6 +70,7 @@ public:
 	int Line;
 	bool End;
 	bool Crossed;
+	int LumpNum;
 
 protected:
 	void PrepareScript();

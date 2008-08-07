@@ -165,6 +165,11 @@ static void ParseActionDef (FScanner &sc, PClass *cls)
 	AFuncDesc *afd;
 	FName funcname;
 	FString args;
+	
+	if (sc.LumpNum == -1 || Wads.GetLumpFile(sc.LumpNum) > 0)
+	{
+		sc.ScriptError ("action functions can only be imported by internal class and actor definitions!");
+	}
 
 	sc.MustGetToken(TK_Native);
 	sc.MustGetToken(TK_Identifier);

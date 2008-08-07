@@ -2603,6 +2603,8 @@ void FinishDehPatch ()
 	}
 }
 
+void ModifyDropAmount(AInventory *inv, int dropamount);
+
 bool ADehackedPickup::TryPickup (AActor *toucher)
 {
 	const PClass *type = DetermineType ();
@@ -2618,18 +2620,10 @@ bool ADehackedPickup::TryPickup (AActor *toucher)
 			RealPickup->flags &= ~MF_DROPPED;
 		}
 		// If this item has been dropped by a monster the
-		// amount of ammo this gives must be halved.
+		// amount of ammo this gives must be adjusted.
 		if (droppedbymonster)
 		{
-			if (RealPickup->IsKindOf(RUNTIME_CLASS(AWeapon)))
-			{
-				static_cast<AWeapon *>(RealPickup)->AmmoGive1 /= 2;
-				static_cast<AWeapon *>(RealPickup)->AmmoGive2 /= 2;
-			}
-			else if (RealPickup->IsKindOf(RUNTIME_CLASS(AAmmo)))
-			{
-				RealPickup->Amount /= 2;
-			}
+			ModifyDropAmount(RealPickup, 0);
 		}
 		if (!RealPickup->TryPickup (toucher))
 		{

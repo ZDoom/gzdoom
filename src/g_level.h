@@ -406,6 +406,7 @@ void G_WriteSnapshots (FILE *file);
 enum ESkillProperty
 {
 	SKILLP_AmmoFactor,
+	SKILLP_DropAmmoFactor,
 	SKILLP_DamageFactor,
 	SKILLP_FastMonsters,
 	SKILLP_Respawn,
@@ -424,7 +425,7 @@ typedef TMap<FName, FString> SkillMenuNames;
 struct FSkillInfo
 {
 	FName Name;
-	fixed_t AmmoFactor, DoubleAmmoFactor;
+	fixed_t AmmoFactor, DoubleAmmoFactor, DropAmmoFactor;
 	fixed_t DamageFactor;
 	bool FastMonsters;
 	bool DisableCheats;

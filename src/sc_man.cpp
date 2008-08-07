@@ -179,6 +179,7 @@ void FScanner::OpenFile (const char *name)
 	ScriptBuffer = FString((const char *)filebuf, filesize);
 	delete[] filebuf;
 	ScriptName = name;	// This is used for error messages so the full file name is preferable
+	LumpNum = -1;
 	PrepareScript ();
 }
 
@@ -196,6 +197,7 @@ void FScanner::OpenMem (const char *name, char *buffer, int size)
 	Close ();
 	ScriptBuffer = FString(buffer, size);
 	ScriptName = name;
+	LumpNum = -1;
 	PrepareScript ();
 }
 
@@ -215,6 +217,7 @@ void FScanner :: OpenLumpNum (int lump)
 		ScriptBuffer = mem.GetString();
 	}
 	ScriptName = Wads.GetLumpFullPath(lump);
+	LumpNum = lump;
 	PrepareScript ();
 }
 

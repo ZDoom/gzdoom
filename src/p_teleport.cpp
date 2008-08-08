@@ -40,106 +40,24 @@ extern void P_CalcHeight (player_t *player);
 
 CVAR (Bool, telezoom, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 
-FState ATeleportFog::States[] =
-{
-#define S_DTFOG 0
-	S_BRIGHT (TFOG, 'A',	6, NULL 						, &States[S_DTFOG+1]),
-	S_BRIGHT (TFOG, 'B',	6, NULL 						, &States[S_DTFOG+2]),
-	S_BRIGHT (TFOG, 'A',	6, NULL 						, &States[S_DTFOG+3]),
-	S_BRIGHT (TFOG, 'B',	6, NULL 						, &States[S_DTFOG+4]),
-	S_BRIGHT (TFOG, 'C',	6, NULL 						, &States[S_DTFOG+5]),
-	S_BRIGHT (TFOG, 'D',	6, NULL 						, &States[S_DTFOG+6]),
-	S_BRIGHT (TFOG, 'E',	6, NULL 						, &States[S_DTFOG+7]),
-	S_BRIGHT (TFOG, 'F',	6, NULL 						, &States[S_DTFOG+8]),
-	S_BRIGHT (TFOG, 'G',	6, NULL 						, &States[S_DTFOG+9]),
-	S_BRIGHT (TFOG, 'H',	6, NULL 						, &States[S_DTFOG+10]),
-	S_BRIGHT (TFOG, 'I',	6, NULL 						, &States[S_DTFOG+11]),
-	S_BRIGHT (TFOG, 'J',	6, NULL 						, NULL),
-
-#define S_HTFOG (S_DTFOG+12)
-	S_BRIGHT (TELE, 'A',    6, NULL                         , &States[S_HTFOG+1]),
-	S_BRIGHT (TELE, 'B',    6, NULL                         , &States[S_HTFOG+2]),
-	S_BRIGHT (TELE, 'C',    6, NULL                         , &States[S_HTFOG+3]),
-	S_BRIGHT (TELE, 'D',    6, NULL                         , &States[S_HTFOG+4]),
-	S_BRIGHT (TELE, 'E',    6, NULL                         , &States[S_HTFOG+5]),
-	S_BRIGHT (TELE, 'F',    6, NULL                         , &States[S_HTFOG+6]),
-	S_BRIGHT (TELE, 'G',    6, NULL                         , &States[S_HTFOG+7]),
-	S_BRIGHT (TELE, 'H',    6, NULL                         , &States[S_HTFOG+8]),
-	S_BRIGHT (TELE, 'G',    6, NULL                         , &States[S_HTFOG+9]),
-	S_BRIGHT (TELE, 'F',    6, NULL                         , &States[S_HTFOG+10]),
-	S_BRIGHT (TELE, 'E',    6, NULL                         , &States[S_HTFOG+11]),
-	S_BRIGHT (TELE, 'D',    6, NULL                         , &States[S_HTFOG+12]),
-	S_BRIGHT (TELE, 'C',    6, NULL                         , NULL),
-
-#define S_STFOG (S_HTFOG+13)
-	S_BRIGHT (TFOG, 'A',	6, NULL 						, &States[S_STFOG+1]),
-	S_BRIGHT (TFOG, 'B',	6, NULL 						, &States[S_STFOG+2]),
-	S_BRIGHT (TFOG, 'C',	6, NULL 						, &States[S_STFOG+3]),
-	S_BRIGHT (TFOG, 'D',	6, NULL 						, &States[S_STFOG+4]),
-	S_BRIGHT (TFOG, 'E',	6, NULL 						, &States[S_STFOG+5]),
-	S_BRIGHT (TFOG, 'F',	6, NULL 						, &States[S_STFOG+6]),
-	S_BRIGHT (TFOG, 'E',	6, NULL 						, &States[S_STFOG+7]),
-	S_BRIGHT (TFOG, 'D',	6, NULL 						, &States[S_STFOG+8]),
-	S_BRIGHT (TFOG, 'C',	6, NULL 						, &States[S_STFOG+9]),
-	S_BRIGHT (TFOG, 'B',	6, NULL 						, NULL),
-};
-
-IMPLEMENT_ACTOR (ATeleportFog, Any, -1, 0)
-	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
-	PROP_Flags2 (MF2_NOTELEPORT)
-	PROP_RenderStyle (STYLE_Add)
-END_DEFAULTS
-
-AT_GAME_SET (TeleportFog)
-{
-	ATeleportFog *def = GetDefault<ATeleportFog>();
-
-	if (gameinfo.gametype == GAME_Doom)
-	{
-		def->SpawnState = &ATeleportFog::States[S_DTFOG];
-	}
-	else if (gameinfo.gametype == GAME_Strife)
-	{
-		def->SpawnState = &ATeleportFog::States[S_STFOG];
-	}
-	else
-	{
-		def->SpawnState = &ATeleportFog::States[S_HTFOG];
-	}
-}
+IMPLEMENT_CLASS (ATeleportFog)
 
 void ATeleportFog::PostBeginPlay ()
 {
 	Super::PostBeginPlay ();
 	S_Sound (this, CHAN_BODY, "misc/teleport", 1, ATTN_NORM);
+	switch (gameinfo.gametype)
+	{
+	case GAME_Hexen:
+	case GAME_Heretic:
+		SetState(FindState(NAME_Raven));
+		break;
+
+	case GAME_Strife:
+		SetState(FindState(NAME_Strife));
+		break;
+	}
 }
-
-IMPLEMENT_STATELESS_ACTOR (ATeleportDest, Any, 14, 0)
-	PROP_Flags (MF_NOBLOCKMAP|MF_NOSECTOR)
-	PROP_Flags3(MF3_DONTSPLASH)
-END_DEFAULTS
-
-// Teleport dest that can spawn above floor
-
-class ATeleportDest2 : public ATeleportDest
-{
-	DECLARE_STATELESS_ACTOR (ATeleportDest2, ATeleportDest)
-};
-
-IMPLEMENT_STATELESS_ACTOR (ATeleportDest2, Any, 9044, 0)
-	PROP_FlagsSet (MF_NOGRAVITY)
-END_DEFAULTS
-
-// Z-preserving dest subject to gravity (for TeleportGroup, etc.)
-
-class ATeleportDest3 : public ATeleportDest2
-{
-	DECLARE_STATELESS_ACTOR (ATeleportDest3, ATeleportDest2)
-};
-
-IMPLEMENT_STATELESS_ACTOR (ATeleportDest3, Any, 9043, 0)
-	PROP_FlagsClear (MF_NOGRAVITY)
-END_DEFAULTS
 
 //==========================================================================
 //
@@ -340,7 +258,7 @@ static AActor *SelectTeleDest (int tid, int tag)
 
 	if (tid != 0)
 	{
-		TActorIterator<ATeleportDest> iterator (tid);
+		NActorIterator iterator (NAME_TeleportDest, tid);
 		int count = 0;
 		while ( (searcher = iterator.Next ()) )
 		{
@@ -405,7 +323,7 @@ static AActor *SelectTeleDest (int tid, int tag)
 			// teleport destination. This means if 50 sectors have a matching tag and
 			// only the last one has a destination, *every* actor is scanned at least 49
 			// times. Yuck.
-			TThinkerIterator<ATeleportDest> it2;
+			TThinkerIterator<AActor> it2(NAME_TeleportDest);
 			while ((searcher = it2.Next()) != NULL)
 			{
 				if (searcher->Sector == sectors + secnum)
@@ -464,7 +382,7 @@ bool EV_Teleport (int tid, int tag, line_t *line, int side, AActor *thing, bool 
 
 		z = searcher->z;
 	}
-	else if (searcher->IsKindOf (RUNTIME_CLASS(ATeleportDest2)))
+	else if (searcher->IsKindOf (PClass::FindClass(NAME_TeleportDest2)))
 	{
 		z = searcher->z;
 	}
@@ -709,7 +627,7 @@ bool EV_TeleportGroup (int group_tid, AActor *victim, int source_tid, int dest_t
 	}
 
 	{
-		TActorIterator<ATeleportDest> iterator (dest_tid);
+		NActorIterator iterator (NAME_TeleportDest, dest_tid);
 		destOrigin = iterator.Next ();
 	}
 	if (destOrigin == NULL)
@@ -718,7 +636,7 @@ bool EV_TeleportGroup (int group_tid, AActor *victim, int source_tid, int dest_t
 	}
 
 	bool didSomething = false;
-	bool floorz = !destOrigin->IsKindOf (RUNTIME_CLASS(ATeleportDest2));
+	bool floorz = !destOrigin->IsKindOf (PClass::FindClass("TeleportDest2"));
 
 	// Use the passed victim if group_tid is 0
 	if (group_tid == 0 && victim != NULL)
@@ -764,7 +682,7 @@ bool EV_TeleportSector (int tag, int source_tid, int dest_tid, bool fog, int gro
 		return false;
 	}
 	{
-		TActorIterator<ATeleportDest> iterator (dest_tid);
+		NActorIterator iterator (NAME_TeleportDest, dest_tid);
 		destOrigin = iterator.Next ();
 	}
 	if (destOrigin == NULL)
@@ -773,7 +691,7 @@ bool EV_TeleportSector (int tag, int source_tid, int dest_tid, bool fog, int gro
 	}
 
 	bool didSomething = false;
-	bool floorz = !destOrigin->IsKindOf (RUNTIME_CLASS(ATeleportDest2));
+	bool floorz = !destOrigin->IsKindOf (PClass::FindClass("TeleportDest2"));
 	int secnum;
 
 	secnum = -1;

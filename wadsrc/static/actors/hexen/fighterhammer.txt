@@ -61,8 +61,6 @@ ACTOR HammerMissile
 	Projectile
 	DeathSound "FighterHammerExplode"
 
-	action native A_BeAdditive();
-
 	States
 	{
 	Spawn:
@@ -71,7 +69,7 @@ ACTOR HammerMissile
 		FHFX CDEFGH 2 Bright
 		Loop
 	Death:
-		FHFX I 3 Bright A_BeAdditive
+		FHFX I 3 Bright A_SetTranslucent(1,1)
 		FHFX J 3 Bright
 		FHFX K 3 Bright A_Explode (128, 128, 0)
 		FHFX LM 3 Bright

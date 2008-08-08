@@ -47,7 +47,6 @@ void A_Pain (AActor *actor);
 void A_Die (AActor *actor);
 void A_Detonate (AActor *mo);
 void A_Explode (AActor *thing);
-void A_ExplodeAndAlert (AActor *thing);
 void A_Mushroom (AActor *actor);
 void A_BossDeath (AActor *actor);
 void A_FireScream (AActor *mo);

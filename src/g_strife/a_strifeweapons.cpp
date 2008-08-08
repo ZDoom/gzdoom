@@ -689,183 +689,18 @@ void A_FireGrenade (AActor *self)
 
 // The Almighty Sigil! ------------------------------------------------------
 
-void A_SelectPiece (AActor *);
-void A_SelectSigilView (AActor *);
-void A_SelectSigilDown (AActor *);
-void A_SelectSigilAttack (AActor *);
-void A_SigilCharge (AActor *);
-void A_FireSigil1 (AActor *);
-void A_FireSigil2 (AActor *);
-void A_FireSigil3 (AActor *);
-void A_FireSigil4 (AActor *);
-void A_FireSigil5 (AActor *);
-void A_LightInverse (AActor *);
+IMPLEMENT_CLASS(ASigil)
 
-FState ASigil::States[] =
+//============================================================================
+//
+// ASigil :: Serialize
+//
+//============================================================================
+
+void ASigil::BeginPlay()
 {
-	S_NORMAL (SIGL, 'A',  0, NULL,					&States[1]),
-	S_NORMAL (SIGL, 'A', -1, A_SelectPiece,			NULL),
-	S_NORMAL (SIGL, 'B', -1, NULL,					NULL),
-	S_NORMAL (SIGL, 'C', -1, NULL,					NULL),
-	S_NORMAL (SIGL, 'D', -1, NULL,					NULL),
-	S_NORMAL (SIGL, 'E', -1, NULL,					NULL),
-
-#define S_SIGIL 6
-	S_BRIGHT (SIGH, 'A',  0, A_SelectSigilView,		&States[S_SIGIL+1]),
-	S_BRIGHT (SIGH, 'A',  1, A_WeaponReady,			&States[S_SIGIL+1]),
-	S_BRIGHT (SIGH, 'B',  1, A_WeaponReady,			&States[S_SIGIL+2]),
-	S_BRIGHT (SIGH, 'C',  1, A_WeaponReady,			&States[S_SIGIL+3]),
-	S_BRIGHT (SIGH, 'D',  1, A_WeaponReady,			&States[S_SIGIL+4]),
-	S_BRIGHT (SIGH, 'E',  1, A_WeaponReady,			&States[S_SIGIL+5]),
-
-#define S_SIGILDOWN (S_SIGIL+6)
-	S_BRIGHT (SIGH, 'A',  0, A_SelectSigilDown,		&States[S_SIGILDOWN+1]),
-	S_BRIGHT (SIGH, 'A',  1, A_Lower,				&States[S_SIGILDOWN+1]),
-	S_BRIGHT (SIGH, 'B',  1, A_Lower,				&States[S_SIGILDOWN+2]),
-	S_BRIGHT (SIGH, 'C',  1, A_Lower,				&States[S_SIGILDOWN+3]),
-	S_BRIGHT (SIGH, 'D',  1, A_Lower,				&States[S_SIGILDOWN+4]),
-	S_BRIGHT (SIGH, 'E',  1, A_Lower,				&States[S_SIGILDOWN+5]),
-
-#define S_SIGILUP (S_SIGILDOWN+6)
-	S_BRIGHT (SIGH, 'A',  0, A_SelectSigilView,		&States[S_SIGILUP+1]),
-	S_BRIGHT (SIGH, 'A',  1, A_Raise,				&States[S_SIGILUP+1]),
-	S_BRIGHT (SIGH, 'B',  1, A_Raise,				&States[S_SIGILUP+2]),
-	S_BRIGHT (SIGH, 'C',  1, A_Raise,				&States[S_SIGILUP+3]),
-	S_BRIGHT (SIGH, 'D',  1, A_Raise,				&States[S_SIGILUP+4]),
-	S_BRIGHT (SIGH, 'E',  1, A_Raise,				&States[S_SIGILUP+5]),
-
-#define S_SIGILATK (S_SIGILUP+6)
-	S_BRIGHT (SIGH, 'A',  0, A_SelectSigilAttack,	&States[S_SIGILATK+1]),
-
-	S_BRIGHT (SIGH, 'A', 18, A_SigilCharge,			&States[S_SIGILATK+2]),
-	S_BRIGHT (SIGH, 'A',  3, A_GunFlash,			&States[S_SIGILATK+3]),
-	S_NORMAL (SIGH, 'A', 10, A_FireSigil1,			&States[S_SIGILATK+4]),
-	S_NORMAL (SIGH, 'A',  5, NULL,					&States[S_SIGIL]),
-
-	S_BRIGHT (SIGH, 'B', 18, A_SigilCharge,			&States[S_SIGILATK+6]),
-	S_BRIGHT (SIGH, 'B',  3, A_GunFlash,			&States[S_SIGILATK+7]),
-	S_NORMAL (SIGH, 'B', 10, A_FireSigil2,			&States[S_SIGILATK+8]),
-	S_NORMAL (SIGH, 'B',  5, NULL,					&States[S_SIGIL]),
-
-	S_BRIGHT (SIGH, 'C', 18, A_SigilCharge,			&States[S_SIGILATK+10]),
-	S_BRIGHT (SIGH, 'C',  3, A_GunFlash,			&States[S_SIGILATK+11]),
-	S_NORMAL (SIGH, 'C', 10, A_FireSigil3,			&States[S_SIGILATK+12]),
-	S_NORMAL (SIGH, 'C',  5, NULL,					&States[S_SIGIL]),
-
-	S_BRIGHT (SIGH, 'D', 18, A_SigilCharge,			&States[S_SIGILATK+14]),
-	S_BRIGHT (SIGH, 'D',  3, A_GunFlash,			&States[S_SIGILATK+15]),
-	S_NORMAL (SIGH, 'D', 10, A_FireSigil4,			&States[S_SIGILATK+16]),
-	S_NORMAL (SIGH, 'D',  5, NULL,					&States[S_SIGIL]),
-
-	S_BRIGHT (SIGH, 'E', 18, A_SigilCharge,			&States[S_SIGILATK+18]),
-	S_BRIGHT (SIGH, 'E',  3, A_GunFlash,			&States[S_SIGILATK+19]),
-	S_NORMAL (SIGH, 'E', 10, A_FireSigil5,			&States[S_SIGILATK+20]),
-	S_NORMAL (SIGH, 'E',  5, NULL,					&States[S_SIGIL]),
-
-#define S_SIGILFLASH (S_SIGILATK+1+4*5)
-	S_BRIGHT (SIGF, 'A',  4, A_Light2,				&States[S_SIGILFLASH+1]),
-	S_BRIGHT (SIGF, 'B',  6, A_LightInverse,		&States[S_SIGILFLASH+2]),
-	S_BRIGHT (SIGF, 'C',  4, A_Light1,				&States[S_SIGILFLASH+3]),
-	S_BRIGHT (SIGF, 'C',  0, A_Light0,				NULL)
-};
-
-IMPLEMENT_ACTOR (ASigil, Strife, -1, 0)
-	PROP_Weapon_SelectionOrder (4000)
-	PROP_Weapon_UpState (S_SIGILUP)
-	PROP_Weapon_DownState (S_SIGILDOWN)
-	PROP_Weapon_ReadyState (S_SIGIL)
-	PROP_Weapon_AtkState (S_SIGILATK)
-	PROP_Weapon_FlashState (S_SIGILFLASH)
-	PROP_Sigil_NumPieces (1)
-	PROP_SpawnState (0)
-	PROP_Flags (MF_SPECIAL)
-	PROP_Flags2 (MF2_FLOORCLIP)
-	PROP_Weapon_FlagsSet (WIF_CHEATNOTWEAPON)
-	PROP_Inventory_PickupSound("weapons/sigilcharge")
-	PROP_Tag ("SIGIL")
-	PROP_Inventory_Icon ("I_SGL1")
-	PROP_Inventory_PickupMessage("$TXT_SIGIL")
-END_DEFAULTS
-
-// Sigil 1 ------------------------------------------------------------------
-
-class ASigil1 : public ASigil
-{
-	DECLARE_STATELESS_ACTOR (ASigil1, ASigil)
-};
-
-IMPLEMENT_STATELESS_ACTOR (ASigil1, Strife, 77, 0)
-	PROP_Sigil_NumPieces (1)
-	PROP_StrifeType (196)
-	PROP_StrifeTeaserType (190)
-	PROP_StrifeTeaserType2 (194)
-	PROP_Tag ("SIGIL")
-	PROP_Inventory_Icon ("I_SGL1")
-END_DEFAULTS
-
-// Sigil 2 ------------------------------------------------------------------
-
-class ASigil2 : public ASigil
-{
-	DECLARE_STATELESS_ACTOR (ASigil2, ASigil)
-};
-
-IMPLEMENT_STATELESS_ACTOR (ASigil2, Strife, 78, 0)
-	PROP_Sigil_NumPieces (2)
-	PROP_StrifeType (197)
-	PROP_StrifeTeaserType (191)
-	PROP_StrifeTeaserType2 (195)
-	PROP_Tag ("SIGIL")
-	PROP_Inventory_Icon ("I_SGL2")
-END_DEFAULTS
-
-// Sigil 3 ------------------------------------------------------------------
-
-class ASigil3 : public ASigil
-{
-	DECLARE_STATELESS_ACTOR (ASigil3, ASigil)
-};
-
-IMPLEMENT_STATELESS_ACTOR (ASigil3, Strife, 79, 0)
-	PROP_Sigil_NumPieces (3)
-	PROP_StrifeType (198)
-	PROP_StrifeTeaserType (192)
-	PROP_StrifeTeaserType2 (196)
-	PROP_Tag ("SIGIL")
-	PROP_Inventory_Icon ("I_SGL3")
-END_DEFAULTS
-
-// Sigil 4 ------------------------------------------------------------------
-
-class ASigil4 : public ASigil
-{
-	DECLARE_STATELESS_ACTOR (ASigil4, ASigil)
-};
-
-IMPLEMENT_STATELESS_ACTOR (ASigil4, Strife, 80, 0)
-	PROP_Sigil_NumPieces (4)
-	PROP_StrifeType (199)
-	PROP_StrifeTeaserType (193)
-	PROP_StrifeTeaserType2 (197)
-	PROP_Tag ("SIGIL")
-	PROP_Inventory_Icon ("I_SGL4")
-END_DEFAULTS
-
-// Sigil 5 ------------------------------------------------------------------
-
-class ASigil5 : public ASigil
-{
-	DECLARE_STATELESS_ACTOR (ASigil5, ASigil)
-};
-
-IMPLEMENT_STATELESS_ACTOR (ASigil5, Strife, 81, 0)
-	PROP_Sigil_NumPieces (5)
-	PROP_StrifeType (200)
-	PROP_StrifeTeaserType (194)
-	PROP_StrifeTeaserType2 (198)
-	PROP_Tag ("SIGIL")
-	PROP_Inventory_Icon ("I_SGL5")
-END_DEFAULTS
+	NumPieces = health;
+}
 
 //============================================================================
 //
@@ -944,7 +779,7 @@ void A_SelectPiece (AActor *self)
 
 	if (pieces > 1)
 	{
-		self->SetState (&ASigil::States[pieces]);
+		self->SetState (self->FindState("Spawn")+pieces);
 	}
 }
 
@@ -1242,7 +1077,7 @@ int ASigil::GiveSigilPiece (AActor *receiver)
 	sigil = receiver->FindInventory<ASigil> ();
 	if (sigil == NULL)
 	{
-		sigil = Spawn<ASigil1> (0,0,0, NO_REPLACE);
+		sigil = static_cast<ASigil*>(Spawn("Sigil1", 0,0,0, NO_REPLACE));
 		if (!sigil->TryPickup (receiver))
 		{
 			sigil->Destroy ();
@@ -1252,15 +1087,11 @@ int ASigil::GiveSigilPiece (AActor *receiver)
 	else if (sigil->NumPieces < 5)
 	{
 		++sigil->NumPieces;
-		static const PClass *const sigils[5] =
+		static const char* sigils[5] =
 		{
-			RUNTIME_CLASS(ASigil1),
-			RUNTIME_CLASS(ASigil2),
-			RUNTIME_CLASS(ASigil3),
-			RUNTIME_CLASS(ASigil4),
-			RUNTIME_CLASS(ASigil5)
+			"Sigil1", "Sigil2", "Sigil3", "Sigil4", "Sigil5"
 		};
-		sigil->Icon = ((AInventory*)GetDefaultByType (sigils[MAX(0,sigil->NumPieces-1)]))->Icon;
+		sigil->Icon = ((AInventory*)GetDefaultByName (sigils[MAX(0,sigil->NumPieces-1)]))->Icon;
 		// If the player has the Sigil out, drop it and bring it back up.
 		if (sigil->Owner->player != NULL && sigil->Owner->player->ReadyWeapon == sigil)
 		{

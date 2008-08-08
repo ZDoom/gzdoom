@@ -371,3 +371,203 @@ ACTOR Communicator : Inventory 206
 	}
 }
 
+// Degnin Ore ---------------------------------------------------------------
+
+ACTOR DegninOre : Inventory 59 native
+{	
+	Game Strife
+	ConversationID 128, 124, 127
+	Health 10
+	Radius 16
+	Height 16
+	Inventory.MaxAmount 10
+	+SOLID
+	+SHOOTABLE
+	+NOBLOOD
+	+FLOORCLIP
+	+INCOMBAT
+	+INVENTORY.INVBAR
+	Tag "Degnin_Ore"
+	DeathSound "ore/explode"
+	Inventory.Icon "I_XPRK"
+	Inventory.PickupMessage "$TXT_DEGNINORE"
+	States
+	{
+	Spawn:
+		XPRK A -1
+		Stop
+	Death:
+		XPRK A 1 A_RemoveForceField
+		BNG3 A 0 A_SetTranslucent(1,1)
+		BNG3 A 0 A_Scream
+		BNG3 A 3 Bright A_Explode(192,192,1,1)
+		BNG3 BCDEFGH 3 Bright
+		Stop
+	}
+}
+
+// Gun Training -------------------------------------------------------------
+
+ACTOR GunTraining : Inventory
+{
+	Game Strife
+	ConversationID 310,-1,-1
+	+FLOORCLIP
+	+INVENTORY.INVBAR
+	+INVENTORY.UNDROPPABLE
+	Inventory.MaxAmount 100
+	Tag "Accuracy"
+	Inventory.Icon "I_GUNT"
+	States
+	{
+	Spawn:
+		GUNT A -1
+		Stop
+	}
+}
+
+// Health Training ----------------------------------------------------------
+
+ACTOR HealthTraining : Inventory native
+{
+	Game Strife
+	ConversationID 309,-1,-1
+	+FLOORCLIP
+	+INVENTORY.INVBAR
+	+INVENTORY.UNDROPPABLE
+	Inventory.MaxAmount 100
+	Tag "Toughness"
+	Inventory.Icon "I_HELT"
+	States
+	{
+	Spawn:
+		HELT A -1
+		Stop
+	}
+}
+
+
+
+// Scanner ------------------------------------------------------------------
+
+ACTOR Scanner : PowerupGiver 2027 native
+{
+	Game Strife
+	ConversationID 165,-1,-1
+	+FLOORCLIP
+	+INVENTORY.FANCYPICKUPSOUND
+	Inventory.MaxAmount 1
+	Tag "scanner"
+	Inventory.Icon "I_PMUP"
+	Powerup.Type "Scanner"
+	Inventory.PickupSound "misc/i_pkup"
+	Inventory.PickupMessage "$TXT_SCANNER"
+	States
+	{
+	Spawn:
+		PMUP AB 6
+		Loop
+	}
+}
+
+// Prison Pass --------------------------------------------------------------
+
+ACTOR PrisonPass : Key native
+{
+	Game Strife
+	ConversationID 304, 286, 303
+	Inventory.Icon "I_TOKN"
+	Tag "Prison_pass"
+	Inventory.PickupMessage "TXT_PRISONPASS"
+	States
+	{
+	Spawn:
+		TOKN A -1
+		Stop
+	}
+}
+
+//---------------------------------------------------------------------------
+// Dummy items. They are just used by Strife to perform ---------------------
+// actions and cannot be held. ----------------------------------------------
+//---------------------------------------------------------------------------
+
+ACTOR DummyStrifeItem : Inventory native
+{
+	States
+	{
+	Spawn:
+		TOKN A -1
+		Stop
+	}
+}
+
+// Sound the alarm! ---------------------------------------------------------
+
+ACTOR RaiseAlarm : DummyStrifeItem native
+{	
+	ConversationID 301, 283, 300
+	Tag "alarm"
+}
+
+// Open door tag 222 --------------------------------------------------------
+
+ACTOR OpenDoor222 : DummyStrifeItem native
+{
+	ConversationID 302, 284, 301
+}
+
+// Close door tag 222 -------------------------------------------------------
+
+ACTOR CloseDoor222 : DummyStrifeItem native
+{
+	ConversationID 303, 285, 302
+}
+
+// Open door tag 224 --------------------------------------------------------
+
+ACTOR OpenDoor224 : DummyStrifeItem native
+{
+	ConversationID 305, -1, -1
+}
+
+// Ammo ---------------------------------------------------------------------
+
+ACTOR AmmoFillup : DummyStrifeItem native
+{
+	ConversationID 298,280,297
+	Tag "Ammo"
+}
+
+// Health -------------------------------------------------------------------
+
+ACTOR HealthFillup : DummyStrifeItem native
+{
+	ConversationID 299,281,298
+	Tag "Health"
+}
+
+// Upgrade Stamina ----------------------------------------------------------
+
+ACTOR UpgradeStamina : DummyStrifeItem native
+{
+	ConversationID 306, 287, 307
+	Inventory.Amount 10
+	Inventory.MaxAmount 100
+}
+
+// Upgrade Accuracy ---------------------------------------------------------
+
+ACTOR UpgradeAccuracy : DummyStrifeItem native
+{
+	ConversationID 307, 288, 308
+}
+
+// Start a slideshow --------------------------------------------------------
+
+ACTOR SlideshowStarter : DummyStrifeItem native
+{
+	ConversationID 343,-1,-1
+}
+
+

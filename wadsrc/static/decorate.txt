@@ -11,6 +11,7 @@
 #include "actors/shared/soundsequence.txt"
 #include "actors/shared/bridge.txt"
 #include "actors/shared/specialspot.txt"
+#include "actors/shared/teleport.txt"
 
 #include "actors/doom/doomplayer.txt"
 #include "actors/doom/possessed.txt"
@@ -140,3 +141,4 @@
 #include "actors/strife/thingstoblowup.txt"
 #include "actors/strife/templar.txt"
 #include "actors/strife/zombie.txt"
+#include "actors/strife/sigil.txt"

@@ -9,9 +9,8 @@
 // a fire or electric death.
 class ADegninOre : public AInventory
 {
-	DECLARE_ACTOR (ADegninOre, AInventory)
+	DECLARE_CLASS (ADegninOre, AInventory)
 public:
-	void GetExplodeParms (int &damage, int &dist, bool &hurtSource);
 	bool Use (bool pickup);
 };
 
@@ -27,39 +26,40 @@ public:
 
 class ADummyStrifeItem : public AInventory
 {
-	DECLARE_ACTOR (ADummyStrifeItem, AInventory)
+	DECLARE_CLASS (ADummyStrifeItem, AInventory)
 };
 
 class AUpgradeStamina : public ADummyStrifeItem
 {
-	DECLARE_STATELESS_ACTOR (AUpgradeStamina, ADummyStrifeItem)
+	DECLARE_CLASS (AUpgradeStamina, ADummyStrifeItem)
 public:
 	bool TryPickup (AActor *toucher);
 };
 
 class AUpgradeAccuracy : public ADummyStrifeItem
 {
-	DECLARE_STATELESS_ACTOR (AUpgradeAccuracy, ADummyStrifeItem)
+	DECLARE_CLASS (AUpgradeAccuracy, ADummyStrifeItem)
 public:
 	bool TryPickup (AActor *toucher);
 };
 
 class ASlideshowStarter : public ADummyStrifeItem
 {
-	DECLARE_STATELESS_ACTOR (ASlideshowStarter, ADummyStrifeItem)
+	DECLARE_CLASS (ASlideshowStarter, ADummyStrifeItem)
 public:
 	bool TryPickup (AActor *toucher);
 };
 
 class ASigil : public AWeapon
 {
-	DECLARE_ACTOR (ASigil, AWeapon)
+	DECLARE_CLASS (ASigil, AWeapon)
 public:
 	bool HandlePickup (AInventory *item);
 	AInventory *CreateCopy (AActor *other);
 	void Serialize (FArchive &arc);
 	bool SpecialDropAction (AActor *dropper);
 	static int GiveSigilPiece (AActor *daPlayer);
+	void BeginPlay();
 
 	int NumPieces, DownPieces;
 };

@@ -1890,7 +1890,7 @@ static void InventoryIcon (FScanner &sc, AInventory *defaults, Baggage &bag)
 			// Don't print warnings if the item is for another game or if this is a shareware IWAD. 
 			// Strife's teaser doesn't contain all the icon graphics of the full game.
 			if ((bag.Info->GameFilter == GAME_Any || bag.Info->GameFilter & gameinfo.gametype) &&
-				!(gameinfo.flags&GI_SHAREWARE))
+				!(gameinfo.flags&GI_SHAREWARE) && Wads.GetLumpFile(sc.LumpNum) != 0)
 			{
 				Printf("Icon '%s' for '%s' not found\n", sc.String, bag.Info->Class->TypeName.GetChars());
 			}

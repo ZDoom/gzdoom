@@ -131,7 +131,11 @@ void A_Mushroom (AActor *actor)
 	}
 	if (spawntype == NULL) spawntype = PClass::FindClass("FatShot");
 
-	A_Explode (actor);	// First make normal explosion
+	P_RadiusAttack (actor, actor->target, 128, 128, actor->DamageType, true);
+	if (actor->z <= actor->floorz + (128<<FRACBITS))
+	{
+		P_HitFloor (actor);
+	}
 
 	// Now launch mushroom cloud
 	AActor *target = Spawn("Mapspot", 0, 0, 0, NO_REPLACE);	// We need something to aim at.

@@ -1,4 +1,7 @@
 August 8, 2008 (Changes by Graf Zahl)
+- Converted teleport fog and destinations to DECORATE.
+- AActor::PreExplode is gone now that the last item that was using it has been converted.
+- Converted the Sigil and the remaining things in a_strifeitems.cpp to DECORATE.
 - Exported Point pushers, CustomSprite and AmbientSound to DECORATE.
 - Changed increased lightning damage for Centaurs into a damage factor.
 - Changed PoisonCloud and Lightning special treatment in P_DamageMobj to use damage

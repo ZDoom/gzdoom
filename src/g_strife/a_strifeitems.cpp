@@ -15,51 +15,7 @@
 
 // Degnin Ore ---------------------------------------------------------------
 
-void A_RemoveForceField (AActor *);
-
-FState ADegninOre::States[] =
-{
-	S_NORMAL (XPRK, 'A', -1, NULL,						NULL),
-
-	S_NORMAL (XPRK, 'A',  1, A_RemoveForceField,		&States[2]),
-	S_BRIGHT (BNG3, 'A',  3, A_ExplodeAndAlert,			&States[3]),
-	S_BRIGHT (BNG3, 'B',  3, NULL,						&States[4]),
-	S_BRIGHT (BNG3, 'C',  3, NULL,						&States[5]),
-	S_BRIGHT (BNG3, 'D',  3, NULL,						&States[6]),
-	S_BRIGHT (BNG3, 'E',  3, NULL,						&States[7]),
-	S_BRIGHT (BNG3, 'F',  3, NULL,						&States[8]),
-	S_BRIGHT (BNG3, 'G',  3, NULL,						&States[9]),
-	S_BRIGHT (BNG3, 'H',  3, NULL,						NULL),
-};
-
-IMPLEMENT_ACTOR (ADegninOre, Strife, 59, 0)
-	PROP_StrifeType (128)
-	PROP_StrifeTeaserType (124)
-	PROP_StrifeTeaserType2 (127)
-	PROP_SpawnHealth (10)
-	PROP_SpawnState (0)
-	PROP_DeathState (1)
-	PROP_RadiusFixed (16)
-	PROP_HeightFixed (16)
-	PROP_Inventory_MaxAmount (10)
-	PROP_Flags (MF_SPECIAL|MF_SOLID|MF_SHOOTABLE|MF_NOBLOOD)
-	PROP_Flags2 (MF2_FLOORCLIP)
-	PROP_Flags4 (MF4_INCOMBAT)
-	PROP_Inventory_FlagsSet (IF_INVBAR)
-	PROP_Tag ("Degnin_Ore")		// "Thalite_Ore" in the Teaser
-	PROP_DeathSound ("ore/explode")
-	PROP_Inventory_Icon ("I_XPRK")
-	PROP_Inventory_PickupMessage("$TXT_DEGNINORE")
-END_DEFAULTS
-
-void ADegninOre::GetExplodeParms (int &damage, int &dist, bool &hurtSource)
-{
-	damage = dist = 192;
-	RenderStyle = STYLE_Add;	// [RH] Make the explosion glow
-
-	// Does Strife automatically play the death sound on death?
-	S_Sound (this, CHAN_BODY, DeathSound, 1, ATTN_NORM);
-}
+IMPLEMENT_CLASS(ADegninOre)
 
 void A_RemoveForceField (AActor *self)
 {
@@ -103,59 +59,22 @@ bool ADegninOre::Use (bool pickup)
 	}
 }
 
-// Gun Training -------------------------------------------------------------
-
-class AGunTraining : public AInventory
-{
-	DECLARE_ACTOR (AGunTraining, AInventory)
-};
-
-FState AGunTraining::States[] =
-{
-	S_NORMAL (GUNT, 'A', -1, NULL, NULL)
-};
-
-IMPLEMENT_ACTOR (AGunTraining, Strife, -1, 0)
-	PROP_StrifeType (310)
-	PROP_SpawnState (0)
-	PROP_Flags (MF_SPECIAL)
-	PROP_Flags2 (MF2_FLOORCLIP)
-	PROP_Inventory_FlagsSet (IF_INVBAR|IF_UNDROPPABLE)
-	PROP_Inventory_MaxAmount (100)
-	PROP_Tag ("Accuracy")
-	PROP_Inventory_Icon ("I_GUNT")
-END_DEFAULTS
-
 // Health Training ----------------------------------------------------------
 
 class AHealthTraining : public AInventory
 {
-	DECLARE_ACTOR (AHealthTraining, AInventory)
+	DECLARE_CLASS (AHealthTraining, AInventory)
 public:
 	bool TryPickup (AActor *toucher);
 };
 
-FState AHealthTraining::States[] =
-{
-	S_NORMAL (HELT, 'A', -1, NULL, NULL)
-};
-
-IMPLEMENT_ACTOR (AHealthTraining, Strife, -1, 0)
-	PROP_StrifeType (309)
-	PROP_SpawnState (0)
-	PROP_Flags (MF_SPECIAL)
-	PROP_Flags2 (MF2_FLOORCLIP)
-	PROP_Inventory_FlagsSet (IF_INVBAR|IF_UNDROPPABLE)
-	PROP_Inventory_MaxAmount (100)
-	PROP_Tag ("Toughness")
-	PROP_Inventory_Icon ("I_HELT")
-END_DEFAULTS
+IMPLEMENT_CLASS (AHealthTraining)
 
 bool AHealthTraining::TryPickup (AActor *toucher)
 {
 	if (Super::TryPickup (toucher))
 	{
-		toucher->GiveInventoryType (RUNTIME_CLASS(AGunTraining));
+		toucher->GiveInventoryType (PClass::FindClass("GunTraining"));
 		AInventory *coin = Spawn<ACoin> (0,0,0, NO_REPLACE);
 		if (coin != NULL)
 		{
@@ -174,30 +93,12 @@ bool AHealthTraining::TryPickup (AActor *toucher)
 
 class AScanner : public APowerupGiver
 {
-	DECLARE_ACTOR (AScanner, APowerupGiver)
+	DECLARE_CLASS (AScanner, APowerupGiver)
 public:
 	bool Use (bool pickup);
 };
 
-FState AScanner::States[] =
-{
-	S_BRIGHT (PMUP, 'A', 6, NULL, &States[1]),
-	S_BRIGHT (PMUP, 'B', 6, NULL, &States[0])
-};
-
-IMPLEMENT_ACTOR (AScanner, Strife, 2027, 0)
-	PROP_StrifeType (165)
-	PROP_SpawnState (0)
-	PROP_Flags (MF_SPECIAL)
-	PROP_Flags2 (MF2_FLOORCLIP)
-	PROP_Inventory_MaxAmount (1)
-	PROP_Inventory_FlagsClear (IF_FANCYPICKUPSOUND)
-	PROP_Tag ("scanner")
-	PROP_Inventory_Icon ("I_PMUP")
-	PROP_PowerupGiver_Powerup ("PowerScanner")
-	PROP_Inventory_PickupSound ("misc/i_pkup")
-	PROP_Inventory_PickupMessage("$TXT_SCANNER")
-END_DEFAULTS
+IMPLEMENT_CLASS (AScanner)
 
 bool AScanner::Use (bool pickup)
 {
@@ -216,26 +117,13 @@ bool AScanner::Use (bool pickup)
 
 class APrisonPass : public AKey
 {
-	DECLARE_ACTOR (APrisonPass, AKey)
+	DECLARE_CLASS (APrisonPass, AKey)
 public:
 	bool TryPickup (AActor *toucher);
 	bool SpecialDropAction (AActor *dropper);
 };
 
-FState APrisonPass::States[] =
-{
-	S_NORMAL (TOKN, 'A', -1, NULL, NULL)
-};
-
-IMPLEMENT_ACTOR (APrisonPass, Strife, -1, 0)
-	PROP_StrifeType (304)
-	PROP_StrifeTeaserType (286)
-	PROP_StrifeTeaserType2 (303)
-	PROP_SpawnState (0)
-	PROP_Inventory_Icon ("I_TOKN")
-	PROP_Tag ("Prison_pass")
-	PROP_Inventory_PickupMessage("$TXT_PRISONPASS")
-END_DEFAULTS
+IMPLEMENT_CLASS (APrisonPass)
 
 bool APrisonPass::TryPickup (AActor *toucher)
 {
@@ -268,32 +156,19 @@ bool APrisonPass::SpecialDropAction (AActor *dropper)
 // actions and cannot be held. ----------------------------------------------
 //---------------------------------------------------------------------------
 
-FState ADummyStrifeItem::States[] =
-{
-	S_NORMAL (TOKN, 'A', -1, NULL, NULL)
-};
-
-IMPLEMENT_ACTOR (ADummyStrifeItem, Strife, -1, 0)
-	PROP_SpawnState (0)
-	PROP_Flags (MF_SPECIAL)
-END_DEFAULTS
+IMPLEMENT_CLASS (ADummyStrifeItem)
 
 // Sound the alarm! ---------------------------------------------------------
 
 class ARaiseAlarm : public ADummyStrifeItem
 {
-	DECLARE_STATELESS_ACTOR (ARaiseAlarm, ADummyStrifeItem)
+	DECLARE_CLASS (ARaiseAlarm, ADummyStrifeItem)
 public:
 	bool TryPickup (AActor *toucher);
 	bool SpecialDropAction (AActor *dropper);
 };
 
-IMPLEMENT_STATELESS_ACTOR (ARaiseAlarm, Strife, -1, 0)
-	PROP_StrifeType (301)
-	PROP_StrifeTeaserType (283)
-	PROP_StrifeTeaserType2 (300)
-	PROP_Tag ("alarm")
-END_DEFAULTS
+IMPLEMENT_CLASS (ARaiseAlarm)
 
 bool ARaiseAlarm::TryPickup (AActor *toucher)
 {
@@ -318,16 +193,12 @@ bool ARaiseAlarm::SpecialDropAction (AActor *dropper)
 
 class AOpenDoor222 : public ADummyStrifeItem
 {
-	DECLARE_STATELESS_ACTOR (AOpenDoor222, ADummyStrifeItem)
+	DECLARE_CLASS (AOpenDoor222, ADummyStrifeItem)
 public:
 	bool TryPickup (AActor *toucher);
 };
 
-IMPLEMENT_STATELESS_ACTOR (AOpenDoor222, Strife, -1, 0)
-	PROP_StrifeType (302)
-	PROP_StrifeTeaserType (284)
-	PROP_StrifeTeaserType2 (301)
-END_DEFAULTS
+IMPLEMENT_CLASS (AOpenDoor222)
 
 bool AOpenDoor222::TryPickup (AActor *toucher)
 {
@@ -340,17 +211,13 @@ bool AOpenDoor222::TryPickup (AActor *toucher)
 
 class ACloseDoor222 : public ADummyStrifeItem
 {
-	DECLARE_STATELESS_ACTOR (ACloseDoor222, ADummyStrifeItem)
+	DECLARE_CLASS (ACloseDoor222, ADummyStrifeItem)
 public:
 	bool TryPickup (AActor *toucher);
 	bool SpecialDropAction (AActor *dropper);
 };
 
-IMPLEMENT_STATELESS_ACTOR (ACloseDoor222, Strife, -1, 0)
-	PROP_StrifeType (303)
-	PROP_StrifeTeaserType (285)
-	PROP_StrifeTeaserType2 (302)
-END_DEFAULTS
+IMPLEMENT_CLASS (ACloseDoor222)
 
 bool ACloseDoor222::TryPickup (AActor *toucher)
 {
@@ -375,15 +242,13 @@ bool ACloseDoor222::SpecialDropAction (AActor *dropper)
 
 class AOpenDoor224 : public ADummyStrifeItem
 {
-	DECLARE_STATELESS_ACTOR (AOpenDoor224, ADummyStrifeItem)
+	DECLARE_CLASS (AOpenDoor224, ADummyStrifeItem)
 public:
 	bool TryPickup (AActor *toucher);
 	bool SpecialDropAction (AActor *dropper);
 };
 
-IMPLEMENT_STATELESS_ACTOR (AOpenDoor224, Strife, -1, 0)
-	PROP_StrifeType (305)
-END_DEFAULTS
+IMPLEMENT_CLASS (AOpenDoor224)
 
 bool AOpenDoor224::TryPickup (AActor *toucher)
 {
@@ -403,17 +268,12 @@ bool AOpenDoor224::SpecialDropAction (AActor *dropper)
 
 class AAmmoFillup : public ADummyStrifeItem
 {
-	DECLARE_STATELESS_ACTOR (AAmmoFillup, ADummyStrifeItem)
+	DECLARE_CLASS (AAmmoFillup, ADummyStrifeItem)
 public:
 	bool TryPickup (AActor *toucher);
 };
 
-IMPLEMENT_STATELESS_ACTOR (AAmmoFillup, Strife, -1, 0)
-	PROP_StrifeType (298)
-	PROP_StrifeTeaserType (280)
-	PROP_StrifeTeaserType2 (297)
-	PROP_Tag ("Ammo")
-END_DEFAULTS
+IMPLEMENT_CLASS (AAmmoFillup)
 
 bool AAmmoFillup::TryPickup (AActor *toucher)
 {
@@ -446,17 +306,12 @@ bool AAmmoFillup::TryPickup (AActor *toucher)
 
 class AHealthFillup : public ADummyStrifeItem
 {
-	DECLARE_STATELESS_ACTOR (AHealthFillup, ADummyStrifeItem)
+	DECLARE_CLASS (AHealthFillup, ADummyStrifeItem)
 public:
 	bool TryPickup (AActor *toucher);
 };
 
-IMPLEMENT_STATELESS_ACTOR (AHealthFillup, Strife, -1, 0)
-	PROP_StrifeType (299)
-	PROP_StrifeTeaserType (281)
-	PROP_StrifeTeaserType2 (298)
-	PROP_Tag ("Health")
-END_DEFAULTS
+IMPLEMENT_CLASS (AHealthFillup)
 
 bool AHealthFillup::TryPickup (AActor *toucher)
 {
@@ -473,13 +328,7 @@ bool AHealthFillup::TryPickup (AActor *toucher)
 
 // Upgrade Stamina ----------------------------------------------------------
 
-IMPLEMENT_STATELESS_ACTOR (AUpgradeStamina, Strife, -1, 0)
-	PROP_StrifeType (306)
-	PROP_StrifeTeaserType (287)
-	PROP_StrifeTeaserType2 (307)
-	PROP_Inventory_Amount (10)
-	PROP_Inventory_MaxAmount (100)
-END_DEFAULTS
+IMPLEMENT_CLASS (AUpgradeStamina)
 
 bool AUpgradeStamina::TryPickup (AActor *toucher)
 {
@@ -497,11 +346,7 @@ bool AUpgradeStamina::TryPickup (AActor *toucher)
 
 // Upgrade Accuracy ---------------------------------------------------------
 
-IMPLEMENT_STATELESS_ACTOR (AUpgradeAccuracy, Strife, -1, 0)
-	PROP_StrifeType (307)
-	PROP_StrifeTeaserType (288)
-	PROP_StrifeTeaserType2 (308)
-END_DEFAULTS
+IMPLEMENT_CLASS (AUpgradeAccuracy)
 
 bool AUpgradeAccuracy::TryPickup (AActor *toucher)
 {
@@ -514,9 +359,7 @@ bool AUpgradeAccuracy::TryPickup (AActor *toucher)
 
 // Start a slideshow --------------------------------------------------------
 
-IMPLEMENT_STATELESS_ACTOR (ASlideshowStarter, Strife, -1, 0)
-	PROP_StrifeType (343)
-END_DEFAULTS
+IMPLEMENT_CLASS (ASlideshowStarter)
 
 bool ASlideshowStarter::TryPickup (AActor *toucher)
 {

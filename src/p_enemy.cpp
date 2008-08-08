@@ -2601,16 +2601,6 @@ void A_Explode (AActor *thing)
 	}
 }
 
-void A_ExplodeAndAlert (AActor *thing)
-{
-	A_Explode (thing);
-	if (thing->target != NULL && thing->target->player != NULL)
-	{
-		validcount++;
-		P_RecursiveSound (thing->Sector, thing->target, false, 0);
-	}
-}
-
 bool CheckBossDeath (AActor *actor)
 {
 	int i;

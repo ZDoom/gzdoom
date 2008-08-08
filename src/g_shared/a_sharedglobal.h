@@ -80,14 +80,9 @@ private:
 
 class ATeleportFog : public AActor
 {
-	DECLARE_ACTOR (ATeleportFog, AActor)
+	DECLARE_CLASS (ATeleportFog, AActor)
 public:
 	void PostBeginPlay ();
-};
-
-class ATeleportDest : public AActor
-{
-	DECLARE_STATELESS_ACTOR (ATeleportDest, AActor)
 };
 
 class ASkyViewpoint : public AActor

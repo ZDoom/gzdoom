@@ -1,0 +1,172 @@
+
+// The Almighty Sigil! ------------------------------------------------------
+
+ACTOR Sigil : Weapon native
+{
+	Game Strife
+
+	Weapon.Kickback 100
+	Weapon.SelectionOrder 4000
+	Health 1
+	+FLOORCLIP
+	+WEAPON.CHEATNOTWEAPON
+	Inventory.PickupSound "weapons/sigilcharge"
+	Tag "SIGIL"
+	Inventory.Icon "I_SGL1"
+	Inventory.PickupMessage "$TXT_SIGIL"
+	
+	action native A_SelectPiece ();
+	action native A_SelectSigilView ();
+	action native A_SelectSigilDown ();
+	action native A_SelectSigilAttack ();
+	action native A_SigilCharge ();
+	action native A_FireSigil1 ();
+	action native A_FireSigil2 ();
+	action native A_FireSigil3 ();
+	action native A_FireSigil4 ();
+	action native A_FireSigil5 ();
+	
+	States
+	{
+	Spawn:
+		SIGL A 1
+		SIGL A -1 A_SelectPiece
+		Stop
+		SIGL B -1
+		Stop
+		SIGL C -1
+		Stop
+		SIGL D -1
+		Stop
+		SIGL E -1
+		Stop
+	Ready:
+		SIGH A 0 Bright A_SelectSigilView
+		Wait
+		SIGH A 1 Bright A_WeaponReady
+		Wait
+		SIGH B 1 Bright A_WeaponReady
+		Wait
+		SIGH C 1 Bright A_WeaponReady
+		Wait
+		SIGH D 1 Bright A_WeaponReady
+		Wait
+		SIGH E 1 Bright A_WeaponReady
+		Wait
+	Deselect:
+		SIGH A 1 Bright A_SelectSigilDown
+		Wait
+		SIGH A 1 Bright A_Lower
+		Wait
+		SIGH B 1 Bright A_Lower
+		Wait
+		SIGH C 1 Bright A_Lower
+		Wait
+		SIGH D 1 Bright A_Lower
+		Wait
+		SIGH E 1 Bright A_Lower
+		Wait
+	Select:
+		SIGH A 1 Bright A_SelectSigilView
+		Wait
+		SIGH A 1 Bright A_Raise
+		Wait
+		SIGH B 1 Bright A_Raise
+		Wait
+		SIGH C 1 Bright A_Raise
+		Wait
+		SIGH D 1 Bright A_Raise
+		Wait
+		SIGH E 1 Bright A_Raise
+		Wait
+	
+	Fire:
+		SIGH A 0 Bright A_SelectSigilAttack
+
+		SIGH A 18 Bright A_SigilCharge
+		SIGH A 3 Bright A_GunFlash
+		SIGH A 10 A_FireSigil1
+		SIGH A 5
+		Goto Ready
+
+		SIGH B 18 Bright A_SigilCharge
+		SIGH B 3 Bright A_GunFlash
+		SIGH B 10 A_FireSigil2
+		SIGH B 5
+		Goto Ready
+
+		SIGH C 18 Bright A_SigilCharge
+		SIGH C 3 Bright A_GunFlash
+		SIGH C 10 A_FireSigil3
+		SIGH C 5
+		Goto Ready
+
+		SIGH D 18 Bright A_SigilCharge
+		SIGH D 3 Bright A_GunFlash
+		SIGH D 10 A_FireSigil4
+		SIGH D 5
+		Goto Ready
+
+		SIGH E 18 Bright A_SigilCharge
+		SIGH E 3 Bright A_GunFlash
+		SIGH E 10 A_FireSigil5
+		SIGH E 5
+		Goto Ready
+	Flash:
+		SIGF A 4 Bright A_Light2
+		SIGF B 6 Bright A_LightInverse
+		SIGF C 4 Bright A_Light1
+		SIGF C 0 Bright A_Light0
+		Stop
+	}
+}
+
+// Sigil 1 ------------------------------------------------------------------
+
+ACTOR Sigil1 : Sigil 77
+{
+	Game Strife
+	ConversationID 196, 190, 194
+	Inventory.Icon "I_SGL1"
+	Health 1
+}
+
+// Sigil 2 ------------------------------------------------------------------
+
+ACTOR Sigil2 : Sigil 78
+{
+	Game Strife
+	ConversationID 197, 191, 195
+	Inventory.Icon "I_SGL2"
+	Health 2
+}
+
+// Sigil 3 ------------------------------------------------------------------
+
+ACTOR Sigil3 : Sigil 79
+{
+	Game Strife
+	ConversationID 198, 192, 196
+	Inventory.Icon "I_SGL3"
+	Health 3
+}
+
+// Sigil 4 ------------------------------------------------------------------
+
+ACTOR Sigil4 : Sigil 80
+{
+	Game Strife
+	ConversationID 199, 193, 197
+	Inventory.Icon "I_SGL4"
+	Health 4
+}
+
+// Sigil 5 ------------------------------------------------------------------
+
+ACTOR Sigil5 : Sigil 81
+{
+	Game Strife
+	ConversationID 200, 194, 198
+	Inventory.Icon "I_SGL5"
+	Health 5
+}

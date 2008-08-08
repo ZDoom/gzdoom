@@ -11,6 +11,7 @@ xx(Doom)
 xx(Heretic)
 xx(Hexen)
 xx(Strife)
+xx(Raven)
 
 // blood spawning
 xx(Blood)
@@ -134,6 +135,8 @@ xx(Mauler)
 
 xx(AcolyteBlue)
 xx(SpectralLightningV1)
+xx(TeleportDest)
+xx(TeleportDest2)
 
 // Strife's spectres
 xx(AlienSpectre1)

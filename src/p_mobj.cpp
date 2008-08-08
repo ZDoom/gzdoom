@@ -2288,10 +2288,6 @@ angle_t AActor::AngleIncrements ()
 	return ANGLE_45;
 }
 
-void AActor::PreExplode ()
-{
-}
-
 void AActor::GetExplodeParms (int &damage, int &dist, bool &hurtSource)
 {
 }

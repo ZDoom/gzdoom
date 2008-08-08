@@ -482,9 +482,6 @@ public:
 	// Called when actor dies
 	virtual void Die (AActor *source, AActor *inflictor);
 
-	// Called by A_Explode just before exploding the actor
-	virtual void PreExplode ();
-
 	// Called by A_Explode to find out how much damage to do
 	virtual void GetExplodeParms (int &damage, int &dist, bool &hurtSource);
 

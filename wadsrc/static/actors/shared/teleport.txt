@@ -1,0 +1,42 @@
+
+ACTOR TeleportFog native
+{
+	+NOBLOCKMAP
+	+NOTELEPORT
+	+NOGRAVITY
+	RenderStyle Add
+	States
+	{
+	Spawn:
+		TFOG ABABCDEFGHIJ 6 Bright
+		Stop
+	
+	Raven:
+		TELE ABCDEFGHGFEDC 6 Bright
+		Stop
+
+	Strife:
+		TFOG ABCDEFEDCB 6 Bright
+		Stop
+	}
+}
+
+
+
+ACTOR TeleportDest 14
+{
+	+NOBLOCKMAP
+	+NOSECTOR
+	+DONTSPLASH
+}
+
+ACTOR TeleportDest2 : TeleportDest 9044
+{
+	+NOGRAVITY
+}
+
+ACTOR TeleportDest3 : TeleportDest2 9043
+{
+	-NOGRAVITY
+}
+

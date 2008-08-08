@@ -128,7 +128,6 @@ ACTOR MageStaffFX2 native
 	DeathSound "MageStaffExplode"
 
 	action native A_MStaffTrack();
-	action native A_BeAdditive();
 
 	States
 	{
@@ -136,7 +135,7 @@ ACTOR MageStaffFX2 native
 		MSP2 ABCD 2 Bright A_MStaffTrack
 		Loop
 	Death:
-		MSP2 E 4 Bright A_BeAdditive
+		MSP2 E 4 Bright A_SetTranslucent(1,1)
 		MSP2 F 5 Bright A_Explode (80, 192, 0)
 		MSP2 GH 5 Bright
 		MSP2 I 4 Bright

@@ -80,29 +80,16 @@ IMPLEMENT_CLASS (AMWeapBloodscourge)
 
 // Mage Staff FX2 (Bloodscourge) --------------------------------------------
 
-void A_BeAdditive (AActor *self)
-{
-	self->RenderStyle = STYLE_Add;
-}
-
 class AMageStaffFX2 : public AActor
 {
 	DECLARE_CLASS(AMageStaffFX2, AActor)
 public:
-	void GetExplodeParms (int &damage, int &dist, bool &hurtSource);
 	int SpecialMissileHit (AActor *victim);
 	bool IsOkayToAttack (AActor *link);
 	bool SpecialBlastHandling (AActor *source, fixed_t strength);
 };
 
 IMPLEMENT_CLASS (AMageStaffFX2)
-
-void AMageStaffFX2::GetExplodeParms (int &damage, int &dist, bool &hurtSource)
-{
-	damage = 80;
-	dist = 192;
-	hurtSource = false;
-}
 
 int AMageStaffFX2::SpecialMissileHit (AActor *victim)
 {

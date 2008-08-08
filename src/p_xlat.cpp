@@ -290,8 +290,8 @@ void P_TranslateLineDef (line_t *ld, maplinedef_t *mld)
 
 void P_TranslateTeleportThings ()
 {
-	ATeleportDest *dest;
-	TThinkerIterator<ATeleportDest> iterator;
+	AActor *dest;
+	TThinkerIterator<AActor> iterator(NAME_TeleportDest);
 	bool foundSomething = false;
 
 	while ( (dest = iterator.Next()) )

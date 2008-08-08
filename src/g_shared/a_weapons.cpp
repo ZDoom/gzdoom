@@ -13,6 +13,7 @@
 #include "cmdlib.h"
 #include "templates.h"
 #include "sbar.h"
+#include "thingdef/thingdef.h"
 
 #define BONUSADD 6
 
@@ -577,6 +578,40 @@ FState *AWeapon::GetAltAtkState (bool hold)
 	if (hold) state = FindState(NAME_AltHold);
 	if (state == NULL) state = FindState(NAME_AltFire);
 	return state;
+}
+
+/* Weapon giver ***********************************************************/
+
+class AWeaponGiver : public AWeapon
+{
+	DECLARE_STATELESS_ACTOR(AWeaponGiver, AWeapon)
+
+public:
+	bool TryPickup(AActor *toucher);
+};
+
+IMPLEMENT_ABSTRACT_ACTOR(AWeaponGiver)
+
+bool AWeaponGiver::TryPickup(AActor *toucher)
+{
+	FDropItem *di = GetDropItems(GetClass());
+
+	if (di != NULL)
+	{
+		const PClass *ti = PClass::FindClass(di->Name);
+		if (ti->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
+		{
+			AWeapon *weap = static_cast<AWeapon*>(Spawn(di->Name, 0, 0, 0, NO_REPLACE));
+			if (weap != NULL)
+			{
+				bool res = weap->TryPickup(toucher);
+				if (!res) weap->Destroy();
+				else GoAwayAndDie();
+				return res;
+			}
+		}
+	}
+	return false;
 }
 
 /* Weapon slots ***********************************************************/

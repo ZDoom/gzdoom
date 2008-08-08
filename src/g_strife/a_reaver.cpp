@@ -24,7 +24,7 @@ void A_ReaverRanged (AActor *self)
 		{
 			angle_t angle = bangle + (pr_reaverattack.Random2() << 20);
 			int damage = ((pr_reaverattack() & 7) + 1) * 3;
-			P_LineAttack (self, angle, MISSILERANGE, pitch, damage, NAME_None, RUNTIME_CLASS(AStrifePuff));
+			P_LineAttack (self, angle, MISSILERANGE, pitch, damage, NAME_None, NAME_StrifePuff);
 		}
 	}
 }

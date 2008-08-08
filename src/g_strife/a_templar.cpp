@@ -27,6 +27,6 @@ void A_TemplarAttack (AActor *self)
 		damage = (pr_templar() & 4) * 2;
 		angle = self->angle + (pr_templar.Random2() << 19);
 		pitchdiff = pr_templar.Random2() * 332063;
-		P_LineAttack (self, angle, MISSILERANGE+64*FRACUNIT, pitch+pitchdiff, damage, NAME_Disintegrate, "MaulerPuff");
+		P_LineAttack (self, angle, MISSILERANGE+64*FRACUNIT, pitch+pitchdiff, damage, NAME_Disintegrate, NAME_MaulerPuff);
 	}
 }

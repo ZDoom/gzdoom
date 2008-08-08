@@ -571,9 +571,9 @@ void FBehavior::StaticLoadDefaultModules ()
 	}
 }
 
-FBehavior *FBehavior::StaticLoadModule (int lumpnum, FileReader * fr, int len)
+FBehavior *FBehavior::StaticLoadModule (int lumpnum, FileReader *fr, int len)
 {
-	if (lumpnum == -1) return NULL;
+	if (lumpnum == -1 && fr == NULL) return NULL;
 
 	for (unsigned int i = 0; i < StaticModules.Size(); ++i)
 	{

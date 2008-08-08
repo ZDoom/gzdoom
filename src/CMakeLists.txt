@@ -544,7 +544,6 @@ add_executable( zdoom WIN32
 	g_hexen/a_spike.cpp
 	g_hexen/a_summon.cpp
 	g_hexen/a_teleportother.cpp
-	g_hexen/a_weaponpieces.cpp
 	g_hexen/a_wraith.cpp
 	g_hexen/hexen_sbar.cpp
 	g_raven/a_artitele.cpp

@@ -9,83 +9,82 @@
 #include "p_pspr.h"
 #include "gstrings.h"
 #include "a_hexenglobal.h"
+#include "a_weaponpiece.h"
+#include "thingdef/thingdef.h"
 
 static FRandom pr_quietusdrop ("QuietusDrop");
 static FRandom pr_fswordflame ("FSwordFlame");
 
-void A_FSwordAttack (AActor *actor);
-void A_DropQuietusPieces (AActor *);
-void A_FSwordFlames (AActor *);
-
 //==========================================================================
 
-class AFighterWeaponPiece : public AFourthWeaponPiece
+class AFighterWeaponPiece : public AWeaponPiece
 {
-	DECLARE_STATELESS_ACTOR (AFighterWeaponPiece, AFourthWeaponPiece)
-public:
-	void BeginPlay ();
+	DECLARE_CLASS (AFighterWeaponPiece, AWeaponPiece)
 protected:
-	bool MatchPlayerClass (AActor *toucher);
+	bool TryPickup (AActor *toucher);
 };
 
 IMPLEMENT_CLASS (AFighterWeaponPiece)
 
-bool AFighterWeaponPiece::MatchPlayerClass (AActor *toucher)
+bool AFighterWeaponPiece::TryPickup (AActor *toucher)
 {
-	return !toucher->IsKindOf (PClass::FindClass(NAME_ClericPlayer)) &&
-		   !toucher->IsKindOf (PClass::FindClass(NAME_MagePlayer));
+	if (!toucher->IsKindOf (PClass::FindClass(NAME_ClericPlayer)) &&
+		!toucher->IsKindOf (PClass::FindClass(NAME_MagePlayer)))
+	{
+		return Super::TryPickup(toucher);
+	}
+	else
+	{ // Wrong class, but try to pick up for ammo
+		if (ShouldStay())
+		{
+			// Can't pick up weapons for other classes in coop netplay
+			return false;
+		}
+
+		AWeapon * Defaults=(AWeapon*)GetDefaultByType(WeaponClass);
+
+		bool gaveSome = !!(toucher->GiveAmmo (Defaults->AmmoType1, Defaults->AmmoGive1) +
+						   toucher->GiveAmmo (Defaults->AmmoType2, Defaults->AmmoGive2));
+
+		if (gaveSome)
+		{
+			GoAwayAndDie ();
+		}
+		return gaveSome;
+	}
 }
 
-//==========================================================================
+//============================================================================
+//
+// A_DropQuietusPieces
+//
+//============================================================================
 
-class AFWeaponPiece1 : public AFighterWeaponPiece
+void A_DropWeaponPieces (AActor *actor)
 {
-	DECLARE_CLASS (AFWeaponPiece1, AFighterWeaponPiece)
-public:
-	void BeginPlay ();
-};
+	int index=CheckIndex(3);
+	if (index<0) return;
 
-IMPLEMENT_CLASS (AFWeaponPiece1)
-
-void AFWeaponPiece1::BeginPlay ()
-{
-	Super::BeginPlay ();
-	PieceValue = WPIECE1;
+	for (int i = 0, j = 0, fineang = 0; i < 3; ++i)
+	{
+		const PClass *cls = PClass::FindClass((ENamedName)StateParameters[index+j]);
+		if (cls)
+		{
+			AActor *piece = Spawn (cls, actor->x, actor->y, actor->z, ALLOW_REPLACE);
+			if (piece != NULL)
+			{
+				piece->momx = actor->momx + finecosine[fineang];
+				piece->momy = actor->momy + finesine[fineang];
+				piece->momz = actor->momz;
+				piece->flags |= MF_DROPPED;
+				fineang += FINEANGLES/3;
+				j = (j == 0) ? (pr_quietusdrop() & 1) + 1 : 3-j;
+			}
+		}
+	}
 }
 
-//==========================================================================
 
-class AFWeaponPiece2 : public AFighterWeaponPiece
-{
-	DECLARE_CLASS (AFWeaponPiece2, AFighterWeaponPiece)
-public:
-	void BeginPlay ();
-};
-
-IMPLEMENT_CLASS (AFWeaponPiece2)
-
-void AFWeaponPiece2::BeginPlay ()
-{
-	Super::BeginPlay ();
-	PieceValue = WPIECE2;
-}
-
-//==========================================================================
-
-class AFWeaponPiece3 : public AFighterWeaponPiece
-{
-	DECLARE_CLASS (AFWeaponPiece3, AFighterWeaponPiece)
-public:
-	void BeginPlay ();
-};
-
-IMPLEMENT_CLASS (AFWeaponPiece3)
-
-void AFWeaponPiece3::BeginPlay ()
-{
-	Super::BeginPlay ();
-	PieceValue = WPIECE3;
-}
 
 // Fighter Sword Missile ----------------------------------------------------
 
@@ -152,42 +151,6 @@ void A_FSwordFlames (AActor *actor)
 		fixed_t z = actor->z+((pr_fswordflame()-128)<<11);
 		Spawn ("FSwordFlame", x, y, z, ALLOW_REPLACE);
 	}
-}
-
-//============================================================================
-//
-// A_DropQuietusPieces
-//
-//============================================================================
-
-void A_DropQuietusPieces (AActor *actor)
-{
-	static const PClass *pieces[3] =
-	{
-		RUNTIME_CLASS(AFWeaponPiece1),
-		RUNTIME_CLASS(AFWeaponPiece2),
-		RUNTIME_CLASS(AFWeaponPiece3)
-	};
-
-	for (int i = 0, j = 0, fineang = 0; i < 3; ++i)
-	{
-		AActor *piece = Spawn (pieces[j], actor->x, actor->y, actor->z, ALLOW_REPLACE);
-		if (piece != NULL)
-		{
-			piece->momx = actor->momx + finecosine[fineang];
-			piece->momy = actor->momy + finesine[fineang];
-			piece->momz = actor->momz;
-			piece->flags |= MF_DROPPED;
-			fineang += FINEANGLES/3;
-			j = (j == 0) ? (pr_quietusdrop() & 1) + 1 : 3-j;
-		}
-	}
-}
-
-void AFighterWeaponPiece::BeginPlay ()
-{
-	Super::BeginPlay ();
-	FourthWeaponClass = PClass::FindClass ("FWeapQuietus");
 }
 
 //============================================================================

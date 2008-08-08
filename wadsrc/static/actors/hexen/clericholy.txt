@@ -1,19 +1,21 @@
 
 // Cleric Weapon Piece ------------------------------------------------------
 
-ACTOR ClericWeaponPiece : FourthWeaponPiece native
+ACTOR ClericWeaponPiece : WeaponPiece native
 {
-	Game Hexen
 	Inventory.PickupMessage "$TXT_WRAITHVERGE_PIECE"
 }
 
 // Cleric Weapon Piece 1 ----------------------------------------------------
 
-ACTOR CWeaponPiece1 : ClericWeaponPiece 18 native
+ACTOR CWeaponPiece1 : ClericWeaponPiece 18
 {
 	Game Hexen
 	SpawnID 33
 	+FLOATBOB
+	Inventory.PickupMessage "$TXT_WRAITHVERGE_PIECE"
+	WeaponPiece.Number 1
+	WeaponPiece.Weapon CWeapWraithverge
 	States
 	{
 	Spawn:
@@ -24,11 +26,12 @@ ACTOR CWeaponPiece1 : ClericWeaponPiece 18 native
 
 // Cleric Weapon Piece 2 ----------------------------------------------------
 
-ACTOR CWeaponPiece2 : ClericWeaponPiece 19 native
+ACTOR CWeaponPiece2 : CWeaponPiece1 19
 {
 	Game Hexen
 	SpawnID 34
 	+FLOATBOB
+	WeaponPiece.Number 2
 	States
 	{
 	Spawn:
@@ -39,11 +42,12 @@ ACTOR CWeaponPiece2 : ClericWeaponPiece 19 native
 
 // Cleric Weapon Piece 3 ----------------------------------------------------
 
-ACTOR CWeaponPiece3 : ClericWeaponPiece 20 native
+ACTOR CWeaponPiece3 : CWeaponPiece1 20
 {
 	Game Hexen
 	SpawnID 35
 	+FLOATBOB
+	WeaponPiece.Number 3
 	States
 	{
 	Spawn:
@@ -56,13 +60,11 @@ ACTOR CWeaponPiece3 : ClericWeaponPiece 20 native
 
 ACTOR WraithvergeDrop
 {
-	action native A_DropWraithvergePieces();
-
 	States
 	{
 	Spawn:
 		TNT1 A 1
-		TNT1 A 1 A_DropWraithvergePieces
+		TNT1 A 1 A_DropWeaponPieces("CWeaponPiece1", "CWeaponPiece2", "CWeaponPiece3")
 		Stop
 	}
 }
@@ -71,16 +73,18 @@ ACTOR WraithvergeDrop
 
 ACTOR CWeapWraithverge : ClericWeapon native
 {
+	Health 3
 	Weapon.SelectionOrder 3000
 	+WEAPON.PRIMARY_USES_BOTH
 	Weapon.AmmoUse1 18
 	Weapon.AmmoUse2 18
-	Weapon.AmmoGive1 0
-	Weapon.AmmoGive2 0
+	Weapon.AmmoGive1 20
+	Weapon.AmmoGive2 20
 	Weapon.KickBack 150
 	Weapon.AmmoType1 "Mana1"
 	Weapon.AmmoType2 "Mana2"
 	Inventory.PickupMessage "$TXT_WEAPON_C4"
+	Inventory.PickupSound "WeaponBuild"
 
 	action native A_CHolyAttack();
 	action native A_CHolyPalette();

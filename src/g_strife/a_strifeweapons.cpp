@@ -5,6 +5,7 @@
 #include "s_sound.h"
 #include "p_enemy.h"
 #include "templates.h"
+#include "thingdef/thingdef.h"
 
 // Note: Strife missiles do 1-4 times their damage amount.
 // Doom missiles do 1-8 times their damage amount, so to
@@ -262,7 +263,7 @@ void P_StrifeGunShot (AActor *mo, bool accurate, angle_t pitch)
 		angle += pr_sgunshot.Random2() << (20 - mo->player->accuracy * 5 / 100);
 	}
 
-	P_LineAttack (mo, angle, PLAYERMISSILERANGE, pitch, damage, NAME_None, RUNTIME_CLASS(AStrifePuff));
+	P_LineAttack (mo, angle, PLAYERMISSILERANGE, pitch, damage, NAME_None, NAME_StrifePuff);
 }
 
 //============================================================================
@@ -322,7 +323,7 @@ void A_FireMiniMissile (AActor *self)
 	savedangle = self->angle;
 	self->angle += pr_minimissile.Random2() << (19 - player->accuracy * 5 / 100);
 	player->mo->PlayAttacking2 ();
-	P_SpawnPlayerMissile (self, RUNTIME_CLASS(AMiniMissile));
+	P_SpawnPlayerMissile (self, PClass::FindClass("MiniMissile"));
 	self->angle = savedangle;
 }
 
@@ -337,8 +338,8 @@ void A_RocketInFlight (AActor *self)
 	AActor *trail;
 
 	S_Sound (self, CHAN_VOICE, "misc/missileinflight", 1, ATTN_NORM);
-	P_SpawnPuff (self, RUNTIME_CLASS(AMiniMissilePuff), self->x, self->y, self->z, self->angle - ANGLE_180, 2, PF_HITTHING);
-	trail = Spawn<ARocketTrail> (self->x - self->momx, self->y - self->momy, self->z, ALLOW_REPLACE);
+	P_SpawnPuff (self, PClass::FindClass("MiniMissilePuff"), self->x, self->y, self->z, self->angle - ANGLE_180, 2, PF_HITTHING);
+	trail = Spawn("RocketTrail", self->x - self->momx, self->y - self->momy, self->z, ALLOW_REPLACE);
 	if (trail != NULL)
 	{
 		trail->momz = FRACUNIT;
@@ -381,7 +382,7 @@ void A_FireFlamer (AActor *self)
 	}
 
 	self->angle += pr_flamethrower.Random2() << 18;
-	self = P_SpawnPlayerMissile (self, RUNTIME_CLASS(AFlameMissile));
+	self = P_SpawnPlayerMissile (self, PClass::FindClass("FlameMissile"));
 	if (self != NULL)
 	{
 		self->momz += 5*FRACUNIT;
@@ -428,7 +429,7 @@ void A_FireMauler1 (AActor *self)
 		// it should use a different puff. ZDoom's default range is longer
 		// than this, so let's not handicap it by being too faithful to the
 		// original.
-		P_LineAttack (self, angle, PLAYERMISSILERANGE, pitch, damage, NAME_Disintegrate, RUNTIME_CLASS(AMaulerPuff));
+		P_LineAttack (self, angle, PLAYERMISSILERANGE, pitch, damage, NAME_Disintegrate, NAME_MaulerPuff);
 	}
 }
 
@@ -471,7 +472,7 @@ void A_FireMauler2 (AActor *self)
 		}
 		self->player->mo->PlayAttacking2 ();
 	}
-	P_SpawnPlayerMissile (self, RUNTIME_CLASS(AMaulerTorpedo));
+	P_SpawnPlayerMissile (self, PClass::FindClass("MaulerTorpedo"));
 	P_DamageMobj (self, self, NULL, 20, self->DamageType);
 	P_ThrustMobj (self, self->angle + ANGLE_180, 0x7D000);
 }
@@ -488,20 +489,21 @@ AActor *P_SpawnSubMissile (AActor *source, const PClass *type, AActor *target);
 
 void A_MaulerTorpedoWave (AActor *self)
 {
+	AActor *wavedef = GetDefaultByName("MaulerTorpedoWave");
 	fixed_t savedz;
 	self->angle += ANGLE_180;
 
 	// If the torpedo hit the ceiling, it should still spawn the wave
 	savedz = self->z;
-	if (self->ceilingz - self->z < GetDefault<AMaulerTorpedoWave>()->height)
+	if (wavedef && self->ceilingz - self->z < wavedef->height)
 	{
-		self->z = self->ceilingz - GetDefault<AMaulerTorpedoWave>()->height;
+		self->z = self->ceilingz - wavedef->height;
 	}
 
 	for (int i = 0; i < 80; ++i)
 	{
 		self->angle += ANGLE_45/10;
-		P_SpawnSubMissile (self, RUNTIME_CLASS(AMaulerTorpedoWave), self->target);
+		P_SpawnSubMissile (self, PClass::FindClass("MaulerTorpedoWave"), self->target);
 	}
 	self->z = savedz;
 }
@@ -545,6 +547,15 @@ AActor *P_SpawnSubMissile (AActor *source, const PClass *type, AActor *target)
 	}
 	return NULL;
 }
+
+class APhosphorousFire : public AActor
+{
+	DECLARE_CLASS (APhosphorousFire, AActor)
+public:
+	int DoSpecialDamage (AActor *target, int damage);
+};
+
+IMPLEMENT_CLASS (APhosphorousFire)
 
 int APhosphorousFire::DoSpecialDamage (AActor *target, int damage)
 {
@@ -623,7 +634,7 @@ void A_Burnination (AActor *self)
 
 void A_FireGrenade (AActor *self)
 {
-	PClass *grenadetype;
+	const PClass *grenadetype;
 	player_t *player = self->player;
 	AActor *grenade;
 	angle_t an;

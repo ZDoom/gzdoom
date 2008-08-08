@@ -7,21 +7,6 @@
 
 // Base class for every humanoid in Strife that can go into
 // a fire or electric death.
-class AStrifeHumanoid : public AActor
-{
-	DECLARE_ACTOR (AStrifeHumanoid, AActor)
-};
-
-class AStrifePuff : public AActor
-{
-	DECLARE_ACTOR (AStrifePuff, AActor)
-};
-
-class AFlameMissile : public AActor
-{
-	DECLARE_ACTOR (AFlameMissile, AActor)
-};
-
 class ADegninOre : public AInventory
 {
 	DECLARE_ACTOR (ADegninOre, AInventory)
@@ -68,7 +53,7 @@ public:
 
 class ASigil : public AWeapon
 {
-	DECLARE_ACTOR (ASigil, AStrifeWeapon)
+	DECLARE_ACTOR (ASigil, AWeapon)
 public:
 	bool HandlePickup (AInventory *item);
 	AInventory *CreateCopy (AActor *other);

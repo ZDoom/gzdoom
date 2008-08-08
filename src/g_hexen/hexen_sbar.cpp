@@ -15,6 +15,7 @@
 #include "a_hexenglobal.h"
 #include "a_keys.h"
 #include "r_translate.h"
+#include "a_weaponpiece.h"
 
 
 class FManaBar : public FTexture
@@ -316,31 +317,19 @@ public:
 		{
 			if (player->mo->IsKindOf (PClass::FindClass(NAME_MagePlayer)))
 			{
-				FourthWeaponShift = 6;
 				FourthWeaponClass = 2;
 				LifeBarClass = 2;
 			}
 			else if (player->mo->IsKindOf (PClass::FindClass(NAME_ClericPlayer)))
 			{
-				FourthWeaponShift = 3;
 				FourthWeaponClass = 1;
 				LifeBarClass = 1;
 			}
 			else
 			{
-				FourthWeaponShift = 0;
 				FourthWeaponClass = 0;
 				LifeBarClass = 0;
 			}
-		}
-	}
-
-	void SetInteger (int pname, int param)
-	{
-		if (pname == 0)
-		{
-			FourthWeaponShift = param;
-			FourthWeaponClass = param / 3;
 		}
 	}
 
@@ -502,11 +491,7 @@ private:
 		}
 
 		// Weapon Pieces
-		if (oldpieces != CPlayer->pieces)
-		{
-			DrawWeaponPieces();
-			oldpieces = CPlayer->pieces;
-		}
+		DrawWeaponPieces();
 	}
 
 //---------------------------------------------------------------------------
@@ -849,32 +834,57 @@ private:
 
 	void DrawWeaponPieces ()
 	{
-		static int PieceX[3][3] = 
-		{
-			{ 190, 225, 234 },
-			{ 190, 212, 225 },
-			{ 190, 205, 224 },
-		};
-		int pieces = (CPlayer->pieces >> FourthWeaponShift) & 7;
-		int weapClass = FourthWeaponClass;
+		static ENamedName FourthWeaponNames[] = { NAME_FWeapQuietus, NAME_CWeapWraithverge, NAME_MWeapBloodscourge };
 
-		if (pieces == 7)
+		for(AInventory *inv = CPlayer->mo->Inventory; inv != NULL; inv = inv->Inventory)
 		{
-			DrawImage (ClassImages[weapClass][imgWEAPONFULL], 190, 0);
-			return;
+			if (inv->IsA(RUNTIME_CLASS(AWeaponHolder)))
+			{
+				AWeaponHolder *hold = static_cast<AWeaponHolder*>(inv);
+
+				if (hold->PieceWeapon->TypeName == FourthWeaponNames[FourthWeaponClass])
+				{
+					// Weapon Pieces
+					if (oldpieces != hold->PieceMask)
+					{
+						oldpieces = hold->PieceMask;
+
+						static int PieceX[3][3] = 
+						{
+							{ 190, 225, 234 },
+							{ 190, 212, 225 },
+							{ 190, 205, 224 },
+						};
+						int pieces = oldpieces;
+						int weapClass = FourthWeaponClass;
+
+						if (pieces == 7)
+						{
+							DrawImage (ClassImages[weapClass][imgWEAPONFULL], 190, 0);
+							return;
+						}
+						DrawImage (ClassImages[weapClass][imgWEAPONSLOT], 190, 0);
+						if (pieces & WPIECE1)
+						{
+							DrawImage (ClassImages[weapClass][imgPIECE1], PieceX[weapClass][0], 0);
+						}
+						if (pieces & WPIECE2)
+						{
+							DrawImage (ClassImages[weapClass][imgPIECE2], PieceX[weapClass][1], 0);
+						}
+						if (pieces & WPIECE3)
+						{
+							DrawImage (ClassImages[weapClass][imgPIECE3], PieceX[weapClass][2], 0);
+						}
+					}
+					return;
+				}
+			}
 		}
-		DrawImage (ClassImages[weapClass][imgWEAPONSLOT], 190, 0);
-		if (pieces & WPIECE1)
+		if (oldpieces != 0)
 		{
-			DrawImage (ClassImages[weapClass][imgPIECE1], PieceX[weapClass][0], 0);
-		}
-		if (pieces & WPIECE2)
-		{
-			DrawImage (ClassImages[weapClass][imgPIECE2], PieceX[weapClass][1], 0);
-		}
-		if (pieces & WPIECE3)
-		{
-			DrawImage (ClassImages[weapClass][imgPIECE3], PieceX[weapClass][2], 0);
+			DrawImage (ClassImages[FourthWeaponClass][imgWEAPONSLOT], 190, 0);
+			oldpieces = 0;
 		}
 	}
 
@@ -1144,7 +1154,6 @@ private:
 	int HealthMarker;
 	char ArtifactFlash;
 
-	char FourthWeaponShift;
 	char FourthWeaponClass;
 	char LifeBarClass;
 

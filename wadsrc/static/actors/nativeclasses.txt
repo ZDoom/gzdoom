@@ -186,6 +186,7 @@ class Actor extends Thinker
 	action native A_DropFire();
 	action native A_GiveQuestItem(eval int itemno);
 	action native A_RemoveForcefield();
+	action native A_DropWeaponPieces(class<Actor> p1, class<Actor> p2, class<Actor> p3);
 }
 
 class Inventory extends Actor

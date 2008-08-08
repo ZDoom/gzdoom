@@ -220,7 +220,6 @@ player_t::player_t()
   health(0),
   inventorytics(0),
   CurrentPlayerClass(0),
-  pieces(0),
   backpack(0),
   fragcount(0),
   lastkilltime(0),
@@ -2421,7 +2420,6 @@ void player_t::Serialize (FArchive &arc)
 		<< centering
 		<< health
 		<< inventorytics
-		<< pieces
 		<< backpack
 		<< fragcount
 		<< spreecount

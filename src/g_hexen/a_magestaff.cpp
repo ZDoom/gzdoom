@@ -6,6 +6,7 @@
 #include "p_enemy.h"
 #include "a_hexenglobal.h"
 #include "gstrings.h"
+#include "a_weaponpiece.h"
 
 static FRandom pr_mstafftrack ("MStaffTrack");
 static FRandom pr_bloodscourgedrop ("BloodScourgeDrop");
@@ -20,72 +21,41 @@ static divline_t BlockCheckLine;
 
 //==========================================================================
 
-class AMageWeaponPiece : public AFourthWeaponPiece
+class AMageWeaponPiece : public AWeaponPiece
 {
-	DECLARE_CLASS (AMageWeaponPiece, AFourthWeaponPiece)
-public:
-	void BeginPlay ();
+	DECLARE_CLASS (AMageWeaponPiece, AWeaponPiece)
 protected:
-	bool MatchPlayerClass (AActor *toucher);
+	bool TryPickup (AActor *toucher);
 };
 
 IMPLEMENT_CLASS (AMageWeaponPiece)
 
-bool AMageWeaponPiece::MatchPlayerClass (AActor *toucher)
+bool AMageWeaponPiece::TryPickup (AActor *toucher)
 {
-	return !toucher->IsKindOf (PClass::FindClass(NAME_FighterPlayer)) &&
-		   !toucher->IsKindOf (PClass::FindClass(NAME_ClericPlayer));
-}
+	if (!toucher->IsKindOf (PClass::FindClass(NAME_ClericPlayer)) &&
+		!toucher->IsKindOf (PClass::FindClass(NAME_FighterPlayer)))
+	{
+		return Super::TryPickup(toucher);
+	}
+	else
+	{ // Wrong class, but try to pick up for ammo
+		if (ShouldStay())
+		{
+			// Can't pick up weapons for other classes in coop netplay
+			return false;
+		}
 
-//==========================================================================
+		AWeapon * Defaults=(AWeapon*)GetDefaultByType(WeaponClass);
 
-class AMWeaponPiece1 : public AMageWeaponPiece
-{
-	DECLARE_CLASS (AMWeaponPiece1, AMageWeaponPiece)
-public:
-	void BeginPlay ();
-};
+		bool gaveSome = !!(toucher->GiveAmmo (Defaults->AmmoType1, Defaults->AmmoGive1) +
+						   toucher->GiveAmmo (Defaults->AmmoType2, Defaults->AmmoGive2));
 
-IMPLEMENT_CLASS (AMWeaponPiece1)
-
-void AMWeaponPiece1::BeginPlay ()
-{
-	Super::BeginPlay ();
-	PieceValue = WPIECE1<<6;
-}
-
-//==========================================================================
-
-class AMWeaponPiece2 : public AMageWeaponPiece
-{
-	DECLARE_CLASS (AMWeaponPiece2, AMageWeaponPiece)
-public:
-	void BeginPlay ();
-};
-
-IMPLEMENT_CLASS (AMWeaponPiece2)
-
-void AMWeaponPiece2::BeginPlay ()
-{
-	Super::BeginPlay ();
-	PieceValue = WPIECE2<<6;
-}
-
-//==========================================================================
-
-class AMWeaponPiece3 : public AMageWeaponPiece
-{
-	DECLARE_CLASS (AMWeaponPiece3, AMageWeaponPiece)
-public:
-	void BeginPlay ();
-};
-
-IMPLEMENT_CLASS (AMWeaponPiece3)
-
-void AMWeaponPiece3::BeginPlay ()
-{
-	Super::BeginPlay ();
-	PieceValue = WPIECE3<<6;
+		if (gaveSome)
+		{
+			GoAwayAndDie ();
+		}
+		return gaveSome;
+	}
 }
 
 // The Mages's Staff (Bloodscourge) -----------------------------------------
@@ -281,42 +251,6 @@ void A_MStaffTrack (AActor *actor)
 		actor->tracer = P_RoughMonsterSearch (actor, 10);
 	}
 	P_SeekerMissile (actor, ANGLE_1*2, ANGLE_1*10);
-}
-
-//============================================================================
-//
-// A_DropBloodscourgePieces
-//
-//============================================================================
-
-void A_DropBloodscourgePieces (AActor *actor)
-{
-	static const PClass *pieces[3] =
-	{
-		RUNTIME_CLASS(AMWeaponPiece1),
-		RUNTIME_CLASS(AMWeaponPiece2),
-		RUNTIME_CLASS(AMWeaponPiece3)
-	};
-
-	for (int i = 0, j = 0, fineang = 0; i < 3; ++i)
-	{
-		AActor *piece = Spawn (pieces[j], actor->x, actor->y, actor->z, ALLOW_REPLACE);
-		if (piece != NULL)
-		{
-			piece->momx = actor->momx + finecosine[fineang];
-			piece->momy = actor->momy + finesine[fineang];
-			piece->momz = actor->momz;
-			piece->flags |= MF_DROPPED;
-			fineang += FINEANGLES/3;
-			j = (j == 0) ? (pr_bloodscourgedrop() & 1) + 1 : 3-j;
-		}
-	}
-}
-
-void AMageWeaponPiece::BeginPlay ()
-{
-	Super::BeginPlay ();
-	FourthWeaponClass = RUNTIME_CLASS(AMWeapBloodscourge);
 }
 
 //============================================================================

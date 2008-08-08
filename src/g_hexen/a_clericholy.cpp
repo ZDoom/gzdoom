@@ -6,6 +6,7 @@
 #include "p_enemy.h"
 #include "a_hexenglobal.h"
 #include "gstrings.h"
+#include "a_weaponpiece.h"
 
 #define BLAST_FULLSTRENGTH	255
 
@@ -30,72 +31,41 @@ void SpawnSpiritTail (AActor *spirit);
 
 //==========================================================================
 
-class AClericWeaponPiece : public AFourthWeaponPiece
+class AClericWeaponPiece : public AWeaponPiece
 {
-	DECLARE_CLASS (AClericWeaponPiece, AFourthWeaponPiece)
-public:
-	void BeginPlay ();
+	DECLARE_CLASS (AClericWeaponPiece, AWeaponPiece)
 protected:
-	bool MatchPlayerClass (AActor *toucher);
+	bool TryPickup (AActor *toucher);
 };
 
 IMPLEMENT_CLASS (AClericWeaponPiece)
 
-bool AClericWeaponPiece::MatchPlayerClass (AActor *toucher)
+bool AClericWeaponPiece::TryPickup (AActor *toucher)
 {
-	return !toucher->IsKindOf (PClass::FindClass(NAME_FighterPlayer)) &&
-		   !toucher->IsKindOf (PClass::FindClass(NAME_MagePlayer));
-}
+	if (!toucher->IsKindOf (PClass::FindClass(NAME_MagePlayer)) &&
+		!toucher->IsKindOf (PClass::FindClass(NAME_FighterPlayer)))
+	{
+		return Super::TryPickup(toucher);
+	}
+	else
+	{ // Wrong class, but try to pick up for ammo
+		if (ShouldStay())
+		{
+			// Can't pick up weapons for other classes in coop netplay
+			return false;
+		}
 
-//==========================================================================
+		AWeapon * Defaults=(AWeapon*)GetDefaultByType(WeaponClass);
 
-class ACWeaponPiece1 : public AClericWeaponPiece
-{
-	DECLARE_CLASS (ACWeaponPiece1, AClericWeaponPiece)
-public:
-	void BeginPlay ();
-};
+		bool gaveSome = !!(toucher->GiveAmmo (Defaults->AmmoType1, Defaults->AmmoGive1) +
+						   toucher->GiveAmmo (Defaults->AmmoType2, Defaults->AmmoGive2));
 
-IMPLEMENT_CLASS (ACWeaponPiece1)
-
-void ACWeaponPiece1::BeginPlay ()
-{
-	Super::BeginPlay ();
-	PieceValue = WPIECE1<<3;
-}
-
-//==========================================================================
-
-class ACWeaponPiece2 : public AClericWeaponPiece
-{
-	DECLARE_CLASS (ACWeaponPiece2, AClericWeaponPiece)
-public:
-	void BeginPlay ();
-};
-
-IMPLEMENT_CLASS (ACWeaponPiece2)
-
-void ACWeaponPiece2::BeginPlay ()
-{
-	Super::BeginPlay ();
-	PieceValue = WPIECE2<<3;
-}
-
-//==========================================================================
-
-class ACWeaponPiece3 : public AClericWeaponPiece
-{
-	DECLARE_CLASS (ACWeaponPiece3, AClericWeaponPiece)
-public:
-	void BeginPlay ();
-};
-
-IMPLEMENT_CLASS (ACWeaponPiece3)
-
-void ACWeaponPiece3::BeginPlay ()
-{
-	Super::BeginPlay ();
-	PieceValue = WPIECE3<<3;
+		if (gaveSome)
+		{
+			GoAwayAndDie ();
+		}
+		return gaveSome;
+	}
 }
 
 // Cleric's Wraithverge (Holy Symbol?) --------------------------------------
@@ -616,42 +586,6 @@ void A_CHolyCheckScream (AActor *actor)
 	if (!actor->tracer)
 	{
 		CHolyFindTarget(actor);
-	}
-}
-
-void AClericWeaponPiece::BeginPlay ()
-{
-	Super::BeginPlay ();
-	FourthWeaponClass = RUNTIME_CLASS(ACWeapWraithverge);
-}
-
-//============================================================================
-//
-// A_DropWraithvergePieces
-//
-//============================================================================
-
-void A_DropWraithvergePieces (AActor *actor)
-{
-	static const PClass *pieces[3] =
-	{
-		RUNTIME_CLASS(ACWeaponPiece1),
-		RUNTIME_CLASS(ACWeaponPiece2),
-		RUNTIME_CLASS(ACWeaponPiece3)
-	};
-
-	for (int i = 0, j = 0, fineang = 0; i < 3; ++i)
-	{
-		AActor *piece = Spawn (pieces[j], actor->x, actor->y, actor->z, ALLOW_REPLACE);
-		if (piece != NULL)
-		{
-			piece->momx = actor->momx + finecosine[fineang];
-			piece->momy = actor->momy + finesine[fineang];
-			piece->momz = actor->momz;
-			piece->flags |= MF_DROPPED;
-			fineang += FINEANGLES/3;
-			j = (j == 0) ? (pr_wraithvergedrop() & 1) + 1 : 3-j;
-		}
 	}
 }
 

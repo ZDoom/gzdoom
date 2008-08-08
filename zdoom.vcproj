@@ -2409,10 +2409,6 @@
 				>
 			</File>
 			<File
-				RelativePath="src\g_hexen\a_weaponpieces.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\src\g_hexen\a_wraith.cpp"
 				>
 			</File>

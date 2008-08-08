@@ -38,24 +38,6 @@ public:
 	bool IsOkayToAttack (AActor *link);
 };
 
-class AFourthWeaponPiece : public AInventory
-{
-	DECLARE_STATELESS_ACTOR (AFourthWeaponPiece, AInventory)
-	HAS_OBJECT_POINTERS
-public:
-	void Serialize (FArchive &arc);
-	bool TryPickup (AActor *toucher);
-	const char *PickupMessage ();
-	bool ShouldStay ();
-	void PlayPickupSound (AActor *toucher);
-protected:
-	virtual bool MatchPlayerClass (AActor *toucher);
-	const PClass *FourthWeaponClass;
-	int PieceValue;
-	TObjPtr<AInventory> TempFourthWeapon;
-	bool PrivateShouldStay ();
-};
-
 class AFighterWeapon : public AWeapon
 {
 	DECLARE_STATELESS_ACTOR (AFighterWeapon, AWeapon);

@@ -1148,7 +1148,7 @@ void P_ConversationCommand (int player, BYTE **stream)
 				level.total_items--;
 				item->flags &= ~MF_COUNTITEM;
 			}
-			if (item->IsA(RUNTIME_CLASS(AFlameThrower)))
+			if (item->GetClass()->TypeName == NAME_FlameThrower)
 			{
 				// The flame thrower gives less ammo when given in a dialog
 				static_cast<AWeapon*>(item)->AmmoGive1 = 40;

@@ -1,3 +1,10 @@
+August 8, 2008 (Changes by Graf Zahl)
+- Removed FourthWeaponClass and based Hexen's fourth weapons on the generic weapon
+  pieces.
+- Added DECORATE conversions for Hexen's Fighter weapons by Karate Chris.
+- Added aWeaponGiver class to generalize the standing AssaultGun.
+- converted a_Strifeweapons.cpp to DECORATE, except for the Sigil.
+
 August 7, 2008 (Changes by Graf Zahl)
 - Converted the rest of a_strifestuff.cpp to DECORATE.
 - Fixed: AStalker::CheckMeleeRange did not perform all checks of AActor::CheckMeleeRange.

@@ -228,7 +228,6 @@ public:
 
 	int			inventorytics;
 	BYTE		CurrentPlayerClass;		// class # for this player instance
-	int			pieces;					// Fourth Weapon pieces
 	bool		backpack;
 	
 	int			frags[MAXPLAYERS];		// kills of other players

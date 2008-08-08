@@ -1,17 +1,19 @@
 
 // Fighter Weapon Piece -----------------------------------------------------
 
-ACTOR FighterWeaponPiece : FourthWeaponPiece native
+ACTOR FighterWeaponPiece : WeaponPiece native
 {
-	Inventory.PickupMessage "$TXT_QUIETUS_PIECE"
 }
 
 // Fighter Weapon Piece 1 ---------------------------------------------------
 
-ACTOR FWeaponPiece1 : FighterWeaponPiece 12 native
+ACTOR FWeaponPiece1 : FighterWeaponPiece 12
 {
 	Game Hexen
 	SpawnID 29
+	Inventory.PickupMessage "$TXT_QUIETUS_PIECE"
+	WeaponPiece.Number 1
+	WeaponPiece.Weapon FWeapQuietus
 	+FLOATBOB
 	States
 	{
@@ -23,10 +25,11 @@ ACTOR FWeaponPiece1 : FighterWeaponPiece 12 native
 
 // Fighter Weapon Piece 2 ---------------------------------------------------
 
-ACTOR FWeaponPiece2 : FighterWeaponPiece 13 native
+ACTOR FWeaponPiece2 : FWeaponPiece1 13
 {
 	Game Hexen
 	SpawnID 30
+	WeaponPiece.Number 2
 	+FLOATBOB
 	States
 	{
@@ -38,10 +41,11 @@ ACTOR FWeaponPiece2 : FighterWeaponPiece 13 native
 
 // Fighter Weapon Piece 3 ---------------------------------------------------
 
-ACTOR FWeaponPiece3 : FighterWeaponPiece 16 native
+ACTOR FWeaponPiece3 : FWeaponPiece1 16
 {
 	Game Hexen
 	SpawnID 31
+	WeaponPiece.Number 3
 	+FLOATBOB
 	States
 	{
@@ -55,13 +59,11 @@ ACTOR FWeaponPiece3 : FighterWeaponPiece 16 native
 
 ACTOR QuietusDrop
 {
-	action native A_DropQuietusPieces();
-
 	States
 	{
 	Spawn:
 		TNT1 A 1
-		TNT1 A 1 A_DropQuietusPieces
+		TNT1 A 1 A_DropWeaponPieces("FWeaponPiece1", "FWeaponPiece2", "FWeaponPiece3")
 		Stop
 	}
 }
@@ -70,17 +72,19 @@ ACTOR QuietusDrop
 
 ACTOR FWeapQuietus : FighterWeapon
 {
+	Health 3
 	Weapon.SelectionOrder 2900
 	+WEAPON.PRIMARY_USES_BOTH
 	Weapon.AmmoUse1 14
 	Weapon.AmmoUse2 14
-	Weapon.AmmoGive1 0
-	Weapon.AmmoGive2 0
+	Weapon.AmmoGive1 20
+	Weapon.AmmoGive2 20
 	Weapon.KickBack 150
 	Weapon.YAdjust 10
 	Weapon.AmmoType1 "Mana1"
 	Weapon.AmmoType2 "Mana2"
 	Inventory.PickupMessage "$TXT_WEAPON_F4"
+	Inventory.PickupSound "WeaponBuild"
 
 	action native A_FSwordAttack();
 

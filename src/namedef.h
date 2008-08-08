@@ -53,6 +53,8 @@ xx(DoorMetal2)
 xx(Wind)
 
 xx(BulletPuff)
+xx(StrifePuff)
+xx(MaulerPuff)
 
 // Special bosses A_BossDeath knows about
 xx(Fatso)
@@ -105,6 +107,11 @@ xx(Cell)
 // Hexen Mana
 xx(Mana1)
 xx(Mana2)
+
+// Hexen's fourth weapons
+xx(FWeapQuietus)
+xx(CWeapWraithverge)
+xx(MWeapBloodscourge)
 
 // Ammo and weapon names for the Strife status bar
 xx(ClipOfBullets)

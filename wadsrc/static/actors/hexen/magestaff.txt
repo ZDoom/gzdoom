@@ -1,18 +1,20 @@
 
 // Mage Weapon Piece --------------------------------------------------------
 
-ACTOR MageWeaponPiece : FourthWeaponPiece native
+ACTOR MageWeaponPiece : WeaponPiece native
 {
-	Inventory.PickupMessage "$TXT_BLOODSCOURGE_PIECE"
 }
 
 // Mage Weapon Piece 1 ------------------------------------------------------
 
-ACTOR MWeaponPiece1 : MageWeaponPiece 21 native
+ACTOR MWeaponPiece1 : MageWeaponPiece 21
 {
 	Game Hexen
 	SpawnID 37
 	+FLOATBOB
+	Inventory.PickupMessage "$TXT_BLOODSCOURGE_PIECE"
+	WeaponPiece.Number 1
+	WeaponPiece.Weapon MWeapBloodscourge
 	States
 	{
 	Spawn:
@@ -23,11 +25,12 @@ ACTOR MWeaponPiece1 : MageWeaponPiece 21 native
 
 // Mage Weapon Piece 2 ------------------------------------------------------
 
-ACTOR MWeaponPiece2 : MageWeaponPiece 22 native
+ACTOR MWeaponPiece2 : MWeaponPiece1 22
 {
 	Game Hexen
 	SpawnID 38
 	+FLOATBOB
+	WeaponPiece.Number 2
 	States
 	{
 	Spawn:
@@ -38,11 +41,12 @@ ACTOR MWeaponPiece2 : MageWeaponPiece 22 native
 
 // Mage Weapon Piece 3 ------------------------------------------------------
 
-ACTOR MWeaponPiece3 : MageWeaponPiece 23 native
+ACTOR MWeaponPiece3 : MWeaponPiece1 23
 {
 	Game Hexen
 	SpawnID 39
 	+FLOATBOB
+	WeaponPiece.Number 3
 	States
 	{
 	Spawn:
@@ -55,13 +59,11 @@ ACTOR MWeaponPiece3 : MageWeaponPiece 23 native
 
 ACTOR BloodscourgeDrop
 {
-	action native A_DropBloodscourgePieces();
-
 	States
 	{
 	Spawn:
 		TNT1 A 1
-		TNT1 A 1 A_DropBloodscourgePieces
+		TNT1 A 1 A_DropWeaponPieces("MWeaponPiece1", "MWeaponPiece2", "MWeaponPiece3")
 		Stop
 	}
 }
@@ -70,15 +72,19 @@ ACTOR BloodscourgeDrop
 
 ACTOR MWeapBloodscourge : MageWeapon native
 {
+	Health 3
 	Weapon.SelectionOrder 3100
 	Weapon.AmmoUse1 15
 	Weapon.AmmoUse2 15
+	Weapon.AmmoGive1 20
+	Weapon.AmmoGive2 20
 	Weapon.KickBack 150
 	Weapon.YAdjust 20
 	Weapon.AmmoType1 "Mana1"
 	Weapon.AmmoType2 "Mana2"
 	+WEAPON.PRIMARY_USES_BOTH
 	Inventory.PickupMessage "$TXT_WEAPON_M4"
+	Inventory.PickupSound "WeaponBuild"
 
 	action native A_MStaffAttack();
 	action native A_MStaffPalette();

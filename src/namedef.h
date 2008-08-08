@@ -52,6 +52,9 @@ xx(DoorCreak)
 xx(DoorMetal2)
 xx(Wind)
 
+xx(PointPusher)
+xx(PointPuller)
+
 xx(BulletPuff)
 xx(StrifePuff)
 xx(MaulerPuff)

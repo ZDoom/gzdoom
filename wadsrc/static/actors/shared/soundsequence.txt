@@ -1,4 +1,12 @@
 
+ACTOR AmbientSound 14065 native
+{
+	+NOBLOCKMAP
+	+NOSECTOR
+	+DONTSPLASH
+}
+
+
 // Heretic Sound sequences -----------------------------------------------------------
 
 ACTOR HereticSoundSequence1 : SoundSequence 1200

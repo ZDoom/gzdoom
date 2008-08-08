@@ -62,6 +62,20 @@ ACTOR MapSpotGravity : MapSpot 9013
 	-NOGRAVITY
 }
 
+// Point Pushers ---------------------------------------------------
+
+ACTOR PointPusher 5001
+{
+	+NOBLOCKMAP
+	+INVISIBLE
+}
+
+ACTOR PointPuller 5002
+{
+	+NOBLOCKMAP
+	+INVISIBLE
+}
+
 // Bloody gibs -------------------------------------------------------------
 
 ACTOR RealGibs
@@ -89,4 +103,18 @@ ACTOR Gibs : RealGibs 24
 	Game Doom
 	SpawnID 146
 	ClearFlags
+}
+
+// Needed for loading Build maps ---------------------------------------
+
+ACTOR CustomSprite 9988 native
+{
+	+NOBLOCKMAP
+	+NOGRAVITY
+	States
+	{
+	Spawn:
+		TNT1 A -1
+		Stop
+	}
 }

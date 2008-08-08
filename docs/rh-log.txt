@@ -1,4 +1,5 @@
 August 8, 2008 (Changes by Graf Zahl)
+- Exported Point pushers, CustomSprite and AmbientSound to DECORATE.
 - Changed increased lightning damage for Centaurs into a damage factor.
 - Changed PoisonCloud and Lightning special treatment in P_DamageMobj to use damage
   types instead to keep dependencies on specific actor types out of the main engine code.

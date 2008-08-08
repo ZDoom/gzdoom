@@ -1842,9 +1842,25 @@ CCMD (playersounds)
 
 // AAmbientSound implementation ---------------------------------------------
 
-IMPLEMENT_STATELESS_ACTOR (AAmbientSound, Any, 14065, 0)
-	PROP_Flags (MF_NOBLOCKMAP|MF_NOSECTOR)
-END_DEFAULTS
+class AAmbientSound : public AActor
+{
+	DECLARE_CLASS (AAmbientSound, AActor)
+public:
+	void Serialize (FArchive &arc);
+
+	void BeginPlay ();
+	void Tick ();
+	void Activate (AActor *activator);
+	void Deactivate (AActor *activator);
+
+protected:
+	bool bActive;
+private:
+	void SetTicker (struct AmbientSound *ambient);
+	int NextCheck;
+};
+
+IMPLEMENT_CLASS (AAmbientSound)
 
 void AAmbientSound::Serialize (FArchive &arc)
 {

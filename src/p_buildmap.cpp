@@ -787,20 +787,12 @@ static void Decrypt (void *to_, const void *from_, int len, int key)
 
 class ACustomSprite : public AActor
 {
-	DECLARE_ACTOR (ACustomSprite, AActor);
+	DECLARE_CLASS (ACustomSprite, AActor);
 public:
 	void BeginPlay ();
 };
 
-FState ACustomSprite::States[] =
-{
-	S_NORMAL (TNT1, 'A', -1, NULL, NULL)
-};
-
-IMPLEMENT_ACTOR (ACustomSprite, Any, 9988, 0)
- PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
- PROP_SpawnState (0)
-END_DEFAULTS
+IMPLEMENT_CLASS (ACustomSprite)
 
 void ACustomSprite::BeginPlay ()
 {

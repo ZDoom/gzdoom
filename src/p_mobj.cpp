@@ -3899,13 +3899,9 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	{
 		mthing->args[0] = mthing->type - 14000;
 		mthing->type = 14065;
-		i = RUNTIME_CLASS(AAmbientSound);
 	}
-	else
-	{
-		// find which type to spawn
-		i = DoomEdMap.FindType (mthing->type);
-	}
+	// find which type to spawn
+	i = DoomEdMap.FindType (mthing->type);
 
 	if (i == NULL)
 	{

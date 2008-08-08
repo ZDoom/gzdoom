@@ -78,24 +78,6 @@ private:
 	DImpactDecal();
 };
 
-class AAmbientSound : public AActor
-{
-	DECLARE_STATELESS_ACTOR (AAmbientSound, AActor)
-public:
-	void Serialize (FArchive &arc);
-
-	void BeginPlay ();
-	void Tick ();
-	void Activate (AActor *activator);
-	void Deactivate (AActor *activator);
-
-protected:
-	bool bActive;
-private:
-	void SetTicker (struct AmbientSound *ambient);
-	int NextCheck;
-};
-
 class ATeleportFog : public AActor
 {
 	DECLARE_ACTOR (ATeleportFog, AActor)

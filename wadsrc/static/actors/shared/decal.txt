@@ -1,0 +1,3 @@
+ACTOR Decal 9200 native
+{
+}

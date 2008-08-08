@@ -1,0 +1,9 @@
+
+ACTOR SoundEnvironment 9048 native
+{
+	+NOSECTOR
+	+NOBLOCKMAP
+	+NOGRAVITY
+	+DONTSPLASH
+}
+

@@ -1,0 +1,8 @@
+
+ACTOR Spark 9026 native
+{
+	+NOSECTOR
+	+NOBLOCKMAP
+	+NOGRAVITY
+	+DONTSPLASH
+}

@@ -1,0 +1,7 @@
+ACTOR WaterZone 9045 native
+{
+	+NOSECTOR
+	+NOBLOCKMAP
+	+NOGRAVITY
+	+DONTSPLASH
+}

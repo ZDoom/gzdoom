@@ -38,21 +38,6 @@
 #include "r_main.h"
 #include "p_local.h"
 
-class ADoomBuilderCamera : public AActor
-{
-	DECLARE_STATELESS_ACTOR (ADoomBuilderCamera, AActor)
-public:
-	void PostBeginPlay ();
-};
-
-IMPLEMENT_STATELESS_ACTOR (ADoomBuilderCamera, Any, 32000, 0)
-END_DEFAULTS
-
-void ADoomBuilderCamera::PostBeginPlay ()
-{
-	Destroy ();
-}
-
 /*
 == SecurityCamera
 ==
@@ -64,7 +49,7 @@ void ADoomBuilderCamera::PostBeginPlay ()
 
 class ASecurityCamera : public AActor
 {
-	DECLARE_STATELESS_ACTOR (ASecurityCamera, AActor)
+	DECLARE_CLASS (ASecurityCamera, AActor)
 public:
 	void PostBeginPlay ();
 	void Tick ();
@@ -78,11 +63,7 @@ protected:
 	angle_t Range;
 };
 
-IMPLEMENT_STATELESS_ACTOR (ASecurityCamera, Any, 9025, 0)
-	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
-	PROP_Flags3 (MF3_DONTSPLASH)
-	PROP_RenderStyle (STYLE_None)
-END_DEFAULTS
+IMPLEMENT_CLASS (ASecurityCamera)
 
 void ASecurityCamera::Serialize (FArchive &arc)
 {
@@ -137,7 +118,7 @@ void ASecurityCamera::Tick ()
 
 class AAimingCamera : public ASecurityCamera
 {
-	DECLARE_STATELESS_ACTOR (AAimingCamera, ASecurityCamera)
+	DECLARE_CLASS (AAimingCamera, ASecurityCamera)
 public:
 	void PostBeginPlay ();
 	void Tick ();
@@ -147,8 +128,7 @@ protected:
 	int MaxPitchChange;
 };
 
-IMPLEMENT_STATELESS_ACTOR (AAimingCamera, Any, 9073, 0)
-END_DEFAULTS
+IMPLEMENT_CLASS (AAimingCamera)
 
 void AAimingCamera::Serialize (FArchive &arc)
 {

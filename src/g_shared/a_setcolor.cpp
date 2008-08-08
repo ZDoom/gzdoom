@@ -4,7 +4,7 @@
 
 class AColorSetter : public AActor
 {
-	DECLARE_STATELESS_ACTOR(AColorSetter, AActor)
+	DECLARE_CLASS(AColorSetter, AActor)
 
 	void PostBeginPlay()
 	{
@@ -15,16 +15,11 @@ class AColorSetter : public AActor
 
 };
 
-IMPLEMENT_STATELESS_ACTOR(AColorSetter, Any, 9038, 0)
-	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
-	PROP_Flags3 (MF3_DONTSPLASH)
-	PROP_RenderStyle (STYLE_None)
-END_DEFAULTS
-
+IMPLEMENT_CLASS(AColorSetter)
 
 class AFadeSetter : public AActor
 {
-	DECLARE_STATELESS_ACTOR(AFadeSetter, AActor)
+	DECLARE_CLASS(AFadeSetter, AActor)
 
 	void PostBeginPlay()
 	{
@@ -35,8 +30,4 @@ class AFadeSetter : public AActor
 
 };
 
-IMPLEMENT_STATELESS_ACTOR(AFadeSetter, Any, 9039, 0)
-	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
-	PROP_Flags3 (MF3_DONTSPLASH)
-	PROP_RenderStyle (STYLE_None)
-END_DEFAULTS
+IMPLEMENT_CLASS(AFadeSetter)

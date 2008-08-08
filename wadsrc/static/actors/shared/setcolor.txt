@@ -1,0 +1,16 @@
+ACTOR ColorSetter 9038 native
+{
+	+NOBLOCKMAP
+	+NOGRAVITY
+	+DONTSPLASH
+	RenderStyle None
+}
+
+
+ACTOR FadeSetter 9039 native
+{
+	+NOBLOCKMAP
+	+NOGRAVITY
+	+DONTSPLASH
+	RenderStyle None
+}

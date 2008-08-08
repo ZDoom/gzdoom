@@ -43,16 +43,13 @@ EXTERN_CVAR(String, secretmessage)
 
 class ASecretTrigger : public AActor
 {
-	DECLARE_STATELESS_ACTOR (ASecretTrigger, AActor)
+	DECLARE_CLASS (ASecretTrigger, AActor)
 public:
 	void PostBeginPlay ();
 	void Activate (AActor *activator);
 };
 
-IMPLEMENT_STATELESS_ACTOR (ASecretTrigger, Any, 9046, 0)
-	PROP_Flags (MF_NOBLOCKMAP|MF_NOSECTOR|MF_NOGRAVITY)
-	PROP_Flags3 (MF3_DONTSPLASH)
-END_DEFAULTS
+IMPLEMENT_CLASS (ASecretTrigger)
 
 void ASecretTrigger::PostBeginPlay ()
 {

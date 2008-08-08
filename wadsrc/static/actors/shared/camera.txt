@@ -1,0 +1,22 @@
+ACTOR DoomBuilderCamera 32000
+{
+	States
+	{
+	Spawn:
+		TNT1 A 1
+		Stop
+	}
+}
+
+
+ACTOR SecurityCamera 9025 native 
+{
+	+NOBLOCKMAP 
+	+NOGRAVITY
+	+DONTSPLASH
+	RenderStyle None
+}
+
+ACTOR AimingCamera : SecurityCamera 9073 native 
+{
+}

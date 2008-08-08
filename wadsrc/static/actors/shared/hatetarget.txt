@@ -1,0 +1,19 @@
+
+
+// Hate Target --------------------------------------------------------------
+
+ACTOR HateTarget 9076 native
+{
+	Radius 20
+	Height 56
+	+SHOOTABLE
+	+NOGRAVITY
+	+NOBLOOD
+	+DONTSPLASH
+	Mass 0x7fffffff
+	States
+	{
+	Spawn:
+		TNT1 A -1
+	}
+}

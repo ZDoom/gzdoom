@@ -1,0 +1,15 @@
+
+ACTOR MapMarker 9040 native
+{
+	+NOBLOCKMAP
+	+NOGRAVITY
+	+DONTSPLASH
+	+INVISIBLE
+	Scale 0.5
+	States
+	{
+	Spawn:
+		AMRK A -1
+		Stop
+	}
+}

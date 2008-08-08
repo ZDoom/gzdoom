@@ -37,10 +37,7 @@
 
 // The base class for sector actions ----------------------------------------
 
-IMPLEMENT_STATELESS_ACTOR (ASectorAction, Any, -1, 0)
-	PROP_Flags (MF_NOBLOCKMAP|MF_NOSECTOR|MF_NOGRAVITY)
-	PROP_Flags3 (MF3_DONTSPLASH)
-END_DEFAULTS
+IMPLEMENT_CLASS (ASectorAction)
 
 void ASectorAction::Destroy ()
 {
@@ -111,13 +108,13 @@ bool ASectorAction::CheckTrigger (AActor *triggerer) const
 
 class ASecActEnter : public ASectorAction
 {
-	DECLARE_STATELESS_ACTOR (ASecActEnter, ASectorAction)
+	DECLARE_CLASS (ASecActEnter, ASectorAction)
 public:
 	bool TriggerAction (AActor *triggerer, int activationType);
 };
 
-IMPLEMENT_STATELESS_ACTOR (ASecActEnter, Any, 9998, 0)
-END_DEFAULTS
+IMPLEMENT_CLASS (ASecActEnter)
+
 
 bool ASecActEnter::TriggerAction (AActor *triggerer, int activationType)
 {
@@ -129,13 +126,13 @@ bool ASecActEnter::TriggerAction (AActor *triggerer, int activationType)
 
 class ASecActExit : public ASectorAction
 {
-	DECLARE_STATELESS_ACTOR (ASecActExit, ASectorAction)
+	DECLARE_CLASS (ASecActExit, ASectorAction)
 public:
 	bool TriggerAction (AActor *triggerer, int activationType);
 };
 
-IMPLEMENT_STATELESS_ACTOR (ASecActExit, Any, 9997, 0)
-END_DEFAULTS
+IMPLEMENT_CLASS (ASecActExit)
+
 
 bool ASecActExit::TriggerAction (AActor *triggerer, int activationType)
 {
@@ -147,15 +144,15 @@ bool ASecActExit::TriggerAction (AActor *triggerer, int activationType)
 
 class ASecActHitFloor : public ASectorAction
 {
-	DECLARE_STATELESS_ACTOR (ASecActHitFloor, ASectorAction)
+	DECLARE_CLASS (ASecActHitFloor, ASectorAction)
 public:
 	bool TriggerAction (AActor *triggerer, int activationType);
 };
 
 // Skull Tag uses 9999 for a special that is triggered whenever
 // the player is on the sector's floor. I think this is more useful.
-IMPLEMENT_STATELESS_ACTOR (ASecActHitFloor, Any, 9999, 0)
-END_DEFAULTS
+IMPLEMENT_CLASS (ASecActHitFloor)
+
 
 bool ASecActHitFloor::TriggerAction (AActor *triggerer, int activationType)
 {
@@ -167,13 +164,13 @@ bool ASecActHitFloor::TriggerAction (AActor *triggerer, int activationType)
 
 class ASecActHitCeil : public ASectorAction
 {
-	DECLARE_STATELESS_ACTOR (ASecActHitCeil, ASectorAction)
+	DECLARE_CLASS (ASecActHitCeil, ASectorAction)
 public:
 	bool TriggerAction (AActor *triggerer, int activationType);
 };
 
-IMPLEMENT_STATELESS_ACTOR (ASecActHitCeil, Any, 9996, 0)
-END_DEFAULTS
+IMPLEMENT_CLASS (ASecActHitCeil)
+
 
 bool ASecActHitCeil::TriggerAction (AActor *triggerer, int activationType)
 {
@@ -185,13 +182,13 @@ bool ASecActHitCeil::TriggerAction (AActor *triggerer, int activationType)
 
 class ASecActUse : public ASectorAction
 {
-	DECLARE_STATELESS_ACTOR (ASecActUse, ASectorAction)
+	DECLARE_CLASS (ASecActUse, ASectorAction)
 public:
 	bool TriggerAction (AActor *triggerer, int activationType);
 };
 
-IMPLEMENT_STATELESS_ACTOR (ASecActUse, Any, 9995, 0)
-END_DEFAULTS
+IMPLEMENT_CLASS (ASecActUse)
+
 
 bool ASecActUse::TriggerAction (AActor *triggerer, int activationType)
 {
@@ -203,13 +200,13 @@ bool ASecActUse::TriggerAction (AActor *triggerer, int activationType)
 
 class ASecActUseWall : public ASectorAction
 {
-	DECLARE_STATELESS_ACTOR (ASecActUseWall, ASectorAction)
+	DECLARE_CLASS (ASecActUseWall, ASectorAction)
 public:
 	bool TriggerAction (AActor *triggerer, int activationType);
 };
 
-IMPLEMENT_STATELESS_ACTOR (ASecActUseWall, Any, 9994, 0)
-END_DEFAULTS
+IMPLEMENT_CLASS (ASecActUseWall)
+
 
 bool ASecActUseWall::TriggerAction (AActor *triggerer, int activationType)
 {
@@ -221,13 +218,13 @@ bool ASecActUseWall::TriggerAction (AActor *triggerer, int activationType)
 
 class ASecActEyesDive : public ASectorAction
 {
-	DECLARE_STATELESS_ACTOR (ASecActEyesDive, ASectorAction)
+	DECLARE_CLASS (ASecActEyesDive, ASectorAction)
 public:
 	bool TriggerAction (AActor *triggerer, int activationType);
 };
 
-IMPLEMENT_STATELESS_ACTOR (ASecActEyesDive, Any, 9993, 0)
-END_DEFAULTS
+IMPLEMENT_CLASS (ASecActEyesDive)
+
 
 bool ASecActEyesDive::TriggerAction (AActor *triggerer, int activationType)
 {
@@ -239,13 +236,13 @@ bool ASecActEyesDive::TriggerAction (AActor *triggerer, int activationType)
 
 class ASecActEyesSurface : public ASectorAction
 {
-	DECLARE_STATELESS_ACTOR (ASecActEyesSurface, ASectorAction)
+	DECLARE_CLASS (ASecActEyesSurface, ASectorAction)
 public:
 	bool TriggerAction (AActor *triggerer, int activationType);
 };
 
-IMPLEMENT_STATELESS_ACTOR (ASecActEyesSurface, Any, 9992, 0)
-END_DEFAULTS
+IMPLEMENT_CLASS (ASecActEyesSurface)
+
 
 bool ASecActEyesSurface::TriggerAction (AActor *triggerer, int activationType)
 {
@@ -257,13 +254,13 @@ bool ASecActEyesSurface::TriggerAction (AActor *triggerer, int activationType)
 
 class ASecActEyesBelowC : public ASectorAction
 {
-	DECLARE_STATELESS_ACTOR (ASecActEyesBelowC, ASectorAction)
+	DECLARE_CLASS (ASecActEyesBelowC, ASectorAction)
 public:
 	bool TriggerAction (AActor *triggerer, int activationType);
 };
 
-IMPLEMENT_STATELESS_ACTOR (ASecActEyesBelowC, Any, 9983, 0)
-END_DEFAULTS
+IMPLEMENT_CLASS (ASecActEyesBelowC)
+
 
 bool ASecActEyesBelowC::TriggerAction (AActor *triggerer, int activationType)
 {
@@ -275,13 +272,13 @@ bool ASecActEyesBelowC::TriggerAction (AActor *triggerer, int activationType)
 
 class ASecActEyesAboveC : public ASectorAction
 {
-	DECLARE_STATELESS_ACTOR (ASecActEyesAboveC, ASectorAction)
+	DECLARE_CLASS (ASecActEyesAboveC, ASectorAction)
 public:
 	bool TriggerAction (AActor *triggerer, int activationType);
 };
 
-IMPLEMENT_STATELESS_ACTOR (ASecActEyesAboveC, Any, 9982, 0)
-END_DEFAULTS
+IMPLEMENT_CLASS (ASecActEyesAboveC)
+
 
 bool ASecActEyesAboveC::TriggerAction (AActor *triggerer, int activationType)
 {
@@ -293,13 +290,13 @@ bool ASecActEyesAboveC::TriggerAction (AActor *triggerer, int activationType)
 
 class ASecActHitFakeFloor : public ASectorAction
 {
-	DECLARE_STATELESS_ACTOR (ASecActHitFakeFloor, ASectorAction)
+	DECLARE_CLASS (ASecActHitFakeFloor, ASectorAction)
 public:
 	bool TriggerAction (AActor *triggerer, int activationType);
 };
 
-IMPLEMENT_STATELESS_ACTOR (ASecActHitFakeFloor, Any, 9989, 0)
-END_DEFAULTS
+IMPLEMENT_CLASS (ASecActHitFakeFloor)
+
 
 bool ASecActHitFakeFloor::TriggerAction (AActor *triggerer, int activationType)
 {

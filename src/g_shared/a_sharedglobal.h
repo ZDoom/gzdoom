@@ -87,7 +87,7 @@ public:
 
 class ASkyViewpoint : public AActor
 {
-	DECLARE_STATELESS_ACTOR (ASkyViewpoint, AActor)
+	DECLARE_CLASS (ASkyViewpoint, AActor)
 public:
 	void Serialize (FArchive &arc);
 	void BeginPlay ();
@@ -173,7 +173,7 @@ public:
 
 class AMapMarker : public AActor
 {
-	DECLARE_ACTOR(AMapMarker, AActor)
+	DECLARE_CLASS(AMapMarker, AActor)
 public:
 	void BeginPlay ();
 	void Activate (AActor *activator);

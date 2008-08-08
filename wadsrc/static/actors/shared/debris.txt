@@ -169,10 +169,8 @@ ACTOR Dirt6
 
 // Stained glass ------------------------------------------------------------
 
-
-ACTOR SGShard1 : GlassShard
+ACTOR GlassShard native
 {
-	SpawnID 54
 	Radius 5
 	Mass 5
 	Projectile
@@ -180,6 +178,11 @@ ACTOR SGShard1 : GlassShard
 	-ACTIVATEIMPACT
 	+HEXENBOUNCE
 	BounceFactor 0.3
+}
+
+ACTOR SGShard1 : GlassShard
+{
+	SpawnID 54
 	States
 	{
 	Spawn:
@@ -194,13 +197,6 @@ ACTOR SGShard1 : GlassShard
 ACTOR SGShard2 : GlassShard
 {
 	SpawnID 55
-	Radius 5
-	Mass 5
-	Projectile
-	-ACTIVATEMCROSS
-	-ACTIVATEIMPACT
-	+HEXENBOUNCE
-	BounceFactor 0.3
 	States
 	{
 	Spawn:
@@ -215,13 +211,6 @@ ACTOR SGShard2 : GlassShard
 ACTOR SGShard3 : GlassShard
 {
 	SpawnID 56
-	Radius 5
-	Mass 5
-	Projectile
-	-ACTIVATEMCROSS
-	-ACTIVATEIMPACT
-	+HEXENBOUNCE
-	BounceFactor 0.3
 	States
 	{
 	Spawn:
@@ -236,13 +225,6 @@ ACTOR SGShard3 : GlassShard
 ACTOR SGShard4 : GlassShard
 {
 	SpawnID 57
-	Radius 5
-	Mass 5
-	Projectile
-	-ACTIVATEMCROSS
-	-ACTIVATEIMPACT
-	+HEXENBOUNCE
-	BounceFactor 0.3
 	States
 	{
 	Spawn:
@@ -257,13 +239,6 @@ ACTOR SGShard4 : GlassShard
 ACTOR SGShard5 : GlassShard
 {
 	SpawnID 58
-	Radius 5
-	Mass 5
-	Projectile
-	-ACTIVATEMCROSS
-	-ACTIVATEIMPACT
-	+HEXENBOUNCE
-	BounceFactor 0.3
 	States
 	{
 	Spawn:
@@ -278,13 +253,6 @@ ACTOR SGShard5 : GlassShard
 ACTOR SGShard6 : GlassShard
 {
 	SpawnID 59
-	Radius 5
-	Mass 5
-	Projectile
-	-ACTIVATEMCROSS
-	-ACTIVATEIMPACT
-	+HEXENBOUNCE
-	BounceFactor 0.3
 	States
 	{
 	Spawn:
@@ -299,13 +267,6 @@ ACTOR SGShard6 : GlassShard
 ACTOR SGShard7 : GlassShard
 {
 	SpawnID 60
-	Radius 5
-	Mass 5
-	Projectile
-	-ACTIVATEMCROSS
-	-ACTIVATEIMPACT
-	+HEXENBOUNCE
-	BounceFactor 0.3
 	States
 	{
 	Spawn:
@@ -320,13 +281,6 @@ ACTOR SGShard7 : GlassShard
 ACTOR SGShard8 : GlassShard
 {
 	SpawnID 61
-	Radius 5
-	Mass 5
-	Projectile
-	-ACTIVATEMCROSS
-	-ACTIVATEIMPACT
-	+HEXENBOUNCE
-	BounceFactor 0.3
 	States
 	{
 	Spawn:
@@ -341,13 +295,6 @@ ACTOR SGShard8 : GlassShard
 ACTOR SGShard9 : GlassShard
 {
 	SpawnID 62
-	Radius 5
-	Mass 5
-	Projectile
-	-ACTIVATEMCROSS
-	-ACTIVATEIMPACT
-	+HEXENBOUNCE
-	BounceFactor 0.3
 	States
 	{
 	Spawn:
@@ -362,13 +309,6 @@ ACTOR SGShard9 : GlassShard
 ACTOR SGShard0 : GlassShard
 {
 	SpawnID 63
-	Radius 5
-	Mass 5
-	Projectile
-	-ACTIVATEMCROSS
-	-ACTIVATEIMPACT
-	+HEXENBOUNCE
-	BounceFactor 0.3
 	States
 	{
 	Spawn:

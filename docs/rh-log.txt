@@ -1,4 +1,5 @@
 August 8, 2008 (Changes by Graf Zahl)
+- Replaced the ActorInfo definitions of several internal classes with DECORATE definitions
 - Converted teleport fog and destinations to DECORATE.
 - AActor::PreExplode is gone now that the last item that was using it has been converted.
 - Converted the Sigil and the remaining things in a_strifeitems.cpp to DECORATE.

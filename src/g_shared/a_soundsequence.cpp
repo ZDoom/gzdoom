@@ -70,7 +70,7 @@
 
 class ASoundSequenceSlot : public AActor
 {
-	DECLARE_STATELESS_ACTOR (ASoundSequenceSlot, AActor)
+	DECLARE_CLASS (ASoundSequenceSlot, AActor)
 	HAS_OBJECT_POINTERS
 public:
 	void Serialize (FArchive &arc);
@@ -81,11 +81,6 @@ public:
 IMPLEMENT_POINTY_CLASS(ASoundSequenceSlot)
 	DECLARE_POINTER(Sequence)
 END_POINTERS
-
-BEGIN_STATELESS_DEFAULTS (ASoundSequenceSlot, Any, -1, 0)
-	PROP_Flags (MF_NOSECTOR|MF_NOBLOCKMAP)
-	PROP_Flags3 (MF3_DONTSPLASH)
-END_DEFAULTS
 
 //==========================================================================
 //
@@ -103,7 +98,7 @@ void ASoundSequenceSlot::Serialize (FArchive &arc)
 
 class ASoundSequence : public AActor
 {
-	DECLARE_STATELESS_ACTOR (ASoundSequence, AActor)
+	DECLARE_CLASS (ASoundSequence, AActor)
 public:
 	void Destroy ();
 	void PostBeginPlay ();
@@ -111,10 +106,7 @@ public:
 	void Deactivate (AActor *activator);
 };
 
-IMPLEMENT_STATELESS_ACTOR (ASoundSequence, Any, 14066, 0)
-	PROP_Flags (MF_NOSECTOR|MF_NOBLOCKMAP)
-	PROP_Flags3 (MF3_DONTSPLASH)
-END_DEFAULTS
+IMPLEMENT_CLASS (ASoundSequence)
 
 //==========================================================================
 //

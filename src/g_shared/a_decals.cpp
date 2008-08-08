@@ -708,13 +708,12 @@ CCMD (spray)
 
 class ADecal : public AActor
 {
-	DECLARE_STATELESS_ACTOR (ADecal, AActor);
+	DECLARE_CLASS (ADecal, AActor);
 public:
 	void BeginPlay ();
 };
 
-IMPLEMENT_STATELESS_ACTOR (ADecal, Any, 9200, 0)
-END_DEFAULTS
+IMPLEMENT_CLASS (ADecal)
 
 void ADecal::BeginPlay ()
 {

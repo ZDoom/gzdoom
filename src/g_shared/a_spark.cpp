@@ -40,15 +40,13 @@
 
 class ASpark : public AActor
 {
-	DECLARE_STATELESS_ACTOR (ASpark, AActor)
+	DECLARE_CLASS (ASpark, AActor)
 public:
 	angle_t AngleIncrements ();
 	void Activate (AActor *activator);
 };
 
-IMPLEMENT_STATELESS_ACTOR (ASpark, Any, 9026, 0)
-	PROP_Flags (MF_NOSECTOR|MF_NOBLOCKMAP|MF_NOGRAVITY)
-END_DEFAULTS
+IMPLEMENT_CLASS (ASpark)
 
 angle_t ASpark::AngleIncrements ()
 {

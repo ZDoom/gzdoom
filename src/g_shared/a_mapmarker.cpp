@@ -51,18 +51,7 @@
 //
 //--------------------------------------------------------------------------
 
-FState AMapMarker::States[] =
-{
-	S_NORMAL (AMRK, 'A', -1, NULL, NULL)
-};
-
-IMPLEMENT_ACTOR(AMapMarker, Any, 9040, 0)
-	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
-	PROP_RenderFlags (RF_INVISIBLE)
-	PROP_SpawnState (0)
-	PROP_XScale (FRACUNIT/2)
-	PROP_YScale (FRACUNIT/2)
-END_DEFAULTS
+IMPLEMENT_CLASS(AMapMarker)
 
 void AMapMarker::BeginPlay ()
 {

@@ -8,7 +8,7 @@ static FRandom pr_dirt ("SpawnDirt");
 
 class AGlassShard : public AActor
 {
-	DECLARE_STATELESS_ACTOR (AGlassShard, AActor)
+	DECLARE_CLASS (AGlassShard, AActor)
 public:
 	bool FloorBounceMissile (secplane_t &plane)
 	{
@@ -24,7 +24,7 @@ public:
 	}
 };
 
-IMPLEMENT_ABSTRACT_ACTOR(AGlassShard)
+IMPLEMENT_CLASS(AGlassShard)
 
 // Dirt stuff
 

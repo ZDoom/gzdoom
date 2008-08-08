@@ -39,26 +39,14 @@
 
 class AHateTarget : public AActor
 {
-	DECLARE_ACTOR (AHateTarget, AActor)
+	DECLARE_CLASS (AHateTarget, AActor)
 public:
 	void BeginPlay ();
 	angle_t AngleIncrements (void);
 	int TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, FName damagetype);
 };
 
-FState AHateTarget::States[] =
-{
-	S_NORMAL (TNT1, 'A',   -1, NULL							, NULL)
-};
-
-IMPLEMENT_ACTOR (AHateTarget, Any, 9076, 0)
-	PROP_RadiusFixed (20)
-	PROP_HeightFixed (56)
-	PROP_Flags (MF_SHOOTABLE|MF_NOGRAVITY|MF_NOBLOOD)
-	PROP_Flags3 (MF3_DONTSPLASH)
-	PROP_SpawnState (0)
-	PROP_MassLong (INT_MAX)
-END_DEFAULTS
+IMPLEMENT_CLASS (AHateTarget)
 
 void AHateTarget::BeginPlay ()
 {

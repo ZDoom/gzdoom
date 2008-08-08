@@ -1,0 +1,75 @@
+
+ACTOR SectorAction native
+{
+	+NOBLOCKMAP
+	+NOSECTOR
+	+NOGRAVITY
+	+DONTSPLASH
+}
+
+// Triggered when entering sector -------------------------------------------
+
+ACTOR SecActEnter : SectorAction 9998 native
+{
+}
+
+// Triggered when leaving sector --------------------------------------------
+
+ACTOR SecActExit : SectorAction 9997 native
+{
+}
+
+// Triggered when hitting sector's floor ------------------------------------
+
+ACTOR SecActHitFloor : SectorAction 9999 native
+{
+}
+
+// Triggered when hitting sector's ceiling ----------------------------------
+
+ACTOR SecActHitCeil : SectorAction 9996 native
+{
+}
+
+// Triggered when using inside sector ---------------------------------------
+
+ACTOR SecActUse : SectorAction 9995 native
+{
+}
+
+// Triggered when using a sector's wall -------------------------------------
+
+ACTOR SecActUseWall : SectorAction 9994 native
+{
+}
+
+// Triggered when eyes go below fake floor ----------------------------------
+
+ACTOR SecActEyesDive : SectorAction 9993 native
+{
+}
+
+// Triggered when eyes go above fake floor ----------------------------------
+
+ACTOR SecActEyesSurface : SectorAction 9992 native
+{
+}
+
+// Triggered when eyes go below fake floor ----------------------------------
+
+ACTOR SecActEyesBelowC : SectorAction 9983 native
+{
+}
+
+// Triggered when eyes go above fake floor ----------------------------------
+
+ACTOR SecActEyesAboveC : SectorAction 9982 native
+{
+}
+
+// Triggered when eyes go below fake floor ----------------------------------
+
+ACTOR SecActHitFakeFloor : SectorAction 9989 native
+{
+}
+

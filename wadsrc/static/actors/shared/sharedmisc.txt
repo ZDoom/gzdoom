@@ -118,3 +118,15 @@ ACTOR CustomSprite 9988 native
 		Stop
 	}
 }
+
+// SwitchableDecoration: Activate and Deactivate change state ---------------
+
+ACTOR SwitchableDecoration native
+{
+}
+
+
+ACTOR SwitchingDecoration : SwitchableDecoration native
+{
+}
+

@@ -301,6 +301,7 @@ ACTOR(ClassBossHealth)
 ACTOR(ClericAttack)
 ACTOR(FighterAttack)
 ACTOR(MageAttack)
+ACTOR(IceSetTics)
 
 ACTOR(TemplarAttack)
 ACTOR(SentinelAttack)

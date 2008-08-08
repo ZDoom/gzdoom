@@ -1,3 +1,10 @@
+ACTOR ParticleFountain native
+{
+	Height 0
+	+NOBLOCKMAP
+	+NOGRAVITY
+	+INVISIBLE
+}
 
 ACTOR RedParticleFountain : ParticleFountain 9027
 {

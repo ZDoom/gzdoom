@@ -21,13 +21,13 @@ static FRandom pr_freeze ("FreezeDeathChunks");
 
 class ASwitchableDecoration : public AActor
 {
-	DECLARE_STATELESS_ACTOR (ASwitchableDecoration, AActor)
+	DECLARE_CLASS (ASwitchableDecoration, AActor)
 public:
 	void Activate (AActor *activator);
 	void Deactivate (AActor *activator);
 };
 
-IMPLEMENT_ABSTRACT_ACTOR (ASwitchableDecoration)
+IMPLEMENT_CLASS (ASwitchableDecoration)
 
 void ASwitchableDecoration::Activate (AActor *activator)
 {
@@ -43,65 +43,12 @@ void ASwitchableDecoration::Deactivate (AActor *activator)
 
 class ASwitchingDecoration : public ASwitchableDecoration
 {
-	DECLARE_STATELESS_ACTOR (ASwitchingDecoration, ASwitchableDecoration)
+	DECLARE_CLASS (ASwitchingDecoration, ASwitchableDecoration)
 public:
 	void Deactivate (AActor *activator) {}
 };
 
-IMPLEMENT_ABSTRACT_ACTOR (ASwitchingDecoration)
-
-/***************************** IceChunk ************************************/
-
-class AIceChunk : public AActor
-{
-	DECLARE_ACTOR (AIceChunk, AActor)
-};
-
-FState AIceChunk::States[] =
-{
-	S_NORMAL (ICEC, 'A',   10, NULL 					, &States[1]),
-	S_NORMAL (ICEC, 'B',   10, A_IceSetTics 			, &States[2]),
-	S_NORMAL (ICEC, 'C',   10, A_IceSetTics 			, &States[3]),
-	S_NORMAL (ICEC, 'D',   10, A_IceSetTics 			, NULL),
-};
-
-IMPLEMENT_ACTOR (AIceChunk, Any, -1, 0)
-	PROP_RadiusFixed (3)
-	PROP_HeightFixed (4)
-	PROP_Mass(5)
-	PROP_Gravity (FRACUNIT/8)
-	PROP_Flags (MF_DROPOFF)
-	PROP_Flags2 (MF2_CANNOTPUSH|MF2_FLOORCLIP|MF2_NOTELEPORT)
-
-	PROP_SpawnState (0)
-END_DEFAULTS
-
-/***************************************************************************/
-
-// A chunk of ice that is also a player -------------------------------------
-
-class AIceChunkHead : public APlayerChunk
-{
-	DECLARE_ACTOR (AIceChunkHead, APlayerChunk)
-};
-
-FState AIceChunkHead::States[] =
-{
-	S_NORMAL (PLAY, 'A',	0, NULL						, &States[1]),
-	S_NORMAL (ICEC, 'A',   10, A_IceCheckHeadDone		, &States[1])
-};
-
-IMPLEMENT_ACTOR (AIceChunkHead, Any, -1, 0)
-	PROP_RadiusFixed (3)
-	PROP_HeightFixed (4)
-	PROP_Mass(5)
-	PROP_DamageType (NAME_Ice)
-	PROP_Gravity (FRACUNIT/8)
-	PROP_Flags (MF_DROPOFF)
-	PROP_Flags2 (MF2_CANNOTPUSH)
-
-	PROP_SpawnState (0)
-END_DEFAULTS
+IMPLEMENT_CLASS (ASwitchingDecoration)
 
 //----------------------------------------------------------------------------
 //
@@ -257,20 +204,6 @@ void A_IceSetTics (AActor *actor)
 
 //============================================================================
 //
-// A_IceCheckHeadDone
-//
-//============================================================================
-
-void A_IceCheckHeadDone (AActor *actor)
-{
-	if (actor->player == NULL)
-	{
-		actor->Destroy ();
-	}
-}
-
-//============================================================================
-//
 // A_FreezeDeathChunks
 //
 //============================================================================
@@ -298,7 +231,7 @@ void A_FreezeDeathChunks (AActor *actor)
 	i = (pr_freeze.Random2()) % (numChunks/4);
 	for (i = MAX (24, numChunks + i); i >= 0; i--)
 	{
-		mo = Spawn<AIceChunk> (
+		mo = Spawn("IceChunk", 
 			actor->x + (((pr_freeze()-128)*actor->radius)>>7), 
 			actor->y + (((pr_freeze()-128)*actor->radius)>>7), 
 			actor->z + (pr_freeze()*actor->height/255), ALLOW_REPLACE);
@@ -315,17 +248,20 @@ void A_FreezeDeathChunks (AActor *actor)
 	}
 	if (actor->player)
 	{ // attach the player's view to a chunk of ice
-		AIceChunkHead *head = Spawn<AIceChunkHead> (actor->x, actor->y, 
+		AActor *head = Spawn("IceChunkHead", actor->x, actor->y, 
 													actor->z + actor->player->mo->ViewHeight, ALLOW_REPLACE);
 		head->momz = FixedDiv(head->z-actor->z, actor->height)<<2;
 		head->momx = pr_freeze.Random2 () << (FRACBITS-7);
 		head->momy = pr_freeze.Random2 () << (FRACBITS-7);
-		head->player = actor->player;
-		actor->player = NULL;
-		head->ObtainInventory (actor);
 		head->health = actor->health;
 		head->angle = actor->angle;
-		head->player->mo = head;
+		if (head->IsKindOf(RUNTIME_CLASS(APlayerPawn)))
+		{
+			head->player->mo = static_cast<APlayerPawn*>(head);
+			head->player = actor->player;
+			actor->player = NULL;
+			head->ObtainInventory (actor);
+		}
 		head->pitch = 0;
 		head->RenderStyle = actor->RenderStyle;
 		head->alpha = actor->alpha;

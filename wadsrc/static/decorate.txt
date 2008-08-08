@@ -101,6 +101,10 @@
 #include "actors/hexen/magecone.txt"
 #include "actors/hexen/magelightning.txt"
 #include "actors/hexen/magestaff.txt"
+#include "actors/hexen/fighterfist.txt"
+#include "actors/hexen/fighteraxe.txt"
+#include "actors/hexen/fighterhammer.txt"
+#include "actors/hexen/fighterquietus.txt"
 
 #include "actors/strife/strifehumanoid.txt"
 #include "actors/strife/strifeplayer.txt"

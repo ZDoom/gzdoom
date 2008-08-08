@@ -1249,7 +1249,7 @@ bool AInventory::TryPickup (AActor *toucher)
 	{
 		// Add the item to the inventory. It is not already there, or HandlePickup
 		// would have already taken care of it.
-		AInventory *copy = CreateCopy (toucher);
+		AInventory *copy = CreeCopy (toucher);
 		if (copy == NULL)
 		{
 			return false;

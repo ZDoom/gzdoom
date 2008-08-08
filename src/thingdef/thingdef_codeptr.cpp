@@ -414,6 +414,7 @@ FState *P_GetState(AActor *self, FState *CallingState, int offset)
 	}
 	else if (offset>0)
 	{
+		if (CallingState == NULL) return NULL;
 		return CallingState + offset;
 	}
 	else if (self != NULL)

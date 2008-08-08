@@ -1,0 +1,113 @@
+
+// The Fighter's Axe --------------------------------------------------------
+
+ACTOR FWeapAxe : FighterWeapon 8010 native
+{
+	Game Hexen
+	SpawnID 27
+	Weapon.SelectionOrder 1500
+	+WEAPON.AXEBLOOD +WEAPON.AMMO_OPTIONAL +WEAPON.MELEEWEAPON
+	Weapon.AmmoUse1 2
+	Weapon.AmmoGive1 25
+	Weapon.KickBack 150
+	Weapon.YAdjust -12
+	Weapon.AmmoType1 "Mana1"
+	Inventory.PickupMessage "$TXT_WEAPON_F2"
+
+	action native A_FAxeCheckUp();
+	action native A_FAxeCheckReady();
+	action native A_FAxeCheckAtk();
+	action native A_FAxeAttack();
+	action native A_FAxeCheckUpG();
+	action native A_FAxeCheckReadyG();
+
+	States
+	{
+	Spawn:
+		WFAX A -1
+		Stop
+	Select:
+		FAXE A 1 A_FAxeCheckUp
+		Loop
+	Deselect:
+		FAXE A 1 A_Lower
+		Loop
+	Ready:
+		FAXE A 1 A_FAxeCheckReady
+		Loop
+	Fire:
+		FAXE B 4 Offset (15, 32) A_FAxeCheckAtk
+		FAXE C 3 Offset (15, 32)
+		FAXE D 2 Offset (15, 32)
+		FAXE D 1 Offset (-5, 70) A_FAxeAttack
+		FAXE D 2 Offset (-25, 90)
+		FAXE E 1 Offset (15, 32)
+		FAXE E 2 Offset (10, 54)
+		FAXE E 7 Offset (10, 150)
+		FAXE A 1 Offset (0, 60) A_ReFire
+		FAXE A 1 Offset (0, 52)
+		FAXE A 1 Offset (0, 44)
+		FAXE A 1 Offset (0, 36)
+		FAXE A 1
+		Goto Ready
+	SelectGlow:
+		FAXE L 1 A_FAxeCheckUpG
+		Loop
+	DeselectGlow:
+		FAXE L 1 A_Lower
+		Loop
+	ReadyGlow:
+		FAXE LLL 1 A_FAxeCheckReadyG
+		FAXE MMM 1 A_FAxeCheckReadyG
+		Loop
+	FireGlow:
+		FAXE N 4 Offset (15, 32)
+		FAXE O 3 Offset (15, 32)
+		FAXE P 2 Offset (15, 32)
+		FAXE P 1 Offset (-5, 70) A_FAxeAttack
+		FAXE P 2 Offset (-25, 90)
+		FAXE Q 1 Offset (15, 32)
+		FAXE Q 2 Offset (10, 54)
+		FAXE Q 7 Offset (10, 150)
+		FAXE A 1 Offset (0, 60) A_ReFire
+		FAXE A 1 Offset (0, 52)
+		FAXE A 1 Offset (0, 44)
+		FAXE A 1 Offset (0, 36)
+		FAXE A 1
+		Goto ReadyGlow
+	}
+}
+
+// Axe Puff -----------------------------------------------------------------
+
+ACTOR AxePuff
+{
+	+NOBLOCKMAP +NOGRAVITY
+	+PUFFONACTORS
+	RenderStyle Translucent
+	Alpha 0.6
+	SeeSound "FighterAxeHitThing"
+	AttackSound "FighterHammerHitWall"
+	ActiveSound "FighterHammerMiss"
+	States
+	{
+	Spawn:
+		FHFX STUVW 4
+		Stop
+	}
+}
+
+// Glowing Axe Puff ---------------------------------------------------------
+
+ACTOR AxePuffGlow : AxePuff
+{
+	+PUFFONACTORS
+	RenderStyle Add
+	Alpha 1
+	States
+	{
+	Spawn:
+		FAXE RSTUVWX 4 Bright
+		Stop
+	}
+}

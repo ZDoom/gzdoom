@@ -66,17 +66,7 @@ public:
 	bool TryPickup (AActor *toucher);
 };
 
-class AStrifeWeapon : public AWeapon
-{
-	DECLARE_STATELESS_ACTOR (AStrifeWeapon, AWeapon)
-};
-
-class AFlameThrower : public AStrifeWeapon
-{
-	DECLARE_ACTOR (AFlameThrower, AStrifeWeapon)
-};
-
-class ASigil : public AStrifeWeapon
+class ASigil : public AWeapon
 {
 	DECLARE_ACTOR (ASigil, AStrifeWeapon)
 public:

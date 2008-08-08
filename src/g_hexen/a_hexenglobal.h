@@ -38,13 +38,6 @@ public:
 	bool IsOkayToAttack (AActor *link);
 };
 
-class AHammerPuff : public AActor
-{
-	DECLARE_ACTOR (AHammerPuff, AActor)
-public:
-	void BeginPlay ();
-};
-
 class AFourthWeaponPiece : public AInventory
 {
 	DECLARE_STATELESS_ACTOR (AFourthWeaponPiece, AInventory)

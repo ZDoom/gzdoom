@@ -18,25 +18,7 @@ public:
 	bool Use (bool pickup);
 };
 
-FState AArtiDarkServant::States[] =
-{
-#define S_ARTI_SUMMON 0
-	S_NORMAL (SUMN, 'A',  350, NULL					    , &States[S_ARTI_SUMMON]),
-};
-
-IMPLEMENT_ACTOR (AArtiDarkServant, Hexen, 86, 16)
-	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
-	PROP_Flags2 (MF2_FLOATBOB)
-	PROP_SpawnState (S_ARTI_SUMMON)
-	PROP_Inventory_RespawnTics (30+4200)
-	PROP_Inventory_DefMaxAmount
-	PROP_Inventory_PickupFlash (1)
-	PROP_Inventory_FlagsSet (IF_INVBAR|IF_FANCYPICKUPSOUND)
-	PROP_Inventory_Icon ("ARTISUMN")
-	PROP_Inventory_PickupSound ("misc/p_pkup")
-	PROP_Inventory_PickupMessage("$TXT_ARTISUMMON")
-END_DEFAULTS
-
+IMPLEMENT_CLASS (AArtiDarkServant)
 
 //============================================================================
 //

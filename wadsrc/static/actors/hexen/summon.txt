@@ -1,4 +1,27 @@
 
+// Dark Servant Artifact ----------------------------------------------------
+
+ACTOR ArtiDarkServant : Inventory 86 native
+{
+	Game Hexen
+	SpawnID 16
+	+COUNTITEM
+	+FLOATBOB
+	Inventory.RespawnTics 4230
+	Inventory.DefMaxAmount
+	Inventory.PickupFlash 1
+	+INVBAR +FANCYPICKUPSOUND
+	Inventory.Icon "ARTISUMN"
+	Inventory.PickupSound "misc/p_pkup"
+	Inventory.PickupMessage "$TXT_ARTISUMMON"
+	States
+	{
+	Spawn:
+		SUMN A 350
+		Loop
+	}
+}
+
 // Summoning Doll -----------------------------------------------------------
 
 ACTOR SummoningDoll

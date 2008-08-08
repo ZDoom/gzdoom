@@ -1,4 +1,8 @@
 August 8, 2008 (Changes by Graf Zahl)
+- Changed increased lightning damage for Centaurs into a damage factor.
+- Changed PoisonCloud and Lightning special treatment in P_DamageMobj to use damage
+  types instead to keep dependencies on specific actor types out of the main engine code.
+- Added Korax DECORATE conversion by Gez and a few others by Karate Chris.
 - Removed FourthWeaponClass and based Hexen's fourth weapons on the generic weapon
   pieces.
 - Added DECORATE conversions for Hexen's Fighter weapons by Karate Chris.

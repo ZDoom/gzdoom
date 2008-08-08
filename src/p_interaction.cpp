@@ -1201,7 +1201,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 	
 	if (!(target->flags5 & MF5_NOPAIN) && (pr_damagemobj() < painchance) && !(target->flags & MF_SKULLFLY))
 	{
-		if (inflictor && inflictor->IsKindOf (RUNTIME_CLASS(ALightning)))
+		if (mod == NAME_Electric)
 		{
 			if (pr_lightning() < 96)
 			{
@@ -1223,7 +1223,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 			target->flags |= MF_JUSTHIT; // fight back!
 			FState * painstate = target->FindState(NAME_Pain, mod);
 			if (painstate != NULL) target->SetState (painstate);
-			if (inflictor && inflictor->IsKindOf (RUNTIME_CLASS(APoisonCloud)))
+			if (mod == NAME_PoisonCloud)
 			{
 				if ((target->flags3 & MF3_ISMONSTER) && pr_poison() < 128)
 				{

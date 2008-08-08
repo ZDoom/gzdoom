@@ -67,6 +67,7 @@
 #include "actors/heretic/dsparil.txt"
 #include "actors/heretic/chicken.txt"
 
+#include "actors/hexen/korax.txt"
 #include "actors/hexen/fighterplayer.txt"
 #include "actors/hexen/clericplayer.txt"
 #include "actors/hexen/mageplayer.txt"
@@ -105,6 +106,7 @@
 #include "actors/hexen/fighteraxe.txt"
 #include "actors/hexen/fighterhammer.txt"
 #include "actors/hexen/fighterquietus.txt"
+#include "actors/hexen/dragon.txt"
 
 #include "actors/strife/strifehumanoid.txt"
 #include "actors/strife/strifeplayer.txt"

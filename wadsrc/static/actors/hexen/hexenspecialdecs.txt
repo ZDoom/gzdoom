@@ -75,6 +75,283 @@ ACTOR TreeDestructible 8062
 }
 
 
+// Pottery1 ------------------------------------------------------------------
+
+ACTOR Pottery1 104 native
+{
+	Game Hexen
+	Health 15
+	Speed 10
+	Height 32
+	+SOLID +SHOOTABLE +NOBLOOD +DROPOFF
+	+SLIDESONWALLS +PUSHABLE +TELESTOMP +CANPASS
+	+NOICEDEATH
+
+	action native A_PotteryExplode();
+
+	States
+	{
+	Spawn:
+		POT1 A -1
+		Loop
+	Death:
+		POT1 A 0 A_PotteryExplode
+		Stop
+	}
+}
+
+// Pottery2 -----------------------------------------------------------------
+
+ACTOR Pottery2 : Pottery1 105
+{
+	Game Hexen
+	Height 25
+	States
+	{
+	Spawn:
+		POT2 A -1
+		Stop
+	}
+}
+
+// Pottery3 -----------------------------------------------------------------
+
+ACTOR Pottery3 : Pottery1 106
+{
+	Game Hexen
+	Height 25
+	States
+	{
+	Spawn:
+		POT3 A -1
+		Stop
+	}
+}
+
+// Pottery Bit --------------------------------------------------------------
+
+ACTOR PotteryBit
+{
+	Radius 5
+	Height 5
+	+MISSILE
+	+NOTELEPORT
+	+NOICEDEATH
+
+	action native A_PotteryChooseBit();
+	action native A_PotteryCheck();
+
+	States
+	{
+	Spawn:
+		PBIT ABCDE -1
+		Stop
+	Death:
+		PBIT F 0 A_PotteryChooseBit
+		Stop
+	Pottery1:
+		PBIT F 140
+		PBIT F 1 A_PotteryCheck
+		Stop
+	Pottery2:
+		PBIT G 140
+		PBIT G 1 A_PotteryCheck
+		Stop
+	Pottery3:
+		PBIT H 140
+		PBIT H 1 A_PotteryCheck
+		Stop
+	Pottery4:
+		PBIT I 140
+		PBIT I 1 A_PotteryCheck
+		Stop
+	Pottery5:
+		PBIT J 140
+		PBIT J 1 A_PotteryCheck
+		Stop
+	}
+}
+
+
+// Blood pool ---------------------------------------------------------------
+
+ACTOR BloodPool 111
+{
+	Game Hexen
+	States
+	{
+	Spawn:
+		BDPL A -1
+		Stop
+	}
+}
+
+
+// Lynched corpse (no heart) ------------------------------------------------
+
+ACTOR ZCorpseLynchedNoHeart 109 native
+{
+	Radius 10
+	Height 100
+	+SOLID +SPAWNCEILING +NOGRAVITY
+
+	action native A_CorpseBloodDrip();
+
+	States
+	{
+	Spawn:
+		CPS5 A 140 A_CorpseBloodDrip
+		Loop
+	}
+}
+
+
+// CorpseBloodDrip ----------------------------------------------------------
+
+ACTOR CorpseBloodDrip
+{
+	Radius 1
+	Height 4
+	Gravity 0.125
+	+MISSILE
+	+NOICEDEATH
+	States
+	{
+	Spawn:
+		BDRP A -1
+		Stop
+	Death:
+		BDSH AB 3
+		BDSH CD 2
+		Stop
+	}
+}
+
+
+// Corpse bit ---------------------------------------------------------------
+
+ACTOR CorpseBit
+{
+	Radius 5
+	Height 5
+	+NOBLOCKMAP
+	+TELESTOMP
+	States
+	{
+	Spawn:
+		CPB1 A -1
+		Stop
+		CPB2 A -1
+		Stop
+		CPB3 A -1
+		Stop
+		CPB4 A -1
+		Stop
+	}
+}
+
+
+// Corpse (sitting, splatterable) -------------------------------------------
+
+ACTOR ZCorpseSitting 110
+{
+	Game Hexen
+	Health 30
+	Radius 15
+	Height 35
+	+SOLID +SHOOTABLE +NOBLOOD
+	+NOICEDEATH
+	DeathSound "FireDemonDeath"
+
+	action native A_CorpseExplode();
+
+	States
+	{
+	Spawn:
+		CPS6 A -1
+		Stop
+		CPS6 A 1 A_CorpseExplode
+		Stop
+	}
+}
+
+
+// Leaf Spawner -------------------------------------------------------------
+
+ACTOR LeafSpawner 113
+{
+	Game Hexen
+	+NOBLOCKMAP +NOSECTOR
+	+INVISIBLE
+
+	action native A_LeafSpawn();
+
+	States
+	{
+	Spawn:
+		TNT1 A 20 A_LeafSpawn
+		Loop
+	}
+}
+
+
+// Leaf 1 -------------------------------------------------------------------
+
+ACTOR Leaf1
+{
+	Radius 2
+	Height 4
+	Gravity 0.125
+	+NOBLOCKMAP +MISSILE
+	+NOTELEPORT +DONTSPLASH
+	+NOICEDEATH
+
+	action native A_LeafThrust();
+	action native A_LeafCheck();
+
+	States
+	{
+	Spawn:
+		LEF1 ABC 4
+		LEF1 D 4 A_LeafThrust
+		LEF1 EFG 4
+		LEF1 H 4 A_LeafThrust
+		LEF1 I 4
+		LEF1 AB 4
+		LEF1 C 4 A_LeafThrust
+		LEF1 DEF 4
+		LEF1 G 4 A_LeafThrust
+		LEF1 HI 4
+		Stop
+	Death:
+		LEF3 D 10 A_LeafCheck
+		Wait
+	}
+}
+
+
+// Leaf 2 -------------------------------------------------------------------
+
+ACTOR Leaf2 : Leaf1
+{
+	States
+	{
+	Spawn:
+		LEF2 ABC 4
+		LEF2 D 4 A_LeafThrust
+		LEF2 EFG 4
+		LEF2 H 4 A_LeafThrust
+		LEF2 I 4
+		LEF2 AB 4
+		LEF2 C 4 A_LeafThrust
+		LEF2 DEF 4
+		LEF2 G 4 A_LeafThrust
+		LEF2 HI 4
+		Stop
+	}
+}
+
+
 // Twined torch -------------------------------------------------------------
 
 ACTOR ZTwinedTorch : SwitchableDecoration 116
@@ -191,6 +468,39 @@ ACTOR ZShrub2 8102
 }
 
 
+// Poison Shroom ------------------------------------------------------------
+
+ACTOR ZPoisonShroom 8104
+{
+	Game Hexen
+	Radius 6
+	Height 20
+	PainChance 255
+	Health 30
+	Mass 0x7fffffff
+	+SHOOTABLE +SOLID +NOBLOOD
+	+NOICEDEATH
+	PainSound "PoisonShroomPain"
+	DeathSound "PoisonShroomDeath"
+
+	action native A_PoisonShroom();
+
+	States
+	{
+	Spawn:
+		SHRM A 5 A_PoisonShroom
+	Pain:
+		SHRM A 6
+		SHRM B 8 A_Pain
+		Goto Spawn
+	Death:
+		SHRM CDE 5
+		SHRM F -1
+		Stop
+	}
+}
+
+
 // Fire Bull ----------------------------------------------------------------
 
 ACTOR ZFireBull : SwitchableDecoration 8042
@@ -221,6 +531,124 @@ ACTOR ZFireBullUnlit : ZFireBull 8043
 	{
 	Spawn:
 		Goto Super::Inactive+2
+	}
+}
+
+
+// Suit of armor ------------------------------------------------------------
+
+ACTOR ZSuitOfArmor
+{
+	Health 60
+	Radius 16
+	Height 72
+	Mass 0x7fffffff
+	+SOLID +SHOOTABLE +NOBLOOD
+	+NOICEDEATH
+	DeathSound "SuitofArmorBreak"
+
+	action native A_SoAExplode();
+
+	States
+	{
+	Spawn:
+		ZSUI A -1
+		Stop
+		ZSUI A 1 A_SoAExplode
+		Stop
+	}
+}
+
+
+// Armor chunk --------------------------------------------------------------
+
+ACTOR ZArmorChunk
+{
+	Radius 4
+	Height 8
+	States
+	{
+	Spawn:
+		ZSUI B -1
+		Stop
+		ZSUI C -1
+		Stop
+		ZSUI D -1
+		Stop
+		ZSUI E -1
+		Stop
+		ZSUI F -1
+		Stop
+		ZSUI G -1
+		Stop
+		ZSUI H -1
+		Stop
+		ZSUI I -1
+		Stop
+		ZSUI J -1
+		Stop
+		ZSUI K -1
+		Stop
+	}
+}
+
+
+// Bell ---------------------------------------------------------------------
+
+ACTOR ZBell 8065 native
+{
+	Game Hexen
+	Health 5
+	Radius 56
+	Height 120
+	Mass 0x7fffffff
+	+SOLID +SHOOTABLE +NOBLOOD +NOGRAVITY +SPAWNCEILING
+	+NOICEDEATH
+	DeathSound "BellRing"
+
+	action native A_BellReset1();
+	action native A_BellReset2();
+
+	States
+	{
+	Spawn:
+		BBLL F -1
+		Stop
+	Death:
+		BBLL A 4 A_BellReset1
+		BBLL BC 4
+		BBLL D 5 A_Scream
+		BBLL CB 4
+		BBLL A 3
+		BBLL E 4
+		BBLL F 5
+		BBLL G 6 A_Scream
+		BBLL F 5
+		BBLL EA 4
+		BBLL BC 5
+		BBLL D 6 A_Scream
+		BBLL CB 5
+		BBLL A 4
+		BBLL EF 5
+		BBLL G 7 A_Scream
+		BBLL FEA 5
+		BBLL B 6
+		BBLL C 6
+		BBLL D 7 A_Scream
+		BBLL CB 6
+		BBLL A 5
+		BBLL EF 6
+		BBLL G 7 A_Scream
+		BBLL FEABC 6
+		BBLL B 7
+		BBLL A 8
+		BBLL E 12
+		BBLL A 10
+		BBLL B 12
+		BBLL A 12
+		BBLL E 14
+		BBLL A 1 A_BellReset2
+		Goto Spawn
 	}
 }
 

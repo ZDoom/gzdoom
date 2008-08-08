@@ -78,162 +78,6 @@ AActor *P_SpawnKoraxMissile (fixed_t x, fixed_t y, fixed_t z,
 
 extern void SpawnSpiritTail (AActor *spirit);
 
-// Korax --------------------------------------------------------------------
-
-class AKorax : public AActor
-{
-	DECLARE_ACTOR (AKorax, AActor)
-};
-
-FState AKorax::States[] =
-{
-#define S_KORAX_LOOK1 0
-	S_NORMAL (KORX, 'A',	5, A_Look				    , &States[S_KORAX_LOOK1]),
-
-#define S_KORAX_CHASE2 (S_KORAX_LOOK1+1)
-	S_NORMAL (KORX, 'A',	3, A_KoraxChase			    , &States[S_KORAX_CHASE2+1]),
-	S_NORMAL (KORX, 'A',	3, A_KoraxChase			    , &States[S_KORAX_CHASE2+2]),
-	S_NORMAL (KORX, 'A',	3, A_KoraxChase			    , &States[S_KORAX_CHASE2+3]),
-	S_NORMAL (KORX, 'B',	3, A_KoraxStep			    , &States[S_KORAX_CHASE2+4]),
-	S_NORMAL (KORX, 'B',	3, A_KoraxChase			    , &States[S_KORAX_CHASE2+5]),
-	S_NORMAL (KORX, 'B',	3, A_KoraxChase			    , &States[S_KORAX_CHASE2+6]),
-	S_NORMAL (KORX, 'B',	3, A_KoraxChase			    , &States[S_KORAX_CHASE2+7]),
-	S_NORMAL (KORX, 'C',	3, A_KoraxStep2			    , &States[S_KORAX_CHASE2+8]),
-	S_NORMAL (KORX, 'C',	3, A_KoraxChase			    , &States[S_KORAX_CHASE2+9]),
-	S_NORMAL (KORX, 'C',	3, A_KoraxChase			    , &States[S_KORAX_CHASE2+10]),
-	S_NORMAL (KORX, 'C',	3, A_KoraxChase			    , &States[S_KORAX_CHASE2+11]),
-	S_NORMAL (KORX, 'D',	3, A_KoraxStep			    , &States[S_KORAX_CHASE2+12]),
-	S_NORMAL (KORX, 'D',	3, A_KoraxChase			    , &States[S_KORAX_CHASE2+13]),
-	S_NORMAL (KORX, 'D',	3, A_KoraxChase			    , &States[S_KORAX_CHASE2+14]),
-	S_NORMAL (KORX, 'D',	3, A_KoraxChase			    , &States[S_KORAX_CHASE2+15]),
-	S_NORMAL (KORX, 'A',	3, A_KoraxStep2			    , &States[S_KORAX_CHASE2]),
-
-#define S_KORAX_PAIN1 (S_KORAX_CHASE2+16)
-	S_NORMAL (KORX, 'H',	5, A_Pain				    , &States[S_KORAX_PAIN1+1]),
-	S_NORMAL (KORX, 'H',	5, NULL					    , &States[S_KORAX_CHASE2]),
-
-#define S_KORAX_ATTACK1 (S_KORAX_PAIN1+2)
-	S_BRIGHT (KORX, 'E',	2, A_FaceTarget			    , &States[S_KORAX_ATTACK1+1]),
-	S_BRIGHT (KORX, 'E',	5, A_KoraxDecide		    , &States[S_KORAX_ATTACK1+1]),
-
-#define S_KORAX_DEATH1 (S_KORAX_ATTACK1+2)
-	S_NORMAL (KORX, 'I',	5, NULL					    , &States[S_KORAX_DEATH1+1]),
-	S_NORMAL (KORX, 'J',	5, A_FaceTarget			    , &States[S_KORAX_DEATH1+2]),
-	S_NORMAL (KORX, 'K',	5, A_Scream				    , &States[S_KORAX_DEATH1+3]),
-	S_NORMAL (KORX, 'L',	5, NULL					    , &States[S_KORAX_DEATH1+4]),
-	S_NORMAL (KORX, 'M',	5, NULL					    , &States[S_KORAX_DEATH1+5]),
-	S_NORMAL (KORX, 'N',	5, NULL					    , &States[S_KORAX_DEATH1+6]),
-	S_NORMAL (KORX, 'O',	5, NULL					    , &States[S_KORAX_DEATH1+7]),
-	S_NORMAL (KORX, 'P',	5, NULL					    , &States[S_KORAX_DEATH1+8]),
-	S_NORMAL (KORX, 'Q',   10, NULL					    , &States[S_KORAX_DEATH1+9]),
-	S_NORMAL (KORX, 'R',	5, A_KoraxBonePop		    , &States[S_KORAX_DEATH1+10]),
-	S_NORMAL (KORX, 'S',	5, A_NoBlocking			    , &States[S_KORAX_DEATH1+11]),
-	S_NORMAL (KORX, 'T',	5, NULL					    , &States[S_KORAX_DEATH1+12]),
-	S_NORMAL (KORX, 'U',	5, NULL					    , &States[S_KORAX_DEATH1+13]),
-	S_NORMAL (KORX, 'V',   -1, NULL					    , NULL),
-
-#define S_KORAX_MISSILE1 (S_KORAX_DEATH1+14)
-	S_BRIGHT (KORX, 'E',	4, A_FaceTarget			    , &States[S_KORAX_MISSILE1+1]),
-	S_BRIGHT (KORX, 'F',	8, A_KoraxMissile		    , &States[S_KORAX_MISSILE1+2]),
-	S_BRIGHT (KORX, 'E',	8, NULL					    , &States[S_KORAX_CHASE2]),
-
-#define S_KORAX_COMMAND1 (S_KORAX_MISSILE1+3)
-	S_BRIGHT (KORX, 'E',	5, A_FaceTarget			    , &States[S_KORAX_COMMAND1+1]),
-	S_BRIGHT (KORX, 'W',   10, A_FaceTarget			    , &States[S_KORAX_COMMAND1+2]),
-	S_BRIGHT (KORX, 'G',   15, A_KoraxCommand		    , &States[S_KORAX_COMMAND1+3]),
-	S_BRIGHT (KORX, 'W',   10, NULL					    , &States[S_KORAX_COMMAND1+4]),
-	S_BRIGHT (KORX, 'E',	5, NULL					    , &States[S_KORAX_CHASE2]),
-
-};
-
-IMPLEMENT_ACTOR (AKorax, Hexen, 10200, 0)
-	PROP_SpawnHealth (5000)
-	PROP_PainChance (20)
-	PROP_SpeedFixed (10)
-	PROP_RadiusFixed (65)
-	PROP_HeightFixed (115)
-	PROP_Mass (2000)
-	PROP_Damage (15)
-	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_COUNTKILL)
-	PROP_Flags2 (MF2_FLOORCLIP|MF2_BOSS|MF2_TELESTOMP|MF2_PUSHWALL|MF2_MCROSS)
-	PROP_Flags3 (MF3_DONTMORPH|MF3_NOTARGET)
-	PROP_Flags4 (MF4_NOICEDEATH)
-
-	PROP_SpawnState (S_KORAX_LOOK1)
-	PROP_SeeState (S_KORAX_CHASE2)
-	PROP_PainState (S_KORAX_PAIN1)
-	PROP_MissileState (S_KORAX_ATTACK1)
-	PROP_DeathState (S_KORAX_DEATH1)
-
-	PROP_SeeSound ("KoraxSight")
-	PROP_AttackSound ("KoraxAttack")
-	PROP_PainSound ("KoraxPain")
-	PROP_DeathSound ("KoraxDeath")
-	PROP_ActiveSound ("KoraxActive")
-	PROP_Obituary ("$OB_KORAX")
-END_DEFAULTS
-
-// Korax Spirit -------------------------------------------------------------
-
-class AKoraxSpirit : public AActor
-{
-	DECLARE_ACTOR (AKoraxSpirit, AActor)
-};
-
-FState AKoraxSpirit::States[] =
-{
-	S_NORMAL (SPIR, 'A',	5, A_KSpiritRoam		    , &States[1]),
-	S_NORMAL (SPIR, 'B',	5, A_KSpiritRoam		    , &States[0]),
-
-#define S_KSPIRIT_DEATH (2)
-	S_NORMAL (SPIR, 'D',	5, NULL					    , &States[S_KSPIRIT_DEATH+1]),
-	S_NORMAL (SPIR, 'E',	5, NULL					    , &States[S_KSPIRIT_DEATH+2]),
-	S_NORMAL (SPIR, 'F',	5, NULL					    , &States[S_KSPIRIT_DEATH+3]),
-	S_NORMAL (SPIR, 'G',	5, NULL					    , &States[S_KSPIRIT_DEATH+4]),
-	S_NORMAL (SPIR, 'H',	5, NULL					    , &States[S_KSPIRIT_DEATH+5]),
-	S_NORMAL (SPIR, 'I',	5, NULL					    , NULL),
-};
-
-IMPLEMENT_ACTOR (AKoraxSpirit, Hexen, -1, 0)
-	PROP_SpeedFixed (8)
-	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY|MF_DROPOFF|MF_NOCLIP|MF_MISSILE)
-	PROP_Flags2 (MF2_NOTELEPORT)
-	PROP_RenderStyle (STYLE_Translucent)
-	PROP_Alpha (HX_ALTSHADOW)
-	PROP_SpawnState (0)
-END_DEFAULTS
-
-// Korax Bolt ---------------------------------------------------------------
-
-class AKoraxBolt : public AActor
-{
-	DECLARE_ACTOR (AKoraxBolt, AActor)
-};
-
-FState AKoraxBolt::States[] =
-{
-#define S_KBOLT1 0
-	S_BRIGHT (MLFX, 'I',	2, NULL					    , &States[S_KBOLT1+1]),
-	S_BRIGHT (MLFX, 'J',	2, A_KBoltRaise			    , &States[S_KBOLT1+2]),
-	S_BRIGHT (MLFX, 'I',	2, A_KBolt				    , &States[S_KBOLT1+3]),
-	S_BRIGHT (MLFX, 'J',	2, A_KBolt				    , &States[S_KBOLT1+4]),
-	S_BRIGHT (MLFX, 'K',	2, A_KBolt				    , &States[S_KBOLT1+5]),
-	S_BRIGHT (MLFX, 'L',	2, A_KBolt				    , &States[S_KBOLT1+6]),
-	S_BRIGHT (MLFX, 'M',	2, A_KBolt				    , &States[S_KBOLT1+2]),
-};
-
-IMPLEMENT_ACTOR (AKoraxBolt, Hexen, -1, 0)
-	PROP_RadiusFixed (15)
-	PROP_HeightFixed (35)
-	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY|MF_DROPOFF|MF_MISSILE)
-	PROP_Flags2 (MF2_NOTELEPORT)
-	PROP_RenderStyle (STYLE_Add)
-
-	PROP_SpawnState (S_KBOLT1)
-END_DEFAULTS
-
-//============================================================================
-
 //============================================================================
 //
 // A_KoraxChase
@@ -297,29 +141,6 @@ void A_KoraxChase (AActor *actor)
 
 //============================================================================
 //
-// A_KoraxStep
-//
-//============================================================================
-
-void A_KoraxStep (AActor *actor)
-{
-	A_Chase (actor);
-}
-
-//============================================================================
-//
-// A_KoraxStep2
-//
-//============================================================================
-
-void A_KoraxStep2 (AActor *actor)
-{
-	S_Sound (actor, CHAN_BODY, "KoraxStep", 1, ATTN_NONE);
-	A_Chase (actor);
-}
-
-//============================================================================
-//
 // A_KoraxBonePop
 //
 //============================================================================
@@ -332,7 +153,7 @@ void A_KoraxBonePop (AActor *actor)
 	// Spawn 6 spirits equalangularly
 	for (i = 0; i < 6; ++i)
 	{
-		mo = P_SpawnMissileAngle (actor, RUNTIME_CLASS(AKoraxSpirit), ANGLE_60*i, 5*FRACUNIT);
+		mo = P_SpawnMissileAngle (actor, PClass::FindClass("KoraxSpirit"), ANGLE_60*i, 5*FRACUNIT);
 		if (mo) KSpiritInit (mo, actor);
 	}
 
@@ -368,11 +189,11 @@ void A_KoraxDecide (AActor *actor)
 {
 	if (pr_koraxdecide()<220)
 	{
-		actor->SetState (&AKorax::States[S_KORAX_MISSILE1]);
+		actor->SetState (actor->FindState("Attack"));
 	}
 	else
 	{
-		actor->SetState (&AKorax::States[S_KORAX_COMMAND1]);
+		actor->SetState (actor->FindState("Command"));
 	}
 }
 
@@ -435,7 +256,7 @@ void A_KoraxCommand (AActor *actor)
 	x = actor->x + KORAX_COMMAND_OFFSET * finecosine[ang];
 	y = actor->y + KORAX_COMMAND_OFFSET * finesine[ang];
 	z = actor->z + KORAX_COMMAND_HEIGHT*FRACUNIT;
-	Spawn<AKoraxBolt> (x, y, z, ALLOW_REPLACE);
+	Spawn("KoraxBolt", x, y, z, ALLOW_REPLACE);
 
 	if (actor->health <= (actor->GetDefault()->health >> 1))
 	{
@@ -609,7 +430,7 @@ void A_KSpiritRoam (AActor *actor)
 	if (actor->health-- <= 0)
 	{
 		S_Sound (actor, CHAN_VOICE, "SpiritDie", 1, ATTN_NORM);
-		actor->SetState (&AKoraxSpirit::States[S_KSPIRIT_DEATH]);
+		actor->SetState (actor->FindState("Death"));
 	}
 	else
 	{
@@ -657,7 +478,7 @@ void A_KBoltRaise (AActor *actor)
 
 	if ((z + KORAX_BOLT_HEIGHT) < actor->ceilingz)
 	{
-		mo = Spawn<AKoraxBolt> (actor->x, actor->y, z, ALLOW_REPLACE);
+		mo = Spawn("KoraxBolt", actor->x, actor->y, z, ALLOW_REPLACE);
 		if (mo)
 		{
 			mo->special1 = KORAX_BOLT_LIFETIME;

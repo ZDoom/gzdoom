@@ -20,6 +20,7 @@ ACTOR Centaur 107
 	ActiveSound "CentaurActive"
 	HowlSound "PuppyBeat"
 	Obituary "$OB_CENTAUR"
+	DamageFactor "Electric", 3
 	States
 	{
 	Spawn:

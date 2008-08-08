@@ -1,0 +1,118 @@
+
+// Dragon -------------------------------------------------------------------
+
+ACTOR Dragon 254
+{
+	Game Hexen
+	Health 640
+	PainChance 128
+	Speed 10
+	Height 65
+	Mass 0x7fffffff
+	Monster
+	+NOGRAVITY +FLOAT +NOBLOOD
+	+BOSS
+	+DONTMORPH +NOTARGET
+	+NOICEDEATH
+	SeeSound "DragonSight"
+	AttackSound "DragonAttack"
+	PainSound "DragonPain"
+	DeathSound "DragonDeath"
+	ActiveSound "DragonActive"
+	Obituary "$OB_DRAGON"
+
+	action native A_DragonInitFlight();
+	action native A_DragonFlap();
+	action native A_DragonFlight();
+	action native A_DragonPain();
+	action native A_DragonAttack();
+	action native A_DragonCheckCrash();
+
+	States
+	{
+	Spawn:
+		DRAG D 10 A_Look
+		Loop
+	See:
+		DRAG CB 5
+		DRAG A 5 A_DragonInitFlight
+		DRAG B 3 A_DragonFlap
+		DRAG BCCDDCCBBAA 3 A_DragonFlight
+		Goto See + 3
+	Pain:
+		DRAG F 10 A_DragonPain
+		Goto See + 3
+	Missile:
+		DRAG E 8 A_DragonAttack
+		Goto See + 3
+	Death:
+		DRAG G 5 A_Scream
+		DRAG H 4 A_NoBlocking
+		DRAG I 4
+		DRAG J 4 A_DragonCheckCrash
+		Wait
+	Crash:
+		DRAG KL 5
+		DRAG M -1
+		Stop
+	}
+}
+
+// Dragon Fireball ----------------------------------------------------------
+
+ACTOR DragonFireball
+{
+	Speed 24
+	Radius 12
+	Height 10
+	Damage 6
+	DamageType "Fire"
+	Projectile
+	-ACTIVATEIMPACT -ACTIVATEPCROSS
+	RenderStyle Add
+	DeathSound "DragonFireballExplode"
+
+	action native A_DragonFX2();
+
+	States
+	{
+	Spawn:
+		DRFX ABCDEF 4 Bright
+		Loop
+	Death:
+		DRFX GHI 4 Bright
+		DRFX J 4 Bright A_DragonFX2
+		DRFX KL 3 Bright
+		Stop
+	}
+}
+
+// Dragon Fireball Secondary Explosion --------------------------------------
+
+ACTOR DragonExplosion
+{
+	Radius 8
+	Height 8
+	DamageType "Fire"
+	+NOBLOCKMAP
+	+NOTELEPORT
+	+INVISIBLE
+	RenderStyle Add
+	DeathSound "DragonFireballExplode"
+	States
+	{
+	Spawn:
+		CFCF Q 1 Bright
+		CFCF Q 4 Bright A_UnHideThing
+		CFCF R 3 Bright A_Scream
+		CFCF S 4 Bright
+		CFCF T 3 Bright A_Explode (80, 128, 0)
+		CFCF U 4 Bright
+		CFCF V 3 Bright
+		CFCF W 4 Bright
+		CFCF X 3 Bright
+		CFCF Y 4 Bright
+		CFCF Z 3 Bright
+		Stop
+	}
+}

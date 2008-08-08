@@ -22,82 +22,29 @@ void A_CheckThrowBomb (AActor *);
 void A_CheckThrowBomb2 (AActor *);
 void A_TimeBomb(AActor *self);
 
-// Fire Bomb (Flechette used by Mage) ---------------------------------------
-
-class AFireBomb : public AActor
-{
-	DECLARE_ACTOR (AFireBomb, AActor)
-public:
-};
-
-FState AFireBomb::States[] =
-{
-#define S_FIREBOMB1 0
-	S_NORMAL (PSBG, 'A',   20, NULL					    , &States[S_FIREBOMB1+1]),
-	S_NORMAL (PSBG, 'A',   10, NULL					    , &States[S_FIREBOMB1+2]),
-	S_NORMAL (PSBG, 'A',   10, NULL					    , &States[S_FIREBOMB1+3]),
-	S_NORMAL (PSBG, 'B',	4, NULL					    , &States[S_FIREBOMB1+4]),
-	S_NORMAL (PSBG, 'C',	4, A_Scream				    , &States[S_FIREBOMB1+5]),
-	S_BRIGHT (XPL1, 'A',	4, A_TimeBomb			    , &States[S_FIREBOMB1+6]),
-	S_BRIGHT (XPL1, 'B',	4, NULL					    , &States[S_FIREBOMB1+7]),
-	S_BRIGHT (XPL1, 'C',	4, NULL					    , &States[S_FIREBOMB1+8]),
-	S_BRIGHT (XPL1, 'D',	4, NULL					    , &States[S_FIREBOMB1+9]),
-	S_BRIGHT (XPL1, 'E',	4, NULL					    , &States[S_FIREBOMB1+10]),
-	S_BRIGHT (XPL1, 'F',	4, NULL					    , NULL),
-};
-
-IMPLEMENT_ACTOR (AFireBomb, Hexen, -1, 0)
-	PROP_DamageType (NAME_Fire)
-	PROP_Flags (MF_NOGRAVITY)
-	PROP_Flags3 (MF3_FOILINVUL)
-	PROP_RenderStyle (STYLE_Translucent)
-	PROP_Alpha (HX_ALTSHADOW)
-
-	PROP_SpawnState (S_FIREBOMB1)
-
-	PROP_DeathSound ("FlechetteExplode")
-END_DEFAULTS
-
 // Poison Bag Artifact (Flechette) ------------------------------------------
 
 class AArtiPoisonBag : public AInventory
 {
-	DECLARE_ACTOR (AArtiPoisonBag, AInventory)
+	DECLARE_CLASS (AArtiPoisonBag, AInventory)
 public:
 	bool HandlePickup (AInventory *item);
 	AInventory *CreateCopy (AActor *other);
 	void BeginPlay ();
 };
 
-FState AArtiPoisonBag::States[] =
-{
-	S_NORMAL (PSBG, 'A',   -1, NULL					    , NULL),
-};
-
-IMPLEMENT_ACTOR (AArtiPoisonBag, Hexen, 8000, 72)
-	PROP_Flags (MF_SPECIAL)
-	PROP_Flags2 (MF2_FLOATBOB)
-	PROP_SpawnState (0)
-	PROP_Inventory_DefMaxAmount
-	PROP_Inventory_PickupFlash (1)
-	PROP_Inventory_FlagsSet (IF_INVBAR|IF_FANCYPICKUPSOUND)
-	PROP_Inventory_Icon ("ARTIPSBG")
-	PROP_Inventory_PickupSound ("misc/p_pkup")
-	PROP_Inventory_PickupMessage("$TXT_ARTIPOISONBAG")
-END_DEFAULTS
+IMPLEMENT_CLASS (AArtiPoisonBag)
 
 // Poison Bag 1 (The Cleric's) ----------------------------------------------
 
 class AArtiPoisonBag1 : public AArtiPoisonBag
 {
-	DECLARE_STATELESS_ACTOR (AArtiPoisonBag1, AArtiPoisonBag)
+	DECLARE_CLASS (AArtiPoisonBag1, AArtiPoisonBag)
 public:
 	bool Use (bool pickup);
 };
 
-IMPLEMENT_STATELESS_ACTOR (AArtiPoisonBag1, Hexen, -1, 0)
-	PROP_Inventory_Icon ("ARTIPSB1")
-END_DEFAULTS
+IMPLEMENT_CLASS (AArtiPoisonBag1)
 
 bool AArtiPoisonBag1::Use (bool pickup)
 {
@@ -120,21 +67,19 @@ bool AArtiPoisonBag1::Use (bool pickup)
 
 class AArtiPoisonBag2 : public AArtiPoisonBag
 {
-	DECLARE_STATELESS_ACTOR (AArtiPoisonBag2, AArtiPoisonBag)
+	DECLARE_CLASS (AArtiPoisonBag2, AArtiPoisonBag)
 public:
 	bool Use (bool pickup);
 };
 
-IMPLEMENT_STATELESS_ACTOR (AArtiPoisonBag2, Hexen, -1, 0)
-	PROP_Inventory_Icon ("ARTIPSB2")
-END_DEFAULTS
+IMPLEMENT_CLASS (AArtiPoisonBag2)
 
 bool AArtiPoisonBag2::Use (bool pickup)
 {
 	angle_t angle = Owner->angle >> ANGLETOFINESHIFT;
 	AActor *mo;
 
-	mo = Spawn<AFireBomb> (
+	mo = Spawn ("FireBomb",
 		Owner->x+16*finecosine[angle],
 		Owner->y+24*finesine[angle], Owner->z-
 		Owner->floorclip+8*FRACUNIT, ALLOW_REPLACE);
@@ -150,14 +95,12 @@ bool AArtiPoisonBag2::Use (bool pickup)
 
 class AArtiPoisonBag3 : public AArtiPoisonBag
 {
-	DECLARE_STATELESS_ACTOR (AArtiPoisonBag3, AArtiPoisonBag)
+	DECLARE_CLASS (AArtiPoisonBag3, AArtiPoisonBag)
 public:
 	bool Use (bool pickup);
 };
 
-IMPLEMENT_STATELESS_ACTOR (AArtiPoisonBag3, Hexen, -1, 0)
-	PROP_Inventory_Icon ("ARTIPSB3")
-END_DEFAULTS
+IMPLEMENT_CLASS (AArtiPoisonBag3)
 
 bool AArtiPoisonBag3::Use (bool pickup)
 {
@@ -289,61 +232,21 @@ void AArtiPoisonBag::BeginPlay ()
 
 // Poison Cloud -------------------------------------------------------------
 
-FState APoisonCloud::States[] =
+class APoisonCloud : public AActor
 {
-#define S_POISONCLOUD1 0
-	S_NORMAL (PSBG, 'D',	1, NULL					    , &States[S_POISONCLOUD1+1]),
-	S_NORMAL (PSBG, 'D',	1, A_Scream				    , &States[S_POISONCLOUD1+2]),
-	S_NORMAL (PSBG, 'D',	2, A_PoisonBagDamage	    , &States[S_POISONCLOUD1+3]),
-	S_NORMAL (PSBG, 'E',	2, A_PoisonBagDamage	    , &States[S_POISONCLOUD1+4]),
-	S_NORMAL (PSBG, 'E',	2, A_PoisonBagDamage	    , &States[S_POISONCLOUD1+5]),
-	S_NORMAL (PSBG, 'E',	2, A_PoisonBagDamage	    , &States[S_POISONCLOUD1+6]),
-	S_NORMAL (PSBG, 'F',	2, A_PoisonBagDamage	    , &States[S_POISONCLOUD1+7]),
-	S_NORMAL (PSBG, 'F',	2, A_PoisonBagDamage	    , &States[S_POISONCLOUD1+8]),
-	S_NORMAL (PSBG, 'F',	2, A_PoisonBagDamage	    , &States[S_POISONCLOUD1+9]),
-	S_NORMAL (PSBG, 'G',	2, A_PoisonBagDamage	    , &States[S_POISONCLOUD1+10]),
-	S_NORMAL (PSBG, 'G',	2, A_PoisonBagDamage	    , &States[S_POISONCLOUD1+11]),
-	S_NORMAL (PSBG, 'G',	2, A_PoisonBagDamage	    , &States[S_POISONCLOUD1+12]),
-	S_NORMAL (PSBG, 'H',	2, A_PoisonBagDamage	    , &States[S_POISONCLOUD1+13]),
-	S_NORMAL (PSBG, 'H',	2, A_PoisonBagDamage	    , &States[S_POISONCLOUD1+14]),
-	S_NORMAL (PSBG, 'H',	2, A_PoisonBagDamage	    , &States[S_POISONCLOUD1+15]),
-	S_NORMAL (PSBG, 'I',	2, A_PoisonBagDamage	    , &States[S_POISONCLOUD1+16]),
-	S_NORMAL (PSBG, 'I',	1, A_PoisonBagDamage	    , &States[S_POISONCLOUD1+17]),
-	S_NORMAL (PSBG, 'I',	1, A_PoisonBagCheck		    , &States[S_POISONCLOUD1+3]),
-
-#define S_POISONCLOUD_X1 (S_POISONCLOUD1+18)
-	S_NORMAL (PSBG, 'H',	7, NULL					    , &States[S_POISONCLOUD_X1+1]),
-	S_NORMAL (PSBG, 'G',	7, NULL					    , &States[S_POISONCLOUD_X1+2]),
-	S_NORMAL (PSBG, 'F',	6, NULL					    , &States[S_POISONCLOUD_X1+3]),
-	S_NORMAL (PSBG, 'D',	6, NULL					    , NULL)
+	DECLARE_CLASS (APoisonCloud, AActor)
+public:
+	int DoSpecialDamage (AActor *target, int damage);
+	void BeginPlay ();
 };
 
-IMPLEMENT_ACTOR (APoisonCloud, Hexen, -1, 0)
-	PROP_Radius (20)
-	PROP_Height (30)
-	PROP_MassLong (0x7fffffff)
-	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY|MF_DROPOFF)
-	PROP_Flags2 (MF2_NODMGTHRUST)
-	PROP_Flags3 (MF3_DONTSPLASH|MF3_FOILINVUL|MF3_CANBLAST|MF3_BLOODLESSIMPACT)
-	PROP_RenderStyle (STYLE_Translucent)
-	PROP_Alpha (HX_SHADOW)
-
-	PROP_SpawnState (S_POISONCLOUD1)
-
-	PROP_DeathSound ("PoisonShroomDeath")
-END_DEFAULTS
+IMPLEMENT_CLASS (APoisonCloud)
 
 void APoisonCloud::BeginPlay ()
 {
 	momx = 1; // missile objects must move to impact other objects
 	special1 = 24+(pr_poisoncloud()&7);
 	special2 = 0;
-}
-
-void APoisonCloud::GetExplodeParms (int &damage, int &distance, bool &hurtSource)
-{
-	damage = 4;
-	distance = 40;
 }
 
 int APoisonCloud::DoSpecialDamage (AActor *victim, int damage)
@@ -414,7 +317,7 @@ void A_PoisonBagCheck (AActor *actor)
 {
 	if (--actor->special1 <= 0)
 	{
-		actor->SetState (&APoisonCloud::States[S_POISONCLOUD_X1]);
+		actor->SetState (actor->FindState ("Death"));
 	}
 	else
 	{
@@ -432,7 +335,7 @@ void A_PoisonBagDamage (AActor *actor)
 {
 	int bobIndex;
 	
-	A_Explode (actor);	
+	P_RadiusAttack (actor, actor->target, 4, 40, actor->DamageType, true);
 	bobIndex = actor->special2;
 	actor->z += FloatBobOffsets[bobIndex]>>4;
 	actor->special2 = (bobIndex+1)&63;

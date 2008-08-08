@@ -31,6 +31,13 @@ void A_FreeTargMobj (AActor *);
 
 // Lightning ----------------------------------------------------------------
 
+class ALightning : public AActor
+{
+	DECLARE_CLASS (ALightning, AActor)
+public:
+	int SpecialMissileHit (AActor *victim);
+};
+
 IMPLEMENT_CLASS(ALightning)
 
 int ALightning::SpecialMissileHit (AActor *thing)
@@ -45,18 +52,7 @@ int ALightning::SpecialMissileHit (AActor *thing)
 		if ((!thing->player && !(thing->flags2&MF2_BOSS))
 			|| !(level.time&1))
 		{
-			// There needs to be a better way to do this...
-			static const PClass *centaur=NULL;
-			if (!centaur) centaur = PClass::FindClass("Centaur");
-
-			if (thing->IsKindOf(centaur))
-			{ // Lightning does more damage to centaurs
-				P_DamageMobj(thing, this, target, 9, NAME_Electric);
-			}
-			else
-			{
-				P_DamageMobj(thing, this, target, 3, NAME_Electric);
-			}
+			P_DamageMobj(thing, this, target, 3, NAME_Electric);
 			if (!(S_IsActorPlayingSomething (this, CHAN_WEAPON, -1)))
 			{
 				S_Sound (this, CHAN_WEAPON, "MageLightningZap", 1, ATTN_NORM);

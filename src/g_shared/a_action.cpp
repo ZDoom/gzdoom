@@ -16,6 +16,40 @@ static FRandom pr_freezedeath ("FreezeDeath");
 static FRandom pr_icesettics ("IceSetTics");
 static FRandom pr_freeze ("FreezeDeathChunks");
 
+
+// SwitchableDecoration: Activate and Deactivate change state ---------------
+
+class ASwitchableDecoration : public AActor
+{
+	DECLARE_STATELESS_ACTOR (ASwitchableDecoration, AActor)
+public:
+	void Activate (AActor *activator);
+	void Deactivate (AActor *activator);
+};
+
+IMPLEMENT_ABSTRACT_ACTOR (ASwitchableDecoration)
+
+void ASwitchableDecoration::Activate (AActor *activator)
+{
+	SetState (FindState(NAME_Active));
+}
+
+void ASwitchableDecoration::Deactivate (AActor *activator)
+{
+	SetState (FindState(NAME_Inactive));
+}
+
+// SwitchingDecoration: Only Activate changes state -------------------------
+
+class ASwitchingDecoration : public ASwitchableDecoration
+{
+	DECLARE_STATELESS_ACTOR (ASwitchingDecoration, ASwitchableDecoration)
+public:
+	void Deactivate (AActor *activator) {}
+};
+
+IMPLEMENT_ABSTRACT_ACTOR (ASwitchingDecoration)
+
 /***************************** IceChunk ************************************/
 
 class AIceChunk : public AActor

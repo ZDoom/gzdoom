@@ -1,0 +1,113 @@
+
+// Teleport Other Artifact --------------------------------------------------
+
+ACTOR ArtiTeleportOther : Inventory 10040 native
+{
+	Game Hexen
+	SpawnID 17
+	+COUNTITEM
+	+FLOATBOB
+	+INVENTORY.INVBAR
+	+INVENTORY.PICKUPFLASH
+	+INVENTORY.FANCYPICKUPSOUND
+	Inventory.DefMaxAmount
+	Inventory.Icon "ARTITELO"
+	Inventory.PickupSound "misc/p_pkup"
+	Inventory.PickupMessage "$TXT_ARTITELEPORTOTHER"
+	States
+	{
+	Spawn:
+		TELO ABCD 5
+		Loop
+	}
+}
+
+
+// Teleport Other FX --------------------------------------------------------
+
+ACTOR TelOtherFX1 native
+{
+	Damage 10001
+	Projectile
+	-ACTIVATEIMPACT
+	-ACTIVATEPCROSS
+	+BLOODLESSIMPACT
+	Radius 16
+	Height 16
+	Speed 20
+
+	action native A_TeloSpawnA ();
+	action native A_TeloSpawnB ();
+	action native A_TeloSpawnC ();
+	action native A_TeloSpawnD ();
+	action native A_CheckTeleRing ();
+
+	States
+	{
+	Spawn:
+		TRNG E 5 Bright
+		TRNG D 4 Bright
+		TRNG C 3 Bright A_TeloSpawnC
+		TRNG B 3 Bright A_TeloSpawnB
+		TRNG A 3 Bright A_TeloSpawnA
+		TRNG B 3 Bright A_TeloSpawnB
+		TRNG C 3 Bright A_TeloSpawnC
+		TRNG D 3 Bright A_TeloSpawnD
+		Goto Spawn+2
+	Death:
+		TRNG E 3 Bright
+		Stop
+	}
+}
+
+
+ACTOR TelOtherFX2 : TelOtherFX1
+{
+	Speed 16
+	States
+	{
+	Spawn:
+		TRNG BCDCB 4 Bright
+		TRNG A 4 Bright A_CheckTeleRing
+		Loop
+	}
+}
+
+ACTOR TelOtherFX3 : TelOtherFX1
+{
+	Speed 16
+	States
+	{
+	Spawn:
+		TRNG CDCBA 4 Bright
+		TRNG B 4 Bright A_CheckTeleRing
+		Loop
+	}
+}
+
+ACTOR TelOtherFX4 : TelOtherFX1
+{
+	Speed 16
+	States
+	{
+	Spawn:
+		TRNG DCBAB 4 Bright
+		TRNG C 4 Bright A_CheckTeleRing
+		Loop
+	}
+
+}
+
+ACTOR TelOtherFX5 : TelOtherFX1
+{
+	Speed 16
+	States
+	{
+	Spawn:
+		TRNG CBABC 4 Bright
+		TRNG D 4 Bright A_CheckTeleRing
+		Loop
+	}
+}
+
+

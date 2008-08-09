@@ -363,51 +363,12 @@ void A_RestoreSpecialPosition (AActor *self)
 	}
 }
 
-/***************************************************************************/
-/* AInventory implementation											   */
-/***************************************************************************/
-
-FState AInventory::States[] =
-{
-#define S_HIDEDOOMISH 0
-	S_NORMAL (TNT1, 'A', 1050, NULL							, &States[S_HIDEDOOMISH+1]),
-	S_NORMAL (TNT1, 'A',	0, A_RestoreSpecialPosition		, &States[S_HIDEDOOMISH+2]),
-	S_NORMAL (TNT1, 'A',    1, A_RestoreSpecialDoomThing	, NULL),
-
-#define S_HIDESPECIAL (S_HIDEDOOMISH+3)
-	S_NORMAL (ACLO, 'E', 1400, NULL                         , &States[S_HIDESPECIAL+1]),
-	S_NORMAL (ACLO, 'A',	0, A_RestoreSpecialPosition		, &States[S_HIDESPECIAL+2]),
-	S_NORMAL (ACLO, 'A',    4, A_RestoreSpecialThing1       , &States[S_HIDESPECIAL+3]),
-	S_NORMAL (ACLO, 'B',    4, NULL                         , &States[S_HIDESPECIAL+4]),
-	S_NORMAL (ACLO, 'A',    4, NULL                         , &States[S_HIDESPECIAL+5]),
-	S_NORMAL (ACLO, 'B',    4, NULL                         , &States[S_HIDESPECIAL+6]),
-	S_NORMAL (ACLO, 'C',    4, NULL                         , &States[S_HIDESPECIAL+7]),
-	S_NORMAL (ACLO, 'B',    4, NULL                         , &States[S_HIDESPECIAL+8]),
-	S_NORMAL (ACLO, 'C',    4, NULL                         , &States[S_HIDESPECIAL+9]),
-	S_NORMAL (ACLO, 'D',    4, NULL                         , &States[S_HIDESPECIAL+10]),
-	S_NORMAL (ACLO, 'C',    4, NULL                         , &States[S_HIDESPECIAL+11]),
-	S_NORMAL (ACLO, 'D',    4, A_RestoreSpecialThing2       , NULL),
-
-#define S_HELD (S_HIDESPECIAL+12)
-	S_NORMAL (TNT1, 'A',   -1, NULL							, NULL),
-
-#define S_HOLDANDDESTROY (S_HELD+1)
-	S_NORMAL (TNT1, 'A',	1, NULL							, NULL),
-};
-
 int AInventory::StaticLastMessageTic;
 const char *AInventory::StaticLastMessage;
 
 IMPLEMENT_POINTY_CLASS (AInventory)
  DECLARE_POINTER (Owner)
 END_POINTERS
-
-BEGIN_DEFAULTS (AInventory, Any, -1, 0)
-	PROP_Inventory_Amount (1)
-	PROP_Inventory_MaxAmount (1)
-	PROP_UseSound ("misc/invuse")
-	PROP_Inventory_PickupSound ("misc/i_pkup")
-END_DEFAULTS
 
 //===========================================================================
 //
@@ -626,7 +587,7 @@ void AInventory::GoAwayAndDie ()
 	if (!GoAway ())
 	{
 		flags &= ~MF_SPECIAL;
-		SetState (&States[S_HOLDANDDESTROY]);
+		SetState (FindState("HoldAndDestroy"));
 	}
 }
 
@@ -725,7 +686,7 @@ void AInventory::BecomeItem ()
 	}
 	RemoveFromHash ();
 	flags &= ~MF_SPECIAL;
-	SetState (&States[S_HELD]);
+	SetState (FindState("Held"));
 }
 
 //===========================================================================
@@ -853,18 +814,43 @@ bool AInventory::Use (bool pickup)
 
 void AInventory::Hide ()
 {
+	FState *HideSpecialState = NULL, *HideDoomishState = NULL;
+
  	flags = (flags & ~MF_SPECIAL) | MF_NOGRAVITY;
 	renderflags |= RF_INVISIBLE;
+
 	if (gameinfo.gametype & GAME_Raven)
 	{
-		SetState (&States[S_HIDESPECIAL]);
-		tics = 1400;
-		if (PickupFlash != NULL) tics += 30;
+		HideSpecialState = FindState("HideSpecial");
+		if (HideSpecialState == NULL)
+		{
+			HideDoomishState = FindState("HideDoomish");
+		}
 	}
 	else
 	{
-		SetState (&States[S_HIDEDOOMISH]);
+		HideDoomishState = FindState("HideDoomish");
+		if (HideDoomishState == NULL)
+		{
+			HideSpecialState = FindState("HideSpecial");
+		}
+	}
+
+	if (HideSpecialState != NULL)
+	{
+		SetState (HideSpecialState);
+		tics = 1400;
+		if (PickupFlash != NULL) tics += 30;
+	}
+	else if (HideDoomishState != NULL)
+	{
+		SetState (HideDoomishState);
 		tics = 1050;
+	}
+	else
+	{
+		GoAwayAndDie();
+		return;
 	}
 	if (RespawnTics != 0)
 	{
@@ -1245,7 +1231,7 @@ bool AInventory::TryPickup (AActor *toucher)
 				if (--copy->Amount <= 0)
 				{
 					copy->flags &= ~MF_SPECIAL;
-					copy->SetState (&States[S_HOLDANDDESTROY]);
+					copy->SetState (copy->FindState("HoldAndDestroy"));
 				}
 			}
 		}

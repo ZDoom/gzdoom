@@ -25,143 +25,25 @@ void P_TeleportToDeathmatchStarts (AActor *victim);
 
 class AArtiTeleportOther : public AInventory
 {
-	DECLARE_ACTOR (AArtiTeleportOther, AInventory)
+	DECLARE_CLASS (AArtiTeleportOther, AInventory)
 public:
 	bool Use (bool pickup);
 };
 
-FState AArtiTeleportOther::States[] =
-{
-#define S_ARTI_TELOTHER1 0
-	S_NORMAL (TELO, 'A',	5, NULL					    , &States[S_ARTI_TELOTHER1+1]),
-	S_NORMAL (TELO, 'B',	5, NULL					    , &States[S_ARTI_TELOTHER1+2]),
-	S_NORMAL (TELO, 'C',	5, NULL					    , &States[S_ARTI_TELOTHER1+3]),
-	S_NORMAL (TELO, 'D',	5, NULL					    , &States[S_ARTI_TELOTHER1]),
-};
-
-IMPLEMENT_ACTOR (AArtiTeleportOther, Hexen, 10040, 17)
-	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
-	PROP_Flags2 (MF2_FLOATBOB)
-	PROP_SpawnState (S_ARTI_TELOTHER1)
-	PROP_Inventory_DefMaxAmount
-	PROP_Inventory_PickupFlash (1)
-	PROP_Inventory_FlagsSet (IF_INVBAR|IF_FANCYPICKUPSOUND)
-	PROP_Inventory_Icon ("ARTITELO")
-	PROP_Inventory_PickupSound ("misc/p_pkup")
-	PROP_Inventory_PickupMessage("$TXT_ARTITELEPORTOTHER")
-END_DEFAULTS
+IMPLEMENT_CLASS (AArtiTeleportOther)
 
 // Teleport Other FX --------------------------------------------------------
 
 class ATelOtherFX1 : public AActor
 {
-	DECLARE_ACTOR (ATelOtherFX1, AActor)
+	DECLARE_CLASS (ATelOtherFX1, AActor)
 public:
 	int DoSpecialDamage (AActor *target, int damage);
 };
 
-FState ATelOtherFX1::States[] =
-{
-#define S_TELO_FX1 0
-	S_BRIGHT (TRNG, 'E',    5, NULL                         , &States[S_TELO_FX1+1]),
-	S_BRIGHT (TRNG, 'D',    4, NULL                         , &States[S_TELO_FX1+2]),
-	S_BRIGHT (TRNG, 'C',    3, A_TeloSpawnC                 , &States[S_TELO_FX1+3]),
-	S_BRIGHT (TRNG, 'B',    3, A_TeloSpawnB                 , &States[S_TELO_FX1+4]),
-	S_BRIGHT (TRNG, 'A',    3, A_TeloSpawnA                 , &States[S_TELO_FX1+5]),
-	S_BRIGHT (TRNG, 'B',    3, A_TeloSpawnB                 , &States[S_TELO_FX1+6]),
-	S_BRIGHT (TRNG, 'C',    3, A_TeloSpawnC                 , &States[S_TELO_FX1+7]),
-	S_BRIGHT (TRNG, 'D',    3, A_TeloSpawnD                 , &States[S_TELO_FX1+2]),
+IMPLEMENT_CLASS (ATelOtherFX1)
 
-#define S_TELO_FX_DONE (S_TELO_FX1+8)
-	S_BRIGHT (TRNG, 'E',    3, NULL                         , NULL),
-
-#define S_TELO_FX2 (S_TELO_FX_DONE+1)
-	S_BRIGHT (TRNG, 'B',    4, NULL                         , &States[S_TELO_FX2+1]),
-	S_BRIGHT (TRNG, 'C',    4, NULL                         , &States[S_TELO_FX2+2]),
-	S_BRIGHT (TRNG, 'D',    4, NULL                         , &States[S_TELO_FX2+3]),
-	S_BRIGHT (TRNG, 'C',    4, NULL                         , &States[S_TELO_FX2+4]),
-	S_BRIGHT (TRNG, 'B',    4, NULL                         , &States[S_TELO_FX2+5]),
-	S_BRIGHT (TRNG, 'A',    4, A_CheckTeleRing              , &States[S_TELO_FX2+0]),
-
-#define S_TELO_FX3 (S_TELO_FX2+6)
-	S_BRIGHT (TRNG, 'C',    4, NULL                         , &States[S_TELO_FX3+1]),
-	S_BRIGHT (TRNG, 'D',    4, NULL                         , &States[S_TELO_FX3+2]),
-	S_BRIGHT (TRNG, 'C',    4, NULL                         , &States[S_TELO_FX3+3]),
-	S_BRIGHT (TRNG, 'B',    4, NULL                         , &States[S_TELO_FX3+4]),
-	S_BRIGHT (TRNG, 'A',    4, NULL                         , &States[S_TELO_FX3+5]),
-	S_BRIGHT (TRNG, 'B',    4, A_CheckTeleRing              , &States[S_TELO_FX3+0]),
-
-#define S_TELO_FX4 (S_TELO_FX3+6)
-	S_BRIGHT (TRNG, 'D',    4, NULL                         , &States[S_TELO_FX4+1]),
-	S_BRIGHT (TRNG, 'C',    4, NULL                         , &States[S_TELO_FX4+2]),
-	S_BRIGHT (TRNG, 'B',    4, NULL                         , &States[S_TELO_FX4+3]),
-	S_BRIGHT (TRNG, 'A',    4, NULL                         , &States[S_TELO_FX4+4]),
-	S_BRIGHT (TRNG, 'B',    4, NULL                         , &States[S_TELO_FX4+5]),
-	S_BRIGHT (TRNG, 'C',    4, A_CheckTeleRing              , &States[S_TELO_FX4+0]),
-
-#define S_TELO_FX5 (S_TELO_FX4+6)
-	S_BRIGHT (TRNG, 'C',    4, NULL                         , &States[S_TELO_FX5+1]),
-	S_BRIGHT (TRNG, 'B',    4, NULL                         , &States[S_TELO_FX5+2]),
-	S_BRIGHT (TRNG, 'A',    4, NULL                         , &States[S_TELO_FX5+3]),
-	S_BRIGHT (TRNG, 'B',    4, NULL                         , &States[S_TELO_FX5+4]),
-	S_BRIGHT (TRNG, 'C',    4, NULL                         , &States[S_TELO_FX5+5]),
-	S_BRIGHT (TRNG, 'D',    4, A_CheckTeleRing              , &States[S_TELO_FX5+0])
-};
-
-IMPLEMENT_ACTOR (ATelOtherFX1, Any, -1, 0)
-	PROP_DamageLong (10001)
-	PROP_Flags (MF_MISSILE|MF_DROPOFF|MF_NOGRAVITY|MF_NOBLOCKMAP)
-	PROP_Flags2 (MF2_NOTELEPORT)
-	PROP_Flags3 (MF3_BLOODLESSIMPACT)
-	PROP_RadiusFixed (16)
-	PROP_HeightFixed (16)
-	PROP_SpeedFixed (20)
-
-	PROP_SpawnState (S_TELO_FX1)
-	PROP_DeathState (S_TELO_FX_DONE)
-END_DEFAULTS
-
-class ATelOtherFX2 : public ATelOtherFX1
-{
-	DECLARE_STATELESS_ACTOR (ATelOtherFX2, ATelOtherFX1)
-};
-
-IMPLEMENT_STATELESS_ACTOR (ATelOtherFX2, Any, -1, 0)
-	PROP_SpeedFixed (16)
-	PROP_SpawnState (S_TELO_FX2)
-END_DEFAULTS
-
-class ATelOtherFX3 : public ATelOtherFX1
-{
-	DECLARE_STATELESS_ACTOR (ATelOtherFX3, ATelOtherFX1)
-};
-
-IMPLEMENT_STATELESS_ACTOR (ATelOtherFX3, Any, -1, 0)
-	PROP_SpeedFixed (16)
-	PROP_SpawnState (S_TELO_FX3)
-END_DEFAULTS
-
-class ATelOtherFX4 : public ATelOtherFX1
-{
-	DECLARE_STATELESS_ACTOR (ATelOtherFX4, ATelOtherFX1)
-};
-
-IMPLEMENT_STATELESS_ACTOR (ATelOtherFX4, Any, -1, 0)
-	PROP_SpeedFixed (16)
-	PROP_SpawnState (S_TELO_FX4)
-END_DEFAULTS
-
-class ATelOtherFX5 : public ATelOtherFX1
-{
-	DECLARE_STATELESS_ACTOR (ATelOtherFX5, ATelOtherFX1)
-};
-
-IMPLEMENT_STATELESS_ACTOR (ATelOtherFX5, Any, -1, 0)
-	PROP_SpeedFixed (16)
-	PROP_SpawnState (S_TELO_FX5)
-END_DEFAULTS
-
-static void TeloSpawn (AActor *source, const PClass *type)
+static void TeloSpawn (AActor *source, const char *type)
 {
 	AActor *fx;
 
@@ -179,22 +61,22 @@ static void TeloSpawn (AActor *source, const PClass *type)
 
 void A_TeloSpawnA (AActor *actor)
 {
-	TeloSpawn (actor, RUNTIME_CLASS(ATelOtherFX2));
+	TeloSpawn (actor, "TelOtherFX2");
 }
 
 void A_TeloSpawnB (AActor *actor)
 {
-	TeloSpawn (actor, RUNTIME_CLASS(ATelOtherFX3));
+	TeloSpawn (actor, "TelOtherFX3");
 }
 
 void A_TeloSpawnC (AActor *actor)
 {
-	TeloSpawn (actor, RUNTIME_CLASS(ATelOtherFX4));
+	TeloSpawn (actor, "TelOtherFX4");
 }
 
 void A_TeloSpawnD (AActor *actor)
 {
-	TeloSpawn (actor, RUNTIME_CLASS(ATelOtherFX5));
+	TeloSpawn (actor, "TelOtherFX5");
 }
 
 void A_CheckTeleRing (AActor *actor)

@@ -1,7 +1,7 @@
 
 // Teleport (self) ----------------------------------------------------------
 
-ACTOR ArtiTeleport : Inventory native 
+ACTOR ArtiTeleport : Inventory 36 native
 {
 	Game Raven
 	+COUNTITEM

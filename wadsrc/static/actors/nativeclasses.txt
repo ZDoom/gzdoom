@@ -191,47 +191,8 @@ class Actor extends Thinker
 }
 
 
-class Inventory extends Actor
-	native
-{
-	action native A_JumpIfNoAmmo(state label);
-	action native A_CustomPunch(eval int damage, optional eval bool norandom, optional evalnot bool useammo, optional class<Actor> pufftype, optional eval float range);
-	action native A_FireBullets(eval float spread_xy, eval float spread_z, eval int numbullets, eval int damageperbullet, optional class<Actor> pufftype, optional evalnot bool useammo, optional eval float range);
-	action native A_FireCustomMissile(class<Actor> missiletype, optional eval float angle, optional evalnot bool useammo, optional eval int spawnofs_xy, optional eval float spawnheight, optional eval bool aimatangle);
-	action native A_RailAttack(eval int damage, optional eval int spawnofs_xy, optional evalnot int useammo, optional color color1, optional color color2, optional eval bool silent, optional eval float maxdiff, optional class<Actor> pufftype);
-	action native A_Light(eval int extralight);
-	action native A_Light0();
-	action native A_Light1();
-	action native A_Light2();
-	action native A_LightInverse();
-	action native A_WeaponReady();
-	action native A_Lower();
-	action native A_Raise();
-	action native A_FirePistol();
-	action native A_FireShotgun();
-	action native A_FireShotgun2();
-	action native A_OpenShotgun2();
-	action native A_LoadShotgun2();
-	action native A_CloseShotgun2();
-	action native A_FireCGun();
-	action native A_FireMissile();
-	action native A_FirePlasma();
-	action native A_FireRailgun();
-	action native A_FireRailgunLeft();
-	action native A_FireRailgunRight();
-	action native A_RailWait();
-	action native A_BFGsound();
-	action native A_FireBFG();
-	action native A_ReFire();
-	action native A_ClearReFire();
-	action native A_CheckReload();
-	action native A_GunFlash();
-	action native A_Saw(optional coerce sound fullsound, optional coerce sound hitsound, optional eval int damage, optional class<Actor> pufftype);
-	action native A_CheckForReload(eval int counter, state label);
-	action native A_ResetReloadCounter();
-}
 
-/*
+
 ACTOR Inventory native
 {
 	Inventory.Amount 1
@@ -301,8 +262,6 @@ ACTOR Inventory native
 		Stop
 	}
 }
-*/
-
 
 Actor Ammo : Inventory native
 {

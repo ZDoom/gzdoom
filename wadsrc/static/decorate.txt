@@ -125,6 +125,8 @@
 #include "actors/hexen/fighterhammer.txt"
 #include "actors/hexen/fighterquietus.txt"
 #include "actors/hexen/dragon.txt"
+#include "actors/hexen/healingradius.txt"
+#include "actors/hexen/teleportother.txt"
 
 #include "actors/strife/strifehumanoid.txt"
 #include "actors/strife/strifeplayer.txt"

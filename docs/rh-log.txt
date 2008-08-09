@@ -1,4 +1,6 @@
 August 9, 2008 (Changes by Graf Zahl)
+- Converted the last of Hexen's inventory items to DECORATE so that I could
+  export AInventory.
 - Removed AT_GAME_SET because it's no longer used anywhere.
 - Converted the last remaining global classes to DECORATE.
 - Fixed: Inventory.PickupFlash requires an class name as parameter not an

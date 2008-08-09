@@ -1,0 +1,23 @@
+
+// Healing Radius Artifact --------------------------------------------------
+
+ACTOR ArtiHealingRadius : Inventory 10120 native
+{
+	Game Hexen
+	+COUNTITEM
+	+FLOATBOB
+	Inventory.DefMaxAmount
+	+INVENTORY.INVBAR 
+	+INVENTORY.PICKUPFLASH
+	+INVENTORY.FANCYPICKUPSOUND
+	Inventory.Icon "ARTIHRAD"
+	Inventory.PickupSound "misc/p_pkup"
+	Inventory.PickupMessage "$TXT_ARTIHEALINGRADIUS"
+	States
+	{
+	Spawn:
+		HRAD ABCDEFGHIJKLMNOP 4 Bright
+		Loop
+	}
+}
+

@@ -105,7 +105,7 @@ struct vissprite_t;
 
 class AInventory : public AActor
 {
-	DECLARE_ACTOR (AInventory, AActor)
+	DECLARE_CLASS (AInventory, AActor)
 	HAS_OBJECT_POINTERS
 public:
 	virtual void Touch (AActor *toucher);

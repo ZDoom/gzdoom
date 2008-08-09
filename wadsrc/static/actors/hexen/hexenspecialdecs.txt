@@ -468,39 +468,6 @@ ACTOR ZShrub2 8102
 }
 
 
-// Poison Shroom ------------------------------------------------------------
-
-ACTOR ZPoisonShroom 8104
-{
-	Game Hexen
-	Radius 6
-	Height 20
-	PainChance 255
-	Health 30
-	Mass 0x7fffffff
-	+SHOOTABLE +SOLID +NOBLOOD
-	+NOICEDEATH
-	PainSound "PoisonShroomPain"
-	DeathSound "PoisonShroomDeath"
-
-	action native A_PoisonShroom();
-
-	States
-	{
-	Spawn:
-		SHRM A 5 A_PoisonShroom
-	Pain:
-		SHRM A 6
-		SHRM B 8 A_Pain
-		Goto Spawn
-	Death:
-		SHRM CDE 5
-		SHRM F -1
-		Stop
-	}
-}
-
-
 // Fire Bull ----------------------------------------------------------------
 
 ACTOR ZFireBull : SwitchableDecoration 8042

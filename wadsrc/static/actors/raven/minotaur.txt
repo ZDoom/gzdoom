@@ -103,7 +103,6 @@ ACTOR Minotaur 9 native
 
 ACTOR MinotaurFriend : Minotaur native
 {
-	Game Hexen
 	Health 2500
 	-DROPOFF
 	-BOSS

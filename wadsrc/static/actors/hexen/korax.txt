@@ -121,5 +121,6 @@ ACTOR KoraxBolt
 		MLFX I 2 Bright
 		MLFX J 2 Bright A_KBoltRaise
 		MLFX IJKLM 2 Bright A_KBolt
+		Stop
 	}
 }

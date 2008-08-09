@@ -166,3 +166,41 @@ ACTOR PoisonCloud native
 		Stop
 	}
 }
+
+// Poison Shroom ------------------------------------------------------------
+
+ACTOR ZPoisonShroom : PoisonBag 8104
+{
+	Game Hexen
+	Radius 6
+	Height 20
+	PainChance 255
+	Health 30
+	Mass 0x7fffffff
+	+SHOOTABLE
+    +SOLID
+    +NOBLOOD
+	+NOICEDEATH
+	-NOBLOCKMAP
+	-NOGRAVITY
+	PainSound "PoisonShroomPain"
+	DeathSound "PoisonShroomDeath"
+
+	action native A_PoisonShroom();
+
+	States
+	{
+	Spawn:
+		SHRM A 5 A_PoisonShroom
+	Pain:
+		SHRM A 6
+		SHRM B 8 A_Pain
+		Goto Spawn
+	Death:
+		SHRM CD 5
+		SHRM E 5 A_PoisonBagInit
+		SHRM F -1
+		Stop
+	}
+}
+

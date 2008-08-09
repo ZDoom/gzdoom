@@ -450,7 +450,6 @@ static void StartScoreboardMenu (void);
 static void InitCrosshairsList();
 
 EXTERN_CVAR (Bool, st_scale)
-EXTERN_CVAR (Int,  r_detail)
 EXTERN_CVAR (Bool, r_stretchsky)
 EXTERN_CVAR (Int,  r_columnmethod)
 EXTERN_CVAR (Bool, r_drawfuzz)
@@ -463,14 +462,6 @@ EXTERN_CVAR (Bool, vid_attachedsurfaces)
 EXTERN_CVAR (Int,  screenblocks)
 
 static TArray<valuestring_t> Crosshairs;
-
-static value_t DetailModes[] =
-{
-	{ 0.0, "Normal" },
-	{ 1.0, "Double Horizontally" },
-	{ 2.0, "Double Vertically" },
-	{ 3.0, "Double Horiz and Vert" }
-};
 
 static value_t ColumnMethods[] = {
 	{ 0.0, "Original" },
@@ -517,7 +508,6 @@ static menuitem_t VideoItems[] = {
 	{ slider,	"Brightness",			{&Gamma},			   	{1.0}, {3.0},	{0.1}, {NULL} },
 	{ discretes,"Crosshair",			{&crosshair},		   	{8.0}, {0.0},	{0.0}, {NULL} },
 	{ discrete, "Column render mode",	{&r_columnmethod},		{2.0}, {0.0},	{0.0}, {ColumnMethods} },
-	{ discrete, "Detail mode",			{&r_detail},		   	{4.0}, {0.0},	{0.0}, {DetailModes} },
 	{ discrete, "Stretch short skies",	{&r_stretchsky},	   	{2.0}, {0.0},	{0.0}, {OnOff} },
 	{ discrete, "Stretch status bar",	{&st_scale},			{2.0}, {0.0},	{0.0}, {OnOff} },
 	{ discrete, "Alternative HUD",		{&hud_althud},			{2.0}, {0.0},	{0.0}, {OnOff} },

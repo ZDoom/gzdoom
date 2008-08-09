@@ -134,7 +134,7 @@ static fixed_t			xscale, yscale;
 static DWORD			xstepscale, ystepscale;
 static DWORD			basexfrac, baseyfrac;
 
-#ifdef USEASM
+#ifdef X86_ASM
 extern "C" void R_SetSpanSource_ASM (const BYTE *flat);
 extern "C" void STACK_ARGS R_SetSpanSize_ASM (int xbits, int ybits);
 extern "C" void R_SetSpanColormap_ASM (BYTE *colormap);
@@ -210,7 +210,7 @@ void R_MapPlane (int y, int x1)
 			FixedMul (GlobVis, abs (centeryfrac - (y << FRACBITS))), planeshade) << COLORMAPSHIFT);
 	}
 
-#ifdef USEASM
+#ifdef X86_ASM
 	if (ds_colormap != ds_curcolormap)
 		R_SetSpanColormap_ASM (ds_colormap);
 #endif
@@ -469,7 +469,7 @@ void R_ClearPlanes (bool fullclear)
 		// [RH] clip ceiling to console bottom
 		clearbufshort (ceilingclip, viewwidth,
 			!screen->Accel2D && ConBottom > viewwindowy && !bRenderingToCanvas
-			? ((ConBottom - viewwindowy) >> detailyshift) : 0);
+			? (ConBottom - viewwindowy) : 0);
 
 		lastopening = 0;
 	}
@@ -988,7 +988,7 @@ void R_DrawSinglePlane (visplane_t *pl, fixed_t alpha, bool masked)
 		}
 		pl->xscale = MulScale16 (pl->xscale, tex->xScale);
 		pl->yscale = MulScale16 (pl->yscale, tex->yScale);
-#ifdef USEASM
+#ifdef X86_ASM
 		R_SetSpanSize_ASM (ds_xbits, ds_ybits);
 #endif
 		ds_source = tex->GetPixels ();
@@ -1344,7 +1344,7 @@ void R_DrawSkyPlane (visplane_t *pl)
 
 void R_DrawNormalPlane (visplane_t *pl, fixed_t alpha, bool masked)
 {
-#ifdef USEASM
+#ifdef X86_ASM
 	if (ds_source != ds_cursource)
 	{
 		R_SetSpanSource_ASM (ds_source);
@@ -1550,7 +1550,7 @@ void R_DrawTiltedPlane (visplane_t *pl, fixed_t alpha, bool masked)
 		}
 	}
 
-#if defined(USEASM)
+#if defined(X86_ASM)
 	if (ds_source != ds_curtiltedsource)
 		R_SetTiltedSpanSource_ASM (ds_source);
 	R_MapVisPlane (pl, R_DrawTiltedPlane_ASM);

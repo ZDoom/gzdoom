@@ -582,7 +582,7 @@ void D_Display ()
 				StatusBar->BlendView (blend);
 			}
 			screen->SetBlendingRect(viewwindowx, viewwindowy,
-				viewwindowx + realviewwidth, viewwindowy + realviewheight);
+				viewwindowx + viewwidth, viewwindowy + viewheight);
 			P_CheckPlayerSprites();
 			screen->RenderView(&players[consoleplayer]);
 			if ((hw2d = screen->Begin2D(viewactive)))
@@ -593,8 +593,11 @@ void D_Display ()
 			}
 			if (automapactive)
 			{
-				int saved_ST_Y=ST_Y;
-				if (hud_althud && realviewheight == SCREENHEIGHT) ST_Y=realviewheight;
+				int saved_ST_Y = ST_Y;
+				if (hud_althud && viewheight == SCREENHEIGHT)
+				{
+					ST_Y = viewheight;
+				}
 				AM_Drawer ();
 				ST_Y = saved_ST_Y;
 			}
@@ -603,13 +606,13 @@ void D_Display ()
 				R_RefreshViewBorder ();
 			}
 
-			if (hud_althud && realviewheight == SCREENHEIGHT)
+			if (hud_althud && viewheight == SCREENHEIGHT)
 			{
 				if (DrawFSHUD || automapactive) DrawHUD();
 				StatusBar->DrawTopStuff (HUD_None);
 			}
 			else 
-			if (realviewheight == SCREENHEIGHT && viewactive)
+			if (viewheight == SCREENHEIGHT && viewactive)
 			{
 				StatusBar->Draw (DrawFSHUD ? HUD_Fullscreen : HUD_None);
 				StatusBar->DrawTopStuff (DrawFSHUD ? HUD_Fullscreen : HUD_None);
@@ -2085,7 +2088,10 @@ void D_DoomMain (void)
 		_FPU_SETCW(cw);
 	}
 #elif defined(_PC_53)
-	_control87(_PC_53, _MCW_PC);
+// On the x64 architecture, changing the floating point precision is not supported.
+#ifndef _WIN64
+	int cfp = _control87(_PC_53, _MCW_PC);
+#endif
 #endif
 
 	PClass::StaticInit ();

@@ -794,7 +794,7 @@ AInventory *AActor::FindInventory (FName type)
 
 AInventory *AActor::GiveInventoryType (const PClass *type)
 {
-	AInventory *item;
+	AInventory *item = NULL;
 
 	if (type != NULL)
 	{

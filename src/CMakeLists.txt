@@ -173,11 +173,24 @@ endif( FMOD_LIBRARY )
 
 if( NOT NO_ASM )
 	find_program( NASM_PATH NAMES ${NASM_NAMES} )
+	find_program( YASM_PATH yasm )
 
-	if( NOT NASM_PATH )
-		message( STATUS "Could not find NASM. Disabling assembly code." )
-		set( NO_ASM ON )
-	else( NOT NASM_PATH )
+	if( YASM_PATH )
+		set( ASSEMBLER ${YASM_PATH} )
+	else( YASM_PATH )
+		if( X64 )
+			message( STATUS "Could not find YASM. Disabling assembly code." )
+			set( NO_ASM ON )
+		else( X64 )
+			if( NOT NASM_PATH )
+				message( STATUS "Could not find YASM or NASM. Disabling assembly code." )
+				set( NO_ASM ON )
+			else( NOT NASM_PATH )
+				set( ASSEMBLER ${NASM_PATH} )
+			endif( NOT NASM_PATH )
+		endif( X64 )
+	endif( YASM_PATH )
+
 	# I think the only reason there was a version requirement was because the
 	# executable name for Windows changed from 0.x to 2.0, right? This is
 	# how to do it in case I need to do something similar later.
@@ -188,7 +201,6 @@ if( NOT NO_ASM )
 	#	if( NOT NASM_VER LESS 2 )
 	#		message( SEND_ERROR "NASM version should be 2 or later. (Installed version is ${NASM_VER}.)" )
 	#	endif( NOT NASM_VER LESS 2 )
-	endif( NOT NASM_PATH )
 endif( NOT NO_ASM )
 
 if( NOT NO_ASM )
@@ -201,22 +213,31 @@ if( NOT NO_ASM )
 
 	# Tell CMake how to assemble our files
 	if( UNIX )
-		set( NASM_OUTPUT_EXTENSION .o )
-		set( NASM_FLAGS -f elf -DM_TARGET_LINUX )
+		set( ASM_OUTPUT_EXTENSION .o )
+		if( X64 )
+			set( ASM_FLAGS -f elf64 -DM_TARGET_LINUX )
+		else( X64 )
+			set( ASM_FLAGS -f elf -DM_TARGET_LINUX )
+		endif( X64 )
 	else( UNIX )
-		set( NASM_OUTPUT_EXTENSION .obj )
-		set( NASM_FLAGS -f win32 -DWIN32 )
+		set( ASM_OUTPUT_EXTENSION .obj )
+		if( X64 )
+			set( ASM_FLAGS -f win64 -DWIN32 -DWIN64 )
+		else( X64 )
+			set( ASM_FLAGS -f win32 -DWIN32 )
+		endif( X64 )
 	endif( UNIX )
 	if( WIN32 )
 		set( FIXRTEXT fixrtext )
 	endif( WIN32 )
+	message( STATUS "Selected assembler: ${ASSEMBLER}" )
 	MACRO( ADD_ASM_FILE infile )
-		set( ASM_OUTPUT_${infile} "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/zdoom.dir/${infile}${NASM_OUTPUT_EXTENSION}" )
+		set( ASM_OUTPUT_${infile} "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/zdoom.dir/${infile}${ASM_OUTPUT_EXTENSION}" )
 		if( WIN32 )
 			set( FIXRTEXT_${infile} COMMAND ${FIXRTEXT} "${ASM_OUTPUT_${infile}}" )
 		endif( WIN32 )
 		add_custom_command( OUTPUT ${ASM_OUTPUT_${infile}}
-			COMMAND ${NASM_PATH} ${NASM_FLAGS} -i${CMAKE_CURRENT_SOURCE_DIR}/ -o"${ASM_OUTPUT_${infile}}" "${CMAKE_CURRENT_SOURCE_DIR}/${infile}"
+			COMMAND ${ASSEMBLER} ${ASM_FLAGS} -i${CMAKE_CURRENT_SOURCE_DIR}/ -o"${ASM_OUTPUT_${infile}}" "${CMAKE_CURRENT_SOURCE_DIR}/${infile}"
 			${FIXRTEXT_${infile}}
 			DEPENDS ${infile} ${FIXRTEXT} )
 		set( ASM_SOURCES ${ASM_SOURCES} "${ASM_OUTPUT_${infile}}" )
@@ -320,14 +341,18 @@ else( WIN32 )
 endif( WIN32 )
 
 if( NOT NO_ASM )
-	ADD_ASM_FILE( a.nas )
-	ADD_ASM_FILE( misc.nas )
-	ADD_ASM_FILE( tmap.nas )
-	ADD_ASM_FILE( tmap2.nas )
-	ADD_ASM_FILE( tmap3.nas )
+	if( X64 )
+		ADD_ASM_FILE( asm_x86_64/tmap3.asm )
+	else( X64 )
+		ADD_ASM_FILE( asm_ia32/a.asm )
+		ADD_ASM_FILE( asm_ia32/misc.asm )
+		ADD_ASM_FILE( asm_ia32/tmap.asm )
+		ADD_ASM_FILE( asm_ia32/tmap2.asm )
+		ADD_ASM_FILE( asm_ia32/tmap3.asm )
+	endif( X64 )
 	if( WIN32 )
 		if( NOT X64 )
-			ADD_ASM_FILE( win32/wrappers.nas )
+			ADD_ASM_FILE( win32/wrappers.asm )
 		endif( NOT X64 )
 	endif( WIN32 )
 endif( NOT NO_ASM )
@@ -482,6 +507,7 @@ add_executable( zdoom WIN32
 	v_video.cpp
 	w_wad.cpp
 	wi_stuff.cpp
+	x86.cpp
 	zstrformat.cpp
 	zstring.cpp
 	g_doom/a_arachnotron.cpp
@@ -705,6 +731,9 @@ if( CMAKE_COMPILER_IS_GNUCXX )
 	
 	# Compile this one file with SSE2 support.
 	set_source_files_properties( nodebuild_classify_sse2.cpp PROPERTIES COMPILE_FLAGS "-msse2 -mfpmath=sse" )
+
+	# Need to enable intrinsics for this file.
+	set_source_files_properties( x86.cpp PROPERTIES COMPILE_FLAGS "-msse2 -mmmx" )
 endif( CMAKE_COMPILER_IS_GNUCXX )
 
 if( MSVC )

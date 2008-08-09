@@ -128,10 +128,6 @@ extern int				fixedlightlev;
 extern lighttable_t*	fixedcolormap;
 
 
-// [RH] New detail modes
-extern "C" int			detailxshift;
-extern "C" int			detailyshift;
-
 //
 // Function pointers to switch refresh/drawing functions.
 // Used to select shadow mode etc.
@@ -190,7 +186,7 @@ void R_SetViewAngle ();
 // Called by G_Drawer.
 void R_RenderActorView (AActor *actor, bool dontmaplines = false);
 void R_RefreshViewBorder ();
-void R_SetupBuffer (bool inview);
+void R_SetupBuffer ();
 
 void R_RenderViewToCanvas (AActor *actor, DCanvas *canvas, int x, int y, int width, int height, bool dontmaplines = false);
 

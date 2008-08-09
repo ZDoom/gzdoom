@@ -1583,7 +1583,7 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, fixed_t sx, fixed_
 
 
 	if (camera->player && (RenderTarget != screen ||
-		realviewheight == RenderTarget->GetHeight() ||
+		viewheight == RenderTarget->GetHeight() ||
 		(RenderTarget->GetWidth() > 320 && !st_scale)))
 	{	// Adjust PSprite for fullscreen views
 		AWeapon *weapon = NULL;
@@ -1593,7 +1593,7 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, fixed_t sx, fixed_
 		}
 		if (pspnum <= ps_flash && weapon != NULL && weapon->YAdjust != 0)
 		{
-			if (RenderTarget != screen || realviewheight == RenderTarget->GetHeight())
+			if (RenderTarget != screen || viewheight == RenderTarget->GetHeight())
 			{
 				vis->texturemid -= weapon->YAdjust;
 			}
@@ -2502,7 +2502,7 @@ void R_DrawParticle (vissprite_t *vis)
 		fg = fg2rgb[color];
 	}
 
-	spacing = (RenderTarget->GetPitch()<<detailyshift) - countbase;
+	spacing = RenderTarget->GetPitch() - countbase;
 	dest = ylookup[yl] + x1 + dc_destorg;
 
 	do

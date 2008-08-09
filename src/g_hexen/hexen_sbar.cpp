@@ -842,7 +842,7 @@ private:
 			{
 				AWeaponHolder *hold = static_cast<AWeaponHolder*>(inv);
 
-				if (hold->PieceWeapon->TypeName == FourthWeaponNames[FourthWeaponClass])
+				if (hold->PieceWeapon->TypeName == FourthWeaponNames[(int)FourthWeaponClass])
 				{
 					// Weapon Pieces
 					if (oldpieces != hold->PieceMask)
@@ -883,7 +883,7 @@ private:
 		}
 		if (oldpieces != 0)
 		{
-			DrawImage (ClassImages[FourthWeaponClass][imgWEAPONSLOT], 190, 0);
+			DrawImage (ClassImages[(int)FourthWeaponClass][imgWEAPONSLOT], 190, 0);
 			oldpieces = 0;
 		}
 	}

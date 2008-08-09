@@ -1,3 +1,20 @@
+August 8, 2008
+- Ported vlinetallasm4 to AMD64 assembly. Even with the increased number of
+  registers AMD64 provides, this routine still needs to be written as self-
+  modifying code for maximum performance. The additional registers do allow
+  for further optimization over the x86 version by allowing all four pixels
+  to be in flight at the same time. The end result is that AMD64 ASM is about
+  2.18 times faster than AMD64 C and about 1.06 times faster than x86 ASM.
+  (For further comparison, AMD64 C and x86 C are practically the same for
+  this function.) Should I port any more assembly to AMD64, mvlineasm4 is the
+  most likely candidate, but it's not used enough at this point to bother.
+  Also, this may or may not work with Linux at the moment, since it doesn't
+  have the eh_handler metadata. Win64 is easier, since I just need to
+  structure the function prologue and epilogue properly and use some
+  assembler directives/macros to automatically generate the metadata. And
+  that brings up another point: You need YASM to assemble the AMD64 code,
+  because NASM doesn't support the Win64 metadata directives.
+
 August 8, 2008 (Changes by Graf Zahl)
 - Replaced the ActorInfo definitions of several internal classes with DECORATE definitions
 - Converted teleport fog and destinations to DECORATE.
@@ -13,6 +30,23 @@ August 8, 2008 (Changes by Graf Zahl)
 - Added DECORATE conversions for Hexen's Fighter weapons by Karate Chris.
 - Added aWeaponGiver class to generalize the standing AssaultGun.
 - converted a_Strifeweapons.cpp to DECORATE, except for the Sigil.
+
+August 7, 2008
+- Added an SSE version of DoBlending. This is strictly C intrinsics.
+  VC++ still throws around unneccessary register moves. GCC seems to be
+  pretty close to optimal, requiring only about 2 cycles/color. They're
+  both faster than my hand-written MMX routine, so I don't need to feel
+  bad about not hand-optimizing this for x64 builds.
+- Removed an extra instruction from DoBlending_MMX, transposed two
+  instructions, and unrolled it once, shaving off about 80 cycles from the
+  time required to blend 256 palette entries. Why? Because I tried writing
+  a C version of the routine using compiler intrinsics and was appalled by
+  all the extra movq's VC++ added to the code. GCC was better, but still
+  generated extra instructions. I only wanted a C version because I can't
+  use inline assembly with VC++'s x64 compiler, and x64 assembly is a bit
+  of a pain. (It's a pain because Linux and Windows have different calling
+  conventions, and you need to maintain extra metadata for functions.) So,
+  the assembly version stays and the C version stays out.
 
 August 7, 2008 (Changes by Graf Zahl)
 - Converted the rest of a_strifestuff.cpp to DECORATE.
@@ -39,6 +73,13 @@ August 7, 2008 (SBARINfO update)
 - Fixed: Various bugs I noticed in the fullscreenoffsets code.
 
 August 6, 2008
+- Removed all the pixel doubling r_detail modes, since the one platform they
+  were intended to assist (486) actually sees very little benefit from them.
+- Rewrote CheckMMX in C and renamed it to CheckCPU.
+- Fixed: CPUID function 0x80000005 is specified to return detailed L1 cache
+  only for AMD processors, so we must not use it on other architectures, or
+  we end up overwriting the L1 cache line size with 0 or some other number
+  we don't actually understand.
 - The x87 precision control is now explicitly set for double precision, since
   GCC defaults to extended precision instead, unlike Visual C++.
 

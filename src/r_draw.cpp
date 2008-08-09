@@ -69,19 +69,6 @@ int 			scaledviewwidth;
 int 			viewwindowx;
 int 			viewwindowy;
 
-extern "C" {
-int				realviewwidth;		// [RH] Physical width of view window
-int				realviewheight;		// [RH] Physical height of view window
-int				detailxshift;		// [RH] X shift for horizontal detail level
-int				detailyshift;		// [RH] Y shift for vertical detail level
-}
-
-#ifdef USEASM
-extern "C" void STACK_ARGS DoubleHoriz_MMX (int height, int width, BYTE *dest, int pitch);
-extern "C" void STACK_ARGS DoubleHorizVert_MMX (int height, int width, BYTE *dest, int pitch);
-extern "C" void STACK_ARGS DoubleVert_ASM (int height, int width, BYTE *dest, int pitch);
-#endif
-
 // [RH] Pointers to the different column drawers.
 //		These get changed depending on the current
 //		screen depth and asm/no asm.
@@ -130,8 +117,6 @@ const BYTE*		bufplce[4];
 int 			dccount;
 }
 
-cycle_t			DetailDoubleCycles;
-
 int dc_fillcolor;
 BYTE *dc_translation;
 BYTE shadetables[NUMCOLORMAPS*16*256];
@@ -161,7 +146,7 @@ EXTERN_CVAR (Int, r_columnmethod)
 /*									*/
 /************************************/
 
-#ifndef	USEASM
+#ifndef	X86_ASM
 //
 // A column is a vertical slice/span from a wall texture that,
 //	given the DOOM style restrictions on the view orientation,
@@ -212,7 +197,7 @@ void R_DrawColumnP_C (void)
 		} while (--count);
 	}
 } 
-#endif	// USEASM
+#endif
 
 // [RH] Just fills a column with a color
 void R_FillColumnP (void)
@@ -404,7 +389,7 @@ void R_InitFuzzTable (int fuzzoff)
 	}
 }
 
-#ifndef USEASM
+#ifndef X86_ASM
 //
 // Creates a fuzzy image by copying pixels from adjacent ones above and below.
 // Used with an all black colormap, this could create the SHADOW effect,
@@ -480,7 +465,7 @@ void R_DrawFuzzColumnP_C (void)
 		fuzzpos = fuzz;
 	}
 } 
-#endif	// USEASM
+#endif
 
 //
 // R_DrawTranlucentColumn
@@ -976,7 +961,7 @@ int 					dscount;
 
 //
 // Draws the actual span.
-#if !defined(USEASM)
+#ifndef X86_ASM
 void R_DrawSpanP_C (void)
 {
 	dsfixed_t			xfrac;
@@ -1256,14 +1241,21 @@ void R_FillSpan (void)
 
 // wallscan stuff, in C
 
-#ifndef USEASM
+#ifndef X86_ASM
 static DWORD STACK_ARGS vlinec1 ();
-static void STACK_ARGS vlinec4 ();
 static int vlinebits;
 
 DWORD (STACK_ARGS *dovline1)() = vlinec1;
 DWORD (STACK_ARGS *doprevline1)() = vlinec1;
+
+#ifdef X64_ASM
+extern "C" static void vlinetallasm4();
+#define dovline4 vlinetallasm4
+extern "C" void setupvlinetallasm (int);
+#else
+static void STACK_ARGS vlinec4 ();
 void (STACK_ARGS *dovline4)() = vlinec4;
+#endif
 
 static DWORD STACK_ARGS mvlinec1();
 static void STACK_ARGS mvlinec4();
@@ -1281,8 +1273,8 @@ DWORD STACK_ARGS prevlineasm1 ();
 DWORD STACK_ARGS vlinetallasm1 ();
 DWORD STACK_ARGS prevlinetallasm1 ();
 void STACK_ARGS vlineasm4 ();
-void STACK_ARGS vlinetallasm4 ();
 void STACK_ARGS vlinetallasmathlon4 ();
+void STACK_ARGS vlinetallasm4 ();
 void STACK_ARGS setupvlineasm (int);
 void STACK_ARGS setupvlinetallasm (int);
 
@@ -1301,7 +1293,7 @@ void (STACK_ARGS *domvline4)() = mvlineasm4;
 
 void setupvline (int fracbits)
 {
-#ifdef USEASM
+#ifdef X86_ASM
 	if (CPU.Family <= 5)
 	{
 		if (fracbits >= 24)
@@ -1329,10 +1321,13 @@ void setupvline (int fracbits)
 	}
 #else
 	vlinebits = fracbits;
+#ifdef X64_ASM
+	setupvlinetallasm(fracbits);
+#endif
 #endif
 }
 
-#ifndef USEASM
+#if !defined(X86_ASM)
 DWORD STACK_ARGS vlinec1 ()
 {
 	DWORD fracstep = dc_iscale;
@@ -1374,7 +1369,7 @@ void STACK_ARGS vlinec4 ()
 
 void setupmvline (int fracbits)
 {
-#if defined(USEASM)
+#if defined(X86_ASM)
 	setupmvlineasm (fracbits);
 	domvline1 = mvlineasm1;
 	domvline4 = mvlineasm4;
@@ -1383,7 +1378,7 @@ void setupmvline (int fracbits)
 #endif
 }
 
-#ifndef USEASM
+#if !defined(X86_ASM)
 DWORD STACK_ARGS mvlinec1 ()
 {
 	DWORD fracstep = dc_iscale;
@@ -1863,17 +1858,17 @@ void R_DrawViewBorder (void)
 		SB_state = screen->GetPageCount ();
 	}
 
-	if (realviewwidth == SCREENWIDTH)
+	if (viewwidth == SCREENWIDTH)
 	{
 		return;
 	}
 
 	R_DrawBorder (0, 0, SCREENWIDTH, viewwindowy);
-	R_DrawBorder (0, viewwindowy, viewwindowx, realviewheight + viewwindowy);
-	R_DrawBorder (viewwindowx + realviewwidth, viewwindowy, SCREENWIDTH, realviewheight + viewwindowy);
-	R_DrawBorder (0, viewwindowy + realviewheight, SCREENWIDTH, ST_Y);
+	R_DrawBorder (0, viewwindowy, viewwindowx, viewheight + viewwindowy);
+	R_DrawBorder (viewwindowx + viewwidth, viewwindowy, SCREENWIDTH, viewheight + viewwindowy);
+	R_DrawBorder (0, viewwindowy + viewheight, SCREENWIDTH, ST_Y);
 
-	M_DrawFrame (viewwindowx, viewwindowy, realviewwidth, realviewheight);
+	M_DrawFrame (viewwindowx, viewwindowy, viewwidth, viewheight);
 	V_MarkRect (0, 0, SCREENWIDTH, ST_Y);
 }
 
@@ -1893,7 +1888,7 @@ void R_DrawTopBorder ()
 	FTexture *p;
 	int offset;
 
-	if (realviewwidth == SCREENWIDTH)
+	if (viewwidth == SCREENWIDTH)
 		return;
 
 	offset = gameinfo.border->offset;
@@ -1901,135 +1896,34 @@ void R_DrawTopBorder ()
 	if (viewwindowy < 34)
 	{
 		R_DrawBorder (0, 0, viewwindowx, 34);
-		R_DrawBorder (viewwindowx, 0, viewwindowx+realviewwidth, viewwindowy);
-		R_DrawBorder (viewwindowx+realviewwidth, 0, SCREENWIDTH, 34);
+		R_DrawBorder (viewwindowx, 0, viewwindowx + viewwidth, viewwindowy);
+		R_DrawBorder (viewwindowx + viewwidth, 0, SCREENWIDTH, 34);
 		p = TexMan(gameinfo.border->t);
 		screen->FlatFill(viewwindowx, viewwindowy - p->GetHeight(),
-						 viewwindowx + realviewwidth, viewwindowy, p, true);
+						 viewwindowx + viewwidth, viewwindowy, p, true);
 
 		p = TexMan(gameinfo.border->l);
 		screen->FlatFill(viewwindowx - p->GetWidth(), viewwindowy,
 						 viewwindowx, 35, p, true);
 		p = TexMan(gameinfo.border->r);
-		screen->FlatFill(viewwindowx + realviewwidth, viewwindowy,
-						 viewwindowx + realviewwidth + p->GetWidth(), 35, p, true);
+		screen->FlatFill(viewwindowx + viewwidth, viewwindowy,
+						 viewwindowx + viewwidth + p->GetWidth(), 35, p, true);
 
 		p = TexMan(gameinfo.border->tl);
-		screen->DrawTexture (p, viewwindowx-offset, viewwindowy - offset, TAG_DONE);
+		screen->DrawTexture (p, viewwindowx - offset, viewwindowy - offset, TAG_DONE);
 
 		p = TexMan(gameinfo.border->tr);
-		screen->DrawTexture (p, viewwindowx+realviewwidth, viewwindowy - offset, TAG_DONE);
+		screen->DrawTexture (p, viewwindowx + viewwidth, viewwindowy - offset, TAG_DONE);
 	}
 	else
 	{
 		R_DrawBorder (0, 0, SCREENWIDTH, 34);
 	}
 }
-
-
-// [RH] Double pixels in the view window horizontally
-//		and/or vertically (or not at all).
-void R_DetailDouble ()
-{
-	if (!viewactive) return;
-	DetailDoubleCycles = 0;
-	clock (DetailDoubleCycles);
-
-	switch ((detailxshift << 1) | detailyshift)
-	{
-	case 1:		// y-double
-#ifdef USEASM
-		DoubleVert_ASM (viewheight, viewwidth, dc_destorg, RenderTarget->GetPitch());
-#else
-		{
-			int rowsize = realviewwidth;
-			int pitch = RenderTarget->GetPitch();
-			int y;
-			BYTE *line;
-
-			line = dc_destorg;
-			for (y = viewheight; y != 0; --y, line += pitch<<1)
-			{
-				memcpy (line+pitch, line, rowsize);
-			}
-		}
-#endif
-		break;
-
-	case 2:		// x-double
-#ifdef USEASM
-		if (CPU.bMMX && (viewwidth&15)==0)
-		{
-			DoubleHoriz_MMX (viewheight, viewwidth, dc_destorg+viewwidth, RenderTarget->GetPitch());
-		}
-		else
-#endif
-		{
-			int rowsize = viewwidth;
-			int pitch = RenderTarget->GetPitch();
-			int y,x;
-			BYTE *linefrom, *lineto;
-
-			linefrom = dc_destorg;
-			for (y = viewheight; y != 0; --y, linefrom += pitch)
-			{
-				lineto = linefrom - viewwidth;
-				for (x = 0; x < rowsize; ++x)
-				{
-					BYTE c = linefrom[x];
-					lineto[x*2] = c;
-					lineto[x*2+1] = c;
-				}
-			}
-		}
-		break;
-
-	case 3:		// x- and y-double
-#ifdef USEASM
-		if (CPU.bMMX && (viewwidth&15)==0 && 0)
-		{
-			DoubleHorizVert_MMX (viewheight, viewwidth, dc_destorg+viewwidth, RenderTarget->GetPitch());
-		}
-		else
-#endif
-		{
-			int rowsize = viewwidth;
-			int realpitch = RenderTarget->GetPitch();
-			int pitch = realpitch << 1;
-			int y,x;
-			BYTE *linefrom, *lineto;
-
-			linefrom = dc_destorg;
-			for (y = viewheight; y != 0; --y, linefrom += pitch)
-			{
-				lineto = linefrom - viewwidth;
-				for (x = 0; x < rowsize; ++x)
-				{
-					BYTE c = linefrom[x];
-					lineto[x*2] = c;
-					lineto[x*2+1] = c;
-					lineto[x*2+realpitch] = c;
-					lineto[x*2+realpitch+1] = c;
-				}
-			}
-		}
-		break;
-	}
-
-	unclock (DetailDoubleCycles);
-}
-
-ADD_STAT(detail)
-{
-	FString out;
-	out.Format ("doubling = %04.1f ms", (double)DetailDoubleCycles * 1000 * SecondsPerCycle);
-	return out;
-}
-
 // [RH] Initialize the column drawer pointers
 void R_InitColumnDrawers ()
 {
-#ifdef USEASM
+#ifdef X86_ASM
 	R_DrawColumn				= R_DrawColumnP_ASM;
 	R_DrawColumnHoriz			= R_DrawColumnHorizP_ASM;
 	R_DrawFuzzColumn			= R_DrawFuzzColumnP_ASM;

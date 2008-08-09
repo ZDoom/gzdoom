@@ -120,7 +120,7 @@ inline int BigLong (int x)
 		| ((((unsigned int)x)<<8) & 0xff0000)
 		| (((unsigned int)x)<<24));
 }
-#endif // USEASM
+#endif
 
 #endif // WORDS_BIGENDIAN
 

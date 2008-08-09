@@ -1192,7 +1192,6 @@ void DFrameBuffer::PrecacheTexture(FTexture *tex, int cache)
 void DFrameBuffer::RenderView(player_t *player)
 {
 	R_RenderActorView (player->mo);
-	R_DetailDouble ();		// [RH] Apply detail mode expansion
 	// [RH] Let cameras draw onto textures that were visible this frame.
 	FCanvasTextureInfo::UpdateAll ();
 }
@@ -1317,7 +1316,7 @@ bool V_DoModeSetup (int width, int height, int bits)
 
 	RenderTarget = screen;
 	screen->Lock (true);
-	R_SetupBuffer (false);
+	R_SetupBuffer ();
 	screen->Unlock ();
 
 	M_RefreshModesList ();

@@ -1067,8 +1067,8 @@ void DBaseStatusBar::DrawCrosshair ()
 	}
 
 	screen->DrawTexture (CrosshairImage,
-		realviewwidth / 2 + viewwindowx,
-		realviewheight / 2 + viewwindowy,
+		viewwidth / 2 + viewwindowx,
+		viewheight / 2 + viewwindowy,
 		DTA_DestWidth, w,
 		DTA_DestHeight, h,
 		DTA_AlphaChannel, true,

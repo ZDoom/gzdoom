@@ -51,7 +51,7 @@ FUZZTABLE	equ	50
 %define fuzzpos			_fuzzpos
 %define fuzzoffset		_fuzzoffset
 %define NormalLight		_NormalLight
-%define realviewheight	_realviewheight
+%define viewheight		_viewheight
 %define fuzzviewheight	_fuzzviewheight
 %define CPU				_CPU
 
@@ -103,7 +103,7 @@ EXTERN centery
 EXTERN fuzzpos
 EXTERN fuzzoffset
 EXTERN NormalLight
-EXTERN realviewheight
+EXTERN viewheight
 EXTERN fuzzviewheight
 EXTERN CPU
 

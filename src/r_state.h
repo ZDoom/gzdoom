@@ -33,9 +33,7 @@
 //
 
 extern "C" int			viewwidth;
-extern "C" int			realviewwidth;
 extern "C" int			viewheight;
-extern "C" int			realviewheight;
 
 // Sprite....
 extern int				firstspritelump;

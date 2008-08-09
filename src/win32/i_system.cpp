@@ -67,9 +67,7 @@
 
 EXTERN_CVAR (String, language)
 
-#ifdef USEASM
-extern "C" void STACK_ARGS CheckMMX (CPUInfo *cpu);
-#endif
+extern void CheckCPUID(CPUInfo *cpu);
 
 extern "C"
 {
@@ -344,12 +342,10 @@ void SetLanguageIDs ()
 //
 // I_Init
 //
+
 void I_Init (void)
 {
-#ifndef USEASM
-	memset (&CPU, 0, sizeof(CPU));
-#else
-	CheckMMX (&CPU);
+	CheckCPUID(&CPU);
 	CalculateCPUSpeed ();
 
 	// Why does Intel right-justify this string?
@@ -367,7 +363,6 @@ void I_Init (void)
 		}
 	}
 
-#endif
 	if (CPU.VendorID[0])
 	{
 		Printf ("CPU Vendor ID: %s\n", CPU.VendorID);
@@ -395,7 +390,6 @@ void I_Init (void)
 		if (CPU.b3DNowPlus)	Printf (" 3DNow!+");
 		Printf ("\n");
 	}
-
 
 	// Use a timer event if possible
 	NewTicArrived = CreateEvent (NULL, FALSE, FALSE, NULL);
@@ -484,7 +478,7 @@ void CalculateCPUSpeed ()
 		Printf ("Can't determine CPU speed, so pretending.\n");
 	}
 
-	Printf ("CPU Speed: %f MHz\n", CyclesPerSecond / 1e6);
+	Printf ("CPU Speed: %.0f MHz\n", CyclesPerSecond / 1e6);
 }
 
 //

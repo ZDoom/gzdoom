@@ -63,7 +63,7 @@
 
 EXTERN_CVAR (String, language)
 
-#ifdef USEASM
+#if defined(X86_ASM) || defined(X64_ASM)
 extern "C" void STACK_ARGS CheckMMX (CPUInfo *cpu);
 #endif
 
@@ -182,7 +182,7 @@ void SetLanguageIDs ()
 //
 void I_Init (void)
 {
-#ifndef USEASM
+#if !defined(X86_ASM) && !defined(X64_ASM)
     memset (&CPU, 0, sizeof(CPU));
 #else
 	CheckMMX (&CPU);

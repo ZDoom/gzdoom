@@ -59,13 +59,13 @@ unsigned int dc_tspans[4][MAXHEIGHT];
 unsigned int *dc_ctspan[4];
 unsigned int *horizspan[4];
 
-#ifdef USEASM
+#ifdef X86_ASM
 extern "C" void R_SetupShadedCol();
 extern "C" void R_SetupAddCol();
 extern "C" void R_SetupAddClampCol();
 #endif
 
-#ifndef USEASM
+#ifndef X86_ASM
 // Copies one span at hx to the screen at sx.
 void rt_copy1col_c (int hx, int sx, int yl, int yh)
 {
@@ -218,7 +218,7 @@ void STACK_ARGS rt_map4cols_c (int sx, int yl, int yh)
 		dest += pitch*2;
 	} while (--count);
 }
-#endif	/* !USEASM */
+#endif
 
 void rt_Translate1col(const BYTE *translation, int hx, int yl, int yh)
 {
@@ -850,7 +850,7 @@ void rt_draw4cols (int sx)
 		dc_ctspan[x][1] = screen->GetHeight();
 	}
 
-#ifdef USEASM
+#ifdef X86_ASM
 	// Setup assembly routines for changed colormaps or other parameters.
 	if (hcolfunc_post4 == rt_shaded4cols)
 	{

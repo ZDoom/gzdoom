@@ -100,14 +100,11 @@ CUSTOM_CVAR (Float, Gamma, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 /* Palette management stuff */
 /****************************/
 
-extern "C"
-{
-	BYTE BestColor_MMX (DWORD rgb, const DWORD *pal);
-}
+extern "C" BYTE BestColor_MMX (DWORD rgb, const DWORD *pal);
 
 int BestColor (const uint32 *pal_in, int r, int g, int b, int first, int num)
 {
-#ifdef USEASM
+#ifdef X86_ASM
 	if (CPU.bMMX)
 	{
 		int pre = 256 - num - first;
@@ -120,9 +117,10 @@ int BestColor (const uint32 *pal_in, int r, int g, int b, int first, int num)
 
 	for (int color = first; color < num; color++)
 	{
-		int dist = (r-pal[color].r)*(r-pal[color].r)+
-				   (g-pal[color].g)*(g-pal[color].g)+
-				   (b-pal[color].b)*(b-pal[color].b);
+		int x = r - pal[color].r;
+		int y = g - pal[color].g;
+		int z = b - pal[color].b;
+		int dist = x*x + y*y + z*z;
 		if (dist < bestdist)
 		{
 			if (dist == 0)
@@ -454,10 +452,8 @@ void InitPalette ()
 
 }
 
-extern "C"
-{
-	void STACK_ARGS DoBlending_MMX (const PalEntry *from, PalEntry *to, int count, int r, int g, int b, int a);
-}
+extern "C" void STACK_ARGS DoBlending_MMX (const PalEntry *from, PalEntry *to, int count, int r, int g, int b, int a);
+extern void DoBlending_SSE2 (const PalEntry *from, PalEntry *to, int count, int r, int g, int b, int a);
 
 void DoBlending (const PalEntry *from, PalEntry *to, int count, int r, int g, int b, int a)
 {
@@ -478,29 +474,51 @@ void DoBlending (const PalEntry *from, PalEntry *to, int count, int r, int g, in
 			to[i] = t;
 		}
 	}
-#ifdef USEASM
-	else if (CPU.bMMX && !(count & 1))
+	else if (CPU.bSSE2)
 	{
-		DoBlending_MMX (from, to, count, r, g, b, a);
-	}
-#endif
-	else
-	{
-		int i, ia;
-
-		ia = 256 - a;
-		r *= a;
-		g *= a;
-		b *= a;
-
-		for (i = count; i > 0; i--, to++, from++)
+		if (count >= 4)
 		{
-			to->r = (r + from->r*ia) >> 8;
-			to->g = (g + from->g*ia) >> 8;
-			to->b = (b + from->b*ia) >> 8;
+			int not3count = count & ~3;
+			DoBlending_SSE2 (from, to, not3count, r, g, b, a);
+			count &= 3;
+			if (count <= 0)
+			{
+				return;
+			}
+			from += not3count;
+			to += not3count;
 		}
 	}
+#ifdef X86_ASM
+	else if (CPU.bMMX)
+	{
+		if (count >= 4)
+		{
+			int not3count = count & ~3;
+			DoBlending_MMX (from, to, not3count, r, g, b, a);
+			count &= 3;
+			if (count <= 0)
+			{
+				return;
+			}
+			from += not3count;
+			to += not3count;
+		}
+	}
+#endif
+	int i, ia;
 
+	ia = 256 - a;
+	r *= a;
+	g *= a;
+	b *= a;
+
+	for (i = count; i > 0; i--, to++, from++)
+	{
+		to->r = (r + from->r * ia) >> 8;
+		to->g = (g + from->g * ia) >> 8;
+		to->b = (b + from->b * ia) >> 8;
+	}
 }
 
 void V_SetBlend (int blendr, int blendg, int blendb, int blenda)

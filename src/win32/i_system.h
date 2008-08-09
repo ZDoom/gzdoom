@@ -52,23 +52,23 @@ extern os_t OSPlatform;
 
 struct CPUInfo	// 92 bytes
 {
-	char VendorID[16];
-	char CPUString[48];
+	char VendorID[16];		// 0
+	char CPUString[48];		// 16
 
-	BYTE Stepping;
-	BYTE Model;
-	BYTE Family;
-	BYTE Type;
+	BYTE Stepping;			// 64
+	BYTE Model;				// 65
+	BYTE Family;			// 66
+	BYTE Type;				// 67
 
-	BYTE BrandIndex;
-	BYTE CLFlush;
-	BYTE CPUCount;
-	BYTE APICID;
+	BYTE BrandIndex;		// 68
+	BYTE CLFlush;			// 69
+	BYTE CPUCount;			// 70
+	BYTE APICID;			// 71
 
-	DWORD bSSE3:1;
+	DWORD bSSE3:1;			// 72
 	DWORD DontCare1:31;
 
-	DWORD bFPU:1;
+	DWORD bFPU:1;			// 76
 	DWORD bVME:1;
 	DWORD bDE:1;
 	DWORD bPSE:1;
@@ -76,7 +76,7 @@ struct CPUInfo	// 92 bytes
 	DWORD bMSR:1;
 	DWORD bPAE:1;
 	DWORD bMCE:1;
-	DWORD bCX8:1;
+	DWORD bCX8:1;			// 77
 	DWORD bAPIC:1;
 	DWORD bReserved1:1;
 	DWORD bSEP:1;
@@ -84,7 +84,7 @@ struct CPUInfo	// 92 bytes
 	DWORD bPGE:1;
 	DWORD bMCA:1;
 	DWORD bCMOV:1;
-	DWORD bPAT:1;
+	DWORD bPAT:1;			// 78
 	DWORD bPSE36:1;
 	DWORD bPSN:1;
 	DWORD bCFLUSH:1;
@@ -92,7 +92,7 @@ struct CPUInfo	// 92 bytes
 	DWORD bDS:1;
 	DWORD bACPI:1;
 	DWORD bMMX:1;
-	DWORD bFXSR:1;
+	DWORD bFXSR:1;			// 79
 	DWORD bSSE:1;
 	DWORD bSSE2:1;
 	DWORD bSS:1;
@@ -101,22 +101,22 @@ struct CPUInfo	// 92 bytes
 	DWORD bReserved3:1;
 	DWORD bPBE:1;
 
-	DWORD DontCare2:22;
+	DWORD DontCare2:22;		// 80
 	DWORD bMMXPlus:1;		// AMD's MMX extensions
 	DWORD bMMXAgain:1;		// Just a copy of bMMX above
 	DWORD DontCare3:6;
 	DWORD b3DNowPlus:1;
 	DWORD b3DNow:1;
 
-	BYTE AMDStepping;
-	BYTE AMDModel;
-	BYTE AMDFamily;
-	BYTE bIsAMD;
+	BYTE AMDStepping;		// 84
+	BYTE AMDModel;			// 85
+	BYTE AMDFamily;			// 86
+	BYTE bIsAMD;			// 87
 
-	BYTE DataL1LineSize;
-	BYTE DataL1LinesPerTag;
-	BYTE DataL1Associativity;
-	BYTE DataL1SizeKB;
+	BYTE DataL1LineSize;	// 88
+	BYTE DataL1LinesPerTag;	// 89
+	BYTE DataL1Associativity;//90
+	BYTE DataL1SizeKB;		// 91
 };
 
 

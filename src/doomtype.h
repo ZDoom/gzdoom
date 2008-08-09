@@ -43,23 +43,61 @@
 
 // Since this file is included by everything, it seems an appropriate place
 // to check the NOASM/USEASM macros.
-#if (!defined(_M_IX86) && !defined(__i386__)) || defined(__APPLE__)
-// The assembly code requires an x86 processor.
-// And needs to be tweaked for Mach-O before enabled on Macs.
+#if defined(__APPLE__)
+// The assembly code needs to be tweaked for Mach-O before enabled on Macs.
 #ifndef NOASM
 #define NOASM
 #endif
 #endif
 
+// There are three assembly-related macros:
+//
+//		NOASM	- Assembly code is disabled
+//		X86_ASM	- Using ia32 assembly code
+//		X64_ASM	- Using amd64 assembly code
+//
+// Note that these relate only to using the pure assembly code. Inline
+// assembly may still be used without respect to these macros, as
+// deemed appropriate.
+
 #ifndef NOASM
-#ifndef USEASM
-#define USEASM 1
+// Select the appropriate type of assembly code to use.
+
+#if defined(_M_IX86) || defined(__i386__)
+
+#define X86_ASM
+#ifdef X64_ASM
+#undef X64_ASM
 #endif
+
+#elif defined(_M_X64) || defined(__amd64__)
+
+#define X64_ASM
+#ifdef X86_ASM
+#undef X86_ASM
+#endif
+
 #else
-#ifdef USEASM
-#undef USEASM
+
+#define NOASM
+
 #endif
+
 #endif
+
+#ifdef NOASM
+// Ensure no assembly macros are defined if NOASM is defined.
+
+#ifdef X86_ASM
+#undef X86_ASM
+#endif
+
+#ifdef X64_ASM
+#undef X64_ASM
+#endif
+
+#endif
+
 
 #if defined(_MSC_VER) || defined(__WATCOMC__)
 #define STACK_ARGS __cdecl

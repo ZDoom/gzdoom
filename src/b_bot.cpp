@@ -111,7 +111,7 @@ void InitBotStuff()
 	if (done) return;
 	done = true;
 
-	struct BotInit
+	static struct BotInit
 	{
 		const char *type;
 		int movecombatdist;
@@ -158,7 +158,7 @@ void InitBotStuff()
 		{ "StrifeGrenadeLauncher2", 18350080, WIF_BOT_REACTION_SKILL_THING|WIF_BOT_EXPLOSIVE, "PhosphorousGrenade" },
 	};
 
-	for(int i=0;i<countof(botinits);i++)
+	for(unsigned i=0;i<sizeof(botinits)/sizeof(botinits[0]);i++)
 	{
 		const PClass *cls = PClass::FindClass(botinits[i].type);
 		if (cls != NULL && cls->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
@@ -173,8 +173,8 @@ void InitBotStuff()
 		}
 	}
 
-	static char *warnbotmissiles[] = { "PlasmaBall", "Ripper", "HornRodFX1" };
-	for(int i=0;i<countof(warnbotmissiles);i++)
+	static const char *warnbotmissiles[] = { "PlasmaBall", "Ripper", "HornRodFX1" };
+	for(unsigned i=0;i<countof(warnbotmissiles);i++)
 	{
 		AActor *a = GetDefaultByName (warnbotmissiles[i]);
 		if (a != NULL)

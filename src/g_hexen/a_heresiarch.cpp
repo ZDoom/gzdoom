@@ -71,6 +71,16 @@ static FRandom pr_heresiarch ("Heresiarch");
 
 // The Heresiarch him/itself ------------------------------------------------
 
+class AHeresiarch : public AActor
+{
+	DECLARE_ACTOR (AHeresiarch, AActor)
+public:
+	const PClass *StopBall;
+
+	void Serialize (FArchive &arc);
+	void Die (AActor *source, AActor *inflictor);
+};
+
 FState AHeresiarch::States[] =
 {
 #define S_SORC_SPAWN1 0

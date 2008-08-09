@@ -3,16 +3,6 @@
 
 #include "d_player.h"
 
-class AHeresiarch : public AActor
-{
-	DECLARE_ACTOR (AHeresiarch, AActor)
-public:
-	const PClass *StopBall;
-
-	void Serialize (FArchive &arc);
-	void Die (AActor *source, AActor *inflictor);
-};
-
 class AHolySpirit : public AActor
 {
 	DECLARE_CLASS (AHolySpirit, AActor)

@@ -20,7 +20,7 @@ static FRandom pr_randomspawn("RandomSpawn");
 
 class ARandomSpawner : public AActor
 {
-	DECLARE_STATELESS_ACTOR (ARandomSpawner, AActor)
+	DECLARE_CLASS (ARandomSpawner, AActor)
 
 	void PostBeginPlay()
 	{
@@ -84,6 +84,5 @@ class ARandomSpawner : public AActor
 	}
 };
 
-IMPLEMENT_STATELESS_ACTOR (ARandomSpawner, Any, -1, 0)
-END_DEFAULTS
+IMPLEMENT_CLASS (ARandomSpawner)
 

@@ -2426,7 +2426,6 @@ void D_DoomMain (void)
 		I_FatalError ("No player classes defined");
 	}
 
-	FActorInfo::StaticGameSet ();
 	StartScreen->Progress ();
 
 	Printf ("R_Init: Init %s refresh subsystem.\n", GameNames[gameinfo.gametype]);

@@ -17,20 +17,11 @@
 
 #define BONUSADD 6
 
-FState AWeapon::States[] =
-{
-	S_NORMAL (SHTG, 'E',	0, A_Light0 			, NULL)
-};
-
 IMPLEMENT_POINTY_CLASS (AWeapon)
  DECLARE_POINTER (Ammo1)
  DECLARE_POINTER (Ammo2)
  DECLARE_POINTER (SisterWeapon)
 END_POINTERS
-
-BEGIN_DEFAULTS (AWeapon, Any, -1, 0)
- PROP_Inventory_PickupSound ("misc/w_pkup")
-END_DEFAULTS
 
 //===========================================================================
 //
@@ -584,13 +575,13 @@ FState *AWeapon::GetAltAtkState (bool hold)
 
 class AWeaponGiver : public AWeapon
 {
-	DECLARE_STATELESS_ACTOR(AWeaponGiver, AWeapon)
+	DECLARE_CLASS(AWeaponGiver, AWeapon)
 
 public:
 	bool TryPickup(AActor *toucher);
 };
 
-IMPLEMENT_ABSTRACT_ACTOR(AWeaponGiver)
+IMPLEMENT_CLASS(AWeaponGiver)
 
 bool AWeaponGiver::TryPickup(AActor *toucher)
 {

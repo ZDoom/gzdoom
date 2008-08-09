@@ -12,9 +12,9 @@
 
 // Fighter Weapon Base Class ------------------------------------------------
 
-IMPLEMENT_STATELESS_ACTOR (AFighterWeapon, Hexen, -1, 0)
-	PROP_Weapon_Kickback (150)
-END_DEFAULTS
+IMPLEMENT_CLASS (AFighterWeapon)
+IMPLEMENT_CLASS (AClericWeapon)
+IMPLEMENT_CLASS (AMageWeapon)
 
 bool AFighterWeapon::TryPickup (AActor *toucher)
 {
@@ -41,10 +41,6 @@ bool AFighterWeapon::TryPickup (AActor *toucher)
 
 // Cleric Weapon Base Class -------------------------------------------------
 
-IMPLEMENT_STATELESS_ACTOR (AClericWeapon, Hexen, -1, 0)
-	PROP_Weapon_Kickback (150)
-END_DEFAULTS
-
 bool AClericWeapon::TryPickup (AActor *toucher)
 {
 	// The Doom and Hexen players are not excluded from pickup in case
@@ -69,10 +65,6 @@ bool AClericWeapon::TryPickup (AActor *toucher)
 }
 
 // Mage Weapon Base Class ---------------------------------------------------
-
-IMPLEMENT_STATELESS_ACTOR (AMageWeapon, Hexen, -1, 0)
-	PROP_Weapon_Kickback (150)
-END_DEFAULTS
 
 bool AMageWeapon::TryPickup (AActor *toucher)
 {

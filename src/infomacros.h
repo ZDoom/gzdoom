@@ -68,7 +68,6 @@ typedef void (*voidfunc_)();
 #pragma warning(disable: 4207)	// nonstandard extension used : extended initializer form
 
 #pragma data_seg(".areg$u")		// ActorInfo initializer list
-#pragma data_seg(".greg$u")		// AT_GAME_SET list
 #pragma data_seg()
 
 #define DOOMEDNUMOF(actor) actor##ActorInfo.DoomEdNum
@@ -96,12 +95,6 @@ typedef void (*voidfunc_)();
 #else
 #define ADD_STRING_PROP(prop1,prop2,val) prop2 "\0" val "\0"
 #endif
-
-// Define a function that gets called when the game is started.
-#define AT_GAME_SET(ns) \
-	extern void ns##_gs(); \
-	__declspec(allocate(".greg$u")) voidfunc_ ns##_gsr = ns##_gs; \
-	void ns##_gs ()
 
 #else
 
@@ -137,21 +130,10 @@ extern void ApplyActorDefault (int defnum, int dataint);
 #define ADD_LONG_PROP(prop,val) ApplyActorDefault (prop, (val));
 #define ADD_STRING_PROP(prop1,prop2,val) ApplyActorDefault (prop1, (val));
 	
-#define AT_GAME_SET(ns) \
-	extern void ns##_gs(); \
-	voidfunc_ ns##_gsr __attribute__((section(GREG_SECTION))) = ns##_gs; \
-	void ns##_gs ()
-
-//typedef void (*speedfunc)(EGameSpeed);
-
 #endif
 
 // Common macros
 
-#define SimpleSpeedSetter(T,normalSpeed,fastSpeed,speed) \
-	{ GetDefault<T>()->Speed = (speed == SPEED_Fast) ? fastSpeed : normalSpeed; }
-
-#define AT_GAME_SET_FRIEND(ns)	friend void ns##_gs();
 
 #define DECLARE_STATELESS_ACTOR(cls,parent) \
 	DECLARE_CLASS(cls,parent) \

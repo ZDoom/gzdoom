@@ -16,3 +16,16 @@ ACTOR ItemFog
 	}
 }
 
+// Pickup flash -------------------------------------------------------------
+
+ACTOR PickupFlash
+{
+	+NOGRAVITY
+	States
+	{
+	Spawn:
+		ACLO DCDCBCBABA 3
+		Stop
+	}
+}
+

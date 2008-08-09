@@ -13,7 +13,7 @@ void A_Summon (AActor *);
 
 class AArtiDarkServant : public AInventory
 {
-	DECLARE_ACTOR (AArtiDarkServant, AInventory)
+	DECLARE_CLASS (AArtiDarkServant, AInventory)
 public:
 	bool Use (bool pickup);
 };

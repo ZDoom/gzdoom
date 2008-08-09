@@ -1,6 +1,8 @@
 #include "actors/nativeclasses.txt"
 #include "actors/constants.txt"
 
+#include "actors/shared/player.txt"
+#include "actors/shared/morph.txt"
 #include "actors/shared/botstuff.txt"
 #include "actors/shared/sharedmisc.txt"
 #include "actors/shared/blood.txt"
@@ -81,10 +83,12 @@
 #include "actors/heretic/dsparil.txt"
 #include "actors/heretic/chicken.txt"
 
+#include "actors/hexen/baseweapons.txt"
 #include "actors/hexen/korax.txt"
 #include "actors/hexen/fighterplayer.txt"
 #include "actors/hexen/clericplayer.txt"
 #include "actors/hexen/mageplayer.txt"
+#include "actors/hexen/pig.txt"
 #include "actors/hexen/flame.txt"
 #include "actors/hexen/hexenarmor.txt"
 #include "actors/hexen/hexendecorations.txt"

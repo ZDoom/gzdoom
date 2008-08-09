@@ -17,10 +17,7 @@
 
 static FRandom pr_restore ("RestorePos");
 
-IMPLEMENT_STATELESS_ACTOR (AAmmo, Any, -1, 0)
-	PROP_Inventory_FlagsSet (IF_KEEPDEPLETED)
-	PROP_Inventory_PickupSound ("misc/ammo_pkup")
-END_DEFAULTS
+IMPLEMENT_CLASS (AAmmo)
 
 //===========================================================================
 //
@@ -365,32 +362,6 @@ void A_RestoreSpecialPosition (AActor *self)
 		}
 	}
 }
-
-// Pickup flash -------------------------------------------------------------
-
-class APickupFlash : public AActor
-{
-	DECLARE_ACTOR (APickupFlash, AActor)
-};
-
-FState APickupFlash::States[] =
-{
-	S_NORMAL (ACLO, 'D',    3, NULL                         , &States[1]),
-	S_NORMAL (ACLO, 'C',    3, NULL                         , &States[2]),
-	S_NORMAL (ACLO, 'D',    3, NULL                         , &States[3]),
-	S_NORMAL (ACLO, 'C',    3, NULL                         , &States[4]),
-	S_NORMAL (ACLO, 'B',    3, NULL                         , &States[5]),
-	S_NORMAL (ACLO, 'C',    3, NULL                         , &States[6]),
-	S_NORMAL (ACLO, 'B',    3, NULL                         , &States[7]),
-	S_NORMAL (ACLO, 'A',    3, NULL                         , &States[8]),
-	S_NORMAL (ACLO, 'B',    3, NULL                         , &States[9]),
-	S_NORMAL (ACLO, 'A',    3, NULL                         , NULL)
-};
-
-IMPLEMENT_ACTOR (APickupFlash, Raven, -1, 0)
-	PROP_SpawnState (0)
-	PROP_Flags (MF_NOGRAVITY)
-END_DEFAULTS
 
 /***************************************************************************/
 /* AInventory implementation											   */
@@ -1154,11 +1125,7 @@ bool AInventory::DrawPowerup (int x, int y)
 /* AArtifact implementation												   */
 /***************************************************************************/
 
-IMPLEMENT_STATELESS_ACTOR (APowerupGiver, Any, -1, 0)
-	PROP_Inventory_DefMaxAmount
-	PROP_Inventory_FlagsSet (IF_INVBAR|IF_FANCYPICKUPSOUND)
-	PROP_Inventory_PickupSound ("misc/p_pkup")
-END_DEFAULTS
+IMPLEMENT_CLASS (APowerupGiver)
 
 //===========================================================================
 //
@@ -1349,8 +1316,7 @@ void AInventory::DetachFromOwner ()
 {
 }
 
-IMPLEMENT_STATELESS_ACTOR (ACustomInventory, Any, -1, 0)
-END_DEFAULTS
+IMPLEMENT_CLASS (ACustomInventory)
 
 //===========================================================================
 //
@@ -1396,12 +1362,7 @@ bool ACustomInventory::TryPickup (AActor *toucher)
 	return useok;
 }
 
-IMPLEMENT_STATELESS_ACTOR (AHealth, Any, -1, 0)
-	PROP_Inventory_Amount (1)
-	PROP_Inventory_MaxAmount (0)
-	PROP_Inventory_PickupSound ("misc/health_pkup")
-END_DEFAULTS
-
+IMPLEMENT_CLASS (AHealth)
 
 //===========================================================================
 //
@@ -1493,10 +1454,7 @@ bool AHealth::TryPickup (AActor *other)
 	return true;
 }
 
-IMPLEMENT_STATELESS_ACTOR (AHealthPickup, Any, -1, 0)
-	PROP_Inventory_DefMaxAmount
-	PROP_Inventory_FlagsSet (IF_INVBAR)
-END_DEFAULTS
+IMPLEMENT_CLASS (AHealthPickup)
 
 //===========================================================================
 //
@@ -1724,9 +1682,9 @@ void ABackpackItem::DetachFromOwner ()
 //
 //===========================================================================
 
-IMPLEMENT_ABSTRACT_ACTOR(ABackpackItem)
+IMPLEMENT_CLASS(ABackpackItem)
 
-IMPLEMENT_ABSTRACT_ACTOR (AMapRevealer)
+IMPLEMENT_CLASS (AMapRevealer)
 
 //===========================================================================
 //

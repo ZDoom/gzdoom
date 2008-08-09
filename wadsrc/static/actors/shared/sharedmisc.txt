@@ -130,3 +130,13 @@ ACTOR SwitchingDecoration : SwitchableDecoration native
 {
 }
 
+// Random spawner -----------------------------------------------------------
+
+ACTOR RandomSpawner native
+{
+	+NOBLOCKMAP
+	+NOSECTOR
+	+NOGRAVITY
+}
+
+

@@ -26,7 +26,7 @@ class player_t;
 // owner while it is present.
 class APowerup : public AInventory
 {
-	DECLARE_STATELESS_ACTOR (APowerup, AInventory)
+	DECLARE_CLASS (APowerup, AInventory)
 public:
 	virtual void Tick ();
 	virtual void Destroy ();
@@ -51,7 +51,7 @@ protected:
 // An artifact is an item that gives the player a powerup when activated.
 class APowerupGiver : public AInventory
 {
-	DECLARE_STATELESS_ACTOR (APowerupGiver, AInventory)
+	DECLARE_CLASS (APowerupGiver, AInventory)
 public:
 	virtual bool Use (bool pickup);
 	virtual void Serialize (FArchive &arc);
@@ -64,7 +64,7 @@ public:
 
 class APowerInvulnerable : public APowerup
 {
-	DECLARE_STATELESS_ACTOR (APowerInvulnerable, APowerup)
+	DECLARE_CLASS (APowerInvulnerable, APowerup)
 protected:
 	void InitEffect ();
 	void DoEffect ();
@@ -74,7 +74,7 @@ protected:
 
 class APowerStrength : public APowerup
 {
-	DECLARE_STATELESS_ACTOR (APowerStrength, APowerup)
+	DECLARE_CLASS (APowerStrength, APowerup)
 public:
 	PalEntry GetBlend ();
 protected:
@@ -85,7 +85,7 @@ protected:
 
 class APowerInvisibility : public APowerup
 {
-	DECLARE_STATELESS_ACTOR (APowerInvisibility, APowerup)
+	DECLARE_CLASS (APowerInvisibility, APowerup)
 protected:
 	void InitEffect ();
 	void DoEffect ();
@@ -95,7 +95,7 @@ protected:
 
 class APowerGhost : public APowerInvisibility
 {
-	DECLARE_STATELESS_ACTOR (APowerGhost, APowerInvisibility)
+	DECLARE_CLASS (APowerGhost, APowerInvisibility)
 protected:
 	void InitEffect ();
 	int AlterWeaponSprite (vissprite_t *vis);
@@ -103,7 +103,7 @@ protected:
 
 class APowerShadow : public APowerInvisibility
 {
-	DECLARE_STATELESS_ACTOR (APowerShadow, APowerInvisibility)
+	DECLARE_CLASS (APowerShadow, APowerInvisibility)
 protected:
 	bool HandlePickup (AInventory *item);
 	void InitEffect ();
@@ -112,14 +112,14 @@ protected:
 
 class APowerIronFeet : public APowerup
 {
-	DECLARE_STATELESS_ACTOR (APowerIronFeet, APowerup)
+	DECLARE_CLASS (APowerIronFeet, APowerup)
 public:
 	void AbsorbDamage (int damage, FName damageType, int &newdamage);
 };
 
 class APowerMask : public APowerIronFeet
 {
-	DECLARE_STATELESS_ACTOR (APowerMask, APowerIronFeet)
+	DECLARE_CLASS (APowerMask, APowerIronFeet)
 public:
 	void AbsorbDamage (int damage, FName damageType, int &newdamage);
 	void DoEffect ();
@@ -127,7 +127,7 @@ public:
 
 class APowerLightAmp : public APowerup
 {
-	DECLARE_STATELESS_ACTOR (APowerLightAmp, APowerup)
+	DECLARE_CLASS (APowerLightAmp, APowerup)
 protected:
 	void DoEffect ();
 	void EndEffect ();
@@ -135,7 +135,7 @@ protected:
 
 class APowerTorch : public APowerLightAmp
 {
-	DECLARE_STATELESS_ACTOR (APowerTorch, APowerLightAmp)
+	DECLARE_CLASS (APowerTorch, APowerLightAmp)
 public:
 	void Serialize (FArchive &arc);
 protected:
@@ -145,7 +145,7 @@ protected:
 
 class APowerFlight : public APowerup
 {
-	DECLARE_STATELESS_ACTOR (APowerFlight, APowerup)
+	DECLARE_CLASS (APowerFlight, APowerup)
 public:
 	bool DrawPowerup (int x, int y);
 	void Serialize (FArchive &arc);
@@ -160,7 +160,7 @@ protected:
 
 class APowerWeaponLevel2 : public APowerup
 {
-	DECLARE_STATELESS_ACTOR (APowerWeaponLevel2, APowerup)
+	DECLARE_CLASS (APowerWeaponLevel2, APowerup)
 protected:
 	void InitEffect ();
 	void EndEffect ();
@@ -168,7 +168,7 @@ protected:
 
 class APowerSpeed : public APowerup
 {
-	DECLARE_STATELESS_ACTOR (APowerSpeed, APowerup)
+	DECLARE_CLASS (APowerSpeed, APowerup)
 protected:
 	void DoEffect ();
 	fixed_t GetSpeedFactor();
@@ -176,17 +176,17 @@ protected:
 
 class APowerMinotaur : public APowerup
 {
-	DECLARE_STATELESS_ACTOR (APowerMinotaur, APowerup)
+	DECLARE_CLASS (APowerMinotaur, APowerup)
 };
 
 class APowerScanner : public APowerup
 {
-	DECLARE_STATELESS_ACTOR (APowerScanner, APowerup)
+	DECLARE_CLASS (APowerScanner, APowerup)
 };
 
 class APowerTargeter : public APowerup
 {
-	DECLARE_ACTOR (APowerTargeter, APowerup)
+	DECLARE_CLASS (APowerTargeter, APowerup)
 protected:
 	void InitEffect ();
 	void DoEffect ();
@@ -197,7 +197,7 @@ protected:
 
 class APowerFrightener : public APowerup
 {
-	DECLARE_STATELESS_ACTOR (APowerFrightener, APowerup)
+	DECLARE_CLASS (APowerFrightener, APowerup)
 protected:
 	void InitEffect ();
 	void EndEffect ();
@@ -205,7 +205,7 @@ protected:
 
 class APowerTimeFreezer : public APowerup
 {
-	DECLARE_STATELESS_ACTOR( APowerTimeFreezer, APowerup )
+	DECLARE_CLASS( APowerTimeFreezer, APowerup )
 protected:
 	void InitEffect( );
 	void DoEffect( );
@@ -214,7 +214,7 @@ protected:
 
 class APowerDamage : public APowerup
 {
-	DECLARE_STATELESS_ACTOR( APowerDamage, APowerup )
+	DECLARE_CLASS( APowerDamage, APowerup )
 protected:
 	void InitEffect ();
 	void EndEffect ();
@@ -223,7 +223,7 @@ protected:
 
 class APowerProtection : public APowerup
 {
-	DECLARE_STATELESS_ACTOR( APowerProtection, APowerup )
+	DECLARE_CLASS( APowerProtection, APowerup )
 protected:
 	void InitEffect ();
 	void EndEffect ();
@@ -232,7 +232,7 @@ protected:
 
 class APowerDrain : public APowerup
 {
-	DECLARE_STATELESS_ACTOR( APowerDrain, APowerup )
+	DECLARE_CLASS( APowerDrain, APowerup )
 protected:
 	void InitEffect( );
 	void EndEffect( );
@@ -240,7 +240,7 @@ protected:
 
 class APowerRegeneration : public APowerup
 {
-	DECLARE_STATELESS_ACTOR( APowerRegeneration, APowerup )
+	DECLARE_CLASS( APowerRegeneration, APowerup )
 protected:
 	void InitEffect( );
 	void EndEffect( );
@@ -248,7 +248,7 @@ protected:
 
 class APowerHighJump : public APowerup
 {
-	DECLARE_STATELESS_ACTOR( APowerHighJump, APowerup )
+	DECLARE_CLASS( APowerHighJump, APowerup )
 protected:
 	void InitEffect( );
 	void EndEffect( );
@@ -256,7 +256,7 @@ protected:
 
 class APowerMorph : public APowerup
 {
-	DECLARE_STATELESS_ACTOR( APowerMorph, APowerup )
+	DECLARE_CLASS( APowerMorph, APowerup )
 public:
 	void Serialize (FArchive &arc);
 

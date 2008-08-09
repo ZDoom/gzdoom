@@ -24,21 +24,21 @@ public:
 
 class AFighterWeapon : public AWeapon
 {
-	DECLARE_STATELESS_ACTOR (AFighterWeapon, AWeapon);
+	DECLARE_CLASS (AFighterWeapon, AWeapon);
 public:
 	bool TryPickup (AActor *toucher);
 };
 
 class AClericWeapon : public AWeapon
 {
-	DECLARE_STATELESS_ACTOR (AClericWeapon, AWeapon);
+	DECLARE_CLASS (AClericWeapon, AWeapon);
 public:
 	bool TryPickup (AActor *toucher);
 };
 
 class AMageWeapon : public AWeapon
 {
-	DECLARE_STATELESS_ACTOR (AMageWeapon, AWeapon);
+	DECLARE_CLASS (AMageWeapon, AWeapon);
 public:
 	bool TryPickup (AActor *toucher);
 };

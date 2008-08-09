@@ -100,7 +100,7 @@ ACTOR ArtiPoisonBag : Inventory 8000 native
 	SpawnID 72
 	+FLOATBOB
 	Inventory.DefMaxAmount
-	Inventory.PickupFlash 1
+	Inventory.PickupFlash "PickupFlash"
 	+INVBAR +FANCYPICKUPSOUND
 	Inventory.Icon "ARTIPSBG"
 	Inventory.PickupSound "misc/p_pkup"

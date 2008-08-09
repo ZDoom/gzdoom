@@ -54,10 +54,6 @@ typedef void *REGINFO;
 extern REGINFO ARegHead;
 extern REGINFO ARegTail;
 
-// List of AT_GAME_SET functions
-extern REGINFO GRegHead;
-extern REGINFO GRegTail;
-
 // List of TypeInfos
 extern REGINFO CRegHead;
 extern REGINFO CRegTail;

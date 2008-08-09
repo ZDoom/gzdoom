@@ -2,17 +2,11 @@
 #include "a_weaponpiece.h"
 #include "doomstat.h"
 
-IMPLEMENT_STATELESS_ACTOR (AWeaponHolder, Any, -1, 0)
-	PROP_Flags (MF_NOBLOCKMAP|MF_NOSECTOR)
-	PROP_Inventory_FlagsSet (IF_UNDROPPABLE)
-END_DEFAULTS
-
+IMPLEMENT_CLASS (AWeaponHolder)
 
 IMPLEMENT_POINTY_CLASS (AWeaponPiece)
  DECLARE_POINTER (FullWeapon)
 END_POINTERS
-BEGIN_STATELESS_DEFAULTS (AWeaponPiece, Any, -1, 0)
-END_DEFAULTS
 
 
 void AWeaponPiece::Serialize (FArchive &arc)

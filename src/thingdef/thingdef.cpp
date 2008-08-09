@@ -442,13 +442,6 @@ static FActorInfo *CreateNewActor(FScanner &sc, FActorInfo **parentc, Baggage *b
 	}
 
 	info->DoomEdNum = DoomEdNum;
-
-	if (parent == RUNTIME_CLASS(AWeapon))
-	{
-		// preinitialize kickback to the default for the game
-		((AWeapon*)(info->Class->Defaults))->Kickback=gameinfo.defKickback;
-	}
-
 	return info;
 }
 
@@ -551,15 +544,24 @@ void FinishThingdef()
 			isRuntimeActor=true;
 		}
 
-		// Friendlies never count as kills!
-		if (GetDefaultByType(ti)->flags & MF_FRIENDLY)
+		AActor *def = GetDefaultByType(ti);
+
+		if (!def)
 		{
-			GetDefaultByType(ti)->flags &=~MF_COUNTKILL;
+			Printf("No ActorInfo defined for class '%s'\n", ti->TypeName.GetChars());
+			errorcount++;
+			continue;
+		}
+
+		// Friendlies never count as kills!
+		if (def->flags & MF_FRIENDLY)
+		{
+			def->flags &=~MF_COUNTKILL;
 		}
 
 		if (ti->IsDescendantOf(RUNTIME_CLASS(AInventory)))
 		{
-			AInventory * defaults=(AInventory *)ti->Defaults;
+			AInventory * defaults=(AInventory *)def;
 			fuglyname v;
 
 			v = defaults->PickupFlash;
@@ -580,7 +582,7 @@ void FinishThingdef()
 		if (ti->IsDescendantOf(RUNTIME_CLASS(APowerupGiver)) && ti != RUNTIME_CLASS(APowerupGiver))
 		{
 			FString typestr;
-			APowerupGiver * defaults=(APowerupGiver *)ti->Defaults;
+			APowerupGiver * defaults=(APowerupGiver *)def;
 			fuglyname v;
 
 			v = defaults->PowerupType;
@@ -615,7 +617,7 @@ void FinishThingdef()
 		// the typeinfo properties of weapons have to be fixed here after all actors have been declared
 		if (ti->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
 		{
-			AWeapon * defaults=(AWeapon *)ti->Defaults;
+			AWeapon * defaults=(AWeapon *)def;
 			fuglyname v;
 
 			v = defaults->AmmoType1;
@@ -714,7 +716,7 @@ void FinishThingdef()
 		// same for the weapon type of weapon pieces.
 		else if (ti->IsDescendantOf(RUNTIME_CLASS(AWeaponPiece)))
 		{
-			AWeaponPiece * defaults=(AWeaponPiece *)ti->Defaults;
+			AWeaponPiece * defaults=(AWeaponPiece *)def;
 			fuglyname v;
 
 			v = defaults->WeaponClass;

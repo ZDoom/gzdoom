@@ -38,7 +38,7 @@
 
 class ADehackedPickup : public AInventory
 {
-	DECLARE_STATELESS_ACTOR (ADehackedPickup, AInventory)
+	DECLARE_CLASS (ADehackedPickup, AInventory)
 	HAS_OBJECT_POINTERS
 public:
 	void Destroy ();

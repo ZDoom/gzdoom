@@ -69,7 +69,7 @@ struct FExtraInfo
 
 class AFakeInventory : public AInventory
 {
-	DECLARE_STATELESS_ACTOR (AFakeInventory, AInventory);
+	DECLARE_CLASS (AFakeInventory, AInventory);
 public:
 	bool Respawnable;
 
@@ -96,9 +96,7 @@ public:
 		// The special was already executed by TryPickup, so do nothing here
 	}
 };
-IMPLEMENT_STATELESS_ACTOR (AFakeInventory, Any, -1, 0)
-	PROP_Flags (MF_SPECIAL)
-END_DEFAULTS
+IMPLEMENT_CLASS (AFakeInventory)
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 

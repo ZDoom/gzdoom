@@ -283,22 +283,6 @@ void FActorInfo::StaticInit ()
 
 //==========================================================================
 //
-// Called after the IWAD has been identified
-//
-//==========================================================================
-
-void FActorInfo::StaticGameSet ()
-{
-	// Run every AT_GAME_SET function
-	TAutoSegIteratorNoArrow<void (*)(), &GRegHead, &GRegTail> setters;
-	while (++setters != NULL)
-	{
-		((void (*)())setters) ();
-	}
-}
-
-//==========================================================================
-//
 // Called after Dehacked patches are applied
 //
 //==========================================================================

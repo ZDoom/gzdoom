@@ -530,11 +530,7 @@ bool P_MorphedDeath(AActor *actor, AActor **morphed, int *morphedstyle, int *mor
 
 // Base class for morphing projectiles --------------------------------------
 
-IMPLEMENT_STATELESS_ACTOR(AMorphProjectile, Any, -1, 0)
-	PROP_Damage (1)
-	PROP_Flags (MF_NOBLOCKMAP|MF_MISSILE|MF_DROPOFF|MF_NOGRAVITY)
-	PROP_Flags2 (MF2_NOTELEPORT)
-END_DEFAULTS
+IMPLEMENT_CLASS(AMorphProjectile)
 
 int AMorphProjectile::DoSpecialDamage (AActor *target, int damage)
 {
@@ -565,12 +561,6 @@ void AMorphProjectile::Serialize (FArchive &arc)
 IMPLEMENT_POINTY_CLASS (AMorphedMonster)
  DECLARE_POINTER (UnmorphedMe)
 END_POINTERS
-
-BEGIN_STATELESS_DEFAULTS (AMorphedMonster, Any, -1, 0)
-	PROP_Flags (MF_SOLID|MF_SHOOTABLE)
-	PROP_Flags2 (MF2_MCROSS|MF2_FLOORCLIP|MF2_PASSMOBJ|MF2_PUSHWALL)
-	PROP_Flags3 (MF3_DONTMORPH|MF3_ISMONSTER)
-END_DEFAULTS
 
 void AMorphedMonster::Serialize (FArchive &arc)
 {

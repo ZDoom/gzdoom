@@ -134,7 +134,7 @@ public:
 	void Tick () {}		// Does absolutely nothing itself
 };
 
-IMPLEMENT_CLASS (AInterpolationSpecial, Any, 9075, 0)
+IMPLEMENT_CLASS (AInterpolationSpecial)
 
 /*
 == PathFollower: something that follows a camera path

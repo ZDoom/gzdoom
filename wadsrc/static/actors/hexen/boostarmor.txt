@@ -8,7 +8,7 @@ ACTOR ArtiBoostArmor : Inventory 8041 native
 	+COUNTITEM
 	+FLOATBOB
 	Inventory.DefMaxAmount
-	Inventory.PickupFlash 1
+	Inventory.PickupFlash "PickupFlash"
 	+INVBAR +FANCYPICKUPSOUND
 	Inventory.Icon "ARTIBRAC"
 	Inventory.PickupSound "misc/p_pkup"

@@ -146,7 +146,7 @@ private:
 
 class AMorphProjectile : public AActor
 {
-	DECLARE_ACTOR (AMorphProjectile, AActor)
+	DECLARE_CLASS (AMorphProjectile, AActor)
 public:
 	int DoSpecialDamage (AActor *target, int damage);
 	void Serialize (FArchive &arc);
@@ -157,7 +157,7 @@ public:
 
 class AMorphedMonster : public AActor
 {
-	DECLARE_ACTOR (AMorphedMonster, AActor)
+	DECLARE_CLASS (AMorphedMonster, AActor)
 	HAS_OBJECT_POINTERS
 public:
 	void Tick ();

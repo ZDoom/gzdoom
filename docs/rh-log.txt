@@ -1,3 +1,14 @@
+August 9, 2008 (Changes by Graf Zahl)
+- Removed AT_GAME_SET because it's no longer used anywhere.
+- Converted the last remaining global classes to DECORATE.
+- Fixed: Inventory.PickupFlash requires an class name as parameter not an
+  integer. Some Hexen definitions got it wrong.
+- Converted Hexen's Pig to DECORATE.
+- Replaced the ActorInfo definitions of all internal inventory classes with 
+  DECORATE definitions.
+- Added option to specify a powerup's duration in second by using a negative
+  number.
+
 August 8, 2008
 - Added Gez's Freedoom detection patch.
 - SBARINFO update:

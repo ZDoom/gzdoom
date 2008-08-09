@@ -7,29 +7,11 @@
 #include "templates.h"
 
 
-IMPLEMENT_STATELESS_ACTOR (AArmor, Any, -1, 0)
-	PROP_Inventory_PickupSound ("misc/armor_pkup")
-END_DEFAULTS
-
-IMPLEMENT_STATELESS_ACTOR (ABasicArmor, Any, -1, 0)
-	PROP_Inventory_FlagsSet (IF_KEEPDEPLETED)
-END_DEFAULTS
-
-IMPLEMENT_STATELESS_ACTOR (ABasicArmorPickup, Any, -1, 0)
-	PROP_Inventory_MaxAmount (0)
-	PROP_Inventory_FlagsSet (IF_AUTOACTIVATE)
-END_DEFAULTS
-
-IMPLEMENT_STATELESS_ACTOR (ABasicArmorBonus, Any, -1, 0)
-	PROP_Inventory_MaxAmount (0)
-	PROP_Inventory_FlagsSet (IF_AUTOACTIVATE|IF_ALWAYSPICKUP)
-	PROP_BasicArmorBonus_SavePercent (FRACUNIT/3)
-END_DEFAULTS
-
-IMPLEMENT_STATELESS_ACTOR (AHexenArmor, Any, -1, 0)
-	PROP_Inventory_FlagsSet (IF_UNDROPPABLE | IF_KEEPDEPLETED)
-END_DEFAULTS
-
+IMPLEMENT_CLASS (AArmor)
+IMPLEMENT_CLASS (ABasicArmor)
+IMPLEMENT_CLASS (ABasicArmorPickup)
+IMPLEMENT_CLASS (ABasicArmorBonus)
+IMPLEMENT_CLASS (AHexenArmor)
 
 //===========================================================================
 //

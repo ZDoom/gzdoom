@@ -21,7 +21,7 @@ public:
 // [BL] Needs to be available for SBarInfo to check weaponpieces
 class AWeaponHolder : public AInventory
 {
-	DECLARE_ACTOR(AWeaponHolder, AInventory)
+	DECLARE_CLASS(AWeaponHolder, AInventory)
 
 public:
 	int PieceMask;

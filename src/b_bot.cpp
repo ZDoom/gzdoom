@@ -104,54 +104,82 @@ FArchive &operator<< (FArchive &arc, botskill_t &skill)
 
 // set the bot specific weapon information
 // This is intentionally not in the weapon definition anymore.
-AT_GAME_SET(BotStuff)
+void InitBotStuff()
 {
-	AWeapon * w;
-	AActor * a;
+	static bool done = false;
+	
+	if (done) return;
+	done = true;
 
-	w = (AWeapon*)GetDefaultByName ("Pistol");
-	if (w != NULL)
+	struct BotInit
 	{
-		w->MoveCombatDist=25000000;
+		const char *type;
+		int movecombatdist;
+		int weaponflags;
+		const char *projectile;
+	} botinits[] = {
+
+		{ "Pistol", 25000000, 0, NULL },
+		{ "Shotgun", 24000000, 0, NULL },
+		{ "SuperShotgun", 15000000, 0, NULL },
+		{ "Chaingun", 27000000, 0, NULL },
+		{ "RocketLauncher", 18350080, WIF_BOT_REACTION_SKILL_THING|WIF_BOT_EXPLOSIVE, "Rocket" },
+		{ "PlasmaRifle",  27000000, 0, "PlasmaBall" },
+		{ "BFG9000", 10000000, WIF_BOT_REACTION_SKILL_THING|WIF_BOT_BFG, "BFGBall" },
+		{ "GoldWand", 25000000, 0, NULL },
+		{ "GoldWandPowered", 25000000, 0, NULL },
+		{ "Crossbow", 24000000, 0, "CrossbowFX1" },
+		{ "CrossbowPowered", 24000000, 0, "CrossbowFX2" },
+		{ "Blaster", 27000000, 0, NULL },
+		{ "BlasterPowered", 27000000, 0, "BlasterFX1" },
+		{ "SkullRod", 27000000, 0, "HornRodFX1" },
+		{ "SkullRodPowered", 27000000, 0, "HornRodFX2" },
+		{ "PhoenixRod", 18350080, WIF_BOT_REACTION_SKILL_THING|WIF_BOT_EXPLOSIVE, "PhoenixFX1" },
+		{ "PhoenixRodPowered", 0, WIF_BOT_MELEE, "PhoenixFX2" },
+		{ "Mace", 27000000, WIF_BOT_REACTION_SKILL_THING, "MaceFX2" },
+		{ "MacePowered", 27000000, WIF_BOT_REACTION_SKILL_THING|WIF_BOT_EXPLOSIVE, "MaceFX4" },
+		{ "FWeapHammer", 22000000, 0, "HammerMissile" },
+		{ "FWeapQuietus", 20000000, 0, "FSwordMissile" },
+		{ "CWeapStaff", 25000000, 0, "CStaffMissile" },
+		{ "CWeapFlane", 27000000, 0, "CFlameMissile" },
+		{ "MWeapWand", 25000000, 0, "MageWandMissile" },
+		{ "CWeapWraithverge", 22000000, 0, "HolyMissile" },
+		{ "MWeapFrost", 19000000, 0, "FrostMissile" },
+		{ "MWeapLightning", 23000000, 0, "LightningFloor" },
+		{ "MWeapBloodscourge", 20000000, 0, "MageStaffFX2" },
+		{ "StrifeCrossbow", 24000000, 0, "ElectricBolt" },
+		{ "StrifeCrossbow2", 24000000, 0, "PoisonBolt" },
+		{ "AssaultGun", 27000000, 0, NULL },
+		{ "MiniMissileLauncher", 18350080, WIF_BOT_REACTION_SKILL_THING|WIF_BOT_EXPLOSIVE, "MiniMissile" },
+		{ "FlameThrower", 24000000, 0, "FlameMissile" },
+		{ "Mauler", 15000000, 0, NULL },
+		{ "Mauler2", 10000000, 0, "MaulerTorpedo" },
+		{ "StrifeGrenadeLauncher", 18350080, WIF_BOT_REACTION_SKILL_THING|WIF_BOT_EXPLOSIVE, "HEGrenade" },
+		{ "StrifeGrenadeLauncher2", 18350080, WIF_BOT_REACTION_SKILL_THING|WIF_BOT_EXPLOSIVE, "PhosphorousGrenade" },
+	};
+
+	for(int i=0;i<countof(botinits);i++)
+	{
+		const PClass *cls = PClass::FindClass(botinits[i].type);
+		if (cls != NULL && cls->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
+		{
+			AWeapon *w = (AWeapon*)GetDefaultByType(cls);
+			if (w != NULL)
+			{
+				w->MoveCombatDist = botinits[i].movecombatdist;
+				w->WeaponFlags |= botinits[i].weaponflags;
+				w->ProjectileType = PClass::FindClass(botinits[i].projectile);
+			}
+		}
 	}
-	w = (AWeapon*)GetDefaultByName ("Shotgun");
-	if (w != NULL)
+
+	static char *warnbotmissiles[] = { "PlasmaBall", "Ripper", "HornRodFX1" };
+	for(int i=0;i<countof(warnbotmissiles);i++)
 	{
-		w->MoveCombatDist=24000000;
-	}
-	w = (AWeapon*)GetDefaultByName ("SuperShotgun");
-	if (w != NULL)
-	{
-		w->MoveCombatDist=15000000;
-	}
-	w = (AWeapon*)GetDefaultByName ("Chaingun");
-	if (w != NULL)
-	{
-		w->MoveCombatDist=27000000;
-	}
-	w = (AWeapon*)GetDefaultByName ("RocketLauncher");
-	if (w != NULL)
-	{
-		w->MoveCombatDist=18350080;
-		w->WeaponFlags|=WIF_BOT_REACTION_SKILL_THING|WIF_BOT_EXPLOSIVE;
-		w->ProjectileType=PClass::FindClass("Rocket");
-	}
-	w = (AWeapon*)GetDefaultByName ("PlasmaRifle");
-	if (w != NULL)
-	{
-		w->MoveCombatDist=27000000;
-		w->ProjectileType=PClass::FindClass("PlasmaBall");
-	}
-	a = GetDefaultByName ("PlasmaBall");
-	if (a != NULL)
-	{
-		a->flags3|=MF3_WARNBOT;
-	}
-	w = (AWeapon*)GetDefaultByName ("BFG9000");
-	if (w != NULL)
-	{
-		w->MoveCombatDist=10000000;
-		w->WeaponFlags|=WIF_BOT_REACTION_SKILL_THING|WIF_BOT_BFG;
-		w->ProjectileType=PClass::FindClass("BFGBall");
+		AActor *a = GetDefaultByName (warnbotmissiles[i]);
+		if (a != NULL)
+		{
+			a->flags3|=MF3_WARNBOT;
+		}
 	}
 }

@@ -148,9 +148,6 @@ IMPLEMENT_POINTY_CLASS (ADehackedPickup)
  DECLARE_POINTER (RealPickup)
 END_POINTERS
 
-BEGIN_STATELESS_DEFAULTS (ADehackedPickup, Any, -1, 0)
-END_DEFAULTS
-
 TArray<PClass *> TouchedActors;
 
 char *UnchangedSpriteNames;

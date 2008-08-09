@@ -2082,6 +2082,14 @@ static void WeaponKickback (FScanner &sc, AWeapon *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
+static void WeaponDefKickback (FScanner &sc, AWeapon *defaults, Baggage &bag)
+{
+	defaults->Kickback = gameinfo.defKickback;
+}
+
+//==========================================================================
+//
+//==========================================================================
 static void WeaponReadySound (FScanner &sc, AWeapon *defaults, Baggage &bag)
 {
 	sc.MustGetString();
@@ -2151,6 +2159,20 @@ static void PowerupColor (FScanner &sc, APowerupGiver *defaults, Baggage &bag)
 	int g;
 	int b;
 	int alpha;
+	PalEntry * pBlendColor;
+
+	if (bag.Info->Class->IsDescendantOf(RUNTIME_CLASS(APowerup)))
+	{
+		pBlendColor = &((APowerup*)defaults)->BlendColor;
+	}
+	else if (bag.Info->Class->IsDescendantOf(RUNTIME_CLASS(APowerupGiver)))
+	{
+		pBlendColor = &((APowerupGiver*)defaults)->BlendColor;
+	}
+	else
+	{
+		sc.ScriptError("\"%s\" requires an actor of type \"Powerup\"\n", sc.String);
+	}
 
 	if (sc.CheckNumber())
 	{
@@ -2197,8 +2219,8 @@ static void PowerupColor (FScanner &sc, APowerupGiver *defaults, Baggage &bag)
 	sc.MustGetFloat();
 	alpha=int(sc.Float*255);
 	alpha=clamp<int>(alpha, 0, 255);
-	if (alpha!=0) defaults->BlendColor = MAKEARGB(alpha, r, g, b);
-	else defaults->BlendColor = 0;
+	if (alpha!=0) *pBlendColor = MAKEARGB(alpha, r, g, b);
+	else *pBlendColor = 0;
 }
 
 //==========================================================================
@@ -2206,8 +2228,23 @@ static void PowerupColor (FScanner &sc, APowerupGiver *defaults, Baggage &bag)
 //==========================================================================
 static void PowerupDuration (FScanner &sc, APowerupGiver *defaults, Baggage &bag)
 {
+	int *pEffectTics;
+
+	if (bag.Info->Class->IsDescendantOf(RUNTIME_CLASS(APowerup)))
+	{
+		pEffectTics = &((APowerup*)defaults)->EffectTics;
+	}
+	else if (bag.Info->Class->IsDescendantOf(RUNTIME_CLASS(APowerupGiver)))
+	{
+		pEffectTics = &((APowerupGiver*)defaults)->EffectTics;
+	}
+	else
+	{
+		sc.ScriptError("\"%s\" requires an actor of type \"Powerup\"\n", sc.String);
+	}
+
 	sc.MustGetNumber();
-	defaults->EffectTics = sc.Number;
+	*pEffectTics = sc.Number>=0? sc.Number : -sc.Number*TICRATE;
 }
 
 //==========================================================================
@@ -2748,8 +2785,8 @@ static const ActorProps props[] =
 	{ "powermorph.morphstyle",			(apf)PowerMorphMorphStyle,		RUNTIME_CLASS(APowerMorph) },
 	{ "powermorph.playerclass",			(apf)PowerMorphPlayerClass,		RUNTIME_CLASS(APowerMorph) },
 	{ "powermorph.unmorphflash",		(apf)PowerMorphUnMorphFlash,	RUNTIME_CLASS(APowerMorph) },
-	{ "powerup.color",					(apf)PowerupColor,				RUNTIME_CLASS(APowerupGiver) },
-	{ "powerup.duration",				(apf)PowerupDuration,			RUNTIME_CLASS(APowerupGiver) },
+	{ "powerup.color",					(apf)PowerupColor,				RUNTIME_CLASS(AInventory) },
+	{ "powerup.duration",				(apf)PowerupDuration,			RUNTIME_CLASS(AInventory) },
 	{ "powerup.mode",					(apf)PowerupMode,				RUNTIME_CLASS(APowerupGiver) },
 	{ "powerup.type",					(apf)PowerupType,				RUNTIME_CLASS(APowerupGiver) },
 	{ "projectile",						ActorProjectile,				RUNTIME_CLASS(AActor) },
@@ -2782,6 +2819,7 @@ static const ActorProps props[] =
 	{ "weapon.ammouse",					(apf)WeaponAmmoUse1,			RUNTIME_CLASS(AWeapon) },
 	{ "weapon.ammouse1",				(apf)WeaponAmmoUse1,			RUNTIME_CLASS(AWeapon) },
 	{ "weapon.ammouse2",				(apf)WeaponAmmoUse2,			RUNTIME_CLASS(AWeapon) },
+	{ "weapon.defaultkickback",			(apf)WeaponDefKickback,			RUNTIME_CLASS(AWeapon) },
 	{ "weapon.kickback",				(apf)WeaponKickback,			RUNTIME_CLASS(AWeapon) },
 	{ "weapon.readysound",				(apf)WeaponReadySound,			RUNTIME_CLASS(AWeapon) },
 	{ "weapon.selectionorder",			(apf)WeaponSelectionOrder,		RUNTIME_CLASS(AWeapon) },

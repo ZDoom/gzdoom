@@ -9,7 +9,7 @@ ACTOR ArtiDarkServant : Inventory 86 native
 	+FLOATBOB
 	Inventory.RespawnTics 4230
 	Inventory.DefMaxAmount
-	Inventory.PickupFlash 1
+	Inventory.PickupFlash "PickupFlash"
 	+INVBAR +FANCYPICKUPSOUND
 	Inventory.Icon "ARTISUMN"
 	Inventory.PickupSound "misc/p_pkup"

@@ -890,7 +890,7 @@ void R_InitSprites ()
 		const char *pclassface = basetype->Meta.GetMetaString (APMETA_Face);
 
 		strcpy (skins[i].name, "Base");
-		if (strcmp(pclassface, "None") == 0)
+		if (pclassface == NULL || strcmp(pclassface, "None") == 0)
 		{
 			skins[i].face[0] = 'S';
 			skins[i].face[1] = 'T';

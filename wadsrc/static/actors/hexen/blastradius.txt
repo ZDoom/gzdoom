@@ -5,7 +5,7 @@ ACTOR ArtiBlastRadius : Inventory 10110 native
 	SpawnID 74
 	+FLOATBOB
 	Inventory.DefMaxAmount
-	Inventory.PickupFlash 1
+	Inventory.PickupFlash "PickupFlash"
 	+INVBAR +FANCYPICKUPSOUND
 	Inventory.Icon "ARTIBLST"
 	Inventory.PickupSound "misc/p_pkup"

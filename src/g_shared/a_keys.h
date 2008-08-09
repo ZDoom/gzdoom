@@ -5,7 +5,7 @@
 
 class AKey : public AInventory
 {
-	DECLARE_STATELESS_ACTOR (AKey, AInventory)
+	DECLARE_CLASS (AKey, AInventory)
 public:
 	virtual bool HandlePickup (AInventory *item);
 

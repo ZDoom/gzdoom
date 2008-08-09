@@ -385,7 +385,6 @@ typedef TMap<FName, BYTE> PainChanceList;
 struct FActorInfo
 {
 	static void StaticInit ();
-	static void StaticGameSet ();
 	static void StaticSetActorNums ();
 
 	void BuildDefaults ();

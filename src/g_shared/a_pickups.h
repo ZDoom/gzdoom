@@ -175,7 +175,7 @@ private:
 // CustomInventory: Supports the Use, Pickup, and Drop states from 96x
 class ACustomInventory : public AInventory
 {
-	DECLARE_STATELESS_ACTOR (ACustomInventory, AInventory)
+	DECLARE_CLASS (ACustomInventory, AInventory)
 public:
 
 	// This is used when an inventory item's use state sequence is executed.
@@ -189,7 +189,7 @@ public:
 // Ammo: Something a weapon needs to operate
 class AAmmo : public AInventory
 {
-	DECLARE_STATELESS_ACTOR (AAmmo, AInventory)
+	DECLARE_CLASS (AAmmo, AInventory)
 public:
 	void Serialize (FArchive &arc);
 	AInventory *CreateCopy (AActor *other);
@@ -203,7 +203,7 @@ public:
 // A weapon is just that.
 class AWeapon : public AInventory
 {
-	DECLARE_ACTOR (AWeapon, AInventory)
+	DECLARE_CLASS (AWeapon, AInventory)
 	HAS_OBJECT_POINTERS
 public:
 	DWORD WeaponFlags;
@@ -295,7 +295,7 @@ enum
 // Health is some item that gives the player health when picked up.
 class AHealth : public AInventory
 {
-	DECLARE_STATELESS_ACTOR (AHealth, AInventory)
+	DECLARE_CLASS (AHealth, AInventory)
 
 	int PrevHealth;
 public:
@@ -306,7 +306,7 @@ public:
 // HealthPickup is some item that gives the player health when used.
 class AHealthPickup : public AInventory
 {
-	DECLARE_STATELESS_ACTOR (AHealthPickup, AInventory)
+	DECLARE_CLASS (AHealthPickup, AInventory)
 public:
 	virtual AInventory *CreateCopy (AActor *other);
 	virtual AInventory *CreateTossable ();
@@ -317,7 +317,7 @@ public:
 // Armor absorbs some damage for the player.
 class AArmor : public AInventory
 {
-	DECLARE_STATELESS_ACTOR (AArmor, AInventory)
+	DECLARE_CLASS (AArmor, AInventory)
 };
 
 // Basic armor absorbs a specific percent of the damage. You should
@@ -325,7 +325,7 @@ class AArmor : public AInventory
 // or BasicArmorBonus and those gives you BasicArmor when it activates.
 class ABasicArmor : public AArmor
 {
-	DECLARE_STATELESS_ACTOR (ABasicArmor, AArmor)
+	DECLARE_CLASS (ABasicArmor, AArmor)
 public:
 	virtual void Serialize (FArchive &arc);
 	virtual void Tick ();
@@ -340,7 +340,7 @@ public:
 // BasicArmorPickup replaces the armor you have.
 class ABasicArmorPickup : public AArmor
 {
-	DECLARE_STATELESS_ACTOR (ABasicArmorPickup, AArmor)
+	DECLARE_CLASS (ABasicArmorPickup, AArmor)
 public:
 	virtual void Serialize (FArchive &arc);
 	virtual AInventory *CreateCopy (AActor *other);
@@ -353,7 +353,7 @@ public:
 // BasicArmorBonus adds to the armor you have.
 class ABasicArmorBonus : public AArmor
 {
-	DECLARE_STATELESS_ACTOR (ABasicArmorBonus, AArmor)
+	DECLARE_CLASS (ABasicArmorBonus, AArmor)
 public:
 	virtual void Serialize (FArchive &arc);
 	virtual AInventory *CreateCopy (AActor *other);
@@ -370,7 +370,7 @@ public:
 // type (the player himself) that work together as a single armor.
 class AHexenArmor : public AArmor
 {
-	DECLARE_STATELESS_ACTOR (AHexenArmor, AArmor)
+	DECLARE_CLASS (AHexenArmor, AArmor)
 public:
 	virtual void Serialize (FArchive &arc);
 	virtual AInventory *CreateCopy (AActor *other);
@@ -388,7 +388,7 @@ protected:
 // PuzzleItems work in conjunction with the UsePuzzleItem special
 class APuzzleItem : public AInventory
 {
-	DECLARE_STATELESS_ACTOR (APuzzleItem, AInventory)
+	DECLARE_CLASS (APuzzleItem, AInventory)
 public:
 	void Serialize (FArchive &arc);
 	bool ShouldStay ();
@@ -401,7 +401,7 @@ public:
 // A MapRevealer reveals the whole map for the player who picks it up.
 class AMapRevealer : public AInventory
 {
-	DECLARE_STATELESS_ACTOR (AMapRevealer, AInventory)
+	DECLARE_CLASS (AMapRevealer, AInventory)
 public:
 	bool TryPickup (AActor *toucher);
 };
@@ -410,7 +410,7 @@ public:
 // normal maximum ammo amounts.
 class ABackpackItem : public AInventory
 {
-	DECLARE_ACTOR (ABackpackItem, AInventory)
+	DECLARE_CLASS (ABackpackItem, AInventory)
 public:
 	void Serialize (FArchive &arc);
 	bool HandlePickup (AInventory *item);

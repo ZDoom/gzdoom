@@ -302,6 +302,8 @@ ACTOR(ClericAttack)
 ACTOR(FighterAttack)
 ACTOR(MageAttack)
 ACTOR(IceSetTics)
+ACTOR(PigPain)
+ACTOR(SnoutAttack)
 
 ACTOR(TemplarAttack)
 ACTOR(SentinelAttack)

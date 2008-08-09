@@ -7,13 +7,7 @@
 #include "s_sound.h"
 #include "c_console.h"
 
-IMPLEMENT_STATELESS_ACTOR (APuzzleItem, Any, -1, 0)
-	PROP_Flags (MF_SPECIAL|MF_NOGRAVITY)
-	PROP_Inventory_FlagsSet (IF_INVBAR)
-	PROP_Inventory_DefMaxAmount
-	PROP_UseSound ("PuzzleSuccess")
-	PROP_Inventory_PickupSound ("misc/i_pkup")
-END_DEFAULTS
+IMPLEMENT_CLASS (APuzzleItem)
 
 void APuzzleItem::Serialize (FArchive &arc)
 {

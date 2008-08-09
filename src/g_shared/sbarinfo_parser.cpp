@@ -458,6 +458,23 @@ void SBarInfo::ParseSBarInfoBlock(FScanner &sc, SBarInfoBlock &block)
 						cmd.flags |= DRAWIMAGE_WEAPONICON;
 					else if(sc.Compare("sigil"))
 						cmd.flags |= DRAWIMAGE_SIGIL;
+					else if(sc.Compare("hexenarmor"))
+					{
+						cmd.flags = DRAWIMAGE_HEXENARMOR;
+						sc.MustGetToken(TK_Identifier);
+						if(sc.Compare("armor"))
+							cmd.value = 0;
+						else if(sc.Compare("shield"))
+							cmd.value = 1;
+						else if(sc.Compare("helm"))
+							cmd.value = 2;
+						else if(sc.Compare("amulet"))
+							cmd.value = 3;
+						else
+							sc.ScriptError("Unkown armor type: '%s'", sc.String);
+						sc.MustGetToken(',');
+						getImage = true;
+					}
 					else if(sc.Compare("translatable"))
 					{
 						cmd.flags |= DRAWIMAGE_TRANSLATABLE;
@@ -489,8 +506,10 @@ void SBarInfo::ParseSBarInfoBlock(FScanner &sc, SBarInfoBlock &block)
 					sc.MustGetToken(TK_Identifier);
 					if(sc.Compare("center"))
 						cmd.flags |= DRAWIMAGE_OFFSET_CENTER;
+					else if(sc.Compare("centerbottom"))
+						cmd.flags |= DRAWIMAGE_OFFSET_CENTERBOTTOM;
 					else
-						sc.ScriptError("Expected 'center' got '%s' instead.", sc.String);
+						sc.ScriptError("Expected 'center' or 'centerbottom' got '%s' instead.", sc.String);
 				}
 				sc.MustGetToken(';');
 				break;
@@ -607,6 +626,8 @@ void SBarInfo::ParseSBarInfoBlock(FScanner &sc, SBarInfoBlock &block)
 						cmd.flags |= DRAWNUMBER_FILLZEROS;
 					else if(sc.Compare("whennotzero"))
 						cmd.flags |= DRAWNUMBER_WHENNOTZERO;
+					else if(sc.Compare("drawshadow"))
+						cmd.flags |= DRAWNUMBER_DRAWSHADOW;
 					else
 						sc.ScriptError("Unknown flag '%s'.", sc.String);
 					if(!sc.CheckToken('|'))
@@ -773,6 +794,10 @@ void SBarInfo::ParseSBarInfoBlock(FScanner &sc, SBarInfoBlock &block)
 					else if(sc.Compare("alwaysshowcounter"))
 					{
 						cmd.flags |= DRAWINVENTORYBAR_ALWAYSSHOWCOUNTER;
+					}
+					else if(sc.Compare("translucent"))
+					{
+						cmd.flags |= DRAWINVENTORYBAR_TRANSLUCENT;
 					}
 					else
 					{
@@ -1015,10 +1040,45 @@ void SBarInfo::ParseSBarInfoBlock(FScanner &sc, SBarInfoBlock &block)
 				else if(!sc.Compare("horizontal"))
 					sc.ScriptError("Unknown direction '%s'.", sc.String);
 				sc.MustGetToken(',');
-				sc.MustGetToken(TK_IntConst);
-				cmd.special = sc.Number;
+				while(sc.CheckToken(TK_Identifier))
+				{
+					if(sc.Compare("reverserows"))
+						cmd.flags |= DRAWKEYBAR_REVERSEROWS;
+					else
+						sc.ScriptError("Unknown flag '%s'.", sc.String);
+					if(!sc.CheckToken('|'))
+						sc.MustGetToken(',');
+				}
+				if(sc.CheckToken(TK_Auto))
+					cmd.special = -1;
+				else
+				{
+					sc.MustGetToken(TK_IntConst);
+					cmd.special = sc.Number;
+				}
 				sc.MustGetToken(',');
 				this->getCoordinates(sc, cmd, block.fullScreenOffsets);
+				if(sc.CheckToken(','))
+				{
+					//key offset
+					sc.MustGetToken(TK_IntConst);
+					cmd.special2 = sc.Number;
+					if(sc.CheckToken(','))
+					{
+						//max per row/column
+						sc.MustGetToken(TK_IntConst);
+						cmd.special3 = sc.Number;
+						sc.MustGetToken(',');
+						//row/column spacing (opposite of previous)
+						if(sc.CheckToken(TK_Auto))
+							cmd.special4 = -1;
+						else
+						{
+							sc.MustGetToken(TK_IntConst);
+							cmd.special4 = sc.Number;
+						}
+					}
+				}
 				sc.MustGetToken(';');
 				break;
 			case SBARINFO_GAMEMODE:

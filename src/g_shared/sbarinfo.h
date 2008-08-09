@@ -170,10 +170,12 @@ enum //drawimage flags
 	DRAWIMAGE_SWITCHABLE_AND = 0x40,
 	DRAWIMAGE_INVULNERABILITY = 0x80,
 	DRAWIMAGE_OFFSET_CENTER = 0x100,
-	DRAWIMAGE_ARMOR = 0x200,
-	DRAWIMAGE_WEAPONICON = 0x400,
-	DRAWIMAGE_SIGIL = 0x800,
-	DRAWIMAGE_KEYSLOT = 0x1000,
+	DRAWIMAGE_OFFSET_CENTERBOTTOM = 0x200,
+	DRAWIMAGE_ARMOR = 0x400,
+	DRAWIMAGE_WEAPONICON = 0x800,
+	DRAWIMAGE_SIGIL = 0x1000,
+	DRAWIMAGE_KEYSLOT = 0x2000,
+	DRAWIMAGE_HEXENARMOR = 0x4000,
 };
 
 enum //drawnumber flags
@@ -198,6 +200,7 @@ enum //drawnumber flags
 	DRAWNUMBER_FILLZEROS = 0x20000,
 	DRAWNUMBER_WHENNOTZERO = 0x40000,
 	DRAWNUMBER_POWERUPTIME = 0x80000,
+	DRAWNUMBER_DRAWSHADOW = 0x100000,
 };
 
 enum //drawbar flags (will go into special2)
@@ -216,10 +219,11 @@ enum //drawselectedinventory flags
 
 enum //drawinventorybar flags
 {
-	DRAWINVENTORYBAR_ALWAYSSHOW = 1,
-	DRAWINVENTORYBAR_NOARTIBOX = 2,
-	DRAWINVENTORYBAR_NOARROWS = 4,
-	DRAWINVENTORYBAR_ALWAYSSHOWCOUNTER = 8,
+	DRAWINVENTORYBAR_ALWAYSSHOW = 0x1,
+	DRAWINVENTORYBAR_NOARTIBOX = 0x2,
+	DRAWINVENTORYBAR_NOARROWS = 0x4,
+	DRAWINVENTORYBAR_ALWAYSSHOWCOUNTER = 0x8,
+	DRAWINVENTORYBAR_TRANSLUCENT = 0x10,
 };
 
 enum //drawgem flags
@@ -248,7 +252,8 @@ enum //drawmugshot flags
 
 enum //drawkeybar flags
 {
-	DRAWKEYBAR_VERTICAL = 1,
+	DRAWKEYBAR_VERTICAL = 0x1,
+	DRAWKEYBAR_REVERSEROWS = 0x2,
 };
 
 enum //event flags
@@ -345,9 +350,9 @@ public:
 	void SetMugShotState(const char* stateName, bool waitTillDone=false, bool reset=false);
 private:
 	void doCommands(SBarInfoBlock &block, int xOffset=0, int yOffset=0, int alpha=FRACUNIT);
-	void DrawGraphic(FTexture* texture, int x, int y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets, bool translate=false, bool dim=false, bool center=false);
-	void DrawString(const char* str, int x, int y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets, EColorRange translation, int spacing=0);
-	void DrawNumber(int num, int len, int x, int y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets, EColorRange translation, int spacing=0, bool fillzeros=false);
+	void DrawGraphic(FTexture* texture, int x, int y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets, bool translate=false, bool dim=false, int offsetflags=0);
+	void DrawString(const char* str, int x, int y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets, EColorRange translation, int spacing=0, bool drawshadow=false);
+	void DrawNumber(int num, int len, int x, int y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets, EColorRange translation, int spacing=0, bool fillzeros=false, bool drawshadow=false);
 	void DrawFace(const char *defaultFace, int accuracy, int stateflags, int x, int y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets);
 	int updateState(bool xdth, bool animatedgodmode);
 	void DrawInventoryBar(int type, int num, int x, int y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets, bool alwaysshow,

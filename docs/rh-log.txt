@@ -1,4 +1,19 @@
 August 8, 2008
+- SBARINFO update:
+  * Added: The ability to have drawkeybar auto detect spacing.
+  * Added: Offset parameter to drawkeybar to allow two key bars with
+    different keys.
+  * Added: Multi-row/column keybar parameters.  Spacing can also be auto.
+    These  defualt to left to right/top to bottom but can be switched.
+  * Added: Drawshadow flag to drawnumber.  This will draw a solid color and
+    translucent number under the normal number.
+  * Added: hexenarmor to drawimage.  This takes a parameter for a hexen
+    armor type and will fade the image like the hexen status bar.
+  * Added: centerbottom offset to draw(switchable)image.
+  * Added: translucent flag to drawinventorybar.
+  * Fixed: Accidentally removed flag from DrawTexture that allowed negative
+    coordinates to work with fullscreenoffsets.  Hopefully this is the last
+    major bug in the fullscreenoffsets system.
 - Ported vlinetallasm4 to AMD64 assembly. Even with the increased number of
   registers AMD64 provides, this routine still needs to be written as self-
   modifying code for maximum performance. The additional registers do allow

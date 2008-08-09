@@ -62,6 +62,7 @@ static FRandom pr_chainwiggle; //use the same method of chain wiggling as hereti
 
 EXTERN_CVAR(Int, fraglimit)
 EXTERN_CVAR(Int, screenblocks)
+EXTERN_CVAR(Bool, vid_fps)
 
 enum
 {
@@ -486,11 +487,11 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 				if(drawAlt != 0) //draw 'off' image
 				{
 					if(cmd.special != -1 && drawAlt == 1)
-						DrawGraphic(Images[cmd.special], cmd.x, cmd.y, xOffset, yOffset, alpha, block.fullScreenOffsets, !!(cmd.flags & DRAWIMAGE_TRANSLATABLE), false, !!(cmd.flags & DRAWIMAGE_OFFSET_CENTER));
+						DrawGraphic(Images[cmd.special], cmd.x, cmd.y, xOffset, yOffset, alpha, block.fullScreenOffsets, !!(cmd.flags & DRAWIMAGE_TRANSLATABLE), false, !!(cmd.flags & (DRAWIMAGE_OFFSET_CENTER|DRAWIMAGE_OFFSET_CENTERBOTTOM)));
 					else if(cmd.special2 != -1 && drawAlt == 2)
-						DrawGraphic(Images[cmd.special2], cmd.x, cmd.y, xOffset, yOffset, alpha, block.fullScreenOffsets, !!(cmd.flags & DRAWIMAGE_TRANSLATABLE), false, !!(cmd.flags & DRAWIMAGE_OFFSET_CENTER));
+						DrawGraphic(Images[cmd.special2], cmd.x, cmd.y, xOffset, yOffset, alpha, block.fullScreenOffsets, !!(cmd.flags & DRAWIMAGE_TRANSLATABLE), false, !!(cmd.flags & (DRAWIMAGE_OFFSET_CENTER|DRAWIMAGE_OFFSET_CENTERBOTTOM)));
 					else if(cmd.special3 != -1 && drawAlt == 3)
-						DrawGraphic(Images[cmd.special3], cmd.x, cmd.y, xOffset, yOffset, alpha, block.fullScreenOffsets, !!(cmd.flags & DRAWIMAGE_TRANSLATABLE), false, !!(cmd.flags & DRAWIMAGE_OFFSET_CENTER));
+						DrawGraphic(Images[cmd.special3], cmd.x, cmd.y, xOffset, yOffset, alpha, block.fullScreenOffsets, !!(cmd.flags & DRAWIMAGE_TRANSLATABLE), false,(cmd.flags & (DRAWIMAGE_OFFSET_CENTER|DRAWIMAGE_OFFSET_CENTERBOTTOM)));
 					break;
 				}
 			}
@@ -528,12 +529,28 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 					if (item != NULL)
 						texture = TexMan[item->Icon];
 				}
+				else if(cmd.flags & DRAWIMAGE_HEXENARMOR)
+				{
+					AHexenArmor *harmor = CPlayer->mo->FindInventory<AHexenArmor>();
+					if (harmor != NULL)
+					{
+						if (harmor->Slots[cmd.value] > 0 && harmor->SlotsIncrement[cmd.value] > 0)
+						{
+							//combine the alpha values
+							alpha = fixed_t(((double) alpha / (double) FRACUNIT) * ((double) MIN<fixed_t> (OPAQUE, Scale(harmor->Slots[cmd.value], OPAQUE, harmor->SlotsIncrement[cmd.value])) / (double) OPAQUE) * FRACUNIT);
+							texture = Images[cmd.image_index];
+						}
+						else
+							break;
+					}
+				}
 				else if((cmd.flags & DRAWIMAGE_INVENTORYICON))
 					texture = TexMan[cmd.sprite_index];
 				else if(cmd.image_index >= 0)
 					texture = Images[cmd.image_index];
 
-				DrawGraphic(texture, cmd.x, cmd.y, xOffset, yOffset, alpha, block.fullScreenOffsets, !!(cmd.flags & DRAWIMAGE_TRANSLATABLE), false, !!(cmd.flags & DRAWIMAGE_OFFSET_CENTER));
+				// if we reach here with DRAWIMAGE_HEXENARMOR set we know we want it to be dim.
+				DrawGraphic(texture, cmd.x, cmd.y, xOffset, yOffset, alpha, block.fullScreenOffsets, !!(cmd.flags & DRAWIMAGE_TRANSLATABLE), false, (cmd.flags & (DRAWIMAGE_OFFSET_CENTER|DRAWIMAGE_OFFSET_CENTERBOTTOM)));
 				break;
 			}
 			case SBARINFO_DRAWNUMBER:
@@ -653,6 +670,7 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 					}
 				}
 				bool fillzeros = !!(cmd.flags & DRAWNUMBER_FILLZEROS);
+				bool drawshadow = !!(cmd.flags & DRAWNUMBER_DRAWSHADOW);
 				EColorRange translation = cmd.translation;
 				if(cmd.special3 != -1 && value <= cmd.special3) //low
 					translation = cmd.translation2;
@@ -660,7 +678,7 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 					translation = cmd.translation3;
 				if((cmd.flags & DRAWNUMBER_WHENNOTZERO) && value == 0)
 					break;
-				DrawNumber(value, cmd.special, cmd.x, cmd.y, xOffset, yOffset, alpha, block.fullScreenOffsets, translation, cmd.special2, fillzeros);
+				DrawNumber(value, cmd.special, cmd.x, cmd.y, xOffset, yOffset, alpha, block.fullScreenOffsets, translation, cmd.special2, fillzeros, drawshadow);
 				break;
 			}
 			case SBARINFO_DRAWMUGSHOT:
@@ -714,6 +732,8 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 					noarrows = true;
 				if((cmd.flags & DRAWINVENTORYBAR_ALWAYSSHOWCOUNTER))
 					alwaysshowcounter = true;
+				if(cmd.flags & DRAWINVENTORYBAR_TRANSLUCENT)
+					alpha = fixed_t((((double) alpha / (double) FRACUNIT) * ((double) HX_SHADOW / (double) FRACUNIT)) * FRACUNIT);
 				if(drawingFont != cmd.font)
 				{
 					drawingFont = cmd.font;
@@ -898,6 +918,8 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 					y = cmd.y + yOffset;
 					w = fg->GetScaledWidth();
 					h = fg->GetScaledHeight();
+					if(vid_fps && x < 0 && y >= 0)
+						y += 10;
 				}
 
 				if(cmd.special3 != 0)
@@ -907,6 +929,7 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 						DTA_DestWidth, w,
 						DTA_DestHeight, h,
 						DTA_Alpha, alpha,
+						DTA_HUDRules, HUD_Normal,
 						TAG_DONE);
 				}
 				else
@@ -918,6 +941,7 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 							DTA_DestWidth, w,
 							DTA_DestHeight, h,
 							DTA_Alpha, alpha,
+							DTA_HUDRules, HUD_Normal,
 							TAG_DONE);
 					}
 					else
@@ -944,6 +968,8 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 					cy = cmd.y + cmd.special3 + yOffset;
 					cw = fg->GetScaledWidth() - fg->GetScaledLeftOffset() - cmd.special3 * 2;
 					ch = fg->GetScaledHeight() - fg->GetScaledTopOffset() - cmd.special3 * 2;
+					if(vid_fps && x < 0 && y >= 0)
+						y += 10;
 				}
 
 				if (horizontal)
@@ -986,6 +1012,7 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 							DTA_ClipRight, cr,
 							DTA_ClipBottom, cb,
 							DTA_Alpha, alpha,
+							DTA_HUDRules, HUD_Normal,
 							TAG_DONE);
 					}
 					else
@@ -1003,6 +1030,7 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 						DTA_ClipRight, cr,
 						DTA_ClipBottom, cb,
 						DTA_Alpha, alpha,
+						DTA_HUDRules, HUD_Normal,
 						TAG_DONE);
 				}
 				break;
@@ -1051,12 +1079,18 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 					if(Scaled)
 						screen->VirtualToRealCoordsInt(x, y, w, h, 320, 200, true);
 				}
+				else
+				{
+					if(vid_fps && x < 0 && y >= 0)
+						y += 10;
+				}
 				screen->DrawTexture (shaders[(vertical << 1) + reverse], x, y,
 					DTA_DestWidth, w,
 					DTA_DestHeight, h,
 					DTA_Alpha, alpha,
 					DTA_AlphaChannel, true,
 					DTA_FillColor, 0,
+					DTA_HUDRules, HUD_Normal,
 					TAG_DONE);
 				break;
 			}
@@ -1073,7 +1107,10 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 				AInventory *item = CPlayer->mo->Inventory;
 				if(item == NULL)
 					break;
-				for(int i = 0;i < cmd.value;i++)
+				int slotOffset = 0;
+				int rowOffset = 0;
+				int rowWidth = 0;
+				for(int i = 0;i < cmd.value+cmd.special2;i++)
 				{
 					while(!item->Icon.isValid() || !item->IsKindOf(RUNTIME_CLASS(AKey)))
 					{
@@ -1081,10 +1118,41 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 						if(item == NULL)
 							goto FinishDrawKeyBar;
 					}
-					if(!vertical)
-						DrawGraphic(TexMan[item->Icon], cmd.x+(cmd.special*i), cmd.y, xOffset, yOffset, alpha, block.fullScreenOffsets);
-					else
-						DrawGraphic(TexMan[item->Icon], cmd.x, cmd.y+(cmd.special*i), xOffset, yOffset, alpha, block.fullScreenOffsets);
+					if(i >= cmd.special2) //Should we start drawing?
+					{
+						if(!vertical)
+						{
+							DrawGraphic(TexMan[item->Icon], cmd.x+slotOffset, cmd.y+rowOffset, xOffset, yOffset, alpha, block.fullScreenOffsets);
+							rowWidth = cmd.special4 == -1 ? TexMan[item->Icon]->GetScaledHeight()+2 : cmd.special4;
+						}
+						else
+						{
+							DrawGraphic(TexMan[item->Icon], cmd.x+rowOffset, cmd.y+slotOffset, xOffset, yOffset, alpha, block.fullScreenOffsets);
+							rowWidth = cmd.special4 == -1 ? TexMan[item->Icon]->GetScaledWidth()+2 : cmd.special4;
+						}
+	
+						// If cmd.special is -1 then the slot size is auto detected
+						if(cmd.special == -1)
+						{
+							if(!vertical)
+								slotOffset += TexMan[item->Icon]->GetScaledWidth() + 2;
+							else
+								slotOffset += TexMan[item->Icon]->GetScaledHeight() + 2;
+						}
+						else
+							slotOffset += cmd.special;
+
+						if(cmd.special3 > 0 && (i % cmd.special3 == cmd.special3-1))
+						{
+							if(cmd.flags & DRAWKEYBAR_REVERSEROWS)
+								rowOffset -= rowWidth;
+							else
+								rowOffset += rowWidth;
+							rowWidth = 0;
+							slotOffset = 0;
+						}
+					}
+
 					item = item->Inventory;
 					if(item == NULL)
 						break;
@@ -1239,12 +1307,12 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 
 //draws an image with the specified flags
 void DSBarInfo::DrawGraphic(FTexture* texture, int x, int y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets,
-	bool translate, bool dim, bool center) //flags
+	bool translate, bool dim, int offsetflags) //flags
 {
 	if (texture == NULL)
 		return;
 
-	if(center)
+	if(offsetflags & DRAWIMAGE_OFFSET_CENTER)
 	{
 		x -= (texture->GetWidth()/2)-texture->LeftOffset;
 		y -= (texture->GetHeight()/2)-texture->TopOffset;
@@ -1272,17 +1340,21 @@ void DSBarInfo::DrawGraphic(FTexture* texture, int x, int y, int xOffset, int yO
 	{
 		w = texture->GetScaledWidth();
 		h = texture->GetScaledHeight();
+		if(vid_fps && x < 0 && y >= 0)
+			y += 10;
 	}
 	screen->DrawTexture(texture, x, y,
 		DTA_DestWidth, w,
 		DTA_DestHeight, h,
 		DTA_Translation, translate ? getTranslation() : 0,
 		DTA_ColorOverlay, dim ? DIM_OVERLAY : 0,
+		DTA_CenterBottomOffset, (offsetflags & DRAWIMAGE_OFFSET_CENTERBOTTOM),
+		DTA_HUDRules, HUD_Normal,
 		DTA_Alpha, alpha,
 		TAG_DONE);
 }
 
-void DSBarInfo::DrawString(const char* str, int x, int y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets, EColorRange translation, int spacing)
+void DSBarInfo::DrawString(const char* str, int x, int y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets, EColorRange translation, int spacing, bool drawshadow)
 {
 	x += spacing;
 	while(*str != '\0')
@@ -1319,11 +1391,28 @@ void DSBarInfo::DrawString(const char* str, int x, int y, int xOffset, int yOffs
 			if(Scaled)
 				screen->VirtualToRealCoordsInt(rx, ry, rw, rh, 320, 200, true);
 		}
+		else
+		{
+			if(vid_fps && x < 0 && y >= 0)
+				y += 10;
+		}
+		if(drawshadow)
+		{
+			int salpha = fixed_t(((double) alpha / (double) FRACUNIT) * ((double) HR_SHADOW / (double) FRACUNIT) * FRACUNIT);
+			screen->DrawTexture(character, rx+2, ry+2,
+								DTA_DestWidth, rw,
+								DTA_DestHeight, rh,
+								DTA_Alpha, salpha,
+								DTA_HUDRules, HUD_Normal,
+								DTA_FillColor, 0,
+								TAG_DONE);
+		}
 		screen->DrawTexture(character, rx, ry,
 			DTA_DestWidth, rw,
 			DTA_DestHeight, rh,
 			DTA_Translation, drawingFont->GetColorTranslation(translation),
 			DTA_Alpha, alpha,
+			DTA_HUDRules, HUD_Normal,
 			TAG_DONE);
 		if(SBarInfoScript->spacingCharacter == '\0')
 			x += width + spacing - (character->LeftOffset+1);
@@ -1334,7 +1423,7 @@ void DSBarInfo::DrawString(const char* str, int x, int y, int xOffset, int yOffs
 }
 
 //draws the specified number up to len digits
-void DSBarInfo::DrawNumber(int num, int len, int x, int y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets, EColorRange translation, int spacing, bool fillzeros)
+void DSBarInfo::DrawNumber(int num, int len, int x, int y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets, EColorRange translation, int spacing, bool fillzeros, bool drawshadow)
 {
 	FString value;
 	int maxval = (int) ceil(pow(10., len))-1;
@@ -1359,7 +1448,7 @@ void DSBarInfo::DrawNumber(int num, int len, int x, int y, int xOffset, int yOff
 		x -= int(drawingFont->StringWidth(value)+(spacing * value.Len()));
 	else //monospaced, so just multiplay the character size
 		x -= int((drawingFont->GetCharWidth((int) SBarInfoScript->spacingCharacter) + spacing) * value.Len());
-	DrawString(value, x, y, xOffset, yOffset, alpha, fullScreenOffsets, translation, spacing);
+	DrawString(value, x, y, xOffset, yOffset, alpha, fullScreenOffsets, translation, spacing, drawshadow);
 }
 
 //draws the mug shot

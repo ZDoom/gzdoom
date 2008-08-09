@@ -345,7 +345,7 @@ void SetLanguageIDs ()
 
 void I_Init (void)
 {
-	//CheckCPUID(&CPU);
+	CheckCPUID(&CPU);
 	CalculateCPUSpeed ();
 
 	// Why does Intel right-justify this string?

@@ -474,7 +474,6 @@ void DoBlending (const PalEntry *from, PalEntry *to, int count, int r, int g, in
 			to[i] = t;
 		}
 	}
-	/*
 	else if (CPU.bSSE2)
 	{
 		if (count >= 4)
@@ -490,7 +489,6 @@ void DoBlending (const PalEntry *from, PalEntry *to, int count, int r, int g, in
 			to += not3count;
 		}
 	}
-	*/
 #ifdef X86_ASM
 	else if (CPU.bMMX)
 	{

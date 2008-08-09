@@ -1,4 +1,5 @@
 August 8, 2008
+- Added Gez's Freedoom detection patch.
 - SBARINFO update:
   * Added: The ability to have drawkeybar auto detect spacing.
   * Added: Offset parameter to drawkeybar to allow two key bars with

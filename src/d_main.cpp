@@ -225,7 +225,8 @@ const IWADInfo IWADInfos[NUM_IWAD_TYPES] =
 	{ "DOOM Registered",						"Doom1",	MAKERGB(84,84,84),		MAKERGB(168,168,168) },
 	{ "Strife: Quest for the Sigil",			NULL,		MAKERGB(224,173,153),	MAKERGB(0,107,101) },
 	{ "Strife: Teaser (Old Version)",			NULL,		MAKERGB(224,173,153),	MAKERGB(0,107,101) },
-	{ "Strife: Teaser (New Version)",			NULL,		MAKERGB(224,173,153),	MAKERGB(0,107,101) }
+	{ "Strife: Teaser (New Version)",			NULL,		MAKERGB(224,173,153),	MAKERGB(0,107,101) },
+	{ "Freedoom",								"Freedoom",	MAKERGB(50,84,67),		MAKERGB(198,220,209) },
 };
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -249,6 +250,7 @@ static const char *IWADNames[] =
 	"hexdd.wad",
 	"strife1.wad",
 	"strife0.wad",
+	"freedoom.wad", // Freedoom.wad is distributed as Doom2.wad, but this allows to have both in the same directory.
 #ifdef unix
 	"DOOM2.WAD",    // Also look for all-uppercase names
 	"PLUTONIA.WAD",
@@ -261,6 +263,7 @@ static const char *IWADNames[] =
 	"HEXDD.WAD",
 	"STRIFE1.WAD",
 	"STRIFE0.WAD",
+	"FREEDOOM.WAD",
 #endif
 	NULL
 };
@@ -1333,6 +1336,7 @@ static void SetIWAD (const char *iwadpath, EIWADType type)
 		{ commercial,	&StrifeGameInfo,		doom2 },		// Strife
 		{ commercial,	&StrifeTeaserGameInfo,	doom2 },		// StrifeTeaser
 		{ commercial,	&StrifeTeaser2GameInfo,	doom2 },		// StrifeTeaser2
+		{ commercial,	&CommercialGameInfo,	doom2 },		// FreeDoom
 	};
 
 	D_AddFile (iwadpath);
@@ -1375,6 +1379,7 @@ static EIWADType ScanIWAD (const char *iwad)
 		"ENDSTRF",
 		"MAP33",
 		"INVCURS",
+		{ 'F','R','E','E','D','O','O','M' },
 		"E2M1","E2M2","E2M3","E2M4","E2M5","E2M6","E2M7","E2M8","E2M9",
 		"E3M1","E3M2","E3M3","E3M4","E3M5","E3M6","E3M7","E3M8","E3M9",
 		"DPHOOF","BFGGA0","HEADA1","CYBRA1",
@@ -1394,6 +1399,7 @@ static EIWADType ScanIWAD (const char *iwad)
 		Check_endstrf,
 		Check_map33,
 		Check_invcurs,
+		Check_FreeDoom,
 		Check_e2m1
 	};
 	int lumpsfound[NUM_CHECKLUMPS];
@@ -1460,6 +1466,10 @@ static EIWADType ScanIWAD (const char *iwad)
 			if (lumpsfound[Check_title])
 			{
 				return IWAD_Hexen;
+			}
+			else if (lumpsfound[Check_FreeDoom])
+			{
+				return IWAD_FreeDoom;
 			}
 			else
 			{

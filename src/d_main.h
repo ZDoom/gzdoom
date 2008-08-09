@@ -70,6 +70,7 @@ enum EIWADType
 	IWAD_Strife,
 	IWAD_StrifeTeaser,
 	IWAD_StrifeTeaser2,
+	IWAD_FreeDoom,
 
 	NUM_IWAD_TYPES
 };

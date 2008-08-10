@@ -32,9 +32,6 @@
 **
 ** This is completely different from Doom's info.c.
 **
-** The primary advancement over Doom's system is that actors can be defined
-** across multiple files without having to recompile most of the source
-** whenever one changes.
 */
 
 
@@ -93,14 +90,16 @@ FArchive &operator<< (FArchive &arc, FState *&state)
 		}
 		else
 		{
+			/* this was never working as intended.
 			I_Error ("Cannot find owner for state %p:\n"
 					 "%s %c%c %3d [%p] -> %p", state,
-					 sprites[state->sprite.index].name,
+					 sprites[state->sprite].name,
 					 state->GetFrame() + 'A',
 					 state->GetFullbright() ? '*' : ' ',
 					 state->GetTics(),
 					 state->GetAction(),
 					 state->GetNextState());
+			*/
 		}
 	}
 	else
@@ -134,27 +133,9 @@ FArchive &operator<< (FArchive &arc, FState *&state)
 
 const PClass *FState::StaticFindStateOwner (const FState *state)
 {
-	const FActorInfo *info = RUNTIME_CLASS(AActor)->ActorInfo;
-
-	if (state >= info->OwnedStates &&
-		state < info->OwnedStates + info->NumOwnedStates)
-	{
-		return RUNTIME_CLASS(AActor);
-	}
-
-	TAutoSegIterator<FActorInfo *, &ARegHead, &ARegTail> reg;
-	while (++reg != NULL)
-	{
-		if (state >= reg->OwnedStates &&
-			state <  reg->OwnedStates + reg->NumOwnedStates)
-		{
-			return reg->Class;
-		}
-	}
-
 	for (unsigned int i = 0; i < PClass::m_RuntimeActors.Size(); ++i)
 	{
-		info = PClass::m_RuntimeActors[i]->ActorInfo;
+		FActorInfo *info = PClass::m_RuntimeActors[i]->ActorInfo;
 		if (state >= info->OwnedStates &&
 			state <  info->OwnedStates + info->NumOwnedStates)
 		{
@@ -211,37 +192,11 @@ int GetSpriteIndex(const char * spritename)
 
 //==========================================================================
 //
-// Change sprite names to indices
-//
-//==========================================================================
-
-void ProcessStates (FState *states, int numstates)
-{
-	int sprite = -1;
-
-	if (states == NULL)
-		return;
-	while (--numstates >= 0)
-	{
-		if (sprite == -1 || strncmp (sprites[sprite].name, states->sprite.name, 4) != 0)
-		{
-			sprite = GetSpriteIndex(states->sprite.name);
-		}
-		states->sprite.index = sprite;
-		states++;
-	}
-}
-
-
-//==========================================================================
-//
 //
 //==========================================================================
 
 void FActorInfo::StaticInit ()
 {
-	TAutoSegIterator<FActorInfo *, &ARegHead, &ARegTail> reg;
-
 	if (sprites.Size() == 0)
 	{
 		spritedef_t temp;
@@ -255,26 +210,6 @@ void FActorInfo::StaticInit ()
 		// Sprite 1 is always ----
 		memcpy (temp.name, "----", 5);
 		sprites.Push (temp);
-	}
-
-	// Attach FActorInfo structures to every actor's PClass
-	while (++reg != NULL)
-	{
-		reg->Class->ActorInfo = reg;
-		if (reg->OwnedStates &&
-			(unsigned)reg->OwnedStates->sprite.index < sprites.Size ())
-		{
-			Printf ("\x1c+%s is stateless. Fix its default list.\n",
-				reg->Class->TypeName.GetChars());
-		}
-		ProcessStates (reg->OwnedStates, reg->NumOwnedStates);
-	}
-
-	// Now build default instances of every actor
-	reg.Reset ();
-	while (++reg != NULL)
-	{
-		reg->BuildDefaults ();
 	}
 
 	Printf ("LoadDecorations: Load external actors.\n");
@@ -291,14 +226,6 @@ void FActorInfo::StaticSetActorNums ()
 {
 	memset (SpawnableThings, 0, sizeof(SpawnableThings));
 	DoomEdMap.Empty ();
-
-	// For every actor valid for this game, add it to the
-	// SpawnableThings array and DoomEdMap
-	TAutoSegIterator<FActorInfo *, &ARegHead, &ARegTail> reg;
-	while (++reg != NULL)
-	{
-		reg->RegisterIDs ();
-	}
 
 	for (unsigned int i = 0; i < PClass::m_RuntimeActors.Size(); ++i)
 	{
@@ -520,30 +447,6 @@ FState *FActorInfo::FindState (int numnames, FName *names, bool exact) const
 		if (count < numnames && exact) return NULL;
 	}
 	return best;
-}
-
-//===========================================================================
-//
-// Changes a single state
-//
-// If the given state does not exist it won't be changed
-// This is only used for postprocessing of actors that use different
-// spawn states for different games so more complex checks are not needed.
-//
-//===========================================================================
-
-void FActorInfo::ChangeState (FName label, FState * newstate) const
-{
-	FStateLabel *slabel;
-
-	if (StateList != NULL)
-	{
-		slabel = StateList->FindLabel (label);
-		if (slabel != NULL)
-		{
-			slabel->State = newstate;
-		}
-	}
 }
 
 //==========================================================================

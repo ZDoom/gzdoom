@@ -397,12 +397,12 @@ static void DrawOneKey(int xo, int & x, int & y, int & c, AInventory * inv)
 	{
 		icon = AltIcon;
 	}
-	else if (inv->SpawnState && inv->SpawnState->sprite.index!=0)
+	else if (inv->SpawnState && inv->SpawnState->sprite!=0)
 	{
 		FState * state = inv->SpawnState;
-		if (state &&  (unsigned)state->sprite.index < (unsigned)sprites.Size ())
+		if (state &&  (unsigned)state->sprite < (unsigned)sprites.Size ())
 		{
-			spritedef_t * sprdef = &sprites[state->sprite.index];
+			spritedef_t * sprdef = &sprites[state->sprite];
 			spriteframe_t * sprframe = &SpriteFrames[sprdef->spriteframes + state->GetFrame()];
 			icon = sprframe->Texture[0];
 		}
@@ -592,18 +592,18 @@ static void DrawOneWeapon(player_t * CPlayer, int x, int & y, AWeapon * weapon)
 
 	if (picnum.isNull())
 	{
-		if (weapon->SpawnState && weapon->SpawnState->sprite.index!=0)
+		if (weapon->SpawnState && weapon->SpawnState->sprite!=0)
 		{
 			state = weapon->SpawnState;
 		}
 		// no spawn state - now try the ready state
-		else if ((ReadyState = weapon->FindState(NAME_Ready)) && ReadyState->sprite.index!=0)
+		else if ((ReadyState = weapon->FindState(NAME_Ready)) && ReadyState->sprite!=0)
 		{
 			state = ReadyState;
 		}
-		if (state &&  (unsigned)state->sprite.index < (unsigned)sprites.Size ())
+		if (state &&  (unsigned)state->sprite < (unsigned)sprites.Size ())
 		{
-			spritedef_t * sprdef = &sprites[state->sprite.index];
+			spritedef_t * sprdef = &sprites[state->sprite];
 			spriteframe_t * sprframe = &SpriteFrames[sprdef->spriteframes + state->GetFrame()];
 
 			picnum = sprframe->Texture[0];

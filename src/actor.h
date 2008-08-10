@@ -774,10 +774,6 @@ public:
 	FState *FindState (FName label) const;
 	FState *FindState (FName label, FName sublabel, bool exact = false) const;
 	bool HasSpecialDeathStates () const;
-
-	static FState States[];
-
-	enum { S_NULL = 2, S_GENERICFREEZEDEATH = 3 };
 };
 
 class FActorIterator

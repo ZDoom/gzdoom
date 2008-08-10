@@ -1,8 +1,20 @@
-August 10, 2008
+August 10, 2008 (Changes by Graf Zahl)
+- Removed DECORATE's ParseClass because it was only used to add data to fully
+  internal actor classes which no longer exist.
+- Changed the state structure so that the Tics value doesn't need to be hacked
+  into misc1 with SF_BIGTIC anymore. 
+- Changed sprite processing so that sprite names are converted to indices 
+  during parsing so that an additional postprocessing step is no longer needed.
+- Fixed: Sprite names in DECORATE were case sensitive.
+- Exported AActor's defaults to DECORATE and removed all code for the 
+  internal property parser which is no longer needed.
+- Converted the Heresiarch to DECORATE.
 - Added an Active and Inactive state for monsters.
 - Made the speed a parameter to A_RaiseMobj and A_SinkMobj and deleted
   GetRaiseSpeed and GetSinkSpeed.
 - Added some remaining DECORATE conversions for Hexen by Karate Chris.
+
+August 10, 2008
 - Changed Windows to use the performance counter instead of rdtsc.
 - Changed Linux to use clock_gettime for profiling instead of rdtsc. This
   avoids potential erroneous results on multicore and variable speed

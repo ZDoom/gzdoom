@@ -109,7 +109,7 @@ void AScriptedMarine::Tick ()
 	Super::Tick ();
 
 	// Override the standard sprite, if desired
-	if (SpriteOverride != 0 && sprite == States[0].sprite.index)
+	if (SpriteOverride != 0 && sprite == GetClass()->ActorInfo->OwnedStates[0].sprite)
 	{
 		sprite = SpriteOverride;
 	}
@@ -593,7 +593,7 @@ void AScriptedMarine::SetSprite (const PClass *source)
 {
 	if (source == NULL || source->ActorInfo == NULL)
 	{ // A valid actor class wasn't passed, so use the standard sprite
-		SpriteOverride = sprite = States[0].sprite.index;
+		SpriteOverride = sprite = GetClass()->ActorInfo->OwnedStates[0].sprite;
 		// Copy the standard player's scaling
 		AActor * playerdef = GetDefaultByName("DoomPlayer");
 		if (playerdef == NULL) playerdef = GetDefaultByType(RUNTIME_CLASS(AScriptedMarine));
@@ -602,7 +602,7 @@ void AScriptedMarine::SetSprite (const PClass *source)
 	}
 	else
 	{ // Use the same sprite the passed class spawns with
-		SpriteOverride = sprite = GetDefaultByType (source)->SpawnState->sprite.index;
+		SpriteOverride = sprite = GetDefaultByType (source)->SpawnState->sprite;
 		scaleX = GetDefaultByType(source)->scaleX;
 		scaleY = GetDefaultByType(source)->scaleY;
 	}

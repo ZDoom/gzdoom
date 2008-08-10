@@ -337,7 +337,7 @@ void A_FireCGun (AActor *actor)
 
 			int theflash = clamp (int(player->psprites[ps_weapon].state - atk), 0, 1);
 
-			if (flash[theflash].sprite.index != flash->sprite.index)
+			if (flash[theflash].sprite != flash->sprite)
 			{
 				theflash = 0;
 			}

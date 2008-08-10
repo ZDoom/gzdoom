@@ -645,7 +645,7 @@ void R_InitSkins (void)
 				const PClass *type = PlayerClasses[j].Type;
 
 				if (type->IsDescendantOf (basetype) &&
-					GetDefaultByType (type)->SpawnState->sprite.index == GetDefaultByType (basetype)->SpawnState->sprite.index &&
+					GetDefaultByType (type)->SpawnState->sprite == GetDefaultByType (basetype)->SpawnState->sprite &&
 					type->Meta.GetMetaInt (APMETA_ColorRange) == basetype->Meta.GetMetaInt (APMETA_ColorRange))
 				{
 					PlayerClasses[j].Skins.Push ((int)i);
@@ -905,7 +905,7 @@ void R_InitSprites ()
 		skins[i].range0end = basetype->Meta.GetMetaInt (APMETA_ColorRange) >> 8;
 		skins[i].ScaleX = GetDefaultByType (basetype)->scaleX;
 		skins[i].ScaleY = GetDefaultByType (basetype)->scaleY;
-		skins[i].sprite = GetDefaultByType (basetype)->SpawnState->sprite.index;
+		skins[i].sprite = GetDefaultByType (basetype)->SpawnState->sprite;
 		skins[i].namespc = ns_global;
 
 		PlayerClasses[i].Skins.Push (i);
@@ -1535,15 +1535,15 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, fixed_t sx, fixed_
 	vissprite_t 		avis;
 
 	// decide which patch to use
-	if ( (unsigned)psp->state->sprite.index >= (unsigned)sprites.Size ())
+	if ( (unsigned)psp->state->sprite >= (unsigned)sprites.Size ())
 	{
-		DPrintf ("R_DrawPSprite: invalid sprite number %i\n", psp->state->sprite.index);
+		DPrintf ("R_DrawPSprite: invalid sprite number %i\n", psp->state->sprite);
 		return;
 	}
-	sprdef = &sprites[psp->state->sprite.index];
+	sprdef = &sprites[psp->state->sprite];
 	if (psp->state->GetFrame() >= sprdef->numframes)
 	{
-		DPrintf ("R_DrawPSprite: invalid sprite frame %i : %i\n", psp->state->sprite.index, psp->state->GetFrame());
+		DPrintf ("R_DrawPSprite: invalid sprite frame %i : %i\n", psp->state->sprite, psp->state->GetFrame());
 		return;
 	}
 	sprframe = &SpriteFrames[sprdef->spriteframes + psp->state->GetFrame()];

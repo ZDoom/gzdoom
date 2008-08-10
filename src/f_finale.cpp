@@ -588,7 +588,7 @@ void F_StartCast (void)
 	wipegamestate = GS_FORCEWIPE;
 	castnum = 0;
 	caststate = castorder[castnum].info->SeeState;
-	castsprite = caststate->sprite.index;
+	castsprite = caststate->sprite;
 	casttranslation = NULL;
 	casttics = caststate->GetTics ();
 	castdeath = false;
@@ -638,7 +638,7 @@ void F_CastTicker (void)
 		}
 		else
 		{
-			castsprite = caststate->sprite.index;
+			castsprite = caststate->sprite;
 			casttranslation = NULL;
 		}
 		castframes = 0;

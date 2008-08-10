@@ -398,7 +398,7 @@ static FActorInfo *CreateNewActor(FScanner &sc, FActorInfo **parentc, Baggage *b
 		{
 			sc.ScriptError("Unknown native class '%s'", typeName.GetChars());
 		}
-		else if (ti->ParentClass->NativeClass() != parent->NativeClass())
+		else if (ti != RUNTIME_CLASS(AActor) && ti->ParentClass->NativeClass() != parent->NativeClass())
 		{
 			sc.ScriptError("Native class '%s' does not inherit from '%s'", 
 				typeName.GetChars(),parent->TypeName.GetChars());
@@ -751,61 +751,3 @@ void FinishThingdef()
 
 }
 
-//==========================================================================
-//
-// ParseClass
-//
-// A minimal placeholder so that I can assign properties to some native
-// classes. Please, no end users use this until it's finalized.
-//
-//==========================================================================
-
-void ParseClass(FScanner &sc)
-{
-	Baggage bag;
-	PClass *cls;
-	FName classname;
-	FName supername;
-
-	sc.MustGetToken(TK_Identifier);	// class name
-	classname = sc.String;
-	sc.MustGetToken(TK_Extends);	// because I'm not supporting Object
-	sc.MustGetToken(TK_Identifier);	// superclass name
-	supername = sc.String;
-	sc.MustGetToken(TK_Native);		// use actor definitions for your own stuff
-	sc.MustGetToken('{');
-
-	cls = const_cast<PClass*>(PClass::FindClass (classname));
-	if (cls == NULL)
-	{
-		sc.ScriptError ("'%s' is not a native class", classname.GetChars());
-	}
-	if (cls->ParentClass == NULL || cls->ParentClass->TypeName != supername)
-	{
-		sc.ScriptError ("'%s' does not extend '%s'", classname.GetChars(), supername.GetChars());
-	}
-	bag.Info = cls->ActorInfo;
-
-	sc.MustGetAnyToken();
-	while (sc.TokenType != '}')
-	{
-		if (sc.TokenType == TK_Action)
-		{
-			ParseActionDef(sc, cls);
-		}
-		else if (sc.TokenType == TK_Const)
-		{
-			ParseConstant(sc, &cls->Symbols, cls);
-		}
-		else if (sc.TokenType == TK_Enum)
-		{
-			ParseEnum(sc, &cls->Symbols, cls);
-		}
-		else
-		{
-			FString tokname = sc.TokenName(sc.TokenType, sc.String);
-			sc.ScriptError ("Expected 'action', 'const' or 'enum' but got %s", tokname.GetChars());
-		}
-		sc.MustGetAnyToken();
-	}
-}

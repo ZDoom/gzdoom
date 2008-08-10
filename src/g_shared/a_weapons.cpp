@@ -61,7 +61,7 @@ bool AWeapon::TryPickup (AActor *toucher)
 {
 	FState * ReadyState = FindState(NAME_Ready);
 	if (ReadyState != NULL &&
-		ReadyState->GetFrame() < sprites[ReadyState->sprite.index].numframes)
+		ReadyState->GetFrame() < sprites[ReadyState->sprite].numframes)
 	{
 		return Super::TryPickup (toucher);
 	}

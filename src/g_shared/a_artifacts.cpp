@@ -1243,15 +1243,20 @@ void APowerTargeter::DoEffect ()
 		PositionAccuracy ();
 		if (EffectTics < 5*TICRATE)
 		{
-			if (EffectTics & 32)
+			FState *state = FindState("Targeter");
+
+			if (state != NULL)
 			{
-				P_SetPsprite (player, ps_targetright, NULL);
-				P_SetPsprite (player, ps_targetleft, &States[1]);
-			}
-			else if (EffectTics & 16)
-			{
-				P_SetPsprite (player, ps_targetright, &States[2]);
-				P_SetPsprite (player, ps_targetleft, NULL);
+				if (EffectTics & 32)
+				{
+					P_SetPsprite (player, ps_targetright, NULL);
+					P_SetPsprite (player, ps_targetleft, state+1);
+				}
+				else if (EffectTics & 16)
+				{
+					P_SetPsprite (player, ps_targetright, state+2);
+					P_SetPsprite (player, ps_targetleft, NULL);
+				}
 			}
 		}
 	}

@@ -1703,7 +1703,7 @@ static void M_DrawClassMenu ()
 
 	M_DrawFrame (x, y, 72*CleanXfac, 80*CleanYfac-1);
 
-	spriteframe_t *sprframe = &SpriteFrames[sprites[PlayerState->sprite.index].spriteframes + PlayerState->GetFrame()];
+	spriteframe_t *sprframe = &SpriteFrames[sprites[PlayerState->sprite].spriteframes + PlayerState->GetFrame()];
 	fixed_t scaleX = GetDefaultByType (PlayerClass->Type)->scaleX;
 	fixed_t scaleY = GetDefaultByType (PlayerClass->Type)->scaleY;
 
@@ -2133,9 +2133,9 @@ static void M_PlayerSetupDrawer ()
 
 		if (GetDefaultByType (PlayerClass->Type)->flags4 & MF4_NOSKIN ||
 			players[consoleplayer].userinfo.PlayerClass == -1 ||
-			PlayerState->sprite.index != GetDefaultByType (PlayerClass->Type)->SpawnState->sprite.index)
+			PlayerState->sprite != GetDefaultByType (PlayerClass->Type)->SpawnState->sprite)
 		{
-			sprframe = &SpriteFrames[sprites[PlayerState->sprite.index].spriteframes + PlayerState->GetFrame()];
+			sprframe = &SpriteFrames[sprites[PlayerState->sprite].spriteframes + PlayerState->GetFrame()];
 			ScaleX = GetDefaultByType(PlayerClass->Type)->scaleX;
 			ScaleY = GetDefaultByType(PlayerClass->Type)->scaleY;
 		}

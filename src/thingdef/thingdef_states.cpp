@@ -311,18 +311,10 @@ void InstallStates(FActorInfo *info, AActor *defaults)
 	// First ensure we have a valid spawn state.
 	FState * state = FindState(defaults, info->Class, "Spawn");
 
-	// Stateless actors that are direct subclasses of AActor
-	// have their spawnstate default to something that won't
-	// immediately destroy them.
-	if (state == &AActor::States[2] && info->Class->ParentClass == RUNTIME_CLASS(AActor))
+	if (state == NULL)
 	{
-		AddState("Spawn", &AActor::States[0]);
-	}
-	else if (state == NULL)
-	{
-		// A NULL spawn state will crash the engine so set it to something that will make
-		// the actor disappear as quickly as possible.
-		AddState("Spawn", &AActor::States[2]);
+		// A NULL spawn state will crash the engine so set it to something valid.
+		AddState("Spawn", GetDefault<AActor>()->SpawnState);
 	}
 
 	if (info->StateList != NULL) 
@@ -510,6 +502,8 @@ int ParseStates(FScanner &sc, FActorInfo * actor, AActor * defaults, Baggage &ba
 	FState * laststate = NULL;
 	intptr_t lastlabel = -1;
 	int minrequiredstate = -1;
+	int spriteindex;
+	char lastsprite[5]="";
 
 	sc.MustGetStringName ("{");
 	sc.SetEscape(false);	// disable escape sequences in the state parser
@@ -609,7 +603,14 @@ do_stop:
 				sc.ScriptError ("Sprite names must be exactly 4 characters\n");
 			}
 
-			memcpy(state.sprite.name, statestring, 4);
+			statestring.ToUpper();
+			if (strcmp(statestring, lastsprite))
+			{
+				strcpy(lastsprite, statestring);
+				spriteindex = GetSpriteIndex(lastsprite);
+			}
+
+			state.sprite = spriteindex;
 			state.Misc1 = state.Misc2 = 0;
 			state.ParameterIndex = 0;
 			sc.MustGetString();
@@ -623,13 +624,7 @@ do_stop:
 			}
 
 			sc.MustGetNumber();
-			sc.Number++;
-			state.Tics = sc.Number & 255;
-			state.Misc1 = (sc.Number >> 8) & 255;
-			if (state.Misc1)
-			{
-				state.Frame |= SF_BIGTIC;
-			}
+			state.Tics = clamp<int>(sc.Number, -1, 32767);
 
 			while (sc.GetString() && !sc.Crossed)
 			{
@@ -640,10 +635,6 @@ do_stop:
 				}
 				if (sc.Compare("OFFSET"))
 				{
-					if (state.Frame & SF_BIGTIC)
-					{
-						sc.ScriptError("You cannot use OFFSET with a state duration larger than 254!");
-					}
 					// specify a weapon offset
 					sc.MustGetStringName("(");
 					sc.MustGetNumber();
@@ -902,7 +893,7 @@ endofstate:
 					frame=0;
 				}
 
-				state.Frame=(state.Frame&(SF_FULLBRIGHT|SF_BIGTIC))|frame;
+				state.Frame=(state.Frame&(SF_FULLBRIGHT))|frame;
 				StateArray.Push(state);
 				count++;
 			}

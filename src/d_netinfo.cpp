@@ -727,8 +727,8 @@ void D_ReadUserInfoStrings (int i, BYTE **stream, bool update)
 				if (players[i].mo != NULL)
 				{
 					if (players[i].cls != NULL &&
-						players[i].mo->state->sprite.index ==
-						GetDefaultByType (players[i].cls)->SpawnState->sprite.index)
+						players[i].mo->state->sprite ==
+						GetDefaultByType (players[i].cls)->SpawnState->sprite)
 					{ // Only change the sprite if the player is using a standard one
 						players[i].mo->sprite = skins[info->skin].sprite;
 						players[i].mo->scaleX = skins[info->skin].ScaleX;

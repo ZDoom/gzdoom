@@ -656,7 +656,7 @@ void AActor::Die (AActor *source, AActor *inflictor)
 
 				if (!deh.NoAutofreeze && !(flags4 & MF4_NOICEDEATH) && (player || (flags3 & MF3_ISMONSTER)))
 				{
-					diestate = &AActor::States[S_GENERICFREEZEDEATH];
+					diestate = FindState(NAME_GenericFreezeDeath);
 				}
 			}
 		}

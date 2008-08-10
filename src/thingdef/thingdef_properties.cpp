@@ -2898,7 +2898,6 @@ void FinishActor(FScanner &sc, FActorInfo *info, Baggage &bag)
 
 	FinishStates (sc, info, defaults, bag);
 	InstallStates (info, defaults);
-	ProcessStates (info->OwnedStates, info->NumOwnedStates);
 	if (bag.DropItemSet)
 	{
 		if (bag.DropItemList == NULL)

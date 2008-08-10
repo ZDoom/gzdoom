@@ -634,7 +634,7 @@ AInventory *AInventory::CreateTossable ()
 
 	// If this actor lacks a SpawnState, don't drop it. (e.g. A base weapon
 	// like the fist can't be dropped because you'll never see it.)
-	if (SpawnState == &AActor::States[AActor::S_NULL] ||
+	if (SpawnState == ::GetDefault<AActor>()->SpawnState ||
 		SpawnState == NULL)
 	{
 		return NULL;

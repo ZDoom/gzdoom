@@ -645,10 +645,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\infodefaults.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\src\lumpconfigfile.cpp"
 				>
 			</File>
@@ -1287,10 +1283,6 @@
 			</File>
 			<File
 				RelativePath=".\src\Info.h"
-				>
-			</File>
-			<File
-				RelativePath=".\src\infomacros.h"
 				>
 			</File>
 			<File

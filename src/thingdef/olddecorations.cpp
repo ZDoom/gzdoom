@@ -332,9 +332,8 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def)
 	memcpy (info->OwnedStates, &states[0], info->NumOwnedStates * sizeof(info->OwnedStates[0]));
 	if (info->NumOwnedStates == 1)
 	{
-		info->OwnedStates->Tics = 0;
+		info->OwnedStates->Tics = -1;
 		info->OwnedStates->Misc1 = 0;
-		info->OwnedStates->Frame &= ~SF_BIGTIC;
 	}
 	else
 	{
@@ -360,9 +359,8 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def)
 			}
 			else
 			{
-				info->OwnedStates[i].Tics = 0;
+				info->OwnedStates[i].Tics = -1;
 				info->OwnedStates[i].Misc1 = 0;
-				info->OwnedStates[i].Frame &= ~SF_BIGTIC;
 			}
 
 			if (def == DEF_Projectile)
@@ -408,9 +406,8 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def)
 			}
 			else
 			{
-				info->OwnedStates[i].Tics = 0;
+				info->OwnedStates[i].Tics = -1;
 				info->OwnedStates[i].Misc1 = 0;
-				info->OwnedStates[i].Frame &= ~SF_BIGTIC;
 			}
 
 			// The first frame plays the burn sound and
@@ -443,20 +440,20 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def)
 				info->OwnedStates[i].NextState = &info->OwnedStates[i+1];
 			}
 			info->OwnedStates[i].NextState = &info->OwnedStates[info->NumOwnedStates-1];
-			info->OwnedStates[i].Tics = 6;
+			info->OwnedStates[i].Tics = 5;
 			info->OwnedStates[i].Misc1 = 0;
 			info->OwnedStates[i].Action = A_FreezeDeath;
 
 			i = info->NumOwnedStates - 1;
 			info->OwnedStates[i].NextState = &info->OwnedStates[i];
-			info->OwnedStates[i].Tics = 2;
+			info->OwnedStates[i].Tics = 1;
 			info->OwnedStates[i].Misc1 = 0;
 			info->OwnedStates[i].Action = A_FreezeDeathChunks;
 			AddState("Ice", &info->OwnedStates[extra.IceDeathStart]);
 		}
 		else if (extra.bGenericIceDeath)
 		{
-			AddState("Ice", &AActor::States[AActor::S_GENERICFREEZEDEATH]);
+			AddState("Ice", RUNTIME_CLASS(AActor)->ActorInfo->FindState(NAME_GenericFreezeDeath));
 		}
 	}
 	if (def == DEF_BreakableDecoration)
@@ -469,7 +466,6 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def)
 	}
 	AddState("Spawn", &info->OwnedStates[extra.SpawnStart]);
 	InstallStates (info, ((AActor *)(type->Defaults)));
-	ProcessStates (info->OwnedStates, info->NumOwnedStates);
 }
 
 //==========================================================================
@@ -749,16 +745,18 @@ static void ParseInsideDecoration (FActorInfo *info, AActor *defaults,
 	}
 
 	unsigned int i;
+	int spr = GetSpriteIndex(sprite);
 
 	for (i = 0; i < states.Size(); ++i)
 	{
-		memcpy (states[i].sprite.name, sprite, 4);
+		states[i].sprite = spr;
 	}
 	if (extra.DeathSprite[0] && extra.DeathEnd != 0)
 	{
+		int spr = GetSpriteIndex(extra.DeathSprite);
 		for (i = extra.DeathStart; i < extra.DeathEnd; ++i)
 		{
-			memcpy (states[i].sprite.name, extra.DeathSprite, 4);
+			states[i].sprite = spr;
 		}
 	}
 }
@@ -805,7 +803,7 @@ static void ParseSpriteFrames (FActorInfo *info, TArray<FState> &states, FScanne
 		while (*token == ' ')
 			token++;
 
-		int rate = 5;
+		int rate = 4;
 		bool firstState = true;
 		char *colon = strchr (token, ':');
 
@@ -820,11 +818,9 @@ static void ParseSpriteFrames (FActorInfo *info, TArray<FState> &states, FScanne
 				sc.ScriptError ("Rates must be in the range [0,65534]");
 			}
 			token = colon + 1;
-			rate += 1;
 		}
 
-		state.Tics = rate & 0xff;
-		state.Misc1 = (rate >> 8);
+		state.Tics = rate;
 
 		while (*token)
 		{
@@ -850,7 +846,7 @@ static void ParseSpriteFrames (FActorInfo *info, TArray<FState> &states, FScanne
 					states.Push (state);
 				}
 				firstState = false;
-				state.Frame = (rate >= 256) ? (SF_BIGTIC | (*token-'A')) : (*token-'A');	
+				state.Frame = *token-'A';	
 			}
 			++token;
 		}

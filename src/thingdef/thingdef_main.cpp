@@ -84,10 +84,6 @@ static void ParseDecorate (FScanner &sc)
 			break;
 		}
 
-		case TK_Class:
-			ParseClass (sc);
-			break;
-
 		case TK_Const:
 			ParseConstant (sc, &RUNTIME_CLASS(AActor)->Symbols, RUNTIME_CLASS(AActor));
 			break;

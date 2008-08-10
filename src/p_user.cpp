@@ -439,7 +439,7 @@ void APlayerPawn::BeginPlay ()
 		// This assumes that player sprites always exist in rotated form and
 		// that the front view is always a separate sprite. So far this is
 		// true for anything that exists.
-		FString normspritename = sprites[SpawnState->sprite.index].name;
+		FString normspritename = sprites[SpawnState->sprite].name;
 		FString crouchspritename = sprites[crouchsprite].name;
 
 		int spritenorm = Wads.CheckNumForName(normspritename + "A1", ns_sprites);
@@ -1081,8 +1081,7 @@ void APlayerPawn::Die (AActor *source, AActor *inflictor)
 				AInventory *item;
 
 				if (weap->SpawnState != NULL &&
-					weap->SpawnState != &AActor::States[0] &&
-					weap->SpawnState != &AActor::States[AActor::S_NULL])
+					weap->SpawnState != ::GetDefault<AActor>()->SpawnState)
 				{
 					item = P_DropItem (this, weap->GetClass(), -1, 256);
 					if (item != NULL)
@@ -1322,7 +1321,7 @@ void P_CheckPlayerSprites()
 			if (player->crouchfactor < FRACUNIT*3/4)
 			{
 
-				if (mo->sprite == mo->SpawnState->sprite.index || mo->sprite == mo->crouchsprite) 
+				if (mo->sprite == mo->SpawnState->sprite || mo->sprite == mo->crouchsprite) 
 				{
 					crouchspriteno = mo->crouchsprite;
 				}
@@ -1351,7 +1350,7 @@ void P_CheckPlayerSprites()
 			{
 				if (mo->sprite == mo->crouchsprite)
 				{
-					mo->sprite = mo->SpawnState->sprite.index;
+					mo->sprite = mo->SpawnState->sprite;
 				}
 				else if (mo->sprite == skins[player->userinfo.skin].crouchsprite)
 				{

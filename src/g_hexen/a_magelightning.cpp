@@ -27,7 +27,6 @@ void A_LightningZap (AActor *);
 void A_ZapMimic (AActor *);
 void A_LastZap (AActor *);
 void A_LightningRemove (AActor *);
-void A_FreeTargMobj (AActor *);
 
 // Lightning ----------------------------------------------------------------
 

@@ -1,0 +1,342 @@
+ACTOR Inventory native
+{
+	Inventory.Amount 1
+	Inventory.MaxAmount 1
+	Inventory.UseSound "misc/invuse"
+	Inventory.PickupSound "misc/i_pkup"
+	
+	action native A_JumpIfNoAmmo(state label);
+	action native A_CustomPunch(eval int damage, optional eval bool norandom, optional evalnot bool useammo, optional class<Actor> pufftype, optional eval float range);
+	action native A_FireBullets(eval float spread_xy, eval float spread_z, eval int numbullets, eval int damageperbullet, optional class<Actor> pufftype, optional evalnot bool useammo, optional eval float range);
+	action native A_FireCustomMissile(class<Actor> missiletype, optional eval float angle, optional evalnot bool useammo, optional eval int spawnofs_xy, optional eval float spawnheight, optional eval bool aimatangle);
+	action native A_RailAttack(eval int damage, optional eval int spawnofs_xy, optional evalnot int useammo, optional color color1, optional color color2, optional eval bool silent, optional eval float maxdiff, optional class<Actor> pufftype);
+	action native A_Light(eval int extralight);
+	action native A_Light0();
+	action native A_Light1();
+	action native A_Light2();
+	action native A_LightInverse();
+	action native A_WeaponReady();
+	action native A_Lower();
+	action native A_Raise();
+	action native A_FirePistol();
+	action native A_FireShotgun();
+	action native A_FireShotgun2();
+	action native A_OpenShotgun2();
+	action native A_LoadShotgun2();
+	action native A_CloseShotgun2();
+	action native A_FireCGun();
+	action native A_FireMissile();
+	action native A_FirePlasma();
+	action native A_FireRailgun();
+	action native A_FireRailgunLeft();
+	action native A_FireRailgunRight();
+	action native A_RailWait();
+	action native A_BFGsound();
+	action native A_FireBFG();
+	action native A_ReFire();
+	action native A_ClearReFire();
+	action native A_CheckReload();
+	action native A_GunFlash();
+	action native A_Saw(optional coerce sound fullsound, optional coerce sound hitsound, optional eval int damage, optional class<Actor> pufftype);
+	action native A_CheckForReload(eval int counter, state label);
+	action native A_ResetReloadCounter();
+	action native A_RestoreSpecialPosition();
+	action native A_RestoreSpecialDoomThing();
+	action native A_RestoreSpecialThing1();
+	action native A_RestoreSpecialThing2();
+	
+	States
+	{
+	HideDoomish:
+		TNT1 A 1050
+		TNT1 A 0 A_RestoreSpecialPosition
+		TNT1 A 1 A_RestoreSpecialDoomThing
+		Stop
+	HideSpecial:
+		ACLO E 1400
+		ACLO A 0 A_RestoreSpecialPosition
+		ACLO A 4 A_RestoreSpecialThing1
+		ACLO BABCBCDC 4
+		ACLO D 4 A_RestoreSpecialThing2
+		Stop
+	Held:
+		TNT1 A -1
+		Stop
+	HoldAndDestroy:
+		TNT1 A 1
+		Stop
+	}
+}
+
+Actor Ammo : Inventory native
+{
+	+INVENTORY.KEEPDEPLETED
+	Inventory.PickupSound "misc/ammo_pkup"
+}
+
+Actor BackpackItem : Inventory native
+{
+}
+
+ACTOR Armor : Inventory native
+{
+	Inventory.PickupSound "misc/armor_pkup"
+}
+
+ACTOR BasicArmor : Armor native
+{
+	+Inventory.KEEPDEPLETED
+}
+
+ACTOR BasicArmorBonus : Armor native
+{
+	+Inventory.AUTOACTIVATE
+	+Inventory.ALWAYSPICKUP
+	Inventory.MaxAmount 0
+	Armor.SavePercent 0.333333
+
+}
+
+ACTOR BasicArmorPickup : Armor native
+{
+	+Inventory.AUTOACTIVATE
+	Inventory.MaxAmount 0
+}
+
+ACTOR HexenArmor : Armor native
+{
+	+Inventory.KEEPDEPLETED
+	+Inventory.UNDROPPABLE
+}
+
+ACTOR DehackedPickup : Inventory native
+{
+}
+
+ACTOR FakeInventory : Inventory native
+{
+}
+
+ACTOR CustomInventory : Inventory native
+{
+}
+
+Actor Health : Inventory native 
+{
+	Inventory.Amount 1
+	Inventory.MaxAmount 0
+	Inventory.PickupSound "misc/health_pkup"
+}
+
+Actor HealthPickup : Inventory native 
+{
+	Inventory.DefMaxAmount
+	+INVENTORY.INVBAR
+}
+
+Actor Key : Inventory native
+{
+	+INVENTORY.INTERHUBSTRIP
+	Inventory.PickupSound "misc/k_pkup"
+}
+
+ACTOR PowerupGiver : Inventory native
+{
+	Inventory.DefMaxAmount
+	+INVENTORY.INVBAR
+	+INVENTORY.FANCYPICKUPSOUND
+	Inventory.PickupSound "misc/p_pkup"
+}
+
+ACTOR Powerup : Inventory native
+{
+}
+
+ACTOR PowerInvulnerable : Powerup native
+{
+	Powerup.Duration -30
+	inventory.icon "SPSHLD0"
+}
+
+ACTOR PowerStrength : Powerup native
+{
+	Powerup.Duration 1
+	Powerup.Color 255,0,0,0.5
+	+INVENTORY.HUBPOWER
+}
+
+ACTOR PowerInvisibility : Powerup native
+{
+	Powerup.Duration -60
+}
+
+ACTOR PowerGhost : PowerInvisibility native
+{
+}
+
+ACTOR PowerShadow : PowerInvisibility native
+{
+	Powerup.Duration -55
+	+INVENTORY.HUBPOWER
+}
+
+ACTOR PowerIronFeet : Powerup native
+{
+	Powerup.Duration -60
+	Powerup.Color 0, 255, 0, 0.125
+}
+
+ACTOR PowerMask : PowerIronFeet native
+{
+	Powerup.Duration -80
+	Powerup.Color 0,0,0,0
+	+INVENTORY.HUBPOWER
+	Inventory.Icon "I_MASK"
+}
+
+ACTOR PowerLightAmp : Powerup native
+{
+	Powerup.Duration -120
+}
+
+ACTOR PowerTorch : PowerLightAmp native
+{
+}
+
+ACTOR PowerFlight : Powerup native
+{
+	Powerup.Duration -60
+	+INVENTORY.HUBPOWER
+}
+
+ACTOR PowerWeaponLevel2 : Powerup native
+{
+	Powerup.Duration -40
+	Inventory.Icon "SPINBK0"
+}
+
+ACTOR PowerSpeed: Powerup native
+{
+	Powerup.Duration -45
+	Speed 1.5
+	Inventory.Icon "SPBOOT0"
+}
+
+// Player Speed Trail (used by the Speed Powerup) ----------------------------
+
+ACTOR PlayerSpeedTrail native
+{
+	+NOBLOCKMAP
+	+NOGRAVITY
+	Alpha 0.6
+	RenderStyle Translucent
+}
+
+ACTOR PowerMinotaur : Powerup native
+{
+	Powerup.Duration -25
+	Inventory.Icon "SPMINO0"
+}
+
+ACTOR PowerTargeter : Powerup native
+{
+	Powerup.Duration -160
+	+INVENTORY.HUBPOWER
+	States
+	{
+	Targeter:
+		TRGT A -1
+		Stop
+		TRGT B -1
+		Stop
+		TRGT C -1
+		Stop
+	}
+}
+
+ACTOR PowerFrightener : Powerup native
+{
+	Powerup.Duration -60
+}
+
+ACTOR PowerScanner : Powerup native
+{
+	Powerup.Duration -80
+	+INVENTORY.HUBPOWER
+}
+
+ACTOR PowerTimeFreezer : Powerup native
+{
+	Powerup.Duration -12
+}
+
+ACTOR PowerDamage : Powerup native
+{
+	Powerup.Duration -25
+}
+
+ACTOR PowerProtection : Powerup native
+{
+	Powerup.Duration -25
+}
+
+ACTOR PowerDrain : Powerup native
+{
+	Powerup.Duration -60
+}
+
+ACTOR PowerRegeneration : Powerup native
+{
+	Powerup.Duration -120
+}
+
+ACTOR PowerHighJump : Powerup native
+{
+}
+
+ACTOR PowerMorph : Powerup native
+{
+	Powerup.Duration -40
+}
+
+ACTOR MapRevealer : Inventory native
+{
+}
+
+ACTOR PuzzleItem : Inventory native 
+{
+	+NOGRAVITY
+	+INVENTORY.INVBAR
+	Inventory.DefMaxAmount
+	Inventory.UseSound "PuzzleSuccess"
+	Inventory.PickupSound "misc/i_pkup"
+}
+
+Actor Weapon : Inventory native
+{
+
+	Inventory.PickupSound "misc/w_pkup"
+	Weapon.DefaultKickback 
+	States
+	{
+	LightDone:
+		SHTG E 0 A_Light0
+		Stop
+	}
+}
+
+ACTOR WeaponGiver : Weapon native
+{
+}
+
+Actor WeaponHolder : Inventory native
+{
+	+NOBLOCKMAP
+	+NOSECTOR
+	+INVENTORY.UNDROPPABLE
+}
+
+Actor WeaponPiece : Inventory native
+{
+}
+

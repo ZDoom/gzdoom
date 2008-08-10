@@ -69,7 +69,6 @@ ACTOR LightningCeiling : Lightning
 	action native A_LightningZap();
 	action native A_LightningClip();
 	action native A_LightningRemove();
-	action native A_FreeTargMobj();
 
 	States
 	{
@@ -89,7 +88,7 @@ ACTOR LightningCeiling : Lightning
 		MLF2 O 3 Bright
 		MLF2 P 3 Bright
 		MLF2 P 1 Bright A_HideThing
-		ACLO E 1050 A_FreeTargMobj
+		ACLO E 1050
 		Stop
 	}
 }

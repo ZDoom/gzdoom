@@ -57,6 +57,7 @@ Everything that is changed is marked (maybe commented) with "Added by MC"
 #include "sbar.h"
 #include "p_acs.h"
 #include "teaminfo.h"
+#include "i_system.h"
 
 static FRandom pr_botspawn ("BotSpawn");
 
@@ -65,7 +66,8 @@ void InitBotStuff();
 //Externs
 FCajunMaster bglobal;
 
-cycle_t BotThinkCycles, BotSupportCycles, BotWTG;
+cycle_t BotThinkCycles, BotSupportCycles;
+int BotWTG;
 
 static const char *BotConfigStrings[] =
 {
@@ -101,7 +103,7 @@ void FCajunMaster::Main (int buf)
 {
 	int i;
 
-	BotThinkCycles = 0;
+	BotThinkCycles.Reset();
 
 	if (consoleplayer != Net_Arbitrator || demoplayback)
 		return;
@@ -114,13 +116,13 @@ void FCajunMaster::Main (int buf)
 	//Think for bots.
 	if (botnum)
 	{
-		clock (BotThinkCycles);
+		BotThinkCycles.Clock();
 		for (i = 0; i < MAXPLAYERS; i++)
 		{
 			if (playeringame[i] && players[i].mo && !freeze && players[i].isbot)
 				Think (players[i].mo, &netcmds[i][buf]);
 		}
-		unclock (BotThinkCycles);
+		BotThinkCycles.Unclock();
 	}
 
 	//Add new bots?
@@ -645,9 +647,8 @@ bool FCajunMaster::LoadBots ()
 ADD_STAT (bots)
 {
 	FString out;
-	out.Format ("think = %04.1f ms  support = %04.1f ms  wtg = %llu",
-		(double)BotThinkCycles * 1000 * SecondsPerCycle,
-		(double)BotSupportCycles * 1000 * SecondsPerCycle,
+	out.Format ("think = %04.1f ms  support = %04.1f ms  wtg = %d",
+		BotThinkCycles.TimeMS(), BotSupportCycles.TimeMS(),
 		BotWTG);
 	return out;
 }

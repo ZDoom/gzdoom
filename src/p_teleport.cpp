@@ -56,6 +56,9 @@ void ATeleportFog::PostBeginPlay ()
 	case GAME_Strife:
 		SetState(FindState(NAME_Strife));
 		break;
+		
+	default:
+		break;
 	}
 }
 

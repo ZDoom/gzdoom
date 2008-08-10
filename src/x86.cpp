@@ -5,7 +5,13 @@
 #include <emmintrin.h>
 
 #include "doomtype.h"
-#include "i_system.h"
+#include "doomdef.h"
+#include "x86.h"
+
+extern "C"
+{
+	CPUInfo CPU;
+}
 
 #ifdef __GNUC__
 #define __cpuid(output, func) __asm__ __volatile__("cpuid" : "=a" ((output)[0]),\
@@ -95,8 +101,11 @@ haveid:
 	cpu->Family = (foo[0] & 0xF00) >> 8;
 
 	if (cpu->Family == 15)
-	{ // Add extended model and family.
+	{ // Add extended family.
 		cpu->Family += (foo[0] >> 20) & 0xFF;
+	}
+	if (cpu->Family == 6 || cpu->Family == 15)
+	{ // Add extended model ID.
 		cpu->Model |= (foo[0] >> 12) & 0xF0;
 	}
 
@@ -134,6 +143,65 @@ haveid:
 	}
 
 #endif
+}
+
+void DumpCPUInfo(const CPUInfo *cpu)
+{
+	char cpustring[4*4*3+1];
+	
+	// Why does Intel right-justify this string (on P4s)
+	// or add extra spaces (on Cores)?
+	const char *f = cpu->CPUString;
+	char *t;
+
+	// Skip extra whitespace at the beginning.
+	while (*f == ' ')
+	{
+		++f;
+	}
+
+	// Copy string to temp buffer, but condense consecutive
+	// spaces to a single space character.
+	for (t = cpustring; *f != '\0'; ++f)
+	{
+		if (*f == ' ' && *(f - 1) == ' ')
+		{
+			continue;
+		}
+		*t++ = *f;
+	}
+	*t = '\0';
+
+	if (cpu->VendorID[0])
+	{
+		Printf("CPU Vendor ID: %s\n", cpu->VendorID);
+		if (cpustring[0])
+		{
+			Printf("  Name: %s\n", cpustring);
+		}
+		if (cpu->bIsAMD)
+		{
+			Printf("  Family %d (%d), Model %d, Stepping %d\n",
+				cpu->Family, cpu->AMDFamily, cpu->AMDModel, cpu->AMDStepping);
+		}
+		else
+		{
+			Printf("  Family %d, Model %d, Stepping %d\n",
+				cpu->Family, cpu->Model, cpu->Stepping);
+		}
+		Printf("  Features:");
+		if (cpu->bMMX)			Printf(" MMX");
+		if (cpu->bMMXPlus)		Printf(" MMX+");
+		if (cpu->bSSE)			Printf(" SSE");
+		if (cpu->bSSE2)			Printf(" SSE2");
+		if (cpu->bSSE3)			Printf(" SSE3");
+		if (cpu->bSSSE3)		Printf(" SSSE3");
+		if (cpu->bSSE41)		Printf(" SSE4.1");
+		if (cpu->bSSE42)		Printf(" SSE4.2");
+		if (cpu->b3DNow)		Printf(" 3DNow!");
+		if (cpu->b3DNowPlus)	Printf(" 3DNow!+");
+		Printf ("\n");
+	}
 }
 
 #if 0

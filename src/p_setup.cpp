@@ -35,6 +35,7 @@
 #include "m_bbox.h"
 #include "g_game.h"
 #include "i_system.h"
+#include "x86.h"
 #include "w_wad.h"
 #include "doomdef.h"
 #include "p_local.h"
@@ -2547,7 +2548,7 @@ line_t**				linebuffer;
 
 static void P_GroupLines (bool buildmap)
 {
-	cycle_t times[16] = { 0 };
+	cycle_t times[16];
 	TArray<linf>		exLightTags;
 	int*				linesDoneInEachSector;
 	int 				i;
@@ -2559,9 +2560,14 @@ static void P_GroupLines (bool buildmap)
 	FBoundingBox		bbox;
 	bool				flaggedNoFronts = false;
 	unsigned int		ii, jj;
-		
+
+	for (i = 0; i < (int)countof(times); ++i)
+	{
+		times[i].Reset();
+	}
+
 	// look up sector number for each subsector
-	clock (times[0]);
+	times[0].Clock();
 	for (i = 0; i < numsubsectors; i++)
 	{
 		subsectors[i].sector = segs[subsectors[i].firstline].sidedef->sector;
@@ -2579,10 +2585,10 @@ static void P_GroupLines (bool buildmap)
 		subsectors[i].CenterX = fixed_t(accumx * 0.5 / subsectors[i].numlines);
 		subsectors[i].CenterY = fixed_t(accumy * 0.5 / subsectors[i].numlines);
 	}
-	unclock (times[0]);
+	times[0].Unclock();
 
 	// count number of lines in each sector
-	clock (times[1]);
+	times[1].Clock();
 	total = 0;
 	totallights = 0;
 	for (i = 0, li = lines; i < numlines; i++, li++)
@@ -2635,10 +2641,10 @@ static void P_GroupLines (bool buildmap)
 	{
 		I_Error ("You need to fix these lines to play this map.\n");
 	}
-	unclock (times[1]);
+	times[1].Unclock();
 
 	// collect extra light info
-	clock (times[2]);
+	times[2].Clock();
 	LightStacks = new FLightStack[totallights];
 	ExtraLights = new FExtraLight[exLightTags.Size()];
 	memset (ExtraLights, 0, exLightTags.Size()*sizeof(FExtraLight));
@@ -2650,10 +2656,10 @@ static void P_GroupLines (bool buildmap)
 		ExtraLights[ii].Lights = &LightStacks[jj];
 		jj += ExtraLights[ii].NumLights;
 	}
-	unclock (times[2]);
+	times[2].Unclock();
 
 	// build line tables for each sector
-	clock (times[3]);
+	times[3].Clock();
 	linebuffer = new line_t *[total];
 	line_t **lineb_p = linebuffer;
 	linesDoneInEachSector = new int[numsectors];
@@ -2766,21 +2772,21 @@ static void P_GroupLines (bool buildmap)
 #endif
 	}
 	delete[] linesDoneInEachSector;
-	unclock (times[3]);
+	times[3].Unclock();
 
 	// [RH] Moved this here
-	clock (times[4]);
+	times[4].Clock();
 	P_InitTagLists();   // killough 1/30/98: Create xref tables for tags
-	unclock (times[4]);
+	times[4].Unclock();
 
-	clock (times[5]);
+	times[5].Clock();
 	if (!buildmap)
 	{
 		P_SetSlopes ();
 	}
-	unclock (times[5]);
+	times[5].Unclock();
 
-	clock (times[6]);
+	times[6].Clock();
 	for (i = 0, li = lines; i < numlines; ++i, ++li)
 	{
 		if (li->special == ExtraFloor_LightOnly)
@@ -2805,14 +2811,14 @@ static void P_GroupLines (bool buildmap)
 			}
 		}
 	}
-	unclock (times[6]);
+	times[6].Unclock();
 
 	if (showloadtimes)
 	{
 		Printf ("---Group Lines Times---\n");
 		for (i = 0; i < 7; ++i)
 		{
-			Printf (" time %d:%10llu\n", i, times[i]);
+			Printf (" time %d:%9.4f ms\n", i, times[i].Time() * 1e3);
 		}
 	}
 }
@@ -3160,11 +3166,16 @@ void P_FreeExtraLevelData()
 // [RH] position indicates the start spot to spawn at
 void P_SetupLevel (char *lumpname, int position)
 {
-	cycle_t times[20] = { 0 };
+	cycle_t times[20];
 	FMapThing *buildthings;
 	int numbuildthings;
 	int i;
 	bool buildmap;
+
+	for (i = 0; i < (int)countof(times); ++i)
+	{
+		times[i].Reset();
+	}
 
 	wminfo.partime = 180;
 
@@ -3278,33 +3289,33 @@ void P_SetupLevel (char *lumpname, int position)
 
 		if (!map->isText)
 		{
-			clock (times[0]);
+			times[0].Clock();
 			P_LoadVertexes (map);
-			unclock (times[0]);
+			times[0].Unclock();
 			
 			// Check for maps without any BSP data at all (e.g. SLIGE)
-			clock (times[1]);
+			times[1].Clock();
 			P_LoadSectors (map);
-			unclock (times[1]);
+			times[1].Unclock();
 
-			clock (times[2]);
+			times[2].Clock();
 			P_LoadSideDefs (map);
-			unclock (times[2]);
+			times[2].Unclock();
 
-			clock (times[3]);
+			times[3].Clock();
 			if (!map->HasBehavior)
 				P_LoadLineDefs (map);
 			else
 				P_LoadLineDefs2 (map);	// [RH] Load Hexen-style linedefs
-			unclock (times[3]);
+			times[3].Unclock();
 
-			clock (times[4]);
+			times[4].Clock();
 			P_LoadSideDefs2 (map);
-			unclock (times[4]);
+			times[4].Unclock();
 
-			clock (times[5]);
+			times[5].Clock();
 			P_FinishLoadingLineDefs ();
-			unclock (times[5]);
+			times[5].Unclock();
 
 			if (!map->HasBehavior)
 				P_LoadThings (map);
@@ -3316,9 +3327,9 @@ void P_SetupLevel (char *lumpname, int position)
 			P_ParseTextMap(map);
 		}
 
-		clock (times[6]);
+		times[6].Clock();
 		P_LoopSidedefs ();
-		unclock (times[6]);
+		times[6].Unclock();
 
 		linemap.Clear();
 		linemap.ShrinkToFit();
@@ -3378,17 +3389,17 @@ void P_SetupLevel (char *lumpname, int position)
 		}
 		else if (!map->isText)	// regular nodes are not supported for text maps
 		{
-			clock (times[7]);
+			times[7].Clock();
 			P_LoadSubsectors (map);
-			unclock (times[7]);
+			times[7].Unclock();
 
-			clock (times[8]);
+			times[8].Clock();
 			if (!ForceNodeBuild) P_LoadNodes (map);
-			unclock (times[8]);
+			times[8].Unclock();
 
-			clock (times[9]);
+			times[9].Clock();
 			if (!ForceNodeBuild) P_LoadSegs (map);
-			unclock (times[9]);
+			times[9].Unclock();
 		}
 		else ForceNodeBuild = true;
 
@@ -3418,21 +3429,21 @@ void P_SetupLevel (char *lumpname, int position)
 		DPrintf ("BSP generation took %.3f sec (%d segs)\n", (endTime - startTime) * 0.001, numsegs);
 	}
 
-	clock (times[10]);
+	times[10].Clock();
 	P_LoadBlockMap (map);
-	unclock (times[10]);
+	times[10].Unclock();
 
-	clock (times[11]);
+	times[11].Clock();
 	P_LoadReject (map, buildmap);
-	unclock (times[11]);
+	times[11].Unclock();
 
-	clock (times[12]);
+	times[12].Clock();
 	P_GroupLines (buildmap);
-	unclock (times[12]);
+	times[12].Unclock();
 
-	clock (times[13]);
+	times[13].Clock();
 	P_FloodZones ();
-	unclock (times[13]);
+	times[13].Unclock();
 
 	bodyqueslot = 0;
 // phares 8/10/98: Clear body queue so the corpses from previous games are
@@ -3445,7 +3456,7 @@ void P_SetupLevel (char *lumpname, int position)
 
 	if (!buildmap)
 	{
-		clock (times[14]);
+		times[14].Clock();
 		P_SpawnThings(position);
 
 		for (i = 0; i < MAXPLAYERS; ++i)
@@ -3453,12 +3464,12 @@ void P_SetupLevel (char *lumpname, int position)
 			if (playeringame[i] && players[i].mo != NULL)
 				players[i].health = players[i].mo->health;
 		}
-		unclock (times[14]);
+		times[14].Unclock();
 
-		clock (times[15]);
+		times[15].Clock();
 		if (!map->HasBehavior && !map->isText)
 			P_TranslateTeleportThings ();	// [RH] Assign teleport destination TIDs
-		unclock (times[15]);
+		times[15].Unclock();
 	}
 	else
 	{
@@ -3473,9 +3484,9 @@ void P_SetupLevel (char *lumpname, int position)
 	// set up world state
 	P_SpawnSpecials ();
 
-	clock (times[16]);
+	times[16].Clock();
 	PO_Init ();	// Initialize the polyobjs
-	unclock (times[16]);
+	times[16].Unclock();
 
 	// if deathmatch, randomly spawn the active players
 	if (deathmatch)
@@ -3499,14 +3510,14 @@ void P_SetupLevel (char *lumpname, int position)
 	// [RH] Remove all particles
 	R_ClearParticles ();
 
-	clock (times[17]);
+	times[17].Clock();
 	// preload graphics and sounds
 	if (precache)
 	{
 		R_PrecacheLevel ();
 		S_PrecacheLevel ();
 	}
-	unclock (times[17]);
+	times[17].Unclock();
 
 	if (deathmatch)
 	{
@@ -3542,7 +3553,7 @@ void P_SetupLevel (char *lumpname, int position)
 				"init polys",
 				"precache"
 			};
-			Printf ("Time%3d:%10llu cycles (%s)\n", i, times[i], timenames[i]);
+			Printf ("Time%3d:%9.4f ms (%s)\n", i, times[i].Time() * 1e3, timenames[i]);
 		}
 	}
 	MapThingsConverted.Clear();

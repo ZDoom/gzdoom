@@ -52,6 +52,7 @@
 #include "i_sound.h"
 #include "i_music.h"
 #include "resource.h"
+#include "x86.h"
 
 #include "d_main.h"
 #include "d_net.h"
@@ -73,7 +74,6 @@ extern "C"
 {
 	double		SecondsPerCycle = 1e-8;
 	double		CyclesPerSecond = 1e8;		// 100 MHz
-	CPUInfo		CPU;
 }
 
 extern HWND Window, ConWindow, GameTitleWindow;
@@ -346,50 +346,7 @@ void SetLanguageIDs ()
 void I_Init (void)
 {
 	CheckCPUID(&CPU);
-	CalculateCPUSpeed ();
-
-	// Why does Intel right-justify this string?
-	char *f = CPU.CPUString, *t = f;
-
-	while (*f == ' ')
-	{
-		++f;
-	}
-	if (f != t)
-	{
-		while (*f != 0)
-		{
-			*t++ = *f++;
-		}
-	}
-
-	if (CPU.VendorID[0])
-	{
-		Printf ("CPU Vendor ID: %s\n", CPU.VendorID);
-		if (CPU.CPUString[0])
-		{
-			Printf ("  Name: %s\n", CPU.CPUString);
-		}
-		if (CPU.bIsAMD)
-		{
-			Printf ("  Family %d (%d), Model %d, Stepping %d\n",
-				CPU.Family, CPU.AMDFamily, CPU.AMDModel, CPU.AMDStepping);
-		}
-		else
-		{
-			Printf ("  Family %d, Model %d, Stepping %d\n",
-				CPU.Family, CPU.Model, CPU.Stepping);
-		}
-		Printf ("  Features:");
-		if (CPU.bMMX)		Printf (" MMX");
-		if (CPU.bMMXPlus)	Printf (" MMX+");
-		if (CPU.bSSE)		Printf (" SSE");
-		if (CPU.bSSE2)		Printf (" SSE2");
-		if (CPU.bSSE3)		Printf (" SSE3");
-		if (CPU.b3DNow)		Printf (" 3DNow!");
-		if (CPU.b3DNowPlus)	Printf (" 3DNow!+");
-		Printf ("\n");
-	}
+	DumpCPUInfo(&CPU);
 
 	// Use a timer event if possible
 	NewTicArrived = CreateEvent (NULL, FALSE, FALSE, NULL);
@@ -431,54 +388,6 @@ void I_Init (void)
 
 	atterm (I_ShutdownSound);
 	I_InitSound ();
-}
-
-void CalculateCPUSpeed ()
-{
-	LARGE_INTEGER freq;
-
-	QueryPerformanceFrequency (&freq);
-
-	if (freq.QuadPart != 0 && CPU.bRDTSC)
-	{
-		LARGE_INTEGER count1, count2;
-		DWORD minDiff;
-		cycle_t ClockCalibration = 0;
-
-		// Count cycles for at least 55 milliseconds.
-		// The performance counter is very low resolution compared to CPU
-		// speeds today, so the longer we count, the more accurate our estimate.
-		// On the other hand, we don't want to count too long, because we don't
-		// want the user to notice us spend time here, since most users will
-		// probably never use the performance statistics.
-		minDiff = freq.LowPart * 11 / 200;
-
-		// Minimize the chance of task switching during the testing by going very
-		// high priority. This is another reason to avoid timing for too long.
-		SetPriorityClass (GetCurrentProcess (), REALTIME_PRIORITY_CLASS);
-		SetThreadPriority (GetCurrentThread (), THREAD_PRIORITY_TIME_CRITICAL);
-		clock (ClockCalibration);
-		QueryPerformanceCounter (&count1);
-		do
-		{
-			QueryPerformanceCounter (&count2);
-		} while ((DWORD)((unsigned __int64)count2.QuadPart - (unsigned __int64)count1.QuadPart) < minDiff);
-		unclock (ClockCalibration);
-		QueryPerformanceCounter (&count2);
-		SetPriorityClass (GetCurrentProcess (), NORMAL_PRIORITY_CLASS);
-		SetThreadPriority (GetCurrentThread (), THREAD_PRIORITY_NORMAL);
-
-		CyclesPerSecond = (double)ClockCalibration *
-			(double)freq.QuadPart /
-			(double)((__int64)count2.QuadPart - (__int64)count1.QuadPart);
-		SecondsPerCycle = 1.0 / CyclesPerSecond;
-	}
-	else
-	{
-		Printf ("Can't determine CPU speed, so pretending.\n");
-	}
-
-	Printf ("CPU Speed: %.0f MHz\n", CyclesPerSecond / 1e6);
 }
 
 //

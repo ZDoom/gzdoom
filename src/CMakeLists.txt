@@ -124,10 +124,6 @@ else( WIN32 )
 	endif( FPU_CONTROL_DIR )
 endif( WIN32 )
 
-if( X64 )
-	set( NO_ASM ON )
-endif( X64 )
-
 # Decide on the name of the FMOD library we want to use.
 
 if( NOT FMOD_LIB_NAME AND MSVC )
@@ -231,15 +227,16 @@ if( NOT NO_ASM )
 		set( FIXRTEXT fixrtext )
 	endif( WIN32 )
 	message( STATUS "Selected assembler: ${ASSEMBLER}" )
-	MACRO( ADD_ASM_FILE infile )
-		set( ASM_OUTPUT_${infile} "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/zdoom.dir/${infile}${ASM_OUTPUT_EXTENSION}" )
+	MACRO( ADD_ASM_FILE indir infile )
+		set( ASM_OUTPUT_${infile} "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/zdoom.dir/${indir}/${infile}${ASM_OUTPUT_EXTENSION}" )
 		if( WIN32 )
 			set( FIXRTEXT_${infile} COMMAND ${FIXRTEXT} "${ASM_OUTPUT_${infile}}" )
 		endif( WIN32 )
 		add_custom_command( OUTPUT ${ASM_OUTPUT_${infile}}
-			COMMAND ${ASSEMBLER} ${ASM_FLAGS} -i${CMAKE_CURRENT_SOURCE_DIR}/ -o"${ASM_OUTPUT_${infile}}" "${CMAKE_CURRENT_SOURCE_DIR}/${infile}"
+			COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/zdoom.dir/${indir}
+			COMMAND ${ASSEMBLER} ${ASM_FLAGS} -i${CMAKE_CURRENT_SOURCE_DIR}/ -o"${ASM_OUTPUT_${infile}}" "${CMAKE_CURRENT_SOURCE_DIR}/${indir}/${infile}.asm"
 			${FIXRTEXT_${infile}}
-			DEPENDS ${infile} ${FIXRTEXT} )
+			DEPENDS ${indir}/${infile}.asm ${FIXRTEXT} )
 		set( ASM_SOURCES ${ASM_SOURCES} "${ASM_OUTPUT_${infile}}" )
 	ENDMACRO( ADD_ASM_FILE )
 endif( NOT NO_ASM )
@@ -285,6 +282,19 @@ endif( NOT STRNICMP_EXISTS )
 if( NOT MSVC )
 	add_definitions( -D__forceinline=inline )
 endif( NOT MSVC )
+
+if( UNIX )
+	CHECK_LIBRARY_EXISTS( rt clock_gettime "" CLOCK_GETTIME_IN_RT )
+	if( NOT CLOCK_GETTIME_IN_RT )
+		CHECK_FUNCTION_EXISTS( clock_gettime CLOCK_GETTIME_EXISTS )
+		if( NOT CLOCK_GETTIME_EXISTS )
+			message( STATUS "Could not find clock_gettime. Timing statistics will not be available." )
+			add_definitions( -DNO_CLOCK_GETTIME )
+		endif( NOT CLOCK_GETTIME_EXISTS )
+	else( NOT CLOCK_GETTIME_IN_RT )
+		set( ZDOOM_LIBS ${ZDOOM_LIBS} rt )
+	endif( NOT CLOCK_GETTIME_IN_RT )
+endif( UNIX )
 
 # Update svnrevision.h
 
@@ -342,13 +352,13 @@ endif( WIN32 )
 
 if( NOT NO_ASM )
 	if( X64 )
-		ADD_ASM_FILE( asm_x86_64/tmap3.asm )
+		ADD_ASM_FILE( asm_x86_64 tmap3 )
 	else( X64 )
-		ADD_ASM_FILE( asm_ia32/a.asm )
-		ADD_ASM_FILE( asm_ia32/misc.asm )
-		ADD_ASM_FILE( asm_ia32/tmap.asm )
-		ADD_ASM_FILE( asm_ia32/tmap2.asm )
-		ADD_ASM_FILE( asm_ia32/tmap3.asm )
+		ADD_ASM_FILE( asm_ia32 a )
+		ADD_ASM_FILE( asm_ia32 misc )
+		ADD_ASM_FILE( asm_ia32 tmap )
+		ADD_ASM_FILE( asm_ia32 tmap2 )
+		ADD_ASM_FILE( asm_ia32 tmap3 )
 	endif( X64 )
 	if( WIN32 )
 		if( NOT X64 )

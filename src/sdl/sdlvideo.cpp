@@ -375,9 +375,9 @@ void SDLFB::Update ()
 	LockCount = 0;
 	UpdatePending = false;
 
-	BlitCycles = 0;
-	SDLFlipCycles = 0;
-	clock (BlitCycles);
+	BlitCycles.Reset();
+	SDLFlipCycles.Reset();
+	BlitCycles.Clock();
 
 	if (SDL_LockSurface (Screen) == -1)
 		return;
@@ -405,11 +405,11 @@ void SDLFB::Update ()
 	
 	SDL_UnlockSurface (Screen);
 	
-	clock (SDLFlipCycles);
+	SDLFlipCycles.Clock();
 	SDL_Flip (Screen);
-	unclock (SDLFlipCycles);
+	SDLFlipCycles.Unclock();
 
-	unclock (BlitCycles);
+	BlitCycles.Unclock();
 
 	if (NeedGammaUpdate)
 	{
@@ -517,10 +517,7 @@ bool SDLFB::IsFullscreen ()
 ADD_STAT (blit)
 {
 	FString out;
-	out.Format (
-		"blit=%04.1f ms  flip=%04.1f ms",
-		(double)BlitCycles * SecondsPerCycle * 1000,
-		(double)SDLFlipCycles * SecondsPerCycle * 1000
-		);
+	out.Format ("blit=%04.1f ms  flip=%04.1f ms",
+		BlitCycles.Time() * 1e-3, SDLFlipCycles.TimeMS());
 	return out;
 }

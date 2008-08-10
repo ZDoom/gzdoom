@@ -76,7 +76,7 @@ static void PlayerLandedOnThing (AActor *mo, AActor *onmobj);
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern cycle_t BotSupportCycles;
-extern cycle_t BotWTG;
+extern int BotWTG;
 EXTERN_CVAR (Bool, r_drawfuzz);
 EXTERN_CVAR (Int,  cl_rockettrails)
 
@@ -2646,7 +2646,7 @@ void AActor::Tick ()
 		if (bglobal.botnum && consoleplayer == Net_Arbitrator && !demoplayback &&
 			((flags & (MF_SPECIAL|MF_MISSILE)) || (flags3 & MF3_ISMONSTER)))
 		{
-			clock (BotSupportCycles);
+			BotSupportCycles.Clock();
 			bglobal.m_Thinking = true;
 			for (i = 0; i < MAXPLAYERS; i++)
 			{
@@ -2681,7 +2681,7 @@ void AActor::Tick ()
 				}
 			}
 			bglobal.m_Thinking = false;
-			unclock (BotSupportCycles);
+			BotSupportCycles.Unclock();
 		}
 
 		//End of MC

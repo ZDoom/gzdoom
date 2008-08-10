@@ -1415,7 +1415,10 @@ void R_SetupBuffer ()
 
 void R_RenderActorView (AActor *actor, bool dontmaplines)
 {
-	WallCycles = PlaneCycles = MaskedCycles = WallScanCycles = 0;
+	WallCycles.Reset();
+	PlaneCycles.Reset();
+	MaskedCycles.Reset();
+	WallScanCycles.Reset();
 
 	R_SetupBuffer ();
 	R_SetupFrame (actor);
@@ -1459,7 +1462,7 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 	// [RH] Setup particles for this frame
 	R_FindParticleSubsectors ();
 
-	clock (WallCycles);
+	WallCycles.Clock();
 	DWORD savedflags = camera->renderflags;
 	// Never draw the player unless in chasecam mode
 	if (!r_showviewer)
@@ -1471,16 +1474,16 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 		R_RenderBSPNode (nodes + numnodes - 1);	// The head node is the last node output.
 	}
 	camera->renderflags = savedflags;
-	unclock (WallCycles);
+	WallCycles.Unclock();
 
 	NetUpdate ();
 
 	if (viewactive)
 	{
-		clock (PlaneCycles);
+		PlaneCycles.Clock();
 		R_DrawPlanes ();
 		R_DrawSkyBoxes ();
-		unclock (PlaneCycles);
+		PlaneCycles.Unclock();
 
 		// [RH] Walk through mirrors
 		size_t lastmirror = WallMirrors.Size ();
@@ -1491,9 +1494,9 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 
 		NetUpdate ();
 		
-		clock (MaskedCycles);
+		MaskedCycles.Clock();
 		R_DrawMasked ();
-		unclock (MaskedCycles);
+		MaskedCycles.Unclock();
 
 		NetUpdate ();
 

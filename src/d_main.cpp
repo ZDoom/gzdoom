@@ -479,8 +479,10 @@ void D_Display ()
 	if (nodrawers)
 		return; 				// for comparative timing / profiling
 	
-	cycle_t cycles = 0;
-	clock (cycles);
+	cycle_t cycles;
+	
+	cycles.Reset();
+	cycles.Clock();
 
 	if (players[consoleplayer].camera == NULL)
 	{
@@ -725,7 +727,7 @@ void D_Display ()
 		Net_WriteByte (DEM_WIPEOFF);
 	}
 
-	unclock (cycles);
+	cycles.Unclock();
 	FrameCycles = cycles;
 }
 
@@ -2635,11 +2637,7 @@ ADD_STAT (fps)
 {
 	FString out;
 	out.Format("frame=%04.1f ms  walls=%04.1f ms  planes=%04.1f ms  masked=%04.1f ms",
-		(double)FrameCycles * SecondsPerCycle * 1000,
-		(double)WallCycles * SecondsPerCycle * 1000,
-		(double)PlaneCycles * SecondsPerCycle * 1000,
-		(double)MaskedCycles * SecondsPerCycle * 1000
-		);
+		FrameCycles.TimeMS(), WallCycles.TimeMS(), PlaneCycles.TimeMS(), MaskedCycles.TimeMS());
 	return out;
 }
 
@@ -2651,14 +2649,15 @@ ADD_STAT (fps)
 //
 //==========================================================================
 
-static cycle_t bestwallcycles = INT_MAX;
+static double bestwallcycles = HUGE_VAL;
 
 ADD_STAT (wallcycles)
 {
 	FString out;
-	if (WallCycles && WallCycles < bestwallcycles)
-		bestwallcycles = WallCycles;
-	out.Format ("%llu", bestwallcycles);
+	double cycles = WallCycles.Time();
+	if (cycles && cycles < bestwallcycles)
+		bestwallcycles = cycles;
+	out.Format ("%g", bestwallcycles);
 	return out;
 }
 
@@ -2672,24 +2671,25 @@ ADD_STAT (wallcycles)
 
 CCMD (clearwallcycles)
 {
-	bestwallcycles = INT_MAX;
+	bestwallcycles = HUGE_VAL;
 }
 
 #if 1
 // To use these, also uncomment the clock/unclock in wallscan
-static cycle_t bestscancycles = INT_MAX;
+static double bestscancycles = HUGE_VAL;
 
 ADD_STAT (scancycles)
 {
 	FString out;
-	if (WallScanCycles && WallScanCycles < bestscancycles)
-		bestscancycles = WallScanCycles;
-	out.Format ("%llu", bestscancycles);
+	double scancycles = WallScanCycles.Time();
+	if (scancycles && scancycles < bestscancycles)
+		bestscancycles = scancycles;
+	out.Format ("%g", bestscancycles);
 	return out;
 }
 
 CCMD (clearscancycles)
 {
-	bestscancycles = INT_MAX;
+	bestscancycles = HUGE_VAL;
 }
 #endif

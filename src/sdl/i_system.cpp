@@ -48,6 +48,7 @@
 #include "i_video.h"
 #include "i_sound.h"
 #include "i_music.h"
+#include "x86.h"
 
 #include "d_main.h"
 #include "d_net.h"
@@ -63,22 +64,15 @@
 
 EXTERN_CVAR (String, language)
 
-#if defined(X86_ASM) || defined(X64_ASM)
-extern "C" void STACK_ARGS CheckMMX (CPUInfo *cpu);
-#endif
-
 extern "C"
 {
 	double		SecondsPerCycle = 1e-8;
 	double		CyclesPerSecond = 1e8;
-	CPUInfo		CPU;
 }
 
 #ifndef NO_GTK
 extern bool GtkAvailable;
 #endif
-
-void CalculateCPUSpeed ();
 
 DWORD LanguageIDs[4] =
 {
@@ -182,95 +176,12 @@ void SetLanguageIDs ()
 //
 void I_Init (void)
 {
-#if !defined(X86_ASM) && !defined(X64_ASM)
-    memset (&CPU, 0, sizeof(CPU));
-#else
-	CheckMMX (&CPU);
-	CalculateCPUSpeed ();
-	
-	// Why does Intel right-justify this string?
-	char *f = CPU.CPUString, *t = f;
-	
-	while (*f == ' ')
-	{
-		++f;
-	}
-	if (f != t)
-	{
-		while (*f != 0)
-		{
-			*t++ = *f++;
-		}
-	}
-#endif
-	if (CPU.VendorID[0])
-	{
-		Printf ("CPU Vendor ID: %s\n", CPU.VendorID);
-		if (CPU.CPUString[0])
-		{
-			Printf ("  Name: %s\n", CPU.CPUString);
-		}
-		if (CPU.bIsAMD)
-		{
-			Printf ("  Family %d (%d), Model %d, Stepping %d\n",
-				CPU.Family, CPU.AMDFamily, CPU.AMDModel, CPU.AMDStepping);
-		}
-		else
-		{
-			Printf ("  Family %d, Model %d, Stepping %d\n",
-				CPU.Family, CPU.Model, CPU.Stepping);
-		}
-		Printf ("  Features:");
-		if (CPU.bMMX)		Printf (" MMX");
-		if (CPU.bMMXPlus)	Printf (" MMX+");
-		if (CPU.bSSE)		Printf (" SSE");
-		if (CPU.bSSE2)		Printf (" SSE2");
-		if (CPU.bSSE3)		Printf (" SSE3");
-		if (CPU.b3DNow)		Printf (" 3DNow!");
-		if (CPU.b3DNowPlus)	Printf (" 3DNow!+");
-		Printf ("\n");
-	}
+	CheckCPUID (&CPU);
+	DumpCPUInfo (&CPU);
 
 	I_GetTime = I_GetTimePolled;
 	I_WaitForTic = I_WaitForTicPolled;
     I_InitSound ();
-}
-
-void CalculateCPUSpeed ()
-{
-	timeval start, stop, now;
-	cycle_t ClockCycles;
-	DWORD usec;
-
-	if (CPU.bRDTSC)
-	{
-		ClockCycles = 0;
-		clock (ClockCycles);
-		gettimeofday (&start, NULL);
-	
-		// Count cycles for at least 100 milliseconds.
-		// We don't have the same accuracy we can get with the Win32
-		// performance counters, so we have to time longer.
-		stop.tv_usec = start.tv_usec + 100000;
-		stop.tv_sec = start.tv_sec;
-		if (stop.tv_usec >= 1000000)
-		{
-			stop.tv_usec -= 1000000;
-			stop.tv_sec += 1;
-		}
-		do
-		{
-			gettimeofday (&now, NULL);
-		} while (timercmp (&now, &stop, <));
-	
-		unclock (ClockCycles);
-		gettimeofday (&now, NULL);
-		usec = now.tv_usec - start.tv_usec;
-
-		CyclesPerSecond = (double)ClockCycles * 1e6 / (double)usec;
-		SecondsPerCycle = 1.0 / CyclesPerSecond;
-	}
-	Printf (PRINT_HIGH, "CPU Speed: ~%f MHz\n", CyclesPerSecond / 1e6);
 }
 
 //

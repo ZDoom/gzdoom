@@ -1249,7 +1249,7 @@ DWORD (STACK_ARGS *dovline1)() = vlinec1;
 DWORD (STACK_ARGS *doprevline1)() = vlinec1;
 
 #ifdef X64_ASM
-extern "C" static void vlinetallasm4();
+extern "C" void vlinetallasm4();
 #define dovline4 vlinetallasm4
 extern "C" void setupvlinetallasm (int);
 #else

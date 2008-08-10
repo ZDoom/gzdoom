@@ -28,6 +28,7 @@
 #include "m_alloc.h"
 
 #include "i_system.h"
+#include "x86.h"
 #include "i_video.h"
 #include "r_local.h"
 #include "r_draw.h"

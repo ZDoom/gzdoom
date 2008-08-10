@@ -63,9 +63,6 @@ ClassReg DObject::RegistrationInfo =
 };
 _DECLARE_TI(DObject)
 
-static cycle_t StaleCycles;
-static int StaleCount;
-
 FMetaTable::~FMetaTable ()
 {
 	FreeMeta ();
@@ -529,10 +526,3 @@ void DObject::CheckIfSerialized () const
 	}
 }
 
-ADD_STAT (destroys)
-{
-	FString out;
-	out.Format ("Pointer fixing: %d in %04.1f ms",
-		StaleCount, SecondsPerCycle * (double)StaleCycles * 1000);
-	return out;
-}

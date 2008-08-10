@@ -1,3 +1,8 @@
+August 10, 2008
+- Changed Linux to use clock_gettime for profiling instead of rdtsc. This
+  avoids potential erroneous results on multicore and variable speed
+  processors.
+
 August 9, 2008 (Changes by Graf Zahl)
 - Converted the last of Hexen's inventory items to DECORATE so that I could
   export AInventory.

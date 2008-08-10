@@ -406,9 +406,11 @@ void DThinker::RunThinkers ()
 {
 	int i, count;
 
-	ThinkCycles = BotSupportCycles = BotWTG = 0;
+	ThinkCycles.Reset();
+	BotSupportCycles.Reset();
+	BotWTG.Reset();
 
-	clock (ThinkCycles);
+	ThinkCycles.Clock();
 
 	// Tick every thinker left from last time
 	for (i = STAT_FIRST_THINKING; i <= MAX_STATNUM; ++i)
@@ -426,7 +428,7 @@ void DThinker::RunThinkers ()
 		}
 	} while (count != 0);
 
-	unclock (ThinkCycles);
+	ThinkCycles.Unclock();
 }
 
 int DThinker::TickThinkers (FThinkerList *list, FThinkerList *dest)
@@ -571,7 +573,6 @@ DThinker *FThinkerIterator::Next ()
 ADD_STAT (think)
 {
 	FString out;
-	out.Format ("Think time = %04.1f ms",
-		SecondsPerCycle * (double)ThinkCycles * 1000);
+	out.Format ("Think time = %04.1f ms", ThinkCycles.TimeMS());
 	return out;
 }

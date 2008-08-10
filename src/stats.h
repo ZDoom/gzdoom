@@ -34,64 +34,76 @@
 #ifndef __STATS_H__
 #define __STATS_H__
 
-#include "i_system.h"
 #include "zstring.h"
-extern "C" double SecondsPerCycle;
-extern "C" double CyclesPerSecond;
 
-#if _MSC_VER
+#ifdef unix
 
-#define _interlockedbittestandset64			hackfixfor
-#define _interlockedbittestandreset64		x64compilation
-#define _interlockedbittestandset			wtfnmake
-#define _interlockedbittestandreset			doesittoo
-#include <intrin.h>
-#undef _interlockedbittestandset64
-#undef _interlockedbittestandreset64
-#undef _interlockedbittestandset
-#undef _interlockedbittestandreset
-
-typedef QWORD cycle_t;
-
-inline cycle_t GetClockCycle ()
+#ifdef NO_CLOCK_GETTIME
+class cycle_t
 {
-#if _M_X64
-	return __rdtsc();
+public:
+	cycle_t &operator= (const cycle_t &o) { return *this; }
+	void Reset() {}
+	void Clock() {}
+	void Unclock() {}
+	double Time() { return 0; }
+	double TimeMS() { return 0; }
+};
+
 #else
-	return CPU.bRDTSC ? __rdtsc() : 0;
-#endif
-}
 
-#elif defined(__GNUC__) && (defined(__i386__) || defined(__amd64__))
+#include <time.h>
 
-typedef unsigned long long cycle_t;
-
-inline cycle_t GetClockCycle()
+class cycle_t
 {
-	if (CPU.bRDTSC)
+public:
+	cycle_t &operator= (const cycle_t &o)
 	{
-		cycle_t res;
-		asm volatile ("rdtsc" : "=A" (res));
-		return res;
+		Sec = o.Sec;
+		return *this;
 	}
-	else
+
+	void Reset()
 	{
-		return 0;
-	}	
-}
+		Sec = 0;
+	}
+	
+	void Clock()
+	{
+		timespec ts;
+		
+		clock_gettime(CLOCK_MONOTONIC, &ts);
+		Sec -= ts.tv_sec + ts.tv_nsec * 1e-9;
+	}
+	
+	void Unclock()
+	{
+		timespec ts;
+		
+		clock_gettime(CLOCK_MONOTONIC, &ts);
+		Sec += ts.tv_sec + ts.tv_nsec * 1e-9;
+	}
+	
+	double Time()
+	{
+		return Sec;
+	}
+	
+	double TimeMS()
+	{
+		return Sec * 1e3;
+	}
+
+private:
+	double Sec;
+};
+
+#endif
 
 #else
 
-typedef QWORD cycle_t;
-
-inline cycle_t GetClockCycle ()
-{
-	return 0;
-}
+// Windows
 #endif
-
-#define clock(v)	{v -= GetClockCycle();}
-#define unclock(v)	{v += GetClockCycle() /*- 41*/;}
 
 class FStat
 {

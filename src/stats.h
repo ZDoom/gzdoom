@@ -103,6 +103,52 @@ private:
 #else
 
 // Windows
+extern double PerfToSec, PerfToMillisec;
+long long QueryPerfCounter();
+
+class cycle_t
+{
+public:
+	cycle_t &operator= (const cycle_t &o)
+	{
+		Counter = o.Counter;
+		return *this;
+	}
+
+	void Reset()
+	{
+		Counter = 0;
+	}
+	
+	void Clock()
+	{
+		// Not using QueryPerformanceCounter directly, so we don't need
+		// to pull in the Windows headers for every single file that
+		// wants to do some profiling.
+		long long time = QueryPerfCounter();
+		Counter -= time;
+	}
+	
+	void Unclock()
+	{
+		long long time = QueryPerfCounter();
+		Counter += time;
+	}
+	
+	double Time()
+	{
+		return Counter * PerfToSec;
+	}
+	
+	double TimeMS()
+	{
+		return Counter * PerfToMillisec;
+	}
+
+private:
+	long long Counter;
+};
+
 #endif
 
 class FStat

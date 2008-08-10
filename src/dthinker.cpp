@@ -42,7 +42,7 @@
 
 static cycle_t ThinkCycles;
 extern cycle_t BotSupportCycles;
-extern cycle_t BotWTG;
+extern int BotWTG;
 
 IMPLEMENT_CLASS (DThinker)
 
@@ -408,7 +408,7 @@ void DThinker::RunThinkers ()
 
 	ThinkCycles.Reset();
 	BotSupportCycles.Reset();
-	BotWTG.Reset();
+	BotWTG = 0;
 
 	ThinkCycles.Clock();
 

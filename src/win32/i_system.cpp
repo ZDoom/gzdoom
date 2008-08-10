@@ -53,6 +53,7 @@
 #include "i_music.h"
 #include "resource.h"
 #include "x86.h"
+#include "stats.h"
 
 #include "d_main.h"
 #include "d_net.h"
@@ -70,14 +71,10 @@ EXTERN_CVAR (String, language)
 
 extern void CheckCPUID(CPUInfo *cpu);
 
-extern "C"
-{
-	double		SecondsPerCycle = 1e-8;
-	double		CyclesPerSecond = 1e8;		// 100 MHz
-}
-
 extern HWND Window, ConWindow, GameTitleWindow;
 extern HINSTANCE g_hInst;
+
+double PerfToSec, PerfToMillisec;
 
 UINT TimerPeriod;
 UINT TimerEventID;
@@ -345,8 +342,14 @@ void SetLanguageIDs ()
 
 void I_Init (void)
 {
+	LARGE_INTEGER perf_freq;
+
 	CheckCPUID(&CPU);
 	DumpCPUInfo(&CPU);
+
+	QueryPerformanceFrequency(&perf_freq);
+	PerfToSec = 1 / double(perf_freq.QuadPart);
+	PerfToMillisec = 1000 / double(perf_freq.QuadPart);
 
 	// Use a timer event if possible
 	NewTicArrived = CreateEvent (NULL, FALSE, FALSE, NULL);
@@ -736,4 +739,12 @@ FString I_GetSteamPath()
 	}
 	path = "";
 	return path;
+}
+
+long long QueryPerfCounter()
+{
+	LARGE_INTEGER counter;
+
+	QueryPerformanceCounter(&counter);
+	return counter.QuadPart;
 }

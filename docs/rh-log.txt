@@ -1,4 +1,5 @@
 August 10, 2008
+- Changed Windows to use the performance counter instead of rdtsc.
 - Changed Linux to use clock_gettime for profiling instead of rdtsc. This
   avoids potential erroneous results on multicore and variable speed
   processors.

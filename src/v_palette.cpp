@@ -54,6 +54,7 @@
 #include "g_level.h"
 #include "st_stuff.h"
 #include "gi.h"
+#include "x86.h"
 
 extern "C" {
 FDynamicColormap NormalLight;

@@ -866,8 +866,8 @@ void D3DFB::Update ()
 		UploadPalette();
 	}
 
-	BlitCycles = 0;
-	clock (BlitCycles);
+	BlitCycles.Reset();
+	BlitCycles.Clock();
 
 	LockCount = 0;
 	HRESULT hr = D3DDevice->TestCooperativeLevel();
@@ -885,7 +885,7 @@ void D3DFB::Update ()
 		InScene = false;
 	}
 
-	unclock (BlitCycles);
+	BlitCycles.Unclock();
 	//LOG1 ("cycles = %d\n", BlitCycles);
 
 	Buffer = NULL;

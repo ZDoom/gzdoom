@@ -41,6 +41,7 @@
 
 #include "gi.h"
 #include "stats.h"
+#include "x86.h"
 
 #undef RANGECHECK
 

@@ -1095,8 +1095,8 @@ void DDrawFB::Update ()
 		}
 	}
 
-	BlitCycles = 0;
-	clock (BlitCycles);
+	BlitCycles.Reset();
+	BlitCycles.Clock();
 
 	if (BufferingNow)
 	{
@@ -1163,8 +1163,8 @@ void DDrawFB::Update ()
 		}
 	}
 
-	unclock (BlitCycles);
-	LOG1 ("cycles = %llu\n", BlitCycles);
+	BlitCycles.Unclock();
+	LOG1 ("cycles = %.1 ms\n", BlitCycles.TimeMS());
 
 	Buffer = NULL;
 	LockCount = 0;
@@ -1299,9 +1299,6 @@ void DDrawFB::Blank ()
 ADD_STAT (blit)
 {
 	FString out;
-	out.Format (
-		"blit=%04.1f ms",
-		(double)BlitCycles * SecondsPerCycle * 1000
-		);
+	out.Format ("blit=%04.1f ms", BlitCycles.TimeMS());
 	return out;
 }

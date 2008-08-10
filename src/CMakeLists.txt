@@ -425,7 +425,6 @@ add_executable( zdoom WIN32
 	hu_scores.cpp
 	i_net.cpp
 	info.cpp
-	infodefaults.cpp
 	lumpconfigfile.cpp
 	m_alloc.cpp
 	m_argv.cpp

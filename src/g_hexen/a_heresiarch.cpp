@@ -47,25 +47,12 @@
 #define BALL2_ANGLEOFFSET	(ANGLE_MAX/3)
 #define BALL3_ANGLEOFFSET	((ANGLE_MAX/3)*2)
 
-void A_SorcBallPop (AActor *actor);
-void A_SorcBallOrbit (AActor *actor);
-void A_SorcSpinBalls (AActor *actor);
-void A_SpeedBalls (AActor *actor);
 void A_SlowBalls (AActor *actor);
 void A_StopBalls (AActor *actor);
 void A_AccelBalls (AActor *actor);
 void A_DecelBalls (AActor *actor);
-void A_SorcBossAttack (AActor *actor);
-void A_SpawnFizzle (AActor *actor);
-void A_BounceCheck (AActor *actor);
-void A_DoBounceCheck (AActor *actor, const char *sound);
-void A_SorcFX1Seek (AActor *actor);
 void A_SorcOffense2 (AActor *actor);
-void A_SorcFX2Split (AActor *actor);
-void A_SorcFX2Orbit (AActor *actor);
-void A_SorcererBishopEntry (AActor *actor);
-void A_SpawnBishop (AActor *actor);
-void A_SorcFX4Check (AActor *actor);
+void A_DoBounceCheck (AActor *actor, const char *sound);
 
 static FRandom pr_heresiarch ("Heresiarch");
 
@@ -73,7 +60,7 @@ static FRandom pr_heresiarch ("Heresiarch");
 
 class AHeresiarch : public AActor
 {
-	DECLARE_ACTOR (AHeresiarch, AActor)
+	DECLARE_CLASS (AHeresiarch, AActor)
 public:
 	const PClass *StopBall;
 
@@ -81,82 +68,7 @@ public:
 	void Die (AActor *source, AActor *inflictor);
 };
 
-FState AHeresiarch::States[] =
-{
-#define S_SORC_SPAWN1 0
-	S_NORMAL (SORC, 'A',	3, NULL					    , &States[S_SORC_SPAWN1+1]),
-	S_NORMAL (SORC, 'A',	2, A_SorcSpinBalls		    , &States[S_SORC_SPAWN1+2]),
-	S_NORMAL (SORC, 'A',   10, A_Look				    , &States[S_SORC_SPAWN1+2]),
-
-#define S_SORC_WALK1 (S_SORC_SPAWN1+3)
-	S_NORMAL (SORC, 'A',	5, A_Chase				    , &States[S_SORC_WALK1+1]),
-	S_NORMAL (SORC, 'B',	5, A_Chase				    , &States[S_SORC_WALK1+2]),
-	S_NORMAL (SORC, 'C',	5, A_Chase				    , &States[S_SORC_WALK1+3]),
-	S_NORMAL (SORC, 'D',	5, A_Chase				    , &States[S_SORC_WALK1]),
-
-#define S_SORC_PAIN1 (S_SORC_WALK1+4)
-	S_NORMAL (SORC, 'G',	8, NULL					    , &States[S_SORC_PAIN1+1]),
-	S_NORMAL (SORC, 'G',	8, A_Pain				    , &States[S_SORC_WALK1]),
-
-#define S_SORC_ATK2_1 (S_SORC_PAIN1+2)
-	S_BRIGHT (SORC, 'F',	6, A_FaceTarget			    , &States[S_SORC_ATK2_1+1]),
-	S_BRIGHT (SORC, 'F',	6, A_SpeedBalls			    , &States[S_SORC_ATK2_1+2]),
-	S_BRIGHT (SORC, 'F',	6, A_FaceTarget			    , &States[S_SORC_ATK2_1+2]),
-
-#define S_SORC_ATTACK1 (S_SORC_ATK2_1+3)
-	S_BRIGHT (SORC, 'E',	6, NULL					    , &States[S_SORC_ATTACK1+1]),
-	S_BRIGHT (SORC, 'E',	6, A_SpawnFizzle		    , &States[S_SORC_ATTACK1+2]),
-	S_BRIGHT (SORC, 'E',	5, A_FaceTarget			    , &States[S_SORC_ATTACK1+1]),
-	S_BRIGHT (SORC, 'E',	2, NULL					    , &States[S_SORC_ATTACK1+4]),
-	S_BRIGHT (SORC, 'E',	2, A_SorcBossAttack		    , &States[S_SORC_WALK1]),
-
-#define S_SORC_DIE1 (S_SORC_ATTACK1+5)
-	S_BRIGHT (SORC, 'H',	5, NULL					    , &States[S_SORC_DIE1+1]),
-	S_BRIGHT (SORC, 'I',	5, A_FaceTarget			    , &States[S_SORC_DIE1+2]),
-	S_BRIGHT (SORC, 'J',	5, A_Scream				    , &States[S_SORC_DIE1+3]),
-	S_BRIGHT (SORC, 'K',	5, NULL					    , &States[S_SORC_DIE1+4]),
-	S_BRIGHT (SORC, 'L',	5, NULL					    , &States[S_SORC_DIE1+5]),
-	S_BRIGHT (SORC, 'M',	5, NULL					    , &States[S_SORC_DIE1+6]),
-	S_BRIGHT (SORC, 'N',	5, NULL					    , &States[S_SORC_DIE1+7]),
-	S_BRIGHT (SORC, 'O',	5, NULL					    , &States[S_SORC_DIE1+8]),
-	S_BRIGHT (SORC, 'P',	5, NULL					    , &States[S_SORC_DIE1+9]),
-	S_BRIGHT (SORC, 'Q',	5, NULL					    , &States[S_SORC_DIE1+10]),
-	S_BRIGHT (SORC, 'R',	5, NULL					    , &States[S_SORC_DIE1+11]),
-	S_BRIGHT (SORC, 'S',	5, NULL					    , &States[S_SORC_DIE1+12]),
-	S_BRIGHT (SORC, 'T',	5, NULL					    , &States[S_SORC_DIE1+13]),
-	S_BRIGHT (SORC, 'U',	5, A_NoBlocking			    , &States[S_SORC_DIE1+14]),
-	S_BRIGHT (SORC, 'V',	5, NULL					    , &States[S_SORC_DIE1+15]),
-	S_BRIGHT (SORC, 'W',	5, NULL					    , &States[S_SORC_DIE1+16]),
-	S_BRIGHT (SORC, 'X',	5, NULL					    , &States[S_SORC_DIE1+17]),
-	S_BRIGHT (SORC, 'Y',	5, NULL					    , &States[S_SORC_DIE1+18]),
-	S_BRIGHT (SORC, 'Z',   -1, NULL					    , NULL),
-};
-
-IMPLEMENT_ACTOR (AHeresiarch, Hexen, 10080, 0)
-	PROP_SpawnHealth (5000)
-	PROP_PainChance (10)
-	PROP_SpeedFixed (16)
-	PROP_RadiusFixed (40)
-	PROP_HeightFixed (110)
-	PROP_Mass (500)
-	PROP_Damage (9)
-	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_NOBLOOD|MF_COUNTKILL)
-	PROP_Flags2 (MF2_FLOORCLIP|MF2_PASSMOBJ|MF2_BOSS|MF2_PUSHWALL|MF2_MCROSS)
-	PROP_Flags3 (MF3_DONTMORPH|MF3_NOTARGET)
-	PROP_Flags4 (MF4_NOICEDEATH|MF4_DEFLECT)
-
-	PROP_SpawnState (S_SORC_SPAWN1)
-	PROP_SeeState (S_SORC_WALK1)
-	PROP_PainState (S_SORC_PAIN1)
-	PROP_MissileState (S_SORC_ATK2_1)
-	PROP_DeathState (S_SORC_DIE1)
-
-	PROP_SeeSound ("SorcererSight")
-	PROP_PainSound ("SorcererPain")
-	PROP_DeathSound ("SorcererDeathScream")
-	PROP_ActiveSound ("SorcererActive")
-	PROP_Obituary ("$OB_HERESIARCH")
-END_DEFAULTS
+IMPLEMENT_CLASS (AHeresiarch)
 
 void AHeresiarch::Serialize (FArchive &arc)
 {
@@ -182,7 +94,7 @@ void AHeresiarch::Die (AActor *source, AActor *inflictor)
 
 class ASorcBall : public AActor
 {
-	DECLARE_STATELESS_ACTOR (ASorcBall, AActor)
+	DECLARE_CLASS (ASorcBall, AActor)
 public:
 	virtual void DoFireSpell ();
 	virtual void SorcUpdateBallAngle ();
@@ -195,36 +107,19 @@ public:
 		arc << AngleOffset;
 	}
 
-	void GetExplodeParms (int &damage, int &distance, bool &hurtSource)
-	{
-		distance = 255;
-		damage = 255;
-		SeeSound = 0;	// don't play bounce
-	}
-
 	bool SpecialBlastHandling (AActor *source, fixed_t strength)
 	{ // don't blast sorcerer balls
 		return false;
 	}
 };
 
-IMPLEMENT_STATELESS_ACTOR (ASorcBall, Hexen, -1, 0)
-	PROP_SpeedFixed (10)
-	PROP_RadiusFixed (5)
-	PROP_HeightFixed (5)
-	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY|MF_MISSILE)
-	PROP_Flags2 (MF2_HEXENBOUNCE|MF2_NOTELEPORT)
-	PROP_Flags3 (MF3_FULLVOLDEATH|MF3_CANBOUNCEWATER|MF3_NOWALLBOUNCESND)
-
-	PROP_SeeSound ("SorcererBallBounce")
-	PROP_DeathSound ("SorcererBigBallExplode")
-END_DEFAULTS
+IMPLEMENT_CLASS (ASorcBall)
 
 // First ball (purple) - fires projectiles ----------------------------------
 
 class ASorcBall1 : public ASorcBall
 {
-	DECLARE_ACTOR (ASorcBall1, ASorcBall)
+	DECLARE_CLASS (ASorcBall1, ASorcBall)
 public:
 	void BeginPlay ()
 	{
@@ -236,49 +131,13 @@ public:
 	virtual void CastSorcererSpell ();
 };
 
-FState ASorcBall1::States[] =
-{
-#define S_SORCBALL1_1 0
-	S_NORMAL (SBMP, 'A',	2, A_SorcBallOrbit		    , &States[S_SORCBALL1_1+1]),
-	S_NORMAL (SBMP, 'B',	2, A_SorcBallOrbit		    , &States[S_SORCBALL1_1+2]),
-	S_NORMAL (SBMP, 'C',	2, A_SorcBallOrbit		    , &States[S_SORCBALL1_1+3]),
-	S_NORMAL (SBMP, 'D',	2, A_SorcBallOrbit		    , &States[S_SORCBALL1_1+4]),
-	S_NORMAL (SBMP, 'E',	2, A_SorcBallOrbit		    , &States[S_SORCBALL1_1+5]),
-	S_NORMAL (SBMP, 'F',	2, A_SorcBallOrbit		    , &States[S_SORCBALL1_1+6]),
-	S_NORMAL (SBMP, 'G',	2, A_SorcBallOrbit		    , &States[S_SORCBALL1_1+7]),
-	S_NORMAL (SBMP, 'H',	2, A_SorcBallOrbit		    , &States[S_SORCBALL1_1+8]),
-	S_NORMAL (SBMP, 'I',	2, A_SorcBallOrbit		    , &States[S_SORCBALL1_1+9]),
-	S_NORMAL (SBMP, 'J',	2, A_SorcBallOrbit		    , &States[S_SORCBALL1_1+10]),
-	S_NORMAL (SBMP, 'K',	2, A_SorcBallOrbit		    , &States[S_SORCBALL1_1+11]),
-	S_NORMAL (SBMP, 'L',	2, A_SorcBallOrbit		    , &States[S_SORCBALL1_1+12]),
-	S_NORMAL (SBMP, 'M',	2, A_SorcBallOrbit		    , &States[S_SORCBALL1_1+13]),
-	S_NORMAL (SBMP, 'N',	2, A_SorcBallOrbit		    , &States[S_SORCBALL1_1+14]),
-	S_NORMAL (SBMP, 'O',	2, A_SorcBallOrbit		    , &States[S_SORCBALL1_1+15]),
-	S_NORMAL (SBMP, 'P',	2, A_SorcBallOrbit		    , &States[S_SORCBALL1_1]),
-
-#define S_SORCBALL1_D1 (S_SORCBALL1_1+16)
-	S_NORMAL (SBMP, 'A',	5, A_SorcBallPop		    , &States[S_SORCBALL1_D1+1]),
-	S_NORMAL (SBMP, 'B',	2, A_BounceCheck		    , &States[S_SORCBALL1_D1+1]),
-
-#define S_SORCBALL1_D5 (S_SORCBALL1_D1+2)
-	S_NORMAL (SBS4, 'D',	5, A_Explode			    , &States[S_SORCBALL1_D5+1]),
-	S_NORMAL (SBS4, 'E',	5, NULL					    , &States[S_SORCBALL1_D5+2]),
-	S_NORMAL (SBS4, 'F',	6, NULL					    , &States[S_SORCBALL1_D5+3]),
-	S_NORMAL (SBS4, 'G',	6, NULL					    , &States[S_SORCBALL1_D5+4]),
-	S_NORMAL (SBS4, 'H',	6, NULL					    , NULL),
-};
-
-IMPLEMENT_ACTOR (ASorcBall1, Hexen, -1, 0)
-	PROP_SpawnState (S_SORCBALL1_1)
-	PROP_PainState (S_SORCBALL1_D1)
-	PROP_DeathState (S_SORCBALL1_D5)
-END_DEFAULTS
+IMPLEMENT_CLASS (ASorcBall1)
 
 // Second ball (blue) - generates the shield --------------------------------
 
 class ASorcBall2 : public ASorcBall
 {
-	DECLARE_ACTOR (ASorcBall2, ASorcBall)
+	DECLARE_CLASS (ASorcBall2, ASorcBall)
 public:
 	void BeginPlay ()
 	{
@@ -288,49 +147,13 @@ public:
 	virtual void CastSorcererSpell ();
 };
 
-FState ASorcBall2::States[] =
-{
-#define S_SORCBALL2_1 0
-	S_NORMAL (SBMB, 'A',	2, A_SorcBallOrbit		    , &States[S_SORCBALL2_1+1]),
-	S_NORMAL (SBMB, 'B',	2, A_SorcBallOrbit		    , &States[S_SORCBALL2_1+2]),
-	S_NORMAL (SBMB, 'C',	2, A_SorcBallOrbit		    , &States[S_SORCBALL2_1+3]),
-	S_NORMAL (SBMB, 'D',	2, A_SorcBallOrbit		    , &States[S_SORCBALL2_1+4]),
-	S_NORMAL (SBMB, 'E',	2, A_SorcBallOrbit		    , &States[S_SORCBALL2_1+5]),
-	S_NORMAL (SBMB, 'F',	2, A_SorcBallOrbit		    , &States[S_SORCBALL2_1+6]),
-	S_NORMAL (SBMB, 'G',	2, A_SorcBallOrbit		    , &States[S_SORCBALL2_1+7]),
-	S_NORMAL (SBMB, 'H',	2, A_SorcBallOrbit		    , &States[S_SORCBALL2_1+8]),
-	S_NORMAL (SBMB, 'I',	2, A_SorcBallOrbit		    , &States[S_SORCBALL2_1+9]),
-	S_NORMAL (SBMB, 'J',	2, A_SorcBallOrbit		    , &States[S_SORCBALL2_1+10]),
-	S_NORMAL (SBMB, 'K',	2, A_SorcBallOrbit		    , &States[S_SORCBALL2_1+11]),
-	S_NORMAL (SBMB, 'L',	2, A_SorcBallOrbit		    , &States[S_SORCBALL2_1+12]),
-	S_NORMAL (SBMB, 'M',	2, A_SorcBallOrbit		    , &States[S_SORCBALL2_1+13]),
-	S_NORMAL (SBMB, 'N',	2, A_SorcBallOrbit		    , &States[S_SORCBALL2_1+14]),
-	S_NORMAL (SBMB, 'O',	2, A_SorcBallOrbit		    , &States[S_SORCBALL2_1+15]),
-	S_NORMAL (SBMB, 'P',	2, A_SorcBallOrbit		    , &States[S_SORCBALL2_1]),
-
-#define S_SORCBALL2_D1 (S_SORCBALL2_1+16)
-	S_NORMAL (SBMB, 'A',	5, A_SorcBallPop		    , &States[S_SORCBALL2_D1+1]),
-	S_NORMAL (SBMB, 'B',	2, A_BounceCheck		    , &States[S_SORCBALL2_D1+1]),
-
-#define S_SORCBALL2_D5 (S_SORCBALL2_D1+2)
-	S_NORMAL (SBS3, 'D',	5, A_Explode			    , &States[S_SORCBALL2_D5+1]),
-	S_NORMAL (SBS3, 'E',	5, NULL					    , &States[S_SORCBALL2_D5+2]),
-	S_NORMAL (SBS3, 'F',	6, NULL					    , &States[S_SORCBALL2_D5+3]),
-	S_NORMAL (SBS3, 'G',	6, NULL					    , &States[S_SORCBALL2_D5+4]),
-	S_NORMAL (SBS3, 'H',	6, NULL					    , NULL),
-};
-
-IMPLEMENT_ACTOR (ASorcBall2, Hexen, -1, 0)
-	PROP_SpawnState (S_SORCBALL2_1)
-	PROP_PainState (S_SORCBALL2_D1)
-	PROP_DeathState (S_SORCBALL2_D5)
-END_DEFAULTS
+IMPLEMENT_CLASS (ASorcBall2)
 
 // Third ball (green) - summons Bishops -------------------------------------
 
 class ASorcBall3 : public ASorcBall
 {
-	DECLARE_ACTOR (ASorcBall3, ASorcBall)
+	DECLARE_CLASS (ASorcBall3, ASorcBall)
 public:
 	void BeginPlay ()
 	{
@@ -340,54 +163,15 @@ public:
 	virtual void CastSorcererSpell ();
 };
 
-FState ASorcBall3::States[] =
-{
-#define S_SORCBALL3_1 0
-	S_NORMAL (SBMG, 'A',	2, A_SorcBallOrbit		    , &States[S_SORCBALL3_1+1]),
-	S_NORMAL (SBMG, 'B',	2, A_SorcBallOrbit		    , &States[S_SORCBALL3_1+2]),
-	S_NORMAL (SBMG, 'C',	2, A_SorcBallOrbit		    , &States[S_SORCBALL3_1+3]),
-	S_NORMAL (SBMG, 'D',	2, A_SorcBallOrbit		    , &States[S_SORCBALL3_1+4]),
-	S_NORMAL (SBMG, 'E',	2, A_SorcBallOrbit		    , &States[S_SORCBALL3_1+5]),
-	S_NORMAL (SBMG, 'F',	2, A_SorcBallOrbit		    , &States[S_SORCBALL3_1+6]),
-	S_NORMAL (SBMG, 'G',	2, A_SorcBallOrbit		    , &States[S_SORCBALL3_1+7]),
-	S_NORMAL (SBMG, 'H',	2, A_SorcBallOrbit		    , &States[S_SORCBALL3_1+8]),
-	S_NORMAL (SBMG, 'I',	2, A_SorcBallOrbit		    , &States[S_SORCBALL3_1+9]),
-	S_NORMAL (SBMG, 'J',	2, A_SorcBallOrbit		    , &States[S_SORCBALL3_1+10]),
-	S_NORMAL (SBMG, 'K',	2, A_SorcBallOrbit		    , &States[S_SORCBALL3_1+11]),
-	S_NORMAL (SBMG, 'L',	2, A_SorcBallOrbit		    , &States[S_SORCBALL3_1+12]),
-	S_NORMAL (SBMG, 'M',	2, A_SorcBallOrbit		    , &States[S_SORCBALL3_1+13]),
-	S_NORMAL (SBMG, 'N',	2, A_SorcBallOrbit		    , &States[S_SORCBALL3_1+14]),
-	S_NORMAL (SBMG, 'O',	2, A_SorcBallOrbit		    , &States[S_SORCBALL3_1+15]),
-	S_NORMAL (SBMG, 'P',	2, A_SorcBallOrbit		    , &States[S_SORCBALL3_1]),
-
-#define S_SORCBALL3_D1 (S_SORCBALL3_1+16)
-	S_NORMAL (SBMG, 'A',	5, A_SorcBallPop		    , &States[S_SORCBALL3_D1+1]),
-	S_NORMAL (SBMG, 'B',	2, A_BounceCheck		    , &States[S_SORCBALL3_D1+1]),
-
-#define S_SORCBALL3_D5 (S_SORCBALL3_D1+2)
-	S_NORMAL (SBS3, 'D',	5, A_Explode			    , &States[S_SORCBALL3_D5+1]),
-	S_NORMAL (SBS3, 'E',	5, NULL					    , &States[S_SORCBALL3_D5+2]),
-	S_NORMAL (SBS3, 'F',	6, NULL					    , &States[S_SORCBALL3_D5+3]),
-	S_NORMAL (SBS3, 'G',	6, NULL					    , &States[S_SORCBALL3_D5+4]),
-	S_NORMAL (SBS3, 'H',	6, NULL					    , NULL),
-};
-
-IMPLEMENT_ACTOR (ASorcBall3, Hexen, -1, 0)
-	PROP_SpawnState (S_SORCBALL3_1)
-	PROP_PainState (S_SORCBALL3_D1)
-	PROP_DeathState (S_SORCBALL3_D5)
-END_DEFAULTS
+IMPLEMENT_CLASS (ASorcBall3)
 
 // Sorcerer spell 1 (The burning, bouncing head thing) ----------------------
 
+/*
 class ASorcFX1 : public AActor
 {
-	DECLARE_ACTOR (ASorcFX1, AActor)
+	DECLARE_CLASS (ASorcFX1, AActor)
 public:
-	void GetExplodeParms (int &damage, int &distance, bool &hurtSource)
-	{
-		damage = 30;
-	}
 	bool FloorBounceMissile (secplane_t &plane)
 	{
 		fixed_t orgmomz = momz;
@@ -400,236 +184,8 @@ public:
 		return true;
 	}
 };
-
-FState ASorcFX1::States[] =
-{
-#define S_SORCFX1_1 0
-	S_BRIGHT (SBS1, 'A',	2, NULL					    , &States[S_SORCFX1_1+1]),
-	S_BRIGHT (SBS1, 'B',	3, A_SorcFX1Seek		    , &States[S_SORCFX1_1+2]),
-	S_BRIGHT (SBS1, 'C',	3, A_SorcFX1Seek		    , &States[S_SORCFX1_1+3]),
-	S_BRIGHT (SBS1, 'D',	3, A_SorcFX1Seek		    , &States[S_SORCFX1_1]),
-
-#define S_SORCFX1_D1 (S_SORCFX1_1+4)
-	S_BRIGHT (FHFX, 'S',	2, A_Explode			    , &States[S_SORCFX1_D1+1]),
-	S_BRIGHT (FHFX, 'S',	6, NULL					    , &States[S_SORCFX1_D1+2]),
-	S_BRIGHT (FHFX, 'S',	6, NULL					    , NULL),
-};
-
-IMPLEMENT_ACTOR (ASorcFX1, Hexen, -1, 0)
-	PROP_SpeedFixed (7)
-	PROP_RadiusFixed (5)
-	PROP_HeightFixed (5)
-	PROP_Flags (MF_NOBLOCKMAP|MF_MISSILE)
-	PROP_Flags2 (MF2_HEXENBOUNCE|MF2_NOTELEPORT)
-	PROP_Flags3 (MF3_FULLVOLDEATH|MF3_CANBOUNCEWATER|MF3_NOWALLBOUNCESND)
-
-	PROP_SpawnState (S_SORCFX1_1)
-	PROP_DeathState (S_SORCFX1_D1)
-	PROP_XDeathState (S_SORCFX1_D1)
-
-	PROP_SeeSound ("SorcererBallBounce")
-	PROP_DeathSound ("SorcererHeadScream")
-END_DEFAULTS
-
-// Sorcerer spell 2 (The visible part of the shield) ------------------------
-
-class ASorcFX2 : public AActor
-{
-	DECLARE_ACTOR (ASorcFX2, AActor)
-};
-
-FState ASorcFX2::States[] =
-{
-#define S_SORCFX2_SPLIT1 0
-	S_BRIGHT (SBS2, 'A',	3, A_SorcFX2Split		    , &States[S_SORCFX2_SPLIT1]),
-
-#define S_SORCFX2T1 (S_SORCFX2_SPLIT1+1)
-	S_NORMAL (SBS2, 'A',   10, NULL					    , NULL),
-
-#define S_SORCFX2_ORBIT1 (S_SORCFX2T1+1)
-	S_BRIGHT (SBS2, 'A',	2, A_SorcFX2Orbit		    , &States[S_SORCFX2_ORBIT1+1]),
-	S_BRIGHT (SBS2, 'B',	2, A_SorcFX2Orbit		    , &States[S_SORCFX2_ORBIT1+2]),
-	S_BRIGHT (SBS2, 'C',	2, A_SorcFX2Orbit		    , &States[S_SORCFX2_ORBIT1+3]),
-	S_BRIGHT (SBS2, 'D',	2, A_SorcFX2Orbit		    , &States[S_SORCFX2_ORBIT1+4]),
-	S_BRIGHT (SBS2, 'E',	2, A_SorcFX2Orbit		    , &States[S_SORCFX2_ORBIT1+5]),
-	S_BRIGHT (SBS2, 'F',	2, A_SorcFX2Orbit		    , &States[S_SORCFX2_ORBIT1+6]),
-	S_BRIGHT (SBS2, 'G',	2, A_SorcFX2Orbit		    , &States[S_SORCFX2_ORBIT1+7]),
-	S_BRIGHT (SBS2, 'H',	2, A_SorcFX2Orbit		    , &States[S_SORCFX2_ORBIT1+8]),
-	S_BRIGHT (SBS2, 'I',	2, A_SorcFX2Orbit		    , &States[S_SORCFX2_ORBIT1+9]),
-	S_BRIGHT (SBS2, 'J',	2, A_SorcFX2Orbit		    , &States[S_SORCFX2_ORBIT1+10]),
-	S_BRIGHT (SBS2, 'K',	2, A_SorcFX2Orbit		    , &States[S_SORCFX2_ORBIT1+11]),
-	S_BRIGHT (SBS2, 'L',	2, A_SorcFX2Orbit		    , &States[S_SORCFX2_ORBIT1+12]),
-	S_BRIGHT (SBS2, 'M',	2, A_SorcFX2Orbit		    , &States[S_SORCFX2_ORBIT1+13]),
-	S_BRIGHT (SBS2, 'N',	2, A_SorcFX2Orbit		    , &States[S_SORCFX2_ORBIT1+14]),
-	S_BRIGHT (SBS2, 'O',	2, A_SorcFX2Orbit		    , &States[S_SORCFX2_ORBIT1+15]),
-	S_BRIGHT (SBS2, 'P',	2, A_SorcFX2Orbit		    , &States[S_SORCFX2_ORBIT1]),
-};
-
-IMPLEMENT_ACTOR (ASorcFX2, Hexen, -1, 0)
-	PROP_SpeedFixed (15)
-	PROP_RadiusFixed (5)
-	PROP_HeightFixed (5)
-	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
-	PROP_Flags2 (MF2_NOTELEPORT)
-
-	PROP_SpawnState (S_SORCFX2_SPLIT1)
-	PROP_DeathState (S_SORCFX2T1)
-END_DEFAULTS
-
-// The translucent trail behind SorcFX2 -------------------------------------
-
-class ASorcFX2T1 : public ASorcFX2
-{
-	DECLARE_STATELESS_ACTOR (ASorcFX2T1, ASorcFX2)
-};
-
-IMPLEMENT_STATELESS_ACTOR (ASorcFX2T1, Hexen, -1, 0)
-	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
-	PROP_Flags2 (MF2_NOTELEPORT)
-	PROP_RenderStyle (STYLE_Translucent)
-	PROP_Alpha (HX_ALTSHADOW)
-
-	PROP_SpawnState (S_SORCFX2T1)
-END_DEFAULTS
-
-// Sorcerer spell 3 (The Bishop spawner) ------------------------------------
-
-class ASorcFX3 : public AActor
-{
-	DECLARE_ACTOR (ASorcFX3, AActor)
-};
-
-FState ASorcFX3::States[] =
-{
-#define S_SORCFX3_1 0
-	S_BRIGHT (SBS3, 'A',	2, NULL					    , &States[S_SORCFX3_1+1]),
-	S_BRIGHT (SBS3, 'B',	2, NULL					    , &States[S_SORCFX3_1+2]),
-	S_BRIGHT (SBS3, 'C',	2, NULL					    , &States[S_SORCFX3_1]),
-
-#define S_BISHMORPH1 (S_SORCFX3_1+3)
-	S_BRIGHT (SBS3, 'A',	4, NULL					    , &States[S_BISHMORPH1+1]),
-	S_NORMAL (BISH, 'P',	4, A_SorcererBishopEntry    , &States[S_BISHMORPH1+2]),
-	S_NORMAL (BISH, 'O',	4, NULL					    , &States[S_BISHMORPH1+3]),
-	S_NORMAL (BISH, 'N',	4, NULL					    , &States[S_BISHMORPH1+4]),
-	S_NORMAL (BISH, 'M',	3, NULL					    , &States[S_BISHMORPH1+5]),
-	S_NORMAL (BISH, 'L',	3, NULL					    , &States[S_BISHMORPH1+6]),
-	S_NORMAL (BISH, 'K',	3, NULL					    , &States[S_BISHMORPH1+7]),
-	S_NORMAL (BISH, 'J',	3, NULL					    , &States[S_BISHMORPH1+8]),
-	S_NORMAL (BISH, 'I',	3, NULL					    , &States[S_BISHMORPH1+9]),
-	S_NORMAL (BISH, 'H',	3, NULL					    , &States[S_BISHMORPH1+10]),
-	S_NORMAL (BISH, 'G',	3, A_SpawnBishop		    , NULL),
-};
-
-IMPLEMENT_ACTOR (ASorcFX3, Hexen, -1, 0)
-	PROP_SpeedFixed (15)
-	PROP_RadiusFixed (22)
-	PROP_HeightFixed (65)
-	PROP_Flags (MF_NOBLOCKMAP|MF_MISSILE)
-	PROP_Flags2 (MF2_NOTELEPORT)
-
-	PROP_SpawnState (S_SORCFX3_1)
-	PROP_DeathState (S_BISHMORPH1)
-
-	PROP_SeeSound ("SorcererBishopSpawn")
-END_DEFAULTS
-
-// The Bishop spawner's explosion animation ---------------------------------
-
-class ASorcFX3Explosion : public AActor
-{
-	DECLARE_ACTOR (ASorcFX3Explosion, AActor)
-};
-
-FState ASorcFX3Explosion::States[] =
-{
-#define S_SORCFX3_EXP1 0
-	S_NORMAL (SBS3, 'D',	3, NULL					    , &States[S_SORCFX3_EXP1+1]),
-	S_NORMAL (SBS3, 'E',	3, NULL					    , &States[S_SORCFX3_EXP1+2]),
-	S_NORMAL (SBS3, 'F',	3, NULL					    , &States[S_SORCFX3_EXP1+3]),
-	S_NORMAL (SBS3, 'G',	3, NULL					    , &States[S_SORCFX3_EXP1+4]),
-	S_NORMAL (SBS3, 'H',	3, NULL					    , NULL),
-};
-
-IMPLEMENT_ACTOR (ASorcFX3Explosion, Hexen, -1, 0)
-	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
-	PROP_Flags2 (MF2_NOTELEPORT)
-	PROP_RenderStyle (STYLE_Translucent)
-	PROP_Alpha (HX_ALTSHADOW)
-
-	PROP_SpawnState (S_SORCFX3_EXP1)
-END_DEFAULTS
-
-
-// Sorcerer spell 4 (The purple projectile) ---------------------------------
-
-class ASorcFX4 : public AActor
-{
-	DECLARE_ACTOR (ASorcFX4, AActor)
-public:
-	void GetExplodeParms (int &damage, int &distance, bool &hurtSource)
-	{
-		damage = 20;
-	}
-};
-
-FState ASorcFX4::States[] =
-{
-#define S_SORCFX4_1 0
-	S_BRIGHT (SBS4, 'A',	2, A_SorcFX4Check		    , &States[S_SORCFX4_1+1]),
-	S_BRIGHT (SBS4, 'B',	2, A_SorcFX4Check		    , &States[S_SORCFX4_1+2]),
-	S_BRIGHT (SBS4, 'C',	2, A_SorcFX4Check		    , &States[S_SORCFX4_1]),
-
-#define S_SORCFX4_D1 (S_SORCFX4_1+3)
-	S_BRIGHT (SBS4, 'D',	2, NULL					    , &States[S_SORCFX4_D1+1]),
-	S_BRIGHT (SBS4, 'E',	2, A_Explode			    , &States[S_SORCFX4_D1+2]),
-	S_BRIGHT (SBS4, 'F',	2, NULL					    , &States[S_SORCFX4_D1+3]),
-	S_BRIGHT (SBS4, 'G',	2, NULL					    , &States[S_SORCFX4_D1+4]),
-	S_BRIGHT (SBS4, 'H',	2, NULL					    , NULL),
-};
-
-IMPLEMENT_ACTOR (ASorcFX4, Hexen, -1, 0)
-	PROP_SpeedFixed (12)
-	PROP_RadiusFixed (10)
-	PROP_HeightFixed (10)
-	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY|MF_MISSILE)
-	PROP_Flags2 (MF2_NOTELEPORT)
-	PROP_RenderStyle (STYLE_Add)
-
-	PROP_SpawnState (S_SORCFX4_1)
-	PROP_DeathState (S_SORCFX4_D1)
-
-	PROP_DeathSound ("SorcererBallExplode")
-END_DEFAULTS
-
-// Spark that appears when shooting SorcFX4 ---------------------------------
-
-class ASorcSpark1 : public AActor
-{
-	DECLARE_ACTOR (ASorcSpark1, AActor)
-};
-
-FState ASorcSpark1::States[] =
-{
-#define S_SORCSPARK1 0
-	S_BRIGHT (SBFX, 'A',	4, NULL					    , &States[S_SORCSPARK1+1]),
-	S_BRIGHT (SBFX, 'B',	4, NULL					    , &States[S_SORCSPARK1+2]),
-	S_BRIGHT (SBFX, 'C',	4, NULL					    , &States[S_SORCSPARK1+3]),
-	S_BRIGHT (SBFX, 'D',	4, NULL					    , &States[S_SORCSPARK1+4]),
-	S_BRIGHT (SBFX, 'E',	4, NULL					    , &States[S_SORCSPARK1+5]),
-	S_BRIGHT (SBFX, 'F',	4, NULL					    , &States[S_SORCSPARK1+6]),
-	S_BRIGHT (SBFX, 'G',	4, NULL					    , NULL),
-};
-
-IMPLEMENT_ACTOR (ASorcSpark1, Hexen, -1, 0)
-	PROP_RadiusFixed (5)
-	PROP_HeightFixed (5)
-	PROP_Gravity (FRACUNIT/8)
-	PROP_Flags (MF_NOBLOCKMAP|MF_DROPOFF)
-	PROP_Flags2 (MF2_NOTELEPORT)
-	PROP_RenderStyle (STYLE_Add)
-
-	PROP_SpawnState (S_SORCSPARK1)
-END_DEFAULTS
+IMPLEMENT_CLASS (ASorcFX1)
+*/
 
 //============================================================================
 //
@@ -684,15 +240,15 @@ void A_SorcSpinBalls(AActor *actor)
 	actor->special1 = ANGLE_1;
 	z = actor->z - actor->floorclip + actor->height;
 	
-	mo = Spawn<ASorcBall1> (actor->x, actor->y, z, NO_REPLACE);
+	mo = Spawn("SorcBall1", actor->x, actor->y, z, NO_REPLACE);
 	if (mo)
 	{
 		mo->target = actor;
 		mo->special2 = SORCFX4_RAPIDFIRE_TIME;
 	}
-	mo = Spawn<ASorcBall2> (actor->x, actor->y, z, NO_REPLACE);
+	mo = Spawn("SorcBall2", actor->x, actor->y, z, NO_REPLACE);
 	if (mo) mo->target = actor;
-	mo = Spawn<ASorcBall3> (actor->x, actor->y, z, NO_REPLACE);
+	mo = Spawn("SorcBall3", actor->x, actor->y, z, NO_REPLACE);
 	if (mo) mo->target = actor;
 }
 
@@ -775,7 +331,7 @@ void A_SorcBallOrbit(AActor *ball)
 		{
 			// Put sorcerer into special throw spell anim
 			if (parent->health > 0)
-				parent->SetStateNF (&AHeresiarch::States[S_SORC_ATTACK1]);
+				parent->SetState (parent->FindState("Attack1"));
 
 			actor->DoFireSpell ();
 		}
@@ -790,7 +346,7 @@ void A_SorcBallOrbit(AActor *ball)
 				parent->args[3] = SORC_STOPPED;
 				// Back to orbit balls
 				if (parent->health > 0)
-					parent->SetStateNF (&AHeresiarch::States[S_SORC_ATTACK1+3]);
+					parent->SetState (parent->FindState("Attack2"));
 			}
 			else
 			{
@@ -964,7 +520,7 @@ void ASorcBall::CastSorcererSpell ()
 
 	// Put sorcerer into throw spell animation
 	if (target->health > 0)
-		target->SetStateNF (&AHeresiarch::States[S_SORC_ATTACK1+3]);
+		target->SetState (target->FindState("Attack2"));
 }
 
 //============================================================================
@@ -983,7 +539,7 @@ void ASorcBall2::CastSorcererSpell ()
 	AActor *mo;
 
 	fixed_t z = parent->z - parent->floorclip + SORC_DEFENSE_HEIGHT*FRACUNIT;
-	mo = Spawn<ASorcFX2> (x, y, z, ALLOW_REPLACE);
+	mo = Spawn("SorcFX2", x, y, z, ALLOW_REPLACE);
 	parent->flags2 |= MF2_REFLECTIVE|MF2_INVULNERABLE;
 	parent->args[0] = SORC_DEFENSE_TIME;
 	if (mo) mo->target = parent;
@@ -1007,18 +563,19 @@ void ASorcBall3::CastSorcererSpell ()
 
 	ang1 = angle - ANGLE_45;
 	ang2 = angle + ANGLE_45;
+	const PClass *cls = PClass::FindClass("SorcFX3");
 	if (health < (GetDefault()->health/3))
 	{	// Spawn 2 at a time
-		mo = P_SpawnMissileAngle(parent, RUNTIME_CLASS(ASorcFX3), ang1, 4*FRACUNIT);
+		mo = P_SpawnMissileAngle(parent, cls, ang1, 4*FRACUNIT);
 		if (mo) mo->target = parent;
-		mo = P_SpawnMissileAngle(parent, RUNTIME_CLASS(ASorcFX3), ang2, 4*FRACUNIT);
+		mo = P_SpawnMissileAngle(parent, cls, ang2, 4*FRACUNIT);
 		if (mo) mo->target = parent;
 	}			
 	else
 	{
 		if (pr_heresiarch() < 128)
 			ang1 = ang2;
-		mo = P_SpawnMissileAngle(parent, RUNTIME_CLASS(ASorcFX3), ang1, 4*FRACUNIT);
+		mo = P_SpawnMissileAngle(parent, cls, ang1, 4*FRACUNIT);
 		if (mo) mo->target = parent;
 	}
 }
@@ -1055,7 +612,8 @@ void ASorcBall1::CastSorcererSpell ()
 
 	ang1 = angle + ANGLE_1*70;
 	ang2 = angle - ANGLE_1*70;
-	mo = P_SpawnMissileAngle (parent, RUNTIME_CLASS(ASorcFX1), ang1, 0);
+	const PClass *cls = PClass::FindClass("SorcFX1");
+	mo = P_SpawnMissileAngle (parent, cls, ang1, 0);
 	if (mo)
 	{
 		mo->target = parent;
@@ -1063,7 +621,7 @@ void ASorcBall1::CastSorcererSpell ()
 		mo->args[4] = BOUNCE_TIME_UNIT;
 		mo->args[3] = 15;				// Bounce time in seconds
 	}
-	mo = P_SpawnMissileAngle (parent, RUNTIME_CLASS(ASorcFX1), ang2, 0);
+	mo = P_SpawnMissileAngle (parent, cls, ang2, 0);
 	if (mo)
 	{
 		mo->target = parent;
@@ -1101,7 +659,7 @@ void A_SorcOffense2(AActor *actor)
 	delta = (finesine[index])*SORCFX4_SPREAD_ANGLE;
 	delta = (delta>>FRACBITS)*ANGLE_1;
 	ang1 = actor->angle + delta;
-	mo = P_SpawnMissileAngle(parent, RUNTIME_CLASS(ASorcFX4), ang1, 0);
+	mo = P_SpawnMissileAngle(parent, PClass::FindClass("SorcFX4"), ang1, 0);
 	if (mo)
 	{
 		mo->special2 = 35*5/2;		// 5 seconds
@@ -1149,7 +707,7 @@ void A_SpawnFizzle(AActor *actor)
 	z = actor->z - actor->floorclip + (actor->height>>1);
 	for (ix=0; ix<5; ix++)
 	{
-		mo = Spawn<ASorcSpark1> (x, y, z, ALLOW_REPLACE);
+		mo = Spawn("SorcSpark1", x, y, z, ALLOW_REPLACE);
 		if (mo)
 		{
 			rangle = angle + ((pr_heresiarch()%5) << 1);
@@ -1196,21 +754,21 @@ void A_SorcFX2Split(AActor *actor)
 {
 	AActor *mo;
 
-	mo = Spawn<ASorcFX2> (actor->x, actor->y, actor->z, NO_REPLACE);
+	mo = Spawn(actor->GetClass(), actor->x, actor->y, actor->z, NO_REPLACE);
 	if (mo)
 	{
 		mo->target = actor->target;
 		mo->args[0] = 0;									// CW
 		mo->special1 = actor->angle;					// Set angle
-		mo->SetStateNF (&ASorcFX2::States[S_SORCFX2_ORBIT1]);
+		mo->SetState (mo->FindState("Orbit"));
 	}
-	mo = Spawn<ASorcFX2> (actor->x, actor->y, actor->z, NO_REPLACE);
+	mo = Spawn(actor->GetClass(), actor->x, actor->y, actor->z, NO_REPLACE);
 	if (mo)
 	{
 		mo->target = actor->target;
 		mo->args[0] = 1;									// CCW
 		mo->special1 = actor->angle;					// Set angle
-		mo->SetStateNF (&ASorcFX2::States[S_SORCFX2_ORBIT1]);
+		mo->SetState (mo->FindState("Orbit"));
 	}
 	actor->Destroy ();
 }
@@ -1241,7 +799,7 @@ void A_SorcFX2Orbit (AActor *actor)
 	if ((parent->health <= 0) ||		// Sorcerer is dead
 		(!parent->args[0]))				// Time expired
 	{
-		actor->SetStateNF (actor->FindState(NAME_Death));
+		actor->SetState (actor->FindState(NAME_Death));
 		parent->args[0] = 0;
 		parent->flags2 &= ~MF2_REFLECTIVE;
 		parent->flags2 &= ~MF2_INVULNERABLE;
@@ -1249,7 +807,7 @@ void A_SorcFX2Orbit (AActor *actor)
 
 	if (actor->args[0] && (parent->args[0]-- <= 0))		// Time expired
 	{
-		actor->SetStateNF (actor->FindState(NAME_Death));
+		actor->SetState (actor->FindState(NAME_Death));
 		parent->args[0] = 0;
 		parent->flags2 &= ~MF2_REFLECTIVE;
 	}
@@ -1264,7 +822,7 @@ void A_SorcFX2Orbit (AActor *actor)
 		z = parent->z - parent->floorclip + SORC_DEFENSE_HEIGHT*FRACUNIT;
 		z += FixedMul(15*FRACUNIT,finecosine[angle]);
 		// Spawn trailer
-		Spawn<ASorcFX2T1> (x, y, z, ALLOW_REPLACE);
+		Spawn("SorcFX2T1", x, y, z, ALLOW_REPLACE);
 	}
 	else							// Clock wise
 	{
@@ -1275,7 +833,7 @@ void A_SorcFX2Orbit (AActor *actor)
 		z = parent->z - parent->floorclip + SORC_DEFENSE_HEIGHT*FRACUNIT;
 		z += FixedMul(20*FRACUNIT,finesine[angle]);
 		// Spawn trailer
-		Spawn<ASorcFX2T1> (x, y, z, ALLOW_REPLACE);
+		Spawn("SorcFX2T1", x, y, z, ALLOW_REPLACE);
 	}
 
 	actor->SetOrigin (x, y, z);
@@ -1319,7 +877,7 @@ void A_SpawnBishop(AActor *actor)
 
 void A_SorcererBishopEntry(AActor *actor)
 {
-	Spawn<ASorcFX3Explosion> (actor->x, actor->y, actor->z, ALLOW_REPLACE);
+	Spawn("SorcFX3Explosion", actor->x, actor->y, actor->z, ALLOW_REPLACE);
 	S_Sound (actor, CHAN_VOICE, actor->SeeSound, 1, ATTN_NORM);
 }
 
@@ -1335,7 +893,7 @@ void A_SorcFX4Check(AActor *actor)
 {
 	if (actor->special2-- <= 0)
 	{
-		actor->SetStateNF (actor->FindState(NAME_Death));
+		actor->SetState (actor->FindState(NAME_Death));
 	}
 }
 

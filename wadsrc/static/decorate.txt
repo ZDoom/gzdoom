@@ -131,6 +131,7 @@
 #include "actors/hexen/serpent.txt"
 #include "actors/hexen/spike.txt"
 #include "actors/hexen/wraith.txt"
+#include "actors/hexen/heresiarch.txt"
 
 #include "actors/strife/strifehumanoid.txt"
 #include "actors/strife/strifeplayer.txt"

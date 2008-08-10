@@ -127,6 +127,10 @@
 #include "actors/hexen/dragon.txt"
 #include "actors/hexen/healingradius.txt"
 #include "actors/hexen/teleportother.txt"
+#include "actors/hexen/iceguy.txt"
+#include "actors/hexen/serpent.txt"
+#include "actors/hexen/spike.txt"
+#include "actors/hexen/wraith.txt"
 
 #include "actors/strife/strifehumanoid.txt"
 #include "actors/strife/strifeplayer.txt"

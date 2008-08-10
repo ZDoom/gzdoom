@@ -1,0 +1,228 @@
+
+// Serpent ------------------------------------------------------------------
+
+ACTOR Serpent 121
+{
+	Game Hexen
+	SpawnID 6
+	Health 90
+	PainChance 96
+	Speed 12
+	Radius 32
+	Height 70
+	Mass 0x7fffffff
+	Monster
+	-SHOOTABLE
+	+NOBLOOD
+	+CANTLEAVEFLOORPIC +NONSHOOTABLE
+	+STAYMORPHED +DONTBLAST +NOTELEOTHER
+	+INVISIBLE
+	SeeSound "SerpentSight"
+	AttackSound "SerpentAttack"
+	PainSound "SerpentPain"
+	DeathSound "SerpentDeath"
+	HitObituary "$OB_SERPENTHIT"
+
+	action native A_SerpentHumpDecide();
+	action native A_SerpentHide();
+	action native A_SerpentCheckForAttack();
+	action native A_SerpentSpawnGibs();
+	action native A_SerpentUnHide();
+	action native A_SerpentRaiseHump();
+	action native A_SerpentLowerHump();
+	action native A_SerpentChooseAttack();
+	action native A_SerpentMeleeAttack();
+
+	States
+	{
+	Spawn:
+		SSPT H 10 A_Look
+		Loop
+	See:
+		SSPT HH 1 A_Chase("Melee", "None", CHF_NIGHTMAREFAST|CHF_NOPLAYACTIVE)
+		SSPT H 2 A_SerpentHumpDecide
+		Loop
+	Pain:
+		SSPT L 5
+		SSPT L 5 A_Pain
+	Dive:
+		SSDV ABC 4
+		SSDV D 4 A_UnSetShootable
+		SSDV E 3 A_PlaySoundEx("SerpentActive", "Body")
+		SSDV F 3
+		SSDV GH 4
+		SSDV I 3
+		SSDV J 3 A_SerpentHide
+		Goto See
+	Melee:
+		SSPT A 1 A_UnHideThing
+		SSPT A 1 A_PlaySoundEx("SerpentBirth", "Voice")
+		SSPT B 3 A_SetShootable
+		SSPT C 3
+		SSPT D 4 A_SerpentCheckForAttack
+		Goto Dive
+	Death:
+		SSPT O 4
+		SSPT P 4 A_Scream
+		SSPT Q 4 A_NoBlocking
+		SSPT RSTUVWXYZ 4
+		Stop
+	XDeath:
+		SSXD A 4
+		SSXD B 4 A_SpawnItemEx("SerpentHead", 0, 0, 45)
+		SSXD C 4 A_NoBlocking
+		SSXD DE 4
+		SSXD FG 3
+		SSXD H 3 A_SerpentSpawnGibs
+		Stop
+	Ice:
+		SSPT [ 5 A_FreezeDeath
+		SSPT [ 1 A_FreezeDeathChunks
+		Wait
+	Walk:
+		SSPT IJI 5 A_Chase("Attack", "None", CHF_NIGHTMAREFAST)
+		SSPT J 5 A_SerpentCheckForAttack
+		Goto Dive
+	Hump:
+		SSPT H 3 A_SerpentUnHide
+		SSPT EFGEF 3 A_SerpentRaiseHump
+		SSPT GEF 3
+		SSPT GEFGE 3 A_SerpentLowerHump
+		SSPT F 3 A_SerpentHide
+		Goto See
+	Attack:
+		SSPT K 6 A_FaceTarget
+		SSPT L 5 A_SerpentChooseAttack
+		Goto MeleeAttack
+	MeleeAttack:
+		SSPT N 5 A_SerpentMeleeAttack
+		Goto Dive
+	}
+}
+
+// Serpent Leader -----------------------------------------------------------
+
+ACTOR SerpentLeader : Serpent 120
+{
+	Game Hexen
+	SpawnID 7
+	Mass 200
+	Obituary "$OB_SERPENT"
+	States
+	{
+	Missile:
+		SSPT N 5 A_CustomMissile("SerpentFX", 32, 0)
+		Goto Dive
+	}
+}
+
+// Serpent Missile Ball -----------------------------------------------------
+
+ACTOR SerpentFX
+{
+	Speed 15
+	Radius 8
+	Height 10
+	Damage 4
+	Projectile
+	-ACTIVATEIMPACT -ACTIVATEPCROSS
+	RenderStyle Add
+	DeathSound "SerpentFXHit"
+
+	States
+	{
+	Spawn:
+		SSFX A 0
+		SSFX A 3 Bright A_PlaySoundEx("SerpentFXContinuous", "Body", 1)
+		SSFX BAB 3 Bright
+		Goto Spawn+1
+	Death:
+		SSFX C 4 Bright A_StopSoundEx("Body")
+		SSFX DEFGH 4 Bright
+		Stop
+	}
+}
+
+// Serpent Head -------------------------------------------------------------
+
+ACTOR SerpentHead
+{
+	Radius 5
+	Height 10
+	Gravity 0.125
+	+NOBLOCKMAP
+
+	action native A_SerpentHeadCheck();
+
+	States
+	{
+	Spawn:
+		SSXD IJKLMNOP 4 A_SerpentHeadCheck
+		Loop
+	Death:
+		SSXD S -1
+		Loop
+	}
+}
+
+// Serpent Gib 1 ------------------------------------------------------------
+
+ACTOR SerpentGib1
+{
+	Radius 3
+	Height 3
+	+NOBLOCKMAP +NOGRAVITY
+
+	action native A_FloatGib();
+	action native A_DelayGib();
+	action native A_SinkGib();
+
+	States
+	{
+	Spawn:
+		SSXD Q 6
+		SSXD Q 6 A_FloatGib
+		SSXD QQ 8 A_FloatGib
+		SSXD QQ 12 A_FloatGib
+		SSXD Q 232 A_DelayGib
+		SSXD QQ 12 A_SinkGib
+		SSXD QQQ 8 A_SinkGib
+		Stop
+	}
+}
+
+// Serpent Gib 2 ------------------------------------------------------------
+
+ACTOR SerpentGib2 : SerpentGib1
+{
+	States
+	{
+	Spawn:
+		SSXD R 6
+		SSXD R 6 A_FloatGib
+		SSXD RR 8 A_FloatGib
+		SSXD RR 12 A_FloatGib
+		SSXD R 232 A_DelayGib
+		SSXD RR 12 A_SinkGib
+		SSXD RRR 8 A_SinkGib
+		Stop
+	}
+}
+
+// Serpent Gib 3 ------------------------------------------------------------
+
+ACTOR SerpentGib3 : SerpentGib1
+{
+	States
+	{
+	Spawn:
+		SSXD T 6
+		SSXD T 6 A_FloatGib
+		SSXD TT 8 A_FloatGib
+		SSXD TT 12 A_FloatGib
+		SSXD T 232 A_DelayGib
+		SSXD TT 12 A_SinkGib
+		SSXD TTT 8 A_SinkGib
+		Stop
+	}
+}

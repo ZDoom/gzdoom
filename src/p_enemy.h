@@ -53,8 +53,8 @@ void A_FireScream (AActor *mo);
 void A_PlayerScream (AActor *mo);
 void A_ClassBossHealth (AActor *);
 
-bool A_RaiseMobj (AActor *);
-bool A_SinkMobj (AActor *);
+bool A_RaiseMobj (AActor *, fixed_t speed);
+bool A_SinkMobj (AActor *, fixed_t speed);
 
 bool CheckBossDeath (AActor *);
 int P_Massacre ();

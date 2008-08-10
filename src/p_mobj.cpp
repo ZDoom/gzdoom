@@ -2330,16 +2330,6 @@ void AActor::Howl ()
 	}
 }
 
-fixed_t AActor::GetSinkSpeed ()
-{
-	return FRACUNIT;
-}
-
-fixed_t AActor::GetRaiseSpeed ()
-{
-	return 2*FRACUNIT;
-}
-
 void AActor::HitFloor ()
 {
 }
@@ -3370,7 +3360,15 @@ void AActor::Activate (AActor *activator)
 		if (flags2 & MF2_DORMANT)
 		{
 			flags2 &= ~MF2_DORMANT;
-			tics = 1;
+			FState *state = FindState("Active");
+			if (state != NULL) 
+			{
+				SetState(state);
+			}
+			else
+			{
+				tics = 1;
+			}
 		}
 	}
 }
@@ -3382,7 +3380,15 @@ void AActor::Deactivate (AActor *activator)
 		if (!(flags2 & MF2_DORMANT))
 		{
 			flags2 |= MF2_DORMANT;
-			tics = -1;
+			FState *state = FindState("Inactive");
+			if (state != NULL) 
+			{
+				SetState(state);
+			}
+			else
+			{
+				tics = -1;
+			}
 		}
 	}
 }

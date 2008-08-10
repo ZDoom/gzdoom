@@ -504,8 +504,9 @@ ACTOR ZFireBullUnlit : ZFireBull 8043
 
 // Suit of armor ------------------------------------------------------------
 
-ACTOR ZSuitOfArmor
+ACTOR ZSuitOfArmor 8064
 {
+	Game Hexen
 	Health 60
 	Radius 16
 	Height 72

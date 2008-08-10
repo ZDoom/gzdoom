@@ -1,4 +1,8 @@
 August 10, 2008
+- Added an Active and Inactive state for monsters.
+- Made the speed a parameter to A_RaiseMobj and A_SinkMobj and deleted
+  GetRaiseSpeed and GetSinkSpeed.
+- Added some remaining DECORATE conversions for Hexen by Karate Chris.
 - Changed Windows to use the performance counter instead of rdtsc.
 - Changed Linux to use clock_gettime for profiling instead of rdtsc. This
   avoids potential erroneous results on multicore and variable speed

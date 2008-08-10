@@ -2766,11 +2766,11 @@ int P_Massacre ()
 // Sink a mobj incrementally into the floor
 //
 
-bool A_SinkMobj (AActor *actor)
+bool A_SinkMobj (AActor *actor, fixed_t speed)
 {
 	if (actor->floorclip < actor->height)
 	{
-		actor->floorclip += actor->GetSinkSpeed ();
+		actor->floorclip += speed;
 		return false;
 	}
 	return true;
@@ -2781,14 +2781,14 @@ bool A_SinkMobj (AActor *actor)
 // Raise a mobj incrementally from the floor to 
 // 
 
-bool A_RaiseMobj (AActor *actor)
+bool A_RaiseMobj (AActor *actor, fixed_t speed)
 {
 	bool done = true;
 
 	// Raise a mobj from the ground
 	if (actor->floorclip > 0)
 	{
-		actor->floorclip -= actor->GetRaiseSpeed ();
+		actor->floorclip -= speed;
 		if (actor->floorclip <= 0)
 		{
 			actor->floorclip = 0;

@@ -496,12 +496,6 @@ public:
 	// Made a metadata property so no longer virtual
 	void Howl ();
 
-	// Called by A_SinkMobj
-	virtual fixed_t GetSinkSpeed ();
-
-	// Called by A_RaiseMobj
-	virtual fixed_t GetRaiseSpeed ();
-
 	// Actor just hit the floor
 	virtual void HitFloor ();
 

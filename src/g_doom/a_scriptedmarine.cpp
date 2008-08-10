@@ -222,7 +222,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MarineNoise)
 
 DEFINE_ACTION_FUNCTION(AActor, A_MarineChase)
 {
-	A_MarineNoise (self);
+	CALL_ACTION(A_MarineNoise, self);
 	A_Chase (self);
 }
 
@@ -234,8 +234,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_MarineChase)
 
 DEFINE_ACTION_FUNCTION(AActor, A_MarineLook)
 {
-	A_MarineNoise (self);
-	A_Look (self);
+	CALL_ACTION(A_MarineNoise, self);
+	CALL_ACTION(A_Look, self);
 }
 
 //============================================================================
@@ -300,7 +300,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_M_Saw)
 //
 //============================================================================
 
-DEFINE_ACTION_FUNCTION(AActor, A_M_Punch)
+static void MarinePunch(AActor *self, int damagemul)
 {
 	angle_t 	angle;
 	int 		damage;
@@ -310,11 +310,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_M_Punch)
 	if (self->target == NULL)
 		return;
 
-	int index=CheckIndex(1);
-	if (index<0) return;
-
-	damage = (pr_m_punch()%10+1) << 1;
-	damage *= EvalExpressionI (StateParameters[index], self);
+	damage = ((pr_m_punch()%10+1) << 1) * damagemul;
 
 	A_FaceTarget (self);
 	angle = self->angle + (pr_m_punch.Random2() << 18);
@@ -327,6 +323,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_M_Punch)
 		S_Sound (self, CHAN_WEAPON, "*fist", 1, ATTN_NORM);
 		self->angle = R_PointToAngle2 (self->x, self->y, linetarget->x, linetarget->y);
 	}
+}
+
+DEFINE_ACTION_FUNCTION(AActor, A_M_Punch)
+{
+	int index=CheckIndex(1);
+	if (index<0) return;
+
+	MarinePunch(self, EvalExpressionI (StateParameters[index], self));
 }
 
 //============================================================================
@@ -479,7 +483,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_M_FireMissile)
 
 	if (self->CheckMeleeRange ())
 	{ // If too close, punch it
-		A_M_Punch (self);
+		MarinePunch(self, 1);
 	}
 	else
 	{
@@ -499,7 +503,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_M_FireRailgun)
 	if (self->target == NULL)
 		return;
 
-	A_MonsterRail (self);
+	CALL_ACTION(A_MonsterRail, self);
 	self->special1 = level.maptime + 50;
 }
 

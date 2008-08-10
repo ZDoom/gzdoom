@@ -249,5 +249,5 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnFly)
 DEFINE_ACTION_FUNCTION(AActor, A_SpawnSound)
 {
 	S_Sound (self, CHAN_BODY, "brain/cube", 1, ATTN_IDLE);
-	A_SpawnFly (self);
+	CALL_ACTION(A_SpawnFly, self);
 }

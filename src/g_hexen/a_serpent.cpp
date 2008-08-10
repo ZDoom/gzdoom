@@ -178,7 +178,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SerpentMeleeAttack)
 	}
 	if (pr_serpentmeattack() < 96)
 	{
-		A_SerpentCheckForAttack (self);
+		CALL_ACTION(A_SerpentCheckForAttack, self);
 	}
 }
 

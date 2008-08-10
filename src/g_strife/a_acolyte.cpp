@@ -98,7 +98,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_AcolyteBits)
 {
 	if (self->SpawnFlags & MTF_SHADOW)
 	{
-		A_BeShadowyFoe (self);
+		CALL_ACTION(A_BeShadowyFoe, self);
 	}
 	if (self->SpawnFlags & MTF_ALTSHADOW)
 	{

@@ -130,8 +130,6 @@ bool EvalExpressionN (int id, AActor *self, const PClass *cls=NULL);
 extern FState * CallingState;
 int CheckIndex(int paramsize, FState ** pcallstate=NULL);
 
-void A_Explode(AActor * self);
-
 enum
 {
 	ACMETA_BASE				= 0x83000,
@@ -166,19 +164,19 @@ enum EDefinitionType
 #define GCC_ASEG __attribute__((section(AREG_SECTION)))
 #endif
 
-/*
-#define DEFINE_FUNCTION(cls, name) \
-void func_##cls##_##name (void *,stackvalue *&sp, FState *); \
-	NativeFunction info_##cls##_##name = { func_##cls##_##name, #cls, #name }; \
-MSVC_FSEG NativeFunction *infoptr_##cls##_##name GCC_FSEG = &info_##cls##_##name; \
-void func_##cls##_##name (void * vself,stackvalue *&sp, FState *CallingState)
-*/
+
+// Macros to handle action functions. These are here so that I don't have to
+// change every single use in case the parameters change.
+#define DECLARE_ACTION(name) void AF_##name(AActor *self);
 
 #define DEFINE_ACTION_FUNCTION(cls, name) \
-	void name (AActor *); \
-	AFuncDesc info_##cls##_##name = { #name, name }; \
+	void AF_##name (AActor *); \
+	AFuncDesc info_##cls##_##name = { #name, AF_##name }; \
 	MSVC_ASEG AFuncDesc *infoptr_##cls##_##name GCC_ASEG = &info_##cls##_##name; \
-	void name (AActor *self)
+	void AF_##name (AActor *self)
+
+#define CALL_ACTION(name,self) AF_##name(self)
+#define GET_ACTION(name) AF_##name
 
 #define ACTION_PARAM_START(count) \
 	int index = CheckIndex(count); \

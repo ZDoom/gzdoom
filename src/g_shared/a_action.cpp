@@ -100,7 +100,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_NoBlocking)
 
 DEFINE_ACTION_FUNCTION(AActor, A_Fall)
 {
-	A_NoBlocking(self);
+	CALL_ACTION(A_NoBlocking, self);
 }
 
 //==========================================================================
@@ -195,7 +195,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FreezeDeath)
 DEFINE_ACTION_FUNCTION(AActor, A_GenericFreezeDeath)
 {
 	self->Translation = TRANSLATION(TRANSLATION_Standard, 7);
-	A_FreezeDeath (self);
+	CALL_ACTION(A_FreezeDeath, self);
 }
 
 //============================================================================
@@ -259,7 +259,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FreezeDeathChunks)
 			mo->momz = FixedDiv(mo->z-self->z, self->height)<<2;
 			mo->momx = pr_freeze.Random2 () << (FRACBITS-7);
 			mo->momy = pr_freeze.Random2 () << (FRACBITS-7);
-			A_IceSetTics (mo); // set a random tic wait
+			CALL_ACTION(A_IceSetTics, mo); // set a random tic wait
 			mo->RenderStyle = self->RenderStyle;
 			mo->alpha = self->alpha;
 		}
@@ -292,9 +292,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_FreezeDeathChunks)
 	// [RH] Do some stuff to make this more useful outside Hexen
 	if (self->flags4 & MF4_BOSSDEATH)
 	{
-		A_BossDeath (self);
+		CALL_ACTION(A_BossDeath, self);
 	}
-	A_NoBlocking (self);
+   CALL_ACTION(A_NoBlocking, self);
 
 	self->Destroy ();
 }

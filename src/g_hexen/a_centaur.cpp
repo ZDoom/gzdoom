@@ -19,7 +19,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CentaurDefend)
 	{
 		// This should unset REFLECTIVE as well
 		// (unless you want the Centaur to reflect projectiles forever!)
-		A_UnSetReflectiveInvulnerable (self);
+		self->flags2&=~(MF2_REFLECTIVE|MF2_INVULNERABLE);
 		self->SetState (self->MeleeState);
 	}
 }

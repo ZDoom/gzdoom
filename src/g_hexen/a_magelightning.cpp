@@ -20,13 +20,8 @@ static FRandom pr_zap ("LightningZap");
 static FRandom pr_zapf ("LightningZapF");
 static FRandom pr_hit ("LightningHit");
 
-void A_LightningReady (AActor *actor);
-void A_MLightningAttack (AActor *actor);
-
-void A_LightningClip (AActor *);
-void A_LightningZap (AActor *);
-void A_ZapMimic (AActor *);
-void A_LastZap (AActor *);
+DECLARE_ACTION(A_LightningClip)
+DECLARE_ACTION(A_LightningZap)
 
 // Lightning ----------------------------------------------------------------
 
@@ -129,7 +124,7 @@ int ALightningZap::SpecialMissileHit (AActor *thing)
 
 DEFINE_ACTION_FUNCTION(AActor, A_LightningReady)
 {
-	A_WeaponReady (self);
+	CALL_ACTION(A_WeaponReady, self);
 	if (pr_lightningready() < 160)
 	{
 		S_Sound (self, CHAN_WEAPON, "MageLightningReady", 1, ATTN_NORM);
@@ -213,7 +208,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightningZap)
 	AActor *mo;
 	fixed_t deltaZ;
 
-	A_LightningClip(self);
+	CALL_ACTION(A_LightningClip, self);
 
 	self->health -= 8;
 	if (self->health <= 0)
@@ -269,13 +264,13 @@ static void MLightningAttack2 (AActor *self)
 	{
 		fmo->special1 = 0;
 		fmo->lastenemy = cmo;
-		A_LightningZap (fmo);	
+		CALL_ACTION(A_LightningZap, fmo);	
 	}
 	if (cmo)
 	{
 		cmo->tracer = NULL;
 		cmo->lastenemy = fmo;
-		A_LightningZap (cmo);	
+		CALL_ACTION(A_LightningZap, cmo);	
 	}
 	S_Sound (self, CHAN_BODY, "MageLightningFire", 1, ATTN_NORM);
 }

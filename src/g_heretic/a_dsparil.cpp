@@ -26,7 +26,7 @@ static FRandom pr_bluespark ("BlueSpark");
 DEFINE_ACTION_FUNCTION(AActor, A_Sor1Pain)
 {
 	self->special1 = 20; // Number of steps to walk fast
-	A_Pain (self);
+	CALL_ACTION(A_Pain, self);
 }
 
 //----------------------------------------------------------------------------

@@ -440,7 +440,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_KSpiritRoam)
 			A_KSpiritSeeker (self, self->args[0]*ANGLE_1,
 							 self->args[0]*ANGLE_1*2);
 		}
-		A_KSpiritWeave (self);
+		CALL_ACTION(A_KSpiritWeave, self);
 		if (pr_kspiritroam()<50)
 		{
 			S_Sound (self, CHAN_VOICE, "SpiritActive", 1, ATTN_NONE);

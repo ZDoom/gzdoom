@@ -27,6 +27,7 @@
 // Needs fixed point, and BAM angles.
 #include "m_fixed.h"
 #include "tables.h"
+#include "thingdef/thingdef.h"
 
 
 //
@@ -93,14 +94,8 @@ void P_BobWeapon (player_t *player, pspdef_t *psp, fixed_t *x, fixed_t *y);
 angle_t P_BulletSlope (AActor *mo, AActor **pLineTarget = NULL);
 void P_GunShot (AActor *mo, bool accurate, const PClass *pufftype, angle_t pitch);
 
-void A_WeaponReady (AActor *actor);
-void A_ReFire (AActor *actor);
-void A_CheckReload (AActor *actor);
-void A_Lower (AActor *actor);
-void A_Raise (AActor *actor);
-void A_GunFlash (AActor *actor);
-void A_Light0 (AActor *actor);
-void A_Light1 (AActor *actor);
-void A_Light2 (AActor *actor);
+DECLARE_ACTION(A_WeaponReady)
+DECLARE_ACTION(A_Raise)
+DECLARE_ACTION(A_ReFire)
 
 #endif	// __P_PSPR_H__

@@ -150,5 +150,5 @@ DEFINE_ACTION_FUNCTION(AActor, A_ProgrammerDeath)
 		}
 	}
 	// the sky change scripts are now done as special actions in MAPINFO
-	A_BossDeath(self);
+	CALL_ACTION(A_BossDeath, self);
 }

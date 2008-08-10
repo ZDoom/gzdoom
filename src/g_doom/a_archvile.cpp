@@ -12,7 +12,7 @@
 // PIT_VileCheck
 // Detect a corpse that could be raised.
 //
-void A_Fire (AActor *self);
+DECLARE_ACTION(A_Fire)
 
 
 
@@ -32,13 +32,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_VileStart)
 DEFINE_ACTION_FUNCTION(AActor, A_StartFire)
 {
 	S_Sound (self, CHAN_BODY, "vile/firestrt", 1, ATTN_NORM);
-	A_Fire (self);
+	CALL_ACTION(A_Fire, self);
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireCrackle)
 {
 	S_Sound (self, CHAN_BODY, "vile/firecrkl", 1, ATTN_NORM);
-	A_Fire (self);
+	CALL_ACTION(A_Fire, self);
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_Fire)
@@ -82,7 +82,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_VileTarget)
 	self->tracer = fog;
 	fog->target = self;
 	fog->tracer = self->target;
-	A_Fire (fog);
+	CALL_ACTION(A_Fire, fog);
 }
 
 

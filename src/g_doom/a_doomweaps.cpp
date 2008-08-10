@@ -261,7 +261,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LoadShotgun2)
 DEFINE_ACTION_FUNCTION(AActor, A_CloseShotgun2)
 {
 	S_Sound (self, CHAN_WEAPON, "weapons/sshotc", 1, ATTN_NORM);
-	A_ReFire (self);
+	CALL_ACTION(A_ReFire, self);
 }
 
 
@@ -401,9 +401,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FirePlasma)
 //
 // [RH] A_FireRailgun
 //
-static int RailOffset;
-
-DEFINE_ACTION_FUNCTION(AActor, A_FireRailgun)
+static void FireRailgun(AActor *self, int RailOffset)
 {
 	int damage;
 	player_t *player;
@@ -429,19 +427,22 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireRailgun)
 	damage = deathmatch ? 100 : 150;
 
 	P_RailAttack (self, damage, RailOffset);
-	RailOffset = 0;
+}
+
+
+DEFINE_ACTION_FUNCTION(AActor, A_FireRailgun)
+{
+	FireRailgun(self, 0);
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireRailgunRight)
 {
-	RailOffset = 10;
-	A_FireRailgun (self);
+	FireRailgun(self, 10);
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireRailgunLeft)
 {
-	RailOffset = -10;
-	A_FireRailgun (self);
+	FireRailgun(self, -10);
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_RailWait)

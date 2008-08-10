@@ -2012,9 +2012,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_Burst)
    // [RH] Do some stuff to make this more useful outside Hexen
    if (self->flags4 & MF4_BOSSDEATH)
    {
-      A_BossDeath (self);
+		CALL_ACTION(A_BossDeath, self);
    }
-   A_NoBlocking (self);
+   CALL_ACTION(A_NoBlocking, self);
 
    self->Destroy ();
 }

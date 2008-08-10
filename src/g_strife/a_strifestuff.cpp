@@ -377,13 +377,6 @@
 
 static FRandom pr_gibtosser ("GibTosser");
 
-void A_TossGib (AActor *);
-void A_LoopActiveSound (AActor *);
-void A_FLoopActiveSound (AActor *);
-void A_Countdown (AActor *);
-void A_XXScream (AActor *);
-void A_SentinelRefire (AActor *);
-
 // Force Field Guard --------------------------------------------------------
 
 void A_RemoveForceField (AActor *);
@@ -472,7 +465,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_KlaxonBlare)
 	{
 		self->target = NULL;
 		self->reactiontime = self->GetDefault()->reactiontime;
-		A_TurretLook (self);
+		CALL_ACTION(A_TurretLook, self);
 		if (self->target == NULL)
 		{
 			self->SetIdle();

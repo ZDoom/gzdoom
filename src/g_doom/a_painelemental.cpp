@@ -8,10 +8,7 @@
 #include "m_bbox.h"
 #include "thingdef/thingdef.h"
 
-void A_PainAttack (AActor *);
-void A_PainDie (AActor *);
-
-void A_SkullAttack (AActor *self);
+DECLARE_ACTION(A_SkullAttack)
 
 static const PClass *GetSpawnType()
 {
@@ -130,7 +127,7 @@ void A_PainShootSkull (AActor *self, angle_t angle, const PClass *spawntype)
 	// [RH] Lost souls hate the same things as their pain elementals
 	other->CopyFriendliness (self, true);
 
-	A_SkullAttack (other);
+	CALL_ACTION(A_SkullAttack, other);
 }
 
 
@@ -166,7 +163,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_PainDie)
 		self->flags &= ~MF_FRIENDLY;
 	}
 	const PClass *spawntype = GetSpawnType();
-	A_NoBlocking (self);
+	CALL_ACTION(A_NoBlocking, self);
 	A_PainShootSkull (self, self->angle + ANG90, spawntype);
 	A_PainShootSkull (self, self->angle + ANG180, spawntype);
 	A_PainShootSkull (self, self->angle + ANG270, spawntype);

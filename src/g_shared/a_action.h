@@ -1,5 +1,6 @@
 class AActor;
 
+/*
 void A_NoBlocking (AActor *);
 void A_HideThing (AActor *);
 void A_UnHideThing (AActor *);
@@ -21,5 +22,8 @@ void A_UnSetShootable (AActor *);
 void A_SetFloorClip (AActor *);
 void A_UnSetFloorClip (AActor *);
 void A_NoGravity (AActor *);
-void FaceMovementDirection (AActor *);
 void A_SkullPop (AActor *);
+*/
+
+
+void FaceMovementDirection (AActor *);

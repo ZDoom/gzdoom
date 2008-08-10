@@ -93,7 +93,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SnoutAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_PigPain)
 {
-	A_Pain (self);
+	CALL_ACTION(A_Pain, self);
 	if (self->z <= self->floorz)
 	{
 		self->momz = FRACUNIT*7/2;

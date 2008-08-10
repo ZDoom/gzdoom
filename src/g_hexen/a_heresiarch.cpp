@@ -48,11 +48,11 @@
 #define BALL2_ANGLEOFFSET	(ANGLE_MAX/3)
 #define BALL3_ANGLEOFFSET	((ANGLE_MAX/3)*2)
 
-void A_SlowBalls (AActor *actor);
-void A_StopBalls (AActor *actor);
-void A_AccelBalls (AActor *actor);
-void A_DecelBalls (AActor *actor);
-void A_SorcOffense2 (AActor *actor);
+DECLARE_ACTION(A_SlowBalls)
+DECLARE_ACTION(A_StopBalls)
+DECLARE_ACTION(A_AccelBalls)
+DECLARE_ACTION(A_DecelBalls)
+DECLARE_ACTION(A_SorcOffense2)
 void A_DoBounceCheck (AActor *actor, const char *sound);
 
 static FRandom pr_heresiarch ("Heresiarch");
@@ -234,7 +234,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcSpinBalls)
 	fixed_t z;
 
 	self->SpawnState += 2;		// [RH] Don't spawn balls again
-	A_SlowBalls(self);
+	CALL_ACTION(A_SlowBalls, self);
 	self->args[0] = 0;								// Currently no defense
 	self->args[3] = SORC_NORMAL;
 	self->args[4] = SORCBALL_INITIAL_SPEED;		// Initial orbit speed
@@ -301,12 +301,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcBallOrbit)
 		break;
 
 	case SORC_DECELERATE:		// Balls decelerating
-		A_DecelBalls(actor);
+		CALL_ACTION(A_DecelBalls, actor);
 		actor->SorcUpdateBallAngle ();
 		break;
 
 	case SORC_ACCELERATE:		// Balls accelerating
-		A_AccelBalls(actor);
+		CALL_ACTION(A_AccelBalls, actor);
 		actor->SorcUpdateBallAngle ();
 		break;
 
@@ -352,7 +352,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcBallOrbit)
 			else
 			{
 				// Do rapid fire spell
-				A_SorcOffense2(actor);
+				CALL_ACTION(A_SorcOffense2, actor);
 			}
 		}
 		break;
@@ -458,7 +458,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_AccelBalls)
 		if (sorc->args[4] >= SORCBALL_TERMINAL_SPEED)
 		{
 			// Reached terminal velocity - stop balls
-			A_StopBalls(sorc);
+			CALL_ACTION(A_StopBalls, sorc);
 		}
 	}
 }

@@ -58,6 +58,8 @@
 
 TArray<int> StateParameters;
 TArray<FName> JumpParameters;
+static TArray<AFuncDesc> AFTable;
+static TArray<FState> StateArray;
 
 //==========================================================================
 //
@@ -65,10 +67,7 @@ TArray<FName> JumpParameters;
 //
 //==========================================================================
 
-static TArray<AFuncDesc> AFTable;
-
-
-static TArray<FState> StateArray;
+DECLARE_ACTION(A_CallSpecial)
 
 //==========================================================================
 //
@@ -415,7 +414,7 @@ bool DoActionSpecials(FScanner &sc, FState & state, bool multistate, int * state
 		{
 			sc.ScriptError ("Too many arguments to %s", specname.GetChars());
 		}
-		state.Action = A_CallSpecial;
+		state.Action = GET_ACTION(A_CallSpecial);
 		return true;
 	}
 	return false;

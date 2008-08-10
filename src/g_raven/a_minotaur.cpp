@@ -21,9 +21,9 @@ static FRandom pr_minotaurslam ("MinotaurSlam");
 static FRandom pr_minotaurroam ("MinotaurRoam");
 static FRandom pr_minotaurchase ("MinotaurChase");
 
-void A_MinotaurLook (AActor *);
-
 void P_MinotaurSlam (AActor *source, AActor *target);
+
+DECLARE_ACTION(A_MinotaurLook)
 
 IMPLEMENT_CLASS(AMinotaur)
 
@@ -466,7 +466,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurRoam)
 	}
 
 	if (pr_minotaurroam() < 30)
-		A_MinotaurLook (self1);		// adjust to closest target
+		CALL_ACTION(A_MinotaurLook, self1);		// adjust to closest target
 
 	if (pr_minotaurroam() < 6)
 	{
@@ -498,7 +498,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurLook)
 {
 	if (!self->IsKindOf(RUNTIME_CLASS(AMinotaurFriend)))
 	{
-		A_Look (self);
+		CALL_ACTION(A_Look, self);
 		return;
 	}
 
@@ -582,7 +582,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurChase)
 	}
 
 	if (pr_minotaurchase() < 30)
-		A_MinotaurLook (self1);		// adjust to closest target
+		CALL_ACTION(A_MinotaurLook, self1);		// adjust to closest target
 
 	if (!self1->target || (self1->target->health <= 0) ||
 		!(self1->target->flags&MF_SHOOTABLE))

@@ -13,13 +13,7 @@ static FRandom pr_dragonflight ("DragonFlight");
 static FRandom pr_dragonflap ("DragonFlap");
 static FRandom pr_dragonfx2 ("DragonFX2");
 
-void A_DragonInitFlight (AActor *);
-void A_DragonFlap (AActor *);
-void A_DragonFlight (AActor *);
-void A_DragonPain (AActor *);
-void A_DragonAttack (AActor *);
-void A_DragonCheckCrash (AActor *);
-void A_DragonFX2 (AActor *);
+DECLARE_ACTION(A_DragonFlight)
 
 //============================================================================
 //
@@ -230,7 +224,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_DragonFlight)
 
 DEFINE_ACTION_FUNCTION(AActor, A_DragonFlap)
 {
-	A_DragonFlight (self);
+	CALL_ACTION(A_DragonFlight, self);
 	if (pr_dragonflap() < 240)
 	{
 		S_Sound (self, CHAN_BODY, "DragonWingflap", 1, ATTN_NORM);
@@ -288,7 +282,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_DragonFX2)
 
 DEFINE_ACTION_FUNCTION(AActor, A_DragonPain)
 {
-	A_Pain (self);
+	CALL_ACTION(A_Pain, self);
 	if (!self->tracer)
 	{ // no destination spot yet
 		self->SetState (self->SeeState);

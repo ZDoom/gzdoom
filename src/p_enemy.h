@@ -2,6 +2,7 @@
 #define __P_ENEMY_H__
 
 #include "r_defs.h"
+#include "thingdef/thingdef.h"
 
 enum dirtype_t
 {
@@ -34,24 +35,19 @@ inline AInventory *P_DropItem (AActor *source, const char *type, int special, in
 }
 void P_TossItem (AActor *item);
 
-void A_Look (AActor *actor);
-void A_Wander (AActor *actor);
-void A_Look2 (AActor *actor);
-void A_Chase (AActor *actor);
-void A_FastChase (AActor *actor);
+DECLARE_ACTION(A_Look)
+DECLARE_ACTION(A_Wander)
+DECLARE_ACTION(A_BossDeath)
+DECLARE_ACTION(A_Pain)
+DECLARE_ACTION(A_MonsterRail)
+DECLARE_ACTION(A_NoBlocking)
+DECLARE_ACTION(A_Explode)
+DECLARE_ACTION(A_Scream)
+DECLARE_ACTION(A_FreezeDeath)
+DECLARE_ACTION(A_FreezeDeathChunks)
+
+void A_Chase(AActor *self);
 void A_FaceTarget (AActor *actor);
-void A_MonsterRail (AActor *actor);
-void A_Scream (AActor *actor);
-void A_XScream (AActor *actor);
-void A_Pain (AActor *actor);
-void A_Die (AActor *actor);
-void A_Detonate (AActor *mo);
-void A_Explode (AActor *thing);
-void A_Mushroom (AActor *actor);
-void A_BossDeath (AActor *actor);
-void A_FireScream (AActor *mo);
-void A_PlayerScream (AActor *mo);
-void A_ClassBossHealth (AActor *);
 
 bool A_RaiseMobj (AActor *, fixed_t speed);
 bool A_SinkMobj (AActor *, fixed_t speed);
@@ -59,6 +55,5 @@ bool A_SinkMobj (AActor *, fixed_t speed);
 bool CheckBossDeath (AActor *);
 int P_Massacre ();
 bool P_CheckMissileRange (AActor *actor);
-void A_LookEx (AActor *actor);
 
 #endif //__P_ENEMY_H__

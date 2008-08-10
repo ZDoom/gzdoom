@@ -27,7 +27,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_IceGuyLook)
 	fixed_t dist;
 	fixed_t an;
 
-	A_Look (self);
+	CALL_ACTION(A_Look, self);
 	if (pr_iceguylook() < 64)
 	{
 		dist = ((pr_iceguylook()-128)*self->radius)>>7;
@@ -111,7 +111,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_IceGuyDie)
 	self->momy = 0;
 	self->momz = 0;
 	self->height = self->GetDefault()->height;
-	A_FreezeDeathChunks (self);
+	CALL_ACTION(A_FreezeDeathChunks, self);
 }
 
 //============================================================================

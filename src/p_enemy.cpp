@@ -1599,7 +1599,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Look)
 			}
 			else
 			{
-				A_Wander (self);
+				CALL_ACTION(A_Wander, self);
 			}
 		}
 		else
@@ -1872,10 +1872,10 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 		{
 			if (actor->flags & MF_FRIENDLY)
 			{
-				A_Look (actor);
+				CALL_ACTION(A_Look, actor);
 				if (actor->target == NULL)
 				{
-					if (!dontmove) A_Wander (actor);
+					if (!dontmove) CALL_ACTION(A_Wander, actor);
 					actor->flags &= ~MF_INCHASE;
 					return;
 				}
@@ -2275,12 +2275,18 @@ DEFINE_ACTION_FUNCTION(AActor, A_ExtChase)
 		!!EvalExpressionI (StateParameters[index+3], self), false);
 }
 
+// for internal use
+void A_Chase(AActor *self)
+{
+	A_DoChase (self, false, self->MeleeState, self->MissileState, true, !!(gameinfo.gametype & GAME_Raven), false);
+}
+
 //=============================================================================
 //
 // A_FaceTarget
 //
 //=============================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_FaceTarget)
+void A_FaceTarget(AActor *self)
 {
 	if (!self->target)
 		return;
@@ -2301,6 +2307,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_FaceTarget)
     }
 }
 
+DEFINE_ACTION_FUNCTION(AActor, A_FaceTarget)
+{
+	A_FaceTarget(self);
+}
 
 //===========================================================================
 //

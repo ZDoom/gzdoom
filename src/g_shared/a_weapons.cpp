@@ -752,7 +752,7 @@ static bool FindMostRecentWeapon (player_t *player, int *slot, int *index)
 	if (player->PendingWeapon != WP_NOCHANGE)
 	{
 		if (player->psprites[ps_weapon].state != NULL &&
-			player->psprites[ps_weapon].state->GetAction() == A_Raise)
+			player->psprites[ps_weapon].state->GetAction() == GET_ACTION(A_Raise))
 		{
 			if (LocalWeapons.LocateWeapon (player->PendingWeapon->GetClass(), slot, index))
 			{

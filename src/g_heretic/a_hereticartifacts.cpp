@@ -49,7 +49,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_TimeBomb)
 	self->z += 32*FRACUNIT;
 	self->RenderStyle = STYLE_Add;
 	self->alpha = FRACUNIT;
-	A_Explode(self);
+	CALL_ACTION(A_Explode, self);
 }
 
 class AArtiTimeBomb : public AInventory

@@ -13,7 +13,7 @@
 //
 DEFINE_ACTION_FUNCTION(AActor, A_KeenDie)
 {
-	A_NoBlocking (self);
+	CALL_ACTION(A_NoBlocking, self);
 	
 	// scan the remaining thinkers to see if all Keens are dead
 	AActor *other;

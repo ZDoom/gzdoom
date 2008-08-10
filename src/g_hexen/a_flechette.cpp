@@ -16,12 +16,7 @@ static FRandom pr_poisonbag ("PoisonBag");
 static FRandom pr_poisoncloud ("PoisonCloud");
 static FRandom pr_poisoncloudd ("PoisonCloudDamage");
 
-void A_PoisonBagInit (AActor *);
-void A_PoisonBagDamage (AActor *);
-void A_PoisonBagCheck (AActor *);
-void A_CheckThrowBomb (AActor *);
-void A_CheckThrowBomb2 (AActor *);
-void A_TimeBomb(AActor *self);
+DECLARE_ACTION(A_CheckThrowBomb)
 
 // Poison Bag Artifact (Flechette) ------------------------------------------
 
@@ -377,5 +372,5 @@ DEFINE_ACTION_FUNCTION(AActor, A_CheckThrowBomb2)
 		self->flags2 &= ~MF2_BOUNCETYPE;
 		self->flags &= ~MF_MISSILE;
 	}
-	A_CheckThrowBomb (self);
+	CALL_ACTION(A_CheckThrowBomb, self);
 }

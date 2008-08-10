@@ -82,7 +82,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_AlienSpectreDeath)
 	int log;
 	int i;
 
-	A_NoBlocking (self);	// [RH] Need this for Sigil rewarding
+	CALL_ACTION(A_NoBlocking, self); // [RH] Need this for Sigil rewarding
 	if (!CheckBossDeath (self))
 	{
 		return;

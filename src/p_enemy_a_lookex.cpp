@@ -818,7 +818,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LookEx)
 				}
 				else
 				{
-					A_Wander (self);
+					CALL_ACTION(A_Wander, self);
 				}
 			}
 		}

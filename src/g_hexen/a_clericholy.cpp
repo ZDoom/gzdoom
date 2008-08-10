@@ -19,15 +19,6 @@ static FRandom pr_checkscream ("CCheckScream");
 static FRandom pr_spiritslam ("CHolySlam");
 static FRandom pr_wraithvergedrop ("WraithvergeDrop");
 
-void A_CHolyAttack2 (AActor *);
-void A_CHolyTail (AActor *);
-void A_CHolySeek (AActor *);
-void A_CHolyCheckScream (AActor *);
-void A_DropWraithvergePieces (AActor *);
-
-void A_CHolyAttack (AActor *);
-void A_CHolyPalette (AActor *);
-
 void SpawnSpiritTail (AActor *spirit);
 
 //==========================================================================
@@ -565,7 +556,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CHolySeek)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CHolyCheckScream)
 {
-	A_CHolySeek (self);
+	CALL_ACTION(A_CHolySeek, self);
 	if (pr_checkscream() < 20)
 	{
 		S_Sound (self, CHAN_VOICE, "SpiritActive", 1, ATTN_NORM);

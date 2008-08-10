@@ -100,9 +100,9 @@ IMPLEMENT_CLASS (AFakeInventory)
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void A_ScreamAndUnblock (AActor *);
-void A_ActiveAndUnblock (AActor *);
-void A_ActiveSound (AActor *);
+DECLARE_ACTION(A_ScreamAndUnblock)
+DECLARE_ACTION(A_ActiveAndUnblock)
+DECLARE_ACTION(A_ActiveSound)
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -367,24 +367,24 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def)
 			{
 				if (extra.bExplosive)
 				{
-					info->OwnedStates[extra.DeathStart].Action = A_Explode;
+					info->OwnedStates[extra.DeathStart].Action = GET_ACTION(A_Explode);
 				}
 			}
 			else
 			{
 				// The first frame plays the death sound and
 				// the second frame makes it nonsolid.
-				info->OwnedStates[extra.DeathStart].Action= A_Scream;
+				info->OwnedStates[extra.DeathStart].Action= GET_ACTION(A_Scream);
 				if (extra.bSolidOnDeath)
 				{
 				}
 				else if (extra.DeathStart + 1 < extra.DeathEnd)
 				{
-					info->OwnedStates[extra.DeathStart+1].Action = A_NoBlocking;
+					info->OwnedStates[extra.DeathStart+1].Action = GET_ACTION(A_NoBlocking);
 				}
 				else
 				{
-					info->OwnedStates[extra.DeathStart].Action = A_ScreamAndUnblock;
+					info->OwnedStates[extra.DeathStart].Action = GET_ACTION(A_ScreamAndUnblock);
 				}
 
 				if (extra.DeathHeight == 0) extra.DeathHeight = ((AActor*)(type->Defaults))->height;
@@ -412,17 +412,17 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def)
 
 			// The first frame plays the burn sound and
 			// the second frame makes it nonsolid.
-			info->OwnedStates[extra.FireDeathStart].Action = A_ActiveSound;
+			info->OwnedStates[extra.FireDeathStart].Action = GET_ACTION(A_ActiveSound);
 			if (extra.bSolidOnBurn)
 			{
 			}
 			else if (extra.FireDeathStart + 1 < extra.FireDeathEnd)
 			{
-				info->OwnedStates[extra.FireDeathStart+1].Action = A_NoBlocking;
+				info->OwnedStates[extra.FireDeathStart+1].Action = GET_ACTION(A_NoBlocking);
 			}
 			else
 			{
-				info->OwnedStates[extra.FireDeathStart].Action = A_ActiveAndUnblock;
+				info->OwnedStates[extra.FireDeathStart].Action = GET_ACTION(A_ActiveAndUnblock);
 			}
 
 			if (extra.BurnHeight == 0) extra.BurnHeight = ((AActor*)(type->Defaults))->height;
@@ -442,13 +442,13 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def)
 			info->OwnedStates[i].NextState = &info->OwnedStates[info->NumOwnedStates-1];
 			info->OwnedStates[i].Tics = 5;
 			info->OwnedStates[i].Misc1 = 0;
-			info->OwnedStates[i].Action = A_FreezeDeath;
+			info->OwnedStates[i].Action = GET_ACTION(A_FreezeDeath);
 
 			i = info->NumOwnedStates - 1;
 			info->OwnedStates[i].NextState = &info->OwnedStates[i];
 			info->OwnedStates[i].Tics = 1;
 			info->OwnedStates[i].Misc1 = 0;
-			info->OwnedStates[i].Action = A_FreezeDeathChunks;
+			info->OwnedStates[i].Action = GET_ACTION(A_FreezeDeathChunks);
 			AddState("Ice", &info->OwnedStates[extra.IceDeathStart]);
 		}
 		else if (extra.bGenericIceDeath)
@@ -867,8 +867,8 @@ static void ParseSpriteFrames (FActorInfo *info, TArray<FState> &states, FScanne
 
 DEFINE_ACTION_FUNCTION(AActor, A_ScreamAndUnblock)
 {
-	A_Scream (self);
-	A_NoBlocking (self);
+	CALL_ACTION(A_Scream, self);
+	CALL_ACTION(A_NoBlocking, self);
 }
 
 //===========================================================================
@@ -879,8 +879,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_ScreamAndUnblock)
 
 DEFINE_ACTION_FUNCTION(AActor, A_ActiveAndUnblock)
 {
-	A_ActiveSound (self);
-	A_NoBlocking (self);
+	CALL_ACTION(A_ActiveSound, self);
+	CALL_ACTION(A_NoBlocking, self);
 }
 
 //===========================================================================

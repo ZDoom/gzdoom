@@ -150,7 +150,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CFlameAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CFlamePuff)
 {
-	A_UnHideThing (self);
+	self->renderflags &= ~RF_INVISIBLE;
 	self->momx = 0;
 	self->momy = 0;
 	self->momz = 0;
@@ -170,7 +170,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CFlameMissile)
 	fixed_t dist;
 	AActor *mo;
 	
-	A_UnHideThing (self);
+	self->renderflags &= ~RF_INVISIBLE;
 	S_Sound (self, CHAN_BODY, "ClericFlameExplode", 1, ATTN_NORM);
 	AActor *BlockingMobj = self->BlockingMobj;
 	if (BlockingMobj && BlockingMobj->flags&MF_SHOOTABLE)

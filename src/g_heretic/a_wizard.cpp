@@ -31,7 +31,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_GhostOff)
 DEFINE_ACTION_FUNCTION(AActor, A_WizAtk1)
 {
 	A_FaceTarget (self);
-	A_GhostOff (self);
+	CALL_ACTION(A_GhostOff, self);
 }
 
 //----------------------------------------------------------------------------
@@ -58,7 +58,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_WizAtk3)
 {
 	AActor *mo;
 
-	A_GhostOff (self);
+	CALL_ACTION(A_GhostOff, self);
 	if (!self->target)
 	{
 		return;

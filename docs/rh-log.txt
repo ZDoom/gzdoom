@@ -1,4 +1,5 @@
 August 10, 2008 (Changes by Graf Zahl)
+- Macro-fied all access to action functions.
 - Changed action function definition so that they have to be defined with a
   DEFINE_ACTION_FUNCTION macro. This should make it easier to improve the
   whole system.

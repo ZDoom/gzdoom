@@ -134,7 +134,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BridgeInit)
 		ball = Spawn(balltype, cx, cy, cz, ALLOW_REPLACE);
 		ball->angle = startangle + (ANGLE_45/32) * (256/ballcount) * i;
 		ball->target = self;
-		A_BridgeOrbit(ball);
+		CALL_ACTION(A_BridgeOrbit, ball);
 	}
 }
 

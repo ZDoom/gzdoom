@@ -11,6 +11,7 @@
 #include "gstrings.h"
 #include "a_hexenglobal.h"
 #include "p_effect.h"
+#include "thingdef/thingdef.h"
 
 #define AXERANGE	((fixed_t)(2.25*MELEERANGE))
 
@@ -67,11 +68,11 @@ FState *AFWeapAxe::GetAtkState (bool hold)
 //
 //============================================================================
 
-void A_FAxeCheckReady (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_FAxeCheckReady)
 {
 	player_t *player;
 
-	if (NULL == (player = actor->player))
+	if (NULL == (player = self->player))
 	{
 		return;
 	}
@@ -81,7 +82,7 @@ void A_FAxeCheckReady (AActor *actor)
 	}
 	else
 	{
-		A_WeaponReady (actor);
+		A_WeaponReady (self);
 	}
 }
 
@@ -91,11 +92,11 @@ void A_FAxeCheckReady (AActor *actor)
 //
 //============================================================================
 
-void A_FAxeCheckReadyG (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_FAxeCheckReadyG)
 {
 	player_t *player;
 
-	if (NULL == (player = actor->player))
+	if (NULL == (player = self->player))
 	{
 		return;
 	}
@@ -105,7 +106,7 @@ void A_FAxeCheckReadyG (AActor *actor)
 	}
 	else
 	{
-		A_WeaponReady (actor);
+		A_WeaponReady (self);
 	}
 }
 
@@ -115,11 +116,11 @@ void A_FAxeCheckReadyG (AActor *actor)
 //
 //============================================================================
 
-void A_FAxeCheckUp (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_FAxeCheckUp)
 {
 	player_t *player;
 
-	if (NULL == (player = actor->player))
+	if (NULL == (player = self->player))
 	{
 		return;
 	}
@@ -129,7 +130,7 @@ void A_FAxeCheckUp (AActor *actor)
 	}
 	else
 	{
-		A_Raise (actor);
+		A_Raise (self);
 	}
 }
 
@@ -139,11 +140,11 @@ void A_FAxeCheckUp (AActor *actor)
 //
 //============================================================================
 
-void A_FAxeCheckUpG (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_FAxeCheckUpG)
 {
 	player_t *player;
 
-	if (NULL == (player = actor->player))
+	if (NULL == (player = self->player))
 	{
 		return;
 	}
@@ -153,7 +154,7 @@ void A_FAxeCheckUpG (AActor *actor)
 	}
 	else
 	{
-		A_Raise (actor);
+		A_Raise (self);
 	}
 }
 
@@ -163,11 +164,11 @@ void A_FAxeCheckUpG (AActor *actor)
 //
 //============================================================================
 
-void A_FAxeCheckAtk (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_FAxeCheckAtk)
 {
 	player_t *player;
 
-	if (NULL == (player = actor->player))
+	if (NULL == (player = self->player))
 	{
 		return;
 	}
@@ -183,7 +184,7 @@ void A_FAxeCheckAtk (AActor *actor)
 //
 //============================================================================
 
-void A_FAxeAttack (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_FAxeAttack)
 {
 	angle_t angle;
 	fixed_t power;
@@ -196,7 +197,7 @@ void A_FAxeAttack (AActor *actor)
 	const PClass *pufftype;
 	AActor *linetarget;
 
-	if (NULL == (player = actor->player))
+	if (NULL == (player = self->player))
 	{
 		return;
 	}

@@ -5,10 +5,11 @@
 #include "p_local.h"
 #include "p_enemy.h"
 #include "a_action.h"
+#include "thingdef/thingdef.h"
 
 static FRandom pr_spidrefire ("SpidRefire");
 
-void A_SpidRefire (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_SpidRefire)
 {
 	// keep firing unless target got out of sight
 	A_FaceTarget (self);
@@ -25,7 +26,7 @@ void A_SpidRefire (AActor *self)
 	}
 }
 
-void A_Metal (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_Metal)
 {
 	S_Sound (self, CHAN_BODY, "spider/walk", 1, ATTN_IDLE);
 	A_Chase (self);

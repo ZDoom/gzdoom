@@ -1,5 +1,6 @@
 #include "m_random.h"
 #include "p_local.h"
+#include "thingdef/thingdef.h"
 
 static FRandom pr_fogspawn ("FogSpawn");
 
@@ -22,7 +23,7 @@ static FRandom pr_fogspawn ("FogSpawn");
 //
 //==========================================================================
 
-void A_FogSpawn (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_FogSpawn)
 {
 	static const PClass *fogs[3] =
 	{
@@ -34,21 +35,21 @@ void A_FogSpawn (AActor *actor)
 	AActor *mo=NULL;
 	angle_t delta;
 
-	if (actor->special1-- > 0) return;
+	if (self->special1-- > 0) return;
 
-	actor->special1 = actor->args[2];		// Reset frequency count
+	self->special1 = self->args[2];		// Reset frequency count
 
-	mo = Spawn (fogs[pr_fogspawn()%3], actor->x, actor->y, actor->z, ALLOW_REPLACE);
+	mo = Spawn (fogs[pr_fogspawn()%3], self->x, self->y, self->z, ALLOW_REPLACE);
 
 	if (mo)
 	{
-		delta = actor->args[1];
+		delta = self->args[1];
 		if (delta==0) delta=1;
-		mo->angle = actor->angle + (((pr_fogspawn()%delta)-(delta>>1))<<24);
-		mo->target = actor;
-		if (actor->args[0] < 1) actor->args[0] = 1;
-		mo->args[0] = (pr_fogspawn() % (actor->args[0]))+1;	// Random speed
-		mo->args[3] = actor->args[3];						// Set lifetime
+		mo->angle = self->angle + (((pr_fogspawn()%delta)-(delta>>1))<<24);
+		mo->target = self;
+		if (self->args[0] < 1) self->args[0] = 1;
+		mo->args[0] = (pr_fogspawn() % (self->args[0]))+1;	// Random speed
+		mo->args[3] = self->args[3];						// Set lifetime
 		mo->args[4] = 1;									// Set to moving
 		mo->special2 = pr_fogspawn()&63;
 	}
@@ -60,29 +61,29 @@ void A_FogSpawn (AActor *actor)
 //
 //==========================================================================
 
-void A_FogMove (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_FogMove)
 {
-	int speed = actor->args[0]<<FRACBITS;
+	int speed = self->args[0]<<FRACBITS;
 	angle_t angle;
 	int weaveindex;
 
-	if (!(actor->args[4])) return;
+	if (!(self->args[4])) return;
 
-	if (actor->args[3]-- <= 0)
+	if (self->args[3]-- <= 0)
 	{
-		actor->SetStateNF (actor->FindState(NAME_Death));
+		self->SetStateNF (self->FindState(NAME_Death));
 		return;
 	}
 
-	if ((actor->args[3] % 4) == 0)
+	if ((self->args[3] % 4) == 0)
 	{
-		weaveindex = actor->special2;
-		actor->z += FloatBobOffsets[weaveindex]>>1;
-		actor->special2 = (weaveindex+1)&63;
+		weaveindex = self->special2;
+		self->z += FloatBobOffsets[weaveindex]>>1;
+		self->special2 = (weaveindex+1)&63;
 	}
 
-	angle = actor->angle>>ANGLETOFINESHIFT;
-	actor->momx = FixedMul(speed, finecosine[angle]);
-	actor->momy = FixedMul(speed, finesine[angle]);
+	angle = self->angle>>ANGLETOFINESHIFT;
+	self->momx = FixedMul(speed, finecosine[angle]);
+	self->momy = FixedMul(speed, finesine[angle]);
 }
 

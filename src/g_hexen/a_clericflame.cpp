@@ -10,6 +10,7 @@
 #include "p_pspr.h"
 #include "gstrings.h"
 #include "a_hexenglobal.h"
+#include "thingdef/thingdef.h"
 
 const fixed_t FLAMESPEED	= fixed_t(0.45*FRACUNIT);
 const fixed_t CFLAMERANGE	= 12*64*FRACUNIT;
@@ -123,22 +124,22 @@ void ACFlameMissile::Tick ()
 //
 //============================================================================
 
-void A_CFlameAttack (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_CFlameAttack)
 {
 	player_t *player;
 
-	if (NULL == (player = actor->player))
+	if (NULL == (player = self->player))
 	{
 		return;
 	}
-	AWeapon *weapon = actor->player->ReadyWeapon;
+	AWeapon *weapon = self->player->ReadyWeapon;
 	if (weapon != NULL)
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return;
 	}
-	P_SpawnPlayerMissile (actor, RUNTIME_CLASS(ACFlameMissile));
-	S_Sound (actor, CHAN_WEAPON, "ClericFlameFire", 1, ATTN_NORM);
+	P_SpawnPlayerMissile (self, RUNTIME_CLASS(ACFlameMissile));
+	S_Sound (self, CHAN_WEAPON, "ClericFlameFire", 1, ATTN_NORM);
 }
 
 //============================================================================
@@ -147,13 +148,13 @@ void A_CFlameAttack (AActor *actor)
 //
 //============================================================================
 
-void A_CFlamePuff (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_CFlamePuff)
 {
-	A_UnHideThing (actor);
-	actor->momx = 0;
-	actor->momy = 0;
-	actor->momz = 0;
-	S_Sound (actor, CHAN_BODY, "ClericFlameExplode", 1, ATTN_NORM);
+	A_UnHideThing (self);
+	self->momx = 0;
+	self->momy = 0;
+	self->momz = 0;
+	S_Sound (self, CHAN_BODY, "ClericFlameExplode", 1, ATTN_NORM);
 }
 
 //============================================================================
@@ -162,16 +163,16 @@ void A_CFlamePuff (AActor *actor)
 //
 //============================================================================
 
-void A_CFlameMissile (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_CFlameMissile)
 {
 	int i;
 	int an, an90;
 	fixed_t dist;
 	AActor *mo;
 	
-	A_UnHideThing (actor);
-	S_Sound (actor, CHAN_BODY, "ClericFlameExplode", 1, ATTN_NORM);
-	AActor *BlockingMobj = actor->BlockingMobj;
+	A_UnHideThing (self);
+	S_Sound (self, CHAN_BODY, "ClericFlameExplode", 1, ATTN_NORM);
+	AActor *BlockingMobj = self->BlockingMobj;
 	if (BlockingMobj && BlockingMobj->flags&MF_SHOOTABLE)
 	{ // Hit something, so spawn the flame circle around the thing
 		dist = BlockingMobj->radius+18*FRACUNIT;
@@ -185,7 +186,7 @@ void A_CFlameMissile (AActor *actor)
 			if (mo)
 			{
 				mo->angle = an<<ANGLETOFINESHIFT;
-				mo->target = actor->target;
+				mo->target = self->target;
 				mo->momx = mo->special1 = FixedMul(FLAMESPEED, finecosine[an]);
 				mo->momy = mo->special2 = FixedMul(FLAMESPEED, finesine[an]);
 				mo->tics -= pr_missile()&3;
@@ -196,13 +197,13 @@ void A_CFlameMissile (AActor *actor)
 			if(mo)
 			{
 				mo->angle = ANG180+(an<<ANGLETOFINESHIFT);
-				mo->target = actor->target;
+				mo->target = self->target;
 				mo->momx = mo->special1 = FixedMul(-FLAMESPEED, finecosine[an]);
 				mo->momy = mo->special2 = FixedMul(-FLAMESPEED, finesine[an]);
 				mo->tics -= pr_missile()&3;
 			}
 		}
-		actor->SetState (actor->SpawnState);
+		self->SetState (self->SpawnState);
 	}
 }
 
@@ -212,12 +213,12 @@ void A_CFlameMissile (AActor *actor)
 //
 //============================================================================
 
-void A_CFlameRotate (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_CFlameRotate)
 {
 	int an;
 
-	an = (actor->angle+ANG90)>>ANGLETOFINESHIFT;
-	actor->momx = actor->special1+FixedMul(FLAMEROTSPEED, finecosine[an]);
-	actor->momy = actor->special2+FixedMul(FLAMEROTSPEED, finesine[an]);
-	actor->angle += ANG90/15;
+	an = (self->angle+ANG90)>>ANGLETOFINESHIFT;
+	self->momx = self->special1+FixedMul(FLAMEROTSPEED, finecosine[an]);
+	self->momy = self->special2+FixedMul(FLAMEROTSPEED, finesine[an]);
+	self->angle += ANG90/15;
 }

@@ -5,6 +5,7 @@
 #include "p_enemy.h"
 #include "s_sound.h"
 #include "a_strifeglobal.h"
+#include "thingdef/thingdef.h"
 
 bool Sys_1ed64 (AActor *self)
 {
@@ -15,7 +16,7 @@ bool Sys_1ed64 (AActor *self)
 	return false;
 }
 
-void A_CrusaderChoose (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_CrusaderChoose)
 {
 	if (self->target == NULL)
 		return;
@@ -43,7 +44,7 @@ void A_CrusaderChoose (AActor *self)
 	}
 }
 
-void A_CrusaderSweepLeft (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_CrusaderSweepLeft)
 {
 	self->angle += ANGLE_90/16;
 	AActor *misl = P_SpawnMissileZAimed (self, self->z + 48*FRACUNIT, self->target, PClass::FindClass("FastFlameMissile"));
@@ -53,7 +54,7 @@ void A_CrusaderSweepLeft (AActor *self)
 	}
 }
 
-void A_CrusaderSweepRight (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_CrusaderSweepRight)
 {
 	self->angle -= ANGLE_90/16;
 	AActor *misl = P_SpawnMissileZAimed (self, self->z + 48*FRACUNIT, self->target, PClass::FindClass("FastFlameMissile"));
@@ -63,7 +64,7 @@ void A_CrusaderSweepRight (AActor *self)
 	}
 }
 
-void A_CrusaderRefire (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_CrusaderRefire)
 {
 	if (self->target == NULL ||
 		self->target->health <= 0 ||
@@ -73,7 +74,7 @@ void A_CrusaderRefire (AActor *self)
 	}
 }
 
-void A_CrusaderDeath (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_CrusaderDeath)
 {
 	if (CheckBossDeath (self))
 	{

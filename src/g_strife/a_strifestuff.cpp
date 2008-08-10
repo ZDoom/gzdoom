@@ -10,6 +10,7 @@
 #include "p_enemy.h"
 #include "p_lnspec.h"
 #include "c_console.h"
+#include "thingdef/thingdef.h"
 
 // Notes so I don't forget them:
 // Strife does some extra stuff in A_Explode if a player caused the explosion. (probably NoiseAlert)
@@ -407,14 +408,14 @@ int AForceFieldGuard::TakeSpecialDamage (AActor *inflictor, AActor *source, int 
 
 // Kneeling Guy -------------------------------------------------------------
 
-void A_SetShadow (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_SetShadow)
 {
 	self->flags |= MF_STRIFEx8000000|MF_SHADOW;
 	self->RenderStyle = STYLE_Translucent;
 	self->alpha = HR_SHADOW;
 }
 
-void A_ClearShadow (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_ClearShadow)
 {
 	self->flags &= ~(MF_STRIFEx8000000|MF_SHADOW);
 	self->RenderStyle = STYLE_Normal;
@@ -423,7 +424,7 @@ void A_ClearShadow (AActor *self)
 
 static FRandom pr_gethurt ("HurtMe!");
 
-void A_GetHurt (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_GetHurt)
 {
 	self->flags4 |= MF4_INCOMBAT;
 	if ((pr_gethurt() % 5) == 0)
@@ -439,7 +440,7 @@ void A_GetHurt (AActor *self)
 
 // Klaxon Warning Light -----------------------------------------------------
 
-void A_TurretLook (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_TurretLook)
 {
 	AActor *target;
 
@@ -465,7 +466,7 @@ void A_TurretLook (AActor *self)
 	}
 }
 
-void A_KlaxonBlare (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_KlaxonBlare)
 {
 	if (--self->reactiontime < 0)
 	{
@@ -551,7 +552,7 @@ IMPLEMENT_CLASS (AMeat)
 //
 //==========================================================================
 
-void A_TossGib (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_TossGib)
 {
 	const char *gibtype = (self->flags & MF_NOBLOOD) ? "Junk" : "Meat";
 	AActor *gib = Spawn (gibtype, self->x, self->y, self->z + 24*FRACUNIT, ALLOW_REPLACE);
@@ -573,7 +574,7 @@ void A_TossGib (AActor *self)
 
 //============================================================================
 
-void A_FLoopActiveSound (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_FLoopActiveSound)
 {
 	if (self->ActiveSound != 0 && !(level.time & 7))
 	{
@@ -581,7 +582,7 @@ void A_FLoopActiveSound (AActor *self)
 	}
 }
 
-void A_Countdown (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_Countdown)
 {
 	if (--self->reactiontime <= 0)
 	{
@@ -590,7 +591,7 @@ void A_Countdown (AActor *self)
 	}
 }
 
-void A_LoopActiveSound (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_LoopActiveSound)
 {
 	if (self->ActiveSound != 0 && !S_IsActorPlayingSomething (self, CHAN_VOICE, -1))
 	{
@@ -598,7 +599,7 @@ void A_LoopActiveSound (AActor *self)
 	}
 }
 
-void A_CheckTerrain (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_CheckTerrain)
 {
 	sector_t *sec = self->Sector;
 
@@ -626,7 +627,7 @@ void A_CheckTerrain (AActor *self)
 //
 //============================================================================
 
-void A_ClearSoundTarget (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_ClearSoundTarget)
 {
 	AActor *actor;
 
@@ -638,7 +639,7 @@ void A_ClearSoundTarget (AActor *self)
 }
 
 
-void A_ItBurnsItBurns (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_ItBurnsItBurns)
 {
 	S_Sound (self, CHAN_VOICE, "human/imonfire", 1, ATTN_NORM);
 
@@ -652,14 +653,14 @@ void A_ItBurnsItBurns (AActor *self)
 	}
 }
 
-void A_DropFire (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_DropFire)
 {
 	AActor *drop = Spawn("FireDroplet", self->x, self->y, self->z + 24*FRACUNIT, ALLOW_REPLACE);
 	drop->momz = -FRACUNIT;
 	P_RadiusAttack (self, self, 64, 64, NAME_Fire, false);
 }
 
-void A_CrispyPlayer (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_CrispyPlayer)
 {
 	if (self->player != NULL && self->player->mo == self)
 	{
@@ -670,7 +671,7 @@ void A_CrispyPlayer (AActor *self)
 	}
 }
 
-void A_HandLower (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_HandLower)
 {
 	if (self->player != NULL)
 	{

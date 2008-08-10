@@ -15,13 +15,13 @@
 //
 #define FATSPREAD (ANG90/8)
 
-void A_FatRaise (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_FatRaise)
 {
 	A_FaceTarget (self);
 	S_Sound (self, CHAN_WEAPON, "fatso/raiseguns", 1, ATTN_NORM);
 }
 
-void A_FatAttack1 (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_FatAttack1)
 {
 	AActor *missile;
 	angle_t an;
@@ -49,7 +49,7 @@ void A_FatAttack1 (AActor *self)
 	}
 }
 
-void A_FatAttack2 (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_FatAttack2)
 {
 	AActor *missile;
 	angle_t an;
@@ -77,7 +77,7 @@ void A_FatAttack2 (AActor *self)
 	}
 }
 
-void A_FatAttack3 (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_FatAttack3)
 {
 	AActor *missile;
 	angle_t an;
@@ -116,39 +116,39 @@ void A_FatAttack3 (AActor *self)
 // Original idea: Linguica
 //
 
-void A_Mushroom (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_Mushroom)
 {
-	int i, j, n = actor->GetMissileDamage (0, 1);
+	int i, j, n = self->GetMissileDamage (0, 1);
 
 	const PClass *spawntype = NULL;
 	int index = CheckIndex (2, NULL);
 	if (index >= 0) 
 	{
 		spawntype = PClass::FindClass((ENamedName)StateParameters[index]);
-		n = EvalExpressionI (StateParameters[index+1], actor);
+		n = EvalExpressionI (StateParameters[index+1], self);
 		if (n == 0)
-			n = actor->GetMissileDamage (0, 1);
+			n = self->GetMissileDamage (0, 1);
 	}
 	if (spawntype == NULL) spawntype = PClass::FindClass("FatShot");
 
-	P_RadiusAttack (actor, actor->target, 128, 128, actor->DamageType, true);
-	if (actor->z <= actor->floorz + (128<<FRACBITS))
+	P_RadiusAttack (self, self->target, 128, 128, self->DamageType, true);
+	if (self->z <= self->floorz + (128<<FRACBITS))
 	{
-		P_HitFloor (actor);
+		P_HitFloor (self);
 	}
 
 	// Now launch mushroom cloud
 	AActor *target = Spawn("Mapspot", 0, 0, 0, NO_REPLACE);	// We need something to aim at.
-	target->height = actor->height;
+	target->height = self->height;
 	for (i = -n; i <= n; i += 8)
 	{
 		for (j = -n; j <= n; j += 8)
 		{
 			AActor *mo;
-			target->x = actor->x + (i << FRACBITS); // Aim in many directions from source
-			target->y = actor->y + (j << FRACBITS);
-			target->z = actor->z + (P_AproxDistance(i,j) << (FRACBITS+2)); // Aim up fairly high
-			mo = P_SpawnMissile (actor, target, spawntype); // Launch fireball
+			target->x = self->x + (i << FRACBITS); // Aim in many directions from source
+			target->y = self->y + (j << FRACBITS);
+			target->z = self->z + (P_AproxDistance(i,j) << (FRACBITS+2)); // Aim up fairly high
+			mo = P_SpawnMissile (self, target, spawntype); // Launch fireball
 			if (mo != NULL)
 			{
 				mo->momx >>= 1;

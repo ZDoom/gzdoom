@@ -6,6 +6,7 @@
 #include "s_sound.h"
 #include "m_random.h"
 #include "a_strifeglobal.h"
+#include "thingdef/thingdef.h"
 
 AActor *P_SpawnSubMissile (AActor *source, const PClass *type, AActor *target);
 
@@ -24,7 +25,7 @@ void ASpectralMonster::Touch (AActor *toucher)
 }
 
 
-void A_SpectralLightningTail (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_SpectralLightningTail)
 {
 	AActor *foo = Spawn("SpectralLightningHTail", self->x - self->momx, self->y - self->momy, self->z, ALLOW_REPLACE);
 
@@ -32,7 +33,7 @@ void A_SpectralLightningTail (AActor *self)
 	foo->health = self->health;
 }
 
-void A_SpectralBigBallLightning (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_SpectralBigBallLightning)
 {
 	const PClass *cls = PClass::FindClass("SpectralLightningH3");
 	if (cls)
@@ -48,7 +49,7 @@ void A_SpectralBigBallLightning (AActor *self)
 
 static FRandom pr_zap5 ("Zap5");
 
-void A_SpectralLightning (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_SpectralLightning)
 {
 	AActor *flash;
 	fixed_t x, y;
@@ -80,7 +81,7 @@ void A_SpectralLightning (AActor *self)
 // altered anywhere.
 #define TRACEANGLE (0xe000000)
 
-void A_Tracer2 (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_Tracer2)
 {
 	AActor *dest;
 	angle_t exact;

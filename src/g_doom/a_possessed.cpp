@@ -7,6 +7,7 @@
 #include "gstrings.h"
 #include "a_action.h"
 #include "a_doomglobal.h"
+#include "thingdef/thingdef.h"
 
 static FRandom pr_posattack ("PosAttack");
 static FRandom pr_sposattack ("SPosAttack");
@@ -16,7 +17,7 @@ static FRandom pr_cposrefire ("CPosRefire");
 //
 // A_PosAttack
 //
-void A_PosAttack (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_PosAttack)
 {
 	int angle;
 	int damage;
@@ -53,7 +54,7 @@ static void A_SPosAttack2 (AActor *self)
     }
 }
 
-void A_SPosAttackUseAtkSound (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_SPosAttackUseAtkSound)
 {
 	if (!self->target)
 		return;
@@ -64,7 +65,7 @@ void A_SPosAttackUseAtkSound (AActor *self)
 
 // This version of the function, which uses a hard-coded sound, is
 // meant for Dehacked only.
-void A_SPosAttack (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_SPosAttack)
 {
 	if (!self->target)
 		return;
@@ -73,7 +74,7 @@ void A_SPosAttack (AActor *self)
 	A_SPosAttack2 (self);
 }
 
-void A_CPosAttack (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_CPosAttack)
 {
 	int angle;
 	int bangle;
@@ -99,7 +100,7 @@ void A_CPosAttack (AActor *self)
 	P_LineAttack (self, angle, MISSILERANGE, slope, damage, NAME_None, NAME_BulletPuff);
 }
 
-void A_CPosRefire (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_CPosRefire)
 {
 	// keep firing unless target got out of sight
 	A_FaceTarget (self);

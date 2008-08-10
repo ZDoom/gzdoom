@@ -172,22 +172,22 @@ int CheckIndex(int paramsize, FState ** pcallstate)
 // Simple flag changers
 //
 //==========================================================================
-void A_SetSolid(AActor * self)
+DEFINE_ACTION_FUNCTION(AActor, A_SetSolid)
 {
 	self->flags |= MF_SOLID;
 }
 
-void A_UnsetSolid(AActor * self)
+DEFINE_ACTION_FUNCTION(AActor, A_UnsetSolid)
 {
 	self->flags &= ~MF_SOLID;
 }
 
-void A_SetFloat(AActor * self)
+DEFINE_ACTION_FUNCTION(AActor, A_SetFloat)
 {
 	self->flags |= MF_FLOAT;
 }
 
-void A_UnsetFloat(AActor * self)
+DEFINE_ACTION_FUNCTION(AActor, A_UnsetFloat)
 {
 	self->flags &= ~(MF_FLOAT|MF_INFLOAT);
 }
@@ -259,17 +259,22 @@ static void DoAttack (AActor *self, bool domelee, bool domissile)
 	}
 }
 
-void A_MeleeAttack(AActor * self)
+DEFINE_ACTION_FUNCTION(AActor, A_MeleeAttack)
 {
 	DoAttack(self, true, false);
 }
 
-void A_MissileAttack(AActor * self)
+DEFINE_ACTION_FUNCTION(AActor, A_MissileAttack)
 {
 	DoAttack(self, false, true);
 }
 
-void A_ComboAttack(AActor * self)
+DEFINE_ACTION_FUNCTION(AActor, A_ComboAttack)
+{
+	DoAttack(self, true, true);
+}
+
+DEFINE_ACTION_FUNCTION(AActor, A_BasicAttack)
 {
 	DoAttack(self, true, true);
 }
@@ -290,22 +295,22 @@ static void DoPlaySound(AActor * self, int channel)
 	S_Sound (self, channel, soundid, 1, ATTN_NORM);
 }
 
-void A_PlaySound(AActor * self)
+DEFINE_ACTION_FUNCTION(AActor, A_PlaySound)
 {
 	DoPlaySound(self, CHAN_BODY);
 }
 
-void A_PlayWeaponSound(AActor * self)
+DEFINE_ACTION_FUNCTION(AActor, A_PlayWeaponSound)
 {
 	DoPlaySound(self, CHAN_WEAPON);
 }
 
-void A_StopSound(AActor * self)
+DEFINE_ACTION_FUNCTION(AActor, A_StopSound)
 {
 	S_StopSound(self, CHAN_VOICE);
 }
 
-void A_PlaySoundEx (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_PlaySoundEx)
 {
 	int index = CheckIndex(4);
 	if (index < 0) return;
@@ -343,7 +348,7 @@ void A_PlaySoundEx (AActor *self)
 	}
 }
 
-void A_StopSoundEx (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_StopSoundEx)
 {
 	int index = CheckIndex (1);
 	if (index < 0) return;
@@ -361,7 +366,7 @@ void A_StopSoundEx (AActor *self)
 // Generic seeker missile function
 //
 //==========================================================================
-void A_SeekerMissile(AActor * self)
+DEFINE_ACTION_FUNCTION(AActor, A_SeekerMissile)
 {
 	int index=CheckIndex(2);
 	if (index<0) return;
@@ -376,7 +381,7 @@ void A_SeekerMissile(AActor * self)
 // Hitscan attack with a customizable amount of bullets (specified in damage)
 //
 //==========================================================================
-void A_BulletAttack (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_BulletAttack)
 {
 	int i;
 	int bangle;
@@ -483,7 +488,7 @@ static void DoJump(AActor * self, FState * CallingState, int offset)
 // State jump function
 //
 //==========================================================================
-void A_Jump(AActor * self)
+DEFINE_ACTION_FUNCTION(AActor, A_Jump)
 {
 	FState * CallingState;
 	int index = CheckIndex(3, &CallingState);
@@ -511,7 +516,7 @@ void A_Jump(AActor * self)
 // State jump function
 //
 //==========================================================================
-void A_JumpIfHealthLower(AActor * self)
+DEFINE_ACTION_FUNCTION(AActor, A_JumpIfHealthLower)
 {
 	FState * CallingState;
 	int index=CheckIndex(2, &CallingState);
@@ -527,7 +532,7 @@ void A_JumpIfHealthLower(AActor * self)
 // State jump function
 //
 //==========================================================================
-void A_JumpIfCloser(AActor * self)
+DEFINE_ACTION_FUNCTION(AActor, A_JumpIfCloser)
 {
 	FState * CallingState = NULL;
 	int index = CheckIndex(2, &CallingState);
@@ -586,12 +591,12 @@ void DoJumpIfInventory(AActor * self, AActor * owner)
 	}
 }
 
-void A_JumpIfInventory(AActor * self)
+DEFINE_ACTION_FUNCTION(AActor, A_JumpIfInventory)
 {
 	DoJumpIfInventory(self, self);
 }
 
-void A_JumpIfInTargetInventory(AActor * self)
+DEFINE_ACTION_FUNCTION(AActor, A_JumpIfInTargetInventory)
 {
 	DoJumpIfInventory(self, self->target);
 }
@@ -602,7 +607,7 @@ void A_JumpIfInTargetInventory(AActor * self)
 //
 //==========================================================================
 
-void A_ExplodeParms (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_Explode)
 {
 	int damage;
 	int distance;
@@ -645,7 +650,7 @@ void A_ExplodeParms (AActor *self)
 //
 //==========================================================================
 
-void A_RadiusThrust (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_RadiusThrust)
 {
 	int force = 0;
 	int distance = 0;
@@ -673,7 +678,7 @@ void A_RadiusThrust (AActor *self)
 // Execute a line special / script
 //
 //==========================================================================
-void A_CallSpecial(AActor * self)
+DEFINE_ACTION_FUNCTION(AActor, A_CallSpecial)
 {
 	int index=CheckIndex(6);
 	if (index<0) return;
@@ -713,7 +718,7 @@ enum CM_Flags
 	CMF_CHECKTARGETDEAD = 8,
 };
 
-void A_CustomMissile(AActor * self)
+DEFINE_ACTION_FUNCTION(AActor, A_CustomMissile)
 {
 	int index=CheckIndex(6);
 	if (index<0) return;
@@ -835,7 +840,7 @@ void A_CustomMissile(AActor * self)
 // An even more customizable hitscan attack
 //
 //==========================================================================
-void A_CustomBulletAttack (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_CustomBulletAttack)
 {
 	int index=CheckIndex(7);
 	if (index<0) return;
@@ -882,7 +887,7 @@ void A_CustomBulletAttack (AActor *self)
 // A fully customizable melee attack
 //
 //==========================================================================
-void A_CustomMeleeAttack (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_CustomMeleeAttack)
 {
 	int index=CheckIndex(5);
 	if (index<0) return;
@@ -916,7 +921,7 @@ void A_CustomMeleeAttack (AActor *self)
 // A fully customizable combo attack
 //
 //==========================================================================
-void A_CustomComboAttack (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_CustomComboAttack)
 {
 	int index=CheckIndex(6);
 	if (index<0) return;
@@ -973,7 +978,7 @@ void A_CustomComboAttack (AActor *self)
 // State jump function
 //
 //==========================================================================
-void A_JumpIfNoAmmo(AActor * self)
+DEFINE_ACTION_FUNCTION(AActor, A_JumpIfNoAmmo)
 {
 	FState * CallingState = NULL;
 	int index=CheckIndex(1, &CallingState);
@@ -992,7 +997,7 @@ void A_JumpIfNoAmmo(AActor * self)
 // An even more customizable hitscan attack
 //
 //==========================================================================
-void A_FireBullets (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_FireBullets)
 {
 	int index=CheckIndex(7);
 	if (index<0 || !self->player) return;
@@ -1055,7 +1060,7 @@ void A_FireBullets (AActor *self)
 // A_FireProjectile
 //
 //==========================================================================
-void A_FireCustomMissile (AActor * self)
+DEFINE_ACTION_FUNCTION(AActor, A_FireCustomMissile)
 {
 	int index=CheckIndex(6);
 	if (index<0 || !self->player) return;
@@ -1115,7 +1120,7 @@ void A_FireCustomMissile (AActor * self)
 // Berserk is not handled here. That can be done with A_CheckIfInventory
 //
 //==========================================================================
-void A_CustomPunch (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_CustomPunch)
 {
 	int index=CheckIndex(5);
 	if (index<0 || !self->player) return;
@@ -1172,7 +1177,7 @@ void A_CustomPunch (AActor *self)
 // customizable railgun attack function
 //
 //==========================================================================
-void A_RailAttack (AActor * self)
+DEFINE_ACTION_FUNCTION(AActor, A_RailAttack)
 {
 	int index=CheckIndex(7);
 	if (index<0 || !self->player) return;
@@ -1203,57 +1208,57 @@ void A_RailAttack (AActor * self)
 //
 //==========================================================================
 
-void A_CustomRailgun (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_CustomRailgun)
 {
 	int index = CheckIndex(7);
 	if (index < 0) return;
 
-	int Damage = EvalExpressionI (StateParameters[index], actor);
-	int Spawnofs_XY = EvalExpressionI (StateParameters[index+1], actor);
+	int Damage = EvalExpressionI (StateParameters[index], self);
+	int Spawnofs_XY = EvalExpressionI (StateParameters[index+1], self);
 	int Color1 = StateParameters[index+2];
 	int Color2 = StateParameters[index+3];
-	bool Silent = !!EvalExpressionI (StateParameters[index+4], actor);
-	bool aim = !!EvalExpressionI (StateParameters[index+5], actor);
-	float MaxDiff = EvalExpressionF (StateParameters[index+6], actor);
+	bool Silent = !!EvalExpressionI (StateParameters[index+4], self);
+	bool aim = !!EvalExpressionI (StateParameters[index+5], self);
+	float MaxDiff = EvalExpressionF (StateParameters[index+6], self);
 	ENamedName PuffTypeName = (ENamedName)StateParameters[index+7];
 
-	if (aim && actor->target == NULL)
+	if (aim && self->target == NULL)
 	{
 		return;
 	}
 	// [RH] Andy Baker's stealth monsters
-	if (actor->flags & MF_STEALTH)
+	if (self->flags & MF_STEALTH)
 	{
-		actor->visdir = 1;
+		self->visdir = 1;
 	}
 
-	actor->flags &= ~MF_AMBUSH;
+	self->flags &= ~MF_AMBUSH;
 
 	if (aim)
 	{
-		actor->angle = R_PointToAngle2 (actor->x,
-										actor->y,
-										actor->target->x,
-										actor->target->y);
+		self->angle = R_PointToAngle2 (self->x,
+										self->y,
+										self->target->x,
+										self->target->y);
 	}
 
-	actor->pitch = P_AimLineAttack (actor, actor->angle, MISSILERANGE);
+	self->pitch = P_AimLineAttack (self, self->angle, MISSILERANGE);
 
 	// Let the aim trail behind the player
 	if (aim)
 	{
-		actor->angle = R_PointToAngle2 (actor->x,
-										actor->y,
-										actor->target->x - actor->target->momx * 3,
-										actor->target->y - actor->target->momy * 3);
+		self->angle = R_PointToAngle2 (self->x,
+										self->y,
+										self->target->x - self->target->momx * 3,
+										self->target->y - self->target->momy * 3);
 
-		if (actor->target->flags & MF_SHADOW)
+		if (self->target->flags & MF_SHADOW)
 		{
-			actor->angle += pr_crailgun.Random2() << 21;
+			self->angle += pr_crailgun.Random2() << 21;
 		}
 	}
 
-	P_RailAttack (actor, Damage, Spawnofs_XY, Color1, Color2, MaxDiff, Silent, PuffTypeName);
+	P_RailAttack (self, Damage, Spawnofs_XY, Color1, Color2, MaxDiff, Silent, PuffTypeName);
 }
 
 //===========================================================================
@@ -1302,12 +1307,12 @@ static void DoGiveInventory(AActor * self, AActor * receiver)
 
 }	
 
-void A_GiveInventory(AActor * self)
+DEFINE_ACTION_FUNCTION(AActor, A_GiveInventory)
 {
 	DoGiveInventory(self, self);
 }	
 
-void A_GiveToTarget(AActor * self)
+DEFINE_ACTION_FUNCTION(AActor, A_GiveToTarget)
 {
 	DoGiveInventory(self, self->target);
 }	
@@ -1342,12 +1347,12 @@ void DoTakeInventory(AActor * self, AActor * receiver)
 	}
 }	
 
-void A_TakeInventory(AActor * self)
+DEFINE_ACTION_FUNCTION(AActor, A_TakeInventory)
 {
 	DoTakeInventory(self, self);
 }	
 
-void A_TakeFromTarget(AActor * self)
+DEFINE_ACTION_FUNCTION(AActor, A_TakeFromTarget)
 {
 	DoTakeInventory(self, self->target);
 }	
@@ -1445,7 +1450,7 @@ static void InitSpawnedItem(AActor *self, AActor *mo, int flags)
 //
 //===========================================================================
 
-void A_SpawnItem(AActor * self)
+DEFINE_ACTION_FUNCTION(AActor, A_SpawnItem)
 {
 	FState * CallingState;
 	int index=CheckIndex(5, &CallingState);
@@ -1497,7 +1502,7 @@ void A_SpawnItem(AActor * self)
 // Enhanced spawning function
 //
 //===========================================================================
-void A_SpawnItemEx(AActor * self)
+DEFINE_ACTION_FUNCTION(AActor, A_SpawnItemEx)
 {
 	FState * CallingState;
 	int index=CheckIndex(9, &CallingState);
@@ -1574,7 +1579,7 @@ void A_SpawnItemEx(AActor * self)
 // Throws a grenade (like Hexen's fighter flechette)
 //
 //===========================================================================
-void A_ThrowGrenade(AActor * self)
+DEFINE_ACTION_FUNCTION(AActor, A_ThrowGrenade)
 {
 	FState * CallingState;
 	int index=CheckIndex(5, &CallingState);
@@ -1630,16 +1635,16 @@ void A_ThrowGrenade(AActor * self)
 // A_Recoil
 //
 //===========================================================================
-void A_Recoil(AActor * actor)
+DEFINE_ACTION_FUNCTION(AActor, A_Recoil)
 {
 	int index=CheckIndex(1, NULL);
 	if (index<0) return;
-	fixed_t xymom = fixed_t(EvalExpressionF (StateParameters[index], actor) * FRACUNIT);
+	fixed_t xymom = fixed_t(EvalExpressionF (StateParameters[index], self) * FRACUNIT);
 
-	angle_t angle = actor->angle + ANG180;
+	angle_t angle = self->angle + ANG180;
 	angle >>= ANGLETOFINESHIFT;
-	actor->momx += FixedMul (xymom, finecosine[angle]);
-	actor->momy += FixedMul (xymom, finesine[angle]);
+	self->momx += FixedMul (xymom, finecosine[angle]);
+	self->momy += FixedMul (xymom, finesine[angle]);
 }
 
 
@@ -1648,18 +1653,18 @@ void A_Recoil(AActor * actor)
 // A_SelectWeapon
 //
 //===========================================================================
-void A_SelectWeapon(AActor * actor)
+DEFINE_ACTION_FUNCTION(AActor, A_SelectWeapon)
 {
 	int index=CheckIndex(1, NULL);
-	if (index<0 || actor->player == NULL) return;
+	if (index<0 || self->player == NULL) return;
 
-	AWeapon * weaponitem = static_cast<AWeapon*>(actor->FindInventory((ENamedName)StateParameters[index]));
+	AWeapon * weaponitem = static_cast<AWeapon*>(self->FindInventory((ENamedName)StateParameters[index]));
 
 	if (weaponitem != NULL && weaponitem->IsKindOf(RUNTIME_CLASS(AWeapon)))
 	{
-		if (actor->player->ReadyWeapon != weaponitem)
+		if (self->player->ReadyWeapon != weaponitem)
 		{
-			actor->player->PendingWeapon = weaponitem;
+			self->player->PendingWeapon = weaponitem;
 		}
 	}
 	else if (pStateCall != NULL) pStateCall->Result=false;
@@ -1673,15 +1678,15 @@ void A_SelectWeapon(AActor * actor)
 //===========================================================================
 EXTERN_CVAR(Float, con_midtime)
 
-void A_Print(AActor * actor)
+DEFINE_ACTION_FUNCTION(AActor, A_Print)
 {
 	int index=CheckIndex(3, NULL);
 	if (index<0) return;
 
-	if (actor->CheckLocalView (consoleplayer) ||
-		(actor->target!=NULL && actor->target->CheckLocalView (consoleplayer)))
+	if (self->CheckLocalView (consoleplayer) ||
+		(self->target!=NULL && self->target->CheckLocalView (consoleplayer)))
 	{
-		float time = EvalExpressionF (StateParameters[index+1], actor);
+		float time = EvalExpressionF (StateParameters[index+1], self);
 		FName fontname = (ENamedName)StateParameters[index+2];
 		FFont * oldfont = screen->Font;
 		float saved = con_midtime;
@@ -1709,7 +1714,7 @@ void A_Print(AActor * actor)
 // A_SetTranslucent
 //
 //===========================================================================
-void A_SetTranslucent(AActor * self)
+DEFINE_ACTION_FUNCTION(AActor, A_SetTranslucent)
 {
 	int index=CheckIndex(2, NULL);
 	if (index<0) return;
@@ -1730,7 +1735,7 @@ void A_SetTranslucent(AActor * self)
 // Fades the actor in
 //
 //===========================================================================
-void A_FadeIn(AActor * self)
+DEFINE_ACTION_FUNCTION(AActor, A_FadeIn)
 {
 	fixed_t reduce = 0;
 	
@@ -1754,7 +1759,7 @@ void A_FadeIn(AActor * self)
 // fades the actor out and destroys it when done
 //
 //===========================================================================
-void A_FadeOut(AActor * self)
+DEFINE_ACTION_FUNCTION(AActor, A_FadeOut)
 {
 	fixed_t reduce = 0;
 	
@@ -1776,7 +1781,7 @@ void A_FadeOut(AActor * self)
 // A_SpawnDebris
 //
 //===========================================================================
-void A_SpawnDebris(AActor * self)
+DEFINE_ACTION_FUNCTION(AActor, A_SpawnDebris)
 {
 	int i;
 	AActor * mo;
@@ -1822,7 +1827,7 @@ void A_SpawnDebris(AActor * self)
 // jumps if no player can see this actor
 //
 //===========================================================================
-void A_CheckSight(AActor * self)
+DEFINE_ACTION_FUNCTION(AActor, A_CheckSight)
 {
 	if (pStateCall != NULL) pStateCall->Result=false;	// Jumps should never set the result for inventory state chains!
 
@@ -1844,7 +1849,7 @@ void A_CheckSight(AActor * self)
 // Inventory drop
 //
 //===========================================================================
-void A_DropInventory(AActor * self)
+DEFINE_ACTION_FUNCTION(AActor, A_DropInventory)
 {
 	int index=CheckIndex(1, &CallingState);
 	if (index<0) return;
@@ -1862,7 +1867,7 @@ void A_DropInventory(AActor * self)
 // A_SetBlend
 //
 //===========================================================================
-void A_SetBlend(AActor * self)
+DEFINE_ACTION_FUNCTION(AActor, A_SetBlend)
 {
 	int index=CheckIndex(3);
 	if (index<0) return;
@@ -1887,7 +1892,7 @@ void A_SetBlend(AActor * self)
 // A_JumpIf
 //
 //===========================================================================
-void A_JumpIf(AActor * self)
+DEFINE_ACTION_FUNCTION(AActor, A_JumpIf)
 {
 	FState * CallingState;
 	int index=CheckIndex(2, &CallingState);
@@ -1904,7 +1909,7 @@ void A_JumpIf(AActor * self)
 // A_KillMaster
 //
 //===========================================================================
-void A_KillMaster(AActor * self)
+DEFINE_ACTION_FUNCTION(AActor, A_KillMaster)
 {
 	if (self->master != NULL)
 	{
@@ -1917,7 +1922,7 @@ void A_KillMaster(AActor * self)
 // A_KillChildren
 //
 //===========================================================================
-void A_KillChildren(AActor * self)
+DEFINE_ACTION_FUNCTION(AActor, A_KillChildren)
 {
 	TThinkerIterator<AActor> it;
 	AActor * mo;
@@ -1936,7 +1941,7 @@ void A_KillChildren(AActor * self)
 // A_CountdownArg
 //
 //===========================================================================
-void A_CountdownArg(AActor * self)
+DEFINE_ACTION_FUNCTION(AActor, A_CountdownArg)
 {
 	int index=CheckIndex(1);
 	if (index<0) return;
@@ -1967,7 +1972,7 @@ void A_CountdownArg(AActor * self)
 //
 //============================================================================
 
-void A_Burst (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_Burst)
 {
    int i, numChunks;
    AActor * mo;
@@ -1976,42 +1981,42 @@ void A_Burst (AActor *actor)
    const PClass * chunk = PClass::FindClass((ENamedName)StateParameters[index]);
    if (chunk == NULL) return;
 
-   actor->momx = actor->momy = actor->momz = 0;
-   actor->height = actor->GetDefault()->height;
+   self->momx = self->momy = self->momz = 0;
+   self->height = self->GetDefault()->height;
 
    // [RH] In Hexen, this creates a random number of shards (range [24,56])
-   // with no relation to the size of the actor shattering. I think it should
+   // with no relation to the size of the self shattering. I think it should
    // base the number of shards on the size of the dead thing, so bigger
    // things break up into more shards than smaller things.
-   // An actor with radius 20 and height 64 creates ~40 chunks.
-   numChunks = MAX<int> (4, (actor->radius>>FRACBITS)*(actor->height>>FRACBITS)/32);
+   // An self with radius 20 and height 64 creates ~40 chunks.
+   numChunks = MAX<int> (4, (self->radius>>FRACBITS)*(self->height>>FRACBITS)/32);
    i = (pr_burst.Random2()) % (numChunks/4);
    for (i = MAX (24, numChunks + i); i >= 0; i--)
    {
       mo = Spawn(chunk,
-         actor->x + (((pr_burst()-128)*actor->radius)>>7),
-         actor->y + (((pr_burst()-128)*actor->radius)>>7),
-         actor->z + (pr_burst()*actor->height/255), ALLOW_REPLACE);
+         self->x + (((pr_burst()-128)*self->radius)>>7),
+         self->y + (((pr_burst()-128)*self->radius)>>7),
+         self->z + (pr_burst()*self->height/255), ALLOW_REPLACE);
 
 	  if (mo)
       {
-         mo->momz = FixedDiv(mo->z-actor->z, actor->height)<<2;
+         mo->momz = FixedDiv(mo->z-self->z, self->height)<<2;
          mo->momx = pr_burst.Random2 () << (FRACBITS-7);
          mo->momy = pr_burst.Random2 () << (FRACBITS-7);
-         mo->RenderStyle = actor->RenderStyle;
-         mo->alpha = actor->alpha;
-		 mo->CopyFriendliness(actor, true);
+         mo->RenderStyle = self->RenderStyle;
+         mo->alpha = self->alpha;
+		 mo->CopyFriendliness(self, true);
       }
    }
 
    // [RH] Do some stuff to make this more useful outside Hexen
-   if (actor->flags4 & MF4_BOSSDEATH)
+   if (self->flags4 & MF4_BOSSDEATH)
    {
-      A_BossDeath (actor);
+      A_BossDeath (self);
    }
-   A_NoBlocking (actor);
+   A_NoBlocking (self);
 
-   actor->Destroy ();
+   self->Destroy ();
 }
 
 //===========================================================================
@@ -2020,7 +2025,7 @@ void A_Burst (AActor *actor)
 // [GRB] Jumps if actor is standing on floor
 //
 //===========================================================================
-void A_CheckFloor (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_CheckFloor)
 {
 	FState *CallingState = NULL;
 	int index = CheckIndex (1, &CallingState);
@@ -2039,7 +2044,7 @@ void A_CheckFloor (AActor *self)
 // resets all momentum of the actor to 0
 //
 //===========================================================================
-void A_Stop (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_Stop)
 {
 	self->momx = self->momy = self->momz = 0;
 	if (self->player && self->player->mo == self && !(self->player->cheats & CF_PREDICTING))
@@ -2055,39 +2060,39 @@ void A_Stop (AActor *self)
 // A_Respawn
 //
 //===========================================================================
-void A_Respawn (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_Respawn)
 {
-	fixed_t x = actor->SpawnPoint[0];
-	fixed_t y = actor->SpawnPoint[1];
+	fixed_t x = self->SpawnPoint[0];
+	fixed_t y = self->SpawnPoint[1];
 	sector_t *sec;
 
-	actor->flags |= MF_SOLID;
+	self->flags |= MF_SOLID;
 	sec = P_PointInSector (x, y);
-	actor->SetOrigin (x, y, sec->floorplane.ZatPoint (x, y));
-	actor->height = actor->GetDefault()->height;
-	if (P_TestMobjLocation (actor))
+	self->SetOrigin (x, y, sec->floorplane.ZatPoint (x, y));
+	self->height = self->GetDefault()->height;
+	if (P_TestMobjLocation (self))
 	{
-		AActor *defs = actor->GetDefault();
-		actor->health = defs->health;
+		AActor *defs = self->GetDefault();
+		self->health = defs->health;
 
-		actor->flags  = (defs->flags & ~MF_FRIENDLY) | (actor->flags & MF_FRIENDLY);
-		actor->flags2 = defs->flags2;
-		actor->flags3 = (defs->flags3 & ~(MF3_NOSIGHTCHECK | MF3_HUNTPLAYERS)) | (actor->flags3 & (MF3_NOSIGHTCHECK | MF3_HUNTPLAYERS));
-		actor->flags4 = (defs->flags4 & ~MF4_NOHATEPLAYERS) | (actor->flags4 & MF4_NOHATEPLAYERS);
-		actor->flags5 = defs->flags5;
-		actor->SetState (actor->SpawnState);
-		actor->renderflags &= ~RF_INVISIBLE;
+		self->flags  = (defs->flags & ~MF_FRIENDLY) | (self->flags & MF_FRIENDLY);
+		self->flags2 = defs->flags2;
+		self->flags3 = (defs->flags3 & ~(MF3_NOSIGHTCHECK | MF3_HUNTPLAYERS)) | (self->flags3 & (MF3_NOSIGHTCHECK | MF3_HUNTPLAYERS));
+		self->flags4 = (defs->flags4 & ~MF4_NOHATEPLAYERS) | (self->flags4 & MF4_NOHATEPLAYERS);
+		self->flags5 = defs->flags5;
+		self->SetState (self->SpawnState);
+		self->renderflags &= ~RF_INVISIBLE;
 
 		int index=CheckIndex(1, NULL);
-		if (index<0 || EvalExpressionN (StateParameters[index], actor))
+		if (index<0 || EvalExpressionN (StateParameters[index], self))
 		{
-			Spawn<ATeleportFog> (x, y, actor->z + TELEFOGHEIGHT, ALLOW_REPLACE);
+			Spawn<ATeleportFog> (x, y, self->z + TELEFOGHEIGHT, ALLOW_REPLACE);
 		}
-		if (actor->CountsAsKill()) level.total_monsters++;
+		if (self->CountsAsKill()) level.total_monsters++;
 	}
 	else
 	{
-		actor->flags &= ~MF_SOLID;
+		self->flags &= ~MF_SOLID;
 	}
 }
 
@@ -2098,17 +2103,17 @@ void A_Respawn (AActor *actor)
 //
 //==========================================================================
 
-void A_PlayerSkinCheck (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_PlayerSkinCheck)
 {
 	if (pStateCall != NULL) pStateCall->Result=false;	// Jumps should never set the result for inventory state chains!
-	if (actor->player != NULL &&
-		skins[actor->player->userinfo.skin].othergame)
+	if (self->player != NULL &&
+		skins[self->player->userinfo.skin].othergame)
 	{
 		int index = CheckIndex(1, &CallingState);
 	
 		if (index >= 0)
 		{
-			DoJump(actor, CallingState, StateParameters[index]);
+			DoJump(self, CallingState, StateParameters[index]);
 		}	
 	}
 }
@@ -2118,7 +2123,7 @@ void A_PlayerSkinCheck (AActor *actor)
 // A_SetGravity
 //
 //===========================================================================
-void A_SetGravity(AActor * self)
+DEFINE_ACTION_FUNCTION(AActor, A_SetGravity)
 {
 	int index=CheckIndex(1);
 	if (index<0) return;
@@ -2135,7 +2140,7 @@ void A_SetGravity(AActor * self)
 //
 //===========================================================================
 
-void A_ClearTarget(AActor * self)
+DEFINE_ACTION_FUNCTION(AActor, A_ClearTarget)
 {
 	self->target = NULL;
 	self->LastHeard = NULL;
@@ -2155,7 +2160,7 @@ void A_ClearTarget(AActor * self)
 //
 //==========================================================================
 
-void A_JumpIfTargetInLOS(AActor * self)
+DEFINE_ACTION_FUNCTION(AActor, A_JumpIfTargetInLOS)
 {
 	FState * CallingState = NULL;
 	int index = CheckIndex(3, &CallingState);
@@ -2217,7 +2222,7 @@ void A_JumpIfTargetInLOS(AActor * self)
 // Damages the master of this child by the specified amount. Negative values heal.
 //
 //===========================================================================
-void A_DamageMaster(AActor * self)
+DEFINE_ACTION_FUNCTION(AActor, A_DamageMaster)
 {
 	int index = CheckIndex(2);
 	if (index<0) return;
@@ -2245,7 +2250,7 @@ void A_DamageMaster(AActor * self)
 // Damages the children of this master by the specified amount. Negative values heal.
 //
 //===========================================================================
-void A_DamageChildren(AActor * self)
+DEFINE_ACTION_FUNCTION(AActor, A_DamageChildren)
 {
 	TThinkerIterator<AActor> it;
 	AActor * mo;
@@ -2281,7 +2286,7 @@ void A_DamageChildren(AActor * self)
 //
 //===========================================================================
 
-void A_CheckForReload( AActor *self )
+DEFINE_ACTION_FUNCTION(AActor, A_CheckForReload)
 {
 	if ( self->player == NULL || self->player->ReadyWeapon == NULL )
 		return;
@@ -2313,7 +2318,7 @@ void A_CheckForReload( AActor *self )
 //
 //===========================================================================
 
-void A_ResetReloadCounter(AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_ResetReloadCounter)
 {
 	if ( self->player == NULL || self->player->ReadyWeapon == NULL )
 		return;

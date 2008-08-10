@@ -5,10 +5,11 @@
 #include "m_random.h"
 #include "p_local.h"
 #include "a_strifeglobal.h"
+#include "thingdef/thingdef.h"
 
 static FRandom pr_reaverattack ("ReaverAttack");
 
-void A_ReaverRanged (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_ReaverRanged)
 {
 	if (self->target != NULL)
 	{

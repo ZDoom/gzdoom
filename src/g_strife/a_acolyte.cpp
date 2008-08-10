@@ -6,6 +6,7 @@
 #include "s_sound.h"
 #include "a_strifeglobal.h"
 #include "doomdata.h"
+#include "thingdef/thingdef.h"
 
 //============================================================================
 //
@@ -21,7 +22,7 @@
 //
 //============================================================================
 
-void A_HideDecepticon (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_HideDecepticon)
 {
 	EV_DoDoor (DDoor::doorClose, NULL, self, 999, 8*FRACUNIT, 0, 0, 0);
 	if (self->target != NULL && self->target->player != NULL)
@@ -36,7 +37,7 @@ void A_HideDecepticon (AActor *self)
 //
 //============================================================================
 
-void A_AcolyteDie (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_AcolyteDie)
 {
 	int i;
 
@@ -80,7 +81,7 @@ void A_AcolyteDie (AActor *self)
 //
 //============================================================================
 
-void A_BeShadowyFoe (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_BeShadowyFoe)
 {
 	self->RenderStyle = STYLE_Translucent;
 	self->alpha = HR_SHADOW;
@@ -93,7 +94,7 @@ void A_BeShadowyFoe (AActor *self)
 //
 //============================================================================
 
-void A_AcolyteBits (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_AcolyteBits)
 {
 	if (self->SpawnFlags & MTF_SHADOW)
 	{

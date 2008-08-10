@@ -54,6 +54,7 @@
 #include "a_sharedglobal.h"
 #include "s_sound.h"
 #include "i_system.h"
+#include "autosegs.h"
 
 TArray<int> StateParameters;
 TArray<FName> JumpParameters;
@@ -64,25 +65,7 @@ TArray<FName> JumpParameters;
 //
 //==========================================================================
 
-
-
-#define FROM_THINGDEF
-// Prototype the code pointers
-#define WEAPON(x)	void A_##x(AActor*);	
-#define ACTOR(x)	void A_##x(AActor*);
-#include "codepointers.h"
-#include "d_dehackedactions.h"
-
-AFuncDesc AFTable[] =
-{
-#define WEAPON(x)	{ "A_" #x, A_##x },
-#define ACTOR(x)	{ "A_" #x, A_##x },
-#include "codepointers.h"
-#include "d_dehackedactions.h"
-	{ "A_Fall", A_NoBlocking },
-	{ "A_BasicAttack", A_ComboAttack },
-	{ "A_Explode", A_ExplodeParms }
-};
+static TArray<AFuncDesc> AFTable;
 
 
 static TArray<FState> StateArray;
@@ -103,11 +86,18 @@ AFuncDesc * FindFunction(const char * string)
 
 	if (!funcsorted) 
 	{
-		qsort(AFTable, countof(AFTable), sizeof(AFTable[0]), funccmp);
+		TAutoSegIterator<AFuncDesc *, &ARegHead, &ARegTail> probe;
+
+		while (++probe != NULL)
+		{
+			AFTable.Push(*probe);
+		}
+		AFTable.ShrinkToFit();
+		qsort(&AFTable[0], AFTable.Size(), sizeof(AFTable[0]), funccmp);
 		funcsorted=true;
 	}
 
-	int min = 0, max = countof(AFTable)-1;
+	int min = 0, max = AFTable.Size()-1;
 
 	while (min <= max)
 	{
@@ -382,6 +372,7 @@ int PrepareStateParameters(FState * state, int numparams)
 	return paramindex;
 }
 
+void A_CallSpecial(AActor * self);
 //==========================================================================
 //
 // DoActionSpecials

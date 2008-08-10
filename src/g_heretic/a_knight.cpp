@@ -7,6 +7,7 @@
 #include "a_action.h"
 #include "a_sharedglobal.h"
 #include "gstrings.h"
+#include "thingdef/thingdef.h"
 
 static FRandom pr_dripblood ("DripBlood");
 static FRandom pr_knightatk ("KnightAttack");
@@ -17,14 +18,14 @@ static FRandom pr_knightatk ("KnightAttack");
 //
 //----------------------------------------------------------------------------
 
-void A_DripBlood (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_DripBlood)
 {
 	AActor *mo;
 	fixed_t x, y;
 
-	x = actor->x + (pr_dripblood.Random2 () << 11);
-	y = actor->y + (pr_dripblood.Random2 () << 11);
-	mo = Spawn ("Blood", x, y, actor->z, ALLOW_REPLACE);
+	x = self->x + (pr_dripblood.Random2 () << 11);
+	y = self->y + (pr_dripblood.Random2 () << 11);
+	mo = Spawn ("Blood", x, y, self->z, ALLOW_REPLACE);
 	mo->momx = pr_dripblood.Random2 () << 10;
 	mo->momy = pr_dripblood.Random2 () << 10;
 	mo->gravity = FRACUNIT/8;
@@ -36,28 +37,28 @@ void A_DripBlood (AActor *actor)
 //
 //----------------------------------------------------------------------------
 
-void A_KnightAttack (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_KnightAttack)
 {
-	if (!actor->target)
+	if (!self->target)
 	{
 		return;
 	}
-	if (actor->CheckMeleeRange ())
+	if (self->CheckMeleeRange ())
 	{
 		int damage = pr_knightatk.HitDice (3);
-		P_DamageMobj (actor->target, actor, actor, damage, NAME_Melee);
-		P_TraceBleed (damage, actor->target, actor);
-		S_Sound (actor, CHAN_BODY, "hknight/melee", 1, ATTN_NORM);
+		P_DamageMobj (self->target, self, self, damage, NAME_Melee);
+		P_TraceBleed (damage, self->target, self);
+		S_Sound (self, CHAN_BODY, "hknight/melee", 1, ATTN_NORM);
 		return;
 	}
 	// Throw axe
-	S_Sound (actor, CHAN_BODY, actor->AttackSound, 1, ATTN_NORM);
-	if (actor->flags & MF_SHADOW || pr_knightatk () < 40)
+	S_Sound (self, CHAN_BODY, self->AttackSound, 1, ATTN_NORM);
+	if (self->flags & MF_SHADOW || pr_knightatk () < 40)
 	{ // Red axe
-		P_SpawnMissileZ (actor, actor->z + 36*FRACUNIT, actor->target, PClass::FindClass("RedAxe"));
+		P_SpawnMissileZ (self, self->z + 36*FRACUNIT, self->target, PClass::FindClass("RedAxe"));
 		return;
 	}
 	// Green axe
-	P_SpawnMissileZ (actor, actor->z + 36*FRACUNIT, actor->target, PClass::FindClass("KnightAxe"));
+	P_SpawnMissileZ (self, self->z + 36*FRACUNIT, self->target, PClass::FindClass("KnightAxe"));
 }
 

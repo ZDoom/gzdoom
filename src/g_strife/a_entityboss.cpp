@@ -5,10 +5,11 @@
 #include "p_enemy.h"
 #include "s_sound.h"
 #include "a_strifeglobal.h"
+#include "thingdef/thingdef.h"
 
 static FRandom pr_entity ("Entity");
 
-void A_SubEntityDeath (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_SubEntityDeath)
 {
 	if (CheckBossDeath (self))
 	{
@@ -35,7 +36,7 @@ void A_SpotLightning (AActor *);
 void A_Spectre3Attack (AActor *);
 
 
-void A_EntityAttack (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_EntityAttack)
 {
 	// Apparent Strife bug: Case 5 was unreachable because they used % 5 instead of % 6.
 	// I've fixed that by making case 1 duplicate it, since case 1 did nothing.
@@ -65,7 +66,7 @@ void A_EntityAttack (AActor *self)
 }
 
 
-void A_SpawnEntity (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_SpawnEntity)
 {
 	AActor *entity = Spawn("EntityBoss", self->x, self->y, self->z + 70*FRACUNIT, ALLOW_REPLACE);
 	if (entity != NULL)
@@ -77,7 +78,7 @@ void A_SpawnEntity (AActor *self)
 	}
 }
 
-void A_EntityDeath (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_EntityDeath)
 {
 	AActor *second;
 	fixed_t secondRadius = GetDefaultByName("EntitySecond")->radius * 2;

@@ -8,6 +8,7 @@
 #include "a_strifeglobal.h"
 #include "c_console.h"
 #include "gstrings.h"
+#include "thingdef/thingdef.h"
 
 static FRandom pr_spectrespawn ("AlienSpectreSpawn");
 static FRandom pr_spectrechunk ("212e4");
@@ -16,21 +17,7 @@ AActor *P_SpawnSubMissile (AActor *source, const PClass *type, AActor *target);
 
 //============================================================================
 
-static void GenericSpectreSpawn (AActor *actor, const char *type)
-{
-	AActor *spectre = Spawn (type, actor->x, actor->y, actor->z, ALLOW_REPLACE);
-	if (spectre != NULL)
-	{
-		spectre->momz = pr_spectrespawn() << 9;
-	}
-}
-
-void A_SpawnSpectre4 (AActor *actor)
-{
-	GenericSpectreSpawn (actor, "AlienSpectre4");
-}
-
-void A_SpectreChunkSmall (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_SpectreChunkSmall)
 {
 	AActor *foo = Spawn("AlienChunkSmall", self->x, self->y, self->z + 10*FRACUNIT, ALLOW_REPLACE);
 
@@ -48,7 +35,7 @@ void A_SpectreChunkSmall (AActor *self)
 	}
 }
 
-void A_SpectreChunkLarge (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_SpectreChunkLarge)
 {
 	AActor *foo = Spawn("AlienChunkLarge", self->x, self->y, self->z + 10*FRACUNIT, ALLOW_REPLACE);
 
@@ -67,7 +54,7 @@ void A_SpectreChunkLarge (AActor *self)
 
 }
 
-void A_Spectre3Attack (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_Spectre3Attack)
 {
 	if (self->target == NULL)
 		return;
@@ -88,7 +75,7 @@ void A_Spectre3Attack (AActor *self)
 	self->angle -= ANGLE_180 / 20 * 10;
 }
 
-void A_AlienSpectreDeath (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_AlienSpectreDeath)
 {
 	AActor *player;
 	char voc[32];

@@ -6,6 +6,7 @@
 #include "a_action.h"
 #include "m_random.h"
 #include "a_hexenglobal.h"
+#include "thingdef/thingdef.h"
 
 static FRandom pr_boom ("BishopBoom");
 static FRandom pr_atk ("BishopAttack");
@@ -20,21 +21,21 @@ static FRandom pr_pain ("BishopPainBlur");
 //
 //============================================================================
 
-void A_BishopAttack (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_BishopAttack)
 {
-	if (!actor->target)
+	if (!self->target)
 	{
 		return;
 	}
-	S_Sound (actor, CHAN_BODY, actor->AttackSound, 1, ATTN_NORM);
-	if (actor->CheckMeleeRange())
+	S_Sound (self, CHAN_BODY, self->AttackSound, 1, ATTN_NORM);
+	if (self->CheckMeleeRange())
 	{
 		int damage = pr_atk.HitDice (4);
-		P_DamageMobj (actor->target, actor, actor, damage, NAME_Melee);
-		P_TraceBleed (damage, actor->target, actor);
+		P_DamageMobj (self->target, self, self, damage, NAME_Melee);
+		P_TraceBleed (damage, self->target, self);
 		return;
 	}
-	actor->special1 = (pr_atk() & 3) + 5;
+	self->special1 = (pr_atk() & 3) + 5;
 }
 
 //============================================================================
@@ -44,23 +45,23 @@ void A_BishopAttack (AActor *actor)
 //		Spawns one of a string of bishop missiles
 //============================================================================
 
-void A_BishopAttack2 (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_BishopAttack2)
 {
 	AActor *mo;
 
-	if (!actor->target || !actor->special1)
+	if (!self->target || !self->special1)
 	{
-		actor->special1 = 0;
-		actor->SetState (actor->SeeState);
+		self->special1 = 0;
+		self->SetState (self->SeeState);
 		return;
 	}
-	mo = P_SpawnMissile (actor, actor->target, PClass::FindClass("BishopFX"));
+	mo = P_SpawnMissile (self, self->target, PClass::FindClass("BishopFX"));
 	if (mo != NULL)
 	{
-		mo->tracer = actor->target;
+		mo->tracer = self->target;
 		mo->special2 = 16; // High word == x/y, Low word == z
 	}
-	actor->special1--;
+	self->special1--;
 }
 
 //============================================================================
@@ -69,27 +70,27 @@ void A_BishopAttack2 (AActor *actor)
 //
 //============================================================================
 
-void A_BishopMissileWeave (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_BishopMissileWeave)
 {
 	fixed_t newX, newY;
 	int weaveXY, weaveZ;
 	int angle;
 
-	if (actor->special2 == 0) actor->special2 = 16;
+	if (self->special2 == 0) self->special2 = 16;
 
-	weaveXY = actor->special2 >> 16;
-	weaveZ = actor->special2 & 0xFFFF;
-	angle = (actor->angle + ANG90) >> ANGLETOFINESHIFT;
-	newX = actor->x - FixedMul (finecosine[angle], FloatBobOffsets[weaveXY]<<1);
-	newY = actor->y - FixedMul (finesine[angle], FloatBobOffsets[weaveXY]<<1);
+	weaveXY = self->special2 >> 16;
+	weaveZ = self->special2 & 0xFFFF;
+	angle = (self->angle + ANG90) >> ANGLETOFINESHIFT;
+	newX = self->x - FixedMul (finecosine[angle], FloatBobOffsets[weaveXY]<<1);
+	newY = self->y - FixedMul (finesine[angle], FloatBobOffsets[weaveXY]<<1);
 	weaveXY = (weaveXY + 2) & 63;
 	newX += FixedMul (finecosine[angle], FloatBobOffsets[weaveXY]<<1);
 	newY += FixedMul (finesine[angle], FloatBobOffsets[weaveXY]<<1);
-	P_TryMove (actor, newX, newY, true);
-	actor->z -= FloatBobOffsets[weaveZ];
+	P_TryMove (self, newX, newY, true);
+	self->z -= FloatBobOffsets[weaveZ];
 	weaveZ = (weaveZ + 2) & 63;
-	actor->z += FloatBobOffsets[weaveZ];	
-	actor->special2 = weaveZ + (weaveXY<<16);
+	self->z += FloatBobOffsets[weaveZ];	
+	self->special2 = weaveZ + (weaveXY<<16);
 }
 
 //============================================================================
@@ -98,7 +99,7 @@ void A_BishopMissileWeave (AActor *actor)
 //
 //============================================================================
 
-void A_BishopDecide (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_BishopDecide)
 {
 	if (pr_decide() < 220)
 	{
@@ -106,7 +107,7 @@ void A_BishopDecide (AActor *actor)
 	}
 	else
 	{
-		actor->SetState (actor->FindState ("Blur"));
+		self->SetState (self->FindState ("Blur"));
 	}		
 }
 
@@ -116,22 +117,22 @@ void A_BishopDecide (AActor *actor)
 //
 //============================================================================
 
-void A_BishopDoBlur (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_BishopDoBlur)
 {
-	actor->special1 = (pr_doblur() & 3) + 3; // Random number of blurs
+	self->special1 = (pr_doblur() & 3) + 3; // Random number of blurs
 	if (pr_doblur() < 120)
 	{
-		P_ThrustMobj (actor, actor->angle + ANG90, 11*FRACUNIT);
+		P_ThrustMobj (self, self->angle + ANG90, 11*FRACUNIT);
 	}
 	else if (pr_doblur() > 125)
 	{
-		P_ThrustMobj (actor, actor->angle - ANG90, 11*FRACUNIT);
+		P_ThrustMobj (self, self->angle - ANG90, 11*FRACUNIT);
 	}
 	else
 	{ // Thrust forward
-		P_ThrustMobj (actor, actor->angle, 11*FRACUNIT);
+		P_ThrustMobj (self, self->angle, 11*FRACUNIT);
 	}
-	S_Sound (actor, CHAN_BODY, "BishopBlur", 1, ATTN_NORM);
+	S_Sound (self, CHAN_BODY, "BishopBlur", 1, ATTN_NORM);
 }
 
 //============================================================================
@@ -140,27 +141,27 @@ void A_BishopDoBlur (AActor *actor)
 //
 //============================================================================
 
-void A_BishopSpawnBlur (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_BishopSpawnBlur)
 {
 	AActor *mo;
 
-	if (!--actor->special1)
+	if (!--self->special1)
 	{
-		actor->momx = 0;
-		actor->momy = 0;
+		self->momx = 0;
+		self->momy = 0;
 		if (pr_sblur() > 96)
 		{
-			actor->SetState (actor->SeeState);
+			self->SetState (self->SeeState);
 		}
 		else
 		{
-			actor->SetState (actor->MissileState);
+			self->SetState (self->MissileState);
 		}
 	}
-	mo = Spawn ("BishopBlur", actor->x, actor->y, actor->z, ALLOW_REPLACE);
+	mo = Spawn ("BishopBlur", self->x, self->y, self->z, ALLOW_REPLACE);
 	if (mo)
 	{
-		mo->angle = actor->angle;
+		mo->angle = self->angle;
 	}
 }
 
@@ -170,11 +171,11 @@ void A_BishopSpawnBlur (AActor *actor)
 //
 //============================================================================
 
-void A_BishopChase (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_BishopChase)
 {
-	actor->z -= FloatBobOffsets[actor->special2] >> 1;
-	actor->special2 = (actor->special2 + 4) & 63;
-	actor->z += FloatBobOffsets[actor->special2] >> 1;
+	self->z -= FloatBobOffsets[self->special2] >> 1;
+	self->special2 = (self->special2 + 4) & 63;
+	self->z += FloatBobOffsets[self->special2] >> 1;
 }
 
 //============================================================================
@@ -183,11 +184,11 @@ void A_BishopChase (AActor *actor)
 //
 //============================================================================
 
-void A_BishopPuff (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_BishopPuff)
 {
 	AActor *mo;
 
-	mo = Spawn ("BishopPuff", actor->x, actor->y, actor->z + 40*FRACUNIT, ALLOW_REPLACE);
+	mo = Spawn ("BishopPuff", self->x, self->y, self->z + 40*FRACUNIT, ALLOW_REPLACE);
 	if (mo)
 	{
 		mo->momz = FRACUNIT/2;
@@ -200,21 +201,21 @@ void A_BishopPuff (AActor *actor)
 //
 //============================================================================
 
-void A_BishopPainBlur (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_BishopPainBlur)
 {
 	AActor *mo;
 
 	if (pr_pain() < 64)
 	{
-		actor->SetState (actor->FindState ("Blur"));
+		self->SetState (self->FindState ("Blur"));
 		return;
 	}
-	fixed_t x = actor->x + (pr_pain.Random2()<<12);
-	fixed_t y = actor->y + (pr_pain.Random2()<<12);
-	fixed_t z = actor->z + (pr_pain.Random2()<<11);
+	fixed_t x = self->x + (pr_pain.Random2()<<12);
+	fixed_t y = self->y + (pr_pain.Random2()<<12);
+	fixed_t z = self->z + (pr_pain.Random2()<<11);
 	mo = Spawn ("BishopPainBlur", x, y, z, ALLOW_REPLACE);
 	if (mo)
 	{
-		mo->angle = actor->angle;
+		mo->angle = self->angle;
 	}
 }

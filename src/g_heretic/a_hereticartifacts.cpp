@@ -5,6 +5,7 @@
 #include "p_local.h"
 #include "p_enemy.h"
 #include "s_sound.h"
+#include "thingdef/thingdef.h"
 
 // Tome of power ------------------------------------------------------------
 
@@ -43,7 +44,7 @@ bool AArtiTomeOfPower::Use (bool pickup)
 
 // Time bomb ----------------------------------------------------------------
 
-void A_TimeBomb(AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_TimeBomb)
 {
 	self->z += 32*FRACUNIT;
 	self->RenderStyle = STYLE_Add;

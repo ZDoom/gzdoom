@@ -5,6 +5,8 @@
 #include "a_action.h"
 #include "m_random.h"
 #include "s_sound.h"
+#include "thingdef/thingdef.h"
+
 
 static FRandom pr_dragonseek ("DragonSeek");
 static FRandom pr_dragonflight ("DragonFlight");
@@ -165,20 +167,20 @@ static void DragonSeek (AActor *actor, angle_t thresh, angle_t turnMax)
 //
 //============================================================================
 
-void A_DragonInitFlight (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_DragonInitFlight)
 {
-	FActorIterator iterator (actor->tid);
+	FActorIterator iterator (self->tid);
 
 	do
 	{ // find the first tid identical to the dragon's tid
-		actor->tracer = iterator.Next ();
-		if (actor->tracer == NULL)
+		self->tracer = iterator.Next ();
+		if (self->tracer == NULL)
 		{
-			actor->SetState (actor->SpawnState);
+			self->SetState (self->SpawnState);
 			return;
 		}
-	} while (actor->tracer == actor);
-	actor->RemoveFromHash ();
+	} while (self->tracer == self);
+	self->RemoveFromHash ();
 }
 
 //============================================================================
@@ -187,36 +189,36 @@ void A_DragonInitFlight (AActor *actor)
 //
 //============================================================================
 
-void A_DragonFlight (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_DragonFlight)
 {
 	angle_t angle;
 
-	DragonSeek (actor, 4*ANGLE_1, 8*ANGLE_1);
-	if (actor->target)
+	DragonSeek (self, 4*ANGLE_1, 8*ANGLE_1);
+	if (self->target)
 	{
-		if(!(actor->target->flags&MF_SHOOTABLE))
+		if(!(self->target->flags&MF_SHOOTABLE))
 		{ // target died
-			actor->target = NULL;
+			self->target = NULL;
 			return;
 		}
-		angle = R_PointToAngle2(actor->x, actor->y, actor->target->x,
-			actor->target->y);
-		if (abs(actor->angle-angle) < ANGLE_45/2 && actor->CheckMeleeRange())
+		angle = R_PointToAngle2(self->x, self->y, self->target->x,
+			self->target->y);
+		if (abs(self->angle-angle) < ANGLE_45/2 && self->CheckMeleeRange())
 		{
 			int damage = pr_dragonflight.HitDice (8);
-			P_DamageMobj (actor->target, actor, actor, damage, NAME_Melee);
-			P_TraceBleed (damage, actor->target, actor);
-			S_Sound (actor, CHAN_WEAPON, actor->AttackSound, 1, ATTN_NORM);
+			P_DamageMobj (self->target, self, self, damage, NAME_Melee);
+			P_TraceBleed (damage, self->target, self);
+			S_Sound (self, CHAN_WEAPON, self->AttackSound, 1, ATTN_NORM);
 		}
-		else if (abs(actor->angle-angle) <= ANGLE_1*20)
+		else if (abs(self->angle-angle) <= ANGLE_1*20)
 		{
-			actor->SetState (actor->MissileState);
-			S_Sound (actor, CHAN_WEAPON, actor->AttackSound, 1, ATTN_NORM);
+			self->SetState (self->MissileState);
+			S_Sound (self, CHAN_WEAPON, self->AttackSound, 1, ATTN_NORM);
 		}
 	}
 	else
 	{
-		P_LookForPlayers (actor, true);
+		P_LookForPlayers (self, true);
 	}
 }
 
@@ -226,16 +228,16 @@ void A_DragonFlight (AActor *actor)
 //
 //============================================================================
 
-void A_DragonFlap (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_DragonFlap)
 {
-	A_DragonFlight (actor);
+	A_DragonFlight (self);
 	if (pr_dragonflap() < 240)
 	{
-		S_Sound (actor, CHAN_BODY, "DragonWingflap", 1, ATTN_NORM);
+		S_Sound (self, CHAN_BODY, "DragonWingflap", 1, ATTN_NORM);
 	}
 	else
 	{
-		actor->PlayActiveSound ();
+		self->PlayActiveSound ();
 	}
 }
 
@@ -245,9 +247,9 @@ void A_DragonFlap (AActor *actor)
 //
 //============================================================================
 
-void A_DragonAttack (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_DragonAttack)
 {
-	P_SpawnMissile (actor, actor->target, PClass::FindClass ("DragonFireball"));						
+	P_SpawnMissile (self, self->target, PClass::FindClass ("DragonFireball"));						
 }
 
 //============================================================================
@@ -256,7 +258,7 @@ void A_DragonAttack (AActor *actor)
 //
 //============================================================================
 
-void A_DragonFX2 (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_DragonFX2)
 {
 	AActor *mo;
 	int i;
@@ -265,15 +267,15 @@ void A_DragonFX2 (AActor *actor)
 	delay = 16+(pr_dragonfx2()>>3);
 	for (i = 1+(pr_dragonfx2()&3); i; i--)
 	{
-		fixed_t x = actor->x+((pr_dragonfx2()-128)<<14);
-		fixed_t y = actor->y+((pr_dragonfx2()-128)<<14);
-		fixed_t z = actor->z+((pr_dragonfx2()-128)<<12);
+		fixed_t x = self->x+((pr_dragonfx2()-128)<<14);
+		fixed_t y = self->y+((pr_dragonfx2()-128)<<14);
+		fixed_t z = self->z+((pr_dragonfx2()-128)<<12);
 
 		mo = Spawn ("DragonExplosion", x, y, z, ALLOW_REPLACE);
 		if (mo)
 		{
 			mo->tics = delay+(pr_dragonfx2()&3)*i*2;
-			mo->target = actor->target;
+			mo->target = self->target;
 		}
 	} 
 }
@@ -284,12 +286,12 @@ void A_DragonFX2 (AActor *actor)
 //
 //============================================================================
 
-void A_DragonPain (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_DragonPain)
 {
-	A_Pain (actor);
-	if (!actor->tracer)
+	A_Pain (self);
+	if (!self->tracer)
 	{ // no destination spot yet
-		actor->SetState (actor->SeeState);
+		self->SetState (self->SeeState);
 	}
 }
 
@@ -299,10 +301,10 @@ void A_DragonPain (AActor *actor)
 //
 //============================================================================
 
-void A_DragonCheckCrash (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_DragonCheckCrash)
 {
-	if (actor->z <= actor->floorz)
+	if (self->z <= self->floorz)
 	{
-		actor->SetState (actor->FindState ("Crash"));
+		self->SetState (self->FindState ("Crash"));
 	}
 }

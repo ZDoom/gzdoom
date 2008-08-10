@@ -6,6 +6,7 @@
 #include "a_action.h"
 #include "m_random.h"
 #include "a_sharedglobal.h"
+#include "thingdef/thingdef.h"
 
 static FRandom pr_stealhealth ("StealHealth");
 static FRandom pr_wraithfx2 ("WraithFX2");
@@ -24,17 +25,17 @@ static FRandom pr_wraithfx4 ("WraithFX4");
 //
 //============================================================================
 
-void A_WraithInit (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_WraithInit)
 {
-	actor->z += 48<<FRACBITS;
+	self->z += 48<<FRACBITS;
 
 	// [RH] Make sure the wraith didn't go into the ceiling
-	if (actor->z + actor->height > actor->ceilingz)
+	if (self->z + self->height > self->ceilingz)
 	{
-		actor->z = actor->ceilingz - actor->height;
+		self->z = self->ceilingz - self->height;
 	}
 
-	actor->special1 = 0;			// index into floatbob
+	self->special1 = 0;			// index into floatbob
 }
 
 //============================================================================
@@ -43,13 +44,13 @@ void A_WraithInit (AActor *actor)
 //
 //============================================================================
 
-void A_WraithRaiseInit (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_WraithRaiseInit)
 {
-	actor->renderflags &= ~RF_INVISIBLE;
-	actor->flags2 &= ~MF2_NONSHOOTABLE;
-	actor->flags3 &= ~MF3_DONTBLAST;
-	actor->flags |= MF_SHOOTABLE|MF_SOLID;
-	actor->floorclip = actor->height;
+	self->renderflags &= ~RF_INVISIBLE;
+	self->flags2 &= ~MF2_NONSHOOTABLE;
+	self->flags3 &= ~MF3_DONTBLAST;
+	self->flags |= MF_SHOOTABLE|MF_SOLID;
+	self->floorclip = self->height;
 }
 
 //============================================================================
@@ -58,20 +59,20 @@ void A_WraithRaiseInit (AActor *actor)
 //
 //============================================================================
 
-void A_WraithRaise (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_WraithRaise)
 {
-	if (A_RaiseMobj (actor, 2*FRACUNIT))
+	if (A_RaiseMobj (self, 2*FRACUNIT))
 	{
 		// Reached it's target height
 		// [RH] Once a buried wraith is fully raised, it should be
 		// morphable, right?
-		actor->flags3 &= ~(MF3_DONTMORPH|MF3_SPECIALFLOORCLIP);
-		actor->SetState (actor->FindState("Chase"));
+		self->flags3 &= ~(MF3_DONTMORPH|MF3_SPECIALFLOORCLIP);
+		self->SetState (self->FindState("Chase"));
 		// [RH] Reset PainChance to a normal wraith's.
-		actor->PainChance = GetDefaultByName ("Wraith")->PainChance;
+		self->PainChance = GetDefaultByName ("Wraith")->PainChance;
 	}
 
-	P_SpawnDirt (actor, actor->radius);
+	P_SpawnDirt (self, self->radius);
 }
 
 //============================================================================
@@ -80,16 +81,16 @@ void A_WraithRaise (AActor *actor)
 //
 //============================================================================
 
-void A_WraithMelee (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_WraithMelee)
 {
 	int amount;
 
 	// Steal health from target and give to self
-	if (actor->CheckMeleeRange() && (pr_stealhealth()<220))
+	if (self->CheckMeleeRange() && (pr_stealhealth()<220))
 	{
 		amount = pr_stealhealth.HitDice (2);
-		P_DamageMobj (actor->target, actor, actor, amount, NAME_Melee);
-		actor->health += amount;
+		P_DamageMobj (self->target, self, self, amount, NAME_Melee);
+		self->health += amount;
 	}
 }
 
@@ -99,7 +100,7 @@ void A_WraithMelee (AActor *actor)
 //
 //============================================================================
 
-void A_WraithFX2 (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_WraithFX2)
 {
 	AActor *mo;
 	angle_t angle;
@@ -107,23 +108,23 @@ void A_WraithFX2 (AActor *actor)
 
 	for (i = 2; i; --i)
 	{
-		mo = Spawn ("WraithFX2", actor->x, actor->y, actor->z, ALLOW_REPLACE);
+		mo = Spawn ("WraithFX2", self->x, self->y, self->z, ALLOW_REPLACE);
 		if(mo)
 		{
 			if (pr_wraithfx2 ()<128)
 			{
-				 angle = actor->angle+(pr_wraithfx2()<<22);
+				 angle = self->angle+(pr_wraithfx2()<<22);
 			}
 			else
 			{
-				 angle = actor->angle-(pr_wraithfx2()<<22);
+				 angle = self->angle-(pr_wraithfx2()<<22);
 			}
 			mo->momz = 0;
 			mo->momx = FixedMul((pr_wraithfx2()<<7)+FRACUNIT,
 				 finecosine[angle>>ANGLETOFINESHIFT]);
 			mo->momy = FixedMul((pr_wraithfx2()<<7)+FRACUNIT, 
 				 finesine[angle>>ANGLETOFINESHIFT]);
-			mo->target = actor;
+			mo->target = self;
 			mo->floorclip = 10*FRACUNIT;
 		}
 	}
@@ -133,24 +134,24 @@ void A_WraithFX2 (AActor *actor)
 //
 // A_WraithFX3
 //
-// Spawn an FX3 around the actor during attacks
+// Spawn an FX3 around the self during attacks
 //
 //============================================================================
 
-void A_WraithFX3 (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_WraithFX3)
 {
 	AActor *mo;
 	int numdropped = pr_wraithfx3()%15;
 
 	while (numdropped-- > 0)
 	{
-		mo = Spawn ("WraithFX3", actor->x, actor->y, actor->z, ALLOW_REPLACE);
+		mo = Spawn ("WraithFX3", self->x, self->y, self->z, ALLOW_REPLACE);
 		if (mo)
 		{
 			mo->x += (pr_wraithfx3()-128)<<11;
 			mo->y += (pr_wraithfx3()-128)<<11;
 			mo->z += (pr_wraithfx3()<<10);
-			mo->target = actor;
+			mo->target = self;
 		}
 	}
 }
@@ -163,7 +164,7 @@ void A_WraithFX3 (AActor *actor)
 //
 //============================================================================
 
-void A_WraithFX4 (AActor *actor)
+void A_WraithFX4 (AActor *self)
 {
 	AActor *mo;
 	int chance = pr_wraithfx4();
@@ -192,24 +193,24 @@ void A_WraithFX4 (AActor *actor)
 
 	if (spawn4)
 	{
-		mo = Spawn ("WraithFX4", actor->x, actor->y, actor->z, ALLOW_REPLACE);
+		mo = Spawn ("WraithFX4", self->x, self->y, self->z, ALLOW_REPLACE);
 		if (mo)
 		{
 			mo->x += (pr_wraithfx4()-128)<<12;
 			mo->y += (pr_wraithfx4()-128)<<12;
 			mo->z += (pr_wraithfx4()<<10);
-			mo->target = actor;
+			mo->target = self;
 		}
 	}
 	if (spawn5)
 	{
-		mo = Spawn ("WraithFX5", actor->x, actor->y, actor->z, ALLOW_REPLACE);
+		mo = Spawn ("WraithFX5", self->x, self->y, self->z, ALLOW_REPLACE);
 		if (mo)
 		{
 			mo->x += (pr_wraithfx4()-128)<<11;
 			mo->y += (pr_wraithfx4()-128)<<11;
 			mo->z += (pr_wraithfx4()<<10);
-			mo->target = actor;
+			mo->target = self;
 		}
 	}
 }
@@ -220,16 +221,16 @@ void A_WraithFX4 (AActor *actor)
 //
 //============================================================================
 
-void A_WraithChase (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_WraithChase)
 {
-	int weaveindex = actor->special1;
-	actor->z += FloatBobOffsets[weaveindex];
-	actor->special1 = (weaveindex+2)&63;
-//	if (actor->floorclip > 0)
+	int weaveindex = self->special1;
+	self->z += FloatBobOffsets[weaveindex];
+	self->special1 = (weaveindex+2)&63;
+//	if (self->floorclip > 0)
 //	{
-//		P_SetMobjState(actor, S_WRAITH_RAISE2);
+//		P_SetMobjState(self, S_WRAITH_RAISE2);
 //		return;
 //	}
-	A_Chase (actor);
-	A_WraithFX4 (actor);
+	A_Chase (self);
+	A_WraithFX4 (self);
 }

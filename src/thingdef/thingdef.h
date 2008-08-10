@@ -130,7 +130,7 @@ bool EvalExpressionN (int id, AActor *self, const PClass *cls=NULL);
 extern FState * CallingState;
 int CheckIndex(int paramsize, FState ** pcallstate=NULL);
 
-void A_ExplodeParms(AActor * self);
+void A_Explode(AActor * self);
 
 enum
 {
@@ -155,6 +155,56 @@ enum EDefinitionType
 	DEF_Projectile,
 };
 
+#if defined(_MSC_VER)
+#pragma data_seg(".areg$u")
+#pragma data_seg()
+
+#define MSVC_ASEG __declspec(allocate(".areg$u"))
+#define GCC_ASEG
+#else
+#define MSVC_ASEG
+#define GCC_ASEG __attribute__((section(AREG_SECTION)))
+#endif
+
+/*
+#define DEFINE_FUNCTION(cls, name) \
+void func_##cls##_##name (void *,stackvalue *&sp, FState *); \
+	NativeFunction info_##cls##_##name = { func_##cls##_##name, #cls, #name }; \
+MSVC_FSEG NativeFunction *infoptr_##cls##_##name GCC_FSEG = &info_##cls##_##name; \
+void func_##cls##_##name (void * vself,stackvalue *&sp, FState *CallingState)
+*/
+
+#define DEFINE_ACTION_FUNCTION(cls, name) \
+	void name (AActor *); \
+	AFuncDesc info_##cls##_##name = { #name, name }; \
+	MSVC_ASEG AFuncDesc *infoptr_##cls##_##name GCC_ASEG = &info_##cls##_##name; \
+	void name (AActor *self)
+
+#define ACTION_PARAM_START(count) \
+	int index = CheckIndex(count); \
+	if (index <= 0) return;
+
+#define ACTION_PARAM_START_OPTIONAL(count) \
+	int index = CheckIndex(count); 
+
+#define ACTION_INT_PARAM(var) \
+	int var = EvalExpressionI(StateParameters[index++], self);
+#define ACTION_BOOL_PARAM(var) \
+	bool var = !!EvalExpressionI(StateParameters[index++], self);
+#define ACTION_NOT_BOOL_PARAM(var) \
+	bool var = EvalExpressionN(StateParameters[index++], self);
+#define ACTION_FIXED_PARAM(var) \
+	fixed_t var = fixed_t(EvalExpressionF(StateParameters[index++], self)*65536.f);
+#define ACTION_FLOAT_PARAM(var) \
+	float var = EvalExpressionF(StateParameters[index++], self);
+#define ACTION_CLASS_PARAM(var) \
+	const PClass *var = PClass::FindClass(ENamedName(StateParameters[index++]));
+#define ACTION_STATE_PARAM(var) \
+	int var = StateParameters[index++];
+#define ACTION_SOUND_PARAM(var) \
+	FSoundID var = StateParameters[index++];
+#define ACTION_STRING_PARAM(var) \
+	const char *var = FName(ENamedName(StateParameters[index++]));
 
 
 #endif

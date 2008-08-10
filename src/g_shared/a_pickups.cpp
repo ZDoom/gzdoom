@@ -14,6 +14,7 @@
 #include "a_strifeglobal.h"
 #include "a_morph.h"
 #include "a_specialspot.h"
+#include "thingdef/thingdef.h"
 
 static FRandom pr_restore ("RestorePos");
 
@@ -269,12 +270,12 @@ bool P_GiveBody (AActor *actor, int num)
 //
 //---------------------------------------------------------------------------
 
-void A_RestoreSpecialThing1 (AActor *thing)
+DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialThing1)
 {
-	thing->renderflags &= ~RF_INVISIBLE;
-	if (static_cast<AInventory *>(thing)->DoRespawn ())
+	self->renderflags &= ~RF_INVISIBLE;
+	if (static_cast<AInventory *>(self)->DoRespawn ())
 	{
-		S_Sound (thing, CHAN_VOICE, "misc/spawn", 1, ATTN_IDLE);
+		S_Sound (self, CHAN_VOICE, "misc/spawn", 1, ATTN_IDLE);
 	}
 }
 
@@ -284,14 +285,14 @@ void A_RestoreSpecialThing1 (AActor *thing)
 //
 //---------------------------------------------------------------------------
 
-void A_RestoreSpecialThing2 (AActor *thing)
+DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialThing2)
 {
-	thing->flags |= MF_SPECIAL;
-	if (!(thing->GetDefault()->flags & MF_NOGRAVITY))
+	self->flags |= MF_SPECIAL;
+	if (!(self->GetDefault()->flags & MF_NOGRAVITY))
 	{
-		thing->flags &= ~MF_NOGRAVITY;
+		self->flags &= ~MF_NOGRAVITY;
 	}
-	thing->SetState (thing->SpawnState);
+	self->SetState (self->SpawnState);
 }
 
 
@@ -301,7 +302,7 @@ void A_RestoreSpecialThing2 (AActor *thing)
 //
 //---------------------------------------------------------------------------
 
-void A_RestoreSpecialDoomThing (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialDoomThing)
 {
 	self->renderflags &= ~RF_INVISIBLE;
 	self->flags |= MF_SPECIAL;
@@ -323,7 +324,7 @@ void A_RestoreSpecialDoomThing (AActor *self)
 //
 //---------------------------------------------------------------------------
 
-void A_RestoreSpecialPosition (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialPosition)
 {
 	// Move item back to its original location
 	fixed_t _x, _y;

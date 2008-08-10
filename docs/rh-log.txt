@@ -1,4 +1,7 @@
 August 10, 2008 (Changes by Graf Zahl)
+- Changed action function definition so that they have to be defined with a
+  DEFINE_ACTION_FUNCTION macro. This should make it easier to improve the
+  whole system.
 - Removed DECORATE's ParseClass because it was only used to add data to fully
   internal actor classes which no longer exist.
 - Changed the state structure so that the Tics value doesn't need to be hacked

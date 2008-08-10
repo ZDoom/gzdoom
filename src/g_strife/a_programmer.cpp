@@ -6,6 +6,7 @@
 #include "s_sound.h"
 #include "a_strifeglobal.h"
 #include "f_finale.h"
+#include "thingdef/thingdef.h"
 
 static FRandom pr_prog ("Programmer");
 
@@ -69,7 +70,7 @@ PalEntry AProgLevelEnder::GetBlend ()
 //
 //============================================================================
 
-void A_ProgrammerMelee (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_ProgrammerMelee)
 {
 	int damage;
 
@@ -94,7 +95,7 @@ void A_ProgrammerMelee (AActor *self)
 //
 //============================================================================
 
-void A_SpotLightning (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_SpotLightning)
 {
 	AActor *spot;
 
@@ -117,7 +118,7 @@ void A_SpotLightning (AActor *self)
 //
 //============================================================================
 
-void A_SpawnProgrammerBase (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_SpawnProgrammerBase)
 {
 	AActor *foo = Spawn("ProgrammerBase", self->x, self->y, self->z + 24*FRACUNIT, ALLOW_REPLACE);
 	if (foo != NULL)
@@ -135,7 +136,7 @@ void A_SpawnProgrammerBase (AActor *self)
 //
 //============================================================================
 
-void A_ProgrammerDeath (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_ProgrammerDeath)
 {
 	if (!CheckBossDeath (self))
 		return;

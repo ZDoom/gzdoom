@@ -11,6 +11,7 @@
 #include "p_local.h"
 #include "p_lnspec.h"
 #include "a_hexenglobal.h"
+#include "thingdef/thingdef.h"
 
 static FRandom pr_pottery ("PotteryExplode");
 static FRandom pr_bit ("PotteryChooseBit");
@@ -49,14 +50,14 @@ void APottery1::HitFloor ()
 //
 //============================================================================
 
-void A_PotteryExplode (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_PotteryExplode)
 {
 	AActor *mo = NULL;
 	int i;
 
 	for(i = (pr_pottery()&3)+3; i; i--)
 	{
-		mo = Spawn ("PotteryBit", actor->x, actor->y, actor->z, ALLOW_REPLACE);
+		mo = Spawn ("PotteryBit", self->x, self->y, self->z, ALLOW_REPLACE);
 		mo->SetState (mo->SpawnState + (pr_pottery()%5));
 		if (mo)
 		{
@@ -66,13 +67,13 @@ void A_PotteryExplode (AActor *actor)
 		}
 	}
 	S_Sound (mo, CHAN_BODY, "PotteryExplode", 1, ATTN_NORM);
-	if (actor->args[0]>=0 && actor->args[0]<=255 && SpawnableThings[actor->args[0]])
+	if (self->args[0]>=0 && self->args[0]<=255 && SpawnableThings[self->args[0]])
 	{ // Spawn an item
 		if (!((level.flags & LEVEL_NOMONSTERS) || (dmflags & DF_NO_MONSTERS))
-		|| !(GetDefaultByType (SpawnableThings[actor->args[0]])->flags3 & MF3_ISMONSTER))
+		|| !(GetDefaultByType (SpawnableThings[self->args[0]])->flags3 & MF3_ISMONSTER))
 		{ // Only spawn monsters if not -nomonsters
-			Spawn (SpawnableThings[actor->args[0]],
-				actor->x, actor->y, actor->z, ALLOW_REPLACE);
+			Spawn (SpawnableThings[self->args[0]],
+				self->x, self->y, self->z, ALLOW_REPLACE);
 		}
 	}
 }
@@ -83,10 +84,10 @@ void A_PotteryExplode (AActor *actor)
 //
 //============================================================================
 
-void A_PotteryChooseBit (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_PotteryChooseBit)
 {
-	actor->SetState (actor->FindState(NAME_Death) + 1 + 2*(pr_bit()%5));
-	actor->tics = 256+(pr_bit()<<1);
+	self->SetState (self->FindState(NAME_Death) + 1 + 2*(pr_bit()%5));
+	self->tics = 256+(pr_bit()<<1);
 }
 
 //============================================================================
@@ -95,7 +96,7 @@ void A_PotteryChooseBit (AActor *actor)
 //
 //============================================================================
 
-void A_PotteryCheck (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_PotteryCheck)
 {
 	int i;
 
@@ -104,10 +105,10 @@ void A_PotteryCheck (AActor *actor)
 		if (playeringame[i])
 		{
 			AActor *pmo = players[i].mo;
-			if (P_CheckSight (actor, pmo) && (abs (R_PointToAngle2 (pmo->x,
-				pmo->y, actor->x, actor->y) - pmo->angle) <= ANGLE_45))
+			if (P_CheckSight (self, pmo) && (abs (R_PointToAngle2 (pmo->x,
+				pmo->y, self->x, self->y) - pmo->angle) <= ANGLE_45))
 			{ // Previous state (pottery bit waiting state)
-				actor->SetState (actor->state - 1);
+				self->SetState (self->state - 1);
 				return;
 			}
 		}
@@ -115,8 +116,6 @@ void A_PotteryCheck (AActor *actor)
 }
 
 // Lynched corpse (no heart) ------------------------------------------------
-
-void A_CorpseBloodDrip (AActor *);
 
 class AZCorpseLynchedNoHeart : public AActor
 {
@@ -139,11 +138,11 @@ void AZCorpseLynchedNoHeart::PostBeginPlay ()
 //
 //============================================================================
 
-void A_CorpseBloodDrip (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_CorpseBloodDrip)
 {
 	if (pr_drip() <= 128)
 	{
-		Spawn ("CorpseBloodDrip", actor->x, actor->y, actor->z + actor->height/2, ALLOW_REPLACE);
+		Spawn ("CorpseBloodDrip", self->x, self->y, self->z + self->height/2, ALLOW_REPLACE);
 	}
 }
 
@@ -153,14 +152,14 @@ void A_CorpseBloodDrip (AActor *actor)
 //
 //============================================================================
 
-void A_CorpseExplode (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_CorpseExplode)
 {
 	AActor *mo;
 	int i;
 
 	for (i = (pr_foo()&3)+3; i; i--)
 	{
-		mo = Spawn ("CorpseBit", actor->x, actor->y, actor->z, ALLOW_REPLACE);
+		mo = Spawn ("CorpseBit", self->x, self->y, self->z, ALLOW_REPLACE);
 		mo->SetState (mo->SpawnState + (pr_foo()%3));
 		if (mo)
 		{
@@ -170,7 +169,7 @@ void A_CorpseExplode (AActor *actor)
 		}
 	}
 	// Spawn a skull
-	mo = Spawn ("CorpseBit", actor->x, actor->y, actor->z, ALLOW_REPLACE);
+	mo = Spawn ("CorpseBit", self->x, self->y, self->z, ALLOW_REPLACE);
 	mo->SetState (mo->SpawnState + 3);
 	if (mo)
 	{
@@ -178,8 +177,8 @@ void A_CorpseExplode (AActor *actor)
 		mo->momx = pr_foo.Random2()<<(FRACBITS-6);
 		mo->momy = pr_foo.Random2()<<(FRACBITS-6);
 	}
-	S_Sound (actor, CHAN_BODY, actor->DeathSound, 1, ATTN_IDLE);
-	actor->Destroy ();
+	S_Sound (self, CHAN_BODY, self->DeathSound, 1, ATTN_IDLE);
+	self->Destroy ();
 }
 
 //============================================================================
@@ -188,7 +187,7 @@ void A_CorpseExplode (AActor *actor)
 //
 //============================================================================
 
-void A_LeafSpawn (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_LeafSpawn)
 {
 	AActor *mo;
 	int i;
@@ -196,13 +195,13 @@ void A_LeafSpawn (AActor *actor)
 	for (i = (pr_leaf()&3)+1; i; i--)
 	{
 		mo = Spawn (pr_leaf()&1 ? PClass::FindClass ("Leaf1") : PClass::FindClass ("Leaf2"),
-			actor->x + (pr_leaf.Random2()<<14),
-			actor->y + (pr_leaf.Random2()<<14),
-			actor->z + (pr_leaf()<<14), ALLOW_REPLACE);
+			self->x + (pr_leaf.Random2()<<14),
+			self->y + (pr_leaf.Random2()<<14),
+			self->z + (pr_leaf()<<14), ALLOW_REPLACE);
 		if (mo)
 		{
-			P_ThrustMobj (mo, actor->angle, (pr_leaf()<<9)+3*FRACUNIT);
-			mo->target = actor;
+			P_ThrustMobj (mo, self->angle, (pr_leaf()<<9)+3*FRACUNIT);
+			mo->target = self;
 			mo->special1 = 0;
 		}
 	}
@@ -214,11 +213,11 @@ void A_LeafSpawn (AActor *actor)
 //
 //============================================================================
 
-void A_LeafThrust (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_LeafThrust)
 {
 	if (pr_leafthrust() <= 96)
 	{
-		actor->momz += (pr_leafthrust()<<9)+FRACUNIT;
+		self->momz += (pr_leafthrust()<<9)+FRACUNIT;
 	}
 }
 
@@ -228,27 +227,27 @@ void A_LeafThrust (AActor *actor)
 //
 //============================================================================
 
-void A_LeafCheck (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_LeafCheck)
 {
-	actor->special1++;
-	if (actor->special1 >= 20)
+	self->special1++;
+	if (self->special1 >= 20)
 	{
-		actor->SetState (NULL);
+		self->SetState (NULL);
 		return;
 	}
-	angle_t ang = actor->target ? actor->target->angle : actor->angle;
+	angle_t ang = self->target ? self->target->angle : self->angle;
 	if (pr_leafcheck() > 64)
 	{
-		if (!actor->momx && !actor->momy)
+		if (!self->momx && !self->momy)
 		{
-			P_ThrustMobj (actor, ang, (pr_leafcheck()<<9)+FRACUNIT);
+			P_ThrustMobj (self, ang, (pr_leafcheck()<<9)+FRACUNIT);
 		}
 		return;
 	}
-	actor->SetState (actor->SpawnState + 7);
-	actor->momz = (pr_leafcheck()<<9)+FRACUNIT;
-	P_ThrustMobj (actor, ang, (pr_leafcheck()<<9)+2*FRACUNIT);
-	actor->flags |= MF_MISSILE;
+	self->SetState (self->SpawnState + 7);
+	self->momz = (pr_leafcheck()<<9)+FRACUNIT;
+	P_ThrustMobj (self, ang, (pr_leafcheck()<<9)+2*FRACUNIT);
+	self->flags |= MF_MISSILE;
 }
 
 //===========================================================================
@@ -257,9 +256,9 @@ void A_LeafCheck (AActor *actor)
 //
 //===========================================================================
 
-void A_PoisonShroom (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_PoisonShroom)
 {
-	actor->tics = 128+(pr_shroom()<<1);
+	self->tics = 128+(pr_shroom()<<1);
 }
 
 //===========================================================================
@@ -268,16 +267,16 @@ void A_PoisonShroom (AActor *actor)
 //
 //===========================================================================
 
-void A_SoAExplode (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_SoAExplode)
 {
 	AActor *mo;
 	int i;
 
 	for (i = 0; i < 10; i++)
 	{
-		mo = Spawn ("ZArmorChunk", actor->x+((pr_soaexplode()-128)<<12),
-			actor->y+((pr_soaexplode()-128)<<12), 
-			actor->z+(pr_soaexplode()*actor->height/256), ALLOW_REPLACE);
+		mo = Spawn ("ZArmorChunk", self->x+((pr_soaexplode()-128)<<12),
+			self->y+((pr_soaexplode()-128)<<12), 
+			self->z+(pr_soaexplode()*self->height/256), ALLOW_REPLACE);
 		mo->SetState (mo->SpawnState + i);
 		if (mo)
 		{
@@ -286,23 +285,20 @@ void A_SoAExplode (AActor *actor)
 			mo->momy = pr_soaexplode.Random2()<<(FRACBITS-6);
 		}
 	}
-	if (actor->args[0]>=0 && actor->args[0]<=255 && SpawnableThings[actor->args[0]])
+	if (self->args[0]>=0 && self->args[0]<=255 && SpawnableThings[self->args[0]])
 	{ // Spawn an item
 		if (!((level.flags & LEVEL_NOMONSTERS) || (dmflags & DF_NO_MONSTERS))
-		|| !(GetDefaultByType (SpawnableThings[actor->args[0]])->flags3 & MF3_ISMONSTER))
+		|| !(GetDefaultByType (SpawnableThings[self->args[0]])->flags3 & MF3_ISMONSTER))
 		{ // Only spawn monsters if not -nomonsters
-			Spawn (SpawnableThings[actor->args[0]],
-				actor->x, actor->y, actor->z, ALLOW_REPLACE);
+			Spawn (SpawnableThings[self->args[0]],
+				self->x, self->y, self->z, ALLOW_REPLACE);
 		}
 	}
-	S_Sound (actor, CHAN_BODY, actor->DeathSound, 1, ATTN_NORM);
-	actor->Destroy ();
+	S_Sound (self, CHAN_BODY, self->DeathSound, 1, ATTN_NORM);
+	self->Destroy ();
 }
 
 // Bell ---------------------------------------------------------------------
-
-void A_BellReset1 (AActor *);
-void A_BellReset2 (AActor *);
 
 class AZBell : public AActor
 {
@@ -327,15 +323,15 @@ void AZBell::Activate (AActor *activator)
 //
 //===========================================================================
 
-void A_BellReset1 (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_BellReset1)
 {
-	actor->flags |= MF_NOGRAVITY;
-	actor->height <<= 2;
-	if (actor->special)
+	self->flags |= MF_NOGRAVITY;
+	self->height <<= 2;
+	if (self->special)
 	{ // Initiate death action
-		LineSpecials[actor->special] (NULL, NULL, false, actor->args[0],
-			actor->args[1], actor->args[2], actor->args[3], actor->args[4]);
-		actor->special = 0;
+		LineSpecials[self->special] (NULL, NULL, false, self->args[0],
+			self->args[1], self->args[2], self->args[3], self->args[4]);
+		self->special = 0;
 	}
 }
 
@@ -345,10 +341,10 @@ void A_BellReset1 (AActor *actor)
 //
 //===========================================================================
 
-void A_BellReset2 (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_BellReset2)
 {
-	actor->flags |= MF_SHOOTABLE;
-	actor->flags &= ~MF_CORPSE;
-	actor->health = 5;
+	self->flags |= MF_SHOOTABLE;
+	self->flags &= ~MF_CORPSE;
+	self->health = 5;
 }
 

@@ -482,9 +482,6 @@ public:
 	// Called when actor dies
 	virtual void Die (AActor *source, AActor *inflictor);
 
-	// Called by A_Explode to find out how much damage to do
-	virtual void GetExplodeParms (int &damage, int &dist, bool &hurtSource);
-
 	// Perform some special damage action. Returns the amount of damage to do.
 	// Returning -1 signals the damage routine to exit immediately
 	virtual int DoSpecialDamage (AActor *target, int damage);

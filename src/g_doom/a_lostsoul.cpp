@@ -19,7 +19,7 @@
 //
 #define SKULLSPEED (20*FRACUNIT)
 
-void A_SkullAttack (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_SkullAttack)
 {
 	AActor *dest;
 	angle_t an;

@@ -7,11 +7,12 @@
 #include "doomstat.h"
 #include "gstrings.h"
 #include "a_action.h"
+#include "thingdef/thingdef.h"
 
 static FRandom pr_bruisattack ("BruisAttack");
 
 
-void A_BruisAttack (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_BruisAttack)
 {
 	if (!self->target)
 		return;

@@ -8,6 +8,7 @@
 #include "p_enemy.h"
 #include "a_action.h"
 #include "a_hexenglobal.h"
+#include "thingdef/thingdef.h"
 
 
 // Fighter Weapon Base Class ------------------------------------------------
@@ -131,7 +132,7 @@ void AdjustPlayerAngle (AActor *pmo, AActor *linetarget)
 //
 //============================================================================
 
-void A_FPunchAttack (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_FPunchAttack)
 {
 	angle_t angle;
 	int damage;
@@ -142,7 +143,7 @@ void A_FPunchAttack (AActor *actor)
 	const PClass *pufftype;
 	AActor *linetarget;
 
-	if (NULL == (player = actor->player))
+	if (NULL == (player = self->player))
 	{
 		return;
 	}

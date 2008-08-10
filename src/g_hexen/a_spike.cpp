@@ -6,16 +6,11 @@
 #include "a_sharedglobal.h"
 #include "s_sound.h"
 #include "m_bbox.h"
+#include "thingdef/thingdef.h"
 
 static FRandom pr_thrustraise ("ThrustRaise");
 
 // Spike (thrust floor) -----------------------------------------------------
-
-void A_ThrustInitUp (AActor *);
-void A_ThrustInitDn (AActor *);
-void A_ThrustRaise (AActor *);
-void A_ThrustLower (AActor *);
-void A_ThrustImpale (AActor *);
 
 // AThrustFloor is just a container for all the spike states.
 // All the real spikes subclass it.
@@ -76,30 +71,30 @@ void AThrustFloor::Deactivate (AActor *activator)
 //		args[1]		0 = normal,   1 = bloody
 //===========================================================================
 
-void A_ThrustInitUp (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_ThrustInitUp)
 {
-	actor->special2 = 5;	// Raise speed
-	actor->args[0] = 1;		// Mark as up
-	actor->floorclip = 0;
-	actor->flags = MF_SOLID;
-	actor->flags2 = MF2_NOTELEPORT|MF2_FLOORCLIP;
-	actor->special1 = 0L;
+	self->special2 = 5;	// Raise speed
+	self->args[0] = 1;		// Mark as up
+	self->floorclip = 0;
+	self->flags = MF_SOLID;
+	self->flags2 = MF2_NOTELEPORT|MF2_FLOORCLIP;
+	self->special1 = 0L;
 }
 
-void A_ThrustInitDn (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_ThrustInitDn)
 {
-	actor->special2 = 5;	// Raise speed
-	actor->args[0] = 0;		// Mark as down
-	actor->floorclip = actor->GetDefault()->height;
-	actor->flags = 0;
-	actor->flags2 = MF2_NOTELEPORT|MF2_FLOORCLIP;
-	actor->renderflags = RF_INVISIBLE;
-	static_cast<AThrustFloor *>(actor)->DirtClump =
-		Spawn("DirtClump", actor->x, actor->y, actor->z, ALLOW_REPLACE);
+	self->special2 = 5;	// Raise speed
+	self->args[0] = 0;		// Mark as down
+	self->floorclip = self->GetDefault()->height;
+	self->flags = 0;
+	self->flags2 = MF2_NOTELEPORT|MF2_FLOORCLIP;
+	self->renderflags = RF_INVISIBLE;
+	static_cast<AThrustFloor *>(self)->DirtClump =
+		Spawn("DirtClump", self->x, self->y, self->z, ALLOW_REPLACE);
 }
 
 
-void A_ThrustRaise (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_ThrustRaise)
 {
 	AThrustFloor *actor = static_cast<AThrustFloor *>(self);
 
@@ -125,25 +120,25 @@ void A_ThrustRaise (AActor *self)
 	actor->special2++;							// Increase raise speed
 }
 
-void A_ThrustLower (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_ThrustLower)
 {
-	if (A_SinkMobj (actor, 6*FRACUNIT))
+	if (A_SinkMobj (self, 6*FRACUNIT))
 	{
-		actor->args[0] = 0;
-		if (actor->args[1])
-			actor->SetStateNF (actor->FindState ("BloodThrustInit1"));
+		self->args[0] = 0;
+		if (self->args[1])
+			self->SetStateNF (self->FindState ("BloodThrustInit1"));
 		else
-			actor->SetStateNF (actor->FindState ("ThrustInit1"));
+			self->SetStateNF (self->FindState ("ThrustInit1"));
 	}
 }
 
-void A_ThrustImpale (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_ThrustImpale)
 {
 	AActor *thing;
-	FBlockThingsIterator it(FBoundingBox(actor->x, actor->y, actor->radius));
+	FBlockThingsIterator it(FBoundingBox(self->x, self->y, self->radius));
 	while ((thing = it.Next()))
 	{
-		if (!thing->intersects(actor))
+		if (!thing->intersects(self))
 		{
 			continue;
 		}
@@ -151,12 +146,12 @@ void A_ThrustImpale (AActor *actor)
 		if (!(thing->flags & MF_SHOOTABLE) )
 			continue;
 
-		if (thing == actor)
+		if (thing == self)
 			continue;	// don't clip against self
 
-		P_DamageMobj (thing, actor, actor, 10001, NAME_Crush);
+		P_DamageMobj (thing, self, self, 10001, NAME_Crush);
 		P_TraceBleed (10001, thing);
-		actor->args[1] = 1;	// Mark thrust thing as bloody
+		self->args[1] = 1;	// Mark thrust thing as bloody
 	}
 }
 

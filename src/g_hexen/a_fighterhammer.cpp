@@ -10,6 +10,7 @@
 #include "p_pspr.h"
 #include "gstrings.h"
 #include "a_hexenglobal.h"
+#include "thingdef/thingdef.h"
 
 const fixed_t HAMMER_RANGE = MELEERANGE+MELEERANGE/2;
 
@@ -23,7 +24,7 @@ extern void AdjustPlayerAngle (AActor *pmo, AActor *linetarget);
 //
 //============================================================================
 
-void A_FHammerAttack (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_FHammerAttack)
 {
 	angle_t angle;
 	int damage;
@@ -33,7 +34,7 @@ void A_FHammerAttack (AActor *actor)
 	player_t *player;
 	AActor *linetarget;
 
-	if (NULL == (player = actor->player))
+	if (NULL == (player = self->player))
 	{
 		return;
 	}
@@ -98,12 +99,12 @@ hammerdone:
 //
 //============================================================================
 
-void A_FHammerThrow (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_FHammerThrow)
 {
 	AActor *mo;
 	player_t *player;
 
-	if (NULL == (player = actor->player))
+	if (NULL == (player = self->player))
 	{
 		return;
 	}

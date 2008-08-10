@@ -12,12 +12,13 @@
 #include "a_keys.h"
 #include "c_console.h"
 #include "templates.h"
+#include "thingdef/thingdef.h"
 
 // Degnin Ore ---------------------------------------------------------------
 
 IMPLEMENT_CLASS(ADegninOre)
 
-void A_RemoveForceField (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_RemoveForceField)
 {
 	self->flags &= ~MF_SPECIAL;
 

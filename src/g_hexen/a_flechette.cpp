@@ -10,6 +10,7 @@
 #include "a_action.h"
 #include "a_hexenglobal.h"
 #include "w_wad.h"
+#include "thingdef/thingdef.h"
 
 static FRandom pr_poisonbag ("PoisonBag");
 static FRandom pr_poisoncloud ("PoisonCloud");
@@ -296,14 +297,14 @@ int APoisonCloud::DoSpecialDamage (AActor *victim, int damage)
 //
 //===========================================================================
 
-void A_PoisonBagInit (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_PoisonBagInit)
 {
 	AActor *mo;
 	
-	mo = Spawn<APoisonCloud> (actor->x, actor->y, actor->z+28*FRACUNIT, ALLOW_REPLACE);
+	mo = Spawn<APoisonCloud> (self->x, self->y, self->z+28*FRACUNIT, ALLOW_REPLACE);
 	if (mo)
 	{
-		mo->target = actor->target;
+		mo->target = self->target;
 	}
 }
 
@@ -313,11 +314,11 @@ void A_PoisonBagInit (AActor *actor)
 //
 //===========================================================================
 
-void A_PoisonBagCheck (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_PoisonBagCheck)
 {
-	if (--actor->special1 <= 0)
+	if (--self->special1 <= 0)
 	{
-		actor->SetState (actor->FindState ("Death"));
+		self->SetState (self->FindState ("Death"));
 	}
 	else
 	{
@@ -331,14 +332,14 @@ void A_PoisonBagCheck (AActor *actor)
 //
 //===========================================================================
 
-void A_PoisonBagDamage (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_PoisonBagDamage)
 {
 	int bobIndex;
 	
-	P_RadiusAttack (actor, actor->target, 4, 40, actor->DamageType, true);
-	bobIndex = actor->special2;
-	actor->z += FloatBobOffsets[bobIndex]>>4;
-	actor->special2 = (bobIndex+1)&63;
+	P_RadiusAttack (self, self->target, 4, 40, self->DamageType, true);
+	bobIndex = self->special2;
+	self->z += FloatBobOffsets[bobIndex]>>4;
+	self->special2 = (bobIndex+1)&63;
 }
 
 //===========================================================================
@@ -347,11 +348,11 @@ void A_PoisonBagDamage (AActor *actor)
 //
 //===========================================================================
 
-void A_CheckThrowBomb (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_CheckThrowBomb)
 {
-	if (--actor->health <= 0)
+	if (--self->health <= 0)
 	{
-		actor->SetState (actor->FindState(NAME_Death));
+		self->SetState (self->FindState(NAME_Death));
 	}
 }
 
@@ -361,20 +362,20 @@ void A_CheckThrowBomb (AActor *actor)
 //
 //===========================================================================
 
-void A_CheckThrowBomb2 (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_CheckThrowBomb2)
 {
 	// [RH] Check using actual velocity, although the momz < 2 check still stands
-	//if (abs(actor->momx) < FRACUNIT*3/2 && abs(actor->momy) < FRACUNIT*3/2
-	//	&& actor->momz < 2*FRACUNIT)
-	if (actor->momz < 2*FRACUNIT &&
-		TMulScale32 (actor->momx, actor->momx, actor->momy, actor->momy, actor->momz, actor->momz)
+	//if (abs(self->momx) < FRACUNIT*3/2 && abs(self->momy) < FRACUNIT*3/2
+	//	&& self->momz < 2*FRACUNIT)
+	if (self->momz < 2*FRACUNIT &&
+		TMulScale32 (self->momx, self->momx, self->momy, self->momy, self->momz, self->momz)
 		< (3*3)/(2*2))
 	{
-		actor->SetState (actor->SpawnState + 6);
-		actor->z = actor->floorz;
-		actor->momz = 0;
-		actor->flags2 &= ~MF2_BOUNCETYPE;
-		actor->flags &= ~MF_MISSILE;
+		self->SetState (self->SpawnState + 6);
+		self->z = self->floorz;
+		self->momz = 0;
+		self->flags2 &= ~MF2_BOUNCETYPE;
+		self->flags &= ~MF_MISSILE;
 	}
-	A_CheckThrowBomb (actor);
+	A_CheckThrowBomb (self);
 }

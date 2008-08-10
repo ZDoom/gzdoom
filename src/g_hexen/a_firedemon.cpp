@@ -5,6 +5,7 @@
 #include "p_enemy.h"
 #include "a_action.h"
 #include "m_random.h"
+#include "thingdef/thingdef.h"
 
 #define FIREDEMON_ATTACK_RANGE	64*8*FRACUNIT
 
@@ -33,13 +34,13 @@ void A_FiredSplotch (AActor *);
 //
 //============================================================================
 
-void A_FiredRocks (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_FiredRocks)
 {
-	A_FiredSpawnRock (actor);
-	A_FiredSpawnRock (actor);
-	A_FiredSpawnRock (actor);
-	A_FiredSpawnRock (actor);
-	A_FiredSpawnRock (actor);
+	A_FiredSpawnRock (self);
+	A_FiredSpawnRock (self);
+	A_FiredSpawnRock (self);
+	A_FiredSpawnRock (self);
+	A_FiredSpawnRock (self);
 }
 
 //============================================================================
@@ -98,13 +99,13 @@ void A_FiredSpawnRock (AActor *actor)
 //
 //============================================================================
 
-void A_SmBounce (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_SmBounce)
 {
 	// give some more momentum (x,y,&z)
-	actor->z = actor->floorz + FRACUNIT;
-	actor->momz = (2*FRACUNIT) + (pr_smbounce() << 10);
-	actor->momx = pr_smbounce()%3<<FRACBITS;
-	actor->momy = pr_smbounce()%3<<FRACBITS;
+	self->z = self->floorz + FRACUNIT;
+	self->momz = (2*FRACUNIT) + (pr_smbounce() << 10);
+	self->momx = pr_smbounce()%3<<FRACBITS;
+	self->momy = pr_smbounce()%3<<FRACBITS;
 }
 
 //============================================================================
@@ -113,12 +114,12 @@ void A_SmBounce (AActor *actor)
 //
 //============================================================================
 
-void A_FiredAttack (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_FiredAttack)
 {
-	if (actor->target == NULL)
+	if (self->target == NULL)
 		return;
-	AActor *mo = P_SpawnMissile (actor, actor->target, PClass::FindClass ("FireDemonMissile"));
-	if (mo) S_Sound (actor, CHAN_BODY, "FireDemonAttack", 1, ATTN_NORM);
+	AActor *mo = P_SpawnMissile (self, self->target, PClass::FindClass ("FireDemonMissile"));
+	if (mo) S_Sound (self, CHAN_BODY, "FireDemonAttack", 1, ATTN_NORM);
 }
 
 //============================================================================
@@ -127,89 +128,89 @@ void A_FiredAttack (AActor *actor)
 //
 //============================================================================
 
-void A_FiredChase (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_FiredChase)
 {
-	int weaveindex = actor->special1;
-	AActor *target = actor->target;
+	int weaveindex = self->special1;
+	AActor *target = self->target;
 	angle_t ang;
 	fixed_t dist;
 
-	if (actor->reactiontime) actor->reactiontime--;
-	if (actor->threshold) actor->threshold--;
+	if (self->reactiontime) self->reactiontime--;
+	if (self->threshold) self->threshold--;
 
 	// Float up and down
-	actor->z += FloatBobOffsets[weaveindex];
-	actor->special1 = (weaveindex+2)&63;
+	self->z += FloatBobOffsets[weaveindex];
+	self->special1 = (weaveindex+2)&63;
 
 	// Ensure it stays above certain height
-	if (actor->z < actor->floorz + (64*FRACUNIT))
+	if (self->z < self->floorz + (64*FRACUNIT))
 	{
-		actor->z += 2*FRACUNIT;
+		self->z += 2*FRACUNIT;
 	}
 
-	if(!actor->target || !(actor->target->flags&MF_SHOOTABLE))
+	if(!self->target || !(self->target->flags&MF_SHOOTABLE))
 	{	// Invalid target
-		P_LookForPlayers (actor,true);
+		P_LookForPlayers (self,true);
 		return;
 	}
 
 	// Strafe
-	if (actor->special2 > 0)
+	if (self->special2 > 0)
 	{
-		actor->special2--;
+		self->special2--;
 	}
 	else
 	{
-		actor->special2 = 0;
-		actor->momx = actor->momy = 0;
-		dist = P_AproxDistance (actor->x - target->x, actor->y - target->y);
+		self->special2 = 0;
+		self->momx = self->momy = 0;
+		dist = P_AproxDistance (self->x - target->x, self->y - target->y);
 		if (dist < FIREDEMON_ATTACK_RANGE)
 		{
 			if (pr_firedemonchase() < 30)
 			{
-				ang = R_PointToAngle2 (actor->x, actor->y, target->x, target->y);
+				ang = R_PointToAngle2 (self->x, self->y, target->x, target->y);
 				if (pr_firedemonchase() < 128)
 					ang += ANGLE_90;
 				else
 					ang -= ANGLE_90;
 				ang >>= ANGLETOFINESHIFT;
-				actor->momx = finecosine[ang] << 3; //FixedMul (8*FRACUNIT, finecosine[ang]);
-				actor->momy = finesine[ang] << 3; //FixedMul (8*FRACUNIT, finesine[ang]);
-				actor->special2 = 3;		// strafe time
+				self->momx = finecosine[ang] << 3; //FixedMul (8*FRACUNIT, finecosine[ang]);
+				self->momy = finesine[ang] << 3; //FixedMul (8*FRACUNIT, finesine[ang]);
+				self->special2 = 3;		// strafe time
 			}
 		}
 	}
 
-	FaceMovementDirection (actor);
+	FaceMovementDirection (self);
 
 	// Normal movement
-	if (!actor->special2)
+	if (!self->special2)
 	{
-		if (--actor->movecount<0 || !P_Move (actor))
+		if (--self->movecount<0 || !P_Move (self))
 		{
-			P_NewChaseDir (actor);
+			P_NewChaseDir (self);
 		}
 	}
 
 	// Do missile attack
-	if (!(actor->flags & MF_JUSTATTACKED))
+	if (!(self->flags & MF_JUSTATTACKED))
 	{
-		if (P_CheckMissileRange (actor) && (pr_firedemonchase() < 20))
+		if (P_CheckMissileRange (self) && (pr_firedemonchase() < 20))
 		{
-			actor->SetState (actor->MissileState);
-			actor->flags |= MF_JUSTATTACKED;
+			self->SetState (self->MissileState);
+			self->flags |= MF_JUSTATTACKED;
 			return;
 		}
 	}
 	else
 	{
-		actor->flags &= ~MF_JUSTATTACKED;
+		self->flags &= ~MF_JUSTATTACKED;
 	}
 
 	// make active sound
 	if (pr_firedemonchase() < 3)
 	{
-		actor->PlayActiveSound ();
+		self->PlayActiveSound ();
 	}
 }
 
@@ -219,18 +220,18 @@ void A_FiredChase (AActor *actor)
 //
 //============================================================================
 
-void A_FiredSplotch (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_FiredSplotch)
 {
 	AActor *mo;
 
-	mo = Spawn ("FireDemonSplotch1", actor->x, actor->y, actor->z, ALLOW_REPLACE);
+	mo = Spawn ("FireDemonSplotch1", self->x, self->y, self->z, ALLOW_REPLACE);
 	if (mo)
 	{
 		mo->momx = (pr_firedemonsplotch() - 128) << 11;
 		mo->momy = (pr_firedemonsplotch() - 128) << 11;
 		mo->momz = (pr_firedemonsplotch() << 10) + FRACUNIT*3;
 	}
-	mo = Spawn ("FireDemonSplotch2", actor->x, actor->y, actor->z, ALLOW_REPLACE);
+	mo = Spawn ("FireDemonSplotch2", self->x, self->y, self->z, ALLOW_REPLACE);
 	if (mo)
 	{
 		mo->momx = (pr_firedemonsplotch() - 128) << 11;

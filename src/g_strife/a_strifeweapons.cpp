@@ -89,7 +89,7 @@ void P_DaggerAlert (AActor *target, AActor *emitter)
 //
 //============================================================================
 
-void A_JabDagger (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_JabDagger)
 {
 	angle_t 	angle;
 	int 		damage;
@@ -97,34 +97,34 @@ void A_JabDagger (AActor *actor)
 	int			power;
 	AActor *linetarget;
 
-	power = MIN(10, actor->player->stamina / 10);
+	power = MIN(10, self->player->stamina / 10);
 	damage = (pr_jabdagger() % (power + 8)) * (power + 2);
 
-	if (actor->FindInventory<APowerStrength>())
+	if (self->FindInventory<APowerStrength>())
 	{
 		damage *= 10;
 	}
 
-	angle = actor->angle + (pr_jabdagger.Random2() << 18);
-	pitch = P_AimLineAttack (actor, angle, 80*FRACUNIT, &linetarget);
-	P_LineAttack (actor, angle, 80*FRACUNIT, pitch, damage, NAME_Melee, "StrifeSpark", true);
+	angle = self->angle + (pr_jabdagger.Random2() << 18);
+	pitch = P_AimLineAttack (self, angle, 80*FRACUNIT, &linetarget);
+	P_LineAttack (self, angle, 80*FRACUNIT, pitch, damage, NAME_Melee, "StrifeSpark", true);
 
 	// turn to face target
 	if (linetarget)
 	{
-		S_Sound (actor, CHAN_WEAPON,
+		S_Sound (self, CHAN_WEAPON,
 			linetarget->flags & MF_NOBLOOD ? "misc/metalhit" : "misc/meathit",
 			1, ATTN_NORM);
-		actor->angle = R_PointToAngle2 (actor->x,
-										actor->y,
+		self->angle = R_PointToAngle2 (self->x,
+										self->y,
 										linetarget->x,
 										linetarget->y);
-		actor->flags |= MF_JUSTATTACKED;
-		P_DaggerAlert (actor, linetarget);
+		self->flags |= MF_JUSTATTACKED;
+		P_DaggerAlert (self, linetarget);
 	}
 	else
 	{
-		S_Sound (actor, CHAN_WEAPON, "misc/swish", 1, ATTN_NORM);
+		S_Sound (self, CHAN_WEAPON, "misc/swish", 1, ATTN_NORM);
 	}
 }
 
@@ -134,7 +134,7 @@ void A_JabDagger (AActor *actor)
 //
 //============================================================================
 
-void A_AlertMonsters (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_AlertMonsters)
 {
 	if (self->player != NULL)
 	{
@@ -181,7 +181,7 @@ int APoisonBolt::DoSpecialDamage (AActor *target, int damage)
 //
 //============================================================================
 
-void A_ClearFlash (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_ClearFlash)
 {
 	player_t *player = self->player;
 
@@ -197,7 +197,7 @@ void A_ClearFlash (AActor *self)
 //
 //============================================================================
 
-void A_ShowElectricFlash (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_ShowElectricFlash)
 {
 	if (self->player != NULL)
 	{
@@ -211,7 +211,7 @@ void A_ShowElectricFlash (AActor *self)
 //
 //============================================================================
 
-void A_FireArrow (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_FireArrow)
 {
 	angle_t savedangle;
 
@@ -272,7 +272,7 @@ void P_StrifeGunShot (AActor *mo, bool accurate, angle_t pitch)
 //
 //============================================================================
 
-void A_FireAssaultGun (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_FireAssaultGun)
 {
 	bool accurate;
 
@@ -305,7 +305,7 @@ void A_FireAssaultGun (AActor *self)
 //
 //============================================================================
 
-void A_FireMiniMissile (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_FireMiniMissile)
 {
 	player_t *player = self->player;
 	angle_t savedangle;
@@ -333,7 +333,7 @@ void A_FireMiniMissile (AActor *self)
 //
 //============================================================================
 
-void A_RocketInFlight (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_RocketInFlight)
 {
 	AActor *trail;
 
@@ -354,7 +354,7 @@ void A_RocketInFlight (AActor *self)
 //
 //============================================================================
 
-void A_FlameDie (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_FlameDie)
 {
 	self->flags |= MF_NOGRAVITY;
 	self->momz = (pr_flamedie() & 3) << FRACBITS;
@@ -366,7 +366,7 @@ void A_FlameDie (AActor *self)
 //
 //============================================================================
 
-void A_FireFlamer (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_FireFlamer)
 {
 	player_t *player = self->player;
 
@@ -400,7 +400,7 @@ void A_FireFlamer (AActor *self)
 //
 //============================================================================
 
-void A_FireMauler1 (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_FireMauler1)
 {
 	if (self->player != NULL)
 	{
@@ -441,7 +441,7 @@ void A_FireMauler1 (AActor *self)
 //
 //============================================================================
 
-void A_FireMauler2Pre (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_FireMauler2Pre)
 {
 	S_Sound (self, CHAN_WEAPON, "weapons/mauler2charge", 1, ATTN_NORM);
 
@@ -460,7 +460,7 @@ void A_FireMauler2Pre (AActor *self)
 //
 //============================================================================
 
-void A_FireMauler2 (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_FireMauler2)
 {
 	if (self->player != NULL)
 	{
@@ -487,7 +487,7 @@ void A_FireMauler2 (AActor *self)
 
 AActor *P_SpawnSubMissile (AActor *source, const PClass *type, AActor *target);
 
-void A_MaulerTorpedoWave (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_MaulerTorpedoWave)
 {
 	AActor *wavedef = GetDefaultByName("MaulerTorpedoWave");
 	fixed_t savedz;
@@ -566,12 +566,12 @@ int APhosphorousFire::DoSpecialDamage (AActor *target, int damage)
 	return Super::DoSpecialDamage (target, damage);
 }
 
-void A_BurnArea (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_BurnArea)
 {
 	P_RadiusAttack (self, self->target, 128, 128, self->DamageType, true);
 }
 
-void A_Burnination (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_Burnination)
 {
 	self->momz -= 8*FRACUNIT;
 	self->momx += (pr_phburn.Random2 (3)) << FRACBITS;
@@ -632,7 +632,7 @@ void A_Burnination (AActor *self)
 //
 //============================================================================
 
-void A_FireGrenade (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_FireGrenade)
 {
 	const PClass *grenadetype;
 	player_t *player = self->player;
@@ -773,7 +773,7 @@ AInventory *ASigil::CreateCopy (AActor *other)
 //
 //============================================================================
 
-void A_SelectPiece (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_SelectPiece)
 {
 	int pieces = MIN (static_cast<ASigil*>(self)->NumPieces, 5);
 
@@ -796,7 +796,7 @@ void A_SelectPiece (AActor *self)
 //
 //============================================================================
 
-void A_SelectSigilView (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_SelectSigilView)
 {
 	int pieces;
 
@@ -819,7 +819,7 @@ void A_SelectSigilView (AActor *self)
 //
 //============================================================================
 
-void A_SelectSigilDown (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_SelectSigilDown)
 {
 	int pieces;
 
@@ -845,7 +845,7 @@ void A_SelectSigilDown (AActor *self)
 //
 //============================================================================
 
-void A_SelectSigilAttack (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_SelectSigilAttack)
 {
 	int pieces;
 
@@ -864,7 +864,7 @@ void A_SelectSigilAttack (AActor *self)
 //
 //============================================================================
 
-void A_SigilCharge (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_SigilCharge)
 {
 	S_Sound (self, CHAN_WEAPON, "weapons/sigilcharge", 1, ATTN_NORM);
 	if (self->player != NULL)
@@ -879,11 +879,11 @@ void A_SigilCharge (AActor *self)
 //
 //============================================================================
 
-void A_LightInverse (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_LightInverse)
 {
-	if (actor->player != NULL)
+	if (self->player != NULL)
 	{
-		actor->player->extralight = INT_MIN;
+		self->player->extralight = INT_MIN;
 	}
 }
 
@@ -893,19 +893,19 @@ void A_LightInverse (AActor *actor)
 //
 //============================================================================
 
-void A_FireSigil1 (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_FireSigil1)
 {
 	AActor *spot;
-	player_t *player = actor->player;
+	player_t *player = self->player;
 	AActor *linetarget;
 
 	if (player == NULL || player->ReadyWeapon == NULL)
 		return;
 
-	P_DamageMobj (actor, actor, NULL, 1*4, 0, DMG_NO_ARMOR);
-	S_Sound (actor, CHAN_WEAPON, "weapons/sigilcharge", 1, ATTN_NORM);
+	P_DamageMobj (self, self, NULL, 1*4, 0, DMG_NO_ARMOR);
+	S_Sound (self, CHAN_WEAPON, "weapons/sigilcharge", 1, ATTN_NORM);
 
-	P_BulletSlope (actor, &linetarget);
+	P_BulletSlope (self, &linetarget);
 	if (linetarget != NULL)
 	{
 		spot = Spawn("SpectralLightningSpot", linetarget->x, linetarget->y, ONFLOORZ, ALLOW_REPLACE);
@@ -916,17 +916,17 @@ void A_FireSigil1 (AActor *actor)
 	}
 	else
 	{
-		spot = Spawn("SpectralLightningSpot", actor->x, actor->y, actor->z, ALLOW_REPLACE);
+		spot = Spawn("SpectralLightningSpot", self->x, self->y, self->z, ALLOW_REPLACE);
 		if (spot != NULL)
 		{
-			spot->momx += 28 * finecosine[actor->angle >> ANGLETOFINESHIFT];
-			spot->momy += 28 * finesine[actor->angle >> ANGLETOFINESHIFT];
+			spot->momx += 28 * finecosine[self->angle >> ANGLETOFINESHIFT];
+			spot->momy += 28 * finesine[self->angle >> ANGLETOFINESHIFT];
 		}
 	}
 	if (spot != NULL)
 	{
 		spot->health = -1;
-		spot->target = actor;
+		spot->target = self;
 	}
 }
 
@@ -936,17 +936,17 @@ void A_FireSigil1 (AActor *actor)
 //
 //============================================================================
 
-void A_FireSigil2 (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_FireSigil2)
 {
-	player_t *player = actor->player;
+	player_t *player = self->player;
 
 	if (player == NULL || player->ReadyWeapon == NULL)
 		return;
 
-	P_DamageMobj (actor, actor, NULL, 2*4, 0, DMG_NO_ARMOR);
-	S_Sound (actor, CHAN_WEAPON, "weapons/sigilcharge", 1, ATTN_NORM);
+	P_DamageMobj (self, self, NULL, 2*4, 0, DMG_NO_ARMOR);
+	S_Sound (self, CHAN_WEAPON, "weapons/sigilcharge", 1, ATTN_NORM);
 
-	P_SpawnPlayerMissile (actor, PClass::FindClass("SpectralLightningH1"));
+	P_SpawnPlayerMissile (self, PClass::FindClass("SpectralLightningH1"));
 }
 
 //============================================================================
@@ -955,29 +955,29 @@ void A_FireSigil2 (AActor *actor)
 //
 //============================================================================
 
-void A_FireSigil3 (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_FireSigil3)
 {
 	AActor *spot;
-	player_t *player = actor->player;
+	player_t *player = self->player;
 	int i;
 
 	if (player == NULL || player->ReadyWeapon == NULL)
 		return;
 
-	P_DamageMobj (actor, actor, NULL, 3*4, 0, DMG_NO_ARMOR);
-	S_Sound (actor, CHAN_WEAPON, "weapons/sigilcharge", 1, ATTN_NORM);
+	P_DamageMobj (self, self, NULL, 3*4, 0, DMG_NO_ARMOR);
+	S_Sound (self, CHAN_WEAPON, "weapons/sigilcharge", 1, ATTN_NORM);
 
-	actor->angle -= ANGLE_90;
+	self->angle -= ANGLE_90;
 	for (i = 0; i < 20; ++i)
 	{
-		actor->angle += ANGLE_180/20;
-		spot = P_SpawnSubMissile (actor, PClass::FindClass("SpectralLightningBall1"), actor);
+		self->angle += ANGLE_180/20;
+		spot = P_SpawnSubMissile (self, PClass::FindClass("SpectralLightningBall1"), self);
 		if (spot != NULL)
 		{
-			spot->z = actor->z + 32*FRACUNIT;
+			spot->z = self->z + 32*FRACUNIT;
 		}
 	}
-	actor->angle -= (ANGLE_180/20)*10;
+	self->angle -= (ANGLE_180/20)*10;
 }
 
 //============================================================================
@@ -986,22 +986,22 @@ void A_FireSigil3 (AActor *actor)
 //
 //============================================================================
 
-void A_FireSigil4 (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_FireSigil4)
 {
 	AActor *spot;
-	player_t *player = actor->player;
+	player_t *player = self->player;
 	AActor *linetarget;
 
 	if (player == NULL || player->ReadyWeapon == NULL)
 		return;
 
-	P_DamageMobj (actor, actor, NULL, 4*4, 0, DMG_NO_ARMOR);
-	S_Sound (actor, CHAN_WEAPON, "weapons/sigilcharge", 1, ATTN_NORM);
+	P_DamageMobj (self, self, NULL, 4*4, 0, DMG_NO_ARMOR);
+	S_Sound (self, CHAN_WEAPON, "weapons/sigilcharge", 1, ATTN_NORM);
 
-	P_BulletSlope (actor, &linetarget);
+	P_BulletSlope (self, &linetarget);
 	if (linetarget != NULL)
 	{
-		spot = P_SpawnPlayerMissile (actor, 0,0,0, PClass::FindClass("SpectralLightningBigV1"), actor->angle, &linetarget);
+		spot = P_SpawnPlayerMissile (self, 0,0,0, PClass::FindClass("SpectralLightningBigV1"), self->angle, &linetarget);
 		if (spot != NULL)
 		{
 			spot->tracer = linetarget;
@@ -1009,11 +1009,11 @@ void A_FireSigil4 (AActor *actor)
 	}
 	else
 	{
-		spot = P_SpawnPlayerMissile (actor, PClass::FindClass("SpectralLightningBigV1"));
+		spot = P_SpawnPlayerMissile (self, PClass::FindClass("SpectralLightningBigV1"));
 		if (spot != NULL)
 		{
-			spot->momx += FixedMul (spot->Speed, finecosine[actor->angle >> ANGLETOFINESHIFT]);
-			spot->momy += FixedMul (spot->Speed, finesine[actor->angle >> ANGLETOFINESHIFT]);
+			spot->momx += FixedMul (spot->Speed, finecosine[self->angle >> ANGLETOFINESHIFT]);
+			spot->momy += FixedMul (spot->Speed, finesine[self->angle >> ANGLETOFINESHIFT]);
 		}
 	}
 }
@@ -1024,17 +1024,17 @@ void A_FireSigil4 (AActor *actor)
 //
 //============================================================================
 
-void A_FireSigil5 (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_FireSigil5)
 {
-	player_t *player = actor->player;
+	player_t *player = self->player;
 
 	if (player == NULL || player->ReadyWeapon == NULL)
 		return;
 
-	P_DamageMobj (actor, actor, NULL, 5*4, 0, DMG_NO_ARMOR);
-	S_Sound (actor, CHAN_WEAPON, "weapons/sigilcharge", 1, ATTN_NORM);
+	P_DamageMobj (self, self, NULL, 5*4, 0, DMG_NO_ARMOR);
+	S_Sound (self, CHAN_WEAPON, "weapons/sigilcharge", 1, ATTN_NORM);
 
-	P_SpawnPlayerMissile (actor, PClass::FindClass("SpectralLightningBigBall1"));
+	P_SpawnPlayerMissile (self, PClass::FindClass("SpectralLightningBigBall1"));
 }
 
 //============================================================================

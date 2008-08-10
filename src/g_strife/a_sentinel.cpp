@@ -3,10 +3,11 @@
 #include "a_action.h"
 #include "p_local.h"
 #include "m_random.h"
+#include "thingdef/thingdef.h"
 
 static FRandom pr_sentinelrefire ("SentinelRefire");
 
-void A_SentinelBob (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_SentinelBob)
 {
 	fixed_t minz, maxz;
 
@@ -35,7 +36,7 @@ void A_SentinelBob (AActor *self)
 	self->reactiontime = (minz >= self->z) ? 4 : 0;
 }
 
-void A_SentinelAttack (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_SentinelAttack)
 {
 	AActor *missile, *trail;
 
@@ -62,7 +63,7 @@ void A_SentinelAttack (AActor *self)
 	}
 }
 
-void A_SentinelRefire (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_SentinelRefire)
 {
 	A_FaceTarget (self);
 

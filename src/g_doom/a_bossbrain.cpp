@@ -13,13 +13,13 @@ static FRandom pr_brainscream ("BrainScream");
 static FRandom pr_brainexplode ("BrainExplode");
 static FRandom pr_spawnfly ("SpawnFly");
 
-void A_BrainAwake (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_BrainAwake)
 {
 	// killough 3/26/98: only generates sound now
 	S_Sound (self, CHAN_VOICE, "brain/sight", 1, ATTN_NONE);
 }
 
-void A_BrainPain (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_BrainPain)
 {
 	S_Sound (self, CHAN_VOICE, "brain/pain", 1, ATTN_NONE);
 }
@@ -48,7 +48,7 @@ static void BrainishExplosion (fixed_t x, fixed_t y, fixed_t z)
 	}
 }
 
-void A_BrainScream (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_BrainScream)
 {
 	fixed_t x;
 		
@@ -60,14 +60,14 @@ void A_BrainScream (AActor *self)
 	S_Sound (self, CHAN_VOICE, "brain/death", 1, ATTN_NONE);
 }
 
-void A_BrainExplode (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_BrainExplode)
 {
 	fixed_t x = self->x + pr_brainexplode.Random2()*2048;
 	fixed_t z = 128 + pr_brainexplode()*2*FRACUNIT;
 	BrainishExplosion (x, self->y, z);
 }
 
-void A_BrainDie (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_BrainDie)
 {
 	// [RH] If noexit, then don't end the level.
 	if ((deathmatch || alwaysapplydmflags) && (dmflags & DF_NO_EXIT))
@@ -76,7 +76,7 @@ void A_BrainDie (AActor *self)
 	G_ExitLevel (0, false);
 }
 
-void A_BrainSpit (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_BrainSpit)
 {
 	DSpotState *state = DSpotState::GetSpotState();
 	AActor *targ;
@@ -129,7 +129,7 @@ void A_BrainSpit (AActor *self)
 	}
 }
 
-void A_SpawnFly (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_SpawnFly)
 {
 	AActor *newmobj;
 	AActor *fog;
@@ -246,7 +246,7 @@ void A_SpawnFly (AActor *self)
 }
 
 // travelling cube sound
-void A_SpawnSound (AActor *self)	
+DEFINE_ACTION_FUNCTION(AActor, A_SpawnSound)
 {
 	S_Sound (self, CHAN_BODY, "brain/cube", 1, ATTN_IDLE);
 	A_SpawnFly (self);

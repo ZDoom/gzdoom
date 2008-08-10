@@ -5,6 +5,7 @@
 #include "p_enemy.h"
 #include "p_local.h"
 #include "s_sound.h"
+#include "thingdef/thingdef.h"
 
 // Loremaster (aka Priest) --------------------------------------------------
 
@@ -37,7 +38,7 @@ int ALoreShot::DoSpecialDamage (AActor *target, int damage)
 	return damage;
 }
 
-void A_LoremasterChain (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_LoremasterChain)
 {
 	S_Sound (self, CHAN_BODY, "loremaster/active", 1, ATTN_NORM);
 	Spawn("LoreShot2", self->x, self->y, self->z, ALLOW_REPLACE);

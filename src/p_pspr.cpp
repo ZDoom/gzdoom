@@ -362,9 +362,9 @@ void P_BobWeapon (player_t *player, pspdef_t *psp, fixed_t *x, fixed_t *y)
 //
 //---------------------------------------------------------------------------
 
-void A_WeaponReady(AActor *actor)
+DEFINE_ACTION_FUNCTION(AInventory, A_WeaponReady)
 {
-	player_t *player = actor->player;
+	player_t *player = self->player;
 	AWeapon *weapon;
 
 	if (NULL == player)
@@ -380,10 +380,10 @@ void A_WeaponReady(AActor *actor)
 	}
 
 	// Change player from attack state
-	if (actor->InStateSequence(actor->state, actor->MissileState) ||
-		actor->InStateSequence(actor->state, actor->MeleeState))
+	if (self->InStateSequence(self->state, self->MissileState) ||
+		self->InStateSequence(self->state, self->MeleeState))
 	{
-		static_cast<APlayerPawn *>(actor)->PlayIdle ();
+		static_cast<APlayerPawn *>(self)->PlayIdle ();
 	}
 
 	// Play ready sound, if any.
@@ -391,7 +391,7 @@ void A_WeaponReady(AActor *actor)
 	{
 		if (!(weapon->WeaponFlags & WIF_READYSNDHALF) || pr_wpnreadysnd() < 128)
 		{
-			S_Sound (actor, CHAN_WEAPON, weapon->ReadySound, 1, ATTN_NORM);
+			S_Sound (self, CHAN_WEAPON, weapon->ReadySound, 1, ATTN_NORM);
 		}
 	}
 
@@ -458,9 +458,9 @@ void P_CheckWeaponFire (player_t *player)
 //
 //---------------------------------------------------------------------------
 
-void A_ReFire (AActor *actor)
+DEFINE_ACTION_FUNCTION(AInventory, A_ReFire)
 {
-	player_t *player = actor->player;
+	player_t *player = self->player;
 
 	if (NULL == player)
 	{
@@ -488,9 +488,9 @@ void A_ReFire (AActor *actor)
 	}
 }
 
-void A_ClearReFire(AActor *actor)
+DEFINE_ACTION_FUNCTION(AInventory, A_ClearReFire)
 {
-	player_t *player = actor->player;
+	player_t *player = self->player;
 
 	if (NULL != player)
 	{
@@ -508,12 +508,12 @@ void A_ClearReFire(AActor *actor)
 //
 //---------------------------------------------------------------------------
 
-void A_CheckReload (AActor *actor)
+DEFINE_ACTION_FUNCTION(AInventory, A_CheckReload)
 {
-	if (actor->player != NULL)
+	if (self->player != NULL)
 	{
-		actor->player->ReadyWeapon->CheckAmmo (
-			actor->player->ReadyWeapon->bAltFire ? AWeapon::AltFire
+		self->player->ReadyWeapon->CheckAmmo (
+			self->player->ReadyWeapon->bAltFire ? AWeapon::AltFire
 			: AWeapon::PrimaryFire, true);
 	}
 }
@@ -524,9 +524,9 @@ void A_CheckReload (AActor *actor)
 //
 //---------------------------------------------------------------------------
 
-void A_Lower (AActor *actor)
+DEFINE_ACTION_FUNCTION(AInventory, A_Lower)
 {
-	player_t *player = actor->player;
+	player_t *player = self->player;
 	pspdef_t *psp;
 
 	if (NULL == player)
@@ -571,13 +571,13 @@ void A_Lower (AActor *actor)
 //
 //---------------------------------------------------------------------------
 
-void A_Raise (AActor *actor)
+DEFINE_ACTION_FUNCTION(AInventory, A_Raise)
 {
-	if (actor == NULL)
+	if (self == NULL)
 	{
 		return;
 	}
-	player_t *player = actor->player;
+	player_t *player = self->player;
 	pspdef_t *psp;
 
 	if (NULL == player)
@@ -612,9 +612,9 @@ void A_Raise (AActor *actor)
 //
 // A_GunFlash
 //
-void A_GunFlash (AActor *actor)
+DEFINE_ACTION_FUNCTION(AInventory, A_GunFlash)
 {
-	player_t *player = actor->player;
+	player_t *player = self->player;
 
 	if (NULL == player)
 	{
@@ -689,37 +689,37 @@ void P_GunShot (AActor *mo, bool accurate, const PClass *pufftype, angle_t pitch
 	P_LineAttack (mo, angle, PLAYERMISSILERANGE, pitch, damage, NAME_None, pufftype);
 }
 
-void A_Light0 (AActor *actor)
+DEFINE_ACTION_FUNCTION(AInventory, A_Light0)
 {
-	if (actor->player != NULL)
+	if (self->player != NULL)
 	{
-		actor->player->extralight = 0;
+		self->player->extralight = 0;
 	}
 }
 
-void A_Light1 (AActor *actor)
+DEFINE_ACTION_FUNCTION(AInventory, A_Light1)
 {
-	if (actor->player != NULL)
+	if (self->player != NULL)
 	{
-		actor->player->extralight = 1;
+		self->player->extralight = 1;
 	}
 }
 
-void A_Light2 (AActor *actor)
+DEFINE_ACTION_FUNCTION(AInventory, A_Light2)
 {
-	if (actor->player != NULL)
+	if (self->player != NULL)
 	{
-		actor->player->extralight = 2;
+		self->player->extralight = 2;
 	}
 }
 
-void A_Light (AActor *actor)
+DEFINE_ACTION_FUNCTION(AInventory, A_Light)
 {
 	int index=CheckIndex(1, &CallingState);
 
-	if (actor->player != NULL && index > 0)
+	if (self->player != NULL && index > 0)
 	{
-		actor->player->extralight = clamp<int>(EvalExpressionI (StateParameters[index], actor), 0, 20);
+		self->player->extralight = clamp<int>(EvalExpressionI (StateParameters[index], self), 0, 20);
 	}
 }
 

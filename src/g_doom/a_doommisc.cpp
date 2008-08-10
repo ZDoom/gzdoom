@@ -8,21 +8,22 @@
 #include "gi.h"
 #include "doomstat.h"
 #include "gstrings.h"
+#include "thingdef/thingdef.h"
 
 // The barrel of green goop ------------------------------------------------
 
-void A_BarrelDestroy (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_BarrelDestroy)
 {
 	if ((dmflags2 & DF2_BARRELS_RESPAWN) &&
 		(deathmatch || alwaysapplydmflags))
 	{
-		actor->height = actor->GetDefault()->height;
-		actor->renderflags |= RF_INVISIBLE;
-		actor->flags &= ~MF_SOLID;
+		self->height = self->GetDefault()->height;
+		self->renderflags |= RF_INVISIBLE;
+		self->flags &= ~MF_SOLID;
 	}
 	else
 	{
-		actor->Destroy ();
+		self->Destroy ();
 	}
 }
 

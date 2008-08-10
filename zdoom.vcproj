@@ -1040,10 +1040,6 @@
 				Name="Decorate++"
 				>
 				<File
-					RelativePath=".\src\codepointers.h"
-					>
-				</File>
-				<File
 					RelativePath=".\src\thingdef\olddecorations.cpp"
 					>
 				</File>

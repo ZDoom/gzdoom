@@ -7,6 +7,7 @@
 #include "s_sound.h"
 #include "p_lnspec.h"
 #include "m_random.h"
+#include "thingdef/thingdef.h"
 
 #define TELEPORT_LIFE 1
 
@@ -59,31 +60,31 @@ static void TeloSpawn (AActor *source, const char *type)
 	}
 }
 
-void A_TeloSpawnA (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_TeloSpawnA)
 {
-	TeloSpawn (actor, "TelOtherFX2");
+	TeloSpawn (self, "TelOtherFX2");
 }
 
-void A_TeloSpawnB (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_TeloSpawnB)
 {
-	TeloSpawn (actor, "TelOtherFX3");
+	TeloSpawn (self, "TelOtherFX3");
 }
 
-void A_TeloSpawnC (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_TeloSpawnC)
 {
-	TeloSpawn (actor, "TelOtherFX4");
+	TeloSpawn (self, "TelOtherFX4");
 }
 
-void A_TeloSpawnD (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_TeloSpawnD)
 {
-	TeloSpawn (actor, "TelOtherFX5");
+	TeloSpawn (self, "TelOtherFX5");
 }
 
-void A_CheckTeleRing (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_CheckTeleRing)
 {
-	if (actor->special1-- <= 0)
+	if (self->special1-- <= 0)
 	{
-		actor->SetState (actor->FindState(NAME_Death));
+		self->SetState (self->FindState(NAME_Death));
 	}
 }
 

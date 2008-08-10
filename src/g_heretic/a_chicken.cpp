@@ -10,6 +10,7 @@
 #include "p_enemy.h"
 #include "d_event.h"
 #include "gstrings.h"
+#include "thingdef/thingdef.h"
 
 void P_UpdateBeak (AActor *actor);
 
@@ -61,17 +62,17 @@ void AChickenPlayer::MorphPlayerThink ()
 //
 //----------------------------------------------------------------------------
 
-void A_ChicAttack (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_ChicAttack)
 {
-	if (!actor->target)
+	if (!self->target)
 	{
 		return;
 	}
-	if (actor->CheckMeleeRange())
+	if (self->CheckMeleeRange())
 	{
 		int damage = 1 + (pr_chicattack() & 1);
-		P_DamageMobj (actor->target, actor, actor, damage, NAME_Melee);
-		P_TraceBleed (damage, actor->target, actor);
+		P_DamageMobj (self->target, self, self, damage, NAME_Melee);
+		P_TraceBleed (damage, self->target, self);
 	}
 }
 
@@ -81,13 +82,13 @@ void A_ChicAttack (AActor *actor)
 //
 //----------------------------------------------------------------------------
 
-void A_Feathers (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_Feathers)
 {
 	int i;
 	int count;
 	AActor *mo;
 
-	if (actor->health > 0)
+	if (self->health > 0)
 	{ // Pain
 		count = pr_feathers() < 32 ? 2 : 1;
 	}
@@ -97,8 +98,8 @@ void A_Feathers (AActor *actor)
 	}
 	for (i = 0; i < count; i++)
 	{
-		mo = Spawn("Feather", actor->x, actor->y, actor->z+20*FRACUNIT, NO_REPLACE);
-		mo->target = actor;
+		mo = Spawn("Feather", self->x, self->y, self->z+20*FRACUNIT, NO_REPLACE);
+		mo->target = self;
 		mo->momx = pr_feathers.Random2() << 8;
 		mo->momy = pr_feathers.Random2() << 8;
 		mo->momz = FRACUNIT + (pr_feathers() << 9);
@@ -112,12 +113,12 @@ void A_Feathers (AActor *actor)
 //
 //---------------------------------------------------------------------------
 
-void P_UpdateBeak (AActor *actor)
+void P_UpdateBeak (AActor *self)
 {
-	if (actor->player != NULL)
+	if (self->player != NULL)
 	{
-		actor->player->psprites[ps_weapon].sy = WEAPONTOP +
-			(actor->player->chickenPeck << (FRACBITS-1));
+		self->player->psprites[ps_weapon].sy = WEAPONTOP +
+			(self->player->chickenPeck << (FRACBITS-1));
 	}
 }
 
@@ -127,11 +128,11 @@ void P_UpdateBeak (AActor *actor)
 //
 //---------------------------------------------------------------------------
 
-void A_BeakRaise (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_BeakRaise)
 {
 	player_t *player;
 
-	if (NULL == (player = actor->player))
+	if (NULL == (player = self->player))
 	{
 		return;
 	}
@@ -156,7 +157,7 @@ void P_PlayPeck (AActor *chicken)
 //
 //----------------------------------------------------------------------------
 
-void A_BeakAttackPL1 (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_BeakAttackPL1)
 {
 	angle_t angle;
 	int damage;
@@ -164,7 +165,7 @@ void A_BeakAttackPL1 (AActor *actor)
 	player_t *player;
 	AActor *linetarget;
 
-	if (NULL == (player = actor->player))
+	if (NULL == (player = self->player))
 	{
 		return;
 	}
@@ -189,7 +190,7 @@ void A_BeakAttackPL1 (AActor *actor)
 //
 //----------------------------------------------------------------------------
 
-void A_BeakAttackPL2 (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_BeakAttackPL2)
 {
 	angle_t angle;
 	int damage;
@@ -197,7 +198,7 @@ void A_BeakAttackPL2 (AActor *actor)
 	player_t *player;
 	AActor *linetarget;
 
-	if (NULL == (player = actor->player))
+	if (NULL == (player = self->player))
 	{
 		return;
 	}

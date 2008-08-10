@@ -33,10 +33,7 @@ WEAPON(BFGsound)
 WEAPON(FireBFG)
 
 ACTOR(BFGSpray)
-#ifndef FROM_THINGDEF
-// A_Explode needs to use A_ExplodeParams in DECORATE
 ACTOR(Explode)
-#endif
 ACTOR(Pain)
 ACTOR(PlayerScream)
 ACTOR(NoBlocking)

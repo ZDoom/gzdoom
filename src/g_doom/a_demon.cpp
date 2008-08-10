@@ -5,10 +5,11 @@
 #include "p_enemy.h"
 #include "gstrings.h"
 #include "a_action.h"
+#include "thingdef/thingdef.h"
 
 static FRandom pr_sargattack ("SargAttack");
 
-void A_SargAttack (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_SargAttack)
 {
 	if (!self->target)
 		return;

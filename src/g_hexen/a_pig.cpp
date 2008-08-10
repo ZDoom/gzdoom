@@ -10,6 +10,7 @@
 #include "p_enemy.h"
 #include "d_event.h"
 #include "gstrings.h"
+#include "thingdef/thingdef.h"
 
 static FRandom pr_snoutattack ("SnoutAttack");
 static FRandom pr_pigattack ("PigAttack");
@@ -55,7 +56,7 @@ void APigPlayer::MorphPlayerThink ()
 //
 //============================================================================
 
-void A_SnoutAttack (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_SnoutAttack)
 {
 	angle_t angle;
 	int damage;
@@ -64,7 +65,7 @@ void A_SnoutAttack (AActor *actor)
 	AActor *puff;
 	AActor *linetarget;
 
-	if (NULL == (player = actor->player))
+	if (NULL == (player = self->player))
 	{
 		return;
 	}
@@ -90,11 +91,11 @@ void A_SnoutAttack (AActor *actor)
 //
 //============================================================================
 
-void A_PigPain (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_PigPain)
 {
-	A_Pain (actor);
-	if (actor->z <= actor->floorz)
+	A_Pain (self);
+	if (self->z <= self->floorz)
 	{
-		actor->momz = FRACUNIT*7/2;
+		self->momz = FRACUNIT*7/2;
 	}
 }

@@ -5,6 +5,7 @@
 #include "p_enemy.h"
 #include "a_action.h"
 #include "m_random.h"
+#include "thingdef/thingdef.h"
 
 static FRandom pr_iceguylook ("IceGuyLook");
 static FRandom pr_iceguychase ("IceGuyChase");
@@ -21,21 +22,21 @@ static const char *WispTypes[2] =
 //
 //============================================================================
 
-void A_IceGuyLook (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_IceGuyLook)
 {
 	fixed_t dist;
 	fixed_t an;
 
-	A_Look (actor);
+	A_Look (self);
 	if (pr_iceguylook() < 64)
 	{
-		dist = ((pr_iceguylook()-128)*actor->radius)>>7;
-		an = (actor->angle+ANG90)>>ANGLETOFINESHIFT;
+		dist = ((pr_iceguylook()-128)*self->radius)>>7;
+		an = (self->angle+ANG90)>>ANGLETOFINESHIFT;
 
 		Spawn (WispTypes[pr_iceguylook()&1],
-			actor->x+FixedMul(dist, finecosine[an]),
-			actor->y+FixedMul(dist, finesine[an]),
-			actor->z+60*FRACUNIT, ALLOW_REPLACE);
+			self->x+FixedMul(dist, finecosine[an]),
+			self->y+FixedMul(dist, finesine[an]),
+			self->z+60*FRACUNIT, ALLOW_REPLACE);
 	}
 }
 
@@ -45,28 +46,28 @@ void A_IceGuyLook (AActor *actor)
 //
 //============================================================================
 
-void A_IceGuyChase (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_IceGuyChase)
 {
 	fixed_t dist;
 	fixed_t an;
 	AActor *mo;
 
-	A_Chase (actor);
+	A_Chase (self);
 	if (pr_iceguychase() < 128)
 	{
-		dist = ((pr_iceguychase()-128)*actor->radius)>>7;
-		an = (actor->angle+ANG90)>>ANGLETOFINESHIFT;
+		dist = ((pr_iceguychase()-128)*self->radius)>>7;
+		an = (self->angle+ANG90)>>ANGLETOFINESHIFT;
 
 		mo = Spawn (WispTypes[pr_iceguychase()&1],
-			actor->x+FixedMul(dist, finecosine[an]),
-			actor->y+FixedMul(dist, finesine[an]),
-			actor->z+60*FRACUNIT, ALLOW_REPLACE);
+			self->x+FixedMul(dist, finecosine[an]),
+			self->y+FixedMul(dist, finesine[an]),
+			self->z+60*FRACUNIT, ALLOW_REPLACE);
 		if (mo)
 		{
-			mo->momx = actor->momx;
-			mo->momy = actor->momy;
-			mo->momz = actor->momz;
-			mo->target = actor;
+			mo->momx = self->momx;
+			mo->momy = self->momy;
+			mo->momz = self->momz;
+			mo->target = self;
 		}
 	}
 }
@@ -77,25 +78,25 @@ void A_IceGuyChase (AActor *actor)
 //
 //============================================================================
 
-void A_IceGuyAttack (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_IceGuyAttack)
 {
 	fixed_t an;
 
-	if(!actor->target) 
+	if(!self->target) 
 	{
 		return;
 	}
-	an = (actor->angle+ANG90)>>ANGLETOFINESHIFT;
-	P_SpawnMissileXYZ(actor->x+FixedMul(actor->radius>>1,
-		finecosine[an]), actor->y+FixedMul(actor->radius>>1,
-		finesine[an]), actor->z+40*FRACUNIT, actor, actor->target,
+	an = (self->angle+ANG90)>>ANGLETOFINESHIFT;
+	P_SpawnMissileXYZ(self->x+FixedMul(self->radius>>1,
+		finecosine[an]), self->y+FixedMul(self->radius>>1,
+		finesine[an]), self->z+40*FRACUNIT, self, self->target,
 		PClass::FindClass ("IceGuyFX"));
-	an = (actor->angle-ANG90)>>ANGLETOFINESHIFT;
-	P_SpawnMissileXYZ(actor->x+FixedMul(actor->radius>>1,
-		finecosine[an]), actor->y+FixedMul(actor->radius>>1,
-		finesine[an]), actor->z+40*FRACUNIT, actor, actor->target,
+	an = (self->angle-ANG90)>>ANGLETOFINESHIFT;
+	P_SpawnMissileXYZ(self->x+FixedMul(self->radius>>1,
+		finecosine[an]), self->y+FixedMul(self->radius>>1,
+		finesine[an]), self->z+40*FRACUNIT, self, self->target,
 		PClass::FindClass ("IceGuyFX"));
-	S_Sound (actor, CHAN_WEAPON, actor->AttackSound, 1, ATTN_NORM);
+	S_Sound (self, CHAN_WEAPON, self->AttackSound, 1, ATTN_NORM);
 }
 
 //============================================================================
@@ -104,13 +105,13 @@ void A_IceGuyAttack (AActor *actor)
 //
 //============================================================================
 
-void A_IceGuyDie (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_IceGuyDie)
 {
-	actor->momx = 0;
-	actor->momy = 0;
-	actor->momz = 0;
-	actor->height = actor->GetDefault()->height;
-	A_FreezeDeathChunks (actor);
+	self->momx = 0;
+	self->momy = 0;
+	self->momz = 0;
+	self->height = self->GetDefault()->height;
+	A_FreezeDeathChunks (self);
 }
 
 //============================================================================
@@ -119,18 +120,18 @@ void A_IceGuyDie (AActor *actor)
 //
 //============================================================================
 
-void A_IceGuyMissileExplode (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_IceGuyMissileExplode)
 {
 	AActor *mo;
 	int i;
 
 	for (i = 0; i < 8; i++)
 	{
-		mo = P_SpawnMissileAngleZ (actor, actor->z+3*FRACUNIT, 
+		mo = P_SpawnMissileAngleZ (self, self->z+3*FRACUNIT, 
 			PClass::FindClass("IceGuyFX2"), i*ANG45, (fixed_t)(-0.3*FRACUNIT));
 		if (mo)
 		{
-			mo->target = actor->target;
+			mo->target = self->target;
 		}
 	}
 }

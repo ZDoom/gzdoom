@@ -4,8 +4,9 @@
 #include "p_enemy.h"
 #include "a_doomglobal.h"
 #include "a_action.h"
+#include "thingdef/thingdef.h"
 
-void A_CyberAttack (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_CyberAttack)
 {
 	if (!self->target)
 		return;
@@ -14,7 +15,7 @@ void A_CyberAttack (AActor *self)
 	P_SpawnMissile (self, self->target, PClass::FindClass("Rocket"));
 }
 
-void A_Hoof (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_Hoof)
 {
 	S_Sound (self, CHAN_BODY, "cyber/hoof", 1, ATTN_IDLE);
 	A_Chase (self);

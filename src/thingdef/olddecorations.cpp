@@ -367,7 +367,7 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def)
 			{
 				if (extra.bExplosive)
 				{
-					info->OwnedStates[extra.DeathStart].Action = A_ExplodeParms;
+					info->OwnedStates[extra.DeathStart].Action = A_Explode;
 				}
 			}
 			else
@@ -865,10 +865,10 @@ static void ParseSpriteFrames (FActorInfo *info, TArray<FState> &states, FScanne
 //
 //===========================================================================
 
-void A_ScreamAndUnblock (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_ScreamAndUnblock)
 {
-	A_Scream (actor);
-	A_NoBlocking (actor);
+	A_Scream (self);
+	A_NoBlocking (self);
 }
 
 //===========================================================================
@@ -877,10 +877,10 @@ void A_ScreamAndUnblock (AActor *actor)
 //
 //===========================================================================
 
-void A_ActiveAndUnblock (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_ActiveAndUnblock)
 {
-	A_ActiveSound (actor);
-	A_NoBlocking (actor);
+	A_ActiveSound (self);
+	A_NoBlocking (self);
 }
 
 //===========================================================================
@@ -889,10 +889,10 @@ void A_ActiveAndUnblock (AActor *actor)
 //
 //===========================================================================
 
-void A_ActiveSound (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_ActiveSound)
 {
-	if (actor->ActiveSound)
+	if (self->ActiveSound)
 	{
-		S_Sound (actor, CHAN_VOICE, actor->ActiveSound, 1, ATTN_NORM);
+		S_Sound (self, CHAN_VOICE, self->ActiveSound, 1, ATTN_NORM);
 	}
 }

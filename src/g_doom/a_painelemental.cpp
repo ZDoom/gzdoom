@@ -138,7 +138,7 @@ void A_PainShootSkull (AActor *self, angle_t angle, const PClass *spawntype)
 // A_PainAttack
 // Spawn a lost soul and launch it at the target
 // 
-void A_PainAttack (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_PainAttack)
 {
 	if (!self->target)
 		return;
@@ -148,7 +148,7 @@ void A_PainAttack (AActor *self)
 	A_PainShootSkull (self, self->angle, spawntype);
 }
 
-void A_DualPainAttack (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_DualPainAttack)
 {
 	if (!self->target)
 		return;
@@ -159,7 +159,7 @@ void A_DualPainAttack (AActor *self)
 	A_PainShootSkull (self, self->angle - ANG45, spawntype);
 }
 
-void A_PainDie (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_PainDie)
 {
 	if (self->target != NULL && self->IsFriend (self->target))
 	{ // And I thought you were my friend!

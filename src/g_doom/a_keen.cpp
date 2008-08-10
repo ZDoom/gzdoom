@@ -4,13 +4,14 @@
 #include "p_spec.h"
 #include "p_enemy.h"
 #include "a_action.h"
+#include "thingdef/thingdef.h"
 
 //
 // A_KeenDie
 // DOOM II special, map 32.
 // Uses special tag 666.
 //
-void A_KeenDie (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_KeenDie)
 {
 	A_NoBlocking (self);
 	

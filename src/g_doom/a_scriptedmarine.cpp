@@ -159,7 +159,7 @@ void AScriptedMarine::Tick ()
 //
 //============================================================================
 
-void A_M_Refire (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_M_Refire)
 {
 	if (self->target == NULL || self->target->health <= 0)
 	{
@@ -187,7 +187,7 @@ void A_M_Refire (AActor *self)
 //
 //============================================================================
 
-void A_M_SawRefire (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_M_SawRefire)
 {
 	if (self->target == NULL || self->target->health <= 0)
 	{
@@ -206,7 +206,7 @@ void A_M_SawRefire (AActor *self)
 //
 //============================================================================
 
-void A_MarineNoise (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_MarineNoise)
 {
 	if (static_cast<AScriptedMarine *>(self)->CurrentWeapon == AScriptedMarine::WEAPON_Chainsaw)
 	{
@@ -220,7 +220,7 @@ void A_MarineNoise (AActor *self)
 //
 //============================================================================
 
-void A_MarineChase (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_MarineChase)
 {
 	A_MarineNoise (self);
 	A_Chase (self);
@@ -232,7 +232,7 @@ void A_MarineChase (AActor *self)
 //
 //============================================================================
 
-void A_MarineLook (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_MarineLook)
 {
 	A_MarineNoise (self);
 	A_Look (self);
@@ -244,7 +244,7 @@ void A_MarineLook (AActor *self)
 //
 //============================================================================
 
-void A_M_Saw (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_M_Saw)
 {
 	if (self->target == NULL)
 		return;
@@ -300,7 +300,7 @@ void A_M_Saw (AActor *self)
 //
 //============================================================================
 
-void A_M_Punch (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_M_Punch)
 {
 	angle_t 	angle;
 	int 		damage;
@@ -357,7 +357,7 @@ void P_GunShot2 (AActor *mo, bool accurate, int pitch, const PClass *pufftype)
 //
 //============================================================================
 
-void A_M_FirePistol (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_M_FirePistol)
 {
 	if (self->target == NULL)
 		return;
@@ -378,7 +378,7 @@ void A_M_FirePistol (AActor *self)
 //
 //============================================================================
 
-void A_M_FireShotgun (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_M_FireShotgun)
 {
 	int pitch;
 
@@ -401,7 +401,7 @@ void A_M_FireShotgun (AActor *self)
 //
 //============================================================================
 
-void A_M_CheckAttack (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_M_CheckAttack)
 {
 	if (self->special1 != 0 || self->target == NULL)
 	{
@@ -419,7 +419,7 @@ void A_M_CheckAttack (AActor *self)
 //
 //============================================================================
 
-void A_M_FireShotgun2 (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_M_FireShotgun2)
 {
 	int pitch;
 
@@ -447,7 +447,7 @@ void A_M_FireShotgun2 (AActor *self)
 //
 //============================================================================
 
-void A_M_FireCGun (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_M_FireCGun)
 {
 	if (self->target == NULL)
 		return;
@@ -472,7 +472,7 @@ void A_M_FireCGun (AActor *self)
 //
 //============================================================================
 
-void A_M_FireMissile (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_M_FireMissile)
 {
 	if (self->target == NULL)
 		return;
@@ -494,7 +494,7 @@ void A_M_FireMissile (AActor *self)
 //
 //============================================================================
 
-void A_M_FireRailgun (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_M_FireRailgun)
 {
 	if (self->target == NULL)
 		return;
@@ -509,7 +509,7 @@ void A_M_FireRailgun (AActor *self)
 //
 //============================================================================
 
-void A_M_FirePlasma (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_M_FirePlasma)
 {
 	if (self->target == NULL)
 		return;
@@ -525,7 +525,7 @@ void A_M_FirePlasma (AActor *self)
 //
 //============================================================================
 
-void A_M_BFGsound (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_M_BFGsound)
 {
 	if (self->target == NULL)
 		return;
@@ -549,7 +549,7 @@ void A_M_BFGsound (AActor *self)
 //
 //============================================================================
 
-void A_M_FireBFG (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_M_FireBFG)
 {
 	if (self->target == NULL)
 		return;

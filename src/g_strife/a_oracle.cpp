@@ -2,6 +2,7 @@
 #include "a_action.h"
 #include "a_strifeglobal.h"
 #include "p_enemy.h"
+#include "thingdef/thingdef.h"
 
 class AOracle : public AActor
 {
@@ -14,7 +15,7 @@ public:
 IMPLEMENT_CLASS (AOracle)
 
 
-void A_WakeOracleSpectre (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_WakeOracleSpectre)
 {
 	TThinkerIterator<AActor> it(NAME_AlienSpectre3);
 	AActor *spectre = it.Next();

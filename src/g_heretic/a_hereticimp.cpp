@@ -6,6 +6,7 @@
 #include "p_local.h"
 #include "p_enemy.h"
 #include "gstrings.h"
+#include "thingdef/thingdef.h"
 
 static FRandom pr_imp ("ImpExplode");
 
@@ -15,7 +16,7 @@ static FRandom pr_imp ("ImpExplode");
 //
 //----------------------------------------------------------------------------
 
-void A_ImpExplode (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_ImpExplode)
 {
 	AActor *chunk;
 
@@ -42,7 +43,7 @@ void A_ImpExplode (AActor *self)
 //
 //----------------------------------------------------------------------------
 
-void A_ImpDeath (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_ImpDeath)
 {
 	self->flags &= ~MF_SOLID;
 	self->flags2 |= MF2_FLOORCLIP;
@@ -54,7 +55,7 @@ void A_ImpDeath (AActor *self)
 //
 //----------------------------------------------------------------------------
 
-void A_ImpXDeath1 (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_ImpXDeath1)
 {
 	self->flags &= ~MF_SOLID;
 	self->flags |= MF_NOGRAVITY;

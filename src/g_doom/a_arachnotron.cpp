@@ -4,8 +4,9 @@
 #include "p_enemy.h"
 #include "a_doomglobal.h"
 #include "a_action.h"
+#include "thingdef/thingdef.h"
 
-void A_BspiAttack (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_BspiAttack)
 {		
 	if (!self->target)
 		return;
@@ -16,7 +17,7 @@ void A_BspiAttack (AActor *self)
 	P_SpawnMissile (self, self->target, PClass::FindClass("ArachnotronPlasma"));
 }
 
-void A_BabyMetal (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_BabyMetal)
 {
 	S_Sound (self, CHAN_BODY, "baby/walk", 1, ATTN_IDLE);
 	A_Chase (self);

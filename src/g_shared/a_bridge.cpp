@@ -70,7 +70,7 @@ void ACustomBridge::BeginPlay ()
 //		target		pointer to center mobj
 //		angle		angle of ball
 
-void A_BridgeOrbit (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_BridgeOrbit)
 {
 	if (self->target == NULL)
 	{ // Don't crash if somebody spawned this into the world
@@ -114,7 +114,7 @@ static const PClass *GetBallType()
 
 
 
-void A_BridgeInit (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_BridgeInit)
 {
 	angle_t startangle;
 	AActor *ball;

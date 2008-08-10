@@ -25,6 +25,7 @@
 #include "a_action.h"
 #include "m_random.h"
 #include "i_system.h"
+#include "thingdef/thingdef.h"
 
 const int KORAX_SPIRIT_LIFETIME = 5*TICRATE/5;	// 5 seconds
 const int KORAX_COMMAND_HEIGHT	= 120;
@@ -84,56 +85,56 @@ extern void SpawnSpiritTail (AActor *spirit);
 //
 //============================================================================
 
-void A_KoraxChase (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_KoraxChase)
 {
 	AActor *spot;
 
-	if ((!actor->special2) && (actor->health <= (actor->GetDefault()->health/2)))
+	if ((!self->special2) && (self->health <= (self->GetDefault()->health/2)))
 	{
 		FActorIterator iterator (KORAX_FIRST_TELEPORT_TID);
 		spot = iterator.Next ();
 		if (spot != NULL)
 		{
-			P_Teleport (actor, spot->x, spot->y, ONFLOORZ, spot->angle, true, true, false);
+			P_Teleport (self, spot->x, spot->y, ONFLOORZ, spot->angle, true, true, false);
 		}
 
-		P_StartScript (actor, NULL, 249, NULL, 0, 0, 0, 0, 0, false);
-		actor->special2 = 1;	// Don't run again
+		P_StartScript (self, NULL, 249, NULL, 0, 0, 0, 0, 0, false);
+		self->special2 = 1;	// Don't run again
 
 		return;
 	}
 
-	if (!actor->target) return;
+	if (!self->target) return;
 	if (pr_koraxchase()<30)
 	{
-		actor->SetState (actor->MissileState);
+		self->SetState (self->MissileState);
 	}
 	else if (pr_koraxchase()<30)
 	{
-		S_Sound (actor, CHAN_VOICE, "KoraxActive", 1, ATTN_NONE);
+		S_Sound (self, CHAN_VOICE, "KoraxActive", 1, ATTN_NONE);
 	}
 
 	// Teleport away
-	if (actor->health < (actor->GetDefault()->health>>1))
+	if (self->health < (self->GetDefault()->health>>1))
 	{
 		if (pr_koraxchase()<10)
 		{
 			FActorIterator iterator (KORAX_TELEPORT_TID);
 
-			if (actor->tracer != NULL)
+			if (self->tracer != NULL)
 			{	// Find the previous teleport destination
 				do
 				{
 					spot = iterator.Next ();
-				} while (spot != NULL && spot != actor->tracer);
+				} while (spot != NULL && spot != self->tracer);
 			}
 
 			// Go to the next teleport destination
 			spot = iterator.Next ();
-			actor->tracer = spot;
+			self->tracer = spot;
 			if (spot)
 			{
-				P_Teleport (actor, spot->x, spot->y, ONFLOORZ, spot->angle, true, true, false);
+				P_Teleport (self, spot->x, spot->y, ONFLOORZ, spot->angle, true, true, false);
 			}
 		}
 	}
@@ -145,7 +146,7 @@ void A_KoraxChase (AActor *actor)
 //
 //============================================================================
 
-void A_KoraxBonePop (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_KoraxBonePop)
 {
 	AActor *mo;
 	int i;
@@ -153,11 +154,11 @@ void A_KoraxBonePop (AActor *actor)
 	// Spawn 6 spirits equalangularly
 	for (i = 0; i < 6; ++i)
 	{
-		mo = P_SpawnMissileAngle (actor, PClass::FindClass("KoraxSpirit"), ANGLE_60*i, 5*FRACUNIT);
-		if (mo) KSpiritInit (mo, actor);
+		mo = P_SpawnMissileAngle (self, PClass::FindClass("KoraxSpirit"), ANGLE_60*i, 5*FRACUNIT);
+		if (mo) KSpiritInit (mo, self);
 	}
 
-	P_StartScript (actor, NULL, 255, NULL, 0, 0, 0, 0, false, false);		// Death script
+	P_StartScript (self, NULL, 255, NULL, 0, 0, 0, 0, false, false);		// Death script
 }
 
 //============================================================================
@@ -185,15 +186,15 @@ void KSpiritInit (AActor *spirit, AActor *korax)
 //
 //============================================================================
 
-void A_KoraxDecide (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_KoraxDecide)
 {
 	if (pr_koraxdecide()<220)
 	{
-		actor->SetState (actor->FindState("Attack"));
+		self->SetState (self->FindState("Attack"));
 	}
 	else
 	{
-		actor->SetState (actor->FindState("Command"));
+		self->SetState (self->FindState("Command"));
 	}
 }
 
@@ -203,7 +204,7 @@ void A_KoraxDecide (AActor *actor)
 //
 //============================================================================
 
-void A_KoraxMissile (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_KoraxMissile)
 {
 	static const struct { const char *type, *sound; } choices[6] =
 	{
@@ -219,7 +220,7 @@ void A_KoraxMissile (AActor *actor)
 	int i;
 	const PClass *info;
 
-	S_Sound (actor, CHAN_VOICE, "KoraxAttack", 1, ATTN_NORM);
+	S_Sound (self, CHAN_VOICE, "KoraxAttack", 1, ATTN_NORM);
 
 	info = PClass::FindClass (choices[type].type);
 	if (info == NULL)
@@ -228,10 +229,10 @@ void A_KoraxMissile (AActor *actor)
 	}
 
 	// Fire all 6 missiles at once
-	S_Sound (actor, CHAN_WEAPON, choices[type].sound, 1, ATTN_NONE);
+	S_Sound (self, CHAN_WEAPON, choices[type].sound, 1, ATTN_NONE);
 	for (i = 0; i < 6; ++i)
 	{
-		KoraxFire (actor, info, i);
+		KoraxFire (self, info, i);
 	}
 }
 
@@ -243,22 +244,22 @@ void A_KoraxMissile (AActor *actor)
 //
 //============================================================================
 
-void A_KoraxCommand (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_KoraxCommand)
 {
 	fixed_t x,y,z;
 	angle_t ang;
 	int numcommands;
 
-	S_Sound (actor, CHAN_VOICE, "KoraxCommand", 1, ATTN_NORM);
+	S_Sound (self, CHAN_VOICE, "KoraxCommand", 1, ATTN_NORM);
 
 	// Shoot stream of lightning to ceiling
-	ang = (actor->angle - ANGLE_90) >> ANGLETOFINESHIFT;
-	x = actor->x + KORAX_COMMAND_OFFSET * finecosine[ang];
-	y = actor->y + KORAX_COMMAND_OFFSET * finesine[ang];
-	z = actor->z + KORAX_COMMAND_HEIGHT*FRACUNIT;
+	ang = (self->angle - ANGLE_90) >> ANGLETOFINESHIFT;
+	x = self->x + KORAX_COMMAND_OFFSET * finecosine[ang];
+	y = self->y + KORAX_COMMAND_OFFSET * finesine[ang];
+	z = self->z + KORAX_COMMAND_HEIGHT*FRACUNIT;
 	Spawn("KoraxBolt", x, y, z, ALLOW_REPLACE);
 
-	if (actor->health <= (actor->GetDefault()->health >> 1))
+	if (self->health <= (self->GetDefault()->health >> 1))
 	{
 		numcommands = 5;
 	}
@@ -267,7 +268,7 @@ void A_KoraxCommand (AActor *actor)
 		numcommands = 4;
 	}
 
-	P_StartScript (actor, NULL, 250+(pr_koraxcommand()%numcommands),
+	P_StartScript (self, NULL, 250+(pr_koraxcommand()%numcommands),
 		NULL, 0, 0, 0, 0, false, false);
 }
 
@@ -324,29 +325,29 @@ void KoraxFire (AActor *actor, const PClass *type, int arm)
 //
 //============================================================================
 
-void A_KSpiritWeave (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_KSpiritWeave)
 {
 	fixed_t newX, newY;
 	int weaveXY, weaveZ;
 	int angle;
 
-	weaveXY = actor->special2>>16;
-	weaveZ = actor->special2&0xFFFF;
-	angle = (actor->angle+ANG90)>>ANGLETOFINESHIFT;
-	newX = actor->x-FixedMul(finecosine[angle], 
+	weaveXY = self->special2>>16;
+	weaveZ = self->special2&0xFFFF;
+	angle = (self->angle+ANG90)>>ANGLETOFINESHIFT;
+	newX = self->x-FixedMul(finecosine[angle], 
 		FloatBobOffsets[weaveXY]<<2);
-	newY = actor->y-FixedMul(finesine[angle],
+	newY = self->y-FixedMul(finesine[angle],
 		FloatBobOffsets[weaveXY]<<2);
 	weaveXY = (weaveXY+(pr_kspiritweave()%5))&63;
 	newX += FixedMul(finecosine[angle], 
 		FloatBobOffsets[weaveXY]<<2);
 	newY += FixedMul(finesine[angle], 
 		FloatBobOffsets[weaveXY]<<2);
-	P_TryMove(actor, newX, newY, true);
-	actor->z -= FloatBobOffsets[weaveZ]<<1;
+	P_TryMove(self, newX, newY, true);
+	self->z -= FloatBobOffsets[weaveZ]<<1;
 	weaveZ = (weaveZ+(pr_kspiritweave()%5))&63;
-	actor->z += FloatBobOffsets[weaveZ]<<1;	
-	actor->special2 = weaveZ+(weaveXY<<16);
+	self->z += FloatBobOffsets[weaveZ]<<1;	
+	self->special2 = weaveZ+(weaveXY<<16);
 }
 
 //============================================================================
@@ -425,24 +426,24 @@ void A_KSpiritSeeker (AActor *actor, angle_t thresh, angle_t turnMax)
 //
 //============================================================================
 
-void A_KSpiritRoam (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_KSpiritRoam)
 {
-	if (actor->health-- <= 0)
+	if (self->health-- <= 0)
 	{
-		S_Sound (actor, CHAN_VOICE, "SpiritDie", 1, ATTN_NORM);
-		actor->SetState (actor->FindState("Death"));
+		S_Sound (self, CHAN_VOICE, "SpiritDie", 1, ATTN_NORM);
+		self->SetState (self->FindState("Death"));
 	}
 	else
 	{
-		if (actor->tracer)
+		if (self->tracer)
 		{
-			A_KSpiritSeeker (actor, actor->args[0]*ANGLE_1,
-							 actor->args[0]*ANGLE_1*2);
+			A_KSpiritSeeker (self, self->args[0]*ANGLE_1,
+							 self->args[0]*ANGLE_1*2);
 		}
-		A_KSpiritWeave (actor);
+		A_KSpiritWeave (self);
 		if (pr_kspiritroam()<50)
 		{
-			S_Sound (actor, CHAN_VOICE, "SpiritActive", 1, ATTN_NONE);
+			S_Sound (self, CHAN_VOICE, "SpiritActive", 1, ATTN_NONE);
 		}
 	}
 }
@@ -453,12 +454,12 @@ void A_KSpiritRoam (AActor *actor)
 //
 //============================================================================
 
-void A_KBolt (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_KBolt)
 {
 	// Countdown lifetime
-	if (actor->special1-- <= 0)
+	if (self->special1-- <= 0)
 	{
-		actor->Destroy ();
+		self->Destroy ();
 	}
 }
 
@@ -468,17 +469,17 @@ void A_KBolt (AActor *actor)
 //
 //============================================================================
 
-void A_KBoltRaise (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_KBoltRaise)
 {
 	AActor *mo;
 	fixed_t z;
 
 	// Spawn a child upward
-	z = actor->z + KORAX_BOLT_HEIGHT;
+	z = self->z + KORAX_BOLT_HEIGHT;
 
-	if ((z + KORAX_BOLT_HEIGHT) < actor->ceilingz)
+	if ((z + KORAX_BOLT_HEIGHT) < self->ceilingz)
 	{
-		mo = Spawn("KoraxBolt", actor->x, actor->y, z, ALLOW_REPLACE);
+		mo = Spawn("KoraxBolt", self->x, self->y, z, ALLOW_REPLACE);
 		if (mo)
 		{
 			mo->special1 = KORAX_BOLT_LIFETIME;

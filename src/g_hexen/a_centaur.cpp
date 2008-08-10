@@ -2,6 +2,7 @@
 #include "p_enemy.h"
 #include "a_action.h"
 #include "m_random.h"
+#include "thingdef/thingdef.h"
 
 static FRandom pr_centaurdefend ("CentaurDefend");
 
@@ -11,14 +12,14 @@ static FRandom pr_centaurdefend ("CentaurDefend");
 //
 //============================================================================
 
-void A_CentaurDefend (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_CentaurDefend)
 {
-	A_FaceTarget (actor);
-	if (actor->CheckMeleeRange() && pr_centaurdefend() < 32)
+	A_FaceTarget (self);
+	if (self->CheckMeleeRange() && pr_centaurdefend() < 32)
 	{
 		// This should unset REFLECTIVE as well
 		// (unless you want the Centaur to reflect projectiles forever!)
-		A_UnSetReflectiveInvulnerable (actor);
-		actor->SetState (actor->MeleeState);
+		A_UnSetReflectiveInvulnerable (self);
+		self->SetState (self->MeleeState);
 	}
 }

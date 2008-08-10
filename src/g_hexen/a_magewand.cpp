@@ -10,6 +10,7 @@
 #include "p_pspr.h"
 #include "gstrings.h"
 #include "a_hexenglobal.h"
+#include "thingdef/thingdef.h"
 
 static FRandom pr_smoke ("MWandSmoke");
 
@@ -109,10 +110,10 @@ void AMageWandMissile::Tick ()
 //
 //============================================================================
 
-void A_MWandAttack (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_MWandAttack)
 {
 	AActor *mo;
 
-	mo = P_SpawnPlayerMissile (actor, RUNTIME_CLASS(AMageWandMissile));
-	S_Sound (actor, CHAN_WEAPON, "MageWandFire", 1, ATTN_NORM);
+	mo = P_SpawnPlayerMissile (self, RUNTIME_CLASS(AMageWandMissile));
+	S_Sound (self, CHAN_WEAPON, "MageWandFire", 1, ATTN_NORM);
 }

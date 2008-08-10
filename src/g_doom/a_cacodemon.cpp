@@ -6,10 +6,11 @@
 #include "gstrings.h"
 #include "a_action.h"
 #include "s_sound.h"
+#include "thingdef/thingdef.h"
 
 static FRandom pr_headattack ("HeadAttack");
 
-void A_HeadAttack (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_HeadAttack)
 {
 	if (!self->target)
 		return;

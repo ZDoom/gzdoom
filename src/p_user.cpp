@@ -1171,7 +1171,7 @@ void APlayerPawn::TweakSpeeds (int &forward, int &side)
 //
 //===========================================================================
 
-void A_PlayerScream (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_PlayerScream)
 {
 	int sound = 0;
 	int chan = CHAN_VOICE;
@@ -1237,7 +1237,7 @@ void A_PlayerScream (AActor *self)
 //
 //----------------------------------------------------------------------------
 
-void A_SkullPop (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_SkullPop)
 {
 	APlayerPawn *mo;
 	player_t *player;
@@ -1253,23 +1253,23 @@ void A_SkullPop (AActor *actor)
 		if (spawntype == NULL) return;
 	}
 
-	actor->flags &= ~MF_SOLID;
-	mo = (APlayerPawn *)Spawn (spawntype, actor->x, actor->y, actor->z + 48*FRACUNIT, NO_REPLACE);
-	//mo->target = actor;
+	self->flags &= ~MF_SOLID;
+	mo = (APlayerPawn *)Spawn (spawntype, self->x, self->y, self->z + 48*FRACUNIT, NO_REPLACE);
+	//mo->target = self;
 	mo->momx = pr_skullpop.Random2() << 9;
 	mo->momy = pr_skullpop.Random2() << 9;
 	mo->momz = 2*FRACUNIT + (pr_skullpop() << 6);
 	// Attach player mobj to bloody skull
-	player = actor->player;
-	actor->player = NULL;
-	mo->ObtainInventory (actor);
+	player = self->player;
+	self->player = NULL;
+	mo->ObtainInventory (self);
 	mo->player = player;
-	mo->health = actor->health;
-	mo->angle = actor->angle;
+	mo->health = self->health;
+	mo->angle = self->angle;
 	if (player != NULL)
 	{
 		player->mo = mo;
-		if (player->camera == actor)
+		if (player->camera == self)
 		{
 			player->camera = mo;
 		}
@@ -1283,11 +1283,11 @@ void A_SkullPop (AActor *actor)
 //
 //----------------------------------------------------------------------------
 
-void A_CheckPlayerDone (AActor *actor)
+DEFINE_ACTION_FUNCTION(AActor, A_CheckPlayerDone)
 {
-	if (actor->player == NULL)
+	if (self->player == NULL)
 	{
-		actor->Destroy ();
+		self->Destroy ();
 	}
 }
 

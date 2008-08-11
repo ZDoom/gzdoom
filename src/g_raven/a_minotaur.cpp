@@ -385,7 +385,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurAtk3)
 	}
 	if (pr_minotauratk3() < 192 && self->special2 == 0)
 	{
-		self->SetState (self->FindState ("Hammer"));
+		self->SetState (self->FindState ("HammerLoop"));
 		self->special2 = 1;
 	}
 }
@@ -548,7 +548,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurLook)
 			if ((mo == master) || (mo == self)) continue;
 			if ((mo->flags5 & MF5_SUMMONEDMONSTER) && (mo->tracer == master)) continue;
 			self->target = mo;
-			break;			// Found self to attack
+			break;			// Found actor to attack
 		}
 	}
 

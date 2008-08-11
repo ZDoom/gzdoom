@@ -61,6 +61,7 @@ ACTOR Minotaur 9 native
 		MNTR W 7 A_FaceTarget
 		MNTR X 12 A_MinotaurAtk3
 		Goto See
+	HammerLoop:
 		MNTR X 12
 		Loop
 	Charge:

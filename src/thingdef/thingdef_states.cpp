@@ -492,7 +492,7 @@ int ParseStates(FScanner &sc, FActorInfo * actor, AActor * defaults, Baggage &ba
 	FState * laststate = NULL;
 	intptr_t lastlabel = -1;
 	int minrequiredstate = -1;
-	int spriteindex;
+	int spriteindex = 0;
 	char lastsprite[5]="";
 
 	sc.MustGetStringName ("{");

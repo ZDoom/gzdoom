@@ -2173,6 +2173,7 @@ static void PowerupColor (FScanner &sc, APowerupGiver *defaults, Baggage &bag)
 	else
 	{
 		sc.ScriptError("\"%s\" requires an actor of type \"Powerup\"\n", sc.String);
+		return;
 	}
 
 	if (sc.CheckNumber())
@@ -2231,6 +2232,8 @@ static void PowerupDuration (FScanner &sc, APowerupGiver *defaults, Baggage &bag
 {
 	int *pEffectTics;
 
+	sc.MustGetNumber();
+
 	if (bag.Info->Class->IsDescendantOf(RUNTIME_CLASS(APowerup)))
 	{
 		pEffectTics = &((APowerup*)defaults)->EffectTics;
@@ -2242,10 +2245,9 @@ static void PowerupDuration (FScanner &sc, APowerupGiver *defaults, Baggage &bag
 	else
 	{
 		sc.ScriptError("\"%s\" requires an actor of type \"Powerup\"\n", sc.String);
+		return;
 	}
-
-	sc.MustGetNumber();
-	*pEffectTics = sc.Number>=0? sc.Number : -sc.Number*TICRATE;
+	*pEffectTics = (sc.Number >= 0) ? sc.Number : -sc.Number * TICRATE;
 }
 
 //==========================================================================

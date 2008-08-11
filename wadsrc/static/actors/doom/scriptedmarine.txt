@@ -40,6 +40,7 @@ ACTOR ScriptedMarine 9100 native
 	Spawn:
 		PLAY A 4 A_MarineLook
 		PLAY A 4 A_MarineNoise
+		Loop
 	Idle:
 		PLAY A 4 A_MarineLook
 		PLAY A 4 A_MarineNoise
@@ -161,6 +162,9 @@ ACTOR ScriptedMarine 9100 native
 		PLAY RSTUV 5
 		PLAY W -1
 		Stop
+	Raise:
+		PLAY MLKJIH 5
+		Goto See
 	}
 }
 

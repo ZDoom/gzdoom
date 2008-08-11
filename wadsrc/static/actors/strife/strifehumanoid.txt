@@ -22,7 +22,7 @@ ACTOR StrifeHumanoid
 		BURN N 5 Bright
 		BURN OPQPQ 5 Bright
 		BURN RSTU 7 Bright
-		BURN V -1
+		BURN V 700
 		Stop
 	Disintegrate:
 		DISR A 5 A_PlaySoundEx("misc/disruptordeath", "Voice")
@@ -30,7 +30,7 @@ ACTOR StrifeHumanoid
 		DISR D 5 A_NoBlocking
 		DISR EF 5
 		DISR GHIJ 4
-		MEAT D -1
+		MEAT D 700
 		Stop
 	}
 }

@@ -27,7 +27,7 @@ ACTOR Piston 45
 	ConversationID 123,-1,-1
 	Health 100
 	Speed 16
-	Radius 16
+	Radius 20
 	Height 76
 	Mass 10000000
 	+SOLID
@@ -61,7 +61,7 @@ ACTOR Piston 45
 ACTOR Computer 182
 {
 	Game Strife
-	ConversationID 128,-1,-1
+	ConversationID 124,-1,-1
 	Health 80
 	Speed 27
 	Radius 26

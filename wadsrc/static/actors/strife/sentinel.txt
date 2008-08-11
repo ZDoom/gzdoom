@@ -85,6 +85,7 @@ ACTOR SentinelFX1
 ACTOR SentinelFX2 : SentinelFX1
 {
 	SeeSound "sentinel/plasma"
+	Damage 1
 	States
 	{
 	Death:

@@ -90,9 +90,9 @@ ACTOR EntityBoss : SpectralMonster 128
 	States
 	{
 	Spawn:
-		MNAM A 100 A_SentinelBob
-		MNAM B 60 Bright A_SentinelBob
-		MNAM CDEFGHIJKL 4 Bright A_SentinelBob
+		MNAM A 100
+		MNAM B 60 Bright
+		MNAM CDEFGHIJKL 4 Bright
 		MNAL A 4 Bright A_Look
 		MNAL B 4 Bright A_SentinelBob
 		Goto Spawn+12
@@ -184,7 +184,6 @@ ACTOR EntitySecond : SpectralMonster
 	Missile:
 		MNAL W 4 Bright A_FaceTarget
 		MNAL U 4 Bright A_CustomMissile("SpectralLightningH3",32,0)
-
 		MNAL V 4 Bright A_SentinelBob
 		Goto See+4
 	Pain:

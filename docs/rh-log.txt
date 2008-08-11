@@ -1,3 +1,6 @@
+August 11, 2008 (Changes by Graf Zahl)
+- Did a thorough check of all DECORATE conversions and fixed the errors I found.
+
 August 10, 2008 (Changes by Graf Zahl)
 - Macro-fied all access to action functions.
 - Changed action function definition so that they have to be defined with a

@@ -55,7 +55,7 @@ ACTOR Stalker 186
 		STLK K 3 A_StalkerAttack
 	SeeFloor:
 		STLK J 3 A_StalkerWalk
-		STLK JKK 3 A_Chase
+		STLK KK 3 A_Chase
 		STLK L 3 A_StalkerWalk
 		STLK L 3 A_Chase
 		Loop

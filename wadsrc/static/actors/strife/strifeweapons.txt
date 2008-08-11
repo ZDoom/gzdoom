@@ -187,7 +187,7 @@ ACTOR StrifeCrossbow : StrifeWeapon 2001
 		XBOW F 5
 		XBOW G 0 A_ShowElectricFlash
 		XBOW G 5 A_CheckReload
-		Goto Ready
+		Goto Ready+1
 	Flash:
 		XBOW KLM 5
 		Loop
@@ -347,7 +347,7 @@ ACTOR RocketTrail
 
 // Rocket Puff --------------------------------------------------------------
 
-ACTOR MiniMissilePuff
+ACTOR MiniMissilePuff : StrifePuff
 {
 	-ALLOWPARTICLES
 	States
@@ -538,7 +538,7 @@ ACTOR Mauler2 : Mauler
 		MAUL I 20 A_FireMauler2Pre
 		MAUL J 10 A_Light1
 		BLSF A 10 Bright A_FireMauler2
-		MAUL B 3 Bright A_Light2
+		MAUL B 10 Bright A_Light2
 		MAUL C 2
 		MAUL D 2 A_Light0
 		MAUL E 2 A_ReFire
@@ -613,7 +613,9 @@ ACTOR MaulerTorpedoWave
 	States
 	{
 	Spawn:
-		TWAV ABC 9 Bright
+		TWAV AB 9 Bright
+	Death:
+		TWAV C 9 Bright
 		Stop
 	}
 }
@@ -685,7 +687,7 @@ ACTOR PhosphorousGrenade
 		GRIN AB 3 A_Countdown
 		Loop
 	Death:
-		BNG3 A 1 A_SpawnItemEx("PhosphorousFire")
+		BNG3 A 2 A_SpawnItemEx("PhosphorousFire")
 		Stop
 	}
 }

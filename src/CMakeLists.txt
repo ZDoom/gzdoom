@@ -350,7 +350,9 @@ else( WIN32 )
 		sdl/st_start.cpp )
 endif( WIN32 )
 
-if( NOT NO_ASM )
+if( NO_ASM )
+	add_definitions( -DNOASM )
+else( NO_ASM )
 	if( X64 )
 		ADD_ASM_FILE( asm_x86_64 tmap3 )
 	else( X64 )
@@ -365,7 +367,7 @@ if( NOT NO_ASM )
 			ADD_ASM_FILE( win32/wrappers.asm )
 		endif( NOT X64 )
 	endif( WIN32 )
-endif( NOT NO_ASM )
+endif( NO_ASM )
 
 add_custom_command( OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.c ${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.h
 	COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/xlat/xlat_parser.y .

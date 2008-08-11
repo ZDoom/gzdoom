@@ -48,11 +48,11 @@
 #define BALL2_ANGLEOFFSET	(ANGLE_MAX/3)
 #define BALL3_ANGLEOFFSET	((ANGLE_MAX/3)*2)
 
-DECLARE_ACTION(A_SlowBalls)
-DECLARE_ACTION(A_StopBalls)
-DECLARE_ACTION(A_AccelBalls)
-DECLARE_ACTION(A_DecelBalls)
-DECLARE_ACTION(A_SorcOffense2)
+void A_SlowBalls (AActor *actor);
+void A_StopBalls (AActor *actor);
+void A_AccelBalls (AActor *actor);
+void A_DecelBalls (AActor *actor);
+void A_SorcOffense2 (AActor *actor);
 void A_DoBounceCheck (AActor *actor, const char *sound);
 
 static FRandom pr_heresiarch ("Heresiarch");
@@ -234,7 +234,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcSpinBalls)
 	fixed_t z;
 
 	self->SpawnState += 2;		// [RH] Don't spawn balls again
-	CALL_ACTION(A_SlowBalls, self);
+	A_SlowBalls(self);
 	self->args[0] = 0;								// Currently no defense
 	self->args[3] = SORC_NORMAL;
 	self->args[4] = SORCBALL_INITIAL_SPEED;		// Initial orbit speed
@@ -301,12 +301,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcBallOrbit)
 		break;
 
 	case SORC_DECELERATE:		// Balls decelerating
-		CALL_ACTION(A_DecelBalls, actor);
+		A_DecelBalls(actor);
 		actor->SorcUpdateBallAngle ();
 		break;
 
 	case SORC_ACCELERATE:		// Balls accelerating
-		CALL_ACTION(A_AccelBalls, actor);
+		A_AccelBalls(actor);
 		actor->SorcUpdateBallAngle ();
 		break;
 
@@ -352,7 +352,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcBallOrbit)
 			else
 			{
 				// Do rapid fire spell
-				CALL_ACTION(A_SorcOffense2, actor);
+				A_SorcOffense2(actor);
 			}
 		}
 		break;
@@ -395,14 +395,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpeedBalls)
 //
 // A_SlowBalls
 //
-// Set balls to slow mode - self is sorcerer
+// Set balls to slow mode - actor is sorcerer
 //
 //============================================================================
 
-DEFINE_ACTION_FUNCTION(AActor, A_SlowBalls)
+void A_SlowBalls(AActor *actor)
 {
-	self->args[3] = SORC_DECELERATE;				// slow mode
-	self->args[2] = SORCBALL_INITIAL_SPEED;		// target speed
+	actor->args[3] = SORC_DECELERATE;				// slow mode
+	actor->args[2] = SORCBALL_INITIAL_SPEED;		// target speed
 }
 
 //============================================================================
@@ -414,9 +414,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_SlowBalls)
 //
 //============================================================================
 
-DEFINE_ACTION_FUNCTION(AActor, A_StopBalls)
+void A_StopBalls(AActor *scary)
 {
-	AHeresiarch *actor = static_cast<AHeresiarch *> (self);
+	AHeresiarch *actor = static_cast<AHeresiarch *> (scary);
 	int chance = pr_heresiarch();
 	actor->args[3] = SORC_STOPPING;				// stopping mode
 	actor->args[1] = 0;							// Reset rotation counter
@@ -440,13 +440,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_StopBalls)
 //
 // A_AccelBalls
 //
-// Increase ball orbit speed - self is ball
+// Increase ball orbit speed - actor is ball
 //
 //============================================================================
 
-DEFINE_ACTION_FUNCTION(AActor, A_AccelBalls)
+void A_AccelBalls(AActor *actor)
 {
-	AActor *sorc = self->target;
+	AActor *sorc = actor->target;
 
 	if (sorc->args[4] < sorc->args[2])
 	{
@@ -458,7 +458,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_AccelBalls)
 		if (sorc->args[4] >= SORCBALL_TERMINAL_SPEED)
 		{
 			// Reached terminal velocity - stop balls
-			CALL_ACTION(A_StopBalls, sorc);
+			A_StopBalls(sorc);
 		}
 	}
 }
@@ -467,13 +467,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_AccelBalls)
 //
 // A_DecelBalls
 //
-// Decrease ball orbit speed - self is ball
+// Decrease ball orbit speed - actor is ball
 //
 //============================================================================
 
-DEFINE_ACTION_FUNCTION(AActor, A_DecelBalls)
+void A_DecelBalls(AActor *actor)
 {
-	AActor *sorc = self->target;
+	AActor *sorc = actor->target;
 
 	if (sorc->args[4] > sorc->args[2])
 	{
@@ -640,12 +640,12 @@ void ASorcBall1::CastSorcererSpell ()
 //
 //============================================================================
 
-DEFINE_ACTION_FUNCTION(AActor, A_SorcOffense2)
+void A_SorcOffense2(AActor *actor)
 {
 	angle_t ang1;
 	AActor *mo;
 	int delta, index;
-	AActor *parent = self->target;
+	AActor *parent = actor->target;
 	AActor *dest = parent->target;
 	int dist;
 
@@ -655,11 +655,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcOffense2)
 		return;
 	}
 
-	index = self->args[4] << 5;
-	self->args[4] += 15;
+	index = actor->args[4] << 5;
+	actor->args[4] += 15;
 	delta = (finesine[index])*SORCFX4_SPREAD_ANGLE;
 	delta = (delta>>FRACBITS)*ANGLE_1;
-	ang1 = self->angle + delta;
+	ang1 = actor->angle + delta;
 	mo = P_SpawnMissileAngle(parent, PClass::FindClass("SorcFX4"), ang1, 0);
 	if (mo)
 	{

@@ -39,7 +39,7 @@ void APigPlayer::MorphPlayerThink ()
 	{ // Snout sniff
 		if (player->ReadyWeapon != NULL)
 		{
-			P_SetPspriteNF(player, ps_weapon, player->ReadyWeapon->FindState(NAME_Flash));
+			P_SetPsprite(player, ps_weapon, player->ReadyWeapon->FindState("Grunt"));
 		}
 		S_Sound (this, CHAN_VOICE, "PigActive1", 1, ATTN_NORM); // snort
 		return;

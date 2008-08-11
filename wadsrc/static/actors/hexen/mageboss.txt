@@ -12,7 +12,6 @@ ACTOR MageBoss 10102
 	Monster
 	+FLOORCLIP +TELESTOMP
 	+DONTMORPH
-	-CANUSEWALLS
 	PainSound "PlayerMagePain"
 	DeathSound "PlayerMageCrazyDeath"
 	Obituary "$OB_MBOSS"

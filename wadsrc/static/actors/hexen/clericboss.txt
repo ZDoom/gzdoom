@@ -12,7 +12,6 @@ ACTOR ClericBoss 10101
 	Monster
 	+FLOORCLIP +TELESTOMP
 	+DONTMORPH
-	-CANUSEWALLS
 	PainSound "PlayerClericPain"
 	DeathSound "PlayerClericCrazyDeath"
 	Obituary "$OBCBOSS"

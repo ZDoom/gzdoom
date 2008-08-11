@@ -18,6 +18,7 @@ static FRandom pr_thrustraise ("ThrustRaise");
 class AThrustFloor : public AActor
 {
 	DECLARE_CLASS (AThrustFloor, AActor)
+	HAS_OBJECT_POINTERS
 public:
 	void Serialize (FArchive &arc);
 
@@ -27,7 +28,9 @@ public:
 	TObjPtr<AActor> DirtClump;
 };
 
-IMPLEMENT_CLASS (AThrustFloor)
+IMPLEMENT_POINTY_CLASS (AThrustFloor)
+ DECLARE_POINTER (DirtClump)
+END_POINTERS
 
 void AThrustFloor::Serialize (FArchive &arc)
 {

@@ -12,6 +12,7 @@ ACTOR Acolyte : StrifeHumanoid
 	Monster
 	+SEESDAGGERS
 	+NOSPLASHALERT
+	+FLOORCLIP
 	MinMissileChance 150
 	Tag "ACOLYTE"
 	SeeSound "acolyte/sight"

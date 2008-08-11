@@ -121,8 +121,9 @@ ACTOR CircleFlame
 	Radius 6
 	Damage 2
 	DamageType "Fire"
-	+NOBLOCKMAP +NOGRAVITY +DROPOFF +MISSILE
-	+NOTELEPORT
+	Projectile
+	-ACTIVATEIMPACT
+	-ACTIVATEPCROSS
 	RenderStyle Add
 	DeathSound "ClericFlameCircle"
 
@@ -165,7 +166,6 @@ ACTOR CFlameMissile native
 	DamageType "Fire"
 	Projectile
 	+INVISIBLE
-	-BLOODSPLATTER
 	RenderStyle Add
 
 	action native A_CFlamePuff();

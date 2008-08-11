@@ -60,7 +60,9 @@ ACTOR PigPlayer : PlayerPawn native
 	Radius 16
 	Height 24
 	Speed 1
+	+WINDTHRUST
 	+NOSKIN
+	-PICKUP
 	PainSound "PigPain"
 	DeathSound "PigDeath"
 	Player.JumpZ 6

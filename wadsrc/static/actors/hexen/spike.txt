@@ -85,6 +85,11 @@ ACTOR ThrustFloorUp : ThrustFloor 10091
 	SpawnID 104
 	+SOLID
 	+NOTELEPORT +FLOORCLIP
+	States
+	{
+	Spawn:
+		Goto ThrustInit2
+	}
 }
 
 // Spike down ---------------------------------------------------------------
@@ -95,4 +100,9 @@ ACTOR ThrustFloorDown : ThrustFloor 10090
 	+NOTELEPORT +FLOORCLIP
 	+INVISIBLE
 	SpawnID 105
+	States
+	{
+	Spawn:
+		Goto ThrustInit1
+	}
 }

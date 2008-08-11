@@ -130,7 +130,9 @@ ACTOR LightningZap native
 	Radius 15
 	Height 35
 	Damage 2
-	+NOBLOCKMAP +NOGRAVITY +DROPOFF +MISSILE
+	Projectile
+	-ACTIVATEIMPACT
+	-ACTIVATEPCROSS
 	RenderStyle Add
 
 	action native A_ZapMimic();

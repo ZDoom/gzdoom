@@ -25,11 +25,11 @@ static FRandom pr_fogspawn ("FogSpawn");
 
 DEFINE_ACTION_FUNCTION(AActor, A_FogSpawn)
 {
-	static const PClass *fogs[3] =
+	static const char *fogs[3] =
 	{
-		PClass::FindClass ("FogPatchSmall"),
-		PClass::FindClass ("FogPatchMedium"),
-		PClass::FindClass ("FogPatchLarge")
+		"FogPatchSmall",
+		"FogPatchMedium",
+		"FogPatchLarge"
 	};
 
 	AActor *mo=NULL;

@@ -16,7 +16,6 @@ ACTOR FireDemon 10060
 	Monster
 	+DROPOFF +NOGRAVITY +FLOAT
 	+FLOORCLIP +INVULNERABLE +TELESTOMP
-	-CANUSEWALLS
 	SeeSound "FireDemonSpawn"
 	PainSound "FireDemonPain"
 	DeathSound "FireDemonDeath"

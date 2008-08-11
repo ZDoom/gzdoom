@@ -21,28 +21,6 @@ static FRandom pr_firedemonsplotch ("FiredSplotch");
 // special2			whether strafing or not
 //============================================================================
 
-void A_FiredRocks (AActor *);
-void A_FiredSpawnRock (AActor *);
-void A_SmBounce (AActor *);
-void A_FiredChase (AActor *);
-void A_FiredAttack (AActor *);
-void A_FiredSplotch (AActor *);
-
-//============================================================================
-//
-// A_FiredRocks
-//
-//============================================================================
-
-DEFINE_ACTION_FUNCTION(AActor, A_FiredRocks)
-{
-	A_FiredSpawnRock (self);
-	A_FiredSpawnRock (self);
-	A_FiredSpawnRock (self);
-	A_FiredSpawnRock (self);
-	A_FiredSpawnRock (self);
-}
-
 //============================================================================
 //
 // A_FiredSpawnRock
@@ -91,6 +69,21 @@ void A_FiredSpawnRock (AActor *actor)
 	// Initialize fire demon
 	actor->special2 = 0;
 	actor->flags &= ~MF_JUSTATTACKED;
+}
+
+//============================================================================
+//
+// A_FiredRocks
+//
+//============================================================================
+
+DEFINE_ACTION_FUNCTION(AActor, A_FiredRocks)
+{
+	A_FiredSpawnRock (self);
+	A_FiredSpawnRock (self);
+	A_FiredSpawnRock (self);
+	A_FiredSpawnRock (self);
+	A_FiredSpawnRock (self);
 }
 
 //============================================================================

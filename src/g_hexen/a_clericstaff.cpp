@@ -15,12 +15,6 @@
 static FRandom pr_staffcheck ("CStaffCheck");
 static FRandom pr_blink ("CStaffBlink");
 
-void A_CStaffInitBlink (AActor *actor);
-void A_CStaffCheckBlink (AActor *actor);
-void A_CStaffCheck (AActor *actor);
-void A_CStaffAttack (AActor *actor);
-void A_CStaffMissileSlither (AActor *);
-
 // Serpent Staff Missile ----------------------------------------------------
 
 class ACStaffMissile : public AActor

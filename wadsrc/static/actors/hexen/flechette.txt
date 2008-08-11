@@ -192,6 +192,7 @@ ACTOR ZPoisonShroom : PoisonBag 8104
 	{
 	Spawn:
 		SHRM A 5 A_PoisonShroom
+		Goto Pain+1
 	Pain:
 		SHRM A 6
 		SHRM B 8 A_Pain

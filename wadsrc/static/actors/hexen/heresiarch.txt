@@ -25,8 +25,6 @@ ACTOR Heresiarch 10080 native
 	
 	action native A_SorcSpinBalls();
 	action native A_SpeedBalls();
-	action native A_SlowBalls();
-	action native A_StopBalls();
 	action native A_SorcBossAttack();
 	action native A_SpawnFizzle();
 	
@@ -83,15 +81,12 @@ ACTOR SorcBall native
 	-ACTIVATEPCROSS
 	+FULLVOLDEATH
 	+CANBOUNCEWATER
-	+NOBOUNCESOUND
+	+NOWALLBOUNCESND
 	+HEXENBOUNCE
 	SeeSound "SorcererBallBounce"
 	DeathSound "SorcererBigBallExplode"
 
 	action native A_SorcBallOrbit();
-	action native A_AccelBalls();
-	action native A_DecelBalls();
-	action native A_SorcOffense2();
 	action native A_SorcBallPop();
 	action native A_BounceCheck ();
 }
@@ -110,6 +105,7 @@ ACTOR SorcBall1 : SorcBall native
 		SBMP B 2 A_BounceCheck
 		Wait
 	Death:
+		SBS4 D 0 A_ChangeFlag("NOBOUNCESOUND", 1)
 		SBS4 D 5 A_Explode(255,255)
 		SBS4 E 5
 		SBS4 FGH 6
@@ -132,6 +128,7 @@ ACTOR SorcBall2 : SorcBall native
 		SBMB B 2 A_BounceCheck
 		Wait
 	Death:
+		SBS4 D 0 A_ChangeFlag("NOBOUNCESOUND", 1)
 		SBS3 D 5 A_Explode(255,255)
 		SBS3 E 5
 		SBS3 FGH 6
@@ -153,6 +150,7 @@ ACTOR SorcBall3 : SorcBall native
 		SBMG B 2 A_BounceCheck
 		Wait
 	Death:
+		SBS4 D 0 A_ChangeFlag("NOBOUNCESOUND", 1)
 		SBS3 D 5 A_Explode(255,255)
 		SBS3 E 5
 		SBS3 FGH 6
@@ -189,7 +187,7 @@ ACTOR SorcFX1
 		SBS1 BCD 3 Bright A_SorcFX1Seek
 		Loop
 	Death:
-		FHFX S 2 Bright A_Explode(30)
+		FHFX S 2 Bright A_Explode(30, 128)
 		FHFX SS 6 Bright
 		Stop
 	}
@@ -275,7 +273,7 @@ ACTOR SorcFX3
 ACTOR SorcFX3Explosion
 {
 	+NOBLOCKMAP
-	+MISSILE
+	+NOGRAVITY
 	+NOTELEPORT
 	RenderStyle Translucent
 	Alpha 0.4
@@ -309,7 +307,7 @@ ACTOR SorcFX4
 		Loop
 	Death:
 		SBS4 D 2 Bright
-		SBS4 E 2 Bright A_Explode(20)
+		SBS4 E 2 Bright A_Explode(20, 128)
 		SBS4 FGH 2 Bright
 		Stop
 	}

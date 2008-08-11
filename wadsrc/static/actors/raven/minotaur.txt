@@ -63,7 +63,7 @@ ACTOR Minotaur 9 native
 		Goto See
 	HammerLoop:
 		MNTR X 12
-		Loop
+		Goto Hammer
 	Charge:
 		MNTR U 2 A_MinotaurCharge
 		Loop

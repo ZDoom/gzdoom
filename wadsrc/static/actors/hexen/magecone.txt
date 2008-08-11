@@ -79,7 +79,8 @@ ACTOR IceShard : FrostMissile
 	Game Hexen
 	SpawnID 65
 	DamageType "Ice"
-	+NOTELEPORT
+	-ACTIVATEIMPACT
+	-ACTIVATEPCROSS
 	States
 	{
 	Spawn:

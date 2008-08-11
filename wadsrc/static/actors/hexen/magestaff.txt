@@ -118,7 +118,7 @@ ACTOR MWeapBloodscourge : MageWeapon native
 
 ACTOR MageStaffFX2 native
 {
-	Speed 18
+	Speed 17
 	Height 8
 	Damage 4
 	DamageType "Fire"

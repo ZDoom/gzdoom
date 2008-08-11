@@ -14,7 +14,6 @@ ACTOR Wraith 34
 	Monster
 	+NOGRAVITY +DROPOFF +FLOAT
 	+FLOORCLIP +TELESTOMP
-	-ACTIVATEIMPACT
 	SeeSound "WraithSight"
 	AttackSound "WraithAttack"
 	PainSound "WraithPain"

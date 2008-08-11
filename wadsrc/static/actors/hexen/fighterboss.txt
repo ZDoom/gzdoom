@@ -13,7 +13,6 @@ ACTOR FighterBoss 10100
 	+FLOORCLIP
 	+TELESTOMP
 	+DONTMORPH
-	-CANUSEWALLS
 	PainSound "PlayerFighterPain"
 	DeathSound "PlayerFighterCrazyDeath"
 	Obituary "$OB_FBOSS"

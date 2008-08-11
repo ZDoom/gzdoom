@@ -332,7 +332,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LastZap)
 	mo = Spawn<ALightningZap> (self->x, self->y, self->z, ALLOW_REPLACE);
 	if (mo)
 	{
-		mo->SetState (mo->FindState ("Death"));
+		mo->SetState (mo->FindState (NAME_Death));
 		mo->momz = 40*FRACUNIT;
 		mo->Damage = 0;
 	}

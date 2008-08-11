@@ -15,7 +15,7 @@ ACTOR Staff : HereticWeapon
 	+MELEEWEAPON
 	Weapon.sisterweapon "StaffPowered"
 
-	action native A_StaffAttack (eval int damage, class<Actor> puff);
+	action native A_StaffAttack (int damage, class<Actor> puff);
 
 	States
 	{
@@ -390,7 +390,7 @@ ACTOR Gauntlets : Weapon 2005
 	Weapon.SisterWeapon "GauntletsPowered"
 	Inventory.PickupMessage "$TxT_WPNGAUNTLETS"
 
-	action native A_GauntletAttack (eval int power);
+	action native A_GauntletAttack (int power);
 
 	States
 	{

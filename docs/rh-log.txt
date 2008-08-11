@@ -1,4 +1,6 @@
 August 11, 2008 (Changes by Graf Zahl)
+- Removed 'eval' modifier from DECORATE. All int, float and bool parameters are
+  'eval' now by default.
 - Did a thorough check of all DECORATE conversions and fixed the errors I found.
 
 August 10, 2008 (Changes by Graf Zahl)

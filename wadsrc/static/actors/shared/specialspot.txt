@@ -1,5 +1,5 @@
 
 ACTOR SpecialSpot native
 {
-	action native A_SpawnSingleItem(class<Actor> type, optional eval int fail_sp, optional eval int fail_co, optional eval int fail_dm);
+	action native A_SpawnSingleItem(class<Actor> type, optional int fail_sp, optional int fail_co, optional int fail_dm);
 }

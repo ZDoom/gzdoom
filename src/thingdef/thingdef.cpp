@@ -159,7 +159,6 @@ void ParseEnum (FScanner &sc, PSymbolTable *symt, PClass *cls)
 static void ParseActionDef (FScanner &sc, PClass *cls)
 {
 #define OPTIONAL		1
-#define EVAL			2
 #define EVALNOT			4
 
 	AFuncDesc *afd;
@@ -194,10 +193,6 @@ static void ParseActionDef (FScanner &sc, PClass *cls)
 				{
 					flags |= OPTIONAL;
 				}
-				else if (sc.CheckToken(TK_Eval))
-				{
-					flags |= EVAL;
-				}
 				else if (sc.CheckToken(TK_EvalNot))
 				{
 					flags |= EVALNOT;
@@ -214,9 +209,12 @@ static void ParseActionDef (FScanner &sc, PClass *cls)
 			sc.MustGetAnyToken();
 			switch (sc.TokenType)
 			{
-			case TK_Bool:		type = 'i';		break;
-			case TK_Int:		type = 'i';		break;
-			case TK_Float:		type = 'f';		break;
+			case TK_Bool:
+			case TK_Int:
+			case TK_Float:
+				type = (flags & EVALNOT)? 'y' : 'x';
+				break;
+
 			case TK_Sound:		type = 's';		break;
 			case TK_String:		type = 't';		break;
 			case TK_Name:		type = 't';		break;
@@ -245,15 +243,6 @@ static void ParseActionDef (FScanner &sc, PClass *cls)
 			else
 			{
 				sc.UnGet();
-			}
-			// If eval or evalnot were a flag, hey the decorate parser doesn't actually care about the type.
-			if (flags & EVALNOT)
-			{
-				type = 'y';
-			}
-			else if (flags & EVAL)
-			{
-				type = 'x';
 			}
 			if (!(flags & OPTIONAL) && type != '+')
 			{

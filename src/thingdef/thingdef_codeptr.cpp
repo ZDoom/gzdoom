@@ -210,10 +210,10 @@ static void DoAttack (AActor *self, bool domelee, bool domissile)
 
 	if (index > 0)
 	{
-		MeleeDamage=StateParameters[index];
+		MeleeDamage=EvalExpressionI(StateParameters[index], self);
 		MeleeSound=StateParameters[index+1];
 		MissileName=(ENamedName)StateParameters[index+2];
-		MissileHeight=StateParameters[index+3];
+		MissileHeight=fixed_t(EvalExpressionF(StateParameters[index+3], self)/65536.f);
 	}
 	else
 	{

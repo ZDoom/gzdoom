@@ -83,6 +83,8 @@ ACTOR WizardFX1
 	FastSpeed 24
 	Damage 3
 	Projectile
+	-ACTIVATEIMPACT
+	-ACTIVATEPCROSS
 	RenderStyle Add
 	States
 	{

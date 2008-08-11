@@ -70,7 +70,7 @@ ACTOR Sorcerer1 7
 		SRCR L 25 A_PlaySoundEx("dsparil/zap", "body")
 		SRCR MN 5
 		SRCR O 4
-		SRCR L 25 A_PlaySoundEx("dsparil/zap", "body")
+		SRCR L 20 A_PlaySoundEx("dsparil/zap", "body")
 		SRCR MN 5
 		SRCR O 4
 		SRCR L 12
@@ -92,6 +92,8 @@ ACTOR SorcererFX1
 	Damage 10
 	DamageType Fire
 	Projectile
+	-ACTIVATEIMPACT
+	-ACTIVATEPCROSS
 	RenderStyle Add
 	States
 	{
@@ -196,6 +198,8 @@ ACTOR Sorcerer2FX1
 	FastSpeed 28
 	Damage 1
 	Projectile
+	-ACTIVATEIMPACT
+	-ACTIVATEPCROSS
 	RenderStyle Add
 
 	action native A_BlueSpark ();

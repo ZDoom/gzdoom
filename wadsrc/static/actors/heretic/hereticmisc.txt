@@ -30,7 +30,7 @@ ACTOR Pod 2035
 		PPOD C 5 BRIGHT A_RemovePod
 		PPOD D 5 BRIGHT A_Scream
 		PPOD E 5 BRIGHT A_Explode
-		PPOD F 5 BRIGHT
+		PPOD F 10 BRIGHT
 		Stop
 	Grow:
 		PPOD IJKLMNOP 3
@@ -67,6 +67,7 @@ ACTOR PodGenerator 43
 	SpawnID 126
 	+NOBLOCKMAP
 	+NOSECTOR
+	+DONTSPLASH
 
 	action native A_MakePod ();
 
@@ -88,6 +89,7 @@ ACTOR TeleGlitterGenerator1 74
 	+NOBLOCKMAP 
 	+NOSECTOR 
 	+NOGRAVITY
+	+DONTSPLASH
 	States
 	{
 	Spawn:
@@ -105,6 +107,7 @@ ACTOR TeleGlitterGenerator2 52
 	+NOBLOCKMAP 
 	+NOSECTOR 
 	+NOGRAVITY
+	+DONTSPLASH
 	States
 	{
 	Spawn:

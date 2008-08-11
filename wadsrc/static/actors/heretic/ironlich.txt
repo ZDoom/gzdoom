@@ -63,6 +63,8 @@ ACTOR HeadFX1
 	FastSpeed 20
 	Damage 1
 	Projectile
+	-ACTIVATEIMPACT
+	-ACTIVATEPCROSS
 	+THRUGHOST
 	RenderStyle Add
 
@@ -128,7 +130,7 @@ ACTOR HeadFX3
 		FX06 ABC 4 BRIGHT A_LichFireGrow
 		Loop
 	NoGrow:
-		FX06 ABC 4 BRIGHT
+		FX06 ABC 5 BRIGHT
 		Loop
 	Death:
 		FX06 DEFG 5 BRIGHT
@@ -144,7 +146,7 @@ ACTOR Whirlwind native
 	Game Heretic
 	SpawnID 165
 	Radius 16
-	Height 75
+	Height 74
 	Speed 10
 	Damage 1
 	Projectile

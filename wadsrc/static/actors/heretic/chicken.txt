@@ -60,11 +60,11 @@ ACTOR BeakPowered : Beak
 
 ACTOR ChickenPlayer : PlayerPawn native
 {
-	Health 24
+	Health 30
 	ReactionTime 0
 	PainChance 255
 	Radius 16
-	Height 30
+	Height 24
 	Speed 1
 	Gravity 0.125
 	+NOSKIN
@@ -142,6 +142,7 @@ ACTOR Chicken : MorphedMonster
 	Pain:
 		CHKN D 5 A_Feathers
 		CHKN C 5 A_Pain
+		Goto See
 	Melee:
 		CHKN A 8 A_FaceTarget
 		CHKN C 10 A_CustomMeleeAttack(random[ChicAttack](1,2))

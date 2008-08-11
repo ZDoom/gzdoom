@@ -77,8 +77,8 @@ ACTOR StaffPuff
 	States
 	{
 	Spawn:
-		PUF3 A 3 BRIGHT
-		PUF3 BCD 3
+		PUF3 A 4 BRIGHT
+		PUF3 BCD 4
 		Stop
 	}
 }
@@ -798,7 +798,6 @@ ACTOR BlasterPuff
 	+NOBLOCKMAP
 	+NOGRAVITY
 	+PUFFONACTORS
-	+NOTELEPORT
 	RenderStyle Add
 	States
 	{
@@ -856,6 +855,9 @@ ACTOR SkullRodPowered : SkullRod
 	Weapon.AmmoUse1 5
 	Weapon.AmmoGive1 0
 	Weapon.SisterWeapon "SkullRod"
+
+	action native A_FireSkullRodPL2();
+
 	States
 	{
 	Fire:
@@ -863,7 +865,7 @@ ACTOR SkullRodPowered : SkullRod
 		HROD D 3
 		HROD E 2
 		HROD F 3
-		HROD G 4 A_FireCustomMissile("HornRodFX2")
+		HROD G 4 A_FireSkullRodPL2
 		HROD F 2
 		HROD E 3
 		HROD D 2

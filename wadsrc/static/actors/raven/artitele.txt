@@ -16,7 +16,7 @@ ACTOR ArtiTeleport : Inventory 36 native
 	States
 	{
 	Spawn:
-		ATLP ABCD 4
+		ATLP ABCB 4
 		Loop
 	}
 }

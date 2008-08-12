@@ -270,6 +270,7 @@ ACTOR ZCorpseSitting 110
 	Spawn:
 		CPS6 A -1
 		Stop
+	Death:
 		CPS6 A 1 A_CorpseExplode
 		Stop
 	}
@@ -522,6 +523,7 @@ ACTOR ZSuitOfArmor 8064
 	Spawn:
 		ZSUI A -1
 		Stop
+	Death:
 		ZSUI A 1 A_SoAExplode
 		Stop
 	}

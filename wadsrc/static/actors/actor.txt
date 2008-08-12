@@ -19,7 +19,7 @@ ACTOR Actor native //: Thinker
 	Gravity 1
 
 	action native A_MonsterRail();
-	action native A_BFGSpray(class<Actor> spraytype = "BFGSpray", int numrays = 40, int damagecount = 15);
+	action native A_BFGSpray(class<Actor> spraytype = "BFGExtra", int numrays = 40, int damagecount = 15);
 	action native A_Pain();
 	action native A_NoBlocking();
 	action native A_XScream();

@@ -1,4 +1,6 @@
 August 12, 2008 (Changes by Graf Zahl)
+- Fixed: The chat sound for Strife was misnamed in the gameinfo structure.
+- fixed a few DECORATE bugs.
 - Changed the action function declaration parser so that optional parameters
   can be given a default value. The 'optional' keyword is no longer needed
   and was removed, as well as 'evalnot'.

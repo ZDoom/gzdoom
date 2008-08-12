@@ -160,9 +160,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_CorpseExplode)
 	for (i = (pr_foo()&3)+3; i; i--)
 	{
 		mo = Spawn ("CorpseBit", self->x, self->y, self->z, ALLOW_REPLACE);
-		mo->SetState (mo->SpawnState + (pr_foo()%3));
 		if (mo)
 		{
+			mo->SetState (mo->SpawnState + (pr_foo()%3));
 			mo->momz = ((pr_foo()&7)+5)*(3*FRACUNIT/4);
 			mo->momx = pr_foo.Random2()<<(FRACBITS-6);
 			mo->momy = pr_foo.Random2()<<(FRACBITS-6);
@@ -170,9 +170,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_CorpseExplode)
 	}
 	// Spawn a skull
 	mo = Spawn ("CorpseBit", self->x, self->y, self->z, ALLOW_REPLACE);
-	mo->SetState (mo->SpawnState + 3);
 	if (mo)
 	{
+		mo->SetState (mo->SpawnState + 3);
 		mo->momz = ((pr_foo()&7)+5)*(3*FRACUNIT/4);
 		mo->momx = pr_foo.Random2()<<(FRACBITS-6);
 		mo->momy = pr_foo.Random2()<<(FRACBITS-6);
@@ -277,9 +277,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_SoAExplode)
 		mo = Spawn ("ZArmorChunk", self->x+((pr_soaexplode()-128)<<12),
 			self->y+((pr_soaexplode()-128)<<12), 
 			self->z+(pr_soaexplode()*self->height/256), ALLOW_REPLACE);
-		mo->SetState (mo->SpawnState + i);
 		if (mo)
 		{
+			mo->SetState (mo->SpawnState + i);
 			mo->momz = ((pr_soaexplode()&7)+5)*FRACUNIT;
 			mo->momx = pr_soaexplode.Random2()<<(FRACBITS-6);
 			mo->momy = pr_soaexplode.Random2()<<(FRACBITS-6);

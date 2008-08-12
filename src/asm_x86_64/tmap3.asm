@@ -3,7 +3,8 @@
 %endif
 
 BITS 64
-DEFAULT REL
+DEFAULT REL
+
 EXTERN vplce
 EXTERN vince
 EXTERN palookupoffse
@@ -20,7 +21,6 @@ ASM_PatchPitch:
 	mov ecx, [dc_pitch]
 	mov [pm+3], ecx
 	mov	[vltpitch+3], ecx
-	selfmod pm, vltpitch+6
 	ret
 	align 16
 
@@ -30,7 +30,6 @@ setupvlinetallasm:
 	mov	[shifter2+2], cl
 	mov	[shifter3+2], cl
 	mov	[shifter4+2], cl
-	selfmod shifter1, shifter4+3
 	ret
 	align 16
 
@@ -97,7 +96,6 @@ pm:	imul	rcx, 320
 	mov		r9d,  [vplce+4]
 	mov		r10d, [vplce+8]
 	mov		r11d, [vplce+12]
-	selfmod loopit, vltepilog
 	jmp		loopit
 
 ALIGN	16

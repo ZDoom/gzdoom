@@ -1,36 +1,9 @@
-%include "valgrind.inc"
-
-BITS 64
-DEFAULT REL
-
 %ifnidn __OUTPUT_FORMAT__,win64
-
-%macro PROC_FRAME 1
-%1:
-%endmacro
-
-%macro rex_push_reg 1
-	push %1
-%endmacro
-
-%macro push_reg 1
-	push %1
-%endmacro
-
-%macro alloc_stack 1
-	sub rsp,%1
-%endmacro
-
-%define parm1lo		dil
-
-%else
-
-%define parm1lo		cl
-
+%error tmap3.asm is for Win64 output. You should use tmap.s for other systems.
 %endif
 
-SECTION .data
-
+BITS 64
+DEFAULT REL
 EXTERN vplce
 EXTERN vince
 EXTERN palookupoffse
@@ -42,7 +15,6 @@ EXTERN dc_pitch
 
 SECTION .text
 
-ALIGN 16
 GLOBAL ASM_PatchPitch
 ASM_PatchPitch:
 	mov ecx, [dc_pitch]
@@ -50,26 +22,21 @@ ASM_PatchPitch:
 	mov	[vltpitch+3], ecx
 	selfmod pm, vltpitch+6
 	ret
+	align 16
 
-ALIGN 16
 GLOBAL setupvlinetallasm
 setupvlinetallasm:
-	mov	[shifter1+2], parm1lo
-	mov	[shifter2+2], parm1lo
-	mov	[shifter3+2], parm1lo
-	mov	[shifter4+2], parm1lo
+	mov	[shifter1+2], cl
+	mov	[shifter2+2], cl
+	mov	[shifter3+2], cl
+	mov	[shifter4+2], cl
 	selfmod shifter1, shifter4+3
 	ret
+	align 16
 
-%ifidn __OUTPUT_FORMAT__,win64
 ; Yasm can't do progbits alloc exec for win64?
 ; Hmm, looks like it's automatic. No worries, then.
-	SECTION .rtext	write ;progbits alloc exec
-%else
-	SECTION .rtext	progbits alloc exec write
-%endif
-
-ALIGN 16
+SECTION .rtext	write ;progbits alloc exec
 
 GLOBAL vlinetallasm4
 PROC_FRAME vlinetallasm4
@@ -138,7 +105,7 @@ loopit:
 			mov		edx, r8d
 shifter1:	shr		edx, 24
 step1:		add		r8d, 0x88888888
-			movzx	rdx, BYTE [rax+rdx]
+			movzx	edx, BYTE [rax+rdx]
 			mov		ebx, r9d
 			mov		dl, [r12+rdx]
 shifter2:	shr		ebx, 24
@@ -179,4 +146,7 @@ vltepilog:
 	pop		rdi
 	pop		rbx
 	ret
+vlinetallasm4_end:
 ENDPROC_FRAME
+	ALIGN 16
+

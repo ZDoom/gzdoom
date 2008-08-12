@@ -1,3 +1,11 @@
+August 11, 2008
+- Ported asm_x86_64/tmap3.nas to AT&T syntax so it can be compiled with gas.
+  After finding out that gas does have directives to describe the .eh_frame
+  metadata, I figured that would be significantly easier and quicker than
+  trying to locate all the scattered docs needed to construct it by hand.
+  Unfortunately, this now means I have to maintain two versions of exactly
+  the same code. :(
+
 August 11, 2008 (Changes by Graf Zahl)
 - Removed 'eval' modifier from DECORATE. All int, float and bool parameters are
   'eval' now by default.

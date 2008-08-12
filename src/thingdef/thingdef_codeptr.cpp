@@ -386,7 +386,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BulletAttack)
 
 FState *P_GetState(AActor *self, FState *CallingState, int offset)
 {
-	if (offset == 0)
+	if (offset == 0 || offset == INT_MIN)
 	{
 		return NULL;	// 0 means 'no state'
 	}
@@ -584,21 +584,23 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Explode)
 	bool alert;
 
 	int index=CheckIndex(4);
-	if (index>=0) 
-	{
-		damage = EvalExpressionI (StateParameters[index], self);
-		distance = EvalExpressionI (StateParameters[index+1], self);
-		hurtSource = EvalExpressionN (StateParameters[index+2], self);
-		if (damage == 0) damage = 128;
-		if (distance == 0) distance = damage;
-		alert = !!EvalExpressionI (StateParameters[index+3], self);
-	}
-	else
+	if (index < 0) return;
+
+	damage = EvalExpressionI (StateParameters[index], self);
+	distance = EvalExpressionI (StateParameters[index+1], self);
+	hurtSource = !!EvalExpressionI (StateParameters[index+2], self);
+	alert = !!EvalExpressionI (StateParameters[index+3], self);
+
+	if (damage < 0)	// get parameters from metadata
 	{
 		damage = self->GetClass()->Meta.GetMetaInt (ACMETA_ExplosionDamage, 128);
 		distance = self->GetClass()->Meta.GetMetaInt (ACMETA_ExplosionRadius, damage);
 		hurtSource = !self->GetClass()->Meta.GetMetaInt (ACMETA_DontHurtShooter);
 		alert = false;
+	}
+	else
+	{
+		if (distance <= 0) distance = damage;
 	}
 
 	P_RadiusAttack (self, self->target, damage, distance, self->DamageType, hurtSource);
@@ -626,14 +628,14 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusThrust)
 	bool affectSource = true;
 	
 	int index=CheckIndex(3);
-	if (index>=0) 
-	{
-		force = EvalExpressionI (StateParameters[index], self);
-		distance = EvalExpressionI (StateParameters[index+1], self);
-		affectSource = EvalExpressionN (StateParameters[index+2], self);
-	}
-	if (force == 0) force = 128;
-	if (distance == 0) distance = force;
+	if (index < 0) return;
+
+	force = EvalExpressionI (StateParameters[index], self);
+	distance = EvalExpressionI (StateParameters[index+1], self);
+	affectSource = !!EvalExpressionI (StateParameters[index+2], self);
+
+	if (force <= 0) force = 128;
+	if (distance <= 0) distance = force;
 
 	P_RadiusAttack (self, self->target, force, distance, self->DamageType, affectSource, false);
 	if (self->z <= self->floorz + (distance<<FRACBITS))
@@ -865,7 +867,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomMeleeAttack)
 	int MeleeSound = StateParameters[index+1];
 	int MissSound = StateParameters[index+2];
 	ENamedName DamageType = (ENamedName)StateParameters[index+3];
-	bool bleed = EvalExpressionN (StateParameters[index+4], self);
+	bool bleed = !!EvalExpressionI (StateParameters[index+4], self);
 
 	if (DamageType==NAME_None) DamageType = NAME_Melee;	// Melee is the default type
 
@@ -900,7 +902,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomComboAttack)
 	int damage = EvalExpressionI (StateParameters[index+2], self);
 	int MeleeSound = StateParameters[index+3];
 	ENamedName DamageType = (ENamedName)StateParameters[index+4];
-	bool bleed = EvalExpressionN (StateParameters[index+5], self);
+	bool bleed = !!EvalExpressionI (StateParameters[index+5], self);
 
 
 	if (!self->target)
@@ -975,7 +977,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireBullets)
 	int NumberOfBullets=EvalExpressionI (StateParameters[index+2], self);
 	int DamagePerBullet=EvalExpressionI (StateParameters[index+3], self);
 	ENamedName PuffTypeName=(ENamedName)StateParameters[index+4];
-	bool UseAmmo=EvalExpressionN (StateParameters[index+5], self);
+	bool UseAmmo=!!EvalExpressionI (StateParameters[index+5], self);
 	fixed_t Range=fixed_t(EvalExpressionF (StateParameters[index+6], self) * FRACUNIT);
 	
 	const PClass * PuffType;
@@ -1035,7 +1037,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireCustomMissile)
 
 	ENamedName MissileName=(ENamedName)StateParameters[index];
 	angle_t Angle=angle_t(EvalExpressionF (StateParameters[index+1], self) * ANGLE_1);
-	bool UseAmmo=EvalExpressionN (StateParameters[index+2], self);
+	bool UseAmmo=!!EvalExpressionI (StateParameters[index+2], self);
 	int SpawnOfs_XY=EvalExpressionI (StateParameters[index+3], self);
 	fixed_t SpawnHeight=fixed_t(EvalExpressionF (StateParameters[index+4], self) * FRACUNIT);
 	INTBOOL AimAtAngle=EvalExpressionI (StateParameters[index+5], self);
@@ -1095,7 +1097,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomPunch)
 
 	int Damage=EvalExpressionI (StateParameters[index], self);
 	bool norandom=!!EvalExpressionI (StateParameters[index+1], self);
-	bool UseAmmo=EvalExpressionN (StateParameters[index+2], self);
+	bool UseAmmo=!!EvalExpressionI (StateParameters[index+2], self);
 	ENamedName PuffTypeName=(ENamedName)StateParameters[index+3];
 	fixed_t Range=fixed_t(EvalExpressionF (StateParameters[index+4], self) * FRACUNIT);
 
@@ -1152,7 +1154,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RailAttack)
 
 	int Damage=EvalExpressionI (StateParameters[index], self);
 	int Spawnofs_XY=EvalExpressionI (StateParameters[index+1], self);
-	bool UseAmmo=EvalExpressionN (StateParameters[index+2], self);
+	bool UseAmmo=!!EvalExpressionI (StateParameters[index+2], self);
 	int Color1=StateParameters[index+3];
 	int Color2=StateParameters[index+4];
 	bool Silent=!!EvalExpressionI (StateParameters[index+5], self);
@@ -1426,7 +1428,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnItem)
 	const PClass * missile= PClass::FindClass((ENamedName)StateParameters[index]);
 	fixed_t distance = fixed_t(EvalExpressionF (StateParameters[index+1], self) * FRACUNIT);
 	fixed_t zheight = fixed_t(EvalExpressionF (StateParameters[index+2], self) * FRACUNIT);
-	bool useammo = EvalExpressionN (StateParameters[index+3], self);
+	bool useammo = !!EvalExpressionI (StateParameters[index+3], self);
 	INTBOOL transfer_translation = EvalExpressionI (StateParameters[index+4], self);
 
 	if (!missile) 
@@ -1554,7 +1556,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ThrowGrenade)
 	fixed_t zheight = fixed_t(EvalExpressionF (StateParameters[index+1], self) * FRACUNIT);
 	fixed_t xymom = fixed_t(EvalExpressionF (StateParameters[index+2], self) * FRACUNIT);
 	fixed_t zmom = fixed_t(EvalExpressionF (StateParameters[index+3], self) * FRACUNIT);
-	bool useammo = EvalExpressionN (StateParameters[index+4], self);
+	bool useammo = !!EvalExpressionI (StateParameters[index+4], self);
 
 	if (self->player && CallingState != self->state && (pStateCall==NULL || CallingState != pStateCall->State))
 	{
@@ -2046,7 +2048,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Respawn)
 		self->renderflags &= ~RF_INVISIBLE;
 
 		int index=CheckIndex(1);
-		if (index<0 || EvalExpressionN (StateParameters[index], self))
+		if (index<0 || EvalExpressionI (StateParameters[index], self))
 		{
 			Spawn<ATeleportFog> (x, y, self->z + TELEFOGHEIGHT, ALLOW_REPLACE);
 		}
@@ -2125,6 +2127,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_ClearTarget)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInLOS)
 {
 	int index = CheckIndex(3);
+	if (index < 0) return;
+
 	angle_t an;
 	angle_t fov = angle_t(EvalExpressionF (StateParameters[index+1], self) * ANGLE_1);
 	INTBOOL projtarg = EvalExpressionI (StateParameters[index+2], self);

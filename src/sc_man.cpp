@@ -910,8 +910,6 @@ FString FScanner::TokenName (int token, const char *string)
 		"'global'",
 		"'self'",
 		"'stop'",
-		"'eval'",
-		"'evalnot'",
 		"'pickup'",
 		"'breakable'",
 		"'projectile'",

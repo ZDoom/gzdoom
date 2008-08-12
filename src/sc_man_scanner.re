@@ -138,8 +138,6 @@ std2:
 		'stop'						{ RET(TK_Stop); }
 
 		/* Needed for decorate action functions */
-		'eval'						{ RET(TK_Eval); }
-		'evalnot'					{ RET(TK_EvalNot); }
 		'action'					{ RET(TK_Action); }
 
 		/* other DECORATE top level keywords */

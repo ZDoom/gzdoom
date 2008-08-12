@@ -459,6 +459,7 @@ static void HandleDeprecatedFlags(AActor *defaults, bool set, int index)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ChangeFlag)
 {
 	int index=CheckIndex(2);
+	if (index < 0) return;
 	const char * flagname = FName((ENamedName)StateParameters[index]).GetChars();	
 	int expression = EvalExpressionI (StateParameters[index+1], self);
 

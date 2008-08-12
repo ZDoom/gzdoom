@@ -404,15 +404,6 @@ int ParseExpression (FScanner &sc, bool _not, PClass *cls)
 
 	ExpData *data = ParseExpressionM (sc, cls);
 
-	if (_not)
-	{
-		ExpData *tmp = data;
-		data = new ExpData;
-		data->Type = EX_Not;
-		data->Children[0] = tmp;
-		data->EvalConst (cls);
-	}
-
 	for (unsigned int i = 0; i < StateExpressions.Size (); i++)
 	{
 		if (StateExpressions[i]->Compare (data))
@@ -666,6 +657,24 @@ static ExpData *ParseExpressionA (FScanner &sc, const PClass *cls)
 		sc.MustGetToken(')');
 		return data;
 	}
+	else if (sc.CheckToken(TK_True))
+	{
+		ExpData *data = new ExpData;
+		data->Type = EX_Const;
+		data->Value.Type = VAL_Int;
+		data->Value.Int = 1;
+
+		return data;
+	}
+	else if (sc.CheckToken(TK_False))
+	{
+		ExpData *data = new ExpData;
+		data->Type = EX_Const;
+		data->Value.Type = VAL_Int;
+		data->Value.Int = 0;
+
+		return data;
+	}
 	else if (sc.CheckToken(TK_IntConst))
 	{
 		ExpData *data = new ExpData;
@@ -895,6 +904,13 @@ static ExpData *ParseExpressionA (FScanner &sc, const PClass *cls)
 // [GRB] Evaluates previously stored expression
 //
 
+bool IsExpressionConst(int id)
+{
+	if (StateExpressions.Size() <= (unsigned int)id) return false;
+
+	return StateExpressions[id]->Type == EX_Const;
+}
+
 int EvalExpressionI (int id, AActor *self, const PClass *cls)
 {
 	if (StateExpressions.Size() <= (unsigned int)id) return 0;
@@ -914,11 +930,6 @@ int EvalExpressionI (int id, AActor *self, const PClass *cls)
 	case VAL_Float:
 		return (int)val.Float;
 	}
-}
-
-bool EvalExpressionN(int id, AActor *self, const PClass *cls)
-{
-	return !EvalExpressionI(id, self, cls);
 }
 
 float EvalExpressionF (int id, AActor *self, const PClass *cls)

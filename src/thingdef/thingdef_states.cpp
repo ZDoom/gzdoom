@@ -690,151 +690,40 @@ do_stop:
 						int paramstart = paramindex;
 						bool varargs = params[numparams - 1] == '+';
 
+
 						if (varargs)
 						{
 							StateParameters[paramindex++] = 0;
 						}
+						else if (afd->defaultparameterindex > -1)
+						{
+							memcpy(&StateParameters[paramindex], &StateParameters[afd->defaultparameterindex],
+								afd->Arguments.Len() * sizeof (StateParameters[0]));
+						}
 
 						while (*params)
 						{
-							switch(*params)
+							if ((*params == 'l' || *params == 'L') && sc.CheckNumber())
 							{
-							case 'S':
-							case 's':		// Sound name
-								sc.MustGetString();
-								v = S_FindSound(sc.String);
-								break;
-
-							case 'M':
-							case 'm':		// Actor name
-							case 'T':
-							case 't':		// String
-								sc.SetEscape(true);
-								sc.MustGetString();
-								sc.SetEscape(false);
-								v = (int)(sc.String[0] ? FName(sc.String) : NAME_None);
-								break;
-
-							case 'L':
-							case 'l':		// Jump label
-
-								if (sc.CheckNumber())
+								// Special case: State label as an offset
+								if (sc.Number > 0 && strlen(statestring)>0)
 								{
-									if (sc.Number > 0 && strlen(statestring)>0)
-									{
-										sc.ScriptError("You cannot use state jumps commands with a jump offset on multistate definitions\n");
-									}
-
-									v=sc.Number;
-									if (v<0)
-									{
-										sc.ScriptError("Negative jump offsets are not allowed");
-									}
-
-									{
-										int minreq=count+v;
-										if (minreq>minrequiredstate) minrequiredstate=minreq;
-									}
-								}
-								else
-								{
-									if (JumpParameters.Size()==0) JumpParameters.Push(NAME_None);
-
-									v = -(int)JumpParameters.Size();
-									// This forces quotation marks around the state name.
-									sc.MustGetToken(TK_StringConst);
-									if (sc.String[0] == 0 || sc.Compare("None"))
-									{
-										v = 0;	// an empty string means 'no state'.
-										break;
-									}
-									FString statestring = sc.String; // ParseStateString(sc);
-									const PClass *stype=NULL;
-									int scope = statestring.IndexOf("::");
-									if (scope >= 0)
-									{
-										FName scopename = FName(statestring, scope, false);
-										if (scopename == NAME_Super)
-										{
-											// Super refers to the direct superclass
-											scopename = actor->Class->ParentClass->TypeName;
-										}
-										JumpParameters.Push(scopename);
-										statestring = statestring.Right(statestring.Len()-scope-2);
-
-										stype = PClass::FindClass (scopename);
-										if (stype == NULL)
-										{
-											sc.ScriptError ("%s is an unknown class.", scopename.GetChars());
-										}
-										if (!stype->IsDescendantOf (RUNTIME_CLASS(AActor)))
-										{
-											sc.ScriptError ("%s is not an actor class, so it has no states.", stype->TypeName.GetChars());
-										}
-										if (!stype->IsAncestorOf (actor->Class))
-										{
-											sc.ScriptError ("%s is not derived from %s so cannot access its states.",
-												actor->Class->TypeName.GetChars(), stype->TypeName.GetChars());
-										}
-									}
-									else
-									{
-										// No class name is stored. This allows 'virtual' jumps to
-										// labels in subclasses.
-										// It also means that the validity of the given state cannot
-										// be checked here.
-										JumpParameters.Push(NAME_None);
-									}
-									TArray<FName> names;
-									MakeStateNameList(statestring, &names);
-
-									if (stype != NULL)
-									{
-										if (!stype->ActorInfo->FindState(names.Size(), &names[0]))
-										{
-											sc.ScriptError("Jump to unknown state '%s' in class '%s'",
-												statestring.GetChars(), stype->TypeName.GetChars());
-										}
-									}
-									JumpParameters.Push((ENamedName)names.Size());
-									for(unsigned i=0;i<names.Size();i++)
-									{
-										JumpParameters.Push(names[i]);
-									}
-									// No offsets here. The point of jumping to labels is to avoid such things!
+									sc.ScriptError("You cannot use state jumps commands with a jump offset on multistate definitions\n");
 								}
 
-								break;
-
-							case 'C':
-							case 'c':		// Color
-								sc.MustGetString ();
-								if (sc.Compare("none"))
+								v=sc.Number;
+								if (v<0)
 								{
-									v = -1;
+									sc.ScriptError("Negative jump offsets are not allowed");
 								}
-								else
-								{
-									int c = V_GetColor (NULL, sc.String);
-									// 0 needs to be the default so we have to mark the color.
-									v = MAKEARGB(1, RPART(c), GPART(c), BPART(c));
-								}
-								break;
 
-							case 'X':
-							case 'x':
-								v = ParseExpression (sc, false, bag.Info->Class);
-								break;
-
-							case 'Y':
-							case 'y':
-								v = ParseExpression (sc, true, bag.Info->Class);
-								break;
-
-							default:
-								assert(false);
-								v = -1;
-								break;
+								int minreq=count+v;
+								if (minreq>minrequiredstate) minrequiredstate=minreq;
+							}
+							else
+							{
+								// Use the generic parameter parser for everything else
+								v = ParseParameter(sc, bag.Info->Class, *params, false);
 							}
 							StateParameters[paramindex++] = v;
 							params++;

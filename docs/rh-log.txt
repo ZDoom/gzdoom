@@ -1,4 +1,7 @@
 August 12, 2008 (Changes by Graf Zahl)
+- Changed the action function declaration parser so that optional parameters
+  can be given a default value. The 'optional' keyword is no longer needed
+  and was removed, as well as 'evalnot'.
 - Restructured the action function interface to remove the dependence on
   the global CallingState variable.
 - Changed handling of AUTOPAGE texture so that it is properly inserted into

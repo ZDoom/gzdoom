@@ -46,14 +46,14 @@ void A_SkullAttack(AActor *self, fixed_t speed)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SkullAttack)
 {
-	int n;
+	int n = 0;
 	int index = CheckIndex (1);
 	if (index >= 0) 
 	{
 		n = FLOAT2FIXED(EvalExpressionF (StateParameters[index], self));
-		if (n == 0) n = SKULLSPEED;
 	}
-	else n = SKULLSPEED;
+
+	if (n == 0) n = SKULLSPEED;
 
 	A_SkullAttack(self, n);
 }

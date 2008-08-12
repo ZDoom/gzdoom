@@ -30,7 +30,7 @@ ACTOR CustomBridge 9991 native
 	Height 2
 	RenderStyle None
 
-	action native A_BridgeInit(optional class<Actor> balltype);
+	action native A_BridgeInit(class<Actor> balltype = "BridgeBall");
 
 	states
 	{

@@ -2234,13 +2234,16 @@ enum ChaseFlags
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Chase)
 {
 	int index=CheckIndex(3);
-	if (index>=0)
+	if (index < 0) return;
+
+	if (StateParameters[index] != INT_MIN)
 	{
+		FState *melee = P_GetState(self, CallingState, StateParameters[index]);
+		FState *missile = P_GetState(self, CallingState, StateParameters[index+1]);
+
 		int flags = EvalExpressionI (StateParameters[index+2], self);
 		if (flags & CHF_RESURRECT && P_CheckForResurrection(self, false)) return;
 
-		FState *melee = P_GetState(self, CallingState, StateParameters[index]);
-		FState *missile = P_GetState(self, CallingState, StateParameters[index+1]);
 		
 		A_DoChase(self, !!(flags&CHF_FASTCHASE), melee, missile, !(flags&CHF_NOPLAYACTIVE), 
 					!!(flags&CHF_NIGHTMAREFAST), !!(flags&CHF_DONTMOVE));
@@ -2271,7 +2274,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ExtChase)
 	A_DoChase(self, false,
 		EvalExpressionI (StateParameters[index], self) ? self->MeleeState:NULL,
 		EvalExpressionI (StateParameters[index+1], self) ? self->MissileState:NULL,
-		EvalExpressionN (StateParameters[index+2], self),
+		!!EvalExpressionI (StateParameters[index+2], self),
 		!!EvalExpressionI (StateParameters[index+3], self), false);
 }
 

@@ -117,13 +117,14 @@ void FinishActor(FScanner &sc, FActorInfo *info, Baggage &bag);
 
 void ParseConstant (FScanner &sc, PSymbolTable *symt, PClass *cls);
 void ParseEnum (FScanner &sc, PSymbolTable *symt, PClass *cls);
+int ParseParameter(FScanner &sc, PClass *cls, char type, bool constant);
 
 
 int ParseExpression (FScanner &sc, bool _not, PClass *cls);
 
+bool IsExpressionConst(int id);
 int EvalExpressionI (int id, AActor *self, const PClass *cls=NULL);
 float EvalExpressionF (int id, AActor *self, const PClass *cls=NULL);
-bool EvalExpressionN (int id, AActor *self, const PClass *cls=NULL);
 
 
 enum
@@ -197,8 +198,6 @@ enum EDefinitionType
 	int var = EvalExpressionI(StateParameters[ap_index_++], self);
 #define ACTION_PARAM_BOOL(var) \
 	bool var = !!EvalExpressionI(StateParameters[ap_index_++], self);
-#define ACTION_PARAM_NOT_BOOL(var) \
-	bool var = EvalExpressionN(StateParameters[ap_index_++], self);
 #define ACTION_PARAM_FIXED(var) \
 	fixed_t var = fixed_t(EvalExpressionF(StateParameters[ap_index_++], self)*65536.f);
 #define ACTION_PARAM_FLOAT(var) \

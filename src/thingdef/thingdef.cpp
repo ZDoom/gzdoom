@@ -146,6 +146,144 @@ void ParseEnum (FScanner &sc, PSymbolTable *symt, PClass *cls)
 	sc.MustGetToken(';');
 }
 
+
+
+//==========================================================================
+//
+// ParseParameter
+//
+// Parses aparameter - either a default in a function declaration 
+// or an argument in a function call.
+//
+//==========================================================================
+
+int ParseParameter(FScanner &sc, PClass *cls, char type, bool constant)
+{
+	int v;
+
+	switch(type)
+	{
+	case 'S':
+	case 's':		// Sound name
+		sc.MustGetString();
+		return S_FindSound(sc.String);
+
+	case 'M':
+	case 'm':		// Actor name
+	case 'T':
+	case 't':		// String
+		sc.SetEscape(true);
+		sc.MustGetString();
+		sc.SetEscape(false);
+		return (int)(sc.String[0] ? FName(sc.String) : NAME_None);
+
+	case 'C':
+	case 'c':		// Color
+		sc.MustGetString ();
+		if (sc.Compare("none"))
+		{
+			return -1;
+		}
+		else if (sc.Compare(""))
+		{
+			return 0;
+		}
+		else
+		{
+			int c = V_GetColor (NULL, sc.String);
+			// 0 needs to be the default so we have to mark the color.
+			return MAKEARGB(1, RPART(c), GPART(c), BPART(c));
+		}
+
+	case 'L':
+	case 'l':
+	{
+		if (JumpParameters.Size()==0) JumpParameters.Push(NAME_None);
+
+		v = -(int)JumpParameters.Size();
+		// This forces quotation marks around the state name.
+		sc.MustGetToken(TK_StringConst);
+		if (sc.String[0] == 0 || sc.Compare("None"))
+		{
+			return 0;
+		}
+		if (sc.Compare("*"))
+		{
+			if (constant) return INT_MIN;
+			else sc.ScriptError("Invalid state name '*'");
+		}
+		FString statestring = sc.String; // ParseStateString(sc);
+		const PClass *stype=NULL;
+		int scope = statestring.IndexOf("::");
+		if (scope >= 0)
+		{
+			FName scopename = FName(statestring, scope, false);
+			if (scopename == NAME_Super)
+			{
+				// Super refers to the direct superclass
+				scopename = cls->ParentClass->TypeName;
+			}
+			JumpParameters.Push(scopename);
+			statestring = statestring.Right(statestring.Len()-scope-2);
+
+			stype = PClass::FindClass (scopename);
+			if (stype == NULL)
+			{
+				sc.ScriptError ("%s is an unknown class.", scopename.GetChars());
+			}
+			if (!stype->IsDescendantOf (RUNTIME_CLASS(AActor)))
+			{
+				sc.ScriptError ("%s is not an actor class, so it has no states.", stype->TypeName.GetChars());
+			}
+			if (!stype->IsAncestorOf (cls))
+			{
+				sc.ScriptError ("%s is not derived from %s so cannot access its states.",
+					cls->TypeName.GetChars(), stype->TypeName.GetChars());
+			}
+		}
+		else
+		{
+			// No class name is stored. This allows 'virtual' jumps to
+			// labels in subclasses.
+			// It also means that the validity of the given state cannot
+			// be checked here.
+			JumpParameters.Push(NAME_None);
+		}
+		TArray<FName> names;
+		MakeStateNameList(statestring, &names);
+
+		if (stype != NULL)
+		{
+			if (!stype->ActorInfo->FindState(names.Size(), &names[0]))
+			{
+				sc.ScriptError("Jump to unknown state '%s' in class '%s'",
+					statestring.GetChars(), stype->TypeName.GetChars());
+			}
+		}
+		JumpParameters.Push((ENamedName)names.Size());
+		for(unsigned i=0;i<names.Size();i++)
+		{
+			JumpParameters.Push(names[i]);
+		}
+		// No offsets here. The point of jumping to labels is to avoid such things!
+		return v;
+	}
+
+	case 'X':
+	case 'x':
+		v = ParseExpression (sc, false, cls);
+		if (constant && !IsExpressionConst(v))
+		{
+			sc.ScriptError("Default parameter must be constant.");
+		}
+		return v;
+
+	default:
+		assert(false);
+		return -1;
+	}
+}
+
 //==========================================================================
 //
 // ActorActionDef
@@ -158,12 +296,16 @@ void ParseEnum (FScanner &sc, PSymbolTable *symt, PClass *cls)
 
 static void ParseActionDef (FScanner &sc, PClass *cls)
 {
-#define OPTIONAL		1
-#define EVALNOT			4
+	enum
+	{
+		OPTIONAL = 1
+	};
 
 	AFuncDesc *afd;
 	FName funcname;
 	FString args;
+	TArray<int> DefaultParams;
+	bool hasdefaults = false;
 	
 	if (sc.LumpNum == -1 || Wads.GetLumpFile(sc.LumpNum) > 0)
 	{
@@ -189,15 +331,7 @@ static void ParseActionDef (FScanner &sc, PClass *cls)
 			// Retrieve flags before type name
 			for (;;)
 			{
-				if (sc.CheckToken(TK_Optional))
-				{
-					flags |= OPTIONAL;
-				}
-				else if (sc.CheckToken(TK_EvalNot))
-				{
-					flags |= EVALNOT;
-				}
-				else if (sc.CheckToken(TK_Coerce) || sc.CheckToken(TK_Native))
+				if (sc.CheckToken(TK_Coerce) || sc.CheckToken(TK_Native))
 				{
 				}
 				else
@@ -212,7 +346,7 @@ static void ParseActionDef (FScanner &sc, PClass *cls)
 			case TK_Bool:
 			case TK_Int:
 			case TK_Float:
-				type = (flags & EVALNOT)? 'y' : 'x';
+				type = 'x';
 				break;
 
 			case TK_Sound:		type = 's';		break;
@@ -244,13 +378,24 @@ static void ParseActionDef (FScanner &sc, PClass *cls)
 			{
 				sc.UnGet();
 			}
+
+			int def;
+			if (sc.CheckToken('='))
+			{
+				hasdefaults = true;
+				flags|=OPTIONAL;
+				def = ParseParameter(sc, cls, type, true);
+			}
+			else
+			{
+				def = 0;
+			}
+			DefaultParams.Push(def);
+
 			if (!(flags & OPTIONAL) && type != '+')
 			{
 				type -= 'a' - 'A';
 			}
-	#undef OPTIONAL
-	#undef EVAL
-	#undef EVALNOT
 			args += type;
 			sc.MustGetAnyToken();
 			if (sc.TokenType != ',' && sc.TokenType != ')')
@@ -265,7 +410,15 @@ static void ParseActionDef (FScanner &sc, PClass *cls)
 	sym->SymbolType = SYM_ActionFunction;
 	sym->Arguments = args;
 	sym->Function = afd->Function;
-	sym->defaultparameterindex = -1;
+	if (hasdefaults)
+	{
+		sym->defaultparameterindex = StateParameters.Size();
+		for(int i = 0; i < DefaultParams.Size(); i++) StateParameters.Push(DefaultParams[i]);
+	}
+	else
+	{
+		sym->defaultparameterindex = -1;
+	}
 	if (cls->Symbols.AddSymbol (sym) == NULL)
 	{
 		delete sym;

@@ -1,3 +1,9 @@
+August 12, 2008 (Changes by Graf Zahl)
+- Changed handling of AUTOPAGE texture so that it is properly inserted into
+  the texture manager even if it is from Raven's IWADs.
+- Removed code related to internal ActorInfo definitions from dobjtype.cpp.
+- removed unneeded file dehackedactions.h
+
 August 11, 2008
 - Ported asm_x86_64/tmap3.nas to AT&T syntax so it can be compiled with gas.
   After finding out that gas does have directives to describe the .eh_frame

@@ -103,7 +103,7 @@ struct PClass
 	PClass				*HashNext;
 	FMetaTable			 Meta;
 	BYTE				*Defaults;
-	BYTE				 bRuntimeClass;	// class was defined at run-time, not compile-time
+	bool				 bRuntimeClass;	// class was defined at run-time, not compile-time
 	unsigned short		 ClassIndex;
 	PSymbolTable		 Symbols;
 

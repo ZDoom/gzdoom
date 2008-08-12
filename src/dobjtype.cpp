@@ -123,36 +123,29 @@ void PClass::StaticFreeData (PClass *type)
 	}
 	type->FreeStateList ();
 
+	if (type->ActorInfo != NULL)
+	{
+		if (type->ActorInfo->OwnedStates != NULL)
+		{
+			delete[] type->ActorInfo->OwnedStates;
+			type->ActorInfo->OwnedStates = NULL;
+		}
+		if (type->ActorInfo->DamageFactors != NULL)
+		{
+			delete type->ActorInfo->DamageFactors;
+			type->ActorInfo->DamageFactors = NULL;
+		}
+		if (type->ActorInfo->PainChances != NULL)
+		{
+			delete type->ActorInfo->PainChances;
+			type->ActorInfo->PainChances = NULL;
+		}
+		delete type->ActorInfo;
+		type->ActorInfo = NULL;
+	}
 	if (type->bRuntimeClass)
 	{
-		if (type->ActorInfo != NULL)
-		{
-			if (type->ActorInfo->OwnedStates != NULL)
-			{
-				delete[] type->ActorInfo->OwnedStates;
-				type->ActorInfo->OwnedStates = NULL;
-			}
-			if (type->ActorInfo->DamageFactors != NULL)
-			{
-				delete type->ActorInfo->DamageFactors;
-				type->ActorInfo->DamageFactors = NULL;
-			}
-			if (type->ActorInfo->PainChances != NULL)
-			{
-				delete type->ActorInfo->PainChances;
-				type->ActorInfo->PainChances = NULL;
-			}
-			delete type->ActorInfo;
-			type->ActorInfo = NULL;
-		}
-		if (type->bRuntimeClass != 2)
-		{
-			delete type;
-		}
-		else
-		{
-			type->Symbols.ReleaseSymbols();
-		}
+		delete type;
 	}
 	else
 	{
@@ -315,8 +308,6 @@ void PClass::InitializeActorInfo ()
 		memset (Defaults, 0, Size);
 	}
 
-	bRuntimeClass = 2;	// Class is internal but actor data external
-
 	FActorInfo *info = ActorInfo = new FActorInfo;
 	info->Class = this;
 	info->GameFilter = GAME_Any;
@@ -398,7 +389,7 @@ const PClass *PClass::NativeClass() const
 {
 	const PClass *cls = this;
 
-	while (cls && cls->bRuntimeClass == 1)
+	while (cls && cls->bRuntimeClass)
 		cls = cls->ParentClass;
 
 	return cls;

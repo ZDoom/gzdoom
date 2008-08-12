@@ -70,13 +70,15 @@ private:
 
 //==========================================================================
 //
-//
+// This texture type will only be used for the AUTOPAGE lump if no other
+// format matches.
 //
 //==========================================================================
 
 FTexture *AutomapTexture_TryCreate(FileReader &data, int lumpnum)
 {
 	if (data.GetLength() < 320) return NULL;
+	if (!Wads.CheckLumpName(lumpnum, "AUTOPAGE")) return NULL;
 	return new FAutomapTexture(lumpnum);
 }
 
@@ -89,6 +91,9 @@ FTexture *AutomapTexture_TryCreate(FileReader &data, int lumpnum)
 FAutomapTexture::FAutomapTexture (int lumpnum)
 : Pixels(NULL), LumpNum(lumpnum)
 {
+	Wads.GetLumpName (Name, lumpnum);
+	Name[8] = 0;
+
 	Width = 320;
 	Height = WORD(Wads.LumpLength(lumpnum) / 320);
 	CalcBitSize ();

@@ -337,7 +337,7 @@ static int markpointnum = 0; // next point to be assigned
 
 static int followplayer = 1; // specifies whether to follow the player around
 
-static FTexture *mapback;	// the automap background
+static FTextureID mapback;	// the automap background
 static fixed_t mapystart=0; // y-value for the start of the map bitmap...used in the parallax stuff.
 static fixed_t mapxstart=0; //x-value for the bitmap.
 
@@ -534,19 +534,24 @@ static void AM_ScrollParchment (fixed_t dmapx, fixed_t dmapy)
 	mapxstart -= MulScale12 (dmapx, scale_mtof);
 	mapystart -= MulScale12 (dmapy, scale_mtof);
 
-	if (mapback != NULL)
+	if (mapback.isValid())
 	{
-		int pwidth = mapback->GetWidth() << MAPBITS;
-		int pheight = mapback->GetHeight() << MAPBITS;
+		FTexture *backtex = TexMan[mapback];
 
-		while(mapxstart > 0)
-			mapxstart -= pwidth;
-		while(mapxstart <= -pwidth)
-			mapxstart += pwidth;
-		while(mapystart > 0)
-			mapystart -= pheight;
-		while(mapystart <= -pheight)
-			mapystart += pheight;
+		if (backtex != NULL)
+		{
+			int pwidth = backtex->GetWidth() << MAPBITS;
+			int pheight = backtex->GetHeight() << MAPBITS;
+
+			while(mapxstart > 0)
+				mapxstart -= pwidth;
+			while(mapxstart <= -pwidth)
+				mapxstart += pwidth;
+			while(mapystart > 0)
+				mapystart -= pheight;
+			while(mapystart <= -pheight)
+				mapystart += pheight;
+		}
 	}
 }
 
@@ -737,23 +742,7 @@ void AM_loadPics ()
 		marknums[i] = TexMan.CheckForTexture (namebuf, FTexture::TEX_MiscPatch);
 	}
 
-	if (mapback == NULL)
-	{
-		i = Wads.CheckNumForName ("AUTOPAGE");
-		if (i >= 0)
-		{
-			mapback = FTexture::CreateTexture(i, FTexture::TEX_Autopage);
-		}
-	}
-}
-
-void AM_unloadPics ()
-{
-	if (mapback != NULL)
-	{
-		delete mapback;
-		mapback = NULL;
-	}
+	mapback = TexMan.CheckForTexture("AUTOPAGE", FTexture::TEX_MiscPatch);
 }
 
 bool AM_clearMarks ()
@@ -788,7 +777,6 @@ void AM_LevelInit ()
 //
 void AM_Stop ()
 {
-	AM_unloadPics ();
 	automapactive = false;
 	stopped = true;
 	BorderNeedRefresh = screen->GetPageCount ();
@@ -1063,22 +1051,26 @@ void AM_Ticker ()
 //
 void AM_clearFB (const AMColor &color)
 {
-	if (mapback == NULL || !am_drawmapback)
+	if (!mapback.isValid() || !am_drawmapback)
 	{
 		screen->Clear (0, 0, f_w, f_h, color.Index, color.RGB);
 	}
 	else
 	{
-		int pwidth = mapback->GetWidth();
-		int pheight = mapback->GetHeight();
-		int x, y;
-
-		//blit the automap background to the screen.
-		for (y = mapystart >> MAPBITS; y < f_h; y += pheight)
+		FTexture *backtex = TexMan[mapback];
+		if (backtex != NULL)
 		{
-			for (x = mapxstart >> MAPBITS; x < f_w; x += pwidth)
+			int pwidth = backtex->GetWidth();
+			int pheight = backtex->GetHeight();
+			int x, y;
+
+			//blit the automap background to the screen.
+			for (y = mapystart >> MAPBITS; y < f_h; y += pheight)
 			{
-				screen->DrawTexture (mapback, x, y, DTA_ClipBottom, f_h, DTA_TopOffset, 0, DTA_LeftOffset, 0, TAG_DONE);
+				for (x = mapxstart >> MAPBITS; x < f_w; x += pwidth)
+				{
+					screen->DrawTexture (backtex, x, y, DTA_ClipBottom, f_h, DTA_TopOffset, 0, DTA_LeftOffset, 0, TAG_DONE);
+				}
 			}
 		}
 	}

@@ -87,7 +87,7 @@ FTexture * FTexture::CreateTexture (int lumpnum, int usetype)
 		{ RawPageTexture_TryCreate,		TEX_MiscPatch },
 		{ FlatTexture_TryCreate,		TEX_Flat },
 		{ PatchTexture_TryCreate,		TEX_Any },
-		{ AutomapTexture_TryCreate,		TEX_Autopage },
+		{ AutomapTexture_TryCreate,		TEX_MiscPatch },
 	};
 
 	if (lumpnum == -1) return NULL;

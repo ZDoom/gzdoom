@@ -1457,24 +1457,20 @@ static void SetPointer(FState *state, PSymbol *sym)
 {
 	if (sym==NULL)
 	{
-		state->Action = NULL;
-		state->ParameterIndex=0;
+		state->SetAction(NULL);
 	}
 	else switch (sym->SymbolType)
 	{
 	case SYM_ActionFunction:
-		state->Action = static_cast<PSymbolActionFunction*>(sym)->Function;
-		state->ParameterIndex=0;	// No parameters for patched code pointers
+		state->SetAction(static_cast<PSymbolActionFunction*>(sym));
 		break;
 	/*
 	case SYM_ExternalFunction:
 		state->Action = A_CallExtFunction;
-		state->ParameterIndex = static_cast<PSymbolExternalFunction*>(sym->Data);
 		break;
 	*/
 	default:
-		state->Action = NULL;
-		state->ParameterIndex=0;
+		state->SetAction(NULL);
 	}
 }
 
@@ -1498,7 +1494,7 @@ static int PatchPointer (int ptrNum)
 			{
 				int index = atoi(Line2);
 				if ((unsigned)(index) >= (unsigned)NumActions)
-					state->Action = NULL;
+					state->SetAction(NULL);
 				else
 				{
 					SetPointer(state, CodePtrSymbols[ActionList[index]]);
@@ -1800,7 +1796,7 @@ static int PatchCodePtrs (int dummy)
 
 				if (name == -1)
 				{
-					state->Action = NULL;
+					state->SetAction(NULL);
 					Printf ("Frame %d: Unknown code pointer: %s\n", frame, Line2);
 				}
 				else
@@ -1821,7 +1817,7 @@ static int PatchCodePtrs (int dummy)
 					}
 					if (min > max)
 					{
-						state->Action = NULL;
+						state->SetAction(NULL);
 						Printf ("Frame %d: Unknown code pointer: %s\n", frame, Line2);
 					}
 					else

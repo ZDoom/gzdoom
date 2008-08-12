@@ -121,6 +121,21 @@ AFuncDesc * FindFunction(const char * string)
 
 //==========================================================================
 //
+// Find an action function in AActor's table
+//
+//==========================================================================
+
+PSymbolActionFunction *FindGlobalActionFunction(const char *name)
+{
+	PSymbol *sym = RUNTIME_CLASS(AActor)->Symbols.FindSymbol(name, false);
+	if (sym != NULL && sym->SymbolType == SYM_ActionFunction)
+		return static_cast<PSymbolActionFunction*>(sym);
+	else
+		return NULL;
+}
+
+//==========================================================================
+//
 // Find a state address
 //
 //==========================================================================
@@ -371,7 +386,6 @@ int PrepareStateParameters(FState * state, int numparams)
 	return paramindex;
 }
 
-void A_CallSpecial(AActor * self);
 //==========================================================================
 //
 // DoActionSpecials
@@ -414,7 +428,8 @@ bool DoActionSpecials(FScanner &sc, FState & state, bool multistate, int * state
 		{
 			sc.ScriptError ("Too many arguments to %s", specname.GetChars());
 		}
-		state.Action = GET_ACTION(A_CallSpecial);
+
+		state.SetAction(FindGlobalActionFunction("A_CallSpecial"), false);
 		return true;
 	}
 	return false;
@@ -650,7 +665,7 @@ do_stop:
 				if (sym != NULL && sym->SymbolType == SYM_ActionFunction)
 				{
 					PSymbolActionFunction *afd = static_cast<PSymbolActionFunction *>(sym);
-					state.Action = afd->Function;
+					state.SetAction(afd, false);
 					if (!afd->Arguments.IsEmpty())
 					{
 						const char *params = afd->Arguments.GetChars();
@@ -664,7 +679,11 @@ do_stop:
 						}
 						else
 						{
-							if (!sc.CheckString("(")) goto endofstate;
+							if (!sc.CheckString("(")) 
+							{
+								state.ParameterIndex = afd->defaultparameterindex+1;
+								goto endofstate;
+							}
 						}
 						
 						int paramindex = PrepareStateParameters(&state, numparams);
@@ -680,19 +699,6 @@ do_stop:
 						{
 							switch(*params)
 							{
-							case 'I':
-							case 'i':		// Integer
-								sc.MustGetNumber();
-								v = sc.Number;
-								break;
-
-							case 'F':
-							case 'f':		// Fixed point
-								sc.MustGetFloat();
-								v = fixed_t(sc.Float*FRACUNIT);
-								break;
-
-
 							case 'S':
 							case 's':		// Sound name
 								sc.MustGetString();

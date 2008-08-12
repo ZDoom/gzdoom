@@ -46,11 +46,14 @@ struct PSymbolConst : public PSymbol
 // If the final character is a +, the previous parameter is repeated indefinitely,
 // and an "imaginary" first parameter is inserted containing the total number of
 // parameters passed.
+struct FState;
+typedef void (*actionf_p)(AActor *self, FState *state, int parameters);
 
 struct PSymbolActionFunction : public PSymbol
 {
 	FString Arguments;
-	void (*Function)(AActor*);
+	actionf_p Function;
+	int defaultparameterindex;
 };
 
 // A symbol table -----------------------------------------------------------

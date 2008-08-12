@@ -381,7 +381,7 @@ void ASpecialSpot::Destroy()
 // will build a list of all mace spots in the level and spawn a
 // mace. The rest of the spots will do nothing.
 
-DEFINE_ACTION_FUNCTION(AActor, A_SpawnSingleItem)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnSingleItem)
 {
 	AActor *spot = NULL;
 	DSpotState *state = DSpotState::GetSpotState();

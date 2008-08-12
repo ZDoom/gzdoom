@@ -265,6 +265,7 @@ static void ParseActionDef (FScanner &sc, PClass *cls)
 	sym->SymbolType = SYM_ActionFunction;
 	sym->Arguments = args;
 	sym->Function = afd->Function;
+	sym->defaultparameterindex = -1;
 	if (cls->Symbols.AddSymbol (sym) == NULL)
 	{
 		delete sym;

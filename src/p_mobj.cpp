@@ -517,17 +517,8 @@ bool AActor::SetState (FState *newstate)
 			}
 		}
 
-		if (newstate->GetAction())
+		if (newstate->CallAction(this))
 		{
-			// The parameterized action functions need access to the current state and
-			// if a function is supposed to work with both actors and weapons
-			// there is no real means to get to it reliably so I store it in a global variable here.
-			// Yes, I know this is truly awful but it is the only method I can think of 
-			// that does not involve changing stuff throughout the code. 
-			// Of course this should be rewritten ASAP.
-			CallingState = newstate;
-			newstate->GetAction() (this);
-
 			// Check whether the called action function resulted in destroying the actor
 			if (ObjectFlags & OF_EuthanizeMe)
 				return false;

@@ -1,6 +1,7 @@
 
-ACTOR StrifeWeapon : DoomWeapon
+ACTOR StrifeWeapon : Weapon
 {
+	Weapon.Kickback 100
 }
 
 // Same as the bullet puff for Doom -----------------------------------------

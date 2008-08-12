@@ -7,12 +7,6 @@
 ACTOR DoomWeapon : Weapon
 {
 	Weapon.Kickback 100
-	States
-	{
-	LightDone:
-		SHTG E 0 A_Light0
-		Stop
-	}
 }
 
 // --------------------------------------------------------------------------

@@ -96,7 +96,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FirePistol)
 //
 // A_Saw
 //
-DEFINE_ACTION_FUNCTION(AActor, A_Saw)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Saw)
 {
 	angle_t 	angle;
 	int 		damage=0;
@@ -119,7 +119,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Saw)
 			return;
 	}
 
-	int index = CheckIndex (4, NULL);
+	int index = CheckIndex (4);
 	if (index >= 0) 
 	{
 		fullsound = FSoundID(StateParameters[index]);
@@ -487,7 +487,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireBFG)
 // A_BFGSpray
 // Spawn a BFG explosion on every monster in view
 //
-DEFINE_ACTION_FUNCTION(AActor, A_BFGSpray)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BFGSpray)
 {
 	int 				i;
 	int 				j;
@@ -499,7 +499,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BFGSpray)
 	int					damagecnt = 15;
 	AActor				*linetarget;
 
-	int index = CheckIndex (3, NULL);
+	int index = CheckIndex (3);
 	if (index >= 0) 
 	{
 		spraytype = PClass::FindClass ((ENamedName)StateParameters[index]);

@@ -84,6 +84,7 @@ struct AFuncDesc
 AFuncDesc * FindFunction(const char * string);
 
 
+
 //==========================================================================
 //
 // State parser
@@ -125,11 +126,6 @@ float EvalExpressionF (int id, AActor *self, const PClass *cls=NULL);
 bool EvalExpressionN (int id, AActor *self, const PClass *cls=NULL);
 
 
-// A truly awful hack to get to the state that called an action function
-// without knowing whether it has been called from a weapon or actor.
-extern FState * CallingState;
-int CheckIndex(int paramsize, FState ** pcallstate=NULL);
-
 enum
 {
 	ACMETA_BASE				= 0x83000,
@@ -167,42 +163,53 @@ enum EDefinitionType
 
 // Macros to handle action functions. These are here so that I don't have to
 // change every single use in case the parameters change.
-#define DECLARE_ACTION(name) void AF_##name(AActor *self);
+#define DECLARE_ACTION(name) void AF_##name(AActor *self, FState *, int);
 
+// This distinction is here so that CALL_ACTION produces errors when trying to
+// access a function that requires parameters.
 #define DEFINE_ACTION_FUNCTION(cls, name) \
-	void AF_##name (AActor *); \
+	void AF_##name (AActor *self, FState *, int); \
 	AFuncDesc info_##cls##_##name = { #name, AF_##name }; \
 	MSVC_ASEG AFuncDesc *infoptr_##cls##_##name GCC_ASEG = &info_##cls##_##name; \
-	void AF_##name (AActor *self)
+	void AF_##name (AActor *self, FState *, int)
 
-#define CALL_ACTION(name,self) AF_##name(self)
-#define GET_ACTION(name) AF_##name
+#define DEFINE_ACTION_FUNCTION_PARAMS(cls, name) \
+	void AFP_##name (AActor *self, FState *CallingState, int ParameterIndex); \
+	AFuncDesc info_##cls##_##name = { #name, AFP_##name }; \
+	MSVC_ASEG AFuncDesc *infoptr_##cls##_##name GCC_ASEG = &info_##cls##_##name; \
+	void AFP_##name (AActor *self, FState *CallingState, int ParameterIndex)
+
+#define DECLARE_PARAMINFO FState *CallingState, int ParameterIndex
+#define PUSH_PARAMINFO CallingState, ParameterIndex
+
+#define CALL_ACTION(name,self) AF_##name(self, NULL, 0)
+
+#define CheckIndex(count) (ParameterIndex-1)
 
 #define ACTION_PARAM_START(count) \
-	int index = CheckIndex(count); \
-	if (index <= 0) return;
+	int ap_index_ = CheckIndex(count); \
+	if (ap_index_ <= 0) return;
 
 #define ACTION_PARAM_START_OPTIONAL(count) \
-	int index = CheckIndex(count); 
+	int ap_index_ = CheckIndex(count); 
 
-#define ACTION_INT_PARAM(var) \
-	int var = EvalExpressionI(StateParameters[index++], self);
-#define ACTION_BOOL_PARAM(var) \
-	bool var = !!EvalExpressionI(StateParameters[index++], self);
-#define ACTION_NOT_BOOL_PARAM(var) \
-	bool var = EvalExpressionN(StateParameters[index++], self);
-#define ACTION_FIXED_PARAM(var) \
-	fixed_t var = fixed_t(EvalExpressionF(StateParameters[index++], self)*65536.f);
-#define ACTION_FLOAT_PARAM(var) \
-	float var = EvalExpressionF(StateParameters[index++], self);
-#define ACTION_CLASS_PARAM(var) \
-	const PClass *var = PClass::FindClass(ENamedName(StateParameters[index++]));
-#define ACTION_STATE_PARAM(var) \
-	int var = StateParameters[index++];
-#define ACTION_SOUND_PARAM(var) \
-	FSoundID var = StateParameters[index++];
-#define ACTION_STRING_PARAM(var) \
-	const char *var = FName(ENamedName(StateParameters[index++]));
-
+#define ACTION_PARAM_INT(var) \
+	int var = EvalExpressionI(StateParameters[ap_index_++], self);
+#define ACTION_PARAM_BOOL(var) \
+	bool var = !!EvalExpressionI(StateParameters[ap_index_++], self);
+#define ACTION_PARAM_NOT_BOOL(var) \
+	bool var = EvalExpressionN(StateParameters[ap_index_++], self);
+#define ACTION_PARAM_FIXED(var) \
+	fixed_t var = fixed_t(EvalExpressionF(StateParameters[ap_index_++], self)*65536.f);
+#define ACTION_PARAM_FLOAT(var) \
+	float var = EvalExpressionF(StateParameters[ap_index_++], self);
+#define ACTION_PARAM_CLASS(var) \
+	const PClass *var = PClass::FindClass(ENamedName(StateParameters[ap_index_++]));
+#define ACTION_PARAM_STATE(var) \
+	int var = StateParameters[ap_index_++];
+#define ACTION_PARAM_SOUND(var) \
+	FSoundID var = StateParameters[ap_index_++];
+#define ACTION_PARAM_STRING(var) \
+	const char *var = FName(ENamedName(StateParameters[ap_index_++]));
 
 #endif

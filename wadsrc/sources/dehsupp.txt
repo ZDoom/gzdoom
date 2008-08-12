@@ -329,7 +329,7 @@ OrgSprNames
 StateMap
 {
 	// S_NULL is implicit
-	DoomWeapon,			FirstState, 1,	// S_LIGHTDONE
+	Weapon,				FirstState, 1,	// S_LIGHTDONE
 	Fist,				FirstState, 8,	// S_PUNCH - S_PUNCH5
 	Pistol,				FirstState, 8,	// S_PISTOL - S_PISTOLFLASH
 	Shotgun,			FirstState, 14,	// S_SGUN - S_SGUNFLASH2

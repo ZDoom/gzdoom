@@ -100,9 +100,7 @@ IMPLEMENT_CLASS (AFakeInventory)
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-DECLARE_ACTION(A_ScreamAndUnblock)
-DECLARE_ACTION(A_ActiveAndUnblock)
-DECLARE_ACTION(A_ActiveSound)
+PSymbolActionFunction *FindGlobalActionFunction(const char *name);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -367,24 +365,24 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def)
 			{
 				if (extra.bExplosive)
 				{
-					info->OwnedStates[extra.DeathStart].Action = GET_ACTION(A_Explode);
+					info->OwnedStates[extra.DeathStart].SetAction(FindGlobalActionFunction("A_Explode"));
 				}
 			}
 			else
 			{
 				// The first frame plays the death sound and
 				// the second frame makes it nonsolid.
-				info->OwnedStates[extra.DeathStart].Action= GET_ACTION(A_Scream);
+				info->OwnedStates[extra.DeathStart].SetAction(FindGlobalActionFunction("A_Scream"));
 				if (extra.bSolidOnDeath)
 				{
 				}
 				else if (extra.DeathStart + 1 < extra.DeathEnd)
 				{
-					info->OwnedStates[extra.DeathStart+1].Action = GET_ACTION(A_NoBlocking);
+					info->OwnedStates[extra.DeathStart+1].SetAction(FindGlobalActionFunction("A_NoBlocking"));
 				}
 				else
 				{
-					info->OwnedStates[extra.DeathStart].Action = GET_ACTION(A_ScreamAndUnblock);
+					info->OwnedStates[extra.DeathStart].SetAction(FindGlobalActionFunction("A_ScreamAndUnblock"));
 				}
 
 				if (extra.DeathHeight == 0) extra.DeathHeight = ((AActor*)(type->Defaults))->height;
@@ -412,17 +410,17 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def)
 
 			// The first frame plays the burn sound and
 			// the second frame makes it nonsolid.
-			info->OwnedStates[extra.FireDeathStart].Action = GET_ACTION(A_ActiveSound);
+			info->OwnedStates[extra.FireDeathStart].SetAction(FindGlobalActionFunction("A_ActiveSound"));
 			if (extra.bSolidOnBurn)
 			{
 			}
 			else if (extra.FireDeathStart + 1 < extra.FireDeathEnd)
 			{
-				info->OwnedStates[extra.FireDeathStart+1].Action = GET_ACTION(A_NoBlocking);
+				info->OwnedStates[extra.FireDeathStart+1].SetAction(FindGlobalActionFunction("A_NoBlocking"));
 			}
 			else
 			{
-				info->OwnedStates[extra.FireDeathStart].Action = GET_ACTION(A_ActiveAndUnblock);
+				info->OwnedStates[extra.FireDeathStart].SetAction(FindGlobalActionFunction("A_ActiveAndUnblock"));
 			}
 
 			if (extra.BurnHeight == 0) extra.BurnHeight = ((AActor*)(type->Defaults))->height;
@@ -442,13 +440,13 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def)
 			info->OwnedStates[i].NextState = &info->OwnedStates[info->NumOwnedStates-1];
 			info->OwnedStates[i].Tics = 5;
 			info->OwnedStates[i].Misc1 = 0;
-			info->OwnedStates[i].Action = GET_ACTION(A_FreezeDeath);
+			info->OwnedStates[i].SetAction(FindGlobalActionFunction("A_FreezeDeath"));
 
 			i = info->NumOwnedStates - 1;
 			info->OwnedStates[i].NextState = &info->OwnedStates[i];
 			info->OwnedStates[i].Tics = 1;
 			info->OwnedStates[i].Misc1 = 0;
-			info->OwnedStates[i].Action = GET_ACTION(A_FreezeDeathChunks);
+			info->OwnedStates[i].SetAction(FindGlobalActionFunction("A_FreezeDeathChunks"));
 			AddState("Ice", &info->OwnedStates[extra.IceDeathStart]);
 		}
 		else if (extra.bGenericIceDeath)
@@ -859,40 +857,3 @@ static void ParseSpriteFrames (FActorInfo *info, TArray<FState> &states, FScanne
 	}
 }
 
-//===========================================================================
-//
-// A_ScreamAndUnblock
-//
-//===========================================================================
-
-DEFINE_ACTION_FUNCTION(AActor, A_ScreamAndUnblock)
-{
-	CALL_ACTION(A_Scream, self);
-	CALL_ACTION(A_NoBlocking, self);
-}
-
-//===========================================================================
-//
-// A_ActiveAndUnblock
-//
-//===========================================================================
-
-DEFINE_ACTION_FUNCTION(AActor, A_ActiveAndUnblock)
-{
-	CALL_ACTION(A_ActiveSound, self);
-	CALL_ACTION(A_NoBlocking, self);
-}
-
-//===========================================================================
-//
-// A_ActiveSound
-//
-//===========================================================================
-
-DEFINE_ACTION_FUNCTION(AActor, A_ActiveSound)
-{
-	if (self->ActiveSound)
-	{
-		S_Sound (self, CHAN_VOICE, self->ActiveSound, 1, ATTN_NORM);
-	}
-}

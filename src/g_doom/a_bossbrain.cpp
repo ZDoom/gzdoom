@@ -76,7 +76,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BrainDie)
 	G_ExitLevel (0, false);
 }
 
-DEFINE_ACTION_FUNCTION(AActor, A_BrainSpit)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BrainSpit)
 {
 	DSpotState *state = DSpotState::GetSpotState();
 	AActor *targ;
@@ -88,7 +88,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BrainSpit)
 	if (targ != NULL)
 	{
 		const PClass *spawntype = NULL;
-		int index = CheckIndex (1, NULL);
+		int index = CheckIndex (1);
 		if (index >= 0) spawntype = PClass::FindClass ((ENamedName)StateParameters[index]);
 		if (spawntype == NULL) spawntype = PClass::FindClass("SpawnShot");
 
@@ -129,7 +129,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BrainSpit)
 	}
 }
 
-DEFINE_ACTION_FUNCTION(AActor, A_SpawnFly)
+static void SpawnFly(AActor *self, const PClass *spawntype, FSoundID sound)
 {
 	AActor *newmobj;
 	AActor *fog;
@@ -143,22 +143,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnFly)
 	targ = self->target;
 
 
-	const PClass *spawntype = NULL;
-	int index = CheckIndex (1, NULL);
-		// First spawn teleport fire.
-	if (index >= 0) 
+	if (spawntype != NULL)
 	{
-		spawntype = PClass::FindClass ((ENamedName)StateParameters[index]);
-		if (spawntype != NULL) 
-		{
-			fog = Spawn (spawntype, targ->x, targ->y, targ->z, ALLOW_REPLACE);
-			if (fog != NULL) S_Sound (fog, CHAN_BODY, fog->SeeSound, 1, ATTN_NORM);
-		}
-	}
-	else
-	{
-		fog = Spawn("SpawnFire", targ->x, targ->y, targ->z, ALLOW_REPLACE);
-		if (fog != NULL) S_Sound (fog, CHAN_BODY, "brain/spawn", 1, ATTN_NORM);
+		fog = Spawn (spawntype, targ->x, targ->y, targ->z, ALLOW_REPLACE);
+		if (fog != NULL) S_Sound (fog, CHAN_BODY, sound, 1, ATTN_NORM);
 	}
 
 	FName SpawnName;
@@ -245,9 +233,29 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnFly)
 	self->Destroy ();
 }
 
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnFly)
+{
+	const PClass *spawntype = NULL;
+	FSoundID sound;
+
+	int index = CheckIndex (1);
+		// First spawn teleport fire.
+	if (index >= 0) 
+	{
+		spawntype = PClass::FindClass ((ENamedName)StateParameters[index]);
+		if (spawntype != NULL) sound = GetDefaultByType(spawntype)->SeeSound;
+	}
+	else
+	{
+		spawntype = PClass::FindClass ("SpawnFire");
+		sound = "brain/spawn";
+	}
+	SpawnFly(self, spawntype, sound);
+}
+
 // travelling cube sound
 DEFINE_ACTION_FUNCTION(AActor, A_SpawnSound)
 {
 	S_Sound (self, CHAN_BODY, "brain/cube", 1, ATTN_IDLE);
-	CALL_ACTION(A_SpawnFly, self);
+	SpawnFly(self, PClass::FindClass("SpawnFire"), "brain/spawn");
 }

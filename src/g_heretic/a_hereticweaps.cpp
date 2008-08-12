@@ -59,7 +59,7 @@ extern bool P_AutoUseChaosDevice (player_t *player);
 //
 //----------------------------------------------------------------------------
 
-DEFINE_ACTION_FUNCTION(AActor, A_StaffAttack)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_StaffAttack)
 {
 	angle_t angle;
 	int damage;
@@ -72,7 +72,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_StaffAttack)
 		return;
 	}
 
-	int index = CheckIndex (2, NULL);
+	int index = CheckIndex (2);
 	if (index < 0) return;
 
 	damage = EvalExpressionI (StateParameters[index], self);
@@ -233,7 +233,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireCrossbowPL2)
 //
 //---------------------------------------------------------------------------
 
-DEFINE_ACTION_FUNCTION(AActor, A_GauntletAttack)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GauntletAttack)
 {
 	angle_t angle;
 	int damage;
@@ -250,7 +250,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_GauntletAttack)
 		return;
 	}
 
-	int index = CheckIndex (1, NULL);
+	int index = CheckIndex (1);
 	if (index < 0) return;
 
 	power = EvalExpressionI (StateParameters[index], self);

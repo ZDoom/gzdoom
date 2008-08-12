@@ -40,8 +40,7 @@
 class AActor;
 class player_t;
 struct pspdef_s;
-
-typedef void (*actionf_p)( AActor* );
+struct FState;
 
 class FThinkerIterator;
 

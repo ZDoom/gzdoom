@@ -325,7 +325,7 @@ static void MarinePunch(AActor *self, int damagemul)
 	}
 }
 
-DEFINE_ACTION_FUNCTION(AActor, A_M_Punch)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_M_Punch)
 {
 	int index=CheckIndex(1);
 	if (index<0) return;
@@ -361,7 +361,7 @@ void P_GunShot2 (AActor *mo, bool accurate, int pitch, const PClass *pufftype)
 //
 //============================================================================
 
-DEFINE_ACTION_FUNCTION(AActor, A_M_FirePistol)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_M_FirePistol)
 {
 	if (self->target == NULL)
 		return;
@@ -451,7 +451,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_M_FireShotgun2)
 //
 //============================================================================
 
-DEFINE_ACTION_FUNCTION(AActor, A_M_FireCGun)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_M_FireCGun)
 {
 	if (self->target == NULL)
 		return;

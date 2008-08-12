@@ -81,6 +81,10 @@
 
 const BYTE SF_FULLBRIGHT = 0x40;
 
+struct Baggage;
+class FScanner;
+struct FActorInfo;
+
 struct FState
 {
 	WORD		sprite;
@@ -88,8 +92,8 @@ struct FState
 	SBYTE		Misc1;
 	BYTE		Misc2;
 	BYTE		Frame;
-	actionf_p	Action;
 	FState		*NextState;
+	actionf_p	ActionFunc;
 	int			ParameterIndex;
 
 	inline int GetFrame() const
@@ -116,15 +120,35 @@ struct FState
 	{
 		return NextState;
 	}
-	inline actionf_p GetAction() const
-	{
-		return Action;
-	}
 	inline void SetFrame(BYTE frame)
 	{
 		Frame = (Frame & SF_FULLBRIGHT) | (frame-'A');
 	}
-
+	void SetAction(PSymbolActionFunction *func, bool setdefaultparams = true)
+	{
+		if (func != NULL)
+		{
+			ActionFunc = func->Function;
+			if (setdefaultparams) ParameterIndex = func->defaultparameterindex+1;
+		}
+		else 
+		{
+			ActionFunc = NULL;
+			if (setdefaultparams) ParameterIndex = 0;
+		}
+	}
+	inline bool CallAction(AActor *self)
+	{
+		if (ActionFunc != NULL)
+		{
+			ActionFunc(self, this, ParameterIndex);
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
 	static const PClass *StaticFindStateOwner (const FState *state);
 	static const PClass *StaticFindStateOwner (const FState *state, const FActorInfo *info);
 };

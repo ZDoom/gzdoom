@@ -21,7 +21,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FatRaise)
 	S_Sound (self, CHAN_WEAPON, "fatso/raiseguns", 1, ATTN_NORM);
 }
 
-DEFINE_ACTION_FUNCTION(AActor, A_FatAttack1)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FatAttack1)
 {
 	AActor *missile;
 	angle_t an;
@@ -30,7 +30,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FatAttack1)
 		return;
 
 	const PClass *spawntype = NULL;
-	int index = CheckIndex (1, NULL);
+	int index = CheckIndex (1);
 	if (index >= 0) spawntype = PClass::FindClass ((ENamedName)StateParameters[index]);
 	if (spawntype == NULL) spawntype = PClass::FindClass("FatShot");
 
@@ -49,7 +49,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FatAttack1)
 	}
 }
 
-DEFINE_ACTION_FUNCTION(AActor, A_FatAttack2)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FatAttack2)
 {
 	AActor *missile;
 	angle_t an;
@@ -58,7 +58,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FatAttack2)
 		return;
 
 	const PClass *spawntype = NULL;
-	int index = CheckIndex (1, NULL);
+	int index = CheckIndex (1);
 	if (index >= 0) spawntype = PClass::FindClass ((ENamedName)StateParameters[index]);
 	if (spawntype == NULL) spawntype = PClass::FindClass("FatShot");
 
@@ -77,7 +77,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FatAttack2)
 	}
 }
 
-DEFINE_ACTION_FUNCTION(AActor, A_FatAttack3)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FatAttack3)
 {
 	AActor *missile;
 	angle_t an;
@@ -86,7 +86,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FatAttack3)
 		return;
 
 	const PClass *spawntype = NULL;
-	int index = CheckIndex (1, NULL);
+	int index = CheckIndex (1);
 	if (index >= 0) spawntype = PClass::FindClass ((ENamedName)StateParameters[index]);
 	if (spawntype == NULL) spawntype = PClass::FindClass("FatShot");
 
@@ -116,12 +116,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_FatAttack3)
 // Original idea: Linguica
 //
 
-DEFINE_ACTION_FUNCTION(AActor, A_Mushroom)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Mushroom)
 {
 	int i, j, n = self->GetMissileDamage (0, 1);
 
 	const PClass *spawntype = NULL;
-	int index = CheckIndex (2, NULL);
+	int index = CheckIndex (2);
 	if (index >= 0) 
 	{
 		spawntype = PClass::FindClass((ENamedName)StateParameters[index]);

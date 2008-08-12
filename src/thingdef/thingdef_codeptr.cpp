@@ -82,7 +82,6 @@ static FRandom pr_burst ("Burst");
 
 // A truly awful hack to get to the state that called an action function
 // without knowing whether it has been called from a weapon or actor.
-FState * CallingState;
 
 struct StateCallData
 {
@@ -114,11 +113,10 @@ bool ACustomInventory::CallStateChain (AActor *actor, FState * State)
 	while (State != NULL)
 	{
 		// Assume success. The code pointer will set this to false if necessary
-		CallingState = StateCall.State = State;
-		if (State->GetAction() != NULL) 
+		StateCall.State = State;
+		StateCall.Result = true;
+		if (State->CallAction(actor))
 		{
-			StateCall.Result = true;	
-			State->GetAction() (actor);
 			// collect all the results. Even one successful call signifies overall success.
 			result |= StateCall.Result;
 		}
@@ -152,23 +150,6 @@ bool ACustomInventory::CallStateChain (AActor *actor, FState * State)
 
 //==========================================================================
 //
-// Let's isolate all handling of CallingState in this one place 
-// so that removing it later becomes easier
-//
-//==========================================================================
-int CheckIndex(int paramsize, FState ** pcallstate)
-{
-	if (CallingState->ParameterIndex == 0) return -1;
-
-	unsigned int index = (unsigned int) CallingState->ParameterIndex-1;
-	if (index > StateParameters.Size()-paramsize) return -1;
-	if (pcallstate) *pcallstate=CallingState;
-	return index;
-}
-
-
-//==========================================================================
-//
 // Simple flag changers
 //
 //==========================================================================
@@ -195,33 +176,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_UnsetFloat)
 //==========================================================================
 //
 // Customizable attack functions which use actor parameters.
-// I think this is among the most requested stuff ever ;-)
 //
 //==========================================================================
-static void DoAttack (AActor *self, bool domelee, bool domissile)
+static void DoAttack (AActor *self, bool domelee, bool domissile,
+					  int MeleeDamage, FSoundID MeleeSound, const PClass *MissileType,fixed_t MissileHeight)
 {
-	int index=CheckIndex(4);
-	int MeleeDamage;
-	int MeleeSound;
-	FName MissileName;
-	fixed_t MissileHeight;
-
 	if (self->target == NULL) return;
-
-	if (index > 0)
-	{
-		MeleeDamage=EvalExpressionI(StateParameters[index], self);
-		MeleeSound=StateParameters[index+1];
-		MissileName=(ENamedName)StateParameters[index+2];
-		MissileHeight=fixed_t(EvalExpressionF(StateParameters[index+3], self)/65536.f);
-	}
-	else
-	{
-		MeleeDamage = self->GetClass()->Meta.GetMetaInt (ACMETA_MeleeDamage, 0);
-		MeleeSound =  self->GetClass()->Meta.GetMetaInt (ACMETA_MeleeSound, 0);
-		MissileName=(ENamedName) self->GetClass()->Meta.GetMetaInt (ACMETA_MissileName, NAME_None);
-		MissileHeight= self->GetClass()->Meta.GetMetaFixed (ACMETA_MissileHeight, 32*FRACUNIT);
-	}
 
 	A_FaceTarget (self);
 	if (domelee && MeleeDamage>0 && self->CheckMeleeRange ())
@@ -231,52 +191,65 @@ static void DoAttack (AActor *self, bool domelee, bool domissile)
 		P_DamageMobj (self->target, self, self, damage, NAME_Melee);
 		P_TraceBleed (damage, self->target, self);
 	}
-	else if (domissile && MissileName != NAME_None)
+	else if (domissile && MissileType != NULL)
 	{
-		const PClass * ti=PClass::FindClass(MissileName);
-		if (ti) 
-		{
-			// This seemingly senseless code is needed for proper aiming.
-			self->z+=MissileHeight-32*FRACUNIT;
-			AActor * missile = P_SpawnMissileXYZ (self->x, self->y, self->z + 32*FRACUNIT, self, self->target, ti, false);
-			self->z-=MissileHeight-32*FRACUNIT;
+		// This seemingly senseless code is needed for proper aiming.
+		self->z+=MissileHeight-32*FRACUNIT;
+		AActor * missile = P_SpawnMissileXYZ (self->x, self->y, self->z + 32*FRACUNIT, self, self->target, MissileType, false);
+		self->z-=MissileHeight-32*FRACUNIT;
 
-			if (missile)
+		if (missile)
+		{
+			// automatic handling of seeker missiles
+			if (missile->flags2&MF2_SEEKERMISSILE)
 			{
-				// automatic handling of seeker missiles
-				if (missile->flags2&MF2_SEEKERMISSILE)
-				{
-					missile->tracer=self->target;
-				}
-				// set the health value so that the missile works properly
-				if (missile->flags4&MF4_SPECTRAL)
-				{
-					missile->health=-2;
-				}
-				P_CheckMissileSpawn(missile);
+				missile->tracer=self->target;
 			}
+			// set the health value so that the missile works properly
+			if (missile->flags4&MF4_SPECTRAL)
+			{
+				missile->health=-2;
+			}
+			P_CheckMissileSpawn(missile);
 		}
 	}
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_MeleeAttack)
 {
-	DoAttack(self, true, false);
+	int MeleeDamage = self->GetClass()->Meta.GetMetaInt (ACMETA_MeleeDamage, 0);
+	FSoundID MeleeSound =  self->GetClass()->Meta.GetMetaInt (ACMETA_MeleeSound, 0);
+	DoAttack(self, true, false, MeleeDamage, MeleeSound, NULL, 0);
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_MissileAttack)
 {
-	DoAttack(self, false, true);
+	const PClass *MissileType=PClass::FindClass((ENamedName) self->GetClass()->Meta.GetMetaInt (ACMETA_MissileName, NAME_None));
+	fixed_t MissileHeight= self->GetClass()->Meta.GetMetaFixed (ACMETA_MissileHeight, 32*FRACUNIT);
+	DoAttack(self, false, true, 0, 0, MissileType, MissileHeight);
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_ComboAttack)
 {
-	DoAttack(self, true, true);
+	int MeleeDamage = self->GetClass()->Meta.GetMetaInt (ACMETA_MeleeDamage, 0);
+	FSoundID MeleeSound =  self->GetClass()->Meta.GetMetaInt (ACMETA_MeleeSound, 0);
+	const PClass *MissileType=PClass::FindClass((ENamedName) self->GetClass()->Meta.GetMetaInt (ACMETA_MissileName, NAME_None));
+	fixed_t MissileHeight= self->GetClass()->Meta.GetMetaFixed (ACMETA_MissileHeight, 32*FRACUNIT);
+	DoAttack(self, true, true, MeleeDamage, MeleeSound, MissileType, MissileHeight);
 }
 
-DEFINE_ACTION_FUNCTION(AActor, A_BasicAttack)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BasicAttack)
 {
-	DoAttack(self, true, true);
+	int index=CheckIndex(4);
+	if (index > 0)
+	{
+		int MeleeDamage=EvalExpressionI(StateParameters[index], self);
+		FSoundID MeleeSound=StateParameters[index+1];
+		const PClass *MissileType=PClass::FindClass((ENamedName)StateParameters[index+2]);
+		fixed_t MissileHeight=fixed_t(EvalExpressionF(StateParameters[index+3], self)/65536.f);
+
+		DoAttack(self, true, true, MeleeDamage, MeleeSound, MissileType, MissileHeight);
+	}
 }
 
 //==========================================================================
@@ -286,23 +259,23 @@ DEFINE_ACTION_FUNCTION(AActor, A_BasicAttack)
 // misc field directly so they can be used in weapon states
 //
 //==========================================================================
-static void DoPlaySound(AActor * self, int channel)
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_PlaySound)
 {
 	int index=CheckIndex(1);
 	if (index<0) return;
 
 	int soundid = StateParameters[index];
-	S_Sound (self, channel, soundid, 1, ATTN_NORM);
+	S_Sound (self, CHAN_BODY, soundid, 1, ATTN_NORM);
 }
 
-DEFINE_ACTION_FUNCTION(AActor, A_PlaySound)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_PlayWeaponSound)
 {
-	DoPlaySound(self, CHAN_BODY);
-}
+	int index=CheckIndex(1);
+	if (index<0) return;
 
-DEFINE_ACTION_FUNCTION(AActor, A_PlayWeaponSound)
-{
-	DoPlaySound(self, CHAN_WEAPON);
+	int soundid = StateParameters[index];
+	S_Sound (self, CHAN_WEAPON, soundid, 1, ATTN_NORM);
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_StopSound)
@@ -310,7 +283,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_StopSound)
 	S_StopSound(self, CHAN_VOICE);
 }
 
-DEFINE_ACTION_FUNCTION(AActor, A_PlaySoundEx)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_PlaySoundEx)
 {
 	int index = CheckIndex(4);
 	if (index < 0) return;
@@ -348,7 +321,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_PlaySoundEx)
 	}
 }
 
-DEFINE_ACTION_FUNCTION(AActor, A_StopSoundEx)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_StopSoundEx)
 {
 	int index = CheckIndex (1);
 	if (index < 0) return;
@@ -366,7 +339,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_StopSoundEx)
 // Generic seeker missile function
 //
 //==========================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_SeekerMissile)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SeekerMissile)
 {
 	int index=CheckIndex(2);
 	if (index<0) return;
@@ -381,7 +354,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SeekerMissile)
 // Hitscan attack with a customizable amount of bullets (specified in damage)
 //
 //==========================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_BulletAttack)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BulletAttack)
 {
 	int i;
 	int bangle;
@@ -488,10 +461,9 @@ static void DoJump(AActor * self, FState * CallingState, int offset)
 // State jump function
 //
 //==========================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_Jump)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Jump)
 {
-	FState * CallingState;
-	int index = CheckIndex(3, &CallingState);
+	int index = CheckIndex(3);
 	int maxchance;
 
 	if (index >= 0 &&
@@ -516,10 +488,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_Jump)
 // State jump function
 //
 //==========================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_JumpIfHealthLower)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfHealthLower)
 {
-	FState * CallingState;
-	int index=CheckIndex(2, &CallingState);
+	int index=CheckIndex(2);
 
 	if (index>=0 && self->health < EvalExpressionI (StateParameters[index], self))
 		DoJump(self, CallingState, StateParameters[index+1]);
@@ -532,10 +503,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_JumpIfHealthLower)
 // State jump function
 //
 //==========================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_JumpIfCloser)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfCloser)
 {
-	FState * CallingState = NULL;
-	int index = CheckIndex(2, &CallingState);
+	int index = CheckIndex(2);
 	AActor * target;
 
 	if (!self->player)
@@ -567,10 +537,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_JumpIfCloser)
 // State jump function
 //
 //==========================================================================
-void DoJumpIfInventory(AActor * self, AActor * owner)
+void DoJumpIfInventory(AActor * self, AActor * owner, DECLARE_PARAMINFO)
 {
-	FState * CallingState;
-	int index=CheckIndex(3, &CallingState);
+	int index=CheckIndex(3);
 	if (index<0) return;
 
 	ENamedName ItemType=(ENamedName)StateParameters[index];
@@ -591,14 +560,14 @@ void DoJumpIfInventory(AActor * self, AActor * owner)
 	}
 }
 
-DEFINE_ACTION_FUNCTION(AActor, A_JumpIfInventory)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfInventory)
 {
-	DoJumpIfInventory(self, self);
+	DoJumpIfInventory(self, self, PUSH_PARAMINFO);
 }
 
-DEFINE_ACTION_FUNCTION(AActor, A_JumpIfInTargetInventory)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfInTargetInventory)
 {
-	DoJumpIfInventory(self, self->target);
+	DoJumpIfInventory(self, self->target, PUSH_PARAMINFO);
 }
 
 //==========================================================================
@@ -607,7 +576,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_JumpIfInTargetInventory)
 //
 //==========================================================================
 
-DEFINE_ACTION_FUNCTION(AActor, A_Explode)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Explode)
 {
 	int damage;
 	int distance;
@@ -650,7 +619,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Explode)
 //
 //==========================================================================
 
-DEFINE_ACTION_FUNCTION(AActor, A_RadiusThrust)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusThrust)
 {
 	int force = 0;
 	int distance = 0;
@@ -678,7 +647,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_RadiusThrust)
 // Execute a line special / script
 //
 //==========================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_CallSpecial)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CallSpecial)
 {
 	int index=CheckIndex(6);
 	if (index<0) return;
@@ -718,7 +687,7 @@ enum CM_Flags
 	CMF_CHECKTARGETDEAD = 8,
 };
 
-DEFINE_ACTION_FUNCTION(AActor, A_CustomMissile)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomMissile)
 {
 	int index=CheckIndex(6);
 	if (index<0) return;
@@ -840,7 +809,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CustomMissile)
 // An even more customizable hitscan attack
 //
 //==========================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_CustomBulletAttack)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomBulletAttack)
 {
 	int index=CheckIndex(7);
 	if (index<0) return;
@@ -887,7 +856,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CustomBulletAttack)
 // A fully customizable melee attack
 //
 //==========================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_CustomMeleeAttack)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomMeleeAttack)
 {
 	int index=CheckIndex(5);
 	if (index<0) return;
@@ -921,7 +890,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CustomMeleeAttack)
 // A fully customizable combo attack
 //
 //==========================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_CustomComboAttack)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomComboAttack)
 {
 	int index=CheckIndex(6);
 	if (index<0) return;
@@ -978,10 +947,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_CustomComboAttack)
 // State jump function
 //
 //==========================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_JumpIfNoAmmo)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfNoAmmo)
 {
-	FState * CallingState = NULL;
-	int index=CheckIndex(1, &CallingState);
+	int index=CheckIndex(1);
 
 	if (pStateCall != NULL) pStateCall->Result=false;	// Jumps should never set the result for inventory state chains!
 	if (index<0 || !self->player || !self->player->ReadyWeapon || pStateCall != NULL) return;	// only for weapons!
@@ -997,7 +965,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_JumpIfNoAmmo)
 // An even more customizable hitscan attack
 //
 //==========================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_FireBullets)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireBullets)
 {
 	int index=CheckIndex(7);
 	if (index<0 || !self->player) return;
@@ -1060,7 +1028,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireBullets)
 // A_FireProjectile
 //
 //==========================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_FireCustomMissile)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireCustomMissile)
 {
 	int index=CheckIndex(6);
 	if (index<0 || !self->player) return;
@@ -1120,7 +1088,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireCustomMissile)
 // Berserk is not handled here. That can be done with A_CheckIfInventory
 //
 //==========================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_CustomPunch)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomPunch)
 {
 	int index=CheckIndex(5);
 	if (index<0 || !self->player) return;
@@ -1177,7 +1145,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CustomPunch)
 // customizable railgun attack function
 //
 //==========================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_RailAttack)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RailAttack)
 {
 	int index=CheckIndex(7);
 	if (index<0 || !self->player) return;
@@ -1208,7 +1176,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_RailAttack)
 //
 //==========================================================================
 
-DEFINE_ACTION_FUNCTION(AActor, A_CustomRailgun)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomRailgun)
 {
 	int index = CheckIndex(7);
 	if (index < 0) return;
@@ -1267,7 +1235,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CustomRailgun)
 //
 //===========================================================================
 
-static void DoGiveInventory(AActor * self, AActor * receiver)
+static void DoGiveInventory(AActor * self, AActor * receiver, DECLARE_PARAMINFO)
 {
 	int index=CheckIndex(2);
 	bool res=true;
@@ -1307,14 +1275,14 @@ static void DoGiveInventory(AActor * self, AActor * receiver)
 
 }	
 
-DEFINE_ACTION_FUNCTION(AActor, A_GiveInventory)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GiveInventory)
 {
-	DoGiveInventory(self, self);
+	DoGiveInventory(self, self, PUSH_PARAMINFO);
 }	
 
-DEFINE_ACTION_FUNCTION(AActor, A_GiveToTarget)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GiveToTarget)
 {
-	DoGiveInventory(self, self->target);
+	DoGiveInventory(self, self->target, PUSH_PARAMINFO);
 }	
 
 //===========================================================================
@@ -1323,7 +1291,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_GiveToTarget)
 //
 //===========================================================================
 
-void DoTakeInventory(AActor * self, AActor * receiver)
+void DoTakeInventory(AActor * self, AActor * receiver, DECLARE_PARAMINFO)
 {
 	int index=CheckIndex(2);
 	if (index<0 || receiver == NULL) return;
@@ -1347,14 +1315,14 @@ void DoTakeInventory(AActor * self, AActor * receiver)
 	}
 }	
 
-DEFINE_ACTION_FUNCTION(AActor, A_TakeInventory)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_TakeInventory)
 {
-	DoTakeInventory(self, self);
+	DoTakeInventory(self, self, PUSH_PARAMINFO);
 }	
 
-DEFINE_ACTION_FUNCTION(AActor, A_TakeFromTarget)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_TakeFromTarget)
 {
-	DoTakeInventory(self, self->target);
+	DoTakeInventory(self, self->target, PUSH_PARAMINFO);
 }	
 
 //===========================================================================
@@ -1450,10 +1418,9 @@ static void InitSpawnedItem(AActor *self, AActor *mo, int flags)
 //
 //===========================================================================
 
-DEFINE_ACTION_FUNCTION(AActor, A_SpawnItem)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnItem)
 {
-	FState * CallingState;
-	int index=CheckIndex(5, &CallingState);
+	int index=CheckIndex(5);
 	if (index<0) return;
 
 	const PClass * missile= PClass::FindClass((ENamedName)StateParameters[index]);
@@ -1502,10 +1469,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnItem)
 // Enhanced spawning function
 //
 //===========================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_SpawnItemEx)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnItemEx)
 {
-	FState * CallingState;
-	int index=CheckIndex(9, &CallingState);
+	int index=CheckIndex(9);
 	if (index<0) return;
 
 	const PClass * missile= PClass::FindClass((ENamedName)StateParameters[index]);
@@ -1579,10 +1545,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnItemEx)
 // Throws a grenade (like Hexen's fighter flechette)
 //
 //===========================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_ThrowGrenade)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ThrowGrenade)
 {
-	FState * CallingState;
-	int index=CheckIndex(5, &CallingState);
+	int index=CheckIndex(5);
 	if (index<0) return;
 
 	const PClass * missile= PClass::FindClass((ENamedName)StateParameters[index]);
@@ -1635,9 +1600,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_ThrowGrenade)
 // A_Recoil
 //
 //===========================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_Recoil)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Recoil)
 {
-	int index=CheckIndex(1, NULL);
+	int index=CheckIndex(1);
 	if (index<0) return;
 	fixed_t xymom = fixed_t(EvalExpressionF (StateParameters[index], self) * FRACUNIT);
 
@@ -1653,9 +1618,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_Recoil)
 // A_SelectWeapon
 //
 //===========================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_SelectWeapon)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SelectWeapon)
 {
-	int index=CheckIndex(1, NULL);
+	int index=CheckIndex(1);
 	if (index<0 || self->player == NULL) return;
 
 	AWeapon * weaponitem = static_cast<AWeapon*>(self->FindInventory((ENamedName)StateParameters[index]));
@@ -1678,9 +1643,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_SelectWeapon)
 //===========================================================================
 EXTERN_CVAR(Float, con_midtime)
 
-DEFINE_ACTION_FUNCTION(AActor, A_Print)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Print)
 {
-	int index=CheckIndex(3, NULL);
+	int index=CheckIndex(3);
 	if (index<0) return;
 
 	if (self->CheckLocalView (consoleplayer) ||
@@ -1714,9 +1679,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_Print)
 // A_SetTranslucent
 //
 //===========================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_SetTranslucent)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetTranslucent)
 {
-	int index=CheckIndex(2, NULL);
+	int index=CheckIndex(2);
 	if (index<0) return;
 
 	fixed_t alpha = fixed_t(EvalExpressionF (StateParameters[index], self) * FRACUNIT);
@@ -1735,11 +1700,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_SetTranslucent)
 // Fades the actor in
 //
 //===========================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_FadeIn)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FadeIn)
 {
 	fixed_t reduce = 0;
 	
-	int index=CheckIndex(1, NULL);
+	int index=CheckIndex(1);
 	if (index>=0) 
 	{
 		reduce = fixed_t(EvalExpressionF (StateParameters[index], self) * FRACUNIT);
@@ -1759,11 +1724,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_FadeIn)
 // fades the actor out and destroys it when done
 //
 //===========================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_FadeOut)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FadeOut)
 {
 	fixed_t reduce = 0;
 	
-	int index=CheckIndex(1, NULL);
+	int index=CheckIndex(1);
 	if (index>=0) 
 	{
 		reduce = fixed_t(EvalExpressionF (StateParameters[index], self) * FRACUNIT);
@@ -1781,13 +1746,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_FadeOut)
 // A_SpawnDebris
 //
 //===========================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_SpawnDebris)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnDebris)
 {
 	int i;
 	AActor * mo;
 	const PClass * debris;
 
-	int index=CheckIndex(4, NULL);
+	int index=CheckIndex(4);
 	if (index<0) return;
 
 	debris = PClass::FindClass((ENamedName)StateParameters[index]);
@@ -1827,7 +1792,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnDebris)
 // jumps if no player can see this actor
 //
 //===========================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_CheckSight)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckSight)
 {
 	if (pStateCall != NULL) pStateCall->Result=false;	// Jumps should never set the result for inventory state chains!
 
@@ -1836,8 +1801,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CheckSight)
 		if (playeringame[i] && P_CheckSight(players[i].camera,self,true)) return;
 	}
 
-	FState * CallingState;
-	int index=CheckIndex(1, &CallingState);
+	int index=CheckIndex(1);
 
 	if (index>=0) DoJump(self, CallingState, StateParameters[index]);
 
@@ -1849,9 +1813,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_CheckSight)
 // Inventory drop
 //
 //===========================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_DropInventory)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DropInventory)
 {
-	int index=CheckIndex(1, &CallingState);
+	int index=CheckIndex(1);
 	if (index<0) return;
 
 	AInventory * inv = self->FindInventory((ENamedName)StateParameters[index]);
@@ -1867,7 +1831,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_DropInventory)
 // A_SetBlend
 //
 //===========================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_SetBlend)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetBlend)
 {
 	int index=CheckIndex(3);
 	if (index<0) return;
@@ -1892,10 +1856,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_SetBlend)
 // A_JumpIf
 //
 //===========================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_JumpIf)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIf)
 {
-	FState * CallingState;
-	int index=CheckIndex(2, &CallingState);
+	int index=CheckIndex(2);
 	if (index<0) return;
 	INTBOOL expression = EvalExpressionI (StateParameters[index], self);
 
@@ -1941,7 +1904,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_KillChildren)
 // A_CountdownArg
 //
 //===========================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_CountdownArg)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CountdownArg)
 {
 	int index=CheckIndex(1);
 	if (index<0) return;
@@ -1972,11 +1935,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_CountdownArg)
 //
 //============================================================================
 
-DEFINE_ACTION_FUNCTION(AActor, A_Burst)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Burst)
 {
    int i, numChunks;
    AActor * mo;
-   int index=CheckIndex(1, NULL);
+   int index=CheckIndex(1);
    if (index<0) return;
    const PClass * chunk = PClass::FindClass((ENamedName)StateParameters[index]);
    if (chunk == NULL) return;
@@ -2025,10 +1988,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_Burst)
 // [GRB] Jumps if actor is standing on floor
 //
 //===========================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_CheckFloor)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckFloor)
 {
-	FState *CallingState = NULL;
-	int index = CheckIndex (1, &CallingState);
+	int index = CheckIndex (1);
 
 	if (pStateCall != NULL) pStateCall->Result=false;	// Jumps should never set the result for inventory state chains!
 	if (self->z <= self->floorz && index >= 0)
@@ -2060,7 +2022,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Stop)
 // A_Respawn
 //
 //===========================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_Respawn)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Respawn)
 {
 	fixed_t x = self->SpawnPoint[0];
 	fixed_t y = self->SpawnPoint[1];
@@ -2083,7 +2045,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Respawn)
 		self->SetState (self->SpawnState);
 		self->renderflags &= ~RF_INVISIBLE;
 
-		int index=CheckIndex(1, NULL);
+		int index=CheckIndex(1);
 		if (index<0 || EvalExpressionN (StateParameters[index], self))
 		{
 			Spawn<ATeleportFog> (x, y, self->z + TELEFOGHEIGHT, ALLOW_REPLACE);
@@ -2103,13 +2065,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_Respawn)
 //
 //==========================================================================
 
-DEFINE_ACTION_FUNCTION(AActor, A_PlayerSkinCheck)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_PlayerSkinCheck)
 {
 	if (pStateCall != NULL) pStateCall->Result=false;	// Jumps should never set the result for inventory state chains!
 	if (self->player != NULL &&
 		skins[self->player->userinfo.skin].othergame)
 	{
-		int index = CheckIndex(1, &CallingState);
+		int index = CheckIndex(1);
 	
 		if (index >= 0)
 		{
@@ -2123,7 +2085,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_PlayerSkinCheck)
 // A_SetGravity
 //
 //===========================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_SetGravity)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetGravity)
 {
 	int index=CheckIndex(1);
 	if (index<0) return;
@@ -2160,10 +2122,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_ClearTarget)
 //
 //==========================================================================
 
-DEFINE_ACTION_FUNCTION(AActor, A_JumpIfTargetInLOS)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInLOS)
 {
-	FState * CallingState = NULL;
-	int index = CheckIndex(3, &CallingState);
+	int index = CheckIndex(3);
 	angle_t an;
 	angle_t fov = angle_t(EvalExpressionF (StateParameters[index+1], self) * ANGLE_1);
 	INTBOOL projtarg = EvalExpressionI (StateParameters[index+2], self);
@@ -2222,7 +2183,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_JumpIfTargetInLOS)
 // Damages the master of this child by the specified amount. Negative values heal.
 //
 //===========================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_DamageMaster)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DamageMaster)
 {
 	int index = CheckIndex(2);
 	if (index<0) return;
@@ -2250,7 +2211,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_DamageMaster)
 // Damages the children of this master by the specified amount. Negative values heal.
 //
 //===========================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_DamageChildren)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DamageChildren)
 {
 	TThinkerIterator<AActor> it;
 	AActor * mo;
@@ -2286,7 +2247,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_DamageChildren)
 //
 //===========================================================================
 
-DEFINE_ACTION_FUNCTION(AActor, A_CheckForReload)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckForReload)
 {
 	if ( self->player == NULL || self->player->ReadyWeapon == NULL )
 		return;

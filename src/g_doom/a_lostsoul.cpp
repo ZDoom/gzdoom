@@ -19,17 +19,35 @@
 //
 #define SKULLSPEED (20*FRACUNIT)
 
-DEFINE_ACTION_FUNCTION(AActor, A_SkullAttack)
+void A_SkullAttack(AActor *self, fixed_t speed)
 {
 	AActor *dest;
 	angle_t an;
 	int dist;
-	int n;
 
 	if (!self->target)
 		return;
 				
-	int index = CheckIndex (1, NULL);
+	dest = self->target;		
+	self->flags |= MF_SKULLFLY;
+
+	S_Sound (self, CHAN_VOICE, self->AttackSound, 1, ATTN_NORM);
+	A_FaceTarget (self);
+	an = self->angle >> ANGLETOFINESHIFT;
+	self->momx = FixedMul (speed, finecosine[an]);
+	self->momy = FixedMul (speed, finesine[an]);
+	dist = P_AproxDistance (dest->x - self->x, dest->y - self->y);
+	dist = dist / speed;
+	
+	if (dist < 1)
+		dist = 1;
+	self->momz = (dest->z+(dest->height>>1) - self->z) / dist;
+}
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SkullAttack)
+{
+	int n;
+	int index = CheckIndex (1);
 	if (index >= 0) 
 	{
 		n = FLOAT2FIXED(EvalExpressionF (StateParameters[index], self));
@@ -37,20 +55,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SkullAttack)
 	}
 	else n = SKULLSPEED;
 
-	dest = self->target;		
-	self->flags |= MF_SKULLFLY;
-
-	S_Sound (self, CHAN_VOICE, self->AttackSound, 1, ATTN_NORM);
-	A_FaceTarget (self);
-	an = self->angle >> ANGLETOFINESHIFT;
-	self->momx = FixedMul (n, finecosine[an]);
-	self->momy = FixedMul (n, finesine[an]);
-	dist = P_AproxDistance (dest->x - self->x, dest->y - self->y);
-	dist = dist / n;
-	
-	if (dist < 1)
-		dist = 1;
-	self->momz = (dest->z+(dest->height>>1) - self->z) / dist;
+	A_SkullAttack(self, n);
 }
 
 //==========================================================================

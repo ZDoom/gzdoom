@@ -713,9 +713,9 @@ enum LO_Flags
 	LOF_FULLVOLSEESOUND = 16,
 };
 
-DEFINE_ACTION_FUNCTION(AActor, A_LookEx)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_LookEx)
 {
-	int index=CheckIndex(6, &CallingState);
+	int index=CheckIndex(6);
 	if (index<0) return;
 
 	int flags = EvalExpressionI (StateParameters[index], self);

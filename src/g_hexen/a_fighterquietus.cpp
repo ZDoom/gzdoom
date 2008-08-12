@@ -60,7 +60,7 @@ bool AFighterWeaponPiece::TryPickup (AActor *toucher)
 //
 //============================================================================
 
-DEFINE_ACTION_FUNCTION(AActor, A_DropWeaponPieces)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DropWeaponPieces)
 {
 	int index=CheckIndex(3);
 	if (index<0) return;

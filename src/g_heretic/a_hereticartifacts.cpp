@@ -49,7 +49,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_TimeBomb)
 	self->z += 32*FRACUNIT;
 	self->RenderStyle = STYLE_Add;
 	self->alpha = FRACUNIT;
-	CALL_ACTION(A_Explode, self);
+	P_RadiusAttack (self, self->target, 128, 128, self->DamageType, true);
+	if (self->z <= self->floorz + (128<<FRACBITS))
+	{
+		P_HitFloor (self);
+	}
 }
 
 class AArtiTimeBomb : public AInventory

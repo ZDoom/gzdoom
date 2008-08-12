@@ -83,7 +83,7 @@ void P_SetPsprite (player_t *player, int position, FState *state)
 		psp->state = state;
 
 		if (sv_fastweapons >= 2 && position == ps_weapon)
-			psp->tics = (state->Action == NULL) ? 0 : 1;
+			psp->tics = state->ActionFunc == NULL? 0 : 1;
 		else if (sv_fastweapons)
 			psp->tics = 1;		// great for producing decals :)
 		else
@@ -98,25 +98,17 @@ void P_SetPsprite (player_t *player, int position, FState *state)
 			psp->sy = state->GetMisc2()<<FRACBITS;
 		}
 
-		if (state->GetAction())
-		{ 
-			// The parameterized action functions need access to the current state and
-			// if a function is supposed to work with both actors and weapons
-			// there is no real means to get to it reliably so I store it in a global variable here.
-			// Yes, I know this is truly awful but it is the only method I can think of 
-			// that does not involve changing stuff throughout the code. 
-			// Of course this should be rewritten ASAP.
-			CallingState = state;
-			// Call action routine.
-			if (player->mo != NULL)
+		if (player->mo != NULL)
+		{
+			if (state->CallAction(player->mo))
 			{
-				state->GetAction() (player->mo);
-			}
-			if (!psp->state)
-			{
-				break;
+				if (!psp->state)
+				{
+					break;
+				}
 			}
 		}
+
 		state = psp->state->GetNextState();
 	} while (!psp->tics); // An initial state of 0 could cycle through.
 }
@@ -713,9 +705,9 @@ DEFINE_ACTION_FUNCTION(AInventory, A_Light2)
 	}
 }
 
-DEFINE_ACTION_FUNCTION(AInventory, A_Light)
+DEFINE_ACTION_FUNCTION_PARAMS(AInventory, A_Light)
 {
-	int index=CheckIndex(1, &CallingState);
+	int index=CheckIndex(1);
 
 	if (self->player != NULL && index > 0)
 	{

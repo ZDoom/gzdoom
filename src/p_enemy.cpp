@@ -2231,9 +2231,9 @@ enum ChaseFlags
 	CHF_DONTMOVE = 16,
 };
 
-DEFINE_ACTION_FUNCTION(AActor, A_Chase)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Chase)
 {
-	int index=CheckIndex(3, &CallingState);
+	int index=CheckIndex(3);
 	if (index>=0)
 	{
 		int flags = EvalExpressionI (StateParameters[index+2], self);
@@ -2262,10 +2262,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_VileChase)
 		A_DoChase (self, false, self->MeleeState, self->MissileState, true, !!(gameinfo.gametype & GAME_Raven), false);
 }
 
-DEFINE_ACTION_FUNCTION(AActor, A_ExtChase)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ExtChase)
 {
 	// Now that A_Chase can handle state label parameters, this function has become rather useless...
-	int index=CheckIndex(4, &CallingState);
+	int index=CheckIndex(4);
 	if (index<0) return;
 
 	A_DoChase(self, false,
@@ -2376,6 +2376,44 @@ DEFINE_ACTION_FUNCTION(AActor, A_XScream)
 		S_Sound (self, CHAN_VOICE, "*gibbed", 1, ATTN_NORM);
 	else
 		S_Sound (self, CHAN_VOICE, "misc/gibbed", 1, ATTN_NORM);
+}
+
+//===========================================================================
+//
+// A_ScreamAndUnblock
+//
+//===========================================================================
+
+DEFINE_ACTION_FUNCTION(AActor, A_ScreamAndUnblock)
+{
+	CALL_ACTION(A_Scream, self);
+	CALL_ACTION(A_NoBlocking, self);
+}
+
+//===========================================================================
+//
+// A_ActiveSound
+//
+//===========================================================================
+
+DEFINE_ACTION_FUNCTION(AActor, A_ActiveSound)
+{
+	if (self->ActiveSound)
+	{
+		S_Sound (self, CHAN_VOICE, self->ActiveSound, 1, ATTN_NORM);
+	}
+}
+
+//===========================================================================
+//
+// A_ActiveAndUnblock
+//
+//===========================================================================
+
+DEFINE_ACTION_FUNCTION(AActor, A_ActiveAndUnblock)
+{
+	CALL_ACTION(A_ActiveSound, self);
+	CALL_ACTION(A_NoBlocking, self);
 }
 
 //---------------------------------------------------------------------------
@@ -2549,11 +2587,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_Pain)
 }
 
 // killough 11/98: kill an object
-DEFINE_ACTION_FUNCTION(AActor, A_Die)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Die)
 {
 	ENamedName name;
 	
-	int index=CheckIndex(1, &CallingState);
+	int index=CheckIndex(1);
 	if (index<0)
 	{
 		name = NAME_None;

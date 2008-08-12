@@ -900,49 +900,43 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 				int x, y, w, h;
 				int cx, cy, cw, ch, cr, cb;
 
-				if(!block.fullScreenOffsets)
+				// These still need to be caclulated for the clear call.
+				if(bg == NULL)
 				{
-					// Calc real screen coordinates for bar
-					x = cmd.x + ST_X + xOffset;
-					y = cmd.y + ST_Y + yOffset;
-					w = fg->GetScaledWidth();
-					h = fg->GetScaledHeight();
-					if (Scaled)
+					if(!block.fullScreenOffsets)
 					{
-						screen->VirtualToRealCoordsInt(x, y, w, h, 320, 200, true);
+						// Calc real screen coordinates for bar
+						x = cmd.x + ST_X + xOffset;
+						y = cmd.y + ST_Y + yOffset;
+						w = fg->GetScaledWidth();
+						h = fg->GetScaledHeight();
+						if (Scaled)
+						{
+							screen->VirtualToRealCoordsInt(x, y, w, h, 320, 200, true);
+						}
 					}
-				}
-				else
-				{
-					x = cmd.x + xOffset;
-					y = cmd.y + yOffset;
-					w = fg->GetScaledWidth();
-					h = fg->GetScaledHeight();
-					if(vid_fps && x < 0 && y >= 0)
-						y += 10;
+					else
+					{
+						x = cmd.x + xOffset;
+						y = cmd.y + yOffset;
+						w = fg->GetScaledWidth();
+						h = fg->GetScaledHeight();
+						if(vid_fps && x < 0 && y >= 0)
+							y += 10;
+					}
 				}
 
 				if(cmd.special3 != 0)
 				{
 					//Draw the whole foreground
-					screen->DrawTexture(fg, x, y,
-						DTA_DestWidth, w,
-						DTA_DestHeight, h,
-						DTA_Alpha, alpha,
-						DTA_HUDRules, HUD_Normal,
-						TAG_DONE);
+					DrawGraphic(fg, cmd.x, cmd.y, xOffset, yOffset, alpha, block.fullScreenOffsets);
 				}
 				else
 				{
 					// Draw background
 					if (bg != NULL && bg->GetScaledWidth() == fg->GetScaledWidth() && bg->GetScaledHeight() == fg->GetScaledHeight())
 					{
-						screen->DrawTexture(bg, x, y,
-							DTA_DestWidth, w,
-							DTA_DestHeight, h,
-							DTA_Alpha, alpha,
-							DTA_HUDRules, HUD_Normal,
-							TAG_DONE);
+						DrawGraphic(bg, cmd.x, cmd.y, xOffset, yOffset, alpha, block.fullScreenOffsets);
 					}
 					else
 					{
@@ -1004,7 +998,54 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 				{
 					if (bg != NULL && bg->GetScaledWidth() == fg->GetScaledWidth() && bg->GetScaledHeight() == fg->GetScaledHeight())
 					{
-						screen->DrawTexture(bg, x, y,
+						if(!block.fullScreenOffsets)
+						{
+							screen->DrawTexture(bg, x, y,
+								DTA_DestWidth, w,
+								DTA_DestHeight, h,
+	  	 						DTA_ClipLeft, cx,
+								DTA_ClipTop, cy,
+								DTA_ClipRight, cr,
+								DTA_ClipBottom, cb,
+								DTA_Alpha, alpha,
+								TAG_DONE);
+						}
+						else
+						{
+							screen->DrawTexture(bg, x, y,
+								DTA_DestWidth, w,
+								DTA_DestHeight, h,
+								DTA_ClipLeft, cx,
+								DTA_ClipTop, cy,
+								DTA_ClipRight, cr,
+								DTA_ClipBottom, cb,
+								DTA_Alpha, alpha,
+								DTA_HUDRules, HUD_Normal,
+								TAG_DONE);
+						}
+					}
+					else
+					{
+						screen->Clear(cx, cy, cr, cb, GPalette.BlackIndex, 0);
+					}
+				}
+				else
+				{
+					if(!block.fullScreenOffsets)
+					{
+						screen->DrawTexture(fg, x, y,
+							DTA_DestWidth, w,
+							DTA_DestHeight, h,
+							DTA_ClipLeft, cx,
+							DTA_ClipTop, cy,
+							DTA_ClipRight, cr,
+							DTA_ClipBottom, cb,
+							DTA_Alpha, alpha,
+							TAG_DONE);
+					}
+					else
+					{
+						screen->DrawTexture(fg, x, y,
 							DTA_DestWidth, w,
 							DTA_DestHeight, h,
 							DTA_ClipLeft, cx,
@@ -1015,23 +1056,6 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 							DTA_HUDRules, HUD_Normal,
 							TAG_DONE);
 					}
-					else
-					{
-						screen->Clear(cx, cy, cr, cb, GPalette.BlackIndex, 0);
-					}
-				}
-				else
-				{
-					screen->DrawTexture(fg, x, y,
-						DTA_DestWidth, w,
-						DTA_DestHeight, h,
-						DTA_ClipLeft, cx,
-						DTA_ClipTop, cy,
-						DTA_ClipRight, cr,
-						DTA_ClipBottom, cb,
-						DTA_Alpha, alpha,
-						DTA_HUDRules, HUD_Normal,
-						TAG_DONE);
 				}
 				break;
 			}
@@ -1084,14 +1108,27 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 					if(vid_fps && x < 0 && y >= 0)
 						y += 10;
 				}
-				screen->DrawTexture (shaders[(vertical << 1) + reverse], x, y,
-					DTA_DestWidth, w,
-					DTA_DestHeight, h,
-					DTA_Alpha, alpha,
-					DTA_AlphaChannel, true,
-					DTA_FillColor, 0,
-					DTA_HUDRules, HUD_Normal,
-					TAG_DONE);
+				if(!block.fullScreenOffsets)
+				{
+					screen->DrawTexture (shaders[(vertical << 1) + reverse], x, y,
+						DTA_DestWidth, w,
+						DTA_DestHeight, h,
+						DTA_Alpha, alpha,
+						DTA_AlphaChannel, true,
+						DTA_FillColor, 0,
+						TAG_DONE);
+				}
+				else
+				{
+					screen->DrawTexture (shaders[(vertical << 1) + reverse], x, y,
+						DTA_DestWidth, w,
+						DTA_DestHeight, h,
+						DTA_Alpha, alpha,
+						DTA_AlphaChannel, true,
+						DTA_FillColor, 0,
+						DTA_HUDRules, HUD_Normal,
+						TAG_DONE);
+				}
 				break;
 			}
 			case SBARINFO_DRAWSTRING:
@@ -1335,6 +1372,14 @@ void DSBarInfo::DrawGraphic(FTexture* texture, int x, int y, int xOffset, int yO
 		// Round to nearest
 		w = (fw + (FRACUNIT>>1)) >> FRACBITS;
 		h = (fh + (FRACUNIT>>1)) >> FRACBITS;
+		screen->DrawTexture(texture, x, y,
+			DTA_DestWidth, w,
+			DTA_DestHeight, h,
+			DTA_Translation, translate ? getTranslation() : 0,
+			DTA_ColorOverlay, dim ? DIM_OVERLAY : 0,
+			DTA_CenterBottomOffset, (offsetflags & DRAWIMAGE_OFFSET_CENTERBOTTOM),
+			DTA_Alpha, alpha,
+			TAG_DONE);
 	}
 	else
 	{
@@ -1342,16 +1387,16 @@ void DSBarInfo::DrawGraphic(FTexture* texture, int x, int y, int xOffset, int yO
 		h = texture->GetScaledHeight();
 		if(vid_fps && x < 0 && y >= 0)
 			y += 10;
+		screen->DrawTexture(texture, x, y,
+			DTA_DestWidth, w,
+			DTA_DestHeight, h,
+			DTA_Translation, translate ? getTranslation() : 0,
+			DTA_ColorOverlay, dim ? DIM_OVERLAY : 0,
+			DTA_CenterBottomOffset, (offsetflags & DRAWIMAGE_OFFSET_CENTERBOTTOM),
+			DTA_HUDRules, HUD_Normal,
+			DTA_Alpha, alpha,
+			TAG_DONE);
 	}
-	screen->DrawTexture(texture, x, y,
-		DTA_DestWidth, w,
-		DTA_DestHeight, h,
-		DTA_Translation, translate ? getTranslation() : 0,
-		DTA_ColorOverlay, dim ? DIM_OVERLAY : 0,
-		DTA_CenterBottomOffset, (offsetflags & DRAWIMAGE_OFFSET_CENTERBOTTOM),
-		DTA_HUDRules, HUD_Normal,
-		DTA_Alpha, alpha,
-		TAG_DONE);
 }
 
 void DSBarInfo::DrawString(const char* str, int x, int y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets, EColorRange translation, int spacing, bool drawshadow)
@@ -1399,21 +1444,45 @@ void DSBarInfo::DrawString(const char* str, int x, int y, int xOffset, int yOffs
 		if(drawshadow)
 		{
 			int salpha = fixed_t(((double) alpha / (double) FRACUNIT) * ((double) HR_SHADOW / (double) FRACUNIT) * FRACUNIT);
-			screen->DrawTexture(character, rx+2, ry+2,
-								DTA_DestWidth, rw,
-								DTA_DestHeight, rh,
-								DTA_Alpha, salpha,
-								DTA_HUDRules, HUD_Normal,
-								DTA_FillColor, 0,
-								TAG_DONE);
+			if(!fullScreenOffsets)
+			{
+				screen->DrawTexture(character, rx+2, ry+2,
+					DTA_DestWidth, rw,
+					DTA_DestHeight, rh,
+					DTA_Alpha, salpha,
+					DTA_FillColor, 0,
+					TAG_DONE);
+			}
+			else
+			{
+				screen->DrawTexture(character, rx+2, ry+2,
+					DTA_DestWidth, rw,
+					DTA_DestHeight, rh,
+					DTA_Alpha, salpha,
+					DTA_HUDRules, HUD_Normal,
+					DTA_FillColor, 0,
+					TAG_DONE);
+			}
 		}
-		screen->DrawTexture(character, rx, ry,
-			DTA_DestWidth, rw,
-			DTA_DestHeight, rh,
-			DTA_Translation, drawingFont->GetColorTranslation(translation),
-			DTA_Alpha, alpha,
-			DTA_HUDRules, HUD_Normal,
-			TAG_DONE);
+		if(!fullScreenOffsets)
+		{
+			screen->DrawTexture(character, rx, ry,
+				DTA_DestWidth, rw,
+				DTA_DestHeight, rh,
+				DTA_Translation, drawingFont->GetColorTranslation(translation),
+				DTA_Alpha, alpha,
+				TAG_DONE);
+		}
+		else
+		{
+			screen->DrawTexture(character, rx, ry,
+				DTA_DestWidth, rw,
+				DTA_DestHeight, rh,
+				DTA_Translation, drawingFont->GetColorTranslation(translation),
+				DTA_Alpha, alpha,
+				DTA_HUDRules, HUD_Normal,
+				TAG_DONE);
+		}
 		if(SBarInfoScript->spacingCharacter == '\0')
 			x += width + spacing - (character->LeftOffset+1);
 		else //width gets changed at the call to GetChar()

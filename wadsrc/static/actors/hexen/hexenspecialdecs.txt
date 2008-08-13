@@ -191,6 +191,7 @@ ACTOR BloodPool 111
 
 ACTOR ZCorpseLynchedNoHeart 109 native
 {
+	Game Hexen
 	Radius 10
 	Height 100
 	+SOLID +SPAWNCEILING +NOGRAVITY

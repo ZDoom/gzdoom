@@ -346,6 +346,15 @@ static bool ReadChars (char **stuff, int size);
 static char *igets (void);
 static int GetLine (void);
 
+static void PushTouchedActor(PClass *cls)
+{
+	for(unsigned i = 0; i < TouchedActors.Size(); i++)
+	{
+		if (TouchedActors[i] == cls) return;
+	}
+	TouchedActors.Push(cls);
+}
+
 inline const char *GetName (int name)
 {
 	return NameBase + NameOffs[name];
@@ -438,7 +447,8 @@ static FState *FindState (int statenum)
 		{
 			if (StateMap[i].OwnerIsPickup)
 			{
-				TouchedActors.Push (const_cast<PClass *>(StateMap[i].Owner));
+
+				PushTouchedActor(const_cast<PClass *>(StateMap[i].Owner));
 			}
 			return StateMap[i].State + statenum - stateacc;
 		}
@@ -1026,7 +1036,7 @@ static int PatchThing (int thingy)
 
 		if (info->flags & MF_SPECIAL)
 		{
-			TouchedActors.Push (const_cast<PClass *>(type));
+			PushTouchedActor(const_cast<PClass *>(type));
 		}
 
 		// Make MF3_ISMONSTER match MF_COUNTKILL
@@ -2577,6 +2587,11 @@ void FinishDehPatch ()
 
 		// Make a copy the state labels 
 		MakeStateDefines(type->ActorInfo->StateList);
+		if (!type->IsDescendantOf(RUNTIME_CLASS(AInventory)))
+		{
+			// If this is a hacked non-inventory item we must also copy AInventory's special states
+			AddStateDefines(RUNTIME_CLASS(AInventory)->ActorInfo->StateList);
+		}
 		InstallStates(subclass->ActorInfo, defaults2);
 
 		// Use the DECORATE replacement feature to redirect all spawns
@@ -2584,7 +2599,7 @@ void FinishDehPatch ()
 		type->ActorInfo->Replacement = subclass->ActorInfo;
 		subclass->ActorInfo->Replacee = type->ActorInfo;
 
-		DPrintf ("%s replaces %s\n", subclass->TypeName.GetChars(), type->TypeName.GetChars());
+		Printf ("%s replaces %s\n", subclass->TypeName.GetChars(), type->TypeName.GetChars());
 	}
 
 	// Now that all Dehacked patches have been processed, it's okay to free StateMap.

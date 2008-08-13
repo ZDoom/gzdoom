@@ -369,6 +369,24 @@ void MakeStateDefines(const FStateLabels *list)
 	MakeStateList(list, StateLabels);
 }
 
+void AddStateDefines(const FStateLabels *list)
+{
+	if (list != NULL) for(int i=0;i<list->NumLabels;i++)
+	{
+		if (list->Labels[i].Children == NULL)
+		{
+			if (!FindStateLabelInList(StateLabels, list->Labels[i].Label, false))
+			{
+				FStateDefine def;
+
+				def.Label = list->Labels[i].Label;
+				def.State = list->Labels[i].State;
+				StateLabels.Push(def);
+			}
+		}
+	}
+}
+
 //==========================================================================
 //
 // PrepareStateParameters

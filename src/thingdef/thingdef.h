@@ -99,6 +99,7 @@ void AddState (const char * statename, FState * state);
 FState * FindState(AActor * actor, const PClass * type, const char * name);
 void InstallStates(FActorInfo *info, AActor *defaults);
 void MakeStateDefines(const FStateLabels *list);
+void AddStateDefines(const FStateLabels *list);
 FState *P_GetState(AActor *self, FState *CallingState, int offset);
 int FinishStates (FScanner &sc, FActorInfo *actor, AActor *defaults, Baggage &bag);
 int ParseStates(FScanner &sc, FActorInfo *actor, AActor *defaults, Baggage &bag);

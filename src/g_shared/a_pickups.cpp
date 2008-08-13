@@ -837,6 +837,8 @@ void AInventory::Hide ()
 		}
 	}
 
+	assert(HideDoomishState != NULL || HideSpecialState != NULL);
+
 	if (HideSpecialState != NULL)
 	{
 		SetState (HideSpecialState);
@@ -847,11 +849,6 @@ void AInventory::Hide ()
 	{
 		SetState (HideDoomishState);
 		tics = 1050;
-	}
-	else
-	{
-		GoAwayAndDie();
-		return;
 	}
 	if (RespawnTics != 0)
 	{

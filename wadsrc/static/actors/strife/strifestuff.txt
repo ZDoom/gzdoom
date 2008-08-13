@@ -467,7 +467,7 @@ ACTOR SStalagmiteSmall 163
 	States
 	{
 	Spawn:
-		STLG E -1
+		STLG F -1
 		Stop
 	}
 }

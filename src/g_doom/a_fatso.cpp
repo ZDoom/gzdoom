@@ -29,9 +29,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FatAttack1)
 	if (!self->target)
 		return;
 
-	const PClass *spawntype = NULL;
-	int index = CheckIndex (1);
-	if (index >= 0) spawntype = PClass::FindClass ((ENamedName)StateParameters[index]);
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_CLASS(spawntype, 0);
+
 	if (spawntype == NULL) spawntype = PClass::FindClass("FatShot");
 
 	A_FaceTarget (self);
@@ -57,9 +57,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FatAttack2)
 	if (!self->target)
 		return;
 
-	const PClass *spawntype = NULL;
-	int index = CheckIndex (1);
-	if (index >= 0) spawntype = PClass::FindClass ((ENamedName)StateParameters[index]);
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_CLASS(spawntype, 0);
+
 	if (spawntype == NULL) spawntype = PClass::FindClass("FatShot");
 
 	A_FaceTarget (self);
@@ -85,9 +85,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FatAttack3)
 	if (!self->target)
 		return;
 
-	const PClass *spawntype = NULL;
-	int index = CheckIndex (1);
-	if (index >= 0) spawntype = PClass::FindClass ((ENamedName)StateParameters[index]);
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_CLASS(spawntype, 0);
+
 	if (spawntype == NULL) spawntype = PClass::FindClass("FatShot");
 
 	A_FaceTarget (self);
@@ -118,17 +118,13 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FatAttack3)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Mushroom)
 {
-	int i, j, n = self->GetMissileDamage (0, 1);
+	int i, j;
 
-	const PClass *spawntype = NULL;
-	int index = CheckIndex (2);
-	if (index >= 0) 
-	{
-		spawntype = PClass::FindClass((ENamedName)StateParameters[index]);
-		n = EvalExpressionI (StateParameters[index+1], self);
-		if (n == 0)
-			n = self->GetMissileDamage (0, 1);
-	}
+	ACTION_PARAM_START(2);
+	ACTION_PARAM_CLASS(spawntype, 0);
+	ACTION_PARAM_INT(n, 1);
+
+	if (n == 0) n = self->GetMissileDamage (0, 1);
 	if (spawntype == NULL) spawntype = PClass::FindClass("FatShot");
 
 	P_RadiusAttack (self, self->target, 128, 128, self->DamageType, true);

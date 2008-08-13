@@ -141,7 +141,7 @@ struct FState
 	{
 		if (ActionFunc != NULL)
 		{
-			ActionFunc(self, this, ParameterIndex);
+			ActionFunc(self, this, ParameterIndex-1);
 			return true;
 		}
 		else

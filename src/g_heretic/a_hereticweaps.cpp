@@ -62,7 +62,6 @@ extern bool P_AutoUseChaosDevice (player_t *player);
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_StaffAttack)
 {
 	angle_t angle;
-	int damage;
 	int slope;
 	player_t *player;
 	AActor *linetarget;
@@ -72,12 +71,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_StaffAttack)
 		return;
 	}
 
-	int index = CheckIndex (2);
-	if (index < 0) return;
-
-	damage = EvalExpressionI (StateParameters[index], self);
-	const PClass *puff = PClass::FindClass ((ENamedName)StateParameters[index+1]);
-
+	ACTION_PARAM_START(2);
+	ACTION_PARAM_INT(damage, 0);
+	ACTION_PARAM_CLASS(puff, 1);
 
 	AWeapon *weapon = player->ReadyWeapon;
 	if (weapon != NULL)
@@ -242,7 +238,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GauntletAttack)
 	fixed_t dist;
 	player_t *player;
 	const PClass *pufftype;
-	int power;
 	AActor *linetarget;
 
 	if (NULL == (player = self->player))
@@ -250,10 +245,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GauntletAttack)
 		return;
 	}
 
-	int index = CheckIndex (1);
-	if (index < 0) return;
-
-	power = EvalExpressionI (StateParameters[index], self);
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_INT(power, 0);
 
 	AWeapon *weapon = player->ReadyWeapon;
 	if (weapon != NULL)

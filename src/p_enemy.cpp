@@ -2233,17 +2233,17 @@ enum ChaseFlags
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Chase)
 {
-	int index=CheckIndex(3);
-	if (index < 0) return;
+	ACTION_PARAM_START(3);
+	ACTION_PARAM_STATE(i_melee, 0);
+	ACTION_PARAM_STATE(i_missile, 1);
+	ACTION_PARAM_INT(flags, 2);
 
-	if (StateParameters[index] != INT_MIN)
+	if (i_melee != INT_MIN)
 	{
-		FState *melee = P_GetState(self, CallingState, StateParameters[index]);
-		FState *missile = P_GetState(self, CallingState, StateParameters[index+1]);
+		FState *melee = P_GetState(self, CallingState, i_melee);
+		FState *missile = P_GetState(self, CallingState, i_missile);
 
-		int flags = EvalExpressionI (StateParameters[index+2], self);
 		if (flags & CHF_RESURRECT && P_CheckForResurrection(self, false)) return;
-
 		
 		A_DoChase(self, !!(flags&CHF_FASTCHASE), melee, missile, !(flags&CHF_NOPLAYACTIVE), 
 					!!(flags&CHF_NIGHTMAREFAST), !!(flags&CHF_DONTMOVE));
@@ -2267,15 +2267,16 @@ DEFINE_ACTION_FUNCTION(AActor, A_VileChase)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ExtChase)
 {
-	// Now that A_Chase can handle state label parameters, this function has become rather useless...
-	int index=CheckIndex(4);
-	if (index<0) return;
+	ACTION_PARAM_START(4);
+	ACTION_PARAM_BOOL(domelee, 0);
+	ACTION_PARAM_BOOL(domissile, 1);
+	ACTION_PARAM_BOOL(playactive, 2);
+	ACTION_PARAM_BOOL(nightmarefast, 3);
 
+	// Now that A_Chase can handle state label parameters, this function has become rather useless...
 	A_DoChase(self, false,
-		EvalExpressionI (StateParameters[index], self) ? self->MeleeState:NULL,
-		EvalExpressionI (StateParameters[index+1], self) ? self->MissileState:NULL,
-		!!EvalExpressionI (StateParameters[index+2], self),
-		!!EvalExpressionI (StateParameters[index+3], self), false);
+		domelee ? self->MeleeState:NULL, domissile ? self->MissileState:NULL,
+		playactive, nightmarefast, false);
 }
 
 // for internal use
@@ -2592,19 +2593,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_Pain)
 // killough 11/98: kill an object
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Die)
 {
-	ENamedName name;
-	
-	int index=CheckIndex(1);
-	if (index<0)
-	{
-		name = NAME_None;
-	}
-	else
-	{
-		name = ENamedName(StateParameters[index]);
-	}
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_NAME(damagetype, 0);
 
-	P_DamageMobj (self, NULL, NULL, self->health, name);
+	P_DamageMobj (self, NULL, NULL, self->health, damagetype);
 }
 
 //

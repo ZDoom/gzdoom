@@ -67,8 +67,6 @@ static TArray<FState> StateArray;
 //
 //==========================================================================
 
-DECLARE_ACTION(A_CallSpecial)
-
 //==========================================================================
 //
 // Find a function by name using a binary search

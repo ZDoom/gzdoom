@@ -327,10 +327,10 @@ static void MarinePunch(AActor *self, int damagemul)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_M_Punch)
 {
-	int index=CheckIndex(1);
-	if (index<0) return;
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_INT(mult, 0);
 
-	MarinePunch(self, EvalExpressionI (StateParameters[index], self));
+	MarinePunch(self, mult);
 }
 
 //============================================================================
@@ -366,9 +366,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_M_FirePistol)
 	if (self->target == NULL)
 		return;
 
-	int index=CheckIndex(1);
-	if (index<0) return;
-	bool accurate =  !!EvalExpressionI (StateParameters[index], self);
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_BOOL(accurate, 0);
 
 	S_Sound (self, CHAN_WEAPON, "weapons/pistol", 1, ATTN_NORM);
 	A_FaceTarget (self);
@@ -456,9 +455,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_M_FireCGun)
 	if (self->target == NULL)
 		return;
 
-	int index=CheckIndex(1);
-	if (index<0) return;
-	bool accurate =  !!EvalExpressionI (StateParameters[index], self);
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_BOOL(accurate, 0);
 
 	S_Sound (self, CHAN_WEAPON, "weapons/chngun", 1, ATTN_NORM);
 	A_FaceTarget (self);

@@ -2599,7 +2599,7 @@ void FinishDehPatch ()
 		type->ActorInfo->Replacement = subclass->ActorInfo;
 		subclass->ActorInfo->Replacee = type->ActorInfo;
 
-		Printf ("%s replaces %s\n", subclass->TypeName.GetChars(), type->TypeName.GetChars());
+		DPrintf ("%s replaces %s\n", subclass->TypeName.GetChars(), type->TypeName.GetChars());
 	}
 
 	// Now that all Dehacked patches have been processed, it's okay to free StateMap.

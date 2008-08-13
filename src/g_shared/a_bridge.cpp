@@ -100,25 +100,16 @@ DEFINE_ACTION_FUNCTION(AActor, A_BridgeOrbit)
 }
 
 
-static const PClass *GetBallType(DECLARE_PARAMINFO)
-{
-	const PClass *balltype = NULL;
-	int index=CheckIndex(1);
-	if (index>=0) 
-	{
-		balltype = PClass::FindClass((ENamedName)StateParameters[index]);
-	}
-	if (balltype == NULL) balltype = PClass::FindClass("BridgeBall");
-	return balltype;
-}
-
-
-
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BridgeInit)
 {
 	angle_t startangle;
 	AActor *ball;
 	fixed_t cx, cy, cz;
+
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_CLASS(balltype, 0);
+
+	if (balltype == NULL) balltype = PClass::FindClass("BridgeBall");
 
 	cx = self->x;
 	cy = self->y;
@@ -128,7 +119,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BridgeInit)
 
 	// Spawn triad into world -- may be more than a triad now.
 	int ballcount = self->args[2]==0 ? 3 : self->args[2];
-	const PClass *balltype = GetBallType(PUSH_PARAMINFO);
+
 	for (int i = 0; i < ballcount; i++)
 	{
 		ball = Spawn(balltype, cx, cy, cz, ALLOW_REPLACE);

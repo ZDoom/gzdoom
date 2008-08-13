@@ -715,18 +715,15 @@ enum LO_Flags
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_LookEx)
 {
-	int index=CheckIndex(6);
-	if (index<0) return;
+	ACTION_PARAM_START(6);
+	ACTION_PARAM_INT(flags, 0);
+	ACTION_PARAM_FIXED(minseedist, 1);
+	ACTION_PARAM_FIXED(maxseedist, 2);
+	ACTION_PARAM_FIXED(maxheardist, 3);
+	ACTION_PARAM_ANGLE(fov, 4);
+	ACTION_PARAM_STATE(i_state, 5);
 
-	int flags = EvalExpressionI (StateParameters[index], self);
-	//if ((flags & LOF_NOSIGHTCHECK) && (flags & LOF_NOSOUNDCHECK)) return; // [KS] Can't see and can't hear so it'd be redundant to continue with a check we know would be false.
-	//But it can still be used to make an self leave to a goal without waking up immediately under certain conditions.
-
-	fixed_t minseedist = fixed_t(EvalExpressionF (StateParameters[index+1], self) * FRACUNIT);
-	fixed_t maxseedist = fixed_t(EvalExpressionF (StateParameters[index+2], self) * FRACUNIT);
-	fixed_t maxheardist = fixed_t(EvalExpressionF (StateParameters[index+3], self) * FRACUNIT);
-	angle_t fov = angle_t(EvalExpressionF (StateParameters[index+4], self) * ANGLE_1);
-	FState *seestate = P_GetState(self, CallingState, StateParameters[index+5]);
+	FState *seestate = P_GetState(self, CallingState, i_state);
 
 	AActor *targ = NULL; // Shuts up gcc
 	fixed_t dist;

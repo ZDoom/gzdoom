@@ -1,7 +1,9 @@
-August 12, 2008 (Changes by Graf Zahl)
+August 13, 2008 (Changes by Graf Zahl)
+- Macro-fied access to action function parameters.
+- Deactivated debug output code in d_Dehacked.cpp.
+- fixed: A_FreezeDeathChunks crashed when a player's head got spawned.
 - fixed: A_CallSpecial must be declared in DECORATE so that a symbol table
   entry can be generated for it.
-- fixed: Dehacked replaced pickups multiple times for changing its states.
 - fixed: Dehacked replaced pickups multiple times for changing its states.
 - fixed: Dehacked must copy AInventory's state to any item it hacks to be a 
   pickup.

@@ -389,13 +389,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnSingleItem)
 	if (state != NULL) spot = state->GetRandomSpot(RUNTIME_TYPE(self), true);
 	if (spot == NULL) return;
 
-	int index=CheckIndex(4);
-	if (index<0) return;
-
-	ENamedName SpawnType = (ENamedName)StateParameters[index];
-	int fail_sp = EvalExpressionI (StateParameters[index+1], self);
-	int fail_co = EvalExpressionI (StateParameters[index+2], self);
-	int fail_dm = EvalExpressionI (StateParameters[index+3], self);
+	ACTION_PARAM_START(4);
+	ACTION_PARAM_CLASS(cls, 0);
+	ACTION_PARAM_INT(fail_sp, 1);
+	ACTION_PARAM_INT(fail_co, 2);
+	ACTION_PARAM_INT(fail_dm, 3);
 
 	if (!multiplayer && pr_spawnmace() < fail_sp)
 	{ // Sometimes doesn't show up if not in deathmatch
@@ -411,7 +409,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnSingleItem)
 	{
 		return;
 	}
-	const PClass *cls = PClass::FindClass(SpawnType);
+
 	if (cls == NULL)
 	{
 		return;

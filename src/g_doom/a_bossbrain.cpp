@@ -83,22 +83,19 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BrainSpit)
 	AActor *spit;
 	bool isdefault = false;
 
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_CLASS(spawntype, 0);
+
 	// shoot a cube at current target
 	targ = state->GetNextInList(PClass::FindClass("BossTarget"), G_SkillProperty(SKILLP_EasyBossBrain));
 
 	if (targ != NULL)
 	{
-		const PClass *spawntype = NULL;
-		int index = CheckIndex (1);
-		if (index < 0) return;
-		
-		spawntype = PClass::FindClass ((ENamedName)StateParameters[index]);
 		if (spawntype == NULL) 
 		{
 			spawntype = PClass::FindClass("SpawnShot");
 			isdefault = true;
 		}
-
 
 		// spawn brain missile
 		spit = P_SpawnMissile (self, targ, spawntype);
@@ -243,14 +240,11 @@ static void SpawnFly(AActor *self, const PClass *spawntype, FSoundID sound)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnFly)
 {
-	const PClass *spawntype = NULL;
 	FSoundID sound;
 
-	int index = CheckIndex (1);
-		// First spawn teleport fire.
-	if (index < 0) return;
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_CLASS(spawntype, 0);
 
-	spawntype = PClass::FindClass ((ENamedName)StateParameters[index]);
 	if (spawntype != NULL) 
 	{
 		sound = GetDefaultByType(spawntype)->SeeSound;

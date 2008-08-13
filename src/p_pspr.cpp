@@ -707,11 +707,12 @@ DEFINE_ACTION_FUNCTION(AInventory, A_Light2)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AInventory, A_Light)
 {
-	int index=CheckIndex(1);
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_INT(light, 0);
 
-	if (self->player != NULL && index > 0)
+	if (self->player != NULL)
 	{
-		self->player->extralight = clamp<int>(EvalExpressionI (StateParameters[index], self), 0, 20);
+		self->player->extralight = clamp<int>(light, 0, 20);
 	}
 }
 

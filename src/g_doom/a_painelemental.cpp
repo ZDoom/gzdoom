@@ -12,12 +12,9 @@ DECLARE_ACTION(A_SkullAttack)
 
 static const PClass *GetSpawnType(DECLARE_PARAMINFO)
 {
-	const PClass *spawntype = NULL;
-	int index=CheckIndex(1);
-	if (index>=0) 
-	{
-		spawntype = PClass::FindClass((ENamedName)StateParameters[index]);
-	}
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_CLASS(spawntype, 0);
+
 	if (spawntype == NULL) spawntype = PClass::FindClass("LostSoul");
 	return spawntype;
 }

@@ -275,8 +275,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_FreezeDeathChunks)
 		head->angle = self->angle;
 		if (head->IsKindOf(RUNTIME_CLASS(APlayerPawn)))
 		{
-			head->player->mo = static_cast<APlayerPawn*>(head);
 			head->player = self->player;
+			head->player->mo = static_cast<APlayerPawn*>(head);
 			self->player = NULL;
 			head->ObtainInventory (self);
 		}

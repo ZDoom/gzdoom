@@ -99,13 +99,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_FirePistol)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Saw)
 {
 	angle_t 	angle;
-	int 		damage=0;
 	player_t *player;
 	AActor *linetarget;
-	
-	FSoundID fullsound;
-	FSoundID hitsound;
-	const PClass * pufftype = NULL;
+
+	ACTION_PARAM_START(4);
+	ACTION_PARAM_SOUND(fullsound, 0);
+	ACTION_PARAM_SOUND(hitsound, 1);
+	ACTION_PARAM_INT(damage, 2);
+	ACTION_PARAM_CLASS(pufftype, 3);
 
 	if (NULL == (player = self->player))
 	{
@@ -119,13 +120,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Saw)
 			return;
 	}
 
-	int index = CheckIndex (4);
-	if (index < 0) return;
-
-	fullsound = FSoundID(StateParameters[index]);
-	hitsound = FSoundID(StateParameters[index+1]);
-	damage = EvalExpressionI (StateParameters[index+2], self);
-	pufftype = PClass::FindClass ((ENamedName)StateParameters[index+3]);
 	if (pufftype == NULL) pufftype = PClass::FindClass(NAME_BulletPuff);
 	if (damage == 0) damage = 2;
 	
@@ -488,23 +482,16 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BFGSpray)
 	int 				damage;
 	angle_t 			an;
 	AActor				*thingToHit;
-	const PClass		*spraytype = NULL;
-	int					numrays = 40;
-	int					damagecnt = 15;
 	AActor				*linetarget;
 
-	int index = CheckIndex (3);
-	if (index < 0) return;
+	ACTION_PARAM_START(3);
+	ACTION_PARAM_CLASS(spraytype, 0);
+	ACTION_PARAM_INT(numrays, 1);
+	ACTION_PARAM_INT(damagecnt, 2);
 
-	spraytype = PClass::FindClass ((ENamedName)StateParameters[index]);
-	if (spraytype == NULL)
-		spraytype = PClass::FindClass("BFGExtra");
-	numrays = EvalExpressionI (StateParameters[index+1], self);
-	if (numrays <= 0)
-		numrays = 40;
-	damagecnt = EvalExpressionI (StateParameters[index+2], self);
-	if (damagecnt <= 0)
-		damagecnt = 15;
+	if (spraytype == NULL) spraytype = PClass::FindClass("BFGExtra");
+	if (numrays <= 0) numrays = 40;
+	if (damagecnt <= 0) damagecnt = 15;
 
 	// [RH] Don't crash if no target
 	if (!self->target)

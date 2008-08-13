@@ -458,10 +458,9 @@ static void HandleDeprecatedFlags(AActor *defaults, bool set, int index)
 //===========================================================================
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ChangeFlag)
 {
-	int index=CheckIndex(2);
-	if (index < 0) return;
-	const char * flagname = FName((ENamedName)StateParameters[index]).GetChars();	
-	int expression = EvalExpressionI (StateParameters[index+1], self);
+	ACTION_PARAM_START(2);
+	ACTION_PARAM_STRING(flagname, 0);
+	ACTION_PARAM_BOOL(expression, 1);
 
 	const char *dot = strchr (flagname, '.');
 	flagdef *fd;
@@ -480,7 +479,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ChangeFlag)
 	{
 		if (fd->structoffset == -1)
 		{
-			HandleDeprecatedFlags(self, !!expression, fd->flagbit);
+			HandleDeprecatedFlags(self, expression, fd->flagbit);
 		}
 		else
 		{

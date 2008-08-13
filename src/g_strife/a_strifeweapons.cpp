@@ -215,10 +215,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireArrow)
 {
 	angle_t savedangle;
 
-	int index=CheckIndex(1);
-	if (index<0) return;
-
-	ENamedName MissileName=(ENamedName)StateParameters[index];
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_CLASS(ti, 0);
 
 	if (self->player == NULL)
 		return;
@@ -230,7 +228,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireArrow)
 			return;
 	}
 
-	const PClass * ti=PClass::FindClass(MissileName);
 	if (ti) 
 	{
 		savedangle = self->angle;
@@ -634,32 +631,28 @@ DEFINE_ACTION_FUNCTION(AActor, A_Burnination)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireGrenade)
 {
-	const PClass *grenadetype;
 	player_t *player = self->player;
 	AActor *grenade;
 	angle_t an;
 	fixed_t tworadii;
 	AWeapon *weapon;
 
-	int index=CheckIndex(3);
-	if (index<0) return;
+	ACTION_PARAM_START(3);
+	ACTION_PARAM_CLASS(grenadetype, 0);
+	ACTION_PARAM_ANGLE(Angle, 1);
+	ACTION_PARAM_STATE(flash, 2);
 
-	ENamedName MissileName=(ENamedName)StateParameters[index];
-	angle_t Angle=angle_t(EvalExpressionF (StateParameters[index+1], self) * ANGLE_1);
-
-	if (player == NULL)
+	if (player == NULL || grenadetype == NULL)
 		return;
 
 	if ((weapon = player->ReadyWeapon) == NULL)
 		return;
 
-	grenadetype = PClass::FindClass(MissileName);
-
 	if (!weapon->DepleteAmmo (weapon->bAltFire))
 		return;
 
 	// Make it flash
-	FState *jumpto = P_GetState(weapon, NULL, StateParameters[index + 2]);
+	FState *jumpto = P_GetState(weapon, NULL, flash);
 
 	P_SetPsprite (player, ps_flash, jumpto);
 

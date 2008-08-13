@@ -1239,14 +1239,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_PlayerScream)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SkullPop)
 {
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_CLASS(spawntype, 0);
+
 	APlayerPawn *mo;
 	player_t *player;
 
 	// [GRB] Parameterized version
-	const PClass *spawntype = NULL;
-	int index = CheckIndex (1);
-	if (index >= 0)
-		spawntype = PClass::FindClass((ENamedName)StateParameters[index]);
 	if (!spawntype || !spawntype->IsDescendantOf (RUNTIME_CLASS (APlayerChunk)))
 	{
 		spawntype = PClass::FindClass("BloodySkull");

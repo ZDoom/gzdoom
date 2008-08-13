@@ -953,6 +953,27 @@ float EvalExpressionF (int id, AActor *self, const PClass *cls)
 	}
 }
 
+fixed_t EvalExpressionFix (int id, AActor *self, const PClass *cls)
+{
+	if (StateExpressions.Size() <= (unsigned int)id) return 0;
+
+	if (cls == NULL && self != NULL)
+	{
+		cls = self->GetClass();
+	}
+
+	ExpVal val = EvalExpression (StateExpressions[id], self, cls);
+
+	switch (val.Type)
+	{
+	default:
+	case VAL_Int:
+		return val.Int << FRACBITS;
+	case VAL_Float:
+		return fixed_t(val.Float*FRACUNIT);
+	}
+}
+
 static ExpVal EvalExpression (ExpData *data, AActor *self, const PClass *cls)
 {
 	ExpVal val;

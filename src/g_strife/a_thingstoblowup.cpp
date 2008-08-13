@@ -27,11 +27,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_Bang4Cloud)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GiveQuestItem)
 {
-	int index=CheckIndex(1);
-	if (index<0) return;
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_INT(questitem, 0);
 
-	int questitem = EvalExpressionI (StateParameters[index], self);
-	
 	// Give one of these quest items to every player in the game
 	for (int i = 0; i < MAXPLAYERS; ++i)
 	{

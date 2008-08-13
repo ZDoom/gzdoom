@@ -62,12 +62,14 @@ bool AFighterWeaponPiece::TryPickup (AActor *toucher)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DropWeaponPieces)
 {
-	int index=CheckIndex(3);
-	if (index<0) return;
+	ACTION_PARAM_START(3);
+	ACTION_PARAM_CLASS(p1, 0);
+	ACTION_PARAM_CLASS(p2, 1);
+	ACTION_PARAM_CLASS(p3, 2);
 
 	for (int i = 0, j = 0, fineang = 0; i < 3; ++i)
 	{
-		const PClass *cls = PClass::FindClass((ENamedName)StateParameters[index+j]);
+		const PClass *cls = j==0? p1 : j==1? p2 : p3;
 		if (cls)
 		{
 			AActor *piece = Spawn (cls, self->x, self->y, self->z, ALLOW_REPLACE);

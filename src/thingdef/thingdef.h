@@ -196,6 +196,8 @@ struct StateCallData
 
 #define ACTION_PARAM_START(count)
 
+#define ACTION_PARAM_CONST(var, i) \
+	int var = StateParameters[ParameterIndex+i];
 #define ACTION_PARAM_INT(var, i) \
 	int var = EvalExpressionI(StateParameters[ParameterIndex+i], self);
 #define ACTION_PARAM_BOOL(var,i) \

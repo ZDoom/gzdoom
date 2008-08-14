@@ -1,4 +1,5 @@
 August 14, 2008 (Changes by Graf Zahl)
+- Fixed: The count parameter of A_Jump is a constant, not an expression.
 - Fixed: A_Jump used a wrong index into the jump address table.
 - Fixed: The recent changes in the DECORATE parser require the special parameter
   to A_CallSpecial to be an expression, not a constant.

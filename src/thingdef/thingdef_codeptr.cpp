@@ -448,7 +448,7 @@ static void DoJump(AActor * self, FState * CallingState, int offset, StateCallDa
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Jump)
 {
 	ACTION_PARAM_START(3);
-	ACTION_PARAM_INT(count, 0);
+	ACTION_PARAM_CONST(count, 0);
 	ACTION_PARAM_INT(maxchance, 1);
 	ACTION_PARAM_VARARG(jumps, 2);
 

@@ -421,7 +421,12 @@ bool DoActionSpecials(FScanner &sc, FState & state, bool multistate, int * state
 
 		int paramindex=PrepareStateParameters(&state, 6);
 
-		StateParameters[paramindex]=special;
+		// The function expects the special to be passed as expression so we
+		// have to convert it.
+		specname.Format("%d", special);
+		FScanner sc2;
+		sc2.OpenMem("", (char*)specname.GetChars(), int(specname.Len()));
+		StateParameters[paramindex] = ParseExpression(sc2, false, bag.Info->Class);
 
 		// Make this consistent with all other parameter parsing
 		if (sc.CheckToken('('))

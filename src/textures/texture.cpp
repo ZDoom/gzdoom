@@ -515,6 +515,11 @@ bool FTexture::UseBasePalette()
 	return true; 
 }
 
+FTexture *FTexture::GetRedirect(bool wantwarped)
+{
+	return this;
+}
+
 
 
 FDummyTexture::FDummyTexture ()

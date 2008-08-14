@@ -460,7 +460,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Jump)
 		}
 		else
 		{
-			ACTION_JUMP(jumps[(pr_cajump() % (count - 1)) + 2]);
+			ACTION_JUMP(jumps[(pr_cajump() % (count - 1))]);
 		}
 	}
 	ACTION_SET_RESULT(false);	// Jumps should never set the result for inventory state chains!

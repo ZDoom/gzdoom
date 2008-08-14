@@ -184,6 +184,7 @@ protected:
 	bool bTranslucentPatches:1;
 
 	void MakeTexture ();
+	FTexture *GetRedirect(bool wantwarped);
 
 private:
 	void CheckForHacks ();
@@ -747,6 +748,18 @@ void FMultiPatchTexture::CheckForHacks ()
 			}
 		}
 	}
+}
+
+//==========================================================================
+//
+// FMultiPatchTexture :: TexPart :: TexPart
+//
+//==========================================================================
+
+FTexture *FMultiPatchTexture::GetRedirect(bool wantwarped)
+{
+	if (bRedirect) return Parts->Texture;
+	else return this;
 }
 
 //==========================================================================

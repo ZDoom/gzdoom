@@ -222,3 +222,29 @@ void FWarp2Texture::MakeTexture (DWORD time)
 	}
 }
 
+//==========================================================================
+//
+// FMultiPatchTexture :: TexPart :: TexPart
+//
+//==========================================================================
+
+FTexture *FWarpTexture::GetRedirect(bool wantwarped)
+{
+	if (!wantwarped) return SourcePic;
+	else return this;
+}
+
+//==========================================================================
+//
+// FMultiPatchTexture :: CopyTrueColorPixels
+//
+// This doesn't warp. It's just here in case someone tries to use a warp
+// texture for compositing a multipatch texture
+//
+//==========================================================================
+
+int FWarpTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)
+{
+	return SourcePic->CopyTrueColorPixels(bmp, x, y, rotate, inf);
+}
+

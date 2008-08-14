@@ -1,4 +1,9 @@
 August 14, 2008 (Changes by Graf Zahl)
+- Fixed: A_Jump used a wrong index into the jump address table.
+- Fixed: The recent changes in the DECORATE parser require the special parameter
+  to A_CallSpecial to be an expression, not a constant.
+- Removed game filters from old style decorations. No WAD in existence ever 
+  used them and removing them allows to make the parser more robust.
 - Added a few more macros so that the action function code doesn't have
   to reference its arguments directly, except 'self'. This may be helpful if it 
   becomes necessary to restructure this code once DoomScript becomes real.

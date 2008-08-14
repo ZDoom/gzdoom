@@ -147,6 +147,7 @@ public:
 	int CopyTrueColorTranslated(FBitmap *bmp, int x, int y, int rotate, FRemapTable *remap, FCopyInfo *inf = NULL);
 	virtual bool UseBasePalette();
 	virtual int GetSourceLump() { return -1; }
+	virtual FTexture *GetRedirect(bool wantwarped);
 
 	virtual void Unload () = 0;
 

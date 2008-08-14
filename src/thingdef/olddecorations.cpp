@@ -244,6 +244,10 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def)
 	info->GameFilter = 0x80;
 	MakeStateDefines(parent->ActorInfo->StateList);
 
+	// There isn't a single WAD out there which uses game filters with old style
+	// decorations so this may as well be disabled. Without this option is is much
+	// easier to detect incorrect declarations 
+#if 0
 	sc.MustGetString ();
 	while (!sc.Compare ("{"))
 	{
@@ -295,6 +299,10 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def)
 	{
 		info->GameFilter &= ~0x80;
 	}
+#else
+	info->GameFilter = GAME_Any;
+	sc.MustGetStringName("{");
+#endif
 
 	states.Clear ();
 	memset (&extra, 0, sizeof(extra));

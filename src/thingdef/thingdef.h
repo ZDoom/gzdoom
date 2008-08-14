@@ -164,28 +164,35 @@ enum EDefinitionType
 #endif
 
 
+struct StateCallData
+{
+	FState * State;
+	AActor * Item;
+	bool Result;
+};
+
 // Macros to handle action functions. These are here so that I don't have to
 // change every single use in case the parameters change.
-#define DECLARE_ACTION(name) void AF_##name(AActor *self, FState *, int);
+#define DECLARE_ACTION(name) void AF_##name(AActor *self, FState *, int, StateCallData *);
 
 // This distinction is here so that CALL_ACTION produces errors when trying to
 // access a function that requires parameters.
 #define DEFINE_ACTION_FUNCTION(cls, name) \
-	void AF_##name (AActor *self, FState *, int); \
+	void AF_##name (AActor *self, FState *, int, StateCallData *); \
 	AFuncDesc info_##cls##_##name = { #name, AF_##name }; \
 	MSVC_ASEG AFuncDesc *infoptr_##cls##_##name GCC_ASEG = &info_##cls##_##name; \
-	void AF_##name (AActor *self, FState *, int)
+	void AF_##name (AActor *self, FState *, int, StateCallData *statecall)
 
 #define DEFINE_ACTION_FUNCTION_PARAMS(cls, name) \
-	void AFP_##name (AActor *self, FState *CallingState, int ParameterIndex); \
+	void AFP_##name (AActor *self, FState *CallingState, int ParameterIndex, StateCallData *statecall); \
 	AFuncDesc info_##cls##_##name = { #name, AFP_##name }; \
 	MSVC_ASEG AFuncDesc *infoptr_##cls##_##name GCC_ASEG = &info_##cls##_##name; \
-	void AFP_##name (AActor *self, FState *CallingState, int ParameterIndex)
+	void AFP_##name (AActor *self, FState *CallingState, int ParameterIndex, StateCallData *statecall)
 
-#define DECLARE_PARAMINFO FState *CallingState, int ParameterIndex
-#define PUSH_PARAMINFO CallingState, ParameterIndex
+#define DECLARE_PARAMINFO FState *CallingState, int ParameterIndex, StateCallData *statecall
+#define PUSH_PARAMINFO CallingState, ParameterIndex, statecall
 
-#define CALL_ACTION(name,self) AF_##name(self, NULL, 0)
+#define CALL_ACTION(name,self) AF_##name(self, NULL, 0, NULL)
 
 #define ACTION_PARAM_START(count)
 
@@ -215,4 +222,10 @@ enum EDefinitionType
 #define ACTION_PARAM_ANGLE(var,i) \
 	angle_t var = angle_t(EvalExpressionF(StateParameters[ParameterIndex+i], self)*ANGLE_90/90.f);
 
+#define ACTION_SET_RESULT(v) if (statecall != NULL) statecall->Result = v;
+
+// Checks to see what called the current action function
+#define ACTION_CALL_FROM_ACTOR() (CallingState == self->state)
+#define ACTION_CALL_FROM_WEAPON() (self->player && CallingState != self->state && statecall == NULL)
+#define ACTION_CALL_FROM_INVENTORY() (statecall != NULL)
 #endif

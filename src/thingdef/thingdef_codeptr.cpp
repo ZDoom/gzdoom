@@ -80,18 +80,6 @@ static FRandom pr_spawnitemex ("SpawnItemEx");
 static FRandom pr_burst ("Burst");
 
 
-// A truly awful hack to get to the state that called an action function
-// without knowing whether it has been called from a weapon or actor.
-
-struct StateCallData
-{
-	FState * State;
-	AActor * Item;
-	bool Result;
-};
-
-StateCallData * pStateCall;
-
 //==========================================================================
 //
 // ACustomInventory :: CallStateChain
@@ -104,18 +92,16 @@ StateCallData * pStateCall;
 bool ACustomInventory::CallStateChain (AActor *actor, FState * State)
 {
 	StateCallData StateCall;
-	StateCallData *pSavedCall = pStateCall;
 	bool result = false;
 	int counter = 0;
 
-	pStateCall = &StateCall;
 	StateCall.Item = this;
 	while (State != NULL)
 	{
 		// Assume success. The code pointer will set this to false if necessary
 		StateCall.State = State;
 		StateCall.Result = true;
-		if (State->CallAction(actor))
+		if (State->CallAction(actor, &StateCall))
 		{
 			// collect all the results. Even one successful call signifies overall success.
 			result |= StateCall.Result;
@@ -131,7 +117,6 @@ bool ACustomInventory::CallStateChain (AActor *actor, FState * State)
 			// Abort immediately if the state jumps to itself!
 			if (State == State->GetNextState()) 
 			{
-				pStateCall = pSavedCall;
 				return false;
 			}
 			
@@ -144,7 +129,6 @@ bool ACustomInventory::CallStateChain (AActor *actor, FState * State)
 			State = StateCall.State;
 		}
 	}
-	pStateCall = pSavedCall;
 	return result;
 }
 
@@ -418,14 +402,14 @@ FState *P_GetState(AActor *self, FState *CallingState, int offset)
 // Do the state jump
 //
 //==========================================================================
-static void DoJump(AActor * self, FState * CallingState, int offset)
+static void DoJump(AActor * self, FState * CallingState, int offset, StateCallData *statecall)
 {
 
-	if (pStateCall != NULL && CallingState == pStateCall->State)
+	if (statecall != NULL)
 	{
-		FState *jumpto = P_GetState(pStateCall->Item, CallingState, offset);
+		FState *jumpto = P_GetState(statecall->Item, CallingState, offset);
 		if (jumpto == NULL) return;
-		pStateCall->State = jumpto;
+		statecall->State = jumpto;
 	}
 	else if (self->player != NULL && CallingState == self->player->psprites[ps_weapon].state)
 	{
@@ -439,13 +423,23 @@ static void DoJump(AActor * self, FState * CallingState, int offset)
 		if (jumpto == NULL) return;
 		P_SetPsprite(self->player, ps_flash, jumpto);
 	}
-	else
+	else if (CallingState == self->state)
 	{
 		FState *jumpto = P_GetState(self, CallingState, offset);
 		if (jumpto == NULL) return;
 		self->SetState (jumpto);
 	}
+	else
+	{
+		// something went very wrong. This should never happen.
+		assert(false);
+	}
 }
+
+// This is just to avoid having to directly reference the internally defined
+// CallingState and statecall parameters in the code below.
+#define ACTION_JUMP(offset) DoJump(self, CallingState, offset, statecall)
+
 //==========================================================================
 //
 // State jump function
@@ -462,14 +456,14 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Jump)
 	{
 		if (count == 2)
 		{
-			DoJump(self, CallingState, *jumps);
+			ACTION_JUMP(*jumps);
 		}
 		else
 		{
-			DoJump(self, CallingState, jumps[(pr_cajump() % (count - 1)) + 2]);
+			ACTION_JUMP(jumps[(pr_cajump() % (count - 1)) + 2]);
 		}
 	}
-	if (pStateCall != NULL) pStateCall->Result=false;	// Jumps should never set the result for inventory state chains!
+	ACTION_SET_RESULT(false);	// Jumps should never set the result for inventory state chains!
 }
 
 //==========================================================================
@@ -483,9 +477,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfHealthLower)
 	ACTION_PARAM_INT(health, 0);
 	ACTION_PARAM_STATE(jump, 1);
 
-	if (self->health < health) DoJump(self, CallingState, jump);
+	if (self->health < health) ACTION_JUMP(jump);
 
-	if (pStateCall != NULL) pStateCall->Result=false;	// Jumps should never set the result for inventory state chains!
+	ACTION_SET_RESULT(false);	// Jumps should never set the result for inventory state chains!
 }
 
 //==========================================================================
@@ -511,7 +505,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfCloser)
 		P_BulletSlope(self, &target);
 	}
 
-	if (pStateCall != NULL) pStateCall->Result=false;	// Jumps should never set the result for inventory state chains!
+	ACTION_SET_RESULT(false);	// Jumps should never set the result for inventory state chains!
 
 	// No target - no jump
 	if (target==NULL) return;
@@ -521,7 +515,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfCloser)
 		  (self->z <=target->z && target->z - (self->z + self->height) < dist) 
 		)
 	   )
-		DoJump(self, CallingState, jump);
+	{
+		ACTION_JUMP(jump);
+	}
 }
 
 //==========================================================================
@@ -536,7 +532,7 @@ void DoJumpIfInventory(AActor * self, AActor * owner, DECLARE_PARAMINFO)
 	ACTION_PARAM_INT(ItemAmount, 1);
 	ACTION_PARAM_STATE(JumpOffset, 2);
 
-	if (pStateCall != NULL) pStateCall->Result=false;	// Jumps should never set the result for inventory state chains!
+	ACTION_SET_RESULT(false);	// Jumps should never set the result for inventory state chains!
 
 	if (!Type || owner == NULL) return;
 
@@ -544,8 +540,8 @@ void DoJumpIfInventory(AActor * self, AActor * owner, DECLARE_PARAMINFO)
 
 	if (Item)
 	{
-		if (ItemAmount>0 && Item->Amount>=ItemAmount) DoJump(self, CallingState, JumpOffset);
-		else if (Item->Amount>=Item->MaxAmount) DoJump(self, CallingState, JumpOffset);
+		if (ItemAmount>0 && Item->Amount>=ItemAmount) ACTION_JUMP(JumpOffset);
+		else if (Item->Amount>=Item->MaxAmount) ACTION_JUMP(JumpOffset);
 	}
 }
 
@@ -637,7 +633,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CallSpecial)
 
 	bool res = !!LineSpecials[special](NULL, self, false, arg1, arg2, arg3, arg4, arg5);
 
-	if (pStateCall != NULL) pStateCall->Result = res;
+	ACTION_SET_RESULT(res);
 }
 
 //==========================================================================
@@ -914,11 +910,13 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfNoAmmo)
 	ACTION_PARAM_START(1);
 	ACTION_PARAM_STATE(jump, 0);
 
-	if (pStateCall != NULL) pStateCall->Result=false;	// Jumps should never set the result for inventory state chains!
-	if (!self->player || !self->player->ReadyWeapon || pStateCall != NULL) return;	// only for weapons!
+	ACTION_SET_RESULT(false);	// Jumps should never set the result for inventory state chains!
+	if (!ACTION_CALL_FROM_WEAPON()) return;
 
 	if (!self->player->ReadyWeapon->CheckAmmo(self->player->ReadyWeapon->bAltFire, false, true))
-		DoJump(self, CallingState, jump);
+	{
+		ACTION_JUMP(jump);
+	}
 
 }
 
@@ -1223,7 +1221,7 @@ static void DoGiveInventory(AActor * self, AActor * receiver, DECLARE_PARAMINFO)
 		else res = true;
 	}
 	else res = false;
-	if (pStateCall != NULL) pStateCall->Result = res;
+	ACTION_SET_RESULT(res);
 
 }	
 
@@ -1251,13 +1249,16 @@ void DoTakeInventory(AActor * self, AActor * receiver, DECLARE_PARAMINFO)
 	
 	if (receiver == NULL) return;
 
-	if (pStateCall != NULL) pStateCall->Result=false;
+	bool res = false;
 
 	AInventory * inv = receiver->FindInventory(item);
 
 	if (inv && !inv->IsKindOf(RUNTIME_CLASS(AHexenArmor)))
 	{
-		if (inv->Amount > 0 && pStateCall != NULL) pStateCall->Result=true;
+		if (inv->Amount > 0)
+		{
+			res = true;
+		}
 		if (!amount || amount>=inv->Amount) 
 		{
 			if (inv->ItemFlags&IF_KEEPDEPLETED) inv->Amount=0;
@@ -1265,6 +1266,7 @@ void DoTakeInventory(AActor * self, AActor * receiver, DECLARE_PARAMINFO)
 		}
 		else inv->Amount-=amount;
 	}
+	ACTION_SET_RESULT(res);
 }	
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_TakeInventory)
@@ -1296,7 +1298,7 @@ enum SIX_Flags
 };
 
 
-static void InitSpawnedItem(AActor *self, AActor *mo, int flags)
+static bool InitSpawnedItem(AActor *self, AActor *mo, int flags)
 {
 	if (mo)
 	{
@@ -1324,8 +1326,7 @@ static void InitSpawnedItem(AActor *self, AActor *mo, int flags)
 				// The monster is blocked so don't spawn it at all!
 				if (mo->CountsAsKill()) level.total_monsters--;
 				mo->Destroy();
-				if (pStateCall != NULL) pStateCall->Result=false;	// for an inventory item's use state
-				return;
+				return false;
 			}
 			else if (originator)
 			{
@@ -1360,6 +1361,7 @@ static void InitSpawnedItem(AActor *self, AActor *mo, int flags)
 			mo->target=originator? originator : self;
 		}
 	}
+	return true;
 }
 
 //===========================================================================
@@ -1381,7 +1383,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnItem)
 
 	if (!missile) 
 	{
-		if (pStateCall != NULL) pStateCall->Result=false;
+		ACTION_SET_RESULT(false);
 		return;
 	}
 
@@ -1394,7 +1396,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnItem)
 		distance=(self->radius+GetDefaultByType(missile)->radius)>>FRACBITS;
 	}
 
-	if (self->player && CallingState != self->state && (pStateCall==NULL || CallingState != pStateCall->State))
+	if (ACTION_CALL_FROM_WEAPON())
 	{
 		// Used from a weapon so use some ammo
 		AWeapon * weapon=self->player->ReadyWeapon;
@@ -1409,7 +1411,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnItem)
 					self->z - self->floorclip + zheight, ALLOW_REPLACE);
 
 	int flags = (transfer_translation? SIXF_TRANSFERTRANSLATION:0) + (useammo? SIXF_SETMASTER:0);
-	InitSpawnedItem(self, mo, flags);
+	bool res = InitSpawnedItem(self, mo, flags);
+	ACTION_SET_RESULT(res);	// for an inventory item's use state
 }
 
 //===========================================================================
@@ -1435,7 +1438,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnItemEx)
 
 	if (!missile) 
 	{
-		if (pStateCall != NULL) pStateCall->Result=false;
+		ACTION_SET_RESULT(false);
 		return;
 	}
 
@@ -1475,7 +1478,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnItemEx)
 	}
 
 	AActor * mo = Spawn( missile, x, y, self->z - self->floorclip + zofs, ALLOW_REPLACE);
-	InitSpawnedItem(self, mo, flags);
+	bool res = InitSpawnedItem(self, mo, flags);
+	ACTION_SET_RESULT(res);	// for an inventory item's use state
 	if (mo)
 	{
 		mo->momx=xmom;
@@ -1502,7 +1506,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ThrowGrenade)
 	ACTION_PARAM_FIXED(zmom, 3);
 	ACTION_PARAM_BOOL(useammo, 4);
 
-	if (self->player && CallingState != self->state && (pStateCall==NULL || CallingState != pStateCall->State))
+	if (ACTION_CALL_FROM_WEAPON())
 	{
 		// Used from a weapon so use some ammo
 		AWeapon * weapon=self->player->ReadyWeapon;
@@ -1537,7 +1541,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ThrowGrenade)
 		}
 		P_CheckMissileSpawn (bo);
 	} 
-	else if (pStateCall != NULL) pStateCall->Result=false;
+	else ACTION_SET_RESULT(false);
 }
 
 
@@ -1579,7 +1583,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SelectWeapon)
 			self->player->PendingWeapon = weaponitem;
 		}
 	}
-	else if (pStateCall != NULL) pStateCall->Result=false;
+	else ACTION_SET_RESULT(false);
+
 }
 
 
@@ -1730,14 +1735,14 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckSight)
 	ACTION_PARAM_START(1);
 	ACTION_PARAM_STATE(jump, 0);
 
-	if (pStateCall != NULL) pStateCall->Result=false;	// Jumps should never set the result for inventory state chains!
+	ACTION_SET_RESULT(false);	// Jumps should never set the result for inventory state chains!
 
 	for (int i=0;i<MAXPLAYERS;i++) 
 	{
 		if (playeringame[i] && P_CheckSight(players[i].camera,self,true)) return;
 	}
 
-	DoJump(self, CallingState, jump);
+	ACTION_JUMP(jump);
 
 }
 
@@ -1795,8 +1800,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIf)
 	ACTION_PARAM_BOOL(expression, 0);
 	ACTION_PARAM_STATE(jump, 1);
 
-	if (pStateCall != NULL) pStateCall->Result=false;	// Jumps should never set the result for inventory state chains!
-	if (expression) DoJump(self, CallingState, jump);
+	ACTION_SET_RESULT(false);	// Jumps should never set the result for inventory state chains!
+	if (expression) ACTION_JUMP(jump);
 
 }
 
@@ -1926,10 +1931,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckFloor)
 	ACTION_PARAM_START(1);
 	ACTION_PARAM_STATE(jump, 0);
 
-	if (pStateCall != NULL) pStateCall->Result=false;	// Jumps should never set the result for inventory state chains!
+	ACTION_SET_RESULT(false);	// Jumps should never set the result for inventory state chains!
 	if (self->z <= self->floorz)
 	{
-		DoJump (self, CallingState, jump);
+		ACTION_JUMP(jump);
 	}
 
 }
@@ -2006,11 +2011,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_PlayerSkinCheck)
 	ACTION_PARAM_START(1);
 	ACTION_PARAM_STATE(jump, 0);
 
-	if (pStateCall != NULL) pStateCall->Result=false;	// Jumps should never set the result for inventory state chains!
+	ACTION_SET_RESULT(false);	// Jumps should never set the result for inventory state chains!
 	if (self->player != NULL &&
 		skins[self->player->userinfo.skin].othergame)
 	{
-		DoJump(self, CallingState, jump);
+		ACTION_JUMP(jump);
 	}
 }
 
@@ -2066,7 +2071,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInLOS)
 	angle_t an;
 	AActor *target;
 
-	if (pStateCall != NULL) pStateCall->Result=false;	// Jumps should never set the result for inventory state chains!
+	ACTION_SET_RESULT(false);	// Jumps should never set the result for inventory state chains!
 
 	if (!self->player)
 	{
@@ -2110,7 +2115,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInLOS)
 
 	if (!target) return;
 
-	DoJump(self, CallingState, jump);
+	ACTION_JUMP(jump);
 }
 
 //===========================================================================
@@ -2196,7 +2201,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckForReload)
 	if (weapon->ReloadCounter != 0)
 	{
 		// Go back to the refire frames, instead of continuing on to the reload frames.
-		DoJump(self, CallingState, jump);
+		ACTION_JUMP(jump);
 	}
 	else
 	{

@@ -30,6 +30,7 @@ Actor PlayerPawn : Actor native
 
 Actor PlayerChunk : PlayerPawn native
 {
+	+NOSKIN
 	-SOLID
 	-SHOOTABLE
 	-PICKUP

@@ -1,3 +1,11 @@
+August 14, 2008 (Changes by Graf Zahl)
+- Added a few more macros so that the action function code doesn't have
+  to reference its arguments directly, except 'self'. This may be helpful if it 
+  becomes necessary to restructure this code once DoomScript becomes real.
+- Removed the last remaining global variable related to action functions:
+  pStateCall. Everything is passed properly as function arguments now.
+- fixed: PlayerChunk was missing the NOSKIN flag.
+
 August 13, 2008 (Changes by Graf Zahl)
 - Macro-fied access to action function parameters.
 - Deactivated debug output code in d_Dehacked.cpp.

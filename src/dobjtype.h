@@ -47,7 +47,8 @@ struct PSymbolConst : public PSymbol
 // and an "imaginary" first parameter is inserted containing the total number of
 // parameters passed.
 struct FState;
-typedef void (*actionf_p)(AActor *self, FState *state, int parameters);
+struct StateCallData;
+typedef void (*actionf_p)(AActor *self, FState *state, int parameters, StateCallData *statecall);
 
 struct PSymbolActionFunction : public PSymbol
 {

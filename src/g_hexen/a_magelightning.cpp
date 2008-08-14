@@ -250,11 +250,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightningZap)
 
 //============================================================================
 //
-// A_MLightningAttack2
+// A_MLightningAttack
 //
 //============================================================================
 
-static void MLightningAttack2 (AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_MLightningAttack)
 {
 	AActor *fmo, *cmo;
 
@@ -273,17 +273,7 @@ static void MLightningAttack2 (AActor *self)
 		CALL_ACTION(A_LightningZap, cmo);	
 	}
 	S_Sound (self, CHAN_BODY, "MageLightningFire", 1, ATTN_NORM);
-}
 
-//============================================================================
-//
-// A_MLightningAttack
-//
-//============================================================================
-
-DEFINE_ACTION_FUNCTION(AActor, A_MLightningAttack)
-{
-	MLightningAttack2(self);
 	if (self->player != NULL)
 	{
 		AWeapon *weapon = self->player->ReadyWeapon;

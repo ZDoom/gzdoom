@@ -137,6 +137,8 @@ ACTOR HereticImpBall
 	FastSpeed 20
 	Damage 1
 	Projectile
+	SeeSound "himp/leaderattack"
+	+SPAWNSOUNDSOURCE
 	-ACTIVATEPCROSS
 	-ACTIVATEIMPACT
 	RenderStyle Add

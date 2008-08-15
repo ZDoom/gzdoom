@@ -1767,6 +1767,7 @@ ACTOR CeilingTurret 27
 	Painchance 0
 	Mass 10000000
 	Monster
+	-SOLID
 	+AMBUSH
 	+SPAWNCEILING
 	+NOGRAVITY

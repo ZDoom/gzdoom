@@ -17,6 +17,7 @@ ACTOR Crusader 3005
 	+MISSILEMORE
 	+INCOMBAT
 	+NOICEDEATH
+	+NOBLOOD
 	MinMissileChance 120
 	MaxDropoffHeight 32
 	DropItem "EnergyPod", 256, 20

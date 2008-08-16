@@ -92,14 +92,14 @@ bool sector_t::IsLinked(sector_t *other, bool ceiling) const
 static bool MoveCeiling(sector_t *sector, int crush, fixed_t move)
 {
 	sector->ceilingplane.ChangeHeight (move);
-	sector->ceilingtexz += move;
+	sector->ChangePlaneTexZ(sector_t::ceiling, move);
 
 	if (P_ChangeSector(sector, crush, move, 1, true)) return false;
 
 	// Don't let the ceiling go below the floor
 	if ((sector->ceilingplane.a | sector->ceilingplane.b |
 		 sector->floorplane.a | sector->floorplane.b) == 0 &&
-		 sector->floortexz > sector->ceilingtexz) return false;
+		 sector->GetPlaneTexZ(sector_t::floor)  > sector->GetPlaneTexZ(sector_t::ceiling)) return false;
 
 	return true;
 }
@@ -107,14 +107,14 @@ static bool MoveCeiling(sector_t *sector, int crush, fixed_t move)
 static bool MoveFloor(sector_t *sector, int crush, fixed_t move)
 {
 	sector->floorplane.ChangeHeight (move);
-	sector->floortexz += move;
+	sector->ChangePlaneTexZ(sector_t::floortexz, move);
 
 	if (P_ChangeSector(sector, crush, move, 0, true)) return false;
 
 	// Don't let the floor go above the ceiling
 	if ((sector->ceilingplane.a | sector->ceilingplane.b |
 		 sector->floorplane.a | sector->floorplane.b) == 0 &&
-		 sector->floortexz > sector->ceilingtexz) return false;
+		 sector->GetPlaneTexZ(sector_t::floor) > sector->GetPlaneTexZ(sector_t::ceiling)) return false;
 
 	return true;
 }

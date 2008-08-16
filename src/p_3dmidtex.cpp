@@ -231,14 +231,14 @@ bool P_GetMidTexturePosition(const line_t *line, int sideno, fixed_t *ptextop, f
 	if(line->flags & ML_DONTPEGBOTTOM)
 	{
 		*ptexbot = y_offset +
-				   MAX<fixed_t>(line->frontsector->floortexz, line->backsector->floortexz);
+			MAX<fixed_t>(line->frontsector->GetPlaneTexZ(sector_t::floor), line->backsector->GetPlaneTexZ(sector_t::floor));
 
 		*ptextop = *ptexbot + textureheight;
 	}
 	else
 	{
 		*ptextop = y_offset +
-				   MIN<fixed_t>(line->frontsector->ceilingtexz, line->backsector->ceilingtexz);
+		   MIN<fixed_t>(line->frontsector->GetPlaneTexZ(sector_t::ceiling), line->backsector->GetPlaneTexZ(sector_t::ceiling));
 		
 		*ptexbot = *ptextop - textureheight;
 	}

@@ -180,9 +180,9 @@ void P_FindFloorCeiling (AActor *actor, bool onlymidtex)
 	tmf.thing = actor;
 	tmf.floorz = tmf.dropoffz = sec->floorplane.ZatPoint (tmf.x, tmf.y);
 	tmf.ceilingz = sec->ceilingplane.ZatPoint (tmf.x, tmf.y);
-	tmf.floorpic = sec->floorpic;
+	tmf.floorpic = sec->GetTexture(sector_t::floor);
 	tmf.floorsector = sec;
-	tmf.ceilingpic = sec->ceilingpic;
+	tmf.ceilingpic = sec->GetTexture(sector_t::ceiling);
 	tmf.ceilingsector = sec;
 	tmf.touchmidtex = false;
 	validcount++;
@@ -239,9 +239,9 @@ bool P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefr
 	tmf.z = z;
 	tmf.floorz = tmf.dropoffz = newsec->floorplane.ZatPoint (x, y);
 	tmf.ceilingz = newsec->ceilingplane.ZatPoint (x, y);
-	tmf.floorpic = newsec->floorpic;
+	tmf.floorpic = newsec->GetTexture(sector_t::floor);
 	tmf.floorsector = newsec;
-	tmf.ceilingpic = newsec->ceilingpic;
+	tmf.ceilingpic = newsec->GetTexture(sector_t::ceiling);
 	tmf.ceilingsector = newsec;
 					
 	spechit.Clear ();
@@ -365,13 +365,13 @@ void P_PlayerStartStomp (AActor *actor)
 
 inline fixed_t secfriction (const sector_t *sec)
 {
-	fixed_t friction = Terrains[TerrainTypes[sec->floorpic]].Friction;
+	fixed_t friction = Terrains[TerrainTypes[sec->GetTexture(sector_t::floor)]].Friction;
 	return friction != 0 ? friction : sec->friction;
 }
 
 inline fixed_t secmovefac (const sector_t *sec)
 {
-	fixed_t movefactor = Terrains[TerrainTypes[sec->floorpic]].MoveFactor;
+	fixed_t movefactor = Terrains[TerrainTypes[sec->GetTexture(sector_t::floor)]].MoveFactor;
 	return movefactor != 0 ? movefactor : sec->movefactor;
 }
 
@@ -408,7 +408,7 @@ int P_GetFriction (const AActor *mo, int *frictionfactor)
 		{
 			sec = m->m_sector;
 			if (!(sec->special & FRICTION_MASK) &&
-				Terrains[TerrainTypes[sec->floorpic]].Friction == 0)
+				Terrains[TerrainTypes[sec->GetTexture(sector_t::floor)]].Friction == 0)
 			{
 				continue;
 			}
@@ -1025,9 +1025,9 @@ bool P_CheckPosition (AActor *thing, fixed_t x, fixed_t y, FCheckPosition &tm)
 // Any contacted lines the step closer together will adjust them.
 	tm.floorz = tm.dropoffz = newsec->floorplane.ZatPoint (x, y);
 	tm.ceilingz = newsec->ceilingplane.ZatPoint (x, y);
-	tm.floorpic = newsec->floorpic;
+	tm.floorpic = newsec->GetTexture(sector_t::floor);
 	tm.floorsector = newsec;
-	tm.ceilingpic = newsec->ceilingpic;
+	tm.ceilingpic = newsec->GetTexture(sector_t::ceiling);
 	tm.ceilingsector = newsec;
 	tm.touchmidtex = false;
 

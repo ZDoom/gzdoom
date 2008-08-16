@@ -269,25 +269,25 @@ void R_ClearClipSegs (short left, short right)
 
 int GetFloorLight (const sector_t *sec)
 {
-	if (sec->FloorFlags & SECF_ABSLIGHTING)
+	if (sec->GetFlags(sector_t::floor) & SECF_ABSLIGHTING)
 	{
-		return sec->FloorLight;
+		return sec->GetPlaneLight(sector_t::floor);
 	}
 	else
 	{
-		return clamp (sec->lightlevel + (SBYTE)sec->FloorLight, 0, 255);
+		return clamp (sec->lightlevel + sec->GetPlaneLight(sector_t::floor), 0, 255);
 	}
 }
 
 int GetCeilingLight (const sector_t *sec)
 {
-	if (sec->CeilingFlags & SECF_ABSLIGHTING)
+	if (sec->GetFlags(sector_t::ceiling) & SECF_ABSLIGHTING)
 	{
-		return sec->CeilingLight;
+		return sec->GetPlaneLight(sector_t::ceiling);
 	}
 	else
 	{
-		return clamp (sec->lightlevel + (SBYTE)sec->CeilingLight, 0, 255);
+		return clamp (sec->lightlevel + sec->GetPlaneLight(sector_t::ceiling), 0, 255);
 	}
 }
 
@@ -368,7 +368,7 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 		{
 			if (CopyPlaneIfValid (&tempsec->floorplane, &s->floorplane, &sec->ceilingplane))
 			{
-				tempsec->floorpic = s->floorpic;
+				tempsec->SetTexture(sector_t::floor, s->GetTexture(sector_t::floor), false);
 			}
 			else if (s->MoreFlags & SECF_FAKEFLOORONLY)
 			{
@@ -406,7 +406,7 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 			{
 				if (CopyPlaneIfValid (&tempsec->ceilingplane, &s->ceilingplane, &sec->floorplane))
 				{
-					tempsec->ceilingpic = s->ceilingpic;
+					tempsec->SetTexture(sector_t::ceiling, s->GetTexture(sector_t::ceiling), false);
 				}
 			}
 			else
@@ -456,23 +456,23 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 		// killough 11/98: prevent sudden light changes from non-water sectors:
 		if ((underwater && !back) || doorunderwater)
 		{					// head-below-floor hack
-			tempsec->floorpic			= diffTex ? sec->floorpic : s->floorpic;
+			tempsec->SetTexture(sector_t::floor, diffTex ? sec->GetTexture(sector_t::floor) : s->GetTexture(sector_t::floor), false);
 			tempsec->planes[sector_t::floor].xform = s->planes[sector_t::floor].xform;
 
 			tempsec->ceilingplane		= s->floorplane;
 			tempsec->ceilingplane.FlipVert ();
 			tempsec->ceilingplane.ChangeHeight (-1);
-			if (s->ceilingpic == skyflatnum)
+			if (s->GetTexture(sector_t::ceiling) == skyflatnum)
 			{
 				tempsec->floorplane			= tempsec->ceilingplane;
 				tempsec->floorplane.FlipVert ();
 				tempsec->floorplane.ChangeHeight (+1);
-				tempsec->ceilingpic			= tempsec->floorpic;
+				tempsec->SetTexture(sector_t::ceiling, tempsec->GetTexture(sector_t::floor), false);
 				tempsec->planes[sector_t::ceiling].xform = tempsec->planes[sector_t::floor].xform;
 			}
 			else
 			{
-				tempsec->ceilingpic			= diffTex ? s->floorpic : s->ceilingpic;
+				tempsec->SetTexture(sector_t::ceiling, diffTex ? s->GetTexture(sector_t::floor) : s->GetTexture(sector_t::ceiling), false);
 				tempsec->planes[sector_t::ceiling].xform = s->planes[sector_t::ceiling].xform;
 			}
 
@@ -502,14 +502,14 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 			tempsec->ColorMap			= s->ColorMap;
 			tempsec->ColorMap			= s->ColorMap;
 
-			tempsec->ceilingpic = diffTex ? sec->ceilingpic : s->ceilingpic;
-			tempsec->floorpic											= s->ceilingpic;
+			tempsec->SetTexture(sector_t::ceiling, diffTex ? sec->GetTexture(sector_t::ceiling) : s->GetTexture(sector_t::ceiling), false);
+			tempsec->SetTexture(sector_t::floor, s->GetTexture(sector_t::ceiling), false);
 			tempsec->planes[sector_t::ceiling].xform = tempsec->planes[sector_t::floor].xform = s->planes[sector_t::ceiling].xform;
 
-			if (s->floorpic != skyflatnum)
+			if (s->GetTexture(sector_t::floor) != skyflatnum)
 			{
 				tempsec->ceilingplane	= sec->ceilingplane;
-				tempsec->floorpic		= s->floorpic;
+				tempsec->SetTexture(sector_t::floor, s->GetTexture(sector_t::floor), false);
 				tempsec->planes[sector_t::floor].xform = s->planes[sector_t::floor].xform;
 			}
 
@@ -723,7 +723,7 @@ void R_AddLine (seg_t *line)
 		}
 		else if (
 		// properly render skies (consider door "open" if both ceilings are sky):
-		(backsector->ceilingpic != skyflatnum || frontsector->ceilingpic != skyflatnum)
+		(backsector->GetTexture(sector_t::ceiling) != skyflatnum || frontsector->GetTexture(sector_t::ceiling) != skyflatnum)
 
 		// if door is closed because back is shut:
 		&& rw_backcz1 <= rw_backfz1 && rw_backcz2 <= rw_backfz2
@@ -750,8 +750,8 @@ void R_AddLine (seg_t *line)
 			solid = false;
 		}
 		else if (backsector->lightlevel != frontsector->lightlevel
-			|| backsector->floorpic != frontsector->floorpic
-			|| backsector->ceilingpic != frontsector->ceilingpic
+			|| backsector->GetTexture(sector_t::floor) != frontsector->GetTexture(sector_t::floor)
+			|| backsector->GetTexture(sector_t::ceiling) != frontsector->GetTexture(sector_t::ceiling)
 			|| curline->sidedef->GetTexture(side_t::mid).isValid()
 
 			// killough 3/7/98: Take flats offsets into account:
@@ -760,10 +760,10 @@ void R_AddLine (seg_t *line)
 			|| backsector->GetXOffset(sector_t::ceiling) != frontsector->GetXOffset(sector_t::ceiling)
 			|| backsector->GetYOffset(sector_t::ceiling) != frontsector->GetYOffset(sector_t::ceiling)
 
-			|| backsector->FloorLight != frontsector->FloorLight
-			|| backsector->CeilingLight != frontsector->CeilingLight
-			|| backsector->FloorFlags != frontsector->FloorFlags
-			|| backsector->CeilingFlags != frontsector->CeilingFlags
+			|| backsector->GetPlaneLight(sector_t::floor) != frontsector->GetPlaneLight(sector_t::floor)
+			|| backsector->GetPlaneLight(sector_t::ceiling) != frontsector->GetPlaneLight(sector_t::ceiling)
+			|| backsector->GetFlags(sector_t::floor) != frontsector->GetFlags(sector_t::floor)
+			|| backsector->GetFlags(sector_t::ceiling) != frontsector->GetFlags(sector_t::ceiling)
 
 			// [RH] Also consider colormaps
 			|| backsector->ColorMap != frontsector->ColorMap
@@ -1041,13 +1041,13 @@ void R_Subsector (subsector_t *sub)
 	r_actualextralight = foggy ? 0 : extralight << 4;
 	basecolormap = frontsector->ColorMap;
 	ceilingplane = frontsector->ceilingplane.ZatPoint (viewx, viewy) > viewz ||
-		frontsector->ceilingpic == skyflatnum ||
+		frontsector->GetTexture(sector_t::ceiling) == skyflatnum ||
 		(frontsector->CeilingSkyBox != NULL && frontsector->CeilingSkyBox->bAlways) ||
 		(frontsector->heightsec && 
 		 !(frontsector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC) &&
-		 frontsector->heightsec->floorpic == skyflatnum) ?
+		 frontsector->heightsec->GetTexture(sector_t::floor) == skyflatnum) ?
 		R_FindPlane(frontsector->ceilingplane,		// killough 3/8/98
-					frontsector->ceilingpic,
+					frontsector->GetTexture(sector_t::ceiling),
 					ceilinglightlevel + r_actualextralight,				// killough 4/11/98
 					frontsector->GetXOffset(sector_t::ceiling),		// killough 3/7/98
 					frontsector->GetYOffset(sector_t::ceiling),		// killough 3/7/98
@@ -1065,13 +1065,13 @@ void R_Subsector (subsector_t *sub)
 	// killough 3/16/98: add floorlightlevel
 	// killough 10/98: add support for skies transferred from sidedefs
 	floorplane = frontsector->floorplane.ZatPoint (viewx, viewy) < viewz || // killough 3/7/98
-		frontsector->floorpic == skyflatnum ||
+		frontsector->GetTexture(sector_t::floor) == skyflatnum ||
 		(frontsector->FloorSkyBox != NULL && frontsector->FloorSkyBox->bAlways) ||
 		(frontsector->heightsec &&
 		 !(frontsector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC) &&
-		 frontsector->heightsec->ceilingpic == skyflatnum) ?
+		 frontsector->heightsec->GetTexture(sector_t::ceiling) == skyflatnum) ?
 		R_FindPlane(frontsector->floorplane,
-					frontsector->floorpic,
+					frontsector->GetTexture(sector_t::floor),
 					floorlightlevel + r_actualextralight,				// killough 3/16/98
 					frontsector->GetXOffset(sector_t::floor),		// killough 3/7/98
 					frontsector->GetYOffset(sector_t::floor),		// killough 3/7/98
@@ -1087,7 +1087,7 @@ void R_Subsector (subsector_t *sub)
 	// lightlevels on floor & ceiling lightlevels in the surrounding area.
 	// [RH] Handle sprite lighting like Duke 3D: If the ceiling is a sky, sprites are lit by
 	// it, otherwise they are lit by the floor.
-	R_AddSprites (sub->sector, frontsector->ceilingpic == skyflatnum ?
+	R_AddSprites (sub->sector, frontsector->GetTexture(sector_t::ceiling) == skyflatnum ?
 		ceilinglightlevel : floorlightlevel, FakeSide);
 
 	// [RH] Add particles

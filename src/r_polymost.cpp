@@ -1267,8 +1267,8 @@ void RP_AddLine (seg_t *line)
 			solid = true;
 		}
 		else if (
-			(backsector->ceilingpic != skyflatnum ||
-			frontsector->ceilingpic != skyflatnum)
+			(backsector->GetTexture(sector_t::ceiling) != skyflatnum ||
+			frontsector->GetTexture(sector_t::ceiling) != skyflatnum)
 
 		// if door is closed because back is shut:
 		&& bcz0 <= bfz0 && bcz1 <= bfz1
@@ -1296,8 +1296,8 @@ void RP_AddLine (seg_t *line)
 			solid = false;
 		}
 		else if (backsector->lightlevel != frontsector->lightlevel
-			|| backsector->floorpic != frontsector->floorpic
-			|| backsector->ceilingpic != frontsector->ceilingpic
+			|| backsector->GetTexture(sector_t::floor) != frontsector->GetTexture(sector_t::floor)
+			|| backsector->GetTexture(sector_t::ceiling) != frontsector->GetTexture(sector_t::ceiling)
 			|| curline->sidedef->GetTexture(side_t::mid).isValid()
 
 			// killough 3/7/98: Take flats offsets into account:
@@ -1306,10 +1306,10 @@ void RP_AddLine (seg_t *line)
 			|| backsector->GetXOffset(sector_t::ceiling) != frontsector->GetXOffset(sector_t::ceiling)
 			|| backsector->GetYOffset(sector_t::ceiling) != frontsector->GetYOffset(sector_t::ceiling)
 	
-			|| backsector->FloorLight != frontsector->FloorLight
-			|| backsector->CeilingLight != frontsector->CeilingLight
-			|| backsector->FloorFlags != frontsector->FloorFlags
-			|| backsector->CeilingFlags != frontsector->CeilingFlags
+			|| backsector->GetPlaneLight(sector_t::floor) != frontsector->GetPlaneLight(sector_t::floor)
+			|| backsector->GetPlaneLight(sector_t::ceiling) != frontsector->GetPlaneLight(sector_t::ceiling)
+			|| backsector->GetFlags(sector_t::floor) != frontsector->GetFlags(sector_t::floor)
+			|| backsector->GetFlags(sector_t::ceiling) != frontsector->GetFlags(sector_t::ceiling)
 
 			// [RH] Also consider colormaps
 			|| backsector->ColorMap != frontsector->ColorMap

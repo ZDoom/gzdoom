@@ -63,7 +63,7 @@ fixed_t sector_t::FindLowestFloorSurrounding (vertex_t **v) const
 	fixed_t ofloor;
 	vertex_t *spot;
 
-	if (linecount == 0) return floortexz;
+	if (linecount == 0) return GetPlaneTexZ(sector_t::floor);
 
 	spot = lines[0]->v1;
 	floor = floorplane.ZatPoint (spot);
@@ -270,7 +270,7 @@ fixed_t sector_t::FindNextLowestCeiling (vertex_t **v) const
 	int i;
 
 
-	if (linecount == 0) return ceilingtexz;
+	if (linecount == 0) return GetPlaneTexZ(sector_t::ceiling);
 
 	spot = lines[0]->v1;
 	height = ceilingplane.ZatPoint (spot);

@@ -144,7 +144,7 @@ inline bool IsFogBoundary (sector_t *front, sector_t *back)
 {
 	return r_fogboundary && !fixedcolormap && front->ColorMap->Fade &&
 		front->ColorMap->Fade != back->ColorMap->Fade &&
-		(front->ceilingpic != skyflatnum || back->ceilingpic != skyflatnum);
+		(front->GetTexture(sector_t::ceiling) != skyflatnum || back->GetTexture(sector_t::ceiling) != skyflatnum);
 }
 
 //=============================================================================
@@ -255,11 +255,11 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 	texheight = tex->GetScaledHeight() << FRACBITS;
 	if (curline->linedef->flags & ML_DONTPEGBOTTOM)
 	{
-		dc_texturemid = MAX (frontsector->floortexz, backsector->floortexz) + texheight;
+		dc_texturemid = MAX (frontsector->GetPlaneTexZ(sector_t::floor), backsector->GetPlaneTexZ(sector_t::floor)) + texheight;
 	}
 	else
 	{
-		dc_texturemid = MIN (frontsector->ceilingtexz, backsector->ceilingtexz);
+		dc_texturemid = MIN (frontsector->GetPlaneTexZ(sector_t::ceiling), backsector->GetPlaneTexZ(sector_t::ceiling));
 	}
 
 	{ // encapsilate the lifetime of rowoffset
@@ -1198,11 +1198,11 @@ void R_NewWall (bool needlights)
 				rowoffset = sidedef->GetTextureYOffset(side_t::mid);
 				if (linedef->flags & ML_DONTPEGBOTTOM)
 				{ // bottom of texture at bottom
-					rw_midtexturemid = frontsector->floortexz + (midtexture->GetHeight() << FRACBITS);
+					rw_midtexturemid = frontsector->GetPlaneTexZ(sector_t::floor) + (midtexture->GetHeight() << FRACBITS);
 				}
 				else
 				{ // top of texture at top
-					rw_midtexturemid = frontsector->ceilingtexz;
+					rw_midtexturemid = frontsector->GetPlaneTexZ(sector_t::ceiling);
 					if (rowoffset < 0 && midtexture != NULL)
 					{
 						rowoffset += midtexture->GetHeight() << FRACBITS;
@@ -1230,10 +1230,10 @@ void R_NewWall (bool needlights)
 	{ // two-sided line
 		// hack to allow height changes in outdoor areas
 
-		rw_frontlowertop = frontsector->ceilingtexz;
+		rw_frontlowertop = frontsector->GetPlaneTexZ(sector_t::ceiling);
 
-		if (frontsector->ceilingpic == skyflatnum &&
-			backsector->ceilingpic == skyflatnum)
+		if (frontsector->GetTexture(sector_t::ceiling) == skyflatnum &&
+			backsector->GetTexture(sector_t::ceiling) == skyflatnum)
 		{
 			if (rw_havehigh)
 			{ // front ceiling is above back ceiling
@@ -1251,7 +1251,7 @@ void R_NewWall (bool needlights)
 			}
 			// Putting sky ceilings on the front and back of a line alters the way unpegged
 			// positioning works.
-			rw_frontlowertop = backsector->ceilingtexz;
+			rw_frontlowertop = backsector->GetPlaneTexZ(sector_t::ceiling);
 		}
 
 		if ((rw_backcz1 <= rw_frontfz1 && rw_backcz2 <= rw_frontfz2) ||
@@ -1265,7 +1265,7 @@ void R_NewWall (bool needlights)
 			markfloor = rw_mustmarkfloor
 				|| backsector->floorplane != frontsector->floorplane
 				|| backsector->lightlevel != frontsector->lightlevel
-				|| backsector->floorpic != frontsector->floorpic
+				|| backsector->GetTexture(sector_t::floor) != frontsector->GetTexture(sector_t::floor)
 
 				// killough 3/7/98: Add checks for (x,y) offsets
 				|| backsector->GetXOffset(sector_t::floor) != frontsector->GetXOffset(sector_t::floor)
@@ -1275,8 +1275,8 @@ void R_NewWall (bool needlights)
 				// from bleeding through deep water
 				|| frontsector->heightsec
 
-				|| backsector->FloorLight != frontsector->FloorLight
-				|| backsector->FloorFlags != frontsector->FloorFlags
+				|| backsector->GetPlaneLight(sector_t::floor) != frontsector->GetPlaneLight(sector_t::floor)
+				|| backsector->GetFlags(sector_t::floor) != frontsector->GetFlags(sector_t::floor)
 
 				// [RH] Add checks for colormaps
 				|| backsector->ColorMap != frontsector->ColorMap
@@ -1289,12 +1289,12 @@ void R_NewWall (bool needlights)
 				|| (sidedef->GetTexture(side_t::mid).isValid() && linedef->flags & (ML_CLIP_MIDTEX|ML_WRAP_MIDTEX))
 				;
 
-			markceiling = (frontsector->ceilingpic != skyflatnum ||
-				backsector->ceilingpic != skyflatnum) &&
+			markceiling = (frontsector->GetTexture(sector_t::ceiling) != skyflatnum ||
+				backsector->GetTexture(sector_t::ceiling) != skyflatnum) &&
 				(rw_mustmarkceiling
 				|| backsector->ceilingplane != frontsector->ceilingplane
 				|| backsector->lightlevel != frontsector->lightlevel
-				|| backsector->ceilingpic != frontsector->ceilingpic
+				|| backsector->GetTexture(sector_t::ceiling) != frontsector->GetTexture(sector_t::ceiling)
 
 				// killough 3/7/98: Add checks for (x,y) offsets
 				|| backsector->GetXOffset(sector_t::ceiling) != frontsector->GetXOffset(sector_t::ceiling)
@@ -1302,10 +1302,10 @@ void R_NewWall (bool needlights)
 
 				// killough 4/15/98: prevent 2s normals
 				// from bleeding through fake ceilings
-				|| (frontsector->heightsec && frontsector->ceilingpic != skyflatnum)
+				|| (frontsector->heightsec && frontsector->GetTexture(sector_t::ceiling) != skyflatnum)
 
-				|| backsector->CeilingLight != frontsector->CeilingLight
-				|| backsector->CeilingFlags != frontsector->CeilingFlags
+				|| backsector->GetPlaneLight(sector_t::ceiling) != frontsector->GetPlaneLight(sector_t::ceiling)
+				|| backsector->GetFlags(sector_t::ceiling) != frontsector->GetFlags(sector_t::ceiling)
 
 				// [RH] Add check for colormaps
 				|| backsector->ColorMap != frontsector->ColorMap
@@ -1328,7 +1328,7 @@ void R_NewWall (bool needlights)
 			rowoffset = sidedef->GetTextureYOffset(side_t::top);
 			if (linedef->flags & ML_DONTPEGTOP)
 			{ // top of texture at top
-				rw_toptexturemid = MulScale16 (frontsector->ceilingtexz - viewz, scale);
+				rw_toptexturemid = MulScale16 (frontsector->GetPlaneTexZ(sector_t::ceiling) - viewz, scale);
 				if (rowoffset < 0 && toptexture != NULL)
 				{
 					rowoffset += toptexture->GetHeight() << FRACBITS;
@@ -1336,7 +1336,7 @@ void R_NewWall (bool needlights)
 			}
 			else
 			{ // bottom of texture at bottom
-				rw_toptexturemid = MulScale16 (backsector->ceilingtexz - viewz, scale) + (toptexture->GetHeight() << FRACBITS);
+				rw_toptexturemid = MulScale16 (backsector->GetPlaneTexZ(sector_t::ceiling) - viewz, scale) + (toptexture->GetHeight() << FRACBITS);
 			}
 			if (toptexture->bWorldPanning)
 			{
@@ -1359,7 +1359,7 @@ void R_NewWall (bool needlights)
 			}
 			else
 			{ // top of texture at top
-				rw_bottomtexturemid = backsector->floortexz;
+				rw_bottomtexturemid = backsector->GetPlaneTexZ(sector_t::floor);
 				if (rowoffset < 0 && bottomtexture != NULL)
 				{
 					rowoffset += bottomtexture->GetHeight() << FRACBITS;
@@ -1388,7 +1388,7 @@ void R_NewWall (bool needlights)
 		if (frontsector->floorplane.ZatPoint (viewx, viewy) >= viewz)       // above view plane
 			markfloor = false;
 		if (frontsector->ceilingplane.ZatPoint (viewx, viewy) <= viewz &&
-			frontsector->ceilingpic != skyflatnum)   // below view plane
+			frontsector->GetTexture(sector_t::ceiling) != skyflatnum)   // below view plane
 			markceiling = false;
 	}
 
@@ -2145,31 +2145,31 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 	case RF_RELUPPER:
 		if (curline->linedef->flags & ML_DONTPEGTOP)
 		{
-			zpos = decal->Z + front->ceilingtexz;
+			zpos = decal->Z + front->GetPlaneTexZ(sector_t::ceiling);
 		}
 		else
 		{
-			zpos = decal->Z + back->ceilingtexz;
+			zpos = decal->Z + back->GetPlaneTexZ(sector_t::ceiling);
 		}
 		break;
 	case RF_RELLOWER:
 		if (curline->linedef->flags & ML_DONTPEGBOTTOM)
 		{
-			zpos = decal->Z + front->ceilingtexz;
+			zpos = decal->Z + front->GetPlaneTexZ(sector_t::ceiling);
 		}
 		else
 		{
-			zpos = decal->Z + back->floortexz;
+			zpos = decal->Z + back->GetPlaneTexZ(sector_t::floor);
 		}
 		break;
 	case RF_RELMID:
 		if (curline->linedef->flags & ML_DONTPEGBOTTOM)
 		{
-			zpos = decal->Z + front->floortexz;
+			zpos = decal->Z + front->GetPlaneTexZ(sector_t::floor);
 		}
 		else
 		{
-			zpos = decal->Z + front->ceilingtexz;
+			zpos = decal->Z + front->GetPlaneTexZ(sector_t::ceiling);
 		}
 	}
 

@@ -429,12 +429,12 @@ void DSectorPlaneInterpolation::UpdateInterpolation()
 	if (!ceiling)
 	{
 		oldheight = sector->floorplane.d;
-		oldtexz = sector->floortexz;
+		oldtexz = sector->GetPlaneTexZ(sector_t::floor);
 	}
 	else
 	{
 		oldheight = sector->ceilingplane.d;
-		oldtexz = sector->ceilingtexz;
+		oldtexz = sector->GetPlaneTexZ(sector_t::ceiling);
 	}
 }
 
@@ -449,12 +449,12 @@ void DSectorPlaneInterpolation::Restore()
 	if (!ceiling)
 	{
 		sector->floorplane.d = bakheight;
-		sector->floortexz = baktexz;
+		sector->SetPlaneTexZ(sector_t::floor, baktexz);
 	}
 	else
 	{
 		sector->ceilingplane.d = bakheight;
-		sector->ceilingtexz = baktexz;
+		sector->GetPlaneTexZ(sector_t::ceiling, baktexz?;
 	}
 }
 
@@ -467,24 +467,25 @@ void DSectorPlaneInterpolation::Restore()
 void DSectorPlaneInterpolation::Interpolate(fixed_t smoothratio)
 {
 	fixed_t *pheight;
+	int pos;
 	fixed_t *ptexz;
 
 	if (!ceiling)
 	{
 		pheight = &sector->floorplane.d;
-		ptexz = &sector->floortexz;
+		pos = sector_t::floor;
 	}
 	else
 	{
 		pheight = &sector->ceilingplane.d;
-		ptexz = &sector->ceilingtexz;
+		pos = sector_t::ceiling;
 	}
 
 	bakheight = *pheight;
-	baktexz = *ptexz;
+	baktexz = sector->GetPlaneTexZ(pos);
 
 	*pheight = oldheight + FixedMul(bakheight - oldheight, smoothratio);
-	*ptexz = oldtexz + FixedMul(baktexz - oldtexz, smoothratio);
+	sector->SetPlaneTexZ(pos, oldtexz + FixedMul(baktexz - oldtexz, smoothratio));
 }
 
 //==========================================================================

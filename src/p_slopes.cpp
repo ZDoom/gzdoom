@@ -209,7 +209,7 @@ void P_VavoomSlope(sector_t * sec, int id, fixed_t x, fixed_t y, fixed_t z, int 
 		{
 			FVector3 v1, v2, cross;
 			secplane_t *srcplane = (which == 0) ? &sec->floorplane : &sec->ceilingplane;
-			fixed_t srcheight = (which == 0) ? sec->floortexz : sec->ceilingtexz;
+			fixed_t srcheight = (which == 0) ? sec->GetPlaneTexZ(sector_t::floor) : sec->GetPlaneTexZ(sector_t::ceiling);
 
 			v1[0] = FIXED2FLOAT (x - l->v2->x);
 			v1[1] = FIXED2FLOAT (y - l->v2->y);
@@ -327,9 +327,9 @@ static void P_SetSlopesFromVertexHeights(FMapThing *firstmt, FMapThing *lastmt)
 				fixed_t z3;
 				if (h1==NULL && h2==NULL && h3==NULL) continue;
 
-				vt1.Z = FIXED2FLOAT(h1? *h1 : j==0? sec->floortexz : sec->ceilingtexz);
-				vt2.Z = FIXED2FLOAT(h2? *h2 : j==0? sec->floortexz : sec->ceilingtexz);
-				z3 = h3? *h3 : j==0? sec->floortexz : sec->ceilingtexz;
+				vt1.Z = FIXED2FLOAT(h1? *h1 : j==0? sec->GetPlaneTexZ(sector_t::floor) : sec->GetPlaneTexZ(sector_t::ceiling));
+				vt2.Z = FIXED2FLOAT(h2? *h2 : j==0? sec->GetPlaneTexZ(sector_t::floor) : sec->GetPlaneTexZ(sector_t::ceiling));
+				z3 = h3? *h3 : j==0? sec->GetPlaneTexZ(sector_t::floor) : sec->GetPlaneTexZ(sector_t::ceiling);
 				vt3.Z = FIXED2FLOAT(z3);
 
 				if (P_PointOnLineSide(vertexes[vi3].x, vertexes[vi3].y, sec->lines[0]) == 0)

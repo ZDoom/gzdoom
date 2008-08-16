@@ -180,8 +180,7 @@ void DFloor::Tick ()
 					m_Sector->special = (m_Sector->special & SECRET_MASK) | m_NewSpecial;
 					//fall thru
 				case genFloorChg:
-					m_Sector->floorpic = m_Texture;
-					m_Sector->AdjustFloorClip ();
+					m_Sector->SetTexture(sector_t::floor, m_Texture);
 					break;
 				default:
 					break;
@@ -197,8 +196,7 @@ void DFloor::Tick ()
 					m_Sector->special = (m_Sector->special & SECRET_MASK) | m_NewSpecial;
 					//fall thru
 				case genFloorChg:
-					m_Sector->floorpic = m_Texture;
-					m_Sector->AdjustFloorClip ();
+					m_Sector->SetTexture(sector_t::floor, m_Texture);
 					break;
 				default:
 					break;
@@ -299,7 +297,7 @@ void DElevator::Tick ()
 
 void DFloor::SetFloorChangeType (sector_t *sec, int change)
 {
-	m_Texture = sec->floorpic;
+	m_Texture = sec->GetTexture(sector_t::floor);
 
 	switch (change & 3)
 	{
@@ -517,13 +515,9 @@ manual_floor:
 			floor->m_FloorDestDist = sec->floorplane.PointToDist (0, 0, newheight);
 			if (line != NULL)
 			{
-				FTextureID oldpic = sec->floorpic;
-				sec->floorpic = line->frontsector->floorpic;
+				FTextureID oldpic = sec->GetTexture(sector_t::floor);
+				sec->SetTexture(sector_t::floor, line->frontsector->GetTexture(sector_t::floor));
 				sec->special = (sec->special & SECRET_MASK) | (line->frontsector->special & ~SECRET_MASK);
-				if (oldpic != sec->floorpic)
-				{
-					sec->AdjustFloorClip ();
-				}
 			}
 			else
 			{
@@ -535,7 +529,7 @@ manual_floor:
 			floor->m_Direction = -1;
 			newheight = sec->FindLowestFloorSurrounding (&spot);
 			floor->m_FloorDestDist = sec->floorplane.PointToDist (spot, newheight);
-			floor->m_Texture = sec->floorpic;
+			floor->m_Texture = sec->GetTexture(sector_t::floor);
 			// jff 1/24/98 make sure floor->m_NewSpecial gets initialized
 			// in case no surrounding sector is at floordestheight
 			// --> should not affect compatibility <--
@@ -546,7 +540,7 @@ manual_floor:
 			modelsec = sec->FindModelFloorSector (newheight);
 			if (modelsec != NULL)
 			{
-				floor->m_Texture = modelsec->floorpic;
+				floor->m_Texture = modelsec->GetTexture(sector_t::floor);
 				floor->m_NewSpecial = modelsec->special & ~SECRET_MASK;
 			}
 			break;
@@ -659,14 +653,14 @@ bool EV_DoChange (line_t *line, EChange changetype, int tag)
 		rtn = true;
 
 		// handle trigger or numeric change type
-		FTextureID oldpic = sec->floorpic;
+		FTextureID oldpic = sec->GetTexture(sector_t::floor);
 
 		switch(changetype)
 		{
 		case trigChangeOnly:
 			if (line)
 			{ // [RH] if no line, no change
-				sec->floorpic = line->frontsector->floorpic;
+				sec->SetTexture(sector_t::floor, line->frontsector->GetTexture(sector_t::floor));
 				sec->special = (sec->special & SECRET_MASK) | (line->frontsector->special & ~SECRET_MASK);
 			}
 			break;
@@ -674,17 +668,12 @@ bool EV_DoChange (line_t *line, EChange changetype, int tag)
 			secm = sec->FindModelFloorSector (sec->CenterFloor());
 			if (secm)
 			{ // if no model, no change
-				sec->floorpic = secm->floorpic;
+				sec->SetTexture(sector_t::floor, secm->GetTexture(sector_t::floor));
 				sec->special = secm->special;
 			}
 			break;
 		default:
 			break;
-		}
-
-		if (oldpic != sec->floorpic)
-		{
-			sec->AdjustFloorClip ();
 		}
 	}
 	return rtn;
@@ -787,7 +776,7 @@ manual_stair:
 		height = sec->floorplane.ZatPoint (0, 0) + stairstep;
 		floor->m_FloorDestDist = sec->floorplane.PointToDist (0, 0, height);
 
-		texture = sec->floorpic;
+		texture = sec->GetTexture(sector_t::floor);
 		osecnum = secnum;				//jff 3/4/98 preserve loop index
 		
 		// Find next sector to raise
@@ -837,7 +826,7 @@ manual_stair:
 					if (!tsec) continue;	//jff 5/7/98 if no backside, continue
 					newsecnum = (int)(tsec - sectors);
 
-					if (!igntxt && tsec->floorpic != texture)
+					if (!igntxt && tsec->GetTexture(sector_t::floor) != texture)
 						continue;
 
 					height += stairstep;
@@ -954,7 +943,7 @@ bool EV_DoDonut (int tag, fixed_t pillarspeed, fixed_t slimespeed)
 			floor->m_Direction = 1;
 			floor->m_Sector = s2;
 			floor->m_Speed = slimespeed;
-			floor->m_Texture = s3->floorpic;
+			floor->m_Texture = s3->GetTexture(sector_t::floor);
 			floor->m_NewSpecial = 0;
 			height = s3->FindHighestFloorPoint (&spot);
 			floor->m_FloorDestDist = s2->floorplane.PointToDist (spot, height);
@@ -1110,18 +1099,18 @@ void DWaggleBase::Destroy()
 void DWaggleBase::DoWaggle (bool ceiling)
 {
 	secplane_t *plane;
-	fixed_t *texz;
+	int pos;
 	fixed_t dist;
 
 	if (ceiling)
 	{
 		plane = &m_Sector->ceilingplane;
-		texz = &m_Sector->ceilingtexz;
+		pos = sector_t::ceiling;
 	}
 	else
 	{
 		plane = &m_Sector->floorplane;
-		texz = &m_Sector->floortexz;
+		pos = sector_t::floor;
 	}
 
 	switch (m_State)
@@ -1138,7 +1127,7 @@ void DWaggleBase::DoWaggle (bool ceiling)
 		if ((m_Scale -= m_ScaleDelta) <= 0)
 		{ // Remove
 			dist = FixedMul (m_OriginalDist - plane->d, plane->ic);
-			*texz -= plane->HeightDiff (m_OriginalDist);
+			m_Sector->ChangePlaneTexZ(pos, -plane->HeightDiff (m_OriginalDist));
 			plane->d = m_OriginalDist;
 			P_ChangeSector (m_Sector, true, dist, ceiling, false);
 			if (ceiling)

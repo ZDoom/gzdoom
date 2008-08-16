@@ -800,19 +800,19 @@ struct UDMFParser
 			switch(key)
 			{
 			case NAME_Heightfloor:
-				sec->floortexz = CheckInt(key) << FRACBITS;
+				sec->SetPlaneTexZ(sector_t::floor, CheckInt(key) << FRACBITS);
 				break;
 
 			case NAME_Heightceiling:
-				sec->ceilingtexz = CheckInt(key) << FRACBITS;
+				sec->SetPlaneTexZ(sector_t::ceiling, CheckInt(key) << FRACBITS);
 				break;
 
 			case NAME_Texturefloor:
-				sec->floorpic = TexMan.GetTexture (CheckString(key), FTexture::TEX_Flat, FTextureManager::TEXMAN_Overridable);
+				sec->SetTexture(sector_t::floor, TexMan.GetTexture (CheckString(key), FTexture::TEX_Flat, FTextureManager::TEXMAN_Overridable));
 				break;
 
 			case NAME_Textureceiling:
-				sec->ceilingpic = TexMan.GetTexture (CheckString(key), FTexture::TEX_Flat, FTextureManager::TEXMAN_Overridable);
+				sec->SetTexture(sector_t::ceiling, TexMan.GetTexture (CheckString(key), FTexture::TEX_Flat, FTextureManager::TEXMAN_Overridable));
 				break;
 
 			case NAME_Lightlevel:
@@ -880,21 +880,21 @@ struct UDMFParser
 					break;
 
 				case NAME_Lightfloor:
-					sec->FloorLight = CheckInt(key);
+					sec->SetPlaneLight(sector_t::floor, CheckInt(key));
 					break;
 
 				case NAME_Lightceiling:
-					sec->CeilingLight = CheckInt(key);
+					sec->SetPlaneLight(sector_t::ceiling, CheckInt(key));
 					break;
 
 				case NAME_Lightfloorabsolute:
-					if (CheckBool(key)) sec->FloorFlags |= SECF_ABSLIGHTING;
-					else sec->FloorFlags &= ~SECF_ABSLIGHTING;
+					if (CheckBool(key)) sec->ChangeFlags(sector_t::floor, 0, SECF_ABSLIGHTING);
+					else sec->ChangeFlags(sector_t::floor, SECF_ABSLIGHTING, 0);
 					break;
 
 				case NAME_Lightceilingabsolute:
-					if (CheckBool(key)) sec->CeilingFlags |= SECF_ABSLIGHTING;
-					else sec->CeilingFlags &= ~SECF_ABSLIGHTING;
+					if (CheckBool(key)) sec->ChangeFlags(sector_t::ceiling, 0, SECF_ABSLIGHTING);
+					else sec->ChangeFlags(sector_t::ceiling, SECF_ABSLIGHTING, 0);
 					break;
 
 				case NAME_Gravity:
@@ -932,16 +932,16 @@ struct UDMFParser
 			sc.MustGetToken(';');
 		}
 
-		sec->floorplane.d = -sec->floortexz;
+		sec->floorplane.d = -sec->GetPlaneTexZ(sector_t::floor);
 		sec->floorplane.c = FRACUNIT;
 		sec->floorplane.ic = FRACUNIT;
-		sec->ceilingplane.d = sec->ceilingtexz;
+		sec->ceilingplane.d = sec->GetPlaneTexZ(sector_t::ceiling);
 		sec->ceilingplane.c = -FRACUNIT;
 		sec->ceilingplane.ic = -FRACUNIT;
 
 		// [RH] Sectors default to white light with the default fade.
 		//		If they are outside (have a sky ceiling), they use the outside fog.
-		if (level.outsidefog != 0xff000000 && (sec->ceilingpic == skyflatnum || (sec->special&0xff) == Sector_Outside))
+		if (level.outsidefog != 0xff000000 && (sec->GetTexture(sector_t::ceiling) == skyflatnum || (sec->special&0xff) == Sector_Outside))
 		{
 			if (fogMap == NULL)
 				fogMap = GetSpecialLights (PalEntry (255,255,255), level.outsidefog, 0);

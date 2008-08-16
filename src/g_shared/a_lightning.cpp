@@ -118,7 +118,7 @@ void DLightningThinker::LightningFlash ()
 	{
 		// allow combination of the lightning sector specials with bit masks
 		int special = (tempSec->special&0xff);
-		if (tempSec->ceilingpic == skyflatnum
+		if (tempSec->GetTexture(sector_t::ceiling) == skyflatnum
 			|| special == Light_IndoorLightning1
 			|| special == Light_IndoorLightning2
 			|| special == Light_OutdoorLightning)

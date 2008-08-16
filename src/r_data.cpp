@@ -457,7 +457,8 @@ void R_PrecacheLevel (void)
 
 	for (i = numsectors - 1; i >= 0; i--)
 	{
-		hitlist[sectors[i].floorpic.GetIndex()] = hitlist[sectors[i].ceilingpic.GetIndex()] |= 2;
+		hitlist[sectors[i].GetTexture(sector_t::floor).GetIndex()] = 
+			hitlist[sectors[i].GetTexture(sector_t::ceiling).GetIndex()] |= 2;
 	}
 
 	for (i = numsides - 1; i >= 0; i--)

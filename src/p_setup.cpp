@@ -1186,18 +1186,18 @@ void P_LoadSectors (MapData * map)
 	{
 		ss->e = &sectors[0].e[i];
 		if (!map->HasBehavior) ss->Flags |= SECF_FLOORDROP;
-		ss->floortexz = LittleShort(ms->floorheight)<<FRACBITS;
-		ss->floorplane.d = -ss->floortexz;
+		ss->SetPlaneTexZ(sector_t::floor, LittleShort(ms->floorheight)<<FRACBITS);
+		ss->floorplane.d = -ss->GetPlaneTexZ(sector_t::floor);
 		ss->floorplane.c = FRACUNIT;
 		ss->floorplane.ic = FRACUNIT;
-		ss->ceilingtexz = LittleShort(ms->ceilingheight)<<FRACBITS;
-		ss->ceilingplane.d = ss->ceilingtexz;
+		ss->SetPlaneTexZ(sector_t::ceiling, LittleShort(ms->ceilingheight)<<FRACBITS);
+		ss->ceilingplane.d = ss->GetPlaneTexZ(sector_t::ceiling);
 		ss->ceilingplane.c = -FRACUNIT;
 		ss->ceilingplane.ic = -FRACUNIT;
 		strncpy (fname, ms->floorpic, 8);
-		ss->floorpic = TexMan.GetTexture (fname, FTexture::TEX_Flat, FTextureManager::TEXMAN_Overridable);
+		ss->SetTexture(sector_t::floor, TexMan.GetTexture (fname, FTexture::TEX_Flat, FTextureManager::TEXMAN_Overridable));
 		strncpy (fname, ms->ceilingpic, 8);
-		ss->ceilingpic = TexMan.GetTexture (fname, FTexture::TEX_Flat, FTextureManager::TEXMAN_Overridable);
+		ss->SetTexture(sector_t::ceiling, TexMan.GetTexture (fname, FTexture::TEX_Flat, FTextureManager::TEXMAN_Overridable));
 		ss->lightlevel = clamp (LittleShort(ms->lightlevel), (short)0, (short)255);
 		if (map->HasBehavior)
 			ss->special = LittleShort(ms->special);
@@ -1225,7 +1225,7 @@ void P_LoadSectors (MapData * map)
 
 		// [RH] Sectors default to white light with the default fade.
 		//		If they are outside (have a sky ceiling), they use the outside fog.
-		if (level.outsidefog != 0xff000000 && (ss->ceilingpic == skyflatnum || (ss->special&0xff) == Sector_Outside))
+		if (level.outsidefog != 0xff000000 && (ss->GetTexture(sector_t::ceiling) == skyflatnum || (ss->special&0xff) == Sector_Outside))
 		{
 			if (fogMap == NULL)
 				fogMap = GetSpecialLights (PalEntry (255,255,255), level.outsidefog, 0);

@@ -1635,7 +1635,7 @@ explode:
 				// explode a missile
 				if (tm.ceilingline &&
 					tm.ceilingline->backsector &&
-					tm.ceilingline->backsector->ceilingpic == skyflatnum &&
+					tm.ceilingline->backsector->GetTexture(sector_t::ceiling) == skyflatnum &&
 					mo->z >= tm.ceilingline->backsector->ceilingplane.ZatPoint (mo->x, mo->y) && //killough
 					!(mo->flags3 & MF3_SKYEXPLODE))
 				{
@@ -3108,9 +3108,9 @@ AActor *AActor::StaticSpawn (const PClass *type, fixed_t ix, fixed_t iy, fixed_t
 		actor->floorz = actor->Sector->floorplane.ZatPoint (ix, iy);
 		actor->ceilingz = actor->Sector->ceilingplane.ZatPoint (ix, iy);
 		actor->floorsector = actor->Sector;
-		actor->floorpic = actor->floorsector->floorpic;
+		actor->floorpic = actor->floorsector->GetTexture(sector_t::floor);
 		actor->ceilingsector = actor->Sector;
-		actor->ceilingpic = actor->ceilingsector->ceilingpic;
+		actor->ceilingpic = actor->ceilingsector->GetTexture(sector_t::ceiling);
 		// Check if there's something solid to stand on between the current position and the
 		// current sector's floor.
 		P_FindFloorCeiling(actor, true);
@@ -3124,9 +3124,9 @@ AActor *AActor::StaticSpawn (const PClass *type, fixed_t ix, fixed_t iy, fixed_t
 		actor->floorz = FIXED_MIN;
 		actor->dropoffz = FIXED_MIN;
 		actor->ceilingz = FIXED_MAX;
-		actor->floorpic = actor->Sector->floorpic;
+		actor->floorpic = actor->Sector->GetTexture(sector_t::floor);
 		actor->floorsector = actor->Sector;
-		actor->ceilingpic = actor->Sector->ceilingpic;
+		actor->ceilingpic = actor->Sector->GetTexture(sector_t::ceiling);
 		actor->ceilingsector = actor->Sector;
 	}
 
@@ -3363,7 +3363,7 @@ void AActor::AdjustFloorClip ()
 			 m->m_sector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC) &&
 			m->m_sector->floorplane.ZatPoint (x, y) == z)
 		{
-			fixed_t clip = Terrains[TerrainTypes[m->m_sector->floorpic]].FootClip;
+			fixed_t clip = Terrains[TerrainTypes[m->m_sector->GetTexture(sector_t::floor)]].FootClip;
 			if (clip < shallowestclip)
 			{
 				shallowestclip = clip;
@@ -4182,7 +4182,7 @@ int P_GetThingFloorType (AActor *thing)
 	}
 	else
 	{
-		return TerrainTypes[thing->Sector->floorpic];
+		return TerrainTypes[thing->Sector->GetTexture(sector_t::floor)];
 	}
 }
 
@@ -4213,11 +4213,11 @@ bool P_HitWater (AActor * thing, sector_t * sec, fixed_t z)
 		(sec->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC) ||
 		!(sec->heightsec->MoreFlags & SECF_CLIPFAKEPLANES))
 	{
-		terrainnum = TerrainTypes[sec->floorpic];
+		terrainnum = TerrainTypes[sec->GetTexture(sector_t::floor)];
 	}
 	else
 	{
-		terrainnum = TerrainTypes[sec->heightsec->floorpic];
+		terrainnum = TerrainTypes[sec->heightsec->GetTexture(sector_t::floor)];
 	}
 
 	int splashnum = Terrains[terrainnum].Splash;

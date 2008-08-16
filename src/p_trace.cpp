@@ -419,7 +419,7 @@ static bool EditTraceResult (DWORD flags, FTraceResults &res)
 	{ // Throw away sky hits
 		if (res.HitType == TRACE_HitFloor)
 		{
-			if (res.Sector->floorpic == skyflatnum)
+			if (res.Sector->GetTexture(sector_t::floor) == skyflatnum)
 			{
 				res.HitType = TRACE_HitNone;
 				return false;
@@ -427,7 +427,7 @@ static bool EditTraceResult (DWORD flags, FTraceResults &res)
 		}
 		else if (res.HitType == TRACE_HitCeiling)
 		{
-			if (res.Sector->ceilingpic == skyflatnum)
+			if (res.Sector->GetTexture(sector_t::ceiling) == skyflatnum)
 			{
 				res.HitType = TRACE_HitNone;
 				return false;
@@ -436,8 +436,8 @@ static bool EditTraceResult (DWORD flags, FTraceResults &res)
 		else if (res.HitType == TRACE_HitWall)
 		{
 			if (res.Tier == TIER_Upper &&
-				res.Line->frontsector->ceilingpic == skyflatnum &&
-				res.Line->backsector->ceilingpic == skyflatnum)
+				res.Line->frontsector->GetTexture(sector_t::ceiling) == skyflatnum &&
+				res.Line->backsector->GetTexture(sector_t::ceiling) == skyflatnum)
 			{
 				res.HitType = TRACE_HitNone;
 				return false;

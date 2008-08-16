@@ -2381,24 +2381,24 @@ void R_ProjectParticle (particle_t *particle, const sector_t *sector, int shade,
 		{
 			topplane = &sector->ceilingplane;
 			botplane = &heightsec->ceilingplane;
-			toppic = sector->ceilingpic;
-			botpic = heightsec->ceilingpic;
+			toppic = sector->GetTexture(sector_t::ceiling);
+			botpic = heightsec->GetTexture(sector_t::ceiling);
 			map = heightsec->ColorMap->Maps;
 		}
 		else if (fakeside == FAKED_BelowFloor)
 		{
 			topplane = &heightsec->floorplane;
 			botplane = &sector->floorplane;
-			toppic = heightsec->floorpic;
-			botpic = sector->floorpic;
+			toppic = heightsec->GetTexture(sector_t::floor);
+			botpic = sector->GetTexture(sector_t::floor);
 			map = heightsec->ColorMap->Maps;
 		}
 		else
 		{
 			topplane = &heightsec->ceilingplane;
 			botplane = &heightsec->floorplane;
-			toppic = heightsec->ceilingpic;
-			botpic = heightsec->floorpic;
+			toppic = heightsec->GetTexture(sector_t::ceiling);
+			botpic = heightsec->GetTexture(sector_t::floor);
 			map = sector->ColorMap->Maps;
 		}
 	}
@@ -2406,8 +2406,8 @@ void R_ProjectParticle (particle_t *particle, const sector_t *sector, int shade,
 	{
 		topplane = &sector->ceilingplane;
 		botplane = &sector->floorplane;
-		toppic = sector->ceilingpic;
-		botpic = sector->floorpic;
+		toppic = sector->GetTexture(sector_t::ceiling);
+		botpic = sector->GetTexture(sector_t::floor);
 		map = sector->ColorMap->Maps;
 	}
 

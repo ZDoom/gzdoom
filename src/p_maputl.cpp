@@ -157,7 +157,7 @@ void P_LineOpening (FLineOpening &open, AActor *actor, const line_t *linedef,
 	/*Printf ("]]]]]] %d %d\n", ff, bf);*/
 
 	open.topsec = fc < bc? front : back;
-	open.ceilingpic = open.topsec->ceilingpic;
+	open.ceilingpic = open.topsec->GetTexture(sector_t::ceiling);
 	open.top = fc < bc ? fc : bc;
 
 	bool usefront;
@@ -186,14 +186,14 @@ void P_LineOpening (FLineOpening &open, AActor *actor, const line_t *linedef,
 	{
 		open.bottom = ff;
 		open.bottomsec = front;
-		open.floorpic = front->floorpic;
+		open.floorpic = front->GetTexture(sector_t::floor);
 		open.lowfloor = bf;
 	}
 	else
 	{
 		open.bottom = bf;
 		open.bottomsec = back;
-		open.floorpic = back->floorpic;
+		open.floorpic = back->GetTexture(sector_t::floor);
 		open.lowfloor = ff;
 	}
 

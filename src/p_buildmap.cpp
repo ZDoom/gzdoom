@@ -369,38 +369,38 @@ static void LoadSectors (sectortype *bsec)
 		bsec->ceilingstat = WORD(bsec->ceilingstat);
 		bsec->floorstat = WORD(bsec->floorstat);
 
-		sec->floortexz = -(LittleLong(bsec->floorz) << 8);
-		sec->floorplane.d = -sec->floortexz;
+		sec->SetPlaneTexZ(sector_t::floor, -(LittleLong(bsec->floorz) << 8));
+		sec->floorplane.d = -sec->GetPlaneTexZ(sector_t::floor);
 		sec->floorplane.c = FRACUNIT;
 		sec->floorplane.ic = FRACUNIT;
 		mysnprintf (tnam, countof(tnam), "BTIL%04d", LittleShort(bsec->floorpicnum));
-		sec->floorpic = TexMan.GetTexture (tnam, FTexture::TEX_Build);
+		sec->SetTexture(sector_t::floor, TexMan.GetTexture (tnam, FTexture::TEX_Build));
 		sec->SetXScale(sector_t::floor, (bsec->floorstat & 8) ? FRACUNIT*2 : FRACUNIT);
 		sec->SetYScale(sector_t::floor, (bsec->floorstat & 8) ? FRACUNIT*2 : FRACUNIT);
 		sec->SetXOffset(sector_t::floor, (bsec->floorxpanning << FRACBITS) + (32 << FRACBITS));
 		sec->SetYOffset(sector_t::floor, bsec->floorypanning << FRACBITS);
-		sec->FloorLight = SHADE2LIGHT (bsec->floorshade);
-		sec->FloorFlags = SECF_ABSLIGHTING;
+		sec->SetPlaneLight(sector_t::floor, SHADE2LIGHT (bsec->floorshade));
+		sec->ChangeFlags(sector_t::floor, 0, SECF_ABSLIGHTING);
 
-		sec->ceilingtexz = -(LittleLong(bsec->ceilingz) << 8);
-		sec->ceilingplane.d = sec->ceilingtexz;
+		sec->SetPlaneTexZ(sector_t::ceiling, -(LittleLong(bsec->ceilingz) << 8));
+		sec->ceilingplane.d = sec->GetPlaneTexZ(sector_t::ceiling);
 		sec->ceilingplane.c = -FRACUNIT;
 		sec->ceilingplane.ic = -FRACUNIT;
 		mysnprintf (tnam, countof(tnam), "BTIL%04d", LittleShort(bsec->ceilingpicnum));
-		sec->ceilingpic = TexMan.GetTexture (tnam, FTexture::TEX_Build);
+		sec->SetTexture(sector_t::ceiling, TexMan.GetTexture (tnam, FTexture::TEX_Build));
 		if (bsec->ceilingstat & 1)
 		{
-			sky1texture = sky2texture = sec->ceilingpic;
-			sec->ceilingpic = skyflatnum;
+			sky1texture = sky2texture = sec->GetTexture(sector_t::ceiling);
+			sec->SetTexture(sector_t::ceiling, skyflatnum);
 		}
 		sec->SetXScale(sector_t::ceiling, (bsec->ceilingstat & 8) ? FRACUNIT*2 : FRACUNIT);
 		sec->SetYScale(sector_t::ceiling, (bsec->ceilingstat & 8) ? FRACUNIT*2 : FRACUNIT);
 		sec->SetXOffset(sector_t::ceiling, (bsec->ceilingxpanning << FRACBITS) + (32 << FRACBITS));
 		sec->SetYOffset(sector_t::ceiling, bsec->ceilingypanning << FRACBITS);
-		sec->CeilingLight = SHADE2LIGHT (bsec->ceilingshade);
-		sec->CeilingFlags = SECF_ABSLIGHTING;
+		sec->SetPlaneLight(sector_t::ceiling, SHADE2LIGHT (bsec->ceilingshade));
+		sec->ChangeFlags(sector_t::ceiling, 0, SECF_ABSLIGHTING);
 
-		sec->lightlevel = (sec->FloorLight + sec->CeilingLight) / 2;
+		sec->lightlevel = (sec->GetPlaneLight(sector_t::floor) + sec->GetPlaneLight(sector_t::ceiling)) / 2;
 
 		sec->seqType = -1;
 		sec->nextsec = -1;

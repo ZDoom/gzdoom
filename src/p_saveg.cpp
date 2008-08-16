@@ -291,10 +291,6 @@ void P_SerializeWorld (FArchive &arc)
 	{
 		arc << sec->floorplane
 			<< sec->ceilingplane
-			<< sec->floortexz
-			<< sec->ceilingtexz
-			<< sec->floorpic
-			<< sec->ceilingpic
 			<< sec->lightlevel
 			<< sec->special
 			<< sec->tag
@@ -317,10 +313,6 @@ void P_SerializeWorld (FArchive &arc)
 			<< sec->mod
 			<< sec->SoundTarget
 			<< sec->SecActTarget
-			<< sec->FloorLight
-			<< sec->CeilingLight
-			<< sec->FloorFlags
-			<< sec->CeilingFlags
 			<< sec->sky
 			<< sec->MoreFlags
 			<< sec->Flags
@@ -415,7 +407,8 @@ FArchive &operator<< (FArchive &arc, side_t::part &p)
 FArchive &operator<< (FArchive &arc, sector_t::splane &p)
 {
 	arc << p.xform.xoffs << p.xform.yoffs << p.xform.xscale << p.xform.yscale 
-		<< p.xform.angle << p.xform.base_yoffs << p.xform.base_angle;
+		<< p.xform.angle << p.xform.base_yoffs << p.xform.base_angle
+		<< p.Flags << p.Light << p.Texture << p.TexZ;
 	return arc;
 }
 

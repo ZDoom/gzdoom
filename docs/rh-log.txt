@@ -1,4 +1,6 @@
 August 16, 2008 (Changes by Graf Zahl)
+- Put more floor/ceiling properties in sector_t into a substructure and
+  added wrapper functions.
 - Fixed: A_Explode wants the distance parameter as an int, not a fixed_t.
 - some minor DECORATE fixes.
 

@@ -1,3 +1,7 @@
+August 16, 2008 (Changes by Graf Zahl)
+- Fixed: A_Explode wants the distance parameter as an int, not a fixed_t.
+- some minor DECORATE fixes.
+
 August 14, 2008 (Changes by Graf Zahl)
 - Fixed: The count parameter of A_Jump is a constant, not an expression.
 - Fixed: A_Jump used a wrong index into the jump address table.

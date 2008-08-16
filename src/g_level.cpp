@@ -764,7 +764,7 @@ static void G_DoParseMapInfo (int lump)
 		case MITL_MAP:		// map <MAPNAME> <Nice Name>
 		  {
 			char maptemp[8];
-			char *mapname;
+			const char *mapname;
 
 			levelflags = defaultinfo.flags;
 			sc.MustGetString ();
@@ -989,7 +989,7 @@ static void ParseMapInfoLower (FScanner &sc,
 			EndSequence newSeq;
 			bool useseq = false;
 			char maptemp[8];
-			char *mapname;
+			const char *mapname;
 
 			sc.MustGetString ();
 			mapname = sc.String;

@@ -1344,7 +1344,7 @@ int SBarInfo::newImage(const char *patchname)
 }
 
 //converts a string into a tranlation.
-EColorRange SBarInfo::GetTranslation(FScanner &sc, char* translation)
+EColorRange SBarInfo::GetTranslation(FScanner &sc, const char* translation)
 {
 	EColorRange returnVal = CR_UNTRANSLATED;
 	FString namedTranslation; //we must send in "[translation]"

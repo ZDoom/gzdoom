@@ -222,9 +222,9 @@ FString ExtractFileBase (const char *path, bool include_extension)
 ParseNum / ParseHex
 ==============
 */
-int ParseHex (char *hex)
+int ParseHex (const char *hex)
 {
-	char *str;
+	const char *str;
 	int num;
 
 	num = 0;
@@ -250,7 +250,7 @@ int ParseHex (char *hex)
 }
 
 
-int ParseNum (char *str)
+int ParseNum (const char *str)
 {
 	if (str[0] == '$')
 		return ParseHex (str+1);
@@ -262,7 +262,7 @@ int ParseNum (char *str)
 
 // [RH] Returns true if the specified string is a valid decimal number
 
-bool IsNum (char *str)
+bool IsNum (const char *str)
 {
 	while (*str)
 	{

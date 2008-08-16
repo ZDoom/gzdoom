@@ -140,7 +140,7 @@ struct SBarInfo
 	int getSignedInteger(FScanner &sc); //returns a signed integer.
 	int newImage(const char* patchname);
 	void Init();
-	EColorRange GetTranslation(FScanner &sc, char* translation);
+	EColorRange GetTranslation(FScanner &sc, const char* translation);
 	SBarInfo();
 	SBarInfo(int lumpnum);
 	~SBarInfo();

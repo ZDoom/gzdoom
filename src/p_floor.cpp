@@ -1157,7 +1157,7 @@ void DWaggleBase::DoWaggle (bool ceiling)
 	dist = plane->d;
 	plane->d = m_OriginalDist + plane->PointToDist (0, 0,
 		FixedMul (FloatBobOffsets[(m_Accumulator>>FRACBITS)&63], m_Scale));
-	*texz += plane->HeightDiff (dist);
+	m_Sector->ChangePlaneTexZ(pos, plane->HeightDiff (dist));
 	dist = plane->HeightDiff (dist);
 	P_ChangeSector (m_Sector, true, dist, ceiling, false);
 }

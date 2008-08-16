@@ -454,7 +454,7 @@ void DSectorPlaneInterpolation::Restore()
 	else
 	{
 		sector->ceilingplane.d = bakheight;
-		sector->GetPlaneTexZ(sector_t::ceiling, baktexz?;
+		sector->SetPlaneTexZ(sector_t::ceiling, baktexz);
 	}
 }
 
@@ -468,7 +468,6 @@ void DSectorPlaneInterpolation::Interpolate(fixed_t smoothratio)
 {
 	fixed_t *pheight;
 	int pos;
-	fixed_t *ptexz;
 
 	if (!ceiling)
 	{

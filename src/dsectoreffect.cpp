@@ -270,7 +270,7 @@ DMover::EResult DMover::MovePlane (fixed_t speed, fixed_t dest, int crush,
 					MoveAttached(crush, -speed, 0, false);
 					return crushed;
 				}
-				m_Sector->ChangePlaneTexZ(sector_t::floortexz, m_Sector->floorplane.HeightDiff (lastpos));
+				m_Sector->ChangePlaneTexZ(sector_t::floor, m_Sector->floorplane.HeightDiff (lastpos));
 				m_Sector->AdjustFloorClip ();
 			}
 			break;

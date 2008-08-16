@@ -498,8 +498,8 @@ static void P_AlignPlane (sector_t *sec, line_t *line, int which)
 
 	refplane = (which == 0) ? &refsec->floorplane : &refsec->ceilingplane;
 	srcplane = (which == 0) ? &sec->floorplane : &sec->ceilingplane;
-	srcheight = (which == 0) ? sec->floortexz : sec->ceilingtexz;
-	destheight = (which == 0) ? refsec->floortexz : refsec->ceilingtexz;
+	srcheight = (which == 0) ? sec->GetPlaneTexZ(sector_t::floor) : sec->GetPlaneTexZ(sector_t::ceiling);
+	destheight = (which == 0) ? refsec->GetPlaneTexZ(sector_t::floor) : refsec->GetPlaneTexZ(sector_t::ceiling);
 
 	p[0] = FIXED2FLOAT (line->v1->x);
 	p[1] = FIXED2FLOAT (line->v1->y);

@@ -107,7 +107,7 @@ static bool MoveCeiling(sector_t *sector, int crush, fixed_t move)
 static bool MoveFloor(sector_t *sector, int crush, fixed_t move)
 {
 	sector->floorplane.ChangeHeight (move);
-	sector->ChangePlaneTexZ(sector_t::floortexz, move);
+	sector->ChangePlaneTexZ(sector_t::floor, move);
 
 	if (P_ChangeSector(sector, crush, move, 0, true)) return false;
 

@@ -1,3 +1,7 @@
+August 18, 2008 (SBARINFO patch)
+- Fixed: DrawBar would not show.
+- Fixed: IsSelected took string constants instead of identifiers.
+
 August 16, 2008 (Changes by Graf Zahl)
 - Put more floor/ceiling properties in sector_t into a substructure and
   added wrapper functions.

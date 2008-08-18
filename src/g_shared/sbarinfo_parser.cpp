@@ -1147,16 +1147,18 @@ void SBarInfo::ParseSBarInfoBlock(FScanner &sc, SBarInfoBlock &block)
 				this->ParseSBarInfoBlock(sc, cmd.subBlock);
 				break;
 			case SBARINFO_ISSELECTED:
+				//Using StringConst instead of Identifieres is deperecated!
 				if(sc.CheckToken(TK_Identifier))
 				{
 					if(sc.Compare("not"))
 					{
 						cmd.flags |= SBARINFOEVENT_NOT;
+						if(!sc.CheckToken(TK_StringConst))
+							sc.MustGetToken(TK_Identifier);
 					}
-					else
-						sc.ScriptError("Expected 'not' got '%s' instead.", sc.String);
 				}
-				sc.MustGetToken(TK_StringConst);
+				else
+					sc.MustGetToken(TK_StringConst);
 				for(int i = 0;i < 2;i++)
 				{
 					cmd.setString(sc, sc.String, i);
@@ -1166,7 +1168,10 @@ void SBarInfo::ParseSBarInfoBlock(FScanner &sc, SBarInfoBlock &block)
 						sc.ScriptError("'%s' is not a type of weapon.", sc.String);
 					}
 					if(sc.CheckToken(','))
-						sc.MustGetToken(TK_StringConst);
+					{
+						if(!sc.CheckToken(TK_StringConst))
+							sc.MustGetToken(TK_Identifier);
+					}
 					else
 						break;
 				}

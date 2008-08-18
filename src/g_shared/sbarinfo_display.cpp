@@ -901,29 +901,26 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 				int cx, cy, cw, ch, cr, cb;
 
 				// These still need to be caclulated for the clear call.
-				if(bg == NULL)
+				if(!block.fullScreenOffsets)
 				{
-					if(!block.fullScreenOffsets)
+					// Calc real screen coordinates for bar
+					x = cmd.x + ST_X + xOffset;
+					y = cmd.y + ST_Y + yOffset;
+					w = fg->GetScaledWidth();
+					h = fg->GetScaledHeight();
+					if (Scaled)
 					{
-						// Calc real screen coordinates for bar
-						x = cmd.x + ST_X + xOffset;
-						y = cmd.y + ST_Y + yOffset;
-						w = fg->GetScaledWidth();
-						h = fg->GetScaledHeight();
-						if (Scaled)
-						{
-							screen->VirtualToRealCoordsInt(x, y, w, h, 320, 200, true);
-						}
+						screen->VirtualToRealCoordsInt(x, y, w, h, 320, 200, true);
 					}
-					else
-					{
-						x = cmd.x + xOffset;
-						y = cmd.y + yOffset;
-						w = fg->GetScaledWidth();
-						h = fg->GetScaledHeight();
-						if(vid_fps && x < 0 && y >= 0)
-							y += 10;
-					}
+				}
+				else
+				{
+					x = cmd.x + xOffset;
+					y = cmd.y + yOffset;
+					w = fg->GetScaledWidth();
+					h = fg->GetScaledHeight();
+					if(vid_fps && x < 0 && y >= 0)
+						y += 10;
 				}
 
 				if(cmd.special3 != 0)

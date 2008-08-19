@@ -10,7 +10,7 @@ ACTOR Oracle 199 native
 	Height 56
 	Monster
 	+NOTDMATCH
-	+FIRERESIST
+	DamageFactor "Fire", 0.5
 	MaxDropoffHeight 32
 	Tag "Oracle"
 	DropItem "Meat"

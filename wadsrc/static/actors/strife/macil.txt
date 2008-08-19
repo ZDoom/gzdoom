@@ -13,10 +13,10 @@ ACTOR Macil1 64 native
 	Monster
 	-COUNTKILL
 	+NOTDMATCH
-	+FIRERESIST
 	+NOICEDEATH
 	+NOSPLASHALERT
 	+NODAMAGE
+	DamageFactor "Fire", 0.5
 	MinMissileChance 150
 	SeeSound "macil/sight"
 	PainSound "macil/pain"

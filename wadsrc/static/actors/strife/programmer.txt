@@ -21,9 +21,9 @@ ACTOR Programmer 71
 	+DONTMORPH
 	+NOBLOCKMONST
 	+LOOKALLAROUND
-	+FIRERESIST
 	+NOICEDEATH
 	+NOTARGETSWITCH
+	DamageFactor "Fire", 0.5
 	MinMissileChance 150
 	AttackSound "programmer/attack"
 	PainSound "programmer/pain"

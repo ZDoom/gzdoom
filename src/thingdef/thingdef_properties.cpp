@@ -100,6 +100,7 @@ enum
 	DEPF_SHORTMISSILERANGE,
 	DEPF_PICKUPFLASH,
 	DEPF_QUARTERGRAVITY,
+	DEPF_FIRERESIST,
 };
 
 static flagdef ActorFlags[]=
@@ -208,7 +209,6 @@ static flagdef ActorFlags[]=
 	DEFINE_FLAG(MF4, LOOKALLAROUND, AActor, flags4),
 	DEFINE_FLAG(MF4, STANDSTILL, AActor, flags4),
 	DEFINE_FLAG(MF4, SPECTRAL, AActor, flags4),
-	DEFINE_FLAG(MF4, FIRERESIST, AActor, flags4),
 	DEFINE_FLAG(MF4, NOSPLASHALERT, AActor, flags4),
 	DEFINE_FLAG(MF4, SYNCHRONIZED, AActor, flags4),
 	DEFINE_FLAG(MF4, NOTARGETSWITCH, AActor, flags4),
@@ -264,6 +264,7 @@ static flagdef ActorFlags[]=
 	DEFINE_DEPRECATED_FLAG(SHORTMISSILERANGE),
 	DEFINE_DEPRECATED_FLAG(LONGMELEERANGE),
 	DEFINE_DEPRECATED_FLAG(QUARTERGRAVITY),
+	DEFINE_DEPRECATED_FLAG(FIRERESIST),
 	DEFINE_DUMMY_FLAG(NONETID),
 	DEFINE_DUMMY_FLAG(ALLOWCLIENTSPAWN),
 };
@@ -434,6 +435,9 @@ static void HandleDeprecatedFlags(AActor *defaults, bool set, int index)
 	case DEPF_QUARTERGRAVITY:
 		defaults->gravity = set? FRACUNIT/4 : FRACUNIT;
 		break;
+	case DEPF_FIRERESIST:
+		if (set) defaults->GetClass()->ActorInfo->DamageFactors->Insert("Fire", 0.5);
+		else defaults->GetClass()->ActorInfo->DamageFactors->Remove("Fire");
 	case DEPF_PICKUPFLASH:
 		if (set)
 		{

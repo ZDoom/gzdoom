@@ -19,8 +19,8 @@ ACTOR Loremaster 12
 	+NOBLOCKMONST
 	+INCOMBAT
 	+LOOKALLAROUND
-	+FIRERESIST
 	+NOICEDEATH
+	DamageFactor "Fire", 0.5
 	MinMissileChance 150
 	Tag "PRIEST"
 	SeeSound "loremaster/sight"

@@ -16,8 +16,8 @@ ACTOR StrifeBishop 187
 	+NOTDMATCH
 	+FLOORCLIP
 	+INCOMBAT
-	+FIRERESIST
 	+NOICEDEATH
+	DamageFactor "Fire", 0.5
 	MinMissileChance 150
 	MaxDropoffHeight 32
 	SeeSound "bishop/sight"

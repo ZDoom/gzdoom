@@ -1,0 +1,223 @@
+===============================================================================
+Universal Doom Map Format ZDoom extensions v1.2 - 21.08.2008
+
+
+    Copyright (c) 2008 Christoph Oelckers.
+    Permission is granted to copy, distribute and/or modify this document
+    under the terms of the GNU Free Documentation License, Version 1.2
+    or any later version published by the Free Software Foundation;
+    with no Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
+    
+===============================================================================
+
+This document discusses only the additions ZDoom makes to the UDMF 
+specification.
+
+=======================================
+I. Grammar / Syntax
+=======================================
+
+    No changes.
+
+=======================================
+II. Implementation Semantics
+=======================================
+
+------------------------------------
+II.A : Storage and Retrieval of Data
+------------------------------------
+
+No changes.
+
+-----------------------------------
+II.B : Storage Within Archive Files
+-----------------------------------
+
+In addition to the base specification ZDoom recognizes the following lumps
+between the TEXTMAP and ENDMAP lumps:
+
+    BEHAVIOR = contains compiled ACS code
+    DIALOGUE = contains compiled Strife conversation scripts.
+    ZNODES = Nodes (must be stored as compressed GL nodes)
+    BLOCKMAP = blockmap. It is recommended not to include this lump in UDMF maps.
+    REJECT = reject table. Recommended use is for special effects only.
+    
+    Lumps starting with 'SCRIPT' are guaranteed to be ignored by ZDoom so they
+    can be used to store ACS and dialogue script sources.
+    
+--------------------------------
+II.C : Implementation Dependence
+--------------------------------
+
+ZDoom supports all namespaces defined in the base specification and adds two new
+ones:
+    "ZDoom"
+    "ZDoomTranslated"
+    
+The only difference between these two namespaces is how line, thing and sector
+specials are handled:
+
+'ZDoom' uses Hexen type specials which are ZDoom's native implementation.
+
+'ZDoomTranslated' uses Doom-type specials. Such maps have to be processed by
+a special translator. A special translator is a text lump that defines how
+Doom-format specials are translated into Hexen-format specials. By default
+each game defines its own translation table but these can be overridden in
+MAPINFO. It is the mapper's responsibility to choose the correct translation
+table for a map.
+
+
+=======================================
+III. Standardized Fields
+=======================================
+
+ZDoom's namespaces implement all fields from the standard, regardless of
+any restrictions mentioned in the spec.
+In particular, the 'ZDoomTranslated' namespaces implements thing specials.
+These will ignore the implicit trigger type and triggering semantics are the
+same as for native maps.
+The only field not fully supported is the thing's 'friend' field. ZDoom does
+not offer MBF's friendly monster implementation and will remap any use of this
+field to 'strifeally', even for the 'Doom' namespace.
+
+In addition to the standard fields, ZDoom defines the following:
+Note: All <bool> fields default to false unless mentioned otherwise.
+
+   linedef
+   {
+      alpha = <float>;          // Translucency of this line, default is 1.0
+      renderstyle = <string>;   // Render style, can be "translucent" or "add",
+                                // default is "translucent".
+      anycross = <bool>;        // New SPAC flag, true = any non-projectile 
+                                // crossing will trigger this line
+      monsteractivate = <bool>; // Monsters can trigger this line.
+                                // For compatibility only because this flag's 
+                                // semantics can not be fully reproduced with
+                                // explicit trigger flags.
+      blockplayers = <bool>;    // Line blocks players' movement.
+      blockeverything = <bool>; // Line blocks everything.
+      firstsideonly = <bool>;   // Line can only be triggered from the front side.
+      zoneboundary = <bool>;    // Line is a boundary for sound reverb zones.
+      clipmidtex = <bool>;      // Line's mid textures are clipped to floor and ceiling.
+      wrapmidtex = <bool>;      // Line's mid textures are wrapped.
+      midtex3d = <bool>;        // Actors can walk on mid texture.
+      checkswitchrange = <bool>;// Switches can only be activated when vertically reachable.
+                    
+   }
+   
+   sidedef
+   {
+      offsetx_top = <float>;    // X offset for upper texture, Default = 0.0.
+      offsety_top = <float>;    // y offset for upper texture, Default = 0.0.
+      offsetx_mid = <float>;    // X offset for mid texture, Default = 0.0.
+      offsety_mid = <float>;    // y offset for mid texture, Default = 0.0.
+      offsetx_bottom = <float>; // X offset for lower texture, Default = 0.0.
+      offsety_bottom = <float>; // y offset for lower texture, Default = 0.0.
+                                // When global texture offsets are used they will
+                                // be added on top of these values.
+      light = <integer>;        // This side's light level. Default is 0.
+      lightabsolute = <bool>;   // true = 'light' is an absolute value. Default is 
+                                // relative to the owning sector's light level.
+      nofakecontrast = <bool>;	// Disables use of fake contrast on this sidedef.
+      smoothlighting = <bool>;	// Use smooth fake contrast.
+   }
+   
+   sector
+   {
+      xpanningfloor = <float>;	      // X texture offset of floor texture, Default = 0.0.
+      ypanningfloor = <float>;        // Y texture offset of floor texture, Default = 0.0.
+      xpanningceiling = <float>;      // X texture offset of ceiling texture, Default = 0.0.
+      ypanningceiling = <float>;      // Y texture offset of ceiling texture, Default = 0.0.
+      xscalefloor = <float>;          // X texture scale of floor texture, Default = 1.0.
+      yscalefloor = <float>;          // Y texture scale of floor texture, Default = 1.0.
+      xscaleceiling = <float>;        // X texture scale of ceiling texture, Default = 1.0.
+      yscaleceiling = <float>;        // Y texture scale of ceiling texture, Default = 1.0.
+      rotationfloor = <float>;        // Rotation of floor texture in degrees, Default = 0.0.
+      rotationceiling = <float>;      // Rotation of ceiling texture in degrees, Default = 0.0.
+      lightfloor = <float>;           // The floor's light level. Default is 0.
+      lightceiling = <float>;         // The ceiling's light level. Default is 0.
+      lightfloorabsolute = <bool>;    // true = 'lightfloor' is an absolute value. Default is 
+                                      // relative to the owning sector's light level.
+      lightceilingabsolute = <bool>;  // true = 'lightceiling' is an absolute value. Default is 
+                                      // relative to the owning sector's light level.
+      gravity = <float>;              // Sector's gravity. Default is 1.0.
+      lightcolor = <integer>;         // Sector'S light color as RRGGBB value, default = 0xffffff.
+      fadecolor = <integer>;          // Sector'S fog color as RRGGBB value, default = 0x000000.
+      desaturation = <float>;         // Color desaturation factor. 0 = none, 1 = full, default = 0.
+      silent = <bool>;                // Actors in this sector make no sound,
+      nofallingdamage = <bool>;		  // Falling damage is disabled in this sector
+      dropactors = <bool>;			  // Actors drop with instantly moving floors
+      
+      * Note about dropactors
+
+        The spec requires this to be false by default. Currently, however ZDoom assumes this to be true
+      for Doom format maps so any map converter converting to the ZDoomTranslated namespace should
+      set this flag for each tagged sector.
+      
+   }
+   
+   thing
+   {
+      skill[n] = <bool>			// Unlike the base spec, n can range from 1-8.
+                                // 8 is the maximum amount of skills the skill 
+                                // menu can display.
+      class[n] = <bool>			// Unlike the base spec, n can range from 1-8.
+                                // 8 is the maximum amount of classes the class
+                                // menu can display.
+   }
+  
+
+*** Special notes for map format conversions:
+
+   Setting the line's ID via special is not supported so any special using
+   this option must be converted to use the line's ID field instead.
+   Unless mentioned differently the arg being used to define the line ID
+   should be set to 0.
+   The following line specials are affected:
+   
+   121: Line_SetIdentification, arg 0
+   208: TranslucentLine, arg0 (arg0 must be preserved)
+     1: Polyobj_StartLine, arg3
+     5: Polyobj_ExplicitLine, arg4
+   215: Teleport_Line, arg0
+   222: Scroll_Texture_Model, arg0 (arg0 must be preserved)
+   
+   Some specials also allow setting the extended flags. These must also be
+   converted to explicitly setting the flags through the defined map fields.
+   This affects the following specials:
+   
+   121: Line_SetIdentification, arg1
+   208: TranslucentLine, arg2
+   
+   These args are to be converted as follows to flags, bit by bit:
+   
+   Bit 0 (Value   1): zoneboundary
+   Bit 1 (Value   2): jumpover
+   Bit 2 (Value   4): blockfloaters
+   Bit 3 (Value   8): clipmidtex
+   Bit 4 (Value  16): wrapmidtex
+   Bit 5 (Value  32): midtex3d
+   Bit 6 (Value  64): checkswitchrange
+   
+   When used in special 208 this arg should be cleared afterward.
+   
+   Special 121 is not being used by UDMF maps in ZDoom and should be completely
+   deleted after conversion.
+   
+   
+=======================================
+Changelog
+=======================================
+
+1.1: 27.05.2008
+Changed default light mode for sectors and sidedefs to relative and renamed
+associated properties to avoid having a non-intuitive standard value for the
+light field.
+Added 'nofakecontrast' option to sidedefs.
+
+1.2 21.08.2008
+Added smooth lighting option to linedefs
+
+===============================================================================
+EOF
+===============================================================================

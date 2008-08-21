@@ -1,4 +1,6 @@
 August 21, 2008  (Changes by Graf Zahl)
+- Fixed: The conversion of the strings in wbstartstruct_t to FStrings
+  caused crashes when reloading the hub data.
 - Replaced WALLF_AUTOCONTRAST with WALLF_NOFAKECONTRAST so that the 
   default setting for the flags is 0.
 - Added: doom2day's smoothlighting

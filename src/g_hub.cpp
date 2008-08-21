@@ -50,7 +50,31 @@
 //
 //==========================================================================
 
-TArray<wbstartstruct_t> hubdata;
+struct FHubInfo
+{
+	int			finished_ep;
+	
+	int			maxkills;
+	int			maxitems;
+	int			maxsecret;
+	int			maxfrags;
+
+	wbplayerstruct_s	plyr[MAXPLAYERS];
+
+	FHubInfo &operator=(const wbstartstruct_t &wbs)
+	{
+		finished_ep = wbs.finished_ep;
+		maxkills = wbs.maxkills;
+		maxsecret= wbs.maxsecret;
+		maxitems = wbs.maxitems;
+		maxfrags = wbs.maxfrags;
+		memcpy(plyr, wbs.plyr, sizeof(plyr));
+		return *this;
+	}
+};
+
+
+TArray<FHubInfo> hubdata;
 
 void G_LeavingHub(int mode, cluster_info_t * cluster, wbstartstruct_t * wbs)
 {
@@ -68,13 +92,13 @@ void G_LeavingHub(int mode, cluster_info_t * cluster, wbstartstruct_t * wbs)
 		}
 		if (i==hubdata.Size())
 		{
-			hubdata.Push(*wbs);
+			hubdata[hubdata.Reserve(1)] = *wbs;
 		}
 
 		hubdata[i].finished_ep=level.levelnum;
 		if (!multiplayer && !deathmatch)
 		{
-			// The player counters don't work in hubs!
+			// The player counters don't work in hubs
 			hubdata[i].plyr[0].skills=level.killed_monsters;
 			hubdata[i].plyr[0].sitems=level.found_items;
 			hubdata[i].plyr[0].ssecret=level.found_secrets;
@@ -131,11 +155,11 @@ static void G_SerializeHub(FArchive & arc)
 	arc << i;
 	if (i>0)
 	{
-		if (arc.IsStoring()) arc.Write(&hubdata[0], i * sizeof(wbstartstruct_t));
+		if (arc.IsStoring()) arc.Write(&hubdata[0], i * sizeof(FHubInfo));
 		else 
 		{
 			hubdata.Resize(i);
-			arc.Read(&hubdata[0], i * sizeof(wbstartstruct_t));
+			arc.Read(&hubdata[0], i * sizeof(FHubInfo));
 		}
 	}
 	else hubdata.Clear();

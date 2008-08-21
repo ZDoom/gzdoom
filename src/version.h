@@ -75,7 +75,7 @@
 // SAVESIG should match SAVEVER.
 
 // MINSAVEVER is the minimum level snapshot version that can be loaded.
-#define MINSAVEVER 1179
+#define MINSAVEVER 1181
 
 #if SVN_REVISION_NUMBER < MINSAVEVER
 // Never write a savegame with a version lower than what we need

@@ -622,7 +622,8 @@ enum
 {
 	WALLF_ABSLIGHTING	= 1,	// Light is absolute instead of relative
 	WALLF_NOAUTODECALS	= 2,	// Do not attach impact decals to this wall
-	WALLF_AUTOCONTRAST	= 4,	// Automatically handle fake contrast in side_t::GetLightLevel
+	WALLF_NOFAKECONTRAST = 4,	// Don't do fake contrast for this wall in side_t::GetLightLevel
+	WALLF_SMOOTHLIGHTING = 8,   // Similar to autocontrast but applies to all angles.
 };
 
 struct side_t

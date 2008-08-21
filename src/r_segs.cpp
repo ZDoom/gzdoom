@@ -1421,6 +1421,8 @@ void R_NewWall (bool needlights)
 	}
 }
 
+CVAR(Bool, r_smoothlighting, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+
 int side_t::GetLightLevel (bool foggy, int baselight) const
 {
 	if (Flags & WALLF_ABSLIGHTING) 
@@ -1431,10 +1433,22 @@ int side_t::GetLightLevel (bool foggy, int baselight) const
 
 	if (!foggy) // Don't do relative lighting in foggy sectors
 	{
-		if (Flags & WALLF_AUTOCONTRAST)
+		if (!(Flags & WALLF_NOFAKECONTRAST))
 		{
-			baselight += lines[linenum].dx==0? level.WallVertLight : 
-						 lines[linenum].dy==0? level.WallHorizLight : 0;
+			if((level.flags & LEVEL_SMOOTHLIGHTING) || (Flags & WALLF_SMOOTHLIGHTING) || r_smoothlighting)
+			{
+				baselight += int // OMG LEE KILLOUGH LIVES! :/
+					(
+						(float(level.WallHorizLight)
+						+abs(atan(float(linedef->dy)/float(linedef->dx))/float(1.57079))
+						*float(level.WallVertLight - level.WallHorizLight))
+					);
+			}
+			else
+			{
+				baselight += lines[linenum].dx==0? level.WallVertLight : 
+							 lines[linenum].dy==0? level.WallHorizLight : 0;
+			}
 		}
 		if (!(Flags & WALLF_ABSLIGHTING))
 		{

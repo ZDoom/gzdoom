@@ -733,13 +733,18 @@ struct UDMFParser
 				break;
 
 			case NAME_lightabsolute:
-				if (CheckBool(key)) sd->Flags|=WALLF_ABSLIGHTING;
-				else sd->Flags&=~WALLF_ABSLIGHTING;
+				if (CheckBool(key)) sd->Flags |= WALLF_ABSLIGHTING;
+				else sd->Flags &= ~WALLF_ABSLIGHTING;
 				break;
 
 			case NAME_nofakecontrast:
-				if (CheckBool(key)) sd->Flags&=~WALLF_AUTOCONTRAST;
-				else sd->Flags|=WALLF_AUTOCONTRAST;
+				if (CheckBool(key)) sd->Flags |= WALLF_NOFAKECONTRAST;
+				else sd->Flags &= WALLF_NOFAKECONTRAST;
+				break;
+
+			case NAME_smoothlighting:
+				if (CheckBool(key)) sd->Flags |= WALLF_SMOOTHLIGHTING;
+				else sd->Flags &= ~WALLF_SMOOTHLIGHTING;
 				break;
 
 			default:

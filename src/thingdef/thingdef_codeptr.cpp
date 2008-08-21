@@ -2192,13 +2192,20 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckForReload)
 	ACTION_PARAM_START(2);
 	ACTION_PARAM_INT(count, 0);
 	ACTION_PARAM_STATE(jump, 1);
+	ACTION_PARAM_BOOL(dontincrement, 2)
+
+	if (count <= 0) return;
 
 	AWeapon *weapon = self->player->ReadyWeapon;
-	
-	weapon->ReloadCounter = (weapon->ReloadCounter+1) % count;
-	
+
+	int ReloadCounter = weapon->ReloadCounter;
+	if(!dontincrement || ReloadCounter != 0)
+		ReloadCounter = (weapon->ReloadCounter+1) % count;
+	else // 0 % 1 = 1?  So how do we check if the weapon was never fired?  We should only do this when we're not incrementing the counter though.
+		ReloadCounter = 1;
+
 	// If we have not made our last shot...
-	if (weapon->ReloadCounter != 0)
+	if (ReloadCounter != 0)
 	{
 		// Go back to the refire frames, instead of continuing on to the reload frames.
 		ACTION_JUMP(jump);
@@ -2208,6 +2215,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckForReload)
 		// We need to reload. However, don't reload if we're out of ammo.
 		weapon->CheckAmmo( false, false );
 	}
+
+	if(!dontincrement)
+		weapon->ReloadCounter = ReloadCounter;
 }
 
 //===========================================================================

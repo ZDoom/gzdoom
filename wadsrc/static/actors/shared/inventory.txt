@@ -38,7 +38,7 @@ ACTOR Inventory native
 	action native A_CheckReload();
 	action native A_GunFlash();
 	action native A_Saw(sound fullsound = "weapons/sawfull", sound hitsound = "weapons/sawhit", int damage = 2, class<Actor> pufftype = "BulletPuff");
-	action native A_CheckForReload(int counter, state label);
+	action native A_CheckForReload(int counter, state label, bool dontincrement = false);
 	action native A_ResetReloadCounter();
 	action native A_RestoreSpecialPosition();
 	action native A_RestoreSpecialDoomThing();

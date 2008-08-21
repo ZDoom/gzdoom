@@ -1,4 +1,8 @@
 August 21, 2008  (Changes by Graf Zahl)
+- Replaced WALLF_AUTOCONTRAST with WALLF_NOFAKECONTRAST so that the 
+  default setting for the flags is 0.
+- Added: doom2day's smoothlighting
+- Added: dontincrement argument to A_CheckForReload.
 - Fixed: The UDMF parser wrote class filter bits into SkillFilter.
 - Fixed: (SBARINFO patch) DrawInventoryBar has a missing argument in 
   one of its drawgraphic calls.

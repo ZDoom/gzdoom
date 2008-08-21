@@ -2177,7 +2177,7 @@ void P_LoadSideDefs2 (MapData * map)
 		sd->SetTextureXOffset(LittleShort(msd->textureoffset)<<FRACBITS);
 		sd->SetTextureYOffset(LittleShort(msd->rowoffset)<<FRACBITS);
 		sd->linenum = NO_INDEX;
-		sd->Flags = WALLF_AUTOCONTRAST;
+		sd->Flags = 0;
 
 		// killough 4/4/98: allow sidedef texture names to be overloaded
 		// killough 4/11/98: refined to allow colormaps to work as wall

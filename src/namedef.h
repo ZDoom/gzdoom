@@ -405,5 +405,6 @@ xx(offsety_bottom)
 xx(light)
 xx(lightabsolute)
 xx(nofakecontrast)
+xx(smoothlighting)
 
 xx(Renderstyle)

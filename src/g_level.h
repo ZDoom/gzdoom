@@ -122,6 +122,8 @@
 #define LEVEL_DUMMYSWITCHES			UCONST64(0x40000000000000)
 #define LEVEL_HEXENHACK				UCONST64(0x80000000000000)	// Level was defined in a Hexen style MAPINFO
 
+#define LEVEL_SMOOTHLIGHTING		UCONST64(0x100000000000000)	// Level uses the smooth lighting feature.
+
 
 struct acsdefered_s;
 

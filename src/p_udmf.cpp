@@ -323,7 +323,7 @@ struct UDMFParser
 			case NAME_Class16:
 				CHECK_N(Hx | Zd | Zdt)
 				if (CheckBool(key)) th->ClassFilter |= (1<<(int(key)-NAME_Class1));
-				else th->SkillFilter &= ~(1<<(int(key)-NAME_Class1));
+				else th->ClassFilter &= ~(1<<(int(key)-NAME_Class1));
 				break;
 
 			case NAME_Ambush:

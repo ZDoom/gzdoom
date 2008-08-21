@@ -1,3 +1,12 @@
+August 21, 2008  (Changes by Graf Zahl)
+- Fixed: The UDMF parser wrote class filter bits into SkillFilter.
+- Fixed: (SBARINFO patch) DrawInventoryBar has a missing argument in 
+  one of its drawgraphic calls.
+
+August 20, 2008 (Changes by Graf Zahl)
+- Added Gez's patch for Heretic's GIMME cheat.
+- Externalized some cheat strings.
+
 August 19, 2008 (Changes by Graf Zahl)
 - Added Gez's patch for removing MF4_FIRERESIST.
 

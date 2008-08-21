@@ -63,7 +63,21 @@ BYTE CheatPowerup[7][10] =
 	{ 'i','d','b','e','h','o','l','d','r', 255 },
 	{ 'i','d','b','e','h','o','l','d','a', 255 },
 	{ 'i','d','b','e','h','o','l','d','l', 255 },
-	{ 'i','d','b','e','h','o','l','d', 255 }
+	{ 'i','d','b','e','h','o','l','d', 255 },
+};
+BYTE CheatPowerup1[11][7] =
+{
+	{ 'g','i','m','m','e','a',255 },
+	{ 'g','i','m','m','e','b',255 },
+	{ 'g','i','m','m','e','c',255 },
+	{ 'g','i','m','m','e','d',255 },
+	{ 'g','i','m','m','e','e',255 },
+	{ 'g','i','m','m','e','f',255 },
+	{ 'g','i','m','m','e','g',255 },
+	{ 'g','i','m','m','e','h',255 },
+	{ 'g','i','m','m','e','i',255 },
+	{ 'g','i','m','m','e','j',255 },
+	{ 'g','i','m','m','e','z',255 },
 };
 BYTE CheatPowerup2[8][10] =
 {
@@ -175,7 +189,18 @@ static cheatseq_t HereticCheats[] =
 	{ CheatAmmo,			0, 0, 0, {CHT_TAKEWEAPS,0},	Cht_Generic },
 	{ CheatGod,				0, 0, 0, {CHT_NOWUDIE,0},	Cht_Generic },
 	{ CheatMassacre,		0, 0, 0, {CHT_MASSACRE,0},	Cht_Generic },
-	{ CheatEngage,			0, 0, 0, {0,0},				Cht_ChangeLevel }
+	{ CheatEngage,			0, 0, 0, {0,0},				Cht_ChangeLevel },
+	{ CheatPowerup1[0],		0, 0, 0, {CHT_GIMMIEA,0},	Cht_Generic },
+	{ CheatPowerup1[1],		0, 0, 0, {CHT_GIMMIEB,0},	Cht_Generic },
+	{ CheatPowerup1[2],		0, 0, 0, {CHT_GIMMIEC,0},	Cht_Generic },
+	{ CheatPowerup1[3],		0, 0, 0, {CHT_GIMMIED,0},	Cht_Generic },
+	{ CheatPowerup1[4],		0, 0, 0, {CHT_GIMMIEE,0},	Cht_Generic },
+	{ CheatPowerup1[5],		0, 0, 0, {CHT_GIMMIEF,0},	Cht_Generic },
+	{ CheatPowerup1[6],		0, 0, 0, {CHT_GIMMIEG,0},	Cht_Generic },
+	{ CheatPowerup1[7],		0, 0, 0, {CHT_GIMMIEH,0},	Cht_Generic },
+	{ CheatPowerup1[8],		0, 0, 0, {CHT_GIMMIEI,0},	Cht_Generic },
+	{ CheatPowerup1[9],		0, 0, 0, {CHT_GIMMIEJ,0},	Cht_Generic },
+	{ CheatPowerup1[10],	0, 0, 0, {CHT_GIMMIEZ,0},	Cht_Generic },
 };
 
 static cheatseq_t HexenCheats[] =

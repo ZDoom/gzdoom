@@ -99,9 +99,9 @@ void cht_DoCheat (player_t *player, int cheat)
 	case CHT_NOMOMENTUM:
 		player->cheats ^= CF_NOMOMENTUM;
 		if (player->cheats & CF_NOMOMENTUM)
-			msg = "LEAD BOOTS ON";
+			msg = GStrings("TXT_LEADBOOTSON");
 		else
-			msg = "LEAD BOOTS OFF";
+			msg = GStrings("TXT_LEADBOOTSOFF");
 		break;
 
 	case CHT_FLY:
@@ -112,13 +112,13 @@ void cht_DoCheat (player_t *player, int cheat)
 			{
 				player->mo->flags |= MF_NOGRAVITY;
 				player->mo->flags2 |= MF2_FLY;
-				msg = "You feel lighter";
+				msg = GStrings("TXT_LIGHTER");
 			}
 			else
 			{
 				player->mo->flags &= ~MF_NOGRAVITY;
 				player->mo->flags2 &= ~MF2_FLY;
-				msg = "Gravity weighs you down";
+				msg = GStrings("TXT_GRAVITY");
 			}
 		}
 		break;
@@ -306,6 +306,64 @@ void cht_DoCheat (player_t *player, int cheat)
 		}
 		break;
 
+	case CHT_GIMMIEA:
+		cht_Give (player, "ArtiInvulnerability");
+		msg = "Valador's Ring of Invunerability";
+		break;
+
+	case CHT_GIMMIEB:
+		cht_Give (player, "ArtiInvisibility");
+		msg = "Shadowsphere";
+		break;
+
+	case CHT_GIMMIEC:
+		cht_Give (player, "ArtiHealth");
+		msg = "Quartz Flask";
+		break;
+
+	case CHT_GIMMIED:
+		cht_Give (player, "ArtiSuperHealth");
+		msg = "Mystic Urn";
+		break;
+
+	case CHT_GIMMIEE:
+		cht_Give (player, "ArtiTomeOfPower");
+		msg = "Tyketto's Tome of Power";
+		break;
+
+	case CHT_GIMMIEF:
+		cht_Give (player, "ArtiTorch");
+		msg = "Torch";
+		break;
+
+	case CHT_GIMMIEG:
+		cht_Give (player, "ArtiTimeBomb");
+		msg = "Delmintalintar's Time Bomb of the Ancients";
+		break;
+
+	case CHT_GIMMIEH:
+		cht_Give (player, "ArtiEgg");
+		msg = "Torpol's Morph Ovum";
+		break;
+
+	case CHT_GIMMIEI:
+		cht_Give (player, "ArtiFly");
+		msg = "Inhilicon's Wings of Wrath";
+		break;
+
+	case CHT_GIMMIEJ:
+		cht_Give (player, "ArtiTeleport");
+		msg = "Darchala's Chaos Device";
+		break;
+
+	case CHT_GIMMIEZ:
+		for (int i=0;i<16;i++)
+		{
+			cht_Give (player, "artifacts");
+		}
+		msg = "All artifacts!";
+		break;
+
 	case CHT_TAKEWEAPS:
 		if (player->morphTics || player->mo == NULL || player->mo->health <= 0)
 		{
@@ -364,7 +422,7 @@ void cht_DoCheat (player_t *player, int cheat)
 
 	case CHT_DONNYTRUMP:
 		cht_Give (player, "HealthTraining");
-		msg = "YOU GOT THE MIDAS TOUCH, BABY";
+		msg = GStrings("TXT_MIDASTOUCH");
 		break;
 
 	case CHT_LEGO:
@@ -391,18 +449,18 @@ void cht_DoCheat (player_t *player, int cheat)
 		cht_Give (player, "MedPatch");
 		cht_Give (player, "MedicalKit");
 		cht_Give (player, "SurgeryKit");
-		msg = "you got the stuff!";
+		msg = GStrings("TXT_GOTSTUFF");
 		break;
 
 	case CHT_PUMPUPP:
 		cht_Give (player, "AmmoSatchel");
-		msg = "you got the stuff!";
+		msg = GStrings("TXT_GOTSTUFF");
 		break;
 
 	case CHT_PUMPUPS:
 		cht_Give (player, "UpgradeStamina", 10);
 		cht_Give (player, "UpgradeAccuracy");
-		msg = "you got the stuff!";
+		msg = GStrings("TXT_GOTSTUFF");
 		break;
 
 	case CHT_CLEARFROZENPROPS:
@@ -414,11 +472,11 @@ void cht_DoCheat (player_t *player, int cheat)
 		bglobal.changefreeze ^= 1;
 		if (bglobal.freeze ^ bglobal.changefreeze)
 		{
-			msg = "Freeze mode on";
+			msg = GStrings("TXT_FREEZEON");
 		}
 		else
 		{
-			msg = "Freeze mode off";
+			msg = GStrings("TXT_FREEZEOFF");
 		}
 		break;
 	}
@@ -450,14 +508,14 @@ const char *cht_Morph (player_t *player, const PClass *morphclass, bool quickund
 		{
 			if (!quickundo && oldclass != morphclass && P_MorphPlayer (player, player, morphclass, 0, style))
 			{
-				return "You feel even stranger.";
+				return GStrings("TXT_STRANGER");
 			}
-			return "You feel like yourself again.";
+			return GStrings("TXT_NOTSTRANGE");
 		}
 	}
 	else if (P_MorphPlayer (player, player, morphclass, 0, style))
 	{
-		return "You feel strange...";
+		return GStrings("TXT_STRANGE");
 	}
 	return "";
 }

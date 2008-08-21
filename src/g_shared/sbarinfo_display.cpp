@@ -1545,7 +1545,7 @@ void DSBarInfo::DrawInventoryBar(int type, int num, int x, int y, int xOffset, i
 				DrawGraphic(Images[invBarOffset + imgARTIBOX], x+i*spacing, y, xOffset, yOffset, alpha, fullScreenOffsets);
 			}
 			if(type != GAME_Strife) //Strife draws the cursor before the icons
-				DrawGraphic(TexMan(item->Icon), x+i*spacing, y, xOffset, yOffset, alpha, false, item->Amount <= 0);
+				DrawGraphic(TexMan(item->Icon), x+i*spacing, y, xOffset, yOffset, alpha, fullScreenOffsets, false, item->Amount <= 0);
 			if(item == CPlayer->mo->InvSel)
 			{
 				if(type == GAME_Heretic)

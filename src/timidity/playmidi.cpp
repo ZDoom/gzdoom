@@ -36,10 +36,7 @@ namespace Timidity
 
 void Renderer::reset_voices()
 {
-	for (int i = 0; i < voices; i++)
-	{
-		voice[i].status = 0;
-	}
+	memset(voice, 0, sizeof(voice[0]) * voices);
 }
 
 /* Process the Reset All Controllers event */

@@ -1,3 +1,10 @@
+August 22, 2008
+- Fixed: Timidity::Renderer::reset_voices() must completely zero the
+  voices. Because this wasn't done, note_on() could try to access
+  the sample for a voice that had never been played yet and access
+  random memory. There may be other places where it's a problem, but
+  this is where I noticed it, by chance.
+
 August 21, 2008  (Changes by Graf Zahl)
 - Fixed: The conversion of the strings in wbstartstruct_t to FStrings
   caused crashes when reloading the hub data.

@@ -413,7 +413,7 @@ static flagdef *FindFlag (const PClass *type, const char *part1, const char *par
 // properties is not recommended
 //
 //===========================================================================
-static void HandleDeprecatedFlags(AActor *defaults, bool set, int index)
+static void HandleDeprecatedFlags(AActor *defaults, FActorInfo *info, bool set, int index)
 {
 	switch (index)
 	{
@@ -436,8 +436,8 @@ static void HandleDeprecatedFlags(AActor *defaults, bool set, int index)
 		defaults->gravity = set? FRACUNIT/4 : FRACUNIT;
 		break;
 	case DEPF_FIRERESIST:
-		if (set) defaults->GetClass()->ActorInfo->DamageFactors->Insert("Fire", 0.5);
-		else defaults->GetClass()->ActorInfo->DamageFactors->Remove("Fire");
+		info->SetDamageFactor(NAME_Fire, set? FRACUNIT/2 : FRACUNIT);
+		break;
 	case DEPF_PICKUPFLASH:
 		if (set)
 		{
@@ -468,22 +468,23 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ChangeFlag)
 
 	const char *dot = strchr (flagname, '.');
 	flagdef *fd;
+	const PClass *cls = self->GetClass();
 
 	if (dot != NULL)
 	{
 		FString part1(flagname, dot-flagname);
-		fd = FindFlag (self->GetClass(), part1, dot+1);
+		fd = FindFlag (cls, part1, dot+1);
 	}
 	else
 	{
-		fd = FindFlag (self->GetClass(), flagname, NULL);
+		fd = FindFlag (cls, flagname, NULL);
 	}
 
 	if (fd != NULL)
 	{
 		if (fd->structoffset == -1)
 		{
-			HandleDeprecatedFlags(self, expression, fd->flagbit);
+			HandleDeprecatedFlags(self, cls->ActorInfo, expression, fd->flagbit);
 		}
 		else
 		{
@@ -495,7 +496,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ChangeFlag)
 	}
 	else
 	{
-		Printf("Unknown flag '%s' in '%s'\n", flagname, self->GetClass()->TypeName.GetChars());
+		Printf("Unknown flag '%s' in '%s'\n", flagname, cls->TypeName.GetChars());
 	}
 }
 
@@ -520,7 +521,7 @@ void ParseActorFlag (FScanner &sc, Baggage &bag, int mod)
 		AActor *defaults = (AActor*)bag.Info->Class->Defaults;
 		if (fd->structoffset == -1)	// this is a deprecated flag that has been changed into a real property
 		{
-			HandleDeprecatedFlags(defaults, mod=='+', fd->flagbit);
+			HandleDeprecatedFlags(defaults, bag.Info, mod=='+', fd->flagbit);
 		}
 		else
 		{
@@ -963,9 +964,7 @@ static void ActorPainChance (FScanner &sc, AActor *defaults, Baggage &bag)
 		else painType=sc.String;
 		sc.MustGetToken(',');
 		sc.MustGetNumber();
-	
-		if (bag.Info->PainChances == NULL) bag.Info->PainChances=new PainChanceList;
-		(*bag.Info->PainChances)[painType] = (BYTE)sc.Number;
+		bag.Info->SetPainChance(painType, sc.Number);
 		return;
 	}
 	defaults->PainChance=sc.Number;
@@ -1636,7 +1635,6 @@ static void ActorDamageType (FScanner &sc, AActor *defaults, Baggage &bag)
 static void ActorDamageFactor (FScanner &sc, AActor *defaults, Baggage &bag)
 {
 	sc.MustGetString ();   
-	if (bag.Info->DamageFactors == NULL) bag.Info->DamageFactors=new DmgFactors;
 
 	FName dmgType;
 	if (sc.Compare("Normal")) dmgType = NAME_None;
@@ -1644,7 +1642,7 @@ static void ActorDamageFactor (FScanner &sc, AActor *defaults, Baggage &bag)
 
 	sc.MustGetToken(',');
 	sc.MustGetFloat();
-	(*bag.Info->DamageFactors)[dmgType]=(fixed_t)(sc.Float*FRACUNIT);
+	bag.Info->SetDamageFactor(dmgType, FLOAT2FIXED(sc.Float));
 }
 
 //==========================================================================

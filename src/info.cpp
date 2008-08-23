@@ -293,6 +293,43 @@ FActorInfo *FActorInfo::GetReplacee ()
 	return rep;
 }
 
+//==========================================================================
+//
+//
+//==========================================================================
+
+void FActorInfo::SetDamageFactor(FName type, fixed_t factor)
+{
+	if (factor != FRACUNIT) 
+	{
+		if (DamageFactors == NULL) DamageFactors=new DmgFactors;
+		DamageFactors->Insert(type, factor);
+	}
+	else 
+	{
+		if (DamageFactors != NULL) 
+			DamageFactors->Remove(type);
+	}
+}
+
+//==========================================================================
+//
+//
+//==========================================================================
+
+void FActorInfo::SetPainChance(FName type, int chance)
+{
+	if (chance >= 0) 
+	{
+		if (PainChances == NULL) PainChances=new PainChanceList;
+		PainChances->Insert(type, MIN(chance, 255));
+	}
+	else 
+	{
+		if (PainChances != NULL) 
+			PainChances->Remove(type);
+	}
+}
 
 //==========================================================================
 //

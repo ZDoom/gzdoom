@@ -201,6 +201,8 @@ struct FActorInfo
 	void BuildDefaults ();
 	void ApplyDefaults (BYTE *defaults);
 	void RegisterIDs ();
+	void SetDamageFactor(FName type, fixed_t factor);
+	void SetPainChance(FName type, int chance);
 
 	FState *FindState (FName name) const;
 	FState *FindState (int numnames, FName *names, bool exact=false) const;

@@ -1,3 +1,8 @@
+/*
+** a_randomspawner.cpp
+** A thing that randomly spawns one item in a list of many, before disappearing.
+*/
+
 #include "actor.h"
 #include "info.h"
 #include "m_random.h"
@@ -10,12 +15,7 @@
 #include "a_action.h"
 #include "thingdef/thingdef.h"
 
-/*
-- in the decorate definition define multiple drop items
-- use the function GetDropItems to get the first drop item, then iterate over them and count how many dropitems are defined.
-- with M_Random( ) % NUMBEROFDROPITEMS you get a random drop item number (let's call it n)
-- use GetDropItems again to get the first drop item, then iterate to the n-th drop item
-*/
+#define MAX_RANDOMSPAWNERS_RECURSION 32 // Should be largely more than enough, honestly.
 static FRandom pr_randomspawn("RandomSpawn");
 
 class ARandomSpawner : public AActor
@@ -32,10 +32,8 @@ class ARandomSpawner : public AActor
 		Super::PostBeginPlay();
 
 		drop = di = GetDropItems(RUNTIME_TYPE(this));
-		// Always make sure it actually exists.
 		if (di != NULL)
 		{
-			// First, we get the size of the array...
 			while (di != NULL)
 			{
 				if (di->Name != NAME_None)
@@ -59,7 +57,9 @@ class ARandomSpawner : public AActor
 				}
 			}
 			// So now we can spawn the dropped item.
-			if (pr_randomspawn() <= di->probability) // prob 255 = always spawn, prob 0 = never spawn.
+			if (special1 >= MAX_RANDOMSPAWNERS_RECURSION)	// Prevents infinite recursions
+				Spawn("Unknown", x, y, z, NO_REPLACE);		// Show that there's a problem.
+			else if (pr_randomspawn() <= di->probability)	// prob 255 = always spawn, prob 0 = never spawn.
 			{
 				newmobj = Spawn(di->Name, x, y, z, ALLOW_REPLACE);
 				// copy everything relevant
@@ -77,11 +77,32 @@ class ARandomSpawner : public AActor
 				newmobj->momx = momx;
 				newmobj->momy = momy;
 				newmobj->momz = momz;
+				newmobj->master = master;	// For things such as DamageMaster/DamageChildren, transfer mastery.
+				newmobj->target = target;
+				newmobj->tracer = tracer;
 				newmobj->CopyFriendliness(this, false);
+				// Special1 is used to count how many recursions we're in.
+				if (newmobj->IsKindOf(PClass::FindClass("RandomSpawner")))
+					newmobj->special1 = ++special1;
+
 			}
 		}
-		Destroy();
+		if ((newmobj != NULL) && ((newmobj->flags4 & MF4_BOSSDEATH) || (newmobj->flags2 & MF2_BOSS)))
+			this->target = newmobj; // If the spawned actor has either of those flags, it's a boss.
+		else Destroy();	// "else" because a boss-replacing spawner must wait until it can call A_BossDeath.
 	}
+
+	void Tick()	// This function is needed for handling boss replacers
+	{
+		Super::Tick();
+		if (target == NULL || target->health <= 0)
+		{
+			health = 0;
+			CALL_ACTION(A_BossDeath, this);
+			Destroy();
+		}
+	}
+
 };
 
 IMPLEMENT_CLASS (ARandomSpawner)

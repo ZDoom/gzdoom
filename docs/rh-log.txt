@@ -1,9 +1,25 @@
+August 22, 2008  (Changes by Graf Zahl)
+- Added and fixed Boss death submission for random spawner.
+- Added functions to FActorInfo that can set the damage factors and
+  pain chances to reduce the chance of new errors when working with
+  these features.
+- Fixed: The handling of the deprecated FIRERESIST flag didn't work.
+  There were 3 problems:
+  * Actor defaults have no class information so HandleDeprecatedFlags
+    needs to be passed a pointer to the ActorInfo.
+  * The DamageFactors list is only created when needed so the code needs to
+    check if it already exists.
+  * damage factors are stored as fixed_t but this set a float.
+
 August 22, 2008
 - Fixed: Timidity::Renderer::reset_voices() must completely zero the
   voices. Because this wasn't done, note_on() could try to access
   the sample for a voice that had never been played yet and access
   random memory. There may be other places where it's a problem, but
   this is where I noticed it, by chance.
+
+August 21, 2008  (Changes by Graf Zahl)
+- Added a traditional Strife color set for the automap.
 
 August 21, 2008  (Changes by Graf Zahl)
 - Fixed: The conversion of the strings in wbstartstruct_t to FStrings

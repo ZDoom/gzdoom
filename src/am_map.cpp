@@ -91,6 +91,15 @@ static BYTE DoomPaletteVals[11*3] =
 	0x80,0x80,0x80, 0x6c,0x6c,0x6c
 };
 
+static AMColor StrifeColors[11];
+static BYTE StrifePaletteVals[11*3] =
+{
+	0x00,0x00,0x00,  239, 239,   0, 0x10,0x10,0x10,
+	 199, 195, 195,  119, 115, 115,   55,  59,  91,
+	 119, 115, 115, 0xfc,0x00,0x00, 0x4c,0x4c,0x4c,
+	0x80,0x80,0x80, 0x6c,0x6c,0x6c
+};
+
 #define MAPBITS 12
 #define MapDiv SafeDivScale12
 #define MapMul MulScale12
@@ -122,7 +131,7 @@ CVAR (Bool,  am_showmonsters,		true,		CVAR_ARCHIVE);
 CVAR (Bool,  am_showitems,			false,		CVAR_ARCHIVE);
 CVAR (Bool,  am_showtime,			true,		CVAR_ARCHIVE);
 CVAR (Bool,  am_showtotaltime,		false,		CVAR_ARCHIVE);
-CVAR (Bool,  am_usecustomcolors,	true,		CVAR_ARCHIVE);
+CVAR (Int,   am_colorset,			0,			CVAR_ARCHIVE);
 CVAR (Color, am_backcolor,			0x6c5440,	CVAR_ARCHIVE);
 CVAR (Color, am_yourcolor,			0xfce8d8,	CVAR_ARCHIVE);
 CVAR (Color, am_wallcolor,			0x2c1808,	CVAR_ARCHIVE);
@@ -648,6 +657,7 @@ static void AM_initColors (bool overlayed)
 		for (i = j = 0; i < 11; i++, j += 3)
 		{
 			DoomColors[i].FromRGB(DoomPaletteVals[j], DoomPaletteVals[j+1], DoomPaletteVals[j+2]);
+			StrifeColors[i].FromRGB(StrifePaletteVals[j], StrifePaletteVals[j+1], StrifePaletteVals[j+2]);
 		}
 	}
 
@@ -667,62 +677,88 @@ static void AM_initColors (bool overlayed)
 		InterTeleportColor.FromCVar (am_ovtelecolor);
 		IntraTeleportColor = InterTeleportColor;
 	}
-	else if (am_usecustomcolors)
+	else switch(am_colorset)
 	{
-		/* Use the custom colors in the am_* cvars */
-		Background.FromCVar (am_backcolor);
-		YourColor.FromCVar (am_yourcolor);
-		SecretWallColor.FromCVar (am_secretwallcolor);
-		WallColor.FromCVar (am_wallcolor);
-		TSWallColor.FromCVar (am_tswallcolor);
-		FDWallColor.FromCVar (am_fdwallcolor);
-		CDWallColor.FromCVar (am_cdwallcolor);
-		ThingColor_Item.FromCVar (am_thingcolor_item);
-		ThingColor_Friend.FromCVar (am_thingcolor_friend);
-		ThingColor_Monster.FromCVar (am_thingcolor_monster);
-		ThingColor.FromCVar (am_thingcolor);
-		GridColor.FromCVar (am_gridcolor);
-		XHairColor.FromCVar (am_xhaircolor);
-		NotSeenColor.FromCVar (am_notseencolor);
-		LockedColor.FromCVar (am_lockedcolor);
-		InterTeleportColor.FromCVar (am_interlevelcolor);
-		IntraTeleportColor.FromCVar (am_intralevelcolor);
-		SecretSectorColor.FromCVar (am_secretsectorcolor);
+		default:
+		{
+			/* Use the custom colors in the am_* cvars */
+			Background.FromCVar (am_backcolor);
+			YourColor.FromCVar (am_yourcolor);
+			SecretWallColor.FromCVar (am_secretwallcolor);
+			WallColor.FromCVar (am_wallcolor);
+			TSWallColor.FromCVar (am_tswallcolor);
+			FDWallColor.FromCVar (am_fdwallcolor);
+			CDWallColor.FromCVar (am_cdwallcolor);
+			ThingColor_Item.FromCVar (am_thingcolor_item);
+			ThingColor_Friend.FromCVar (am_thingcolor_friend);
+			ThingColor_Monster.FromCVar (am_thingcolor_monster);
+			ThingColor.FromCVar (am_thingcolor);
+			GridColor.FromCVar (am_gridcolor);
+			XHairColor.FromCVar (am_xhaircolor);
+			NotSeenColor.FromCVar (am_notseencolor);
+			LockedColor.FromCVar (am_lockedcolor);
+			InterTeleportColor.FromCVar (am_interlevelcolor);
+			IntraTeleportColor.FromCVar (am_intralevelcolor);
+			SecretSectorColor.FromCVar (am_secretsectorcolor);
 
-		DWORD ba = am_backcolor;
+			DWORD ba = am_backcolor;
 
-		int r = RPART(ba) - 16;
-		int g = GPART(ba) - 16;
-		int b = BPART(ba) - 16;
+			int r = RPART(ba) - 16;
+			int g = GPART(ba) - 16;
+			int b = BPART(ba) - 16;
 
-		if (r < 0)
-			r += 32;
-		if (g < 0)
-			g += 32;
-		if (b < 0)
-			b += 32;
+			if (r < 0)
+				r += 32;
+			if (g < 0)
+				g += 32;
+			if (b < 0)
+				b += 32;
 
-		AlmostBackground.FromRGB(r, g, b);
-	}
-	else
-	{ // Use colors corresponding to the original Doom's
-		Background = DoomColors[0];
-		YourColor = DoomColors[1];
-		AlmostBackground = DoomColors[2];
-		SecretSectorColor = 		
-			SecretWallColor =
-			WallColor = DoomColors[3];
-		TSWallColor = DoomColors[4];
-		FDWallColor = DoomColors[5];
-		LockedColor =
-			CDWallColor = DoomColors[6];
-		ThingColor_Item = 
-			ThingColor_Friend = 
-			ThingColor_Monster =
-			ThingColor = DoomColors[7];
-		GridColor = DoomColors[8];
-		XHairColor = DoomColors[9];
-		NotSeenColor = DoomColors[10];
+			AlmostBackground.FromRGB(r, g, b);
+			break;
+		}
+
+		case 1:	// Doom
+			// Use colors corresponding to the original Doom's
+			Background = DoomColors[0];
+			YourColor = DoomColors[1];
+			AlmostBackground = DoomColors[2];
+			SecretSectorColor = 		
+				SecretWallColor =
+				WallColor = DoomColors[3];
+			TSWallColor = DoomColors[4];
+			FDWallColor = DoomColors[5];
+			LockedColor =
+				CDWallColor = DoomColors[6];
+			ThingColor_Item = 
+				ThingColor_Friend = 
+				ThingColor_Monster =
+				ThingColor = DoomColors[7];
+			GridColor = DoomColors[8];
+			XHairColor = DoomColors[9];
+			NotSeenColor = DoomColors[10];
+			break;
+
+		case 2:	// Strife
+			// Use colors corresponding to the original Strife's
+			Background = StrifeColors[0];
+			YourColor = StrifeColors[1];
+			AlmostBackground = DoomColors[2];
+			SecretSectorColor = 		
+				SecretWallColor =
+				WallColor = StrifeColors[3];
+			TSWallColor = StrifeColors[4];
+			FDWallColor = StrifeColors[5];
+			LockedColor =
+				CDWallColor = StrifeColors[6];
+			ThingColor_Item = 
+				ThingColor_Friend = 
+				ThingColor_Monster =
+				ThingColor = StrifeColors[7];
+			GridColor = StrifeColors[8];
+			XHairColor = StrifeColors[9];
+			NotSeenColor = StrifeColors[10];
+			break;
 	}
 
 	lastpal = palette;
@@ -1348,7 +1384,7 @@ void AM_drawWalls (bool allmap)
 					lines[i].special == Teleport_ZombieChanger ||
 					lines[i].special == Teleport_Line) &&
 					(lines[i].activation & SPAC_PlayerActivate) &&
-					am_usecustomcolors)
+					am_colorset == 0)
 				{ // intra-level teleporters
 					AM_drawMline(&l, IntraTeleportColor);
 				}
@@ -1356,7 +1392,7 @@ void AM_drawWalls (bool allmap)
 						 lines[i].special == Teleport_EndGame ||
 						 lines[i].special == Exit_Normal ||
 						 lines[i].special == Exit_Secret) &&
-						 am_usecustomcolors)
+						am_colorset == 0)
 				{ // inter-level/game-ending teleporters
 					AM_drawMline(&l, InterTeleportColor);
 				}
@@ -1372,7 +1408,7 @@ void AM_drawWalls (bool allmap)
 						 lines[i].special == ACS_LockedExecuteDoor ||
 						 (lines[i].special == Generic_Door && lines[i].args[4]!=0))
 				{
-					if (am_usecustomcolors)
+					if (am_colorset == 0)
 					{
 						int P_GetMapColorForLock(int lock);
 						int lock;

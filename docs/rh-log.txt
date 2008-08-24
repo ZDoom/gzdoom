@@ -1,3 +1,7 @@
+August 23, 2008
+- Added Win64 support to the crash report generator. (Pity that Win32
+  cannot be as informative.)
+
 August 22, 2008  (Changes by Graf Zahl)
 - Added and fixed Boss death submission for random spawner.
 - Added functions to FActorInfo that can set the damage factors and

@@ -41,6 +41,9 @@
 #include <richedit.h>
 #include <winuser.h>
 #include <tlhelp32.h>
+#ifndef _M_IX86
+#include <winternl.h>
+#endif
 #ifndef __GNUC__
 #include <dbghelp.h>
 #endif
@@ -142,6 +145,11 @@ typedef BOOL (WINAPI *WRITEDUMP) (HANDLE, DWORD, HANDLE, int,
 
 // TYPES -------------------------------------------------------------------
 
+#ifdef _M_X64
+typedef PRUNTIME_FUNCTION (WINAPI *RTLLOOKUPFUNCTIONENTRY)
+	(ULONG64 ControlPc, PULONG64 ImageBase, void *HistoryTable);
+#endif
+
 // Damn Microsoft for doing Get/SetWindowLongPtr half-assed. Instead of
 // giving them proper prototypes under Win32, they are just macros for
 // Get/SetWindowLong, meaning they take LONGs and not LONG_PTRs.
@@ -235,8 +243,8 @@ static void AddZipFile (HANDLE ziphandle, TarFile *whichfile, short dosdate, sho
 static HANDLE CreateTempFile ();
 
 static void DumpBytes (HANDLE file, BYTE *address);
-static void AddStackInfo (HANDLE file, void *dumpaddress, DWORD code);
-static void StackWalk (HANDLE file, void *dumpaddress, DWORD *topOfStack, DWORD *jump);
+static void AddStackInfo (HANDLE file, void *dumpaddress, DWORD code, CONTEXT *ctxt);
+static void StackWalk (HANDLE file, void *dumpaddress, DWORD *topOfStack, DWORD *jump, CONTEXT *ctxt);
 static void AddToolHelp (HANDLE file);
 
 static HANDLE WriteTextReport ();
@@ -650,9 +658,9 @@ HANDLE WriteTextReport ()
 			if (verinfo.dwPlatformId != VER_PLATFORM_WIN32_WINDOWS)
 			{
 				j += mysnprintf (CrashSummary + j, countof(CrashSummary) - j,
-					" - tried to %s address %08lX",
+					" - tried to %s address %p",
 					CrashPointers.ExceptionRecord->ExceptionInformation[0] ? "write" : "read",
-					CrashPointers.ExceptionRecord->ExceptionInformation[1]);
+					(void *)CrashPointers.ExceptionRecord->ExceptionInformation[1]);
 			}
 		}
 		CrashSummary[j++] = ')';
@@ -741,17 +749,21 @@ HANDLE WriteTextReport ()
 
 	AddToolHelp (file);
 
+#ifdef _M_IX86
 	Writef (file, "\r\nBytes near EIP:");
+#else
+	Writef (file, "\r\nBytes near RIP:");
+#endif
 	DumpBytes (file, (BYTE *)CrashPointers.ExceptionRecord->ExceptionAddress-16);
 
 	if (ctxt->ContextFlags & CONTEXT_CONTROL)
 	{
 #ifndef _M_X64
 		AddStackInfo (file, (void *)(size_t)CrashPointers.ContextRecord->Esp,
-			CrashPointers.ExceptionRecord->ExceptionCode);
+			CrashPointers.ExceptionRecord->ExceptionCode, ctxt);
 #else
 		AddStackInfo (file, (void *)CrashPointers.ContextRecord->Rsp,
-			CrashPointers.ExceptionRecord->ExceptionCode);
+			CrashPointers.ExceptionRecord->ExceptionCode, ctxt);
 #endif
 	}
 
@@ -814,7 +826,7 @@ static void AddToolHelp (HANDLE file)
 
 				if (thread.th32ThreadID == DbgThreadID)
 				{
-					Writef (file, " at %08x*", CrashAddress);
+					Writef (file, " at %p*", CrashAddress);
 				}
 				Writef (file, "\r\n");
 			}
@@ -829,7 +841,7 @@ static void AddToolHelp (HANDLE file)
 	{
 		do
 		{
-			Writef (file, "%08x - %08x %c%s\r\n",
+			Writef (file, "%p - %p %c%s\r\n",
 				module.modBaseAddr, module.modBaseAddr + module.modBaseSize - 1,
 				module.modBaseAddr <= CrashPointers.ExceptionRecord->ExceptionAddress &&
 				module.modBaseAddr + module.modBaseSize > CrashPointers.ExceptionRecord->ExceptionAddress
@@ -849,12 +861,16 @@ static void AddToolHelp (HANDLE file)
 //
 //==========================================================================
 
-static void AddStackInfo (HANDLE file, void *dumpaddress, DWORD code)
+static void AddStackInfo (HANDLE file, void *dumpaddress, DWORD code, CONTEXT *ctxt)
 {
 	DWORD *addr = (DWORD *)dumpaddress, *jump;
 	DWORD *topOfStack = GetTopOfStack (dumpaddress);
 	BYTE peekb;
+#ifdef _M_IX86
 	DWORD peekd;
+#else
+	QWORD peekq;
+#endif
 
 	jump = topOfStack;
 	if (code == EXCEPTION_STACK_OVERFLOW)
@@ -866,7 +882,7 @@ static void AddStackInfo (HANDLE file, void *dumpaddress, DWORD code)
 		}
 	}
 
-	StackWalk (file, dumpaddress, topOfStack, jump);
+	StackWalk (file, dumpaddress, topOfStack, jump, ctxt);
 
 	Writef (file, "\r\nStack Contents:\r\n");
 	DWORD *scan;
@@ -881,6 +897,8 @@ static void AddStackInfo (HANDLE file, void *dumpaddress, DWORD code)
 			Writef (file, "\r\n . . . Snip . . .\r\n\r\n");
 		}
 
+		Writef (file, "%p:", scan);
+#ifdef _M_IX86
 		if (topOfStack - scan < 4)
 		{
 			max = topOfStack - scan;
@@ -890,7 +908,6 @@ static void AddStackInfo (HANDLE file, void *dumpaddress, DWORD code)
 			max = 4;
 		}
 
-		Writef (file, "%p:", scan);
 		for (i = 0; i < max; ++i)
 		{
 			if (!SafeReadMemory (&scan[i], &peekd, 4))
@@ -903,8 +920,31 @@ static void AddStackInfo (HANDLE file, void *dumpaddress, DWORD code)
 		{
 			Writef (file, "         ");
 		}
+#else
+		if ((QWORD *)topOfStack - (QWORD *)scan < 2)
+		{
+			max = (QWORD *)topOfStack - (QWORD *)scan;
+		}
+		else
+		{
+			max = 2;
+		}
+
+		for (i = 0; i < max; ++i)
+		{
+			if (!SafeReadMemory (&scan[i], &peekq, 8))
+			{
+				break;
+			}
+			Writef (file, " %016x", peekq);
+		}
+		if (i < 2)
+		{
+			Writef (file, "                 ");
+		}
+#endif
 		Writef (file, "  ");
-		for (i = 0; i < max*4; ++i)
+		for (i = 0; i < max*sizeof(void*); ++i)
 		{
 			if (!SafeReadMemory ((BYTE *)scan + i, &peekb, 1))
 			{
@@ -916,9 +956,12 @@ static void AddStackInfo (HANDLE file, void *dumpaddress, DWORD code)
 	}
 }
 
+#ifdef _M_IX86
+
 //==========================================================================
 //
 // StackWalk
+// Win32 version
 //
 // Lists a possible call trace for the crashing thread to the text report.
 // This is not very specific and just lists any pointers into the
@@ -926,7 +969,7 @@ static void AddStackInfo (HANDLE file, void *dumpaddress, DWORD code)
 //
 //==========================================================================
 
-static void StackWalk (HANDLE file, void *dumpaddress, DWORD *topOfStack, DWORD *jump)
+static void StackWalk (HANDLE file, void *dumpaddress, DWORD *topOfStack, DWORD *jump, CONTEXT *ctxt)
 {
 	DWORD *addr = (DWORD *)dumpaddress;
 
@@ -947,7 +990,6 @@ static void StackWalk (HANDLE file, void *dumpaddress, DWORD *topOfStack, DWORD 
 			Writef (file, "\r\n\r\n  . . . . Snip . . . .\r\n");
 		}
 
-#ifndef _M_X64
 		DWORD_PTR code;
 
 		if (SafeReadMemory (scan, &code, sizeof(code)) &&
@@ -1106,10 +1148,132 @@ static void StackWalk (HANDLE file, void *dumpaddress, DWORD *topOfStack, DWORD 
 				}
 			}
 		}
-#endif
 	}
 	Writef (file, "\r\n");
 }
+
+#else
+
+//==========================================================================
+//
+// StackWalk
+// Win64 version
+//
+// Walks the stack for the crashing thread and dumps the trace to the text
+// report. Unlike the Win32 version, Win64 provides facilities for
+// doing a 100% exact walk.
+//
+// See http://www.nynaeve.net/?p=113 for more information, and
+// http://www.nynaeve.net/Code/StackWalk64.cpp in particular.
+//
+//==========================================================================
+
+static void StackWalk (HANDLE file, void *dumpaddress, DWORD *topOfStack, DWORD *jump, CONTEXT *ctxt)
+{
+	RTLLOOKUPFUNCTIONENTRY RtlLookupFunctionEntry;
+	HMODULE kernel;
+	CONTEXT context;
+	KNONVOLATILE_CONTEXT_POINTERS nv_context;
+	PRUNTIME_FUNCTION function;
+	PVOID handler_data;
+	ULONG64 establisher_frame;
+	ULONG64 image_base;
+
+	Writef (file, "\r\nCall trace:\r\n  rip=%p  <- Here it dies.\r\n", CrashAddress);
+
+	kernel = GetModuleHandle("kernel32.dll");
+	if (kernel == NULL || NULL == (RtlLookupFunctionEntry =
+		(RTLLOOKUPFUNCTIONENTRY)GetProcAddress(kernel, "RtlLookupFunctionEntry")))
+	{
+		Writef (file, "  Unavailable: Could not get address of RtlLookupFunctionEntry\r\n");
+		return;
+	}
+	// Get the caller's context
+	context = *ctxt;
+
+	// This unwind loop intentionally skips the first call frame, as it
+	// shall correspond to the call to StackTrace64, which we aren't
+	// interested in.
+
+	for (ULONG frame = 0; ; ++frame)
+	{
+		// Try to look up unwind metadata for the current function.
+		function = RtlLookupFunctionEntry(context.Rip, &image_base, NULL);
+		memset(&nv_context, 0, sizeof(nv_context));
+		if (function == NULL)
+		{
+			// If we don't have a RUNTIME_FUNCTION, then we've encountered
+			// a leaf function. Adjust the stack appropriately.
+			context.Rip  = (ULONG64)(*(PULONG64)context.Rsp);
+			context.Rsp += 8;
+			Writef(file, "  Leaf function\r\n\r\n");
+		}
+		else
+		{
+			// Note that there is not a one-to-one correspondance between
+			// runtime functions and source functions. One source function
+			// may be broken into multiple runtime functions. This loop walks
+			// backward from the current runtime function for however many
+			// consecutive runtime functions precede it. There is a slight
+			// chance that this will walk across different source functions.
+			// (Or maybe not, depending on whether or not the compiler
+			// guarantees that there will be empty space between functions;
+			// it looks like VC++ might.) In practice, this seems to work
+			// quite well for identifying the exact address to search for in
+			// a map file to determine the function name.
+
+			PRUNTIME_FUNCTION function2 = function;
+			ULONG64 base = image_base;
+
+			while (function2 != NULL)
+			{
+				Writef(file, "  Function range: %p -> %p\r\n",
+					(void *)(base + function2->BeginAddress),
+					(void *)(base + function2->EndAddress));
+				function2 = RtlLookupFunctionEntry(base + function2->BeginAddress - 1, &base, NULL);
+			}
+			Writef(file, "\r\n");
+
+			// Use RtlVirtualUnwind to execute the unwind for us.
+			RtlVirtualUnwind(0/*UNW_FLAG_NHANDLER*/, image_base, context.Rip,
+				function, &context, &handler_data, &establisher_frame,
+				&nv_context);
+		}
+		// If we reach a RIP of zero, this means we've walked off the end of
+		// the call stack and are done.
+		if (context.Rip == NULL)
+		{
+			break;
+		}
+
+		// Display the context. Note that we don't bother showing the XMM
+		// context, although we have the nonvolatile portion of it.
+		Writef(file, " FRAME %02d:\r\n  rip=%p rsp=%p rbp=%p\r\n",
+			frame, context.Rip, context.Rsp, context.Rbp);
+		Writef(file, "  r12=%p r13=%p r14=%p\r\n"
+					 "  rdi=%p rsi=%p rbx=%p\r\n",
+			context.R12, context.R13, context.R14,
+			context.Rdi, context.Rsi, context.Rbx);
+
+		static const char reg_names[16][4] =
+		{
+			"rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi",
+			"r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"
+		};
+
+		// If we have stack-based register stores, then display them here.
+		for (int i = 0; i < 16; ++i)
+		{
+			if (nv_context.IntegerContext[i])
+			{
+				Writef(file, "   -> '%s' saved on stack at %p (=> %p)\r\n",
+					reg_names[i], nv_context.IntegerContext[i], *nv_context.IntegerContext[i]);
+			}
+		}
+	}
+}
+
+#endif
 
 //==========================================================================
 //
@@ -1121,7 +1285,7 @@ static void StackWalk (HANDLE file, void *dumpaddress, DWORD *topOfStack, DWORD 
 
 static void DumpBytes (HANDLE file, BYTE *address)
 {
-	char line[64*3], *line_p = line;
+	char line[68*3], *line_p = line;
 	DWORD len;
 	BYTE peek;
 

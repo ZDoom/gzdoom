@@ -108,13 +108,13 @@ decalgroup BulletChip
  * Blood smears crawl down walls a bit like in Blood.
  *
  * These do not need generators; the engine will create them automatically
- * when something bleeds. In the future, the shade color will be ignored,
+ * when something bleeds. If a blood color is set, the shade color will be ignored,
  * and the actor's blood color will be used instead.
  */
 decal BloodSplat1
 {
 	pic BSPLAT1
-	shade "68 00 00"
+	shade "BloodDefault"
 	x-scale 0.75
 	y-scale 0.75
 	randomflipx
@@ -124,7 +124,7 @@ decal BloodSplat1
 decal BloodSplat2
 {
 	pic BSPLAT2
-	shade "68 00 00"
+	shade "BloodDefault"
 	x-scale 0.75
 	y-scale 0.75
 	randomflipx
@@ -134,7 +134,7 @@ decal BloodSplat2
 decal BloodSplat3
 {
 	pic BSPLAT3
-	shade "68 00 00"
+	shade "BloodDefault"
 	x-scale 0.75
 	y-scale 0.75
 	randomflipx
@@ -144,7 +144,7 @@ decal BloodSplat3
 decal BloodSplat4
 {
 	pic BSPLAT4
-	shade "68 00 00"
+	shade "BloodDefault"
 	x-scale 0.75
 	y-scale 0.75
 	randomflipx
@@ -154,7 +154,7 @@ decal BloodSplat4
 decal BloodSplat5
 {
 	pic BSPLAT5
-	shade "68 00 00"
+	shade "BloodDefault"
 	x-scale 0.75
 	y-scale 0.75
 	randomflipx
@@ -164,7 +164,7 @@ decal BloodSplat5
 decal BloodSplat6
 {
 	pic BSPLAT6
-	shade "68 00 00"
+	shade "BloodDefault"
 	x-scale 0.75
 	y-scale 0.75
 	randomflipx
@@ -174,7 +174,7 @@ decal BloodSplat6
 decal BloodSplat7
 {
 	pic BSPLAT7
-	shade "68 00 00"
+	shade "BloodDefault"
 	x-scale 0.75
 	y-scale 0.75
 	randomflipx
@@ -199,7 +199,7 @@ decal BloodSmear1
 	pic BSMEAR1
 	x-scale 0.625
 	y-scale 0.625
-	shade "68 00 00"
+	shade "BloodDefault"
 	randomflipx
 	animator BloodSmearer
 }
@@ -209,7 +209,7 @@ decal BloodSmear2
 	pic BSMEAR1
 	x-scale 0.625
 	y-scale 0.625
-	shade "68 00 00"
+	shade "BloodDefault"
 	randomflipx
 	animator BloodSmearer
 }

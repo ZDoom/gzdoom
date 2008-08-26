@@ -1,3 +1,13 @@
+August 26, 2008  (Changes by Graf Zahl)
+- Blood default color is set in the gameinfo now so that Chex Quest
+  can default to green instead of red.
+- Fixed: The version of CheckNumForFullName that checks for a specific
+  WAD did not work.
+- Moved MAPINFO names into gameinfo structure.
+- Added Chex Quest support. Credits go to fraggle for creating a 
+  Dehacked patch that does most of the work. The rest includes a new
+  MAPINFO and removal of the drop items from the monsters being used.
+
 August 23, 2008
 - Added Win64 support to the crash report generator. (Pity that Win32
   cannot be as informative.)

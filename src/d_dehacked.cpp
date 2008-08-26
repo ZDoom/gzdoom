@@ -2096,17 +2096,19 @@ static int DoInclude (int dummy)
 	return GetLine();
 }
 
-void DoDehPatch (const char *patchfile, bool autoloading)
+void DoDehPatch (const char *patchfile, bool autoloading, int lump)
 {
 	char file[256];
 	int cont;
 	int filelen = 0;	// Be quiet, gcc
-	int lump;
 
 	PatchFile = NULL;
 	PatchName = NULL;
 
-	lump = Wads.CheckNumForName ("DEHACKED");
+	if (lump < 0)
+	{
+		lump = Wads.CheckNumForName ("DEHACKED");
+	}
 
 	if (lump >= 0 && autoloading)
 	{

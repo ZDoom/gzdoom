@@ -953,12 +953,12 @@ int FWadCollection::CheckNumForFullName (const char *name, int wadnum)
 		return CheckNumForFullName (name);
 	}
 
-	i = FirstLumpIndex[MakeKey (name) % NumLumps];
+	i = FirstLumpIndex_FullName[MakeKey (name) % NumLumps];
 
-	while (i != NULL_INDEX &&
+	while (i != NULL_INDEX && 
 		(stricmp(name, LumpInfo[i].fullname) || LumpInfo[i].wadnum != wadnum))
 	{
-		i = NextLumpIndex[i];
+		i = NextLumpIndex_FullName[i];
 	}
 
 	return i != NULL_INDEX ? i : -1;

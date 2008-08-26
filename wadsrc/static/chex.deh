@@ -1,0 +1,811 @@
+Patch File for DeHackEd v3.0
+
+# 
+# This is a dehacked patch for emulating the chex.exe executable that
+# comes with Chex Quest.  It is generated from automatic scripts used
+# to compare chex.exe with Final Doom's doom2.exe.  The purpose of 
+# this patch is to allow Chex Quest to be played accurately with
+# source ports; it will not work with Vanilla Doom and DOS dehacked,
+# as some of the string and cheat replacements are longer than is
+# possible with dehacked.
+#
+# Because of the limitations of dehacked, it is not possible to 
+# completely emulate chex.exe merely with a dehacked patch.  Although
+# this patch takes care of the majority of the changes necessary, the
+# following changes are also necessary to accurately emulate chex.deh:
+#
+#  * Monsters should not drop ammo
+#  * The game should end after the fifth level, instead of the eighth.
+#  * The episode selection screen should not be displayed.
+#  * The level warp cheat should always warp to episode 1.
+#  * The automap should show the level name for the episode 1 level,
+#    eg. the displayed level name for E2M3 is the level name for 
+#        E1M3.
+#
+#    Simon Howard (fraggle)
+#--
+#
+# These are magic commands to Chocolate Doom to enable longer strings
+# and cheats than Vanilla dehacked allows:
+#
+# *allow-long-strings* *allow-long-cheats*
+#
+
+Doom version = 21
+Patch format = 6
+
+Text 46 47
+are you sure you want to
+quit this great game?Don't give up now...do 
+you still wish to quit?
+
+Text 49 38
+please don't leave, there's more
+demons to toast!please don't leave, we
+need your help!
+
+Text 50 38
+let's beat it -- this is turning
+into a bloodbath!please don't leave, we
+need your help!
+
+Text 50 38
+i wouldn't leave if i were you.
+dos is much worse.please don't leave, we
+need your help!
+
+Text 56 38
+you're trying to say you like dos
+better than me, right?please don't leave, we
+need your help!
+
+Text 54 38
+don't leave yet -- there's a
+demon around that corner!please don't leave, we
+need your help!
+
+Text 55 38
+ya know, next time you come in here
+i'm gonna toast ya.please don't leave, we
+need your help!
+
+Text 34 38
+go ahead and leave. see if i care.please don't leave, we
+need your help!
+
+Text 46 47
+are you sure you want to
+quit this great game?Don't give up now...do 
+you still wish to quit?
+
+Text 49 38
+you want to quit?
+then, thou hast lost an eighth!please don't leave, we
+need your help!
+
+Text 72 38
+don't go now, there's a 
+dimensional shambler waiting
+at the dos prompt!please don't leave, we
+need your help!
+
+Text 51 38
+get outta here and go back
+to your boring programs.please don't leave, we
+need your help!
+
+Text 53 38
+if i were your boss, i'd 
+ deathmatch ya in a minute!please don't leave, we
+need your help!
+
+Text 57 38
+look, bud. you leave now
+and you forfeit your body count!please don't leave, we
+need your help!
+
+Text 59 38
+just leave. when you come
+back, i'll be waiting with a bat.please don't leave, we
+need your help!
+
+Text 58 38
+you're lucky i don't smack
+you for thinking about leaving.please don't leave, we
+need your help!
+
+Text 72 70
+free memory available for DOOM to execute.  Reconfigure your CONFIG.SYS
+free memory available for Chex(R) Quest.  Reconfigure your CONFIG.SYS
+
+
+Text 73 70
+creating a custom boot menu item in your CONFIG.SYS for optimum DOOMing.
+creating a custom boot menu item in your CONFIG.SYS for optimum play.
+
+
+Text 53 62
+information on how to free up more memory for DOOM.
+
+information on how to free up more memory for Chex(R) Quest.
+
+
+
+Text 14 23
+DOOM aborted.
+Chex(R) Quest aborted.
+
+
+Text 440 104
+Once you beat the big badasses and
+clean out the moon base you're supposed
+to win, aren't you? Aren't you? Where's
+your fat reward and ticket home? What
+the hell is this? It's not supposed to
+end this way!
+
+It stinks like rotten meat, but looks
+like the lost Deimos base.  Looks like
+you're stuck on The Shores of Hell.
+The only way out is through.
+
+To continue the DOOM experience, play
+The Shores of Hell and its amazing
+sequel, Inferno!
+Mission accomplished.
+
+Are you prepared for the next mission?
+
+
+
+
+
+
+Press the escape key to continue...
+
+
+Text 466 15
+You've done it! The hideous cyber-
+demon lord that ruled the lost Deimos
+moon base has been slain and you
+are triumphant! But ... where are
+you? You clamber to the edge of the
+moon and look down to see the awful
+truth.
+
+Deimos floats above Hell itself!
+You've never heard of anyone escaping
+from Hell, but you'll make the bastards
+sorry they ever heard of you! Quickly,
+you rappel down to  the surface of
+Hell.
+
+Now, it's on to the final chapter of
+DOOM! -- Inferno.You've done it!
+
+Text 492 14
+The loathsome spiderdemon that
+masterminded the invasion of the moon
+bases and caused so much death has had
+its ass kicked for all time.
+
+A hidden doorway opens and you enter.
+You've proven too tough for Hell to
+contain, and now Hell at last plays
+fair -- for you emerge from the door
+to see the green fields of Earth!
+Home at last.
+
+You wonder what's been happening on
+Earth while you were battling evil
+unleashed. It's good that no Hell-
+spawn could have come through that
+door with you ...Wonderful Job!
+
+Text 503 9
+the spider mastermind must have sent forth
+its legions of hellspawn before your
+final confrontation with that terrible
+beast from hell.  but you stepped forward
+and brought forth eternal damnation and
+suffering upon the horde as a true hero
+would in the face of something so evil.
+
+besides, someone was gonna pay for what
+happened to daisy, your pet rabbit.
+
+but now, you see spread before you more
+potential pain and gibbitude as a nation
+of demons run amok among our cities.
+
+next stop, hell on earth!Fantastic
+
+Text 405 6
+YOU HAVE ENTERED DEEPLY INTO THE INFESTED
+STARPORT. BUT SOMETHING IS WRONG. THE
+MONSTERS HAVE BROUGHT THEIR OWN REALITY
+WITH THEM, AND THE STARPORT'S TECHNOLOGY
+IS BEING SUBVERTED BY THEIR PRESENCE.
+
+AHEAD, YOU SEE AN OUTPOST OF HELL, A
+FORTIFIED ZONE. IF YOU CAN GET PAST IT,
+YOU CAN PENETRATE INTO THE HAUNTED HEART
+OF THE STARBASE AND FIND THE CONTROLLING
+SWITCH WHICH HOLDS EARTH'S POPULATION
+HOSTAGE.Great!
+
+Text 617 10
+YOU HAVE WON! YOUR VICTORY HAS ENABLED
+HUMANKIND TO EVACUATE EARTH AND ESCAPE
+THE NIGHTMARE.  NOW YOU ARE THE ONLY
+HUMAN LEFT ON THE FACE OF THE PLANET.
+CANNIBAL MUTATIONS, CARNIVOROUS ALIENS,
+AND EVIL SPIRITS ARE YOUR ONLY NEIGHBORS.
+YOU SIT BACK AND WAIT FOR DEATH, CONTENT
+THAT YOU HAVE SAVED YOUR SPECIES.
+
+BUT THEN, EARTH CONTROL BEAMS DOWN A
+MESSAGE FROM SPACE: "SENSORS HAVE LOCATED
+THE SOURCE OF THE ALIEN INVASION. IF YOU
+GO THERE, YOU MAY BE ABLE TO BLOCK THEIR
+ENTRY.  THE ALIEN BASE IS IN THE HEART OF
+YOUR OWN HOME CITY, NOT FAR FROM THE
+STARPORT." SLOWLY AND PAINFULLY YOU GET
+UP AND RETURN TO THE FRAY.Way to go!
+
+Text 312 20
+YOU ARE AT THE CORRUPT HEART OF THE CITY,
+SURROUNDED BY THE CORPSES OF YOUR ENEMIES.
+YOU SEE NO WAY TO DESTROY THE CREATURES'
+ENTRYWAY ON THIS SIDE, SO YOU CLENCH YOUR
+TEETH AND PLUNGE THROUGH IT.
+
+THERE MUST BE A WAY TO CLOSE IT ON THE
+OTHER SIDE. WHAT DO YOU CARE IF YOU'VE
+GOT TO GO THROUGH HELL TO GET TO IT?Thanks for the help!
+
+Text 494 7
+THE HORRENDOUS VISAGE OF THE BIGGEST
+DEMON YOU'VE EVER SEEN CRUMBLES BEFORE
+YOU, AFTER YOU PUMP YOUR ROCKETS INTO
+HIS EXPOSED BRAIN. THE MONSTER SHRIVELS
+UP AND DIES, ITS THRASHING LIMBS
+DEVASTATING UNTOLD MILES OF HELL'S
+SURFACE.
+
+YOU'VE DONE IT. THE INVASION IS OVER.
+EARTH IS SAVED. HELL IS A WRECK. YOU
+WONDER WHERE BAD FOLKS WILL GO WHEN THEY
+DIE, NOW. WIPING THE SWEAT FROM YOUR
+FOREHEAD YOU BEGIN THE LONG TREK BACK
+HOME. REBUILDING EARTH OUGHT TO BE A
+LOT MORE FUN THAN RUINING IT WAS.
+Great!
+
+
+Text 164 9
+CONGRATULATIONS, YOU'VE FOUND THE SECRET
+LEVEL! LOOKS LIKE IT'S BEEN BUILT BY
+HUMANS, RATHER THAN DEMONS. YOU WONDER
+WHO THE INMATES OF THIS CORNER OF HELL
+WILL BE.Fabulous!
+
+Text 92 17
+CONGRATULATIONS, YOU'VE FOUND THE
+SUPER SECRET LEVEL!  YOU'D BETTER
+BLAZE THROUGH THIS ONE!
+CONGRATULATIONS!
+
+
+Text 433 12
+You gloat over the steaming carcass of the
+Guardian.  With its death, you've wrested
+the Accelerator from the stinking claws
+of Hell.  You relax and glance around the
+room.  Damn!  There was supposed to be at
+least one working prototype, but you can't
+see it. The demons must have taken it.
+
+You must find the prototype, or all your
+struggles will have been wasted. Keep
+moving, keep fighting, keep killing.
+Oh yes, keep living, too.Nicely done!
+
+Text 193 9
+Even the deadly Arch-Vile labyrinth could
+not stop you, and you've gotten to the
+prototype Accelerator which is soon
+efficiently and permanently deactivated.
+
+You're good at that kind of thing.Nice Job!
+
+Text 328 10
+You've bashed and battered your way into
+the heart of the devil-hive.  Time for a
+Search-and-Destroy mission, aimed at the
+Gatekeeper, whose foul offspring is
+cascading to Earth.  Yeah, he's bad. But
+you know who's worse!
+
+Grinning evilly, you check your gear, and
+get ready to give the bastard a little Hell
+of your own making!Well done!
+
+Text 460 12
+The Gatekeeper's evil face is splattered
+all over the place.  As its tattered corpse
+collapses, an inverted Gate forms and
+sucks down the shards of the last
+prototype Accelerator, not to mention the
+few remaining demons.  You're done. Hell
+has gone back to pounding bad dead folks 
+instead of good live ones.  Remember to
+tell your grandkids to put a rocket
+launcher in your coffin. If you go to Hell
+when you die, you'll need it for some
+final cleaning-up ...Eat Chex(R)!
+
+Text 159 14
+You've found the second-hardest level we
+got. Hope you have a saved game a level or
+two previous.  If not, be prepared to die
+aplenty. For master marines only.Are you ready?
+
+Text 106 15
+Betcha wondered just what WAS the hardest
+level we had ready for ya?  Now you know.
+No one gets out alive.Were you ready?
+
+Text 389 23
+You've fought your way out of the infested
+experimental labs.   It seems that UAC has
+once again gulped it down.  With their
+high turnover, it must be hard for poor
+old UAC to buy corporate health insurance
+nowadays..
+
+Ahead lies the military complex, now
+swarming with diseased horrors hot to get
+their teeth into you. With luck, the
+complex still has some warlike ordnance
+laying around.There's more to come...
+
+Text 310 22
+You hear the grinding of heavy machinery
+ahead.  You sure hope they're not stamping
+out new hellspawn, but you're ready to
+ream out a whole herd if you have to.
+They might be planning a blood feast, but
+you feel about as mean as two thousand
+maniacs packed into one mad killer.
+
+You don't plan to go down easy.Keep up the good work!
+
+Text 309 11
+The vista opening ahead looks real damn
+familiar. Smells familiar, too -- like
+fried excrement. You didn't like this
+place before, and you sure as hell ain't
+planning to like it now. The more you
+brood on it, the madder you get.
+Hefting your gun, an evil grin trickles
+onto your face. Time to take some names.Get ready!.
+
+Text 385 9
+Suddenly, all is silent, from one horizon
+to the other. The agonizing echo of Hell
+fades away, the nightmare sky turns to
+blue, the heaps of monster corpses start 
+to evaporate along with the evil stench 
+that filled the air. Jeeze, maybe you've
+done it. Have you really won?
+
+Something rumbles in the distance.
+A blue light begins to glow inside the
+ruined skull of the demon-spitter.Be Proud.
+
+Text 173 4
+What now? Looks totally different. Kind
+of like King Tut's condo. Well,
+whatever's here can't be any worse
+than usual. Can it?  Or maybe it's best
+to let sleeping gods lie..Wow!
+
+Text 353 6
+Time for a vacation. You've burst the
+bowels of hell and by golly you're ready
+for a break. You mutter to yourself,
+Maybe someone else can kick Hell's ass
+next time around. Ahead lies a quiet town,
+with peaceful flowing water, quaint
+buildings, and presumably no Hellspawn.
+
+As you step off the transport, you hear
+the stomp of a cyberdemon's iron shoe.Great.
+
+Text 9 18
+ZOMBIEMANFLEMOIDUS COMMONUS
+
+Text 11 19
+SHOTGUN GUYFLEMOIDUS BIPEDICUS
+
+Text 5 30
+DEMONFLEMOIDUS BIPEDICUS WITH ARMOR
+
+Text 13 13
+BARON OF HELLTHE FLEMBRANE
+
+Text 81 70
+                         The Ultimate DOOM Startup v%i.%i                                                 Chex(R) Quest Startup                        
+
+Text 80 59
+                   DOOM 2: Plutonia Experiment v%i.%i                                              Chex(R) Quest                           
+
+Text 78 61
+                     DOOM 2: TNT - Evilution v%i.%i                                                Chex(R) Quest                           
+
+Text 80 65
+                         DOOM 2: Hell on Earth v%i.%i                                                    Chex(R) Quest                           
+
+Text 55 55
+
+You cannot -file with the shareware version. Register!
+You cannot -file with Chex(R) Quest version. Register!
+
+Text 36 23
+
+This is not the registered version.
+This is Chex(R) Quest.
+
+Text 415 0
+===========================================================================
+ATTENTION:  This version of DOOM has been modified.  If you would like to
+get a copy of the original game, call 1-800-IDGAMES or see the readme file.
+        You will not receive technical support for modified games.
+                      press enter to continue
+===========================================================================
+
+
+Text 281 0
+===========================================================================
+             This version is NOT SHAREWARE, do not distribute!
+         Please report software piracy to the SPA: 1-800-388-PIR8
+===========================================================================
+
+
+Text 265 0
+===========================================================================
+                            Do not distribute!
+         Please report software piracy to the SPA: 1-800-388-PIR8
+===========================================================================
+
+
+Text 35 44
+R_Init: Init DOOM refresh daemon - R_Init: Init Chex(R) Quest refresh daemon - 
+
+Text 25 25
+c:\doomdata\doomsav%c.dsgc:\doomdata\chexsav%c.dsg
+
+Text 13 13
+doomsav%c.dsgchexsav%c.dsg
+
+Text 47 57
+Different DOOM versions cannot play a net game!Different Chex(R) Quest versions cannot play a net quest!
+
+Text 25 25
+c:\doomdata\doomsav%d.dsgc:\doomdata\chexsav%d.dsg
+
+Text 13 13
+doomsav%d.dsgchexsav%d.dsg
+
+Text 25 25
+c:\doomdata\doomsav%d.dsgc:\doomdata\chexsav%d.dsg
+
+Text 13 13
+doomsav%d.dsgchexsav%d.dsg
+
+Text 52 53
+you can't do load while in a net game!
+
+press a key.you can't do load while in a net quest!
+
+press a key.
+
+Text 52 53
+quicksave over your game named
+
+'%s'?
+
+press y or n.quicksave over your quest named
+
+'%s'?
+
+press y or n.
+
+Text 51 52
+you can't quickload during a netgame!
+
+press a key.you can't quickload during a netquest!
+
+press a key.
+
+Text 61 62
+do you want to quickload the game named
+
+'%s'?
+
+press y or n.do you want to quickload the quest named
+
+'%s'?
+
+press y or n.
+
+Text 65 67
+you can't start a new game
+while in a network game.
+
+press a key.you can't start a new quest
+while in a network quest.
+
+press a key.
+
+Text 71 68
+are you sure? this skill level
+isn't even remotely fair.
+
+press y or n.Careful, this will be tough.
+Do you wish to continue?
+
+press y or n.
+
+Text 91 82
+this is the shareware version of doom.
+
+you need to order the entire trilogy.
+
+press a key.this is Chex(R) Quest. look for
+
+future levels at www.chexquest.com.
+
+press a key.
+
+Text 38 39
+you can't end a netgame!
+
+press a key.you can't end a netquest!
+
+press a key.
+
+Text 53 54
+are you sure you want to end the game?
+
+press y or n.are you sure you want to end the quest?
+
+press y or n.
+
+Text 23 19
+I'm ready to kick butt!I'm ready to zorch!
+
+Text 7 18
+I'm OK.I'm feeling great!
+
+Text 25 28
+I'm not looking too good!I'm getting pretty gooed up!
+
+Text 5 17
+Help!Somebody help me!
+
+Text 9 30
+You suck!Go back to your own dimension!
+
+Text 21 17
+Next time, scumbag...Stop that Flemoid
+
+Text 10 17
+Come here!I think I'm lost!
+
+Text 21 30
+I'll take care of it.I'll get you out of this gunk.
+
+Text 10 10
+DOOM00.pcxCHEX00.pcx
+
+Text 20 28
+Picked up the armor.Picked up the Chex(R) Armor.
+
+Text 24 34
+Picked up the MegaArmor!Picked up the Super Chex(R) Armor!
+
+Text 25 27
+Picked up a health bonus.Picked up a glass of water.
+
+Text 25 26
+Picked up an armor bonus.Picked up slime repellent.
+
+Text 12 22
+Supercharge!Supercharge Breakfast!
+
+Text 25 21
+Picked up a blue keycard.Picked up a blue key.
+
+Text 27 23
+Picked up a yellow keycard.Picked up a yellow key.
+
+Text 24 20
+Picked up a red keycard.Picked up a red key.
+
+Text 21 26
+Picked up a stimpack.Picked up a bowl of fruit.
+
+Text 41 33
+Picked up a medikit that you REALLY need!Picked up some needed vegetables!
+
+Text 20 31
+Picked up a medikit.Picked up a bowl of vegetables.
+
+Text 24 15
+Radiation Shielding SuitSlimeproof Suit
+
+Text 17 32
+Picked up a clip.Picked up a mini zorch recharge.
+
+Text 27 28
+Picked up a box of bullets.Picked up a mini zorch pack.
+
+Text 19 37
+Picked up a rocket.Picked up a zorch propulsor recharge.
+
+Text 27 33
+Picked up a box of rockets.Picked up a zorch propulsor pack.
+
+Text 25 37
+Picked up an energy cell.Picked up a phasing zorcher recharge.
+
+Text 30 33
+Picked up an energy cell pack.Picked up a phasing zorcher pack.
+
+Text 27 35
+Picked up 4 shotgun shells.Picked up a large zorcher recharge.
+
+Text 34 31
+Picked up a box of shotgun shells.Picked up a large zorcher pack.
+
+Text 34 21
+Picked up a backpack full of ammo!Picked up a Zorchpak!
+
+Text 30 23
+You got the BFG9000!  Oh, yes.You got the LAZ Device!
+
+Text 21 26
+You got the chaingun!You got the Rapid Zorcher!
+
+Text 28 28
+A chainsaw!  Find some meat!You got the Super Bootspork!
+
+Text 28 28
+You got the rocket launcher!You got the Zorch Propulsor!
+
+Text 23 28
+You got the plasma gun!You got the Phasing Zorcher!
+
+Text 20 26
+You got the shotgun!You got the Large Zorcher!
+
+Text 26 32
+You got the super shotgun!You got the Super Large Zorcher!
+
+Text 22 18
+Degreelessness Mode OnInvincible Mode On
+
+Text 23 19
+Degreelessness Mode OffInvincible Mode Off
+
+Text 20 11
+Ammo (no keys) AddedZorch Added
+
+Text 21 17
+Very Happy Ammo AddedSuper Zorch Added
+
+Text 21 16
+... doesn't suck - GM... Eat Chex(R)!
+
+Text 23 19
+I'm ready to kick butt!I'm ready to zorch!
+
+Text 7 18
+I'm OK.I'm feeling great!
+
+Text 25 28
+I'm not looking too good!I'm getting pretty gooed up!
+
+Text 5 17
+Help!Somebody help me!
+
+Text 9 30
+You suck!Go back to your own dimension!
+
+Text 21 17
+Next time, scumbag...Stop that Flemoid
+
+Text 10 17
+Come here!I think I'm lost!
+
+Text 21 30
+I'll take care of it.I'll get you out of this gunk.
+
+Text 12 18
+E1M1: HangarE1M1: Landing Zone
+
+Text 19 22
+E1M2: Nuclear PlantE1M2: Storage Facility
+
+Text 20 22
+E1M3: Toxin RefineryE1M3: Experimental Lab
+
+Text 21 15
+E1M4: Command ControlE1M4: Arboretum
+
+Text 16 23
+E1M5: Phobos LabE1M5: Caverns of Bazoik
+
+Text 22 18
+You mumble to yourselfI'm feeling great.
+
+Text 12 17
+Who's there?I think I'm lost.
+
+Text 18 8
+You scare yourselfOh No...
+
+Text 17 17
+You start to raveGotta break free.
+
+Text 17 6
+You've lost it...Hurry!
+
+# Frame/Thing table changes:
+
+Frame 537
+Duration = 3
+
+Frame 538
+Duration = 3
+
+Frame 539 
+Duration = 0
+
+Thing 2 (Zombieman)
+Close attack frame = 184
+Far attack frame = 0
+
+Thing 3 (Shotgun guy)
+Close attack frame = 217
+Far attack frame = 0
+
+Thing 16 (Boss)
+Width = 2883584
+Height = 6553600
+Speed = 0
+
+Thing 19
+Height = 0
+
+# Cheats:
+
+Cheat 0
+Chainsaw = joelkoenigs
+God mode = davidbrus
+Ammo & Keys = scottholman
+Ammo = mikekoenigs
+No Clipping 1 = charlesjacobi
+No Clipping 2 = charlesjacobi
+Invincibility = andrewbenson
+Berserk = deanhyers
+Invisibility = marybregi
+Radiation Suit = allen
+Auto-map = digitalcafe
+Lite-amp Goggles = joshuastorms
+Level Warp = leesnyder
+Player Position = kimhyers
+Map cheat = sherrill
+

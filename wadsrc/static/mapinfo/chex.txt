@@ -1,0 +1,87 @@
+// MAPINFO for Chex Quest
+
+clearepisodes
+episode e1m1 
+	picname "M_EPI1"
+	key k
+	
+// Registered/Retail Episode 1
+
+map E1M1 lookup HUSTR_E1M1
+levelnum 1
+titlepatch WILV00
+next E1M2
+secretnext E1M9
+sky1 SKY1 0
+cluster 1
+par 30
+sucktime 1
+music D_E1M1
+
+map E1M2 lookup HUSTR_E1M2
+levelnum 2
+titlepatch WILV01
+next E1M3
+secretnext E1M9
+sky1 SKY1 0
+cluster 1
+par 75
+sucktime 1
+music D_E1M2
+
+map E1M3 lookup HUSTR_E1M3
+levelnum 3
+titlepatch WILV02
+next E1M4
+secretnext E1M9
+sky1 SKY1 0
+cluster 1
+par 120
+sucktime 1
+music D_E1M3
+
+map E1M4 lookup HUSTR_E1M4
+levelnum 4
+titlepatch WILV03
+next E1M5
+secretnext E1M9
+sky1 SKY1 0
+cluster 1
+par 90
+sucktime 1
+music D_E1M4
+
+map E1M5 lookup HUSTR_E1M5
+levelnum 5
+titlepatch WILV04
+next EndGame1
+secretnext E1M9
+sky1 SKY1 0
+cluster 1
+par 165
+sucktime 1
+music D_E1M5
+
+
+// Clusters (correspond with same-numbered episode)
+
+clusterdef 1
+flat FLOOR4_8
+music D_VICTOR
+exittext lookup E1TEXT
+
+clusterdef 2
+flat SFLR6_1
+music D_VICTOR
+exittext lookup E2TEXT
+
+clusterdef 3
+flat MFLR8_4
+music D_VICTOR
+exittext lookup E3TEXT
+
+clusterdef 4
+flat MFLR8_3
+music D_VICTOR
+exittext lookup E4TEXT
+

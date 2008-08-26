@@ -57,7 +57,7 @@ public:
 };
 
 
-void DoDehPatch (const char *patchfile, bool autoloading);
+void DoDehPatch (const char *patchfile, bool autoloading, int lumpnum=-1);
 void FinishDehPatch ();
 
 #endif //__D_DEHACK_H__

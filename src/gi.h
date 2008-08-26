@@ -47,6 +47,7 @@
 #define GI_MENUHACK_COMMERCIAL	0x00000060
 #define GI_ALWAYSFALLINGDAMAGE	0x00000080
 #define GI_TEASER2				0x00000100	// Alternate version of the Strife Teaser
+#define GI_CHEX_QUEST			0x00000200
 
 #ifndef EGAMETYPE
 #define EGAMETYPE
@@ -114,6 +115,8 @@ typedef struct
 	char SkyFlatName[9];
 	fixed_t StepHeight;
 	const char *translator;
+	const char *mapinfo[2];
+	DWORD defaultbloodcolor;
 } gameinfo_t;
 
 extern gameinfo_t gameinfo;

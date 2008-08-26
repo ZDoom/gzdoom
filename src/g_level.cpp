@@ -605,41 +605,12 @@ void G_ParseMapInfo ()
 	atterm (G_UnloadMapInfo);
 
 	// Parse the default MAPINFO for the current game.
-	switch (gameinfo.gametype)
+	for(int i=0; i<2; i++)
 	{
-	case GAME_Doom:
-		G_DoParseMapInfo (Wads.GetNumForFullName ("mapinfo/doomcommon.txt"));
-		switch (gamemission)
+		if (gameinfo.mapinfo[i] != NULL)
 		{
-		case doom:
-			G_DoParseMapInfo (Wads.GetNumForFullName ("mapinfo/doom1.txt"));
-			break;
-		case pack_plut:
-			G_DoParseMapInfo (Wads.GetNumForFullName ("mapinfo/plutonia.txt"));
-			break;
-		case pack_tnt:
-			G_DoParseMapInfo (Wads.GetNumForFullName ("mapinfo/tnt.txt"));
-			break;
-		default:
-			G_DoParseMapInfo (Wads.GetNumForFullName ("mapinfo/doom2.txt"));
-			break;
+			G_DoParseMapInfo(Wads.GetNumForFullName(gameinfo.mapinfo[i]));
 		}
-		break;
-
-	case GAME_Heretic:
-		G_DoParseMapInfo (Wads.GetNumForFullName ("mapinfo/heretic.txt"));
-		break;
-
-	case GAME_Hexen:
-		G_DoParseMapInfo (Wads.GetNumForFullName ("mapinfo/hexen.txt"));
-		break;
-
-	case GAME_Strife:
-		G_DoParseMapInfo (Wads.GetNumForFullName ("mapinfo/strife.txt"));
-		break;
-
-	default:
-		break;
 	}
 
 	// Parse any extra MAPINFOs.

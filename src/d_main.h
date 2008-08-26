@@ -71,6 +71,7 @@ enum EIWADType
 	IWAD_StrifeTeaser,
 	IWAD_StrifeTeaser2,
 	IWAD_FreeDoom,
+	IWAD_ChexQuest,
 
 	NUM_IWAD_TYPES
 };

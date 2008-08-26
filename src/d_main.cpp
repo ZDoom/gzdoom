@@ -147,6 +147,9 @@ extern gameinfo_t HexenDKGameInfo;
 extern gameinfo_t StrifeGameInfo;
 extern gameinfo_t StrifeTeaserGameInfo;
 extern gameinfo_t StrifeTeaser2GameInfo;
+extern gameinfo_t ChexGameInfo;
+extern gameinfo_t PlutoniaGameInfo;
+extern gameinfo_t TNTGameInfo;
 
 extern int testingmode;
 extern bool setmodeneeded;
@@ -227,6 +230,7 @@ const IWADInfo IWADInfos[NUM_IWAD_TYPES] =
 	{ "Strife: Teaser (Old Version)",			NULL,		MAKERGB(224,173,153),	MAKERGB(0,107,101) },
 	{ "Strife: Teaser (New Version)",			NULL,		MAKERGB(224,173,153),	MAKERGB(0,107,101) },
 	{ "Freedoom",								"Freedoom",	MAKERGB(50,84,67),		MAKERGB(198,220,209) },
+	{ "Chex(R) Quest",							"Chex",		MAKERGB(255,255,0),		MAKERGB(0,192,0) },
 };
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -251,6 +255,7 @@ static const char *IWADNames[] =
 	"strife1.wad",
 	"strife0.wad",
 	"freedoom.wad", // Freedoom.wad is distributed as Doom2.wad, but this allows to have both in the same directory.
+	"chex.wad",
 #ifdef unix
 	"DOOM2.WAD",    // Also look for all-uppercase names
 	"PLUTONIA.WAD",
@@ -264,6 +269,7 @@ static const char *IWADNames[] =
 	"STRIFE1.WAD",
 	"STRIFE0.WAD",
 	"FREEDOOM.WAD",
+	"CHEX.WAD",
 #endif
 	NULL
 };
@@ -1324,8 +1330,8 @@ static void SetIWAD (const char *iwadpath, EIWADType type)
 		const gameinfo_t *Info;
 		GameMission_t Mission;
 	} Datas[NUM_IWAD_TYPES] = {
-		{ commercial,	&CommercialGameInfo,	pack_tnt },		// Doom2TNT
-		{ commercial,	&CommercialGameInfo,	pack_plut },	// Doom2Plutonia
+		{ commercial,	&TNTGameInfo,			pack_tnt },		// Doom2TNT
+		{ commercial,	&PlutoniaGameInfo,		pack_plut },	// Doom2Plutonia
 		{ commercial,	&HexenGameInfo,			doom2 },		// Hexen
 		{ commercial,	&HexenDKGameInfo,		doom2 },		// HexenDK
 		{ commercial,	&CommercialGameInfo,	doom2 },		// Doom2
@@ -1339,6 +1345,7 @@ static void SetIWAD (const char *iwadpath, EIWADType type)
 		{ commercial,	&StrifeTeaserGameInfo,	doom2 },		// StrifeTeaser
 		{ commercial,	&StrifeTeaser2GameInfo,	doom2 },		// StrifeTeaser2
 		{ commercial,	&CommercialGameInfo,	doom2 },		// FreeDoom
+		{ registered,	&ChexGameInfo,			doom },			// Chex Quest
 	};
 
 	D_AddFile (iwadpath);
@@ -1382,10 +1389,13 @@ static EIWADType ScanIWAD (const char *iwad)
 		"MAP33",
 		"INVCURS",
 		{ 'F','R','E','E','D','O','O','M' },
+		"W94_1",
+		{ 'P','O','S','S','H','0','M','0' },
 		"E2M1","E2M2","E2M3","E2M4","E2M5","E2M6","E2M7","E2M8","E2M9",
 		"E3M1","E3M2","E3M3","E3M4","E3M5","E3M6","E3M7","E3M8","E3M9",
 		"DPHOOF","BFGGA0","HEADA1","CYBRA1",
 		{ 'S','P','I','D','A','1','D','1' },
+
 	};
 #define NUM_CHECKLUMPS (sizeof(checklumps)/8)
 	enum
@@ -1402,6 +1412,8 @@ static EIWADType ScanIWAD (const char *iwad)
 		Check_map33,
 		Check_invcurs,
 		Check_FreeDoom,
+		Check_W94_1,
+		Check_POSSH0M0,
 		Check_e2m1
 	};
 	int lumpsfound[NUM_CHECKLUMPS];
@@ -1512,7 +1524,14 @@ static EIWADType ScanIWAD (const char *iwad)
 			{
 				if (lumpsfound[Check_e4m1])
 				{
-					return IWAD_UltimateDoom;
+					if (lumpsfound[Check_W94_1] && lumpsfound[Check_POSSH0M0])
+					{
+						return IWAD_ChexQuest;
+					}
+					else
+					{
+						return IWAD_UltimateDoom;
+					}
 				}
 				else
 				{
@@ -2437,6 +2456,24 @@ void D_DoomMain (void)
 	Printf ("DecalLibrary: Load decals.\n");
 	DecalLibrary.Clear ();
 	DecalLibrary.ReadAllDecals ();
+
+	// Patch the game for Chex quest differences
+	if (gameinfo.flags & GI_CHEX_QUEST)
+	{
+		// remove the drop items from the zombie and shotgunguy
+		// (this could be done with a DECORATE lump but would need
+		//  as much code to load it.)
+		PClass *info;
+
+		info = (PClass*)PClass::FindClass("Zombieman");
+		if (info) info->Meta.SetMetaInt (ACMETA_DropItems, 0);
+
+		info = (PClass*)PClass::FindClass("ShotgunGuy");
+		if (info) info->Meta.SetMetaInt (ACMETA_DropItems, 0);
+
+		int lump = Wads.CheckNumForFullName("chex.deh", 0);
+		if (lump >= 0) DoDehPatch(NULL, true, lump);
+	}
 
 	// [RH] Try adding .deh and .bex files on the command line.
 	// If there are none, try adding any in the config file.

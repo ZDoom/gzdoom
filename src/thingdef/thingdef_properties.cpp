@@ -816,6 +816,12 @@ static int ParseMorphStyle (FScanner &sc)
 //==========================================================================
 static void ActorSkipSuper (FScanner &sc, AActor *defaults, Baggage &bag)
 {
+	if (bag.Info->Class->IsDescendantOf(RUNTIME_CLASS(AInventory)))
+	{
+		sc.ScriptMessage("'skip_super' in definition of inventory item igmored.\n");
+		return;
+	}
+
 	memcpy (defaults, GetDefault<AActor>(), sizeof(AActor));
 	if (bag.DropItemList != NULL)
 	{

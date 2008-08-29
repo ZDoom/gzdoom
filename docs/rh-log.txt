@@ -1,3 +1,12 @@
+August 29, 2008  (Changes by Graf Zahl)
+- Fixed: SKIP_SUPER doesn't work for inventory items so it must be
+  disabled for them
+- Fixed: Chex Quest doesn't have a HELP2 screen so it must not be used
+  in the gameinfo.
+- Fixed: Default blood color is no longer red so P_DrawSplash2 must
+  get it from the gameinfo instead.
+- Added new French language texts by DoomKn1ght_.
+  
 August 26, 2008  (Changes by Graf Zahl)
 - Blood default color is set in the gameinfo now so that Chex Quest
   can default to green instead of red.

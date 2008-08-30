@@ -16,22 +16,32 @@ PRESSYN = "APPUYEZ SUR Y OU N";
 QUITMSG = "VOUS VOULEZ VRAIMENT\nQUITTER CE SUPER JEU?";
 
 // QuitDoom1 messages
-QUITMSG1 = "ne part pas,Il ya encore\ndes démons a griller!";
-QUITMSG2 = "fichons le camp-ça dégenere\nen bain de sang!";
-QUITMSG3 = "Je ne quitterai pas si j'etait vous.\n os est bien pire.";
-QUITMSG4 = "Tu essai de dire que tu aime dos\nmieux que moi,pas vrai?";
-QUITMSG5 = "Ne part pas encore-il y a \nun demon dans le coin!";
-QUITMSG6 = "tu sais,la prochaine que tu viens ici\nje te grille.";
-QUITMSG7 = "vas y part.regarde si j'y fais attention.";
+QUITMSG1 = "ne partez pas,Il ya encore\ndes démons a griller!";
+QUITMSG2 = "fichons le camp ,ça dégenere\nen bain de sang!";
+QUITMSG3 = "Je ne quitterai pas si j'etait vous.\nos est bien pire.";
+QUITMSG4 = "Vous essayez de dire que vous aimez dos\nmieux que moi ,pas vrai?";
+QUITMSG5 = "Ne partez pas encore-il y a \nun demon dans le coin!";
+QUITMSG6 = "vous savez ,la prochaine que vous venez ici\nje vous grille.";
+QUITMSG7 = "allez y partez. regardez si j'y fais attention.";
 
 // QuitDOOM II messages
-QUITMSG8 = "vous voulez quitter?\nalors,vous avez perdus un huitieme!";
-QUITMSG9 = "ne part pas maintenent,il y a un \nportail interdimensionnel attendant\na l'ecran os";
-QUITMSG10 = "tire toi de la et retourne\na tes programmes ennuyeux.";
-QUITMSG11 = "si j'etait ton patron,je te\n tuerai dans la minute!";
-QUITMSG12 = "regarde l'ami.tu part maintenant\net tu perd ton nombre de tue!";
-QUITMSG13 = "allez part.quand tu reviendra\n,je t'attendrai avec une batte.";
-QUITMSG14 = "t'es chanceux je te gifle pas\nparce que tu pense partir.";
+QUITMSG8 = "vous voulez vraiment quitter?\nalors,vous avez perdus un huitieme!";
+QUITMSG9 = "ne partez pas maintenent,il y a un \nportail interdimensionnel attendant\na l'ecran os";
+QUITMSG10 = "tirez vous de la et retournez\na vos programmes ennuyeux.";
+QUITMSG11 = "si j'etait votre patron,je vous\n tuerais dans la minute!";
+QUITMSG12 = "regardez l'ami. vous partez maintenant\net vous perdez votre nombre de tues!";
+QUITMSG13 = "allez partez. quand vous reviendrez\n,je vous attendrai avec une batte.";
+QUITMSG14 = "vous etes chanceux je vous gifle pas\nparce que vous pensez partir.";
+
+// Quit Strife messages
+QUITMSG15 = "ou allez vous?!\nque va devenir la rebellion?";
+QUITMSG16 = "carnage interruptus...\ntout un programme!";
+QUITMSG17 = "mais vous etes l'espoir\n-- mon unique chance!!";
+QUITMSG18 = "personne ne peut marcher sur un oiseau noir.";
+QUITMSG19 = "je vous pensais different...";
+QUITMSG20 = "d'accord! tuez et allez vous en!";
+QUITMSG21 = "vous pouvez quitter...\nmais vous ne pouvez pas vous cacher...";
+QUITMSG22 = "whaaa, quel est le probleme?\nvotre mere a dit a table?";
 
 LOADNET = "VOUS NE POUVEZ PAS CHARGER\nUN JEU EN RESEAU!\n\nAPPUYEZ SUR UNE TOUCHE.";
 QLOADNET = "CHARGEMENT RAPIDE INTERDIT EN RESEAU!\n\nAPPUYEZ SUR UNE TOUCHE.";
@@ -228,13 +238,13 @@ PHUSTR_27 = "level 27: ante-christ";
 PHUSTR_28 = "level 28: l'egout";
 PHUSTR_29 = "level 29: l'odyssee des bruits";
 PHUSTR_30 = "level 30: la porte de l'enfer";
-PHUSTR_31 = "level 31: l'antre des cyberdemons";
+PHUSTR_31 = "level 31: l'antre des demons-cybernetiques";
 PHUSTR_32 = "level 32: On y va!";
 
 THUSTR_1 = "level 1: le systeme de controle";
 THUSTR_2 = "level 2: le barbecue humain";
 THUSTR_3 = "level 3: le controle de l'energie";
-THUSTR_4 = "level 4: trou de vers";
+THUSTR_4 = "level 4: trous de vers";
 THUSTR_5 = "level 5: la boucle";
 THUSTR_6 = "level 6: la saison d'ouverture";
 THUSTR_7 = "level 7: la prison";
@@ -243,7 +253,7 @@ THUSTR_9 = "level 9: le fief";
 THUSTR_10 = "level 10: redemption";
 THUSTR_11 = "level 11: le complexe de stockage";
 THUSTR_12 = "level 12: le cratere";
-THUSTR_13 = "level 13: l'usine de traitement des déchets nucleaires";
+THUSTR_13 = "level 13: l'usine de traitement des dechets nucleaires";
 THUSTR_14 = "level 14: l'acierie";
 THUSTR_15 = "level 15: la zone morte";
 THUSTR_16 = "level 16: les echelons les plus bas";
@@ -312,7 +322,7 @@ E1TEXT =
   "ET NETTOYE LA BASE LUNAIRE, VOUS AVEZ\n"
   "GAGNE, NON? PAS VRAI? OU EST DONC VOTRE\n"
   " RECOMPENSE ET VOTRE BILLET DE\n"
-  "RETOUR? QU'EST-QUE CA VEUT DIRE?CE"
+  "RETOUR? QU'EST-QUE CA VEUT DIRE? CE"
   "N'EST PAS LA FIN ESPEREE!\n"
   "\n"
   "CA SENT LA VIANDE PUTREFIEE, MAIS\n"
@@ -363,22 +373,23 @@ E3TEXT =
   "CETTE PORTE AVEC VOUS...";
 
 E4TEXT =
-	"l'araignee cerveau a du vous envoye\n"
+	"l'araignee cerveau doit avoir envoye\n"
 	"ses legions de creatures de l' enfer \n"
-	"avant votre\n"
-	"confrontation finale avec cette terrible\n"
-	"bete de l'enfer. mais vous avanciez\n"
-	"et suscitiez la damnation eternelle et\n"
-	"et souffriez devans la meute comme un hero\n"
-	"ayant dans le regard quelque chose de \nsi malefique.\n"
-	"d'ailleurs,quelqu'un va devoir payer \npour ce qui est"
-	"arrive a daisy, votre lapin.\n"
+	"avant votre confrontation finale avec\n"
+	"cette terrible bete de l'enfer.\n"
+	"Mais vous avancez et mettez de suite\n"
+	"la damnation eternelle et souffrances\n"
+	"a la meute comme un hero le fairait\n"
+	"face de quelque chose de si malefique.\n"
+	"D'ailleurs,quelqu'un va devoir payer \n"
+	"pour ce qui est arrive a margherite, \n"
+	"votre lapin domestique.\n"
 	"\n"
-	"mais maintenant, vous vous eloigne avant \n"
-	"que de nouvelles\n"
-	"souffrances potencielles de chairs broyees\n"
-	"comme une hordede demons enrages qui envahirait\n"
-	"nos villes."
+	"mais maintenant, vous voyez devant vous \n"
+	"encore plus de nouvelles souffrances \n"
+	"potencielles et de chairs broyees\n"
+	"comme une horde de demons devunus \n"
+	"vindicatifs parmi nos villes.\n\n"
 	"prochain arret,l'enfer sur terre!";
  
 // after level 6, put this:
@@ -467,137 +478,150 @@ C6TEXT =
   "MIEUX DE FONCER DANS CELUI-LA!\n";
 
 P1TEXT =
-	"Vous jubile sur la carcass brulante du\n"
-	"Guardien. Avec sa mort, vous avez arrache\n"
-	"l'accelerateur des griffes fetides\n"
-	"de l'enfer. Vous vous reposez et regardez\n"
-	"aux alentours de l'endroit. Mince! Il etait\n"
-      "suppose qu'il y ait\n"
-	"au mois un prototype fonctionnant, mais vous\n"
-	"ne le voyez pas. Les demons l'on surement pris.\n"
-	"\n"
-	"Vous devez trouver le prototype, ou tous vos\n"
-	"combats auront ete vains. \n"
-	"avancer, vous battre, tuer.\n"
-	"ah oui,vivre,aussi.";
+	"Vous jubilez sur la carcass brulante \n"
+	"du Guardien. Avec sa mort, vous avez \n"
+	"arrache l'accelerateur des griffes \n"
+	"fetides de l'enfer. Vous vous reposez \n"
+	"et regardez aux alentours de l'endroit. \n"
+	"Mince! Il etait suppose qu'il y ait\n"
+	"au mois un prototype fonctionnant, \n"
+	"mais vous ne le voyez pas. les demons \n"
+	"l'on surement pris. \n\n"
+	"Vous devez trouver le prototype ,ou \n"
+	"tous vos combats auront ete vains. \n"
+	"continez a avancer, vous battre, tuer. \n"
+	"Oh oui ,a vivre ,aussi.";
 P2TEXT =
-	"Meme le labyrinthe des archi-infame\n"
-	"ne vous arreta pas, et vous arrivez au\n"
-	"prototype d' accelerateur qui est proche\n"
+	"Meme le labyrinthe mortifere des \n"
+	"archi-infames ne vous arreta pas,\n"
+	"et vous arrivez au prototype     \n"
+	"d' accelerateur qui est proche   \n"
 	"desactive efficacement et pour toujours.\n"
 	"\n"
-	"Vous êtes doue pour ça.";
+	"Vous etes doue pour ces choses la.";
 P3TEXT =
-	"Vous avez enfonce votre chemin a travers\n"
-	"au coeur d' une ruche de demons. Il est temps\n"
-	"de trouver et detruire, cherchant le\n"
-	"Guardien, avec sa progeniture degenere\n"
-	"descendant sur terre.  Oui,il est cruel. Mais\n"
-	"vous savez qui est pire!\n"
-	"\n"
-	"sourriant mechament, vous verifiez \nl' equipement"
-	", et vous vous preparez a faire\n voir a ces"
-	"fumiers de quel bois vous etes fait!";
+	"Vous vous etes fraye votre chemin a \n"
+	"travers le coeur d'une ruche de \n"
+	"diables. Il est temps pour une mission\n"
+	"de recherche et destruction visant le \n"
+	"guardien de la porte ,avec sa \n"
+	"progeniture repugnante descendant en \n"
+	"cascade sur terre. Oui ,il est cruel. \n"
+	"Mais vous savez qui est pire!\n\n"
+	"Sourriant malefiquement, vous verifiez \n"
+	"l'equipement et vous vous preparez a\n"
+	"faire voir a ce fumier un petit enfer\n"
+	"fait de votre propre main!";
 P4TEXT =
-	"La face malefique du gardien est eparpillee\n"
-	"aux alentours. Comme son corps en lambeaux\n"
-	"vacille,un portail inverse apparait\n"
-	"au niveau des eclat du dernier \n"
-	"prototype d'accelerateur, sans parler des\n"
-	"quelques demons restants. Mission accomplie.\n"
-	"L'enfer a fini de liberer des mort-vivants\n"
-	"au lieu de vivants.\n"
-      "Souvenez vous de dire a vos enfants\n"
-	"de mettre un lance-roquette dans votre\n"
-	"cercueil. Si vous allez en enfer\n"
-	"quand vous serez mort, vous en aurez besoin\n"
-	"pour un nettoyage definitif...";
+	"La face malefique du gardien de la porte \n"
+	"est eparpillee aux alentours. Comme son \n"
+	"corps en lambeaux vacille ,un portail \n"
+	"inverse se forme et aspire les eclat du \n"
+	"dernier prototype d'accelerateur, sans \n"
+	"parler des quelques demons restants.\n"
+	"Vous avez termine. L'enfer a fini de\n"
+	"liberer des mort-vivants au lieu de \n"
+	"gens bien vivants.\n"
+	"Souvenez vous de dire a vos enfants de\n"
+	"mettre un lance-roquette dans votre\n"
+	"cercueil. Si vous allez en enfer,\n"
+	"quand vous serez mort, vous en aurez \n"
+	"besoin ,pour un nettoyage definitif...";
 P5TEXT =
 	"Vous avez trouver notre second niveau\n"
-	"le plus difficile. J'espere que vous avez\n"
-	"sauvegarde au deux precendants.\n"
-      "Sinon, soyez prets a mourrir souvent.\n"
+	"le plus difficile que nous avons.\n"
+	"J'espere que vous avez sauvegarde\n"
+	"au deux precendants.\n"
+	"Sinon, soyez prets a mourrir souvent.\n"
 	"Pour maitre marine seulement.";
 P6TEXT =
-	"Vous vouliez peut etre connaitre le niveau\n"
-      "le plus dure\n"
-	"Prepare pour vous? Maintenant vous savez.\n"
-	"Personne peut en rechapper vivant.";
+	"peut etre, vous demandiez vous quel\n"
+	"ETAIT le niveau le plus dure, que nous\n"
+	"avions prepare pour vous? Maintenant,\n"
+	"vous savez. Nul n'en sortira vivant.\n"
 T1TEXT =
-	"Vous vous etes fraye un chemin à travers\n"
-	"des labos experimentaux. Il semble que\n"
-	"l'U.A.C.les a encore vides. Avec leur\n"
-	"chiffre d'affaire, ça doit etre dur pour\n"
-	"l'ancienne U.A.C. de souscrire une assurance\n"
-	"de nos jours..\n"
+	"Vous vous etes fraye un chemin vers la\n"
+	"sortie des labos experimentaux infestes.\n"
+	"Il semble que l'UAC les a encore vides. \n"
+	"Avec leur chiffres d'affaires eleve,\n"
+	"ca doit etre dur pour la pauvre vieille\n"
+	"UAC d' acheter des societes \n"
+	"d'assurance vie ,de nos jours...\n"
 	"\n"
-	"Devant vous attend le complexe militaire,\n"
-	"cela grouille d'horreur morbide voulant\n"
-	"vous enfoncer leur dents. Avec chance, le\n"
-	"complexe contient encore du materiel de guerre\n"
-	"quelque part.";
+	"Vous avez devant vous le complexe \n"
+	"militaire ,cela grouille d'horreurs \n"
+	"morbides pres a vous enfoncer leur dents.\n"
+	"Avec un peu de chance ,le complexe a \n"
+	"encore quelques munitions de guerre,\n"
+	"reposant autour.";
 T2TEXT =
 	"Vous entendez le grincement d'une grosse\n"
-	"machineriedevant.\n"
-	"Vous esperez qu'ils ne sont pas en train\n"
-	"d'eradiquer de nouvelles creatures,\n"
-	"mais vous etes pret a\n"
-	"decimer un troupeau si vous le deviez.\n"
-	"Ils prepare peut-être un festin de sang,\n"
-	"mais vous vous sentez aussi fort que deux\n"
-	"milliers de fous dans le corps d'un seul\n"
-	"tueur;\n"
+	"machinerie devant.Vous esperez surement\n"
+	"qu'ils ne sont pas en train de fabriquer\n"
+	"de nouvelles creatures de l'enfer,\n"
+	"mais vous etes pret a balayer tout\n"
+	"un troupeau si vous le deviez.\n"
+	"Ils pourraient etre en train de preparer\n"
+	"un festin de sang ,mais vous vous sentez\n"
+	"pareil a deux milliers de fous dans le \n"
+	"corps d'un seul et meme tueur\n"
+	"\n"
 	"Vous ne pensez pas tomber si facilement.";
 T3TEXT =
-	"La vue s'ouvrant devant est semble \n"
-	"sacrement familiere.\n"
-	"Vous la sentez familiere, trop -- comme\n"
-	"de l'excrement brule. Vous n'aimiez pas cet\n"
-	"endroit avant, et vous etes sur de ne pas\n"
-	"envisager de l'aimer maintenant.\n"
-	"Plus vous penseriez a cette idee,\n"
-	"plus vous sombrerez dans la folie.\n"
-	"saisissant votre arme,un sourrire\n"
+	"La vue s'ouvrant devant vous semble \n"
+	"sacrement ,diablement ,familiere.\n"
+	"Les odeurs familieres, trop -- comme\n"
+	"des excrements frits. Vous n'aimiez \n"
+	"pas cet endroit avant, et vous etes \n"
+	"terriblement sur de ne pas envisager\n"
+	"l'aimer maintenant.\n"
+	"Plus vous pensiez a cette idee ,\n"
+	"plus vous sombriez dans la folie.\n"
+	"Saisissant votre arme ,un sourrire\n"
 	"malefique apparait sur votre visage.\n"
-	"Il est temps de prendre des noms.";
+	"Il est temps de prendre quelques noms.";
 T4TEXT =
-	"Soudain, tout est silencieux,a l'horizon\n"
-	"pour les autres.\n"
-	"L'echo agonisant de l'enfer s'attenue\n"
-	"au loin, le ciel de cauchemare devient\n"
-	"bleu, les corps des demons commencent\n"
-	"a s'evaporer avec une odeaur nauseabonde\n"
-	"qui emplie l'air. Bon dieu, peut etre\n"
-	"l'avez vous fait. Avez vous reellement\n"
-	"gagne?\n"
+	"Tout a coup, tout est silencieux ,\n"
+	"d'un horizon a l'autre.\n"
+	"L'echo agonisant de l'enfer s'estompe,\n"
+	"le ciel cauchemardeque tourne au bleu,\n"
+	"les tas de cadavres de monstres \n"
+	"commencent a s'evaporer avec une puanteur\n"
+	"nauseabonde qui remplissait l'air.\n"
+	"Doux jesus ,peut etre l'avez vous fait.\n"
+	"Avez vous reellement gagne?\n\n"
 	"quelque chose gronde au loin.\n"
 	"une lumiere bleue a commence a luire\n"
 	"dans le crane defonce du demon\n"
 	"cracheur.";
 T5TEXT =
-	"Maintenant quoi? cela semble completement\n"
-	"different.\n"
-	"Une Sorte de lottissement du roi Tut.\n"
+	"Maintenant quoi? Cela semble \n"
+	"completement different.\n"
+	"Une Sorte de lottissement du\n"
+	"roi Tut.\n"
 	"Bon, rien ne peut-etre pire\n"
 	"que d'habitude. N'est-ce pas?\n" 
 	"Ou peut etre est ce mieux\n"
-	"de laisser dormir ces mensonges\n"
-	"a propos des dieux";
+	"de laisser dormir les dieux,\n"
+	"la ou ils reposent\n"
 T6TEXT =
 	"Vous avez besoin de vacances.\n"
-	"Vous avez eclates les profondeurs de\n"
-	"l'enfer et pour sur vous etes pres\n"
-	"pour une pause.\n"
-	"Vous vous marmonner a vous meme peut-etre\n"
-	"quelqu'un pourrait botter le cul de l'enfer\n"
-	"a votre place la prochaine fois.\n"
-	"une ville silencieuse reside,devant \n"
-	"avec le flot paisible de l'eau,les batiments\n"
-	"pittoresques, et probablement plus de\n" 
-	"creatures de l'enfer.\n"
-	"Quand vous descendez au dehors du transport,\n"
-	"vous entendez le bruit du sabot d'acier\n"
-	"d'un cyberdemon.";
+	"Vous avez eclates les entrailles\n"
+	"de l'enfer et pour sur vous etes \n"
+	"pres pour une pause.\n"
+	"Vous marmonner a vous meme:\n"
+	"peut-etre quelqu'un pourrait botter\n"
+	"le cul de l'enfer a votre place,\n"
+	"la prochaine fois.\n"
+	"Une ville tranquille reside devant, \n"
+	"avec le flot paisible de l'eau,\n"
+	"les batiments pittoresques, et\n"
+	"probablement plus de creatures\n" 
+	"de l'enfer.\n"
+	"Quand vous descendez au dehors du \n"
+	"transport, vous entendez le bruit \n"
+	"du sabot d'acier d'un \n"
+	"demon-cybernetique.";
 
 
 //
@@ -641,8 +665,8 @@ TXT_FRAGLIMIT = "limite de frag atteinte.";
 TXT_TIMELIMIT = "limite de temps atteinte.";
 
 // Spree messages
-SPREEKILLSELF = "%o was looking good until %g killed %hself!";
-SPREEOVER = "%o's killing spree was ended by %k";
+SPREEKILLSELF = "%o etait en folie meurtriere avant que %g ne (le/la) frag!";
+SPREEOVER = "La folie meurtrière %o a ete termine par %k";
 SPREE5 = "%k est dans une folie meurtrière!";
 SPREE10 = "%k se dechaine!";
 SPREE15 = "%k domine!";
@@ -650,10 +674,10 @@ SPREE20 = "%k est inarretable!";
 SPREE25 = "%k est comme un dieu!";
 
 // Mulitkill messages
-MULTI2 = "Double kill!";
-MULTI3 = "Multi kill!";
-MULTI4 = "Ultra kill!";
-MULTI5 = "Monster kill!";
+MULTI2 = "Double meurtre!";
+MULTI3 = "Multi meurtre!";
+MULTI4 = "Ultra meurtre!";
+MULTI5 = "Meurtre monstre!";
 
 // Obituary strings
 // First the self-kills, then the other-kills
@@ -672,44 +696,44 @@ OB_KILLEDSELF = "%o se tua (lui/elle)meme.";
 
 OB_STEALTHBABY = "%o cru voir un arachnotron.";
 OB_STEALTHVILE = "%o cru voir un archi-infame.";
-OB_STEALTHBARON = "%o cru voir un Baron de l'Enfer.";
+OB_STEALTHBARON = "%o cru voir un baron de l'enfer.";
 OB_STEALTHCACO = "%o cru voir un cacodemon.";
-OB_STEALTHCHAINGUY = "%o cru voir un chaingunner.";
+OB_STEALTHCHAINGUY = "%o cru voir un mitrailleur.";
 OB_STEALTHDEMON = "%o cru voir un demon.";
-OB_STEALTHKNIGHT = "%o cru voir un Chevalier de l'Enfer.";
-OB_STEALTHIMP = "%o cru voir un Lutin.";
+OB_STEALTHKNIGHT = "%o cru voir un chevalier de l'enfer.";
+OB_STEALTHIMP = "%o cru voir un lutin.";
 OB_STEALTHFATSO = "%o cru voir un mancubus.";
 OB_STEALTHUNDEAD = "%o cru voir un revenant.";
-OB_STEALTHSHOTGUY = "%o cru voir un type sergeant.";
+OB_STEALTHSHOTGUY = "%o cru voir un type au fusil.";
 OB_STEALTHZOMBIE = "%o cru voir un zombie.";
 OB_UNDEADHIT = "%o a ete cogne par un revenant.";
 OB_IMPHIT = "%o a ete lacere par un imp.";
 OB_CACOHIT = "%o s'est approche trop pres d'un cacodemon.";
 OB_DEMONHIT = "%o a ete mordu par un demon.";
 OB_SPECTREHIT = "%o a ete mange par un spectre.";
-OB_BARONHIT = "%o a ete dechire par un Baron de l'Enfer.";
-OB_KNIGHTHIT = "%o a ete etrippe par un Hell Knight.";
+OB_BARONHIT = "%o a ete dechire par un baron de l'enfer.";
+OB_KNIGHTHIT = "%o a ete etrippe par un un chevalier de l'enfer.";
 OB_ZOMBIE = "%o a ete tue par un zombie.";
-OB_SHOTGUY = "%o a ete tire par un sergeant.";
+OB_SHOTGUY = "%o a ete tire par un type au fusil.";
 OB_VILE = "%o a ete incinere par un archvile.";
 OB_UNDEAD = "%o n'aurais pas pu esquive cette boule de feu de revenant.";
 OB_FATSO = "%o s'est fait aplatir par un mancubus.";
-OB_CHAINGUY = "%o a ete perfore par un chaingunner.";
+OB_CHAINGUY = "%o a ete perfore par un mitrailleur.";
 OB_SKULL = "%o a ete hante par une ame perdue.";
-OB_IMP = "%o brule par un imp.";
+OB_IMP = "%o brule par un lutin.";
 OB_CACO = "%o a ete terrasse par un cacodemon.";
 OB_BARON = "%o a ete meurtri par un Baron de l'Enfer.";
 OB_KNIGHT = "%o a ete assassine Chevalier de l'Enfer.";
-OB_SPIDER = "%o est reste en admiration devant le spider demon.";
-OB_BABY = "%o a laisse un Arachnotron l'avoir.";
-OB_CYBORG = "%o a ete reduie a une eclaboussure par un cyberdemon.";
+OB_SPIDER = "%o est reste en admiration devant le demon arachneen.";
+OB_BABY = "%o a laisse un arachnotron l'avoir.";
+OB_CYBORG = "%o a ete reduie a une eclaboussure par un demon-cybernetique.";
 OB_WOLFSS = "%o a rencontre un Nazi.";
 
 OB_CHICKEN = "%o a ete picore a mort.";
-OB_BEAST = "%o a ete carbonise par un weredragon.";
-OB_CLINK = "%o a ete entaille par un sabreclaw.";
-OB_DSPARIL1 = "%o a ete ebouillante par un D'Sparil's serpent.";
-OB_DSPARIL1HIT = "%o a ete mache par un D'Sparil's serpent.";
+OB_BEAST = "%o a ete carbonise par un dragon-garou.";
+OB_CLINK = "%o a ete entaille par un dents-de-sabres.";
+OB_DSPARIL1 = "%o a ete ebouillante par un serpent de D'Sparil.";
+OB_DSPARIL1HIT = "%o a ete mache par un serpent de D'Sparil.";
 OB_DSPARIL2 = "%o etait trop faible pour D'Sparil.";
 OB_DSPARIL2HIT = "%o a ete gifle par D'Sparil.";
 OB_HERETICIMP = "%o a ete effraye par une gargouille.";
@@ -736,7 +760,7 @@ OB_MPPLASMARIFLE = "%o a ete bruler par le fusil a plasma de %k.";
 OB_MPBFG_BOOM = "%o a ete eclate en morceaux par le BFG de %k.";
 OB_MPBFG_SPLASH = "%o n a pas pu se protege du BFG de %k.";
 OB_MPTELEFRAG = "%o a ete telefrague par %k.";
-OB_RAILGUN = "%o a ete enrailé par %k.";
+OB_RAILGUN = "%o a ete enraille par %k.";
 
 // Same as OB_MPTELEFRAG, but shown when a monster telefrags you
 OB_MONTELEFRAG = "%o a ete telefrague.";
@@ -756,113 +780,113 @@ STARTUP5 = "";
 
 // Heretic strings
 HE1TEXT =
-		"avec la destruction des liches\n"
-		"de fer et leur moitie, le dernier\n"
-		"des mortvivants sont nettoye de\n"
-		"cette face de l existence.\n\n"
-		"ces creatures doivent venir de \n"
-		"quelquepart, bien que,vous avez le\n"
+		"avec la destruction des sangsues\n"
+		"de fer et leur seides, les derniers\n"
+		"des mort-vivants furent nettoye de\n"
+		"cette face de l'existence.\n\n"
+		"ces creatures durent venir de \n"
+		"quelquepart, bien que,vous eutes le\n"
 		"soupcon sournois que l ardent\n"
-		"portail de lenfer peut conduire\n"
+		"portail de l'enfer put conduire\n"
 		"dans leur dimension.\n\n"
 		"pour etre sur que beaucoup de\n"
-		"mortvivants ou pire ne viennent\n"
-		"a travers, vous devez scelle la\n"
-		"bouche de lenfer de part l autre\n"
-            "cote. bien sur\n"
-		"cela veut dire que vous pouvez\n"
-            "rester coince dans un monde\n"
-		"tres hostile, mais personne n a\n"
-		"jamais dis qu heretic est facile!";
+		"mort-vivants ou pire ne viennent\n"
+		"par son biais, vous dutes scelle le\n"
+		"portail de l enfer de l'autre cote.\n"
+		"bien sur cela veut dire que vous\n"
+		"eutes pu rester coince dans un monde\n"
+		"tres hostile, mais personne n'a\n"
+		"jamais dis qu'etre un heretic eut\n"
+		"ete facile!";
 HE2TEXT =
-		"les puissants maulotaurs ont prouve\n"
-		"etre trop faible pour vous, et\n"
-		"leurs corps brulant glissant sur le\n"
-		"sol, vous sentez l effroyable\n"
-		"satisfaction qu ils ont ete\n"
+		"les puissants massotaures eurent \n"
+		"prouve ne pas vous correspondre,\n"
+		"et leurs cadavres vaporeux glissant sur\n"
+		"le sol, vous sentites l effroyable\n"
+		"satisfaction qu ils furent\n"
 		"detruit.\n\n"
-		"les portails quils gardaient\n"
-		"sont ouverts, revelantce que vous\n"
-		"esperez le chemin du retour. mais\n"
-		"au fur et a mesure que vous avance,\n"
-            "feignant de rire\n"
-		"sonne a vos oreilles.\n\n"
-		"etait ce l autre force controlant\n"
-		"les maulotaurs? puisse etre\n"
+		"les passerelles qu'ils garderent\n"
+		"furent ouvertes, revelant ce que vous\n"
+		"esperates etre le chemin du retour.\n"
+		"mais au fur et a mesure que vous \n"
+		"avancates ,un rire moqueur sonna a\n"
+		"vos oreilles.\n\n"
+		"etait ce quelqu'autre force controlant\n"
+		"les massotaures? eusse t'elles pu etre\n"
 		"plus atroces les creatures dans\n"
-		"cette porte? la surface d' un dome\n"
-            "de crystal\n"
-		"depasse ou le ciel devrait etre\n"
-		"ce n est pas de bon augure....";
+		"cette porte? le balayage d'un dome\n"
+		"de crystal\n"
+		"depasse ou le ciel aurait du etre\n"
+		"ce ne fut pas de bon augure....";
 HE3TEXT =
-		"la mort de d'sparil s est repandue\n"
-		"a travers les liens magiques\n"
-		"entre les creatures de cette face,\n"
+		"la mort de d'sparil a liberes\n"
+		"les liens magiques liant\n"
+		"les creatures de cette face,\n"
             "leurs cri en mourrant surpasserent\n"
 		"ses propres cris d agonie.\n\n"
-		"votre serment de vengeance realise,\n"
-		"vous entrez dans le portail pour\n"
+		"votre serment de vengeance rempli,\n"
+		"vous entrate dans le portail pour\n"
 		"votre monde, moments insignifiants\n"
-		"avant que le dome ne vole en eclats.\n\n"
+		"avant que la coupole ne volasse en \neclats.\n"
 		"mais si le pouvoir de d'sparil\n"
-		"est brise pour toujours, pourquoi\n"
-            "etes vous inquiet?\n"
-		"etait ce son dernier cri\n"
-		"celui qui resonne comme une\n"
+		"fut rompu a jamais, pourquoi ne pas\n"
+		"ne pas vous sentir en securite?\n"
+		"fut ce son dernier cri\n"
+		"celui qui resonna comme une\n"
 		"malediction? une invoquation? vous\n"
-		"vous ne pouvez etre sur,mais il se\n"
-		"peut n etre qu un cri.\n\n"
-		"alors encore, qui y a til a propos\n"
-		"des chevaucheurs de serpents?";
+		"ne putes en etre sur vraiment, mais\n"
+		"il s'eut put n'etre qu un cri.\n\n"
+		"puis de nouveau, que devenirent\n"
+		"les autres serpents coureurs?";
 HE4TEXT =
 		"vous crutes pouvoir retourner dans\n"
 		"votre monde apres que d'sparil\n"
             "trepassa , mais son acte\n"
 		"final fut de vous bannir dans sa\n"
-		"propre dimension. ici vous entrez\n"
-		" dans restes effondre de terre\n"
-		"conquisent par d'sparil. vous avez\n"
+		"propre dimension. ici vous entrates\n"
+		" dans des restes effondres de terres\n"
+		"conquisent par d'sparil. vous eutes\n"
 		"le dernier gardien de ces terres,\n"
-		"mais maintenant vous vous tenez\n"
-		"devant la forteresse de d'sparil."
-            "jusqua ce moment vous n avez \n"
+		"mais a ce moment vous vous tenites\n"
+		"devant le bastion de d'sparil."
+            "jusqua ce moment vous n' eutes \n"
 		"aucun doute sur votre capacite\n"
-		"d affronte tout ce que vous pouviez\n"
+		"d affronter tout ce que vous pouviez\n"
 		"rencontrer,mais derriere ce portail\n"
 		"git le coeur profond du mal\n"
 		"qui envahit votre monde. d'sparil\n"
-		"est peut etre mort,amis le puit ou\n"
-		"il fut genere reste. maintenant vous\n"
-		"devez entre dans ce puit dans lespoir\n"
-		"de trouve une sortie.et quelque part,\n"
+		"eut pu etre mort,mais le puit ou\n"
+		"il fut ne demeura. maintenant vous\n"
+		"dutes entrer dans ce puit dans l'espoir\n"
+		"de trouver une sortie.et quelque part,\n"
 		"dans la plus sombre partie du\n"
             "royaume de d'sparil,\n"
-		"sa garde personnelle attend votre\n"
+		"sa garde personnelle attendit votre\n"
 		"arrivee ...";
 HE5TEXT =
-		"des que le molautaur final eu mugit\n"
-		"son agonie, vous realise que vous\n"
-		"n aviez jamais ete aussi proche de\n"
+		"des que le massotaure final eu mugit\n"
+		"son agonie mortelle, vous realisates que\n"
+		"vous n'eutes jamais ete aussi proche de\n"
 		"votre propre destruction.meme le \n"
 		"combat contre d'sparil et ses\n" 
-            "disciples n' eut ete a ce point a\n"
-		"desespere. souriant quand vous regardez\n"
-		"fixement le portail s'ouvrir devant vous,\n"
-		"wous demandant s'il mene chez vous,ou si\n"
-		"ils ouvre sur une innimaginable\n"
-		"horreur. vous vous demandez\n"
-		"si vous aviez la force d'y aller,\n"
-		"si rien rien d' autre que souffrance\n"
-            "et mort vous attendent.\n"
-		"mais que pouviez vous faire d' autre, si\n"
-		"la volonte de vous battre s'enfuie?\n"
-		"pouvez vous forcez vous meme a continuer\n"
-		"face a un tel desespoir? avez vous\n"
-		"le courage? vous trouvez, a la fin,\n"
-		"ce n'est pas dans votre nature de\n"
-		"vous rendre sans un combat.les yeux\n"
-		"large,vous partez rencontrer votre\n"
-            "destinee.";
+		"disciples n'eut ete a ce point \n"
+		"desespere. souriant, quand vous \n"
+		"regardates fixement le portail s'ouvrir \n"
+		"devant vous ,vous demandant s'il menait \n"
+		"chez vous,ou si il ouvrait sur une\n"
+		"innimaginable horreur. vous vous \n"
+		"demandates si vous eutes la force d'y aller,\n"
+		"si rien d'autre que souffrance\n"
+		"et mort vous eurent attendu.\n"
+		"mais que putes vous faire d'autre, si\n"
+		"la volonte de vous battre s'eut enfuie?\n"
+		"putes vous,vous meme vous forcer a \n"
+		"continuer face a un tel desespoir? \n"
+		"eutes vous le courage? vous trouvates,\n"
+		"a la fin ,ce ne fut pas dans votre nature\n"
+		"de vous rendre sans un combat. les yeux\n"
+		"larges ,vous partates rencontrer votre\n"
+		"destinee.";
 
 // EPISODE 1 - LA CITE DES DAMNES
 HHUSTR_E1M1 = "LES DOCKS";
@@ -891,7 +915,7 @@ HHUSTR_E3M1 = "L' ENTREPOT";
 HHUSTR_E3M2 = "LA FOSSE D AISANCES";
 HHUSTR_E3M3 = "LA CONFLUENCE";
 HHUSTR_E3M4 = "LA FORTRESSE D'AZUR";
-HHUSTR_E3M5 = "LE REPAIRE DES OPHIDIAN";
+HHUSTR_E3M5 = "LE REPAIRE DES OPHIDIENS";
 HHUSTR_E3M6 = "LES COULOIRS DE LA PEUR";
 HHUSTR_E3M7 = "LE GOUFFRE";
 HHUSTR_E3M8 = "LE DONJON DE D'SPARIL";
@@ -921,9 +945,9 @@ HHUSTR_E5M9 = "L ECHEVAUX DE D'SPARIL";
 
 // Keys
 
-TXT_GOTBLUEKEY = "BLUE KEY";
-TXT_GOTYELLOWKEY = "YELLOW KEY";
-TXT_GOTGREENKEY = "GREEN KEY";
+TXT_GOTBLUEKEY = "CLE BLEUE";
+TXT_GOTYELLOWKEY = "CLE JAUNE";
+TXT_GOTGREENKEY = "CLE ROUGE";
 
 // Artifacts
 
@@ -932,7 +956,7 @@ TXT_ARTIFLY = "LES AILES DU COURROUX";
 TXT_ARTIINVULNERABILITY = "L'ANNEAU D'INVINCIBILITE";
 TXT_ARTITOMEOFPOWER = "TOME DU POUVOIR";
 TXT_ARTIINVISIBILITY = "SPHERE D'OMBRE";
-TXT_ARTIEGG = "MORPH OVUM";
+TXT_ARTIEGG = "OVULE TRANSFORME";
 TXT_ARTISUPERHEALTH = "URNE MYSTIQUE";
 TXT_ARTITORCH = "LA TORCHE";
 TXT_ARTIFIREBOMB = "BOMBE A RETARDEMENT DES ANCIENTS";
@@ -948,7 +972,7 @@ TXT_ITEMSUPERMAP = "CARTE EN ROULEAU DEPLIANT";
 
 // Ammo
 
-TXT_AMMOGOLDWAND1 = "WAND CRYSTAL";
+TXT_AMMOGOLDWAND1 = "SCEPTRE DE CRYSTAL";
 TXT_AMMOGOLDWAND2 = "GEODE DE CRYSTAL";
 TXT_AMMOMACE1 = "SPHERES DE MASSE";
 TXT_AMMOMACE2 = "PILE DE SPHERES DE MASSE";
@@ -1055,7 +1079,7 @@ TXT_USEPUZZLEFAILED = "VOUS NE POUVEZ PAS UTILISE CECI ICI";
 
 // Items
 
-TXT_ARMOR1 = "MESH ARMOR";
+TXT_ARMOR1 = "ARMURE DE MAILLES";
 TXT_ARMOR2 = "BOUCLIER DU FAUCON";
 TXT_ARMOR3 = "CASQUE DE PLATINE";
 TXT_ARMOR4 = "AMULET DE L'ELOIGNEMENT";
@@ -1071,24 +1095,24 @@ TXT_WEAPON_C4 = "BATON DU COURROUX ASSEMBLE";
 TXT_WEAPON_M2 = "BRISURES GELEE";
 TXT_WEAPON_M3 = "ARC DE LA MORT";
 TXT_WEAPON_M4 = "FLEAUT SANGLANT ASSEMBLE";
-TXT_WEAPONPIECE = "Une piece d' arme! C'est votre jour de chance!";
+TXT_WEAPONPIECE = "Une piece d'arme! C'est votre jour de chance!";
 TXT_QUIETUS_PIECE = "SEGMENT DU QUIETUS";
-TXT_WRAITHVERGE_PIECE = "SEGMENT OF BATON DU COURROUX";
-TXT_BLOODSCOURGE_PIECE = "SEGMENT OF FLEAUT SANGLANT";
+TXT_WRAITHVERGE_PIECE = "SEGMENT DU BATON DU COURROUX";
+TXT_BLOODSCOURGE_PIECE = "SEGMENT DU FLEAUT SANGLANT";
 
 // Strife locks
 
-TXT_NEEDKEY = "Vous n' avez pas la clé.";
+TXT_NEEDKEY = "Vous n'avez pas la cle.";
 TXT_NEED_PASSCARD = "Vous avez besoin de la carte passe.";
-TXT_NEED_PASSCARD_DOOR = "Vous avez besoin de la clé carte passe pour ouvrir cette porte.";
+TXT_NEED_PASSCARD_DOOR = "Vous avez besoin de la cle carte passe pour ouvrir cette porte.";
 TXT_NEED_IDCARD = "Vous avez besoin d'une carte ID.";
-TXT_NEED_PRISONKEY = "Vous n'avez pas la clé de la prison.";
+TXT_NEED_PRISONKEY = "Vous n'avez pas la cle de la prison.";
 TXT_NEED_HANDPRINT = "Votre main ne s'imprime pas sur le dossier.";
 TXT_NEED_GOLDKEY = "Vous avez besoin d'une clé d'or.";
 TXT_NEED_IDBADGE = "Vous avez besoin d'un badge ID.";
 TXT_NEED_IDBADGE_DOOR = "Vous avez besoin d'un badge ID pour ouvrir cette porte.";
-TXT_NEED_SILVERKEY = "Vous avez besoin de la clé d' argent.";
-TXT_NEED_BRASSKEY = "Vous avez besoin de la clé de laiton.";
+TXT_NEED_SILVERKEY = "Vous avez besoin de la cle d'argent.";
+TXT_NEED_BRASSKEY = "Vous avez besoin de la cle de laiton.";
 TXT_NEED_REDCRYSTAL = "Vous avez besoin du crystal rouge.";
 TXT_NEED_BLUECRYSTAL = "Vous avez besoin du crystal bleu.";
 
@@ -1096,7 +1120,7 @@ TXT_NEED_BLUECRYSTAL = "Vous avez besoin du crystal bleu.";
 
 TXT_QUEST_14 = "Vous avez explose le crystal";
 TXT_QUEST_16 = "Vous avez explose les portes";
-TXT_QUEST_27 = "Vous avez explose l' ordinateur";
+TXT_QUEST_27 = "Vous avez explose l'ordinateur";
 
 TXT_KILLED_BISHOP = "Vous avez tue l'eveque!";
 TXT_KILLED_ORACLE = "Vous avez tue l'oracle!";
@@ -1143,7 +1167,7 @@ TXT_SIGIL = "Vous avez pris le SIGIL.";
 
 TXT_BASEKEY = "Vous avez pris la cle Base.";
 TXT_GOVSKEY = "Vous avez pris la cle Govs.";
-TXT_PASSCARD = "Vous avez pris la cartepass.";
+TXT_PASSCARD = "Vous avez pris la carte-pass.";
 TXT_IDBADGE = "Vous avez pris le Badge ID.";
 TXT_PRISONKEY = "Vous avez pris la cle de la Prison.";
 TXT_SEVEREDHAND = "Vous avez pris la main coupee.";
@@ -1184,10 +1208,10 @@ TXT_AMMOSATCHEL = "Vous avez pris le sachet de munitions";
 
 // Random dialogs
 
-TXT_RANDOM_PEASANT_01 = "S'il vous plait ne me blesse pas.";
-TXT_RANDOM_PEASANT_02 = "Si tu cherche a me blesse, Je n' en merite pas l'effort.";
+TXT_RANDOM_PEASANT_01 = "S'il vous plait ne me blessez pas.";
+TXT_RANDOM_PEASANT_02 = "Si vous cherchez a me blesse, Je n' en merite pas l'effort.";
 TXT_RANDOM_PEASANT_03 = "Je ne sais rien.";
-TXT_RANDOM_PEASANT_04 = "Va t en ou j'appel les guardes!";
+TXT_RANDOM_PEASANT_04 = "Allez vous en ou j'appel les guardes!";
 TXT_RANDOM_PEASANT_05 = "Je voudrais quelque fois que ces rebelles apprennent quelle est leur place et stoppent ce non-sens.";
 TXT_RANDOM_PEASANT_06 = "Laisse moi seul, OK?";
 TXT_RANDOM_PEASANT_07 = "Je ne suis pas sur , mais quelque fois je pense connaitre certains des acolytes.";
@@ -1195,7 +1219,7 @@ TXT_RANDOM_PEASANT_08 = "L' ordre maintient tout ferme aux alentours.";
 TXT_RANDOM_PEASANT_09 = "Ce n'est pas possible que ce ne sois juste q'une force de securite.";
 TXT_RANDOM_PEASANT_10 = "J'ai entendu que l' ordre etait tres nerveux a cause des action du front aux alentours.";
 
-TXT_RANDOM_REBEL_01 = "Ce n'est pas possible l' ordre se dressera contre nous.";
+TXT_RANDOM_REBEL_01 = "Ce n'est pas possible l'ordre se dressera contre nous.";
 TXT_RANDOM_REBEL_02 = "Nous sommes presque pret a frappe. Les plans de Macil echouront.";
 TXT_RANDOM_REBEL_03 = "Nous sommes tous derriere vous, ne vous inquiete pas.";
 TXT_RANDOM_REBEL_04 = "Ne vous approche pas trop de ces robots. Ils vous brulerons pour un rien!";
@@ -1208,25 +1232,25 @@ TXT_RANDOM_REBEL_10 = "Aussi longtemps qu'un de nous est debout, nous vaincront.
 
 TXT_RANDOM_AGUARD_01 = "Bouge de la, paysan.";
 TXT_RANDOM_AGUARD_02 = "Suis la vrai foie , seulement la tu commencera a comprendre.";
-TXT_RANDOM_AGUARD_03 = "Seulement a travers la mort que tu renaitra.";
-TXT_RANDOM_AGUARD_04 = "Je ne suis pas interesse par tes betises inutile.";
-TXT_RANDOM_AGUARD_05 = "si j'avais voulu te parle je te l'aurais dis.";
+TXT_RANDOM_AGUARD_03 = "C'est seulement a travers la mort que quelqu'un peut renaitre.";
+TXT_RANDOM_AGUARD_04 = "Je ne suis pas interesse par tes betises inutiles.";
+TXT_RANDOM_AGUARD_05 = "si j'avais voulu te parler je te l'aurais dis.";
 TXT_RANDOM_AGUARD_06 = "Va ennuyer quelqu'un d'autre!";
 TXT_RANDOM_AGUARD_07 = "Bouge!";
-TXT_RANDOM_AGUARD_08 = "Si l'alarm s'eteind, reste en dehors de notre chemin!";
+TXT_RANDOM_AGUARD_08 = "Si l'alarme s'eteind, reste en dehors de notre chemin!";
 TXT_RANDOM_AGUARD_09 = "L'ordre nettoira le monde et le conduira dans une nouvelle ere.";
 TXT_RANDOM_AGUARD_10 = "Un probleme? Je pense que non.";
 
-TXT_RANDOM_BEGGAR_01 = "L' aumone pour les pauvres?";
+TXT_RANDOM_BEGGAR_01 = "L'aumone pour les pauvres?";
 TXT_RANDOM_BEGGAR_02 = "Qui regarde tu, surfacer?";
-TXT_RANDOM_BEGGAR_03 = "Aurai tu de la nourriture en trop sur toi, nest ce pas?";
-TXT_RANDOM_BEGGAR_04 = "Vous les gens de la surface nous comprendre jamais.";
+TXT_RANDOM_BEGGAR_03 = "Aurai tu de la nourriture en trop sur toi, n'aurais tu pas?";
+TXT_RANDOM_BEGGAR_04 = "Vous les gens de la surface vous ne comprendrez jamais.";
 TXT_RANDOM_BEGGAR_05 = "Ha, les guarde ne nous trouve pas, ces idiot ne savent meme pas que l'ont existent.";
 TXT_RANDOM_BEGGAR_06 = "Un jour a part les membres de l'ordre sera force de nous rejoidre.";
 TXT_RANDOM_BEGGAR_07 = "Reste immobile maintenant, mais tu sais que cela sera un jour pour toi aussi.";
 TXT_RANDOM_BEGGAR_08 = "Ils n'y pas plus ennuyant qu'un surfacer et son comportement!";
 TXT_RANDOM_BEGGAR_09 = "L'ordre n'en aura pas pour longtemps de votre front.";
-TXT_RANDOM_BEGGAR_10 = "Prend guarde a toi, surfacer. nous connaisont nos ennemis!";
+TXT_RANDOM_BEGGAR_10 = "Prend guarde a toi, surfacer. Nous connaisont nos ennemis!";
 
 TXT_RANDOM_PGUARD_01 = "Nous sommes les main du destin. Apprendre notre colere est de trouve l'oubli!";
 TXT_RANDOM_PGUARD_02 = "L'ordre nettoira le monde des faibles et corrompus!";
@@ -1243,19 +1267,18 @@ TXT_RANDOMGOODBYE_1 = "Au revoir!";
 TXT_RANDOMGOODBYE_2 = "Merci, au revoir!";
 TXT_RANDOMGOODBYE_3 = "A plus tard!";
 
-
 // Bloodbath announcer
 
 BBA_BONED = "%k desossa %o comme un poisson";
 BBA_CASTRA = "%k castra %o";
 BBA_CREAMED = "%k a battu a plate couture %o";
 BBA_DECIMAT = "%k a decime %o";
-BBA_DESTRO = "%k a detrui %o";
+BBA_DESTRO = "%k a detruit %o";
 BBA_DICED = "%k  a coupe en des %o";
 BBA_DISEMBO = "%k a etripe %o";
-BBA_FLATTE = "%k a aplati %o";
-BBA_JUSTICE = "%k werea bite a rendu une justice anal a wilou %o";
-BBA_MADNESS = "%k lammah a fait une folie ANAL a phoenix %o :lol ";
+BBA_FLATTE = "%k a aplatit %o";
+BBA_JUSTICE = "%k a rendu une justice anal a %o";
+BBA_MADNESS = "%k a fait une folie ANAL a %o";
 BBA_KILLED = "%k a tue %o";
 BBA_MINCMEAT = "%k a fait de la viande hachee de %o";
 BBA_MASSACR = "%k a massacre %o";
@@ -1264,7 +1287,7 @@ BBA_REAMED = "%k a decoupe en fines lamelles %o";
 BBA_RIPPED = "%k a ouvert un nouvel orifice a %o";
 BBA_SLAUGHT = "%k a massacre %o";
 BBA_SMASHED = "%k a enfonce %o";
-BBA_SODOMIZ = "%k yétimothée a sodomise necrotikflesh %o";
+BBA_SODOMIZ = "%k y a sodomise n %o";
 BBA_SPLATT = "%k a eclabousse les morceaux de %o";
 BBA_SQUASH = "%k a ecrabouille %o";
 BBA_THROTTL = "%k a etouffe %o";
@@ -1274,11 +1297,11 @@ BBA_HELL = "%k a envoye en enfer %o";
 BBA_TOAST = "%k a grille %o";
 BBA_SNUFF = "%k a creve %o";
 BBA_HOSED = "%k a arose %o";
-BBA_SPRAYED = "DK a pulverise les cons de la cfd %o";
+BBA_SPRAYED = "%k a pulverise %o";
 BBA_DOGMEAT = "%k a fait de la patee pour chien %o";
-BBA_BEATEN = "la communaute francaise des enculés,ils se reconnaitrons";
+BBA_BEATEN = "%k a battu %o";
 
-BBA_EXCREMENT = "%o :Kira est un excrement";
+BBA_EXCREMENT = "%o est un excrement";
 BBA_HAMBURGER = "%o est un hamburger";
 BBA_SCROTUM = "%o a souffert d'une separation du scrotum";
 BBA_POPULATION = "%o s'est propose pour un controle de la population";

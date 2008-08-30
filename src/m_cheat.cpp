@@ -81,10 +81,20 @@ void cht_DoCheat (player_t *player, int cheat)
 		// fall through to CHT_GOD
 	case CHT_GOD:
 		player->cheats ^= CF_GODMODE;
-		if (player->cheats & CF_GODMODE)
-			msg = GStrings("STSTR_DQDON");
+		if (gameinfo.gametype != GAME_Chex)
+		{
+			if (player->cheats & CF_GODMODE)
+				msg = GStrings("STSTR_DQDON");
+			else
+				msg = GStrings("STSTR_DQDOFF");
+		}
 		else
-			msg = GStrings("STSTR_DQDOFF");
+		{
+			if (player->cheats & CF_GODMODE)
+				msg = GStrings("STSTR_CDQDON");
+			else
+				msg = GStrings("STSTR_CDQDOFF");
+		}
 		SB_state = screen->GetPageCount ();
 		break;
 
@@ -160,7 +170,10 @@ void cht_DoCheat (player_t *player, int cheat)
 			{
 				player->mo->GiveInventoryType (type);
 			}
-			msg = GStrings("STSTR_CHOPPERS");
+			if(gameinfo.gametype != GAME_Chex)
+				msg = GStrings("STSTR_CHOPPERS");
+			else
+				msg = GStrings("STSTR_CCHOPPERS");
 		}
 		// [RH] The original cheat also set powers[pw_invulnerability] to true.
 		// Since this is a timer and not a boolean, it effectively turned off
@@ -191,7 +204,10 @@ void cht_DoCheat (player_t *player, int cheat)
 		cht_Give (player, "ammo");
 		cht_Give (player, "keys");
 		cht_Give (player, "armor");
-		msg = GStrings("STSTR_KFAADDED");
+		if(gameinfo.gametype != GAME_Chex)
+			msg = GStrings("STSTR_KFAADDED");
+		else
+			msg = GStrings("STSTR_CKFAADDED");
 		break;
 
 	case CHT_IDFA:
@@ -199,7 +215,10 @@ void cht_DoCheat (player_t *player, int cheat)
 		cht_Give (player, "weapons");
 		cht_Give (player, "ammo");
 		cht_Give (player, "armor");
-		msg = GStrings("STSTR_FAADDED");
+		if(gameinfo.gametype != GAME_Chex)
+			msg = GStrings("STSTR_FAADDED");
+		else
+			msg = GStrings("STSTR_CFAADDED");
 		break;
 
 	case CHT_BEHOLDV:
@@ -622,6 +641,10 @@ void cht_Give (player_t *player, const char *name, int amount)
 		{
 			type = PClass::FindClass ("Backpack");
 		}
+		else if (gameinfo.gametype == GAME_Chex)
+		{
+			type = PClass::FindClass ("Zorchpack");
+		}
 		else
 		{ // Hexen doesn't have a backpack, foo!
 			type = NULL;
@@ -849,6 +872,10 @@ void cht_Take (player_t *player, const char *name, int amount)
 		else if (gameinfo.gametype == GAME_Doom)
 		{
 			type = PClass::FindClass ("Backpack");
+		}
+		else if (gameinfo.gametype == GAME_Chex)
+		{
+			type = PClass::FindClass ("Zorchpack");
 		}
 		else
 		{ // Hexen doesn't have a backpack, foo!

@@ -1,0 +1,68 @@
+
+// General Pickups ============================================================
+
+// Health ---------------------------------------------------------------------
+
+actor GlassOfWater : HealthBonus 2014
+{
+	game Chex
+	inventory.pickupmessage "$GOTWATER"
+}
+
+actor BowlOfFruit : Stimpack 2011
+{
+	game Chex
+	inventory.pickupmessage "$GOTFRUIT"
+}
+
+actor BowlOfVegetables : Medikit 2012
+{
+	game Chex
+	inventory.pickupmessage "$GOTVEGETABLES"
+	health.lowmessage 25, "$GOTVEGETABLESNEED"
+}
+
+actor SuperchargeBreakfast : Soulsphere 2013
+{
+	game Chex
+	inventory.pickupmessage "$GOTBREAKFAST"
+}
+
+// Armor ----------------------------------------------------------------------
+
+actor SlimeRepellent : ArmorBonus 2015
+{
+	game Chex
+	inventory.pickupmessage "$GOTREPELLENT"
+}
+
+actor ChexArmor : GreenArmor 2018
+{
+	game Chex
+	inventory.pickupmessage "$GOTCHEXARMOR"
+}
+
+actor SuperChexArmor : BlueArmor 2019
+{
+	game Chex
+	inventory.pickupmessage "$GOTSUPERCHEXARMOR"
+}
+
+// Powerups ===================================================================
+
+actor ComputerAreaMap : Allmap 2026
+{
+	game Chex
+}
+
+actor SlimeProofSuit : RadSuit 2025
+{
+	game Chex
+	inventory.pickupmessage "$GOTSLIMESUIT"
+}
+
+actor Zorchpack : Backpack 8
+{
+	game Chex
+	inventory.pickupmessage "$GOTZORCHPACK"
+}

@@ -37,6 +37,10 @@ QUITMSG20 = "fine! just kill and run!";
 QUITMSG21 = "you can quit...\nbut you can't hide...";
 QUITMSG22 = "whaaa, what's the matter?\nmommy says dinnertime?";
 
+// Quit Chex messages
+QUITMSG23 = "Don't give up now...do\nyou still wish to quit?";
+QUITMSG24 = "please don't leave, we\nneed your help!"; //7 times as likely to show
+
 LOADNET = "you can't do load while in a net game!\n\npress a key.";
 QLOADNET = "you can't quickload during a netgame!\n\npress a key.";
 QSAVESPOT = "you haven't picked a quicksave slot yet!\n\npress a key.";
@@ -1301,3 +1305,75 @@ BBA_SCROTUM = "%o suffered scrotum separation";
 BBA_POPULATION = "%o volunteered for population control";
 BBA_SUICIDE = "%o has suicided";
 BBA_DARWIN = "%o received the Darwin Award";
+
+// Chex Quest Strings
+CHUSTR_E1M1 = "E1M1: Landing Zone";
+CHUSTR_E1M2 = "E1M2: Storage Facility";
+CHUSTR_E1M3 = "E1M3: Experimental Lab";
+CHUSTR_E1M4 = "E1M4: Arboretum";
+CHUSTR_E1M5 = "E1M5: Caverns of Bazoik";
+
+CE1TEXT =
+		"Mission accomplished.\n"
+		"\n"
+		"Are you prepared for the next mission?\n"
+		"\n"
+		"\n"
+		"\n"
+		"\n"
+		"\n"
+		"\n"
+		"Press the escape key to continue...";
+
+CE2TEXT = "You've done it!";
+CE3TEXT = "Wonderful Job!";
+CE4TEXT = "Fantastic";
+
+CLOADNET = "you can't do load while in a net quest!\n\npress a key.";
+CQSPROMPT = "quicksave over your quest named\n\n'%s'?\n\npress y or n.";
+CQLOADNET = "you can't quickload during a netquest!\n\npress a key.";
+CQLPROMPT = "do you want to quickload the quest named\n\n'%s'?\n\npress y or n.";
+CNEWGAME = "you can't start a new quest\nwhile in a network quest.\n\npress a key.";
+
+CNIGHTMARE = "Careful, this will be tough.\nDo you wish to continue?\n\npress y or n.";
+
+CSWSTRING = "this is Chex(R) Quest. look for\n\nfuture levels at www.chexquest.com.\n\npress a key.";
+
+CNETEND = "you can't end a netquest!\n\npress a key.";
+CENDGAME = "are you sure you want to end the quest?\n\npress y or n.";
+
+GOTCHEXARMOR = "Picked up the Chex(R) Armor.";
+GOTSUPERCHEXARMOR = "Picked up the Super Chex(R) Armor!";
+GOTWATER = "Picked up a glass of water.";
+GOTREPELLENT = "Picked up slime repellent.";
+GOTBREAKFAST = "Supercharge Breakfast!";
+GOTCBLUEKEY = "Picked up a blue key.";
+GOTCYELLOWKEY = "Picked up a yallow key.";
+GOTCREDKEY = "Picked up a red key.";
+GOTFRUIT = "Picked up a bowl of fruit.";
+GOTVEGETABLESNEED = "Picked up some needed vegetables!";
+GOTVEGETABLES = "Picked up a bowl of vegetables.";
+GOTSLIMESUIT = "Slimeproof Suit";
+GOTZORCHRECHARGE = "Picked up a mini zorch recharge.";
+GOTMINIZORCHPACK = "Picked up a mini zorch pack.";
+GOTPROPULSORRECHARGE = "Picked up a zorch propulsor recharge.";
+GOTPROPULSORPACK = "Picked up a zorch propulsor pack.";
+GOTPHASINGZORCHERRECHARGE = "Picked up a phasing zorcher recharge";
+GOTPHASINGZORCHERPACK = "Picked up a phasing zorcher pack.";
+GOTLARGEZORCHERRECHARGE = "Picked up a large zorcher recharge.";
+GOTLARGEZORCHERPACK = "Picked up a large zorcher pack.";
+GOTZORCHPACK = "Picked up a Zorchpak!";
+GOTLAZDEVICE = "You got the LAZ Device!";
+GOTRAPIDZORCHER = "You got the Rapid Zorcher!";
+GOTSUPERBOOTSPORK = "You got the Super Bootspork!";
+GOTZORCHPROPULSOR = "You got the Zorch Propulsor!";
+GOTPHASINGZORCHER = "You got the Phasing Zorcher!";
+GOTLARGEZORCHER = "You got the Large Zorcher!";
+GOTSUPERLARGEZORCHER = "You got the Super Large Zorcher!";
+GOTMINIZORCHER = "Picked up a Mini Zorcher.";
+
+STSTR_CDQDON = "Invincible Mode ON";
+STSTR_CDQDOFF = "Invincible Mode OFF";
+STSTR_CFAADDED = "Zorch Added";
+STSTR_CKFAADDED = "Super Zorch Added";
+STSTR_CCHOPPERS = "... Eat Chex(R)!";

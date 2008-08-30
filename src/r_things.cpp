@@ -523,7 +523,7 @@ void R_InitSkins (void)
 
 				if (stricmp (sc.String, "heretic") == 0)
 				{
-					if (gameinfo.gametype == GAME_Doom)
+					if (gameinfo.gametype & GAME_DoomChex)
 					{
 						transtype = PClass::FindClass (NAME_HereticPlayer);
 						skins[i].othergame = true;
@@ -547,7 +547,7 @@ void R_InitSkins (void)
 						transtype = PClass::FindClass (NAME_DoomPlayer);
 						skins[i].othergame = true;
 					}
-					else if (gameinfo.gametype != GAME_Doom)
+					else if (!(gameinfo.gametype & GAME_DoomChex))
 					{
 						remove = true;
 					}
@@ -618,7 +618,7 @@ void R_InitSkins (void)
 		// [GRB] Assume Doom skin by default
 		if (!remove && basetype == NULL)
 		{
-			if (gameinfo.gametype == GAME_Doom)
+			if (gameinfo.gametype & GAME_DoomChex)
 			{
 				basetype = transtype = PClass::FindClass (NAME_DoomPlayer);
 			}
@@ -849,7 +849,7 @@ void R_InitSprites ()
 	clearbufshort (zeroarray, MAXWIDTH, 0);
 
 	// [RH] Create a standard translation to map skins between Heretic and Doom
-	if (gameinfo.gametype == GAME_Doom)
+	if (gameinfo.gametype == GAME_DoomChex)
 	{
 		R_CreateSkinTranslation ("SPALHTIC");
 	}

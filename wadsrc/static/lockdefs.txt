@@ -558,3 +558,58 @@ Lock 51 Strife
 	Mapcolor 150 150 150
 }
 
+//
+// Chex Locks
+//
+
+Lock 1 Chex
+{
+	ChexRedCard
+	Message "$PD_REDC"
+	RemoteMessage "$PD_REDCO"
+	Mapcolor 255 0 0
+}
+
+
+Lock 2 Chex
+{
+	ChexBlueCard
+	Message "$PD_BLUEC"
+	RemoteMessage "$PD_BLUECO"
+	Mapcolor 0 0 255
+}
+
+
+Lock 3 Chex
+{
+	ChexYellowCard
+	Message "$PD_YELLOWC"
+	RemoteMessage "$PD_YELLOWCO"
+	Mapcolor 255 255 0
+}
+
+Lock 129 Chex
+{
+	ChexRedCard
+	Message "$PD_REDK"
+	RemoteMessage "$PD_REDO"
+	Mapcolor 255 0 0
+}
+
+
+Lock 130 Chex
+{
+	ChexBlueCard
+	Message "$PD_BLUEK"
+	RemoteMessage "$PD_BLUEO"
+	Mapcolor 0 0 255
+}
+
+
+Lock 131 Chex
+{
+	ChexYellowCard
+	Message "$PD_YELLOWK"
+	RemoteMessage "$PD_YELLOWO"
+	Mapcolor 255 255 0
+}

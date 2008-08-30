@@ -393,9 +393,9 @@ void F_TextWrite (void)
 		return;
 
 	// draw some of the text onto the screen
-	leftmargin = (gameinfo.gametype & (GAME_Doom|GAME_Strife|GAME_Hexen) ? 10 : 20) - 160;
+	leftmargin = (gameinfo.gametype & (GAME_DoomStrifeChex|GAME_Hexen) ? 10 : 20) - 160;
 	rowheight = screen->Font->GetHeight () +
-		(gameinfo.gametype & (GAME_Doom|GAME_Strife) ? 3 : -1);
+		(gameinfo.gametype & (GAME_DoomStrifeChex) ? 3 : -1);
 	scale = (CleanXfac != 1 || CleanYfac != 1);
 
 	cx = leftmargin;
@@ -405,7 +405,7 @@ void F_TextWrite (void)
 	}
 	else
 	{
-		cy = (gameinfo.gametype & (GAME_Doom|GAME_Strife) ? 10 : 5) - 100;
+		cy = (gameinfo.gametype & (GAME_DoomStrifeChex) ? 10 : 5) - 100;
 	}
 	ch = FinaleText.GetChars();
 		

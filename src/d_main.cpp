@@ -667,7 +667,7 @@ void D_Display ()
 		FTexture *tex;
 		int x;
 
-		tex = TexMan[gameinfo.gametype & (GAME_Doom|GAME_Strife) ? "M_PAUSE" : "PAUSED"];
+		tex = TexMan[gameinfo.gametype & (GAME_DoomStrifeChex) ? "M_PAUSE" : "PAUSED"];
 		x = (SCREENWIDTH - tex->GetWidth()*CleanXfac)/2 +
 			tex->LeftOffset*CleanXfac;
 		screen->DrawTexture (tex, x, 4, DTA_CleanNoMove, true, TAG_DONE);
@@ -2456,24 +2456,6 @@ void D_DoomMain (void)
 	Printf ("DecalLibrary: Load decals.\n");
 	DecalLibrary.Clear ();
 	DecalLibrary.ReadAllDecals ();
-
-	// Patch the game for Chex quest differences
-	if (gameinfo.flags & GI_CHEX_QUEST)
-	{
-		// remove the drop items from the zombie and shotgunguy
-		// (this could be done with a DECORATE lump but would need
-		//  as much code to load it.)
-		PClass *info;
-
-		info = (PClass*)PClass::FindClass("Zombieman");
-		if (info) info->Meta.SetMetaInt (ACMETA_DropItems, 0);
-
-		info = (PClass*)PClass::FindClass("ShotgunGuy");
-		if (info) info->Meta.SetMetaInt (ACMETA_DropItems, 0);
-
-		int lump = Wads.CheckNumForFullName("chex.deh", 0);
-		if (lump >= 0) DoDehPatch(NULL, true, lump);
-	}
 
 	// [RH] Try adding .deh and .bex files on the command line.
 	// If there are none, try adding any in the config file.

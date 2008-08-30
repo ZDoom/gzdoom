@@ -41,6 +41,7 @@ void ABasicArmor::Tick ()
 	{
 		switch (gameinfo.gametype)
 		{
+		case GAME_Chex:
 		case GAME_Doom:
 			Icon = TexMan.CheckForTexture (SavePercent == FRACUNIT/3 ? "ARM1A0" : "ARM2A0", FTexture::TEX_Any);
 			break;

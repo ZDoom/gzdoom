@@ -548,7 +548,7 @@ bool P_NewLookPlayers (AActor *actor, angle_t fov, fixed_t mindist, fixed_t maxd
 		return P_NewLookEnemies (actor, fov, mindist, maxdist, chasegoal);
 	}
 
-	if (!(gameinfo.gametype & (GAME_Doom|GAME_Strife)) &&
+	if (!(gameinfo.gametype & (GAME_DoomStrifeChex)) &&
 		!multiplayer &&
 		players[0].health <= 0)
 	{ // Single player game and player is dead; look for monsters

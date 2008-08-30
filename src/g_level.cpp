@@ -1689,7 +1689,7 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 	{
 		int cstype = SBarInfoScript->GetGameType();
 
-		if(cstype == GAME_Doom) //Did the user specify a "base"
+		if(cstype == GAME_Doom || cstype == GAME_Chex) //Did the user specify a "base"
 		{
 			StatusBar = CreateDoomStatusBar ();
 		}
@@ -1712,7 +1712,7 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 	}
 	if (StatusBar == NULL)
 	{
-		if (gameinfo.gametype == GAME_Doom)
+		if (gameinfo.gametype & GAME_DoomChex)
 		{
 			StatusBar = CreateDoomStatusBar ();
 		}

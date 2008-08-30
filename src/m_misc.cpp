@@ -605,6 +605,7 @@ static bool FindFreeName (FString &fullname, const char *extension)
 		case GAME_Heretic:	gamename = "Heretic_";	break;
 		case GAME_Hexen:	gamename = "Hexen_";	break;
 		case GAME_Strife:	gamename = "Strife_";	break;
+		case GAME_Chex:		gamename = "Chex_";		break;
 		default:			gamename = "";			break;
 		}
 

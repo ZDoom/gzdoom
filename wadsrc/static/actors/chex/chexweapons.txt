@@ -1,0 +1,64 @@
+// Same as Doom weapons, but the obituaries are removed.
+
+actor Bootspoon : Fist
+{
+	obituary ""
+}
+
+actor SuperBootspork : Chainsaw 2005
+{
+	obituary ""
+}
+
+actor MiniZorcher : Pistol
+{
+	obituary ""
+	inventory.pickupmessage "$GOTMINIZORCHER"
+	states
+	{
+		Spawn:
+			stop
+	}
+}
+
+actor LargeZorcher : Shotgun 2001
+{
+	game Chex
+	obituary ""
+	inventory.pickupmessage "$GOTLARGEZORCHER"
+}
+
+actor SuperLargeZorcher : SuperShotgun 82
+{
+	game Chex
+	obituary ""
+	inventory.pickupmessage "$GOTSUPERLARGEZORCHER"
+}
+
+actor RapidZorcher : Chaingun 2002
+{
+	game Chex
+	obituary ""
+	inventory.pickupmessage "$GOTRAPIDZORCHER"
+}
+
+actor ZorchPropulsor : RocketLauncher 2003
+{
+	game Chex
+	obituary ""
+	inventory.pickupmessage "$GOTZORCHPROPULSOR"
+}
+
+actor PhasingZorcher : PlasmaRifle 2004
+{
+	game Chex
+	obituary ""
+	inventory.pickupmessage "$GOTPHASINGZORCHER"
+}
+
+actor LAZDevice : BFG9000 2006
+{
+	game Chex
+	obituary ""
+	inventory.pickupmessage "$GOTLAZDEVICE"
+}

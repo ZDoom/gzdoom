@@ -1,0 +1,86 @@
+// Renaming and changing messages
+
+// Mini Zorch -----------------------------------------------------------------
+
+actor MiniZorchRecharge : Clip 2007
+{
+	Game Chex
+	inventory.pickupmessage "$GOTZORCHRECHARGE"
+}
+
+actor MiniZorchPack : Clip 2048
+{
+	Game Chex
+	Inventory.PickupMessage "$GOTMINIZORCHPACK"
+	Inventory.Amount 50
+	States
+	{
+		Spawn:
+			AMMO A -1
+			Stop
+	}
+}
+
+// Large Zorch ----------------------------------------------------------------
+
+actor LargeZorchRecharge : Shell 2008
+{
+	Game Chex
+	inventory.pickupmessage "$GOTLARGEZORCHERRECHARGE"
+}
+
+actor LargeZorchPack : Shell 2049
+{
+	Game Chex
+	Inventory.PickupMessage "GOTLARGEZORCHERPACK"
+	Inventory.Amount 20
+	States
+	{
+		Spawn:
+			SBOX A -1
+			Stop
+	}
+}
+
+// Zorch Propulsor ------------------------------------------------------------
+
+actor PropulsorZorch : RocketAmmo 2010
+{
+	Game Chex
+	inventory.pickupmessage "$GOTPROPULSORRECHARGE"
+}
+
+actor PropulsorZorchPack : RocketAmmo 2046
+{
+	Game Chex
+	Inventory.PickupMessage "$GOTPROPULSORPACK"
+	Inventory.Amount 5
+	States
+	{
+		Spawn:
+			BROK A -1
+			Stop
+	}
+}
+
+// Phasing Zorch --------------------------------------------------------------
+
+actor PhasingZorch : Cell 2047
+{
+	Game Chex
+	inventory.pickupmessage "$GOTPHASINGZORCHERRECHARGE"
+}
+
+actor PhasingZorchPack : Cell 17
+{
+	Game Chex
+	SpawnID 142
+	Inventory.PickupMessage "$GOTPHASINGZORCHERPACK"
+	Inventory.Amount 100
+	States
+	{
+		Spawn:
+			CELP A -1
+			Stop
+	}
+}

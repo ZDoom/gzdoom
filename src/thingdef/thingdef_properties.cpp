@@ -857,6 +857,10 @@ static void ActorGame (FScanner &sc, AActor *defaults, Baggage &bag)
 	{
 		bag.Info->GameFilter |= GAME_Strife;
 	}
+	else if (sc.Compare ("Chex"))
+	{
+		bag.Info->GameFilter |= GAME_Chex;
+	}
 	else if (sc.Compare ("Any"))
 	{
 		bag.Info->GameFilter = GAME_Any;
@@ -1940,8 +1944,8 @@ static void InventoryPickupflash (FScanner &sc, AInventory *defaults, Baggage &b
 static void InventoryPickupmsg (FScanner &sc, AInventory *defaults, Baggage &bag)
 {
 	// allow game specific pickup messages
-	const char * games[] = {"Doom", "Heretic", "Hexen", "Raven", "Strife", NULL};
-	int gamemode[]={GAME_Doom, GAME_Heretic, GAME_Hexen, GAME_Raven, GAME_Strife};
+	const char * games[] = {"Doom", "Heretic", "Hexen", "Raven", "Strife", "Chex", NULL};
+	int gamemode[]={GAME_Doom, GAME_Heretic, GAME_Hexen, GAME_Raven, GAME_Strife, GAME_Chex};
 
 	sc.MustGetString();
 	int game = sc.MatchString(games);

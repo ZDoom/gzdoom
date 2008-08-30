@@ -1,3 +1,6 @@
+August 30, 2008  (Changes by Graf Zahl)
+- Added Blzut3's patch for a real Chex Quest game mode.
+
 August 29, 2008  (Changes by Graf Zahl)
 - Fixed: SKIP_SUPER doesn't work for inventory items so it must be
   disabled for them

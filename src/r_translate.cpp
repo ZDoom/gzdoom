@@ -363,7 +363,7 @@ void R_InitTranslationTables ()
 	}
 
 	// Create the standard translation tables
-	if (gameinfo.gametype == GAME_Doom)
+	if (gameinfo.gametype & GAME_DoomChex)
 	{
 		for (i = 0x70; i < 0x80; i++)
 		{ // map green ramp to gray, brown, red
@@ -575,7 +575,7 @@ static void R_CreatePlayerTranslation (float h, float s, float v, FPlayerSkin *s
 	bases = s;
 	basev = v;
 
-	if (gameinfo.gametype == GAME_Doom || gameinfo.gametype == GAME_Strife)
+	if (gameinfo.gametype & GAME_DoomStrifeChex)
 	{
 		// Build player sprite translation
 		s -= 0.23f;

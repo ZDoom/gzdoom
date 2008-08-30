@@ -82,6 +82,7 @@ xx(StrifePlayer)
 xx(FighterPlayer)
 xx(ClericPlayer)
 xx(MagePlayer)
+xx(ChexPlayer)
 xx(ChickenPlayer)
 xx(PigPlayer)
 

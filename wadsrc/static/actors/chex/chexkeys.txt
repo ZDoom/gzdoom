@@ -1,0 +1,19 @@
+// These are merely renames of the Doom cards
+
+actor ChexBlueCard : BlueCard 5
+{
+	Game Chex
+	inventory.pickupmessage "$GOTCBLUEKEY"
+}
+
+actor ChexYellowCard : YellowCard 6
+{
+	Game Chex
+	inventory.pickupmessage "$GOTCYELLOWKEY"
+}
+
+actor ChexRedCard : RedCard 13
+{
+	Game Chex
+	inventory.pickupmessage "$GOTCREDKEY"
+}

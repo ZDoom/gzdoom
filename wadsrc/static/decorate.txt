@@ -167,3 +167,11 @@
 #include "actors/strife/templar.txt"
 #include "actors/strife/zombie.txt"
 #include "actors/strife/sigil.txt"
+
+#include "actors/chex/chexmonsters.txt"
+#include "actors/chex/chexkeys.txt"
+#include "actors/chex/chexammo.txt"
+#include "actors/chex/chexweapons.txt"
+#include "actors/chex/chexitems.txt"
+#include "actors/chex/chexdecorations.txt"
+#include "actors/chex/chexplayer.txt"

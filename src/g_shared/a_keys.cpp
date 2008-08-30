@@ -211,6 +211,10 @@ static void ParseLock(FScanner &sc)
 	{
 		if (gameinfo.gametype != GAME_Strife) keynum=-1;
 	}
+	else if (sc.Compare("CHEX"))
+	{
+		if (gameinfo.gametype != GAME_Chex) keynum=-1;
+	}
 	else sc.UnGet();
 
 	ignorekey = true;

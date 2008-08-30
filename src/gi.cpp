@@ -40,9 +40,9 @@
 
 gameinfo_t gameinfo;
 
-const char *GameNames[9] =
+const char *GameNames[17] =
 {
-	NULL, "Doom", "Heretic", NULL, "Hexen", NULL, NULL, NULL, "Strife"
+	NULL, "Doom", "Heretic", NULL, "Hexen", NULL, NULL, NULL, "Strife", NULL, NULL, NULL, NULL, NULL, NULL, NULL, "Chex"
 };
 
 
@@ -278,12 +278,12 @@ gameinfo_t ChexGameInfo =
 	"FLOOR7_2",
 	&DoomBorder,
 	0,
-	GAME_Doom,
+	GAME_Chex,
 	100,
 	"F_SKY1",
 	24*FRACUNIT,
 	"xlat/doom.txt",
-	{ "mapinfo/doomcommon.txt", "mapinfo/chex.txt" },
+	{ "mapinfo/chex.txt", NULL },
 	MAKERGB(95,175,87),
 };
 

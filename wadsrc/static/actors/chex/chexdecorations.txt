@@ -1,0 +1,205 @@
+// Doom items renamed with height changes
+
+// Civilians ------------------------------------------------------------------
+
+actor Civilian1 : GreenTorch 45
+{
+	game Chex
+	height 54
+}
+
+actor Civilian2 : ShortGreenTorch 56
+{
+	game Chex
+	height 54
+}
+
+actor Civilian3 : ShortRedTorch 57
+{
+	game Chex
+	height 48
+}
+
+actor DeadChexWarrior : DeadMarine 15
+{
+	game Chex
+}
+
+actor DeadChexWarrior2 : GibbedMarine 10
+{
+	game Chex
+}
+
+actor DeadChexWarrior3 : GibbedMarineExtra 12
+{
+	game Chex
+}
+
+// Landing Zone ---------------------------------------------------------------
+
+actor LandingLight : Column 2028
+{
+	game Chex
+	height 35
+}
+
+actor Spaceship : TechPillar 48
+{
+	game Chex
+	height 52
+}
+
+// Trees and Plants -----------------------------------------------------------
+
+actor AppleTree : Stalagtite 47
+{
+	game Chex
+	height 92
+}
+
+actor BananaTree : BigTree 54
+{
+	game Chex
+	height 108
+}
+
+actor HangingFlowerPot : Meat2 50
+{
+	game Chex
+}
+
+actor HangingFlowerPot2 : Meat3 51
+{
+	game Chex
+}
+
+actor HangingFlowerPotNonSolid : HangingFlowerPot 59
+{
+	game Chex
+	-SOLID
+	radius 20
+}
+
+actor HangingFlowerPot2NonSolid : HangingFlowerPot2 61
+{
+	game Chex
+	-SOLID
+	radius 20
+}
+
+actor OrangeTree : TorchTree 43
+{
+	game Chex
+	height 92
+}
+
+actor SubmergedPlant : ShortGreenColumn 31
+{
+	game Chex
+	height 42
+}
+
+actor TallFlower : HeadsOnAStick 28
+{
+	game Chex
+	height 25
+}
+
+actor TallFlower2 : DeadStick 25
+{
+	game Chex
+	height 25
+}
+
+// Slime Fountain -------------------------------------------------------------
+
+actor SlimeFountain : BlueTorch 44
+{
+	game Chex
+	height 48
+}
+
+// Cavern Decorations ---------------------------------------------------------
+
+actor CavernBat : BloodyTwitch 49
+{
+	game Chex
+	height 52
+}
+
+actor CavernBatNonSolid : CavernBat 63
+{
+	game Chex
+	-SOLID
+	radius 20
+}
+
+actor CavernColumn : TallRedColumn 32
+{
+	game Chex
+	height 128
+}
+
+actor CavernStalactite : Meat5 53
+{
+	game Chex
+	height 48
+}
+
+actor CavernStalagmite : TallGreenColumn 30
+{
+	game Chex
+	height 60
+}
+
+actor NonSolidCavernStalactite : CavernStalactite 62
+{
+	game Chex
+	-SOLID
+	radius 20
+}
+
+// Misc. Props ----------------------------------------------------------------
+
+actor ChemicalBurner : EvilEye 41
+{
+	game Chex
+	height 25
+}
+
+actor ChemicalFlask : Candlestick 34
+{
+	game Chex
+	renderstyle translucent
+	alpha 0.75
+}
+
+// Who's idea was it to put an invisible thing on E1M4?
+actor DeadCycloptisCommonus : DeadDemon 21
+{
+	game Chex
+}
+
+actor FlagOnPole : SkullColumn 37
+{
+	game Chex
+	height 128
+}
+
+actor GasTank : Candelabra 35
+{
+	game Chex
+	height 36
+}
+
+actor LightColumn : ShortBlueTorch 55
+{
+	game Chex
+	height 86
+}
+
+actor MineCart : ShortRedColumn 33
+{
+	game Chex
+	height 30
+}

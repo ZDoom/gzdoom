@@ -86,7 +86,7 @@ void P_TranslateLineDef (line_t *ld, maplinedef_t *mld)
 	}
 	else
 	{
-		if (gameinfo.gametype == GAME_Doom)
+		if (gameinfo.gametype & GAME_DoomChex)
 		{
 			if (flags & ML_RESERVED_ETERNITY)
 			{

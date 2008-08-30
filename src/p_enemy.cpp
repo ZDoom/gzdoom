@@ -1412,7 +1412,7 @@ bool P_LookForPlayers (AActor *actor, INTBOOL allaround)
 		return P_LookForEnemies (actor, allaround);
 	}
 
-	if (!(gameinfo.gametype & (GAME_Doom|GAME_Strife)) &&
+	if (!(gameinfo.gametype & (GAME_DoomStrifeChex)) &&
 		!multiplayer &&
 		players[0].health <= 0)
 	{ // Single player game and player is dead; look for monsters

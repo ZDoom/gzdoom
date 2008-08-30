@@ -1177,7 +1177,7 @@ void DBaseStatusBar::Draw (EHudState state)
 	{
 		int y, i, time = level.time / TICRATE, height;
 		int totaltime = level.totaltime / TICRATE;
-		EColorRange highlight = (gameinfo.gametype == GAME_Doom) ?
+		EColorRange highlight = (gameinfo.gametype & GAME_DoomChex) ?
 			CR_UNTRANSLATED : CR_YELLOW;
 
 		height = screen->Font->GetHeight () * CleanYfac;

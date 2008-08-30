@@ -944,7 +944,7 @@ static void AddStackInfo (HANDLE file, void *dumpaddress, DWORD code, CONTEXT *c
 		}
 #endif
 		Writef (file, "  ");
-		for (i = 0; i < max*sizeof(void*); ++i)
+		for (i = 0; i < int(max*sizeof(void*)); ++i)
 		{
 			if (!SafeReadMemory ((BYTE *)scan + i, &peekb, 1))
 			{

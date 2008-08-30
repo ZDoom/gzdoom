@@ -344,7 +344,7 @@ static void ParseOuter (FScanner &sc)
 				break;
 
 			case OUT_IFDOOM:
-				if (gameinfo.gametype != GAME_Doom)
+				if (!(gameinfo.gametype & GAME_DoomChex))
 				{
 					ifskip = true;
 				}

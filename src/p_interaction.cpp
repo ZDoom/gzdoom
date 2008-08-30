@@ -321,7 +321,7 @@ static int GibHealth(AActor *actor)
 	return -abs(
 		actor->GetClass()->Meta.GetMetaInt (
 			AMETA_GibHealth,
-			gameinfo.gametype == GAME_Doom ?
+			gameinfo.gametype & GAME_DoomChex ?
 				-actor->GetDefault()->health :
 				-actor->GetDefault()->health/2));
 }

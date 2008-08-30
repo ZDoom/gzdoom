@@ -1,3 +1,37 @@
+skill baby
+	AmmoFactor 2
+	DamageFactor 0.5
+	EasyBossBrain
+	SpawnFilter "Baby"
+	PicName "M_JKILL"
+	Key i
+
+skill easy
+	EasyBossBrain
+	SpawnFilter "Easy"
+	PicName "M_ROUGH"
+	Key h
+
+skill normal
+	SpawnFilter "Normal"
+	PicName "M_HURT"
+	Key h
+
+skill hard
+	SpawnFilter "Hard"
+	PicName "M_ULTRA"
+	Key u
+
+skill nightmare
+	AmmoFactor 2
+	FastMonsters
+	DisableCheats
+	RespawnTime 12
+	SpawnFilter "Nightmare"
+	PicName "M_NMARE"
+	MustConfirm "$CNIGHTMARE"
+	Key n
+
 // MAPINFO for Chex Quest
 
 clearepisodes
@@ -7,7 +41,7 @@ episode e1m1
 	
 // Registered/Retail Episode 1
 
-map E1M1 lookup HUSTR_E1M1
+map E1M1 lookup CHUSTR_E1M1
 levelnum 1
 titlepatch WILV00
 next E1M2
@@ -18,7 +52,7 @@ par 30
 sucktime 1
 music D_E1M1
 
-map E1M2 lookup HUSTR_E1M2
+map E1M2 lookup CHUSTR_E1M2
 levelnum 2
 titlepatch WILV01
 next E1M3
@@ -29,7 +63,7 @@ par 75
 sucktime 1
 music D_E1M2
 
-map E1M3 lookup HUSTR_E1M3
+map E1M3 lookup CHUSTR_E1M3
 levelnum 3
 titlepatch WILV02
 next E1M4
@@ -40,7 +74,7 @@ par 120
 sucktime 1
 music D_E1M3
 
-map E1M4 lookup HUSTR_E1M4
+map E1M4 lookup CHUSTR_E1M4
 levelnum 4
 titlepatch WILV03
 next E1M5
@@ -51,7 +85,7 @@ par 90
 sucktime 1
 music D_E1M4
 
-map E1M5 lookup HUSTR_E1M5
+map E1M5 lookup CHUSTR_E1M5
 levelnum 5
 titlepatch WILV04
 next EndGame1
@@ -68,20 +102,20 @@ music D_E1M5
 clusterdef 1
 flat FLOOR4_8
 music D_VICTOR
-exittext lookup E1TEXT
+exittext lookup CE1TEXT
 
 clusterdef 2
 flat SFLR6_1
 music D_VICTOR
-exittext lookup E2TEXT
+exittext lookup CE2TEXT
 
 clusterdef 3
 flat MFLR8_4
 music D_VICTOR
-exittext lookup E3TEXT
+exittext lookup CE3TEXT
 
 clusterdef 4
 flat MFLR8_3
 music D_VICTOR
-exittext lookup E4TEXT
+exittext lookup CE4TEXT
 

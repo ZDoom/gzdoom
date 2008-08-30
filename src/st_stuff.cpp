@@ -153,6 +153,22 @@ static BYTE CheatStoneCold[] =	{ 's','t','o','n','e','c','o','l','d',255 };
 static BYTE CheatElvis[] =		{ 'e','l','v','i','s',255 };
 static BYTE CheatTopo[] =		{ 't','o','p','o',255 };
 
+//[BL] Graf will probably get rid of this
+static BYTE CheatJoelKoenigs[] =	{ 'j','o','e','l','k','o','e','n','i','g','s',255 };
+static BYTE CheatDavidBrus[] =		{ 'd','a','v','i','d','b','r','u','s',255 };
+static BYTE CheatScottHolman[] =	{ 's','c','o','t','t','h','o','l','m','a','n',255 };
+static BYTE CheatMikeKoenigs[] =	{ 'm','i','k','e','k','o','e','n','i','g','s',255 };
+static BYTE CheatCharlesJacobi[] =	{ 'c','h','a','r','l','e','s','j','a','c','o','b','i',255 };
+static BYTE CheatAndrewBenson[] =	{ 'a','n','d','r','e','w','b','e','n','s','o','n',255 };
+static BYTE CheatDeanHyers[] =		{ 'd','e','a','n','h','y','e','r','s',255 };
+static BYTE CheatMaryBregi[] =		{ 'm','a','r','y','b','r','e','g','i',255 };
+static BYTE CheatAllen[] =			{ 'a','l','l','e','n',255 };
+static BYTE CheatDigitalCafe[] =	{ 'd','i','g','i','t','a','l','c','a','f','e',255 };
+static BYTE CheatJoshuaStorms[] =	{ 'j','o','s','h','u','a','s','t','o','r','m','s',255 };
+static BYTE CheatLeeSnyder[] =		{ 'l','e','e','s','n','y','d','e','r',0,0,255 };
+static BYTE CheatKimHyers[] =		{ 'k','i','m','h','y','e','r','s',255 };
+static BYTE CheatShrrill[] =		{ 's','h','r','r','i','l','l',255 };
+
 static cheatseq_t DoomCheats[] =
 {
 	{ CheatMus,				0, 1, 0, {0,0},				Cht_Music },
@@ -246,6 +262,25 @@ static cheatseq_t StrifeCheats[] =
 	{ CheatLego,			0, 0, 0, {CHT_LEGO,0},		Cht_Generic },
 };
 
+static cheatseq_t ChexCheats[] =
+{
+	{ CheatMus,				0, 1, 0, {0,0},				Cht_Music },
+	{ CheatKimHyers,		0, 1, 0, {0,0},				Cht_MyPos },
+	{ CheatShrrill,			0, 0, 0, {0,0},				Cht_AutoMap },
+	{ CheatDavidBrus,		0, 0, 0, {CHT_IDDQD,0},		Cht_Generic },
+	{ CheatMikeKoenigs,		0, 0, 0, {CHT_IDKFA,0},		Cht_Generic },
+	{ CheatScottHolman,		0, 0, 0, {CHT_IDFA,0},		Cht_Generic },
+	{ CheatCharlesJacobi,	0, 0, 0, {CHT_NOCLIP,0},	Cht_Generic },
+	{ CheatAndrewBenson,	0, 0, 0, {CHT_BEHOLDV,0},	Cht_Generic },
+	{ CheatDeanHyers,		0, 0, 0, {CHT_BEHOLDS,0},	Cht_Generic },
+	{ CheatMaryBregi,		0, 0, 0, {CHT_BEHOLDI,0},	Cht_Generic },
+	{ CheatAllen,			0, 0, 0, {CHT_BEHOLDR,0},	Cht_Generic },
+	{ CheatDigitalCafe,		0, 0, 0, {CHT_BEHOLDA,0},	Cht_Generic },
+	{ CheatJoshuaStorms,	0, 0, 0, {CHT_BEHOLDL,0},	Cht_Generic },
+	{ CheatJoelKoenigs,		0, 0, 0, {CHT_CHAINSAW,0},	Cht_Generic },
+	{ CheatLeeSnyder,		0, 0, 0, {0,0},				Cht_ChangeLevel }
+};
+
 extern bool CheckCheatmode ();
 
 // Respond to keyboard input events, intercept cheats.
@@ -280,6 +315,11 @@ bool ST_Responder (event_t *ev)
 		case GAME_Strife:
 			cheats = StrifeCheats;
 			numcheats = countof(StrifeCheats);
+			break;
+
+		case GAME_Chex:
+			cheats = ChexCheats;
+			numcheats = countof(ChexCheats);
 			break;
 
 		default:

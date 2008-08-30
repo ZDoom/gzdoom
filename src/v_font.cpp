@@ -286,7 +286,7 @@ FFont::FFont (const char *name, const char *nametemplate, int first, int count, 
 	BYTE usedcolors[256], identity[256];
 	double *luminosity;
 	int maxyoffs;
-	bool doomtemplate = gameinfo.gametype == GAME_Doom ? strncmp (nametemplate, "STCFN", 5) == 0 : false;
+	bool doomtemplate = gameinfo.gametype & GAME_DoomChex ? strncmp (nametemplate, "STCFN", 5) == 0 : false;
 	bool stcfn121 = false;
 
 	Chars = new CharData[count];
@@ -2092,7 +2092,7 @@ void V_InitFonts()
 	}
 	if (!(BigFont=FFont::FindFont("BigFont")))
 	{
-		if (gameinfo.gametype == GAME_Doom)
+		if (gameinfo.gametype & GAME_DoomChex)
 		{
 			BigFont = new FSingleLumpFont ("BigFont", Wads.GetNumForName ("DBIGFONT"));
 		}

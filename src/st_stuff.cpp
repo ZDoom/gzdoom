@@ -42,6 +42,7 @@ struct cheatseq_t
 	bool (*Handler)(cheatseq_t *);
 };
 
+static bool CheatCheckList (event_t *ev, cheatseq_t *cheats, int numcheats);
 static bool CheatAddKey (cheatseq_t *cheat, BYTE key, bool *eat);
 static bool Cht_Generic (cheatseq_t *);
 static bool Cht_Music (cheatseq_t *);
@@ -169,6 +170,8 @@ static BYTE CheatLeeSnyder[] =		{ 'l','e','e','s','n','y','d','e','r',0,0,255 };
 static BYTE CheatKimHyers[] =		{ 'k','i','m','h','y','e','r','s',255 };
 static BYTE CheatShrrill[] =		{ 's','h','r','r','i','l','l',255 };
 
+static BYTE CheatTNTem[] =		{ 't','n','t','e','m',255 };
+
 static cheatseq_t DoomCheats[] =
 {
 	{ CheatMus,				0, 1, 0, {0,0},				Cht_Music },
@@ -281,7 +284,15 @@ static cheatseq_t ChexCheats[] =
 	{ CheatLeeSnyder,		0, 0, 0, {0,0},				Cht_ChangeLevel }
 };
 
+static cheatseq_t SpecialCheats[] =
+{
+	{ CheatTNTem,		0, 0, 0, {CHT_MASSACRE,0},	Cht_Generic }
+};
+
+
 extern bool CheckCheatmode ();
+
+CVAR(Bool, allcheats, false, CVAR_ARCHIVE)
 
 // Respond to keyboard input events, intercept cheats.
 // [RH] Cheats eat the last keypress used to trigger them
@@ -289,11 +300,10 @@ bool ST_Responder (event_t *ev)
 {
 	bool eat = false;
 
-	if (ev->type == EV_KeyDown)
+	if (!allcheats)
 	{
 		cheatseq_t *cheats;
 		int numcheats;
-		int i;
 
 		switch (gameinfo.gametype)
 		{
@@ -325,6 +335,29 @@ bool ST_Responder (event_t *ev)
 		default:
 			return false;
 		}
+		return CheatCheckList(ev, cheats, numcheats);
+	}
+	else
+	{
+		static cheatseq_t *cheatlists[] = { DoomCheats, HereticCheats, HexenCheats, StrifeCheats, ChexCheats, SpecialCheats };
+		static int counts[] = { countof(DoomCheats), countof(HereticCheats), countof(HexenCheats), 
+								countof(StrifeCheats), countof(ChexCheats), countof(SpecialCheats) };
+
+		for (int i=0; i<countof(cheatlists); i++)
+		{
+			if (CheatCheckList(ev, cheatlists[i], counts[i])) return true;
+		}
+	}
+	return false;
+}
+
+static bool CheatCheckList (event_t *ev, cheatseq_t *cheats, int numcheats)
+{
+	bool eat = false;
+
+	if (ev->type == EV_KeyDown)
+	{
+		int i;
 
 		for (i = 0; i < numcheats; i++, cheats++)
 		{

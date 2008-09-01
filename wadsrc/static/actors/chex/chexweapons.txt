@@ -2,16 +2,19 @@
 
 actor Bootspoon : Fist
 {
+	game Chex
 	obituary ""
 }
 
 actor SuperBootspork : Chainsaw 2005
 {
+	game Chex
 	obituary ""
 }
 
 actor MiniZorcher : Pistol
 {
+	game Chex
 	obituary ""
 	inventory.pickupmessage "$GOTMINIZORCHER"
 	states

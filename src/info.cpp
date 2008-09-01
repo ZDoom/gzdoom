@@ -251,6 +251,12 @@ void FActorInfo::RegisterIDs ()
 			DoomEdMap.AddType (DoomEdNum, Class);
 		}
 	}
+	// Fill out the list for Chex Quest with Doom's actors
+	if (gameinfo.gametype == GAME_Chex && DoomEdMap.FindType(DoomEdNum) == NULL &&
+		(GameFilter & GAME_Doom))
+	{
+		DoomEdMap.AddType (DoomEdNum, Class);
+	}
 }
 
 //==========================================================================

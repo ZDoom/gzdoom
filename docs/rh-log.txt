@@ -1,4 +1,9 @@
 September 1, 2008  (Changes by Graf Zahl)
+- Added an 'allcheats' CVAR. This will enable all cheats from all
+  supported games in any game being played.
+- Changed Chex Quest DoomEdNum initilization so that all empty slots 
+  are filled with Doom actors if they exist.
+- Added missing spawn filters to Chex Quest items.
 - Gave the PlayerPawn base class a default damage fade color instead of
   hacking it into the actor when actually used.
 - Fixed: The DamageFade color was not saved in savegames.

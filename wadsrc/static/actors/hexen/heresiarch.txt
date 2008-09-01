@@ -3,6 +3,7 @@
 
 ACTOR Heresiarch 10080 native
 {
+	Game Hexen
 	Health 5000
 	Painchance 10
 	Speed 16

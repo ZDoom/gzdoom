@@ -232,7 +232,7 @@ public:
 	~FDoomEdMap();
 
 	const PClass *FindType (int doomednum) const;
-	void AddType (int doomednum, const PClass *type);
+	void AddType (int doomednum, const PClass *type, bool temporary = false);
 	void DelType (int doomednum);
 	void Empty ();
 
@@ -246,6 +246,7 @@ private:
 		FDoomEdEntry *HashNext;
 		const PClass *Type;
 		int DoomEdNum;
+		bool temp;
 	};
 
 	static FDoomEdEntry *DoomEdHash[DOOMED_HASHSIZE];

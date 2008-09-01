@@ -1,3 +1,8 @@
+September 1, 2008  (Changes by Graf Zahl)
+- Gave the PlayerPawn base class a default damage fade color instead of
+  hacking it into the actor when actually used.
+- Fixed: The DamageFade color was not saved in savegames.
+
 August 30, 2008  (Changes by Graf Zahl)
 - Added Blzut3's patch for a real Chex Quest game mode.
 

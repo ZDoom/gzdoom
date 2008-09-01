@@ -1474,16 +1474,6 @@ void DBaseStatusBar::BlendView (float blend[4])
 			cnt = 228;
 
 		APlayerPawn *mo = players[consoleplayer].mo;
-
-		// [CW] If no damage fade is specified, assume defaults.
-		if (!mo->HasDamageFade)
-		{
-			mo->HasDamageFade = true;
-			mo->RedDamageFade = 255;
-			mo->GreenDamageFade = 0;
-			mo->BlueDamageFade = 0;
-		}
-
 		AddBlend (mo->RedDamageFade / 255, mo->GreenDamageFade / 255, mo->BlueDamageFade / 255, cnt / 255.f, blend);
 	}
 

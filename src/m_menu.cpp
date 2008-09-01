@@ -1999,7 +1999,7 @@ void M_QuitGame (int choice)
 	//  or one at random, between 1 and maximum number.
 	if (gameinfo.gametype & (GAME_DoomStrifeChex))
 	{
-		int quitmsg = 0;gametic % (gameinfo.gametype == GAME_Doom ? (gameinfo.gametype != GAME_Chex ? NUM_QUITDOOMMESSAGES : NUM_QUITCHEXMESSAGES - 1) : NUM_QUITSTRIFEMESSAGES - 1);
+		int quitmsg = 0;
 		if (gameinfo.gametype == GAME_Doom)
 			quitmsg = gametic % NUM_QUITDOOMMESSAGES;
 		else if (gameinfo.gametype == GAME_Strife)

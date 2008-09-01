@@ -26,6 +26,7 @@ Actor PlayerPawn : Actor native
 	Player.SideMove 1,1
 	Player.ColorRange 0,0
 	Player.SoundClass "player"
+	Player.DamageScreenColor "ff 00 00"
 }
 
 Actor PlayerChunk : PlayerPawn native

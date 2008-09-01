@@ -2490,8 +2490,6 @@ static void PlayerCrouchSprite (FScanner &sc, APlayerPawn *defaults, Baggage &ba
 //==========================================================================
 static void PlayerDmgScreenColor (FScanner &sc, APlayerPawn *defaults, Baggage &bag)
 {
-	defaults->HasDamageFade = true;
-
 	if (sc.CheckNumber ())
 	{
 		sc.MustGetNumber ();

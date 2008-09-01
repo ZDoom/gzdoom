@@ -269,7 +269,7 @@ gameinfo_t ChexGameInfo =
 	"misc/chat2",
 	"D_VICTOR",
 	"FLOOR4_8",
-	"HELP2",
+	"CREDIT",
 	"VICTORY2",
 	"ENDPIC",
 	{ { "HELP1", "CREDIT" } },

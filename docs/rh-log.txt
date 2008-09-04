@@ -1,3 +1,10 @@
+September 4, 2008  (Changes by Graf Zahl)
+- Fixed: Red blood particles used too dark colors.
+- Fixed: The smoothlighting code in side_t::GetLightLevel relied on 
+  the global 'linedef' variable for automatic fake contrast although
+  this issue had already been fixed for the original code here.
+- Replaced static string buffers with FString in FONTDEFS parser.
+
 September 1, 2008  (Changes by Graf Zahl)
 - Added an 'allcheats' CVAR. This will enable all cheats from all
   supported games in any game being played.

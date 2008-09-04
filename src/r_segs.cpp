@@ -1435,12 +1435,13 @@ int side_t::GetLightLevel (bool foggy, int baselight) const
 	{
 		if (!(Flags & WALLF_NOFAKECONTRAST))
 		{
-			if((level.flags & LEVEL_SMOOTHLIGHTING) || (Flags & WALLF_SMOOTHLIGHTING) || r_smoothlighting)
+			if (((level.flags & LEVEL_SMOOTHLIGHTING) || (Flags & WALLF_SMOOTHLIGHTING) || r_smoothlighting) &&
+				lines[linenum].dx != 0)
 			{
 				baselight += int // OMG LEE KILLOUGH LIVES! :/
 					(
 						(float(level.WallHorizLight)
-						+abs(atan(float(linedef->dy)/float(linedef->dx))/float(1.57079))
+						+abs(atan(float(lines[linenum].dy)/float(lines[linenum].dx))/float(1.57079))
 						*float(level.WallVertLight - level.WallHorizLight))
 					);
 			}

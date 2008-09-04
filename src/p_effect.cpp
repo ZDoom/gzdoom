@@ -101,7 +101,7 @@ void P_InitEffects ()
 		color++;
 	}
 
-	int kind = gameinfo.defaultbloodcolor;
+	int kind = gameinfo.defaultbloodparticlecolor;
 	blood1 = ColorMatcher.Pick(RPART(kind), GPART(kind), BPART(kind));
 	blood2 = ColorMatcher.Pick(RPART(kind)/3, GPART(kind)/3, BPART(kind)/3);
 }

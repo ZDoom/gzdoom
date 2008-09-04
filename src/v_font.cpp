@@ -1499,7 +1499,8 @@ FSpecialFont::FSpecialFont (const char *name, int first, int count, int *lumplis
 	double *luminosity;
 	int maxyoffs;
 	int TotalColors;
-
+	FTexture *pic;
+	
 	Name=copystring(name);
 	Chars = new CharData[count];
 	charlumps = new int[count];
@@ -1520,8 +1521,15 @@ FSpecialFont::FSpecialFont (const char *name, int first, int count, int *lumplis
 		if (lump >= 0)
 		{
 			Wads.GetLumpName(buffer, lump);
-			buffer[8]=0;
-			FTexture *pic = TexMan[buffer];
+			if (buffer[0] != 0)
+			{
+				buffer[8]=0;
+				pic = TexMan[buffer];
+			}
+			else
+			{
+				pic = NULL;
+			}
 			if (pic != NULL)
 			{
 				int height = pic->GetScaledHeight();
@@ -1623,7 +1631,7 @@ void V_InitCustomFonts()
 	FScanner sc;
 	int lumplist[256];
 	bool notranslate[256];
-	char namebuffer[16], templatebuf[16];
+	FString namebuffer, templatebuf;
 	int i;
 	int llump,lastlump=0;
 	int format;
@@ -1638,8 +1646,7 @@ void V_InitCustomFonts()
 		{
 			memset (lumplist, -1, sizeof(lumplist));
 			memset (notranslate, 0, sizeof(notranslate));
-			strncpy (namebuffer, sc.String, 15);
-			namebuffer[15] = 0;
+			namebuffer = sc.String;
 			format = 0;
 			start = 33;
 			first = 33;
@@ -1653,8 +1660,7 @@ void V_InitCustomFonts()
 				{
 					if (format == 2) goto wrong;
 					sc.MustGetString();
-					strncpy (templatebuf, sc.String, 16);
-					templatebuf[15] = 0;
+					templatebuf = sc.String;
 					format = 1;
 				}
 				else if (sc.Compare ("BASE"))

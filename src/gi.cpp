@@ -98,7 +98,8 @@ gameinfo_t HexenGameInfo =
 	24*FRACUNIT,
 	"xlat/heretic.txt",	// not really correct but this was used before.
 	{ "mapinfo/hexen.txt", NULL },
-	MAKERGB(100,0,0),
+	MAKERGB(104,0,0),
+	MAKERGB(255,0,0),
 };
 
 gameinfo_t HexenDKGameInfo =
@@ -129,7 +130,8 @@ gameinfo_t HexenDKGameInfo =
 	24*FRACUNIT,
 	"xlat/heretic.txt",	// not really correct but this was used before.
 	{ "mapinfo/hexen.txt", NULL },
-	MAKERGB(100,0,0),
+	MAKERGB(104,0,0),
+	MAKERGB(255,0,0),
 };
 
 gameinfo_t HereticGameInfo =
@@ -160,7 +162,8 @@ gameinfo_t HereticGameInfo =
 	24*FRACUNIT,
 	"xlat/heretic.txt",
 	{ "mapinfo/heretic.txt", NULL },
-	MAKERGB(100,0,0),
+	MAKERGB(104,0,0),
+	MAKERGB(255,0,0),
 };
 
 gameinfo_t HereticSWGameInfo =
@@ -191,7 +194,8 @@ gameinfo_t HereticSWGameInfo =
 	24*FRACUNIT,
 	"xlat/heretic.txt",
 	{ "mapinfo/heretic.txt", NULL },
-	MAKERGB(100,0,0),
+	MAKERGB(104,0,0),
+	MAKERGB(255,0,0),
 };
 
 gameinfo_t SharewareGameInfo =
@@ -222,7 +226,8 @@ gameinfo_t SharewareGameInfo =
 	24*FRACUNIT,
 	"xlat/doom.txt",
 	{ "mapinfo/doomcommon.txt", "mapinfo/doom1.txt" },
-	MAKERGB(100,0,0),
+	MAKERGB(104,0,0),
+	MAKERGB(255,0,0),
 };
 
 gameinfo_t RegisteredGameInfo =
@@ -253,7 +258,8 @@ gameinfo_t RegisteredGameInfo =
 	24*FRACUNIT,
 	"xlat/doom.txt",
 	{ "mapinfo/doomcommon.txt", "mapinfo/doom1.txt" },
-	MAKERGB(100,0,0),
+	MAKERGB(104,0,0),
+	MAKERGB(255,0,0),
 };
 
 gameinfo_t ChexGameInfo =
@@ -269,7 +275,7 @@ gameinfo_t ChexGameInfo =
 	"misc/chat2",
 	"D_VICTOR",
 	"FLOOR4_8",
-	"CREDIT",
+	"HELP2",
 	"VICTORY2",
 	"ENDPIC",
 	{ { "HELP1", "CREDIT" } },
@@ -284,6 +290,7 @@ gameinfo_t ChexGameInfo =
 	24*FRACUNIT,
 	"xlat/doom.txt",
 	{ "mapinfo/chex.txt", NULL },
+	MAKERGB(63,125,57),
 	MAKERGB(95,175,87),
 };
 
@@ -315,7 +322,8 @@ gameinfo_t RetailGameInfo =
 	24*FRACUNIT,
 	"xlat/doom.txt",
 	{ "mapinfo/doomcommon.txt", "mapinfo/doom1.txt" },
-	MAKERGB(100,0,0),
+	MAKERGB(104,0,0),
+	MAKERGB(255,0,0),
 };
 
 gameinfo_t CommercialGameInfo =
@@ -346,7 +354,8 @@ gameinfo_t CommercialGameInfo =
 	24*FRACUNIT,
 	"xlat/doom.txt",
 	{ "mapinfo/doomcommon.txt", "mapinfo/doom2.txt" },
-	MAKERGB(100,0,0),
+	MAKERGB(104,0,0),
+	MAKERGB(255,0,0),
 };
 
 gameinfo_t PlutoniaGameInfo =
@@ -377,7 +386,8 @@ gameinfo_t PlutoniaGameInfo =
 	24*FRACUNIT,
 	"xlat/doom.txt",
 	{ "mapinfo/doomcommon.txt", "mapinfo/plutonia.txt" },
-	MAKERGB(100,0,0),
+	MAKERGB(104,0,0),
+	MAKERGB(255,0,0),
 };
 
 gameinfo_t TNTGameInfo =
@@ -408,7 +418,8 @@ gameinfo_t TNTGameInfo =
 	24*FRACUNIT,
 	"xlat/doom.txt",
 	{ "mapinfo/doomcommon.txt", "mapinfo/tnt.txt" },
-	MAKERGB(100,0,0),
+	MAKERGB(104,0,0),
+	MAKERGB(255,0,0),
 };
 
 gameinfo_t StrifeGameInfo =
@@ -439,7 +450,8 @@ gameinfo_t StrifeGameInfo =
 	16*FRACUNIT,
 	"xlat/strife.txt",
 	{ "mapinfo/strife.txt", NULL },
-	MAKERGB(100,0,0),
+	MAKERGB(104,0,0),
+	MAKERGB(255,0,0),
 };
 
 gameinfo_t StrifeTeaserGameInfo =
@@ -470,7 +482,8 @@ gameinfo_t StrifeTeaserGameInfo =
 	16*FRACUNIT,
 	"xlat/strife.txt",
 	{ "mapinfo/strife.txt", NULL },
-	MAKERGB(100,0,0),
+	MAKERGB(104,0,0),
+	MAKERGB(255,0,0),
 };
 
 gameinfo_t StrifeTeaser2GameInfo =
@@ -501,5 +514,6 @@ gameinfo_t StrifeTeaser2GameInfo =
 	16*FRACUNIT,
 	"xlat/strife.txt",
 	{ "mapinfo/strife.txt", NULL },
-	MAKERGB(100,0,0),
+	MAKERGB(104,0,0),
+	MAKERGB(255,0,0),
 };

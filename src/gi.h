@@ -120,6 +120,7 @@ typedef struct
 	const char *translator;
 	const char *mapinfo[2];
 	DWORD defaultbloodcolor;
+	DWORD defaultbloodparticlecolor;
 } gameinfo_t;
 
 extern gameinfo_t gameinfo;

@@ -1819,7 +1819,7 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 //
 // G_DoCompleted
 //
-static char		nextlevel[9];
+static FString	nextlevel;
 static int		startpos;	// [RH] Support for multiple starts per level
 extern int		NoWipe;		// [RH] Don't wipe when travelling in hubs
 static bool		startkeepfacing;	// [RH] Support for keeping your facing angle
@@ -1831,7 +1831,7 @@ static bool		g_nomonsters;
 //		match the first parameter of the single player start spots
 //		that should appear in the next map.
 
-void G_ChangeLevel(const char * levelname, int position, bool keepFacing, int nextSkill, 
+void G_ChangeLevel(const char *levelname, int position, bool keepFacing, int nextSkill, 
 				   bool nointermission, bool resetinv, bool nomonsters)
 {
 	if (unloading)
@@ -1840,15 +1840,14 @@ void G_ChangeLevel(const char * levelname, int position, bool keepFacing, int ne
 		return;
 	}
 
-	strncpy (nextlevel, levelname, 8);
-	nextlevel[8] = 0;
+	nextlevel = levelname;
 
-	if (strncmp(nextlevel, "enDSeQ", 6))
+	if (strncmp(levelname, "enDSeQ", 6))
 	{
 		level_info_t *nextinfo = CheckLevelRedirect (FindLevelInfo (nextlevel));
 		if (nextinfo)
 		{
-			strncpy(nextlevel, nextinfo->mapname, 8);
+			nextlevel = nextinfo->mapname;
 		}
 	}
 
@@ -1944,7 +1943,7 @@ void G_DoCompleted (void)
 
 	if (gamestate == GS_TITLELEVEL)
 	{
-		strncpy (level.mapname, nextlevel, 8);
+		strncpy (level.mapname, nextlevel, 255);
 		G_DoLoadLevel (startpos, false);
 		startpos = 0;
 		viewactive = true;
@@ -1985,8 +1984,9 @@ void G_DoCompleted (void)
 	}
 
 	CheckWarpTransMap (wminfo.next, true);
+	nextlevel = wminfo.next;
 
-	wminfo.next_ep = FindLevelInfo (nextlevel)->cluster - 1;
+	wminfo.next_ep = FindLevelInfo (wminfo.next)->cluster - 1;
 	wminfo.maxkills = level.total_monsters;
 	wminfo.maxitems = level.total_items;
 	wminfo.maxsecret = level.total_secrets;
@@ -2318,7 +2318,7 @@ void G_DoWorldDone (void)
 	}
 	else
 	{
-		strncpy (level.mapname, nextlevel, 8);
+		strncpy (level.mapname, nextlevel, 255);
 	}
 	G_StartTravel ();
 	G_DoLoadLevel (startpos, true);

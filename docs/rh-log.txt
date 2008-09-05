@@ -1,3 +1,17 @@
+September 4, 2008
+- Fixed: The "same level" dmflag did not work.
+- Changed the nextlevel global var to an FString.
+- Implemented some more controllers for the OPL player:
+  * RPN select (controllers 100 and 101)
+  *  RPN 0 (pitch bend sensitivity)
+  * NPRN select (controllers 98 and 99)
+  * Data entry (controllers 6 and 38)
+  * All notes off (controller 123)
+  * All sounds off (controller 120)
+  * Reset controllers (controller 121)
+- Added pixel doubling and quadrupling for fullscreen DirectDraw modes.
+  The command line options -2 and -4 can be used to force them.
+
 September 4, 2008  (Changes by Graf Zahl)
 - Fixed: Red blood particles used too dark colors.
 - Fixed: The smoothlighting code in side_t::GetLightLevel relied on 

@@ -3,7 +3,7 @@
 ** Code to let ZDoom use DirectDraw 3
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2006 Randy Heit
+** Copyright 1998-2008 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -132,12 +132,12 @@ DDrawFB::DDrawFB (int width, int height, bool fullscreen)
 	BlitSurf = NULL;
 	Clipper = NULL;
 	GDIPalette = NULL;
-	ClipRegion = NULL;
 	ClipSize = 0;
 	BufferCount = 1;
 	Gamma = 1.0;
 	BufferPitch = Pitch;
 	FlipFlags = vid_vsync ? DDFLIP_WAIT : DDFLIP_WAIT|DDFLIP_NOVSYNC;
+	PixelDoubling = 0;
 
 	NeedGammaUpdate = false;
 	NeedPalUpdate = false;
@@ -239,20 +239,21 @@ bool DDrawFB::CreateResources ()
 			if (mode->width == Width && mode->height == Height)
 			{
 				TrueHeight = mode->realheight;
+				PixelDoubling = mode->doubling;
 				break;
 			}
 		}
-		hr = DDraw->SetDisplayMode (Width, TrueHeight, bits = vid_displaybits, vid_refreshrate, 0);
+		hr = DDraw->SetDisplayMode (Width << PixelDoubling, TrueHeight << PixelDoubling, bits = vid_displaybits, vid_refreshrate, 0);
 		if (FAILED(hr))
 		{
-			hr = DDraw->SetDisplayMode (Width, TrueHeight, bits = vid_displaybits, 0, 0);
+			hr = DDraw->SetDisplayMode (Width << PixelDoubling, TrueHeight << PixelDoubling, bits = vid_displaybits, 0, 0);
 			bits = 32;
 			while (FAILED(hr) && bits >= 8)
 			{
-				hr = DDraw->SetDisplayMode (Width, Height, bits, vid_refreshrate, 0);
+				hr = DDraw->SetDisplayMode (Width << PixelDoubling, Height << PixelDoubling, bits, vid_refreshrate, 0);
 				if (FAILED(hr))
 				{
-					hr = DDraw->SetDisplayMode (Width, Height, bits, 0, 0);
+					hr = DDraw->SetDisplayMode (Width << PixelDoubling, Height << PixelDoubling, bits, 0, 0);
 				}
 				bits -= 8;
 			}
@@ -290,6 +291,7 @@ bool DDrawFB::CreateResources ()
 		// Create the primary surface
 		ddsd.dwFlags = DDSD_CAPS;
 		ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
+//		PixelDoubling = 1;
 		do
 		{
 			hr = DDraw->CreateSurface (&ddsd, &PrimarySurf, NULL);
@@ -304,8 +306,8 @@ bool DDrawFB::CreateResources ()
 		MaybeCreatePalette ();
 
 		// Resize the window to match desired dimensions
-		int sizew = Width + GetSystemMetrics (SM_CXSIZEFRAME)*2;
-		int sizeh = Height + GetSystemMetrics (SM_CYSIZEFRAME) * 2 +
+		int sizew = (Width << PixelDoubling) + GetSystemMetrics (SM_CXSIZEFRAME)*2;
+		int sizeh = (Height << PixelDoubling) + GetSystemMetrics (SM_CYSIZEFRAME) * 2 +
 					 GetSystemMetrics (SM_CYCAPTION);
 		LOG2 ("Resize window to %dx%d\n", sizew, sizeh);
 		VidResizing = true;
@@ -334,8 +336,8 @@ bool DDrawFB::CreateResources ()
 
 		// Create the backbuffer
 		ddsd.dwFlags        = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS;
-		ddsd.dwWidth        = Width;
-		ddsd.dwHeight       = Height;
+		ddsd.dwWidth        = Width << PixelDoubling;
+		ddsd.dwHeight       = Height << PixelDoubling;
 		ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | (UseBlitter ? DDSCAPS_SYSTEMMEMORY : 0);
 
 		hr = DDraw->CreateSurface (&ddsd, &BackSurf, NULL);
@@ -661,6 +663,11 @@ void DDrawFB::MaybeCreatePalette ()
 					NeedPalUpdate = true;
 				}
 			}
+			if (PixelDoubling)
+			{
+				UsePfx = true;
+				GPfx.SetFormat (-8, 0, 0, 0);
+			}
 		}
 	}
 	else
@@ -681,11 +688,6 @@ void DDrawFB::ReleaseResources ()
 		Unlock ();
 	}
 
-	if (ClipRegion != NULL)
-	{
-		delete[] ClipRegion;
-		ClipRegion = NULL;
-	}
 	SAFE_RELEASE( Clipper );
 	SAFE_RELEASE( PrimarySurf );
 	SAFE_RELEASE( BackSurf );
@@ -1110,8 +1112,8 @@ void DDrawFB::Update ()
 				if (UsePfx)
 				{
 					GPfx.Convert (MemBuffer, BufferPitch,
-						writept, Pitch, Width, Height,
-						FRACUNIT, FRACUNIT, 0, 0);
+						writept, Pitch, Width << PixelDoubling, Height << PixelDoubling,
+						FRACUNIT >> PixelDoubling, FRACUNIT >> PixelDoubling, 0, 0);
 				}
 				else
 				{
@@ -1207,8 +1209,8 @@ bool DDrawFB::PaintToWindow ()
 			if (LockSurf (NULL, NULL) != NoGood)
 			{
 				GPfx.Convert (MemBuffer, BufferPitch,
-					Buffer, Pitch, Width, Height,
-					FRACUNIT, FRACUNIT, 0, 0);
+					Buffer, Pitch, Width << PixelDoubling, Height << PixelDoubling,
+					FRACUNIT >> PixelDoubling, FRACUNIT >> PixelDoubling, 0, 0);
 				LockingSurf->Unlock (NULL);
 				if (FAILED (hr = PrimarySurf->Blt (&rect, BackSurf, NULL, DDBLT_WAIT|DDBLT_ASYNC, NULL)))
 				{

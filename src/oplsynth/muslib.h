@@ -154,9 +154,12 @@ struct OPLdata {
 	uchar	channelVolume[CHANNELS];		// volume
 	uchar	channelLastVolume[CHANNELS];	// last volume
 	schar	channelPan[CHANNELS];			// pan, 0=normal
-	schar	channelPitch[CHANNELS];			// pitch wheel, 0=normal
+	schar	channelPitch[CHANNELS];			// pitch wheel, 64=normal
 	uchar	channelSustain[CHANNELS];		// sustain pedal value
 	uchar	channelModulation[CHANNELS];	// modulation pot value
+	ushort	channelPitchSens[CHANNELS];		// pitch sensitivity, 2=default
+	ushort	channelRPN[CHANNELS];			// RPN number for data entry
+	uchar	channelExpression[CHANNELS];	// expression
 };
 
 struct OPLio {
@@ -227,9 +230,9 @@ struct musicBlock {
 	void OPLpitchWheel(uint channel, int pitch);
 	void OPLchangeControl(uint channel, uchar controller, int value);
 	void OPLprogramChange(uint channel, int value);
+	void OPLresetControllers(uint channel, int vol);
 	void OPLplayMusic(int vol);
 	void OPLstopMusic();
-	void OPLchangeVolume(uint volume);
 
 	int OPLloadBank (FileReader &data);
 
@@ -250,7 +253,7 @@ protected:
 
 	void writeFrequency(uint slot, uint note, int pitch, uint keyOn);
 	void writeModulation(uint slot, struct OPL2instrument *instr, int state);
-	uint calcVolume(uint channelVolume, uint MUSvolume, uint noteVolume);
+	uint calcVolume(uint channelVolume, uint channelExpression, uint noteVolume);
 	int occupyChannel(uint slot, uint channel,
 						 int note, int volume, struct OP2instrEntry *instrument, uchar secondary);
 	int releaseChannel(uint slot, uint killed);
@@ -273,12 +276,17 @@ enum MUSctrl {
     ctrlChorus,
     ctrlSustainPedal,
     ctrlSoftPedal,
-    _ctrlCount_,
-    ctrlSoundsOff = _ctrlCount_,
+	ctrlRPNHi,
+	ctrlRPNLo,
+	ctrlNRPNHi,
+	ctrlNRPNLo,
+	ctrlDataEntryHi,
+	ctrlDataEntryLo,
+
+	ctrlSoundsOff,
     ctrlNotesOff,
     ctrlMono,
     ctrlPoly,
-    ctrlResetCtrls
 };
 
 #define OPL_SAMPLE_RATE			49716.0

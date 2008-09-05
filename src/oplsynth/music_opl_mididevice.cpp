@@ -468,15 +468,21 @@ void OPLMIDIDevice::HandleEvent(int status, int parm1, int parm2)
 		{
 		case 0:		OPLchangeControl(channel, ctrlBank, parm2);			break;
 		case 1:		OPLchangeControl(channel, ctrlModulation, parm2);	break;
+		case 6:		OPLchangeControl(channel, ctrlDataEntryHi, parm2);	break;
 		case 7:		OPLchangeControl(channel, ctrlVolume, parm2);		break;
 		case 10:	OPLchangeControl(channel, ctrlPan, parm2);			break;
 		case 11:	OPLchangeControl(channel, ctrlExpression, parm2);	break;
+		case 38:	OPLchangeControl(channel, ctrlDataEntryLo, parm2);	break;
 		case 64:	OPLchangeControl(channel, ctrlSustainPedal, parm2);	break;
 		case 67:	OPLchangeControl(channel, ctrlSoftPedal, parm2);	break;
 		case 91:	OPLchangeControl(channel, ctrlReverb, parm2);		break;
 		case 93:	OPLchangeControl(channel, ctrlChorus, parm2);		break;
+		case 98:	OPLchangeControl(channel, ctrlNRPNLo, parm2);		break;
+		case 99:	OPLchangeControl(channel, ctrlNRPNHi, parm2);		break;
+		case 100:	OPLchangeControl(channel, ctrlRPNLo, parm2);		break;
+		case 101:	OPLchangeControl(channel, ctrlRPNHi, parm2);		break;
 		case 120:	OPLchangeControl(channel, ctrlSoundsOff, parm2);	break;
-		case 121:	OPLchangeControl(channel, ctrlResetCtrls, parm2);	break;
+		case 121:	OPLresetControllers(channel, 100);					break;
 		case 123:	OPLchangeControl(channel, ctrlNotesOff, parm2);		break;
 		case 126:	OPLchangeControl(channel, ctrlMono, parm2);			break;
 		case 127:	OPLchangeControl(channel, ctrlPoly, parm2);			break;

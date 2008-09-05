@@ -185,7 +185,18 @@ bool Win32Video::InitD3D9 ()
 	FreeModes ();
 	AddD3DModes (D3DFMT_X8R8G8B8);
 	AddD3DModes (D3DFMT_R5G6B5);
-	AddLowResModes ();
+	if (Args->CheckParm ("-2"))
+	{ // Force all modes to be pixel-doubled.
+		ScaleModes (1);
+	}
+	else if (Args->CheckParm ("-4"))
+	{ // Force all modes to be pixel-quadrupled.
+		ScaleModes (2);
+	}
+	else
+	{
+		AddLowResModes ();
+	}
 	AddLetterboxModes ();
 	if (m_Modes == NULL)
 	{ // Too bad. We didn't find any modes for D3D9. We probably won't find any
@@ -256,12 +267,24 @@ void Win32Video::InitDDraw ()
 					"If you started ZDoom from a fullscreen DOS box, run it from "
 					"a DOS window instead. If that does not work, you may need to reboot.");
 	}
-	if (OSPlatform == os_Win95)
+	if (Args->CheckParm ("-2"))
+	{ // Force all modes to be pixel-doubled.
+		ScaleModes(1);
+	}
+	else if (Args->CheckParm ("-4"))
+	{ // Force all modes to be pixel-quadrupled.
+		ScaleModes(2);
+	}
+	else
 	{
-		// Windows 95 will let us use Mode X. If we didn't find any linear
-		// modes in the loop above, add the Mode X modes here.
-		AddMode (320, 200, 8, 200, 0);
-		AddMode (320, 240, 8, 240, 0);
+		if (OSPlatform == os_Win95)
+		{
+			// Windows 95 will let us use Mode X. If we didn't find any linear
+			// modes in the loop above, add the Mode X modes here.
+			AddMode (320, 200, 8, 200, 0);
+			AddMode (320, 240, 8, 240, 0);
+		}
+		AddLowResModes ();
 	}
 	AddLetterboxModes ();
 }
@@ -358,7 +381,7 @@ void Win32Video::AddLowResModes()
 	{
 		nextmode = mode->next;
 		if (mode->realheight == mode->height &&
-			mode->doubling == 0&&
+			mode->doubling == 0 &&
 			mode->height >= 200*2 &&
 			mode->height <= 480*2 &&
 			mode->width >= 320*2 &&
@@ -371,7 +394,7 @@ void Win32Video::AddLowResModes()
 	{
 		nextmode = mode->next;
 		if (mode->realheight == mode->height &&
-			mode->doubling == 0&&
+			mode->doubling == 0 &&
 			mode->height >= 200*4 &&
 			mode->height <= 480*4 &&
 			mode->width >= 320*4 &&
@@ -453,6 +476,36 @@ void Win32Video::FreeModes ()
 		delete tempmode;
 	}
 	m_Modes = NULL;
+}
+
+// For every mode, set its scaling factor. Modes that end up with too
+// small a display area are discarded.
+
+void Win32Video::ScaleModes (int doubling)
+{
+	ModeInfo *mode, **prev;
+
+	prev = &m_Modes;
+	mode = m_Modes;
+
+	while (mode != NULL)
+	{
+		assert(mode->doubling == 0);
+		mode->width >>= doubling;
+		mode->height >>= doubling;
+		mode->realheight >>= doubling;
+		mode->doubling = doubling;
+		if ((mode->width & 7) != 0 || mode->width < 320 || mode->height < 200)
+		{ // Mode became too small. Delete it.
+			*prev = mode->next;
+			delete mode;
+		}
+		else
+		{
+			prev = &mode->next;
+		}
+		mode = *prev;
+	}
 }
 
 void Win32Video::StartModeIterator (int bits, bool fs)

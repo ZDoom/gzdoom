@@ -460,6 +460,7 @@ bool D3DFB::CreateResources ()
 	}
 	if (FAILED(D3DDevice->CreatePixelShader (GammaFixerDef, &GammaFixerShader)))
 	{
+// Cannot print during screen creation.
 //		Printf ("Using Shader Model 1.4: Windowed mode gamma will not work.\n");
 		GammaFixerShader = NULL;
 	}

@@ -51,13 +51,11 @@ extern HWND Window;
 #include "c_cvars.h"
 #include "i_system.h"
 #include "gi.h"
-#include "actor.h"
-#include "r_state.h"
 #include "w_wad.h"
 #include "i_music.h"
 #include "i_musicinterns.h"
 #include "v_text.h"
-#include "p_local.h"
+#include "v_palette.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -1402,8 +1400,8 @@ FSoundChan *FMODSoundRenderer::StartSound(sfxinfo_t *sfx, float vol, int pitch, 
 
 CVAR(Float, snd_3dspread, 180, 0)
 
-FSoundChan *FMODSoundRenderer::StartSound3D(sfxinfo_t *sfx, float vol, float distscale,
-	int pitch, int priority, const FVector3 &pos, const FVector3 &vel, const sector_t *sector,
+FSoundChan *FMODSoundRenderer::StartSound3D(sfxinfo_t *sfx, SoundListener *listener, float vol, float distscale,
+	int pitch, int priority, const FVector3 &pos, const FVector3 &vel,
 	int channum, int chanflags, FSoundChan *reuse_chan)
 {
 	int id = int(sfx - &S_sfx[0]);
@@ -1465,7 +1463,7 @@ FSoundChan *FMODSoundRenderer::StartSound3D(sfxinfo_t *sfx, float vol, float dis
 		{
 			mode = (mode & ~FMOD_LOOP_OFF) | FMOD_LOOP_NORMAL;
 		}
-		mode = SetChanHeadSettings(chan, sfx, pos, channum, chanflags, sector, mode);
+		mode = SetChanHeadSettings(listener, chan, sfx, pos, channum, chanflags, mode);
 		chan->setMode(mode);
 		chan->setChannelGroup((chanflags & (CHAN_UI | CHAN_NOPAUSE)) ? SfxGroup : PausableSfx);
 
@@ -1543,16 +1541,17 @@ void FMODSoundRenderer::HandleChannelDelay(FMOD::Channel *chan, FSoundChan *reus
 //
 //==========================================================================
 
-FMOD_MODE FMODSoundRenderer::SetChanHeadSettings(FMOD::Channel *chan, sfxinfo_t *sfx, const FVector3 &pos, int channum, int chanflags, const sector_t *sec, FMOD_MODE oldmode) const
+FMOD_MODE FMODSoundRenderer::SetChanHeadSettings(SoundListener *listener, FMOD::Channel *chan, sfxinfo_t *sfx, 
+												 const FVector3 &pos, int channum, int chanflags, 
+												 FMOD_MODE oldmode) const
 {
-	if (players[consoleplayer].camera == NULL)
+	if (!listener->valid)
 	{
 		return oldmode;
 	}
 	FVector3 cpos, mpos;
-	cpos.X = FIXED2FLOAT(players[consoleplayer].camera->x);
-	cpos.Y = FIXED2FLOAT(players[consoleplayer].camera->z);
-	cpos.Z = FIXED2FLOAT(players[consoleplayer].camera->y);
+
+	cpos = listener->position;
 
 	if (chanflags & CHAN_AREA)
 	{
@@ -1725,7 +1724,7 @@ void FMODSoundRenderer::SetInactive(bool inactive)
 //
 //==========================================================================
 
-void FMODSoundRenderer::UpdateSoundParams3D(FSoundChan *chan, const FVector3 &pos, const FVector3 &vel)
+void FMODSoundRenderer::UpdateSoundParams3D(SoundListener *listener, FSoundChan *chan, const FVector3 &pos, const FVector3 &vel)
 {
 	if (chan == NULL || chan->SysChannel == NULL)
 		return;
@@ -1737,7 +1736,7 @@ void FMODSoundRenderer::UpdateSoundParams3D(FSoundChan *chan, const FVector3 &po
 	{
 		oldmode = FMOD_3D | FMOD_SOFTWARE;
 	}
-	mode = SetChanHeadSettings(fchan, chan->SfxInfo, pos, chan->EntChannel, chan->ChanFlags, chan->Sector, oldmode);
+	mode = SetChanHeadSettings(listener, fchan, chan->SfxInfo, pos, chan->EntChannel, chan->ChanFlags, oldmode);
 	if (mode != oldmode)
 	{ // Only set the mode if it changed.
 		fchan->setMode(mode);
@@ -1751,32 +1750,30 @@ void FMODSoundRenderer::UpdateSoundParams3D(FSoundChan *chan, const FVector3 &po
 //
 //==========================================================================
 
-void FMODSoundRenderer::UpdateListener()
+void FMODSoundRenderer::UpdateListener(SoundListener *listener)
 {
-	AActor *listener = players[consoleplayer].camera;
-	float angle;
 	FMOD_VECTOR pos, vel;
 	FMOD_VECTOR forward;
 	FMOD_VECTOR up;
 
-	if (listener == NULL)
+	if (!listener->valid)
 	{
 		return;
 	}
 
 	// Set velocity to 0 to prevent crazy doppler shifts just from running.
-	vel.x = 0;//listener->momx * (TICRATE/65536.f);
-	vel.y = 0;//listener->momz * (TICRATE/65536.f);
-	vel.z = 0;//listener->momy * (TICRATE/65536.f);
-	pos.x = listener->x / 65536.f;
-	pos.y = listener->z / 65536.f;
-	pos.z = listener->y / 65536.f;
 
-	angle = (float)(listener->angle) * ((float)PI / 2147483648.f);
+	vel.x = listener->velocity.X;
+	vel.z = listener->velocity.Y;
+	vel.y = listener->velocity.Z;
+	pos.x = listener->position.X;
+	pos.z = listener->position.Y;
+	pos.y = listener->position.Z;
 
-	forward.x = cosf(angle);
+	float angle = listener->angle;
+	forward.x = cos(angle);
 	forward.y = 0;
-	forward.z = sinf(angle);
+	forward.z = sin(angle);
 
 	up.x = 0;
 	up.y = 1;
@@ -1793,9 +1790,9 @@ void FMODSoundRenderer::UpdateListener()
 	}
 	else
 	{
-		underwater = (listener->waterlevel == 3 && snd_waterlp);
+		underwater = (listener->underwater && snd_waterlp);
 		assert (zones != NULL);
-		env = zones[listener->Sector->ZoneNumber].Environment;
+		env = zones[listener->ZoneNumber].Environment;
 		if (env == NULL)
 		{
 			env = DefaultEnvironments[0];
@@ -1812,7 +1809,7 @@ void FMODSoundRenderer::UpdateListener()
 	if (underwater || env->SoftwareWater)
 	{
 		//PausableSfx->setPitch(0.64171f);		// This appears to be what Duke 3D uses
-		PausableSfx->setPitch(0.7937005f);		// Approx. 4 semitones lower; what Nash suggesetd
+		PausableSfx->setPitch(0.7937005f);		// Approx. 4 semitones lower; what Nash suggested
 		if (WaterLP != NULL)
 		{
 			if (LastWaterLP != snd_waterlp)

@@ -110,6 +110,7 @@ static void CalcPolyobjSoundOrg(const FPolyObj *poly, fixed_t *x, fixed_t *y, fi
 static FSoundChan *S_StartSound(AActor *mover, const sector_t *sec, const FPolyObj *poly,
 	const FVector3 *pt, int channel, FSoundID sound_id, float volume, float attenuation);
 static sfxinfo_t *S_LoadSound(sfxinfo_t *sfx);
+static void S_SetListener(SoundListener &listener, AActor *listenactor);
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -988,7 +989,9 @@ static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyO
 	}
 	else if (attenuation > 0)
 	{
-		chan = GSnd->StartSound3D (sfx, volume, attenuation, pitch, basepriority, pos, vel, sec, channel, chanflags, NULL);
+		SoundListener listener;
+		S_SetListener(listener, players[consoleplayer].camera);
+		chan = GSnd->StartSound3D (sfx, &listener, volume, attenuation, pitch, basepriority, pos, vel, channel, chanflags, NULL);
 	}
 	else
 	{
@@ -1073,8 +1076,11 @@ void S_RestartSound(FSoundChan *chan)
 			return;
 		}
 
-		ochan = GSnd->StartSound3D(sfx, chan->Volume, chan->DistanceScale, chan->Pitch,
-			chan->Priority, pos, vel, chan->Sector, chan->EntChannel, chan->ChanFlags, chan);
+		SoundListener listener;
+		S_SetListener(listener, players[consoleplayer].camera);
+
+		ochan = GSnd->StartSound3D(sfx, &listener, chan->Volume, chan->DistanceScale, chan->Pitch,
+			chan->Priority, pos, vel, chan->EntChannel, chan->ChanFlags, chan);
 	}
 	else
 	{
@@ -1570,9 +1576,10 @@ void S_RestoreEvictedChannels()
 // Updates music & sounds
 //==========================================================================
 
-void S_UpdateSounds (void *listener_p)
+void S_UpdateSounds (AActor *listenactor)
 {
 	FVector3 pos, vel;
+	SoundListener listener;
 
 	I_UpdateMusic();
 
@@ -1587,19 +1594,23 @@ void S_UpdateSounds (void *listener_p)
 		S_ActivatePlayList(false);
 	}
 
+	// should never happen
+	S_SetListener(listener, listenactor);
+
 	for (FSoundChan *chan = Channels; chan != NULL; chan = chan->NextChan)
 	{
 		if ((chan->ChanFlags & (CHAN_EVICTED | CHAN_IS3D)) == CHAN_IS3D)
 		{
 			CalcPosVel(chan, &pos, &vel);
-			GSnd->UpdateSoundParams3D(chan, pos, vel);
+			GSnd->UpdateSoundParams3D(&listener, chan, pos, vel);
 		}
 		chan->ChanFlags &= ~CHAN_JUSTSTARTED;
 	}
 
 	SN_UpdateActiveSequences();
 
-	GSnd->UpdateListener();
+
+	GSnd->UpdateListener(&listener);
 	GSnd->UpdateSounds();
 
 	if (level.time >= RestartEvictionsAt)
@@ -1608,6 +1619,43 @@ void S_UpdateSounds (void *listener_p)
 		S_RestoreEvictedChannels();
 	}
 }
+
+//==========================================================================
+//
+// Sets the internal listener structure
+//
+//==========================================================================
+
+static void S_SetListener(SoundListener &listener, AActor *listenactor)
+{
+	if (listenactor != NULL)
+	{
+		listener.angle = (float)(listenactor->angle) * ((float)PI / 2147483648.f);
+		/*
+		listener.velocity.X = listenactor->momx * (TICRATE/65536.f);
+		listener.velocity.Y = listenactor->momz * (TICRATE/65536.f);
+		listener.velocity.Z = listenactor->momy * (TICRATE/65536.f);
+		*/
+		listener.velocity.Zero();
+		listener.position.X = FIXED2FLOAT(listenactor->x);
+		listener.position.Y = FIXED2FLOAT(listenactor->y);
+		listener.position.Z = FIXED2FLOAT(listenactor->z);
+		listener.underwater = listenactor->waterlevel == 3;
+		listener.ZoneNumber = listenactor->Sector->ZoneNumber;
+		listener.valid = true;
+	}
+	else
+	{
+		listener.angle = 0;
+		listener.position.Zero();
+		listener.velocity.Zero();
+		listener.underwater=false;
+		listener.ZoneNumber=0;
+		listener.valid = false;
+	}
+}
+
+
 
 //==========================================================================
 //

@@ -1,3 +1,8 @@
+September 6, 2008  (Changes by Graf Zahl)
+- Changed sound interface so that all references to game data like actors
+  and sectors are done in s_sound.cpp and not in fmodsound.cpp. Also removed
+  several 'sector' parameters because they were never used inside the sound code.
+
 September 5, 2008
 - Added the "extended" keyword for episode definitions to define episodes
   that are only available in the extended version of Heretic.

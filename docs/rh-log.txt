@@ -1,4 +1,6 @@
 September 5, 2008
+- Added the "extended" keyword for episode definitions to define episodes
+  that are only available in the extended version of Heretic.
 - Added hexendemo.wad and hexdemo.wad as aliases for the demo Hexen IWAD.
 - Added IWAD checks for freedoom1.wad and freedm.wad.
 - The garbage collector now has an opportunity to step each time individual

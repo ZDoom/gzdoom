@@ -1285,6 +1285,7 @@ static void ParseEpisodeInfo (FScanner &sc)
 	char key = 0;
 	bool noskill = false;
 	bool optional = false;
+	bool extended = false;
 
 	// Get map name
 	sc.MustGetString ();
@@ -1305,8 +1306,13 @@ static void ParseEpisodeInfo (FScanner &sc)
 	{
 		if (sc.Compare ("optional"))
 		{
-			// For M4 in Doom and M4 and M5 in Heretic
+			// For M4 in Doom
 			optional = true;
+		}
+		else if (sc.Compare ("extended"))
+		{
+			// For M4 and M5 in Heretic
+			extended = true;
 		}
 		else if (sc.Compare ("name"))
 		{
@@ -1340,6 +1346,12 @@ static void ParseEpisodeInfo (FScanner &sc)
 		}
 	}
 	while (sc.GetString ());
+
+	if (extended && !(gameinfo.flags & GI_MENUHACK_EXTENDED))
+	{ // If the episode is for the extended Heretic, but this is
+	  // not the extended Heretic, ignore it.
+		return;
+	}
 
 	if (optional && !remove)
 	{

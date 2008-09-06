@@ -47,12 +47,12 @@ episode e3m1
 episode e4m1 
 	name "$MNU_OSSUARY"
 	key o
-	optional
+	extended
 
 episode e5m1 
 	name "$MNU_DEMESNE"
 	key s
-	optional
+	extended
 
 
 

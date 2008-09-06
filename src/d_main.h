@@ -60,6 +60,7 @@ enum EIWADType
 	IWAD_Doom2Plutonia,
 	IWAD_Hexen,
 	IWAD_HexenDK,
+	IWAD_HexenDemo,
 	IWAD_Doom2,
 	IWAD_HereticShareware,
 	IWAD_HereticExtended,
@@ -71,6 +72,8 @@ enum EIWADType
 	IWAD_StrifeTeaser,
 	IWAD_StrifeTeaser2,
 	IWAD_FreeDoom,
+	IWAD_FreeDoom1,
+	IWAD_FreeDM,
 	IWAD_ChexQuest,
 
 	NUM_IWAD_TYPES

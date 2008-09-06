@@ -1,4 +1,6 @@
 September 5, 2008
+- Added hexendemo.wad and hexdemo.wad as aliases for the demo Hexen IWAD.
+- Added IWAD checks for freedoom1.wad and freedm.wad.
 - The garbage collector now has an opportunity to step each time individual
   thinkers tick, not just once every game tick. This more closely follows
   the original Lua behavior. This change was made because, in cases of

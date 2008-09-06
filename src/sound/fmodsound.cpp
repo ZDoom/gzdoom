@@ -1791,8 +1791,7 @@ void FMODSoundRenderer::UpdateListener(SoundListener *listener)
 	else
 	{
 		underwater = (listener->underwater && snd_waterlp);
-		assert (zones != NULL);
-		env = zones[listener->ZoneNumber].Environment;
+		env = listener->Environment;
 		if (env == NULL)
 		{
 			env = DefaultEnvironments[0];

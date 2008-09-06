@@ -1641,7 +1641,8 @@ static void S_SetListener(SoundListener &listener, AActor *listenactor)
 		listener.position.Y = FIXED2FLOAT(listenactor->y);
 		listener.position.Z = FIXED2FLOAT(listenactor->z);
 		listener.underwater = listenactor->waterlevel == 3;
-		listener.ZoneNumber = listenactor->Sector->ZoneNumber;
+		assert(zones != NULL);
+		listener.Environment = zones[listenactor->Sector->ZoneNumber].Environment;
 		listener.valid = true;
 	}
 	else
@@ -1649,8 +1650,8 @@ static void S_SetListener(SoundListener &listener, AActor *listenactor)
 		listener.angle = 0;
 		listener.position.Zero();
 		listener.velocity.Zero();
-		listener.underwater=false;
-		listener.ZoneNumber=0;
+		listener.underwater = false;
+		listener.Environment = NULL;
 		listener.valid = false;
 	}
 }

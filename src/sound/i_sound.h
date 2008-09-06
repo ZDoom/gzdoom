@@ -51,7 +51,7 @@ struct SoundListener
 	float angle;
 	bool underwater;
 	bool valid;
-	int ZoneNumber;
+	ReverbContainer *Environment;
 };
 
 class SoundStream

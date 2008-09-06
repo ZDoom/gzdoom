@@ -126,6 +126,8 @@ IMPLEMENT_CLASS(DSectorMarker)
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
+extern DThinker *NextToThink;
+
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 namespace GC
@@ -327,6 +329,8 @@ static void MarkRoot()
 	Mark(bglobal.firstthing);
 	Mark(bglobal.body1);
 	Mark(bglobal.body2);
+	// NextToThink must not be freed while thinkers are ticking.
+	Mark(NextToThink);
 	// Mark soft roots.
 	if (SoftRoots != NULL)
 	{

@@ -1,3 +1,10 @@
+September 5, 2008
+- The garbage collector now has an opportunity to step each time individual
+  thinkers tick, not just once every game tick. This more closely follows
+  the original Lua behavior. This change was made because, in cases of
+  extremely large and frequent memory allocations, the collector may not run
+  fast enough if it only has a chance to execute once per tick.
+
 September 4, 2008
 - Fixed: The "same level" dmflag did not work.
 - Changed the nextlevel global var to an FString.

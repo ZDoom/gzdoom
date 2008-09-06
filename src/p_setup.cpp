@@ -1616,6 +1616,8 @@ void P_SaveLineSpecial (line_t *ld)
 
 void P_FinishLoadingLineDef(line_t *ld, int alpha)
 {
+	bool additive = false;
+
 	ld->frontsector = ld->sidenum[0]!=NO_SIDE ? sides[ld->sidenum[0]].sector : 0;
 	ld->backsector  = ld->sidenum[1]!=NO_SIDE ? sides[ld->sidenum[1]].sector : 0;
 	float dx = FIXED2FLOAT(ld->v2->x - ld->v1->x);
@@ -1634,6 +1636,7 @@ void P_FinishLoadingLineDef(line_t *ld, int alpha)
 	{
 		sides[ld->sidenum[0]].linenum = linenum;
 		sides[ld->sidenum[0]].TexelLength = len;
+
 	}
 	if (ld->sidenum[1] != NO_SIDE)
 	{
@@ -1647,15 +1650,22 @@ void P_FinishLoadingLineDef(line_t *ld, int alpha)
 
 	case TranslucentLine:			// killough 4/11/98: translucent 2s textures
 		// [RH] Second arg controls how opaque it is.
-		if (alpha < 0)
+		if (alpha == -32767)
 		{
 			alpha = ld->args[1];
+			additive = !!ld->args[2];
 		}
+		else if (alpha < 0)
+		{
+			alpha = -alpha;
+			additive = true;
+		}
+
 		alpha = Scale(alpha, FRACUNIT, 255); 
 		if (!ld->args[0])
 		{
 			ld->Alpha = alpha;
-			if (ld->args[2] == 1)
+			if (additive)
 			{
 				ld->flags |= ML_ADDTRANS;
 			}
@@ -1667,7 +1677,7 @@ void P_FinishLoadingLineDef(line_t *ld, int alpha)
 				if (lines[j].id == ld->args[0])
 				{
 					lines[j].Alpha = alpha;
-					if (lines[j].args[2] == 1)
+					if (additive)
 					{
 						lines[j].flags |= ML_ADDTRANS;
 					}
@@ -1871,7 +1881,7 @@ static void P_AllocateSideDefs (int count)
 	for (i = 0; i < count; i++)
 	{
 		sidetemp[i].a.special = sidetemp[i].a.tag = 0;
-		sidetemp[i].a.alpha = -1;
+		sidetemp[i].a.alpha = -32767;
 		sidetemp[i].a.map = NO_SIDE;
 	}
 	if (count < numsides)
@@ -2027,11 +2037,29 @@ int P_DetermineTranslucency (int lumpnum)
 	FWadLump tranmap = Wads.OpenLumpNum (lumpnum);
 	BYTE index;
 	PalEntry newcolor;
+	PalEntry newcolor2;
 
 	tranmap.Seek (GPalette.BlackIndex * 256 + GPalette.WhiteIndex, SEEK_SET);
 	tranmap.Read (&index, 1);
 
 	newcolor = GPalette.BaseColors[GPalette.Remap[index]];
+
+	tranmap.Seek (GPalette.WhiteIndex * 256 + GPalette.BlackIndex, SEEK_SET);
+	tranmap.Read (&index, 1);
+	newcolor2 = GPalette.BaseColors[GPalette.Remap[index]];
+	if (newcolor2.r == 255)	// if black on white results in white it's either
+							// fully transparent or additive
+	{
+		if (developer)
+		{
+			char lumpname[9];
+			lumpname[8] = 0;
+			Wads.GetLumpName (lumpname, lumpnum);
+			Printf ("%s appears to be additive translucency %d (%d%%)\n", lumpname, newcolor.r,
+				newcolor.r*100/255);
+		}
+		return -newcolor.r;
+	}
 
 	if (developer)
 	{

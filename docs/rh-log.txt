@@ -1,4 +1,7 @@
 September 6, 2008  (Changes by Graf Zahl)
+- Fixed: The tagged version of TranslucentLine took the information for additive
+  translucency from the tagged linedef, not the control linedef.
+- Added check for additive translucency to TRANMAP checking.
 - Changed listener structure to directly contain the sound environment instead
   of getting it from the zone in the low level code.
 - Changed sound interface so that all references to game data like actors

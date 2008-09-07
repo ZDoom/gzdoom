@@ -10,6 +10,7 @@ actor SuperBootspork : Chainsaw 2005
 {
 	game Chex
 	obituary ""
+	Inventory.PickupMessage "$GOTSUPERBOOTSPORK"
 }
 
 actor MiniZorcher : Pistol

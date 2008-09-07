@@ -1,4 +1,5 @@
 September 7, 2008  (Changes by Graf Zahl)
+- Added missing Strife automap colors for items and non-monsters.
 - Fixed: GetMSLength didn't resolve random and player sounds.
 - Moved sound aliasing code out of fmodsound.cpp into S_LoadSound.
 

@@ -97,7 +97,7 @@ static BYTE StrifePaletteVals[11*3] =
 	0x00,0x00,0x00,  239, 239,   0, 0x10,0x10,0x10,
 	 199, 195, 195,  119, 115, 115,   55,  59,  91,
 	 119, 115, 115, 0xfc,0x00,0x00, 0x4c,0x4c,0x4c,
-	0x80,0x80,0x80, 0x6c,0x6c,0x6c
+	187, 59, 0, 219, 171, 0
 };
 
 #define MAPBITS 12
@@ -751,13 +751,13 @@ static void AM_initColors (bool overlayed)
 			FDWallColor = StrifeColors[5];
 			LockedColor =
 				CDWallColor = StrifeColors[6];
-			ThingColor_Item = 
-				ThingColor_Friend = 
-				ThingColor_Monster =
-				ThingColor = StrifeColors[7];
+			ThingColor_Item = StrifeColors[10];
+			ThingColor_Friend = 
+				ThingColor_Monster = StrifeColors[7];
+			ThingColor = StrifeColors[9];
 			GridColor = StrifeColors[8];
-			XHairColor = StrifeColors[9];
-			NotSeenColor = StrifeColors[10];
+			XHairColor = DoomColors[9];
+			NotSeenColor = DoomColors[10];
 			break;
 	}
 

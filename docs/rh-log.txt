@@ -1,3 +1,7 @@
+September 7, 2008  (Changes by Graf Zahl)
+- Fixed: GetMSLength didn't resolve random and player sounds.
+- Moved sound aliasing code out of fmodsound.cpp into S_LoadSound.
+
 September 6, 2008  (Changes by Graf Zahl)
 - Fixed: The tagged version of TranslucentLine took the information for additive
   translucency from the tagged linedef, not the control linedef.

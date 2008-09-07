@@ -116,8 +116,9 @@ public:
 	void SetMusicVolume (float volume)
 	{
 	}
-	void LoadSound (sfxinfo_t *sfx)
+	bool LoadSound (sfxinfo_t *sfx)
 	{
+		return true;
 	}
 	void UnloadSound (sfxinfo_t *sfx)
 	{

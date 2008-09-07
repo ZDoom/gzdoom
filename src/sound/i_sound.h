@@ -91,7 +91,7 @@ public:
 
 	virtual void SetSfxVolume (float volume) = 0;
 	virtual void SetMusicVolume (float volume) = 0;
-	virtual void LoadSound (sfxinfo_t *sfx) = 0;	// load a sound from disk
+	virtual bool LoadSound (sfxinfo_t *sfx) = 0;	// load a sound from disk
 	virtual void UnloadSound (sfxinfo_t *sfx) = 0;	// unloads a sound from memory
 	virtual unsigned int GetMSLength(sfxinfo_t *sfx) = 0;	// Gets the length of a sound at its default frequency
 	virtual float GetOutputRate() = 0;

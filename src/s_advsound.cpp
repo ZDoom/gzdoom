@@ -208,8 +208,6 @@ static int S_AddSound (const char *logicalname, int lumpnum, FScanner *sc=NULL);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern int sfx_sawup, sfx_sawidl, sfx_sawful, sfx_sawhit;
-extern int sfx_itemup, sfx_tink;
 extern int sfx_empty;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
@@ -333,6 +331,56 @@ int S_PickReplacement (int refid)
 	}
 	return refid;
 }
+
+//==========================================================================
+//
+// S_GetSoundMSLength
+//
+// Returns duration of sound
+//
+//==========================================================================
+
+unsigned int S_GetMSLength(FSoundID sound)
+{
+	if (sound < 0 || sound >= S_sfx.Size()) return 0;
+
+	sfxinfo_t *sfx = &S_sfx[sound];
+
+	// Resolve player sounds, random sounds, and aliases
+	if (sfx->link != sfxinfo_t::NO_LINK)
+	{
+		if (sfx->bPlayerReserve)
+		{
+			sfx = &S_sfx[S_FindSkinnedSound (NULL, sound)];
+		}
+		else if (sfx->bRandomHeader)
+		{
+			// Hm... What should we do here?
+			// Pick the longest or the shortest sound?
+			// I think the longest one makes more sense.
+
+			int length = 0;
+			const FRandomSoundList *list = &S_rnd[sfx->link];
+
+			for (int i=0; i < list->NumSounds; i++)
+			{
+				// unfortunately we must load all sounds to find the longest one... :(
+				int thislen = S_GetMSLength(list->Sounds[i]);
+				if (thislen > length) length = thislen;
+			}
+			return length;
+		}
+		else
+		{
+			sfx = &S_sfx[sfx->link];
+		}
+	}
+
+	sfx = S_LoadSound(sfx);
+	if (sfx != NULL) return GSnd->GetMSLength(sfx);
+	else return 0;
+}
+
 
 //==========================================================================
 //
@@ -777,7 +825,7 @@ static void S_ClearSoundData()
 	S_StopAllChannels();
 	for (i = 0; i < S_sfx.Size(); ++i)
 	{
-		GSnd->UnloadSound(&S_sfx[i]);
+		S_UnloadSound(&S_sfx[i]);
 	}
 	S_sfx.Clear();
 
@@ -1956,7 +2004,7 @@ void AAmbientSound::Activate (AActor *activator)
 				Destroy ();
 				return;
 			}
-			amb->periodmin = Scale(GSnd->GetMSLength(&S_sfx[sndnum]), TICRATE, 1000);
+			amb->periodmin = Scale(S_GetMSLength(sndnum), TICRATE, 1000);
 		}
 
 		NextCheck = gametic;

@@ -13,7 +13,7 @@ public:
 
 	void SetSfxVolume (float volume);
 	void SetMusicVolume (float volume);
-	void LoadSound (sfxinfo_t *sfx);
+	bool LoadSound (sfxinfo_t *sfx);
 	void UnloadSound (sfxinfo_t *sfx);
 	unsigned int GetMSLength(sfxinfo_t *sfx);
 	float GetOutputRate();

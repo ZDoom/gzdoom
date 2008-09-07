@@ -109,7 +109,6 @@ static void CalcSectorSoundOrg(const sector_t *sec, int channum, fixed_t *x, fix
 static void CalcPolyobjSoundOrg(const FPolyObj *poly, fixed_t *x, fixed_t *y, fixed_t *z);
 static FSoundChan *S_StartSound(AActor *mover, const sector_t *sec, const FPolyObj *poly,
 	const FVector3 *pt, int channel, FSoundID sound_id, float volume, float attenuation);
-static sfxinfo_t *S_LoadSound(sfxinfo_t *sfx);
 static void S_SetListener(SoundListener &listener, AActor *listenactor);
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -393,7 +392,7 @@ void S_Start ()
 			// First delete the old sound list
 			for(unsigned i = 1; i < S_sfx.Size(); i++) 
 			{
-				GSnd->UnloadSound(&S_sfx[i]);
+				S_UnloadSound(&S_sfx[i]);
 			}
 			
 			// Parse the global SNDINFO
@@ -482,7 +481,7 @@ void S_PrecacheLevel ()
 		{
 			if (!S_sfx[i].bUsed && S_sfx[i].link == sfxinfo_t::NO_LINK)
 			{
-				GSnd->UnloadSound (&S_sfx[i]);
+				S_UnloadSound (&S_sfx[i]);
 			}
 		}
 	}
@@ -513,8 +512,23 @@ void S_CacheSound (sfxinfo_t *sfx)
 				sfx = &S_sfx[sfx->link];
 			}
 			sfx->bUsed = true;
-			GSnd->LoadSound (sfx);
+			S_LoadSound (sfx);
 		}
+	}
+}
+
+//==========================================================================
+//
+// S_UnloadSound
+//
+//==========================================================================
+
+void S_UnloadSound (sfxinfo_t *sfx)
+{
+	if (sfx->data != NULL)
+	{
+		GSnd->UnloadSound(sfx);
+		DPrintf("Unloaded sound \"%s\" (%td)\n", sfx->name.GetChars(), sfx - &S_sfx[0]);
 	}
 }
 
@@ -1168,13 +1182,38 @@ void S_Sound (const sector_t *sec, int channel, FSoundID sfxid, float volume, fl
 
 sfxinfo_t *S_LoadSound(sfxinfo_t *sfx)
 {
-	if (sfx->data == NULL)
+	while (sfx->data == NULL)
 	{
-		GSnd->LoadSound (sfx);
-		if (sfx->link != sfxinfo_t::NO_LINK)
+		unsigned int i;
+
+		// If the sound doesn't exist, replace it with the empty sound.
+		if (sfx->lumpnum == -1)
 		{
-			sfx = &S_sfx[sfx->link];
+			sfx->lumpnum = sfx_empty;
 		}
+		
+		// See if there is another sound already initialized with this lump. If so,
+		// then set this one up as a link, and don't load the sound again.
+		for (i = 0; i < S_sfx.Size(); i++)
+		{
+			if (S_sfx[i].data && S_sfx[i].link == sfxinfo_t::NO_LINK && S_sfx[i].lumpnum == sfx->lumpnum)
+			{
+				DPrintf ("Linked %s to %s (%d)\n", sfx->name.GetChars(), S_sfx[i].name.GetChars(), i);
+				sfx->link = i;
+				return &S_sfx[i];
+			}
+		}
+
+		DPrintf("Loading sound \"%s\" (%td)\n", sfx->name.GetChars(), sfx - &S_sfx[0]);
+		if (!GSnd->LoadSound (sfx))
+		{
+			if (sfx->lumpnum != sfx_empty)
+			{
+				sfx->lumpnum = sfx_empty;
+				continue;
+			}
+		}
+		break;
 	}
 	return sfx;
 }

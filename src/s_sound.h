@@ -351,6 +351,9 @@ int S_AddPlayerSound (const char *playerclass, const int gender, int refid, cons
 int S_AddPlayerSound (const char *playerclass, const int gender, int refid, int lumpnum, bool fromskin=false);
 int S_AddPlayerSoundExisting (const char *playerclass, const int gender, int refid, int aliasto, bool fromskin=false);
 void S_ShrinkPlayerSoundLists ();
+void S_UnloadSound (sfxinfo_t *sfx);
+sfxinfo_t *S_LoadSound(sfxinfo_t *sfx);
+unsigned int S_GetMSLength(FSoundID sound);
 
 // [RH] Prints sound debug info to the screen.
 //		Modelled after Hexen's noise cheat.

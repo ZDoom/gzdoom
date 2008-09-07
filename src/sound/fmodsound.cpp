@@ -38,7 +38,6 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <mmsystem.h>
-#include "resource.h"
 extern HWND Window;
 #define USE_WINDOWS_DWORD
 #else
@@ -50,10 +49,8 @@ extern HWND Window;
 #include "fmodsound.h"
 #include "c_cvars.h"
 #include "i_system.h"
-#include "gi.h"
 #include "w_wad.h"
 #include "i_music.h"
-#include "i_musicinterns.h"
 #include "v_text.h"
 #include "v_palette.h"
 
@@ -91,6 +88,7 @@ static const char *Enum_NameForNum(const FEnumList *list, int num);
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 EXTERN_CVAR (String, snd_output)
+EXTERN_CVAR (Float, snd_sfxvolume)
 EXTERN_CVAR (Float, snd_musicvolume)
 EXTERN_CVAR (Int, snd_buffersize)
 EXTERN_CVAR (Int, snd_samplerate)
@@ -1896,110 +1894,41 @@ void FMODSoundRenderer::UpdateSounds()
 //
 //==========================================================================
 
-void FMODSoundRenderer::LoadSound(sfxinfo_t *sfx)
+bool FMODSoundRenderer::LoadSound(sfxinfo_t *sfx)
 {
 	if (sfx->data == NULL)
 	{
-		DPrintf("Loading sound \"%s\" (%td)\n", sfx->name.GetChars(), sfx - &S_sfx[0]);
-		getsfx(sfx);
-	}
-}
+		void **slot = &sfx->data;
+		BYTE *sfxdata;
+		BYTE *sfxstart;
+		int size;
+		FMOD_RESULT result;
+		FMOD_MODE samplemode;
+		FMOD_CREATESOUNDEXINFO exinfo = { sizeof(exinfo), };
+		FMOD::Sound *sample;
+		int rolloff;
+		float mindist, maxdist;
 
-//==========================================================================
-//
-// FMODSoundRenderer :: UnloadSound
-//
-//==========================================================================
+		samplemode = FMOD_3D | FMOD_OPENMEMORY | FMOD_SOFTWARE;
 
-void FMODSoundRenderer::UnloadSound(sfxinfo_t *sfx)
-{
-	if (sfx->data != NULL)
-	{
-		((FMOD::Sound *)sfx->data)->release();
-		sfx->data = NULL;
-		DPrintf("Unloaded sound \"%s\" (%td)\n", sfx->name.GetChars(), sfx - &S_sfx[0]);
-	}
-}
-
-//==========================================================================
-//
-// FMODSoundRenderer :: GetMSLength
-//
-//==========================================================================
-
-unsigned int FMODSoundRenderer::GetMSLength(sfxinfo_t *sfx)
-{
-	if (sfx->data == NULL)
-	{
-		LoadSound(sfx);
-	}
-	if (sfx->data != NULL)
-	{
-		unsigned int length;
-
-		if (((FMOD::Sound *)sfx->data)->getLength(&length, FMOD_TIMEUNIT_MS) == FMOD_OK)
+		if (sfx->MaxDistance == 0)
 		{
-			return length;
+			mindist = S_MinDistance;
+			maxdist = S_MaxDistanceOrRolloffFactor;
+			rolloff = S_RolloffType;
 		}
-	}
-	return 0;	// Don't know.
-}
+		else
+		{
+			mindist = sfx->MinDistance;
+			maxdist = sfx->MaxDistance;
+			rolloff = sfx->RolloffType;
+		}
 
-//==========================================================================
-//
-// FMODSoundRenderer :: DoLoad
-//
-//==========================================================================
-
-void FMODSoundRenderer::DoLoad(void **slot, sfxinfo_t *sfx)
-{
-	BYTE *sfxdata;
-	BYTE *sfxstart;
-	int size;
-	int errcount;
-	FMOD_RESULT result;
-	FMOD_MODE samplemode;
-	FMOD_CREATESOUNDEXINFO exinfo = { sizeof(exinfo), };
-	FMOD::Sound *sample;
-	int rolloff;
-	float mindist, maxdist;
-
-	samplemode = FMOD_3D | FMOD_OPENMEMORY | FMOD_SOFTWARE;
-
-	if (sfx->MaxDistance == 0)
-	{
-		mindist = S_MinDistance;
-		maxdist = S_MaxDistanceOrRolloffFactor;
-		rolloff = S_RolloffType;
-	}
-	else
-	{
-		mindist = sfx->MinDistance;
-		maxdist = sfx->MaxDistance;
-		rolloff = sfx->RolloffType;
-	}
-
-	sfxdata = NULL;
-
-	errcount = 0;
-	while (errcount < 2)
-	{
+		sfxdata = NULL;
 		sample = NULL;
-		if (sfxdata != NULL)
-		{
-			delete[] sfxdata;
-			sfxdata = NULL;
-		}
-
-		if (errcount)
-			sfx->lumpnum = Wads.GetNumForName("dsempty", ns_sounds);
 
 		size = Wads.LumpLength(sfx->lumpnum);
-		if (size == 0)
-		{
-			errcount++;
-			continue;
-		}
+		if (size <= 0) return false;
 
 		FWadLump wlump = Wads.OpenLumpNum(sfx->lumpnum);
 		sfxstart = sfxdata = new BYTE[size];
@@ -2046,74 +1975,81 @@ void FMODSoundRenderer::DoLoad(void **slot, sfxinfo_t *sfx)
 		{
 			exinfo.length = size;
 		}
+
 		if (exinfo.length == 0)
 		{
 			DPrintf("Sample has a length of 0\n");
-			break;
 		}
-		result = Sys->createSound((char *)sfxstart, samplemode, &exinfo, &sample);
-		if (result != FMOD_OK)
+		else
 		{
-			DPrintf("Failed to allocate sample: Error %d\n", result);
-			errcount++;
-			continue;
-		}
-		*slot = sample;
-		break;
-	}
+			result = Sys->createSound((char *)sfxstart, samplemode, &exinfo, &sample);
+			if (result != FMOD_OK)
+			{
+				DPrintf("Failed to allocate sample: Error %d\n", result);
 
-	if (sample != NULL)
-	{
-		if (rolloff == ROLLOFF_Log)
+				if (sfxdata != NULL)
+				{
+					delete[] sfxdata;
+				}
+				return false;
+			}
+			*slot = sample;
+		}
+
+		if (sfxdata != NULL)
 		{
-			maxdist = 10000.f;
+			delete[] sfxdata;
 		}
-		sample->set3DMinMaxDistance(mindist, maxdist);
-		sample->setUserData(sfx);
-	}
 
-	if (sfxdata != NULL)
-	{
-		delete[] sfxdata;
+		if (sample != NULL)
+		{
+			if (rolloff == ROLLOFF_Log)
+			{
+				maxdist = 10000.f;
+			}
+			sample->set3DMinMaxDistance(mindist, maxdist);
+			sample->setUserData(sfx);
+		}
 	}
+	return sfx->data != NULL;
 }
 
 //==========================================================================
 //
-// FMODSoundRenderer :: getsfx
-//
-// Get the sound data from the WAD and register it with sound library
+// FMODSoundRenderer :: UnloadSound
 //
 //==========================================================================
 
-void FMODSoundRenderer::getsfx(sfxinfo_t *sfx)
+void FMODSoundRenderer::UnloadSound(sfxinfo_t *sfx)
 {
-	unsigned int i;
-
-	// If the sound doesn't exist, replace it with the empty sound.
-	if (sfx->lumpnum == -1)
+	if (sfx->data != NULL)
 	{
-		sfx->lumpnum = sfx_empty;
-	}
-	
-	// See if there is another sound already initialized with this lump. If so,
-	// then set this one up as a link, and don't load the sound again.
-	for (i = 0; i < S_sfx.Size(); i++)
-	{
-		if (S_sfx[i].data && S_sfx[i].link == sfxinfo_t::NO_LINK && S_sfx[i].lumpnum == sfx->lumpnum)
-		{
-			DPrintf ("Linked to %s (%d)\n", S_sfx[i].name.GetChars(), i);
-			sfx->link = i;
-			return;
-		}
-	}
-	DoLoad(&sfx->data, sfx);
-	// If the sound failed to load, make it the empty sound.
-	if (sfx->data == NULL)
-	{
-		sfx->lumpnum = sfx_empty;
+		((FMOD::Sound *)sfx->data)->release();
+		sfx->data = NULL;
 	}
 }
+
+//==========================================================================
+//
+// FMODSoundRenderer :: GetMSLength
+//
+//==========================================================================
+
+unsigned int FMODSoundRenderer::GetMSLength(sfxinfo_t *sfx)
+{
+	if (sfx->data != NULL)
+	{
+		unsigned int length;
+
+		if (((FMOD::Sound *)sfx->data)->getLength(&length, FMOD_TIMEUNIT_MS) == FMOD_OK)
+		{
+			return length;
+		}
+	}
+	return 0;	// Don't know.
+}
+
+
 
 //==========================================================================
 //

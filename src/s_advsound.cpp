@@ -377,7 +377,7 @@ unsigned int S_GetMSLength(FSoundID sound)
 	}
 
 	sfx = S_LoadSound(sfx);
-	if (sfx != NULL) return GSnd->GetMSLength(sfx);
+	if (sfx != NULL) return GSnd->GetMSLength(sfx->data);
 	else return 0;
 }
 
@@ -483,7 +483,7 @@ int S_AddSoundLump (const char *logicalname, int lump)
 {
 	sfxinfo_t newsfx;
 
-	newsfx.data = NULL;
+	newsfx.data.Clear();
 	newsfx.name = logicalname;
 	newsfx.lumpnum = lump;
 	newsfx.next = 0;

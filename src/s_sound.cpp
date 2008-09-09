@@ -523,9 +523,10 @@ void S_CacheSound (sfxinfo_t *sfx)
 
 void S_UnloadSound (sfxinfo_t *sfx)
 {
-	if (sfx->data != NULL)
+	if (sfx->data.isValid())
 	{
-		GSnd->UnloadSound(sfx);
+		GSnd->UnloadSound(sfx->data);
+		sfx->data.Clear();
 		DPrintf("Unloaded sound \"%s\" (%td)\n", sfx->name.GetChars(), sfx - &S_sfx[0]);
 	}
 }
@@ -1011,11 +1012,11 @@ static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyO
 	{
 		SoundListener listener;
 		S_SetListener(listener, players[consoleplayer].camera);
-		chan = GSnd->StartSound3D (sfx, &listener, volume, rolloff, attenuation, pitch, basepriority, pos, vel, channel, chanflags, NULL);
+		chan = GSnd->StartSound3D (sfx->data, &listener, volume, rolloff, attenuation, pitch, basepriority, pos, vel, channel, chanflags, NULL);
 	}
 	else
 	{
-		chan = GSnd->StartSound (sfx, volume, pitch, chanflags, NULL);
+		chan = GSnd->StartSound (sfx->data, volume, pitch, chanflags, NULL);
 	}
 	if (chan == NULL && (chanflags & CHAN_LOOP))
 	{
@@ -1099,12 +1100,12 @@ void S_RestartSound(FSoundChan *chan)
 		SoundListener listener;
 		S_SetListener(listener, players[consoleplayer].camera);
 
-		ochan = GSnd->StartSound3D(sfx, &listener, chan->Volume, chan->Rolloff, chan->DistanceScale, chan->Pitch,
+		ochan = GSnd->StartSound3D(sfx->data, &listener, chan->Volume, chan->Rolloff, chan->DistanceScale, chan->Pitch,
 			chan->Priority, pos, vel, chan->EntChannel, chan->ChanFlags, chan);
 	}
 	else
 	{
-		ochan = GSnd->StartSound(chan->SfxInfo, chan->Volume, chan->Pitch, chan->ChanFlags, chan);
+		ochan = GSnd->StartSound(sfx->data, chan->Volume, chan->Pitch, chan->ChanFlags, chan);
 	}
 	assert(ochan == NULL || ochan == chan);
 	if (ochan != NULL)
@@ -1188,7 +1189,9 @@ void S_Sound (const sector_t *sec, int channel, FSoundID sfxid, float volume, fl
 
 sfxinfo_t *S_LoadSound(sfxinfo_t *sfx)
 {
-	while (sfx->data == NULL)
+	if (GSnd->IsNull()) return sfx;
+
+	while (!sfx->data.isValid())
 	{
 		unsigned int i;
 
@@ -1202,16 +1205,66 @@ sfxinfo_t *S_LoadSound(sfxinfo_t *sfx)
 		// then set this one up as a link, and don't load the sound again.
 		for (i = 0; i < S_sfx.Size(); i++)
 		{
-			if (S_sfx[i].data && S_sfx[i].link == sfxinfo_t::NO_LINK && S_sfx[i].lumpnum == sfx->lumpnum)
+			if (S_sfx[i].data.isValid() && S_sfx[i].link == sfxinfo_t::NO_LINK && S_sfx[i].lumpnum == sfx->lumpnum)
 			{
 				DPrintf ("Linked %s to %s (%d)\n", sfx->name.GetChars(), S_sfx[i].name.GetChars(), i);
 				sfx->link = i;
+				// This is necessary to avoid using the rolloff settings of the linked sound if its
+				// settings are different.
+				if (sfx->Rolloff.MinDistance == 0) sfx->Rolloff = S_Rolloff;
 				return &S_sfx[i];
 			}
 		}
 
 		DPrintf("Loading sound \"%s\" (%td)\n", sfx->name.GetChars(), sfx - &S_sfx[0]);
-		if (!GSnd->LoadSound (sfx))
+
+		int size = Wads.LumpLength(sfx->lumpnum);
+		if (size > 0)
+		{
+			BYTE *sfxdata;
+			BYTE *sfxstart;
+			FWadLump wlump = Wads.OpenLumpNum(sfx->lumpnum);
+			sfxstart = sfxdata = new BYTE[size];
+			wlump.Read(sfxdata, size);
+			SDWORD len = ((SDWORD *)sfxdata)[1];
+
+			// If the sound is raw, just load it as such.
+			// Otherwise, try the sound as DMX format.
+			// If that fails, let FMOD try and figure it out.
+			if (sfx->bLoadRAW ||
+				(((BYTE *)sfxdata)[0] == 3 && ((BYTE *)sfxdata)[1] == 0 && len <= size - 8))
+			{
+				int frequency;
+
+				if (sfx->bLoadRAW)
+				{
+					len = Wads.LumpLength (sfx->lumpnum);
+					frequency = (sfx->bForce22050 ? 22050 : 11025);
+				}
+				else
+				{
+					frequency = ((WORD *)sfxdata)[1];
+					if (frequency == 0)
+					{
+						frequency = 11025;
+					}
+					sfxstart = sfxdata + 8;
+				}
+				sfx->data = GSnd->LoadSoundRaw(sfxstart, len, frequency, 1, 8);
+			}
+			else
+			{
+				len = Wads.LumpLength (sfx->lumpnum);
+				sfx->data = GSnd->LoadSound(sfxstart, len);
+			}
+			
+			if (sfxdata != NULL)
+			{
+				delete[] sfxdata;
+			}
+		}
+
+		if (!sfx->data.isValid())
 		{
 			if (sfx->lumpnum != sfx_empty)
 			{

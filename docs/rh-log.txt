@@ -1,4 +1,10 @@
 September 9, 2008  (Changes by Graf Zahl)
+- Since loading of the sound lump is now done in S_LoadSound I added an IsNull
+  method to the SoundRenderer class so that this function doesn't need to 
+  load the sound for the NullSoundRenderer.
+- Took some more non-FMOD related code out of fmodsound.cpp, including the
+  code that checks for raw and Doom sounds. This means that sfxinfo_t is no
+  longer needed in the SoundRenderer class so I took out all references to it.
 - Fixed: FMODSoundRenderer::StartSound3D must set the static variable pointing
   to the rolloff information back to NULL when starting the sound fails.
 - Fixed: Rolloff information was taken from the sfxinfo that contained the

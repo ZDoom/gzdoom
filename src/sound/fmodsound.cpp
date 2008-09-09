@@ -975,10 +975,6 @@ void FMODSoundRenderer::Shutdown()
 {
 	if (Sys != NULL)
 	{
-		unsigned int i;
-
-		//S_StopAllChannels();
-
 		if (MusicGroup != NULL)
 		{
 			MusicGroup->release();
@@ -1003,16 +999,6 @@ void FMODSoundRenderer::Shutdown()
 		{
 			WaterReverb->release();
 			WaterReverb = NULL;
-		}
-
-		// Free all loaded samples
-		for (i = 0; i < S_sfx.Size(); i++)
-		{
-			if (S_sfx[i].data != NULL)
-			{
-				((FMOD::Sound *)S_sfx[i].data)->release();
-				S_sfx[i].data = NULL;
-			}
 		}
 
 		Sys->close();
@@ -1341,15 +1327,14 @@ SoundStream *FMODSoundRenderer::OpenStream(const char *filename_or_data, int fla
 //
 //==========================================================================
 
-FSoundChan *FMODSoundRenderer::StartSound(sfxinfo_t *sfx, float vol, int pitch, int chanflags, FSoundChan *reuse_chan)
+FSoundChan *FMODSoundRenderer::StartSound(SoundHandle sfx, float vol, int pitch, int chanflags, FSoundChan *reuse_chan)
 {
-	int id = int(sfx - &S_sfx[0]);
 	FMOD_RESULT result;
 	FMOD_MODE mode;
 	FMOD::Channel *chan;
 	float freq;
 
-	if (FMOD_OK == ((FMOD::Sound *)sfx->data)->getDefaults(&freq, NULL, NULL, NULL))
+	if (FMOD_OK == ((FMOD::Sound *)sfx.data)->getDefaults(&freq, NULL, NULL, NULL))
 	{
 		freq = PITCH(freq, pitch);
 	}
@@ -1359,7 +1344,7 @@ FSoundChan *FMODSoundRenderer::StartSound(sfxinfo_t *sfx, float vol, int pitch, 
 	}
 
 	GRolloff = NULL;	// Do 2D sounds need rolloff?
-	result = Sys->playSound(FMOD_CHANNEL_FREE, (FMOD::Sound *)sfx->data, true, &chan);
+	result = Sys->playSound(FMOD_CHANNEL_FREE, (FMOD::Sound *)sfx.data, true, &chan);
 	if (FMOD_OK == result)
 	{
 		result = chan->getMode(&mode);
@@ -1386,8 +1371,8 @@ FSoundChan *FMODSoundRenderer::StartSound(sfxinfo_t *sfx, float vol, int pitch, 
 		return CommonChannelSetup(chan, reuse_chan);
 	}
 
-	DPrintf ("Sound %s failed to play: %d\n", sfx->name.GetChars(), result);
-	return 0;
+	//DPrintf ("Sound %s failed to play: %d\n", sfx->name.GetChars(), result);
+	return NULL;
 }
 
 //==========================================================================
@@ -1398,12 +1383,11 @@ FSoundChan *FMODSoundRenderer::StartSound(sfxinfo_t *sfx, float vol, int pitch, 
 
 CVAR(Float, snd_3dspread, 180, 0)
 
-FSoundChan *FMODSoundRenderer::StartSound3D(sfxinfo_t *sfx, SoundListener *listener, float vol, 
+FSoundChan *FMODSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener *listener, float vol, 
 	FRolloffInfo *rolloff, float distscale,
 	int pitch, int priority, const FVector3 &pos, const FVector3 &vel,
 	int channum, int chanflags, FSoundChan *reuse_chan)
 {
-	int id = int(sfx - &S_sfx[0]);
 	FMOD_RESULT result;
 	FMOD_MODE mode;
 	FMOD::Channel *chan;
@@ -1412,11 +1396,11 @@ FSoundChan *FMODSoundRenderer::StartSound3D(sfxinfo_t *sfx, SoundListener *liste
 	int numchans;
 	int def_priority;
 
-	if (FMOD_OK == ((FMOD::Sound *)sfx->data)->getDefaults(&def_freq, &def_vol, &def_pan, &def_priority))
+	if (FMOD_OK == ((FMOD::Sound *)sfx.data)->getDefaults(&def_freq, &def_vol, &def_pan, &def_priority))
 	{
 		freq = PITCH(def_freq, pitch);
 		// Change the sound's default priority before playing it.
-		((FMOD::Sound *)sfx->data)->setDefaults(def_freq, def_vol, def_pan, clamp(def_priority - priority, 1, 256));
+		((FMOD::Sound *)sfx.data)->setDefaults(def_freq, def_vol, def_pan, clamp(def_priority - priority, 1, 256));
 	}
 	else
 	{
@@ -1432,18 +1416,18 @@ FSoundChan *FMODSoundRenderer::StartSound3D(sfxinfo_t *sfx, SoundListener *liste
 	// as long as the paremeters are set properly. It will first try to kick out sounds
 	// with the same priority level but has no problem with kicking out sounds at
 	// higher priority levels if it needs to.
-	result = Sys->playSound(FMOD_CHANNEL_FREE, (FMOD::Sound *)sfx->data, true, &chan);
+	result = Sys->playSound(FMOD_CHANNEL_FREE, (FMOD::Sound *)sfx.data, true, &chan);
 
 	// Then set the priority back.
 	if (def_priority >= 0)
 	{
-		((FMOD::Sound *)sfx->data)->setDefaults(def_freq, def_vol, def_pan, def_priority);
+		((FMOD::Sound *)sfx.data)->setDefaults(def_freq, def_vol, def_pan, def_priority);
 	}
 
 	// Reduce volume of stereo sounds, because each channel will be summed together
 	// and is likely to be very similar, resulting in an amplitude twice what it
 	// would have been had it been mixed to mono.
-	if (FMOD_OK == ((FMOD::Sound *)sfx->data)->getFormat(NULL, NULL, &numchans, NULL))
+	if (FMOD_OK == ((FMOD::Sound *)sfx.data)->getFormat(NULL, NULL, &numchans, NULL))
 	{
 		if (numchans > 1)
 		{
@@ -1462,7 +1446,7 @@ FSoundChan *FMODSoundRenderer::StartSound3D(sfxinfo_t *sfx, SoundListener *liste
 		{
 			mode = (mode & ~FMOD_LOOP_OFF) | FMOD_LOOP_NORMAL;
 		}
-		mode = SetChanHeadSettings(listener, chan, sfx, pos, channum, chanflags, mode);
+		mode = SetChanHeadSettings(listener, chan, pos, channum, chanflags, mode);
 		chan->setMode(mode);
 		chan->setChannelGroup((chanflags & (CHAN_UI | CHAN_NOPAUSE)) ? SfxGroup : PausableSfx);
 
@@ -1484,7 +1468,7 @@ FSoundChan *FMODSoundRenderer::StartSound3D(sfxinfo_t *sfx, SoundListener *liste
 	}
 
 	GRolloff = NULL;
-	DPrintf ("Sound %s failed to play: %d\n", sfx->name.GetChars(), result);
+	//DPrintf ("Sound %s failed to play: %d\n", sfx->name.GetChars(), result);
 	return 0;
 }
 
@@ -1542,7 +1526,7 @@ void FMODSoundRenderer::HandleChannelDelay(FMOD::Channel *chan, FSoundChan *reus
 //
 //==========================================================================
 
-FMOD_MODE FMODSoundRenderer::SetChanHeadSettings(SoundListener *listener, FMOD::Channel *chan, sfxinfo_t *sfx, 
+FMOD_MODE FMODSoundRenderer::SetChanHeadSettings(SoundListener *listener, FMOD::Channel *chan,
 												 const FVector3 &pos, int channum, int chanflags, 
 												 FMOD_MODE oldmode) const
 {
@@ -1737,7 +1721,7 @@ void FMODSoundRenderer::UpdateSoundParams3D(SoundListener *listener, FSoundChan 
 	{
 		oldmode = FMOD_3D | FMOD_SOFTWARE;
 	}
-	mode = SetChanHeadSettings(listener, fchan, chan->SfxInfo, pos, chan->EntChannel, chan->ChanFlags, oldmode);
+	mode = SetChanHeadSettings(listener, fchan, pos, chan->EntChannel, chan->ChanFlags, oldmode);
 	if (mode != oldmode)
 	{ // Only set the mode if it changed.
 		fchan->setMode(mode);
@@ -1893,108 +1877,86 @@ void FMODSoundRenderer::UpdateSounds()
 
 //==========================================================================
 //
+// FMODSoundRenderer :: LoadSoundRaw
+//
+//==========================================================================
+
+SoundHandle FMODSoundRenderer::LoadSoundRaw(BYTE *sfxdata, int length, int frequency, int channels, int bits)
+{
+	FMOD_CREATESOUNDEXINFO exinfo = { sizeof(exinfo), };
+	SoundHandle retval = { NULL };
+
+	if (length == 0) return retval;
+
+	exinfo.length = length;
+	exinfo.numchannels = channels;
+	exinfo.defaultfrequency = frequency;
+	switch (bits)
+	{
+	case 8:
+		// Need to convert sample data from unsigned to signed.
+		for (int i = 0; i < length; ++i)
+		{
+			sfxdata[i] = sfxdata[i] - 128;
+		}
+
+	case -8:
+		exinfo.format = FMOD_SOUND_FORMAT_PCM8;
+		break;
+
+	case 16:
+		exinfo.format = FMOD_SOUND_FORMAT_PCM16;
+		break;
+
+	case 32:
+		exinfo.format = FMOD_SOUND_FORMAT_PCM32;
+		break;
+
+	default:
+		return retval;
+	}
+
+	const FMOD_MODE samplemode = FMOD_3D | FMOD_OPENMEMORY | FMOD_SOFTWARE | FMOD_OPENRAW;
+	FMOD::Sound *sample;
+	FMOD_RESULT result;
+
+	result = Sys->createSound((char *)sfxdata, samplemode, &exinfo, &sample);
+	if (result != FMOD_OK)
+	{
+		DPrintf("Failed to allocate sample: Error %d\n", result);
+		return retval;
+	}
+	retval.data = sample;
+	return retval;
+}
+
+//==========================================================================
+//
 // FMODSoundRenderer :: LoadSound
 //
 //==========================================================================
 
-bool FMODSoundRenderer::LoadSound(sfxinfo_t *sfx)
+SoundHandle FMODSoundRenderer::LoadSound(BYTE *sfxdata, int length)
 {
-	if (sfx->data == NULL)
+	FMOD_CREATESOUNDEXINFO exinfo = { sizeof(exinfo), };
+	SoundHandle retval = { NULL };
+
+	if (length == 0) return retval;
+
+	exinfo.length = length;
+
+	const FMOD_MODE samplemode = FMOD_3D | FMOD_OPENMEMORY | FMOD_SOFTWARE;
+	FMOD::Sound *sample;
+	FMOD_RESULT result;
+
+	result = Sys->createSound((char *)sfxdata, samplemode, &exinfo, &sample);
+	if (result != FMOD_OK)
 	{
-		void **slot = &sfx->data;
-		BYTE *sfxdata;
-		BYTE *sfxstart;
-		int size;
-		FMOD_RESULT result;
-		FMOD_MODE samplemode;
-		FMOD_CREATESOUNDEXINFO exinfo = { sizeof(exinfo), };
-		FMOD::Sound *sample;
-
-		samplemode = FMOD_3D | FMOD_OPENMEMORY | FMOD_SOFTWARE;
-
-		sfxdata = NULL;
-		sample = NULL;
-
-		size = Wads.LumpLength(sfx->lumpnum);
-		if (size <= 0) return false;
-
-		FWadLump wlump = Wads.OpenLumpNum(sfx->lumpnum);
-		sfxstart = sfxdata = new BYTE[size];
-		wlump.Read(sfxdata, size);
-		SDWORD len = ((SDWORD *)sfxdata)[1];
-
-		// If the sound is raw, just load it as such.
-		// Otherwise, try the sound as DMX format.
-		// If that fails, let FMOD try and figure it out.
-		if (sfx->bLoadRAW ||
-			(((BYTE *)sfxdata)[0] == 3 && ((BYTE *)sfxdata)[1] == 0 && len <= size - 8))
-		{
-			int frequency;
-
-			if (sfx->bLoadRAW)
-			{
-				len = Wads.LumpLength (sfx->lumpnum);
-				frequency = (sfx->bForce22050 ? 22050 : 11025);
-			}
-			else
-			{
-				frequency = ((WORD *)sfxdata)[1];
-				if (frequency == 0)
-				{
-					frequency = 11025;
-				}
-				sfxstart = sfxdata + 8;
-			}
-
-			exinfo.length = len;
-			exinfo.numchannels = 1;
-			exinfo.defaultfrequency = frequency;
-			exinfo.format = FMOD_SOUND_FORMAT_PCM8;
-
-			samplemode |= FMOD_OPENRAW;
-
-			// Need to convert sample data from unsigned to signed.
-			for (int i = 0; i < len; ++i)
-			{
-				sfxstart[i] = sfxstart[i] - 128;
-			}
-		}
-		else
-		{
-			exinfo.length = size;
-		}
-
-		if (exinfo.length == 0)
-		{
-			DPrintf("Sample has a length of 0\n");
-		}
-		else
-		{
-			result = Sys->createSound((char *)sfxstart, samplemode, &exinfo, &sample);
-			if (result != FMOD_OK)
-			{
-				DPrintf("Failed to allocate sample: Error %d\n", result);
-
-				if (sfxdata != NULL)
-				{
-					delete[] sfxdata;
-				}
-				return false;
-			}
-			*slot = sample;
-		}
-
-		if (sfxdata != NULL)
-		{
-			delete[] sfxdata;
-		}
-
-		if (sample != NULL)
-		{
-			sample->setUserData(sfx);
-		}
+		DPrintf("Failed to allocate sample: Error %d\n", result);
+		return retval;
 	}
-	return sfx->data != NULL;
+	retval.data = sample;
+	return retval;
 }
 
 //==========================================================================
@@ -2003,12 +1965,11 @@ bool FMODSoundRenderer::LoadSound(sfxinfo_t *sfx)
 //
 //==========================================================================
 
-void FMODSoundRenderer::UnloadSound(sfxinfo_t *sfx)
+void FMODSoundRenderer::UnloadSound(SoundHandle sfx)
 {
-	if (sfx->data != NULL)
+	if (sfx.data != NULL)
 	{
-		((FMOD::Sound *)sfx->data)->release();
-		sfx->data = NULL;
+		((FMOD::Sound *)sfx.data)->release();
 	}
 }
 
@@ -2018,13 +1979,13 @@ void FMODSoundRenderer::UnloadSound(sfxinfo_t *sfx)
 //
 //==========================================================================
 
-unsigned int FMODSoundRenderer::GetMSLength(sfxinfo_t *sfx)
+unsigned int FMODSoundRenderer::GetMSLength(SoundHandle sfx)
 {
-	if (sfx->data != NULL)
+	if (sfx.data != NULL)
 	{
 		unsigned int length;
 
-		if (((FMOD::Sound *)sfx->data)->getLength(&length, FMOD_TIMEUNIT_MS) == FMOD_OK)
+		if (((FMOD::Sound *)sfx.data)->getLength(&length, FMOD_TIMEUNIT_MS) == FMOD_OK)
 		{
 			return length;
 		}

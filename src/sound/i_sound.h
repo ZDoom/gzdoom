@@ -89,11 +89,13 @@ public:
 	SoundRenderer ();
 	virtual ~SoundRenderer ();
 
+	virtual bool IsNull() { return false; }
 	virtual void SetSfxVolume (float volume) = 0;
 	virtual void SetMusicVolume (float volume) = 0;
-	virtual bool LoadSound (sfxinfo_t *sfx) = 0;	// load a sound from disk
-	virtual void UnloadSound (sfxinfo_t *sfx) = 0;	// unloads a sound from memory
-	virtual unsigned int GetMSLength(sfxinfo_t *sfx) = 0;	// Gets the length of a sound at its default frequency
+	virtual SoundHandle LoadSound(BYTE *sfxdata, int length) = 0;
+	virtual SoundHandle LoadSoundRaw(BYTE *sfxdata, int length, int frequency, int channels, int bits) = 0;
+	virtual void UnloadSound (SoundHandle sfx) = 0;	// unloads a sound from memory
+	virtual unsigned int GetMSLength(SoundHandle sfx) = 0;	// Gets the length of a sound at its default frequency
 	virtual float GetOutputRate() = 0;
 
 	// Streaming sounds.
@@ -101,8 +103,8 @@ public:
 	virtual SoundStream *OpenStream (const char *filename, int flags, int offset, int length) = 0;
 
 	// Starts a sound.
-	virtual FSoundChan *StartSound (sfxinfo_t *sfx, float vol, int pitch, int chanflags, FSoundChan *reuse_chan) = 0;
-	virtual FSoundChan *StartSound3D (sfxinfo_t *sfx, SoundListener *listener, float vol, FRolloffInfo *rolloff, float distscale, int pitch, int priority, const FVector3 &pos, const FVector3 &vel, int channum, int chanflags, FSoundChan *reuse_chan) = 0;
+	virtual FSoundChan *StartSound (SoundHandle sfx, float vol, int pitch, int chanflags, FSoundChan *reuse_chan) = 0;
+	virtual FSoundChan *StartSound3D (SoundHandle sfx, SoundListener *listener, float vol, FRolloffInfo *rolloff, float distscale, int pitch, int priority, const FVector3 &pos, const FVector3 &vel, int channum, int chanflags, FSoundChan *reuse_chan) = 0;
 
 	// Stops a sound channel.
 	virtual void StopSound (FSoundChan *chan) = 0;

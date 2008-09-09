@@ -35,6 +35,13 @@ struct FRolloffInfo
 	union { float MaxDistance; float RolloffFactor; };
 };
 
+struct SoundHandle
+{
+	void *data;
+
+	bool isValid() const { return data != NULL; }
+	void Clear() { data = NULL; }
+};
 
 //
 // SoundFX struct.
@@ -43,7 +50,7 @@ struct sfxinfo_t
 {
 	// Next field is for use by the system sound interface.
 	// A non-null data means the sound has been loaded.
-	void	   *data;
+	SoundHandle	data;
 
 	FString		name;					// [RH] Sound name defined in SNDINFO
 	int 		lumpnum;				// lump number of sfx
@@ -65,7 +72,6 @@ struct sfxinfo_t
 	WORD		bUsed:1;
 	WORD		bSingular:1;
 	WORD		bTentative:1;
-	WORD		RolloffType:2;
 
 	unsigned int link;
 	enum { NO_LINK = 0xffffffff };

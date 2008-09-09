@@ -83,6 +83,8 @@ CVAR (Bool, snd_pitched, false, CVAR_ARCHIVE)
 
 SoundRenderer *GSnd;
 
+void I_CloseSound ();
+
 
 //
 // SFX API
@@ -110,20 +112,27 @@ CUSTOM_CVAR (Float, snd_sfxvolume, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOIN
 class NullSoundRenderer : public SoundRenderer
 {
 public:
+	virtual bool IsNull() { return true; }
 	void SetSfxVolume (float volume)
 	{
 	}
 	void SetMusicVolume (float volume)
 	{
 	}
-	bool LoadSound (sfxinfo_t *sfx)
+	SoundHandle LoadSound(BYTE *sfxdata, int length)
 	{
-		return true;
+		SoundHandle retval = { NULL };
+		return retval;
 	}
-	void UnloadSound (sfxinfo_t *sfx)
+	SoundHandle LoadSoundRaw(BYTE *sfxdata, int length, int frequency, int channels, int bits)
+	{
+		SoundHandle retval = { NULL };
+		return retval;
+	}
+	void UnloadSound (SoundHandle sfx)
 	{
 	}
-	unsigned int GetMSLength(sfxinfo_t *sfx)
+	unsigned int GetMSLength(SoundHandle sfx)
 	{
 		// Return something that isn't 0. This is only used by some
 		// ambient sounds to specify a default minimum period.
@@ -145,11 +154,11 @@ public:
 	}
 
 	// Starts a sound. (No, not really.)
-	FSoundChan *StartSound (sfxinfo_t *sfx, float vol, int pitch, int chanflags, FSoundChan *reuse_chan)
+	FSoundChan *StartSound (SoundHandle sfx, float vol, int pitch, int chanflags, FSoundChan *reuse_chan)
 	{
 		return NULL;
 	}
-	FSoundChan *StartSound3D (sfxinfo_t *sfx, SoundListener *listener, float vol, FRolloffInfo *rolloff, float distscale, int pitch, int priority, const FVector3 &pos, const FVector3 &vel, int channum, int chanflags, FSoundChan *reuse_chan)
+	FSoundChan *StartSound3D (SoundHandle sfx, SoundListener *listener, float vol, FRolloffInfo *rolloff, float distscale, int pitch, int priority, const FVector3 &pos, const FVector3 &vel, int channum, int chanflags, FSoundChan *reuse_chan)
 	{
 		return NULL;
 	}
@@ -230,7 +239,7 @@ void I_InitSound ()
 
 	if (!GSnd->IsValid ())
 	{
-		delete GSnd;
+		I_CloseSound();
 		GSnd = new NullSoundRenderer;
 		Printf (TEXTCOLOR_RED"Sound init failed. Using nosound.\n");
 	}
@@ -239,12 +248,24 @@ void I_InitSound ()
 }
 
 
-void I_ShutdownSound (void)
+void I_CloseSound ()
+{
+	// Free all loaded samples
+	for (unsigned i = 0; i < S_sfx.Size(); i++)
+	{
+		S_UnloadSound(&S_sfx[i]);
+	}
+
+	delete GSnd;
+	GSnd = NULL;
+}
+
+void I_ShutdownSound()
 {
 	if (GSnd != NULL)
 	{
-		delete GSnd;
-		GSnd = NULL;
+		S_StopAllChannels();
+		I_CloseSound();
 	}
 }
 
@@ -257,11 +278,7 @@ CCMD (snd_reset)
 {
 	I_ShutdownMusic();
 	S_EvictAllChannels();
-	if (GSnd != NULL)
-	{
-		delete GSnd;
-		GSnd = NULL;
-	}
+	I_CloseSound();
 	I_InitSound();
 	S_RestartMusic();
 	S_RestoreEvictedChannels();

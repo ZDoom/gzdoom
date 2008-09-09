@@ -13,9 +13,10 @@ public:
 
 	void SetSfxVolume (float volume);
 	void SetMusicVolume (float volume);
-	bool LoadSound (sfxinfo_t *sfx);
-	void UnloadSound (sfxinfo_t *sfx);
-	unsigned int GetMSLength(sfxinfo_t *sfx);
+	SoundHandle LoadSound(BYTE *sfxdata, int length);
+	SoundHandle LoadSoundRaw(BYTE *sfxdata, int length, int frequency, int channels, int bits);
+	void UnloadSound (SoundHandle sfx);
+	unsigned int GetMSLength(SoundHandle sfx);
 	float GetOutputRate();
 
 	// Streaming sounds.
@@ -25,8 +26,8 @@ public:
 	void StopStream (SoundStream *stream);
 
 	// Starts a sound.
-	FSoundChan *StartSound (sfxinfo_t *sfx, float vol, int pitch, int chanflags, FSoundChan *reuse_chan);
-	FSoundChan *StartSound3D (sfxinfo_t *sfx, SoundListener *listener, float vol, FRolloffInfo *rolloff, float distscale, int pitch, int priority, const FVector3 &pos, const FVector3 &vel, int channum, int chanflags, FSoundChan *reuse_chan);
+	FSoundChan *StartSound (SoundHandle sfx, float vol, int pitch, int chanflags, FSoundChan *reuse_chan);
+	FSoundChan *StartSound3D (SoundHandle sfx, SoundListener *listener, float vol, FRolloffInfo *rolloff, float distscale, int pitch, int priority, const FVector3 &pos, const FVector3 &vel, int channum, int chanflags, FSoundChan *reuse_chan);
 
 	// Stops a sound channel.
 	void StopSound (FSoundChan *chan);
@@ -69,9 +70,7 @@ private:
 
 	void HandleChannelDelay(FMOD::Channel *chan, FSoundChan *reuse_chan, float freq) const;
 	FSoundChan *CommonChannelSetup(FMOD::Channel *chan, FSoundChan *reuse_chan) const;
-	FMOD_MODE SetChanHeadSettings(SoundListener *listener, FMOD::Channel *chan, sfxinfo_t *sfx, const FVector3 &pos, int channum, int chanflags, FMOD_MODE oldmode) const;
-	void DoLoad (void **slot, sfxinfo_t *sfx);
-	void getsfx (sfxinfo_t *sfx);
+	FMOD_MODE SetChanHeadSettings(SoundListener *listener, FMOD::Channel *chan, const FVector3 &pos, int channum, int chanflags, FMOD_MODE oldmode) const;
 
 	bool Init ();
 	void Shutdown ();

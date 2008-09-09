@@ -1463,7 +1463,7 @@ FSoundChan *FMODSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener *list
 		HandleChannelDelay(chan, reuse_chan, freq);
 		chan->setPaused(false);
 		FSoundChan *schan = CommonChannelSetup(chan, reuse_chan);
-		schan->Rolloff = rolloff;
+		schan->Rolloff = *rolloff;
 		return schan;
 	}
 
@@ -2091,7 +2091,7 @@ float F_CALLBACK FMODSoundRenderer::RolloffCallback(FMOD_CHANNEL *channel, float
 	}
 	else if (chan->getUserData((void **)&schan) == FMOD_OK && schan != NULL)
 	{
-		rolloff = schan->Rolloff;
+		rolloff = &schan->Rolloff;
 		distance *= schan->DistanceScale;
 	}
 	else

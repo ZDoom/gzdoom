@@ -185,7 +185,7 @@ struct FSoundChan
 	FSoundChan	*NextChan;	// Next channel in this list.
 	FSoundChan **PrevChan;	// Previous channel in this list.
 	sfxinfo_t	*SfxInfo;	// Sound information.
-	FRolloffInfo *Rolloff;	// Rolloff parameters (do not necessarily come from SfxInfo!)
+	FRolloffInfo Rolloff;	// Rolloff parameters (do not necessarily come from SfxInfo!)
 	QWORD_UNION	StartTime;	// Sound start time in DSP clocks.
 	FSoundID	SoundID;	// Sound ID of playing sound.
 	FSoundID	OrgID;		// Sound ID of sound used to start this channel.

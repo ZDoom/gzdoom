@@ -1,4 +1,6 @@
 September 9, 2008  (Changes by Graf Zahl)
+- Fixed: The new rolloff values being stored in FSoundChan need to be serialized
+  for savegames.
 - Since loading of the sound lump is now done in S_LoadSound I added an IsNull
   method to the SoundRenderer class so that this function doesn't need to 
   load the sound for the NullSoundRenderer.

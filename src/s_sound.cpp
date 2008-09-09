@@ -1100,7 +1100,7 @@ void S_RestartSound(FSoundChan *chan)
 		SoundListener listener;
 		S_SetListener(listener, players[consoleplayer].camera);
 
-		ochan = GSnd->StartSound3D(sfx->data, &listener, chan->Volume, chan->Rolloff, chan->DistanceScale, chan->Pitch,
+		ochan = GSnd->StartSound3D(sfx->data, &listener, chan->Volume, &chan->Rolloff, chan->DistanceScale, chan->Pitch,
 			chan->Priority, pos, vel, chan->EntChannel, chan->ChanFlags, chan);
 	}
 	else
@@ -1793,16 +1793,19 @@ static FArchive &operator<<(FArchive &arc, FSoundChan &chan)
 	case SOURCE_Unattached:	arc << chan.Point[0] << chan.Point[1] << chan.Point[2];	break;
 	default:				I_Error("Unknown sound source type %d\n", chan.SourceType);	break;
 	}
-	arc << chan.SoundID;
-	arc << chan.OrgID;
-	arc << chan.Volume;
-	arc << chan.DistanceScale;
-	arc << chan.Pitch;
-	arc << chan.ChanFlags;
-	arc << chan.EntChannel;
-	arc << chan.Priority;
-	arc << chan.NearLimit;
-	arc << chan.StartTime;
+	arc << chan.SoundID
+		<< chan.OrgID
+		<< chan.Volume
+		<< chan.DistanceScale
+		<< chan.Pitch
+		<< chan.ChanFlags
+		<< chan.EntChannel
+		<< chan.Priority
+		<< chan.NearLimit
+		<< chan.StartTime
+		<< chan.Rolloff.RolloffType
+		<< chan.Rolloff.MinDistance
+		<< chan.Rolloff.MaxDistance;
 
 	if (arc.IsLoading())
 	{

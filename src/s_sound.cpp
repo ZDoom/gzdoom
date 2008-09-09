@@ -857,7 +857,6 @@ static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyO
 	}
 
 	sfx = &S_sfx[sound_id];
-	rolloff = sfx->Rolloff.MinDistance == 0? &S_Rolloff : &sfx->Rolloff;
 
 	// Scale volume according to SNDINFO data.
 	volume = MIN(volume * sfx->Volume, 1.f);
@@ -867,6 +866,7 @@ static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyO
 	// When resolving a link we do not want to get the NearLimit of
 	// the referenced sound so some additional checks are required
 	int near_limit = sfx->NearLimit;
+	rolloff = &sfx->Rolloff;
 
 	// Resolve player sounds, random sounds, and aliases
 	while (sfx->link != sfxinfo_t::NO_LINK)
@@ -875,19 +875,25 @@ static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyO
 		{
 			sound_id = FSoundID(S_FindSkinnedSound (actor, sound_id));
 			near_limit = S_sfx[sound_id].NearLimit;
+			rolloff = &S_sfx[sound_id].Rolloff;
 		}
 		else if (sfx->bRandomHeader)
 		{
 			sound_id = FSoundID(S_PickReplacement (sound_id));
 			if (near_limit < 0) near_limit = S_sfx[sound_id].NearLimit;
+			if (rolloff->MinDistance == 0) rolloff = &S_sfx[sound_id].Rolloff;
 		}
 		else
 		{
 			sound_id = FSoundID(sfx->link);
 			if (near_limit < 0) near_limit = S_sfx[sound_id].NearLimit;
+			if (rolloff->MinDistance == 0) rolloff = &S_sfx[sound_id].Rolloff;
 		}
 		sfx = &S_sfx[sound_id];
 	}
+
+	// If no valid rolloff was set use the global default
+	if (rolloff->MinDistance == 0) rolloff = &S_Rolloff;
 
 	// If this is a singular sound, don't play it if it's already playing.
 	if (sfx->bSingular && S_CheckSingular(sound_id))

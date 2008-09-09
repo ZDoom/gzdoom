@@ -149,7 +149,7 @@ public:
 	{
 		return NULL;
 	}
-	FSoundChan *StartSound3D (sfxinfo_t *sfx, SoundListener *listener, float vol, float distscale, int pitch, int priority, const FVector3 &pos, const FVector3 &vel, int channum, int chanflags, FSoundChan *reuse_chan)
+	FSoundChan *StartSound3D (sfxinfo_t *sfx, SoundListener *listener, float vol, FRolloffInfo *rolloff, float distscale, int pitch, int priority, const FVector3 &pos, const FVector3 &vel, int channum, int chanflags, FSoundChan *reuse_chan)
 	{
 		return NULL;
 	}

@@ -126,9 +126,7 @@ int sfx_empty;
 FSoundChan *Channels;
 FSoundChan *FreeChannels;
 
-int S_RolloffType;
-float S_MinDistance;
-float S_MaxDistanceOrRolloffFactor;
+FRolloffInfo S_Rolloff;
 BYTE *S_SoundCurve;
 int S_SoundCurveSize;
 
@@ -812,6 +810,7 @@ static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyO
 	int pitch;
 	FSoundChan *chan;
 	FVector3 pos, vel;
+	FRolloffInfo *rolloff;
 
 	if (sound_id <= 0 || volume <= 0)
 		return NULL;
@@ -858,6 +857,7 @@ static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyO
 	}
 
 	sfx = &S_sfx[sound_id];
+	rolloff = sfx->Rolloff.MinDistance == 0? &S_Rolloff : &sfx->Rolloff;
 
 	// Scale volume according to SNDINFO data.
 	volume = MIN(volume * sfx->Volume, 1.f);
@@ -1005,7 +1005,7 @@ static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyO
 	{
 		SoundListener listener;
 		S_SetListener(listener, players[consoleplayer].camera);
-		chan = GSnd->StartSound3D (sfx, &listener, volume, attenuation, pitch, basepriority, pos, vel, channel, chanflags, NULL);
+		chan = GSnd->StartSound3D (sfx, &listener, volume, rolloff, attenuation, pitch, basepriority, pos, vel, channel, chanflags, NULL);
 	}
 	else
 	{
@@ -1093,7 +1093,7 @@ void S_RestartSound(FSoundChan *chan)
 		SoundListener listener;
 		S_SetListener(listener, players[consoleplayer].camera);
 
-		ochan = GSnd->StartSound3D(sfx, &listener, chan->Volume, chan->DistanceScale, chan->Pitch,
+		ochan = GSnd->StartSound3D(sfx, &listener, chan->Volume, chan->Rolloff, chan->DistanceScale, chan->Pitch,
 			chan->Priority, pos, vel, chan->EntChannel, chan->ChanFlags, chan);
 	}
 	else

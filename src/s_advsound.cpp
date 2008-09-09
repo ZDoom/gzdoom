@@ -501,10 +501,10 @@ int S_AddSoundLump (const char *logicalname, int lump)
 	newsfx.bUsed = false;
 	newsfx.bSingular = false;
 	newsfx.bTentative = false;
-	newsfx.RolloffType = ROLLOFF_Doom;
 	newsfx.link = sfxinfo_t::NO_LINK;
-	newsfx.MinDistance = 0;
-	newsfx.MaxDistance = 0;
+	newsfx.Rolloff.RolloffType = ROLLOFF_Doom;
+	newsfx.Rolloff.MinDistance = 0;
+	newsfx.Rolloff.MaxDistance = 0;
 
 	return (int)S_sfx.Push (newsfx);
 }
@@ -1202,7 +1202,7 @@ static void S_AddSNDINFO (int lump)
 			case SI_Rolloff: {
 				// $rolloff *|<logical name> [linear|log|custom] <min dist> <max dist/rolloff factor>
 				// Using * for the name makes it the default for sounds that don't specify otherwise.
-				float *min, *max;
+				FRolloffInfo *rolloff;
 				int type;
 				int sfx;
 
@@ -1210,14 +1210,12 @@ static void S_AddSNDINFO (int lump)
 				if (sc.Compare("*"))
 				{
 					sfx = -1;
-					min = &S_MinDistance;
-					max = &S_MaxDistanceOrRolloffFactor;
+					rolloff = &S_Rolloff;
 				}
 				else
 				{
 					sfx = S_FindSoundTentative(sc.String);
-					min = &S_sfx[sfx].MinDistance;
-					max = &S_sfx[sfx].MaxDistance;
+					rolloff = &S_sfx[sfx].Rolloff;
 				}
 				type = ROLLOFF_Doom;
 				if (!sc.CheckFloat())
@@ -1225,15 +1223,15 @@ static void S_AddSNDINFO (int lump)
 					sc.MustGetString();
 					if (sc.Compare("linear"))
 					{
-						type = ROLLOFF_Linear;
+						rolloff->RolloffType = ROLLOFF_Linear;
 					}
 					else if (sc.Compare("log"))
 					{
-						type = ROLLOFF_Log;
+						rolloff->RolloffType = ROLLOFF_Log;
 					}
 					else if (sc.Compare("custom"))
 					{
-						type = ROLLOFF_Custom;
+						rolloff->RolloffType = ROLLOFF_Custom;
 					}
 					else
 					{
@@ -1241,17 +1239,9 @@ static void S_AddSNDINFO (int lump)
 					}
 					sc.MustGetFloat();
 				}
-				if (sfx < 0)
-				{
-					S_RolloffType = type;
-				}
-				else
-				{
-					S_sfx[sfx].RolloffType = type;
-				}
-				*min = sc.Float;
+				rolloff->MinDistance = sc.Float;
 				sc.MustGetFloat();
-				*max = sc.Float;
+				rolloff->MaxDistance = sc.Float;
 				break;
 			  }
 

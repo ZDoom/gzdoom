@@ -133,7 +133,7 @@ static bool ShowedBanner;
 // The rolloff callback is called during FMOD::Sound::play, so we need this
 // global variable to contain the sound info during that time for the
 // callback.
-static sfxinfo_t *GSfxInfo;
+static FRolloffInfo *GRolloff;
 static float GDistScale;
 
 // In the below lists, duplicate entries are for user selection. When
@@ -1358,7 +1358,7 @@ FSoundChan *FMODSoundRenderer::StartSound(sfxinfo_t *sfx, float vol, int pitch, 
 		freq = 0;
 	}
 
-	GSfxInfo = sfx;
+	GRolloff = NULL;	// Do 2D sounds need rolloff?
 	result = Sys->playSound(FMOD_CHANNEL_FREE, (FMOD::Sound *)sfx->data, true, &chan);
 	if (FMOD_OK == result)
 	{
@@ -1398,7 +1398,8 @@ FSoundChan *FMODSoundRenderer::StartSound(sfxinfo_t *sfx, float vol, int pitch, 
 
 CVAR(Float, snd_3dspread, 180, 0)
 
-FSoundChan *FMODSoundRenderer::StartSound3D(sfxinfo_t *sfx, SoundListener *listener, float vol, float distscale,
+FSoundChan *FMODSoundRenderer::StartSound3D(sfxinfo_t *sfx, SoundListener *listener, float vol, 
+	FRolloffInfo *rolloff, float distscale,
 	int pitch, int priority, const FVector3 &pos, const FVector3 &vel,
 	int channum, int chanflags, FSoundChan *reuse_chan)
 {
@@ -1424,7 +1425,7 @@ FSoundChan *FMODSoundRenderer::StartSound3D(sfxinfo_t *sfx, SoundListener *liste
 	}
 
 	// Play it.
-	GSfxInfo = sfx;
+	GRolloff = rolloff;
 	GDistScale = distscale;
 
 	// Experiments indicate that playSound will ignore priorities and always succeed
@@ -1478,9 +1479,11 @@ FSoundChan *FMODSoundRenderer::StartSound3D(sfxinfo_t *sfx, SoundListener *liste
 		HandleChannelDelay(chan, reuse_chan, freq);
 		chan->setPaused(false);
 		FSoundChan *schan = CommonChannelSetup(chan, reuse_chan);
+		schan->Rolloff = rolloff;
 		return schan;
 	}
 
+	GRolloff = NULL;
 	DPrintf ("Sound %s failed to play: %d\n", sfx->name.GetChars(), result);
 	return 0;
 }
@@ -1618,7 +1621,7 @@ FSoundChan *FMODSoundRenderer::CommonChannelSetup(FMOD::Channel *chan, FSoundCha
 	}
 	chan->setUserData(schan);
 	chan->setCallback(FMOD_CHANNEL_CALLBACKTYPE_END, ChannelEndCallback, 0);
-	GSfxInfo = NULL;
+	GRolloff = NULL;
 	return schan;
 }
 
@@ -1906,23 +1909,8 @@ bool FMODSoundRenderer::LoadSound(sfxinfo_t *sfx)
 		FMOD_MODE samplemode;
 		FMOD_CREATESOUNDEXINFO exinfo = { sizeof(exinfo), };
 		FMOD::Sound *sample;
-		int rolloff;
-		float mindist, maxdist;
 
 		samplemode = FMOD_3D | FMOD_OPENMEMORY | FMOD_SOFTWARE;
-
-		if (sfx->MaxDistance == 0)
-		{
-			mindist = S_MinDistance;
-			maxdist = S_MaxDistanceOrRolloffFactor;
-			rolloff = S_RolloffType;
-		}
-		else
-		{
-			mindist = sfx->MinDistance;
-			maxdist = sfx->MaxDistance;
-			rolloff = sfx->RolloffType;
-		}
 
 		sfxdata = NULL;
 		sample = NULL;
@@ -2003,11 +1991,6 @@ bool FMODSoundRenderer::LoadSound(sfxinfo_t *sfx)
 
 		if (sample != NULL)
 		{
-			if (rolloff == ROLLOFF_Log)
-			{
-				maxdist = 10000.f;
-			}
-			sample->set3DMinMaxDistance(mindist, maxdist);
 			sample->setUserData(sfx);
 		}
 	}
@@ -2138,63 +2121,46 @@ float F_CALLBACK FMODSoundRenderer::RolloffCallback(FMOD_CHANNEL *channel, float
 {
 	FMOD::Channel *chan = (FMOD::Channel *)channel;
 	FSoundChan *schan;
-	// Defaults for Doom.
-	int type = ROLLOFF_Doom;
-	sfxinfo_t *sfx;
-	float min;
-	float max;
-	float factor;
-	float volume;
+	FRolloffInfo *rolloff;
 
-	type = S_RolloffType;
-	factor = S_MaxDistanceOrRolloffFactor;
-	min = S_MinDistance;
-	max = S_MaxDistanceOrRolloffFactor;
-
-	if (GSfxInfo != NULL)
+	if (GRolloff != NULL)
 	{
-		sfx = GSfxInfo;
+		rolloff = GRolloff;
 		distance *= GDistScale;
 	}
 	else if (chan->getUserData((void **)&schan) == FMOD_OK && schan != NULL)
 	{
-		sfx = schan->SfxInfo;
+		rolloff = schan->Rolloff;
 		distance *= schan->DistanceScale;
 	}
 	else
 	{
 		return 0;
 	}
-	if (sfx == NULL)
+	if (rolloff == NULL)
 	{
 		return 0;
 	}
 
-	if (sfx->MaxDistance == 0)
-	{
-		type = sfx->RolloffType;
-		factor = sfx->RolloffFactor;
-	}
-	chan->get3DMinMaxDistance(&min, &max);
-
-	if (distance <= min)
+	if (distance <= rolloff->MinDistance)
 	{
 		return 1;
 	}
-	if (type == ROLLOFF_Log)
+	if (rolloff->RolloffType == ROLLOFF_Log)
 	{ // Logarithmic rolloff has no max distance where it goes silent.
-		return min / (min + factor * (distance - min));
+		return rolloff->MinDistance / (rolloff->MinDistance + rolloff->RolloffFactor * (distance - rolloff->MinDistance));
 	}
-	if (distance >= max)
+	if (distance >= rolloff->MaxDistance)
 	{
 		return 0;
 	}
-	volume = (max - distance) / (max - min);
-	if (type == ROLLOFF_Custom && S_SoundCurve != NULL)
+
+	float volume = (rolloff->MaxDistance - distance) / (rolloff->MaxDistance - rolloff->MinDistance);
+	if (rolloff->RolloffType == ROLLOFF_Custom && S_SoundCurve != NULL)
 	{
 		volume = S_SoundCurve[int(S_SoundCurveSize * (1 - volume))] / 127.f;
 	}
-	if (type == ROLLOFF_Linear)
+	if (rolloff->RolloffType == ROLLOFF_Linear)
 	{
 		return volume;
 	}

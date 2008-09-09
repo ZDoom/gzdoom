@@ -1,3 +1,9 @@
+September 9, 2008  (Changes by Graf Zahl)
+- Fixed: FMODSoundRenderer::StartSound3D must set the static variable pointing
+  to the rolloff information back to NULL when starting the sound fails.
+- Fixed: Rolloff information was taken from the sfxinfo that contained the
+  actual sound data, not the one that was used for starting the sound.
+
 September 7, 2008  (Changes by Graf Zahl)
 - Fixed: Chex Quest's Super Bootspork was missing the pickup message.
 - Added missing Strife automap colors for items and non-monsters.

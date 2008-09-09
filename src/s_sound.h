@@ -27,6 +27,15 @@
 class AActor;
 class FScanner;
 
+// Default rolloff information.
+struct FRolloffInfo
+{
+	int RolloffType;
+	float MinDistance;
+	union { float MaxDistance; float RolloffFactor; };
+};
+
+
 //
 // SoundFX struct.
 //
@@ -61,8 +70,7 @@ struct sfxinfo_t
 	unsigned int link;
 	enum { NO_LINK = 0xffffffff };
 
-	float		MinDistance;
-	union		{ float MaxDistance, RolloffFactor; };
+	FRolloffInfo	Rolloff;
 };
 
 // Rolloff types
@@ -158,10 +166,7 @@ public:
 
 FArchive &operator<<(FArchive &arc, FSoundID &sid);
 
-// Default rolloff information.
-extern int S_RolloffType;
-extern float S_MinDistance;
-extern float S_MaxDistanceOrRolloffFactor;
+extern FRolloffInfo S_Rolloff;
 extern BYTE *S_SoundCurve;
 extern int S_SoundCurveSize;
 
@@ -174,6 +179,7 @@ struct FSoundChan
 	FSoundChan	*NextChan;	// Next channel in this list.
 	FSoundChan **PrevChan;	// Previous channel in this list.
 	sfxinfo_t	*SfxInfo;	// Sound information.
+	FRolloffInfo *Rolloff;	// Rolloff parameters (do not necessarily come from SfxInfo!)
 	QWORD_UNION	StartTime;	// Sound start time in DSP clocks.
 	FSoundID	SoundID;	// Sound ID of playing sound.
 	FSoundID	OrgID;		// Sound ID of sound used to start this channel.

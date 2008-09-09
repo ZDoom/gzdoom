@@ -102,7 +102,7 @@ public:
 
 	// Starts a sound.
 	virtual FSoundChan *StartSound (sfxinfo_t *sfx, float vol, int pitch, int chanflags, FSoundChan *reuse_chan) = 0;
-	virtual FSoundChan *StartSound3D (sfxinfo_t *sfx, SoundListener *listener, float vol, float distscale, int pitch, int priority, const FVector3 &pos, const FVector3 &vel, int channum, int chanflags, FSoundChan *reuse_chan) = 0;
+	virtual FSoundChan *StartSound3D (sfxinfo_t *sfx, SoundListener *listener, float vol, FRolloffInfo *rolloff, float distscale, int pitch, int priority, const FVector3 &pos, const FVector3 &vel, int channum, int chanflags, FSoundChan *reuse_chan) = 0;
 
 	// Stops a sound channel.
 	virtual void StopSound (FSoundChan *chan) = 0;

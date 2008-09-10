@@ -272,7 +272,7 @@ void SBarInfo::ParseSBarInfo(int lump)
 						{
 							sc.ScriptError("Unkown flag '%s'.", sc.String);
 						}
-						if(!sc.CheckToken('|') || !sc.CheckToken(','))
+						if(!sc.CheckToken('|') && !sc.CheckToken(','))
 							goto FinishStatusBar; //No more args so we must skip over anything else and go to the end.
 					}
 					sc.MustGetToken(TK_FloatConst);

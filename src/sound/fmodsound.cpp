@@ -1,6 +1,6 @@
 /*
 ** i_sound.cpp
-** System interface for sound; uses fmod.dll
+** System interface for sound; uses FMOD Ex.
 **
 **---------------------------------------------------------------------------
 ** Copyright 1998-2008 Randy Heit

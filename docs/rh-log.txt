@@ -1,3 +1,11 @@
+September 9, 2008
+- Added a check for D3DLINECAPS_ANTIALIAS, but this is complicated by the
+  fact that NVidia's don't report it, even though they support it. If there
+  are any cards that no longer have antialised lines on the automap, please
+  let me know.
+- Added vid_hwaalines cvar to force antialiased lines off for the
+  Direct3D renderer, in case it doesn't really support them.
+
 September 9, 2008  (Changes by Graf Zahl)
 - Fixed: The new rolloff values being stored in FSoundChan need to be serialized
   for savegames.

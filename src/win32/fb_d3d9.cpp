@@ -214,6 +214,7 @@ CUSTOM_CVAR(Bool, vid_hw2d, true, CVAR_NOINITCALL)
 }
 
 CVAR(Int, d3d_showpacks, 0, 0)
+CVAR(Bool, vid_hwaalines, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 // CODE --------------------------------------------------------------------
 
@@ -273,9 +274,9 @@ D3DFB::D3DFB (int width, int height, bool fullscreen)
 		return;
 	}
 
-	memcpy (SourcePalette, GPalette.BaseColors, sizeof(PalEntry)*256);
+	memcpy(SourcePalette, GPalette.BaseColors, sizeof(PalEntry)*256);
 
-	Windowed = !(static_cast<Win32Video *>(Video)->GoFullscreen (fullscreen));
+	Windowed = !(static_cast<Win32Video *>(Video)->GoFullscreen(fullscreen));
 
 	TrueHeight = height;
 	if (fullscreen)
@@ -294,23 +295,23 @@ D3DFB::D3DFB (int width, int height, bool fullscreen)
 	LBOffsetI = (TrueHeight - Height) / 2;
 	LBOffset = float(LBOffsetI);
 
-	FillPresentParameters (&d3dpp, fullscreen, VSync);
+	FillPresentParameters(&d3dpp, fullscreen, VSync);
 
 	HRESULT hr;
 
-	if (FAILED(hr = D3D->CreateDevice (D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, Window,
+	if (FAILED(hr = D3D->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, Window,
 		D3DCREATE_HARDWARE_VERTEXPROCESSING | D3DCREATE_FPU_PRESERVE, &d3dpp, &D3DDevice)))
 	{
-		if (FAILED(D3D->CreateDevice (D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, Window,
+		if (FAILED(D3D->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, Window,
 			D3DCREATE_SOFTWARE_VERTEXPROCESSING | D3DCREATE_FPU_PRESERVE, &d3dpp, &D3DDevice)))
 		{
 			if (d3dpp.FullScreen_RefreshRateInHz != 0)
 			{
 				d3dpp.FullScreen_RefreshRateInHz = 0;
-				if (FAILED(hr = D3D->CreateDevice (D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, Window,
+				if (FAILED(hr = D3D->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, Window,
 					D3DCREATE_HARDWARE_VERTEXPROCESSING | D3DCREATE_FPU_PRESERVE, &d3dpp, &D3DDevice)))
 				{
-					if (FAILED(D3D->CreateDevice (D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, Window,
+					if (FAILED(D3D->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, Window,
 						D3DCREATE_SOFTWARE_VERTEXPROCESSING | D3DCREATE_FPU_PRESERVE, &d3dpp, &D3DDevice)))
 					{
 						D3DDevice = NULL;
@@ -321,14 +322,34 @@ D3DFB::D3DFB (int width, int height, bool fullscreen)
 	}
 	if (D3DDevice != NULL)
 	{
-		CreateResources ();
-		SetInitialState ();
+		D3DADAPTER_IDENTIFIER9 adapter_id;
+		D3DDEVICE_CREATION_PARAMETERS create_params;
+
+		if (FAILED(hr = D3DDevice->GetDeviceCaps(&DeviceCaps)))
+		{
+			memset(&DeviceCaps, 0, sizeof(DeviceCaps));
+		}
+		if (SUCCEEDED(hr = D3DDevice->GetCreationParameters(&create_params)) &&
+			SUCCEEDED(hr = D3D->GetAdapterIdentifier(create_params.AdapterOrdinal, 0, &adapter_id)))
+		{
+			// NVidia's drivers lie, claiming they don't support
+			// antialiased lines when, really, they do.
+			if (adapter_id.VendorId == 0x10de)
+			{
+				DeviceCaps.LineCaps |= D3DLINECAPS_ANTIALIAS;
+			}
+			// I don't know about ATI's drivers. The only ATI device
+			// I have readily available to test with (a Mobility X300)
+			// really doesn't support them.
+		}
+		CreateResources();
+		SetInitialState();
 	}
 }
 
 D3DFB::~D3DFB ()
 {
-	ReleaseResources ();
+	ReleaseResources();
 	SAFE_RELEASE( D3DDevice );
 	delete[] QuadExtra;
 }
@@ -351,8 +372,6 @@ void D3DFB::SetInitialState()
 	D3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP);
 	D3DDevice->SetSamplerState(1, D3DSAMP_ADDRESSU, SM14 ? D3DTADDRESS_BORDER : D3DTADDRESS_CLAMP);
 	D3DDevice->SetSamplerState(1, D3DSAMP_ADDRESSV, SM14 ? D3DTADDRESS_BORDER : D3DTADDRESS_CLAMP);
-
-	D3DDevice->SetRenderState(D3DRS_ANTIALIASEDLINEENABLE, TRUE);
 
 	NeedGammaUpdate = true;
 	NeedPalUpdate = true;
@@ -946,6 +965,7 @@ void D3DFB::Draw3DPart(bool copy3d)
 	DrawLetterbox();
 	InScene = true;
 	D3DDevice->BeginScene();
+	D3DDevice->SetRenderState(D3DRS_ANTIALIASEDLINEENABLE, (DeviceCaps.LineCaps & D3DLINECAPS_ANTIALIAS) && vid_hwaalines);
 	assert(OldRenderTarget == NULL);
 	if (TempRenderTexture != NULL &&
 		((Windowed && GammaFixerShader && TempRenderTexture != FinalWipeScreen) || GatheringWipeScreen || PixelDoubling))

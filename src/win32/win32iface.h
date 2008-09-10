@@ -324,6 +324,8 @@ private:
 	void EndLineBatch();
 	void EndBatch();
 
+	D3DCAPS9 DeviceCaps;
+
 	// State
 	void EnableAlphaTest(BOOL enabled);
 	void SetAlphaBlend(D3DBLENDOP op, D3DBLEND srcblend=D3DBLEND(0), D3DBLEND destblend=D3DBLEND(0));
@@ -365,6 +367,7 @@ private:
 	bool InScene;
 	bool SM14;
 	bool GatheringWipeScreen;
+	bool AALines;
 	D3DPal *Palettes;
 	D3DTex *Textures;
 	PackingTexture *Packs;

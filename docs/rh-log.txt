@@ -1,3 +1,8 @@
+September 11, 2008
+- Antialiasing of lines is now controlled solely by the vid_hwaalines cvar,
+  ignoring what the driver reports, since ATI is apparently just as bad as
+  NVidia.
+
 September 9, 2008
 - Added a check for D3DLINECAPS_ANTIALIAS, but this is complicated by the
   fact that NVidia's don't report it, even though they support it. If there

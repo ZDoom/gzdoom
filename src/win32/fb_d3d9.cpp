@@ -965,7 +965,7 @@ void D3DFB::Draw3DPart(bool copy3d)
 	DrawLetterbox();
 	InScene = true;
 	D3DDevice->BeginScene();
-	D3DDevice->SetRenderState(D3DRS_ANTIALIASEDLINEENABLE, (DeviceCaps.LineCaps & D3DLINECAPS_ANTIALIAS) && vid_hwaalines);
+	D3DDevice->SetRenderState(D3DRS_ANTIALIASEDLINEENABLE, vid_hwaalines);
 	assert(OldRenderTarget == NULL);
 	if (TempRenderTexture != NULL &&
 		((Windowed && GammaFixerShader && TempRenderTexture != FinalWipeScreen) || GatheringWipeScreen || PixelDoubling))

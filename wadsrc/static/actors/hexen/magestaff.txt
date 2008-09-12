@@ -3,6 +3,10 @@
 
 ACTOR MageWeaponPiece : WeaponPiece native
 {
+	Inventory.PickupSound "misc/w_pkup"
+	Inventory.PickupMessage "$TXT_BLOODSCOURGE_PIECE"
+	WeaponPiece.Weapon MWeapBloodscourge
+	+FLOATBOB
 }
 
 // Mage Weapon Piece 1 ------------------------------------------------------
@@ -11,10 +15,7 @@ ACTOR MWeaponPiece1 : MageWeaponPiece 21
 {
 	Game Hexen
 	SpawnID 37
-	+FLOATBOB
-	Inventory.PickupMessage "$TXT_BLOODSCOURGE_PIECE"
 	WeaponPiece.Number 1
-	WeaponPiece.Weapon MWeapBloodscourge
 	States
 	{
 	Spawn:
@@ -25,11 +26,10 @@ ACTOR MWeaponPiece1 : MageWeaponPiece 21
 
 // Mage Weapon Piece 2 ------------------------------------------------------
 
-ACTOR MWeaponPiece2 : MWeaponPiece1 22
+ACTOR MWeaponPiece2 : MageWeaponPiece 22
 {
 	Game Hexen
 	SpawnID 38
-	+FLOATBOB
 	WeaponPiece.Number 2
 	States
 	{
@@ -41,11 +41,10 @@ ACTOR MWeaponPiece2 : MWeaponPiece1 22
 
 // Mage Weapon Piece 3 ------------------------------------------------------
 
-ACTOR MWeaponPiece3 : MWeaponPiece1 23
+ACTOR MWeaponPiece3 : MageWeaponPiece 23
 {
 	Game Hexen
 	SpawnID 39
-	+FLOATBOB
 	WeaponPiece.Number 3
 	States
 	{
@@ -83,6 +82,7 @@ ACTOR MWeapBloodscourge : MageWeapon native
 	Weapon.AmmoType1 "Mana1"
 	Weapon.AmmoType2 "Mana2"
 	+WEAPON.PRIMARY_USES_BOTH
+	+Inventory.NoAttenPickupSound
 	Inventory.PickupMessage "$TXT_WEAPON_M4"
 	Inventory.PickupSound "WeaponBuild"
 

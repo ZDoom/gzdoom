@@ -99,6 +99,7 @@ enum
 	IF_IGNORESKILL		= 1<<14,	// Ignores any skill related multiplicators when giving this item.
 	IF_CREATECOPYMOVED	= 1<<15,	// CreateCopy changed the owner (copy's Owner field holds new owner).
 	IF_INITEFFECTFAILED	= 1<<16,	// CreateCopy tried to activate a powerup and activation failed (can happen with PowerMorph)
+	IF_NOATTENPICKUPSOUND = 1<<17,	// Play pickup sound with ATTN_NONE
 };
 
 struct vissprite_t;

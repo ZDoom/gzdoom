@@ -981,10 +981,24 @@ const char *AInventory::PickupMessage ()
 
 void AInventory::PlayPickupSound (AActor *toucher)
 {
-	S_Sound (toucher, CHAN_PICKUP, PickupSound, 1,
-		(ItemFlags & IF_FANCYPICKUPSOUND) &&
-		(toucher == NULL || toucher->CheckLocalView (consoleplayer))
-		? ATTN_NONE : ATTN_NORM);
+	float atten;
+
+	if (ItemFlags & IF_NOATTENPICKUPSOUND)
+	{
+		atten = ATTN_NONE;
+	}
+#if 0
+	else if ((ItemFlags & IF_FANCYPICKUPSOUND) &&
+		(toucher == NULL || toucher->CheckLocalView(consoeplayer)))
+	{
+		atten = ATTN_NONE;
+	}
+#endif
+	else
+	{
+		atten = ATTN_NORM;
+	}
+	S_Sound (toucher, CHAN_PICKUP, PickupSound, 1, atten);
 }
 
 //===========================================================================

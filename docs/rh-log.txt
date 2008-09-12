@@ -1,4 +1,7 @@
 September 11, 2008
+- Fixed: Hexen's fourth weapon pieces did not play the correct pickup sound,
+  and when they were fully assembled, they did not play the sound across the
+  entire level.
 - Antialiasing of lines is now controlled solely by the vid_hwaalines cvar,
   ignoring what the driver reports, since ATI is apparently just as bad as
   NVidia.

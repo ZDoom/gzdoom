@@ -3,6 +3,10 @@
 
 ACTOR FighterWeaponPiece : WeaponPiece native
 {
+	Inventory.PickupSound "misc/w_pkup"
+	Inventory.PickupMessage "$TXT_QUIETUS_PIECE"
+	WeaponPiece.Weapon FWeapQuietus
+	+FLOATBOB
 }
 
 // Fighter Weapon Piece 1 ---------------------------------------------------
@@ -11,10 +15,7 @@ ACTOR FWeaponPiece1 : FighterWeaponPiece 12
 {
 	Game Hexen
 	SpawnID 29
-	Inventory.PickupMessage "$TXT_QUIETUS_PIECE"
 	WeaponPiece.Number 1
-	WeaponPiece.Weapon FWeapQuietus
-	+FLOATBOB
 	States
 	{
 	Spawn:
@@ -25,12 +26,11 @@ ACTOR FWeaponPiece1 : FighterWeaponPiece 12
 
 // Fighter Weapon Piece 2 ---------------------------------------------------
 
-ACTOR FWeaponPiece2 : FWeaponPiece1 13
+ACTOR FWeaponPiece2 : FighterWeaponPiece 13
 {
 	Game Hexen
 	SpawnID 30
 	WeaponPiece.Number 2
-	+FLOATBOB
 	States
 	{
 	Spawn:
@@ -41,12 +41,11 @@ ACTOR FWeaponPiece2 : FWeaponPiece1 13
 
 // Fighter Weapon Piece 3 ---------------------------------------------------
 
-ACTOR FWeaponPiece3 : FWeaponPiece1 16
+ACTOR FWeaponPiece3 : FighterWeaponPiece 16
 {
 	Game Hexen
 	SpawnID 31
 	WeaponPiece.Number 3
-	+FLOATBOB
 	States
 	{
 	Spawn:
@@ -75,6 +74,7 @@ ACTOR FWeapQuietus : FighterWeapon
 	Health 3
 	Weapon.SelectionOrder 2900
 	+WEAPON.PRIMARY_USES_BOTH
+	+Inventory.NoAttenPickupSound
 	Weapon.AmmoUse1 14
 	Weapon.AmmoUse2 14
 	Weapon.AmmoGive1 20

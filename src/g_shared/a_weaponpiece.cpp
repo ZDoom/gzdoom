@@ -146,7 +146,13 @@ const char *AWeaponPiece::PickupMessage ()
 
 void AWeaponPiece::PlayPickupSound (AActor *toucher)
 {
-	if (FullWeapon) FullWeapon->PlayPickupSound(toucher);
-	else Super::PlayPickupSound(toucher);
+	if (FullWeapon)
+	{
+		FullWeapon->PlayPickupSound(toucher);
+	}
+	else
+	{
+		Super::PlayPickupSound(toucher);
+	}
 }
 

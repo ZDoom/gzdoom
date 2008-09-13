@@ -1559,7 +1559,8 @@ static EIWADType ScanIWAD (const char *iwad)
 			if (!lumpsfound[Check_Mapinfo])
 			{
 				// The original release won't work without its hacked custom EXE.
-				I_FatalError("Found an incompatible version of Chex Quest 3");
+				//I_FatalError("Found an incompatible version of Chex Quest 3");
+				return NUM_IWAD_TYPES;	// Can't use it.
 			}
 			return IWAD_ChexQuest3;
 		}

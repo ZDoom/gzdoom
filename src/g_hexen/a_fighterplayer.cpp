@@ -17,7 +17,7 @@ IMPLEMENT_CLASS (AFighterWeapon)
 IMPLEMENT_CLASS (AClericWeapon)
 IMPLEMENT_CLASS (AMageWeapon)
 
-bool AFighterWeapon::TryPickup (AActor *toucher)
+bool AFighterWeapon::TryPickup (AActor *&toucher)
 {
 	// The Doom and Hexen players are not excluded from pickup in case
 	// somebody wants to use these weapons with either of those games.
@@ -42,7 +42,7 @@ bool AFighterWeapon::TryPickup (AActor *toucher)
 
 // Cleric Weapon Base Class -------------------------------------------------
 
-bool AClericWeapon::TryPickup (AActor *toucher)
+bool AClericWeapon::TryPickup (AActor *&toucher)
 {
 	// The Doom and Hexen players are not excluded from pickup in case
 	// somebody wants to use these weapons with either of those games.
@@ -67,7 +67,7 @@ bool AClericWeapon::TryPickup (AActor *toucher)
 
 // Mage Weapon Base Class ---------------------------------------------------
 
-bool AMageWeapon::TryPickup (AActor *toucher)
+bool AMageWeapon::TryPickup (AActor *&toucher)
 {
 	// The Doom and Hexen players are not excluded from pickup in case
 	// somebody wants to use these weapons with either of those games.

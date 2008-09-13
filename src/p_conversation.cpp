@@ -1154,7 +1154,7 @@ void P_ConversationCommand (int player, BYTE **stream)
 				static_cast<AWeapon*>(item)->AmmoGive1 = 40;
 			}
 			item->flags |= MF_DROPPED;
-			if (!item->TryPickup (players[player].mo))
+			if (!item->CallTryPickup (players[player].mo))
 			{
 				item->Destroy ();
 				Conversation_TakeStuff = false;

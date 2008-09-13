@@ -33,21 +33,21 @@ class AUpgradeStamina : public ADummyStrifeItem
 {
 	DECLARE_CLASS (AUpgradeStamina, ADummyStrifeItem)
 public:
-	bool TryPickup (AActor *toucher);
+	bool TryPickup (AActor *&toucher);
 };
 
 class AUpgradeAccuracy : public ADummyStrifeItem
 {
 	DECLARE_CLASS (AUpgradeAccuracy, ADummyStrifeItem)
 public:
-	bool TryPickup (AActor *toucher);
+	bool TryPickup (AActor *&toucher);
 };
 
 class ASlideshowStarter : public ADummyStrifeItem
 {
 	DECLARE_CLASS (ASlideshowStarter, ADummyStrifeItem)
 public:
-	bool TryPickup (AActor *toucher);
+	bool TryPickup (AActor *&toucher);
 };
 
 class ASigil : public AWeapon

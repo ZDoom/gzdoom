@@ -48,7 +48,7 @@ bool AArtiHealingRadius::Use (bool pickup)
 					AHexenArmor *armor = Spawn<AHexenArmor> (0,0,0, NO_REPLACE);
 					armor->health = j;
 					armor->Amount = 1;
-					if (!armor->TryPickup (players[i].mo))
+					if (!armor->CallTryPickup (players[i].mo))
 					{
 						armor->Destroy ();
 					}

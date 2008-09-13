@@ -577,7 +577,7 @@ void GiveSpawner (player_t *player, const PClass *type, int amount)
 			level.total_items--;
 			item->flags &= ~MF_COUNTITEM;
 		} 
-		if (!item->TryPickup (player->mo))
+		if (!item->CallTryPickup (player->mo))
 		{
 			item->Destroy ();
 		}
@@ -693,7 +693,7 @@ void cht_Give (player_t *player, const char *name, int amount)
 			ABasicArmorPickup *armor = Spawn<ABasicArmorPickup> (0,0,0, NO_REPLACE);
 			armor->SaveAmount = 100*deh.BlueAC;
 			armor->SavePercent = gameinfo.gametype != GAME_Heretic ? FRACUNIT/2 : FRACUNIT*3/4;
-			if (!armor->TryPickup (player->mo))
+			if (!armor->CallTryPickup (player->mo))
 			{
 				armor->Destroy ();
 			}
@@ -705,7 +705,7 @@ void cht_Give (player_t *player, const char *name, int amount)
 				AHexenArmor *armor = Spawn<AHexenArmor> (0,0,0, NO_REPLACE);
 				armor->health = i;
 				armor->Amount = 0;
-				if (!armor->TryPickup (player->mo))
+				if (!armor->CallTryPickup (player->mo))
 				{
 					armor->Destroy ();
 				}
@@ -726,7 +726,7 @@ void cht_Give (player_t *player, const char *name, int amount)
 				if (key->KeyNumber != 0)
 				{
 					key = static_cast<AKey *>(Spawn (PClass::m_Types[i], 0,0,0, NO_REPLACE));
-					if (!key->TryPickup (player->mo))
+					if (!key->CallTryPickup (player->mo))
 					{
 						key->Destroy ();
 					}

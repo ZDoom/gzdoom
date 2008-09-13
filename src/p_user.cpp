@@ -698,7 +698,7 @@ void APlayerPawn::GiveDeathmatchInventory()
 			if (key->KeyNumber != 0)
 			{
 				key = static_cast<AKey *>(Spawn (PClass::m_Types[i], 0,0,0, NO_REPLACE));
-				if (!key->TryPickup (this))
+				if (!key->CallTryPickup (this))
 				{
 					key->Destroy ();
 				}
@@ -1007,7 +1007,7 @@ void APlayerPawn::GiveDefaultInventory ()
 					static_cast<AWeapon*>(item)->AmmoGive1 =
 					static_cast<AWeapon*>(item)->AmmoGive2 = 0;
 				}
-				if (!item->TryPickup(this))
+				if (!item->CallTryPickup(this))
 				{
 					item->Destroy ();
 					item = NULL;

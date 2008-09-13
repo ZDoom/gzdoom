@@ -78,7 +78,7 @@ public:
 		return Respawnable && Super::ShouldRespawn();
 	}
 
-	bool TryPickup (AActor *toucher)
+	bool TryPickup (AActor *&toucher)
 	{
 		INTBOOL success = LineSpecials[special] (NULL, toucher, false,
 			args[0], args[1], args[2], args[3], args[4]);

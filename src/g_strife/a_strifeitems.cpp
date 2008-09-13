@@ -66,12 +66,12 @@ class AHealthTraining : public AInventory
 {
 	DECLARE_CLASS (AHealthTraining, AInventory)
 public:
-	bool TryPickup (AActor *toucher);
+	bool TryPickup (AActor *&toucher);
 };
 
 IMPLEMENT_CLASS (AHealthTraining)
 
-bool AHealthTraining::TryPickup (AActor *toucher)
+bool AHealthTraining::TryPickup (AActor *&toucher)
 {
 	if (Super::TryPickup (toucher))
 	{
@@ -80,7 +80,7 @@ bool AHealthTraining::TryPickup (AActor *toucher)
 		if (coin != NULL)
 		{
 			coin->Amount = toucher->player->accuracy*5 + 300;
-			if (!coin->TryPickup (toucher))
+			if (!coin->CallTryPickup (toucher))
 			{
 				coin->Destroy ();
 			}
@@ -120,13 +120,13 @@ class APrisonPass : public AKey
 {
 	DECLARE_CLASS (APrisonPass, AKey)
 public:
-	bool TryPickup (AActor *toucher);
+	bool TryPickup (AActor *&toucher);
 	bool SpecialDropAction (AActor *dropper);
 };
 
 IMPLEMENT_CLASS (APrisonPass)
 
-bool APrisonPass::TryPickup (AActor *toucher)
+bool APrisonPass::TryPickup (AActor *&toucher)
 {
 	Super::TryPickup (toucher);
 	EV_DoDoor (DDoor::doorOpen, NULL, toucher, 223, 2*FRACUNIT, 0, 0, 0);
@@ -165,13 +165,13 @@ class ARaiseAlarm : public ADummyStrifeItem
 {
 	DECLARE_CLASS (ARaiseAlarm, ADummyStrifeItem)
 public:
-	bool TryPickup (AActor *toucher);
+	bool TryPickup (AActor *&toucher);
 	bool SpecialDropAction (AActor *dropper);
 };
 
 IMPLEMENT_CLASS (ARaiseAlarm)
 
-bool ARaiseAlarm::TryPickup (AActor *toucher)
+bool ARaiseAlarm::TryPickup (AActor *&toucher)
 {
 	P_NoiseAlert (toucher, toucher);
 	// A_WakeOracleSpectre (dword312F4);
@@ -196,12 +196,12 @@ class AOpenDoor222 : public ADummyStrifeItem
 {
 	DECLARE_CLASS (AOpenDoor222, ADummyStrifeItem)
 public:
-	bool TryPickup (AActor *toucher);
+	bool TryPickup (AActor *&toucher);
 };
 
 IMPLEMENT_CLASS (AOpenDoor222)
 
-bool AOpenDoor222::TryPickup (AActor *toucher)
+bool AOpenDoor222::TryPickup (AActor *&toucher)
 {
 	EV_DoDoor (DDoor::doorOpen, NULL, toucher, 222, 2*FRACUNIT, 0, 0, 0);
 	GoAwayAndDie ();
@@ -214,13 +214,13 @@ class ACloseDoor222 : public ADummyStrifeItem
 {
 	DECLARE_CLASS (ACloseDoor222, ADummyStrifeItem)
 public:
-	bool TryPickup (AActor *toucher);
+	bool TryPickup (AActor *&toucher);
 	bool SpecialDropAction (AActor *dropper);
 };
 
 IMPLEMENT_CLASS (ACloseDoor222)
 
-bool ACloseDoor222::TryPickup (AActor *toucher)
+bool ACloseDoor222::TryPickup (AActor *&toucher)
 {
 	EV_DoDoor (DDoor::doorClose, NULL, toucher, 222, 2*FRACUNIT, 0, 0, 0);
 	GoAwayAndDie ();
@@ -245,13 +245,13 @@ class AOpenDoor224 : public ADummyStrifeItem
 {
 	DECLARE_CLASS (AOpenDoor224, ADummyStrifeItem)
 public:
-	bool TryPickup (AActor *toucher);
+	bool TryPickup (AActor *&toucher);
 	bool SpecialDropAction (AActor *dropper);
 };
 
 IMPLEMENT_CLASS (AOpenDoor224)
 
-bool AOpenDoor224::TryPickup (AActor *toucher)
+bool AOpenDoor224::TryPickup (AActor *&toucher)
 {
 	EV_DoDoor (DDoor::doorOpen, NULL, toucher, 224, 2*FRACUNIT, 0, 0, 0);
 	GoAwayAndDie ();
@@ -271,12 +271,12 @@ class AAmmoFillup : public ADummyStrifeItem
 {
 	DECLARE_CLASS (AAmmoFillup, ADummyStrifeItem)
 public:
-	bool TryPickup (AActor *toucher);
+	bool TryPickup (AActor *&toucher);
 };
 
 IMPLEMENT_CLASS (AAmmoFillup)
 
-bool AAmmoFillup::TryPickup (AActor *toucher)
+bool AAmmoFillup::TryPickup (AActor *&toucher)
 {
 	const PClass * clip = PClass::FindClass(NAME_ClipOfBullets);
 	if (clip != NULL)
@@ -309,12 +309,12 @@ class AHealthFillup : public ADummyStrifeItem
 {
 	DECLARE_CLASS (AHealthFillup, ADummyStrifeItem)
 public:
-	bool TryPickup (AActor *toucher);
+	bool TryPickup (AActor *&toucher);
 };
 
 IMPLEMENT_CLASS (AHealthFillup)
 
-bool AHealthFillup::TryPickup (AActor *toucher)
+bool AHealthFillup::TryPickup (AActor *&toucher)
 {
 	static const int skillhealths[5] = { -100, -75, -50, -50, -100 };
 
@@ -331,7 +331,7 @@ bool AHealthFillup::TryPickup (AActor *toucher)
 
 IMPLEMENT_CLASS (AUpgradeStamina)
 
-bool AUpgradeStamina::TryPickup (AActor *toucher)
+bool AUpgradeStamina::TryPickup (AActor *&toucher)
 {
 	if (toucher->player == NULL)
 		return false;
@@ -349,7 +349,7 @@ bool AUpgradeStamina::TryPickup (AActor *toucher)
 
 IMPLEMENT_CLASS (AUpgradeAccuracy)
 
-bool AUpgradeAccuracy::TryPickup (AActor *toucher)
+bool AUpgradeAccuracy::TryPickup (AActor *&toucher)
 {
 	if (toucher->player == NULL || toucher->player->accuracy >= 100)
 		return false;
@@ -362,7 +362,7 @@ bool AUpgradeAccuracy::TryPickup (AActor *toucher)
 
 IMPLEMENT_CLASS (ASlideshowStarter)
 
-bool ASlideshowStarter::TryPickup (AActor *toucher)
+bool ASlideshowStarter::TryPickup (AActor *&toucher)
 {
 	gameaction = ga_slideshow;
 	if (level.levelnum == 10)

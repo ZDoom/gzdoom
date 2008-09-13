@@ -1071,7 +1071,7 @@ int ASigil::GiveSigilPiece (AActor *receiver)
 	if (sigil == NULL)
 	{
 		sigil = static_cast<ASigil*>(Spawn("Sigil1", 0,0,0, NO_REPLACE));
-		if (!sigil->TryPickup (receiver))
+		if (!sigil->CallTryPickup (receiver))
 		{
 			sigil->Destroy ();
 		}

@@ -69,7 +69,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Summon)
 		{
 			mo->tracer = self->tracer;		// Pointer to master
 			AInventory *power = Spawn<APowerMinotaur> (0, 0, 0, NO_REPLACE);
-			power->TryPickup (self->tracer);
+			power->CallTryPickup (self->tracer);
 			if (self->tracer->player != NULL)
 			{
 				mo->FriendPlayer = int(self->tracer->player - players + 1);

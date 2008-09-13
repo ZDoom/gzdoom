@@ -226,7 +226,7 @@ static void DoGiveInv (AActor *actor, const PClass *info, int amount)
 	{
 		item->Amount = amount;
 	}
-	if (!item->TryPickup (actor))
+	if (!item->CallTryPickup (actor))
 	{
 		item->Destroy ();
 	}

@@ -57,7 +57,7 @@ void AWeapon::Serialize (FArchive &arc)
 //
 //===========================================================================
 
-bool AWeapon::TryPickup (AActor *toucher)
+bool AWeapon::TryPickup (AActor *&toucher)
 {
 	FState * ReadyState = FindState(NAME_Ready);
 	if (ReadyState != NULL &&
@@ -578,12 +578,12 @@ class AWeaponGiver : public AWeapon
 	DECLARE_CLASS(AWeaponGiver, AWeapon)
 
 public:
-	bool TryPickup(AActor *toucher);
+	bool TryPickup(AActor *&toucher);
 };
 
 IMPLEMENT_CLASS(AWeaponGiver)
 
-bool AWeaponGiver::TryPickup(AActor *toucher)
+bool AWeaponGiver::TryPickup(AActor *&toucher)
 {
 	FDropItem *di = GetDropItems(GetClass());
 
@@ -595,7 +595,8 @@ bool AWeaponGiver::TryPickup(AActor *toucher)
 			AWeapon *weap = static_cast<AWeapon*>(Spawn(di->Name, 0, 0, 0, NO_REPLACE));
 			if (weap != NULL)
 			{
-				bool res = weap->TryPickup(toucher);
+				weap->ItemFlags &= ~IF_ALWAYSPICKUP;	// use the flag of this item only.
+				bool res = weap->CallTryPickup(toucher);
 				if (!res) weap->Destroy();
 				else GoAwayAndDie();
 				return res;

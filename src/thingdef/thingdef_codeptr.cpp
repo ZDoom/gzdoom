@@ -1213,7 +1213,7 @@ static void DoGiveInventory(AActor * self, AActor * receiver, DECLARE_PARAMINFO)
 			item->flags&=~MF_COUNTITEM;
 			level.total_items--;
 		}
-		if (!item->TryPickup (receiver))
+		if (!item->CallTryPickup (receiver))
 		{
 			item->Destroy ();
 			res = false;

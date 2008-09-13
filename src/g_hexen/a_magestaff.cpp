@@ -26,12 +26,12 @@ class AMageWeaponPiece : public AWeaponPiece
 {
 	DECLARE_CLASS (AMageWeaponPiece, AWeaponPiece)
 protected:
-	bool TryPickup (AActor *toucher);
+	bool TryPickup (AActor *&toucher);
 };
 
 IMPLEMENT_CLASS (AMageWeaponPiece)
 
-bool AMageWeaponPiece::TryPickup (AActor *toucher)
+bool AMageWeaponPiece::TryPickup (AActor *&toucher)
 {
 	if (!toucher->IsKindOf (PClass::FindClass(NAME_ClericPlayer)) &&
 		!toucher->IsKindOf (PClass::FindClass(NAME_FighterPlayer)))

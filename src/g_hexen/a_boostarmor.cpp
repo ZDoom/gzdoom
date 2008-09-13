@@ -31,7 +31,7 @@ bool AArtiBoostArmor::Use (bool pickup)
 			armor->flags |= MF_DROPPED;
 			armor->health = i;
 			armor->Amount = 1;
-			if (!armor->TryPickup (Owner))
+			if (!armor->CallTryPickup (Owner))
 			{
 				armor->Destroy ();
 			}
@@ -48,7 +48,7 @@ bool AArtiBoostArmor::Use (bool pickup)
 		armor->flags |= MF_DROPPED;
 		armor->SaveAmount = 50;
 		armor->MaxSaveAmount = 300;
-		if (!armor->TryPickup (Owner))
+		if (!armor->CallTryPickup (Owner))
 		{
 			armor->Destroy ();
 			return false;

@@ -60,7 +60,7 @@ bool APowerupGiver::Use (bool pickup)
 	}
 
 	power->ItemFlags |= ItemFlags & (IF_ALWAYSPICKUP|IF_ADDITIVETIME);
-	if (power->TryPickup (Owner))
+	if (power->CallTryPickup (Owner))
 	{
 		return true;
 	}

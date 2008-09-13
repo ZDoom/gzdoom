@@ -7,7 +7,7 @@ protected:
 	bool PrivateShouldStay ();
 public:
 	void Serialize (FArchive &arc);
-	bool TryPickup (AActor *toucher);
+	bool TryPickup (AActor *&toucher);
 	bool ShouldStay ();
 	virtual const char *PickupMessage ();
 	virtual void PlayPickupSound (AActor *toucher);

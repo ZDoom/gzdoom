@@ -2614,7 +2614,7 @@ void FinishDehPatch ()
 
 void ModifyDropAmount(AInventory *inv, int dropamount);
 
-bool ADehackedPickup::TryPickup (AActor *toucher)
+bool ADehackedPickup::TryPickup (AActor *&toucher)
 {
 	const PClass *type = DetermineType ();
 	if (type == NULL)
@@ -2634,7 +2634,7 @@ bool ADehackedPickup::TryPickup (AActor *toucher)
 		{
 			ModifyDropAmount(RealPickup, 0);
 		}
-		if (!RealPickup->TryPickup (toucher))
+		if (!RealPickup->CallTryPickup (toucher))
 		{
 			RealPickup->Destroy ();
 			RealPickup = NULL;

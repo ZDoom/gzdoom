@@ -45,7 +45,7 @@ public:
 	const char *PickupMessage ();
 	bool ShouldRespawn ();
 	bool ShouldStay ();
-	bool TryPickup (AActor *toucher);
+	bool TryPickup (AActor *&toucher);
 	void PlayPickupSound (AActor *toucher);
 	void DoPickupSpecial (AActor *toucher);
 	void Serialize(FArchive &arc);

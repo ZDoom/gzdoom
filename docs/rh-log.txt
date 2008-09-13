@@ -1,4 +1,11 @@
 September 13, 2008  (Changes by Graf Zahl)
+- Moved IF_ALWAYSPICKUP and GiveQuest into CallTryPickup so that they are
+  automatically used by all inventory classes.
+- The previous change made it necessary to replace all TryPickup calls with
+  another function that just calls TryPickup.
+- Fixed: AInventory::TryPickup can change the toucher so this must be reported
+  to subclasses calling the super function. Changed TryPickup to pass the
+  toucher pointer by reference.
 - Prefixed all names of CQ decorations with Chex after seeing some conflicts
   with PWADs.
 - Removed Chex Quest actors that were just unaltered duplicates of Doom's.

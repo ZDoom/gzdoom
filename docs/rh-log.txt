@@ -1,3 +1,7 @@
+September 13, 2008  (Changes by Graf Zahl)
+- Fixed: Crouching no longer worked due to a bug introduced by the
+  player input code.
+
 September 12, 2008
 - Added GetPlayerInput() for examining a player's inputs from ACS. Most
   buttons are now passed across the network, and there are four new user

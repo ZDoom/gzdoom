@@ -1995,7 +1995,7 @@ void P_PlayerThink (player_t *player)
 	}
 
 	// Handle crouching
-	if (player->cmd.ucmd.buttons & BT_CROUCH)
+	if (player->cmd.ucmd.buttons & BT_JUMP)
 	{
 		player->cmd.ucmd.buttons &= ~BT_CROUCH;
 	}

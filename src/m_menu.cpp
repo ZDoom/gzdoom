@@ -1995,21 +1995,27 @@ void M_QuitResponse(int ch)
 
 void M_QuitGame (int choice)
 {
-	// We pick index 0 which is language sensitive,
-	//  or one at random, between 1 and maximum number.
 	if (gameinfo.gametype & (GAME_DoomStrifeChex))
 	{
 		int quitmsg = 0;
 		if (gameinfo.gametype == GAME_Doom)
-			quitmsg = gametic % NUM_QUITDOOMMESSAGES;
-		else if (gameinfo.gametype == GAME_Strife)
-			quitmsg = gametic % NUM_QUITSTRIFEMESSAGES - 1;
-		else //Chex quest has 2 messages but one is more likely to show
-			quitmsg = (gametic % NUM_QUITCHEXMESSAGES + 6) > NUM_QUITCHEXMESSAGES ? NUM_QUITCHEXMESSAGES - 1 : (gametic % NUM_QUITCHEXMESSAGES + 6);
-
-		if (quitmsg != 0 || gameinfo.gametype == GAME_Strife || gameinfo.gametype == GAME_Chex)
 		{
-			EndString.Format("QUITMSG%d", quitmsg + (gameinfo.gametype == GAME_Doom ? 0 : (gameinfo.gametype == GAME_Chex ? NUM_QUITDOOMMESSAGES + NUM_QUITSTRIFEMESSAGES : NUM_QUITDOOMMESSAGES + 1)));
+			quitmsg = gametic % (NUM_QUITDOOMMESSAGES + 1);
+		}
+		else if (gameinfo.gametype == GAME_Strife)
+		{
+			quitmsg = gametic % (NUM_QUITSTRIFEMESSAGES + 1);
+			if (quitmsg != 0) quitmsg += NUM_QUITDOOMMESSAGES;
+		}
+		else
+		{
+			quitmsg = gametic % (NUM_QUITCHEXMESSAGES + 1);
+			if (quitmsg != 0) quitmsg += NUM_QUITDOOMMESSAGES + NUM_QUITSTRIFEMESSAGES;
+		}
+
+		if (quitmsg != 0)
+		{
+			EndString.Format("QUITMSG%d", quitmsg);
 			EndString.Format("%s\n\n%s", GStrings(EndString), GStrings("DOSY"));
 		}
 		else

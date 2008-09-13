@@ -75,6 +75,7 @@ enum EIWADType
 	IWAD_FreeDoom1,
 	IWAD_FreeDM,
 	IWAD_ChexQuest,
+	IWAD_ChexQuest3,
 
 	NUM_IWAD_TYPES
 };

@@ -3,20 +3,20 @@
 actor Bootspoon : Fist
 {
 	game Chex
-	obituary ""
+	obituary "$OB_MPSPOON"
 }
 
 actor SuperBootspork : Chainsaw 2005
 {
 	game Chex
-	obituary ""
+	obituary "$OB_MPBOOTSPORK"
 	Inventory.PickupMessage "$GOTSUPERBOOTSPORK"
 }
 
 actor MiniZorcher : Pistol
 {
 	game Chex
-	obituary ""
+	obituary "$OP_MPZORCH"
 	inventory.pickupmessage "$GOTMINIZORCHER"
 	states
 	{
@@ -28,21 +28,21 @@ actor MiniZorcher : Pistol
 actor LargeZorcher : Shotgun 2001
 {
 	game Chex
-	obituary ""
+	obituary "$OP_MPZORCH"
 	inventory.pickupmessage "$GOTLARGEZORCHER"
 }
 
 actor SuperLargeZorcher : SuperShotgun 82
 {
 	game Chex
-	obituary ""
+	obituary "$OB_MPMEGAZORCH"
 	inventory.pickupmessage "$GOTSUPERLARGEZORCHER"
 }
 
 actor RapidZorcher : Chaingun 2002
 {
 	game Chex
-	obituary ""
+	obituary "$OB_MPRAPIDZORCH"
 	inventory.pickupmessage "$GOTRAPIDZORCHER"
 }
 
@@ -51,18 +51,72 @@ actor ZorchPropulsor : RocketLauncher 2003
 	game Chex
 	obituary ""
 	inventory.pickupmessage "$GOTZORCHPROPULSOR"
+	States
+	{
+	Fire:
+		MISG B 8 A_GunFlash
+		MISG B 12 A_FireCustomMissile("PropulsorMissile")
+		MISG B 0 A_ReFire
+		Goto Ready
+	}
 }
+
+actor PropulsorMissile : Rocket
+{
+	-ROCKETTRAIL
+	-DEHEXPLOSION
+	RenderStyle Translucent
+	Obituary "$OB_MPPROPULSOR"
+	Alpha 0.75
+}	
 
 actor PhasingZorcher : PlasmaRifle 2004
 {
 	game Chex
 	obituary ""
 	inventory.pickupmessage "$GOTPHASINGZORCHER"
+	states
+	{
+	Fire:
+		PLSG A 0 A_GunFlash
+		PLSG A 3 A_FireCustomMissile("PhaseZorchMissile")
+		PLSG B 20 A_ReFire
+		Goto Ready
+	Flash:
+		PLSF A 0 A_Jump(128, 2)
+		PLSF A 4 Bright A_Light1
+		Goto LightDone
+		PLSF B 4 Bright A_Light1
+		Goto LightDone
+	}
 }
+
+actor PhaseZorchMissile : PlasmaBall
+{
+	RenderStyle Translucent
+	Obituary "$OB_MPPHASEZORCH"
+	Alpha 0.75
+}	
 
 actor LAZDevice : BFG9000 2006
 {
 	game Chex
 	obituary ""
 	inventory.pickupmessage "$GOTLAZDEVICE"
+	states
+	{
+	Fire:
+		BFGG A 20 A_BFGsound
+		BFGG B 10 A_GunFlash
+		BFGG B 10 A_FireCustomMissile("LAZBall")
+		BFGG B 20 A_ReFire
+		Goto Ready
+	}
+}
+
+actor LAZBall : BFGBall
+{
+	RenderStyle Translucent
+	Obituary "$OB_MPLAZ_BOOM"
+	Alpha 0.75
 }

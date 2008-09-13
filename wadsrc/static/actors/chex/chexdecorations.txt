@@ -2,48 +2,33 @@
 
 // Civilians ------------------------------------------------------------------
 
-actor Civilian1 : GreenTorch 45
+actor ChexCivilian1 : GreenTorch 45
 {
 	game Chex
 	height 54
 }
 
-actor Civilian2 : ShortGreenTorch 56
+actor ChexCivilian2 : ShortGreenTorch 56
 {
 	game Chex
 	height 54
 }
 
-actor Civilian3 : ShortRedTorch 57
+actor ChexCivilian3 : ShortRedTorch 57
 {
 	game Chex
 	height 48
 }
 
-actor DeadChexWarrior : DeadMarine 15
-{
-	game Chex
-}
-
-actor DeadChexWarrior2 : GibbedMarine 10
-{
-	game Chex
-}
-
-actor DeadChexWarrior3 : GibbedMarineExtra 12
-{
-	game Chex
-}
-
 // Landing Zone ---------------------------------------------------------------
 
-actor LandingLight : Column 2028
+actor ChexLandingLight : Column 2028
 {
 	game Chex
 	height 35
 }
 
-actor Spaceship : TechPillar 48
+actor ChexSpaceship : TechPillar 48
 {
 	game Chex
 	height 52
@@ -51,61 +36,37 @@ actor Spaceship : TechPillar 48
 
 // Trees and Plants -----------------------------------------------------------
 
-actor AppleTree : Stalagtite 47
+actor ChexAppleTree : Stalagtite 47
 {
 	game Chex
 	height 92
 }
 
-actor BananaTree : BigTree 54
+actor ChexBananaTree : BigTree 54
 {
 	game Chex
 	height 108
 }
 
-actor HangingFlowerPot : Meat2 50
-{
-	game Chex
-}
-
-actor HangingFlowerPot2 : Meat3 51
-{
-	game Chex
-}
-
-actor HangingFlowerPotNonSolid : HangingFlowerPot 59
-{
-	game Chex
-	-SOLID
-	radius 20
-}
-
-actor HangingFlowerPot2NonSolid : HangingFlowerPot2 61
-{
-	game Chex
-	-SOLID
-	radius 20
-}
-
-actor OrangeTree : TorchTree 43
+actor ChexOrangeTree : TorchTree 43
 {
 	game Chex
 	height 92
 }
 
-actor SubmergedPlant : ShortGreenColumn 31
+actor ChexSubmergedPlant : ShortGreenColumn 31
 {
 	game Chex
 	height 42
 }
 
-actor TallFlower : HeadsOnAStick 28
+actor ChexTallFlower : HeadsOnAStick 28
 {
 	game Chex
 	height 25
 }
 
-actor TallFlower2 : DeadStick 25
+actor ChexTallFlower2 : DeadStick 25
 {
 	game Chex
 	height 25
@@ -113,92 +74,66 @@ actor TallFlower2 : DeadStick 25
 
 // Slime Fountain -------------------------------------------------------------
 
-actor SlimeFountain : BlueTorch 44
+actor ChexSlimeFountain : BlueTorch 44
 {
 	game Chex
 	height 48
+	States
+	{
+	Spawn:
+		TBLU ABCD 4
+		Loop
+	}
 }
 
 // Cavern Decorations ---------------------------------------------------------
 
-actor CavernBat : BloodyTwitch 49
-{
-	game Chex
-	height 52
-}
-
-actor CavernBatNonSolid : CavernBat 63
-{
-	game Chex
-	-SOLID
-	radius 20
-}
-
-actor CavernColumn : TallRedColumn 32
+actor ChexCavernColumn : TallRedColumn 32
 {
 	game Chex
 	height 128
 }
 
-actor CavernStalactite : Meat5 53
-{
-	game Chex
-	height 48
-}
-
-actor CavernStalagmite : TallGreenColumn 30
+actor ChexCavernStalagmite : TallGreenColumn 30
 {
 	game Chex
 	height 60
 }
 
-actor NonSolidCavernStalactite : CavernStalactite 62
-{
-	game Chex
-	-SOLID
-	radius 20
-}
-
 // Misc. Props ----------------------------------------------------------------
 
-actor ChemicalBurner : EvilEye 41
+actor ChexChemicalBurner : EvilEye 41
 {
 	game Chex
 	height 25
 }
 
-actor ChemicalFlask : Candlestick 34
+actor ChexChemicalFlask : Candlestick 34
 {
 	game Chex
 	renderstyle translucent
 	alpha 0.75
 }
 
-// Who's idea was it to put an invisible thing on E1M4?
-actor DeadCycloptisCommonus : DeadDemon 21
-{
-	game Chex
-}
-
-actor FlagOnPole : SkullColumn 37
+actor ChexFlagOnPole : SkullColumn 37
 {
 	game Chex
 	height 128
 }
 
-actor GasTank : Candelabra 35
+actor ChexGasTank : Candelabra 35
 {
 	game Chex
 	height 36
 }
 
-actor LightColumn : ShortBlueTorch 55
+actor ChexLightColumn : ShortBlueTorch 55
 {
 	game Chex
 	height 86
 }
 
-actor MineCart : ShortRedColumn 33
+actor ChexMineCart : ShortRedColumn 33
 {
 	game Chex
 	height 30

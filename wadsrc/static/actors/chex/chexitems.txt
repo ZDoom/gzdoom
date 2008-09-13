@@ -53,6 +53,7 @@ actor SuperChexArmor : BlueArmor 2019
 actor ComputerAreaMap : Allmap 2026
 {
 	game Chex
+	inventory.pickupmessage "$GOTCHEXMAP"
 }
 
 actor SlimeProofSuit : RadSuit 2025

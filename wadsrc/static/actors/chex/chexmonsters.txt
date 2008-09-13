@@ -9,6 +9,7 @@ actor FlemoidusCommonus : ZombieMan 3004
 {
 	Game Chex
 	DropItem ""
+	Obituary "$OB_COMMONUS"
 	States
 	{
 		Missile:
@@ -28,6 +29,7 @@ actor FlemoidusBipedicus : ShotgunGuy 9
 {
 	Game Chex
 	DropItem ""
+	Obituary "$OB_BIPEDICUS"
 	States
 	{
 		Missile:
@@ -46,6 +48,8 @@ actor FlemoidusBipedicus : ShotgunGuy 9
 actor ArmoredFlemoidusBipedicus : DoomImp 3001
 {
 	Game Chex
+	Obituary "$OB_BIPEDICUS2"
+	HitObituary "$OB_BIPEDICUS2"
 }
 
 //===========================================================================
@@ -57,6 +61,7 @@ actor ArmoredFlemoidusBipedicus : DoomImp 3001
 actor FlemoidusCycloptisCommonus : Demon 3002
 {
 	Game Chex
+	Obituary "$OB_CYCLOPTIS"
 }
 
 //===========================================================================
@@ -71,6 +76,7 @@ actor Flembrane : BaronOfHell 3003
 	radius 44
 	height 100
 	speed 0
+	Obituary "$OB_FLEMBRANE"
 	States
 	{
 		Missile:

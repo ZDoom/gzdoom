@@ -148,6 +148,7 @@ extern gameinfo_t StrifeGameInfo;
 extern gameinfo_t StrifeTeaserGameInfo;
 extern gameinfo_t StrifeTeaser2GameInfo;
 extern gameinfo_t ChexGameInfo;
+extern gameinfo_t Chex3GameInfo;
 extern gameinfo_t PlutoniaGameInfo;
 extern gameinfo_t TNTGameInfo;
 
@@ -234,6 +235,7 @@ const IWADInfo IWADInfos[NUM_IWAD_TYPES] =
 	{ "Freedoom \"Demo\"",						"Freedoom1",MAKERGB(50,84,67),		MAKERGB(198,220,209) },
 	{ "FreeDM",									"FreeDM",	MAKERGB(50,84,67),		MAKERGB(198,220,209) },
 	{ "Chex(R) Quest",							"Chex",		MAKERGB(255,255,0),		MAKERGB(0,192,0) },
+	{ "Chex(R) Quest 3",						"Chex3",	MAKERGB(255,255,0),		MAKERGB(0,192,0) },
 };
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -263,6 +265,7 @@ static const char *IWADNames[] =
 	"freedoom1.wad",
 	"freedm.wad",
 	"chex.wad",
+	"chex3.wad",
 #ifdef unix
 	"DOOM2.WAD",    // Also look for all-uppercase names
 	"PLUTONIA.WAD",
@@ -281,6 +284,7 @@ static const char *IWADNames[] =
 	"FREEDOOM1.WAD",
 	"FREEDM.WAD",
 	"CHEX.WAD",
+	"CHEX3.WAD",
 #endif
 	NULL
 };
@@ -1360,6 +1364,7 @@ static void SetIWAD (const char *iwadpath, EIWADType type)
 		{ shareware,	&SharewareGameInfo,		doom },			// FreeDoom1
 		{ commercial,	&CommercialGameInfo,	doom2 },		// FreeDM
 		{ registered,	&ChexGameInfo,			doom },			// Chex Quest
+		{ registered,	&Chex3GameInfo,			doom },			// Chex Quest 3
 	};
 
 	D_AddFile (iwadpath);
@@ -1406,6 +1411,9 @@ static EIWADType ScanIWAD (const char *iwad)
 		{ 'F','R','E','E','D','O','O','M' },
 		"W94_1",
 		{ 'P','O','S','S','H','0','M','0' },
+		"CYCLA1",
+		"FLMBA1",
+		"MAPINFO",
 		"E2M1","E2M2","E2M3","E2M4","E2M5","E2M6","E2M7","E2M8","E2M9",
 		"E3M1","E3M2","E3M3","E3M4","E3M5","E3M6","E3M7","E3M8","E3M9",
 		"DPHOOF","BFGGA0","HEADA1","CYBRA1",
@@ -1430,6 +1438,9 @@ static EIWADType ScanIWAD (const char *iwad)
 		Check_FreeDoom,
 		Check_W94_1,
 		Check_POSSH0M0,
+		Check_Cycla1,
+		Check_Flmba1,
+		Check_Mapinfo,
 		Check_e2m1
 	};
 	int lumpsfound[NUM_CHECKLUMPS];
@@ -1542,6 +1553,15 @@ static EIWADType ScanIWAD (const char *iwad)
 					return IWAD_Heretic;
 				}
 			}
+		}
+		else if (lumpsfound[Check_Cycla1] && lumpsfound[Check_Flmba1])
+		{
+			if (!lumpsfound[Check_Mapinfo])
+			{
+				// The original release won't work without its hacked custom EXE.
+				I_FatalError("Found an incompatible version of Chex Quest 3");
+			}
+			return IWAD_ChexQuest3;
 		}
 		else
 		{

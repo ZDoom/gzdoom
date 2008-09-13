@@ -294,6 +294,38 @@ gameinfo_t ChexGameInfo =
 	MAKERGB(95,175,87),
 };
 
+gameinfo_t Chex3GameInfo =
+{
+	GI_CHEX_QUEST,
+	"TITLEPIC",
+	"ENDPIC",
+	"VICTORY2",
+	"D_INTRO",
+	5,
+	0,
+	200/35,
+	"misc/chat2",
+	"D_VICTOR",
+	"ENDPIC01",
+	"CREDIT",
+	"CREDIT",
+	"ENDPIC",
+	{ { "HELP1", "CREDIT" } },
+	"menu/quit1",
+	2,
+	"FLOOR7_2",
+	&DoomBorder,
+	0,
+	GAME_Chex,
+	100,
+	"F_SKY1",
+	24*FRACUNIT,
+	"xlat/doom.txt",
+	{ "mapinfo/chex.txt", NULL },
+	MAKERGB(63,125,57),
+	MAKERGB(95,175,87),
+};
+
 gameinfo_t RetailGameInfo =
 {
 	GI_MENUHACK_RETAIL,

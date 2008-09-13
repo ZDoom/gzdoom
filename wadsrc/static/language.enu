@@ -38,8 +38,13 @@ QUITMSG21 = "you can quit...\nbut you can't hide...";
 QUITMSG22 = "whaaa, what's the matter?\nmommy says dinnertime?";
 
 // Quit Chex messages
-QUITMSG23 = "Don't give up now...do\nyou still wish to quit?";
-QUITMSG24 = "please don't leave, we\nneed your help!"; //7 times as likely to show
+QUITMSG23 = "Don't quit now, there are still\nflemoids on the loose!";
+QUITMSG24 = "Don't give up -- the flemoids will\nget the upper hand!";
+QUITMSG25 = "Don't leave now.\nWe need your help!";
+QUITMSG26 = "I hope you're just taking a\nbreak for Chex(R) party mix.";
+QUITMSG27 = "Don't quit now!\nWe need your help!";
+QUITMSG28 = "Don't abandon the\nIntergalactic Federation of Cereals!";
+QUITMSG29 = "The real Chex(R) Warrior\nwouldn't give up so fast!";
 
 LOADNET = "you can't do load while in a net game!\n\npress a key.";
 QLOADNET = "you can't quickload during a netgame!\n\npress a key.";
@@ -684,8 +689,6 @@ OB_TEMPLARHIT = "%o was clawed by a Templar.";
 OB_TEMPLAR = "%o was vaporized by a Templar.";
 OB_REAVERHIT = "%o was sliced open by a Reaver.";
 OB_REAVER = "%o was shot down by a Reaver.";
-
-
 
 OB_MPFIST = "%o chewed on %k's fist.";
 OB_MPCHAINSAW = "%o was mowed over by %k's chainsaw.";
@@ -1351,9 +1354,11 @@ GOTCBLUEKEY = "Picked up a blue key.";
 GOTCYELLOWKEY = "Picked up a yellow key.";
 GOTCREDKEY = "Picked up a red key.";
 GOTFRUIT = "Picked up a bowl of fruit.";
-GOTVEGETABLESNEED = "Picked up some needed vegetables!";
+GOTVEGETABLESNEED = "Vegetables are REALLY good for you!";
 GOTVEGETABLES = "Picked up a bowl of vegetables.";
-GOTSLIMESUIT = "Slimeproof Suit";
+GOTSLIMESUIT = "Found a Slime-Proof Suit";
+GOTCHEXMAP = "Found a Computer Area Map";
+
 GOTZORCHRECHARGE = "Picked up a mini zorch recharge.";
 GOTMINIZORCHPACK = "Picked up a mini zorch pack.";
 GOTPROPULSORRECHARGE = "Picked up a zorch propulsor recharge.";
@@ -1363,13 +1368,14 @@ GOTPHASINGZORCHERPACK = "Picked up a phasing zorcher pack.";
 GOTLARGEZORCHERRECHARGE = "Picked up a large zorcher recharge.";
 GOTLARGEZORCHERPACK = "Picked up a large zorcher pack.";
 GOTZORCHPACK = "Picked up a Zorchpak!";
-GOTLAZDEVICE = "You got the LAZ Device!";
+
+GOTLAZDEVICE = "You got the LAZ Device! Woot!";
 GOTRAPIDZORCHER = "You got the Rapid Zorcher!";
 GOTSUPERBOOTSPORK = "You got the Super Bootspork!";
 GOTZORCHPROPULSOR = "You got the Zorch Propulsor!";
 GOTPHASINGZORCHER = "You got the Phasing Zorcher!";
 GOTLARGEZORCHER = "You got the Large Zorcher!";
-GOTSUPERLARGEZORCHER = "You got the Super Large Zorcher!";
+GOTSUPERLARGEZORCHER = "You got the Mega Zorcher!";
 GOTMINIZORCHER = "Picked up a Mini Zorcher.";
 
 STSTR_CDQDON = "Invincible Mode ON";
@@ -1377,3 +1383,20 @@ STSTR_CDQDOFF = "Invincible Mode OFF";
 STSTR_CFAADDED = "Zorch Added";
 STSTR_CKFAADDED = "Super Zorch Added";
 STSTR_CCHOPPERS = "... Eat Chex(R)!";
+
+OB_COMMONUS = "%o was slimed by a flemoid.";
+OB_BIPEDICUS = "%o was slimed by a bipedicus.";
+OB_BIPEDICUS2 = "%o was slimed by an armored bipedicus.";
+OB_CYCLOPTIS = "%o was slimed by a cycloptis.";
+OB_FLEMBRANE = "%o was defeated by the Flembrane.";
+
+OB_MPSPOON = "%o was spoon fed by %k.";
+OB_MPBOOTSPORK = "%o was thouroughly mixed with %k's bootspork.";
+OB_MPZORCH = "%o was zorched by %k.";
+OB_MPMEGAZORCH = "%o was hit by %k's mega-zorcher.";
+OB_MPRAPIDZORCH = "%o was rapid zorched by %k.";
+OB_MPPROPULSOR = "%o was zorched by %k's propulsor.";
+OB_MPP_SPLASH = "%o was hit by %k's propulsor.";
+OB_MPPHASEZORCH = "%o was phase zorched by %k.";
+OB_MPLAZ_BOOM = "%o fell prey to %k's LAZ device.";
+OB_MPLAZ_SPLASH = "%o was lazzed by %k.";

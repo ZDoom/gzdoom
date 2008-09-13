@@ -1,4 +1,12 @@
 September 13, 2008  (Changes by Graf Zahl)
+- Prefixed all names of CQ decorations with Chex after seeing some conflicts
+  with PWADs.
+- Removed Chex Quest actors that were just unaltered duplicates of Doom's.
+- Added detection for Chex Quest 3 IWAD.
+- Cleaned up M_QuitGame because the code was almost incomprehensible and I
+  wanted to add CQ3's new quit messages.
+- Added Chex Quest obituaries and a few other messages from CQ3.
+- Fixed: drawbar improperly clipped images when not in the top left quadrant.
 - Fixed: Crouching no longer worked due to a bug introduced by the
   player input code.
 

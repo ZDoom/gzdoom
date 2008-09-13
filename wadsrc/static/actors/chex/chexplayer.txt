@@ -8,4 +8,5 @@ actor ChexPlayer : DoomPlayer
 	player.startitem "MiniZorcher"
 	player.startitem "Bootspoon"
 	player.startitem "MiniZorchRecharge", 50
+	player.damagescreencolor "60 b0 58"
 }

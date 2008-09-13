@@ -69,11 +69,10 @@ struct zdemoheader_s {
 
 struct usercmd_s
 {
-	BYTE	buttons;
-	BYTE	pad;
+	DWORD	buttons;
 	short	pitch;			// up/down
-	short	yaw;			// left/right	// If you haven't guessed, I just
-	short	roll;			// tilt			// ripped these from Quake2's usercmd.
+	short	yaw;			// left/right
+	short	roll;			// "tilt"
 	short	forwardmove;
 	short	sidemove;
 	short	upmove;
@@ -92,7 +91,7 @@ enum
 	UCMDF_FORWARDMOVE	= 0x08,
 	UCMDF_SIDEMOVE		= 0x10,
 	UCMDF_UPMOVE		= 0x20,
-	UCMDF_ROLL			= 0x40
+	UCMDF_ROLL			= 0x40,
 };
 
 // When changing the following enum, be sure to update Net_SkipCommand()

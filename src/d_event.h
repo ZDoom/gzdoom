@@ -76,18 +76,40 @@ typedef enum
 
 //
 // Button/action code definitions.
+// The net code supports up to 29 buttons, so don't make this longer than that.
 //
 typedef enum
 {
-	BT_ATTACK		= 1,	// Press "Fire".
-	BT_USE			= 2,	// Use button, to open doors, activate switches.
-    BT_JUMP			= 4,
-    BT_DUCK			= 8,	// Unimplemented
-	BT_TURN180		= 16,
-	BT_ALTATTACK	= 32,	// Press your other "Fire".
-} buttoncode_t;
+	BT_ATTACK		= 1<<0,	// Press "Fire".
+	BT_USE			= 1<<1,	// Use button, to open doors, activate switches.
+    BT_JUMP			= 1<<2,
+    BT_CROUCH		= 1<<3,
+	BT_TURN180		= 1<<4,
+	BT_ALTATTACK	= 1<<5,	// Press your other "Fire".
+	BT_RELOAD		= 1<<6,	// Not connected to anything at the moment.
+	BT_ZOOM			= 1<<7,	// Neither is this.
 
-#define IMP_WEAPONSLOT
+	// The rest are all ignored by the play simulation and are for scripts.
+	BT_SPEED		= 1<<8,
+	BT_STRAFE		= 1<<9,
+
+	BT_MOVERIGHT	= 1<<10,
+	BT_MOVELEFT		= 1<<11,
+	BT_BACK			= 1<<12,
+	BT_FORWARD		= 1<<13,
+	BT_RIGHT		= 1<<14,
+	BT_LEFT			= 1<<15,
+	BT_LOOKUP		= 1<<16,
+	BT_LOOKDOWN		= 1<<17,
+	BT_MOVEUP		= 1<<18,
+	BT_MOVEDOWN		= 1<<19,
+	BT_SHOWSCORES	= 1<<20,
+
+	BT_USER1		= 1<<21,
+	BT_USER2		= 1<<22,
+	BT_USER3		= 1<<23,
+	BT_USER4		= 1<<24,
+} buttoncode_t;
 
 
 //

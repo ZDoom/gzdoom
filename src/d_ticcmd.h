@@ -33,11 +33,6 @@
 struct ticcmd_t
 {
 	usercmd_t	ucmd;
-/*
-	char		forwardmove;	// *2048 for move
-	char		sidemove;		// *2048 for move
-	short		angleturn;		// <<16 for angle delta
-*/
 	SWORD		consistancy;	// checks for net game
 };
 

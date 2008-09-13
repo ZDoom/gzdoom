@@ -150,8 +150,30 @@ int UnpackUserCmd (usercmd_t *ucmd, const usercmd_t *basis, BYTE **stream)
 
 	if (flags)
 	{
+		// We can support up to 29 buttons, using from 0 to 4 bytes to store them.
 		if (flags & UCMDF_BUTTONS)
-			ucmd->buttons = ReadByte (stream);
+		{
+			DWORD buttons = ucmd->buttons;
+			BYTE in = ReadByte(stream);
+
+			buttons = (buttons & ~0x7F) | (in & 0x7F);
+			if (in & 0x80)
+			{
+				in = ReadByte(stream);
+				buttons = (buttons & ~(0x7F << 7)) | ((in & 0x7F) << 7);
+				if (in & 0x80)
+				{
+					in = ReadByte(stream);
+					buttons = (buttons & ~(0x7F << 14)) | ((in & 0x7F) << 14);
+					if (in & 0x80)
+					{
+						in = ReadByte(stream);
+						buttons = (buttons & ~(0xFF << 21)) | (in << 21);
+					}
+				}
+			}
+			ucmd->buttons = buttons;
+		}
 		if (flags & UCMDF_PITCH)
 			ucmd->pitch = ReadWord (stream);
 		if (flags & UCMDF_YAW)
@@ -176,6 +198,7 @@ int PackUserCmd (const usercmd_t *ucmd, const usercmd_t *basis, BYTE **stream)
 	BYTE *temp = *stream;
 	BYTE *start = *stream;
 	usercmd_t blank;
+	DWORD buttons_changed;
 
 	if (basis == NULL)
 	{
@@ -185,10 +208,41 @@ int PackUserCmd (const usercmd_t *ucmd, const usercmd_t *basis, BYTE **stream)
 
 	WriteByte (0, stream);			// Make room for the packing bits
 
-	if (ucmd->buttons != basis->buttons)
+	buttons_changed = ucmd->buttons ^ basis->buttons;
+	if (buttons_changed != 0)
 	{
+		BYTE bytes[4] = {  ucmd->buttons        & 0x7F,
+						  (ucmd->buttons >> 7)  & 0x7F,
+						  (ucmd->buttons >> 14) & 0x7F,
+						  (ucmd->buttons >> 21) & 0xFF };
+
 		flags |= UCMDF_BUTTONS;
-		WriteByte (ucmd->buttons, stream);
+
+		if (buttons_changed & 0xFFFFFF80)
+		{
+			bytes[0] |= 0x80;
+			if (buttons_changed & 0xFFFFC000)
+			{
+				bytes[1] |= 0x80;
+				if (buttons_changed & 0xFFE00000)
+				{
+					bytes[2] |= 0x80;
+				}
+			}
+		}
+		WriteByte (bytes[0], stream);
+		if (bytes[0] & 0x80)
+		{
+			WriteByte (bytes[1], stream);
+			if (bytes[1] & 0x80)
+			{
+				WriteByte (bytes[2], stream);
+				if (bytes[2] & 0x80)
+				{
+					WriteByte (bytes[3], stream);
+				}
+			}
+		}
 	}
 	if (ucmd->pitch != basis->pitch)
 	{
@@ -299,13 +353,25 @@ int SkipTicCmd (BYTE **stream, int count)
 			{
 				moreticdata = false;
 				skip = 1;
-				if (*flow & UCMDF_BUTTONS)		skip += 1;
 				if (*flow & UCMDF_PITCH)		skip += 2;
 				if (*flow & UCMDF_YAW)			skip += 2;
 				if (*flow & UCMDF_FORWARDMOVE)	skip += 2;
 				if (*flow & UCMDF_SIDEMOVE)		skip += 2;
 				if (*flow & UCMDF_UPMOVE)		skip += 2;
 				if (*flow & UCMDF_ROLL)			skip += 2;
+				if (*flow & UCMDF_BUTTONS)
+				{
+					if (*++flow & 0x80)
+					{
+						if (*++flow & 0x80)
+						{
+							if (*++flow & 0x80)
+							{
+								++flow;
+							}
+						}
+					}
+				}
 				flow += skip;
 			}
 			else if (type == DEM_EMPTYUSERCMD)

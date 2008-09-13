@@ -116,7 +116,9 @@ FButtonStatus Button_Mlook, Button_Klook, Button_Use, Button_AltAttack,
 	Button_Attack, Button_Speed, Button_MoveRight, Button_MoveLeft,
 	Button_Strafe, Button_LookDown, Button_LookUp, Button_Back,
 	Button_Forward, Button_Right, Button_Left, Button_MoveDown,
-	Button_MoveUp, Button_Jump, Button_ShowScores, Button_Crouch;
+	Button_MoveUp, Button_Jump, Button_ShowScores, Button_Crouch,
+	Button_Zoom, Button_Reload,
+	Button_User1, Button_User2, Button_User3, Button_User4;
 
 bool ParsingKeyConf;
 
@@ -128,11 +130,16 @@ bool ParsingKeyConf;
 
 FActionMap ActionMaps[] =
 {
+	{ 0x125f5226, &Button_User2,		"user2" },
 	{ 0x1eefa611, &Button_Jump,			"jump" },
 	{ 0x201f1c55, &Button_Right,		"right" },
+	{ 0x20ccc4d5, &Button_Zoom,			"zoom" },
 	{ 0x23a99cd7, &Button_Back,			"back" },
+	{ 0x426b69e7, &Button_Reload,		"reload" },
 	{ 0x4463f43a, &Button_LookDown,		"lookdown" },
+	{ 0x534c30ee, &Button_User4,		"user4" },
 	{ 0x5622bf42, &Button_Attack,		"attack" },
+	{ 0x577712d0, &Button_User1,		"user1" },
 	{ 0x57c25cb2, &Button_Klook,		"klook" },
 	{ 0x59f3e907, &Button_Forward,		"forward" },
 	{ 0x6167ce99, &Button_MoveDown,		"movedown" },
@@ -143,6 +150,7 @@ FActionMap ActionMaps[] =
 	{ 0xab2c3e71, &Button_Crouch,		"crouch" },
 	{ 0xb000b483, &Button_Left,			"left" },
 	{ 0xb62b1e49, &Button_LookUp,		"lookup" },
+	{ 0xb6f8fe92, &Button_User3,		"user3" },
 	{ 0xb7e6a54b, &Button_Strafe,		"strafe" },
 	{ 0xd5897c73, &Button_ShowScores,	"showscores" },
 	{ 0xe0ccb317, &Button_Speed,		"speed" },

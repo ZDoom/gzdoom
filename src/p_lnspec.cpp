@@ -2455,7 +2455,9 @@ enum
 };
 
 FUNC(LS_SetPlayerProperty)
-// SetPlayerProperty (who, set, which)
+// SetPlayerProperty (who, value, which)
+// who == 0: set activator's property
+// who == 1: set every player's property
 {
 	int mask = 0;
 

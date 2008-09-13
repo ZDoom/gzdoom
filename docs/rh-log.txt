@@ -1,3 +1,8 @@
+September 12, 2008
+- Added GetPlayerInput() for examining a player's inputs from ACS. Most
+  buttons are now passed across the network. Also added four user buttons
+  that are specifically for use with this command.
+
 September 11, 2008
 - Fixed: Hexen's fourth weapon pieces did not play the correct pickup sound,
   and when they were fully assembled, they did not play the sound across the

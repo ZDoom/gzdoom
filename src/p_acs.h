@@ -553,8 +553,9 @@ public:
 		PCD_CHECKPLAYERCAMERA,		// [TN]
 		PCD_MORPHACTOR,				// [MH]
 		PCD_UNMORPHACTOR,			// [MH]
+		PCD_GETPLAYERINPUT,
 
-		PCODE_COMMAND_COUNT
+/*348*/	PCODE_COMMAND_COUNT
 	};
 
 	// Some constants used by ACS scripts
@@ -689,6 +690,7 @@ protected:
 	void SetActorProperty (int tid, int property, int value);
 	void DoSetActorProperty (AActor *actor, int property, int value);
 	int GetActorProperty (int tid, int property);
+	int GetPlayerInput (int playernum, int inputnum);
 
 private:
 	DLevelScript ();

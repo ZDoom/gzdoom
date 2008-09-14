@@ -32,7 +32,7 @@ actor LargeZorchRecharge : Shell 2008
 actor LargeZorchPack : Shell 2049
 {
 	Game Chex
-	Inventory.PickupMessage "GOTLARGEZORCHERPACK"
+	Inventory.PickupMessage "$GOTLARGEZORCHERPACK"
 	Inventory.Amount 20
 	States
 	{

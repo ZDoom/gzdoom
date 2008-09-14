@@ -1,3 +1,7 @@
+September 14, 2008  (Changes by Graf Zahl)
+- fixed: For Chex Quest some CVars were initialized to Heretic's default.
+- fixed pickup message for LargeZorchPack.
+
 September 13, 2008  (Changes by Graf Zahl)
 - Moved IF_ALWAYSPICKUP and GiveQuest into CallTryPickup so that they are
   automatically used by all inventory classes.

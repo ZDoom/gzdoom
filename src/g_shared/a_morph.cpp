@@ -10,6 +10,8 @@
 #include "a_sharedglobal.h"
 #include "sbar.h"
 #include "a_morph.h"
+#include "doomstat.h"
+#include "g_level.h"
 
 static FRandom pr_morphmonst ("MorphMonster");
 

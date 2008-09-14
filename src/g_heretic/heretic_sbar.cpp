@@ -14,6 +14,7 @@
 #include "templates.h"
 #include "a_keys.h"
 #include "r_translate.h"
+#include "g_level.h"
 
 
 static FRandom pr_chainwiggle;

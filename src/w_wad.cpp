@@ -18,7 +18,6 @@
 #include <sys/stat.h>
 #include <string.h>
 
-#include "m_alloc.h"
 #include "doomtype.h"
 #include "m_argv.h"
 #include "i_system.h"

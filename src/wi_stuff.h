@@ -28,7 +28,7 @@
 // INTERMISSION
 // Structure passed e.g. to WI_Start(wb)
 //
-typedef struct wbplayerstruct_s
+struct wbplayerstruct_t
 {
 	bool		in;			// whether the player is in game
 	
@@ -40,9 +40,9 @@ typedef struct wbplayerstruct_s
 	int			frags[MAXPLAYERS];
 	int			fragcount;	// [RH] Cumulative frags for this player
 
-} wbplayerstruct_t;
+};
 
-typedef struct wbstartstruct_s
+struct wbstartstruct_t
 {
 	int			finished_ep;
 	int			next_ep;
@@ -68,8 +68,13 @@ typedef struct wbstartstruct_s
 	// index of this player in game
 	int			pnum;	
 
-	wbplayerstruct_s	plyr[MAXPLAYERS];
-} wbstartstruct_t;
+	wbplayerstruct_t	plyr[MAXPLAYERS];
+};
+
+// Intermission stats.
+// Parameters for world map / intermission.
+extern wbstartstruct_t wminfo; 
+
 
 // Called by main loop, animate the intermission.
 void WI_Ticker ();

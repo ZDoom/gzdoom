@@ -46,10 +46,12 @@
 #include "r_sky.h"
 #include "stats.h"
 
-#include "m_alloc.h"
 #include "v_video.h"
 #include "a_sharedglobal.h"
 #include "c_console.h"
+#include "cmdlib.h"
+#include "d_net.h"
+#include "g_level.h"
 
 //EXTERN_CVAR (Int, tx)
 //EXTERN_CVAR (Int, ty)

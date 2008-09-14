@@ -34,7 +34,7 @@
 #ifndef __C_DISPATCH_H__
 #define __C_DISPATCH_H__
 
-#include "dobject.h"
+#include "doomtype.h"
 
 class FConfigFile;
 class APlayerPawn;

@@ -25,8 +25,6 @@
 
 #include <stdio.h>
 
-#include "m_alloc.h"
-
 #include "i_system.h"
 #include "x86.h"
 #include "i_video.h"
@@ -63,6 +61,7 @@
 #include "r_translate.h"
 #include "f_wipe.h"
 #include "m_png.h"
+#include "colormatcher.h"
 
 IMPLEMENT_ABSTRACT_CLASS (DCanvas)
 IMPLEMENT_ABSTRACT_CLASS (DFrameBuffer)

@@ -32,14 +32,13 @@
 **
 */
 
-#include "m_alloc.h"
 #include "i_system.h"
-#include "d_protocol.h"
 #include "d_ticcmd.h"
 #include "d_net.h"
 #include "doomdef.h"
 #include "doomstat.h"
 #include "cmdlib.h"
+#include "farchive.h"
 
 
 char *ReadString (BYTE **stream)
@@ -279,6 +278,11 @@ int PackUserCmd (const usercmd_t *ucmd, const usercmd_t *basis, BYTE **stream)
 	WriteByte (flags, &temp);
 
 	return *stream - start;
+}
+
+FArchive &operator<< (FArchive &arc, ticcmd_t &cmd)
+{
+	return arc << cmd.consistancy << cmd.ucmd;
 }
 
 FArchive &operator<< (FArchive &arc, usercmd_t &cmd)

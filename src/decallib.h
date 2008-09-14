@@ -37,9 +37,8 @@
 #include <string.h>
 
 #include "doomtype.h"
-#include "tarray.h"
-#include "name.h"
-#include "actor.h"
+#include "r_blend.h"
+#include "textures/textures.h"
 
 class FScanner;
 class FDecalTemplate;

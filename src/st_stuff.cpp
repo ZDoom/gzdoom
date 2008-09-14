@@ -27,6 +27,9 @@
 #include "c_dispatch.h"
 #include "d_event.h"
 #include "gi.h"
+#include "d_net.h"
+#include "doomstat.h"
+#include "g_level.h"
 
 EXTERN_CVAR (Bool, ticker);
 EXTERN_CVAR (Bool, noisedebug);

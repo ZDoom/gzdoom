@@ -2,7 +2,6 @@
 
 #include "templates.h"
 #include "m_random.h"
-#include "m_alloc.h"
 #include "i_system.h"
 #include "doomdef.h"
 #include "p_local.h"
@@ -18,6 +17,7 @@
 #include "a_doomglobal.h"
 #include "a_action.h"
 #include "thingdef/thingdef.h"
+#include "g_level.h"
 
 #include "gi.h"
 

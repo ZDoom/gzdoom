@@ -59,7 +59,6 @@
 
 #include "stats.h"
 #include "hardware.h"
-#include "zstring.h"
 #include "gameconfigfile.h"
 
 EXTERN_CVAR (String, language)

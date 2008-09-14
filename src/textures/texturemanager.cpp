@@ -46,6 +46,7 @@
 #include "gi.h"
 #include "st_start.h"
 #include "cmdlib.h"
+#include "g_level.h"
 
 extern void R_InitBuildTiles();
 

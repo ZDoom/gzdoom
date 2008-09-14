@@ -23,8 +23,8 @@
 #ifndef __I_VIDEO_H__
 #define __I_VIDEO_H__
 
-#include "doomtype.h"
-#include "v_video.h"
+
+class DFrameBuffer;
 
 
 // [RH] Set the display mode

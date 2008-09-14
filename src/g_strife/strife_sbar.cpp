@@ -14,6 +14,8 @@
 #include "a_keys.h"
 #include "a_strifeglobal.h"
 #include "gi.h"
+#include "g_level.h"
+#include "colormatcher.h"
 
 // Number of tics to move the popscreen up and down.
 #define POP_TIME (TICRATE/8)

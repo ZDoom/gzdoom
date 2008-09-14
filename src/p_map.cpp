@@ -27,7 +27,6 @@
 
 #include "templates.h"
 
-#include "m_alloc.h"
 #include "m_bbox.h"
 #include "m_random.h"
 #include "i_system.h"
@@ -53,6 +52,7 @@
 #include "a_doomglobal.h"
 #include "p_conversation.h"
 #include "r_translate.h"
+#include "g_level.h"
 
 #define WATER_SINK_FACTOR		3
 #define WATER_SINK_SMALL_FACTOR	4

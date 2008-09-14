@@ -26,7 +26,6 @@
 #include <stddef.h>
 
 #include "templates.h"
-#include "m_alloc.h"
 #include "doomdef.h"
 #include "i_system.h"
 #include "w_wad.h"
@@ -138,6 +137,12 @@ const FRenderStyle LegacyRenderStyles[STYLE_Count] =
 		  /* STYLE_Shaded */  {{ STYLEOP_Add,		STYLEALPHA_Src,		STYLEALPHA_InvSrc,	STYLEF_RedIsAlpha | STYLEF_ColorIsFixed }},
 /* STYLE_TranslucentStencil */{{ STYLEOP_Add,		STYLEALPHA_Src,		STYLEALPHA_InvSrc,	STYLEF_ColorIsFixed }},
 };
+
+FArchive &operator<< (FArchive &arc, FRenderStyle &style)
+{
+	arc << style.BlendOp << style.SrcAlpha << style.DestAlpha << style.Flags;
+	return arc;
+}
 
 EXTERN_CVAR (Int, r_columnmethod)
 

@@ -23,9 +23,10 @@
 #ifndef __M_MENU_H__
 #define __M_MENU_H__
 
-#include "d_event.h"
 #include "c_cvars.h"
 
+struct event_t;
+struct menu_t;
 //
 // MENUS
 //

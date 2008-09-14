@@ -17,6 +17,7 @@
 #include "m_random.h"
 #include "m_bbox.h"
 #include "p_lnspec.h"
+#include "g_level.h"
 
 // State.
 #include "r_state.h"

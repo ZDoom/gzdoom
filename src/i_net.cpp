@@ -53,7 +53,6 @@
 #include "d_event.h"
 #include "d_net.h"
 #include "m_argv.h"
-#include "m_alloc.h"
 #include "m_swap.h"
 #include "m_crc32.h"
 #include "d_player.h"

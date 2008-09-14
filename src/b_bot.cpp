@@ -11,6 +11,7 @@
 #include "p_local.h"
 #include "cmdlib.h"
 #include "teaminfo.h"
+#include "d_net.h"
 
 CVAR (Int, bot_next_color, 11, 0)
 CVAR (Bool, bot_observer, false, 0)

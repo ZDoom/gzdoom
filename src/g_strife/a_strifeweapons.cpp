@@ -6,6 +6,7 @@
 #include "p_enemy.h"
 #include "templates.h"
 #include "thingdef/thingdef.h"
+#include "doomstat.h"
 
 // Note: Strife missiles do 1-4 times their damage amount.
 // Doom missiles do 1-8 times their damage amount, so to

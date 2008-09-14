@@ -34,10 +34,8 @@
 #ifndef __C_BINDINGS_H__
 #define __C_BINDINGS_H__
 
-#include "doomtype.h"
-#include "d_event.h"
-#include <stdio.h>
 
+struct event_t;
 class FConfigFile;
 
 bool C_DoKey (event_t *ev);

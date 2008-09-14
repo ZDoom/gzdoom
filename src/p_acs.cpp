@@ -67,6 +67,7 @@
 #include "info.h"
 #include "r_translate.h"
 #include "sbarinfo.h"
+#include "cmdlib.h"
 
 extern FILE *Logfile;
 
@@ -862,7 +863,7 @@ FBehavior::FBehavior (int lumpnum, FileReader * fr, int len)
 		BYTE *strings = FindChunk (MAKE_ID('S','T','R','L'));
 		if (strings != NULL)
 		{
-			StringTable = strings - Data + 8;
+			StringTable = DWORD(strings - Data + 8);
 		}
 		else
 		{

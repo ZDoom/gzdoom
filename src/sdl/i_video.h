@@ -23,9 +23,9 @@
 #ifndef __I_VIDEO_H__
 #define __I_VIDEO_H__
 
-#include "doomtype.h"
-#include "v_video.h"
+#include "basictypes.h"
 
+class DCanvas;
 
 // [RH] Set the display mode
 void I_SetMode (int &width, int &height, int &bits);

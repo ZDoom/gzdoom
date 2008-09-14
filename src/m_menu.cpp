@@ -67,6 +67,9 @@
 #include "st_start.h"
 #include "teaminfo.h"
 #include "r_translate.h"
+#include "g_level.h"
+#include "d_event.h"
+#include "colormatcher.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -651,7 +654,7 @@ CCMD (bumpgamma)
 	// on the fly for *any* gamma level.
 	// Q: What are reasonable limits to use here?
 
-	float newgamma = Gamma + 0.1;
+	float newgamma = Gamma + 0.1f;
 
 	if (newgamma > 3.0)
 		newgamma = 1.0;
@@ -2084,7 +2087,7 @@ static void M_PlayerSetupTicker (void)
 		PlayerState = GetDefaultByType (PlayerClass->Type)->SeeState;
 		PlayerTics = PlayerState->GetTics();
 
-		PlayerSkin = R_FindSkin (skins[PlayerSkin].name, PlayerClass - &PlayerClasses[0]);
+		PlayerSkin = R_FindSkin (skins[PlayerSkin].name, int(PlayerClass - &PlayerClasses[0]));
 		R_GetPlayerTranslation (players[consoleplayer].userinfo.color,
 			&skins[PlayerSkin], translationtables[TRANSLATION_Players][MAXPLAYERS]);
 	}
@@ -2231,9 +2234,9 @@ static void M_PlayerSetupDrawer ()
 	x = SmallFont->StringWidth ("Green") + 8 + PSetupDef.x;
 	color = players[consoleplayer].userinfo.color;
 
-	M_DrawSlider (x, PSetupDef.y + LINEHEIGHT*2+yo, 0.0f, 255.0f, RPART(color));
-	M_DrawSlider (x, PSetupDef.y + LINEHEIGHT*3+yo, 0.0f, 255.0f, GPART(color));
-	M_DrawSlider (x, PSetupDef.y + LINEHEIGHT*4+yo, 0.0f, 255.0f, BPART(color));
+	M_DrawSlider (x, PSetupDef.y + LINEHEIGHT*2+yo, 0.0f, 255.0f, float(RPART(color)));
+	M_DrawSlider (x, PSetupDef.y + LINEHEIGHT*3+yo, 0.0f, 255.0f, float(GPART(color)));
+	M_DrawSlider (x, PSetupDef.y + LINEHEIGHT*4+yo, 0.0f, 255.0f, float(BPART(color)));
 
 	// [GRB] Draw class setting
 	int pclass = players[consoleplayer].userinfo.PlayerClass;

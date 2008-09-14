@@ -9,6 +9,7 @@
 #include "i_system.h"
 #include "p_acs.h"
 #include "thingdef/thingdef.h"
+#include "g_level.h"
 
 //============================================================================
 //

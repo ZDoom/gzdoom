@@ -6,6 +6,7 @@
 #include "s_sound.h"
 #include "a_strifeglobal.h"
 #include "thingdef/thingdef.h"
+#include "g_level.h"
 
 static FRandom pr_entity ("Entity");
 

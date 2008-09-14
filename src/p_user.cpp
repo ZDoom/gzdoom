@@ -51,6 +51,8 @@
 #include "c_dispatch.h"
 #include "tarray.h"
 #include "thingdef/thingdef.h"
+#include "g_level.h"
+#include "d_net.h"
 
 static FRandom pr_skullpop ("SkullPop");
 

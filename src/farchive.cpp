@@ -47,7 +47,6 @@
 
 #include "doomtype.h"
 #include "farchive.h"
-#include "m_alloc.h"
 #include "m_swap.h"
 #include "m_crc32.h"
 #include "cmdlib.h"

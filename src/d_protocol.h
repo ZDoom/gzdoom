@@ -34,11 +34,7 @@
 #ifndef __D_PROTOCOL_H__
 #define __D_PROTOCOL_H__
 
-#include "doomstat.h"
 #include "doomtype.h"
-#include "doomdef.h"
-#include "m_fixed.h"
-#include "farchive.h"
 
 // The IFF routines here all work with big-endian IDs, even if the host
 // system is little-endian.
@@ -78,6 +74,8 @@ struct usercmd_s
 	short	upmove;
 };
 typedef struct usercmd_s usercmd_t;
+
+class FArchive;
 
 FArchive &operator<< (FArchive &arc, usercmd_t &cmd);
 

@@ -26,7 +26,6 @@
 #include <io.h>
 #endif
 #include <fcntl.h>
-#include "m_alloc.h"
 
 #include "i_system.h"
 #include "i_sound.h"
@@ -48,8 +47,8 @@
 #include "gstrings.h"
 #include "gi.h"
 #include "templates.h"
-#include "zstring.h"
 #include "timidity/timidity.h"
+#include "g_level.h"
 
 // MACROS ------------------------------------------------------------------
 

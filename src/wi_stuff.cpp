@@ -1263,11 +1263,7 @@ void WI_updateDeathmatchStats ()
 		if (acceleratestage)
 		{
 			S_Sound (CHAN_VOICE | CHAN_UI, "players/male/gibbed", 1, ATTN_NONE);
-
-			if (gamemode == commercial)
-				WI_initNoState();
-			else
-				WI_initShowNextLoc();
+			WI_initShowNextLoc();
 		}
 	}
 	else if (dm_state & 1)

@@ -196,8 +196,6 @@ static int DoomSpecificInfo (char *buffer, char *end)
 	return p;
 }
 
-#include "zstring.h"
-
 int main (int argc, char **argv)
 {
 	printf(GAMENAME" v%s - SVN revision %s - SDL version\nCompiled on %s\n\n",

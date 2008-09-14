@@ -32,7 +32,6 @@
 **
 */
 
-#include "m_alloc.h"
 #include "templates.h"
 #include "p_setup.h"
 #include <stdarg.h>
@@ -62,6 +61,10 @@
 #include "doomstat.h"
 #include "d_gui.h"
 #include "v_video.h"
+#include "cmdlib.h"
+#include "d_net.h"
+#include "g_level.h"
+#include "d_event.h"
 
 #include "gi.h"
 

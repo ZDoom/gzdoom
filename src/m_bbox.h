@@ -23,7 +23,6 @@
 #define __M_BBOX_H__
 
 #include "doomtype.h"
-#include "m_fixed.h"
 
 struct line_t;
 

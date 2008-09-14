@@ -37,13 +37,13 @@
 #define __TABLES_H__
 
 #include <math.h>
+#include "basictypes.h"
 
 #ifndef PI
 #define PI				3.14159265358979323846		// matches value in gcc v2 math.h
 #endif
 
 
-#include "m_fixed.h"
 		
 #define FINEANGLES		8192
 #define FINEMASK		(FINEANGLES-1)

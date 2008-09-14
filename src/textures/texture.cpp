@@ -41,6 +41,7 @@
 #include "i_system.h"
 #include "r_translate.h"
 #include "bitmap.h"
+#include "colormatcher.h"
 
 typedef bool (*CheckFunc)(FileReader & file);
 typedef FTexture * (*CreateFunc)(FileReader & file, int lumpnum);
@@ -520,6 +521,14 @@ FTexture *FTexture::GetRedirect(bool wantwarped)
 	return this;
 }
 
+void FTexture::SetScaledSize(int fitwidth, int fitheight)
+{
+	xScale = DivScale16(Width, fitwidth);
+	yScale = DivScale16(Height,fitheight);
+	// compensate for roundoff errors
+	if (MulScale16(xScale, fitwidth) != Width) xScale++;
+	if (MulScale16(yScale, fitheight) != Height) yScale++;
+}
 
 
 FDummyTexture::FDummyTexture ()

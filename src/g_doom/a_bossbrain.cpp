@@ -8,6 +8,8 @@
 #include "statnums.h"
 #include "a_specialspot.h"
 #include "thingdef/thingdef.h"
+#include "doomstat.h"
+#include "g_level.h"
 
 static FRandom pr_brainscream ("BrainScream");
 static FRandom pr_brainexplode ("BrainExplode");

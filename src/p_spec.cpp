@@ -31,8 +31,6 @@
 //-----------------------------------------------------------------------------
 
 
-#include "m_alloc.h"
-
 #include <stdlib.h>
 
 #include "templates.h"
@@ -59,6 +57,7 @@
 #include "sc_man.h"
 #include "gi.h"
 #include "statnums.h"
+#include "g_level.h"
 
 // State.
 #include "r_state.h"
@@ -922,7 +921,7 @@ void P_SpawnSpecials (void)
 
 		case dScroll_EastLavaDamage:
 			new DScroller (DScroller::sc_floor, (-FRACUNIT/2)<<3,
-				0, -1, sector-sectors, 0);
+				0, -1, int(sector-sectors), 0);
 			break;
 
 		default:
@@ -944,7 +943,7 @@ void P_SpawnSpecials (void)
 				int i = (sector->special & 0xff) - Scroll_North_Slow;
 				fixed_t dx = hexenScrollies[i][0] * (FRACUNIT/2);
 				fixed_t dy = hexenScrollies[i][1] * (FRACUNIT/2);
-				new DScroller (DScroller::sc_floor, dx, dy, -1, sector-sectors, 0);
+				new DScroller (DScroller::sc_floor, dx, dy, -1, int(sector-sectors), 0);
 			}
 			else if ((sector->special & 0xff) >= Carry_East5 &&
 					 (sector->special & 0xff) <= Carry_East35)
@@ -952,7 +951,7 @@ void P_SpawnSpecials (void)
 			  // Only east scrollers also scroll the texture
 				new DScroller (DScroller::sc_floor,
 					(-FRACUNIT/2)<<((sector->special & 0xff) - Carry_East5),
-					0, -1, sector-sectors, 0);
+					0, -1, int(sector-sectors), 0);
 			}
 			break;
 		}
@@ -1338,7 +1337,7 @@ static void P_SpawnScrollers(void)
 			{
 				// if 1, then displacement
 				// if 2, then accelerative (also if 3)
-				control = sides[*l->sidenum].sector - sectors;
+				control = int(sides[*l->sidenum].sector - sectors);
 				if (l->args[1] & 2)
 					accel = 1;
 			}
@@ -1871,7 +1870,7 @@ static void P_SpawnPushers ()
 						thing->GetClass()->TypeName == NAME_PointPuller)
 					{
 						new DPusher (DPusher::p_push, l->args[3] ? l : NULL, l->args[2],
-									 0, thing, thing->Sector - sectors);
+									 0, thing, int(thing->Sector - sectors));
 					}
 				}
 			}

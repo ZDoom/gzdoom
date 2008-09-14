@@ -33,7 +33,6 @@
 */
 
 #include "i_system.h"
-#include "m_alloc.h"
 #include "w_wad.h"
 #include "doomdef.h"
 #include "r_local.h"
@@ -43,6 +42,7 @@
 #include "sc_man.h"
 #include "v_text.h"
 #include "st_start.h"
+#include "doomstat.h"
 
 
 static int R_CountGroup (const char *start, const char *end);

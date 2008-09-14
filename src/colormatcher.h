@@ -49,4 +49,7 @@ private:
 	const PalEntry *Pal;
 };
 
+extern FColorMatcher ColorMatcher;
+
+
 #endif //__COLORMATCHER_H__

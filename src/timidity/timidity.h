@@ -21,7 +21,6 @@
 #define TIMIDITY_H
 
 #include "doomtype.h"
-#include "zstring.h"
 
 class FileReader;
 

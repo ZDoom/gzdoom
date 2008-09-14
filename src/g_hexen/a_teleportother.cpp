@@ -8,6 +8,8 @@
 #include "p_lnspec.h"
 #include "m_random.h"
 #include "thingdef/thingdef.h"
+#include "g_level.h"
+#include "doomstat.h"
 
 #define TELEPORT_LIFE 1
 

@@ -38,7 +38,6 @@
 #include "cmdlib.h"
 #include "actor.h"
 #include "dobject.h"
-#include "m_alloc.h"
 #include "doomstat.h"		// Ideally, DObjects can be used independant of Doom.
 #include "d_player.h"		// See p_user.cpp to find out why this doesn't work.
 #include "g_game.h"			// Needed for bodyque.
@@ -48,8 +47,6 @@
 #include "stats.h"
 #include "a_sharedglobal.h"
 #include "dsectoreffect.h"
-
-#include "autosegs.h"
 
 PClass DObject::_StaticType;
 ClassReg DObject::RegistrationInfo =

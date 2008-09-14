@@ -24,7 +24,7 @@
 #ifndef __STSTUFF_H__
 #define __STSTUFF_H__
 
-#include "d_event.h"
+struct event_t;
 
 extern int ST_X;
 extern int ST_Y;

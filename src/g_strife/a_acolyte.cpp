@@ -7,6 +7,7 @@
 #include "a_strifeglobal.h"
 #include "doomdata.h"
 #include "thingdef/thingdef.h"
+#include "doomstat.h"
 
 //============================================================================
 //

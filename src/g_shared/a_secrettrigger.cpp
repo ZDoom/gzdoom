@@ -38,6 +38,7 @@
 #include "info.h"
 #include "s_sound.h"
 #include "d_player.h"
+#include "doomstat.h"
 
 EXTERN_CVAR(String, secretmessage)
 

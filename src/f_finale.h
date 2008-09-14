@@ -23,8 +23,11 @@
 #ifndef __F_FINALE__
 #define __F_FINALE__
 
-#include "doomtype.h"
-#include "d_event.h"
+#include "basictypes.h"
+
+struct event_t;
+
+
 //
 // FINALE
 //

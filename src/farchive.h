@@ -37,8 +37,6 @@
 #include <stdio.h>
 #include "doomtype.h"
 #include "dobject.h"
-#include "tarray.h"
-#include "name.h"
 
 class FFile
 {
@@ -277,8 +275,6 @@ inline FArchive &operator<< (FArchive &arc, PalEntry &p)
 {
 	return arc << p.a << p.r << p.g << p.b;
 }
-
-#include "dobject.h"
 
 template<class T>
 inline FArchive &operator<< (FArchive &arc, T* &object)

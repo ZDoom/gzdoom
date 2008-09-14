@@ -32,6 +32,7 @@
 #include "sbar.h"
 #include "r_interpolate.h"
 #include "i_sound.h"
+#include "g_level.h"
 
 extern gamestate_t wipegamestate;
 

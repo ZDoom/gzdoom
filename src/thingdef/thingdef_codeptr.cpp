@@ -39,6 +39,7 @@
 */
 
 #include "gi.h"
+#include "g_level.h"
 #include "actor.h"
 #include "info.h"
 #include "sc_man.h"
@@ -55,7 +56,6 @@
 #include "a_action.h"
 #include "decallib.h"
 #include "m_random.h"
-#include "autosegs.h"
 #include "i_system.h"
 #include "p_local.h"
 #include "c_console.h"
@@ -64,6 +64,7 @@
 #include "a_doomglobal.h"
 #include "thingdef/thingdef.h"
 #include "v_video.h"
+#include "doomstat.h"
 
 
 static FRandom pr_camissile ("CustomActorfire");

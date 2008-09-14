@@ -24,6 +24,8 @@
 #define __D_NET__
 
 #include "doomtype.h"
+#include "doomdef.h"
+#include "d_ticcmd.h"
 
 
 //
@@ -126,5 +128,20 @@ void Net_DoCommand (int type, BYTE **stream, int player);
 void Net_SkipCommand (int type, BYTE **stream);
 
 void Net_ClearBuffers ();
+
+
+// Netgame stuff (buffers and pointers, i.e. indices).
+
+// This is the interface to the packet driver, a separate program
+// in DOS, but just an abstraction here.
+extern	doomcom_t		doomcom;
+
+extern	struct ticcmd_t	localcmds[LOCALCMDTICS];
+
+extern	int 			maketic;
+extern	int 			nettics[MAXNETNODES];
+
+extern	ticcmd_t		netcmds[MAXPLAYERS][BACKUPTICS];
+extern	int 			ticdup;
 
 #endif

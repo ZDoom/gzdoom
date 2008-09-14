@@ -41,7 +41,6 @@
 #include "w_wad.h"
 #include "i_system.h"
 #include "sc_man.h"
-#include "zstring.h"
 #include "c_dispatch.h"
 #include "v_text.h"
 

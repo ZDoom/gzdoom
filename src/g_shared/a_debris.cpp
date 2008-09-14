@@ -1,6 +1,7 @@
 #include "actor.h"
 #include "info.h"
 #include "m_random.h"
+#include "m_fixed.h"
 
 static FRandom pr_dirt ("SpawnDirt");
 

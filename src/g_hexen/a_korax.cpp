@@ -26,6 +26,7 @@
 #include "m_random.h"
 #include "i_system.h"
 #include "thingdef/thingdef.h"
+#include "g_level.h"
 
 const int KORAX_SPIRIT_LIFETIME = 5*TICRATE/5;	// 5 seconds
 const int KORAX_COMMAND_HEIGHT	= 120;

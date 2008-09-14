@@ -95,6 +95,8 @@
 #include "gameconfigfile.h"
 #include "win32iface.h"
 #include "templates.h"
+#include "cmdlib.h"
+#include "d_event.h"
 
 #define DINPUT_BUFFERSIZE	32
 

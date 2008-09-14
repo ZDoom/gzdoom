@@ -7,6 +7,7 @@
 #include "s_sound.h"
 #include "p_acs.h"
 #include "r_sky.h"
+#include "g_level.h"
 
 static FRandom pr_lightning ("Lightning");
 

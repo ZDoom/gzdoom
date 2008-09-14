@@ -8,12 +8,13 @@
 #include "sc_man.h"
 #include "v_palette.h"
 #include "w_wad.h"
+#include "doomstat.h"
 
 
 
 struct OneKey
 {
-	const PClass * key;
+	const PClass *key;
 	int count;
 
 	bool check(AActor * owner)
@@ -26,7 +27,7 @@ struct Keygroup
 {
 	TArray<OneKey> anykeylist;
 
-	bool check(AActor * owner)
+	bool check(AActor *owner)
 	{
 		for(unsigned int i=0;i<anykeylist.Size();i++)
 		{
@@ -39,14 +40,13 @@ struct Keygroup
 struct Lock
 {
 	TArray<Keygroup *> keylist;
-	char * message;
-	char * remotemsg;
+	FString Message;
+	FString RemoteMsg;
 	FSoundID locksound;
 	int	rgb;
 
 	Lock()
 	{
-		message=remotemsg=NULL;
 		rgb=0;
 	}
 
@@ -54,8 +54,6 @@ struct Lock
 	{
 		for(unsigned int i=0;i<keylist.Size();i++) delete keylist[i];
 		keylist.Clear();
-		if (message) delete [] message;
-		if (remotemsg) delete [] remotemsg;
 	}
 
 	bool check(AActor * owner)
@@ -80,7 +78,7 @@ struct Lock
 };
 
 
-static Lock * locks[256];		// all valid locks
+static Lock *locks[256];		// all valid locks
 static bool keysdone=false;		// have the locks been initialized?
 static int currentnumber;		// number to be assigned to next key
 static bool ignorekey;			// set to true when the current lock is not being used
@@ -250,12 +248,12 @@ static void ParseLock(FScanner &sc)
 
 		case 1:	// message
 			sc.MustGetString();
-			lock->message = copystring(sc.String);
+			lock->Message = sc.String;
 			break;
 
 		case 2: // remotemsg
 			sc.MustGetString();
-			lock->remotemsg = copystring(sc.String);
+			lock->RemoteMsg = sc.String;
 			break;
 
 		case 3:	// mapcolor
@@ -289,13 +287,13 @@ static void ParseLock(FScanner &sc)
 		}
 	}
 	// copy the messages if the other one does not exist
-	if (!lock->remotemsg && lock->message)
+	if (lock->RemoteMsg.IsEmpty() && lock->Message.IsNotEmpty())
 	{
-		lock->remotemsg = copystring(lock->message);
+		lock->RemoteMsg = lock->Message;
 	}
-	if (!lock->message && lock->remotemsg)
+	if (!lock->Message.IsEmpty() && lock->RemoteMsg.IsNotEmpty())
 	{
-		lock->message = copystring(lock->remotemsg);
+		lock->Message = lock->RemoteMsg;
 	}
 	lock->keylist.ShrinkToFit();
 }
@@ -412,7 +410,7 @@ bool P_CheckKeys (AActor *owner, int keynum, bool remote)
 	else
 	{
 		if (locks[keynum]->check(owner)) return true;
-		failtext = remote? locks[keynum]->remotemsg : locks[keynum]->message;
+		failtext = remote? locks[keynum]->RemoteMsg : locks[keynum]->Message;
 		failsound = locks[keynum]->locksound;
 	}
 

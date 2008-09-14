@@ -46,6 +46,9 @@
 #include "sc_man.h"
 #include "templates.h"
 #include "p_local.h"
+#include "doomstat.h"
+#include "g_level.h"
+
 
 #define HUMETA_AltIcon 0x10f000
 

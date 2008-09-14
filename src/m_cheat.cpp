@@ -43,6 +43,8 @@
 #include "p_lnspec.h"
 #include "c_console.h"
 #include "r_translate.h"
+#include "g_level.h"
+#include "d_net.h"
 
 // [RH] Actually handle the cheat. The cheat code in st_stuff.c now just
 // writes some bytes to the network data stream, and the network code

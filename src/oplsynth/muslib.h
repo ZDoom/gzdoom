@@ -78,7 +78,8 @@ Voice-mail (Czech language only, not recommended; weekends only):
 #ifndef __DEFTYPES_H_
   #include "deftypes.h"
 #endif
-#include "files.h"
+
+class FileReader;
 
 /* Global Definitions */
 

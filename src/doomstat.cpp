@@ -40,8 +40,8 @@ FStringTable	GStrings;
 EGameSpeed		GameSpeed = SPEED_Normal;
 
 // Game Mode - identify IWAD as shareware, retail etc.
-GameMode_t		gamemode = undetermined;
-GameMission_t	gamemission = doom;
+int	gamemode = undetermined;
+int	gamemission = doom;
 
 // Show developer messages if true.
 CVAR (Bool, developer, false, 0)

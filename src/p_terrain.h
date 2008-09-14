@@ -35,9 +35,6 @@
 #define __P_TERRAIN_H__
 
 #include "dobject.h"
-#include "m_fixed.h"
-#include "tarray.h"
-#include "name.h"
 #include "s_sound.h"
 #include "textures/textures.h"
 

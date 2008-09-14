@@ -7,6 +7,7 @@
 #include "templates.h"
 #include "m_bbox.h"
 #include "thingdef/thingdef.h"
+#include "doomstat.h"
 
 DECLARE_ACTION(A_SkullAttack)
 

@@ -11,6 +11,7 @@
 #include "gstrings.h"
 #include "a_hexenglobal.h"
 #include "thingdef/thingdef.h"
+#include "g_level.h"
 
 #define ZAGSPEED	FRACUNIT
 

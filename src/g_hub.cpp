@@ -42,6 +42,8 @@
 #include "files.h"
 #include "m_png.h"
 #include "gstrings.h"
+#include "wi_stuff.h"
+#include "farchive.h"
 
 
 //==========================================================================
@@ -59,7 +61,7 @@ struct FHubInfo
 	int			maxsecret;
 	int			maxfrags;
 
-	wbplayerstruct_s	plyr[MAXPLAYERS];
+	wbplayerstruct_t	plyr[MAXPLAYERS];
 
 	FHubInfo &operator=(const wbstartstruct_t &wbs)
 	{

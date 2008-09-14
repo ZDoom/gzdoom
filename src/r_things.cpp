@@ -26,7 +26,6 @@
 #include <malloc.h>
 
 #include "templates.h"
-#include "m_alloc.h"
 #include "doomdef.h"
 #include "m_swap.h"
 #include "m_argv.h"
@@ -44,6 +43,10 @@
 #include "sbar.h"
 #include "gi.h"
 #include "r_sky.h"
+#include "cmdlib.h"
+#include "g_level.h"
+#include "d_net.h"
+#include "colormatcher.h"
 
 extern FTexture *CrosshairImage;
 extern fixed_t globaluclip, globaldclip;

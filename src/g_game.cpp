@@ -30,7 +30,6 @@
 
 #include "templates.h"
 #include "version.h"
-#include "m_alloc.h"
 #include "doomdef.h" 
 #include "doomstat.h"
 #include "d_protocol.h"
@@ -73,6 +72,9 @@
 #include "a_keys.h"
 #include "a_artifacts.h"
 #include "r_translate.h"
+#include "cmdlib.h"
+#include "d_net.h"
+#include "d_event.h"
 
 #include <zlib.h>
 

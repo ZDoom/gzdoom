@@ -24,7 +24,6 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "templates.h"
-#include "m_alloc.h"
 #include "i_system.h"
 #include "m_random.h"
 #include "doomdef.h"
@@ -57,6 +56,9 @@
 #include "teaminfo.h"
 #include "r_translate.h"
 #include "r_sky.h"
+#include "g_level.h"
+#include "d_event.h"
+#include "colormatcher.h"
 
 // MACROS ------------------------------------------------------------------
 

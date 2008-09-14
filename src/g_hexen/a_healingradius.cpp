@@ -9,6 +9,7 @@
 #include "a_action.h"
 #include "a_hexenglobal.h"
 #include "gi.h"
+#include "doomstat.h"
 
 #define HEAL_RADIUS_DIST	255*FRACUNIT
 

@@ -13,6 +13,8 @@
 #include "c_console.h"
 #include "templates.h"
 #include "thingdef/thingdef.h"
+#include "g_level.h"
+#include "doomstat.h"
 
 // Degnin Ore ---------------------------------------------------------------
 

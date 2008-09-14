@@ -35,6 +35,7 @@
 #include "actor.h"
 #include "info.h"
 #include "p_effect.h"
+#include "doomdata.h"
 
 class AParticleFountain : public AActor
 {

@@ -1,13 +1,13 @@
 #ifndef __TEXTURES_H
 #define __TEXTURES_H
 
-#include "doomtype.h"
-#include "m_fixed.h"
+#include "basictypes.h"
 
 class FBitmap;
 struct FRemapTable;
 struct FCopyInfo;
 class FScanner;
+struct PClass;
 
 // Texture IDs
 class FTextureManager;
@@ -201,14 +201,7 @@ public:
 		WidthMask = (1 << WidthBits) - 1;
 	}
 
-	void SetScaledSize(int fitwidth, int fitheight)
-	{
-		xScale = DivScale16(Width, fitwidth);
-		yScale = DivScale16(Height,fitheight);
-		// compensate for roundoff errors
-		if (MulScale16(xScale, fitwidth) != Width) xScale++;
-		if (MulScale16(yScale, fitheight) != Height) yScale++;
-	}
+	void SetScaledSize(int fitwidth, int fitheight);
 
 	virtual void HackHack (int newheight);	// called by FMultipatchTexture to discover corrupt patches.
 

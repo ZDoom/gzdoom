@@ -38,7 +38,6 @@
 
 #include "v_palette.h"
 #include "v_font.h"
-#include "colormatcher.h"
 
 #include "doomdef.h"
 
@@ -396,8 +395,6 @@ private:
 	DWORD LastMS, LastSec, FrameCount, LastCount, LastTic;
 };
 
-
-extern FColorMatcher ColorMatcher;
 
 // This is the screen updated by I_FinishUpdate.
 extern DFrameBuffer *screen;

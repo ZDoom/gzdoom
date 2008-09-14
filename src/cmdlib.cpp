@@ -10,8 +10,6 @@
 #include <sys/stat.h>
 #include <time.h>
 
-#include "m_alloc.h"
-
 /*
 progdir will hold the path up to the game directory, including the slash
 

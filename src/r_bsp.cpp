@@ -29,7 +29,6 @@
 #include <stdlib.h>
 
 #include "templates.h"
-#include "m_alloc.h"
 
 #include "doomdef.h"
 
@@ -43,6 +42,7 @@
 #include "r_draw.h"
 #include "r_things.h"
 #include "a_sharedglobal.h"
+#include "g_level.h"
 
 // State.
 #include "doomstat.h"

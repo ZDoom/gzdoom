@@ -47,11 +47,11 @@
 #include "c_dispatch.h"
 #include "m_argv.h"
 #include "doomstat.h"
-#include "m_alloc.h"
 #include "d_player.h"
 #include "configfile.h"
 #include "m_crc32.h"
 #include "v_text.h"
+#include "d_net.h"
 
 // MACROS ------------------------------------------------------------------
 

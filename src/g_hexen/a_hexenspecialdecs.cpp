@@ -12,6 +12,8 @@
 #include "p_lnspec.h"
 #include "a_hexenglobal.h"
 #include "thingdef/thingdef.h"
+#include "g_level.h"
+#include "doomstat.h"
 
 static FRandom pr_pottery ("PotteryExplode");
 static FRandom pr_bit ("PotteryChooseBit");

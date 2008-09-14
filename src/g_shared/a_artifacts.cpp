@@ -17,6 +17,8 @@
 #include "v_video.h"
 #include "templates.h"
 #include "a_morph.h"
+#include "g_level.h"
+#include "doomstat.h"
 
 static FRandom pr_torch ("Torch");
 

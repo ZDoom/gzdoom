@@ -69,6 +69,7 @@
 #include "p_acs.h"
 #include "s_sndseq.h"
 #include "r_interpolate.h"
+#include "doomstat.h"
 
 // MACROS ------------------------------------------------------------------
 

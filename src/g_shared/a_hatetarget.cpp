@@ -34,6 +34,7 @@
 
 #include "actor.h"
 #include "info.h"
+#include "m_fixed.h"
 
 // Hate Target --------------------------------------------------------------
 

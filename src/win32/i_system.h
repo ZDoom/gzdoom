@@ -23,9 +23,10 @@
 #ifndef __I_SYSTEM__
 #define __I_SYSTEM__
 
-#include "d_main.h"
-#include "d_ticcmd.h"
-#include "d_event.h"
+#include "doomtype.h"
+
+struct ticcmd_t;
+struct WadStuff;
 
 // Index values into the LanguageIDs array
 enum

@@ -140,10 +140,9 @@ inline FRenderStyle &FRenderStyle::operator= (ERenderStyle legacy)
 	*this = LegacyRenderStyles[legacy];
 	return *this;
 }
-inline FArchive &operator<< (FArchive &arc, FRenderStyle &style)
-{
-	arc << style.BlendOp << style.SrcAlpha << style.DestAlpha << style.Flags;
-	return arc;
-}
+
+class FArchive;
+
+FArchive &operator<< (FArchive &arc, FRenderStyle &style);
 
 #endif

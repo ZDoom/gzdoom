@@ -28,6 +28,8 @@
 #include "d_gui.h"
 #include "i_input.h"
 #include "templates.h"
+#include "d_net.h"
+#include "d_event.h"
 
 #define QUEUESIZE		128
 #define MESSAGESIZE		128
@@ -170,7 +172,7 @@ bool CT_Responder (event_t *ev)
 			}
 			else
 			{
-				CT_AddChar (ev->data1);
+				CT_AddChar (char(ev->data1));
 			}
 			return true;
 		}

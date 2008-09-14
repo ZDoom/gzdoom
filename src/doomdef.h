@@ -88,6 +88,12 @@ typedef enum
 	GS_FORCEWIPEFADE = -2
 } gamestate_t;
 
+extern	gamestate_t 	gamestate;
+
+// wipegamestate can be set to -1
+//	to force a wipe on the next draw
+extern gamestate_t wipegamestate;
+
 
 typedef float skill_t;
 

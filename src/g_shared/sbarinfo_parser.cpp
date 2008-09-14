@@ -45,6 +45,7 @@
 #include "m_random.h"
 #include "gi.h"
 #include "i_system.h"
+#include "g_level.h"
 
 SBarInfo *SBarInfoScript;
 

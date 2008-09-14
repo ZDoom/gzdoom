@@ -66,6 +66,7 @@
 #include "f_wipe.h"
 #include "st_stuff.h"
 #include "win32iface.h"
+#include "doomstat.h"
 
 // MACROS ------------------------------------------------------------------
 

@@ -8,6 +8,7 @@
 #include "gstrings.h"
 #include "a_weaponpiece.h"
 #include "thingdef/thingdef.h"
+#include "doomstat.h"
 
 static FRandom pr_mstafftrack ("MStaffTrack");
 static FRandom pr_bloodscourgedrop ("BloodScourgeDrop");

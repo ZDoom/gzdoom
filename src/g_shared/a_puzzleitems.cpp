@@ -6,6 +6,7 @@
 #include "p_enemy.h"
 #include "s_sound.h"
 #include "c_console.h"
+#include "doomstat.h"
 
 IMPLEMENT_CLASS (APuzzleItem)
 

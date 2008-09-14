@@ -51,7 +51,6 @@
 #include "gi.h"
 #include "w_wad.h"
 #include "s_sound.h"
-#include "m_alloc.h"
 
 // MACROS ------------------------------------------------------------------
 

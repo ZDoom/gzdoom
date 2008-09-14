@@ -37,6 +37,8 @@
 
 #define TEAM_None 255
 
+#include "doomtype.h"
+
 struct TEAMINFO
 {
 	FString		name;

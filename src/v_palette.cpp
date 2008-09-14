@@ -45,7 +45,6 @@
 
 #include "templates.h"
 #include "v_video.h"
-#include "m_alloc.h"
 #include "i_system.h"
 #include "r_main.h"		// For lighting constants
 #include "w_wad.h"
@@ -55,6 +54,7 @@
 #include "st_stuff.h"
 #include "gi.h"
 #include "x86.h"
+#include "colormatcher.h"
 
 extern "C" {
 FDynamicColormap NormalLight;

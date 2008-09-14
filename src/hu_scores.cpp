@@ -40,6 +40,8 @@
 #include "teaminfo.h"
 #include "templates.h"
 #include "v_video.h"
+#include "doomstat.h"
+#include "g_level.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -298,7 +300,7 @@ static void HU_DrawPlayer (player_t *player, bool highlight, int x, int y, int h
 	int color;
 	char str[80];
 
-	D_GetPlayerColor (player - players, &h, &s, &v);
+	D_GetPlayerColor (int(player - players), &h, &s, &v);
 	HSVtoRGB (&r, &g, &b, h, s, v);
 
 	screen->Clear (SCREENWIDTH / 24, y, SCREENWIDTH / 24 + 24*CleanXfac, y + height, -1,

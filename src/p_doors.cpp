@@ -34,6 +34,7 @@
 #include "a_keys.h"
 #include "i_system.h"
 #include "sc_man.h"
+#include "cmdlib.h"
 
 IMPLEMENT_CLASS (DDoor)
 

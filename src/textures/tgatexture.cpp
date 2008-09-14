@@ -39,6 +39,7 @@
 #include "w_wad.h"
 #include "templates.h"
 #include "bitmap.h"
+#include "colormatcher.h"
 
 
 //==========================================================================

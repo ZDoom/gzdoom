@@ -47,7 +47,6 @@
 #include <d3d9.h>
 
 #include "hardware.h"
-#include "v_video.h"
 
 #define SAFE_RELEASE(x)		{ if (x != NULL) { x->Release(); x = NULL; } }
 

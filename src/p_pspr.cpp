@@ -27,6 +27,7 @@
 #include "a_doomglobal.h"
 #include "templates.h"
 #include "thingdef/thingdef.h"
+#include "g_level.h"
 
 // MACROS ------------------------------------------------------------------
 

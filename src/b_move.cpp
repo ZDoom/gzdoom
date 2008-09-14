@@ -17,6 +17,7 @@
 #include "p_lnspec.h"
 #include "gi.h"
 #include "a_keys.h"
+#include "d_event.h"
 
 enum dirtype_t
 {

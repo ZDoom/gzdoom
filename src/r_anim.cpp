@@ -32,6 +32,7 @@
 **
 */
 
+#include "doomtype.h"
 #include "cmdlib.h"
 #include "i_system.h"
 #include "r_local.h"
@@ -42,6 +43,7 @@
 #include "sc_man.h"
 #include "templates.h"
 #include "w_wad.h"
+#include "g_level.h"
 
 // MACROS ------------------------------------------------------------------
 

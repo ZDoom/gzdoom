@@ -35,8 +35,8 @@
 #include "dobject.h"
 #include "i_system.h"
 #include "actor.h"
-#include "autosegs.h"
 #include "templates.h"
+#include "autosegs.h"
 
 TArray<PClass *> PClass::m_RuntimeActors;
 TArray<PClass *> PClass::m_Types;

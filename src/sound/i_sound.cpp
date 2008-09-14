@@ -50,7 +50,6 @@ extern HINSTANCE g_hInst;
 #include <stdarg.h>
 
 #include "doomtype.h"
-#include "m_alloc.h"
 #include <math.h>
 
 #include "fmodsound.h"

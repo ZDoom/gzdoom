@@ -56,6 +56,8 @@
 #include "templates.h"
 #include "sbar.h"
 #include "s_sound.h"
+#include "g_level.h"
+#include "d_net.h"
 
 static FRandom pr_obituary ("Obituary");
 static FRandom pr_botrespawn ("BotRespawn");
@@ -357,7 +359,7 @@ void AActor::Die (AActor *source, AActor *inflictor)
 	if (debugfile && this->player)
 	{
 		static int dieticks[MAXPLAYERS];
-		int pnum = this->player-players;
+		int pnum = int(this->player-players);
 		if (dieticks[pnum] == gametic)
 			gametic=gametic;
 		dieticks[pnum] = gametic;

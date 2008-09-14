@@ -14,6 +14,7 @@
 #include "gi.h"
 #include "r_translate.h"
 #include "thingdef/thingdef.h"
+#include "doomstat.h"
 
 static FRandom pr_sap ("StaffAtkPL1");
 static FRandom pr_sap2 ("StaffAtkPL2");

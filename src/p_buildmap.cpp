@@ -16,6 +16,7 @@
 #include "r_main.h"
 #include "r_defs.h"
 #include "p_setup.h"
+#include "g_level.h"
 
 // MACROS ------------------------------------------------------------------
 

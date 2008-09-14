@@ -6,6 +6,7 @@
 #include "gi.h"
 #include "s_sound.h"
 #include "m_random.h"
+#include "doomstat.h"
 
 static FRandom pr_tele ("TeleportSelf");
 

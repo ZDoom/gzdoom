@@ -25,7 +25,9 @@
 #ifndef __D_MAIN__
 #define __D_MAIN__
 
-#include "d_event.h"
+#include "doomtype.h"
+
+struct event_t;
 
 //
 // D_DoomMain()

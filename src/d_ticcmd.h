@@ -23,7 +23,6 @@
 #ifndef __D_TICCMD_H__
 #define __D_TICCMD_H__
 
-#include "doomtype.h"
 #include "d_protocol.h"
 
 // The data sampled per tick (single player)
@@ -37,9 +36,6 @@ struct ticcmd_t
 };
 
 
-inline FArchive &operator<< (FArchive &arc, ticcmd_t &cmd)
-{
-	return arc << cmd.consistancy << cmd.ucmd;
-}
+FArchive &operator<< (FArchive &arc, ticcmd_t &cmd);
 
 #endif	// __D_TICCMD_H__

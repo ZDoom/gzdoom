@@ -9,6 +9,7 @@
 #include "gstrings.h"
 #include "a_specialspot.h"
 #include "thingdef/thingdef.h"
+#include "g_level.h"
 
 static FRandom pr_s2fx1 ("S2FX1");
 static FRandom pr_scrc1atk ("Srcr1Attack");

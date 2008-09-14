@@ -46,6 +46,7 @@
 #include "v_palette.h"
 #include "a_sharedglobal.h"
 #include "r_interpolate.h"
+#include "g_level.h"
 
 static void CopyPlayer (player_t *dst, player_t *src, const char *name);
 static void ReadOnePlayer (FArchive &arc, bool skipload);

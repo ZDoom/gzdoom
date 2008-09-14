@@ -49,6 +49,7 @@
 #include <io.h>
 #endif
 #include "muslib.h"
+#include "files.h"
 
 #include "c_cvars.h"
 

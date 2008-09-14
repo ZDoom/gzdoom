@@ -36,6 +36,7 @@
 #include "p_local.h"
 #include "i_system.h"
 #include "r_sky.h"
+#include "doomstat.h"
 
 struct FTraceInfo
 {

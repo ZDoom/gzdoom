@@ -1,4 +1,5 @@
 #include "actor.h"
+#include "g_level.h"
 #include "gi.h"
 #include "m_random.h"
 #include "s_sound.h"
@@ -11,6 +12,7 @@
 #include "p_lnspec.h"
 #include "c_console.h"
 #include "thingdef/thingdef.h"
+#include "doomstat.h"
 
 // Notes so I don't forget them:
 // Strife does some extra stuff in A_Explode if a player caused the explosion. (probably NoiseAlert)

@@ -1,4 +1,5 @@
 September 14, 2008  (Changes by Graf Zahl)
+- Cleaned up some include dependencies.
 - fixed: For Chex Quest some CVars were initialized to Heretic's default.
 - fixed pickup message for LargeZorchPack.
 

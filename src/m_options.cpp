@@ -36,7 +36,6 @@
 ** taglists to describe each menu item. We'll see... (Probably not.)
 */
 
-#include "m_alloc.h"
 #include "templates.h"
 
 #include "doomdef.h"
@@ -77,6 +76,8 @@
 #include "m_misc.h"
 #include "hardware.h"
 #include "sc_man.h"
+#include "cmdlib.h"
+#include "d_event.h"
 
 // Data.
 #include "m_menu.h"

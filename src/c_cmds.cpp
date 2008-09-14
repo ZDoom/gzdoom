@@ -66,6 +66,8 @@
 #include "p_local.h"
 #include "r_sky.h"
 #include "p_setup.h"
+#include "cmdlib.h"
+#include "d_net.h"
 
 extern FILE *Logfile;
 extern bool insave;

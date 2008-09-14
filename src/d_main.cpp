@@ -49,7 +49,6 @@
 #include "doomerrors.h"
 
 #include "d_gui.h"
-#include "m_alloc.h"
 #include "m_random.h"
 #include "doomdef.h"
 #include "doomstat.h"
@@ -96,6 +95,9 @@
 #include "teaminfo.h"
 #include "hardware.h"
 #include "sbarinfo.h"
+#include "d_net.h"
+#include "g_level.h"
+#include "d_event.h"
 
 EXTERN_CVAR(Bool, hud_althud)
 void DrawHUD();

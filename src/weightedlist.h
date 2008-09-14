@@ -35,7 +35,8 @@
 #include <stdlib.h>
 
 #include "doomtype.h"
-#include "m_random.h"
+
+class FRandom;
 
 template<class T>
 class TWeightedList

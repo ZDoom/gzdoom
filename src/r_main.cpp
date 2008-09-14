@@ -29,7 +29,6 @@
 #include <math.h>
 
 #include "templates.h"
-#include "m_alloc.h"
 #include "doomdef.h"
 #include "d_net.h"
 #include "doomstat.h"

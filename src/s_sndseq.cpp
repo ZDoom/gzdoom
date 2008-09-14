@@ -15,7 +15,6 @@
 #include "doomtype.h"
 #include "doomstat.h"
 #include "sc_man.h"
-#include "m_alloc.h"
 #include "m_random.h"
 #include "s_sound.h"
 #include "s_sndseq.h"
@@ -26,6 +25,7 @@
 #include "gi.h"
 #include "templates.h"
 #include "c_dispatch.h"
+#include "g_level.h"
 
 // MACROS ------------------------------------------------------------------
 

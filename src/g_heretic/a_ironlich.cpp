@@ -7,6 +7,7 @@
 #include "a_action.h"
 #include "gstrings.h"
 #include "thingdef/thingdef.h"
+#include "g_level.h"
 
 static FRandom pr_foo ("WhirlwindDamage");
 static FRandom pr_atk ("LichAttack");

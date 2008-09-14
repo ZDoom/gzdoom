@@ -26,8 +26,10 @@
 #define __P_SPEC__
 
 #include "dsectoreffect.h"
+#include "doomdata.h"
 
 class FScanner;
+struct level_info_t;
 
 //jff 2/23/98 identify the special classes that can share sectors
 

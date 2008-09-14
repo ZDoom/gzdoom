@@ -26,7 +26,6 @@
 #include <string.h>
 #include <errno.h>
 #include "timidity.h"
-#include "zstring.h"
 #include "tarray.h"
 #include "i_system.h"
 #include "w_wad.h"

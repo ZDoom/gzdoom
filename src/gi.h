@@ -34,7 +34,7 @@
 #ifndef __GI_H__
 #define __GI_H__
 
-#include "doomtype.h"
+#include "basictypes.h"
 
 #define GI_MAPxx				0x00000001
 #define GI_PAGESARERAW			0x00000002

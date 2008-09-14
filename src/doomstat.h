@@ -28,16 +28,6 @@
 #ifndef __D_STATE__
 #define __D_STATE__
 
-// We need globally shared data structures,
-//	for defining the global state variables.
-// We need the player data structure as well.
-//#include "d_player.h"
-
-#include "doomdata.h"
-#include "d_net.h"
-#include "g_level.h"
-
-// We also need the definition of a cvar
 #include "c_cvars.h"
 
 // -----------------------
@@ -61,8 +51,8 @@ extern	bool			devparm;		// DEBUG: launched with -devparm
 // -----------------------------------------------------
 // Game Mode - identify IWAD as shareware, retail etc.
 //
-extern GameMode_t		gamemode;
-extern GameMission_t	gamemission;
+extern int	gamemode;
+extern int	gamemission;
 
 // -------------------------------------------
 // Selected skill type, map etc.
@@ -96,7 +86,7 @@ EXTERN_CVAR (Float, teamdamage)
 
 // [RH] The class the player will spawn as in single player,
 // in case using a random class with Hexen.
-extern int SinglePlayerClass[MAXPLAYERS];
+extern int SinglePlayerClass[/*MAXPLAYERS*/];
 
 // -------------------------
 // Internal parameters for sound rendering.
@@ -158,11 +148,6 @@ extern	int				demover;
 // Quit after playing a demo from cmdline.
 extern	bool			singledemo; 	
 
-
-
-
-extern	gamestate_t 	gamestate;
-
 extern	int				SaveVersion;
 
 
@@ -180,23 +165,7 @@ extern	int 			gametic;
 
 
 // Alive? Disconnected?
-extern	bool	 		playeringame[MAXPLAYERS];
-
-
-// Player spawn spots for deathmatch.
-extern TArray<FMapThing> deathmatchstarts;
-
-// Player spawn spots.
-extern	FMapThing		playerstarts[MAXPLAYERS];
-
-// Intermission stats.
-// Parameters for world map / intermission.
-extern	struct wbstartstruct_s wminfo; 
-
-
-
-
-
+extern	bool	 		playeringame[/*MAXPLAYERS*/];
 
 
 //-----------------------------------------
@@ -214,9 +183,6 @@ extern	bool	 		precache;
 //REFRESH
 //-------
 
-// wipegamestate can be set to -1
-//	to force a wipe on the next draw
-extern gamestate_t wipegamestate;
 extern bool setsizeneeded;
 extern bool setmodeneeded;
 
@@ -237,21 +203,6 @@ extern	int 			bodyqueslot;
 // Used for rendering,
 //	as well as tracking projectiles etc.
 
-
-
-// Netgame stuff (buffers and pointers, i.e. indices).
-
-// This is the interface to the packet driver, a separate program
-// in DOS, but just an abstraction here.
-extern	doomcom_t		doomcom;
-
-extern	struct ticcmd_t	localcmds[LOCALCMDTICS];
-
-extern	int 			maketic;
-extern	int 			nettics[MAXNETNODES];
-
-extern	ticcmd_t		netcmds[MAXPLAYERS][BACKUPTICS];
-extern	int 			ticdup;
 
 
 // ---- [RH] ----

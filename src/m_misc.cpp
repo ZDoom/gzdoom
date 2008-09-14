@@ -43,8 +43,6 @@
 
 #include <ctype.h>
 
-#include "m_alloc.h"
-
 #include "doomdef.h"
 
 #include "m_swap.h"

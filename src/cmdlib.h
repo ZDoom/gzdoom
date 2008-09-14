@@ -13,7 +13,6 @@
 #endif
 
 #include "doomtype.h"
-#include "zstring.h"
 
 #include <stdio.h>
 #include <string.h>

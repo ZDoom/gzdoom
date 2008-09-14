@@ -52,6 +52,9 @@
 #include "gstrings.h"
 #include "sound/i_music.h"
 #include "p_setup.h"
+#include "d_net.h"
+#include "g_level.h"
+#include "d_event.h"
 
 // The conversations as they exist inside a SCRIPTxx lump.
 struct Response

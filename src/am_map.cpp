@@ -34,10 +34,12 @@
 #include "a_sharedglobal.h"
 #include "statnums.h"
 #include "r_translate.h"
+#include "d_event.h"
 
 #include "m_cheat.h"
 #include "i_system.h"
 #include "c_dispatch.h"
+#include "colormatcher.h"
 
 // Needs access to LFB.
 #include "v_video.h"

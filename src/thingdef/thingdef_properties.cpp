@@ -55,7 +55,6 @@
 #include "a_action.h"
 #include "decallib.h"
 #include "m_random.h"
-#include "autosegs.h"
 #include "i_system.h"
 #include "p_local.h"
 #include "p_effect.h"
@@ -70,6 +69,7 @@
 #include "a_sharedglobal.h"
 #include "r_translate.h"
 #include "a_morph.h"
+#include "colormatcher.h"
 
 //==========================================================================
 //

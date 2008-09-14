@@ -45,6 +45,7 @@
 #include "a_sharedglobal.h"
 #include "gi.h"
 #include "templates.h"
+#include "g_level.h"
 
 // List of spawnable things for the Thing_Spawn and Thing_Projectile specials.
 const PClass *SpawnableThings[MAX_SPAWNABLES];

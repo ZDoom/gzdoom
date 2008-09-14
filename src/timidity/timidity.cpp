@@ -25,7 +25,6 @@
 
 #include "timidity.h"
 #include "templates.h"
-#include "m_alloc.h"
 #include "cmdlib.h"
 #include "c_cvars.h"
 #include "c_dispatch.h"

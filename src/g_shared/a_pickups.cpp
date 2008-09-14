@@ -15,6 +15,8 @@
 #include "a_morph.h"
 #include "a_specialspot.h"
 #include "thingdef/thingdef.h"
+#include "g_level.h"
+#include "doomstat.h"
 
 static FRandom pr_restore ("RestorePos");
 

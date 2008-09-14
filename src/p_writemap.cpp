@@ -4,6 +4,7 @@
 #include "w_wad.h"
 #include "r_defs.h"
 #include "m_swap.h"
+#include "doomstat.h"
 
 static int WriteTHINGS (FILE *file);
 static int WriteLINEDEFS (FILE *file);

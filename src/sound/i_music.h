@@ -36,7 +36,8 @@
 
 #include "doomdef.h"
 #include "doomstat.h"
-#include "files.h"
+
+class FileReader;
 
 //
 //	MUSIC I/O

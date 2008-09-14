@@ -7,6 +7,7 @@
 #include "s_sound.h"
 #include "ravenshared.h"
 #include "thingdef/thingdef.h"
+#include "g_level.h"
 
 void A_Summon (AActor *);
 

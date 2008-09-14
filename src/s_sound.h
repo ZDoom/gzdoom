@@ -21,8 +21,7 @@
 #ifndef __S_SOUND__
 #define __S_SOUND__
 
-#include "m_fixed.h"
-#include "tarray.h"
+#include "doomtype.h"
 
 class AActor;
 class FScanner;

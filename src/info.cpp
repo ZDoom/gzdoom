@@ -38,7 +38,7 @@
 #include "info.h"
 #include "m_fixed.h"
 #include "c_dispatch.h"
-#include "autosegs.h"
+#include "d_net.h"
 
 #include "gi.h"
 

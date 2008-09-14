@@ -38,6 +38,7 @@
 #include "statnums.h"
 #include "i_system.h"
 #include "thingdef/thingdef.h"
+#include "doomstat.h"
 
 static FRandom pr_spot ("SpecialSpot");
 static FRandom pr_spawnmace ("SpawnMace");

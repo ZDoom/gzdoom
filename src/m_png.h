@@ -1,3 +1,5 @@
+#ifndef __M_PNG_H
+#define __M_PNG_H
 /*
 ** m_png.h
 **
@@ -31,7 +33,10 @@
 **
 */
 
-#include "v_video.h"
+#include <stdio.h>
+#include "doomtype.h"
+
+enum ESSType;
 
 // PNG Writing --------------------------------------------------------------
 
@@ -110,3 +115,5 @@ bool M_ReadIDAT (FileReader *file, BYTE *buffer, int width, int height, int pitc
 class FTexture;
 
 FTexture *PNGTexture_CreateFromFile(PNGHandle *png, const FString &filename);
+
+#endif

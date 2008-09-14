@@ -18,6 +18,8 @@
 #include "stats.h"
 #include "a_pickups.h"
 #include "statnums.h"
+#include "d_net.h"
+#include "d_event.h"
 
 static FRandom pr_botmove ("BotMove");
 

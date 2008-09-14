@@ -35,7 +35,6 @@
 #include <assert.h>
 #include "templates.h"
 #include "d_main.h"
-#include "m_alloc.h"
 #include "g_level.h"
 #include "g_game.h"
 #include "s_sound.h"
@@ -75,6 +74,8 @@
 #include "r_translate.h"
 #include "p_lnspec.h"
 #include "r_interpolate.h"
+#include "cmdlib.h"
+#include "d_net.h"
 
 #include "gi.h"
 

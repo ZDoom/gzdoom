@@ -8,6 +8,8 @@
 #include "gstrings.h"
 #include "a_weaponpiece.h"
 #include "thingdef/thingdef.h"
+#include "g_level.h"
+#include "doomstat.h"
 
 #define BLAST_FULLSTRENGTH	255
 

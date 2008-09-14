@@ -33,6 +33,7 @@
 #include "a_sharedglobal.h"
 #include "m_random.h"
 #include "i_system.h"
+#include "doomstat.h"
 
 static FRandom pr_teleport ("Teleport");
 

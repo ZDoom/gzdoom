@@ -41,6 +41,8 @@
 #include "decallib.h"
 #include "statnums.h"
 #include "c_dispatch.h"
+#include "d_net.h"
+#include "colormatcher.h"
 
 static fixed_t DecalWidth, DecalLeft, DecalRight;
 static fixed_t SpreadZ;

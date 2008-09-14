@@ -34,19 +34,19 @@
 #ifndef __C_CONSOLE__
 #define __C_CONSOLE__
 
-#include <stdio.h>
 #include <stdarg.h>
+#include "basictypes.h"
 
-#include "doomtype.h"
-#include "doomdef.h"
-#include "d_event.h"
-#include "cmdlib.h"
+struct event_t;
 
 #define C_BLINKRATE			(TICRATE/2)
 
-typedef enum cstate_t {
+typedef enum cstate_t 
+{
 	c_up=0, c_down=1, c_falling=2, c_rising=3
-} constate_e;
+} 
+constate_e;
+
 extern constate_e ConsoleState;
 extern int ConBottom;
 

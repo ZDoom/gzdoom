@@ -25,7 +25,6 @@
 //
 //-----------------------------------------------------------------------------
 
-#include "m_alloc.h"
 #include <stdlib.h>
 #include <stddef.h>
 
@@ -34,6 +33,7 @@
 
 #include "doomdef.h"
 #include "doomstat.h"
+#include "doomdata.h"
 #include "p_lnspec.h"
 
 #include "r_local.h"
@@ -44,6 +44,8 @@
 #include "w_wad.h"
 #include "stats.h"
 #include "a_sharedglobal.h"
+#include "d_net.h"
+#include "g_level.h"
 
 #define WALLYREPEAT 8
 

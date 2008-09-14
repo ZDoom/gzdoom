@@ -5,7 +5,8 @@ extern "C"
 {
 #include <jpeglib.h>
 }
-#include "files.h"
+
+class FileReader;
 
 
 struct FLumpSourceMgr : public jpeg_source_mgr

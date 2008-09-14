@@ -29,9 +29,6 @@
 
 // Some global defines, that configure the game.
 #include "doomdef.h"
-#include "m_swap.h"
-
-
 
 //
 // Map level types.
@@ -349,6 +346,12 @@ enum EMapThingFlags
 	STF_SHADOW			= 0x0100,
 	STF_ALTSHADOW		= 0x0200,
 };
+
+// Player spawn spots for deathmatch.
+extern TArray<FMapThing> deathmatchstarts;
+
+// Player spawn spots.
+extern	FMapThing		playerstarts[MAXPLAYERS];
 
 
 #endif					// __DOOMDATA__

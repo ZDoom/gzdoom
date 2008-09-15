@@ -65,6 +65,7 @@ extern void ChildSigHandler (int signum);
 #include "c_dispatch.h"
 #include "i_system.h"
 #include "i_sound.h"
+#include "s_sound.h"
 #include "m_swap.h"
 #include "i_cd.h"
 #include "tempfiles.h"

@@ -1,4 +1,7 @@
 September 15, 2008  (Changes by Graf Zahl)
+- Separated low level sound code from all high level dependencies.
+- Separated low level sound channel class from high level class which now
+  is just a subclass of the low level class.
 - Moved some more high level sound logic out of FMODSoundRenderer:
   The rolloff and channel ended callbacks now call functions in s_sound.cpp
   instead of working on the data itself and GSnd->StopSound has been replaced

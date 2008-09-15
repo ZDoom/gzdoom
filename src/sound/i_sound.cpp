@@ -145,7 +145,7 @@ public:
 	{
 		return 11025;	// Lies!
 	}
-	void StopChannel(FSoundChan *chan)
+	void StopChannel(FISoundChannel *chan)
 	{
 	}
 
@@ -160,17 +160,17 @@ public:
 	}
 
 	// Starts a sound. (No, not really.)
-	FSoundChan *StartSound (SoundHandle sfx, float vol, int pitch, int chanflags, FSoundChan *reuse_chan)
+	FISoundChannel *StartSound (SoundHandle sfx, float vol, int pitch, int chanflags, FISoundChannel *reuse_chan)
 	{
 		return NULL;
 	}
-	FSoundChan *StartSound3D (SoundHandle sfx, SoundListener *listener, float vol, FRolloffInfo *rolloff, float distscale, int pitch, int priority, const FVector3 &pos, const FVector3 &vel, int channum, int chanflags, FSoundChan *reuse_chan)
+	FISoundChannel *StartSound3D (SoundHandle sfx, SoundListener *listener, float vol, FRolloffInfo *rolloff, float distscale, int pitch, int priority, const FVector3 &pos, const FVector3 &vel, int channum, int chanflags, FISoundChannel *reuse_chan)
 	{
 		return NULL;
 	}
 
 	// Returns position of sound on this channel, in samples.
-	unsigned int GetPosition(FSoundChan *chan)
+	unsigned int GetPosition(FISoundChannel *chan)
 	{
 		return 0;
 	}
@@ -191,7 +191,7 @@ public:
 	}
 
 	// Updates the volume, separation, and pitch of a sound channel.
-	void UpdateSoundParams3D (SoundListener *listener, FSoundChan *chan, const FVector3 &pos, const FVector3 &vel)
+	void UpdateSoundParams3D (SoundListener *listener, FISoundChannel *chan, bool areasound, const FVector3 &pos, const FVector3 &vel)
 	{
 	}
 

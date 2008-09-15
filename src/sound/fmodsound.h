@@ -27,14 +27,14 @@ public:
 	void StopStream (SoundStream *stream);
 
 	// Starts a sound.
-	FSoundChan *StartSound (SoundHandle sfx, float vol, int pitch, int chanflags, FSoundChan *reuse_chan);
-	FSoundChan *StartSound3D (SoundHandle sfx, SoundListener *listener, float vol, FRolloffInfo *rolloff, float distscale, int pitch, int priority, const FVector3 &pos, const FVector3 &vel, int channum, int chanflags, FSoundChan *reuse_chan);
+	FISoundChannel *StartSound (SoundHandle sfx, float vol, int pitch, int chanflags, FISoundChannel *reuse_chan);
+	FISoundChannel *StartSound3D (SoundHandle sfx, SoundListener *listener, float vol, FRolloffInfo *rolloff, float distscale, int pitch, int priority, const FVector3 &pos, const FVector3 &vel, int channum, int chanflags, FISoundChannel *reuse_chan);
 
 	// Stops a sound channel.
-	void StopChannel (FSoundChan *chan);
+	void StopChannel (FISoundChannel *chan);
 
 	// Returns position of sound on this channel, in samples.
-	unsigned int GetPosition(FSoundChan *chan);
+	unsigned int GetPosition(FISoundChannel *chan);
 
 	// Synchronizes following sound startups.
 	void Sync (bool sync);
@@ -46,7 +46,7 @@ public:
 	void SetInactive (bool inactive);
 
 	// Updates the position of a sound channel.
-	void UpdateSoundParams3D (SoundListener *listener, FSoundChan *chan, const FVector3 &pos, const FVector3 &vel);
+	void UpdateSoundParams3D (SoundListener *listener, FISoundChannel *chan, bool areasound, const FVector3 &pos, const FVector3 &vel);
 
 	void UpdateListener (SoundListener *listener);
 	void UpdateSounds ();
@@ -69,9 +69,9 @@ private:
 		(FMOD_CHANNEL *channel, FMOD_CHANNEL_CALLBACKTYPE type, int cmd, unsigned int data1, unsigned int data2);
 	static float F_CALLBACK RolloffCallback(FMOD_CHANNEL *channel, float distance);
 
-	void HandleChannelDelay(FMOD::Channel *chan, FSoundChan *reuse_chan, float freq) const;
-	FSoundChan *CommonChannelSetup(FMOD::Channel *chan, FSoundChan *reuse_chan) const;
-	FMOD_MODE SetChanHeadSettings(SoundListener *listener, FMOD::Channel *chan, const FVector3 &pos, int channum, int chanflags, FMOD_MODE oldmode) const;
+	void HandleChannelDelay(FMOD::Channel *chan, FISoundChannel *reuse_chan, bool abstime, float freq) const;
+	FISoundChannel *CommonChannelSetup(FMOD::Channel *chan, FISoundChannel *reuse_chan) const;
+	FMOD_MODE SetChanHeadSettings(SoundListener *listener, FMOD::Channel *chan, const FVector3 &pos, bool areasound, FMOD_MODE oldmode) const;
 
 	bool Init ();
 	void Shutdown ();

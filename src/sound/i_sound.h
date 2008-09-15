@@ -35,8 +35,8 @@
 #ifndef __I_SOUND__
 #define __I_SOUND__
 
-#include "s_sound.h"
-#include "vectors.h"
+#include "doomtype.h"
+#include "i_soundinternal.h"
 
 enum ECodecType
 {
@@ -44,14 +44,12 @@ enum ECodecType
 	CODEC_Vorbis,
 };
 
-struct SoundListener
+enum EStartSoundFlags
 {
-	FVector3 position;
-	FVector3 velocity;
-	float angle;
-	bool underwater;
-	bool valid;
-	ReverbContainer *Environment;
+	SNDF_LOOP=1,
+	SNDF_NOPAUSE=2,
+	SNDF_AREA=4,
+	SNDF_ABSTIME=8
 };
 
 class SoundStream
@@ -104,14 +102,14 @@ public:
 	virtual SoundStream *OpenStream (const char *filename, int flags, int offset, int length) = 0;
 
 	// Starts a sound.
-	virtual FSoundChan *StartSound (SoundHandle sfx, float vol, int pitch, int chanflags, FSoundChan *reuse_chan) = 0;
-	virtual FSoundChan *StartSound3D (SoundHandle sfx, SoundListener *listener, float vol, FRolloffInfo *rolloff, float distscale, int pitch, int priority, const FVector3 &pos, const FVector3 &vel, int channum, int chanflags, FSoundChan *reuse_chan) = 0;
+	virtual FISoundChannel *StartSound (SoundHandle sfx, float vol, int pitch, int chanflags, FISoundChannel *reuse_chan) = 0;
+	virtual FISoundChannel *StartSound3D (SoundHandle sfx, SoundListener *listener, float vol, FRolloffInfo *rolloff, float distscale, int pitch, int priority, const FVector3 &pos, const FVector3 &vel, int channum, int chanflags, FISoundChannel *reuse_chan) = 0;
 
 	// Stops a sound channel.
-	virtual void StopChannel (FSoundChan *chan) = 0;
+	virtual void StopChannel (FISoundChannel *chan) = 0;
 
 	// Returns position of sound on this channel, in samples.
-	virtual unsigned int GetPosition(FSoundChan *chan) = 0;
+	virtual unsigned int GetPosition(FISoundChannel *chan) = 0;
 
 	// Synchronizes following sound startups.
 	virtual void Sync (bool sync) = 0;
@@ -123,7 +121,7 @@ public:
 	virtual void SetInactive(bool inactive) = 0;
 
 	// Updates the volume, separation, and pitch of a sound channel.
-	virtual void UpdateSoundParams3D (SoundListener *listener, FSoundChan *chan, const FVector3 &pos, const FVector3 &vel) = 0;
+	virtual void UpdateSoundParams3D (SoundListener *listener, FISoundChannel *chan, bool areasound, const FVector3 &pos, const FVector3 &vel) = 0;
 
 	virtual void UpdateListener (SoundListener *) = 0;
 	virtual void UpdateSounds () = 0;
@@ -142,6 +140,10 @@ extern SoundRenderer *GSnd;
 void I_InitSound ();
 void I_ShutdownSound ();
 
-void S_ChannelEnded(FSoundChan *schan);
+void S_ChannelEnded(FISoundChannel *schan);
 float S_GetRolloff(FRolloffInfo *rolloff, float distance);
+FISoundChannel *S_GetChannel(void *syschan);
+
+extern ReverbContainer *DefaultEnvironments[26];
+
 #endif

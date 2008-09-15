@@ -4130,6 +4130,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\sound\i_soundinternal.h"
+				>
+			</File>
+			<File
 				RelativePath="src\sound\music_cd.cpp"
 				>
 			</File>

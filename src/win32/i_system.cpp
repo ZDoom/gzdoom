@@ -65,6 +65,7 @@
 #include "gameconfigfile.h"
 #include "v_font.h"
 #include "g_level.h"
+#include "doomstat.h"
 
 #include "stats.h"
 

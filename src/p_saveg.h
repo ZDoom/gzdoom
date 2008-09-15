@@ -34,7 +34,8 @@
 #ifndef __P_SAVEG_H__
 #define __P_SAVEG_H__
 
-#include "farchive.h"
+class FArchive;
+struct PNGHandle;
 
 // Persistent storage/archiving.
 // These are the load / save game routines.

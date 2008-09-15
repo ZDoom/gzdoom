@@ -6,7 +6,6 @@
 #include "d_player.h"
 #include "a_action.h"
 #include "p_local.h"
-#include "a_doomglobal.h"
 #include "a_strifeglobal.h"
 #include "p_enemy.h"
 #include "p_lnspec.h"

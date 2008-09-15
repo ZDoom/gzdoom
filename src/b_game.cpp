@@ -59,6 +59,7 @@ Everything that is changed is marked (maybe commented) with "Added by MC"
 #include "teaminfo.h"
 #include "i_system.h"
 #include "d_net.h"
+#include "d_netinf.h"
 
 static FRandom pr_botspawn ("BotSpawn");
 

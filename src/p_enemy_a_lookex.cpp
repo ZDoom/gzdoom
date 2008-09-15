@@ -14,7 +14,6 @@
 #include "c_cvars.h"
 #include "p_enemy.h"
 #include "a_sharedglobal.h"
-#include "a_doomglobal.h"
 #include "a_action.h"
 #include "thingdef/thingdef.h"
 #include "g_level.h"

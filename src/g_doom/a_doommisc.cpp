@@ -2,7 +2,6 @@
 #include "info.h"
 #include "p_enemy.h"
 #include "p_local.h"
-#include "a_doomglobal.h"
 #include "a_sharedglobal.h"
 #include "m_random.h"
 #include "gi.h"

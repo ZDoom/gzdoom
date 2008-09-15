@@ -1,7 +1,6 @@
 #ifndef __A_SHAREDGLOBAL_H__
 #define __A_SHAREDGLOBAL_H__
 
-#include "dobject.h"
 #include "info.h"
 #include "actor.h"
 

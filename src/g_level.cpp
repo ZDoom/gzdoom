@@ -76,6 +76,7 @@
 #include "r_interpolate.h"
 #include "cmdlib.h"
 #include "d_net.h"
+#include "d_netinf.h"
 
 #include "gi.h"
 

@@ -9,7 +9,6 @@
 #include "p_local.h"
 #include "p_enemy.h"
 #include "s_sound.h"
-#include "a_doomglobal.h"
 #include "statnums.h"
 #include "gstrings.h"
 #include "a_action.h"

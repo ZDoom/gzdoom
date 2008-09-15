@@ -1,7 +1,6 @@
 #ifndef __A_ARTIFACTS_H__
 #define __A_ARTIFACTS_H__
 
-#include "farchive.h"
 #include "a_pickups.h"
 
 #define INVERSECOLOR 0x00345678
@@ -10,15 +9,6 @@
 // [BC] More hacks!
 #define REDCOLOR 0x00beefee
 #define GREENCOLOR 0x00beefad
-
-#define STREAM_ENUM(e) \
-	inline FArchive &operator<< (FArchive &arc, e &i) \
-	{ \
-		BYTE val = (BYTE)i; \
-		arc << val; \
-		i = (e)val; \
-		return arc; \
-	}
 
 class player_t;
 

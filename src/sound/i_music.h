@@ -35,7 +35,6 @@
 #define __I_MUSIC_H__
 
 #include "doomdef.h"
-#include "doomstat.h"
 
 class FileReader;
 

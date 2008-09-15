@@ -61,7 +61,6 @@
 #include "c_console.h"
 #include "doomerrors.h"
 #include "a_sharedglobal.h"
-#include "a_doomglobal.h"
 #include "thingdef/thingdef.h"
 #include "v_video.h"
 #include "doomstat.h"

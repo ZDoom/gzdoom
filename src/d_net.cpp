@@ -56,6 +56,7 @@
 #include "p_conversation.h"
 #include "g_level.h"
 #include "d_event.h"
+#include "m_argv.h"
 
 int P_StartScript (AActor *who, line_t *where, int script, char *map, bool backSide,
 					int arg0, int arg1, int arg2, int always, bool wantResultCode, bool net);

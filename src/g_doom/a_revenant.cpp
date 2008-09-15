@@ -7,7 +7,6 @@
 #include "p_enemy.h"
 #include "gstrings.h"
 #include "a_action.h"
-#include "a_doomglobal.h"
 #include "thingdef/thingdef.h"
 #include "g_level.h"
 

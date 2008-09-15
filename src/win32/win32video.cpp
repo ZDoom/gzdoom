@@ -63,6 +63,7 @@
 #include "v_pfx.h"
 #include "stats.h"
 #include "doomerrors.h"
+#include "m_argv.h"
 
 #include "win32iface.h"
 

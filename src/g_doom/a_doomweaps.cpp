@@ -3,7 +3,6 @@
 #include "s_sound.h"
 #include "m_random.h"
 #include "a_pickups.h"
-#include "a_doomglobal.h"
 #include "d_player.h"
 #include "p_pspr.h"
 #include "p_local.h"

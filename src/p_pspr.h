@@ -62,6 +62,7 @@ typedef enum
 
 } psprnum_t;
 
+/*
 inline FArchive &operator<< (FArchive &arc, psprnum_t &i)
 {
 	BYTE val = (BYTE)i;
@@ -69,6 +70,7 @@ inline FArchive &operator<< (FArchive &arc, psprnum_t &i)
 	i = (psprnum_t)val;
 	return arc;
 }
+*/
 
 typedef struct pspdef_s
 {

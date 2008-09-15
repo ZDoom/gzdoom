@@ -70,6 +70,7 @@
 #include "g_level.h"
 #include "d_event.h"
 #include "colormatcher.h"
+#include "d_netinf.h"
 
 // MACROS ------------------------------------------------------------------
 

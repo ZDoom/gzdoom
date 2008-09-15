@@ -2,7 +2,6 @@
 #include "s_sound.h"
 #include "p_local.h"
 #include "p_enemy.h"
-#include "a_doomglobal.h"
 #include "a_action.h"
 #include "thingdef/thingdef.h"
 

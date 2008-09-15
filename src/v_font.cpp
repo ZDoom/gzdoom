@@ -2117,3 +2117,4 @@ void V_InitFonts()
 		ConFont = new FSingleLumpFont ("ConsoleFont", Wads.GetNumForName ("CONFONT"));
 	}
 }
+

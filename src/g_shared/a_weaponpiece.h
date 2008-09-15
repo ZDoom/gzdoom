@@ -27,9 +27,5 @@ public:
 	int PieceMask;
 	const PClass * PieceWeapon;
 
-	void Serialize (FArchive &arc)
-	{
-		Super::Serialize(arc);
-		arc << PieceMask << PieceWeapon;
-	}
+	void Serialize (FArchive &arc);
 };

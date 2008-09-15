@@ -2,7 +2,6 @@
 #include "info.h"
 #include "p_enemy.h"
 #include "p_local.h"
-#include "a_doomglobal.h"
 #include "a_action.h"
 #include "templates.h"
 #include "m_bbox.h"

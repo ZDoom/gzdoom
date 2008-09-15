@@ -5,7 +5,6 @@
 #include "s_sound.h"
 #include "p_local.h"
 #include "p_enemy.h"
-#include "a_doomglobal.h"
 #include "gi.h"
 #include "gstrings.h"
 #include "a_action.h"

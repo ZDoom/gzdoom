@@ -6,7 +6,6 @@
 #include "p_enemy.h"
 #include "gstrings.h"
 #include "a_action.h"
-#include "a_doomglobal.h"
 #include "thingdef/thingdef.h"
 
 static FRandom pr_posattack ("PosAttack");

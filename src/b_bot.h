@@ -8,7 +8,6 @@
 #define __B_BOT_H__
 
 #include "c_cvars.h"
-#include "m_argv.h"
 #include "tables.h"
 #include "info.h"
 #include "doomdef.h"

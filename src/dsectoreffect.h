@@ -1,7 +1,6 @@
 #ifndef __DSECTOREFFECT_H__
 #define __DSECTOREFFECT_H__
 
-#include "dobject.h"
 #include "dthinker.h"
 #include "r_defs.h"
 

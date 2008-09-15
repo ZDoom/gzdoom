@@ -38,35 +38,10 @@
 
 EXTERN_CVAR (Float, autoaim)
 
-#define MAXPLAYERNAME	15
-
-enum
-{
-	GENDER_MALE,
-	GENDER_FEMALE,
-	GENDER_NEUTER
-};
-
 int D_GenderToInt (const char *gender);
 extern const char *GenderNames[3];
 
 int D_PlayerClassToInt (const char *classname);
-
-struct userinfo_s
-{
-	char		netname[MAXPLAYERNAME+1];
-	BYTE		team;
-	int			aimdist;
-	int			color;
-	int			skin;
-	int			gender;
-	bool		neverswitch;
-	fixed_t		MoveBob, StillBob;
-	int			PlayerClass;
-};
-typedef struct userinfo_s userinfo_t;
-
-FArchive &operator<< (FArchive &arc, userinfo_t &info);
 
 void D_SetupUserInfo (void);
 

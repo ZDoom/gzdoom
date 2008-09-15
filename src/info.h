@@ -73,8 +73,6 @@
 #endif
 
 #include "dobject.h"
-#include "dthinker.h"
-#include "farchive.h"
 #include "doomdef.h"
 
 const BYTE SF_FULLBRIGHT = 0x40;
@@ -82,6 +80,7 @@ const BYTE SF_FULLBRIGHT = 0x40;
 struct Baggage;
 class FScanner;
 struct FActorInfo;
+class FArchive;
 
 struct FState
 {

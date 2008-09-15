@@ -42,6 +42,8 @@
 #include "c_dispatch.h"
 #include "sdlvideo.h"
 #include "v_text.h"
+#include "doomstat.h"
+#include "m_argv.h"
 
 EXTERN_CVAR (Bool, ticker)
 EXTERN_CVAR (Bool, fullscreen)

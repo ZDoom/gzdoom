@@ -49,7 +49,6 @@
 #include "gi.h"
 
 #include "a_sharedglobal.h"
-#include "a_doomglobal.h"
 #include "p_conversation.h"
 #include "r_translate.h"
 #include "g_level.h"

@@ -26,9 +26,10 @@
 #include <dirent.h>
 #include <ctype.h>
 
-#include "d_main.h"
-#include "d_ticcmd.h"
-#include "d_event.h"
+#include "doomtype.h"
+
+struct ticcmd_t;
+struct WadStuff;
 
 #ifndef SHARE_DIR
 #define SHARE_DIR "/usr/local/share/"

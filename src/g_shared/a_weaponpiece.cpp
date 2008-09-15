@@ -1,8 +1,16 @@
 #include "a_pickups.h"
 #include "a_weaponpiece.h"
 #include "doomstat.h"
+#include "farchive.h"
 
 IMPLEMENT_CLASS (AWeaponHolder)
+
+void AWeaponHolder::Serialize (FArchive &arc)
+{
+	Super::Serialize(arc);
+	arc << PieceMask << PieceWeapon;
+}
+
 
 IMPLEMENT_POINTY_CLASS (AWeaponPiece)
  DECLARE_POINTER (FullWeapon)

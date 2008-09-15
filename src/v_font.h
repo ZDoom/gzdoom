@@ -71,14 +71,6 @@ enum EColorRange
 
 extern int NumTextColors;
 
-inline FArchive &operator<< (FArchive &arc, EColorRange &i)
-{
-	BYTE val = (BYTE)i;
-	arc << val;
-	i = (EColorRange)val;
-	return arc;
-}
-
 class FFont
 {
 public:

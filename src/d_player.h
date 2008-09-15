@@ -40,8 +40,6 @@
 // case of the generic moving object/actor.
 #include "actor.h"
 
-#include "d_netinf.h"
-
 //Added by MC:
 #include "b_bot.h"
 
@@ -181,6 +179,32 @@ typedef enum
 #define WPIECE3		4
 
 #define WP_NOCHANGE ((AWeapon*)~0)
+
+
+#define MAXPLAYERNAME	15
+
+enum
+{
+	GENDER_MALE,
+	GENDER_FEMALE,
+	GENDER_NEUTER
+};
+
+struct userinfo_t
+{
+	char		netname[MAXPLAYERNAME+1];
+	BYTE		team;
+	int			aimdist;
+	int			color;
+	int			skin;
+	int			gender;
+	bool		neverswitch;
+	fixed_t		MoveBob, StillBob;
+	int			PlayerClass;
+};
+
+FArchive &operator<< (FArchive &arc, userinfo_t &info);
+
 
 //
 // Extended player object info: player_t

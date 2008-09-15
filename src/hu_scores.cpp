@@ -42,6 +42,7 @@
 #include "v_video.h"
 #include "doomstat.h"
 #include "g_level.h"
+#include "d_netinf.h"
 
 // MACROS ------------------------------------------------------------------
 

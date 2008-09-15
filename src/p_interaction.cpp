@@ -47,7 +47,6 @@
 
 #include "b_bot.h"	//Added by MC:
 
-#include "a_doomglobal.h"
 #include "ravenshared.h"
 #include "a_hexenglobal.h"
 #include "a_sharedglobal.h"
@@ -58,6 +57,7 @@
 #include "s_sound.h"
 #include "g_level.h"
 #include "d_net.h"
+#include "d_netinf.h"
 
 static FRandom pr_obituary ("Obituary");
 static FRandom pr_botrespawn ("BotRespawn");

@@ -1,7 +1,6 @@
 #ifndef __A_STRIFEGLOBAL_H__
 #define __A_STRIFEGLOBAL_H__
 
-#include "dobject.h"
 #include "info.h"
 #include "a_pickups.h"
 

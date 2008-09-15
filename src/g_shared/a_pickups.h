@@ -1,7 +1,6 @@
 #ifndef __A_PICKUPS_H__
 #define __A_PICKUPS_H__
 
-#include "dobject.h"
 #include "actor.h"
 #include "info.h"
 #include "s_sound.h"

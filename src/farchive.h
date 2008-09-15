@@ -35,7 +35,6 @@
 #define __FARCHIVE_H__
 
 #include <stdio.h>
-#include "doomtype.h"
 #include "dobject.h"
 
 class FFile

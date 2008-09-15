@@ -40,6 +40,7 @@
 #include "v_video.h"
 #include "g_game.h"
 #include "colormatcher.h"
+#include "d_netinf.h"
 
 #include "gi.h"
 #include "stats.h"

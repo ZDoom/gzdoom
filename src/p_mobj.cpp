@@ -39,7 +39,6 @@
 #include "c_cvars.h"
 #include "b_bot.h"	//Added by MC:
 #include "stats.h"
-#include "a_doomglobal.h"
 #include "a_hexenglobal.h"
 #include "a_sharedglobal.h"
 #include "gi.h"

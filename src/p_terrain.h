@@ -34,9 +34,10 @@
 #ifndef __P_TERRAIN_H__
 #define __P_TERRAIN_H__
 
-#include "dobject.h"
 #include "s_sound.h"
 #include "textures/textures.h"
+
+struct PClass;
 
 // This is just a wrapper class so that I don't have to expose FTextureID's implementation
 // to anything that doesn't really need it.

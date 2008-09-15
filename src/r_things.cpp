@@ -47,6 +47,7 @@
 #include "g_level.h"
 #include "d_net.h"
 #include "colormatcher.h"
+#include "d_netinf.h"
 
 extern FTexture *CrosshairImage;
 extern fixed_t globaluclip, globaldclip;

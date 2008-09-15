@@ -40,6 +40,7 @@
 #include "i_system.h"
 #include "c_dispatch.h"
 #include "colormatcher.h"
+#include "d_netinf.h"
 
 // Needs access to LFB.
 #include "v_video.h"

@@ -63,7 +63,6 @@
 #include "v_palette.h"
 #include "a_sharedglobal.h"
 #include "thingdef/thingdef.h"
-#include "dobject.h"
 #include "r_translate.h"
 
 // [SO] Just the way Randy said to do it :)

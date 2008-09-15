@@ -83,7 +83,6 @@
 #include "gi.h"
 #include "b_bot.h"		//Added by MC:
 #include "stats.h"
-#include "a_doomglobal.h"
 #include "gameconfigfile.h"
 #include "sbar.h"
 #include "decallib.h"
@@ -98,6 +97,7 @@
 #include "d_net.h"
 #include "g_level.h"
 #include "d_event.h"
+#include "d_netinf.h"
 
 EXTERN_CVAR(Bool, hud_althud)
 void DrawHUD();

@@ -1,9 +1,7 @@
 #ifndef __A_DOOMGLOBAL_H__
 #define __A_DOOMGLOBAL_H__
 
-#include "dobject.h"
 #include "info.h"
-#include "d_player.h"
 
 class AScriptedMarine : public AActor
 {

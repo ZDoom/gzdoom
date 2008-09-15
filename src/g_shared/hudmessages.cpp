@@ -54,6 +54,14 @@ IMPLEMENT_CLASS (DHUDMessageTypeOnFadeOut)
  * Basic HUD message. Appears and disappears without any special effects *
  *************************************************************************/
 
+inline FArchive &operator<< (FArchive &arc, EColorRange &i)
+{
+	BYTE val = (BYTE)i;
+	arc << val;
+	i = (EColorRange)val;
+	return arc;
+}
+
 //============================================================================
 //
 // DHUDMessage Constructor

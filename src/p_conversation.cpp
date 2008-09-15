@@ -55,6 +55,7 @@
 #include "d_net.h"
 #include "g_level.h"
 #include "d_event.h"
+#include "doomstat.h"
 
 // The conversations as they exist inside a SCRIPTxx lump.
 struct Response

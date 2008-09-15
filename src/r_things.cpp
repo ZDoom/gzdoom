@@ -32,7 +32,6 @@
 #include "i_system.h"
 #include "w_wad.h"
 #include "r_local.h"
-#include "p_effect.h"
 #include "c_console.h"
 #include "c_cvars.h"
 #include "c_dispatch.h"
@@ -48,6 +47,11 @@
 #include "d_net.h"
 #include "colormatcher.h"
 #include "d_netinf.h"
+#include "r_bsp.h"
+#include "r_plane.h"
+#include "r_segs.h"
+#include "v_palette.h"
+
 
 extern FTexture *CrosshairImage;
 extern fixed_t globaluclip, globaldclip;

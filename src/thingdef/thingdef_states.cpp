@@ -48,7 +48,6 @@
 #include "p_lnspec.h"
 #include "a_action.h"
 #include "p_local.h"
-#include "p_effect.h"
 #include "v_palette.h"
 #include "doomerrors.h"
 #include "thingdef.h"

@@ -1,9 +1,11 @@
+/*
 #include "actor.h"
 #include "p_enemy.h"
 #include "a_action.h"
 #include "p_local.h"
 #include "m_random.h"
 #include "thingdef/thingdef.h"
+*/
 
 static FRandom pr_sentinelrefire ("SentinelRefire");
 

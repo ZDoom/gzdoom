@@ -122,7 +122,7 @@
 #define LEVEL_SMOOTHLIGHTING		UCONST64(0x100000000000000)	// Level uses the smooth lighting feature.
 
 
-struct acsdefered_s;
+struct acsdefered_t;
 
 struct FSpecialAction
 {
@@ -171,7 +171,7 @@ struct level_info_t
 	int			musicorder;
 	FCompressedMemFile	*snapshot;
 	DWORD		snapshotVer;
-	struct acsdefered_s *defered;
+	struct acsdefered_t *defered;
 	char		skypic2[9];
 	float		skyspeed1;
 	float		skyspeed2;

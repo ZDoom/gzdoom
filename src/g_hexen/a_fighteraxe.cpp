@@ -1,3 +1,4 @@
+/*
 #include "actor.h"
 #include "gi.h"
 #include "m_random.h"
@@ -5,17 +6,16 @@
 #include "d_player.h"
 #include "a_action.h"
 #include "p_local.h"
-#include "p_enemy.h"
 #include "a_action.h"
 #include "p_pspr.h"
 #include "gstrings.h"
 #include "a_hexenglobal.h"
-#include "p_effect.h"
 #include "thingdef/thingdef.h"
+*/
 
 #define AXERANGE	((fixed_t)(2.25*MELEERANGE))
 
-static FRandom pr_atk ("FAxeAtk");
+static FRandom pr_axeatk ("FAxeAtk");
 
 void A_FAxeCheckReady (AActor *actor);
 void A_FAxeCheckUp (AActor *actor);
@@ -203,8 +203,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeAttack)
 	}
 	AActor *pmo=player->mo;
 
-	damage = 40+(pr_atk()&15);
-	damage += pr_atk()&7;
+	damage = 40+(pr_axeatk()&15);
+	damage += pr_axeatk()&7;
 	power = 0;
 	weapon = player->ReadyWeapon;
 	if (player->ReadyWeapon->Ammo1->Amount > 0)

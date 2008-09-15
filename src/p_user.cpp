@@ -35,7 +35,6 @@
 #include "m_random.h"
 #include "p_pspr.h"
 #include "p_enemy.h"
-#include "p_effect.h"
 #include "s_sound.h"
 #include "a_sharedglobal.h"
 #include "a_keys.h"

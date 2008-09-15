@@ -44,6 +44,7 @@
 
 // Needs access to LFB.
 #include "v_video.h"
+#include "v_palette.h"
 
 #include "v_text.h"
 

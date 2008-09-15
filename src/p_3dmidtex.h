@@ -3,8 +3,10 @@
 #define __3DMIDTEX_H
 
 #include "doomtype.h"
-#include "r_defs.h"
 
+class DInterpolation;
+struct sector_t;
+struct line_t;
 class AActor;
 
 bool P_Scroll3dMidtex(sector_t *sector, int crush, fixed_t move, bool ceiling);

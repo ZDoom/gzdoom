@@ -23,7 +23,6 @@
 #include "doomstat.h"
 #include "gi.h"
 #include "p_pspr.h"
-#include "p_effect.h"
 #include "templates.h"
 #include "thingdef/thingdef.h"
 #include "g_level.h"

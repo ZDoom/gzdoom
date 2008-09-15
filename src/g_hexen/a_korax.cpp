@@ -16,17 +16,18 @@
 //	255		For use in death script (spawn spots)
 //===========================================================================
 
+/*
 #include "actor.h"
 #include "info.h"
 #include "p_local.h"
 #include "p_spec.h"
 #include "s_sound.h"
-#include "p_enemy.h"
 #include "a_action.h"
 #include "m_random.h"
 #include "i_system.h"
 #include "thingdef/thingdef.h"
 #include "g_level.h"
+*/
 
 const int KORAX_SPIRIT_LIFETIME = 5*TICRATE/5;	// 5 seconds
 const int KORAX_COMMAND_HEIGHT	= 120;
@@ -60,7 +61,7 @@ static FRandom pr_koraxcommand ("KoraxCommand");
 static FRandom pr_kspiritweave ("KSpiritWeave");
 static FRandom pr_kspiritseek ("KSpiritSeek");
 static FRandom pr_kspiritroam ("KSpiritRoam");
-static FRandom pr_missile ("SKoraxMissile");
+static FRandom pr_kmissile ("SKoraxMissile");
 
 void A_KoraxChase (AActor *);
 void A_KoraxStep (AActor *);
@@ -511,7 +512,7 @@ AActor *P_SpawnKoraxMissile (fixed_t x, fixed_t y, fixed_t z,
 	an = R_PointToAngle2(x, y, dest->x, dest->y);
 	if (dest->flags & MF_SHADOW)
 	{ // Invisible target
-		an += pr_missile.Random2()<<21;
+		an += pr_kmissile.Random2()<<21;
 	}
 	th->angle = an;
 	an >>= ANGLETOFINESHIFT;

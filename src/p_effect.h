@@ -50,6 +50,7 @@
 #define FX_WHITEFOUNTAIN	0x00070000
 
 struct particle_t;
+class AActor;
 
 particle_t *JitterParticle (int ttl);
 

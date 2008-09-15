@@ -1,3 +1,4 @@
+/*
 #include "actor.h"
 #include "info.h"
 #include "m_random.h"
@@ -7,6 +8,7 @@
 #include "a_action.h"
 #include "gstrings.h"
 #include "thingdef/thingdef.h"
+*/
 
 static FRandom pr_wizatk3 ("WizAtk3");
 

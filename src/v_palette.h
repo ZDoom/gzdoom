@@ -34,8 +34,7 @@
 #ifndef __V_PALETTE_H__
 #define __V_PALETTE_H__
 
-#include "doomtype.h"
-#include "r_main.h"
+#include "basictypes.h"
 
 #define MAKERGB(r,g,b)		DWORD(((r)<<16)|((g)<<8)|(b))
 #define MAKEARGB(a,r,g,b)	DWORD(((a)<<24)|((r)<<16)|((g)<<8)|(b))

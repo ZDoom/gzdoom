@@ -1,3 +1,4 @@
+/*
 #include "templates.h"
 #include "actor.h"
 #include "info.h"
@@ -9,6 +10,7 @@
 #include "a_action.h"
 #include "thingdef/thingdef.h"
 #include "g_level.h"
+*/
 
 static FRandom pr_tracer ("Tracer");
 static FRandom pr_skelfist ("SkelFist");

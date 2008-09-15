@@ -1,3 +1,4 @@
+/*
 #include "actor.h"
 #include "info.h"
 #include "p_local.h"
@@ -7,6 +8,7 @@
 #include "m_random.h"
 #include "p_terrain.h"
 #include "thingdef/thingdef.h"
+*/
 
 static FRandom pr_serpentchase ("SerpentChase");
 static FRandom pr_serpenthump ("SerpentHump");

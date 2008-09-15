@@ -22,6 +22,7 @@
 #include "c_console.h"
 #include "c_dispatch.h"
 #include "c_cvars.h"
+#include "d_player.h"
 #include "v_text.h"
 #include "v_video.h"
 #include "gi.h"

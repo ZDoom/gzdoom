@@ -1,3 +1,4 @@
+/*
 #include "info.h"
 #include "a_pickups.h"
 #include "a_artifacts.h"
@@ -5,6 +6,7 @@
 #include "p_local.h"
 #include "gi.h"
 #include "s_sound.h"
+*/
 
 // Boost Armor Artifact (Dragonskin Bracers) --------------------------------
 

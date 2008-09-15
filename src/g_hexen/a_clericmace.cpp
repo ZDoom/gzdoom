@@ -1,11 +1,13 @@
+/*
 #include "m_random.h"
 #include "p_local.h"
 #include "a_hexenglobal.h"
 #include "thingdef/thingdef.h"
+*/
 
 extern void AdjustPlayerAngle (AActor *pmo, AActor *linetarget);
 
-static FRandom pr_atk ("CMaceAttack");
+static FRandom pr_maceatk ("CMaceAttack");
 
 //===========================================================================
 //
@@ -27,7 +29,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CMaceAttack)
 		return;
 	}
 
-	damage = 25+(pr_atk()&15);
+	damage = 25+(pr_maceatk()&15);
 	for (i = 0; i < 16; i++)
 	{
 		angle = player->mo->angle+i*(ANG45/16);

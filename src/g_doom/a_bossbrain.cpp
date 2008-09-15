@@ -1,3 +1,4 @@
+/*
 #include "actor.h"
 #include "info.h"
 #include "m_random.h"
@@ -9,6 +10,7 @@
 #include "thingdef/thingdef.h"
 #include "doomstat.h"
 #include "g_level.h"
+*/
 
 static FRandom pr_brainscream ("BrainScream");
 static FRandom pr_brainexplode ("BrainExplode");

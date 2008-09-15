@@ -1,8 +1,11 @@
+/*
 #include "actor.h"
 #include "a_action.h"
 #include "a_strifeglobal.h"
 #include "p_enemy.h"
+#include "r_defs.h"
 #include "thingdef/thingdef.h"
+*/
 
 class AOracle : public AActor
 {

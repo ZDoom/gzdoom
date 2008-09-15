@@ -34,7 +34,12 @@
 #ifndef __P_TRACE_H__
 #define __P_TRACE_H__
 
-#include "r_defs.h"
+#include <stddef.h>
+#include "basictypes.h"
+
+struct sector_t;
+struct line_t;
+class AActor;
 
 enum ETraceResult
 {

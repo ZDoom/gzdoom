@@ -283,6 +283,14 @@ inline FArchive &operator<< (FArchive &arc, T* &object)
 
 FArchive &operator<< (FArchive &arc, const PClass * &info);
 
+class FFont;
+FArchive &SerializeFFontPtr (FArchive &arc, FFont* &font);
+template<> inline FArchive &operator<< <FFont> (FArchive &arc, FFont* &font)
+{
+	return SerializeFFontPtr (arc, font);
+}
+
+
 template<class T,class TT>
 inline FArchive &operator<< (FArchive &arc, TArray<T,TT> &self)
 {

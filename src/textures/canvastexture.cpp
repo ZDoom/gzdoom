@@ -36,6 +36,7 @@
 #include "doomtype.h"
 #include "files.h"
 #include "r_local.h"
+#include "v_palette.h"
 
 extern float LastFOV;
 

@@ -30,7 +30,6 @@
 #include "i_video.h"
 #include "r_local.h"
 #include "r_draw.h"
-#include "r_plane.h"
 #include "r_state.h"
 
 #include "doomdef.h"
@@ -62,6 +61,8 @@
 #include "f_wipe.h"
 #include "m_png.h"
 #include "colormatcher.h"
+#include "v_palette.h"
+
 
 IMPLEMENT_ABSTRACT_CLASS (DCanvas)
 IMPLEMENT_ABSTRACT_CLASS (DFrameBuffer)

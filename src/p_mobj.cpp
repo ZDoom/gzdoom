@@ -58,6 +58,7 @@
 #include "g_level.h"
 #include "d_event.h"
 #include "colormatcher.h"
+#include "v_palette.h"
 
 // MACROS ------------------------------------------------------------------
 

@@ -77,6 +77,7 @@
 #include "cmdlib.h"
 #include "d_net.h"
 #include "d_netinf.h"
+#include "v_palette.h"
 
 #include "gi.h"
 

@@ -67,6 +67,7 @@
 #include "st_stuff.h"
 #include "win32iface.h"
 #include "doomstat.h"
+#include "v_palette.h"
 
 // MACROS ------------------------------------------------------------------
 

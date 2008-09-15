@@ -1,12 +1,13 @@
+/*
 #include "actor.h"
 #include "info.h"
 #include "p_local.h"
 #include "s_sound.h"
-#include "p_enemy.h"
 #include "a_action.h"
 #include "m_random.h"
 #include "a_hexenglobal.h"
 #include "thingdef/thingdef.h"
+*/
 
 static FRandom pr_boom ("BishopBoom");
 static FRandom pr_atk ("BishopAttack");

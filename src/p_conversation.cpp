@@ -36,6 +36,7 @@
 
 #include "actor.h"
 #include "r_data.h"
+#include "r_main.h"
 #include "p_conversation.h"
 #include "w_wad.h"
 #include "cmdlib.h"

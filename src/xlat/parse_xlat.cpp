@@ -35,10 +35,8 @@
 
 
 #include "doomtype.h"
-#include "tarray.h"
 #include "w_wad.h"
 #include "c_console.h"
-#include "p_lnspec.h"
 #include "info.h"
 #include "gi.h"
 #include "parsecontext.h"

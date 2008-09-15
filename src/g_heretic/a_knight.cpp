@@ -1,13 +1,14 @@
+/*
 #include "actor.h"
 #include "info.h"
 #include "m_random.h"
 #include "s_sound.h"
 #include "p_local.h"
-#include "p_enemy.h"
 #include "a_action.h"
 #include "a_sharedglobal.h"
 #include "gstrings.h"
 #include "thingdef/thingdef.h"
+*/
 
 static FRandom pr_dripblood ("DripBlood");
 static FRandom pr_knightatk ("KnightAttack");

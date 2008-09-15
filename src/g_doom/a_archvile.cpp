@@ -1,3 +1,4 @@
+/*
 #include "actor.h"
 #include "info.h"
 #include "p_local.h"
@@ -6,6 +7,7 @@
 #include "gstrings.h"
 #include "a_action.h"
 #include "thingdef/thingdef.h"
+*/
 
 //
 // PIT_VileCheck

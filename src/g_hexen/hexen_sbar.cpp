@@ -16,6 +16,7 @@
 #include "a_keys.h"
 #include "r_translate.h"
 #include "a_weaponpiece.h"
+#include "v_palette.h"
 
 
 class FManaBar : public FTexture

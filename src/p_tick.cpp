@@ -24,7 +24,6 @@
 
 #include "p_local.h"
 #include "p_effect.h"
-#include "p_acs.h"
 #include "c_console.h"
 #include "b_bot.h"
 #include "s_sound.h"

@@ -24,7 +24,6 @@
 #define __P_SETUP__
 
 #include "w_wad.h"
-#include "files.h"
 #include "doomdata.h"
 
 

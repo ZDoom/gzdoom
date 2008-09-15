@@ -1,3 +1,4 @@
+/*
 #include "actor.h"
 #include "info.h"
 #include "p_local.h"
@@ -6,6 +7,7 @@
 #include "a_action.h"
 #include "m_random.h"
 #include "thingdef/thingdef.h"
+*/
 
 static FRandom pr_iceguylook ("IceGuyLook");
 static FRandom pr_iceguychase ("IceGuyChase");

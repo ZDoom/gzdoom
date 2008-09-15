@@ -48,6 +48,7 @@
 #include "r_translate.h"
 #include "g_level.h"
 #include "d_event.h"
+#include "v_palette.h"
 
 static void FadePic ();
 static void GetFinaleText (const char *msgLumpName);

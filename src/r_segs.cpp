@@ -46,6 +46,10 @@
 #include "a_sharedglobal.h"
 #include "d_net.h"
 #include "g_level.h"
+#include "r_bsp.h"
+#include "r_plane.h"
+#include "r_segs.h"
+#include "v_palette.h"
 
 #define WALLYREPEAT 8
 

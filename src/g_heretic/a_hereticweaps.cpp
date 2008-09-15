@@ -1,3 +1,4 @@
+/*
 #include "templates.h"
 #include "actor.h"
 #include "info.h"
@@ -8,13 +9,11 @@
 #include "p_pspr.h"
 #include "p_local.h"
 #include "gstrings.h"
-#include "p_effect.h"
-#include "gstrings.h"
-#include "p_enemy.h"
 #include "gi.h"
 #include "r_translate.h"
 #include "thingdef/thingdef.h"
 #include "doomstat.h"
+*/
 
 static FRandom pr_sap ("StaffAtkPL1");
 static FRandom pr_sap2 ("StaffAtkPL2");

@@ -36,13 +36,10 @@
 
 #include "doomtype.h"
 
-#include "v_palette.h"
-#include "v_font.h"
-
 #include "doomdef.h"
-
-// Needed because we are refering to patches.
-#include "r_data.h"
+#include "dobject.h"
+#include "r_blend.h"
+#include "c_cvars.h"
 
 extern int CleanWidth, CleanHeight, CleanXfac, CleanYfac;
 extern int DisplayWidth, DisplayHeight, DisplayBits;
@@ -124,6 +121,10 @@ enum ESSType
 	SS_RGB,
 	SS_BGRA
 };
+
+class FFont;
+struct FRemapTable;
+class player_t;
 
 //
 // VIDEO

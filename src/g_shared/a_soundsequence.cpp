@@ -65,6 +65,7 @@
 #include "s_sound.h"
 #include "m_random.h"
 #include "s_sndseq.h"
+#include "farchive.h"
 
 // SoundSequenceSlot --------------------------------------------------------
 

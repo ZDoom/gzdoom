@@ -1,3 +1,4 @@
+/*
 #include "actor.h"
 #include "info.h"
 #include "p_enemy.h"
@@ -7,6 +8,7 @@
 #include "m_bbox.h"
 #include "thingdef/thingdef.h"
 #include "doomstat.h"
+*/
 
 DECLARE_ACTION(A_SkullAttack)
 

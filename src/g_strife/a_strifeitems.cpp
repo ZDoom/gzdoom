@@ -1,3 +1,4 @@
+/*
 #include "info.h"
 #include "a_pickups.h"
 #include "d_player.h"
@@ -15,7 +16,7 @@
 #include "thingdef/thingdef.h"
 #include "g_level.h"
 #include "doomstat.h"
-
+*/
 // Degnin Ore ---------------------------------------------------------------
 
 IMPLEMENT_CLASS(ADegninOre)

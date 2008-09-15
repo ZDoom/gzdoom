@@ -1,14 +1,3 @@
-#include "actor.h"
-#include "info.h"
-#include "m_random.h"
-#include "s_sound.h"
-#include "p_local.h"
-#include "p_enemy.h"
-#include "doomstat.h"
-#include "gstrings.h"
-#include "a_action.h"
-#include "thingdef/thingdef.h"
-
 static FRandom pr_bruisattack ("BruisAttack");
 
 

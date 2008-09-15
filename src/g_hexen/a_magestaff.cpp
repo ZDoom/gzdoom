@@ -1,14 +1,15 @@
+/*
 #include "actor.h"
 #include "info.h"
 #include "p_local.h"
 #include "m_random.h"
 #include "s_sound.h"
-#include "p_enemy.h"
 #include "a_hexenglobal.h"
 #include "gstrings.h"
 #include "a_weaponpiece.h"
 #include "thingdef/thingdef.h"
 #include "doomstat.h"
+*/
 
 static FRandom pr_mstafftrack ("MStaffTrack");
 static FRandom pr_bloodscourgedrop ("BloodScourgeDrop");

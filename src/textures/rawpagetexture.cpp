@@ -37,6 +37,7 @@
 #include "files.h"
 #include "r_data.h"
 #include "w_wad.h"
+#include "v_palette.h"
 
 
 //==========================================================================

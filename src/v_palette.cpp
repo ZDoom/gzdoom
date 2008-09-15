@@ -55,6 +55,7 @@
 #include "gi.h"
 #include "x86.h"
 #include "colormatcher.h"
+#include "v_palette.h"
 
 extern "C" {
 FDynamicColormap NormalLight;

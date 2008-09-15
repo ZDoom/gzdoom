@@ -1,3 +1,4 @@
+/*
 #include "actor.h"
 #include "info.h"
 #include "m_random.h"
@@ -7,6 +8,7 @@
 #include "s_sound.h"
 #include "m_bbox.h"
 #include "thingdef/thingdef.h"
+*/
 
 static FRandom pr_thrustraise ("ThrustRaise");
 

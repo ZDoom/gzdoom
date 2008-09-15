@@ -1,3 +1,4 @@
+/*
 #include "actor.h"
 #include "gi.h"
 #include "m_random.h"
@@ -5,16 +6,16 @@
 #include "d_player.h"
 #include "a_action.h"
 #include "p_local.h"
-#include "p_enemy.h"
 #include "a_action.h"
 #include "p_pspr.h"
 #include "gstrings.h"
 #include "a_hexenglobal.h"
 #include "thingdef/thingdef.h"
+*/
 
 const fixed_t HAMMER_RANGE = MELEERANGE+MELEERANGE/2;
 
-static FRandom pr_atk ("FHammerAtk");
+static FRandom pr_hammeratk ("FHammerAtk");
 
 extern void AdjustPlayerAngle (AActor *pmo, AActor *linetarget);
 
@@ -40,7 +41,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FHammerAttack)
 	}
 	AActor *pmo=player->mo;
 
-	damage = 60+(pr_atk()&63);
+	damage = 60+(pr_hammeratk()&63);
 	power = 10*FRACUNIT;
 	for (i = 0; i < 16; i++)
 	{

@@ -731,9 +731,9 @@ private:
 };
 
 // The structure used to control scripts between maps
-struct acsdefered_s
+struct acsdefered_t
 {
-	struct acsdefered_s *next;
+	struct acsdefered_t *next;
 
 	enum EType
 	{
@@ -746,8 +746,7 @@ struct acsdefered_s
 	int arg0, arg1, arg2;
 	int playernum;
 };
-typedef struct acsdefered_s acsdefered_t;
 
-FArchive &operator<< (FArchive &arc, acsdefered_s *&defer);
+FArchive &operator<< (FArchive &arc, acsdefered_t *&defer);
 
 #endif //__P_ACS_H__

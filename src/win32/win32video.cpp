@@ -64,6 +64,7 @@
 #include "stats.h"
 #include "doomerrors.h"
 #include "m_argv.h"
+#include "r_defs.h"
 
 #include "win32iface.h"
 

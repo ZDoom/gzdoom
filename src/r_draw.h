@@ -232,7 +232,7 @@ extern "C" const BYTE*		ds_source;
 
 extern "C" int				ds_color;		// [RH] For flat color (no texturing)
 
-extern BYTE shadetables[NUMCOLORMAPS*16*256];
+extern BYTE shadetables[/*NUMCOLORMAPS*16*256*/];
 extern FDynamicColormap ShadeFakeColormap[16];
 extern BYTE identitymap[256];
 extern BYTE *dc_translation;

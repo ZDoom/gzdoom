@@ -4,7 +4,6 @@
 #include "gstrings.h"
 #include "p_local.h"
 #include "gi.h"
-#include "p_enemy.h"
 #include "s_sound.h"
 #include "m_random.h"
 #include "a_sharedglobal.h"

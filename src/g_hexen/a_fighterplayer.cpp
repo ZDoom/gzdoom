@@ -1,3 +1,4 @@
+/*
 #include "actor.h"
 #include "gi.h"
 #include "m_random.h"
@@ -5,11 +6,10 @@
 #include "d_player.h"
 #include "a_action.h"
 #include "p_local.h"
-#include "p_enemy.h"
 #include "a_action.h"
 #include "a_hexenglobal.h"
 #include "thingdef/thingdef.h"
-
+*/
 
 // Fighter Weapon Base Class ------------------------------------------------
 

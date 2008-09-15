@@ -37,6 +37,7 @@
 #include "g_game.h"
 #include "g_level.h"
 #include "r_translate.h"
+#include "v_palette.h"
 
 #include "gi.h"
 #include "stats.h"

@@ -55,6 +55,7 @@
 #include "doomerrors.h"
 
 #include "win32iface.h"
+#include "v_palette.h"
 
 // MACROS ------------------------------------------------------------------
 

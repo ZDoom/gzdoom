@@ -535,90 +535,15 @@ add_executable( zdoom WIN32
 	x86.cpp
 	zstrformat.cpp
 	zstring.cpp
-	g_doom/a_arachnotron.cpp
-	g_doom/a_archvile.cpp
-	g_doom/a_bossbrain.cpp
-	g_doom/a_bruiser.cpp
-	g_doom/a_cacodemon.cpp
-	g_doom/a_cyberdemon.cpp
-	g_doom/a_demon.cpp
-	g_doom/a_doomimp.cpp
 	g_doom/a_doommisc.cpp
-	g_doom/a_doomweaps.cpp
-	g_doom/a_fatso.cpp
-	g_doom/a_keen.cpp
-	g_doom/a_lostsoul.cpp
-	g_doom/a_painelemental.cpp
-	g_doom/a_possessed.cpp
-	g_doom/a_revenant.cpp
-	g_doom/a_scriptedmarine.cpp
-	g_doom/a_spidermaster.cpp
 	g_doom/doom_sbar.cpp
-	g_heretic/a_chicken.cpp
-	g_heretic/a_dsparil.cpp
-	g_heretic/a_hereticartifacts.cpp
-	g_heretic/a_hereticimp.cpp
 	g_heretic/a_hereticmisc.cpp
-	g_heretic/a_hereticweaps.cpp
-	g_heretic/a_ironlich.cpp
-	g_heretic/a_knight.cpp
-	g_heretic/a_wizard.cpp
 	g_heretic/heretic_sbar.cpp
-	g_hexen/a_bats.cpp
-	g_hexen/a_bishop.cpp
-	g_hexen/a_blastradius.cpp
-	g_hexen/a_boostarmor.cpp
-	g_hexen/a_centaur.cpp
-	g_hexen/a_clericflame.cpp
-	g_hexen/a_clericholy.cpp
-	g_hexen/a_clericmace.cpp
-	g_hexen/a_clericstaff.cpp
-	g_hexen/a_dragon.cpp
-	g_hexen/a_fighteraxe.cpp
-	g_hexen/a_fighterhammer.cpp
-	g_hexen/a_fighterplayer.cpp
-	g_hexen/a_fighterquietus.cpp
-	g_hexen/a_firedemon.cpp
-	g_hexen/a_flechette.cpp
-	g_hexen/a_fog.cpp
-	g_hexen/a_healingradius.cpp
-	g_hexen/a_heresiarch.cpp
-	g_hexen/a_hexenspecialdecs.cpp
-	g_hexen/a_iceguy.cpp
-	g_hexen/a_korax.cpp
-	g_hexen/a_magecone.cpp
-	g_hexen/a_magelightning.cpp
-	g_hexen/a_magestaff.cpp
-	g_hexen/a_magewand.cpp
-	g_hexen/a_pig.cpp
-	g_hexen/a_serpent.cpp
-	g_hexen/a_spike.cpp
-	g_hexen/a_summon.cpp
-	g_hexen/a_teleportother.cpp
-	g_hexen/a_wraith.cpp
+	g_hexen/a_hexenmisc.cpp
 	g_hexen/hexen_sbar.cpp
 	g_raven/a_artitele.cpp
 	g_raven/a_minotaur.cpp
-	g_strife/a_acolyte.cpp
-	g_strife/a_alienspectres.cpp
-	g_strife/a_coin.cpp
-	g_strife/a_crusader.cpp
-	g_strife/a_entityboss.cpp
-	g_strife/a_inquisitor.cpp
-	g_strife/a_loremaster.cpp
-	g_strife/a_macil.cpp
-	g_strife/a_oracle.cpp
-	g_strife/a_programmer.cpp
-	g_strife/a_reaver.cpp
-	g_strife/a_rebels.cpp
-	g_strife/a_sentinel.cpp
-	g_strife/a_spectral.cpp
-	g_strife/a_stalker.cpp
-	g_strife/a_strifeitems.cpp
 	g_strife/a_strifestuff.cpp
-	g_strife/a_strifeweapons.cpp
-	g_strife/a_templar.cpp
-	g_strife/a_thingstoblowup.cpp
 	g_strife/strife_sbar.cpp
 	g_shared/a_action.cpp
 	g_shared/a_armor.cpp

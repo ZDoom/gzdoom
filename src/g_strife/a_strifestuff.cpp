@@ -12,6 +12,32 @@
 #include "c_console.h"
 #include "thingdef/thingdef.h"
 #include "doomstat.h"
+#include "gstrings.h"
+#include "a_keys.h"
+#include "a_sharedglobal.h"
+#include "templates.h"
+#include "d_event.h"
+
+// Include all the other Strife stuff here to reduce compile time
+#include "a_acolyte.cpp"
+#include "a_alienspectres.cpp"
+#include "a_coin.cpp"
+#include "a_crusader.cpp"
+#include "a_entityboss.cpp"
+#include "a_inquisitor.cpp"
+#include "a_loremaster.cpp"
+#include "a_macil.cpp"
+#include "a_oracle.cpp"
+#include "a_programmer.cpp"
+#include "a_reaver.cpp"
+#include "a_rebels.cpp"
+#include "a_sentinel.cpp"
+#include "a_spectral.cpp"
+#include "a_stalker.cpp"
+#include "a_strifeitems.cpp"
+#include "a_strifeweapons.cpp"
+#include "a_templar.cpp"
+#include "a_thingstoblowup.cpp"
 
 // Notes so I don't forget them:
 // Strife does some extra stuff in A_Explode if a player caused the explosion. (probably NoiseAlert)
@@ -521,7 +547,7 @@ void APowerCoupling::Die (AActor *source, AActor *inflictor)
 	players[i].mo->GiveInventoryType (QuestItemClasses[5]);
 	S_Sound (CHAN_VOICE, "svox/voc13", 1, ATTN_NORM);
 	players[i].SetLogNumber (13);
-	P_DropItem (this, "BrokenPowerCoupling", -1, 256);
+	P_DropItem (this, PClass::FindClass("BrokenPowerCoupling"), -1, 256);
 	Destroy ();
 }
 

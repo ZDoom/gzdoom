@@ -43,6 +43,7 @@
 #include "c_dispatch.h"
 #include "d_net.h"
 #include "colormatcher.h"
+#include "v_palette.h"
 
 static fixed_t DecalWidth, DecalLeft, DecalRight;
 static fixed_t SpreadZ;
@@ -301,7 +302,7 @@ fixed_t DBaseDecal::GetRealZ (const side_t *wall) const
 	default:
 		return Z;
 	case RF_RELUPPER:
-		if (curline->linedef->flags & ML_DONTPEGTOP)
+		if (line->flags & ML_DONTPEGTOP)
 		{
 			return Z + front->GetPlaneTexZ(sector_t::ceiling);
 		}
@@ -310,7 +311,7 @@ fixed_t DBaseDecal::GetRealZ (const side_t *wall) const
 			return Z + back->GetPlaneTexZ(sector_t::ceiling);
 		}
 	case RF_RELLOWER:
-		if (curline->linedef->flags & ML_DONTPEGBOTTOM)
+		if (line->flags & ML_DONTPEGBOTTOM)
 		{
 			return Z + front->GetPlaneTexZ(sector_t::ceiling);
 		}
@@ -319,7 +320,7 @@ fixed_t DBaseDecal::GetRealZ (const side_t *wall) const
 			return Z + back->GetPlaneTexZ(sector_t::floor);
 		}
 	case RF_RELMID:
-		if (curline->linedef->flags & ML_DONTPEGBOTTOM)
+		if (line->flags & ML_DONTPEGBOTTOM)
 		{
 			return Z + front->GetPlaneTexZ(sector_t::floor);
 		}

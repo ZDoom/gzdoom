@@ -33,7 +33,6 @@
 #include "p_local.h"
 #include "m_bbox.h"
 #include "p_lnspec.h"
-#include "p_effect.h"
 #include "s_sound.h"
 #include "g_game.h"
 #include "doomstat.h"

@@ -29,7 +29,6 @@
 #include "i_system.h"
 #include "g_level.h"
 #include "p_local.h"
-#include "p_acs.h"
 
 int SaveVersion;
 

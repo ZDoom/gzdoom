@@ -23,6 +23,8 @@
 #ifndef __R_SEGS_H__
 #define __R_SEGS_H__
 
+struct drawseg_t;
+
 void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2);
 
 extern short *openings;

@@ -1,9 +1,11 @@
+/*
 #include "actor.h"
 #include "info.h"
 #include "m_random.h"
 #include "p_local.h"
 #include "s_sound.h"
 #include "thingdef/thingdef.h"
+*/
 
 static FRandom pr_batspawn ("BatSpawn");
 static FRandom pr_batmove ("BatMove");

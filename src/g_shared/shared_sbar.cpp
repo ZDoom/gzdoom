@@ -46,11 +46,12 @@
 #include "v_text.h"
 #include "s_sound.h"
 #include "gi.h"
-#include "p_effect.h"
 #include "doomstat.h"
 #include "g_level.h"
 #include "d_net.h"
 #include "colormatcher.h"
+#include "v_palette.h"
+
 #include "../version.h"
 
 #define XHAIRSHRINKSIZE		(FRACUNIT/18)

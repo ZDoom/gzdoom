@@ -52,6 +52,7 @@ extern HWND Window;
 #include "w_wad.h"
 #include "i_music.h"
 #include "v_text.h"
+#include "v_video.h"
 #include "v_palette.h"
 
 // MACROS ------------------------------------------------------------------
@@ -2147,7 +2148,6 @@ float F_CALLBACK FMODSoundRenderer::RolloffCallback(FMOD_CHANNEL *channel, float
 void FMODSoundRenderer::DrawWaveDebug(int mode)
 {
 	const int window_height = 100;
-	float wavearray[MAXWIDTH];
 	int window_size;
 	int numoutchans;
 	int y;
@@ -2160,6 +2160,8 @@ void FMODSoundRenderer::DrawWaveDebug(int mode)
 	// Scale all the channel windows so one group fits completely on one row, with
 	// 16 pixels of padding between each window.
 	window_size = (screen->GetWidth() - 16) / numoutchans - 16;
+
+	float *wavearray = (float*)alloca(window_size*sizeof(float));
 
 	y = 16;
 	y = DrawChannelGroupOutput(SfxGroup, wavearray, window_size, window_height, y, mode);

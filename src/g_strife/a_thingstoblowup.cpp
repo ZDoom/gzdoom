@@ -1,3 +1,4 @@
+/*
 #include "actor.h"
 #include "m_random.h"
 #include "p_local.h"
@@ -8,6 +9,7 @@
 #include "thingdef/thingdef.h"
 #include "thingdef/thingdef.h"
 #include "doomstat.h"
+*/
 
 static FRandom pr_bang4cloud ("Bang4Cloud");
 static FRandom pr_lightout ("LightOut");

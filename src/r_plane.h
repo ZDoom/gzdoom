@@ -102,7 +102,6 @@ visplane_t *R_FindPlane
 
 visplane_t *R_CheckPlane (visplane_t *pl, int start, int stop);
 
-bool R_AlignFlat (int linenum, int side, int fc);
 
 // [RH] Added for multires support
 bool R_PlaneInitData (void);

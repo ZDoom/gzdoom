@@ -1,6 +1,8 @@
 #ifndef __THINGDEF_H
 #define __THINGDEF_H
 
+#include "doomtype.h"
+
 class FScanner;
 
 //==========================================================================

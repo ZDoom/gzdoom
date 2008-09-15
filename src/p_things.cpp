@@ -34,7 +34,6 @@
 
 #include "doomtype.h"
 #include "p_local.h"
-#include "p_effect.h"
 #include "info.h"
 #include "s_sound.h"
 #include "tables.h"

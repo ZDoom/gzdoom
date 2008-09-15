@@ -44,6 +44,7 @@
 #include "m_crc32.h"
 #include "m_swap.h"
 #include "c_cvars.h"
+#include "r_defs.h"
 #include "v_video.h"
 #include "m_png.h"
 #include "templates.h"

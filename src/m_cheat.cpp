@@ -39,7 +39,6 @@
 #include "w_wad.h"
 #include "a_keys.h"
 #include "templates.h"
-#include "p_lnspec.h"
 #include "c_console.h"
 #include "r_translate.h"
 #include "g_level.h"

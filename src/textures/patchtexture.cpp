@@ -38,6 +38,7 @@
 #include "r_data.h"
 #include "w_wad.h"
 #include "templates.h"
+#include "v_palette.h"
 
 
 //==========================================================================

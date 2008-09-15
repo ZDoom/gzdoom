@@ -1,3 +1,4 @@
+/*
 #include "actor.h"
 #include "info.h"
 #include "m_random.h"
@@ -8,6 +9,7 @@
 #include "gstrings.h"
 #include "thingdef/thingdef.h"
 #include "g_level.h"
+*/
 
 static FRandom pr_foo ("WhirlwindDamage");
 static FRandom pr_atk ("LichAttack");

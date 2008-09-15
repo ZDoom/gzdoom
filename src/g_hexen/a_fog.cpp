@@ -1,6 +1,8 @@
+/*
 #include "m_random.h"
 #include "p_local.h"
 #include "thingdef/thingdef.h"
+*/
 
 static FRandom pr_fogspawn ("FogSpawn");
 

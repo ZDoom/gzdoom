@@ -98,6 +98,7 @@
 #include "g_level.h"
 #include "d_event.h"
 #include "d_netinf.h"
+#include "v_palette.h"
 
 EXTERN_CVAR(Bool, hud_althud)
 void DrawHUD();

@@ -48,6 +48,7 @@
 #include "s_sound.h"
 #include "templates.h"
 #include "gi.h"
+#include "v_palette.h"
 #include "colormatcher.h"
 
 CVAR (Int, cl_rockettrails, 1, CVAR_ARCHIVE);

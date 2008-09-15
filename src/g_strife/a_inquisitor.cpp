@@ -1,3 +1,4 @@
+/*
 #include "actor.h"
 #include "m_random.h"
 #include "a_action.h"
@@ -5,6 +6,7 @@
 #include "p_enemy.h"
 #include "s_sound.h"
 #include "thingdef/thingdef.h"
+*/
 
 static FRandom pr_inq ("Inquisitor");
 

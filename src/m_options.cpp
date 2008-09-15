@@ -60,6 +60,7 @@
 #include "gi.h"
 
 #include "r_local.h"
+#include "v_palette.h"
 #include "gameconfigfile.h"
 
 #include "hu_stuff.h"

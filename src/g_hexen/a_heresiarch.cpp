@@ -1,15 +1,15 @@
+/*
 #include "actor.h"
 #include "info.h"
 #include "p_local.h"
 #include "s_sound.h"
-#include "p_enemy.h"
 #include "a_action.h"
 #include "m_random.h"
 #include "a_hexenglobal.h"
 #include "i_system.h"
-#include "p_acs.h"
 #include "thingdef/thingdef.h"
 #include "g_level.h"
+*/
 
 //============================================================================
 //

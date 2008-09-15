@@ -55,6 +55,7 @@
 #include "a_weaponpiece.h"
 #include "a_strifeglobal.h"
 #include "g_level.h"
+#include "v_palette.h"
 
 static FRandom pr_chainwiggle; //use the same method of chain wiggling as heretic.
 

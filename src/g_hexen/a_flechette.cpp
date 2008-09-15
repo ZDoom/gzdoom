@@ -1,10 +1,10 @@
+/*
 #include "actor.h"
 #include "info.h"
 #include "a_pickups.h"
 #include "a_artifacts.h"
 #include "gstrings.h"
 #include "p_local.h"
-#include "p_enemy.h"
 #include "s_sound.h"
 #include "m_random.h"
 #include "a_action.h"
@@ -12,6 +12,7 @@
 #include "w_wad.h"
 #include "thingdef/thingdef.h"
 #include "g_level.h"
+*/
 
 static FRandom pr_poisonbag ("PoisonBag");
 static FRandom pr_poisoncloud ("PoisonCloud");

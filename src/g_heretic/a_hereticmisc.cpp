@@ -1,6 +1,5 @@
 #include "actor.h"
 #include "info.h"
-#include "p_enemy.h"
 #include "a_pickups.h"
 #include "a_action.h"
 #include "m_random.h"
@@ -8,6 +7,24 @@
 #include "s_sound.h"
 #include "gstrings.h"
 #include "thingdef/thingdef.h"
+#include "p_enemy.h"
+#include "a_specialspot.h"
+#include "g_level.h"
+#include "a_sharedglobal.h"
+#include "templates.h"
+#include "r_translate.h"
+#include "doomstat.h"
+
+// Include all the other Heretic stuff here to reduce compile time
+#include "a_chicken.cpp"
+#include "a_dsparil.cpp"
+#include "a_hereticartifacts.cpp"
+#include "a_hereticimp.cpp"
+#include "a_hereticweaps.cpp"
+#include "a_ironlich.cpp"
+#include "a_knight.cpp"
+#include "a_wizard.cpp"
+
 
 static FRandom pr_podpain ("PodPain");
 static FRandom pr_makepod ("MakePod");
@@ -15,7 +32,7 @@ static FRandom pr_teleg ("TeleGlitter");
 static FRandom pr_teleg2 ("TeleGlitter2");
 static FRandom pr_volcano ("VolcanoSet");
 static FRandom pr_blast ("VolcanoBlast");
-static FRandom pr_impact ("VolcBallImpact");
+static FRandom pr_volcimpact ("VolcBallImpact");
 
 //----------------------------------------------------------------------------
 //
@@ -184,7 +201,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_VolcBallImpact)
 		angle >>= ANGLETOFINESHIFT;
 		tiny->momx = FixedMul (FRACUNIT*7/10, finecosine[angle]);
 		tiny->momy = FixedMul (FRACUNIT*7/10, finesine[angle]);
-		tiny->momz = FRACUNIT + (pr_impact() << 9);
+		tiny->momz = FRACUNIT + (pr_volcimpact() << 9);
 		P_CheckMissileSpawn (tiny);
 	}
 }

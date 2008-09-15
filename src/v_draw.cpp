@@ -40,9 +40,11 @@
 #include "m_swap.h"
 #include "r_defs.h"
 #include "r_draw.h"
+#include "r_main.h"
 #include "r_things.h"
 #include "r_translate.h"
 #include "doomstat.h"
+#include "v_palette.h"
 
 #include "i_system.h"
 #include "i_video.h"

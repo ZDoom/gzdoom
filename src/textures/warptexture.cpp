@@ -36,6 +36,7 @@
 #include "doomtype.h"
 #include "files.h"
 #include "r_data.h"
+#include "r_main.h"
 #include "templates.h"
 
 

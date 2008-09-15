@@ -43,6 +43,9 @@
 #include "doomstat.h"
 #include "g_level.h"
 #include "d_netinf.h"
+#include "v_font.h"
+#include "v_palette.h"
+#include "d_player.h"
 
 // MACROS ------------------------------------------------------------------
 

@@ -1,8 +1,13 @@
 #ifndef __P_ENEMY_H__
 #define __P_ENEMY_H__
 
-#include "r_defs.h"
 #include "thingdef/thingdef.h"
+
+struct sector_t;
+class AActor;
+class AInventory;
+struct PClass;
+
 
 enum dirtype_t
 {
@@ -29,10 +34,6 @@ bool P_TryWalk (AActor *actor);
 void P_NewChaseDir (AActor *actor);
 bool P_LookForPlayers (AActor *actor, INTBOOL allaround);
 AInventory *P_DropItem (AActor *source, const PClass *type, int special, int chance);
-inline AInventory *P_DropItem (AActor *source, const char *type, int special, int chance)
-{
-	return P_DropItem (source, PClass::FindClass (type), special, chance);
-}
 void P_TossItem (AActor *item);
 
 DECLARE_ACTION(A_Look)

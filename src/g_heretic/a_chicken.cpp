@@ -1,3 +1,4 @@
+/*
 #include "actor.h"
 #include "gi.h"
 #include "m_random.h"
@@ -11,6 +12,7 @@
 #include "d_event.h"
 #include "gstrings.h"
 #include "thingdef/thingdef.h"
+*/
 
 void P_UpdateBeak (AActor *actor);
 

@@ -42,6 +42,7 @@
 #include "gi.h"
 #include "r_sky.h"
 #include "g_level.h"
+#include "v_palette.h"
 
 //===========================================================================
 //

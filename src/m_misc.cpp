@@ -57,6 +57,7 @@
 #include "i_system.h"
 #include "i_video.h"
 #include "v_video.h"
+#include "r_defs.h"
 
 #include "hu_stuff.h"
 

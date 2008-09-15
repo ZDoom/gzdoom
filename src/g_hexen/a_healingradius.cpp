@@ -1,15 +1,16 @@
+/*
 #include "info.h"
 #include "a_pickups.h"
 #include "a_artifacts.h"
 #include "gstrings.h"
 #include "p_local.h"
-#include "p_enemy.h"
 #include "s_sound.h"
 #include "m_random.h"
 #include "a_action.h"
 #include "a_hexenglobal.h"
 #include "gi.h"
 #include "doomstat.h"
+*/
 
 #define HEAL_RADIUS_DIST	255*FRACUNIT
 

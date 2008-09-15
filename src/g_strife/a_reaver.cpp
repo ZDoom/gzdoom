@@ -1,3 +1,4 @@
+/*
 #include "actor.h"
 #include "p_enemy.h"
 #include "a_action.h"
@@ -6,6 +7,7 @@
 #include "p_local.h"
 #include "a_strifeglobal.h"
 #include "thingdef/thingdef.h"
+*/
 
 static FRandom pr_reaverattack ("ReaverAttack");
 

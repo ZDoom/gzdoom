@@ -25,6 +25,7 @@
 #include "p_spec.h"
 #include "c_cvars.h"
 #include "doomstat.h"
+#include "v_palette.h"
 
 
 // [RH]

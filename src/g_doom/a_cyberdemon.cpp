@@ -1,9 +1,11 @@
+/*
 #include "actor.h"
 #include "p_local.h"
 #include "s_sound.h"
 #include "p_enemy.h"
 #include "a_action.h"
 #include "thingdef/thingdef.h"
+*/
 
 DEFINE_ACTION_FUNCTION(AActor, A_CyberAttack)
 {

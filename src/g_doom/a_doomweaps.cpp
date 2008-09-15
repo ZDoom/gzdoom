@@ -1,3 +1,4 @@
+/*
 #include "actor.h"
 #include "info.h"
 #include "s_sound.h"
@@ -12,6 +13,7 @@
 #include "templates.h"
 #include "thingdef/thingdef.h"
 #include "doomstat.h"
+*/
 
 static FRandom pr_punch ("Punch");
 static FRandom pr_saw ("Saw");

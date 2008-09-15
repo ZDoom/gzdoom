@@ -63,7 +63,9 @@
 #include "a_sharedglobal.h"
 #include "thingdef/thingdef.h"
 #include "v_video.h"
+#include "v_font.h"
 #include "doomstat.h"
+#include "v_palette.h"
 
 
 static FRandom pr_camissile ("CustomActorfire");

@@ -1,13 +1,14 @@
+/*
 #include "info.h"
 #include "a_pickups.h"
 #include "a_artifacts.h"
 #include "gstrings.h"
 #include "p_local.h"
-#include "p_enemy.h"
 #include "s_sound.h"
 #include "ravenshared.h"
 #include "thingdef/thingdef.h"
 #include "g_level.h"
+*/
 
 void A_Summon (AActor *);
 

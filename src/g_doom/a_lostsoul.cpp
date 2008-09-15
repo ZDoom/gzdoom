@@ -1,3 +1,4 @@
+/*
 #include "templates.h"
 #include "actor.h"
 #include "info.h"
@@ -9,6 +10,7 @@
 #include "gstrings.h"
 #include "a_action.h"
 #include "thingdef/thingdef.h"
+*/
 
  FRandom pr_lost ("LostMissileRange");
 

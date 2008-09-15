@@ -1,6 +1,8 @@
+/*
 #include "a_pickups.h"
 #include "a_strifeglobal.h"
 #include "gstrings.h"
+*/
 
 // Coin ---------------------------------------------------------------------
 

@@ -1847,9 +1847,9 @@ void S_ChannelEnded(FISoundChannel *ichan)
 			{
 				evicted = !!(schan->ChanFlags & CHAN_JUSTSTARTED);
 			}
-			else if (pos < len)
+			else
 			{
-				evicted = true;
+				evicted = (pos < len);
 			}
 		}
 		if (!evicted)

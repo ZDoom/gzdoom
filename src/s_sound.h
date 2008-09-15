@@ -210,6 +210,7 @@ FSoundChan *S_GetChannel(void *syschan);
 void S_ReturnChannel(FSoundChan *chan);
 void S_EvictAllChannels();
 
+void S_StopChannel(FSoundChan *chan);
 void S_LinkChannel(FSoundChan *chan, FSoundChan **head);
 void S_UnlinkChannel(FSoundChan *chan);
 

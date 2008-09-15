@@ -17,6 +17,7 @@ public:
 	SoundHandle LoadSoundRaw(BYTE *sfxdata, int length, int frequency, int channels, int bits);
 	void UnloadSound (SoundHandle sfx);
 	unsigned int GetMSLength(SoundHandle sfx);
+	unsigned int GetSampleLength(SoundHandle sfx);
 	float GetOutputRate();
 
 	// Streaming sounds.
@@ -30,7 +31,7 @@ public:
 	FSoundChan *StartSound3D (SoundHandle sfx, SoundListener *listener, float vol, FRolloffInfo *rolloff, float distscale, int pitch, int priority, const FVector3 &pos, const FVector3 &vel, int channum, int chanflags, FSoundChan *reuse_chan);
 
 	// Stops a sound channel.
-	void StopSound (FSoundChan *chan);
+	void StopChannel (FSoundChan *chan);
 
 	// Returns position of sound on this channel, in samples.
 	unsigned int GetPosition(FSoundChan *chan);

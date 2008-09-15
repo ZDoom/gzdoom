@@ -1616,24 +1616,11 @@ FSoundChan *FMODSoundRenderer::CommonChannelSetup(FMOD::Channel *chan, FSoundCha
 //
 //==========================================================================
 
-void FMODSoundRenderer::StopSound(FSoundChan *chan)
+void FMODSoundRenderer::StopChannel(FSoundChan *chan)
 {
-	if (chan == NULL)
-		return;
-
-	if (chan->SysChannel != NULL)
+	if (chan != NULL && chan->SysChannel != NULL)
 	{
-		// S_EvictAllChannels() will set the CHAN_EVICTED flag to indicate
-		// that it wants to keep all the channel information around.
-		if (!(chan->ChanFlags & CHAN_EVICTED))
-		{
-			chan->ChanFlags |= CHAN_FORGETTABLE;
-		}
 		((FMOD::Channel *)chan->SysChannel)->stop();
-	}
-	else
-	{
-		S_ReturnChannel(chan);
 	}
 }
 
@@ -1995,6 +1982,26 @@ unsigned int FMODSoundRenderer::GetMSLength(SoundHandle sfx)
 }
 
 
+//==========================================================================
+//
+// FMODSoundRenderer :: GetMSLength
+//
+//==========================================================================
+
+unsigned int FMODSoundRenderer::GetSampleLength(SoundHandle sfx)
+{
+	if (sfx.data != NULL)
+	{
+		unsigned int length;
+
+		if (((FMOD::Sound *)sfx.data)->getLength(&length, FMOD_TIMEUNIT_PCM) == FMOD_OK)
+		{
+			return length;
+		}
+	}
+	return 0;	// Don't know.
+}
+
 
 //==========================================================================
 //
@@ -2014,58 +2021,7 @@ FMOD_RESULT F_CALLBACK FMODSoundRenderer::ChannelEndCallback
 
 	if (chan->getUserData((void **)&schan) == FMOD_OK && schan != NULL)
 	{
-		bool evicted;
-
-		// If the sound was stopped with GSnd->StopSound(), then we know
-		// it wasn't evicted. Otherwise, if it's looping, it must have
-		// been evicted. If it's not looping, then it was evicted if it
-		// didn't reach the end of its playback.
-		if (schan->ChanFlags & CHAN_FORGETTABLE)
-		{
-			evicted = false;
-		}
-		else if (schan->ChanFlags & (CHAN_LOOP | CHAN_EVICTED))
-		{
-			evicted = true;
-		}
-		else
-		{
-			FMOD::Sound *sound;
-			unsigned int len, pos;
-
-			evicted = false;	// Assume not evicted
-			if (FMOD_OK == chan->getPosition(&pos, FMOD_TIMEUNIT_PCM))
-			{
-				// If position is 0, then this sound either didn't have
-				// a chance to play at all, or it stopped normally.
-				if (pos == 0)
-				{
-					if (schan->ChanFlags & CHAN_JUSTSTARTED)
-					{
-						evicted = true;
-					}
-				}
-				else if (FMOD_OK == chan->getCurrentSound(&sound))
-				{
-					if (FMOD_OK == sound->getLength(&len, FMOD_TIMEUNIT_PCM))
-					{
-						if (pos < len)
-						{
-							evicted = true;
-						}
-					}
-				}
-			}
-		}
-		if (!evicted)
-		{
-			S_ReturnChannel(schan);
-		}
-		else
-		{
-			schan->ChanFlags |= CHAN_EVICTED;
-			schan->SysChannel = NULL;
-		}
+		S_ChannelEnded(schan);
 	}
 	return FMOD_OK;
 }
@@ -2083,52 +2039,18 @@ float F_CALLBACK FMODSoundRenderer::RolloffCallback(FMOD_CHANNEL *channel, float
 {
 	FMOD::Channel *chan = (FMOD::Channel *)channel;
 	FSoundChan *schan;
-	FRolloffInfo *rolloff;
 
 	if (GRolloff != NULL)
 	{
-		rolloff = GRolloff;
-		distance *= GDistScale;
+		return S_GetRolloff(GRolloff, distance * GDistScale);
 	}
 	else if (chan->getUserData((void **)&schan) == FMOD_OK && schan != NULL)
 	{
-		rolloff = &schan->Rolloff;
-		distance *= schan->DistanceScale;
+		return S_GetRolloff(&schan->Rolloff, distance * schan->DistanceScale);
 	}
 	else
 	{
 		return 0;
-	}
-	if (rolloff == NULL)
-	{
-		return 0;
-	}
-
-	if (distance <= rolloff->MinDistance)
-	{
-		return 1;
-	}
-	if (rolloff->RolloffType == ROLLOFF_Log)
-	{ // Logarithmic rolloff has no max distance where it goes silent.
-		return rolloff->MinDistance / (rolloff->MinDistance + rolloff->RolloffFactor * (distance - rolloff->MinDistance));
-	}
-	if (distance >= rolloff->MaxDistance)
-	{
-		return 0;
-	}
-
-	float volume = (rolloff->MaxDistance - distance) / (rolloff->MaxDistance - rolloff->MinDistance);
-	if (rolloff->RolloffType == ROLLOFF_Custom && S_SoundCurve != NULL)
-	{
-		volume = S_SoundCurve[int(S_SoundCurveSize * (1 - volume))] / 127.f;
-	}
-	if (rolloff->RolloffType == ROLLOFF_Linear)
-	{
-		return volume;
-	}
-	else
-	{
-		return (powf(10.f, volume) - 1.f) / 9.f;
 	}
 }
 

@@ -137,9 +137,16 @@ public:
 		// ambient sounds to specify a default minimum period.
 		return 250;
 	}
+	unsigned int GetSampleLength(SoundHandle sfx)
+	{
+		return 0;
+	}
 	float GetOutputRate()
 	{
 		return 11025;	// Lies!
+	}
+	void StopChannel(FSoundChan *chan)
+	{
 	}
 
 	// Streaming sounds.
@@ -160,15 +167,6 @@ public:
 	FSoundChan *StartSound3D (SoundHandle sfx, SoundListener *listener, float vol, FRolloffInfo *rolloff, float distscale, int pitch, int priority, const FVector3 &pos, const FVector3 &vel, int channum, int chanflags, FSoundChan *reuse_chan)
 	{
 		return NULL;
-	}
-
-	// Stops a sound channel.
-	void StopSound (FSoundChan *chan)
-	{
-		if (chan != NULL)
-		{
-			S_ReturnChannel(chan);
-		}
 	}
 
 	// Returns position of sound on this channel, in samples.

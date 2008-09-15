@@ -1,3 +1,13 @@
+September 15, 2008  (Changes by Graf Zahl)
+- Moved some more high level sound logic out of FMODSoundRenderer:
+  The rolloff and channel ended callbacks now call functions in s_sound.cpp
+  instead of working on the data itself and GSnd->StopSound has been replaced
+  with S_StopChannel.
+- Changed compilation for g_doom, g_heretic, g_hexen and g_strife folders so 
+  that all files are included by a central one instead of compiling each one 
+  separately. This speeds up the compilation process by 25% when doing a 
+  complete rebuild in Visual C.
+
 September 14, 2008  (Changes by Graf Zahl)
 - Cleaned up some include dependencies.
 - fixed: For Chex Quest some CVars were initialized to Heretic's default.

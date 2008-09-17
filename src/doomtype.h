@@ -170,6 +170,14 @@ struct PalEntry
 #endif
 };
 
+// Screenshot buffer image data types
+enum ESSType
+{
+	SS_PAL,
+	SS_RGB,
+	SS_BGRA
+};
+
 #ifndef M_PI
 #define M_PI		3.14159265358979323846	// matches value in gcc v2 math.h
 #endif

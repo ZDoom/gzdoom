@@ -1,3 +1,13 @@
+September 16, 2008  (Changes by Graf Zahl)
+- Changed: Replaced weapons should not be given by generic cheats, only
+  when explicitly giving them.
+- Changed 'give weapon' cheat so that in single player it only gives weapons
+  belonging to the current game or are placed in a weapon slot to avoid
+  giving the Chex Quest weapons in Doom and vice versa.
+- Fixed: The texture manager must be the first thing to be initialized
+  because MAPINFO and DECORATE both can reference textures and letting them
+  create their own textures is not safe.
+
 September 15, 2008  (Changes by Graf Zahl)
 - Separated low level sound code from all high level dependencies.
 - Separated low level sound channel class from high level class which now

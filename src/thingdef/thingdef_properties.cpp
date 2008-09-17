@@ -1893,19 +1893,15 @@ static void InventoryAmount (FScanner &sc, AInventory *defaults, Baggage &bag)
 static void InventoryIcon (FScanner &sc, AInventory *defaults, Baggage &bag)
 {
 	sc.MustGetString();
-	defaults->Icon = TexMan.AddPatch (sc.String);
+	defaults->Icon = TexMan.CheckForTexture(sc.String, FTexture::TEX_MiscPatch);
 	if (!defaults->Icon.isValid())
 	{
-		defaults->Icon = TexMan.AddPatch (sc.String, ns_sprites);
-		if (!defaults->Icon.isValid())
+		// Don't print warnings if the item is for another game or if this is a shareware IWAD. 
+		// Strife's teaser doesn't contain all the icon graphics of the full game.
+		if ((bag.Info->GameFilter == GAME_Any || bag.Info->GameFilter & gameinfo.gametype) &&
+			!(gameinfo.flags&GI_SHAREWARE) && Wads.GetLumpFile(sc.LumpNum) != 0)
 		{
-			// Don't print warnings if the item is for another game or if this is a shareware IWAD. 
-			// Strife's teaser doesn't contain all the icon graphics of the full game.
-			if ((bag.Info->GameFilter == GAME_Any || bag.Info->GameFilter & gameinfo.gametype) &&
-				!(gameinfo.flags&GI_SHAREWARE) && Wads.GetLumpFile(sc.LumpNum) != 0)
-			{
-				Printf("Icon '%s' for '%s' not found\n", sc.String, bag.Info->Class->TypeName.GetChars());
-			}
+			Printf("Icon '%s' for '%s' not found\n", sc.String, bag.Info->Class->TypeName.GetChars());
 		}
 	}
 }
@@ -2460,14 +2456,10 @@ static void PlayerMorphWeapon (FScanner &sc, APlayerPawn *defaults, Baggage &bag
 static void PlayerScoreIcon (FScanner &sc, APlayerPawn *defaults, Baggage &bag)
 {
 	sc.MustGetString ();
-	defaults->ScoreIcon = TexMan.AddPatch (sc.String);
+	defaults->ScoreIcon = TexMan.CheckForTexture(sc.String, FTexture::TEX_MiscPatch);
 	if (!defaults->ScoreIcon.isValid())
 	{
-		defaults->ScoreIcon = TexMan.AddPatch (sc.String, ns_sprites);
-		if (!defaults->ScoreIcon.isValid())
-		{
-			Printf("Icon '%s' for '%s' not found\n", sc.String, bag.Info->Class->TypeName.GetChars ());
-		}
+		Printf("Icon '%s' for '%s' not found\n", sc.String, bag.Info->Class->TypeName.GetChars ());
 	}
 }
 

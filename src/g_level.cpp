@@ -832,7 +832,7 @@ static void G_DoParseMapInfo (int lump)
 			SetLevelNum (levelinfo, levelinfo->levelnum);	// Wipe out matching levelnums from other maps.
 			if (levelinfo->pname[0] != 0)
 			{
-				if (!TexMan.AddPatch(levelinfo->pname).Exists())
+				if (!TexMan.CheckForTexture(levelinfo->pname, FTexture::TEX_MiscPatch).Exists())
 				{
 					levelinfo->pname[0] = 0;
 				}

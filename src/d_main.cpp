@@ -2481,6 +2481,9 @@ void D_DoomMain (void)
 		StartScreen->AppendStatusLine(temp);
 	}
 
+	Printf ("Texman.Init: Init texture manager.\n", GameNames[gameinfo.gametype]);
+	TexMan.Init();
+
 	// [RH] Parse through all loaded mapinfo lumps
 	Printf ("G_ParseMapInfo: Load map definitions.\n");
 	G_ParseMapInfo ();

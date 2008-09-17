@@ -62,12 +62,7 @@ void FImageCollection::Add (const char **patchNames, int numPatches, int namespc
 
 	for (int i = 0; i < numPatches; ++i)
 	{
-		FTextureID picnum = TexMan.AddPatch (patchNames[i], namespc, true);
-
-		if (!picnum.Exists() && namespc != ns_sprites)
-		{
-			picnum = TexMan.AddPatch (patchNames[i], ns_sprites);
-		}
+		FTextureID picnum = TexMan.CheckForTexture(patchNames[i], namespc);
 		ImageMap[OldCount + i] = picnum;
 	}
 }

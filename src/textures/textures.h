@@ -299,7 +299,6 @@ public:
 
 	FTextureID CreateTexture (int lumpnum, int usetype=FTexture::TEX_Any);	// Also calls AddTexture
 	FTextureID AddTexture (FTexture *texture);
-	FTextureID AddPatch (const char *patchname, int namespc=0, bool tryany = false);
 
 	void LoadTextureX(int wadnum);
 	void AddTexturesForWad(int wadnum);

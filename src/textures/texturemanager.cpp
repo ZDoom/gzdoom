@@ -332,33 +332,6 @@ void FTextureManager::ReplaceTexture (FTextureID picnum, FTexture *newtexture, b
 
 //==========================================================================
 //
-// FTextureManager :: AddPatch
-//
-//==========================================================================
-
-FTextureID FTextureManager::AddPatch (const char *patchname, int namespc, bool tryany)
-{
-	if (patchname == NULL)
-	{
-		return FTextureID(-1);
-	}
-	FTextureID texnum = CheckForTexture (patchname, FTexture::TEX_MiscPatch, tryany);
-
-	if (texnum.Exists())
-	{
-		return texnum;
-	}
-	int lumpnum = Wads.CheckNumForName (patchname, namespc==ns_global? ns_graphics:namespc);
-	if (lumpnum < 0)
-	{
-		return FTextureID(-1);
-	}
-
-	return CreateTexture (lumpnum, FTexture::TEX_MiscPatch);
-}
-
-//==========================================================================
-//
 // FTextureManager :: AddGroup
 //
 //==========================================================================
@@ -441,11 +414,6 @@ void FTextureManager::AddHiresTextures (int wadnum)
 				int amount = ListTextures(name, tlist);
 				if (amount == 0)
 				{
-					FTextureID oldtex = AddPatch(name);
-					if (oldtex.Exists()) tlist.Push(oldtex);
-				}
-				if (tlist.Size() == 0)
-				{
 					// A texture with this name does not yet exist
 					FTexture * newtex = FTexture::CreateTexture (firsttx, FTexture::TEX_Any);
 					if (newtex != NULL)
@@ -519,11 +487,6 @@ void FTextureManager::LoadTextureDefs(int wadnum, const char *lumpname)
 
 					tlist.Clear();
 					int amount = ListTextures(sc.String, tlist);
-					if (amount == 0)
-					{
-						FTextureID oldtex = AddPatch(sc.String);
-						if (oldtex.Exists()) tlist.Push(FTextureID(oldtex));
-					}
 					FName texname = sc.String;
 
 					sc.MustGetString();
@@ -623,6 +586,10 @@ void FTextureManager::LoadTextureDefs(int wadnum, const char *lumpname)
 				else if (sc.Compare("flat"))
 				{
 					ParseXTexture(sc, FTexture::TEX_Flat);
+				}
+				else if (sc.Compare("graphic"))
+				{
+					ParseXTexture(sc, FTexture::TEX_MiscPatch);
 				}
 			}
 		}
@@ -843,6 +810,8 @@ void FTextureManager::SortTexturesByType(int start, int end)
 
 void FTextureManager::Init()
 {
+	FTexture::InitGrayMap();
+
 	int wadcnt = Wads.GetNumWads();
 	for(int i = 0; i< wadcnt; i++)
 	{

@@ -36,8 +36,6 @@
 #include <stdio.h>
 #include "doomtype.h"
 
-enum ESSType;
-
 // PNG Writing --------------------------------------------------------------
 
 // Start writing an 8-bit palettized PNG file.

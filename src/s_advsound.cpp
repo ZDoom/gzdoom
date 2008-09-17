@@ -342,7 +342,10 @@ int S_PickReplacement (int refid)
 
 unsigned int S_GetMSLength(FSoundID sound)
 {
-	if (sound < 0 || sound >= S_sfx.Size()) return 0;
+	if ((unsigned int)sound >= S_sfx.Size())
+	{
+		return 0;
+	}
 
 	sfxinfo_t *sfx = &S_sfx[sound];
 

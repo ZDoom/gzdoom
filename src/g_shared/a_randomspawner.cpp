@@ -23,7 +23,7 @@ class ARandomSpawner : public AActor
 
 	void PostBeginPlay()
 	{
-		AActor *newmobj;
+		AActor *newmobj = NULL;
 		FDropItem *di;   // di will be our drop item list iterator
 		FDropItem *drop; // while drop stays as the reference point.
 		int n=0;

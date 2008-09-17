@@ -41,7 +41,7 @@
 
 
 FWarpTexture::FWarpTexture (FTexture *source)
-: SourcePic (source), Pixels (0), Spans (0), GenTime (0), Speed (1.f)
+: GenTime (0), SourcePic (source), Pixels (0), Spans (0), Speed (1.f)
 {
 	CopySize(source);
 	bNoDecals = source->bNoDecals;

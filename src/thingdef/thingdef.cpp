@@ -409,7 +409,8 @@ static void ParseActionDef (FScanner &sc, PClass *cls)
 	if (hasdefaults)
 	{
 		sym->defaultparameterindex = StateParameters.Size();
-		for(int i = 0; i < DefaultParams.Size(); i++) StateParameters.Push(DefaultParams[i]);
+		for(unsigned int i = 0; i < DefaultParams.Size(); i++)
+			StateParameters.Push(DefaultParams[i]);
 	}
 	else
 	{

@@ -114,13 +114,6 @@ enum
 	HUD_HorizCenter
 };
 
-// Screenshot buffer image data types
-enum ESSType
-{
-	SS_PAL,
-	SS_RGB,
-	SS_BGRA
-};
 
 class FFont;
 struct FRemapTable;

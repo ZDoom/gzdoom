@@ -346,7 +346,7 @@ bool ST_Responder (event_t *ev)
 		static int counts[] = { countof(DoomCheats), countof(HereticCheats), countof(HexenCheats), 
 								countof(StrifeCheats), countof(ChexCheats), countof(SpecialCheats) };
 
-		for (int i=0; i<countof(cheatlists); i++)
+		for (size_t i=0; i<countof(cheatlists); i++)
 		{
 			if (CheatCheckList(ev, cheatlists[i], counts[i])) return true;
 		}

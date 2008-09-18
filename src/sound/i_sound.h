@@ -141,7 +141,7 @@ void I_InitSound ();
 void I_ShutdownSound ();
 
 void S_ChannelEnded(FISoundChannel *schan);
-float S_GetRolloff(FRolloffInfo *rolloff, float distance);
+float S_GetRolloff(FRolloffInfo *rolloff, float distance, bool logarithmic);
 FISoundChannel *S_GetChannel(void *syschan);
 
 extern ReverbContainer *DefaultEnvironments[26];

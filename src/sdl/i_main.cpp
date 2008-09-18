@@ -54,6 +54,9 @@
 #include "errors.h"
 #include "version.h"
 #include "w_wad.h"
+#include "g_level.h"
+#include "r_state.h"
+#include "cmdlib.h"
 
 // MACROS ------------------------------------------------------------------
 

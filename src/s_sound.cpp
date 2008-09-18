@@ -1778,7 +1778,7 @@ static void S_SetListener(SoundListener &listener, AActor *listenactor)
 //
 //==========================================================================
 
-float S_GetRolloff(FRolloffInfo *rolloff, float distance)
+float S_GetRolloff(FRolloffInfo *rolloff, float distance, bool logarithmic)
 {
 	if (rolloff == NULL)
 	{
@@ -1803,13 +1803,27 @@ float S_GetRolloff(FRolloffInfo *rolloff, float distance)
 	{
 		volume = S_SoundCurve[int(S_SoundCurveSize * (1 - volume))] / 127.f;
 	}
-	if (rolloff->RolloffType == ROLLOFF_Linear)
+	if (logarithmic)
 	{
-		return volume;
+		if (rolloff->RolloffType == ROLLOFF_Linear)
+		{
+			return volume;
+		}
+		else
+		{
+			return float((pow(10.f, volume) - 1.) / 9.);
+		}
 	}
 	else
 	{
-		return (powf(10.f, volume) - 1.f) / 9.f;
+		if (rolloff->RolloffType == ROLLOFF_Linear)
+		{
+			return float(log10(9. * volume + 1.));
+		}
+		else
+		{
+			return volume;
+		}
 	}
 }
 

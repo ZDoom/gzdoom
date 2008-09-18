@@ -2040,11 +2040,11 @@ float F_CALLBACK FMODSoundRenderer::RolloffCallback(FMOD_CHANNEL *channel, float
 
 	if (GRolloff != NULL)
 	{
-		return S_GetRolloff(GRolloff, distance * GDistScale);
+		return S_GetRolloff(GRolloff, distance * GDistScale, true);
 	}
 	else if (chan->getUserData((void **)&schan) == FMOD_OK && schan != NULL)
 	{
-		return S_GetRolloff(&schan->Rolloff, distance * schan->DistanceScale);
+		return S_GetRolloff(&schan->Rolloff, distance * schan->DistanceScale, true);
 	}
 	else
 	{

@@ -42,6 +42,7 @@
 #include "st_start.h"
 #include "doomdef.h"
 #include "i_system.h"
+#include "c_cvars.h"
 
 // MACROS ------------------------------------------------------------------
 

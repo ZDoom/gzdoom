@@ -57,6 +57,8 @@
 #include "g_level.h"
 #include "r_state.h"
 #include "cmdlib.h"
+#include "r_main.h"
+#include "doomstat.h"
 
 // MACROS ------------------------------------------------------------------
 

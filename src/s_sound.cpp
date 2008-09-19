@@ -1811,7 +1811,7 @@ float S_GetRolloff(FRolloffInfo *rolloff, float distance, bool logarithmic)
 		}
 		else
 		{
-			return float((pow(10.f, volume) - 1.) / 9.);
+			return float((powf(10.f, volume) - 1.) / 9.);
 		}
 	}
 	else

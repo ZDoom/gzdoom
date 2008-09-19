@@ -40,6 +40,7 @@
 
 #include "SDL.h"
 #include "doomtype.h"
+#include "doomstat.h"
 #include "version.h"
 #include "doomdef.h"
 #include "cmdlib.h"
@@ -60,6 +61,9 @@
 #include "stats.h"
 #include "hardware.h"
 #include "gameconfigfile.h"
+
+#include "m_fixed.h"
+#include "g_level.h"
 
 EXTERN_CVAR (String, language)
 

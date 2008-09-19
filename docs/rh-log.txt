@@ -1,3 +1,8 @@
+September 19, 2008  (Changes by Graf Zahl)
+- Fixed: The crosshair must be initialized after the texture manager because
+  on the fly texture creation for graphics patches is no longer supported.
+- Fixed a few Linux compile errors.
+
 September 16, 2008  (Changes by Graf Zahl)
 - Changed: Replaced weapons should not be given by generic cheats, only
   when explicitly giving them.

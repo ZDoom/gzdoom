@@ -94,7 +94,7 @@ CUSTOM_CVAR (Bool, st_scale, true, CVAR_ARCHIVE)
 	}
 }
 
-CUSTOM_CVAR (Int, crosshair, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CUSTOM_CVAR (Int, crosshair, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOINITCALL)
 {
 	int num = self;
 	char name[16], size;

@@ -2484,6 +2484,9 @@ void D_DoomMain (void)
 	Printf ("Texman.Init: Init texture manager.\n");
 	TexMan.Init();
 
+	// Now that all textues have been loaded the crosshair can be initialized.
+	crosshair.Callback ();
+
 	// [RH] Parse through all loaded mapinfo lumps
 	Printf ("G_ParseMapInfo: Load map definitions.\n");
 	G_ParseMapInfo ();

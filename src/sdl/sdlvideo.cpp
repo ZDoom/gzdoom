@@ -9,7 +9,7 @@
 #include "v_video.h"
 #include "v_pfx.h"
 #include "stats.h"
-
+#include "v_palette.h"
 #include "sdlvideo.h"
 
 #include <SDL.h>

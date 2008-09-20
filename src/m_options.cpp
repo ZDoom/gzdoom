@@ -2976,6 +2976,7 @@ void UpdateJoystickMenu ()
 				JoystickItems[line].type = discrete;
 				JoystickItems[line].a.intcvar = cvars[i];
 				JoystickItems[line].b.numvalues = 6.f;
+				JoystickItems[line].d.graycheck = NULL;
 				JoystickItems[line].e.values = JoyAxisMapNames;
 				line++;
 			}

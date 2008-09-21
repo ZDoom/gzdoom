@@ -1,4 +1,6 @@
 September 21, 2008  (Changes by Graf Zahl)
+- did some code cleanup and reorganization in thingdef.cpp.
+- Replaced the translation parser for TEXTURES with FRemapTable::AddToTranslation.
 - To get the game name the screenshot code might as well use the globally
   available GameNames array instead of creating its own list.
 - Moved backpack names for cheat into gameinfo.

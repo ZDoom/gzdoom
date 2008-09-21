@@ -387,6 +387,40 @@ void AddStateDefines(const FStateLabels *list)
 
 //==========================================================================
 //
+// RetargetState(Pointer)s
+//
+// These functions are used when a goto follows one or more labels.
+// Because multiple labels are permitted to occur consecutively with no
+// intervening states, it is not enough to remember the last label defined
+// and adjust it. So these functions search for all labels that point to
+// the current position in the state array and give them a copy of the
+// target string instead.
+//
+//==========================================================================
+
+static void RetargetStatePointers (intptr_t count, const char *target, TArray<FStateDefine> & statelist)
+{
+	for(unsigned i = 0;i<statelist.Size(); i++)
+	{
+		if (statelist[i].State == (FState*)count)
+		{
+			statelist[i].State = target == NULL ? NULL : (FState *)copystring (target);
+		}
+		if (statelist[i].Children.Size() > 0)
+		{
+			RetargetStatePointers(count, target, statelist[i].Children);
+		}
+	}
+}
+
+static void RetargetStates (intptr_t count, const char *target)
+{
+	RetargetStatePointers(count, target, StateLabels);
+}
+
+
+//==========================================================================
+//***
 // PrepareStateParameters
 // creates an empty parameter list for a parameterized function call
 //
@@ -403,7 +437,7 @@ int PrepareStateParameters(FState * state, int numparams)
 }
 
 //==========================================================================
-//
+//***
 // DoActionSpecials
 // handles action specials as code pointers
 //
@@ -457,40 +491,7 @@ bool DoActionSpecials(FScanner &sc, FState & state, bool multistate, int * state
 }
 
 //==========================================================================
-//
-// RetargetState(Pointer)s
-//
-// These functions are used when a goto follows one or more labels.
-// Because multiple labels are permitted to occur consecutively with no
-// intervening states, it is not enough to remember the last label defined
-// and adjust it. So these functions search for all labels that point to
-// the current position in the state array and give them a copy of the
-// target string instead.
-//
-//==========================================================================
-
-static void RetargetStatePointers (intptr_t count, const char *target, TArray<FStateDefine> & statelist)
-{
-	for(unsigned i = 0;i<statelist.Size(); i++)
-	{
-		if (statelist[i].State == (FState*)count)
-		{
-			statelist[i].State = target == NULL ? NULL : (FState *)copystring (target);
-		}
-		if (statelist[i].Children.Size() > 0)
-		{
-			RetargetStatePointers(count, target, statelist[i].Children);
-		}
-	}
-}
-
-static void RetargetStates (intptr_t count, const char *target)
-{
-	RetargetStatePointers(count, target, StateLabels);
-}
-
-//==========================================================================
-//
+//***
 // Reads a state label that may contain '.'s.
 // processes a state block
 //
@@ -515,7 +516,7 @@ static FString ParseStateString(FScanner &sc)
 }
 
 //==========================================================================
-//
+//***
 // ParseStates
 // parses a state block
 //
@@ -821,7 +822,7 @@ endofstate:
 //
 //==========================================================================
 
-static FState *ResolveGotoLabel (FScanner &sc, AActor *actor, const PClass *mytype, char *name)
+static FState *ResolveGotoLabel (AActor *actor, const PClass *mytype, char *name)
 {
 	const PClass *type=mytype;
 	FState *state;
@@ -849,15 +850,15 @@ static FState *ResolveGotoLabel (FScanner &sc, AActor *actor, const PClass *myty
 			const PClass *stype = PClass::FindClass (classname);
 			if (stype == NULL)
 			{
-				sc.ScriptError ("%s is an unknown class.", classname);
+				I_Error ("%s is an unknown class.", classname);
 			}
 			if (!stype->IsDescendantOf (RUNTIME_CLASS(AActor)))
 			{
-				sc.ScriptError ("%s is not an actor class, so it has no states.", stype->TypeName.GetChars());
+				I_Error ("%s is not an actor class, so it has no states.", stype->TypeName.GetChars());
 			}
 			if (!stype->IsAncestorOf (type))
 			{
-				sc.ScriptError ("%s is not derived from %s so cannot access its states.",
+				I_Error ("%s is not derived from %s so cannot access its states.",
 					type->TypeName.GetChars(), stype->TypeName.GetChars());
 			}
 			if (type != stype)
@@ -887,7 +888,7 @@ static FState *ResolveGotoLabel (FScanner &sc, AActor *actor, const PClass *myty
 	}
 	else if (v != 0)
 	{
-		sc.ScriptError ("Attempt to get invalid state %s from actor %s.", label, type->TypeName.GetChars());
+		I_Error ("Attempt to get invalid state %s from actor %s.", label, type->TypeName.GetChars());
 	}
 	delete[] namestart;		// free the allocated string buffer
 	return state;
@@ -922,15 +923,15 @@ static void FixStatePointers (FActorInfo *actor, TArray<FStateDefine> & list)
 //
 //==========================================================================
 
-static void FixStatePointersAgain (FScanner &sc, FActorInfo *actor, AActor *defaults, TArray<FStateDefine> & list)
+static void FixStatePointersAgain (FActorInfo *actor, AActor *defaults, TArray<FStateDefine> & list)
 {
 	for(unsigned i=0;i<list.Size(); i++)
 	{
 		if (list[i].State != NULL && FState::StaticFindStateOwner (list[i].State, actor) == NULL)
 		{ // It's not a valid state, so it must be a label string. Resolve it.
-			list[i].State = ResolveGotoLabel (sc, defaults, actor->Class, (char *)list[i].State);
+			list[i].State = ResolveGotoLabel (defaults, actor->Class, (char *)list[i].State);
 		}
-		if (list[i].Children.Size() > 0) FixStatePointersAgain(sc, actor, defaults, list[i].Children);
+		if (list[i].Children.Size() > 0) FixStatePointersAgain(actor, defaults, list[i].Children);
 	}
 }
 
@@ -942,7 +943,7 @@ static void FixStatePointersAgain (FScanner &sc, FActorInfo *actor, AActor *defa
 //
 //==========================================================================
 
-int FinishStates (FScanner &sc, FActorInfo *actor, AActor *defaults, Baggage &bag)
+int FinishStates (FActorInfo *actor, AActor *defaults)
 {
 	static int c=0;
 	int count = StateArray.Size();
@@ -985,7 +986,7 @@ int FinishStates (FScanner &sc, FActorInfo *actor, AActor *defaults, Baggage &ba
 				}
 				else	// goto
 				{
-					realstates[i].NextState = ResolveGotoLabel (sc, defaults, bag.Info->Class, (char *)realstates[i].NextState);
+					realstates[i].NextState = ResolveGotoLabel (defaults, actor->Class, (char *)realstates[i].NextState);
 				}
 			}
 		}
@@ -993,7 +994,7 @@ int FinishStates (FScanner &sc, FActorInfo *actor, AActor *defaults, Baggage &ba
 	StateArray.Clear ();
 
 	// Fix state pointers that are gotos
-	FixStatePointersAgain (sc, actor, defaults, StateLabels);
+	FixStatePointersAgain (actor, defaults, StateLabels);
 
 	return count;
 }

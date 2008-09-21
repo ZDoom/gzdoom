@@ -2013,7 +2013,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, startitem, S_i, PlayerPawn)
 	di->amount = 1;
 	if (PROP_PARM_COUNT > 1)
 	{
-		PROP_INT_PARM(amt, 0);
+		PROP_INT_PARM(amt, 1);
 		di->amount = amt;
 	}
 	di->Next = bag.DropItemList;

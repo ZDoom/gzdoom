@@ -953,16 +953,11 @@ void FTextureManager::AddTexturesLumps (int lump1, int lump2, int patcheslump)
 }
 
 
-static bool Check(char *& range,  char c)
-{
-	while (isspace(*range)) range++;
-	if (*range==c)
-	{
-		range++;
-		return true;
-	}
-	return false;
-}
+//==========================================================================
+//
+// 
+//
+//==========================================================================
 
 void FMultiPatchTexture::ParsePatch(FScanner &sc, TexPart & part)
 {
@@ -1056,46 +1051,7 @@ void FMultiPatchTexture::ParsePatch(FScanner &sc, TexPart & part)
 					do
 					{
 						sc.MustGetString();
-
-						char *range = sc.String;
-						int start,end;
-
-						start=strtol(range, &range, 10);
-						if (!Check(range, ':')) return;
-						end=strtol(range, &range, 10);
-						if (!Check(range, '=')) return;
-						if (!Check(range, '['))
-						{
-							int pal1,pal2;
-
-							pal1=strtol(range, &range, 10);
-							if (!Check(range, ':')) return;
-							pal2=strtol(range, &range, 10);
-
-							part.Translation->AddIndexRange(start, end, pal1, pal2);
-						}
-						else
-						{ 
-							// translation using RGB values
-							int r1,g1,b1,r2,g2,b2;
-
-							r1=strtol(range, &range, 10);
-							if (!Check(range, ',')) return;
-							g1=strtol(range, &range, 10);
-							if (!Check(range, ',')) return;
-							b1=strtol(range, &range, 10);
-							if (!Check(range, ']')) return;
-							if (!Check(range, ':')) return;
-							if (!Check(range, '[')) return;
-							r2=strtol(range, &range, 10);
-							if (!Check(range, ',')) return;
-							g2=strtol(range, &range, 10);
-							if (!Check(range, ',')) return;
-							b2=strtol(range, &range, 10);
-							if (!Check(range, ']')) return;
-
-							part.Translation->AddColorRange(start, end, r1, g1, b1, r2, g2, b2);
-						}
+						part.Translation->AddToTranslation(sc.String);
 					}
 					while (sc.CheckString(","));
 				}
@@ -1161,6 +1117,11 @@ void FMultiPatchTexture::ParsePatch(FScanner &sc, TexPart & part)
 	}
 }
 
+//==========================================================================
+//
+// Constructor for text based multipatch definitions
+//
+//==========================================================================
 
 FMultiPatchTexture::FMultiPatchTexture (FScanner &sc, int usetype)
 : Pixels (0), Spans(0), Parts(0), bRedirect(false), bTranslucentPatches(false)

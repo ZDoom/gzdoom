@@ -106,7 +106,7 @@ void InstallStates(FActorInfo *info, AActor *defaults);
 void MakeStateDefines(const FStateLabels *list);
 void AddStateDefines(const FStateLabels *list);
 FState *P_GetState(AActor *self, FState *CallingState, int offset);
-int FinishStates (FScanner &sc, FActorInfo *actor, AActor *defaults, Baggage &bag);
+int FinishStates (FActorInfo *actor, AActor *defaults);
 int ParseStates(FScanner &sc, FActorInfo *actor, AActor *defaults, Baggage &bag);
 FState *CheckState(FScanner &sc, PClass *type);
 

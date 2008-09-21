@@ -526,7 +526,14 @@ void FinishActor(FScanner &sc, FActorInfo *info, Baggage &bag)
 {
 	AActor *defaults = (AActor*)info->Class->Defaults;
 
-	FinishStates (sc, info, defaults, bag);
+	try
+	{
+		FinishStates (info, defaults);
+	}
+	catch (CRecoverableError &err)
+	{
+		sc.ScriptError(err.GetMessage());
+	}
 	InstallStates (info, defaults);
 	if (bag.DropItemSet)
 	{

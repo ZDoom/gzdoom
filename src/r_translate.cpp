@@ -43,6 +43,9 @@
 #include "colormatcher.h"
 #include "d_netinf.h"
 #include "v_palette.h"
+#include "sc_man.h"
+#include "doomerrors.h"
+#include "i_system.h"
 
 #include "gi.h"
 #include "stats.h"
@@ -82,10 +85,22 @@ FRemapTable::FRemapTable(int count)
 	// the caller will do that next, if only by calling MakeIdentity().
 }
 
+//----------------------------------------------------------------------------
+//
+//
+//
+//----------------------------------------------------------------------------
+
 FRemapTable::~FRemapTable()
 {
 	Free();
 }
+
+//----------------------------------------------------------------------------
+//
+//
+//
+//----------------------------------------------------------------------------
 
 void FRemapTable::Alloc(int count)
 {
@@ -95,6 +110,12 @@ void FRemapTable::Alloc(int count)
 	Native = NULL;
 	NumEntries = count;
 }
+
+//----------------------------------------------------------------------------
+//
+//
+//
+//----------------------------------------------------------------------------
 
 void FRemapTable::Free()
 {
@@ -108,6 +129,12 @@ void FRemapTable::Free()
 	}
 }
 
+//----------------------------------------------------------------------------
+//
+//
+//
+//----------------------------------------------------------------------------
+
 FRemapTable::FRemapTable(const FRemapTable &o)
 {
 	Remap = NULL;
@@ -115,6 +142,12 @@ FRemapTable::FRemapTable(const FRemapTable &o)
 	NumEntries = 0;
 	operator= (o);
 }
+
+//----------------------------------------------------------------------------
+//
+//
+//
+//----------------------------------------------------------------------------
 
 FRemapTable &FRemapTable::operator=(const FRemapTable &o)
 {
@@ -134,6 +167,12 @@ FRemapTable &FRemapTable::operator=(const FRemapTable &o)
 	return *this;
 }
 
+//----------------------------------------------------------------------------
+//
+//
+//
+//----------------------------------------------------------------------------
+
 bool FRemapTable::operator==(const FRemapTable &o)
 {
 	// Two translations are identical when they have the same amount of colors
@@ -142,6 +181,12 @@ bool FRemapTable::operator==(const FRemapTable &o)
 	if (o.NumEntries != NumEntries) return false;
 	return !memcmp(o.Palette, Palette, NumEntries * sizeof(*Palette));
 }
+
+//----------------------------------------------------------------------------
+//
+//
+//
+//----------------------------------------------------------------------------
 
 void FRemapTable::Serialize(FArchive &arc)
 {
@@ -167,6 +212,11 @@ void FRemapTable::Serialize(FArchive &arc)
 	}
 }
 
+//----------------------------------------------------------------------------
+//
+//
+//
+//----------------------------------------------------------------------------
 
 void FRemapTable::MakeIdentity()
 {
@@ -186,6 +236,12 @@ void FRemapTable::MakeIdentity()
 	}
 }
 
+//----------------------------------------------------------------------------
+//
+//
+//
+//----------------------------------------------------------------------------
+
 bool FRemapTable::IsIdentity() const
 {
 	for (int j = 0; j < 256; ++j)
@@ -198,6 +254,12 @@ bool FRemapTable::IsIdentity() const
 	return true;
 }
 
+//----------------------------------------------------------------------------
+//
+//
+//
+//----------------------------------------------------------------------------
+
 void FRemapTable::KillNative()
 {
 	if (Native != NULL)
@@ -207,6 +269,12 @@ void FRemapTable::KillNative()
 	}
 }
 
+//----------------------------------------------------------------------------
+//
+//
+//
+//----------------------------------------------------------------------------
+
 void FRemapTable::UpdateNative()
 {
 	if (Native != NULL)
@@ -214,6 +282,12 @@ void FRemapTable::UpdateNative()
 		Native->Update();
 	}
 }
+
+//----------------------------------------------------------------------------
+//
+//
+//
+//----------------------------------------------------------------------------
 
 FNativePalette *FRemapTable::GetNative()
 {
@@ -223,6 +297,12 @@ FNativePalette *FRemapTable::GetNative()
 	}
 	return Native;
 }
+
+//----------------------------------------------------------------------------
+//
+//
+//
+//----------------------------------------------------------------------------
 
 void FRemapTable::AddIndexRange(int start, int end, int pal1, int pal2)
 {
@@ -249,6 +329,12 @@ void FRemapTable::AddIndexRange(int start, int end, int pal1, int pal2)
 		Palette[i].a = i==0? 0:255;
 	}
 }
+
+//----------------------------------------------------------------------------
+//
+//
+//
+//----------------------------------------------------------------------------
 
 void FRemapTable::AddColorRange(int start, int end, int _r1,int _g1, int _b1, int _r2, int _g2, int _b2)
 {
@@ -304,6 +390,160 @@ void FRemapTable::AddColorRange(int start, int end, int _r1,int _g1, int _b1, in
 	}
 }
 
+//----------------------------------------------------------------------------
+//
+//
+//
+//----------------------------------------------------------------------------
+
+void FRemapTable::AddToTranslation(const char * range)
+{
+	int start,end;
+	FScanner sc;
+
+	sc.OpenMem("translation", range, int(strlen(range)));
+	sc.SetCMode(true);
+
+	try
+	{
+		sc.MustGetToken(TK_IntConst);
+		start = sc.Number;
+		sc.MustGetToken(':');
+		sc.MustGetToken(TK_IntConst);
+		end = sc.Number;
+		sc.MustGetToken('=');
+		if (!sc.CheckToken('['))
+		{
+			int pal1,pal2;
+
+			sc.MustGetToken(TK_IntConst);
+			pal1 = sc.Number;
+			sc.MustGetToken(':');
+			sc.MustGetToken(TK_IntConst);
+			pal2 = sc.Number;
+			AddIndexRange(start, end, pal1, pal2);
+		}
+		else
+		{ 
+			// translation using RGB values
+			int r1,g1,b1,r2,g2,b2;
+
+			sc.MustGetToken(TK_IntConst);
+			r1 = sc.Number;
+			sc.MustGetToken(',');
+
+			sc.MustGetToken(TK_IntConst);
+			g1 = sc.Number;
+			sc.MustGetToken(',');
+
+			sc.MustGetToken(TK_IntConst);
+			b1 = sc.Number;
+			sc.MustGetToken(']');
+			sc.MustGetToken(':');
+			sc.MustGetToken('[');
+
+			sc.MustGetToken(TK_IntConst);
+			r2 = sc.Number;
+			sc.MustGetToken(',');
+
+			sc.MustGetToken(TK_IntConst);
+			g2 = sc.Number;
+			sc.MustGetToken(',');
+
+			sc.MustGetToken(TK_IntConst);
+			b2 = sc.Number;
+			sc.MustGetToken(']');
+
+			AddColorRange(start, end, r1, g1, b1, r2, g2, b2);
+		}
+	}
+	catch (CRecoverableError &err)
+	{
+		Printf("Error in translation '%s':\n%s\n", err.GetMessage());
+	}
+}
+
+//----------------------------------------------------------------------------
+//
+// Stores a copy of this translation in the DECORATE translation table
+//
+//----------------------------------------------------------------------------
+
+int FRemapTable::StoreTranslation()
+{
+	unsigned int i;
+
+	for (i = 0; i < translationtables[TRANSLATION_Decorate].Size(); i++)
+	{
+		if (*this == *translationtables[TRANSLATION_Decorate][i])
+		{
+			// A duplicate of this translation already exists
+			return TRANSLATION(TRANSLATION_Decorate, i);
+		}
+	}
+	if (translationtables[TRANSLATION_Decorate].Size() >= MAX_DECORATE_TRANSLATIONS)
+	{
+		I_Error("Too many DECORATE translations");
+	}
+	FRemapTable *newtrans = new FRemapTable;
+	*newtrans = *this;
+	i = translationtables[TRANSLATION_Decorate].Push(newtrans);
+	return TRANSLATION(TRANSLATION_Decorate, i);
+}
+
+
+//----------------------------------------------------------------------------
+//
+//
+//
+//----------------------------------------------------------------------------
+
+TArray<PalEntry> BloodTranslationColors;
+
+int CreateBloodTranslation(PalEntry color)
+{
+	unsigned int i;
+
+	if (BloodTranslationColors.Size() == 0)
+	{
+		// Don't use the first slot.
+		translationtables[TRANSLATION_Blood].Push(NULL);
+		BloodTranslationColors.Push(0);
+	}
+
+	for (i = 1; i < BloodTranslationColors.Size(); i++)
+	{
+		if (color.r == BloodTranslationColors[i].r &&
+			color.g == BloodTranslationColors[i].g &&
+			color.b == BloodTranslationColors[i].b)
+		{
+			// A duplicate of this translation already exists
+			return i;
+		}
+	}
+	if (BloodTranslationColors.Size() >= MAX_DECORATE_TRANSLATIONS)
+	{
+		I_Error("Too many blood colors");
+	}
+	FRemapTable *trans = new FRemapTable;
+	for (i = 0; i < 256; i++)
+	{
+		int bright = MAX(MAX(GPalette.BaseColors[i].r, GPalette.BaseColors[i].g), GPalette.BaseColors[i].b);
+		PalEntry pe = PalEntry(color.r*bright/255, color.g*bright/255, color.b*bright/255);
+		int entry = ColorMatcher.Pick(pe.r, pe.g, pe.b);
+
+		trans->Palette[i] = pe;
+		trans->Remap[i] = entry;
+	}
+	translationtables[TRANSLATION_Blood].Push(trans);
+	return BloodTranslationColors.Push(color);
+}
+
+//----------------------------------------------------------------------------
+//
+//
+//
+//----------------------------------------------------------------------------
 
 FRemapTable *TranslationToTable(int translation)
 {
@@ -323,6 +563,12 @@ FRemapTable *TranslationToTable(int translation)
 	return slots->operator[](index);
 }
 
+//----------------------------------------------------------------------------
+//
+//
+//
+//----------------------------------------------------------------------------
+
 static void PushIdentityTable(int slot)
 {
 	FRemapTable *table = new FRemapTable;
@@ -330,11 +576,14 @@ static void PushIdentityTable(int slot)
 	translationtables[slot].Push(table);
 }
 
+//----------------------------------------------------------------------------
 //
 // R_InitTranslationTables
 // Creates the translation tables to map the green color ramp to gray,
 // brown, red. Assumes a given structure of the PLAYPAL.
 //
+//----------------------------------------------------------------------------
+
 void R_InitTranslationTables ()
 {
 	int i, j;
@@ -508,6 +757,12 @@ void R_InitTranslationTables ()
 	}
 }
 
+//----------------------------------------------------------------------------
+//
+//
+//
+//----------------------------------------------------------------------------
+
 void R_DeinitTranslationTables()
 {
 	for (int i = 0; i < NUM_TRANSLATION_TABLES; ++i)
@@ -523,8 +778,13 @@ void R_DeinitTranslationTables()
 	}
 }
 
+//----------------------------------------------------------------------------
+//
 // [RH] Create a player's translation table based on a given mid-range color.
 // [GRB] Split to 2 functions (because of player setup menu)
+//
+//----------------------------------------------------------------------------
+
 static void SetRemap(FRemapTable *table, int i, float r, float g, float b)
 {
 	int ir = clamp (int(r * 255.f), 0, 255);
@@ -533,6 +793,12 @@ static void SetRemap(FRemapTable *table, int i, float r, float g, float b)
 	table->Remap[i] = ColorMatcher.Pick (ir, ig, ib);
 	table->Palette[i] = PalEntry(255, ir, ig, ib);
 }
+
+//----------------------------------------------------------------------------
+//
+//
+//
+//----------------------------------------------------------------------------
 
 static void R_CreatePlayerTranslation (float h, float s, float v, FPlayerSkin *skin, FRemapTable *table, FRemapTable *alttable)
 {
@@ -675,6 +941,12 @@ static void R_CreatePlayerTranslation (float h, float s, float v, FPlayerSkin *s
 	table->UpdateNative();
 }
 
+//----------------------------------------------------------------------------
+//
+//
+//
+//----------------------------------------------------------------------------
+
 void R_BuildPlayerTranslation (int player)
 {
 	float h, s, v;
@@ -687,6 +959,12 @@ void R_BuildPlayerTranslation (int player)
 		translationtables[TRANSLATION_PlayersExtra][player]);
 }
 
+//----------------------------------------------------------------------------
+//
+//
+//
+//----------------------------------------------------------------------------
+
 void R_GetPlayerTranslation (int color, FPlayerSkin *skin, FRemapTable *table)
 {
 	float h, s, v;
@@ -696,3 +974,4 @@ void R_GetPlayerTranslation (int color, FPlayerSkin *skin, FRemapTable *table)
 
 	R_CreatePlayerTranslation (h, s, v, skin, table, NULL);
 }
+

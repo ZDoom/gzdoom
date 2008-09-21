@@ -38,6 +38,8 @@ struct FRemapTable
 	void Serialize(FArchive &ar);
 	void AddIndexRange(int start, int end, int pal1, int pal2);
 	void AddColorRange(int start, int end, int r1,int g1, int b1, int r2, int g2, int b2);
+	void AddToTranslation(const char * range);
+	int StoreTranslation();
 
 	BYTE *Remap;				// For the software renderer
 	PalEntry *Palette;			// The ideal palette this maps to
@@ -98,6 +100,10 @@ void R_DeinitTranslationTables();
 void R_BuildPlayerTranslation (int player);
 
 extern const BYTE IcePalette[16][3];
+
+extern TArray<PalEntry> BloodTranslationColors;
+
+int CreateBloodTranslation(PalEntry color);
 
 
 

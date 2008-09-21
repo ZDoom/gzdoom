@@ -1697,17 +1697,21 @@ static int PatchMisc (int dummy)
 	{
 		player->health = deh.StartHealth;
 
-		FDropItem * di = GetDropItems(PClass::FindClass(NAME_DoomPlayer));
-		while (di != NULL)
+		// Hm... I'm not sure that this is the right way to change this info...
+		unsigned int index = PClass::FindClass(NAME_DoomPlayer)->Meta.GetMetaInt (ACMETA_DropItems) - 1;
+		if (index >= 0 && index < DropItemList.Size())
 		{
-			if (di->Name == NAME_Clip)
+			FDropItem * di = DropItemList[index];
+			while (di != NULL)
 			{
-				di->amount = deh.StartBullets;
+				if (di->Name == NAME_Clip)
+				{
+					di->amount = deh.StartBullets;
+				}
+				di = di->Next;
 			}
-			di = di->Next;
 		}
 	}
-
 
 	// 0xDD means "enable infighting"
 	if (infighting == 0xDD)
@@ -2195,14 +2199,6 @@ void DoDehPatch (const char *patchfile, bool autoloading, int lump)
 	PatchFile[filelen] = 0;
 
 	dversion = pversion = -1;
-/*
-	if (gameinfo.gametype != GAME_Doom)
-	{
-		Printf ("DeHackEd/BEX patches are only supported for DOOM mode\n");
-		delete[] PatchFile;
-		return;
-	}
-*/
 	cont = 0;
 	if (0 == strncmp (PatchFile, "Patch File for DeHackEd v", 25))
 	{

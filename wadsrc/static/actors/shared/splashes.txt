@@ -65,7 +65,7 @@ ACTOR LavaSmoke
 	+NOGRAVITY
 	+DONTSPLASH
 	RenderStyle Translucent
-	Alpha Default
+	DefaultAlpha
 	States
 	{
 	Spawn:

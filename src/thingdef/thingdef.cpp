@@ -68,82 +68,6 @@
 
 const PClass *QuestItemClasses[31];
 
-
-
-//==========================================================================
-//
-// ActorConstDef
-//
-// Parses a constant definition.
-//
-//==========================================================================
-
-void ParseConstant (FScanner &sc, PSymbolTable * symt, PClass *cls)
-{
-	// Read the type and make sure it's int.
-	// (Maybe there will be other types later.)
-	sc.MustGetToken(TK_Int);
-	sc.MustGetToken(TK_Identifier);
-	FName symname = sc.String;
-	sc.MustGetToken('=');
-	int expr = ParseExpression (sc, false, cls);
-	sc.MustGetToken(';');
-
-	int val = EvalExpressionI (expr, NULL, cls);
-	PSymbolConst *sym = new PSymbolConst;
-	sym->SymbolName = symname;
-	sym->SymbolType = SYM_Const;
-	sym->Value = val;
-	if (symt->AddSymbol (sym) == NULL)
-	{
-		delete sym;
-		sc.ScriptError ("'%s' is already defined in class '%s'.",
-			symname.GetChars(), cls->TypeName.GetChars());
-	}
-}
-
-//==========================================================================
-//
-// ActorEnumDef
-//
-// Parses an enum definition.
-//
-//==========================================================================
-
-void ParseEnum (FScanner &sc, PSymbolTable *symt, PClass *cls)
-{
-	int currvalue = 0;
-
-	sc.MustGetToken('{');
-	while (!sc.CheckToken('}'))
-	{
-		sc.MustGetToken(TK_Identifier);
-		FName symname = sc.String;
-		if (sc.CheckToken('='))
-		{
-			int expr = ParseExpression(sc, false, cls);
-			currvalue = EvalExpressionI(expr, NULL, cls);
-		}
-		PSymbolConst *sym = new PSymbolConst;
-		sym->SymbolName = symname;
-		sym->SymbolType = SYM_Const;
-		sym->Value = currvalue;
-		if (symt->AddSymbol (sym) == NULL)
-		{
-			delete sym;
-			sc.ScriptError ("'%s' is already defined in class '%s'.",
-				symname.GetChars(), cls->TypeName.GetChars());
-		}
-		// This allows a comma after the last value but doesn't enforce it.
-		if (sc.CheckToken('}')) break;
-		sc.MustGetToken(',');
-		currvalue++;
-	}
-	sc.MustGetToken(';');
-}
-
-
-
 //==========================================================================
 //
 // ParseParameter
@@ -560,6 +484,7 @@ static FActorInfo *CreateNewActor(FScanner &sc, FActorInfo **parentc, Baggage *b
 
 	ResetBaggage (bag);
 	bag->Info = info;
+	bag->Lumpnum = sc.LumpNum;
 
 	info->DoomEdNum = -1;
 	if (parent->ActorInfo->DamageFactors != NULL)

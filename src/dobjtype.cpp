@@ -297,7 +297,7 @@ void PClass::InitializeActorInfo ()
 	Defaults = new BYTE[Size];
 	if (ParentClass->Defaults != NULL) 
 	{
-		memcpy (Defaults, ParentClass->Defaults, Size);
+		memcpy (Defaults, ParentClass->Defaults, ParentClass->Size);
 		if (Size > ParentClass->Size)
 		{
 			memset (Defaults + ParentClass->Size, 0, Size - ParentClass->Size);

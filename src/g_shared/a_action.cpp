@@ -81,7 +81,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_NoBlocking)
 	// If the self has attached metadata for items to drop, drop those.
 	if (!self->IsKindOf (RUNTIME_CLASS (APlayerPawn)))	// [GRB]
 	{
-		FDropItem *di = GetDropItems(RUNTIME_TYPE(self));
+		FDropItem *di = self->GetDropItems();
 
 		if (di != NULL)
 		{

@@ -587,7 +587,7 @@ IMPLEMENT_CLASS(AWeaponGiver)
 
 bool AWeaponGiver::TryPickup(AActor *&toucher)
 {
-	FDropItem *di = GetDropItems(GetClass());
+	FDropItem *di = GetDropItems();
 
 	if (di != NULL)
 	{

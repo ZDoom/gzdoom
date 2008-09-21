@@ -20,7 +20,7 @@ public:
 
 	void Open(const char *lumpname);
 	void OpenFile(const char *filename);
-	void OpenMem(const char *name, char *buffer, int size);
+	void OpenMem(const char *name, const char *buffer, int size);
 	void OpenLumpNum(int lump);
 	void Close();
 

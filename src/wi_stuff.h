@@ -24,6 +24,8 @@
 
 #include "doomdef.h"
 
+class FTexture;
+
 //
 // INTERMISSION
 // Structure passed e.g. to WI_Start(wb)
@@ -50,8 +52,8 @@ struct wbstartstruct_t
 	FString		current;	// [RH] Name of map just finished
 	FString		next;		// next level, [RH] actual map name
 
-	FString		lname0;
-	FString		lname1;
+	FTexture	*LName0;
+	FTexture	*LName1;
 	
 	int			maxkills;
 	int			maxitems;

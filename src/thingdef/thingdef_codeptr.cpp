@@ -2236,3 +2236,49 @@ DEFINE_ACTION_FUNCTION(AActor, A_ResetReloadCounter)
 	AWeapon *weapon = self->player->ReadyWeapon;
 	weapon->ReloadCounter = 0;
 }
+
+//===========================================================================
+//
+// A_ChangeFlag
+//
+//===========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ChangeFlag)
+{
+	ACTION_PARAM_START(2);
+	ACTION_PARAM_STRING(flagname, 0);
+	ACTION_PARAM_BOOL(expression, 1);
+
+	const char *dot = strchr (flagname, '.');
+	FFlagDef *fd;
+	const PClass *cls = self->GetClass();
+
+	if (dot != NULL)
+	{
+		FString part1(flagname, dot-flagname);
+		fd = FindFlag (cls, part1, dot+1);
+	}
+	else
+	{
+		fd = FindFlag (cls, flagname, NULL);
+	}
+
+	if (fd != NULL)
+	{
+		if (fd->structoffset == -1)
+		{
+			HandleDeprecatedFlags(self, cls->ActorInfo, expression, fd->flagbit);
+		}
+		else
+		{
+			int * flagp = (int*) (((char*)self) + fd->structoffset);
+
+			if (expression) *flagp |= fd->flagbit;
+			else *flagp &= ~fd->flagbit;
+		}
+	}
+	else
+	{
+		Printf("Unknown flag '%s' in '%s'\n", flagname, cls->TypeName.GetChars());
+	}
+}
+

@@ -50,13 +50,17 @@
 #define REGMARKER(x) (x)
 typedef void *REGINFO;
 
-// List of ActorInfos and the TypeInfos they belong to
+// List of Action functons
 extern REGINFO ARegHead;
 extern REGINFO ARegTail;
 
 // List of TypeInfos
 extern REGINFO CRegHead;
 extern REGINFO CRegTail;
+
+// List of properties
+extern REGINFO GRegHead;
+extern REGINFO GRegTail;
 
 template<class T, REGINFO *_head, REGINFO *_tail>
 class TAutoSegIteratorNoArrow

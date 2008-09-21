@@ -44,6 +44,7 @@
 #include "g_level.h"
 #include "d_net.h"
 #include "d_dehacked.h"
+#include "gi.h"
 
 // [RH] Actually handle the cheat. The cheat code in st_stuff.c now just
 // writes some bytes to the network data stream, and the network code
@@ -630,26 +631,7 @@ void cht_Give (player_t *player, const char *name, int amount)
 	if (giveall || stricmp (name, "backpack") == 0)
 	{
 		// Select the correct type of backpack based on the game
-		if (gameinfo.gametype == GAME_Heretic)
-		{
-			type = PClass::FindClass ("BagOfHolding");
-		}
-		else if (gameinfo.gametype == GAME_Strife)
-		{
-			type = PClass::FindClass ("AmmoSatchel");
-		}
-		else if (gameinfo.gametype == GAME_Doom)
-		{
-			type = PClass::FindClass ("Backpack");
-		}
-		else if (gameinfo.gametype == GAME_Chex)
-		{
-			type = PClass::FindClass ("Zorchpack");
-		}
-		else
-		{ // Hexen doesn't have a backpack, foo!
-			type = NULL;
-		}
+		type = PClass::FindClass(gameinfo.backpacktype);
 		if (type != NULL)
 		{
 			GiveSpawner (player, type, 1);
@@ -874,33 +856,17 @@ void cht_Take (player_t *player, const char *name, int amount)
 
 	if (takeall || stricmp (name, "backpack") == 0)
 	{
-		// Select the correct type of backpack based on the game
-		if (gameinfo.gametype == GAME_Heretic)
+		// Take away all types of backpacks the player might own.
+		for (unsigned int i = 0; i < PClass::m_Types.Size(); ++i)
 		{
-			type = PClass::FindClass ("BagOfHolding");
-		}
-		else if (gameinfo.gametype == GAME_Strife)
-		{
-			type = PClass::FindClass ("AmmoSatchel");
-		}
-		else if (gameinfo.gametype == GAME_Doom)
-		{
-			type = PClass::FindClass ("Backpack");
-		}
-		else if (gameinfo.gametype == GAME_Chex)
-		{
-			type = PClass::FindClass ("Zorchpack");
-		}
-		else
-		{ // Hexen doesn't have a backpack, foo!
-			type = NULL;
-		}
-		if (type != NULL)
-		{
-			AActor *backpack = player->mo->FindInventory (type);
+			const PClass *type = PClass::m_Types[i];
 
-			if (backpack)
-				backpack->Destroy ();
+			if (type->IsDescendantOf(RUNTIME_CLASS (ABackpackItem)))
+			{
+				AInventory *pack = player->mo->FindInventory (type);
+
+				if (pack) pack->Destroy();
+			}
 		}
 
 		if (!takeall)

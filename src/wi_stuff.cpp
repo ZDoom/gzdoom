@@ -763,7 +763,7 @@ void WI_drawLF ()
 {
 	int y = WI_TITLEY;
 
-	FTexture * tex = wbs->lname0[0]? TexMan[wbs->lname0] : NULL;
+	FTexture * tex = wbs->LName0;
 	
 	// draw <LevelName> 
 	if (tex)
@@ -825,7 +825,7 @@ void WI_drawEL ()
 	}
 
 	// draw <LevelName>
-	FTexture * tex = wbs->lname1[0]? TexMan[wbs->lname1] : NULL;
+	FTexture * tex = wbs->LName1;
 	if (tex)
 	{
 		screen->DrawTexture(tex, (SCREENWIDTH - tex->GetWidth() * CleanXfac) / 2, y * CleanYfac, DTA_CleanNoMove, true, TAG_DONE);

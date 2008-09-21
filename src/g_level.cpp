@@ -830,6 +830,7 @@ static void G_DoParseMapInfo (int lump)
 				strcpy (levelinfo->skypic2, levelinfo->skypic1);
 			}
 			SetLevelNum (levelinfo, levelinfo->levelnum);	// Wipe out matching levelnums from other maps.
+			/* can't do this here.
 			if (levelinfo->pname[0] != 0)
 			{
 				if (!TexMan.CheckForTexture(levelinfo->pname, FTexture::TEX_MiscPatch).Exists())
@@ -837,6 +838,7 @@ static void G_DoParseMapInfo (int lump)
 					levelinfo->pname[0] = 0;
 				}
 			}
+			*/
 			break;
 		  }
 
@@ -1704,7 +1706,7 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 	{
 		int cstype = SBarInfoScript->GetGameType();
 
-		if(cstype == GAME_Doom || cstype == GAME_Chex) //Did the user specify a "base"
+		if(cstype & GAME_DoomChex) //Did the user specify a "base"
 		{
 			StatusBar = CreateDoomStatusBar ();
 		}
@@ -1973,7 +1975,7 @@ void G_DoCompleted (void)
 		AM_Stop ();
 
 	wminfo.finished_ep = level.cluster - 1;
-	wminfo.lname0 = level.info->pname;
+	wminfo.LName0 = TexMan[TexMan.CheckForTexture(level.info->pname, FTexture::TEX_MiscPatch)];
 	wminfo.current = level.mapname;
 
 	if (deathmatch &&
@@ -1981,20 +1983,20 @@ void G_DoCompleted (void)
 		!(level.flags & LEVEL_CHANGEMAPCHEAT))
 	{
 		wminfo.next = level.mapname;
-		wminfo.lname1 = level.info->pname;
+		wminfo.LName1 = wminfo.LName0;
 	}
 	else
 	{
 		if (strncmp (nextlevel, "enDSeQ", 6) == 0)
 		{
 			wminfo.next = FString(nextlevel, 8);
-			wminfo.lname1 = "";
+			wminfo.LName1 = NULL;
 		}
 		else
 		{
 			level_info_t *nextinfo = FindLevelInfo (nextlevel);
 			wminfo.next = nextinfo->mapname;
-			wminfo.lname1 = nextinfo->pname;
+			wminfo.LName1 = TexMan[TexMan.CheckForTexture(nextinfo->pname, FTexture::TEX_MiscPatch)];
 		}
 	}
 

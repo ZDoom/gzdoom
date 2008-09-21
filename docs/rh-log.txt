@@ -1,3 +1,31 @@
+September 21, 2008  (Changes by Graf Zahl)
+- To get the game name the screenshot code might as well use the globally
+  available GameNames array instead of creating its own list.
+- Moved backpack names for cheat into gameinfo.
+- Fixed: SNDINFO must be loaded before the textures. However, this required
+  some changes to the MAPINFO parser which tried to access the texture manager
+  to check if the level name patches exist. That check had to be moved to
+  where the intermission screen is set up.
+- Fixed: 'bloodcolor' ignored the first parameter value when given a list
+  of integers.
+  Please note that this creates an incompatibility between old and new 
+  versions so if you want to create something that works with both 2.2.0
+  and current versions better use the string format version for the color
+  parameter!
+- Rewrote the DECORATE property parser so that the parser is completely
+  separated from the property handlers. This should allow reuse of all 
+  the handler code for a new format if Doomscript requires one.
+- Fixed: PClass::InitializeActorInfo copied too many bytes if a subclass's
+  defaults were larger than the parent's.
+- Moved A_ChangeFlag to thingdef_codeptr.cpp.
+- Moved translation related code from thingdef_properties.cpp to r_translate.cpp
+  and rewrote the translation parser to use FScanner instead of strtol.
+- replaced DECORATE's 'alpha default' by 'defaultalpha' for consistency.
+  Since this was never used outside zdoom.pk3 it's not critical.
+- Removed support for game specific pickup messages because the only thing
+  this was ever used for - Raven's invulnerability item - has already been
+  split up into a Heretic and Hexen version.
+
 September 20, 2008
 - Fixed: The Timidity config parser always tried to process the note number,
   even if it wasn't specified.

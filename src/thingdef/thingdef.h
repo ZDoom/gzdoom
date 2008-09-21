@@ -5,6 +5,24 @@
 
 class FScanner;
 
+
+//==========================================================================
+//
+// A flag descriptor
+//
+//==========================================================================
+
+struct FFlagDef
+{
+	int flagbit;
+	const char *name;
+	int structoffset;
+};
+
+FFlagDef *FindFlag (const PClass *type, const char *part1, const char *part2);
+void HandleDeprecatedFlags(AActor *defaults, FActorInfo *info, bool set, int index);
+
+
 //==========================================================================
 //
 // This class is for storing a name inside a const PClass* field without
@@ -32,25 +50,10 @@ public:
 
 //==========================================================================
 //
-// Dropitem list
-//
-//==========================================================================
-
-struct FDropItem 
-{
-	FName Name;
-	int probability;
-	int amount;
-	FDropItem * Next;
-};
-
-FDropItem *GetDropItems(const PClass * cls);
-
-//==========================================================================
-//
 // Extra info maintained while defining an actor.
 //
 //==========================================================================
+struct FDropItem;
 
 struct Baggage
 {
@@ -58,6 +61,7 @@ struct Baggage
 	bool DropItemSet;
 	bool StateSet;
 	int CurrentState;
+	int Lumpnum;
 
 	FDropItem *DropItemList;
 };
@@ -69,7 +73,6 @@ inline void ResetBaggage (Baggage *bag)
 	bag->CurrentState = 0;
 	bag->StateSet = false;
 }
-
 
 //==========================================================================
 //
@@ -115,6 +118,7 @@ FState *CheckState(FScanner &sc, PClass *type);
 //==========================================================================
 
 void ParseActorProperty(FScanner &sc, Baggage &bag);
+void HandleActorFlag(FScanner &sc, Baggage &bag, const char *part1, const char *part2, int mod);
 void ParseActorFlag (FScanner &sc, Baggage &bag, int mod);
 void FinishActor(FScanner &sc, FActorInfo *info, Baggage &bag);
 
@@ -156,20 +160,91 @@ enum EDefinitionType
 
 #if defined(_MSC_VER)
 #pragma data_seg(".areg$u")
+#pragma data_seg(".greg$u")
 #pragma data_seg()
 
 #define MSVC_ASEG __declspec(allocate(".areg$u"))
 #define GCC_ASEG
+#define MSVC_PSEG __declspec(allocate(".greg$u"))
+#define GCC_PSEG
 #else
 #define MSVC_ASEG
 #define GCC_ASEG __attribute__((section(AREG_SECTION)))
+#define MSVC_PSEG
+#define GCC_PSEG __attribute__((section(GREG_SECTION)))
 #endif
 
 
+union FPropParam
+{
+	int i;
+	float f;
+	const char *s;
+};
+
+typedef void (*PropHandler)(AActor *defaults, Baggage &bag, FPropParam *params);
+
+enum ECategory
+{
+	CAT_PROPERTY,	// Inheritable property
+	CAT_INFO		// non-inheritable info (spawn ID, Doomednum, game filter, conversation ID)
+};
+
+struct FPropertyInfo
+{
+	const char *name;
+	const char *params;
+	const PClass *cls;
+	PropHandler Handler;
+	int category;
+};
+
+FPropertyInfo *FindProperty(const char * string);
+int MatchString (const char *in, const char **strings);
+
+
+#define DEFINE_PROPERTY_BASE(name, paramlist, clas, cat) \
+	static void Handler_##name##_##paramlist##_##clas(A##clas *defaults, Baggage &bag, FPropParam *params); \
+	static FPropertyInfo Prop_####name##_##paramlist##_##clas = \
+		{ #name, #paramlist, RUNTIME_CLASS(A##clas), (PropHandler)Handler_##name##_##paramlist##_##clas, cat }; \
+	MSVC_PSEG FPropertyInfo *infoptr_##name##_##paramlist##_##clas GCC_PSEG = &Prop_####name##_##paramlist##_##clas; \
+	static void Handler_##name##_##paramlist##_##clas(A##clas *defaults, Baggage &bag, FPropParam *params)
+
+#define DEFINE_PREFIXED_PROPERTY_BASE(prefix, name, paramlist, clas, cat) \
+	static void Handler_##name##_##paramlist##_##clas(A##clas *defaults, Baggage &bag, FPropParam *params); \
+	static FPropertyInfo Prop_####name##_##paramlist##_##clas = \
+{ #prefix"."#name, #paramlist, RUNTIME_CLASS(A##clas), (PropHandler)Handler_##name##_##paramlist##_##clas, cat }; \
+	MSVC_PSEG FPropertyInfo *infoptr_##name##_##paramlist##_##clas GCC_PSEG = &Prop_####name##_##paramlist##_##clas; \
+	static void Handler_##name##_##paramlist##_##clas(A##clas *defaults, Baggage &bag, FPropParam *params)
+
+
+#define DEFINE_PROPERTY(name, paramlist, clas) DEFINE_PROPERTY_BASE(name, paramlist, clas, CAT_PROPERTY)
+#define DEFINE_INFO_PROPERTY(name, paramlist, clas) DEFINE_PROPERTY_BASE(name, paramlist, clas, CAT_INFO)
+
+#define DEFINE_CLASS_PROPERTY(name, paramlist, clas) DEFINE_PREFIXED_PROPERTY_BASE(clas, name, paramlist, clas, CAT_PROPERTY)
+#define DEFINE_CLASS_PROPERTY_PREFIX(prefix, name, paramlist, clas) DEFINE_PREFIXED_PROPERTY_BASE(prefix, name, paramlist, clas, CAT_PROPERTY)
+
+#define PROP_PARM_COUNT (params[0].i)
+
+#define PROP_STRING_PARM(var, no) \
+	const char *var = params[(no)+1].s;
+
+#define PROP_INT_PARM(var, no) \
+	int var = params[(no)+1].i;
+
+#define PROP_FLOAT_PARM(var, no) \
+	float var = params[(no)+1].f;
+
+#define PROP_FIXED_PARM(var, no) \
+	fixed_t var = fixed_t(params[(no)+1].f * FRACUNIT);
+
+#define PROP_COLOR_PARM(var, no) \
+	int var = params[(no)+1].i== 0? params[(no)+2].i : V_GetColor(NULL, params[(no)+2].s);
+
 struct StateCallData
 {
-	FState * State;
-	AActor * Item;
+	FState *State;
+	AActor *Item;
 	bool Result;
 };
 

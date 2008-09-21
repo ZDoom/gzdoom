@@ -982,7 +982,7 @@ void APlayerPawn::GiveDefaultInventory ()
 	AddInventory (barmor);
 
 	// Now add the items from the DECORATE definition
-	FDropItem *di = GetDropItems(RUNTIME_TYPE(this));
+	FDropItem *di = GetDropItems();
 
 	while (di)
 	{

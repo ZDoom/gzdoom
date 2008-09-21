@@ -2481,12 +2481,6 @@ void D_DoomMain (void)
 		StartScreen->AppendStatusLine(temp);
 	}
 
-	Printf ("Texman.Init: Init texture manager.\n");
-	TexMan.Init();
-
-	// Now that all textues have been loaded the crosshair can be initialized.
-	crosshair.Callback ();
-
 	// [RH] Parse through all loaded mapinfo lumps
 	Printf ("G_ParseMapInfo: Load map definitions.\n");
 	G_ParseMapInfo ();
@@ -2494,6 +2488,13 @@ void D_DoomMain (void)
 	// [RH] Parse any SNDINFO lumps
 	Printf ("S_InitData: Load sound definitions.\n");
 	S_InitData ();
+
+
+	Printf ("Texman.Init: Init texture manager.\n");
+	TexMan.Init();
+
+	// Now that all textues have been loaded the crosshair can be initialized.
+	crosshair.Callback ();
 
 	// [CW] Parse any TEAMINFO lumps
 	Printf ("TEAMINFO_Init: Load team definitions.\n");

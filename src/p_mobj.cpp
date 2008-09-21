@@ -4887,3 +4887,45 @@ void AActor::SetIdle()
 	if (idle == NULL) idle = SpawnState;
 	SetState(idle);
 }
+
+FDropItem *AActor::GetDropItems()
+{
+	unsigned int index = GetClass()->Meta.GetMetaInt (ACMETA_DropItems) - 1;
+
+	if (index >= 0 && index < DropItemList.Size())
+	{
+		return DropItemList[index];
+	}
+	return NULL;
+}
+
+//----------------------------------------------------------------------------
+//
+// DropItem handling
+//
+//----------------------------------------------------------------------------
+FDropItemPtrArray DropItemList;
+
+void FreeDropItemChain(FDropItem *chain)
+{
+	while (chain != NULL)
+	{
+		FDropItem *next = chain->Next;
+		delete chain;
+		chain = next;
+	}
+}
+
+FDropItemPtrArray::~FDropItemPtrArray()
+{
+	for (unsigned int i = 0; i < Size(); ++i)
+	{
+		FreeDropItemChain ((*this)[i]);
+	}
+}
+
+int StoreDropItemChain(FDropItem *chain)
+{
+	return DropItemList.Push (chain) + 1;
+}
+

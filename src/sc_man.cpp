@@ -192,7 +192,7 @@ void FScanner::OpenFile (const char *name)
 //
 //==========================================================================
 
-void FScanner::OpenMem (const char *name, char *buffer, int size)
+void FScanner::OpenMem (const char *name, const char *buffer, int size)
 {
 	Close ();
 	ScriptBuffer = FString(buffer, size);

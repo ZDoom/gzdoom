@@ -1,7 +1,7 @@
 /*
 ** thingdef-properties.cpp
 **
-** Actor definitions - properties and flags parser
+** Actor definitions - properties and flags handling
 **
 **---------------------------------------------------------------------------
 ** Copyright 2002-2007 Christoph Oelckers
@@ -41,7 +41,6 @@
 #include "gi.h"
 #include "actor.h"
 #include "info.h"
-#include "sc_man.h"
 #include "tarray.h"
 #include "w_wad.h"
 #include "templates.h"
@@ -68,6 +67,7 @@
 #include "r_translate.h"
 #include "a_morph.h"
 #include "colormatcher.h"
+#include "autosegs.h"
 
 //==========================================================================
 //
@@ -80,13 +80,6 @@
 #define DEFINE_FLAG2(symbol, name, type, variable) { symbol, #name, (int)(size_t)&((type*)1)->variable - 1 }
 #define DEFINE_DEPRECATED_FLAG(name) { DEPF_##name, #name, -1 }
 #define DEFINE_DUMMY_FLAG(name) { DEPF_UNUSED, #name, -1 }
-
-struct flagdef
-{
-	int flagbit;
-	const char *name;
-	int structoffset;
-};
 
 enum 
 {
@@ -101,7 +94,7 @@ enum
 	DEPF_FIRERESIST,
 };
 
-static flagdef ActorFlags[]=
+static FFlagDef ActorFlags[]=
 {
 	DEFINE_FLAG(MF, PICKUP, APlayerPawn, flags),
 	DEFINE_FLAG(MF, SPECIAL, APlayerPawn, flags),
@@ -267,7 +260,7 @@ static flagdef ActorFlags[]=
 	DEFINE_DUMMY_FLAG(ALLOWCLIENTSPAWN),
 };
 
-static flagdef InventoryFlags[] =
+static FFlagDef InventoryFlags[] =
 {
 	// Inventory flags
 	DEFINE_FLAG(IF, QUIET, AInventory, ItemFlags),
@@ -288,7 +281,7 @@ static flagdef InventoryFlags[] =
 
 };
 
-static flagdef WeaponFlags[] =
+static FFlagDef WeaponFlags[] =
 {
 	// Weapon flags
 	DEFINE_FLAG(WIF, NOAUTOFIRE, AWeapon, WeaponFlags),
@@ -311,11 +304,11 @@ static flagdef WeaponFlags[] =
 	DEFINE_DUMMY_FLAG(NOLMS),
 };
 
-static const struct { const PClass *Type; flagdef *Defs; int NumDefs; } FlagLists[] =
+static const struct { const PClass *Type; FFlagDef *Defs; int NumDefs; } FlagLists[] =
 {
-	{ RUNTIME_CLASS(AActor), 		ActorFlags,		sizeof(ActorFlags)/sizeof(flagdef) },
-	{ RUNTIME_CLASS(AInventory), 	InventoryFlags,	sizeof(InventoryFlags)/sizeof(flagdef) },
-	{ RUNTIME_CLASS(AWeapon), 		WeaponFlags,	sizeof(WeaponFlags)/sizeof(flagdef) }
+	{ RUNTIME_CLASS(AActor), 		ActorFlags,		sizeof(ActorFlags)/sizeof(FFlagDef) },
+	{ RUNTIME_CLASS(AInventory), 	InventoryFlags,	sizeof(InventoryFlags)/sizeof(FFlagDef) },
+	{ RUNTIME_CLASS(AWeapon), 		WeaponFlags,	sizeof(WeaponFlags)/sizeof(FFlagDef) }
 };
 #define NUM_FLAG_LISTS 3
 
@@ -326,10 +319,10 @@ static const struct { const PClass *Type; flagdef *Defs; int NumDefs; } FlagList
 //==========================================================================
 static int STACK_ARGS flagcmp (const void * a, const void * b)
 {
-	return stricmp( ((flagdef*)a)->name, ((flagdef*)b)->name);
+	return stricmp( ((FFlagDef*)a)->name, ((FFlagDef*)b)->name);
 }
 
-static flagdef *FindFlag (flagdef *flags, int numflags, const char *flag)
+static FFlagDef *FindFlag (FFlagDef *flags, int numflags, const char *flag)
 {
 	int min = 0, max = numflags - 1;
 
@@ -353,17 +346,17 @@ static flagdef *FindFlag (flagdef *flags, int numflags, const char *flag)
 	return NULL;
 }
 
-static flagdef *FindFlag (const PClass *type, const char *part1, const char *part2)
+FFlagDef *FindFlag (const PClass *type, const char *part1, const char *part2)
 {
 	static bool flagsorted = false;
-	flagdef *def;
+	FFlagDef *def;
 	int i;
 
 	if (!flagsorted) 
 	{
 		for (i = 0; i < NUM_FLAG_LISTS; ++i)
 		{
-			qsort (FlagLists[i].Defs, FlagLists[i].NumDefs, sizeof(flagdef), flagcmp);
+			qsort (FlagLists[i].Defs, FlagLists[i].NumDefs, sizeof(FFlagDef), flagcmp);
 		}
 		flagsorted = true;
 	}
@@ -412,7 +405,7 @@ static flagdef *FindFlag (const PClass *type, const char *part1, const char *par
 // properties is not recommended
 //
 //===========================================================================
-static void HandleDeprecatedFlags(AActor *defaults, FActorInfo *info, bool set, int index)
+void HandleDeprecatedFlags(AActor *defaults, FActorInfo *info, bool set, int index)
 {
 	switch (index)
 	{
@@ -452,372 +445,126 @@ static void HandleDeprecatedFlags(AActor *defaults, FActorInfo *info, bool set, 
 	}
 }
 
-//===========================================================================
-//
-// A_ChangeFlag
-//
-// This cannot be placed in thingdef_codeptr because it needs the flag table
-//
-//===========================================================================
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ChangeFlag)
-{
-	ACTION_PARAM_START(2);
-	ACTION_PARAM_STRING(flagname, 0);
-	ACTION_PARAM_BOOL(expression, 1);
-
-	const char *dot = strchr (flagname, '.');
-	flagdef *fd;
-	const PClass *cls = self->GetClass();
-
-	if (dot != NULL)
-	{
-		FString part1(flagname, dot-flagname);
-		fd = FindFlag (cls, part1, dot+1);
-	}
-	else
-	{
-		fd = FindFlag (cls, flagname, NULL);
-	}
-
-	if (fd != NULL)
-	{
-		if (fd->structoffset == -1)
-		{
-			HandleDeprecatedFlags(self, cls->ActorInfo, expression, fd->flagbit);
-		}
-		else
-		{
-			int * flagp = (int*) (((char*)self) + fd->structoffset);
-
-			if (expression) *flagp |= fd->flagbit;
-			else *flagp &= ~fd->flagbit;
-		}
-	}
-	else
-	{
-		Printf("Unknown flag '%s' in '%s'\n", flagname, cls->TypeName.GetChars());
-	}
-}
-
 //==========================================================================
 //
+// 
+//
 //==========================================================================
-void ParseActorFlag (FScanner &sc, Baggage &bag, int mod)
+int MatchString (const char *in, const char **strings)
 {
-	flagdef *fd;
+	int i;
 
-	sc.MustGetString ();
-
-	FString part1 = sc.String;
-	const char *part2 = NULL;
-	if (sc.CheckString ("."))
+	for (i = 0; *strings != NULL; i++)
 	{
-		sc.MustGetString ();
-		part2 = sc.String;
-	}
-	if ( (fd = FindFlag (bag.Info->Class, part1.GetChars(), part2)) )
-	{
-		AActor *defaults = (AActor*)bag.Info->Class->Defaults;
-		if (fd->structoffset == -1)	// this is a deprecated flag that has been changed into a real property
+		if (!stricmp(in, *strings++))
 		{
-			HandleDeprecatedFlags(defaults, bag.Info, mod=='+', fd->flagbit);
-		}
-		else
-		{
-			DWORD * flagvar = (DWORD*) ((char*)defaults + fd->structoffset);
-			if (mod == '+')
-			{
-				*flagvar |= fd->flagbit;
-			}
-			else
-			{
-				*flagvar &= ~fd->flagbit;
-			}
-		}
-	}
-	else
-	{
-		if (part2 == NULL)
-		{
-			sc.ScriptError("\"%s\" is an unknown flag\n", part1.GetChars());
-		}
-		else
-		{
-			sc.ScriptError("\"%s.%s\" is an unknown flag\n", part1.GetChars(), part2);
-		}
-	}
-}
-
-
-
-//----------------------------------------------------------------------------
-//----------------------------------------------------------------------------
-//
-// Translation parsing
-//
-//----------------------------------------------------------------------------
-//----------------------------------------------------------------------------
-FRemapTable CurrentTranslation;
-TArray<PalEntry> BloodTranslationColors;
-
-PalEntry BloodTranslations[256];
-
-static bool Check(char *& range,  char c, bool error=true)
-{
-	while (isspace(*range)) range++;
-	if (*range==c)
-	{
-		range++;
-		return true;
-	}
-	if (error)
-	{
-		//sc.ScriptError("Invalid syntax in translation specification: '%c' expected", c);
-	}
-	return false;
-}
-
-
-static void AddToTranslation(char * range)
-{
-	int start,end;
-
-	start=strtol(range, &range, 10);
-	if (!Check(range, ':')) return;
-	end=strtol(range, &range, 10);
-	if (!Check(range, '=')) return;
-	if (!Check(range, '[', false))
-	{
-		int pal1,pal2;
-
-		pal1=strtol(range, &range, 10);
-		if (!Check(range, ':')) return;
-		pal2=strtol(range, &range, 10);
-
-		CurrentTranslation.AddIndexRange(start, end, pal1, pal2);
-	}
-	else
-	{ 
-		// translation using RGB values
-		int r1,g1,b1,r2,g2,b2;
-
-		r1=strtol(range, &range, 10);
-		if (!Check(range, ',')) return;
-		g1=strtol(range, &range, 10);
-		if (!Check(range, ',')) return;
-		b1=strtol(range, &range, 10);
-		if (!Check(range, ']')) return;
-		if (!Check(range, ':')) return;
-		if (!Check(range, '[')) return;
-		r2=strtol(range, &range, 10);
-		if (!Check(range, ',')) return;
-		g2=strtol(range, &range, 10);
-		if (!Check(range, ',')) return;
-		b2=strtol(range, &range, 10);
-		if (!Check(range, ']')) return;
-
-		CurrentTranslation.AddColorRange(start, end, r1, g1, b1, r2, g2, b2);
-	}
-}
-
-static int StoreTranslation(FScanner &sc)
-{
-	unsigned int i;
-
-	for (i = 0; i < translationtables[TRANSLATION_Decorate].Size(); i++)
-	{
-		if (CurrentTranslation == *translationtables[TRANSLATION_Decorate][i])
-		{
-			// A duplicate of this translation already exists
-			return TRANSLATION(TRANSLATION_Decorate, i);
-		}
-	}
-	if (translationtables[TRANSLATION_Decorate].Size() >= MAX_DECORATE_TRANSLATIONS)
-	{
-		sc.ScriptError("Too many translations in DECORATE");
-	}
-	FRemapTable *newtrans = new FRemapTable;
-	*newtrans = CurrentTranslation;
-	i = translationtables[TRANSLATION_Decorate].Push(newtrans);
-	return TRANSLATION(TRANSLATION_Decorate, i);
-}
-
-static int CreateBloodTranslation(FScanner &sc, PalEntry color)
-{
-	unsigned int i;
-
-	for (i = 0; i < BloodTranslationColors.Size(); i++)
-	{
-		if (color.r == BloodTranslationColors[i].r &&
-			color.g == BloodTranslationColors[i].g &&
-			color.b == BloodTranslationColors[i].b)
-		{
-			// A duplicate of this translation already exists
 			return i;
 		}
 	}
-	if (BloodTranslationColors.Size() >= MAX_DECORATE_TRANSLATIONS)
-	{
-		sc.ScriptError("Too many blood colors in DECORATE");
-	}
-	FRemapTable *trans = new FRemapTable;
-	for (i = 0; i < 256; i++)
-	{
-		int bright = MAX(MAX(GPalette.BaseColors[i].r, GPalette.BaseColors[i].g), GPalette.BaseColors[i].b);
-		PalEntry pe = PalEntry(color.r*bright/255, color.g*bright/255, color.b*bright/255);
-		int entry = ColorMatcher.Pick(pe.r, pe.g, pe.b);
-
-		trans->Palette[i] = pe;
-		trans->Remap[i] = entry;
-	}
-	translationtables[TRANSLATION_Blood].Push(trans);
-	return BloodTranslationColors.Push(color);
-}
-
-//----------------------------------------------------------------------------
-//
-// DropItem handling
-//
-//----------------------------------------------------------------------------
-
-static void FreeDropItemChain(FDropItem *chain)
-{
-	while (chain != NULL)
-	{
-		FDropItem *next = chain->Next;
-		delete chain;
-		chain = next;
-	}
-}
-
-class FDropItemPtrArray : public TArray<FDropItem *>
-{
-public:
-	~FDropItemPtrArray()
-	{
-		for (unsigned int i = 0; i < Size(); ++i)
-		{
-			FreeDropItemChain ((*this)[i]);
-		}
-	}
-};
-
-static FDropItemPtrArray DropItemList;
-
-FDropItem *GetDropItems(const PClass *cls)
-{
-	unsigned int index = cls->Meta.GetMetaInt (ACMETA_DropItems) - 1;
-
-	if (index >= 0 && index < DropItemList.Size())
-	{
-		return DropItemList[index];
-	}
-	return NULL;
+	return -1;
 }
 
 //==========================================================================
 //
+// Info Property handlers
 //
 //==========================================================================
 
-typedef void (*ActorPropFunction) (FScanner &sc, AActor *defaults, Baggage &bag);
-
-struct ActorProps 
-{ 
-	const char *name; 
-	ActorPropFunction Handler; 
-	const PClass * type; 
-};
-
-typedef ActorProps (*ActorPropHandler) (const char *str, unsigned int len);
-
-static const ActorProps *is_actorprop (const char *str);
-
-
 //==========================================================================
 //
-// Checks for a numeric parameter which may or may not be preceded by a comma
-//
 //==========================================================================
-static bool CheckNumParm(FScanner &sc)
+DEFINE_INFO_PROPERTY(game, T, Actor)
 {
-	if (sc.CheckString(","))
+	PROP_STRING_PARM(str, 0);
+	if (!stricmp(str, "Doom"))
 	{
-		sc.MustGetNumber();
-		return true;
+		bag.Info->GameFilter |= GAME_Doom;
+	}
+	else if (!stricmp(str, "Heretic"))
+	{
+		bag.Info->GameFilter |= GAME_Heretic;
+	}
+	else if (!stricmp(str, "Hexen"))
+	{
+		bag.Info->GameFilter |= GAME_Hexen;
+	}
+	else if (!stricmp(str, "Raven"))
+	{
+		bag.Info->GameFilter |= GAME_Raven;
+	}
+	else if (!stricmp(str, "Strife"))
+	{
+		bag.Info->GameFilter |= GAME_Strife;
+	}
+	else if (!stricmp(str, "Chex"))
+	{
+		bag.Info->GameFilter |= GAME_Chex;
+	}
+	else if (!stricmp(str, "Any"))
+	{
+		bag.Info->GameFilter = GAME_Any;
 	}
 	else
 	{
-		return sc.CheckNumber();
+		I_Error ("Unknown game type %s", str);
 	}
 }
 
-static bool CheckFloatParm(FScanner &sc)
+//==========================================================================
+//
+//==========================================================================
+DEFINE_INFO_PROPERTY(spawnid, I, Actor)
 {
-	if (sc.CheckString(","))
+	PROP_INT_PARM(id, 0);
+	if (id<0 || id>255)
 	{
-		sc.MustGetFloat();
-		return true;
+		I_Error ("SpawnID must be in the range [0,255]");
 	}
-	else
-	{
-		return sc.CheckFloat();
-	}
+	else bag.Info->SpawnID=(BYTE)id;
 }
 
-// [MH]
-static int ParseMorphStyle (FScanner &sc)
+//==========================================================================
+//
+//==========================================================================
+DEFINE_INFO_PROPERTY(conversationid, IiI, Actor)
 {
- 	static const char * morphstyles[]={
-		"MRF_ADDSTAMINA", "MRF_FULLHEALTH", "MRF_UNDOBYTOMEOFPOWER", "MRF_UNDOBYCHAOSDEVICE",
-		"MRF_FAILNOTELEFRAG", "MRF_FAILNOLAUGH", "MRF_WHENINVULNERABLE", "MRF_LOSEACTUALWEAPON",
-		"MRF_NEWTIDBEHAVIOUR", "MRF_UNDOBYDEATH", "MRF_UNDOBYDEATHFORCED", "MRF_UNDOBYDEATHSAVES", NULL};
+	PROP_INT_PARM(convid, 0);
+	PROP_INT_PARM(id1, 1);
+	PROP_INT_PARM(id2, 2);
 
- 	static const int morphstyle_values[]={
-		MORPH_ADDSTAMINA, MORPH_FULLHEALTH, MORPH_UNDOBYTOMEOFPOWER, MORPH_UNDOBYCHAOSDEVICE,
-		MORPH_FAILNOTELEFRAG, MORPH_FAILNOLAUGH, MORPH_WHENINVULNERABLE, MORPH_LOSEACTUALWEAPON,
-		MORPH_NEWTIDBEHAVIOUR, MORPH_UNDOBYDEATH, MORPH_UNDOBYDEATHFORCED, MORPH_UNDOBYDEATHSAVES};
-
-	// May be given flags by number...
-	if (sc.CheckNumber())
+	// Handling for Strife teaser IDs - only of meaning for the standard items
+	// as PWADs cannot be loaded with the teasers.
+	if (PROP_PARM_COUNT > 1)
 	{
-		sc.MustGetNumber();
-		return sc.Number;
-	}
+		if ((gameinfo.flags & (GI_SHAREWARE|GI_TEASER2)) == (GI_SHAREWARE))
+			convid=id1;
 
-	// ... else should be flags by name.
-	// NOTE: Later this should be removed and a normal expression used.
-	// The current DECORATE parser can't handle this though.
-	bool gotparen = sc.CheckString("(");
-	int style = 0;
-	do
-	{
-		sc.MustGetString();
-		style |= morphstyle_values[sc.MustMatchString(morphstyles)];
-	}
-	while (sc.CheckString("|"));
-	if (gotparen)
-	{
-		sc.MustGetStringName(")");
-	}
+		if ((gameinfo.flags & (GI_SHAREWARE|GI_TEASER2)) == (GI_SHAREWARE|GI_TEASER2))
+			convid=id2;
 
-	return style;
+		if (convid==-1) return;
+	}
+	if (convid<0 || convid>1000)
+	{
+		I_Error ("ConversationID must be in the range [0,1000]");
+	}
+	else StrifeTypes[convid] = bag.Info->Class;
 }
 
 //==========================================================================
 //
-// Property parsers
+// Property handlers
 //
 //==========================================================================
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorSkipSuper (FScanner &sc, AActor *defaults, Baggage &bag)
+DEFINE_PROPERTY(skip_super, 0, Actor)
 {
 	if (bag.Info->Class->IsDescendantOf(RUNTIME_CLASS(AInventory)))
 	{
-		sc.ScriptMessage("'skip_super' in definition of inventory item igmored.\n");
+		Printf("'skip_super' in definition of inventory item '%s' ignored.", bag.Info->Class->TypeName.GetChars() );
 		return;
 	}
 
@@ -833,257 +580,167 @@ static void ActorSkipSuper (FScanner &sc, AActor *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
-static void ActorGame (FScanner &sc, AActor *defaults, Baggage &bag)
+DEFINE_PROPERTY(tag, S, Actor)
 {
-	sc.MustGetString ();
-	if (sc.Compare ("Doom"))
+	PROP_STRING_PARM(str, 0);
+	bag.Info->Class->Meta.SetMetaString(AMETA_StrifeName, str);
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_PROPERTY(health, I, Actor)
+{
+	PROP_INT_PARM(id, 0);
+	defaults->health=id;
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_PROPERTY(gibhealth, I, Actor)
+{
+	PROP_INT_PARM(id, 0);
+	bag.Info->Class->Meta.SetMetaInt (AMETA_GibHealth, id);
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_PROPERTY(woundhealth, I, Actor)
+{
+	PROP_INT_PARM(id, 0);
+	bag.Info->Class->Meta.SetMetaInt (AMETA_WoundHealth, id);
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_PROPERTY(reactiontime, I, Actor)
+{
+	PROP_INT_PARM(id, 0);
+	defaults->reactiontime=id;
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_PROPERTY(painchance, ZI, Actor)
+{
+	PROP_STRING_PARM(str, 0);
+	PROP_INT_PARM(id, 1);
+	if (str == NULL)
 	{
-		bag.Info->GameFilter |= GAME_Doom;
-	}
-	else if (sc.Compare ("Heretic"))
-	{
-		bag.Info->GameFilter |= GAME_Heretic;
-	}
-	else if (sc.Compare ("Hexen"))
-	{
-		bag.Info->GameFilter |= GAME_Hexen;
-	}
-	else if (sc.Compare ("Raven"))
-	{
-		bag.Info->GameFilter |= GAME_Raven;
-	}
-	else if (sc.Compare ("Strife"))
-	{
-		bag.Info->GameFilter |= GAME_Strife;
-	}
-	else if (sc.Compare ("Chex"))
-	{
-		bag.Info->GameFilter |= GAME_Chex;
-	}
-	else if (sc.Compare ("Any"))
-	{
-		bag.Info->GameFilter = GAME_Any;
+		defaults->PainChance=id;
 	}
 	else
 	{
-		sc.ScriptError ("Unknown game type %s", sc.String);
-	}
-}
-
-//==========================================================================
-//
-//==========================================================================
-static void ActorSpawnID (FScanner &sc, AActor *defaults, Baggage &bag)
-{
-	sc.MustGetNumber();
-	if (sc.Number<0 || sc.Number>255)
-	{
-		sc.ScriptError ("SpawnID must be in the range [0,255]");
-	}
-	else bag.Info->SpawnID=(BYTE)sc.Number;
-}
-
-//==========================================================================
-//
-//==========================================================================
-static void ActorConversationID (FScanner &sc, AActor *defaults, Baggage &bag)
-{
-	int convid;
-
-	sc.MustGetNumber();
-	convid = sc.Number;
-
-	// Handling for Strife teaser IDs - only of meaning for the standard items
-	// as PWADs cannot be loaded with the teasers.
-	if (sc.CheckString(","))
-	{
-		sc.MustGetNumber();
-		if ((gameinfo.flags & (GI_SHAREWARE|GI_TEASER2)) == (GI_SHAREWARE))
-			convid=sc.Number;
-
-		sc.MustGetStringName(",");
-		sc.MustGetNumber();
-		if ((gameinfo.flags & (GI_SHAREWARE|GI_TEASER2)) == (GI_SHAREWARE|GI_TEASER2))
-			convid=sc.Number;
-
-		if (convid==-1) return;
-	}
-	if (convid<0 || convid>1000)
-	{
-		sc.ScriptError ("ConversationID must be in the range [0,1000]");
-	}
-	else StrifeTypes[convid] = bag.Info->Class;
-}
-
-//==========================================================================
-//
-//==========================================================================
-static void ActorTag (FScanner &sc, AActor *defaults, Baggage &bag)
-{
-	sc.MustGetString();
-	bag.Info->Class->Meta.SetMetaString(AMETA_StrifeName, sc.String);
-}
-
-//==========================================================================
-//
-//==========================================================================
-static void ActorHealth (FScanner &sc, AActor *defaults, Baggage &bag)
-{
-	sc.MustGetNumber();
-	defaults->health=sc.Number;
-}
-
-//==========================================================================
-//
-//==========================================================================
-static void ActorGibHealth (FScanner &sc, AActor *defaults, Baggage &bag)
-{
-	sc.MustGetNumber();
-	bag.Info->Class->Meta.SetMetaInt (AMETA_GibHealth, sc.Number);
-}
-
-//==========================================================================
-//
-//==========================================================================
-static void ActorWoundHealth (FScanner &sc, AActor *defaults, Baggage &bag)
-{
-	sc.MustGetNumber();
-	bag.Info->Class->Meta.SetMetaInt (AMETA_WoundHealth, sc.Number);
-}
-
-//==========================================================================
-//
-//==========================================================================
-static void ActorReactionTime (FScanner &sc, AActor *defaults, Baggage &bag)
-{
-	sc.MustGetNumber();
-	defaults->reactiontime=sc.Number;
-}
-
-//==========================================================================
-//
-//==========================================================================
-static void ActorPainChance (FScanner &sc, AActor *defaults, Baggage &bag)
-{
-	if (!sc.CheckNumber())
-	{
 		FName painType;
-		sc.MustGetString();
-		if (sc.Compare("Normal")) painType = NAME_None;
-		else painType=sc.String;
-		sc.MustGetToken(',');
-		sc.MustGetNumber();
-		bag.Info->SetPainChance(painType, sc.Number);
-		return;
+		if (!stricmp(str, "Normal")) painType = NAME_None;
+		else painType=str;
+
+		if (bag.Info->PainChances == NULL) bag.Info->PainChances=new PainChanceList;
+		(*bag.Info->PainChances)[painType] = (BYTE)id;
 	}
-	defaults->PainChance=sc.Number;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorDamage (FScanner &sc, AActor *defaults, Baggage &bag)
+DEFINE_PROPERTY(damage, X, Actor)
 {
+	PROP_INT_PARM(id, 0);
+
 	// Damage can either be a single number, in which case it is subject
 	// to the original damage calculation rules. Or, it can be an expression
 	// and will be calculated as-is, ignoring the original rules. For
 	// compatibility reasons, expressions must be enclosed within
 	// parentheses.
 
-	if (sc.CheckString ("("))
+	defaults->Damage = id;
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_PROPERTY(speed, F, Actor)
+{
+	PROP_FIXED_PARM(id, 0);
+	defaults->Speed = id;
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_PROPERTY(floatspeed, F, Actor)
+{
+	PROP_FIXED_PARM(id, 0);
+	defaults->FloatSpeed=id;
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_PROPERTY(radius, F, Actor)
+{
+	PROP_FIXED_PARM(id, 0);
+	defaults->radius=id;
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_PROPERTY(height, F, Actor)
+{
+	PROP_FIXED_PARM(id, 0);
+	defaults->height=id;
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_PROPERTY(mass, I, Actor)
+{
+	PROP_INT_PARM(id, 0);
+	defaults->Mass=id;
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_PROPERTY(xscale, F, Actor)
+{
+	PROP_FIXED_PARM(id, 0);
+	defaults->scaleX = id;
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_PROPERTY(yscale, F, Actor)
+{
+	PROP_FIXED_PARM(id, 0);
+	defaults->scaleY = id;
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_PROPERTY(scale, F, Actor)
+{
+	PROP_FIXED_PARM(id, 0);
+	defaults->scaleX = defaults->scaleY = id;
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_PROPERTY(args, Iiiii, Actor)
+{
+	for (int i = 0; i < PROP_PARM_COUNT; i++)
 	{
-		defaults->Damage = 0x40000000 | ParseExpression (sc, false, bag.Info->Class);
-		sc.MustGetStringName(")");
-	}
-	else
-	{
-		sc.MustGetNumber ();
-		defaults->Damage = sc.Number;
-	}
-}
-
-//==========================================================================
-//
-//==========================================================================
-static void ActorSpeed (FScanner &sc, AActor *defaults, Baggage &bag)
-{
-	sc.MustGetFloat();
-	defaults->Speed=fixed_t(sc.Float*FRACUNIT);
-}
-
-//==========================================================================
-//
-//==========================================================================
-static void ActorFloatSpeed (FScanner &sc, AActor *defaults, Baggage &bag)
-{
-	sc.MustGetFloat();
-	defaults->FloatSpeed=fixed_t(sc.Float*FRACUNIT);
-}
-
-//==========================================================================
-//
-//==========================================================================
-static void ActorRadius (FScanner &sc, AActor *defaults, Baggage &bag)
-{
-	sc.MustGetFloat();
-	defaults->radius=fixed_t(sc.Float*FRACUNIT);
-}
-
-//==========================================================================
-//
-//==========================================================================
-static void ActorHeight (FScanner &sc, AActor *defaults, Baggage &bag)
-{
-	sc.MustGetFloat();
-	defaults->height=fixed_t(sc.Float*FRACUNIT);
-}
-
-//==========================================================================
-//
-//==========================================================================
-static void ActorMass (FScanner &sc, AActor *defaults, Baggage &bag)
-{
-	sc.MustGetNumber();
-	defaults->Mass=sc.Number;
-}
-
-//==========================================================================
-//
-//==========================================================================
-static void ActorXScale (FScanner &sc, AActor *defaults, Baggage &bag)
-{
-	sc.MustGetFloat();
-	defaults->scaleX = FLOAT2FIXED(sc.Float);
-}
-
-//==========================================================================
-//
-//==========================================================================
-static void ActorYScale (FScanner &sc, AActor *defaults, Baggage &bag)
-{
-	sc.MustGetFloat();
-	defaults->scaleY = FLOAT2FIXED(sc.Float);
-}
-
-//==========================================================================
-//
-//==========================================================================
-static void ActorScale (FScanner &sc, AActor *defaults, Baggage &bag)
-{
-	sc.MustGetFloat();
-	defaults->scaleX= defaults->scaleY = FLOAT2FIXED(sc.Float);
-}
-
-//==========================================================================
-//
-//==========================================================================
-static void ActorArgs (FScanner &sc, AActor *defaults, Baggage &bag)
-{
-	for (int i = 0; i < 5; i++)
-	{
-		sc.MustGetNumber();
-		defaults->args[i] = sc.Number;
-		if (i < 4 && !sc.CheckToken(',')) break;
+		PROP_INT_PARM(id, i);
+		defaults->args[i] = id;
 	}
 	defaults->flags2|=MF2_ARGSDEFINED;
 }
@@ -1091,62 +748,64 @@ static void ActorArgs (FScanner &sc, AActor *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
-static void ActorSeeSound (FScanner &sc, AActor *defaults, Baggage &bag)
+DEFINE_PROPERTY(seesound, S, Actor)
 {
-	sc.MustGetString();
-	defaults->SeeSound = sc.String;
+	PROP_STRING_PARM(str, 0);
+	defaults->SeeSound = str;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorAttackSound (FScanner &sc, AActor *defaults, Baggage &bag)
+DEFINE_PROPERTY(attacksound, S, Actor)
 {
-	sc.MustGetString();
-	defaults->AttackSound = sc.String;
+	PROP_STRING_PARM(str, 0);
+	defaults->AttackSound = str;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorPainSound (FScanner &sc, AActor *defaults, Baggage &bag)
+DEFINE_PROPERTY(painsound, S, Actor)
 {
-	sc.MustGetString();
-	defaults->PainSound = sc.String;
+	PROP_STRING_PARM(str, 0);
+	defaults->PainSound = str;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorDeathSound (FScanner &sc, AActor *defaults, Baggage &bag)
+DEFINE_PROPERTY(deathsound, S, Actor)
 {
-	sc.MustGetString();
-	defaults->DeathSound = sc.String;
+	PROP_STRING_PARM(str, 0);
+	defaults->DeathSound = str;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorActiveSound (FScanner &sc, AActor *defaults, Baggage &bag)
+DEFINE_PROPERTY(activesound, S, Actor)
 {
-	sc.MustGetString();
-	defaults->ActiveSound = sc.String;
+	PROP_STRING_PARM(str, 0);
+	defaults->ActiveSound = str;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorHowlSound (FScanner &sc, AActor *defaults, Baggage &bag)
+DEFINE_PROPERTY(howlsound, S, Actor)
 {
-	sc.MustGetString();
-	bag.Info->Class->Meta.SetMetaInt (AMETA_HowlSound, S_FindSound(sc.String));
+	PROP_STRING_PARM(str, 0);
+	bag.Info->Class->Meta.SetMetaInt (AMETA_HowlSound, S_FindSound(str));
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorDropItem (FScanner &sc, AActor *defaults, Baggage &bag)
+DEFINE_PROPERTY(dropitem, S_i_i, Actor)
 {
+	PROP_STRING_PARM(type, 0);
+
 	// create a linked list of dropitems
 	if (!bag.DropItemSet)
 	{
@@ -1156,17 +815,18 @@ static void ActorDropItem (FScanner &sc, AActor *defaults, Baggage &bag)
 
 	FDropItem *di = new FDropItem;
 
-	sc.MustGetString();
-	di->Name=sc.String;
+	di->Name =type;
 	di->probability=255;
 	di->amount=-1;
 
-	if (CheckNumParm(sc))
+	if (PROP_PARM_COUNT > 1)
 	{
-		di->probability = sc.Number;
-		if (CheckNumParm(sc))
+		PROP_INT_PARM(prob, 1);
+		di->probability = prob;
+		if (PROP_PARM_COUNT > 2)
 		{
-			di->amount = sc.Number;
+			PROP_INT_PARM(amt, 1);
+			di->amount = amt;
 		}
 	}
 	di->Next = bag.DropItemList;
@@ -1176,138 +836,9 @@ static void ActorDropItem (FScanner &sc, AActor *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
-static void ActorSpawnState (FScanner &sc, AActor *defaults, Baggage &bag)
+DEFINE_PROPERTY(renderstyle, S, Actor)
 {
-	AddState("Spawn", CheckState (sc, bag.Info->Class));
-}
-
-//==========================================================================
-//
-//==========================================================================
-static void ActorSeeState (FScanner &sc, AActor *defaults, Baggage &bag)
-{
-	AddState("See", CheckState (sc, bag.Info->Class));
-}
-
-//==========================================================================
-//
-//==========================================================================
-static void ActorMeleeState (FScanner &sc, AActor *defaults, Baggage &bag)
-{
-	AddState("Melee", CheckState (sc, bag.Info->Class));
-}
-
-//==========================================================================
-//
-//==========================================================================
-static void ActorMissileState (FScanner &sc, AActor *defaults, Baggage &bag)
-{
-	AddState("Missile", CheckState (sc, bag.Info->Class));
-}
-
-//==========================================================================
-//
-//==========================================================================
-static void ActorPainState (FScanner &sc, AActor *defaults, Baggage &bag)
-{
-	AddState("Pain", CheckState (sc, bag.Info->Class));
-}
-
-//==========================================================================
-//
-//==========================================================================
-static void ActorDeathState (FScanner &sc, AActor *defaults, Baggage &bag)
-{
-	AddState("Death", CheckState (sc, bag.Info->Class));
-}
-
-//==========================================================================
-//
-//==========================================================================
-static void ActorXDeathState (FScanner &sc, AActor *defaults, Baggage &bag)
-{
-	AddState("XDeath", CheckState (sc, bag.Info->Class));
-}
-
-//==========================================================================
-//
-//==========================================================================
-static void ActorBurnState (FScanner &sc, AActor *defaults, Baggage &bag)
-{
-	AddState("Burn", CheckState (sc, bag.Info->Class));
-}
-
-//==========================================================================
-//
-//==========================================================================
-static void ActorIceState (FScanner &sc, AActor *defaults, Baggage &bag)
-{
-	AddState("Ice", CheckState (sc, bag.Info->Class));
-}
-
-//==========================================================================
-//
-//==========================================================================
-static void ActorRaiseState (FScanner &sc, AActor *defaults, Baggage &bag)
-{
-	AddState("Raise", CheckState (sc, bag.Info->Class));
-}
-
-//==========================================================================
-//
-//==========================================================================
-static void ActorCrashState (FScanner &sc, AActor *defaults, Baggage &bag)
-{
-	AddState("Crash", CheckState (sc, bag.Info->Class));
-}
-
-//==========================================================================
-//
-//==========================================================================
-static void ActorCrushState (FScanner &sc, AActor *defaults, Baggage &bag)
-{
-	AddState("Crush", CheckState (sc, bag.Info->Class));
-}
-
-//==========================================================================
-//
-//==========================================================================
-static void ActorWoundState (FScanner &sc, AActor *defaults, Baggage &bag)
-{
-	AddState("Wound", CheckState (sc, bag.Info->Class));
-}
-
-//==========================================================================
-//
-//==========================================================================
-static void ActorDisintegrateState (FScanner &sc, AActor *defaults, Baggage &bag)
-{
-	AddState("Disintegrate", CheckState (sc, bag.Info->Class));
-}
-
-//==========================================================================
-//
-//==========================================================================
-static void ActorHealState (FScanner &sc, AActor *defaults, Baggage &bag)
-{
-	AddState("Heal", CheckState (sc, bag.Info->Class));
-}
-
-//==========================================================================
-//
-//==========================================================================
-static void ActorStates (FScanner &sc, AActor *defaults, Baggage &bag)
-{
-	if (!bag.StateSet) ParseStates(sc, bag.Info, defaults, bag);
-	else sc.ScriptError("Multiple state declarations not allowed");
-	bag.StateSet=true;
-}
-
-//==========================================================================
-//
-//==========================================================================
-static void ActorRenderStyle (FScanner &sc, AActor *defaults, Baggage &bag)
-{
+	PROP_STRING_PARM(str, 0);
 	static const char * renderstyles[]={
 		"NONE","NORMAL","FUZZY","SOULTRANS","OPTFUZZY","STENCIL","TRANSLUCENT", "ADD","SHADED", NULL};
 
@@ -1315,48 +846,53 @@ static void ActorRenderStyle (FScanner &sc, AActor *defaults, Baggage &bag)
 		STYLE_None, STYLE_Normal, STYLE_Fuzzy, STYLE_SoulTrans, STYLE_OptFuzzy,
 			STYLE_TranslucentStencil, STYLE_Translucent, STYLE_Add, STYLE_Shaded};
 
-	sc.MustGetString();
-	defaults->RenderStyle = LegacyRenderStyles[renderstyle_values[sc.MustMatchString(renderstyles)]];
+	// make this work for old style decorations, too.
+	if (!strnicmp(str, "style_", 6)) str+=6;
+
+	int style = MatchString(str, renderstyles);
+	if (style < 0) I_Error("Unknown render style '%s'");
+	defaults->RenderStyle = LegacyRenderStyles[renderstyle_values[style]];
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorAlpha (FScanner &sc, AActor *defaults, Baggage &bag)
+DEFINE_PROPERTY(defaultalpha, 0, Actor)
 {
-	if (sc.CheckString("DEFAULT"))
-	{
-		defaults->alpha = gameinfo.gametype == GAME_Heretic ? HR_SHADOW : HX_SHADOW;
-	}
-	else
-	{
-		sc.MustGetFloat();
-		defaults->alpha=fixed_t(sc.Float*FRACUNIT);
-	}
+	defaults->alpha = gameinfo.gametype == GAME_Heretic ? HR_SHADOW : HX_SHADOW;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorObituary (FScanner &sc, AActor *defaults, Baggage &bag)
+DEFINE_PROPERTY(alpha, F, Actor)
 {
-	sc.MustGetString();
-	bag.Info->Class->Meta.SetMetaString (AMETA_Obituary, sc.String);
+	PROP_FIXED_PARM(id, 0);
+	defaults->alpha = id;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorHitObituary (FScanner &sc, AActor *defaults, Baggage &bag)
+DEFINE_PROPERTY(obituary, S, Actor)
 {
-	sc.MustGetString();
-	bag.Info->Class->Meta.SetMetaString (AMETA_HitObituary, sc.String);
+	PROP_STRING_PARM(str, 0);
+	bag.Info->Class->Meta.SetMetaString (AMETA_Obituary, str);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorDontHurtShooter (FScanner &sc, AActor *defaults, Baggage &bag)
+DEFINE_PROPERTY(hitobituary, S, Actor)
+{
+	PROP_STRING_PARM(str, 0);
+	bag.Info->Class->Meta.SetMetaString (AMETA_HitObituary, str);
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_PROPERTY(donthurtshooter, 0, Actor)
 {
 	bag.Info->Class->Meta.SetMetaInt (ACMETA_DontHurtShooter, true);
 }
@@ -1364,28 +900,27 @@ static void ActorDontHurtShooter (FScanner &sc, AActor *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
-static void ActorExplosionRadius (FScanner &sc, AActor *defaults, Baggage &bag)
+DEFINE_PROPERTY(explosionradius, I, Actor)
 {
-	sc.MustGetNumber();
-	bag.Info->Class->Meta.SetMetaInt (ACMETA_ExplosionRadius, sc.Number);
+	PROP_INT_PARM(id, 0);
+	bag.Info->Class->Meta.SetMetaInt (ACMETA_ExplosionRadius, id);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorExplosionDamage (FScanner &sc, AActor *defaults, Baggage &bag)
+DEFINE_PROPERTY(explosiondamage, I, Actor)
 {
-	sc.MustGetNumber();
-	bag.Info->Class->Meta.SetMetaInt (ACMETA_ExplosionDamage, sc.Number);
+	PROP_INT_PARM(id, 0);
+	bag.Info->Class->Meta.SetMetaInt (ACMETA_ExplosionDamage, id);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorDeathHeight (FScanner &sc, AActor *defaults, Baggage &bag)
+DEFINE_PROPERTY(deathheight, F, Actor)
 {
-	sc.MustGetFloat();
-	fixed_t h = fixed_t(sc.Float * FRACUNIT);
+	PROP_FIXED_PARM(h, 0);
 	// AActor::Die() uses a height of 0 to mean "cut the height to 1/4",
 	// so if a height of 0 is desired, store it as -1.
 	bag.Info->Class->Meta.SetMetaFixed (AMETA_DeathHeight, h <= 0 ? -1 : h);
@@ -1394,10 +929,9 @@ static void ActorDeathHeight (FScanner &sc, AActor *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
-static void ActorBurnHeight (FScanner &sc, AActor *defaults, Baggage &bag)
+DEFINE_PROPERTY(burnheight, F, Actor)
 {
-	sc.MustGetFloat();
-	fixed_t h = fixed_t(sc.Float * FRACUNIT);
+	PROP_FIXED_PARM(h, 0);
 	// The note above for AMETA_DeathHeight also applies here.
 	bag.Info->Class->Meta.SetMetaFixed (AMETA_BurnHeight, h <= 0 ? -1 : h);
 }
@@ -1405,162 +939,124 @@ static void ActorBurnHeight (FScanner &sc, AActor *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
-static void ActorMaxTargetRange (FScanner &sc, AActor *defaults, Baggage &bag)
+DEFINE_PROPERTY(maxtargetrange, F, Actor)
 {
-	sc.MustGetFloat();
-	defaults->maxtargetrange = fixed_t(sc.Float*FRACUNIT);
+	PROP_FIXED_PARM(id, 0);
+	defaults->maxtargetrange = id;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorMeleeThreshold (FScanner &sc, AActor *defaults, Baggage &bag)
+DEFINE_PROPERTY(meleethreshold, F, Actor)
 {
-	sc.MustGetFloat();
-	defaults->meleethreshold = fixed_t(sc.Float*FRACUNIT);
+	PROP_FIXED_PARM(id, 0);
+	defaults->meleethreshold = id;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorMeleeDamage (FScanner &sc, AActor *defaults, Baggage &bag)
+DEFINE_PROPERTY(meleedamage, I, Actor)
 {
-	sc.MustGetNumber();
-	bag.Info->Class->Meta.SetMetaInt (ACMETA_MeleeDamage, sc.Number);
+	PROP_INT_PARM(id, 0);
+	bag.Info->Class->Meta.SetMetaInt (ACMETA_MeleeDamage, id);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorMeleeRange (FScanner &sc, AActor *defaults, Baggage &bag)
+DEFINE_PROPERTY(meleerange, F, Actor)
 {
-	sc.MustGetFloat();
-	defaults->meleerange = fixed_t(sc.Float*FRACUNIT);
+	PROP_FIXED_PARM(id, 0);
+	defaults->meleerange = id;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorMeleeSound (FScanner &sc, AActor *defaults, Baggage &bag)
+DEFINE_PROPERTY(meleesound, S, Actor)
 {
-	sc.MustGetString();
-	bag.Info->Class->Meta.SetMetaInt (ACMETA_MeleeSound, S_FindSound(sc.String));
+	PROP_STRING_PARM(str, 0);
+	bag.Info->Class->Meta.SetMetaInt (ACMETA_MeleeSound, S_FindSound(str));
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorMissileType (FScanner &sc, AActor *defaults, Baggage &bag)
+DEFINE_PROPERTY(missiletype, S, Actor)
 {
-	sc.MustGetString();
-	bag.Info->Class->Meta.SetMetaInt (ACMETA_MissileName, FName(sc.String));
+	PROP_STRING_PARM(str, 0);
+	bag.Info->Class->Meta.SetMetaInt (ACMETA_MissileName, FName(str));
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorMissileHeight (FScanner &sc, AActor *defaults, Baggage &bag)
+DEFINE_PROPERTY(missileheight, F, Actor)
 {
-	sc.MustGetFloat();
-	bag.Info->Class->Meta.SetMetaFixed (ACMETA_MissileHeight, fixed_t(sc.Float*FRACUNIT));
+	PROP_FIXED_PARM(id, 0);
+	bag.Info->Class->Meta.SetMetaFixed (ACMETA_MissileHeight, id);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorTranslation (FScanner &sc, AActor *defaults, Baggage &bag)
+DEFINE_PROPERTY(translation, L, Actor)
 {
-	if (sc.CheckNumber())
+	PROP_INT_PARM(type, 0);
+
+	if (type == 0)
 	{
+		PROP_INT_PARM(trans, 1);
 		int max = (gameinfo.gametype==GAME_Strife || (bag.Info->GameFilter&GAME_Strife)) ? 6:2;
-		if (sc.Number < 0 || sc.Number > max)
+		if (trans < 0 || trans > max)
 		{
-			sc.ScriptError ("Translation must be in the range [0,%d]", max);
+			I_Error ("Translation must be in the range [0,%d]", max);
 		}
-		defaults->Translation = TRANSLATION(TRANSLATION_Standard, sc.Number);
+		defaults->Translation = TRANSLATION(TRANSLATION_Standard, trans);
 	}
-	else if (sc.CheckString("Ice"))
+	else 
 	{
-		defaults->Translation = TRANSLATION(TRANSLATION_Standard, 7);
-	}
-	else
-	{
+		FRemapTable CurrentTranslation;
+
 		CurrentTranslation.MakeIdentity();
-		do
+		for(int i = 1; i < PROP_PARM_COUNT; i++)
 		{
-			sc.GetString();
-			AddToTranslation(sc.String);
+			PROP_STRING_PARM(str, i);
+			if (i== 1 && PROP_PARM_COUNT == 2 && !stricmp(str, "Ice"))
+			{
+				defaults->Translation = TRANSLATION(TRANSLATION_Standard, 7);
+				return;
+			}
+			else
+			{
+				CurrentTranslation.AddToTranslation(str);
+			}
 		}
-		while (sc.CheckString(","));
-		defaults->Translation = StoreTranslation (sc);
+		defaults->Translation = CurrentTranslation.StoreTranslation ();
 	}
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorStencilColor (FScanner &sc, AActor *defaults, Baggage &bag)
+DEFINE_PROPERTY(stencilcolor, C, Actor)
 {
-	int r,g,b;
+	PROP_COLOR_PARM(color, 0);
 
-	if (sc.CheckNumber())
-	{
-		sc.MustGetNumber();
-		r=clamp<int>(sc.Number, 0, 255);
-		sc.CheckString(",");
-		sc.MustGetNumber();
-		g=clamp<int>(sc.Number, 0, 255);
-		sc.CheckString(",");
-		sc.MustGetNumber();
-		b=clamp<int>(sc.Number, 0, 255);
-	}
-	else
-	{
-		sc.MustGetString();
-		int c = V_GetColor(NULL, sc.String);
-		r=RPART(c);
-		g=GPART(c);
-		b=BPART(c);
-	}
-	defaults->fillcolor = MAKERGB(r,g,b) | (ColorMatcher.Pick (r, g, b) << 24);
+	defaults->fillcolor = color | (ColorMatcher.Pick (RPART(color), GPART(color), BPART(color)) << 24);
 }
-
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorBloodColor (FScanner &sc, AActor *defaults, Baggage &bag)
+DEFINE_PROPERTY(bloodcolor, C, Actor)
 {
-	int r,g,b;
+	PROP_COLOR_PARM(color, 0);
 
-	if (sc.CheckNumber())
-	{
-		sc.MustGetNumber();
-		r = clamp<int>(sc.Number, 0, 255);
-		sc.CheckString(",");
-		sc.MustGetNumber();
-		g = clamp<int>(sc.Number, 0, 255);
-		sc.CheckString(",");
-		sc.MustGetNumber();
-		b = clamp<int>(sc.Number, 0, 255);
-	}
-	else
-	{
-		sc.MustGetString();
-		int c = V_GetColor(NULL, sc.String);
-		r = RPART(c);
-		g = GPART(c);
-		b = BPART(c);
-	}
-	PalEntry pe = MAKERGB(r,g,b);
-	pe.a = CreateBloodTranslation(sc, pe);
-	if (DWORD(pe) == 0)
-	{
-		// If black is the first color being created it will create a value of 0
-		// which stands for 'no translation'
-		// Using (1,1,1) instead of (0,0,0) won't be noticable.
-		pe = MAKERGB(1,1,1);
-	}
+	PalEntry pe = color;
+	pe.a = CreateBloodTranslation(pe);
 	bag.Info->Class->Meta.SetMetaInt (AMETA_BloodColor, pe);
 }
 
@@ -1568,25 +1064,26 @@ static void ActorBloodColor (FScanner &sc, AActor *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
-static void ActorBloodType (FScanner &sc, AActor *defaults, Baggage &bag)
+DEFINE_PROPERTY(bloodtype, Sss, Actor)
 {
-	sc.MustGetString();
-	FName blood = sc.String;
+	PROP_STRING_PARM(str, 0)
+	PROP_STRING_PARM(str1, 1)
+	PROP_STRING_PARM(str2, 2)
+
+	FName blood = str;
 	// normal blood
 	bag.Info->Class->Meta.SetMetaInt (AMETA_BloodType, blood);
 
-	if (sc.CheckString(",")) 
+	if (PROP_PARM_COUNT > 1)
 	{
-		sc.MustGetString();
-		blood = sc.String;
+		blood = str1;
 	}
 	// blood splatter
 	bag.Info->Class->Meta.SetMetaInt (AMETA_BloodType2, blood);
 
-	if (sc.CheckString(",")) 
+	if (PROP_PARM_COUNT > 2)
 	{
-		sc.MustGetString();
-		blood = sc.String;
+		blood = str2;
 	}
 	// axe blood
 	bag.Info->Class->Meta.SetMetaInt (AMETA_BloodType3, blood);
@@ -1595,157 +1092,154 @@ static void ActorBloodType (FScanner &sc, AActor *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
-static void ActorBounceFactor (FScanner &sc, AActor *defaults, Baggage &bag)
+DEFINE_PROPERTY(bouncefactor, F, Actor)
 {
-	sc.MustGetFloat ();
-	defaults->bouncefactor = clamp<fixed_t>(fixed_t(sc.Float * FRACUNIT), 0, FRACUNIT);
+	PROP_FIXED_PARM(id, 0);
+	defaults->bouncefactor = clamp<fixed_t>(id, 0, FRACUNIT);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorWallBounceFactor (FScanner &sc, AActor *defaults, Baggage &bag)
+DEFINE_PROPERTY(wallbouncefactor, F, Actor)
 {
-	sc.MustGetFloat ();
-	defaults->wallbouncefactor = clamp<fixed_t>(fixed_t(sc.Float * FRACUNIT), 0, FRACUNIT);
+	PROP_FIXED_PARM(id, 0);
+	defaults->wallbouncefactor = clamp<fixed_t>(id, 0, FRACUNIT);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorBounceCount (FScanner &sc, AActor *defaults, Baggage &bag)
+DEFINE_PROPERTY(bouncecount, I, Actor)
 {
-	sc.MustGetNumber ();
-	defaults->bouncecount = sc.Number;
+	PROP_INT_PARM(id, 0);
+	defaults->bouncecount = id;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorMinMissileChance (FScanner &sc, AActor *defaults, Baggage &bag)
+DEFINE_PROPERTY(minmissilechance, I, Actor)
 {
-	sc.MustGetNumber ();
-	defaults->MinMissileChance=sc.Number;
+	PROP_INT_PARM(id, 0);
+	defaults->MinMissileChance=id;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorDamageType (FScanner &sc, AActor *defaults, Baggage &bag)
+DEFINE_PROPERTY(damagetype, S, Actor)
 {
-	sc.MustGetString ();   
-	if (sc.Compare("Normal")) defaults->DamageType = NAME_None;
-	else defaults->DamageType=sc.String;
+	PROP_STRING_PARM(str, 0);
+	if (!stricmp(str, "Normal")) defaults->DamageType = NAME_None;
+	else defaults->DamageType=str;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorDamageFactor (FScanner &sc, AActor *defaults, Baggage &bag)
+DEFINE_PROPERTY(damagefactor, SF, Actor)
 {
-	sc.MustGetString ();   
+	PROP_STRING_PARM(str, 0);
+	PROP_FIXED_PARM(id, 0);
+
+	if (bag.Info->DamageFactors == NULL) bag.Info->DamageFactors=new DmgFactors;
 
 	FName dmgType;
-	if (sc.Compare("Normal")) dmgType = NAME_None;
-	else dmgType=sc.String;
+	if (!stricmp(str, "Normal")) dmgType = NAME_None;
+	else dmgType=str;
 
-	sc.MustGetToken(',');
-	sc.MustGetFloat();
-	bag.Info->SetDamageFactor(dmgType, FLOAT2FIXED(sc.Float));
+	(*bag.Info->DamageFactors)[dmgType]=id;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorDecal (FScanner &sc, AActor *defaults, Baggage &bag)
+DEFINE_PROPERTY(decal, S, Actor)
 {
-	sc.MustGetString();
-	defaults->DecalGenerator = (FDecalBase *)intptr_t(int(FName(sc.String)));
+	PROP_STRING_PARM(str, 0);
+	defaults->DecalGenerator = (FDecalBase *)intptr_t(int(FName(str)));
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorMaxStepHeight (FScanner &sc, AActor *defaults, Baggage &bag)
+DEFINE_PROPERTY(maxstepheight, F, Actor)
 {
-	sc.MustGetNumber ();
-	defaults->MaxStepHeight=sc.Number * FRACUNIT;
+	PROP_FIXED_PARM(i, 0);
+	defaults->MaxStepHeight = i;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorMaxDropoffHeight (FScanner &sc, AActor *defaults, Baggage &bag)
+DEFINE_PROPERTY(maxdropoffheight, F, Actor)
 {
-	sc.MustGetNumber ();
-	defaults->MaxDropOffHeight=sc.Number * FRACUNIT;
+	PROP_FIXED_PARM(i, 0);
+	defaults->MaxDropOffHeight = i;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorPoisonDamage (FScanner &sc, AActor *defaults, Baggage &bag)
+DEFINE_PROPERTY(poisondamage, I, Actor)
 {
-	sc.MustGetNumber();
-	bag.Info->Class->Meta.SetMetaInt (AMETA_PoisonDamage, sc.Number);
+	PROP_INT_PARM(i, 0);
+	bag.Info->Class->Meta.SetMetaInt (AMETA_PoisonDamage, i);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorFastSpeed (FScanner &sc, AActor *defaults, Baggage &bag)
+DEFINE_PROPERTY(fastspeed, F, Actor)
 {
-	sc.MustGetFloat();
-	bag.Info->Class->Meta.SetMetaFixed (AMETA_FastSpeed, fixed_t(sc.Float*FRACUNIT));
+	PROP_FIXED_PARM(i, 0);
+	bag.Info->Class->Meta.SetMetaFixed (AMETA_FastSpeed, i);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorRadiusDamageFactor (FScanner &sc, AActor *defaults, Baggage &bag)
+DEFINE_PROPERTY(radiusdamagefactor, F, Actor)
 {
-	sc.MustGetFloat();
-	bag.Info->Class->Meta.SetMetaFixed (AMETA_RDFactor, fixed_t(sc.Float*FRACUNIT));
+	PROP_FIXED_PARM(i, 0);
+	bag.Info->Class->Meta.SetMetaFixed (AMETA_RDFactor, i);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorCameraheight (FScanner &sc, AActor *defaults, Baggage &bag)
+DEFINE_PROPERTY(cameraheight, F, Actor)
 {
-	sc.MustGetFloat();
-	bag.Info->Class->Meta.SetMetaFixed (AMETA_CameraHeight, fixed_t(sc.Float*FRACUNIT));
+	PROP_FIXED_PARM(i, 0);
+	bag.Info->Class->Meta.SetMetaFixed (AMETA_CameraHeight, i);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorVSpeed (FScanner &sc, AActor *defaults, Baggage &bag)
+DEFINE_PROPERTY(vspeed, F, Actor)
 {
-	sc.MustGetFloat();
-	defaults->momz = fixed_t(sc.Float*FRACUNIT);
+	PROP_FIXED_PARM(i, 0);
+	defaults->momz = i;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorGravity (FScanner &sc, AActor *defaults, Baggage &bag)
+DEFINE_PROPERTY(gravity, F, Actor)
 {
-	sc.MustGetFloat ();
+	PROP_FIXED_PARM(i, 0);
 
-	if (sc.Float < 0.f)
-		sc.ScriptError ("Gravity must not be negative.");
-
-	defaults->gravity = FLOAT2FIXED (sc.Float);
-
-	if (sc.Float == 0.f)
-		defaults->flags |= MF_NOGRAVITY;
+	if (i < 0) I_Error ("Gravity must not be negative.");
+	defaults->gravity = i;
+	if (i == 0) defaults->flags |= MF_NOGRAVITY;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorClearFlags (FScanner &sc, AActor *defaults, Baggage &bag)
+DEFINE_PROPERTY(clearflags, 0, Actor)
 {
 	defaults->flags=defaults->flags3=defaults->flags4=defaults->flags5=0;
 	defaults->flags2&=MF2_ARGSDEFINED;	// this flag must not be cleared
@@ -1754,9 +1248,9 @@ static void ActorClearFlags (FScanner &sc, AActor *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
-static void ActorMonster (FScanner &sc, AActor *defaults, Baggage &bag)
+DEFINE_PROPERTY(monster, 0, Actor)
 {
-	// sets the standard flag for a monster
+	// sets the standard flags for a monster
 	defaults->flags|=MF_SHOOTABLE|MF_COUNTKILL|MF_SOLID; 
 	defaults->flags2|=MF2_PUSHWALL|MF2_MCROSS|MF2_PASSMOBJ;
 	defaults->flags3|=MF3_ISMONSTER;
@@ -1766,7 +1260,7 @@ static void ActorMonster (FScanner &sc, AActor *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
-static void ActorProjectile (FScanner &sc, AActor *defaults, Baggage &bag)
+DEFINE_PROPERTY(projectile, 0, Actor)
 {
 	// sets the standard flags for a projectile
 	defaults->flags|=MF_NOBLOCKMAP|MF_NOGRAVITY|MF_DROPOFF|MF_MISSILE; 
@@ -1783,125 +1277,127 @@ static void ActorProjectile (FScanner &sc, AActor *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
-static void AmmoBackpackAmount (FScanner &sc, AAmmo *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY(backpackamount, I, Ammo)
 {
-	sc.MustGetNumber();
-	defaults->BackpackAmount=sc.Number;
+	PROP_INT_PARM(i, 0);
+	defaults->BackpackAmount = i;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void AmmoBackpackMaxAmount (FScanner &sc, AAmmo *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY(backpackmaxamount, I, Ammo)
 {
-	sc.MustGetNumber();
-	defaults->BackpackMaxAmount=sc.Number;
+	PROP_INT_PARM(i, 0);
+	defaults->BackpackMaxAmount = i;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void AmmoDropAmount (FScanner &sc, AAmmo *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY(dropamount, I, Ammo)
 {
-	sc.MustGetNumber();
-	bag.Info->Class->Meta.SetMetaInt (AIMETA_DropAmount, sc.Number);
+	PROP_INT_PARM(i, 0);
+	bag.Info->Class->Meta.SetMetaInt (AIMETA_DropAmount, i);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ArmorMaxSaveAmount (FScanner &sc, ABasicArmorBonus *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY_PREFIX(armor, maxsaveamount, I, BasicArmorBonus)
 {
-	sc.MustGetNumber();
-	defaults->MaxSaveAmount = sc.Number;
+	PROP_INT_PARM(i, 0);
+	defaults->MaxSaveAmount = i;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ArmorMaxBonus (FScanner &sc, ABasicArmorBonus *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY_PREFIX(armor, maxbonus, I, BasicArmorBonus)
 {
-	sc.MustGetNumber();
-	defaults->BonusCount = sc.Number;
+	PROP_INT_PARM(i, 0);
+	defaults->BonusCount = i;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ArmorMaxBonusMax (FScanner &sc, ABasicArmorBonus *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY_PREFIX(armor, maxbonusmax, I, BasicArmorBonus)
 {
-	sc.MustGetNumber();
-	defaults->BonusMax = sc.Number;
+	PROP_INT_PARM(i, 0);
+	defaults->BonusMax = i;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ArmorSaveAmount (FScanner &sc, AActor *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY(saveamount, I, Armor)
 {
-	sc.MustGetNumber();
+	PROP_INT_PARM(i, 0);
+
 	// Special case here because this property has to work for 2 unrelated classes
 	if (bag.Info->Class->IsDescendantOf(RUNTIME_CLASS(ABasicArmorPickup)))
 	{
-		((ABasicArmorPickup*)defaults)->SaveAmount=sc.Number;
+		((ABasicArmorPickup*)defaults)->SaveAmount=i;
 	}
 	else if (bag.Info->Class->IsDescendantOf(RUNTIME_CLASS(ABasicArmorBonus)))
 	{
-		((ABasicArmorBonus*)defaults)->SaveAmount=sc.Number;
+		((ABasicArmorBonus*)defaults)->SaveAmount=i;
 	}
 	else
 	{
-		sc.ScriptError("\"%s\" requires an actor of type \"Armor\"\n", sc.String);
+		I_Error("\"Armor.SaveAmount\" requires an actor of type \"Armor\"");
 	}
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ArmorSavePercent (FScanner &sc, AActor *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY(savepercent, F, Armor)
 {
-	sc.MustGetFloat();
-	if (sc.Float<0.0f) sc.Float=0.0f;
-	if (sc.Float>100.0f) sc.Float=100.0f;
+	PROP_FIXED_PARM(i, 0);
+
+	i = clamp(i, 0, 100*FRACUNIT)/100;
 	// Special case here because this property has to work for 2 unrelated classes
 	if (bag.Info->Class->IsDescendantOf(RUNTIME_CLASS(ABasicArmorPickup)))
 	{
-		((ABasicArmorPickup*)defaults)->SavePercent=fixed_t(sc.Float*FRACUNIT/100.0f);
+		((ABasicArmorPickup*)defaults)->SavePercent = i;
 	}
 	else if (bag.Info->Class->IsDescendantOf(RUNTIME_CLASS(ABasicArmorBonus)))
 	{
-		((ABasicArmorBonus*)defaults)->SavePercent=fixed_t(sc.Float*FRACUNIT/100.0f);
+		((ABasicArmorBonus*)defaults)->SavePercent = i;
 	}
 	else
 	{
-		sc.ScriptError("\"%s\" requires an actor of type \"Armor\"\n", sc.String);
+		I_Error("\"Armor.SavePercent\" requires an actor of type \"Armor\"\n");
 	}
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void InventoryAmount (FScanner &sc, AInventory *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY(amount, I, Inventory)
 {
-	sc.MustGetNumber();
-	defaults->Amount=sc.Number;
+	PROP_INT_PARM(i, 0);
+	defaults->Amount = i;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void InventoryIcon (FScanner &sc, AInventory *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY(icon, S, Inventory)
 {
-	sc.MustGetString();
-	defaults->Icon = TexMan.CheckForTexture(sc.String, FTexture::TEX_MiscPatch);
+	PROP_STRING_PARM(i, 0);
+
+	defaults->Icon = TexMan.CheckForTexture(i, FTexture::TEX_MiscPatch);
 	if (!defaults->Icon.isValid())
 	{
 		// Don't print warnings if the item is for another game or if this is a shareware IWAD. 
 		// Strife's teaser doesn't contain all the icon graphics of the full game.
 		if ((bag.Info->GameFilter == GAME_Any || bag.Info->GameFilter & gameinfo.gametype) &&
-			!(gameinfo.flags&GI_SHAREWARE) && Wads.GetLumpFile(sc.LumpNum) != 0)
+			!(gameinfo.flags&GI_SHAREWARE) && Wads.GetLumpFile(bag.Lumpnum) != 0)
 		{
-			Printf("Icon '%s' for '%s' not found\n", sc.String, bag.Info->Class->TypeName.GetChars());
+			Printf("Icon '%s' for '%s' not found\n", i, bag.Info->Class->TypeName.GetChars());
 		}
 	}
 }
@@ -1909,16 +1405,16 @@ static void InventoryIcon (FScanner &sc, AInventory *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
-static void InventoryMaxAmount (FScanner &sc, AInventory *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY(maxamount, I, Inventory)
 {
-	sc.MustGetNumber();
-	defaults->MaxAmount=sc.Number;
+	PROP_INT_PARM(i, 0);
+	defaults->MaxAmount = i;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void InventoryDefMaxAmount (FScanner &sc, AInventory *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY(defmaxamount, 0, Inventory)
 {
 	defaults->MaxAmount = gameinfo.gametype == GAME_Heretic ? 16 : 25;
 }
@@ -1927,170 +1423,180 @@ static void InventoryDefMaxAmount (FScanner &sc, AInventory *defaults, Baggage &
 //==========================================================================
 //
 //==========================================================================
-static void InventoryPickupflash (FScanner &sc, AInventory *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY(pickupflash, S, Inventory)
 {
-	sc.MustGetString();
-	defaults->PickupFlash = fuglyname(sc.String);
+	PROP_STRING_PARM(str, 0);
+	defaults->PickupFlash = fuglyname(str);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void InventoryPickupmsg (FScanner &sc, AInventory *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY(pickupmessage, S, Inventory)
 {
-	// allow game specific pickup messages
-	const char * games[] = {"Doom", "Heretic", "Hexen", "Raven", "Strife", "Chex", NULL};
-	int gamemode[]={GAME_Doom, GAME_Heretic, GAME_Hexen, GAME_Raven, GAME_Strife, GAME_Chex};
-
-	sc.MustGetString();
-	int game = sc.MatchString(games);
-
-	if (game!=-1 && sc.CheckString(","))
-	{
-		sc.MustGetString();
-		if (!(gameinfo.gametype&gamemode[game])) return;
-	}
-	bag.Info->Class->Meta.SetMetaString(AIMETA_PickupMessage, sc.String);
+	PROP_STRING_PARM(str, 0);
+	bag.Info->Class->Meta.SetMetaString(AIMETA_PickupMessage, str);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void InventoryPickupsound (FScanner &sc, AInventory *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY(pickupsound, S, Inventory)
 {
-	sc.MustGetString();
-	defaults->PickupSound = sc.String;
+	PROP_STRING_PARM(str, 0);
+	defaults->PickupSound = str;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void InventoryRespawntics (FScanner &sc, AInventory *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY(respawntics, I, Inventory)
 {
-	sc.MustGetNumber();
-	defaults->RespawnTics=sc.Number;
+	PROP_INT_PARM(i, 0);
+	defaults->RespawnTics = i;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void InventoryUsesound (FScanner &sc, AInventory *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY(usesound, S, Inventory)
 {
-	sc.MustGetString();
-	defaults->UseSound = sc.String;
+	PROP_STRING_PARM(str, 0);
+	defaults->UseSound = str;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void InventoryGiveQuest (FScanner &sc, AInventory *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY(givequest, I, Inventory)
 {
-	sc.MustGetNumber();
-	bag.Info->Class->Meta.SetMetaInt(AIMETA_GiveQuest, sc.Number);
+	PROP_INT_PARM(i, 0);
+	bag.Info->Class->Meta.SetMetaInt(AIMETA_GiveQuest, i);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void HealthLowMessage (FScanner &sc, AHealth *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY(lowmessage, IS, Health)
 {
-	sc.MustGetNumber();
-	bag.Info->Class->Meta.SetMetaInt(AIMETA_LowHealth, sc.Number);
-	sc.MustGetStringName(",");
-	sc.MustGetString();
-	bag.Info->Class->Meta.SetMetaString(AIMETA_LowHealthMessage, sc.String);
+	PROP_INT_PARM(i, 0);
+	PROP_STRING_PARM(str, 1);
+	bag.Info->Class->Meta.SetMetaInt(AIMETA_LowHealth, i);
+	bag.Info->Class->Meta.SetMetaString(AIMETA_LowHealthMessage, str);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void PuzzleitemNumber (FScanner &sc, APuzzleItem *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY(number, I, PuzzleItem)
 {
-	sc.MustGetNumber();
-	defaults->PuzzleItemNumber=sc.Number;
+	PROP_INT_PARM(i, 0);
+	defaults->PuzzleItemNumber = i;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void PuzzleitemFailMsg (FScanner &sc, APuzzleItem *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY(failmessage, S, PuzzleItem)
 {
-	sc.MustGetString();
-	bag.Info->Class->Meta.SetMetaString(AIMETA_PuzzFailMessage, sc.String);
+	PROP_STRING_PARM(str, 0);
+	bag.Info->Class->Meta.SetMetaString(AIMETA_PuzzFailMessage, str);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void WeaponAmmoGive1 (FScanner &sc, AWeapon *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY(ammogive, I, Weapon)
 {
-	sc.MustGetNumber();
-	defaults->AmmoGive1=sc.Number;
+	PROP_INT_PARM(i, 0);
+	defaults->AmmoGive1 = i;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void WeaponAmmoGive2 (FScanner &sc, AWeapon *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY(ammogive1, I, Weapon)
 {
-	sc.MustGetNumber();
-	defaults->AmmoGive2=sc.Number;
-}
-
-//==========================================================================
-//
-// Passing these parameters is really tricky to allow proper inheritance
-// and forward declarations. Here only a name is
-// stored which must be resolved after everything has been declared
-//
-//==========================================================================
-
-static void WeaponAmmoType1 (FScanner &sc, AWeapon *defaults, Baggage &bag)
-{
-	sc.MustGetString();
-	defaults->AmmoType1 = fuglyname(sc.String);
+	PROP_INT_PARM(i, 0);
+	defaults->AmmoGive1 = i;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void WeaponAmmoType2 (FScanner &sc, AWeapon *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY(ammogive2, I, Weapon)
 {
-	sc.MustGetString();
-	defaults->AmmoType2 = fuglyname(sc.String);
+	PROP_INT_PARM(i, 0);
+	defaults->AmmoGive2 = 2;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void WeaponAmmoUse1 (FScanner &sc, AWeapon *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY(ammotype, S, Weapon)
 {
-	sc.MustGetNumber();
-	defaults->AmmoUse1=sc.Number;
+	PROP_STRING_PARM(str, 0);
+	defaults->AmmoType1 = fuglyname(str);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void WeaponAmmoUse2 (FScanner &sc, AWeapon *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY(ammotype1, S, Weapon)
 {
-	sc.MustGetNumber();
-	defaults->AmmoUse2=sc.Number;
+	PROP_STRING_PARM(str, 0);
+	defaults->AmmoType1 = fuglyname(str);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void WeaponKickback (FScanner &sc, AWeapon *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY(ammotype2, S, Weapon)
 {
-	sc.MustGetNumber();
-	defaults->Kickback=sc.Number;
+	PROP_STRING_PARM(str, 0);
+	defaults->AmmoType2 = fuglyname(str);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void WeaponDefKickback (FScanner &sc, AWeapon *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY(ammouse, I, Weapon)
+{
+	PROP_INT_PARM(i, 0);
+	defaults->AmmoUse1 = i;
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_CLASS_PROPERTY(ammouse1, I, Weapon)
+{
+	PROP_INT_PARM(i, 0);
+	defaults->AmmoUse1 = i;
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_CLASS_PROPERTY(ammouse2, I, Weapon)
+{
+	PROP_INT_PARM(i, 0);
+	defaults->AmmoUse2 = i;
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_CLASS_PROPERTY(kickback, I, Weapon)
+{
+	PROP_INT_PARM(i, 0);
+	defaults->Kickback = i;
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_CLASS_PROPERTY(defaultkickback, 0, Weapon)
 {
 	defaults->Kickback = gameinfo.defKickback;
 }
@@ -2098,74 +1604,73 @@ static void WeaponDefKickback (FScanner &sc, AWeapon *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
-static void WeaponReadySound (FScanner &sc, AWeapon *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY(readysound, S, Weapon)
 {
-	sc.MustGetString();
-	defaults->ReadySound = sc.String;
+	PROP_STRING_PARM(str, 0);
+	defaults->ReadySound = str;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void WeaponSelectionOrder (FScanner &sc, AWeapon *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY(selectionorder, I, Weapon)
 {
-	sc.MustGetNumber();
-	defaults->SelectionOrder=sc.Number;
+	PROP_INT_PARM(i, 0);
+	defaults->SelectionOrder = i;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void WeaponSisterWeapon (FScanner &sc, AWeapon *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY(sisterweapon, S, Weapon)
 {
-	sc.MustGetString();
-	defaults->SisterWeaponType=fuglyname(sc.String);
+	PROP_STRING_PARM(str, 0);
+	defaults->SisterWeaponType = fuglyname(str);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void WeaponUpSound (FScanner &sc, AWeapon *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY(upsound, S, Weapon)
 {
-	sc.MustGetString();
-	defaults->UpSound = sc.String;
+	PROP_STRING_PARM(str, 0);
+	defaults->UpSound = str;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void WeaponYAdjust (FScanner &sc, AWeapon *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY(yadjust, F, Weapon)
 {
-	sc.MustGetFloat();
-	defaults->YAdjust=fixed_t(sc.Float * FRACUNIT);
+	PROP_FIXED_PARM(i, 0);
+	defaults->YAdjust = i;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void WPieceValue (FScanner &sc, AWeaponPiece *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY(number, I, WeaponPiece)
 {
-	sc.MustGetNumber();
-	defaults->PieceValue = 1 << (sc.Number-1);
+	PROP_INT_PARM(i, 0);
+	defaults->PieceValue = 1 << (i-1);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void WPieceWeapon (FScanner &sc, AWeaponPiece *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY(weapon, S, WeaponPiece)
 {
-	sc.MustGetString();
-	defaults->WeaponClass = fuglyname(sc.String);
+	PROP_STRING_PARM(str, 0);
+	defaults->WeaponClass = fuglyname(str);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void PowerupColor (FScanner &sc, APowerupGiver *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY_PREFIX(powerup, color, C_f, Inventory)
 {
-	int r;
-	int g;
-	int b;
+	PROP_INT_PARM(i, 0);
+
 	int alpha;
 	PalEntry * pBlendColor;
 
@@ -2179,66 +1684,59 @@ static void PowerupColor (FScanner &sc, APowerupGiver *defaults, Baggage &bag)
 	}
 	else
 	{
-		sc.ScriptError("\"%s\" requires an actor of type \"Powerup\"\n", sc.String);
+		I_Error("\"powerup.color\" requires an actor of type \"Powerup\"\n");
 		return;
 	}
 
-	if (sc.CheckNumber())
-	{
-		r=clamp<int>(sc.Number, 0, 255);
-		sc.CheckString(",");
-		sc.MustGetNumber();
-		g=clamp<int>(sc.Number, 0, 255);
-		sc.CheckString(",");
-		sc.MustGetNumber();
-		b=clamp<int>(sc.Number, 0, 255);
-	}
-	else
-	{
-		sc.MustGetString();
+	PROP_INT_PARM(mode, 0);
+	PROP_INT_PARM(color, 1);
 
-		if (sc.Compare("INVERSEMAP"))
+	if (mode == 1)
+	{
+		PROP_STRING_PARM(name, 1);
+
+		if (!stricmp(name, "INVERSEMAP"))
 		{
-			defaults->BlendColor = INVERSECOLOR;
+			*pBlendColor = INVERSECOLOR;
 			return;
 		}
-		else if (sc.Compare("GOLDMAP"))
+		else if (!stricmp(name, "GOLDMAP"))
 		{
-			defaults->BlendColor = GOLDCOLOR;
+			*pBlendColor = GOLDCOLOR;
 			return;
 		}
 		// [BC] Yay, more hacks.
-		else if ( sc.Compare( "REDMAP" ))
+		else if (!stricmp(name, "REDMAP" ))
 		{
-			defaults->BlendColor = REDCOLOR;
+			*pBlendColor = REDCOLOR;
 			return;
 		}
-		else if ( sc.Compare( "GREENMAP" ))
+		else if (!stricmp(name, "GREENMAP" ))
 		{
-			defaults->BlendColor = GREENCOLOR;
+			*pBlendColor = GREENCOLOR;
 			return;
 		}
 
-		int c = V_GetColor(NULL, sc.String);
-		r=RPART(c);
-		g=GPART(c);
-		b=BPART(c);
+		color = V_GetColor(NULL, name);
 	}
-	sc.CheckString(",");
-	sc.MustGetFloat();
-	alpha=int(sc.Float*255);
+	else if (PROP_PARM_COUNT > 1)
+	{
+		PROP_FLOAT_PARM(falpha, 2);
+		alpha=int(falpha*255);
+	}
+	else alpha = 255/3;
+
 	alpha=clamp<int>(alpha, 0, 255);
-	if (alpha!=0) *pBlendColor = MAKEARGB(alpha, r, g, b);
+	if (alpha!=0) *pBlendColor = MAKEARGB(alpha, 0, 0, 0) | color;
 	else *pBlendColor = 0;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void PowerupDuration (FScanner &sc, APowerupGiver *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY_PREFIX(powerup, duration, I, Inventory)
 {
 	int *pEffectTics;
-
 
 	if (bag.Info->Class->IsDescendantOf(RUNTIME_CLASS(APowerup)))
 	{
@@ -2250,30 +1748,30 @@ static void PowerupDuration (FScanner &sc, APowerupGiver *defaults, Baggage &bag
 	}
 	else
 	{
-		sc.ScriptError("\"%s\" requires an actor of type \"Powerup\"\n", sc.String);
+		I_Error("\"powerup.color\" requires an actor of type \"Powerup\"\n");
 		return;
 	}
 
-	sc.MustGetNumber();
-	*pEffectTics = (sc.Number >= 0) ? sc.Number : -sc.Number * TICRATE;
+	PROP_INT_PARM(i, 0);
+	*pEffectTics = (i >= 0) ? i : -i * TICRATE;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void PowerupMode (FScanner &sc, APowerupGiver *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY_PREFIX(powerup, mode, S, PowerupGiver)
 {
-	sc.MustGetString();
-	defaults->mode = (FName)sc.String;
+	PROP_STRING_PARM(str, 0);
+	defaults->mode = (FName)str;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void PowerupType (FScanner &sc, APowerupGiver *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY_PREFIX(powerup, type, S, PowerupGiver)
 {
-	sc.MustGetString();
-	defaults->PowerupType = fuglyname(sc.String);
+	PROP_STRING_PARM(str, 0);
+	defaults->PowerupType = fuglyname(str);
 }
 
 //==========================================================================
@@ -2285,21 +1783,20 @@ static void PowerupType (FScanner &sc, APowerupGiver *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
-static void PlayerDisplayName (FScanner &sc, APlayerPawn *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY_PREFIX(player, displayname, S, PlayerPawn)
 {
-	sc.MustGetString ();
-	bag.Info->Class->Meta.SetMetaString (APMETA_DisplayName, sc.String);
+	PROP_STRING_PARM(str, 0);
+	bag.Info->Class->Meta.SetMetaString (APMETA_DisplayName, str);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void PlayerSoundClass (FScanner &sc, APlayerPawn *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY_PREFIX(player, soundclass, S, PlayerPawn)
 {
-	FString tmp;
+	PROP_STRING_PARM(str, 0);
 
-	sc.MustGetString ();
-	tmp = sc.String;
+	FString tmp = str;
 	tmp.ReplaceChars (' ', '_');
 	bag.Info->Class->Meta.SetMetaString (APMETA_SoundClass, tmp);
 }
@@ -2307,19 +1804,18 @@ static void PlayerSoundClass (FScanner &sc, APlayerPawn *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
-static void PlayerFace (FScanner &sc, APlayerPawn *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY_PREFIX(player, face, S, PlayerPawn)
 {
-	FString tmp;
+	PROP_STRING_PARM(str, 0);
+	FString tmp = str;
 
-	sc.MustGetString ();
-	tmp = sc.String;
+	tmp.ToUpper();
 	if (tmp.Len() != 3)
 	{
 		Printf("Invalid face '%s' for '%s';\nSTF replacement codes must be 3 characters.\n",
-			sc.String, bag.Info->Class->TypeName.GetChars ());
+			tmp.GetChars(), bag.Info->Class->TypeName.GetChars ());
 	}
 
-	tmp.ToUpper();
 	bool valid = (
 		(((tmp[0] >= 'A') && (tmp[0] <= 'Z')) || ((tmp[0] >= '0') && (tmp[0] <= '9'))) &&
 		(((tmp[1] >= 'A') && (tmp[1] <= 'Z')) || ((tmp[1] >= '0') && (tmp[1] <= '9'))) &&
@@ -2328,7 +1824,7 @@ static void PlayerFace (FScanner &sc, APlayerPawn *defaults, Baggage &bag)
 	if (!valid)
 	{
 		Printf("Invalid face '%s' for '%s';\nSTF replacement codes must be alphanumeric.\n",
-			sc.String, bag.Info->Class->TypeName.GetChars ());
+			tmp.GetChars(), bag.Info->Class->TypeName.GetChars ());
 	}
 	
 	bag.Info->Class->Meta.SetMetaString (APMETA_Face, tmp);
@@ -2337,15 +1833,10 @@ static void PlayerFace (FScanner &sc, APlayerPawn *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
-static void PlayerColorRange (FScanner &sc, APlayerPawn *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY_PREFIX(player, colorrange, I_I, PlayerPawn)
 {
-	int start, end;
-
-	sc.MustGetNumber ();
-	start = sc.Number;
-	sc.CheckString(",");
-	sc.MustGetNumber ();
-	end = sc.Number;
+	PROP_INT_PARM(start, 0);
+	PROP_INT_PARM(end, 0);
 
 	if (start > end)
 		swap (start, end);
@@ -2356,150 +1847,147 @@ static void PlayerColorRange (FScanner &sc, APlayerPawn *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
-static void PlayerAttackZOffset (FScanner &sc, APlayerPawn *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY_PREFIX(player, attackzoffset, F, PlayerPawn)
 {
-	sc.MustGetFloat ();
-	defaults->AttackZOffset = FLOAT2FIXED (sc.Float);
+	PROP_FIXED_PARM(z, 0);
+	defaults->AttackZOffset = z;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void PlayerJumpZ (FScanner &sc, APlayerPawn *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY_PREFIX(player, jumpz, F, PlayerPawn)
 {
-	sc.MustGetFloat ();
-	defaults->JumpZ = FLOAT2FIXED (sc.Float);
+	PROP_FIXED_PARM(z, 0);
+	defaults->JumpZ = z;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void PlayerSpawnClass (FScanner &sc, APlayerPawn *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY_PREFIX(player, spawnclass, L, PlayerPawn)
 {
-	sc.MustGetString ();
-	if (sc.Compare ("Any"))
-		defaults->SpawnMask = 0;
-	else if (sc.Compare ("Fighter"))
-		defaults->SpawnMask |= 1;
-	else if (sc.Compare ("Cleric"))
-		defaults->SpawnMask |= 2;
-	else if (sc.Compare ("Mage"))
-		defaults->SpawnMask |= 4;
-	else if (IsNum(sc.String))
+	PROP_INT_PARM(type, 0);
+
+	if (type == 0)
 	{
-		int val = strtol(sc.String, NULL, 0);
+		PROP_INT_PARM(val, 1);
 		if (val > 0) defaults->SpawnMask |= 1<<(val-1);
 	}
+	else 
+	{
+		for(int i=1; i<PROP_PARM_COUNT; i++)
+		{
+			PROP_STRING_PARM(str, i);
+
+			if (!stricmp(str, "Any"))
+				defaults->SpawnMask = 0;
+			else if (!stricmp(str, "Fighter"))
+				defaults->SpawnMask |= 1;
+			else if (!stricmp(str, "Cleric"))
+				defaults->SpawnMask |= 2;
+			else if (!stricmp(str, "Mage"))
+				defaults->SpawnMask |= 4;
+
+		}
+	}
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void PlayerViewHeight (FScanner &sc, APlayerPawn *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY_PREFIX(player, viewheight, F, PlayerPawn)
 {
-	sc.MustGetFloat ();
-	defaults->ViewHeight = FLOAT2FIXED (sc.Float);
+	PROP_FIXED_PARM(z, 0);
+	defaults->ViewHeight = z;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void PlayerForwardMove (FScanner &sc, APlayerPawn *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY_PREFIX(player, forwardmove, F_f, PlayerPawn)
 {
-	sc.MustGetFloat ();
-	defaults->ForwardMove1 = defaults->ForwardMove2 = FLOAT2FIXED (sc.Float);
-	if (CheckFloatParm (sc))
-		defaults->ForwardMove2 = FLOAT2FIXED (sc.Float);
+	PROP_FIXED_PARM(m, 0);
+	defaults->ForwardMove1 = defaults->ForwardMove2 = m;
+	if (PROP_PARM_COUNT > 1)
+	{
+		PROP_FIXED_PARM(m2, 1);
+		defaults->ForwardMove2 = m2;
+	}
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void PlayerSideMove (FScanner &sc, APlayerPawn *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY_PREFIX(player, sidemove, F_f, PlayerPawn)
 {
-	sc.MustGetFloat ();
-	defaults->SideMove1 = defaults->SideMove2 = FLOAT2FIXED (sc.Float);
-	if (CheckFloatParm (sc))
-		defaults->SideMove2 = FLOAT2FIXED (sc.Float);
+	PROP_FIXED_PARM(m, 0);
+	defaults->SideMove1 = defaults->SideMove2 = m;
+	if (PROP_PARM_COUNT > 1)
+	{
+		PROP_FIXED_PARM(m2, 1);
+		defaults->SideMove2 = m2;
+	}
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void PlayerMaxHealth (FScanner &sc, APlayerPawn *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY_PREFIX(player, maxhealth, I, PlayerPawn)
 {
-	sc.MustGetNumber ();
-	defaults->MaxHealth = sc.Number;
+	PROP_INT_PARM(z, 0);
+	defaults->MaxHealth = z;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void PlayerRunHealth (FScanner &sc, APlayerPawn *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY_PREFIX(player, runhealth, I, PlayerPawn)
 {
-	sc.MustGetNumber ();
-	defaults->RunHealth = sc.Number;
+	PROP_INT_PARM(z, 0);
+	defaults->RunHealth = z;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void PlayerMorphWeapon (FScanner &sc, APlayerPawn *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY_PREFIX(player, morphweapon, S, PlayerPawn)
 {
-	sc.MustGetString ();
-	defaults->MorphWeapon = FName(sc.String);
+	PROP_STRING_PARM(z, 0);
+	defaults->MorphWeapon = FName(z);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void PlayerScoreIcon (FScanner &sc, APlayerPawn *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY_PREFIX(player, scoreicon, S, PlayerPawn)
 {
-	sc.MustGetString ();
-	defaults->ScoreIcon = TexMan.CheckForTexture(sc.String, FTexture::TEX_MiscPatch);
+	PROP_STRING_PARM(z, 0);
+	defaults->ScoreIcon = TexMan.CheckForTexture(z, FTexture::TEX_MiscPatch);
 	if (!defaults->ScoreIcon.isValid())
 	{
-		Printf("Icon '%s' for '%s' not found\n", sc.String, bag.Info->Class->TypeName.GetChars ());
+		Printf("Icon '%s' for '%s' not found\n", z, bag.Info->Class->TypeName.GetChars ());
 	}
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void PlayerCrouchSprite (FScanner &sc, APlayerPawn *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY_PREFIX(player, crouchsprite, S, PlayerPawn)
 {
-	sc.MustGetString ();
-	for (int i = 0; i < sc.StringLen; i++)
-	{
-		sc.String[i] = toupper (sc.String[i]);
-	}
-	defaults->crouchsprite = GetSpriteIndex (sc.String);
+	PROP_STRING_PARM(z, 0);
+	defaults->crouchsprite = GetSpriteIndex (z);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void PlayerDmgScreenColor (FScanner &sc, APlayerPawn *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY_PREFIX(player, damagescreencolor, C, PlayerPawn)
 {
-	if (sc.CheckNumber ())
-	{
-		sc.MustGetNumber ();
-		defaults->RedDamageFade = clamp <float> (sc.Number, 0, 255);
-		sc.CheckString (",");
-		sc.MustGetNumber ();
-		defaults->GreenDamageFade = clamp <float> (sc.Number, 0, 255);
-		sc.CheckString (",");
-		sc.MustGetNumber ();
-		defaults->BlueDamageFade = clamp <float> (sc.Number, 0, 255);
-	}
-	else
-	{
-		sc.MustGetString ();
-		int c = V_GetColor (NULL, sc.String);
-		defaults->RedDamageFade = RPART (c);
-		defaults->GreenDamageFade = GPART (c);
-		defaults->BlueDamageFade = BPART (c);
-	}
+	PROP_COLOR_PARM(c, 0);
+	defaults->RedDamageFade = RPART (c);
+	defaults->GreenDamageFade = GPART (c);
+	defaults->BlueDamageFade = BPART (c);
 }
 
 //==========================================================================
@@ -2507,9 +1995,11 @@ static void PlayerDmgScreenColor (FScanner &sc, APlayerPawn *defaults, Baggage &
 // [GRB] Store start items in drop item list
 //
 //==========================================================================
-static void PlayerStartItem (FScanner &sc, APlayerPawn *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY_PREFIX(player, startitem, S_i, PlayerPawn)
 {
-	// create a linked list of dropitems
+	PROP_STRING_PARM(str, 0);
+
+	// create a linked list of startitems
 	if (!bag.DropItemSet)
 	{
 		bag.DropItemSet = true;
@@ -2518,13 +2008,13 @@ static void PlayerStartItem (FScanner &sc, APlayerPawn *defaults, Baggage &bag)
 
 	FDropItem * di=new FDropItem;
 
-	sc.MustGetString();
-	di->Name = sc.String;
+	di->Name = str;
 	di->probability = 255;
 	di->amount = 1;
-	if (CheckNumParm(sc))
+	if (PROP_PARM_COUNT > 1)
 	{
-		di->amount = sc.Number;
+		PROP_INT_PARM(amt, 0);
+		di->amount = amt;
 	}
 	di->Next = bag.DropItemList;
 	bag.DropItemList = di;
@@ -2533,136 +2023,162 @@ static void PlayerStartItem (FScanner &sc, APlayerPawn *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
-static void PlayerInvulMode (FScanner &sc, APlayerPawn *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY_PREFIX(player, invulnerabilitymode, S, PlayerPawn)
 {
-	sc.MustGetString ();
-	bag.Info->Class->Meta.SetMetaInt (APMETA_InvulMode, (FName)sc.String);
+	PROP_STRING_PARM(str, 0);
+	bag.Info->Class->Meta.SetMetaInt (APMETA_InvulMode, (FName)str);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void PlayerHealRadius (FScanner &sc, APlayerPawn *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY_PREFIX(player, healradiustype, S, PlayerPawn)
 {
-	sc.MustGetString ();
-	bag.Info->Class->Meta.SetMetaInt (APMETA_HealingRadius, (FName)sc.String);
+	PROP_STRING_PARM(str, 0);
+	bag.Info->Class->Meta.SetMetaInt (APMETA_HealingRadius, (FName)str);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void PlayerHexenArmor (FScanner &sc, APlayerPawn *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY_PREFIX(player, hexenarmor, FFFFF, PlayerPawn)
 {
 	for (int i=0;i<5;i++)
 	{
-		sc.MustGetFloat ();
-		bag.Info->Class->Meta.SetMetaFixed (APMETA_Hexenarmor0+i, FLOAT2FIXED (sc.Float));
-		if (i!=4) sc.MustGetStringName(",");
+		PROP_FIXED_PARM(val, i);
+		bag.Info->Class->Meta.SetMetaFixed (APMETA_Hexenarmor0+i, val);
 	}
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void EggFXPlayerClass (FScanner &sc, AMorphProjectile *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY(playerclass, S, MorphProjectile)
 {
-	sc.MustGetString ();
-	defaults->PlayerClass = FName(sc.String);
+	PROP_STRING_PARM(str, 0);
+	defaults->PlayerClass = FName(str);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void EggFXMonsterClass (FScanner &sc, AMorphProjectile *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY(monsterclass, S, MorphProjectile)
 {
-	sc.MustGetString ();
-	defaults->MonsterClass = FName(sc.String);
+	PROP_STRING_PARM(str, 0);
+	defaults->MonsterClass = FName(str);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void EggFXDuration (FScanner &sc, AMorphProjectile *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY(duration, I, MorphProjectile)
 {
-	sc.MustGetNumber ();
-	defaults->Duration = sc.Number;
+	PROP_INT_PARM(i, 0);
+	defaults->Duration = i >= 0 ? i : -i*TICRATE;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void EggFXMorphStyle (FScanner &sc, AMorphProjectile *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY(morphstyle, M, MorphProjectile)
 {
-	defaults->MorphStyle = ParseMorphStyle(sc);
+	PROP_INT_PARM(i, 0);
+	defaults->MorphStyle = i;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void EggFXMorphFlash (FScanner &sc, AMorphProjectile *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY(morphflash, S, MorphProjectile)
 {
-	sc.MustGetString ();
-	defaults->MorphFlash = FName(sc.String);
+	PROP_STRING_PARM(str, 0);
+	defaults->MorphFlash = FName(str);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void EggFXUnMorphFlash (FScanner &sc, AMorphProjectile *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY(unmorphflash, S, MorphProjectile)
 {
-	sc.MustGetString ();
-	defaults->UnMorphFlash = FName(sc.String);
+	PROP_STRING_PARM(str, 0);
+	defaults->UnMorphFlash = FName(str);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void PowerMorphPlayerClass (FScanner &sc, APowerMorph *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY(playerclass, S, PowerMorph)
 {
-	sc.MustGetString ();
-	defaults->PlayerClass = FName(sc.String);
+	PROP_STRING_PARM(str, 0);
+	defaults->PlayerClass = FName(str);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void PowerMorphMorphStyle (FScanner &sc, APowerMorph *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY(morphstyle, M, PowerMorph)
 {
-	defaults->MorphStyle = ParseMorphStyle(sc);
+	PROP_INT_PARM(i, 0);
+	defaults->MorphStyle = i;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void PowerMorphMorphFlash (FScanner &sc, APowerMorph *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY(morphflash, S, PowerMorph)
 {
-	sc.MustGetString ();
-	defaults->MorphFlash = FName(sc.String);
+	PROP_STRING_PARM(str, 0);
+	defaults->MorphFlash = FName(str);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void PowerMorphUnMorphFlash (FScanner &sc, APowerMorph *defaults, Baggage &bag)
+DEFINE_CLASS_PROPERTY(unmorphflash, S, PowerMorph)
 {
-	sc.MustGetString ();
-	defaults->UnMorphFlash = FName(sc.String);
+	PROP_STRING_PARM(str, 0);
+	defaults->UnMorphFlash = FName(str);
 }
+
 
 //==========================================================================
 //
+// Find a property by name using a binary search
+//
 //==========================================================================
-static const ActorProps *APropSearch (const char *str, const ActorProps *props, int numprops)
+static int STACK_ARGS propcmp(const void * a, const void * b)
 {
-	int min = 0, max = numprops - 1;
+	return stricmp( (*(FPropertyInfo**)a)->name, (*(FPropertyInfo**)b)->name);
+}
+
+static TArray<FPropertyInfo*> properties;
+
+FPropertyInfo *FindProperty(const char * string)
+{
+	static bool propsorted=false;
+
+	if (!propsorted) 
+	{
+		TAutoSegIterator<FPropertyInfo *, &GRegHead, &GRegTail> probe;
+
+		while (++probe != NULL)
+		{
+			properties.Push(probe);
+		}
+		properties.ShrinkToFit();
+		qsort(&properties[0], properties.Size(), sizeof(properties[0]), propcmp);
+		propsorted=true;
+	}
+
+	int min = 0, max = properties.Size()-1;
 
 	while (min <= max)
 	{
 		int mid = (min + max) / 2;
-		int lexval = strcmp (str, props[mid].name);
+		int lexval = stricmp (string, properties[mid]->name);
 		if (lexval == 0)
 		{
-			return &props[mid];
+			return properties[mid];
 		}
 		else if (lexval > 0)
 		{
@@ -2674,251 +2190,4 @@ static const ActorProps *APropSearch (const char *str, const ActorProps *props, 
 		}
 	}
 	return NULL;
-}
-
-//==========================================================================
-//
-// all actor properties
-//
-//==========================================================================
-#define apf ActorPropFunction
-static const ActorProps props[] =
-{
-	{ "activesound",					ActorActiveSound,				RUNTIME_CLASS(AActor) },
-	{ "alpha",							ActorAlpha,						RUNTIME_CLASS(AActor) },
-	{ "ammo.backpackamount",			(apf)AmmoBackpackAmount,		RUNTIME_CLASS(AAmmo) },
-	{ "ammo.backpackmaxamount",			(apf)AmmoBackpackMaxAmount,		RUNTIME_CLASS(AAmmo) },
-	{ "ammo.dropamount",				(apf)AmmoDropAmount,			RUNTIME_CLASS(AAmmo) },
-	{ "args",							ActorArgs,						RUNTIME_CLASS(AActor) },
-	{ "armor.maxbonus",					(apf)ArmorMaxBonus,				RUNTIME_CLASS(ABasicArmorBonus) },
-	{ "armor.maxbonusmax",				(apf)ArmorMaxBonusMax,			RUNTIME_CLASS(ABasicArmorBonus) },
-	{ "armor.maxsaveamount",			(apf)ArmorMaxSaveAmount,		RUNTIME_CLASS(ABasicArmorBonus) },
-	{ "armor.saveamount",				(apf)ArmorSaveAmount,			RUNTIME_CLASS(AActor) },
-	{ "armor.savepercent",				(apf)ArmorSavePercent,			RUNTIME_CLASS(AActor) },
-	{ "attacksound",					ActorAttackSound,				RUNTIME_CLASS(AActor) },
-	{ "bloodcolor",						ActorBloodColor,				RUNTIME_CLASS(AActor) },
-	{ "bloodtype",						ActorBloodType,					RUNTIME_CLASS(AActor) },
-	{ "bouncecount",					ActorBounceCount,				RUNTIME_CLASS(AActor) },
-	{ "bouncefactor",					ActorBounceFactor,				RUNTIME_CLASS(AActor) },
-	{ "burn",							ActorBurnState,					RUNTIME_CLASS(AActor) },
-	{ "burnheight",						ActorBurnHeight,				RUNTIME_CLASS(AActor) },
-	{ "cameraheight",					ActorCameraheight,				RUNTIME_CLASS(AActor) },
-	{ "clearflags",						ActorClearFlags,				RUNTIME_CLASS(AActor) },
-	{ "conversationid",					ActorConversationID,			RUNTIME_CLASS(AActor) },
-	{ "crash",							ActorCrashState,				RUNTIME_CLASS(AActor) },
-	{ "crush",							ActorCrushState,				RUNTIME_CLASS(AActor) },
-	{ "damage",							ActorDamage,					RUNTIME_CLASS(AActor) },
-	{ "damagefactor",					ActorDamageFactor,				RUNTIME_CLASS(AActor) },
-	{ "damagetype",						ActorDamageType,				RUNTIME_CLASS(AActor) },
-	{ "death",							ActorDeathState,				RUNTIME_CLASS(AActor) },
-	{ "deathheight",					ActorDeathHeight,				RUNTIME_CLASS(AActor) },
-	{ "deathsound",						ActorDeathSound,				RUNTIME_CLASS(AActor) },
-	{ "decal",							ActorDecal,						RUNTIME_CLASS(AActor) },
-	{ "disintegrate",					ActorDisintegrateState,			RUNTIME_CLASS(AActor) },
-	{ "donthurtshooter",				ActorDontHurtShooter,			RUNTIME_CLASS(AActor) },
-	{ "dropitem",						ActorDropItem,					RUNTIME_CLASS(AActor) },
-	{ "explosiondamage",				ActorExplosionDamage,			RUNTIME_CLASS(AActor) },
-	{ "explosionradius",				ActorExplosionRadius,			RUNTIME_CLASS(AActor) },
-	{ "fastspeed",						ActorFastSpeed,					RUNTIME_CLASS(AActor) },
-	{ "floatspeed",						ActorFloatSpeed,				RUNTIME_CLASS(AActor) },
-	{ "game",							ActorGame,						RUNTIME_CLASS(AActor) },
-	{ "gibhealth",						ActorGibHealth,					RUNTIME_CLASS(AActor) },
-	{ "gravity",						ActorGravity,					RUNTIME_CLASS(AActor) },
-	{ "heal",							ActorHealState,					RUNTIME_CLASS(AActor) },
-	{ "health",							ActorHealth,					RUNTIME_CLASS(AActor) },
-	{ "health.lowmessage",				(apf)HealthLowMessage,			RUNTIME_CLASS(AHealth) },
-	{ "height",							ActorHeight,					RUNTIME_CLASS(AActor) },
-	{ "hitobituary",					ActorHitObituary,				RUNTIME_CLASS(AActor) },
-	{ "howlsound",						ActorHowlSound,					RUNTIME_CLASS(AActor) },
-	{ "ice",							ActorIceState,					RUNTIME_CLASS(AActor) },
-	{ "inventory.amount",				(apf)InventoryAmount,			RUNTIME_CLASS(AInventory) },
-	{ "inventory.defmaxamount",			(apf)InventoryDefMaxAmount,		RUNTIME_CLASS(AInventory) },
-	{ "inventory.givequest",			(apf)InventoryGiveQuest,		RUNTIME_CLASS(AInventory) },
-	{ "inventory.icon",					(apf)InventoryIcon,				RUNTIME_CLASS(AInventory) },
-	{ "inventory.maxamount",			(apf)InventoryMaxAmount,		RUNTIME_CLASS(AInventory) },
-	{ "inventory.pickupflash",			(apf)InventoryPickupflash,		RUNTIME_CLASS(AInventory) },
-	{ "inventory.pickupmessage",		(apf)InventoryPickupmsg,		RUNTIME_CLASS(AInventory) },
-	{ "inventory.pickupsound",			(apf)InventoryPickupsound,		RUNTIME_CLASS(AInventory) },
-	{ "inventory.respawntics",			(apf)InventoryRespawntics,		RUNTIME_CLASS(AInventory) },
-	{ "inventory.usesound",				(apf)InventoryUsesound,			RUNTIME_CLASS(AInventory) },
-	{ "mass",							ActorMass,						RUNTIME_CLASS(AActor) },
-	{ "maxdropoffheight",				ActorMaxDropoffHeight,			RUNTIME_CLASS(AActor) },
-	{ "maxstepheight",					ActorMaxStepHeight,				RUNTIME_CLASS(AActor) },
-	{ "maxtargetrange",					ActorMaxTargetRange,			RUNTIME_CLASS(AActor) },
-	{ "melee",							ActorMeleeState,				RUNTIME_CLASS(AActor) },
-	{ "meleedamage",					ActorMeleeDamage,				RUNTIME_CLASS(AActor) },
-	{ "meleerange",						ActorMeleeRange,				RUNTIME_CLASS(AActor) },
-	{ "meleesound",						ActorMeleeSound,				RUNTIME_CLASS(AActor) },
-	{ "meleethreshold",					ActorMeleeThreshold,			RUNTIME_CLASS(AActor) },
-	{ "minmissilechance",				ActorMinMissileChance,			RUNTIME_CLASS(AActor) },
-	{ "missile",						ActorMissileState,				RUNTIME_CLASS(AActor) },
-	{ "missileheight",					ActorMissileHeight,				RUNTIME_CLASS(AActor) },
-	{ "missiletype",					ActorMissileType,				RUNTIME_CLASS(AActor) },
-	{ "monster",						ActorMonster,					RUNTIME_CLASS(AActor) },
-	{ "morphprojectile.duration",		(apf)EggFXDuration,				RUNTIME_CLASS(AMorphProjectile) },
- 	{ "morphprojectile.monsterclass",	(apf)EggFXMonsterClass,			RUNTIME_CLASS(AMorphProjectile) },
-	{ "morphprojectile.morphflash",		(apf)EggFXMorphFlash,			RUNTIME_CLASS(AMorphProjectile) },
-	{ "morphprojectile.morphstyle",		(apf)EggFXMorphStyle,			RUNTIME_CLASS(AMorphProjectile) },
- 	{ "morphprojectile.playerclass",	(apf)EggFXPlayerClass,			RUNTIME_CLASS(AMorphProjectile) },
-	{ "morphprojectile.unmorphflash",	(apf)EggFXUnMorphFlash,			RUNTIME_CLASS(AMorphProjectile) },
-	{ "obituary",						ActorObituary,					RUNTIME_CLASS(AActor) },
-	{ "pain",							ActorPainState,					RUNTIME_CLASS(AActor) },
-	{ "painchance",						ActorPainChance,				RUNTIME_CLASS(AActor) },
-	{ "painsound",						ActorPainSound,					RUNTIME_CLASS(AActor) },
-	{ "player.attackzoffset",			(apf)PlayerAttackZOffset,		RUNTIME_CLASS(APlayerPawn) },
-	{ "player.colorrange",				(apf)PlayerColorRange,			RUNTIME_CLASS(APlayerPawn) },
-	{ "player.crouchsprite",			(apf)PlayerCrouchSprite,		RUNTIME_CLASS(APlayerPawn) },
-	{ "player.damagescreencolor",		(apf)PlayerDmgScreenColor,		RUNTIME_CLASS(APlayerPawn) },
-	{ "player.displayname",				(apf)PlayerDisplayName,			RUNTIME_CLASS(APlayerPawn) },
-	{ "player.face",					(apf)PlayerFace,				RUNTIME_CLASS(APlayerPawn) },
-	{ "player.forwardmove",				(apf)PlayerForwardMove,			RUNTIME_CLASS(APlayerPawn) },
-	{ "player.healradiustype",			(apf)PlayerHealRadius,			RUNTIME_CLASS(APlayerPawn) },
-	{ "player.hexenarmor",				(apf)PlayerHexenArmor,			RUNTIME_CLASS(APlayerPawn) },
-	{ "player.invulnerabilitymode",		(apf)PlayerInvulMode,			RUNTIME_CLASS(APlayerPawn) },
-	{ "player.jumpz",					(apf)PlayerJumpZ,				RUNTIME_CLASS(APlayerPawn) },
-	{ "player.maxhealth",				(apf)PlayerMaxHealth,			RUNTIME_CLASS(APlayerPawn) },
-	{ "player.morphweapon",				(apf)PlayerMorphWeapon,			RUNTIME_CLASS(APlayerPawn) },
-	{ "player.runhealth",				(apf)PlayerRunHealth,			RUNTIME_CLASS(APlayerPawn) },
-	{ "player.scoreicon",				(apf)PlayerScoreIcon,			RUNTIME_CLASS(APlayerPawn) },
-	{ "player.sidemove",				(apf)PlayerSideMove,			RUNTIME_CLASS(APlayerPawn) },
-	{ "player.soundclass",				(apf)PlayerSoundClass,			RUNTIME_CLASS(APlayerPawn) },
-	{ "player.spawnclass",				(apf)PlayerSpawnClass,			RUNTIME_CLASS(APlayerPawn) },
-	{ "player.startitem",				(apf)PlayerStartItem,			RUNTIME_CLASS(APlayerPawn) },
-	{ "player.viewheight",				(apf)PlayerViewHeight,			RUNTIME_CLASS(APlayerPawn) },
-	{ "poisondamage",					ActorPoisonDamage,				RUNTIME_CLASS(AActor) },
-	{ "powermorph.morphflash",			(apf)PowerMorphMorphFlash,		RUNTIME_CLASS(APowerMorph) },
-	{ "powermorph.morphstyle",			(apf)PowerMorphMorphStyle,		RUNTIME_CLASS(APowerMorph) },
-	{ "powermorph.playerclass",			(apf)PowerMorphPlayerClass,		RUNTIME_CLASS(APowerMorph) },
-	{ "powermorph.unmorphflash",		(apf)PowerMorphUnMorphFlash,	RUNTIME_CLASS(APowerMorph) },
-	{ "powerup.color",					(apf)PowerupColor,				RUNTIME_CLASS(AInventory) },
-	{ "powerup.duration",				(apf)PowerupDuration,			RUNTIME_CLASS(AInventory) },
-	{ "powerup.mode",					(apf)PowerupMode,				RUNTIME_CLASS(APowerupGiver) },
-	{ "powerup.type",					(apf)PowerupType,				RUNTIME_CLASS(APowerupGiver) },
-	{ "projectile",						ActorProjectile,				RUNTIME_CLASS(AActor) },
-	{ "puzzleitem.failmessage",			(apf)PuzzleitemFailMsg,			RUNTIME_CLASS(APuzzleItem) },
-	{ "puzzleitem.number",				(apf)PuzzleitemNumber,			RUNTIME_CLASS(APuzzleItem) },
-	{ "radius",							ActorRadius,					RUNTIME_CLASS(AActor) },
-	{ "radiusdamagefactor",				ActorRadiusDamageFactor,		RUNTIME_CLASS(AActor) },
-	{ "raise",							ActorRaiseState,				RUNTIME_CLASS(AActor) },
-	{ "reactiontime",					ActorReactionTime,				RUNTIME_CLASS(AActor) },
-	{ "renderstyle",					ActorRenderStyle,				RUNTIME_CLASS(AActor) },
-	{ "scale",							ActorScale,						RUNTIME_CLASS(AActor) },
-	{ "see",							ActorSeeState,					RUNTIME_CLASS(AActor) },
-	{ "seesound",						ActorSeeSound,					RUNTIME_CLASS(AActor) },
-	{ "skip_super",						ActorSkipSuper,					RUNTIME_CLASS(AActor) },
-	{ "spawn",							ActorSpawnState,				RUNTIME_CLASS(AActor) },
-	{ "spawnid",						ActorSpawnID,					RUNTIME_CLASS(AActor) },
-	{ "speed",							ActorSpeed,						RUNTIME_CLASS(AActor) },
-	{ "states",							ActorStates,					RUNTIME_CLASS(AActor) },
-	{ "stencilcolor",					ActorStencilColor,				RUNTIME_CLASS(AActor) },
-	{ "tag",							ActorTag,						RUNTIME_CLASS(AActor) },
-	{ "translation",					ActorTranslation,				RUNTIME_CLASS(AActor) },
-	{ "vspeed",							ActorVSpeed,					RUNTIME_CLASS(AActor) },
-	{ "wallbouncefactor",				ActorWallBounceFactor,			RUNTIME_CLASS(AActor) },
-	{ "weapon.ammogive",				(apf)WeaponAmmoGive1,			RUNTIME_CLASS(AWeapon) },
-	{ "weapon.ammogive1",				(apf)WeaponAmmoGive1,			RUNTIME_CLASS(AWeapon) },
-	{ "weapon.ammogive2",				(apf)WeaponAmmoGive2,			RUNTIME_CLASS(AWeapon) },
-	{ "weapon.ammotype",				(apf)WeaponAmmoType1,			RUNTIME_CLASS(AWeapon) },
-	{ "weapon.ammotype1",				(apf)WeaponAmmoType1,			RUNTIME_CLASS(AWeapon) },
-	{ "weapon.ammotype2",				(apf)WeaponAmmoType2,			RUNTIME_CLASS(AWeapon) },
-	{ "weapon.ammouse",					(apf)WeaponAmmoUse1,			RUNTIME_CLASS(AWeapon) },
-	{ "weapon.ammouse1",				(apf)WeaponAmmoUse1,			RUNTIME_CLASS(AWeapon) },
-	{ "weapon.ammouse2",				(apf)WeaponAmmoUse2,			RUNTIME_CLASS(AWeapon) },
-	{ "weapon.defaultkickback",			(apf)WeaponDefKickback,			RUNTIME_CLASS(AWeapon) },
-	{ "weapon.kickback",				(apf)WeaponKickback,			RUNTIME_CLASS(AWeapon) },
-	{ "weapon.readysound",				(apf)WeaponReadySound,			RUNTIME_CLASS(AWeapon) },
-	{ "weapon.selectionorder",			(apf)WeaponSelectionOrder,		RUNTIME_CLASS(AWeapon) },
-	{ "weapon.sisterweapon",			(apf)WeaponSisterWeapon,		RUNTIME_CLASS(AWeapon) },
-	{ "weapon.upsound",					(apf)WeaponUpSound,				RUNTIME_CLASS(AWeapon) },
-	{ "weapon.yadjust",					(apf)WeaponYAdjust,				RUNTIME_CLASS(AWeapon) },
-	{ "weaponpiece.number",				(apf)WPieceValue,				RUNTIME_CLASS(AWeaponPiece) },
-	{ "weaponpiece.weapon",				(apf)WPieceWeapon,				RUNTIME_CLASS(AWeaponPiece) },
-	{ "wound",							ActorWoundState,				RUNTIME_CLASS(AActor) },
-	{ "woundhealth",					ActorWoundHealth,				RUNTIME_CLASS(AActor) },
-	{ "xdeath",							ActorXDeathState,				RUNTIME_CLASS(AActor) },
-	{ "xscale",							ActorXScale,					RUNTIME_CLASS(AActor) },
-	{ "yscale",							ActorYScale,					RUNTIME_CLASS(AActor) },
-	// AWeapon:MinAmmo1 and 2 are never used so there is no point in adding them here!
-};
-static const ActorProps *is_actorprop (const char *str)
-{
-	return APropSearch (str, props, sizeof(props)/sizeof(ActorProps));
-}
-
-
-//==========================================================================
-//
-// Parses an actor property
-//
-//==========================================================================
-
-void ParseActorProperty(FScanner &sc, Baggage &bag)
-{
-	strlwr (sc.String);
-
-	FString propname = sc.String;
-
-	if (sc.CheckString ("."))
-	{
-		sc.MustGetString ();
-		propname += '.';
-		strlwr (sc.String);
-		propname += sc.String;
-	}
-	else
-	{
-		sc.UnGet ();
-	}
-
-	const ActorProps *prop = is_actorprop (propname.GetChars());
-
-	if (prop != NULL)
-	{
-		if (!bag.Info->Class->IsDescendantOf(prop->type))
-		{
-			sc.ScriptError("\"%s\" requires an actor of type \"%s\"\n", propname.GetChars(), prop->type->TypeName.GetChars());
-		}
-		else
-		{
-			prop->Handler (sc, (AActor *)bag.Info->Class->Defaults, bag);
-		}
-	}
-	else
-	{
-		sc.ScriptError("\"%s\" is an unknown actor property\n", propname.GetChars());
-	}
-}
-
-
-//==========================================================================
-//
-// Finalizes an actor definition
-//
-//==========================================================================
-
-void FinishActor(FScanner &sc, FActorInfo *info, Baggage &bag)
-{
-	AActor *defaults = (AActor*)info->Class->Defaults;
-
-	FinishStates (sc, info, defaults, bag);
-	InstallStates (info, defaults);
-	if (bag.DropItemSet)
-	{
-		if (bag.DropItemList == NULL)
-		{
-			if (info->Class->Meta.GetMetaInt (ACMETA_DropItems) != 0)
-			{
-				info->Class->Meta.SetMetaInt (ACMETA_DropItems, 0);
-			}
-		}
-		else
-		{
-			info->Class->Meta.SetMetaInt (ACMETA_DropItems,
-				DropItemList.Push (bag.DropItemList) + 1);
-		}
-	}
-	if (info->Class->IsDescendantOf (RUNTIME_CLASS(AInventory)))
-	{
-		defaults->flags |= MF_SPECIAL;
-	}
 }

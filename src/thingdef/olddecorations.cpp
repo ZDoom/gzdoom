@@ -123,97 +123,6 @@ static const char *RenderStyles[] =
 	NULL
 };
 
-static const char *FlagNames1[] =
-{
-	"*",
-	"Solid",
-	"*",
-	"NoSector",
-
-	"NoBlockmap",
-	"*",
-	"*",
-	"*",
-
-	"SpawnCeiling",
-	"NoGravity",
-	"*",
-	"*",
-
-	"*",
-	"*",
-	"*",
-	"*",
-
-	"*",
-	"*",
-	"Shadow",
-	"NoBlood",
-
-	"*",
-	"*",
-	"*",
-	"CountItem",
-	NULL
-};
-
-static const char *FlagNames2[] =
-{
-	"LowGravity",
-	"WindThrust",
-	"*",
-	"*",
-
-	"*",
-	"FloorClip",
-	"SpawnFloat",
-	"NoTeleport",
-
-	"Ripper",
-	"Pushable",
-	"SlidesOnWalls",
-	"*",
-
-	"CanPass",
-	"CannotPush",
-	"ThruGhost",
-	"*",
-
-	"FireDamage",
-	"NoDamageThrust",
-	"Telestomp",
-	"FloatBob",
-
-	"*",
-	"ActivateImpact",
-	"CanPushWalls",
-	"ActivateMCross",
-
-	"ActivatePCross",
-	"*",
-	"*",
-	"*",
-
-	"*",
-	"*",
-	"*",
-	"Reflective",
-	NULL
-};
-
-static const char *FlagNames3[] =
-{
-	"FloorHugger",
-	"CeilingHugger",
-	"*",
-	"*",
-
-	"*",
-	"*",
-	"DontSplash",
-	NULL
-};
-
 // CODE --------------------------------------------------------------------
 
 //==========================================================================
@@ -243,65 +152,8 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def)
 	info->GameFilter = 0x80;
 	MakeStateDefines(parent->ActorInfo->StateList);
 
-	// There isn't a single WAD out there which uses game filters with old style
-	// decorations so this may as well be disabled. Without this option is is much
-	// easier to detect incorrect declarations 
-#if 0
-	sc.MustGetString ();
-	while (!sc.Compare ("{"))
-	{
-		if (sc.Compare ("Doom"))
-		{
-			info->GameFilter |= GAME_Doom;
-		}
-		else if (sc.Compare ("Heretic"))
-		{
-			info->GameFilter |= GAME_Heretic;
-		}
-		else if (sc.Compare ("Hexen"))
-		{
-			info->GameFilter |= GAME_Hexen;
-		}
-		else if (sc.Compare ("Raven"))
-		{
-			info->GameFilter |= GAME_Raven;
-		}
-		else if (sc.Compare ("Strife"))
-		{
-			info->GameFilter |= GAME_Strife;
-		}
-		else if (sc.Compare ("Any"))
-		{
-			info->GameFilter = GAME_Any;
-		}
-		else
-		{
-			if (def != DEF_Decoration || info->GameFilter != 0x80) 
-			{
-				sc.ScriptError ("Unknown game type %s in %s", sc.String, typeName.GetChars());
-			}
-			else 
-			{
-				// If this is a regular decoration (without preceding keyword) and no game 
-				// filters defined this is more likely a general syntax error so output a 
-				// more meaningful message.
-				sc.ScriptError ("Syntax error: Unknown identifier '%s'", typeName.GetChars());
-			}
-		}
-		sc.MustGetString ();
-	}
-	if (info->GameFilter == 0x80)
-	{
-		info->GameFilter = GAME_Any;
-	}
-	else
-	{
-		info->GameFilter &= ~0x80;
-	}
-#else
 	info->GameFilter = GAME_Any;
 	sc.MustGetStringName("{");
-#endif
 
 	states.Clear ();
 	memset (&extra, 0, sizeof(extra));
@@ -724,23 +576,9 @@ static void ParseInsideDecoration (FActorInfo *info, AActor *defaults,
 		}
 		else if (sc.String[0] != '*')
 		{
-			int bit = sc.MatchString (FlagNames1);
-			if (bit != -1)
-			{
-				defaults->flags |= 1 << bit;
-			}
-			else if ((bit = sc.MatchString (FlagNames2)) != -1)
-			{
-				defaults->flags2 |= 1 << bit;
-			}
-			else if ((bit = sc.MatchString (FlagNames3)) != -1)
-			{
-				defaults->flags3 |= 1 << bit;
-			}
-			else
-			{
-				sc.ScriptError (NULL);
-			}
+			Baggage bag;
+			bag.Info = info;
+			HandleActorFlag(sc, bag, sc.String, NULL, '+');
 		}
 		else
 		{

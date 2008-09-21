@@ -174,16 +174,23 @@ const PClass *FState::StaticFindStateOwner (const FState *state, const FActorInf
 
 int GetSpriteIndex(const char * spritename)
 {
+	// Make sure that the string is upper case and 4 characters long
+	char upper[5];
+	for (int i = 0; spritename[i] != 0 && i < 4; i++)
+	{
+		upper[i] = toupper (spritename[i]);
+	}
+	upper[4] = 0;
+
 	for (unsigned i = 0; i < sprites.Size (); ++i)
 	{
-		if (strncmp (sprites[i].name, spritename, 4) == 0)
+		if (strcmp (sprites[i].name, spritename) == 0)
 		{
 			return (int)i;
 		}
 	}
 	spritedef_t temp;
-	strncpy (temp.name, spritename, 4);
-	temp.name[4] = 0;
+	strcpy (temp.name, upper);
 	temp.numframes = 0;
 	temp.spriteframes = 0;
 	return (int)sprites.Push (temp);

@@ -47,9 +47,6 @@
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 void ParseActor(FScanner &sc);
-void ParseClass(FScanner &sc);
-void ParseGlobalConst(FScanner &sc);
-void ParseGlobalEnum(FScanner &sc);
 void FinishThingdef();
 void ParseOldDecoration(FScanner &sc, EDefinitionType def);
 

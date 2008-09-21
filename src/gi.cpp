@@ -100,6 +100,7 @@ gameinfo_t HexenGameInfo =
 	{ "mapinfo/hexen.txt", NULL },
 	MAKERGB(104,0,0),
 	MAKERGB(255,0,0),
+	"BagOfHolding",	// Hexen doesn't have a backpack so use Heretic's.
 };
 
 gameinfo_t HexenDKGameInfo =
@@ -132,6 +133,7 @@ gameinfo_t HexenDKGameInfo =
 	{ "mapinfo/hexen.txt", NULL },
 	MAKERGB(104,0,0),
 	MAKERGB(255,0,0),
+	"BagOfHolding",
 };
 
 gameinfo_t HereticGameInfo =
@@ -164,6 +166,7 @@ gameinfo_t HereticGameInfo =
 	{ "mapinfo/heretic.txt", NULL },
 	MAKERGB(104,0,0),
 	MAKERGB(255,0,0),
+	"BagOfHolding",
 };
 
 gameinfo_t HereticSWGameInfo =
@@ -196,6 +199,7 @@ gameinfo_t HereticSWGameInfo =
 	{ "mapinfo/heretic.txt", NULL },
 	MAKERGB(104,0,0),
 	MAKERGB(255,0,0),
+	"BagOfHolding",
 };
 
 gameinfo_t SharewareGameInfo =
@@ -228,6 +232,7 @@ gameinfo_t SharewareGameInfo =
 	{ "mapinfo/doomcommon.txt", "mapinfo/doom1.txt" },
 	MAKERGB(104,0,0),
 	MAKERGB(255,0,0),
+	"Backpack",
 };
 
 gameinfo_t RegisteredGameInfo =
@@ -260,6 +265,7 @@ gameinfo_t RegisteredGameInfo =
 	{ "mapinfo/doomcommon.txt", "mapinfo/doom1.txt" },
 	MAKERGB(104,0,0),
 	MAKERGB(255,0,0),
+	"Backpack",
 };
 
 gameinfo_t ChexGameInfo =
@@ -292,6 +298,7 @@ gameinfo_t ChexGameInfo =
 	{ "mapinfo/chex.txt", NULL },
 	MAKERGB(63,125,57),
 	MAKERGB(95,175,87),
+	"ZorchPack",
 };
 
 gameinfo_t Chex3GameInfo =
@@ -324,6 +331,7 @@ gameinfo_t Chex3GameInfo =
 	{ "mapinfo/chex.txt", NULL },
 	MAKERGB(63,125,57),
 	MAKERGB(95,175,87),
+	"ZorchPack",
 };
 
 gameinfo_t RetailGameInfo =
@@ -356,6 +364,7 @@ gameinfo_t RetailGameInfo =
 	{ "mapinfo/doomcommon.txt", "mapinfo/doom1.txt" },
 	MAKERGB(104,0,0),
 	MAKERGB(255,0,0),
+	"Backpack",
 };
 
 gameinfo_t CommercialGameInfo =
@@ -388,6 +397,7 @@ gameinfo_t CommercialGameInfo =
 	{ "mapinfo/doomcommon.txt", "mapinfo/doom2.txt" },
 	MAKERGB(104,0,0),
 	MAKERGB(255,0,0),
+	"Backpack",
 };
 
 gameinfo_t PlutoniaGameInfo =
@@ -420,6 +430,7 @@ gameinfo_t PlutoniaGameInfo =
 	{ "mapinfo/doomcommon.txt", "mapinfo/plutonia.txt" },
 	MAKERGB(104,0,0),
 	MAKERGB(255,0,0),
+	"Backpack",
 };
 
 gameinfo_t TNTGameInfo =
@@ -452,6 +463,7 @@ gameinfo_t TNTGameInfo =
 	{ "mapinfo/doomcommon.txt", "mapinfo/tnt.txt" },
 	MAKERGB(104,0,0),
 	MAKERGB(255,0,0),
+	"Backpack",
 };
 
 gameinfo_t StrifeGameInfo =
@@ -484,6 +496,7 @@ gameinfo_t StrifeGameInfo =
 	{ "mapinfo/strife.txt", NULL },
 	MAKERGB(104,0,0),
 	MAKERGB(255,0,0),
+	"AmmoSatchel",
 };
 
 gameinfo_t StrifeTeaserGameInfo =
@@ -516,6 +529,7 @@ gameinfo_t StrifeTeaserGameInfo =
 	{ "mapinfo/strife.txt", NULL },
 	MAKERGB(104,0,0),
 	MAKERGB(255,0,0),
+	"AmmoSatchel",
 };
 
 gameinfo_t StrifeTeaser2GameInfo =
@@ -548,4 +562,5 @@ gameinfo_t StrifeTeaser2GameInfo =
 	{ "mapinfo/strife.txt", NULL },
 	MAKERGB(104,0,0),
 	MAKERGB(255,0,0),
+	"AmmoSatchel",
 };

@@ -30,7 +30,7 @@ class ARandomSpawner : public AActor
 
 		Super::PostBeginPlay();
 
-		drop = di = GetDropItems(RUNTIME_TYPE(this));
+		drop = di = GetDropItems();
 		if (di != NULL)
 		{
 			while (di != NULL)

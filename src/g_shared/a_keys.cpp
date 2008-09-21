@@ -394,6 +394,7 @@ bool P_CheckKeys (AActor *owner, int keynum, bool remote)
 	const char *failtext = NULL;
 	FSoundID failsound;
 
+	if (owner == NULL) return false;
 	if (keynum<=0 || keynum>255) return true;
 	// Just a safety precaution. The messages should have been initialized upon game start.
 	if (!keysdone) P_InitKeyMessages();

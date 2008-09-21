@@ -1,3 +1,7 @@
+September 20, 2008
+- Fixed: The Timidity config parser always tried to process the note number,
+  even if it wasn't specified.
+
 September 19, 2008
 - Fixed: When UpdateJoystickMenu() modifies the menu items for different
   controllers, the joystick axis selectors need to NULL the d.graycheck

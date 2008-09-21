@@ -383,7 +383,7 @@ static int read_config_file(const char *name, bool ismain)
 				bank->tone[i].name = w[2];
 				bank->tone[i].fontbank = atoi(w[3]);
 				bank->tone[i].fontpreset = atoi(w[4]);
-				if (bank->tone[i].fontbank == 128 || (w[5][0] >= '0' && w[5][0] <= '9'))
+				if (words > 5 && (bank->tone[i].fontbank == 128 || (w[5][0] >= '0' && w[5][0] <= '9')))
 				{
 					bank->tone[i].fontnote = atoi(w[5]);
 					j = 6;

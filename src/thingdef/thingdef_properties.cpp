@@ -573,8 +573,7 @@ DEFINE_PROPERTY(skip_super, 0, Actor)
 	{
 		FreeDropItemChain (bag.DropItemList);
 	}
-	ResetBaggage (&bag);
-	MakeStateDefines(NULL);
+	ResetBaggage (&bag, RUNTIME_CLASS(AActor));
 }
 
 //==========================================================================

@@ -841,6 +841,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\p_states.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\src\p_switch.cpp"
 				>
 			</File>

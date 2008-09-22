@@ -89,6 +89,7 @@ struct FState
 	SBYTE		Misc1;
 	BYTE		Misc2;
 	BYTE		Frame;
+	BYTE		DefineFlags;	// Unused byte so let's use it during state creation.
 	FState		*NextState;
 	actionf_p	ActionFunc;
 	int			ParameterIndex;
@@ -204,8 +205,12 @@ struct FActorInfo
 	void SetDamageFactor(FName type, fixed_t factor);
 	void SetPainChance(FName type, int chance);
 
-	FState *FindState (FName name) const;
 	FState *FindState (int numnames, FName *names, bool exact=false) const;
+	FState *FindStateByString(const char *name, bool exact=false);
+	FState *FindState (FName name) const
+	{
+		return FindState(1, &name);
+	}
 
 	FActorInfo *GetReplacement ();
 	FActorInfo *GetReplacee ();
@@ -252,6 +257,6 @@ private:
 extern FDoomEdMap DoomEdMap;
 
 int GetSpriteIndex(const char * spritename);
-void MakeStateNameList(const char * fname, TArray<FName> * out);
+TArray<FName> &MakeStateNameList(const char * fname);
 
 #endif	// __INFO_H__

@@ -57,9 +57,7 @@
 #include "colormatcher.h"
 
 TArray<int> StateParameters;
-TArray<FName> JumpParameters;
 static TArray<AFuncDesc> AFTable;
-static TArray<FState> StateArray;
 
 //==========================================================================
 //
@@ -132,291 +130,8 @@ PSymbolActionFunction *FindGlobalActionFunction(const char *name)
 		return NULL;
 }
 
-//==========================================================================
-//
-// Find a state address
-//
-//==========================================================================
-
-struct FStateDefine
-{
-	FName Label;
-	TArray<FStateDefine> Children;
-	FState *State;
-};
-
-static TArray<FStateDefine> StateLabels;
-
-void ClearStateLabels()
-{
-	StateLabels.Clear();
-}
-
-//==========================================================================
-//
-// Search one list of state definitions for the given name
-//
-//==========================================================================
-
-static FStateDefine * FindStateLabelInList(TArray<FStateDefine> & list, FName name, bool create)
-{
-	for(unsigned i = 0; i<list.Size(); i++)
-	{
-		if (list[i].Label == name) return &list[i];
-	}
-	if (create)
-	{
-		FStateDefine def;
-		def.Label=name;
-		def.State=NULL;
-		return &list[list.Push(def)];
-	}
-	return NULL;
-}
-
-//==========================================================================
-//
-// Finds the address of a state given by name. 
-// Adds the state if it doesn't exist
-//
-//==========================================================================
-
-static FStateDefine * FindStateAddress(const char * name)
-{
-	static TArray<FName> namelist(3);
-	FStateDefine * statedef=NULL;
-
-	MakeStateNameList(name, &namelist);
-
-	TArray<FStateDefine> * statelist = &StateLabels;
-	for(unsigned i=0;i<namelist.Size();i++)
-	{
-		statedef = FindStateLabelInList(*statelist, namelist[i], true);
-		statelist = &statedef->Children;
-	}
-	return statedef;
-}
-
-void AddState (const char * statename, FState * state)
-{
-	FStateDefine * std = FindStateAddress(statename);
-	std->State = state;
-}
-
-//==========================================================================
-//
-// Finds the state associated with the given name
-//
-//==========================================================================
-
-FState * FindState(AActor * actor, const PClass * type, const char * name)
-{
-	static TArray<FName> namelist(3);
-	FStateDefine * statedef=NULL;
-
-	MakeStateNameList(name, &namelist);
-
-	TArray<FStateDefine> * statelist = &StateLabels;
-	for(unsigned i=0;i<namelist.Size();i++)
-	{
-		statedef = FindStateLabelInList(*statelist, namelist[i], false);
-		if (statedef == NULL) return NULL;
-		statelist = &statedef->Children;
-	}
-	return statedef? statedef->State : NULL;
-}
-
-//==========================================================================
-//
-// Finds the state associated with the given name
-//
-//==========================================================================
-
-FState * FindStateInClass(AActor * actor, const PClass * type, const char * name)
-{
-	static TArray<FName> namelist(3);
-
-	MakeStateNameList(name, &namelist);
-	FActorInfo * info = type->ActorInfo;
-	if (info) return info->FindState(namelist.Size(), &namelist[0], true);
-	return NULL;
-}
-
-//==========================================================================
-//
-// Checks if a state list is empty
-// A list is empty if it doesn't contain any states and no children
-// that contain any states
-//
-//==========================================================================
-
-static bool IsStateListEmpty(TArray<FStateDefine> & statelist)
-{
-	for(unsigned i=0;i<statelist.Size();i++)
-	{
-		if (statelist[i].State!=NULL || !IsStateListEmpty(statelist[i].Children)) return false;
-	}
-	return true;
-}
-
-//==========================================================================
-//
-// Creates the final list of states from the state definitions
-//
-//==========================================================================
-
-static int STACK_ARGS labelcmp(const void * a, const void * b)
-{
-	FStateLabel * A = (FStateLabel *)a;
-	FStateLabel * B = (FStateLabel *)b;
-	return ((int)A->Label - (int)B->Label);
-}
-
-static FStateLabels * CreateStateLabelList(TArray<FStateDefine> & statelist)
-{
-	// First delete all empty labels from the list
-	for (int i=statelist.Size()-1;i>=0;i--)
-	{
-		if (statelist[i].Label == NAME_None || (statelist[i].State == NULL && statelist[i].Children.Size() == 0))
-		{
-			statelist.Delete(i);
-		}
-	}
-
-	int count=statelist.Size();
-
-	if (count == 0) return NULL;
-
-	FStateLabels * list = (FStateLabels*)M_Malloc(sizeof(FStateLabels)+(count-1)*sizeof(FStateLabel));
-	list->NumLabels = count;
-
-	for (int i=0;i<count;i++)
-	{
-		list->Labels[i].Label = statelist[i].Label;
-		list->Labels[i].State = statelist[i].State;
-		list->Labels[i].Children = CreateStateLabelList(statelist[i].Children);
-	}
-	qsort(list->Labels, count, sizeof(FStateLabel), labelcmp);
-	return list;
-}
-
-//===========================================================================
-//
-// InstallStates
-//
-// Creates the actor's state list from the current definition
-//
-//===========================================================================
-
-void InstallStates(FActorInfo *info, AActor *defaults)
-{
-	// First ensure we have a valid spawn state.
-	FState * state = FindState(defaults, info->Class, "Spawn");
-
-	if (state == NULL)
-	{
-		// A NULL spawn state will crash the engine so set it to something valid.
-		AddState("Spawn", GetDefault<AActor>()->SpawnState);
-	}
-
-	if (info->StateList != NULL) 
-	{
-		info->StateList->Destroy();
-		M_Free(info->StateList);
-	}
-	info->StateList = CreateStateLabelList(StateLabels);
-
-	// Cache these states as member veriables.
-	defaults->SpawnState = info->FindState(NAME_Spawn);
-	defaults->SeeState = info->FindState(NAME_See);
-	// Melee and Missile states are manipulated by the scripted marines so they
-	// have to be stored locally
-	defaults->MeleeState = info->FindState(NAME_Melee);
-	defaults->MissileState = info->FindState(NAME_Missile);
-}
 
 
-//===========================================================================
-//
-// MakeStateDefines
-//
-// Creates a list of state definitions from an existing actor
-// Used by Dehacked to modify an actor's state list
-//
-//===========================================================================
-
-static void MakeStateList(const FStateLabels *list, TArray<FStateDefine> &dest)
-{
-	dest.Clear();
-	if (list != NULL) for(int i=0;i<list->NumLabels;i++)
-	{
-		FStateDefine def;
-
-		def.Label = list->Labels[i].Label;
-		def.State = list->Labels[i].State;
-		dest.Push(def);
-		if (list->Labels[i].Children != NULL)
-		{
-			MakeStateList(list->Labels[i].Children, dest[dest.Size()-1].Children);
-		}
-	}
-}
-
-void MakeStateDefines(const FStateLabels *list)
-{
-	MakeStateList(list, StateLabels);
-}
-
-void AddStateDefines(const FStateLabels *list)
-{
-	if (list != NULL) for(int i=0;i<list->NumLabels;i++)
-	{
-		if (list->Labels[i].Children == NULL)
-		{
-			if (!FindStateLabelInList(StateLabels, list->Labels[i].Label, false))
-			{
-				FStateDefine def;
-
-				def.Label = list->Labels[i].Label;
-				def.State = list->Labels[i].State;
-				StateLabels.Push(def);
-			}
-		}
-	}
-}
-
-//==========================================================================
-//
-// RetargetState(Pointer)s
-//
-// These functions are used when a goto follows one or more labels.
-// Because multiple labels are permitted to occur consecutively with no
-// intervening states, it is not enough to remember the last label defined
-// and adjust it. So these functions search for all labels that point to
-// the current position in the state array and give them a copy of the
-// target string instead.
-//
-//==========================================================================
-
-static void RetargetStatePointers (intptr_t count, const char *target, TArray<FStateDefine> & statelist)
-{
-	for(unsigned i = 0;i<statelist.Size(); i++)
-	{
-		if (statelist[i].State == (FState*)count)
-		{
-			statelist[i].State = target == NULL ? NULL : (FState *)copystring (target);
-		}
-		if (statelist[i].Children.Size() > 0)
-		{
-			RetargetStatePointers(count, target, statelist[i].Children);
-		}
-	}
-}
-
-static void RetargetStates (intptr_t count, const char *target)
-{
-	RetargetStatePointers(count, target, StateLabels);
-}
 
 
 //==========================================================================
@@ -552,10 +267,11 @@ do_goto:
 			if (laststate != NULL)
 			{ // Following a state definition: Modify it.
 				laststate->NextState = (FState*)copystring(statestring);	
+				laststate->DefineFlags = SDF_LABEL;
 			}
 			else if (lastlabel >= 0)
 			{ // Following a label: Retarget it.
-				RetargetStates (count+1, statestring);
+				bag.statedef.RetargetStates (count+1, statestring);
 			}
 			else
 			{
@@ -567,11 +283,11 @@ do_goto:
 do_stop:
 			if (laststate!=NULL)
 			{
-				laststate->NextState=(FState*)-1;
+				laststate->DefineFlags = SDF_STOP;
 			}
 			else if (lastlabel >=0)
 			{
-				RetargetStates (count+1, NULL);
+				bag.statedef.RetargetStates (count+1, NULL);
 			}
 			else
 			{
@@ -586,7 +302,7 @@ do_stop:
 				sc.ScriptError("%s before first state", sc.String);
 				continue;
 			}
-			laststate->NextState=(FState*)-2;
+			laststate->DefineFlags = SDF_WAIT;
 		}
 		else if (!statestring.CompareNoCase("LOOP"))
 		{
@@ -596,6 +312,7 @@ do_stop:
 				continue;
 			}
 			laststate->NextState=(FState*)(lastlabel+1);
+			laststate->DefineFlags = SDF_INDEX;
 		}
 		else
 		{
@@ -608,7 +325,7 @@ do_stop:
 				do
 				{
 					lastlabel = count;
-					AddState(statestring, (FState *) (count+1));
+					bag.statedef.AddState(statestring, (FState *) (count+1), SDF_INDEX);
 					statestring = ParseStateString(sc);
 					if (!statestring.CompareNoCase("GOTO"))
 					{
@@ -789,7 +506,7 @@ do_stop:
 			}
 			sc.UnGet();
 endofstate:
-			StateArray.Push(state);
+			bag.StateArray.Push(state);
 			while (*statestrp)
 			{
 				int frame=((*statestrp++)&223)-'A';
@@ -801,10 +518,10 @@ endofstate:
 				}
 
 				state.Frame=(state.Frame&(SF_FULLBRIGHT))|frame;
-				StateArray.Push(state);
+				bag.StateArray.Push(state);
 				count++;
 			}
-			laststate=&StateArray[count];
+			laststate=&bag.StateArray[count];
 			count++;
 		}
 	}
@@ -813,189 +530,6 @@ endofstate:
 		sc.ScriptError("A_Jump offset out of range in %s", actor->Class->TypeName.GetChars());
 	}
 	sc.SetEscape(true);	// re-enable escape sequences
-	return count;
-}
-
-//==========================================================================
-//
-// ResolveGotoLabel
-//
-//==========================================================================
-
-static FState *ResolveGotoLabel (AActor *actor, const PClass *mytype, char *name)
-{
-	const PClass *type=mytype;
-	FState *state;
-	char *namestart = name;
-	char *label, *offset, *pt;
-	int v;
-
-	// Check for classname
-	if ((pt = strstr (name, "::")) != NULL)
-	{
-		const char *classname = name;
-		*pt = '\0';
-		name = pt + 2;
-
-		// The classname may either be "Super" to identify this class's immediate
-		// superclass, or it may be the name of any class that this one derives from.
-		if (stricmp (classname, "Super") == 0)
-		{
-			type = type->ParentClass;
-			actor = GetDefaultByType (type);
-		}
-		else
-		{
-			// first check whether a state of the desired name exists
-			const PClass *stype = PClass::FindClass (classname);
-			if (stype == NULL)
-			{
-				I_Error ("%s is an unknown class.", classname);
-			}
-			if (!stype->IsDescendantOf (RUNTIME_CLASS(AActor)))
-			{
-				I_Error ("%s is not an actor class, so it has no states.", stype->TypeName.GetChars());
-			}
-			if (!stype->IsAncestorOf (type))
-			{
-				I_Error ("%s is not derived from %s so cannot access its states.",
-					type->TypeName.GetChars(), stype->TypeName.GetChars());
-			}
-			if (type != stype)
-			{
-				type = stype;
-				actor = GetDefaultByType (type);
-			}
-		}
-	}
-	label = name;
-	// Check for offset
-	offset = NULL;
-	if ((pt = strchr (name, '+')) != NULL)
-	{
-		*pt = '\0';
-		offset = pt + 1;
-	}
-	v = offset ? strtol (offset, NULL, 0) : 0;
-
-	// Get the state's address.
-	if (type==mytype) state = FindState (actor, type, label);
-	else state = FindStateInClass (actor, type, label);
-
-	if (state != NULL)
-	{
-		state += v;
-	}
-	else if (v != 0)
-	{
-		I_Error ("Attempt to get invalid state %s from actor %s.", label, type->TypeName.GetChars());
-	}
-	delete[] namestart;		// free the allocated string buffer
-	return state;
-}
-
-//==========================================================================
-//
-// FixStatePointers
-//
-// Fixes an actor's default state pointers.
-//
-//==========================================================================
-
-static void FixStatePointers (FActorInfo *actor, TArray<FStateDefine> & list)
-{
-	for(unsigned i=0;i<list.Size(); i++)
-	{
-		size_t v=(size_t)list[i].State;
-		if (v >= 1 && v < 0x10000)
-		{
-			list[i].State = actor->OwnedStates + v - 1;
-		}
-		if (list[i].Children.Size() > 0) FixStatePointers(actor, list[i].Children);
-	}
-}
-
-//==========================================================================
-//
-// FixStatePointersAgain
-//
-// Resolves an actor's state pointers that were specified as jumps.
-//
-//==========================================================================
-
-static void FixStatePointersAgain (FActorInfo *actor, AActor *defaults, TArray<FStateDefine> & list)
-{
-	for(unsigned i=0;i<list.Size(); i++)
-	{
-		if (list[i].State != NULL && FState::StaticFindStateOwner (list[i].State, actor) == NULL)
-		{ // It's not a valid state, so it must be a label string. Resolve it.
-			list[i].State = ResolveGotoLabel (defaults, actor->Class, (char *)list[i].State);
-		}
-		if (list[i].Children.Size() > 0) FixStatePointersAgain(actor, defaults, list[i].Children);
-	}
-}
-
-
-//==========================================================================
-//
-// FinishStates
-// copies a state block and fixes all state links
-//
-//==========================================================================
-
-int FinishStates (FActorInfo *actor, AActor *defaults)
-{
-	static int c=0;
-	int count = StateArray.Size();
-
-	if (count > 0)
-	{
-		FState *realstates = new FState[count];
-		int i;
-		int currange;
-
-		memcpy(realstates, &StateArray[0], count*sizeof(FState));
-		actor->OwnedStates = realstates;
-		actor->NumOwnedStates = count;
-
-		// adjust the state pointers
-		// In the case new states are added these must be adjusted, too!
-		FixStatePointers (actor, StateLabels);
-
-		for(i = currange = 0; i < count; i++)
-		{
-			// resolve labels and jumps
-			switch((ptrdiff_t)realstates[i].NextState)
-			{
-			case 0:		// next
-				realstates[i].NextState = (i < count-1 ? &realstates[i+1] : &realstates[0]);
-				break;
-
-			case -1:	// stop
-				realstates[i].NextState = NULL;
-				break;
-
-			case -2:	// wait
-				realstates[i].NextState = &realstates[i];
-				break;
-
-			default:	// loop
-				if ((size_t)realstates[i].NextState < 0x10000)
-				{
-					realstates[i].NextState = &realstates[(size_t)realstates[i].NextState-1];
-				}
-				else	// goto
-				{
-					realstates[i].NextState = ResolveGotoLabel (defaults, actor->Class, (char *)realstates[i].NextState);
-				}
-			}
-		}
-	}
-	StateArray.Clear ();
-
-	// Fix state pointers that are gotos
-	FixStatePointersAgain (actor, defaults, StateLabels);
-
 	return count;
 }
 

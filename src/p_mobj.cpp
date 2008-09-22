@@ -4811,10 +4811,6 @@ int AActor::DoSpecialDamage (AActor *target, int damage)
 
 int AActor::TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, FName damagetype)
 {
-	// If the actor does not have a corresponding death state, then it does not take damage.
-	// Note that DeathState matches every kind of damagetype, so if an actor has that, it can
-	// be hurt with any type of damage. Exception: Massacre damage always succeeds, because
-	// it needs to work.
 	FState *death;
 
 	if (flags5 & MF5_NODAMAGE)
@@ -4828,7 +4824,7 @@ int AActor::TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, FN
 	// it needs to work.
 
 	// Always kill if there is a regular death state or no death states at all.
-	if (FindState (NAME_Death) != NULL || !HasSpecialDeathStates())
+	if (FindState (NAME_Death) != NULL || !HasSpecialDeathStates() || damagetype == NAME_Massacre)
 	{
 		return damage;
 	}

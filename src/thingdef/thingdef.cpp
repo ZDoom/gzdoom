@@ -169,8 +169,8 @@ int ParseParameter(FScanner &sc, PClass *cls, char type, bool constant)
 			// be checked here.
 			JumpParameters.Push(NAME_None);
 		}
-		TArray<FName> names;
-		MakeStateNameList(statestring, &names);
+
+		TArray<FName> &names = MakeStateNameList(statestring);
 
 		if (stype != NULL)
 		{
@@ -420,8 +420,6 @@ static FActorInfo *CreateNewActor(FName typeName, FName parentName, FName replac
 		info = ti->ActorInfo;
 	}
 
-	MakeStateDefines(parent->ActorInfo->StateList);
-
 	info->DoomEdNum = -1;
 	if (parent->ActorInfo->DamageFactors != NULL)
 	{
@@ -522,7 +520,7 @@ static FActorInfo *ParseActorHeader(FScanner &sc, Baggage *bag)
 	try
 	{
 		FActorInfo *info =  CreateNewActor(typeName, parentName, replaceName, DoomEdNum, native);
-		ResetBaggage (bag);
+		ResetBaggage (bag, info->Class->ParentClass);
 		bag->Info = info;
 		bag->Lumpnum = sc.LumpNum;
 		return info;
@@ -577,8 +575,8 @@ void ParseActor(FScanner &sc)
 			sc.ScriptError("Unexpected '%s' in definition of '%s'", sc.String, bag.Info->Class->TypeName.GetChars());
 			break;
 		}
-		FinishActor(sc, info, bag);
 	}
+	FinishActor(sc, info, bag);
 	sc.SetCMode (false);
 }
 

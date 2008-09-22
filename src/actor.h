@@ -785,8 +785,18 @@ public:
 	bool isFast();
 	void SetIdle();
 
-	FState *FindState (FName label) const;
-	FState *FindState (FName label, FName sublabel, bool exact = false) const;
+	FState *FindState (FName label) const
+	{
+		return GetClass()->ActorInfo->FindState(1, &label);
+	}
+
+	FState *FindState (FName label, FName sublabel, bool exact = false) const
+	{
+		FName names[]={label, sublabel};
+		return GetClass()->ActorInfo->FindState(2, &label, exact);
+	}
+
+
 	bool HasSpecialDeathStates () const;
 };
 

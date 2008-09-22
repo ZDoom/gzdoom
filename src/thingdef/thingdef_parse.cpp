@@ -507,7 +507,7 @@ void ParseActorProperty(FScanner &sc, Baggage &bag)
 	}
 	else if (MatchString(propname, statenames) != -1)
 	{
-		AddState(propname, CheckState (sc, bag.Info->Class));
+		bag.statedef.AddState(propname, CheckState (sc, bag.Info->Class));
 	}
 	else
 	{
@@ -528,13 +528,14 @@ void FinishActor(FScanner &sc, FActorInfo *info, Baggage &bag)
 
 	try
 	{
-		FinishStates (info, defaults);
+		bag.statedef.FinishStates (info, defaults, bag.StateArray);
 	}
 	catch (CRecoverableError &err)
 	{
 		sc.ScriptError(err.GetMessage());
 	}
-	InstallStates (info, defaults);
+	bag.statedef.InstallStates (info, defaults);
+	bag.StateArray.Clear ();
 	if (bag.DropItemSet)
 	{
 		if (bag.DropItemList == NULL)

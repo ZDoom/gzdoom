@@ -50,6 +50,68 @@ public:
 
 //==========================================================================
 //
+// State parser
+//
+//==========================================================================
+
+extern TArray<int> StateParameters;
+extern TArray<FName> JumpParameters;
+
+struct FStateLabels;
+
+enum EStateDefineFlags
+{
+	SDF_NEXT = 0,
+	SDF_STATE = 1,
+	SDF_STOP = 2,
+	SDF_WAIT = 3,
+	SDF_LABEL = 4,
+	SDF_INDEX = 5,
+};
+
+struct FStateDefine
+{
+	FName Label;
+	TArray<FStateDefine> Children;
+	FState *State;
+	BYTE DefineFlags;
+};
+
+class FStateDefinitions
+{
+	TArray<FStateDefine> StateLabels;
+
+	static FStateDefine *FindStateLabelInList(TArray<FStateDefine> &list, FName name, bool create);
+	static FStateLabels *CreateStateLabelList(TArray<FStateDefine> &statelist);
+	static void MakeStateList(const FStateLabels *list, TArray<FStateDefine> &dest);
+	static void RetargetStatePointers (intptr_t count, const char *target, TArray<FStateDefine> & statelist);
+	FStateDefine *FindStateAddress(const char *name);
+	FState *FindState(const char *name);
+
+	FState *ResolveGotoLabel (AActor *actor, const PClass *mytype, char *name);
+	static void FixStatePointers (FActorInfo *actor, TArray<FStateDefine> & list);
+	void ResolveGotoLabels (FActorInfo *actor, AActor *defaults, TArray<FStateDefine> & list);
+
+public:
+
+
+	void ClearStateLabels()
+	{
+		StateLabels.Clear();
+	}
+
+	void AddState (const char * statename, FState * state, BYTE defflags = SDF_STATE);
+	void InstallStates(FActorInfo *info, AActor *defaults);
+	int FinishStates (FActorInfo *actor, AActor *defaults, TArray<FState> &StateArray);
+
+	void MakeStateDefines(const PClass *cls);
+	void AddStateDefines(const FStateLabels *list);
+	void RetargetStates (intptr_t count, const char *target);
+
+};
+
+//==========================================================================
+//
 // Extra info maintained while defining an actor.
 //
 //==========================================================================
@@ -62,16 +124,20 @@ struct Baggage
 	bool StateSet;
 	int CurrentState;
 	int Lumpnum;
+	FStateDefinitions statedef;
+	TArray<FState> StateArray;
 
 	FDropItem *DropItemList;
 };
 
-inline void ResetBaggage (Baggage *bag)
+inline void ResetBaggage (Baggage *bag, const PClass *stateclass)
 {
 	bag->DropItemList = NULL;
 	bag->DropItemSet = false;
 	bag->CurrentState = 0;
 	bag->StateSet = false;
+	bag->StateArray.Clear();
+	bag->statedef.MakeStateDefines(stateclass);
 }
 
 //==========================================================================
@@ -90,25 +156,8 @@ AFuncDesc * FindFunction(const char * string);
 
 
 
-//==========================================================================
-//
-// State parser
-//
-//==========================================================================
-
-extern TArray<int> StateParameters;
-extern TArray<FName> JumpParameters;
-
-void ClearStateLabels();
-void AddState (const char * statename, FState * state);
-FState * FindState(AActor * actor, const PClass * type, const char * name);
-void InstallStates(FActorInfo *info, AActor *defaults);
-void MakeStateDefines(const FStateLabels *list);
-void AddStateDefines(const FStateLabels *list);
 FState *P_GetState(AActor *self, FState *CallingState, int offset);
-int FinishStates (FActorInfo *actor, AActor *defaults);
 int ParseStates(FScanner &sc, FActorInfo *actor, AActor *defaults, Baggage &bag);
-FState *CheckState(FScanner &sc, PClass *type);
 
 
 //==========================================================================

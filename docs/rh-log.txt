@@ -1,3 +1,11 @@
+September 22, 2008  (Changes by Graf Zahl)
+- Used the one unused byte in the state structure as a flag to tell what type
+  the NextState parameter is. The code did some rather unsafe checks with it
+  to determine its type.
+- moved all state related code into a new file: p_states.cpp.
+- merged all FindState functions. All the different variations are now inlined
+  and call the same function to do the real work.
+
 September 21, 2008  (Changes by Graf Zahl)
 - did some code cleanup and reorganization in thingdef.cpp.
 - Replaced the translation parser for TEXTURES with FRemapTable::AddToTranslation.

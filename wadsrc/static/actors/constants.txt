@@ -13,7 +13,8 @@ const int SXF_ABSOLUTEMOMENTUM=8;
 const int SXF_SETMASTER=16;
 const int SXF_NOCHECKPOSITION = 32;
 const int SXF_TELEFRAG=64;
-const int SXF_TRANSFERAMBUSHFLAG=128;
+// 128 was uses by Skulltag
+const int SXF_TRANSFERAMBUSHFLAG=256;
 
 // Flags for A_Chase
 const int CHF_FASTCHASE = 1;

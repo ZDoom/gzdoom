@@ -396,7 +396,6 @@ static FActorInfo *CreateNewActor(FName typeName, FName parentName, FName replac
 		}
 	}
 
-	Printf("Defining %s\n", typeName.GetChars());
 	if (native)
 	{
 		ti = (PClass*)PClass::FindClass(typeName);
@@ -578,7 +577,7 @@ void ParseActor(FScanner &sc)
 			sc.ScriptError("Unexpected '%s' in definition of '%s'", sc.String, bag.Info->Class->TypeName.GetChars());
 			break;
 		}
-
+		FinishActor(sc, info, bag);
 	}
 	sc.SetCMode (false);
 }

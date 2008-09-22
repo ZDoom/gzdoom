@@ -356,51 +356,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_BulletAttack)
 
 //==========================================================================
 //
-// Resolves a label parameter
-//
-//==========================================================================
-
-FState *P_GetState(AActor *self, FState *CallingState, int offset)
-{
-	if (offset == 0 || offset == INT_MIN)
-	{
-		return NULL;	// 0 means 'no state'
-	}
-	else if (offset>0)
-	{
-		if (CallingState == NULL) return NULL;
-		return CallingState + offset;
-	}
-	else if (self != NULL)
-	{
-		offset = -offset;
-
-		FName classname = JumpParameters[offset];
-		const PClass *cls;
-		cls = classname==NAME_None?  RUNTIME_TYPE(self) : PClass::FindClass(classname);
-		if (cls==NULL || cls->ActorInfo==NULL) return NULL;	// shouldn't happen
-
-		int numnames = (int)JumpParameters[offset+1];
-		FState *jumpto = cls->ActorInfo->FindState(numnames, &JumpParameters[offset+2]);
-		if (jumpto == NULL)
-		{
-			const char *dot="";
-			Printf("Jump target '");
-			if (classname != NAME_None) Printf("%s::", classname.GetChars());
-			for (int i=0;i<numnames;i++)
-			{
-				Printf("%s%s", dot, JumpParameters[offset+2+i].GetChars());
-				dot = ".";
-			}
-			Printf("' not found in %s\n", self->GetClass()->TypeName.GetChars());
-		}
-		return jumpto;
-	}
-	else return NULL;
-}
-
-//==========================================================================
-//
 // Do the state jump
 //
 //==========================================================================

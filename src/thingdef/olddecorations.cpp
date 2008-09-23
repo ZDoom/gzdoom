@@ -141,7 +141,6 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def)
 	PClass *type;
 	PClass *parent;
 	FName typeName;
-	FStateDefinitions statedef;
 
 	if (def == DEF_Pickup) parent = RUNTIME_CLASS(AFakeInventory);
 	else parent = RUNTIME_CLASS(AActor);
@@ -246,7 +245,7 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def)
 				if (extra.DeathHeight == 0) extra.DeathHeight = ((AActor*)(type->Defaults))->height;
 				info->Class->Meta.SetMetaFixed (AMETA_DeathHeight, extra.DeathHeight);
 			}
-			statedef.AddState("Death", &info->OwnedStates[extra.DeathStart]);
+			bag.statedef.AddState("Death", &info->OwnedStates[extra.DeathStart]);
 		}
 
 		// Burn states are the same as death states, except they can optionally terminate
@@ -284,7 +283,7 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def)
 			if (extra.BurnHeight == 0) extra.BurnHeight = ((AActor*)(type->Defaults))->height;
 			type->Meta.SetMetaFixed (AMETA_BurnHeight, extra.BurnHeight);
 
-			statedef.AddState("Burn", &info->OwnedStates[extra.FireDeathStart]);
+			bag.statedef.AddState("Burn", &info->OwnedStates[extra.FireDeathStart]);
 		}
 
 		// Ice states are similar to burn and death, except their final frame enters
@@ -305,11 +304,11 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def)
 			info->OwnedStates[i].Tics = 1;
 			info->OwnedStates[i].Misc1 = 0;
 			info->OwnedStates[i].SetAction(FindGlobalActionFunction("A_FreezeDeathChunks"));
-			statedef.AddState("Ice", &info->OwnedStates[extra.IceDeathStart]);
+			bag.statedef.AddState("Ice", &info->OwnedStates[extra.IceDeathStart]);
 		}
 		else if (extra.bGenericIceDeath)
 		{
-			statedef.AddState("Ice", RUNTIME_CLASS(AActor)->ActorInfo->FindState(NAME_GenericFreezeDeath));
+			bag.statedef.AddState("Ice", RUNTIME_CLASS(AActor)->ActorInfo->FindState(NAME_GenericFreezeDeath));
 		}
 	}
 	if (def == DEF_BreakableDecoration)
@@ -320,8 +319,8 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def)
 	{
 		((AActor *)(type->Defaults))->flags |= MF_DROPOFF|MF_MISSILE;
 	}
-	statedef.AddState("Spawn", &info->OwnedStates[extra.SpawnStart]);
-	statedef.InstallStates (info, ((AActor *)(type->Defaults)));
+	bag.statedef.AddState("Spawn", &info->OwnedStates[extra.SpawnStart]);
+	bag.statedef.InstallStates (info, ((AActor *)(type->Defaults)));
 }
 
 //==========================================================================

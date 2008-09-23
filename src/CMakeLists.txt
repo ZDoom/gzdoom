@@ -486,6 +486,7 @@ add_executable( zdoom WIN32
 	p_sight.cpp
 	p_slopes.cpp
 	p_spec.cpp
+	p_states.cpp
 	p_switch.cpp
 	p_teleport.cpp
 	p_terrain.cpp
@@ -624,6 +625,7 @@ add_executable( zdoom WIN32
 	thingdef/thingdef_codeptr.cpp
 	thingdef/thingdef_exp.cpp
 	thingdef/thingdef_main.cpp
+	thingdef/thingdef_parse.cpp
 	thingdef/thingdef_properties.cpp
 	thingdef/thingdef_states.cpp
 	timidity/common.cpp

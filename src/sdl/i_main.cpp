@@ -185,7 +185,7 @@ static int DoomSpecificInfo (char *buffer, char *end)
 
 		if (!viewactive)
 		{
-			buffer += snprintf (buffer+p, size-p, "\n\nView not active.");
+			p += snprintf (buffer+p, size-p, "\n\nView not active.");
 		}
 		else
 		{

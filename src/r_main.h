@@ -54,8 +54,8 @@ extern bool				LocalKeyboardTurner;	// [RH] The local player used the keyboard t
 extern float			WallTMapScale;
 extern float			WallTMapScale2;
 
-extern int				viewwidth;
-extern int				viewheight;
+extern "C" int				viewwidth;
+extern "C" int				viewheight;
 extern int				viewwindowx;
 extern int				viewwindowy;
 

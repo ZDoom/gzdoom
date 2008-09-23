@@ -49,6 +49,7 @@
 #include "v_palette.h"
 #include "doomerrors.h"
 #include "autosegs.h"
+#include "i_system.h"
 
 
 //==========================================================================

@@ -1478,6 +1478,7 @@ void S_RelinkSound (AActor *from, AActor *to)
 			}
 			else
 			{
+				chan->Actor = NULL;
 				S_StopChannel(chan);
 			}
 		}

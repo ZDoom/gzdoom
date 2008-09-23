@@ -35,6 +35,7 @@
 
 #include <stdio.h>
 #include "doomtype.h"
+#include "v_video.h"
 
 // PNG Writing --------------------------------------------------------------
 

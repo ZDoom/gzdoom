@@ -2583,15 +2583,16 @@ void FinishDehPatch ()
 		AActor *defaults2 = GetDefaultByType (subclass);
 		memcpy (defaults2, defaults1, sizeof(AActor));
 
-		// Make a copy the state labels 
+		// Make a copy the replaced class's state labels 
+		FStateDefinitions statedef;
+		statedef.MakeStateDefines(type);
+
 		if (!type->IsDescendantOf(RUNTIME_CLASS(AInventory)))
 		{
 			// If this is a hacked non-inventory item we must also copy AInventory's special states
-			FStateDefinitions statedef;
-			statedef.MakeStateDefines(type);
 			statedef.AddStateDefines(RUNTIME_CLASS(AInventory)->ActorInfo->StateList);
-			statedef.InstallStates(subclass->ActorInfo, defaults2);
 		}
+		statedef.InstallStates(subclass->ActorInfo, defaults2);
 
 		// Use the DECORATE replacement feature to redirect all spawns
 		// of the original class to the new one.

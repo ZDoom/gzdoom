@@ -1835,7 +1835,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, face, S, PlayerPawn)
 DEFINE_CLASS_PROPERTY_PREFIX(player, colorrange, I_I, PlayerPawn)
 {
 	PROP_INT_PARM(start, 0);
-	PROP_INT_PARM(end, 0);
+	PROP_INT_PARM(end, 1);
 
 	if (start > end)
 		swap (start, end);

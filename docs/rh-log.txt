@@ -1,3 +1,11 @@
+September 24, 2008  (Changes by Graf Zahl)
+- Fixed: player.colorrange didn't read the parameters correctly.
+- Reverted an 'optimization' in d_dehacked.cpp that didn't work.
+
+September 23, 2008  (Changes by Graf Zahl)
+- Fixed: Old style decorations forgot all inherited states when installing 
+  their labels.
+  
 September 22, 2008  (Changes by Graf Zahl)
 - Used the one unused byte in the state structure as a flag to tell what type
   the NextState parameter is. The code did some rather unsafe checks with it

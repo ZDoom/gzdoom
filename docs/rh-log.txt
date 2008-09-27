@@ -1,3 +1,6 @@
+September 27, 2008  (Changes by Graf Zahl)
+- Fixed: The translation string parser printed a broken error message.
+
 September 24, 2008  (Changes by Graf Zahl)
 - Fixed: player.colorrange didn't read the parameters correctly.
 - Reverted an 'optimization' in d_dehacked.cpp that didn't work.

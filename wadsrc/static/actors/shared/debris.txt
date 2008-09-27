@@ -174,7 +174,7 @@ ACTOR GlassShard native
 	Radius 5
 	Mass 5
 	Projectile
-	-ACTIVATEMCROSS
+	-ACTIVATEPCROSS
 	-ACTIVATEIMPACT
 	+HEXENBOUNCE
 	BounceFactor 0.3

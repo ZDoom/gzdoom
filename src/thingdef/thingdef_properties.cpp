@@ -1526,7 +1526,7 @@ DEFINE_CLASS_PROPERTY(ammogive1, I, Weapon)
 DEFINE_CLASS_PROPERTY(ammogive2, I, Weapon)
 {
 	PROP_INT_PARM(i, 0);
-	defaults->AmmoGive2 = 2;
+	defaults->AmmoGive2 = i;
 }
 
 //==========================================================================

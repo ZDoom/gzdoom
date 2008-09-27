@@ -1,4 +1,5 @@
 September 27, 2008  (Changes by Graf Zahl)
+- Fixed: weapon.ammogive2 always gave 2 amounts of ammo.
 - Fixed: The translation string parser printed a broken error message.
 
 September 24, 2008  (Changes by Graf Zahl)

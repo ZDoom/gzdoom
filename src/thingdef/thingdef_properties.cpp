@@ -824,7 +824,7 @@ DEFINE_PROPERTY(dropitem, S_i_i, Actor)
 		di->probability = prob;
 		if (PROP_PARM_COUNT > 2)
 		{
-			PROP_INT_PARM(amt, 1);
+			PROP_INT_PARM(amt, 2);
 			di->amount = amt;
 		}
 	}

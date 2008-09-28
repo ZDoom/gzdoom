@@ -1,3 +1,6 @@
+September 28, 2008  (Changes by Graf Zahl)
+- Fixed: Dropitem gave incorrect amounts to the item if a probability was set.
+
 September 27, 2008  (Changes by Graf Zahl)
 - Fixed: weapon.ammogive2 always gave 2 amounts of ammo.
 - Fixed: The translation string parser printed a broken error message.

@@ -1,3 +1,7 @@
+October 4, 2008  (Changes by Graf Zahl)
+- Fixed: Resurrecting a player didn't unset the RF_INVISIBLE flag which is
+  set when the player is crushed to gibs under a door.
+
 September 28, 2008  (Changes by Graf Zahl)
 - Fixed: Dropitem gave incorrect amounts to the item if a probability was set.
 

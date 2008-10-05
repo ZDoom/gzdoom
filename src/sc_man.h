@@ -56,6 +56,7 @@ public:
 	bool Compare(const char *text);
 	int MatchString(const char **strings);
 	int MustMatchString(const char **strings);
+	int GetMessageLine();
 
 	void ScriptError(const char *message, ...);
 	void ScriptMessage(const char *message, ...);
@@ -71,6 +72,7 @@ public:
 	bool End;
 	bool Crossed;
 	int LumpNum;
+	FString ScriptName;
 
 protected:
 	void PrepareScript();
@@ -81,7 +83,6 @@ protected:
 	static const int MAX_STRING_SIZE = 128;
 
 	bool ScriptOpen;
-	FString ScriptName;
 	FString ScriptBuffer;
 	const char *ScriptPtr;
 	const char *ScriptEndPtr;

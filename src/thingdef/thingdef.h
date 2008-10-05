@@ -119,6 +119,9 @@ struct FDropItem;
 
 struct Baggage
 {
+#ifdef _DEBUG
+	FString ClassName;	// This is here so that during debugging the class name can be seen
+#endif
 	FActorInfo *Info;
 	bool DropItemSet;
 	bool StateSet;

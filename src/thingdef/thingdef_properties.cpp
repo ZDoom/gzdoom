@@ -1718,7 +1718,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, color, C_f, Inventory)
 
 		color = V_GetColor(NULL, name);
 	}
-	else if (PROP_PARM_COUNT > 1)
+	if (PROP_PARM_COUNT > 2)
 	{
 		PROP_FLOAT_PARM(falpha, 2);
 		alpha=int(falpha*255);

@@ -523,6 +523,9 @@ static FActorInfo *ParseActorHeader(FScanner &sc, Baggage *bag)
 		ResetBaggage (bag, info->Class->ParentClass);
 		bag->Info = info;
 		bag->Lumpnum = sc.LumpNum;
+#ifdef _DEBUG
+		bag->ClassName = typeName;
+#endif
 		return info;
 	}
 	catch (CRecoverableError &err)

@@ -150,6 +150,9 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def)
 	type = parent->CreateDerivedClass (typeName, parent->Size);
 	ResetBaggage(&bag, parent);
 	info = bag.Info = type->ActorInfo;
+#ifdef _DEBUG
+	bag.ClassName = type->TypeName;
+#endif
 
 	info->GameFilter = GAME_Any;
 	sc.MustGetStringName("{");

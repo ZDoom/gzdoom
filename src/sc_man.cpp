@@ -951,6 +951,17 @@ FString FScanner::TokenName (int token, const char *string)
 //
 //==========================================================================
 
+int FScanner::GetMessageLine()
+{
+	return AlreadyGot? AlreadyGotLine : Line;
+}
+
+//==========================================================================
+//
+// FScanner::ScriptError
+//
+//==========================================================================
+
 void STACK_ARGS FScanner::ScriptError (const char *message, ...)
 {
 	FString composed;

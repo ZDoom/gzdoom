@@ -1,7 +1,6 @@
-/* French strings updated by DK 
- * Special thanks to "la communauté française de Doom" :)
- * 
- */
+//=====================================
+//French strings updated by DoomKn1ght.
+//=====================================
 
 [fr]
 
@@ -42,6 +41,10 @@ QUITMSG19 = "je vous pensais different...";
 QUITMSG20 = "d'accord! tuez et allez vous en!";
 QUITMSG21 = "vous pouvez quitter...\nmais vous ne pouvez pas vous cacher...";
 QUITMSG22 = "whaaa, quel est le probleme?\nvotre mere a dit a table?";
+
+// Quit Chex messages
+QUITMSG23 = "N'abbandonnez pas maintenant...do\nVoulez vous toujours quitter?";
+QUITMSG24 = "S'il vous plait ne quitter pas, nous\nnescessitons votre aide!"; //7 times as likely to show
 
 LOADNET = "VOUS NE POUVEZ PAS CHARGER\nUN JEU EN RESEAU!\n\nAPPUYEZ SUR UNE TOUCHE.";
 QLOADNET = "CHARGEMENT RAPIDE INTERDIT EN RESEAU!\n\nAPPUYEZ SUR UNE TOUCHE.";
@@ -167,7 +170,7 @@ HUSTR_E4M2 = "E4M2: UNE HAINE PARFAITE";
 HUSTR_E4M3 = "E4M3: COUPER LE MAL";
 HUSTR_E4M4 = "E4M4: LE MAL INDISCIPLINE ";
 HUSTR_E4M5 = "E4M5: ILS S'EN REPENTIRONT";
-HUSTR_E4M6 = "E4M6: CONTRE MOI AVEC MECHANCETE";
+HUSTR_E4M6 = "E4M6: CONTRE TOI AVEC MECHANCETE";
 HUSTR_E4M7 = "E4M7: ET L'ENFER SUIVI";
 HUSTR_E4M8 = "E4M8: UNTO LE CRUEL";
 HUSTR_E4M9 = "E4M9: PEUR";
@@ -244,7 +247,7 @@ PHUSTR_32 = "level 32: On y va!";
 THUSTR_1 = "level 1: le systeme de controle";
 THUSTR_2 = "level 2: le barbecue humain";
 THUSTR_3 = "level 3: le controle de l'energie";
-THUSTR_4 = "level 4: trous de vers";
+THUSTR_4 = "level 4: les trous de vers";
 THUSTR_5 = "level 5: la boucle";
 THUSTR_6 = "level 6: la saison d'ouverture";
 THUSTR_7 = "level 7: la prison";
@@ -272,7 +275,7 @@ THUSTR_28 = "level 28: que diable?";
 THUSTR_29 = "level 29: le fleuve styx";
 THUSTR_30 = "level 30: le dernier appel";
 THUSTR_31 = "level 31: pharaon";
-THUSTR_32 = "level 32: caraibbes";
+THUSTR_32 = "level 32: les caraibbes";
 
 HUSTR_TALKTOSELF1 = "VOUS PARLEZ TOUT SEUL ";
 HUSTR_TALKTOSELF2 = "QUI EST LA?";
@@ -332,7 +335,7 @@ E1TEXT =
   "\n"
   "POUR VIVRE LA SUITE DE DOOM, JOUEZ\n"
   "A 'AUX PORTES DE L'ENFER' ET A\n"
-  "L'EPISODE SUIVANT, 'L'ENFER'!\n";
+  "L'EPISODE SUIVANT, 'INFERNO'!\n";
         
 E2TEXT =
   "VOUS AVEZ REUSSI. L'INFAME DEMON\n"
@@ -421,7 +424,7 @@ C2TEXT =
   "ATTENDEZ CALMEMENT LA MORT, HEUREUX \n"
   "D'AVOIR PU SAUVER VOTRE RACE.\n"
   "MAIS UN MESSAGE VOUS PARVIENT SOUDAIN\n"
-  "DE L'ESPACE: \"NOS CAPTEURS ONT LOCALISE\n"
+  "DE L'ESPACE: NOS CAPTEURS ONT LOCALISE\n"
   "LA SOURCE DE L'INVASION EXTRATERRESTRE.\n"
   "SI VOUS Y ALLEZ, VOUS POURREZ PEUT-ETRE\n"
   "LES ARRETER. LEUR BASE EST SITUEE AU COEUR\n"
@@ -495,7 +498,7 @@ P2TEXT =
 	"Meme le labyrinthe mortifere des \n"
 	"archi-infames ne vous arreta pas,\n"
 	"et vous arrivez au prototype     \n"
-	"d' accelerateur qui est proche   \n"
+	"d'accelerateur qui est proche   \n"
 	"desactive efficacement et pour toujours.\n"
 	"\n"
 	"Vous etes doue pour ces choses la.";
@@ -538,7 +541,8 @@ P6TEXT =
 	"peut etre, vous demandiez vous quel\n"
 	"ETAIT le niveau le plus dure, que nous\n"
 	"avions prepare pour vous? Maintenant,\n"
-	"vous savez. Nul n'en sortira vivant.\n"
+	"vous savez. Nul n'en sortira vivant.\n";
+	
 T1TEXT =
 	"Vous vous etes fraye un chemin vers la\n"
 	"sortie des labos experimentaux infestes.\n"
@@ -715,15 +719,15 @@ OB_BARONHIT = "%o a ete dechire par un baron de l'enfer.";
 OB_KNIGHTHIT = "%o a ete etrippe par un un chevalier de l'enfer.";
 OB_ZOMBIE = "%o a ete tue par un zombie.";
 OB_SHOTGUY = "%o a ete tire par un type au fusil.";
-OB_VILE = "%o a ete incinere par un archvile.";
+OB_VILE = "%o a ete incinere par un archi-infame.";
 OB_UNDEAD = "%o n'aurais pas pu esquive cette boule de feu de revenant.";
 OB_FATSO = "%o s'est fait aplatir par un mancubus.";
 OB_CHAINGUY = "%o a ete perfore par un mitrailleur.";
 OB_SKULL = "%o a ete hante par une ame perdue.";
 OB_IMP = "%o brule par un lutin.";
-OB_CACO = "%o a ete terrasse par un cacodemon.";
+OB_CACO = "%o a ete terrasse par un Cacodemon.";
 OB_BARON = "%o a ete meurtri par un Baron de l'Enfer.";
-OB_KNIGHT = "%o a ete assassine Chevalier de l'Enfer.";
+OB_KNIGHT = "%o a ete assassine par un Chevalier de l'Enfer.";
 OB_SPIDER = "%o est reste en admiration devant le demon arachneen.";
 OB_BABY = "%o a laisse un arachnotron l'avoir.";
 OB_CYBORG = "%o a ete reduie a une eclaboussure par un demon-cybernetique.";
@@ -731,7 +735,7 @@ OB_WOLFSS = "%o a rencontre un Nazi.";
 
 OB_CHICKEN = "%o a ete picore a mort.";
 OB_BEAST = "%o a ete carbonise par un dragon-garou.";
-OB_CLINK = "%o a ete entaille par un dents-de-sabres.";
+OB_CLINK = "%o a ete entaille par un sabregriffe.";
 OB_DSPARIL1 = "%o a ete ebouillante par un serpent de D'Sparil.";
 OB_DSPARIL1HIT = "%o a ete mache par un serpent de D'Sparil.";
 OB_DSPARIL2 = "%o etait trop faible pour D'Sparil.";
@@ -740,13 +744,53 @@ OB_HERETICIMP = "%o a ete effraye par une gargouille.";
 OB_HERETICIMPHIT = "%o a ete mis en pieces par une gargouille.";
 OB_IRONLICH = "%o a ete devaste par une sangsue de fer.";
 OB_IRONLICHHIT = "%o a fait ami-ami avec sangsue de fer.";
-OB_BONEKNIGHT = "%o s'est fait hache par un guerrier mort vivant.";
-OB_BONEKNIGHTHIT = "%o s'est fait pourfendre par un guerrier mort vivant.";
+OB_BONEKNIGHT = "%o s'est fait hache par un guerrier mort-vivant.";
+OB_BONEKNIGHTHIT = "%o s'est fait pourfendre par un guerrier mort-vivant.";
 OB_MUMMY = "%o a ete aplati par un golem.";
 OB_MUMMYLEADER = "%o a ete hurle a mort par un nitrogolem.";
 OB_SNAKE = "%o s est fait entrechoque par un ophidien.";
 OB_WIZARD = "%o a ete maudit par un sorcier.";
 OB_WIZARDHIT = "%o a ete palpe par un sorcier.";
+
+OB_FIREDEMON = "%o a goute au feu d'un Afrit.";
+OB_DEMON1 = "%o a ete brule par un Serpent.";
+OB_DEMON2 = "%o a ete empoisonne par un Serpent.";
+OB_ETTIN = "%o a ete reduit en puree par un Ettin.";
+OB_CENTAUR = "%o a ete coupe par un Centaure.";
+OB_SLAUGHTAURHIT = "%o a ete coupe par un Massacrotaure.";
+OB_SLAUGHTAUR = "%o a ete terrasse par une boule de feu de Massacrotaure.";
+OB_BISHOP = "%o a succombe face au pouvoir obscure d'un eveque.";
+OB_ICEGUY = "%o a ete gele par un Wendigo.";
+OB_SERPENTHIT = "%o a ete mutile par un Chasseur.";
+OB_SERPENT = "%o a ete brule par un Chasseur.";
+OB_WRAITH = "%o a ete carbonise par un Reiver.";
+OB_WRAITHHIT = "%o a eu sa vie ravit par un Reiver.";
+OB_DRAGON = "%o a ete incinere par une vouivre de la mort.";
+OB_KORAX = "%o a ete balaye de l'echiquier par Korax.";
+OB_FBOSS = "%o a ete pourfendu par Zedek.";
+OB_MBOSS = "%o n'aurait pu absorber la mana de Menelkir.";
+OB_CBOSS = "%o a ete baptise par Traductus.";
+OB_HERESIARCH = "%o a eu ses os roulles par un Heresiarche.";
+
+OB_ACOLYTE = "%o a ete tire avec zele par un Acolyte.";
+OB_MACIL = "%o n'aurait jamais du se rebelle contre Macil.";
+OB_REBEL = "%o a ete abbatu par un Rebel.";
+OB_BEGGAR = "%o a ete battu a mort par un pauvre.";
+OB_PEASANT = "%o n'aurait jamais du chercher la bagarre a un civil.";
+OB_ALIENSPECTE = "%o a ete terrasse par le Spectre.";
+OB_ENTITY = "%o a senti le courroux du dieu unique.";
+OB_LOREMASTER = "%o n'a pu echapper a l'emprise du Maitre des Traditions.";
+OB_PROGRAMMER = "%o a ete efface par le Programmer.";
+OB_STFBISHOP = "%o a ete descendu par l'Eveque.";
+OB_SENTINEL = "%o a ete abbatu par une Sentinelle.";
+OB_CRUSADER = "%o a ete balaye par un croise.";
+OB_INQUISITOR = "%o a ete condamne par un Inquisiteur.";
+OB_STALKER = "%o a ete embette par un chasseur.";
+OB_TURRET = "%o a declenche les defenses automatiques.";
+OB_TEMPLARHIT = "%o a ete griffe par un Templier.";
+OB_TEMPLAR = "%o a ete vaporise par un Templier.";
+OB_REAVERHIT = "%o a ete fendu par un Reaver.";
+OB_REAVER = "%o a ete descendu par un Reaver.";
 
 OB_MPFIST = "%o a bouffe le poing de %k.";
 OB_MPCHAINSAW = "%o a ete tondu par la tronconneuse de %k.";
@@ -849,7 +893,7 @@ HE4TEXT =
 		"le dernier gardien de ces terres,\n"
 		"mais a ce moment vous vous tenites\n"
 		"devant le bastion de d'sparil."
-            "jusqua ce moment vous n' eutes \n"
+            "jusqua ce moment vous n'eutes \n"
 		"aucun doute sur votre capacite\n"
 		"d affronter tout ce que vous pouviez\n"
 		"rencontrer,mais derriere ce portail\n"
@@ -910,7 +954,7 @@ HHUSTR_E2M7 = "LA GRANDE PIECE";
 HHUSTR_E2M8 = "LE PORTAIL DU CHAOS";
 HHUSTR_E2M9 = "LE GLACIER";
 
-// EPISODE 3 - LE DOME DE D'SPARIL
+// EPISODE 3 - LA COUPOLE DE D'SPARIL
 HHUSTR_E3M1 = "L' ENTREPOT";
 HHUSTR_E3M2 = "LA FOSSE D AISANCES";
 HHUSTR_E3M3 = "LA CONFLUENCE";
@@ -956,19 +1000,19 @@ TXT_ARTIFLY = "LES AILES DU COURROUX";
 TXT_ARTIINVULNERABILITY = "L'ANNEAU D'INVINCIBILITE";
 TXT_ARTITOMEOFPOWER = "TOME DU POUVOIR";
 TXT_ARTIINVISIBILITY = "SPHERE D'OMBRE";
-TXT_ARTIEGG = "OVULE TRANSFORME";
+TXT_ARTIEGG = "OVULE DE METAMORPHOSE";
 TXT_ARTISUPERHEALTH = "URNE MYSTIQUE";
 TXT_ARTITORCH = "LA TORCHE";
 TXT_ARTIFIREBOMB = "BOMBE A RETARDEMENT DES ANCIENTS";
-TXT_ARTITELEPORT = "L' USTENSIL DU CHAOS";
+TXT_ARTITELEPORT = "L'USTENSIL DU CHAOS";
 
 // Items
 
-TXT_ITEMHEALTH = "CRYSTAL VIAL";
+TXT_ITEMHEALTH = "FIOLE DE CRYSTAL";
 TXT_ITEMBAGOFHOLDING = "SAC DE PRISES";
 TXT_ITEMSHIELD1 = "BOUCLIER D'ARGENT";
 TXT_ITEMSHIELD2 = "BOUCLIER ENCHANTE";
-TXT_ITEMSUPERMAP = "CARTE EN ROULEAU DEPLIANT";
+TXT_ITEMSUPERMAP = "CARTE ROULEAU DEPLIANTE";
 
 // Ammo
 
@@ -976,19 +1020,19 @@ TXT_AMMOGOLDWAND1 = "SCEPTRE DE CRYSTAL";
 TXT_AMMOGOLDWAND2 = "GEODE DE CRYSTAL";
 TXT_AMMOMACE1 = "SPHERES DE MASSE";
 TXT_AMMOMACE2 = "PILE DE SPHERES DE MASSE";
-TXT_AMMOCROSSBOW1 = "FLECHES AERIENNNES";
-TXT_AMMOCROSSBOW2 = "CARQUOIS DE FLECHES AERIENNNES";
-TXT_AMMOBLASTER1 = "ORB DE GRIFFE";
-TXT_AMMOBLASTER2 = "ORB DE L'ENERGIE";
+TXT_AMMOCROSSBOW1 = "FLECHES ETHEREES";
+TXT_AMMOCROSSBOW2 = "CARQUOIS DE FLECHES ETHEREES";
+TXT_AMMOBLASTER1 = "L'ORBE DE GRIFFE";
+TXT_AMMOBLASTER2 = "L'ORBE D'ENERGIE";
 TXT_AMMOSKULLROD1 = "RUNES MINEURES";
 TXT_AMMOSKULLROD2 = "RUNES SUPERIEURES";
-TXT_AMMOPHOENIXROD1 = "ORB DE FLAMES";
-TXT_AMMOPHOENIXROD2 = "ORB DE L'ENFER";
+TXT_AMMOPHOENIXROD1 = "L'ORBE DE FLAMES";
+TXT_AMMOPHOENIXROD2 = "L'ORBE DE L'ENFER";
 
 // Weapons
 
 TXT_WPNMACE = "MASSE DE FEU";
-TXT_WPNCROSSBOW = "ARBALETE AERIENNE";
+TXT_WPNCROSSBOW = "ARBALETE ETHEREE";
 TXT_WPNBLASTER = "GRIFFE DU DRAGON";
 TXT_WPNSKULLROD = "LE BATON DE L'ENFER";
 TXT_WPNPHOENIXROD = "LE BATON DU PHOENIX";
@@ -1050,11 +1094,11 @@ TXT_NEED_KEY_CASTLE = "Vous avez besoin de la CLE DU CHATEAU";
 
 TXT_ARTIINVULNERABILITY2 = "L'ICONE DU DEFENSEUR";
 TXT_ARTISUMMON = "SERVANT OBSCURE";
-TXT_ARTIEGG2 = "PORKALATOR";
+TXT_ARTIEGG2 = "PORCIFICATEUR";
 TXT_ARTIPOISONBAG = "FLECHETTE";
 TXT_ARTITELEPORTOTHER = "L'USTENSIL DE BANISSEMENT";
 TXT_ARTISPEED = "BOTTES DE VITESSE";
-TXT_ARTIBOOSTMANA = "KRATER DE LA PUISSANCE";
+TXT_ARTIBOOSTMANA = "CRATERE DE LA PUISSANCE";
 TXT_ARTIBOOSTARMOR = "BRACELETS EN PEAU DE DRAGON";
 TXT_ARTIBLASTRADIUS = "DISQUE DE REPULSION";
 TXT_ARTIHEALINGRADIUS = "CADRE D' ENCHANTEMENT MYSTIQUE";
@@ -1068,12 +1112,12 @@ TXT_ARTIPUZZGEMGREEN1 = "PLANETE D'EMERAUDE";
 TXT_ARTIPUZZGEMGREEN2 = "PLANETE D'EMERAUDE";
 TXT_ARTIPUZZGEMBLUE1 = "PLANETE DE SAPPHIRE";
 TXT_ARTIPUZZGEMBLUE2 = "PLANETE DE SAPPHIRE";
-TXT_ARTIPUZZBOOK1 = "CODEX DEMON";
+TXT_ARTIPUZZBOOK1 = "CODEX DES DEMON";
 TXT_ARTIPUZZBOOK2 = "LIVRE OBSCURE";
 TXT_ARTIPUZZSKULL2 = "MASQUE DE FLAMES";
 TXT_ARTIPUZZFWEAPON = "LE SCEAU DE GLAIVE";
 TXT_ARTIPUZZCWEAPON = "LA SAINTE RELIQUE";
-TXT_ARTIPUZZMWEAPON = "SIGIL DU MAGUS";
+TXT_ARTIPUZZMWEAPON = "SIGIL DU MAGE";
 TXT_ARTIPUZZGEAR = "ROUAGE D'HORLOGE";
 TXT_USEPUZZLEFAILED = "VOUS NE POUVEZ PAS UTILISE CECI ICI";
 
@@ -1215,7 +1259,7 @@ TXT_RANDOM_PEASANT_04 = "Allez vous en ou j'appel les guardes!";
 TXT_RANDOM_PEASANT_05 = "Je voudrais quelque fois que ces rebelles apprennent quelle est leur place et stoppent ce non-sens.";
 TXT_RANDOM_PEASANT_06 = "Laisse moi seul, OK?";
 TXT_RANDOM_PEASANT_07 = "Je ne suis pas sur , mais quelque fois je pense connaitre certains des acolytes.";
-TXT_RANDOM_PEASANT_08 = "L' ordre maintient tout ferme aux alentours.";
+TXT_RANDOM_PEASANT_08 = "L' ordre maintient tout bien verrouille aux alentours.";
 TXT_RANDOM_PEASANT_09 = "Ce n'est pas possible que ce ne sois juste q'une force de securite.";
 TXT_RANDOM_PEASANT_10 = "J'ai entendu que l' ordre etait tres nerveux a cause des action du front aux alentours.";
 
@@ -1230,7 +1274,7 @@ TXT_RANDOM_REBEL_08 = "Une fois que nous auront fait chuter ces charlatans, Nous
 TXT_RANDOM_REBEL_09 = "Souvient toi tu ne te bas pas seulement pour toi meme, mais pour tous le monde ici et dehors.";
 TXT_RANDOM_REBEL_10 = "Aussi longtemps qu'un de nous est debout, nous vaincront.";
 
-TXT_RANDOM_AGUARD_01 = "Bouge de la, paysan.";
+TXT_RANDOM_AGUARD_01 = "Bouge de la, paysan!";
 TXT_RANDOM_AGUARD_02 = "Suis la vrai foie , seulement la tu commencera a comprendre.";
 TXT_RANDOM_AGUARD_03 = "C'est seulement a travers la mort que quelqu'un peut renaitre.";
 TXT_RANDOM_AGUARD_04 = "Je ne suis pas interesse par tes betises inutiles.";
@@ -1252,20 +1296,78 @@ TXT_RANDOM_BEGGAR_08 = "Ils n'y pas plus ennuyant qu'un surfacer et son comporte
 TXT_RANDOM_BEGGAR_09 = "L'ordre n'en aura pas pour longtemps de votre front.";
 TXT_RANDOM_BEGGAR_10 = "Prend guarde a toi, surfacer. Nous connaisont nos ennemis!";
 
-TXT_RANDOM_PGUARD_01 = "Nous sommes les main du destin. Apprendre notre colere est de trouve l'oubli!";
+TXT_RANDOM_PGUARD_01 = "Nous sommes les mains du destin. Apprendre notre colere est de trouve l'oubli!";
 TXT_RANDOM_PGUARD_02 = "L'ordre nettoira le monde des faibles et corrompus!";
 TXT_RANDOM_PGUARD_03 = "Obei aux ordres du maitre!";
 TXT_RANDOM_PGUARD_04 = "longue vies aux frere de l'ordre!";
 TXT_RANDOM_PGUARD_05 = "La liberte est l'illusion qui aveugle les faible d'esprit.";
 TXT_RANDOM_PGUARD_06 = "le pouvoir est le chemin de la gloire. Suivre l'ordre c'est suivre ce chemin!";
-TXT_RANDOM_PGUARD_07 = "Prend ta place parmi les justes, rejoin nous!";
+TXT_RANDOM_PGUARD_07 = "Prend ta place parmi les justes, rejoins nous!";
 TXT_RANDOM_PGUARD_08 = "L'ordre protege les siens.";
-TXT_RANDOM_PGUARD_09 = "Les Acolytes? Ils ont deja vus la pleine gloire de l'ordre.";
+TXT_RANDOM_PGUARD_09 = "Les Acolytes? Ils ont deja a voir la pleine gloire de l'ordre.";
 TXT_RANDOM_PGUARD_10 = "Si il y a une once de gloire dans ce corps pathetique, Tu entrera dans les armes de l'ordre.";
 
 TXT_RANDOMGOODBYE_1 = "Au revoir!";
 TXT_RANDOMGOODBYE_2 = "Merci, au revoir!";
 TXT_RANDOMGOODBYE_3 = "A plus tard!";
+
+// Menu
+MNU_NEWGAME			= "NOUVEAU JEU";
+MNU_OPTIONS			= "OPTIONS";
+MNU_GAMEFILES		= "FICHIERS DE JEU";
+MNU_INFO			= "INFO";
+MNU_QUITGAME		= "QUITTER LE JEU";
+
+MNU_FIGHTER			= "COMBATTANT";
+MNU_CLERIC			= "CLERC";
+MNU_MAGE			= "MAGICIEN";
+MNU_RANDOM			= "AU HAZARD";
+
+MNU_LOADGAME		= "CHARGEMENT";
+MNU_SAVEGAME		= "SAUVEGARDE";
+
+MNU_COTD			= "LA CITE DES DAMNES";
+MNU_HELLSMAW		= "LA BOUCHE DE L'ENFER";
+MNU_DOME			= "LE DOME DE D'SPARIL";
+MNU_OSSUARY			= "L'OSSUAIRE";
+MNU_DEMESNE			= "LE DOMAINE STAGNANT";
+
+MNU_WETNURSE		= "VOUS AVEZ BESOIN D'UNE NOURRICE";
+MNU_YELLOWBELLIES	= "UN TROUILLARD-TU-EST";
+MNU_BRINGEST		= "AMMENEZ LES MOI!";
+MNU_SMITE			= "TU EST UN MAITRE-MEUTRIER";
+MNU_BLACKPLAGUE		= "LA PESTE NOIRE ME POSSEDE";
+
+MNU_NOPICTURE		= "Pas d'image";
+MNU_DIFFVERSION		= "Version\nDifferente";
+MNU_NOFILES			= "Pas de fichier";
+
+MNU_CHOOSECLASS		= "CHOISISSEZ UNE CLASS:";
+MNU_CHOOSESKILL		= "CHOISISSEZ UN NIVEAU DE DIFICULTE:";
+
+MNU_SQUIRE			= "ECUYER";
+MNU_KNIGHT			= "CHEVALIER";
+MNU_WARRIOR			= "GUERRIER";
+MNU_BERSERKER		= "FOU-FURIEUX";
+MNU_TITAN			= "TITAN";
+                                    
+MNU_ALTARBOY		= "ENFANT DE CHOEUR";
+MNU_ACOLYTE			= "ACOLYTE";
+MNU_PRIEST			= "PRETRE";
+MNU_CARDINAL		= "CARDINALE";
+MNU_POPE			= "PAPE";
+                                    
+MNU_APPRENTICE		= "APPRENTI";
+MNU_ENCHANTER		= "ENCHANTEUR";
+MNU_SORCERER        = "SORCIER";
+MNU_WARLOCK			= "BRISEUR DE SERMENT";
+MNU_ARCHMAGE		= "ARCHIMAGICIEN";
+
+MNU_PLAYERSETUP		= "REGLAGE DU JOUEUR";
+
+MNU_DELETESG		= "Voulez vous vraiment effacer cette sauvegarde?\n";
+
+MNU_ONLYREGISTERED	= "SEULEMENT DISPONIBLE DANS LA VERSION ENREGISTREE";
 
 // Bloodbath announcer
 
@@ -1309,3 +1411,116 @@ BBA_SUICIDE = "%o s'est suicide";
 BBA_DARWIN = "%o  a recu la medaille Darwin";
 
 
+// Chex Quest Strings
+CHUSTR_E1M1 = "E1M1: La piste d'atterissage";
+CHUSTR_E1M2 = "E1M2: Le centre de stockage";
+CHUSTR_E1M3 = "E1M3: Les labos experimentaux";
+CHUSTR_E1M4 = "E1M4: L'Arboretum";
+CHUSTR_E1M5 = "E1M5: Les cavernes de Bazoik";
+
+CE1TEXT =
+      "Mission accomplie.\n"
+      "\n"
+      "Etes vous pret pour la prochaine mission?\n"
+      "\n"
+      "\n"
+      "\n"
+      "\n"
+      "\n"
+      "\n"
+      "Pressez le bouton echap pour continuer...";
+
+CE2TEXT = "Vous l'avez fait!";
+CE3TEXT = "Merveilleux travail!";
+CE4TEXT = "Fantastique!";
+//These replaced Doom2 messages
+CE5TEXT = "Trop fort!";
+CE6TEXT = "Dans la bonne voie!";
+CE7TEXT = "merci pour l'aide!";
+CE8TEXT = "Genial!\n";
+CE9TEXT = "Fabuleux!";
+//The next for plutonia
+CE10TEXT = "joliment travaille!";
+CE11TEXT = "Joli travail!";
+CE12TEXT = "Bien joue!";
+CE13TEXT = "mangez du Chex(R)!";
+CE14TEXT = "Etes vous pres?";
+CE15TEXT = "Etiez vous pres";
+//TNT
+CE16TEXT = "Il y en plus a venir...";
+CE17TEXT = "Continuez le bon travail!";
+CE18TEXT = "Soyez prets!";
+CE19TEXT = "Soyez fiers.";
+CE20TEXT = "Wow!";
+CE21TEXT = "Genial.";
+
+CC_FLEMOIDUSCOMMONUS = "FLEMOIDUS COMMONUS";
+CC_FLEMOIDUSBIPEDICUS = "FLEMOIDUS BIPEDICUS";
+CC_FLEMOIDUSBIPEDICUSWITHARMOR = "FLEMOIDUS BIPEDICUS AVEC ARMURE";
+CC_THEFLEMBRANE = "LA FLEMBRANE";
+
+CLOADNET = "vous ne pouvez pas charger lors d'une quete reseau!\n\npressez un bouton.";
+CQSPROMPT = "sauvergarde rapide par dessus la denome quete\n\n'%s'?\n\npressez y or n.";
+CQLOADNET = "vous ne pouvez pas charger rapidement lors d'une quete reseau!!\n\npressez un bouton.";
+CQLPROMPT = "voulez charger rapidement la denome quete\n\n'%s'?\n\npressez y or n.";
+CNEWGAME = "vous ne pouvez pas commencer une nouvelle quete\nlors d'une quete reseau.\n\pressez un bouton.";
+
+CNIGHTMARE = "Atention, ca va etre dur.\nVoulez vous continuer?\n\npressez y or n.";
+
+CSWSTRING = "Ceci est la quete de Chex(R). a la recherche de\n\nfutures niveau at www.chexquest.com.\n\npressez un bouton.";
+
+CNETEND = "vous ne pouvez pas interompre une quete internet!\n\npressez un bouton.";
+CENDGAME = "etes vous sure de vouloir interompre la quete?\n\npressez y or n.";
+
+GOTCHEXARMOR = "Vous avez pris l'armure Chex(R).";
+GOTSUPERCHEXARMOR = "Vous avez pris la super armure Chex(R)!";
+GOTWATER = "Vous avez pris un verre d'eau.";
+GOTREPELLENT = "Vous avez pris de la chaux repulsive.";
+GOTBREAKFAST = "Petit-dejeuner supercharge!";
+GOTCBLUEKEY = "Vous avez pris une cle bleue.";
+GOTCYELLOWKEY = "Vous avez pris une cle jaune.";
+GOTCREDKEY = "Vous avez pris une cle rouge.";
+GOTFRUIT = "Vous avez pris un bol de fruits.";
+GOTVEGETABLESNEED = "Les legumes sont VRAIMENT bon pour vous!";
+GOTVEGETABLES = "Vous avez pris un bol de legumes.";
+GOTSLIMESUIT = "Combinaison pare-geleevisqueuse";
+GOTCHEXMAP = "Vous avez trouve une carte de la zone electronique";
+
+GOTZORCHRECHARGE = "Vous avez pris une mini recharge zorch.";
+GOTMINIZORCHPACK = "Vous avez pris un mini paquet zorch.";
+GOTPROPULSORPACK = "Vous avez pris un paquet propulseur zorch.";
+GOTPHASINGZORCHERRECHARGE = "Vous avez pris une recharge zorcheur phasant";
+GOTPHASINGZORCHERPACK = "Vous avez pris un paquet zorcheur phasant.";
+GOTLARGEZORCHERRECHARGE = "Vous avez pris une grande recharge zorcheur.";
+GOTLARGEZORCHERPACK = "Vous avez pris un grand paquet zorcheur.";
+GOTZORCHPACK = "Vous avez pris un zorchpak!";
+
+GOTLAZDEVICE = "You avez pris l'ustensil LAZ! woot!";
+GOTRAPIDZORCHER = "You avez pris le Zorcheur Rapide!";
+GOTSUPERBOOTSPORK = "You avez pris le Super Bootspork!";
+GOTZORCHPROPULSOR = "You avez pris le Propulseur Zorch!";
+GOTPHASINGZORCHER = "You avez pris le Zorcheur phasant!";
+GOTSUPERLARGEZORCHER = "You avez pris le mega Zorcheur!";
+
+STSTR_CDQDON = "Mode invincible ALLUME";
+STSTR_CDQDOFF = "Mode invincible ETEINT";
+STSTR_CFAADDED = "Zorch Ajoute";
+STSTR_CKFAADDED = "Super Zorch Ajoute";
+STSTR_CCHOPPERS = "... Mangez du Chex(R)!";
+
+OB_COMMONUS = "%o a ete gelifie par un flemoid.";
+OB_BIPEDICUS = "%o a ete gelifie par un bipedicus.";
+OB_BIPEDICUS2 = "%o a ete gelifie par un bipedicus en armure.";
+OB_CYCLOPTIS = "%o a ete gelifie par un cycloptis.";
+OB_FLEMBRANE = "%o a ete defait par la Flembrane.";
+
+OB_MPSPOON = "%o a ete nourri a la petite cuilliere par %k.";
+OB_MPBOOTSPORK = "%o a ete melange minutieusement par le bootspork de %k.";
+OB_MPZORCH = "%o a ete zorche par %k.";
+OB_MPMEGAZORCH = "%o a ete frappe par le mega zorcheur de %k.";
+OB_MPRAPIDZORCH = "%o a ete zorche rapidement par %k.";
+OB_MPPROPULSOR = "%o a ete zorche par le propulseur de %k.";
+OB_MPP_SPLASH = "%o a ete frape par le propulseur de %k.";
+OB_MPPHASEZORCH = "%o a ete phase zorche par %k.";
+OB_MPLAZ_BOOM = "%o est tombe en proie a l'ustensil LAZ %k.";
+OB_MPLAZ_SPLASH = "%o a ete lazze par %k.";

@@ -351,6 +351,7 @@ static const char *MapInfoMapLevel[] =
 	"compat_invisibility",
 	"compat_silent_instant_floors",
 	"compat_sectorsounds",
+	"compat_missileclip",
 	"bordertexture",
 	"f1", // [RC] F1 help
 	"noinfighting",
@@ -503,6 +504,7 @@ MapHandlers[] =
 	{ MITYPE_COMPATFLAG, COMPATF_INVISIBILITY},
 	{ MITYPE_COMPATFLAG, COMPATF_SILENT_INSTANT_FLOORS},
 	{ MITYPE_COMPATFLAG, COMPATF_SECTORSOUNDS},
+	{ MITYPE_COMPATFLAG, COMPATF_MISSILECLIP},
 	{ MITYPE_LUMPNAME,	lioffset(bordertexture), 0 },
 	{ MITYPE_LUMPNAME,  lioffset(f1), 0, }, 
 	{ MITYPE_SCFLAGS,	LEVEL_NOINFIGHTING, ~LEVEL_TOTALINFIGHTING },

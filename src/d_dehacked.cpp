@@ -746,6 +746,7 @@ static int PatchThing (int thingy)
 		else if (linelen == 6 && stricmp (Line1, "Height") == 0)
 		{
 			info->height = val;
+			info->projectilepassheight = 0;	// needs to be disabled
 			hadHeight = true;
 		}
 		else if (linelen == 14 && stricmp (Line1, "Missile damage") == 0)
@@ -1009,6 +1010,7 @@ static int PatchThing (int thingy)
 			thingy <= NumOrgHeights && thingy > 0)
 		{
 			info->height = OrgHeights[thingy - 1] * FRACUNIT;
+			info->projectilepassheight = 0;
 		}
 		// If the thing's shadow changed, change its fuzziness if not already specified
 		if ((info->flags ^ oldflags) & MF_SHADOW)

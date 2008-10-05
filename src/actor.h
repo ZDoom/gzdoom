@@ -650,6 +650,7 @@ public:
 	struct sector_t	*ceilingsector;
 	FTextureID		ceilingpic;			// contacted sec ceilingpic
 	fixed_t			radius, height;		// for movement checking
+	fixed_t			projectilepassheight;	// height for clipping projectile movement against this actor
 	fixed_t			momx, momy, momz;	// momentums
 	SDWORD			tics;				// state tic counter
 	FState			*state;

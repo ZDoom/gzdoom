@@ -220,6 +220,7 @@ void AActor::Serialize (FArchive &arc)
 		<< ceilingsector
 		<< radius
 		<< height
+		<< projectilepassheight
 		<< momx
 		<< momy
 		<< momz

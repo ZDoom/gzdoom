@@ -1,4 +1,11 @@
 October 5, 2008  (Changes by Graf Zahl)
+- Finally has the right idea how to restore Doom's original clipping of projectiles
+  against decorations without breaking anything newer:
+  Added a new 'projectilepassheight' property that defines an alternative height
+  that is only used when checking a projectile's movement against this actor.
+  If the value is positive it is used regardless of other settings, if it is
+  negative, its absolute will be used if a new compatibility option is enabled
+  and if it is 0 the normal height will be used.
 - Fixed: Powerup.Color's handler contained an unnecessary 'else' which resulted
   in opaque powerup blends.
 

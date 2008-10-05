@@ -6,6 +6,7 @@ ACTOR TechLamp 85
 	Game Doom
 	Radius 16
 	Height 80
+	ProjectilePassHeight -16
 	+SOLID
 	States
 	{
@@ -22,6 +23,7 @@ ACTOR TechLamp2 86
 	Game Doom
 	Radius 16
 	Height 60
+	ProjectilePassHeight -16
 	+SOLID
 	States
 	{
@@ -38,6 +40,7 @@ ACTOR Column 2028
 	Game Doom
 	Radius 16
 	Height 48
+	ProjectilePassHeight -16
 	+SOLID
 	States
 	{
@@ -54,6 +57,7 @@ ACTOR TallGreenColumn 30
 	Game Doom
 	Radius 16
 	Height 52
+	ProjectilePassHeight -16
 	+SOLID
 	States
 	{
@@ -70,6 +74,7 @@ ACTOR ShortGreenColumn 31
 	Game Doom
 	Radius 16
 	Height 40
+	ProjectilePassHeight -16
 	+SOLID
 	States
 	{
@@ -86,6 +91,7 @@ ACTOR TallRedColumn 32
 	Game Doom
 	Radius 16
 	Height 52
+	ProjectilePassHeight -16
 	+SOLID
 	States
 	{
@@ -102,6 +108,7 @@ ACTOR ShortRedColumn 33
 	Game Doom
 	Radius 16
 	Height 40
+	ProjectilePassHeight -16
 	+SOLID
 	States
 	{
@@ -118,6 +125,7 @@ ACTOR SkullColumn 37
 	Game Doom
 	Radius 16
 	Height 40
+	ProjectilePassHeight -16
 	+SOLID
 	States
 	{
@@ -134,6 +142,7 @@ ACTOR HeartColumn 36
 	Game Doom
 	Radius 16
 	Height 40
+	ProjectilePassHeight -16
 	+SOLID
 	States
 	{
@@ -150,6 +159,7 @@ ACTOR EvilEye 41
 	Game Doom
 	Radius 16
 	Height 54
+	ProjectilePassHeight -16
 	+SOLID
 	States
 	{
@@ -166,6 +176,7 @@ ACTOR FloatingSkull 42
 	Game Doom
 	Radius 16
 	Height 26
+	ProjectilePassHeight -16
 	+SOLID
 	States
 	{
@@ -182,6 +193,7 @@ ACTOR TorchTree 43
 	Game Doom
 	Radius 16
 	Height 56
+	ProjectilePassHeight -16
 	+SOLID
 	States
 	{
@@ -198,6 +210,7 @@ ACTOR BlueTorch 44
 	Game Doom
 	Radius 16
 	Height 68
+	ProjectilePassHeight -16
 	+SOLID
 	States
 	{
@@ -214,6 +227,7 @@ ACTOR GreenTorch 45
 	Game Doom
 	Radius 16
 	Height 68
+	ProjectilePassHeight -16
 	+SOLID
 	States
 	{
@@ -230,6 +244,7 @@ ACTOR RedTorch 46
 	Game Doom
 	Radius 16
 	Height 68
+	ProjectilePassHeight -16
 	+SOLID
 	States
 	{
@@ -246,6 +261,7 @@ ACTOR ShortBlueTorch 55
 	Game Doom
 	Radius 16
 	Height 37
+	ProjectilePassHeight -16
 	+SOLID
 	States
 	{
@@ -262,6 +278,7 @@ ACTOR ShortGreenTorch 56
 	Game Doom
 	Radius 16
 	Height 37
+	ProjectilePassHeight -16
 	+SOLID
 	States
 	{
@@ -278,6 +295,7 @@ ACTOR ShortRedTorch 57
 	Game Doom
 	Radius 16
 	Height 37
+	ProjectilePassHeight -16
 	+SOLID
 	States
 	{
@@ -294,6 +312,7 @@ ACTOR Stalagtite 47
 	Game Doom
 	Radius 16
 	Height 40
+	ProjectilePassHeight -16
 	+SOLID
 	States
 	{
@@ -310,6 +329,7 @@ ACTOR TechPillar 48
 	Game Doom
 	Radius 16
 	Height 128
+	ProjectilePassHeight -16
 	+SOLID
 	States
 	{
@@ -326,6 +346,7 @@ ACTOR Candlestick 34
 	Game Doom
 	Radius 20
 	Height 14
+	ProjectilePassHeight -16
 	States
 	{
 	Spawn:
@@ -341,6 +362,7 @@ ACTOR Candelabra 35
 	Game Doom
 	Radius 16
 	Height 60
+	ProjectilePassHeight -16
 	+SOLID
 	States
 	{
@@ -489,6 +511,7 @@ ACTOR HeadOnAStick 27
 	Game Doom
 	Radius 16
 	Height 56
+	ProjectilePassHeight -16
 	+SOLID
 	States
 	{
@@ -505,6 +528,7 @@ ACTOR HeadsOnAStick 28
 	Game Doom
 	Radius 16
 	Height 64
+	ProjectilePassHeight -16
 	+SOLID
 	States
 	{
@@ -521,6 +545,7 @@ ACTOR HeadCandles 29
 	Game Doom
 	Radius 16
 	Height 42
+	ProjectilePassHeight -16
 	+SOLID
 	States
 	{
@@ -537,6 +562,7 @@ ACTOR DeadStick 25
 	Game Doom
 	Radius 16
 	Height 64
+	ProjectilePassHeight -16
 	+SOLID
 	States
 	{
@@ -553,6 +579,7 @@ ACTOR LiveStick 26
 	Game Doom
 	Radius 16
 	Height 64
+	ProjectilePassHeight -16
 	+SOLID
 	States
 	{
@@ -570,6 +597,7 @@ ACTOR BigTree 54
 	Game Doom
 	Radius 32
 	Height 108
+	ProjectilePassHeight -16
 	+SOLID
 	States
 	{
@@ -587,6 +615,7 @@ ACTOR BurningBarrel 70
 	SpawnID 149
 	Radius 16
 	Height 32
+	ProjectilePassHeight -16
 	+SOLID
 	States
 	{

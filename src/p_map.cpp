@@ -745,8 +745,24 @@ bool PIT_CheckThing (AActor *thing, FCheckPosition &tm)
 		{
 			return true;
 		}
+
+		int clipheight;
+		
+		if (thing->projectilepassheight > 0) 
+		{
+			clipheight = thing->projectilepassheight;
+		}
+		else if (thing->projectilepassheight < 0 && (i_compatflags & COMPATF_MISSILECLIP))
+		{
+			clipheight = -thing->projectilepassheight;
+		}
+		else
+		{
+			clipheight = thing->height;
+		}
+
 		// Check if it went over / under
-		if (tm.thing->z > thing->z + thing->height)
+		if (tm.thing->z > thing->z + clipheight)
 		{ // Over thing
 			return true;
 		}

@@ -540,6 +540,7 @@ void FStateDefinitions::MakeStateList(const FStateLabels *list, TArray<FStateDef
 
 		def.Label = list->Labels[i].Label;
 		def.State = list->Labels[i].State;
+		def.DefineFlags = SDF_STATE;
 		dest.Push(def);
 		if (list->Labels[i].Children != NULL)
 		{
@@ -721,10 +722,11 @@ void FStateDefinitions::FixStatePointers (FActorInfo *actor, TArray<FStateDefine
 {
 	for(unsigned i=0;i<list.Size(); i++)
 	{
-		size_t v=(size_t)list[i].State;
-		if (v >= 1 && v < 0x10000)
+		if (list[i].DefineFlags == SDF_INDEX)
 		{
+			size_t v=(size_t)list[i].State;
 			list[i].State = actor->OwnedStates + v - 1;
+			list[i].DefineFlags = SDF_STATE;
 		}
 		if (list[i].Children.Size() > 0) FixStatePointers(actor, list[i].Children);
 	}
@@ -763,6 +765,8 @@ int FStateDefinitions::FinishStates (FActorInfo *actor, AActor *defaults, TArray
 {
 	static int c=0;
 	int count = StateArray.Size();
+
+	DPrintf("Finishing states for %s\n", actor->Class->TypeName.GetChars());
 
 	if (count > 0)
 	{

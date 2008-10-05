@@ -311,6 +311,7 @@ bool ParsePropertyParams(FScanner &sc, FPropertyInfo *prop, AActor *defaults, Ba
 
 			nocomma = false;
 			conv.s = NULL;
+			pref.s = NULL;
 			pref.i = -1;
 			switch ((*p) & 223)
 			{

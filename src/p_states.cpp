@@ -38,6 +38,7 @@
 #include "templates.h"
 #include "cmdlib.h"
 #include "i_system.h"
+#include "c_dispatch.h"
 #include "thingdef/thingdef.h"
 
 // Each state is owned by an actor. Actors can own any number of
@@ -816,3 +817,38 @@ int FStateDefinitions::FinishStates (FActorInfo *actor, AActor *defaults, TArray
 	return count;
 }
 
+
+void DumpStateHelper(FStateLabels *StateList, const FString &prefix)
+{
+	for (int i = 0; i < StateList->NumLabels; i++)
+	{
+		if (StateList->Labels[i].State != NULL)
+		{
+			const PClass *owner = FState::StaticFindStateOwner(StateList->Labels[i].State);
+			if (owner == NULL)
+			{
+				Printf(PRINT_LOG, "%s%s: invalid\n", prefix.GetChars(), StateList->Labels[i].Label.GetChars());
+			}
+			else
+			{
+				Printf(PRINT_LOG, "%s%s: %s.%d\n", prefix.GetChars(), StateList->Labels[i].Label.GetChars(),
+					owner->TypeName.GetChars(), StateList->Labels[i].State - owner->ActorInfo->OwnedStates);
+			}
+		}
+		if (StateList->Labels[i].Children != NULL)
+		{
+			DumpStateHelper(StateList->Labels[i].Children, prefix + '.' + StateList->Labels[i].Label.GetChars());
+		}
+	}
+}
+
+CCMD(dumpstates)
+{
+	for (unsigned int i = 0; i < PClass::m_RuntimeActors.Size(); ++i)
+	{
+		FActorInfo *info = PClass::m_RuntimeActors[i]->ActorInfo;
+		Printf(PRINT_LOG, "State labels for %s\n", info->Class->TypeName.GetChars());
+		DumpStateHelper(info->StateList, "");
+		Printf(PRINT_LOG, "----------------------------\n");
+	}
+}

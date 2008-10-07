@@ -1476,12 +1476,17 @@ void APowerDamage::ModifyDamage(int damage, FName damageType, int &newdamage, bo
 	if (!passive && damage > 0)
 	{
 		DmgFactors * df = GetClass()->ActorInfo->DamageFactors;
-		if (df != NULL)
+		if (df != NULL && df->CountUsed() != 0)
 		{
 			const fixed_t * pdf = df->CheckKey(damageType);
 			if (pdf== NULL && damageType != NAME_None) pdf = df->CheckKey(NAME_None);
-			if (pdf == NULL) pdf = &def;
-
+		}
+		else
+		{
+			pdf = &def;
+		}
+		if (pdf != NULL)
+		{
 			damage = newdamage = FixedMul(damage, *pdf);
 			if (*pdf > 0 && damage == 0) damage = newdamage = 1;	// don't allow zero damage as result of an underflow
 			if (Owner != NULL && *pdf > FRACUNIT) S_Sound(Owner, 5, ActiveSound, 1.0f, ATTN_NONE);
@@ -1530,12 +1535,15 @@ void APowerProtection::ModifyDamage(int damage, FName damageType, int &newdamage
 	if (passive && damage > 0)
 	{
 		DmgFactors * df = GetClass()->ActorInfo->DamageFactors;
-		if (df != NULL)
+		if (df != NULL && df->CountUsed() != 0)
 		{
 			const fixed_t * pdf = df->CheckKey(damageType);
 			if (pdf== NULL && damageType != NAME_None) pdf = df->CheckKey(NAME_None);
-			if (pdf == NULL) pdf = &def;
+		}
+		else pdf = &def;
 
+		if (pdf != NULL)
+		{
 			damage = newdamage = FixedMul(damage, *pdf);
 			if (Owner != NULL && *pdf < FRACUNIT) S_Sound(Owner, 5, ActiveSound, 1.0f, ATTN_NONE);
 		}

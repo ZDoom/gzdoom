@@ -1,3 +1,12 @@
+October 7, 2008  (Changes by Graf Zahl)
+- Fixed: Cheats in demos must not access the weapon slots.
+- Fixed: S_ChannelEnded didn't check for a NULL SfxInfo.
+- Fixed: R_InitTables did a typecast to angle_t instead of fixed_t.
+
+October 6, 2008  (Changes by Graf Zahl)
+- Fixed: PowerProtection and PowerDamage applied their defaults incorrectly.
+- Fixed: The damage type property didn't properly read its factor.
+
 October 5, 2008  (Changes by Graf Zahl)
 - Finally has the right idea how to restore Doom's original clipping of projectiles
   against decorations without breaking anything newer:

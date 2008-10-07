@@ -1149,7 +1149,7 @@ DEFINE_PROPERTY(damagetype, S, Actor)
 DEFINE_PROPERTY(damagefactor, SF, Actor)
 {
 	PROP_STRING_PARM(str, 0);
-	PROP_FIXED_PARM(id, 0);
+	PROP_FIXED_PARM(id, 1);
 
 	if (bag.Info->DamageFactors == NULL) bag.Info->DamageFactors=new DmgFactors;
 

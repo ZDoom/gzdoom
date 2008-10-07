@@ -1854,8 +1854,8 @@ void S_ChannelEnded(FISoundChannel *ichan)
 		{
 			evicted = true;
 		}
-		else
-		{
+		else if (schan->SfxInfo != NULL)
+		{ 
 			unsigned int pos = GSnd->GetPosition(schan);
 			unsigned int len = GSnd->GetSampleLength(schan->SfxInfo->data);
 			if (pos == 0)
@@ -1866,6 +1866,10 @@ void S_ChannelEnded(FISoundChannel *ichan)
 			{
 				evicted = (pos < len);
 			}
+		}
+		else
+		{
+			evicted = false;
 		}
 		if (!evicted)
 		{

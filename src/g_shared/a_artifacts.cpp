@@ -1475,10 +1475,11 @@ void APowerDamage::ModifyDamage(int damage, FName damageType, int &newdamage, bo
 	static const fixed_t def = 4*FRACUNIT;
 	if (!passive && damage > 0)
 	{
+		const fixed_t * pdf = NULL;
 		DmgFactors * df = GetClass()->ActorInfo->DamageFactors;
 		if (df != NULL && df->CountUsed() != 0)
 		{
-			const fixed_t * pdf = df->CheckKey(damageType);
+			pdf = df->CheckKey(damageType);
 			if (pdf== NULL && damageType != NAME_None) pdf = df->CheckKey(NAME_None);
 		}
 		else
@@ -1534,10 +1535,11 @@ void APowerProtection::ModifyDamage(int damage, FName damageType, int &newdamage
 	static const fixed_t def = FRACUNIT/4;
 	if (passive && damage > 0)
 	{
+		const fixed_t * pdf = NULL;
 		DmgFactors * df = GetClass()->ActorInfo->DamageFactors;
 		if (df != NULL && df->CountUsed() != 0)
 		{
-			const fixed_t * pdf = df->CheckKey(damageType);
+			pdf = df->CheckKey(damageType);
 			if (pdf== NULL && damageType != NAME_None) pdf = df->CheckKey(NAME_None);
 		}
 		else pdf = &def;

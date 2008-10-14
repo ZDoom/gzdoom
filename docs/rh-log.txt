@@ -1,4 +1,7 @@
 October 13, 2008
+- This may or may not be a problem, but GCC warned that FStateDefinitions::
+  AddStateDefines() does not initialize def.FStateDefine::DefineFlags, so
+  I fixed that.
 - Fixed: The three-argument version of AActor::FindState() initialized a
   two-entry array for passing to the main FindState() routine, but did
   not actually pass it, passing the original primary label instead.

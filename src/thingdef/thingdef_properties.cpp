@@ -858,7 +858,7 @@ DEFINE_PROPERTY(renderstyle, S, Actor)
 	if (!strnicmp(str, "style_", 6)) str+=6;
 
 	int style = MatchString(str, renderstyles);
-	if (style < 0) I_Error("Unknown render style '%s'");
+	if (style < 0) I_Error("Unknown render style '%s'", str);
 	defaults->RenderStyle = LegacyRenderStyles[renderstyle_values[style]];
 }
 

@@ -582,6 +582,7 @@ void FStateDefinitions::AddStateDefines(const FStateLabels *list)
 
 				def.Label = list->Labels[i].Label;
 				def.State = list->Labels[i].State;
+				def.DefineFlags = SDF_STATE;
 				StateLabels.Push(def);
 			}
 		}

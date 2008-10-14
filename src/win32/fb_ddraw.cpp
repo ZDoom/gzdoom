@@ -1167,7 +1167,7 @@ void DDrawFB::Update ()
 	}
 
 	BlitCycles.Unclock();
-	LOG1 ("cycles = %.1 ms\n", BlitCycles.TimeMS());
+	LOG1 ("cycles = %.1f ms\n", BlitCycles.TimeMS());
 
 	Buffer = NULL;
 	LockCount = 0;

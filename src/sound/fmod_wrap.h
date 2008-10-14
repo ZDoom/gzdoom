@@ -103,7 +103,7 @@ namespace FMOD
 		  FMOD_RESULT getPluginHandle        (FMOD_PLUGINTYPE plugintype, int index, unsigned int *handle) { return FMOD_System_GetPluginHandle(this, plugintype, index, handle); }
 		  FMOD_RESULT getPluginInfo          (unsigned int handle, FMOD_PLUGINTYPE *plugintype, char *name, int namelen, unsigned int *version) { return FMOD_System_GetPluginInfo(this, handle, plugintype, name, namelen, version); }
 		  FMOD_RESULT setOutputByPlugin      (unsigned int handle) { return FMOD_System_SetOutputByPlugin(this, handle); }
-		  FMOD_RESULT getOutputByPlugin      (unsigned int handle) { return FMOD_System_GetOutputByPlugin(this, handle); }
+		  FMOD_RESULT getOutputByPlugin      (unsigned int *handle) { return FMOD_System_GetOutputByPlugin(this, handle); }
 		  FMOD_RESULT createCodec            (FMOD_CODEC_DESCRIPTION *description, unsigned int priority = 0) { return FMOD_System_CreateCodec(this, description, priority); }
 
 		// Init/Close

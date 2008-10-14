@@ -141,7 +141,7 @@ endif( NOT FMOD_LIB_NAME )
 
 # Search for FMOD include files
 
-find_path( FMOD_INCLUDE_DIR fmod.h
+find_path( FMOD_INCLUDE_DIR fmod.hpp
 	PATHS ${FMOD_SEARCH_PATHS}
 	${FMOD_INC_PATH_SUFFIXES} )
 

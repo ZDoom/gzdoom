@@ -1,5 +1,11 @@
 cmake_minimum_required( VERSION 2.4 )
 
+IF( NOT CMAKE_BUILD_TYPE )
+	SET( CMAKE_BUILD_TYPE Debug CACHE STRING
+		"Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel."
+		FORCE )
+ENDIF( NOT CMAKE_BUILD_TYPE )
+
 set( ZDOOM_OUTPUT_DIR ${CMAKE_BINARY_DIR} CACHE PATH "Directory where zdoom.pk3 and the executable will be created" )
 set( ZDOOM_EXE_NAME "zdoom" CACHE FILEPATH "Name of the executable to create" )
 

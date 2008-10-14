@@ -535,38 +535,43 @@ void FTextureManager::LoadTextureDefs(int wadnum, const char *lumpname)
 				else if (sc.Compare("define")) // define a new "fake" texture
 				{
 					sc.GetString();
-					memcpy(src, ExtractFileBase(sc.String, false), 8);
-
-					int lumpnum = Wads.CheckNumForFullName(sc.String, true, ns_patches);
-					if (lumpnum == -1) lumpnum = Wads.CheckNumForFullName(sc.String, true, ns_graphics);
-
-					sc.GetString();
-					is32bit = !!sc.Compare("force32bit");
-					if (!is32bit) sc.UnGet();
-
-					sc.GetNumber();
-					width = sc.Number;
-					sc.GetNumber();
-					height = sc.Number;
-
-					if (lumpnum>=0)
+					
+					FString base = ExtractFileBase(sc.String, false);
+					if (!base.IsEmpty())
 					{
-						FTexture *newtex = FTexture::CreateTexture(lumpnum, FTexture::TEX_Override);
+						strncpy(src, base, 8);
 
-						if (newtex != NULL)
+						int lumpnum = Wads.CheckNumForFullName(sc.String, true, ns_patches);
+						if (lumpnum == -1) lumpnum = Wads.CheckNumForFullName(sc.String, true, ns_graphics);
+
+						sc.GetString();
+						is32bit = !!sc.Compare("force32bit");
+						if (!is32bit) sc.UnGet();
+
+						sc.GetNumber();
+						width = sc.Number;
+						sc.GetNumber();
+						height = sc.Number;
+
+						if (lumpnum>=0)
 						{
-							// Replace the entire texture and adjust the scaling and offset factors.
-							newtex->bWorldPanning = true;
-							newtex->SetScaledSize(width, height);
-							memcpy(newtex->Name, src, sizeof(newtex->Name));
+							FTexture *newtex = FTexture::CreateTexture(lumpnum, FTexture::TEX_Override);
 
-							FTextureID oldtex = TexMan.CheckForTexture(src, FTexture::TEX_MiscPatch);
-							if (oldtex.isValid()) 
+							if (newtex != NULL)
 							{
-								ReplaceTexture(oldtex, newtex, true);
-								newtex->UseType = FTexture::TEX_Override;
+								// Replace the entire texture and adjust the scaling and offset factors.
+								newtex->bWorldPanning = true;
+								newtex->SetScaledSize(width, height);
+								memcpy(newtex->Name, src, sizeof(newtex->Name));
+
+								FTextureID oldtex = TexMan.CheckForTexture(src, FTexture::TEX_MiscPatch);
+								if (oldtex.isValid()) 
+								{
+									ReplaceTexture(oldtex, newtex, true);
+									newtex->UseType = FTexture::TEX_Override;
+								}
+								else AddTexture(newtex);
 							}
-							else AddTexture(newtex);
 						}
 					}				
 					//else Printf("Unable to define hires texture '%s'\n", tex->Name);

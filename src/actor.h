@@ -793,8 +793,8 @@ public:
 
 	FState *FindState (FName label, FName sublabel, bool exact = false) const
 	{
-		FName names[]={label, sublabel};
-		return GetClass()->ActorInfo->FindState(2, &label, exact);
+		FName names[] = { label, sublabel };
+		return GetClass()->ActorInfo->FindState(2, names, exact);
 	}
 
 

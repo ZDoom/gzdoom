@@ -184,6 +184,7 @@ void I_Init (void)
 
 	I_GetTime = I_GetTimePolled;
 	I_WaitForTic = I_WaitForTicPolled;
+	atterm (I_ShutdownSound);
     I_InitSound ();
 }
 

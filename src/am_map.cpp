@@ -1383,7 +1383,14 @@ void AM_drawWalls (bool allmap)
 			}
 			else
 			{
-				if ((lines[i].special == Teleport ||
+				if (lines[i].flags & ML_SECRET)
+				{ // secret door
+					if (am_cheat != 0)
+						AM_drawMline(&l, SecretWallColor);
+				    else
+						AM_drawMline(&l, WallColor);
+				}
+				else if ((lines[i].special == Teleport ||
 					lines[i].special == Teleport_NoFog ||
 					lines[i].special == Teleport_ZombieChanger ||
 					lines[i].special == Teleport_Line) &&
@@ -1399,13 +1406,6 @@ void AM_drawWalls (bool allmap)
 						am_colorset == 0)
 				{ // inter-level/game-ending teleporters
 					AM_drawMline(&l, InterTeleportColor);
-				}
-				else if (lines[i].flags & ML_SECRET)
-				{ // secret door
-					if (am_cheat != 0)
-						AM_drawMline(&l, SecretWallColor);
-				    else
-						AM_drawMline(&l, WallColor);
 				}
 				else if (lines[i].special == Door_LockedRaise ||
 						 lines[i].special == ACS_LockedExecute ||

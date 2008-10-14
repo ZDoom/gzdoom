@@ -3665,13 +3665,13 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_THINGCOUNTNAMESECTOR:
-			STACK(2) = ThingCount (-1, STACK(3), STACK(2), STACK(1));
-			sp--;
+			STACK(3) = ThingCount (-1, STACK(3), STACK(2), STACK(1));
+			sp -= 2;
 			break;
 
 		case PCD_THINGCOUNTSECTOR:
-			STACK(2) = ThingCount (STACK(3), -1, STACK(2), STACK(1));
-			sp--;
+			STACK(3) = ThingCount (STACK(3), -1, STACK(2), STACK(1));
+			sp -= 2;
 			break;
 
 		case PCD_TAGWAIT:

@@ -1,3 +1,13 @@
+October 13, 2008
+- Fixed: SDL builds did not shutdown the sound system at exit.
+- Fixed: ThingCountSector and ThingCountNameSector did not remove enough
+  entries from the stack, and did not put the result in the right slot.
+- Fixed: Teleport lines were prioritized over secret lines when deciding what
+  color to draw them on the automap.
+- Fixed: Death-reverting morphs did not remove the morph item from the
+  player's inventory when death caused the morph to revert.
+- Updated fmod_wrap.h for FMOD Ex 4.18.
+
 October 7, 2008  (Changes by Graf Zahl)
 - Fixed: Cheats in demos must not access the weapon slots.
 - Fixed: S_ChannelEnded didn't check for a NULL SfxInfo.

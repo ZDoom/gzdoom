@@ -97,13 +97,14 @@ namespace FMOD
 
 		// Plug-in support
 		  FMOD_RESULT setPluginPath          (const char *path) { return FMOD_System_SetPluginPath(this, path); }
-		  FMOD_RESULT loadPlugin             (const char *filename, FMOD_PLUGINTYPE *plugintype, int *index) { return FMOD_System_LoadPlugin(this, filename, plugintype, index); }
+		  FMOD_RESULT loadPlugin             (const char *filename, unsigned int *handle, unsigned int priority = 0) { return FMOD_System_LoadPlugin(this, filename, handle, priority); }
+		  FMOD_RESULT unloadPlugin           (unsigned int handle) { return FMOD_System_UnloadPlugin(this, handle); }
 		  FMOD_RESULT getNumPlugins          (FMOD_PLUGINTYPE plugintype, int *numplugins) { return FMOD_System_GetNumPlugins(this, plugintype, numplugins); }
-		  FMOD_RESULT getPluginInfo          (FMOD_PLUGINTYPE plugintype, int index, char *name, int namelen, unsigned int *version) { return FMOD_System_GetPluginInfo(this, plugintype, index, name, namelen, version); }
-		  FMOD_RESULT unloadPlugin           (FMOD_PLUGINTYPE plugintype, int index) { return FMOD_System_UnloadPlugin(this, plugintype, index); }
-		  FMOD_RESULT setOutputByPlugin      (int index) { return FMOD_System_SetOutputByPlugin(this, index); }
-		  FMOD_RESULT getOutputByPlugin      (int *index) { return FMOD_System_GetOutputByPlugin(this, index); }
-		  FMOD_RESULT createCodec            (FMOD_CODEC_DESCRIPTION *description) { return FMOD_System_CreateCodec(this, description); }
+		  FMOD_RESULT getPluginHandle        (FMOD_PLUGINTYPE plugintype, int index, unsigned int *handle) { return FMOD_System_GetPluginHandle(this, plugintype, index, handle); }
+		  FMOD_RESULT getPluginInfo          (unsigned int handle, FMOD_PLUGINTYPE *plugintype, char *name, int namelen, unsigned int *version) { return FMOD_System_GetPluginInfo(this, handle, plugintype, name, namelen, version); }
+		  FMOD_RESULT setOutputByPlugin      (unsigned int handle) { return FMOD_System_SetOutputByPlugin(this, handle); }
+		  FMOD_RESULT getOutputByPlugin      (unsigned int handle) { return FMOD_System_GetOutputByPlugin(this, handle); }
+		  FMOD_RESULT createCodec            (FMOD_CODEC_DESCRIPTION *description, unsigned int priority = 0) { return FMOD_System_CreateCodec(this, description, priority); }
 
 		// Init/Close
 		  FMOD_RESULT init                   (int maxchannels, FMOD_INITFLAGS flags, void *extradriverdata) { return FMOD_System_Init(this, maxchannels, flags, extradriverdata); }
@@ -142,7 +143,6 @@ namespace FMOD
 		  FMOD_RESULT createStream           (const char *name_or_data, FMOD_MODE mode, FMOD_CREATESOUNDEXINFO *exinfo, Sound **sound) { return FMOD_System_CreateStream(this, name_or_data, mode, exinfo, (FMOD_SOUND **)sound); }
 		  FMOD_RESULT createDSP              (FMOD_DSP_DESCRIPTION *description, DSP **dsp) { return FMOD_System_CreateDSP(this, description, (FMOD_DSP **)dsp); }
 		  FMOD_RESULT createDSPByType        (FMOD_DSP_TYPE type, DSP **dsp) { return FMOD_System_CreateDSPByType(this, type, (FMOD_DSP **)dsp); }
-		  FMOD_RESULT createDSPByIndex       (int index, DSP **dsp) { return FMOD_System_CreateDSPByIndex(this, index, (FMOD_DSP **)dsp); }
 		  FMOD_RESULT createChannelGroup     (const char *name, ChannelGroup **channelgroup) { return FMOD_System_CreateChannelGroup(this, name, (FMOD_CHANNELGROUP **)channelgroup); }
 		  FMOD_RESULT createSoundGroup       (const char *name, SoundGroup **soundgroup) { return FMOD_System_CreateSoundGroup(this, name, (FMOD_SOUNDGROUP **)soundgroup); }
 		  FMOD_RESULT createReverb           (Reverb **reverb) { return FMOD_System_CreateReverb(this, (FMOD_REVERB **)reverb); }

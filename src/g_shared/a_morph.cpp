@@ -211,6 +211,15 @@ bool P_UndoPlayerMorph (player_t *activator, player_t *player, bool force)
 
 	mo->ObtainInventory (pmo);
 	DObject::StaticPointerSubstitution (pmo, mo);
+	// Remove the morph power if the morph is being undone prematurely.
+	for (AInventory *item = mo->Inventory, *next = NULL; item != NULL; item = next)
+	{
+		next = item->Inventory;
+		if (item->IsKindOf(RUNTIME_CLASS(APowerMorph)))
+		{
+			item->Destroy();
+		}
+	}
 	if ((pmo->tid != 0) && (player->MorphStyle & MORPH_NEWTIDBEHAVIOUR))
 	{
 		mo->tid = pmo->tid;

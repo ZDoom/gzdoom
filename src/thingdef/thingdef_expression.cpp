@@ -1253,7 +1253,7 @@ FxRandom::FxRandom(FRandom * r, FxExpression *mi, FxExpression *ma, const FScrip
 : FxExpression(pos)
 {
 	rng = r;
-	if (min && max)
+	if (mi && ma)
 	{
 		min = new FxIntCast(mi);
 		max = new FxIntCast(ma);

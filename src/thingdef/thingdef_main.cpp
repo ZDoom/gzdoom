@@ -83,11 +83,11 @@ static void ParseDecorate (FScanner &sc)
 		}
 
 		case TK_Const:
-			ParseConstant (sc, &GlobalSymbols, RUNTIME_CLASS(AActor));
+			ParseConstant (sc, &GlobalSymbols, NULL);
 			break;
 
 		case TK_Enum:
-			ParseEnum (sc, &GlobalSymbols, RUNTIME_CLASS(AActor));
+			ParseEnum (sc, &GlobalSymbols, NULL);
 			break;
 
 		case TK_Pickup:

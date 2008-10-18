@@ -244,6 +244,7 @@ static FxExpression *ParseExpressionD (FScanner &sc, const PClass *cls);
 static FxExpression *ParseExpressionC (FScanner &sc, const PClass *cls);
 static FxExpression *ParseExpressionB (FScanner &sc, const PClass *cls);
 static FxExpression *ParseExpressionA (FScanner &sc, const PClass *cls);
+static FxExpression *ParseExpression0 (FScanner &sc, const PClass *cls);
 
 FxExpression *ParseExpression (FScanner &sc, PClass *cls)
 {
@@ -440,8 +441,61 @@ static FxExpression *ParseExpressionB (FScanner &sc, const PClass *cls)
 	}
 }
 
+//==========================================================================
+//
+//	ParseExpressionB
+//
+//==========================================================================
 
 static FxExpression *ParseExpressionA (FScanner &sc, const PClass *cls)
+{
+	FxExpression *base_expr = ParseExpression0 (sc, cls);
+
+	while(1)
+	{
+		FScriptPosition pos(sc);
+
+		if (sc.CheckToken('.'))
+		{
+			if (sc.CheckToken(TK_Default))
+			{
+				sc.MustGetToken('.');
+				base_expr = new FxClassDefaults(base_expr, pos);
+			}
+			sc.MustGetToken(TK_Identifier);
+
+			FName FieldName = sc.String;
+			pos = sc;
+			/* later!
+			if (SC_CheckToken('('))
+			{
+				if (base_expr->IsDefaultObject())
+				{
+					SC_ScriptError("Cannot call methods for default.");
+				}
+				base_expr = ParseFunctionCall(base_expr, FieldName, false, false, pos);
+			}
+			else
+			*/
+			{
+				base_expr = new FxDotIdentifier(base_expr, FieldName, pos);
+			}
+		}
+		else if (sc.CheckToken('['))
+		{
+			FxExpression *index = ParseExpressionM(sc, cls);
+			sc.MustGetToken(']');
+			base_expr = new FxArrayElement(base_expr, index, pos);
+		}
+		else break;
+	} 
+
+	return base_expr;
+}
+
+
+
+static FxExpression *ParseExpression0 (FScanner &sc, const PClass *cls)
 {
 	FScriptPosition scpos(sc);
 	if (sc.CheckToken('('))
@@ -466,34 +520,6 @@ static FxExpression *ParseExpressionA (FScanner &sc, const PClass *cls)
 	{
 		return new FxConstant(sc.Float, scpos);
 	}
-	/*
-	else if (sc.CheckToken(TK_Class))
-	{
-		// Accept class'SomeClassName'.SomeConstant
-		sc.MustGetToken(TK_NameConst);
-		cls = PClass::FindClass (sc.Name);
-		if (cls == NULL)
-		{
-			sc.ScriptError ("Unknown class '%s'", sc.String);
-		}
-		sc.MustGetToken('.');
-		sc.MustGetToken(TK_Identifier);
-		PSymbol *sym = cls->Symbols.FindSymbol (sc.String, true);
-		if (sym != NULL && sym->SymbolType == SYM_Const)
-		{
-			FxExpression *data = new FxExpression;
-			data->Type = EX_Const;
-			data->Value.Type = VAL_Int;
-			data->Value.Int = static_cast<PSymbolConst *>(sym)->Value;
-			return data;
-		}
-		else
-		{
-			sc.ScriptError ("'%s' is not a constant value in class '%s'", sc.String, cls->TypeName.GetChars());
-			return NULL;
-		}
-	}
-	*/
 	else if (sc.CheckToken(TK_Identifier))
 	{
 		FName identifier = FName(sc.String);
@@ -560,74 +586,85 @@ static FxExpression *ParseExpressionA (FScanner &sc, const PClass *cls)
 			return new FxAbs(x); 
 		}
 
-		case NAME_Sin:
-		{
-			sc.MustGetToken('(');
-
-			FxExpression *data = new FxExpression;
-			data->Type = EX_Sin;
-			data->ValueType = VAL_Float;
-
-			data->Children[0] = ParseExpressionM (sc, cls);
-
-			sc.MustGetToken(')');
-			return data;
-		}
-		break;
-
-		case NAME_Cos:
-		{
-			sc.MustGetToken('(');
-
-			FxExpression *data = new FxExpression;
-			data->Type = EX_Cos;
-			data->ValueType = VAL_Float;
-
-			data->Children[0] = ParseExpressionM (sc, cls);
-
-			sc.MustGetToken(')');
-			return data;
-		}
-		break;
-
 		default:
-		{
-			int specnum, min_args, max_args;
-
-			// Check if this is an action special
-			specnum = P_FindLineSpecial (sc.String, &min_args, &max_args);
-			if (specnum != 0 && min_args >= 0)
+			if (sc.CheckToken('('))
 			{
-				int i;
-
-				sc.MustGetToken('(');
-
-				FxExpression *data = new FxExpression, **left;
-				data->Type = EX_ActionSpecial;
-				data->Value.Int = specnum;
-				data->ValueType = VAL_Int;
-
-				data->Children[0] = ParseExpressionM (sc, cls);
-				left = &data->Children[1];
-
-				for (i = 1; i < 5 && sc.CheckToken(','); ++i)
+				if (identifier == NAME_Sin)
 				{
-					FxExpression *right = new FxExpression;
-					right->Type = EX_Right;
-					right->Children[0] = ParseExpressionM (sc, cls);
-					*left = right;
-					left = &right->Children[1];
-				}
-				*left = NULL;
-				sc.MustGetToken(')');
-				if (i < min_args)
-					sc.ScriptError ("Not enough arguments to action special");
-				if (i > max_args)
-					sc.ScriptError ("Too many arguments to action special");
+					sc.MustGetToken('(');
 
-				return data;
+					FxExpression *data = new FxExpression;
+					data->Type = EX_Sin;
+					data->ValueType = VAL_Float;
+
+					data->Children[0] = ParseExpressionM (sc, cls);
+
+					sc.MustGetToken(')');
+					return data;
+				}
+				else if (identifier == NAME_Cos)
+				{
+					sc.MustGetToken('(');
+
+					FxExpression *data = new FxExpression;
+					data->Type = EX_Cos;
+					data->ValueType = VAL_Float;
+
+					data->Children[0] = ParseExpressionM (sc, cls);
+
+					sc.MustGetToken(')');
+					return data;
+				}
+				else
+				{
+					int specnum, min_args, max_args;
+
+					// Check if this is an action special
+					specnum = P_FindLineSpecial (sc.String, &min_args, &max_args);
+					if (specnum != 0 && min_args >= 0)
+					{
+						int i;
+
+						sc.MustGetToken('(');
+
+						FxExpression *data = new FxExpression, **left;
+						data->Type = EX_ActionSpecial;
+						data->Value.Int = specnum;
+						data->ValueType = VAL_Int;
+
+						data->Children[0] = ParseExpressionM (sc, cls);
+						left = &data->Children[1];
+
+						for (i = 1; i < 5 && sc.CheckToken(','); ++i)
+						{
+							FxExpression *right = new FxExpression;
+							right->Type = EX_Right;
+							right->Children[0] = ParseExpressionM (sc, cls);
+							*left = right;
+							left = &right->Children[1];
+						}
+						*left = NULL;
+						sc.MustGetToken(')');
+						if (i < min_args)
+							sc.ScriptError ("Not enough arguments to action special");
+						if (i > max_args)
+							sc.ScriptError ("Too many arguments to action special");
+
+						return data;
+					}
+					else
+					{
+						sc.ScriptError("Unknown function '%s'", identifier.GetChars());
+					}
+				}
+
+			}	
+			else
+			{
+				return new FxIdentifier(identifier, sc);
 			}
 
+			/*
 			// Check if this is a constant
 			if (cls != NULL)
 			{
@@ -667,16 +704,15 @@ static FxExpression *ParseExpressionA (FScanner &sc, const PClass *cls)
 				sc.MustGetToken(']');
 			}
 			return data;
-		}
-		break;
+			*/
 		}
 	}
 	else
 	{
 		FString tokname = sc.TokenName(sc.TokenType, sc.String);
 		sc.ScriptError ("Unexpected token %s", tokname.GetChars());
-		return NULL;
 	}
+	return NULL;
 }
 
 //

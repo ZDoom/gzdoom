@@ -261,7 +261,74 @@ protected:
 
 //==========================================================================
 //
-//	ZxConstant
+//	FxIdentifier
+//
+//==========================================================================
+
+class FxIdentifier : public FxExpression
+{
+	FName Identifier;
+
+public:
+	FxIdentifier(FName i, const FScriptPosition &p);
+	FxExpression *Resolve(FCompileContext&);
+};
+
+
+//==========================================================================
+//
+//	FxDotIdentifier
+//
+//==========================================================================
+
+class FxDotIdentifier : public FxExpression
+{
+	FxExpression *container;
+	FName Identifier;
+
+public:
+	FxDotIdentifier(FxExpression*, FName, const FScriptPosition &);
+	~FxDotIdentifier();
+	FxExpression *Resolve(FCompileContext&);
+};
+
+//==========================================================================
+//
+//	FxClassDefaults
+//
+//==========================================================================
+
+class FxClassDefaults : public FxExpression
+{
+	FxExpression *obj;
+
+public:
+	FxClassDefaults(FxExpression*, const FScriptPosition &);
+	~FxClassDefaults();
+	FxExpression *Resolve(FCompileContext&);
+	bool IsDefaultObject() const;
+};
+
+//==========================================================================
+//
+//	FxArrayElement
+//
+//==========================================================================
+
+class FxArrayElement : public FxExpression
+{
+public:
+	FxExpression *Array;
+	FxExpression *index;
+
+	FxArrayElement(FxExpression*, FxExpression*, const FScriptPosition&);
+	~FxArrayElement();
+	FxExpression *Resolve(FCompileContext&);
+};
+
+//==========================================================================
+//
+//	FxConstant
 //
 //==========================================================================
 

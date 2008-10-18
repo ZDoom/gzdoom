@@ -912,7 +912,7 @@ FxExpression *FxBinaryInt::Resolve(FCompileContext& ctx)
 		FxExpression *e = new FxConstant(
 			Operator == TK_LShift? v1 << v2 : 
 			Operator == TK_RShift? v1 >> v2 : 
-			Operator == TK_URShift? int(unsigned int(v1) >> v2) : 
+			Operator == TK_URShift? int((unsigned int)(v1) >> v2) : 
 			Operator == '&'? v1 & v2 : 
 			Operator == '|'? v1 | v2 : 
 			Operator == '^'? v1 ^ v2 : 0, ScriptPosition);
@@ -940,7 +940,7 @@ ExpVal FxBinaryInt::EvalExpression (AActor *self, const PClass *cls)
 	ret.Int =
 		Operator == TK_LShift? v1 << v2 : 
 		Operator == TK_RShift? v1 >> v2 : 
-		Operator == TK_URShift? int(unsigned int(v1) >> v2) : 
+		Operator == TK_URShift? int((unsigned int)(v1) >> v2) : 
 		Operator == '&'? v1 & v2 : 
 		Operator == '|'? v1 | v2 : 
 		Operator == '^'? v1 ^ v2 : 0;

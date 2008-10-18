@@ -254,6 +254,7 @@ xx(Z)
 xx(MomX)
 xx(MomY)
 xx(MomZ)
+xx(Abs)
 
 // Various actor names which are used internally
 xx(MapSpot)

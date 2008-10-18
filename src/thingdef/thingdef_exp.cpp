@@ -47,66 +47,17 @@
 #include "a_pickups.h"
 #include "thingdef.h"
 #include "p_lnspec.h"
-
-void InitExpressions ();
-void ClearExpressions ();
+#include "doomstat.h"
+#include "thingdef_exp.h"
 
 FRandom pr_exrandom ("EX_Random");
 
-enum ExpOp
-{
-	EX_NOP,
+extern PSymbolTable		 GlobalSymbols;
 
-	EX_Const,
-	EX_Var,
 
-	EX_Compl,		// ~exp
-	EX_Not,			// !exp
-//	EX_Plus,		// +exp
-	EX_Minus,		// -exp
-	EX_Mul,			// exp * exp
-	EX_Div,			// exp / exp
-	EX_Mod,			// exp % exp
-	EX_Add,			// exp + exp
-	EX_Sub,			// exp - exp
-	EX_LShift,		// exp << exp
-	EX_RShift,		// exp >> exp
-	EX_LT,			// exp < exp
-	EX_GT,			// exp > exp
-	EX_LE,			// exp <= exp
-	EX_GE,			// exp >= exp
-	EX_Eq,			// exp == exp
-	EX_NE,			// exp != exp
-	EX_And,			// exp & exp
-	EX_Xor,			// exp ^ exp
-	EX_Or,			// exp | exp
-	EX_LogAnd,		// exp && exp
-	EX_LogOr,		// exp || exp
-	EX_Cond,		// exp ? exp : exp
 
-	EX_Random,		// random (min, max)
-	EX_Random2,		// random2 ([mask])
-	EX_Sin,			// sin (angle)
-	EX_Cos,			// cos (angle)
-	EX_ActionSpecial,
-	EX_Right,
-};
 
-enum ExpValType
-{
-	VAL_Int,
-	VAL_Float,
-};
 
-struct ExpVal
-{
-	ExpValType Type;
-	union
-	{
-		int Int;
-		float Float;
-	};
-};
 
 typedef ExpVal (*ExpVarGet) (AActor *, int);
 
@@ -122,7 +73,7 @@ ExpVal GetAngle (AActor *actor, int id)
 {
 	ExpVal val;
 	val.Type = VAL_Float;
-	val.Float = (float)actor->angle / ANGLE_1;
+	val.Float = (double)actor->angle / ANGLE_1;
 	return val;
 }
 
@@ -162,7 +113,7 @@ ExpVal GetPitch (AActor *actor, int id)
 {
 	ExpVal val;
 	val.Type = VAL_Float;
-	val.Float = (float)actor->pitch / ANGLE_1;
+	val.Float = (double)actor->pitch / ANGLE_1;
 	return val;
 }
 
@@ -251,448 +202,271 @@ static struct FExpVar
 	ENamedName name;	// identifier
 	int array;			// array size (0 if not an array)
 	ExpVarGet get;
+	int ValueType;
 } ExpVars[] = {
-	{ NAME_Alpha,		0, GetAlpha },
-	{ NAME_Angle,		0, GetAngle },
-	{ NAME_Args,		5, GetArgs },
-	{ NAME_CeilingZ,	0, GetCeilingZ },
-	{ NAME_FloorZ,		0, GetFloorZ },
-	{ NAME_Health,		0, GetHealth },
-	{ NAME_Pitch,		0, GetPitch },
-	{ NAME_Special,		0, GetSpecial },
-	{ NAME_TID,			0, GetTID },
-	{ NAME_TIDtoHate,	0, GetTIDToHate },
-	{ NAME_WaterLevel,	0, GetWaterLevel },
-	{ NAME_X,			0, GetX },
-	{ NAME_Y,			0, GetY },
-	{ NAME_Z,			0, GetZ },
-	{ NAME_MomX,		0, GetMomX },
-	{ NAME_MomY,		0, GetMomY },
-	{ NAME_MomZ,		0, GetMomZ },
+	{ NAME_Alpha,		0, GetAlpha, VAL_Float },
+	{ NAME_Angle,		0, GetAngle, VAL_Float },
+	{ NAME_Args,		5, GetArgs, VAL_Int },
+	{ NAME_CeilingZ,	0, GetCeilingZ, VAL_Float },
+	{ NAME_FloorZ,		0, GetFloorZ, VAL_Float },
+	{ NAME_Health,		0, GetHealth, VAL_Int },
+	{ NAME_Pitch,		0, GetPitch, VAL_Float },
+	{ NAME_Special,		0, GetSpecial, VAL_Int },
+	{ NAME_TID,			0, GetTID, VAL_Int },
+	{ NAME_TIDtoHate,	0, GetTIDToHate, VAL_Int },
+	{ NAME_WaterLevel,	0, GetWaterLevel, VAL_Int },
+	{ NAME_X,			0, GetX, VAL_Float },
+	{ NAME_Y,			0, GetY, VAL_Float },
+	{ NAME_Z,			0, GetZ, VAL_Float },
+	{ NAME_MomX,		0, GetMomX, VAL_Float },
+	{ NAME_MomY,		0, GetMomY, VAL_Float },
+	{ NAME_MomZ,		0, GetMomZ, VAL_Float },
 };
 
-struct ExpData;
-static ExpVal EvalExpression (ExpData *data, AActor *self, const PClass *cls);
 
-struct ExpData
-{
-	ExpData ()
-	{
-		Type = EX_NOP;
-		Value.Type = VAL_Int;
-		Value.Int = 0;
-		RNG = NULL;
-		for (int i = 0; i < 2; i++)
-			Children[i] = NULL;
-	}
-	~ExpData ()
-	{
-		for (int i = 0; i < 2; i++)
-		{
-			if (Children[i])
-			{
-				delete Children[i];
-			}
-		}
-	}
-	// Try to evaluate constant expression
-	void EvalConst (const PClass *cls)
-	{
-		if (Type == EX_NOP || Type == EX_Const || Type == EX_Var)
-		{
-			return;
-		}
-		else if (Type == EX_Compl || Type == EX_Not || /*Type == EX_Plus || */Type == EX_Minus)
-		{
-			if (Children[0]->Type == EX_Const)
-			{
-				Value = EvalExpression (this, NULL, cls);
-				Type = EX_Const;
-			}
-		}
-		else if (Type == EX_Cond)
-		{
-			if (Children[0]->Type == EX_Const)
-			{
-				bool cond = (Children[0]->Value.Type == VAL_Int) ? (Children[0]->Value.Int != 0) : (Children[0]->Value.Float != 0);
-				ExpData *data = Children[1]->Children[cond];
-				delete Children[1]->Children[!cond];
-				delete Children[1];
-				delete Children[0];
-
-				Type = data->Type;
-				Value = data->Value;
-				for (int i = 0; i < 2; i++)
-				{
-					Children[i] = data->Children[i];
-					data->Children[i] = NULL;
-				}
-
-				delete data;
-			}
-		}
-		else if (Type != EX_Random && Type != EX_Sin && Type != EX_Cos && Type != EX_ActionSpecial)
-		{
-			if (Children[0]->Type == EX_Const && Children[1]->Type == EX_Const)
-			{
-				Value = EvalExpression (this, NULL, NULL);
-				Type = EX_Const;
-				delete Children[0]; Children[0] = NULL;
-				delete Children[1]; Children[1] = NULL;
-			}
-		}
-	}
-	bool Compare (ExpData *other)
-	{
-		if (!other)
-			return false;
-
-		if (Type != other->Type ||
-			Value.Type != other->Value.Type ||
-			Value.Float != other->Value.Float ||
-			RNG != other->RNG)
-		{
-			return false;
-		}
-
-		for (int i = 0; i < 2; i++)
-		{
-			if (Children[i] && !Children[i]->Compare (other->Children[i]))
-				return false;
-		}
-
-		return true;
-	}
-
-	ExpOp Type;
-	ExpVal Value;
-	ExpData *Children[2];
-	FRandom *RNG;	// only used by random and random2
-};
-
-TArray<ExpData *> StateExpressions;
+TDeletingArray<FxExpression *> StateExpressions;
 
 //
 // ParseExpression
 // [GRB] Parses an expression and stores it into Expression array
 //
 
-static ExpData *ParseExpressionM (FScanner &sc, const PClass *cls);
-static ExpData *ParseExpressionL (FScanner &sc, const PClass *cls);
-static ExpData *ParseExpressionK (FScanner &sc, const PClass *cls);
-static ExpData *ParseExpressionJ (FScanner &sc, const PClass *cls);
-static ExpData *ParseExpressionI (FScanner &sc, const PClass *cls);
-static ExpData *ParseExpressionH (FScanner &sc, const PClass *cls);
-static ExpData *ParseExpressionG (FScanner &sc, const PClass *cls);
-static ExpData *ParseExpressionF (FScanner &sc, const PClass *cls);
-static ExpData *ParseExpressionE (FScanner &sc, const PClass *cls);
-static ExpData *ParseExpressionD (FScanner &sc, const PClass *cls);
-static ExpData *ParseExpressionC (FScanner &sc, const PClass *cls);
-static ExpData *ParseExpressionB (FScanner &sc, const PClass *cls);
-static ExpData *ParseExpressionA (FScanner &sc, const PClass *cls);
+static FxExpression *ParseExpressionM (FScanner &sc, const PClass *cls);
+static FxExpression *ParseExpressionL (FScanner &sc, const PClass *cls);
+static FxExpression *ParseExpressionK (FScanner &sc, const PClass *cls);
+static FxExpression *ParseExpressionJ (FScanner &sc, const PClass *cls);
+static FxExpression *ParseExpressionI (FScanner &sc, const PClass *cls);
+static FxExpression *ParseExpressionH (FScanner &sc, const PClass *cls);
+static FxExpression *ParseExpressionG (FScanner &sc, const PClass *cls);
+static FxExpression *ParseExpressionF (FScanner &sc, const PClass *cls);
+static FxExpression *ParseExpressionE (FScanner &sc, const PClass *cls);
+static FxExpression *ParseExpressionD (FScanner &sc, const PClass *cls);
+static FxExpression *ParseExpressionC (FScanner &sc, const PClass *cls);
+static FxExpression *ParseExpressionB (FScanner &sc, const PClass *cls);
+static FxExpression *ParseExpressionA (FScanner &sc, const PClass *cls);
 
-int ParseExpression (FScanner &sc, bool _not, PClass *cls)
+FxExpression *ParseExpression (FScanner &sc, PClass *cls)
 {
-	static bool inited=false;
-	
-	if (!inited)
-	{
-		InitExpressions ();
-		atterm (ClearExpressions);
-		inited=true;
-	}
+	FxExpression *data = ParseExpressionM (sc, cls);
 
-	ExpData *data = ParseExpressionM (sc, cls);
-
-	for (unsigned int i = 0; i < StateExpressions.Size (); i++)
-	{
-		if (StateExpressions[i]->Compare (data))
-		{
-			delete data;
-			return i;
-		}
-	}
-
-	return StateExpressions.Push (data);
-}
-
-static ExpData *ParseExpressionM (FScanner &sc, const PClass *cls)
-{
-	ExpData *tmp = ParseExpressionL (sc, cls);
-
-	if (sc.CheckToken('?'))
-	{
-		ExpData *data = new ExpData;
-		data->Type = EX_Cond;
-		data->Children[0] = tmp;
-		ExpData *choices = new ExpData;
-		data->Children[1] = choices;
-		choices->Type = EX_Right;
-		choices->Children[0] = ParseExpressionM (sc, cls);
-		sc.MustGetToken(':');
-		choices->Children[1] = ParseExpressionM (sc, cls);
-		data->EvalConst (cls);
-		return data;
-	}
-	else
-	{
-		return tmp;
-	}
-}
-
-static ExpData *ParseExpressionL (FScanner &sc, const PClass *cls)
-{
-	ExpData *tmp = ParseExpressionK (sc, cls);
-
-	while (sc.CheckToken(TK_OrOr))
-	{
-		ExpData *right = ParseExpressionK (sc, cls);
-		ExpData *data =  new ExpData;
-		data->Type = EX_LogOr;
-		data->Children[0] = tmp;
-		data->Children[1] = right;
-		data->EvalConst (cls);
-		tmp = data;
-	}
-	return tmp;
-}
-
-static ExpData *ParseExpressionK (FScanner &sc, const PClass *cls)
-{
-	ExpData *tmp = ParseExpressionJ (sc, cls);
-
-	while (sc.CheckToken(TK_AndAnd))
-	{
-		ExpData *right = ParseExpressionJ (sc, cls);
-		ExpData *data =  new ExpData;
-		data->Type = EX_LogAnd;
-		data->Children[0] = tmp;
-		data->Children[1] = right;
-		data->EvalConst (cls);
-		tmp = data;
-	}
-	return tmp;
-}
-
-static ExpData *ParseExpressionJ (FScanner &sc, const PClass *cls)
-{
-	ExpData *tmp = ParseExpressionI (sc, cls);
-
-	while (sc.CheckToken('|'))
-	{
-		ExpData *right = ParseExpressionI (sc, cls);
-		ExpData *data =  new ExpData;
-		data->Type = EX_Or;
-		data->Children[0] = tmp;
-		data->Children[1] = right;
-		data->EvalConst (cls);
-		tmp = data;
-	}
-	return tmp;
-}
-
-static ExpData *ParseExpressionI (FScanner &sc, const PClass *cls)
-{
-	ExpData *tmp = ParseExpressionH (sc, cls);
-
-	while (sc.CheckToken('^'))
-	{
-		ExpData *right = ParseExpressionH (sc, cls);
-		ExpData *data =  new ExpData;
-		data->Type = EX_Xor;
-		data->Children[0] = tmp;
-		data->Children[1] = right;
-		data->EvalConst (cls);
-		tmp = data;
-	}
-	return tmp;
-}
-
-static ExpData *ParseExpressionH (FScanner &sc, const PClass *cls)
-{
-	ExpData *tmp = ParseExpressionG (sc, cls);
-
-	while (sc.CheckToken('&'))
-	{
-		ExpData *right = ParseExpressionG (sc, cls);
-		ExpData *data =  new ExpData;
-		data->Type = EX_And;
-		data->Children[0] = tmp;
-		data->Children[1] = right;
-		data->EvalConst (cls);
-		tmp = data;
-	}
-	return tmp;
-}
-
-static ExpData *ParseExpressionG (FScanner &sc, const PClass *cls)
-{
-	ExpData *tmp = ParseExpressionF (sc, cls);
-
-	while (sc.GetToken() && (sc.TokenType == TK_Eq || sc.TokenType == TK_Neq))
-	{
-		int token = sc.TokenType;
-		ExpData *right = ParseExpressionF (sc, cls);
-		ExpData *data =  new ExpData;
-		data->Type = token == TK_Eq? EX_Eq : EX_NE;
-		data->Children[0] = tmp;
-		data->Children[1] = right;
-		data->EvalConst (cls);
-		tmp = data;
-	}
-	if (!sc.End) sc.UnGet();
-	return tmp;
-}
-
-static ExpData *ParseExpressionF (FScanner &sc, const PClass *cls)
-{
-	ExpData *tmp = ParseExpressionE (sc, cls);
-
-	while (sc.GetToken() && (sc.TokenType == '<' || sc.TokenType == '>' || sc.TokenType == TK_Leq || sc.TokenType == TK_Geq))
-	{
-		int token = sc.TokenType;
-		ExpData *right = ParseExpressionE (sc, cls);
-		ExpData *data =  new ExpData;
-		data->Type = token == '<' ? EX_LT : token == '>' ? EX_GT : token == TK_Leq? EX_LE : EX_GE;
-		data->Children[0] = tmp;
-		data->Children[1] = right;
-		data->EvalConst (cls);
-		tmp = data;
-	}
-	if (!sc.End) sc.UnGet();
-	return tmp;
-}
-
-static ExpData *ParseExpressionE (FScanner &sc, const PClass *cls)
-{
-	ExpData *tmp = ParseExpressionD (sc, cls);
-
-	while (sc.GetToken() && (sc.TokenType == TK_LShift || sc.TokenType == TK_RShift))
-	{
-		int token = sc.TokenType;
-		ExpData *right = ParseExpressionD (sc, cls);
-		ExpData *data =  new ExpData;
-		data->Type = token == TK_LShift? EX_LShift : EX_RShift;
-		data->Children[0] = tmp;
-		data->Children[1] = right;
-		data->EvalConst (cls);
-		tmp = data;
-	}
-	if (!sc.End) sc.UnGet();
-	return tmp;
-}
-
-static ExpData *ParseExpressionD (FScanner &sc, const PClass *cls)
-{
-	ExpData *tmp = ParseExpressionC (sc, cls);
-
-	while (sc.GetToken() && (sc.TokenType == '+' || sc.TokenType == '-'))
-	{
-		int token = sc.TokenType;
-		ExpData *right = ParseExpressionC (sc, cls);
-		ExpData *data =  new ExpData;
-		data->Type = token == '+'? EX_Add : EX_Sub;
-		data->Children[0] = tmp;
-		data->Children[1] = right;
-		data->EvalConst (cls);
-		tmp = data;
-	}
-	if (!sc.End) sc.UnGet();
-	return tmp;
-}
-
-static ExpData *ParseExpressionC (FScanner &sc, const PClass *cls)
-{
-	ExpData *tmp = ParseExpressionB (sc, cls);
-
-	while (sc.GetToken() && (sc.TokenType == '*' || sc.TokenType == '/' || sc.TokenType == '%'))
-	{
-		int token = sc.TokenType;
-		ExpData *right = ParseExpressionB (sc, cls);
-		ExpData *data =  new ExpData;
-		data->Type = token == '*'? EX_Mul : token == '/'? EX_Div : EX_Mod;
-		data->Children[0] = tmp;
-		data->Children[1] = right;
-		data->EvalConst (cls);
-		tmp = data;
-	}
-	if (!sc.End) sc.UnGet();
-	return tmp;
-}
-
-static ExpData *ParseExpressionB (FScanner &sc, const PClass *cls)
-{
-	ExpData *data = new ExpData;
-
-	if (sc.CheckToken('~'))
-	{
-		data->Type = EX_Compl;
-	}
-	else if (sc.CheckToken('!'))
-	{
-		data->Type = EX_Not;
-	}
-	else if (sc.CheckToken('-'))
-	{
-		data->Type = EX_Minus;
-	}
-	else
-	{
-		sc.CheckToken('+');
-		delete data;
-		return ParseExpressionA (sc, cls);
-	}
-
-	data->Children[0] = ParseExpressionA (sc, cls);
-	data->EvalConst (cls);
+	FCompileContext ctx;
+	ctx.cls = cls;
+	data = data->Resolve(ctx);
 
 	return data;
 }
 
-static ExpData *ParseExpressionA (FScanner &sc, const PClass *cls)
+
+int ParseExpression (FScanner &sc, bool _not, PClass *cls)
 {
+	if (StateExpressions.Size()==0)
+	{
+		// StateExpressions[0] always is const 0;
+		FxExpression *data = new FxConstant(0, FScriptPosition());
+		StateExpressions.Push (data);
+	}
+
+	FxExpression *data = ParseExpression (sc, cls);
+	return StateExpressions.Push (data);
+}
+
+static FxExpression *ParseExpressionM (FScanner &sc, const PClass *cls)
+{
+	FxExpression *condition = ParseExpressionL (sc, cls);
+
+	if (sc.CheckToken('?'))
+	{
+		FxExpression *truex = ParseExpressionM (sc, cls);
+		sc.MustGetToken(':');
+		FxExpression *falsex = ParseExpressionM (sc, cls);
+		return new FxConditional(condition, truex, falsex);
+	}
+	else
+	{
+		return condition;
+	}
+}
+
+static FxExpression *ParseExpressionL (FScanner &sc, const PClass *cls)
+{
+	FxExpression *tmp = ParseExpressionK (sc, cls);
+
+	while (sc.CheckToken(TK_OrOr))
+	{
+		FxExpression *right = ParseExpressionK (sc, cls);
+		tmp = new FxBinaryLogical(TK_OrOr, tmp, right);
+	}
+	return tmp;
+}
+
+static FxExpression *ParseExpressionK (FScanner &sc, const PClass *cls)
+{
+	FxExpression *tmp = ParseExpressionJ (sc, cls);
+
+	while (sc.CheckToken(TK_AndAnd))
+	{
+		FxExpression *right = ParseExpressionJ (sc, cls);
+		tmp = new FxBinaryLogical(TK_AndAnd, tmp, right);
+	}
+	return tmp;
+}
+
+static FxExpression *ParseExpressionJ (FScanner &sc, const PClass *cls)
+{
+	FxExpression *tmp = ParseExpressionI (sc, cls);
+
+	while (sc.CheckToken('|'))
+	{
+		FxExpression *right = ParseExpressionI (sc, cls);
+		tmp = new FxBinaryInt('|', tmp, right);
+	}
+	return tmp;
+}
+
+static FxExpression *ParseExpressionI (FScanner &sc, const PClass *cls)
+{
+	FxExpression *tmp = ParseExpressionH (sc, cls);
+
+	while (sc.CheckToken('^'))
+	{
+		FxExpression *right = ParseExpressionH (sc, cls);
+		tmp = new FxBinaryInt('^', tmp, right);
+	}
+	return tmp;
+}
+
+static FxExpression *ParseExpressionH (FScanner &sc, const PClass *cls)
+{
+	FxExpression *tmp = ParseExpressionG (sc, cls);
+
+	while (sc.CheckToken('&'))
+	{
+		FxExpression *right = ParseExpressionG (sc, cls);
+		tmp = new FxBinaryInt('&', tmp, right);
+	}
+	return tmp;
+}
+
+static FxExpression *ParseExpressionG (FScanner &sc, const PClass *cls)
+{
+	FxExpression *tmp = ParseExpressionF (sc, cls);
+
+	while (sc.GetToken() && (sc.TokenType == TK_Eq || sc.TokenType == TK_Neq))
+	{
+		int token = sc.TokenType;
+		FxExpression *right = ParseExpressionF (sc, cls);
+		tmp = new FxCompareEq(token, tmp, right);
+	}
+	if (!sc.End) sc.UnGet();
+	return tmp;
+}
+
+static FxExpression *ParseExpressionF (FScanner &sc, const PClass *cls)
+{
+	FxExpression *tmp = ParseExpressionE (sc, cls);
+
+	while (sc.GetToken() && (sc.TokenType == '<' || sc.TokenType == '>' || sc.TokenType == TK_Leq || sc.TokenType == TK_Geq))
+	{
+		int token = sc.TokenType;
+		FxExpression *right = ParseExpressionE (sc, cls);
+		tmp = new FxCompareRel(token, tmp, right);
+	}
+	if (!sc.End) sc.UnGet();
+	return tmp;
+}
+
+static FxExpression *ParseExpressionE (FScanner &sc, const PClass *cls)
+{
+	FxExpression *tmp = ParseExpressionD (sc, cls);
+
+	while (sc.GetToken() && (sc.TokenType == TK_LShift || sc.TokenType == TK_RShift || sc.TokenType == TK_URShift))
+	{
+		int token = sc.TokenType;
+		FxExpression *right = ParseExpressionD (sc, cls);
+		tmp = new FxBinaryInt(token, tmp, right);
+	}
+	if (!sc.End) sc.UnGet();
+	return tmp;
+}
+
+static FxExpression *ParseExpressionD (FScanner &sc, const PClass *cls)
+{
+	FxExpression *tmp = ParseExpressionC (sc, cls);
+
+	while (sc.GetToken() && (sc.TokenType == '+' || sc.TokenType == '-'))
+	{
+		int token = sc.TokenType;
+		FxExpression *right = ParseExpressionC (sc, cls);
+		tmp = new FxAddSub(token, tmp, right);
+	}
+	if (!sc.End) sc.UnGet();
+	return tmp;
+}
+
+static FxExpression *ParseExpressionC (FScanner &sc, const PClass *cls)
+{
+	FxExpression *tmp = ParseExpressionB (sc, cls);
+
+	while (sc.GetToken() && (sc.TokenType == '*' || sc.TokenType == '/' || sc.TokenType == '%'))
+	{
+		int token = sc.TokenType;
+		FxExpression *right = ParseExpressionB (sc, cls);
+		tmp = new FxMulDiv(token, tmp, right);
+	}
+	if (!sc.End) sc.UnGet();
+	return tmp;
+}
+
+static FxExpression *ParseExpressionB (FScanner &sc, const PClass *cls)
+{
+	sc.GetToken();
+	switch(sc.TokenType)
+	{
+	case '~':
+		return new FxUnaryNotBitwise(ParseExpressionA (sc, cls));
+
+	case '!':
+		return new FxUnaryNotBoolean(ParseExpressionA (sc, cls));
+
+	case '-':
+		return new FxMinusSign(ParseExpressionA (sc, cls));
+
+	case '+':
+		return new FxPlusSign(ParseExpressionA (sc, cls));
+
+	default:
+		sc.UnGet();
+		return ParseExpressionA (sc, cls);
+	}
+}
+
+
+static FxExpression *ParseExpressionA (FScanner &sc, const PClass *cls)
+{
+	FScriptPosition scpos(sc);
 	if (sc.CheckToken('('))
 	{
-		ExpData *data = ParseExpressionM (sc, cls);
+		FxExpression *data = ParseExpressionM (sc, cls);
 		sc.MustGetToken(')');
 		return data;
 	}
 	else if (sc.CheckToken(TK_True))
 	{
-		ExpData *data = new ExpData;
-		data->Type = EX_Const;
-		data->Value.Type = VAL_Int;
-		data->Value.Int = 1;
-
-		return data;
+		return new FxConstant(1, scpos);
 	}
 	else if (sc.CheckToken(TK_False))
 	{
-		ExpData *data = new ExpData;
-		data->Type = EX_Const;
-		data->Value.Type = VAL_Int;
-		data->Value.Int = 0;
-
-		return data;
+		return new FxConstant(0, scpos);
 	}
 	else if (sc.CheckToken(TK_IntConst))
 	{
-		ExpData *data = new ExpData;
-		data->Type = EX_Const;
-		data->Value.Type = VAL_Int;
-		data->Value.Int = sc.Number;
-
-		return data;
+		return new FxConstant(sc.Number, scpos);
 	}
 	else if (sc.CheckToken(TK_FloatConst))
 	{
-		ExpData *data = new ExpData;
-		data->Type = EX_Const;
-		data->Value.Type = VAL_Float;
-		data->Value.Float = sc.Float;
-
-		return data;
+		return new FxConstant(sc.Float, scpos);
 	}
+	/*
 	else if (sc.CheckToken(TK_Class))
 	{
 		// Accept class'SomeClassName'.SomeConstant
@@ -707,7 +481,7 @@ static ExpData *ParseExpressionA (FScanner &sc, const PClass *cls)
 		PSymbol *sym = cls->Symbols.FindSymbol (sc.String, true);
 		if (sym != NULL && sym->SymbolType == SYM_Const)
 		{
-			ExpData *data = new ExpData;
+			FxExpression *data = new FxExpression;
 			data->Type = EX_Const;
 			data->Value.Type = VAL_Int;
 			data->Value.Int = static_cast<PSymbolConst *>(sym)->Value;
@@ -719,9 +493,11 @@ static ExpData *ParseExpressionA (FScanner &sc, const PClass *cls)
 			return NULL;
 		}
 	}
+	*/
 	else if (sc.CheckToken(TK_Identifier))
 	{
-		switch (FName(sc.String))
+		FName identifier = FName(sc.String);
+		switch (identifier)
 		{
 		case NAME_Random:
 		{
@@ -739,15 +515,12 @@ static ExpData *ParseExpressionA (FScanner &sc, const PClass *cls)
 			}
 			sc.MustGetToken('(');
 
-			ExpData *data = new ExpData;
-			data->Type = EX_Random;
-			data->RNG = rng;
-
-			data->Children[0] = ParseExpressionM (sc, cls);
+			FxExpression *min = ParseExpressionM (sc, cls);
 			sc.MustGetToken(',');
-			data->Children[1] = ParseExpressionM (sc, cls);
+			FxExpression *max = ParseExpressionM (sc, cls);
 			sc.MustGetToken(')');
-			return data;
+
+			return new FxRandom(rng, min, max, sc);
 		}
 		break;
 
@@ -768,25 +541,32 @@ static ExpData *ParseExpressionA (FScanner &sc, const PClass *cls)
 
 			sc.MustGetToken('(');
 
-			ExpData *data = new ExpData;
-			data->Type = EX_Random2;
-			data->RNG = rng;
+			FxExpression *mask = NULL;
 
 			if (!sc.CheckToken(')'))
 			{
-				data->Children[0] = ParseExpressionM(sc, cls);
+				mask = ParseExpressionM(sc, cls);
 				sc.MustGetToken(')');
 			}
-			return data;
+			return new FxRandom2(rng, mask, sc);
 		}
 		break;
+
+		case NAME_Abs:
+		{
+			sc.MustGetToken('(');
+			FxExpression *x = ParseExpressionM (sc, cls);
+			sc.MustGetToken(')');
+			return new FxAbs(x); 
+		}
 
 		case NAME_Sin:
 		{
 			sc.MustGetToken('(');
 
-			ExpData *data = new ExpData;
+			FxExpression *data = new FxExpression;
 			data->Type = EX_Sin;
+			data->ValueType = VAL_Float;
 
 			data->Children[0] = ParseExpressionM (sc, cls);
 
@@ -799,8 +579,9 @@ static ExpData *ParseExpressionA (FScanner &sc, const PClass *cls)
 		{
 			sc.MustGetToken('(');
 
-			ExpData *data = new ExpData;
+			FxExpression *data = new FxExpression;
 			data->Type = EX_Cos;
+			data->ValueType = VAL_Float;
 
 			data->Children[0] = ParseExpressionM (sc, cls);
 
@@ -821,16 +602,17 @@ static ExpData *ParseExpressionA (FScanner &sc, const PClass *cls)
 
 				sc.MustGetToken('(');
 
-				ExpData *data = new ExpData, **left;
+				FxExpression *data = new FxExpression, **left;
 				data->Type = EX_ActionSpecial;
 				data->Value.Int = specnum;
+				data->ValueType = VAL_Int;
 
 				data->Children[0] = ParseExpressionM (sc, cls);
 				left = &data->Children[1];
 
 				for (i = 1; i < 5 && sc.CheckToken(','); ++i)
 				{
-					ExpData *right = new ExpData;
+					FxExpression *right = new FxExpression;
 					right->Type = EX_Right;
 					right->Children[0] = ParseExpressionM (sc, cls);
 					*left = right;
@@ -849,14 +631,11 @@ static ExpData *ParseExpressionA (FScanner &sc, const PClass *cls)
 			// Check if this is a constant
 			if (cls != NULL)
 			{
-				PSymbol *sym = cls->Symbols.FindSymbol (sc.String, true);
+				PSymbol *sym = cls->Symbols.FindSymbol (identifier, true);
+				if (sym == NULL) sym = GlobalSymbols.FindSymbol (identifier, true);
 				if (sym != NULL && sym->SymbolType == SYM_Const)
 				{
-					ExpData *data = new ExpData;
-					data->Type = EX_Const;
-					data->Value.Type = VAL_Int;
-					data->Value.Int = static_cast<PSymbolConst *>(sym)->Value;
-					return data;
+					return new FxConstant(static_cast<PSymbolConst *>(sym)->Value, sc);
 				}
 			}
 
@@ -875,10 +654,11 @@ static ExpData *ParseExpressionA (FScanner &sc, const PClass *cls)
 			if (varid == -1)
 				sc.ScriptError ("Unknown value '%s'", sc.String);
 
-			ExpData *data = new ExpData;
+			FxExpression *data = new FxExpression;
 			data->Type = EX_Var;
 			data->Value.Type = VAL_Int;
 			data->Value.Int = varid;
+			data->ValueType = ExpVars[varid].ValueType;
 
 			if (ExpVars[varid].array)
 			{
@@ -908,7 +688,7 @@ bool IsExpressionConst(int id)
 {
 	if (StateExpressions.Size() <= (unsigned int)id) return false;
 
-	return StateExpressions[id]->Type == EX_Const;
+	return StateExpressions[id]->isConstant();
 }
 
 int EvalExpressionI (int id, AActor *self, const PClass *cls)
@@ -920,7 +700,7 @@ int EvalExpressionI (int id, AActor *self, const PClass *cls)
 		cls = self->GetClass();
 	}
 
-	ExpVal val = EvalExpression (StateExpressions[id], self, cls);
+	ExpVal val = StateExpressions[id]->EvalExpression (self, cls);
 
 	switch (val.Type)
 	{
@@ -932,7 +712,7 @@ int EvalExpressionI (int id, AActor *self, const PClass *cls)
 	}
 }
 
-float EvalExpressionF (int id, AActor *self, const PClass *cls)
+double EvalExpressionF (int id, AActor *self, const PClass *cls)
 {
 	if (StateExpressions.Size() <= (unsigned int)id) return 0.f;
 
@@ -941,13 +721,13 @@ float EvalExpressionF (int id, AActor *self, const PClass *cls)
 		cls = self->GetClass();
 	}
 
-	ExpVal val = EvalExpression (StateExpressions[id], self, cls);
+	ExpVal val = StateExpressions[id]->EvalExpression (self, cls);
 
 	switch (val.Type)
 	{
 	default:
 	case VAL_Int:
-		return (float)val.Int;
+		return (double)val.Int;
 	case VAL_Float:
 		return val.Float;
 	}
@@ -962,7 +742,7 @@ fixed_t EvalExpressionFix (int id, AActor *self, const PClass *cls)
 		cls = self->GetClass();
 	}
 
-	ExpVal val = EvalExpression (StateExpressions[id], self, cls);
+	ExpVal val = StateExpressions[id]->EvalExpression (self, cls);
 
 	switch (val.Type)
 	{
@@ -974,20 +754,17 @@ fixed_t EvalExpressionFix (int id, AActor *self, const PClass *cls)
 	}
 }
 
-static ExpVal EvalExpression (ExpData *data, AActor *self, const PClass *cls)
+ExpVal FxExpression::EvalExpression (AActor *self, const PClass *cls)
 {
 	ExpVal val;
 
 	val.Type = VAL_Int;		// Placate GCC
 
-	switch (data->Type)
+	switch (Type)
 	{
 	case EX_NOP:
-		assert (data->Type != EX_NOP);
-		val = data->Value;
-		break;
-	case EX_Const:
-		val = data->Value;
+		assert (Type != EX_NOP);
+		val = Value;
 		break;
 	case EX_Var:
 		if (!self)
@@ -997,539 +774,18 @@ static ExpVal EvalExpression (ExpData *data, AActor *self, const PClass *cls)
 		else
 		{
 			int id = 0;
-			if (ExpVars[data->Value.Int].array)
+			if (ExpVars[Value.Int].array)
 			{
-				ExpVal idval = EvalExpression (data->Children[0], self, cls);
-				id = ((idval.Type == VAL_Int) ? idval.Int : (int)idval.Float) % ExpVars[data->Value.Int].array;
+				ExpVal idval = Children[0]->EvalExpression (self, cls);
+				id = ((idval.Type == VAL_Int) ? idval.Int : (int)idval.Float) % ExpVars[Value.Int].array;
 			}
 
-			val = ExpVars[data->Value.Int].get (self, id);
+			val = ExpVars[Value.Int].get (self, id);
 		}
 		break;
-	case EX_Compl:
-		{
-			ExpVal a = EvalExpression (data->Children[0], self, cls);
-
-			val.Type = VAL_Int;
-			val.Int = ~((a.Type == VAL_Int) ? a.Int : (int)a.Float);
-		}
-		break;
-	case EX_Not:
-		{
-			ExpVal a = EvalExpression (data->Children[0], self, cls);
-
-			val.Type = VAL_Int;
-			val.Int = !((a.Type == VAL_Int) ? a.Int : (int)a.Float);
-		}
-		break;
-	case EX_Minus:
-		{
-			val = EvalExpression (data->Children[0], self, cls);
-
-			if (val.Type == VAL_Int)
-				val.Int = -val.Int;
-			else
-				val.Float = -val.Float;
-		}
-		break;
-	case EX_Mul:
-		{
-			ExpVal a = EvalExpression (data->Children[0], self, cls);
-			ExpVal b = EvalExpression (data->Children[1], self, cls);
-
-			if (a.Type == VAL_Int)
-			{
-				if (b.Type == VAL_Int)
-				{
-					val.Type = VAL_Int;
-					val.Int = a.Int * b.Int;
-				}
-				else
-				{
-					val.Type = VAL_Float;
-					val.Float = a.Int * b.Float;
-				}
-			}
-			else
-			{
-				val.Type = VAL_Float;
-				if (b.Type == VAL_Int)
-					val.Float = a.Float * b.Int;
-				else
-					val.Float = a.Float * b.Float;
-			}
-		}
-		break;
-	case EX_Div:
-		{
-			ExpVal a = EvalExpression (data->Children[0], self, cls);
-			ExpVal b = EvalExpression (data->Children[1], self, cls);
-
-			if (b.Int == 0)
-			{
-				I_FatalError ("Division by zero");
-			}
-
-			if (a.Type == VAL_Int)
-			{
-				if (b.Type == VAL_Int)
-				{
-					val.Type = VAL_Int;
-					val.Int = a.Int / b.Int;
-				}
-				else
-				{
-					val.Type = VAL_Float;
-					val.Float = a.Int / b.Float;
-				}
-			}
-			else
-			{
-				val.Type = VAL_Float;
-				if (b.Type == VAL_Int)
-					val.Float = a.Float / b.Int;
-				else
-					val.Float = a.Float / b.Float;
-			}
-		}
-		break;
-	case EX_Mod:
-		{
-			ExpVal a = EvalExpression (data->Children[0], self, cls);
-			ExpVal b = EvalExpression (data->Children[1], self, cls);
-
-			if (b.Int == 0)
-			{
-				I_FatalError ("Division by zero");
-			}
-
-			if (a.Type == VAL_Int)
-			{
-				if (b.Type == VAL_Int)
-				{
-					val.Type = VAL_Int;
-					val.Int = a.Int % b.Int;
-				}
-				else
-				{
-					val.Type = VAL_Float;
-					val.Float = fmodf (a.Int, b.Float);
-				}
-			}
-			else
-			{
-				val.Type = VAL_Float;
-				if (b.Type == VAL_Int)
-					val.Float = fmodf (a.Float, b.Int);
-				else
-					val.Float = fmodf (a.Float, b.Float);
-			}
-		}
-		break;
-	case EX_Add:
-		{
-			ExpVal a = EvalExpression (data->Children[0], self, cls);
-			ExpVal b = EvalExpression (data->Children[1], self, cls);
-
-			if (a.Type == VAL_Int)
-			{
-				if (b.Type == VAL_Int)
-				{
-					val.Type = VAL_Int;
-					val.Int = a.Int + b.Int;
-				}
-				else
-				{
-					val.Type = VAL_Float;
-					val.Float = a.Int + b.Float;
-				}
-			}
-			else
-			{
-				val.Type = VAL_Float;
-				if (b.Type == VAL_Int)
-					val.Float = a.Float + b.Int;
-				else
-					val.Float = a.Float + b.Float;
-			}
-		}
-		break;
-	case EX_Sub:
-		{
-			ExpVal a = EvalExpression (data->Children[0], self, cls);
-			ExpVal b = EvalExpression (data->Children[1], self, cls);
-
-			if (a.Type == VAL_Int)
-			{
-				if (b.Type == VAL_Int)
-				{
-					val.Type = VAL_Int;
-					val.Int = a.Int - b.Int;
-				}
-				else
-				{
-					val.Type = VAL_Float;
-					val.Float = a.Int - b.Float;
-				}
-			}
-			else
-			{
-				val.Type = VAL_Float;
-				if (b.Type == VAL_Int)
-					val.Float = a.Float - b.Int;
-				else
-					val.Float = a.Float - b.Float;
-			}
-		}
-		break;
-	case EX_LShift:
-		{
-			ExpVal a = EvalExpression (data->Children[0], self, cls);
-			ExpVal b = EvalExpression (data->Children[1], self, cls);
-
-			val.Type = VAL_Int;
-
-			if (a.Type == VAL_Int)
-			{
-				if (b.Type == VAL_Int)
-					val.Int = a.Int << b.Int;
-				else
-					val.Int = a.Int << (int)b.Float;
-			}
-			else
-			{
-				if (b.Type == VAL_Int)
-					val.Int = (int)a.Float << b.Int;
-				else
-					val.Int = (int)a.Float << (int)b.Float;
-			}
-		}
-		break;
-	case EX_RShift:
-		{
-			ExpVal a = EvalExpression (data->Children[0], self, cls);
-			ExpVal b = EvalExpression (data->Children[1], self, cls);
-
-			val.Type = VAL_Int;
-
-			if (a.Type == VAL_Int)
-			{
-				if (b.Type == VAL_Int)
-					val.Int = a.Int >> b.Int;
-				else
-					val.Int = a.Int >> (int)b.Float;
-			}
-			else
-			{
-				if (b.Type == VAL_Int)
-					val.Int = (int)a.Float >> b.Int;
-				else
-					val.Int = (int)a.Float >> (int)b.Float;
-			}
-		}
-		break;
-	case EX_LT:
-		{
-			ExpVal a = EvalExpression (data->Children[0], self, cls);
-			ExpVal b = EvalExpression (data->Children[1], self, cls);
-
-			val.Type = VAL_Int;
-
-			if (a.Type == VAL_Int)
-			{
-				if (b.Type == VAL_Int)
-					val.Int = a.Int < b.Int;
-				else
-					val.Int = a.Int < b.Float;
-			}
-			else
-			{
-				if (b.Type == VAL_Int)
-					val.Int = a.Float < b.Int;
-				else
-					val.Int = a.Float < b.Float;
-			}
-		}
-		break;
-	case EX_GT:
-		{
-			ExpVal a = EvalExpression (data->Children[0], self, cls);
-			ExpVal b = EvalExpression (data->Children[1], self, cls);
-
-			val.Type = VAL_Int;
-
-			if (a.Type == VAL_Int)
-			{
-				if (b.Type == VAL_Int)
-					val.Int = a.Int > b.Int;
-				else
-					val.Int = a.Int > b.Float;
-			}
-			else
-			{
-				if (b.Type == VAL_Int)
-					val.Int = a.Float > b.Int;
-				else
-					val.Int = a.Float > b.Float;
-			}
-		}
-		break;
-	case EX_LE:
-		{
-			ExpVal a = EvalExpression (data->Children[0], self, cls);
-			ExpVal b = EvalExpression (data->Children[1], self, cls);
-
-			val.Type = VAL_Int;
-
-			if (a.Type == VAL_Int)
-			{
-				if (b.Type == VAL_Int)
-					val.Int = a.Int <= b.Int;
-				else
-					val.Int = a.Int <= b.Float;
-			}
-			else
-			{
-				if (b.Type == VAL_Int)
-					val.Int = a.Float <= b.Int;
-				else
-					val.Int = a.Float <= b.Float;
-			}
-		}
-		break;
-	case EX_GE:
-		{
-			ExpVal a = EvalExpression (data->Children[0], self, cls);
-			ExpVal b = EvalExpression (data->Children[1], self, cls);
-
-			val.Type = VAL_Int;
-
-			if (a.Type == VAL_Int)
-			{
-				if (b.Type == VAL_Int)
-					val.Int = a.Int >= b.Int;
-				else
-					val.Int = a.Int >= b.Float;
-			}
-			else
-			{
-				if (b.Type == VAL_Int)
-					val.Int = a.Float >= b.Int;
-				else
-					val.Int = a.Float >= b.Float;
-			}
-		}
-		break;
-	case EX_Eq:
-		{
-			ExpVal a = EvalExpression (data->Children[0], self, cls);
-			ExpVal b = EvalExpression (data->Children[1], self, cls);
-
-			val.Type = VAL_Int;
-
-			if (a.Type == VAL_Int)
-			{
-				if (b.Type == VAL_Int)
-					val.Int = a.Int == b.Int;
-				else
-					val.Int = a.Int == b.Float;
-			}
-			else
-			{
-				if (b.Type == VAL_Int)
-					val.Int = a.Float == b.Int;
-				else
-					val.Int = a.Float == b.Float;
-			}
-		}
-		break;
-	case EX_NE:
-		{
-			ExpVal a = EvalExpression (data->Children[0], self, cls);
-			ExpVal b = EvalExpression (data->Children[1], self, cls);
-
-			val.Type = VAL_Int;
-
-			if (a.Type == VAL_Int)
-			{
-				if (b.Type == VAL_Int)
-					val.Int = a.Int != b.Int;
-				else
-					val.Int = a.Int != b.Float;
-			}
-			else
-			{
-				if (b.Type == VAL_Int)
-					val.Int = a.Float != b.Int;
-				else
-					val.Int = a.Float != b.Float;
-			}
-		}
-		break;
-	case EX_And:
-		{
-			ExpVal a = EvalExpression (data->Children[0], self, cls);
-			ExpVal b = EvalExpression (data->Children[1], self, cls);
-
-			val.Type = VAL_Int;
-
-			if (a.Type == VAL_Int)
-			{
-				if (b.Type == VAL_Int)
-					val.Int = a.Int & b.Int;
-				else
-					val.Int = a.Int & (int)b.Float;
-			}
-			else
-			{
-				if (b.Type == VAL_Int)
-					val.Int = (int)a.Float & b.Int;
-				else
-					val.Int = (int)a.Float & (int)b.Float;
-			}
-		}
-		break;
-	case EX_Xor:
-		{
-			ExpVal a = EvalExpression (data->Children[0], self, cls);
-			ExpVal b = EvalExpression (data->Children[1], self, cls);
-
-			val.Type = VAL_Int;
-
-			if (a.Type == VAL_Int)
-			{
-				if (b.Type == VAL_Int)
-					val.Int = a.Int ^ b.Int;
-				else
-					val.Int = a.Int ^ (int)b.Float;
-			}
-			else
-			{
-				if (b.Type == VAL_Int)
-					val.Int = (int)a.Float ^ b.Int;
-				else
-					val.Int = (int)a.Float ^ (int)b.Float;
-			}
-		}
-		break;
-	case EX_Or:
-		{
-			ExpVal a = EvalExpression (data->Children[0], self, cls);
-			ExpVal b = EvalExpression (data->Children[1], self, cls);
-
-			val.Type = VAL_Int;
-
-			if (a.Type == VAL_Int)
-			{
-				if (b.Type == VAL_Int)
-					val.Int = a.Int | b.Int;
-				else
-					val.Int = a.Int | (int)b.Float;
-			}
-			else
-			{
-				if (b.Type == VAL_Int)
-					val.Int = (int)a.Float | b.Int;
-				else
-					val.Int = (int)a.Float | (int)b.Float;
-			}
-		}
-		break;
-	case EX_LogAnd:
-		{
-			ExpVal a = EvalExpression (data->Children[0], self, cls);
-			ExpVal b = EvalExpression (data->Children[1], self, cls);
-
-			val.Type = VAL_Int;
-
-			if (a.Type == VAL_Int)
-			{
-				if (b.Type == VAL_Int)
-					val.Int = a.Int && b.Int;
-				else
-					val.Int = a.Int && b.Float;
-			}
-			else
-			{
-				if (b.Type == VAL_Int)
-					val.Int = a.Float && b.Int;
-				else
-					val.Int = a.Float && b.Float;
-			}
-		}
-		break;
-	case EX_LogOr:
-		{
-			ExpVal a = EvalExpression (data->Children[0], self, cls);
-			ExpVal b = EvalExpression (data->Children[1], self, cls);
-
-			val.Type = VAL_Int;
-
-			if (a.Type == VAL_Int)
-			{
-				if (b.Type == VAL_Int)
-					val.Int = a.Int || b.Int;
-				else
-					val.Int = a.Int || b.Float;
-			}
-			else
-			{
-				if (b.Type == VAL_Int)
-					val.Int = a.Float || b.Int;
-				else
-					val.Int = a.Float || b.Float;
-			}
-		}
-		break;
-	case EX_Cond:
-		{
-			ExpVal a = EvalExpression (data->Children[0], self, cls);
-
-			if (a.Type == VAL_Float)
-				a.Int = (int)a.Float;
-
-			val = EvalExpression (data->Children[1]->Children[!!a.Int], self, cls);
-		}
-		break;
-
-	case EX_Random:
-		{
-			ExpVal a = EvalExpression (data->Children[0], self, cls);
-			ExpVal b = EvalExpression (data->Children[1], self, cls);
-
-			int min = (a.Type == VAL_Int) ? a.Int : (int)a.Float;
-			int max = (b.Type == VAL_Int) ? b.Int : (int)b.Float;
-
-			val.Type = VAL_Int;
-
-			if (max < min)
-			{
-				swap (max, min);
-			}
-
-			val.Int = (*data->RNG)(max - min + 1) + min;
-		}
-		break;
-
-	case EX_Random2:
-		{
-			if (data->Children[0] == NULL)
-			{
-				val.Type = VAL_Int;
-				val.Int = data->RNG->Random2();
-			}
-			else
-			{
-				ExpVal a = EvalExpression (data->Children[0], self, cls);
-				val.Type = VAL_Int;
-				val.Int = data->RNG->Random2((a.Type == VAL_Int) ? a.Int : (int)a.Float);
-			}
-		}
-		break;
-
 	case EX_Sin:
 		{
-			ExpVal a = EvalExpression (data->Children[0], self, cls);
+			ExpVal a = Children[0]->EvalExpression (self, cls);
 			angle_t angle = (a.Type == VAL_Int) ? (a.Int * ANGLE_1) : angle_t(a.Float * ANGLE_1);
 
 			val.Type = VAL_Float;
@@ -1539,7 +795,7 @@ static ExpVal EvalExpression (ExpData *data, AActor *self, const PClass *cls)
 
 	case EX_Cos:
 		{
-			ExpVal a = EvalExpression (data->Children[0], self, cls);
+			ExpVal a = Children[0]->EvalExpression (self, cls);
 			angle_t angle = (a.Type == VAL_Int) ? (a.Int * ANGLE_1) : angle_t(a.Float * ANGLE_1);
 
 			val.Type = VAL_Float;
@@ -1551,11 +807,11 @@ static ExpVal EvalExpression (ExpData *data, AActor *self, const PClass *cls)
 		{
 			int parms[5] = { 0, 0, 0, 0 };
 			int i = 0;
-			ExpData *parm = data;
+			FxExpression *parm = this;
 			
 			while (parm != NULL && i < 5)
 			{
-				ExpVal val = EvalExpression (parm->Children[0], self, cls);
+				ExpVal val = parm->Children[0]->EvalExpression (self, cls);
 				if (val.Type == VAL_Int)
 				{
 					parms[i] = val.Int;
@@ -1569,14 +825,14 @@ static ExpVal EvalExpression (ExpData *data, AActor *self, const PClass *cls)
 			}
 
 			val.Type = VAL_Int;
-			val.Int = LineSpecials[data->Value.Int] (NULL, self, false,
+			val.Int = LineSpecials[Value.Int] (NULL, self, false,
 				parms[0], parms[1], parms[2], parms[3], parms[4]);
 		}
 		break;
 
 	case EX_Right:
 		// This should never be a top-level expression.
-		assert (data->Type != EX_Right);
+		assert (Type != EX_Right);
 		break;
 	}
 
@@ -1584,32 +840,66 @@ static ExpVal EvalExpression (ExpData *data, AActor *self, const PClass *cls)
 }
 
 
-//
-// InitExpressions
-// [GRB] Set up expression data
-//
-
-void InitExpressions ()
+bool FxExpression::isConstant() const
 {
-	// StateExpressions[0] always is const 0;
-	ExpData *data = new ExpData;
-	data->Type = EX_Const;
-	data->Value.Type = VAL_Int;
-	data->Value.Int = 0;
+	return false;
+}
 
-	StateExpressions.Push (data);
+FxExpression *FxExpression::Resolve(FCompileContext &ctx)
+{
+	if (Children[0]) Children[0] = Children[0]->Resolve(ctx);
+	if (Children[1]) Children[1] = Children[1]->Resolve(ctx);
+	return this;
 }
 
 
-//
-// ClearExpressions
-// [GRB] Free all expression data
-//
 
-void ClearExpressions ()
+/*
+some stuff for later
+static FxExpression *ParseExpressionA (FScanner &sc, const PClass *cls)
 {
-	ExpData *data;
+	else if (sc.CheckToken(TK_Identifier))
+	{
+		FName IdName = FName(sc.String);
+		switch (IdName)
+		{
+		default:
+		{
+			FScriptPosition scriptpos(sc);
+			if (sc.CheckToken('('))
+			{
+				// function call
+				TArray<FxExpression *> arguments;
 
-	while (StateExpressions.Pop (data))
-		delete data;
+				do
+				{
+					FxExpression *data = ParseExpressionM(sc, cls);
+					arguments.Push(data);
+				}
+				while (sc.CheckToken(','));
+				return new FxFunctionCall(arguments, scriptpos);
+			}
+			else
+			{
+				FxExpression *data = new FxIdentifier(IdName, scriptpos);
+				if (sc.CheckToken('['))
+				{
+					FxExpression *index = ParseExpressionM(sc, cls);
+					sc.MustGetToken(']');
+					data = new FxArrayElement(data, index);
+				}
+				return data;
+			}
+		}
+		break;
+		}
+	}
+	else
+	{
+		FString tokname = sc.TokenName(sc.TokenType, sc.String);
+		sc.ScriptError ("Unexpected token %s", tokname.GetChars());
+		return NULL;
+	}
 }
+
+*/

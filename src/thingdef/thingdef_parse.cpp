@@ -50,6 +50,7 @@
 #include "doomerrors.h"
 #include "autosegs.h"
 #include "i_system.h"
+#include "thingdef_exp.h"
 
 
 //==========================================================================
@@ -68,10 +69,11 @@ void ParseConstant (FScanner &sc, PSymbolTable * symt, PClass *cls)
 	sc.MustGetToken(TK_Identifier);
 	FName symname = sc.String;
 	sc.MustGetToken('=');
-	int expr = ParseExpression (sc, false, cls);
+	FxExpression *expr = ParseExpression (sc, cls);
 	sc.MustGetToken(';');
 
-	int val = EvalExpressionI (expr, NULL, cls);
+	int val = expr->EvalExpression(NULL, cls).GetInt();
+	delete expr;
 	PSymbolConst *sym = new PSymbolConst;
 	sym->SymbolName = symname;
 	sym->SymbolType = SYM_Const;
@@ -79,8 +81,8 @@ void ParseConstant (FScanner &sc, PSymbolTable * symt, PClass *cls)
 	if (symt->AddSymbol (sym) == NULL)
 	{
 		delete sym;
-		sc.ScriptError ("'%s' is already defined in class '%s'.",
-			symname.GetChars(), cls->TypeName.GetChars());
+		sc.ScriptError ("'%s' is already defined in '%s'.",
+			symname.GetChars(), cls? cls->TypeName.GetChars() : "Global");
 	}
 }
 
@@ -103,8 +105,9 @@ void ParseEnum (FScanner &sc, PSymbolTable *symt, PClass *cls)
 		FName symname = sc.String;
 		if (sc.CheckToken('='))
 		{
-			int expr = ParseExpression(sc, false, cls);
-			currvalue = EvalExpressionI(expr, NULL, cls);
+			FxExpression *expr = ParseExpression (sc, cls);
+			currvalue = expr->EvalExpression(NULL, cls).GetInt();
+			delete expr;
 		}
 		PSymbolConst *sym = new PSymbolConst;
 		sym->SymbolName = symname;
@@ -113,8 +116,8 @@ void ParseEnum (FScanner &sc, PSymbolTable *symt, PClass *cls)
 		if (symt->AddSymbol (sym) == NULL)
 		{
 			delete sym;
-			sc.ScriptError ("'%s' is already defined in class '%s'.",
-				symname.GetChars(), cls->TypeName.GetChars());
+		sc.ScriptError ("'%s' is already defined in '%s'.",
+			symname.GetChars(), cls? cls->TypeName.GetChars() : "Global");
 		}
 		// This allows a comma after the last value but doesn't enforce it.
 		if (sc.CheckToken('}')) break;

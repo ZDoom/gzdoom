@@ -1,3 +1,13 @@
+October 18, 2008  (Changes by Graf Zahl)
+- Added a global symbol table and changed DECORATE parser to put its global 
+  symbols there instead of into AActor.
+- Changed the expression evaluator's floating point precision to double.
+- Started rewriting the DECORATE expression evaluator to allow more flexibility.
+  All the operators use the new functionality but functions, variables and
+  constants are yet to be redone.
+  While doing this rewrite I noticed that random2 was always evaluated as const.
+  This got fixed automatically.
+
 October 13, 2008
 - This may or may not be a problem, but GCC warned that FStateDefinitions::
   AddStateDefines() does not initialize def.FStateDefine::DefineFlags, so

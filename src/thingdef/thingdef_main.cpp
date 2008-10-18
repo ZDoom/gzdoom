@@ -51,6 +51,7 @@ void FinishThingdef();
 void ParseOldDecoration(FScanner &sc, EDefinitionType def);
 
 // STATIC FUNCTION PROTOTYPES --------------------------------------------
+PSymbolTable		 GlobalSymbols;
 
 //==========================================================================
 //
@@ -82,11 +83,11 @@ static void ParseDecorate (FScanner &sc)
 		}
 
 		case TK_Const:
-			ParseConstant (sc, &RUNTIME_CLASS(AActor)->Symbols, RUNTIME_CLASS(AActor));
+			ParseConstant (sc, &GlobalSymbols, RUNTIME_CLASS(AActor));
 			break;
 
 		case TK_Enum:
-			ParseEnum (sc, &RUNTIME_CLASS(AActor)->Symbols, RUNTIME_CLASS(AActor));
+			ParseEnum (sc, &GlobalSymbols, RUNTIME_CLASS(AActor));
 			break;
 
 		case TK_Pickup:

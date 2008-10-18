@@ -183,7 +183,7 @@ int ParseExpression (FScanner &sc, bool _not, PClass *cls);
 
 bool IsExpressionConst(int id);
 int EvalExpressionI (int id, AActor *self, const PClass *cls=NULL);
-float EvalExpressionF (int id, AActor *self, const PClass *cls=NULL);
+double EvalExpressionF (int id, AActor *self, const PClass *cls=NULL);
 fixed_t EvalExpressionFix (int id, AActor *self, const PClass *cls=NULL);
 
 

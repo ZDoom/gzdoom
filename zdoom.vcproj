@@ -1064,6 +1064,14 @@
 					>
 				</File>
 				<File
+					RelativePath=".\src\thingdef\thingdef_exp.h"
+					>
+				</File>
+				<File
+					RelativePath=".\src\thingdef\thingdef_expression.cpp"
+					>
+				</File>
+				<File
 					RelativePath=".\src\thingdef\thingdef_main.cpp"
 					>
 				</File>

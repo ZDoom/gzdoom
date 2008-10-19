@@ -51,6 +51,7 @@
 #include "autosegs.h"
 #include "i_system.h"
 #include "thingdef_exp.h"
+#include "w_wad.h"
 
 
 //==========================================================================
@@ -63,26 +64,39 @@
 
 void ParseConstant (FScanner &sc, PSymbolTable * symt, PClass *cls)
 {
-	// Read the type and make sure it's int.
-	// (Maybe there will be other types later.)
-	sc.MustGetToken(TK_Int);
-	sc.MustGetToken(TK_Identifier);
-	FName symname = sc.String;
-	sc.MustGetToken('=');
-	FxExpression *expr = ParseExpression (sc, cls);
-	sc.MustGetToken(';');
-
-	int val = expr->EvalExpression(NULL, cls).GetInt();
-	delete expr;
-	PSymbolConst *sym = new PSymbolConst;
-	sym->SymbolName = symname;
-	sym->SymbolType = SYM_Const;
-	sym->Value = val;
-	if (symt->AddSymbol (sym) == NULL)
+	// Read the type and make sure it's int or float.
+	if (sc.CheckToken(TK_Int) || sc.CheckToken(TK_Float))
 	{
-		delete sym;
-		sc.ScriptError ("'%s' is already defined in '%s'.",
-			symname.GetChars(), cls? cls->TypeName.GetChars() : "Global");
+		int type = sc.TokenType;
+		sc.MustGetToken(TK_Identifier);
+		FName symname = sc.String;
+		sc.MustGetToken('=');
+		FxExpression *expr = ParseExpression (sc, cls);
+		sc.MustGetToken(';');
+
+		ExpVal val = expr->EvalExpression(NULL);
+		delete expr;
+		PSymbolConst *sym = new PSymbolConst(symname);
+		if (type == TK_Int)
+		{
+			sym->ValueType = VAL_Int;
+			sym->Value = val.GetInt();
+		}
+		else
+		{
+			sym->ValueType = VAL_Float;
+			sym->Value = val.GetFloat();
+		}
+		if (symt->AddSymbol (sym) == NULL)
+		{
+			delete sym;
+			sc.ScriptError ("'%s' is already defined in '%s'.",
+				symname.GetChars(), cls? cls->TypeName.GetChars() : "Global");
+		}
+	}
+	else
+	{
+		sc.ScriptError("Numeric type required for constant");
 	}
 }
 
@@ -106,18 +120,17 @@ void ParseEnum (FScanner &sc, PSymbolTable *symt, PClass *cls)
 		if (sc.CheckToken('='))
 		{
 			FxExpression *expr = ParseExpression (sc, cls);
-			currvalue = expr->EvalExpression(NULL, cls).GetInt();
+			currvalue = expr->EvalExpression(NULL).GetInt();
 			delete expr;
 		}
-		PSymbolConst *sym = new PSymbolConst;
-		sym->SymbolName = symname;
-		sym->SymbolType = SYM_Const;
+		PSymbolConst *sym = new PSymbolConst(symname);
+		sym->ValueType = VAL_Int;
 		sym->Value = currvalue;
 		if (symt->AddSymbol (sym) == NULL)
 		{
 			delete sym;
-		sc.ScriptError ("'%s' is already defined in '%s'.",
-			symname.GetChars(), cls? cls->TypeName.GetChars() : "Global");
+			sc.ScriptError ("'%s' is already defined in '%s'.",
+				symname.GetChars(), cls? cls->TypeName.GetChars() : "Global");
 		}
 		// This allows a comma after the last value but doesn't enforce it.
 		if (sc.CheckToken('}')) break;
@@ -125,6 +138,88 @@ void ParseEnum (FScanner &sc, PSymbolTable *symt, PClass *cls)
 		currvalue++;
 	}
 	sc.MustGetToken(';');
+}
+
+//==========================================================================
+//
+// ActorConstDef
+//
+// Parses a constant definition.
+//
+//==========================================================================
+
+void ParseVariable (FScanner &sc, PSymbolTable * symt, PClass *cls)
+{
+	FExpressionType valuetype;
+
+	if (sc.LumpNum == -1 || Wads.GetLumpFile(sc.LumpNum) > 0)
+	{
+		sc.ScriptError ("variables can only be imported by internal class and actor definitions!");
+	}
+
+	// Read the type and make sure it's int or float.
+	sc.MustGetAnyToken();
+	switch (sc.TokenType)
+	{
+	case TK_Int:
+		valuetype = VAL_Int;
+		break;
+
+	case TK_Float:
+		valuetype = VAL_Float;
+		break;
+
+	case TK_Angle_t:
+		valuetype = VAL_Angle;
+		break;
+
+	case TK_Fixed_t:
+		valuetype = VAL_Fixed;
+		break;
+
+	case TK_Bool:
+		valuetype = VAL_Bool;
+		break;
+
+	case TK_Identifier:
+		valuetype = VAL_Object;
+		// Todo: Object type
+		sc.ScriptError("Object type variables not implemented yet!");
+		break;
+
+	default:
+		sc.ScriptError("Invalid variable type %s", sc.String);
+		return;
+	}
+
+	sc.MustGetToken(TK_Identifier);
+	FName symname = sc.String;
+	if (sc.CheckToken('['))
+	{
+		FxExpression *expr = ParseExpression (sc, cls);
+		int maxelems = expr->EvalExpression(NULL).GetInt();
+		delete expr;
+		sc.MustGetToken(']');
+		valuetype.MakeArray(maxelems);
+	}
+	sc.MustGetToken(';');
+
+	FVariableInfo *vi = FindVariable(symname, cls);
+	if (vi == NULL)
+	{
+		sc.ScriptError("Unknown native variable '%s'", symname.GetChars());
+	}
+
+	PSymbolVariable *sym = new PSymbolVariable(symname);
+	sym->offset = vi->address;	// todo
+	sym->ValueType = valuetype;
+
+	if (symt->AddSymbol (sym) == NULL)
+	{
+		delete sym;
+		sc.ScriptError ("'%s' is already defined in '%s'.",
+			symname.GetChars(), cls? cls->TypeName.GetChars() : "Global");
+	}
 }
 
 //==========================================================================

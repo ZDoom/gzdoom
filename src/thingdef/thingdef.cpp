@@ -325,9 +325,7 @@ static void ParseActionDef (FScanner &sc, PClass *cls)
 		}
 	}
 	sc.MustGetToken(';');
-	PSymbolActionFunction *sym = new PSymbolActionFunction;
-	sym->SymbolName = funcname;
-	sym->SymbolType = SYM_ActionFunction;
+	PSymbolActionFunction *sym = new PSymbolActionFunction(funcname);
 	sym->Arguments = args;
 	sym->Function = afd->Function;
 	if (hasdefaults)
@@ -561,6 +559,10 @@ void ParseActor(FScanner &sc)
 
 		case TK_Enum:
 			ParseEnum (sc, &info->Class->Symbols, info->Class);
+			break;
+
+		case TK_Native:
+			ParseVariable (sc, &info->Class->Symbols, info->Class);
 			break;
 
 		case TK_Identifier:

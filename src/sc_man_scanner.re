@@ -145,6 +145,8 @@ std2:
 		'pickup'					{ RET(TK_Pickup); }
 		'breakable'					{ RET(TK_Breakable); }
 		'projectile'				{ RET(TK_Projectile); }
+		'fixed_t'					{ RET(TK_Fixed_t); }
+		'angle_t'					{ RET(TK_Angle_t); }
 
 		L (L|D)*					{ RET(TK_Identifier); }
 

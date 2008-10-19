@@ -5,11 +5,14 @@
 #error You must #include "dobject.h" to get dobjtype.h
 #endif
 
+#include "thingdef/thingdef_type.h"
+
 // Symbol information -------------------------------------------------------
 
 enum ESymbolType
 {
 	SYM_Const,
+	SYM_Variable,
 	SYM_ActionFunction
 };
 
@@ -19,13 +22,34 @@ struct PSymbol
 
 	ESymbolType SymbolType;
 	FName SymbolName;
+
+protected:
+	PSymbol(FName name, ESymbolType type) { SymbolType = type; SymbolName = name; }
 };
 
 // A constant value ---------------------------------------------------------
 
 struct PSymbolConst : public PSymbol
 {
-	int Value;
+	int ValueType;
+	union
+	{
+		int Value;
+		double Float;
+	};
+
+	PSymbolConst(FName name) : PSymbol(name, SYM_Const) {}
+};
+
+// A variable ---------------------------------------------------------
+
+struct PSymbolVariable : public PSymbol
+{
+	FExpressionType ValueType;
+	int size;
+	intptr_t offset;
+
+	PSymbolVariable(FName name) : PSymbol(name, SYM_Variable) {}
 };
 
 // An action function -------------------------------------------------------
@@ -55,6 +79,8 @@ struct PSymbolActionFunction : public PSymbol
 	FString Arguments;
 	actionf_p Function;
 	int defaultparameterindex;
+
+	PSymbolActionFunction(FName name) : PSymbol(name, SYM_ActionFunction) {}
 };
 
 // A symbol table -----------------------------------------------------------

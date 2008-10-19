@@ -52,180 +52,6 @@
 
 FRandom pr_exrandom ("EX_Random");
 
-extern PSymbolTable		 GlobalSymbols;
-
-
-
-
-
-
-typedef ExpVal (*ExpVarGet) (AActor *, int);
-
-ExpVal GetAlpha (AActor *actor, int id)
-{
-	ExpVal val;
-	val.Type = VAL_Float;
-	val.Float = FIXED2FLOAT (actor->alpha);
-	return val;
-}
-
-ExpVal GetAngle (AActor *actor, int id)
-{
-	ExpVal val;
-	val.Type = VAL_Float;
-	val.Float = (double)actor->angle / ANGLE_1;
-	return val;
-}
-
-ExpVal GetArgs (AActor *actor, int id)
-{
-	ExpVal val;
-	val.Type = VAL_Int;
-	val.Int = actor->args[id];
-	return val;
-}
-
-ExpVal GetCeilingZ (AActor *actor, int id)
-{
-	ExpVal val;
-	val.Type = VAL_Float;
-	val.Float = FIXED2FLOAT (actor->ceilingz);
-	return val;
-}
-
-ExpVal GetFloorZ (AActor *actor, int id)
-{
-	ExpVal val;
-	val.Type = VAL_Float;
-	val.Float = FIXED2FLOAT (actor->floorz);
-	return val;
-}
-
-ExpVal GetHealth (AActor *actor, int id)
-{
-	ExpVal val;
-	val.Type = VAL_Int;
-	val.Int = actor->health;
-	return val;
-}
-
-ExpVal GetPitch (AActor *actor, int id)
-{
-	ExpVal val;
-	val.Type = VAL_Float;
-	val.Float = (double)actor->pitch / ANGLE_1;
-	return val;
-}
-
-ExpVal GetSpecial (AActor *actor, int id)
-{
-	ExpVal val;
-	val.Type = VAL_Int;
-	val.Int = actor->special;
-	return val;
-}
-
-ExpVal GetTID (AActor *actor, int id)
-{
-	ExpVal val;
-	val.Type = VAL_Int;
-	val.Int = actor->tid;
-	return val;
-}
-
-ExpVal GetTIDToHate (AActor *actor, int id)
-{
-	ExpVal val;
-	val.Type = VAL_Int;
-	val.Int = actor->TIDtoHate;
-	return val;
-}
-
-ExpVal GetWaterLevel (AActor *actor, int id)
-{
-	ExpVal val;
-	val.Type = VAL_Int;
-	val.Int = actor->waterlevel;
-	return val;
-}
-
-ExpVal GetX (AActor *actor, int id)
-{
-	ExpVal val;
-	val.Type = VAL_Float;
-	val.Float = FIXED2FLOAT (actor->x);
-	return val;
-}
-
-ExpVal GetY (AActor *actor, int id)
-{
-	ExpVal val;
-	val.Type = VAL_Float;
-	val.Float = FIXED2FLOAT (actor->y);
-	return val;
-}
-
-ExpVal GetZ (AActor *actor, int id)
-{
-	ExpVal val;
-	val.Type = VAL_Float;
-	val.Float = FIXED2FLOAT (actor->z);
-	return val;
-}
-
-ExpVal GetMomX (AActor *actor, int id)
-{
-	ExpVal val;
-	val.Type = VAL_Float;
-	val.Float = FIXED2FLOAT (actor->momx);
-	return val;
-}
-
-ExpVal GetMomY (AActor *actor, int id)
-{
-	ExpVal val;
-	val.Type = VAL_Float;
-	val.Float = FIXED2FLOAT (actor->momy);
-	return val;
-}
-
-ExpVal GetMomZ (AActor *actor, int id)
-{
-	ExpVal val;
-	val.Type = VAL_Float;
-	val.Float = FIXED2FLOAT (actor->momz);
-	return val;
-}
-
-static struct FExpVar
-{
-	ENamedName name;	// identifier
-	int array;			// array size (0 if not an array)
-	ExpVarGet get;
-	int ValueType;
-} ExpVars[] = {
-	{ NAME_Alpha,		0, GetAlpha, VAL_Float },
-	{ NAME_Angle,		0, GetAngle, VAL_Float },
-	{ NAME_Args,		5, GetArgs, VAL_Int },
-	{ NAME_CeilingZ,	0, GetCeilingZ, VAL_Float },
-	{ NAME_FloorZ,		0, GetFloorZ, VAL_Float },
-	{ NAME_Health,		0, GetHealth, VAL_Int },
-	{ NAME_Pitch,		0, GetPitch, VAL_Float },
-	{ NAME_Special,		0, GetSpecial, VAL_Int },
-	{ NAME_TID,			0, GetTID, VAL_Int },
-	{ NAME_TIDtoHate,	0, GetTIDToHate, VAL_Int },
-	{ NAME_WaterLevel,	0, GetWaterLevel, VAL_Int },
-	{ NAME_X,			0, GetX, VAL_Float },
-	{ NAME_Y,			0, GetY, VAL_Float },
-	{ NAME_Z,			0, GetZ, VAL_Float },
-	{ NAME_MomX,		0, GetMomX, VAL_Float },
-	{ NAME_MomY,		0, GetMomY, VAL_Float },
-	{ NAME_MomZ,		0, GetMomZ, VAL_Float },
-};
-
-
-TDeletingArray<FxExpression *> StateExpressions;
-
 //
 // ParseExpression
 // [GRB] Parses an expression and stores it into Expression array
@@ -244,6 +70,7 @@ static FxExpression *ParseExpressionD (FScanner &sc, const PClass *cls);
 static FxExpression *ParseExpressionC (FScanner &sc, const PClass *cls);
 static FxExpression *ParseExpressionB (FScanner &sc, const PClass *cls);
 static FxExpression *ParseExpressionA (FScanner &sc, const PClass *cls);
+static FxExpression *ParseExpression0 (FScanner &sc, const PClass *cls);
 
 FxExpression *ParseExpression (FScanner &sc, PClass *cls)
 {
@@ -251,23 +78,15 @@ FxExpression *ParseExpression (FScanner &sc, PClass *cls)
 
 	FCompileContext ctx;
 	ctx.cls = cls;
+	ctx.lax = true;
 	data = data->Resolve(ctx);
 
 	return data;
 }
 
-
 int ParseExpression (FScanner &sc, bool _not, PClass *cls)
 {
-	if (StateExpressions.Size()==0)
-	{
-		// StateExpressions[0] always is const 0;
-		FxExpression *data = new FxConstant(0, FScriptPosition());
-		StateExpressions.Push (data);
-	}
-
-	FxExpression *data = ParseExpression (sc, cls);
-	return StateExpressions.Push (data);
+	return AddExpression(ParseExpression (sc, cls));
 }
 
 static FxExpression *ParseExpressionM (FScanner &sc, const PClass *cls)
@@ -440,8 +259,64 @@ static FxExpression *ParseExpressionB (FScanner &sc, const PClass *cls)
 	}
 }
 
+//==========================================================================
+//
+//	ParseExpressionB
+//
+//==========================================================================
 
 static FxExpression *ParseExpressionA (FScanner &sc, const PClass *cls)
+{
+	FxExpression *base_expr = ParseExpression0 (sc, cls);
+
+	while(1)
+	{
+		FScriptPosition pos(sc);
+
+#if 0
+		if (sc.CheckToken('.'))
+		{
+			if (sc.CheckToken(TK_Default))
+			{
+				sc.MustGetToken('.');
+				base_expr = new FxClassDefaults(base_expr, pos);
+			}
+			sc.MustGetToken(TK_Identifier);
+
+			FName FieldName = sc.String;
+			pos = sc;
+			/* later!
+			if (SC_CheckToken('('))
+			{
+				if (base_expr->IsDefaultObject())
+				{
+					SC_ScriptError("Cannot call methods for default.");
+				}
+				base_expr = ParseFunctionCall(base_expr, FieldName, false, false, pos);
+			}
+			else
+			*/
+			{
+				base_expr = new FxDotIdentifier(base_expr, FieldName, pos);
+			}
+		}
+		else 
+#endif
+			if (sc.CheckToken('['))
+		{
+			FxExpression *index = ParseExpressionM(sc, cls);
+			sc.MustGetToken(']');
+			base_expr = new FxArrayElement(base_expr, index);
+		}
+		else break;
+	} 
+
+	return base_expr;
+}
+
+
+
+static FxExpression *ParseExpression0 (FScanner &sc, const PClass *cls)
 {
 	FScriptPosition scpos(sc);
 	if (sc.CheckToken('('))
@@ -466,34 +341,6 @@ static FxExpression *ParseExpressionA (FScanner &sc, const PClass *cls)
 	{
 		return new FxConstant(sc.Float, scpos);
 	}
-	/*
-	else if (sc.CheckToken(TK_Class))
-	{
-		// Accept class'SomeClassName'.SomeConstant
-		sc.MustGetToken(TK_NameConst);
-		cls = PClass::FindClass (sc.Name);
-		if (cls == NULL)
-		{
-			sc.ScriptError ("Unknown class '%s'", sc.String);
-		}
-		sc.MustGetToken('.');
-		sc.MustGetToken(TK_Identifier);
-		PSymbol *sym = cls->Symbols.FindSymbol (sc.String, true);
-		if (sym != NULL && sym->SymbolType == SYM_Const)
-		{
-			FxExpression *data = new FxExpression;
-			data->Type = EX_Const;
-			data->Value.Type = VAL_Int;
-			data->Value.Int = static_cast<PSymbolConst *>(sym)->Value;
-			return data;
-		}
-		else
-		{
-			sc.ScriptError ("'%s' is not a constant value in class '%s'", sc.String, cls->TypeName.GetChars());
-			return NULL;
-		}
-	}
-	*/
 	else if (sc.CheckToken(TK_Identifier))
 	{
 		FName identifier = FName(sc.String);
@@ -560,201 +407,89 @@ static FxExpression *ParseExpressionA (FScanner &sc, const PClass *cls)
 			return new FxAbs(x); 
 		}
 
-		case NAME_Sin:
-		{
-			sc.MustGetToken('(');
-
-			FxExpression *data = new FxExpression;
-			data->Type = EX_Sin;
-			data->ValueType = VAL_Float;
-
-			data->Children[0] = ParseExpressionM (sc, cls);
-
-			sc.MustGetToken(')');
-			return data;
-		}
-		break;
-
-		case NAME_Cos:
-		{
-			sc.MustGetToken('(');
-
-			FxExpression *data = new FxExpression;
-			data->Type = EX_Cos;
-			data->ValueType = VAL_Float;
-
-			data->Children[0] = ParseExpressionM (sc, cls);
-
-			sc.MustGetToken(')');
-			return data;
-		}
-		break;
-
 		default:
-		{
-			int specnum, min_args, max_args;
-
-			// Check if this is an action special
-			specnum = P_FindLineSpecial (sc.String, &min_args, &max_args);
-			if (specnum != 0 && min_args >= 0)
+			if (sc.CheckToken('('))
 			{
-				int i;
-
-				sc.MustGetToken('(');
-
-				FxExpression *data = new FxExpression, **left;
-				data->Type = EX_ActionSpecial;
-				data->Value.Int = specnum;
-				data->ValueType = VAL_Int;
-
-				data->Children[0] = ParseExpressionM (sc, cls);
-				left = &data->Children[1];
-
-				for (i = 1; i < 5 && sc.CheckToken(','); ++i)
+				if (identifier == NAME_Sin)
 				{
-					FxExpression *right = new FxExpression;
-					right->Type = EX_Right;
-					right->Children[0] = ParseExpressionM (sc, cls);
-					*left = right;
-					left = &right->Children[1];
+					FxExpression *data = new FxExpression;
+					data->Type = EX_Sin;
+					data->ValueType = VAL_Float;
+
+					data->Children[0] = ParseExpressionM (sc, cls);
+
+					sc.MustGetToken(')');
+					return data;
 				}
-				*left = NULL;
-				sc.MustGetToken(')');
-				if (i < min_args)
-					sc.ScriptError ("Not enough arguments to action special");
-				if (i > max_args)
-					sc.ScriptError ("Too many arguments to action special");
-
-				return data;
-			}
-
-			// Check if this is a constant
-			if (cls != NULL)
-			{
-				PSymbol *sym = cls->Symbols.FindSymbol (identifier, true);
-				if (sym == NULL) sym = GlobalSymbols.FindSymbol (identifier, true);
-				if (sym != NULL && sym->SymbolType == SYM_Const)
+				else if (identifier == NAME_Cos)
 				{
-					return new FxConstant(static_cast<PSymbolConst *>(sym)->Value, sc);
-				}
-			}
+					FxExpression *data = new FxExpression;
+					data->Type = EX_Cos;
+					data->ValueType = VAL_Float;
 
-			// Check if it's a variable we understand
-			int varid = -1;
-			FName vname = sc.String;
-			for (size_t i = 0; i < countof(ExpVars); i++)
-			{
-				if (vname == ExpVars[i].name)
+					data->Children[0] = ParseExpressionM (sc, cls);
+
+					sc.MustGetToken(')');
+					return data;
+				}
+				else
 				{
-					varid = (int)i;
-					break;
+					int specnum, min_args, max_args;
+
+					// Check if this is an action special
+					specnum = P_FindLineSpecial (sc.String, &min_args, &max_args);
+					if (specnum != 0 && min_args >= 0)
+					{
+						int i;
+
+						FxExpression *data = new FxExpression, **left;
+						data->Type = EX_ActionSpecial;
+						data->Value.Int = specnum;
+						data->ValueType = VAL_Int;
+
+						data->Children[0] = ParseExpressionM (sc, cls);
+						left = &data->Children[1];
+
+						for (i = 1; i < 5 && sc.CheckToken(','); ++i)
+						{
+							FxExpression *right = new FxExpression;
+							right->Type = EX_Right;
+							right->Children[0] = ParseExpressionM (sc, cls);
+							*left = right;
+							left = &right->Children[1];
+						}
+						*left = NULL;
+						sc.MustGetToken(')');
+						if (i < min_args)
+							sc.ScriptError ("Not enough arguments to action special");
+						if (i > max_args)
+							sc.ScriptError ("Too many arguments to action special");
+
+						return data;
+					}
+					else
+					{
+						sc.ScriptError("Unknown function '%s'", identifier.GetChars());
+					}
 				}
-			}
 
-			if (varid == -1)
-				sc.ScriptError ("Unknown value '%s'", sc.String);
-
-			FxExpression *data = new FxExpression;
-			data->Type = EX_Var;
-			data->Value.Type = VAL_Int;
-			data->Value.Int = varid;
-			data->ValueType = ExpVars[varid].ValueType;
-
-			if (ExpVars[varid].array)
+			}	
+			else
 			{
-				sc.MustGetToken('[');
-				data->Children[0] = ParseExpressionM (sc, cls);
-				sc.MustGetToken(']');
+				return new FxIdentifier(identifier, sc);
 			}
-			return data;
-		}
-		break;
 		}
 	}
 	else
 	{
 		FString tokname = sc.TokenName(sc.TokenType, sc.String);
 		sc.ScriptError ("Unexpected token %s", tokname.GetChars());
-		return NULL;
 	}
+	return NULL;
 }
 
-//
-// EvalExpression
-// [GRB] Evaluates previously stored expression
-//
 
-bool IsExpressionConst(int id)
-{
-	if (StateExpressions.Size() <= (unsigned int)id) return false;
-
-	return StateExpressions[id]->isConstant();
-}
-
-int EvalExpressionI (int id, AActor *self, const PClass *cls)
-{
-	if (StateExpressions.Size() <= (unsigned int)id) return 0;
-
-	if (cls == NULL && self != NULL)
-	{
-		cls = self->GetClass();
-	}
-
-	ExpVal val = StateExpressions[id]->EvalExpression (self, cls);
-
-	switch (val.Type)
-	{
-	default:
-	case VAL_Int:
-		return val.Int;
-	case VAL_Float:
-		return (int)val.Float;
-	}
-}
-
-double EvalExpressionF (int id, AActor *self, const PClass *cls)
-{
-	if (StateExpressions.Size() <= (unsigned int)id) return 0.f;
-
-	if (cls == NULL && self != NULL)
-	{
-		cls = self->GetClass();
-	}
-
-	ExpVal val = StateExpressions[id]->EvalExpression (self, cls);
-
-	switch (val.Type)
-	{
-	default:
-	case VAL_Int:
-		return (double)val.Int;
-	case VAL_Float:
-		return val.Float;
-	}
-}
-
-fixed_t EvalExpressionFix (int id, AActor *self, const PClass *cls)
-{
-	if (StateExpressions.Size() <= (unsigned int)id) return 0;
-
-	if (cls == NULL && self != NULL)
-	{
-		cls = self->GetClass();
-	}
-
-	ExpVal val = StateExpressions[id]->EvalExpression (self, cls);
-
-	switch (val.Type)
-	{
-	default:
-	case VAL_Int:
-		return val.Int << FRACBITS;
-	case VAL_Float:
-		return fixed_t(val.Float*FRACUNIT);
-	}
-}
-
-ExpVal FxExpression::EvalExpression (AActor *self, const PClass *cls)
+ExpVal FxExpression::EvalExpression (AActor *self)
 {
 	ExpVal val;
 
@@ -766,26 +501,9 @@ ExpVal FxExpression::EvalExpression (AActor *self, const PClass *cls)
 		assert (Type != EX_NOP);
 		val = Value;
 		break;
-	case EX_Var:
-		if (!self)
-		{
-			I_FatalError ("Missing actor data");
-		}
-		else
-		{
-			int id = 0;
-			if (ExpVars[Value.Int].array)
-			{
-				ExpVal idval = Children[0]->EvalExpression (self, cls);
-				id = ((idval.Type == VAL_Int) ? idval.Int : (int)idval.Float) % ExpVars[Value.Int].array;
-			}
-
-			val = ExpVars[Value.Int].get (self, id);
-		}
-		break;
 	case EX_Sin:
 		{
-			ExpVal a = Children[0]->EvalExpression (self, cls);
+			ExpVal a = Children[0]->EvalExpression (self);
 			angle_t angle = (a.Type == VAL_Int) ? (a.Int * ANGLE_1) : angle_t(a.Float * ANGLE_1);
 
 			val.Type = VAL_Float;
@@ -795,7 +513,7 @@ ExpVal FxExpression::EvalExpression (AActor *self, const PClass *cls)
 
 	case EX_Cos:
 		{
-			ExpVal a = Children[0]->EvalExpression (self, cls);
+			ExpVal a = Children[0]->EvalExpression (self);
 			angle_t angle = (a.Type == VAL_Int) ? (a.Int * ANGLE_1) : angle_t(a.Float * ANGLE_1);
 
 			val.Type = VAL_Float;
@@ -811,7 +529,7 @@ ExpVal FxExpression::EvalExpression (AActor *self, const PClass *cls)
 			
 			while (parm != NULL && i < 5)
 			{
-				ExpVal val = parm->Children[0]->EvalExpression (self, cls);
+				ExpVal val = parm->Children[0]->EvalExpression (self);
 				if (val.Type == VAL_Int)
 				{
 					parms[i] = val.Int;
@@ -852,54 +570,3 @@ FxExpression *FxExpression::Resolve(FCompileContext &ctx)
 	return this;
 }
 
-
-
-/*
-some stuff for later
-static FxExpression *ParseExpressionA (FScanner &sc, const PClass *cls)
-{
-	else if (sc.CheckToken(TK_Identifier))
-	{
-		FName IdName = FName(sc.String);
-		switch (IdName)
-		{
-		default:
-		{
-			FScriptPosition scriptpos(sc);
-			if (sc.CheckToken('('))
-			{
-				// function call
-				TArray<FxExpression *> arguments;
-
-				do
-				{
-					FxExpression *data = ParseExpressionM(sc, cls);
-					arguments.Push(data);
-				}
-				while (sc.CheckToken(','));
-				return new FxFunctionCall(arguments, scriptpos);
-			}
-			else
-			{
-				FxExpression *data = new FxIdentifier(IdName, scriptpos);
-				if (sc.CheckToken('['))
-				{
-					FxExpression *index = ParseExpressionM(sc, cls);
-					sc.MustGetToken(']');
-					data = new FxArrayElement(data, index);
-				}
-				return data;
-			}
-		}
-		break;
-		}
-	}
-	else
-	{
-		FString tokname = sc.TokenName(sc.TokenType, sc.String);
-		sc.ScriptError ("Unexpected token %s", tokname.GetChars());
-		return NULL;
-	}
-}
-
-*/

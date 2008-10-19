@@ -2,6 +2,8 @@
 #define __THINGDEF_H
 
 #include "doomtype.h"
+#include "info.h"
+
 
 class FScanner;
 
@@ -162,6 +164,7 @@ AFuncDesc * FindFunction(const char * string);
 FState *P_GetState(AActor *self, FState *CallingState, int offset);
 int ParseStates(FScanner &sc, FActorInfo *actor, AActor *defaults, Baggage &bag);
 
+PSymbolActionFunction *FindGlobalActionFunction(const char *name);
 
 //==========================================================================
 //
@@ -175,6 +178,7 @@ void ParseActorFlag (FScanner &sc, Baggage &bag, int mod);
 void FinishActor(FScanner &sc, FActorInfo *info, Baggage &bag);
 
 void ParseConstant (FScanner &sc, PSymbolTable *symt, PClass *cls);
+void ParseVariable (FScanner &sc, PSymbolTable *symt, PClass *cls);
 void ParseEnum (FScanner &sc, PSymbolTable *symt, PClass *cls);
 int ParseParameter(FScanner &sc, PClass *cls, char type, bool constant);
 
@@ -182,10 +186,22 @@ int ParseParameter(FScanner &sc, PClass *cls, char type, bool constant);
 int ParseExpression (FScanner &sc, bool _not, PClass *cls);
 
 bool IsExpressionConst(int id);
-int EvalExpressionI (int id, AActor *self, const PClass *cls=NULL);
-double EvalExpressionF (int id, AActor *self, const PClass *cls=NULL);
-fixed_t EvalExpressionFix (int id, AActor *self, const PClass *cls=NULL);
+int EvalExpressionI (int id, AActor *self);
+double EvalExpressionF (int id, AActor *self);
+fixed_t EvalExpressionFix (int id, AActor *self);
 
+enum 
+{
+	DEPF_UNUSED,
+	DEPF_FIREDAMAGE,
+	DEPF_ICEDAMAGE,
+	DEPF_LOWGRAVITY,
+	DEPF_LONGMELEERANGE,
+	DEPF_SHORTMISSILERANGE,
+	DEPF_PICKUPFLASH,
+	DEPF_QUARTERGRAVITY,
+	DEPF_FIRERESIST,
+};
 
 enum
 {
@@ -213,17 +229,22 @@ enum EDefinitionType
 #if defined(_MSC_VER)
 #pragma data_seg(".areg$u")
 #pragma data_seg(".greg$u")
+#pragma data_seg(".mreg$u")
 #pragma data_seg()
 
 #define MSVC_ASEG __declspec(allocate(".areg$u"))
 #define GCC_ASEG
 #define MSVC_PSEG __declspec(allocate(".greg$u"))
 #define GCC_PSEG
+#define MSVC_MSEG __declspec(allocate(".mreg$u"))
+#define GCC_MSEG
 #else
 #define MSVC_ASEG
 #define GCC_ASEG __attribute__((section(AREG_SECTION)))
 #define MSVC_PSEG
 #define GCC_PSEG __attribute__((section(GREG_SECTION)))
+#define MSVC_MSEG
+#define GCC_MSEG __attribute__((section(MREG_SECTION)))
 #endif
 
 
@@ -251,7 +272,16 @@ struct FPropertyInfo
 	int category;
 };
 
+struct FVariableInfo
+{
+	const char *name;
+	intptr_t address;
+	const PClass *owner;
+};
+
+
 FPropertyInfo *FindProperty(const char * string);
+FVariableInfo *FindVariable(const char * string, const PClass *cls);
 int MatchString (const char *in, const char **strings);
 
 
@@ -293,6 +323,18 @@ int MatchString (const char *in, const char **strings);
 #define PROP_COLOR_PARM(var, no) \
 	int var = params[(no)+1].i== 0? params[(no)+2].i : V_GetColor(NULL, params[(no)+2].s);
 
+
+#define DEFINE_GLOBAL_VARIABLE(name) \
+	static FVariableInfo GlobalDef__##name = { #name, intptr_t(&name), NULL }; \
+	MSVC_MSEG FVariableInfo *infoptr_GlobalDef__##name = &GlobalDef__##name;
+
+#define DEFINE_MEMBER_VARIABLE(name, cls) \
+	static FVariableInfo GlobalDef__##name = { #name, myoffsetof(cls, name), RUNTIME_CLASS(cls) }; \
+	MSVC_MSEG FVariableInfo *infoptr_GlobalDef__##name = &GlobalDef__##name;
+
+	
+
+
 struct StateCallData
 {
 	FState *State;
@@ -308,13 +350,13 @@ struct StateCallData
 // access a function that requires parameters.
 #define DEFINE_ACTION_FUNCTION(cls, name) \
 	void AF_##name (AActor *self, FState *, int, StateCallData *); \
-	AFuncDesc info_##cls##_##name = { #name, AF_##name }; \
+	static AFuncDesc info_##cls##_##name = { #name, AF_##name }; \
 	MSVC_ASEG AFuncDesc *infoptr_##cls##_##name GCC_ASEG = &info_##cls##_##name; \
 	void AF_##name (AActor *self, FState *, int, StateCallData *statecall)
 
 #define DEFINE_ACTION_FUNCTION_PARAMS(cls, name) \
 	void AFP_##name (AActor *self, FState *CallingState, int ParameterIndex, StateCallData *statecall); \
-	AFuncDesc info_##cls##_##name = { #name, AFP_##name }; \
+	static AFuncDesc info_##cls##_##name = { #name, AFP_##name }; \
 	MSVC_ASEG AFuncDesc *infoptr_##cls##_##name GCC_ASEG = &info_##cls##_##name; \
 	void AFP_##name (AActor *self, FState *CallingState, int ParameterIndex, StateCallData *statecall)
 

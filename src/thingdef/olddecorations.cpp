@@ -99,8 +99,6 @@ IMPLEMENT_CLASS (AFakeInventory)
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-PSymbolActionFunction *FindGlobalActionFunction(const char *name);
-
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static void ParseInsideDecoration (Baggage &bag, AActor *defaults,

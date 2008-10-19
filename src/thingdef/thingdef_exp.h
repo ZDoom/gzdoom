@@ -48,24 +48,7 @@
 #define ABORT(p) if (!(p)) { delete this; return NULL; }
 #define SAFE_RESOLVE(p,c) RESOLVE(p,c); ABORT(p) 
 
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-/*
-class FxType
-{
-	EBaseType type;
-public:
-	FxType(EBaseType t) { type = t; }
-	FxType(const FxType & t) { type = t.type; }
-	FxType &operator =(const FxType &t) { type = t.type; return *this; }
-
-	EBaseType GetBaseType() const { return type; }
-};
-*/
+extern PSymbolTable		 GlobalSymbols;
 
 //==========================================================================
 //
@@ -119,7 +102,7 @@ struct FScriptPosition
 		return *this;
 	}
 
-	void Message(int severity, const char *message,...);
+	void Message(int severity, const char *message,...) const;
 };
 
 //==========================================================================
@@ -131,6 +114,17 @@ struct FScriptPosition
 struct FCompileContext
 {
 	const PClass *cls;
+	bool lax;
+
+
+	PSymbol *FindInClass(FName identifier)
+	{
+		return cls? cls->Symbols.FindSymbol(identifier, true) : NULL;
+	}
+	PSymbol *FindGlobal(FName identifier)
+	{
+		return GlobalSymbols.FindSymbol(identifier, true);
+	}
 };
 
 //==========================================================================
@@ -157,23 +151,6 @@ enum ExpOp
 //
 //==========================================================================
 
-enum ExpValType
-{
-	VAL_Int,
-	VAL_Float,
-	VAL_Unknown,
-
-	// only used for accessing class member fields to ensure proper conversion
-	VAL_Fixed,
-	VAL_Angle,
-};
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
 struct ExpVal
 {
 	ExpValType Type;
@@ -181,6 +158,7 @@ struct ExpVal
 	{
 		int Int;
 		double Float;
+		void *pointer;
 	};
 
 	int GetInt()
@@ -196,6 +174,11 @@ struct ExpVal
 	bool GetBool()
 	{
 		return Type == VAL_Int? !!Int : Type == VAL_Float? Float!=0. : false;
+	}
+	
+	template<class T> T *GetPointer()
+	{
+		return Type == VAL_Object || Type == VAL_Pointer? (T*)pointer : NULL;
 	}
 
 };
@@ -246,15 +229,16 @@ public:
 		return Resolve(ctx);
 	}
 	
-	virtual ExpVal EvalExpression (AActor *self, const PClass *cls);
+	virtual ExpVal EvalExpression (AActor *self);
 	virtual bool isConstant() const;
+	virtual void RequestAddress();
 
 	int Type;
 	ExpVal Value;
 	FxExpression *Children[2];
 
 	FScriptPosition ScriptPosition;
-	int ValueType;
+	FExpressionType ValueType;
 protected:
 	bool isresolved;
 };
@@ -311,23 +295,6 @@ public:
 
 //==========================================================================
 //
-//	FxArrayElement
-//
-//==========================================================================
-
-class FxArrayElement : public FxExpression
-{
-public:
-	FxExpression *Array;
-	FxExpression *index;
-
-	FxArrayElement(FxExpression*, FxExpression*, const FScriptPosition&);
-	~FxArrayElement();
-	FxExpression *Resolve(FCompileContext&);
-};
-
-//==========================================================================
-//
 //	FxConstant
 //
 //==========================================================================
@@ -354,12 +321,14 @@ public:
 		value = cv;
 		ValueType = cv.Type;
 	}
+	
+	static FxExpression *MakeConstant(PSymbol *sym, const FScriptPosition &pos);
 
 	bool isConstant() const
 	{
 		return true;
 	}
-	ExpVal EvalExpression (AActor *self, const PClass *cls);
+	ExpVal EvalExpression (AActor *self);
 };
 
 
@@ -379,7 +348,7 @@ public:
 	~FxIntCast();
 	FxExpression *Resolve(FCompileContext&);
 
-	ExpVal EvalExpression (AActor *self, const PClass *cls);
+	ExpVal EvalExpression (AActor *self);
 };
 
 
@@ -413,7 +382,7 @@ public:
 	FxMinusSign(FxExpression*);
 	~FxMinusSign();
 	FxExpression *Resolve(FCompileContext&);
-	ExpVal EvalExpression (AActor *self, const PClass *cls);
+	ExpVal EvalExpression (AActor *self);
 };
 
 //==========================================================================
@@ -430,7 +399,7 @@ public:
 	FxUnaryNotBitwise(FxExpression*);
 	~FxUnaryNotBitwise();
 	FxExpression *Resolve(FCompileContext&);
-	ExpVal EvalExpression (AActor *self, const PClass *cls);
+	ExpVal EvalExpression (AActor *self);
 };
 
 //==========================================================================
@@ -447,7 +416,7 @@ public:
 	FxUnaryNotBoolean(FxExpression*);
 	~FxUnaryNotBoolean();
 	FxExpression *Resolve(FCompileContext&);
-	ExpVal EvalExpression (AActor *self, const PClass *cls);
+	ExpVal EvalExpression (AActor *self);
 };
 
 //==========================================================================
@@ -480,7 +449,7 @@ public:
 
 	FxAddSub(int, FxExpression*, FxExpression*);
 	FxExpression *Resolve(FCompileContext&);
-	ExpVal EvalExpression (AActor *self, const PClass *cls);
+	ExpVal EvalExpression (AActor *self);
 };
 
 //==========================================================================
@@ -495,7 +464,7 @@ public:
 
 	FxMulDiv(int, FxExpression*, FxExpression*);
 	FxExpression *Resolve(FCompileContext&);
-	ExpVal EvalExpression (AActor *self, const PClass *cls);
+	ExpVal EvalExpression (AActor *self);
 };
 
 //==========================================================================
@@ -510,7 +479,7 @@ public:
 
 	FxCompareRel(int, FxExpression*, FxExpression*);
 	FxExpression *Resolve(FCompileContext&);
-	ExpVal EvalExpression (AActor *self, const PClass *cls);
+	ExpVal EvalExpression (AActor *self);
 };
 
 //==========================================================================
@@ -525,7 +494,7 @@ public:
 
 	FxCompareEq(int, FxExpression*, FxExpression*);
 	FxExpression *Resolve(FCompileContext&);
-	ExpVal EvalExpression (AActor *self, const PClass *cls);
+	ExpVal EvalExpression (AActor *self);
 };
 
 //==========================================================================
@@ -540,7 +509,7 @@ public:
 
 	FxBinaryInt(int, FxExpression*, FxExpression*);
 	FxExpression *Resolve(FCompileContext&);
-	ExpVal EvalExpression (AActor *self, const PClass *cls);
+	ExpVal EvalExpression (AActor *self);
 };
 
 //==========================================================================
@@ -560,7 +529,7 @@ public:
 	~FxBinaryLogical();
 	FxExpression *Resolve(FCompileContext&);
 
-	ExpVal EvalExpression (AActor *self, const PClass *cls);
+	ExpVal EvalExpression (AActor *self);
 };
 
 //==========================================================================
@@ -580,7 +549,7 @@ public:
 	~FxConditional();
 	FxExpression *Resolve(FCompileContext&);
 
-	ExpVal EvalExpression (AActor *self, const PClass *cls);
+	ExpVal EvalExpression (AActor *self);
 };
 
 //==========================================================================
@@ -599,7 +568,7 @@ public:
 	~FxAbs();
 	FxExpression *Resolve(FCompileContext&);
 
-	ExpVal EvalExpression (AActor *self, const PClass *cls);
+	ExpVal EvalExpression (AActor *self);
 };
 
 //==========================================================================
@@ -619,7 +588,7 @@ public:
 	~FxRandom();
 	FxExpression *Resolve(FCompileContext&);
 
-	ExpVal EvalExpression (AActor *self, const PClass *cls);
+	ExpVal EvalExpression (AActor *self);
 };
 
 
@@ -641,11 +610,87 @@ public:
 	~FxRandom2();
 	FxExpression *Resolve(FCompileContext&);
 
-	ExpVal EvalExpression (AActor *self, const PClass *cls);
+	ExpVal EvalExpression (AActor *self);
 };
 
 
+//==========================================================================
+//
+//	FxGlobalVariable
+//
+//==========================================================================
+
+class FxGlobalVariable : public FxExpression
+{
+public:
+	PSymbolVariable *var;
+	bool AddressRequested;
+
+	FxGlobalVariable(PSymbolVariable*, const FScriptPosition&);
+	FxExpression *Resolve(FCompileContext&);
+	void RequestAddress();
+	ExpVal EvalExpression (AActor *self);
+};
+
+//==========================================================================
+//
+//	FxClassMember
+//
+//==========================================================================
+
+class FxClassMember : public FxExpression
+{
+public:
+	FxExpression *classx;
+	PSymbolVariable *membervar;
+	bool AddressRequested;
+
+	FxClassMember(FxExpression*, PSymbolVariable*, const FScriptPosition&);
+	~FxClassMember();
+	FxExpression *Resolve(FCompileContext&);
+	void RequestAddress();
+	ExpVal EvalExpression (AActor *self);
+};
+
+//==========================================================================
+//
+//	FxSelf
+//
+//==========================================================================
+
+class FxSelf : public FxExpression
+{
+public:
+	FxSelf(const FScriptPosition&);
+	FxExpression *Resolve(FCompileContext&);
+	ExpVal EvalExpression (AActor *self);
+};
+
+//==========================================================================
+//
+//	FxArrayElement
+//
+//==========================================================================
+
+class FxArrayElement : public FxExpression
+{
+public:
+	FxExpression *Array;
+	FxExpression *index;
+	//bool AddressRequested;
+
+	FxArrayElement(FxExpression*, FxExpression*);
+	~FxArrayElement();
+	FxExpression *Resolve(FCompileContext&);
+	//void RequestAddress();
+	ExpVal EvalExpression (AActor *self);
+};
+
+
+
+
 FxExpression *ParseExpression (FScanner &sc, PClass *cls);
+int AddExpression (FxExpression *data);
 
 
 #endif

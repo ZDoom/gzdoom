@@ -46,6 +46,7 @@
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
+void InitThingdef();
 void ParseActor(FScanner &sc);
 void FinishThingdef();
 void ParseOldDecoration(FScanner &sc, EDefinitionType def);
@@ -102,6 +103,10 @@ static void ParseDecorate (FScanner &sc)
 			ParseOldDecoration (sc, DEF_Projectile);
 			break;
 
+		case TK_Native:
+			ParseVariable(sc, &GlobalSymbols, NULL);
+			break;
+
 		case ';':
 			// ';' is the start of a comment in the non-cmode parser which
 			// is used to parse parts of the DECORATE lump. If we don't add 
@@ -142,6 +147,7 @@ void LoadDecorations ()
 {
 	int lastlump, lump;
 
+	InitThingdef();
 	lastlump = 0;
 	while ((lump = Wads.FindLump ("DECORATE", &lastlump)) != -1)
 	{

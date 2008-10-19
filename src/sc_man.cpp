@@ -914,6 +914,8 @@ FString FScanner::TokenName (int token, const char *string)
 		"'breakable'",
 		"'projectile'",
 		"'#include'",
+		"'fixed_t'",
+		"'angle_t'",
 	};
 
 	FString work;

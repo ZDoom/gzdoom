@@ -18,6 +18,28 @@ ACTOR Actor native //: Thinker
 	FloatSpeed 4
 	Gravity 1
 
+	// Variables for the expression evaluator
+	// NOTE: fixed_t and angle_t are only used here to ensure proper conversion
+	// Internally they are handled as floats.
+	// Variables must be native.
+	native fixed_t alpha;
+	native angle_t angle;
+	native int args[5];
+	native fixed_t ceilingz;
+	native fixed_t floorz;
+	native int health;
+	native angle_t pitch;
+	native int special;
+	native int tid;
+	native int TIDtoHate;
+	native int waterlevel;
+	native fixed_t x;
+	native fixed_t y;
+	native fixed_t z;
+	native fixed_t momx;
+	native fixed_t momy;
+	native fixed_t momz;
+
 	action native A_MonsterRail();
 	action native A_BFGSpray(class<Actor> spraytype = "BFGExtra", int numrays = 40, int damagecount = 15);
 	action native A_Pain();

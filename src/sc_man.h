@@ -209,6 +209,8 @@ enum
 	TK_Breakable,
 	TK_Projectile,
 	TK_Include,
+	TK_Fixed_t,
+	TK_Angle_t,
 
 	TK_LastToken
 };

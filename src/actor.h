@@ -633,7 +633,7 @@ public:
 	FRenderStyle	RenderStyle;		// Style to draw this actor with
 	DWORD			renderflags;		// Different rendering flags
 	FTextureID		picnum;				// Draw this instead of sprite if valid
-	SWORD			TIDtoHate;			// TID of things to hate (0 if none)
+	int				TIDtoHate;			// TID of things to hate (0 if none)
 	DWORD			effects;			// [RH] see p_effect.h
 	fixed_t			alpha;
 	DWORD			fillcolor;			// Color to draw when STYLE_Shaded
@@ -678,18 +678,18 @@ public:
 	TObjPtr<AActor>	LastLookActor;	// Actor last looked for (if TIDtoHate != 0)
 	fixed_t			SpawnPoint[3]; 	// For nightmare respawn
 	WORD			SpawnAngle;
+	BYTE			SoundChans;		// Bitfield indicating which sound channels are playing.
 	int				skillrespawncount;
 	TObjPtr<AActor>	tracer;			// Thing being chased/attacked for tracers
 	TObjPtr<AActor>	master;			// Thing which spawned this one (prevents mutual attacks)
 	fixed_t			floorclip;		// value to use for floor clipping
-	SWORD			tid;			// thing identifier
-	BYTE			SoundChans;		// Bitfield indicating which sound channels are playing.
-	BYTE			special;		// special
+	int				tid;			// thing identifier
+	int				special;		// special
 	int				args[5];		// special arguments
 
 	AActor			*inext, **iprev;// Links to other mobjs in same bucket
 	TObjPtr<AActor> goal;			// Monster's goal if not chasing anything
-	BYTE			waterlevel;		// 0=none, 1=feet, 2=waist, 3=eyes
+	int				waterlevel;		// 0=none, 1=feet, 2=waist, 3=eyes
 	BYTE			boomwaterlevel;	// splash information for non-swimmable water sectors
 	BYTE			MinMissileChance;// [RH] If a random # is > than this, then missile attack.
 	SBYTE			LastLookPlayerNumber;// Player number last looked for (if TIDtoHate == 0)

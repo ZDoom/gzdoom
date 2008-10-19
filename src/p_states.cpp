@@ -768,8 +768,6 @@ int FStateDefinitions::FinishStates (FActorInfo *actor, AActor *defaults, TArray
 	static int c=0;
 	int count = StateArray.Size();
 
-	DPrintf("Finishing states for %s\n", actor->Class->TypeName.GetChars());
-
 	if (count > 0)
 	{
 		FState *realstates = new FState[count];

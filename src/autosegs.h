@@ -40,10 +40,12 @@
 #define AREG_SECTION "__DATA,areg"
 #define CREG_SECTION "__DATA,creg"
 #define GREG_SECTION "__DATA,greg"
+#define GREG_SECTION "__DATA,mreg"
 #else
 #define AREG_SECTION "areg"
 #define CREG_SECTION "creg"
 #define GREG_SECTION "greg"
+#define MREG_SECTION "mreg"
 #endif
 #endif
 
@@ -61,6 +63,10 @@ extern REGINFO CRegTail;
 // List of properties
 extern REGINFO GRegHead;
 extern REGINFO GRegTail;
+
+// List of variables
+extern REGINFO MRegHead;
+extern REGINFO MRegTail;
 
 template<class T, REGINFO *_head, REGINFO *_tail>
 class TAutoSegIteratorNoArrow

@@ -49,7 +49,141 @@
 #include "p_lnspec.h"
 #include "doomstat.h"
 #include "thingdef_exp.h"
+#include "autosegs.h"
 
+int testglobalvar = 1337;	// just for having one global variable to test with
+DEFINE_GLOBAL_VARIABLE(testglobalvar)
+
+// Accessible actor member variables
+DEFINE_MEMBER_VARIABLE(alpha, AActor)
+DEFINE_MEMBER_VARIABLE(angle, AActor)
+DEFINE_MEMBER_VARIABLE(args, AActor)
+DEFINE_MEMBER_VARIABLE(ceilingz, AActor)
+DEFINE_MEMBER_VARIABLE(floorz, AActor)
+DEFINE_MEMBER_VARIABLE(health, AActor)
+DEFINE_MEMBER_VARIABLE(pitch, AActor)
+DEFINE_MEMBER_VARIABLE(special, AActor)
+DEFINE_MEMBER_VARIABLE(tid, AActor)
+DEFINE_MEMBER_VARIABLE(TIDtoHate, AActor)
+DEFINE_MEMBER_VARIABLE(waterlevel, AActor)
+DEFINE_MEMBER_VARIABLE(x, AActor)
+DEFINE_MEMBER_VARIABLE(y, AActor)
+DEFINE_MEMBER_VARIABLE(z, AActor)
+DEFINE_MEMBER_VARIABLE(momx, AActor)
+DEFINE_MEMBER_VARIABLE(momy, AActor)
+DEFINE_MEMBER_VARIABLE(momz, AActor)
+
+static TDeletingArray<FxExpression *> StateExpressions;
+
+int AddExpression (FxExpression *data)
+{
+	if (StateExpressions.Size()==0)
+	{
+		// StateExpressions[0] always is const 0;
+		FxExpression *data = new FxConstant(0, FScriptPosition());
+		StateExpressions.Push (data);
+	}
+	return StateExpressions.Push (data);
+}
+
+//==========================================================================
+//
+// EvalExpression
+// [GRB] Evaluates previously stored expression
+//
+//==========================================================================
+
+
+bool IsExpressionConst(int id)
+{
+	if (StateExpressions.Size() <= (unsigned int)id) return false;
+
+	return StateExpressions[id]->isConstant();
+}
+
+int EvalExpressionI (int id, AActor *self)
+{
+	if (StateExpressions.Size() <= (unsigned int)id) return 0;
+
+	return StateExpressions[id]->EvalExpression (self).GetInt();
+}
+
+double EvalExpressionF (int id, AActor *self)
+{
+	if (StateExpressions.Size() <= (unsigned int)id) return 0.f;
+
+	return StateExpressions[id]->EvalExpression (self).GetFloat();
+}
+
+fixed_t EvalExpressionFix (int id, AActor *self)
+{
+	if (StateExpressions.Size() <= (unsigned int)id) return 0;
+
+	ExpVal val = StateExpressions[id]->EvalExpression (self);
+
+	switch (val.Type)
+	{
+	default:
+		return 0;
+	case VAL_Int:
+		return val.Int << FRACBITS;
+	case VAL_Float:
+		return fixed_t(val.Float*FRACUNIT);
+	}
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+static ExpVal GetVariableValue (void *address, FExpressionType &type)
+{
+	// NOTE: This cannot access native variables of types
+	// char, short and float. These need to be redefined if necessary!
+	ExpVal ret;
+
+	switch(type.Type)
+	{
+	case VAL_Int:
+		ret.Type = VAL_Int;
+		ret.Int = *(int*)address;
+		break;
+
+	case VAL_Bool:
+		ret.Type = VAL_Int;
+		ret.Int = *(bool*)address;
+		break;
+
+	case VAL_Float:
+		ret.Type = VAL_Float;
+		ret.Float = *(double*)address;
+		break;
+
+	case VAL_Fixed:
+		ret.Type = VAL_Float;
+		ret.Float = (*(fixed_t*)address) / 65536.;
+		break;
+
+	case VAL_Angle:
+		ret.Type = VAL_Float;
+		ret.Float = (*(angle_t*)address) * 90./ANGLE_90;	// intentionally not using ANGLE_1
+		break;
+
+	case VAL_Object:
+	case VAL_Class:
+		ret.Type = ExpValType(type.Type);	// object and class pointers don't retain their specific class information as values
+		ret.pointer = *(void**)address;
+		break;
+
+	default:
+		ret.Type = VAL_Unknown;
+		ret.pointer = NULL;
+		break;
+	}
+	return ret;
+}
 
 //==========================================================================
 //
@@ -57,9 +191,11 @@
 //
 //==========================================================================
 
-void STACK_ARGS FScriptPosition::Message (int severity, const char *message, ...)
+void STACK_ARGS FScriptPosition::Message (int severity, const char *message, ...) const
 {
 	FString composed;
+
+	if ((severity == MSG_DEBUG || severity == MSG_DEBUGLOG) && !developer) return;
 
 	if (message == NULL)
 	{
@@ -89,17 +225,11 @@ void STACK_ARGS FScriptPosition::Message (int severity, const char *message, ...
 		break;
 
 	case MSG_DEBUG:
-		if (!developer) return;
 		type = "message";
 		break;
 
-	case MSG_LOG:
-		type = "message";
-		level = PRINT_LOG;
-		break;
-		
 	case MSG_DEBUGLOG:
-		if (!developer) return;
+	case MSG_LOG:
 		type = "message";
 		level = PRINT_LOG;
 		break;
@@ -109,16 +239,66 @@ void STACK_ARGS FScriptPosition::Message (int severity, const char *message, ...
 		FileName.GetChars(), ScriptLine, composed.GetChars());
 }
 
+
 //==========================================================================
 //
 //
 //
 //==========================================================================
 
-ExpVal FxConstant::EvalExpression (AActor *self, const PClass *cls)
+void FxExpression::RequestAddress()
+{
+	ScriptPosition.Message(MSG_ERROR, "invalid dereference\n");
+}
+
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+ExpVal FxConstant::EvalExpression (AActor *self)
 {
 	return value;
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxExpression *FxConstant::MakeConstant(PSymbol *sym, const FScriptPosition &pos)
+{
+	FxExpression *x;
+	if (sym->SymbolType == SYM_Const)
+	{
+		PSymbolConst *csym = static_cast<PSymbolConst*>(sym);
+		switch(csym->ValueType)
+		{
+		case VAL_Int:
+			x = new FxConstant(csym->Value, pos);
+			break;
+
+		case VAL_Float:
+			x = new FxConstant(csym->Float, pos);
+			break;
+
+		default:
+			pos.Message(MSG_ERROR, "Invalid constant '%s'\n", csym->SymbolName.GetChars());
+			return NULL;
+		}
+	}
+	else
+	{
+		pos.Message(MSG_ERROR, "'%s' is not a constant\n", sym->SymbolName.GetChars());
+		x = NULL;
+	}
+	return x;
+}
+
+
 
 //==========================================================================
 //
@@ -155,21 +335,30 @@ FxExpression *FxIntCast::Resolve(FCompileContext &ctx)
 	CHECKRESOLVED();
 	SAFE_RESOLVE(basex, ctx);
 
-	if (basex->isConstant())
-	{
-		ExpVal constval = basex->EvalExpression(NULL, ctx.cls);
-		FxExpression *x = new FxConstant(constval.GetInt(), ScriptPosition);
-		delete this;
-		return x;
-	}
-	else if (basex->ValueType == VAL_Int)
+	if (basex->ValueType == VAL_Int)
 	{
 		FxExpression *x = basex;
 		basex = NULL;
 		delete this;
 		return x;
 	}
-	return this;
+	else if (basex->ValueType == VAL_Float)
+	{
+		if (basex->isConstant())
+		{
+			ExpVal constval = basex->EvalExpression(NULL);
+			FxExpression *x = new FxConstant(constval.GetInt(), ScriptPosition);
+			delete this;
+			return x;
+		}
+		return this;
+	}
+	else
+	{
+		ScriptPosition.Message(MSG_ERROR, "Numeric type expected");
+		delete this;
+		return NULL;
+	}
 }
 
 //==========================================================================
@@ -178,9 +367,9 @@ FxExpression *FxIntCast::Resolve(FCompileContext &ctx)
 //
 //==========================================================================
 
-ExpVal FxIntCast::EvalExpression (AActor *self, const PClass *cls)
+ExpVal FxIntCast::EvalExpression (AActor *self)
 {
-	ExpVal baseval = basex->EvalExpression(self, cls);
+	ExpVal baseval = basex->EvalExpression(self);
 	baseval.Int = baseval.GetInt();
 	baseval.Type = VAL_Int;
 	return baseval;
@@ -221,10 +410,19 @@ FxExpression *FxPlusSign::Resolve(FCompileContext& ctx)
 	CHECKRESOLVED();
 	SAFE_RESOLVE(Operand, ctx);
 
-	FxExpression *e = Operand;
-	Operand = NULL;
-	delete this;
-	return e;
+	if (Operand->ValueType.isNumeric())
+	{
+		FxExpression *e = Operand;
+		Operand = NULL;
+		delete this;
+		return e;
+	}
+	else
+	{
+		ScriptPosition.Message(MSG_ERROR, "Numeric type expected");
+		delete this;
+		return NULL;
+	}
 }
 
 //==========================================================================
@@ -261,17 +459,26 @@ FxExpression *FxMinusSign::Resolve(FCompileContext& ctx)
 	CHECKRESOLVED();
 	SAFE_RESOLVE(Operand, ctx);
 
-	if (Operand->isConstant())
+	if (Operand->ValueType.isNumeric())
 	{
-		ExpVal val = Operand->EvalExpression(NULL, ctx.cls);
-		FxExpression *e = val.Type == VAL_Int?
-			new FxConstant(-val.Int, ScriptPosition) :
-			new FxConstant(-val.Float, ScriptPosition);
-		delete this;
-		return e;
+		if (Operand->isConstant())
+		{
+			ExpVal val = Operand->EvalExpression(NULL);
+			FxExpression *e = val.Type == VAL_Int?
+				new FxConstant(-val.Int, ScriptPosition) :
+				new FxConstant(-val.Float, ScriptPosition);
+			delete this;
+			return e;
+		}
+		ValueType = Operand->ValueType;
+		return this;
 	}
-	ValueType = Operand->ValueType;
-	return this;
+	else
+	{
+		ScriptPosition.Message(MSG_ERROR, "Numeric type expected");
+		delete this;
+		return NULL;
+	}
 }
 
 //==========================================================================
@@ -280,18 +487,18 @@ FxExpression *FxMinusSign::Resolve(FCompileContext& ctx)
 //
 //==========================================================================
 
-ExpVal FxMinusSign::EvalExpression (AActor *self, const PClass *cls)
+ExpVal FxMinusSign::EvalExpression (AActor *self)
 {
 	ExpVal ret;
 
 	if (ValueType == VAL_Int)
 	{
-		ret.Int = -Operand->EvalExpression(self, cls).GetInt();
+		ret.Int = -Operand->EvalExpression(self).GetInt();
 		ret.Type = VAL_Int;
 	}
 	else
 	{
-		ret.Float = -Operand->EvalExpression(self, cls).GetFloat();
+		ret.Float = -Operand->EvalExpression(self).GetFloat();
 		ret.Type = VAL_Float;
 	}
 	return ret;
@@ -332,18 +539,28 @@ FxExpression *FxUnaryNotBitwise::Resolve(FCompileContext& ctx)
 	CHECKRESOLVED();
 	SAFE_RESOLVE(Operand, ctx);
 
-	/* DECORATE allows this.
+	if  (Operand->ValueType == VAL_Float && ctx.lax)
+	{
+		// DECORATE allows floats here so cast them to int.
+		Operand = new FxIntCast(Operand);
+		Operand = Operand->Resolve(ctx);
+		if (Operand == NULL) 
+		{
+			delete this;
+			return NULL;
+		}
+	}
+
 	if (Operand->ValueType != VAL_Int)
 	{
 		ScriptPosition.Message(MSG_ERROR, "Integer type expected");
 		delete this;
 		return NULL;
 	}
-	*/
 
 	if (Operand->isConstant())
 	{
-		int result = ~Operand->EvalExpression(NULL, ctx.cls).GetInt();
+		int result = ~Operand->EvalExpression(NULL).GetInt();
 		FxExpression *e = new FxConstant(result, ScriptPosition);
 		delete this;
 		return e;
@@ -358,11 +575,11 @@ FxExpression *FxUnaryNotBitwise::Resolve(FCompileContext& ctx)
 //
 //==========================================================================
 
-ExpVal FxUnaryNotBitwise::EvalExpression (AActor *self, const PClass *cls)
+ExpVal FxUnaryNotBitwise::EvalExpression (AActor *self)
 {
 	ExpVal ret;
 
-	ret.Int = ~Operand->EvalExpression(self, cls).GetInt();
+	ret.Int = ~Operand->EvalExpression(self).GetInt();
 	ret.Type = VAL_Int;
 	return ret;
 }
@@ -409,12 +626,21 @@ FxExpression *FxUnaryNotBoolean::Resolve(FCompileContext& ctx)
 		return NULL;
 	}
 
-	if (Operand->isConstant())
+	if (Operand->ValueType.isNumeric() || Operand->ValueType.isPointer())
 	{
-		bool result = !Operand->EvalExpression(NULL, ctx.cls).GetBool();
-		FxExpression *e = new FxConstant(result, ScriptPosition);
+		if (Operand->isConstant())
+		{
+			bool result = !Operand->EvalExpression(NULL).GetBool();
+			FxExpression *e = new FxConstant(result, ScriptPosition);
+			delete this;
+			return e;
+		}
+	}
+	else
+	{
+		ScriptPosition.Message(MSG_ERROR, "Numeric type expected");
 		delete this;
-		return e;
+		return NULL;
 	}
 	ValueType = VAL_Int;
 	return this;
@@ -426,11 +652,11 @@ FxExpression *FxUnaryNotBoolean::Resolve(FCompileContext& ctx)
 //
 //==========================================================================
 
-ExpVal FxUnaryNotBoolean::EvalExpression (AActor *self, const PClass *cls)
+ExpVal FxUnaryNotBoolean::EvalExpression (AActor *self)
 {
 	ExpVal ret;
 
-	ret.Int = !Operand->EvalExpression(self, cls).GetBool();
+	ret.Int = !Operand->EvalExpression(self).GetBool();
 	ret.Type = VAL_Int;
 	return ret;
 }
@@ -477,19 +703,31 @@ bool FxBinary::ResolveLR(FCompileContext& ctx, bool castnumeric)
 		return false;
 	}
 
-	ValueType = left->ValueType;
-	if (castnumeric && right->ValueType == VAL_Float)
+	if (left->ValueType == VAL_Int && right->ValueType == VAL_Int)
+	{
+		ValueType = VAL_Int;
+	}
+	else if (left->ValueType.isNumeric() && right->ValueType.isNumeric())
 	{
 		ValueType = VAL_Float;
 	}
-	/* not for DECORATE - will be activated later
-	else if (left->ValueType != right->ValueType)
+	else if (left->ValueType == VAL_Object && right->ValueType == VAL_Object)
 	{
-		ScriptPosition.Message(MSG_ERROR, "Type mismatch in expression");
-		delete this;
-		return false;
+		ValueType = VAL_Object;
 	}
-	*/
+	else if (left->ValueType == VAL_Class && right->ValueType == VAL_Class)
+	{
+		ValueType = VAL_Class;
+	}
+	else
+	{
+		ValueType = VAL_Unknown;
+	}
+
+	if (castnumeric)
+	{
+		// later!
+	}
 	return true;
 }
 
@@ -516,13 +754,19 @@ FxExpression *FxAddSub::Resolve(FCompileContext& ctx)
 	CHECKRESOLVED();
 	if (!ResolveLR(ctx, true)) return NULL;
 
-	if (left->isConstant() && right->isConstant())
+	if (!ValueType.isNumeric())
+	{
+		ScriptPosition.Message(MSG_ERROR, "Numeric type expected");
+		delete this;
+		return NULL;
+	}
+	else if (left->isConstant() && right->isConstant())
 	{
 		if (ValueType == VAL_Float)
 		{
 			double v;
-			double v1 = left->EvalExpression(NULL, ctx.cls).GetFloat();
-			double v2 = right->EvalExpression(NULL, ctx.cls).GetFloat();
+			double v1 = left->EvalExpression(NULL).GetFloat();
+			double v2 = right->EvalExpression(NULL).GetFloat();
 
 			v =	Operator == '+'? v1 + v2 : 
 				Operator == '-'? v1 - v2 : 0;
@@ -534,8 +778,8 @@ FxExpression *FxAddSub::Resolve(FCompileContext& ctx)
 		else
 		{
 			int v;
-			int v1 = left->EvalExpression(NULL, ctx.cls).GetInt();
-			int v2 = right->EvalExpression(NULL, ctx.cls).GetInt();
+			int v1 = left->EvalExpression(NULL).GetInt();
+			int v2 = right->EvalExpression(NULL).GetInt();
 
 			v =	Operator == '+'? v1 + v2 : 
 				Operator == '-'? v1 - v2 : 0;
@@ -555,14 +799,14 @@ FxExpression *FxAddSub::Resolve(FCompileContext& ctx)
 //
 //==========================================================================
 
-ExpVal FxAddSub::EvalExpression (AActor *self, const PClass *cls)
+ExpVal FxAddSub::EvalExpression (AActor *self)
 {
 	ExpVal ret;
 
-	if (left->ValueType == VAL_Float || right->ValueType ==VAL_Float)
+	if (ValueType == VAL_Float)
 	{
-		double v1 = left->EvalExpression(self, cls).GetFloat();
-		double v2 = right->EvalExpression(self, cls).GetFloat();
+		double v1 = left->EvalExpression(self).GetFloat();
+		double v2 = right->EvalExpression(self).GetFloat();
 
 		ret.Type = VAL_Float;
 		ret.Float = Operator == '+'? v1 + v2 : 
@@ -570,8 +814,8 @@ ExpVal FxAddSub::EvalExpression (AActor *self, const PClass *cls)
 	}
 	else
 	{
-		int v1 = left->EvalExpression(self, cls).GetInt();
-		int v2 = right->EvalExpression(self, cls).GetInt();
+		int v1 = left->EvalExpression(self).GetInt();
+		int v2 = right->EvalExpression(self).GetInt();
 
 		ret.Type = VAL_Int;
 		ret.Int = Operator == '+'? v1 + v2 : 
@@ -604,13 +848,19 @@ FxExpression *FxMulDiv::Resolve(FCompileContext& ctx)
 
 	if (!ResolveLR(ctx, true)) return NULL;
 
-	if (left->isConstant() && right->isConstant())
+	if (!ValueType.isNumeric())
+	{
+		ScriptPosition.Message(MSG_ERROR, "Numeric type expected");
+		delete this;
+		return NULL;
+	}
+	else if (left->isConstant() && right->isConstant())
 	{
 		if (ValueType == VAL_Float)
 		{
 			double v;
-			double v1 = left->EvalExpression(NULL, ctx.cls).GetFloat();
-			double v2 = right->EvalExpression(NULL, ctx.cls).GetFloat();
+			double v1 = left->EvalExpression(NULL).GetFloat();
+			double v2 = right->EvalExpression(NULL).GetFloat();
 
 			if (Operator != '*' && v2 == 0)
 			{
@@ -630,8 +880,8 @@ FxExpression *FxMulDiv::Resolve(FCompileContext& ctx)
 		else
 		{
 			int v;
-			int v1 = left->EvalExpression(NULL, ctx.cls).GetInt();
-			int v2 = right->EvalExpression(NULL, ctx.cls).GetInt();
+			int v1 = left->EvalExpression(NULL).GetInt();
+			int v2 = right->EvalExpression(NULL).GetInt();
 
 			if (Operator != '*' && v2 == 0)
 			{
@@ -660,14 +910,14 @@ FxExpression *FxMulDiv::Resolve(FCompileContext& ctx)
 //
 //==========================================================================
 
-ExpVal FxMulDiv::EvalExpression (AActor *self, const PClass *cls)
+ExpVal FxMulDiv::EvalExpression (AActor *self)
 {
 	ExpVal ret;
 
-	if (left->ValueType == VAL_Float || right->ValueType ==VAL_Float)
+	if (ValueType == VAL_Float)
 	{
-		double v1 = left->EvalExpression(self, cls).GetFloat();
-		double v2 = right->EvalExpression(self, cls).GetFloat();
+		double v1 = left->EvalExpression(self).GetFloat();
+		double v2 = right->EvalExpression(self).GetFloat();
 
 		if (Operator != '*' && v2 == 0)
 		{
@@ -681,8 +931,8 @@ ExpVal FxMulDiv::EvalExpression (AActor *self, const PClass *cls)
 	}
 	else
 	{
-		int v1 = left->EvalExpression(self, cls).GetInt();
-		int v2 = right->EvalExpression(self, cls).GetInt();
+		int v1 = left->EvalExpression(self).GetInt();
+		int v2 = right->EvalExpression(self).GetInt();
 
 		if (Operator != '*' && v2 == 0)
 		{
@@ -720,14 +970,20 @@ FxExpression *FxCompareRel::Resolve(FCompileContext& ctx)
 	CHECKRESOLVED();
 	if (!ResolveLR(ctx, true)) return false;
 
-	if (left->isConstant() && right->isConstant())
+	if (!ValueType.isNumeric())
+	{
+		ScriptPosition.Message(MSG_ERROR, "Numeric type expected");
+		delete this;
+		return NULL;
+	}
+	else if (left->isConstant() && right->isConstant())
 	{
 		int v;
 
 		if (ValueType == VAL_Float)
 		{
-			double v1 = left->EvalExpression(NULL, ctx.cls).GetFloat();
-			double v2 = right->EvalExpression(NULL, ctx.cls).GetFloat();
+			double v1 = left->EvalExpression(NULL).GetFloat();
+			double v2 = right->EvalExpression(NULL).GetFloat();
 			v =	Operator == '<'? v1 < v2 : 
 				Operator == '>'? v1 > v2 : 
 				Operator == TK_Geq? v1 >= v2 : 
@@ -735,8 +991,8 @@ FxExpression *FxCompareRel::Resolve(FCompileContext& ctx)
 		}
 		else
 		{
-			int v1 = left->EvalExpression(NULL, ctx.cls).GetInt();
-			int v2 = right->EvalExpression(NULL, ctx.cls).GetInt();
+			int v1 = left->EvalExpression(NULL).GetInt();
+			int v2 = right->EvalExpression(NULL).GetInt();
 			v =	Operator == '<'? v1 < v2 : 
 				Operator == '>'? v1 > v2 : 
 				Operator == TK_Geq? v1 >= v2 : 
@@ -757,16 +1013,16 @@ FxExpression *FxCompareRel::Resolve(FCompileContext& ctx)
 //
 //==========================================================================
 
-ExpVal FxCompareRel::EvalExpression (AActor *self, const PClass *cls)
+ExpVal FxCompareRel::EvalExpression (AActor *self)
 {
 	ExpVal ret;
 
 	ret.Type = VAL_Int;
 
-	if (left->ValueType == VAL_Float || right->ValueType ==VAL_Float)
+	if (left->ValueType == VAL_Float || right->ValueType == VAL_Float)
 	{
-		double v1 = left->EvalExpression(self, cls).GetFloat();
-		double v2 = right->EvalExpression(self, cls).GetFloat();
+		double v1 = left->EvalExpression(self).GetFloat();
+		double v2 = right->EvalExpression(self).GetFloat();
 		ret.Int = Operator == '<'? v1 < v2 : 
 				  Operator == '>'? v1 > v2 : 
 				  Operator == TK_Geq? v1 >= v2 : 
@@ -774,8 +1030,8 @@ ExpVal FxCompareRel::EvalExpression (AActor *self, const PClass *cls)
 	}
 	else
 	{
-		int v1 = left->EvalExpression(self, cls).GetInt();
-		int v2 = right->EvalExpression(self, cls).GetInt();
+		int v1 = left->EvalExpression(self).GetInt();
+		int v2 = right->EvalExpression(self).GetInt();
 		ret.Int = Operator == '<'? v1 < v2 : 
 				  Operator == '>'? v1 > v2 : 
 				  Operator == TK_Geq? v1 >= v2 : 
@@ -814,20 +1070,26 @@ FxExpression *FxCompareEq::Resolve(FCompileContext& ctx)
 		return NULL;
 	}
 
-	if (left->isConstant() && right->isConstant())
+	if (!ValueType.isNumeric() && !ValueType.isPointer())
+	{
+		ScriptPosition.Message(MSG_ERROR, "Numeric type expected");
+		delete this;
+		return NULL;
+	}
+	else if (left->isConstant() && right->isConstant())
 	{
 		int v;
 
 		if (ValueType == VAL_Float)
 		{
-			double v1 = left->EvalExpression(NULL, ctx.cls).GetFloat();
-			double v2 = right->EvalExpression(NULL, ctx.cls).GetFloat();
+			double v1 = left->EvalExpression(NULL).GetFloat();
+			double v2 = right->EvalExpression(NULL).GetFloat();
 			v = Operator == TK_Eq? v1 == v2 : v1 != v2;
 		}
 		else
 		{
-			int v1 = left->EvalExpression(NULL, ctx.cls).GetInt();
-			int v2 = right->EvalExpression(NULL, ctx.cls).GetInt();
+			int v1 = left->EvalExpression(NULL).GetInt();
+			int v2 = right->EvalExpression(NULL).GetInt();
 			v = Operator == TK_Eq? v1 == v2 : v1 != v2;
 		}
 		FxExpression *e = new FxConstant(v, ScriptPosition);
@@ -844,23 +1106,28 @@ FxExpression *FxCompareEq::Resolve(FCompileContext& ctx)
 //
 //==========================================================================
 
-ExpVal FxCompareEq::EvalExpression (AActor *self, const PClass *cls)
+ExpVal FxCompareEq::EvalExpression (AActor *self)
 {
 	ExpVal ret;
 
 	ret.Type = VAL_Int;
 
-	if (left->ValueType == VAL_Float || right->ValueType ==VAL_Float)
+	if (left->ValueType == VAL_Float || right->ValueType == VAL_Float)
 	{
-		double v1 = left->EvalExpression(self, cls).GetFloat();
-		double v2 = right->EvalExpression(self, cls).GetFloat();
+		double v1 = left->EvalExpression(self).GetFloat();
+		double v2 = right->EvalExpression(self).GetFloat();
+		ret.Int = Operator == TK_Eq? v1 == v2 : v1 != v2;
+	}
+	else if (ValueType == VAL_Int)
+	{
+		int v1 = left->EvalExpression(self).GetInt();
+		int v2 = right->EvalExpression(self).GetInt();
 		ret.Int = Operator == TK_Eq? v1 == v2 : v1 != v2;
 	}
 	else
 	{
-		int v1 = left->EvalExpression(self, cls).GetInt();
-		int v2 = right->EvalExpression(self, cls).GetInt();
-		ret.Int = Operator == TK_Eq? v1 == v2 : v1 != v2;
+		// Implement pointer comparison
+		ret.Int = 0;
 	}
 	return ret;
 }
@@ -889,25 +1156,37 @@ FxExpression *FxBinaryInt::Resolve(FCompileContext& ctx)
 	CHECKRESOLVED();
 	if (!ResolveLR(ctx, false)) return false;
 
-	/* later! DECORATE doesn't do proper type checks
-	if (lax)
+	if (ctx.lax && ValueType == VAL_Float)
 	{
-		if (left->ValueType == VAL_Float) left = new FxIntCast(left);
-		if (right->ValueType == VAL_Float) right = new FxIntCast(right);
+		// For DECORATE which allows floats here.
+		if (left->ValueType != VAL_Int)
+		{
+			left = new FxIntCast(left);
+			left = left->Resolve(ctx);
+		}
+		if (right->ValueType != VAL_Int)
+		{
+			right = new FxIntCast(right);
+			right = left->Resolve(ctx);
+		}
+		if (left == NULL || right == NULL)
+		{
+			delete this;
+			return NULL;
+		}
+		ValueType = VAL_Int;
 	}
 
-	if (left->ValueType != VAL_Int || right->->ValueType != VAL_Int)
+	if (ValueType != VAL_Int)
 	{
-		ScriptPosition.Message(MSG_ERROR, "Type mismatch in expression");
+		ScriptPosition.Message(MSG_ERROR, "Integer type expected");
 		delete this;
 		return NULL;
 	}
-	*/
-
-	if (left->isConstant() && right->isConstant())
+	else if (left->isConstant() && right->isConstant())
 	{
-		int v1 = left->EvalExpression(NULL, ctx.cls).GetInt();
-		int v2 = right->EvalExpression(NULL, ctx.cls).GetInt();
+		int v1 = left->EvalExpression(NULL).GetInt();
+		int v2 = right->EvalExpression(NULL).GetInt();
 
 		FxExpression *e = new FxConstant(
 			Operator == TK_LShift? v1 << v2 : 
@@ -929,10 +1208,10 @@ FxExpression *FxBinaryInt::Resolve(FCompileContext& ctx)
 //
 //==========================================================================
 
-ExpVal FxBinaryInt::EvalExpression (AActor *self, const PClass *cls)
+ExpVal FxBinaryInt::EvalExpression (AActor *self)
 {
-	int v1 = left->EvalExpression(self, cls).GetInt();
-	int v2 = right->EvalExpression(self, cls).GetInt();
+	int v1 = left->EvalExpression(self).GetInt();
+	int v2 = right->EvalExpression(self).GetInt();
 
 	ExpVal ret;
 
@@ -994,8 +1273,8 @@ FxExpression *FxBinaryLogical::Resolve(FCompileContext& ctx)
 
 	int b_left=-1, b_right=-1;
 
-	if (left->isConstant()) b_left = left->EvalExpression(NULL, ctx.cls).GetBool();
-	if (right->isConstant()) b_right = right->EvalExpression(NULL, ctx.cls).GetBool();
+	if (left->isConstant()) b_left = left->EvalExpression(NULL).GetBool();
+	if (right->isConstant()) b_right = right->EvalExpression(NULL).GetBool();
 
 	// Do some optimizations. This will throw out all sub-expressions that are not
 	// needed to retrieve the final result.
@@ -1066,9 +1345,9 @@ FxExpression *FxBinaryLogical::Resolve(FCompileContext& ctx)
 //
 //==========================================================================
 
-ExpVal FxBinaryLogical::EvalExpression (AActor *self, const PClass *cls)
+ExpVal FxBinaryLogical::EvalExpression (AActor *self)
 {
-	bool b_left = left->EvalExpression(self, cls).GetBool();
+	bool b_left = left->EvalExpression(self).GetBool();
 	ExpVal ret;
 
 	ret.Type = VAL_Int;
@@ -1076,11 +1355,11 @@ ExpVal FxBinaryLogical::EvalExpression (AActor *self, const PClass *cls)
 
 	if (Operator == TK_AndAnd)
 	{
-		ret.Int = (b_left && right->EvalExpression(self, cls).GetBool());
+		ret.Int = (b_left && right->EvalExpression(self).GetBool());
 	}
 	else if (Operator == TK_OrOr)
 	{
-		ret.Int = (b_left || right->EvalExpression(self, cls).GetBool());
+		ret.Int = (b_left || right->EvalExpression(self).GetBool());
 	}
 	return ret;
 }
@@ -1129,12 +1408,13 @@ FxExpression *FxConditional::Resolve(FCompileContext& ctx)
 
 	if (truex->ValueType == VAL_Int && falsex->ValueType == VAL_Int)
 		ValueType = VAL_Int;
-	else
+	else if (truex->ValueType.isNumeric() && falsex->ValueType.isNumeric())
 		ValueType = VAL_Float;
+	//else if (truex->ValueType != falsex->ValueType)
 
 	if (condition->isConstant())
 	{
-		ExpVal condval = condition->EvalExpression(NULL, ctx.cls);
+		ExpVal condval = condition->EvalExpression(NULL);
 		bool result = condval.GetBool();
 
 		FxExpression *e = result? truex:falsex;
@@ -1153,13 +1433,13 @@ FxExpression *FxConditional::Resolve(FCompileContext& ctx)
 //
 //==========================================================================
 
-ExpVal FxConditional::EvalExpression (AActor *self, const PClass *cls)
+ExpVal FxConditional::EvalExpression (AActor *self)
 {
-	ExpVal condval = condition->EvalExpression(self, cls);
+	ExpVal condval = condition->EvalExpression(self);
 	bool result = condval.GetBool();
 
 	FxExpression *e = result? truex:falsex;
-	return e->EvalExpression(self, cls);
+	return e->EvalExpression(self);
 }
 
 //==========================================================================
@@ -1171,7 +1451,7 @@ FxAbs::FxAbs(FxExpression *v)
 : FxExpression(v->ScriptPosition)
 {
 	val = v;
-	Type = VAL_Int;
+	ValueType = v->ValueType;
 }
 
 //==========================================================================
@@ -1196,9 +1476,16 @@ FxExpression *FxAbs::Resolve(FCompileContext &ctx)
 	CHECKRESOLVED();
 	SAFE_RESOLVE(val, ctx);
 
-	if (val->isConstant())
+
+	if (!ValueType.isNumeric())
 	{
-		ExpVal value = val->EvalExpression(NULL, ctx.cls);
+		ScriptPosition.Message(MSG_ERROR, "Numeric type expected");
+		delete this;
+		return NULL;
+	}
+	else if (val->isConstant())
+	{
+		ExpVal value = val->EvalExpression(NULL);
 		switch (value.Type)
 		{
 		case VAL_Int:
@@ -1227,9 +1514,9 @@ FxExpression *FxAbs::Resolve(FCompileContext &ctx)
 //
 //==========================================================================
 
-ExpVal FxAbs::EvalExpression (AActor *self, const PClass *cls)
+ExpVal FxAbs::EvalExpression (AActor *self)
 {
-	ExpVal value = val->EvalExpression(self, cls);
+	ExpVal value = val->EvalExpression(self);
 	switch (value.Type)
 	{
 	default:
@@ -1253,17 +1540,8 @@ FxRandom::FxRandom(FRandom * r, FxExpression *mi, FxExpression *ma, const FScrip
 : FxExpression(pos)
 {
 	rng = r;
-	if (mi && ma)
-	{
-		min = new FxIntCast(mi);
-		max = new FxIntCast(ma);
-	}
-	else
-	{
-		SAFE_DELETE(mi);
-		SAFE_DELETE(ma);
-		min = max = NULL;
-	}
+	min = new FxIntCast(mi);
+	max = new FxIntCast(ma);
 	ValueType = VAL_Int;
 }
 
@@ -1304,10 +1582,10 @@ FxExpression *FxRandom::Resolve(FCompileContext &ctx)
 //
 //==========================================================================
 
-ExpVal FxRandom::EvalExpression (AActor *self, const PClass *cls)
+ExpVal FxRandom::EvalExpression (AActor *self)
 {
-	int minval = min->EvalExpression (self, cls).GetInt();
-	int maxval = max->EvalExpression (self, cls).GetInt();
+	int minval = min->EvalExpression (self).GetInt();
+	int maxval = max->EvalExpression (self).GetInt();
 
 	ExpVal val;
 	val.Type = VAL_Int;
@@ -1366,12 +1644,472 @@ FxExpression *FxRandom2::Resolve(FCompileContext &ctx)
 //
 //==========================================================================
 
-ExpVal FxRandom2::EvalExpression (AActor *self, const PClass *cls)
+ExpVal FxRandom2::EvalExpression (AActor *self)
 {
-	ExpVal maskval = mask->EvalExpression(self, cls);
+	ExpVal maskval = mask->EvalExpression(self);
 	int imaskval = maskval.GetInt();
 
 	maskval.Type = VAL_Int;
 	maskval.Int = rng->Random2(imaskval);
 	return maskval;
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxIdentifier::FxIdentifier(FName name, const FScriptPosition &pos)
+: FxExpression(pos)
+{
+	Identifier = name;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
+{
+	PSymbol * sym;
+	FxExpression *newex = NULL;
+	//FBaseCVar * cv = NULL;
+	//FString s;
+	int num;
+	//const PClass *Class;
+	
+	CHECKRESOLVED();
+	// see if the current class (if valid) defines something with this name.
+	if ((sym = ctx.FindInClass(Identifier)) != NULL)
+	{
+		if (sym->SymbolType == SYM_Const)
+		{
+			ScriptPosition.Message(MSG_DEBUGLOG, "Resolving name '%s' as class constant\n", Identifier.GetChars());
+			newex = FxConstant::MakeConstant(sym, ScriptPosition);
+		}
+		else if (sym->SymbolType == SYM_Variable)
+		{
+			PSymbolVariable *vsym = static_cast<PSymbolVariable*>(sym);
+			ScriptPosition.Message(MSG_DEBUGLOG, "Resolving name '%s' as member variable, index %d\n", Identifier.GetChars(), vsym->offset);
+			newex = new FxClassMember((new FxSelf(ScriptPosition))->Resolve(ctx), vsym, ScriptPosition);
+		}
+		else
+		{
+			ScriptPosition.Message(MSG_ERROR, "Invalid member identifier '%s'\n", Identifier.GetChars());
+		}
+	}
+	// now check the global identifiers.
+	else if ((sym = ctx.FindGlobal(Identifier)) != NULL)
+	{
+		if (sym->SymbolType == SYM_Const)
+		{
+			ScriptPosition.Message(MSG_DEBUGLOG, "Resolving name '%s' as global constant\n", Identifier.GetChars());
+			newex = FxConstant::MakeConstant(sym, ScriptPosition);
+		}
+		else if (sym->SymbolType == SYM_Variable)	// global variables will always be native
+		{
+			PSymbolVariable *vsym = static_cast<PSymbolVariable*>(sym);
+			ScriptPosition.Message(MSG_DEBUGLOG, "Resolving name '%s' as global variable, address %d\n", Identifier.GetChars(), vsym->offset);
+			newex = new FxGlobalVariable(vsym, ScriptPosition);
+		}
+		else
+		{
+			ScriptPosition.Message(MSG_ERROR, "Invalid global identifier '%s'\n", Identifier.GetChars());
+		}
+	}
+	/*
+	else if ((Class = PClass::FindClass(Identifier)))
+	{
+		pos.Message(MSG_DEBUGLOG, "Resolving name '%s' as class name\n", Identifier.GetChars());
+			newex = new FxClassType(Class, ScriptPosition);
+		}
+	}
+	*/
+
+	// also check for CVars
+	/*
+	else if ((cv = FindCVar(Identifier, NULL)) != NULL)
+	{
+		CLOG(CL_RESOLVE, LPrintf("Resolving name '%s' as cvar\n", Identifier.GetChars()));
+		newex = new FxCVar(cv, ScriptPosition);
+	}
+	*/
+	// amd line specials
+	else if ((num = P_FindLineSpecial(Identifier, NULL, NULL)))
+	{
+		ScriptPosition.Message(MSG_DEBUGLOG, "Resolving name '%s' as line special %d\n", Identifier.GetChars(), num);
+		newex = new FxConstant(num, ScriptPosition);
+	}
+	else
+	{
+		ScriptPosition.Message(MSG_ERROR, "Unknown identifier '%s'", Identifier.GetChars());
+		newex = new FxConstant(0, ScriptPosition);
+	}
+	delete this;
+	return newex? newex->Resolve(ctx) : NULL;
+}
+
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxSelf::FxSelf(const FScriptPosition &pos)
+: FxExpression(pos)
+{
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxExpression *FxSelf::Resolve(FCompileContext& ctx)
+{
+	CHECKRESOLVED();
+	if (!ctx.cls)
+	{
+		// can't really happen with DECORATE's expression evaluator.
+		ScriptPosition.Message(MSG_ERROR, "self used outside of a member function");
+		delete this;
+		return NULL;
+	}
+	ValueType = ctx.cls;
+	ValueType.Type = VAL_Object;
+	return this;
+}  
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+ExpVal FxSelf::EvalExpression (AActor *self)
+{
+	ExpVal ret;
+	
+	ret.Type = VAL_Object;
+	ret.pointer = self;
+	return ret;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxGlobalVariable::FxGlobalVariable(PSymbolVariable *mem, const FScriptPosition &pos)
+: FxExpression(pos)
+{
+	var = mem;
+	AddressRequested = false;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void FxGlobalVariable::RequestAddress()
+{
+	AddressRequested = true;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxExpression *FxGlobalVariable::Resolve(FCompileContext&)
+{
+	CHECKRESOLVED();
+	switch (var->ValueType.Type)
+	{
+	case VAL_Int:
+	case VAL_Bool:
+		ValueType = VAL_Int;
+		break;
+
+	case VAL_Float:
+	case VAL_Fixed:
+	case VAL_Angle:
+		ValueType = VAL_Float;
+
+	case VAL_Object:
+	case VAL_Class:
+		ValueType = var->ValueType;
+		break;
+
+	default:
+		ScriptPosition.Message(MSG_ERROR, "Invalid type for global variable");
+		delete this;
+		return NULL;
+	}
+	return this;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+ExpVal FxGlobalVariable::EvalExpression (AActor *self)
+{
+	ExpVal ret;
+	
+	if (!AddressRequested)
+	{
+		ret = GetVariableValue((void*)var->offset, var->ValueType);
+	}
+	else
+	{
+		ret.pointer = (void*)var->offset;
+		ret.Type = VAL_Pointer;
+	}
+	return ret;
+}
+
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxClassMember::FxClassMember(FxExpression *x, PSymbolVariable* mem, const FScriptPosition &pos)
+: FxExpression(pos)
+{
+	classx = x;
+	membervar = mem;
+	AddressRequested = false;
+	//if (classx->IsDefaultObject()) Readonly=true;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxClassMember::~FxClassMember()
+{
+	SAFE_DELETE(classx);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void FxClassMember::RequestAddress()
+{
+	AddressRequested = true;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxExpression *FxClassMember::Resolve(FCompileContext &ctx)
+{
+	CHECKRESOLVED();
+	SAFE_RESOLVE(classx, ctx);
+
+	if (classx->ValueType != VAL_Object && classx->ValueType != VAL_Class)
+	{
+		ScriptPosition.Message(MSG_ERROR, "Member variable requires a class or object");
+		delete this;
+		return NULL;
+	}
+	switch (membervar->ValueType.Type)
+	{
+	case VAL_Int:
+	case VAL_Bool:
+		ValueType = VAL_Int;
+		break;
+
+	case VAL_Float:
+	case VAL_Fixed:
+	case VAL_Angle:
+		ValueType = VAL_Float;
+		break;
+
+	case VAL_Object:
+	case VAL_Class:
+	case VAL_Array:
+		ValueType = membervar->ValueType;
+		break;
+
+	default:
+		ScriptPosition.Message(MSG_ERROR, "Invalid type for member variable %s", membervar->SymbolName.GetChars());
+		delete this;
+		return NULL;
+	}
+	return this;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+ExpVal FxClassMember::EvalExpression (AActor *self)
+{
+	char *object = NULL;
+	if (classx->ValueType == VAL_Class)
+	{
+		// not implemented yet
+	}
+	else
+	{
+		object = classx->EvalExpression(self).GetPointer<char>();
+	}
+	if (object == NULL)
+	{
+		I_Error("Accessing member variable without valid object");
+	}
+
+	ExpVal ret;
+	
+	if (!AddressRequested)
+	{
+		ret = GetVariableValue(object + membervar->offset, membervar->ValueType);
+	}
+	else
+	{
+		ret.pointer = object + membervar->offset;
+		ret.Type = VAL_Pointer;
+	}
+	return ret;
+}
+
+
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxArrayElement::FxArrayElement(FxExpression *base, FxExpression *_index)
+:FxExpression(base->ScriptPosition)
+{
+	Array=base;
+	index = _index;
+	//AddressRequested = false;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxArrayElement::~FxArrayElement()
+{
+	SAFE_DELETE(Array);
+	SAFE_DELETE(index);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+/*
+void FxArrayElement::RequestAddress()
+{
+	AddressRequested = true;
+}
+*/
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxExpression *FxArrayElement::Resolve(FCompileContext &ctx)
+{
+	CHECKRESOLVED();
+	SAFE_RESOLVE(Array,ctx);
+	SAFE_RESOLVE(index,ctx);
+
+	if (index->ValueType == VAL_Float && ctx.lax)
+	{
+		// DECORATE allows floats here so cast them to int.
+		index = new FxIntCast(index);
+		index = index->Resolve(ctx);
+		if (index == NULL) 
+		{
+			delete this;
+			return NULL;
+		}
+	}
+	if (index->ValueType != VAL_Int)
+	{
+		ScriptPosition.Message(MSG_ERROR, "Array index must be integer");
+		delete this;
+		return NULL;
+	}
+
+	if (Array->ValueType != VAL_Array)
+	{
+		ScriptPosition.Message(MSG_ERROR, "'[]' can only be used with arrays.");
+		delete this;
+		return NULL;
+	}
+
+	ValueType = Array->ValueType.GetBaseType();
+	if (ValueType != VAL_Int)
+	{
+		// int arrays only for now
+		ScriptPosition.Message(MSG_ERROR, "Only integer arrays are supported.");
+		delete this;
+		return NULL;
+	}
+	Array->RequestAddress();
+	return this;
+}
+
+//==========================================================================
+//
+// in its current state this won't be able to do more than handle the args array.
+//
+//==========================================================================
+
+ExpVal FxArrayElement::EvalExpression (AActor *self)
+{
+	int * arraystart = Array->EvalExpression(self).GetPointer<int>();
+	int indexval = index->EvalExpression(self).GetInt();
+
+	if (indexval < 0 || indexval >= Array->ValueType.size)
+	{
+		I_Error("Array index out of bounds");
+	}
+
+	ExpVal ret;
+
+	ret.Int = arraystart[indexval];
+	ret.Type = VAL_Int;
+	return ret;
+}
+
+
+

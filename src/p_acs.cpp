@@ -5420,6 +5420,7 @@ int DLevelScript::RunScript ()
 
 		case PCD_SETMUGSHOTSTATE:
 			StatusBar->SetMugShotState(FBehavior::StaticLookupString(STACK(1)));
+			sp--;
 			break;
 
 		case PCD_CHECKPLAYERCAMERA:

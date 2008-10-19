@@ -1,3 +1,8 @@
+October 18, 2008
+- Commented out the MugShot state nulling in DSBarInfo::AttachToPlayer() so
+  that fiddling with player options does not reset the mug shot.
+- Fixed: SetMugShotState ACS command did not pop the stack.
+
 October 18, 2008  (Changes by Graf Zahl)
 - Added a global symbol table and changed DECORATE parser to put its global 
   symbols there instead of into AActor.

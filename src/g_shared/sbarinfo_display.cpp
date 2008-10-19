@@ -277,7 +277,7 @@ void DSBarInfo::NewGame ()
 void DSBarInfo::AttachToPlayer (player_t *player)
 {
 	DBaseStatusBar::AttachToPlayer(player);
-	MugShot.CurrentState = NULL;
+//	MugShot.CurrentState = NULL;
 }
 
 void DSBarInfo::SetMugShotState (const char *state_name, bool wait_till_done, bool reset)

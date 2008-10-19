@@ -134,16 +134,24 @@ static bool P_SightCheckLine (line_t *ld)
 		{
 			return false;
 		}
-		if (SeePastShootableLines &&
-            (!(ld->activation & SPAC_Impact) ||
-             (ld->special != ACS_Execute && ld->special != ACS_ExecuteAlways)) ||
-             (ld->args[1] != 0 && ld->args[1] != level.levelnum))     
+		// Pretend the other side is invisible if this is not an impact line
+		// that runs a script on the current map. Used to prevent monsters
+		// from trying to attack through a block everything line unless
+		// there's a chance their attack will make it nonblocking.
+		if (!SeePastShootableLines)
 		{
-			// Pretend the other side is invisible if this is not an impact line
-			// or it does not run a script on the current map. Used to prevent
-			// monsters from trying to attack through a block everything line
-			// unless there's a chance their attack will make it nonblocking.
-			return false;
+			if (!(ld->activation & SPAC_Impact))
+			{
+				return false;
+			}
+			if (ld->special != ACS_Execute && ld->special != ACS_ExecuteAlways)
+			{
+				return false;
+			}
+			if (ld->args[1] != 0 && ld->args[1] != level.levelnum)
+			{
+				return false;
+			}
 		}
 	}
 

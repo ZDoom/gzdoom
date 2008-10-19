@@ -1,4 +1,6 @@
 October 18, 2008
+- Rewrote the SeePastShootableLines check in P_SightCheckLine() to be
+  more readable.
 - Commented out the MugShot state nulling in DSBarInfo::AttachToPlayer() so
   that fiddling with player options does not reset the mug shot.
 - Fixed: SetMugShotState ACS command did not pop the stack.

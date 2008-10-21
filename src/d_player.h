@@ -372,7 +372,6 @@ public:
 
 // Bookkeeping on players - state.
 extern player_t players[MAXPLAYERS];
-extern DWORD playerswiping;
 
 inline FArchive &operator<< (FArchive &arc, player_t *&p)
 {

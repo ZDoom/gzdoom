@@ -77,11 +77,11 @@ void P_Ticker (void)
 	{
 		// This is a separate slot from the wipe in D_Display(), because this
 		// is delayed slightly due to latency. (Even on a singleplayer game!)
-		GSnd->SetSfxPaused(!!playerswiping, 2);
+//		GSnd->SetSfxPaused(!!playerswiping, 2);
 	}
 
 	// run the tic
-	if (paused || (playerswiping && !demoplayback) || P_CheckTickerPaused())
+	if (paused || P_CheckTickerPaused())
 		return;
 
 	// [RH] Frozen mode is only changed every 4 tics, to make it work with A_Tracer().

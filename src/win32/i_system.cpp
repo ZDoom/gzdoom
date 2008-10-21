@@ -89,6 +89,7 @@ const IWADInfo *DoomStartupInfo;
 
 int (*I_GetTime) (bool saveMS);
 int (*I_WaitForTic) (int);
+void (*I_FreezeTime) (bool frozen);
 
 os_t OSPlatform;
 
@@ -120,6 +121,7 @@ unsigned int I_MSTime (void)
 
 static DWORD TicStart;
 static DWORD TicNext;
+static int TicFrozen;
 
 //
 // I_GetTime
@@ -128,6 +130,11 @@ static DWORD TicNext;
 int I_GetTimePolled (bool saveMS)
 {
 	DWORD tm;
+
+	if (TicFrozen != 0)
+	{
+		return TicFrozen;
+	}
 
 	tm = timeGetTime();
 	if (!basetime)
@@ -146,10 +153,28 @@ int I_WaitForTicPolled (int prevtic)
 {
 	int time;
 
+	assert(TicFrozen == 0);
 	while ((time = I_GetTimePolled(false)) <= prevtic)
 		;
 
 	return time;
+}
+
+void I_FreezeTimePolled (bool frozen)
+{
+	if (frozen)
+	{
+		assert(TicFrozen == 0);
+		TicFrozen = I_GetTimePolled(false);
+	}
+	else
+	{
+		assert(TicFrozen != 0);
+		int froze = TicFrozen;
+		TicFrozen = 0;
+		int now = I_GetTimePolled(false);
+		basetime += (now - froze) * 1000 / TICRATE;
+	}
 }
 
 
@@ -168,6 +193,7 @@ int I_GetTimeEventDriven (bool saveMS)
 
 int I_WaitForTicEvent (int prevtic)
 {
+	assert(!TicFrozen);
 	while (prevtic >= tics)
 	{
 		WaitForSingleObject(NewTicArrived, 1000/TICRATE);
@@ -178,10 +204,18 @@ int I_WaitForTicEvent (int prevtic)
 
 void CALLBACK TimerTicked (UINT id, UINT msg, DWORD_PTR user, DWORD_PTR dw1, DWORD_PTR dw2)
 {
-	tics++;
+	if (!TicFrozen)
+	{
+		tics++;
+	}
 	ted_start = timeGetTime ();
 	ted_next = ted_start + MillisecondsPerTic;
 	SetEvent (NewTicArrived);
+}
+
+void I_FreezeTimeEventDriven(bool frozen)
+{
+	TicFrozen = frozen;
 }
 
 // Returns the fractional amount of a tic passed since the most recent tic
@@ -384,11 +418,13 @@ void I_Init (void)
 	{
 		I_GetTime = I_GetTimeEventDriven;
 		I_WaitForTic = I_WaitForTicEvent;
+		I_FreezeTime = I_FreezeTimeEventDriven;
 	}
 	else
 	{	// If no timer event, busy-loop with timeGetTime
 		I_GetTime = I_GetTimePolled;
 		I_WaitForTic = I_WaitForTicPolled;
+		I_FreezeTime = I_FreezeTimePolled;
 	}
 
 	atterm (I_ShutdownSound);

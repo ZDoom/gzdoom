@@ -719,37 +719,39 @@ void D_Display ()
 		C_DrawConsole (hw2d);	// draw console
 		M_Drawer ();			// menu is drawn even on top of everything
 		FStat::PrintStat ();
-		screen->Update ();	// page flip or blit buffer
+		screen->Update ();		// page flip or blit buffer
 	}
 	else
 	{
 		// wipe update
-		int wipestart, nowtime, tics;
+		unsigned int wipestart, nowtime, diff;
 		bool done;
 
 		GSnd->SetSfxPaused(true, 1);
+		I_FreezeTime(true);
 		screen->WipeEndScreen ();
 
-		wipestart = I_GetTime (false);
-
-		Net_WriteByte (DEM_WIPEON);
-		NetUpdate ();		// send out any new accumulation
+		wipestart = I_MSTime();
+		NetUpdate();		// send out any new accumulation
 
 		do
 		{
-			nowtime = I_WaitForTic (wipestart);
-			tics = nowtime - wipestart;
+			do
+			{
+				I_WaitVBL(2);
+				nowtime = I_MSTime();
+				diff = (nowtime - wipestart) * 40 / 1000;	// Using 35 here feels too slow.
+			} while (diff < 1);
 			wipestart = nowtime;
-			done = screen->WipeDo (tics);
+			done = screen->WipeDo (1);
 			C_DrawConsole (hw2d);	// console and
 			M_Drawer ();			// menu are drawn even on top of wipes
 			screen->Update ();		// page flip or blit buffer
-			NetUpdate ();
+			NetUpdate ();			// [RH] not sure this is needed anymore
 		} while (!done);
 		screen->WipeCleanup();
+		I_FreezeTime(false);
 		GSnd->SetSfxPaused(false, 1);
-
-		Net_WriteByte (DEM_WIPEOFF);
 	}
 
 	cycles.Unclock();

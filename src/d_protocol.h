@@ -141,8 +141,8 @@ enum EDemoCommand
 	DEM_DOAUTOSAVE,		// 42 An autosave should be made
 	DEM_MORPHEX,		// 43 String: The class to morph to.
 	DEM_SUMMONFOE,		// 44 String: Thing to fabricate
-	DEM_WIPEON,			// 45 Player started a screen wipe
-	DEM_WIPEOFF,		// 46 Player finished a screen wipe
+	DEM_UNDONE9,		// 45
+	DEM_UNDONE10,		// 46
 	DEM_TAKECHEAT,		// 47 String: item to take, Word: quantity
 	DEM_ADDCONTROLLER,	// 48 Player to add to the controller list.
 	DEM_DELCONTROLLER,	// 49 Player to remove from the controller list.

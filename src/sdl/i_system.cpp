@@ -87,6 +87,7 @@ DWORD LanguageIDs[4] =
 	
 int (*I_GetTime) (bool saveMS);
 int (*I_WaitForTic) (int);
+void (*I_FreezTime) (bool frozen);
 
 void I_Tactile (int on, int off, int total)
 {
@@ -116,6 +117,7 @@ unsigned int I_MSTime (void)
 
 static DWORD TicStart;
 static DWORD TicNext;
+static int TicFrozen;
 
 //
 // I_GetTime
@@ -123,6 +125,11 @@ static DWORD TicNext;
 //
 int I_GetTimePolled (bool saveMS)
 {
+	if (TicFrozen != 0)
+	{
+		return TicFrozen;
+	}
+
 	DWORD tm = SDL_GetTicks ();
 
 	if (saveMS)
@@ -137,10 +144,28 @@ int I_WaitForTicPolled (int prevtic)
 {
     int time;
 
+	assert (TicFrozen == 0);
     while ((time = I_GetTimePolled(false)) <= prevtic)
 		;
 
     return time;
+}
+
+void I_FreezeTimePolled (bool frozen)
+{
+	if (frozen)
+	{
+		assert(TicFrozen == 0);
+		TicFrozen = I_GetTimePolled(false);
+	}
+	else
+	{
+		assert(TicFrozen != 0);
+		int froze = TicFrozen;
+		TicFrozen = 0;
+		int now = I_GetTimePolled(false);
+		basetime += (now - froze) * 1000 / TICRATE;
+	}
 }
 
 // Returns the fractional amount of a tic passed since the most recent tic
@@ -184,6 +209,7 @@ void I_Init (void)
 
 	I_GetTime = I_GetTimePolled;
 	I_WaitForTic = I_WaitForTicPolled;
+	I_FreezeTime = I_FreezeTimePolled;
 	atterm (I_ShutdownSound);
     I_InitSound ();
 }

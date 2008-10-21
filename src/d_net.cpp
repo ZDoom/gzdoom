@@ -607,7 +607,6 @@ void PlayerIsGone (int netnode, int netconsole)
 	nodeingame[netnode] = false;
 	playeringame[netconsole] = false;
 	nodejustleft[netnode] = false;
-	playerswiping &= ~(1 << netconsole);
 
 	if (deathmatch)
 	{
@@ -2314,14 +2313,6 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 				Printf ("%s\n", *msg != '\0' ? msg : "Morph failed.");
 			}
 		}
-		break;
-
-	case DEM_WIPEON:
-		playerswiping |= 1 << player;
-		break;
-
-	case DEM_WIPEOFF:
-		playerswiping &= ~(1 << player);
 		break;
 
 	case DEM_ADDCONTROLLER:

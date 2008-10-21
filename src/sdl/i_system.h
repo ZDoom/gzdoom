@@ -56,8 +56,11 @@ extern int (*I_GetTime) (bool saveMS);
 // like I_GetTime, except it waits for a new tic before returning
 extern int (*I_WaitForTic) (int);
 
-int I_GetTimePolled (bool saveMS);
-int I_GetTimeFake (void);
+// Freezes tic counting temporarily. While frozen, calls to I_GetTime()
+// will always return the same value. This does not affect I_MSTime().
+// You must also not call I_WaitForTic() while freezing time, since the
+// tic will never arrive (unless it's the current one).
+extern void (*I_FreezeTime) (bool frozen);
 
 fixed_t I_GetTimeFrac (uint32 *ms);
 

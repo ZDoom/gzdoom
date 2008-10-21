@@ -58,7 +58,7 @@ void *MRegTail = 0;
 void *ARegTail __attribute__((section(AREG_SECTION))) = 0;
 void *CRegTail __attribute__((section(CREG_SECTION))) = 0;
 void *GRegTail __attribute__((section(GREG_SECTION))) = 0;
-void *MRegTail __attribute__((section(GREG_SECTION))) = 0;
+void *MRegTail __attribute__((section(MREG_SECTION))) = 0;
 
 #elif
 

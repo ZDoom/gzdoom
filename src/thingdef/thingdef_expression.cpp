@@ -51,6 +51,7 @@
 #include "thingdef_exp.h"
 #include "autosegs.h"
 
+extern int thingdef_terminate;
 int testglobalvar = 1337;	// just for having one global variable to test with
 DEFINE_GLOBAL_VARIABLE(testglobalvar)
 
@@ -221,6 +222,7 @@ void STACK_ARGS FScriptPosition::Message (int severity, const char *message, ...
 		break;
 
 	case MSG_ERROR:
+		thingdef_terminate++;
 		type = "error";
 		break;
 
@@ -239,6 +241,45 @@ void STACK_ARGS FScriptPosition::Message (int severity, const char *message, ...
 		FileName.GetChars(), ScriptLine, composed.GetChars());
 }
 
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+ExpVal FxExpression::EvalExpression (AActor *self)
+{
+	I_Error("Unresolved expression found");
+	ExpVal val;
+
+	val.Type = VAL_Int;
+	val.Int = 0;
+	return val;
+}
+
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+bool FxExpression::isConstant() const
+{
+	return false;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxExpression *FxExpression::Resolve(FCompileContext &ctx)
+{
+	return this;
+}
 
 //==========================================================================
 //
@@ -2112,4 +2153,256 @@ ExpVal FxArrayElement::EvalExpression (AActor *self)
 }
 
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
+FxFunctionCall::FxFunctionCall(FxExpression *self, FName methodname, FArgumentList *args, const FScriptPosition &pos)
+: FxExpression(pos)
+{
+	Self = self;
+	MethodName = methodname;
+	ArgList = args;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxFunctionCall::~FxFunctionCall()
+{
+	SAFE_DELETE(Self);
+	SAFE_DELETE(ArgList);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
+{
+	// There's currently only 2 global functions.
+	// This will have to change later!
+	if (MethodName == NAME_Sin || MethodName == NAME_Cos)
+	{
+		if (Self != NULL)
+		{
+			ScriptPosition.Message(MSG_ERROR, "Global variables cannot have a self pointer");
+			delete this;
+			return NULL;
+		}
+		FxExpression *x = new FxGlobalFunctionCall(MethodName, ArgList, ScriptPosition);
+		ArgList = NULL;
+		delete this;
+		return x->Resolve(ctx);
+	}
+
+	int min, max;
+	int special = P_FindLineSpecial(MethodName.GetChars(), &min, &max);
+	if (special > 0 && min >= 0)
+	{
+		int paramcount = ArgList? ArgList->Size() : 0;
+		if (paramcount < min)
+		{
+			ScriptPosition.Message(MSG_ERROR, "Not enough parameters for '%s' (expected %d, got %d)", 
+				MethodName.GetChars(), min, paramcount);
+			delete this;
+			return NULL;
+		}
+		else if (paramcount > max)
+		{
+			ScriptPosition.Message(MSG_ERROR, "too many parameters for '%s' (expected %d, got %d)", 
+				MethodName.GetChars(), max, paramcount);
+			delete this;
+			return NULL;
+		}
+		FxExpression *x = new FxActionSpecialCall(Self, special, ArgList, ScriptPosition);
+		ArgList = NULL;
+		delete this;
+		return x->Resolve(ctx);
+	}
+
+	ScriptPosition.Message(MSG_ERROR, "Call to unknown function '%s'", MethodName.GetChars());
+	delete this;
+	return NULL;
+}
+
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxActionSpecialCall::FxActionSpecialCall(FxExpression *self, int special, FArgumentList *args, const FScriptPosition &pos)
+: FxExpression(pos)
+{
+	Self = self;
+	Special = special;
+	ArgList = args;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxActionSpecialCall::~FxActionSpecialCall()
+{
+	SAFE_DELETE(Self);
+	SAFE_DELETE(ArgList);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxExpression *FxActionSpecialCall::Resolve(FCompileContext& ctx)
+{
+	CHECKRESOLVED();
+	bool failed = false;
+
+	if (ArgList != NULL)
+	{
+		for(unsigned i = 0; i < ArgList->Size(); i++)
+		{
+			(*ArgList)[i] = (*ArgList)[i]->Resolve(ctx);
+			if ((*ArgList)[i] == NULL) failed = true;
+			if ((*ArgList)[i]->ValueType != VAL_Int)
+			{
+				if (ctx.lax && ((*ArgList)[i]->ValueType == VAL_Float))
+				{
+					(*ArgList)[i] = new FxIntCast((*ArgList)[i]);
+				}
+				else
+				{
+					ScriptPosition.Message(MSG_ERROR, "Integer expected for parameter %d", i);
+					failed = true;
+				}
+			}
+		}
+		if (failed)
+		{
+			delete this;
+			return NULL;
+		}
+	}
+	ValueType = VAL_Int;
+	return this;
+}
+
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
+ExpVal FxActionSpecialCall::EvalExpression (AActor *self)
+{
+	int v[5] = {0,0,0,0,0};
+
+	if (Self != NULL)
+	{
+		self = Self->EvalExpression(self).GetPointer<AActor>();
+	}
+
+	if (ArgList != NULL)
+	{
+		for(unsigned i = 0; i < ArgList->Size(); i++)
+		{
+			v[i] = (*ArgList)[i]->EvalExpression(self).GetInt();
+		}
+	}
+	ExpVal ret;
+	ret.Type = VAL_Int;
+	ret.Int = LineSpecials[Special](NULL, self, false, v[0], v[1], v[2], v[3], v[4]);
+	return ret;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxGlobalFunctionCall::FxGlobalFunctionCall(FName fname, FArgumentList *args, const FScriptPosition &pos)
+: FxExpression(pos)
+{
+	Name = fname;
+	ArgList = args;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxGlobalFunctionCall::~FxGlobalFunctionCall()
+{
+	SAFE_DELETE(ArgList);
+}
+
+//==========================================================================
+//
+// // so far just a quick hack to handle sin and cos
+//
+//==========================================================================
+
+FxExpression *FxGlobalFunctionCall::Resolve(FCompileContext& ctx)
+{
+	CHECKRESOLVED();
+
+	if (ArgList == NULL || ArgList->Size() != 1)
+	{
+		ScriptPosition.Message(MSG_ERROR, "%s only has one parameter", Name.GetChars());
+		delete this;
+		return NULL;
+	}
+
+	(*ArgList)[0] = (*ArgList)[0]->Resolve(ctx);
+	if ((*ArgList)[0] == NULL)
+	{
+		delete this;
+		return NULL;
+	}
+
+	if (!(*ArgList)[0]->ValueType.isNumeric())
+	{
+		ScriptPosition.Message(MSG_ERROR, "numeric value expected for parameter");
+		delete this;
+		return NULL;
+	}
+	ValueType = VAL_Float;
+	return this;
+}
+
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
+ExpVal FxGlobalFunctionCall::EvalExpression (AActor *self)
+{
+	double v = (*ArgList)[0]->EvalExpression(self).GetFloat();
+	ExpVal ret;
+	ret.Type = VAL_Float;
+
+	// shall we use the CRT's sin and cos functions?
+	angle_t angle = angle_t(v * ANGLE_90/90.);
+	if (Name == NAME_Sin) ret.Float = FIXED2FLOAT (finesine[angle>>ANGLETOFINESHIFT]);
+	else ret.Float = FIXED2FLOAT (finecosine[angle>>ANGLETOFINESHIFT]);
+	return ret;
+}

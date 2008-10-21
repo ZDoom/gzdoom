@@ -133,24 +133,6 @@ struct FCompileContext
 //
 //==========================================================================
 
-enum ExpOp
-{
-	EX_NOP,
-
-	EX_Var,
-
-	EX_Sin,			// sin (angle)
-	EX_Cos,			// cos (angle)
-	EX_ActionSpecial,
-	EX_Right,
-};
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
 struct ExpVal
 {
 	ExpValType Type;
@@ -192,34 +174,11 @@ struct ExpVal
 
 struct FxExpression
 {
-	FxExpression ()
-	{
-		isresolved = false;
-		ValueType = VAL_Unknown;
-		Type = EX_NOP;
-		Value.Type = VAL_Int;
-		Value.Int = 0;
-		for (int i = 0; i < 2; i++)
-			Children[i] = NULL;
-	}
-	virtual ~FxExpression ()
-	{
-		for (int i = 0; i < 2; i++)
-		{
-			if (Children[i])
-			{
-				delete Children[i];
-			}
-		}
-	}
-
 protected:
 	FxExpression(const FScriptPosition &pos)
 	{
 		isresolved = false;
 		ScriptPosition = pos;
-		for (int i = 0; i < 2; i++)
-			Children[i] = NULL;
 	}
 public:
 	virtual FxExpression *Resolve(FCompileContext &ctx);
@@ -232,10 +191,6 @@ public:
 	virtual ExpVal EvalExpression (AActor *self);
 	virtual bool isConstant() const;
 	virtual void RequestAddress();
-
-	int Type;
-	ExpVal Value;
-	FxExpression *Children[2];
 
 	FScriptPosition ScriptPosition;
 	FExpressionType ValueType;
@@ -683,6 +638,68 @@ public:
 	~FxArrayElement();
 	FxExpression *Resolve(FCompileContext&);
 	//void RequestAddress();
+	ExpVal EvalExpression (AActor *self);
+};
+
+
+//==========================================================================
+//
+//	FxFunctionCall
+//
+//==========================================================================
+
+typedef TDeletingArray<FxExpression*> FArgumentList;
+
+class FxFunctionCall : public FxExpression
+{
+	FxExpression *Self;
+	FName MethodName;
+	FArgumentList *ArgList;
+
+public:
+
+	FxFunctionCall(FxExpression *self, FName methodname, FArgumentList *args, const FScriptPosition &pos);
+	~FxFunctionCall();
+	FxExpression *Resolve(FCompileContext&);
+};
+
+
+//==========================================================================
+//
+//	FxActionSpecialCall
+//
+//==========================================================================
+
+class FxActionSpecialCall : public FxExpression
+{
+	FxExpression *Self;
+	int Special;
+	FArgumentList *ArgList;
+
+public:
+
+	FxActionSpecialCall(FxExpression *self, int special, FArgumentList *args, const FScriptPosition &pos);
+	~FxActionSpecialCall();
+	FxExpression *Resolve(FCompileContext&);
+	ExpVal EvalExpression (AActor *self);
+};
+
+//==========================================================================
+//
+//	FxGlobalFunctionCall
+//
+//==========================================================================
+
+class FxGlobalFunctionCall : public FxExpression
+{
+	FName Name;
+	FArgumentList *ArgList;
+
+public:
+
+	FxGlobalFunctionCall(FName fname, FArgumentList *args, const FScriptPosition &pos);
+	~FxGlobalFunctionCall();
+	FxExpression *Resolve(FCompileContext&);
 	ExpVal EvalExpression (AActor *self);
 };
 

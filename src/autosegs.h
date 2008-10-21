@@ -40,7 +40,7 @@
 #define AREG_SECTION "__DATA,areg"
 #define CREG_SECTION "__DATA,creg"
 #define GREG_SECTION "__DATA,greg"
-#define GREG_SECTION "__DATA,mreg"
+#define MREG_SECTION "__DATA,mreg"
 #else
 #define AREG_SECTION "areg"
 #define CREG_SECTION "creg"

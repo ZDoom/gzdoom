@@ -43,6 +43,7 @@
 #include "s_sound.h"
 #include "cmdlib.h"
 #include "thingdef.h"
+#include "i_system.h"
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -53,6 +54,8 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def);
 
 // STATIC FUNCTION PROTOTYPES --------------------------------------------
 PSymbolTable		 GlobalSymbols;
+
+int thingdef_terminate;
 
 //==========================================================================
 //
@@ -153,6 +156,10 @@ void LoadDecorations ()
 	{
 		FScanner sc(lump);
 		ParseDecorate (sc);
+	}
+	if (thingdef_terminate)
+	{
+		I_Error("%d errors found", thingdef_terminate);
 	}
 	FinishThingdef();
 }

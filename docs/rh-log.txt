@@ -1,3 +1,8 @@
+October 21, 2008  (Changes by Graf Zahl)
+- Added a proper function parser to the expression evaluator and converted
+  sin/cos and action specials to use it. The old evaluator is gone now.
+- fixed some GCC problems with autosegs.
+
 October 20, 2008
 - Game time is now frozen during screen wipes. This obsoletes the DEM_WIPEON
   and DEM_WIPEOFF commands. Fixes multimap demos desyncing when played back

@@ -1,7 +1,7 @@
 /*
 ** thingdef_exp.cpp
 **
-** Expression parsing / runtime evaluating support
+** Expression parsing for DECORATE
 **
 **---------------------------------------------------------------------------
 ** Copyright 2005 Jan Cholasta
@@ -410,69 +410,27 @@ static FxExpression *ParseExpression0 (FScanner &sc, const PClass *cls)
 		default:
 			if (sc.CheckToken('('))
 			{
-				if (identifier == NAME_Sin)
+				FArgumentList *args = NULL;
+				try
 				{
-					FxExpression *data = new FxExpression;
-					data->Type = EX_Sin;
-					data->ValueType = VAL_Float;
-
-					data->Children[0] = ParseExpressionM (sc, cls);
-
-					sc.MustGetToken(')');
-					return data;
-				}
-				else if (identifier == NAME_Cos)
-				{
-					FxExpression *data = new FxExpression;
-					data->Type = EX_Cos;
-					data->ValueType = VAL_Float;
-
-					data->Children[0] = ParseExpressionM (sc, cls);
-
-					sc.MustGetToken(')');
-					return data;
-				}
-				else
-				{
-					int specnum, min_args, max_args;
-
-					// Check if this is an action special
-					specnum = P_FindLineSpecial (sc.String, &min_args, &max_args);
-					if (specnum != 0 && min_args >= 0)
+					if (!sc.CheckToken(')'))
 					{
-						int i;
-
-						FxExpression *data = new FxExpression, **left;
-						data->Type = EX_ActionSpecial;
-						data->Value.Int = specnum;
-						data->ValueType = VAL_Int;
-
-						data->Children[0] = ParseExpressionM (sc, cls);
-						left = &data->Children[1];
-
-						for (i = 1; i < 5 && sc.CheckToken(','); ++i)
+						args = new FArgumentList;
+						do
 						{
-							FxExpression *right = new FxExpression;
-							right->Type = EX_Right;
-							right->Children[0] = ParseExpressionM (sc, cls);
-							*left = right;
-							left = &right->Children[1];
+							args->Push(ParseExpressionM (sc, cls));
+
 						}
-						*left = NULL;
+						while (sc.CheckToken(','));
 						sc.MustGetToken(')');
-						if (i < min_args)
-							sc.ScriptError ("Not enough arguments to action special");
-						if (i > max_args)
-							sc.ScriptError ("Too many arguments to action special");
-
-						return data;
 					}
-					else
-					{
-						sc.ScriptError("Unknown function '%s'", identifier.GetChars());
-					}
+					return new FxFunctionCall(NULL, identifier, args, sc);
 				}
-
+				catch (...)
+				{
+					delete args;
+					throw;
+				}
 			}	
 			else
 			{
@@ -488,85 +446,4 @@ static FxExpression *ParseExpression0 (FScanner &sc, const PClass *cls)
 	return NULL;
 }
 
-
-ExpVal FxExpression::EvalExpression (AActor *self)
-{
-	ExpVal val;
-
-	val.Type = VAL_Int;		// Placate GCC
-
-	switch (Type)
-	{
-	case EX_NOP:
-		assert (Type != EX_NOP);
-		val = Value;
-		break;
-	case EX_Sin:
-		{
-			ExpVal a = Children[0]->EvalExpression (self);
-			angle_t angle = (a.Type == VAL_Int) ? (a.Int * ANGLE_1) : angle_t(a.Float * ANGLE_1);
-
-			val.Type = VAL_Float;
-			val.Float = FIXED2FLOAT (finesine[angle>>ANGLETOFINESHIFT]);
-		}
-		break;
-
-	case EX_Cos:
-		{
-			ExpVal a = Children[0]->EvalExpression (self);
-			angle_t angle = (a.Type == VAL_Int) ? (a.Int * ANGLE_1) : angle_t(a.Float * ANGLE_1);
-
-			val.Type = VAL_Float;
-			val.Float = FIXED2FLOAT (finecosine[angle>>ANGLETOFINESHIFT]);
-		}
-		break;
-
-	case EX_ActionSpecial:
-		{
-			int parms[5] = { 0, 0, 0, 0 };
-			int i = 0;
-			FxExpression *parm = this;
-			
-			while (parm != NULL && i < 5)
-			{
-				ExpVal val = parm->Children[0]->EvalExpression (self);
-				if (val.Type == VAL_Int)
-				{
-					parms[i] = val.Int;
-				}
-				else
-				{
-					parms[i] = (int)val.Float;
-				}
-				i++;
-				parm = parm->Children[1];
-			}
-
-			val.Type = VAL_Int;
-			val.Int = LineSpecials[Value.Int] (NULL, self, false,
-				parms[0], parms[1], parms[2], parms[3], parms[4]);
-		}
-		break;
-
-	case EX_Right:
-		// This should never be a top-level expression.
-		assert (Type != EX_Right);
-		break;
-	}
-
-	return val;
-}
-
-
-bool FxExpression::isConstant() const
-{
-	return false;
-}
-
-FxExpression *FxExpression::Resolve(FCompileContext &ctx)
-{
-	if (Children[0]) Children[0] = Children[0]->Resolve(ctx);
-	if (Children[1]) Children[1] = Children[1]->Resolve(ctx);
-	return this;
-}
 

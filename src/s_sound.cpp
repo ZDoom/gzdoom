@@ -318,10 +318,14 @@ void S_Shutdown ()
 {
 	FSoundChan *chan, *next;
 
-	while (Channels != NULL)
+	chan = Channels;
+	while (chan != NULL)
 	{
-		S_StopChannel(Channels);
+		next = chan->NextChan;
+		S_StopChannel(chan);
+		chan = next;
 	}
+
 	GSnd->UpdateSounds();
 	for (chan = FreeChannels; chan != NULL; chan = next)
 	{
@@ -1441,9 +1445,13 @@ void S_StopSound (const FPolyObj *poly, int channel)
 void S_StopAllChannels ()
 {
 	SN_StopAllSequences();
-	while (Channels != NULL)
+
+	FSoundChan *chan = Channels;
+	while (chan != NULL)
 	{
-		S_StopChannel(Channels);
+		FSoundChan *next = chan->NextChan;
+		S_StopChannel(chan);
+		chan = next;
 	}
 	GSnd->UpdateSounds();
 }

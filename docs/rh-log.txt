@@ -1,7 +1,7 @@
-October 21, 2008  (Changes by Graf Zahl)
-- Added a proper function parser to the expression evaluator and converted
-  sin/cos and action specials to use it. The old evaluator is gone now.
-- fixed some GCC problems with autosegs.
+October 23, 2008  (Changes by Graf Zahl)
+- Fixed: The high level sound code must not rely on FMod immediately returning 
+  the sound channel data when a sound is being stopped. This caused
+  an endless loop when changing levels with Strife's Flamethrower active.
 
 October 20, 2008
 - Game time is now frozen during screen wipes. This obsoletes the DEM_WIPEON

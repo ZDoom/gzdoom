@@ -81,6 +81,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_StaffAttack)
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return;
 	}
+	if (puff == NULL) puff = PClass::FindClass(NAME_BulletPuff);	// just to be sure
 	angle = self->angle;
 	angle += pr_sap.Random2() << 18;
 	slope = P_AimLineAttack (self, angle, MELEERANGE, &linetarget);

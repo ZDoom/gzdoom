@@ -1,7 +1,25 @@
+October 25, 2008  (Changes by Graf Zahl)
+- Added NULL checks to all places where class names are passed as DECORATE
+  parameters.
+- All DECORATE parameters are passed as expressions now. This change allows
+  for compile time checks of all class names being used in DECORATE so many
+  incorrect definitions may output warnings now.
+
 October 23, 2008  (Changes by Graf Zahl)
+- Changed: S_StopChannel now resets the actor's sound flags. The previous bug
+  made me think that delaying this until FMod calls the end of sound callback 
+  may simply be too late.
 - Fixed: The high level sound code must not rely on FMod immediately returning 
   the sound channel data when a sound is being stopped. This caused
   an endless loop when changing levels with Strife's Flamethrower active.
+
+October 22, 2008  (Changes by Graf Zahl)
+- Changed DECORATE sound and color parameters to use expressions.
+
+October 21, 2008  (Changes by Graf Zahl)
+- Added a proper function parser to the expression evaluator and converted
+  sin/cos and action specials to use it. The old evaluator is gone now.
+- fixed some GCC problems with autosegs.
 
 October 20, 2008
 - Game time is now frozen during screen wipes. This obsoletes the DEM_WIPEON

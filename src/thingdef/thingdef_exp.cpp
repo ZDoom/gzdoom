@@ -84,11 +84,6 @@ FxExpression *ParseExpression (FScanner &sc, PClass *cls)
 	return data;
 }
 
-int ParseExpression (FScanner &sc, bool _not, PClass *cls)
-{
-	return AddExpression(ParseExpression (sc, cls));
-}
-
 static FxExpression *ParseExpressionM (FScanner &sc, const PClass *cls)
 {
 	FxExpression *condition = ParseExpressionL (sc, cls);

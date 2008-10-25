@@ -52,7 +52,112 @@
 #include "i_system.h"
 #include "thingdef_exp.h"
 #include "w_wad.h"
+#include "v_video.h"
 
+void ParseOldDecoration(FScanner &sc, EDefinitionType def);
+
+//==========================================================================
+//
+// ParseParameter
+//
+// Parses aparameter - either a default in a function declaration 
+// or an argument in a function call.
+//
+//==========================================================================
+
+FxExpression *ParseParameter(FScanner &sc, PClass *cls, char type, bool constant)
+{
+	FxExpression *x = NULL;
+	int v;
+
+	switch(type)
+	{
+	case 'S':
+	case 's':		// Sound name
+		sc.MustGetString();
+		x = new FxConstant(FSoundID(sc.String), sc);
+		break;
+
+	case 'M':
+	case 'm':		// Actor name
+		sc.SetEscape(true);
+		sc.MustGetString();
+		sc.SetEscape(false);
+		x = new FxClassTypeCast(RUNTIME_CLASS(AActor), new FxConstant(FName(sc.String), sc));
+		break;
+
+	case 'T':
+	case 't':		// String
+		sc.SetEscape(true);
+		sc.MustGetString();
+		sc.SetEscape(false);
+		x = new FxConstant(sc.String[0]? FName(sc.String) : NAME_None, sc);
+		break;
+
+	case 'C':
+	case 'c':		// Color
+		sc.MustGetString ();
+		if (sc.Compare("none"))
+		{
+			v = -1;
+		}
+		else if (sc.Compare(""))
+		{
+			v = 0;
+		}
+		else
+		{
+			int c = V_GetColor (NULL, sc.String);
+			// 0 needs to be the default so we have to mark the color.
+			v = MAKEARGB(1, RPART(c), GPART(c), BPART(c));
+		}
+		{
+			ExpVal val;
+			val.Type = VAL_Color;
+			val.Int = v;
+			x = new FxConstant(val, sc);
+			break;
+		}
+
+	case 'L':
+	case 'l':
+	{
+		// This forces quotation marks around the state name.
+		sc.MustGetToken(TK_StringConst);
+		if (sc.String[0] == 0 || sc.Compare("None"))
+		{
+			x = new FxConstant((FState*)NULL, sc);
+		}
+		else if (sc.Compare("*"))
+		{
+			if (constant) 
+			{
+				x = new FxConstant((FState*)(intptr_t)-1, sc);
+			}
+			else sc.ScriptError("Invalid state name '*'");
+		}
+		else
+		{
+			x = new FxMultiNameState(sc.String, sc);
+		}
+		break;
+	}
+
+	case 'X':
+	case 'x':
+		x = ParseExpression (sc, cls);
+		if (constant && !x->isConstant())
+		{
+			sc.ScriptError("Default parameter must be constant.");
+		}
+		break;
+
+	default:
+		assert(false);
+		return NULL;
+	}
+	return x;
+}
 
 //==========================================================================
 //
@@ -62,7 +167,7 @@
 //
 //==========================================================================
 
-void ParseConstant (FScanner &sc, PSymbolTable * symt, PClass *cls)
+static void ParseConstant (FScanner &sc, PSymbolTable * symt, PClass *cls)
 {
 	// Read the type and make sure it's int or float.
 	if (sc.CheckToken(TK_Int) || sc.CheckToken(TK_Float))
@@ -108,7 +213,7 @@ void ParseConstant (FScanner &sc, PSymbolTable * symt, PClass *cls)
 //
 //==========================================================================
 
-void ParseEnum (FScanner &sc, PSymbolTable *symt, PClass *cls)
+static void ParseEnum (FScanner &sc, PSymbolTable *symt, PClass *cls)
 {
 	int currvalue = 0;
 
@@ -148,7 +253,7 @@ void ParseEnum (FScanner &sc, PSymbolTable *symt, PClass *cls)
 //
 //==========================================================================
 
-void ParseVariable (FScanner &sc, PSymbolTable * symt, PClass *cls)
+static void ParseVariable (FScanner &sc, PSymbolTable * symt, PClass *cls)
 {
 	FExpressionType valuetype;
 
@@ -227,7 +332,7 @@ void ParseVariable (FScanner &sc, PSymbolTable * symt, PClass *cls)
 // Parses a flag name
 //
 //==========================================================================
-void ParseActorFlag (FScanner &sc, Baggage &bag, int mod)
+static void ParseActorFlag (FScanner &sc, Baggage &bag, int mod)
 {
 	sc.MustGetString ();
 
@@ -335,7 +440,7 @@ static int ParseMorphStyle (FScanner &sc)
 //
 //==========================================================================
 
-FState *CheckState(FScanner &sc, PClass *type)
+static FState *CheckState(FScanner &sc, PClass *type)
 {
 	int v=0;
 
@@ -388,7 +493,7 @@ FState *CheckState(FScanner &sc, PClass *type)
 //
 //==========================================================================
 
-bool ParsePropertyParams(FScanner &sc, FPropertyInfo *prop, AActor *defaults, Baggage &bag)
+static bool ParsePropertyParams(FScanner &sc, FPropertyInfo *prop, AActor *defaults, Baggage &bag)
 {
 	static TArray<FPropParam> params;
 	static TArray<FString> strings;
@@ -417,7 +522,8 @@ bool ParsePropertyParams(FScanner &sc, FPropertyInfo *prop, AActor *defaults, Ba
 				
 				if (sc.CheckString ("("))
 				{
-					conv.i = 0x40000000 | ParseExpression (sc, false, bag.Info->Class);
+					FxExpression *x = ParseExpression(sc, bag.Info->Class);
+					conv.i = 0x40000000 | StateParams.Add(x, bag.Info->Class, false);
 					params.Push(conv);
 					sc.MustGetStringName(")");
 					break;
@@ -564,7 +670,7 @@ bool ParsePropertyParams(FScanner &sc, FPropertyInfo *prop, AActor *defaults, Ba
 //
 //==========================================================================
 
-void ParseActorProperty(FScanner &sc, Baggage &bag)
+static void ParseActorProperty(FScanner &sc, Baggage &bag)
 {
 	static const char *statenames[] = {
 		"Spawn", "See", "Melee", "Missile", "Pain", "Death", "XDeath", "Burn", 
@@ -615,44 +721,372 @@ void ParseActorProperty(FScanner &sc, Baggage &bag)
 	}
 }
 
-
 //==========================================================================
 //
-// Finalizes an actor definition
+// ActorActionDef
+//
+// Parses an action function definition. A lot of this is essentially
+// documentation in the declaration for when I have a proper language
+// ready.
 //
 //==========================================================================
 
-void FinishActor(FScanner &sc, FActorInfo *info, Baggage &bag)
+static void ParseActionDef (FScanner &sc, PClass *cls)
 {
-	AActor *defaults = (AActor*)info->Class->Defaults;
+	enum
+	{
+		OPTIONAL = 1
+	};
+
+	AFuncDesc *afd;
+	FName funcname;
+	FString args;
+	TArray<FxExpression *> DefaultParams;
+	bool hasdefaults = false;
+	
+	if (sc.LumpNum == -1 || Wads.GetLumpFile(sc.LumpNum) > 0)
+	{
+		sc.ScriptError ("action functions can only be imported by internal class and actor definitions!");
+	}
+
+	sc.MustGetToken(TK_Native);
+	sc.MustGetToken(TK_Identifier);
+	funcname = sc.String;
+	afd = FindFunction(sc.String);
+	if (afd == NULL)
+	{
+		sc.ScriptError ("The function '%s' has not been exported from the executable.", sc.String);
+	}
+	sc.MustGetToken('(');
+	if (!sc.CheckToken(')'))
+	{
+		while (sc.TokenType != ')')
+		{
+			int flags = 0;
+			char type = '@';
+
+			// Retrieve flags before type name
+			for (;;)
+			{
+				if (sc.CheckToken(TK_Coerce) || sc.CheckToken(TK_Native))
+				{
+				}
+				else
+				{
+					break;
+				}
+			}
+			// Read the variable type
+			sc.MustGetAnyToken();
+			switch (sc.TokenType)
+			{
+			case TK_Bool:
+			case TK_Int:
+			case TK_Float:
+				type = 'x';
+				break;
+
+			case TK_Sound:		type = 's';		break;
+			case TK_String:		type = 't';		break;
+			case TK_Name:		type = 't';		break;
+			case TK_State:		type = 'l';		break;
+			case TK_Color:		type = 'c';		break;
+			case TK_Class:
+				sc.MustGetToken('<');
+				sc.MustGetToken(TK_Identifier);	// Skip class name, since the parser doesn't care
+				sc.MustGetToken('>');
+				type = 'm';
+				break;
+			case TK_Ellipsis:
+				type = '+';
+				sc.MustGetToken(')');
+				sc.UnGet();
+				break;
+			default:
+				sc.ScriptError ("Unknown variable type %s", sc.TokenName(sc.TokenType, sc.String).GetChars());
+				break;
+			}
+			// Read the optional variable name
+			if (!sc.CheckToken(',') && !sc.CheckToken(')'))
+			{
+				sc.MustGetToken(TK_Identifier);
+			}
+			else
+			{
+				sc.UnGet();
+			}
+
+			FxExpression *def;
+			if (sc.CheckToken('='))
+			{
+				hasdefaults = true;
+				flags |= OPTIONAL;
+				def = ParseParameter(sc, cls, type, true);
+			}
+			else
+			{
+				def = NULL;
+			}
+			DefaultParams.Push(def);
+
+			if (!(flags & OPTIONAL) && type != '+')
+			{
+				type -= 'a' - 'A';
+			}
+			args += type;
+			sc.MustGetAnyToken();
+			if (sc.TokenType != ',' && sc.TokenType != ')')
+			{
+				sc.ScriptError ("Expected ',' or ')' but got %s instead", sc.TokenName(sc.TokenType, sc.String).GetChars());
+			}
+		}
+	}
+	sc.MustGetToken(';');
+	PSymbolActionFunction *sym = new PSymbolActionFunction(funcname);
+	sym->Arguments = args;
+	sym->Function = afd->Function;
+	if (hasdefaults)
+	{
+		sym->defaultparameterindex = StateParams.Size();
+		for(unsigned int i = 0; i < DefaultParams.Size(); i++)
+		{
+			StateParams.Add(DefaultParams[i], cls, true);
+		}
+	}
+	else
+	{
+		sym->defaultparameterindex = -1;
+	}
+	if (cls->Symbols.AddSymbol (sym) == NULL)
+	{
+		delete sym;
+		sc.ScriptError ("'%s' is already defined in class '%s'.",
+			funcname.GetChars(), cls->TypeName.GetChars());
+	}
+}
+
+//==========================================================================
+//
+// Starts a new actor definition
+//
+//==========================================================================
+static FActorInfo *ParseActorHeader(FScanner &sc, Baggage *bag)
+{
+	FName typeName;
+	FName parentName;
+	FName replaceName;
+	bool native = false;
+	int DoomEdNum = -1;
+
+	// Get actor name
+	sc.MustGetString();
+	
+	char *colon = strchr(sc.String, ':');
+	if (colon != NULL)
+	{
+		*colon++ = 0;
+	}
+
+	typeName = sc.String;
+
+	// Do some tweaking so that a definition like 'Actor:Parent' which is read as a single token is recognized as well
+	// without having resort to C-mode (which disallows periods in actor names.)
+	if (colon == NULL)
+	{
+		sc.MustGetString ();
+		if (sc.String[0]==':')
+		{
+			colon = sc.String + 1;
+		}
+	}
+		
+	if (colon != NULL)
+	{
+		if (colon[0] == 0)
+		{
+			sc.MustGetString ();
+			colon = sc.String;
+		}
+	}
+
+	if (colon == NULL)
+	{
+		sc.UnGet();
+	}
+
+	parentName = colon;
+
+	// Check for "replaces"
+	if (sc.CheckString ("replaces"))
+	{
+		// Get actor name
+		sc.MustGetString ();
+		replaceName = sc.String;
+	}
+
+	// Now, after the actor names have been parsed, it is time to switch to C-mode 
+	// for the rest of the actor definition.
+	sc.SetCMode (true);
+	if (sc.CheckNumber()) 
+	{
+		if (sc.Number>=-1 && sc.Number<32768) DoomEdNum = sc.Number;
+		else sc.ScriptError ("DoomEdNum must be in the range [-1,32767]");
+	}
+
+	if (sc.CheckString("native"))
+	{
+		native = true;
+	}
 
 	try
 	{
-		bag.statedef.FinishStates (info, defaults, bag.StateArray);
+		FActorInfo *info =  CreateNewActor(sc, typeName, parentName, replaceName, DoomEdNum, native);
+		ResetBaggage (bag, info->Class->ParentClass);
+		bag->Info = info;
+		bag->Lumpnum = sc.LumpNum;
+#ifdef _DEBUG
+		bag->ClassName = typeName;
+#endif
+		return info;
 	}
 	catch (CRecoverableError &err)
 	{
-		sc.ScriptError(err.GetMessage());
+		sc.ScriptError("%s", err.GetMessage());
+		return NULL;
 	}
-	bag.statedef.InstallStates (info, defaults);
-	bag.StateArray.Clear ();
-	if (bag.DropItemSet)
+}
+
+//==========================================================================
+//
+// Reads an actor definition
+//
+//==========================================================================
+static void ParseActor(FScanner &sc)
+{
+	FActorInfo * info=NULL;
+	Baggage bag;
+
+	info = ParseActorHeader(sc, &bag);
+	sc.MustGetToken('{');
+	while (sc.MustGetAnyToken(), sc.TokenType != '}')
 	{
-		if (bag.DropItemList == NULL)
+		switch (sc.TokenType)
 		{
-			if (info->Class->Meta.GetMetaInt (ACMETA_DropItems) != 0)
+		case TK_Action:
+			ParseActionDef (sc, info->Class);
+			break;
+
+		case TK_Const:
+			ParseConstant (sc, &info->Class->Symbols, info->Class);
+			break;
+
+		case TK_Enum:
+			ParseEnum (sc, &info->Class->Symbols, info->Class);
+			break;
+
+		case TK_Native:
+			ParseVariable (sc, &info->Class->Symbols, info->Class);
+			break;
+
+		case TK_Identifier:
+			// other identifier related checks here
+		case TK_Projectile:	// special case: both keyword and property name
+			ParseActorProperty(sc, bag);
+			break;
+
+		case '+':
+		case '-':
+			ParseActorFlag(sc, bag, sc.TokenType);
+			break;
+
+		default:
+			sc.ScriptError("Unexpected '%s' in definition of '%s'", sc.String, bag.Info->Class->TypeName.GetChars());
+			break;
+		}
+	}
+	FinishActor(sc, info, bag);
+	sc.SetCMode (false);
+}
+
+
+
+//==========================================================================
+//
+// ParseDecorate
+//
+// Parses a single DECORATE lump
+//
+//==========================================================================
+
+void ParseDecorate (FScanner &sc)
+{
+	// Get actor class name.
+	for(;;)
+	{
+		FScanner::SavedPos pos = sc.SavePos();
+		if (!sc.GetToken ())
+		{
+			return;
+		}
+		switch (sc.TokenType)
+		{
+		case TK_Include:
+		{
+			sc.MustGetString();
+			FScanner newscanner;
+			newscanner.Open(sc.String);
+			ParseDecorate(newscanner);
+			break;
+		}
+
+		case TK_Const:
+			ParseConstant (sc, &GlobalSymbols, NULL);
+			break;
+
+		case TK_Enum:
+			ParseEnum (sc, &GlobalSymbols, NULL);
+			break;
+
+		case TK_Pickup:
+			ParseOldDecoration (sc, DEF_Pickup);
+			break;
+
+		case TK_Breakable:
+			ParseOldDecoration (sc, DEF_BreakableDecoration);
+			break;
+
+		case TK_Projectile:
+			ParseOldDecoration (sc, DEF_Projectile);
+			break;
+
+		case TK_Native:
+			ParseVariable(sc, &GlobalSymbols, NULL);
+			break;
+
+		case ';':
+			// ';' is the start of a comment in the non-cmode parser which
+			// is used to parse parts of the DECORATE lump. If we don't add 
+			// a check here the user will only get weird non-informative
+			// error messages if a semicolon is found.
+			sc.ScriptError("Unexpected ';'");
+			break;
+
+		case TK_Identifier:
+			// 'ACTOR' cannot be a keyword because it is also needed as a class identifier
+			// so let's do a special case for this.
+			if (sc.Compare("ACTOR"))
 			{
-				info->Class->Meta.SetMetaInt (ACMETA_DropItems, 0);
+				ParseActor (sc);
+				break;
 			}
+
+		default:
+			// without the option of game filters following, anything but an opening brace
+			// here means a syntax error.
+			sc.MustGetStringName("{");
+			sc.RestorePos(pos);
+			ParseOldDecoration(sc, DEF_Decoration);
+			break;
 		}
-		else
-		{
-			info->Class->Meta.SetMetaInt (ACMETA_DropItems,
-				StoreDropItemChain(bag.DropItemList));
-		}
-	}
-	if (info->Class->IsDescendantOf (RUNTIME_CLASS(AInventory)))
-	{
-		defaults->flags |= MF_SPECIAL;
 	}
 }

@@ -56,65 +56,11 @@ extern PSymbolTable		 GlobalSymbols;
 //
 //==========================================================================
 
-enum
-{
-	MSG_WARNING,
-	MSG_ERROR,
-	MSG_DEBUG,
-	MSG_LOG,
-	MSG_DEBUGLOG
-};
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-struct FScriptPosition
-{
-	FString FileName;
-	int ScriptLine;
-
-	FScriptPosition()
-	{
-		ScriptLine=0;
-	}
-	FScriptPosition(const FScriptPosition &other)
-	{
-		FileName = other.FileName;
-		ScriptLine = other.ScriptLine;
-	}
-	FScriptPosition(FString fname, int line)
-	{
-		FileName = fname;
-		ScriptLine = line;
-	}
-	FScriptPosition(FScanner &sc)
-	{
-		FileName = sc.ScriptName;
-		ScriptLine = sc.GetMessageLine();
-	}
-	FScriptPosition &operator=(const FScriptPosition &other)
-	{
-		FileName = other.FileName;
-		ScriptLine = other.ScriptLine;
-		return *this;
-	}
-
-	void Message(int severity, const char *message,...) const;
-};
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
 struct FCompileContext
 {
 	const PClass *cls;
 	bool lax;
+	bool isconst;
 
 
 	PSymbol *FindInClass(FName identifier)
@@ -143,24 +89,49 @@ struct ExpVal
 		void *pointer;
 	};
 
-	int GetInt()
+	int GetInt() const
 	{
 		return Type == VAL_Int? Int : Type == VAL_Float? int(Float) : 0;
 	}
 
-	double GetFloat()
+	double GetFloat() const
 	{
 		return Type == VAL_Int? double(Int) : Type == VAL_Float? Float : 0;
 	}
 
-	bool GetBool()
+	bool GetBool() const
 	{
-		return Type == VAL_Int? !!Int : Type == VAL_Float? Float!=0. : false;
+		return (Type == VAL_Int || Type == VAL_Sound) ? !!Int : Type == VAL_Float? Float!=0. : false;
 	}
 	
-	template<class T> T *GetPointer()
+	template<class T> T *GetPointer() const
 	{
 		return Type == VAL_Object || Type == VAL_Pointer? (T*)pointer : NULL;
+	}
+
+	FSoundID GetSoundID() const
+	{
+		return Type == VAL_Sound? Int : 0;
+	}
+
+	int GetColor() const
+	{
+		return Type == VAL_Color? Int : 0;
+	}
+
+	FName GetName() const
+	{
+		return Type == VAL_Name? ENamedName(Int) : NAME_None;
+	}
+	
+	FState *GetState() const
+	{
+		return Type == VAL_State? (FState*)pointer : NULL;
+	}
+
+	const PClass *GetClass() const
+	{
+		return Type == VAL_Class? (const PClass *)pointer : NULL;
 	}
 
 };
@@ -172,7 +143,7 @@ struct ExpVal
 //
 //==========================================================================
 
-struct FxExpression
+class FxExpression
 {
 protected:
 	FxExpression(const FScriptPosition &pos)
@@ -181,12 +152,9 @@ protected:
 		ScriptPosition = pos;
 	}
 public:
+	virtual ~FxExpression() {}
 	virtual FxExpression *Resolve(FCompileContext &ctx);
-	FxExpression *ResolveAsBoolean(FCompileContext &ctx)
-	{
-		// This will need more handling if other types than Int and Float are added
-		return Resolve(ctx);
-	}
+	FxExpression *ResolveAsBoolean(FCompileContext &ctx);
 	
 	virtual ExpVal EvalExpression (AActor *self);
 	virtual bool isConstant() const;
@@ -194,7 +162,7 @@ public:
 
 	FScriptPosition ScriptPosition;
 	FExpressionType ValueType;
-protected:
+
 	bool isresolved;
 };
 
@@ -263,18 +231,50 @@ public:
 	{
 		ValueType = value.Type = VAL_Int;
 		value.Int = val;
+		isresolved = true;
 	}
 
 	FxConstant(double val, const FScriptPosition &pos) : FxExpression(pos)
 	{
 		ValueType = value.Type = VAL_Float;
 		value.Float = val;
+		isresolved = true;
+	}
+
+	FxConstant(FSoundID val, const FScriptPosition &pos) : FxExpression(pos)
+	{
+		ValueType = value.Type = VAL_Sound;
+		value.Int = val;
+		isresolved = true;
+	}
+
+	FxConstant(FName val, const FScriptPosition &pos) : FxExpression(pos)
+	{
+		ValueType = value.Type = VAL_Name;
+		value.Int = val;
+		isresolved = true;
 	}
 
 	FxConstant(ExpVal cv, const FScriptPosition &pos) : FxExpression(pos)
 	{
 		value = cv;
 		ValueType = cv.Type;
+		isresolved = true;
+	}
+	
+	FxConstant(const PClass *val, const FScriptPosition &pos) : FxExpression(pos)
+	{
+		value.pointer = (void*)val;
+		ValueType = val;
+		value.Type = VAL_Class;
+		isresolved = true;
+	}
+
+	FxConstant(FState *state, const FScriptPosition &pos) : FxExpression(pos)
+	{
+		value.pointer = state;
+		ValueType = value.Type = VAL_State;
+		isresolved = true;
 	}
 	
 	static FxExpression *MakeConstant(PSymbol *sym, const FScriptPosition &pos);
@@ -704,10 +704,64 @@ public:
 };
 
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+class FxClassTypeCast : public FxExpression
+{
+	const PClass *desttype;
+	FxExpression *basex;
+
+public:
+
+	FxClassTypeCast(const PClass *dtype, FxExpression *x);
+	~FxClassTypeCast();
+	FxExpression *Resolve(FCompileContext&);
+	ExpVal EvalExpression (AActor *self);
+};
+
+//==========================================================================
+//
+// Only used to resolve the old jump by index feature of DECORATE
+//
+//==========================================================================
+
+class FxStateByIndex : public FxExpression
+{
+	int index;
+
+public:
+
+	FxStateByIndex(int i, const FScriptPosition &pos) : FxExpression(pos)
+	{
+		index = i;
+	}
+	FxExpression *Resolve(FCompileContext&);
+};
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+class FxMultiNameState : public FxExpression
+{
+	const PClass *scope;
+	TArray<FName> names;
+public:
+
+	FxMultiNameState(const char *statestring, const FScriptPosition &pos);
+	FxExpression *Resolve(FCompileContext&);
+	ExpVal EvalExpression (AActor *self);
+};
+
 
 
 FxExpression *ParseExpression (FScanner &sc, PClass *cls);
-int AddExpression (FxExpression *data);
 
 
 #endif

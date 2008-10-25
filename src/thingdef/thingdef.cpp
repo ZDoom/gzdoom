@@ -4,8 +4,8 @@
 ** Actor definitions
 **
 **---------------------------------------------------------------------------
-** Copyright 2002-2007 Christoph Oelckers
-** Copyright 2004-2007 Randy Heit
+** Copyright 2002-2008 Christoph Oelckers
+** Copyright 2004-2008 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -56,302 +56,29 @@
 #include "m_random.h"
 #include "i_system.h"
 #include "p_local.h"
-#include "v_palette.h"
 #include "doomerrors.h"
 #include "a_hexenglobal.h"
 #include "a_weaponpiece.h"
 #include "p_conversation.h"
 #include "v_text.h"
 #include "thingdef.h"
+#include "thingdef_exp.h"
 #include "a_sharedglobal.h"
 
+// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+void InitThingdef();
+void ParseDecorate (FScanner &sc);
 
+// STATIC FUNCTION PROTOTYPES --------------------------------------------
 const PClass *QuestItemClasses[31];
-
-//==========================================================================
-//
-// ParseParameter
-//
-// Parses aparameter - either a default in a function declaration 
-// or an argument in a function call.
-//
-//==========================================================================
-
-int ParseParameter(FScanner &sc, PClass *cls, char type, bool constant)
-{
-	int v;
-
-	switch(type)
-	{
-	case 'S':
-	case 's':		// Sound name
-		sc.MustGetString();
-		return S_FindSound(sc.String);
-
-	case 'M':
-	case 'm':		// Actor name
-	case 'T':
-	case 't':		// String
-		sc.SetEscape(true);
-		sc.MustGetString();
-		sc.SetEscape(false);
-		return (int)(sc.String[0] ? FName(sc.String) : NAME_None);
-
-	case 'C':
-	case 'c':		// Color
-		sc.MustGetString ();
-		if (sc.Compare("none"))
-		{
-			return -1;
-		}
-		else if (sc.Compare(""))
-		{
-			return 0;
-		}
-		else
-		{
-			int c = V_GetColor (NULL, sc.String);
-			// 0 needs to be the default so we have to mark the color.
-			return MAKEARGB(1, RPART(c), GPART(c), BPART(c));
-		}
-
-	case 'L':
-	case 'l':
-	{
-		if (JumpParameters.Size()==0) JumpParameters.Push(NAME_None);
-
-		v = -(int)JumpParameters.Size();
-		// This forces quotation marks around the state name.
-		sc.MustGetToken(TK_StringConst);
-		if (sc.String[0] == 0 || sc.Compare("None"))
-		{
-			return 0;
-		}
-		if (sc.Compare("*"))
-		{
-			if (constant) return INT_MIN;
-			else sc.ScriptError("Invalid state name '*'");
-		}
-		FString statestring = sc.String; // ParseStateString(sc);
-		const PClass *stype=NULL;
-		int scope = statestring.IndexOf("::");
-		if (scope >= 0)
-		{
-			FName scopename = FName(statestring, scope, false);
-			if (scopename == NAME_Super)
-			{
-				// Super refers to the direct superclass
-				scopename = cls->ParentClass->TypeName;
-			}
-			JumpParameters.Push(scopename);
-			statestring = statestring.Right(statestring.Len()-scope-2);
-
-			stype = PClass::FindClass (scopename);
-			if (stype == NULL)
-			{
-				sc.ScriptError ("%s is an unknown class.", scopename.GetChars());
-			}
-			if (!stype->IsDescendantOf (RUNTIME_CLASS(AActor)))
-			{
-				sc.ScriptError ("%s is not an actor class, so it has no states.", stype->TypeName.GetChars());
-			}
-			if (!stype->IsAncestorOf (cls))
-			{
-				sc.ScriptError ("%s is not derived from %s so cannot access its states.",
-					cls->TypeName.GetChars(), stype->TypeName.GetChars());
-			}
-		}
-		else
-		{
-			// No class name is stored. This allows 'virtual' jumps to
-			// labels in subclasses.
-			// It also means that the validity of the given state cannot
-			// be checked here.
-			JumpParameters.Push(NAME_None);
-		}
-
-		TArray<FName> &names = MakeStateNameList(statestring);
-
-		if (stype != NULL)
-		{
-			if (!stype->ActorInfo->FindState(names.Size(), &names[0]))
-			{
-				sc.ScriptError("Jump to unknown state '%s' in class '%s'",
-					statestring.GetChars(), stype->TypeName.GetChars());
-			}
-		}
-		JumpParameters.Push((ENamedName)names.Size());
-		for(unsigned i=0;i<names.Size();i++)
-		{
-			JumpParameters.Push(names[i]);
-		}
-		// No offsets here. The point of jumping to labels is to avoid such things!
-		return v;
-	}
-
-	case 'X':
-	case 'x':
-		v = ParseExpression (sc, false, cls);
-		if (constant && !IsExpressionConst(v))
-		{
-			sc.ScriptError("Default parameter must be constant.");
-		}
-		return v;
-
-	default:
-		assert(false);
-		return -1;
-	}
-}
-
-//==========================================================================
-//
-// ActorActionDef
-//
-// Parses an action function definition. A lot of this is essentially
-// documentation in the declaration for when I have a proper language
-// ready.
-//
-//==========================================================================
-
-static void ParseActionDef (FScanner &sc, PClass *cls)
-{
-	enum
-	{
-		OPTIONAL = 1
-	};
-
-	AFuncDesc *afd;
-	FName funcname;
-	FString args;
-	TArray<int> DefaultParams;
-	bool hasdefaults = false;
-	
-	if (sc.LumpNum == -1 || Wads.GetLumpFile(sc.LumpNum) > 0)
-	{
-		sc.ScriptError ("action functions can only be imported by internal class and actor definitions!");
-	}
-
-	sc.MustGetToken(TK_Native);
-	sc.MustGetToken(TK_Identifier);
-	funcname = sc.String;
-	afd = FindFunction(sc.String);
-	if (afd == NULL)
-	{
-		sc.ScriptError ("The function '%s' has not been exported from the executable.", sc.String);
-	}
-	sc.MustGetToken('(');
-	if (!sc.CheckToken(')'))
-	{
-		while (sc.TokenType != ')')
-		{
-			int flags = 0;
-			char type = '@';
-
-			// Retrieve flags before type name
-			for (;;)
-			{
-				if (sc.CheckToken(TK_Coerce) || sc.CheckToken(TK_Native))
-				{
-				}
-				else
-				{
-					break;
-				}
-			}
-			// Read the variable type
-			sc.MustGetAnyToken();
-			switch (sc.TokenType)
-			{
-			case TK_Bool:
-			case TK_Int:
-			case TK_Float:
-				type = 'x';
-				break;
-
-			case TK_Sound:		type = 's';		break;
-			case TK_String:		type = 't';		break;
-			case TK_Name:		type = 't';		break;
-			case TK_State:		type = 'l';		break;
-			case TK_Color:		type = 'c';		break;
-			case TK_Class:
-				sc.MustGetToken('<');
-				sc.MustGetToken(TK_Identifier);	// Skip class name, since the parser doesn't care
-				sc.MustGetToken('>');
-				type = 'm';
-				break;
-			case TK_Ellipsis:
-				type = '+';
-				sc.MustGetToken(')');
-				sc.UnGet();
-				break;
-			default:
-				sc.ScriptError ("Unknown variable type %s", sc.TokenName(sc.TokenType, sc.String).GetChars());
-				break;
-			}
-			// Read the optional variable name
-			if (!sc.CheckToken(',') && !sc.CheckToken(')'))
-			{
-				sc.MustGetToken(TK_Identifier);
-			}
-			else
-			{
-				sc.UnGet();
-			}
-
-			int def;
-			if (sc.CheckToken('='))
-			{
-				hasdefaults = true;
-				flags|=OPTIONAL;
-				def = ParseParameter(sc, cls, type, true);
-			}
-			else
-			{
-				def = 0;
-			}
-			DefaultParams.Push(def);
-
-			if (!(flags & OPTIONAL) && type != '+')
-			{
-				type -= 'a' - 'A';
-			}
-			args += type;
-			sc.MustGetAnyToken();
-			if (sc.TokenType != ',' && sc.TokenType != ')')
-			{
-				sc.ScriptError ("Expected ',' or ')' but got %s instead", sc.TokenName(sc.TokenType, sc.String).GetChars());
-			}
-		}
-	}
-	sc.MustGetToken(';');
-	PSymbolActionFunction *sym = new PSymbolActionFunction(funcname);
-	sym->Arguments = args;
-	sym->Function = afd->Function;
-	if (hasdefaults)
-	{
-		sym->defaultparameterindex = StateParameters.Size();
-		for(unsigned int i = 0; i < DefaultParams.Size(); i++)
-			StateParameters.Push(DefaultParams[i]);
-	}
-	else
-	{
-		sym->defaultparameterindex = -1;
-	}
-	if (cls->Symbols.AddSymbol (sym) == NULL)
-	{
-		delete sym;
-		sc.ScriptError ("'%s' is already defined in class '%s'.",
-			funcname.GetChars(), cls->TypeName.GetChars());
-	}
-}
+PSymbolTable		 GlobalSymbols;
 
 //==========================================================================
 //
 // Starts a new actor definition
 //
 //==========================================================================
-static FActorInfo *CreateNewActor(FName typeName, FName parentName, FName replaceName, 
+FActorInfo *CreateNewActor(const FScriptPosition &sc, FName typeName, FName parentName, FName replaceName, 
 								  int DoomEdNum, bool native)
 {
 	const PClass *replacee = NULL;
@@ -366,15 +93,15 @@ static FActorInfo *CreateNewActor(FName typeName, FName parentName, FName replac
 
 		if (parent == NULL)
 		{
-			I_Error ("Parent type '%s' not found in %s", parentName.GetChars(), typeName.GetChars());
+			sc.Message(MSG_FATAL, "Parent type '%s' not found in %s", parentName.GetChars(), typeName.GetChars());
 		}
 		else if (!parent->IsDescendantOf(RUNTIME_CLASS(AActor)))
 		{
-			I_Error ("Parent type '%s' is not an actor in %s", parentName.GetChars(), typeName.GetChars());
+			sc.Message(MSG_FATAL, "Parent type '%s' is not an actor in %s", parentName.GetChars(), typeName.GetChars());
 		}
 		else if (parent->ActorInfo == NULL)
 		{
-			I_Error ("uninitialized parent type '%s' in %s", parentName.GetChars(), typeName.GetChars());
+			sc.Message(MSG_FATAL, "uninitialized parent type '%s' in %s", parentName.GetChars(), typeName.GetChars());
 		}
 	}
 
@@ -386,11 +113,11 @@ static FActorInfo *CreateNewActor(FName typeName, FName parentName, FName replac
 
 		if (replacee == NULL)
 		{
-			I_Error ("Replaced type '%s' not found in %s", replaceName.GetChars(), typeName.GetChars());
+			sc.Message(MSG_FATAL, "Replaced type '%s' not found in %s", replaceName.GetChars(), typeName.GetChars());
 		}
 		else if (replacee->ActorInfo == NULL)
 		{
-			I_Error ("Replaced type '%s' is not an actor in %s", replaceName.GetChars(), typeName.GetChars());
+			sc.Message(MSG_FATAL, "Replaced type '%s' is not an actor in %s", replaceName.GetChars(), typeName.GetChars());
 		}
 	}
 
@@ -399,15 +126,15 @@ static FActorInfo *CreateNewActor(FName typeName, FName parentName, FName replac
 		ti = (PClass*)PClass::FindClass(typeName);
 		if (ti == NULL)
 		{
-			I_Error("Unknown native class '%s'", typeName.GetChars());
+			sc.Message(MSG_FATAL, "Unknown native class '%s'", typeName.GetChars());
 		}
 		else if (ti != RUNTIME_CLASS(AActor) && ti->ParentClass->NativeClass() != parent->NativeClass())
 		{
-			I_Error("Native class '%s' does not inherit from '%s'", typeName.GetChars(), parentName.GetChars());
+			sc.Message(MSG_FATAL, "Native class '%s' does not inherit from '%s'", typeName.GetChars(), parentName.GetChars());
 		}
 		else if (ti->ActorInfo != NULL)
 		{
-			I_Error("Redefinition of internal class '%s'", typeName.GetChars());
+			sc.Message(MSG_FATAL, "Redefinition of internal class '%s'", typeName.GetChars());
 		}
 		ti->InitializeActorInfo();
 		info = ti->ActorInfo;
@@ -444,145 +171,43 @@ static FActorInfo *CreateNewActor(FName typeName, FName parentName, FName replac
 
 //==========================================================================
 //
-// Starts a new actor definition
+// Finalizes an actor definition
 //
 //==========================================================================
-static FActorInfo *ParseActorHeader(FScanner &sc, Baggage *bag)
+
+void FinishActor(const FScriptPosition &sc, FActorInfo *info, Baggage &bag)
 {
-	FName typeName;
-	FName parentName;
-	FName replaceName;
-	bool native = false;
-	int DoomEdNum = -1;
-
-	// Get actor name
-	sc.MustGetString();
-	
-	char *colon = strchr(sc.String, ':');
-	if (colon != NULL)
-	{
-		*colon++ = 0;
-	}
-
-	typeName = sc.String;
-
-	// Do some tweaking so that a definition like 'Actor:Parent' which is read as a single token is recognized as well
-	// without having resort to C-mode (which disallows periods in actor names.)
-	if (colon == NULL)
-	{
-		sc.MustGetString ();
-		if (sc.String[0]==':')
-		{
-			colon = sc.String + 1;
-		}
-	}
-		
-	if (colon != NULL)
-	{
-		if (colon[0] == 0)
-		{
-			sc.MustGetString ();
-			colon = sc.String;
-		}
-	}
-
-	if (colon == NULL)
-	{
-		sc.UnGet();
-	}
-
-	parentName = colon;
-
-	// Check for "replaces"
-	if (sc.CheckString ("replaces"))
-	{
-		// Get actor name
-		sc.MustGetString ();
-		replaceName = sc.String;
-	}
-
-	// Now, after the actor names have been parsed, it is time to switch to C-mode 
-	// for the rest of the actor definition.
-	sc.SetCMode (true);
-	if (sc.CheckNumber()) 
-	{
-		if (sc.Number>=-1 && sc.Number<32768) DoomEdNum = sc.Number;
-		else sc.ScriptError ("DoomEdNum must be in the range [-1,32767]");
-	}
-
-	if (sc.CheckString("native"))
-	{
-		native = true;
-	}
+	AActor *defaults = (AActor*)info->Class->Defaults;
 
 	try
 	{
-		FActorInfo *info =  CreateNewActor(typeName, parentName, replaceName, DoomEdNum, native);
-		ResetBaggage (bag, info->Class->ParentClass);
-		bag->Info = info;
-		bag->Lumpnum = sc.LumpNum;
-#ifdef _DEBUG
-		bag->ClassName = typeName;
-#endif
-		return info;
+		bag.statedef.FinishStates (info, defaults, bag.StateArray);
 	}
 	catch (CRecoverableError &err)
 	{
-		sc.ScriptError("%s", err.GetMessage());
-		return NULL;
+		sc.Message(MSG_FATAL, "%s", err.GetMessage());
 	}
-}
-
-//==========================================================================
-//
-// Reads an actor definition
-//
-//==========================================================================
-void ParseActor(FScanner &sc)
-{
-	FActorInfo * info=NULL;
-	Baggage bag;
-
-	info = ParseActorHeader(sc, &bag);
-	sc.MustGetToken('{');
-	while (sc.MustGetAnyToken(), sc.TokenType != '}')
+	bag.statedef.InstallStates (info, defaults);
+	bag.StateArray.Clear ();
+	if (bag.DropItemSet)
 	{
-		switch (sc.TokenType)
+		if (bag.DropItemList == NULL)
 		{
-		case TK_Action:
-			ParseActionDef (sc, info->Class);
-			break;
-
-		case TK_Const:
-			ParseConstant (sc, &info->Class->Symbols, info->Class);
-			break;
-
-		case TK_Enum:
-			ParseEnum (sc, &info->Class->Symbols, info->Class);
-			break;
-
-		case TK_Native:
-			ParseVariable (sc, &info->Class->Symbols, info->Class);
-			break;
-
-		case TK_Identifier:
-			// other identifier related checks here
-		case TK_Projectile:	// special case: both keyword and property name
-			ParseActorProperty(sc, bag);
-			break;
-
-		case '+':
-		case '-':
-			ParseActorFlag(sc, bag, sc.TokenType);
-			break;
-
-		default:
-			sc.ScriptError("Unexpected '%s' in definition of '%s'", sc.String, bag.Info->Class->TypeName.GetChars());
-			break;
+			if (info->Class->Meta.GetMetaInt (ACMETA_DropItems) != 0)
+			{
+				info->Class->Meta.SetMetaInt (ACMETA_DropItems, 0);
+			}
+		}
+		else
+		{
+			info->Class->Meta.SetMetaInt (ACMETA_DropItems,
+				StoreDropItemChain(bag.DropItemList));
 		}
 	}
-	FinishActor(sc, info, bag);
-	sc.SetCMode (false);
+	if (info->Class->IsDescendantOf (RUNTIME_CLASS(AInventory)))
+	{
+		defaults->flags |= MF_SPECIAL;
+	}
 }
 
 //==========================================================================
@@ -617,10 +242,12 @@ static int ResolvePointer(const PClass **pPtr, const PClass *owner, const PClass
 }
 
 
-void FinishThingdef()
+static void FinishThingdef()
 {
 	unsigned int i;
-	int errorcount=0;
+	int errorcount;
+
+	errorcount = StateParams.ResolveAll();
 
 	for (i = 0;i < PClass::m_Types.Size(); i++)
 	{
@@ -745,5 +372,29 @@ void FinishThingdef()
 		QuestItemClasses[i] = PClass::FindClass(fmt);
 	}
 
+}
+
+
+
+//==========================================================================
+//
+// LoadActors
+//
+// Called from FActor::StaticInit()
+//
+//==========================================================================
+
+void LoadActors ()
+{
+	int lastlump, lump;
+
+	InitThingdef();
+	lastlump = 0;
+	while ((lump = Wads.FindLump ("DECORATE", &lastlump)) != -1)
+	{
+		FScanner sc(lump);
+		ParseDecorate (sc);
+	}
+	FinishThingdef();
 }
 

@@ -719,9 +719,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_LookEx)
 	ACTION_PARAM_FIXED(maxseedist, 2);
 	ACTION_PARAM_FIXED(maxheardist, 3);
 	ACTION_PARAM_ANGLE(fov, 4);
-	ACTION_PARAM_STATE(i_state, 5);
-
-	FState *seestate = P_GetState(self, CallingState, i_state);
+	ACTION_PARAM_STATE(seestate, 5);
 
 	AActor *targ = NULL; // Shuts up gcc
 	fixed_t dist;

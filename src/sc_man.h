@@ -215,4 +215,44 @@ enum
 	TK_LastToken
 };
 
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+enum
+{
+	MSG_WARNING,
+	MSG_FATAL,
+	MSG_ERROR,
+	MSG_DEBUG,
+	MSG_LOG,
+	MSG_DEBUGLOG
+};
+
+//==========================================================================
+//
+// a class that remembers a parser position
+//
+//==========================================================================
+
+struct FScriptPosition
+{
+	FString FileName;
+	int ScriptLine;
+
+	FScriptPosition()
+	{
+		ScriptLine=0;
+	}
+	FScriptPosition(const FScriptPosition &other);
+	FScriptPosition(FString fname, int line);
+	FScriptPosition(FScanner &sc);
+	FScriptPosition &operator=(const FScriptPosition &other);
+	void Message(int severity, const char *message,...) const;
+};
+
+
 #endif //__SC_MAN_H__

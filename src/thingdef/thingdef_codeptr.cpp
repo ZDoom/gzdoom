@@ -232,6 +232,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BasicAttack)
 	ACTION_PARAM_CLASS(MissileType, 2);
 	ACTION_PARAM_FIXED(MissileHeight, 3);
 
+	if (MissileType == NULL) return;
 	DoAttack(self, true, true, MeleeDamage, MeleeSound, MissileType, MissileHeight);
 }
 
@@ -359,31 +360,24 @@ DEFINE_ACTION_FUNCTION(AActor, A_BulletAttack)
 // Do the state jump
 //
 //==========================================================================
-static void DoJump(AActor * self, FState * CallingState, int offset, StateCallData *statecall)
+static void DoJump(AActor * self, FState * CallingState, FState *jumpto, StateCallData *statecall)
 {
+	if (jumpto == NULL) return;
 
 	if (statecall != NULL)
 	{
-		FState *jumpto = P_GetState(statecall->Item, CallingState, offset);
-		if (jumpto == NULL) return;
 		statecall->State = jumpto;
 	}
 	else if (self->player != NULL && CallingState == self->player->psprites[ps_weapon].state)
 	{
-		FState *jumpto = P_GetState(self->player->ReadyWeapon, CallingState, offset);
-		if (jumpto == NULL) return;
 		P_SetPsprite(self->player, ps_weapon, jumpto);
 	}
 	else if (self->player != NULL && CallingState == self->player->psprites[ps_flash].state)
 	{
-		FState *jumpto = P_GetState(self->player->ReadyWeapon, CallingState, offset);
-		if (jumpto == NULL) return;
 		P_SetPsprite(self->player, ps_flash, jumpto);
 	}
 	else if (CallingState == self->state)
 	{
-		FState *jumpto = P_GetState(self, CallingState, offset);
-		if (jumpto == NULL) return;
 		self->SetState (jumpto);
 	}
 	else
@@ -405,20 +399,14 @@ static void DoJump(AActor * self, FState * CallingState, int offset, StateCallDa
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Jump)
 {
 	ACTION_PARAM_START(3);
-	ACTION_PARAM_CONST(count, 0);
+	ACTION_PARAM_INT(count, 0);
 	ACTION_PARAM_INT(maxchance, 1);
-	ACTION_PARAM_VARARG(jumps, 2);
 
 	if (count >= 2 && (maxchance >= 256 || pr_cajump() < maxchance))
 	{
-		if (count == 2)
-		{
-			ACTION_JUMP(*jumps);
-		}
-		else
-		{
-			ACTION_JUMP(jumps[(pr_cajump() % (count - 1))]);
-		}
+		int jumps = 2 + (count == 2? 0 : (pr_cajump() % (count - 1)));
+		ACTION_PARAM_STATE(jumpto, jumps);
+		ACTION_JUMP(jumpto);
 	}
 	ACTION_SET_RESULT(false);	// Jumps should never set the result for inventory state chains!
 }
@@ -482,7 +470,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfCloser)
 // State jump function
 //
 //==========================================================================
-void DoJumpIfInventory(AActor * self, AActor * owner, DECLARE_PARAMINFO)
+void DoJumpIfInventory(AActor * owner, DECLARE_PARAMINFO)
 {
 	ACTION_PARAM_START(3);
 	ACTION_PARAM_CLASS(Type, 0);
@@ -504,12 +492,12 @@ void DoJumpIfInventory(AActor * self, AActor * owner, DECLARE_PARAMINFO)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfInventory)
 {
-	DoJumpIfInventory(self, self, PUSH_PARAMINFO);
+	DoJumpIfInventory(self, PUSH_PARAMINFO);
 }
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfInTargetInventory)
 {
-	DoJumpIfInventory(self, self->target, PUSH_PARAMINFO);
+	DoJumpIfInventory(self->target, PUSH_PARAMINFO);
 }
 
 //==========================================================================
@@ -1143,7 +1131,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomRailgun)
 //
 //===========================================================================
 
-static void DoGiveInventory(AActor * self, AActor * receiver, DECLARE_PARAMINFO)
+static void DoGiveInventory(AActor * receiver, DECLARE_PARAMINFO)
 {
 	ACTION_PARAM_START(2);
 	ACTION_PARAM_CLASS(mi, 0);
@@ -1184,12 +1172,12 @@ static void DoGiveInventory(AActor * self, AActor * receiver, DECLARE_PARAMINFO)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GiveInventory)
 {
-	DoGiveInventory(self, self, PUSH_PARAMINFO);
+	DoGiveInventory(self, PUSH_PARAMINFO);
 }	
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GiveToTarget)
 {
-	DoGiveInventory(self, self->target, PUSH_PARAMINFO);
+	DoGiveInventory(self->target, PUSH_PARAMINFO);
 }	
 
 //===========================================================================
@@ -1198,13 +1186,13 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GiveToTarget)
 //
 //===========================================================================
 
-void DoTakeInventory(AActor * self, AActor * receiver, DECLARE_PARAMINFO)
+void DoTakeInventory(AActor * receiver, DECLARE_PARAMINFO)
 {
 	ACTION_PARAM_START(2);
 	ACTION_PARAM_CLASS(item, 0);
 	ACTION_PARAM_INT(amount, 1);
 	
-	if (receiver == NULL) return;
+	if (item == NULL || receiver == NULL) return;
 
 	bool res = false;
 
@@ -1228,12 +1216,12 @@ void DoTakeInventory(AActor * self, AActor * receiver, DECLARE_PARAMINFO)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_TakeInventory)
 {
-	DoTakeInventory(self, self, PUSH_PARAMINFO);
+	DoTakeInventory(self, PUSH_PARAMINFO);
 }	
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_TakeFromTarget)
 {
-	DoTakeInventory(self, self->target, PUSH_PARAMINFO);
+	DoTakeInventory(self->target, PUSH_PARAMINFO);
 }	
 
 //===========================================================================
@@ -1463,6 +1451,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ThrowGrenade)
 	ACTION_PARAM_FIXED(zmom, 3);
 	ACTION_PARAM_BOOL(useammo, 4);
 
+	if (missile == NULL) return;
+
 	if (ACTION_CALL_FROM_WEAPON())
 	{
 		// Used from a weapon so use some ammo
@@ -1529,7 +1519,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SelectWeapon)
 	ACTION_PARAM_START(1);
 	ACTION_PARAM_CLASS(cls, 0);
 
-	if (self->player == NULL) return;
+	if (cls == NULL || self->player == NULL) 
+	{
+		ACTION_SET_RESULT(false);
+		return;
+	}
 
 	AWeapon * weaponitem = static_cast<AWeapon*>(self->FindInventory(cls));
 
@@ -1714,10 +1708,13 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DropInventory)
 	ACTION_PARAM_START(1);
 	ACTION_PARAM_CLASS(drop, 0);
 
-	AInventory * inv = self->FindInventory(drop);
-	if (inv)
+	if (drop)
 	{
-		self->DropInventory(inv);
+		AInventory * inv = self->FindInventory(drop);
+		if (inv)
+		{
+			self->DropInventory(inv);
+		}
 	}
 }
 

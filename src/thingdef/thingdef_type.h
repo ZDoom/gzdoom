@@ -8,13 +8,18 @@
 
 enum ExpValType
 {
-	VAL_Int,
-	VAL_Float,
-	VAL_Unknown,
-	VAL_Array,
-	VAL_Object,
-	VAL_Class,
-	VAL_Pointer,
+	VAL_Int,		// integer number
+	VAL_Float,		// floating point number
+	VAL_Unknown,	// nothing
+	VAL_Array,		// Array (very limited right now)
+	VAL_Object,		// Object reference
+	VAL_Class,		// Class reference
+	VAL_Pointer,	// Dereferenced variable (only used for addressing arrays for now.)
+	VAL_Sound,		// Sound identifier. Internally it's an int.
+	VAL_Name,		// A Name
+	VAL_MultiName,	// Multiple names for multi-label states
+	VAL_Color,		// A color.
+	VAL_State,		// A State pointer
 
 	// only used for accessing external variables to ensure proper conversion
 	VAL_Fixed,

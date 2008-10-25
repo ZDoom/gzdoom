@@ -49,7 +49,7 @@
 #include "templates.h"
 #include "cmdlib.h"
 
-extern void LoadDecorations ();
+extern void LoadActors ();
 
 //==========================================================================
 //
@@ -102,8 +102,8 @@ void FActorInfo::StaticInit ()
 		sprites.Push (temp);
 	}
 
-	Printf ("LoadDecorations: Load external actors.\n");
-	LoadDecorations ();
+	Printf ("LoadActors: Load actor definitions.\n");
+	LoadActors ();
 }
 
 //==========================================================================

@@ -2232,15 +2232,12 @@ enum ChaseFlags
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Chase)
 {
 	ACTION_PARAM_START(3);
-	ACTION_PARAM_STATE(i_melee, 0);
-	ACTION_PARAM_STATE(i_missile, 1);
+	ACTION_PARAM_STATE(melee, 0);
+	ACTION_PARAM_STATE(missile, 1);
 	ACTION_PARAM_INT(flags, 2);
 
-	if (i_melee != INT_MIN)
+	if (melee != (FState*)-1)
 	{
-		FState *melee = P_GetState(self, CallingState, i_melee);
-		FState *missile = P_GetState(self, CallingState, i_missile);
-
 		if (flags & CHF_RESURRECT && P_CheckForResurrection(self, false)) return;
 		
 		A_DoChase(self, !!(flags&CHF_FASTCHASE), melee, missile, !(flags&CHF_NOPLAYACTIVE), 

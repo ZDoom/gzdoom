@@ -21,6 +21,7 @@
 #include "cmdlib.h"
 #include "m_misc.h"
 #include "templates.h"
+#include "doomstat.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -1023,3 +1024,91 @@ void FScanner::CheckOpen()
 		I_FatalError ("SC_ call before SC_Open().");
 	}
 }
+
+//==========================================================================
+//
+// a class that remembers a parser position
+//
+//==========================================================================
+
+FScriptPosition::FScriptPosition(const FScriptPosition &other)
+{
+	FileName = other.FileName;
+	ScriptLine = other.ScriptLine;
+}
+
+FScriptPosition::FScriptPosition(FString fname, int line)
+{
+	FileName = fname;
+	ScriptLine = line;
+}
+
+FScriptPosition::FScriptPosition(FScanner &sc)
+{
+	FileName = sc.ScriptName;
+	ScriptLine = sc.GetMessageLine();
+}
+
+FScriptPosition &FScriptPosition::operator=(const FScriptPosition &other)
+{
+	FileName = other.FileName;
+	ScriptLine = other.ScriptLine;
+	return *this;
+}
+
+//==========================================================================
+//
+// FScriptPosition::Message
+//
+//==========================================================================
+
+void STACK_ARGS FScriptPosition::Message (int severity, const char *message, ...) const
+{
+	FString composed;
+
+	if ((severity == MSG_DEBUG || severity == MSG_DEBUGLOG) && !developer) return;
+
+	if (message == NULL)
+	{
+		composed = "Bad syntax.";
+	}
+	else
+	{
+		va_list arglist;
+		va_start (arglist, message);
+		composed.VFormat (message, arglist);
+		va_end (arglist);
+	}
+	const char *type = "";
+	int level = PRINT_HIGH;
+
+	switch (severity)
+	{
+	default:
+		return;
+
+	case MSG_WARNING:
+		type = "warning";
+		break;
+
+	case MSG_ERROR:
+		type = "error";
+		break;
+
+	case MSG_DEBUG:
+		type = "message";
+		break;
+
+	case MSG_DEBUGLOG:
+	case MSG_LOG:
+		type = "message";
+		level = PRINT_LOG;
+		break;
+
+	case MSG_FATAL:
+		I_Error ("Script error, \"%s\" line %d:\n%s\n",
+			FileName.GetChars(), ScriptLine, composed.GetChars());
+	}
+}
+
+

@@ -654,33 +654,33 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireGrenade)
 	if (!weapon->DepleteAmmo (weapon->bAltFire))
 		return;
 
-	// Make it flash
-	FState *jumpto = P_GetState(weapon, NULL, flash);
+	P_SetPsprite (player, ps_flash, flash);
 
-	P_SetPsprite (player, ps_flash, jumpto);
-
-	self->z += 32*FRACUNIT;
-	grenade = P_SpawnSubMissile (self, grenadetype, self);
-	self->z -= 32*FRACUNIT;
-	if (grenade == NULL)
-		return;
-
-	if (grenade->SeeSound != 0)
+	if (grenadetype != NULL)
 	{
-		S_Sound (grenade, CHAN_VOICE, grenade->SeeSound, 1, ATTN_NORM);
+		self->z += 32*FRACUNIT;
+		grenade = P_SpawnSubMissile (self, grenadetype, self);
+		self->z -= 32*FRACUNIT;
+		if (grenade == NULL)
+			return;
+
+		if (grenade->SeeSound != 0)
+		{
+			S_Sound (grenade, CHAN_VOICE, grenade->SeeSound, 1, ATTN_NORM);
+		}
+
+		grenade->momz = FixedMul (finetangent[FINEANGLES/4-(self->pitch>>ANGLETOFINESHIFT)], grenade->Speed) + 8*FRACUNIT;
+
+		an = self->angle >> ANGLETOFINESHIFT;
+		tworadii = self->radius + grenade->radius;
+		grenade->x += FixedMul (finecosine[an], tworadii);
+		grenade->y += FixedMul (finesine[an], tworadii);
+
+		an = self->angle + Angle;
+		an >>= ANGLETOFINESHIFT;
+		grenade->x += FixedMul (finecosine[an], 15*FRACUNIT);
+		grenade->y += FixedMul (finesine[an], 15*FRACUNIT);
 	}
-
-	grenade->momz = FixedMul (finetangent[FINEANGLES/4-(self->pitch>>ANGLETOFINESHIFT)], grenade->Speed) + 8*FRACUNIT;
-
-	an = self->angle >> ANGLETOFINESHIFT;
-	tworadii = self->radius + grenade->radius;
-	grenade->x += FixedMul (finecosine[an], tworadii);
-	grenade->y += FixedMul (finesine[an], tworadii);
-
-	an = self->angle + Angle;
-	an >>= ANGLETOFINESHIFT;
-	grenade->x += FixedMul (finecosine[an], 15*FRACUNIT);
-	grenade->y += FixedMul (finesine[an], 15*FRACUNIT);
 }
 
 // The Almighty Sigil! ------------------------------------------------------

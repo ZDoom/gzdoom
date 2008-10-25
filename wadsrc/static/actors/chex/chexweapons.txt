@@ -83,10 +83,11 @@ actor PhasingZorcher : PlasmaRifle 2004
 		PLSG B 20 A_ReFire
 		Goto Ready
 	Flash:
-		PLSF A 0 A_Jump(128, 2)
-		PLSF A 4 Bright A_Light1
+		PLSF A 0 A_Jump(128, "Flash2")
+		PLSF A 3 Bright A_Light1
 		Goto LightDone
-		PLSF B 4 Bright A_Light1
+	Flash2:
+		PLSF B 3 Bright A_Light1
 		Goto LightDone
 	}
 }

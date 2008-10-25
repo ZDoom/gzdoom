@@ -1910,6 +1910,13 @@ void S_StopChannel(FSoundChan *chan)
 		{
 			chan->ChanFlags |= CHAN_FORGETTABLE;
 		}
+
+		if (chan->SourceType == SOURCE_Actor && chan->Actor != NULL)
+		{
+			chan->Actor->SoundChans &= ~(1 << chan->EntChannel);
+			chan->Actor = NULL;
+		}
+
 		GSnd->StopChannel(chan);
 	}
 	else

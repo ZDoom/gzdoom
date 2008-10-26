@@ -2599,7 +2599,7 @@ FxExpression *FxMultiNameState::Resolve(FCompileContext &ctx)
 	CHECKRESOLVED();
 	if (names[0] == NAME_None)
 	{
-		scope = NULL;
+		scope = ctx.cls;
 	}
 	else if (names[0] == NAME_Super)
 	{
@@ -2643,6 +2643,7 @@ FxExpression *FxMultiNameState::Resolve(FCompileContext &ctx)
 	}
 	names.Delete(0);
 	names.ShrinkToFit();
+	ValueType = VAL_State;
 	return this;
 }
 

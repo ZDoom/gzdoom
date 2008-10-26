@@ -1,3 +1,7 @@
+October 26, 2008  (Changes by Graf Zahl)
+- Fixed: A_Jump didn't properly determine a state's owner anymore when called
+  from weapons.
+
 October 25, 2008  (Changes by Graf Zahl)
 - Added NULL checks to all places where class names are passed as DECORATE
   parameters.

@@ -101,7 +101,7 @@ extern float S_GetMusicVolume (const char *music);
 
 static bool S_CheckSoundLimit(sfxinfo_t *sfx, const FVector3 &pos, int near_limit);
 static void S_ActivatePlayList(bool goBack);
-static void CalcPosVel(const FSoundChan *chan, FVector3 *pos, FVector3 *vel);
+static void CalcPosVel(FSoundChan *chan, FVector3 *pos, FVector3 *vel);
 static void CalcPosVel(int type, const AActor *actor, const sector_t *sector, const FPolyObj *poly,
 	const float pt[3], int channel, int chanflags, FVector3 *pos, FVector3 *vel);
 static void CalcSectorSoundOrg(const sector_t *sec, int channum, fixed_t *x, fixed_t *y, fixed_t *z);
@@ -625,7 +625,7 @@ void S_LinkChannel(FSoundChan *chan, FSoundChan **head)
 //
 //=========================================================================
 
-static void CalcPosVel(const FSoundChan *chan, FVector3 *pos, FVector3 *vel)
+static void CalcPosVel(FSoundChan *chan, FVector3 *pos, FVector3 *vel)
 {
 	CalcPosVel(chan->SourceType, chan->Actor, chan->Sector, chan->Poly, chan->Point,
 		chan->EntChannel, chan->ChanFlags, pos, vel);
@@ -1057,7 +1057,7 @@ static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyO
 		chan->SourceType = type;
 		switch (type)
 		{
-		case SOURCE_Actor:		chan->Actor = actor;	actor->SoundChans |= 1 << channel;	break;
+		case SOURCE_Actor:		chan->Actor = actor;	actor->SoundChans |= 1 << channel; GC::WriteBarrier(actor);	break;
 		case SOURCE_Sector:		chan->Sector = sec;		break;
 		case SOURCE_Polyobj:	chan->Poly = poly;		break;
 		case SOURCE_Unattached:	chan->Point[0] = pt->X; chan->Point[1] = pt->Y; chan->Point[2] = pt->Z;	break;
@@ -1438,6 +1438,27 @@ void S_StopSound (const FPolyObj *poly, int channel)
 
 //==========================================================================
 //
+// S_MarkSoundChannels
+//
+//==========================================================================
+
+void S_MarkSoundChannels()
+{
+	for (FSoundChan *chan = Channels; chan != NULL; chan = chan->NextChan)
+	{
+		if (chan->SourceType == SOURCE_Actor)
+		{
+			GC::Mark(chan->Actor);
+		}
+		else
+		{
+			chan->Actor = NULL;
+		}
+	}
+}
+
+//==========================================================================
+//
 // S_StopAllChannels
 //
 //==========================================================================
@@ -1476,9 +1497,11 @@ void S_RelinkSound (AActor *from, AActor *to)
 			if (to != NULL)
 			{
 				chan->Actor = to;
+				GC::WriteBarrier(to);
 			}
 			else if (!(chan->ChanFlags & CHAN_LOOP))
 			{
+				chan->Actor = NULL;
 				chan->SourceType = SOURCE_Unattached;
 				chan->Point[0] = FIXED2FLOAT(from->x);
 				chan->Point[1] = FIXED2FLOAT(from->z);

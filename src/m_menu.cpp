@@ -1637,9 +1637,13 @@ void M_NewGame(int choice)
 	}
 	else if (EpiDef.numitems <= 1)
 	{
-		if (EpisodeNoSkill[0])
+		if (AllSkills.Size() == 1)
 		{
-			M_ChooseSkill(2);
+			M_ChooseSkill(0);
+		}
+		else if (EpisodeNoSkill[0])
+		{
+			M_ChooseSkill(AllSkills.Size() == 2? 1:2);
 		}
 		else
 		{
@@ -1823,12 +1827,16 @@ void M_Episode (int choice)
 
 	epi = choice;
 
-	if (EpisodeNoSkill[choice])
+	if (AllSkills.Size() == 1)
 	{
-		M_ChooseSkill(2);
+		M_ChooseSkill(0);
 		return;
 	}
-
+	else if (EpisodeNoSkill[choice])
+	{
+		M_ChooseSkill(AllSkills.Size() == 2? 1:2);
+		return;
+	}
 	M_StartupSkillMenu(NULL);
 }
 
@@ -1858,13 +1866,17 @@ static void SCClass (int option)
 	{
 		M_SetupNextMenu (&EpiDef);
 	}
+	else if (AllSkills.Size() == 1)
+	{
+		M_ChooseSkill(0);
+	}
 	else if (!EpisodeNoSkill[0])
 	{
 		M_StartupSkillMenu(playerclass);
 	}
 	else
 	{
-		M_ChooseSkill(2);
+		M_ChooseSkill(AllSkills.Size() == 2? 1:2);
 	}
 }
 
@@ -1886,9 +1898,13 @@ static void M_ChooseClass (int choice)
 	{
 		M_SetupNextMenu (&EpiDef);
 	}
+	else if (AllSkills.Size() == 1)
+	{
+		M_ChooseSkill(0);
+	}
 	else if (EpisodeNoSkill[0])
 	{
-		M_ChooseSkill(2);
+		M_ChooseSkill(AllSkills.Size() == 2? 1:2);
 	}
 	else 
 	{

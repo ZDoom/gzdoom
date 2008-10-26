@@ -1,4 +1,9 @@
 October 26, 2008  (Changes by Graf Zahl)
+- Added read and write barriers to the actor pointer in the sound channel
+  structure.
+- Fixed: Items which should stay but had an IF_ALWAYSPICKUP flag were removed.
+- Fixed: The pickup flash must only play when an item is picked up so the 
+  correct place to spawn it is in AInventory::Touch, not in AInventory::GoAway.
 - Fixed: A_Jump didn't properly determine a state's owner anymore when called
   from weapons.
 

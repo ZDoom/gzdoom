@@ -300,6 +300,7 @@ static void MarkRoot()
 	DThinker::MarkRoots();
 	FCanvasTextureInfo::Mark();
 	Mark(DACSThinker::ActiveThinker);
+	S_MarkSoundChannels();
 	// Mark dead bodies.
 	for (i = 0; i < BODYQUESIZE; ++i)
 	{

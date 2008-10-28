@@ -347,7 +347,6 @@ do_stop:
 
 						if (varargs)
 						{
-							varargcount++;
 							paramindex++;
 						}
 						else if (afd->defaultparameterindex > -1)

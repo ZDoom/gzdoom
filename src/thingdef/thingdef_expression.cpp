@@ -2764,7 +2764,7 @@ void FStateExpressions::Copy(int dest, int src, int cnt)
 	for(int i=0; i<cnt; i++)
 	{
 		// For now set only a reference because these expressions may change when being resolved
-		expressions[dest+i].expr = (FxExpression*)(src+i);
+		expressions[dest+i].expr = (FxExpression*)intptr_t(src+i);
 		expressions[dest+i].cloned = true;
 	}
 }
@@ -2786,7 +2786,7 @@ int FStateExpressions::ResolveAll()
 		if (expressions[i].cloned)
 		{
 			// Now that everything coming before has been resolved we may copy the actual pointer.
-			intptr_t ii = ((intptr_t)expressions[i].expr)-1;
+			intptr_t ii = ((intptr_t)expressions[i].expr);
 			expressions[i].expr = expressions[ii].expr;
 		}
 		else if (expressions[i].expr != NULL)

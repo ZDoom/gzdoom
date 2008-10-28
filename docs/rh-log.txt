@@ -1,4 +1,6 @@
 October 28, 2008  (Changes by Graf Zahl)
+- Fixed: The railgun attack functions still read their puff parameters as names
+  even though they are now passed as class pointers.
 - Fixed: The state parser counted one parameter too many for a varargs function.
 - Fixed: FStateExpressions could copy unresolved default parameter expressions.
   When these were resolved and changed later all copied pointers pointed to

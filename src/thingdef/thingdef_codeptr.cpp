@@ -1053,7 +1053,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RailAttack)
 	ACTION_PARAM_COLOR(Color2, 4);
 	ACTION_PARAM_BOOL(Silent, 5);
 	ACTION_PARAM_FLOAT(MaxDiff, 6);
-	ACTION_PARAM_NAME(PuffTypeName, 7);
+	ACTION_PARAM_CLASS(PuffType, 7);
 
 	if (!self->player) return;
 
@@ -1065,7 +1065,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RailAttack)
 		if (!weapon->DepleteAmmo(weapon->bAltFire, true)) return;	// out of ammo
 	}
 
-	P_RailAttack (self, Damage, Spawnofs_XY, Color1, Color2, MaxDiff, Silent, PuffTypeName);
+	P_RailAttack (self, Damage, Spawnofs_XY, Color1, Color2, MaxDiff, Silent, PuffType);
 }
 
 //==========================================================================
@@ -1084,7 +1084,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomRailgun)
 	ACTION_PARAM_BOOL(Silent, 4);
 	ACTION_PARAM_BOOL(aim, 5);
 	ACTION_PARAM_FLOAT(MaxDiff, 6);
-	ACTION_PARAM_NAME(PuffTypeName, 7);
+	ACTION_PARAM_CLASS(PuffType, 7);
 
 	if (aim && self->target == NULL)
 	{
@@ -1122,7 +1122,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomRailgun)
 		}
 	}
 
-	P_RailAttack (self, Damage, Spawnofs_XY, Color1, Color2, MaxDiff, Silent, PuffTypeName);
+	P_RailAttack (self, Damage, Spawnofs_XY, Color1, Color2, MaxDiff, Silent, PuffType);
 }
 
 //===========================================================================

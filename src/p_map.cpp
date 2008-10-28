@@ -2970,7 +2970,7 @@ static bool ProcessRailHit (FTraceResults &res)
 	return true;
 }
 
-void P_RailAttack (AActor *source, int damage, int offset, int color1, int color2, float maxdiff, bool silent, FName puff)
+void P_RailAttack (AActor *source, int damage, int offset, int color1, int color2, float maxdiff, bool silent, const PClass *puffclass)
 {
 	fixed_t vx, vy, vz;
 	angle_t angle, pitch;
@@ -3063,7 +3063,7 @@ void P_RailAttack (AActor *source, int damage, int offset, int color1, int color
 
 	// Now hurt anything the trace hit
 	unsigned int i;
-	const PClass *puffclass = PClass::FindClass(puff);
+	if (puffclass == NULL) puffclass = PClass::FindClass(NAME_BulletPuff);
 	AActor *puffDefaults = puffclass == NULL? NULL : GetDefaultByType (puffclass);
 	FName damagetype = (puffDefaults == NULL || puffDefaults->DamageType == NAME_None) ? FName(NAME_Railgun) : puffDefaults->DamageType;
 

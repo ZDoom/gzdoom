@@ -1,3 +1,8 @@
+October 28, 2008  (Changes by Graf Zahl)
+- Fixed: FStateExpressions could copy unresolved default parameter expressions.
+  When these were resolved and changed later all copied pointers pointed to
+  invalid data.
+
 October 26, 2008  (Changes by Graf Zahl)
 - Added read and write barriers to the actor pointer in the sound channel
   structure.

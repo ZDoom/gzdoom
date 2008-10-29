@@ -2474,8 +2474,8 @@ FxExpression *FxClassTypeCast::Resolve(FCompileContext &ctx)
 	if (basex->isConstant())
 	{
 		FName clsname = basex->EvalExpression(NULL).GetName();
-		const PClass *cls;
-		
+		const PClass *cls = NULL;
+
 		if (clsname != NAME_None || !ctx.isconst)
 		{
 			cls= PClass::FindClass(clsname);

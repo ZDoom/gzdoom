@@ -1,3 +1,7 @@
+October 29, 2008  (Changes by Graf Zahl)
+- Fixed: FxClassTypeCast::Resolve didn't work for NULL classes because a variable
+  was not initialized.
+
 October 28, 2008  (Changes by Graf Zahl)
 - Fixed: The railgun attack functions still read their puff parameters as names
   even though they are now passed as class pointers.

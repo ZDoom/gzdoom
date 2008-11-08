@@ -596,6 +596,10 @@ void FTextureManager::LoadTextureDefs(int wadnum, const char *lumpname)
 				{
 					ParseXTexture(sc, FTexture::TEX_MiscPatch);
 				}
+				else
+				{
+					sc.ScriptError("Texture definition expected, found '%s'", sc.String);
+				}
 			}
 		}
 	}

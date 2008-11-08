@@ -1,3 +1,8 @@
+November 2, 2008  (Changes by Graf Zahl)
+- Fixed: The TEXTURES parser didn't report an error for invalid keywords.
+- Fixed: The DECORATE expression evaluator was too strict with missing jump labels.
+  For compatibility it only may print a warning, not an error.
+
 October 29, 2008  (Changes by Graf Zahl)
 - Fixed: FxClassTypeCast::Resolve didn't work for NULL classes because a variable
   was not initialized.

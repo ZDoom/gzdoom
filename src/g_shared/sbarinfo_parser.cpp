@@ -726,21 +726,19 @@ void SBarInfo::ParseSBarInfoBlock(FScanner &sc, SBarInfoBlock &block)
 					if(!sc.CheckToken('|'))
 						sc.MustGetToken(',');
 				}
-				sc.MustGetToken(TK_IntConst);
-				cmd.x = sc.Number;
-				sc.MustGetToken(',');
-				sc.MustGetToken(TK_IntConst);
-				cmd.y = sc.Number - (200 - this->height);
+				this->getCoordinates(sc, cmd, block.fullScreenOffsets);
 				cmd.special2 = cmd.x + 30;
 				cmd.special3 = cmd.y + 24;
 				cmd.translation = CR_GOLD;
 				if(sc.CheckToken(',')) //more font information
 				{
-					sc.MustGetToken(TK_IntConst);
-					cmd.special2 = sc.Number;
-					sc.MustGetToken(',');
-					sc.MustGetToken(TK_IntConst);
-					cmd.special3 = sc.Number - (200 - this->height);
+					int x = cmd.x;
+					int y = cmd.y;
+					this->getCoordinates(sc, cmd, block.fullScreenOffsets);
+					cmd.special2 = cmd.x;
+					cmd.special3 = cmd.y;
+					cmd.x = x;
+					cmd.y = y;
 					if(sc.CheckToken(','))
 					{
 						sc.MustGetToken(TK_Identifier);

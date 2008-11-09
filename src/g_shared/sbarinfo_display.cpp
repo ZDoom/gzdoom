@@ -1372,8 +1372,8 @@ void DSBarInfo::DrawGraphic(FTexture* texture, int x, int y, int xOffset, int yO
 
 	if(offsetflags & DRAWIMAGE_OFFSET_CENTER)
 	{
-		x -= (texture->GetWidth()/2)-texture->LeftOffset;
-		y -= (texture->GetHeight()/2)-texture->TopOffset;
+		x -= (texture->GetScaledWidth()/2)-texture->LeftOffset;
+		y -= (texture->GetScaledHeight()/2)-texture->TopOffset;
 	}
 
 	x += xOffset;

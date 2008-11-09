@@ -65,8 +65,7 @@ private:
 	QWORD_UNION DSPClock;
 	int OutputRate;
 
-	static FMOD_RESULT F_CALLBACK ChannelEndCallback
-		(FMOD_CHANNEL *channel, FMOD_CHANNEL_CALLBACKTYPE type, int cmd, unsigned int data1, unsigned int data2);
+	static FMOD_RESULT F_CALLBACK ChannelCallback(FMOD_CHANNEL *channel, FMOD_CHANNEL_CALLBACKTYPE type, void *data1, void *data2);
 	static float F_CALLBACK RolloffCallback(FMOD_CHANNEL *channel, float distance);
 
 	void HandleChannelDelay(FMOD::Channel *chan, FISoundChannel *reuse_chan, bool abstime, float freq) const;

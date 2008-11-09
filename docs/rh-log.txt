@@ -1,3 +1,9 @@
+November 8, 2008
+- Made sdl/i_system.cpp:I_GetTimePolled() functionally equivalent to the
+  Win32 version.
+- Updated fmod_wrap.h and fmodsound.cpp for FMOD 4.20.
+- GCC warning removal.
+
 November 2, 2008  (Changes by Graf Zahl)
 - Fixed: The TEXTURES parser didn't report an error for invalid keywords.
 - Fixed: The DECORATE expression evaluator was too strict with missing jump labels.

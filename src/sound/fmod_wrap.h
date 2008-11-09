@@ -193,6 +193,8 @@ namespace FMOD
 		// Userdata set/get.
 		  FMOD_RESULT setUserData            (void *userdata) { return FMOD_System_SetUserData(this, userdata); }
 		  FMOD_RESULT getUserData            (void **userdata) { return FMOD_System_GetUserData(this, userdata); }
+
+		  FMOD_RESULT getMemoryInfo          (unsigned int memorybits, unsigned int event_memorybits, unsigned int *memoryused, unsigned int *memoryused_array) { return FMOD_System_GetMemoryInfo(this, memorybits, event_memorybits, memoryused, memoryused_array); }
 	};
 
 	/*
@@ -256,6 +258,8 @@ namespace FMOD
 		// Userdata set/get.
 		  FMOD_RESULT setUserData            (void *userdata) { return FMOD_Sound_SetUserData(this, userdata); }
 		  FMOD_RESULT getUserData            (void **userdata) { return FMOD_Sound_GetUserData(this, userdata); }
+
+		  FMOD_RESULT getMemoryInfo          (unsigned int memorybits, unsigned int event_memorybits, unsigned int *memoryused, unsigned int *memoryused_array) { return FMOD_Sound_GetMemoryInfo(this, memorybits, event_memorybits, memoryused, memoryused_array); }
 	};
 
 	/*
@@ -299,7 +303,9 @@ namespace FMOD
 
 		  FMOD_RESULT setChannelGroup        (ChannelGroup *channelgroup) { return FMOD_Channel_SetChannelGroup(this, (FMOD_CHANNELGROUP *)channelgroup); }
 		  FMOD_RESULT getChannelGroup        (ChannelGroup **channelgroup) { return FMOD_Channel_GetChannelGroup(this, (FMOD_CHANNELGROUP **)channelgroup); }
-		  FMOD_RESULT setCallback            (FMOD_CHANNEL_CALLBACKTYPE type, FMOD_CHANNEL_CALLBACK callback, int command) { return FMOD_Channel_SetCallback(this, type, callback, command); }
+		  FMOD_RESULT setCallback            (FMOD_CHANNEL_CALLBACK callback) { return FMOD_Channel_SetCallback(this, callback); }
+		  FMOD_RESULT setLowPassGain         (float gain) { return FMOD_Channel_SetLowPassGain(this, gain); }
+		  FMOD_RESULT getLowPassGain         (float *gain) { return FMOD_Channel_GetLowPassGain(this, gain); }
 
 		// 3D functionality.
 		  FMOD_RESULT set3DAttributes        (const FMOD_VECTOR *pos, const FMOD_VECTOR *vel) { return FMOD_Channel_Set3DAttributes(this, pos, vel); }
@@ -345,6 +351,8 @@ namespace FMOD
 		// Userdata set/get.
 		  FMOD_RESULT setUserData            (void *userdata) { return FMOD_Channel_SetUserData(this, userdata); }
 		  FMOD_RESULT getUserData            (void **userdata) { return FMOD_Channel_GetUserData(this, userdata); }
+
+		  FMOD_RESULT getMemoryInfo          (unsigned int memorybits, unsigned int event_memorybits, unsigned int *memoryused, unsigned int *memoryused_array) { return FMOD_Channel_GetMemoryInfo(this, memorybits, event_memorybits, memoryused, memoryused_array); }
 	};
 
 	/*
@@ -402,6 +410,8 @@ namespace FMOD
 		// Userdata set/get.
 		  FMOD_RESULT setUserData             (void *userdata) { return FMOD_ChannelGroup_SetUserData(this, userdata); }
 		  FMOD_RESULT getUserData             (void **userdata) { return FMOD_ChannelGroup_GetUserData(this, userdata); }
+
+		  FMOD_RESULT getMemoryInfo           (unsigned int memorybits, unsigned int event_memorybits, unsigned int *memoryused, unsigned int *memoryused_array) { return FMOD_ChannelGroup_GetMemoryInfo(this, memorybits, event_memorybits, memoryused, memoryused_array); }
 	};
 
 	/*
@@ -438,6 +448,8 @@ namespace FMOD
 		// Userdata set/get.
 		  FMOD_RESULT setUserData            (void *userdata) { return FMOD_SoundGroup_SetUserData(this, userdata); }
 		  FMOD_RESULT getUserData            (void **userdata) { return FMOD_SoundGroup_GetUserData(this, userdata); }
+
+		  FMOD_RESULT getMemoryInfo          (unsigned int memorybits, unsigned int event_memorybits, unsigned int *memoryused, unsigned int *memoryused_array) { return FMOD_SoundGroup_GetMemoryInfo(this, memorybits, event_memorybits, memoryused, memoryused_array); }
 	};
 
 	/*
@@ -489,6 +501,8 @@ namespace FMOD
 		// Userdata set/get.
 		  FMOD_RESULT setUserData            (void *userdata) { return FMOD_DSP_SetUserData(this, userdata); }
 		  FMOD_RESULT getUserData            (void **userdata) { return FMOD_DSP_GetUserData(this, userdata); }
+
+		  FMOD_RESULT getMemoryInfo          (unsigned int memorybits, unsigned int event_memorybits, unsigned int *memoryused, unsigned int *memoryused_array) { return FMOD_DSP_GetMemoryInfo(this, memorybits, event_memorybits, memoryused, memoryused_array); }
 	};
 
 
@@ -514,6 +528,8 @@ namespace FMOD
 		// Userdata set/get.
 		  FMOD_RESULT setUserData           (void *userdata) { return FMOD_DSPConnection_SetUserData(this, userdata); }
 		  FMOD_RESULT getUserData           (void **userdata) { return FMOD_DSPConnection_GetUserData(this, userdata); }
+
+		  FMOD_RESULT getMemoryInfo         (unsigned int memorybits, unsigned int event_memorybits, unsigned int *memoryused, unsigned int *memoryused_array) { return FMOD_DSPConnection_GetMemoryInfo(this, memorybits, event_memorybits, memoryused, memoryused_array); }
 	};
 
 
@@ -555,6 +571,8 @@ namespace FMOD
 		// Userdata set/get.
 		  FMOD_RESULT setUserData            (void *userdata) { return FMOD_Geometry_SetUserData(this, userdata); }
 		  FMOD_RESULT getUserData            (void **userdata) { return FMOD_Geometry_GetUserData(this, userdata); }
+
+		  FMOD_RESULT getMemoryInfo          (unsigned int memorybits, unsigned int event_memorybits, unsigned int *memoryused, unsigned int *memoryused_array) { return FMOD_Geometry_GetMemoryInfo(this, memorybits, event_memorybits, memoryused, memoryused_array); }
 	};
 
 
@@ -583,6 +601,8 @@ namespace FMOD
 		// Userdata set/get.
 		  FMOD_RESULT setUserData            (void *userdata) { return FMOD_Reverb_SetUserData(this, userdata); }
 		  FMOD_RESULT getUserData            (void **userdata) { return FMOD_Reverb_GetUserData(this, userdata); }
+
+		  FMOD_RESULT getMemoryInfo          (unsigned int memorybits, unsigned int event_memorybits, unsigned int *memoryused, unsigned int *memoryused_array) { return FMOD_Reverb_GetMemoryInfo(this, memorybits, event_memorybits, memoryused, memoryused_array); }
 	};
 }
 

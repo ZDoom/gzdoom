@@ -131,7 +131,7 @@ int I_GetTimePolled (bool saveMS)
 		return TicFrozen;
 	}
 
-	DWORD tm = SDL_GetTicks ();
+	DWORD tm = SDL_GetTicks() + 1;	// Make sure this isn't 0.
 	if (BaseTime == 0)
 	{
 		BaseTime = tm;
@@ -140,9 +140,9 @@ int I_GetTimePolled (bool saveMS)
 	if (saveMS)
 	{
 		TicStart = tm;
-		TicNext = Scale ((Scale (tm, TICRATE, 1000) + 1), 1000, TICRATE);
+		TicNext = Scale((Scale (tm, TICRATE, 1000) + 1), 1000, TICRATE);
 	}
-	return Scale (tm - BaseTime, TICRATE, 1000);
+	return Scale(tm - BaseTime, TICRATE, 1000);
 }
 
 int I_WaitForTicPolled (int prevtic)

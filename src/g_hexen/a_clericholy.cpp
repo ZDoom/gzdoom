@@ -155,7 +155,7 @@ bool AHolySpirit::IsOkayToAttack (AActor *link)
 		{
 			return false;
 		}
-		if (!(link->flags&MF_SHOOTABLE))
+		if (!(link->flags & MF_SHOOTABLE))
 		{
 			return false;
 		}

@@ -84,7 +84,7 @@ void AMinotaurFriend::Serialize (FArchive &arc)
 
 bool AMinotaurFriend::IsOkayToAttack (AActor *link)
 {
-	if ((link->flags3&MF3_ISMONSTER) && (link != tracer))
+	if ((link->flags3 & MF3_ISMONSTER) && (link != tracer))
 	{
 		if (!((link->flags ^ flags) & MF_FRIENDLY))
 		{ // Don't attack friends
@@ -542,9 +542,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurLook)
 
 		while ((mo = iterator.Next()) != NULL)
 		{
-			if (!(mo->flags3&MF3_ISMONSTER)) continue;
+			if (!(mo->flags3 & MF3_ISMONSTER)) continue;
 			if (mo->health <= 0) continue;
-			if (!(mo->flags&MF_SHOOTABLE)) continue;
+			if (!(mo->flags & MF_SHOOTABLE)) continue;
 			dist = P_AproxDistance (self->x - mo->x, self->y - mo->y);
 			if (dist > MINOTAUR_LOOK_DIST) continue;
 			if ((mo == master) || (mo == self)) continue;

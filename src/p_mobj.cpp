@@ -2184,7 +2184,7 @@ void P_NightmareRespawn (AActor *mobj)
 	mo->SpawnPoint[1] = mobj->SpawnPoint[1];
 	mo->SpawnPoint[2] = mobj->SpawnPoint[2];
 	mo->SpawnAngle = mobj->SpawnAngle;
-	mo->SpawnFlags = mobj->SpawnFlags;
+	mo->SpawnFlags = mobj->SpawnFlags & ~MTF_DORMANT;	// It wasn't dormant when it died, so it's not dormant now, either.
 	mo->angle = ANG45 * (mobj->SpawnAngle/45);
 
 	mo->HandleSpawnFlags ();
@@ -2403,14 +2403,17 @@ bool AActor::IsOkayToAttack (AActor *link)
 {
 	if (player)				// Minotaur looking around player
 	{
-		if ((link->flags3 & MF3_ISMONSTER) ||
-			(link->player && (link != this)))
+		if ((link->flags3 & MF3_ISMONSTER) || (link->player && (link != this)))
 		{
-			if (!(link->flags&MF_SHOOTABLE))
+			if (IsFriend(link))
 			{
 				return false;
 			}
-			if (link->flags2&MF2_DORMANT)
+			if (!(link->flags & MF_SHOOTABLE))
+			{
+				return false;
+			}
+			if (link->flags2 & MF2_DORMANT)
 			{
 				return false;
 			}

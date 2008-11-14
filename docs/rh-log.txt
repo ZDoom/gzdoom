@@ -1,3 +1,10 @@
+November 14, 2008
+- Fixed: AMageStaffFX2::IsOkayToAttack() / A_MStaffAttack aimed at friendlies.
+- Added kill count awareness to A_ChangeFlag.
+- P_NightmareRespawn() now clears the MTF_AMBUSH flag, so respawned monsters
+  aren't dormant (since there would be no way to activate them, and they
+  were certainly not dormant when they died).
+
 November 8, 2008
 - Made sdl/i_system.cpp:I_GetTimePolled() functionally equivalent to the
   Win32 version.

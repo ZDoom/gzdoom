@@ -1360,4 +1360,3 @@ static AActor *RoughBlockCheck (AActor *mo, int index)
 	}
 	return NULL;
 }
-

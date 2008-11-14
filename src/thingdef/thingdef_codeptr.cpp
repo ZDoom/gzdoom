@@ -2216,16 +2216,39 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ChangeFlag)
 
 	if (fd != NULL)
 	{
+		bool kill_before, kill_after;
+
+		kill_before = self->CountsAsKill();
 		if (fd->structoffset == -1)
 		{
 			HandleDeprecatedFlags(self, cls->ActorInfo, expression, fd->flagbit);
 		}
 		else
 		{
-			int * flagp = (int*) (((char*)self) + fd->structoffset);
+			int *flagp = (int*) (((char*)self) + fd->structoffset);
 
-			if (expression) *flagp |= fd->flagbit;
-			else *flagp &= ~fd->flagbit;
+			if (expression)
+			{
+				*flagp |= fd->flagbit;
+			}
+			else
+			{
+				*flagp &= ~fd->flagbit;
+			}
+		}
+		kill_after = self->CountsAsKill();
+		// Was this monster previously worth a kill but no longer is?
+		// Or vice versa?
+		if (kill_before != kill_after)
+		{
+			if (kill_after)
+			{ // It counts as a kill now.
+				level.total_monsters++;
+			}
+			else
+			{ // It no longer counts as a kill.
+				level.total_monsters--;
+			}
 		}
 	}
 	else

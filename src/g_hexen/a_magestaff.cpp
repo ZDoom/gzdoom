@@ -108,10 +108,9 @@ int AMageStaffFX2::SpecialMissileHit (AActor *victim)
 
 bool AMageStaffFX2::IsOkayToAttack (AActor *link)
 {
-	if (((link->flags3&MF3_ISMONSTER) || link->player)
-		&& !(link->flags2&MF2_DORMANT))
+	if (((link->flags3 & MF3_ISMONSTER) || link->player) && !(link->flags2 & MF2_DORMANT))
 	{
-		if (!(link->flags&MF_SHOOTABLE))
+		if (!(link->flags & MF_SHOOTABLE))
 		{
 			return false;
 		}
@@ -123,7 +122,11 @@ bool AMageStaffFX2::IsOkayToAttack (AActor *link)
 		{
 			return false;
 		}
-		else if (P_CheckSight (this, link))
+		if (target != NULL && target->IsFriend(link))
+		{
+			return false;
+		}
+		if (P_CheckSight (this, link))
 		{
 			AActor *master = target;
 			angle_t angle = R_PointToAngle2 (master->x, master->y,

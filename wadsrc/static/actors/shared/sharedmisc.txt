@@ -139,4 +139,11 @@ ACTOR RandomSpawner native
 	+NOGRAVITY
 }
 
+// Fast projectiles -----------------------------------------------------------
+
+ACTOR FastProjectile native
+{
+	Projectile
+}
+
 

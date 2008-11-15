@@ -179,4 +179,13 @@ public:
 	void Deactivate (AActor *activator);
 };
 
+class AFastProjectile : public AActor
+{
+	DECLARE_CLASS(AFastProjectile, AActor)
+public:
+	void Tick ();
+	virtual void Effect();
+};
+
+
 #endif //__A_SHAREDGLOBAL_H__

@@ -695,14 +695,19 @@ boom:
 
 // Blaster FX 1 -------------------------------------------------------------
 
-class ABlasterFX1 : public AActor
+//----------------------------------------------------------------------------
+//
+// Thinker for the ultra-fast blaster PL2 ripper-spawning missile.
+//
+//----------------------------------------------------------------------------
+
+class ABlasterFX1 : public AFastProjectile
 {
-	DECLARE_CLASS(ABlasterFX1, AActor)
+	DECLARE_CLASS(ABlasterFX1, AFastProjectile)
 public:
-	void Tick ();
+	void Effect ();
 	int DoSpecialDamage (AActor *target, int damage);
 };
-
 
 int ABlasterFX1::DoSpecialDamage (AActor *target, int damage)
 {
@@ -717,9 +722,18 @@ int ABlasterFX1::DoSpecialDamage (AActor *target, int damage)
 	return damage;
 }
 
+void ABlasterFX1::Effect ()
+{
+	if (pr_bfx1t() < 64)
+	{
+		Spawn("BlasterSmoke", x, y, MAX<fixed_t> (z - 8 * FRACUNIT, floorz), ALLOW_REPLACE);
+	}
+}
+
 IMPLEMENT_CLASS(ABlasterFX1)
 
 // Ripper -------------------------------------------------------------------
+
 
 class ARipper : public AActor
 {
@@ -799,77 +813,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnRippers)
 		ripper->momx = FixedMul (ripper->Speed, finecosine[angle]);
 		ripper->momy = FixedMul (ripper->Speed, finesine[angle]);
 		P_CheckMissileSpawn (ripper);
-	}
-}
-
-//----------------------------------------------------------------------------
-//
-// PROC P_BlasterMobjThinker
-//
-// Thinker for the ultra-fast blaster PL2 ripper-spawning missile.
-//
-//----------------------------------------------------------------------------
-
-void ABlasterFX1::Tick ()
-{
-	int i;
-	fixed_t xfrac;
-	fixed_t yfrac;
-	fixed_t zfrac;
-	int changexy;
-
-	PrevX = x;
-	PrevY = y;
-	PrevZ = z;
-
-	// Handle movement
-	if (momx || momy || (z != floorz) || momz)
-	{
-		xfrac = momx>>3;
-		yfrac = momy>>3;
-		zfrac = momz>>3;
-		changexy = xfrac | yfrac;
-		for (i = 0; i < 8; i++)
-		{
-			if (changexy)
-			{
-				if (!P_TryMove (this, x + xfrac, y + yfrac, true))
-				{ // Blocked move
-					P_ExplodeMissile (this, BlockingLine, BlockingMobj);
-					return;
-				}
-			}
-			z += zfrac;
-			if (z <= floorz)
-			{ // Hit the floor
-				z = floorz;
-				P_HitFloor (this);
-				P_ExplodeMissile (this, NULL, NULL);
-				return;
-			}
-			if (z + height > ceilingz)
-			{ // Hit the ceiling
-				z = ceilingz - height;
-				P_ExplodeMissile (this, NULL, NULL);
-				return;
-			}
-			if (changexy && (pr_bfx1t() < 64))
-			{
-				Spawn("BlasterSmoke", x, y, MAX<fixed_t> (z - 8 * FRACUNIT, floorz), ALLOW_REPLACE);
-			}
-		}
-	}
-	// Advance the state
-	if (tics != -1)
-	{
-		tics--;
-		while (!tics)
-		{
-			if (!SetState (state->GetNextState ()))
-			{ // mobj was removed
-				return;
-			}
-		}
 	}
 }
 

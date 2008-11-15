@@ -157,14 +157,13 @@ ACTOR CircleFlame
 
 // Flame Missile ------------------------------------------------------------
 
-ACTOR CFlameMissile native
+ACTOR CFlameMissile : FastProjectile native
 {
 	Speed 200
 	Radius 14
 	Height 8
 	Damage 8
 	DamageType "Fire"
-	Projectile
 	+INVISIBLE
 	RenderStyle Add
 

@@ -1,3 +1,8 @@
+November 15, 2008  (Changes by Graf Zahl)
+- moved common code of Raven's fast projectiles into a base class
+  called FastProjectile. This base class doesn't have any effects attached
+  so that it can be used for user defined fast projectiles.
+
 November 14, 2008
 - Removed GC barriers from the sound channels. If we must, we can always
   do it the old way and scan every channel to see if it matches an actor/

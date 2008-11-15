@@ -26,12 +26,12 @@ void A_CFlameMissile (AActor *);
 
 // Flame Missile ------------------------------------------------------------
 
-class ACFlameMissile : public AActor
+class ACFlameMissile : public AFastProjectile
 {
-	DECLARE_CLASS (ACFlameMissile, AActor)
+	DECLARE_CLASS (ACFlameMissile, AFastProjectile)
 public:
 	void BeginPlay ();
-	void Tick ();
+	void Effect ();
 };
 
 IMPLEMENT_CLASS (ACFlameMissile)
@@ -41,80 +41,22 @@ void ACFlameMissile::BeginPlay ()
 	special1 = 2;
 }
 
-void ACFlameMissile::Tick ()
+void ACFlameMissile::Effect ()
 {
-	int i;
-	fixed_t xfrac;
-	fixed_t yfrac;
-	fixed_t zfrac;
 	fixed_t newz;
-	bool changexy;
-	AActor *mo;
 
-	PrevX = x;
-	PrevY = y;
-	PrevZ = z;
-
-	// Handle movement
-	if (momx || momy ||	(z != floorz) || momz)
+	if (!--special1)
 	{
-		xfrac = momx>>3;
-		yfrac = momy>>3;
-		zfrac = momz>>3;
-		changexy = xfrac || yfrac;
-		for (i = 0; i < 8; i++)
+		special1 = 4;
+		newz = z-12*FRACUNIT;
+		if (newz < floorz)
 		{
-			if (changexy)
-			{
-				if (!P_TryMove (this, x+xfrac, y+yfrac, true))
-				{ // Blocked move
-					P_ExplodeMissile (this, BlockingLine, BlockingMobj);
-					return;
-				}
-			}
-			z += zfrac;
-			if (z <= floorz)
-			{ // Hit the floor
-				z = floorz;
-				P_HitFloor (this);
-				P_ExplodeMissile (this, NULL, NULL);
-				return;
-			}
-			if (z+height > ceilingz)
-			{ // Hit the ceiling
-				z = ceilingz-height;
-				P_ExplodeMissile (this, NULL, NULL);
-				return;
-			}
-			if (changexy)
-			{
-				if (!--special1)
-				{
-					special1 = 4;
-					newz = z-12*FRACUNIT;
-					if (newz < floorz)
-					{
-						newz = floorz;
-					}
-					mo = Spawn ("CFlameFloor", x, y, newz, ALLOW_REPLACE);
-					if (mo)
-					{
-						mo->angle = angle;
-					}
-				}
-			}
+			newz = floorz;
 		}
-	}
-	// Advance the state
-	if (tics != -1)
-	{
-		tics--;
-		while (!tics)
+		AActor *mo = Spawn ("CFlameFloor", x, y, newz, ALLOW_REPLACE);
+		if (mo)
 		{
-			if (!SetState (state->GetNextState ()))
-			{ // mobj was removed
-				return;
-			}
+			mo->angle = angle;
 		}
 	}
 }

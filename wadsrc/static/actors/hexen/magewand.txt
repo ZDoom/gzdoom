@@ -44,13 +44,12 @@ ACTOR MageWandSmoke
 
 // Wand Missile -------------------------------------------------------------
 
-ACTOR MageWandMissile native
+ACTOR MageWandMissile : FastProjectile native
 {
 	Speed 184
 	Radius 12
 	Height 8
 	Damage 2
-	Projectile
 	+RIPPER +CANNOTPUSH +NODAMAGETHRUST
 	SeeSound "MageWandFire"
 	States

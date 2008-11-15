@@ -722,13 +722,12 @@ ACTOR BlasterPowered : Blaster
 
 // Blaster FX 1 -------------------------------------------------------------
 
-ACTOR BlasterFX1 native
+ACTOR BlasterFX1 : FastProjectile native
 {
 	Radius 12
 	Height 8
 	Speed 184
 	Damage 2
-	Projectile
 	SeeSound "weapons/blastershoot"
 	DeathSound "weapons/blasterhit"
 	+SPAWNSOUNDSOURCE

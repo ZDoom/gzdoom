@@ -1057,7 +1057,7 @@ static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyO
 		chan->SourceType = type;
 		switch (type)
 		{
-		case SOURCE_Actor:		chan->Actor = actor;	actor->SoundChans |= 1 << channel; GC::WriteBarrier(actor);	break;
+		case SOURCE_Actor:		chan->Actor = actor;	actor->SoundChans |= 1 << channel; break;
 		case SOURCE_Sector:		chan->Sector = sec;		break;
 		case SOURCE_Polyobj:	chan->Poly = poly;		break;
 		case SOURCE_Unattached:	chan->Point[0] = pt->X; chan->Point[1] = pt->Y; chan->Point[2] = pt->Z;	break;
@@ -1497,7 +1497,6 @@ void S_RelinkSound (AActor *from, AActor *to)
 			if (to != NULL)
 			{
 				chan->Actor = to;
-				GC::WriteBarrier(to);
 			}
 			else if (!(chan->ChanFlags & CHAN_LOOP))
 			{
@@ -1509,11 +1508,15 @@ void S_RelinkSound (AActor *from, AActor *to)
 			}
 			else
 			{
-				chan->Actor = NULL;
 				S_StopChannel(chan);
 			}
 		}
 	}
+	if (to != NULL)
+	{
+		to->SoundChans = from->SoundChans;
+	}
+	from->SoundChans = 0;
 }
 
 //==========================================================================
@@ -1697,6 +1700,10 @@ void S_RestoreEvictedChannel(FSoundChan *chan)
 				chan->ChanFlags |= CHAN_FORGETTABLE;
 			}
 		}
+	}
+	else if (chan->SysChannel == NULL && (chan->ChanFlags & (CHAN_FORGETTABLE | CHAN_LOOP)) == CHAN_FORGETTABLE)
+	{
+		S_ReturnChannel(chan);
 	}
 }
 

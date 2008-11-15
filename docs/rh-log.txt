@@ -1,4 +1,11 @@
 November 14, 2008
+- Removed GC barriers from the sound channels. If we must, we can always
+  do it the old way and scan every channel to see if it matches an actor/
+  entchannel pair.
+- Fixed: S_RelinkSounds() did not move the SoundChans bitfield to the new
+  actor.
+- Fixed: Stolen channels could be kept around by the high-level channels
+  indefinitely.
 - Fixed: AMageStaffFX2::IsOkayToAttack() / A_MStaffAttack aimed at friendlies.
 - Added kill count awareness to A_ChangeFlag.
 - P_NightmareRespawn() now clears the MTF_AMBUSH flag, so respawned monsters

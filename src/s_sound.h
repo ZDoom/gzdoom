@@ -178,10 +178,9 @@ struct FSoundChan : public FISoundChannel
 	SBYTE		Priority;
 	SWORD		NearLimit;
 	BYTE		SourceType;
-	TObjPtr<AActor> Actor;
 	union
 	{
-		//AActor	*Actor;				// Used for position and velocity.
+		AActor			*Actor;		// Used for position and velocity.
 		const sector_t	*Sector;	// Sector for area sounds.
 		const FPolyObj	*Poly;		// Polyobject sound source.
 		float			 Point[3];	// Sound is not attached to any source.

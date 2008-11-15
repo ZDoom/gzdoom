@@ -554,6 +554,7 @@ add_executable( zdoom WIN32
 	g_shared/a_camera.cpp
 	g_shared/a_debris.cpp
 	g_shared/a_decals.cpp
+	g_shared/a_fastprojectile.cpp
 	g_shared/a_flashfader.cpp
 	g_shared/a_fountain.cpp
 	g_shared/a_hatetarget.cpp

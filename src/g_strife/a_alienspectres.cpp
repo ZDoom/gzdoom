@@ -111,14 +111,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_AlienSpectreDeath)
 		break;
 
 	case NAME_AlienSpectre2:
-		C_MidPrint(GStrings("TXT_KILLED_BISHOP"));
+		C_MidPrint(SmallFont, GStrings("TXT_KILLED_BISHOP"));
 		log = 74;
 		player->GiveInventoryType (QuestItemClasses[20]);
 		break;
 
 	case NAME_AlienSpectre3:
 	{
-		C_MidPrint(GStrings("TXT_KILLED_ORACLE"));
+		C_MidPrint(SmallFont, GStrings("TXT_KILLED_ORACLE"));
 		// If there are any Oracles still alive, kill them.
 		TThinkerIterator<AActor> it(NAME_Oracle);
 		AActor *oracle;
@@ -149,7 +149,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_AlienSpectreDeath)
 	}
 
 	case NAME_AlienSpectre4:
-		C_MidPrint(GStrings("TXT_KILLED_MACIL"));
+		C_MidPrint(SmallFont, GStrings("TXT_KILLED_MACIL"));
 		player->GiveInventoryType (QuestItemClasses[23]);
 		if (player->FindInventory (QuestItemClasses[24]) == NULL)
 		{	// Richter has taken over. Macil is a snake.
@@ -162,7 +162,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_AlienSpectreDeath)
 		break;
 
 	case NAME_AlienSpectre5:
-		C_MidPrint(GStrings("TXT_KILLED_LOREMASTER"));
+		C_MidPrint(SmallFont, GStrings("TXT_KILLED_LOREMASTER"));
 		ASigil *sigil;
 
 		player->GiveInventoryType (QuestItemClasses[25]);

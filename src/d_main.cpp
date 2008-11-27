@@ -897,7 +897,7 @@ void D_PageDrawer (void)
 		screen->Clear (0, 0, SCREENWIDTH, SCREENHEIGHT, 0, 0);
 		if (!PageBlank)
 		{
-			screen->DrawText (CR_WHITE, 0, 0, "Page graphic goes here", TAG_DONE);
+			screen->DrawText (SmallFont, CR_WHITE, 0, 0, "Page graphic goes here", TAG_DONE);
 		}
 	}
 	if (Advisory != NULL)

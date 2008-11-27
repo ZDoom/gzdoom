@@ -670,7 +670,7 @@ void drawquad(float x0, float y0, float x1, float y1, float x2, float y2, float 
 void printnum(int x, int y, int num)
 {
 	char foo[16]; mysnprintf (foo, countof(foo), "%d", num);
-	RenderTarget->DrawText (CR_WHITE, x, y, foo);
+	RenderTarget->DrawText (SmallFont, CR_WHITE, x, y, foo);
 }
 
 void drawpolymosttest()

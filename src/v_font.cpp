@@ -62,7 +62,7 @@ The FON2 header is followed by variable length data:
 
 	ubyte Palette[PaletteSize+1][3];
 		-- The last entry is the delimiter color. The delimiter is not used
-		-- by the font but is used my imagetool when converting the font
+		-- by the font but is used by imagetool when converting the font
 		-- back to an image. Color 0 is the transparent color and is also
 		-- used only for converting the font back to an image. The other
 		-- entries are all presorted in increasing order of brightness.
@@ -144,6 +144,13 @@ public:
 
 protected:
 	FTextureID PicNum;
+};
+
+// Essentially a normal multilump font but with an explicit list of character patches
+class FSpecialFont : public FFont
+{
+public:
+	FSpecialFont (const char *name, int first, int count, int *lumplist, const bool *notranslate);
 };
 
 // This is a font character that loads a texture and recolors it.
@@ -1503,18 +1510,6 @@ void FFontChar2::MakeTexture ()
 	}
 }
 
-//===========================================================================
-// 
-// Essentially a normal multilump font but 
-// with an explicit list of character patches
-//
-//===========================================================================
-class FSpecialFont : public FFont
-{
-public:
-	FSpecialFont (const char *name, int first, int count, int *lumplist, const bool *notranslate);
-};
-
 //==========================================================================
 //
 // FSpecialFont :: FSpecialFont
@@ -1723,7 +1718,7 @@ void V_InitCustomFonts()
 						if (sc.Number >= 0 && sc.Number < 256)
 							notranslate[sc.Number] = true;
 					}
-					format=2;
+					format = 2;
 				}
 				else
 				{
@@ -1756,7 +1751,7 @@ void V_InitCustomFonts()
 						break;
 					}
 				}
-				if (count>0)
+				if (count > 0)
 				{
 					new FSpecialFont (namebuffer, first, count, &lumplist[first], notranslate);
 				}
@@ -2116,7 +2111,7 @@ void V_InitFonts()
 			SmallFont = new FFont ("SmallFont", "STCFN%.3d", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART);
 		}
 	}
-	if (!(SmallFont2=FFont::FindFont("SmallFont2")))
+	if (!(SmallFont2 = FFont::FindFont("SmallFont2")))
 	{
 		if (Wads.CheckNumForName ("STBFN033", ns_graphics) >= 0)
 		{
@@ -2127,7 +2122,7 @@ void V_InitFonts()
 			SmallFont2 = SmallFont;
 		}
 	}
-	if (!(BigFont=FFont::FindFont("BigFont")))
+	if (!(BigFont = FFont::FindFont("BigFont")))
 	{
 		if (gameinfo.gametype & GAME_DoomChex)
 		{
@@ -2142,9 +2137,19 @@ void V_InitFonts()
 			BigFont = new FFont ("BigFont", "FONTB%02u", HU_FONTSTART, HU_FONTSIZE, 1);
 		}
 	}
-	if (!(ConFont=FFont::FindFont("ConsoleFont")))
+	if (!(ConFont = FFont::FindFont("ConsoleFont")))
 	{
 		ConFont = new FSingleLumpFont ("ConsoleFont", Wads.GetNumForName ("CONFONT"));
 	}
+	if (!(IntermissionFont = FFont::FindFont("IntermissionFont")))
+	{
+		if (gameinfo.gametype & GAME_DoomChex)
+		{
+			IntermissionFont = FFont::FindFont("IntermissionFont_Doom");
+		}
+		if (IntermissionFont == NULL)
+		{
+			IntermissionFont = BigFont;
+		}
+	}
 }
-

@@ -2154,10 +2154,6 @@ void DLevelScript::DoSetFont (int fontnum)
 	{
 		activefont = SmallFont;
 	}
-	if (screen != NULL)
-	{
-		screen->SetFont (activefont);
-	}
 }
 
 #define APROP_Health		0
@@ -2535,11 +2531,6 @@ int DLevelScript::RunScript ()
 	const char *lookup;
 	int optstart = -1;
 	int temp;
-
-	if (screen != NULL)
-	{
-		screen->SetFont (activefont);
-	}
 
 	while (state == SCRIPT_Running)
 	{
@@ -4009,7 +4000,7 @@ int DLevelScript::RunScript ()
 				if (pcd == PCD_ENDPRINTBOLD || screen == NULL ||
 					screen->CheckLocalView (consoleplayer))
 				{
-					C_MidPrint (work);
+					C_MidPrint (activefont, work);
 				}
 			}
 			else
@@ -4060,26 +4051,26 @@ int DLevelScript::RunScript ()
 					switch (type & 0xFFFF)
 					{
 					default:	// normal
-						msg = new DHUDMessage (work, x, y, hudwidth, hudheight, color, holdTime);
+						msg = new DHUDMessage (activefont, work, x, y, hudwidth, hudheight, color, holdTime);
 						break;
 					case 1:		// fade out
 						{
 							float fadeTime = (optstart < sp) ? FIXED2FLOAT(Stack[optstart]) : 0.5f;
-							msg = new DHUDMessageFadeOut (work, x, y, hudwidth, hudheight, color, holdTime, fadeTime);
+							msg = new DHUDMessageFadeOut (activefont, work, x, y, hudwidth, hudheight, color, holdTime, fadeTime);
 						}
 						break;
 					case 2:		// type on, then fade out
 						{
 							float typeTime = (optstart < sp) ? FIXED2FLOAT(Stack[optstart]) : 0.05f;
 							float fadeTime = (optstart < sp-1) ? FIXED2FLOAT(Stack[optstart+1]) : 0.5f;
-							msg = new DHUDMessageTypeOnFadeOut (work, x, y, hudwidth, hudheight, color, typeTime, holdTime, fadeTime);
+							msg = new DHUDMessageTypeOnFadeOut (activefont, work, x, y, hudwidth, hudheight, color, typeTime, holdTime, fadeTime);
 						}
 						break;
 					case 3:		// fade in, then fade out
 						{
 							float inTime = (optstart < sp) ? FIXED2FLOAT(Stack[optstart]) : 0.5f;
 							float outTime = (optstart < sp-1) ? FIXED2FLOAT(Stack[optstart+1]) : 0.5f;
-							msg = new DHUDMessageFadeInOut (work, x, y, hudwidth, hudheight, color, holdTime, inTime, outTime);
+							msg = new DHUDMessageFadeInOut (activefont, work, x, y, hudwidth, hudheight, color, holdTime, inTime, outTime);
 						}
 						break;
 					}
@@ -5581,10 +5572,6 @@ int DLevelScript::RunScript ()
 	{
 		this->pc = pc;
 		assert (sp == 0);
-	}
-	if (screen != NULL)
-	{
-		screen->SetFont (SmallFont);
 	}
 	return resultValue;
 }

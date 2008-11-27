@@ -151,17 +151,17 @@ void S_NoiseDebug (void)
 	int y, color;
 
 	y = 32 * CleanYfac;
-	screen->DrawText (CR_YELLOW, 0, y, "*** SOUND DEBUG INFO ***", TAG_DONE);
+	screen->DrawText (SmallFont, CR_YELLOW, 0, y, "*** SOUND DEBUG INFO ***", TAG_DONE);
 	y += 8;
 
-	screen->DrawText (CR_GOLD, 0, y, "name", TAG_DONE);
-	screen->DrawText (CR_GOLD, 70, y, "x", TAG_DONE);
-	screen->DrawText (CR_GOLD, 120, y, "y", TAG_DONE);
-	screen->DrawText (CR_GOLD, 170, y, "z", TAG_DONE);
-	screen->DrawText (CR_GOLD, 220, y, "vol", TAG_DONE);
-	screen->DrawText (CR_GOLD, 260, y, "dist", TAG_DONE);
-	screen->DrawText (CR_GOLD, 300, y, "chan", TAG_DONE);
-	screen->DrawText (CR_GOLD, 340, y, "flags", TAG_DONE);
+	screen->DrawText (SmallFont, CR_GOLD, 0, y, "name", TAG_DONE);
+	screen->DrawText (SmallFont, CR_GOLD, 70, y, "x", TAG_DONE);
+	screen->DrawText (SmallFont, CR_GOLD, 120, y, "y", TAG_DONE);
+	screen->DrawText (SmallFont, CR_GOLD, 170, y, "z", TAG_DONE);
+	screen->DrawText (SmallFont, CR_GOLD, 220, y, "vol", TAG_DONE);
+	screen->DrawText (SmallFont, CR_GOLD, 260, y, "dist", TAG_DONE);
+	screen->DrawText (SmallFont, CR_GOLD, 300, y, "chan", TAG_DONE);
+	screen->DrawText (SmallFont, CR_GOLD, 340, y, "flags", TAG_DONE);
 	y += 8;
 
 	if (Channels == NULL)
@@ -186,51 +186,51 @@ void S_NoiseDebug (void)
 		// Name
 		Wads.GetLumpName (temp, chan->SfxInfo->lumpnum);
 		temp[8] = 0;
-		screen->DrawText (color, 0, y, temp, TAG_DONE);
+		screen->DrawText (SmallFont, color, 0, y, temp, TAG_DONE);
 
 		if (!(chan->ChanFlags & CHAN_IS3D))
 		{
-			screen->DrawText(color, 70, y, "---", TAG_DONE);	// X
-			screen->DrawText(color, 120, y, "---", TAG_DONE);	// Y
-			screen->DrawText(color, 170, y, "---", TAG_DONE);	// Z
-			screen->DrawText(color, 260, y, "---", TAG_DONE);	// Distance
+			screen->DrawText(SmallFont, color, 70, y, "---", TAG_DONE);		// X
+			screen->DrawText(SmallFont, color, 120, y, "---", TAG_DONE);	// Y
+			screen->DrawText(SmallFont, color, 170, y, "---", TAG_DONE);	// Z
+			screen->DrawText(SmallFont, color, 260, y, "---", TAG_DONE);	// Distance
 		}
 		else
 		{
 			// X coordinate
-			mysnprintf (temp, countof(temp), "%.0f", origin.X);
-			screen->DrawText (color, 70, y, temp, TAG_DONE);
+			mysnprintf(temp, countof(temp), "%.0f", origin.X);
+			screen->DrawText(SmallFont, color, 70, y, temp, TAG_DONE);
 
 			// Y coordinate
-			mysnprintf (temp, countof(temp), "%.0f", origin.Z);
-			screen->DrawText (color, 120, y, temp, TAG_DONE);
+			mysnprintf(temp, countof(temp), "%.0f", origin.Z);
+			screen->DrawText(SmallFont, color, 120, y, temp, TAG_DONE);
 
 			// Z coordinate
-			mysnprintf (temp, countof(temp), "%.0f", origin.Y);
-			screen->DrawText (color, 170, y, temp, TAG_DONE);
+			mysnprintf(temp, countof(temp), "%.0f", origin.Y);
+			screen->DrawText(SmallFont, color, 170, y, temp, TAG_DONE);
 
 			// Distance
 			if (chan->DistanceScale > 0)
 			{
-				mysnprintf (temp, countof(temp), "%.0f", (origin - listener).Length());
-				screen->DrawText (color, 260, y, temp, TAG_DONE);
+				mysnprintf(temp, countof(temp), "%.0f", (origin - listener).Length());
+				screen->DrawText(SmallFont, color, 260, y, temp, TAG_DONE);
 			}
 			else
 			{
-				screen->DrawText (color, 260, y, "---", TAG_DONE);
+				screen->DrawText(SmallFont, color, 260, y, "---", TAG_DONE);
 			}
 		}
 
 		// Volume
-		mysnprintf (temp, countof(temp), "%.2g", chan->Volume);
-		screen->DrawText (color, 220, y, temp, TAG_DONE);
+		mysnprintf(temp, countof(temp), "%.2g", chan->Volume);
+		screen->DrawText(SmallFont, color, 220, y, temp, TAG_DONE);
 
 		// Channel
-		mysnprintf (temp, countof(temp), "%d", chan->EntChannel);
-		screen->DrawText (color, 300, y, temp, TAG_DONE);
+		mysnprintf(temp, countof(temp), "%d", chan->EntChannel);
+		screen->DrawText(SmallFont, color, 300, y, temp, TAG_DONE);
 
 		// Flags
-		mysnprintf (temp, countof(temp), "%s3%sZ%sU%sM%sN%sA%sL%sE",
+		mysnprintf(temp, countof(temp), "%s3%sZ%sU%sM%sN%sA%sL%sE",
 			(chan->ChanFlags & CHAN_IS3D)			? TEXTCOLOR_GREEN : TEXTCOLOR_BLACK,
 			(chan->ChanFlags & CHAN_LISTENERZ)		? TEXTCOLOR_GREEN : TEXTCOLOR_BLACK,
 			(chan->ChanFlags & CHAN_UI)				? TEXTCOLOR_GREEN : TEXTCOLOR_BLACK,
@@ -239,7 +239,7 @@ void S_NoiseDebug (void)
 			(chan->ChanFlags & CHAN_AREA)			? TEXTCOLOR_GREEN : TEXTCOLOR_BLACK,
 			(chan->ChanFlags & CHAN_LOOP)			? TEXTCOLOR_GREEN : TEXTCOLOR_BLACK,
 			(chan->ChanFlags & CHAN_EVICTED)		? TEXTCOLOR_GREEN : TEXTCOLOR_BLACK);
-		screen->DrawText (color, 340, y, temp, TAG_DONE);
+		screen->DrawText(SmallFont, color, 340, y, temp, TAG_DONE);
 
 		y += 8;
 		if (chan->PrevChan == &Channels)

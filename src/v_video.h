@@ -128,8 +128,6 @@ class DCanvas : public DObject
 {
 	DECLARE_ABSTRACT_CLASS (DCanvas, DObject)
 public:
-	FFont *Font;
-
 	DCanvas (int width, int height);
 	virtual ~DCanvas ();
 
@@ -187,8 +185,6 @@ public:
 
 	// Text drawing functions -----------------------------------------------
 
-	virtual void SetFont (FFont *font);
-
 	// 2D Texture drawing
 	void STACK_ARGS DrawTexture (FTexture *img, int x, int y, int tags, ...);
 	void FillBorder (FTexture *img);	// Fills the border around a 4:3 part of the screen on non-4:3 displays
@@ -196,8 +192,8 @@ public:
 	void VirtualToRealCoordsInt(int &x, int &y, int &w, int &h, int vwidth, int vheight, bool vbottom=false, bool handleaspect=true) const;
 
 	// 2D Text drawing
-	void STACK_ARGS DrawText (int normalcolor, int x, int y, const char *string, ...);
-	void STACK_ARGS DrawChar (int normalcolor, int x, int y, BYTE character, ...);
+	void STACK_ARGS DrawText (FFont *font, int normalcolor, int x, int y, const char *string, ...);
+	void STACK_ARGS DrawChar (FFont *font, int normalcolor, int x, int y, BYTE character, ...);
 
 protected:
 	BYTE *Buffer;

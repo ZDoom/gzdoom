@@ -110,7 +110,7 @@ bool AScanner::Use (bool pickup)
 	{
 		if (Owner->CheckLocalView (consoleplayer))
 		{
-			C_MidPrint(GStrings("TXT_NEEDMAP"));
+			C_MidPrint(SmallFont, GStrings("TXT_NEEDMAP"));
 		}
 		return false;
 	}

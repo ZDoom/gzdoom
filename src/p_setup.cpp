@@ -3244,7 +3244,7 @@ void P_SetupLevel (char *lumpname, int position)
 	AActor::ClearTIDHashes ();
 
 	// [RH] clear out the mid-screen message
-	C_MidPrint (NULL);
+	C_MidPrint (NULL, NULL);
 
 	// Free all level data from the previous map
 	P_FreeLevelData ();

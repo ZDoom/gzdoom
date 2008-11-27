@@ -57,7 +57,7 @@ class DHUDMessage : public DObject
 	DECLARE_CLASS (DHUDMessage, DObject)
 	HAS_OBJECT_POINTERS
 public:
-	DHUDMessage (const char *text, float x, float y, int hudwidth, int hudheight,
+	DHUDMessage (FFont *font, const char *text, float x, float y, int hudwidth, int hudheight,
 		EColorRange textColor, float holdTime);
 	virtual ~DHUDMessage ();
 
@@ -98,7 +98,7 @@ class DHUDMessageFadeOut : public DHUDMessage
 {
 	DECLARE_CLASS (DHUDMessageFadeOut, DHUDMessage)
 public:
-	DHUDMessageFadeOut (const char *text, float x, float y, int hudwidth, int hudheight,
+	DHUDMessageFadeOut (FFont *font, const char *text, float x, float y, int hudwidth, int hudheight,
 		EColorRange textColor, float holdTime, float fadeOutTime);
 
 	virtual void Serialize (FArchive &arc);
@@ -117,7 +117,7 @@ class DHUDMessageFadeInOut : public DHUDMessageFadeOut
 {
 	DECLARE_CLASS (DHUDMessageFadeInOut, DHUDMessageFadeOut)
 public:
-	DHUDMessageFadeInOut (const char *text, float x, float y, int hudwidth, int hudheight,
+	DHUDMessageFadeInOut (FFont *font, const char *text, float x, float y, int hudwidth, int hudheight,
 		EColorRange textColor, float holdTime, float fadeInTime, float fadeOutTime);
 
 	virtual void Serialize (FArchive &arc);
@@ -136,7 +136,7 @@ class DHUDMessageTypeOnFadeOut : public DHUDMessageFadeOut
 {
 	DECLARE_CLASS (DHUDMessageTypeOnFadeOut, DHUDMessageFadeOut)
 public:
-	DHUDMessageTypeOnFadeOut (const char *text, float x, float y, int hudwidth, int hudheight,
+	DHUDMessageTypeOnFadeOut (FFont *font, const char *text, float x, float y, int hudwidth, int hudheight,
 		EColorRange textColor, float typeTime, float holdTime, float fadeOutTime);
 
 	virtual void Serialize (FArchive &arc);

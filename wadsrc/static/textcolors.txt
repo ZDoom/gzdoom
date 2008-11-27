@@ -207,3 +207,13 @@ Console:
 Flat:
 	#808080
 }
+
+Cyan
+{
+	#001F1F #00F0F0
+Console:
+	#000000 #007F7F     0 127
+	#00FFFF #FEFFFF   128 256
+Flat:
+	#00DDDD
+}

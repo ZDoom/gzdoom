@@ -581,7 +581,6 @@ private:
 
 		screen->DrawTexture (Images[back], left, top, DTA_CleanNoMove, true, DTA_Alpha, FRACUNIT*3/4, TAG_DONE);
 		screen->DrawTexture (Images[bars], left, top, DTA_CleanNoMove, true, TAG_DONE);
-		screen->SetFont (SmallFont2);
 
 		switch (CurrentPop)
 		{
@@ -592,7 +591,7 @@ private:
 				((level.time/TICRATE)%3600)/60,
 				(level.time/TICRATE)%60);
 
-			screen->DrawText (CR_UNTRANSLATED, left+210*xscale, top+8*yscale, buff,
+			screen->DrawText (SmallFont2, CR_UNTRANSLATED, left+210*xscale, top+8*yscale, buff,
 				DTA_CleanNoMove, true, TAG_DONE);
 
 			if (CPlayer->LogText != NULL)
@@ -600,7 +599,7 @@ private:
 				FBrokenLines *lines = V_BreakLines (SmallFont2, 272, CPlayer->LogText);
 				for (i = 0; lines[i].Width >= 0; ++i)
 				{
-					screen->DrawText (CR_UNTRANSLATED, left+24*xscale, top+(18+i*12)*yscale,
+					screen->DrawText (SmallFont2, CR_UNTRANSLATED, left+24*xscale, top+(18+i*12)*yscale,
 						lines[i].Text, DTA_CleanNoMove, true, TAG_DONE);
 				}
 				V_FreeBrokenLines (lines);
@@ -653,7 +652,7 @@ private:
 					DTA_ClipLeft, clipleft,
 					DTA_ClipRight, clipright,
 					TAG_DONE);
-				screen->DrawText (CR_UNTRANSLATED,
+				screen->DrawText (SmallFont2, CR_UNTRANSLATED,
 					left + (colnum * 140 + leftcol + 17)*xscale,
 					top + (11 + rownum)*yscale,
 					label,
@@ -711,7 +710,7 @@ private:
 			};
 			for (i = 0; i < 7; ++i)
 			{
-				const PClass * ammotype = PClass::FindClass(AmmoList[i].AmmoType);
+				const PClass *ammotype = PClass::FindClass(AmmoList[i].AmmoType);
 				item = CPlayer->mo->FindInventory (ammotype);
 
 				if (item == NULL)
@@ -758,8 +757,6 @@ private:
 			}
 			break;
 		}
-
-		screen->SetFont (SmallFont);
 	}
 
 	void DrINumber (signed int val, int x, int y, int imgBase) const

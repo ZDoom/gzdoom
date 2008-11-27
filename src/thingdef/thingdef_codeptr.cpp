@@ -1556,22 +1556,19 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Print)
 	if (self->CheckLocalView (consoleplayer) ||
 		(self->target!=NULL && self->target->CheckLocalView (consoleplayer)))
 	{
-		FFont * oldfont = screen->Font;
 		float saved = con_midtime;
-
+		FFont *font = NULL;
 		
 		if (fontname != NAME_None)
 		{
-			FFont * font = V_GetFont(fontname);
-			if (font != NULL) screen->SetFont(font);
+			font = V_GetFont(fontname);
 		}
 		if (time > 0)
 		{
 			con_midtime = time;
 		}
 		
-		C_MidPrint(text);
-		screen->SetFont(oldfont);
+		C_MidPrint(font != NULL ? font : SmallFont, text);
 		con_midtime = saved;
 	}
 }

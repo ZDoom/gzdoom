@@ -17,6 +17,7 @@
 #include "a_sharedglobal.h"
 #include "templates.h"
 #include "d_event.h"
+#include "v_font.h"
 
 // Include all the other Strife stuff here to reduce compile time
 #include "a_acolyte.cpp"

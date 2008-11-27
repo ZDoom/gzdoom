@@ -66,6 +66,7 @@ enum EColorRange
 	CR_DARKBROWN,
 	CR_PURPLE,
 	CR_DARKGRAY,
+	CR_CYAN,
 	NUM_TEXT_COLORS
 };
 
@@ -126,7 +127,7 @@ protected:
 };
 
 
-extern FFont *SmallFont, *SmallFont2, *BigFont, *ConFont;
+extern FFont *SmallFont, *SmallFont2, *BigFont, *ConFont, *IntermissionFont;
 
 void V_InitFonts();
 EColorRange V_FindFontColor (FName name);

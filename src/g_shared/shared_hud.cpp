@@ -156,14 +156,14 @@ static void DrawImageToBox(FTexture * tex, int x, int y, int w, int h, int trans
 //
 //---------------------------------------------------------------------------
 
-static void DrawHudText(int color, char * text, int x, int y, int trans=0xc000)
+static void DrawHudText(FFont *font, int color, char * text, int x, int y, int trans=0xc000)
 {
-	int zerowidth = screen->Font->GetCharWidth('0');
+	int zerowidth = font->GetCharWidth('0');
 
 	x+=zerowidth/2;
 	for(int i=0;text[i];i++)
 	{
-		screen->DrawChar(color, x, y, text[i],
+		screen->DrawChar(font, color, x, y, text[i],
 			DTA_KeepRatio, true,
 			DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, trans, 
 			DTA_CenterBottomOffset, 1, TAG_DONE);
@@ -178,12 +178,12 @@ static void DrawHudText(int color, char * text, int x, int y, int trans=0xc000)
 //
 //---------------------------------------------------------------------------
 
-static void DrawHudNumber(int color, int num, int x, int y, int trans=0xc000)
+static void DrawHudNumber(FFont *font, int color, int num, int x, int y, int trans=0xc000)
 {
 	char text[15];
 
 	mysnprintf(text, countof(text), "%d", num);
-	DrawHudText(color, text, x, y, trans);
+	DrawHudText(font, color, text, x, y, trans);
 }
 
 
@@ -198,29 +198,27 @@ static void DrawStatus(player_t * CPlayer, int x, int y)
 	char tempstr[50];
 	int space;
 	
-	screen->SetFont(SmallFont);
-
 	if (hud_showstats)
 	{
-		space=SmallFont->StringWidth("Ac: ");
+		space = SmallFont->StringWidth("Ac: ");
 
-		y-=SmallFont->GetHeight()-1;
-		screen->DrawText(hudcolor_statnames, x, y, "Ac:", 
+		y -= SmallFont->GetHeight()-1;
+		screen->DrawText(SmallFont, hudcolor_statnames, x, y, "Ac:", 
 			DTA_KeepRatio, true,
 			DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, 0xc000, TAG_DONE);
 
 		mysnprintf(tempstr, countof(tempstr), "%i ", CPlayer->accuracy);
-		screen->DrawText(hudcolor_stats, x+space, y, tempstr,
+		screen->DrawText(SmallFont, hudcolor_stats, x+space, y, tempstr,
 			DTA_KeepRatio, true,
 			DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, 0xc000, TAG_DONE);
 
 		y-=SmallFont->GetHeight()-1;
-		screen->DrawText(hudcolor_statnames, x, y, "St:", 
+		screen->DrawText(SmallFont, hudcolor_statnames, x, y, "St:", 
 			DTA_KeepRatio, true,
 			DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, 0xc000, TAG_DONE);
 
 		mysnprintf(tempstr, countof(tempstr), "%i ", CPlayer->stamina);
-		screen->DrawText(hudcolor_stats, x+space, y, tempstr,
+		screen->DrawText(SmallFont, hudcolor_stats, x+space, y, tempstr,
 			DTA_KeepRatio, true,
 			DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, 0xc000, TAG_DONE);
 	}
@@ -233,39 +231,39 @@ static void DrawStatus(player_t * CPlayer, int x, int y)
 		// work in cooperative hub games
 		if (hud_showsecrets)
 		{
-			y-=SmallFont->GetHeight()-1;
-			screen->DrawText(hudcolor_statnames, x, y, "S:", 
+			y -= SmallFont->GetHeight()-1;
+			screen->DrawText(SmallFont, hudcolor_statnames, x, y, "S:", 
 				DTA_KeepRatio, true,
 				DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, 0xc000, TAG_DONE);
 
 			mysnprintf(tempstr, countof(tempstr), "%i/%i ", multiplayer? CPlayer->secretcount : level.found_secrets, level.total_secrets);
-			screen->DrawText(hudcolor_stats, x+space, y, tempstr,
+			screen->DrawText(SmallFont, hudcolor_stats, x+space, y, tempstr,
 				DTA_KeepRatio, true,
 				DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, 0xc000, TAG_DONE);
 		}
 		
 		if (hud_showitems)
 		{
-			y-=SmallFont->GetHeight()-1;
-			screen->DrawText(hudcolor_statnames, x, y, "I:", 
+			y -= SmallFont->GetHeight()-1;
+			screen->DrawText(SmallFont, hudcolor_statnames, x, y, "I:", 
 				DTA_KeepRatio, true,
 				DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, 0xc000, TAG_DONE);
 
 			mysnprintf(tempstr, countof(tempstr), "%i/%i ", multiplayer? CPlayer->itemcount : level.found_items, level.total_items);
-			screen->DrawText(hudcolor_stats, x+space, y, tempstr,
+			screen->DrawText(SmallFont, hudcolor_stats, x+space, y, tempstr,
 				DTA_KeepRatio, true,
 				DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, 0xc000, TAG_DONE);
 		}
 		
 		if (hud_showmonsters)
 		{
-			y-=SmallFont->GetHeight()-1;
-			screen->DrawText(hudcolor_statnames, x, y, "K:", 
+			y -= SmallFont->GetHeight()-1;
+			screen->DrawText(SmallFont, hudcolor_statnames, x, y, "K:", 
 				DTA_KeepRatio, true,
 				DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, 0xc000, TAG_DONE);
 
 			mysnprintf(tempstr, countof(tempstr), "%i/%i ", multiplayer? CPlayer->killcount : level.killed_monsters, level.total_monsters);
-			screen->DrawText(hudcolor_stats, x+space, y, tempstr,
+			screen->DrawText(SmallFont, hudcolor_stats, x+space, y, tempstr,
 				DTA_KeepRatio, true,
 				DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, 0xc000, TAG_DONE);
 		}
@@ -289,9 +287,7 @@ static void DrawHealth(int health, int x, int y)
 		CR_BLUE;
 	
 	DrawImageToBox(healthpic, x, y, 31, 17);
-
-	screen->SetFont(HudFont);
-	DrawHudNumber(fontcolor, health, x + 33, y + 17);
+	DrawHudNumber(HudFont, fontcolor, health, x + 33, y + 17);
 }
 
 //===========================================================================
@@ -318,9 +314,7 @@ static void DrawArmor(AInventory * armor, int x, int y)
 		if (ap)
 		{
 			DrawImageToBox(TexMan[armor->Icon], x, y, 31, 17);
-
-			screen->SetFont(HudFont);
-			DrawHudNumber(fontcolor, ap, x + 33, y + 17);
+			DrawHudNumber(HudFont, fontcolor, ap, x + 33, y + 17);
 		}
 	}
 }
@@ -530,10 +524,9 @@ static int DrawAmmo(player_t * CPlayer, int x, int y)
 
 	// ok, we got all ammo types. Now draw the list back to front (bottom to top)
 
-	int def_width=ConFont->StringWidth("000/000");
+	int def_width = ConFont->StringWidth("000/000");
 	x-=def_width;
-	screen->SetFont(ConFont);
-	int yadd=ConFont->GetHeight();
+	int yadd = ConFont->GetHeight();
 
 	for(i=orderedammos.Size()-1;i>=0;i--)
 	{
@@ -559,7 +552,7 @@ static int DrawAmmo(player_t * CPlayer, int x, int y)
 						 ammo < ( (maxammo * hud_ammo_red) / 100) ? CR_RED :   
 						 ammo < ( (maxammo * hud_ammo_yellow) / 100) ? CR_GOLD : CR_GREEN );
 
-		DrawHudText(fontcolor, buf, x-tex_width, y+yadd, trans);
+		DrawHudText(ConFont, fontcolor, buf, x-tex_width, y+yadd, trans);
 		DrawImageToBox(TexMan[icon], x-20, y, 16, 8, trans);
 		y-=10;
 	}
@@ -699,8 +692,7 @@ static void DrawInventory(player_t * CPlayer, int x,int y)
 						if (rover->Amount>=1000) xx = 32 - IndexFont->StringWidth(buffer);
 						else xx = 22;
 
-						screen->SetFont(IndexFont);
-						screen->DrawText(CR_GOLD, x+xx, y+20, buffer, 
+						screen->DrawText(IndexFont, CR_GOLD, x+xx, y+20, buffer, 
 							DTA_KeepRatio, true,
 							DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, trans, TAG_DONE);
 					}
@@ -728,9 +720,7 @@ static void DrawInventory(player_t * CPlayer, int x,int y)
 static void DrawFrags(player_t * CPlayer, int x, int y)
 {
 	DrawImageToBox(fragpic, x, y, 31, 17);
-
-	screen->SetFont(HudFont);
-	DrawHudNumber(CR_GRAY, CPlayer->fragcount, x + 33, y + 17);
+	DrawHudNumber(HudFont, CR_GRAY, CPlayer->fragcount, x + 33, y + 17);
 }
 
 
@@ -747,7 +737,7 @@ static void DrawCoordinates(player_t * CPlayer)
 	fixed_t y;
 	fixed_t z;
 	char coordstr[18];
-	int h=SmallFont->GetHeight()+1;
+	int h = SmallFont->GetHeight()+1;
 
 	
 	if (!map_point_coordinates || !automapactive) 
@@ -768,17 +758,17 @@ static void DrawCoordinates(player_t * CPlayer)
 	int ypos = 18;
 
 	mysnprintf(coordstr, countof(coordstr), "X: %d", x>>FRACBITS);
-	screen->DrawText(hudcolor_xyco, xpos, ypos, coordstr,
+	screen->DrawText(SmallFont, hudcolor_xyco, xpos, ypos, coordstr,
 		DTA_KeepRatio, true,
 		DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
 
 	mysnprintf(coordstr, countof(coordstr), "Y: %d", y>>FRACBITS);
-	screen->DrawText(hudcolor_xyco, xpos, ypos+h, coordstr,
+	screen->DrawText(SmallFont, hudcolor_xyco, xpos, ypos+h, coordstr,
 		DTA_KeepRatio, true,
 		DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
 
 	mysnprintf(coordstr, countof(coordstr), "Z: %d", z>>FRACBITS);
-	screen->DrawText(hudcolor_xyco, xpos, ypos+2*h, coordstr,
+	screen->DrawText(SmallFont, hudcolor_xyco, xpos, ypos+2*h, coordstr,
 		DTA_KeepRatio, true,
 		DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
 }
@@ -845,7 +835,6 @@ void DrawHUD()
 		i=DrawAmmo(CPlayer, hudwidth-5, i);
 		DrawWeapons(CPlayer, hudwidth-5, i);
 		DrawInventory(CPlayer, 144, hudheight-28);
-		screen->SetFont(SmallFont);
 		if (CPlayer->camera && CPlayer->camera->player)
 		{
 			StatusBar->DrawCrosshair();
@@ -862,13 +851,11 @@ void DrawHUD()
 		int fonth=SmallFont->GetHeight()+1;
 		int bottom=hudheight-1;
 
-		screen->SetFont(SmallFont);
-
 		if (am_showtotaltime)
 		{
 			seconds = level.totaltime / TICRATE;
 			mysnprintf(printstr, countof(printstr), "%02i:%02i:%02i", seconds/3600, (seconds%3600)/60, seconds%60);
-			DrawHudText(hudcolor_ttim, printstr, hudwidth-length, bottom, FRACUNIT);
+			DrawHudText(SmallFont, hudcolor_ttim, printstr, hudwidth-length, bottom, FRACUNIT);
 			bottom -= fonth;
 		}
 
@@ -876,7 +863,7 @@ void DrawHUD()
 		{
 			seconds = level.time /TICRATE;
 			mysnprintf(printstr, countof(printstr), "%02i:%02i:%02i", seconds/3600, (seconds%3600)/60, seconds%60);
-			DrawHudText(hudcolor_time, printstr, hudwidth-length, bottom, FRACUNIT);
+			DrawHudText(SmallFont, hudcolor_time, printstr, hudwidth-length, bottom, FRACUNIT);
 			bottom -= fonth;
 
 			// Single level time for hubs
@@ -884,12 +871,12 @@ void DrawHUD()
 			{
 				seconds= level.maptime /TICRATE;
 				mysnprintf(printstr, countof(printstr), "%02i:%02i:%02i", seconds/3600, (seconds%3600)/60, seconds%60);
-				DrawHudText(hudcolor_ltim, printstr, hudwidth-length, bottom, FRACUNIT);
+				DrawHudText(SmallFont, hudcolor_ltim, printstr, hudwidth-length, bottom, FRACUNIT);
 			}
 		}
 
 		mysnprintf(printstr, countof(printstr), "%s: %s", level.mapname, level.level_name);
-		screen->DrawText(hudcolor_titl, 1, hudheight-fonth-1, printstr,
+		screen->DrawText(SmallFont, hudcolor_titl, 1, hudheight-fonth-1, printstr,
 			DTA_KeepRatio, true,
 			DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, TAG_DONE);
 

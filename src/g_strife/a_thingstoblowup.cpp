@@ -53,7 +53,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GiveQuestItem)
 
 	if (name != NULL)
 	{
-		C_MidPrint (name);
+		C_MidPrint (SmallFont, name);
 	}
 }
 

@@ -130,7 +130,7 @@ const FTexture::Span FPaletteTester::DummySpan[2] = { { 0, 16 }, { 0, 0 } };
 
 int DisplayWidth, DisplayHeight, DisplayBits;
 
-FFont *SmallFont, *SmallFont2, *BigFont, *ConFont;
+FFont *SmallFont, *SmallFont2, *BigFont, *ConFont, *IntermissionFont;
 
 extern "C" {
 DWORD Col2RGB8[65][256];
@@ -206,7 +206,6 @@ DCanvas::DCanvas (int _width, int _height)
 {
 	// Init member vars
 	Buffer = NULL;
-	Font = NULL;
 	LockCount = 0;
 	Width = _width;
 	Height = _height;
@@ -823,9 +822,7 @@ void DFrameBuffer::DrawRateStuff ()
 			chars = mysnprintf (fpsbuff, countof(fpsbuff), "%2u ms (%3u fps)", howlong, LastCount);
 			rate_x = Width - chars * 8;
 			Clear (rate_x, 0, Width, 8, 0, 0);
-			SetFont (ConFont);
-			DrawText (CR_WHITE, rate_x, 0, (char *)&fpsbuff[0], TAG_DONE);
-			SetFont (SmallFont);
+			DrawText (ConFont, CR_WHITE, rate_x, 0, (char *)&fpsbuff[0], TAG_DONE);
 
 			DWORD thisSec = ms/1000;
 			if (LastSec < thisSec)
@@ -1254,7 +1251,6 @@ bool V_DoModeSetup (int width, int height, int bits)
 
 	screen = buff;
 	GC::WriteBarrier(screen);
-	screen->SetFont (SmallFont);
 	screen->SetGamma (Gamma);
 
 	// Load fonts now so they can be packed into textures straight away,
@@ -1464,7 +1460,6 @@ void V_Init2()
 	int width = screen->GetWidth();
 	int height = screen->GetHeight();
 	float gamma = static_cast<DDummyFrameBuffer *>(screen)->Gamma;
-	FFont *font = screen->Font;
 
 	{
 		DFrameBuffer *s = screen;
@@ -1482,7 +1477,6 @@ void V_Init2()
 		Printf ("Resolution: %d x %d\n", SCREENWIDTH, SCREENHEIGHT);
 
 	screen->SetGamma (gamma);
-	if (font != NULL) screen->SetFont (font);
 	FBaseCVar::ResetColors ();
 	C_NewModeAdjust();
 	M_InitVideoModesMenu();

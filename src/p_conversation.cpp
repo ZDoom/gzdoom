@@ -740,7 +740,7 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 		toSay = GStrings[dlgtext.GetChars()];
 		if (toSay==NULL) toSay = "Go away!";	// Ok, it's lame - but it doesn't look like an error to the player. ;)
 	}
-	DialogueLines = V_BreakLines (screen->Font, screen->GetWidth()/CleanXfac-24*2, toSay);
+	DialogueLines = V_BreakLines (SmallFont, screen->GetWidth()/CleanXfac-24*2, toSay);
 
 	// Fill out the possible choices
 	ShowGold = false;
@@ -753,7 +753,7 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 			continue;
 		}
 		ShowGold |= reply->NeedsGold;
-		reply->ReplyLines = V_BreakLines (screen->Font, 320-50-10, reply->Reply);
+		reply->ReplyLines = V_BreakLines (SmallFont, 320-50-10, reply->Reply);
 		for (j = 0; reply->ReplyLines[j].Width >= 0; ++j)
 		{
 			item.label = reply->ReplyLines[j].Text.LockBuffer();
@@ -895,14 +895,14 @@ static void DrawConversationMenu ()
 
 	if (speakerName != NULL)
 	{
-		screen->DrawText (CR_WHITE, x, y, speakerName,
+		screen->DrawText (SmallFont, CR_WHITE, x, y, speakerName,
 			DTA_CleanNoMove, true, TAG_DONE);
 		y += linesize * 3 / 2;
 	}
 	x = 24 * screen->GetWidth() / 320;
 	for (i = 0; DialogueLines[i].Width >= 0; ++i)
 	{
-		screen->DrawText (CR_UNTRANSLATED, x, y, DialogueLines[i].Text,
+		screen->DrawText (SmallFont, CR_UNTRANSLATED, x, y, DialogueLines[i].Text,
 			DTA_CleanNoMove, true, TAG_DONE);
 		y += linesize;
 	}
@@ -913,12 +913,12 @@ static void DrawConversationMenu ()
 		char goldstr[32];
 
 		mysnprintf (goldstr, countof(goldstr), "%d", coin != NULL ? coin->Amount : 0);
-		screen->DrawText (CR_GRAY, 21, 191, goldstr, DTA_320x200, true,
+		screen->DrawText (SmallFont, CR_GRAY, 21, 191, goldstr, DTA_320x200, true,
 			DTA_FillColor, 0, DTA_Alpha, HR_SHADOW, TAG_DONE);
 		screen->DrawTexture (TexMan(((AInventory *)GetDefaultByType (RUNTIME_CLASS(ACoin)))->Icon),
 			3, 190, DTA_320x200, true,
 			DTA_FillColor, 0, DTA_Alpha, HR_SHADOW, TAG_DONE);
-		screen->DrawText (CR_GRAY, 20, 190, goldstr, DTA_320x200, true, TAG_DONE);
+		screen->DrawText (SmallFont, CR_GRAY, 20, 190, goldstr, DTA_320x200, true, TAG_DONE);
 		screen->DrawTexture (TexMan(((AInventory *)GetDefaultByType (RUNTIME_CLASS(ACoin)))->Icon),
 			2, 189, DTA_320x200, true, TAG_DONE);
 	}

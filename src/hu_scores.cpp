@@ -157,7 +157,7 @@ void HU_DrawScores (player_t *player)
 static void HU_DoDrawScores (player_t *player, player_t *sortedplayers[MAXPLAYERS])
 {
 	int color;
-	int height = screen->Font->GetHeight() * CleanYfac;
+	int height = SmallFont->GetHeight() * CleanYfac;
 	unsigned int i;
 	int maxwidth = 0;
 	int numTeams = 0;
@@ -221,8 +221,7 @@ static void HU_DoDrawScores (player_t *player, player_t *sortedplayers[MAXPLAYER
 				char score[80];
 				mysnprintf (score, countof(score), "%d", teams[i].score);
 
-				screen->SetFont (BigFont);
-				screen->DrawText (teams[i].GetTextColor (), scorexwidth, gamestate == GS_INTERMISSION ? y * 4 / 5 : y / 2, score,
+				screen->DrawText (BigFont, teams[i].GetTextColor(), scorexwidth, gamestate == GS_INTERMISSION ? y * 4 / 5 : y / 2, score,
 					DTA_CleanNoMove, true, TAG_DONE);
 
 				scorexwidth += SCREENWIDTH / 8;
@@ -232,15 +231,13 @@ static void HU_DoDrawScores (player_t *player, player_t *sortedplayers[MAXPLAYER
 		gamestate == GS_INTERMISSION ? y += 0 : y += SCREENWIDTH / 32;
 	}
 
-	screen->SetFont (SmallFont);
-
-	screen->DrawText (color, SCREENWIDTH / 32, y, "Color",
+	screen->DrawText (SmallFont, color, SCREENWIDTH / 32, y, "Color",
 		DTA_CleanNoMove, true, TAG_DONE);
 
-	screen->DrawText (color, SCREENWIDTH / 4, y, deathmatch ? "Frags" : "Kills",
+	screen->DrawText (SmallFont, color, SCREENWIDTH / 4, y, deathmatch ? "Frags" : "Kills",
 		DTA_CleanNoMove, true, TAG_DONE);
 
-	screen->DrawText (color, SCREENWIDTH / 2, y, "Name",
+	screen->DrawText (SmallFont, color, SCREENWIDTH / 2, y, "Name",
 		DTA_CleanNoMove, true, TAG_DONE);
 
 	x = (SCREENWIDTH >> 1) - (((maxwidth + 32 + 32 + 16) * CleanXfac) >> 1);
@@ -287,7 +284,7 @@ static void HU_DrawTimeRemaining (int y)
 		else
 			mysnprintf (str, countof(str), "Level ends in %02d:%02d", minutes, seconds);
 		
-		screen->DrawText (CR_GREY, SCREENWIDTH/2 - SmallFont->StringWidth (str)/2*CleanXfac,
+		screen->DrawText (SmallFont, CR_GREY, SCREENWIDTH/2 - SmallFont->StringWidth (str)/2*CleanXfac,
 			y, str, DTA_CleanNoMove, true, TAG_DONE);
 	}
 }
@@ -329,10 +326,10 @@ static void HU_DrawPlayer (player_t *player, bool highlight, int x, int y, int h
 
 	mysnprintf (str, countof(str), "%d", deathmatch ? player->fragcount : player->killcount);
 
-	screen->DrawText (color, SCREENWIDTH / 4, y, player->playerstate == PST_DEAD && !deathmatch ? "DEAD" : str,
+	screen->DrawText (SmallFont, color, SCREENWIDTH / 4, y, player->playerstate == PST_DEAD && !deathmatch ? "DEAD" : str,
 		DTA_CleanNoMove, true, TAG_DONE);
 
-	screen->DrawText (color, SCREENWIDTH / 2, y, player->userinfo.netname,
+	screen->DrawText (SmallFont, color, SCREENWIDTH / 2, y, player->userinfo.netname,
 		DTA_CleanNoMove, true, TAG_DONE);
 
 	if (teamplay && teams[player->userinfo.team].logo.GetChars ())

@@ -46,6 +46,7 @@
 #include "v_text.h"
 #include "gi.h"
 #include "r_translate.h"
+#include "templates.h"
 
 // States for the intermission
 typedef enum
@@ -210,11 +211,6 @@ static bool				noautostartmap;
 
 static TArray<FTexture *> yah; 		// You Are Here graphic
 static FTexture* 		splat;		// splat
-static FTexture* 		percent;	// %, : graphics
-static FTexture* 		colon;
-static FTexture*		slash;
-static FTexture* 		num[10];	// 0-9 graphic
-static FTexture* 		wiminus;	// minus sign
 static FTexture* 		finished;	// "Finished!" graphics
 static FTexture* 		entering;	// "Entering" graphic
 static FTexture* 		sp_secret;	// "secret"
@@ -409,12 +405,12 @@ void WI_LoadBackground(bool isenterpic)
 				{
 				case 0:		// Background
 					sc.MustGetString();
-					texture=TexMan.CheckForTexture(sc.String, FTexture::TEX_MiscPatch,FTextureManager::TEXMAN_TryAny);
+					texture = TexMan.CheckForTexture(sc.String, FTexture::TEX_MiscPatch, FTextureManager::TEXMAN_TryAny);
 					break;
 
 				case 1:		// Splat
 					sc.MustGetString();
-					splat=TexMan[sc.String];
+					splat = TexMan[sc.String];
 					break;
 
 				case 2:		// Pointers
@@ -422,7 +418,8 @@ void WI_LoadBackground(bool isenterpic)
 					{
 						yah.Push(TexMan[sc.String]);
 					}
-					if (sc.Crossed) sc.UnGet();
+					if (sc.Crossed)
+						sc.UnGet();
 					break;
 
 				case 3:		// Spots
@@ -683,23 +680,15 @@ void WI_drawBackground()
 //
 //====================================================================
 
-static void WI_DrawCharPatch (FTexture *patch, int x, int y)
+static int WI_DrawCharPatch (int charcode, int x, int y, EColorRange translation=CR_UNTRANSLATED)
 {
-	if (patch->UseType != FTexture::TEX_FontChar)
-	{
-		screen->DrawTexture (patch, x, y,
-			DTA_Clean, true,
-			DTA_ShadowAlpha, (gameinfo.gametype & GAME_DoomChex) ? 0 : FRACUNIT/2,
-			TAG_DONE);
-	}
-	else
-	{
-		screen->DrawTexture (patch, x, y,
-			DTA_Clean, true,
-			DTA_ShadowAlpha, (gameinfo.gametype & GAME_DoomChex) ? 0 : FRACUNIT/2,
-			DTA_Translation, BigFont->GetColorTranslation (CR_UNTRANSLATED),	// otherwise it doesn't look good in Strife!
-			TAG_DONE);
-	}
+	int width;
+	screen->DrawTexture(IntermissionFont->GetChar(charcode, &width), x, y,
+		DTA_Clean, true,
+		DTA_ShadowAlpha, (gameinfo.gametype & GAME_DoomChex) ? 0 : FRACUNIT/2,
+		DTA_Translation, IntermissionFont->GetColorTranslation(translation),
+		TAG_DONE);
+	return x - width;
 }
 
 
@@ -712,21 +701,20 @@ static void WI_DrawCharPatch (FTexture *patch, int x, int y)
 //
 //====================================================================
 
-int WI_DrawName(int y,const char * levelname, bool nomove=false)
+int WI_DrawName(int y, const char *levelname, bool nomove=false)
 {
 	int i;
 	size_t l;
-	const char * p;
-	int h=0;
+	const char *p;
+	int h = 0;
 	int lumph;
 
-	lumph=BigFont->GetHeight();
+	lumph = BigFont->GetHeight();
 
-	p=levelname;
-	l=strlen(p);
+	p = levelname;
+	l = strlen(p);
 	if (!l) return 0;
 
-	screen->SetFont(BigFont);
 	FBrokenLines *lines = V_BreakLines(BigFont, 320, p);
 
 	if (lines)
@@ -735,19 +723,18 @@ int WI_DrawName(int y,const char * levelname, bool nomove=false)
 		{
 			if (!nomove)
 			{
-				screen->DrawText(CR_UNTRANSLATED, 160 - lines[i].Width/2, y+h, lines[i].Text, DTA_Clean, true, TAG_DONE);
+				screen->DrawText(BigFont, CR_UNTRANSLATED, 160 - lines[i].Width/2, y+h, lines[i].Text, DTA_Clean, true, TAG_DONE);
 			}
 			else
 			{
-				screen->DrawText(CR_UNTRANSLATED, (SCREENWIDTH - lines[i].Width * CleanXfac) / 2, (y+h) * CleanYfac, 
+				screen->DrawText(BigFont, CR_UNTRANSLATED, (SCREENWIDTH - lines[i].Width * CleanXfac) / 2, (y+h) * CleanYfac, 
 					lines[i].Text, DTA_CleanNoMove, true, TAG_DONE);
 			}
 			h+=lumph;
 		}
 		V_FreeBrokenLines(lines);
 	}
-	screen->SetFont(SmallFont);
-	return h+lumph/4;
+	return h + lumph/4;
 }
 
 
@@ -763,7 +750,7 @@ void WI_drawLF ()
 {
 	int y = WI_TITLEY;
 
-	FTexture * tex = wbs->LName0;
+	FTexture *tex = wbs->LName0;
 	
 	// draw <LevelName> 
 	if (tex)
@@ -773,11 +760,12 @@ void WI_drawLF ()
 	}
 	else 
 	{
-		y+=WI_DrawName(y, lnametexts[0]);
+		y += WI_DrawName(y, lnametexts[0]);
 	}
 	
 	// draw "Finished!"
-	if (y < NG_STATSY - screen->Font->GetHeight()*3/4)
+	FFont *font = gameinfo.gametype & GAME_Raven ? SmallFont : BigFont;
+	if (y < NG_STATSY - font->GetHeight()*3/4)
 	{
 		// don't draw 'finished' if the level name is too high!
 		if (gameinfo.gametype & GAME_DoomChex) 
@@ -786,10 +774,9 @@ void WI_drawLF ()
 		}
 		else 
 		{
-			screen->SetFont(gameinfo.gametype&GAME_Raven? SmallFont : BigFont);
-			screen->DrawText(CR_WHITE, 160 - screen->Font->StringWidth("finished")/2, y-4, "finished", 
+			screen->DrawText(font, CR_WHITE,
+				160 - font->StringWidth("finished")/2, y-4, "finished", 
 				DTA_Clean, true, TAG_DONE);
-			screen->SetFont(SmallFont);
 		}
 	}
 }
@@ -806,22 +793,21 @@ void WI_drawLF ()
 void WI_drawEL ()
 {
 	int y = WI_TITLEY;
-
+	FFont *font = gameinfo.gametype & GAME_Raven ? SmallFont : BigFont;
 
 	// draw "entering"
 	// be careful with the added height so that it works for oversized 'entering' patches!
 	if (gameinfo.gametype & GAME_DoomChex)
 	{
 		screen->DrawTexture(entering, (SCREENWIDTH - entering->GetWidth() * CleanXfac) / 2, y * CleanYfac, DTA_CleanNoMove, true, TAG_DONE);
-		y += entering->GetHeight() + screen->Font->GetHeight()/4;
+		y += entering->GetHeight() + font->GetHeight()/4;
 	}
 	else
 	{
-		screen->SetFont(gameinfo.gametype&GAME_Raven? SmallFont : BigFont);
-		screen->DrawText(CR_WHITE, (SCREENWIDTH - screen->Font->StringWidth("now entering:") * CleanXfac) / 2, y * CleanYfac, 
+		screen->DrawText(font, CR_WHITE,
+			(SCREENWIDTH - font->StringWidth("now entering:") * CleanXfac) / 2, y * CleanYfac, 
 			"now entering:", DTA_CleanNoMove, true, TAG_DONE);
-		y += screen->Font->GetHeight()*5/4;
-		screen->SetFont(SmallFont);
+		y += font->GetHeight()*5/4;
 	}
 
 	// draw <LevelName>
@@ -888,92 +874,81 @@ void WI_drawOnLnode( int   n, FTexture * c[] ,int numc)
 	} 
 }
 
-// ====================================================================
+//====================================================================
 //
 // Draws a number.
 // If digits > 0, then use that many digits minimum,
 //	otherwise only use as many as necessary.
-// Returns new x position.
+// x is the right edge of the number.
+// Returns new x position, that is, the left edge of the number.
 //
-// ====================================================================
-int WI_drawNum (int x, int y, int n, int digits, bool leadingzeros = true)
+//====================================================================
+int WI_drawNum (int x, int y, int n, int digits, bool leadingzeros=true, EColorRange translation=CR_UNTRANSLATED)
 {
-	int fontwidth = num[3]->GetWidth();
-	int xofs;
+	int fontwidth = IntermissionFont->GetCharWidth('3');
 	char text[8];
+	int len;
 	char *text_p;
 
 	if (leadingzeros)
 	{
-		mysnprintf (text, countof(text), "%07d", n);
+		len = mysnprintf (text, countof(text), "%0*d", digits, n);
 	}
 	else
 	{
-		mysnprintf (text, countof(text), "%7d", n);
-		if (digits < 0)
-		{
-			text_p = strrchr (text, ' ');
-			digits = (text_p == NULL) ? 7 : 6 - (int)(text_p - text);
-			x -= digits * fontwidth;
-		}
+		len = mysnprintf (text, countof(text), "%d", n);
 	}
+	text_p = text + MIN<int>(len, countof(text)-1);
 
-	text_p = strchr (text, '-');
-	if (text_p == NULL || text_p - text > 7 - digits)
+	while (--text_p >= text)
 	{
-		text_p = text + 7 - digits;
-	}
-
-	xofs = x;
-
-	if (*text_p == '-')
-	{
-		x -= fontwidth;
-		WI_DrawCharPatch (wiminus, x, y);
-	}
-
-	// draw the new number
-	while (*text_p)
-	{
+		// Digits are centered in a box the width of the '3' character.
+		// Other characters (specifically, '-') are right-aligned in their cell.
 		if (*text_p >= '0' && *text_p <= '9')
 		{
-			FTexture *p = num[*text_p - '0'];
-			WI_DrawCharPatch (p, xofs + (fontwidth - p->GetWidth())/2, y);
+			x -= fontwidth;
+			WI_DrawCharPatch(*text_p, x + (fontwidth - IntermissionFont->GetCharWidth(*text_p)) / 2, y, translation);
 		}
-		text_p++;
-		xofs += fontwidth;
+		else
+		{
+			WI_DrawCharPatch(*text_p, x - IntermissionFont->GetCharWidth(*text_p), y, translation);
+			x -= fontwidth;
+		}
+	}
+	if (len < digits)
+	{
+		x -= fontwidth * (digits - len);
 	}
 	return x;
-
 }
 
-// ====================================================================
+//====================================================================
 //
 //
 //
-// ====================================================================
+//====================================================================
 
-void WI_drawPercent (int x, int y, int p, int b)
+void WI_drawPercent (int x, int y, int p, int b, bool show_total=true)
 {
 	if (p < 0)
 		return;
 
 	if (wi_percents)
 	{
-		WI_DrawCharPatch (percent, x, y);
-
-		if (b == 0)
-			WI_drawNum (x, y, 100, -1, false);
-		else
-			WI_drawNum(x, y, p * 100 / b, -1, false);
+		WI_DrawCharPatch('%', x, y, CR_UNTRANSLATED);
+		WI_drawNum(x, y, b == 0 ? 100 : p * 100 / b, -1, false);
 	}
 	else
 	{
-		int y2 = y + percent->GetHeight() - screen->Font->GetHeight ();
-		x = WI_drawNum (x, y, b, -1, false);
-		x -= SmallFont->StringWidth (" OF ");
-		screen->DrawText (CR_UNTRANSLATED, x, y2, " OF",
-			DTA_Clean, true, TAG_DONE);
+		x += IntermissionFont->GetCharWidth('%');
+		if (show_total)
+		{
+			int y2 = y + IntermissionFont->GetHeight() - BigFont->GetHeight();
+			x = WI_drawNum(x, y, b, 3, false);
+			x -= BigFont->GetCharWidth('/');
+			screen->DrawText (BigFont, gameinfo.gametype & GAME_Doom ? CR_RED : CR_UNTRANSLATED, x, y2, "/",
+				DTA_Clean, true, TAG_DONE);
+		}
 		WI_drawNum (x, y, p, -1, false);
 	}
 }
@@ -991,6 +966,21 @@ void WI_drawTime (int x, int y, int t, bool no_sucks=false)
 		return;
 
 	sucky = !no_sucks && t >= wbs->sucktime * 60 * 60 && wbs->sucktime > 0;
+
+	if (sucky)
+	{ // "sucks"
+		if (sucks != NULL)
+		{
+			screen->DrawTexture (sucks, x - sucks->GetWidth(), y - IntermissionFont->GetHeight() - 2,
+				DTA_Clean, true, TAG_DONE); 
+		}
+		else
+		{
+			screen->DrawText (BigFont, CR_UNTRANSLATED, x  - BigFont->StringWidth("SUCKS"), y - IntermissionFont->GetHeight() - 2,
+				"SUCKS", DTA_Clean, true, TAG_DONE);
+		}
+	}
+
 	int hours = t / 3600;
 	t -= hours * 3600;
 	int minutes = t / 60;
@@ -999,37 +989,16 @@ void WI_drawTime (int x, int y, int t, bool no_sucks=false)
 
 	// Why were these offsets hard coded? Half the WADs with custom patches
 	// I tested screwed up miserably in this function!
-	int num_spacing = num[3]->GetWidth();
-	int colon_spacing = colon->GetWidth();
+	int num_spacing = IntermissionFont->GetCharWidth('3');
+	int colon_spacing = IntermissionFont->GetCharWidth(':');
 
-	x -= 2*num_spacing;
-	WI_drawNum (x, y, seconds, 2);
-	x -= colon_spacing;
-	WI_DrawCharPatch (colon, x , y);
-	x -= 2*num_spacing ;
-	WI_drawNum (x, y, minutes, 2, hours!=0);
+	x = WI_drawNum (x, y, seconds, 2) - 1;
+	WI_DrawCharPatch (':', x -= colon_spacing, y);
+	x = WI_drawNum (x, y, minutes, 2, hours!=0);
 	if (hours)
 	{
-		x -= colon_spacing;
-		WI_DrawCharPatch (colon, x , y);
-		x -= 2*num_spacing ;
+		WI_DrawCharPatch (':', x -= colon_spacing, y);
 		WI_drawNum (x, y, hours, 2);
-	}
-
-	if (sucky)
-	{ // "sucks"
-		if (sucks != NULL)
-		{
-			screen->DrawTexture (sucks, x - sucks->GetWidth(), y - num[0]->GetHeight() - 2,
-				DTA_Clean, true, TAG_DONE); 
-		}
-		else
-		{
-			screen->SetFont (BigFont);
-			screen->DrawText (CR_UNTRANSLATED, x  - BigFont->StringWidth("SUCKS"), y - BigFont->GetHeight() - 2,
-				"SUCKS", DTA_Clean, true, TAG_DONE);
-			screen->SetFont (SmallFont);
-		}
 	}
 }
 
@@ -1547,7 +1516,7 @@ void WI_updateNetgameStats ()
 void WI_drawNetgameStats ()
 {
 	int i, x, y;
-	int pwidth = percent->GetWidth();
+	int pwidth = IntermissionFont->GetCharWidth('%');
 
 	// draw animated background
 	WI_drawBackground(); 
@@ -1588,33 +1557,41 @@ void WI_drawNetgameStats ()
 					DTA_Clean, true,
 					TAG_DONE);
 
+			screen->DrawText(SmallFont, CR_GRAY, x + 3, y + 2, players[i].userinfo.netname, DTA_Clean, true, TAG_DONE);
 			x += NG_SPACINGX;
-			WI_drawPercent (x-pwidth, y+10, cnt_kills[i], wbs->maxkills);	x += NG_SPACINGX;
-			WI_drawPercent (x-pwidth, y+10, cnt_items[i], wbs->maxitems);	x += NG_SPACINGX;
-			WI_drawPercent (x-pwidth, y+10, cnt_secret[i], wbs->maxsecret);	x += NG_SPACINGX;
+			WI_drawPercent (x-pwidth, y+10, cnt_kills[i], wbs->maxkills, false);	x += NG_SPACINGX;
+			WI_drawPercent (x-pwidth, y+10, cnt_items[i], wbs->maxitems, false);	x += NG_SPACINGX;
+			WI_drawPercent (x-pwidth, y+10, cnt_secret[i], wbs->maxsecret, false);	x += NG_SPACINGX;
 
 			if (dofrags)
 				WI_drawNum(x, y+10, cnt_frags[i], -1, false);
 
 			y += WI_SPACINGY;
 		}
+
+		// [RH] Draw totals
+		x = NG_STATSX;
+		y += 10;
+		screen->DrawText(BigFont, CR_CYAN, x - BigFont->StringWidth("TOTALS"), y, "TOTALS", DTA_Clean, true, TAG_DONE);
+		x += NG_SPACINGX - pwidth + IntermissionFont->GetCharWidth('%');
+		WI_drawNum(x, y, wbs->maxkills, -1, false, CR_CYAN);	x += NG_SPACINGX;
+		WI_drawNum(x, y, wbs->maxitems, -1, false, CR_CYAN);	x += NG_SPACINGX;
+		WI_drawNum(x, y, wbs->maxsecret, -1, false, CR_CYAN);
 	}
 	else 
 	{
 		if (gameinfo.gametype & GAME_Raven)
 		{
-			screen->SetFont (BigFont);
-			screen->DrawText (CR_UNTRANSLATED, 95, 35, "KILLS", DTA_Clean, true, DTA_Shadow, true, TAG_DONE);
-			screen->DrawText (CR_UNTRANSLATED, 155, 35, "BONUS", DTA_Clean, true, DTA_Shadow, true, TAG_DONE);
-			screen->DrawText (CR_UNTRANSLATED, 232, 35, "SECRET", DTA_Clean, true, DTA_Shadow, true, TAG_DONE);
+			screen->DrawText (BigFont, CR_UNTRANSLATED, 95, 35, "KILLS", DTA_Clean, true, DTA_Shadow, true, TAG_DONE);
+			screen->DrawText (BigFont, CR_UNTRANSLATED, 155, 35, "BONUS", DTA_Clean, true, DTA_Shadow, true, TAG_DONE);
+			screen->DrawText (BigFont, CR_UNTRANSLATED, 232, 35, "SECRET", DTA_Clean, true, DTA_Shadow, true, TAG_DONE);
 			y = 50;
 		}
 		else
 		{
-			screen->SetFont (SmallFont);
-			screen->DrawText (CR_UNTRANSLATED, 95, 50, "KILLS", DTA_Clean, true, DTA_Shadow, true, TAG_DONE);
-			screen->DrawText (CR_UNTRANSLATED, 155, 50, "BONUS", DTA_Clean, true, DTA_Shadow, true, TAG_DONE);
-			screen->DrawText (CR_UNTRANSLATED, 232, 50, "SECRET", DTA_Clean, true, DTA_Shadow, true, TAG_DONE);
+			screen->DrawText (SmallFont, CR_UNTRANSLATED, 95, 50, "KILLS", DTA_Clean, true, DTA_Shadow, true, TAG_DONE);
+			screen->DrawText (SmallFont, CR_UNTRANSLATED, 155, 50, "BONUS", DTA_Clean, true, DTA_Shadow, true, TAG_DONE);
+			screen->DrawText (SmallFont, CR_UNTRANSLATED, 232, 50, "SECRET", DTA_Clean, true, DTA_Shadow, true, TAG_DONE);
 			y = 62;
 		}
 		WI_drawLF ();	
@@ -1634,9 +1611,8 @@ void WI_drawNetgameStats ()
 			}
 			else	// Hexen and Strife don't have a face graphic for this.
 			{
-				char pstr[3]={'P', '1'+i, 0};
-				screen->SetFont (BigFont);
-				screen->DrawText(CR_UNTRANSLATED, 25, y+10, pstr, DTA_Clean, true, TAG_DONE);
+				char pstr[3] = {'P', '1'+i, 0};
+				screen->DrawText(BigFont, CR_UNTRANSLATED, 25, y+10, pstr, DTA_Clean, true, TAG_DONE);
 			}
 
 			WI_drawPercent (127, y+10, cnt_kills[i], wbs->maxkills);
@@ -1650,7 +1626,6 @@ void WI_drawNetgameStats ()
 			}
 			y += 37;
 		}
-		screen->SetFont (SmallFont);
 	}
 }
 
@@ -1790,7 +1765,7 @@ void WI_drawStats (void)
 	// line height
 	int lh; 	
 
-	lh = (3*num[0]->GetHeight())/2;
+	lh = IntermissionFont->GetHeight() * 3 / 2;
 
 	// draw animated background
 	WI_drawBackground(); 
@@ -1824,34 +1799,33 @@ void WI_drawStats (void)
 	}
 	else
 	{
-		screen->SetFont (BigFont);
-		screen->DrawText (CR_UNTRANSLATED, 50, 65, "KILLS", DTA_Clean, true, DTA_Shadow, true, TAG_DONE);
-		screen->DrawText (CR_UNTRANSLATED, 50, 90, "ITEMS", DTA_Clean, true, DTA_Shadow, true, TAG_DONE);
-		screen->DrawText (CR_UNTRANSLATED, 50, 115, "SECRETS", DTA_Clean, true, DTA_Shadow, true, TAG_DONE);
+		screen->DrawText (BigFont, CR_UNTRANSLATED, 50, 65, "KILLS", DTA_Clean, true, DTA_Shadow, true, TAG_DONE);
+		screen->DrawText (BigFont, CR_UNTRANSLATED, 50, 90, "ITEMS", DTA_Clean, true, DTA_Shadow, true, TAG_DONE);
+		screen->DrawText (BigFont, CR_UNTRANSLATED, 50, 115, "SECRETS", DTA_Clean, true, DTA_Shadow, true, TAG_DONE);
 
 		int slashpos = gameinfo.gametype==GAME_Strife? 235:237;
 		int countpos = gameinfo.gametype==GAME_Strife? 185:200;
 		if (sp_state >= 2)
 		{
 			WI_drawNum (countpos, 65, cnt_kills[0], 3, false);
-			WI_DrawCharPatch (slash, slashpos, 65);
+			WI_DrawCharPatch ('/', slashpos, 65);
 			WI_drawNum (248, 65, wbs->maxkills, 3, false);
 		}
 		if (sp_state >= 4)
 		{
 			WI_drawNum (countpos, 90, cnt_items[0], 3, false);
-			WI_DrawCharPatch (slash, slashpos, 90);
+			WI_DrawCharPatch ('/', slashpos, 90);
 			WI_drawNum (248, 90, wbs->maxitems, 3, false);
 		}
 		if (sp_state >= 6)
 		{
 			WI_drawNum (countpos, 115, cnt_secret[0], 3, false);
-			WI_DrawCharPatch (slash, slashpos, 115);
+			WI_DrawCharPatch ('/', slashpos, 115);
 			WI_drawNum (248, 115, wbs->maxsecret, 3, false);
 		}
 		if (sp_state >= 8)
 		{
-			screen->DrawText (CR_UNTRANSLATED, 85, 160, "TIME",
+			screen->DrawText (BigFont, CR_UNTRANSLATED, 85, 160, "TIME",
 				DTA_Clean, true, DTA_Shadow, true, TAG_DONE);
 			WI_drawTime (249, 160, cnt_time);
 			if (wi_showtotaltime)
@@ -1859,7 +1833,6 @@ void WI_drawStats (void)
 				WI_drawTime (249, 180, cnt_total_time);
 			}
 		}
-		screen->SetFont (SmallFont);
 	}
 }
 
@@ -1950,13 +1923,8 @@ void WI_Ticker(void)
 
 void WI_loadData(void)
 {
-	int i;
-	char name[9];
-
 	if (gameinfo.gametype & GAME_DoomChex)
 	{
-		wiminus = TexMan["WIMINUS"];		// minus sign
-		percent = TexMan["WIPCNT"];		// percent sign
 		finished = TexMan["WIF"];		// "finished"
 		entering = TexMan["WIENTER"];	// "entering"
 		kills = TexMan["WIOSTK"];		// "kills"
@@ -1964,30 +1932,19 @@ void WI_loadData(void)
 		sp_secret = TexMan["WISCRT2"];	// "secret"
 		items = TexMan["WIOSTI"];		// "items"
 		frags = TexMan["WIFRGS"];		// "frgs"
-		colon = TexMan["WICOLON"];		// ":"
 		timepic = TexMan["WITIME"];		// "time"
 		sucks = TexMan["WISUCKS"];		// "sucks"
 		par = TexMan["WIPAR"];			// "par"
-		killers = TexMan["WIKILRS"];		// "killers" (vertical]
-		victims = TexMan["WIVCTMS"];		// "victims" (horiz]
+		killers = TexMan["WIKILRS"];	// "killers" (vertical]
+		victims = TexMan["WIVCTMS"];	// "victims" (horiz]
 		total = TexMan["WIMSTT"];		// "total"
 		star = TexMan["STFST01"];		// your face
 		bstar = TexMan["STFDEAD0"];		// dead face
  		p = TexMan["STPBANY"];
-
-		for (i = 0; i < 10; i++)
-		{ // numbers 0-9
-			mysnprintf (name, countof(name), "WINUM%d", i);	 
-			num[i] = TexMan[name];
-		}
 	}
 	else if (gameinfo.gametype & GAME_Raven)
 	{
-		wiminus = TexMan["FONTB13"];
-		percent = TexMan["FONTB05"];
-		colon = TexMan["FONTB26"];
-		slash = TexMan["FONTB15"];
-		if (gameinfo.gametype==GAME_Heretic)
+		if (gameinfo.gametype == GAME_Heretic)
 		{
 			star = TexMan["FACEA0"];
 			bstar = TexMan["FACEB0"];
@@ -1998,34 +1955,19 @@ void WI_loadData(void)
 			star = BigFont->GetChar('*', &dummywidth);	// just a dummy to avoid an error if it is being used
 			bstar = star;
 		}
-
-		for (i = 0; i < 10; i++)
-		{
-			mysnprintf (name, countof(name), "FONTB%d", 16 + i);
-			num[i] = TexMan[name];
-		}
 	}
 	else // Strife needs some handling, too!
 	{
 		int dummywidth;
-		wiminus = BigFont->GetChar('-', &dummywidth);
-		percent = BigFont->GetChar('%', &dummywidth);
-		colon = BigFont->GetChar(':', &dummywidth);
-		slash = BigFont->GetChar('/', &dummywidth);
 		star = BigFont->GetChar('*', &dummywidth);	// just a dummy to avoid an error if it is being used
 		bstar = star;
-		for (i = 0; i < 10; i++)
-		{
-			num[i] = BigFont->GetChar('0'+i, &dummywidth);
-		}
 	}
 
 	// Use the local level structure which can be overridden by hubs if they eventually get names!
 	lnametexts[0] = level.level_name;		
 
-	level_info_t * li = FindLevelInfo(wbs->next);
-	if (li) lnametexts[1] = G_MaybeLookupLevelName(li);
-	else lnametexts[1]=NULL;
+	level_info_t *li = FindLevelInfo(wbs->next);
+	lnametexts[1] = li ? G_MaybeLookupLevelName(li) : NULL;
 
 	WI_LoadBackground(false);
 }

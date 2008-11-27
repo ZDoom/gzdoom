@@ -1482,14 +1482,12 @@ static void M_DrawConText (int color, int x, int y, const char *str)
 {
 	int len = (int)strlen(str);
 
-	screen->SetFont (ConFont);
 	x = (x - 160) * CleanXfac + screen->GetWidth() / 2;
 	y = (y - 100) * CleanYfac + screen->GetHeight() / 2;
-	screen->DrawText (color, x, y, str,
+	screen->DrawText (ConFont, color, x, y, str,
 		DTA_CellX, 8 * CleanXfac,
 		DTA_CellY, 8 * CleanYfac,
 		TAG_DONE);
-	screen->SetFont (SmallFont);
 }
 
 void M_BuildKeyList (menuitem_t *item, int numitems)
@@ -1660,11 +1658,9 @@ void M_OptDrawer ()
 	{
 		if (BigFont && CurrentMenu->texttitle)
 		{
-			screen->SetFont (BigFont);
-			screen->DrawText (gameinfo.gametype & GAME_DoomChex ? CR_RED : CR_UNTRANSLATED,
+			screen->DrawText (BigFont, gameinfo.gametype & GAME_DoomChex ? CR_RED : CR_UNTRANSLATED,
 				160-BigFont->StringWidth (CurrentMenu->texttitle)/2, 10,
 				CurrentMenu->texttitle, DTA_Clean, true, TAG_DONE);
-			screen->SetFont (SmallFont);
 			y = 15 + BigFont->GetHeight ();
 		}
 		else
@@ -1746,7 +1742,7 @@ void M_OptDrawer ()
 					? CR_YELLOW : LabelColor;
 				break;
 			}
-			screen->DrawText (color, x, y, item->label, DTA_Clean, true, DTA_ColorOverlay, overlay, TAG_DONE);
+			screen->DrawText (SmallFont, color, x, y, item->label, DTA_Clean, true, DTA_ColorOverlay, overlay, TAG_DONE);
 
 			switch (item->type)
 			{
@@ -1757,7 +1753,7 @@ void M_OptDrawer ()
 
 					mysnprintf (tbuf, countof(tbuf), "%d.", item->b.position);
 					x = CurrentMenu->indent - SmallFont->StringWidth (tbuf);
-					screen->DrawText (CR_GREY, x, y, tbuf, DTA_Clean, true, TAG_DONE);
+					screen->DrawText (SmallFont, CR_GREY, x, y, tbuf, DTA_Clean, true, TAG_DONE);
 				}
 				break;
 
@@ -1773,12 +1769,12 @@ void M_OptDrawer ()
 
 				if (v == vals)
 				{
-					screen->DrawText (ValueColor, CurrentMenu->indent + 14, y, "Unknown",
+					screen->DrawText (SmallFont, ValueColor, CurrentMenu->indent + 14, y, "Unknown",
 						DTA_Clean, true, TAG_DONE);
 				}
 				else
 				{
-					screen->DrawText (item->type == cdiscrete ? v : ValueColor,
+					screen->DrawText (SmallFont, item->type == cdiscrete ? v : ValueColor,
 						CurrentMenu->indent + 14, y, item->e.values[v].name,
 						DTA_Clean, true, TAG_DONE);
 				}
@@ -1822,12 +1818,12 @@ void M_OptDrawer ()
 
 				if (v == vals)
 				{
-					screen->DrawText (ValueColor, CurrentMenu->indent + 14, y, "Unknown",
+					screen->DrawText (SmallFont, ValueColor, CurrentMenu->indent + 14, y, "Unknown",
 						DTA_Clean, true, DTA_ColorOverlay, overlay, TAG_DONE);
 				}
 				else
 				{
-					screen->DrawText (item->type == cdiscrete ? v : ValueColor,
+					screen->DrawText (SmallFont, item->type == cdiscrete ? v : ValueColor,
 						CurrentMenu->indent + 14, y,
 						item->type != discretes ? item->e.values[v].name : item->e.valuestrings[v].name.GetChars(),
 						DTA_Clean, true, DTA_ColorOverlay, overlay, TAG_DONE);
@@ -1842,7 +1838,7 @@ void M_OptDrawer ()
 
 				value = item->a.cvar->GetGenericRep (CVAR_String);
 				v = M_FindCurVal(value.String, item->e.enumvalues, (int)item->b.numvalues);
-				screen->DrawText(ValueColor, CurrentMenu->indent + 14, y, v, DTA_Clean, true, TAG_DONE);
+				screen->DrawText(SmallFont, ValueColor, CurrentMenu->indent + 14, y, v, DTA_Clean, true, TAG_DONE);
 			}
 			break;
 
@@ -1856,11 +1852,11 @@ void M_OptDrawer ()
 				if (v == vals)
 				{
 					UCVarValue val = item->a.guidcvar->GetGenericRep (CVAR_String);
-					screen->DrawText (ValueColor, CurrentMenu->indent + 14, y, val.String, DTA_Clean, true, TAG_DONE);
+					screen->DrawText (SmallFont, ValueColor, CurrentMenu->indent + 14, y, val.String, DTA_Clean, true, TAG_DONE);
 				}
 				else
 				{
-					screen->DrawText (ValueColor, CurrentMenu->indent + 14, y, item->e.guidvalues[v].Name,
+					screen->DrawText (SmallFont, ValueColor, CurrentMenu->indent + 14, y, item->e.guidvalues[v].Name,
 						DTA_Clean, true, TAG_DONE);
 				}
 
@@ -1868,7 +1864,7 @@ void M_OptDrawer ()
 			break;
 
 			case nochoice:
-				screen->DrawText (CR_GOLD, CurrentMenu->indent + 14, y,
+				screen->DrawText (SmallFont, CR_GOLD, CurrentMenu->indent + 14, y,
 					(item->e.values[(int)item->b.min]).name, DTA_Clean, true, TAG_DONE);
 				break;
 
@@ -1897,7 +1893,7 @@ void M_OptDrawer ()
 				}
 				else
 				{
-					screen->DrawText(CR_BLACK, CurrentMenu->indent + 14, y + labelofs, "---",
+					screen->DrawText(SmallFont, CR_BLACK, CurrentMenu->indent + 14, y + labelofs, "---",
 						DTA_Clean, true, TAG_DONE);
 				}
 			}
@@ -1976,7 +1972,7 @@ void M_OptDrawer ()
 					str = "???";
 				}
 
-				screen->DrawText (ValueColor,
+				screen->DrawText (SmallFont, ValueColor,
 					CurrentMenu->indent + 14, y, str, DTA_Clean, true, TAG_DONE);
 			}
 			break;
@@ -2011,7 +2007,7 @@ void M_OptDrawer ()
 					else
 						color = CR_BRICK;	//LabelColor;
 
-					screen->DrawText (color, 104 * x + 20, y, str, DTA_Clean, true, TAG_DONE);
+					screen->DrawText (SmallFont, color, 104 * x + 20, y, str, DTA_Clean, true, TAG_DONE);
 				}
 			}
 
@@ -2054,7 +2050,7 @@ void M_OptDrawer ()
 				fillptr += mysnprintf (fillptr, countof(flagsblah) - (fillptr - flagsblah), "%s = %d", vars[i]->GetName (), **vars[i]);
 			}
 		}
-		screen->DrawText (ValueColor,
+		screen->DrawText (SmallFont, ValueColor,
 			160 - (SmallFont->StringWidth (flagsblah) >> 1), 0, flagsblah,
 			DTA_Clean, true, TAG_DONE);
 	}
@@ -2831,9 +2827,9 @@ static void ColorPickerDrawer ()
 	screen->Clear (x + 48*CleanXfac, y, x + 48*2*CleanXfac, y + 48*CleanYfac, -1, newColor);
 
 	y += 49*CleanYfac;
-	screen->DrawText (CR_GRAY, x+(24-SmallFont->StringWidth("Old")/2)*CleanXfac, y,
+	screen->DrawText (SmallFont, CR_GRAY, x+(24-SmallFont->StringWidth("Old")/2)*CleanXfac, y,
 		"Old", DTA_CleanNoMove, true, TAG_DONE);
-	screen->DrawText (CR_WHITE, x+(48+24-SmallFont->StringWidth("New")/2)*CleanXfac, y,
+	screen->DrawText (SmallFont, CR_WHITE, x+(48+24-SmallFont->StringWidth("New")/2)*CleanXfac, y,
 		"New", DTA_CleanNoMove, true, TAG_DONE);
 }
 

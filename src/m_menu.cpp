@@ -941,11 +941,10 @@ void M_DrawLoad (void)
 	else
 	{
 		const char *loadgame = GStrings("MNU_LOADGAME");
-		screen->DrawText (CR_UNTRANSLATED,
+		screen->DrawText (BigFont, CR_UNTRANSLATED,
 			(SCREENWIDTH - BigFont->StringWidth (loadgame)*CleanXfac)/2, 10*CleanYfac,
 			loadgame, DTA_CleanNoMove, true, TAG_DONE);
 	}
-	screen->SetFont (SmallFont);
 	M_DrawSaveLoadCommon ();
 }
 
@@ -983,10 +982,6 @@ static void M_ExtractSaveData (const FSaveGameNode *node)
 	PNGHandle *png;
 
 	M_UnloadSaveData ();
-
-	// When breaking comment strings below, be sure to get the spacing from
-	// the small font instead of some other font.
-	screen->SetFont (SmallFont);
 
 	if (node != NULL &&
 		node->Succ != NULL &&
@@ -1036,7 +1031,7 @@ static void M_ExtractSaveData (const FSaveGameNode *node)
 					memcpy (comment + timelen, pcomment, commentlen);
 				}
 				comment[timelen+commentlen] = 0;
-				SaveComment = V_BreakLines (screen->Font, 216*screen->GetWidth()/640/CleanXfac, comment);
+				SaveComment = V_BreakLines (SmallFont, 216*screen->GetWidth()/640/CleanXfac, comment);
 				delete[] comment;
 				delete[] time;
 				delete[] pcomment;
@@ -1121,7 +1116,7 @@ static void M_DrawSaveLoadCommon ()
 				? GStrings("MNU_NOPICTURE") : GStrings("MNU_DIFFVERSION");
 			const int textlen = SmallFont->StringWidth (text)*CleanXfac;
 
-			screen->DrawText (CR_GOLD, savepicLeft+(savepicWidth-textlen)/2,
+			screen->DrawText (SmallFont, CR_GOLD, savepicLeft+(savepicWidth-textlen)/2,
 				savepicTop+(savepicHeight-rowHeight)/2, text,
 				DTA_CleanNoMove, true, TAG_DONE);
 		}
@@ -1137,7 +1132,7 @@ static void M_DrawSaveLoadCommon ()
 		// for that.
 		for (i = 0; SaveComment != NULL && SaveComment[i].Width >= 0 && i < 6; ++i)
 		{
-			screen->DrawText (CR_GOLD, commentLeft, commentTop
+			screen->DrawText (SmallFont, CR_GOLD, commentLeft, commentTop
 				+ SmallFont->GetHeight()*i*CleanYfac, SaveComment[i].Text,
 				DTA_CleanNoMove, true, TAG_DONE);
 		}
@@ -1154,7 +1149,7 @@ static void M_DrawSaveLoadCommon ()
 			const char * text = GStrings("MNU_NOFILES");
 			const int textlen = SmallFont->StringWidth (text)*CleanXfac;
 
-			screen->DrawText (CR_GOLD, listboxLeft+(listboxWidth-textlen)/2,
+			screen->DrawText (SmallFont, CR_GOLD, listboxLeft+(listboxWidth-textlen)/2,
 				listboxTop+(listboxHeight-rowHeight)/2, text,
 				DTA_CleanNoMove, true, TAG_DONE);
 			return;
@@ -1189,17 +1184,16 @@ static void M_DrawSaveLoadCommon ()
 				didSeeSelected = true;
 				if (!genStringEnter)
 				{
-					screen->DrawText (
-						color, listboxLeft+1,
-						listboxTop+rowHeight*i+CleanYfac, node->Title,
+					screen->DrawText (SmallFont, color,
+						listboxLeft+1, listboxTop+rowHeight*i+CleanYfac, node->Title,
 						DTA_CleanNoMove, true, TAG_DONE);
 				}
 				else
 				{
-					screen->DrawText (CR_WHITE, listboxLeft+1,
-						listboxTop+rowHeight*i+CleanYfac, savegamestring,
+					screen->DrawText (SmallFont, CR_WHITE,
+						listboxLeft+1, listboxTop+rowHeight*i+CleanYfac, savegamestring,
 						DTA_CleanNoMove, true, TAG_DONE);
-					screen->DrawText (CR_WHITE,
+					screen->DrawText (SmallFont, CR_WHITE,
 						listboxLeft+1+SmallFont->StringWidth (savegamestring)*CleanXfac,
 						listboxTop+rowHeight*i+CleanYfac, underscore,
 						DTA_CleanNoMove, true, TAG_DONE);
@@ -1207,9 +1201,8 @@ static void M_DrawSaveLoadCommon ()
 			}
 			else
 			{
-				screen->DrawText (
-					color, listboxLeft+1,
-					listboxTop+rowHeight*i+CleanYfac, node->Title,
+				screen->DrawText (SmallFont, color,
+					listboxLeft+1, listboxTop+rowHeight*i+CleanYfac, node->Title,
 					DTA_CleanNoMove, true, TAG_DONE);
 			}
 		}
@@ -1306,12 +1299,11 @@ void M_DrawSave()
 	}
 	else
 	{
-		const char * text = GStrings("MNU_SAVEGAME");
-		screen->DrawText (CR_UNTRANSLATED,
+		const char *text = GStrings("MNU_SAVEGAME");
+		screen->DrawText (BigFont, CR_UNTRANSLATED,
 			(SCREENWIDTH - BigFont->StringWidth (text)*CleanXfac)/2, 10*CleanYfac,
 			text, DTA_CleanNoMove, true, TAG_DONE);
 	}
-	screen->SetFont (SmallFont);
 	M_DrawSaveLoadCommon ();
 }
 
@@ -1681,8 +1673,8 @@ static void DrawClassMenu(void)
 		"M_MWALK%d"
 	};
 
-	const char * text = GStrings("MNU_CHOOSECLASS");
-	screen->DrawText (CR_UNTRANSLATED, 34, 24, text, DTA_Clean, true, TAG_DONE);
+	const char *text = GStrings("MNU_CHOOSECLASS");
+	screen->DrawText (BigFont, CR_UNTRANSLATED, 34, 24, text, DTA_Clean, true, TAG_DONE);
 	classnum = itemOn;
 	if (classnum > 2)
 	{
@@ -1703,7 +1695,7 @@ static void M_DrawClassMenu ()
 	if (ClassMenuDef.numitems > 4 && gameinfo.gametype & GAME_Raven)
 		tit_y = 2;
 	
-	screen->DrawText (gameinfo.gametype & GAME_DoomChex ? CR_RED : CR_UNTRANSLATED,
+	screen->DrawText (BigFont, gameinfo.gametype & GAME_DoomChex ? CR_RED : CR_UNTRANSLATED,
 		160 - BigFont->StringWidth (text)/2,
 		tit_y,
 		text, DTA_Clean, true, TAG_DONE);
@@ -1753,7 +1745,7 @@ static void M_DrawClassMenu ()
 
 static void DrawHexenSkillMenu()
 {
-	screen->DrawText (CR_UNTRANSLATED, 74, 16, GStrings("MNU_CHOOSESKILL"), DTA_Clean, true, TAG_DONE);
+	screen->DrawText (BigFont, CR_UNTRANSLATED, 74, 16, GStrings("MNU_CHOOSESKILL"), DTA_Clean, true, TAG_DONE);
 }
 
 
@@ -2141,31 +2133,30 @@ static void M_PlayerSetupDrawer ()
 	}
 
 	// Draw title
-	const char * text = GStrings("MNU_PLAYERSETUP");
-	screen->DrawText (gameinfo.gametype & GAME_DoomChex ? CR_RED : CR_UNTRANSLATED,
+	const char *text = GStrings("MNU_PLAYERSETUP");
+	screen->DrawText (BigFont, gameinfo.gametype & GAME_DoomChex ? CR_RED : CR_UNTRANSLATED,
 		160 - BigFont->StringWidth (text)/2,
 		15,
 		text, DTA_Clean, true, TAG_DONE);
 
-	screen->SetFont (SmallFont);
 
 	// Draw player name box
-	screen->DrawText (label, PSetupDef.x, PSetupDef.y+yo, "Name", DTA_Clean, true, TAG_DONE);
+	screen->DrawText (SmallFont, label, PSetupDef.x, PSetupDef.y+yo, "Name", DTA_Clean, true, TAG_DONE);
 	M_DrawSaveLoadBorder (PSetupDef.x + 56, PSetupDef.y, MAXPLAYERNAME+1);
-	screen->DrawText (CR_UNTRANSLATED, PSetupDef.x + 56 + xo, PSetupDef.y+yo, savegamestring,
+	screen->DrawText (SmallFont, CR_UNTRANSLATED, PSetupDef.x + 56 + xo, PSetupDef.y+yo, savegamestring,
 		DTA_Clean, true, TAG_DONE);
 
 	// Draw cursor for player name box
 	if (genStringEnter)
-		screen->DrawText (CR_UNTRANSLATED,
+		screen->DrawText (SmallFont, CR_UNTRANSLATED,
 			PSetupDef.x + SmallFont->StringWidth(savegamestring) + 56+xo,
 			PSetupDef.y + yo, underscore, DTA_Clean, true, TAG_DONE);
 
 	// Draw player team setting
 	x = SmallFont->StringWidth ("Team") + 8 + PSetupDef.x;
-	screen->DrawText (label, PSetupDef.x, PSetupDef.y + LINEHEIGHT+yo, "Team",
+	screen->DrawText (SmallFont, label, PSetupDef.x, PSetupDef.y + LINEHEIGHT+yo, "Team",
 		DTA_Clean, true, TAG_DONE);
-	screen->DrawText (value, x, PSetupDef.y + LINEHEIGHT+yo,
+	screen->DrawText (SmallFont, value, x, PSetupDef.y + LINEHEIGHT+yo,
 		!TEAMINFO_IsValidTeam (players[consoleplayer].userinfo.team) ? "None" :
 		teams[players[consoleplayer].userinfo.team].name,
 		DTA_Clean, true, TAG_DONE);
@@ -2231,12 +2222,12 @@ static void M_PlayerSetupDrawer ()
 		}
 
 		const char *str = "PRESS " TEXTCOLOR_WHITE "SPACE";
-		screen->DrawText (CR_GOLD, 320 - 52 - 32 -
+		screen->DrawText (SmallFont, CR_GOLD, 320 - 52 - 32 -
 			SmallFont->StringWidth (str)/2,
 			PSetupDef.y + LINEHEIGHT*3 + 76, str,
 			DTA_Clean, true, TAG_DONE);
 		str = PlayerRotation ? "TO SEE FRONT" : "TO SEE BACK";
-		screen->DrawText (CR_GOLD, 320 - 52 - 32 -
+		screen->DrawText (SmallFont, CR_GOLD, 320 - 52 - 32 -
 			SmallFont->StringWidth (str)/2,
 			PSetupDef.y + LINEHEIGHT*3 + 76 + SmallFont->GetHeight (), str,
 			DTA_Clean, true, TAG_DONE);
@@ -2245,9 +2236,9 @@ static void M_PlayerSetupDrawer ()
 	// Draw player color sliders
 	//V_DrawTextCleanMove (CR_GREY, PSetupDef.x, PSetupDef.y + LINEHEIGHT, "Color");
 
-	screen->DrawText (label, PSetupDef.x, PSetupDef.y + LINEHEIGHT*2+yo, "Red", DTA_Clean, true, TAG_DONE);
-	screen->DrawText (label, PSetupDef.x, PSetupDef.y + LINEHEIGHT*3+yo, "Green", DTA_Clean, true, TAG_DONE);
-	screen->DrawText (label, PSetupDef.x, PSetupDef.y + LINEHEIGHT*4+yo, "Blue", DTA_Clean, true, TAG_DONE);
+	screen->DrawText (SmallFont, label, PSetupDef.x, PSetupDef.y + LINEHEIGHT*2+yo, "Red", DTA_Clean, true, TAG_DONE);
+	screen->DrawText (SmallFont, label, PSetupDef.x, PSetupDef.y + LINEHEIGHT*3+yo, "Green", DTA_Clean, true, TAG_DONE);
+	screen->DrawText (SmallFont, label, PSetupDef.x, PSetupDef.y + LINEHEIGHT*4+yo, "Blue", DTA_Clean, true, TAG_DONE);
 
 	x = SmallFont->StringWidth ("Green") + 8 + PSetupDef.x;
 	color = players[consoleplayer].userinfo.color;
@@ -2259,35 +2250,35 @@ static void M_PlayerSetupDrawer ()
 	// [GRB] Draw class setting
 	int pclass = players[consoleplayer].userinfo.PlayerClass;
 	x = SmallFont->StringWidth ("Class") + 8 + PSetupDef.x;
-	screen->DrawText (label, PSetupDef.x, PSetupDef.y + LINEHEIGHT*5+yo, "Class", DTA_Clean, true, TAG_DONE);
-	screen->DrawText (value, x, PSetupDef.y + LINEHEIGHT*5+yo,
+	screen->DrawText (SmallFont, label, PSetupDef.x, PSetupDef.y + LINEHEIGHT*5+yo, "Class", DTA_Clean, true, TAG_DONE);
+	screen->DrawText (SmallFont, value, x, PSetupDef.y + LINEHEIGHT*5+yo,
 		pclass == -1 ? "Random" : PlayerClasses[pclass].Type->Meta.GetMetaString (APMETA_DisplayName),
 		DTA_Clean, true, TAG_DONE);
 
 	// Draw skin setting
 	x = SmallFont->StringWidth ("Skin") + 8 + PSetupDef.x;
-	screen->DrawText (label, PSetupDef.x, PSetupDef.y + LINEHEIGHT*6+yo, "Skin", DTA_Clean, true, TAG_DONE);
+	screen->DrawText (SmallFont, label, PSetupDef.x, PSetupDef.y + LINEHEIGHT*6+yo, "Skin", DTA_Clean, true, TAG_DONE);
 	if (GetDefaultByType (PlayerClass->Type)->flags4 & MF4_NOSKIN ||
 		players[consoleplayer].userinfo.PlayerClass == -1)
 	{
-		screen->DrawText (value, x, PSetupDef.y + LINEHEIGHT*6+yo, "Base", DTA_Clean, true, TAG_DONE);
+		screen->DrawText (SmallFont, value, x, PSetupDef.y + LINEHEIGHT*6+yo, "Base", DTA_Clean, true, TAG_DONE);
 	}
 	else
 	{
-		screen->DrawText (value, x, PSetupDef.y + LINEHEIGHT*6+yo,
+		screen->DrawText (SmallFont, value, x, PSetupDef.y + LINEHEIGHT*6+yo,
 			skins[PlayerSkin].name, DTA_Clean, true, TAG_DONE);
 	}
 
 	// Draw gender setting
 	x = SmallFont->StringWidth ("Gender") + 8 + PSetupDef.x;
-	screen->DrawText (label, PSetupDef.x, PSetupDef.y + LINEHEIGHT*7+yo, "Gender", DTA_Clean, true, TAG_DONE);
-	screen->DrawText (value, x, PSetupDef.y + LINEHEIGHT*7+yo,
+	screen->DrawText (SmallFont, label, PSetupDef.x, PSetupDef.y + LINEHEIGHT*7+yo, "Gender", DTA_Clean, true, TAG_DONE);
+	screen->DrawText (SmallFont, value, x, PSetupDef.y + LINEHEIGHT*7+yo,
 		genders[players[consoleplayer].userinfo.gender], DTA_Clean, true, TAG_DONE);
 
 	// Draw autoaim setting
 	x = SmallFont->StringWidth ("Autoaim") + 8 + PSetupDef.x;
-	screen->DrawText (label, PSetupDef.x, PSetupDef.y + LINEHEIGHT*8+yo, "Autoaim", DTA_Clean, true, TAG_DONE);
-	screen->DrawText (value, x, PSetupDef.y + LINEHEIGHT*8+yo,
+	screen->DrawText (SmallFont, label, PSetupDef.x, PSetupDef.y + LINEHEIGHT*8+yo, "Autoaim", DTA_Clean, true, TAG_DONE);
+	screen->DrawText (SmallFont, value, x, PSetupDef.y + LINEHEIGHT*8+yo,
 		autoaim == 0 ? "Never" :
 		autoaim <= 0.25 ? "Very Low" :
 		autoaim <= 0.5 ? "Low" :
@@ -2762,10 +2753,10 @@ void M_StartMessage (const char *string, void (*routine)(int), bool input)
 //
 //		Find string height from hu_font chars
 //
-int M_StringHeight (const char *string)
+int M_StringHeight (FFont *font, const char *string)
 {
 	int h;
-	int height = screen->Font->GetHeight ();
+	int height = font->GetHeight ();
 		
 	h = height;
 	while (*string)
@@ -3036,7 +3027,7 @@ bool M_SaveLoadResponder (event_t *ev)
 				{
 					V_FreeBrokenLines (SaveComment);
 				}
-				SaveComment = V_BreakLines (screen->Font, 216*screen->GetWidth()/640/CleanXfac, workbuf);
+				SaveComment = V_BreakLines (SmallFont, 216*screen->GetWidth()/640/CleanXfac, workbuf);
 			}
 			break;
 
@@ -3218,17 +3209,17 @@ void M_Drawer ()
 		BorderNeedRefresh = screen->GetPageCount ();
 		SB_state = screen->GetPageCount ();
 
-		FBrokenLines *lines = V_BreakLines (screen->Font, 320, messageString);
+		FBrokenLines *lines = V_BreakLines (SmallFont, 320, messageString);
 		y = 100;
 
 		for (i = 0; lines[i].Width >= 0; i++)
-			y -= screen->Font->GetHeight () / 2;
+			y -= SmallFont->GetHeight () / 2;
 
 		for (i = 0; lines[i].Width >= 0; i++)
 		{
-			screen->DrawText (CR_UNTRANSLATED, 160 - lines[i].Width/2, y, lines[i].Text,
+			screen->DrawText (SmallFont, CR_UNTRANSLATED, 160 - lines[i].Width/2, y, lines[i].Text,
 				DTA_Clean, true, TAG_DONE);
-			y += screen->Font->GetHeight ();
+			y += SmallFont->GetHeight ();
 		}
 
 		V_FreeBrokenLines (lines);
@@ -3242,8 +3233,8 @@ void M_Drawer ()
 		// For Heretic shareware message:
 		if (showSharewareMessage)
 		{
-			const char * text = GStrings("MNU_ONLYREGISTERED");
-			screen->DrawText (CR_WHITE, 160 - SmallFont->StringWidth(text)/2,
+			const char *text = GStrings("MNU_ONLYREGISTERED");
+			screen->DrawText (SmallFont, CR_WHITE, 160 - SmallFont->StringWidth(text)/2,
 				8, text, DTA_Clean, true, TAG_DONE);
 		}
 
@@ -3256,7 +3247,6 @@ void M_Drawer ()
 		}
 		else
 		{
-			screen->SetFont (BigFont);
 			if (currentMenu->routine)
 				currentMenu->routine(); 		// call Draw routine
 
@@ -3282,7 +3272,7 @@ void M_Drawer ()
 						}
 						const char *text = currentMenu->menuitems[i].name;
 						if (*text == '$') text = GStrings(text+1);
-						screen->DrawText (color, x, y, text,
+						screen->DrawText (BigFont, color, x, y, text,
 							DTA_Clean, true, TAG_DONE);
 					}
 					else
@@ -3293,7 +3283,6 @@ void M_Drawer ()
 				}
 				y += LINEHEIGHT;
 			}
-			screen->SetFont (SmallFont);
 			
 			// DRAW CURSOR
 			if (drawSkull)
@@ -3303,12 +3292,10 @@ void M_Drawer ()
 					// [RH] Use options menu cursor for the player setup menu.
 					if (skullAnimCounter < 6)
 					{
-						screen->SetFont (ConFont);
-						screen->DrawText (CR_RED, x - 16,
+						screen->DrawText (ConFont, CR_RED, x - 16,
 							currentMenu->y + itemOn*LINEHEIGHT +
 							(!(gameinfo.gametype & (GAME_DoomStrifeChex)) ? 6 : -1), "\xd",
 							DTA_Clean, true, TAG_DONE);
-						screen->SetFont (SmallFont);
 					}
 				}
 				else if (gameinfo.gametype & GAME_DoomChex)

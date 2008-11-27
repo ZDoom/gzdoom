@@ -1,5 +1,17 @@
+November 27, 2008
+- The co-op summary screen now has a totals row at the bottom (if it fits).
+- Changed WI_drawPercent() when wi_percents is false so that the total
+  display is optional, and it formats it like Heretic's intermission, with
+  a slash and a fixed-width right column.
+
+November 21, 2008
+- Font is no longer a property of the screen object. Pass the font to
+  DrawText and DrawChar directly instead.
+- Doom's intermission characters are now collected together as a font
+  so they can be colorized.
+
 November 15, 2008  (Changes by Graf Zahl)
-- moved common code of Raven's fast projectiles into a base class
+- Moved common code of Raven's fast projectiles into a base class
   called FastProjectile. This base class doesn't have any effects attached
   so that it can be used for user defined fast projectiles.
 

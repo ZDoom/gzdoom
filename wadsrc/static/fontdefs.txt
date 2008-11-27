@@ -45,3 +45,23 @@ INDEXFONT_RAVEN
    8 SMALLIN8
    9 SMALLIN9
 }
+
+// Doom and Chex intermissions use special text glyphs. The Raven and Strife
+// games just use the standard big font.
+
+IntermissionFont_Doom
+{
+	% WIPCNT
+	: WICOLON
+	0 WINUM0
+	1 WINUM1
+	2 WINUM2
+	3 WINUM3
+	4 WINUM4
+	5 WINUM5
+	6 WINUM6
+	7 WINUM7
+	8 WINUM8
+	9 WINUM9
+	- WIMINUS
+}

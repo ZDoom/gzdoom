@@ -452,7 +452,7 @@ void AActor::Die (AActor *source, AActor *inflictor)
 					SexMessage (GStrings("SPREEKILLSELF"), buff,
 						player->userinfo.gender, player->userinfo.netname,
 						player->userinfo.netname);
-					StatusBar->AttachMessage (new DHUDMessageFadeOut (buff,
+					StatusBar->AttachMessage (new DHUDMessageFadeOut (SmallFont, buff,
 							1.5f, 0.2f, 0, 0, CR_WHITE, 3.f, 0.5f), MAKE_ID('K','S','P','R'));
 				}
 			}
@@ -500,7 +500,7 @@ void AActor::Die (AActor *source, AActor *inflictor)
 						{
 							SexMessage (GStrings("SPREEOVER"), buff, player->userinfo.gender,
 								player->userinfo.netname, source->player->userinfo.netname);
-							StatusBar->AttachMessage (new DHUDMessageFadeOut (buff,
+							StatusBar->AttachMessage (new DHUDMessageFadeOut (SmallFont, buff,
 								1.5f, 0.2f, 0, 0, CR_WHITE, 3.f, 0.5f), MAKE_ID('K','S','P','R'));
 						}
 					}
@@ -510,7 +510,7 @@ void AActor::Die (AActor *source, AActor *inflictor)
 						{
 							SexMessage (spreemsg, buff, player->userinfo.gender,
 								player->userinfo.netname, source->player->userinfo.netname);
-							StatusBar->AttachMessage (new DHUDMessageFadeOut (buff,
+							StatusBar->AttachMessage (new DHUDMessageFadeOut (SmallFont, buff,
 								1.5f, 0.2f, 0, 0, CR_WHITE, 3.f, 0.5f), MAKE_ID('K','S','P','R'));
 						}
 					}
@@ -558,7 +558,7 @@ void AActor::Die (AActor *source, AActor *inflictor)
 						{
 							SexMessage (multimsg, buff, player->userinfo.gender,
 								player->userinfo.netname, source->player->userinfo.netname);
-							StatusBar->AttachMessage (new DHUDMessageFadeOut (buff,
+							StatusBar->AttachMessage (new DHUDMessageFadeOut (SmallFont, buff,
 								1.5f, 0.8f, 0, 0, CR_RED, 3.f, 0.5f), MAKE_ID('M','K','I','L'));
 						}
 					}

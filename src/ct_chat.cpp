@@ -213,13 +213,13 @@ void CT_Drawer (void)
 		y += ((SCREENHEIGHT == viewheight && viewactive) || gamestate != GS_LEVEL) ? screen_height : st_y;
 
 		promptwidth = SmallFont->StringWidth (prompt) * scalex;
-		x = screen->Font->GetCharWidth ('_') * scalex * 2 + promptwidth;
+		x = SmallFont->GetCharWidth ('_') * scalex * 2 + promptwidth;
 
 		// figure out if the text is wider than the screen->
 		// if so, only draw the right-most portion of it.
 		for (i = len - 1; i >= 0 && x < screen_width; i--)
 		{
-			x += screen->Font->GetCharWidth (ChatQueue[i] & 0x7f) * scalex;
+			x += SmallFont->GetCharWidth (ChatQueue[i] & 0x7f) * scalex;
 		}
 
 		if (i >= 0)
@@ -236,14 +236,14 @@ void CT_Drawer (void)
 		ChatQueue[len+1] = '\0';
 		if (con_scaletext < 2)
 		{
-			screen->DrawText (CR_GREEN, 0, y, prompt, DTA_CleanNoMove, *con_scaletext, TAG_DONE);
-			screen->DrawText (CR_GREY, promptwidth, y, (char *)(ChatQueue + i), DTA_CleanNoMove, *con_scaletext, TAG_DONE);
+			screen->DrawText (SmallFont, CR_GREEN, 0, y, prompt, DTA_CleanNoMove, *con_scaletext, TAG_DONE);
+			screen->DrawText (SmallFont, CR_GREY, promptwidth, y, (char *)(ChatQueue + i), DTA_CleanNoMove, *con_scaletext, TAG_DONE);
 		}
 		else
 		{
-			screen->DrawText (CR_GREEN, 0, y, prompt, 
+			screen->DrawText (SmallFont, CR_GREEN, 0, y, prompt, 
 				DTA_VirtualWidth, screen_width, DTA_VirtualHeight, screen_height, DTA_KeepRatio, true, TAG_DONE);
-			screen->DrawText (CR_GREY, promptwidth, y, (char *)(ChatQueue + i), 
+			screen->DrawText (SmallFont, CR_GREY, promptwidth, y, (char *)(ChatQueue + i), 
 				DTA_VirtualWidth, screen_width, DTA_VirtualHeight, screen_height, DTA_KeepRatio, true, TAG_DONE);
 		}
 		ChatQueue[len] = '\0';

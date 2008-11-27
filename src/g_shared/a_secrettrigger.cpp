@@ -39,6 +39,7 @@
 #include "s_sound.h"
 #include "d_player.h"
 #include "doomstat.h"
+#include "v_font.h"
 
 EXTERN_CVAR(String, secretmessage)
 
@@ -66,7 +67,7 @@ void ASecretTrigger::Activate (AActor *activator)
 		{
 			if (args[0] <= 1)
 			{
-				C_MidPrint (secretmessage);
+				C_MidPrint (SmallFont, secretmessage);
 			}
 			if (args[0] == 0 || args[0] == 2)
 			{

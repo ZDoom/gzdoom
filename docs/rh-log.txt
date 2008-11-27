@@ -1,4 +1,5 @@
 November 27, 2008
+- Fixed: disabling lowerHealthCap didn't affect interpolateHealth.
 - The co-op summary screen now has a totals row at the bottom (if it fits).
 - Changed WI_drawPercent() when wi_percents is false so that the total
   display is optional, and it formats it like Heretic's intermission, with

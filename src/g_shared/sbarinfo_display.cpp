@@ -296,13 +296,14 @@ void DSBarInfo::Tick ()
 	}
 	else
 	{
-		if(oldHealth > CPlayer->health)
+		int health = SBarInfoScript->lowerHealthCap ? CPlayer->health : CPlayer->mo->health;
+		if(oldHealth > health)
 		{
-			oldHealth -= clamp((oldHealth - CPlayer->health) >> 2, 1, SBarInfoScript->interpolationSpeed);
+			oldHealth -= clamp((oldHealth - health), 1, SBarInfoScript->interpolationSpeed);
 		}
 		else if(oldHealth < CPlayer->health)
 		{
-			oldHealth += clamp((CPlayer->health - oldHealth) >> 2, 1, SBarInfoScript->interpolationSpeed);
+			oldHealth += clamp((health - oldHealth), 1, SBarInfoScript->interpolationSpeed);
 		}
 	}
 	AInventory *armor = CPlayer->mo->FindInventory<ABasicArmor>();

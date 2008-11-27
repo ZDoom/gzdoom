@@ -664,6 +664,7 @@ static void CalcPosVel(int type, const AActor *actor, const sector_t *sector,
 			break;
 
 		case SOURCE_Actor:
+			assert(actor != NULL);
 			if (actor != NULL)
 			{
 				x = actor->x;
@@ -673,6 +674,7 @@ static void CalcPosVel(int type, const AActor *actor, const sector_t *sector,
 			break;
 
 		case SOURCE_Sector:
+			assert(sector != NULL);
 			if (chanflags & CHAN_AREA)
 			{
 				CalcSectorSoundOrg(sector, channum, &x, &z, &y);
@@ -686,6 +688,7 @@ static void CalcPosVel(int type, const AActor *actor, const sector_t *sector,
 			break;
 
 		case SOURCE_Polyobj:
+			assert(poly != NULL);
 			CalcPolyobjSoundOrg(poly, &x, &z, &y);
 			break;
 
@@ -1432,27 +1435,6 @@ void S_StopSound (const FPolyObj *poly, int channel)
 			(chan->EntChannel == channel || (i_compatflags & COMPATF_MAGICSILENCE)))
 		{
 			S_StopChannel(chan);
-		}
-	}
-}
-
-//==========================================================================
-//
-// S_MarkSoundChannels
-//
-//==========================================================================
-
-void S_MarkSoundChannels()
-{
-	for (FSoundChan *chan = Channels; chan != NULL; chan = chan->NextChan)
-	{
-		if (chan->SourceType == SOURCE_Actor)
-		{
-			GC::Mark(chan->Actor);
-		}
-		else
-		{
-			chan->Actor = NULL;
 		}
 	}
 }

@@ -277,7 +277,6 @@ bool S_CheckSingular (int sound_id);
 void S_StopSound (AActor *ent, int channel);
 void S_StopSound (const sector_t *sec, int channel);
 void S_StopSound (const FPolyObj *poly, int channel);
-void S_MarkSoundChannels();
 
 // Stops an origin-less sound from playing from this channel.
 void S_StopSound (int channel);

@@ -701,7 +701,7 @@ static int WI_DrawCharPatch (int charcode, int x, int y, EColorRange translation
 //
 //====================================================================
 
-int WI_DrawName(int y, const char *levelname, bool nomove=false)
+int WI_DrawName(int y, const char *levelname)
 {
 	int i;
 	size_t l;
@@ -709,28 +709,21 @@ int WI_DrawName(int y, const char *levelname, bool nomove=false)
 	int h = 0;
 	int lumph;
 
-	lumph = BigFont->GetHeight();
+	lumph = BigFont->GetHeight() * CleanYfac;
 
 	p = levelname;
 	l = strlen(p);
 	if (!l) return 0;
 
-	FBrokenLines *lines = V_BreakLines(BigFont, 320, p);
+	FBrokenLines *lines = V_BreakLines(BigFont, screen->GetWidth() / CleanXfac, p);
 
 	if (lines)
 	{
 		for (i = 0; lines[i].Width >= 0; i++)
 		{
-			if (!nomove)
-			{
-				screen->DrawText(BigFont, CR_UNTRANSLATED, 160 - lines[i].Width/2, y+h, lines[i].Text, DTA_Clean, true, TAG_DONE);
-			}
-			else
-			{
-				screen->DrawText(BigFont, CR_UNTRANSLATED, (SCREENWIDTH - lines[i].Width * CleanXfac) / 2, (y+h) * CleanYfac, 
-					lines[i].Text, DTA_CleanNoMove, true, TAG_DONE);
-			}
-			h+=lumph;
+			screen->DrawText(BigFont, CR_UNTRANSLATED, (SCREENWIDTH - lines[i].Width * CleanXfac) / 2, y + h, 
+				lines[i].Text, DTA_CleanNoMove, true, TAG_DONE);
+			h += lumph;
 		}
 		V_FreeBrokenLines(lines);
 	}
@@ -748,15 +741,16 @@ int WI_DrawName(int y, const char *levelname, bool nomove=false)
 //====================================================================
 void WI_drawLF ()
 {
-	int y = WI_TITLEY;
+	int y = WI_TITLEY * CleanYfac;
+	int midx = screen->GetWidth() / 2;
 
 	FTexture *tex = wbs->LName0;
 	
 	// draw <LevelName> 
 	if (tex)
 	{
-		screen->DrawTexture(tex, 160-tex->GetWidth()/2, y, DTA_Clean, true, TAG_DONE);
-		y += tex->GetHeight() + BigFont->GetHeight()/4;
+		screen->DrawTexture(tex, midx - tex->GetWidth()*CleanXfac/2, y, DTA_CleanNoMove, true, TAG_DONE);
+		y += tex->GetHeight() + BigFont->GetHeight()*CleanYfac/4;
 	}
 	else 
 	{
@@ -770,13 +764,13 @@ void WI_drawLF ()
 		// don't draw 'finished' if the level name is too high!
 		if (gameinfo.gametype & GAME_DoomChex) 
 		{
-			screen->DrawTexture(finished, 160 - finished->GetWidth()/2, y, DTA_Clean, true, TAG_DONE);
+			screen->DrawTexture(finished, midx - finished->GetWidth()*CleanXfac/2, y, DTA_CleanNoMove, true, TAG_DONE);
 		}
 		else 
 		{
 			screen->DrawText(font, CR_WHITE,
-				160 - font->StringWidth("finished")/2, y-4, "finished", 
-				DTA_Clean, true, TAG_DONE);
+				midx - font->StringWidth("finished")/2, y - 4*CleanYfac, "finished", 
+				DTA_CleanNoMove, true, TAG_DONE);
 		}
 	}
 }
@@ -792,33 +786,33 @@ void WI_drawLF ()
 //====================================================================
 void WI_drawEL ()
 {
-	int y = WI_TITLEY;
+	int y = WI_TITLEY * CleanYfac;
 	FFont *font = gameinfo.gametype & GAME_Raven ? SmallFont : BigFont;
 
 	// draw "entering"
 	// be careful with the added height so that it works for oversized 'entering' patches!
 	if (gameinfo.gametype & GAME_DoomChex)
 	{
-		screen->DrawTexture(entering, (SCREENWIDTH - entering->GetWidth() * CleanXfac) / 2, y * CleanYfac, DTA_CleanNoMove, true, TAG_DONE);
-		y += entering->GetHeight() + font->GetHeight()/4;
+		screen->DrawTexture(entering, (SCREENWIDTH - entering->GetWidth() * CleanXfac) / 2, y, DTA_CleanNoMove, true, TAG_DONE);
+		y += (entering->GetHeight() + font->GetHeight()/4) * CleanYfac;
 	}
 	else
 	{
 		screen->DrawText(font, CR_WHITE,
-			(SCREENWIDTH - font->StringWidth("now entering:") * CleanXfac) / 2, y * CleanYfac, 
+			(SCREENWIDTH - font->StringWidth("now entering:") * CleanXfac) / 2, y, 
 			"now entering:", DTA_CleanNoMove, true, TAG_DONE);
-		y += font->GetHeight()*5/4;
+		y += font->GetHeight()*5*CleanYfac/4;
 	}
 
 	// draw <LevelName>
-	FTexture * tex = wbs->LName1;
+	FTexture *tex = wbs->LName1;
 	if (tex)
 	{
-		screen->DrawTexture(tex, (SCREENWIDTH - tex->GetWidth() * CleanXfac) / 2, y * CleanYfac, DTA_CleanNoMove, true, TAG_DONE);
+		screen->DrawTexture(tex, (SCREENWIDTH - tex->GetWidth() * CleanXfac) / 2, y, DTA_CleanNoMove, true, TAG_DONE);
 	}
 	else
 	{
-		WI_DrawName(y, lnametexts[1], true);
+		WI_DrawName(y, lnametexts[1]);
 	}
 }
 

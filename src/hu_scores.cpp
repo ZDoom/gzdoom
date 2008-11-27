@@ -161,7 +161,7 @@ static void HU_DoDrawScores (player_t *player, player_t *sortedplayers[MAXPLAYER
 	unsigned int i;
 	int maxwidth = 0;
 	int numTeams = 0;
-	int x ,y;
+	int x, y;
 	
 	if (deathmatch)
 	{

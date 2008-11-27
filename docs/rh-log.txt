@@ -1,4 +1,7 @@
 November 27, 2008
+- Removed S_MarkSoundChannels(), as it caused all non-actor sounds to
+  have their origins zeroed during collections.
+- WI_drawLF() now draws the level name at the top of the screen, always.
 - Fixed: disabling lowerHealthCap didn't affect interpolateHealth.
 - The co-op summary screen now has a totals row at the bottom (if it fits).
 - Changed WI_drawPercent() when wi_percents is false so that the total

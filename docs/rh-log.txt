@@ -1,3 +1,10 @@
+November 29, 2008 (sbarinfo update)
+- Added: inventorybarnotvisible to check to see if the inventory bar is up.
+- Added the following flags to drawselectedinventory center, centerbottom, and
+  drawshadow.
+- Fixed: The translucent flag for drawinventorybar should only have affected
+  the artibox image.
+  
 November 27, 2008
 - Removed S_MarkSoundChannels(), as it caused all non-actor sounds to
   have their origins zeroed during collections.
@@ -13,6 +20,9 @@ November 21, 2008
   DrawText and DrawChar directly instead.
 - Doom's intermission characters are now collected together as a font
   so they can be colorized.
+
+November 18, 2008  (Changes by Graf Zahl)
+- Fixed: compatf_limitpain must check for 21 Lost Souls, not 20.
 
 November 15, 2008  (Changes by Graf Zahl)
 - Moved common code of Raven's fast projectiles into a base class

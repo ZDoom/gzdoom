@@ -675,15 +675,18 @@ static void CalcPosVel(int type, const AActor *actor, const sector_t *sector,
 
 		case SOURCE_Sector:
 			assert(sector != NULL);
-			if (chanflags & CHAN_AREA)
+			if (sector != NULL)
 			{
-				CalcSectorSoundOrg(sector, channum, &x, &z, &y);
-			}
-			else
-			{
-				x = sector->soundorg[0];
-				z = sector->soundorg[1];
-				chanflags |= CHAN_LISTENERZ;
+				if (chanflags & CHAN_AREA)
+				{
+					CalcSectorSoundOrg(sector, channum, &x, &z, &y);
+				}
+				else
+				{
+					x = sector->soundorg[0];
+					z = sector->soundorg[1];
+					chanflags |= CHAN_LISTENERZ;
+				}
 			}
 			break;
 

@@ -56,8 +56,8 @@ void A_PainShootSkull (AActor *self, angle_t angle, const PClass *spawntype)
 	if (i_compatflags & COMPATF_LIMITPAIN)
 	{
 		// count total number of skulls currently on the level
-		// if there are already 20 skulls on the level, don't spit another one
-		int count = 20;
+		// if there are already 21 skulls on the level, don't spit another one
+		int count = 21;
 		FThinkerIterator iterator (spawntype);
 		DThinker *othink;
 

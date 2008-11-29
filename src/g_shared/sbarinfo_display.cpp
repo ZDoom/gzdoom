@@ -491,11 +491,11 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 				if(drawAlt != 0) //draw 'off' image
 				{
 					if(cmd.special != -1 && drawAlt == 1)
-						DrawGraphic(Images[cmd.special], cmd.x, cmd.y, xOffset, yOffset, alpha, block.fullScreenOffsets, !!(cmd.flags & DRAWIMAGE_TRANSLATABLE), false, !!(cmd.flags & (DRAWIMAGE_OFFSET_CENTER|DRAWIMAGE_OFFSET_CENTERBOTTOM)));
+						DrawGraphic(Images[cmd.special], cmd.x, cmd.y, xOffset, yOffset, alpha, block.fullScreenOffsets, !!(cmd.flags & DRAWIMAGE_TRANSLATABLE), false, !!(cmd.flags & DRAWIMAGE_OFFSET));
 					else if(cmd.special2 != -1 && drawAlt == 2)
-						DrawGraphic(Images[cmd.special2], cmd.x, cmd.y, xOffset, yOffset, alpha, block.fullScreenOffsets, !!(cmd.flags & DRAWIMAGE_TRANSLATABLE), false, !!(cmd.flags & (DRAWIMAGE_OFFSET_CENTER|DRAWIMAGE_OFFSET_CENTERBOTTOM)));
+						DrawGraphic(Images[cmd.special2], cmd.x, cmd.y, xOffset, yOffset, alpha, block.fullScreenOffsets, !!(cmd.flags & DRAWIMAGE_TRANSLATABLE), false, !!(cmd.flags & DRAWIMAGE_OFFSET));
 					else if(cmd.special3 != -1 && drawAlt == 3)
-						DrawGraphic(Images[cmd.special3], cmd.x, cmd.y, xOffset, yOffset, alpha, block.fullScreenOffsets, !!(cmd.flags & DRAWIMAGE_TRANSLATABLE), false,(cmd.flags & (DRAWIMAGE_OFFSET_CENTER|DRAWIMAGE_OFFSET_CENTERBOTTOM)));
+						DrawGraphic(Images[cmd.special3], cmd.x, cmd.y, xOffset, yOffset, alpha, block.fullScreenOffsets, !!(cmd.flags & DRAWIMAGE_TRANSLATABLE), false, (cmd.flags & DRAWIMAGE_OFFSET));
 					break;
 				}
 			}
@@ -700,13 +700,15 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 			case SBARINFO_DRAWSELECTEDINVENTORY:
 				if(CPlayer->mo->InvSel != NULL && !(level.flags & LEVEL_NOINVENTORYBAR))
 				{
+					int offsetflags = (cmd.flags & DRAWSELECTEDINVENTORY_CENTER) ? DRAWIMAGE_OFFSET_CENTER : 0;
+					offsetflags |= (cmd.flags & DRAWSELECTEDINVENTORY_CENTERBOTTOM) ? DRAWIMAGE_OFFSET_CENTERBOTTOM : 0;
 					if((cmd.flags & DRAWSELECTEDINVENTORY_ARTIFLASH) && artiflash)
 					{
-						DrawGraphic(Images[ARTIFLASH_OFFSET+(4-artiflash)], cmd.x, cmd.y, xOffset, yOffset, alpha, block.fullScreenOffsets, false, CPlayer->mo->InvSel->Amount <= 0);
+						DrawGraphic(Images[ARTIFLASH_OFFSET+(4-artiflash)], cmd.x, cmd.y, xOffset, yOffset, alpha, block.fullScreenOffsets, false, CPlayer->mo->InvSel->Amount <= 0, offsetflags);
 					}
 					else
 					{
-						DrawGraphic(TexMan(CPlayer->mo->InvSel->Icon), cmd.x, cmd.y, xOffset, yOffset, alpha, block.fullScreenOffsets, false, CPlayer->mo->InvSel->Amount <= 0);
+						DrawGraphic(TexMan(CPlayer->mo->InvSel->Icon), cmd.x, cmd.y, xOffset, yOffset, alpha, block.fullScreenOffsets, false, CPlayer->mo->InvSel->Amount <= 0, offsetflags);
 					}
 					if((cmd.flags & DRAWSELECTEDINVENTORY_ALWAYSSHOWCOUNTER) || CPlayer->mo->InvSel->Amount != 1)
 					{
@@ -714,7 +716,7 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 						{
 							drawingFont = cmd.font;
 						}
-						DrawNumber(CPlayer->mo->InvSel->Amount, 3, cmd.special2, cmd.special3, xOffset, yOffset, alpha, block.fullScreenOffsets, cmd.translation, cmd.special4);
+						DrawNumber(CPlayer->mo->InvSel->Amount, 3, cmd.special2, cmd.special3, xOffset, yOffset, alpha, block.fullScreenOffsets, cmd.translation, cmd.special4, false, !!(cmd.flags & DRAWSELECTEDINVENTORY_DRAWSHADOW));
 					}
 				}
 				else if((cmd.flags & DRAWSELECTEDINVENTORY_ALTERNATEONEMPTY))
@@ -728,6 +730,7 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 				bool artibox = true;
 				bool noarrows = false;
 				bool alwaysshowcounter = false;
+				int bgalpha = alpha;
 				if((cmd.flags & DRAWINVENTORYBAR_ALWAYSSHOW))
 					alwaysshow = true;
 				if((cmd.flags & DRAWINVENTORYBAR_NOARTIBOX))
@@ -737,12 +740,12 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 				if((cmd.flags & DRAWINVENTORYBAR_ALWAYSSHOWCOUNTER))
 					alwaysshowcounter = true;
 				if(cmd.flags & DRAWINVENTORYBAR_TRANSLUCENT)
-					alpha = fixed_t((((double) alpha / (double) FRACUNIT) * ((double) HX_SHADOW / (double) FRACUNIT)) * FRACUNIT);
+					bgalpha = fixed_t((((double) alpha / (double) FRACUNIT) * ((double) HX_SHADOW / (double) FRACUNIT)) * FRACUNIT);
 				if(drawingFont != cmd.font)
 				{
 					drawingFont = cmd.font;
 				}
-				DrawInventoryBar(cmd.special, cmd.value, cmd.x, cmd.y, xOffset, yOffset, alpha, block.fullScreenOffsets, alwaysshow, cmd.special2, cmd.special3, cmd.translation, artibox, noarrows, alwaysshowcounter);
+				DrawInventoryBar(cmd.special, cmd.value, cmd.x, cmd.y, xOffset, yOffset, alpha, block.fullScreenOffsets, alwaysshow, cmd.special2, cmd.special3, cmd.translation, artibox, noarrows, alwaysshowcounter, bgalpha);
 				break;
 			}
 			case SBARINFO_DRAWBAR:
@@ -1292,6 +1295,10 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 				}
 				break;
 			}
+			case SBARINFO_INVENTORYBARNOTVISIBLE:
+				if(CPlayer->inventorytics <= 0 || (level.flags & LEVEL_NOINVENTORYBAR))
+					doCommands(cmd.subBlock, xOffset, yOffset, alpha);
+				break;
 			case SBARINFO_WEAPONAMMO:
 				if(CPlayer->ReadyWeapon != NULL)
 				{
@@ -1553,7 +1560,7 @@ void DSBarInfo::DrawFace(const char *defaultFace, int accuracy, int stateflags, 
 }
 
 void DSBarInfo::DrawInventoryBar(int type, int num, int x, int y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets, bool alwaysshow,
-	int counterx, int countery, EColorRange translation, bool drawArtiboxes, bool noArrows, bool alwaysshowcounter)
+	int counterx, int countery, EColorRange translation, bool drawArtiboxes, bool noArrows, bool alwaysshowcounter, int bgalpha)
 { //yes, there is some Copy & Paste here too
 	AInventory *item;
 	int i;
@@ -1567,7 +1574,7 @@ void DSBarInfo::DrawInventoryBar(int type, int num, int x, int y, int xOffset, i
 		{
 			if(drawArtiboxes)
 			{
-				DrawGraphic(Images[invBarOffset + imgARTIBOX], x+i*spacing, y, xOffset, yOffset, alpha, fullScreenOffsets);
+				DrawGraphic(Images[invBarOffset + imgARTIBOX], x+i*spacing, y, xOffset, yOffset, bgalpha, fullScreenOffsets);
 			}
 			if(type != GAME_Strife) //Strife draws the cursor before the icons
 				DrawGraphic(TexMan(item->Icon), x+i*spacing, y, xOffset, yOffset, alpha, fullScreenOffsets, false, item->Amount <= 0);

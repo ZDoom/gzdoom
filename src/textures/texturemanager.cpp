@@ -297,7 +297,7 @@ void FTextureManager::UnloadAll ()
 
 FTextureID FTextureManager::AddTexture (FTexture *texture)
 {
-	size_t bucket;
+	int bucket;
 	int hash;
 
 	if (texture == NULL) return FTextureID(-1);
@@ -307,7 +307,7 @@ FTextureID FTextureManager::AddTexture (FTexture *texture)
 	// Textures without name can't be looked for
 	if (texture->Name[0] != 0)
 	{
-		bucket = MakeKey (texture->Name) % HASH_SIZE;
+		bucket = int(MakeKey (texture->Name) % HASH_SIZE);
 		hash = HashFirst[bucket];
 	}
 	else

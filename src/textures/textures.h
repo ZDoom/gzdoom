@@ -300,7 +300,6 @@ public:
 	void LoadTextureDefs(int wadnum, const char *lumpname);
 	void ParseXTexture(FScanner &sc, int usetype);
 	void SortTexturesByType(int start, int end);
-	void RemoveTexture();
 
 	FTextureID CreateTexture (int lumpnum, int usetype=FTexture::TEX_Any);	// Also calls AddTexture
 	FTextureID AddTexture (FTexture *texture);

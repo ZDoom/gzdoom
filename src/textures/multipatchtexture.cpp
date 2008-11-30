@@ -170,7 +170,6 @@ protected:
 	{
 		SWORD OriginX, OriginY;
 		BYTE Rotate;
-		bool textureOwned;
 		BYTE op;
 		FRemapTable *Translation;
 		PalEntry Blend;
@@ -315,7 +314,6 @@ FMultiPatchTexture::~FMultiPatchTexture ()
 	{
 		for(int i=0; i<NumParts;i++)
 		{
-			if (Parts[i].textureOwned && Parts[i].Texture != NULL) delete Parts[i].Texture;
 			if (Parts[i].Translation != NULL) delete Parts[i].Translation;
 		}
 		delete[] Parts;
@@ -774,7 +772,6 @@ FMultiPatchTexture::TexPart::TexPart()
 {
 	OriginX = OriginY = 0;
 	Rotate = 0;
-	textureOwned = false;
 	Texture = NULL;
 	Translation = NULL;
 	Blend = 0;
@@ -972,8 +969,16 @@ void FMultiPatchTexture::ParsePatch(FScanner &sc, TexPart & part)
 		int lumpnum = Wads.CheckNumForFullName(sc.String);
 		if (lumpnum >= 0)
 		{
-			part.Texture = FTexture::CreateTexture(lumpnum, TEX_WallPatch);
-			part.textureOwned = true;
+			texno = TexMan.FindTextureByLumpNum(lumpnum);
+			if (texno.isValid ())
+			{
+				part.Texture = TexMan[texno];
+			}
+			else
+			{
+				part.Texture = FTexture::CreateTexture("", lumpnum, TEX_WallPatch);
+				TexMan.AddTexture(part.Texture);
+			}
 		}
 		else if (strlen(sc.String) <= 8 && !strpbrk(sc.String, "./"))
 		{

@@ -56,14 +56,11 @@ public:
 	void Unload ();
 	void MakeTexture ();
 
-	int GetSourceLump() { return LumpNum; }
-
 	FAutomapTexture (int lumpnum);
 
 private:
 	BYTE *Pixels;
 	Span DummySpan[2];
-	int LumpNum;
 };
 
 
@@ -89,11 +86,8 @@ FTexture *AutomapTexture_TryCreate(FileReader &data, int lumpnum)
 //==========================================================================
 
 FAutomapTexture::FAutomapTexture (int lumpnum)
-: Pixels(NULL), LumpNum(lumpnum)
+: FTexture(NULL, lumpnum), Pixels(NULL)
 {
-	Wads.GetLumpName (Name, lumpnum);
-	Name[8] = 0;
-
 	Width = 320;
 	Height = WORD(Wads.LumpLength(lumpnum) / 320);
 	CalcBitSize ();
@@ -139,7 +133,7 @@ void FAutomapTexture::Unload ()
 void FAutomapTexture::MakeTexture ()
 {
 	int x, y;
-	FMemLump data = Wads.ReadLump (LumpNum);
+	FMemLump data = Wads.ReadLump (SourceLump);
 	const BYTE *indata = (const BYTE *)data.GetMem();
 
 	Pixels = new BYTE[Width * Height];

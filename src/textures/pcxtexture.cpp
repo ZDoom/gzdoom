@@ -93,10 +93,8 @@ public:
 
 	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf = NULL);
 	bool UseBasePalette();
-	int GetSourceLump() { return SourceLump; }
 
 protected:
-	int SourceLump;
 	BYTE *Pixels;
 	Span DummySpans[2];
 
@@ -157,10 +155,8 @@ FTexture * PCXTexture_TryCreate(FileReader & file, int lumpnum)
 //==========================================================================
 
 FPCXTexture::FPCXTexture(int lumpnum, PCXHeader & hdr)
-: SourceLump(lumpnum), Pixels(0)
+: FTexture(NULL, lumpnum), Pixels(0)
 {
-	Wads.GetLumpName (Name, lumpnum);
-	Name[8] = 0;
 	bMasked = false;
 	Width = LittleShort(hdr.xmax) - LittleShort(hdr.xmin) + 1;
 	Height = LittleShort(hdr.ymax) - LittleShort(hdr.ymin) + 1;

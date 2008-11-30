@@ -168,6 +168,7 @@ extern bool timingdemo;
 
 // Start time for timing demos
 int starttime;
+static level_info_t gamedefaults;
 
 
 // ACS variables with world scope
@@ -233,6 +234,7 @@ static const char *MapInfoTopLevel[] =
 	"skill",
 	"clearskills",
 	"adddefaultmap",
+	"gamedefaults",
 	NULL
 };
 
@@ -246,6 +248,7 @@ enum
 	MITL_SKILL,
 	MITL_CLEARSKILLS,
 	MITL_ADDDEFAULTMAP,
+	MITL_GAMEDEFAULTS,
 };
 
 static const char *MapInfoMapLevel[] =
@@ -263,7 +266,7 @@ static const char *MapInfoMapLevel[] =
 	"sucktime",
 	"music",
 	"nointermission",
-	"intermission",
+ 	"intermission",
 	"doublesky",
 	"nosoundclipping",
 	"allowmonstertelefrags",
@@ -283,7 +286,9 @@ static const char *MapInfoMapLevel[] =
 	"evenlighting",
 	"smoothlighting",
 	"noautosequences",
+	"autosequences",
 	"forcenoskystretch",
+	"skystretch",
 	"allowfreelook",
 	"nofreelook",
 	"allowjump",
@@ -436,7 +441,9 @@ MapHandlers[] =
 	{ MITYPE_CLRBYTES,	lioffset(WallVertLight), lioffset(WallHorizLight) },
 	{ MITYPE_SETFLAG,	LEVEL_SMOOTHLIGHTING, 0 },
 	{ MITYPE_SETFLAG,	LEVEL_SNDSEQTOTALCTRL, 0 },
+	{ MITYPE_CLRFLAG,	LEVEL_SNDSEQTOTALCTRL, 0 },
 	{ MITYPE_SETFLAG,	LEVEL_FORCENOSKYSTRETCH, 0 },
+	{ MITYPE_CLRFLAG,	LEVEL_FORCENOSKYSTRETCH, 0 },
 	{ MITYPE_SCFLAGS,	LEVEL_FREELOOK_YES, ~LEVEL_FREELOOK_NO },
 	{ MITYPE_SCFLAGS,	LEVEL_FREELOOK_NO, ~LEVEL_FREELOOK_YES },
 	{ MITYPE_CLRFLAG,	LEVEL_JUMP_NO, 0 },
@@ -609,6 +616,8 @@ void G_ParseMapInfo ()
 
 	atterm (G_UnloadMapInfo);
 
+	SetLevelDefaults (&gamedefaults);
+
 	// Parse the default MAPINFO for the current game.
 	for(int i=0; i<2; i++)
 	{
@@ -633,6 +642,7 @@ void G_ParseMapInfo ()
 	{
 		I_FatalError ("You cannot use clearskills in a MAPINFO if you do not define any new skills after it.");
 	}
+	ClearLevelInfoStrings (&gamedefaults);
 }
 
 static FSpecialAction *CopySpecialActions(FSpecialAction *spec)
@@ -709,6 +719,20 @@ static void ClearClusterInfoStrings(cluster_info_t *cinfo)
 	SafeDelete(cinfo->clustername);
 }
 
+static void CopyLevelInfo(level_info_t *levelinfo, level_info_t *from)
+{
+	memcpy (levelinfo, from, sizeof(*levelinfo));
+	CopyString(levelinfo->music);
+	CopyString(levelinfo->intermusic);
+	CopyString(levelinfo->translator);
+	CopyString(levelinfo->enterpic);
+	CopyString(levelinfo->exitpic);
+	CopyString(levelinfo->soundinfo);
+	CopyString(levelinfo->sndseq);
+	levelinfo->specialactions = CopySpecialActions(levelinfo->specialactions);
+	levelinfo->opdata = CopyOptData(levelinfo->opdata);
+}
+
 
 static void G_DoParseMapInfo (int lump)
 {
@@ -721,13 +745,21 @@ static void G_DoParseMapInfo (int lump)
 
 	FScanner sc(lump);
 
-	SetLevelDefaults (&defaultinfo);
+	CopyLevelInfo(&defaultinfo, &gamedefaults);
 	HexenHack = false;
 
 	while (sc.GetString ())
 	{
 		switch (sc.MustMatchString (MapInfoTopLevel))
 		{
+		case MITL_GAMEDEFAULTS:
+			ClearLevelInfoStrings(&gamedefaults);
+			SetLevelDefaults (&gamedefaults);
+			ParseMapInfoLower (sc, MapHandlers, MapInfoMapLevel, &gamedefaults, NULL, defaultinfo.flags);
+			ClearLevelInfoStrings(&defaultinfo);
+			CopyLevelInfo(&defaultinfo, &gamedefaults);
+			break;
+
 		case MITL_DEFAULTMAP:
 			ClearLevelInfoStrings(&defaultinfo);
 			SetLevelDefaults (&defaultinfo);
@@ -776,16 +808,7 @@ static void G_DoParseMapInfo (int lump)
 				ClearLevelInfoStrings (&wadlevelinfos[levelindex]);
 			}
 			levelinfo = &wadlevelinfos[levelindex];
-			memcpy (levelinfo, &defaultinfo, sizeof(*levelinfo));
-			CopyString(levelinfo->music);
-			CopyString(levelinfo->intermusic);
-			CopyString(levelinfo->translator);
-			CopyString(levelinfo->enterpic);
-			CopyString(levelinfo->exitpic);
-			CopyString(levelinfo->soundinfo);
-			CopyString(levelinfo->sndseq);
-			levelinfo->specialactions = CopySpecialActions(levelinfo->specialactions);
-			levelinfo->opdata = CopyOptData(levelinfo->opdata);
+			CopyLevelInfo(levelinfo, &defaultinfo);
 			if (HexenHack)
 			{
 				levelinfo->WallHorizLight = levelinfo->WallVertLight = 0;

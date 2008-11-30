@@ -60,11 +60,9 @@ public:
 	FTextureFormat GetFormat ();
 	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf = NULL);
 	bool UseBasePalette();
-	int GetSourceLump() { return SourceLump; }
 
 protected:
 
-	int SourceLump;
 	FString SourceFile;
 	BYTE *Pixels;
 	Span **Spans;
@@ -194,7 +192,7 @@ FTexture *PNGTexture_CreateFromFile(PNGHandle *png, const FString &filename)
 
 FPNGTexture::FPNGTexture (FileReader &lump, int lumpnum, const FString &filename, int width, int height,
 						  BYTE depth, BYTE colortype, BYTE interlace)
-: SourceLump(lumpnum), SourceFile(filename), Pixels(0), Spans(0),
+: FTexture(NULL, lumpnum), SourceFile(filename), Pixels(0), Spans(0),
   BitDepth(depth), ColorType(colortype), Interlace(interlace),
   PaletteMap(0), PaletteSize(0), StartOfIDAT(0)
 {
@@ -207,9 +205,6 @@ FPNGTexture::FPNGTexture (FileReader &lump, int lumpnum, const FString &filename
 	bool havetRNS = false;
 	DWORD len, id;
 	int i;
-
-	Wads.GetLumpName (Name, lumpnum);
-	Name[8] = 0;
 
 	UseType = TEX_MiscPatch;
 	LeftOffset = 0;

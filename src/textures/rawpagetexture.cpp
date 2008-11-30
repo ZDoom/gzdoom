@@ -56,10 +56,7 @@ public:
 	const BYTE *GetPixels ();
 	void Unload ();
 
-	int GetSourceLump() { return SourceLump; }
-
 protected:
-	int SourceLump;
 	BYTE *Pixels;
 	static const Span DummySpans[2];
 
@@ -176,11 +173,8 @@ const FTexture::Span FRawPageTexture::DummySpans[2] =
 //==========================================================================
 
 FRawPageTexture::FRawPageTexture (int lumpnum)
-: SourceLump(lumpnum), Pixels(0)
+: FTexture(NULL, lumpnum), Pixels(0)
 {
-	Wads.GetLumpName (Name, lumpnum);
-	Name[8] = 0;
-
 	Width = 320;
 	Height = 200;
 	WidthBits = 8;

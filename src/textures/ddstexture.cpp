@@ -159,11 +159,9 @@ public:
 	const BYTE *GetPixels ();
 	void Unload ();
 	FTextureFormat GetFormat ();
-	int GetSourceLump() { return SourceLump; }
 
 protected:
 
-	int SourceLump;
 	BYTE *Pixels;
 	Span **Spans;
 
@@ -285,12 +283,9 @@ FTexture *DDSTexture_TryCreate (FileReader &data, int lumpnum)
 //==========================================================================
 
 FDDSTexture::FDDSTexture (FileReader &lump, int lumpnum, void *vsurfdesc)
-: SourceLump(lumpnum), Pixels(0), Spans(0)
+: FTexture(NULL, lumpnum), Pixels(0), Spans(0)
 {
 	DDSURFACEDESC2 *surf = (DDSURFACEDESC2 *)vsurfdesc;
-
-	Wads.GetLumpName (Name, lumpnum);
-	Name[8] = 0;
 
 	UseType = TEX_MiscPatch;
 	LeftOffset = 0;

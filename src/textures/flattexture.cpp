@@ -55,10 +55,7 @@ public:
 	const BYTE *GetPixels ();
 	void Unload ();
 
-	int GetSourceLump() { return SourceLump; }
-
 protected:
-	int SourceLump;
 	BYTE *Pixels;
 	Span DummySpans[2];
 
@@ -89,13 +86,11 @@ FTexture *FlatTexture_TryCreate(FileReader & file, int lumpnum)
 //==========================================================================
 
 FFlatTexture::FFlatTexture (int lumpnum)
-: SourceLump(lumpnum), Pixels(0)
+: FTexture(NULL, lumpnum), Pixels(0)
 {
 	int area;
 	int bits;
 
-	Wads.GetLumpName (Name, lumpnum);
-	Name[8] = 0;
 	area = Wads.LumpLength (lumpnum);
 
 	switch (area)

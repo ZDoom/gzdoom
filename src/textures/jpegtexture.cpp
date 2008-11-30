@@ -170,11 +170,9 @@ public:
 	FTextureFormat GetFormat ();
 	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf = NULL);
 	bool UseBasePalette();
-	int GetSourceLump() { return SourceLump; }
 
 protected:
 
-	int SourceLump;
 	BYTE *Pixels;
 	Span DummySpans[2];
 
@@ -240,11 +238,8 @@ FTexture *JPEGTexture_TryCreate(FileReader & data, int lumpnum)
 //==========================================================================
 
 FJPEGTexture::FJPEGTexture (int lumpnum, int width, int height)
-: SourceLump(lumpnum), Pixels(0)
+: FTexture(NULL, lumpnum), Pixels(0)
 {
-	Wads.GetLumpName (Name, lumpnum);
-	Name[8] = 0;
-
 	UseType = TEX_MiscPatch;
 	LeftOffset = 0;
 	TopOffset = 0;

@@ -127,14 +127,34 @@ FTexture * FTexture::CreateTexture (int lumpnum, int usetype)
 	return NULL;
 }
 
-FTexture::FTexture ()
+FTexture * FTexture::CreateTexture (const char *name, int lumpnum, int usetype)
+{
+	FTexture *tex = CreateTexture(lumpnum, usetype);
+	if (tex != NULL && name != NULL) uppercopy(tex->Name, name);
+	return tex;
+}
+
+
+FTexture::FTexture (const char *name, int lumpnum)
 : LeftOffset(0), TopOffset(0),
-  WidthBits(0), HeightBits(0), xScale(FRACUNIT), yScale(FRACUNIT),
+  WidthBits(0), HeightBits(0), xScale(FRACUNIT), yScale(FRACUNIT), SourceLump(lumpnum),
   UseType(TEX_Any), bNoDecals(false), bNoRemap0(false), bWorldPanning(false),
   bMasked(true), bAlphaTexture(false), bHasCanvas(false), bWarped(0), bComplex(false),
   Rotations(0xFFFF), Width(0), Height(0), WidthMask(0), Native(NULL)
 {
-	*Name = 0;
+	if (name != NULL)
+	{
+		uppercopy(Name, name);
+	}
+	else if (lumpnum < 0)
+	{
+		*Name = 0;
+	}
+	else
+	{
+		Wads.GetLumpName (Name, lumpnum);
+		Name[8] = 0;
+	}
 }
 
 FTexture::~FTexture ()

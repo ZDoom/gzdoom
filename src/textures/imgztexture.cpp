@@ -68,12 +68,8 @@ public:
 	const BYTE *GetPixels ();
 	void Unload ();
 
-	int GetSourceLump() { return SourceLump; }
-
 protected:
 
-
-	int SourceLump;
 	BYTE *Pixels;
 	Span **Spans;
 
@@ -107,7 +103,7 @@ FTexture *IMGZTexture_TryCreate(FileReader & file, int lumpnum)
 //==========================================================================
 
 FIMGZTexture::FIMGZTexture (int lumpnum, WORD w, WORD h, SWORD l, SWORD t)
-	: SourceLump(lumpnum), Pixels(0), Spans(0)
+	: FTexture(NULL, lumpnum), Pixels(0), Spans(0)
 {
 	Wads.GetLumpName (Name, lumpnum);
 	Name[8] = 0;

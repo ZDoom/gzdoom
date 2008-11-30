@@ -32,7 +32,7 @@ skill nightmare
 	PicName "M_NMARE"
 	Key b
 
-defaultmap
+gamedefaults
 forcenoskystretch
 strifefallingdamage
 nointermission

@@ -57,10 +57,7 @@ public:
 	const BYTE *GetPixels ();
 	void Unload ();
 
-	int GetSourceLump() { return SourceLump; }
-
 protected:
-	int SourceLump;
 	BYTE *Pixels;
 	Span **Spans;
 	bool hackflag;
@@ -141,10 +138,8 @@ FTexture *PatchTexture_TryCreate(FileReader & file, int lumpnum)
 //==========================================================================
 
 FPatchTexture::FPatchTexture (int lumpnum, patch_t * header)
-: SourceLump(lumpnum), Pixels(0), Spans(0), hackflag(false)
+: FTexture(NULL, lumpnum), Pixels(0), Spans(0), hackflag(false)
 {
-	Wads.GetLumpName (Name, lumpnum);
-	Name[8] = 0;
 	Width = header->width;
 	Height = header->height;
 	LeftOffset = header->leftoffset;

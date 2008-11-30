@@ -213,6 +213,30 @@ int FTextureManager::ListTextures (const char *name, TArray<FTextureID> &list)
 
 //==========================================================================
 //
+// FTextureManager :: FindTextureByLumpNum
+//
+//==========================================================================
+
+FTextureID FTextureManager::FindTextureByLumpNum (int lumpnum)
+{
+	if (lumpnum < 0)
+	{
+		return FTextureID(-1);
+	}
+	// This can't use hashing because using ReplaceTexture would break the hash chains. :(
+	for(unsigned i = 0; i <Textures.Size(); i++)
+	{
+		if (Textures[i].Texture->SourceLump == lumpnum)
+		{
+			return FTextureID(i);
+		}
+	}
+	return FTextureID(-1);
+}
+
+
+//==========================================================================
+//
 // FTextureManager :: GetTextures
 //
 //==========================================================================
@@ -273,12 +297,29 @@ void FTextureManager::UnloadAll ()
 
 FTextureID FTextureManager::AddTexture (FTexture *texture)
 {
+	size_t bucket;
+	int hash;
+
+	if (texture == NULL) return FTextureID(-1);
+
 	// Later textures take precedence over earlier ones
-	size_t bucket = MakeKey (texture->Name) % HASH_SIZE;
-	TextureHash hasher = { texture, HashFirst[bucket] };
+
+	// Textures without name can't be looked for
+	if (texture->Name[0] != 0)
+	{
+		bucket = MakeKey (texture->Name) % HASH_SIZE;
+		hash = HashFirst[bucket];
+	}
+	else
+	{
+		bucket = -1;
+		hash = -1;
+	}
+
+	TextureHash hasher = { texture, hash };
 	int trans = Textures.Push (hasher);
 	Translation.Push (trans);
-	HashFirst[bucket] = trans;
+	if (bucket >= 0) HashFirst[bucket] = trans;
 	return FTextureID(trans);
 }
 

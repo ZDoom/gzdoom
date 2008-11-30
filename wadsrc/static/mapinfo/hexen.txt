@@ -81,7 +81,7 @@ exittextislump
 music hub
 pic interpic
 
-defaultmap
+gamedefaults
 	activateowndeathspecials
 	infiniteflightpowerup
 	fallingdamage

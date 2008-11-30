@@ -1,4 +1,6 @@
 November 29, 2008
+- Fixed alignment of "finished" line in WI_drawLF() when the level name is a
+  graphic and scaled.
 - It is now possible to replace the game's SmallFont with a single lump font
   called SMALLFNT.
 - Reduced the width of the second column in wi_percents false mode from 3 to

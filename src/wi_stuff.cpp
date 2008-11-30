@@ -750,7 +750,7 @@ void WI_drawLF ()
 	if (tex)
 	{
 		screen->DrawTexture(tex, midx - tex->GetWidth()*CleanXfac/2, y, DTA_CleanNoMove, true, TAG_DONE);
-		y += tex->GetHeight() + BigFont->GetHeight()*CleanYfac/4;
+		y += (tex->GetHeight() + BigFont->GetHeight()/4) * CleanYfac;
 	}
 	else 
 	{

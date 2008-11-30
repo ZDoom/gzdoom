@@ -937,10 +937,9 @@ void WI_drawPercent (int x, int y, int p, int b, bool show_total=true)
 		x += IntermissionFont->GetCharWidth('%');
 		if (show_total)
 		{
-			int y2 = y + IntermissionFont->GetHeight() - BigFont->GetHeight();
-			x = WI_drawNum(x, y, b, 3, false);
-			x -= BigFont->GetCharWidth('/');
-			screen->DrawText (BigFont, gameinfo.gametype & GAME_Doom ? CR_RED : CR_UNTRANSLATED, x, y2, "/",
+			x = WI_drawNum(x, y, b, 2, false);
+			x -= IntermissionFont->GetCharWidth('/');
+			screen->DrawText (IntermissionFont, CR_UNTRANSLATED, x, y, "/",
 				DTA_Clean, true, TAG_DONE);
 		}
 		WI_drawNum (x, y, p, -1, false);

@@ -1527,7 +1527,7 @@ FSpecialFont::FSpecialFont (const char *name, int first, int count, int *lumplis
 	int TotalColors;
 	FTexture *pic;
 	
-	Name=copystring(name);
+	Name = copystring(name);
 	Chars = new CharData[count];
 	charlumps = new int[count];
 	PatchRemap = new BYTE[256];
@@ -1549,7 +1549,7 @@ FSpecialFont::FSpecialFont (const char *name, int first, int count, int *lumplis
 			Wads.GetLumpName(buffer, lump);
 			if (buffer[0] != 0)
 			{
-				buffer[8]=0;
+				buffer[8] = 0;
 				pic = TexMan[buffer];
 			}
 			else
@@ -1725,8 +1725,11 @@ void V_InitCustomFonts()
 					if (format == 1) goto wrong;
 					int *p = &lumplist[*(unsigned char*)sc.String];
 					sc.MustGetString();
-					*p = Wads.CheckNumForFullName (sc.String, true);
-					format=2;
+					if (-1 == (*p = Wads.CheckNumForFullName (sc.String, true)))
+					{
+						*p = Wads.CheckNumForFullName (sc.String, true, ns_graphics);
+					}
+					format = 2;
 				}
 			}
 			if (format == 1)
@@ -2102,7 +2105,13 @@ void V_InitFonts()
 	// load the heads-up font
 	if (!(SmallFont = FFont::FindFont("SmallFont")))
 	{
-		if (Wads.CheckNumForName ("FONTA_S") >= 0)
+		int i;
+
+		if ((i = Wads.CheckNumForName("SMALLFNT")) >= 0)
+		{
+			SmallFont = new FSingleLumpFont("SmallFont", i);
+		}
+		else if (Wads.CheckNumForName ("FONTA_S") >= 0)
 		{
 			SmallFont = new FFont ("SmallFont", "FONTA%02u", HU_FONTSTART, HU_FONTSIZE, 1);
 		}
@@ -2111,7 +2120,7 @@ void V_InitFonts()
 			SmallFont = new FFont ("SmallFont", "STCFN%.3d", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART);
 		}
 	}
-	if (!(SmallFont2 = FFont::FindFont("SmallFont2")))
+	if (!(SmallFont2 = FFont::FindFont("SmallFont2")))	// Only used by Strife
 	{
 		if (Wads.CheckNumForName ("STBFN033", ns_graphics) >= 0)
 		{

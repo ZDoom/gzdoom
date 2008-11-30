@@ -1,10 +1,18 @@
+November 29, 2008
+- It is now possible to replace the game's SmallFont with a single lump font
+  called SMALLFNT.
+- Reduced the width of the second column in wi_percents false mode from 3 to
+  2 characters.
+- Added a WISLASH graphic for Doom's intermission screen when wi_percents is
+  false.
+
 November 29, 2008 (sbarinfo update)
 - Added: inventorybarnotvisible to check to see if the inventory bar is up.
 - Added the following flags to drawselectedinventory center, centerbottom, and
   drawshadow.
 - Fixed: The translucent flag for drawinventorybar should only have affected
   the artibox image.
-  
+
 November 27, 2008
 - Removed S_MarkSoundChannels(), as it caused all non-actor sounds to
   have their origins zeroed during collections.

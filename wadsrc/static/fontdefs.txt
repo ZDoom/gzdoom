@@ -64,4 +64,5 @@ IntermissionFont_Doom
 	8 WINUM8
 	9 WINUM9
 	- WIMINUS
+	/ WISLASH
 }

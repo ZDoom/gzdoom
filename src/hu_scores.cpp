@@ -280,9 +280,9 @@ static void HU_DrawTimeRemaining (int y)
 		seconds = timeleft / TICRATE;
 
 		if (hours)
-			mysnprintf (str, countof(str), "Level ends in %02d:%02d:%02d", hours, minutes, seconds);
+			mysnprintf (str, countof(str), "Level ends in %d:%02d:%02d", hours, minutes, seconds);
 		else
-			mysnprintf (str, countof(str), "Level ends in %02d:%02d", minutes, seconds);
+			mysnprintf (str, countof(str), "Level ends in %d:%02d", minutes, seconds);
 		
 		screen->DrawText (SmallFont, CR_GREY, SCREENWIDTH/2 - SmallFont->StringWidth (str)/2*CleanXfac,
 			y, str, DTA_CleanNoMove, true, TAG_DONE);

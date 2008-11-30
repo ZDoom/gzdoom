@@ -1,4 +1,6 @@
 November 30, 2008  (Changes by Graf Zahl)
+- Fixed: 'finished' wasn't drawn on the intermission because the space 
+  check compared scaled with unscaled coordinates.
 - Changed: Textures without a name no longer get added to the texture manager's 
   hash chains.
 - Fixed: specifying texture patches or font characters by full lump name instead

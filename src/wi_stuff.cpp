@@ -759,7 +759,7 @@ void WI_drawLF ()
 	
 	// draw "Finished!"
 	FFont *font = gameinfo.gametype & GAME_Raven ? SmallFont : BigFont;
-	if (y < NG_STATSY - font->GetHeight()*3/4)
+	if (y < (NG_STATSY - font->GetHeight()*3/4) * CleanYfac)
 	{
 		// don't draw 'finished' if the level name is too high!
 		if (gameinfo.gametype & GAME_DoomChex) 

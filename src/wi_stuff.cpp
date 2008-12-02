@@ -769,7 +769,7 @@ void WI_drawLF ()
 		else 
 		{
 			screen->DrawText(font, CR_WHITE,
-				midx - font->StringWidth("finished")/2, y - 4*CleanYfac, "finished", 
+				midx - font->StringWidth("finished")*CleanXfac/2, y - 4*CleanYfac, "finished", 
 				DTA_CleanNoMove, true, TAG_DONE);
 		}
 	}

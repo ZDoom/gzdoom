@@ -1,3 +1,8 @@
+December 1, 2008
+- Restored the multiplayer scoreboard's former centering so that it doesn't
+  look awful on widescreen intermissions.
+- Fixed horizontal positioning of 'finished' on the Raven games when scaled.
+
 November 30, 2008  (Changes by Graf Zahl)
 - Fixed: 'finished' wasn't drawn on the intermission because the space 
   check compared scaled with unscaled coordinates.

@@ -1039,19 +1039,62 @@ DEFINE_CLASS_PROPERTY(savepercent, F, Armor)
 {
 	PROP_FIXED_PARM(i, 0);
 
-	i = clamp(i, 0, 100*FRACUNIT)/100;
 	// Special case here because this property has to work for 2 unrelated classes
 	if (bag.Info->Class->IsDescendantOf(RUNTIME_CLASS(ABasicArmorPickup)))
 	{
-		((ABasicArmorPickup*)defaults)->SavePercent = i;
+		((ABasicArmorPickup*)defaults)->SavePercent=i;
 	}
 	else if (bag.Info->Class->IsDescendantOf(RUNTIME_CLASS(ABasicArmorBonus)))
 	{
-		((ABasicArmorBonus*)defaults)->SavePercent = i;
+		((ABasicArmorBonus*)defaults)->SavePercent=i;
 	}
 	else
 	{
-		I_Error("\"Armor.SavePercent\" requires an actor of type \"Armor\"\n");
+		I_Error("\"Armor.SavePercent\" requires an actor of type \"Armor\"");
+	}
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_CLASS_PROPERTY(maxabsorb, I, Armor)
+{
+	PROP_INT_PARM(i, 0);
+
+	// Special case here because this property has to work for 2 unrelated classes
+	if (bag.Info->Class->IsDescendantOf(RUNTIME_CLASS(ABasicArmorPickup)))
+	{
+		((ABasicArmorPickup*)defaults)->MaxAbsorb = i;
+	}
+	else if (bag.Info->Class->IsDescendantOf(RUNTIME_CLASS(ABasicArmorBonus)))
+	{
+		((ABasicArmorBonus*)defaults)->MaxAbsorb = i;
+	}
+	else
+	{
+		I_Error("\"Armor.MaxAbsorb\" requires an actor of type \"Armor\"\n");
+	}
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_CLASS_PROPERTY(maxfullabsorb, I, Armor)
+{
+	PROP_INT_PARM(i, 0);
+
+	// Special case here because this property has to work for 2 unrelated classes
+	if (bag.Info->Class->IsDescendantOf(RUNTIME_CLASS(ABasicArmorPickup)))
+	{
+		((ABasicArmorPickup*)defaults)->MaxFullAbsorb = i;
+	}
+	else if (bag.Info->Class->IsDescendantOf(RUNTIME_CLASS(ABasicArmorBonus)))
+	{
+		((ABasicArmorBonus*)defaults)->MaxFullAbsorb = i;
+	}
+	else
+	{
+		I_Error("\"Armor.MaxFullAbsorb\" requires an actor of type \"Armor\"\n");
 	}
 }
 

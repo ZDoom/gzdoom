@@ -538,7 +538,6 @@ add_executable( zdoom WIN32
 	zstrformat.cpp
 	zstring.cpp
 	g_doom/a_doommisc.cpp
-	g_doom/doom_sbar.cpp
 	g_heretic/a_hereticmisc.cpp
 	g_heretic/heretic_sbar.cpp
 	g_hexen/a_hexenmisc.cpp

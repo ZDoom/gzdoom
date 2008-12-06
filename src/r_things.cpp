@@ -1474,7 +1474,7 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 		// fixed map
 		vis->colormap = fixedcolormap;
 	}
-	else if (!foggy && (thing->renderflags & RF_FULLBRIGHT))
+	else if (!foggy && ((thing->renderflags & RF_FULLBRIGHT) || (thing->flags5 & MF5_BRIGHT)))
 	{
 		// full bright
 		if (invertcolormap)

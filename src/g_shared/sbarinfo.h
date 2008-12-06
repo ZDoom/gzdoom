@@ -147,7 +147,17 @@ struct SBarInfo
 	static void Load();
 };
 
-extern SBarInfo *SBarInfoScript;
+#define NUM_SCRIPTS 5
+#define SCRIPT_CUSTOM	0
+#define SCRIPT_DOOM		1
+// The next ones shouldn't be used... yet
+#define SCRIPT_HERETIC	2
+#define SCRIPT_HEXEN	3
+#define SCRIPT_STRIFE	4
+// Converts GAME_x to it's script number
+#define GETSBARINFOSCRIPT(game) \
+	(game & GAME_DoomChex) ? SCRIPT_DOOM : (game == GAME_Heretic ? SCRIPT_HERETIC : (game == GAME_Hexen ? SCRIPT_HEXEN : (game == GAME_Strife ? SCRIPT_STRIFE : SCRIPT_CUSTOM)))
+extern SBarInfo *SBarInfoScript[5];
 
 
 // Enums used between the parser and the display
@@ -344,7 +354,7 @@ class DSBarInfo : public DBaseStatusBar
 {
 	DECLARE_CLASS(DSBarInfo, DBaseStatusBar)
 public:
-	DSBarInfo();
+	DSBarInfo(SBarInfo *script=NULL);
 	~DSBarInfo();
 	void Draw(EHudState state);
 	void NewGame();
@@ -367,6 +377,7 @@ private:
 		bool wiggle, bool translate);
 	FRemapTable* getTranslation();
 
+	SBarInfo *script;
 	FImageCollection Images;
 	FPlayerSkin *oldSkin;
 	FFont *drawingFont;

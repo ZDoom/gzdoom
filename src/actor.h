@@ -302,6 +302,7 @@ enum
 										// dependence of main engine code of specific actor types.
 	MF5_SUMMONEDMONSTER	= 0x02000000,	// To mark the friendly Minotaur. Hopefully to be generalized later.
 	MF5_NOVERTICALMELEERANGE=0x04000000,// Does not check vertical distance for melee range
+	MF5_BRIGHT			= 0x08000000,	// Actor is always rendered fullbright
 
 
 // --- mobj.renderflags ---

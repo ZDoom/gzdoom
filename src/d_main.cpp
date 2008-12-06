@@ -138,6 +138,7 @@ EXTERN_CVAR (Float, m_pitch)
 EXTERN_CVAR (Float, m_yaw)
 EXTERN_CVAR (Bool, invertmouse)
 EXTERN_CVAR (Bool, lookstrafe)
+EXTERN_CVAR (Int, screenblocks)
 
 extern gameinfo_t SharewareGameInfo;
 extern gameinfo_t RegisteredGameInfo;
@@ -636,13 +637,13 @@ void D_Display ()
 				R_RefreshViewBorder ();
 			}
 
-			if (hud_althud && viewheight == SCREENHEIGHT)
+			if (hud_althud && viewheight == SCREENHEIGHT && screenblocks > 10)
 			{
 				if (DrawFSHUD || automapactive) DrawHUD();
 				StatusBar->DrawTopStuff (HUD_None);
 			}
 			else 
-			if (viewheight == SCREENHEIGHT && viewactive)
+			if (viewheight == SCREENHEIGHT && viewactive && screenblocks > 10)
 			{
 				StatusBar->Draw (DrawFSHUD ? HUD_Fullscreen : HUD_None);
 				StatusBar->DrawTopStuff (DrawFSHUD ? HUD_Fullscreen : HUD_None);

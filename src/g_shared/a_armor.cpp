@@ -22,7 +22,7 @@ IMPLEMENT_CLASS (AHexenArmor)
 void ABasicArmor::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
-	arc << SavePercent << BonusCount;
+	arc << SavePercent << BonusCount << MaxAbsorb << MaxFullAbsorb << AbsorbCount;
 }
 
 //===========================================================================
@@ -37,6 +37,7 @@ void ABasicArmor::Serialize (FArchive &arc)
 void ABasicArmor::Tick ()
 {
 	Super::Tick ();
+	AbsorbCount = 0;
 	if (!Icon.isValid())
 	{
 		switch (gameinfo.gametype)
@@ -108,15 +109,31 @@ bool ABasicArmor::HandlePickup (AInventory *item)
 
 void ABasicArmor::AbsorbDamage (int damage, FName damageType, int &newdamage)
 {
+	int saved;
+
 	if (damageType != NAME_Drowning)
 	{
-		int saved = FixedMul (damage, SavePercent);
+		int full = MAX(0, MaxFullAbsorb - AbsorbCount);
+		if (damage < full)
+		{
+			saved = damage;
+		}
+		else
+		{
+			saved += full + FixedMul (damage - full, SavePercent);
+			if (MaxAbsorb > 0 && saved + AbsorbCount > MaxAbsorb) 
+			{
+				saved = MAX(0,  MaxAbsorb - AbsorbCount);
+			}
+		}
+
 		if (Amount < saved)
 		{
 			saved = Amount;
 		}
 		newdamage -= saved;
 		Amount -= saved;
+		AbsorbCount += saved;
 		if (Amount == 0)
 		{
 			// The armor has become useless
@@ -159,7 +176,7 @@ void ABasicArmor::AbsorbDamage (int damage, FName damageType, int &newdamage)
 void ABasicArmorPickup::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
-	arc << SavePercent << SaveAmount;
+	arc << SavePercent << SaveAmount << MaxAbsorb << MaxFullAbsorb;
 	arc << DropTime;
 }
 
@@ -174,6 +191,8 @@ AInventory *ABasicArmorPickup::CreateCopy (AActor *other)
 	ABasicArmorPickup *copy = static_cast<ABasicArmorPickup *> (Super::CreateCopy (other));
 	copy->SavePercent = SavePercent;
 	copy->SaveAmount = SaveAmount;
+	copy->MaxAbsorb = MaxAbsorb;
+	copy->MaxFullAbsorb = MaxFullAbsorb;
 	return copy;
 }
 
@@ -216,6 +235,8 @@ bool ABasicArmorPickup::Use (bool pickup)
 	armor->Amount = SaveAmount + armor->BonusCount;
 	armor->MaxAmount = SaveAmount;
 	armor->Icon = Icon;
+	armor->MaxAbsorb = MaxAbsorb;
+	armor->MaxFullAbsorb = MaxFullAbsorb;
 	return true;
 }
 
@@ -228,7 +249,8 @@ bool ABasicArmorPickup::Use (bool pickup)
 void ABasicArmorBonus::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
-	arc << SavePercent << SaveAmount << MaxSaveAmount << BonusCount << BonusMax;
+	arc << SavePercent << SaveAmount << MaxSaveAmount << BonusCount << BonusMax
+		 << MaxAbsorb << MaxFullAbsorb;
 }
 
 //===========================================================================
@@ -245,6 +267,8 @@ AInventory *ABasicArmorBonus::CreateCopy (AActor *other)
 	copy->MaxSaveAmount = MaxSaveAmount;
 	copy->BonusCount = BonusCount;
 	copy->BonusMax = BonusMax;
+	copy->MaxAbsorb = MaxAbsorb;
+	copy->MaxFullAbsorb = MaxFullAbsorb;
 	return copy;
 }
 
@@ -295,6 +319,8 @@ bool ABasicArmorBonus::Use (bool pickup)
 		armor->Amount = 0;
 		armor->Icon = Icon;
 		armor->SavePercent = SavePercent;
+		armor->MaxAbsorb = MaxAbsorb;
+		armor->MaxFullAbsorb = MaxFullAbsorb;
 	}
 
 	armor->Amount = MIN(armor->Amount + saveAmount, MaxSaveAmount + armor->BonusCount);

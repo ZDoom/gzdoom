@@ -1105,18 +1105,6 @@ FUNC(LS_Thing_Deactivate)
 	return false;
 }
 
-static void RemoveThing(AActor * actor)
-{
-	// Don't remove live players.
-	if (actor->player == NULL || actor != actor->player->mo)
-	{
-		// be friendly to the level statistics. ;)
-		if (actor->CountsAsKill() && actor->health > 0) level.total_monsters--;
-		if (actor->flags&MF_COUNTITEM) level.total_items--;
-		actor->Destroy ();
-	}
-}
-
 FUNC(LS_Thing_Remove)
 // Thing_Remove (tid)
 {
@@ -1130,13 +1118,13 @@ FUNC(LS_Thing_Remove)
 		{
 			AActor *temp = iterator.Next ();
 
-			RemoveThing(actor);
+			P_RemoveThing(actor);
 			actor = temp;
 		}
 	}
 	else if (it != NULL)
 	{
-		RemoveThing(it);
+		P_RemoveThing(it);
 	}
 
 	return true;

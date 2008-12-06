@@ -2493,6 +2493,9 @@ void G_DoPlayDemo (void)
 	{
 		const char *eek = "Cannot play non-ZDoom demos.\n(They would go out of sync badly.)\n";
 
+		C_RestoreCVars();
+		M_Free(demobuffer);
+		demo_p = demobuffer = NULL;
 		if (singledemo)
 		{
 			I_Error (eek);
@@ -2505,11 +2508,13 @@ void G_DoPlayDemo (void)
 	}
 	else if (G_ProcessIFFDemo (mapname))
 	{
+		C_RestoreCVars();
 		gameaction = ga_nothing;
 		demoplayback = false;
 	}
 	else
 	{
+	
 		// don't spend a lot of time in loadlevel 
 		precache = false;
 		demonew = true;

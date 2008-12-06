@@ -1,3 +1,22 @@
+December 6, 2008  (Changes by Graf Zahl)
+- Fixed: G_DoPlayDemo did not free the demobuffer or the CVAR backups when it
+  failed to start the demo.
+
+December 2, 2008  (Changes by Graf Zahl)
+- Added a MF5_BRIGHT flag to always render an actor fullbright.
+- Fixed: Calling Door_Animated with a non-zero tag created a new thinker
+  for each two-sided line of the sector.
+
+December 1, 2008  (Changes by Graf Zahl)
+- Added Karate Chris's submission for making 'spray' a cheat.
+- Added CO2's default parameter additions for several Doom code pointers
+  submission.
+- Added CO2's A_RemoveMaster/A_RemoveChildren submission.
+- Added Blzut3's SBARINFO replacement for the Doom statusbar.
+- Fixed: SBarInfo still displayed the wrong bar for height 0
+- Added A_KillSiblings and A_DamageSiblings code pointers.
+- added MaxAbsorb and MaxFullAbsorb properties for Armor.
+
 December 1, 2008
 - Restored the multiplayer scoreboard's former centering so that it doesn't
   look awful on widescreen intermissions.

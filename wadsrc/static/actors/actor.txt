@@ -54,10 +54,10 @@ ACTOR Actor native //: Thinker
 	action native A_SPosAttackUseAtkSound();
 	action native A_VileChase();
 	action native A_VileStart();
-	action native A_VileTarget();
+	action native A_VileTarget(class<Actor> fire = "ArchvileFire");
 	action native A_VileAttack();	
 	action native A_StartFire();
-	action native A_Fire();
+	action native A_Fire(float spawnheight = 0);
 	action native A_FireCrackle();
 	action native A_Tracer();
 	action native A_SkelWhoosh();
@@ -84,7 +84,7 @@ ACTOR Actor native //: Thinker
 	action native A_PainAttack(class<Actor> spawntype = "LostSoul");
 	action native A_DualPainAttack(class<Actor> spawntype = "LostSoul");
 	action native A_PainDie(class<Actor> spawntype = "LostSoul");
-	action native A_KeenDie();
+	action native A_KeenDie(int doortag = 666);
 	action native A_BrainPain();
 	action native A_BrainScream();
 	action native A_BrainDie();
@@ -189,8 +189,11 @@ ACTOR Actor native //: Thinker
 	action native A_SetBlend(color color1, float alpha, int tics, color color2 = "");
 	action native A_ChangeFlag(string flagname, bool value);
 	action native A_JumpIf(bool expression, state label);
+	action native A_RemoveMaster();
+	action native A_RemoveChildren(bool removeall = false);
 	action native A_KillMaster();
 	action native A_KillChildren();
+	action native A_KillSiblings();
 	action native A_CheckFloor(state label);
 	action native A_PlayerSkinCheck(state label);
 	action native A_BasicAttack(int meleedamage, sound meleesound, class<actor> missiletype, float missileheight);
@@ -216,6 +219,7 @@ ACTOR Actor native //: Thinker
 	action native A_JumpIfTargetInLOS (state label, float fov = 0, bool projectiletarget = false);
 	action native A_DamageMaster(int amount, name damagetype = "none");
 	action native A_DamageChildren(int amount, name damagetype = "none");
+	action native A_DamageSiblings(int amount, name damagetype = "none");
 	action native A_SelectWeapon(class<Weapon> whichweapon);
 	action native A_Punch();
 	action native A_Feathers();

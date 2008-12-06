@@ -1790,6 +1790,25 @@ DEFINE_ACTION_FUNCTION(AActor, A_KillChildren)
 
 //===========================================================================
 //
+// A_KillSiblings
+//
+//===========================================================================
+DEFINE_ACTION_FUNCTION(AActor, A_KillSiblings)
+{
+	TThinkerIterator<AActor> it;
+	AActor * mo;
+
+	while ( (mo = it.Next()) )
+	{
+		if (mo->master == self->master && mo != self)
+		{
+			P_DamageMobj(mo, self, self, mo->health, NAME_None, DMG_NO_ARMOR);
+		}
+	}
+}
+
+//===========================================================================
+//
 // A_CountdownArg
 //
 //===========================================================================
@@ -2131,6 +2150,39 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DamageChildren)
 
 //===========================================================================
 //
+// A_DamageSiblings (amount)
+// Damages the siblings of this master by the specified amount. Negative values heal.
+//
+//===========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DamageSiblings)
+{
+	TThinkerIterator<AActor> it;
+	AActor * mo;
+
+	ACTION_PARAM_START(2);
+	ACTION_PARAM_INT(amount, 0);
+	ACTION_PARAM_NAME(DamageType, 1);
+
+	while ( (mo = it.Next()) )
+	{
+		if (mo->master == self->master && mo != self)
+		{
+			if (amount > 0)
+			{
+				P_DamageMobj(mo, self, self, amount, DamageType, DMG_NO_ARMOR);
+			}
+			else if (amount < 0)
+			{
+				amount = -amount;
+				P_GiveBody(mo, amount);
+			}
+		}
+	}
+}
+
+
+//===========================================================================
+//
 // Modified code pointer from Skulltag
 //
 //===========================================================================
@@ -2254,3 +2306,36 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ChangeFlag)
 	}
 }
 
+//===========================================================================
+//
+// A_RemoveMaster
+//
+//===========================================================================
+DEFINE_ACTION_FUNCTION(AActor, A_RemoveMaster)
+{
+   if (self->master != NULL)
+   {
+      P_RemoveThing(self->master);
+   }
+}
+
+//===========================================================================
+//
+// A_RemoveChildren
+//
+//===========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RemoveChildren)
+{
+   TThinkerIterator<AActor> it;
+   AActor * mo;
+   ACTION_PARAM_START(1);
+   ACTION_PARAM_BOOL(removeall,0);
+
+   while ( (mo = it.Next()) )
+   {
+      if ( ( mo->master == self ) && ( ( mo->health <= 0 ) || removeall) )
+      {
+		P_RemoveThing(mo);
+      }
+   }
+}

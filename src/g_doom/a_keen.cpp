@@ -11,9 +11,9 @@
 //
 // A_KeenDie
 // DOOM II special, map 32.
-// Uses special tag 666.
+// Uses special tag 666 by default.
 //
-DEFINE_ACTION_FUNCTION(AActor, A_KeenDie)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_KeenDie)
 {
 	CALL_ACTION(A_NoBlocking, self);
 	
@@ -31,7 +31,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_KeenDie)
 		}
 	}
 
-	EV_DoDoor (DDoor::doorOpen, NULL, NULL, 666, 2*FRACUNIT, 0, 0, 0);
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_INT(doortag, 0);
+
+	EV_DoDoor (DDoor::doorOpen, NULL, NULL, doortag, 2*FRACUNIT, 0, 0, 0);
 }
 
 

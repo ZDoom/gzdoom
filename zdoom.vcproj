@@ -2828,10 +2828,6 @@
 					/>
 				</FileConfiguration>
 			</File>
-			<File
-				RelativePath=".\src\g_doom\doom_sbar.cpp"
-				>
-			</File>
 		</Filter>
 		<Filter
 			Name="Raven Shared"

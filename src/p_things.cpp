@@ -412,6 +412,19 @@ int P_Thing_Damage (int tid, AActor *whofor0, int amount, FName type)
 	return count;
 }
 
+void P_RemoveThing(AActor * actor)
+{
+	// Don't remove live players.
+	if (actor->player == NULL || actor != actor->player->mo)
+	{
+		// be friendly to the level statistics. ;)
+		if (actor->CountsAsKill() && actor->health > 0) level.total_monsters--;
+		if (actor->flags&MF_COUNTITEM) level.total_items--;
+		actor->Destroy ();
+	}
+}
+
+
 CCMD (dumpspawnables)
 {
 	int i;
@@ -424,3 +437,4 @@ CCMD (dumpspawnables)
 		}
 	}
 }
+

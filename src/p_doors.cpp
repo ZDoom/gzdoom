@@ -797,6 +797,7 @@ bool EV_SlidingDoor (line_t *line, AActor *actor, int tag, int speed, int delay)
 			{
 				rtn = true;
 				new DAnimatedDoor (sec, line, speed, delay);
+				break;
 			}
 		}
 	}

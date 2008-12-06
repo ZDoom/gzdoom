@@ -120,7 +120,7 @@ void ABasicArmor::AbsorbDamage (int damage, FName damageType, int &newdamage)
 		}
 		else
 		{
-			saved += full + FixedMul (damage - full, SavePercent);
+			saved = full + FixedMul (damage - full, SavePercent);
 			if (MaxAbsorb > 0 && saved + AbsorbCount > MaxAbsorb) 
 			{
 				saved = MAX(0,  MaxAbsorb - AbsorbCount);

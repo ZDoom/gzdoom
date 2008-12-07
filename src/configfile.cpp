@@ -637,7 +637,7 @@ bool FConfigFile::WriteConfigFile () const
 		entry = section->RootEntry;
 		if (section->Note.IsNotEmpty())
 		{
-			fprintf (file, "%s", section->Note.GetChars());
+			fputs (section->Note.GetChars(), file);
 		}
 		fprintf (file, "[%s]\n", section->Name);
 		while (entry != NULL)
@@ -646,7 +646,7 @@ bool FConfigFile::WriteConfigFile () const
 			entry = entry->Next;
 		}
 		section = section->Next;
-		fprintf (file, "\n");
+		fputs ("\n", file);
 	}
 	fclose (file);
 	return true;

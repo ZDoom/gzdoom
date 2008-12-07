@@ -470,6 +470,97 @@ int strbin (char *str)
 	return str - start;
 }
 
+// [RH] Replaces the escape sequences in a string with actual escaped characters.
+// This operation is done in-place. The result is the new length of the string.
+
+FString strbin1 (const char *start)
+{
+	FString result;
+	const char *p = start;
+	char c;
+	int i;
+
+	while ( (c = *p++) ) {
+		if (c != '\\') {
+			result << c;
+		} else {
+			switch (*p) {
+				case 'a':
+					result << '\a';
+					break;
+				case 'b':
+					result << '\b';
+					break;
+				case 'c':
+					result << '\034';	// TEXTCOLOR_ESCAPE
+					break;
+				case 'f':
+					result << '\f';
+					break;
+				case 'n':
+					result << '\n';
+					break;
+				case 't':
+					result << '\t';
+					break;
+				case 'r':
+					result << '\r';
+					break;
+				case 'v':
+					result << '\v';
+					break;
+				case '?':
+					result << '\?';
+					break;
+				case '\n':
+					break;
+				case 'x':
+				case 'X':
+					c = 0;
+					p++;
+					for (i = 0; i < 2; i++) {
+						c <<= 4;
+						if (*p >= '0' && *p <= '9')
+							c += *p-'0';
+						else if (*p >= 'a' && *p <= 'f')
+							c += 10 + *p-'a';
+						else if (*p >= 'A' && *p <= 'F')
+							c += 10 + *p-'A';
+						else
+							break;
+						p++;
+					}
+					result << c;
+					break;
+				case '0':
+				case '1':
+				case '2':
+				case '3':
+				case '4':
+				case '5':
+				case '6':
+				case '7':
+					c = 0;
+					for (i = 0; i < 3; i++) {
+						c <<= 3;
+						if (*p >= '0' && *p <= '7')
+							c += *p-'0';
+						else
+							break;
+						p++;
+					}
+					result << c;
+					break;
+				default:
+					result << *p;
+					break;
+			}
+			p++;
+		}
+	}
+	return result;
+}
+
 //==========================================================================
 //
 // ExpandEnvVars
@@ -534,3 +625,4 @@ FString ExpandEnvVars(const char *searchpathstring)
 	}
 	return out;
 }
+

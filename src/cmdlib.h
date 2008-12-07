@@ -52,6 +52,7 @@ void FormatGUID (char *buffer, size_t buffsize, const GUID &guid);
 const char *myasctime ();
 
 int strbin (char *str);
+FString strbin1 (const char *start);
 
 void CreatePath(const char * fn);
 

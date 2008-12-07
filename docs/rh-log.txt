@@ -1,4 +1,9 @@
 December 7, 2008  (Changes by Graf Zahl)
+- Added a strbin1 function that does the same as strbin but creates a copy 
+  instead of overwriting the original string. ACS performing this operation
+  in place caused crashes with RTC-3057.
+- fixed: FScriptPosition::Message did not print the message if it was not 
+  a fatal error.
 - Fixed: The save percentage for Doom's green armor was slightly too low
   which caused roundoff errors that made it less than 1/3 effective.
 - Added support for "RRGGBB" strings to V_GetColor.

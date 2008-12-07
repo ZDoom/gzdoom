@@ -1,4 +1,20 @@
 December 6, 2008
+- Added binary (b) and hexadecimal (x) cast types for ACS's various print
+  statements.
+- Added ClassifyActor(tid) ACS builtin function. This takes a TID and returns
+  a set of bits describing the actor. If TID is 0, it returns information
+  about the activator. If there is more than one actor with the given TID,
+  only the first one is considered. Currently defined bits are:
+    ACTOR_NONE         No actors with this TID exist (only when TID is not 0).
+    ACTOR_WORLD        Activator is the world (only when TID is 0).
+    ACTOR_PLAYER       Actor is a player (includes bots and voodoo dolls).
+    ACTOR_BOT          Actor is a bot.
+    ACTOR_VOODOODOLL   Actor is a voodoo doll.
+    ACTOR_MONSTER      Actor is a monster.
+    ACTOR_ALIVE        Actor is alive (players/monsters only).
+    ACTOR_DEAD         Actor is dead (players/monsters only).
+    ACTOR_MISSILE      Actor is a missile.
+    ACTOR_GENERIC      Actor exists, but no further information is available.
 - Moved ExpandEnvVars() from d_main.cpp to cmdlib.cpp.
 - AutoExec paths now support the same variable expansion as the search paths.
   Additionally, on Windows, the default autoexec path is now relative to

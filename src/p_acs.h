@@ -3,7 +3,7 @@
 ** ACS script stuff
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2007 Randy Heit
+** Copyright 1998-2008 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -554,8 +554,11 @@ public:
 		PCD_MORPHACTOR,				// [MH]
 		PCD_UNMORPHACTOR,			// [MH]
 		PCD_GETPLAYERINPUT,
+		PCD_CLASSIFYACTOR,
+		PCD_PRINTBINARY,
+/*350*/	PCD_PRINTHEX,
 
-/*348*/	PCODE_COMMAND_COUNT
+/*351*/	PCODE_COMMAND_COUNT
 	};
 
 	// Some constants used by ACS scripts
@@ -682,6 +685,7 @@ protected:
 	static int DoSpawn (int type, fixed_t x, fixed_t y, fixed_t z, int tid, int angle);
 	static int DoSpawnSpot (int type, int spot, int tid, int angle);
 	static int DoSpawnSpotFacing (int type, int spot, int tid);
+	int DoClassifyActor (int tid);
 
 	void DoFadeTo (int r, int g, int b, int a, fixed_t time);
 	void DoFadeRange (int r1, int g1, int b1, int a1,

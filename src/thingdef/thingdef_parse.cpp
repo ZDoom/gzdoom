@@ -1076,14 +1076,17 @@ void ParseDecorate (FScanner &sc)
 			else if (sc.Compare("PICKUP"))
 			{
 				ParseOldDecoration (sc, DEF_Pickup);
+				break;
 			}
 			else if (sc.Compare("BREAKABLE"))
 			{
 				ParseOldDecoration (sc, DEF_BreakableDecoration);
+				break;
 			}
 			else if (sc.Compare("PROJECTILE"))
 			{
 				ParseOldDecoration (sc, DEF_Projectile);
+				break;
 			}
 		default:
 			// without the option of game filters following, anything but an opening brace

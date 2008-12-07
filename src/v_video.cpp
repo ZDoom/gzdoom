@@ -454,33 +454,48 @@ int V_GetColorFromString (const DWORD *palette, const char *cstr)
 	}
 	else
 	{
-		// Treat it as a space-delemited hexadecimal string
-		for (i = 0; i < 3; ++i)
+		if (strlen(cstr) == 6)
 		{
-			// Skip leading whitespace
-			while (*cstr <= ' ' && *cstr != '\0')
+			char *p;
+			int color = strtol(cstr, &p, 16);
+			if (*p == 0)
 			{
-				cstr++;
+				// RRGGBB string
+				c[0] = (color & 0xff0000) >> 16;
+				c[1] = (color & 0xff00) >> 8;
+				c[2] = (color & 0xff);
 			}
-			// Extract a component and convert it to eight-bit
-			for (p = 0; *cstr > ' '; ++p, ++cstr)
+		}
+		else
+		{
+			// Treat it as a space-delemited hexadecimal string
+			for (i = 0; i < 3; ++i)
 			{
-				if (p < 2)
+				// Skip leading whitespace
+				while (*cstr <= ' ' && *cstr != '\0')
 				{
-					val[p] = *cstr;
+					cstr++;
 				}
-			}
-			if (p == 0)
-			{
-				c[i] = 0;
-			}
-			else
-			{
-				if (p == 1)
+				// Extract a component and convert it to eight-bit
+				for (p = 0; *cstr > ' '; ++p, ++cstr)
 				{
-					val[1] = val[0];
+					if (p < 2)
+					{
+						val[p] = *cstr;
+					}
 				}
-				c[i] = ParseHex (val);
+				if (p == 0)
+				{
+					c[i] = 0;
+				}
+				else
+				{
+					if (p == 1)
+					{
+						val[1] = val[0];
+					}
+					c[i] = ParseHex (val);
+				}
 			}
 		}
 	}

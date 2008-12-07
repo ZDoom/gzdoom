@@ -820,31 +820,31 @@ static int PatchThing (int thingy)
 				}
 
 				if (!strnicmp (Line1, "Initial", 7))
-					statedef.AddState("Spawn", state ? state : GetDefault<AActor>()->SpawnState);
+					statedef.SetStateLabel("Spawn", state ? state : GetDefault<AActor>()->SpawnState);
 				else if (!strnicmp (Line1, "First moving", 12))
-					statedef.AddState("See", state);
+					statedef.SetStateLabel("See", state);
 				else if (!strnicmp (Line1, "Injury", 6))
-					statedef.AddState("Pain", state);
+					statedef.SetStateLabel("Pain", state);
 				else if (!strnicmp (Line1, "Close attack", 12))
 				{
 					if (thingy != 1)	// Not for players!
 					{
-						statedef.AddState("Melee", state);
+						statedef.SetStateLabel("Melee", state);
 					}
 				}
 				else if (!strnicmp (Line1, "Far attack", 10))
 				{
 					if (thingy != 1)	// Not for players!
 					{
-						statedef.AddState("Missile", state);
+						statedef.SetStateLabel("Missile", state);
 					}
 				}
 				else if (!strnicmp (Line1, "Death", 5))
-					statedef.AddState("Death", state);
+					statedef.SetStateLabel("Death", state);
 				else if (!strnicmp (Line1, "Exploding", 9))
-					statedef.AddState("XDeath", state);
+					statedef.SetStateLabel("XDeath", state);
 				else if (!strnicmp (Line1, "Respawn", 7))
-					statedef.AddState("Raise", state);
+					statedef.SetStateLabel("Raise", state);
 			}
 			else if (stricmp (Line1 + linelen - 6, " sound") == 0)
 			{
@@ -1394,15 +1394,15 @@ static int PatchWeapon (int weapNum)
 				}
 
 				if (strnicmp (Line1, "Deselect", 8) == 0)
-					statedef.AddState("Select", state);
+					statedef.SetStateLabel("Select", state);
 				else if (strnicmp (Line1, "Select", 6) == 0)
-					statedef.AddState("Deselect", state);
+					statedef.SetStateLabel("Deselect", state);
 				else if (strnicmp (Line1, "Bobbing", 7) == 0)
-					statedef.AddState("Ready", state);
+					statedef.SetStateLabel("Ready", state);
 				else if (strnicmp (Line1, "Shooting", 8) == 0)
-					statedef.AddState("Fire", state);
+					statedef.SetStateLabel("Fire", state);
 				else if (strnicmp (Line1, "Firing", 6) == 0)
-					statedef.AddState("Flash", state);
+					statedef.SetStateLabel("Flash", state);
 			}
 			else if (stricmp (Line1, "Ammo type") == 0)
 			{

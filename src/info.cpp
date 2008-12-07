@@ -58,6 +58,9 @@ extern void LoadActors ();
 
 int GetSpriteIndex(const char * spritename)
 {
+	static char lastsprite[5];
+	static int lastindex;
+
 	// Make sure that the string is upper case and 4 characters long
 	char upper[5]={0,0,0,0,0};
 	for (int i = 0; spritename[i] != 0 && i < 4; i++)
@@ -65,18 +68,25 @@ int GetSpriteIndex(const char * spritename)
 		upper[i] = toupper (spritename[i]);
 	}
 
+	// cache the name so if the next one is the same the function doesn't have to perform a search.
+	if (!strcmp(upper, lastsprite))
+	{
+		return lastindex;
+	}
+	strcpy(lastsprite, upper);
+
 	for (unsigned i = 0; i < sprites.Size (); ++i)
 	{
-		if (strcmp (sprites[i].name, spritename) == 0)
+		if (strcmp (sprites[i].name, upper) == 0)
 		{
-			return (int)i;
+			return (lastindex = (int)i);
 		}
 	}
 	spritedef_t temp;
 	strcpy (temp.name, upper);
 	temp.numframes = 0;
 	temp.spriteframes = 0;
-	return (int)sprites.Push (temp);
+	return (lastindex = (int)sprites.Push (temp));
 }
 
 

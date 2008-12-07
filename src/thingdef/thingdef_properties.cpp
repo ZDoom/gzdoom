@@ -152,31 +152,31 @@ DEFINE_INFO_PROPERTY(game, T, Actor)
 	PROP_STRING_PARM(str, 0);
 	if (!stricmp(str, "Doom"))
 	{
-		bag.Info->GameFilter |= GAME_Doom;
+		info->GameFilter |= GAME_Doom;
 	}
 	else if (!stricmp(str, "Heretic"))
 	{
-		bag.Info->GameFilter |= GAME_Heretic;
+		info->GameFilter |= GAME_Heretic;
 	}
 	else if (!stricmp(str, "Hexen"))
 	{
-		bag.Info->GameFilter |= GAME_Hexen;
+		info->GameFilter |= GAME_Hexen;
 	}
 	else if (!stricmp(str, "Raven"))
 	{
-		bag.Info->GameFilter |= GAME_Raven;
+		info->GameFilter |= GAME_Raven;
 	}
 	else if (!stricmp(str, "Strife"))
 	{
-		bag.Info->GameFilter |= GAME_Strife;
+		info->GameFilter |= GAME_Strife;
 	}
 	else if (!stricmp(str, "Chex"))
 	{
-		bag.Info->GameFilter |= GAME_Chex;
+		info->GameFilter |= GAME_Chex;
 	}
 	else if (!stricmp(str, "Any"))
 	{
-		bag.Info->GameFilter = GAME_Any;
+		info->GameFilter = GAME_Any;
 	}
 	else
 	{
@@ -194,7 +194,7 @@ DEFINE_INFO_PROPERTY(spawnid, I, Actor)
 	{
 		I_Error ("SpawnID must be in the range [0,255]");
 	}
-	else bag.Info->SpawnID=(BYTE)id;
+	else info->SpawnID=(BYTE)id;
 }
 
 //==========================================================================
@@ -222,7 +222,7 @@ DEFINE_INFO_PROPERTY(conversationid, IiI, Actor)
 	{
 		I_Error ("ConversationID must be in the range [0,1000]");
 	}
-	else StrifeTypes[convid] = bag.Info->Class;
+	else StrifeTypes[convid] = info->Class;
 }
 
 //==========================================================================
@@ -236,9 +236,16 @@ DEFINE_INFO_PROPERTY(conversationid, IiI, Actor)
 //==========================================================================
 DEFINE_PROPERTY(skip_super, 0, Actor)
 {
-	if (bag.Info->Class->IsDescendantOf(RUNTIME_CLASS(AInventory)))
+	if (info->Class->IsDescendantOf(RUNTIME_CLASS(AInventory)))
 	{
-		Printf("'skip_super' in definition of inventory item '%s' ignored.", bag.Info->Class->TypeName.GetChars() );
+		bag.ScriptPosition.Message(MSG_WARNING,
+			"'skip_super' in definition of inventory item '%s' ignored.", info->Class->TypeName.GetChars() );
+		return;
+	}
+	if (bag.StateSet)
+	{
+		bag.ScriptPosition.Message(MSG_WARNING,
+			"'skip_super' must appear before any state definitions.");
 		return;
 	}
 
@@ -256,7 +263,7 @@ DEFINE_PROPERTY(skip_super, 0, Actor)
 DEFINE_PROPERTY(tag, S, Actor)
 {
 	PROP_STRING_PARM(str, 0);
-	bag.Info->Class->Meta.SetMetaString(AMETA_StrifeName, str);
+	info->Class->Meta.SetMetaString(AMETA_StrifeName, str);
 }
 
 //==========================================================================
@@ -274,7 +281,7 @@ DEFINE_PROPERTY(health, I, Actor)
 DEFINE_PROPERTY(gibhealth, I, Actor)
 {
 	PROP_INT_PARM(id, 0);
-	bag.Info->Class->Meta.SetMetaInt (AMETA_GibHealth, id);
+	info->Class->Meta.SetMetaInt (AMETA_GibHealth, id);
 }
 
 //==========================================================================
@@ -283,7 +290,7 @@ DEFINE_PROPERTY(gibhealth, I, Actor)
 DEFINE_PROPERTY(woundhealth, I, Actor)
 {
 	PROP_INT_PARM(id, 0);
-	bag.Info->Class->Meta.SetMetaInt (AMETA_WoundHealth, id);
+	info->Class->Meta.SetMetaInt (AMETA_WoundHealth, id);
 }
 
 //==========================================================================
@@ -312,8 +319,8 @@ DEFINE_PROPERTY(painchance, ZI, Actor)
 		if (!stricmp(str, "Normal")) painType = NAME_None;
 		else painType=str;
 
-		if (bag.Info->PainChances == NULL) bag.Info->PainChances=new PainChanceList;
-		(*bag.Info->PainChances)[painType] = (BYTE)id;
+		if (info->PainChances == NULL) info->PainChances=new PainChanceList;
+		(*info->PainChances)[painType] = (BYTE)id;
 	}
 }
 
@@ -478,7 +485,7 @@ DEFINE_PROPERTY(activesound, S, Actor)
 DEFINE_PROPERTY(howlsound, S, Actor)
 {
 	PROP_STRING_PARM(str, 0);
-	bag.Info->Class->Meta.SetMetaInt (AMETA_HowlSound, S_FindSound(str));
+	info->Class->Meta.SetMetaInt (AMETA_HowlSound, S_FindSound(str));
 }
 
 //==========================================================================
@@ -559,7 +566,7 @@ DEFINE_PROPERTY(alpha, F, Actor)
 DEFINE_PROPERTY(obituary, S, Actor)
 {
 	PROP_STRING_PARM(str, 0);
-	bag.Info->Class->Meta.SetMetaString (AMETA_Obituary, str);
+	info->Class->Meta.SetMetaString (AMETA_Obituary, str);
 }
 
 //==========================================================================
@@ -568,7 +575,7 @@ DEFINE_PROPERTY(obituary, S, Actor)
 DEFINE_PROPERTY(hitobituary, S, Actor)
 {
 	PROP_STRING_PARM(str, 0);
-	bag.Info->Class->Meta.SetMetaString (AMETA_HitObituary, str);
+	info->Class->Meta.SetMetaString (AMETA_HitObituary, str);
 }
 
 //==========================================================================
@@ -576,7 +583,7 @@ DEFINE_PROPERTY(hitobituary, S, Actor)
 //==========================================================================
 DEFINE_PROPERTY(donthurtshooter, 0, Actor)
 {
-	bag.Info->Class->Meta.SetMetaInt (ACMETA_DontHurtShooter, true);
+	info->Class->Meta.SetMetaInt (ACMETA_DontHurtShooter, true);
 }
 
 //==========================================================================
@@ -585,7 +592,7 @@ DEFINE_PROPERTY(donthurtshooter, 0, Actor)
 DEFINE_PROPERTY(explosionradius, I, Actor)
 {
 	PROP_INT_PARM(id, 0);
-	bag.Info->Class->Meta.SetMetaInt (ACMETA_ExplosionRadius, id);
+	info->Class->Meta.SetMetaInt (ACMETA_ExplosionRadius, id);
 }
 
 //==========================================================================
@@ -594,7 +601,7 @@ DEFINE_PROPERTY(explosionradius, I, Actor)
 DEFINE_PROPERTY(explosiondamage, I, Actor)
 {
 	PROP_INT_PARM(id, 0);
-	bag.Info->Class->Meta.SetMetaInt (ACMETA_ExplosionDamage, id);
+	info->Class->Meta.SetMetaInt (ACMETA_ExplosionDamage, id);
 }
 
 //==========================================================================
@@ -605,7 +612,7 @@ DEFINE_PROPERTY(deathheight, F, Actor)
 	PROP_FIXED_PARM(h, 0);
 	// AActor::Die() uses a height of 0 to mean "cut the height to 1/4",
 	// so if a height of 0 is desired, store it as -1.
-	bag.Info->Class->Meta.SetMetaFixed (AMETA_DeathHeight, h <= 0 ? -1 : h);
+	info->Class->Meta.SetMetaFixed (AMETA_DeathHeight, h <= 0 ? -1 : h);
 }
 
 //==========================================================================
@@ -615,7 +622,7 @@ DEFINE_PROPERTY(burnheight, F, Actor)
 {
 	PROP_FIXED_PARM(h, 0);
 	// The note above for AMETA_DeathHeight also applies here.
-	bag.Info->Class->Meta.SetMetaFixed (AMETA_BurnHeight, h <= 0 ? -1 : h);
+	info->Class->Meta.SetMetaFixed (AMETA_BurnHeight, h <= 0 ? -1 : h);
 }
 
 //==========================================================================
@@ -642,7 +649,7 @@ DEFINE_PROPERTY(meleethreshold, F, Actor)
 DEFINE_PROPERTY(meleedamage, I, Actor)
 {
 	PROP_INT_PARM(id, 0);
-	bag.Info->Class->Meta.SetMetaInt (ACMETA_MeleeDamage, id);
+	info->Class->Meta.SetMetaInt (ACMETA_MeleeDamage, id);
 }
 
 //==========================================================================
@@ -660,7 +667,7 @@ DEFINE_PROPERTY(meleerange, F, Actor)
 DEFINE_PROPERTY(meleesound, S, Actor)
 {
 	PROP_STRING_PARM(str, 0);
-	bag.Info->Class->Meta.SetMetaInt (ACMETA_MeleeSound, S_FindSound(str));
+	info->Class->Meta.SetMetaInt (ACMETA_MeleeSound, S_FindSound(str));
 }
 
 //==========================================================================
@@ -669,7 +676,7 @@ DEFINE_PROPERTY(meleesound, S, Actor)
 DEFINE_PROPERTY(missiletype, S, Actor)
 {
 	PROP_STRING_PARM(str, 0);
-	bag.Info->Class->Meta.SetMetaInt (ACMETA_MissileName, FName(str));
+	info->Class->Meta.SetMetaInt (ACMETA_MissileName, FName(str));
 }
 
 //==========================================================================
@@ -678,7 +685,7 @@ DEFINE_PROPERTY(missiletype, S, Actor)
 DEFINE_PROPERTY(missileheight, F, Actor)
 {
 	PROP_FIXED_PARM(id, 0);
-	bag.Info->Class->Meta.SetMetaFixed (ACMETA_MissileHeight, id);
+	info->Class->Meta.SetMetaFixed (ACMETA_MissileHeight, id);
 }
 
 //==========================================================================
@@ -691,7 +698,7 @@ DEFINE_PROPERTY(translation, L, Actor)
 	if (type == 0)
 	{
 		PROP_INT_PARM(trans, 1);
-		int max = (gameinfo.gametype==GAME_Strife || (bag.Info->GameFilter&GAME_Strife)) ? 6:2;
+		int max = (gameinfo.gametype==GAME_Strife || (info->GameFilter&GAME_Strife)) ? 6:2;
 		if (trans < 0 || trans > max)
 		{
 			I_Error ("Translation must be in the range [0,%d]", max);
@@ -739,7 +746,7 @@ DEFINE_PROPERTY(bloodcolor, C, Actor)
 
 	PalEntry pe = color;
 	pe.a = CreateBloodTranslation(pe);
-	bag.Info->Class->Meta.SetMetaInt (AMETA_BloodColor, pe);
+	info->Class->Meta.SetMetaInt (AMETA_BloodColor, pe);
 }
 
 
@@ -754,21 +761,21 @@ DEFINE_PROPERTY(bloodtype, Sss, Actor)
 
 	FName blood = str;
 	// normal blood
-	bag.Info->Class->Meta.SetMetaInt (AMETA_BloodType, blood);
+	info->Class->Meta.SetMetaInt (AMETA_BloodType, blood);
 
 	if (PROP_PARM_COUNT > 1)
 	{
 		blood = str1;
 	}
 	// blood splatter
-	bag.Info->Class->Meta.SetMetaInt (AMETA_BloodType2, blood);
+	info->Class->Meta.SetMetaInt (AMETA_BloodType2, blood);
 
 	if (PROP_PARM_COUNT > 2)
 	{
 		blood = str2;
 	}
 	// axe blood
-	bag.Info->Class->Meta.SetMetaInt (AMETA_BloodType3, blood);
+	info->Class->Meta.SetMetaInt (AMETA_BloodType3, blood);
 }
 
 //==========================================================================
@@ -825,13 +832,13 @@ DEFINE_PROPERTY(damagefactor, SF, Actor)
 	PROP_STRING_PARM(str, 0);
 	PROP_FIXED_PARM(id, 1);
 
-	if (bag.Info->DamageFactors == NULL) bag.Info->DamageFactors=new DmgFactors;
+	if (info->DamageFactors == NULL) info->DamageFactors=new DmgFactors;
 
 	FName dmgType;
 	if (!stricmp(str, "Normal")) dmgType = NAME_None;
 	else dmgType=str;
 
-	(*bag.Info->DamageFactors)[dmgType]=id;
+	(*info->DamageFactors)[dmgType]=id;
 }
 
 //==========================================================================
@@ -867,7 +874,7 @@ DEFINE_PROPERTY(maxdropoffheight, F, Actor)
 DEFINE_PROPERTY(poisondamage, I, Actor)
 {
 	PROP_INT_PARM(i, 0);
-	bag.Info->Class->Meta.SetMetaInt (AMETA_PoisonDamage, i);
+	info->Class->Meta.SetMetaInt (AMETA_PoisonDamage, i);
 }
 
 //==========================================================================
@@ -876,7 +883,7 @@ DEFINE_PROPERTY(poisondamage, I, Actor)
 DEFINE_PROPERTY(fastspeed, F, Actor)
 {
 	PROP_FIXED_PARM(i, 0);
-	bag.Info->Class->Meta.SetMetaFixed (AMETA_FastSpeed, i);
+	info->Class->Meta.SetMetaFixed (AMETA_FastSpeed, i);
 }
 
 //==========================================================================
@@ -885,7 +892,7 @@ DEFINE_PROPERTY(fastspeed, F, Actor)
 DEFINE_PROPERTY(radiusdamagefactor, F, Actor)
 {
 	PROP_FIXED_PARM(i, 0);
-	bag.Info->Class->Meta.SetMetaFixed (AMETA_RDFactor, i);
+	info->Class->Meta.SetMetaFixed (AMETA_RDFactor, i);
 }
 
 //==========================================================================
@@ -894,7 +901,7 @@ DEFINE_PROPERTY(radiusdamagefactor, F, Actor)
 DEFINE_PROPERTY(cameraheight, F, Actor)
 {
 	PROP_FIXED_PARM(i, 0);
-	bag.Info->Class->Meta.SetMetaFixed (AMETA_CameraHeight, i);
+	info->Class->Meta.SetMetaFixed (AMETA_CameraHeight, i);
 }
 
 //==========================================================================
@@ -980,7 +987,7 @@ DEFINE_CLASS_PROPERTY(backpackmaxamount, I, Ammo)
 DEFINE_CLASS_PROPERTY(dropamount, I, Ammo)
 {
 	PROP_INT_PARM(i, 0);
-	bag.Info->Class->Meta.SetMetaInt (AIMETA_DropAmount, i);
+	info->Class->Meta.SetMetaInt (AIMETA_DropAmount, i);
 }
 
 //==========================================================================
@@ -1018,11 +1025,11 @@ DEFINE_CLASS_PROPERTY(saveamount, I, Armor)
 	PROP_INT_PARM(i, 0);
 
 	// Special case here because this property has to work for 2 unrelated classes
-	if (bag.Info->Class->IsDescendantOf(RUNTIME_CLASS(ABasicArmorPickup)))
+	if (info->Class->IsDescendantOf(RUNTIME_CLASS(ABasicArmorPickup)))
 	{
 		((ABasicArmorPickup*)defaults)->SaveAmount=i;
 	}
-	else if (bag.Info->Class->IsDescendantOf(RUNTIME_CLASS(ABasicArmorBonus)))
+	else if (info->Class->IsDescendantOf(RUNTIME_CLASS(ABasicArmorBonus)))
 	{
 		((ABasicArmorBonus*)defaults)->SaveAmount=i;
 	}
@@ -1039,18 +1046,19 @@ DEFINE_CLASS_PROPERTY(savepercent, F, Armor)
 {
 	PROP_FIXED_PARM(i, 0);
 
+	i = clamp(i, 0, 100*FRACUNIT)/100;
 	// Special case here because this property has to work for 2 unrelated classes
-	if (bag.Info->Class->IsDescendantOf(RUNTIME_CLASS(ABasicArmorPickup)))
+	if (info->Class->IsDescendantOf(RUNTIME_CLASS(ABasicArmorPickup)))
 	{
-		((ABasicArmorPickup*)defaults)->SavePercent=i;
+		((ABasicArmorPickup*)defaults)->SavePercent = i;
 	}
-	else if (bag.Info->Class->IsDescendantOf(RUNTIME_CLASS(ABasicArmorBonus)))
+	else if (info->Class->IsDescendantOf(RUNTIME_CLASS(ABasicArmorBonus)))
 	{
-		((ABasicArmorBonus*)defaults)->SavePercent=i;
+		((ABasicArmorBonus*)defaults)->SavePercent = i;
 	}
 	else
 	{
-		I_Error("\"Armor.SavePercent\" requires an actor of type \"Armor\"");
+		I_Error("\"Armor.SavePercent\" requires an actor of type \"Armor\"\n");
 	}
 }
 
@@ -1062,11 +1070,11 @@ DEFINE_CLASS_PROPERTY(maxabsorb, I, Armor)
 	PROP_INT_PARM(i, 0);
 
 	// Special case here because this property has to work for 2 unrelated classes
-	if (bag.Info->Class->IsDescendantOf(RUNTIME_CLASS(ABasicArmorPickup)))
+	if (info->Class->IsDescendantOf(RUNTIME_CLASS(ABasicArmorPickup)))
 	{
 		((ABasicArmorPickup*)defaults)->MaxAbsorb = i;
 	}
-	else if (bag.Info->Class->IsDescendantOf(RUNTIME_CLASS(ABasicArmorBonus)))
+	else if (info->Class->IsDescendantOf(RUNTIME_CLASS(ABasicArmorBonus)))
 	{
 		((ABasicArmorBonus*)defaults)->MaxAbsorb = i;
 	}
@@ -1084,11 +1092,11 @@ DEFINE_CLASS_PROPERTY(maxfullabsorb, I, Armor)
 	PROP_INT_PARM(i, 0);
 
 	// Special case here because this property has to work for 2 unrelated classes
-	if (bag.Info->Class->IsDescendantOf(RUNTIME_CLASS(ABasicArmorPickup)))
+	if (info->Class->IsDescendantOf(RUNTIME_CLASS(ABasicArmorPickup)))
 	{
 		((ABasicArmorPickup*)defaults)->MaxFullAbsorb = i;
 	}
-	else if (bag.Info->Class->IsDescendantOf(RUNTIME_CLASS(ABasicArmorBonus)))
+	else if (info->Class->IsDescendantOf(RUNTIME_CLASS(ABasicArmorBonus)))
 	{
 		((ABasicArmorBonus*)defaults)->MaxFullAbsorb = i;
 	}
@@ -1119,10 +1127,11 @@ DEFINE_CLASS_PROPERTY(icon, S, Inventory)
 	{
 		// Don't print warnings if the item is for another game or if this is a shareware IWAD. 
 		// Strife's teaser doesn't contain all the icon graphics of the full game.
-		if ((bag.Info->GameFilter == GAME_Any || bag.Info->GameFilter & gameinfo.gametype) &&
+		if ((info->GameFilter == GAME_Any || info->GameFilter & gameinfo.gametype) &&
 			!(gameinfo.flags&GI_SHAREWARE) && Wads.GetLumpFile(bag.Lumpnum) != 0)
 		{
-			Printf("Icon '%s' for '%s' not found\n", i, bag.Info->Class->TypeName.GetChars());
+			bag.ScriptPosition.Message(MSG_WARNING,
+				"Icon '%s' for '%s' not found\n", i, info->Class->TypeName.GetChars());
 		}
 	}
 }
@@ -1160,7 +1169,7 @@ DEFINE_CLASS_PROPERTY(pickupflash, S, Inventory)
 DEFINE_CLASS_PROPERTY(pickupmessage, S, Inventory)
 {
 	PROP_STRING_PARM(str, 0);
-	bag.Info->Class->Meta.SetMetaString(AIMETA_PickupMessage, str);
+	info->Class->Meta.SetMetaString(AIMETA_PickupMessage, str);
 }
 
 //==========================================================================
@@ -1196,7 +1205,7 @@ DEFINE_CLASS_PROPERTY(usesound, S, Inventory)
 DEFINE_CLASS_PROPERTY(givequest, I, Inventory)
 {
 	PROP_INT_PARM(i, 0);
-	bag.Info->Class->Meta.SetMetaInt(AIMETA_GiveQuest, i);
+	info->Class->Meta.SetMetaInt(AIMETA_GiveQuest, i);
 }
 
 //==========================================================================
@@ -1206,8 +1215,8 @@ DEFINE_CLASS_PROPERTY(lowmessage, IS, Health)
 {
 	PROP_INT_PARM(i, 0);
 	PROP_STRING_PARM(str, 1);
-	bag.Info->Class->Meta.SetMetaInt(AIMETA_LowHealth, i);
-	bag.Info->Class->Meta.SetMetaString(AIMETA_LowHealthMessage, str);
+	info->Class->Meta.SetMetaInt(AIMETA_LowHealth, i);
+	info->Class->Meta.SetMetaString(AIMETA_LowHealthMessage, str);
 }
 
 //==========================================================================
@@ -1225,7 +1234,7 @@ DEFINE_CLASS_PROPERTY(number, I, PuzzleItem)
 DEFINE_CLASS_PROPERTY(failmessage, S, PuzzleItem)
 {
 	PROP_STRING_PARM(str, 0);
-	bag.Info->Class->Meta.SetMetaString(AIMETA_PuzzFailMessage, str);
+	info->Class->Meta.SetMetaString(AIMETA_PuzzFailMessage, str);
 }
 
 //==========================================================================
@@ -1399,11 +1408,11 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, color, C_f, Inventory)
 	int alpha;
 	PalEntry * pBlendColor;
 
-	if (bag.Info->Class->IsDescendantOf(RUNTIME_CLASS(APowerup)))
+	if (info->Class->IsDescendantOf(RUNTIME_CLASS(APowerup)))
 	{
 		pBlendColor = &((APowerup*)defaults)->BlendColor;
 	}
-	else if (bag.Info->Class->IsDescendantOf(RUNTIME_CLASS(APowerupGiver)))
+	else if (info->Class->IsDescendantOf(RUNTIME_CLASS(APowerupGiver)))
 	{
 		pBlendColor = &((APowerupGiver*)defaults)->BlendColor;
 	}
@@ -1463,11 +1472,11 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, duration, I, Inventory)
 {
 	int *pEffectTics;
 
-	if (bag.Info->Class->IsDescendantOf(RUNTIME_CLASS(APowerup)))
+	if (info->Class->IsDescendantOf(RUNTIME_CLASS(APowerup)))
 	{
 		pEffectTics = &((APowerup*)defaults)->EffectTics;
 	}
-	else if (bag.Info->Class->IsDescendantOf(RUNTIME_CLASS(APowerupGiver)))
+	else if (info->Class->IsDescendantOf(RUNTIME_CLASS(APowerupGiver)))
 	{
 		pEffectTics = &((APowerupGiver*)defaults)->EffectTics;
 	}
@@ -1511,7 +1520,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, type, S, PowerupGiver)
 DEFINE_CLASS_PROPERTY_PREFIX(player, displayname, S, PlayerPawn)
 {
 	PROP_STRING_PARM(str, 0);
-	bag.Info->Class->Meta.SetMetaString (APMETA_DisplayName, str);
+	info->Class->Meta.SetMetaString (APMETA_DisplayName, str);
 }
 
 //==========================================================================
@@ -1523,7 +1532,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, soundclass, S, PlayerPawn)
 
 	FString tmp = str;
 	tmp.ReplaceChars (' ', '_');
-	bag.Info->Class->Meta.SetMetaString (APMETA_SoundClass, tmp);
+	info->Class->Meta.SetMetaString (APMETA_SoundClass, tmp);
 }
 
 //==========================================================================
@@ -1537,8 +1546,9 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, face, S, PlayerPawn)
 	tmp.ToUpper();
 	if (tmp.Len() != 3)
 	{
-		Printf("Invalid face '%s' for '%s';\nSTF replacement codes must be 3 characters.\n",
-			tmp.GetChars(), bag.Info->Class->TypeName.GetChars ());
+		bag.ScriptPosition.Message(MSG_WARNING,
+			"Invalid face '%s' for '%s';\nSTF replacement codes must be 3 characters.\n",
+			tmp.GetChars(), info->Class->TypeName.GetChars ());
 	}
 
 	bool valid = (
@@ -1548,11 +1558,12 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, face, S, PlayerPawn)
 		);
 	if (!valid)
 	{
-		Printf("Invalid face '%s' for '%s';\nSTF replacement codes must be alphanumeric.\n",
-			tmp.GetChars(), bag.Info->Class->TypeName.GetChars ());
+		bag.ScriptPosition.Message(MSG_WARNING,
+			"Invalid face '%s' for '%s';\nSTF replacement codes must be alphanumeric.\n",
+			tmp.GetChars(), info->Class->TypeName.GetChars ());
 	}
 	
-	bag.Info->Class->Meta.SetMetaString (APMETA_Face, tmp);
+	info->Class->Meta.SetMetaString (APMETA_Face, tmp);
 }
 
 //==========================================================================
@@ -1566,7 +1577,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, colorrange, I_I, PlayerPawn)
 	if (start > end)
 		swap (start, end);
 
-	bag.Info->Class->Meta.SetMetaInt (APMETA_ColorRange, (start & 255) | ((end & 255) << 8));
+	info->Class->Meta.SetMetaInt (APMETA_ColorRange, (start & 255) | ((end & 255) << 8));
 }
 
 //==========================================================================
@@ -1691,7 +1702,8 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, scoreicon, S, PlayerPawn)
 	defaults->ScoreIcon = TexMan.CheckForTexture(z, FTexture::TEX_MiscPatch);
 	if (!defaults->ScoreIcon.isValid())
 	{
-		Printf("Icon '%s' for '%s' not found\n", z, bag.Info->Class->TypeName.GetChars ());
+		bag.ScriptPosition.Message(MSG_WARNING,
+			"Icon '%s' for '%s' not found\n", z, info->Class->TypeName.GetChars ());
 	}
 }
 
@@ -1751,7 +1763,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, startitem, S_i, PlayerPawn)
 DEFINE_CLASS_PROPERTY_PREFIX(player, invulnerabilitymode, S, PlayerPawn)
 {
 	PROP_STRING_PARM(str, 0);
-	bag.Info->Class->Meta.SetMetaInt (APMETA_InvulMode, (FName)str);
+	info->Class->Meta.SetMetaInt (APMETA_InvulMode, (FName)str);
 }
 
 //==========================================================================
@@ -1760,7 +1772,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, invulnerabilitymode, S, PlayerPawn)
 DEFINE_CLASS_PROPERTY_PREFIX(player, healradiustype, S, PlayerPawn)
 {
 	PROP_STRING_PARM(str, 0);
-	bag.Info->Class->Meta.SetMetaInt (APMETA_HealingRadius, (FName)str);
+	info->Class->Meta.SetMetaInt (APMETA_HealingRadius, (FName)str);
 }
 
 //==========================================================================
@@ -1771,7 +1783,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, hexenarmor, FFFFF, PlayerPawn)
 	for (int i=0;i<5;i++)
 	{
 		PROP_FIXED_PARM(val, i);
-		bag.Info->Class->Meta.SetMetaFixed (APMETA_Hexenarmor0+i, val);
+		info->Class->Meta.SetMetaFixed (APMETA_Hexenarmor0+i, val);
 	}
 }
 

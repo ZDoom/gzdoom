@@ -37,7 +37,7 @@ ACTOR LeatherArmor : BasicArmorPickup 2018
 	Inventory.Icon "I_ARM2"
 	Inventory.PickupMessage "$TXT_LEATHERARMOR"
 	Armor.SaveAmount 100
-	Armor.SavePercent 33.33333
+	Armor.SavePercent 33.335
 	Tag "Leather_Armor"
 	States
 	{

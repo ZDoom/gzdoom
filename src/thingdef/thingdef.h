@@ -82,6 +82,9 @@ struct FStateDefine
 class FStateDefinitions
 {
 	TArray<FStateDefine> StateLabels;
+	FState *laststate;
+	intptr_t lastlabel;
+	TArray<FState> StateArray;
 
 	static FStateDefine *FindStateLabelInList(TArray<FStateDefine> &list, FName name, bool create);
 	static FStateLabels *CreateStateLabelList(TArray<FStateDefine> &statelist);
@@ -96,19 +99,27 @@ class FStateDefinitions
 
 public:
 
-
-	void ClearStateLabels()
+	FStateDefinitions()
 	{
-		StateLabels.Clear();
+		laststate = NULL;
+		lastlabel = -1;
 	}
 
-	void AddState (const char * statename, FState * state, BYTE defflags = SDF_STATE);
+	void SetStateLabel (const char * statename, FState * state, BYTE defflags = SDF_STATE);
+	void AddStateLabel (const char * statename);
 	void InstallStates(FActorInfo *info, AActor *defaults);
-	int FinishStates (FActorInfo *actor, AActor *defaults, TArray<FState> &StateArray);
+	int FinishStates (FActorInfo *actor, AActor *defaults);
 
 	void MakeStateDefines(const PClass *cls);
 	void AddStateDefines(const FStateLabels *list);
 	void RetargetStates (intptr_t count, const char *target);
+
+	bool SetGotoLabel(const char *string);
+	bool SetStop();
+	bool SetWait();
+	bool SetLoop();
+	bool AddStates(FState *state, const char *framechars);
+	int GetStateCount() const { return StateArray.Size(); }
 
 };
 
@@ -162,9 +173,10 @@ struct Baggage
 	int CurrentState;
 	int Lumpnum;
 	FStateDefinitions statedef;
-	TArray<FState> StateArray;
 
 	FDropItem *DropItemList;
+
+	FScriptPosition ScriptPosition;
 };
 
 inline void ResetBaggage (Baggage *bag, const PClass *stateclass)
@@ -173,7 +185,6 @@ inline void ResetBaggage (Baggage *bag, const PClass *stateclass)
 	bag->DropItemSet = false;
 	bag->CurrentState = 0;
 	bag->StateSet = false;
-	bag->StateArray.Clear();
 	bag->statedef.MakeStateDefines(stateclass);
 }
 
@@ -193,7 +204,7 @@ AFuncDesc * FindFunction(const char * string);
 
 
 
-int ParseStates(FScanner &sc, FActorInfo *actor, AActor *defaults, Baggage &bag);
+void ParseStates(FScanner &sc, FActorInfo *actor, AActor *defaults, Baggage &bag);
 
 PSymbolActionFunction *FindGlobalActionFunction(const char *name);
 
@@ -203,8 +214,8 @@ PSymbolActionFunction *FindGlobalActionFunction(const char *name);
 //
 //==========================================================================
 
-FActorInfo *CreateNewActor(const FScriptPosition &sc, FName typeName, FName parentName, FName replaceName, 
-								  int DoomEdNum, bool native);
+FActorInfo *CreateNewActor(FName typeName, FName parentName, bool native);
+void SetReplacement(FActorInfo *info, FName replaceName);
 
 void HandleActorFlag(FScanner &sc, Baggage &bag, const char *part1, const char *part2, int mod);
 void FinishActor(const FScriptPosition &sc, FActorInfo *info, Baggage &bag);
@@ -276,7 +287,7 @@ union FPropParam
 	const char *s;
 };
 
-typedef void (*PropHandler)(AActor *defaults, Baggage &bag, FPropParam *params);
+typedef void (*PropHandler)(AActor *defaults, FActorInfo *info, Baggage &bag, FPropParam *params);
 
 enum ECategory
 {
@@ -307,18 +318,18 @@ int MatchString (const char *in, const char **strings);
 
 
 #define DEFINE_PROPERTY_BASE(name, paramlist, clas, cat) \
-	static void Handler_##name##_##paramlist##_##clas(A##clas *defaults, Baggage &bag, FPropParam *params); \
+	static void Handler_##name##_##paramlist##_##clas(A##clas *defaults, FActorInfo *info, Baggage &bag, FPropParam *params); \
 	static FPropertyInfo Prop_##name##_##paramlist##_##clas = \
 		{ #name, #paramlist, RUNTIME_CLASS(A##clas), (PropHandler)Handler_##name##_##paramlist##_##clas, cat }; \
 	MSVC_PSEG FPropertyInfo *infoptr_##name##_##paramlist##_##clas GCC_PSEG = &Prop_##name##_##paramlist##_##clas; \
-	static void Handler_##name##_##paramlist##_##clas(A##clas *defaults, Baggage &bag, FPropParam *params)
+	static void Handler_##name##_##paramlist##_##clas(A##clas *defaults, FActorInfo *info, Baggage &bag, FPropParam *params)
 
 #define DEFINE_PREFIXED_PROPERTY_BASE(prefix, name, paramlist, clas, cat) \
-	static void Handler_##name##_##paramlist##_##clas(A##clas *defaults, Baggage &bag, FPropParam *params); \
+	static void Handler_##name##_##paramlist##_##clas(A##clas *defaults, FActorInfo *info, Baggage &bag, FPropParam *params); \
 	static FPropertyInfo Prop_##name##_##paramlist##_##clas = \
 { #prefix"."#name, #paramlist, RUNTIME_CLASS(A##clas), (PropHandler)Handler_##name##_##paramlist##_##clas, cat }; \
 	MSVC_PSEG FPropertyInfo *infoptr_##name##_##paramlist##_##clas GCC_PSEG = &Prop_##name##_##paramlist##_##clas; \
-	static void Handler_##name##_##paramlist##_##clas(A##clas *defaults, Baggage &bag, FPropParam *params)
+	static void Handler_##name##_##paramlist##_##clas(A##clas *defaults, FActorInfo *info, Baggage &bag, FPropParam *params)
 
 
 #define DEFINE_PROPERTY(name, paramlist, clas) DEFINE_PROPERTY_BASE(name, paramlist, clas, CAT_PROPERTY)

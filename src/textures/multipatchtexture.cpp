@@ -443,7 +443,7 @@ BYTE * GetBlendMap(PalEntry blend, BYTE *blendwork)
 	default:
 		if (blend.r >= BLEND_DESATURATE1 && blend.r <= BLEND_DESATURATE31)
 		{
-			return DesaturateColormap[blend - BLEND_DESATURATE1];
+			return DesaturateColormap[blend.r - BLEND_DESATURATE1];
 		}
 		else 
 		{
@@ -509,7 +509,7 @@ void FMultiPatchTexture::MakeTexture ()
 			trans = NullMap;
 			hasTranslucent = true;
 		}
-		else if (Parts[i].Blend != BLEND_NONE)
+		else if (Parts[i].Blend != 0)
 		{
 			trans = GetBlendMap(Parts[i].Blend, blendwork);
 		}

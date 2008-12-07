@@ -145,6 +145,8 @@ FxExpression *ParseParameter(FScanner &sc, PClass *cls, char type, bool constant
 
 	case 'X':
 	case 'x':
+	case 'Y':
+	case 'y':
 		x = ParseExpression (sc, cls);
 		if (constant && !x->isConstant())
 		{
@@ -190,7 +192,7 @@ static void ParseConstant (FScanner &sc, PSymbolTable * symt, PClass *cls)
 		else
 		{
 			sym->ValueType = VAL_Float;
-			sym->Value = val.GetFloat();
+			sym->Float = val.GetFloat();
 		}
 		if (symt->AddSymbol (sym) == NULL)
 		{
@@ -654,7 +656,7 @@ static bool ParsePropertyParams(FScanner &sc, FPropertyInfo *prop, AActor *defau
 	// call the handler
 	try
 	{
-		prop->Handler(defaults, bag, &params[0]);
+		prop->Handler(defaults, bag.Info, bag, &params[0]);
 	}
 	catch (CRecoverableError &error)
 	{
@@ -713,7 +715,7 @@ static void ParseActorProperty(FScanner &sc, Baggage &bag)
 	}
 	else if (MatchString(propname, statenames) != -1)
 	{
-		bag.statedef.AddState(propname, CheckState (sc, bag.Info->Class));
+		bag.statedef.SetStateLabel(propname, CheckState (sc, bag.Info->Class));
 	}
 	else
 	{
@@ -782,8 +784,11 @@ static void ParseActionDef (FScanner &sc, PClass *cls)
 			{
 			case TK_Bool:
 			case TK_Int:
-			case TK_Float:
 				type = 'x';
+				break;
+
+			case TK_Float:
+				type = 'y';
 				break;
 
 			case TK_Sound:		type = 's';		break;
@@ -940,7 +945,10 @@ static FActorInfo *ParseActorHeader(FScanner &sc, Baggage *bag)
 
 	try
 	{
-		FActorInfo *info =  CreateNewActor(sc, typeName, parentName, replaceName, DoomEdNum, native);
+		FActorInfo *info =  CreateNewActor(typeName, parentName, native);
+		info->DoomEdNum = DoomEdNum > 0? DoomEdNum : -1;
+		SetReplacement(info, replaceName);
+
 		ResetBaggage (bag, info->Class->ParentClass);
 		bag->Info = info;
 		bag->Lumpnum = sc.LumpNum;
@@ -989,8 +997,6 @@ static void ParseActor(FScanner &sc)
 			break;
 
 		case TK_Identifier:
-			// other identifier related checks here
-		case TK_Projectile:	// special case: both keyword and property name
 			ParseActorProperty(sc, bag);
 			break;
 
@@ -1047,18 +1053,6 @@ void ParseDecorate (FScanner &sc)
 			ParseEnum (sc, &GlobalSymbols, NULL);
 			break;
 
-		case TK_Pickup:
-			ParseOldDecoration (sc, DEF_Pickup);
-			break;
-
-		case TK_Breakable:
-			ParseOldDecoration (sc, DEF_BreakableDecoration);
-			break;
-
-		case TK_Projectile:
-			ParseOldDecoration (sc, DEF_Projectile);
-			break;
-
 		case TK_Native:
 			ParseVariable(sc, &GlobalSymbols, NULL);
 			break;
@@ -1079,7 +1073,18 @@ void ParseDecorate (FScanner &sc)
 				ParseActor (sc);
 				break;
 			}
-
+			else if (sc.Compare("PICKUP"))
+			{
+				ParseOldDecoration (sc, DEF_Pickup);
+			}
+			else if (sc.Compare("BREAKABLE"))
+			{
+				ParseOldDecoration (sc, DEF_BreakableDecoration);
+			}
+			else if (sc.Compare("PROJECTILE"))
+			{
+				ParseOldDecoration (sc, DEF_Projectile);
+			}
 		default:
 			// without the option of game filters following, anything but an opening brace
 			// here means a syntax error.

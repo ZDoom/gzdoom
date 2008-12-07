@@ -299,7 +299,8 @@ public:
 	{
 		for (unsigned int i = 0; i < TArray<T,TT>::Size(); ++i)
 		{
-			delete (*this)[i];
+			if ((*this)[i] != NULL) 
+				delete (*this)[i];
 		}
 	}
 };

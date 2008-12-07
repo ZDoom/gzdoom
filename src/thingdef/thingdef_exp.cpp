@@ -336,101 +336,92 @@ static FxExpression *ParseExpression0 (FScanner &sc, const PClass *cls)
 	{
 		return new FxConstant(sc.Float, scpos);
 	}
+	else if (sc.CheckToken(TK_Random))
+	{
+		FRandom *rng;
+
+		if (sc.CheckToken('['))
+		{
+			sc.MustGetToken(TK_Identifier);
+			rng = FRandom::StaticFindRNG(sc.String);
+			sc.MustGetToken(']');
+		}
+		else
+		{
+			rng = &pr_exrandom;
+		}
+		sc.MustGetToken('(');
+
+		FxExpression *min = ParseExpressionM (sc, cls);
+		sc.MustGetToken(',');
+		FxExpression *max = ParseExpressionM (sc, cls);
+		sc.MustGetToken(')');
+
+		return new FxRandom(rng, min, max, sc);
+	}
+	else if (sc.CheckToken(TK_Random2))
+	{
+		FRandom *rng;
+
+		if (sc.CheckToken('['))
+		{
+			sc.MustGetToken(TK_Identifier);
+			rng = FRandom::StaticFindRNG(sc.String);
+			sc.MustGetToken(']');
+		}
+		else
+		{
+			rng = &pr_exrandom;
+		}
+
+		sc.MustGetToken('(');
+
+		FxExpression *mask = NULL;
+
+		if (!sc.CheckToken(')'))
+		{
+			mask = ParseExpressionM(sc, cls);
+			sc.MustGetToken(')');
+		}
+		return new FxRandom2(rng, mask, sc);
+	}
+	else if (sc.CheckToken(TK_Abs))
+	{
+		sc.MustGetToken('(');
+		FxExpression *x = ParseExpressionM (sc, cls);
+		sc.MustGetToken(')');
+		return new FxAbs(x); 
+	}
 	else if (sc.CheckToken(TK_Identifier))
 	{
 		FName identifier = FName(sc.String);
-		switch (identifier)
+		if (sc.CheckToken('('))
 		{
-		case NAME_Random:
-		{
-			FRandom *rng;
-
-			if (sc.CheckToken('['))
+			FArgumentList *args = NULL;
+			try
 			{
-				sc.MustGetToken(TK_Identifier);
-				rng = FRandom::StaticFindRNG(sc.String);
-				sc.MustGetToken(']');
-			}
-			else
-			{
-				rng = &pr_exrandom;
-			}
-			sc.MustGetToken('(');
-
-			FxExpression *min = ParseExpressionM (sc, cls);
-			sc.MustGetToken(',');
-			FxExpression *max = ParseExpressionM (sc, cls);
-			sc.MustGetToken(')');
-
-			return new FxRandom(rng, min, max, sc);
-		}
-		break;
-
-		case NAME_Random2:
-		{
-			FRandom *rng;
-
-			if (sc.CheckToken('['))
-			{
-				sc.MustGetToken(TK_Identifier);
-				rng = FRandom::StaticFindRNG(sc.String);
-				sc.MustGetToken(']');
-			}
-			else
-			{
-				rng = &pr_exrandom;
-			}
-
-			sc.MustGetToken('(');
-
-			FxExpression *mask = NULL;
-
-			if (!sc.CheckToken(')'))
-			{
-				mask = ParseExpressionM(sc, cls);
-				sc.MustGetToken(')');
-			}
-			return new FxRandom2(rng, mask, sc);
-		}
-		break;
-
-		case NAME_Abs:
-		{
-			sc.MustGetToken('(');
-			FxExpression *x = ParseExpressionM (sc, cls);
-			sc.MustGetToken(')');
-			return new FxAbs(x); 
-		}
-
-		default:
-			if (sc.CheckToken('('))
-			{
-				FArgumentList *args = NULL;
-				try
+				if (!sc.CheckToken(')'))
 				{
-					if (!sc.CheckToken(')'))
+					args = new FArgumentList;
+					do
 					{
-						args = new FArgumentList;
-						do
-						{
-							args->Push(ParseExpressionM (sc, cls));
+						args->Push(ParseExpressionM (sc, cls));
 
-						}
-						while (sc.CheckToken(','));
-						sc.MustGetToken(')');
 					}
-					return new FxFunctionCall(NULL, identifier, args, sc);
+					while (sc.CheckToken(','));
+					sc.MustGetToken(')');
 				}
-				catch (...)
-				{
-					delete args;
-					throw;
-				}
-			}	
-			else
-			{
-				return new FxIdentifier(identifier, sc);
+				return new FxFunctionCall(NULL, identifier, args, sc);
 			}
+			catch (...)
+			{
+				delete args;
+				throw;
+			}
+		}	
+		else
+		{
+			return new FxIdentifier(identifier, sc);
 		}
 	}
 	else

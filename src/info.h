@@ -29,37 +29,6 @@
 ** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **---------------------------------------------------------------------------
 **
-** Important restrictions because of the way FState is structured:
-**
-** The range of Frame is [0,63]. Since sprite naming conventions
-** are even more restrictive than this, this isn't something to
-** really worry about.
-**
-** The range of Tics is [-1,65534]. If Misc1 is important, then
-** the range of Tics is reduced to [-1,254], because Misc1 also
-** doubles as the high byte of the tic.
-**
-** The range of Misc1 is [-128,127] and Misc2's range is [0,255].
-**
-** When compiled with Visual C++, this struct is 16 bytes. With
-** any other compiler (assuming a 32-bit architecture), it is 20 bytes.
-** This is because with VC++, I can use the charizing operator to
-** initialize the name array to exactly 4 chars. If GCC would
-** compile something like char t = "PLYR"[0]; as char t = 'P'; then GCC
-** could also use the 16-byte version. Unfortunately, GCC compiles it
-** more like:
-**
-** char t;
-** void initializer () {
-**     static const char str[]="PLYR";
-**     t = str[0];
-** }
-**
-** While this does allow the use of a 16-byte FState, the additional
-** code amounts to more than 4 bytes.
-**
-** If C++ would allow char name[4] = "PLYR"; without an error (as C does),
-** I could just initialize the name as a regular string and be done with it.
 */
 
 #ifndef __INFO_H__

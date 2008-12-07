@@ -142,11 +142,11 @@ std2:
 
 		/* other DECORATE top level keywords */
 		'#include'					{ RET(TK_Include); }
-		'pickup'					{ RET(TK_Pickup); }
-		'breakable'					{ RET(TK_Breakable); }
-		'projectile'				{ RET(TK_Projectile); }
 		'fixed_t'					{ RET(TK_Fixed_t); }
 		'angle_t'					{ RET(TK_Angle_t); }
+		'abs'						{ RET(TK_Abs); }
+		'random'					{ RET(TK_Random); }
+		'random2'					{ RET(TK_Random2); }
 
 		L (L|D)*					{ RET(TK_Identifier); }
 

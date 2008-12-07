@@ -78,8 +78,7 @@ PSymbolTable		 GlobalSymbols;
 // Starts a new actor definition
 //
 //==========================================================================
-FActorInfo *CreateNewActor(const FScriptPosition &sc, FName typeName, FName parentName, FName replaceName, 
-								  int DoomEdNum, bool native)
+FActorInfo *CreateNewActor(FName typeName, FName parentName, bool native)
 {
 	const PClass *replacee = NULL;
 	PClass *ti = NULL;
@@ -93,31 +92,15 @@ FActorInfo *CreateNewActor(const FScriptPosition &sc, FName typeName, FName pare
 
 		if (parent == NULL)
 		{
-			sc.Message(MSG_FATAL, "Parent type '%s' not found in %s", parentName.GetChars(), typeName.GetChars());
+			I_Error( "Parent type '%s' not found in %s", parentName.GetChars(), typeName.GetChars());
 		}
 		else if (!parent->IsDescendantOf(RUNTIME_CLASS(AActor)))
 		{
-			sc.Message(MSG_FATAL, "Parent type '%s' is not an actor in %s", parentName.GetChars(), typeName.GetChars());
+			I_Error( "Parent type '%s' is not an actor in %s", parentName.GetChars(), typeName.GetChars());
 		}
 		else if (parent->ActorInfo == NULL)
 		{
-			sc.Message(MSG_FATAL, "uninitialized parent type '%s' in %s", parentName.GetChars(), typeName.GetChars());
-		}
-	}
-
-	// Check for "replaces"
-	if (replaceName != NAME_None)
-	{
-		// Get actor name
-		replacee = PClass::FindClass (replaceName);
-
-		if (replacee == NULL)
-		{
-			sc.Message(MSG_FATAL, "Replaced type '%s' not found in %s", replaceName.GetChars(), typeName.GetChars());
-		}
-		else if (replacee->ActorInfo == NULL)
-		{
-			sc.Message(MSG_FATAL, "Replaced type '%s' is not an actor in %s", replaceName.GetChars(), typeName.GetChars());
+			I_Error( "uninitialized parent type '%s' in %s", parentName.GetChars(), typeName.GetChars());
 		}
 	}
 
@@ -126,15 +109,15 @@ FActorInfo *CreateNewActor(const FScriptPosition &sc, FName typeName, FName pare
 		ti = (PClass*)PClass::FindClass(typeName);
 		if (ti == NULL)
 		{
-			sc.Message(MSG_FATAL, "Unknown native class '%s'", typeName.GetChars());
+			I_Error( "Unknown native class '%s'", typeName.GetChars());
 		}
 		else if (ti != RUNTIME_CLASS(AActor) && ti->ParentClass->NativeClass() != parent->NativeClass())
 		{
-			sc.Message(MSG_FATAL, "Native class '%s' does not inherit from '%s'", typeName.GetChars(), parentName.GetChars());
+			I_Error( "Native class '%s' does not inherit from '%s'", typeName.GetChars(), parentName.GetChars());
 		}
 		else if (ti->ActorInfo != NULL)
 		{
-			sc.Message(MSG_FATAL, "Redefinition of internal class '%s'", typeName.GetChars());
+			I_Error( "Redefinition of internal class '%s'", typeName.GetChars());
 		}
 		ti->InitializeActorInfo();
 		info = ti->ActorInfo;
@@ -145,7 +128,6 @@ FActorInfo *CreateNewActor(const FScriptPosition &sc, FName typeName, FName pare
 		info = ti->ActorInfo;
 	}
 
-	info->DoomEdNum = -1;
 	if (parent->ActorInfo->DamageFactors != NULL)
 	{
 		// copy damage factors from parent
@@ -158,15 +140,40 @@ FActorInfo *CreateNewActor(const FScriptPosition &sc, FName typeName, FName pare
 		info->PainChances = new PainChanceList;
 		*info->PainChances = *parent->ActorInfo->PainChances;
 	}
+	info->Replacee = info->Replacement = NULL;
+	info->DoomEdNum = -1;
+	return info;
+}
 
-	if (replacee != NULL)
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
+void SetReplacement(FActorInfo *info, FName replaceName)
+{
+	// Check for "replaces"
+	if (replaceName != NAME_None)
 	{
-		replacee->ActorInfo->Replacement = ti->ActorInfo;
-		ti->ActorInfo->Replacee = replacee->ActorInfo;
+		// Get actor name
+		const PClass *replacee = PClass::FindClass (replaceName);
+
+		if (replacee == NULL)
+		{
+			I_Error ("Replaced type '%s' not found in %s", replaceName.GetChars(), info->Class->TypeName.GetChars());
+		}
+		else if (replacee->ActorInfo == NULL)
+		{
+			I_Error ("Replaced type '%s' is not an actor in %s", replaceName.GetChars(), info->Class->TypeName.GetChars());
+		}
+		if (replacee != NULL)
+		{
+			replacee->ActorInfo->Replacement = info;
+			info->Replacee = replacee->ActorInfo;
+		}
 	}
 
-	if (DoomEdNum > 0) info->DoomEdNum = DoomEdNum;
-	return info;
 }
 
 //==========================================================================
@@ -181,14 +188,14 @@ void FinishActor(const FScriptPosition &sc, FActorInfo *info, Baggage &bag)
 
 	try
 	{
-		bag.statedef.FinishStates (info, defaults, bag.StateArray);
+		bag.statedef.FinishStates (info, defaults);
 	}
 	catch (CRecoverableError &err)
 	{
 		sc.Message(MSG_FATAL, "%s", err.GetMessage());
 	}
 	bag.statedef.InstallStates (info, defaults);
-	bag.StateArray.Clear ();
+	bag.statedef.MakeStateDefines(NULL);
 	if (bag.DropItemSet)
 	{
 		if (bag.DropItemList == NULL)

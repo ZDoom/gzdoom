@@ -441,9 +441,9 @@ void InitPalette ()
 		shade = DesaturateColormap[m];
 		for (c = 0; c < 256; c++)
 		{
-			intensity = GPalette.BaseColors[c].r * 77 +
+			intensity = (GPalette.BaseColors[c].r * 77 +
 						GPalette.BaseColors[c].g * 143 +
-						GPalette.BaseColors[c].b * 37;
+						GPalette.BaseColors[c].b * 37) / 255;
 
 			int r = (GPalette.BaseColors[c].r * (31-m) + intensity *m) / 31;
 			int g = (GPalette.BaseColors[c].g * (31-m) + intensity *m) / 31;

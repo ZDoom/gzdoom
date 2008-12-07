@@ -63,7 +63,7 @@
 // creates an empty parameter list for a parameterized function call
 //
 //==========================================================================
-static int PrepareStateParameters(FState * state, int numparams, const PClass *cls)
+int PrepareStateParameters(FState * state, int numparams, const PClass *cls)
 {
 	int paramindex=StateParams.Reserve(numparams, cls);
 	state->ParameterIndex = paramindex+1;
@@ -76,7 +76,7 @@ static int PrepareStateParameters(FState * state, int numparams, const PClass *c
 // handles action specials as code pointers
 //
 //==========================================================================
-bool DoActionSpecials(FScanner &sc, FState & state, bool multistate, int * statecount, Baggage &bag)
+bool DoActionSpecials(FScanner &sc, FState & state, Baggage &bag)
 {
 	int i;
 	int min_args, max_args;
@@ -150,15 +150,10 @@ static FString ParseStateString(FScanner &sc)
 // parses a state block
 //
 //==========================================================================
-int ParseStates(FScanner &sc, FActorInfo * actor, AActor * defaults, Baggage &bag)
+void ParseStates(FScanner &sc, FActorInfo * actor, AActor * defaults, Baggage &bag)
 {
 	FString statestring;
-	intptr_t count = 0;
 	FState state;
-	FState * laststate = NULL;
-	intptr_t lastlabel = -1;
-	int minrequiredstate = -1;
-	int spriteindex = 0;
 	char lastsprite[5]="";
 
 	sc.MustGetStringName ("{");
@@ -177,17 +172,7 @@ do_goto:
 				statestring += '+';
 				statestring += sc.String;
 			}
-			// copy the text - this must be resolved later!
-			if (laststate != NULL)
-			{ // Following a state definition: Modify it.
-				laststate->NextState = (FState*)copystring(statestring);	
-				laststate->DefineFlags = SDF_LABEL;
-			}
-			else if (lastlabel >= 0)
-			{ // Following a label: Retarget it.
-				bag.statedef.RetargetStates (count+1, statestring);
-			}
-			else
+			if (!bag.statedef.SetGotoLabel(statestring))
 			{
 				sc.ScriptError("GOTO before first state");
 			}
@@ -195,15 +180,7 @@ do_goto:
 		else if (!statestring.CompareNoCase("STOP"))
 		{
 do_stop:
-			if (laststate!=NULL)
-			{
-				laststate->DefineFlags = SDF_STOP;
-			}
-			else if (lastlabel >=0)
-			{
-				bag.statedef.RetargetStates (count+1, NULL);
-			}
-			else
+			if (!bag.statedef.SetStop())
 			{
 				sc.ScriptError("STOP before first state");
 				continue;
@@ -211,35 +188,28 @@ do_stop:
 		}
 		else if (!statestring.CompareNoCase("WAIT") || !statestring.CompareNoCase("FAIL"))
 		{
-			if (!laststate) 
+			if (!bag.statedef.SetWait())
 			{
 				sc.ScriptError("%s before first state", sc.String);
 				continue;
 			}
-			laststate->DefineFlags = SDF_WAIT;
 		}
 		else if (!statestring.CompareNoCase("LOOP"))
 		{
-			if (!laststate) 
+			if (!bag.statedef.SetLoop())
 			{
 				sc.ScriptError("LOOP before first state");
 				continue;
 			}
-			laststate->NextState=(FState*)(lastlabel+1);
-			laststate->DefineFlags = SDF_INDEX;
 		}
 		else
 		{
-			const char * statestrp;
-
 			sc.MustGetString();
 			if (sc.Compare (":"))
 			{
-				laststate = NULL;
 				do
 				{
-					lastlabel = count;
-					bag.statedef.AddState(statestring, (FState *) (count+1), SDF_INDEX);
+					bag.statedef.AddStateLabel(statestring);
 					statestring = ParseStateString(sc);
 					if (!statestring.CompareNoCase("GOTO"))
 					{
@@ -261,25 +231,11 @@ do_stop:
 				sc.ScriptError ("Sprite names must be exactly 4 characters\n");
 			}
 
-			statestring.ToUpper();
-			if (strcmp(statestring, lastsprite))
-			{
-				strcpy(lastsprite, statestring);
-				spriteindex = GetSpriteIndex(lastsprite);
-			}
-
-			state.sprite = spriteindex;
+			state.sprite = GetSpriteIndex(statestring);
 			state.Misc1 = state.Misc2 = 0;
 			state.ParameterIndex = 0;
 			sc.MustGetString();
-			statestring = (sc.String+1);
-			statestrp = statestring;
-			state.Frame = (*sc.String & 223)-'A';
-			if ((*sc.String & 223)<'A' || (*sc.String & 223)>']')
-			{
-				sc.ScriptError ("Frames must be A-Z, [, \\, or ]");
-				state.Frame=0;
-			}
+			statestring = sc.String;
 
 			sc.MustGetNumber();
 			state.Tics = clamp<int>(sc.Number, -1, 32767);
@@ -307,10 +263,8 @@ do_stop:
 				// Make the action name lowercase to satisfy the gperf hashers
 				strlwr (sc.String);
 
-				int minreq = count;
-				if (DoActionSpecials(sc, state, !statestring.IsEmpty(), &minreq, bag))
+				if (DoActionSpecials(sc, state, bag))
 				{
-					if (minreq>minrequiredstate) minrequiredstate=minreq;
 					goto endofstate;
 				}
 
@@ -360,7 +314,7 @@ do_stop:
 							if ((*params == 'l' || *params == 'L') && sc.CheckNumber())
 							{
 								// Special case: State label as an offset
-								if (sc.Number > 0 && strlen(statestring)>0)
+								if (sc.Number > 0 && statestring.Len() > 1)
 								{
 									sc.ScriptError("You cannot use state jumps commands with a jump offset on multistate definitions\n");
 								}
@@ -371,7 +325,7 @@ do_stop:
 									sc.ScriptError("Negative jump offsets are not allowed");
 								}
 
-								x = new FxStateByIndex(count+v, sc);
+								x = new FxStateByIndex(bag.statedef.GetStateCount() + v, sc);
 							}
 							else
 							{
@@ -420,26 +374,12 @@ do_stop:
 			}
 			sc.UnGet();
 endofstate:
-			bag.StateArray.Push(state);
-			while (*statestrp)
+			if (!bag.statedef.AddStates(&state, statestring))
 			{
-				int frame=((*statestrp++)&223)-'A';
-
-				if (frame<0 || frame>28)
-				{
-					sc.ScriptError ("Frames must be A-Z, [, \\, or ]");
-					frame=0;
-				}
-
-				state.Frame=(state.Frame&(SF_FULLBRIGHT))|frame;
-				bag.StateArray.Push(state);
-				count++;
+				sc.ScriptError ("Invalid frame character string '%s'", statestring.GetChars());
 			}
-			laststate=&bag.StateArray[count];
-			count++;
 		}
 	}
 	sc.SetEscape(true);	// re-enable escape sequences
-	return count;
 }
 

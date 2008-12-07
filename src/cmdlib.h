@@ -55,4 +55,6 @@ int strbin (char *str);
 
 void CreatePath(const char * fn);
 
+FString ExpandEnvVars(const char *searchpathstring);
+
 #endif

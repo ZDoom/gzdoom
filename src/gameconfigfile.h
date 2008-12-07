@@ -2,7 +2,7 @@
 ** gameconfigfile.h
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2006 Randy Heit
+** Copyright 1998-2008 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -56,6 +56,7 @@ public:
 
 protected:
 	void WriteCommentHeader (FILE *file) const;
+	void CreateStandardAutoExec (const char *section, bool start);
 
 private:
 	static void MigrateStub (const char *pathname, FConfigFile *config, void *userdata);

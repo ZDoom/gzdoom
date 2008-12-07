@@ -1,3 +1,13 @@
+December 6, 2008
+- Moved ExpandEnvVars() from d_main.cpp to cmdlib.cpp.
+- AutoExec paths now support the same variable expansion as the search paths.
+  Additionally, on Windows, the default autoexec path is now relative to
+  $PROGDIR, rather than using a fixed path to the executable's current
+  directory.
+- All usable Autoload and AutoExec sections are now created at the top of
+  the config file along with some brief explanatory notes so they are
+  readily visible to anyone who wants to edit them.
+
 December 6, 2008  (Changes by Graf Zahl)
 - Fixed: G_DoPlayDemo did not free the demobuffer or the CVAR backups when it
   failed to start the demo.
@@ -19,7 +29,8 @@ December 1, 2008  (Changes by Graf Zahl)
 
 December 1, 2008
 - Restored the multiplayer scoreboard's former centering so that it doesn't
-  look awful on widescreen intermissions.
+  look awful on widescreen intermissions. Also changed the column widths to
+  be font-dependant rather than fixed proportions of the screen width.
 - Fixed horizontal positioning of 'finished' on the Raven games when scaled.
 
 November 30, 2008  (Changes by Graf Zahl)

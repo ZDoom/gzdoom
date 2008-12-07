@@ -2,7 +2,7 @@
 ** configfile.h
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2006 Randy Heit
+** Copyright 1998-2008 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -50,12 +50,17 @@ public:
 	FConfigFile &operator= (const FConfigFile &other);
 
 	bool HaveSections () { return Sections != NULL; }
+	void CreateSectionAtStart (const char *name);
+	void MoveSectionToStart (const char *name);
+	void SetSectionNote (const char *section, const char *note);
+	void SetSectionNote (const char *note);
 	bool SetSection (const char *section, bool allowCreate=false);
 	bool SetFirstSection ();
 	bool SetNextSection ();
 	const char *GetCurrentSection () const;
 	void ClearCurrentSection ();
 
+	bool SectionIsEmpty ();
 	bool NextInSection (const char *&key, const char *&value);
 	const char *GetValueForKey (const char *key) const;
 	void SetValueForKey (const char *key, const char *value, bool duplicates=false);
@@ -86,6 +91,7 @@ private:
 		FConfigEntry *RootEntry;
 		FConfigEntry **LastEntryPtr;
 		FConfigSection *Next;
+		FString Note;
 		char Name[1];	// + length of name
 	};
 
@@ -99,6 +105,7 @@ private:
 	FConfigEntry *FindEntry (FConfigSection *section, const char *key) const;
 	FConfigSection *NewConfigSection (const char *name);
 	FConfigEntry *NewConfigEntry (FConfigSection *section, const char *key, const char *value);
+	void SetSectionNote (FConfigSection *section, const char *note);
 
 public:
 	class Position

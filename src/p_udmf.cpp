@@ -924,6 +924,10 @@ struct UDMFParser
 					Flag(sec->Flags, SECF_SILENT, key);
 					break;
 
+				case NAME_NoRespawn:
+					Flag(sec->Flags, SECF_NORESPAWN, key);
+					break;
+
 				case NAME_Nofallingdamage:
 					Flag(sec->Flags, SECF_NOFALLINGDAMAGE, key);
 					break;

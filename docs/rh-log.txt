@@ -1,3 +1,11 @@
+December 12, 2008  (Changes by Graf Zahl)
+- Added a SECF_NORESPAWN flag for sectors that prevents players from being respawned
+  in such a sector. As a workaround for current map formats a new actor
+  (DoomEdNum 9041) was added that can set the extended sector flags without the
+  use of ACS and sector tags. The new flag can also be set with Sector_ChangeFlags.
+- Fixed: Players ignored MF2_TELESTOMP and always telefragged what was in the way.
+- Fixed: Actors with MF5_NOINTERACTION were not affected by the time freezer.
+
 December 7, 2008  (Changes by Graf Zahl)
 - Added a strbin1 function that does the same as strbin but creates a copy 
   instead of overwriting the original string. ACS performing this operation

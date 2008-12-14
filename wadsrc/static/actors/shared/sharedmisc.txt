@@ -146,4 +146,12 @@ ACTOR FastProjectile native
 	Projectile
 }
 
+// Sector flag setter -----------------------------------------------------------
 
+ACTOR SectorFlagSetter 9041 native
+{
+	+NOBLOCKMAP
+	+NOGRAVITY
+	+DONTSPLASH
+	RenderStyle None
+}

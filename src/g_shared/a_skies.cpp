@@ -228,3 +228,19 @@ void ASectorSilencer::Destroy ()
 	Sector->Flags &= ~SECF_SILENT;
 	Super::Destroy ();
 }
+
+class ASectorFlagSetter : public AActor
+{
+	DECLARE_CLASS (ASectorFlagSetter, AActor)
+public:
+	void BeginPlay ();
+};
+
+IMPLEMENT_CLASS (ASectorFlagSetter)
+
+void ASectorFlagSetter::BeginPlay ()
+{
+	Super::BeginPlay ();
+	Sector->Flags |= args[0];
+}
+

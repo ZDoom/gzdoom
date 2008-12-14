@@ -245,7 +245,7 @@ bool P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefr
 					
 	spechit.Clear ();
 
-	bool StompAlwaysFrags = thing->player || (thing->flags2 & MF2_TELESTOMP) || 
+	bool StompAlwaysFrags = (thing->flags2 & MF2_TELESTOMP) || 
 							(level.flags & LEVEL_MONSTERSTELEFRAG) || telefrag;
 
 	FBoundingBox box(x, y, thing->radius);

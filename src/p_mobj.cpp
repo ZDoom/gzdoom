@@ -2484,7 +2484,20 @@ void AActor::Tick ()
 
 	if (flags5 & MF5_NOINTERACTION)
 	{
-		// only do the minimally necessary things here to save time.
+		// only do the minimally necessary things here to save time:
+		// Check the time freezer
+		// apply momentum
+		// ensure that the actor is not linked into the blockmap
+
+		if (!(flags5 & MF5_NOTIMEFREEZE))
+		{
+			//Added by MC: Freeze mode.
+			if (bglobal.freeze || level.flags & LEVEL_FROZEN)
+			{
+				return;
+			}
+		}
+
 		UnlinkFromWorld ();
 		flags |= MF_NOBLOCKMAP;
 		x += momx;
@@ -2523,6 +2536,7 @@ void AActor::Tick ()
 				return;
 			}
 		}
+
 
 		if (cl_rockettrails & 2)
 		{
@@ -3464,6 +3478,7 @@ APlayerPawn *P_SpawnPlayer (FMapThing *mthing, bool tempplayer)
 		( deathmatch == false ) &&
 		( gameaction != ga_worlddone ) &&
 		( p->mo != NULL ) && 
+		( !(p->mo->Sector->Flags & SECF_NORESPAWN) ) &&
 		( (p->mo->Sector->special & 255) != Damage_InstantDeath ))
 	{
 		spawn_x = p->mo->x;

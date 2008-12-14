@@ -134,8 +134,8 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       yscaleceiling = <float>;        // Y texture scale of ceiling texture, Default = 1.0.
       rotationfloor = <float>;        // Rotation of floor texture in degrees, Default = 0.0.
       rotationceiling = <float>;      // Rotation of ceiling texture in degrees, Default = 0.0.
-      lightfloor = <float>;           // The floor's light level. Default is 0.
-      lightceiling = <float>;         // The ceiling's light level. Default is 0.
+      lightfloor = <integer>;         // The floor's light level. Default is 0.
+      lightceiling = <integer>;       // The ceiling's light level. Default is 0.
       lightfloorabsolute = <bool>;    // true = 'lightfloor' is an absolute value. Default is 
                                       // relative to the owning sector's light level.
       lightceilingabsolute = <bool>;  // true = 'lightceiling' is an absolute value. Default is 
@@ -146,7 +146,8 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       desaturation = <float>;         // Color desaturation factor. 0 = none, 1 = full, default = 0.
       silent = <bool>;                // Actors in this sector make no sound,
       nofallingdamage = <bool>;		  // Falling damage is disabled in this sector
-      dropactors = <bool>;			  // Actors drop with instantly moving floors
+      dropactors = <bool>;            // Actors drop with instantly moving floors (*)
+	  norespawn = <bool>;             // Players can not respawn in this sector
       
       * Note about dropactors
 
@@ -217,6 +218,12 @@ Added 'nofakecontrast' option to sidedefs.
 
 1.2 21.08.2008
 Added smooth lighting option to linedefs
+
+1.3 12.12.2008
+Added NoRespawn sector flag
+Fixed lightfloor and lightceiling properties for sectors. They are of type 
+integer, not float
+
 
 ===============================================================================
 EOF

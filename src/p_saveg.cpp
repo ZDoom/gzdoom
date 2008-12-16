@@ -147,7 +147,7 @@ static void ReadMultiplePlayers (FArchive &arc, int numPlayers, int numPlayersNo
 	char **nametemp = new char *[numPlayers];
 	player_t *playertemp = new player_t[numPlayers];
 	BYTE *tempPlayerUsed = new BYTE[numPlayers];
-	BYTE *playerUsed = new BYTE[MAXPLAYERS];
+	BYTE playerUsed[MAXPLAYERS];
 
 	for (i = 0; i < numPlayers; ++i)
 	{
@@ -202,7 +202,9 @@ static void ReadMultiplePlayers (FArchive &arc, int numPlayers, int numPlayersNo
 			}
 		}
 
-		// Make sure any extra players don't have actors spawned yet.
+		// Make sure any extra players don't have actors spawned yet. Happens if the players
+		// present now got the same slots as they had in the save, but there are not as many
+		// as there were in the save.
 		for (j = 0; j < MAXPLAYERS; ++j)
 		{
 			if (playerUsed[j] == 0)
@@ -214,9 +216,19 @@ static void ReadMultiplePlayers (FArchive &arc, int numPlayers, int numPlayersNo
 				}
 			}
 		}
+
+		// Remove any temp players that were not used. Happens if there are fewer players
+		// than there were in the save, and they got shuffled.
+		for (i = 0; i < numPlayers; ++i)
+		{
+			if (tempPlayerUsed[i] == 0)
+			{
+				playertemp[i].mo->Destroy();
+				playertemp[i].mo = NULL;
+			}
+		}
 	}
 
-	delete[] playerUsed;
 	delete[] tempPlayerUsed;
 	delete[] playertemp;
 	for (i = 0; i < numPlayers; ++i)
@@ -252,6 +264,11 @@ static void CopyPlayer (player_t *dst, player_t *src, const char *name)
 	else
 	{
 		dst->userinfo = uibackup;
+	}
+	// Make sure the player pawn points to the proper player struct.
+	if (dst->mo != NULL)
+	{
+		dst->mo->player = dst;
 	}
 }
 

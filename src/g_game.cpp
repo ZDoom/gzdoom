@@ -900,6 +900,7 @@ void G_Ticker ()
 			G_DoNewGame ();
 			break;
 		case ga_loadgame:
+		case ga_autoloadgame:
 			G_DoLoadGame ();
 			break;
 		case ga_savegame:
@@ -1424,7 +1425,7 @@ void G_DoReborn (int playernum, bool freshbot)
 		if (BackupSaveName.Len() > 0 && FileExists (BackupSaveName.GetChars()))
 		{ // Load game from the last point it was saved
 			savename = BackupSaveName;
-			gameaction = ga_loadgame;
+			gameaction = ga_autoloadgame;
 		}
 		else
 		{ // Reload the level from scratch
@@ -1698,8 +1699,11 @@ void G_DoLoadGame ()
 	char *text = NULL;
 	char *map;
 
+	if (gameaction != ga_autoloadgame)
+	{
+		demoplayback = false;
+	}
 	gameaction = ga_nothing;
-	demoplayback = false;
 
 	FILE *stdfile = fopen (savename.GetChars(), "rb");
 	if (stdfile == NULL)

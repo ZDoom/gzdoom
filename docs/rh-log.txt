@@ -1,4 +1,7 @@
 December 15, 2008
+- Fixed: Autoloading a game (e.g. respawning after dying in single player)
+  during demo playback prematurely ended demo control of the player.
+- Fixed: Loading a multiplayer save with only one player crashed.
 - Changed the co-op intermission screen to draw the stats with the small font.
 - Added Karate Chris's patch to optionally specify an angle offset for
   summoning.

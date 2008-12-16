@@ -46,6 +46,7 @@
 #include "v_font.h"
 #include "v_palette.h"
 #include "d_player.h"
+#include "hu_stuff.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -171,6 +172,41 @@ void HU_DrawScores (player_t *player)
 
 //==========================================================================
 //
+// HU_GetPlayerWidths
+//
+// Returns the widest player name and class icon.
+//
+//==========================================================================
+
+void HU_GetPlayerWidths(int &maxnamewidth, int &maxscorewidth)
+{
+	maxnamewidth = SmallFont->StringWidth("Name");
+	maxscorewidth = 0;
+
+	for (int i = 0; i < MAXPLAYERS; i++)
+	{
+		if (playeringame[i])
+		{
+			int width = SmallFont->StringWidth(players[i].userinfo.netname);
+			if (width > maxnamewidth)
+			{
+				maxnamewidth = width;
+			}
+			if (players[i].mo->ScoreIcon.isValid())
+			{
+				FTexture *pic = TexMan[players[i].mo->ScoreIcon];
+				width = pic->GetWidth() - pic->GetScaledLeftOffset() + 2;
+				if (width > maxscorewidth)
+				{
+					maxscorewidth = width;
+				}
+			}
+		}
+	}
+}
+
+//==========================================================================
+//
 // HU_DoDrawScores
 //
 //==========================================================================
@@ -197,28 +233,7 @@ static void HU_DoDrawScores (player_t *player, player_t *sortedplayers[MAXPLAYER
 		color = sb_cooperative_headingcolor;
 	}
 
-	maxnamewidth = SmallFont->StringWidth("Name");
-	maxscorewidth = 0;
-	for (i = 0; i < MAXPLAYERS; i++)
-	{
-		if (playeringame[i])
-		{
-			int width = SmallFont->StringWidth (players[i].userinfo.netname);
-			if (width > maxnamewidth)
-			{
-				maxnamewidth = width;
-			}
-			if (players[i].mo->ScoreIcon.isValid())
-			{
-				FTexture *pic = TexMan[players[i].mo->ScoreIcon];
-				width = pic->GetWidth() - pic->GetScaledLeftOffset() + 2;
-				if (width > maxscorewidth)
-				{
-					maxscorewidth = width;
-				}
-			}
-		}
-	}
+	HU_GetPlayerWidths(maxnamewidth, maxscorewidth);
 
 	bottom = gamestate != GS_INTERMISSION ? ST_Y : SCREENHEIGHT;
 	y = MAX(48*CleanYfac, (bottom - MAXPLAYERS * (height + CleanYfac + 1)) / 2);
@@ -352,7 +367,6 @@ static void HU_DrawTimeRemaining (int y)
 
 static void HU_DrawPlayer (player_t *player, bool highlight, int col1, int col2, int col3, int col4, int maxnamewidth, int y, int height)
 {
-	float h, s, v, r, g, b;
 	int color;
 	char str[80];
 
@@ -368,40 +382,8 @@ static void HU_DrawPlayer (player_t *player, bool highlight, int col1, int col2,
 	col3 += col1;
 	col4 += col1;
 
-	if (teamplay && deathmatch)
-	{
-		if (TEAMINFO_IsValidTeam (player->userinfo.team))
-			color = teams[player->userinfo.team].GetTextColor();
-		else
-			color = CR_GREY;
-	}
-	else
-	{
-		if (!highlight)
-		{
-			if (demoplayback && player == &players[consoleplayer])
-			{
-				color = CR_GOLD;
-			}
-			else
-			{
-				color = deathmatch ? sb_deathmatch_otherplayercolor : sb_cooperative_otherplayercolor;
-			}
-		}
-		else
-		{
-			color = deathmatch ? sb_deathmatch_yourplayercolor : sb_cooperative_yourplayercolor;
-		}
-	}
-
-	D_GetPlayerColor (int(player - players), &h, &s, &v);
-	HSVtoRGB (&r, &g, &b, h, s, v);
-
-	screen->Clear (col1, y, col1 + 24*CleanXfac, y + height, -1,
-		MAKEARGB(255,clamp(int(r*255.f),0,255),
-					 clamp(int(g*255.f),0,255),
-					 clamp(int(b*255.f),0,255)));
-
+	color = HU_GetRowColor(player, highlight);
+	HU_DrawColorBar(col1, y, height, (int)(player - players));
 	mysnprintf (str, countof(str), "%d", deathmatch ? player->fragcount : player->killcount);
 
 	screen->DrawText (SmallFont, color, col2, y, player->playerstate == PST_DEAD && !deathmatch ? "DEAD" : str,
@@ -423,5 +405,59 @@ static void HU_DrawPlayer (player_t *player, bool highlight, int col1, int col2,
 		FTexture *pic = TexMan[teams[player->userinfo.team].logo];
 		screen->DrawTexture (pic, col1 - (pic->GetWidth() + 2) * CleanXfac, y,
 			DTA_CleanNoMove, true, TAG_DONE);
+	}
+}
+
+//==========================================================================
+//
+// HU_DrawColorBar
+//
+//==========================================================================
+
+void HU_DrawColorBar(int x, int y, int height, int playernum)
+{
+	float h, s, v, r, g, b;
+
+	D_GetPlayerColor (playernum, &h, &s, &v);
+	HSVtoRGB (&r, &g, &b, h, s, v);
+
+	screen->Clear (x, y, x + 24*CleanXfac, y + height, -1,
+		MAKEARGB(255,clamp(int(r*255.f),0,255),
+					 clamp(int(g*255.f),0,255),
+					 clamp(int(b*255.f),0,255)));
+}
+
+//==========================================================================
+//
+// HU_GetRowColor
+//
+//==========================================================================
+
+int HU_GetRowColor(player_t *player, bool highlight)
+{
+	if (teamplay && deathmatch)
+	{
+		if (TEAMINFO_IsValidTeam (player->userinfo.team))
+			return teams[player->userinfo.team].GetTextColor();
+		else
+			return CR_GREY;
+	}
+	else
+	{
+		if (!highlight)
+		{
+			if (demoplayback && player == &players[consoleplayer])
+			{
+				return CR_GOLD;
+			}
+			else
+			{
+				return deathmatch ? sb_deathmatch_otherplayercolor : sb_cooperative_otherplayercolor;
+			}
+		}
+		else
+		{
+			return deathmatch ? sb_deathmatch_yourplayercolor : sb_cooperative_yourplayercolor;
+		}
 	}
 }

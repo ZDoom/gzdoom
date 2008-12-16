@@ -1,4 +1,5 @@
 December 15, 2008
+- Changed the co-op intermission screen to draw the stats with the small font.
 - Added Karate Chris's patch to optionally specify an angle offset for
   summoning.
 - Added Karate Chris's fix for Serpent Staff vampirism on teammates.

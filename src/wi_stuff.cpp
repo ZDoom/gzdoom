@@ -680,13 +680,13 @@ void WI_drawBackground()
 //
 //====================================================================
 
-static int WI_DrawCharPatch (int charcode, int x, int y, EColorRange translation=CR_UNTRANSLATED)
+static int WI_DrawCharPatch (FFont *font, int charcode, int x, int y, EColorRange translation=CR_UNTRANSLATED, bool nomove=false)
 {
 	int width;
-	screen->DrawTexture(IntermissionFont->GetChar(charcode, &width), x, y,
-		DTA_Clean, true,
+	screen->DrawTexture(font->GetChar(charcode, &width), x, y,
+		nomove ? DTA_CleanNoMove : DTA_Clean, true,
 		DTA_ShadowAlpha, (gameinfo.gametype & GAME_DoomChex) ? 0 : FRACUNIT/2,
-		DTA_Translation, IntermissionFont->GetColorTranslation(translation),
+		DTA_Translation, font->GetColorTranslation(translation),
 		TAG_DONE);
 	return x - width;
 }
@@ -739,7 +739,7 @@ int WI_DrawName(int y, const char *levelname)
 // A level name patch can be specified for all games now, not just Doom.
 //
 //====================================================================
-void WI_drawLF ()
+int WI_drawLF ()
 {
 	int y = WI_TITLEY * CleanYfac;
 	int midx = screen->GetWidth() / 2;
@@ -765,14 +765,17 @@ void WI_drawLF ()
 		if (gameinfo.gametype & GAME_DoomChex) 
 		{
 			screen->DrawTexture(finished, midx - finished->GetWidth()*CleanXfac/2, y, DTA_CleanNoMove, true, TAG_DONE);
+			return y + finished->GetHeight() * CleanYfac;
 		}
 		else 
 		{
 			screen->DrawText(font, CR_WHITE,
 				midx - font->StringWidth("finished")*CleanXfac/2, y - 4*CleanYfac, "finished", 
 				DTA_CleanNoMove, true, TAG_DONE);
+			return y + font->GetHeight() * CleanYfac;
 		}
 	}
+	return y;
 }
 
 
@@ -877,13 +880,18 @@ void WI_drawOnLnode( int   n, FTexture * c[] ,int numc)
 // Returns new x position, that is, the left edge of the number.
 //
 //====================================================================
-int WI_drawNum (int x, int y, int n, int digits, bool leadingzeros=true, EColorRange translation=CR_UNTRANSLATED)
+int WI_drawNum (FFont *font, int x, int y, int n, int digits, bool leadingzeros=true, EColorRange translation=CR_UNTRANSLATED)
 {
-	int fontwidth = IntermissionFont->GetCharWidth('3');
+	int fontwidth = font->GetCharWidth('3');
 	char text[8];
 	int len;
 	char *text_p;
+	bool nomove = font != IntermissionFont;
 
+	if (nomove)
+	{
+		fontwidth *= CleanXfac;
+	}
 	if (leadingzeros)
 	{
 		len = mysnprintf (text, countof(text), "%0*d", digits, n);
@@ -901,11 +909,11 @@ int WI_drawNum (int x, int y, int n, int digits, bool leadingzeros=true, EColorR
 		if (*text_p >= '0' && *text_p <= '9')
 		{
 			x -= fontwidth;
-			WI_DrawCharPatch(*text_p, x + (fontwidth - IntermissionFont->GetCharWidth(*text_p)) / 2, y, translation);
+			WI_DrawCharPatch(font, *text_p, x + (fontwidth - font->GetCharWidth(*text_p)) / 2, y, translation, nomove);
 		}
 		else
 		{
-			WI_DrawCharPatch(*text_p, x - IntermissionFont->GetCharWidth(*text_p), y, translation);
+			WI_DrawCharPatch(font, *text_p, x - font->GetCharWidth(*text_p), y, translation, nomove);
 			x -= fontwidth;
 		}
 	}
@@ -922,27 +930,38 @@ int WI_drawNum (int x, int y, int n, int digits, bool leadingzeros=true, EColorR
 //
 //====================================================================
 
-void WI_drawPercent (int x, int y, int p, int b, bool show_total=true)
+void WI_drawPercent (FFont *font, int x, int y, int p, int b, bool show_total=true, EColorRange color=CR_UNTRANSLATED)
 {
 	if (p < 0)
 		return;
 
 	if (wi_percents)
 	{
-		WI_DrawCharPatch('%', x, y, CR_UNTRANSLATED);
-		WI_drawNum(x, y, b == 0 ? 100 : p * 100 / b, -1, false);
+		if (font != IntermissionFont)
+		{
+			x -= font->GetCharWidth('%') * CleanXfac;
+		}
+		else
+		{
+			x -= font->GetCharWidth('%');
+		}
+		screen->DrawText(font, color, x, y, "%", font != IntermissionFont ? DTA_CleanNoMove : DTA_Clean, true, TAG_DONE);
+		if (font != IntermissionFont)
+		{
+			x -= 2*CleanXfac;
+		}
+		WI_drawNum(font, x, y, b == 0 ? 100 : p * 100 / b, -1, false, color);
 	}
 	else
 	{
-		x += IntermissionFont->GetCharWidth('%');
 		if (show_total)
 		{
-			x = WI_drawNum(x, y, b, 2, false);
-			x -= IntermissionFont->GetCharWidth('/');
-			screen->DrawText (IntermissionFont, CR_UNTRANSLATED, x, y, "/",
+			x = WI_drawNum(font, x, y, b, 2, false);
+			x -= font->GetCharWidth('/');
+			screen->DrawText (IntermissionFont, color, x, y, "/",
 				DTA_Clean, true, TAG_DONE);
 		}
-		WI_drawNum (x, y, p, -1, false);
+		WI_drawNum (font, x, y, p, -1, false, color);
 	}
 }
 
@@ -985,13 +1004,13 @@ void WI_drawTime (int x, int y, int t, bool no_sucks=false)
 	int num_spacing = IntermissionFont->GetCharWidth('3');
 	int colon_spacing = IntermissionFont->GetCharWidth(':');
 
-	x = WI_drawNum (x, y, seconds, 2) - 1;
-	WI_DrawCharPatch (':', x -= colon_spacing, y);
-	x = WI_drawNum (x, y, minutes, 2, hours!=0);
+	x = WI_drawNum (IntermissionFont, x, y, seconds, 2) - 1;
+	WI_DrawCharPatch (IntermissionFont, ':', x -= colon_spacing, y);
+	x = WI_drawNum (IntermissionFont, x, y, minutes, 2, hours!=0);
 	if (hours)
 	{
-		WI_DrawCharPatch (':', x -= colon_spacing, y);
-		WI_drawNum (x, y, hours, 2);
+		WI_DrawCharPatch (IntermissionFont, ':', x -= colon_spacing, y);
+		WI_drawNum (IntermissionFont, x, y, hours, 2);
 	}
 }
 
@@ -1508,116 +1527,107 @@ void WI_updateNetgameStats ()
 
 void WI_drawNetgameStats ()
 {
-	int i, x, y;
+	int i, x, y, height;
+	int maxnamewidth, maxscorewidth;
 	int pwidth = IntermissionFont->GetCharWidth('%');
+	int icon_x, name_x, kills_x, bonus_x, secret_x;
+	int bonus_len, secret_len;
+	int missed_kills, missed_items, missed_secrets;
+	EColorRange color;
+	const char *bonus_label;
 
 	// draw animated background
 	WI_drawBackground(); 
 
-	WI_drawLF();
+	y = WI_drawLF();
 
-	if (gameinfo.gametype & GAME_DoomChex)
+	HU_GetPlayerWidths(maxnamewidth, maxscorewidth);
+	height = SmallFont->GetHeight() * CleanYfac;
+	y += 16*CleanYfac;
+
+	bonus_label = (gameinfo.gametype & GAME_Raven) ? "BONUS" : "ITEMS";
+	icon_x = (SmallFont->StringWidth("COLOR") + 8) * CleanXfac;
+	name_x = icon_x + maxscorewidth * CleanXfac;
+	kills_x = name_x + (maxnamewidth + SmallFont->StringWidth("XXXXX") + 8) * CleanXfac;
+	bonus_x = kills_x + ((bonus_len = SmallFont->StringWidth(bonus_label)) + 8) * CleanXfac;
+	secret_x = bonus_x + ((secret_len = SmallFont->StringWidth("SECRET")) + 8) * CleanXfac;
+
+	x = (SCREENWIDTH - secret_x) >> 1;
+	icon_x += x;
+	name_x += x;
+	kills_x += x;
+	bonus_x += x;
+	secret_x += x;
+
+	color = (gameinfo.gametype & GAME_Raven) ? CR_GREEN : CR_UNTRANSLATED;
+
+	screen->DrawText(SmallFont, color, x, y, "COLOR", DTA_CleanNoMove, true, TAG_DONE);
+	screen->DrawText(SmallFont, color, name_x, y, "NAME", DTA_CleanNoMove, true, TAG_DONE);
+	screen->DrawText(SmallFont, color, kills_x - SmallFont->StringWidth("KILLS")*CleanXfac, y, "KILLS", DTA_CleanNoMove, true, TAG_DONE);
+	screen->DrawText(SmallFont, color, bonus_x - bonus_len*CleanXfac, y, bonus_label, DTA_CleanNoMove, true, TAG_DONE);
+	screen->DrawText(SmallFont, color, secret_x - secret_len*CleanXfac, y, "SECRET", DTA_CleanNoMove, true, TAG_DONE);
+	y += height + 6 * CleanYfac;
+
+	missed_kills = wbs->maxkills;
+	missed_items = wbs->maxitems;
+	missed_secrets = wbs->maxsecret;
+
+	// Draw lines for each player
+	for (i = 0; i < MAXPLAYERS; ++i)
 	{
-		// draw stat titles (top line)
-		screen->DrawTexture (kills, NG_STATSX+NG_SPACINGX-kills->GetWidth(), NG_STATSY, DTA_Clean, true, TAG_DONE);
-		screen->DrawTexture (items, NG_STATSX+2*NG_SPACINGX-items->GetWidth(), NG_STATSY, DTA_Clean, true, TAG_DONE);
-		screen->DrawTexture (secret, NG_STATSX+3*NG_SPACINGX-secret->GetWidth(), NG_STATSY, DTA_Clean, true, TAG_DONE);
+		player_t *player;
 
-		if (dofrags)
-			screen->DrawTexture (frags, NG_STATSX+4*NG_SPACINGX-frags->GetWidth(), NG_STATSY, DTA_Clean, true, TAG_DONE);
+		if (!playeringame[i])
+			continue;
 
-		// draw stats
-		y = NG_STATSY + kills->GetHeight();
-
-		for (i = 0; i < MAXPLAYERS; i++)
+		player = &players[i];
+		HU_DrawColorBar(x, y, height, i);
+		color = (EColorRange)HU_GetRowColor(player, i == consoleplayer);
+		if (player->mo->ScoreIcon.isValid())
 		{
-			if (y >= 200-WI_SPACINGY)
-				break;
-
-			if (!playeringame[i])
-				continue;
-
-			x = NG_STATSX;
-			// [RH] Only use one graphic for the face backgrounds
-			screen->DrawTexture (p, x - p->GetWidth(), y,
-				DTA_Translation, translationtables[TRANSLATION_Players](i),
-				DTA_Clean, true,
-				TAG_DONE);
-
-			if (i == me)
-				screen->DrawTexture (star, x - p->GetWidth(), y,
-					DTA_Translation, translationtables[TRANSLATION_Players](i),
-					DTA_Clean, true,
-					TAG_DONE);
-
-			screen->DrawText(SmallFont, CR_GRAY, x + 3, y + 2, players[i].userinfo.netname, DTA_Clean, true, TAG_DONE);
-			x += NG_SPACINGX;
-			WI_drawPercent (x-pwidth, y+10, cnt_kills[i], wbs->maxkills, false);	x += NG_SPACINGX;
-			WI_drawPercent (x-pwidth, y+10, cnt_items[i], wbs->maxitems, false);	x += NG_SPACINGX;
-			WI_drawPercent (x-pwidth, y+10, cnt_secret[i], wbs->maxsecret, false);	x += NG_SPACINGX;
-
-			if (dofrags)
-				WI_drawNum(x, y+10, cnt_frags[i], -1, false);
-
-			y += WI_SPACINGY;
+			FTexture *pic = TexMan[player->mo->ScoreIcon];
+			screen->DrawTexture(pic, icon_x, y, DTA_CleanNoMove, true, TAG_DONE);
 		}
-
-		// [RH] Draw totals
-		x = NG_STATSX;
-		y += 10;
-		screen->DrawText(BigFont, CR_CYAN, x - BigFont->StringWidth("TOTALS"), y, "TOTALS", DTA_Clean, true, TAG_DONE);
-		x += NG_SPACINGX - pwidth + IntermissionFont->GetCharWidth('%');
-		WI_drawNum(x, y, wbs->maxkills, -1, false, CR_CYAN);	x += NG_SPACINGX;
-		WI_drawNum(x, y, wbs->maxitems, -1, false, CR_CYAN);	x += NG_SPACINGX;
-		WI_drawNum(x, y, wbs->maxsecret, -1, false, CR_CYAN);
+		screen->DrawText(SmallFont, color, name_x, y, player->userinfo.netname, DTA_CleanNoMove, true, TAG_DONE);
+		WI_drawPercent(SmallFont, kills_x, y, cnt_kills[i], wbs->maxkills, false, color);
+		missed_kills -= cnt_kills[i];
+		if (ng_state >= 4)
+		{
+			WI_drawPercent(SmallFont, bonus_x, y, cnt_items[i], wbs->maxitems, false, color);
+			missed_items -= cnt_items[i];
+			if (ng_state >= 6)
+			{
+				WI_drawPercent(SmallFont, secret_x, y, cnt_secret[i], wbs->maxsecret, false, color);
+				missed_secrets -= cnt_secret[i];
+			}
+		}
+		y += height + CleanYfac;
 	}
-	else 
+
+	// Draw "MISSED" line
+	y += 5 * CleanYfac;
+	screen->DrawText(SmallFont, CR_DARKGRAY, name_x, y, "MISSED", DTA_CleanNoMove, true, TAG_DONE);
+	WI_drawPercent(SmallFont, kills_x, y, missed_kills, wbs->maxkills, false, CR_DARKGRAY);
+	if (ng_state >= 4)
 	{
-		if (gameinfo.gametype & GAME_Raven)
+		WI_drawPercent(SmallFont, bonus_x, y, missed_items, wbs->maxitems, false, CR_DARKGRAY);
+		if (ng_state >= 6)
 		{
-			screen->DrawText (BigFont, CR_UNTRANSLATED, 95, 35, "KILLS", DTA_Clean, true, DTA_Shadow, true, TAG_DONE);
-			screen->DrawText (BigFont, CR_UNTRANSLATED, 155, 35, "BONUS", DTA_Clean, true, DTA_Shadow, true, TAG_DONE);
-			screen->DrawText (BigFont, CR_UNTRANSLATED, 232, 35, "SECRET", DTA_Clean, true, DTA_Shadow, true, TAG_DONE);
-			y = 50;
+			WI_drawPercent(SmallFont, secret_x, y, missed_secrets, wbs->maxsecret, false, CR_DARKGRAY);
 		}
-		else
-		{
-			screen->DrawText (SmallFont, CR_UNTRANSLATED, 95, 50, "KILLS", DTA_Clean, true, DTA_Shadow, true, TAG_DONE);
-			screen->DrawText (SmallFont, CR_UNTRANSLATED, 155, 50, "BONUS", DTA_Clean, true, DTA_Shadow, true, TAG_DONE);
-			screen->DrawText (SmallFont, CR_UNTRANSLATED, 232, 50, "SECRET", DTA_Clean, true, DTA_Shadow, true, TAG_DONE);
-			y = 62;
-		}
-		WI_drawLF ();	
+	}
 
-		for (i = 0; i < MAXPLAYERS; i++)
+	// Draw "TOTAL" line
+	y += height + 5 * CleanYfac;
+	color = (gameinfo.gametype & GAME_Raven) ? CR_GREEN : CR_UNTRANSLATED;
+	screen->DrawText(SmallFont, color, name_x, y, "TOTAL", DTA_CleanNoMove, true, TAG_DONE);
+	WI_drawNum(SmallFont, kills_x, y, wbs->maxkills, 0, false, color);
+	if (ng_state >= 4)
+	{
+		WI_drawNum(SmallFont, bonus_x, y, wbs->maxitems, 0, false, color);
+		if (ng_state >= 6)
 		{
-			if (y >= 200-WI_SPACINGY)
-				break;
-			if (!playeringame[i])
-				continue;
-			if (gameinfo.gametype == GAME_Heretic)
-			{
-				screen->DrawTexture (star, 25, y,
-					DTA_Translation, translationtables[TRANSLATION_Players](i),
-					DTA_Clean, true,
-					TAG_DONE);
-			}
-			else	// Hexen and Strife don't have a face graphic for this.
-			{
-				char pstr[3] = {'P', '1'+i, 0};
-				screen->DrawText(BigFont, CR_UNTRANSLATED, 25, y+10, pstr, DTA_Clean, true, TAG_DONE);
-			}
-
-			WI_drawPercent (127, y+10, cnt_kills[i], wbs->maxkills);
-			if (ng_state >= 4)
-			{
-				WI_drawPercent (202, y+10, cnt_items[i], wbs->maxitems);
-				if (ng_state >= 6)
-				{
-					WI_drawPercent (279, y+10, cnt_secret[i], wbs->maxsecret);
-				}
-			}
-			y += 37;
+			WI_drawNum(SmallFont, secret_x, y, wbs->maxsecret, 0, false, color);
 		}
 	}
 }
@@ -1768,13 +1778,13 @@ void WI_drawStats (void)
 	if (gameinfo.gametype & GAME_DoomChex)
 	{
 		screen->DrawTexture (kills, SP_STATSX, SP_STATSY, DTA_Clean, true, TAG_DONE);
-		WI_drawPercent (320 - SP_STATSX, SP_STATSY, cnt_kills[0], wbs->maxkills);
+		WI_drawPercent (IntermissionFont, 320 - SP_STATSX, SP_STATSY, cnt_kills[0], wbs->maxkills);
 
 		screen->DrawTexture (items, SP_STATSX, SP_STATSY+lh, DTA_Clean, true, TAG_DONE);
-		WI_drawPercent (320 - SP_STATSX, SP_STATSY+lh, cnt_items[0], wbs->maxitems);
+		WI_drawPercent (IntermissionFont, 320 - SP_STATSX, SP_STATSY+lh, cnt_items[0], wbs->maxitems);
 
 		screen->DrawTexture (sp_secret, SP_STATSX, SP_STATSY+2*lh, DTA_Clean, true, TAG_DONE);
-		WI_drawPercent(320 - SP_STATSX, SP_STATSY+2*lh, cnt_secret[0], wbs->maxsecret);
+		WI_drawPercent (IntermissionFont, 320 - SP_STATSX, SP_STATSY+2*lh, cnt_secret[0], wbs->maxsecret);
 
 		screen->DrawTexture (timepic, SP_TIMEX, SP_TIMEY, DTA_Clean, true, TAG_DONE);
 		WI_drawTime (160 - SP_TIMEX, SP_TIMEY, cnt_time);
@@ -1800,21 +1810,21 @@ void WI_drawStats (void)
 		int countpos = gameinfo.gametype==GAME_Strife? 185:200;
 		if (sp_state >= 2)
 		{
-			WI_drawNum (countpos, 65, cnt_kills[0], 3, false);
-			WI_DrawCharPatch ('/', slashpos, 65);
-			WI_drawNum (248, 65, wbs->maxkills, 3, false);
+			WI_drawNum (IntermissionFont, countpos, 65, cnt_kills[0], 3, false);
+			WI_DrawCharPatch (IntermissionFont, '/', slashpos, 65);
+			WI_drawNum (IntermissionFont, 248, 65, wbs->maxkills, 3, false);
 		}
 		if (sp_state >= 4)
 		{
-			WI_drawNum (countpos, 90, cnt_items[0], 3, false);
-			WI_DrawCharPatch ('/', slashpos, 90);
-			WI_drawNum (248, 90, wbs->maxitems, 3, false);
+			WI_drawNum (IntermissionFont, countpos, 90, cnt_items[0], 3, false);
+			WI_DrawCharPatch (IntermissionFont, '/', slashpos, 90);
+			WI_drawNum (IntermissionFont, 248, 90, wbs->maxitems, 3, false);
 		}
 		if (sp_state >= 6)
 		{
-			WI_drawNum (countpos, 115, cnt_secret[0], 3, false);
-			WI_DrawCharPatch ('/', slashpos, 115);
-			WI_drawNum (248, 115, wbs->maxsecret, 3, false);
+			WI_drawNum (IntermissionFont, countpos, 115, cnt_secret[0], 3, false);
+			WI_DrawCharPatch (IntermissionFont, '/', slashpos, 115);
+			WI_drawNum (IntermissionFont, 248, 115, wbs->maxsecret, 3, false);
 		}
 		if (sp_state >= 8)
 		{

@@ -1,3 +1,10 @@
+December 15, 2008
+- Increased maximum number of per-pattern rows for the XM loader from
+  256 to 1024 to deal with a module that otherwise would not load.
+- Removed the artificial restriction on not supporting Vorbis-compressed
+  samples in XMs if they are stereo, since it turns out that OggMod does
+  support them.
+
 December 12, 2008  (Changes by Graf Zahl)
 - Added a SECF_NORESPAWN flag for sectors that prevents players from being respawned
   in such a sector. As a workaround for current map formats a new actor

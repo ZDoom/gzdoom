@@ -2397,7 +2397,6 @@ short *FMODSoundRenderer::DecodeSample(int outlen, const void *coded, int sizeby
 	}
 	result = sound->getFormat(NULL, &format, &channels, NULL);
 	// TODO: Handle more formats if it proves necessary.
-	// Does OggMod work with stereo samples?
 	if (result != FMOD_OK || format != FMOD_SOUND_FORMAT_PCM16 || channels != 1)
 	{
 		sound->release();

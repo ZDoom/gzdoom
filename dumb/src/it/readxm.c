@@ -27,6 +27,7 @@
 #include <malloc.h>
 #include <assert.h>
 
+#define MAX_COLUMN_MEMORY		(1024*5)
 
 extern short *DUMBCALLBACK dumb_decode_vorbis(int outlen, const void *oggstream, int sizebytes);
 
@@ -211,8 +212,8 @@ static int it_xm_read_pattern(IT_PATTERN *pattern, DUMBFILE *f, int n_channels, 
 	if (size == 0)
 		return 0;
 
-	if (size > 1280 * n_channels) {
-		TRACE("XM error: pattern data size > %d bytes\n", 1280 * n_channels);
+	if (size > MAX_COLUMN_MEMORY * n_channels) {
+		TRACE("XM error: pattern data size > %d bytes\n", MAX_COLUMN_MEMORY * n_channels);
 		return -1;
 	}
 
@@ -636,8 +637,7 @@ static int it_xm_read_sample_data(IT_SAMPLE *sample, unsigned char roguebytes, D
 		return -1;
 
 	/* FMOD extension: Samples compressed with Ogg Vorbis */
-	if (!(sample->flags & IT_SAMPLE_STEREO) &&
-		!memcmp((char *)sample->data + 4, "OggS", 4) &&
+	if (!memcmp((char *)sample->data + 4, "OggS", 4) &&
 		!memcmp((char *)sample->data + 33, "vorbis", 7))
 	{
 		int32 outlen = ((unsigned char *)(sample->data))[0] |
@@ -859,7 +859,7 @@ static DUMB_IT_SIGDATA *it_xm_load_sigdata(DUMBFILE *f, int * version)
 			sigdata->pattern[i].entry = NULL;
 
 		{
-			unsigned char *buffer = malloc(1280 * n_channels); /* 256 rows * 5 bytes */
+			unsigned char *buffer = malloc(MAX_COLUMN_MEMORY * n_channels); /* 256 rows * 5 bytes */
 			if (!buffer) {
 				_dumb_it_unload_sigdata(sigdata);
 				return NULL;
@@ -1054,7 +1054,7 @@ static DUMB_IT_SIGDATA *it_xm_load_sigdata(DUMBFILE *f, int * version)
 			sigdata->pattern[i].entry = NULL;
 
 		{
-			unsigned char *buffer = malloc(1280 * n_channels); /* 256 rows * 5 bytes */
+			unsigned char *buffer = malloc(MAX_COLUMN_MEMORY * n_channels); /* 256 rows * 5 bytes */
 			if (!buffer) {
 				free(roguebytes);
 				_dumb_it_unload_sigdata(sigdata);

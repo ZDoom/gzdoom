@@ -371,7 +371,7 @@ CCMD (dumpmapthings)
 
 bool CheckCheatmode ();
 
-CCMD (summon)
+static void SummonActor (int command, int command2, FCommandLine argv)
 {
 	if (CheckCheatmode ())
 		return;
@@ -384,43 +384,25 @@ CCMD (summon)
 			Printf ("Unknown class '%s'\n", argv[1]);
 			return;
 		}
-		Net_WriteByte (DEM_SUMMON);
+		Net_WriteByte (argv.argc() > 2 ? command2 : command);
 		Net_WriteString (type->TypeName.GetChars());
+
+		if (argv.argc () > 2)
+			Net_WriteWord (atoi (argv[2]));
 	}
+}
+
+CCMD (summon)
+{
+	SummonActor (DEM_SUMMON, DEM_SUMMON2, argv);
 }
 
 CCMD (summonfriend)
 {
-	if (CheckCheatmode ())
-		return;
-
-	if (argv.argc() > 1)
-	{
-		const PClass *type = PClass::FindClass (argv[1]);
-		if (type == NULL)
-		{
-			Printf ("Unknown class '%s'\n", argv[1]);
-			return;
-		}
-		Net_WriteByte (DEM_SUMMONFRIEND);
-		Net_WriteString (type->TypeName.GetChars());
-	}
+	SummonActor (DEM_SUMMONFRIEND, DEM_SUMMONFRIEND2, argv);
 }
 
 CCMD (summonfoe)
 {
-	if (CheckCheatmode ())
-		return;
-
-	if (argv.argc() > 1)
-	{
-		const PClass *type = PClass::FindClass (argv[1]);
-		if (type == NULL)
-		{
-			Printf ("Unknown class '%s'\n", argv[1]);
-			return;
-		}
-		Net_WriteByte (DEM_SUMMONFOE);
-		Net_WriteString (type->TypeName.GetChars());
-	}
+	SummonActor (DEM_SUMMONFOE, DEM_SUMMONFOE2, argv);
 }

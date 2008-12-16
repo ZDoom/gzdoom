@@ -1377,76 +1377,74 @@ void AM_drawWalls (bool allmap)
 				// map secret sectors like Boom
 				AM_drawMline(&l, SecretSectorColor);
 			}
-			else if (!lines[i].backsector)
-			{
-				AM_drawMline(&l, WallColor);
+			else if (lines[i].flags & ML_SECRET)
+			{ // secret door
+				if (am_cheat != 0 && lines[i].backsector != NULL)
+					AM_drawMline(&l, SecretWallColor);
+			    else
+					AM_drawMline(&l, WallColor);
 			}
-			else
-			{
-				if (lines[i].flags & ML_SECRET)
-				{ // secret door
-					if (am_cheat != 0)
-						AM_drawMline(&l, SecretWallColor);
-				    else
-						AM_drawMline(&l, WallColor);
-				}
-				else if ((lines[i].special == Teleport ||
-					lines[i].special == Teleport_NoFog ||
-					lines[i].special == Teleport_ZombieChanger ||
-					lines[i].special == Teleport_Line) &&
-					(lines[i].activation & SPAC_PlayerActivate) &&
+			else if ((lines[i].special == Teleport ||
+				lines[i].special == Teleport_NoFog ||
+				lines[i].special == Teleport_ZombieChanger ||
+				lines[i].special == Teleport_Line) &&
+				(lines[i].activation & SPAC_PlayerActivate) &&
+				am_colorset == 0)
+			{ // intra-level teleporters
+				AM_drawMline(&l, IntraTeleportColor);
+			}
+			else if ((lines[i].special == Teleport_NewMap ||
+					 lines[i].special == Teleport_EndGame ||
+					 lines[i].special == Exit_Normal ||
+					 lines[i].special == Exit_Secret) &&
 					am_colorset == 0)
-				{ // intra-level teleporters
-					AM_drawMline(&l, IntraTeleportColor);
-				}
-				else if ((lines[i].special == Teleport_NewMap ||
-						 lines[i].special == Teleport_EndGame ||
-						 lines[i].special == Exit_Normal ||
-						 lines[i].special == Exit_Secret) &&
-						am_colorset == 0)
-				{ // inter-level/game-ending teleporters
-					AM_drawMline(&l, InterTeleportColor);
-				}
-				else if (lines[i].special == Door_LockedRaise ||
-						 lines[i].special == ACS_LockedExecute ||
-						 lines[i].special == ACS_LockedExecuteDoor ||
-						 (lines[i].special == Generic_Door && lines[i].args[4]!=0))
+			{ // inter-level/game-ending teleporters
+				AM_drawMline(&l, InterTeleportColor);
+			}
+			else if (lines[i].special == Door_LockedRaise ||
+					 lines[i].special == ACS_LockedExecute ||
+					 lines[i].special == ACS_LockedExecuteDoor ||
+					 (lines[i].special == Generic_Door && lines[i].args[4] !=0 ))
+			{
+				if (am_colorset == 0)
 				{
-					if (am_colorset == 0)
-					{
-						int P_GetMapColorForLock(int lock);
-						int lock;
+					int P_GetMapColorForLock(int lock);
+					int lock;
 
+					if (lines[i].special==Door_LockedRaise) lock=lines[i].args[3];
+					else lock=lines[i].args[4];
 
-						if (lines[i].special==Door_LockedRaise) lock=lines[i].args[3];
-						else lock=lines[i].args[4];
+					int color = P_GetMapColorForLock(lock);
 
-						int color = P_GetMapColorForLock(lock);
+					AMColor c;
 
-						AMColor c;
+					if (color >= 0)	c.FromRGB(RPART(color), GPART(color), BPART(color));
+					else c = LockedColor;
 
-						if (color >= 0)	c.FromRGB(RPART(color), GPART(color), BPART(color));
-						else c = LockedColor;
-
-						AM_drawMline (&l, c);
-					}
-					else
-						AM_drawMline (&l, LockedColor);  // locked special
+					AM_drawMline (&l, c);
 				}
-				else if (lines[i].backsector->floorplane
-					  != lines[i].frontsector->floorplane)
+				else
 				{
-					AM_drawMline(&l, FDWallColor); // floor level change
+					AM_drawMline (&l, LockedColor);  // locked special
 				}
-				else if (lines[i].backsector->ceilingplane
-					  != lines[i].frontsector->ceilingplane)
-				{
-					AM_drawMline(&l, CDWallColor); // ceiling level change
-				}
-				else if (am_cheat != 0)
-				{
-					AM_drawMline(&l, TSWallColor);
-				}
+			}
+			else if (lines[i].backsector == NULL)
+			{
+				AM_drawMline(&l, WallColor);	// one-sided wall
+			}
+			else if (lines[i].backsector->floorplane
+				  != lines[i].frontsector->floorplane)
+			{
+				AM_drawMline(&l, FDWallColor); // floor level change
+			}
+			else if (lines[i].backsector->ceilingplane
+				  != lines[i].frontsector->ceilingplane)
+			{
+				AM_drawMline(&l, CDWallColor); // ceiling level change
+			}
+			else if (am_cheat != 0)
+			{
+				AM_drawMline(&l, TSWallColor);
 			}
 		}
 		else if (allmap)

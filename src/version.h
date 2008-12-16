@@ -54,7 +54,7 @@
 // Version identifier for network games.
 // Bump it every time you do a release unless you're certain you
 // didn't change anything that will affect sync.
-#define NETGAMEVERSION 217
+#define NETGAMEVERSION 218
 
 // Version stored in the ini's [LastRun] section.
 // Bump it if you made some configuration change that you want to
@@ -64,7 +64,7 @@
 // Protocol version used in demos.
 // Bump it if you change existing DEM_ commands or add new ones.
 // Otherwise, it should be safe to leave it alone.
-#define DEMOGAMEVERSION 0x20D
+#define DEMOGAMEVERSION 0x20E
 
 // Minimum demo version we can play.
 // Bump it whenever you change or remove existing DEM_ commands.

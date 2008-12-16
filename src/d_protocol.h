@@ -148,6 +148,9 @@ enum EDemoCommand
 	DEM_DELCONTROLLER,	// 49 Player to remove from the controller list.
 	DEM_KILLCLASSCHEAT,	// 50 String: Class to kill.
 	DEM_CONVERSATION,	// 51 Make conversations work.
+	DEM_SUMMON2,		// 52 String: Thing to fabricate, WORD: angle offset
+	DEM_SUMMONFRIEND2,	// 53
+	DEM_SUMMONFOE2,		// 54
 };
 
 // The following are implemented by cht_DoCheat in m_cheat.cpp

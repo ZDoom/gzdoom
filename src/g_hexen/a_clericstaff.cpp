@@ -72,7 +72,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CStaffCheck)
 			P_LineAttack (pmo, angle, fixed_t(1.5*MELEERANGE), slope, damage, NAME_Melee, PClass::FindClass ("CStaffPuff"));
 			pmo->angle = R_PointToAngle2 (pmo->x, pmo->y, 
 				linetarget->x, linetarget->y);
-			if ((linetarget->player || linetarget->flags3&MF3_ISMONSTER)
+			if (((linetarget->player && (!linetarget->IsTeammate (pmo) || level.teamdamage != 0))|| linetarget->flags3&MF3_ISMONSTER)
 				&& (!(linetarget->flags2&(MF2_DORMANT+MF2_INVULNERABLE))))
 			{
 				newLife = player->health+(damage>>3);
@@ -96,7 +96,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CStaffCheck)
 			P_LineAttack (pmo, angle, fixed_t(1.5*MELEERANGE), slope, damage, NAME_Melee, PClass::FindClass ("CStaffPuff"));
 			pmo->angle = R_PointToAngle2 (pmo->x, pmo->y, 
 				linetarget->x, linetarget->y);
-			if (linetarget->player || linetarget->flags3&MF3_ISMONSTER)
+			if ((linetarget->player && (!linetarget->IsTeammate (pmo) || level.teamdamage != 0)) || linetarget->flags3&MF3_ISMONSTER)
 			{
 				newLife = player->health+(damage>>4);
 				newLife = newLife > 100 ? 100 : newLife;

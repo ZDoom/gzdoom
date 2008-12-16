@@ -1,4 +1,9 @@
 December 15, 2008
+- Added Karate Chris's patch to optionally specify an angle offset for
+  summoning.
+- Added Karate Chris's fix for Serpent Staff vampirism on teammates.
+- Locks and teleporters now take precedence over one-sidedness for automap
+  coloring.
 - Increased maximum number of per-pattern rows for the XM loader from
   256 to 1024 to deal with a module that otherwise would not load.
 - Removed the artificial restriction on not supporting Vorbis-compressed

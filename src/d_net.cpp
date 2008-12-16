@@ -2113,6 +2113,9 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 	case DEM_SUMMON:
 	case DEM_SUMMONFRIEND:
 	case DEM_SUMMONFOE:
+	case DEM_SUMMON2:
+	case DEM_SUMMONFRIEND2:
+	case DEM_SUMMONFOE2:
 		{
 			const PClass *typeinfo;
 
@@ -2136,7 +2139,7 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 							source->z + 8 * FRACUNIT, ALLOW_REPLACE);
 						if (spawned != NULL)
 						{
-							if (type == DEM_SUMMONFRIEND)
+							if (type == DEM_SUMMONFRIEND || type == DEM_SUMMONFRIEND2)
 							{
 								if (spawned->CountsAsKill()) 
 								{
@@ -2146,11 +2149,16 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 								spawned->flags |= MF_FRIENDLY;
 								spawned->LastHeard = players[player].mo;
 							}
-							else if (type == DEM_SUMMONFOE)
+							else if (type == DEM_SUMMONFOE || type == DEM_SUMMONFOE2)
 							{
 								spawned->FriendPlayer = 0;
 								spawned->flags &= ~MF_FRIENDLY;
 							}
+						}
+						if (type >= DEM_SUMMON2 && type <= DEM_SUMMONFOE2)
+						{
+							int angle = ReadWord(stream);
+							spawned->angle = source->angle - (ANGLE_1 * angle);
 						}
 					}
 				}
@@ -2383,6 +2391,9 @@ void Net_SkipCommand (int type, BYTE **stream)
 
 		case DEM_GIVECHEAT:
 		case DEM_TAKECHEAT:
+		case DEM_SUMMON2:
+		case DEM_SUMMONFRIEND2:
+		case DEM_SUMMONFOE2:
 			skip = strlen ((char *)(*stream)) + 3;
 			break;
 

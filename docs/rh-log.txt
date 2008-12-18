@@ -1,3 +1,11 @@
+December 17, 2008
+- Fixed: Thing_ProjectileIntercept broke slightly when converted to the new
+  vector math routines (almost two years ago!) because the original code
+  multiplied down columns of the rotation matrix, but the new code multiplies
+  across rows of the matrix instead. This is remedied by flipping the matrix
+  across the x=y axis by reversing the sign of the sine value passed to the
+  matrix constructor.
+
 December 15, 2008
 - Fixed: Autoloading a game (e.g. respawning after dying in single player)
   during demo playback prematurely ended demo control of the player.

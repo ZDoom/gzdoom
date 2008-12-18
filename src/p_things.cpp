@@ -173,7 +173,7 @@ bool P_Thing_Move (int tid, AActor *source, int mapspot, bool fog)
 	return false;
 }
 
-bool P_Thing_Projectile (int tid, AActor *source, int type, const char * type_name, angle_t angle,
+bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_name, angle_t angle,
 	fixed_t speed, fixed_t vspeed, int dest, AActor *forcedest, int gravity, int newtid,
 	bool leadTarget)
 {
@@ -288,7 +288,7 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char * type_na
 							double ydotx = -aim | tvel;
 							double a = acos (clamp (ydotx / targspeed / dist, -1.0, 1.0));
 							double multiplier = double(pr_leadtarget.Random2())*0.1/255+1.1;
-							double sinb = clamp (targspeed*multiplier * sin(a) / fspeed, -1.0, 1.0);
+							double sinb = -clamp (targspeed*multiplier * sin(a) / fspeed, -1.0, 1.0);
 
 							// Use the cross product of two of the triangle's sides to get a
 							// rotation vector.

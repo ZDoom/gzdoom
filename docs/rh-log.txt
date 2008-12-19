@@ -1,3 +1,10 @@
+December 18, 2008
+- Decal changes as per Xaser's suggestions: Smaller decal for PhoenixFX2,
+  CrossbowFX2 and MaceFX4 were missing decals, and HornRodFX2 gets a whole
+  new decal.
+- Fixed: bfgscrc2.png had some holes in the middle that did not look so good.
+  (From previously being handled through WinTex, maybe?)
+
 December 17, 2008
 - Fixed: Thing_ProjectileIntercept broke slightly when converted to the new
   vector math routines (almost two years ago!) because the original code

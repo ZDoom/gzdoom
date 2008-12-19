@@ -772,6 +772,30 @@ decal CrossbowScorch2
 	randomflipy
 }
 
+/***** Phoenix Rod, flamethrower mode **************************************/
+
+decal PhoenixThrowerScorch
+{
+	pic CBALSCR1
+	shade "00 00 00"
+	x-scale 0.4
+	y-scale 0.4
+	randomflipx
+	randomflipy
+}
+
+/***** "Horn Rod", rain maker projectile ***********************************/
+
+decal HornyRainMaker
+{
+	pic TWIRL
+	shade "00 00 00"
+	x-scale 0.7
+	y-scale 0.7
+	randomflipx
+	randomflipy
+}
+
 /***** Centaur Scorches ****************************************************/
 
 decal CentaurScorch
@@ -990,15 +1014,17 @@ generator GoldWand			RailScorchLower
 generator GoldWandPowered		RailScorchLower
 generator GoldWandFX1			HImpScorch
 generator CrossbowFX1			CrossbowScorch
+generator CrossbowFX2			CrossbowScorch
 generator CrossbowFX3			CrossbowScorch2
 generator MaceFX1			BaronScorch
+generator MaceFX4			BFGScorch
 generator Blaster			RailScorchLower
 generator BlasterFX1			HImpScorch
 generator Ripper			HImpScorch
 generator HornRodFX1			PlasmaScorchLower
-generator HornRodFX2			PlasmaScorchLower
+generator HornRodFX2			HornyRainMaker
 generator PhoenixFX1			Scorch
-generator PhoenixFX2			Scorch
+generator PhoenixFX2			PhoenixThrowerScorch
 
 generator CStaffMissile			DoomImpScorch
 generator HammerMissile			Scorch

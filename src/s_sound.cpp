@@ -664,7 +664,7 @@ static void CalcPosVel(int type, const AActor *actor, const sector_t *sector,
 			break;
 
 		case SOURCE_Actor:
-			assert(actor != NULL);
+//			assert(actor != NULL);
 			if (actor != NULL)
 			{
 				x = actor->x;
@@ -715,14 +715,11 @@ static void CalcPosVel(int type, const AActor *actor, const sector_t *sector,
 	if (vel != NULL)
 	{
 		// Only actors maintain velocity information.
-		if (type == SOURCE_Actor)
+		if (type == SOURCE_Actor && actor != NULL)
 		{
-			if (actor != NULL)
-			{
-				vel->X = FIXED2FLOAT(actor->momx) * TICRATE;
-				vel->Y = FIXED2FLOAT(actor->momz) * TICRATE;
-				vel->Z = FIXED2FLOAT(actor->momy) * TICRATE;
-			}
+			vel->X = FIXED2FLOAT(actor->momx) * TICRATE;
+			vel->Y = FIXED2FLOAT(actor->momz) * TICRATE;
+			vel->Z = FIXED2FLOAT(actor->momy) * TICRATE;
 		}
 		else
 		{

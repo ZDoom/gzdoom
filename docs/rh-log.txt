@@ -1,3 +1,10 @@
+December 19, 2008
+- Fixed: OggMod passes the raw sample data to OggEnc for stereo samples, so
+  the resultant Vorbis stream is not actually stereo but mono with the right
+  channel after the left. The two need to be interleaved just like
+  uncompressed samples are.
+- Removed the pattern length limit in the XM reader.
+
 December 18, 2008
 - Decal changes as per Xaser's suggestions: Smaller decal for PhoenixFX2,
   CrossbowFX2 and MaceFX4 were missing decals, and HornRodFX2 gets a whole

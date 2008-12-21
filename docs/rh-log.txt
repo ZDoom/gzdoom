@@ -1,3 +1,8 @@
+December 20, 2008
+- OggMod improperly decodes the right channel of stereo samples when sending
+  them to OggEnc, so I have no choice but to convert them to mono by chopping
+  off the right channel and only using the left channel information.
+
 December 19, 2008
 - Fixed: OggMod passes the raw sample data to OggEnc for stereo samples, so
   the resultant Vorbis stream is not actually stereo but mono with the right

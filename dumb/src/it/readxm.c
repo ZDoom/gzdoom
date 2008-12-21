@@ -660,6 +660,18 @@ static int it_xm_read_sample_data(IT_SAMPLE *sample, unsigned char roguebytes, D
 			outlen <<= 1;
 		}
 
+		if (sample->flags & IT_SAMPLE_STEREO)
+		{
+			/* OggMod knows nothing of stereo samples and compresses them as mono,
+			 * screwing up the second channel. (Because for whatever reason,
+			 * ModPlug delta encodes them independantly, even though it presents
+			 * the sample as a double-length mono sound to other players.)
+			 */
+			sample->flags &= ~IT_SAMPLE_STEREO;
+			outlen >>= 1;
+			sample->loop_start >>= 1;
+			sample->loop_end >>= 1;
+		}
 		output = dumb_decode_vorbis(outlen, (char *)sample->data + 4, datasizebytes - 4);
 		if (output != NULL)
 		{
@@ -674,28 +686,6 @@ static int it_xm_read_sample_data(IT_SAMPLE *sample, unsigned char roguebytes, D
 			}
 
 			it_xm_fixup_sample_points(sample);
-			/* Stereo samples are still passed to OggEnc as mono sounds, just like
-			 * uncompressed samples, so we need to interleave them now. */
-			ibuffer = malloc(sample->length << 2);
-			if (ibuffer == NULL)
-			{
-				/* No memory => ignore stereo bits at the end */
-				sample->flags &= ~IT_SAMPLE_STEREO;
-			}
-			else
-			{
-				for (i = 0; i < sample->length; ++i)
-				{
-					((short *)ibuffer)[i*2]   = ((short *)sample->data)[i];
-					((short *)ibuffer)[i*2+1] = ((short *)sample->data)[i + sample->length];
-				}
-				for (i = 0; i < sample->length; ++i)
-				{
-					((short *)ibuffer)[i*2+1] -= ((short *)ibuffer)[sample->length*2 - 1];
-				}
-				free(sample->data);
-				sample->data = ibuffer;
-			}
 			return 0;
 		}
 		/* Decode failed, so assume it's normal sample data that just so
@@ -895,7 +885,9 @@ static DUMB_IT_SIGDATA *it_xm_load_sigdata(DUMBFILE *f, int * version)
 			int buffersize = 0;
 			for (i = 0; i < sigdata->n_patterns; i++) {
 				if (it_xm_read_pattern(&sigdata->pattern[i], f, n_channels, &buffer, &buffersize, * version) != 0) {
-					free(buffer);
+					if (buffer != NULL) {
+						free(buffer);
+					}
 					_dumb_it_unload_sigdata(sigdata);
 					return NULL;
 				}
@@ -1087,7 +1079,9 @@ static DUMB_IT_SIGDATA *it_xm_load_sigdata(DUMBFILE *f, int * version)
 			int buffersize = 0;
 			for (i = 0; i < sigdata->n_patterns; i++) {
 				if (it_xm_read_pattern(&sigdata->pattern[i], f, n_channels, &buffer, &buffersize, * version) != 0) {
-					free(buffer);
+					if (buffer != NULL) {
+						free(buffer);
+					}
 					free(roguebytes);
 					_dumb_it_unload_sigdata(sigdata);
 					return NULL;

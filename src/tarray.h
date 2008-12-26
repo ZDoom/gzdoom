@@ -149,6 +149,24 @@ public:
 			}
 		}
 	}
+
+	void Delete (unsigned int index, int deletecount)
+	{
+		if (index + deletecount > Count) deletecount = Count - index;
+		if (deletecount > 0)
+		{
+			for(int i = 0; i < deletecount; i++)
+			{
+				Array[index + i].~T();
+			}
+			Count -= deletecount;
+			if (index < Count)
+			{
+				memmove (&Array[index], &Array[index+deletecount], sizeof(T)*(Count - index));
+			}
+		}
+	}
+
 	// Inserts an item into the array, shifting elements as needed
 	void Insert (unsigned int index, const T &item)
 	{

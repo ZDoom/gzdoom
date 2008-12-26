@@ -129,7 +129,7 @@ struct FSpotList
 
 	ASpecialSpot *GetNextInList(int skipcounter)
 	{
-		if (++SkipCount > skipcounter)
+		if (Spots.Size() > 0 && ++SkipCount > skipcounter)
 		{
 			SkipCount = 0;
 

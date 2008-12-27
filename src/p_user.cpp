@@ -680,6 +680,31 @@ AWeapon *APlayerPawn::PickNewWeapon (const PClass *ammotype)
 	return best;
 }
 
+
+//===========================================================================
+//
+// APlayerPawn :: CheckWeaponSwitch
+//
+// Checks if weapons should be changed after picking up ammo
+//
+//===========================================================================
+
+void APlayerPawn::CheckWeaponSwitch(const PClass *ammotype)
+{
+	if (!player->userinfo.neverswitch &&
+		player->PendingWeapon == WP_NOCHANGE && 
+		(player->ReadyWeapon == NULL ||
+		 (player->ReadyWeapon->WeaponFlags & WIF_WIMPY_WEAPON)))
+	{
+		AWeapon *best = BestWeapon (ammotype);
+		if (best != NULL && (player->ReadyWeapon == NULL ||
+			best->SelectionOrder < player->ReadyWeapon->SelectionOrder))
+		{
+			player->PendingWeapon = best;
+		}
+	}
+}
+
 //===========================================================================
 //
 // APlayerPawn :: GiveDeathmatchInventory

@@ -325,7 +325,14 @@ do_stop:
 									sc.ScriptError("Negative jump offsets are not allowed");
 								}
 
-								x = new FxStateByIndex(bag.statedef.GetStateCount() + v, sc);
+								if (x > 0)
+								{
+									x = new FxStateByIndex(bag.statedef.GetStateCount() + v, sc);
+								}
+								else
+								{
+									x = new FxConstant((FState*)NULL, sc);
+								}
 							}
 							else
 							{

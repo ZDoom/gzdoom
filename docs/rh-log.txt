@@ -1,3 +1,11 @@
+December 27, 2008  (Changes by Graf Zahl)
+- Fixed: The correct player class was not remembered when the menu had both
+  a player class selection menu and an episode menu.
+- Fixed: AddToConsole could write outside its working buffer.
+- Fixed: 0 was no longer recognized as placeholder for 'no state' in A_Chase.
+- Fixed: When picking up weapons the code did not check if it should switch away
+  from weak weapons.
+
 December 20, 2008
 - OggMod improperly decodes the right channel of stereo samples when sending
   them to OggEnc, so I have no choice but to convert them to mono by chopping

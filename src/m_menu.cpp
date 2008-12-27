@@ -267,6 +267,8 @@ static FSaveGameNode	NewSaveNode;
 
 static int 	epi;				// Selected episode
 
+static const char *saved_playerclass = NULL;
+
 // PRIVATE MENU DEFINITIONS ------------------------------------------------
 
 //
@@ -1821,15 +1823,18 @@ void M_Episode (int choice)
 
 	if (AllSkills.Size() == 1)
 	{
+		saved_playerclass = NULL;
 		M_ChooseSkill(0);
 		return;
 	}
 	else if (EpisodeNoSkill[choice])
 	{
+		saved_playerclass = NULL;
 		M_ChooseSkill(AllSkills.Size() == 2? 1:2);
 		return;
 	}
-	M_StartupSkillMenu(NULL);
+	M_StartupSkillMenu(saved_playerclass);
+	saved_playerclass = NULL;
 }
 
 //==========================================================================
@@ -1856,6 +1861,7 @@ static void SCClass (int option)
 
 	if (EpiDef.numitems > 1)
 	{
+		saved_playerclass = playerclass;
 		M_SetupNextMenu (&EpiDef);
 	}
 	else if (AllSkills.Size() == 1)
@@ -1888,6 +1894,7 @@ static void M_ChooseClass (int choice)
 
 	if (EpiDef.numitems > 1)
 	{
+		saved_playerclass = playerclass;
 		M_SetupNextMenu (&EpiDef);
 	}
 	else if (AllSkills.Size() == 1)

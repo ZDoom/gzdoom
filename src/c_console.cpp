@@ -667,7 +667,7 @@ void AddToConsole (int printlevel, const char *text)
 	}
 
 	len = (int)strlen (text);
-	size = len + 3;
+	size = len + 20;
 
 	if (addtype != NEWLINE)
 	{
@@ -767,6 +767,15 @@ void AddToConsole (int printlevel, const char *text)
 				if (*work_p)
 				{
 					linestart = work_p - 1 - cc.Len();
+					if (linestart < work)
+					{
+						// The line start is outside the buffer. 
+						// Make space for the newly inserted stuff.
+						size_t movesize = work-linestart;
+						memmove(work + movesize, work, strlen(work));
+						work_p += movesize;
+						linestart = work;
+					}
 					linestart[0] = TEXTCOLOR_ESCAPE;
 					strncpy (linestart + 1, cc, cc.Len());
 				}

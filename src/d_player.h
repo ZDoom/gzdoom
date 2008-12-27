@@ -80,8 +80,9 @@ public:
 	virtual void TweakSpeeds (int &forwardmove, int &sidemove);
 	virtual void MorphPlayerThink ();
 	virtual void ActivateMorphWeapon ();
-	virtual AWeapon *PickNewWeapon (const PClass *ammotype);
-	virtual AWeapon *BestWeapon (const PClass *ammotype);
+	AWeapon *PickNewWeapon (const PClass *ammotype);
+	AWeapon *BestWeapon (const PClass *ammotype);
+	void CheckWeaponSwitch(const PClass *ammotype);
 	virtual void GiveDeathmatchInventory ();
 	virtual void FilterCoopRespawnInventory (APlayerPawn *oldplayer);
 

@@ -96,18 +96,9 @@ bool AAmmo::HandlePickup (AInventory *item)
 
 			assert (Owner != NULL);
 
-			if (oldamount == 0 && Owner != NULL && Owner->player != NULL &&
-				!Owner->player->userinfo.neverswitch &&
-				Owner->player->PendingWeapon == WP_NOCHANGE && 
-				(Owner->player->ReadyWeapon == NULL ||
-				 (Owner->player->ReadyWeapon->WeaponFlags & WIF_WIMPY_WEAPON)))
+			if (oldamount == 0 && Owner != NULL && Owner->player != NULL)
 			{
-				AWeapon *best = barrier_cast<APlayerPawn *>(Owner)->BestWeapon (GetClass());
-				if (best != NULL && (Owner->player->ReadyWeapon == NULL ||
-					best->SelectionOrder < Owner->player->ReadyWeapon->SelectionOrder))
-				{
-					Owner->player->PendingWeapon = best;
-				}
+				barrier_cast<APlayerPawn *>(Owner)->CheckWeaponSwitch(GetClass());
 			}
 		}
 		return true;

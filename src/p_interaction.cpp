@@ -1451,6 +1451,10 @@ CCMD (kill)
 	}
 	else
 	{
+		// If suiciding is disabled, then don't do it.
+		if (dmflags2 & DF2_NOSUICIDE)
+			return;
+
 		// Kill the player
 		Net_WriteByte (DEM_SUICIDE);
 	}

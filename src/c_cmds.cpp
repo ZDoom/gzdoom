@@ -232,7 +232,8 @@ CCMD (chase)
 	}
 	else
 	{
-		if (gamestate == GS_LEVEL && deathmatch && CheckCheatmode ())
+		// Check if we're allowed to use chasecam.
+		if (gamestate != GS_LEVEL || (!(dmflags2 & DF2_CHASECAM) && CheckCheatmode ()))
 			return;
 
 		Net_WriteByte (DEM_GENERICCHEAT);

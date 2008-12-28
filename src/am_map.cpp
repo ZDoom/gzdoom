@@ -863,6 +863,10 @@ void AM_ToggleMap ()
 	if (gamestate != GS_LEVEL)
 		return;
 
+	// Don't activate the automap if we're not allowed to use it.
+	if (dmflags2 & DF2_NO_AUTOMAP)
+		return;
+
 	SB_state = screen->GetPageCount ();
 	if (!automapactive)
 	{
@@ -1572,6 +1576,10 @@ void AM_drawPlayers ()
 		{
 			continue;
 		}
+
+		// We don't always want to show allies on the automap.
+		if (dmflags2 & DF2_NO_AUTOMAP_ALLIES && i != consoleplayer)
+			continue;
 		
 		if (deathmatch && !demoplayback &&
 			!p->mo->IsTeammate (players[consoleplayer].mo) &&

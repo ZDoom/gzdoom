@@ -1,3 +1,6 @@
+December 28, 2008  (Changes by Graf Zahl)
+- Added Karate Chris's new DMFlags submission.
+
 December 27, 2008  (Changes by Graf Zahl)
 - Fixed: The correct player class was not remembered when the menu had both
   a player class selection menu and an episode menu.

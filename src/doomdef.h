@@ -243,12 +243,17 @@ enum
 	DF2_YES_RESPAWN_INVUL	= 1 << 10,	// Player is temporarily invulnerable when respawned
 //	DF2_COOP_SHOTGUNSTART	= 1 << 11,	// All playres start with a shotgun when they respawn
 	DF2_SAME_SPAWN_SPOT		= 1 << 12,	// Players respawn in the same place they died (co-op)
-
 	DF2_YES_KEEPFRAGS		= 1 << 13,	// Don't clear frags after each level
 	DF2_NO_RESPAWN			= 1 << 14,	// Player cannot respawn
-	DF2_YES_LOSEFRAG		= 1 << 15,	// Lose a frag when killed. More incentive to try to
-//										// not get yerself killed
+	DF2_YES_LOSEFRAG		= 1 << 15,	// Lose a frag when killed. More incentive to try to not get yerself killed
 	DF2_INFINITE_INVENTORY	= 1 << 16,	// Infinite inventory.
+	DF2_KILL_MONSTERS		= 1 << 17,	// All monsters must be killed before the level exits.
+	DF2_NO_AUTOMAP			= 1 << 18,	// Players are allowed to see the automap.
+	DF2_NO_AUTOMAP_ALLIES	= 1 << 19,	// Allies can been seen on the automap.
+	DF2_DISALLOW_SPYING		= 1 << 20,	// You can spy on your allies.
+	DF2_CHASECAM			= 1 << 21,	// Players can use the chasecam cheat.
+	DF2_NOSUICIDE			= 1 << 22,	// Players are allowed to suicide.
+	DF2_NOAUTOAIM			= 1 << 23,	// Players cannot use autoaim.
 };
 
 // [RH] Compatibility flags.

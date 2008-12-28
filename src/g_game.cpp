@@ -724,6 +724,10 @@ static void ChangeSpy (bool forward)
 		return;
 	}
 
+	// We may not be allowed to spy on anyone.
+	if (dmflags2 & DF2_DISALLOW_SPYING)
+		return;
+
 	// Otherwise, cycle to the next player.
 	bool checkTeam = !demoplayback && deathmatch;
 	int pnum = players[consoleplayer].camera->player - players;

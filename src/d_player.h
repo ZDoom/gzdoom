@@ -195,6 +195,7 @@ struct userinfo_t
 {
 	char		netname[MAXPLAYERNAME+1];
 	BYTE		team;
+	int			savedaimdist;
 	int			aimdist;
 	int			color;
 	int			skin;

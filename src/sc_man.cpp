@@ -1030,6 +1030,7 @@ void FScanner::CheckOpen()
 // a class that remembers a parser position
 //
 //==========================================================================
+int FScriptPosition::ErrorCounter;
 
 FScriptPosition::FScriptPosition(const FScriptPosition &other)
 {
@@ -1092,6 +1093,7 @@ void STACK_ARGS FScriptPosition::Message (int severity, const char *message, ...
 		break;
 
 	case MSG_ERROR:
+		ErrorCounter++;
 		type = "error";
 		break;
 

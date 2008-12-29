@@ -232,7 +232,7 @@ static ExpVal GetVariableValue (void *address, FExpressionType &type)
 
 ExpVal FxExpression::EvalExpression (AActor *self)
 {
-	I_Error("Unresolved expression found");
+	ScriptPosition.Message(MSG_ERROR, "Unresolved expression found");
 	ExpVal val;
 
 	val.Type = VAL_Int;
@@ -2635,23 +2635,27 @@ FxExpression *FxMultiNameState::Resolve(FCompileContext &ctx)
 	}
 	if (scope != NULL)
 	{
+		FState *destination = NULL;
 		// If the label is class specific we can resolve it right here
-		if (scope->ActorInfo == NULL)
+		if (names[1] != NAME_None)
 		{
-			ScriptPosition.Message(MSG_ERROR, "'%s' has no actorinfo", names[0].GetChars());
-			delete this;
-			return NULL;
-		}
-		FState *destination = scope->ActorInfo->FindState(names.Size()-1, &names[1], false);
-		if (destination == NULL)
-		{
-			ScriptPosition.Message(ctx.lax? MSG_WARNING:MSG_ERROR, "Unknown state jump destination");
-			if (!ctx.lax)
+			if (scope->ActorInfo == NULL)
 			{
+				ScriptPosition.Message(MSG_ERROR, "'%s' has no actorinfo", names[0].GetChars());
 				delete this;
 				return NULL;
 			}
-			return this;
+			destination = scope->ActorInfo->FindState(names.Size()-1, &names[1], false);
+			if (destination == NULL)
+			{
+				ScriptPosition.Message(ctx.lax? MSG_WARNING:MSG_ERROR, "Unknown state jump destination");
+				if (!ctx.lax)
+				{
+					delete this;
+					return NULL;
+				}
+				return this;
+			}
 		}
 		FxExpression *x = new FxConstant(destination, ScriptPosition);
 		delete this;
@@ -2707,7 +2711,7 @@ FStateExpressions StateParams;
 
 FStateExpressions::~FStateExpressions()
 {
-	for(int i=0; i<Size(); i++)
+	for(unsigned i=0; i<Size(); i++)
 	{
 		if (expressions[i].expr != NULL && !expressions[i].cloned)
 		{
@@ -2797,7 +2801,7 @@ int FStateExpressions::ResolveAll()
 
 	FCompileContext ctx;
 	ctx.lax = true;
-	for(int i=0; i<Size(); i++)
+	for(unsigned i=0; i<Size(); i++)
 	{
 		if (expressions[i].cloned)
 		{
@@ -2822,7 +2826,7 @@ int FStateExpressions::ResolveAll()
 		}
 	}
 
-	for(int i=0; i<Size(); i++)
+	for(unsigned i=0; i<Size(); i++)
 	{
 		if (expressions[i].expr != NULL)
 		{

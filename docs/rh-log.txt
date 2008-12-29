@@ -1,3 +1,14 @@
+December 30, 2008  (Changes by Graf Zahl)
+- Made several DECORATE errors which do not involve parsing non-fatal.
+- Added a static error counter to FScriptPosition class.
+- Changed initialization of actor class type properties: fuglyname is gone as
+  is the postprocessing in FinishThingdef. Instead an empty placeholder class
+  is now created when a class is first referenced and this placeholder is later
+  filled in. 
+- Added option to replace backslash with '^' in state frame definitions because
+  the backslash is just causing too many problems because it's also an escape
+  character.
+
 December 28, 2008  (Changes by Graf Zahl)
 - Added Karate Chris's new DMFlags submission.
 

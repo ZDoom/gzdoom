@@ -184,7 +184,8 @@ void SetReplacement(FActorInfo *info, FName replaceName)
 
 void FinishActor(const FScriptPosition &sc, FActorInfo *info, Baggage &bag)
 {
-	AActor *defaults = (AActor*)info->Class->Defaults;
+	PClass *ti = info->Class;
+	AActor *defaults = (AActor*)ti->Defaults;
 
 	try
 	{
@@ -192,7 +193,9 @@ void FinishActor(const FScriptPosition &sc, FActorInfo *info, Baggage &bag)
 	}
 	catch (CRecoverableError &err)
 	{
-		sc.Message(MSG_FATAL, "%s", err.GetMessage());
+		sc.Message(MSG_ERROR, "%s", err.GetMessage());
+		bag.statedef.MakeStateDefines(NULL);
+		return;
 	}
 	bag.statedef.InstallStates (info, defaults);
 	bag.statedef.MakeStateDefines(NULL);
@@ -200,68 +203,77 @@ void FinishActor(const FScriptPosition &sc, FActorInfo *info, Baggage &bag)
 	{
 		if (bag.DropItemList == NULL)
 		{
-			if (info->Class->Meta.GetMetaInt (ACMETA_DropItems) != 0)
+			if (ti->Meta.GetMetaInt (ACMETA_DropItems) != 0)
 			{
-				info->Class->Meta.SetMetaInt (ACMETA_DropItems, 0);
+				ti->Meta.SetMetaInt (ACMETA_DropItems, 0);
 			}
 		}
 		else
 		{
-			info->Class->Meta.SetMetaInt (ACMETA_DropItems,
+			ti->Meta.SetMetaInt (ACMETA_DropItems,
 				StoreDropItemChain(bag.DropItemList));
 		}
 	}
-	if (info->Class->IsDescendantOf (RUNTIME_CLASS(AInventory)))
+	if (ti->IsDescendantOf (RUNTIME_CLASS(AInventory)))
 	{
 		defaults->flags |= MF_SPECIAL;
+	}
+
+	// Weapons must be checked for all relevant states. They may crash the game otherwise.
+	if (ti->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
+	{
+		FState * ready = ti->ActorInfo->FindState(NAME_Ready);
+		FState * select = ti->ActorInfo->FindState(NAME_Select);
+		FState * deselect = ti->ActorInfo->FindState(NAME_Deselect);
+		FState * fire = ti->ActorInfo->FindState(NAME_Fire);
+
+		// Consider any weapon without any valid state abstract and don't output a warning
+		// This is for creating base classes for weapon groups that only set up some properties.
+		if (ready || select || deselect || fire)
+		{
+			if (!ready)
+			{
+				sc.Message(MSG_ERROR, "Weapon %s doesn't define a ready state.\n", ti->TypeName.GetChars());
+			}
+			if (!select) 
+			{
+				sc.Message(MSG_ERROR, "Weapon %s doesn't define a select state.\n", ti->TypeName.GetChars());
+			}
+			if (!deselect) 
+			{
+				sc.Message(MSG_ERROR, "Weapon %s doesn't define a deselect state.\n", ti->TypeName.GetChars());
+			}
+			if (!fire) 
+			{
+				sc.Message(MSG_ERROR, "Weapon %s doesn't define a fire state.\n", ti->TypeName.GetChars());
+			}
+		}
 	}
 }
 
 //==========================================================================
 //
 // Do some postprocessing after everything has been defined
-// This also processes all the internal actors to adjust the type
-// fields in the weapons
 //
 //==========================================================================
 
-static int ResolvePointer(const PClass **pPtr, const PClass *owner, const PClass *destclass, const char *description)
-{
-	fuglyname v;
-
-	v = *pPtr;
-	if (v != NAME_None && v.IsValidName())
-	{
-		*pPtr = PClass::FindClass(v);
-		if (!*pPtr)
-		{
-			Printf("Unknown %s '%s' in '%s'\n", description, v.GetChars(), owner->TypeName.GetChars());
-			return 1;
-		}
-		else if (!(*pPtr)->IsDescendantOf(destclass))
-		{
-			*pPtr = NULL;
-			Printf("Invalid %s '%s' in '%s'\n", description, v.GetChars(), owner->TypeName.GetChars());
-			return 1;
-		}
-	}
-	return 0;
-}
-
-
 static void FinishThingdef()
 {
-	unsigned int i;
-	int errorcount;
+	int errorcount = StateParams.ResolveAll();
 
-	errorcount = StateParams.ResolveAll();
-
-	for (i = 0;i < PClass::m_Types.Size(); i++)
+	for (unsigned i = 0;i < PClass::m_Types.Size(); i++)
 	{
 		PClass * ti = PClass::m_Types[i];
 
 		// Skip non-actors
 		if (!ti->IsDescendantOf(RUNTIME_CLASS(AActor))) continue;
+
+		if (ti->Size == -1)
+		{
+			Printf("Class %s referenced but not defined\n", ti->TypeName.GetChars());
+			errorcount++;
+			continue;
+		}
 
 		AActor *def = GetDefaultByType(ti);
 
@@ -270,100 +282,6 @@ static void FinishThingdef()
 			Printf("No ActorInfo defined for class '%s'\n", ti->TypeName.GetChars());
 			errorcount++;
 			continue;
-		}
-
-		// Friendlies never count as kills!
-		if (def->flags & MF_FRIENDLY)
-		{
-			def->flags &=~MF_COUNTKILL;
-		}
-
-		if (ti->IsDescendantOf(RUNTIME_CLASS(AInventory)))
-		{
-			AInventory * defaults=(AInventory *)def;
-			errorcount += ResolvePointer(&defaults->PickupFlash, ti, RUNTIME_CLASS(AActor), "pickup flash");
-		}
-
-		if (ti->IsDescendantOf(RUNTIME_CLASS(APowerupGiver)) && ti != RUNTIME_CLASS(APowerupGiver))
-		{
-			FString typestr;
-			APowerupGiver * defaults=(APowerupGiver *)def;
-			fuglyname v;
-
-			v = defaults->PowerupType;
-			if (v != NAME_None && v.IsValidName())
-			{
-				typestr.Format ("Power%s", v.GetChars());
-				const PClass * powertype=PClass::FindClass(typestr);
-				if (!powertype) powertype=PClass::FindClass(v.GetChars());
-
-				if (!powertype)
-				{
-					Printf("Unknown powerup type '%s' in '%s'\n", v.GetChars(), ti->TypeName.GetChars());
-					errorcount++;
-				}
-				else if (!powertype->IsDescendantOf(RUNTIME_CLASS(APowerup)))
-				{
-					Printf("Invalid powerup type '%s' in '%s'\n", v.GetChars(), ti->TypeName.GetChars());
-					errorcount++;
-				}
-				else
-				{
-					defaults->PowerupType=powertype;
-				}
-			}
-			else if (v == NAME_None)
-			{
-				Printf("No powerup type specified in '%s'\n", ti->TypeName.GetChars());
-				errorcount++;
-			}
-		}
-
-		// the typeinfo properties of weapons have to be fixed here after all actors have been declared
-		if (ti->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
-		{
-			AWeapon * defaults=(AWeapon *)def;
-			errorcount += ResolvePointer(&defaults->AmmoType1, ti, RUNTIME_CLASS(AAmmo), "ammo type");
-			errorcount += ResolvePointer(&defaults->AmmoType2, ti, RUNTIME_CLASS(AAmmo), "ammo type");
-			errorcount += ResolvePointer(&defaults->SisterWeaponType, ti, RUNTIME_CLASS(AWeapon), "sister weapon type");
-
-			FState * ready = ti->ActorInfo->FindState(NAME_Ready);
-			FState * select = ti->ActorInfo->FindState(NAME_Select);
-			FState * deselect = ti->ActorInfo->FindState(NAME_Deselect);
-			FState * fire = ti->ActorInfo->FindState(NAME_Fire);
-
-			// Consider any weapon without any valid state abstract and don't output a warning
-			// This is for creating base classes for weapon groups that only set up some properties.
-			if (ready || select || deselect || fire)
-			{
-				// Do some consistency checks. If these states are undefined the weapon cannot work!
-				if (!ready)
-				{
-					Printf("Weapon %s doesn't define a ready state.\n", ti->TypeName.GetChars());
-					errorcount++;
-				}
-				if (!select) 
-				{
-					Printf("Weapon %s doesn't define a select state.\n", ti->TypeName.GetChars());
-					errorcount++;
-				}
-				if (!deselect) 
-				{
-					Printf("Weapon %s doesn't define a deselect state.\n", ti->TypeName.GetChars());
-					errorcount++;
-				}
-				if (!fire) 
-				{
-					Printf("Weapon %s doesn't define a fire state.\n", ti->TypeName.GetChars());
-					errorcount++;
-				}
-			}
-		}
-		// same for the weapon type of weapon pieces.
-		else if (ti->IsDescendantOf(RUNTIME_CLASS(AWeaponPiece)))
-		{
-			AWeaponPiece * defaults=(AWeaponPiece *)def;
-			errorcount += ResolvePointer(&defaults->WeaponClass, ti, RUNTIME_CLASS(AWeapon), "weapon type");
 		}
 	}
 	if (errorcount > 0)
@@ -378,7 +296,6 @@ static void FinishThingdef()
 		mysnprintf(fmt, countof(fmt), "QuestItem%d", i+1);
 		QuestItemClasses[i] = PClass::FindClass(fmt);
 	}
-
 }
 
 
@@ -395,12 +312,17 @@ void LoadActors ()
 {
 	int lastlump, lump;
 
+	FScriptPosition::ResetErrorCounter();
 	InitThingdef();
 	lastlump = 0;
 	while ((lump = Wads.FindLump ("DECORATE", &lastlump)) != -1)
 	{
 		FScanner sc(lump);
 		ParseDecorate (sc);
+	}
+	if (FScriptPosition::ErrorCounter > 0)
+	{
+		I_Error("%d errors while parsing DECORATE scripts", FScriptPosition::ErrorCounter);
 	}
 	FinishThingdef();
 }

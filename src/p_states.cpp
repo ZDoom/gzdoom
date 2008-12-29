@@ -826,8 +826,14 @@ bool FStateDefinitions::AddStates(FState *state, const char *framechars)
 	bool error = false;
 	while (*framechars)
 	{
-		int frame=((*framechars++)&223)-'A';
+		int frame;
+		
+		if (*framechars == '^') 
+			frame = '\\'-'A';
+		else 
+			frame = ((*framechars)&223)-'A';
 
+		framechars++;
 		if (frame<0 || frame>28)
 		{
 			frame = 0;

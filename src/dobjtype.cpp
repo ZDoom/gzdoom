@@ -216,7 +216,7 @@ const PClass *PClass::FindClass (FName zaname)
 		}
 		else if (lexx == 0)
 		{
-			return cls;
+			return cls->Size<0? NULL : cls;
 		}
 		else
 		{
@@ -247,15 +247,34 @@ DObject *PClass::CreateNew () const
 PClass *PClass::CreateDerivedClass (FName name, unsigned int size)
 {
 	assert (size >= Size);
+	PClass *type;
+	bool notnew;
 
-	PClass *type = new PClass;
+	const PClass *existclass = FindClass(name);
+
+	// This is a placeholder so fill it in
+	if (existclass != NULL && existclass->Size == -1)
+	{
+		type = const_cast<PClass*>(existclass);
+		if (!IsDescendantOf(type->ParentClass))
+		{
+			I_Error("%s must inherit from %s but doesn't.", name.GetChars(), type->ParentClass->TypeName.GetChars());
+		}
+		Printf("Defining placeholder class %s\n", name.GetChars());
+		notnew = true;
+	}
+	else
+	{
+		type = new PClass;
+		notnew = false;
+	}
 
 	type->TypeName = name;
 	type->ParentClass = this;
 	type->Size = size;
 	type->Pointers = NULL;
 	type->ConstructNative = ConstructNative;
-	type->ClassIndex = m_Types.Push (type);
+	if (!notnew) type->ClassIndex = m_Types.Push (type);
 	type->Meta = Meta;
 	type->Defaults = new BYTE[size];
 	memcpy (type->Defaults, Defaults, Size);
@@ -267,7 +286,7 @@ PClass *PClass::CreateDerivedClass (FName name, unsigned int size)
 	type->bRuntimeClass = true;
 	type->ActorInfo = NULL;
 	type->Symbols.SetParentTable (&this->Symbols);
-	type->InsertIntoHash();
+	if (!notnew) type->InsertIntoHash();
 
 	// If this class has an actor info, then any classes derived from it
 	// also need an actor info.
@@ -287,6 +306,51 @@ PClass *PClass::CreateDerivedClass (FName name, unsigned int size)
 		info->PainChances = NULL;
 		m_RuntimeActors.Push (type);
 	}
+	return type;
+}
+
+// Like FindClass but creates a placeholder if no class
+// is found. CreateDerivedClass will automatcally fill in
+// the placeholder when the actual class is defined.
+const PClass *PClass::FindClassTentative (FName name)
+{
+	if (name == NAME_None)
+	{
+		return NULL;
+	}
+
+	PClass *cls = TypeHash[name % HASH_SIZE];
+
+	while (cls != 0)
+	{
+		int lexx = int(name) - int(cls->TypeName);
+		if (lexx > 0)
+		{
+			cls = cls->HashNext;
+		}
+		else if (lexx == 0)
+		{
+			return cls;
+		}
+		else
+		{
+			break;
+		}
+	}
+	PClass *type = new PClass;
+	Printf("Creating placeholder class %s : %s\n", name.GetChars(), TypeName.GetChars());
+
+	type->TypeName = name;
+	type->ParentClass = this;
+	type->Size = -1;
+	type->Pointers = NULL;
+	type->ConstructNative = NULL;
+	type->ClassIndex = m_Types.Push (type);
+	type->Defaults = NULL;
+	type->FlatPointers = NULL;
+	type->bRuntimeClass = true;
+	type->ActorInfo = NULL;
+	type->InsertIntoHash();
 	return type;
 }
 

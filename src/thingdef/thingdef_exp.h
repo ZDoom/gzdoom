@@ -62,6 +62,12 @@ struct FCompileContext
 	bool lax;
 	bool isconst;
 
+	FCompileContext(const PClass *_cls = NULL, bool _lax = false, bool _isconst = false)
+	{
+		cls = _cls;
+		lax = _lax;
+		isconst = _isconst;
+	}
 
 	PSymbol *FindInClass(FName identifier)
 	{

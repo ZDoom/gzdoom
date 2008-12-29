@@ -17,7 +17,6 @@ enum ExpValType
 	VAL_Pointer,	// Dereferenced variable (only used for addressing arrays for now.)
 	VAL_Sound,		// Sound identifier. Internally it's an int.
 	VAL_Name,		// A Name
-	VAL_MultiName,	// Multiple names for multi-label states
 	VAL_Color,		// A color.
 	VAL_State,		// A State pointer
 

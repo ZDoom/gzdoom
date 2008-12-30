@@ -260,7 +260,7 @@ PClass *PClass::CreateDerivedClass (FName name, unsigned int size)
 		{
 			I_Error("%s must inherit from %s but doesn't.", name.GetChars(), type->ParentClass->TypeName.GetChars());
 		}
-		Printf("Defining placeholder class %s\n", name.GetChars());
+		DPrintf("Defining placeholder class %s\n", name.GetChars());
 		notnew = true;
 	}
 	else
@@ -338,7 +338,7 @@ const PClass *PClass::FindClassTentative (FName name)
 		}
 	}
 	PClass *type = new PClass;
-	Printf("Creating placeholder class %s : %s\n", name.GetChars(), TypeName.GetChars());
+	DPrintf("Creating placeholder class %s : %s\n", name.GetChars(), TypeName.GetChars());
 
 	type->TypeName = name;
 	type->ParentClass = this;

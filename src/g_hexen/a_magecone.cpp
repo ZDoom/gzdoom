@@ -77,7 +77,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireConePL1)
 	for (i = 0; i < 16; i++)
 	{
 		angle = self->angle+i*(ANG45/16);
-		slope = P_AimLineAttack (self, angle, MELEERANGE, &linetarget);
+		slope = P_AimLineAttack (self, angle, MELEERANGE, &linetarget, 0, false, true);
 		if (linetarget)
 		{
 			P_DamageMobj (linetarget, self, self, damage, NAME_Ice);

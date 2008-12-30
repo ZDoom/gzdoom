@@ -66,7 +66,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CStaffCheck)
 	for (i = 0; i < 3; i++)
 	{
 		angle = pmo->angle+i*(ANG45/16);
-		slope = P_AimLineAttack (pmo, angle, fixed_t(1.5*MELEERANGE), &linetarget);
+		slope = P_AimLineAttack (pmo, angle, fixed_t(1.5*MELEERANGE), &linetarget, 0, false, true);
 		if (linetarget)
 		{
 			P_LineAttack (pmo, angle, fixed_t(1.5*MELEERANGE), slope, damage, NAME_Melee, PClass::FindClass ("CStaffPuff"));
@@ -90,7 +90,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CStaffCheck)
 			break;
 		}
 		angle = pmo->angle-i*(ANG45/16);
-		slope = P_AimLineAttack (player->mo, angle, fixed_t(1.5*MELEERANGE), &linetarget);
+		slope = P_AimLineAttack (player->mo, angle, fixed_t(1.5*MELEERANGE), &linetarget, 0, false, true);
 		if (linetarget)
 		{
 			P_LineAttack (pmo, angle, fixed_t(1.5*MELEERANGE), slope, damage, NAME_Melee, PClass::FindClass ("CStaffPuff"));

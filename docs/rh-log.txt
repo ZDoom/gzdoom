@@ -1,4 +1,8 @@
 December 30, 2008  (Changes by Graf Zahl)
+- Fixed: FMOD calls for setting the water reverb must check the return code
+  for errors.
+- Fixed: Hexen's dual attack weapons must check distance to targets in 3D,
+  not 2D.
 - Made several DECORATE errors which do not involve parsing non-fatal.
 - Added a static error counter to FScriptPosition class.
 - Changed initialization of actor class type properties: fuglyname is gone as

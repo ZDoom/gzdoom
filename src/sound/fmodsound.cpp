@@ -903,26 +903,43 @@ bool FMODSoundRenderer::Init()
 		FMOD::DSP *sfx_head, *pausable_head;
 
 		result = SfxGroup->getDSPHead(&sfx_head);
-		result = sfx_head->getInput(0, &pausable_head, &SfxConnection);
-
-		result = WaterLP->addInput(pausable_head, NULL);
-		WaterLP->setActive(false);
-		WaterLP->setParameter(FMOD_DSP_LOWPASS_CUTOFF, snd_waterlp);
-		WaterLP->setParameter(FMOD_DSP_LOWPASS_RESONANCE, 2);
-		if (WaterReverb != NULL)
+		if (result == FMOD_OK)
 		{
-			FMOD::DSPConnection *dry;
-			result = WaterReverb->addInput(pausable_head, &dry);
-			result = dry->setMix(0.1f);
-			result = WaterReverb->addInput(WaterLP, NULL);
-			result = sfx_head->addInput(WaterReverb, NULL);
-			WaterReverb->setParameter(FMOD_DSP_REVERB_ROOMSIZE, 0.001f);
-			WaterReverb->setParameter(FMOD_DSP_REVERB_DAMP, 0.2f);
-			WaterReverb->setActive(false);
-		}
-		else
-		{
-			result = sfx_head->addInput(WaterLP, NULL);
+			result = sfx_head->getInput(0, &pausable_head, &SfxConnection);
+			if (result == FMOD_OK)
+			{
+				result = WaterLP->addInput(pausable_head, NULL);
+				WaterLP->setActive(false);
+				WaterLP->setParameter(FMOD_DSP_LOWPASS_CUTOFF, snd_waterlp);
+				WaterLP->setParameter(FMOD_DSP_LOWPASS_RESONANCE, 2);
+				if (WaterReverb != NULL)
+				{
+					FMOD::DSPConnection *dry;
+					result = WaterReverb->addInput(pausable_head, &dry);
+					if (result == FMOD_OK)
+					{
+						result = dry->setMix(0.1f);
+						if (result == FMOD_OK)
+						{
+							result = WaterReverb->addInput(WaterLP, NULL);
+							if (result == FMOD_OK)
+							{
+								result = sfx_head->addInput(WaterReverb, NULL);
+								if (result == FMOD_OK)
+								{
+									WaterReverb->setParameter(FMOD_DSP_REVERB_ROOMSIZE, 0.001f);
+									WaterReverb->setParameter(FMOD_DSP_REVERB_DAMP, 0.2f);
+									WaterReverb->setActive(false);
+								}
+							}
+						}
+					}
+				}
+				else
+				{
+					result = sfx_head->addInput(WaterLP, NULL);
+				}
+			}
 		}
 	}
 	LastWaterLP = snd_waterlp;

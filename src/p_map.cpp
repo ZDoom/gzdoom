@@ -2359,6 +2359,7 @@ struct aim_t
 	AActor *		thing_friend, * thing_other;
 	angle_t			pitch_friend, pitch_other;
 	bool			notsmart;
+	bool			check3d;
 
 	void AimTraverse (fixed_t startx, fixed_t starty, fixed_t endx, fixed_t endy);
 
@@ -2385,7 +2386,7 @@ void aim_t::AimTraverse (fixed_t startx, fixed_t starty, fixed_t endx, fixed_t e
 		fixed_t 			thingbottompitch;
 		fixed_t 			dist;
 		int					thingpitch;
-
+		
 		if (in->isaline) 
 		{
 			li = in->d.line;
@@ -2396,8 +2397,8 @@ void aim_t::AimTraverse (fixed_t startx, fixed_t starty, fixed_t endx, fixed_t e
 			// Crosses a two sided line.
 			// A two sided line will restrict the possible target ranges.
 			FLineOpening open;
-			P_LineOpening (open, NULL, li, it.Trace().x + FixedMul (it.Trace().dx, in->frac),
-				it.Trace().y + FixedMul (it.Trace().dy, in->frac));
+			P_LineOpening (open, NULL, li, it.Trace().x + FixedMul (it.Trace().dx, in->frac), 
+											it.Trace().y + FixedMul (it.Trace().dy, in->frac));
 
 			if (open.bottom >= open.top)
 				return;				// stop
@@ -2456,6 +2457,23 @@ void aim_t::AimTraverse (fixed_t startx, fixed_t starty, fixed_t endx, fixed_t e
 			thingbottompitch = bottompitch;
 		
 		thingpitch = thingtoppitch/2 + thingbottompitch/2;
+		
+		if (check3d)
+		{
+			// We need to do a 3D distance check here because this is nearly always used in
+			// combination with P_LineAttack. P_LineAttack uses 3D distance but FPathTraverse
+			// only 2D. This causes some problems with Hexen's weapons that use different
+			// attack modes based on distance to target
+			fixed_t cosine = finecosine[thingpitch >> ANGLETOFINESHIFT];
+			if (cosine != 0)
+			{
+				fixed_t d3 = FixedDiv( FixedMul( P_AproxDistance(it.Trace().dx, it.Trace().dy), in->frac), cosine);
+				if (d3 > attackrange)
+				{
+					return;
+				}
+			}
+		}
 
 		if (sv_smartaim && !notsmart)
 		{
@@ -2500,7 +2518,7 @@ void aim_t::AimTraverse (fixed_t startx, fixed_t starty, fixed_t endx, fixed_t e
 // P_AimLineAttack
 //
 //============================================================================
-fixed_t P_AimLineAttack (AActor *t1, angle_t angle, fixed_t distance, AActor **pLineTarget, fixed_t vrange, bool forcenosmart)
+fixed_t P_AimLineAttack (AActor *t1, angle_t angle, fixed_t distance, AActor **pLineTarget, fixed_t vrange, bool forcenosmart, bool check3d)
 {
 	fixed_t x2;
 	fixed_t y2;
@@ -2508,6 +2526,7 @@ fixed_t P_AimLineAttack (AActor *t1, angle_t angle, fixed_t distance, AActor **p
 
 	angle >>= ANGLETOFINESHIFT;
 	aim.shootthing = t1;
+	aim.check3d = check3d;
 
 	x2 = t1->x + (distance>>FRACBITS)*finecosine[angle];
 	y2 = t1->y + (distance>>FRACBITS)*finesine[angle];

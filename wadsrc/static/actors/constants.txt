@@ -13,7 +13,7 @@ const int SXF_ABSOLUTEMOMENTUM=8;
 const int SXF_SETMASTER=16;
 const int SXF_NOCHECKPOSITION = 32;
 const int SXF_TELEFRAG=64;
-// 128 was uses by Skulltag
+const int SXF_CLIENTSPAWN=128;	// only used by Skulltag
 const int SXF_TRANSFERAMBUSHFLAG=256;
 
 // Flags for A_Chase

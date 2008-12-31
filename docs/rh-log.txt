@@ -1,3 +1,10 @@
+December 31, 2008  (Changes by Graf Zahl)
+- Added a constant name for Skulltag's 128 flag for A_SpawnItemEx. For 
+  compatibility ZDoom needs to define this name, too, even though it doesn't 
+  use it.
+- Fixed: The nodebuilder could hang on badly set up polyobjects. Now it aborts 
+  when the loop iterates NumberOfSegs times.
+  
 December 30, 2008  (Changes by Graf Zahl)
 - Fixed: FMOD calls for setting the water reverb must check the return code
   for errors.

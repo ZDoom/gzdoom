@@ -1256,30 +1256,30 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 					const PClass *weapon2 = PClass::FindClass(cmd.string[1]);
 					if(weapon2 != NULL)
 					{
-						if((cmd.flags & SBARINFOEVENT_NOT) && (weapon1 != CPlayer->ReadyWeapon->GetSpecies() && weapon2 != CPlayer->ReadyWeapon->GetSpecies()))
+						if((cmd.flags & SBARINFOEVENT_NOT) && (weapon1 != CPlayer->ReadyWeapon->GetClass() && weapon2 != CPlayer->ReadyWeapon->GetClass()))
 							doCommands(cmd.subBlock, xOffset, yOffset, alpha);
-						else if(!(cmd.flags & SBARINFOEVENT_NOT) && (weapon1 == CPlayer->ReadyWeapon->GetSpecies() || weapon2 == CPlayer->ReadyWeapon->GetSpecies()))
+						else if(!(cmd.flags & SBARINFOEVENT_NOT) && (weapon1 == CPlayer->ReadyWeapon->GetClass() || weapon2 == CPlayer->ReadyWeapon->GetClass()))
 							doCommands(cmd.subBlock, xOffset, yOffset, alpha);
 					}
 					else
 					{
-						if(!(cmd.flags & SBARINFOEVENT_NOT) && weapon1 == CPlayer->ReadyWeapon->GetSpecies())
+						if(!(cmd.flags & SBARINFOEVENT_NOT) && weapon1 == CPlayer->ReadyWeapon->GetClass())
 							doCommands(cmd.subBlock, xOffset, yOffset, alpha);
-						else if((cmd.flags & SBARINFOEVENT_NOT) && weapon1 != CPlayer->ReadyWeapon->GetSpecies())
+						else if((cmd.flags & SBARINFOEVENT_NOT) && weapon1 != CPlayer->ReadyWeapon->GetClass())
 							doCommands(cmd.subBlock, xOffset, yOffset, alpha);
 					}
 				}
 				break;
 			case SBARINFO_USESAMMO:
-				if ((CPlayer->ReadyWeapon->AmmoType1 != NULL || CPlayer->ReadyWeapon->AmmoType2 != NULL) ^ 
+				if ((CPlayer->ReadyWeapon != NULL && (CPlayer->ReadyWeapon->AmmoType1 != NULL || CPlayer->ReadyWeapon->AmmoType2 != NULL)) ^ 
 					!!(cmd.flags & SBARINFOEVENT_NOT))
 				{
 					doCommands(cmd.subBlock, xOffset, yOffset, alpha);
 				}
 				break;
 			case SBARINFO_USESSECONDARYAMMO:
-				if((CPlayer->ReadyWeapon->AmmoType2 != NULL && CPlayer->ReadyWeapon->AmmoType2 != CPlayer->ReadyWeapon->AmmoType1 && !(cmd.flags & SBARINFOEVENT_NOT)) ||
-					(CPlayer->ReadyWeapon->AmmoType2 == NULL && cmd.flags & SBARINFOEVENT_NOT))
+				if((CPlayer->ReadyWeapon != NULL && CPlayer->ReadyWeapon->AmmoType2 != NULL && CPlayer->ReadyWeapon->AmmoType2 != CPlayer->ReadyWeapon->AmmoType1 && !(cmd.flags & SBARINFOEVENT_NOT)) ||
+					((CPlayer->ReadyWeapon == NULL || CPlayer->ReadyWeapon->AmmoType2 == NULL) && cmd.flags & SBARINFOEVENT_NOT))
 				{
 					doCommands(cmd.subBlock, xOffset, yOffset, alpha);
 				}

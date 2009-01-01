@@ -109,19 +109,20 @@ void I_EndRead(void)
 {
 }
 
-// [RH] Returns time in milliseconds
-unsigned int I_MSTime (void)
-{
-	unsigned int time = SDL_GetTicks ();
-	if (!basetime)
-		basetime = time;
-	return time - basetime;
-}
 
 static DWORD TicStart;
 static DWORD TicNext;
 static DWORD BaseTime;
 static int TicFrozen;
+
+// [RH] Returns time in milliseconds
+unsigned int I_MSTime (void)
+{
+	unsigned int time = SDL_GetTicks ();
+	if (!BaseTime)
+		BaseTime = time;
+	return time - BaseTime;
+}
 
 //
 // I_GetTime

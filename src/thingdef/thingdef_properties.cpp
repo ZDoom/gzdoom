@@ -1528,7 +1528,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, type, S, PowerupGiver)
 	// Yuck! What was I thinking when I decided to prepend "Power" to the name? 
 	// Now it's too late to change it...
 	const PClass *cls = PClass::FindClass(str);
-	if (cls == NULL || !cls->IsDescendantOf(RUNTIME_CLASS(APowerupGiver)))
+	if (cls == NULL || !cls->IsDescendantOf(RUNTIME_CLASS(APowerup)))
 	{
 		FString st;
 		st.Format("%s%s", strnicmp(str, "power", 5)? "Power" : "", str);

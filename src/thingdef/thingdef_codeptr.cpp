@@ -1073,6 +1073,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RailAttack)
 // also for monsters
 //
 //==========================================================================
+enum
+{
+	CRF_DONTAIM = 0,
+	CRF_AIMPARALLEL = 1,
+	CRF_AIMDIRECT = 2
+};
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomRailgun)
 {
@@ -1082,9 +1088,13 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomRailgun)
 	ACTION_PARAM_COLOR(Color1, 2);
 	ACTION_PARAM_COLOR(Color2, 3);
 	ACTION_PARAM_BOOL(Silent, 4);
-	ACTION_PARAM_BOOL(aim, 5);
+	ACTION_PARAM_INT(aim, 5);
 	ACTION_PARAM_FLOAT(MaxDiff, 6);
 	ACTION_PARAM_CLASS(PuffType, 7);
+
+	fixed_t saved_x = self->x;
+	fixed_t saved_y = self->y;
+	angle_t saved_angle = self->angle;
 
 	if (aim && self->target == NULL)
 	{
@@ -1098,12 +1108,15 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomRailgun)
 
 	self->flags &= ~MF_AMBUSH;
 
+
 	if (aim)
 	{
+
 		self->angle = R_PointToAngle2 (self->x,
 										self->y,
 										self->target->x,
 										self->target->y);
+
 	}
 
 	self->pitch = P_AimLineAttack (self, self->angle, MISSILERANGE);
@@ -1111,18 +1124,37 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomRailgun)
 	// Let the aim trail behind the player
 	if (aim)
 	{
-		self->angle = R_PointToAngle2 (self->x,
-										self->y,
+		saved_angle = self->angle = R_PointToAngle2 (self->x, self->y,
 										self->target->x - self->target->momx * 3,
 										self->target->y - self->target->momy * 3);
 
+		if (aim == CRF_AIMDIRECT)
+		{
+			// Tricky: We must offset to the angle of the current position
+			// but then change the angle again to ensure proper aim.
+			self->x += Spawnofs_XY * finecosine[self->angle];
+			self->y += Spawnofs_XY * finesine[self->angle];
+			Spawnofs_XY = 0;
+			self->angle = R_PointToAngle2 (self->x, self->y,
+											self->target->x - self->target->momx * 3,
+											self->target->y - self->target->momy * 3);
+		}
+
 		if (self->target->flags & MF_SHADOW)
 		{
-			self->angle += pr_crailgun.Random2() << 21;
+			angle_t rnd = pr_crailgun.Random2() << 21;
+			self->angle += rnd;
+			saved_angle = rnd;
 		}
 	}
 
+	angle_t angle = (self->angle - ANG90) >> ANGLETOFINESHIFT;
+
 	P_RailAttack (self, Damage, Spawnofs_XY, Color1, Color2, MaxDiff, Silent, PuffType);
+
+	self->x = saved_x;
+	self->y = saved_y;
+	self->angle = saved_angle;
 }
 
 //===========================================================================

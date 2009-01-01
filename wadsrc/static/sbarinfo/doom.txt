@@ -26,22 +26,34 @@ statusbar fullscreen, fullscreenoffsets // ZDoom HUD
 	drawimage ammoicon1, -14, -4, centerbottom;
 	drawnumber 3, HUDFONT_DOOM, untranslated, ammo1, drawshadow, -25, -20;
 
-	//secondary ammo and inventory
-	usessecondaryammo
+	usesammo
 	{
-		drawimage ammoicon2, -14, -22, centerbottom;
-		drawnumber 3, HUDFONT_DOOM, untranslated, ammo2, drawshadow, -25, -38;
-		inventorybarnotvisible
+		//secondary ammo and inventory
+		usessecondaryammo
 		{
-			drawselectedinventory centerbottom, drawshadow, alwaysshowcounter, HUDFONT_DOOM, -14, -39, -26, -56, untranslated;
+			drawimage ammoicon2, -14, -22, centerbottom;
+			drawnumber 3, HUDFONT_DOOM, untranslated, ammo2, drawshadow, -25, -38;
+			inventorybarnotvisible
+			{
+				drawselectedinventory centerbottom, drawshadow, alwaysshowcounter, HUDFONT_DOOM, -14, -39, -26, -56, untranslated;
+			}
+		}
+		//no secondary ammo
+		usessecondaryammo not
+		{
+			inventorybarnotvisible
+			{
+				drawselectedinventory centerbottom, drawshadow, alwaysshowcounter, HUDFONT_DOOM, -14, -21, -26, -38, untranslated;
+			}
 		}
 	}
-	//no secondary ammo
-	usessecondaryammo not
+	
+	// no ammo but inventory
+	usesammo not
 	{
 		inventorybarnotvisible
 		{
-			drawselectedinventory centerbottom, drawshadow, alwaysshowcounter, HUDFONT_DOOM, -14, -21, -26, -38, untranslated;
+			drawselectedinventory centerbottom, drawshadow, alwaysshowcounter, HUDFONT_DOOM, -14, -3, -26, -20, untranslated;
 		}
 	}
 

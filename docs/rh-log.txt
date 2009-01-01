@@ -1,4 +1,16 @@
+January 1, 2009  (Changes by Graf Zahl)
+- Changed pickup sounds of local player to unpaused to resolve problems with 
+  the time freezer and make them behave better.
+- Fixed: When sounds are paused not all newly started sounds should actually
+  be played.
+- Fixed: SBARINFO had no means to check if a weapon uses any ammo at all and
+  as a result the inventory icon was misplaced if a no-ammo weapon was selected.
+
 December 31, 2008  (Changes by Graf Zahl)
+- Fixed: P_CheckMissileSpawn and AFastProjectile didn't adjust their
+  calculations for missiles with small radii.
+- Added a new aiming mode to A_CustomRailgun to aim directly at the target
+  from the actual point the shot originates from.
 - Added a constant name for Skulltag's 128 flag for A_SpawnItemEx. For 
   compatibility ZDoom needs to define this name, too, even though it doesn't 
   use it.

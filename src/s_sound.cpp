@@ -112,6 +112,7 @@ static void S_SetListener(SoundListener &listener, AActor *listenactor);
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+static bool		SoundPaused;		// whether sound is paused
 static bool		MusicPaused;		// whether music is paused
 static MusPlayingInfo mus_playing;	// music currently being played
 static FString	 LastSong;			// last music that was played
@@ -1000,6 +1001,13 @@ static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyO
 		}
 	}
 
+	// sound is paused and a non-looped sound is being started.
+	// Such a sound would play right after unpausing which wouldn't sound right.
+	if (!(chanflags & CHAN_LOOP) && !(chanflags & (CHAN_UI|CHAN_NOPAUSE)) && SoundPaused)
+	{
+		return NULL;
+	}
+
 	// Vary the sfx pitches.
 	if (sfx->PitchMask != 0)
 	{
@@ -1604,6 +1612,7 @@ void S_PauseSound (bool notmusic)
 		I_PauseSong (mus_playing.handle);
 		MusicPaused = true;
 	}
+	SoundPaused = true;
 	GSnd->SetSfxPaused (true, 0);
 }
 
@@ -1621,6 +1630,7 @@ void S_ResumeSound ()
 		I_ResumeSong (mus_playing.handle);
 		MusicPaused = false;
 	}
+	SoundPaused = false;
 	GSnd->SetSfxPaused (false, 0);
 }
 

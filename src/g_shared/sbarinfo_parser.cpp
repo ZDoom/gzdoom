@@ -103,6 +103,7 @@ static const char *SBarInfoRoutineLevel[] =
 	"playerclass",
 	"aspectratio",
 	"isselected",
+	"usesammo",
 	"usessecondaryammo",
 	"hasweaponpiece",
 	"inventorybarnotvisible",
@@ -1224,12 +1225,13 @@ void SBarInfo::ParseSBarInfoBlock(FScanner &sc, SBarInfoBlock &block)
 				this->ParseSBarInfoBlock(sc, cmd.subBlock);
 				break;
 			case SBARINFO_USESSECONDARYAMMO:
+			case SBARINFO_USESAMMO:
 				if(sc.CheckToken(TK_Identifier))
 				{
 					if(sc.Compare("not"))
 						cmd.flags |= SBARINFOEVENT_NOT;
 					else
-						sc.ScriptError("Exspected 'not' got '%s' instead.", sc.String);
+						sc.ScriptError("Expected 'not' got '%s' instead.", sc.String);
 				}
 				sc.MustGetToken('{');
 				cmd.subBlock.fullScreenOffsets = block.fullScreenOffsets;

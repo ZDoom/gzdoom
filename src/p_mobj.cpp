@@ -4356,6 +4356,8 @@ bool P_HitFloor (AActor *thing)
 
 bool P_CheckMissileSpawn (AActor* th)
 {
+	int shift, count = 1;
+
 	// [RH] Don't decrement tics if they are already less than 1
 	if ((th->flags4 & MF4_RANDOMIZE) && th->tics > 0)
 	{
@@ -4367,40 +4369,56 @@ bool P_CheckMissileSpawn (AActor* th)
 	// move a little forward so an angle can be computed if it immediately explodes
 	if (th->Speed >= 100*FRACUNIT)
 	{ // Ultra-fast ripper spawning missile
-		th->x += th->momx>>3;
-		th->y += th->momy>>3;
-		th->z += th->momz>>3;
+		shift = 3;
 	}
 	else
 	{ // Normal missile
-		th->x += th->momx>>1;
-		th->y += th->momy>>1;
-		th->z += th->momz>>1;
+		shift = 1;
 	}
 
-	// killough 3/15/98: no dropoff (really = don't care for missiles)
-
-	if (!P_TryMove (th, th->x, th->y, false))
+	if (th->radius > 0)
 	{
-		// [RH] Don't explode ripping missiles that spawn inside something
-		if (th->BlockingMobj == NULL || !(th->flags2 & MF2_RIP) || (th->BlockingMobj->flags5 & MF5_DONTRIP))
+		while ( ((th->momx >> shift) > th->radius) || ((th->momy >> shift) > th->radius))
 		{
-			// If this is a monster spawned by A_CustomMissile subtract it from the counter.
-			if (th->CountsAsKill())
+			// we need to take smaller steps but to produce the same end result
+			// we have to do more of them.
+			shift++;
+			count<<=1;
+		}
+	}
+
+	FCheckPosition tm(!!(th->flags2 & MF2_RIP));
+
+	for(int i=0; i<count; i++)
+	{
+		th->x += th->momx>>shift;
+		th->y += th->momy>>shift;
+		th->z += th->momz>>shift;
+
+		// killough 3/15/98: no dropoff (really = don't care for missiles)
+
+		if (!P_TryMove (th, th->x, th->y, false, false, tm))
+		{
+			// [RH] Don't explode ripping missiles that spawn inside something
+			if (th->BlockingMobj == NULL || !(th->flags2 & MF2_RIP) || (th->BlockingMobj->flags5 & MF5_DONTRIP))
 			{
-				th->flags&=~MF_COUNTKILL;
-				level.total_monsters--;
+				// If this is a monster spawned by A_CustomMissile subtract it from the counter.
+				if (th->CountsAsKill())
+				{
+					th->flags&=~MF_COUNTKILL;
+					level.total_monsters--;
+				}
+				// [RH] Don't explode missiles that spawn on top of horizon lines
+				if (th->BlockingLine != NULL && th->BlockingLine->special == Line_Horizon)
+				{
+					th->Destroy ();
+				}
+				else
+				{
+					P_ExplodeMissile (th, NULL, th->BlockingMobj);
+				}
+				return false;
 			}
-			// [RH] Don't explode missiles that spawn on top of horizon lines
-			if (th->BlockingLine != NULL && th->BlockingLine->special == Line_Horizon)
-			{
-				th->Destroy ();
-			}
-			else
-			{
-				P_ExplodeMissile (th, NULL, th->BlockingMobj);
-			}
-			return false;
 		}
 	}
 	return true;

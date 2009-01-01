@@ -29,18 +29,35 @@ void AFastProjectile::Tick ()
 	// [RH] Ripping is a little different than it was in Hexen
 	FCheckPosition tm(!!(flags2 & MF2_RIP));
 
+	int shift = 3;
+	int count = 8;
+	if (radius > 0)
+	{
+		while ( ((momx >> shift) > radius) || ((momy >> shift) > radius))
+		{
+			// we need to take smaller steps.
+			shift++;
+			count<<=1;
+		}
+	}
+
 	// Handle movement
 	if (momx || momy || (z != floorz) || momz)
 	{
-		xfrac = momx>>3;
-		yfrac = momy>>3;
-		zfrac = momz>>3;
+		xfrac = momx>>shift;
+		yfrac = momy>>shift;
+		zfrac = momz>>shift;
 		changexy = xfrac || yfrac;
-		for (i = 0; i < 8; i++)
+		int ripcount = count >> 3;
+		for (i = 0; i < count; i++)
 		{
 			if (changexy)
 			{
-				tm.LastRipped = NULL;	// [RH] Do rip damage each step, like Hexen
+				if (--ripcount <= 0)
+				{
+					tm.LastRipped = NULL;	// [RH] Do rip damage each step, like Hexen
+					ripcount = count >> 3;
+				}
 				if (!P_TryMove (this, x + xfrac,y + yfrac, true, false, tm))
 				{ // Blocked move
 					P_ExplodeMissile (this, BlockingLine, BlockingMobj);

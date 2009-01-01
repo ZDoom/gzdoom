@@ -1270,6 +1270,13 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 					}
 				}
 				break;
+			case SBARINFO_USESAMMO:
+				if ((CPlayer->ReadyWeapon->AmmoType1 != NULL || CPlayer->ReadyWeapon->AmmoType2 != NULL) ^ 
+					!!(cmd.flags & SBARINFOEVENT_NOT))
+				{
+					doCommands(cmd.subBlock, xOffset, yOffset, alpha);
+				}
+				break;
 			case SBARINFO_USESSECONDARYAMMO:
 				if((CPlayer->ReadyWeapon->AmmoType2 != NULL && CPlayer->ReadyWeapon->AmmoType2 != CPlayer->ReadyWeapon->AmmoType1 && !(cmd.flags & SBARINFOEVENT_NOT)) ||
 					(CPlayer->ReadyWeapon->AmmoType2 == NULL && cmd.flags & SBARINFOEVENT_NOT))

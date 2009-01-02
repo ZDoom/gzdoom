@@ -1,4 +1,9 @@
 January 1, 2009  (Changes by Graf Zahl)
+- Added 'ininventory item, amount' option to SBARINFO to check for a minimum 
+  amount instead of mere presence in the inventory.
+- Fixed: Door lock messages were overwritten by remote messages.
+
+January 1, 2009  (Changes by Graf Zahl)
 - Fixed: SBARINFO used GetSpecies instead of GetClass to check weapon types.
 - Added a few missing NULL pointer checks to SBARINFO code.
 - Changed pickup sounds of local player to unpaused to resolve problems with 

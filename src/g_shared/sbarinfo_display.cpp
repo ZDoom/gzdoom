@@ -1356,6 +1356,8 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 			{
 				AInventory *item1 = CPlayer->mo->FindInventory(PClass::FindClass(cmd.string[0]));
 				AInventory *item2 = CPlayer->mo->FindInventory(PClass::FindClass(cmd.string[1]));
+				if (item1 != NULL && cmd.special2 > 0 && item1->Amount < cmd.special2) item1 = NULL;
+				if (item2 != NULL && cmd.special3 > 0 && item2->Amount < cmd.special3) item2 = NULL;
 				if(cmd.flags & SBARINFOEVENT_AND)
 				{
 					if((item1 != NULL && item2 != NULL) && !(cmd.flags & SBARINFOEVENT_NOT))

@@ -77,8 +77,14 @@
 //==========================================================================
 static const PClass *FindClassTentative(const char *name, const char *ancestor)
 {
+	// "" and "none" mean 'no class'
+	if (name == NULL || *name == 0 || !stricmp(name, "none"))
+	{
+		return NULL;
+	}
+
 	const PClass *anc = PClass::FindClass(ancestor);
-	assert(anc != NULL);	// parent classes used here should always be natively defined
+	assert(anc != NULL);	// parent classes used here should always be natively defined	
 	const PClass *cls = const_cast<PClass*>(anc)->FindClassTentative(name);
 	assert (cls != NULL);	// cls can not ne NULL here
 	if (!cls->IsDescendantOf(anc))

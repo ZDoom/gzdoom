@@ -1,3 +1,7 @@
+January 3, 2009  (Changes by Graf Zahl)
+- Fixed: 'None' was no longer recognized as a NULL class name by the 
+  DECORATE parser.
+
 January 1, 2009  (Changes by Graf Zahl)
 - Added 'ininventory item, amount' option to SBARINFO to check for a minimum 
   amount instead of mere presence in the inventory.

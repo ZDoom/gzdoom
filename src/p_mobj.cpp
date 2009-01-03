@@ -4456,6 +4456,26 @@ void P_PlaySpawnSound(AActor *missile, AActor *spawner)
 	}
 }
 
+static AActor * SpawnMissile (const PClass *type, fixed_t x, fixed_t y, fixed_t z)
+{
+	AActor *th = Spawn (type, x, y, z, ALLOW_REPLACE);
+
+	if (th != NULL)
+	{
+		// Force floor huggers to the floor and ceiling huggers to the ceiling
+		if (th->flags3 & MF3_FLOORHUGGER)
+		{
+			z = th->floorz;
+		}
+		else if (th->flags3 & MF3_CEILINGHUGGER)
+		{
+			z = th->ceilingz - th->height;
+		}
+	}
+	return th;
+}
+
+
 //---------------------------------------------------------------------------
 //
 // FUNC P_SpawnMissile
@@ -4485,22 +4505,13 @@ AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z,
 			type->TypeName.GetChars(), source->GetClass()->TypeName.GetChars());
 		return NULL;
 	}
-	int defflags3 = GetDefaultByType (type)->flags3;
 
-	if (defflags3 & MF3_FLOORHUGGER)
-	{
-		z = ONFLOORZ;
-	}
-	else if (defflags3 & MF3_CEILINGHUGGER)
-	{
-		z = ONCEILINGZ;
-	}
-	else if (z != ONFLOORZ)
+	if (z != ONFLOORZ && z != ONCEILINGZ) 
 	{
 		z -= source->floorclip;
 	}
 
-	AActor *th = Spawn (type, x, y, z, ALLOW_REPLACE);
+	AActor *th = SpawnMissile (type, x, y, z);
 	
 	P_PlaySpawnSound(th, source);
 	th->target = source;		// record missile's originator
@@ -4515,7 +4526,7 @@ AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z,
 
 	FVector3 velocity(dest->x - source->x, dest->y - source->y, dest->z - source->z);
 	// Floor and ceiling huggers should never have a vertical component to their velocity
-	if (defflags3 & (MF3_FLOORHUGGER|MF3_CEILINGHUGGER))
+	if (th->flags3 & (MF3_FLOORHUGGER|MF3_CEILINGHUGGER))
 	{
 		velocity.Z = 0;
 	}
@@ -4609,21 +4620,14 @@ AActor *P_SpawnMissileAngleZSpeed (AActor *source, fixed_t z,
 	const PClass *type, angle_t angle, fixed_t momz, fixed_t speed, AActor *owner, bool checkspawn)
 {
 	AActor *mo;
-	int defflags3 = GetDefaultByType (type)->flags3;
 
-	if (defflags3 & MF3_FLOORHUGGER)
-	{
-		z = ONFLOORZ;
-	}
-	else if (defflags3 & MF3_CEILINGHUGGER)
-	{
-		z = ONCEILINGZ;
-	}
-	if (z != ONFLOORZ)
+	if (z != ONFLOORZ && z != ONCEILINGZ && source != NULL) 
 	{
 		z -= source->floorclip;
 	}
-	mo = Spawn (type, source->x, source->y, z, ALLOW_REPLACE);
+
+	mo = SpawnMissile (type, source->x, source->y, z);
+
 	P_PlaySpawnSound(mo, source);
 	mo->target = owner != NULL ? owner : source; // Originator
 	mo->angle = angle;

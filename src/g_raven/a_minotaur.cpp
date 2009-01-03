@@ -406,7 +406,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MntrFloorFire)
 	self->z = self->floorz;
 	x = self->x + (pr_fire.Random2 () << 10);
 	y = self->y + (pr_fire.Random2 () << 10);
-	mo = Spawn("MinotaurFX3", x, y, ONFLOORZ, ALLOW_REPLACE);
+	mo = Spawn("MinotaurFX3", x, y, self->floorz, ALLOW_REPLACE);
 	mo->target = self->target;
 	mo->momx = 1; // Force block checking
 	P_CheckMissileSpawn (mo);

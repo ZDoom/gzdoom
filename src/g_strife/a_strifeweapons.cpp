@@ -904,7 +904,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSigil1)
 	P_BulletSlope (self, &linetarget);
 	if (linetarget != NULL)
 	{
-		spot = Spawn("SpectralLightningSpot", linetarget->x, linetarget->y, ONFLOORZ, ALLOW_REPLACE);
+		spot = Spawn("SpectralLightningSpot", linetarget->x, linetarget->y, linetarget->floorz, ALLOW_REPLACE);
 		if (spot != NULL)
 		{
 			spot->tracer = linetarget;

@@ -1,4 +1,5 @@
 January 3, 2009  (Changes by Graf Zahl)
+- Made spawning of floor- and ceiling huggers a little more intelligent.
 - Fixed: 'None' was no longer recognized as a NULL class name by the 
   DECORATE parser.
 

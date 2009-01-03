@@ -75,7 +75,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Beacon)
 	AActor *rebel;
 	angle_t an;
 
-	rebel = Spawn("Rebel1", self->x, self->y, ONFLOORZ, ALLOW_REPLACE);
+	rebel = Spawn("Rebel1", self->x, self->y, self->floorz, ALLOW_REPLACE);
 	if (!P_TryMove (rebel, rebel->x, rebel->y, true))
 	{
 		rebel->Destroy ();

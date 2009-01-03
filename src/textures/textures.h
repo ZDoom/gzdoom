@@ -1,13 +1,14 @@
 #ifndef __TEXTURES_H
 #define __TEXTURES_H
 
-#include "basictypes.h"
+#include "doomtype.h"
 
 class FBitmap;
 struct FRemapTable;
 struct FCopyInfo;
 class FScanner;
 struct PClass;
+class FArchive;
 
 // Texture IDs
 class FTextureManager;

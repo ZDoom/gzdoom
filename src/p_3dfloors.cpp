@@ -35,8 +35,6 @@
 **
 */
 
-#ifdef _3DFLOORS
-
 #include "templates.h"
 #include "p_local.h"
 #include "p_lnspec.h"
@@ -44,6 +42,8 @@
 #include "sc_man.h"
 #include "v_palette.h"
 #include "g_level.h"
+
+#ifdef _3DFLOORS
 
 //==========================================================================
 //

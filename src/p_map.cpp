@@ -2724,7 +2724,12 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 				trace.Sector->heightsec == NULL &&
 				trace.HitType == TRACE_HitFloor)
 			{
-				P_HitWater (puff, trace.Sector);
+				// Using the puff's position is not accurate enough.
+				// Instead make it splash at the actual hit position
+				hitx = t1->x + FixedMul (vx, trace.Distance);
+				hity = t1->y + FixedMul (vy, trace.Distance);
+				hitz = shootz + FixedMul (vz, trace.Distance);
+				P_HitWater (puff, P_PointInSector(hitx, hity), hitx, hity, hitz);
 			}
 		}
 		else
@@ -2998,6 +3003,8 @@ void P_RailAttack (AActor *source, int damage, int offset, int color1, int color
 	FTraceResults trace;
 	fixed_t shootz;
 
+	if (puffclass == NULL) puffclass = PClass::FindClass(NAME_BulletPuff);
+
 	pitch = (angle_t)(-source->pitch) >> ANGLETOFINESHIFT;
 	angle = source->angle >> ANGLETOFINESHIFT;
 
@@ -3040,39 +3047,16 @@ void P_RailAttack (AActor *source, int damage, int offset, int color1, int color
 		trace.CrossedWater == NULL &&
 		trace.Sector->heightsec == NULL)
 	{
-		fixed_t savex, savey, savez;
-		fixed_t savefloor, saveceil, savedropoff;
-		FTextureID savefloorpic;
-		sector_t *savefloorsec;
-		FTextureID saveceilingpic;
-		sector_t *saveceilingsec;
-
-		savex = source->x;
-		savey = source->y;
-		savez = source->z;
-		savefloor = source->floorz;
-		saveceil = source->ceilingz;
-		savedropoff = source->dropoffz;
-		savefloorpic = source->floorpic;
-		savefloorsec = source->floorsector;
-		saveceilingpic = source->ceilingpic;
-		saveceilingsec = source->ceilingsector;
-
-		source->SetOrigin (trace.X, trace.Y, trace.Z);
-		P_HitWater (source, trace.Sector);
-		source->SetOrigin (savex, savey, savez);
-
-		source->floorz = savefloor;
-		source->ceilingz = saveceil;
-		source->dropoffz = savedropoff;
-		source->floorpic = savefloorpic;
-		source->floorsector = savefloorsec;
-		source->ceilingpic = saveceilingpic;
-		source->ceilingsector = saveceilingsec;
+		AActor *thepuff = Spawn (puffclass, trace.X, trace.Y, trace.Z, ALLOW_REPLACE);
+		if (thepuff != NULL)
+		{
+			P_HitWater (thepuff, trace.Sector);
+			thepuff->Destroy ();
+		}
 	}
 	if (trace.CrossedWater)
 	{
-		AActor *thepuff = Spawn ("BulletPuff", 0, 0, 0, ALLOW_REPLACE);
+		AActor *thepuff = Spawn (puffclass, 0, 0, 0, ALLOW_REPLACE);
 		if (thepuff != NULL)
 		{
 			SpawnDeepSplash (source, trace, thepuff, vx, vy, vz, shootz);
@@ -3082,7 +3066,6 @@ void P_RailAttack (AActor *source, int damage, int offset, int color1, int color
 
 	// Now hurt anything the trace hit
 	unsigned int i;
-	if (puffclass == NULL) puffclass = PClass::FindClass(NAME_BulletPuff);
 	AActor *puffDefaults = puffclass == NULL? NULL : GetDefaultByType (puffclass);
 	FName damagetype = (puffDefaults == NULL || puffDefaults->DamageType == NAME_None) ? FName(NAME_Railgun) : puffDefaults->DamageType;
 
@@ -4532,22 +4515,11 @@ static void SpawnDeepSplash (AActor *t1, const FTraceResults &trace, AActor *puf
 
 		if (hitdist >= 0 && hitdist <= trace.Distance)
 		{
-			fixed_t savex, savey, savez;
+			fixed_t hitx = t1->x+FixedMul (vx, hitdist);
+			fixed_t hity = t1->y+FixedMul (vy, hitdist);
+			fixed_t hitz = shootz+FixedMul (vz, hitdist);
 
-			// Move the puff onto the water surface, splash, then move it back.
-			if (puff == NULL)
-			{
-				puff = t1;
-			}
-
-			savex = puff->x;
-			savey = puff->y;
-			savez = puff->z;
-			puff->SetOrigin (t1->x+FixedMul (vx, hitdist),
-							 t1->y+FixedMul (vy, hitdist),
-							shootz+FixedMul (vz, hitdist));
-			P_HitWater (puff, puff->Sector);
-			puff->SetOrigin (savex, savey, savez);
+			P_HitWater (puff != NULL? puff:t1, P_PointInSector(hitx, hity), hitx, hity, hitz);
 		}
 	}
 }

@@ -1,3 +1,12 @@
+January 4, 2009  (Changes by Graf Zahl)
+- Used new functionality to avoid moving the puff around in SpawnDeepSplash.
+- Fixed: P_RailAttack used the shooting actor or a default puff for some splash
+  related actions. It should use the puff type passed to it as a parameter instead.
+- Changed splash handling in P_LineAttack to use the actual hit position to
+  spawn the splash and not the puff's spawn position which is offset a little.
+- made some precision related changes to P_HitWater. The precise hit coordinate
+  can now be passed as parameters.
+
 January 3, 2009  (Changes by Graf Zahl)
 - Made spawning of floor- and ceiling huggers a little more intelligent.
 - Fixed: 'None' was no longer recognized as a NULL class name by the 

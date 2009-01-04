@@ -50,6 +50,13 @@ struct FTraceInfo
 	fixed_t EnterDist;
 	bool (*TraceCallback)(FTraceResults &res);
 	DWORD TraceFlags;
+	int inshootthrough;
+
+	// These are required for 3D-floor checking
+	// to create a fake sector with a floor 
+	// or ceiling plane coming from a 3D-floor
+	sector_t DummySector[2];	
+	int sectorsel;		
 
 	bool TraceTraverse (int ptflags);
 	bool CheckSectorPlane (const sector_t *sector, bool checkFloor);
@@ -85,27 +92,121 @@ bool Trace (fixed_t x, fixed_t y, fixed_t z, sector_t *sector,
 	inf.TraceFlags = flags;
 	res.CrossedWater = NULL;
 	inf.Results = &res;
+	inf.inshootthrough = true;
 
 	res.HitType = TRACE_HitNone;
 
+	// Do a 3D floor check in the starting sector
+	memset(&res, 0, sizeof(res));
+	inf.sectorsel=0;
 
+#ifdef _3DFLOORS
+	TDeletingArray<F3DFloor*> &ff = sector->e->XFloor.ffloors;
+
+	if (ff.Size())
+	{
+		memcpy(&inf.DummySector[0],sector,sizeof(sector_t));
+		inf.CurSector=sector=&inf.DummySector[0];
+		inf.sectorsel=1;
+		fixed_t bf = sector->floorplane.ZatPoint (x, y);
+		fixed_t bc = sector->ceilingplane.ZatPoint (x, y);
+
+		for(unsigned int i=0;i<ff.Size();i++)
+		{
+			F3DFloor * rover=ff[i];
+
+			if (!(rover->flags&FF_SHOOTTHROUGH) && rover->flags&FF_EXISTS)
+			{
+				fixed_t ff_bottom=rover->bottom.plane->ZatPoint(x, y);
+				fixed_t ff_top=rover->top.plane->ZatPoint(x, y);
+				// clip to the part of the sector we are in
+				if (z>ff_top)
+				{
+					// above
+					if (bf<ff_top)
+					{
+						sector->floorplane=*rover->top.plane;
+						sector->SetTexture(sector_t::floor, *rover->top.texture, false);
+						bf=ff_top;
+					}
+				}
+				else if (z<ff_bottom)
+				{
+					//below
+					if (bc>ff_bottom)
+					{
+						sector->ceilingplane=*rover->bottom.plane;
+						sector->SetTexture(sector_t::ceiling, *rover->bottom.texture, false);
+						bc=ff_bottom;
+					}
+				}
+				else
+				{
+					// inside
+					if (bf<ff_bottom)
+					{
+						sector->floorplane=*rover->bottom.plane;
+						sector->SetTexture(sector_t::floor, *rover->bottom.texture, false);
+						bf=ff_bottom;
+					}
+
+					if (bc>ff_top)
+					{
+						sector->ceilingplane=*rover->top.plane;
+						sector->SetTexture(sector_t::ceiling, *rover->top.texture, false);
+						bc=ff_top;
+					}
+					inf.inshootthrough = false;
+				}
+			}
+		}
+	}
+#endif
+
+	// check for overflows and clip if necessary
+	SQWORD xd= (SQWORD)x + ( ( SQWORD(vx) * SQWORD(maxDist) )>>16);
+
+	if (xd>SQWORD(32767)*FRACUNIT)
+	{
+		maxDist = inf.MaxDist=FixedDiv(FIXED_MAX-x,vx);
+	}
+	else if (xd<-SQWORD(32767)*FRACUNIT)
+	{
+		maxDist = inf.MaxDist=FixedDiv(FIXED_MIN-x,vx);
+	}
+
+
+	SQWORD yd= (SQWORD)y + ( ( SQWORD(vy) * SQWORD(maxDist) )>>16);
+
+	if (yd>SQWORD(32767)*FRACUNIT)
+	{
+		maxDist = inf.MaxDist=FixedDiv(FIXED_MAX-y,vy);
+	}
+	else if (yd<-SQWORD(32767)*FRACUNIT)
+	{
+		maxDist = inf.MaxDist=FixedDiv(FIXED_MIN-y,vy);
+	}
+
+	// recalculate the trace's end points for robustness
 	if (inf.TraceTraverse (ptflags))
 	{ // check for intersection with floor/ceiling
-		res.Sector = inf.CurSector;
+		res.Sector = &sectors[inf.CurSector->sectornum];
 
 		if (inf.CheckSectorPlane (inf.CurSector, true))
 		{
 			res.HitType = TRACE_HitFloor;
+			res.HitTexture = inf.CurSector->GetTexture(sector_t::floor);
 			if (res.CrossedWater == NULL &&
 				inf.CurSector->heightsec != NULL &&
 				inf.CurSector->heightsec->floorplane.ZatPoint (res.X, res.Y) >= res.Z)
 			{
-				res.CrossedWater = inf.CurSector;
+				res.CrossedWater = &sectors[inf.CurSector->sectornum];
 			}
 		}
 		else if (inf.CheckSectorPlane (inf.CurSector, false))
 		{
 			res.HitType = TRACE_HitCeiling;
+			res.HitTexture = inf.CurSector->GetTexture(sector_t::ceiling);
 		}
 	}
 
@@ -154,11 +255,12 @@ bool FTraceInfo::TraceTraverse (int ptflags)
 
 			fixed_t ff, fc, bf = 0, bc = 0;
 
-			if (in->d.line->frontsector == CurSector)
+			// CurSector may be a copy so we must compare the sector number, not the index!
+			if (in->d.line->frontsector->sectornum == CurSector->sectornum)
 			{
 				lineside = 0;
 			}
-			else if (in->d.line->backsector == CurSector)
+			else if (in->d.line->backsector && in->d.line->backsector->sectornum == CurSector->sectornum)
 			{
 				lineside = 1;
 			}
@@ -202,22 +304,24 @@ bool FTraceInfo::TraceTraverse (int ptflags)
 			}
 
 			if (Results->CrossedWater == NULL &&
-				CurSector->heightsec &&
+				CurSector->heightsec && 
 				!(CurSector->MoreFlags & SECF_IGNOREHEIGHTSEC) &&
 				//CurSector->heightsec->waterzone &&
 				hitz <= CurSector->heightsec->floorplane.ZatPoint (hitx, hity))
 			{
 				// hit crossed a water plane
-				Results->CrossedWater = CurSector;
+				Results->CrossedWater = &sectors[CurSector->sectornum];
 			}
 
 			if (hitz <= ff)
 			{ // hit floor in front of wall
 				Results->HitType = TRACE_HitFloor;
+				Results->HitTexture = CurSector->GetTexture(sector_t::floor);
 			}
 			else if (hitz >= fc)
 			{ // hit ceiling in front of wall
 				Results->HitType = TRACE_HitCeiling;
+				Results->HitTexture = CurSector->GetTexture(sector_t::ceiling);
 			}
 			else if (entersector == NULL ||
 				hitz <= bf || hitz >= bc ||
@@ -234,7 +338,65 @@ bool FTraceInfo::TraceTraverse (int ptflags)
 				}
 			}
 			else
-			{ // made it past the wall
+			{ 	// made it past the wall
+#ifdef _3DFLOORS
+				// check for 3D floors first
+				if (entersector->e->XFloor.ffloors.Size())
+				{
+					memcpy(&DummySector[sectorsel],entersector,sizeof(sector_t));
+					entersector=&DummySector[sectorsel];
+					sectorsel^=1;
+
+					for(unsigned int i=0;i<entersector->e->XFloor.ffloors.Size();i++)
+					{
+						F3DFloor * rover=entersector->e->XFloor.ffloors[i];
+						int entershootthrough = !!(rover->flags&FF_SHOOTTHROUGH);
+
+						if (entershootthrough != inshootthrough && rover->flags&FF_EXISTS)
+						{
+							fixed_t ff_bottom=rover->bottom.plane->ZatPoint(hitx, hity);
+							fixed_t ff_top=rover->top.plane->ZatPoint(hitx, hity);
+
+							// clip to the part of the sector we are in
+							if (hitz>ff_top)
+							{
+								// above
+								if (bf<ff_top)
+								{
+									entersector->floorplane=*rover->top.plane;
+									entersector->SetTexture(sector_t::floor, *rover->top.texture, false);
+									bf=ff_top;
+								}
+							}
+							else if (hitz<ff_bottom)
+							{
+								//below
+								if (bc>ff_bottom)
+								{
+									entersector->ceilingplane=*rover->bottom.plane;
+									entersector->SetTexture(sector_t::ceiling, *rover->bottom.texture, false);
+									bc=ff_bottom;
+								}
+							}
+							else
+							{
+								//hit the edge - equivalent to hitting the wall
+								Results->HitType = TRACE_HitWall;
+								Results->Tier = TIER_FFloor;
+								Results->ffloor = rover;
+								if ((TraceFlags & TRACE_Impact) && in->d.line->special)
+								{
+									P_ActivateLine (in->d.line, IgnoreThis, lineside, SPAC_Impact);
+								}
+								goto cont;
+							}
+						}
+					}
+				}
+#endif
+
+
+
 				Results->HitType = TRACE_HitNone;
 				if (TraceFlags & TRACE_PCross)
 				{
@@ -246,11 +408,14 @@ bool FTraceInfo::TraceTraverse (int ptflags)
 					P_ActivateLine (in->d.line, IgnoreThis, lineside, SPAC_Impact);
 				}
 			}
+#ifdef _3DFLOORS
+cont:
+#endif
 
 			if (Results->HitType != TRACE_HitNone)
 			{
 				// We hit something, so figure out where exactly
-				Results->Sector = CurSector;
+				Results->Sector = &sectors[CurSector->sectornum];
 
 				if (Results->HitType != TRACE_HitWall &&
 					!CheckSectorPlane (CurSector, Results->HitType == TRACE_HitFloor))
@@ -357,6 +522,41 @@ bool FTraceInfo::TraceTraverse (int ptflags)
 				abs(hity - in->d.thing->y) > in->d.thing->radius) continue;
 		}
 
+		// check for extrafloors first
+		if (CurSector->e->XFloor.ffloors.Size())
+		{
+			fixed_t ff_floor=CurSector->floorplane.ZatPoint(hitx, hity);
+			fixed_t ff_ceiling=CurSector->ceilingplane.ZatPoint(hitx, hity);
+
+			if (hitz>ff_ceiling)	// actor is hit above the current ceiling
+			{
+				Results->HitType=TRACE_HitCeiling;
+				Results->HitTexture = CurSector->GetTexture(sector_t::ceiling);
+			}
+			else if (hitz<ff_floor)	// actor is hit below the current floor
+			{
+				Results->HitType=TRACE_HitFloor;
+				Results->HitTexture = CurSector->GetTexture(sector_t::floor);
+			}
+			else goto cont1;
+
+			// the trace hit a 3D-floor before the thing.
+			// Calculate an intersection and abort.
+			Results->Sector = &sectors[CurSector->sectornum];
+			if (!CheckSectorPlane(CurSector, Results->HitType==TRACE_HitFloor))
+			{
+				Results->HitType=TRACE_HitNone;
+			}
+			if (TraceCallback != NULL)
+			{
+				return TraceCallback (*Results);
+			}
+			else
+			{
+				return false;
+			}
+		}
+cont1:
 
 		Results->HitType = TRACE_HitActor;
 		Results->X = hitx;
@@ -418,17 +618,9 @@ static bool EditTraceResult (DWORD flags, FTraceResults &res)
 {
 	if (flags & TRACE_NoSky)
 	{ // Throw away sky hits
-		if (res.HitType == TRACE_HitFloor)
+		if (res.HitType == TRACE_HitFloor || res.HitType == TRACE_HitCeiling)
 		{
-			if (res.Sector->GetTexture(sector_t::floor) == skyflatnum)
-			{
-				res.HitType = TRACE_HitNone;
-				return false;
-			}
-		}
-		else if (res.HitType == TRACE_HitCeiling)
-		{
-			if (res.Sector->GetTexture(sector_t::ceiling) == skyflatnum)
+			if (res.HitTexture == skyflatnum)
 			{
 				res.HitType = TRACE_HitNone;
 				return false;

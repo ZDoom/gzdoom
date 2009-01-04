@@ -2879,6 +2879,10 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 
 	P_SerializePlayers (arc, hubLoad);
 	P_SerializeSounds (arc);
+	if (arc.IsLoading()) for(i=0;i<numsectors;i++)
+	{
+		P_Recalculate3DFloors(&sectors[i]);
+	}
 }
 
 // Archives the current level

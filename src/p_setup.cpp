@@ -1242,6 +1242,7 @@ void P_LoadSectors (MapData * map)
 		// killough 8/28/98: initialize all sectors to normal friction
 		ss->friction = ORIG_FRICTION;
 		ss->movefactor = ORIG_FRICTION_FACTOR;
+		ss->sectornum = i;
 	}
 	delete[] msp;
 }
@@ -2130,6 +2131,28 @@ void P_ProcessSideTextures(bool checktranmap, side_t *sd, sector_t *sec, mapside
 			}
 		}
 		break;
+
+#ifdef _3DFLOORS
+	case Sector_Set3DFloor:
+		if (msd->toptexture[0]=='#')
+		{
+			strncpy (name, msd->toptexture, 8);
+			sd->SetTexture(side_t::top, FNullTextureID() +(-strtol(name+1, NULL, 10)));	// store the alpha as a negative texture index
+														// This will be sorted out by the 3D-floor code later.
+		}
+		else
+		{
+			strncpy (name, msd->toptexture, 8);
+			sd->SetTexture(side_t::top, TexMan.GetTexture (name, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable));
+		}
+
+		strncpy (name, msd->midtexture, 8);
+		sd->SetTexture(side_t::mid, TexMan.GetTexture (name, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable));
+
+		strncpy (name, msd->bottomtexture, 8);
+		sd->SetTexture(side_t::bottom, TexMan.GetTexture (name, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable));
+		break;
+#endif
 
 	case TranslucentLine:	// killough 4/11/98: apply translucency to 2s normal texture
 		if (checktranmap)
@@ -3482,6 +3505,9 @@ void P_SetupLevel (char *lumpname, int position)
 		bodyque[i] = NULL;
 
 	deathmatchstarts.Clear ();
+
+	// Spawn 3d floors - must be done before spawning things so it can't be done in P_SpawnSpecials
+	P_Spawn3DFloors();
 
 	if (!buildmap)
 	{

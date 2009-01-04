@@ -2188,7 +2188,7 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 				{
 					DImpactDecal::StaticCreate (s,
 						trace.X, trace.Y, trace.Z,
-						sides + trace.Line->sidenum[trace.Side]);
+						sides + trace.Line->sidenum[trace.Side], NULL);
 				}
 			}
 		}

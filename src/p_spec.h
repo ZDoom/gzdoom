@@ -182,7 +182,7 @@ void	P_UpdateSpecials (void);
 bool	P_ActivateLine (line_t *ld, AActor *mo, int side, int activationType);
 bool	P_TestActivateLine (line_t *ld, AActor *mo, int side, int activationType);
 
-void	P_PlayerInSpecialSector (player_t *player);
+void 	P_PlayerInSpecialSector (player_t *player, sector_t * sector=NULL);
 void	P_PlayerOnSpecialFlat (player_t *player, int floorType);
 
 void	P_SetSectorFriction (int tag, int amount, bool alterFlag);

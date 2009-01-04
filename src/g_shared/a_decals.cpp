@@ -131,7 +131,8 @@ void DBaseDecal::Serialize (FArchive &arc)
 		<< Translation
 		<< PicNum
 		<< RenderFlags
-		<< RenderStyle;
+		<< RenderStyle
+		<< Sector;
 }
 
 void DBaseDecal::SerializeChain (FArchive &arc, DBaseDecal **first)
@@ -207,7 +208,7 @@ void DBaseDecal::SetShade (int r, int g, int b)
 }
 
 // Returns the texture the decal stuck to.
-FTextureID DBaseDecal::StickToWall (side_t *wall, fixed_t x, fixed_t y)
+FTextureID DBaseDecal::StickToWall (side_t *wall, fixed_t x, fixed_t y, F3DFloor * ffloor)
 {
 	// Stick the decal at the end of the chain so it appears on top
 	DBaseDecal *next, **prev;
@@ -262,7 +263,7 @@ FTextureID DBaseDecal::StickToWall (side_t *wall, fixed_t x, fixed_t y)
 			Z -= back->GetPlaneTexZ(sector_t::floor);
 		tex = wall->GetTexture(side_t::bottom);
 	}
-	else
+	else if (back->ceilingplane.ZatPoint (x, y) <= Z)
 	{
 		RenderFlags |= RF_RELUPPER|RF_CLIPUPPER;
 		if (line->flags & ML_DONTPEGTOP)
@@ -271,7 +272,31 @@ FTextureID DBaseDecal::StickToWall (side_t *wall, fixed_t x, fixed_t y)
 			Z -= back->GetPlaneTexZ(sector_t::ceiling);
 		tex = wall->GetTexture(side_t::top);
 	}
+#ifdef _3DFLOORS
+	else if (ffloor) // this is a 3d-floor segment - do this only if we know which one!
+	{
+		Sector=ffloor->model;
+		RenderFlags |= RF_RELMID|RF_CLIPMID;
+		if (line->flags & ML_DONTPEGBOTTOM)
+			Z -= Sector->GetPlaneTexZ(sector_t::floor);
+		else
+			Z -= Sector->GetPlaneTexZ(sector_t::ceiling);
 
+		if (ffloor->flags & FF_UPPERTEXTURE)
+		{
+			tex = wall->GetTexture(side_t::top);
+		}
+		else if (ffloor->flags & FF_LOWERTEXTURE)
+		{
+			tex = wall->GetTexture(side_t::bottom);
+		}
+		else
+		{
+			tex = sides[ffloor->master->sidenum[0]].GetTexture(side_t::mid);
+		}
+	}
+#endif
+	else return FNullTextureID();
 	CalcFracPos (wall, x, y);
 
 	return tex;
@@ -406,7 +431,7 @@ static side_t *NextWall (const side_t *wall)
 	return NULL;
 }
 
-void DBaseDecal::SpreadLeft (fixed_t r, vertex_t *v1, side_t *feelwall)
+void DBaseDecal::SpreadLeft (fixed_t r, vertex_t *v1, side_t *feelwall, F3DFloor * ffloor)
 {
 	fixed_t ldx, ldy;
 
@@ -426,7 +451,7 @@ void DBaseDecal::SpreadLeft (fixed_t r, vertex_t *v1, side_t *feelwall)
 		x += Scale (r, ldx, wallsize);
 		y += Scale (r, ldy, wallsize);
 		r = wallsize + startr;
-		SpreadSource->CloneSelf (SpreadTemplate, x, y, SpreadZ, feelwall);
+		SpreadSource->CloneSelf (SpreadTemplate, x, y, SpreadZ, feelwall, ffloor);
 		SpreadStack.Push (feelwall);
 
 		side_t *nextwall = NextWall (feelwall);
@@ -444,13 +469,13 @@ void DBaseDecal::SpreadLeft (fixed_t r, vertex_t *v1, side_t *feelwall)
 				vertex_t *v2;
 
 				GetWallStuff (nextwall, v2, ldx, ldy);
-				SpreadLeft (startr, v2, nextwall);
+				SpreadLeft (startr, v2, nextwall, ffloor);
 			}
 		}
 	}
 }
 
-void DBaseDecal::SpreadRight (fixed_t r, side_t *feelwall, fixed_t wallsize)
+void DBaseDecal::SpreadRight (fixed_t r, side_t *feelwall, fixed_t wallsize, F3DFloor * ffloor)
 {
 	vertex_t *v1;
 	fixed_t x, y, ldx, ldy;
@@ -473,7 +498,7 @@ void DBaseDecal::SpreadRight (fixed_t r, side_t *feelwall, fixed_t wallsize)
 			}
 			if (i == -1)
 			{
-				SpreadRight (r, nextwall, wallsize);
+				SpreadRight (r, nextwall, wallsize, ffloor);
 			}
 		}
 
@@ -485,12 +510,12 @@ void DBaseDecal::SpreadRight (fixed_t r, side_t *feelwall, fixed_t wallsize)
 		x -= Scale (r, ldx, wallsize);
 		y -= Scale (r, ldy, wallsize);
 		r = DecalRight - r;
-		SpreadSource->CloneSelf (SpreadTemplate, x, y, SpreadZ, feelwall);
+		SpreadSource->CloneSelf (SpreadTemplate, x, y, SpreadZ, feelwall, ffloor);
 		SpreadStack.Push (feelwall);
 	}
 }
 
-void DBaseDecal::Spread (const FDecalTemplate *tpl, side_t *wall, fixed_t x, fixed_t y, fixed_t z)
+void DBaseDecal::Spread (const FDecalTemplate *tpl, side_t *wall, fixed_t x, fixed_t y, fixed_t z, F3DFloor * ffloor)
 {
 	FTexture *tex;
 	vertex_t *v1;
@@ -510,21 +535,21 @@ void DBaseDecal::Spread (const FDecalTemplate *tpl, side_t *wall, fixed_t x, fix
 	SpreadZ = z;
 
 	// Try spreading left first
-	SpreadLeft (rorg - DecalLeft, v1, wall);
+		SpreadLeft (rorg - DecalLeft, v1, wall, ffloor);
 	SpreadStack.Clear ();
 
 	// Then try spreading right
 	SpreadRight (rorg + DecalRight, wall,
-		Length (lines[wall->linenum].dx, lines[wall->linenum].dy));
+			Length (lines[wall->linenum].dx, lines[wall->linenum].dy), ffloor);
 	SpreadStack.Clear ();
 }
 
-DBaseDecal *DBaseDecal::CloneSelf (const FDecalTemplate *tpl, fixed_t ix, fixed_t iy, fixed_t iz, side_t *wall) const
+DBaseDecal *DBaseDecal::CloneSelf (const FDecalTemplate *tpl, fixed_t ix, fixed_t iy, fixed_t iz, side_t *wall, F3DFloor * ffloor) const
 {
 	DBaseDecal *decal = new DBaseDecal(iz);
 	if (decal != NULL)
 	{
-		decal->StickToWall (wall, ix, iy);
+		decal->StickToWall (wall, ix, iy, ffloor);
 		tpl->ApplyToDecal (decal, wall);
 		decal->AlphaColor = AlphaColor;
 		decal->RenderFlags = (decal->RenderFlags & RF_DECALMASK) |
@@ -598,7 +623,7 @@ void DImpactDecal::CheckMax ()
 	}
 }
 
-DImpactDecal *DImpactDecal::StaticCreate (const char *name, fixed_t x, fixed_t y, fixed_t z, side_t *wall, PalEntry color)
+DImpactDecal *DImpactDecal::StaticCreate (const char *name, fixed_t x, fixed_t y, fixed_t z, side_t *wall, F3DFloor * ffloor, PalEntry color)
 {
 	if (cl_maxdecals > 0)
 	{
@@ -606,13 +631,13 @@ DImpactDecal *DImpactDecal::StaticCreate (const char *name, fixed_t x, fixed_t y
 
 		if (tpl != NULL && (tpl = tpl->GetDecal()) != NULL)
 		{
-			return StaticCreate (tpl, x, y, z, wall, color);
+			return StaticCreate (tpl, x, y, z, wall, ffloor, color);
 		}
 	}
 	return NULL;
 }
 
-DImpactDecal *DImpactDecal::StaticCreate (const FDecalTemplate *tpl, fixed_t x, fixed_t y, fixed_t z, side_t *wall, PalEntry color)
+DImpactDecal *DImpactDecal::StaticCreate (const FDecalTemplate *tpl, fixed_t x, fixed_t y, fixed_t z, side_t *wall, F3DFloor * ffloor, PalEntry color)
 {
 	DImpactDecal *decal = NULL;
 	if (tpl != NULL && cl_maxdecals > 0 && !(wall->Flags & WALLF_NOAUTODECALS))
@@ -625,12 +650,12 @@ DImpactDecal *DImpactDecal::StaticCreate (const FDecalTemplate *tpl, fixed_t x, 
 			// If the default color of the lower decal is the same as the main decal's
 			// apply the custom color as well.
 			if (tpl->ShadeColor == tpl_low->ShadeColor) lowercolor=0;
-			StaticCreate (tpl_low, x, y, z, wall, lowercolor);
+			StaticCreate (tpl_low, x, y, z, wall, ffloor, lowercolor);
 		}
 		DImpactDecal::CheckMax();
 		decal = new DImpactDecal (z);
 
-		FTextureID stickypic = decal->StickToWall (wall, x, y);
+		FTextureID stickypic = decal->StickToWall (wall, x, y, ffloor);
 		FTexture *tex = TexMan[stickypic];
 
 		if (tex != NULL && tex->bNoDecals)
@@ -655,18 +680,18 @@ DImpactDecal *DImpactDecal::StaticCreate (const FDecalTemplate *tpl, fixed_t x, 
 		}
 
 		// Spread decal to nearby walls if it does not all fit on this one
-		decal->Spread (tpl, wall, x, y, z);
+		decal->Spread (tpl, wall, x, y, z, ffloor);
 	}
 	return decal;
 }
 
-DBaseDecal *DImpactDecal::CloneSelf (const FDecalTemplate *tpl, fixed_t ix, fixed_t iy, fixed_t iz, side_t *wall) const
+DBaseDecal *DImpactDecal::CloneSelf (const FDecalTemplate *tpl, fixed_t ix, fixed_t iy, fixed_t iz, side_t *wall, F3DFloor * ffloor) const
 {
 	DImpactDecal::CheckMax();
 	DImpactDecal *decal = new DImpactDecal(iz);
 	if (decal != NULL)
 	{
-		decal->StickToWall (wall, ix, iy);
+		decal->StickToWall (wall, ix, iy, ffloor);
 		tpl->ApplyToDecal (decal, wall);
 		decal->AlphaColor = AlphaColor;
 		decal->RenderFlags = (decal->RenderFlags & RF_DECALMASK) |
@@ -751,12 +776,12 @@ void ADecal::BeginPlay ()
 			{
 				decal = new DBaseDecal (this);
 				wall = sides + trace.Line->sidenum[trace.Side];
-				decal->StickToWall (wall, trace.X, trace.Y);
+				decal->StickToWall (wall, trace.X, trace.Y, trace.ffloor);
 				tpl->ApplyToDecal (decal, wall);
 				// Spread decal to nearby walls if it does not all fit on this one
 				if (cl_spreaddecals)
 				{
-					decal->Spread (tpl, wall, trace.X, trace.Y, z);
+					decal->Spread (tpl, wall, trace.X, trace.Y, z, trace.ffloor);
 				}
 			}
 			else

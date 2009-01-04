@@ -29,6 +29,7 @@ static const struct {
 	int code;
 	const char *name;
 } sigill_codes[] = {
+#ifndef __FreeBSD__
 	{ ILL_ILLOPC, "Illegal opcode" },
 	{ ILL_ILLOPN, "Illegal operand" },
 	{ ILL_ILLADR, "Illegal addressing mode" },
@@ -37,6 +38,7 @@ static const struct {
 	{ ILL_PRVREG, "Privileged register" },
 	{ ILL_COPROC, "Coprocessor error" },
 	{ ILL_BADSTK, "Internal stack error" },
+#endif
 	{ 0, NULL }
 };
 
@@ -59,8 +61,10 @@ static const struct {
 	int code;
 	const char *name;
 } sigsegv_codes[] = {
+#ifndef __FreeBSD__
 	{ SEGV_MAPERR, "Address not mapped to object" },
 	{ SEGV_ACCERR, "Invalid permissions for mapped object" },
+#endif
 	{ 0, NULL }
 };
 
@@ -68,9 +72,11 @@ static const struct {
 	int code;
 	const char *name;
 } sigbus_codes[] = {
+#ifndef __FreeBSD__
 	{ BUS_ADRALN, "Invalid address alignment" },
 	{ BUS_ADRERR, "Non-existent physical address" },
 	{ BUS_OBJERR, "Object specific hardware error" },
+#endif
 	{ 0, NULL }
 };
 
@@ -176,7 +182,9 @@ static void crash_catcher(int signum, siginfo_t *siginfo, void *context)
 	const char *sigdesc = NULL;
 	pid_t pid, dbg_pid;
 	struct stat sbuf;
+#ifndef __FreeBSD__
 	struct rlimit rl;
+#endif
 	int status, i;
 	FILE *f;
 
@@ -374,7 +382,12 @@ int cc_install_handlers(int num_signals, int *signals, const char *logfile, int 
 	memset(&sa, 0, sizeof(sa));
 
 	sa.sa_sigaction = crash_catcher;
+	
+#ifndef __FreeBSD__
 	sa.sa_flags = SA_ONESHOT | SA_NODEFER | SA_SIGINFO;
+#else
+	sa.sa_flags = SA_NODEFER | SA_SIGINFO;
+#endif
 
 	cc_logfile = logfile;
 	cc_user_info = user_info;

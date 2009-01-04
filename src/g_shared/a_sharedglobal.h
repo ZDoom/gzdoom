@@ -7,6 +7,7 @@
 class FDecalTemplate;
 struct vertex_t;
 struct side_t;
+struct F3DFloor;
 
 extern void P_SpawnDirt (AActor *actor, fixed_t radius);
 
@@ -23,11 +24,11 @@ public:
 
 	void Serialize (FArchive &arc);
 	void Destroy ();
-	FTextureID StickToWall (side_t *wall, fixed_t x, fixed_t y);
+	FTextureID StickToWall (side_t *wall, fixed_t x, fixed_t y, F3DFloor * ffloor);
 	fixed_t GetRealZ (const side_t *wall) const;
 	void SetShade (DWORD rgb);
 	void SetShade (int r, int g, int b);
-	void Spread (const FDecalTemplate *tpl, side_t *wall, fixed_t x, fixed_t y, fixed_t z);
+	void Spread (const FDecalTemplate *tpl, side_t *wall, fixed_t x, fixed_t y, fixed_t z, F3DFloor * ffloor);
 	void GetXY (side_t *side, fixed_t &x, fixed_t &y) const;
 
 	static void SerializeChain (FArchive &arc, DBaseDecal **firstptr);
@@ -43,14 +44,15 @@ public:
 	FTextureID PicNum;
 	DWORD RenderFlags;
 	FRenderStyle RenderStyle;
+	sector_t * Sector;	// required for 3D floors
 
 protected:
-	virtual DBaseDecal *CloneSelf (const FDecalTemplate *tpl, fixed_t x, fixed_t y, fixed_t z, side_t *wall) const;
+	virtual DBaseDecal *CloneSelf (const FDecalTemplate *tpl, fixed_t x, fixed_t y, fixed_t z, side_t *wall, F3DFloor * ffloor) const;
 	void CalcFracPos (side_t *wall, fixed_t x, fixed_t y);
 	void Remove ();
 
-	static void SpreadLeft (fixed_t r, vertex_t *v1, side_t *feelwall);
-	static void SpreadRight (fixed_t r, side_t *feelwall, fixed_t wallsize);
+	static void SpreadLeft (fixed_t r, vertex_t *v1, side_t *feelwall, F3DFloor * ffloor);
+	static void SpreadRight (fixed_t r, side_t *feelwall, fixed_t wallsize, F3DFloor * ffloor);
 };
 
 class DImpactDecal : public DBaseDecal
@@ -60,8 +62,8 @@ public:
 	DImpactDecal (fixed_t z);
 	DImpactDecal (side_t *wall, const FDecalTemplate *templ);
 
-	static DImpactDecal *StaticCreate (const char *name, fixed_t x, fixed_t y, fixed_t z, side_t *wall, PalEntry color=0);
-	static DImpactDecal *StaticCreate (const FDecalTemplate *tpl, fixed_t x, fixed_t y, fixed_t z, side_t *wall, PalEntry color=0);
+	static DImpactDecal *StaticCreate (const char *name, fixed_t x, fixed_t y, fixed_t z, side_t *wall, F3DFloor * ffloor, PalEntry color=0);
+	static DImpactDecal *StaticCreate (const FDecalTemplate *tpl, fixed_t x, fixed_t y, fixed_t z, side_t *wall, F3DFloor * ffloor, PalEntry color=0);
 
 	void BeginPlay ();
 	void Destroy ();
@@ -70,7 +72,7 @@ public:
 	static void SerializeTime (FArchive &arc);
 
 protected:
-	DBaseDecal *CloneSelf (const FDecalTemplate *tpl, fixed_t x, fixed_t y, fixed_t z, side_t *wall) const;
+	DBaseDecal *CloneSelf (const FDecalTemplate *tpl, fixed_t x, fixed_t y, fixed_t z, side_t *wall, F3DFloor * ffloor) const;
 	static void CheckMax ();
 
 private:

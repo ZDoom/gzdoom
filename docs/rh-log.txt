@@ -1,4 +1,6 @@
 January 4, 2009  (Changes by Graf Zahl)
+- added GZDoom's 3D floor physics code. This is not active yet so anything
+  compiled from this code won't have any support for it!
 - Used new functionality to avoid moving the puff around in SpawnDeepSplash.
 - Fixed: P_RailAttack used the shooting actor or a default puff for some splash
   related actions. It should use the puff type passed to it as a parameter instead.

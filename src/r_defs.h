@@ -229,6 +229,7 @@ inline FArchive &operator<< (FArchive &arc, secplane_t &plane)
 	return arc;
 }
 
+#include "p_3dfloors.h"
 // Ceiling/floor flags
 enum
 {
@@ -319,6 +320,14 @@ struct extsector_t
 			TArray<FLinkedSector> Sectors;
 		} Floor, Ceiling;
 	} Linked;
+
+	// 3D floors
+	struct xfloor
+	{
+		TDeletingArray<F3DFloor *>		ffloors;		// 3D floors in this sector
+		TArray<lightlist_t>				lightlist;		// 3D light list
+		TArray<sector_t*>				attached;		// 3D floors attached to this sector
+	} XFloor;
 	
 	void Serialize(FArchive &arc);
 };
@@ -600,6 +609,7 @@ struct sector_t
 
 	vertex_t *Triangle[3];	// Three points that can define a plane
 	short						oldspecial;			//jff 2/16/98 remembers if sector WAS secret (automap)
+	int							sectornum;			// for comparing sector copies
 
 	extsector_t	*				e;		// This stores data that requires construction/destruction. Such data must not be copied by R_FakeFlat.
 };
@@ -742,7 +752,6 @@ struct line_t
 	slopetype_t	slopetype;	// To aid move clipping.
 	sector_t	*frontsector, *backsector;
 	int 		validcount;	// if == validcount, already checked
-
 };
 
 // phares 3/14/98

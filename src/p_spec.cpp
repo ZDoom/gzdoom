@@ -387,17 +387,21 @@ bool P_TestActivateLine (line_t *line, AActor *mo, int side, int activationType)
 // Called every tic frame
 //	that the player origin is in a special sector
 //
-void P_PlayerInSpecialSector (player_t *player)
+void P_PlayerInSpecialSector (player_t *player, sector_t * sector)
 {
-	sector_t *sector = player->mo->Sector;
-	int special = sector->special & ~SECRET_MASK;
 
-	// Falling, not all the way down yet?
-	if (player->mo->z != sector->floorplane.ZatPoint (player->mo->x, player->mo->y)
-		&& !player->mo->waterlevel)
+	if (sector == NULL)
 	{
-		return;
+		// Falling, not all the way down yet?
+		sector = player->mo->Sector;
+		if (player->mo->z != sector->floorplane.ZatPoint (player->mo->x, player->mo->y)
+			&& !player->mo->waterlevel)
+		{
+			return;
+		}
 	}
+
+	int special = sector->special & ~SECRET_MASK;
 
 	// Has hit ground.
 	AInventory *ironfeet;

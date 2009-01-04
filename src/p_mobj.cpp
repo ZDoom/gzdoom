@@ -1066,8 +1066,31 @@ void P_ExplodeMissile (AActor *mo, line_t *line, AActor *target)
 					y = line->v1->y + MulScale30 (line->dy, frac);
 					z = mo->z;
 
+					F3DFloor * ffloor=NULL;
+#ifdef _3DFLOORS
+					if (line->sidenum[side^1]!=NO_SIDE)
+					{
+						sector_t * backsector=sides[line->sidenum[side^1]].sector;
+						extsector_t::xfloor &xf = backsector->e->XFloor;
+						// find a 3D-floor to stick to
+						for(unsigned int i=0;i<xf.ffloors.Size();i++)
+						{
+							F3DFloor * rover=xf.ffloors[i];
+
+							if ((rover->flags&(FF_EXISTS|FF_SOLID|FF_RENDERSIDES))==(FF_EXISTS|FF_SOLID|FF_RENDERSIDES))
+							{
+								if (z<=rover->top.plane->ZatPoint(x, y) && z>=rover->bottom.plane->ZatPoint( x, y))
+								{
+									ffloor=rover;
+									break;
+								}
+							}
+						}
+					}
+#endif
+
 					DImpactDecal::StaticCreate (base->GetDecal (),
-						x, y, z, sides + line->sidenum[side]);
+						x, y, z, sides + line->sidenum[side], ffloor);
 				}
 			}
 		}
@@ -1318,7 +1341,7 @@ void P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 	fixed_t ptryx, ptryy;
 	player_t *player;
 	fixed_t xmove, ymove;
-	bool walkplane;
+	const secplane_t * walkplane;
 	static const int windTab[3] = {2048*5, 2048*10, 2048*25};
 	int steps, step, totalsteps;
 	fixed_t startx, starty;
@@ -1723,7 +1746,19 @@ explode:
 			{
 				if (mo->dropoffz != mo->floorz) // 3DMidtex or other special cases that must be excluded
 				{
-					return;
+#ifdef _3DFLOORS
+					unsigned i;
+					for(i=0;i<mo->Sector->e->XFloor.ffloors.Size();i++)
+					{
+						// Sliding around on 3D floors looks extremely bad so
+						// if the floor comes from one in the current sector stop sliding the corpse!
+						F3DFloor * rover=mo->Sector->e->XFloor.ffloors[i];
+						if (!(rover->flags&FF_EXISTS)) continue;
+						if (rover->flags&FF_SOLID && rover->top.plane->ZatPoint(mo->x,mo->y)==mo->floorz) break;
+					}
+					if (i==mo->Sector->e->XFloor.ffloors.Size()) 
+#endif
+						return;
 				}
 			}
 		}
@@ -1894,6 +1929,7 @@ void P_ZMovement (AActor *mo)
 		{ // [RH] Let the sector do something to the actor
 			mo->Sector->SecActTarget->TriggerAction (mo, SECSPAC_HitFloor);
 		}
+		P_CheckFor3DFloorHit(mo);
 		// [RH] Need to recheck this because the sector action might have
 		// teleported the actor so it is no longer below the floor.
 		if (mo->z <= mo->floorz)
@@ -1992,6 +2028,7 @@ void P_ZMovement (AActor *mo)
 		{ // [RH] Let the sector do something to the actor
 			mo->Sector->SecActTarget->TriggerAction (mo, SECSPAC_HitCeiling);
 		}
+		P_CheckFor3DCeilingHit(mo);
 		// [RH] Need to recheck this because the sector action might have
 		// teleported the actor so it is no longer above the ceiling.
 		if (mo->z + mo->height > mo->ceilingz)
@@ -2829,6 +2866,26 @@ void AActor::Tick ()
 			floorz == z)
 		{
 			const secplane_t * floorplane = &floorsector->floorplane;
+			static secplane_t copyplane;
+
+#ifdef _3DFLOORS
+			// Check 3D floors as well
+			if (floorsector->e)	// apparently this can be called when the data is already gone-
+			for(unsigned int i=0;i<floorsector->e->XFloor.ffloors.Size();i++)
+			{
+				F3DFloor * rover= floorsector->e->XFloor.ffloors[i];
+				if(!(rover->flags & FF_SOLID) || !(rover->flags & FF_EXISTS)) continue;
+
+				if (rover->top.plane->ZatPoint(x, y) == floorz)
+				{
+					copyplane = *rover->top.plane;
+					if (copyplane.c<0) copyplane.FlipVert();
+					floorplane = &copyplane;
+					break;
+				}
+			}
+#endif
+
 			if (floorplane->c < STEEPSLOPE &&
 				floorplane->ZatPoint (x, y) <= floorz)
 			{
@@ -3053,8 +3110,42 @@ bool AActor::UpdateWaterLevel (fixed_t oldz, bool dosplash)
 			// But the water level must be reset when this function returns
 			if (!(hsec->MoreFlags&SECF_UNDERWATERMASK)) reset=true;
 		}
-	}
+#ifdef _3DFLOORS
+		else
+		{
+			// Check 3D floors as well!
+			for(unsigned int i=0;i<Sector->e->XFloor.ffloors.Size();i++)
+			{
+				F3DFloor*  rover=Sector->e->XFloor.ffloors[i];
 
+				if (!(rover->flags & FF_EXISTS)) continue;
+				if(!(rover->flags & FF_SWIMMABLE) || rover->flags & FF_SOLID) continue;
+
+				fixed_t ff_bottom=rover->bottom.plane->ZatPoint(x, y);
+				fixed_t ff_top=rover->top.plane->ZatPoint(x, y);
+
+				if(ff_top <= z || ff_bottom > (z + (height >> 1))) continue;
+				
+				fh=ff_top;
+				if (z < fh)
+				{
+					waterlevel = 1;
+					if (z + height/2 < fh)
+					{
+						waterlevel = 2;
+						if ((player && z + player->viewheight <= fh) ||
+							(z + height <= fh))
+						{
+							waterlevel = 3;
+						}
+					}
+				}
+
+				break;
+			}
+		}
+#endif
+	}
 		
 	// some additional checks to make deep sectors like Boom's splash without setting
 	// the water flags. 
@@ -3064,7 +3155,7 @@ bool AActor::UpdateWaterLevel (fixed_t oldz, bool dosplash)
 	}
 	boomwaterlevel=waterlevel;
 	if (reset) waterlevel=lastwaterlevel;
-	return false;	// we did the splash ourselves! ;)
+	return false;	// we did the splash ourselves
 }
 
 //==========================================================================
@@ -3376,6 +3467,9 @@ void AActor::AdjustFloorClip ()
 	fixed_t oldclip = floorclip;
 	fixed_t shallowestclip = FIXED_MAX;
 	const msecnode_t *m;
+
+	// possibly standing on a 3D-floor!
+	if (Sector->e->XFloor.ffloors.Size() && z>Sector->floorplane.ZatPoint(x,y)) floorclip=0;
 
 	// [RH] clip based on shallowest floor player is standing on
 	// If the sector has a deep water effect, then let that effect
@@ -4234,6 +4328,25 @@ bool P_HitWater (AActor * thing, sector_t * sec, fixed_t x, fixed_t y, fixed_t z
 	if (z == FIXED_MIN) z = thing->z;
 	// don't splash above the object
 	if (checkabove && z > thing->z + (thing->height >> 1)) return false;
+
+#ifdef _3DFLOORS
+	for(unsigned int i=0;i<sec->e->XFloor.ffloors.Size();i++)
+	{		
+		F3DFloor * rover = sec->e->XFloor.ffloors[i];
+		if (!(rover->flags & FF_EXISTS)) continue;
+		fixed_t planez = rover->top.plane->ZatPoint(x, y);
+		if (z > planez - FRACUNIT/2 && z < planez + FRACUNIT/2)	// allow minor imprecisions
+		{
+			if (rover->flags & (FF_SOLID|FF_SWIMMABLE) )
+			{
+				terrainnum = TerrainTypes[*rover->top.texture];
+				goto foundone;
+			}
+		}
+		planez = rover->bottom.plane->ZatPoint(x, y);
+		if (planez < z) return false;
+	}
+#endif
 	if (sec->heightsec == NULL ||
 		//!sec->heightsec->waterzone ||
 		(sec->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC) ||
@@ -4245,6 +4358,9 @@ bool P_HitWater (AActor * thing, sector_t * sec, fixed_t x, fixed_t y, fixed_t z
 	{
 		terrainnum = TerrainTypes[sec->heightsec->GetTexture(sector_t::floor)];
 	}
+#ifdef _3DFLOORS
+foundone:
+#endif
 
 	int splashnum = Terrains[terrainnum].Splash;
 	bool smallsplash = false;
@@ -4339,6 +4455,22 @@ bool P_HitFloor (AActor *thing)
 		{
 			break;
 		}
+
+#ifdef _3DFLOORS
+		// Check 3D floors
+		for(unsigned int i=0;i<m->m_sector->e->XFloor.ffloors.Size();i++)
+		{		
+			F3DFloor * rover = m->m_sector->e->XFloor.ffloors[i];
+			if (!(rover->flags & FF_EXISTS)) continue;
+			if (rover->flags & (FF_SOLID|FF_SWIMMABLE))
+			{
+				if (rover->top.plane->ZatPoint(thing->x, thing->y) == thing->z)
+				{
+					return P_HitWater (thing, m->m_sector);
+				}
+			}
+		}
+#endif
 	}
 	if (m == NULL ||
 		(m->m_sector->heightsec != NULL &&

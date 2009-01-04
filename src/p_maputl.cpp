@@ -197,6 +197,12 @@ void P_LineOpening (FLineOpening &open, AActor *actor, const line_t *linedef,
 		open.lowfloor = ff;
 	}
 
+	// Check 3D floors
+	if (actor != NULL)
+	{
+		P_LineOpening_XFloors(open, actor, linedef, x, y, refx, refy);
+	}
+
 	if (actor != NULL && linedef->frontsector != NULL && linedef->backsector != NULL && 
 		linedef->flags & ML_3DMIDTEX)
 	{

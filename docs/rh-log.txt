@@ -1,4 +1,8 @@
 January 4, 2009  (Changes by Graf Zahl)
+- Fixed: For map spawns any change to an actor's floor z-coordinate must be 
+  delayed until after its z-coordinate has been set. That means that for 
+  map spawns AActor::StaticSpawn may not call P_FindFloorCeiling for such
+  actors.
 - added GZDoom's 3D floor physics code. This is not active yet so anything
   compiled from this code won't have any support for it!
 - Used new functionality to avoid moving the puff around in SpawnDeepSplash.

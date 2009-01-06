@@ -103,7 +103,7 @@ bool ACustomInventory::CallStateChain (AActor *actor, FState * State)
 		// Assume success. The code pointer will set this to false if necessary
 		StateCall.State = State;
 		StateCall.Result = true;
-		if (State->CallAction(actor, &StateCall))
+		if (State->CallAction(actor, this, &StateCall))
 		{
 			// collect all the results. Even one successful call signifies overall success.
 			result |= StateCall.Result;

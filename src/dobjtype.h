@@ -72,7 +72,7 @@ struct PSymbolVariable : public PSymbol
 // parameters passed.
 struct FState;
 struct StateCallData;
-typedef void (*actionf_p)(AActor *self, FState *state, int parameters, StateCallData *statecall);
+typedef void (*actionf_p)(AActor *self, AActor *stateowner, FState *state, int parameters, StateCallData *statecall);
 
 struct PSymbolActionFunction : public PSymbol
 {

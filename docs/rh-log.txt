@@ -1,3 +1,7 @@
+January 5, 2009  (Changes by Graf Zahl)
+- fixed: Parsing of color strings with 6 characters and spaces did not work.
+- fixed: State labels must be evaluated for the state's owner, not the calling actor.
+
 January 4, 2009  (Changes by Graf Zahl)
 - Fixed: For map spawns any change to an actor's floor z-coordinate must be 
   delayed until after its z-coordinate has been set. That means that for 

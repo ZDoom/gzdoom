@@ -520,7 +520,7 @@ bool AActor::SetState (FState *newstate)
 			}
 		}
 
-		if (newstate->CallAction(this))
+		if (newstate->CallAction(this, this))
 		{
 			// Check whether the called action function resulted in destroying the actor
 			if (ObjectFlags & OF_EuthanizeMe)

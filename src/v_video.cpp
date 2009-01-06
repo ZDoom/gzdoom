@@ -465,9 +465,11 @@ int V_GetColorFromString (const DWORD *palette, const char *cstr)
 				c[1] = (color & 0xff00) >> 8;
 				c[2] = (color & 0xff);
 			}
+			else goto normal;
 		}
 		else
 		{
+normal:
 			// Treat it as a space-delemited hexadecimal string
 			for (i = 0; i < 3; ++i)
 			{

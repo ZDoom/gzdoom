@@ -104,11 +104,11 @@ struct FState
 			if (setdefaultparams) ParameterIndex = 0;
 		}
 	}
-	inline bool CallAction(AActor *self, StateCallData *statecall = NULL)
+	inline bool CallAction(AActor *self, AActor *stateowner, StateCallData *statecall = NULL)
 	{
 		if (ActionFunc != NULL)
 		{
-			ActionFunc(self, this, ParameterIndex-1, statecall);
+			ActionFunc(self, stateowner, this, ParameterIndex-1, statecall);
 			return true;
 		}
 		else

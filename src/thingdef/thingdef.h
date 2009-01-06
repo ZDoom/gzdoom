@@ -351,26 +351,26 @@ struct StateCallData
 
 // Macros to handle action functions. These are here so that I don't have to
 // change every single use in case the parameters change.
-#define DECLARE_ACTION(name) void AF_##name(AActor *self, FState *, int, StateCallData *);
+#define DECLARE_ACTION(name) void AF_##name(AActor *self, AActor *stateowner, FState *, int, StateCallData *);
 
 // This distinction is here so that CALL_ACTION produces errors when trying to
 // access a function that requires parameters.
 #define DEFINE_ACTION_FUNCTION(cls, name) \
-	void AF_##name (AActor *self, FState *, int, StateCallData *); \
+	void AF_##name (AActor *self, AActor *stateowner, FState *, int, StateCallData *); \
 	static AFuncDesc info_##cls##_##name = { #name, AF_##name }; \
 	MSVC_ASEG AFuncDesc *infoptr_##cls##_##name GCC_ASEG = &info_##cls##_##name; \
-	void AF_##name (AActor *self, FState *, int, StateCallData *statecall)
+	void AF_##name (AActor *self, AActor *stateowner, FState *, int, StateCallData *statecall)
 
 #define DEFINE_ACTION_FUNCTION_PARAMS(cls, name) \
-	void AFP_##name (AActor *self, FState *CallingState, int ParameterIndex, StateCallData *statecall); \
+	void AFP_##name (AActor *self, AActor *stateowner, FState *CallingState, int ParameterIndex, StateCallData *statecall); \
 	static AFuncDesc info_##cls##_##name = { #name, AFP_##name }; \
 	MSVC_ASEG AFuncDesc *infoptr_##cls##_##name GCC_ASEG = &info_##cls##_##name; \
-	void AFP_##name (AActor *self, FState *CallingState, int ParameterIndex, StateCallData *statecall)
+	void AFP_##name (AActor *self, AActor *stateowner, FState *CallingState, int ParameterIndex, StateCallData *statecall)
 
-#define DECLARE_PARAMINFO AActor *self, FState *CallingState, int ParameterIndex, StateCallData *statecall
-#define PUSH_PARAMINFO self, CallingState, ParameterIndex, statecall
+#define DECLARE_PARAMINFO AActor *self, AActor *stateowner, FState *CallingState, int ParameterIndex, StateCallData *statecall
+#define PUSH_PARAMINFO self, stateowner, CallingState, ParameterIndex, statecall
 
-#define CALL_ACTION(name,self) AF_##name(self, NULL, 0, NULL)
+#define CALL_ACTION(name,self) AF_##name(self, self, NULL, 0, NULL)
 
 
 int EvalExpressionI (DWORD x, AActor *self);
@@ -395,7 +395,7 @@ FName EvalExpressionName (DWORD x, AActor *self);
 #define ACTION_PARAM_CLASS(var,i) \
 	const PClass *var = EvalExpressionClass(ParameterIndex+i, self);
 #define ACTION_PARAM_STATE(var,i) \
-	FState *var = EvalExpressionState(ParameterIndex+i, self);
+	FState *var = EvalExpressionState(ParameterIndex+i, stateowner);
 #define ACTION_PARAM_COLOR(var,i) \
 	PalEntry var = EvalExpressionCol(ParameterIndex+i, self);
 #define ACTION_PARAM_SOUND(var,i) \

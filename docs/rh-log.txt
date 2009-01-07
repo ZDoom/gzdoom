@@ -1,3 +1,7 @@
+January 7, 2009  (Changes by Graf Zahl)
+- copied some 3D floor fixes from GZDoom.
+- fixed: Crushing polyobject did incomplete checks for blocked moves.
+
 January 5, 2009  (Changes by Graf Zahl)
 - fixed: Parsing of color strings with 6 characters and spaces did not work.
 - fixed: State labels must be evaluated for the state's owner, not the calling actor.

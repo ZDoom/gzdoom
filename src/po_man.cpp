@@ -774,7 +774,7 @@ void ThrustMobj (AActor *actor, seg_t *seg, FPolyObj *po)
 	actor->momy += thrustY;
 	if (po->crush)
 	{
-		if (po->bHurtOnTouch || !P_CheckPosition (actor, actor->x + thrustX, actor->y + thrustY))
+		if (po->bHurtOnTouch || !P_CheckMove (actor, actor->x + thrustX, actor->y + thrustY))
 		{
 			P_DamageMobj (actor, NULL, NULL, po->crush, NAME_Crush);
 			P_TraceBleed (po->crush, actor);

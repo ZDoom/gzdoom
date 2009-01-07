@@ -1562,7 +1562,20 @@ static EIWADType ScanIWAD (const char *iwad)
 	}
 	else if (lumpsfound[Check_map01])
 	{
-		if (lumpsfound[Check_redtnt2])
+		if (lumpsfound[Check_FreeDoom])
+		{
+			// Is there a 100% reliable way to tell FreeDoom and FreeDM
+			// apart based solely on the lump names?
+			if (strstr(iwad, "freedm.wad") || strstr(iwad, "FREEDM.WAD"))
+			{
+				return IWAD_FreeDM;
+			}
+			else
+			{
+				return IWAD_FreeDoom;
+			}
+		}
+		else if (lumpsfound[Check_redtnt2])
 		{
 			return IWAD_Doom2TNT;
 		}
@@ -1581,19 +1594,6 @@ static EIWADType ScanIWAD (const char *iwad)
 				else
 				{
 					return IWAD_HexenDemo;
-				}
-			}
-			else if (lumpsfound[Check_FreeDoom])
-			{
-				// Is there a 100% reliable way to tell FreeDoom and FreeDM
-				// apart based solely on the lump names?
-				if (strstr(iwad, "freedm.wad") || strstr(iwad, "FREEDM.WAD"))
-				{
-					return IWAD_FreeDM;
-				}
-				else
-				{
-					return IWAD_FreeDoom;
 				}
 			}
 			else

@@ -456,6 +456,7 @@ void DSectorPlaneInterpolation::Restore()
 		sector->ceilingplane.d = bakheight;
 		sector->SetPlaneTexZ(sector_t::ceiling, baktexz);
 	}
+	P_RecalculateAttached3DFloors(sector);
 }
 
 //==========================================================================
@@ -485,6 +486,7 @@ void DSectorPlaneInterpolation::Interpolate(fixed_t smoothratio)
 
 	*pheight = oldheight + FixedMul(bakheight - oldheight, smoothratio);
 	sector->SetPlaneTexZ(pos, oldtexz + FixedMul(baktexz - oldtexz, smoothratio));
+	P_RecalculateAttached3DFloors(sector);
 }
 
 //==========================================================================

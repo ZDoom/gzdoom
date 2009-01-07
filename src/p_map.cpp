@@ -220,12 +220,9 @@ void P_FindFloorCeiling (AActor *actor, bool onlyspawnpos)
 
 			fixed_t ff_bottom=rover->bottom.plane->ZatPoint(actor->x, actor->y);
 			fixed_t ff_top=rover->top.plane->ZatPoint(actor->x, actor->y);
-			
-			fixed_t delta1 = actor->z - (ff_bottom + ((ff_top-ff_bottom)/2));
-			fixed_t delta2 = actor->z + (actor->height? actor->height:1) - (ff_bottom + ((ff_top-ff_bottom)/2));
 
-			if (ff_top > actor->floorz && abs(delta1) < abs(delta2)) actor->floorz = ff_top;
-			if (ff_bottom < actor->ceilingz && abs(delta1) >= abs(delta2)) actor->ceilingz = ff_bottom;
+			if (ff_top > actor->floorz && ff_top < actor->z) actor->floorz = ff_top;
+			if (ff_bottom < actor->ceilingz && ff_bottom > actor->z + actor->height) actor->ceilingz = ff_bottom;
 		}
 	}
 #endif
@@ -1769,6 +1766,90 @@ bool P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 {
 	FCheckPosition tm;
 	return P_TryMove(thing, x, y, dropoff, onfloor, tm);
+}
+
+
+
+//
+// P_CheckMove
+// Similar to P_TryMove but doesn't actually move the actor. Used for polyobject crushing
+//
+
+bool P_CheckMove(AActor *thing, fixed_t x, fixed_t y)
+{
+	FCheckPosition tm;
+	fixed_t		newz = thing->z;
+	int 		side;
+	int 		oldside;
+	line_t* 	ld;
+	sector_t*	oldsec = thing->Sector;	// [RH] for sector actions
+	sector_t*	newsec;
+
+	if (!P_CheckPosition (thing, x, y, tm))
+	{
+		return false;
+	}
+
+	if (thing->flags3 & MF3_FLOORHUGGER)
+	{
+		newz = tm.floorz;
+	}
+	else if (thing->flags3 & MF3_CEILINGHUGGER)
+	{
+		newz = tm.ceilingz - thing->height;
+	}
+
+	if (!(thing->flags & MF_NOCLIP))
+	{
+		if (tm.ceilingz - tm.floorz < thing->height)
+		{
+			return false;
+		}
+
+		if (!(thing->flags & MF_TELEPORT)
+			&& tm.ceilingz - newz < thing->height
+			&& !(thing->flags3 & MF3_CEILINGHUGGER)
+			&& (!(thing->flags2 & MF2_FLY) || !(thing->flags & MF_NOGRAVITY)))
+		{
+			return false;
+		}
+		if (thing->flags2 & MF2_FLY && thing->flags & MF_NOGRAVITY)
+		{
+			if (thing->z+thing->height > tm.ceilingz)
+				return false;
+		}
+		if (!(thing->flags & MF_TELEPORT) && !(thing->flags3 & MF3_FLOORHUGGER))
+		{
+			if (tm.floorz-newz > thing->MaxStepHeight)
+			{ // too big a step up
+				return false;
+			}
+			else if ((thing->flags & MF_MISSILE) && tm.floorz > newz)
+			{ // [RH] Don't let normal missiles climb steps
+				return false;
+			}
+			else if (newz < tm.floorz)
+			{ // [RH] Check to make sure there's nothing in the way for the step up
+				fixed_t savedz = thing->z;
+				thing->z = newz = tm.floorz;
+				bool good = P_TestMobjZ (thing);
+				thing->z = savedz;
+				if (!good)
+				{
+					return false;
+				}
+			}
+		}
+
+		if (thing->flags2 & MF2_CANTLEAVEFLOORPIC
+			&& (tm.floorpic != thing->floorpic
+				|| tm.floorz - newz != 0))
+		{ // must stay within a sector of a certain floor type
+			return false;
+		}
+	}
+
+	return true;
 }
 
 

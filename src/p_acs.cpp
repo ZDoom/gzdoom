@@ -5372,7 +5372,7 @@ int DLevelScript::RunScript ()
 				switch (STACK(1))
 				{
 				case PLAYERINFO_TEAM:			STACK(2) = userinfo->team; break;
-				case PLAYERINFO_AIMDIST:		STACK(2) = userinfo->aimdist; break;
+				case PLAYERINFO_AIMDIST:		STACK(2) = userinfo->GetAimDist(); break;
 				case PLAYERINFO_COLOR:			STACK(2) = userinfo->color; break;
 				case PLAYERINFO_GENDER:			STACK(2) = userinfo->gender; break;
 				case PLAYERINFO_NEVERSWITCH:	STACK(2) = userinfo->neverswitch; break;

@@ -1,3 +1,8 @@
+January 10, 2009  (Changes by Graf Zahl)
+- fixed: Identification of Doom1 Freedoom IWAD did not work.
+- fixed: UDMF did not initialize a sector's light colors.
+- fixed implementation of DF2_NOAUTOAIM flag.
+
 January 7, 2009  (Changes by Graf Zahl)
 - copied some 3D floor fixes from GZDoom.
 - fixed: Crushing polyobject did incomplete checks for blocked moves.

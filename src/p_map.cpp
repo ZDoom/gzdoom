@@ -1779,11 +1779,6 @@ bool P_CheckMove(AActor *thing, fixed_t x, fixed_t y)
 {
 	FCheckPosition tm;
 	fixed_t		newz = thing->z;
-	int 		side;
-	int 		oldside;
-	line_t* 	ld;
-	sector_t*	oldsec = thing->Sector;	// [RH] for sector actions
-	sector_t*	newsec;
 
 	if (!P_CheckPosition (thing, x, y, tm))
 	{
@@ -2925,7 +2920,7 @@ fixed_t P_AimLineAttack (AActor *t1, angle_t angle, fixed_t distance, AActor **p
 			// vrange of 0 degrees, because then toppitch and bottompitch will
 			// be equal, and PTR_AimTraverse will never find anything to shoot at
 			// if it crosses a line.
-			vrange = clamp (t1->player->userinfo.aimdist, ANGLE_1/2, ANGLE_1*35);
+			vrange = clamp (t1->player->userinfo.GetAimDist(), ANGLE_1/2, ANGLE_1*35);
 		}
 	}
 	aim.toppitch = t1->pitch - vrange;

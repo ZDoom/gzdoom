@@ -452,9 +452,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireBFG)
 	{
 		return;
 	}
-	// [RH] bfg can be forced to not use freeaim
-	angle_t storedpitch = self->pitch;
-	int storedaimdist = player->userinfo.aimdist;
 
 	AWeapon *weapon = self->player->ReadyWeapon;
 	if (weapon != NULL)
@@ -463,14 +460,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireBFG)
 			return;
 	}
 
-	if (dmflags2 & DF2_NO_FREEAIMBFG)
-	{
-		self->pitch = 0;
-		player->userinfo.aimdist = ANGLE_1*35;
-	}
-	P_SpawnPlayerMissile (self, PClass::FindClass("BFGBall"));
-	self->pitch = storedpitch;
-	player->userinfo.aimdist = storedaimdist;
+	P_SpawnPlayerMissile (self,  0, 0, 0, PClass::FindClass("BFGBall"), self->angle, NULL, NULL, !!(dmflags2 & DF2_NO_FREEAIMBFG));
 }
 
 //

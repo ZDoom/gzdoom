@@ -479,19 +479,6 @@ CUSTOM_CVAR (Int, dmflags2, 0, CVAR_SERVERINFO)
 			if (p->cheats & CF_CHASECAM)
 				cht_DoCheat (p, CHT_CHASECAM);
 		}
-
-		// Change our autoaim settings if need be.
-		if (dmflags2 & DF2_NOAUTOAIM)
-		{
-			// Save our aimdist and set aimdist to 0.
-			p->userinfo.savedaimdist = p->userinfo.aimdist;
-			p->userinfo.aimdist = 0;
-		}
-		else
-		{
-			// Restore our aimdist.
-			p->userinfo.aimdist = p->userinfo.savedaimdist;
-		}
 	}
 }
 
@@ -1634,18 +1621,15 @@ static EIWADType ScanIWAD (const char *iwad)
 		}
 		else
 		{
+			if (lumpsfound[Check_FreeDoom])
+			{
+				return IWAD_FreeDoom1;
+			}
 			for (i = Check_e2m1; i < NUM_CHECKLUMPS; i++)
 			{
 				if (!lumpsfound[i])
 				{
-					if (lumpsfound[Check_FreeDoom])
-					{
-						return IWAD_FreeDoom1;
-					}
-					else
-					{
-						return IWAD_DoomShareware;
-					}
+					return IWAD_DoomShareware;
 				}
 			}
 			if (i == NUM_CHECKLUMPS)

@@ -950,19 +950,36 @@ struct UDMFParser
 		sec->ceilingplane.c = -FRACUNIT;
 		sec->ceilingplane.ic = -FRACUNIT;
 
-		// [RH] Sectors default to white light with the default fade.
-		//		If they are outside (have a sky ceiling), they use the outside fog.
-		if (level.outsidefog != 0xff000000 && (sec->GetTexture(sector_t::ceiling) == skyflatnum || (sec->special&0xff) == Sector_Outside))
+		if (lightcolor == -1 && fadecolor == -1 && desaturation == -1)
 		{
-			if (fogMap == NULL)
-				fogMap = GetSpecialLights (PalEntry (255,255,255), level.outsidefog, 0);
-			sec->ColorMap = fogMap;
+			// [RH] Sectors default to white light with the default fade.
+			//		If they are outside (have a sky ceiling), they use the outside fog.
+			if (level.outsidefog != 0xff000000 && (sec->GetTexture(sector_t::ceiling) == skyflatnum || (sec->special&0xff) == Sector_Outside))
+			{
+				if (fogMap == NULL)
+					fogMap = GetSpecialLights (PalEntry (255,255,255), level.outsidefog, 0);
+				sec->ColorMap = fogMap;
+			}
+			else
+			{
+				if (normMap == NULL)
+					normMap = GetSpecialLights (PalEntry (255,255,255), level.fadeto, NormalLight.Desaturate);
+				sec->ColorMap = normMap;
+			}
 		}
 		else
 		{
-			if (normMap == NULL)
-				normMap = GetSpecialLights (PalEntry (255,255,255), level.fadeto, NormalLight.Desaturate);
-			sec->ColorMap = normMap;
+			if (lightcolor == -1) lightcolor = PalEntry(255,255,255);
+			if (fadecolor == -1) 
+			{
+				if (level.outsidefog != 0xff000000 && (sec->GetTexture(sector_t::ceiling) == skyflatnum || (sec->special&0xff) == Sector_Outside))
+					fadecolor = level.outsidefog;
+				else
+					fadecolor = level.fadeto;
+			}
+			if (desaturation == -1) desaturation = NormalLight.Desaturate;
+
+			sec->ColorMap = GetSpecialLights (lightcolor, fadecolor, desaturation);
 		}
 	}
 

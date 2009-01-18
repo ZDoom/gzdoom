@@ -106,6 +106,7 @@ struct FMapInfoParser
 		format_type = FMT_Unknown;
 	}
 
+	void ParseEpisodeInfo ();
 	void ParseSkill ();
 	void ParseMapInfo (int lump, level_info_t &gamedefaults);
 

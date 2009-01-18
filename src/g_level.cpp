@@ -743,16 +743,6 @@ static void CopyLevelInfo(level_info_t *levelinfo, level_info_t *from)
 
 
 
-static void ClearEpisodes()
-{
-	for (int i = 0; i < EpiDef.numitems; ++i)
-	{
-		delete[] const_cast<char *>(EpisodeMenu[i].name);
-		EpisodeMenu[i].name = NULL;
-	}
-	EpiDef.numitems = 0;
-}
-
 static void ParseMapInfoLower (FScanner &sc,
 							   MapInfoHandler *handlers,
 							   const char *strings[],
@@ -1147,160 +1137,6 @@ static void ParseMapInfoLower (FScanner &sc,
 	}
 }
 
-// Episode definitions start with the header "episode <start-map>"
-// and then can be followed by any of the following:
-//
-// name "Episode name as text"
-// picname "Picture to display the episode name"
-// key "Shortcut key for the menu"
-// noskillmenu
-// remove
-
-static void ParseEpisodeInfo (FScanner &sc)
-{
-	int i;
-	char map[9];
-	char *pic = NULL;
-	bool picisgfx = false;	// Shut up, GCC!!!!
-	bool remove = false;
-	char key = 0;
-	bool noskill = false;
-	bool optional = false;
-	bool extended = false;
-
-	// Get map name
-	sc.MustGetString ();
-	uppercopy (map, sc.String);
-	map[8] = 0;
-
-	sc.MustGetString ();
-	if (sc.Compare ("teaser"))
-	{
-		sc.MustGetString ();
-		if (gameinfo.flags & GI_SHAREWARE)
-		{
-			uppercopy (map, sc.String);
-		}
-		sc.MustGetString ();
-	}
-	do
-	{
-		if (sc.Compare ("optional"))
-		{
-			// For M4 in Doom
-			optional = true;
-		}
-		else if (sc.Compare ("extended"))
-		{
-			// For M4 and M5 in Heretic
-			extended = true;
-		}
-		else if (sc.Compare ("name"))
-		{
-			sc.MustGetString ();
-			ReplaceString (&pic, sc.String);
-			picisgfx = false;
-		}
-		else if (sc.Compare ("picname"))
-		{
-			sc.MustGetString ();
-			ReplaceString (&pic, sc.String);
-			picisgfx = true;
-		}
-		else if (sc.Compare ("remove"))
-		{
-			remove = true;
-		}
-		else if (sc.Compare ("key"))
-		{
-			sc.MustGetString ();
-			key = sc.String[0];
-		}
-		else if (sc.Compare("noskillmenu"))
-		{
-			noskill = true;
-		}
-		else
-		{
-			sc.UnGet ();
-			break;
-		}
-	}
-	while (sc.GetString ());
-
-	if (extended && !(gameinfo.flags & GI_MENUHACK_EXTENDED))
-	{ // If the episode is for the extended Heretic, but this is
-	  // not the extended Heretic, ignore it.
-		return;
-	}
-
-	if (optional && !remove)
-	{
-		if (!P_CheckMapData(map))
-		{
-			// If the episode is optional and the map does not exist
-			// just ignore this episode definition.
-			return;
-		}
-	}
-
-
-	for (i = 0; i < EpiDef.numitems; ++i)
-	{
-		if (strncmp (EpisodeMaps[i], map, 8) == 0)
-		{
-			break;
-		}
-	}
-
-	if (remove)
-	{
-		// If the remove property is given for an episode, remove it.
-		if (i < EpiDef.numitems)
-		{
-			if (i+1 < EpiDef.numitems)
-			{
-				memmove (&EpisodeMaps[i], &EpisodeMaps[i+1],
-					sizeof(EpisodeMaps[0])*(EpiDef.numitems - i - 1));
-				memmove (&EpisodeMenu[i], &EpisodeMenu[i+1],
-					sizeof(EpisodeMenu[0])*(EpiDef.numitems - i - 1));
-				memmove (&EpisodeNoSkill[i], &EpisodeNoSkill[i+1], 
-					sizeof(EpisodeNoSkill[0])*(EpiDef.numitems - i - 1));
-			}
-			EpiDef.numitems--;
-		}
-	}
-	else
-	{
-		if (pic == NULL)
-		{
-			pic = copystring (map);
-			picisgfx = false;
-		}
-
-		if (i == EpiDef.numitems)
-		{
-			if (EpiDef.numitems == MAX_EPISODES)
-			{
-				i = EpiDef.numitems - 1;
-			}
-			else
-			{
-				i = EpiDef.numitems++;
-			}
-		}
-		else
-		{
-			delete[] const_cast<char *>(EpisodeMenu[i].name);
-		}
-
-		EpisodeMenu[i].name = pic;
-		EpisodeMenu[i].alphaKey = tolower(key);
-		EpisodeMenu[i].fulltext = !picisgfx;
-		EpisodeNoSkill[i] = noskill;
-		strncpy (EpisodeMaps[i], map, 8);
-	}
-}
 
 static int FindEndSequence (int type, const char *picname)
 {
@@ -3211,6 +3047,196 @@ level_info_t *ParseMapHeader(FScanner &sc, level_info_t &defaultinfo)
 	return levelinfo;
 }
 
+
+//==========================================================================
+//
+// Episode definitions start with the header "episode <start-map>"
+// and then can be followed by any of the following:
+//
+// name "Episode name as text"
+// picname "Picture to display the episode name"
+// key "Shortcut key for the menu"
+// noskillmenu
+// remove
+//
+//==========================================================================
+
+void FMapInfoParser::ParseEpisodeInfo ()
+{
+	int i;
+	char map[9];
+	char *pic = NULL;
+	bool picisgfx = false;	// Shut up, GCC!!!!
+	bool remove = false;
+	char key = 0;
+	bool noskill = false;
+	bool optional = false;
+	bool extended = false;
+
+	// Get map name
+	sc.MustGetString ();
+	uppercopy (map, sc.String);
+	map[8] = 0;
+
+	sc.MustGetString ();
+	if (sc.CheckString ("teaser"))
+	{
+		sc.MustGetString ();
+		if (gameinfo.flags & GI_SHAREWARE)
+		{
+			uppercopy (map, sc.String);
+		}
+		sc.MustGetString ();
+	}
+
+	ParseOpenBrace();
+
+	while (sc.GetString())
+	{
+		if (sc.Compare ("optional"))
+		{
+			// For M4 in Doom
+			optional = true;
+		}
+		else if (sc.Compare ("extended"))
+		{
+			// For M4 and M5 in Heretic
+			extended = true;
+		}
+		else if (sc.Compare ("name"))
+		{
+			ParseOpenParen();
+			sc.MustGetString ();
+			ReplaceString (&pic, sc.String);
+			picisgfx = false;
+			ParseCloseParen();
+		}
+		else if (sc.Compare ("picname"))
+		{
+			ParseOpenParen();
+			sc.MustGetString ();
+			ReplaceString (&pic, sc.String);
+			picisgfx = true;
+			ParseCloseParen();
+		}
+		else if (sc.Compare ("remove"))
+		{
+			remove = true;
+		}
+		else if (sc.Compare ("key"))
+		{
+			ParseOpenParen();
+			sc.MustGetString ();
+			key = sc.String[0];
+			ParseCloseParen();
+		}
+		else if (sc.Compare("noskillmenu"))
+		{
+			noskill = true;
+		}
+		else if (!ParseCloseBrace())
+		{
+			// Unknown
+			sc.ScriptMessage("Unknown property '%s' found in episode definition\n", sc.String);
+			SkipToNext();
+		}
+		else
+		{
+			break;
+		}
+	}
+
+	if (extended && !(gameinfo.flags & GI_MENUHACK_EXTENDED))
+	{ // If the episode is for the extended Heretic, but this is
+	  // not the extended Heretic, ignore it.
+		return;
+	}
+
+	if (optional && !remove)
+	{
+		if (!P_CheckMapData(map))
+		{
+			// If the episode is optional and the map does not exist
+			// just ignore this episode definition.
+			return;
+		}
+	}
+
+
+	for (i = 0; i < EpiDef.numitems; ++i)
+	{
+		if (strncmp (EpisodeMaps[i], map, 8) == 0)
+		{
+			break;
+		}
+	}
+
+	if (remove)
+	{
+		// If the remove property is given for an episode, remove it.
+		if (i < EpiDef.numitems)
+		{
+			if (i+1 < EpiDef.numitems)
+			{
+				memmove (&EpisodeMaps[i], &EpisodeMaps[i+1],
+					sizeof(EpisodeMaps[0])*(EpiDef.numitems - i - 1));
+				memmove (&EpisodeMenu[i], &EpisodeMenu[i+1],
+					sizeof(EpisodeMenu[0])*(EpiDef.numitems - i - 1));
+				memmove (&EpisodeNoSkill[i], &EpisodeNoSkill[i+1], 
+					sizeof(EpisodeNoSkill[0])*(EpiDef.numitems - i - 1));
+			}
+			EpiDef.numitems--;
+		}
+	}
+	else
+	{
+		if (pic == NULL)
+		{
+			pic = copystring (map);
+			picisgfx = false;
+		}
+
+		if (i == EpiDef.numitems)
+		{
+			if (EpiDef.numitems == MAX_EPISODES)
+			{
+				i = EpiDef.numitems - 1;
+			}
+			else
+			{
+				i = EpiDef.numitems++;
+			}
+		}
+		else
+		{
+			delete[] const_cast<char *>(EpisodeMenu[i].name);
+		}
+
+		EpisodeMenu[i].name = pic;
+		EpisodeMenu[i].alphaKey = tolower(key);
+		EpisodeMenu[i].fulltext = !picisgfx;
+		EpisodeNoSkill[i] = noskill;
+		strncpy (EpisodeMaps[i], map, 8);
+	}
+}
+
+
+//==========================================================================
+//
+// Clears episode definitions
+//
+//==========================================================================
+
+static void ClearEpisodes()
+{
+	for (int i = 0; i < EpiDef.numitems; ++i)
+	{
+		delete[] const_cast<char *>(EpisodeMenu[i].name);
+		EpisodeMenu[i].name = NULL;
+	}
+	EpiDef.numitems = 0;
+}
+
 //==========================================================================
 //
 // G_DoParseMapInfo
@@ -3276,7 +3302,7 @@ void FMapInfoParser::ParseMapInfo (int lump, level_info_t &gamedefaults)
 		}
 		else if (sc.Compare("episode"))
 		{
-			ParseEpisodeInfo(sc);
+			ParseEpisodeInfo();
 		}
 		else if (sc.Compare("clearepisodes"))
 		{

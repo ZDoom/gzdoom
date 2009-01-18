@@ -96,12 +96,14 @@ void FMapInfoParser::ParseSkill ()
 			ParseOpenParen();
 			sc.MustGetFloat ();
 			skill.DropAmmoFactor = FLOAT2FIXED(sc.Float);
+			ParseCloseParen();
 		}
 		else if (sc.Compare ("damagefactor"))
 		{
 			ParseOpenParen();
 			sc.MustGetFloat ();
 			skill.DamageFactor = FLOAT2FIXED(sc.Float);
+			ParseCloseParen();
 		}
 		else if (sc.Compare ("fastmonsters"))
 		{
@@ -124,18 +126,21 @@ void FMapInfoParser::ParseSkill ()
 			ParseOpenParen();
 			sc.MustGetFloat ();
 			skill.RespawnCounter = int(sc.Float*TICRATE);
+			ParseCloseParen();
 		}
 		else if (sc.Compare("respawnlimit"))
 		{
 			ParseOpenParen();
 			sc.MustGetNumber ();
 			skill.RespawnLimit = sc.Number;
+			ParseCloseParen();
 		}
 		else if (sc.Compare("Aggressiveness"))
 		{
 			ParseOpenParen();
 			sc.MustGetFloat ();
 			skill.Aggressiveness = FRACUNIT - FLOAT2FIXED(clamp(sc.Float, 0.,1.));
+			ParseCloseParen();
 		}
 		else if (sc.Compare("SpawnFilter"))
 		{
@@ -153,12 +158,14 @@ void FMapInfoParser::ParseSkill ()
 				else if (sc.Compare("hard")) skill.SpawnFilter |= 8;
 				else if (sc.Compare("nightmare")) skill.SpawnFilter |= 16;
 			}
+			ParseCloseParen();
 		}
 		else if (sc.Compare("ACSReturn"))
 		{
 			ParseOpenParen();
 			sc.MustGetNumber ();
 			skill.ACSReturn = sc.Number;
+			ParseCloseParen();
 		}
 		else if (sc.Compare("Name"))
 		{
@@ -166,6 +173,7 @@ void FMapInfoParser::ParseSkill ()
 			sc.MustGetString ();
 			skill.MenuName = sc.String;
 			skill.MenuNameIsLump = false;
+			ParseCloseParen();
 		}
 		else if (sc.Compare("PlayerClassName"))
 		{
@@ -175,6 +183,7 @@ void FMapInfoParser::ParseSkill ()
 			ParseComma();
 			sc.MustGetString ();
 			skill.MenuNamesForPlayerClass[pc]=sc.String;
+			ParseCloseParen();
 		}
 		else if (sc.Compare("PicName"))
 		{
@@ -182,6 +191,7 @@ void FMapInfoParser::ParseSkill ()
 			sc.MustGetString ();
 			skill.MenuName = sc.String;
 			skill.MenuNameIsLump = true;
+			ParseCloseParen();
 		}
 		else if (sc.Compare("MustConfirm"))
 		{
@@ -191,18 +201,21 @@ void FMapInfoParser::ParseSkill ()
 			{
 				skill.MustConfirmText = sc.String;
 			}
+			ParseCloseParen();
 		}
 		else if (sc.Compare("Key"))
 		{
 			ParseOpenParen();
 			sc.MustGetString();
 			skill.Shortcut = tolower(sc.String[0]);
+			ParseCloseParen();
 		}
 		else if (sc.Compare("TextColor"))
 		{
 			ParseOpenParen();
 			sc.MustGetString();
 			skill.TextColor.Format("[%s]", sc.String);
+			ParseCloseParen();
 		}
 		else if (!ParseCloseBrace())
 		{

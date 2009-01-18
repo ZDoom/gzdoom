@@ -219,6 +219,12 @@ protected:
 	Span **CreateSpans (const BYTE *pixels) const;
 	void FreeSpans (Span **spans) const;
 	void CalcBitSize ();
+	void CopyInfo(FTexture *other)
+	{
+		CopySize(other);
+		bNoDecals = other->bNoDecals;
+		Rotations = other->Rotations;
+	}
 
 	static void FlipSquareBlock (BYTE *block, int x, int y);
 	static void FlipSquareBlockRemap (BYTE *block, int x, int y, const BYTE *remap);

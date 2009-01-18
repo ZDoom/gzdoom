@@ -782,7 +782,7 @@ FUNC(LS_Teleport_NewMap)
 
 FUNC(LS_Teleport)
 // Teleport (tid, sectortag, bNoSourceFog)
-	{
+{
 	return EV_Teleport (arg0, arg1, ln, backSide, it, true, !arg2, false);
 }
 

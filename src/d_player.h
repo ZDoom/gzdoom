@@ -204,7 +204,7 @@ struct userinfo_t
 	fixed_t		MoveBob, StillBob;
 	int			PlayerClass;
 
-	int GetAimDist() const { return (dmflags2 & DF2_NOAUTOAIM)? aimdist : 0; }
+	int GetAimDist() const { return (dmflags2 & DF2_NOAUTOAIM)? 0 : aimdist; }
 };
 
 FArchive &operator<< (FArchive &arc, userinfo_t &info);

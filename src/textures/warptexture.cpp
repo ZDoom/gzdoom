@@ -43,9 +43,7 @@
 FWarpTexture::FWarpTexture (FTexture *source)
 : GenTime (0), SourcePic (source), Pixels (0), Spans (0), Speed (1.f)
 {
-	CopySize(source);
-	bNoDecals = source->bNoDecals;
-	Rotations = source->Rotations;
+	CopyInfo(source);
 	bWarped = 1;
 }
 

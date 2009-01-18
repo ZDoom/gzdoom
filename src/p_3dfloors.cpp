@@ -558,7 +558,7 @@ void P_LineOpening_XFloors (FLineOpening &open, AActor * thing, const line_t *li
 		fixed_t thingbot, thingtop;
 		
 		thingbot = thing->z;
-		thingtop = thingbot + thing->height;
+		thingtop = thingbot + (thing->height==0? 1:thing->height);
 
 		extsector_t::xfloor *xf[2] = {&linedef->frontsector->e->XFloor, &linedef->backsector->e->XFloor};
 
@@ -575,16 +575,14 @@ void P_LineOpening_XFloors (FLineOpening &open, AActor * thing, const line_t *li
 			
 			highestfloorpic.SetInvalid();
 			lowestceilingpic.SetInvalid();
-			thingtop = thing->z + (thing->height==0? 1:thing->height);
 			
 			for(int j=0;j<2;j++)
 			{
-				// Check for frontsector's 3D-floors
 				for(unsigned i=0;i<xf[j]->ffloors.Size();i++)
 				{
 					F3DFloor *rover = xf[j]->ffloors[i];
 
-					if (!(rover->flags&FF_EXISTS)) continue;
+					if (!(rover->flags & FF_EXISTS)) continue;
 					if (!(rover->flags & FF_SOLID)) continue;
 					
 					fixed_t ff_bottom=rover->bottom.plane->ZatPoint(x, y);
@@ -604,7 +602,7 @@ void P_LineOpening_XFloors (FLineOpening &open, AActor * thing, const line_t *li
 						highestfloor = ff_top;
 						highestfloorpic = *rover->top.texture;
 					}
-					if(ff_top > lowestfloor[j] && ff_top <= thing->z) lowestfloor[j] = ff_top;
+					if(ff_top > lowestfloor[j] && ff_top <= thing->z + thing->MaxStepHeight) lowestfloor[j] = ff_top;
 				}
 			}
 			

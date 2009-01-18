@@ -3214,13 +3214,27 @@ AActor *AActor::StaticSpawn (const PClass *type, fixed_t ix, fixed_t iy, fixed_t
 	if (G_SkillProperty(SKILLP_FastMonsters))
 		actor->Speed = actor->GetClass()->Meta.GetMetaFixed(AMETA_FastSpeed, actor->Speed);
 
+
 	// set subsector and/or block links
 	actor->LinkToWorld (SpawningMapThing);
+
+	actor->dropoffz =			// killough 11/98: for tracking dropoffs
+	actor->floorz = actor->Sector->floorplane.ZatPoint (ix, iy);
+	actor->ceilingz = actor->Sector->ceilingplane.ZatPoint (ix, iy);
+
+	// The z-coordinate needs to be set once before calling P_FindFloorCeiling
+	// For FLOATRANDZ just use the floor here.
+	if (iz == ONFLOORZ || iz == FLOATRANDZ)
+	{
+		actor->z = actor->floorz;
+	}
+	else if (iz == ONCEILINGZ)
+	{
+		actor->z = actor->ceilingz - actor->height;
+	}
+
 	if (SpawningMapThing || !type->IsDescendantOf (RUNTIME_CLASS(APlayerPawn)))
 	{
-		actor->dropoffz =			// killough 11/98: for tracking dropoffs
-		actor->floorz = actor->Sector->floorplane.ZatPoint (ix, iy);
-		actor->ceilingz = actor->Sector->ceilingplane.ZatPoint (ix, iy);
 		actor->floorsector = actor->Sector;
 		actor->floorpic = actor->floorsector->GetTexture(sector_t::floor);
 		actor->ceilingsector = actor->Sector;
@@ -3236,9 +3250,6 @@ AActor *AActor::StaticSpawn (const PClass *type, fixed_t ix, fixed_t iy, fixed_t
 	}
 	else
 	{
-		actor->floorz = FIXED_MIN;
-		actor->dropoffz = FIXED_MIN;
-		actor->ceilingz = FIXED_MAX;
 		actor->floorpic = actor->Sector->GetTexture(sector_t::floor);
 		actor->floorsector = actor->Sector;
 		actor->ceilingpic = actor->Sector->GetTexture(sector_t::ceiling);

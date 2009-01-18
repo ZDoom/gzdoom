@@ -46,7 +46,7 @@
 
 #if defined(_MSC_VER)
 
-#pragma comment(linker, "/merge:.areg=.data /merge:.creg=.data /merge:.greg=.data /merge:.mreg=.data")
+#pragma comment(linker, "/merge:.areg=.data /merge:.creg=.data /merge:.greg=.data /merge:.mreg=.data /merge:.yreg=.data /merge:.zreg=.data")
 
 #pragma data_seg(".areg$a")
 void *ARegHead = 0;
@@ -59,6 +59,12 @@ void *GRegHead = 0;
 
 #pragma data_seg(".mreg$a")
 void *MRegHead = 0;
+
+#pragma data_seg(".yreg$a")
+void *YRegHead = 0;
+
+#pragma data_seg(".zreg$a")
+void *ZRegHead = 0;
 
 #pragma data_seg()
 
@@ -87,6 +93,8 @@ void *ARegHead __attribute__((section(AREG_SECTION))) = 0;
 void *CRegHead __attribute__((section(CREG_SECTION))) = 0;
 void *GRegHead __attribute__((section(GREG_SECTION))) = 0;
 void *MRegHead __attribute__((section(MREG_SECTION))) = 0;
+void *YRegHead __attribute__((section(YREG_SECTION))) = 0;
+void *ZRegHead __attribute__((section(ZREG_SECTION))) = 0;
 
 #elif
 

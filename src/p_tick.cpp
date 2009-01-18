@@ -57,7 +57,7 @@ bool P_CheckTickerPaused ()
 		 && players[consoleplayer].viewz != 1
 		 && wipegamestate == gamestate)
 	{
-		S_PauseSound (!(level.flags & LEVEL_PAUSE_MUSIC_IN_MENUS));
+		S_PauseSound (!(level.flags2 & LEVEL2_PAUSE_MUSIC_IN_MENUS));
 		return true;
 	}
 	return false;
@@ -111,7 +111,7 @@ void P_Ticker (void)
 	// Since things will be moving, it's okay to interpolate them in the renderer.
 	r_NoInterpolate = false;
 
-	if (!bglobal.freeze && !(level.flags & LEVEL_FROZEN))
+	if (!bglobal.freeze && !(level.flags2 & LEVEL2_FROZEN))
 	{
 		P_ThinkParticles ();	// [RH] make the particles think
 	}
@@ -126,7 +126,7 @@ void P_Ticker (void)
 	DThinker::RunThinkers ();
 
 	//if added by MC: Freeze mode.
-	if (!bglobal.freeze && !(level.flags & LEVEL_FROZEN))
+	if (!bglobal.freeze && !(level.flags2 & LEVEL2_FROZEN))
 	{
 		P_UpdateSpecials ();
 		P_RunEffects ();	// [RH] Run particle effects

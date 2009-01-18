@@ -2489,7 +2489,7 @@ FUNC(LS_SetPlayerProperty)
 				}
 				else if (it->player - players == consoleplayer)
 				{
-					level.flags |= LEVEL_ALLMAP;
+					level.flags2 |= LEVEL2_ALLMAP;
 				}
 			}
 			else
@@ -2504,7 +2504,7 @@ FUNC(LS_SetPlayerProperty)
 				}
 				else if (it->player - players == consoleplayer)
 				{
-					level.flags &= ~LEVEL_ALLMAP;
+					level.flags2 &= ~LEVEL2_ALLMAP;
 				}
 			}
 		}
@@ -2525,7 +2525,7 @@ FUNC(LS_SetPlayerProperty)
 					}
 					else if (i == consoleplayer)
 					{
-						level.flags |= LEVEL_ALLMAP;
+						level.flags2 |= LEVEL2_ALLMAP;
 					}
 				}
 				else
@@ -2540,7 +2540,7 @@ FUNC(LS_SetPlayerProperty)
 					}
 					else if (i == consoleplayer)
 					{
-						level.flags &= ~LEVEL_ALLMAP;
+						level.flags2 &= ~LEVEL2_ALLMAP;
 					}
 				}
 			}

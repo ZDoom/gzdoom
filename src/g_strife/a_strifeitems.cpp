@@ -106,7 +106,7 @@ IMPLEMENT_CLASS (AScanner)
 
 bool AScanner::Use (bool pickup)
 {
-	if (!(level.flags & LEVEL_ALLMAP))
+	if (!(level.flags2 & LEVEL2_ALLMAP))
 	{
 		if (Owner->CheckLocalView (consoleplayer))
 		{

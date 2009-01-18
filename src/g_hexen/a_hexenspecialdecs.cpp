@@ -72,7 +72,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_PotteryExplode)
 	S_Sound (mo, CHAN_BODY, "PotteryExplode", 1, ATTN_NORM);
 	if (self->args[0]>=0 && self->args[0]<=255 && SpawnableThings[self->args[0]])
 	{ // Spawn an item
-		if (!((level.flags & LEVEL_NOMONSTERS) || (dmflags & DF_NO_MONSTERS))
+		if (!((level.flags2 & LEVEL2_NOMONSTERS) || (dmflags & DF_NO_MONSTERS))
 		|| !(GetDefaultByType (SpawnableThings[self->args[0]])->flags3 & MF3_ISMONSTER))
 		{ // Only spawn monsters if not -nomonsters
 			Spawn (SpawnableThings[self->args[0]],
@@ -290,7 +290,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SoAExplode)
 	}
 	if (self->args[0]>=0 && self->args[0]<=255 && SpawnableThings[self->args[0]])
 	{ // Spawn an item
-		if (!((level.flags & LEVEL_NOMONSTERS) || (dmflags & DF_NO_MONSTERS))
+		if (!((level.flags2 & LEVEL2_NOMONSTERS) || (dmflags & DF_NO_MONSTERS))
 		|| !(GetDefaultByType (SpawnableThings[self->args[0]])->flags3 & MF3_ISMONSTER))
 		{ // Only spawn monsters if not -nomonsters
 			Spawn (SpawnableThings[self->args[0]],

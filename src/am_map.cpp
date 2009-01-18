@@ -1784,7 +1784,7 @@ void AM_Drawer ()
 	if (!automapactive)
 		return;
 
-	bool allmap = (level.flags & LEVEL_ALLMAP) != 0;
+	bool allmap = (level.flags2 & LEVEL2_ALLMAP) != 0;
 	bool allthings = allmap && players[consoleplayer].mo->FindInventory<APowerScanner>() != NULL;
 
 	AM_initColors (viewactive);

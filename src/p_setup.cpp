@@ -1561,7 +1561,7 @@ void P_SetLineID (line_t *ld)
 		switch (ld->special)
 		{
 		case Line_SetIdentification:
-			if (!(level.flags & LEVEL_HEXENHACK))
+			if (!(level.flags2 & LEVEL2_HEXENHACK))
 			{
 				ld->id = ld->args[0] + 256 * ld->args[4];
 				ld->flags |= ld->args[1]<<16;
@@ -1772,9 +1772,9 @@ void P_LoadLineDefs (MapData * map)
 
 		P_AdjustLine (ld);
 		P_SaveLineSpecial (ld);
-		if (level.flags & LEVEL_CLIPMIDTEX) ld->flags |= ML_CLIP_MIDTEX;
-		if (level.flags & LEVEL_WRAPMIDTEX) ld->flags |= ML_WRAP_MIDTEX;
-		if (level.flags & LEVEL_CHECKSWITCHRANGE) ld->flags |= ML_CHECKSWITCHRANGE;
+		if (level.flags2 & LEVEL2_CLIPMIDTEX) ld->flags |= ML_CLIP_MIDTEX;
+		if (level.flags2 & LEVEL2_WRAPMIDTEX) ld->flags |= ML_WRAP_MIDTEX;
+		if (level.flags2 & LEVEL2_CHECKSWITCHRANGE) ld->flags |= ML_CHECKSWITCHRANGE;
 	}
 	delete[] mldf;
 }
@@ -1850,9 +1850,9 @@ void P_LoadLineDefs2 (MapData * map)
 		P_AdjustLine (ld);
 		P_SetLineID(ld);
 		P_SaveLineSpecial (ld);
-		if (level.flags & LEVEL_CLIPMIDTEX) ld->flags |= ML_CLIP_MIDTEX;
-		if (level.flags & LEVEL_WRAPMIDTEX) ld->flags |= ML_WRAP_MIDTEX;
-		if (level.flags & LEVEL_CHECKSWITCHRANGE) ld->flags |= ML_CHECKSWITCHRANGE;
+		if (level.flags2 & LEVEL2_CLIPMIDTEX) ld->flags |= ML_CLIP_MIDTEX;
+		if (level.flags2 & LEVEL2_WRAPMIDTEX) ld->flags |= ML_WRAP_MIDTEX;
+		if (level.flags2 & LEVEL2_CHECKSWITCHRANGE) ld->flags |= ML_CHECKSWITCHRANGE;
 
 		// convert the activation type
 		ld->activation = 1 << GET_SPAC(ld->flags);
@@ -3319,9 +3319,9 @@ void P_SetupLevel (char *lumpname, int position)
 		{
 			// Doom format and UDMF text maps get strict monster activation unless the mapinfo
 			// specifies differently.
-			if (!(level.flags & LEVEL_LAXACTIVATIONMAPINFO))
+			if (!(level.flags2 & LEVEL2_LAXACTIVATIONMAPINFO))
 			{
-				level.flags &= ~LEVEL_LAXMONSTERACTIVATION;
+				level.flags2 &= ~LEVEL2_LAXMONSTERACTIVATION;
 			}
 		}
 
@@ -3330,9 +3330,9 @@ void P_SetupLevel (char *lumpname, int position)
 			// set compatibility flags
 			if (gameinfo.gametype == GAME_Strife)
 			{
-				level.flags |= LEVEL_RAILINGHACK;
+				level.flags2 |= LEVEL2_RAILINGHACK;
 			}
-			level.flags |= LEVEL_DUMMYSWITCHES;
+			level.flags2 |= LEVEL2_DUMMYSWITCHES;
 		}
 
 		FBehavior::StaticLoadDefaultModules ();

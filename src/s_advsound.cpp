@@ -1071,7 +1071,7 @@ static void S_AddSNDINFO (int lump)
 				mysnprintf (temp, countof(temp), "MAP%02d", sc.Number);
 				info = FindLevelInfo (temp);
 				sc.MustGetString ();
-				if (info->mapname[0] && (!(info->flags & LEVEL_MUSICDEFINED)))
+				if (info->mapname[0] && (!(info->flags2 & LEVEL2_MUSICDEFINED)))
 				{
 					ReplaceString (&info->music, sc.String);
 				}

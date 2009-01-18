@@ -1148,7 +1148,7 @@ void APlayerPawn::Die (AActor *source, AActor *inflictor)
 				}
 			}
 		}
-		if (!multiplayer && (level.flags & LEVEL_DEATHSLIDESHOW))
+		if (!multiplayer && (level.flags2 & LEVEL2_DEATHSLIDESHOW))
 		{
 			F_StartSlideshow ();
 		}
@@ -1876,7 +1876,7 @@ void P_DeathThink (player_t *player)
 		if (level.time >= player->respawn_time || ((player->cmd.ucmd.buttons & BT_USE) && !player->isbot))
 		{
 			player->cls = NULL;		// Force a new class if the player is using a random class
-			player->playerstate = (multiplayer || (level.flags & LEVEL_ALLOWRESPAWN)) ? PST_REBORN : PST_ENTER;
+			player->playerstate = (multiplayer || (level.flags2 & LEVEL2_ALLOWRESPAWN)) ? PST_REBORN : PST_ENTER;
 			if (player->mo->special1 > 2)
 			{
 				player->mo->special1 = 0;

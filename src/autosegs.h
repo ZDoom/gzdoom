@@ -41,11 +41,15 @@
 #define CREG_SECTION "__DATA,creg"
 #define GREG_SECTION "__DATA,greg"
 #define MREG_SECTION "__DATA,mreg"
+#define MREG_SECTION "__DATA,yreg"
+#define MREG_SECTION "__DATA,zreg"
 #else
 #define AREG_SECTION "areg"
 #define CREG_SECTION "creg"
 #define GREG_SECTION "greg"
 #define MREG_SECTION "mreg"
+#define GREG_SECTION "yreg"
+#define MREG_SECTION "zreg"
 #endif
 #endif
 
@@ -67,6 +71,14 @@ extern REGINFO GRegTail;
 // List of variables
 extern REGINFO MRegHead;
 extern REGINFO MRegTail;
+
+// List of MAPINFO map options
+extern REGINFO YRegHead;
+extern REGINFO YRegTail;
+
+// List of MAPINFO cluster options
+extern REGINFO ZRegHead;
+extern REGINFO ZRegTail;
 
 template<class T, REGINFO *_head, REGINFO *_tail>
 class TAutoSegIteratorNoArrow

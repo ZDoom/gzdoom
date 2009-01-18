@@ -1824,7 +1824,7 @@ void P_MonsterFallingDamage (AActor *mo)
 	int damage;
 	int mom;
 
-	if (!(level.flags&LEVEL_MONSTERFALLINGDAMAGE))
+	if (!(level.flags2 & LEVEL2_MONSTERFALLINGDAMAGE))
 		return;
 	if (mo->floorsector->Flags & SECF_NOFALLINGDAMAGE)
 		return;
@@ -2529,7 +2529,7 @@ void AActor::Tick ()
 		if (!(flags5 & MF5_NOTIMEFREEZE))
 		{
 			//Added by MC: Freeze mode.
-			if (bglobal.freeze || level.flags & LEVEL_FROZEN)
+			if (bglobal.freeze || level.flags2 & LEVEL2_FROZEN)
 			{
 				return;
 			}
@@ -2568,7 +2568,7 @@ void AActor::Tick ()
 			}
 
 			// Apply freeze mode.
-			if (( level.flags & LEVEL_FROZEN ) && ( player == NULL || !( player->cheats & CF_TIMEFREEZE )))
+			if (( level.flags2 & LEVEL2_FROZEN ) && ( player == NULL || !( player->cheats & CF_TIMEFREEZE )))
 			{
 				return;
 			}
@@ -3687,7 +3687,7 @@ APlayerPawn *P_SpawnPlayer (FMapThing *mthing, bool tempplayer)
 	{ // Give all cards in death match mode.
 		p->mo->GiveDeathmatchInventory ();
 	}
-	else if ((multiplayer || (level.flags & LEVEL_ALLOWRESPAWN)) && state == PST_REBORN && oldactor != NULL)
+	else if ((multiplayer || (level.flags2 & LEVEL2_ALLOWRESPAWN)) && state == PST_REBORN && oldactor != NULL)
 	{ // Special inventory handling for respawning in coop
 		p->mo->FilterCoopRespawnInventory (oldactor);
 	}
@@ -3997,7 +3997,7 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	}
 
 	// don't spawn any monsters if -nomonsters
-	if (((level.flags & LEVEL_NOMONSTERS) || (dmflags & DF_NO_MONSTERS)) && info->flags3 & MF3_ISMONSTER )
+	if (((level.flags2 & LEVEL2_NOMONSTERS) || (dmflags & DF_NO_MONSTERS)) && info->flags3 & MF3_ISMONSTER )
 	{
 		return NULL;
 	}

@@ -1026,7 +1026,7 @@ void F_StartSlideshow ()
 	V_SetBlend (0,0,0,0);
 
 	// The slideshow is determined solely by the map you're on.
-	if (!multiplayer && level.flags & LEVEL_DEATHSLIDESHOW)
+	if (!multiplayer && level.flags2 & LEVEL2_DEATHSLIDESHOW)
 	{
 		FinalePart = 14;
 	}

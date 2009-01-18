@@ -83,6 +83,7 @@
 
 #include "g_hub.h"
 
+
 EXTERN_CVAR (Float, sv_gravity)
 EXTERN_CVAR (Float, sv_aircontrol)
 EXTERN_CVAR (Int, disableautosave)
@@ -98,6 +99,69 @@ EXTERN_CVAR (Int, disableautosave)
 #define RCLS_ID			MAKE_ID('r','c','L','s')
 #define PCLS_ID			MAKE_ID('p','c','L','s')
 
+
+
+void level_info_t::Reset()
+{
+	mapname[0] = 0;
+	levelnum = 0;
+	pname[0] = 0;
+	nextmap[0] = 0;
+	secretmap[0] = 0;
+	strcpy (skypic1, "-NOFLAT-");
+	strcpy (skypic2, "-NOFLAT-");
+	cluster = 0;
+	partime = 0;
+	sucktime = 0;
+	flags = 0;
+	flags2 = gameinfo.gametype == GAME_Hexen? 0 : LEVEL2_LAXMONSTERACTIVATION;
+	music = NULL;
+	level_name = NULL;
+	strcpy (fadetable, "COLORMAP");
+	WallHorizLight = -8;
+	WallVertLight = +8;
+	f1[0] = 0;
+	musicorder = 0;
+	snapshot = NULL;
+	snapshotVer = 0;
+	defered = 0;
+	skyspeed1 = skyspeed2 = 0.f;
+	fadeto = 0;
+	outsidefog = 0xff000000;
+	cdtrack = 0;
+	cdid = 0;
+	gravity = 0.f;
+	aircontrol = 0.f;
+	WarpTrans = 0;
+	airsupply = 20;
+	compatflags = 0;
+	compatmask = 0;
+	translator = NULL;
+	RedirectType = 0;
+	RedirectMap[0] = 0;
+	enterpic = 0;
+	exitpic = 0;
+	intermusic = 0;
+	intermusicorder = 0;
+	soundinfo = 0;
+	sndseq = 0;
+	strcpy (bordertexture, gameinfo.borderFlat);
+	teamdamage = 0.f;
+	specialactions = NULL;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 static int FindEndSequence (int type, const char *picname);
 static void SetEndSequence (char *nextmap, int type);
 static void InitPlayerClasses ();
@@ -107,8 +171,7 @@ static void SetLevelNum (level_info_t *info, int num);
 static void ClearEpisodes ();
 static void ClearLevelInfoStrings (level_info_t *linfo);
 static void ClearClusterInfoStrings (cluster_info_t *cinfo);
-static void ParseSkill (FScanner &sc);
-static void G_VerifySkill();
+void G_VerifySkill();
 
 struct FOptionalMapinfoParser
 {
@@ -200,7 +263,7 @@ TArray<FSkillInfo> AllSkills;
 static bool HexenHack;
 
 static char unnamed[] = "Unnamed";
-static level_info_t TheDefaultLevelInfo =
+static level_info_t TheDefaultLevelInfo;/* =
 {
  	"",			// mapname
  	0, 			// levelnum
@@ -218,7 +281,7 @@ static level_info_t TheDefaultLevelInfo =
  	+8, 		// WallVertLight
  	-8,			// WallHorizLight
 	"",			// [RC] F1
-};
+};*/
 
 static cluster_info_t TheDefaultClusterInfo = { 0 };
 
@@ -390,6 +453,9 @@ enum EMIType
 	MITYPE_SETFLAG,
 	MITYPE_CLRFLAG,
 	MITYPE_SCFLAGS,
+	MITYPE_SETFLAG2,
+	MITYPE_CLRFLAG2,
+	MITYPE_SCFLAGS2,
 	MITYPE_CLUSTER,
 	MITYPE_STRING,
 	MITYPE_MUSIC,
@@ -439,7 +505,7 @@ MapHandlers[] =
 	{ MITYPE_SETFLAG,	LEVEL_STARTLIGHTNING, 0 },
 	{ MITYPE_LUMPNAME,	lioffset(fadetable), 0 },
 	{ MITYPE_CLRBYTES,	lioffset(WallVertLight), lioffset(WallHorizLight) },
-	{ MITYPE_SETFLAG,	LEVEL_SMOOTHLIGHTING, 0 },
+	{ MITYPE_SETFLAG2,	LEVEL2_SMOOTHLIGHTING, 0 },
 	{ MITYPE_SETFLAG,	LEVEL_SNDSEQTOTALCTRL, 0 },
 	{ MITYPE_CLRFLAG,	LEVEL_SNDSEQTOTALCTRL, 0 },
 	{ MITYPE_SETFLAG,	LEVEL_FORCENOSKYSTRETCH, 0 },
@@ -470,13 +536,13 @@ MapHandlers[] =
 	{ MITYPE_SETFLAG,	LEVEL_FILTERSTARTS, 0 },
 	{ MITYPE_SETFLAG,	LEVEL_ACTOWNSPECIAL, 0 },
 	{ MITYPE_CLRFLAG,	LEVEL_ACTOWNSPECIAL, 0 },
-	{ MITYPE_SETFLAG,	LEVEL_MISSILESACTIVATEIMPACT, 0 },
-	{ MITYPE_CLRFLAG,	LEVEL_MISSILESACTIVATEIMPACT, 0 },
+	{ MITYPE_SETFLAG2,	LEVEL2_MISSILESACTIVATEIMPACT, 0 },
+	{ MITYPE_CLRFLAG2,	LEVEL2_MISSILESACTIVATEIMPACT, 0 },
 	{ MITYPE_SETFLAG,	LEVEL_NOINVENTORYBAR, 0 },
-	{ MITYPE_SETFLAG,	LEVEL_DEATHSLIDESHOW, 0 },
+	{ MITYPE_SETFLAG2,	LEVEL2_DEATHSLIDESHOW, 0 },
 	{ MITYPE_REDIRECT,	lioffset(RedirectMap), 0 },
-	{ MITYPE_CLRFLAG,	LEVEL_LAXMONSTERACTIVATION, LEVEL_LAXACTIVATIONMAPINFO },
-	{ MITYPE_SETFLAG,	LEVEL_LAXMONSTERACTIVATION, LEVEL_LAXACTIVATIONMAPINFO },
+	{ MITYPE_CLRFLAG2,	LEVEL2_LAXMONSTERACTIVATION, LEVEL2_LAXACTIVATIONMAPINFO },
+	{ MITYPE_SETFLAG2,	LEVEL2_LAXMONSTERACTIVATION, LEVEL2_LAXACTIVATIONMAPINFO },
 	{ MITYPE_COMPATFLAG, COMPATF_BOOMSCROLL},
 	{ MITYPE_STRING,	lioffset(exitpic), 0 },
 	{ MITYPE_STRING,	lioffset(exitpic), 0 },
@@ -484,17 +550,17 @@ MapHandlers[] =
 	{ MITYPE_MUSIC,		lioffset(intermusic), lioffset(intermusicorder) },
 	{ MITYPE_INT,		lioffset(airsupply), 0 },
 	{ MITYPE_SPECIALACTION, lioffset(specialactions), 0 },
-	{ MITYPE_SETFLAG,	LEVEL_KEEPFULLINVENTORY, 0 },
-	{ MITYPE_SETFLAG,	LEVEL_MONSTERFALLINGDAMAGE, 0 },
-	{ MITYPE_CLRFLAG,	LEVEL_MONSTERFALLINGDAMAGE, 0 },
+	{ MITYPE_SETFLAG2,	LEVEL2_KEEPFULLINVENTORY, 0 },
+	{ MITYPE_SETFLAG2,	LEVEL2_MONSTERFALLINGDAMAGE, 0 },
+	{ MITYPE_CLRFLAG2,	LEVEL2_MONSTERFALLINGDAMAGE, 0 },
 	{ MITYPE_STRING,	lioffset(sndseq), 0 },
 	{ MITYPE_STRING,	lioffset(soundinfo), 0 },
 	{ MITYPE_STRING,	lioffset(soundinfo), 0 },
-	{ MITYPE_SETFLAG,	LEVEL_CLIPMIDTEX, 0 },
-	{ MITYPE_SETFLAG,	LEVEL_WRAPMIDTEX, 0 },
+	{ MITYPE_SETFLAG2,	LEVEL2_CLIPMIDTEX, 0 },
+	{ MITYPE_SETFLAG2,	LEVEL2_WRAPMIDTEX, 0 },
 	{ MITYPE_CLRFLAG,	LEVEL_CROUCH_NO, 0 },
 	{ MITYPE_SETFLAG,	LEVEL_CROUCH_NO, 0 },
-	{ MITYPE_SCFLAGS,	LEVEL_PAUSE_MUSIC_IN_MENUS, 0 },
+	{ MITYPE_SCFLAGS2,	LEVEL2_PAUSE_MUSIC_IN_MENUS, 0 },
 	{ MITYPE_COMPATFLAG, COMPATF_SHORTTEX},
 	{ MITYPE_COMPATFLAG, COMPATF_STAIRINDEX},
 	{ MITYPE_COMPATFLAG, COMPATF_LIMITPAIN},
@@ -514,19 +580,19 @@ MapHandlers[] =
 	{ MITYPE_COMPATFLAG, COMPATF_MISSILECLIP},
 	{ MITYPE_LUMPNAME,	lioffset(bordertexture), 0 },
 	{ MITYPE_LUMPNAME,  lioffset(f1), 0, }, 
-	{ MITYPE_SCFLAGS,	LEVEL_NOINFIGHTING, ~LEVEL_TOTALINFIGHTING },
-	{ MITYPE_SCFLAGS,	0, ~(LEVEL_NOINFIGHTING|LEVEL_TOTALINFIGHTING)},
-	{ MITYPE_SCFLAGS,	LEVEL_TOTALINFIGHTING, ~LEVEL_NOINFIGHTING },
-	{ MITYPE_SETFLAG,	LEVEL_INFINITE_FLIGHT, 0 },
-	{ MITYPE_CLRFLAG,	LEVEL_INFINITE_FLIGHT, 0 },
-	{ MITYPE_SETFLAG,	LEVEL_ALLOWRESPAWN, 0 },
+	{ MITYPE_SCFLAGS2,	LEVEL2_NOINFIGHTING, ~LEVEL2_TOTALINFIGHTING },
+	{ MITYPE_SCFLAGS2,	0, ~(LEVEL2_NOINFIGHTING|LEVEL2_TOTALINFIGHTING)},
+	{ MITYPE_SCFLAGS2,	LEVEL2_TOTALINFIGHTING, ~LEVEL2_NOINFIGHTING },
+	{ MITYPE_SETFLAG2,	LEVEL2_INFINITE_FLIGHT, 0 },
+	{ MITYPE_CLRFLAG2,	LEVEL2_INFINITE_FLIGHT, 0 },
+	{ MITYPE_SETFLAG2,	LEVEL2_ALLOWRESPAWN, 0 },
 	{ MITYPE_FLOAT,		lioffset(teamdamage), 0 },
-	{ MITYPE_SCFLAGS,	LEVEL_FORCETEAMPLAYON, ~LEVEL_FORCETEAMPLAYOFF },
-	{ MITYPE_SCFLAGS,	LEVEL_FORCETEAMPLAYOFF, ~LEVEL_FORCETEAMPLAYON },
-	{ MITYPE_SETFLAG,	LEVEL_CHECKSWITCHRANGE, 0 },
-	{ MITYPE_CLRFLAG,	LEVEL_CHECKSWITCHRANGE, 0 },
+	{ MITYPE_SCFLAGS2,	LEVEL2_FORCETEAMPLAYON, ~LEVEL2_FORCETEAMPLAYOFF },
+	{ MITYPE_SCFLAGS2,	LEVEL2_FORCETEAMPLAYOFF, ~LEVEL2_FORCETEAMPLAYON },
+	{ MITYPE_SETFLAG2,	LEVEL2_CHECKSWITCHRANGE, 0 },
+	{ MITYPE_CLRFLAG2,	LEVEL2_CHECKSWITCHRANGE, 0 },
 	{ MITYPE_STRING,	lioffset(translator), 0 },
-	{ MITYPE_SETFLAG,	LEVEL_CONV_SINGLE_UNFREEZE, 0 },
+	{ MITYPE_SETFLAG2,	LEVEL2_CONV_SINGLE_UNFREEZE, 0 },
 	{ MITYPE_IGNORE,	0, 0 },		// Skulltag option: nobotnodes
 };
 
@@ -566,7 +632,7 @@ static void ParseMapInfoLower (FScanner &sc,
 							   const char *strings[],
 							   level_info_t *levelinfo,
 							   cluster_info_t *clusterinfo,
-							   QWORD levelflags);
+							   DWORD levelflags, DWORD levelflags2);
 
 static int FindWadLevelInfo (const char *name)
 {
@@ -586,64 +652,6 @@ static int FindWadClusterInfo (int cluster)
 	return -1;
 }
 
-static void SetLevelDefaults (level_info_t *levelinfo)
-{
-	memset (levelinfo, 0, sizeof(*levelinfo));
-	levelinfo->snapshot = NULL;
-	levelinfo->outsidefog = 0xff000000;
-	levelinfo->WallHorizLight = -8;
-	levelinfo->WallVertLight = +8;
-	strncpy (levelinfo->fadetable, "COLORMAP", 8);
-	strcpy (levelinfo->skypic1, "-NOFLAT-");
-	strcpy (levelinfo->skypic2, "-NOFLAT-");
-	strcpy (levelinfo->bordertexture, gameinfo.borderFlat);
-	if (gameinfo.gametype != GAME_Hexen)
-	{
-		// For maps without a BEHAVIOR, this will be cleared.
-		levelinfo->flags |= LEVEL_LAXMONSTERACTIVATION;
-	}
-	levelinfo->airsupply = 10;
-}
-
-//
-// G_ParseMapInfo
-// Parses the MAPINFO lumps of all loaded WADs and generates
-// data for wadlevelinfos and wadclusterinfos.
-//
-void G_ParseMapInfo ()
-{
-	int lump, lastlump = 0;
-
-	atterm (G_UnloadMapInfo);
-
-	SetLevelDefaults (&gamedefaults);
-
-	// Parse the default MAPINFO for the current game.
-	for(int i=0; i<2; i++)
-	{
-		if (gameinfo.mapinfo[i] != NULL)
-		{
-			G_DoParseMapInfo(Wads.GetNumForFullName(gameinfo.mapinfo[i]));
-		}
-	}
-
-	// Parse any extra MAPINFOs.
-	while ((lump = Wads.FindLump ("MAPINFO", &lastlump)) != -1)
-	{
-		G_DoParseMapInfo (lump);
-	}
-	EndSequences.ShrinkToFit ();
-
-	if (EpiDef.numitems == 0)
-	{
-		I_FatalError ("You cannot use clearepisodes in a MAPINFO if you do not define any new episodes after it.");
-	}
-	if (AllSkills.Size()==0)
-	{
-		I_FatalError ("You cannot use clearskills in a MAPINFO if you do not define any new skills after it.");
-	}
-	ClearLevelInfoStrings (&gamedefaults);
-}
 
 static FSpecialAction *CopySpecialActions(FSpecialAction *spec)
 {
@@ -734,177 +742,6 @@ static void CopyLevelInfo(level_info_t *levelinfo, level_info_t *from)
 }
 
 
-static void G_DoParseMapInfo (int lump)
-{
-	level_info_t defaultinfo;
-	level_info_t *levelinfo;
-	int levelindex;
-	cluster_info_t *clusterinfo;
-	int clusterindex;
-	QWORD levelflags;
-
-	FScanner sc(lump);
-
-	CopyLevelInfo(&defaultinfo, &gamedefaults);
-	HexenHack = false;
-
-	while (sc.GetString ())
-	{
-		switch (sc.MustMatchString (MapInfoTopLevel))
-		{
-		case MITL_GAMEDEFAULTS:
-			ClearLevelInfoStrings(&gamedefaults);
-			SetLevelDefaults (&gamedefaults);
-			ParseMapInfoLower (sc, MapHandlers, MapInfoMapLevel, &gamedefaults, NULL, defaultinfo.flags);
-			ClearLevelInfoStrings(&defaultinfo);
-			CopyLevelInfo(&defaultinfo, &gamedefaults);
-			break;
-
-		case MITL_DEFAULTMAP:
-			ClearLevelInfoStrings(&defaultinfo);
-			SetLevelDefaults (&defaultinfo);
-			ParseMapInfoLower (sc, MapHandlers, MapInfoMapLevel, &defaultinfo, NULL, defaultinfo.flags);
-			break;
-
-		case MITL_ADDDEFAULTMAP:
-			// Same as above but adds to the existing definitions instead of replacing them completely
-			ParseMapInfoLower (sc, MapHandlers, MapInfoMapLevel, &defaultinfo, NULL, defaultinfo.flags);
-			break;
-
-		case MITL_MAP:		// map <MAPNAME> <Nice Name>
-		  {
-			char maptemp[8];
-			const char *mapname;
-
-			levelflags = defaultinfo.flags;
-			sc.MustGetString ();
-			mapname = sc.String;
-			if (IsNum (mapname))
-			{	// MAPNAME is a number; assume a Hexen wad
-				int mapnum = atoi (mapname);
-				mysnprintf (maptemp, countof(maptemp), "MAP%02d", mapnum);
-				mapname = maptemp;
-				HexenHack = true;
-				// Hexen levels are automatically nointermission,
-				// no auto sound sequences, falling damage,
-				// monsters activate their own specials, and missiles
-				// are always the activators of impact lines.
-				levelflags |= LEVEL_NOINTERMISSION
-							| LEVEL_SNDSEQTOTALCTRL
-							| LEVEL_FALLDMG_HX
-							| LEVEL_ACTOWNSPECIAL
-							| LEVEL_MISSILESACTIVATEIMPACT
-							| LEVEL_INFINITE_FLIGHT
-							| LEVEL_MONSTERFALLINGDAMAGE
-							| LEVEL_HEXENHACK;
-			}
-			levelindex = FindWadLevelInfo (mapname);
-			if (levelindex == -1)
-			{
-				levelindex = wadlevelinfos.Reserve(1);
-			}
-			else
-			{
-				ClearLevelInfoStrings (&wadlevelinfos[levelindex]);
-			}
-			levelinfo = &wadlevelinfos[levelindex];
-			CopyLevelInfo(levelinfo, &defaultinfo);
-			if (HexenHack)
-			{
-				levelinfo->WallHorizLight = levelinfo->WallVertLight = 0;
-			}
-			uppercopy (levelinfo->mapname, mapname);
-			sc.MustGetString ();
-			if (sc.String[0] == '$')
-			{
-				// For consistency with other definitions allow $Stringtablename here, too.
-				levelflags |= LEVEL_LOOKUPLEVELNAME;
-				ReplaceString (&levelinfo->level_name, sc.String + 1);
-			}
-			else
-			{
-				if (sc.Compare ("lookup"))
-				{
-					sc.MustGetString ();
-					levelflags |= LEVEL_LOOKUPLEVELNAME;
-				}
-				ReplaceString (&levelinfo->level_name, sc.String);
-			}
-			// Set up levelnum now so that you can use Teleport_NewMap specials
-			// to teleport to maps with standard names without needing a levelnum.
-			if (!strnicmp (levelinfo->mapname, "MAP", 3) && levelinfo->mapname[5] == 0)
-			{
-				int mapnum = atoi (levelinfo->mapname + 3);
-
-				if (mapnum >= 1 && mapnum <= 99)
-					levelinfo->levelnum = mapnum;
-			}
-			else if (levelinfo->mapname[0] == 'E' &&
-				levelinfo->mapname[1] >= '0' && levelinfo->mapname[1] <= '9' &&
-				levelinfo->mapname[2] == 'M' &&
-				levelinfo->mapname[3] >= '0' && levelinfo->mapname[3] <= '9')
-			{
-				int epinum = levelinfo->mapname[1] - '1';
-				int mapnum = levelinfo->mapname[3] - '0';
-				levelinfo->levelnum = epinum*10 + mapnum;
-			}
-			ParseMapInfoLower (sc, MapHandlers, MapInfoMapLevel, levelinfo, NULL, levelflags);
-			// When the second sky is -NOFLAT-, make it a copy of the first sky
-			if (strcmp (levelinfo->skypic2, "-NOFLAT-") == 0)
-			{
-				strcpy (levelinfo->skypic2, levelinfo->skypic1);
-			}
-			SetLevelNum (levelinfo, levelinfo->levelnum);	// Wipe out matching levelnums from other maps.
-			/* can't do this here.
-			if (levelinfo->pname[0] != 0)
-			{
-				if (!TexMan.CheckForTexture(levelinfo->pname, FTexture::TEX_MiscPatch).Exists())
-				{
-					levelinfo->pname[0] = 0;
-				}
-			}
-			*/
-			break;
-		  }
-
-		case MITL_CLUSTERDEF:	// clusterdef <clusternum>
-			sc.MustGetNumber ();
-			clusterindex = FindWadClusterInfo (sc.Number);
-			if (clusterindex == -1)
-			{
-				clusterindex = wadclusterinfos.Reserve(1);
-				clusterinfo = &wadclusterinfos[clusterindex];
-			}
-			else
-			{
-				clusterinfo = &wadclusterinfos[clusterindex];
-				ClearClusterInfoStrings(clusterinfo);
-			}
-			memset (clusterinfo, 0, sizeof(cluster_info_t));
-			clusterinfo->cluster = sc.Number;
-			ParseMapInfoLower (sc, ClusterHandlers, MapInfoClusterLevel, NULL, clusterinfo, 0);
-			break;
-
-		case MITL_EPISODE:
-			ParseEpisodeInfo(sc);
-			break;
-
-		case MITL_CLEAREPISODES:
-			ClearEpisodes();
-			break;
-
-		case MITL_SKILL:
-			ParseSkill(sc);
-			break;
-
-		case MITL_CLEARSKILLS:
-			AllSkills.Clear();
-			break;
-
-		}
-	}
-	ClearLevelInfoStrings(&defaultinfo);
-}
 
 static void ClearEpisodes()
 {
@@ -921,7 +758,7 @@ static void ParseMapInfoLower (FScanner &sc,
 							   const char *strings[],
 							   level_info_t *levelinfo,
 							   cluster_info_t *clusterinfo,
-							   QWORD flags)
+							   DWORD flags, DWORD flags2)
 {
 	int entry;
 	MapInfoHandler *handler;
@@ -1169,6 +1006,20 @@ static void ParseMapInfoLower (FScanner &sc,
 			flags = (flags & handler->data2) | handler->data1;
 			break;
 
+		case MITYPE_SETFLAG2:
+			flags2 |= handler->data1;
+			flags2 |= handler->data2;
+			break;
+
+		case MITYPE_CLRFLAG2:
+			flags2 &= ~handler->data1;
+			flags2 |= handler->data2;
+			break;
+
+		case MITYPE_SCFLAGS2:
+			flags2 = (flags2 & handler->data2) | handler->data1;
+			break;
+
 		case MITYPE_CLUSTER:
 			sc.MustGetNumber ();
 			*((int *)(info + handler->data1)) = sc.Number;
@@ -1226,7 +1077,7 @@ static void ParseMapInfoLower (FScanner &sc,
 				if (levelinfo != NULL)
 				{
 					// Flag the level so that the $MAP command doesn't override this.
-					flags|=LEVEL_MUSICDEFINED;
+					flags2 |= LEVEL2_MUSICDEFINED;
 				}
 			}
 			break;
@@ -2175,11 +2026,11 @@ void G_DoLoadLevel (int position, bool autosave)
 	StatusBar->DetachAllMessages ();
 
 	// Force 'teamplay' to 'true' if need be.
-	if (level.flags & LEVEL_FORCETEAMPLAYON)
+	if (level.flags2 & LEVEL2_FORCETEAMPLAYON)
 		teamplay = true;
 
 	// Force 'teamplay' to 'false' if need be.
-	if (level.flags & LEVEL_FORCETEAMPLAYOFF)
+	if (level.flags2 & LEVEL2_FORCETEAMPLAYOFF)
 		teamplay = false;
 
 	Printf (
@@ -2223,11 +2074,11 @@ void G_DoLoadLevel (int position, bool autosave)
 
 	if (g_nomonsters)
 	{
-		level.flags |= LEVEL_NOMONSTERS;
+		level.flags2 |= LEVEL2_NOMONSTERS;
 	}
 	else
 	{
-		level.flags &= ~LEVEL_NOMONSTERS;
+		level.flags2 &= ~LEVEL2_NOMONSTERS;
 	}
 
 	P_SetupLevel (level.mapname, position);
@@ -3246,262 +3097,250 @@ static void InitPlayerClasses ()
 }
 
 
-static void ParseSkill (FScanner &sc)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+static int GetDefaultLevelNum(const char *mapname)
 {
-	FSkillInfo skill;
-
-	skill.AmmoFactor = FRACUNIT;
-	skill.DoubleAmmoFactor = 2*FRACUNIT;
-	skill.DropAmmoFactor = -1;
-	skill.DamageFactor = FRACUNIT;
-	skill.FastMonsters = false;
-	skill.DisableCheats = false;
-	skill.EasyBossBrain = false;
-	skill.AutoUseHealth = false;
-	skill.RespawnCounter = 0;
-	skill.RespawnLimit = 0;
-	skill.Aggressiveness = FRACUNIT;
-	skill.SpawnFilter = 0;
-	skill.ACSReturn = AllSkills.Size();
-	skill.MenuNameIsLump = false;
-	skill.MustConfirm = false;
-	skill.Shortcut = 0;
-	skill.TextColor = "";
-
-	sc.MustGetString();
-	skill.Name = sc.String;
-
-	while (sc.GetString ())
+	if (!strnicmp (mapname, "MAP", 3) && strlen(mapname) <= 5)
 	{
-		if (sc.Compare ("ammofactor"))
-		{
-			sc.MustGetFloat ();
-			skill.AmmoFactor = FLOAT2FIXED(sc.Float);
-		}
-		else if (sc.Compare ("doubleammofactor"))
-		{
-			sc.MustGetFloat ();
-			skill.DoubleAmmoFactor = FLOAT2FIXED(sc.Float);
-		}
-		else if (sc.Compare ("dropammofactor"))
-		{
-			sc.MustGetFloat ();
-			skill.DropAmmoFactor = FLOAT2FIXED(sc.Float);
-		}
-		else if (sc.Compare ("damagefactor"))
-		{
-			sc.MustGetFloat ();
-			skill.DamageFactor = FLOAT2FIXED(sc.Float);
-		}
-		else if (sc.Compare ("fastmonsters"))
-		{
-			skill.FastMonsters = true;
-		}
-		else if (sc.Compare ("disablecheats"))
-		{
-			skill.DisableCheats = true;
-		}
-		else if (sc.Compare ("easybossbrain"))
-		{
-			skill.EasyBossBrain = true;
-		}
-		else if (sc.Compare("autousehealth"))
-		{
-			skill.AutoUseHealth = true;
-		}
-		else if (sc.Compare("respawntime"))
-		{
-			sc.MustGetFloat ();
-			skill.RespawnCounter = int(sc.Float*TICRATE);
-		}
-		else if (sc.Compare("respawnlimit"))
-		{
-			sc.MustGetNumber ();
-			skill.RespawnLimit = sc.Number;
-		}
-		else if (sc.Compare("Aggressiveness"))
-		{
-			sc.MustGetFloat ();
-			skill.Aggressiveness = FRACUNIT - FLOAT2FIXED(clamp<float>(sc.Float, 0,1));
-		}
-		else if (sc.Compare("SpawnFilter"))
-		{
-			if (sc.CheckNumber())
-			{
-				if (sc.Number > 0) skill.SpawnFilter |= (1<<(sc.Number-1));
-			}
-			else
-			{
-				sc.MustGetString ();
-				if (sc.Compare("baby")) skill.SpawnFilter |= 1;
-				else if (sc.Compare("easy")) skill.SpawnFilter |= 2;
-				else if (sc.Compare("normal")) skill.SpawnFilter |= 4;
-				else if (sc.Compare("hard")) skill.SpawnFilter |= 8;
-				else if (sc.Compare("nightmare")) skill.SpawnFilter |= 16;
-			}
-		}
-		else if (sc.Compare("ACSReturn"))
-		{
-			sc.MustGetNumber ();
-			skill.ACSReturn = sc.Number;
-		}
-		else if (sc.Compare("Name"))
-		{
-			sc.MustGetString ();
-			skill.MenuName = sc.String;
-			skill.MenuNameIsLump = false;
-		}
-		else if (sc.Compare("PlayerClassName"))
-		{
-			sc.MustGetString ();
-			FName pc = sc.String;
-			sc.MustGetString ();
-			skill.MenuNamesForPlayerClass[pc]=sc.String;
-		}
-		else if (sc.Compare("PicName"))
-		{
-			sc.MustGetString ();
-			skill.MenuName = sc.String;
-			skill.MenuNameIsLump = true;
-		}
-		else if (sc.Compare("MustConfirm"))
-		{
-			skill.MustConfirm = true;
-			if (sc.CheckToken(TK_StringConst))
-			{
-				skill.MustConfirmText = sc.String;
-			}
-		}
-		else if (sc.Compare("Key"))
-		{
-			sc.MustGetString();
-			skill.Shortcut = tolower(sc.String[0]);
-		}
-		else if (sc.Compare("TextColor"))
-		{
-			sc.MustGetString();
-			skill.TextColor = '[';
-			skill.TextColor << sc.String << ']';
-		}
-		else
-		{
-			sc.UnGet ();
-			break;
-		}
+		int mapnum = atoi (mapname + 3);
+
+		if (mapnum >= 1 && mapnum <= 99)
+			return mapnum;
 	}
-	for(unsigned int i = 0; i < AllSkills.Size(); i++)
+	else if (mapname[0] == 'E' &&
+			mapname[1] >= '0' && mapname[1] <= '9' &&
+			mapname[2] == 'M' &&
+			mapname[3] >= '0' && mapname[3] <= '9')
 	{
-		if (AllSkills[i].Name == skill.Name)
-		{
-			AllSkills[i] = skill;
-			return;
-		}
-	}
-	AllSkills.Push(skill);
-}
-
-int G_SkillProperty(ESkillProperty prop)
-{
-	if (AllSkills.Size() > 0)
-	{
-		switch(prop)
-		{
-		case SKILLP_AmmoFactor:
-			if (dmflags2 & DF2_YES_DOUBLEAMMO)
-			{
-				return AllSkills[gameskill].DoubleAmmoFactor;
-			}
-			return AllSkills[gameskill].AmmoFactor;
-
-		case SKILLP_DropAmmoFactor:
-			return AllSkills[gameskill].DropAmmoFactor;
-
-		case SKILLP_DamageFactor:
-			return AllSkills[gameskill].DamageFactor;
-
-		case SKILLP_FastMonsters:
-			return AllSkills[gameskill].FastMonsters  || (dmflags & DF_FAST_MONSTERS);
-
-		case SKILLP_Respawn:
-			if (dmflags & DF_MONSTERS_RESPAWN && AllSkills[gameskill].RespawnCounter==0) 
-				return TICRATE * (gameinfo.gametype != GAME_Strife ? 12 : 16);
-			return AllSkills[gameskill].RespawnCounter;
-
-		case SKILLP_RespawnLimit:
-			return AllSkills[gameskill].RespawnLimit;
-
-		case SKILLP_Aggressiveness:
-			return AllSkills[gameskill].Aggressiveness;
-
-		case SKILLP_DisableCheats:
-			return AllSkills[gameskill].DisableCheats;
-
-		case SKILLP_AutoUseHealth:
-			return AllSkills[gameskill].AutoUseHealth;
-
-		case SKILLP_EasyBossBrain:
-			return AllSkills[gameskill].EasyBossBrain;
-
-		case SKILLP_SpawnFilter:
-			return AllSkills[gameskill].SpawnFilter;
-
-		case SKILLP_ACSReturn:
-			return AllSkills[gameskill].ACSReturn;
-		}
+		int epinum = mapname[1] - '1';
+		int mapnum = mapname[3] - '0';
+		return epinum*10 + mapnum;
 	}
 	return 0;
 }
 
+//==========================================================================
+//
+// ParseMapHeader
+// Parses the header of a map definition ('map mapxx mapname')
+//
+//==========================================================================
 
-void G_VerifySkill()
+level_info_t *ParseMapHeader(FScanner &sc, level_info_t &defaultinfo)
 {
-	if (gameskill >= (int)AllSkills.Size())
-		gameskill = AllSkills.Size()-1;
-	else if (gameskill < 0)
-		gameskill = 0;
-}
+	FName mapname;
+	bool HexenHack = false;
 
-FSkillInfo &FSkillInfo::operator=(const FSkillInfo &other)
-{
-	Name = other.Name;
-	AmmoFactor = other.AmmoFactor;
-	DoubleAmmoFactor = other.DoubleAmmoFactor;
-	DropAmmoFactor = other.DropAmmoFactor;
-	DamageFactor = other.DamageFactor;
-	FastMonsters = other.FastMonsters;
-	DisableCheats = other.DisableCheats;
-	AutoUseHealth = other.AutoUseHealth;
-	EasyBossBrain = other.EasyBossBrain;
-	RespawnCounter= other.RespawnCounter;
-	RespawnLimit= other.RespawnLimit;
-	Aggressiveness= other.Aggressiveness;
-	SpawnFilter = other.SpawnFilter;
-	ACSReturn = other.ACSReturn;
-	MenuName = other.MenuName;
-	MenuNamesForPlayerClass = other.MenuNamesForPlayerClass;
-	MenuNameIsLump = other.MenuNameIsLump;
-	MustConfirm = other.MustConfirm;
-	MustConfirmText = other.MustConfirmText;
-	Shortcut = other.Shortcut;
-	TextColor = other.TextColor;
-	return *this;
-}
-
-int FSkillInfo::GetTextColor() const
-{
-	if (TextColor.IsEmpty())
-	{
-		return CR_UNTRANSLATED;
+	if (sc.CheckNumber())
+	{	// MAPNAME is a number; assume a Hexen wad
+		char maptemp[8];
+		mysnprintf (maptemp, countof(maptemp), "MAP%02d", sc.Number);
+		mapname = maptemp;
+		HexenHack = true;
 	}
-	const BYTE *cp = (const BYTE *)TextColor.GetChars();
-	int color = V_ParseFontColor(cp, 0, 0);
-	if (color == CR_UNDEFINED)
+	else 
 	{
-		Printf("Undefined color '%s' in definition of skill %s\n", TextColor.GetChars(), Name.GetChars());
-		color = CR_UNTRANSLATED;
+		mapname = sc.String;
 	}
-	return color;
+	int levelindex = FindWadLevelInfo (mapname);
+	if (levelindex == -1)
+	{
+		levelindex = wadlevelinfos.Reserve(1);
+	}
+	else
+	{
+		ClearLevelInfoStrings (&wadlevelinfos[levelindex]);
+	}
+	level_info_t *levelinfo = &wadlevelinfos[levelindex];
+	*levelinfo = defaultinfo;
+	if (HexenHack)
+	{
+		levelinfo->WallHorizLight = levelinfo->WallVertLight = 0;
+
+		// Hexen levels are automatically nointermission,
+		// no auto sound sequences, falling damage,
+		// monsters activate their own specials, and missiles
+		// are always the activators of impact lines.
+		levelinfo->flags |= LEVEL_NOINTERMISSION
+						 | LEVEL_SNDSEQTOTALCTRL
+						 | LEVEL_FALLDMG_HX
+						 | LEVEL_ACTOWNSPECIAL;
+		levelinfo->flags2|= LEVEL2_HEXENHACK
+						 | LEVEL2_INFINITE_FLIGHT
+						 | LEVEL2_MISSILESACTIVATEIMPACT
+						 | LEVEL2_MONSTERFALLINGDAMAGE;
+
+	}
+
+	uppercopy (levelinfo->mapname, mapname);
+	sc.MustGetString ();
+	if (sc.String[0] == '$')
+	{
+		// For consistency with other definitions allow $Stringtablename here, too.
+		levelinfo->flags |= LEVEL_LOOKUPLEVELNAME;
+		levelinfo->level_name = sc.String + 1;
+	}
+	else
+	{
+		if (sc.Compare ("lookup"))
+		{
+			sc.MustGetString ();
+			levelinfo->flags |= LEVEL_LOOKUPLEVELNAME;
+		}
+		levelinfo->level_name = sc.String;
+	}
+
+	// Set up levelnum now so that you can use Teleport_NewMap specials
+	// to teleport to maps with standard names without needing a levelnum.
+	levelinfo->levelnum = GetDefaultLevelNum(levelinfo->mapname);
+
+	return levelinfo;
 }
+
+//==========================================================================
+//
+// G_DoParseMapInfo
+// Parses a single MAPINFO lump
+// data for wadlevelinfos and wadclusterinfos.
+//
+//==========================================================================
+
+void FMapInfoParser::ParseMapInfo (int lump, level_info_t &gamedefaults)
+{
+	level_info_t defaultinfo;
+
+	sc.OpenLumpNum(lump);
+
+	defaultinfo = gamedefaults;
+	HexenHack = false;
+
+	while (sc.GetString ())
+	{
+		if (sc.Compare("gamedefaults"))
+		{
+			gamedefaults.Reset();
+			ParseMapInfoLower (sc, MapHandlers, MapInfoMapLevel, &gamedefaults, NULL, defaultinfo.flags, defaultinfo.flags2);
+			defaultinfo = gamedefaults;
+		}
+		else if (sc.Compare("defaultmap"))
+		{
+			defaultinfo = gamedefaults;
+			ParseMapInfoLower (sc, MapHandlers, MapInfoMapLevel, &defaultinfo, NULL, defaultinfo.flags, defaultinfo.flags2);
+		}
+		else if (sc.Compare("adddefaultmap"))
+		{
+			// Same as above but adds to the existing definitions instead of replacing them completely
+			ParseMapInfoLower (sc, MapHandlers, MapInfoMapLevel, &defaultinfo, NULL, defaultinfo.flags, defaultinfo.flags2);
+		}
+		else if (sc.Compare("map"))
+		{
+			level_info_t *levelinfo = ParseMapHeader(sc, defaultinfo);
+
+			ParseMapInfoLower (sc, MapHandlers, MapInfoMapLevel, levelinfo, NULL, 0,0);
+			// When the second sky is -NOFLAT-, make it a copy of the first sky
+			if (strcmp (levelinfo->skypic2, "-NOFLAT-") == 0)
+			{
+				strcpy (levelinfo->skypic2, levelinfo->skypic1);
+			}
+			SetLevelNum (levelinfo, levelinfo->levelnum);	// Wipe out matching levelnums from other maps.
+		}
+		else if (sc.Compare("clusterdef"))
+		{
+			sc.MustGetNumber ();
+			/*
+			int clusterindex = FindWadClusterInfo (sc.Number);
+			if (clusterindex == -1)
+			{
+				clusterindex = wadclusterinfos.Reserve(1);
+			}
+
+			cluster_info_t *clusterinfo = &wadclusterinfos[clusterindex];
+			clusterinfo.Reset();
+			clusterinfo->cluster = sc.Number;
+			ParseMapInfoLower (sc, ClusterHandlers, MapInfoClusterLevel, NULL, clusterinfo, 0, 0);
+			*/
+		}
+		else if (sc.Compare("episode"))
+		{
+			ParseEpisodeInfo(sc);
+		}
+		else if (sc.Compare("clearepisodes"))
+		{
+			ClearEpisodes();
+		}
+		else if (sc.Compare("skill"))
+		{
+			ParseSkill();
+		}
+		else if (sc.Compare("clearskills"))
+		{
+			AllSkills.Clear();
+		}
+	}
+}
+
+
+//==========================================================================
+//
+// G_ParseMapInfo
+// Parses the MAPINFO lumps of all loaded WADs and generates
+// data for wadlevelinfos and wadclusterinfos.
+//
+//==========================================================================
+
+void G_ParseMapInfo ()
+{
+	int lump, lastlump = 0;
+	level_info_t gamedefaults;
+
+	// Parse the default MAPINFO for the current game.
+	for(int i=0; i<2; i++)
+	{
+		if (gameinfo.mapinfo[i] != NULL)
+		{
+			FMapInfoParser parse;
+			parse.ParseMapInfo(Wads.GetNumForFullName(gameinfo.mapinfo[i]), gamedefaults);
+		}
+	}
+
+	// Parse any extra MAPINFOs.
+	while ((lump = Wads.FindLump ("MAPINFO", &lastlump)) != -1)
+	{
+		FMapInfoParser parse;
+		parse.ParseMapInfo(lump, gamedefaults);
+	}
+	EndSequences.ShrinkToFit ();
+
+	if (EpiDef.numitems == 0)
+	{
+		I_FatalError ("You cannot use clearepisodes in a MAPINFO if you do not define any new episodes after it.");
+	}
+	if (AllSkills.Size()==0)
+	{
+		I_FatalError ("You cannot use clearskills in a MAPINFO if you do not define any new skills after it.");
+	}
+}
+
+
+//==========================================================================
+//
+// Lists all currently defined maps
+//
+//==========================================================================
 
 CCMD(listmaps)
 {
@@ -3515,3 +3354,4 @@ CCMD(listmaps)
 		}
 	}
 }
+

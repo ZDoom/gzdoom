@@ -1124,7 +1124,7 @@ void G_PlayerFinishLevel (int player, EFinishLevelType mode, bool resetinventory
 		}
 	}
 
-	if (mode == FINISH_NoHub && !(level.flags & LEVEL_KEEPFULLINVENTORY))
+	if (mode == FINISH_NoHub && !(level.flags2 & LEVEL2_KEEPFULLINVENTORY))
 	{ // Reduce all owned (visible) inventory to 1 item each
 		for (item = p->mo->Inventory; item != NULL; item = item->Inventory)
 		{
@@ -1424,7 +1424,7 @@ static void G_QueueBody (AActor *body)
 //
 void G_DoReborn (int playernum, bool freshbot)
 {
-	if (!multiplayer && !(level.flags & LEVEL_ALLOWRESPAWN))
+	if (!multiplayer && !(level.flags2 & LEVEL2_ALLOWRESPAWN))
 	{
 		if (BackupSaveName.Len() > 0 && FileExists (BackupSaveName.GetChars()))
 		{ // Load game from the last point it was saved

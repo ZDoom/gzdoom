@@ -327,6 +327,8 @@ Actor Weapon : Inventory native
 
 ACTOR WeaponGiver : Weapon native
 {
+	Weapon.AmmoGive1 -1
+	Weapon.AmmoGive2 -1
 }
 
 Actor WeaponHolder : Inventory native

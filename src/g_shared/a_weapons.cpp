@@ -607,6 +607,8 @@ bool AWeaponGiver::TryPickup(AActor *&toucher)
 			if (weap != NULL)
 			{
 				weap->ItemFlags &= ~IF_ALWAYSPICKUP;	// use the flag of this item only.
+				if (weap->AmmoGive1 >= 0) weap->AmmoGive1 = AmmoGive1;
+				if (weap->AmmoGive2 >= 0) weap->AmmoGive2 = AmmoGive2;
 				bool res = weap->CallTryPickup(toucher);
 				if (!res) weap->Destroy();
 				else GoAwayAndDie();

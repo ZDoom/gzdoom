@@ -1,3 +1,6 @@
+January 11, 2009  (Changes by Graf Zahl)
+- Added option to specify the amount of ammo to be given by a WeaponGiver.
+
 January 10, 2009  (Changes by Graf Zahl)
 - fixed: Identification of Doom1 Freedoom IWAD did not work.
 - fixed: UDMF did not initialize a sector's light colors.

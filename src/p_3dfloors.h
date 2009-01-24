@@ -4,8 +4,6 @@
 
 //#define _3DFLOORS
 
-#ifdef _3DFLOORS
-
 // 3D floor flags. Most are the same as in Legacy but I added some for EDGE's and Vavoom's features as well.
 typedef enum
 {
@@ -38,6 +36,10 @@ typedef enum
   FF_FLOOD			   = 0x20000000, // extends towards the next lowest flooding or solid 3D floor or the bottom of the sector
   
 } ffloortype_e;
+
+
+
+#ifdef _3DFLOORS
 
 
 struct secplane_t;

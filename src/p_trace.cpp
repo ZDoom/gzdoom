@@ -290,6 +290,15 @@ bool FTraceInfo::TraceTraverse (int ptflags)
 				// This is the way Doom.exe did it and some WADs (e.g. Alien Vendetta MAP15 need it.
 				if (i_compatflags & COMPATF_TRACE && in->d.line->backsector == in->d.line->frontsector)
 				{
+					// We must check special activation here because the code below is never reached.
+					if (TraceFlags & TRACE_PCross)
+					{
+						P_ActivateLine (in->d.line, IgnoreThis, lineside, SPAC_PCross);
+					}
+					if (TraceFlags & TRACE_Impact)
+					{
+						P_ActivateLine (in->d.line, IgnoreThis, lineside, SPAC_Impact);
+					}
 					continue;
 				}
 			}

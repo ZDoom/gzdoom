@@ -1,3 +1,7 @@
+January 24, 2009  (Changes by Graf Zahl)
+- Fixed: With COMPAT_TRACE switched on linedef actions on lines having
+  the same sector on both sides were not triggered.
+
 January 18, 2009  (Changes by Graf Zahl)
 - Added a CopyInfo function to FTexture that contains all code required to 
   clone a texture. Used for creating warping textures.

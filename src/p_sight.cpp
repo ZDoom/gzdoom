@@ -76,6 +76,7 @@ public:
 
 		SeePastBlockEverything = flags & 6;
 		SeePastShootableLines = flags & 4;
+		myseethrough = FF_SEETHROUGH;
 	}
 };
 

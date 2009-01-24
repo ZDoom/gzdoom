@@ -1,4 +1,5 @@
 January 24, 2009  (Changes by Graf Zahl)
+- Fixed: The sight checking code didn't initialize the myseethrough variable.
 - Fixed: With COMPAT_TRACE switched on linedef actions on lines having
   the same sector on both sides were not triggered.
 

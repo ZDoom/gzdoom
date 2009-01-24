@@ -777,10 +777,64 @@ void JoinGame (int i)
 	doomcom.numplayers = doomcom.numnodes;
 }
 
+static int PrivateNetOf(in_addr in)
+{
+	int addr = ntohl(in.s_addr);
+		 if ((addr & 0xFFFF0000) == 0xC0A80000)		// 192.168.0.0
+	{
+		return 0xC0A80000;
+	}
+	else if ((addr & 0xFFF00000) == 0xAC100000)		// 172.16.0.0
+	{
+		return 0xAC100000;
+	}
+	else if ((addr & 0xFF000000) == 0x0A000000)		// 10.0.0.0
+	{
+		return 0x0A000000;
+	}
+	else if ((addr & 0xFF000000) == 0x7F000000)		// 127.0.0.0 (localhost)
+	{
+		return 0x7F000000;
+	}
+	// Not a private IP
+	return 0;
+}
+
+//
+// NodesOnSameNetwork
+//
+// The best I can really do here is check if the others are on the same
+// private network, since that means we (probably) are too.
+//
+
+static bool NodesOnSameNetwork()
+{
+	int net1;
+
+	net1 = PrivateNetOf(sendaddress[1].sin_addr);
+//	Printf("net1 = %08x\n", net1);
+	if (net1 == 0)
+	{
+		return false;
+	}
+	for (int i = 2; i < doomcom.numnodes; ++i)
+	{
+		int net = PrivateNetOf(sendaddress[i].sin_addr);
+//		Printf("Net[%d] = %08x\n", i, net);
+		if (net != net1)
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
 //
 // I_InitNetwork
 //
-void I_InitNetwork (void)
+// Returns true if packet server mode might be a good idea.
+//
+bool I_InitNetwork (void)
 {
 	int i;
 	char *v;
@@ -829,8 +883,14 @@ void I_InitNetwork (void)
 		doomcom.id = DOOMCOM_ID;
 		doomcom.numplayers = doomcom.numnodes = 1;
 		doomcom.consoleplayer = 0;
-		return;
+		return false;
 	}
+	if (doomcom.numnodes < 3)
+	{ // Packet server mode with only two players is effectively the same as
+	  // peer-to-peer but with some slightly larger packets.
+		return false;
+	}
+	return doomcom.numnodes > 3 || !NodesOnSameNetwork();
 }
 
 

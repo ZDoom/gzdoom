@@ -24,7 +24,7 @@
 #define __I_NET_H__
 
 // Called by D_DoomMain.
-void I_InitNetwork (void);
+bool I_InitNetwork (void);
 void I_NetCmd (void);
 
 #endif

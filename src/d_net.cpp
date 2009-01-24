@@ -1583,18 +1583,27 @@ void D_CheckNetGame (void)
 	}
 
 	// I_InitNetwork sets doomcom and netgame
-	I_InitNetwork ();
+	if (I_InitNetwork ())
+	{
+		NetMode = NET_PacketServer;
+	}
 	if (doomcom.id != DOOMCOM_ID)
+	{
 		I_FatalError ("Doomcom buffer invalid!");
-
+	}
 	players[0].settings_controller = true;
-	
+
 	consoleplayer = doomcom.consoleplayer;
 
 	v = Args->CheckValue ("-netmode");
 	if (v != NULL)
 	{
 		NetMode = atoi (v) != 0 ? NET_PacketServer : NET_PeerToPeer;
+	}
+	if (doomcom.numnodes > 1)
+	{
+		Printf ("Selected " TEXTCOLOR_BLUE "%s" TEXTCOLOR_NORMAL " networking mode. (%s)\n", NetMode == NET_PeerToPeer ? "peer to peer" : "packet server",
+			v != NULL ? "forced" : "auto");
 	}
 
 	// [RH] Setup user info

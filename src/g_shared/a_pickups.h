@@ -135,7 +135,7 @@ public:
 	int Amount;					// Amount of item this instance has
 	int MaxAmount;				// Max amount of item this instance can have
 	int RespawnTics;			// Tics from pickup time to respawn time
-	FTextureID Icon;					// Icon to show on status bar or HUD
+	FTextureID Icon;			// Icon to show on status bar or HUD
 	int DropTime;				// Countdown after dropping
 	const PClass *SpawnPointClass;	// For respawning like Heretic's mace
 

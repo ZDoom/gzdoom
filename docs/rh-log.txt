@@ -1,4 +1,7 @@
 January 24, 2009
+- Restored the rhythm section to fmopl.cpp and made some slight updates from
+  version 0.72 of MAME's fmopl.c. Also refactored CalcVoice so that the
+  original MAME structure is more visible.
 - Removed the SoundChans bitfield from AActor, since it seems there are race
   conditions I don't fully understand where it simply doesn't work.
 - Removed BaseTime initialization from sdl/i_system.cpp as per Chris's

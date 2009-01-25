@@ -184,6 +184,7 @@ struct OPLio {
 	virtual void	WriteDelay(int ticks);
 
 	uint OPLchannels;
+	void *chips[2];
 };
 
 struct DiskWriterIO : public OPLio

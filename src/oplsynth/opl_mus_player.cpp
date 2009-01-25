@@ -207,11 +207,8 @@ bool OPLmusicBlock::ServiceStream (void *buff, int numbytes)
 
 		if (samplesleft > 0)
 		{
-			YM3812UpdateOne (0, samples1, samplesleft);
-			if (TwoChips)
-			{
-				YM3812UpdateOne (1, samples1, samplesleft);
-			}
+			YM3812UpdateOne (io->chips[0], samples1, samplesleft);
+			YM3812UpdateOne (io->chips[1], samples1, samplesleft);
 			OffsetSamples(samples1, samplesleft);
 			assert(NextTickIn == ticky);
 			NextTickIn -= samplesleft;
@@ -230,11 +227,8 @@ bool OPLmusicBlock::ServiceStream (void *buff, int numbytes)
 				{
 					if (numsamples > 0)
 					{
-						YM3812UpdateOne (0, samples1, numsamples);
-						if (TwoChips)
-						{
-							YM3812UpdateOne (1, samples1, numsamples);
-						}
+						YM3812UpdateOne (io->chips[0], samples1, numsamples);
+						YM3812UpdateOne (io->chips[1], samples1, numsamples);
 						OffsetSamples(samples1, numsamples);
 					}
 					res = false;
@@ -448,10 +442,12 @@ int OPLmusicFile::PlayTick ()
 	return 0;
 }
 
+/*
 ADD_STAT (opl)
 {
 	return YM3812GetVoiceString ();
 }
+*/
 
 OPLmusicFile::OPLmusicFile(const OPLmusicFile *source, const char *filename)
 {

@@ -25,18 +25,18 @@ typedef void (*OPL_PORTHANDLER_W)(int param,unsigned char data);
 typedef unsigned char (*OPL_PORTHANDLER_R)(int param);
 
 
-int  YM3812Init(int num, int clock, int rate);
-void YM3812Shutdown(void);
-void YM3812ResetChip(int which);
-int  YM3812Write(int which, int a, int v);
-unsigned char YM3812Read(int which, int a);
-int  YM3812TimerOver(int which, int c);
-void YM3812UpdateOne(int which, float *buffer, int length);
+void *YM3812Init(int clock, int rate);
+void YM3812Shutdown(void *chip);
+void YM3812ResetChip(void *chip);
+int  YM3812Write(void *chip, int a, int v);
+unsigned char YM3812Read(void *chip, int a);
+int  YM3812TimerOver(void *chip, int c);
+void YM3812UpdateOne(void *chip, float *buffer, int length);
 
-void YM3812SetTimerHandler(int which, OPL_TIMERHANDLER TimerHandler, int channelOffset);
-void YM3812SetIRQHandler(int which, OPL_IRQHANDLER IRQHandler, int param);
-void YM3812SetUpdateHandler(int which, OPL_UPDATEHANDLER UpdateHandler, int param);
+void YM3812SetTimerHandler(void *chip, OPL_TIMERHANDLER TimerHandler, int channelOffset);
+void YM3812SetIRQHandler(void *chip, OPL_IRQHANDLER IRQHandler, int param);
+void YM3812SetUpdateHandler(void *chip, OPL_UPDATEHANDLER UpdateHandler, int param);
 
-FString YM3812GetVoiceString();
+FString YM3812GetVoiceString(void *chip);
 
 #endif

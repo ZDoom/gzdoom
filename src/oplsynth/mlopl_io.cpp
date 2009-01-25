@@ -58,8 +58,8 @@ void OPLio::WriteDelay(int ticks)
 
 void OPLio::OPLwriteReg(int which, uint reg, uchar data)
 {
-	YM3812Write (which, 0, reg);
-	YM3812Write (which, 1, data);
+	YM3812Write (chips[which], 0, reg);
+	YM3812Write (chips[which], 1, data);
 }
 
 /*
@@ -300,16 +300,28 @@ void OPLio::OPLshutup(void)
 */
 int OPLio::OPLinit(uint numchips)
 {
-	if (!YM3812Init (numchips, 3579545, int(OPL_SAMPLE_RATE)))
+	assert(numchips >= 1 && numchips <= 2);
+	chips[0] = YM3812Init (3579545, int(OPL_SAMPLE_RATE));
+	if (chips[0] != NULL)
 	{
-		OPLchannels = OPL2CHANNELS * numchips;
-		OPLwriteInitState();
-		return 0;
+		if (numchips > 1)
+		{
+			chips[1] = YM3812Init (3579545, int(OPL_SAMPLE_RATE));
+			if (chips[1] == NULL)
+			{
+				YM3812Shutdown(chips[0]);
+				chips[0] = NULL;
+				return -1;
+			}
+		}
 	}
 	else
 	{
 		return -1;
 	}
+	OPLchannels = OPL2CHANNELS * numchips;
+	OPLwriteInitState();
+	return 0;
 }
 
 void OPLio::OPLwriteInitState()
@@ -328,5 +340,8 @@ void OPLio::OPLwriteInitState()
 */
 void OPLio::OPLdeinit(void)
 {
-	YM3812Shutdown ();
+	YM3812Shutdown (chips[0]);
+	chips[0] = NULL;
+	YM3812Shutdown (chips[1]);
+	chips[1] = NULL;
 }

@@ -119,8 +119,6 @@ static int TicFrozen;
 unsigned int I_MSTime (void)
 {
 	unsigned int time = SDL_GetTicks ();
-	if (!BaseTime)
-		BaseTime = time;
 	return time - BaseTime;
 }
 
@@ -135,11 +133,7 @@ int I_GetTimePolled (bool saveMS)
 		return TicFrozen;
 	}
 
-	DWORD tm = SDL_GetTicks() + 1;	// Make sure this isn't 0.
-	if (BaseTime == 0)
-	{
-		BaseTime = tm;
-	}
+	DWORD tm = SDL_GetTicks();
 
 	if (saveMS)
 	{

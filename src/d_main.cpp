@@ -510,10 +510,50 @@ CVAR (Flag, sv_noautoaim,			dmflags2, DF2_NOAUTOAIM);
 
 int i_compatflags;	// internal compatflags composed from the compatflags CVAR and MAPINFO settings
 
+EXTERN_CVAR(Int, compatmode)
+
+static int GetCompatibility(int mask)
+{
+	if (level.info == NULL) return mask;
+	else return (mask & ~level.info->compatmask) | (level.info->compatflags & level.info->compatmask);
+}
+
 CUSTOM_CVAR (Int, compatflags, 0, CVAR_ARCHIVE|CVAR_SERVERINFO)
 {
-	if (level.info == NULL) i_compatflags = self;
-	else i_compatflags = (self & ~level.info->compatmask) | (level.info->compatflags & level.info->compatmask);
+	i_compatflags = GetCompatibility(self);
+}
+
+CUSTOM_CVAR(Int, compatmode, 0, CVAR_ARCHIVE|CVAR_SERVERINFO)
+{
+	int v;
+
+	switch (self)
+	{
+	default:
+	case 0:
+		v = 0;
+		break;
+
+	case 1:	// Doom2.exe compatible with a few relaxed settings
+		v = COMPATF_SHORTTEX|COMPATF_STAIRINDEX|COMPATF_USEBLOCKING|COMPATF_NODOORLIGHT|
+			COMPATF_TRACE|COMPATF_MISSILECLIP|COMPATF_SOUNDTARGET|COMPATF_DEHHEALTH|COMPATF_CROSSDROPOFF;
+		break;
+
+	case 2:	// same as 1 but stricter (NO_PASSMOBJ and INVISIBILITY are also set)
+		v = COMPATF_SHORTTEX|COMPATF_STAIRINDEX|COMPATF_USEBLOCKING|COMPATF_NODOORLIGHT|
+			COMPATF_TRACE|COMPATF_MISSILECLIP|COMPATF_SOUNDTARGET|COMPATF_NO_PASSMOBJ|COMPATF_LIMITPAIN|
+			COMPATF_DEHHEALTH|COMPATF_INVISIBILITY;
+		break;
+
+	case 3:
+		v = COMPATF_TRACE|COMPATF_SOUNDTARGET|COMPATF_BOOMSCROLL;
+		break;
+
+	case 4:
+		v = COMPATF_SOUNDTARGET;
+		break;
+	}
+	compatflags = v;
 }
 
 CVAR (Flag, compat_shortTex,	compatflags, COMPATF_SHORTTEX);
@@ -536,6 +576,7 @@ CVAR (Flag, compat_invisibility,compatflags, COMPATF_INVISIBILITY);
 CVAR (Flag, compat_silentinstantfloors,compatflags, COMPATF_SILENT_INSTANT_FLOORS);
 CVAR (Flag, compat_sectorsounds,compatflags, COMPATF_SECTORSOUNDS);
 CVAR (Flag, compat_missileclip,	compatflags, COMPATF_MISSILECLIP);
+CVAR (Flag, compat_crossdropoff,compatflags, COMPATF_CROSSDROPOFF);
 
 //==========================================================================
 //

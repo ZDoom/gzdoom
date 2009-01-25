@@ -86,6 +86,7 @@
 EXTERN_CVAR(Bool, nomonsterinterpolation)
 EXTERN_CVAR(Int, showendoom)
 EXTERN_CVAR(Bool, hud_althud)
+EXTERN_CVAR(Int, compatmode)
 //
 // defaulted values
 //
@@ -138,6 +139,14 @@ value_t OnOff[2] = {
 value_t OffOn[2] = {
 	{ 0.0, "On" },
 	{ 1.0, "Off" }
+};
+
+value_t CompatModes[5] = {
+	{ 0.0, "Default" },
+	{ 1.0, "Doom" },
+	{ 2.0, "Doom (strict)" },
+	{ 3.0, "Boom" },
+	{ 4.0, "ZDoom 2.0.63" }
 };
 
 menu_t  *CurrentMenu;
@@ -1092,6 +1101,8 @@ static menu_t DMFlagsMenu =
  *=======================================*/
 
 static menuitem_t CompatibilityItems[] = {
+	{ discrete, "Compatibility mode",						{&compatmode},	{5.0}, {0.0},	{0.0}, {CompatModes} },
+	{ redtext,	" ",					{NULL},			{0.0}, {0.0}, {0.0}, {NULL} },
 	{ bitflag,	"Find shortest textures like Doom",			{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_SHORTTEX} },
 	{ bitflag,	"Use buggier stair building",				{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_STAIRINDEX} },
 	{ bitflag,	"Limit Pain Elementals' Lost Souls",		{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_LIMITPAIN} },
@@ -1107,6 +1118,7 @@ static menuitem_t CompatibilityItems[] = {
 	{ bitflag,	"DEH health settings like Doom2.exe",		{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_DEHHEALTH} },
 	{ bitflag,	"Self ref. sectors don't block shots",		{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_TRACE} },
 	{ bitflag,	"Monsters get stuck over dropoffs",			{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_DROPOFF} },
+	{ bitflag,	"Monsters cannot cross dropoffs",			{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_CROSSDROPOFF} },
 	{ bitflag,	"Monsters see invisible players",			{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_INVISIBILITY} },
 	{ bitflag,	"Boom scrollers are additive",				{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_BOOMSCROLL} },
 	{ bitflag,	"Inst. moving floors are not silent",		{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_SILENT_INSTANT_FLOORS} },

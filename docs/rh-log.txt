@@ -1,3 +1,8 @@
+January 25, 2009  (Changes by Graf Zahl)
+- fixed: AFastProjectile::Tick must call Effect only 8 times per tic, regardless
+  of the amount of steps taken.
+- fixed: momentum checks in AFastProjectile did not use absolute values.
+
 January 24, 2009
 - Restored the rhythm section to fmopl.cpp and made some slight updates from
   version 0.72 of MAME's fmopl.c. Also refactored CalcVoice so that the

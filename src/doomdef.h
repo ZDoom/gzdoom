@@ -279,6 +279,7 @@ enum
 	COMPATF_SILENT_INSTANT_FLOORS = 1<<17,	// Instantly moving floors are not silent
 	COMPATF_SECTORSOUNDS	= 1 << 18,	// Sector sounds use original method for sound origin.
 	COMPATF_MISSILECLIP		= 1 << 19,	// Use original Doom heights for clipping against projectiles
+	COMPATF_CROSSDROPOFF	= 1 << 20,	// monsters can't be pushed over dropoffs
 };
 
 // phares 3/20/98:

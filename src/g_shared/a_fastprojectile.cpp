@@ -33,7 +33,7 @@ void AFastProjectile::Tick ()
 	int count = 8;
 	if (radius > 0)
 	{
-		while ( ((momx >> shift) > radius) || ((momy >> shift) > radius))
+		while ( ((abs(momx) >> shift) > radius) || ((abs(momy) >> shift) > radius))
 		{
 			// we need to take smaller steps.
 			shift++;
@@ -56,8 +56,8 @@ void AFastProjectile::Tick ()
 				if (--ripcount <= 0)
 				{
 					tm.LastRipped = NULL;	// [RH] Do rip damage each step, like Hexen
-					ripcount = count >> 3;
 				}
+				
 				if (!P_TryMove (this, x + xfrac,y + yfrac, true, false, tm))
 				{ // Blocked move
 					P_ExplodeMissile (this, BlockingLine, BlockingMobj);
@@ -78,7 +78,11 @@ void AFastProjectile::Tick ()
 				P_ExplodeMissile (this, NULL, NULL);
 				return;
 			}
-			if (changexy) Effect();
+			if (changexy && ripcount <= 0) 
+			{
+				ripcount = count >> 3;
+				Effect();
+			}
 		}
 	}
 	// Advance the state

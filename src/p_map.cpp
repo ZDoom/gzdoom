@@ -160,6 +160,45 @@ static bool PIT_FindFloorCeiling (line_t *ld, const FBoundingBox &box, FCheckPos
 	return true;
 }
 
+
+void P_GetFloorCeilingZ(FCheckPosition &tmf)
+{
+	sector_t *sec = P_PointInSector (tmf.x, tmf.y);
+	tmf.floorsector = sec;
+	tmf.ceilingsector = sec;
+
+	tmf.floorz = tmf.dropoffz = sec->floorplane.ZatPoint (tmf.x, tmf.y);
+	tmf.ceilingz = sec->ceilingplane.ZatPoint (tmf.x, tmf.y);
+	tmf.floorpic = sec->GetTexture(sector_t::floor);
+	tmf.ceilingpic = sec->GetTexture(sector_t::ceiling);
+
+#ifdef _3DFLOORS
+	for(unsigned int i=0;i<sec->e->XFloor.ffloors.Size();i++)
+	{
+		F3DFloor*  rover = sec->e->XFloor.ffloors[i];
+
+		if (!(rover->flags & FF_SOLID) || !(rover->flags & FF_EXISTS)) continue;
+
+		fixed_t ff_bottom = rover->bottom.plane->ZatPoint(tmf.x, tmf.y);
+		fixed_t ff_top = rover->top.plane->ZatPoint(tmf.x, tmf.y);
+
+		if (ff_top > tmf.floorz)
+		{
+			if (ff_top < tmf.z || (tmf.thing != NULL && ff_bottom < tmf.z && ff_top < tmf.z + tmf.thing->MaxStepHeight))  
+			{
+				tmf.dropoffz = tmf.floorz = ff_top;
+				tmf.floorpic = *rover->top.texture;
+			}
+		}
+		if (ff_bottom < tmf.ceilingz && ff_bottom > tmf.z + tmf.thing->height) 
+		{
+			tmf.ceilingz = ff_bottom;
+			tmf.ceilingpic = *rover->bottom.texture;
+		}
+	}
+#endif
+}
+
 //==========================================================================
 //
 // P_FindFloorCeiling
@@ -168,22 +207,24 @@ static bool PIT_FindFloorCeiling (line_t *ld, const FBoundingBox &box, FCheckPos
 
 void P_FindFloorCeiling (AActor *actor, bool onlyspawnpos)
 {
-	sector_t *sec;
 	FCheckPosition tmf;
 
+	tmf.thing = actor;
 	tmf.x = actor->x;
 	tmf.y = actor->y;
+	tmf.z = actor->z;
+	P_GetFloorCeilingZ(tmf);
+
+	actor->floorz = tmf.floorz;
+	actor->dropoffz = tmf.dropoffz;
+	actor->ceilingz = tmf.ceilingz;
+	actor->floorpic = tmf.floorpic;
+	actor->floorsector = tmf.floorsector;
+	actor->ceilingpic = tmf.ceilingpic;
+	actor->ceilingsector = tmf.ceilingsector;
 
 	FBoundingBox box(tmf.x, tmf.y, actor->radius);
 
-	sec = P_PointInSector (tmf.x, tmf.y);
-	tmf.thing = actor;
-	tmf.floorz = tmf.dropoffz = sec->floorplane.ZatPoint (tmf.x, tmf.y);
-	tmf.ceilingz = sec->ceilingplane.ZatPoint (tmf.x, tmf.y);
-	tmf.floorpic = sec->GetTexture(sector_t::floor);
-	tmf.floorsector = sec;
-	tmf.ceilingpic = sec->GetTexture(sector_t::ceiling);
-	tmf.ceilingsector = sec;
 	tmf.touchmidtex = false;
 	validcount++;
 
@@ -207,25 +248,6 @@ void P_FindFloorCeiling (AActor *actor, bool onlyspawnpos)
 		actor->ceilingpic = tmf.ceilingpic;
 		actor->ceilingsector = tmf.ceilingsector;
 	}
-
-#ifdef _3DFLOORS
-	// also check 3D floors at the spawn position if the result from the block lines iterator cannot be used.
-	if (onlyspawnpos)
-	{
-		for(unsigned int i=0;i<actor->Sector->e->XFloor.ffloors.Size();i++)
-		{
-			F3DFloor*  rover=actor->Sector->e->XFloor.ffloors[i];
-
-			if (!(rover->flags & FF_SOLID) || !(rover->flags & FF_EXISTS)) continue;
-
-			fixed_t ff_bottom=rover->bottom.plane->ZatPoint(actor->x, actor->y);
-			fixed_t ff_top=rover->top.plane->ZatPoint(actor->x, actor->y);
-
-			if (ff_top > actor->floorz && ff_top < actor->z) actor->floorz = ff_top;
-			if (ff_bottom < actor->ceilingz && ff_bottom > actor->z + actor->height) actor->ceilingz = ff_bottom;
-		}
-	}
-#endif
 }
 
 //
@@ -244,11 +266,9 @@ void P_FindFloorCeiling (AActor *actor, bool onlyspawnpos)
 bool P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefrag)
 {
 	FCheckPosition tmf;
-	sector_t*		newsec;
 	
 	// kill anything occupying the position
 		
-	newsec = P_PointInSector (x,y);
 	
 	// The base floor/ceiling is from the subsector that contains the point.
 	// Any contacted lines the step closer together will adjust them.
@@ -256,12 +276,7 @@ bool P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefr
 	tmf.x = x;
 	tmf.y = y;
 	tmf.z = z;
-	tmf.floorz = tmf.dropoffz = newsec->floorplane.ZatPoint (x, y);
-	tmf.ceilingz = newsec->ceilingplane.ZatPoint (x, y);
-	tmf.floorpic = newsec->GetTexture(sector_t::floor);
-	tmf.floorsector = newsec;
-	tmf.ceilingpic = newsec->GetTexture(sector_t::ceiling);
-	tmf.ceilingsector = newsec;
+	P_GetFloorCeilingZ(tmf);
 					
 	spechit.Clear ();
 
@@ -1538,6 +1553,13 @@ bool P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 					goto pushline;
 				}
 			}
+		}
+
+		// compatibility check: Doom originally did not allow monsters to cross dropoffs at all.
+		// If the compatibility flag is on, only allow this when the momentum comes from a scroller
+		if ((i_compatflags & COMPATF_CROSSDROPOFF) && !(thing->flags4 & MF4_SCROLLMOVE))
+		{
+			dropoff = false;
 		}
 
 		// killough 3/15/98: Allow certain objects to drop off

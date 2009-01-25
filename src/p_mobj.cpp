@@ -1396,15 +1396,18 @@ void P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 	// because BOOM relied on the speed being fast enough to accumulate
 	// despite friction. If the speed is too low, then its movement will get
 	// cancelled, and it won't accumulate to the desired speed.
+	mo->flags4 &= ~MF4_SCROLLMOVE;
 	if (abs(scrollx) > CARRYSTOPSPEED)
 	{
 		scrollx = FixedMul (scrollx, CARRYFACTOR);
 		mo->momx += scrollx;
+		mo->flags4 |= MF4_SCROLLMOVE;
 	}
 	if (abs(scrolly) > CARRYSTOPSPEED)
 	{
 		scrolly = FixedMul (scrolly, CARRYFACTOR);
 		mo->momy += scrolly;
+		mo->flags4 |= MF4_SCROLLMOVE;
 	}
 	xmove += scrollx;
 	ymove += scrolly;
@@ -1781,6 +1784,7 @@ explode:
 		}
 
 		mo->momx = mo->momy = 0;
+		mo->flags4 &= ~MF4_SCROLLMOVE;
 
 		// killough 10/98: kill any bobbing momentum too (except in voodoo dolls)
 		if (player && player->mo == mo)
@@ -3235,14 +3239,20 @@ AActor *AActor::StaticSpawn (const PClass *type, fixed_t ix, fixed_t iy, fixed_t
 
 	if (SpawningMapThing || !type->IsDescendantOf (RUNTIME_CLASS(APlayerPawn)))
 	{
-		actor->floorsector = actor->Sector;
-		actor->floorpic = actor->floorsector->GetTexture(sector_t::floor);
-		actor->ceilingsector = actor->Sector;
-		actor->ceilingpic = actor->ceilingsector->GetTexture(sector_t::ceiling);
 		// Check if there's something solid to stand on between the current position and the
 		// current sector's floor. For map spawns this must be delayed until after setting the
 		// z-coordinate.
-		if (!SpawningMapThing) P_FindFloorCeiling(actor, true);
+		if (!SpawningMapThing) 
+		{
+			P_FindFloorCeiling(actor, true);
+		}
+		else
+		{
+			actor->floorsector = actor->Sector;
+			actor->floorpic = actor->floorsector->GetTexture(sector_t::floor);
+			actor->ceilingsector = actor->Sector;
+			actor->ceilingpic = actor->ceilingsector->GetTexture(sector_t::ceiling);
+		}
 	}
 	else if (!(actor->flags5 & MF5_NOINTERACTION))
 	{

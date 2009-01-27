@@ -59,34 +59,6 @@ class FScanner;
 #define GCC_ZSEG __attribute__((section(ZREG_SECTION)))
 #endif
 
-#define DEFINE_MAP_OPTION(name, old) \
-	static void MapOptHandler_##name(FScanner &sc, level_info_t *levelinfo); \
-	static FMapOptInfo MapOpt_##name = \
-		{ #name, MapOptHandler_##name, old }; \
-	MSVC_YSEG FMapOptInfo *mapopt_##name GCC_YSEG = &MapOpt_##name; \
-	static void MapOptHandler_##name(FScanner &sc, level_info_t *levelinfo)
-
-#define DEFINE_CLUSTER_OPTION(name, old) \
-	static void MapOptHandler_##name(FScanner &sc, cluster_info_t *clusterinfo); \
-	static FClusterOptInfo ClusterOpt_##name = \
-		{ #name, ClusterOptHandler_##name, old }; \
-	MSVC_ZSEG FClusterOptInfo *clusteropt_##name GCC_ZSEG = &ClusterOpt_##name; \
-	static void ClusterOptHandler_##name(FScanner &sc, cluster_info_t *clusterinfo)
-
-
-struct FMapOptInfo
-{
-	const char *name;
-	void (*handler) (FScanner &sc, level_info_t *levelinfo);
-	bool old;
-};
-
-struct FClusterOptInfo
-{
-	const char *name;
-	void (*handler) (FScanner &sc, cluster_info_t *levelinfo);
-	bool old;
-};
 
 struct FMapInfoParser
 {
@@ -106,6 +78,10 @@ struct FMapInfoParser
 		format_type = FMT_Unknown;
 	}
 
+	void ParseNextMap(char *mapname);
+	void ParseLumpOrTextureName(char *name);
+	level_info_t *ParseMapHeader(level_info_t &defaultinfo);
+	void ParseMapDefinition(level_info_t &leveldef);
 	void ParseEpisodeInfo ();
 	void ParseSkill ();
 	void ParseMapInfo (int lump, level_info_t &gamedefaults);
@@ -144,25 +120,59 @@ struct FMapInfoParser
 		}
 	}
 
+	bool CheckOpenParen()
+	{
+		if (format_type == FMT_New) return sc.CheckString("=");
+		else return false;	// force explicit handling
+	}
+
 	void ParseOpenParen()
 	{
-		if (format_type == FMT_New) sc.MustGetStringName("(");
+		if (format_type == FMT_New) sc.MustGetStringName("=");
 	}
 
 	void MustParseOpenParen()
 	{
-		if (format_type == FMT_New) sc.MustGetStringName("(");
+		if (format_type == FMT_New) sc.MustGetStringName("=");
 		else sc.ScriptError(NULL);
 	}
 
 	void ParseCloseParen()
 	{
-		if (format_type == FMT_New) sc.MustGetStringName(")");
+		//if (format_type == FMT_New) sc.MustGetStringName(")");
 	}
 
 	void ParseComma()
 	{
 		if (format_type == FMT_New) sc.MustGetStringName(",");
+	}
+
+	bool CheckNumber()
+	{
+		if (format_type == FMT_New) 
+		{
+			if (sc.CheckString(","))
+			{
+				sc.MustGetNumber();
+				return true;
+			}
+			return false;
+		}
+		else return sc.CheckNumber();
+	}
+
+	bool CheckFloat()
+	{
+		if (format_type == FMT_New) 
+		{
+			if (sc.CheckString(","))
+			{
+				sc.MustGetFloat();
+				return true;
+			}
+			return false;
+		}
+		else return sc.CheckFloat();
 	}
 
 	// skips an entire parameter list that's enclosed in parentheses.
@@ -174,6 +184,35 @@ struct FMapInfoParser
 			sc.MustGetStringName("(");
 		}
 	}
+};
+
+#define DEFINE_MAP_OPTION(name, old) \
+	static void MapOptHandler_##name(FMapInfoParser &parse, level_info_t *info); \
+	static FMapOptInfo MapOpt_##name = \
+		{ #name, MapOptHandler_##name, old }; \
+	MSVC_YSEG FMapOptInfo *mapopt_##name GCC_YSEG = &MapOpt_##name; \
+	static void MapOptHandler_##name(FMapInfoParser &parse, level_info_t *info)
+
+#define DEFINE_CLUSTER_OPTION(name, old) \
+	static void MapOptHandler_##name(FScanner &sc, cluster_info_t *info); \
+	static FClusterOptInfo ClusterOpt_##name = \
+		{ #name, ClusterOptHandler_##name, old }; \
+	MSVC_ZSEG FClusterOptInfo *clusteropt_##name GCC_ZSEG = &ClusterOpt_##name; \
+	static void ClusterOptHandler_##name(FScanner &sc, cluster_info_t *info)
+
+
+struct FMapOptInfo
+{
+	const char *name;
+	void (*handler) (FMapInfoParser &parse, level_info_t *levelinfo);
+	bool old;
+};
+
+struct FClusterOptInfo
+{
+	const char *name;
+	void (*handler) (FScanner &sc, cluster_info_t *levelinfo);
+	bool old;
 };
 
 
@@ -273,7 +312,6 @@ struct FSpecialAction
 	FName Type;					// this is initialized before the actors...
 	BYTE Action;
 	int Args[5];				// must allow 16 bit tags for 666 & 667!
-	FSpecialAction *Next;
 };
 
 class FCompressedMemFile;
@@ -307,8 +345,8 @@ struct level_info_t
 	int			sucktime;
 	DWORD		flags;
 	DWORD		flags2;
-	char		*music;
-	char		*level_name;
+	FString		Music;
+	FString		LevelName;
 	char		fadetable[9];
 	SBYTE		WallVertLight, WallHorizLight;
 	char		f1[9];
@@ -330,27 +368,25 @@ struct level_info_t
 	int			airsupply;
 	DWORD		compatflags;
 	DWORD		compatmask;
-	char		*translator;	// for converting Doom-format linedef and sector types.
+	FString		Translator;	// for converting Doom-format linedef and sector types.
 
 	// Redirection: If any player is carrying the specified item, then
 	// you go to the RedirectMap instead of this one.
 	FName		RedirectType;
 	char		RedirectMap[9];
 
-	char		*enterpic;
-	char		*exitpic;
-	char 		*intermusic;
+	FString		EnterPic;
+	FString		ExitPic;
+	FString 	InterMusic;
 	int			intermusicorder;
 
-	char		*soundinfo;
-	char		*sndseq;
+	FString		SoundInfo;
+	FString		SndSeq;
 	char		bordertexture[9];
 
 	float		teamdamage;
 
-	FSpecialAction * specialactions;
-	FOptionalMapinfoData *opdata;
-
+	TArray<FSpecialAction> specialactions;
 
 	level_info_t() { Reset(); }
 	void Reset();
@@ -380,7 +416,7 @@ struct FLevelLocals
 	int			clusterflags;
 	int			levelnum;
 	int			lumpnum;
-	char		level_name[64];			// the descriptive name (Outer Base, etc)
+	char		level_name[64];
 	char		mapname[256];			// the server name (base1, etc)
 	char		nextmap[9];				// go here when fraglimit is hit
 	char		secretmap[9];			// map to go to when used secret exit
@@ -391,7 +427,7 @@ struct FLevelLocals
 	DWORD		fadeto;					// The color the palette fades to (usually black)
 	DWORD		outsidefog;				// The fog for sectors with sky ceilings
 
-	char		*music;
+	FString		Music;
 	int			musicorder;
 	int			cdtrack;
 	unsigned int cdid;

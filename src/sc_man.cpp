@@ -752,16 +752,21 @@ void FScanner::UnGet ()
 //
 //==========================================================================
 
-int FScanner::MatchString (const char **strings)
+int FScanner::MatchString (const char **strings, size_t stride)
 {
 	int i;
 
+	assert(stride % sizeof(const char*) == 0);
+
+	stride /= sizeof(const char*);
+
 	for (i = 0; *strings != NULL; i++)
 	{
-		if (Compare (*strings++))
+		if (Compare (*strings))
 		{
 			return i;
 		}
+		strings += stride;
 	}
 	return -1;
 }
@@ -772,11 +777,11 @@ int FScanner::MatchString (const char **strings)
 //
 //==========================================================================
 
-int FScanner::MustMatchString (const char **strings)
+int FScanner::MustMatchString (const char **strings, size_t stride)
 {
 	int i;
 
-	i = MatchString (strings);
+	i = MatchString (strings, stride);
 	if (i == -1)
 	{
 		ScriptError (NULL);

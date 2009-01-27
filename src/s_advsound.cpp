@@ -1073,7 +1073,7 @@ static void S_AddSNDINFO (int lump)
 				sc.MustGetString ();
 				if (info->mapname[0] && (!(info->flags2 & LEVEL2_MUSICDEFINED)))
 				{
-					ReplaceString (&info->music, sc.String);
+					info->Music = sc.String;
 				}
 				}
 				break;

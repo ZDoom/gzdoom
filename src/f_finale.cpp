@@ -1062,7 +1062,7 @@ void F_AdvanceSlideshow ()
 	{
 	case -99:
 		if (level.cdtrack == 0 || !S_ChangeCDMusic (level.cdtrack, level.cdid))
-			S_ChangeMusic (level.music, level.musicorder);
+			S_ChangeMusic (level.Music, level.musicorder);
 		gamestate = GS_LEVEL;
 		wipegamestate = GS_LEVEL;
 		P_ResumeConversation ();

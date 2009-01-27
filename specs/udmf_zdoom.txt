@@ -159,13 +159,13 @@ Note: All <bool> fields default to false unless mentioned otherwise.
    
    thing
    {
-      skill[n] = <bool>			// Unlike the base spec, n can range from 1-8.
+      skill#= <bool>			// Unlike the base spec, # can range from 1-8.
                                 // 8 is the maximum amount of skills the skill 
                                 // menu can display.
-      class[n] = <bool>			// Unlike the base spec, n can range from 1-8.
+      class# = <bool>			// Unlike the base spec, # can range from 1-8.
                                 // 8 is the maximum amount of classes the class
                                 // menu can display.
-   }
+								
   
 
 *** Special notes for map format conversions:
@@ -223,6 +223,10 @@ Added smooth lighting option to linedefs
 Added NoRespawn sector flag
 Fixed lightfloor and lightceiling properties for sectors. They are of type 
 integer, not float
+
+1.4 27.01.2009
+Changed description of class and skill thing flags to avoid the impression that
+this uses array syntax. No functional changes
 
 
 ===============================================================================

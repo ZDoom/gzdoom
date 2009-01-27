@@ -1,10 +1,11 @@
 /* 
 
 This file is based on fmopl.c from MAME 0.95. The non-YM3816 parts have been
-ripped out in the interest of trying to make this a bit faster, since Doom
-music doesn't need them. I also made it render the sound a voice at a time
-instead of a sample at a time, so unused voices don't waste time being
-calculated.
+ripped out in the interest of making this simpler, since Doom music doesn't
+need them. I also made it render the sound a voice at a time instead of a
+sample at a time, so unused voices don't waste time being calculated. If all
+voices are playing, it's not much difference, but it does offer a big
+improvement when only a few voices are playing.
 
 Here is the appropriate section from mame.txt:
 
@@ -1919,41 +1920,32 @@ void YM3812UpdateOne(void *chip, float *buffer, int length)
 	UINT32 eg_timer_bak = OPL->eg_timer;
 	UINT32 eg_cnt_bak = OPL->eg_cnt;
 
-	UINT32 noise_p_bak = OPL->noise_p;
-	UINT32 noise_rng_bak = OPL->noise_rng;
-
 	UINT32 lfo_am_cnt_out = lfo_am_cnt_bak;
 	UINT32 eg_timer_out = eg_timer_bak;
 	UINT32 eg_cnt_out = eg_cnt_bak;
-
-	UINT32 noise_p_out = noise_p_bak;
-	UINT32 noise_rng_out = noise_rng_bak;
 
 	for (i = 0; i <= (rhythm ? 5 : 8); ++i)
 	{
 		OPL->lfo_am_cnt = lfo_am_cnt_bak;
 		OPL->eg_timer = eg_timer_bak;
 		OPL->eg_cnt = eg_cnt_bak;
-		OPL->noise_p = noise_p_bak;
-		OPL->noise_rng = noise_rng_bak;
 		if (CalcVoice (OPL, i, buffer, length))
 		{
 			lfo_am_cnt_out = OPL->lfo_am_cnt;
 			eg_timer_out = OPL->eg_timer;
 			eg_cnt_out = OPL->eg_cnt;
-			noise_p_out = OPL->noise_p;
-			noise_rng_out = OPL->noise_rng;
 		}
 	}
 
 	OPL->lfo_am_cnt = lfo_am_cnt_out;
 	OPL->eg_timer = eg_timer_out;
 	OPL->eg_cnt = eg_cnt_out;
-	OPL->noise_p = noise_p_out;
-	OPL->noise_rng = noise_rng_out;
 
 	if (rhythm)		/* Rhythm part */
 	{
+		OPL->lfo_am_cnt = lfo_am_cnt_bak;
+		OPL->eg_timer = eg_timer_bak;
+		OPL->eg_cnt = eg_cnt_bak;
 		CalcRhythm (OPL, buffer, length);
 	}
 }
@@ -1979,7 +1971,6 @@ static bool CalcVoice (FM_OPL *OPL, int voice, float *buffer, int length)
 		OPL_CALC_CH(CH, buffer + i);
 
 		advance(OPL, voice, voice);
-		advance_noise(OPL);
 	}
 	return true;
 }

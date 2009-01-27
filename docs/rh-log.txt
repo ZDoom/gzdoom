@@ -1,3 +1,8 @@
+January 26, 2009
+- Fixed: Some OPL state needs to be restored before calculating rhythm. Also,
+  since only the rhythm section uses the RNG, it doesn't need to be advanced
+  for the normal voice processing.
+
 January 25, 2009  (Changes by Graf Zahl)
 - fixed: AFastProjectile::Tick must call Effect only 8 times per tic, regardless
   of the amount of steps taken.

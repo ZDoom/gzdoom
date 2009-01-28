@@ -482,7 +482,7 @@ CCMD (error)
 	if (argv.argc() > 1)
 	{
 		char *textcopy = copystring (argv[1]);
-		I_Error (textcopy);
+		I_Error ("%s", textcopy);
 	}
 	else
 	{
@@ -495,7 +495,7 @@ CCMD (error_fatal)
 	if (argv.argc() > 1)
 	{
 		char *textcopy = copystring (argv[1]);
-		I_FatalError (textcopy);
+		I_FatalError ("%s", textcopy);
 	}
 	else
 	{

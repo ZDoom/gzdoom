@@ -124,7 +124,7 @@ public:
 	void Copy(int dest, int src, int cnt);
 	int ResolveAll();
 	FxExpression *Get(int no);
-	int Size() { return expressions.Size(); }
+	unsigned int Size() { return expressions.Size(); }
 };
 
 extern FStateExpressions StateParams;

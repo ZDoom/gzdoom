@@ -16,6 +16,34 @@ if( CMAKE_SIZEOF_VOID_P MATCHES "8" )
 	set( X64 64 )
 endif( CMAKE_SIZEOF_VOID_P MATCHES "8" )
 
+# You can either use "make install" on the FMOD distribution to put it
+# in standard system locations, or you can unpack the FMOD distribution
+# in the root of the zdoom tree. e.g.:
+# zdoom
+#   docs
+#   fmodapi<version>linux[64] -or simply- fmod
+#   jpeg-6b
+#   ...
+
+# Construct version numbers for searching for the FMOD library on Linux.
+set( MINOR_VERSIONS "50" "49" "48" "47" "46" "45" "44" "43" "42" "41"
+	"40" "39" "38" "37" "36" "35" "34" "33" "32" "31" "30" "29" "28"
+	"27" "26" "25" "24" "23" "22" "21" "20" "21" "19" "18" "17" "16"
+	"15" "14" "13" "12" "11" "10" "09" "08" "07" "06" "05" "04" "03"
+	"02" "01" "00" )
+set( MAJOR_VERSIONS "22" "20" )
+set( FMOD_DIR_VERSIONS ${FMOD_DIR_VERSIONS} "../fmod" )
+foreach( majver ${MAJOR_VERSIONS} )
+	foreach( minver ${MINOR_VERSIONS} )
+		set( FMOD_VERSIONS ${FMOD_VERSIONS} "fmodex${X64}-4.${majver}.${minver}" )
+		set( FMOD_DIR_VERSIONS ${FMOD_DIR_VERSIONS} "${CMAKE_HOME_DIRECTORY}/fmodapi4${majver}${minver}linux${X64}" )
+	endforeach( minver ${MINOR_VERSIONS} )
+	foreach( dir ${FMOD_DIR_VERSIONS} )
+		set( FMOD_LOCAL_INC_DIRS ${FMOD_LOCAL_INC_DIRS} "${dir}/api/inc" )
+		set( FMOD_LOCAL_LIB_DIRS ${FMOD_LOCAL_LIB_DIRS} "${dir}/api/lib" )
+	endforeach( dir ${FMOD_DIR_VERSIONS} )
+endforeach( majver ${MAJER_VERSIONS} )
+
 if( WIN32 )
 	if( X64 )
 		set( WIN_TYPE Win64 )
@@ -94,7 +122,7 @@ else( WIN32 )
 		/opt/include )
 	set( FMOD_INC_PATH_SUFFIXES PATH_SUFFIXES fmodex )
 	set( NASM_NAMES nasm )
-	
+
 	# Non-Windows version also needs SDL
 	find_package( SDL )
 	if( NOT SDL_FOUND )
@@ -142,9 +170,16 @@ endif( NOT FMOD_LIB_NAME )
 
 # Search for FMOD include files
 
-find_path( FMOD_INCLUDE_DIR fmod.hpp
-	PATHS ${FMOD_SEARCH_PATHS}
-	${FMOD_INC_PATH_SUFFIXES} )
+if( NOT WIN32 )
+	find_path( FMOD_INCLUDE_DIR fmod.hpp
+		PATHS ${FMOD_LOCAL_INC_DIRS} )
+endif( NOT WIN32 )
+
+if( NOT FMOD_INCLUDE_DIR )
+	find_path( FMOD_INCLUDE_DIR fmod.hpp
+		PATHS ${FMOD_SEARCH_PATHS}
+		${FMOD_INC_PATH_SUFFIXES} )
+endif( NOT FMOD_INCLUDE_DIR )
 
 if( FMOD_INCLUDE_DIR )
 	message( STATUS "FMOD include files found at ${FMOD_INCLUDE_DIR}" )
@@ -155,9 +190,15 @@ endif( FMOD_INCLUDE_DIR )
 
 # Search for FMOD library
 
-find_library( FMOD_LIBRARY ${FMOD_LIB_NAME}
-	PATHS ${FMOD_SEARCH_PATHS}
-	${FMOD_LIB_PATH_SUFFIXES} )
+if( WIN32 )
+	find_library( FMOD_LIBRARY ${FMOD_LIB_NAME}
+		PATHS ${FMOD_SEARCH_PATHS}
+		${FMOD_LIB_PATH_SUFFIXES} )
+else( WIN32 )
+	find_library( FMOD_LIBRARY
+		NAMES ${FMOD_VERSIONS}
+		PATHS ${FMOD_LOCAL_LIB_DIRS} )
+endif( WIN32 )
 
 if( FMOD_LIBRARY )
 	message( STATUS "FMOD library found at ${FMOD_LIBRARY}" )

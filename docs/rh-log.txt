@@ -1,3 +1,11 @@
+January 27, 2009
+- More GCC warning removal, the most egregious of which was the security
+  vulnerability "format not a string literal and no format arguments".
+- Changed the CMake script to search for fmod libraries by full name instead
+  of assuming a symbolic link has been placed for the latest version. It can
+  also find a non-installed copy of FMOD if it is placed local to the ZDoom
+  source tree.
+
 January 26, 2009
 - Fixed: Some OPL state needs to be restored before calculating rhythm. Also,
   since only the rhythm section uses the RNG, it doesn't need to be advanced

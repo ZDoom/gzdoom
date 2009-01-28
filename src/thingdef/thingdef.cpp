@@ -268,7 +268,7 @@ static void FinishThingdef()
 		// Skip non-actors
 		if (!ti->IsDescendantOf(RUNTIME_CLASS(AActor))) continue;
 
-		if (ti->Size == -1)
+		if (ti->Size == (unsigned)-1)
 		{
 			Printf("Class %s referenced but not defined\n", ti->TypeName.GetChars());
 			errorcount++;

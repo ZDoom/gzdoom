@@ -2506,11 +2506,11 @@ void G_DoPlayDemo (void)
 		demo_p = demobuffer = NULL;
 		if (singledemo)
 		{
-			I_Error (eek);
+			I_Error ("%s", eek);
 		}
 		else
 		{
-			Printf (PRINT_BOLD, eek);
+			Printf (PRINT_BOLD, "%s", eek);
 			gameaction = ga_nothing;
 		}
 	}

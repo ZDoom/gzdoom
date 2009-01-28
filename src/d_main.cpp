@@ -2447,7 +2447,7 @@ void D_DoomMain (void)
 	}
 	if (devparm)
 	{
-		Printf (GStrings("D_DEVSTR"));
+		Printf ("%s", GStrings("D_DEVSTR"));
 	}
 
 #ifndef unix
@@ -2456,7 +2456,7 @@ void D_DoomMain (void)
 	// the user's home directory.
 	if (Args->CheckParm("-cdrom"))
 	{
-		Printf (GStrings("D_CDROM"));
+		Printf ("%s", GStrings("D_CDROM"));
 		mkdir (CDROM_DIR, 0);
 	}
 #endif

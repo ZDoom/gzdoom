@@ -928,7 +928,7 @@ void DumpStateHelper(FStateLabels *StateList, const FString &prefix)
 			else
 			{
 				Printf(PRINT_LOG, "%s%s: %s.%d\n", prefix.GetChars(), StateList->Labels[i].Label.GetChars(),
-					owner->TypeName.GetChars(), StateList->Labels[i].State - owner->ActorInfo->OwnedStates);
+					owner->TypeName.GetChars(), int(StateList->Labels[i].State - owner->ActorInfo->OwnedStates));
 			}
 		}
 		if (StateList->Labels[i].Children != NULL)

@@ -253,7 +253,7 @@ PClass *PClass::CreateDerivedClass (FName name, unsigned int size)
 	const PClass *existclass = FindClass(name);
 
 	// This is a placeholder so fill it in
-	if (existclass != NULL && existclass->Size == -1)
+	if (existclass != NULL && existclass->Size == (unsigned)-1)
 	{
 		type = const_cast<PClass*>(existclass);
 		if (!IsDescendantOf(type->ParentClass))

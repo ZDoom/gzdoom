@@ -1997,7 +1997,7 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 
 	case DEM_PRINT:
 		s = ReadString (stream);
-		Printf (s);
+		Printf ("%s", s);
 		break;
 
 	case DEM_CENTERPRINT:

@@ -2157,24 +2157,28 @@ void DLevelScript::DoSetFont (int fontnum)
 	}
 }
 
-#define APROP_Health		0
-#define APROP_Speed			1
-#define APROP_Damage		2
-#define APROP_Alpha			3
-#define APROP_RenderStyle	4
-#define APROP_Ambush		10
-#define APROP_Invulnerable	11
-#define APROP_JumpZ			12	// [GRB]
-#define APROP_ChaseGoal		13
-#define APROP_Frightened	14
-#define APROP_Gravity		15
-#define APROP_Friendly		16
-#define APROP_SpawnHealth   17
-#define APROP_SeeSound		5	// Sounds can only be set, not gotten
-#define APROP_AttackSound	6
-#define APROP_PainSound		7
-#define APROP_DeathSound	8
-#define APROP_ActiveSound	9
+enum
+{
+	APROP_Health		= 0,
+	APROP_Speed			= 1,
+	APROP_Damage		= 2,
+	APROP_Alpha			= 3,
+	APROP_RenderStyle	= 4,
+	APROP_SeeSound		= 5,	// Sounds can only be set, not gotten
+	APROP_AttackSound	= 6,
+	APROP_PainSound		= 7,
+	APROP_DeathSound	= 8,
+	APROP_ActiveSound	= 9,
+	APROP_Ambush		= 10,
+	APROP_Invulnerable	= 11,
+	APROP_JumpZ			= 12,	// [GRB]
+	APROP_ChaseGoal		= 13,
+	APROP_Frightened	= 14,
+	APROP_Gravity		= 15,
+	APROP_Friendly		= 16,
+	APROP_SpawnHealth   = 17,
+	APROP_Dropped		= 18,
+};	
 
 // These are needed for ACS's APROP_RenderStyle
 static const int LegacyRenderStyleIndices[] =
@@ -2251,6 +2255,10 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 
 	case APROP_Ambush:
 		if (value) actor->flags |= MF_AMBUSH; else actor->flags &= ~MF_AMBUSH;
+		break;
+
+	case APROP_Dropped:
+		if (value) actor->flags |= MF_DROPPED; else actor->flags &= ~MF_DROPPED;
 		break;
 
 	case APROP_Invulnerable:
@@ -2356,6 +2364,7 @@ int DLevelScript::GetActorProperty (int tid, int property)
 							return STYLE_Normal;
 	case APROP_Gravity:		return actor->gravity;
 	case APROP_Ambush:		return !!(actor->flags & MF_AMBUSH);
+	case APROP_Dropped:		return !!(actor->flags & MF_DROPPED);
 	case APROP_ChaseGoal:	return !!(actor->flags5 & MF5_CHASEGOAL);
 	case APROP_Frightened:	return !!(actor->flags4 & MF4_FRIGHTENED);
 	case APROP_Friendly:	return !!(actor->flags & MF_FRIENDLY);

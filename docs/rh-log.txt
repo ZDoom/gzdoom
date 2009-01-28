@@ -1,3 +1,9 @@
+January 28, 2009  (Changes by Graf Zahl)
+- Added APROP_Dropped actor property.
+- Fixed: The compatmode CVAR needs CVAR_NOINITCALL so that the compatibility 
+  flags don't get reset each start.
+- Fixed: compatmode Doom(strict) was missing COMPAT_CROSSDROPOFF
+  
 January 27, 2009
 - More GCC warning removal, the most egregious of which was the security
   vulnerability "format not a string literal and no format arguments".
@@ -12,6 +18,18 @@ January 26, 2009
   for the normal voice processing.
 
 January 25, 2009  (Changes by Graf Zahl)
+- fixed some issues with P_FindFloorCeiling's coordinate processing.
+- added a new compatmode CVAR which allows setting some generic compatibility 
+  flag combinations:
+  Doom: sets the options needed to make most Doom.exe compatible map play without
+  errors.
+  Doom (strict): Same as above but sets a few more options. Please note that this
+  does not mean full Doom.exe behavior emulation.
+  Boom: Sets all options that consider differences between ZDoom and Boom.
+  ZDoom 2.0.63: Sets only the COMPATF_SOUNDTARGET option which is needed for
+  many older ZDoom maps.
+- added new COMPAT_CROSSDROPOFF option to block monsters from being pushed over
+  dropoffs by damage kickback.
 - fixed: AFastProjectile::Tick must call Effect only 8 times per tic, regardless
   of the amount of steps taken.
 - fixed: momentum checks in AFastProjectile did not use absolute values.

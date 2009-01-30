@@ -1,3 +1,6 @@
+January 30, 2009  (Changes by Graf Zahl)
+- Added Blzut3's statusbar maintenance patch.
+
 January 29, 2009  (Changes by Graf Zahl)
 - fixed sound origin of the Mage Wand's missile.
 

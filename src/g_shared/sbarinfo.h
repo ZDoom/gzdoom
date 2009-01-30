@@ -147,17 +147,9 @@ struct SBarInfo
 	static void Load();
 };
 
-#define NUM_SCRIPTS 5
 #define SCRIPT_CUSTOM	0
-#define SCRIPT_DOOM		1
-// The next ones shouldn't be used... yet
-#define SCRIPT_HERETIC	2
-#define SCRIPT_HEXEN	3
-#define SCRIPT_STRIFE	4
-// Converts GAME_x to it's script number
-#define GETSBARINFOSCRIPT(game) \
-	(game & GAME_DoomChex) ? SCRIPT_DOOM : (game == GAME_Heretic ? SCRIPT_HERETIC : (game == GAME_Hexen ? SCRIPT_HEXEN : (game == GAME_Strife ? SCRIPT_STRIFE : SCRIPT_CUSTOM)))
-extern SBarInfo *SBarInfoScript[5];
+#define SCRIPT_DEFAULT	1
+extern SBarInfo *SBarInfoScript[2];
 
 
 // Enums used between the parser and the display

@@ -122,6 +122,7 @@ typedef struct
 	DWORD defaultbloodcolor;
 	DWORD defaultbloodparticlecolor;
 	const char *backpacktype;
+	const char *statusbar;
 } gameinfo_t;
 
 extern gameinfo_t gameinfo;

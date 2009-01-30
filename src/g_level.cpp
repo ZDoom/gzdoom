@@ -1750,14 +1750,14 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 		}
 		else
 		{
-			StatusBar = CreateCustomStatusBar(GETSBARINFOSCRIPT(gameinfo.gametype));
+			StatusBar = CreateCustomStatusBar(SCRIPT_DEFAULT);
 		}
 	}
 	if (StatusBar == NULL)
 	{
 		if (gameinfo.gametype & GAME_DoomChex)
 		{
-			StatusBar = CreateCustomStatusBar (GETSBARINFOSCRIPT(gameinfo.gametype));
+			StatusBar = CreateCustomStatusBar (SCRIPT_DEFAULT);
 		}
 		else if (gameinfo.gametype == GAME_Heretic)
 		{

@@ -71,13 +71,15 @@ struct FMapInfoParser
 
 	FScanner sc;
 	int format_type;
-
+	bool HexenHack;
 
 	FMapInfoParser()
 	{
 		format_type = FMT_Unknown;
+		HexenHack = false;
 	}
 
+	void ParseCluster();
 	void ParseNextMap(char *mapname);
 	void ParseLumpOrTextureName(char *name);
 	level_info_t *ParseMapHeader(level_info_t &defaultinfo);
@@ -350,7 +352,6 @@ struct level_info_t
 	char		fadetable[9];
 	SBYTE		WallVertLight, WallHorizLight;
 	char		f1[9];
-	// TheDefaultLevelInfo initializes everything above this line.
 	int			musicorder;
 	FCompressedMemFile	*snapshot;
 	DWORD		snapshotVer;
@@ -499,14 +500,17 @@ struct cluster_info_t
 {
 	int			cluster;
 	char		finaleflat[9];
-	char		*exittext;
-	char		*entertext;
-	char		*messagemusic;
+	FString		ExitText;
+	FString		EnterText;
+	FString		MessageMusic;
 	int			musicorder;
 	int			flags;
 	int			cdtrack;
-	char		*clustername;
+	FString		ClusterName;
 	unsigned int cdid;
+
+	void Reset();
+
 };
 
 // Cluster flags
@@ -521,6 +525,7 @@ struct cluster_info_t
 extern FLevelLocals level;
 
 extern TArray<level_info_t> wadlevelinfos;
+extern TArray<cluster_info_t> wadclusterinfos;
 
 extern SDWORD ACS_WorldVars[NUM_WORLDVARS];
 extern SDWORD ACS_GlobalVars[NUM_GLOBALVARS];

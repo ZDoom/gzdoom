@@ -86,8 +86,8 @@ void	F_AdvanceSlideshow ();
 //
 // F_StartFinale
 //
-void F_StartFinale (char *music, int musicorder, int cdtrack, unsigned int cdid, char *flat, char *text,
-					INTBOOL textInLump, INTBOOL finalePic, INTBOOL lookupText, bool ending)
+void F_StartFinale (const char *music, int musicorder, int cdtrack, unsigned int cdid, const char *flat, 
+					const char *text, INTBOOL textInLump, INTBOOL finalePic, INTBOOL lookupText, bool ending)
 {
 	bool loopmusic = ending ? !(gameinfo.flags & GI_NOLOOPFINALEMUSIC) : true;
 	gameaction = ga_nothing;

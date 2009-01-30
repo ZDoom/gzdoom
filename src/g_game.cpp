@@ -1980,7 +1980,7 @@ static void PutSaveComment (FILE *file)
 
 	// Get level name
 	//strcpy (comment, level.level_name);
-	mysnprintf(comment, countof(comment), "%s - %s", level.mapname, level.level_name);
+	mysnprintf(comment, countof(comment), "%s - %s", level.mapname, level.LevelName.GetChars());
 	len = (WORD)strlen (comment);
 	comment[len] = '\n';
 

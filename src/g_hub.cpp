@@ -131,13 +131,12 @@ void G_LeavingHub(int mode, cluster_info_t * cluster, wbstartstruct_t * wbs)
 			{
 				if (cluster->flags & CLUSTER_LOOKUPNAME)
 				{
-					strncpy(level.level_name, GStrings(cluster->ClusterName), 64);
+					level.LevelName = GStrings(cluster->ClusterName);
 				}
 				else
 				{
-					strncpy(level.level_name, cluster->ClusterName, 64);
+					level.LevelName = cluster->ClusterName;
 				}
-				level.level_name[63]=0;
 			}
 		}
 	}

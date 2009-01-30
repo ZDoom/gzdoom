@@ -45,6 +45,7 @@
 #include "p_setup.h"
 #include "i_system.h"
 #include "gi.h"
+#include "gstrings.h"
 
 int FindEndSequence (int type, const char *picname);
 
@@ -119,6 +120,52 @@ void level_info_t::Reset()
 	strcpy (bordertexture, gameinfo.borderFlat);
 	teamdamage = 0.f;
 	specialactions.Clear();
+}
+
+
+//==========================================================================
+//
+//
+//==========================================================================
+
+FString level_info_t::LookupLevelName()
+{
+	if (flags & LEVEL_LOOKUPLEVELNAME)
+	{
+		const char *thename;
+		const char *lookedup;
+
+		lookedup = GStrings[LevelName];
+		if (lookedup == NULL)
+		{
+			thename = LevelName;
+		}
+		else
+		{
+			char checkstring[32];
+
+			// Strip out the header from the localized string
+			if (mapname[0] == 'E' && mapname[2] == 'M')
+			{
+				mysnprintf (checkstring, countof(checkstring), "%s: ", mapname);
+			}
+			else if (mapname[0] == 'M' && mapname[1] == 'A' && mapname[2] == 'P')
+			{
+				mysnprintf (checkstring, countof(checkstring), "%d: ", atoi(mapname + 3));
+			}
+			thename = strstr (lookedup, checkstring);
+			if (thename == NULL)
+			{
+				thename = lookedup;
+			}
+			else
+			{
+				thename += strlen (checkstring);
+			}
+		}
+		return thename;
+	}
+	else return LevelName;
 }
 
 
@@ -346,6 +393,20 @@ void FMapInfoParser::ParseNextMap(char *mapname)
 						newSeq.MusicLooping = !!sc.Number;
 					}
 					ParseCloseParen();
+				}
+				else
+				{
+					if (format_type == FMT_New)
+					{
+						// Unknown
+						sc.ScriptMessage("Unknown property '%s' found in endgame definition\n", sc.String);
+						SkipToNext();
+					}
+					else
+					{
+						sc.ScriptError("Unknown property '%s' found in endgame definition\n", sc.String);
+					}
+
 				}
 			}
 			useseq = true;
@@ -993,17 +1054,34 @@ void FMapInfoParser::ParseMapDefinition(level_info_t &info)
 				break;
 			}
 		}
-
-
-		else if (!ParseCloseBrace())
-		{
-			// Unknown
-			sc.ScriptMessage("Unknown property '%s' found in map definition\n", sc.String);
-			SkipToNext();
-		}
 		else
 		{
-			break;
+			TAutoSegIterator<FMapOptInfo*, &YRegHead, &YRegTail> probe;
+			bool success = false;
+
+			while (++probe != NULL)
+			{
+				if (sc.Compare(probe->name))
+				{
+					probe->handler(*this, &info);
+					success = true;
+					break;
+				}
+			}
+
+			if (!success)
+			{
+				if (!ParseCloseBrace())
+				{
+					// Unknown
+					sc.ScriptMessage("Unknown property '%s' found in map definition\n", sc.String);
+					SkipToNext();
+				}
+				else
+				{
+					break;
+				}
+			}
 		}
 	}
 }

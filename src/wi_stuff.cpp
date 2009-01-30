@@ -230,7 +230,7 @@ static FTexture* 		p;			// Player graphic
 static FTexture*		lnames[2];	// Name graphics of each level (centered)
 
 // [RH] Info to dynamically generate the level name graphics
-static const char		*lnametexts[2];
+static FString			lnametexts[2];
 
 static FTexture			*background;
 
@@ -712,6 +712,7 @@ int WI_DrawName(int y, const char *levelname)
 	lumph = BigFont->GetHeight() * CleanYfac;
 
 	p = levelname;
+	if (!p) return 0;
 	l = strlen(p);
 	if (!l) return 0;
 
@@ -1967,10 +1968,11 @@ void WI_loadData(void)
 	}
 
 	// Use the local level structure which can be overridden by hubs
-	lnametexts[0] = level.level_name;		
+	lnametexts[0] = level.LevelName;		
 
 	level_info_t *li = FindLevelInfo(wbs->next);
-	lnametexts[1] = li ? G_MaybeLookupLevelName(li) : NULL;
+	if (li) lnametexts[1] = li->LookupLevelName();
+	else lnametexts[1] = "";
 
 	WI_LoadBackground(false);
 }

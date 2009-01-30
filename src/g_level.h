@@ -45,18 +45,13 @@ class FScanner;
 
 #if defined(_MSC_VER)
 #pragma data_seg(".yreg$u")
-#pragma data_seg(".zreg$u")
 #pragma data_seg()
 
 #define MSVC_YSEG __declspec(allocate(".yreg$u"))
 #define GCC_YSEG
-#define MSVC_ZSEG __declspec(allocate(".zreg$u"))
-#define GCC_ZSEG
 #else
 #define MSVC_YSEG
 #define GCC_YSEG __attribute__((section(YREG_SECTION)))
-#define MSVC_ZSEG
-#define GCC_ZSEG __attribute__((section(ZREG_SECTION)))
 #endif
 
 
@@ -195,13 +190,6 @@ struct FMapInfoParser
 	MSVC_YSEG FMapOptInfo *mapopt_##name GCC_YSEG = &MapOpt_##name; \
 	static void MapOptHandler_##name(FMapInfoParser &parse, level_info_t *info)
 
-#define DEFINE_CLUSTER_OPTION(name, old) \
-	static void MapOptHandler_##name(FScanner &sc, cluster_info_t *info); \
-	static FClusterOptInfo ClusterOpt_##name = \
-		{ #name, ClusterOptHandler_##name, old }; \
-	MSVC_ZSEG FClusterOptInfo *clusteropt_##name GCC_ZSEG = &ClusterOpt_##name; \
-	static void ClusterOptHandler_##name(FScanner &sc, cluster_info_t *info)
-
 
 struct FMapOptInfo
 {
@@ -209,14 +197,6 @@ struct FMapOptInfo
 	void (*handler) (FMapInfoParser &parse, level_info_t *levelinfo);
 	bool old;
 };
-
-struct FClusterOptInfo
-{
-	const char *name;
-	void (*handler) (FScanner &sc, cluster_info_t *levelinfo);
-	bool old;
-};
-
 
 #define NUM_WORLDVARS			256
 #define NUM_GLOBALVARS			64
@@ -391,6 +371,7 @@ struct level_info_t
 
 	level_info_t() { Reset(); }
 	void Reset();
+	FString LookupLevelName ();
 
 };
 
@@ -417,7 +398,7 @@ struct FLevelLocals
 	int			clusterflags;
 	int			levelnum;
 	int			lumpnum;
-	char		level_name[64];
+	FString		LevelName;
 	char		mapname[256];			// the server name (base1, etc)
 	char		nextmap[9];				// go here when fraglimit is hit
 	char		secretmap[9];			// map to go to when used secret exit
@@ -572,8 +553,6 @@ void G_DoLoadLevel (int position, bool autosave);
 void G_InitLevelLocals (void);
 
 void G_AirControlChanged ();
-
-const char *G_MaybeLookupLevelName (level_info_t *level);
 
 cluster_info_t *FindClusterInfo (int cluster);
 level_info_t *FindLevelInfo (const char *mapname);

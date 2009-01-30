@@ -41,6 +41,7 @@
 #include "templates.h"
 #include "v_font.h"
 
+TArray<FSkillInfo> AllSkills;
 
 //==========================================================================
 //

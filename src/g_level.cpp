@@ -96,7 +96,6 @@ EXTERN_CVAR (Int, disableautosave)
 #define PCLS_ID			MAKE_ID('p','c','L','s')
 
 static void SetEndSequence (char *nextmap, int type);
-static void InitPlayerClasses ();
 void G_VerifySkill();
 
 static FRandom pr_classchoice ("RandomPlayerClassChoice");
@@ -140,7 +139,6 @@ FLevelLocals level;			// info about current level
 
 TArray<cluster_info_t> wadclusterinfos;
 TArray<level_info_t> wadlevelinfos;
-TArray<FSkillInfo> AllSkills;
 
 static level_info_t TheDefaultLevelInfo;
 static cluster_info_t TheDefaultClusterInfo;
@@ -381,6 +379,28 @@ void G_DoNewGame (void)
 	}
 	G_InitNew (d_mapname, false);
 	gameaction = ga_nothing;
+}
+
+// Initializes player classes in case they are random.
+// This gets called at the start of a new game, and the classes
+// chosen here are used for the remainder of a single-player
+// or coop game. These are ignored for deathmatch.
+
+static void InitPlayerClasses ()
+{
+	if (!savegamerestore)
+	{
+		for (int i = 0; i < MAXPLAYERS; ++i)
+		{
+			SinglePlayerClass[i] = players[i].userinfo.PlayerClass;
+			if (SinglePlayerClass[i] < 0 || !playeringame[i])
+			{
+				SinglePlayerClass[i] = (pr_classchoice()) % PlayerClasses.Size ();
+			}
+			players[i].cls = NULL;
+			players[i].CurrentPlayerClass = SinglePlayerClass[i];
+		}
+	}
 }
 
 void G_InitNew (const char *mapname, bool bTitleLevel)
@@ -877,7 +897,7 @@ void G_DoLoadLevel (int position, bool autosave)
 			"\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36"
 			"\36\36\36\36\36\36\36\36\36\36\36\36\37\n\n"
 			TEXTCOLOR_BOLD "%s - %s\n\n",
-			level.mapname, level.level_name);
+			level.mapname, level.LevelName.GetChars());
 
 	if (wipegamestate == GS_LEVEL)
 		wipegamestate = GS_FORCEWIPE;
@@ -1257,9 +1277,7 @@ void G_InitLevelLocals ()
 		level.Music = info->Music;
 		level.musicorder = info->musicorder;
 
-		strncpy(level.level_name, info->LevelName, 63);
-		level.level_name[63] = 0;
-		G_MaybeLookupLevelName (NULL);
+		level.LevelName = level.info->LookupLevelName();
 		strncpy (level.nextmap, info->nextmap, 8);
 		level.nextmap[8] = 0;
 		strncpy (level.secretmap, info->secretmap, 8);
@@ -1274,7 +1292,7 @@ void G_InitLevelLocals ()
 	{
 		level.partime = level.cluster = 0;
 		level.sucktime = 0;
-		strcpy(level.level_name, "Unnamed");
+		level.LevelName = "Unnamed";
 		level.nextmap[0] =
 			level.secretmap[0] = 0;
 		level.Music = "";
@@ -1391,62 +1409,6 @@ cluster_info_t *FindClusterInfo (int cluster)
 		return &wadclusterinfos[i];
 	else
 		return &TheDefaultClusterInfo;
-}
-
-const char *G_MaybeLookupLevelName (level_info_t *ininfo)
-{
-	level_info_t *info;
-
-	if (ininfo == NULL)
-	{
-		info = level.info;
-	}
-	else
-	{
-		info = ininfo;
-	}
-
-	if (info != NULL && info->flags & LEVEL_LOOKUPLEVELNAME)
-	{
-		const char *thename;
-		const char *lookedup;
-
-		lookedup = GStrings[info->LevelName];
-		if (lookedup == NULL)
-		{
-			thename = info->LevelName;
-		}
-		else
-		{
-			char checkstring[32];
-
-			// Strip out the header from the localized string
-			if (info->mapname[0] == 'E' && info->mapname[2] == 'M')
-			{
-				mysnprintf (checkstring, countof(checkstring), "%s: ", info->mapname);
-			}
-			else if (info->mapname[0] == 'M' && info->mapname[1] == 'A' && info->mapname[2] == 'P')
-			{
-				mysnprintf (checkstring, countof(checkstring), "%d: ", atoi(info->mapname + 3));
-			}
-			thename = strstr (lookedup, checkstring);
-			if (thename == NULL)
-			{
-				thename = lookedup;
-			}
-			else
-			{
-				thename += strlen (checkstring);
-			}
-		}
-		if (ininfo == NULL)
-		{
-			strncpy(level.level_name, thename, 63);
-			level.level_name[63] = 0;
-		}
-		return thename;
-	}
-	return info != NULL ? (const char*)(info->LevelName) : NULL;
 }
 
 void G_AirControlChanged ()
@@ -1913,30 +1875,6 @@ void FLevelLocals::AddScroller (DScroller *scroller, int secnum)
 	}
 }
 
-// Initializes player classes in case they are random.
-// This gets called at the start of a new game, and the classes
-// chosen here are used for the remainder of a single-player
-// or coop game. These are ignored for deathmatch.
-
-static void InitPlayerClasses ()
-{
-	if (!savegamerestore)
-	{
-		for (int i = 0; i < MAXPLAYERS; ++i)
-		{
-			SinglePlayerClass[i] = players[i].userinfo.PlayerClass;
-			if (SinglePlayerClass[i] < 0 || !playeringame[i])
-			{
-				SinglePlayerClass[i] = (pr_classchoice()) % PlayerClasses.Size ();
-			}
-			players[i].cls = NULL;
-			players[i].CurrentPlayerClass = SinglePlayerClass[i];
-		}
-	}
-}
-
-
-
 //==========================================================================
 //
 // Lists all currently defined maps
@@ -1951,7 +1889,7 @@ CCMD(listmaps)
 
 		if (P_CheckMapData(info->mapname))
 		{
-			Printf("%s: '%s'\n", info->mapname, G_MaybeLookupLevelName(info));
+			Printf("%s: '%s'\n", info->mapname, info->LookupLevelName().GetChars());
 		}
 	}
 }

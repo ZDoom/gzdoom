@@ -51,6 +51,7 @@ ACTOR MageWandMissile : FastProjectile native
 	Height 8
 	Damage 2
 	+RIPPER +CANNOTPUSH +NODAMAGETHRUST
+	+SPAWNSOUNDSOURCE
 	SeeSound "MageWandFire"
 	States
 	{

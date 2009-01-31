@@ -1,4 +1,5 @@
 January 30, 2009
+- Added weapdrop ccmd.
 - Centered the compatibility mode option in the comptibility options menu.
 - Added button mappings for 8 mouse buttons on SDL. It works with my system,
   but Linux being Linux, there are no guarantees that it's appropriate for

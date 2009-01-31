@@ -386,6 +386,11 @@ CCMD (invdrop)
 	if (players[consoleplayer].mo) SendItemDrop = players[consoleplayer].mo->InvSel;
 }
 
+CCMD (weapdrop)
+{
+	SendItemDrop = players[consoleplayer].ReadyWeapon;
+}
+
 CCMD (drop)
 {
 	if (argv.argc() > 1 && who != NULL)

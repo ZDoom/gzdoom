@@ -425,6 +425,7 @@ static menuitem_t ControlsItems[] =
 	{ control,	"Next item",			{NULL}, {0.0}, {0.0}, {0.0}, {(value_t *)"invnext"} },
 	{ control,	"Previous item",		{NULL}, {0.0}, {0.0}, {0.0}, {(value_t *)"invprev"} },
 	{ control,	"Drop item",			{NULL}, {0.0}, {0.0}, {0.0}, {(value_t *)"invdrop"} },
+	{ control,	"Drop weapon",			{NULL}, {0.0}, {0.0}, {0.0}, {(value_t *)"weapdrop"} },
 	{ redtext,	" ",					{NULL},	{0.0}, {0.0}, {0.0}, {NULL} },
 	{ whitetext,"Other",				{NULL},	{0.0}, {0.0}, {0.0}, {NULL} },
 	{ control,	"Toggle automap",		{NULL}, {0.0}, {0.0}, {0.0}, {(value_t *)"togglemap"} },

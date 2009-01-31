@@ -2431,12 +2431,12 @@ void STACK_ARGS D3DFB::DrawTextureV (FTexture *img, int x, int y, uint32 tags_fi
 	}
 	if (x0 < parms.lclip)
 	{
-		u0 += float(parms.lclip - x0) * uscale / xscale;
+		u0 += float(parms.lclip - x0) * uscale;
 		x0 = float(parms.lclip);
 	}
 	if (x1 > parms.rclip)
 	{
-		u1 -= float(x1 - parms.rclip) * uscale / xscale;
+		u1 -= float(x1 - parms.rclip) * uscale;
 		x1 = float(parms.rclip);
 	}
 	parms.bilinear = false;

@@ -1,4 +1,6 @@
 January 30, 2009
+- Fixed: D3DFB::DrawTextureV() did not properly adjust the texture coordinate
+  for lclip and rclip.
 - Added weapdrop ccmd.
 - Centered the compatibility mode option in the comptibility options menu.
 - Added button mappings for 8 mouse buttons on SDL. It works with my system,

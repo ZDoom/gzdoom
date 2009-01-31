@@ -191,6 +191,60 @@ void cluster_info_t::Reset()
 
 //==========================================================================
 //
+// ParseLookupnamr
+// Parses a string that may reference the string table
+//
+//==========================================================================
+
+bool FMapInfoParser::ParseLookupName(FString &dest)
+{
+	sc.MustGetString();
+	if (sc.Compare("lookup"))
+	{
+		ParseComma();
+		sc.MustGetString();
+		dest = sc.String;
+		return true;
+	}
+	else if (sc.String[0] == '$')
+	{
+		dest = sc.String+1;
+		return true;
+	}
+	else if (format_type == FMT_Old)
+	{
+		dest = sc.String;
+		return false;
+	}
+	else
+	{
+		sc.UnGet();
+		dest = "";
+		do
+		{
+			sc.MustGetString();
+			dest += sc.String;
+		}
+		while (sc.CheckString(","));
+		return false;
+	}
+}
+
+//==========================================================================
+//
+//
+//==========================================================================
+
+void FMapInfoParser::ParseLumpOrTextureName(char *name)
+{
+	sc.MustGetString();
+	uppercopy(name, sc.String);
+	name[8]=0;
+}
+
+
+//==========================================================================
+//
 // ParseCluster
 // Parses a cluster definition
 //
@@ -216,22 +270,22 @@ void FMapInfoParser::ParseCluster()
 		if (sc.Compare("name"))
 		{
 			ParseOpenParen();
-			sc.MustGetString();
-			clusterinfo->ClusterName = sc.String;
+			if (ParseLookupName(clusterinfo->ClusterName))
+				clusterinfo->flags |= CLUSTER_LOOKUPCLUSTERNAME;
 			ParseCloseParen();
 		}
 		else if (sc.Compare("entertext"))
 		{
 			ParseOpenParen();
-			sc.MustGetString();
-			clusterinfo->EnterText = sc.String;
+			if (ParseLookupName(clusterinfo->EnterText))
+				clusterinfo->flags |= CLUSTER_LOOKUPENTERTEXT;
 			ParseCloseParen();
 		}
 		else if (sc.Compare("exittext"))
 		{
 			ParseOpenParen();
-			sc.MustGetString();
-			clusterinfo->ExitText = sc.String;
+			if (ParseLookupName(clusterinfo->ExitText))
+				clusterinfo->flags |= CLUSTER_LOOKUPEXITTEXT;
 			ParseCloseParen();
 		}
 		else if (sc.Compare("music"))
@@ -258,15 +312,13 @@ void FMapInfoParser::ParseCluster()
 		else if (sc.Compare("flat"))
 		{
 			ParseOpenParen();
-			sc.MustGetString();
-			uppercopy(clusterinfo->finaleflat, sc.String);
+			ParseLumpOrTextureName(clusterinfo->finaleflat);
 			ParseCloseParen();
 		}
 		else if (sc.Compare("pic"))
 		{
 			ParseOpenParen();
-			sc.MustGetString();
-			uppercopy(clusterinfo->finaleflat, sc.String);
+			ParseLumpOrTextureName(clusterinfo->finaleflat);
 			clusterinfo->flags |= CLUSTER_FINALEPIC;
 			ParseCloseParen();
 		}
@@ -290,11 +342,11 @@ void FMapInfoParser::ParseCluster()
 		}
 		else if (sc.Compare("entertextislump"))
 		{
-			clusterinfo->flags |= CLUSTER_LOOKUPENTERTEXT;
+			clusterinfo->flags |= CLUSTER_ENTERTEXTINLUMP;
 		}
 		else if (sc.Compare("exittextislump"))
 		{
-			clusterinfo->flags |= CLUSTER_LOOKUPEXITTEXT;
+			clusterinfo->flags |= CLUSTER_EXITTEXTINLUMP;
 		}
 		else if (!ParseCloseBrace())
 		{
@@ -490,17 +542,6 @@ void FMapInfoParser::ParseNextMap(char *mapname)
 
 //==========================================================================
 //
-//
-//==========================================================================
-
-void FMapInfoParser::ParseLumpOrTextureName(char *name)
-{
-	sc.MustGetString();
-	uppercopy(name, sc.String);
-}
-
-//==========================================================================
-//
 // Map options
 //
 //==========================================================================
@@ -541,7 +582,6 @@ DEFINE_MAP_OPTION(cluster, true)
 	{
 		unsigned int clusterindex = wadclusterinfos.Reserve(1);
 		cluster_info_t *clusterinfo = &wadclusterinfos[clusterindex];
-		memset (clusterinfo, 0, sizeof(cluster_info_t));
 		clusterinfo->cluster = parse.sc.Number;
 		if (parse.HexenHack)
 		{
@@ -606,6 +646,14 @@ DEFINE_MAP_OPTION(titlepatch, true)
 }
 
 DEFINE_MAP_OPTION(partime, true)
+{
+	parse.ParseOpenParen();
+	parse.sc.MustGetNumber();
+	info->partime = parse.sc.Number;
+	parse.ParseCloseParen();
+}
+
+DEFINE_MAP_OPTION(par, true)
 {
 	parse.ParseOpenParen();
 	parse.sc.MustGetNumber();
@@ -1136,6 +1184,7 @@ level_info_t *FMapInfoParser::ParseMapHeader(level_info_t &defaultinfo)
 	}
 	else 
 	{
+		sc.MustGetString();
 		mapname = sc.String;
 	}
 	int levelindex = FindWadLevelInfo (mapname);
@@ -1165,6 +1214,7 @@ level_info_t *FMapInfoParser::ParseMapHeader(level_info_t &defaultinfo)
 	}
 
 	uppercopy (levelinfo->mapname, mapname);
+	levelinfo->mapname[8] = 0;
 	sc.MustGetString ();
 	if (sc.String[0] == '$')
 	{
@@ -1462,6 +1512,10 @@ void FMapInfoParser::ParseMapInfo (int lump, level_info_t &gamedefaults)
 		else if (sc.Compare("clearskills"))
 		{
 			AllSkills.Clear();
+		}
+		else
+		{
+			sc.ScriptError("%s: Unknown top level keyword", sc.String);
 		}
 	}
 }

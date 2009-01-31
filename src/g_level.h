@@ -74,6 +74,7 @@ struct FMapInfoParser
 		HexenHack = false;
 	}
 
+	bool ParseLookupName(FString &dest);
 	void ParseCluster();
 	void ParseNextMap(char *mapname);
 	void ParseLumpOrTextureName(char *name);
@@ -502,6 +503,7 @@ struct cluster_info_t
 #define CLUSTER_LOOKUPEXITTEXT	0x00000010	// Exit text is the name of a language string
 #define CLUSTER_LOOKUPENTERTEXT	0x00000020	// Enter text is the name of a language string
 #define CLUSTER_LOOKUPNAME		0x00000040	// Name is the name of a language string
+#define CLUSTER_LOOKUPCLUSTERNAME 0x00000080	// Cluster name is the name of a language string
 
 extern FLevelLocals level;
 

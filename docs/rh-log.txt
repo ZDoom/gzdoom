@@ -1,3 +1,10 @@
+January 30, 2009
+- Added button mappings for 8 mouse buttons on SDL. It works with my system,
+  but Linux being Linux, there are no guarantees that it's appropriate for
+  other systems.
+- Fixed: SDL input code did not generate GUI events for the mousewheel, so it
+  could not be used to scroll the console buffer.
+
 January 30, 2009  (Changes by Graf Zahl)
 - Added Blzut3's statusbar maintenance patch.
 

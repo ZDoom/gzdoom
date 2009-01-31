@@ -1101,7 +1101,7 @@ static menu_t DMFlagsMenu =
  *=======================================*/
 
 static menuitem_t CompatibilityItems[] = {
-	{ discrete, "Compatibility mode",						{&compatmode},	{5.0}, {0.0},	{0.0}, {CompatModes} },
+	{ discrete, "Compatibility mode",						{&compatmode},	{5.0}, {1.0},	{0.0}, {CompatModes} },
 	{ redtext,	" ",					{NULL},			{0.0}, {0.0}, {0.0}, {NULL} },
 	{ bitflag,	"Find shortest textures like Doom",			{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_SHORTTEX} },
 	{ bitflag,	"Use buggier stair building",				{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_STAIRINDEX} },
@@ -1529,7 +1529,8 @@ static void CalcIndent (menu_t *menu)
 	for (i = 0; i < menu->numitems; i++)
 	{
 		item = menu->items + i;
-		if (item->type != whitetext && item->type != redtext && item->type != screenres)
+		if (item->type != whitetext && item->type != redtext && item->type != screenres &&
+			(item->type != discrete || !item->c.discretecenter))
 		{
 			thiswidth = SmallFont->StringWidth (item->label);
 			if (thiswidth > widest)
@@ -1659,6 +1660,7 @@ void M_OptDrawer ()
 	UCVarValue value;
 	DWORD overlay;
 	int labelofs;
+	int indent;
 
 	if (!CurrentMenu->DontDim)
 	{
@@ -1710,6 +1712,14 @@ void M_OptDrawer ()
 
 		item = CurrentMenu->items + i;
 		overlay = 0;
+		if (item->type == discrete && item->c.discretecenter)
+		{
+			indent = 160;
+		}
+		else
+		{
+			indent = CurrentMenu->indent;
+		}
 
 		if (item->type != screenres)
 		{
@@ -1718,14 +1728,14 @@ void M_OptDrawer ()
 			{
 			case more:
 			case safemore:
-				x = CurrentMenu->indent - width;
+				x = indent - width;
 				color = MoreColor;
 				break;
 
 			case numberedmore:
 			case rsafemore:
 			case rightmore:
-				x = CurrentMenu->indent + 14;
+				x = indent + 14;
 				color = item->type != rightmore ? CR_GREEN : MoreColor;
 				break;
 
@@ -1740,12 +1750,12 @@ void M_OptDrawer ()
 				break;
 
 			case listelement:
-				x = CurrentMenu->indent + 14;
+				x = indent + 14;
 				color = LabelColor;
 				break;
 
 			case colorpicker:
-				x = CurrentMenu->indent + 14;
+				x = indent + 14;
 				color = MoreColor;
 				break;
 
@@ -1757,7 +1767,7 @@ void M_OptDrawer ()
 				// Intentional fall-through
 
 			default:
-				x = CurrentMenu->indent - width;
+				x = indent - width;
 				color = (item->type == control && menuactive == MENU_WaitKey && i == CurrentItem)
 					? CR_YELLOW : LabelColor;
 				break;
@@ -1772,7 +1782,7 @@ void M_OptDrawer ()
 					char tbuf[16];
 
 					mysnprintf (tbuf, countof(tbuf), "%d.", item->b.position);
-					x = CurrentMenu->indent - SmallFont->StringWidth (tbuf);
+					x = indent - SmallFont->StringWidth (tbuf);
 					screen->DrawText (SmallFont, CR_GREY, x, y, tbuf, DTA_Clean, true, TAG_DONE);
 				}
 				break;
@@ -1789,13 +1799,13 @@ void M_OptDrawer ()
 
 				if (v == vals)
 				{
-					screen->DrawText (SmallFont, ValueColor, CurrentMenu->indent + 14, y, "Unknown",
+					screen->DrawText (SmallFont, ValueColor, indent + 14, y, "Unknown",
 						DTA_Clean, true, TAG_DONE);
 				}
 				else
 				{
 					screen->DrawText (SmallFont, item->type == cdiscrete ? v : ValueColor,
-						CurrentMenu->indent + 14, y, item->e.values[v].name,
+						indent + 14, y, item->e.values[v].name,
 						DTA_Clean, true, TAG_DONE);
 				}
 
@@ -1838,13 +1848,13 @@ void M_OptDrawer ()
 
 				if (v == vals)
 				{
-					screen->DrawText (SmallFont, ValueColor, CurrentMenu->indent + 14, y, "Unknown",
+					screen->DrawText (SmallFont, ValueColor, indent + 14, y, "Unknown",
 						DTA_Clean, true, DTA_ColorOverlay, overlay, TAG_DONE);
 				}
 				else
 				{
 					screen->DrawText (SmallFont, item->type == cdiscrete ? v : ValueColor,
-						CurrentMenu->indent + 14, y,
+						indent + 14, y,
 						item->type != discretes ? item->e.values[v].name : item->e.valuestrings[v].name.GetChars(),
 						DTA_Clean, true, DTA_ColorOverlay, overlay, TAG_DONE);
 				}
@@ -1858,7 +1868,7 @@ void M_OptDrawer ()
 
 				value = item->a.cvar->GetGenericRep (CVAR_String);
 				v = M_FindCurVal(value.String, item->e.enumvalues, (int)item->b.numvalues);
-				screen->DrawText(SmallFont, ValueColor, CurrentMenu->indent + 14, y, v, DTA_Clean, true, TAG_DONE);
+				screen->DrawText(SmallFont, ValueColor, indent + 14, y, v, DTA_Clean, true, TAG_DONE);
 			}
 			break;
 
@@ -1872,11 +1882,11 @@ void M_OptDrawer ()
 				if (v == vals)
 				{
 					UCVarValue val = item->a.guidcvar->GetGenericRep (CVAR_String);
-					screen->DrawText (SmallFont, ValueColor, CurrentMenu->indent + 14, y, val.String, DTA_Clean, true, TAG_DONE);
+					screen->DrawText (SmallFont, ValueColor, indent + 14, y, val.String, DTA_Clean, true, TAG_DONE);
 				}
 				else
 				{
-					screen->DrawText (SmallFont, ValueColor, CurrentMenu->indent + 14, y, item->e.guidvalues[v].Name,
+					screen->DrawText (SmallFont, ValueColor, indent + 14, y, item->e.guidvalues[v].Name,
 						DTA_Clean, true, TAG_DONE);
 				}
 
@@ -1884,22 +1894,22 @@ void M_OptDrawer ()
 			break;
 
 			case nochoice:
-				screen->DrawText (SmallFont, CR_GOLD, CurrentMenu->indent + 14, y,
+				screen->DrawText (SmallFont, CR_GOLD, indent + 14, y,
 					(item->e.values[(int)item->b.min]).name, DTA_Clean, true, TAG_DONE);
 				break;
 
 			case slider:
 				value = item->a.cvar->GetGenericRep (CVAR_Float);
-				M_DrawSlider (CurrentMenu->indent + 14, y + labelofs, item->b.min, item->c.max, value.Float);
+				M_DrawSlider (indent + 14, y + labelofs, item->b.min, item->c.max, value.Float);
 				break;
 
 			case absslider:
 				value = item->a.cvar->GetGenericRep (CVAR_Float);
-				M_DrawSlider (CurrentMenu->indent + 14, y + labelofs, item->b.min, item->c.max, fabs(value.Float));
+				M_DrawSlider (indent + 14, y + labelofs, item->b.min, item->c.max, fabs(value.Float));
 				break;
 
 			case intslider:
-				M_DrawSlider (CurrentMenu->indent + 14, y + labelofs, item->b.min, item->c.max, item->a.fval);
+				M_DrawSlider (indent + 14, y + labelofs, item->b.min, item->c.max, item->a.fval);
 				break;
 
 			case control:
@@ -1909,11 +1919,11 @@ void M_OptDrawer ()
 				C_NameKeys (description, item->b.key1, item->c.key2);
 				if (description[0])
 				{
-					M_DrawConText(CR_WHITE, CurrentMenu->indent + 14, y-1+labelofs, description);
+					M_DrawConText(CR_WHITE, indent + 14, y-1+labelofs, description);
 				}
 				else
 				{
-					screen->DrawText(SmallFont, CR_BLACK, CurrentMenu->indent + 14, y + labelofs, "---",
+					screen->DrawText(SmallFont, CR_BLACK, indent + 14, y + labelofs, "---",
 						DTA_Clean, true, TAG_DONE);
 				}
 			}
@@ -1922,7 +1932,7 @@ void M_OptDrawer ()
 			case colorpicker:
 			{
 				int box_x, box_y;
-				box_x = (CurrentMenu->indent - 35 - 160) * CleanXfac + screen->GetWidth()/2;
+				box_x = (indent - 35 - 160) * CleanXfac + screen->GetWidth()/2;
 				box_y = (y - ((gameinfo.gametype & GAME_Raven) ? 99 : 100)) * CleanYfac + screen->GetHeight()/2;
 				screen->Clear (box_x, box_y, box_x + 32*CleanXfac, box_y + (fontheight-1)*CleanYfac,
 					item->a.colorcvar->GetIndex(), 0);
@@ -1938,7 +1948,7 @@ void M_OptDrawer ()
 
 				box_y = (y - 98) * CleanYfac + screen->GetHeight()/2;
 				p = 0;
-				box_x = (CurrentMenu->indent - 32 - 160) * CleanXfac + screen->GetWidth()/2;
+				box_x = (indent - 32 - 160) * CleanXfac + screen->GetWidth()/2;
 				for (x1 = 0, p = int(item->b.min * 16); x1 < 16; ++p, ++x1)
 				{
 					screen->Clear (box_x, box_y, box_x + w, box_y + h, p, 0);
@@ -1993,7 +2003,7 @@ void M_OptDrawer ()
 				}
 
 				screen->DrawText (SmallFont, ValueColor,
-					CurrentMenu->indent + 14, y, str, DTA_Clean, true, TAG_DONE);
+					indent + 14, y, str, DTA_Clean, true, TAG_DONE);
 			}
 			break;
 
@@ -2005,7 +2015,7 @@ void M_OptDrawer ()
 				i == CurrentItem &&
 				(skullAnimCounter < 6 || menuactive == MENU_WaitKey))
 			{
-				M_DrawConText(CR_RED, CurrentMenu->indent + 3, y-1+labelofs, "\xd");
+				M_DrawConText(CR_RED, indent + 3, y-1+labelofs, "\xd");
 			}
 		}
 		else

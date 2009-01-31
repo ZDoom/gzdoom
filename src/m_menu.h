@@ -140,6 +140,7 @@ typedef struct menuitem_s {
 		int				  key2;
 		char			 *res2;
 		void			 *extra;
+		float			  discretecenter;
 	} c;
 	union {
 		float			  step;

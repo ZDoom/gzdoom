@@ -1,3 +1,6 @@
+January 31, 2009
+- Fixed clipping in D3DFB::DrawTextureV() for good by using a scissor test.
+
 January 30, 2009
 - Fixed: D3DFB::DrawTextureV() did not properly adjust the texture coordinate
   for lclip and rclip.

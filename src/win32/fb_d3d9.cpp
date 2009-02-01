@@ -2405,18 +2405,7 @@ void STACK_ARGS D3DFB::DrawTextureV (FTexture *img, int x, int y, uint32 tags_fi
 	float u1 = tex->Box->Right;
 	float v1 = tex->Box->Bottom;
 	float uscale = 1.f / tex->Box->Owner->Width;
-	float vscale = 1.f / tex->Box->Owner->Height / yscale;
-
-	if (y0 < parms.uclip)
-	{
-		v0 += (float(parms.uclip) - y0) * vscale;
-		y0 = float(parms.uclip);
-	}
-	if (y1 > parms.dclip)
-	{
-		v1 -= (y1 - float(parms.dclip)) * vscale;
-		y1 = float(parms.dclip);
-	}
+	bool scissoring = false;
 
 	if (parms.flipX)
 	{
@@ -2429,16 +2418,45 @@ void STACK_ARGS D3DFB::DrawTextureV (FTexture *img, int x, int y, uint32 tags_fi
 		x1 -= (parms.texwidth - parms.windowright) * xscale;
 		u1 -= (parms.texwidth - parms.windowright) * uscale;
 	}
+#if 0
+	float vscale = 1.f / tex->Box->Owner->Height / yscale;
+	if (y0 < parms.uclip)
+	{
+		v0 += (float(parms.uclip) - y0) * vscale;
+		y0 = float(parms.uclip);
+	}
+	if (y1 > parms.dclip)
+	{
+		v1 -= (y1 - float(parms.dclip)) * vscale;
+		y1 = float(parms.dclip);
+	}
 	if (x0 < parms.lclip)
 	{
-		u0 += float(parms.lclip - x0) * uscale;
+		u0 += float(parms.lclip - x0) * uscale / xscale * 2;
 		x0 = float(parms.lclip);
 	}
 	if (x1 > parms.rclip)
 	{
-		u1 -= float(x1 - parms.rclip) * uscale;
+		u1 -= (x1 - parms.rclip) * uscale / xscale * 2;
 		x1 = float(parms.rclip);
 	}
+#else
+	// Use a scissor test because the math above introduces some jitter
+	// that is noticeable at low resolutions. Unfortunately, this means this
+	// quad has to be in a batch by itself.
+	if (y0 < parms.uclip || y1 > parms.dclip || x0 < parms.lclip || x1 > parms.rclip)
+	{
+		scissoring = true;
+		if (QuadBatchPos > 0)
+		{
+			EndQuadBatch();
+			BeginQuadBatch();
+		}
+		RECT scissor = { parms.lclip, parms.uclip, parms.rclip, parms.dclip };
+		D3DDevice->SetScissorRect(&scissor);
+		D3DDevice->SetRenderState(D3DRS_SCISSORTESTENABLE, TRUE);
+	}
+#endif
 	parms.bilinear = false;
 
 	D3DCOLOR color0, color1;
@@ -2511,6 +2529,12 @@ void STACK_ARGS D3DFB::DrawTextureV (FTexture *img, int x, int y, uint32 tags_fi
 	QuadBatchPos++;
 	VertexPos += 4;
 	IndexPos += 6;
+
+	if (scissoring)
+	{
+		EndQuadBatch();
+		D3DDevice->SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE);
+	}
 }
 
 //==========================================================================

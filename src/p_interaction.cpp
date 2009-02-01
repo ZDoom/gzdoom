@@ -957,6 +957,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 	if (df != NULL)
 	{
 		fixed_t * pdf = df->CheckKey(mod);
+		if (pdf== NULL && mod != NAME_None) pdf = df->CheckKey(NAME_None);
 		if (pdf != NULL)
 		{
 			damage = FixedMul(damage, *pdf);

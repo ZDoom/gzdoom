@@ -1,3 +1,7 @@
+February 2, 2009  (Changes by Graf Zahl)
+- Fixed: The damage factor for 'normal' damage is supposed to be applied to
+  all damage types that don't have a specific damage factor.
+
 January 31, 2009
 - Changed FMOD init() to allocate some virtual channels.
 - Fixed clipping in D3DFB::DrawTextureV() for good by using a scissor test.

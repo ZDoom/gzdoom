@@ -189,6 +189,150 @@ void cluster_info_t::Reset()
 }
 
 
+
+//==========================================================================
+//
+//
+//==========================================================================
+
+void FMapInfoParser::ParseOpenBrace()
+{
+	switch(format_type)
+	{
+	default:
+		format_type = sc.CheckString("{")? FMT_New : FMT_Old;
+		if (format_type == FMT_New) 
+			sc.SetCMode(true);
+		break;
+
+	case FMT_Old:
+		break;
+
+	case FMT_New:
+		sc.MustGetStringName("{");
+		sc.SetCMode(true);
+		break;
+	}
+}
+
+//==========================================================================
+//
+//
+//==========================================================================
+
+bool FMapInfoParser::ParseCloseBrace()
+{
+	if (format_type == FMT_New)
+	{
+		return sc.Compare("}");
+	}
+	else
+	{
+		// We have to assume that the next keyword
+		// starts a new top level block
+		sc.UnGet();
+		return true;
+	}
+}
+
+//==========================================================================
+//
+//
+//==========================================================================
+
+bool FMapInfoParser::CheckAssign()
+{
+	if (format_type == FMT_New) return sc.CheckString("=");
+	else return false;	// force explicit handling
+}
+
+//==========================================================================
+//
+//
+//==========================================================================
+
+void FMapInfoParser::ParseAssign()
+{
+	if (format_type == FMT_New) sc.MustGetStringName("=");
+}
+
+//==========================================================================
+//
+//
+//==========================================================================
+
+void FMapInfoParser::MustParseAssign()
+{
+	if (format_type == FMT_New) sc.MustGetStringName("=");
+	else sc.ScriptError(NULL);
+}
+
+//==========================================================================
+//
+//
+//==========================================================================
+
+void FMapInfoParser::ParseComma()
+{
+	if (format_type == FMT_New) sc.MustGetStringName(",");
+}
+
+//==========================================================================
+//
+//
+//==========================================================================
+
+bool FMapInfoParser::CheckNumber()
+{
+	if (format_type == FMT_New) 
+	{
+		if (sc.CheckString(","))
+		{
+			sc.MustGetNumber();
+			return true;
+		}
+		return false;
+	}
+	else return sc.CheckNumber();
+}
+
+//==========================================================================
+//
+//
+//==========================================================================
+
+bool FMapInfoParser::CheckFloat()
+{
+	if (format_type == FMT_New) 
+	{
+		if (sc.CheckString(","))
+		{
+			sc.MustGetFloat();
+			return true;
+		}
+		return false;
+	}
+	else return sc.CheckFloat();
+}
+
+//==========================================================================
+//
+// skips an entire parameter list that's separated by commas
+//
+//==========================================================================
+
+void FMapInfoParser::SkipToNext()
+{
+	if (sc.CheckString("="))
+	{
+		do
+		{
+			sc.MustGetString();
+		}
+		while (sc.CheckString(","));
+	}
+}
+
 //==========================================================================
 //
 // ParseLookupnamr
@@ -245,6 +389,29 @@ void FMapInfoParser::ParseLumpOrTextureName(char *name)
 
 //==========================================================================
 //
+//
+//==========================================================================
+
+void FMapInfoParser::ParseMusic(FString &name, int &order)
+{
+	sc.MustGetString();
+
+	order = 0;
+	char *colon = strchr (sc.String, ':');
+	if (colon)
+	{
+		order = atoi(colon+1);
+		*colon = 0;
+	}
+	name = sc.String;
+	if (!colon && CheckNumber())
+	{
+		order = sc.Number;
+	}
+}
+
+//==========================================================================
+//
 // ParseCluster
 // Parses a cluster definition
 //
@@ -269,58 +436,39 @@ void FMapInfoParser::ParseCluster()
 	{
 		if (sc.Compare("name"))
 		{
-			ParseOpenParen();
+			ParseAssign();
 			if (ParseLookupName(clusterinfo->ClusterName))
 				clusterinfo->flags |= CLUSTER_LOOKUPCLUSTERNAME;
-			ParseCloseParen();
 		}
 		else if (sc.Compare("entertext"))
 		{
-			ParseOpenParen();
+			ParseAssign();
 			if (ParseLookupName(clusterinfo->EnterText))
 				clusterinfo->flags |= CLUSTER_LOOKUPENTERTEXT;
-			ParseCloseParen();
 		}
 		else if (sc.Compare("exittext"))
 		{
-			ParseOpenParen();
+			ParseAssign();
 			if (ParseLookupName(clusterinfo->ExitText))
 				clusterinfo->flags |= CLUSTER_LOOKUPEXITTEXT;
-			ParseCloseParen();
 		}
 		else if (sc.Compare("music"))
 		{
 			int order = 0;
 
-			ParseOpenParen();
-			sc.MustGetString();
-
-			char *colon = strchr (sc.String, ':');
-			if (colon)
-			{
-				order = atoi(colon+1);
-				*colon = 0;
-			}
-			clusterinfo->MessageMusic = sc.String;
-			if (!colon && CheckNumber())
-			{
-				order = sc.Number;
-			}
-			clusterinfo->musicorder = order;
-			ParseCloseParen();
+			ParseAssign();
+			ParseMusic(clusterinfo->MessageMusic, clusterinfo->musicorder);
 		}
 		else if (sc.Compare("flat"))
 		{
-			ParseOpenParen();
+			ParseAssign();
 			ParseLumpOrTextureName(clusterinfo->finaleflat);
-			ParseCloseParen();
 		}
 		else if (sc.Compare("pic"))
 		{
-			ParseOpenParen();
+			ParseAssign();
 			ParseLumpOrTextureName(clusterinfo->finaleflat);
 			clusterinfo->flags |= CLUSTER_FINALEPIC;
-			ParseCloseParen();
 		}
 		else if (sc.Compare("hub"))
 		{
@@ -328,17 +476,15 @@ void FMapInfoParser::ParseCluster()
 		}
 		else if (sc.Compare("cdtrack"))
 		{
-			ParseOpenParen();
+			ParseAssign();
 			sc.MustGetNumber();
 			clusterinfo->cdtrack = sc.Number;
-			ParseCloseParen();
 		}
 		else if (sc.Compare("cdid"))
 		{
-			ParseOpenParen();
+			ParseAssign();
 			sc.MustGetString();
 			clusterinfo->cdid = strtoul (sc.String, NULL, 16);
-			ParseCloseParen();
 		}
 		else if (sc.Compare("entertextislump"))
 		{
@@ -401,15 +547,14 @@ void FMapInfoParser::ParseNextMap(char *mapname)
 				sc.MustGetString();
 				if (sc.Compare("pic"))
 				{
-					ParseOpenParen();
+					ParseAssign();
 					sc.MustGetString();
 					newSeq.EndType = END_Pic;
 					newSeq.PicName = sc.String;
-					ParseCloseParen();
 				}
 				else if (sc.Compare("hscroll"))
 				{
-					ParseOpenParen();
+					ParseAssign();
 					newSeq.EndType = END_Bunny;
 					sc.MustGetString();
 					newSeq.PicName = sc.String;
@@ -418,18 +563,16 @@ void FMapInfoParser::ParseNextMap(char *mapname)
 					newSeq.PicName2 = sc.String;
 					if (CheckNumber())
 						newSeq.PlayTheEnd = !!sc.Number;
-					ParseCloseParen();
 				}
 				else if (sc.Compare("vscroll"))
 				{
-					ParseOpenParen();
+					ParseAssign();
 					newSeq.EndType = END_Demon;
 					sc.MustGetString();
 					newSeq.PicName = sc.String;
 					ParseComma();
 					sc.MustGetString();
 					newSeq.PicName2 = sc.String;
-					ParseCloseParen();
 				}
 				else if (sc.Compare("cast"))
 				{
@@ -437,14 +580,13 @@ void FMapInfoParser::ParseNextMap(char *mapname)
 				}
 				else if (sc.Compare("music"))
 				{
-					ParseOpenParen();
+					ParseAssign();
 					sc.MustGetString();
 					newSeq.Music = sc.String;
 					if (CheckNumber())
 					{
 						newSeq.MusicLooping = !!sc.Number;
 					}
-					ParseCloseParen();
 				}
 				else
 				{
@@ -548,29 +690,26 @@ void FMapInfoParser::ParseNextMap(char *mapname)
 
 DEFINE_MAP_OPTION(levelnum, true)
 {
-	parse.ParseOpenParen();
+	parse.ParseAssign();
 	parse.sc.MustGetNumber();
 	info->levelnum = parse.sc.Number;
-	parse.ParseCloseParen();
 }
 
 DEFINE_MAP_OPTION(next, true)
 {
-	parse.ParseOpenParen();
+	parse.ParseAssign();
 	parse.ParseNextMap(info->nextmap);
-	parse.ParseCloseParen();
 }
 
 DEFINE_MAP_OPTION(secretnext, true)
 {
-	parse.ParseOpenParen();
+	parse.ParseAssign();
 	parse.ParseNextMap(info->secretmap);
-	parse.ParseCloseParen();
 }
 
 DEFINE_MAP_OPTION(cluster, true)
 {
-	parse.ParseOpenParen();
+	parse.ParseAssign();
 	parse.sc.MustGetNumber();
 	info->cluster = parse.sc.Number;
 
@@ -588,13 +727,11 @@ DEFINE_MAP_OPTION(cluster, true)
 			clusterinfo->flags |= CLUSTER_HUB;
 		}
 	}
-
-	parse.ParseCloseParen();
 }
 
 DEFINE_MAP_OPTION(sky1, true)
 {
-	parse.ParseOpenParen();
+	parse.ParseAssign();
 	parse.ParseLumpOrTextureName(info->skypic1);
 	if (parse.CheckFloat())
 	{
@@ -602,14 +739,13 @@ DEFINE_MAP_OPTION(sky1, true)
 		{
 			parse.sc.Float /= 256;
 		}
-		info->skyspeed1 = parse.sc.Float;
+		info->skyspeed1 = parse.sc.Float * (35.f / 1000.f);
 	}
-	parse.ParseCloseParen();
 }
 
 DEFINE_MAP_OPTION(sky2, true)
 {
-	parse.ParseOpenParen();
+	parse.ParseAssign();
 	parse.ParseLumpOrTextureName(info->skypic2);
 	if (parse.CheckFloat())
 	{
@@ -617,105 +753,69 @@ DEFINE_MAP_OPTION(sky2, true)
 		{
 			parse.sc.Float /= 256;
 		}
-		info->skyspeed2 = parse.sc.Float;
+		info->skyspeed2 = parse.sc.Float * (35.f / 1000.f);
 	}
-	parse.ParseCloseParen();
 }
 
 DEFINE_MAP_OPTION(fade, true)
 {
-	parse.ParseOpenParen();
+	parse.ParseAssign();
 	parse.sc.MustGetString();
 	info->fadeto = V_GetColor(NULL, parse.sc.String);
-	parse.ParseCloseParen();
 }
 
 DEFINE_MAP_OPTION(outsidefog, true)
 {
-	parse.ParseOpenParen();
+	parse.ParseAssign();
 	parse.sc.MustGetString();
 	info->outsidefog = V_GetColor(NULL, parse.sc.String);
-	parse.ParseCloseParen();
 }
 
 DEFINE_MAP_OPTION(titlepatch, true)
 {
-	parse.ParseOpenParen();
+	parse.ParseAssign();
 	parse.ParseLumpOrTextureName(info->pname);
-	parse.ParseCloseParen();
 }
 
 DEFINE_MAP_OPTION(partime, true)
 {
-	parse.ParseOpenParen();
+	parse.ParseAssign();
 	parse.sc.MustGetNumber();
 	info->partime = parse.sc.Number;
-	parse.ParseCloseParen();
 }
 
 DEFINE_MAP_OPTION(par, true)
 {
-	parse.ParseOpenParen();
+	parse.ParseAssign();
 	parse.sc.MustGetNumber();
 	info->partime = parse.sc.Number;
-	parse.ParseCloseParen();
 }
 
 DEFINE_MAP_OPTION(sucktime, true)
 {
-	parse.ParseOpenParen();
+	parse.ParseAssign();
 	parse.sc.MustGetNumber();
 	info->sucktime = parse.sc.Number;
-	parse.ParseCloseParen();
 }
 
 DEFINE_MAP_OPTION(music, true)
 {
-	int order = 0;
-	parse.ParseOpenParen();
-	parse.sc.MustGetString ();
-	char *colon = strchr (parse.sc.String, ':');
-	if (colon)
-	{
-		order = atoi(colon+1);
-		*colon = 0;
-	}
-	info->Music = parse.sc.String;
-	if (!colon && parse.CheckNumber())
-	{
-		order = parse.sc.Number;
-	}
-	info->musicorder = order;
+	parse.ParseAssign();
+	parse.ParseMusic(info->Music, info->musicorder);
 	// Flag the level so that the $MAP command doesn't override this.
 	info->flags2 |= LEVEL2_MUSICDEFINED;
-	parse.ParseCloseParen();
 }
 
 DEFINE_MAP_OPTION(intermusic, true)
 {
-	int order = 0;
-	parse.ParseOpenParen();
-	parse.sc.MustGetString ();
-	char *colon = strchr (parse.sc.String, ':');
-	if (colon)
-	{
-		order = atoi(colon+1);
-		*colon = 0;
-	}
-	info->InterMusic = parse.sc.String;
-	if (!colon && parse.CheckNumber())
-	{
-		order = parse.sc.Number;
-	}
-	info->intermusicorder = order;
-	parse.ParseCloseParen();
+	parse.ParseAssign();
+	parse.ParseMusic(info->InterMusic, info->intermusicorder);
 }
 
 DEFINE_MAP_OPTION(fadetable, true)
 {
-	parse.ParseOpenParen();
+	parse.ParseAssign();
 	parse.ParseLumpOrTextureName(info->fadetable);
-	parse.ParseCloseParen();
 }
 
 DEFINE_MAP_OPTION(evenlighting, true)
@@ -725,95 +825,84 @@ DEFINE_MAP_OPTION(evenlighting, true)
 
 DEFINE_MAP_OPTION(cdtrack, true)
 {
-	parse.ParseOpenParen();
+	parse.ParseAssign();
 	parse.sc.MustGetNumber();
 	info->cdtrack = parse.sc.Number;
-	parse.ParseCloseParen();
 }
 
 DEFINE_MAP_OPTION(cdid, true)
 {
-	parse.ParseOpenParen();
+	parse.ParseAssign();
 	parse.sc.MustGetString();
 	info->cdid = strtoul (parse.sc.String, NULL, 16);
-	parse.ParseCloseParen();
 }
 
 DEFINE_MAP_OPTION(warptrans, true)
 {
-	parse.ParseOpenParen();
+	parse.ParseAssign();
 	parse.sc.MustGetNumber();
 	info->WarpTrans = parse.sc.Number;
-	parse.ParseCloseParen();
 }
 
 DEFINE_MAP_OPTION(vertwallshade, true)
 {
-	parse.ParseOpenParen();
+	parse.ParseAssign();
 	parse.sc.MustGetNumber();
 	info->WallVertLight = (SBYTE)clamp (parse.sc.Number / 2, -128, 127);
-	parse.ParseCloseParen();
 }
 
 DEFINE_MAP_OPTION(horizwallshade, true)
 {
-	parse.ParseOpenParen();
+	parse.ParseAssign();
 	parse.sc.MustGetNumber();
 	info->WallHorizLight = (SBYTE)clamp (parse.sc.Number / 2, -128, 127);
-	parse.ParseCloseParen();
 }
 
 DEFINE_MAP_OPTION(gravity, true)
 {
-	parse.ParseOpenParen();
+	parse.ParseAssign();
 	parse.sc.MustGetFloat();
 	info->gravity = parse.sc.Float;
-	parse.ParseCloseParen();
 }
 
 DEFINE_MAP_OPTION(aircontrol, true)
 {
-	parse.ParseOpenParen();
+	parse.ParseAssign();
 	parse.sc.MustGetFloat();
 	info->aircontrol = parse.sc.Float;
-	parse.ParseCloseParen();
 }
 
 DEFINE_MAP_OPTION(airsupply, true)
 {
-	parse.ParseOpenParen();
+	parse.ParseAssign();
 	parse.sc.MustGetNumber();
 	info->airsupply = parse.sc.Number;
-	parse.ParseCloseParen();
 }
 
 DEFINE_MAP_OPTION(interpic, true)
 {
-	parse.ParseOpenParen();
+	parse.ParseAssign();
 	parse.sc.MustGetString();
 	info->ExitPic = parse.sc.String;
-	parse.ParseCloseParen();
 }
 
 DEFINE_MAP_OPTION(exitpic, true)
 {
-	parse.ParseOpenParen();
+	parse.ParseAssign();
 	parse.sc.MustGetString();
 	info->ExitPic = parse.sc.String;
-	parse.ParseCloseParen();
 }
 
 DEFINE_MAP_OPTION(enterpic, true)
 {
-	parse.ParseOpenParen();
+	parse.ParseAssign();
 	parse.sc.MustGetString();
 	info->EnterPic = parse.sc.String;
-	parse.ParseCloseParen();
 }
 
 DEFINE_MAP_OPTION(specialaction, true)
 {
-	parse.ParseOpenParen();
+	parse.ParseAssign();
 
 	FSpecialAction *sa = &info->specialactions[info->specialactions.Reserve(1)];
 	int min_arg, max_arg;
@@ -834,71 +923,62 @@ DEFINE_MAP_OPTION(specialaction, true)
 		sa->Args[j++] = parse.sc.Number;
 	}
 	if (parse.format_type == parse.FMT_Old) parse.sc.SetCMode(false);
-	parse.ParseCloseParen();
 }
 
 DEFINE_MAP_OPTION(redirect, true)
 {
-	parse.ParseOpenParen();
+	parse.ParseAssign();
 	parse.sc.MustGetString();
 	info->RedirectType = parse.sc.String;
 	parse.ParseComma();
 	parse.ParseLumpOrTextureName(info->RedirectMap);
-	parse.ParseCloseParen();
 }
 
 DEFINE_MAP_OPTION(sndseq, true)
 {
-	parse.ParseOpenParen();
+	parse.ParseAssign();
 	parse.sc.MustGetString();
 	info->SndSeq = parse.sc.String;
-	parse.ParseCloseParen();
 }
 
 DEFINE_MAP_OPTION(sndinfo, true)
 {
-	parse.ParseOpenParen();
+	parse.ParseAssign();
 	parse.sc.MustGetString();
 	info->SoundInfo = parse.sc.String;
-	parse.ParseCloseParen();
 }
 
 DEFINE_MAP_OPTION(soundinfo, true)
 {
-	parse.ParseOpenParen();
+	parse.ParseAssign();
 	parse.sc.MustGetString();
 	info->SoundInfo = parse.sc.String;
-	parse.ParseCloseParen();
 }
 
 DEFINE_MAP_OPTION(translator, true)
 {
-	parse.ParseOpenParen();
+	parse.ParseAssign();
 	parse.sc.MustGetString();
 	info->Translator = parse.sc.String;
-	parse.ParseCloseParen();
 }
 
 DEFINE_MAP_OPTION(bordertexture, true)
 {
-	parse.ParseOpenParen();
+	parse.ParseAssign();
 	parse.ParseLumpOrTextureName(info->bordertexture);
-	parse.ParseCloseParen();
 }
 
 DEFINE_MAP_OPTION(f1, true)
 {
-	parse.ParseOpenParen();
+	parse.ParseAssign();
 	parse.ParseLumpOrTextureName(info->f1);
-	parse.ParseCloseParen();
 }
 
 DEFINE_MAP_OPTION(teamdamage, true)
 {
-	parse.ParseOpenParen();
+	parse.ParseAssign();
 	parse.sc.MustGetFloat();
 	info->teamdamage = parse.sc.Float;
-	parse.ParseCloseParen();
 }
 
 //==========================================================================
@@ -1038,9 +1118,8 @@ void FMapInfoParser::ParseMapDefinition(level_info_t &info)
 			switch (handler->type)
 			{
 			case MITYPE_EATNEXT:
-				ParseOpenParen();
+				ParseAssign();
 				sc.MustGetString();
-				ParseCloseParen();
 				break;
 
 			case MITYPE_IGNORE:
@@ -1079,7 +1158,7 @@ void FMapInfoParser::ParseMapDefinition(level_info_t &info)
 				int set = 1;
 				if (format_type == FMT_New)
 				{
-					if (CheckOpenParen())
+					if (CheckAssign())
 					{
 						sc.MustGetNumber();
 						set = sc.Number;
@@ -1173,7 +1252,6 @@ static int GetDefaultLevelNum(const char *mapname)
 level_info_t *FMapInfoParser::ParseMapHeader(level_info_t &defaultinfo)
 {
 	FName mapname;
-	bool HexenHack = false;
 
 	if (sc.CheckNumber())
 	{	// MAPNAME is a number; assume a Hexen wad
@@ -1277,7 +1355,6 @@ void FMapInfoParser::ParseEpisodeInfo ()
 		{
 			uppercopy (map, sc.String);
 		}
-		sc.MustGetString ();
 	}
 
 	ParseOpenBrace();
@@ -1296,19 +1373,17 @@ void FMapInfoParser::ParseEpisodeInfo ()
 		}
 		else if (sc.Compare ("name"))
 		{
-			ParseOpenParen();
+			ParseAssign();
 			sc.MustGetString ();
 			ReplaceString (&pic, sc.String);
 			picisgfx = false;
-			ParseCloseParen();
 		}
 		else if (sc.Compare ("picname"))
 		{
-			ParseOpenParen();
+			ParseAssign();
 			sc.MustGetString ();
 			ReplaceString (&pic, sc.String);
 			picisgfx = true;
-			ParseCloseParen();
 		}
 		else if (sc.Compare ("remove"))
 		{
@@ -1316,10 +1391,9 @@ void FMapInfoParser::ParseEpisodeInfo ()
 		}
 		else if (sc.Compare ("key"))
 		{
-			ParseOpenParen();
+			ParseAssign();
 			sc.MustGetString ();
 			key = sc.String[0];
-			ParseCloseParen();
 		}
 		else if (sc.Compare("noskillmenu"))
 		{

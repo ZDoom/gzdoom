@@ -80,31 +80,27 @@ void FMapInfoParser::ParseSkill ()
 	{
 		if (sc.Compare ("ammofactor"))
 		{
-			ParseOpenParen();
+			ParseAssign();
 			sc.MustGetFloat ();
 			skill.AmmoFactor = FLOAT2FIXED(sc.Float);
-			ParseCloseParen();
 		}
 		else if (sc.Compare ("doubleammofactor"))
 		{
-			ParseOpenParen();
+			ParseAssign();
 			sc.MustGetFloat ();
 			skill.DoubleAmmoFactor = FLOAT2FIXED(sc.Float);
-			ParseCloseParen();
 		}
 		else if (sc.Compare ("dropammofactor"))
 		{
-			ParseOpenParen();
+			ParseAssign();
 			sc.MustGetFloat ();
 			skill.DropAmmoFactor = FLOAT2FIXED(sc.Float);
-			ParseCloseParen();
 		}
 		else if (sc.Compare ("damagefactor"))
 		{
-			ParseOpenParen();
+			ParseAssign();
 			sc.MustGetFloat ();
 			skill.DamageFactor = FLOAT2FIXED(sc.Float);
-			ParseCloseParen();
 		}
 		else if (sc.Compare ("fastmonsters"))
 		{
@@ -124,28 +120,25 @@ void FMapInfoParser::ParseSkill ()
 		}
 		else if (sc.Compare("respawntime"))
 		{
-			ParseOpenParen();
+			ParseAssign();
 			sc.MustGetFloat ();
 			skill.RespawnCounter = int(sc.Float*TICRATE);
-			ParseCloseParen();
 		}
 		else if (sc.Compare("respawnlimit"))
 		{
-			ParseOpenParen();
+			ParseAssign();
 			sc.MustGetNumber ();
 			skill.RespawnLimit = sc.Number;
-			ParseCloseParen();
 		}
 		else if (sc.Compare("Aggressiveness"))
 		{
-			ParseOpenParen();
+			ParseAssign();
 			sc.MustGetFloat ();
 			skill.Aggressiveness = FRACUNIT - FLOAT2FIXED(clamp(sc.Float, 0.,1.));
-			ParseCloseParen();
 		}
 		else if (sc.Compare("SpawnFilter"))
 		{
-			ParseOpenParen();
+			ParseAssign();
 			if (sc.CheckNumber())
 			{
 				if (sc.Number > 0) skill.SpawnFilter |= (1<<(sc.Number-1));
@@ -159,64 +152,56 @@ void FMapInfoParser::ParseSkill ()
 				else if (sc.Compare("hard")) skill.SpawnFilter |= 8;
 				else if (sc.Compare("nightmare")) skill.SpawnFilter |= 16;
 			}
-			ParseCloseParen();
 		}
 		else if (sc.Compare("ACSReturn"))
 		{
-			ParseOpenParen();
+			ParseAssign();
 			sc.MustGetNumber ();
 			skill.ACSReturn = sc.Number;
-			ParseCloseParen();
 		}
 		else if (sc.Compare("Name"))
 		{
-			ParseOpenParen();
+			ParseAssign();
 			sc.MustGetString ();
 			skill.MenuName = sc.String;
 			skill.MenuNameIsLump = false;
-			ParseCloseParen();
 		}
 		else if (sc.Compare("PlayerClassName"))
 		{
-			ParseOpenParen();
+			ParseAssign();
 			sc.MustGetString ();
 			FName pc = sc.String;
 			ParseComma();
 			sc.MustGetString ();
 			skill.MenuNamesForPlayerClass[pc]=sc.String;
-			ParseCloseParen();
 		}
 		else if (sc.Compare("PicName"))
 		{
-			ParseOpenParen();
+			ParseAssign();
 			sc.MustGetString ();
 			skill.MenuName = sc.String;
 			skill.MenuNameIsLump = true;
-			ParseCloseParen();
 		}
 		else if (sc.Compare("MustConfirm"))
 		{
-			ParseOpenParen();
+			ParseAssign();
 			skill.MustConfirm = true;
 			if (sc.CheckToken(TK_StringConst))
 			{
 				skill.MustConfirmText = sc.String;
 			}
-			ParseCloseParen();
 		}
 		else if (sc.Compare("Key"))
 		{
-			ParseOpenParen();
+			ParseAssign();
 			sc.MustGetString();
 			skill.Shortcut = tolower(sc.String[0]);
-			ParseCloseParen();
 		}
 		else if (sc.Compare("TextColor"))
 		{
-			ParseOpenParen();
+			ParseAssign();
 			sc.MustGetString();
 			skill.TextColor.Format("[%s]", sc.String);
-			ParseCloseParen();
 		}
 		else if (!ParseCloseBrace())
 		{

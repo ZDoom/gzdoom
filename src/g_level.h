@@ -75,113 +75,26 @@ struct FMapInfoParser
 	}
 
 	bool ParseLookupName(FString &dest);
+	void ParseMusic(FString &name, int &order);
+	void ParseLumpOrTextureName(char *name);
+
 	void ParseCluster();
 	void ParseNextMap(char *mapname);
-	void ParseLumpOrTextureName(char *name);
 	level_info_t *ParseMapHeader(level_info_t &defaultinfo);
 	void ParseMapDefinition(level_info_t &leveldef);
 	void ParseEpisodeInfo ();
 	void ParseSkill ();
 	void ParseMapInfo (int lump, level_info_t &gamedefaults);
 
-	void ParseOpenBrace()
-	{
-		switch(format_type)
-		{
-		default:
-			format_type = sc.CheckString("{")? FMT_New : FMT_Old;
-			if (format_type == FMT_New) sc.SetCMode(true);
-			break;
-
-		case FMT_Old:
-			break;
-
-		case FMT_New:
-			sc.MustGetStringName("{");
-			sc.SetCMode(true);
-			break;
-		}
-	}
-
-	bool ParseCloseBrace()
-	{
-		if (format_type == FMT_New)
-		{
-			return sc.Compare("}");
-		}
-		else
-		{
-			// We have to assume that the next keyword
-			// starts a new top level block
-			sc.UnGet();
-			return true;
-		}
-	}
-
-	bool CheckOpenParen()
-	{
-		if (format_type == FMT_New) return sc.CheckString("=");
-		else return false;	// force explicit handling
-	}
-
-	void ParseOpenParen()
-	{
-		if (format_type == FMT_New) sc.MustGetStringName("=");
-	}
-
-	void MustParseOpenParen()
-	{
-		if (format_type == FMT_New) sc.MustGetStringName("=");
-		else sc.ScriptError(NULL);
-	}
-
-	void ParseCloseParen()
-	{
-		//if (format_type == FMT_New) sc.MustGetStringName(")");
-	}
-
-	void ParseComma()
-	{
-		if (format_type == FMT_New) sc.MustGetStringName(",");
-	}
-
-	bool CheckNumber()
-	{
-		if (format_type == FMT_New) 
-		{
-			if (sc.CheckString(","))
-			{
-				sc.MustGetNumber();
-				return true;
-			}
-			return false;
-		}
-		else return sc.CheckNumber();
-	}
-
-	bool CheckFloat()
-	{
-		if (format_type == FMT_New) 
-		{
-			if (sc.CheckString(","))
-			{
-				sc.MustGetFloat();
-				return true;
-			}
-			return false;
-		}
-		else return sc.CheckFloat();
-	}
-
-	// skips an entire parameter list that's enclosed in parentheses.
-	void SkipToNext()
-	{
-		if (sc.CheckString("("))
-		{
-			while (!sc.CheckString(")"));
-			sc.MustGetStringName("(");
-		}
-	}
+	void ParseOpenBrace();
+	bool ParseCloseBrace();
+	bool CheckAssign();
+	void ParseAssign();
+	void MustParseAssign();
+	void ParseComma();
+	bool CheckNumber();
+	bool CheckFloat();
+	void SkipToNext();
 };
 
 #define DEFINE_MAP_OPTION(name, old) \

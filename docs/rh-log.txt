@@ -1,4 +1,5 @@
 January 31, 2009
+- Changed FMOD init() to allocate some virtual channels.
 - Fixed clipping in D3DFB::DrawTextureV() for good by using a scissor test.
 
 January 30, 2009

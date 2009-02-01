@@ -163,7 +163,8 @@ void S_NoiseDebug (void)
 	screen->DrawText (SmallFont, CR_GOLD, 220, y, "vol", TAG_DONE);
 	screen->DrawText (SmallFont, CR_GOLD, 260, y, "dist", TAG_DONE);
 	screen->DrawText (SmallFont, CR_GOLD, 300, y, "chan", TAG_DONE);
-	screen->DrawText (SmallFont, CR_GOLD, 340, y, "flags", TAG_DONE);
+	screen->DrawText (SmallFont, CR_GOLD, 340, y, "pri", TAG_DONE);
+	screen->DrawText (SmallFont, CR_GOLD, 380, y, "flags", TAG_DONE);
 	y += 8;
 
 	if (Channels == NULL)
@@ -231,6 +232,10 @@ void S_NoiseDebug (void)
 		mysnprintf(temp, countof(temp), "%d", chan->EntChannel);
 		screen->DrawText(SmallFont, color, 300, y, temp, TAG_DONE);
 
+		// Priority
+		mysnprintf(temp, countof(temp), "%d", chan->Priority);
+		screen->DrawText(SmallFont, color, 340, y, temp, TAG_DONE);
+
 		// Flags
 		mysnprintf(temp, countof(temp), "%s3%sZ%sU%sM%sN%sA%sL%sE",
 			(chan->ChanFlags & CHAN_IS3D)			? TEXTCOLOR_GREEN : TEXTCOLOR_BLACK,
@@ -241,7 +246,7 @@ void S_NoiseDebug (void)
 			(chan->ChanFlags & CHAN_AREA)			? TEXTCOLOR_GREEN : TEXTCOLOR_BLACK,
 			(chan->ChanFlags & CHAN_LOOP)			? TEXTCOLOR_GREEN : TEXTCOLOR_BLACK,
 			(chan->ChanFlags & CHAN_EVICTED)		? TEXTCOLOR_GREEN : TEXTCOLOR_BLACK);
-		screen->DrawText(SmallFont, color, 340, y, temp, TAG_DONE);
+		screen->DrawText(SmallFont, color, 380, y, temp, TAG_DONE);
 
 		y += 8;
 		if (chan->PrevChan == &Channels)
@@ -940,7 +945,7 @@ static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyO
 	// Select priority.
 	if (type == SOURCE_None || actor == players[consoleplayer].camera)
 	{
-		basepriority = 40;
+		basepriority = 80;
 	}
 	else
 	{
@@ -1664,7 +1669,7 @@ void S_EvictAllChannels()
 			{
 				S_StopChannel(chan);
 			}
-			assert(chan->NextChan == next);
+//			assert(chan->NextChan == next);
 		}
 	}
 }

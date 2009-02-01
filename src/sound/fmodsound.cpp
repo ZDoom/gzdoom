@@ -805,7 +805,7 @@ bool FMODSoundRenderer::Init()
 	}
 	for (;;)
 	{
-		result = Sys->init(snd_channels + NUM_EXTRA_SOFTWARE_CHANNELS, initflags, 0);
+		result = Sys->init(MAX(*snd_channels, MAX_CHANNELS), initflags, 0);
 		if (result == FMOD_ERR_OUTPUT_CREATEBUFFER)
 		{ 
 			// Possible causes of a buffer creation failure:
@@ -1435,7 +1435,7 @@ FISoundChannel *FMODSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener *
 	GDistScale = distscale;
 
 	// Experiments indicate that playSound will ignore priorities and always succeed
-	// as long as the paremeters are set properly. It will first try to kick out sounds
+	// as long as the parameters are set properly. It will first try to kick out sounds
 	// with the same priority level but has no problem with kicking out sounds at
 	// higher priority levels if it needs to.
 	result = Sys->playSound(FMOD_CHANNEL_FREE, (FMOD::Sound *)sfx.data, true, &chan);
@@ -1488,6 +1488,7 @@ FISoundChannel *FMODSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener *
 			return NULL;
 		}
 		chan->setPaused(false);
+		chan->getPriority(&def_priority);
 		FISoundChannel *schan = CommonChannelSetup(chan, reuse_chan);
 		schan->Rolloff = *rolloff;
 		return schan;

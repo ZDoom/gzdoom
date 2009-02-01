@@ -22,6 +22,7 @@
 #include "m_misc.h"
 #include "templates.h"
 #include "doomstat.h"
+#include "v_text.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -1012,7 +1013,7 @@ void STACK_ARGS FScanner::ScriptMessage (const char *message, ...)
 		va_end (arglist);
 	}
 
-	Printf ("Script error, \"%s\" line %d:\n%s\n", ScriptName.GetChars(),
+	Printf (TEXTCOLOR_RED"Script error, \"%s\" line %d:\n%s\n", ScriptName.GetChars(),
 		AlreadyGot? AlreadyGotLine : Line, composed.GetChars());
 }
 

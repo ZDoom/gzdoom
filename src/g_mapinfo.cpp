@@ -335,7 +335,7 @@ void FMapInfoParser::SkipToNext()
 
 //==========================================================================
 //
-// ParseLookupnamr
+// ParseLookupname
 // Parses a string that may reference the string table
 //
 //==========================================================================
@@ -367,9 +367,11 @@ bool FMapInfoParser::ParseLookupName(FString &dest)
 		do
 		{
 			sc.MustGetString();
-			dest += sc.String;
+			dest << sc.String << '\n';
 		}
 		while (sc.CheckString(","));
+		// strip off the last newline
+		dest.Truncate(long(dest.Len()-1));
 		return false;
 	}
 }
@@ -541,7 +543,6 @@ void FMapInfoParser::ParseNextMap(char *mapname)
 			newSeq.EndType = END_Pic1;
 			newSeq.PlayTheEnd = false;
 			newSeq.MusicLooping = true;
-			sc.MustGetStringName("{");
 			while (!sc.CheckString("}"))
 			{
 				sc.MustGetString();

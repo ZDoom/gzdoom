@@ -46,6 +46,7 @@
 #include "gi.h"
 #include "i_system.h"
 #include "g_level.h"
+#include "p_acs.h"
 
 SBarInfo *SBarInfoScript[NUM_SCRIPTS] = {NULL,NULL,NULL,NULL,NULL};
 static const char *DefaultScriptNames[NUM_SCRIPTS] =

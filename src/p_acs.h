@@ -36,6 +36,7 @@
 #define __P_ACS_H__
 
 #include "dobject.h"
+#include "dthinker.h"
 #include "doomtype.h"
 
 #define LOCAL_SIZE				20
@@ -43,6 +44,34 @@
 
 class FFont;
 class FileReader;
+
+
+enum
+{
+	NUM_WORLDVARS = 256,
+	NUM_GLOBALVARS = 64
+};
+
+struct InitIntToZero
+{
+	void Init(int &v)
+	{
+		v = 0;
+	}
+};
+typedef TMap<SDWORD, SDWORD, THashTraits<SDWORD>, InitIntToZero> FWorldGlobalArray;
+
+// ACS variables with world scope
+extern SDWORD ACS_WorldVars[NUM_WORLDVARS];
+extern FWorldGlobalArray ACS_WorldArrays[NUM_WORLDVARS];
+
+// ACS variables with global scope
+extern SDWORD ACS_GlobalVars[NUM_GLOBALVARS];
+extern FWorldGlobalArray ACS_GlobalArrays[NUM_GLOBALVARS];
+
+void P_ReadACSVars(PNGHandle *);
+void P_WriteACSVars(FILE*);
+void P_ClearACSVars(bool);
 
 // The in-memory version
 struct ScriptPtr

@@ -98,6 +98,7 @@ EXTERN_CVAR (Int, disableautosave)
 static void SetEndSequence (char *nextmap, int type);
 void G_VerifySkill();
 
+
 static FRandom pr_classchoice ("RandomPlayerClassChoice");
 
 TArray<EndSequence> EndSequences;
@@ -110,19 +111,12 @@ EndSequence::EndSequence()
 	PlayTheEnd = false;
 }
 
+extern level_info_t TheDefaultLevelInfo;
 extern bool timingdemo;
 
 // Start time for timing demos
 int starttime;
 
-
-// ACS variables with world scope
-SDWORD ACS_WorldVars[NUM_WORLDVARS];
-FWorldGlobalArray ACS_WorldArrays[NUM_WORLDVARS];
-
-// ACS variables with global scope
-SDWORD ACS_GlobalVars[NUM_GLOBALVARS];
-FWorldGlobalArray ACS_GlobalArrays[NUM_GLOBALVARS];
 
 extern bool netdemo;
 extern FString BackupSaveName;
@@ -137,19 +131,10 @@ void *statcopy;					// for statistics driver
 
 FLevelLocals level;			// info about current level
 
-TArray<cluster_info_t> wadclusterinfos;
-TArray<level_info_t> wadlevelinfos;
-
-static level_info_t TheDefaultLevelInfo;
-static cluster_info_t TheDefaultClusterInfo;
-
-
-
-
-int FindWadLevelInfo (const char *name);
-int FindWadClusterInfo (int cluster);
-void ClearEpisodes();
-
+//==========================================================================
+//
+//
+//==========================================================================
 
 int FindEndSequence (int type, const char *picname)
 {
@@ -167,6 +152,11 @@ int FindEndSequence (int type, const char *picname)
 	return -1;
 }
 
+//==========================================================================
+//
+//
+//==========================================================================
+
 static void SetEndSequence (char *nextmap, int type)
 {
 	int seqnum;
@@ -181,6 +171,11 @@ static void SetEndSequence (char *nextmap, int type)
 	strcpy (nextmap, "enDSeQ");
 	*((WORD *)(nextmap + 6)) = (WORD)seqnum;
 }
+
+//==========================================================================
+//
+//
+//==========================================================================
 
 void G_SetForEndGame (char *nextmap)
 {
@@ -205,74 +200,14 @@ void G_SetForEndGame (char *nextmap)
 	}
 }
 
-void G_UnloadMapInfo ()
-{
-	G_ClearSnapshots ();
-
-	wadlevelinfos.Clear();
-	wadclusterinfos.Clear();
-
-	ClearEpisodes();
-}
-
-level_info_t *FindLevelByWarpTrans (int num)
-{
-	for (unsigned i = wadlevelinfos.Size(); i-- != 0; )
-		if (wadlevelinfos[i].WarpTrans == num)
-			return &wadlevelinfos[i];
-
-	return NULL;
-}
-
-static void zapDefereds (acsdefered_t *def)
-{
-	while (def)
-	{
-		acsdefered_t *next = def->next;
-		delete def;
-		def = next;
-	}
-}
-
-void P_RemoveDefereds (void)
-{
-	// Remove any existing defereds
-	for (unsigned int i = 0; i < wadlevelinfos.Size(); i++)
-	{
-		if (wadlevelinfos[i].defered)
-		{
-			zapDefereds (wadlevelinfos[i].defered);
-			wadlevelinfos[i].defered = NULL;
-		}
-	}
-}
-
-bool CheckWarpTransMap (FString &mapname, bool substitute)
-{
-	if (mapname[0] == '&' && (mapname[1] & 0xDF) == 'W' &&
-		(mapname[2] & 0xDF) == 'T' && mapname[3] == '@')
-	{
-		level_info_t *lev = FindLevelByWarpTrans (atoi (&mapname[4]));
-		if (lev != NULL)
-		{
-			mapname = lev->mapname;
-			return true;
-		}
-		else if (substitute)
-		{
-			char a = mapname[4], b = mapname[5];
-			mapname = "MAP";
-			mapname << a << b;
-		}
-	}
-	return false;
-}
-
+//==========================================================================
 //
 // G_InitNew
 // Can be called by the startup code or the menu task,
 // consoleplayer, playeringame[] should be set.
 //
+//==========================================================================
+
 static FString d_mapname;
 static int d_skill=-1;
 
@@ -283,6 +218,11 @@ void G_DeferedInitNew (const char *mapname, int newskill)
 	CheckWarpTransMap (d_mapname, true);
 	gameaction = ga_newgame2;
 }
+
+//==========================================================================
+//
+//
+//==========================================================================
 
 CCMD (map)
 {
@@ -308,6 +248,11 @@ CCMD (map)
 		Printf ("Usage: map <map name>\n");
 	}
 }
+
+//==========================================================================
+//
+//
+//==========================================================================
 
 CCMD (open)
 {
@@ -336,6 +281,11 @@ CCMD (open)
 	}
 }
 
+
+//==========================================================================
+//
+//
+//==========================================================================
 
 void G_NewInit ()
 {
@@ -369,6 +319,11 @@ void G_NewInit ()
 	NextSkill = -1;
 }
 
+//==========================================================================
+//
+//
+//==========================================================================
+
 void G_DoNewGame (void)
 {
 	G_NewInit ();
@@ -381,10 +336,15 @@ void G_DoNewGame (void)
 	gameaction = ga_nothing;
 }
 
+//==========================================================================
+//
 // Initializes player classes in case they are random.
 // This gets called at the start of a new game, and the classes
 // chosen here are used for the remainder of a single-player
 // or coop game. These are ignored for deathmatch.
+//
+//==========================================================================
+
 
 static void InitPlayerClasses ()
 {
@@ -402,6 +362,11 @@ static void InitPlayerClasses ()
 		}
 	}
 }
+
+//==========================================================================
+//
+//
+//==========================================================================
 
 void G_InitNew (const char *mapname, bool bTitleLevel)
 {
@@ -518,16 +483,7 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 			rngseed = rngseed*3/2;
 		}
 		FRandom::StaticClearRandom ();
-		memset (ACS_WorldVars, 0, sizeof(ACS_WorldVars));
-		memset (ACS_GlobalVars, 0, sizeof(ACS_GlobalVars));
-		for (i = 0; i < NUM_WORLDVARS; ++i)
-		{
-			ACS_WorldArrays[i].Clear ();
-		}
-		for (i = 0; i < NUM_GLOBALVARS; ++i)
-		{
-			ACS_GlobalArrays[i].Clear ();
-		}
+		P_ClearACSVars(true);
 		level.time = 0;
 		level.maptime = 0;
 		level.totaltime = 0;
@@ -581,9 +537,14 @@ static bool		resetinventory;	// Reset the inventory to the player's default for 
 static bool		unloading;
 static bool		g_nomonsters;
 
+//==========================================================================
+//
 // [RH] The position parameter to these next three functions should
 //		match the first parameter of the single player start spots
 //		that should appear in the next map.
+//
+//==========================================================================
+
 
 void G_ChangeLevel(const char *levelname, int position, bool keepFacing, int nextSkill, 
 				   bool nointermission, bool resetinv, bool nomonsters)
@@ -598,7 +559,7 @@ void G_ChangeLevel(const char *levelname, int position, bool keepFacing, int nex
 
 	if (strncmp(levelname, "enDSeQ", 6))
 	{
-		level_info_t *nextinfo = CheckLevelRedirect (FindLevelInfo (nextlevel));
+		level_info_t *nextinfo = FindLevelInfo (nextlevel)->CheckLevelRedirect ();
 		if (nextinfo)
 		{
 			nextlevel = nextinfo->mapname;
@@ -660,6 +621,11 @@ void G_ChangeLevel(const char *levelname, int position, bool keepFacing, int nex
 	}
 }
 
+//==========================================================================
+//
+//
+//==========================================================================
+
 const char *G_GetExitMap()
 {
 	return level.nextmap;
@@ -679,6 +645,11 @@ const char *G_GetSecretExitMap()
 	return nextmap;
 }
 
+//==========================================================================
+//
+//
+//==========================================================================
+
 void G_ExitLevel (int position, bool keepFacing)
 {
 	G_ChangeLevel(G_GetExitMap(), position, keepFacing);
@@ -688,6 +659,11 @@ void G_SecretExitLevel (int position)
 {
 	G_ChangeLevel(G_GetSecretExitMap(), position, false);
 }
+
+//==========================================================================
+//
+//
+//==========================================================================
 
 void G_DoCompleted (void)
 {
@@ -809,11 +785,7 @@ void G_DoCompleted (void)
 
 		if (mode == FINISH_NextHub)
 		{ // Reset world variables for the new hub.
-			memset (ACS_WorldVars, 0, sizeof(ACS_WorldVars));
-			for (i = 0; i < NUM_WORLDVARS; ++i)
-			{
-				ACS_WorldArrays[i].Clear ();
-			}
+			P_ClearACSVars(false);
 		}
 		// With hub statistics the time should be per hub.
 		// Additionally there is a global time counter now so nothing is missed by changing it
@@ -843,6 +815,11 @@ void G_DoCompleted (void)
 	WI_Start (&wminfo);
 }
 
+//==========================================================================
+//
+//
+//==========================================================================
+
 class DAutosaver : public DThinker
 {
 	DECLARE_CLASS (DAutosaver, DThinker)
@@ -858,9 +835,12 @@ void DAutosaver::Tick ()
 	Destroy ();
 }
 
+//==========================================================================
 //
 // G_DoLoadLevel 
 //
+//==========================================================================
+
 extern gamestate_t 	wipegamestate; 
  
 void G_DoLoadLevel (int position, bool autosave)
@@ -1005,9 +985,12 @@ void G_DoLoadLevel (int position, bool autosave)
 }
 
 
+//==========================================================================
 //
 // G_WorldDone 
 //
+//==========================================================================
+
 void G_WorldDone (void) 
 { 
 	cluster_info_t *nextcluster;
@@ -1062,6 +1045,11 @@ void G_WorldDone (void)
 	}
 } 
  
+//==========================================================================
+//
+//
+//==========================================================================
+
 void G_DoWorldDone (void) 
 {		 
 	gamestate = GS_LEVEL;
@@ -1205,6 +1193,11 @@ void G_FinishTravel ()
 	}
 }
  
+//==========================================================================
+//
+//
+//==========================================================================
+
 void G_InitLevelLocals ()
 {
 	level_info_t *info;
@@ -1225,7 +1218,6 @@ void G_InitLevelLocals ()
 	level.info = info;
 	level.skyspeed1 = info->skyspeed1;
 	level.skyspeed2 = info->skyspeed2;
-	info = (level_info_t *)info;
 	strncpy (level.skypic2, info->skypic2, 8);
 	level.fadeto = info->fadeto;
 	level.cdtrack = info->cdtrack;
@@ -1307,6 +1299,11 @@ void G_InitLevelLocals ()
 	NormalLight.ChangeFade (level.fadeto);
 }
 
+//==========================================================================
+//
+//
+//==========================================================================
+
 bool FLevelLocals::IsJumpingAllowed() const
 {
 	if (dmflags & DF_NO_JUMP)
@@ -1315,6 +1312,11 @@ bool FLevelLocals::IsJumpingAllowed() const
 		return true;
 	return !(level.flags & LEVEL_JUMP_NO);
 }
+
+//==========================================================================
+//
+//
+//==========================================================================
 
 bool FLevelLocals::IsCrouchingAllowed() const
 {
@@ -1325,6 +1327,11 @@ bool FLevelLocals::IsCrouchingAllowed() const
 	return !(level.flags & LEVEL_CROUCH_NO);
 }
 
+//==========================================================================
+//
+//
+//==========================================================================
+
 bool FLevelLocals::IsFreelookAllowed() const
 {
 	if (level.flags & LEVEL_FREELOOK_NO)
@@ -1333,6 +1340,11 @@ bool FLevelLocals::IsFreelookAllowed() const
 		return true;
 	return !(dmflags & DF_NO_FREELOOK);
 }
+
+//==========================================================================
+//
+//
+//==========================================================================
 
 FString CalcMapName (int episode, int level)
 {
@@ -1350,66 +1362,10 @@ FString CalcMapName (int episode, int level)
 	return lumpname;
 }
 
-level_info_t *FindLevelInfo (const char *mapname)
-{
-	int i;
-
-	if ((i = FindWadLevelInfo (mapname)) > -1)
-		return &wadlevelinfos[i];
-	else
-	{
-		if (TheDefaultLevelInfo.LevelName.IsEmpty())
-		{
-			uppercopy(TheDefaultLevelInfo.skypic1, "SKY1");
-			uppercopy(TheDefaultLevelInfo.skypic2, "SKY1");
-			TheDefaultLevelInfo.LevelName = "Unnamed";
-		}
-		return &TheDefaultLevelInfo;
-	}
-}
-
-level_info_t *FindLevelByNum (int num)
-{
-	for (unsigned int i = 0; i < wadlevelinfos.Size(); i++)
-		if (wadlevelinfos[i].levelnum == num)
-			return &wadlevelinfos[i];
-
-	return NULL;
-}
-
-level_info_t *CheckLevelRedirect (level_info_t *info)
-{
-	if (info->RedirectType != NAME_None)
-	{
-		const PClass *type = PClass::FindClass(info->RedirectType);
-		if (type != NULL)
-		{
-			for (int i = 0; i < MAXPLAYERS; ++i)
-			{
-				if (playeringame[i] && players[i].mo->FindInventory (type))
-				{
-					// check for actual presence of the map.
-					if (P_CheckMapData(info->RedirectMap))
-					{
-						return FindLevelInfo(info->RedirectMap);
-					}
-					break;
-				}
-			}
-		}
-	}
-	return NULL;
-}
-
-cluster_info_t *FindClusterInfo (int cluster)
-{
-	int i;
-
-	if ((i = FindWadClusterInfo (cluster)) > -1)
-		return &wadclusterinfos[i];
-	else
-		return &TheDefaultClusterInfo;
-}
+//==========================================================================
+//
+//
+//==========================================================================
 
 void G_AirControlChanged ()
 {
@@ -1424,6 +1380,11 @@ void G_AirControlChanged ()
 		level.airfriction = (fixed_t)(fric * 65536.f);
 	}
 }
+
+//==========================================================================
+//
+//
+//==========================================================================
 
 void G_SerializeLevel (FArchive &arc, bool hubLoad)
 {
@@ -1537,13 +1498,18 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 	}
 }
 
+//==========================================================================
+//
 // Archives the current level
+//
+//==========================================================================
+
 void G_SnapshotLevel ()
 {
 	if (level.info->snapshot)
 		delete level.info->snapshot;
 
-	if (level.info->mapname[0] != 0 || level.info == &TheDefaultLevelInfo)
+	if (level.info->isValid())
 	{
 		level.info->snapshotVer = SAVEVER;
 		level.info->snapshot = new FCompressedMemFile;
@@ -1556,14 +1522,19 @@ void G_SnapshotLevel ()
 	}
 }
 
+//==========================================================================
+//
 // Unarchives the current level based on its snapshot
 // The level should have already been loaded and setup.
+//
+//==========================================================================
+
 void G_UnSnapshotLevel (bool hubLoad)
 {
 	if (level.info->snapshot == NULL)
 		return;
 
-	if (level.info->mapname[0] != 0 || level.info == &TheDefaultLevelInfo)
+	if (level.info->isValid())
 	{
 		SaveVersion = level.info->snapshotVer;
 		level.info->snapshot->Reopen ();
@@ -1601,21 +1572,13 @@ void G_UnSnapshotLevel (bool hubLoad)
 		}
 	}
 	// No reason to keep the snapshot around once the level's been entered.
-	delete level.info->snapshot;
-	level.info->snapshot = NULL;
+	level.info->ClearSnapshot();
 }
 
-void G_ClearSnapshots (void)
-{
-	for (unsigned int i = 0; i < wadlevelinfos.Size(); i++)
-	{
-		if (wadlevelinfos[i].snapshot)
-		{
-			delete wadlevelinfos[i].snapshot;
-			wadlevelinfos[i].snapshot = NULL;
-		}
-	}
-}
+//==========================================================================
+//
+//
+//==========================================================================
 
 static void writeMapName (FArchive &arc, const char *name)
 {
@@ -1632,12 +1595,22 @@ static void writeMapName (FArchive &arc, const char *name)
 	arc.Write (name, size);
 }
 
+//==========================================================================
+//
+//
+//==========================================================================
+
 static void writeSnapShot (FArchive &arc, level_info_t *i)
 {
 	arc << i->snapshotVer;
 	writeMapName (arc, i->mapname);
 	i->snapshot->Serialize (arc);
 }
+
+//==========================================================================
+//
+//
+//==========================================================================
 
 void G_WriteSnapshots (FILE *file)
 {
@@ -1705,6 +1678,11 @@ void G_WriteSnapshots (FILE *file)
 		arc3 << pnum;
 	}
 }
+
+//==========================================================================
+//
+//
+//==========================================================================
 
 void G_ReadSnapshots (PNGHandle *png)
 {
@@ -1792,11 +1770,21 @@ void G_ReadSnapshots (PNGHandle *png)
 }
 
 
+//==========================================================================
+//
+//
+//==========================================================================
+
 static void writeDefereds (FArchive &arc, level_info_t *i)
 {
 	writeMapName (arc, i->mapname);
 	arc << i->defered;
 }
+
+//==========================================================================
+//
+//
+//==========================================================================
 
 void P_WriteACSDefereds (FILE *file)
 {
@@ -1822,6 +1810,11 @@ void P_WriteACSDefereds (FILE *file)
 		delete arc;
 	}
 }
+
+//==========================================================================
+//
+//
+//==========================================================================
 
 void P_ReadACSDefereds (PNGHandle *png)
 {
@@ -1853,6 +1846,11 @@ void P_ReadACSDefereds (PNGHandle *png)
 }
 
 
+//==========================================================================
+//
+//
+//==========================================================================
+
 void FLevelLocals::Tick ()
 {
 	// Reset carry sectors
@@ -1861,6 +1859,11 @@ void FLevelLocals::Tick ()
 		memset (Scrolls, 0, sizeof(*Scrolls)*numsectors);
 	}
 }
+
+//==========================================================================
+//
+//
+//==========================================================================
 
 void FLevelLocals::AddScroller (DScroller *scroller, int secnum)
 {

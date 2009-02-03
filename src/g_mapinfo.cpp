@@ -46,11 +46,26 @@
 #include "i_system.h"
 #include "gi.h"
 #include "gstrings.h"
+#include "farchive.h"
+#include "p_acs.h"
+#include "doomstat.h"
+#include "d_player.h"
 
 int FindEndSequence (int type, const char *picname);
 
 
-int FindWadLevelInfo (const char *name)
+TArray<cluster_info_t> wadclusterinfos;
+TArray<level_info_t> wadlevelinfos;
+
+level_info_t TheDefaultLevelInfo;
+static cluster_info_t TheDefaultClusterInfo;
+
+//==========================================================================
+//
+//
+//==========================================================================
+
+static int FindWadLevelInfo (const char *name)
 {
 	for (unsigned int i = 0; i < wadlevelinfos.Size(); i++)
 		if (!strnicmp (name, wadlevelinfos[i].mapname, 8))
@@ -59,7 +74,90 @@ int FindWadLevelInfo (const char *name)
 	return -1;
 }
 
-int FindWadClusterInfo (int cluster)
+//==========================================================================
+//
+//
+//==========================================================================
+
+level_info_t *FindLevelInfo (const char *mapname)
+{
+	int i;
+
+	if ((i = FindWadLevelInfo (mapname)) > -1)
+		return &wadlevelinfos[i];
+	else
+	{
+		if (TheDefaultLevelInfo.LevelName.IsEmpty())
+		{
+			uppercopy(TheDefaultLevelInfo.skypic1, "SKY1");
+			uppercopy(TheDefaultLevelInfo.skypic2, "SKY1");
+			TheDefaultLevelInfo.LevelName = "Unnamed";
+		}
+		return &TheDefaultLevelInfo;
+	}
+}
+
+//==========================================================================
+//
+//
+//==========================================================================
+
+level_info_t *FindLevelByNum (int num)
+{
+	for (unsigned int i = 0; i < wadlevelinfos.Size(); i++)
+		if (wadlevelinfos[i].levelnum == num)
+			return &wadlevelinfos[i];
+
+	return NULL;
+}
+
+
+//==========================================================================
+//
+//
+//==========================================================================
+
+static level_info_t *FindLevelByWarpTrans (int num)
+{
+	for (unsigned i = wadlevelinfos.Size(); i-- != 0; )
+		if (wadlevelinfos[i].WarpTrans == num)
+			return &wadlevelinfos[i];
+
+	return NULL;
+}
+
+//==========================================================================
+//
+//
+//==========================================================================
+
+bool CheckWarpTransMap (FString &mapname, bool substitute)
+{
+	if (mapname[0] == '&' && (mapname[1] & 0xDF) == 'W' &&
+		(mapname[2] & 0xDF) == 'T' && mapname[3] == '@')
+	{
+		level_info_t *lev = FindLevelByWarpTrans (atoi (&mapname[4]));
+		if (lev != NULL)
+		{
+			mapname = lev->mapname;
+			return true;
+		}
+		else if (substitute)
+		{
+			char a = mapname[4], b = mapname[5];
+			mapname = "MAP";
+			mapname << a << b;
+		}
+	}
+	return false;
+}
+
+//==========================================================================
+//
+//
+//==========================================================================
+
+static int FindWadClusterInfo (int cluster)
 {
 	for (unsigned int i = 0; i < wadclusterinfos.Size(); i++)
 		if (wadclusterinfos[i].cluster == cluster)
@@ -67,6 +165,49 @@ int FindWadClusterInfo (int cluster)
 		
 	return -1;
 }
+
+//==========================================================================
+//
+//
+//==========================================================================
+
+cluster_info_t *FindClusterInfo (int cluster)
+{
+	int i;
+
+	if ((i = FindWadClusterInfo (cluster)) > -1)
+		return &wadclusterinfos[i];
+	else
+		return &TheDefaultClusterInfo;
+}
+
+//==========================================================================
+//
+//
+//==========================================================================
+
+void G_ClearSnapshots (void)
+{
+	for (unsigned int i = 0; i < wadlevelinfos.Size(); i++)
+	{
+		wadlevelinfos[i].ClearSnapshot();
+	}
+}
+
+//==========================================================================
+//
+// Remove any existing defereds
+//
+//==========================================================================
+
+void P_RemoveDefereds (void)
+{
+	for (unsigned int i = 0; i < wadlevelinfos.Size(); i++)
+	{
+		wadlevelinfos[i].ClearDefered();
+	}
+}
+
 
 //==========================================================================
 //
@@ -168,6 +309,73 @@ FString level_info_t::LookupLevelName()
 	else return LevelName;
 }
 
+
+//==========================================================================
+//
+//
+//==========================================================================
+
+void level_info_t::ClearSnapshot()
+{
+	if (snapshot != NULL) delete snapshot;
+	snapshot = NULL;
+}
+
+//==========================================================================
+//
+//
+//==========================================================================
+
+void level_info_t::ClearDefered()
+{
+	acsdefered_t *def = defered;
+	while (def)
+	{
+		acsdefered_t *next = def->next;
+		delete def;
+		def = next;
+	}
+	defered = NULL;
+}
+
+//==========================================================================
+//
+//
+//==========================================================================
+
+level_info_t *level_info_t::CheckLevelRedirect ()
+{
+	if (RedirectType != NAME_None)
+	{
+		const PClass *type = PClass::FindClass(RedirectType);
+		if (type != NULL)
+		{
+			for (int i = 0; i < MAXPLAYERS; ++i)
+			{
+				if (playeringame[i] && players[i].mo->FindInventory (type))
+				{
+					// check for actual presence of the map.
+					if (P_CheckMapData(RedirectMap))
+					{
+						return FindLevelInfo(RedirectMap);
+					}
+					break;
+				}
+			}
+		}
+	}
+	return NULL;
+}
+
+//==========================================================================
+//
+//
+//==========================================================================
+
+bool level_info_t::isValid()
+{
+	return mapname[0] != 0 || this == &TheDefaultLevelInfo;
+}
 
 //==========================================================================
 //
@@ -1608,6 +1816,8 @@ void G_ParseMapInfo ()
 {
 	int lump, lastlump = 0;
 	level_info_t gamedefaults;
+
+	atterm(ClearEpisodes);
 
 	// Parse the default MAPINFO for the current game.
 	for(int i=0; i<2; i++)

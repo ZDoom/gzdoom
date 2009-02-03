@@ -112,9 +112,6 @@ struct FMapOptInfo
 	bool old;
 };
 
-#define NUM_WORLDVARS			256
-#define NUM_GLOBALVARS			64
-
 enum ELevelFlags
 {
 	LEVEL_NOINTERMISSION		= 0x00000001,
@@ -283,9 +280,21 @@ struct level_info_t
 
 	TArray<FSpecialAction> specialactions;
 
-	level_info_t() { Reset(); }
+	level_info_t() 
+	{ 
+		Reset(); 
+	}
+	~level_info_t()
+	{
+		ClearSnapshot(); 
+		ClearDefered();
+	}
 	void Reset();
+	bool isValid();
 	FString LookupLevelName ();
+	void ClearSnapshot();
+	void ClearDefered();
+	level_info_t *CheckLevelRedirect ();
 
 };
 
@@ -423,21 +432,6 @@ extern FLevelLocals level;
 extern TArray<level_info_t> wadlevelinfos;
 extern TArray<cluster_info_t> wadclusterinfos;
 
-extern SDWORD ACS_WorldVars[NUM_WORLDVARS];
-extern SDWORD ACS_GlobalVars[NUM_GLOBALVARS];
-
-struct InitIntToZero
-{
-	void Init(int &v)
-	{
-		v = 0;
-	}
-};
-typedef TMap<SDWORD, SDWORD, THashTraits<SDWORD>, InitIntToZero> FWorldGlobalArray;
-
-extern FWorldGlobalArray ACS_WorldArrays[NUM_WORLDVARS];
-extern FWorldGlobalArray ACS_GlobalArrays[NUM_GLOBALVARS];
-
 extern bool savegamerestore;
 
 // mapname will be changed if it is a valid warptrans
@@ -477,9 +471,9 @@ level_info_t *CheckLevelRedirect (level_info_t *info);
 FString CalcMapName (int episode, int level);
 
 void G_ParseMapInfo (void);
-void G_UnloadMapInfo ();
 
 void G_ClearSnapshots (void);
+void P_RemoveDefereds ();
 void G_SnapshotLevel (void);
 void G_UnSnapshotLevel (bool keepPlayers);
 struct PNGHandle;

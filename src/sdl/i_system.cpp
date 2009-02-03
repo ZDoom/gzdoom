@@ -228,7 +228,6 @@ void I_Quit (void)
 
     if (demorecording)
 		G_CheckDemoStatus();
-    G_ClearSnapshots ();
 }
 
 

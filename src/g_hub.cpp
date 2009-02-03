@@ -127,17 +127,16 @@ void G_LeavingHub(int mode, cluster_info_t * cluster, wbstartstruct_t * wbs)
 					wbs->plyr[j].ssecret += hubdata[i].plyr[j].ssecret;
 				}
 			}
-			if (cluster->clustername) 
+			if (cluster->ClusterName.IsNotEmpty()) 
 			{
 				if (cluster->flags & CLUSTER_LOOKUPNAME)
 				{
-					strncpy(level.level_name, GStrings(cluster->clustername), 64);
+					level.LevelName = GStrings(cluster->ClusterName);
 				}
 				else
 				{
-					strncpy(level.level_name, cluster->clustername, 64);
+					level.LevelName = cluster->ClusterName;
 				}
-				level.level_name[63]=0;
 			}
 		}
 	}

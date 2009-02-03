@@ -2652,9 +2652,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_BossDeath)
 	
 	// Do generic special death actions first
 	bool checked = false;
-	FSpecialAction *sa = level.info->specialactions;
-	while (sa)
+	for(unsigned i=0; i<level.info->specialactions.Size(); i++)
 	{
+		FSpecialAction *sa = &level.info->specialactions[i];
+
 		if (type == sa->Type || mytype == sa->Type)
 		{
 			if (!checked && !CheckBossDeath(self))
@@ -2666,7 +2667,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_BossDeath)
 			LineSpecials[sa->Action](NULL, self, false, 
 				sa->Args[0], sa->Args[1], sa->Args[2], sa->Args[3], sa->Args[4]);
 		}
-		sa = sa->Next;
 	}
 
 	// [RH] These all depend on the presence of level flags now

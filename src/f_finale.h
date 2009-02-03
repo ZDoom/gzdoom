@@ -42,8 +42,8 @@ void F_Ticker ();
 void F_Drawer ();
 
 
-void F_StartFinale (char *music, int musicorder, int cdtrack, unsigned int cdid, char *flat, char *text,
-					INTBOOL textInLump, INTBOOL finalePic, INTBOOL lookupText, bool ending);
+void F_StartFinale (const char *music, int musicorder, int cdtrack, unsigned int cdid, const char *flat, 
+					const char *text, INTBOOL textInLump, INTBOOL finalePic, INTBOOL lookupText, bool ending);
 
 void F_StartSlideshow ();
 

@@ -672,7 +672,7 @@ bool PIT_CheckLine (line_t *ld, const FBoundingBox &box, FCheckPosition &tm)
 		// better than Strife's handling of rails, which lets you jump into rails
 		// from either side. How long until somebody reports this as a bug and I'm
 		// forced to say, "It's not a bug. It's a feature?" Ugh.
-		(!(level.flags & LEVEL_RAILINGHACK) ||
+		(!(level.flags2 & LEVEL2_RAILINGHACK) ||
 		 open.bottom == tm.thing->Sector->floorplane.ZatPoint (sx, sy)))
 	{
 		open.bottom += 32*FRACUNIT;
@@ -870,8 +870,8 @@ bool PIT_CheckThing (AActor *thing, FCheckPosition &tm)
 			if (!thing->player && !tm.thing->target->player)
 			{
 				int infight;
-				if (level.flags & LEVEL_TOTALINFIGHTING) infight=1;
-				else if (level.flags & LEVEL_NOINFIGHTING) infight=-1;
+				if (level.flags2 & LEVEL2_TOTALINFIGHTING) infight=1;
+				else if (level.flags2 & LEVEL2_NOINFIGHTING) infight=-1;
 				else infight = infighting;
 				
 				if (infight < 0)
@@ -1412,7 +1412,7 @@ static void CheckForPushSpecial (line_t *line, int side, AActor *mobj)
 		}
 		else if (mobj->flags2 & MF2_IMPACT)
 		{
-			if ((level.flags & LEVEL_MISSILESACTIVATEIMPACT) ||
+			if ((level.flags2 & LEVEL2_MISSILESACTIVATEIMPACT) ||
 				!(mobj->flags & MF_MISSILE) ||
 				(mobj->target == NULL))
 			{

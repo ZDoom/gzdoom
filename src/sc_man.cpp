@@ -22,6 +22,7 @@
 #include "m_misc.h"
 #include "templates.h"
 #include "doomstat.h"
+#include "v_text.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -752,16 +753,21 @@ void FScanner::UnGet ()
 //
 //==========================================================================
 
-int FScanner::MatchString (const char **strings)
+int FScanner::MatchString (const char **strings, size_t stride)
 {
 	int i;
 
+	assert(stride % sizeof(const char*) == 0);
+
+	stride /= sizeof(const char*);
+
 	for (i = 0; *strings != NULL; i++)
 	{
-		if (Compare (*strings++))
+		if (Compare (*strings))
 		{
 			return i;
 		}
+		strings += stride;
 	}
 	return -1;
 }
@@ -772,11 +778,11 @@ int FScanner::MatchString (const char **strings)
 //
 //==========================================================================
 
-int FScanner::MustMatchString (const char **strings)
+int FScanner::MustMatchString (const char **strings, size_t stride)
 {
 	int i;
 
-	i = MatchString (strings);
+	i = MatchString (strings, stride);
 	if (i == -1)
 	{
 		ScriptError (NULL);
@@ -1007,7 +1013,7 @@ void STACK_ARGS FScanner::ScriptMessage (const char *message, ...)
 		va_end (arglist);
 	}
 
-	Printf ("Script error, \"%s\" line %d:\n%s\n", ScriptName.GetChars(),
+	Printf (TEXTCOLOR_RED"Script error, \"%s\" line %d:\n%s\n", ScriptName.GetChars(),
 		AlreadyGot? AlreadyGotLine : Line, composed.GetChars());
 }
 

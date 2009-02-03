@@ -858,7 +858,7 @@ CCMD(nextmap)
 
 	if (next != NULL && strncmp(next, "enDSeQ", 6))
 	{
-		G_InitNew(next, false);
+		G_DeferedInitNew(next, false);
 	}
 	else
 	{
@@ -879,7 +879,7 @@ CCMD(nextsecret)
 
 	if (next != NULL && strncmp(next, "enDSeQ", 6))
 	{
-		G_InitNew(next, false);
+		G_DeferedInitNew(next, false);
 	}
 	else
 	{

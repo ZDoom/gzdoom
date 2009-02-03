@@ -49,6 +49,9 @@ void *GRegTail = 0;
 #pragma data_seg(".mreg$z")
 void *MRegTail = 0;
 
+#pragma data_seg(".yreg$z")
+void *YRegTail = 0;
+
 #pragma data_seg()
 
 
@@ -59,6 +62,7 @@ void *ARegTail __attribute__((section(AREG_SECTION))) = 0;
 void *CRegTail __attribute__((section(CREG_SECTION))) = 0;
 void *GRegTail __attribute__((section(GREG_SECTION))) = 0;
 void *MRegTail __attribute__((section(MREG_SECTION))) = 0;
+void *YRegTail __attribute__((section(YREG_SECTION))) = 0;
 
 #elif
 

@@ -1242,11 +1242,11 @@ void DBaseStatusBar::Draw (EHudState state)
 		{
 			i = mysnprintf (line, countof(line), "%s: ", level.mapname);
 		}
-		line[i] = TEXTCOLOR_ESCAPE;
-		line[i+1] = CR_GREY + 'A';
-		strcpy (&line[i+2], level.level_name);
+		FString mapname;
+
+		mapname.Format("%c%c%s", TEXTCOLOR_ESCAPE, CR_GREY + 'A', level.LevelName.GetChars());
 		screen->DrawText (SmallFont, highlight,
-			(SCREENWIDTH - SmallFont->StringWidth (line)*CleanXfac)/2, y, line,
+			(SCREENWIDTH - SmallFont->StringWidth (mapname)*CleanXfac)/2, y, mapname,
 			DTA_CleanNoMove, true, TAG_DONE);
 
 		if (!deathmatch)

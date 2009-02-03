@@ -36,90 +36,166 @@
 
 #include "doomtype.h"
 #include "doomdef.h"
+#include "autosegs.h"
+#include "sc_man.h"
 
-#define NUM_WORLDVARS			256
-#define NUM_GLOBALVARS			64
+struct level_info_t;
+struct cluster_info_t;
+class FScanner;
 
-#define LEVEL_NOINTERMISSION		UCONST64(0x00000001)
-#define LEVEL_NOINVENTORYBAR		UCONST64(0x00000002)	// This effects Doom only, since it's the only one without a standard inventory bar.
-#define	LEVEL_DOUBLESKY				UCONST64(0x00000004)
-#define LEVEL_HASFADETABLE			UCONST64(0x00000008)	// Level uses Hexen's fadetable mapinfo to get fog
+#if defined(_MSC_VER)
+#pragma data_seg(".yreg$u")
+#pragma data_seg()
 
-#define LEVEL_MAP07SPECIAL			UCONST64(0x00000010)
-#define LEVEL_BRUISERSPECIAL		UCONST64(0x00000020)
-#define LEVEL_CYBORGSPECIAL			UCONST64(0x00000040)
-#define LEVEL_SPIDERSPECIAL			UCONST64(0x00000080)
+#define MSVC_YSEG __declspec(allocate(".yreg$u"))
+#define GCC_YSEG
+#else
+#define MSVC_YSEG
+#define GCC_YSEG __attribute__((section(YREG_SECTION)))
+#endif
 
-#define LEVEL_SPECLOWERFLOOR		UCONST64(0x00000100)
-#define LEVEL_SPECOPENDOOR			UCONST64(0x00000200)
-#define LEVEL_SPECACTIONSMASK		UCONST64(0x00000300)
 
-#define LEVEL_MONSTERSTELEFRAG		UCONST64(0x00000400)
-#define LEVEL_ACTOWNSPECIAL			UCONST64(0x00000800)
-#define LEVEL_SNDSEQTOTALCTRL		UCONST64(0x00001000)
-#define LEVEL_FORCENOSKYSTRETCH		UCONST64(0x00002000)
+struct FMapInfoParser
+{
+	enum EFormatType
+	{
+		FMT_Unknown,
+		FMT_Old,
+		FMT_New
+	};
 
-#define LEVEL_CROUCH_NO				UCONST64(0x00004000)
-#define LEVEL_JUMP_NO				UCONST64(0x00008000)
-#define LEVEL_FREELOOK_NO			UCONST64(0x00010000)
-#define LEVEL_FREELOOK_YES			UCONST64(0x00020000)
+	FScanner sc;
+	int format_type;
+	bool HexenHack;
 
-// The absence of both of the following bits means that this level does not
-// use falling damage (though damage can be forced with dmflags).
-#define LEVEL_FALLDMG_ZD			UCONST64(0x00040000)	// Level uses ZDoom's falling damage
-#define LEVEL_FALLDMG_HX			UCONST64(0x00080000)	// Level uses Hexen's falling damage
+	FMapInfoParser()
+	{
+		format_type = FMT_Unknown;
+		HexenHack = false;
+	}
 
-#define LEVEL_HEADSPECIAL			UCONST64(0x00100000)	// Heretic episode 1/4
-#define LEVEL_MINOTAURSPECIAL		UCONST64(0x00200000)	// Heretic episode 2/5
-#define LEVEL_SORCERER2SPECIAL		UCONST64(0x00400000)	// Heretic episode 3
-#define LEVEL_SPECKILLMONSTERS		UCONST64(0x00800000)
+	bool ParseLookupName(FString &dest);
+	void ParseMusic(FString &name, int &order);
+	void ParseLumpOrTextureName(char *name);
 
-#define LEVEL_STARTLIGHTNING		UCONST64(0x01000000)	// Automatically start lightning
-#define LEVEL_FILTERSTARTS			UCONST64(0x02000000)	// Apply mapthing filtering to player starts
-#define LEVEL_LOOKUPLEVELNAME		UCONST64(0x04000000)	// Level name is the name of a language string
-#define LEVEL_HEXENFORMAT			UCONST64(0x08000000)	// Level uses the Hexen map format
+	void ParseCluster();
+	void ParseNextMap(char *mapname);
+	level_info_t *ParseMapHeader(level_info_t &defaultinfo);
+	void ParseMapDefinition(level_info_t &leveldef);
+	void ParseEpisodeInfo ();
+	void ParseSkill ();
+	void ParseMapInfo (int lump, level_info_t &gamedefaults);
 
-#define LEVEL_SWAPSKIES				UCONST64(0x10000000)	// Used by lightning
-#define LEVEL_NOALLIES				UCONST64(0x20000000)	// i.e. Inside Strife's front base
-#define LEVEL_CHANGEMAPCHEAT		UCONST64(0x40000000)	// Don't display cluster messages
-#define LEVEL_VISITED				UCONST64(0x80000000)	// Used for intermission map
+	void ParseOpenBrace();
+	bool ParseCloseBrace();
+	bool CheckAssign();
+	void ParseAssign();
+	void MustParseAssign();
+	void ParseComma();
+	bool CheckNumber();
+	bool CheckFloat();
+	void SkipToNext();
+};
 
-#define LEVEL_DEATHSLIDESHOW		UCONST64(0x100000000)	// Slideshow on death
-#define LEVEL_ALLMAP				UCONST64(0x200000000)	// The player picked up a map on this level
+#define DEFINE_MAP_OPTION(name, old) \
+	static void MapOptHandler_##name(FMapInfoParser &parse, level_info_t *info); \
+	static FMapOptInfo MapOpt_##name = \
+		{ #name, MapOptHandler_##name, old }; \
+	MSVC_YSEG FMapOptInfo *mapopt_##name GCC_YSEG = &MapOpt_##name; \
+	static void MapOptHandler_##name(FMapInfoParser &parse, level_info_t *info)
 
-#define LEVEL_LAXMONSTERACTIVATION	UCONST64(0x400000000)	// Monsters can open doors depending on the door speed
-#define LEVEL_LAXACTIVATIONMAPINFO	UCONST64(0x800000000)	// LEVEL_LAXMONSTERACTIVATION is not a default.
 
-#define LEVEL_MISSILESACTIVATEIMPACT UCONST64(0x1000000000)	// Missiles are the activators of SPAC_IMPACT events, not their shooters
-#define LEVEL_FROZEN				UCONST64(0x2000000000)	// Game is frozen by a TimeFreezer
+struct FMapOptInfo
+{
+	const char *name;
+	void (*handler) (FMapInfoParser &parse, level_info_t *levelinfo);
+	bool old;
+};
 
-#define LEVEL_KEEPFULLINVENTORY		UCONST64(0x4000000000)	// doesn't reduce the amount of inventory items to 1
+enum ELevelFlags
+{
+	LEVEL_NOINTERMISSION		= 0x00000001,
+	LEVEL_NOINVENTORYBAR		= 0x00000002,	// This effects Doom only, since it's the only one without a standard inventory bar.
+	LEVEL_DOUBLESKY				= 0x00000004,
+	LEVEL_HASFADETABLE			= 0x00000008,	// Level uses Hexen's fadetable mapinfo to get fog
 
-#define LEVEL_MUSICDEFINED			UCONST64(0x8000000000)	// a marker to disable the $map command in SNDINFO for this map
-#define LEVEL_MONSTERFALLINGDAMAGE	UCONST64(0x10000000000)
-#define LEVEL_CLIPMIDTEX			UCONST64(0x20000000000)
-#define LEVEL_WRAPMIDTEX			UCONST64(0x40000000000)
+	LEVEL_MAP07SPECIAL			= 0x00000010,
+	LEVEL_BRUISERSPECIAL		= 0x00000020,
+	LEVEL_CYBORGSPECIAL			= 0x00000040,
+	LEVEL_SPIDERSPECIAL			= 0x00000080,
 
-#define LEVEL_CHECKSWITCHRANGE		UCONST64(0x80000000000)	
+	LEVEL_SPECLOWERFLOOR		= 0x00000100,
+	LEVEL_SPECOPENDOOR			= 0x00000200,
+	LEVEL_SPECACTIONSMASK		= 0x00000300,
 
-#define LEVEL_PAUSE_MUSIC_IN_MENUS	UCONST64(0x100000000000)
-#define LEVEL_TOTALINFIGHTING		UCONST64(0x200000000000)
-#define LEVEL_NOINFIGHTING			UCONST64(0x400000000000)
+	LEVEL_MONSTERSTELEFRAG		= 0x00000400,
+	LEVEL_ACTOWNSPECIAL			= 0x00000800,
+	LEVEL_SNDSEQTOTALCTRL		= 0x00001000,
+	LEVEL_FORCENOSKYSTRETCH		= 0x00002000,
 
-#define LEVEL_NOMONSTERS			UCONST64(0x800000000000)
-#define LEVEL_INFINITE_FLIGHT		UCONST64(0x1000000000000)
+	LEVEL_CROUCH_NO				= 0x00004000,
+	LEVEL_JUMP_NO				= 0x00008000,
+	LEVEL_FREELOOK_NO			= 0x00010000,
+	LEVEL_FREELOOK_YES			= 0x00020000,
 
-#define LEVEL_ALLOWRESPAWN			UCONST64(0x2000000000000)
+	// The absence of both of the following bits means that this level does not
+	// use falling damage (though damage can be forced with dmflags,.
+	LEVEL_FALLDMG_ZD			= 0x00040000,	// Level uses ZDoom's falling damage
+	LEVEL_FALLDMG_HX			= 0x00080000,	// Level uses Hexen's falling damage
 
-#define LEVEL_FORCETEAMPLAYON		UCONST64(0x4000000000000)
-#define LEVEL_FORCETEAMPLAYOFF		UCONST64(0x8000000000000)
+	LEVEL_HEADSPECIAL			= 0x00100000,	// Heretic episode 1/4
+	LEVEL_MINOTAURSPECIAL		= 0x00200000,	// Heretic episode 2/5
+	LEVEL_SORCERER2SPECIAL		= 0x00400000,	// Heretic episode 3
+	LEVEL_SPECKILLMONSTERS		= 0x00800000,
 
-#define LEVEL_CONV_SINGLE_UNFREEZE	UCONST64(0x10000000000000)
-#define LEVEL_RAILINGHACK			UCONST64(0x20000000000000)	// but UDMF requires them to be separate to have more control
-#define LEVEL_DUMMYSWITCHES			UCONST64(0x40000000000000)
-#define LEVEL_HEXENHACK				UCONST64(0x80000000000000)	// Level was defined in a Hexen style MAPINFO
+	LEVEL_STARTLIGHTNING		= 0x01000000,	// Automatically start lightning
+	LEVEL_FILTERSTARTS			= 0x02000000,	// Apply mapthing filtering to player starts
+	LEVEL_LOOKUPLEVELNAME		= 0x04000000,	// Level name is the name of a language string
+	LEVEL_HEXENFORMAT			= 0x08000000,	// Level uses the Hexen map format
 
-#define LEVEL_SMOOTHLIGHTING		UCONST64(0x100000000000000)	// Level uses the smooth lighting feature.
+	LEVEL_SWAPSKIES				= 0x10000000,	// Used by lightning
+	LEVEL_NOALLIES				= 0x20000000,	// i.e. Inside Strife's front base
+	LEVEL_CHANGEMAPCHEAT		= 0x40000000,	// Don't display cluster messages
+	LEVEL_VISITED				= 0x80000000,	// Used for intermission map
+
+	// The flags QWORD is now split into 2 DWORDs 
+	LEVEL2_DEATHSLIDESHOW		= 0x00000001,	// Slideshow on death
+	LEVEL2_ALLMAP				= 0x00000002,	// The player picked up a map on this level
+
+	LEVEL2_LAXMONSTERACTIVATION	= 0x00000004,	// Monsters can open doors depending on the door speed
+	LEVEL2_LAXACTIVATIONMAPINFO	= 0x00000008,	// LEVEL_LAXMONSTERACTIVATION is not a default.
+
+	LEVEL2_MISSILESACTIVATEIMPACT = 0x00000010,	// Missiles are the activators of SPAC_IMPACT events, not their shooters
+	LEVEL2_FROZEN				= 0x00000020,	// Game is frozen by a TimeFreezer
+
+	LEVEL2_KEEPFULLINVENTORY	= 0x00000040,	// doesn't reduce the amount of inventory items to 1
+
+	LEVEL2_MUSICDEFINED			= 0x00000080,	// a marker to disable the $map command in SNDINFO for this map
+	LEVEL2_MONSTERFALLINGDAMAGE	= 0x00000100,
+	LEVEL2_CLIPMIDTEX			= 0x00000200,
+	LEVEL2_WRAPMIDTEX			= 0x00000400,
+
+	LEVEL2_CHECKSWITCHRANGE		= 0x00000800,	
+
+	LEVEL2_PAUSE_MUSIC_IN_MENUS	= 0x00001000,
+	LEVEL2_TOTALINFIGHTING		= 0x00002000,
+	LEVEL2_NOINFIGHTING			= 0x00004000,
+
+	LEVEL2_NOMONSTERS			= 0x00008000,
+	LEVEL2_INFINITE_FLIGHT		= 0x00010000,
+
+	LEVEL2_ALLOWRESPAWN			= 0x00020000,
+
+	LEVEL2_FORCETEAMPLAYON		= 0x00040000,
+	LEVEL2_FORCETEAMPLAYOFF		= 0x00080000,
+
+	LEVEL2_CONV_SINGLE_UNFREEZE	= 0x00100000,
+	LEVEL2_RAILINGHACK			= 0x00200000,	// but UDMF requires them to be separate to have more control
+	LEVEL2_DUMMYSWITCHES		= 0x00400000,
+	LEVEL2_HEXENHACK			= 0x00800000,	// Level was defined in a Hexen style MAPINFO
+
+	LEVEL2_SMOOTHLIGHTING		= 0x01000000,	// Level uses the smooth lighting feature.
+};
 
 
 struct acsdefered_t;
@@ -129,7 +205,6 @@ struct FSpecialAction
 	FName Type;					// this is initialized before the actors...
 	BYTE Action;
 	int Args[5];				// must allow 16 bit tags for 666 & 667!
-	FSpecialAction *Next;
 };
 
 class FCompressedMemFile;
@@ -161,13 +236,13 @@ struct level_info_t
 	int			cluster;
 	int			partime;
 	int			sucktime;
-	QWORD		flags;
-	char		*music;
-	char		*level_name;
+	DWORD		flags;
+	DWORD		flags2;
+	FString		Music;
+	FString		LevelName;
 	char		fadetable[9];
 	SBYTE		WallVertLight, WallHorizLight;
 	char		f1[9];
-	// TheDefaultLevelInfo initializes everything above this line.
 	int			musicorder;
 	FCompressedMemFile	*snapshot;
 	DWORD		snapshotVer;
@@ -185,26 +260,41 @@ struct level_info_t
 	int			airsupply;
 	DWORD		compatflags;
 	DWORD		compatmask;
-	char		*translator;	// for converting Doom-format linedef and sector types.
+	FString		Translator;	// for converting Doom-format linedef and sector types.
 
 	// Redirection: If any player is carrying the specified item, then
 	// you go to the RedirectMap instead of this one.
 	FName		RedirectType;
 	char		RedirectMap[9];
 
-	char		*enterpic;
-	char		*exitpic;
-	char 		*intermusic;
+	FString		EnterPic;
+	FString		ExitPic;
+	FString 	InterMusic;
 	int			intermusicorder;
 
-	char		*soundinfo;
-	char		*sndseq;
+	FString		SoundInfo;
+	FString		SndSeq;
 	char		bordertexture[9];
 
 	float		teamdamage;
 
-	FSpecialAction * specialactions;
-	FOptionalMapinfoData *opdata;
+	TArray<FSpecialAction> specialactions;
+
+	level_info_t() 
+	{ 
+		Reset(); 
+	}
+	~level_info_t()
+	{
+		ClearSnapshot(); 
+		ClearDefered();
+	}
+	void Reset();
+	bool isValid();
+	FString LookupLevelName ();
+	void ClearSnapshot();
+	void ClearDefered();
+	level_info_t *CheckLevelRedirect ();
 
 };
 
@@ -231,17 +321,18 @@ struct FLevelLocals
 	int			clusterflags;
 	int			levelnum;
 	int			lumpnum;
-	char		level_name[64];			// the descriptive name (Outer Base, etc)
+	FString		LevelName;
 	char		mapname[256];			// the server name (base1, etc)
 	char		nextmap[9];				// go here when fraglimit is hit
 	char		secretmap[9];			// map to go to when used secret exit
 
-	QWORD		flags;
+	DWORD		flags;
+	DWORD		flags2;
 
 	DWORD		fadeto;					// The color the palette fades to (usually black)
 	DWORD		outsidefog;				// The fog for sectors with sky ceilings
 
-	char		*music;
+	FString		Music;
 	int			musicorder;
 	int			cdtrack;
 	unsigned int cdid;
@@ -313,14 +404,17 @@ struct cluster_info_t
 {
 	int			cluster;
 	char		finaleflat[9];
-	char		*exittext;
-	char		*entertext;
-	char		*messagemusic;
+	FString		ExitText;
+	FString		EnterText;
+	FString		MessageMusic;
 	int			musicorder;
 	int			flags;
 	int			cdtrack;
-	char		*clustername;
+	FString		ClusterName;
 	unsigned int cdid;
+
+	void Reset();
+
 };
 
 // Cluster flags
@@ -331,25 +425,12 @@ struct cluster_info_t
 #define CLUSTER_LOOKUPEXITTEXT	0x00000010	// Exit text is the name of a language string
 #define CLUSTER_LOOKUPENTERTEXT	0x00000020	// Enter text is the name of a language string
 #define CLUSTER_LOOKUPNAME		0x00000040	// Name is the name of a language string
+#define CLUSTER_LOOKUPCLUSTERNAME 0x00000080	// Cluster name is the name of a language string
 
 extern FLevelLocals level;
 
 extern TArray<level_info_t> wadlevelinfos;
-
-extern SDWORD ACS_WorldVars[NUM_WORLDVARS];
-extern SDWORD ACS_GlobalVars[NUM_GLOBALVARS];
-
-struct InitIntToZero
-{
-	void Init(int &v)
-	{
-		v = 0;
-	}
-};
-typedef TMap<SDWORD, SDWORD, THashTraits<SDWORD>, InitIntToZero> FWorldGlobalArray;
-
-extern FWorldGlobalArray ACS_WorldArrays[NUM_WORLDVARS];
-extern FWorldGlobalArray ACS_GlobalArrays[NUM_GLOBALVARS];
+extern TArray<cluster_info_t> wadclusterinfos;
 
 extern bool savegamerestore;
 
@@ -382,8 +463,6 @@ void G_InitLevelLocals (void);
 
 void G_AirControlChanged ();
 
-const char *G_MaybeLookupLevelName (level_info_t *level);
-
 cluster_info_t *FindClusterInfo (int cluster);
 level_info_t *FindLevelInfo (const char *mapname);
 level_info_t *FindLevelByNum (int num);
@@ -392,9 +471,9 @@ level_info_t *CheckLevelRedirect (level_info_t *info);
 FString CalcMapName (int episode, int level);
 
 void G_ParseMapInfo (void);
-void G_UnloadMapInfo ();
 
 void G_ClearSnapshots (void);
+void P_RemoveDefereds ();
 void G_SnapshotLevel (void);
 void G_UnSnapshotLevel (bool keepPlayers);
 struct PNGHandle;

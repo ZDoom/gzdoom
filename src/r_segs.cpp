@@ -1441,7 +1441,7 @@ int side_t::GetLightLevel (bool foggy, int baselight) const
 	{
 		if (!(Flags & WALLF_NOFAKECONTRAST))
 		{
-			if (((level.flags & LEVEL_SMOOTHLIGHTING) || (Flags & WALLF_SMOOTHLIGHTING) || r_smoothlighting) &&
+			if (((level.flags2 & LEVEL2_SMOOTHLIGHTING) || (Flags & WALLF_SMOOTHLIGHTING) || r_smoothlighting) &&
 				lines[linenum].dx != 0)
 			{
 				baselight += int // OMG LEE KILLOUGH LIVES! :/

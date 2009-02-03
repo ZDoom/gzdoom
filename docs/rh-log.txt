@@ -1,3 +1,17 @@
+January 18, 2009 - February 3, 2009  (Changes by Graf Zahl)
+- moved all code related to global ACS variables to p_acs.cpp where it belongs.
+- fixed: The nextmap and nextsecret CCMDs need to call G_DeferedInitNew instead of G_InitNew.
+- rewrote the MAPINFO parser:
+  * split level_info_t::flags into 2 DWORDS so that I don't have to deal with 64 bit values later.
+  * split off skill code into its own file
+  * created a parser class for MAPINFO
+  * replaced all uses of ReplaceString in level_info_t with FStrings and made the specialaction 
+    data a TArray so that levelinfos can be handled without error prone maintenance functions.
+  * split of parser code from g_level.cpp
+  * const-ified parameters to F_StartFinale.
+  * Changed how G_MaybeLookupLevelName works and made it return an FString.
+  * removed 64 character limit on level names.
+
 February 2, 2009
 - Changed DECORATE replacements so that they aren't overridden by Dehacked.
 

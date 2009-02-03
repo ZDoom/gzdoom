@@ -625,6 +625,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\g_mapinfo.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\g_skill.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\src\gameconfigfile.cpp"
 				>
 			</File>

@@ -875,7 +875,7 @@ void DrawHUD()
 			}
 		}
 
-		mysnprintf(printstr, countof(printstr), "%s: %s", level.mapname, level.level_name);
+		mysnprintf(printstr, countof(printstr), "%s: %s", level.mapname, level.LevelName.GetChars());
 		screen->DrawText(SmallFont, hudcolor_titl, 1, hudheight-fonth-1, printstr,
 			DTA_KeepRatio, true,
 			DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, TAG_DONE);

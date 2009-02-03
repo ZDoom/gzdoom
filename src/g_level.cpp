@@ -1,6 +1,6 @@
 /*
 ** g_level.cpp
-** Parses MAPINFO and controls movement between levels
+** controls movement between levels
 **
 **---------------------------------------------------------------------------
 ** Copyright 1998-2006 Randy Heit
@@ -83,13 +83,10 @@
 
 #include "g_hub.h"
 
+
 EXTERN_CVAR (Float, sv_gravity)
 EXTERN_CVAR (Float, sv_aircontrol)
 EXTERN_CVAR (Int, disableautosave)
-
-// Hey, GCC, these macros better be safe!
-#define lioffset(x)		((size_t)&((level_info_t*)1)->x - 1)
-#define cioffset(x)		((size_t)&((cluster_info_t*)1)->x - 1)
 
 #define SNAP_ID			MAKE_ID('s','n','A','p')
 #define DSNP_ID			MAKE_ID('d','s','N','p')
@@ -98,58 +95,8 @@ EXTERN_CVAR (Int, disableautosave)
 #define RCLS_ID			MAKE_ID('r','c','L','s')
 #define PCLS_ID			MAKE_ID('p','c','L','s')
 
-static int FindEndSequence (int type, const char *picname);
 static void SetEndSequence (char *nextmap, int type);
-static void InitPlayerClasses ();
-static void ParseEpisodeInfo (FScanner &sc);
-static void G_DoParseMapInfo (int lump);
-static void SetLevelNum (level_info_t *info, int num);
-static void ClearEpisodes ();
-static void ClearLevelInfoStrings (level_info_t *linfo);
-static void ClearClusterInfoStrings (cluster_info_t *cinfo);
-static void ParseSkill (FScanner &sc);
-static void G_VerifySkill();
-
-struct FOptionalMapinfoParser
-{
-	const char *keyword;
-	MIParseFunc parsefunc;
-};
-
-static TArray<FOptionalMapinfoParser> optmapinf(TArray<FOptionalMapinfoParser>::NoInit);
-
-
-void AddOptionalMapinfoParser(const char *keyword, MIParseFunc parsefunc)
-{
-	FOptionalMapinfoParser mi;
-	
-	mi.keyword = keyword;
-	mi.parsefunc = parsefunc;
-	optmapinf.Push(mi);
-}
-
-static void ParseOptionalBlock(const char *keyword, FScanner &sc, level_info_t *info)
-{
-	for(unsigned i=0;i<optmapinf.Size();i++)
-	{
-		if (!stricmp(keyword, optmapinf[i].keyword))
-		{
-			optmapinf[i].parsefunc(sc, info);
-			return;
-		}
-	}
-	int bracecount = 0;
-	
-	while (sc.GetString())
-	{
-		if (sc.Compare("{")) bracecount++;
-		else if (sc.Compare("}"))
-		{
-			if (--bracecount < 0) return;
-		}
-	}
-}
-			
+void G_VerifySkill();
 
 
 static FRandom pr_classchoice ("RandomPlayerClassChoice");
@@ -164,20 +111,12 @@ EndSequence::EndSequence()
 	PlayTheEnd = false;
 }
 
+extern level_info_t TheDefaultLevelInfo;
 extern bool timingdemo;
 
 // Start time for timing demos
 int starttime;
-static level_info_t gamedefaults;
 
-
-// ACS variables with world scope
-SDWORD ACS_WorldVars[NUM_WORLDVARS];
-FWorldGlobalArray ACS_WorldArrays[NUM_WORLDVARS];
-
-// ACS variables with global scope
-SDWORD ACS_GlobalVars[NUM_GLOBALVARS];
-FWorldGlobalArray ACS_GlobalArrays[NUM_GLOBALVARS];
 
 extern bool netdemo;
 extern FString BackupSaveName;
@@ -192,1266 +131,12 @@ void *statcopy;					// for statistics driver
 
 FLevelLocals level;			// info about current level
 
-static TArray<cluster_info_t> wadclusterinfos;
-TArray<level_info_t> wadlevelinfos;
-TArray<FSkillInfo> AllSkills;
-
-// MAPINFO is parsed slightly differently when the map name is just a number.
-static bool HexenHack;
-
-static char unnamed[] = "Unnamed";
-static level_info_t TheDefaultLevelInfo =
-{
- 	"",			// mapname
- 	0, 			// levelnum
- 	"", 		// pname,
- 	"", 		// nextmap
- 	"",			// secretmap
- 	"SKY1",		// skypic1
- 	0, 			// cluster
- 	0, 			// partime
- 	0, 			// sucktime
- 	0, 			// flags
- 	NULL, 		// music
- 	unnamed, 	// level_name
- 	"COLORMAP",	// fadetable
- 	+8, 		// WallVertLight
- 	-8,			// WallHorizLight
-	"",			// [RC] F1
-};
-
-static cluster_info_t TheDefaultClusterInfo = { 0 };
-
-
-
-static const char *MapInfoTopLevel[] =
-{
-	"map",
-	"defaultmap",
-	"clusterdef",
-	"episode",
-	"clearepisodes",
-	"skill",
-	"clearskills",
-	"adddefaultmap",
-	"gamedefaults",
-	NULL
-};
-
-enum
-{
-	MITL_MAP,
-	MITL_DEFAULTMAP,
-	MITL_CLUSTERDEF,
-	MITL_EPISODE,
-	MITL_CLEAREPISODES,
-	MITL_SKILL,
-	MITL_CLEARSKILLS,
-	MITL_ADDDEFAULTMAP,
-	MITL_GAMEDEFAULTS,
-};
-
-static const char *MapInfoMapLevel[] =
-{
-	"levelnum",
-	"next",
-	"secretnext",
-	"cluster",
-	"sky1",
-	"sky2",
-	"fade",
-	"outsidefog",
-	"titlepatch",
-	"par",
-	"sucktime",
-	"music",
-	"nointermission",
- 	"intermission",
-	"doublesky",
-	"nosoundclipping",
-	"allowmonstertelefrags",
-	"map07special",
-	"baronspecial",
-	"cyberdemonspecial",
-	"spidermastermindspecial",
-	"minotaurspecial",
-	"dsparilspecial",
-	"ironlichspecial",
-	"specialaction_exitlevel",
-	"specialaction_opendoor",
-	"specialaction_lowerfloor",
-	"specialaction_killmonsters",
-	"lightning",
-	"fadetable",
-	"evenlighting",
-	"smoothlighting",
-	"noautosequences",
-	"autosequences",
-	"forcenoskystretch",
-	"skystretch",
-	"allowfreelook",
-	"nofreelook",
-	"allowjump",
-	"nojump",
-	"fallingdamage",		// Hexen falling damage
-	"oldfallingdamage",		// Lesser ZDoom falling damage
-	"forcefallingdamage",	// Skull Tag compatibility name for oldfallingdamage
-	"strifefallingdamage",	// Strife's falling damage is really unforgiving
-	"nofallingdamage",
-	"noallies",
-	"cdtrack",
-	"cdid",
-	"cd_start_track",
-	"cd_end1_track",
-	"cd_end2_track",
-	"cd_end3_track",
-	"cd_intermission_track",
-	"cd_title_track",
-	"warptrans",
-	"vertwallshade",
-	"horizwallshade",
-	"gravity",
-	"aircontrol",
-	"filterstarts",
-	"activateowndeathspecials",
-	"killeractivatesdeathspecials",
-	"missilesactivateimpactlines",
-	"missileshootersactivetimpactlines",
-	"noinventorybar",
-	"deathslideshow",
-	"redirect",
-	"strictmonsteractivation",
-	"laxmonsteractivation",
-	"additive_scrollers",
-	"interpic",
-	"exitpic",
-	"enterpic",
-	"intermusic",
-	"airsupply",
-	"specialaction",
-	"keepfullinventory",
-	"monsterfallingdamage",
-	"nomonsterfallingdamage",
-	"sndseq",
-	"sndinfo",
-	"soundinfo",
-	"clipmidtextures",
-	"wrapmidtextures",
-	"allowcrouch",
-	"nocrouch",
-	"pausemusicinmenus",
-	"compat_shorttex",	
-	"compat_stairs",		
-	"compat_limitpain",	
-	"compat_nopassover",	
-	"compat_notossdrops",	
-	"compat_useblocking", 
-	"compat_nodoorlight",	
-	"compat_ravenscroll",	
-	"compat_soundtarget",	
-	"compat_dehhealth",	
-	"compat_trace",		
-	"compat_dropoff",
-	"compat_boomscroll",
-	"compat_invisibility",
-	"compat_silent_instant_floors",
-	"compat_sectorsounds",
-	"compat_missileclip",
-	"bordertexture",
-	"f1", // [RC] F1 help
-	"noinfighting",
-	"normalinfighting",
-	"totalinfighting",
-	"infiniteflightpowerup",
-	"noinfiniteflightpowerup",
-	"allowrespawn",
-	"teamdamage",
-	"teamplayon",
-	"teamplayoff",
-	"checkswitchrange",
-	"nocheckswitchrange",
-	"translator",
-	"unfreezesingleplayerconversations",
-	"nobotnodes",
-	NULL
-};
-
-enum EMIType
-{
-	MITYPE_EATNEXT,
-	MITYPE_IGNORE,
-	MITYPE_INT,
-	MITYPE_FLOAT,
-	MITYPE_HEX,
-	MITYPE_COLOR,
-	MITYPE_MAPNAME,
-	MITYPE_LUMPNAME,
-	MITYPE_SKY,
-	MITYPE_SETFLAG,
-	MITYPE_CLRFLAG,
-	MITYPE_SCFLAGS,
-	MITYPE_CLUSTER,
-	MITYPE_STRING,
-	MITYPE_MUSIC,
-	MITYPE_RELLIGHT,
-	MITYPE_CLRBYTES,
-	MITYPE_REDIRECT,
-	MITYPE_SPECIALACTION,
-	MITYPE_COMPATFLAG,
-	MITYPE_STRINGT,
-};
-
-struct MapInfoHandler
-{
-	EMIType type;
-	QWORD data1, data2;
-}
-MapHandlers[] =
-{
-	{ MITYPE_INT,		lioffset(levelnum), 0 },
-	{ MITYPE_MAPNAME,	lioffset(nextmap), 0 },
-	{ MITYPE_MAPNAME,	lioffset(secretmap), 0 },
-	{ MITYPE_CLUSTER,	lioffset(cluster), 0 },
-	{ MITYPE_SKY,		lioffset(skypic1), lioffset(skyspeed1) },
-	{ MITYPE_SKY,		lioffset(skypic2), lioffset(skyspeed2) },
-	{ MITYPE_COLOR,		lioffset(fadeto), 0 },
-	{ MITYPE_COLOR,		lioffset(outsidefog), 0 },
-	{ MITYPE_LUMPNAME,	lioffset(pname), 0 },
-	{ MITYPE_INT,		lioffset(partime), 0 },
-	{ MITYPE_INT,		lioffset(sucktime), 0 },
-	{ MITYPE_MUSIC,		lioffset(music), lioffset(musicorder) },
-	{ MITYPE_SETFLAG,	LEVEL_NOINTERMISSION, 0 },
-	{ MITYPE_CLRFLAG,	LEVEL_NOINTERMISSION, 0 },
-	{ MITYPE_SETFLAG,	LEVEL_DOUBLESKY, 0 },
-	{ MITYPE_IGNORE,	0, 0 },	// was nosoundclipping
-	{ MITYPE_SETFLAG,	LEVEL_MONSTERSTELEFRAG, 0 },
-	{ MITYPE_SETFLAG,	LEVEL_MAP07SPECIAL, 0 },
-	{ MITYPE_SETFLAG,	LEVEL_BRUISERSPECIAL, 0 },
-	{ MITYPE_SETFLAG,	LEVEL_CYBORGSPECIAL, 0 },
-	{ MITYPE_SETFLAG,	LEVEL_SPIDERSPECIAL, 0 },
-	{ MITYPE_SETFLAG,	LEVEL_MINOTAURSPECIAL, 0 },
-	{ MITYPE_SETFLAG,	LEVEL_SORCERER2SPECIAL, 0 },
-	{ MITYPE_SETFLAG,	LEVEL_HEADSPECIAL, 0 },
-	{ MITYPE_SCFLAGS,	0, ~LEVEL_SPECACTIONSMASK },
-	{ MITYPE_SCFLAGS,	LEVEL_SPECOPENDOOR, ~LEVEL_SPECACTIONSMASK },
-	{ MITYPE_SCFLAGS,	LEVEL_SPECLOWERFLOOR, ~LEVEL_SPECACTIONSMASK },
-	{ MITYPE_SETFLAG,	LEVEL_SPECKILLMONSTERS, 0 },
-	{ MITYPE_SETFLAG,	LEVEL_STARTLIGHTNING, 0 },
-	{ MITYPE_LUMPNAME,	lioffset(fadetable), 0 },
-	{ MITYPE_CLRBYTES,	lioffset(WallVertLight), lioffset(WallHorizLight) },
-	{ MITYPE_SETFLAG,	LEVEL_SMOOTHLIGHTING, 0 },
-	{ MITYPE_SETFLAG,	LEVEL_SNDSEQTOTALCTRL, 0 },
-	{ MITYPE_CLRFLAG,	LEVEL_SNDSEQTOTALCTRL, 0 },
-	{ MITYPE_SETFLAG,	LEVEL_FORCENOSKYSTRETCH, 0 },
-	{ MITYPE_CLRFLAG,	LEVEL_FORCENOSKYSTRETCH, 0 },
-	{ MITYPE_SCFLAGS,	LEVEL_FREELOOK_YES, ~LEVEL_FREELOOK_NO },
-	{ MITYPE_SCFLAGS,	LEVEL_FREELOOK_NO, ~LEVEL_FREELOOK_YES },
-	{ MITYPE_CLRFLAG,	LEVEL_JUMP_NO, 0 },
-	{ MITYPE_SETFLAG,	LEVEL_JUMP_NO, 0 },
-	{ MITYPE_SCFLAGS,	LEVEL_FALLDMG_HX, ~LEVEL_FALLDMG_ZD },
-	{ MITYPE_SCFLAGS,	LEVEL_FALLDMG_ZD, ~LEVEL_FALLDMG_HX },
-	{ MITYPE_SCFLAGS,	LEVEL_FALLDMG_ZD, ~LEVEL_FALLDMG_HX },
-	{ MITYPE_SETFLAG,	LEVEL_FALLDMG_ZD|LEVEL_FALLDMG_HX, 0 },
-	{ MITYPE_SCFLAGS,	0, ~(LEVEL_FALLDMG_ZD|LEVEL_FALLDMG_HX) },
-	{ MITYPE_SETFLAG,	LEVEL_NOALLIES, 0 },
-	{ MITYPE_INT,		lioffset(cdtrack), 0 },
-	{ MITYPE_HEX,		lioffset(cdid), 0 },
-	{ MITYPE_EATNEXT,	0, 0 },
-	{ MITYPE_EATNEXT,	0, 0 },
-	{ MITYPE_EATNEXT,	0, 0 },
-	{ MITYPE_EATNEXT,	0, 0 },
-	{ MITYPE_EATNEXT,	0, 0 },
-	{ MITYPE_EATNEXT,	0, 0 },
-	{ MITYPE_INT,		lioffset(WarpTrans), 0 },
-	{ MITYPE_RELLIGHT,	lioffset(WallVertLight), 0 },
-	{ MITYPE_RELLIGHT,	lioffset(WallHorizLight), 0 },
-	{ MITYPE_FLOAT,		lioffset(gravity), 0 },
-	{ MITYPE_FLOAT,		lioffset(aircontrol), 0 },
-	{ MITYPE_SETFLAG,	LEVEL_FILTERSTARTS, 0 },
-	{ MITYPE_SETFLAG,	LEVEL_ACTOWNSPECIAL, 0 },
-	{ MITYPE_CLRFLAG,	LEVEL_ACTOWNSPECIAL, 0 },
-	{ MITYPE_SETFLAG,	LEVEL_MISSILESACTIVATEIMPACT, 0 },
-	{ MITYPE_CLRFLAG,	LEVEL_MISSILESACTIVATEIMPACT, 0 },
-	{ MITYPE_SETFLAG,	LEVEL_NOINVENTORYBAR, 0 },
-	{ MITYPE_SETFLAG,	LEVEL_DEATHSLIDESHOW, 0 },
-	{ MITYPE_REDIRECT,	lioffset(RedirectMap), 0 },
-	{ MITYPE_CLRFLAG,	LEVEL_LAXMONSTERACTIVATION, LEVEL_LAXACTIVATIONMAPINFO },
-	{ MITYPE_SETFLAG,	LEVEL_LAXMONSTERACTIVATION, LEVEL_LAXACTIVATIONMAPINFO },
-	{ MITYPE_COMPATFLAG, COMPATF_BOOMSCROLL},
-	{ MITYPE_STRING,	lioffset(exitpic), 0 },
-	{ MITYPE_STRING,	lioffset(exitpic), 0 },
-	{ MITYPE_STRING,	lioffset(enterpic), 0 },
-	{ MITYPE_MUSIC,		lioffset(intermusic), lioffset(intermusicorder) },
-	{ MITYPE_INT,		lioffset(airsupply), 0 },
-	{ MITYPE_SPECIALACTION, lioffset(specialactions), 0 },
-	{ MITYPE_SETFLAG,	LEVEL_KEEPFULLINVENTORY, 0 },
-	{ MITYPE_SETFLAG,	LEVEL_MONSTERFALLINGDAMAGE, 0 },
-	{ MITYPE_CLRFLAG,	LEVEL_MONSTERFALLINGDAMAGE, 0 },
-	{ MITYPE_STRING,	lioffset(sndseq), 0 },
-	{ MITYPE_STRING,	lioffset(soundinfo), 0 },
-	{ MITYPE_STRING,	lioffset(soundinfo), 0 },
-	{ MITYPE_SETFLAG,	LEVEL_CLIPMIDTEX, 0 },
-	{ MITYPE_SETFLAG,	LEVEL_WRAPMIDTEX, 0 },
-	{ MITYPE_CLRFLAG,	LEVEL_CROUCH_NO, 0 },
-	{ MITYPE_SETFLAG,	LEVEL_CROUCH_NO, 0 },
-	{ MITYPE_SCFLAGS,	LEVEL_PAUSE_MUSIC_IN_MENUS, 0 },
-	{ MITYPE_COMPATFLAG, COMPATF_SHORTTEX},
-	{ MITYPE_COMPATFLAG, COMPATF_STAIRINDEX},
-	{ MITYPE_COMPATFLAG, COMPATF_LIMITPAIN},
-	{ MITYPE_COMPATFLAG, COMPATF_NO_PASSMOBJ},
-	{ MITYPE_COMPATFLAG, COMPATF_NOTOSSDROPS},
-	{ MITYPE_COMPATFLAG, COMPATF_USEBLOCKING},
-	{ MITYPE_COMPATFLAG, COMPATF_NODOORLIGHT},
-	{ MITYPE_COMPATFLAG, COMPATF_RAVENSCROLL},
-	{ MITYPE_COMPATFLAG, COMPATF_SOUNDTARGET},
-	{ MITYPE_COMPATFLAG, COMPATF_DEHHEALTH},
-	{ MITYPE_COMPATFLAG, COMPATF_TRACE},
-	{ MITYPE_COMPATFLAG, COMPATF_DROPOFF},
-	{ MITYPE_COMPATFLAG, COMPATF_BOOMSCROLL},
-	{ MITYPE_COMPATFLAG, COMPATF_INVISIBILITY},
-	{ MITYPE_COMPATFLAG, COMPATF_SILENT_INSTANT_FLOORS},
-	{ MITYPE_COMPATFLAG, COMPATF_SECTORSOUNDS},
-	{ MITYPE_COMPATFLAG, COMPATF_MISSILECLIP},
-	{ MITYPE_LUMPNAME,	lioffset(bordertexture), 0 },
-	{ MITYPE_LUMPNAME,  lioffset(f1), 0, }, 
-	{ MITYPE_SCFLAGS,	LEVEL_NOINFIGHTING, ~LEVEL_TOTALINFIGHTING },
-	{ MITYPE_SCFLAGS,	0, ~(LEVEL_NOINFIGHTING|LEVEL_TOTALINFIGHTING)},
-	{ MITYPE_SCFLAGS,	LEVEL_TOTALINFIGHTING, ~LEVEL_NOINFIGHTING },
-	{ MITYPE_SETFLAG,	LEVEL_INFINITE_FLIGHT, 0 },
-	{ MITYPE_CLRFLAG,	LEVEL_INFINITE_FLIGHT, 0 },
-	{ MITYPE_SETFLAG,	LEVEL_ALLOWRESPAWN, 0 },
-	{ MITYPE_FLOAT,		lioffset(teamdamage), 0 },
-	{ MITYPE_SCFLAGS,	LEVEL_FORCETEAMPLAYON, ~LEVEL_FORCETEAMPLAYOFF },
-	{ MITYPE_SCFLAGS,	LEVEL_FORCETEAMPLAYOFF, ~LEVEL_FORCETEAMPLAYON },
-	{ MITYPE_SETFLAG,	LEVEL_CHECKSWITCHRANGE, 0 },
-	{ MITYPE_CLRFLAG,	LEVEL_CHECKSWITCHRANGE, 0 },
-	{ MITYPE_STRING,	lioffset(translator), 0 },
-	{ MITYPE_SETFLAG,	LEVEL_CONV_SINGLE_UNFREEZE, 0 },
-	{ MITYPE_IGNORE,	0, 0 },		// Skulltag option: nobotnodes
-};
-
-static const char *MapInfoClusterLevel[] =
-{
-	"entertext",
-	"exittext",
-	"music",
-	"flat",
-	"pic",
-	"hub",
-	"cdtrack",
-	"cdid",
-	"entertextislump",
-	"exittextislump",
-	"name",
-	NULL
-};
-
-MapInfoHandler ClusterHandlers[] =
-{
-	{ MITYPE_STRINGT,	cioffset(entertext), CLUSTER_LOOKUPENTERTEXT },
-	{ MITYPE_STRINGT,	cioffset(exittext), CLUSTER_LOOKUPEXITTEXT },
-	{ MITYPE_MUSIC,		cioffset(messagemusic), cioffset(musicorder) },
-	{ MITYPE_LUMPNAME,	cioffset(finaleflat), 0 },
-	{ MITYPE_LUMPNAME,	cioffset(finaleflat), CLUSTER_FINALEPIC },
-	{ MITYPE_SETFLAG,	CLUSTER_HUB, 0 },
-	{ MITYPE_INT,		cioffset(cdtrack), 0 },
-	{ MITYPE_HEX,		cioffset(cdid), 0 },
-	{ MITYPE_SETFLAG,	CLUSTER_ENTERTEXTINLUMP, 0 },
-	{ MITYPE_SETFLAG,	CLUSTER_EXITTEXTINLUMP, 0 },
-	{ MITYPE_STRINGT,	cioffset(clustername), CLUSTER_LOOKUPNAME },
-};
-
-static void ParseMapInfoLower (FScanner &sc,
-							   MapInfoHandler *handlers,
-							   const char *strings[],
-							   level_info_t *levelinfo,
-							   cluster_info_t *clusterinfo,
-							   QWORD levelflags);
-
-static int FindWadLevelInfo (const char *name)
-{
-	for (unsigned int i = 0; i < wadlevelinfos.Size(); i++)
-		if (!strnicmp (name, wadlevelinfos[i].mapname, 8))
-			return i;
-		
-	return -1;
-}
-
-static int FindWadClusterInfo (int cluster)
-{
-	for (unsigned int i = 0; i < wadclusterinfos.Size(); i++)
-		if (wadclusterinfos[i].cluster == cluster)
-			return i;
-		
-	return -1;
-}
-
-static void SetLevelDefaults (level_info_t *levelinfo)
-{
-	memset (levelinfo, 0, sizeof(*levelinfo));
-	levelinfo->snapshot = NULL;
-	levelinfo->outsidefog = 0xff000000;
-	levelinfo->WallHorizLight = -8;
-	levelinfo->WallVertLight = +8;
-	strncpy (levelinfo->fadetable, "COLORMAP", 8);
-	strcpy (levelinfo->skypic1, "-NOFLAT-");
-	strcpy (levelinfo->skypic2, "-NOFLAT-");
-	strcpy (levelinfo->bordertexture, gameinfo.borderFlat);
-	if (gameinfo.gametype != GAME_Hexen)
-	{
-		// For maps without a BEHAVIOR, this will be cleared.
-		levelinfo->flags |= LEVEL_LAXMONSTERACTIVATION;
-	}
-	levelinfo->airsupply = 10;
-}
-
+//==========================================================================
 //
-// G_ParseMapInfo
-// Parses the MAPINFO lumps of all loaded WADs and generates
-// data for wadlevelinfos and wadclusterinfos.
 //
-void G_ParseMapInfo ()
-{
-	int lump, lastlump = 0;
+//==========================================================================
 
-	atterm (G_UnloadMapInfo);
-
-	SetLevelDefaults (&gamedefaults);
-
-	// Parse the default MAPINFO for the current game.
-	for(int i=0; i<2; i++)
-	{
-		if (gameinfo.mapinfo[i] != NULL)
-		{
-			G_DoParseMapInfo(Wads.GetNumForFullName(gameinfo.mapinfo[i]));
-		}
-	}
-
-	// Parse any extra MAPINFOs.
-	while ((lump = Wads.FindLump ("MAPINFO", &lastlump)) != -1)
-	{
-		G_DoParseMapInfo (lump);
-	}
-	EndSequences.ShrinkToFit ();
-
-	if (EpiDef.numitems == 0)
-	{
-		I_FatalError ("You cannot use clearepisodes in a MAPINFO if you do not define any new episodes after it.");
-	}
-	if (AllSkills.Size()==0)
-	{
-		I_FatalError ("You cannot use clearskills in a MAPINFO if you do not define any new skills after it.");
-	}
-	ClearLevelInfoStrings (&gamedefaults);
-}
-
-static FSpecialAction *CopySpecialActions(FSpecialAction *spec)
-{
-	FSpecialAction **pSpec = &spec;
-
-	while (*pSpec)
-	{
-		FSpecialAction *newspec = new FSpecialAction;
-		*newspec = **pSpec;
-		*pSpec = newspec;
-		pSpec = &newspec->Next;
-	}
-	return spec;
-}
-
-static FOptionalMapinfoData *CopyOptData(FOptionalMapinfoData *opdata)
-{
-	FOptionalMapinfoData **opt = &opdata;
-
-	while (*opt)
-	{
-		FOptionalMapinfoData *newop = (*opt)->Clone();
-		*opt = newop;
-		opt = &newop->Next;
-	}
-	return opdata;
-}
-
-static void CopyString (char *& string)
-{
-	if (string != NULL)
-		string = copystring(string);
-}
-
-static void SafeDelete(char *&string)
-{
-	if (string != NULL)
-	{
-		delete[] string;
-		string = NULL;
-	}
-}
-
-static void ClearLevelInfoStrings(level_info_t *linfo)
-{
-	SafeDelete(linfo->music);
-	SafeDelete(linfo->intermusic);
-	SafeDelete(linfo->level_name);
-	SafeDelete(linfo->translator);
-	SafeDelete(linfo->enterpic);
-	SafeDelete(linfo->exitpic);
-	SafeDelete(linfo->soundinfo);
-	SafeDelete(linfo->sndseq);
-	for (FSpecialAction *spac = linfo->specialactions; spac != NULL; )
-	{
-		FSpecialAction *next = spac->Next;
-		delete spac;
-		spac = next;
-	}
-	for (FOptionalMapinfoData *spac = linfo->opdata; spac != NULL; )
-	{
-		FOptionalMapinfoData *next = spac->Next;
-		delete spac;
-		spac = next;
-	}
-}
-
-static void ClearClusterInfoStrings(cluster_info_t *cinfo)
-{
-	SafeDelete(cinfo->exittext);
-	SafeDelete(cinfo->entertext);
-	SafeDelete(cinfo->messagemusic);
-	SafeDelete(cinfo->clustername);
-}
-
-static void CopyLevelInfo(level_info_t *levelinfo, level_info_t *from)
-{
-	memcpy (levelinfo, from, sizeof(*levelinfo));
-	CopyString(levelinfo->music);
-	CopyString(levelinfo->intermusic);
-	CopyString(levelinfo->translator);
-	CopyString(levelinfo->enterpic);
-	CopyString(levelinfo->exitpic);
-	CopyString(levelinfo->soundinfo);
-	CopyString(levelinfo->sndseq);
-	levelinfo->specialactions = CopySpecialActions(levelinfo->specialactions);
-	levelinfo->opdata = CopyOptData(levelinfo->opdata);
-}
-
-
-static void G_DoParseMapInfo (int lump)
-{
-	level_info_t defaultinfo;
-	level_info_t *levelinfo;
-	int levelindex;
-	cluster_info_t *clusterinfo;
-	int clusterindex;
-	QWORD levelflags;
-
-	FScanner sc(lump);
-
-	CopyLevelInfo(&defaultinfo, &gamedefaults);
-	HexenHack = false;
-
-	while (sc.GetString ())
-	{
-		switch (sc.MustMatchString (MapInfoTopLevel))
-		{
-		case MITL_GAMEDEFAULTS:
-			ClearLevelInfoStrings(&gamedefaults);
-			SetLevelDefaults (&gamedefaults);
-			ParseMapInfoLower (sc, MapHandlers, MapInfoMapLevel, &gamedefaults, NULL, defaultinfo.flags);
-			ClearLevelInfoStrings(&defaultinfo);
-			CopyLevelInfo(&defaultinfo, &gamedefaults);
-			break;
-
-		case MITL_DEFAULTMAP:
-			ClearLevelInfoStrings(&defaultinfo);
-			SetLevelDefaults (&defaultinfo);
-			ParseMapInfoLower (sc, MapHandlers, MapInfoMapLevel, &defaultinfo, NULL, defaultinfo.flags);
-			break;
-
-		case MITL_ADDDEFAULTMAP:
-			// Same as above but adds to the existing definitions instead of replacing them completely
-			ParseMapInfoLower (sc, MapHandlers, MapInfoMapLevel, &defaultinfo, NULL, defaultinfo.flags);
-			break;
-
-		case MITL_MAP:		// map <MAPNAME> <Nice Name>
-		  {
-			char maptemp[8];
-			const char *mapname;
-
-			levelflags = defaultinfo.flags;
-			sc.MustGetString ();
-			mapname = sc.String;
-			if (IsNum (mapname))
-			{	// MAPNAME is a number; assume a Hexen wad
-				int mapnum = atoi (mapname);
-				mysnprintf (maptemp, countof(maptemp), "MAP%02d", mapnum);
-				mapname = maptemp;
-				HexenHack = true;
-				// Hexen levels are automatically nointermission,
-				// no auto sound sequences, falling damage,
-				// monsters activate their own specials, and missiles
-				// are always the activators of impact lines.
-				levelflags |= LEVEL_NOINTERMISSION
-							| LEVEL_SNDSEQTOTALCTRL
-							| LEVEL_FALLDMG_HX
-							| LEVEL_ACTOWNSPECIAL
-							| LEVEL_MISSILESACTIVATEIMPACT
-							| LEVEL_INFINITE_FLIGHT
-							| LEVEL_MONSTERFALLINGDAMAGE
-							| LEVEL_HEXENHACK;
-			}
-			levelindex = FindWadLevelInfo (mapname);
-			if (levelindex == -1)
-			{
-				levelindex = wadlevelinfos.Reserve(1);
-			}
-			else
-			{
-				ClearLevelInfoStrings (&wadlevelinfos[levelindex]);
-			}
-			levelinfo = &wadlevelinfos[levelindex];
-			CopyLevelInfo(levelinfo, &defaultinfo);
-			if (HexenHack)
-			{
-				levelinfo->WallHorizLight = levelinfo->WallVertLight = 0;
-			}
-			uppercopy (levelinfo->mapname, mapname);
-			sc.MustGetString ();
-			if (sc.String[0] == '$')
-			{
-				// For consistency with other definitions allow $Stringtablename here, too.
-				levelflags |= LEVEL_LOOKUPLEVELNAME;
-				ReplaceString (&levelinfo->level_name, sc.String + 1);
-			}
-			else
-			{
-				if (sc.Compare ("lookup"))
-				{
-					sc.MustGetString ();
-					levelflags |= LEVEL_LOOKUPLEVELNAME;
-				}
-				ReplaceString (&levelinfo->level_name, sc.String);
-			}
-			// Set up levelnum now so that you can use Teleport_NewMap specials
-			// to teleport to maps with standard names without needing a levelnum.
-			if (!strnicmp (levelinfo->mapname, "MAP", 3) && levelinfo->mapname[5] == 0)
-			{
-				int mapnum = atoi (levelinfo->mapname + 3);
-
-				if (mapnum >= 1 && mapnum <= 99)
-					levelinfo->levelnum = mapnum;
-			}
-			else if (levelinfo->mapname[0] == 'E' &&
-				levelinfo->mapname[1] >= '0' && levelinfo->mapname[1] <= '9' &&
-				levelinfo->mapname[2] == 'M' &&
-				levelinfo->mapname[3] >= '0' && levelinfo->mapname[3] <= '9')
-			{
-				int epinum = levelinfo->mapname[1] - '1';
-				int mapnum = levelinfo->mapname[3] - '0';
-				levelinfo->levelnum = epinum*10 + mapnum;
-			}
-			ParseMapInfoLower (sc, MapHandlers, MapInfoMapLevel, levelinfo, NULL, levelflags);
-			// When the second sky is -NOFLAT-, make it a copy of the first sky
-			if (strcmp (levelinfo->skypic2, "-NOFLAT-") == 0)
-			{
-				strcpy (levelinfo->skypic2, levelinfo->skypic1);
-			}
-			SetLevelNum (levelinfo, levelinfo->levelnum);	// Wipe out matching levelnums from other maps.
-			/* can't do this here.
-			if (levelinfo->pname[0] != 0)
-			{
-				if (!TexMan.CheckForTexture(levelinfo->pname, FTexture::TEX_MiscPatch).Exists())
-				{
-					levelinfo->pname[0] = 0;
-				}
-			}
-			*/
-			break;
-		  }
-
-		case MITL_CLUSTERDEF:	// clusterdef <clusternum>
-			sc.MustGetNumber ();
-			clusterindex = FindWadClusterInfo (sc.Number);
-			if (clusterindex == -1)
-			{
-				clusterindex = wadclusterinfos.Reserve(1);
-				clusterinfo = &wadclusterinfos[clusterindex];
-			}
-			else
-			{
-				clusterinfo = &wadclusterinfos[clusterindex];
-				ClearClusterInfoStrings(clusterinfo);
-			}
-			memset (clusterinfo, 0, sizeof(cluster_info_t));
-			clusterinfo->cluster = sc.Number;
-			ParseMapInfoLower (sc, ClusterHandlers, MapInfoClusterLevel, NULL, clusterinfo, 0);
-			break;
-
-		case MITL_EPISODE:
-			ParseEpisodeInfo(sc);
-			break;
-
-		case MITL_CLEAREPISODES:
-			ClearEpisodes();
-			break;
-
-		case MITL_SKILL:
-			ParseSkill(sc);
-			break;
-
-		case MITL_CLEARSKILLS:
-			AllSkills.Clear();
-			break;
-
-		}
-	}
-	ClearLevelInfoStrings(&defaultinfo);
-}
-
-static void ClearEpisodes()
-{
-	for (int i = 0; i < EpiDef.numitems; ++i)
-	{
-		delete[] const_cast<char *>(EpisodeMenu[i].name);
-		EpisodeMenu[i].name = NULL;
-	}
-	EpiDef.numitems = 0;
-}
-
-static void ParseMapInfoLower (FScanner &sc,
-							   MapInfoHandler *handlers,
-							   const char *strings[],
-							   level_info_t *levelinfo,
-							   cluster_info_t *clusterinfo,
-							   QWORD flags)
-{
-	int entry;
-	MapInfoHandler *handler;
-	BYTE *info;
-
-	info = levelinfo ? (BYTE *)levelinfo : (BYTE *)clusterinfo;
-
-	while (sc.GetString ())
-	{
-		if (sc.MatchString (MapInfoTopLevel) != -1)
-		{
-			sc.UnGet ();
-			break;
-		}
-		entry = sc.MatchString (strings);
-
-		if (entry == -1)
-		{
-			FString keyword = sc.String;
-			sc.MustGetString();
-			if (levelinfo != NULL)
-			{
-				if (sc.Compare("{"))
-				{
-					ParseOptionalBlock(keyword, sc, levelinfo);
-					continue;
-				}
-			}
-			sc.ScriptError("Unknown keyword '%s'", keyword.GetChars());
-		}
-
-		handler = handlers + entry;
-		switch (handler->type)
-		{
-		case MITYPE_EATNEXT:
-			sc.MustGetString ();
-			break;
-
-		case MITYPE_IGNORE:
-			break;
-
-		case MITYPE_INT:
-			sc.MustGetNumber ();
-			*((int *)(info + handler->data1)) = sc.Number;
-			break;
-
-		case MITYPE_FLOAT:
-			sc.MustGetFloat ();
-			*((float *)(info + handler->data1)) = sc.Float;
-			break;
-
-		case MITYPE_HEX:
-			sc.MustGetString ();
-			*((int *)(info + handler->data1)) = strtoul (sc.String, NULL, 16);
-			break;
-
-		case MITYPE_COLOR:
-			sc.MustGetString ();
-			*((DWORD *)(info + handler->data1)) = V_GetColor (NULL, sc.String);
-			break;
-
-		case MITYPE_REDIRECT:
-			sc.MustGetString ();
-			levelinfo->RedirectType = sc.String;
-			// Intentional fall-through
-
-		case MITYPE_MAPNAME: {
-			EndSequence newSeq;
-			bool useseq = false;
-			char maptemp[8];
-			const char *mapname;
-
-			sc.MustGetString ();
-			mapname = sc.String;
-			if (IsNum (mapname))
-			{
-				int mapnum = atoi (mapname);
-
-				if (HexenHack)
-				{
-					mysnprintf (maptemp, countof(maptemp), "&wt@%02d", mapnum);
-				}
-				else
-				{
-					mysnprintf (maptemp, countof(maptemp), "MAP%02d", mapnum);
-				}
-				mapname = maptemp;
-			}
-			if (stricmp (mapname, "endgame") == 0)
-			{
-				newSeq.Advanced = true;
-				newSeq.EndType = END_Pic1;
-				newSeq.PlayTheEnd = false;
-				newSeq.MusicLooping = true;
-				sc.MustGetStringName("{");
-				while (!sc.CheckString("}"))
-				{
-					sc.MustGetString();
-					if (sc.Compare("pic"))
-					{
-						sc.MustGetString();
-						newSeq.EndType = END_Pic;
-						newSeq.PicName = sc.String;
-					}
-					else if (sc.Compare("hscroll"))
-					{
-						newSeq.EndType = END_Bunny;
-						sc.MustGetString();
-						newSeq.PicName = sc.String;
-						sc.MustGetString();
-						newSeq.PicName2 = sc.String;
-						if (sc.CheckNumber())
-							newSeq.PlayTheEnd = !!sc.Number;
-					}
-					else if (sc.Compare("vscroll"))
-					{
-						newSeq.EndType = END_Demon;
-						sc.MustGetString();
-						newSeq.PicName = sc.String;
-						sc.MustGetString();
-						newSeq.PicName2 = sc.String;
-					}
-					else if (sc.Compare("cast"))
-					{
-						newSeq.EndType = END_Cast;
-					}
-					else if (sc.Compare("music"))
-					{
-						sc.MustGetString();
-						newSeq.Music = sc.String;
-						if (sc.CheckNumber())
-						{
-							newSeq.MusicLooping = !!sc.Number;
-						}
-					}
-				}
-				useseq = true;
-			}
-			else if (strnicmp (mapname, "EndGame", 7) == 0)
-			{
-				int type;
-				switch (sc.String[7])
-				{
-				case '1':	type = END_Pic1;		break;
-				case '2':	type = END_Pic2;		break;
-				case '3':	type = END_Bunny;		break;
-				case 'C':	type = END_Cast;		break;
-				case 'W':	type = END_Underwater;	break;
-				case 'S':	type = END_Strife;		break;
-				default:	type = END_Pic3;		break;
-				}
-				newSeq.EndType = type;
-				useseq = true;
-			}
-			else if (stricmp (mapname, "endpic") == 0)
-			{
-				sc.MustGetString ();
-				newSeq.EndType = END_Pic;
-				newSeq.PicName = sc.String;
-				useseq = true;
-			}
-			else if (stricmp (mapname, "endbunny") == 0)
-			{
-				newSeq.EndType = END_Bunny;
-				useseq = true;
-			}
-			else if (stricmp (mapname, "endcast") == 0)
-			{
-				newSeq.EndType = END_Cast;
-				useseq = true;
-			}
-			else if (stricmp (mapname, "enddemon") == 0)
-			{
-				newSeq.EndType = END_Demon;
-				useseq = true;
-			}
-			else if (stricmp (mapname, "endchess") == 0)
-			{
-				newSeq.EndType = END_Chess;
-				useseq = true;
-			}
-			else if (stricmp (mapname, "endunderwater") == 0)
-			{
-				newSeq.EndType = END_Underwater;
-				useseq = true;
-			}
-			else if (stricmp (mapname, "endbuystrife") == 0)
-			{
-				newSeq.EndType = END_BuyStrife;
-				useseq = true;
-			}
-			else
-			{
-				strncpy ((char *)(info + handler->data1), mapname, 8);
-			}
-			if (useseq)
-			{
-				int seqnum = -1;
-				
-				if (!newSeq.Advanced)
-				{
-					seqnum = FindEndSequence (newSeq.EndType, newSeq.PicName);
-				}
-
-				if (seqnum == -1)
-				{
-					seqnum = (int)EndSequences.Push (newSeq);
-				}
-				strcpy ((char *)(info + handler->data1), "enDSeQ");
-				*((WORD *)(info + handler->data1 + 6)) = (WORD)seqnum;
-			}
-			break;
-		  }
-
-		case MITYPE_LUMPNAME:
-			sc.MustGetString ();
-			uppercopy ((char *)(info + handler->data1), sc.String);
-			flags |= handler->data2;
-			break;
-
-		case MITYPE_SKY:
-			sc.MustGetString ();	// get texture name;
-			uppercopy ((char *)(info + handler->data1), sc.String);
-			sc.MustGetFloat ();		// get scroll speed
-			if (HexenHack)
-			{
-				sc.Float /= 256;
-			}
-			// Sky scroll speed is specified as pixels per tic, but we
-			// want pixels per millisecond.
-			*((float *)(info + handler->data2)) = sc.Float * 35 / 1000;
-			break;
-
-		case MITYPE_SETFLAG:
-			flags |= handler->data1;
-			flags |= handler->data2;
-			break;
-
-		case MITYPE_CLRFLAG:
-			flags &= ~handler->data1;
-			flags |= handler->data2;
-			break;
-
-		case MITYPE_SCFLAGS:
-			flags = (flags & handler->data2) | handler->data1;
-			break;
-
-		case MITYPE_CLUSTER:
-			sc.MustGetNumber ();
-			*((int *)(info + handler->data1)) = sc.Number;
-			// If this cluster hasn't been defined yet, add it. This is especially needed
-			// for Hexen, because it doesn't have clusterdefs. If we don't do this, every
-			// level on Hexen will sometimes be considered as being on the same hub,
-			// depending on the check done.
-			if (FindWadClusterInfo (sc.Number) == -1)
-			{
-				unsigned int clusterindex = wadclusterinfos.Reserve(1);
-				clusterinfo = &wadclusterinfos[clusterindex];
-				memset (clusterinfo, 0, sizeof(cluster_info_t));
-				clusterinfo->cluster = sc.Number;
-				if (HexenHack)
-				{
-					clusterinfo->flags |= CLUSTER_HUB;
-				}
-			}
-			break;
-
-		case MITYPE_STRINGT:
-			sc.MustGetString ();
-			if (sc.String[0] == '$')
-			{
-				// For consistency with other definitions allow $Stringtablename here, too.
-				flags |= handler->data2;
-				ReplaceString ((char **)(info + handler->data1), sc.String+1);
-			}
-			else
-			{
-				if (sc.Compare ("lookup"))
-				{
-					flags |= handler->data2;
-					sc.MustGetString ();
-				}
-				ReplaceString ((char **)(info + handler->data1), sc.String);
-			}
-			break;
-
-		case MITYPE_STRING:
-			sc.MustGetString();
-			ReplaceString ((char **)(info + handler->data1), sc.String);
-			break;
-
-		case MITYPE_MUSIC:
-			sc.MustGetString ();
-			{
-				char *colon = strchr (sc.String, ':');
-				if (colon)
-				{
-					*colon = 0;
-				}
-				ReplaceString ((char **)(info + handler->data1), sc.String);
-				*((int *)(info + handler->data2)) = colon ? atoi (colon + 1) : 0;
-				if (levelinfo != NULL)
-				{
-					// Flag the level so that the $MAP command doesn't override this.
-					flags|=LEVEL_MUSICDEFINED;
-				}
-			}
-			break;
-
-		case MITYPE_RELLIGHT:
-			sc.MustGetNumber ();
-			*((SBYTE *)(info + handler->data1)) = (SBYTE)clamp (sc.Number / 2, -128, 127);
-			break;
-
-		case MITYPE_CLRBYTES:
-			*((BYTE *)(info + handler->data1)) = 0;
-			*((BYTE *)(info + handler->data2)) = 0;
-			break;
-
-		case MITYPE_SPECIALACTION:
-			{
-				FSpecialAction **so = (FSpecialAction**)(info + handler->data1);
-				FSpecialAction *sa = new FSpecialAction;
-				int min_arg, max_arg;
-				sa->Next = *so;
-				*so = sa;
-				sc.SetCMode(true);
-				sc.MustGetString();
-				sa->Type = FName(sc.String);
-				sc.CheckString(",");
-				sc.MustGetString();
-				sa->Action = P_FindLineSpecial(sc.String, &min_arg, &max_arg);
-				if (sa->Action == 0 || min_arg < 0)
-				{
-					sc.ScriptError("Unknown specialaction '%s'");
-				}
-				int j = 0;
-				while (j < 5 && sc.CheckString(","))
-				{
-					sc.MustGetNumber();
-					sa->Args[j++] = sc.Number;
-				}
-				/*
-				if (j<min || j>max)
-				{
-					// Should be an error but can't for compatibility.
-				}
-				*/
-				sc.SetCMode(false);
-			}
-			break;
-
-		case MITYPE_COMPATFLAG:
-			if (!sc.CheckNumber()) sc.Number = 1;
-
-			if (levelinfo != NULL)
-			{
-				if (sc.Number) levelinfo->compatflags |= (DWORD)handler->data1;
-				else levelinfo->compatflags &= ~ (DWORD)handler->data1;
-				levelinfo->compatmask |= (DWORD)handler->data1;
-			}
-			break;
-		}
-	}
-	if (levelinfo)
-	{
-		levelinfo->flags = flags;
-	}
-	else
-	{
-		clusterinfo->flags = flags;
-	}
-}
-
-// Episode definitions start with the header "episode <start-map>"
-// and then can be followed by any of the following:
-//
-// name "Episode name as text"
-// picname "Picture to display the episode name"
-// key "Shortcut key for the menu"
-// noskillmenu
-// remove
-
-static void ParseEpisodeInfo (FScanner &sc)
-{
-	int i;
-	char map[9];
-	char *pic = NULL;
-	bool picisgfx = false;	// Shut up, GCC!!!!
-	bool remove = false;
-	char key = 0;
-	bool noskill = false;
-	bool optional = false;
-	bool extended = false;
-
-	// Get map name
-	sc.MustGetString ();
-	uppercopy (map, sc.String);
-	map[8] = 0;
-
-	sc.MustGetString ();
-	if (sc.Compare ("teaser"))
-	{
-		sc.MustGetString ();
-		if (gameinfo.flags & GI_SHAREWARE)
-		{
-			uppercopy (map, sc.String);
-		}
-		sc.MustGetString ();
-	}
-	do
-	{
-		if (sc.Compare ("optional"))
-		{
-			// For M4 in Doom
-			optional = true;
-		}
-		else if (sc.Compare ("extended"))
-		{
-			// For M4 and M5 in Heretic
-			extended = true;
-		}
-		else if (sc.Compare ("name"))
-		{
-			sc.MustGetString ();
-			ReplaceString (&pic, sc.String);
-			picisgfx = false;
-		}
-		else if (sc.Compare ("picname"))
-		{
-			sc.MustGetString ();
-			ReplaceString (&pic, sc.String);
-			picisgfx = true;
-		}
-		else if (sc.Compare ("remove"))
-		{
-			remove = true;
-		}
-		else if (sc.Compare ("key"))
-		{
-			sc.MustGetString ();
-			key = sc.String[0];
-		}
-		else if (sc.Compare("noskillmenu"))
-		{
-			noskill = true;
-		}
-		else
-		{
-			sc.UnGet ();
-			break;
-		}
-	}
-	while (sc.GetString ());
-
-	if (extended && !(gameinfo.flags & GI_MENUHACK_EXTENDED))
-	{ // If the episode is for the extended Heretic, but this is
-	  // not the extended Heretic, ignore it.
-		return;
-	}
-
-	if (optional && !remove)
-	{
-		if (!P_CheckMapData(map))
-		{
-			// If the episode is optional and the map does not exist
-			// just ignore this episode definition.
-			return;
-		}
-	}
-
-
-	for (i = 0; i < EpiDef.numitems; ++i)
-	{
-		if (strncmp (EpisodeMaps[i], map, 8) == 0)
-		{
-			break;
-		}
-	}
-
-	if (remove)
-	{
-		// If the remove property is given for an episode, remove it.
-		if (i < EpiDef.numitems)
-		{
-			if (i+1 < EpiDef.numitems)
-			{
-				memmove (&EpisodeMaps[i], &EpisodeMaps[i+1],
-					sizeof(EpisodeMaps[0])*(EpiDef.numitems - i - 1));
-				memmove (&EpisodeMenu[i], &EpisodeMenu[i+1],
-					sizeof(EpisodeMenu[0])*(EpiDef.numitems - i - 1));
-				memmove (&EpisodeNoSkill[i], &EpisodeNoSkill[i+1], 
-					sizeof(EpisodeNoSkill[0])*(EpiDef.numitems - i - 1));
-			}
-			EpiDef.numitems--;
-		}
-	}
-	else
-	{
-		if (pic == NULL)
-		{
-			pic = copystring (map);
-			picisgfx = false;
-		}
-
-		if (i == EpiDef.numitems)
-		{
-			if (EpiDef.numitems == MAX_EPISODES)
-			{
-				i = EpiDef.numitems - 1;
-			}
-			else
-			{
-				i = EpiDef.numitems++;
-			}
-		}
-		else
-		{
-			delete[] const_cast<char *>(EpisodeMenu[i].name);
-		}
-
-		EpisodeMenu[i].name = pic;
-		EpisodeMenu[i].alphaKey = tolower(key);
-		EpisodeMenu[i].fulltext = !picisgfx;
-		EpisodeNoSkill[i] = noskill;
-		strncpy (EpisodeMaps[i], map, 8);
-	}
-}
-
-static int FindEndSequence (int type, const char *picname)
+int FindEndSequence (int type, const char *picname)
 {
 	unsigned int i, num;
 
@@ -1467,6 +152,11 @@ static int FindEndSequence (int type, const char *picname)
 	return -1;
 }
 
+//==========================================================================
+//
+//
+//==========================================================================
+
 static void SetEndSequence (char *nextmap, int type)
 {
 	int seqnum;
@@ -1481,6 +171,11 @@ static void SetEndSequence (char *nextmap, int type)
 	strcpy (nextmap, "enDSeQ");
 	*((WORD *)(nextmap + 6)) = (WORD)seqnum;
 }
+
+//==========================================================================
+//
+//
+//==========================================================================
 
 void G_SetForEndGame (char *nextmap)
 {
@@ -1505,85 +200,14 @@ void G_SetForEndGame (char *nextmap)
 	}
 }
 
-void G_UnloadMapInfo ()
-{
-	unsigned int i;
-
-	G_ClearSnapshots ();
-
-	for (i = 0; i < wadlevelinfos.Size(); ++i)
-	{
-		ClearLevelInfoStrings (&wadlevelinfos[i]);
-	}
-	wadlevelinfos.Clear();
-
-	for (i = 0; i < wadclusterinfos.Size(); ++i)
-	{
-		ClearClusterInfoStrings (&wadclusterinfos[i]);
-	}
-	wadclusterinfos.Clear();
-
-	ClearEpisodes();
-}
-
-level_info_t *FindLevelByWarpTrans (int num)
-{
-	for (unsigned i = wadlevelinfos.Size(); i-- != 0; )
-		if (wadlevelinfos[i].WarpTrans == num)
-			return &wadlevelinfos[i];
-
-	return NULL;
-}
-
-static void zapDefereds (acsdefered_t *def)
-{
-	while (def)
-	{
-		acsdefered_t *next = def->next;
-		delete def;
-		def = next;
-	}
-}
-
-void P_RemoveDefereds (void)
-{
-	// Remove any existing defereds
-	for (unsigned int i = 0; i < wadlevelinfos.Size(); i++)
-	{
-		if (wadlevelinfos[i].defered)
-		{
-			zapDefereds (wadlevelinfos[i].defered);
-			wadlevelinfos[i].defered = NULL;
-		}
-	}
-}
-
-bool CheckWarpTransMap (FString &mapname, bool substitute)
-{
-	if (mapname[0] == '&' && (mapname[1] & 0xDF) == 'W' &&
-		(mapname[2] & 0xDF) == 'T' && mapname[3] == '@')
-	{
-		level_info_t *lev = FindLevelByWarpTrans (atoi (&mapname[4]));
-		if (lev != NULL)
-		{
-			mapname = lev->mapname;
-			return true;
-		}
-		else if (substitute)
-		{
-			char a = mapname[4], b = mapname[5];
-			mapname = "MAP";
-			mapname << a << b;
-		}
-	}
-	return false;
-}
-
+//==========================================================================
 //
 // G_InitNew
 // Can be called by the startup code or the menu task,
 // consoleplayer, playeringame[] should be set.
 //
+//==========================================================================
+
 static FString d_mapname;
 static int d_skill=-1;
 
@@ -1594,6 +218,11 @@ void G_DeferedInitNew (const char *mapname, int newskill)
 	CheckWarpTransMap (d_mapname, true);
 	gameaction = ga_newgame2;
 }
+
+//==========================================================================
+//
+//
+//==========================================================================
 
 CCMD (map)
 {
@@ -1619,6 +248,11 @@ CCMD (map)
 		Printf ("Usage: map <map name>\n");
 	}
 }
+
+//==========================================================================
+//
+//
+//==========================================================================
 
 CCMD (open)
 {
@@ -1647,6 +281,11 @@ CCMD (open)
 	}
 }
 
+
+//==========================================================================
+//
+//
+//==========================================================================
 
 void G_NewInit ()
 {
@@ -1680,6 +319,11 @@ void G_NewInit ()
 	NextSkill = -1;
 }
 
+//==========================================================================
+//
+//
+//==========================================================================
+
 void G_DoNewGame (void)
 {
 	G_NewInit ();
@@ -1691,6 +335,38 @@ void G_DoNewGame (void)
 	G_InitNew (d_mapname, false);
 	gameaction = ga_nothing;
 }
+
+//==========================================================================
+//
+// Initializes player classes in case they are random.
+// This gets called at the start of a new game, and the classes
+// chosen here are used for the remainder of a single-player
+// or coop game. These are ignored for deathmatch.
+//
+//==========================================================================
+
+
+static void InitPlayerClasses ()
+{
+	if (!savegamerestore)
+	{
+		for (int i = 0; i < MAXPLAYERS; ++i)
+		{
+			SinglePlayerClass[i] = players[i].userinfo.PlayerClass;
+			if (SinglePlayerClass[i] < 0 || !playeringame[i])
+			{
+				SinglePlayerClass[i] = (pr_classchoice()) % PlayerClasses.Size ();
+			}
+			players[i].cls = NULL;
+			players[i].CurrentPlayerClass = SinglePlayerClass[i];
+		}
+	}
+}
+
+//==========================================================================
+//
+//
+//==========================================================================
 
 void G_InitNew (const char *mapname, bool bTitleLevel)
 {
@@ -1807,16 +483,7 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 			rngseed = rngseed*3/2;
 		}
 		FRandom::StaticClearRandom ();
-		memset (ACS_WorldVars, 0, sizeof(ACS_WorldVars));
-		memset (ACS_GlobalVars, 0, sizeof(ACS_GlobalVars));
-		for (i = 0; i < NUM_WORLDVARS; ++i)
-		{
-			ACS_WorldArrays[i].Clear ();
-		}
-		for (i = 0; i < NUM_GLOBALVARS; ++i)
-		{
-			ACS_GlobalArrays[i].Clear ();
-		}
+		P_ClearACSVars(true);
 		level.time = 0;
 		level.maptime = 0;
 		level.totaltime = 0;
@@ -1870,9 +537,14 @@ static bool		resetinventory;	// Reset the inventory to the player's default for 
 static bool		unloading;
 static bool		g_nomonsters;
 
+//==========================================================================
+//
 // [RH] The position parameter to these next three functions should
 //		match the first parameter of the single player start spots
 //		that should appear in the next map.
+//
+//==========================================================================
+
 
 void G_ChangeLevel(const char *levelname, int position, bool keepFacing, int nextSkill, 
 				   bool nointermission, bool resetinv, bool nomonsters)
@@ -1887,7 +559,7 @@ void G_ChangeLevel(const char *levelname, int position, bool keepFacing, int nex
 
 	if (strncmp(levelname, "enDSeQ", 6))
 	{
-		level_info_t *nextinfo = CheckLevelRedirect (FindLevelInfo (nextlevel));
+		level_info_t *nextinfo = FindLevelInfo (nextlevel)->CheckLevelRedirect ();
 		if (nextinfo)
 		{
 			nextlevel = nextinfo->mapname;
@@ -1949,6 +621,11 @@ void G_ChangeLevel(const char *levelname, int position, bool keepFacing, int nex
 	}
 }
 
+//==========================================================================
+//
+//
+//==========================================================================
+
 const char *G_GetExitMap()
 {
 	return level.nextmap;
@@ -1968,6 +645,11 @@ const char *G_GetSecretExitMap()
 	return nextmap;
 }
 
+//==========================================================================
+//
+//
+//==========================================================================
+
 void G_ExitLevel (int position, bool keepFacing)
 {
 	G_ChangeLevel(G_GetExitMap(), position, keepFacing);
@@ -1977,6 +659,11 @@ void G_SecretExitLevel (int position)
 {
 	G_ChangeLevel(G_GetSecretExitMap(), position, false);
 }
+
+//==========================================================================
+//
+//
+//==========================================================================
 
 void G_DoCompleted (void)
 {
@@ -2098,11 +785,7 @@ void G_DoCompleted (void)
 
 		if (mode == FINISH_NextHub)
 		{ // Reset world variables for the new hub.
-			memset (ACS_WorldVars, 0, sizeof(ACS_WorldVars));
-			for (i = 0; i < NUM_WORLDVARS; ++i)
-			{
-				ACS_WorldArrays[i].Clear ();
-			}
+			P_ClearACSVars(false);
 		}
 		// With hub statistics the time should be per hub.
 		// Additionally there is a global time counter now so nothing is missed by changing it
@@ -2132,6 +815,11 @@ void G_DoCompleted (void)
 	WI_Start (&wminfo);
 }
 
+//==========================================================================
+//
+//
+//==========================================================================
+
 class DAutosaver : public DThinker
 {
 	DECLARE_CLASS (DAutosaver, DThinker)
@@ -2147,9 +835,12 @@ void DAutosaver::Tick ()
 	Destroy ();
 }
 
+//==========================================================================
 //
 // G_DoLoadLevel 
 //
+//==========================================================================
+
 extern gamestate_t 	wipegamestate; 
  
 void G_DoLoadLevel (int position, bool autosave)
@@ -2175,18 +866,18 @@ void G_DoLoadLevel (int position, bool autosave)
 	StatusBar->DetachAllMessages ();
 
 	// Force 'teamplay' to 'true' if need be.
-	if (level.flags & LEVEL_FORCETEAMPLAYON)
+	if (level.flags2 & LEVEL2_FORCETEAMPLAYON)
 		teamplay = true;
 
 	// Force 'teamplay' to 'false' if need be.
-	if (level.flags & LEVEL_FORCETEAMPLAYOFF)
+	if (level.flags2 & LEVEL2_FORCETEAMPLAYOFF)
 		teamplay = false;
 
 	Printf (
 			"\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36"
 			"\36\36\36\36\36\36\36\36\36\36\36\36\37\n\n"
 			TEXTCOLOR_BOLD "%s - %s\n\n",
-			level.mapname, level.level_name);
+			level.mapname, level.LevelName.GetChars());
 
 	if (wipegamestate == GS_LEVEL)
 		wipegamestate = GS_FORCEWIPE;
@@ -2223,11 +914,11 @@ void G_DoLoadLevel (int position, bool autosave)
 
 	if (g_nomonsters)
 	{
-		level.flags |= LEVEL_NOMONSTERS;
+		level.flags2 |= LEVEL2_NOMONSTERS;
 	}
 	else
 	{
-		level.flags &= ~LEVEL_NOMONSTERS;
+		level.flags2 &= ~LEVEL2_NOMONSTERS;
 	}
 
 	P_SetupLevel (level.mapname, position);
@@ -2294,9 +985,12 @@ void G_DoLoadLevel (int position, bool autosave)
 }
 
 
+//==========================================================================
 //
 // G_WorldDone 
 //
+//==========================================================================
+
 void G_WorldDone (void) 
 { 
 	cluster_info_t *nextcluster;
@@ -2311,9 +1005,9 @@ void G_WorldDone (void)
 
 	if (strncmp (nextlevel, "enDSeQ", 6) == 0)
 	{
-		F_StartFinale (thiscluster->messagemusic, thiscluster->musicorder,
+		F_StartFinale (thiscluster->MessageMusic, thiscluster->musicorder,
 			thiscluster->cdtrack, thiscluster->cdid,
-			thiscluster->finaleflat, thiscluster->exittext,
+			thiscluster->finaleflat, thiscluster->ExitText,
 			thiscluster->flags & CLUSTER_EXITTEXTINLUMP,
 			thiscluster->flags & CLUSTER_FINALEPIC,
 			thiscluster->flags & CLUSTER_LOOKUPEXITTEXT,
@@ -2327,21 +1021,21 @@ void G_WorldDone (void)
 		{
 			// Only start the finale if the next level's cluster is different
 			// than the current one and we're not in deathmatch.
-			if (nextcluster->entertext)
+			if (nextcluster->EnterText.IsNotEmpty())
 			{
-				F_StartFinale (nextcluster->messagemusic, nextcluster->musicorder,
+				F_StartFinale (nextcluster->MessageMusic, nextcluster->musicorder,
 					nextcluster->cdtrack, nextcluster->cdid,
-					nextcluster->finaleflat, nextcluster->entertext,
+					nextcluster->finaleflat, nextcluster->EnterText,
 					nextcluster->flags & CLUSTER_ENTERTEXTINLUMP,
 					nextcluster->flags & CLUSTER_FINALEPIC,
 					nextcluster->flags & CLUSTER_LOOKUPENTERTEXT,
 					false);
 			}
-			else if (thiscluster->exittext)
+			else if (thiscluster->ExitText.IsNotEmpty())
 			{
-				F_StartFinale (thiscluster->messagemusic, thiscluster->musicorder,
+				F_StartFinale (thiscluster->MessageMusic, thiscluster->musicorder,
 					thiscluster->cdtrack, nextcluster->cdid,
-					thiscluster->finaleflat, thiscluster->exittext,
+					thiscluster->finaleflat, thiscluster->ExitText,
 					thiscluster->flags & CLUSTER_EXITTEXTINLUMP,
 					thiscluster->flags & CLUSTER_FINALEPIC,
 					thiscluster->flags & CLUSTER_LOOKUPEXITTEXT,
@@ -2351,6 +1045,11 @@ void G_WorldDone (void)
 	}
 } 
  
+//==========================================================================
+//
+//
+//==========================================================================
+
 void G_DoWorldDone (void) 
 {		 
 	gamestate = GS_LEVEL;
@@ -2494,6 +1193,11 @@ void G_FinishTravel ()
 	}
 }
  
+//==========================================================================
+//
+//
+//==========================================================================
+
 void G_InitLevelLocals ()
 {
 	level_info_t *info;
@@ -2514,7 +1218,6 @@ void G_InitLevelLocals ()
 	level.info = info;
 	level.skyspeed1 = info->skyspeed1;
 	level.skyspeed2 = info->skyspeed2;
-	info = (level_info_t *)info;
 	strncpy (level.skypic2, info->skypic2, 8);
 	level.fadeto = info->fadeto;
 	level.cdtrack = info->cdtrack;
@@ -2553,7 +1256,7 @@ void G_InitLevelLocals ()
 
 	G_AirControlChanged ();
 
-	if (info->level_name)
+	if (!info->LevelName.IsEmpty())
 	{
 		cluster_info_t *clus = FindClusterInfo (info->cluster);
 
@@ -2563,11 +1266,10 @@ void G_InitLevelLocals ()
 		level.clusterflags = clus ? clus->flags : 0;
 		level.flags |= info->flags;
 		level.levelnum = info->levelnum;
-		level.music = info->music;
+		level.Music = info->Music;
 		level.musicorder = info->musicorder;
 
-		strncpy (level.level_name, info->level_name, 63);
-		G_MaybeLookupLevelName (NULL);
+		level.LevelName = level.info->LookupLevelName();
 		strncpy (level.nextmap, info->nextmap, 8);
 		level.nextmap[8] = 0;
 		strncpy (level.secretmap, info->secretmap, 8);
@@ -2582,10 +1284,10 @@ void G_InitLevelLocals ()
 	{
 		level.partime = level.cluster = 0;
 		level.sucktime = 0;
-		strcpy (level.level_name, "Unnamed");
+		level.LevelName = "Unnamed";
 		level.nextmap[0] =
 			level.secretmap[0] = 0;
-		level.music = NULL;
+		level.Music = "";
 		strcpy (level.skypic1, "SKY1");
 		strcpy (level.skypic2, "SKY1");
 		level.flags = 0;
@@ -2597,6 +1299,11 @@ void G_InitLevelLocals ()
 	NormalLight.ChangeFade (level.fadeto);
 }
 
+//==========================================================================
+//
+//
+//==========================================================================
+
 bool FLevelLocals::IsJumpingAllowed() const
 {
 	if (dmflags & DF_NO_JUMP)
@@ -2605,6 +1312,11 @@ bool FLevelLocals::IsJumpingAllowed() const
 		return true;
 	return !(level.flags & LEVEL_JUMP_NO);
 }
+
+//==========================================================================
+//
+//
+//==========================================================================
 
 bool FLevelLocals::IsCrouchingAllowed() const
 {
@@ -2615,6 +1327,11 @@ bool FLevelLocals::IsCrouchingAllowed() const
 	return !(level.flags & LEVEL_CROUCH_NO);
 }
 
+//==========================================================================
+//
+//
+//==========================================================================
+
 bool FLevelLocals::IsFreelookAllowed() const
 {
 	if (level.flags & LEVEL_FREELOOK_NO)
@@ -2623,6 +1340,11 @@ bool FLevelLocals::IsFreelookAllowed() const
 		return true;
 	return !(dmflags & DF_NO_FREELOOK);
 }
+
+//==========================================================================
+//
+//
+//==========================================================================
 
 FString CalcMapName (int episode, int level)
 {
@@ -2640,124 +1362,10 @@ FString CalcMapName (int episode, int level)
 	return lumpname;
 }
 
-level_info_t *FindLevelInfo (const char *mapname)
-{
-	int i;
-
-	if ((i = FindWadLevelInfo (mapname)) > -1)
-		return &wadlevelinfos[i];
-	else
-		return &TheDefaultLevelInfo;
-}
-
-level_info_t *FindLevelByNum (int num)
-{
-	for (unsigned int i = 0; i < wadlevelinfos.Size(); i++)
-		if (wadlevelinfos[i].levelnum == num)
-			return &wadlevelinfos[i];
-
-	return NULL;
-}
-
-level_info_t *CheckLevelRedirect (level_info_t *info)
-{
-	if (info->RedirectType != NAME_None)
-	{
-		const PClass *type = PClass::FindClass(info->RedirectType);
-		if (type != NULL)
-		{
-			for (int i = 0; i < MAXPLAYERS; ++i)
-			{
-				if (playeringame[i] && players[i].mo->FindInventory (type))
-				{
-					// check for actual presence of the map.
-					if (P_CheckMapData(info->RedirectMap))
-					{
-						return FindLevelInfo(info->RedirectMap);
-					}
-					break;
-				}
-			}
-		}
-	}
-	return NULL;
-}
-
-static void SetLevelNum (level_info_t *info, int num)
-{
-	// Avoid duplicate levelnums. The level being set always has precedence.
-	for (unsigned int i = 0; i < wadlevelinfos.Size(); ++i)
-	{
-		if (wadlevelinfos[i].levelnum == num)
-			wadlevelinfos[i].levelnum = 0;
-	}
-	info->levelnum = num;
-}
-
-cluster_info_t *FindClusterInfo (int cluster)
-{
-	int i;
-
-	if ((i = FindWadClusterInfo (cluster)) > -1)
-		return &wadclusterinfos[i];
-	else
-		return &TheDefaultClusterInfo;
-}
-
-const char *G_MaybeLookupLevelName (level_info_t *ininfo)
-{
-	level_info_t *info;
-
-	if (ininfo == NULL)
-	{
-		info = level.info;
-	}
-	else
-	{
-		info = ininfo;
-	}
-
-	if (info != NULL && info->flags & LEVEL_LOOKUPLEVELNAME)
-	{
-		const char *thename;
-		const char *lookedup;
-
-		lookedup = GStrings[info->level_name];
-		if (lookedup == NULL)
-		{
-			thename = info->level_name;
-		}
-		else
-		{
-			char checkstring[32];
-
-			// Strip out the header from the localized string
-			if (info->mapname[0] == 'E' && info->mapname[2] == 'M')
-			{
-				mysnprintf (checkstring, countof(checkstring), "%s: ", info->mapname);
-			}
-			else if (info->mapname[0] == 'M' && info->mapname[1] == 'A' && info->mapname[2] == 'P')
-			{
-				mysnprintf (checkstring, countof(checkstring), "%d: ", atoi(info->mapname + 3));
-			}
-			thename = strstr (lookedup, checkstring);
-			if (thename == NULL)
-			{
-				thename = lookedup;
-			}
-			else
-			{
-				thename += strlen (checkstring);
-			}
-		}
-		if (ininfo == NULL)
-		{
-			strncpy (level.level_name, thename, 63);
-		}
-		return thename;
-	}
-	return info != NULL ? info->level_name : NULL;
-}
+//==========================================================================
+//
+//
+//==========================================================================
 
 void G_AirControlChanged ()
 {
@@ -2772,6 +1380,11 @@ void G_AirControlChanged ()
 		level.airfriction = (fixed_t)(fric * 65536.f);
 	}
 }
+
+//==========================================================================
+//
+//
+//==========================================================================
 
 void G_SerializeLevel (FArchive &arc, bool hubLoad)
 {
@@ -2885,13 +1498,18 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 	}
 }
 
+//==========================================================================
+//
 // Archives the current level
+//
+//==========================================================================
+
 void G_SnapshotLevel ()
 {
 	if (level.info->snapshot)
 		delete level.info->snapshot;
 
-	if (level.info->mapname[0] != 0 || level.info == &TheDefaultLevelInfo)
+	if (level.info->isValid())
 	{
 		level.info->snapshotVer = SAVEVER;
 		level.info->snapshot = new FCompressedMemFile;
@@ -2904,14 +1522,19 @@ void G_SnapshotLevel ()
 	}
 }
 
+//==========================================================================
+//
 // Unarchives the current level based on its snapshot
 // The level should have already been loaded and setup.
+//
+//==========================================================================
+
 void G_UnSnapshotLevel (bool hubLoad)
 {
 	if (level.info->snapshot == NULL)
 		return;
 
-	if (level.info->mapname[0] != 0 || level.info == &TheDefaultLevelInfo)
+	if (level.info->isValid())
 	{
 		SaveVersion = level.info->snapshotVer;
 		level.info->snapshot->Reopen ();
@@ -2949,21 +1572,13 @@ void G_UnSnapshotLevel (bool hubLoad)
 		}
 	}
 	// No reason to keep the snapshot around once the level's been entered.
-	delete level.info->snapshot;
-	level.info->snapshot = NULL;
+	level.info->ClearSnapshot();
 }
 
-void G_ClearSnapshots (void)
-{
-	for (unsigned int i = 0; i < wadlevelinfos.Size(); i++)
-	{
-		if (wadlevelinfos[i].snapshot)
-		{
-			delete wadlevelinfos[i].snapshot;
-			wadlevelinfos[i].snapshot = NULL;
-		}
-	}
-}
+//==========================================================================
+//
+//
+//==========================================================================
 
 static void writeMapName (FArchive &arc, const char *name)
 {
@@ -2980,12 +1595,22 @@ static void writeMapName (FArchive &arc, const char *name)
 	arc.Write (name, size);
 }
 
+//==========================================================================
+//
+//
+//==========================================================================
+
 static void writeSnapShot (FArchive &arc, level_info_t *i)
 {
 	arc << i->snapshotVer;
 	writeMapName (arc, i->mapname);
 	i->snapshot->Serialize (arc);
 }
+
+//==========================================================================
+//
+//
+//==========================================================================
 
 void G_WriteSnapshots (FILE *file)
 {
@@ -3053,6 +1678,11 @@ void G_WriteSnapshots (FILE *file)
 		arc3 << pnum;
 	}
 }
+
+//==========================================================================
+//
+//
+//==========================================================================
 
 void G_ReadSnapshots (PNGHandle *png)
 {
@@ -3140,11 +1770,21 @@ void G_ReadSnapshots (PNGHandle *png)
 }
 
 
+//==========================================================================
+//
+//
+//==========================================================================
+
 static void writeDefereds (FArchive &arc, level_info_t *i)
 {
 	writeMapName (arc, i->mapname);
 	arc << i->defered;
 }
+
+//==========================================================================
+//
+//
+//==========================================================================
 
 void P_WriteACSDefereds (FILE *file)
 {
@@ -3170,6 +1810,11 @@ void P_WriteACSDefereds (FILE *file)
 		delete arc;
 	}
 }
+
+//==========================================================================
+//
+//
+//==========================================================================
 
 void P_ReadACSDefereds (PNGHandle *png)
 {
@@ -3201,6 +1846,11 @@ void P_ReadACSDefereds (PNGHandle *png)
 }
 
 
+//==========================================================================
+//
+//
+//==========================================================================
+
 void FLevelLocals::Tick ()
 {
 	// Reset carry sectors
@@ -3209,6 +1859,11 @@ void FLevelLocals::Tick ()
 		memset (Scrolls, 0, sizeof(*Scrolls)*numsectors);
 	}
 }
+
+//==========================================================================
+//
+//
+//==========================================================================
 
 void FLevelLocals::AddScroller (DScroller *scroller, int secnum)
 {
@@ -3223,285 +1878,11 @@ void FLevelLocals::AddScroller (DScroller *scroller, int secnum)
 	}
 }
 
-// Initializes player classes in case they are random.
-// This gets called at the start of a new game, and the classes
-// chosen here are used for the remainder of a single-player
-// or coop game. These are ignored for deathmatch.
-
-static void InitPlayerClasses ()
-{
-	if (!savegamerestore)
-	{
-		for (int i = 0; i < MAXPLAYERS; ++i)
-		{
-			SinglePlayerClass[i] = players[i].userinfo.PlayerClass;
-			if (SinglePlayerClass[i] < 0 || !playeringame[i])
-			{
-				SinglePlayerClass[i] = (pr_classchoice()) % PlayerClasses.Size ();
-			}
-			players[i].cls = NULL;
-			players[i].CurrentPlayerClass = SinglePlayerClass[i];
-		}
-	}
-}
-
-
-static void ParseSkill (FScanner &sc)
-{
-	FSkillInfo skill;
-
-	skill.AmmoFactor = FRACUNIT;
-	skill.DoubleAmmoFactor = 2*FRACUNIT;
-	skill.DropAmmoFactor = -1;
-	skill.DamageFactor = FRACUNIT;
-	skill.FastMonsters = false;
-	skill.DisableCheats = false;
-	skill.EasyBossBrain = false;
-	skill.AutoUseHealth = false;
-	skill.RespawnCounter = 0;
-	skill.RespawnLimit = 0;
-	skill.Aggressiveness = FRACUNIT;
-	skill.SpawnFilter = 0;
-	skill.ACSReturn = AllSkills.Size();
-	skill.MenuNameIsLump = false;
-	skill.MustConfirm = false;
-	skill.Shortcut = 0;
-	skill.TextColor = "";
-
-	sc.MustGetString();
-	skill.Name = sc.String;
-
-	while (sc.GetString ())
-	{
-		if (sc.Compare ("ammofactor"))
-		{
-			sc.MustGetFloat ();
-			skill.AmmoFactor = FLOAT2FIXED(sc.Float);
-		}
-		else if (sc.Compare ("doubleammofactor"))
-		{
-			sc.MustGetFloat ();
-			skill.DoubleAmmoFactor = FLOAT2FIXED(sc.Float);
-		}
-		else if (sc.Compare ("dropammofactor"))
-		{
-			sc.MustGetFloat ();
-			skill.DropAmmoFactor = FLOAT2FIXED(sc.Float);
-		}
-		else if (sc.Compare ("damagefactor"))
-		{
-			sc.MustGetFloat ();
-			skill.DamageFactor = FLOAT2FIXED(sc.Float);
-		}
-		else if (sc.Compare ("fastmonsters"))
-		{
-			skill.FastMonsters = true;
-		}
-		else if (sc.Compare ("disablecheats"))
-		{
-			skill.DisableCheats = true;
-		}
-		else if (sc.Compare ("easybossbrain"))
-		{
-			skill.EasyBossBrain = true;
-		}
-		else if (sc.Compare("autousehealth"))
-		{
-			skill.AutoUseHealth = true;
-		}
-		else if (sc.Compare("respawntime"))
-		{
-			sc.MustGetFloat ();
-			skill.RespawnCounter = int(sc.Float*TICRATE);
-		}
-		else if (sc.Compare("respawnlimit"))
-		{
-			sc.MustGetNumber ();
-			skill.RespawnLimit = sc.Number;
-		}
-		else if (sc.Compare("Aggressiveness"))
-		{
-			sc.MustGetFloat ();
-			skill.Aggressiveness = FRACUNIT - FLOAT2FIXED(clamp<float>(sc.Float, 0,1));
-		}
-		else if (sc.Compare("SpawnFilter"))
-		{
-			if (sc.CheckNumber())
-			{
-				if (sc.Number > 0) skill.SpawnFilter |= (1<<(sc.Number-1));
-			}
-			else
-			{
-				sc.MustGetString ();
-				if (sc.Compare("baby")) skill.SpawnFilter |= 1;
-				else if (sc.Compare("easy")) skill.SpawnFilter |= 2;
-				else if (sc.Compare("normal")) skill.SpawnFilter |= 4;
-				else if (sc.Compare("hard")) skill.SpawnFilter |= 8;
-				else if (sc.Compare("nightmare")) skill.SpawnFilter |= 16;
-			}
-		}
-		else if (sc.Compare("ACSReturn"))
-		{
-			sc.MustGetNumber ();
-			skill.ACSReturn = sc.Number;
-		}
-		else if (sc.Compare("Name"))
-		{
-			sc.MustGetString ();
-			skill.MenuName = sc.String;
-			skill.MenuNameIsLump = false;
-		}
-		else if (sc.Compare("PlayerClassName"))
-		{
-			sc.MustGetString ();
-			FName pc = sc.String;
-			sc.MustGetString ();
-			skill.MenuNamesForPlayerClass[pc]=sc.String;
-		}
-		else if (sc.Compare("PicName"))
-		{
-			sc.MustGetString ();
-			skill.MenuName = sc.String;
-			skill.MenuNameIsLump = true;
-		}
-		else if (sc.Compare("MustConfirm"))
-		{
-			skill.MustConfirm = true;
-			if (sc.CheckToken(TK_StringConst))
-			{
-				skill.MustConfirmText = sc.String;
-			}
-		}
-		else if (sc.Compare("Key"))
-		{
-			sc.MustGetString();
-			skill.Shortcut = tolower(sc.String[0]);
-		}
-		else if (sc.Compare("TextColor"))
-		{
-			sc.MustGetString();
-			skill.TextColor = '[';
-			skill.TextColor << sc.String << ']';
-		}
-		else
-		{
-			sc.UnGet ();
-			break;
-		}
-	}
-	for(unsigned int i = 0; i < AllSkills.Size(); i++)
-	{
-		if (AllSkills[i].Name == skill.Name)
-		{
-			AllSkills[i] = skill;
-			return;
-		}
-	}
-	AllSkills.Push(skill);
-}
-
-int G_SkillProperty(ESkillProperty prop)
-{
-	if (AllSkills.Size() > 0)
-	{
-		switch(prop)
-		{
-		case SKILLP_AmmoFactor:
-			if (dmflags2 & DF2_YES_DOUBLEAMMO)
-			{
-				return AllSkills[gameskill].DoubleAmmoFactor;
-			}
-			return AllSkills[gameskill].AmmoFactor;
-
-		case SKILLP_DropAmmoFactor:
-			return AllSkills[gameskill].DropAmmoFactor;
-
-		case SKILLP_DamageFactor:
-			return AllSkills[gameskill].DamageFactor;
-
-		case SKILLP_FastMonsters:
-			return AllSkills[gameskill].FastMonsters  || (dmflags & DF_FAST_MONSTERS);
-
-		case SKILLP_Respawn:
-			if (dmflags & DF_MONSTERS_RESPAWN && AllSkills[gameskill].RespawnCounter==0) 
-				return TICRATE * (gameinfo.gametype != GAME_Strife ? 12 : 16);
-			return AllSkills[gameskill].RespawnCounter;
-
-		case SKILLP_RespawnLimit:
-			return AllSkills[gameskill].RespawnLimit;
-
-		case SKILLP_Aggressiveness:
-			return AllSkills[gameskill].Aggressiveness;
-
-		case SKILLP_DisableCheats:
-			return AllSkills[gameskill].DisableCheats;
-
-		case SKILLP_AutoUseHealth:
-			return AllSkills[gameskill].AutoUseHealth;
-
-		case SKILLP_EasyBossBrain:
-			return AllSkills[gameskill].EasyBossBrain;
-
-		case SKILLP_SpawnFilter:
-			return AllSkills[gameskill].SpawnFilter;
-
-		case SKILLP_ACSReturn:
-			return AllSkills[gameskill].ACSReturn;
-		}
-	}
-	return 0;
-}
-
-
-void G_VerifySkill()
-{
-	if (gameskill >= (int)AllSkills.Size())
-		gameskill = AllSkills.Size()-1;
-	else if (gameskill < 0)
-		gameskill = 0;
-}
-
-FSkillInfo &FSkillInfo::operator=(const FSkillInfo &other)
-{
-	Name = other.Name;
-	AmmoFactor = other.AmmoFactor;
-	DoubleAmmoFactor = other.DoubleAmmoFactor;
-	DropAmmoFactor = other.DropAmmoFactor;
-	DamageFactor = other.DamageFactor;
-	FastMonsters = other.FastMonsters;
-	DisableCheats = other.DisableCheats;
-	AutoUseHealth = other.AutoUseHealth;
-	EasyBossBrain = other.EasyBossBrain;
-	RespawnCounter= other.RespawnCounter;
-	RespawnLimit= other.RespawnLimit;
-	Aggressiveness= other.Aggressiveness;
-	SpawnFilter = other.SpawnFilter;
-	ACSReturn = other.ACSReturn;
-	MenuName = other.MenuName;
-	MenuNamesForPlayerClass = other.MenuNamesForPlayerClass;
-	MenuNameIsLump = other.MenuNameIsLump;
-	MustConfirm = other.MustConfirm;
-	MustConfirmText = other.MustConfirmText;
-	Shortcut = other.Shortcut;
-	TextColor = other.TextColor;
-	return *this;
-}
-
-int FSkillInfo::GetTextColor() const
-{
-	if (TextColor.IsEmpty())
-	{
-		return CR_UNTRANSLATED;
-	}
-	const BYTE *cp = (const BYTE *)TextColor.GetChars();
-	int color = V_ParseFontColor(cp, 0, 0);
-	if (color == CR_UNDEFINED)
-	{
-		Printf("Undefined color '%s' in definition of skill %s\n", TextColor.GetChars(), Name.GetChars());
-		color = CR_UNTRANSLATED;
-	}
-	return color;
-}
+//==========================================================================
+//
+// Lists all currently defined maps
+//
+//==========================================================================
 
 CCMD(listmaps)
 {
@@ -3511,7 +1892,11 @@ CCMD(listmaps)
 
 		if (P_CheckMapData(info->mapname))
 		{
-			Printf("%s: '%s'\n", info->mapname, G_MaybeLookupLevelName(info));
+			Printf("%s: '%s'\n", info->mapname, info->LookupLevelName().GetChars());
 		}
 	}
 }
+
+
+
+

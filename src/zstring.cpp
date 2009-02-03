@@ -1110,6 +1110,7 @@ void FString::ReallocBuffer (size_t newlen)
 #include <windows.h>
 
 static HANDLE StringHeap;
+const SIZE_T STRING_HEAP_SIZE = 64*1024;
 #endif
 
 FStringData *FStringData::Alloc (size_t strlen)
@@ -1120,7 +1121,7 @@ FStringData *FStringData::Alloc (size_t strlen)
 #ifdef _WIN32
 	if (StringHeap == NULL)
 	{
-		StringHeap = HeapCreate (0, 64*1024, 0);
+		StringHeap = HeapCreate (0, STRING_HEAP_SIZE, 0);
 		if (StringHeap == NULL)
 		{
 			throw std::bad_alloc();

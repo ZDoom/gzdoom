@@ -239,7 +239,7 @@ bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType)
 	}
 	// some old WADs use this method to create walls that change the texture when shot.
 	else if (activationType == SPAC_Impact &&					// only for shootable triggers
-		(level.flags & LEVEL_DUMMYSWITCHES) &&					// this is only a compatibility setting for an old hack!
+		(level.flags2 & LEVEL2_DUMMYSWITCHES) &&					// this is only a compatibility setting for an old hack!
 		!repeat &&												// only non-repeatable triggers
 		(special<Generic_Floor || special>Generic_Crusher) &&	// not for Boom's generalized linedefs
 		special &&												// not for lines without a special
@@ -322,7 +322,7 @@ bool P_TestActivateLine (line_t *line, AActor *mo, int side, int activationType)
 		// lax activation checks, monsters can also activate certain lines
 		// even without them being marked as monster activate-able. This is
 		// the default for non-Hexen maps in Hexen format.
-		if (!(level.flags & LEVEL_LAXMONSTERACTIVATION))
+		if (!(level.flags2 & LEVEL2_LAXMONSTERACTIVATION))
 		{
 			return false;
 		}

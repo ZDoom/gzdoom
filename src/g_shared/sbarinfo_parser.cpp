@@ -46,6 +46,7 @@
 #include "gi.h"
 #include "i_system.h"
 #include "g_level.h"
+#include "p_acs.h"
 
 SBarInfo *SBarInfoScript[2] = {NULL,NULL};
 

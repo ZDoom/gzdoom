@@ -848,7 +848,7 @@ static void DrawConversationMenu ()
 	}
 
 	// [CW] Freeze the game depending on MAPINFO options.
-	if (ConversationPauseTic < gametic && !multiplayer && !(level.flags & LEVEL_CONV_SINGLE_UNFREEZE))
+	if (ConversationPauseTic < gametic && !multiplayer && !(level.flags2 & LEVEL2_CONV_SINGLE_UNFREEZE))
 	{
 		menuactive = MENU_On;
 	}

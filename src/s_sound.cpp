@@ -370,26 +370,18 @@ void S_Start ()
 		
 		// Check for local sound definitions. Only reload if they differ
 		// from the previous ones.
-		const char *LocalSndInfo;
-		const char *LocalSndSeq;
+		FString LocalSndInfo;
+		FString LocalSndSeq;
 		
 		// To be certain better check whether level is valid!
-		if (level.info && level.info->soundinfo)
+		if (level.info)
 		{
-			LocalSndInfo = level.info->soundinfo;
-		}
-		else
-		{
-			LocalSndInfo = "";
+			LocalSndInfo = level.info->SoundInfo;
 		}
 
-		if (level.info && level.info->sndseq)
+		if (level.info)
 		{
-			LocalSndSeq  = level.info->sndseq;
-		}
-		else
-		{
-			LocalSndSeq  = "";
+			LocalSndSeq  = level.info->SndSeq;
 		}
 
 		bool parse_ss = false;
@@ -420,11 +412,11 @@ void S_Start ()
 		{
 			parse_ss = true;
 		}
+
 		if (parse_ss)
 		{
 			S_ParseSndSeq(*LocalSndSeq? Wads.CheckNumForFullName(LocalSndSeq, true) : -1);
 		}
-		else
 		
 		LastLocalSndInfo = LocalSndInfo;
 		LastLocalSndSeq = LocalSndSeq;
@@ -442,7 +434,7 @@ void S_Start ()
 	if (!savegamerestore)
 	{
 		if (level.cdtrack == 0 || !S_ChangeCDMusic (level.cdtrack, level.cdid))
-			S_ChangeMusic (level.music, level.musicorder);
+			S_ChangeMusic (level.Music, level.musicorder);
 	}
 }
 
@@ -2170,7 +2162,7 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 	{
 		if (gamestate == GS_LEVEL || gamestate == GS_TITLELEVEL)
 		{
-			musicname = level.music;
+			musicname = level.Music;
 			order = level.musicorder;
 		}
 		else
@@ -2433,9 +2425,9 @@ CCMD (idmus)
 
 		if ( (info = FindLevelInfo (map)) )
 		{
-			if (info->music)
+			if (info->Music.IsNotEmpty())
 			{
-				S_ChangeMusic (info->music, info->musicorder);
+				S_ChangeMusic (info->Music, info->musicorder);
 				Printf ("%s\n", GStrings("STSTR_MUS"));
 			}
 		}

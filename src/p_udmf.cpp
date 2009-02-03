@@ -419,9 +419,9 @@ struct UDMFParser
 		ld->Alpha = FRACUNIT;
 		ld->id = -1;
 		ld->sidenum[0] = ld->sidenum[1] = NO_SIDE;
-		if (level.flags & LEVEL_CLIPMIDTEX) ld->flags |= ML_CLIP_MIDTEX;
-		if (level.flags & LEVEL_WRAPMIDTEX) ld->flags |= ML_WRAP_MIDTEX;
-		if (level.flags & LEVEL_CHECKSWITCHRANGE) ld->flags |= ML_CHECKSWITCHRANGE;
+		if (level.flags2 & LEVEL2_CLIPMIDTEX) ld->flags |= ML_CLIP_MIDTEX;
+		if (level.flags2 & LEVEL2_WRAPMIDTEX) ld->flags |= ML_WRAP_MIDTEX;
+		if (level.flags2 & LEVEL2_CHECKSWITCHRANGE) ld->flags |= ML_CHECKSWITCHRANGE;
 
 		sc.MustGetToken('{');
 		while (!sc.CheckToken('}'))
@@ -1124,19 +1124,19 @@ struct UDMFParser
 			case NAME_Doom:
 				namespace_bits = Dm;
 				P_LoadTranslator("xlat/doom_base.txt");
-				level.flags |= LEVEL_DUMMYSWITCHES;
+				level.flags2 |= LEVEL2_DUMMYSWITCHES;
 				floordrop = true;
 				break;
 			case NAME_Heretic:
 				namespace_bits = Ht;
 				P_LoadTranslator("xlat/heretic_base.txt");
-				level.flags |= LEVEL_DUMMYSWITCHES;
+				level.flags2 |= LEVEL2_DUMMYSWITCHES;
 				floordrop = true;
 				break;
 			case NAME_Strife:
 				namespace_bits = St;
 				P_LoadTranslator("xlat/strife_base.txt");
-				level.flags |= LEVEL_DUMMYSWITCHES|LEVEL_RAILINGHACK;
+				level.flags2 |= LEVEL2_DUMMYSWITCHES|LEVEL2_RAILINGHACK;
 				floordrop = true;
 				break;
 			default:

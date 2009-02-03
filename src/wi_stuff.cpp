@@ -230,7 +230,7 @@ static FTexture* 		p;			// Player graphic
 static FTexture*		lnames[2];	// Name graphics of each level (centered)
 
 // [RH] Info to dynamically generate the level name graphics
-static const char		*lnametexts[2];
+static FString			lnametexts[2];
 
 static FTexture			*background;
 
@@ -297,11 +297,11 @@ void WI_LoadBackground(bool isenterpic)
 	if (isenterpic)
 	{
 		level_info_t * li = FindLevelInfo(wbs->next);
-		if (li != NULL) lumpname = li->enterpic;
+		if (li != NULL) lumpname = li->EnterPic;
 	}
 	else
 	{
-		lumpname = level.info->exitpic;
+		lumpname = level.info->ExitPic;
 	}
 
 	// Try to get a default if nothing specified
@@ -329,7 +329,7 @@ void WI_LoadBackground(bool isenterpic)
 					// If going from E1-E3 to E4 the default should be used, not the exit pic.
 
 					// Not if the exit pic is user defined!
-					if (level.info->exitpic != NULL && level.info->exitpic[0]!=0) return;
+					if (level.info->ExitPic.IsNotEmpty()) return;
 
 					// E1-E3 need special treatment when playing Doom 1.
 					if (gamemode!=commercial)
@@ -712,6 +712,7 @@ int WI_DrawName(int y, const char *levelname)
 	lumph = BigFont->GetHeight() * CleanYfac;
 
 	p = levelname;
+	if (!p) return 0;
 	l = strlen(p);
 	if (!l) return 0;
 
@@ -1885,8 +1886,8 @@ void WI_Ticker(void)
 	if (bcnt == 1)
 	{
 		// intermission music - use the defaults if none specified
-		if (level.info->intermusic != NULL) 
-			S_ChangeMusic(level.info->intermusic, level.info->intermusicorder);
+		if (level.info->InterMusic.IsNotEmpty()) 
+			S_ChangeMusic(level.info->InterMusic, level.info->intermusicorder);
 		else if (gameinfo.gametype == GAME_Heretic)
 			S_ChangeMusic ("mus_intr");
 		else if (gameinfo.gametype == GAME_Hexen)
@@ -1966,11 +1967,12 @@ void WI_loadData(void)
 		bstar = star;
 	}
 
-	// Use the local level structure which can be overridden by hubs if they eventually get names!
-	lnametexts[0] = level.level_name;		
+	// Use the local level structure which can be overridden by hubs
+	lnametexts[0] = level.LevelName;		
 
 	level_info_t *li = FindLevelInfo(wbs->next);
-	lnametexts[1] = li ? G_MaybeLookupLevelName(li) : NULL;
+	if (li) lnametexts[1] = li->LookupLevelName();
+	else lnametexts[1] = "";
 
 	WI_LoadBackground(false);
 }

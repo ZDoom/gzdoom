@@ -2585,7 +2585,7 @@ void FinishDehPatch ()
 		AActor *defaults2 = GetDefaultByType (subclass);
 		memcpy (defaults2, defaults1, sizeof(AActor));
 
-		// Make a copy the replaced class's state labels 
+		// Make a copy of the replaced class's state labels 
 		FStateDefinitions statedef;
 		statedef.MakeStateDefines(type);
 
@@ -2598,8 +2598,16 @@ void FinishDehPatch ()
 
 		// Use the DECORATE replacement feature to redirect all spawns
 		// of the original class to the new one.
+		FActorInfo *old_replacement = type->ActorInfo->Replacement;
+
 		type->ActorInfo->Replacement = subclass->ActorInfo;
 		subclass->ActorInfo->Replacee = type->ActorInfo;
+		// If this actor was already replaced by another actor, copy that
+		// replacement over to this item.
+		if (old_replacement != NULL)
+		{
+			subclass->ActorInfo->Replacement = old_replacement;
+		}
 
 		DPrintf ("%s replaces %s\n", subclass->TypeName.GetChars(), type->TypeName.GetChars());
 	}

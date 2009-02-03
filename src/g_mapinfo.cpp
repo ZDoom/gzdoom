@@ -751,6 +751,7 @@ void FMapInfoParser::ParseNextMap(char *mapname)
 			newSeq.EndType = END_Pic1;
 			newSeq.PlayTheEnd = false;
 			newSeq.MusicLooping = true;
+			sc.MustGetStringName("{");
 			while (!sc.CheckString("}"))
 			{
 				sc.MustGetString();

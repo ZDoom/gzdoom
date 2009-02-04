@@ -1,5 +1,6 @@
 February 3, 2009
-- Added a fflush call after the logfile write in I_FatalError so that the
+- Bumped MINSAVEVER to coincide with the new MAPINFO merge.
+- Added a fflush() call after the logfile write in I_FatalError so that the
   error text is visible in the file while the error dialog is displayed.
 
 January 18, 2009 - February 3, 2009  (Changes by Graf Zahl)

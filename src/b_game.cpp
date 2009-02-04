@@ -332,7 +332,7 @@ bool FCajunMaster::SpawnBot (const char *name, int color)
 		{
 			strcat (concat, colors[bot_next_color]);
 		}
-		if (TEAMINFO_IsValidTeam (thebot->lastteam))
+		if (TeamLibrary.IsValidTeam (thebot->lastteam))
 		{ // Keep the bot on the same team when switching levels
 			mysnprintf (concat + strlen(concat), countof(concat) - strlen(concat),
 				"\\team\\%d\n", thebot->lastteam);
@@ -374,7 +374,7 @@ void FCajunMaster::DoAddBot (int bnum, char *info)
 		botingame[bnum] = true;
 
 		if (teamplay)
-			Printf ("%s joined the %s team\n", players[bnum].userinfo.netname, teams[players[bnum].userinfo.team].name.GetChars ());
+			Printf ("%s joined the %s team\n", players[bnum].userinfo.netname,Teams[players[bnum].userinfo.team].GetName ());
 		else
 			Printf ("%s joined the game\n", players[bnum].userinfo.netname);
 
@@ -592,17 +592,17 @@ bool FCajunMaster::LoadBots ()
 					if (IsNum (sc.String))
 					{
 						teamnum = atoi (sc.String);
-						if (!TEAMINFO_IsValidTeam (teamnum))
+						if (!TeamLibrary.IsValidTeam (teamnum))
 						{
-							teamnum = TEAM_None;
+							teamnum = TEAM_NONE;
 						}
 					}
 					else
 					{
-						teamnum = TEAM_None;
-						for (int i = 0; i < int(teams.Size()); ++i)
+						teamnum = TEAM_NONE;
+						for (unsigned int i = 0; i < Teams.Size(); ++i)
 						{
-							if (stricmp (teams[i].name, sc.String) == 0)
+							if (stricmp (Teams[i].GetName (), sc.String) == 0)
 							{
 								teamnum = i;
 								break;
@@ -638,7 +638,7 @@ bool FCajunMaster::LoadBots ()
 			appendinfo (newinfo->info, "255");
 		}
 		newinfo->next = bglobal.botinfo;
-		newinfo->lastteam = TEAM_None;
+		newinfo->lastteam = TEAM_NONE;
 		bglobal.botinfo = newinfo;
 		bglobal.loaded_bots++;
 	}

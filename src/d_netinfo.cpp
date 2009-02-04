@@ -65,7 +65,7 @@ CVAR (Float,	autoaim,				5000.f,		CVAR_USERINFO | CVAR_ARCHIVE);
 CVAR (String,	name,					"Player",	CVAR_USERINFO | CVAR_ARCHIVE);
 CVAR (Color,	color,					0x40cf00,	CVAR_USERINFO | CVAR_ARCHIVE);
 CVAR (String,	skin,					"base",		CVAR_USERINFO | CVAR_ARCHIVE);
-CVAR (Int,		team,					TEAM_None,	CVAR_USERINFO | CVAR_ARCHIVE);
+CVAR (Int,		team,					TEAM_NONE,	CVAR_USERINFO | CVAR_ARCHIVE);
 CVAR (String,	gender,					"male",		CVAR_USERINFO | CVAR_ARCHIVE);
 CVAR (Bool,		neverswitchonpickup,	false,		CVAR_USERINFO | CVAR_ARCHIVE);
 CVAR (Float,	movebob,				0.25f,		CVAR_USERINFO | CVAR_ARCHIVE);
@@ -191,13 +191,13 @@ void D_GetPlayerColor (int player, float *h, float *s, float *v)
 	RGBtoHSV (RPART(color)/255.f, GPART(color)/255.f, BPART(color)/255.f,
 		h, s, v);
 
-	if (teamplay && TEAMINFO_IsValidTeam(info->team))
+	if (teamplay && TeamLibrary.IsValidTeam(info->team) && !Teams[info->team].GetAllowCustomPlayerColor ())
 	{
 		// In team play, force the player to use the team's hue
 		// and adjust the saturation and value so that the team
 		// hue is visible in the final color.
 		float ts, tv;
-		int tcolor = teams[info->team].playercolor;
+		int tcolor = Teams[info->team].GetPlayerColor ();
 
 		RGBtoHSV (RPART(tcolor)/255.f, GPART(tcolor)/255.f, BPART(tcolor)/255.f,
 			h, &ts, &tv);
@@ -225,10 +225,10 @@ void D_PickRandomTeam (int player)
 
 int D_PickRandomTeam ()
 {
-	for (int i = 0; i < (signed)teams.Size (); i++)
+	for (unsigned int i = 0; i < Teams.Size (); i++)
 	{
-		teams[i].present = 0;
-		teams[i].ties = 0;
+		Teams[i].m_iPresent = 0;
+		Teams[i].m_iTies = 0;
 	}
 
 	int numTeams = 0;
@@ -238,9 +238,9 @@ int D_PickRandomTeam ()
 	{
 		if (playeringame[i])
 		{
-			if (TEAMINFO_IsValidTeam (players[i].userinfo.team))
+			if (TeamLibrary.IsValidTeam (players[i].userinfo.team))
 			{
-				if (teams[players[i].userinfo.team].present++ == 0)
+				if (Teams[players[i].userinfo.team].m_iPresent++ == 0)
 				{
 					numTeams++;
 				}
@@ -252,36 +252,37 @@ int D_PickRandomTeam ()
 	{
 		do
 		{
-			team = pr_pickteam() % teams.Size ();
-		} while (teams[team].present != 0);
+			team = pr_pickteam() % Teams.Size ();
+		} while (Teams[team].m_iPresent != 0);
 	}
 	else
 	{
-		int lowest = INT_MAX, lowestTie = 0, i;
+		int lowest = INT_MAX, lowestTie = 0;
+		unsigned int i;
 
-		for (i = 0; i < (signed)teams.Size (); ++i)
+		for (i = 0; i < Teams.Size (); ++i)
 		{
-			if (teams[i].present > 0)
+			if (Teams[i].m_iPresent > 0)
 			{
-				if (teams[i].present < lowest)
+				if (Teams[i].m_iPresent < lowest)
 				{
-					lowest = teams[i].present;
+					lowest = Teams[i].m_iPresent;
 					lowestTie = 0;
-					teams[0].ties = i;
+					Teams[0].m_iTies = i;
 				}
-				else if (teams[i].present == lowest)
+				else if (Teams[i].m_iPresent == lowest)
 				{
-					teams[++lowestTie].ties = i;
+					Teams[++lowestTie].m_iTies = i;
 				}
 			}
 		}
 		if (lowestTie == 0)
 		{
-			team = teams[0].ties;
+			team = Teams[0].m_iTies;
 		}
 		else
 		{
-			team = teams[pr_pickteam() % (lowestTie+1)].ties;
+			team = Teams[pr_pickteam() % (lowestTie+1)].m_iTies;
 		}
 	}
 
@@ -292,7 +293,7 @@ static void UpdateTeam (int pnum, int team, bool update)
 {
 	userinfo_t *info = &players[pnum].userinfo;
 
-	if ((dmflags2 & DF2_NO_TEAM_SWITCH) && (alwaysapplydmflags || deathmatch) && TEAMINFO_IsValidTeam (info->team))
+	if ((dmflags2 & DF2_NO_TEAM_SWITCH) && (alwaysapplydmflags || deathmatch) && TeamLibrary.IsValidTeam (info->team))
 	{
 		Printf ("Team changing has been disabled!\n");
 		return;
@@ -300,21 +301,21 @@ static void UpdateTeam (int pnum, int team, bool update)
 
 	int oldteam;
 
-	if (!TEAMINFO_IsValidTeam (team))
+	if (!TeamLibrary.IsValidTeam (team))
 	{
-		team = TEAM_None;
+		team = TEAM_NONE;
 	}
 	oldteam = info->team;
 	info->team = team;
 
-	if (teamplay && !TEAMINFO_IsValidTeam (info->team))
+	if (teamplay && !TeamLibrary.IsValidTeam (info->team))
 	{ // Force players onto teams in teamplay mode
 		info->team = D_PickRandomTeam ();
 	}
 	if (update && oldteam != info->team)
 	{
-		if (TEAMINFO_IsValidTeam (info->team))
-			Printf ("%s joined the %s team\n", info->netname, teams[info->team].name.GetChars());
+		if (TeamLibrary.IsValidTeam (info->team))
+			Printf ("%s joined the %s team\n", info->netname, Teams[info->team].GetName ());
 		else
 			Printf ("%s is now a loner\n", info->netname);
 	}
@@ -324,13 +325,13 @@ static void UpdateTeam (int pnum, int team, bool update)
 	{
 		StatusBar->AttachToPlayer (&players[pnum]);
 	}
-	if (!TEAMINFO_IsValidTeam (info->team))
-		info->team = TEAM_None;
+	if (!TeamLibrary.IsValidTeam (info->team))
+		info->team = TEAM_NONE;
 }
 
 int D_GetFragCount (player_t *player)
 {
-	if (!teamplay || !TEAMINFO_IsValidTeam (player->userinfo.team))
+	if (!teamplay || !TeamLibrary.IsValidTeam (player->userinfo.team))
 	{
 		return player->fragcount;
 	}
@@ -360,7 +361,7 @@ void D_SetupUserInfo ()
 		memset (&players[i].userinfo, 0, sizeof(userinfo_t));
 
 	strncpy (coninfo->netname, name, MAXPLAYERNAME);
-	if (teamplay && !TEAMINFO_IsValidTeam (team))
+	if (teamplay && !TeamLibrary.IsValidTeam (team))
 	{
 		coninfo->team = D_PickRandomTeam ();
 	}
@@ -831,7 +832,7 @@ CCMD (playerinfo)
 		int i = atoi (argv[1]);
 		userinfo_t *ui = &players[i].userinfo;
 		Printf ("Name:        %s\n",		ui->netname);
-		Printf ("Team:        %s (%d)\n",	ui->team == TEAM_None ? "None" : teams[ui->team].name.GetChars(), ui->team);
+		Printf ("Team:        %s (%d)\n",	ui->team == TEAM_NONE ? "None" : Teams[ui->team].GetName (), ui->team);
 		Printf ("Aimdist:     %d\n",		ui->aimdist);
 		Printf ("Color:       %06x\n",		ui->color);
 		Printf ("Skin:        %s (%d)\n",	skins[ui->skin].name, ui->skin);

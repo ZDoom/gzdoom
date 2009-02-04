@@ -1,9 +1,9 @@
 /*
 ** teaminfo.h
-** Implementation of the TEAMINFO lump.
+** Parses TEAMINFO and manages teams.
 **
 **---------------------------------------------------------------------------
-** Copyright 2007-2008 Christopher Westley
+** Copyright 2007-2009 Christopher Westley
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -35,28 +35,43 @@
 #ifndef __TEAMINFO_H__
 #define __TEAMINFO_H__
 
-#define TEAM_None 255
-
 #include "doomtype.h"
+#include "sc_man.h"
 
-struct TEAMINFO
+const int TEAM_NONE = 255;
+const int TEAM_MAXIMUM = 16;
+
+class FTeam
 {
-	FString		name;
-	int			playercolor;
-	FString		textcolor;
-	int			GetTextColor () const;
-	FString		logo;
-	int			players;
-	int			score;
-	int			present;
-	int			ties;
+public:
+	FTeam ();
+	void ParseTeamInfo ();
+	bool IsValidTeam (unsigned int uiTeam);
+
+	const char *GetName () const;
+	int GetPlayerColor () const;
+	int GetTextColor () const;
+	FString GetLogo () const;
+	bool GetAllowCustomPlayerColor () const;
+
+	int			m_iPlayerCount;
+	int			m_iScore;
+	int			m_iPresent;
+	int			m_iTies;
+
+private:
+	void ParseTeamDefinition (FScanner &Scan);
+	void ClearTeams ();
+
+	FString		m_Name;
+	BYTE		m_GameFilter;
+	int			m_iPlayerColor;
+	FString		m_TextColor;
+	FString		m_Logo;
+	bool		m_bAllowCustomPlayerColor;
 };
 
-extern TArray <TEAMINFO> teams;
-
-extern void TEAMINFO_Init ();
-extern void TEAMINFO_ParseTeam ();
-
-extern bool TEAMINFO_IsValidTeam (int team);
+extern FTeam			TeamLibrary;
+extern TArray<FTeam>	Teams;
 
 #endif

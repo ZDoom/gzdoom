@@ -55,7 +55,7 @@ void FCajunMaster::ClearPlayer (int i, bool keepTeam)
 	if (bot)
 	{
 		bot->inuse = false;
-		bot->lastteam = keepTeam ? players[i].userinfo.team : TEAM_None;
+		bot->lastteam = keepTeam ? players[i].userinfo.team : TEAM_NONE;
 	}
 	players[i].~player_t();
 	::new(&players[i]) player_t;

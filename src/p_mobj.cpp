@@ -4910,7 +4910,7 @@ bool AActor::IsTeammate (AActor *other)
 		return false;
 	if (!deathmatch)
 		return true;
-	if (teamplay && other->player->userinfo.team != TEAM_None &&
+	if (teamplay && other->player->userinfo.team != TEAM_NONE &&
 		player->userinfo.team == other->player->userinfo.team)
 	{
 		return true;

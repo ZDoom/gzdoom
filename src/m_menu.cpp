@@ -2164,8 +2164,8 @@ static void M_PlayerSetupDrawer ()
 	screen->DrawText (SmallFont, label, PSetupDef.x, PSetupDef.y + LINEHEIGHT+yo, "Team",
 		DTA_Clean, true, TAG_DONE);
 	screen->DrawText (SmallFont, value, x, PSetupDef.y + LINEHEIGHT+yo,
-		!TEAMINFO_IsValidTeam (players[consoleplayer].userinfo.team) ? "None" :
-		teams[players[consoleplayer].userinfo.team].name,
+		!TeamLibrary.IsValidTeam (players[consoleplayer].userinfo.team) ? "None" :
+		Teams[players[consoleplayer].userinfo.team].GetName (),
 		DTA_Clean, true, TAG_DONE);
 
 	// Draw player character
@@ -2640,11 +2640,11 @@ static void M_ChangePlayerTeam (int choice)
 	{
 		if (team == 0)
 		{
-			team = TEAM_None;
+			team = TEAM_NONE;
 		}
-		else if (team == TEAM_None)
+		else if (team == TEAM_NONE)
 		{
-			team = teams.Size () - 1;
+			team = Teams.Size () - 1;
 		}
 		else
 		{
@@ -2653,11 +2653,11 @@ static void M_ChangePlayerTeam (int choice)
 	}
 	else
 	{
-		if (team == int(teams.Size () - 1))
+		if (team == int(Teams.Size () - 1))
 		{
-			team = TEAM_None;
+			team = TEAM_NONE;
 		}
-		else if (team == TEAM_None)
+		else if (team == TEAM_NONE)
 		{
 			team = 0;
 		}

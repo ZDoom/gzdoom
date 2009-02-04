@@ -2521,9 +2521,9 @@ void D_DoomMain (void)
 	// Now that all textues have been loaded the crosshair can be initialized.
 	crosshair.Callback ();
 
-	// [CW] Parse any TEAMINFO lumps
-	Printf ("TEAMINFO_Init: Load team definitions.\n");
-	TEAMINFO_Init ();
+	// [CW] Parse any TEAMINFO lumps.
+	Printf ("ParseTeamInfo: Load team definitions.\n");
+	TeamLibrary.ParseTeamInfo ();
 
 	FActorInfo::StaticInit ();
 

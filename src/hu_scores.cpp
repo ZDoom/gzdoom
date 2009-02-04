@@ -248,22 +248,22 @@ static void HU_DoDrawScores (player_t *player, player_t *sortedplayers[MAXPLAYER
 			y = MAX(BigFont->GetHeight() * 4, y);
 		}
 
-		for (i = 0; i < teams.Size (); i++)
+		for (i = 0; i < Teams.Size (); i++)
 		{
-			teams[i].players = 0;
-			teams[i].score = 0;
+			Teams[i].m_iPlayerCount = 0;
+			Teams[i].m_iScore = 0;
 		}
 
 		for (i = 0; i < MAXPLAYERS; ++i)
 		{
-			if (playeringame[sortedplayers[i]-players] && TEAMINFO_IsValidTeam (sortedplayers[i]->userinfo.team))
+			if (playeringame[sortedplayers[i]-players] && TeamLibrary.IsValidTeam (sortedplayers[i]->userinfo.team))
 			{
-				if (teams[sortedplayers[i]->userinfo.team].players++ == 0)
+				if (Teams[sortedplayers[i]->userinfo.team].m_iPlayerCount++ == 0)
 				{
 					numTeams++;
 				}
 
-				teams[sortedplayers[i]->userinfo.team].score += sortedplayers[i]->fragcount;
+				Teams[sortedplayers[i]->userinfo.team].m_iScore += sortedplayers[i]->fragcount;
 			}
 		}
 
@@ -271,9 +271,9 @@ static void HU_DoDrawScores (player_t *player, player_t *sortedplayers[MAXPLAYER
 		int numscores = 0;
 		int scorex;
 
-		for (i = 0; i < teams.Size(); ++i)
+		for (i = 0; i < Teams.Size(); ++i)
 		{
-			if (teams[i].players)
+			if (Teams[i].m_iPlayerCount)
 			{
 				numscores++;
 			}
@@ -281,14 +281,14 @@ static void HU_DoDrawScores (player_t *player, player_t *sortedplayers[MAXPLAYER
 
 		scorex = (SCREENWIDTH - scorexwidth * (numscores - 1)) / 2;
 
-		for (i = 0; i < teams.Size(); ++i)
+		for (i = 0; i < Teams.Size(); ++i)
 		{
-			if (teams[i].players)
+			if (Teams[i].m_iPlayerCount)
 			{
 				char score[80];
-				mysnprintf (score, countof(score), "%d", teams[i].score);
+				mysnprintf (score, countof(score), "%d", Teams[i].m_iScore);
 
-				screen->DrawText (BigFont, teams[i].GetTextColor(),
+				screen->DrawText (BigFont, Teams[i].GetTextColor(),
 					scorex - BigFont->StringWidth(score)*CleanXfac/2, y, score,
 					DTA_CleanNoMove, true, TAG_DONE);
 
@@ -400,9 +400,9 @@ static void HU_DrawPlayer (player_t *player, bool highlight, int col1, int col2,
 	screen->DrawText (SmallFont, color, col4, y, player->userinfo.netname,
 		DTA_CleanNoMove, true, TAG_DONE);
 
-	if (teamplay && teams[player->userinfo.team].logo.IsNotEmpty())
+	if (teamplay && Teams[player->userinfo.team].GetLogo ().IsNotEmpty ())
 	{
-		FTexture *pic = TexMan[teams[player->userinfo.team].logo];
+		FTexture *pic = TexMan[Teams[player->userinfo.team].GetLogo ().GetChars ()];
 		screen->DrawTexture (pic, col1 - (pic->GetWidth() + 2) * CleanXfac, y,
 			DTA_CleanNoMove, true, TAG_DONE);
 	}
@@ -437,8 +437,8 @@ int HU_GetRowColor(player_t *player, bool highlight)
 {
 	if (teamplay && deathmatch)
 	{
-		if (TEAMINFO_IsValidTeam (player->userinfo.team))
-			return teams[player->userinfo.team].GetTextColor();
+		if (TeamLibrary.IsValidTeam (player->userinfo.team))
+			return Teams[player->userinfo.team].GetTextColor();
 		else
 			return CR_GREY;
 	}

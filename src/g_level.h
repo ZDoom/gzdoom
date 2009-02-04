@@ -212,9 +212,6 @@ class DScroller;
 
 class FScanner;
 struct level_info_t;
-typedef void (*MIParseFunc)(FScanner &sc, level_info_t *info);
-
-void AddOptionalMapinfoParser(const char *keyword, MIParseFunc parsefunc);
 
 struct FOptionalMapinfoData
 {
@@ -224,6 +221,18 @@ struct FOptionalMapinfoData
 	virtual ~FOptionalMapinfoData() {}
 	virtual FOptionalMapinfoData *Clone() const = 0;
 };
+
+struct FOptionalMapinfoDataPtr
+{
+	FOptionalMapinfoData *Ptr;
+
+	FOptionalMapinfoDataPtr() throw() : Ptr(NULL) {}
+	~FOptionalMapinfoDataPtr() { if (Ptr!=NULL) delete Ptr; }
+	FOptionalMapinfoDataPtr(const FOptionalMapinfoDataPtr &p) throw() : Ptr(p.Ptr->Clone()) {}
+	FOptionalMapinfoDataPtr &operator= (FOptionalMapinfoDataPtr &p) throw() { Ptr = p.Ptr->Clone(); return *this; }
+};
+
+typedef TMap<FName, FOptionalMapinfoDataPtr> FOptData;
 
 struct level_info_t
 {
@@ -278,6 +287,8 @@ struct level_info_t
 
 	float		teamdamage;
 
+	FOptData	optdata;
+
 	TArray<FSpecialAction> specialactions;
 
 	level_info_t() 
@@ -296,6 +307,23 @@ struct level_info_t
 	void ClearDefered();
 	level_info_t *CheckLevelRedirect ();
 
+	template<class T>
+	T *GetOptData(FName id, bool create = true)
+	{
+		FOptionalMapinfoDataPtr *pdat = optdata.CheckKey(id);
+		
+		if (pdat != NULL)
+		{
+			return static_cast<T*>(pdat->Ptr);
+		}
+		else if (create)
+		{
+			T *newobj = new T;
+			optdata[id].Ptr = newobj;
+			return newobj;
+		}
+		else return NULL;
+	}
 };
 
 // [RH] These get zeroed every tic and are updated by thinkers.

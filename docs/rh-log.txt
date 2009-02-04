@@ -1,3 +1,6 @@
+February 5, 2009  (Changes by Graf Zahl)
+- Made improvements so that the FOptionalMapinfoData class is easier to use.
+
 February 3, 2009
 - Moved the MF_INCHASE recursion check from A_Look() into A_Chase(). This
   lets A_Look() always put the actor into its see state. This problem could

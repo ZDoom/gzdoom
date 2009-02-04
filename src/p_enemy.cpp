@@ -1590,10 +1590,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Look)
 			// Let the self wander around aimlessly looking for a fight
 			if (self->SeeState != NULL)
 			{
-				if (!(self->flags & MF_INCHASE))
-				{
-					self->SetState (self->SeeState);
-				}
+				self->SetState (self->SeeState);
 			}
 			else
 			{
@@ -1638,7 +1635,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Look)
 		}
 	}
 
-	if (self->target && !(self->flags & MF_INCHASE))
+	if (self->target)
 	{
 		self->SetState (self->SeeState);
 	}
@@ -1757,6 +1754,10 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 {
 	int delta;
 
+	if (actor->flags & MF_INCHASE)
+	{
+		return;
+	}
 	actor->flags |= MF_INCHASE;
 
 	// [RH] Andy Baker's stealth monsters
@@ -2183,7 +2184,6 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 			S_Sound (corpsehit, CHAN_BODY, "vile/raise", 1, ATTN_IDLE);
 			info = corpsehit->GetDefault ();
 			
-			corpsehit->SetState (raisestate);
 			corpsehit->height = info->height;	// [RH] Use real mobj height
 			corpsehit->radius = info->radius;	// [RH] Use real radius
 			/*
@@ -2207,6 +2207,7 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 
 			// You are the Archvile's minion now, so hate what it hates
 			corpsehit->CopyFriendliness (self, false);
+			corpsehit->SetState (raisestate);
 
 			return true;
 		}

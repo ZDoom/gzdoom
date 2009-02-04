@@ -1,4 +1,8 @@
 February 3, 2009
+- Moved the MF_INCHASE recursion check from A_Look() into A_Chase(). This
+  lets A_Look() always put the actor into its see state. This problem could
+  be heard by an Archvile's resurrectee playing its see sound but failing to
+  enter its see state because it was called from A_Chase().
 - Fixed: SBARINFO used different rounding modes for the background and
   foreground of the DrawBar command.
 - Bumped MINSAVEVER to coincide with the new MAPINFO merge.

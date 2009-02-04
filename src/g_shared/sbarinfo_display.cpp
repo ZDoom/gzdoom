@@ -914,14 +914,18 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 				if(!block.fullScreenOffsets)
 				{
 					// Calc real screen coordinates for bar
-					x = cmd.x + ST_X + xOffset;
-					y = cmd.y + ST_Y + yOffset;
-					w = fg->GetScaledWidth();
-					h = fg->GetScaledHeight();
+					x = (cmd.x + ST_X + xOffset) << FRACBITS;
+					y = (cmd.y + ST_Y + yOffset) << FRACBITS;
+					w = fg->GetScaledWidth() << FRACBITS;
+					h = fg->GetScaledHeight() << FRACBITS;
 					if (Scaled)
 					{
-						screen->VirtualToRealCoordsInt(x, y, w, h, 320, 200, true);
+						screen->VirtualToRealCoords(x, y, w, h, 320, 200, true);
 					}
+					x >>= FRACBITS;
+					y >>= FRACBITS;
+					w = (w + FRACUNIT/2) >> FRACBITS;
+					h = (h + FRACUNIT/2) >> FRACBITS;
 				}
 				else
 				{
@@ -954,14 +958,18 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 				if(!block.fullScreenOffsets)
 				{
 					// Calc clipping rect for background
-					cx = cmd.x + ST_X + cmd.special3 + xOffset;
-					cy = cmd.y + ST_Y + cmd.special3 + yOffset;
-					cw = fg->GetScaledWidth() - fg->GetScaledLeftOffset() - cmd.special3 * 2;
-					ch = fg->GetScaledHeight() - fg->GetScaledTopOffset() - cmd.special3 * 2;
+					cx = (cmd.x + ST_X + cmd.special3 + xOffset) << FRACBITS;
+					cy = (cmd.y + ST_Y + cmd.special3 + yOffset) << FRACBITS;
+					cw = (fg->GetScaledWidth() - fg->GetScaledLeftOffset() - cmd.special3 * 2) << FRACBITS;
+					ch = (fg->GetScaledHeight() - fg->GetScaledTopOffset() - cmd.special3 * 2) << FRACBITS;
 					if (Scaled)
 					{
-						screen->VirtualToRealCoordsInt(cx, cy, cw, ch, 320, 200, true);
+						screen->VirtualToRealCoords(cx, cy, cw, ch, 320, 200, true);
 					}
+					cx >>= FRACBITS;
+					cy >>= FRACBITS;
+					cw = (cw + FRACUNIT/2) >> FRACBITS;
+					ch = (ch + FRACUNIT/2) >> FRACBITS;
 				}
 				else
 				{

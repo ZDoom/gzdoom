@@ -1,4 +1,6 @@
 February 3, 2009
+- Fixed: SBARINFO used different rounding modes for the background and
+  foreground of the DrawBar command.
 - Bumped MINSAVEVER to coincide with the new MAPINFO merge.
 - Added a fflush() call after the logfile write in I_FatalError so that the
   error text is visible in the file while the error dialog is displayed.

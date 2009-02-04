@@ -474,7 +474,10 @@ void STACK_ARGS I_FatalError (const char *error, ...)
 
 		// Record error to log (if logging)
 		if (Logfile)
+		{
 			fprintf (Logfile, "\n**** DIED WITH FATAL ERROR:\n%s\n", errortext);
+			fflush (Logfile);
+		}
 
 		throw CFatalError (errortext);
 	}

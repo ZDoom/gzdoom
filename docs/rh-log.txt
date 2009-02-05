@@ -1,3 +1,8 @@
+February 4, 2009
+- Added a compatibility lump because I think it's a shame that Void doesn't
+  work properly on new ZDooms after all the collaboration I had with Cyb on
+  that map. (Works with other maps, too.)
+
 February 5, 2009  (Changes by Graf Zahl)
 - Made improvements so that the FOptionalMapinfoData class is easier to use.
 

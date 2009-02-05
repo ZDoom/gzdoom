@@ -1185,6 +1185,10 @@ void G_FinishTravel ()
 				inv->LinkToWorld ();
 				inv->Travelled ();
 			}
+			if (ib_compatflags & BCOMPATF_RESETPLAYERSPEED)
+			{
+				pawn->Speed = pawn->GetDefault()->Speed;
+			}
 			if (level.FromSnapshot)
 			{
 				FBehavior::StaticStartTypedScripts (SCRIPT_Return, pawn, true);

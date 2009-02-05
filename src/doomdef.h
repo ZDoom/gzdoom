@@ -282,6 +282,14 @@ enum
 	COMPATF_CROSSDROPOFF	= 1 << 20,	// monsters can't be pushed over dropoffs
 };
 
+// Emulate old bugs for select maps. These are not exposed by a cvar
+// or mapinfo because we do not want new maps to use these bugs.
+enum
+{
+	BCOMPATF_SETSLOPEOVERFLOW	= 1 << 0,	// SetSlope things can overflow
+	BCOMPATF_RESETPLAYERSPEED	= 1 << 1,	// Set player speed to 1.0 when changing maps
+};
+
 // phares 3/20/98:
 //
 // Player friction is variable, based on controlling

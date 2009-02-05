@@ -63,6 +63,8 @@
 #include "r_sky.h"
 #include "cmdlib.h"
 #include "g_level.h"
+#include "md5.h"
+#include "compatibility.h"
 
 void P_SpawnSlopeMakers (FMapThing *firstmt, FMapThing *lastmt);
 void P_SetSlopes ();
@@ -508,6 +510,51 @@ bool P_CheckMapData(const char *mapname)
 	if (mapd == NULL) return false;
 	delete mapd;
 	return true;
+}
+
+//===========================================================================
+//
+// MapData :: GetChecksum
+//
+// Hashes a map based on its header, THINGS, LINEDEFS, SIDEDEFS, SECTORS,
+// and BEHAVIOR lumps. Node-builder generated lumps are not included.
+//
+//===========================================================================
+
+void MapData::GetChecksum(BYTE cksum[16])
+{
+	MD5Context md5;
+
+	if (file != NULL)
+	{
+		if (isText)
+		{
+			file->Seek(MapLumps[ML_TEXTMAP].FilePos, SEEK_SET);
+			md5.Update(file, MapLumps[ML_TEXTMAP].Size);
+		}
+		else
+		{
+			if (MapLumps[ML_LABEL].Size != 0)
+			{
+				file->Seek(MapLumps[ML_LABEL].FilePos, SEEK_SET);
+				md5.Update(file, MapLumps[ML_LABEL].Size);
+			}
+			file->Seek(MapLumps[ML_THINGS].FilePos, SEEK_SET);
+			md5.Update(file, MapLumps[ML_THINGS].Size);
+			file->Seek(MapLumps[ML_LINEDEFS].FilePos, SEEK_SET);
+			md5.Update(file, MapLumps[ML_LINEDEFS].Size);
+			file->Seek(MapLumps[ML_SIDEDEFS].FilePos, SEEK_SET);
+			md5.Update(file, MapLumps[ML_SIDEDEFS].Size);
+			file->Seek(MapLumps[ML_SECTORS].FilePos, SEEK_SET);
+			md5.Update(file, MapLumps[ML_SECTORS].Size);
+		}
+		if (HasBehavior)
+		{
+			file->Seek(MapLumps[ML_BEHAVIOR].FilePos, SEEK_SET);
+			md5.Update(file, MapLumps[ML_BEHAVIOR].Size);
+		}
+	}
+	md5.Final(cksum);
 }
 
 //===========================================================================
@@ -3301,6 +3348,9 @@ void P_SetupLevel (char *lumpname, int position)
 	{
 		// note: most of this ordering is important 
 		ForceNodeBuild = gennodes;
+
+		CheckCompatibility(map);
+
 		// [RH] Load in the BEHAVIOR lump
 		FBehavior::StaticUnloadModules ();
 		if (map->HasBehavior)

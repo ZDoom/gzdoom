@@ -1,0 +1,40 @@
+#ifndef COMPATIBILITY_H
+#define COMPATIBILITY_H
+
+#include "doomtype.h"
+#include "tarray.h"
+#include "p_setup.h"
+
+union FMD5Holder
+{
+	BYTE Bytes[16];
+	DWORD DWords[4];
+};
+
+struct FCompatValues
+{
+	int CompatFlags;
+	int BCompatFlags;
+};
+
+struct FMD5HashTraits
+{
+	hash_t Hash(const FMD5Holder key)
+	{
+		return *(hash_t *)key.Bytes;
+	}
+	int Compare(const FMD5Holder left, const FMD5Holder right)
+	{
+		return left.DWords[0] != right.DWords[0] ||
+			   left.DWords[1] != right.DWords[1] ||
+			   left.DWords[2] != right.DWords[2] ||
+			   left.DWords[3] != right.DWords[3];
+	}
+};
+
+extern TMap<FMD5Holder, FCompatValues, FMD5HashTraits> BCompatMap;
+
+void ParseCompatibility();
+void CheckCompatibility(MapData *map);
+
+#endif

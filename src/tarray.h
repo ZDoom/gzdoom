@@ -398,7 +398,7 @@ template<class KT> struct THashTraits
 
 template<class VT> struct TValueTraits
 {
-	// Initializes a value for TMap. If a regular consructor isn't
+	// Initializes a value for TMap. If a regular constructor isn't
 	// good enough, you can override it.
 	void Init(VT &value)
 	{

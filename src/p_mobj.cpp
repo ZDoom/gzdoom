@@ -3762,7 +3762,6 @@ APlayerPawn *P_SpawnPlayer (FMapThing *mthing, bool tempplayer)
 				if (sectors[i].SoundTarget == oldactor) sectors[i].SoundTarget = NULL;
 			}
 
-
 			DObject::StaticPointerSubstitution (oldactor, p->mo);
 			// PointerSubstitution() will also affect the bodyque, so undo that now.
 			for (int ii=0; ii < BODYQUESIZE; ++ii)

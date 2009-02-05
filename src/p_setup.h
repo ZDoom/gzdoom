@@ -80,6 +80,8 @@ struct MapData
 		}
 		return 0;
 	}
+
+	void GetChecksum(BYTE cksum[16]);
 };
 
 MapData * P_OpenMapData(const char * mapname);

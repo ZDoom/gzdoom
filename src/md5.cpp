@@ -101,7 +101,7 @@ void MD5Context::Update(FileReader *file, unsigned len)
 
 	while (len != 0)
 	{
-		t = MIN(len, sizeof(readbuf));
+		t = MIN<long>(len, sizeof(readbuf));
 		len -= t;
 		t = file->Read(readbuf, t);
 		Update(readbuf, t);
@@ -249,8 +249,6 @@ MD5Transform(DWORD buf[4], const DWORD in[16])
 
 #endif
 
-#include "c_dispatch.h"
-
 //==========================================================================
 //
 // CCMD md5sum
@@ -258,6 +256,9 @@ MD5Transform(DWORD buf[4], const DWORD in[16])
 // Like the command-line tool, because I wanted to make sure I had it right.
 //
 //==========================================================================
+
+#include "c_dispatch.h"
+#include <errno.h>
 
 CCMD (md5sum)
 {

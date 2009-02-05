@@ -149,7 +149,7 @@ void FTeam::ParseTeamInfo ()
 
 	if (Teams.Size () < 2)
 		I_FatalError ("ParseTeamInfo: At least two teams must be defined in TEAMINFO.");
-	else if (Teams.Size () > TEAM_MAXIMUM)
+	else if (Teams.Size () > (unsigned)TEAM_MAXIMUM)
 		I_FatalError ("ParseTeamInfo: Too many teams defined. (Maximum: %d)", TEAM_MAXIMUM);
 }
 

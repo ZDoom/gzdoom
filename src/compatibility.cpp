@@ -214,7 +214,7 @@ CCMD (mapchecksum)
 	{
 		Printf("Usage: mapchecksum <map> ...\n");
 	}
-	for (unsigned int i = 1; i < argv.argc(); ++i)
+	for (int i = 1; i < argv.argc(); ++i)
 	{
 		map = P_OpenMapData(argv[i]);
 		if (map == NULL)
@@ -225,7 +225,7 @@ CCMD (mapchecksum)
 		{
 			map->GetChecksum(cksum);
 			delete map;
-			for (int j = 0; j < sizeof(cksum); ++j)
+			for (size_t j = 0; j < sizeof(cksum); ++j)
 			{
 				Printf("%02X", cksum[j]);
 			}

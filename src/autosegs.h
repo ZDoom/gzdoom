@@ -41,13 +41,13 @@
 #define CREG_SECTION "__DATA,creg"
 #define GREG_SECTION "__DATA,greg"
 #define MREG_SECTION "__DATA,mreg"
-#define MREG_SECTION "__DATA,yreg"
+#define YREG_SECTION "__DATA,yreg"
 #else
 #define AREG_SECTION "areg"
 #define CREG_SECTION "creg"
 #define GREG_SECTION "greg"
 #define MREG_SECTION "mreg"
-#define GREG_SECTION "yreg"
+#define YREG_SECTION "yreg"
 #endif
 #endif
 

@@ -456,6 +456,7 @@ add_executable( zdoom WIN32
 	c_expr.cpp
 	cmdlib.cpp
 	colormatcher.cpp
+	compatibility.cpp
 	configfile.cpp
 	ct_chat.cpp
 	d_dehacked.cpp
@@ -495,6 +496,7 @@ add_executable( zdoom WIN32
 	m_options.cpp
 	m_png.cpp
 	m_random.cpp
+	md5.cpp
 	mus2midi.cpp
 	name.cpp
 	nodebuild.cpp

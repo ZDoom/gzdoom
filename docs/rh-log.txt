@@ -1,3 +1,9 @@
+February 5, 2009
+- Changed singleplayer allowrespawn to act like a co-op game when you
+  change levels while dead by immediately respawning you before the switch
+  so that you get to keep all your inventory.
+- Fixed: G_InitLevelLocals() did not set flags2.
+
 February 5, 2009  (Changes by Graf Zahl)
 - fixed: The compatibility parser applied the last map's settings to all
   maps in the compatibility list.

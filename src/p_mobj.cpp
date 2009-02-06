@@ -3735,7 +3735,6 @@ APlayerPawn *P_SpawnPlayer (FMapThing *mthing, bool tempplayer)
 		mobj->z = mobj->ceilingz - mobj->height;
 	}
 
-
 	// [BC] Do script stuff
 	if (!tempplayer)
 	{

@@ -288,6 +288,7 @@ enum
 {
 	BCOMPATF_SETSLOPEOVERFLOW	= 1 << 0,	// SetSlope things can overflow
 	BCOMPATF_RESETPLAYERSPEED	= 1 << 1,	// Set player speed to 1.0 when changing maps
+	BCOMPATF_SPECHITOVERFLOW	= 1 << 2,	// Emulate spechit overflow (e.g. Strain MAP07)
 };
 
 // phares 3/20/98:

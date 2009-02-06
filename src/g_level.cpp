@@ -1216,6 +1216,7 @@ void G_InitLevelLocals ()
 	level.aircontrol = (fixed_t)(sv_aircontrol * 65536.f);
 	level.teamdamage = teamdamage;
 	level.flags = 0;
+	level.flags2 = 0;
 
 	info = FindLevelInfo (level.mapname);
 

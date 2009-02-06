@@ -45,6 +45,8 @@
 #include "doomdef.h"
 #include "doomstat.h"
 #include "c_dispatch.h"
+#include "gi.h"
+#include "g_level.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -75,6 +77,7 @@ static FCompatOption Options[] =
 {
 	{ "setslopeoverflow",		0, BCOMPATF_SETSLOPEOVERFLOW },
 	{ "resetplayerspeed",		0, BCOMPATF_RESETPLAYERSPEED },
+	{ "spechitoverflow",		0, BCOMPATF_SPECHITOVERFLOW },
 
 	// list copied from g_mapinfo.cpp
 	{ "shorttex",				COMPATF_SHORTTEX, 0 },
@@ -169,6 +172,7 @@ void ParseCompatibility()
 		{
 			BCompatMap[md5array[j]] = flags;
 		}
+		md5array.Clear();
 	}
 }
 
@@ -183,20 +187,42 @@ void CheckCompatibility(MapData *map)
 	FMD5Holder md5;
 	FCompatValues *flags;
 
-	map->GetChecksum(md5.Bytes);
-	flags = BCompatMap.CheckKey(md5);
-	if (flags != NULL)
+	// When playing Doom IWAD levels force COMPAT_SHORTTEX.
+	if (Wads.GetLumpFile(map->lumpnum) == 1 && gameinfo.gametype == GAME_Doom && !(level.flags & LEVEL_HEXENFORMAT))
 	{
-		ii_compatflags = flags->CompatFlags;
-		ib_compatflags = flags->BCompatFlags;
+		ii_compatflags = COMPATF_SHORTTEX;
+		ib_compatflags = 0;
 	}
 	else
 	{
-		ii_compatflags = 0;
-		ib_compatflags = 0;
+		map->GetChecksum(md5.Bytes);
+
+		flags = BCompatMap.CheckKey(md5);
+
+		if (developer)
+		{
+			Printf("MD5 = ");
+			for (size_t j = 0; j < sizeof(md5.Bytes); ++j)
+			{
+				Printf("%02X", md5.Bytes[j]);
+			}
+			if (flags != NULL) Printf(", cflags = %08x, bflags = %08x\n", flags->CompatFlags, flags->BCompatFlags);
+			else Printf("\n");
+		}
+
+		if (flags != NULL)
+		{
+			ii_compatflags = flags->CompatFlags;
+			ib_compatflags = flags->BCompatFlags;
+		}
+		else
+		{
+			ii_compatflags = 0;
+			ib_compatflags = 0;
+		}
 	}
 	// Reset i_compatflags
-	compatflags = compatflags;
+	compatflags.Callback();
 }
 
 //==========================================================================

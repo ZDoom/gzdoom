@@ -876,9 +876,9 @@ void AInventory::Touch (AActor *toucher)
 		toucher = toucher->player->mo;
 	}
 
-	// This is the only situation when a pickup flash should ever play.
-	if (!CallTryPickup (toucher)) return;
+	if (!CallTryPickup (toucher, &toucher)) return;
 
+	// This is the only situation when a pickup flash should ever play.
 	if (PickupFlash != NULL && !ShouldStay())
 	{
 		Spawn(PickupFlash, x, y, z, ALLOW_REPLACE);
@@ -1258,9 +1258,12 @@ bool AInventory::TryPickup (AActor *&toucher)
 //
 //===========================================================================
 
-bool AInventory::CallTryPickup (AActor *toucher)
+bool AInventory::CallTryPickup (AActor *toucher, AActor **toucher_return)
 {
 	bool res = TryPickup(toucher);
+
+	// Morph items can change the toucher so we need an option to return this info.
+	if (toucher_return != NULL) *toucher_return = toucher;
 
 	if (!res && (ItemFlags & IF_ALWAYSPICKUP) && !ShouldStay())
 	{

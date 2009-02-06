@@ -1,9 +1,26 @@
+February 5, 2009  (Changes by Graf Zahl)
+- fixed: The compatibility parser applied the last map's settings to all
+  maps in the compatibility list.
+- Added compatibility settings for a few more levels in some classic WADs.
+- Added spechit overflow workaround for Strain MAP07. This is highly map
+  specific because the original behavior cannot be restored.
+- Added a check for Doom's IWAD levels that forces COMPAT_SHORTTEX for them.
+  MD5 cannot be used well here because there's many different IWADs with 
+  slightly different levels. This is only done for Doom format levels to
+  ensure that custom IWADs for ZDoom are not affected.
+- fixed: level.flags2 was not reset at level start.
+- Fixed: Morph powerups can change the actor picking up the item so 
+  AInventory::CallTryPickup must be able to return the new actor.
+- Fixed: ACS's GiveInventory may not assume that a PlayerPawn is still
+  attached to the player data after an item has been given.
+- Added a missing NULL pointer check to DBaseStatusBar::Blendview.
+
 February 4, 2009
 - Added a compatibility lump because I think it's a shame that Void doesn't
   work properly on new ZDooms after all the collaboration I had with Cyb on
   that map. (Works with other maps, too.)
 
-February 5, 2009  (Changes by Graf Zahl)
+February 4, 2009  (Changes by Graf Zahl)
 - Made improvements so that the FOptionalMapinfoData class is easier to use.
 
 February 3, 2009

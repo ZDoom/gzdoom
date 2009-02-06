@@ -29,4 +29,34 @@ A80E7EE40E0D0C76A6FBD242BE29FE27 // map15
 	// What's really sad is that I got a separate bug report for this map
 	// years ago, but nobody made mention of this problem back then.
 	trace
+	useblocking
+}
+
+// mostly cosmetic (except AV MAP07 and MM2 MAP25)
+0EECBF37B328C9CAAF20DED4949A4157 // Sudtic e2m6
+4ACE0644883BDA0CBA254FA02C9ACF83 // Teutic e3m4
+9F2BE080A33F775294BD78822456924E // Nukemine e1m4
+CD31793D3A4B00231B124C0C23649644 // Strain map02
+19094AEB53D12EFC8E0568424F659F11 // Strain map31
+60733BDD1AA3F4B2262ADC79B2E1B5AB // Memento Mori map29
+F84AB4557464A383E93F37CD3A82AC48 // MM2 map03
+1497894956B3C8EBE8A240B7FDD99C6A // MM2 map25
+941E4CB56EE4184E0B1ED43486AB0BBF // AV map07
+{
+	shorttex
+}
+
+2FE901F659A16E58D7BCD7C30021C238 // AV map15
+{
+	trace
+}
+
+9D50EBE17CEC78938C7A668DB0768611 // Strain map07: Make the exit accessible
+{
+	spechitoverflow
+}
+
+96368EB950E33AF62EA6423434E3CEF7 // Hacx map17: There's some switches behind shootable covers in this level
+{
+	useblocking
 }

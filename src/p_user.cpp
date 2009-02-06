@@ -978,6 +978,8 @@ void APlayerPawn::ThrowPoisonBag ()
 
 void APlayerPawn::GiveDefaultInventory ()
 {
+	if (player == NULL) return;
+
 	// [GRB] Give inventory specified in DECORATE
 	player->health = GetDefault ()->health;
 
@@ -1033,13 +1035,20 @@ void APlayerPawn::GiveDefaultInventory ()
 					static_cast<AWeapon*>(item)->AmmoGive1 =
 					static_cast<AWeapon*>(item)->AmmoGive2 = 0;
 				}
-				if (!item->CallTryPickup(this))
+				AActor *check;
+				if (!item->CallTryPickup(this, &check))
 				{
+					if (check != this)
+					{
+						// Player was morphed. This is illegal at game start.
+						// This problem is only detectable when it's too late to do something about it...
+						I_Error("Cannot give morph items when starting a game");
+					}
 					item->Destroy ();
 					item = NULL;
 				}
 			}
-			if (item != NULL && item->IsKindOf (RUNTIME_CLASS (AWeapon)) && 
+			if (item != NULL && item->IsKindOf (RUNTIME_CLASS (AWeapon)) &&
 				static_cast<AWeapon*>(item)->CheckAmmo(AWeapon::EitherFire, false))
 			{
 				player->ReadyWeapon = player->PendingWeapon = static_cast<AWeapon *> (item);

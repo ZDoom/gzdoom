@@ -65,6 +65,8 @@ public:
 
 	int BoxOnLineSide (const line_t *ld) const;
 
+	void Set(int index, fixed_t value) {m_Box[index] = value;}
+
 protected:
 	fixed_t m_Box[4];
 };

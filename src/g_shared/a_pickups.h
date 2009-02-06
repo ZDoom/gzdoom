@@ -117,7 +117,7 @@ public:
 	virtual bool ShouldRespawn ();
 	virtual bool ShouldStay ();
 	virtual void Hide ();
-	bool CallTryPickup (AActor *toucher);
+	bool CallTryPickup (AActor *toucher, AActor **toucher_return = NULL);
 	virtual void DoPickupSpecial (AActor *toucher);
 	virtual bool SpecialDropAction (AActor *dropper);
 	virtual bool DrawPowerup (int x, int y);

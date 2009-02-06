@@ -451,7 +451,7 @@ static void DoGiveInv (AActor *actor, const PClass *info, int amount)
 	}
 	// If the item was a weapon, don't bring it up automatically
 	// unless the player was not already using a weapon.
-	if (savedPendingWeap != NULL && hadweap)
+	if (savedPendingWeap != NULL && hadweap && actor->player != NULL)
 	{
 		actor->player->PendingWeapon = savedPendingWeap;
 	}

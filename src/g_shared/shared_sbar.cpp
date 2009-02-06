@@ -1502,7 +1502,7 @@ void DBaseStatusBar::BlendView (float blend[4])
 
 	if (screen->Accel2D || (CPlayer->camera != NULL && menuactive == MENU_Off && ConsoleState == c_up))
 	{
-		player_t *player = (CPlayer->camera->player != NULL) ? CPlayer->camera->player : CPlayer;
+		player_t *player = (CPlayer->camera != NULL && CPlayer->camera->player != NULL) ? CPlayer->camera->player : CPlayer;
 		AddBlend (player->BlendR, player->BlendG, player->BlendB, player->BlendA, blend);
 	}
 

@@ -1533,6 +1533,10 @@ void R_StoreWallRange (int start, int stop)
 	ds_p->sx2 = WallSX2;
 	ds_p->sz1 = WallSZ1;
 	ds_p->sz2 = WallSZ2;
+	ds_p->cx = WallTX1;
+	ds_p->cy = WallTY1;
+	ds_p->cdx = WallTX2 - WallTX1;
+	ds_p->cdy = WallTY2 - WallTY1;
 	ds_p->siz1 = (DWORD)DivScale32 (1, WallSZ1) >> 1;
 	ds_p->siz2 = (DWORD)DivScale32 (1, WallSZ2) >> 1;
 	ds_p->x1 = rw_x = start;

@@ -1403,6 +1403,7 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 	vis->FillColor = thing->fillcolor;
 	vis->xscale = xscale;
 	vis->yscale = Scale (InvZtoScale, yscale, tz)>>4;
+	vis->depth = tz;
 	vis->idepth = (DWORD)DivScale32 (1, tz) >> 1;	// tz is 20.12, so idepth ought to be 12.20, but
 	vis->cx = tx2;									// signed math makes it 13.19
 	vis->gx = fx;
@@ -2115,20 +2116,19 @@ void R_DrawSprite (vissprite_t *spr)
 		r1 = MAX<int> (ds->x1, spr->x1);
 		r2 = MIN<int> (ds->x2, spr->x2);
 
-		fixed_t nearidepth, faridepth;
-		if (ds->siz1 > ds->siz2)
+		fixed_t neardepth, fardepth;
+		if (ds->sz1 < ds->sz2)
 		{
-			nearidepth = ds->siz1, faridepth = ds->siz2;
+			neardepth = ds->sz1, fardepth = ds->sz2;
 		}
 		else
 		{
-			nearidepth = ds->siz2, faridepth = ds->siz1;
+			neardepth = ds->sz2, fardepth = ds->sz1;
 		}
-		// (siz2 - siz1)*(rx - sx1)/(sx2 - sx1)
-		// Lower values are further away
-		if (nearidepth < spr->idepth || (faridepth < spr->idepth &&
+		if (neardepth > spr->depth || (fardepth > spr->depth &&
 			// Check if sprite is in front of draw seg:
-			Scale (ds->siz2 - ds->siz1, (r1+r2)/2 - ds->sx1, ds->sx2 - ds->sx1) + ds->siz1 < spr->idepth))
+			DMulScale24 (spr->depth - ds->cy, ds->cdx, ds->cdy, ds->cx - spr->cx) < 0))
+
 		{
 			// seg is behind sprite, so draw the mid texture if it has one
 			if (ds->maskedtexturecol != -1 || ds->bFogBoundary)
@@ -2430,6 +2430,7 @@ void R_ProjectParticle (particle_t *particle, const sector_t *sector, int shade,
 	vis->xscale = xscale;
 //	vis->yscale = FixedMul (xscale, InvZtoScale);
 	vis->yscale = xscale;
+	vis->depth = tz;
 	vis->idepth = (DWORD)DivScale32 (1, tz) >> 1;
 	vis->cx = tx;
 	vis->gx = particle->x;

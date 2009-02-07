@@ -1,4 +1,8 @@
 February 6, 2009
+- Restored the old drawseg/sprite distance check from 2.0.63. The code that
+  replaced it did the check at the center of the area intersected by the
+  sprite and the drawseg, whereas 2.0.63 only did the check at the location
+  of the sprite on the map.
 - Commented out the CALL_ACTION(A_Look, actor) for targetless friendly
   monsters in A_DoChase(). They can still find new targets without this,
   and with it, they got stuck on the first frame of their see state.

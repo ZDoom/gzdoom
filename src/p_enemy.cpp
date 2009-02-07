@@ -1545,7 +1545,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Look)
 		self->special = 0;
 		self->goal = iterator.Next ();
 		self->reactiontime = self->args[2] * TICRATE + level.maptime;
-		if (self->args[3] == 0) self->flags5 &=~ MF5_CHASEGOAL;
+		if (self->args[3] == 0) self->flags5 &= ~MF5_CHASEGOAL;
 		else self->flags5 |= MF5_CHASEGOAL;
 	}
 
@@ -1583,7 +1583,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Look)
 		if (self->IsFriend (targ))	// be a little more precise!
 		{
 			// If we find a valid target here, the wandering logic should *not*
-			// be activated! If would cause the seestate to be set twice.
+			// be activated! It would cause the seestate to be set twice.
 			if (P_LookForPlayers (self, self->flags4 & MF4_LOOKALLAROUND))
 				goto seeyou;
 
@@ -1610,8 +1610,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Look)
 				goto seeyou;
 		}
 	}
-		
-		
+	
 	if (!P_LookForPlayers (self, self->flags4 & MF4_LOOKALLAROUND))
 		return;
 				
@@ -1871,7 +1870,7 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 		{
 			if (actor->flags & MF_FRIENDLY)
 			{
-				CALL_ACTION(A_Look, actor);
+				//CALL_ACTION(A_Look, actor);
 				if (actor->target == NULL)
 				{
 					if (!dontmove) CALL_ACTION(A_Wander, actor);

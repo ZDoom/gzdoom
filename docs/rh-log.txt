@@ -1,4 +1,7 @@
 February 6, 2009
+- Commented out the CALL_ACTION(A_Look, actor) for targetless friendly
+  monsters in A_DoChase(). They can still find new targets without this,
+  and with it, they got stuck on the first frame of their see state.
 - Fixed: Keys bound in a custom key section would unbind the key in the
   main game section.
 - Fixed scrolling of the automap background on a rotated automap.

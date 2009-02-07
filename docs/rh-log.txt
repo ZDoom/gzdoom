@@ -1,3 +1,8 @@
+February 7, 2009  (Changes by Graf Zahl)
+- Fixed: G_SerializeLevel must use the TEXMAN_ReturnFirst flag for getting
+  the sky textures so that it still works when the first texture in a TEXTURE1
+  lump is used as sky.
+
 February 6, 2009
 - Restored the old drawseg/sprite distance check from 2.0.63. The code that
   replaced it did the check at the center of the area intersected by the

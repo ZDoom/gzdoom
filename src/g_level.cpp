@@ -1421,8 +1421,8 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 	{
 		strncpy (level.skypic1, arc.ReadName(), 8);
 		strncpy (level.skypic2, arc.ReadName(), 8);
-		sky1texture = TexMan.GetTexture (level.skypic1, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
-		sky2texture = TexMan.GetTexture (level.skypic2, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
+		sky1texture = TexMan.GetTexture (level.skypic1, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_ReturnFirst);
+		sky2texture = TexMan.GetTexture (level.skypic2, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_ReturnFirst);
 		R_InitSkyMap ();
 	}
 

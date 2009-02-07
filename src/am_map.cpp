@@ -593,10 +593,13 @@ void AM_changeWindowLoc ()
 	}
 
 	int oldmx = m_x, oldmy = m_y;
-	fixed_t incx = m_paninc.x, incy = m_paninc.y;
+	fixed_t incx, incy, oincx, oincy;
+	
+	incx = m_paninc.x;
+	incy = m_paninc.y;
 
-	incx = Scale(m_paninc.x, SCREENWIDTH, 320);
-	incy = Scale(m_paninc.y, SCREENHEIGHT, 200);
+	oincx = incx = Scale(m_paninc.x, SCREENWIDTH, 320);
+	oincy = incy = Scale(m_paninc.y, SCREENHEIGHT, 200);
 	if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 	{
 		AM_rotate(&incx, &incy, players[consoleplayer].camera->angle - ANG90);
@@ -606,7 +609,7 @@ void AM_changeWindowLoc ()
 	m_y += incy;
 
 	AM_ClipRotatedExtents (oldmx + m_w/2, oldmy + m_h/2);
-	AM_ScrollParchment (m_x - oldmx, oldmy - m_y);
+	AM_ScrollParchment (m_x != oldmx ? oincx : 0, m_y != oldmy ? -oincy : 0);
 }
 
 

@@ -1,3 +1,6 @@
+February 6, 2009
+- Fixed scrolling of the automap background on a rotating automap.
+
 February 5, 2009
 - Changed singleplayer allowrespawn to act like a co-op game when you
   change levels while dead by immediately respawning you before the switch

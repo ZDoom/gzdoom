@@ -580,35 +580,61 @@ bool C_DoKey (event_t *ev)
 	return false;
 }
 
+const char *C_ConfigKeyName(int keynum)
+{
+	const char *name = KeyName(keynum);
+	if (name[1] == 0)	// Make sure given name is config-safe
+	{
+		if (name[0] == '[')
+			return "LeftBracket";
+		else if (name[0] == ']')
+			return "RightBracket";
+		else if (name[0] == '=')
+			return "Equals";
+		else if (strcmp (name, "kp=") == 0)
+			return "KP-Equals";
+	}
+	return name;
+}
+
+// This function is first called for functions in custom key sections.
+// In this case, matchcmd is non-NULL, and only keys bound to that command
+// are stored. If a match is found, its binding is set to "\1".
+// After all custom key sections are saved, it is called one more for the
+// normal Bindings and DoubleBindings sections for this game. In this case
+// matchcmd is NULL and all keys will be stored. The config section was not
+// previously cleared, so all old bindings are still in place. If the binding
+// for a key is empty, the corresponding key in the config is removed as well.
+// If a binding is "\1", then the binding itself is cleared, but nothing
+// happens to the entry in the config.
 void C_ArchiveBindings (FConfigFile *f, bool dodouble, const char *matchcmd)
 {
 	FString *bindings;
-	const char *name;
 	int i;
 
 	bindings = dodouble ? DoubleBindings : Bindings;
 
 	for (i = 0; i < NUM_KEYS; i++)
 	{
-		if (!bindings[i].IsEmpty() && (matchcmd==NULL || stricmp(bindings[i], matchcmd)==0))
+		if (bindings[i].IsEmpty())
 		{
-			name = KeyName (i);
-			if (name[1] == 0)	// Make sure given name is config-safe
+			if (matchcmd == NULL)
 			{
-				if (name[0] == '[')
-					name = "LeftBracket";
-				else if (name[0] == ']')
-					name = "RightBracket";
-				else if (name[0] == '=')
-					name = "Equals";
-				else if (strcmp (name, "kp=") == 0)
-					name = "KP-Equals";
+				f->ClearKey(C_ConfigKeyName(i));
 			}
-			f->SetValueForKey (name, bindings[i]);
+		}
+		else if (matchcmd == NULL || stricmp(bindings[i], matchcmd) == 0)
+		{
+			if (bindings[i][0] == '\1')
+			{
+				bindings[i] = "";
+				continue;
+			}
+			f->SetValueForKey(C_ConfigKeyName(i), bindings[i]);
 			if (matchcmd != NULL)
-			{ // If saving a specific command, remove the old binding
-			  // so it does not get saved in the general binding list
-				Bindings[i] = "";
+			{ // If saving a specific command, set a marker so that
+			  // it does not get saved in the general binding list.
+				bindings[i] = "\1";
 			}
 		}
 	}

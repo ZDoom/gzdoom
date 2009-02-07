@@ -59,6 +59,7 @@ public:
 	bool SetNextSection ();
 	const char *GetCurrentSection () const;
 	void ClearCurrentSection ();
+	void ClearKey (const char *key);
 
 	bool SectionIsEmpty ();
 	bool NextInSection (const char *&key, const char *&value);

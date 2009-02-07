@@ -454,12 +454,10 @@ void FGameConfigFile::ArchiveGameData (const char *gamename)
 
 	strcpy (subsection, "Bindings");
 	SetSection (section, true);
-	ClearCurrentSection ();
 	C_ArchiveBindings (this, false);
 
 	strncpy (subsection, "DoubleBindings", sublen);
 	SetSection (section, true);
-	ClearCurrentSection ();
 	C_ArchiveBindings (this, true);
 
 	if (WeaponSection.IsEmpty())

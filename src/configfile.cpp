@@ -334,6 +334,40 @@ void FConfigFile::ClearCurrentSection ()
 
 //====================================================================
 //
+// FConfigFile :: ClearKey
+//
+// Removes a key from the current section, if found. If there are
+// duplicates, only the first is removed.
+//
+//====================================================================
+
+void FConfigFile::ClearKey(const char *key)
+{
+	if (CurrentSection->RootEntry == NULL)
+	{
+		return;
+	}
+	FConfigEntry **prober = &CurrentSection->RootEntry, *probe = *prober;
+
+	while (probe != NULL && stricmp(probe->Key, key) != 0)
+	{
+		prober = &probe->Next;
+		probe = *prober;
+	}
+	if (probe != NULL)
+	{
+		*prober = probe->Next;
+		if (CurrentSection->LastEntryPtr == &probe->Next)
+		{
+			CurrentSection->LastEntryPtr = prober;
+		}
+		delete[] probe->Value;
+		delete[] (char *)probe;
+	}
+}
+
+//====================================================================
+//
 // FConfigFile :: SectionIsEmpty
 //
 // Returns true if the current section has no entries. If there is

@@ -1777,7 +1777,9 @@ void FMapInfoParser::ParseMapInfo (int lump, level_info_t &gamedefaults)
 			}
 			SetLevelNum (levelinfo, levelinfo->levelnum);	// Wipe out matching levelnums from other maps.
 		}
-		else if (sc.Compare("clusterdef"))
+		// clusterdef is the old keyword but the new format has enough 
+		// structuring that 'cluster' can be handled, too. The old format does not.
+		else if (sc.Compare("clusterdef") || (format_type == FMT_New && sc.Compare("cluster")))
 		{
 			ParseCluster();
 		}

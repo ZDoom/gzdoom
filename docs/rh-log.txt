@@ -1,4 +1,6 @@
 February 8, 2009  (Changes by Graf Zahl)
+- Fixed parsing for MustConfirm key in skill parser.
+- Converted internal MAPINFOs to new syntax.
 - Added a range parameter to SNDINFO's $limit.
 - Restored Dehacked music name replacement.
 

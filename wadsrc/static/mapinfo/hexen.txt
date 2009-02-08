@@ -1,87 +1,106 @@
-// A bare-bones MAPINFO for Hexen.
-// Most of the MAPINFO is still in hexen.wad.
-
+// A bare-bones MAPINFO for Hexen.
+// Most of the MAPINFO is still in hexen.wad.
 skill baby
-	AmmoFactor 1.5
-	DoubleAmmoFactor 1.5
-	DamageFactor 0.5
+{
+	AmmoFactor = 1.5
+	DoubleAmmoFactor = 1.5
+	DamageFactor = 0.5
 	EasyBossBrain
-	SpawnFilter "Baby"
-	Name "$MNU_WETNURSE"
-	PlayerClassName "fighter" "$MNU_SQUIRE"
-	PlayerClassName "cleric" "$MNU_ALTARBOY"
-	PlayerClassName "mage" "$MNU_APPRENTICE"
-
+	SpawnFilter = Baby
+	Name = "$MNU_WETNURSE"
+	playerclassname = "fighter", "$MNU_SQUIRE"
+	playerclassname = "cleric", "$MNU_ALTARBOY"
+	playerclassname = "mage", "$MNU_APPRENTICE"
+}
 
 skill easy
-	DoubleAmmoFactor 1.5
-	SpawnFilter "Easy"
-	Name "$MNU_YELLOWBELLIES"
-	PlayerClassName "fighter" "$MNU_KNIGHT"
-	PlayerClassName "cleric" "$MNU_ACOLYTE"
-	PlayerClassName "mage" "$MNU_ENCHANTER"
+{
+	DoubleAmmoFactor = 1.5
+	SpawnFilter = Easy
+	Name = "$MNU_YELLOWBELLIES"
+	playerclassname = "fighter", "$MNU_KNIGHT"
+	playerclassname = "cleric", "$MNU_ACOLYTE"
+	playerclassname = "mage", "$MNU_ENCHANTER"
+}
 
 skill normal
-	DoubleAmmoFactor 1.5
-	SpawnFilter "Normal"
-	Name "$MNU_BRINGEST"
-	PlayerClassName "fighter" "$MNU_WARRIOR"
-	PlayerClassName "cleric" "$MNU_PRIEST"
-	PlayerClassName "mage" "$MNU_SORCERER"
+{
+	DoubleAmmoFactor = 1.5
+	SpawnFilter = Normal
+	Name = "$MNU_BRINGEST"
+	playerclassname = "fighter", "$MNU_WARRIOR"
+	playerclassname = "cleric", "$MNU_PRIEST"
+	playerclassname = "mage", "$MNU_SORCERER"
+}
 
 skill hard
-	DoubleAmmoFactor 1.5
-	SpawnFilter "Hard"
-	Name "$MNU_SMITE"
-	PlayerClassName "fighter" "$MNU_BERSERKER"
-	PlayerClassName "cleric" "$MNU_CARDINAL"
-	PlayerClassName "mage" "$MNU_WARLOCK"
+{
+	DoubleAmmoFactor = 1.5
+	SpawnFilter = Hard
+	Name = "$MNU_SMITE"
+	playerclassname = "fighter", "$MNU_BERSERKER"
+	playerclassname = "cleric", "$MNU_CARDINAL"
+	playerclassname = "mage", "$MNU_WARLOCK"
+}
 
 skill nightmare
-	AmmoFactor 1.5
-	DoubleAmmoFactor 1.5
+{
+	AmmoFactor = 1.5
+	DoubleAmmoFactor = 1.5
 	FastMonsters
 	DisableCheats
-	SpawnFilter "Nightmare"
-	Name "$MNU_BLACKPLAGUE"
-	PlayerClassName "fighter" "$MNU_TITAN"
-	PlayerClassName "cleric" "$MNU_POPE"
-	PlayerClassName "mage" "$MNU_ARCHMAGE"
+	SpawnFilter = Nightmare
+	Name = "$MNU_BLACKPLAGUE"
+	playerclassname = "fighter", "$MNU_TITAN"
+	playerclassname = "cleric", "$MNU_POPE"
+	playerclassname = "mage", "$MNU_ARCHMAGE"
+}
 
 clearepisodes
 episode "&wt@01"
-	name "Hexen"
-	key h
+{
+	name = "Hexen"
+	key = "h"
+}
 
-clusterdef 1
-hub
-exittext clus1msg
-exittextislump
-music hub
-pic interpic
+cluster 1
+{
+	hub
+	exittext = "clus1msg"
+	exittextislump
+	music = "hub"
+	pic = "interpic"
+}
 
-clusterdef 2
-hub
-exittext clus2msg
-exittextislump
-music hub
-pic interpic
+cluster 2
+{
+	hub
+	exittext = "clus2msg"
+	exittextislump
+	music = "hub"
+	pic = "interpic"
+}
 
-clusterdef 3
-hub
-exittext clus3msg
-exittextislump
-music hub
-pic interpic
+cluster 3
+{
+	hub
+	exittext = "clus3msg"
+	exittextislump
+	music = "hub"
+	pic = "interpic"
+}
 
-clusterdef 4
-hub
-exittext clus4msg
-exittextislump
-music hub
-pic interpic
+cluster 4
+{
+	hub
+	exittext = "clus4msg"
+	exittextislump
+	music = "hub"
+	pic = "interpic"
+}
 
 gamedefaults
+{
 	activateowndeathspecials
 	infiniteflightpowerup
 	fallingdamage
@@ -89,7 +108,8 @@ gamedefaults
 	noautosequences
 	missilesactivateimpactlines
 	monsterfallingdamage
-	
+}
+
 // There is also support for showing a clus5msg after cluster 5, but
 // since it isn't used, and it would intefere with the finale if I
 // included it here, I'm leaving out the clusterdef for cluster 5.

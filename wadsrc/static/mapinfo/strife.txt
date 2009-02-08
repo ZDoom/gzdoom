@@ -1,278 +1,363 @@
-// MAPINFO for Strife (full version and teaser)
-
+// MAPINFO for Strife (full version and teaser)
 skill baby
-	AmmoFactor 2
-	DamageFactor 0.5
+{
+	AmmoFactor = 2
+	DamageFactor = 0.5
 	EasyBossBrain
-	SpawnFilter "Baby"
-	PicName "M_JKILL"
-	Key t
+	SpawnFilter = Baby
+	PicName = "M_JKILL"
+	Key = "t"
+}
 
 skill easy
-	SpawnFilter "Easy"
-	PicName "M_ROUGH"
-	Key r
+{
+	SpawnFilter = Easy
+	PicName = "M_ROUGH"
+	Key = "r"
+}
 
 skill normal
-	SpawnFilter "Normal"
-	PicName "M_HURT"
-	Key v
+{
+	SpawnFilter = Normal
+	PicName = "M_HURT"
+	Key = "v"
+}
 
 skill hard
-	SpawnFilter "Hard"
-	PicName "M_ULTRA"
-	Key e
+{
+	SpawnFilter = Hard
+	PicName = "M_ULTRA"
+	Key = "e"
+}
 
 skill nightmare
-	AmmoFactor 2
+{
+	AmmoFactor = 2
 	FastMonsters
 	DisableCheats
-	RespawnTime 16
-	SpawnFilter "Nightmare"
-	PicName "M_NMARE"
-	Key b
+	RespawnTime = 16
+	SpawnFilter = Nightmare
+	PicName = "M_NMARE"
+	Key = "b"
+}
 
 gamedefaults
-forcenoskystretch
-strifefallingdamage
-nointermission
-clipmidtextures
-noinfighting
+{
+	forcenoskystretch
+	strifefallingdamage
+	nointermission
+	clipmidtextures
+	noinfighting
+}
 
-map MAP01 "AREA  1: sanctuary"
-next MAP02
-sky1 SKYMNT02 0
-music D_ACTION
-cluster 1
+map MAP01 "AREA 1: sanctuary"
+{
+	next = "MAP02"
+	sky1 = "SKYMNT02", 0
+	music = "D_ACTION"
+	cluster = 1
+}
 
-map MAP02 "AREA  2: town"
-next MAP03
-sky1 SKYMNT02 0
-music D_TAVERN
-cluster 1
+map MAP02 "AREA 2: town"
+{
+	next = "MAP03"
+	sky1 = "SKYMNT02", 0
+	music = "D_TAVERN"
+	cluster = 1
+}
 
-map MAP03 "AREA  3: front base"
-next MAP04
-sky1 SKYMNT02 0
-music D_DANGER
-cluster 1
-noallies
-redirect Sigil map30
+map MAP03 "AREA 3: front base"
+{
+	next = "MAP04"
+	sky1 = "SKYMNT02", 0
+	music = "D_DANGER"
+	cluster = 1
+	noallies
+	redirect = "Sigil"
+, "map30"
+}
 
-map MAP04 "AREA  4: power station"
-next MAP05
-sky1 SKYMNT02 0
-music D_FAST
-cluster 1
+map MAP04 "AREA 4: power station"
+{
+	next = "MAP05"
+	sky1 = "SKYMNT02", 0
+	music = "D_FAST"
+	cluster = 1
+}
 
-map MAP05 "AREA  5: prison"
-next MAP06
-sky1 SKYMNT02 0
-music D_INTRO
-cluster 1
+map MAP05 "AREA 5: prison"
+{
+	next = "MAP06"
+	sky1 = "SKYMNT02", 0
+	music = "D_INTRO"
+	cluster = 1
+}
 
-map MAP06 "AREA  6: sewers"
-next MAP07
-sky1 SKYMNT02 0
-music D_DARKER
-cluster 1
+map MAP06 "AREA 6: sewers"
+{
+	next = "MAP07"
+	sky1 = "SKYMNT02", 0
+	music = "D_DARKER"
+	cluster = 1
+}
 
-map MAP07 "AREA  7: castle"
-next MAP08
-sky1 SKYMNT02 0
-music D_STRIKE
-cluster 1
-redirect Sigil map10
+map MAP07 "AREA 7: castle"
+{
+	next = "MAP08"
+	sky1 = "SKYMNT02", 0
+	music = "D_STRIKE"
+	cluster = 1
+	redirect = "Sigil"
+, "map10"
+}
 
-map MAP08 "AREA  8: Audience Chamber"
-next MAP09
-sky1 SKYMNT02 0
-music D_SLIDE
-cluster 1
+map MAP08 "AREA 8: Audience Chamber"
+{
+	next = "MAP09"
+	sky1 = "SKYMNT02", 0
+	music = "D_SLIDE"
+	cluster = 1
+}
 
-map MAP09 "AREA  9: Castle: Programmer's Keep"
-next MAP10
-sky1 SKYMNT02 0
-music D_TRIBAL
-cluster 1
-// These are the sky changes for the first 8 maps
-specialaction "Programmer", ACS_Execute, 0, 1, 256
-specialaction "Programmer", ACS_Execute, 0, 2, 256
-specialaction "Programmer", ACS_Execute, 0, 3, 256
-specialaction "Programmer", ACS_Execute, 0, 4, 256
-specialaction "Programmer", ACS_Execute, 0, 5, 256
-specialaction "Programmer", ACS_Execute, 0, 6, 256
-specialaction "Programmer", ACS_Execute, 0, 7, 256
-specialaction "Programmer", ACS_Execute, 0, 8, 256
+map MAP09 "AREA 9: Castle: Programmer's Keep"
+{
+	next = "MAP10"
+	sky1 = "SKYMNT02", 0
+	music = "D_TRIBAL"
+	cluster = 1
+// These are the sky changes for the first 8 maps
+	specialaction = "Programmer", "ACS_Execute", 0, 1, 256
+	specialaction = "Programmer", "ACS_Execute", 0, 2, 256
+	specialaction = "Programmer", "ACS_Execute", 0, 3, 256
+	specialaction = "Programmer", "ACS_Execute", 0, 4, 256
+	specialaction = "Programmer", "ACS_Execute", 0, 5, 256
+	specialaction = "Programmer", "ACS_Execute", 0, 6, 256
+	specialaction = "Programmer", "ACS_Execute", 0, 7, 256
+	specialaction = "Programmer", "ACS_Execute", 0, 8, 256// It seems that Strife was originally going to print the text
+// from the C1TEXT lump when you move from map 9 to map 10, but
+// that idea apparently got scrapped as the game developed. 
 
-// It seems that Strife was originally going to print the text
-// from the C1TEXT lump when you move from map 9 to map 10, but
-// that idea apparently got scrapped as the game developed. 
+}
 
 map MAP10 "AREA 10: New Front Base"
-next MAP11
-sky1 SKYMNT01 0
-music D_MARCH
-cluster 1
+{
+	next = "MAP11"
+	sky1 = "SKYMNT01", 0
+	music = "D_MARCH"
+	cluster = 1
+}
 
 map MAP11 "AREA 11: Borderlands"
-next MAP12
-sky1 SKYMNT01 0
-music D_DANGER
-cluster 1
+{
+	next = "MAP12"
+	sky1 = "SKYMNT01", 0
+	music = "D_DANGER"
+	cluster = 1
+}
 
 map MAP12 "AREA 12: the temple of the oracle"
-next MAP13
-sky1 SKYMNT01 0
-music D_MOOD
-cluster 1
+{
+	next = "MAP13"
+	sky1 = "SKYMNT01", 0
+	music = "D_MOOD"
+	cluster = 1
+}
 
 map MAP13 "AREA 13: Catacombs"
-next MAP14
-sky1 SKYMNT01 0
-music D_CASTLE
-cluster 1
+{
+	next = "MAP14"
+	sky1 = "SKYMNT01", 0
+	music = "D_CASTLE"
+	cluster = 1
+}
 
 map MAP14 "AREA 14: mines"
-next MAP15
-sky1 SKYMNT01 0
-music D_DARKER
-cluster 1
+{
+	next = "MAP15"
+	sky1 = "SKYMNT01", 0
+	music = "D_DARKER"
+	cluster = 1
+}
 
 map MAP15 "AREA 15: Fortress: Administration"
-next MAP16
-sky1 SKYMNT01 0
-music D_ACTION
-cluster 1
+{
+	next = "MAP16"
+	sky1 = "SKYMNT01", 0
+	music = "D_ACTION"
+	cluster = 1
+}
 
 map MAP16 "AREA 16: Fortress: Bishop's Tower"
-next MAP17
-sky1 SKYMNT01 0
-music D_FIGHT
-cluster 1
+{
+	next = "MAP17"
+	sky1 = "SKYMNT01", 0
+	music = "D_FIGHT"
+	cluster = 1
+}
 
 map MAP17 "AREA 17: Fortress: The Bailey"
-next MAP18
-sky1 SKYMNT01 0
-music D_SPENSE
-cluster 1
+{
+	next = "MAP18"
+	sky1 = "SKYMNT01", 0
+	music = "D_SPENSE"
+	cluster = 1
+}
 
 map MAP18 "AREA 18: Fortress: Stores"
-next MAP19
-sky1 SKYMNT01 0
-music D_SLIDE
-cluster 1
+{
+	next = "MAP19"
+	sky1 = "SKYMNT01", 0
+	music = "D_SLIDE"
+	cluster = 1
+}
 
 map MAP19 "AREA 19: Fortress: Security Complex"
-next MAP20
-sky1 SKYMNT01 0
-music D_STRIKE
-cluster 1
+{
+	next = "MAP20"
+	sky1 = "SKYMNT01", 0
+	music = "D_STRIKE"
+	cluster = 1
+}
 
 map MAP20 "AREA 20: Factory: Receiving"
-next MAP21
-sky1 SKYMNT01 0
-music D_DARK
-cluster 1
+{
+	next = "MAP21"
+	sky1 = "SKYMNT01", 0
+	music = "D_DARK"
+	cluster = 1
+}
 
 map MAP21 "AREA 21: Factory: Manufacturing"
-next MAP22
-sky1 SKYMNT01 0
-music D_TECH
-cluster 1
+{
+	next = "MAP22"
+	sky1 = "SKYMNT01", 0
+	music = "D_TECH"
+	cluster = 1
+}
 
 map MAP22 "AREA 22: Factory: Forge"
-next MAP23
-sky1 SKYMNT01 0
-music D_SLIDE
-cluster 1
+{
+	next = "MAP23"
+	sky1 = "SKYMNT01", 0
+	music = "D_SLIDE"
+	cluster = 1
+}
 
 map MAP23 "AREA 23: Order Commons"
-next MAP24
-sky1 SKYMNT01 0
-music D_DRONE
-cluster 1
+{
+	next = "MAP24"
+	sky1 = "SKYMNT01", 0
+	music = "D_DRONE"
+	cluster = 1
+}
 
 map MAP24 "AREA 24: Factory: Conversion Chapel"
-next MAP25
-sky1 SKYMNT01 0
-music D_PANTHR
-cluster 1
+{
+	next = "MAP25"
+	sky1 = "SKYMNT01", 0
+	music = "D_PANTHR"
+	cluster = 1
+}
 
 map MAP25 "AREA 25: Catacombs: Ruined Temple"
-next MAP26
-sky1 SKYMNT01 0
-music D_SAD
-cluster 1
+{
+	next = "MAP26"
+	sky1 = "SKYMNT01", 0
+	music = "D_SAD"
+	cluster = 1
+}
 
 map MAP26 "AREA 26: proving grounds"
-next MAP27
-sky1 SKYMNT01 0
-music D_INSTRY
-cluster 1
+{
+	next = "MAP27"
+	sky1 = "SKYMNT01", 0
+	music = "D_INSTRY"
+	cluster = 1
+}
 
 map MAP27 "AREA 27: The Lab"
-next MAP28
-sky1 SKYMNT01 0
-music D_TECH
-cluster 1
+{
+	next = "MAP28"
+	sky1 = "SKYMNT01", 0
+	music = "D_TECH"
+	cluster = 1
+}
 
 map MAP28 "AREA 28: Alien Ship"
-next MAP29
-sky1 SKYMNT01 0
-music D_ACTION
-cluster 1
+{
+	next = "MAP29"
+	sky1 = "SKYMNT01", 0
+	music = "D_ACTION"
+	cluster = 1
+}
 
 map MAP29 "AREA 29: Entity's Lair"
-next EndGameS
-sky1 SKYMNT01 0
-music D_INSTRY
-cluster 1
-deathslideshow
+{
+	next = "EndGameS"
+	sky1 = "SKYMNT01", 0
+	music = "D_INSTRY"
+	cluster = 1
+	deathslideshow
+}
 
 map MAP30 "AREA 30: Abandoned Front Base"
-next MAP31
-sky1 SKYMNT01 0
-music D_DRONE
-cluster 1
+{
+	next = "MAP31"
+	sky1 = "SKYMNT01", 0
+	music = "D_DRONE"
+	cluster = 1
+}
 
 map MAP31 "AREA 31: Training Facility"
-next MAP01
-sky1 SKYMNT01 0
-music D_FIGHT
+{
+	next = "MAP01"
+	sky1 = "SKYMNT01", 0
+	music = "D_FIGHT"
+	cluster = 1
+}
+
+map MAP32 "AREA 1: Sanctuary"
+{
+	next = "MAP33"
+	sky1 = "SKYMNT02", 0
+	music = "D_MAP1"
+	cluster = 2
+}
+
+map MAP33 "AREA 2: Town"
+{
+	next = "MAP34"
+	sky1 = "SKYMNT02", 0
+	music = "D_MAP2"
+	cluster = 2
+}
+
+map MAP34 "AREA 3: Movement Base"
+{
+	next = "EndBuyStrife"
+	sky1 = "SKYMNT02", 0
+	music = "D_MAP3"
+	cluster = 2
+	noallies
+}
+
 cluster 1
+{
+	hub
+}
 
-
-map MAP32 "AREA  1: Sanctuary"
-next MAP33
-sky1 SKYMNT02 0
-music D_MAP1
 cluster 2
-
-map MAP33 "AREA  2: Town"
-next MAP34
-sky1 SKYMNT02 0
-music D_MAP2
-cluster 2
-
-map MAP34 "AREA  3: Movement Base"
-next EndBuyStrife
-sky1 SKYMNT02 0
-music D_MAP3
-cluster 2
-noallies
-
-
-clusterdef 1
-hub
-
-clusterdef 2
-hub
-exittext T1TEXT
-music d_fmfast
-pic PANEL7
-exittextislump
+{
+	hub
+	exittext = "T1TEXT"
+	music = "d_fmfast"
+	pic = "PANEL7"
+	exittextislump
+}
 
 clearepisodes
 episode MAP02 teaser MAP33
-name "Quest for the Sigil"
+{
+	name = "Quest for the Sigil"
+}
+

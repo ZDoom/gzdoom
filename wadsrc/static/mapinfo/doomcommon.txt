@@ -1,33 +1,44 @@
 skill baby
-	AmmoFactor 2
-	DamageFactor 0.5
+{
+	AmmoFactor = 2
+	DamageFactor = 0.5
 	EasyBossBrain
-	SpawnFilter "Baby"
-	PicName "M_JKILL"
-	Key i
+	SpawnFilter = Baby
+	PicName = "M_JKILL"
+	Key = "i"
+}
 
 skill easy
+{
 	EasyBossBrain
-	SpawnFilter "Easy"
-	PicName "M_ROUGH"
-	Key h
+	SpawnFilter = Easy
+	PicName = "M_ROUGH"
+	Key = "h"
+}
 
 skill normal
-	SpawnFilter "Normal"
-	PicName "M_HURT"
-	Key h
+{
+	SpawnFilter = Normal
+	PicName = "M_HURT"
+	Key = "h"
+}
 
 skill hard
-	SpawnFilter "Hard"
-	PicName "M_ULTRA"
-	Key u
+{
+	SpawnFilter = Hard
+	PicName = "M_ULTRA"
+	Key = "u"
+}
 
 skill nightmare
-	AmmoFactor 2
+{
+	AmmoFactor = 2
 	FastMonsters
 	DisableCheats
-	RespawnTime 12
-	SpawnFilter "Nightmare"
-	PicName "M_NMARE"
+	RespawnTime = 12
+	SpawnFilter = Nightmare
+	PicName = "M_NMARE"
 	MustConfirm
-	Key n
+	Key = "n"
+}
+

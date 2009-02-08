@@ -2263,20 +2263,12 @@ void D_DoomMain (void)
 #endif
 		file += "skins";
 		D_AddDirectory (file);
-	
-		const char *home = getenv ("HOME");
-		if (home)
-		{
-			file = home;
-			if (home[strlen(home) - 1] != '/')
-			{
-				file += '/';
-			}
-			file += ".zdoom/skins";
-			D_AddDirectory (file);
-		}
-	
-	
+
+#ifdef unix
+		file = NicePath("~/" GAME_DIR "/skins");
+		D_AddDirectory (file);
+#endif	
+
 		// Add common (global) wads
 		D_AddConfigWads ("Global.Autoload");
 

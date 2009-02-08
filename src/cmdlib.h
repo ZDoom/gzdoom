@@ -57,5 +57,6 @@ FString strbin1 (const char *start);
 void CreatePath(const char * fn);
 
 FString ExpandEnvVars(const char *searchpathstring);
+FString NicePath(const char *path);
 
 #endif

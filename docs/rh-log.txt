@@ -1,3 +1,13 @@
+February 7, 2009
+- Added GTK+-based clipboard support for Linux.
+- Fixed: Most Linux filesystems do not fill in d_type for scandir(), so we
+  cannot rely on it to detect directories.
+- Added NicePath() function to perform shell-style ~ substitution on path
+  names.
+- Changed the default screenshot directory on Unix to ~/.zdoom/screenshots/.
+- Added -shotdir command line option to temporarily override the
+  screenshot_dir cvar.
+
 February 7, 2009  (Changes by Graf Zahl)
 - Fixed: G_SerializeLevel must use the TEXMAN_ReturnFirst flag for getting
   the sky textures so that it still works when the first texture in a TEXTURE1

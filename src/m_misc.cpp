@@ -301,19 +301,17 @@ static long ParseCommandLine (const char *args, int *argc, char **argv)
 #ifdef unix
 FString GetUserFile (const char *file, bool nodir)
 {
-	char *home = getenv ("HOME");
-	if (home == NULL || *home == '\0')
-		I_FatalError ("Please set your HOME environment variable");
+	FString path;
 
-	FString path = home;
-	if (path[path.Len()-1] != '/')
-		path += nodir ? "/" : "/"GAME_DIR;
-	else if (!nodir)
-		path += GAME_DIR;
-
-	if (!nodir)
+	if (nodir)
+	{
+		path = NicePath("~/");
+	}
+	else
 	{
 		struct stat info;
+
+		path = NicePath("~/" GAME_DIR "/");
 		if (stat (path, &info) == -1)
 		{
 			if (mkdir (path, S_IRUSR | S_IWUSR | S_IXUSR) == -1)
@@ -330,7 +328,6 @@ FString GetUserFile (const char *file, bool nodir)
 			}
 		}
 	}
-	path += '/';
 	path += file;
 	return path;
 }
@@ -649,10 +646,20 @@ void M_ScreenShot (const char *filename)
 		else
 #endif
 		{
-			int dirlen = (int)strlen (screenshot_dir);
+			int dirlen;
+			autoname = Args->CheckValue("-shotdir");
+			if (autoname == NULL)
+			{
+				autoname = screenshot_dir;
+			}
+			dirlen = strlen(autoname);
 			if (dirlen == 0)
 			{
+#ifdef unix
+				autoname = "~/.zdoom/screenshots/";
+#else
 				autoname = progdir;
+#endif
 			}
 			else if (dirlen > 0)
 			{
@@ -663,6 +670,7 @@ void M_ScreenShot (const char *filename)
 				}
 			}
 		}
+		autoname = NicePath(autoname);
 		if (!FindFreeName (autoname, writepcx ? "pcx" : "png"))
 		{
 			Printf ("M_ScreenShot: Delete some screenshots\n");

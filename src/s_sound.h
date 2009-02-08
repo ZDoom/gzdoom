@@ -46,6 +46,7 @@ struct sfxinfo_t
 
 	BYTE		PitchMask;
 	SWORD		NearLimit;				// 0 means unlimited
+	float		LimitRange;				// Range for sound limiting (squared for faster computations)
 
 	WORD		bRandomHeader:1;
 	WORD		bPlayerReserve:1;
@@ -178,6 +179,7 @@ struct FSoundChan : public FISoundChannel
 	SBYTE		Priority;
 	SWORD		NearLimit;
 	BYTE		SourceType;
+	float		LimitRange;
 	union
 	{
 		AActor			*Actor;		// Used for position and velocity.

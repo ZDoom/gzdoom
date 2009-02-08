@@ -494,6 +494,7 @@ int S_AddSoundLump (const char *logicalname, int lump)
 	newsfx.Volume = 1;
 	newsfx.PitchMask = CurrentPitchMask;
 	newsfx.NearLimit = 2;
+	newsfx.LimitRange = 256*256;
 	newsfx.bRandomHeader = false;
 	newsfx.bPlayerReserve = false;
 	newsfx.bForce11025 = false;
@@ -584,7 +585,11 @@ static int S_AddSound (const char *logicalname, int lumpnum, FScanner *sc)
 		sfx->bRandomHeader = false;
 		sfx->link = sfxinfo_t::NO_LINK;
 		sfx->bTentative = false;
-		if (sfx->NearLimit == -1) sfx->NearLimit = 2;
+		if (sfx->NearLimit == -1) 
+		{
+			sfx->NearLimit = 2;
+			sfx->LimitRange = 256*256;
+		}
 		//sfx->PitchMask = CurrentPitchMask;
 	}
 	else
@@ -1154,13 +1159,17 @@ static void S_AddSNDINFO (int lump)
 				break;
 
 			case SI_Limit: {
-				// $limit <logical name> <max channels>
+				// $limit <logical name> <max channels> [<distance>]
 				int sfx;
 
 				sc.MustGetString ();
 				sfx = S_FindSoundTentative (sc.String);
 				sc.MustGetNumber ();
 				S_sfx[sfx].NearLimit = MIN(MAX(sc.Number, 0), 255);
+				if (sc.CheckFloat())
+				{
+					S_sfx[sfx].LimitRange = sc.Float * sc.Float;
+				}
 				}
 				break;
 

@@ -1,3 +1,7 @@
+February 8, 2009  (Changes by Graf Zahl)
+- Added a range parameter to SNDINFO's $limit.
+- Restored Dehacked music name replacement.
+
 February 7, 2009
 - Added GUICapture mouse events for Win32.
 - Changed I_GetFromClipboard() to return an FString.

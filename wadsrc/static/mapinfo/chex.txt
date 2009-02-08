@@ -50,7 +50,7 @@ sky1 SKY1 0
 cluster 1
 par 30
 sucktime 1
-music D_E1M1
+music $MUSIC_E1M1
 
 map E1M2 lookup CHUSTR_E1M2
 levelnum 2
@@ -61,7 +61,7 @@ sky1 SKY1 0
 cluster 1
 par 75
 sucktime 1
-music D_E1M2
+music $MUSIC_E1M2
 
 map E1M3 lookup CHUSTR_E1M3
 levelnum 3
@@ -72,7 +72,7 @@ sky1 SKY1 0
 cluster 1
 par 120
 sucktime 1
-music D_E1M3
+music $MUSIC_E1M3
 
 map E1M4 lookup CHUSTR_E1M4
 levelnum 4
@@ -83,7 +83,7 @@ sky1 SKY1 0
 cluster 1
 par 90
 sucktime 1
-music D_E1M4
+music $MUSIC_E1M4
 
 map E1M5 lookup CHUSTR_E1M5
 levelnum 5
@@ -94,28 +94,28 @@ sky1 SKY1 0
 cluster 1
 par 165
 sucktime 1
-music D_E1M5
+music $MUSIC_E1M5
 
 
 // Clusters (correspond with same-numbered episode)
 
 clusterdef 1
 flat FLOOR4_8
-music D_VICTOR
+music $MUSIC_VICTOR
 exittext lookup CE1TEXT
 
 clusterdef 2
 flat SFLR6_1
-music D_VICTOR
+music $MUSIC_VICTOR
 exittext lookup CE2TEXT
 
 clusterdef 3
 flat MFLR8_4
-music D_VICTOR
+music $MUSIC_VICTOR
 exittext lookup CE3TEXT
 
 clusterdef 4
 flat MFLR8_3
-music D_VICTOR
+music $MUSIC_VICTOR
 exittext lookup CE4TEXT
 

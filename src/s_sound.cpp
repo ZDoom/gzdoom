@@ -99,7 +99,7 @@ extern float S_GetMusicVolume (const char *music);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static bool S_CheckSoundLimit(sfxinfo_t *sfx, const FVector3 &pos, int near_limit);
+static bool S_CheckSoundLimit(sfxinfo_t *sfx, const FVector3 &pos, int near_limit, float limit_range);
 static bool S_IsChannelUsed(AActor *actor, int channel, int *seen);
 static void S_ActivatePlayList(bool goBack);
 static void CalcPosVel(FSoundChan *chan, FVector3 *pos, FVector3 *vel);
@@ -868,6 +868,7 @@ static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyO
 	// When resolving a link we do not want to get the NearLimit of
 	// the referenced sound so some additional checks are required
 	int near_limit = sfx->NearLimit;
+	float limit_range = sfx->LimitRange;
 	rolloff = &sfx->Rolloff;
 
 	// Resolve player sounds, random sounds, and aliases
@@ -877,18 +878,27 @@ static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyO
 		{
 			sound_id = FSoundID(S_FindSkinnedSound (actor, sound_id));
 			near_limit = S_sfx[sound_id].NearLimit;
+			limit_range = S_sfx[sound_id].LimitRange;
 			rolloff = &S_sfx[sound_id].Rolloff;
 		}
 		else if (sfx->bRandomHeader)
 		{
 			sound_id = FSoundID(S_PickReplacement (sound_id));
-			if (near_limit < 0) near_limit = S_sfx[sound_id].NearLimit;
+			if (near_limit < 0) 
+			{
+				near_limit = S_sfx[sound_id].NearLimit;
+				limit_range = S_sfx[sound_id].LimitRange;
+			}
 			if (rolloff->MinDistance == 0) rolloff = &S_sfx[sound_id].Rolloff;
 		}
 		else
 		{
 			sound_id = FSoundID(sfx->link);
-			if (near_limit < 0) near_limit = S_sfx[sound_id].NearLimit;
+			if (near_limit < 0) 
+			{
+				near_limit = S_sfx[sound_id].NearLimit;
+				limit_range = S_sfx[sound_id].LimitRange;
+			}
 			if (rolloff->MinDistance == 0) rolloff = &S_sfx[sound_id].Rolloff;
 		}
 		sfx = &S_sfx[sound_id];
@@ -912,7 +922,7 @@ static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyO
 
 	// If this sound doesn't like playing near itself, don't play it if
 	// that's what would happen.
-	if (near_limit > 0 && S_CheckSoundLimit(sfx, pos, near_limit))
+	if (near_limit > 0 && S_CheckSoundLimit(sfx, pos, near_limit, limit_range))
 	{
 		chanflags |= CHAN_EVICTED;
 	}
@@ -1056,6 +1066,7 @@ static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyO
 		chan->Volume = volume;
 		chan->ChanFlags |= chanflags;
 		chan->NearLimit = near_limit;
+		chan->LimitRange = limit_range;
 		chan->Pitch = pitch;
 		chan->Priority = basepriority;
 		chan->DistanceScale = attenuation;
@@ -1117,7 +1128,7 @@ void S_RestartSound(FSoundChan *chan)
 
 		// If this sound doesn't like playing near itself, don't play it if
 		// that's what would happen.
-		if (chan->NearLimit > 0 && S_CheckSoundLimit(&S_sfx[chan->SoundID], pos, chan->NearLimit))
+		if (chan->NearLimit > 0 && S_CheckSoundLimit(&S_sfx[chan->SoundID], pos, chan->NearLimit, chan->LimitRange))
 		{
 			return;
 		}
@@ -1326,7 +1337,7 @@ bool S_CheckSingular(int sound_id)
 //
 //==========================================================================
 
-bool S_CheckSoundLimit(sfxinfo_t *sfx, const FVector3 &pos, int near_limit)
+bool S_CheckSoundLimit(sfxinfo_t *sfx, const FVector3 &pos, int near_limit, float limit_range)
 {
 	FSoundChan *chan;
 	int count;
@@ -1338,7 +1349,7 @@ bool S_CheckSoundLimit(sfxinfo_t *sfx, const FVector3 &pos, int near_limit)
 			FVector3 chanorigin;
 
 			CalcPosVel(chan, &chanorigin, NULL);
-			if ((chanorigin - pos).LengthSquared() <= 256.0*256.0)
+			if ((chanorigin - pos).LengthSquared() <= limit_range)
 			{
 				count++;
 			}
@@ -2001,6 +2012,15 @@ static FArchive &operator<<(FArchive &arc, FSoundChan &chan)
 		<< chan.Rolloff.MinDistance
 		<< chan.Rolloff.MaxDistance;
 
+	if (SaveVersion >= 1416)
+	{
+		arc << chan.LimitRange;
+	}
+	else 
+	{
+		chan.LimitRange = 256*256;
+	}
+
 	if (arc.IsLoading())
 	{
 		chan.SfxInfo = &S_sfx[chan.SoundID];
@@ -2177,7 +2197,21 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 		S_StopMusic (true);
 		return false;
 	}
-	
+
+	FString DEH_Music;
+	if (musicname[0] == '$')
+	{
+		// handle dehacked replacement.
+		// Any music name defined this way needs to be prefixed with 'D_' because
+		// Doom.exe does not contain the prefix so these strings don't either.
+		const char * mus_string = GStrings[musicname+1];
+		if (mus_string != NULL)
+		{
+			DEH_Music << "D_" << mus_string;
+			musicname = DEH_Music;
+		}
+	}
+
 	if (!mus_playing.name.IsEmpty() && stricmp (mus_playing.name, musicname) == 0)
 	{
 		if (order != mus_playing.baseorder)

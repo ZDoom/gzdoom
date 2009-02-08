@@ -256,7 +256,7 @@ void F_Ticker ()
 							if (EndSequences[FinaleSequence].EndType == END_Bunny)
 							{
 								if (!EndSequences[FinaleSequence].Advanced)
-									S_StartMusic ("d_bunny");
+									S_StartMusic ("$music_bunny");
 							}
 						}
 						if (EndSequences[FinaleSequence].Advanced &&
@@ -600,7 +600,7 @@ void F_StartCast (void)
 	castonmelee = 0;
 	castattacking = false;
 	if (!EndSequences[FinaleSequence].Advanced)
-		S_ChangeMusic ("d_evil");
+		S_ChangeMusic ("$music_evil");
 }
 
 

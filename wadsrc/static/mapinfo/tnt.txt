@@ -14,7 +14,7 @@ sky1 SKY1 0
 cluster 5
 par 30
 sucktime 1
-music D_RUNNIN
+music $MUSIC_RUNNIN
 
 map MAP02 lookup THUSTR_2
 titlepatch CWILV01
@@ -24,7 +24,7 @@ sky1 SKY1 0
 cluster 5
 par 90
 sucktime 1
-music D_STALKS
+music $MUSIC_STALKS
 
 map MAP03 lookup THUSTR_3
 titlepatch CWILV02
@@ -34,7 +34,7 @@ sky1 SKY1 0
 cluster 5
 par 120
 sucktime 1
-music D_COUNTD
+music $MUSIC_COUNTD
 
 map MAP04 lookup THUSTR_4
 titlepatch CWILV03
@@ -44,7 +44,7 @@ sky1 SKY1 0
 cluster 5
 par 120
 sucktime 1
-music D_BETWEE
+music $MUSIC_BETWEE
 
 map MAP05 lookup THUSTR_5
 titlepatch CWILV04
@@ -54,7 +54,7 @@ sky1 SKY1 0
 cluster 5
 par 90
 sucktime 1
-music D_DOOM
+music $MUSIC_DOOM
 
 map MAP06 lookup THUSTR_6
 titlepatch CWILV05
@@ -64,7 +64,7 @@ sky1 SKY1 0
 cluster 5
 par 150
 sucktime 1
-music D_THE_DA
+music $MUSIC_THE_DA
 
 map MAP07 lookup THUSTR_7
 titlepatch CWILV06
@@ -75,7 +75,7 @@ cluster 6
 par 120
 sucktime 1
 map07special
-music D_SHAWN
+music $MUSIC_SHAWN
 
 map MAP08 lookup THUSTR_8
 titlepatch CWILV07
@@ -85,7 +85,7 @@ sky1 SKY1 0
 cluster 6
 par 120
 sucktime 1
-music D_DDTBLU
+music $MUSIC_DDTBLU
 
 map MAP09 lookup THUSTR_9
 titlepatch CWILV08
@@ -95,7 +95,7 @@ sky1 SKY1 0
 cluster 6
 par 270
 sucktime 1
-music D_IN_CIT
+music $MUSIC_IN_CIT
 
 map MAP10 lookup THUSTR_10
 titlepatch CWILV09
@@ -105,7 +105,7 @@ sky1 SKY1 0
 cluster 6
 par 90
 sucktime 1
-music D_DEAD
+music $MUSIC_DEAD
 
 map MAP11 lookup THUSTR_11
 titlepatch CWILV10
@@ -115,7 +115,7 @@ sky1 SKY1 0
 cluster 6
 par 210
 sucktime 1
-music D_STLKS2
+music $MUSIC_STLKS2
 
 map MAP12 lookup THUSTR_12
 titlepatch CWILV11
@@ -125,7 +125,7 @@ sky1 SKY2 0
 cluster 7
 par 150
 sucktime 1
-music D_THEDA2
+music $MUSIC_THEDA2
 
 map MAP13 lookup THUSTR_13
 titlepatch CWILV12
@@ -135,7 +135,7 @@ sky1 SKY2 0
 cluster 7
 par 150
 sucktime 1
-music D_DOOM2
+music $MUSIC_DOOM2
 
 map MAP14 lookup THUSTR_14
 titlepatch CWILV13
@@ -145,7 +145,7 @@ sky1 SKY2 0
 cluster 7
 par 150
 sucktime 1
-music D_DDTBL2
+music $MUSIC_DDTBL2
 
 map MAP15 lookup THUSTR_15
 titlepatch CWILV14
@@ -155,7 +155,7 @@ sky1 SKY2 0
 cluster 7
 par 210
 sucktime 1
-music D_RUNNI2
+music $MUSIC_RUNNI2
 
 map MAP16 lookup THUSTR_16
 titlepatch CWILV15
@@ -165,7 +165,7 @@ sky1 SKY2 0
 cluster 7
 par 150
 sucktime 1
-music D_DEAD2
+music $MUSIC_DEAD2
 
 map MAP17 lookup THUSTR_17
 titlepatch CWILV16
@@ -175,7 +175,7 @@ sky1 SKY2 0
 cluster 7
 par 420
 sucktime 1
-music D_STLKS3
+music $MUSIC_STLKS3
 
 map MAP18 lookup THUSTR_18
 titlepatch CWILV17
@@ -185,7 +185,7 @@ sky1 SKY2 0
 cluster 7
 par 150
 sucktime 1
-music D_ROMERO
+music $MUSIC_ROMERO
 
 map MAP19 lookup THUSTR_19
 titlepatch CWILV18
@@ -195,7 +195,7 @@ sky1 SKY2 0
 cluster 7
 par 210
 sucktime 1
-music D_SHAWN2
+music $MUSIC_SHAWN2
 
 map MAP20 lookup THUSTR_20
 titlepatch CWILV19
@@ -205,7 +205,7 @@ sky1 SKY2 0
 cluster 7
 par 150
 sucktime 1
-music D_MESSAG
+music $MUSIC_MESSAG
 
 map MAP21 lookup THUSTR_21
 titlepatch CWILV20
@@ -215,7 +215,7 @@ sky1 SKY3 0
 cluster 8
 par 240
 sucktime 1
-music D_COUNT2
+music $MUSIC_COUNT2
 
 map MAP22 lookup THUSTR_22
 titlepatch CWILV21
@@ -225,7 +225,7 @@ sky1 SKY3 0
 cluster 8
 par 150
 sucktime 1
-music D_DDTBL3
+music $MUSIC_DDTBL3
 
 map MAP23 lookup THUSTR_23
 titlepatch CWILV22
@@ -235,7 +235,7 @@ sky1 SKY3 0
 cluster 8
 par 180
 sucktime 1
-music D_AMPIE
+music $MUSIC_AMPIE
 
 map MAP24 lookup THUSTR_24
 titlepatch CWILV23
@@ -245,7 +245,7 @@ sky1 SKY3 0
 cluster 8
 par 150
 sucktime 1
-music D_THEDA3
+music $MUSIC_THEDA3
 
 map MAP25 lookup THUSTR_25
 titlepatch CWILV24
@@ -255,7 +255,7 @@ sky1 SKY3 0
 cluster 8
 par 150
 sucktime 1
-music D_ADRIAN
+music $MUSIC_ADRIAN
 
 map MAP26 lookup THUSTR_26
 titlepatch CWILV25
@@ -265,7 +265,7 @@ sky1 SKY3 0
 cluster 8
 par 300
 sucktime 1
-music D_MESSG2
+music $MUSIC_MESSG2
 
 map MAP27 lookup THUSTR_27
 titlepatch CWILV26
@@ -275,7 +275,7 @@ sky1 SKY3 0
 cluster 8
 par 330
 sucktime 1
-music D_ROMER2
+music $MUSIC_ROMER2
 
 map MAP28 lookup THUSTR_28
 titlepatch CWILV27
@@ -285,7 +285,7 @@ sky1 SKY3 0
 cluster 8
 par 420
 sucktime 1
-music D_TENSE
+music $MUSIC_TENSE
 
 map MAP29 lookup THUSTR_29
 titlepatch CWILV28
@@ -295,7 +295,7 @@ sky1 SKY3 0
 cluster 8
 par 300
 sucktime 1
-music D_SHAWN3
+music $MUSIC_SHAWN3
 
 map MAP30 lookup THUSTR_30
 titlepatch CWILV29
@@ -306,7 +306,7 @@ cluster 8
 par 180
 sucktime 1
 allowmonstertelefrags
-music D_OPENIN
+music $MUSIC_OPENIN
 
 map MAP31 lookup THUSTR_31
 titlepatch CWILV30
@@ -316,7 +316,7 @@ sky1 SKY3 0
 cluster 9
 par 120
 sucktime 1
-music D_EVIL
+music $MUSIC_EVIL
 
 map MAP32 lookup THUSTR_32
 titlepatch CWILV31
@@ -326,40 +326,40 @@ sky1 SKY3 0
 cluster 10
 par 30
 sucktime 1
-music D_ULTIMA
+music $MUSIC_ULTIMA
 
 // DOOM II first cluster (up thru level 6)
 clusterdef 5
 flat SLIME16
-music D_READ_M
+music $MUSIC_READ_M
 exittext lookup T1TEXT
 
 // DOOM II second cluster (up thru level 11)
 clusterdef 6
 flat RROCK14
-music D_READ_M
+music $MUSIC_READ_M
 exittext lookup T2TEXT
 
 // DOOM II third cluster (up thru level 20)
 clusterdef 7
 flat RROCK07
-music D_READ_M
+music $MUSIC_READ_M
 exittext lookup T3TEXT
 
 // DOOM II fourth cluster (up thru level 30)
 clusterdef 8
 flat RROCK17
-music D_READ_M
+music $MUSIC_READ_M
 exittext lookup T4TEXT
 
 // DOOM II fifth cluster (level 31)
 clusterdef 9
 flat RROCK13
-music D_READ_M
+music $MUSIC_READ_M
 entertext lookup T5TEXT
 
 // DOOM II sixth cluster (level 32)
 clusterdef 10
 flat RROCK19
-music D_READ_M
+music $MUSIC_READ_M
 entertext lookup T6TEXT

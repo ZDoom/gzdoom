@@ -30,7 +30,7 @@ sky1 SKY1 0
 cluster 1
 par 30
 sucktime 1
-music D_E1M1
+music $MUSIC_E1M1
 
 map E1M2 lookup HUSTR_E1M2
 levelnum 2
@@ -41,7 +41,7 @@ sky1 SKY1 0
 cluster 1
 par 75
 sucktime 1
-music D_E1M2
+music $MUSIC_E1M2
 
 map E1M3 lookup HUSTR_E1M3
 levelnum 3
@@ -52,7 +52,7 @@ sky1 SKY1 0
 cluster 1
 par 120
 sucktime 1
-music D_E1M3
+music $MUSIC_E1M3
 
 map E1M4 lookup HUSTR_E1M4
 levelnum 4
@@ -63,7 +63,7 @@ sky1 SKY1 0
 cluster 1
 par 90
 sucktime 1
-music D_E1M4
+music $MUSIC_E1M4
 
 map E1M5 lookup HUSTR_E1M5
 levelnum 5
@@ -74,7 +74,7 @@ sky1 SKY1 0
 cluster 1
 par 165
 sucktime 1
-music D_E1M5
+music $MUSIC_E1M5
 
 map E1M6 lookup HUSTR_E1M6
 levelnum 6
@@ -85,7 +85,7 @@ sky1 SKY1 0
 cluster 1
 par 180
 sucktime 1
-music D_E1M6
+music $MUSIC_E1M6
 
 map E1M7 lookup HUSTR_E1M7
 levelnum 7
@@ -96,7 +96,7 @@ sky1 SKY1 0
 cluster 1
 par 180
 sucktime 1
-music D_E1M7
+music $MUSIC_E1M7
 
 map E1M8 lookup HUSTR_E1M8
 levelnum 8
@@ -111,7 +111,7 @@ nosoundclipping
 baronspecial
 specialaction_lowerfloor
 sucktime 1
-music D_E1M8
+music $MUSIC_E1M8
 
 map E1M9 lookup HUSTR_E1M9
 levelnum 9
@@ -122,7 +122,7 @@ sky1 SKY1 0
 cluster 1
 par 165
 sucktime 1
-music D_E1M9
+music $MUSIC_E1M9
 
 // Registered/Retail Episode 2
 
@@ -135,7 +135,7 @@ sky1 SKY2 0
 cluster 2
 par 90
 sucktime 1
-music D_E2M1
+music $MUSIC_E2M1
 
 map E2M2 lookup HUSTR_E2M2
 levelnum 12
@@ -146,7 +146,7 @@ sky1 SKY2 0
 cluster 2
 par 90
 sucktime 1
-music D_E2M2
+music $MUSIC_E2M2
 
 map E2M3 lookup HUSTR_E2M3
 levelnum 13
@@ -157,7 +157,7 @@ sky1 SKY2 0
 cluster 2
 par 90
 sucktime 1
-music D_E2M3
+music $MUSIC_E2M3
 
 map E2M4 lookup HUSTR_E2M4
 levelnum 14
@@ -168,7 +168,7 @@ sky1 SKY2 0
 cluster 2
 par 120
 sucktime 1
-music D_E2M4
+music $MUSIC_E2M4
 
 map E2M5 lookup HUSTR_E2M5
 levelnum 15
@@ -179,7 +179,7 @@ sky1 SKY2 0
 cluster 2
 par 90
 sucktime 1
-music D_E2M5
+music $MUSIC_E2M5
 
 map E2M6 lookup HUSTR_E2M6
 levelnum 16
@@ -190,7 +190,7 @@ sky1 SKY2 0
 cluster 2
 par 360
 sucktime 1
-music D_E2M6
+music $MUSIC_E2M6
 
 map E2M7 lookup HUSTR_E2M7
 levelnum 17
@@ -201,7 +201,7 @@ sky1 SKY2 0
 cluster 2
 par 240
 sucktime 1
-music D_E2M7
+music $MUSIC_E2M7
 
 map E2M8 lookup HUSTR_E2M8
 levelnum 18
@@ -216,7 +216,7 @@ nosoundclipping
 cyberdemonspecial
 specialaction_exitlevel
 sucktime 1
-music D_E2M8
+music $MUSIC_E2M8
 
 map E2M9 lookup HUSTR_E2M9
 levelnum 19
@@ -227,7 +227,7 @@ sky1 SKY2 0
 cluster 2
 par 170
 sucktime 1
-music D_E2M9
+music $MUSIC_E2M9
 
 // Registered/Retail Episode 3
 
@@ -240,7 +240,7 @@ sky1 SKY3 0
 cluster 3
 par 90
 sucktime 1
-music D_E3M1
+music $MUSIC_E3M1
 
 map E3M2 lookup HUSTR_E3M2
 levelnum 22
@@ -251,7 +251,7 @@ sky1 SKY3 0
 cluster 3
 par 45
 sucktime 1
-music D_E3M2
+music $MUSIC_E3M2
 
 map E3M3 lookup HUSTR_E3M3
 levelnum 23
@@ -262,7 +262,7 @@ sky1 SKY3 0
 cluster 3
 par 90
 sucktime 1
-music D_E3M3
+music $MUSIC_E3M3
 
 map E3M4 lookup HUSTR_E3M4
 levelnum 24
@@ -273,7 +273,7 @@ sky1 SKY3 0
 cluster 3
 par 150
 sucktime 1
-music D_E3M4
+music $MUSIC_E3M4
 
 map E3M5 lookup HUSTR_E3M5
 levelnum 25
@@ -284,7 +284,7 @@ sky1 SKY3 0
 cluster 3
 par 90
 sucktime 1
-music D_E3M5
+music $MUSIC_E3M5
 
 map E3M6 lookup HUSTR_E3M6
 levelnum 26
@@ -295,7 +295,7 @@ sky1 SKY3 0
 cluster 3
 par 90
 sucktime 1
-music D_E3M6
+music $MUSIC_E3M6
 
 map E3M7 lookup HUSTR_E3M7
 levelnum 27
@@ -306,7 +306,7 @@ sky1 SKY3 0
 cluster 3
 par 165
 sucktime 1
-music D_E3M7
+music $MUSIC_E3M7
 
 map E3M8 lookup HUSTR_E3M8
 levelnum 28
@@ -321,7 +321,7 @@ nosoundclipping
 spidermastermindspecial
 specialaction_exitlevel
 sucktime 1
-music D_E3M8
+music $MUSIC_E3M8
 
 map E3M9 lookup HUSTR_E3M9
 levelnum 29
@@ -332,7 +332,7 @@ sky1 SKY3 0
 cluster 3
 par 135
 sucktime 1
-music D_E3M9
+music $MUSIC_E3M9
 
 // Retail Episode 4
 
@@ -344,7 +344,7 @@ secretnext E4M9
 sky1 SKY4 0
 cluster 4
 sucktime 1
-music D_E3M4
+music $MUSIC_E3M4
 
 map E4M2 lookup HUSTR_E4M2
 levelnum 32
@@ -354,7 +354,7 @@ secretnext E4M9
 sky1 SKY4 0
 cluster 4
 sucktime 1
-music D_E3M2
+music $MUSIC_E3M2
 
 map E4M3 lookup HUSTR_E4M3
 levelnum 33
@@ -364,7 +364,7 @@ secretnext E4M9
 sky1 SKY4 0
 cluster 4
 sucktime 1
-music D_E3M3
+music $MUSIC_E3M3
 
 map E4M4 lookup HUSTR_E4M4
 levelnum 34
@@ -374,7 +374,7 @@ secretnext E4M9
 sky1 SKY4 0
 cluster 4
 sucktime 1
-music D_E1M5
+music $MUSIC_E1M5
 
 map E4M5 lookup HUSTR_E4M5
 levelnum 35
@@ -384,7 +384,7 @@ secretnext E4M9
 sky1 SKY4 0
 cluster 4
 sucktime 1
-music D_E2M7
+music $MUSIC_E2M7
 
 map E4M6 lookup HUSTR_E4M6
 levelnum 36
@@ -396,7 +396,7 @@ cluster 4
 cyberdemonspecial
 specialaction_opendoor
 sucktime 1
-music D_E2M4
+music $MUSIC_E2M4
 
 map E4M7 lookup HUSTR_E4M7
 levelnum 37
@@ -406,7 +406,7 @@ secretnext E4M9
 sky1 SKY4 0
 cluster 4
 sucktime 1
-music D_E2M6
+music $MUSIC_E2M6
 
 map E4M8 lookup HUSTR_E4M8
 levelnum 38
@@ -420,7 +420,7 @@ nosoundclipping
 spidermastermindspecial
 specialaction_lowerfloor
 sucktime 1
-music D_E2M5
+music $MUSIC_E2M5
 
 map E4M9 lookup HUSTR_E4M9
 levelnum 39
@@ -430,27 +430,27 @@ secretnext E4M3
 sky1 SKY4 0
 cluster 4
 sucktime 1
-music D_E1M9
+music $MUSIC_E1M9
 
 // Clusters (correspond with same-numbered episode)
 
 clusterdef 1
 flat FLOOR4_8
-music D_VICTOR
+music $MUSIC_VICTOR
 exittext lookup E1TEXT
 
 clusterdef 2
 flat SFLR6_1
-music D_VICTOR
+music $MUSIC_VICTOR
 exittext lookup E2TEXT
 
 clusterdef 3
 flat MFLR8_4
-music D_VICTOR
+music $MUSIC_VICTOR
 exittext lookup E3TEXT
 
 clusterdef 4
 flat MFLR8_3
-music D_VICTOR
+music $MUSIC_VICTOR
 exittext lookup E4TEXT
 

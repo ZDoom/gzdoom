@@ -1895,9 +1895,9 @@ void WI_Ticker(void)
 		else if (gameinfo.gametype == GAME_Strife)	// Strife also needs a default
 			S_ChangeMusic ("d_slide");
 		else if (gamemode == commercial)
-			S_ChangeMusic ("d_dm2int");
+			S_ChangeMusic ("$MUSIC_DM2INT");
 		else
-			S_ChangeMusic ("d_inter"); 
+			S_ChangeMusic ("$MUSIC_INTER"); 
 
 	}
 	

@@ -1,4 +1,5 @@
 February 7, 2009
+- Added GUICapture mouse events for Win32.
 - Changed I_GetFromClipboard() to return an FString.
 - Added GTK+-based clipboard support for Linux.
 - Fixed: Most Linux filesystems do not fill in d_type for scandir(), so we

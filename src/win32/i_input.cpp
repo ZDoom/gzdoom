@@ -699,6 +699,23 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			DIKState[ActiveDIKState][event.data1] = (event.type == EV_KeyDown);
 			D_PostEvent (&event);
 		}
+		else if (GUICapture)
+		{
+			event.type = EV_GUI_Event;
+			if (message >= WM_LBUTTONDOWN && message <= WM_LBUTTONDBLCLK)
+			{
+				event.subtype = message - WM_LBUTTONDOWN + EV_GUI_LButtonDown;
+			}
+			else if (message >= WM_RBUTTONDOWN && message <= WM_RBUTTONDBLCLK)
+			{
+				event.subtype = message - WM_RBUTTONDOWN + EV_GUI_RButtonDown;
+			}
+			else if (message >= WM_MBUTTONDOWN && message <= WM_MBUTTONDBLCLK)
+			{
+				event.subtype = message - WM_MBUTTONDOWN + EV_GUI_MButtonDown;
+			}
+			D_PostEvent (&event);
+		}
 		break;
 
 	case WM_XBUTTONDOWN:

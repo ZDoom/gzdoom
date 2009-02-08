@@ -2024,15 +2024,15 @@ void I_PutInClipboard (const char *str)
 	CloseClipboard ();
 }
 
-char *I_GetFromClipboard ()
+FString I_GetFromClipboard ()
 {
-	char *retstr = NULL;
+	FString retstr;
 	HGLOBAL cliphandle;
 	char *clipstr;
 	char *nlstr;
 
 	if (!IsClipboardFormatAvailable (CF_TEXT) || !OpenClipboard (Window))
-		return NULL;
+		return retstr;
 
 	cliphandle = GetClipboardData (CF_TEXT);
 	if (cliphandle != NULL)
@@ -2040,15 +2040,16 @@ char *I_GetFromClipboard ()
 		clipstr = (char *)GlobalLock (cliphandle);
 		if (clipstr != NULL)
 		{
-			retstr = copystring (clipstr);
-			GlobalUnlock (clipstr);
-			nlstr = retstr;
-
-			// Convert CR-LF pairs to just LF
-			while ( (nlstr = strstr (retstr, "\r\n")) )
+			// Convert CR-LF pairs to just LF while copying to the FString
+			for (nlstr = clipstr; *nlstr != '\0'; ++nlstr)
 			{
-				memmove (nlstr, nlstr + 1, strlen (nlstr) - 1);
+				if (nlstr[0] == '\r' && nlstr[1] == '\n')
+				{
+					nlstr++;
+				}
+				retstr += *nlstr;
 			}
+			GlobalUnlock (clipstr);
 		}
 	}
 

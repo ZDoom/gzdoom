@@ -646,7 +646,7 @@ void M_ScreenShot (const char *filename)
 		else
 #endif
 		{
-			int dirlen;
+			size_t dirlen;
 			autoname = Args->CheckValue("-shotdir");
 			if (autoname == NULL)
 			{

@@ -596,7 +596,7 @@ void I_PutInClipboard (const char *str)
 #endif
 }
 
-char *I_GetFromClipboard ()
+FString I_GetFromClipboard ()
 {
 #ifndef NO_GTK
 	if (GtkAvailable)
@@ -607,12 +607,12 @@ char *I_GetFromClipboard ()
 			gchar *text = gtk_clipboard_wait_for_text(clipboard);
 			if (text != NULL)
 			{
-				char *copy = copystring(text);
+				FString copy(text);
 				g_free(text);
 				return copy;
 			}
 		}
 	}
 #endif
-	return NULL;
+	return "";
 }

@@ -1739,13 +1739,14 @@ static bool C_HandleKey (event_t *ev, BYTE *buffer, int len)
 				}
 				else
 				{ // paste from clipboard
-					char *clip = I_GetFromClipboard ();
-					if (clip != NULL)
+					FString clip = I_GetFromClipboard ();
+					if (clip.IsNotEmpty())
 					{
-						strtok (clip, "\r\n\b");
-						int cliplen = (int)strlen (clip);
+						// Only paste the first line.
+						long brk = clip.IndexOfAny("\r\n\b");
+						int cliplen = brk >= 0 ? brk : clip.Len();
 
-						cliplen = MIN(len, cliplen);
+						// Make sure there's room for the whole thing.
 						if (buffer[0] + cliplen > len)
 						{
 							cliplen = len - buffer[0];
@@ -1764,7 +1765,6 @@ static bool C_HandleKey (event_t *ev, BYTE *buffer, int len)
 							makestartposgood ();
 							HistPos = NULL;
 						}
-						delete[] clip;
 					}
 					break;
 				}

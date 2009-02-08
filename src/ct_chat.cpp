@@ -150,16 +150,19 @@ bool CT_Responder (event_t *ev)
 			}
 			else if (ev->data1 == 'V' && (ev->data3 & GKM_CTRL))
 			{
-				char *clip = I_GetFromClipboard ();
-				if (clip != NULL)
+				FString clip = I_GetFromClipboard ();
+				if (clip.IsNotEmpty())
 				{
-					char *clip_p = clip;
-					strtok (clip, "\n\r\b");
+					// Only paste the first line.
+					const char *clip_p = clip;
 					while (*clip_p)
 					{
+						if (*clip_p == '\n' || *clip_p == '\r' || *clip_p == '\b')
+						{
+							break;
+						}
 						CT_AddChar (*clip_p++);
 					}
-					delete[] clip;
 				}
 			}
 		}

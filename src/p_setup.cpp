@@ -3349,8 +3349,6 @@ void P_SetupLevel (char *lumpname, int position)
 		// note: most of this ordering is important 
 		ForceNodeBuild = gennodes;
 
-		CheckCompatibility(map);
-
 		// [RH] Load in the BEHAVIOR lump
 		FBehavior::StaticUnloadModules ();
 		if (map->HasBehavior)
@@ -3364,6 +3362,8 @@ void P_SetupLevel (char *lumpname, int position)
 			// If none has been defined in a map use the game's default.
 			P_LoadTranslator(!level.info->Translator.IsEmpty()? level.info->Translator.GetChars() : gameinfo.translator);
 		}
+		CheckCompatibility(map);
+
 
 		if (!map->HasBehavior || map->isText)
 		{

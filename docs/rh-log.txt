@@ -1,4 +1,7 @@
 February 9, 2009
+- Changed I_InitInput() to acquire the IDirectInput8A interface by using
+  DirectInput8Create() instead of CoCreateInstance(). This allows the Steam
+  GameOverlayRenderer.dll to properly hook it.
 - Stopped sending double the number of wheel events as appropriate to the
   console under Linux.
 - Added middle mouse button selection pasting for X systems.

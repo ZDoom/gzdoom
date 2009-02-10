@@ -1,5 +1,6 @@
 February 9, 2009
-- Stopped sending double the number of wheel events to the console under Linux.
+- Stopped sending double the number of wheel events as appropriate to the
+  console under Linux.
 - Added middle mouse button selection pasting for X systems.
 
 February 8, 2009  (Changes by Graf Zahl)

@@ -39,7 +39,7 @@
 bool I_InitInput (void *hwnd);
 void I_ShutdownInput ();
 void I_PutInClipboard (const char *str);
-FString I_GetFromClipboard ();
+FString I_GetFromClipboard (bool windows_has_no_selection_clipboard);
 
 void I_GetEvent ();
 

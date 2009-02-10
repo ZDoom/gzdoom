@@ -2,7 +2,7 @@
 #define __I_INPUT_H__
 
 void I_PutInClipboard (const char *str);
-FString I_GetFromClipboard ();
+FString I_GetFromClipboard (bool use_primary_selection);
 
 struct GUIDName
 {

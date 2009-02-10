@@ -152,7 +152,7 @@ bool CT_Responder (event_t *ev)
 			}
 			else if (ev->data1 == 'V' && (ev->data3 & GKM_CTRL))
 			{
-				CT_PasteChat(I_GetFromClipboard());
+				CT_PasteChat(I_GetFromClipboard(false));
 			}
 		}
 		else if (ev->subtype == EV_GUI_Char)
@@ -169,10 +169,12 @@ bool CT_Responder (event_t *ev)
 			}
 			return true;
 		}
+#ifdef unix
 		else if (ev->subtype == EV_GUI_MButtonDown)
 		{
-			CT_PasteChat(I_GetFromClipboard());
+			CT_PasteChat(I_GetFromClipboard(true));
 		}
+#endif
 	}
 
 	return false;
@@ -186,7 +188,7 @@ bool CT_Responder (event_t *ev)
 
 void CT_PasteChat(const char *clip)
 {
-	if (clip != NULL)
+	if (clip != NULL && *clip != '\0')
 	{
 		// Only paste the first line.
 		while (*clip != '\0')

@@ -587,21 +587,24 @@ void I_PutInClipboard (const char *str)
 		{
 			gtk_clipboard_set_text(clipboard, str, -1);
 		}
+		/* Should I? I don't know. It's not actually a selection.
 		clipboard = gtk_clipboard_get(GDK_SELECTION_PRIMARY);
 		if (clipboard != NULL)
 		{
 			gtk_clipboard_set_text(clipboard, str, -1);
 		}
+		*/
 	}
 #endif
 }
 
-FString I_GetFromClipboard ()
+FString I_GetFromClipboard (bool use_primary_selection)
 {
 #ifndef NO_GTK
 	if (GtkAvailable)
 	{
-		GtkClipboard *clipboard = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
+		GtkClipboard *clipboard = gtk_clipboard_get(use_primary_selection ?
+			GDK_SELECTION_PRIMARY : GDK_SELECTION_CLIPBOARD);
 		if (clipboard != NULL)
 		{
 			gchar *text = gtk_clipboard_wait_for_text(clipboard);

@@ -2041,14 +2041,14 @@ void I_PutInClipboard (const char *str)
 	CloseClipboard ();
 }
 
-FString I_GetFromClipboard ()
+FString I_GetFromClipboard (bool return_nothing)
 {
 	FString retstr;
 	HGLOBAL cliphandle;
 	char *clipstr;
 	char *nlstr;
 
-	if (!IsClipboardFormatAvailable (CF_TEXT) || !OpenClipboard (Window))
+	if (return_nothing || !IsClipboardFormatAvailable (CF_TEXT) || !OpenClipboard (Window))
 		return retstr;
 
 	cliphandle = GetClipboardData (CF_TEXT);

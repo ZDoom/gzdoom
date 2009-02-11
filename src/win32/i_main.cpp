@@ -743,7 +743,7 @@ void ShowErrorPane(const char *text)
 	SendMessage (ConWindow, EM_EXGETSEL, 0, (LPARAM)&end);
 	ErrorIconChar = end.cpMax;
 
-	// Now start adding the actualy error message.
+	// Now start adding the actual error message.
 	SendMessage (ConWindow, EM_REPLACESEL, FALSE, (LPARAM)"Execution could not continue.\n\n");
 
 	// Restore old charformat but with light yellow text.

@@ -1,3 +1,8 @@
+February 10, 2009
+- Moved the V_InitFontColors() call earlier in the startup sequence so that
+  colored error messages appear colored in the startup window. Also lightened
+  up the "Flat" red to contrast better on the startup background.
+
 February 9, 2009
 - Changed I_InitInput() to acquire the IDirectInput8A interface by using
   DirectInput8Create() instead of CoCreateInstance(). This allows the Steam

@@ -408,7 +408,7 @@ void FMapInfoParser::ParseOpenBrace()
 	switch(format_type)
 	{
 	default:
-		format_type = sc.CheckString("{")? FMT_New : FMT_Old;
+		format_type = sc.CheckString("{") ? FMT_New : FMT_Old;
 		if (format_type == FMT_New) 
 			sc.SetCMode(true);
 		break;

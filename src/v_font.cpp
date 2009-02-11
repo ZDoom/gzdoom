@@ -2104,7 +2104,6 @@ EColorRange V_ParseFontColor (const BYTE *&color_value, int normalcolor, int bol
 
 void V_InitFonts()
 {
-	V_InitFontColors ();
 	V_InitCustomFonts ();
 
 	// load the heads-up font

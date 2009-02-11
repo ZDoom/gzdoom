@@ -2340,6 +2340,8 @@ void D_DoomMain (void)
 	// [RH] Initialize localizable strings.
 	GStrings.LoadStrings (false);
 
+	V_InitFontColors ();
+
 	// [RH] Moved these up here so that we can do most of our
 	//		startup output in a fullscreen console.
 

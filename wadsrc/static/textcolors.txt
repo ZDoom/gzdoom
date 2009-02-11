@@ -65,7 +65,7 @@ Console:
 	#000000  #7F0000    0 127
 	#FF0000  #FFFEFE  128 256
 Flat:
-	#DD0000
+	#FF5566
 }
 
 Blue

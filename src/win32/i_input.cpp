@@ -1455,7 +1455,7 @@ bool I_InitInput (void *hwnd)
 	DInputDLL = LoadLibrary("dinput8.dll");
 	if (DInputDLL != NULL)
 	{
-		typedef HRESULT (*blah)(HINSTANCE, DWORD, REFIID, LPVOID *, LPUNKNOWN);
+		typedef HRESULT (WINAPI *blah)(HINSTANCE, DWORD, REFIID, LPVOID *, LPUNKNOWN);
 		blah di8c = (blah)GetProcAddress(DInputDLL, "DirectInput8Create");
 		if (di8c != NULL)
 		{
@@ -1484,7 +1484,7 @@ bool I_InitInput (void *hwnd)
 			I_FatalError ("Could not load dinput.dll: %08lx", GetLastError());
 		}
 
-		typedef HRESULT (*blah)(HINSTANCE, DWORD, LPDIRECTINPUT*, LPUNKNOWN);
+		typedef HRESULT (WINAPI *blah)(HINSTANCE, DWORD, LPDIRECTINPUT*, LPUNKNOWN);
 		blah dic = (blah)GetProcAddress (DInputDLL, "DirectInputCreateA");
 
 		if (dic == NULL)

@@ -1,4 +1,4 @@
-February 15, 2009  (Changes by Graf Zahl)
+﻿February 15, 2009  (Changes by Graf Zahl)
 - Fixed: The CHARFORMAT structure that is used to set the color in a Windows
   Rich Edit control was not fully initialized resulting in incorrect colors
   being set.
@@ -23,6 +23,7 @@ February 14, 2009  (Changes by Graf Zahl)
   block in the file.
 
 February 10, 2009
+- Fixed: DirectInput8Create() used the wrong calling convention.
 - Moved the V_InitFontColors() call earlier in the startup sequence so that
   colored error messages appear colored in the startup window. Also lightened
   up the "Flat" red to contrast better on the startup background.

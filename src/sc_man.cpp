@@ -1013,7 +1013,7 @@ void STACK_ARGS FScanner::ScriptMessage (const char *message, ...)
 		va_end (arglist);
 	}
 
-	Printf (TEXTCOLOR_RED"Script error, \"%s\" line %d:\n%s\n", ScriptName.GetChars(),
+	Printf (TEXTCOLOR_RED"Script error, \"%s\" line %d:\n"TEXTCOLOR_RED"%s\n", ScriptName.GetChars(),
 		AlreadyGot? AlreadyGotLine : Line, composed.GetChars());
 }
 
@@ -1087,6 +1087,7 @@ void STACK_ARGS FScriptPosition::Message (int severity, const char *message, ...
 		va_end (arglist);
 	}
 	const char *type = "";
+	const char *color;
 	int level = PRINT_HIGH;
 
 	switch (severity)
@@ -1096,29 +1097,34 @@ void STACK_ARGS FScriptPosition::Message (int severity, const char *message, ...
 
 	case MSG_WARNING:
 		type = "warning";
+		color = TEXTCOLOR_YELLOW;
 		break;
 
 	case MSG_ERROR:
 		ErrorCounter++;
 		type = "error";
+		color = TEXTCOLOR_RED;
 		break;
 
+	case MSG_MESSAGE:
 	case MSG_DEBUG:
 		type = "message";
+		color = TEXTCOLOR_GREEN;
 		break;
 
 	case MSG_DEBUGLOG:
 	case MSG_LOG:
 		type = "message";
 		level = PRINT_LOG;
+		color = "";
 		break;
 
 	case MSG_FATAL:
 		I_Error ("Script error, \"%s\" line %d:\n%s\n",
 			FileName.GetChars(), ScriptLine, composed.GetChars());
 	}
-	Printf (level, "Script %s, \"%s\" line %d:\n%s\n",
-		type, FileName.GetChars(), ScriptLine, composed.GetChars());
+	Printf (level, "%sScript %s, \"%s\" line %d:\n%s%s\n",
+		color, type, FileName.GetChars(), ScriptLine, color, composed.GetChars());
 }
 
 

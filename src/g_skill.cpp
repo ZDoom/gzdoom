@@ -225,6 +225,7 @@ void FMapInfoParser::ParseSkill ()
 			break;
 		}
 	}
+	CheckEndOfFile("skill");
 	for(unsigned int i = 0; i < AllSkills.Size(); i++)
 	{
 		if (AllSkills[i].Name == skill.Name)

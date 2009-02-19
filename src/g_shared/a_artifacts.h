@@ -77,6 +77,7 @@ class APowerInvisibility : public APowerup
 {
 	DECLARE_CLASS (APowerInvisibility, APowerup)
 protected:
+	void CommonInit ();
 	void InitEffect ();
 	void DoEffect ();
 	void EndEffect ();

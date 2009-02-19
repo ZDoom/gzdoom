@@ -541,6 +541,21 @@ void FMapInfoParser::SkipToNext()
 	}
 }
 
+
+//==========================================================================
+//
+// checks if the current block was properly terminated
+//
+//==========================================================================
+
+void FMapInfoParser::CheckEndOfFile(const char *block)
+{
+	if (format_type == FMT_New && !sc.Compare("}"))
+	{
+		sc.ScriptError("Unexpected end of file in %s definition", block);
+	}
+}
+
 //==========================================================================
 //
 // ParseLookupname
@@ -715,6 +730,7 @@ void FMapInfoParser::ParseCluster()
 			break;
 		}
 	}
+	CheckEndOfFile("cluster");
 }
 
 
@@ -1191,6 +1207,13 @@ DEFINE_MAP_OPTION(teamdamage, true)
 	info->teamdamage = parse.sc.Float;
 }
 
+DEFINE_MAP_OPTION(mapbackground, true)
+{
+	parse.ParseAssign();
+	parse.ParseLumpOrTextureName(info->mapbg);
+}
+
+
 //==========================================================================
 //
 // All flag based map options 
@@ -1421,6 +1444,7 @@ void FMapInfoParser::ParseMapDefinition(level_info_t &info)
 			}
 		}
 	}
+	CheckEndOfFile("map");
 }
 
 
@@ -1620,6 +1644,7 @@ void FMapInfoParser::ParseEpisodeInfo ()
 			break;
 		}
 	}
+	CheckEndOfFile("episode");
 
 	if (extended && !(gameinfo.flags & GI_MENUHACK_EXTENDED))
 	{ // If the episode is for the extended Heretic, but this is

@@ -1,3 +1,27 @@
+February 15, 2009  (Changes by Graf Zahl)
+- Fixed: The CHARFORMAT structure that is used to set the color in a Windows
+  Rich Edit control was not fully initialized resulting in incorrect colors
+  being set.
+
+February 14, 2009  (Changes by Graf Zahl)
+- Added MF5_CANTSEEK flag to prevent seeker missiles from homing in on
+  certain actors and added an option to APowerInvisibility to set this
+  flag when active.
+- Added map specific automap backgrounds.
+- Fixed: Voodoo dolls did not play a sound when dying.
+- Added colorized error messages to DECORATE and made a few more error
+  conditions that do not block further parsing not immediately abort.
+- Made all errors in CreateNewActor not immediately fatal so that the
+  rest of the DECORATE lump can be parsed normally to look for more errors.
+- Fixed: Defining classes with the same name as their immediate base class
+  was legal. It should not be allowed that a class has another one with the
+  same name in its ancestry.
+- Fixed: Formatting of the intermission screen on Heretic, Hexen and Strife
+  was broken. Changed it to use WI_Drawpercent which does it properly and
+  also allows showing percentage in these games now.
+- Fixed: The MAPINFO parser ignored missing terminating braces of the last
+  block in the file.
+
 February 10, 2009
 - Moved the V_InitFontColors() call earlier in the startup sequence so that
   colored error messages appear colored in the startup window. Also lightened

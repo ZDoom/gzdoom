@@ -798,7 +798,9 @@ void AM_loadPics ()
 		marknums[i] = TexMan.CheckForTexture (namebuf, FTexture::TEX_MiscPatch);
 	}
 
-	mapback = TexMan.CheckForTexture("AUTOPAGE", FTexture::TEX_MiscPatch);
+	const char *autopage = level.info->mapbg[0] == 0? "AUTOPAGE" : (const char*)level.info->mapbg[0];
+
+	mapback = TexMan.CheckForTexture(autopage, FTexture::TEX_MiscPatch);
 }
 
 bool AM_clearMarks ()

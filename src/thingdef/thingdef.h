@@ -189,7 +189,7 @@ PSymbolActionFunction *FindGlobalActionFunction(const char *name);
 //
 //==========================================================================
 
-FActorInfo *CreateNewActor(FName typeName, FName parentName, bool native);
+FActorInfo *CreateNewActor(FScriptPosition &sc, FName typeName, FName parentName, bool native);
 void SetReplacement(FActorInfo *info, FName replaceName);
 
 void HandleActorFlag(FScanner &sc, Baggage &bag, const char *part1, const char *part2, int mod);

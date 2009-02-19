@@ -704,13 +704,18 @@ static void ParseActorProperty(FScanner &sc, Baggage &bag)
 		}
 		else
 		{
-			sc.ScriptError("\"%s\" requires an actor of type \"%s\"\n", propname.GetChars(), prop->cls->TypeName.GetChars());
+			sc.ScriptMessage("\"%s\" requires an actor of type \"%s\"\n", propname.GetChars(), prop->cls->TypeName.GetChars());
+			FScriptPosition::ErrorCounter++;
 		}
 	}
 	else if (!propname.CompareNoCase("States"))
 	{
-		if (!bag.StateSet) ParseStates(sc, bag.Info, (AActor *)bag.Info->Class->Defaults, bag);
-		else sc.ScriptError("Multiple state declarations not allowed");
+		if (bag.StateSet) 
+		{
+			sc.ScriptMessage("'%s' contains multiple state declarations", bag.Info->Class->TypeName.GetChars());
+			FScriptPosition::ErrorCounter++;
+		}
+		ParseStates(sc, bag.Info, (AActor *)bag.Info->Class->Defaults, bag);
 		bag.StateSet=true;
 	}
 	else if (MatchString(propname, statenames) != -1)
@@ -740,6 +745,7 @@ static void ParseActionDef (FScanner &sc, PClass *cls)
 		OPTIONAL = 1
 	};
 
+	bool error = false;
 	AFuncDesc *afd;
 	FName funcname;
 	FString args;
@@ -748,7 +754,8 @@ static void ParseActionDef (FScanner &sc, PClass *cls)
 	
 	if (sc.LumpNum == -1 || Wads.GetLumpFile(sc.LumpNum) > 0)
 	{
-		sc.ScriptError ("action functions can only be imported by internal class and actor definitions!");
+		sc.ScriptMessage ("action functions can only be imported by internal class and actor definitions!");
+		error++;
 	}
 
 	sc.MustGetToken(TK_Native);
@@ -757,7 +764,8 @@ static void ParseActionDef (FScanner &sc, PClass *cls)
 	afd = FindFunction(sc.String);
 	if (afd == NULL)
 	{
-		sc.ScriptError ("The function '%s' has not been exported from the executable.", sc.String);
+		sc.ScriptMessage ("The function '%s' has not been exported from the executable.", sc.String);
+		error++;
 	}
 	sc.MustGetToken('(');
 	if (!sc.CheckToken(')'))
@@ -808,7 +816,9 @@ static void ParseActionDef (FScanner &sc, PClass *cls)
 				sc.UnGet();
 				break;
 			default:
-				sc.ScriptError ("Unknown variable type %s", sc.TokenName(sc.TokenType, sc.String).GetChars());
+				sc.ScriptMessage ("Unknown variable type %s", sc.TokenName(sc.TokenType, sc.String).GetChars());
+				type = 'x';
+				FScriptPosition::ErrorCounter++;
 				break;
 			}
 			// Read the optional variable name
@@ -862,11 +872,16 @@ static void ParseActionDef (FScanner &sc, PClass *cls)
 	{
 		sym->defaultparameterindex = -1;
 	}
-	if (cls->Symbols.AddSymbol (sym) == NULL)
+	if (error)
+	{
+		FScriptPosition::ErrorCounter++;
+	}
+	else if (cls->Symbols.AddSymbol (sym) == NULL)
 	{
 		delete sym;
-		sc.ScriptError ("'%s' is already defined in class '%s'.",
+		sc.ScriptMessage ("'%s' is already defined in class '%s'.",
 			funcname.GetChars(), cls->TypeName.GetChars());
+		FScriptPosition::ErrorCounter++;
 	}
 }
 
@@ -935,7 +950,12 @@ static FActorInfo *ParseActorHeader(FScanner &sc, Baggage *bag)
 	if (sc.CheckNumber()) 
 	{
 		if (sc.Number>=-1 && sc.Number<32768) DoomEdNum = sc.Number;
-		else sc.ScriptError ("DoomEdNum must be in the range [-1,32767]");
+		else 
+		{
+			// does not need to be fatal.
+			sc.ScriptMessage ("DoomEdNum must be in the range [-1,32767]");
+			FScriptPosition::ErrorCounter++;
+		}
 	}
 
 	if (sc.CheckString("native"))
@@ -945,7 +965,7 @@ static FActorInfo *ParseActorHeader(FScanner &sc, Baggage *bag)
 
 	try
 	{
-		FActorInfo *info =  CreateNewActor(typeName, parentName, native);
+		FActorInfo *info =  CreateNewActor(FScriptPosition(sc), typeName, parentName, native);
 		info->DoomEdNum = DoomEdNum > 0? DoomEdNum : -1;
 		SetReplacement(info, replaceName);
 

@@ -566,6 +566,7 @@ void I_PrintStr (const char *cp)
 				// Change the color.
 				format.cbSize = sizeof(format);
 				format.dwMask = CFM_COLOR;
+				format.dwEffects = 0;
 				format.crTextColor = color;
 				SendMessage (edit, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&format);
 			}

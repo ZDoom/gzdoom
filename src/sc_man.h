@@ -227,7 +227,8 @@ enum
 	MSG_ERROR,
 	MSG_DEBUG,
 	MSG_LOG,
-	MSG_DEBUGLOG
+	MSG_DEBUGLOG,
+	MSG_MESSAGE
 };
 
 //==========================================================================

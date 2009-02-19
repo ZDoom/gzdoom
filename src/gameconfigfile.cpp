@@ -71,6 +71,7 @@ EXTERN_CVAR (Color, am_wallcolor)
 EXTERN_CVAR (Color, am_fdwallcolor)
 EXTERN_CVAR (Color, am_cdwallcolor)
 EXTERN_CVAR (Float, spc_amp)
+EXTERN_CVAR (Bool, wi_percents)
 
 FString WeaponSection;
 
@@ -638,6 +639,8 @@ void FGameConfigFile::SetRavenDefaults (bool isHexen)
 		color.ResetToDefault ();
 	}
 
+	val.Bool = false;
+	wi_percents.SetGenericRepDefault (val, CVAR_Bool);
 	val.Bool = true;
 	con_centernotify.SetGenericRepDefault (val, CVAR_Bool);
 	snd_pitched.SetGenericRepDefault (val, CVAR_Bool);

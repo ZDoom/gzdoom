@@ -1807,25 +1807,18 @@ void WI_drawStats (void)
 		screen->DrawText (BigFont, CR_UNTRANSLATED, 50, 90, "ITEMS", DTA_Clean, true, DTA_Shadow, true, TAG_DONE);
 		screen->DrawText (BigFont, CR_UNTRANSLATED, 50, 115, "SECRETS", DTA_Clean, true, DTA_Shadow, true, TAG_DONE);
 
-		int slashpos = gameinfo.gametype==GAME_Strife? 235:237;
-		int countpos = gameinfo.gametype==GAME_Strife? 185:200;
+		int countpos = gameinfo.gametype==GAME_Strife? 285:270;
 		if (sp_state >= 2)
 		{
-			WI_drawNum (IntermissionFont, countpos, 65, cnt_kills[0], 3, false);
-			WI_DrawCharPatch (IntermissionFont, '/', slashpos, 65);
-			WI_drawNum (IntermissionFont, 248, 65, wbs->maxkills, 3, false);
+			WI_drawPercent (IntermissionFont, countpos, 65, cnt_kills[0], wbs->maxkills);
 		}
 		if (sp_state >= 4)
 		{
-			WI_drawNum (IntermissionFont, countpos, 90, cnt_items[0], 3, false);
-			WI_DrawCharPatch (IntermissionFont, '/', slashpos, 90);
-			WI_drawNum (IntermissionFont, 248, 90, wbs->maxitems, 3, false);
+			WI_drawPercent (IntermissionFont, countpos, 90, cnt_items[0], wbs->maxitems);
 		}
 		if (sp_state >= 6)
 		{
-			WI_drawNum (IntermissionFont, countpos, 115, cnt_secret[0], 3, false);
-			WI_DrawCharPatch (IntermissionFont, '/', slashpos, 115);
-			WI_drawNum (IntermissionFont, 248, 115, wbs->maxsecret, 3, false);
+			WI_drawPercent (IntermissionFont, countpos, 115, cnt_secret[0], wbs->maxsecret);
 		}
 		if (sp_state >= 8)
 		{

@@ -95,6 +95,7 @@ struct FMapInfoParser
 	bool CheckNumber();
 	bool CheckFloat();
 	void SkipToNext();
+	void CheckEndOfFile(const char *block);
 };
 
 #define DEFINE_MAP_OPTION(name, old) \
@@ -284,6 +285,7 @@ struct level_info_t
 	FString		SoundInfo;
 	FString		SndSeq;
 	char		bordertexture[9];
+	char		mapbg[9];
 
 	float		teamdamage;
 

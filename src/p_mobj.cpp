@@ -1284,7 +1284,7 @@ bool P_SeekerMissile (AActor *actor, angle_t thresh, angle_t turnMax)
 	AActor *target;
 
 	target = actor->tracer;
-	if (target == NULL || actor->Speed == 0)
+	if (target == NULL || actor->Speed == 0 || (target->flags5 & MF5_CANTSEEK))
 	{
 		return false;
 	}

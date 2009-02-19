@@ -309,7 +309,7 @@ void DSBarInfo::Tick ()
 			oldHealth += clamp((health - oldHealth), 1, script->interpolationSpeed);
 		}
 	}
-	AInventory *armor = CPlayer->mo->FindInventory<ABasicArmor>();
+	AInventory *armor = CPlayer->mo != NULL? CPlayer->mo->FindInventory<ABasicArmor>() : NULL;
 	if(armor == NULL)
 	{
 		oldArmor = 0;

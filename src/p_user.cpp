@@ -1221,7 +1221,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_PlayerScream)
 
 	if (self->player == NULL || self->DeathSound != 0)
 	{
-		S_Sound (self, CHAN_VOICE, self->DeathSound, 1, ATTN_NORM);
+		if (self->DeathSound != 0)
+		{
+			S_Sound (self, CHAN_VOICE, self->DeathSound, 1, ATTN_NORM);
+		}
+		else
+		{
+			S_Sound (self, CHAN_VOICE, "*death", 1, ATTN_NORM);
+		}
 		return;
 	}
 

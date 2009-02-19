@@ -78,7 +78,7 @@ PSymbolTable		 GlobalSymbols;
 // Starts a new actor definition
 //
 //==========================================================================
-FActorInfo *CreateNewActor(FName typeName, FName parentName, bool native)
+FActorInfo *CreateNewActor(FScriptPosition &sc, FName typeName, FName parentName, bool native)
 {
 	const PClass *replacee = NULL;
 	PClass *ti = NULL;
@@ -89,18 +89,32 @@ FActorInfo *CreateNewActor(FName typeName, FName parentName, bool native)
 	if (parentName != NAME_None)
 	{
 		parent = const_cast<PClass *> (PClass::FindClass (parentName));
+		
+		const PClass *p = parent;
+		while (p != NULL)
+		{
+			if (p->TypeName == typeName)
+			{
+				sc.Message(MSG_ERROR, "'%s' inherits from a class with the same name", typeName.GetChars());
+				break;
+			}
+			p = p->ParentClass;
+		}
 
 		if (parent == NULL)
 		{
-			I_Error( "Parent type '%s' not found in %s", parentName.GetChars(), typeName.GetChars());
+			sc.Message(MSG_ERROR, "Parent type '%s' not found in %s", parentName.GetChars(), typeName.GetChars());
+			parent = RUNTIME_CLASS(AActor);
 		}
 		else if (!parent->IsDescendantOf(RUNTIME_CLASS(AActor)))
 		{
-			I_Error( "Parent type '%s' is not an actor in %s", parentName.GetChars(), typeName.GetChars());
+			sc.Message(MSG_ERROR, "Parent type '%s' is not an actor in %s", parentName.GetChars(), typeName.GetChars());
+			parent = RUNTIME_CLASS(AActor);
 		}
 		else if (parent->ActorInfo == NULL)
 		{
-			I_Error( "uninitialized parent type '%s' in %s", parentName.GetChars(), typeName.GetChars());
+			sc.Message(MSG_ERROR, "uninitialized parent type '%s' in %s", parentName.GetChars(), typeName.GetChars());
+			parent = RUNTIME_CLASS(AActor);
 		}
 	}
 
@@ -109,21 +123,26 @@ FActorInfo *CreateNewActor(FName typeName, FName parentName, bool native)
 		ti = (PClass*)PClass::FindClass(typeName);
 		if (ti == NULL)
 		{
-			I_Error( "Unknown native class '%s'", typeName.GetChars());
+			sc.Message(MSG_ERROR, "Unknown native class '%s'", typeName.GetChars());
+			goto create;
 		}
 		else if (ti != RUNTIME_CLASS(AActor) && ti->ParentClass->NativeClass() != parent->NativeClass())
 		{
-			I_Error( "Native class '%s' does not inherit from '%s'", typeName.GetChars(), parentName.GetChars());
+			sc.Message(MSG_ERROR, "Native class '%s' does not inherit from '%s'", typeName.GetChars(), parentName.GetChars());
+			parent = RUNTIME_CLASS(AActor);
+			goto create;
 		}
 		else if (ti->ActorInfo != NULL)
 		{
-			I_Error( "Redefinition of internal class '%s'", typeName.GetChars());
+			sc.Message(MSG_ERROR, "Redefinition of internal class '%s'", typeName.GetChars());
+			goto create;
 		}
 		ti->InitializeActorInfo();
 		info = ti->ActorInfo;
 	}
 	else
 	{
+	create:
 		ti = parent->CreateDerivedClass (typeName, parent->Size);
 		info = ti->ActorInfo;
 	}

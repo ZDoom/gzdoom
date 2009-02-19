@@ -542,17 +542,38 @@ IMPLEMENT_CLASS (APowerInvisibility)
 
 //===========================================================================
 //
+// APowerInvisibility :: CommonInit
+//
+// stuff that's done for all subclasses
+//
+//===========================================================================
+
+void APowerInvisibility::CommonInit()
+{
+	Owner->flags |= MF_SHADOW;
+	// transfer seeker missile blocking (but only if the owner does not already have this flag
+	if (!(Owner->flags5 & MF5_CANTSEEK) && (flags5 & MF5_CANTSEEK)) Owner->flags5 |= MF5_CANTSEEK;
+	else flags &=~MF5_CANTSEEK;
+}
+
+//===========================================================================
+//
 // APowerInvisibility :: InitEffect
 //
 //===========================================================================
 
 void APowerInvisibility::InitEffect ()
 {
-	Owner->flags |= MF_SHADOW;
+	CommonInit();
 	Owner->alpha = FRACUNIT/5;
 	Owner->RenderStyle = STYLE_OptFuzzy;
 }
 
+//===========================================================================
+//
+// APowerInvisibility :: DoEffect
+//
+//===========================================================================
 void APowerInvisibility::DoEffect ()
 {
 	Super::DoEffect();
@@ -571,6 +592,7 @@ void APowerInvisibility::EndEffect ()
 {
 	if (Owner != NULL)
 	{
+		if (flags5 & MF5_CANTSEEK) Owner->flags5 &= ~MF5_CANTSEEK;
 		Owner->flags &= ~MF_SHADOW;
 		Owner->flags3 &= ~MF3_GHOST;
 		Owner->RenderStyle = STYLE_Normal;
@@ -628,7 +650,7 @@ IMPLEMENT_CLASS (APowerGhost)
 
 void APowerGhost::InitEffect ()
 {
-	Owner->flags |= MF_SHADOW;
+	CommonInit();
 	Owner->flags3 |= MF3_GHOST;
 	Owner->alpha = HR_SHADOW;
 	Owner->RenderStyle = STYLE_Translucent;
@@ -705,7 +727,7 @@ bool APowerShadow::HandlePickup (AInventory *item)
 
 void APowerShadow::InitEffect ()
 {
-	Owner->flags |= MF_SHADOW;
+	CommonInit();
 	Owner->alpha = special1 == 0 ? TRANSLUC25 : 0;
 	Owner->RenderStyle = STYLE_Translucent;
 }

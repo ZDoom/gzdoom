@@ -304,6 +304,7 @@ enum
 	MF5_SUMMONEDMONSTER	= 0x02000000,	// To mark the friendly Minotaur. Hopefully to be generalized later.
 	MF5_NOVERTICALMELEERANGE=0x04000000,// Does not check vertical distance for melee range
 	MF5_BRIGHT			= 0x08000000,	// Actor is always rendered fullbright
+	MF5_CANTSEEK		= 0x10000000,	// seeker missiles cannot home in on this actor
 
 
 // --- mobj.renderflags ---

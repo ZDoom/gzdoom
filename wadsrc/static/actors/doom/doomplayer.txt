@@ -17,7 +17,14 @@ ACTOR DoomPlayer : PlayerPawn
 	Player.StartItem "Pistol"
 	Player.StartItem "Fist"
 	Player.StartItem "Clip", 50
-	
+	Player.WeaponSlot 1, Fist, Chainsaw
+	Player.WeaponSlot 2, Pistol
+	Player.WeaponSlot 3, Shotgun, SuperShotgun
+	Player.WeaponSlot 4, Chaingun
+	Player.WeaponSlot 5, RocketLauncher
+	Player.WeaponSlot 6, PlasmaRifle
+	Player.WeaponSlot 7, BFG9000
+
 	States
 	{
 	Spawn:

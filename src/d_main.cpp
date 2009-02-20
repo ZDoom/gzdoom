@@ -2525,9 +2525,6 @@ void D_DoomMain (void)
 
 	FActorInfo::StaticInit ();
 
-	// Now that all actors have been defined we can finally set up the weapon slots
-	GameConfig->DoWeaponSetup (GameNames[gameinfo.gametype]);
-
 	// [GRB] Initialize player class list
 	SetupPlayerClasses ();
 

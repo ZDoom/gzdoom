@@ -1963,15 +1963,16 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 			BYTE who = ReadByte (stream);
 
 			s = ReadString (stream);
+			CleanseString (s);
 			if (((who & 1) == 0) || players[player].userinfo.team == TEAM_NONE)
 			{ // Said to everyone
 				if (who & 2)
 				{
-					Printf (PRINT_CHAT, TEXTCOLOR_BOLD "* %s%s\n", name, s);
+					Printf (PRINT_CHAT, TEXTCOLOR_BOLD "* %s" TEXTCOLOR_BOLD "%s" TEXTCOLOR_BOLD "\n", name, s);
 				}
 				else
 				{
-					Printf (PRINT_CHAT, "%s: %s\n", name, s);
+					Printf (PRINT_CHAT, "%s" TEXTCOLOR_CHAT ": %s" TEXTCOLOR_CHAT "\n", name, s);
 				}
 				S_Sound (CHAN_VOICE | CHAN_UI, gameinfo.chatSound, 1, ATTN_NONE);
 			}
@@ -1979,11 +1980,11 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 			{ // Said only to members of the player's team
 				if (who & 2)
 				{
-					Printf (PRINT_TEAMCHAT, TEXTCOLOR_BOLD "* (%s)%s\n", name, s);
+					Printf (PRINT_TEAMCHAT, TEXTCOLOR_BOLD "* (%s" TEXTCOLOR_BOLD ")%s" TEXTCOLOR_BOLD "\n", name, s);
 				}
 				else
 				{
-					Printf (PRINT_TEAMCHAT, "(%s): %s\n", name, s);
+					Printf (PRINT_TEAMCHAT, "(%s" TEXTCOLOR_TEAMCHAT "): %s" TEXTCOLOR_TEAMCHAT "\n", name, s);
 				}
 				S_Sound (CHAN_VOICE | CHAN_UI, gameinfo.chatSound, 1, ATTN_NONE);
 			}

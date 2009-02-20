@@ -251,7 +251,8 @@ bool FConfigFile::SetSection (const char *name, bool allowCreate)
 //
 // FConfigFile :: SetFirstSection
 //
-// Sets the current section to the first one in the file.
+// Sets the current section to the first one in the file. Returns
+// false if there are no sections.
 //
 //====================================================================
 
@@ -270,7 +271,8 @@ bool FConfigFile::SetFirstSection ()
 //
 // FConfigFile :: SetNextSection
 //
-// Advances the current section to the next one in the file.
+// Advances the current section to the next one in the file. Returns
+// false if there are no more sections.
 //
 //====================================================================
 
@@ -330,6 +332,43 @@ void FConfigFile::ClearCurrentSection ()
 		CurrentSection->RootEntry = NULL;
 		CurrentSection->LastEntryPtr = &CurrentSection->RootEntry;
 	}
+}
+
+//====================================================================
+//
+// FConfigFile :: DeleteCurrentSection
+//
+// Completely removes the current section. The current section is
+// advanced to the next section. Returns true if there is still a
+// current section.
+//
+//====================================================================
+
+bool FConfigFile::DeleteCurrentSection()
+{
+	if (CurrentSection != NULL)
+	{
+		FConfigSection *sec;
+
+		ClearCurrentSection();
+
+		// Find the preceding section.
+		for (sec = Sections; sec != NULL && sec->Next != CurrentSection; sec = sec->Next)
+		{ }
+
+		sec->Next = CurrentSection->Next;
+		if (LastSectionPtr == &CurrentSection->Next)
+		{
+			LastSectionPtr = &sec->Next;
+		}
+
+		CurrentSection->~FConfigSection();
+		delete[] (char *)CurrentSection;
+
+		CurrentSection = sec->Next;
+		return CurrentSection != NULL;
+	}
+	return false;
 }
 
 //====================================================================

@@ -71,6 +71,9 @@ struct FBrokenLines
 #define TEXTCOLOR_NORMAL		"\034-"
 #define TEXTCOLOR_BOLD			"\034+"
 
+#define TEXTCOLOR_CHAT			"\034*"
+#define TEXTCOLOR_TEAMCHAT		"\034!"
+
 FBrokenLines *V_BreakLines (FFont *font, int maxwidth, const BYTE *str);
 void V_FreeBrokenLines (FBrokenLines *lines);
 inline FBrokenLines *V_BreakLines (FFont *font, int maxwidth, const char *str)

@@ -22,6 +22,11 @@ ACTOR FighterPlayer : PlayerPawn
 	Player.StartItem "FWeapFist"
 	Player.ForwardMove 1.08, 1.2
 	Player.SideMove 1.125, 1.475
+	Player.WeaponSlot 1, FWeapFist
+	Player.WeaponSlot 2, FWeapAxe
+	Player.WeaponSlot 3, FWeapHammer
+	Player.WeaponSlot 4, FWeapQuietus
+	
 	States
 	{
 	Spawn:

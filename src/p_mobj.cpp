@@ -3769,6 +3769,10 @@ APlayerPawn *P_SpawnPlayer (FMapThing *mthing, bool tempplayer)
 			FBehavior::StaticStartTypedScripts (SCRIPT_Respawn, p->mo, true);
 		}
 	}
+	if (playernum == consoleplayer)
+	{
+		LocalWeapons.CompleteSetup(mobj->GetClass());
+	}
 	return mobj;
 }
 

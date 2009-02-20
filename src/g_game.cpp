@@ -296,12 +296,12 @@ CCMD (turn180)
 
 CCMD (weapnext)
 {
-	SendItemUse = PickNextWeapon (&players[consoleplayer]);
+	SendItemUse = LocalWeapons.PickNextWeapon (&players[consoleplayer]);
 }
 
 CCMD (weapprev)
 {
-	SendItemUse = PickPrevWeapon (&players[consoleplayer]);
+	SendItemUse = LocalWeapons.PickPrevWeapon (&players[consoleplayer]);
 }
 
 CCMD (invnext)

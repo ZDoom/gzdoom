@@ -11,6 +11,14 @@ ACTOR HereticPlayer : PlayerPawn
 	Player.StartItem "GoldWand"
 	Player.StartItem "Staff"
 	Player.StartItem "GoldWandAmmo", 50
+	Player.WeaponSlot 1, Staff, Gauntlets
+	Player.WeaponSlot 2, GoldWand
+	Player.WeaponSlot 3, Crossbow
+	Player.WeaponSlot 4, Blaster
+	Player.WeaponSlot 5, SkullRod
+	Player.WeaponSlot 6, PhoenixRod
+	Player.WeaponSlot 7, Mace
+	
 	States
 	{
 	Spawn:

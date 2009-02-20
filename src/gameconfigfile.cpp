@@ -73,8 +73,6 @@ EXTERN_CVAR (Color, am_cdwallcolor)
 EXTERN_CVAR (Float, spc_amp)
 EXTERN_CVAR (Bool, wi_percents)
 
-FString WeaponSection;
-
 FGameConfigFile::FGameConfigFile ()
 {
 	FString pathname;
@@ -222,16 +220,6 @@ void FGameConfigFile::DoGlobalSetup ()
 					noblitter->ResetToDefault ();
 				}
 			}
-			if (last < 201)
-			{
-				// Be sure the Hexen fourth weapons are assigned to slot 4
-				// If this section does not already exist, then they will be
-				// assigned by SetupWeaponList().
-				if (SetSection ("Hexen.WeaponSlots"))
-				{
-					SetValueForKey ("Slot[4]", "FWeapQuietus CWeapWraithverge MWeapBloodscourge");
-				}
-			}
 			if (last < 202)
 			{
 				// Make sure the Hexen hotkeys are accessible by default.
@@ -269,6 +257,28 @@ void FGameConfigFile::DoGlobalSetup ()
 				if (precache != NULL)
 				{
 					precache->ResetToDefault();
+				}
+			}
+			if (last < 208)
+			{ // Weapon sections are no longer used, so tidy up the config by deleting them.
+				const char *name;
+				size_t namelen;
+				bool more;
+
+				more = SetFirstSection();
+				while (more)
+				{
+					name = GetCurrentSection();
+					if (name != NULL && 
+						(namelen = strlen(name)) > 12 &&
+						strcmp(name + namelen - 12, ".WeaponSlots") == 0)
+					{
+						more = DeleteCurrentSection();
+					}
+					else
+					{
+						more = SetNextSection();
+					}
 				}
 			}
 		}
@@ -376,17 +386,6 @@ void FGameConfigFile::DoGameSetup (const char *gamename)
 	}
 }
 
-// Separated from DoGameSetup because it needs all the weapons properly defined
-void FGameConfigFile::DoWeaponSetup (const char *gamename)
-{
-	strncpy (subsection, "WeaponSlots", sublen);
-
-	if (!SetSection (section) || !LocalWeapons.RestoreSlots (*this))
-	{
-		SetupWeaponList (gamename);
-	}
-}
-
 void FGameConfigFile::ReadNetVars ()
 {
 	strncpy (subsection, "NetServerInfo", sublen);
@@ -460,18 +459,6 @@ void FGameConfigFile::ArchiveGameData (const char *gamename)
 	strncpy (subsection, "DoubleBindings", sublen);
 	SetSection (section, true);
 	C_ArchiveBindings (this, true);
-
-	if (WeaponSection.IsEmpty())
-	{
-		strncpy (subsection, "WeaponSlots", sublen);
-	}
-	else
-	{
-		mysnprintf (subsection, sublen, "%s.WeaponSlots", WeaponSection.GetChars());
-	}
-	SetSection (section, true);
-	ClearCurrentSection ();
-	LocalWeapons.SaveSlots (*this);
 }
 
 void FGameConfigFile::ArchiveGlobalData ()
@@ -673,79 +660,6 @@ void FGameConfigFile::SetRavenDefaults (bool isHexen)
 	{
 		val.Int = 0x3f6040;
 		color.SetGenericRepDefault (val, CVAR_Int);
-	}
-}
-
-void FGameConfigFile::SetupWeaponList (const char *gamename)
-{
-	for (int i = 0; i < NUM_WEAPON_SLOTS; ++i)
-	{
-		LocalWeapons.Slots[i].Clear ();
-	}
-
-	if (strcmp (gamename, "Heretic") == 0)
-	{
-		LocalWeapons.Slots[1].AddWeapon ("Staff");
-		LocalWeapons.Slots[1].AddWeapon ("Gauntlets");
-		LocalWeapons.Slots[2].AddWeapon ("GoldWand");
-		LocalWeapons.Slots[3].AddWeapon ("Crossbow");
-		LocalWeapons.Slots[4].AddWeapon ("Blaster");
-		LocalWeapons.Slots[5].AddWeapon ("SkullRod");
-		LocalWeapons.Slots[6].AddWeapon ("PhoenixRod");
-		LocalWeapons.Slots[7].AddWeapon ("Mace");
-	}
-	else if (strcmp (gamename, "Hexen") == 0)
-	{
-		LocalWeapons.Slots[1].AddWeapon ("FWeapFist");
-		LocalWeapons.Slots[2].AddWeapon ("FWeapAxe");
-		LocalWeapons.Slots[3].AddWeapon ("FWeapHammer");
-		LocalWeapons.Slots[4].AddWeapon ("FWeapQuietus");
-		LocalWeapons.Slots[1].AddWeapon ("CWeapMace");
-		LocalWeapons.Slots[2].AddWeapon ("CWeapStaff");
-		LocalWeapons.Slots[3].AddWeapon ("CWeapFlame");
-		LocalWeapons.Slots[4].AddWeapon ("CWeapWraithverge");
-		LocalWeapons.Slots[1].AddWeapon ("MWeapWand");
-		LocalWeapons.Slots[2].AddWeapon ("MWeapFrost");
-		LocalWeapons.Slots[3].AddWeapon ("MWeapLightning");
-		LocalWeapons.Slots[4].AddWeapon ("MWeapBloodscourge");
-	}
-	else if (strcmp (gamename, "Strife") == 0)
-	{
-		LocalWeapons.Slots[1].AddWeapon ("PunchDagger");
-		LocalWeapons.Slots[2].AddWeapon ("StrifeCrossbow2");
-		LocalWeapons.Slots[2].AddWeapon ("StrifeCrossbow");
-		LocalWeapons.Slots[3].AddWeapon ("AssaultGun");
-		LocalWeapons.Slots[4].AddWeapon ("MiniMissileLauncher");
-		LocalWeapons.Slots[5].AddWeapon ("StrifeGrenadeLauncher2");
-		LocalWeapons.Slots[5].AddWeapon ("StrifeGrenadeLauncher");
-		LocalWeapons.Slots[6].AddWeapon ("FlameThrower");
-		LocalWeapons.Slots[7].AddWeapon ("Mauler2");
-		LocalWeapons.Slots[7].AddWeapon ("Mauler");
-		LocalWeapons.Slots[8].AddWeapon ("Sigil");
-	}
-	else if (strcmp (gamename, "Chex") == 0)
-	{
-		LocalWeapons.Slots[1].AddWeapon ("Bootspoon");
-		LocalWeapons.Slots[1].AddWeapon ("SuperBootspork");
-		LocalWeapons.Slots[2].AddWeapon ("MiniZorcher");
-		LocalWeapons.Slots[3].AddWeapon ("LargeZorcher");
-		LocalWeapons.Slots[3].AddWeapon ("SuperLargeZorcher");
-		LocalWeapons.Slots[4].AddWeapon ("RapidZorcher");
-		LocalWeapons.Slots[5].AddWeapon ("ZorchPropulsor");
-		LocalWeapons.Slots[6].AddWeapon ("PhasingZorcher");
-		LocalWeapons.Slots[7].AddWeapon ("LAZDevice");
-	}
-	else // Doom
-	{
-		LocalWeapons.Slots[1].AddWeapon ("Fist");
-		LocalWeapons.Slots[1].AddWeapon ("Chainsaw");
-		LocalWeapons.Slots[2].AddWeapon ("Pistol");
-		LocalWeapons.Slots[3].AddWeapon ("Shotgun");
-		LocalWeapons.Slots[3].AddWeapon ("SuperShotgun");
-		LocalWeapons.Slots[4].AddWeapon ("Chaingun");
-		LocalWeapons.Slots[5].AddWeapon ("RocketLauncher");
-		LocalWeapons.Slots[6].AddWeapon ("PlasmaRifle");
-		LocalWeapons.Slots[7].AddWeapon ("BFG9000");
 	}
 }
 

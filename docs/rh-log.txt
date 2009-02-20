@@ -1,7 +1,21 @@
-﻿February 15, 2009  (Changes by Graf Zahl)
+﻿February 17, 2009
+- Fixed: Player names and chat macros that end with incomplete \c escapes now
+  have those escapes stripped before printing so that they do not merge with
+  subsequent text.
+
+February 15, 2009  (Changes by Graf Zahl)
 - Fixed: The CHARFORMAT structure that is used to set the color in a Windows
   Rich Edit control was not fully initialized resulting in incorrect colors
   being set.
+
+Feburary 14, 2009
+- Moved default weapon slot assignments into the player classes.
+  Weapon.SlotNumber is now used solely for mods that want to add new weapons
+  without completely redoing the player's arsenal. Restored some config-based
+  weapon slot customization, though slots are no longer automatically saved
+  to the config and section names have changed slightly. However, unlike
+  before, config slots are now the definitive word on slot assignments and
+  cannot be overridden by any other files loaded.
 
 February 14, 2009  (Changes by Graf Zahl)
 - Added MF5_CANTSEEK flag to prevent seeker missiles from homing in on
@@ -21,6 +35,14 @@ February 14, 2009  (Changes by Graf Zahl)
   also allows showing percentage in these games now.
 - Fixed: The MAPINFO parser ignored missing terminating braces of the last
   block in the file.
+
+February 11, 2009
+- Fixed: Several weapons were missing a game filter from their definitions.
+- Removed storage of weapon slots in the config so that weapon slots can
+  be setup in the weapons themselves. Slots are still configurable, since
+  they need to be for KEYCONF to work; any changes simply won't be saved
+  when you quit.
+- Removed limit on weapon slot sizes.
 
 February 10, 2009
 - Fixed: DirectInput8Create() used the wrong calling convention.

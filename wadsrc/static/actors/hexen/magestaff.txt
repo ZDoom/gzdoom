@@ -71,6 +71,7 @@ ACTOR BloodscourgeDrop
 
 ACTOR MWeapBloodscourge : MageWeapon native
 {
+	Game Hexen
 	Health 3
 	Weapon.SelectionOrder 3100
 	Weapon.AmmoUse1 15

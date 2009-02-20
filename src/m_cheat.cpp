@@ -737,7 +737,7 @@ void cht_Give (player_t *player, const char *name, int amount)
 				// Give the weapon only if it belongs to the current game or
 				// is in a weapon slot. Unfortunately this check only works in
 				// singleplayer games because the weapon slots are stored locally.
-				// In multiplayer games or demors all weapons must be given because the state of
+				// In multiplayer games or demos all weapons must be given because the state of
 				// the weapon slots is not guaranteed to be the same when recording or playing back.
 				if (multiplayer || demorecording || demoplayback || 
 					type->ActorInfo->GameFilter == GAME_Any || 

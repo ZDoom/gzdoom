@@ -59,6 +59,7 @@ public:
 	bool SetNextSection ();
 	const char *GetCurrentSection () const;
 	void ClearCurrentSection ();
+	bool DeleteCurrentSection ();
 	void ClearKey (const char *key);
 
 	bool SectionIsEmpty ();

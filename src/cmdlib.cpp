@@ -10,6 +10,8 @@
 #include "doomtype.h"
 #include "cmdlib.h"
 #include "i_system.h"
+#include "v_text.h"
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <time.h>
@@ -588,6 +590,35 @@ FString strbin1 (const char *start)
 		}
 	}
 	return result;
+}
+
+//==========================================================================
+//
+// CleanseString
+//
+// Does some mild sanity checking on a string: If it ends with an incomplete
+// color escape, the escape is removed.
+//
+//==========================================================================
+
+void CleanseString(char *str)
+{
+	char *escape = strrchr(str, TEXTCOLOR_ESCAPE);
+	if (escape != NULL)
+	{
+		if (escape[1] == '\0')
+		{
+			*escape = '\0';
+		}
+		else if (escape[1] == '[')
+		{
+			char *close = strchr(escape + 2, ']');
+			if (close == NULL)
+			{
+				*escape = '\0';
+			}
+		}
+	}
 }
 
 //==========================================================================

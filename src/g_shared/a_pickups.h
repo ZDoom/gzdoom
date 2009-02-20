@@ -7,7 +7,6 @@
 
 #define MAX_MANA				200
 
-#define MAX_WEAPONS_PER_SLOT	8
 #define NUM_WEAPON_SLOTS		10
 
 class player_t;
@@ -17,30 +16,39 @@ class AWeapon;
 class FWeaponSlot
 {
 public:
-	FWeaponSlot ();
-	void Clear ();
+	FWeaponSlot &operator= (const FWeaponSlot &other) { Weapons = other.Weapons; return *this; }
+	void Clear() { Weapons.Clear(); }
 	bool AddWeapon (const char *type);
 	bool AddWeapon (const PClass *type);
+	void AddWeaponList (const char *list, bool clear);
 	AWeapon *PickWeapon (player_t *player);
-	int CountWeapons ();
+	int Size () { return (int)Weapons.Size(); }
+	int LocateWeapon (const PClass *type);
 
 	inline const PClass *GetWeapon (int index) const
 	{
-		return Weapons[index];
+		if ((unsigned)index < Weapons.Size())
+		{
+			return Weapons[index].Type;
+		}
+		else
+		{
+			return NULL;
+		}
 	}
-
-	friend AWeapon *PickNextWeapon (player_t *player);
-	friend AWeapon *PickPrevWeapon (player_t *player);
 
 	friend struct FWeaponSlots;
 
 private:
-	const PClass *Weapons[MAX_WEAPONS_PER_SLOT];
+	struct WeaponInfo
+	{
+		const PClass *Type;
+		fixed_t Position;
+	};
+	void SetInitialPositions();
+	void Sort();
+	TArray<WeaponInfo> Weapons;
 };
-
-AWeapon *PickNextWeapon (player_t *player);
-AWeapon *PickPrevWeapon (player_t *player);
-
 // FWeaponSlots::AddDefaultWeapon return codes
 enum ESlotDef
 {
@@ -53,13 +61,20 @@ struct FWeaponSlots
 {
 	FWeaponSlot Slots[NUM_WEAPON_SLOTS];
 
+	AWeapon *PickNextWeapon (player_t *player);
+	AWeapon *PickPrevWeapon (player_t *player);
+
 	void Clear ();
 	bool LocateWeapon (const PClass *type, int *const slot, int *const index);
 	ESlotDef AddDefaultWeapon (int slot, const PClass *type);
-	int RestoreSlots (FConfigFile &config);
-	void SaveSlots (FConfigFile &config);
+	void AddExtraWeapons();
+	void SetFromPlayer(const PClass *type);
+	void CompleteSetup(const PClass *type);
+	int RestoreSlots (FConfigFile *config, const char *section);
 };
 
+void P_PlaybackKeyConfWeapons();
+void P_SetLocalWeapons(AActor *player);
 extern FWeaponSlots LocalWeapons;
 
 /************************************************************************/
@@ -202,6 +217,13 @@ public:
 };
 
 // A weapon is just that.
+enum
+{
+	AWMETA_BASE = 0x72000,
+	AWMETA_SlotNumber,
+	AWMETA_SlotPriority,
+};
+
 class AWeapon : public AInventory
 {
 	DECLARE_CLASS (AWeapon, AInventory)

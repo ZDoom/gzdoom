@@ -506,7 +506,7 @@ static int DrawAmmo(player_t * CPlayer, int x, int y)
 	// Do not check for actual presence in the inventory!
 	// We want to show all ammo types that can be used by
 	// the weapons in the weapon slots.
-	for (k=0;k<NUM_WEAPON_SLOTS;k++) for(j=0;j<MAX_WEAPONS_PER_SLOT;j++)
+	for (k=0;k<NUM_WEAPON_SLOTS;k++) for(j=0;j<LocalWeapons.Slots[k].Size();j++)
 	{
 		const PClass * weap = LocalWeapons.Slots[k].GetWeapon(j);
 
@@ -636,7 +636,7 @@ static void DrawWeapons(player_t * CPlayer, int x, int y)
 	}
 
 	// And now everything in the weapon slots back to front
-	for (k=NUM_WEAPON_SLOTS-1;k>=0;k--) for(j=MAX_WEAPONS_PER_SLOT-1;j>=0;j--)
+	for (k=NUM_WEAPON_SLOTS-1;k>=0;k--) for(j=LocalWeapons.Slots[k].Size()-1;j>=0;j--)
 	{
 		const PClass * weap = LocalWeapons.Slots[k].GetWeapon(j);
 		if (weap) 

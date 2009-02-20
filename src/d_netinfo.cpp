@@ -55,6 +55,7 @@
 #include "teaminfo.h"
 #include "r_translate.h"
 #include "templates.h"
+#include "cmdlib.h"
 
 static FRandom pr_pickteam ("PickRandomTeam");
 
@@ -698,10 +699,10 @@ void D_ReadUserInfoStrings (int i, BYTE **stream, bool update)
 				{
 					char oldname[MAXPLAYERNAME+1];
 
-					strncpy (oldname, info->netname, MAXPLAYERNAME);
-					oldname[MAXPLAYERNAME] = 0;
+					strcpy (oldname, info->netname);
 					strncpy (info->netname, value, MAXPLAYERNAME);
 					info->netname[MAXPLAYERNAME] = 0;
+					CleanseString(info->netname);
 
 					if (update && strcmp (oldname, info->netname) != 0)
 					{

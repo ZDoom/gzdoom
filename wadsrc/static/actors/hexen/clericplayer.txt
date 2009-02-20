@@ -22,6 +22,11 @@ ACTOR ClericPlayer : PlayerPawn
 	Player.HealRadiusType "Health"
 	Player.Hexenarmor 10, 10, 25, 5, 20
 	Player.StartItem "CWeapMace"
+	Player.WeaponSlot 1, CWeapMace
+	Player.WeaponSlot 2, CWeapStaff
+	Player.WeaponSlot 3, CWeapFlame
+	Player.WeaponSlot 4, CWeapWraithverge
+	
 	States
 	{
 	Spawn:

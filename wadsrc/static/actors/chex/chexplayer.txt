@@ -9,4 +9,11 @@ actor ChexPlayer : DoomPlayer
 	player.startitem "Bootspoon"
 	player.startitem "MiniZorchRecharge", 50
 	player.damagescreencolor "60 b0 58"
+	player.WeaponSlot 1, Bootspoon, SuperBootspork
+	player.WeaponSlot 2, MiniZorcher
+	player.WeaponSlot 3, LargeZorcher, SuperLargeZorcher
+	player.WeaponSlot 4, RapidZorcher
+	player.WeaponSlot 5, ZorchPropulsor
+	player.WeaponSlot 6, PhasingZorcher
+	player.WeaponSlot 7, LAZDevice
 }

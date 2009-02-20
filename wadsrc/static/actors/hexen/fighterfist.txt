@@ -3,6 +3,7 @@
 
 ACTOR FWeapFist : FighterWeapon
 {
+	Game Hexen
 	+BLOODSPLATTER
 	Weapon.SelectionOrder 3400
 	+WEAPON.MELEEWEAPON

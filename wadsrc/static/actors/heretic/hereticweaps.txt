@@ -9,6 +9,7 @@ ACTOR HereticWeapon : Weapon
 
 ACTOR Staff : HereticWeapon
 {
+	Game Heretic
 	Weapon.SelectionOrder 3800
 	+THRUGHOST
 	+WIMPY_WEAPON
@@ -38,6 +39,7 @@ ACTOR Staff : HereticWeapon
 
 ACTOR StaffPowered : Staff
 {
+	Game Heretic
 	Weapon.sisterweapon "Staff"
 	Weapon.ReadySound "weapons/staffcrackle"
 	+WEAPON.POWERED_UP
@@ -106,6 +108,7 @@ ACTOR StaffPuff2
 
 ACTOR GoldWand : HereticWeapon
 {
+	Game Heretic
 	+BLOODSPLATTER
 	Weapon.SelectionOrder 2000
 	Weapon.AmmoGive 25
@@ -138,6 +141,7 @@ ACTOR GoldWand : HereticWeapon
 
 ACTOR GoldWandPowered : GoldWand
 {
+	Game Heretic
 	+WEAPON.POWERED_UP
 	Weapon.AmmoGive 0
 	Weapon.SisterWeapon "GoldWand"
@@ -269,6 +273,7 @@ ACTOR Crossbow : HereticWeapon 2001
 
 ACTOR CrossbowPowered : Crossbow
 {
+	Game Heretic
 	+WEAPON.POWERED_UP
 	Weapon.AmmoGive 0
 	Weapon.SisterWeapon "Crossbow"
@@ -388,7 +393,7 @@ ACTOR Gauntlets : Weapon 2005
 	Weapon.YAdjust 15
 	Weapon.UpSound "weapons/gauntletsactivate"
 	Weapon.SisterWeapon "GauntletsPowered"
-	Inventory.PickupMessage "$TxT_WPNGAUNTLETS"
+	Inventory.PickupMessage "$TXT_WPNGAUNTLETS"
 
 	action native A_GauntletAttack (int power);
 
@@ -420,6 +425,7 @@ ACTOR Gauntlets : Weapon 2005
 
 ACTOR GauntletsPowered : Gauntlets
 {
+	Game Heretic
 	+POWERED_UP
 	Weapon.SisterWeapon "Gauntlets"
 	States
@@ -518,6 +524,7 @@ ACTOR Mace : HereticWeapon
 
 ACTOR MacePowered : Mace
 {
+	Game Heretic
 	+WEAPON.POWERED_UP
 	Weapon.AmmoUse 5
 	Weapon.AmmoGive 0
@@ -704,6 +711,7 @@ ACTOR Blaster : HereticWeapon 53
 
 ACTOR BlasterPowered : Blaster
 {
+	Game Heretic
 	+WEAPON.POWERED_UP
 	Weapon.AmmoUse 5
 	Weapon.AmmoGive 0
@@ -850,6 +858,7 @@ ACTOR SkullRod : HereticWeapon 2004
 
 ACTOR SkullRodPowered : SkullRod
 {
+	Game Heretic
 	+WEAPON.POWERED_UP
 	Weapon.AmmoUse1 5
 	Weapon.AmmoGive1 0
@@ -1022,6 +1031,7 @@ ACTOR PhoenixRod : Weapon 2003 native
 
 ACTOR PhoenixRodPowered : PhoenixRod native
 {
+	Game Heretic
 	+WEAPON.POWERED_UP
 	Weapon.SisterWeapon "PhoenixRod"
 	Weapon.AmmoGive 0

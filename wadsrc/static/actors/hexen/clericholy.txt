@@ -71,6 +71,7 @@ ACTOR WraithvergeDrop
 
 ACTOR CWeapWraithverge : ClericWeapon native
 {
+	Game Hexen
 	Health 3
 	Weapon.SelectionOrder 3000
 	+WEAPON.PRIMARY_USES_BOTH

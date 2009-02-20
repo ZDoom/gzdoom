@@ -45,6 +45,7 @@ ACTOR StrifeSpark : StrifePuff
 
 ACTOR PunchDagger : StrifeWeapon
 {
+	Game Strife
 	Weapon.SelectionOrder 3900
 	+WEAPON.NOALERT
 	
@@ -198,11 +199,13 @@ ACTOR StrifeCrossbow : StrifeWeapon 2001
 
 ACTOR StrifeCrossbow2 : StrifeCrossbow
 {
+	Game Strife
 	Weapon.SelectionOrder 2700
 	Weapon.AmmoUse1 1
 	Weapon.AmmoGive1 0
 	Weapon.AmmoType1 "PoisonBolts"
 	Weapon.SisterWeapon "StrifeCrossbow"
+
 	States
 	{
 	Ready:
@@ -362,6 +365,7 @@ ACTOR MiniMissilePuff : StrifePuff
 
 ACTOR MiniMissile
 {
+	Game Strife
 	ConversationID 99,-1,-1
 	Speed 20
 	Radius 10
@@ -515,6 +519,7 @@ ACTOR Mauler : StrifeWeapon 2004
 
 ACTOR Mauler2 : Mauler
 {
+	Game Strife
 	Weapon.SelectionOrder 3300
 	Weapon.AmmoUse1 30
 	Weapon.AmmoGive1 0
@@ -626,6 +631,7 @@ ACTOR MaulerTorpedoWave
 
 ACTOR HEGrenade
 {
+	Game Strife
 	ConversationID 106,-1,-1
 	Speed 15
 	Radius 13
@@ -663,6 +669,7 @@ ACTOR HEGrenade
 
 ACTOR PhosphorousGrenade
 {
+	Game Strife
 	ConversationID 107,-1,-1
 	Speed 15
 	Radius 13
@@ -782,6 +789,7 @@ ACTOR StrifeGrenadeLauncher : StrifeWeapon 154
 
 ACTOR StrifeGrenadeLauncher2 : StrifeGrenadeLauncher
 {
+	Game Strife
 	Weapon.SelectionOrder 3200
 	Weapon.AmmoUse1 1
 	Weapon.AmmoGive1 0

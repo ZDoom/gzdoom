@@ -1,4 +1,7 @@
-﻿February 17, 2009
+﻿February 20, 2009  (Changes by Graf Zahl)
+- fixed: level_info_t::mapbg was not initialized
+
+February 17, 2009
 - Fixed: Player names and chat macros that end with incomplete \c escapes now
   have those escapes stripped before printing so that they do not merge with
   subsequent text.
@@ -59,6 +62,8 @@ February 9, 2009
 - Added middle mouse button selection pasting for X systems.
 
 February 8, 2009  (Changes by Graf Zahl)
+- Fixed parsing of 'cluster' keyword when format is not yet known.
+- Moved CheckCompatibility call so that it is done after setting LEVEL_HEXENFORMAT.
 - Fixed parsing for MustConfirm key in skill parser.
 - Converted internal MAPINFOs to new syntax.
 - Added a range parameter to SNDINFO's $limit.

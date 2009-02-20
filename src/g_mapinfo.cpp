@@ -217,6 +217,7 @@ void P_RemoveDefereds (void)
 void level_info_t::Reset()
 {
 	mapname[0] = 0;
+	mapbg[0] = 0;
 	levelnum = 0;
 	pname[0] = 0;
 	nextmap[0] = 0;

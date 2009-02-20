@@ -169,14 +169,14 @@ ACTOR WoodenBarrel 82
 
 // Strife's explosive barrel ------------------------------------------------
 
-ACTOR ExplosiveBarrel2 : ExplosiveBarrel 94
+ACTOR ExplosiveBarrel2 94
 {
 	Game Strife
 	Health 30
 	Radius 10
 	Height 32
 	ConversationID 204, -1, -1
-	//+SOLID +SHOOTABLE +NOBLOOD
+	+SOLID +SHOOTABLE +NOBLOOD +OLDRADIUSDMG
 	+INCOMBAT
 	States
 	{
@@ -187,8 +187,7 @@ ACTOR ExplosiveBarrel2 : ExplosiveBarrel 94
 		BART B 2 Bright A_Scream
 		BART CD 2 Bright
 		BART E 2 Bright A_NoBlocking
-		BART F 0 Bright A_AlertMonsters
-		BART F 2 Bright A_Explode(64, 64)
+		BART F 2 Bright A_Explode(64, 64, 1, 1)
 		BART GHIJ 2 Bright
 		BART K 3 Bright
 		BART L -1

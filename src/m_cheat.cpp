@@ -735,14 +735,10 @@ void cht_Give (player_t *player, const char *name, int amount)
 
 			{
 				// Give the weapon only if it belongs to the current game or
-				// is in a weapon slot. Unfortunately this check only works in
-				// singleplayer games because the weapon slots are stored locally.
-				// In multiplayer games or demos all weapons must be given because the state of
-				// the weapon slots is not guaranteed to be the same when recording or playing back.
-				if (multiplayer || demorecording || demoplayback || 
-					type->ActorInfo->GameFilter == GAME_Any || 
+				// is in a weapon slot. 
+				if (type->ActorInfo->GameFilter == GAME_Any || 
 					(type->ActorInfo->GameFilter & gameinfo.gametype) ||	
-					LocalWeapons.LocateWeapon(type, NULL, NULL))
+					player->weapons.LocateWeapon(type, NULL, NULL))
 				{
 					AWeapon *def = (AWeapon*)GetDefaultByType (type);
 					if (!(def->WeaponFlags & WIF_CHEATNOTWEAPON))

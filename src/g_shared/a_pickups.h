@@ -71,11 +71,16 @@ struct FWeaponSlots
 	void SetFromPlayer(const PClass *type);
 	void CompleteSetup(const PClass *type);
 	int RestoreSlots (FConfigFile *config, const char *section);
+	void PrintSettings();
+
+	void SetSlot(int slot, TArray<const char *> argv);
+	void AddSlot(int slot, const char *name);
+	void AddSlotDefault(int slot, const char *name);
+
 };
 
 void P_PlaybackKeyConfWeapons();
-void P_SetLocalWeapons(AActor *player);
-extern FWeaponSlots LocalWeapons;
+void P_CompleteWeaponSetup(int playernum, const PClass *type);
 
 /************************************************************************/
 /* Class definitions													*/

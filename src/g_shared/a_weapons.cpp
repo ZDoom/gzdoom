@@ -16,6 +16,7 @@
 #include "thingdef/thingdef.h"
 #include "doomstat.h"
 #include "g_level.h"
+#include "d_net.h"
 
 #define BONUSADD 6
 
@@ -27,6 +28,7 @@ END_POINTERS
 
 FString WeaponSection;
 TArray<FString> KeyConfWeapons;
+bool PlayingKeyConf;
 
 //===========================================================================
 //
@@ -909,18 +911,18 @@ static bool FindMostRecentWeapon(player_t *player, int *slot, int *index)
 {
 	if (player->PendingWeapon != WP_NOCHANGE)
 	{
-		return LocalWeapons.LocateWeapon(player->PendingWeapon->GetClass(), slot, index);
+		return player->weapons.LocateWeapon(player->PendingWeapon->GetClass(), slot, index);
 	}
 	else if (player->ReadyWeapon != NULL)
 	{
 		AWeapon *weap = player->ReadyWeapon;
-		if (!LocalWeapons.LocateWeapon(weap->GetClass(), slot, index))
+		if (!player->weapons.LocateWeapon(weap->GetClass(), slot, index))
 		{
 			// If the current weapon wasn't found and is powered up,
 			// look for its non-powered up version.
 			if (weap->WeaponFlags & WIF_POWERED_UP && weap->SisterWeaponType != NULL)
 			{
-				return LocalWeapons.LocateWeapon(weap->SisterWeaponType, slot, index);
+				return player->weapons.LocateWeapon(weap->SisterWeaponType, slot, index);
 			}
 			return false;
 		}
@@ -973,7 +975,7 @@ AWeapon *FWeaponSlots::PickNextWeapon(player_t *player)
 					slot = 0;
 				}
 			}
-			const PClass *type = LocalWeapons.Slots[slot].GetWeapon(index);
+			const PClass *type = Slots[slot].GetWeapon(index);
 			AWeapon *weap = static_cast<AWeapon *>(player->mo->FindInventory(type));
 			if (weap != NULL && weap->CheckAmmo(AWeapon::EitherFire, false))
 			{
@@ -1026,7 +1028,7 @@ AWeapon *FWeaponSlots::PickPrevWeapon (player_t *player)
 				}
 				index = Slots[slot].Size() - 1;
 			}
-			const PClass *type = LocalWeapons.Slots[slot].GetWeapon(index);
+			const PClass *type = Slots[slot].GetWeapon(index);
 			AWeapon *weap = static_cast<AWeapon *>(player->mo->FindInventory(type));
 			if (weap != NULL && weap->CheckAmmo(AWeapon::EitherFire, false))
 			{
@@ -1121,6 +1123,25 @@ void FWeaponSlots::CompleteSetup(const PClass *type)
 	}
 }
 
+void P_CompleteWeaponSetup(int playernum, const PClass *type)
+{
+	// Set up the weapon slots locally
+	LocalWeapons.CompleteSetup(type);
+	// Now transmit them across the network
+	for (int i = 0; i < NUM_WEAPON_SLOTS; ++i)
+	{
+		Net_WriteByte(DEM_SETSLOT);
+		Net_WriteByte(playernum);
+		Net_WriteByte(i);
+		Net_WriteByte(LocalWeapons.Slots[i].Size());
+		for(int j = 0; j < LocalWeapons.Slots[i].Size(); j++)
+		{
+			const PClass *cls = LocalWeapons.Slots[i].GetWeapon(j);
+			if (cls != NULL) Net_WriteString(cls->TypeName.GetChars());
+		}
+	}
+}
+
 //===========================================================================
 //
 // FWeaponSlots :: SetFromPlayer
@@ -1184,6 +1205,35 @@ int FWeaponSlots::RestoreSlots(FConfigFile *config, const char *section)
 // CCMD setslot
 //
 //===========================================================================
+void FWeaponSlots::SetSlot(int slot, TArray<const char *> argv)
+{
+	Slots[slot].Clear();
+	for (int i = 0; i < argv.Size(); ++i)
+	{
+		if (!Slots[slot].AddWeapon (argv[i]))
+		{
+			Printf ("Could not add %s to slot %d\n", argv[i], slot);
+		}
+	}
+}
+
+
+void FWeaponSlots::PrintSettings()
+{
+	for (int i = 1; i <= NUM_WEAPON_SLOTS; ++i)
+	{
+		int slot = i % NUM_WEAPON_SLOTS;
+		if (Slots[slot].Size() > 0)
+		{
+			Printf("Slot[%d]=", slot);
+			for (int j = 0; j < Slots[slot].Size(); ++j)
+			{
+				Printf("%s ", Slots[slot].GetWeapon(j)->TypeName.GetChars());
+			}
+			Printf("\n");
+		}
+	}
+}
 
 CCMD (setslot)
 {
@@ -1203,19 +1253,7 @@ CCMD (setslot)
 			}
 			Printf("%s.Weapons]\n", players[consoleplayer].mo->GetClass()->TypeName.GetChars());
 		}
-		for (int i = 1; i <= NUM_WEAPON_SLOTS; ++i)
-		{
-			int slot = i % NUM_WEAPON_SLOTS;
-			if (LocalWeapons.Slots[slot].Size() > 0)
-			{
-				Printf("Slot[%d]=", slot);
-				for (int j = 0; j < LocalWeapons.Slots[slot].Size(); ++j)
-				{
-					Printf("%s ", LocalWeapons.Slots[slot].GetWeapon(j)->TypeName.GetChars());
-				}
-				Printf("\n");
-			}
-		}
+		players[consoleplayer].weapons.PrintSettings();
 		return;
 	}
 
@@ -1223,22 +1261,32 @@ CCMD (setslot)
 	{
 		KeyConfWeapons.Push(argv.args());
 	}
+	else if (PlayingKeyConf)
+	{
+		BYTE count = argv.argc()-2;
+		TArray<const char *> weapons;
+
+		weapons.Resize(count);
+		for(int i = 0; i < count; i++)
+		{
+			weapons[i] = argv[i+2];
+		}
+		LocalWeapons.SetSlot(slot, weapons);
+	}
 	else
 	{
-		LocalWeapons.Slots[slot].Clear();
 		if (argv.argc() == 2)
 		{
 			Printf ("Slot %d cleared\n", slot);
 		}
-		else
+
+		Net_WriteByte(DEM_SETSLOT);
+		Net_WriteByte(consoleplayer);
+		Net_WriteByte(slot);
+		Net_WriteByte(argv.argc()-2);
+		for (int i = 2; i < argv.argc(); i++)
 		{
-			for (int i = 2; i < argv.argc(); ++i)
-			{
-				if (!LocalWeapons.Slots[slot].AddWeapon (argv[i]))
-				{
-					Printf ("Could not add %s to slot %d\n", argv[i], slot);
-				}
-			}
+			Net_WriteString(argv[i]);
 		}
 	}
 }
@@ -1249,9 +1297,17 @@ CCMD (setslot)
 //
 //===========================================================================
 
+void FWeaponSlots::AddSlot(int slot, const char *name)
+{
+	if (!Slots[slot].AddWeapon (name))
+	{
+		Printf ("Could not add %s to slot %zu\n", name, slot);
+	}
+}
+
 CCMD (addslot)
 {
-	size_t slot;
+	unsigned int slot;
 
 	if (argv.argc() != 3 || (slot = atoi (argv[1])) >= NUM_WEAPON_SLOTS)
 	{
@@ -1263,12 +1319,16 @@ CCMD (addslot)
 	{
 		KeyConfWeapons.Push(argv.args());
 	}
+	else if (PlayingKeyConf)
+	{
+		LocalWeapons.AddSlot(int(slot), argv[2]);
+	}
 	else
 	{
-		if (!LocalWeapons.Slots[slot].AddWeapon (argv[2]))
-		{
-			Printf ("Could not add %s to slot %zu\n", argv[2], slot);
-		}
+		Net_WriteByte(DEM_ADDSLOT);
+		Net_WriteByte(consoleplayer);
+		Net_WriteByte(slot);
+		Net_WriteString(argv[2]);
 	}
 }
 
@@ -1291,6 +1351,26 @@ CCMD (weaponsection)
 // CCMD addslotdefault
 //
 //===========================================================================
+void FWeaponSlots::AddSlotDefault(int slot, const char *name)
+{
+	const PClass *type = PClass::FindClass (name);
+	if (type != NULL && type->IsDescendantOf (RUNTIME_CLASS(AWeapon)))
+	{
+		switch (AddDefaultWeapon (slot, type))
+		{
+		case SLOTDEF_Full:
+			Printf ("Could not add %s to slot %d\n", name, slot);
+			break;
+
+		default:
+		case SLOTDEF_Added:
+			break;
+
+		case SLOTDEF_Exists:
+			break;
+		}
+	}
+}
 
 CCMD (addslotdefault)
 {
@@ -1307,26 +1387,23 @@ CCMD (addslotdefault)
 	if (type == NULL || !type->IsDescendantOf (RUNTIME_CLASS(AWeapon)))
 	{
 		Printf ("%s is not a weapon\n", argv[2]);
+		return;
 	}
 
 	if (ParsingKeyConf)
 	{
 		KeyConfWeapons.Push(argv.args());
 	}
+	else if (PlayingKeyConf)
+	{
+		LocalWeapons.AddSlotDefault(int(slot), argv[2]);
+	}
 	else
 	{
-		switch (LocalWeapons.AddDefaultWeapon (slot, type))
-		{
-		case SLOTDEF_Full:
-			Printf ("Could not add %s to slot %d\n", argv[2], slot);
-			break;
-
-		case SLOTDEF_Added:
-			break;
-
-		case SLOTDEF_Exists:
-			break;
-		}
+		Net_WriteByte(DEM_ADDSLOTDEFAULT);
+		Net_WriteByte(consoleplayer);
+		Net_WriteByte(slot);
+		Net_WriteString(argv[2]);
 	}
 }
 
@@ -1340,11 +1417,13 @@ CCMD (addslotdefault)
 
 void P_PlaybackKeyConfWeapons()
 {
+	PlayingKeyConf = true;
 	for (unsigned int i = 0; i < KeyConfWeapons.Size(); ++i)
 	{
 		FString cmd(KeyConfWeapons[i]);
 		AddCommandString(cmd.LockBuffer());
 	}
+	PlayingKeyConf = false;
 }
 
 //===========================================================================

@@ -362,6 +362,8 @@ public:
 	fixed_t crouchoffset;
 	fixed_t crouchviewdelta;
 
+	FWeaponSlots weapons;
+
 	// [CW] I moved these here for multiplayer conversation support.
 	TObjPtr<AActor> ConversationNPC, ConversationPC;
 	angle_t ConversationNPCAngle;

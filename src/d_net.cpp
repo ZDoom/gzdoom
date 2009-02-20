@@ -2378,6 +2378,40 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 		P_ConversationCommand (player, stream);
 		break;
 
+	case DEM_SETSLOT:
+		{
+			BYTE playernum = ReadByte(stream);
+			BYTE slot = ReadByte(stream);
+			BYTE count = ReadByte(stream);
+			TArray<const char *> weapons;
+
+			weapons.Resize(count);
+			for(int i = 0; i < count; i++)
+			{
+				weapons[i] = ReadStringConst(stream);
+			}
+			players[playernum].weapons.SetSlot(slot, weapons);
+		}
+		break;
+
+	case DEM_ADDSLOT:
+		{
+			BYTE playernum = ReadByte(stream);
+			BYTE slot = ReadByte(stream);
+			const char *weap = ReadStringConst(stream);
+			players[playernum].weapons.AddSlot(slot, weap);
+		}
+		break;
+
+	case DEM_ADDSLOTDEFAULT:
+		{
+			BYTE playernum = ReadByte(stream);
+			BYTE slot = ReadByte(stream);
+			const char *weap = ReadStringConst(stream);
+			players[playernum].weapons.AddSlotDefault(slot, weap);
+		}
+		break;
+
 	default:
 		I_Error ("Unknown net command: %d", type);
 		break;
@@ -2495,6 +2529,22 @@ void Net_SkipCommand (int type, BYTE **stream)
 				}
 			}
 			break;
+
+		case DEM_SETSLOT:
+			{
+				skip = 3;
+				for(int numweapons = *(*stream + 2); numweapons > 0; numweapons--)
+				{
+					skip += strlen ((char *)(*stream + skip)) + 1;
+				}
+			}
+			break;
+
+		case DEM_ADDSLOT:
+		case DEM_ADDSLOTDEFAULT:
+			skip = strlen ((char *)(*stream + 2)) + 3;
+			break;
+
 
 		default:
 			return;

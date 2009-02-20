@@ -1,4 +1,8 @@
 ﻿February 20, 2009  (Changes by Graf Zahl)
+- Bumped netgame, demo and min demo version for the weapon slot changes.
+- changed weapon slots to be stored per player. Information is now transmitted
+  across the network so that all machines know each player's current weapon
+  configuration so that it can be used by cheats or HUD display routines.
 - fixed: level_info_t::mapbg was not initialized
 
 February 17, 2009

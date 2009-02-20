@@ -151,6 +151,9 @@ enum EDemoCommand
 	DEM_SUMMON2,		// 52 String: Thing to fabricate, WORD: angle offset
 	DEM_SUMMONFRIEND2,	// 53
 	DEM_SUMMONFOE2,		// 54
+	DEM_ADDSLOTDEFAULT,	// 55
+	DEM_ADDSLOT,		// 56
+	DEM_SETSLOT,		// 57
 };
 
 // The following are implemented by cht_DoCheat in m_cheat.cpp
@@ -226,6 +229,7 @@ int ReadWord (BYTE **stream);
 int ReadLong (BYTE **stream);
 float ReadFloat (BYTE **stream);
 char *ReadString (BYTE **stream);
+const char *ReadStringConst(BYTE **stream);
 void WriteByte (BYTE val, BYTE **stream);
 void WriteWord (short val, BYTE **stream);
 void WriteLong (int val, BYTE **stream);

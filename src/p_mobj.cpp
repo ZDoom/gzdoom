@@ -3771,7 +3771,7 @@ APlayerPawn *P_SpawnPlayer (FMapThing *mthing, bool tempplayer)
 	}
 	if (playernum == consoleplayer)
 	{
-		LocalWeapons.CompleteSetup(mobj->GetClass());
+		P_CompleteWeaponSetup(consoleplayer, mobj->GetClass());
 	}
 	return mobj;
 }

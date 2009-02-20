@@ -49,6 +49,13 @@ char *ReadString (BYTE **stream)
 	return copystring (string);
 }
 
+const char *ReadStringConst(BYTE **stream)
+{
+	const char *string = *((const char **)stream);
+	*stream += strlen (string) + 1;
+	return string;
+}
+
 int ReadByte (BYTE **stream)
 {
 	BYTE v = **stream;

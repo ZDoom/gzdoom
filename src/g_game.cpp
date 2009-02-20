@@ -264,7 +264,7 @@ CCMD (slot)
 
 		if (slot < NUM_WEAPON_SLOTS)
 		{
-			SendItemUse = LocalWeapons.Slots[slot].PickWeapon (&players[consoleplayer]);
+			SendItemUse = players[consoleplayer].weapons.Slots[slot].PickWeapon (&players[consoleplayer]);
 		}
 	}
 }
@@ -296,12 +296,12 @@ CCMD (turn180)
 
 CCMD (weapnext)
 {
-	SendItemUse = LocalWeapons.PickNextWeapon (&players[consoleplayer]);
+	SendItemUse = players[consoleplayer].weapons.PickNextWeapon (&players[consoleplayer]);
 }
 
 CCMD (weapprev)
 {
-	SendItemUse = LocalWeapons.PickPrevWeapon (&players[consoleplayer]);
+	SendItemUse = players[consoleplayer].weapons.PickPrevWeapon (&players[consoleplayer]);
 }
 
 CCMD (invnext)

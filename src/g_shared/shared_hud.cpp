@@ -491,14 +491,14 @@ static void AddAmmoToList(AWeapon * weapdef)
 	}
 }
 
-static int DrawAmmo(player_t * CPlayer, int x, int y)
+static int DrawAmmo(player_t *CPlayer, int x, int y)
 {
 
 	int i,j,k;
 	char buf[256];
-	AInventory * inv;
+	AInventory *inv;
 
-	AWeapon * wi=CPlayer->ReadyWeapon;
+	AWeapon *wi=CPlayer->ReadyWeapon;
 
 	orderedammos.Clear();
 
@@ -506,9 +506,9 @@ static int DrawAmmo(player_t * CPlayer, int x, int y)
 	// Do not check for actual presence in the inventory!
 	// We want to show all ammo types that can be used by
 	// the weapons in the weapon slots.
-	for (k=0;k<NUM_WEAPON_SLOTS;k++) for(j=0;j<LocalWeapons.Slots[k].Size();j++)
+	for (k = 0; k < NUM_WEAPON_SLOTS; k++) for(j = 0; j < CPlayer->weapons.Slots[k].Size(); j++)
 	{
-		const PClass * weap = LocalWeapons.Slots[k].GetWeapon(j);
+		const PClass *weap = CPlayer->weapons.Slots[k].GetWeapon(j);
 
 		if (weap) AddAmmoToList((AWeapon*)GetDefaultByType(weap));
 	}
@@ -628,17 +628,17 @@ static void DrawWeapons(player_t * CPlayer, int x, int y)
 	// First draw all weapons in the inventory that are not assigned to a weapon slot
 	for(inv=CPlayer->mo->Inventory;inv;inv=inv->Inventory)
 	{
-		int slot, index;
-		if (inv->IsKindOf(RUNTIME_CLASS(AWeapon)) && !LocalWeapons.LocateWeapon(RUNTIME_TYPE(inv), &slot, &index))
+		if (inv->IsKindOf(RUNTIME_CLASS(AWeapon)) && 
+			!CPlayer->weapons.LocateWeapon(RUNTIME_TYPE(inv), NULL, NULL))
 		{
 			DrawOneWeapon(CPlayer, x, y, static_cast<AWeapon*>(inv));
 		}
 	}
 
 	// And now everything in the weapon slots back to front
-	for (k=NUM_WEAPON_SLOTS-1;k>=0;k--) for(j=LocalWeapons.Slots[k].Size()-1;j>=0;j--)
+	for (k = NUM_WEAPON_SLOTS - 1; k >= 0; k--) for(j = CPlayer->weapons.Slots[k].Size() - 1; j >= 0; j--)
 	{
-		const PClass * weap = LocalWeapons.Slots[k].GetWeapon(j);
+		const PClass *weap = CPlayer->weapons.Slots[k].GetWeapon(j);
 		if (weap) 
 		{
 			inv=CPlayer->mo->FindInventory(weap);

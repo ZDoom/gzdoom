@@ -1,4 +1,5 @@
 ﻿February 21, 2009  (Changes by Graf Zahl)
+- Fixed: Untranslated colors in fonts had an alpha value of 0 but need 255.
 - Fixed: The Doom status bar's ammo display may not use the INDEXFONT for 
   the alternative HUD. Instead it has to create a separate one out of the
   STYSNUM characters.

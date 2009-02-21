@@ -1622,6 +1622,7 @@ FSpecialFont::FSpecialFont (const char *name, int first, int count, FTexture **l
 			{
 				remap->Remap[j] = identity[j];
 				remap->Palette[j] = GPalette.BaseColors[identity[j]];
+				remap->Palette[j].a = 0xff;
 			}
 		}
 	}

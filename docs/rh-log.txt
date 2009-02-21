@@ -1,4 +1,7 @@
 ﻿February 21, 2009  (Changes by Graf Zahl)
+- Fixed: The Doom status bar's ammo display may not use the INDEXFONT for 
+  the alternative HUD. Instead it has to create a separate one out of the
+  STYSNUM characters.
 - Fixed: skins can not be sorted for binary search because the player class
   code depends on the original indices.
 - Fixed: P_StartConversation set the global dialog node variable for all

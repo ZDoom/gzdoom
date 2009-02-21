@@ -549,11 +549,14 @@ private:
 		if (armor != NULL && armor->Amount != 0)
 		{
 			pic = TexMan(armor->Icon);
-			screen->DrawTexture (pic, 56, -24,
-				DTA_HUDRules, HUD_Normal,
-				DTA_LeftOffset, pic->GetWidth()/2,
-				DTA_TopOffset, pic->GetHeight(),
-				TAG_DONE);
+			if (pic != NULL)
+			{
+				screen->DrawTexture (pic, 56, -24,
+					DTA_HUDRules, HUD_Normal,
+					DTA_LeftOffset, pic->GetWidth()/2,
+					DTA_TopOffset, pic->GetHeight(),
+					TAG_DONE);
+			}
 			DrBNumberOuter (armor->Amount, 5, -43);
 		}
 

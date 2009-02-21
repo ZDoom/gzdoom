@@ -419,10 +419,12 @@ static const char *skinsoundnames[NUMSKINSOUNDS][2] =
 	{ "dsjump",		"*jump" }
 };
 
+/*
 static int STACK_ARGS skinsorter (const void *a, const void *b)
 {
 	return stricmp (((FPlayerSkin *)a)->name, ((FPlayerSkin *)b)->name);
 }
+*/
 
 void R_InitSkins (void)
 {
@@ -782,6 +784,19 @@ int R_FindSkin (const char *name, int pclass)
 		return pclass;
 	}
 
+	for (unsigned i = PlayerClasses.Size(); i < numskins; i++)
+	{
+		if (strnicmp (skins[i].name, name, 16) == 0)
+		{
+			if (PlayerClasses[pclass].CheckSkin (mid))
+				return i;
+			else
+				return pclass;
+		}
+	}
+
+
+	/*
 	min = PlayerClasses.Size ();
 	max = (int)numskins-1;
 
@@ -805,6 +820,7 @@ int R_FindSkin (const char *name, int pclass)
 			max = mid - 1;
 		}
 	}
+	*/
 	return pclass;
 }
 
@@ -932,7 +948,7 @@ void R_InitSprites ()
 	}
 
 	// [RH] Sort the skins, but leave base as skin 0
-	qsort (&skins[PlayerClasses.Size ()], numskins-PlayerClasses.Size (), sizeof(FPlayerSkin), skinsorter);
+	//qsort (&skins[PlayerClasses.Size ()], numskins-PlayerClasses.Size (), sizeof(FPlayerSkin), skinsorter);
 }
 
 void R_DeinitSprites()

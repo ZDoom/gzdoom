@@ -163,16 +163,25 @@ bool AWeapon::PickupForAmmo (AWeapon *ownedWeapon)
 	// Don't take ammo if the weapon sticks around.
 	if (!ShouldStay ())
 	{
-		int oldamount = 0;
-		if (ownedWeapon->Ammo1 != NULL) oldamount = ownedWeapon->Ammo1->Amount;
+		int oldamount1 = 0;
+		int oldamount2 = 0;
+		if (ownedWeapon->Ammo1 != NULL) oldamount1 = ownedWeapon->Ammo1->Amount;
+		if (ownedWeapon->Ammo2 != NULL) oldamount2 = ownedWeapon->Ammo1->Amount;
 
 		if (AmmoGive1 > 0) gotstuff = AddExistingAmmo (ownedWeapon->Ammo1, AmmoGive1);
 		if (AmmoGive2 > 0) gotstuff |= AddExistingAmmo (ownedWeapon->Ammo2, AmmoGive2);
 
 		AActor *Owner = ownedWeapon->Owner;
-		if (gotstuff && oldamount == 0 && Owner != NULL && Owner->player != NULL)
+		if (gotstuff && Owner != NULL && Owner->player != NULL)
 		{
-			static_cast<APlayerPawn *>(Owner)->CheckWeaponSwitch(ownedWeapon->Ammo1->GetClass());
+			if (ownedWeapon->Ammo1 != NULL && oldamount1 == 0)
+			{
+				static_cast<APlayerPawn *>(Owner)->CheckWeaponSwitch(ownedWeapon->Ammo1->GetClass());
+			}
+			else if (ownedWeapon->Ammo2 != NULL && oldamount2 == 0)
+			{
+				static_cast<APlayerPawn *>(Owner)->CheckWeaponSwitch(ownedWeapon->Ammo2->GetClass());
+			}
 		}
 	}
 	return gotstuff;

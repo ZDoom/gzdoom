@@ -1,4 +1,12 @@
-﻿February 20, 2009  (Changes by Graf Zahl)
+﻿February 21, 2009  (Changes by Graf Zahl)
+- Fixed: skins can not be sorted for binary search because the player class
+  code depends on the original indices.
+- Fixed: P_StartConversation set the global dialog node variable for all
+  players, not just the consoleplayer.
+- Fixed: AWeapon::PickupForAmmo assumed that any weapon having a secondary
+  ammo type also has a primary one.
+
+February 20, 2009  (Changes by Graf Zahl)
 - Bumped netgame, demo and min demo version for the weapon slot changes.
 - changed weapon slots to be stored per player. Information is now transmitted
   across the network so that all machines know each player's current weapon

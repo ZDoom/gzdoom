@@ -78,7 +78,7 @@ PSymbolTable		 GlobalSymbols;
 // Starts a new actor definition
 //
 //==========================================================================
-FActorInfo *CreateNewActor(FScriptPosition &sc, FName typeName, FName parentName, bool native)
+FActorInfo *CreateNewActor(const FScriptPosition &sc, FName typeName, FName parentName, bool native)
 {
 	const PClass *replacee = NULL;
 	PClass *ti = NULL;

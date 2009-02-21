@@ -776,9 +776,6 @@ void R_InitSkins (void)
 // [RH] Find a skin by name
 int R_FindSkin (const char *name, int pclass)
 {
-	int min, max, mid;
-	int lexx;
-
 	if (stricmp ("base", name) == 0)
 	{
 		return pclass;
@@ -788,39 +785,12 @@ int R_FindSkin (const char *name, int pclass)
 	{
 		if (strnicmp (skins[i].name, name, 16) == 0)
 		{
-			if (PlayerClasses[pclass].CheckSkin (mid))
+			if (PlayerClasses[pclass].CheckSkin (i))
 				return i;
 			else
 				return pclass;
 		}
 	}
-
-
-	/*
-	min = PlayerClasses.Size ();
-	max = (int)numskins-1;
-
-	while (min <= max)
-	{
-		mid = (min + max)/2;
-		lexx = strnicmp (skins[mid].name, name, 16);
-		if (lexx == 0)
-		{
-			if (PlayerClasses[pclass].CheckSkin (mid))
-				return mid;
-			else
-				return pclass;
-		}
-		else if (lexx < 0)
-		{
-			min = mid + 1;
-		}
-		else
-		{
-			max = mid - 1;
-		}
-	}
-	*/
 	return pclass;
 }
 

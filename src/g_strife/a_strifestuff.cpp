@@ -465,6 +465,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_TurretLook)
 {
 	AActor *target;
 
+	if (self->flags5 & MF5_INCONVERSATION)
+		return;
+
 	self->threshold = 0;
 	target = self->LastHeard;
 	if (target != NULL &&

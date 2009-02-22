@@ -1908,13 +1908,14 @@ void YM3812SetUpdateHandler(void *chip,OPL_UPDATEHANDLER UpdateHandler,int param
 void YM3812UpdateOne(void *chip, float *buffer, int length)
 {
 	FM_OPL		*OPL = (FM_OPL *)chip;
-	UINT8		rhythm = OPL->rhythm&0x20;
 	int i;
 
 	if (OPL == NULL)
 	{
 		return;
 	}
+
+	UINT8		rhythm = OPL->rhythm&0x20;
 
 	UINT32 lfo_am_cnt_bak = OPL->lfo_am_cnt;
 	UINT32 eg_timer_bak = OPL->eg_timer;

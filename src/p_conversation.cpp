@@ -659,6 +659,9 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 	const char *toSay;
 	int i, j;
 
+	// Make sure this is actually a player.
+	if (pc->player == NULL) return;
+
 	// [CW] If an NPC is talking to a PC already, then don't let
 	// anyone else talk to the NPC.
 	for (i = 0; i < MAXPLAYERS; i++)
@@ -672,9 +675,11 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 
 	pc->momx = pc->momy = 0;	// Stop moving
 	pc->player->momx = pc->player->momy = 0;
+	static_cast<APlayerPawn*>(pc)->PlayIdle ();
 
 	pc->player->ConversationPC = pc;
 	pc->player->ConversationNPC = npc;
+	npc->flags5 |= MF5_INCONVERSATION;
 
 	FStrifeDialogueNode *CurNode = npc->Conversation;
 
@@ -947,6 +952,8 @@ static void PickConversationReply ()
 	{
 		Net_WriteByte (DEM_CONVERSATION);
 		Net_WriteByte (CONV_NPCANGLE);
+		Net_WriteByte (DEM_CONVERSATION);
+		Net_WriteByte (CONV_CLOSE);
 		return;
 	}
 
@@ -966,6 +973,8 @@ static void PickConversationReply ()
 
 			Net_WriteByte (DEM_CONVERSATION);
 			Net_WriteByte (CONV_NPCANGLE);
+			Net_WriteByte (DEM_CONVERSATION);
+			Net_WriteByte (CONV_CLOSE);
 			return;
 		}
 	}
@@ -1189,7 +1198,13 @@ void P_ConversationCommand (int player, BYTE **stream)
 		players[player].ConversationNPC = NULL;
 		players[player].ConversationPC = NULL;
 		players[player].ConversationNPCAngle = 0;
-		break;
+		// fall through
+	case CONV_CLOSE:
+		if (players[player].ConversationNPC != NULL)
+		{
+			players[player].ConversationNPC->flags5 &= ~MF5_INCONVERSATION;
+		}
+
 
 	default:
 		break;

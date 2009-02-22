@@ -55,6 +55,7 @@ enum
 	CONV_GIVEINVENTORY,
 	CONV_TAKEINVENTORY,
 	CONV_SETNULL,
+	CONV_CLOSE,
 };
 
 extern TArray<FStrifeDialogueNode *> StrifeDialogues;

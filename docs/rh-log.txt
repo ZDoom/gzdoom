@@ -1,4 +1,11 @@
-﻿February 21, 2009
+﻿February 22, 2009  (Changes by Graf Zahl)
+- Fixed: With opl_onechip set the second OPL chip was never set to anything valid
+  so it contained an invalid pointer. There were also a few other places that
+  simply assumed that the second chip is set to something valid.
+- Fixed: NPCs which are engaged in a conversation should not move.
+- Fixed: Player movement animation was not stopped when starting a conversation.
+
+February 21, 2009
 - Added selective compression of network packets. Interestingly, most packets
   don't actually compress all that well, even the ones that aren't too short
   to possibly compress. (Maybe make the whole thing one long, never-ending

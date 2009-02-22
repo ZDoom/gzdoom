@@ -464,7 +464,7 @@ OPLmusicFile::OPLmusicFile(const OPLmusicFile *source, const char *filename)
 		delete io;
 	}
 	io = new DiskWriterIO(filename);
-	io->OPLinit(TwoChips);
+	io->OPLinit(TwoChips + 1);
 	Restart();
 }
 

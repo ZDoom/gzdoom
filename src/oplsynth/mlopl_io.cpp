@@ -302,6 +302,7 @@ int OPLio::OPLinit(uint numchips)
 {
 	assert(numchips >= 1 && numchips <= 2);
 	chips[0] = YM3812Init (3579545, int(OPL_SAMPLE_RATE));
+	chips[1] = NULL;
 	if (chips[0] != NULL)
 	{
 		if (numchips > 1)

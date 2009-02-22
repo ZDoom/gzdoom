@@ -1538,6 +1538,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_Look)
 {
 	AActor *targ;
 
+	if (self->flags5 & MF5_INCONVERSATION)
+		return;
+
 	// [RH] Set goal now if appropriate
 	if (self->special == Thing_SetGoal && self->args[0] == 0) 
 	{
@@ -1652,6 +1655,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_Wander)
 	// This seems as good a place as any.
 	self->flags4 &= ~MF4_INCOMBAT;
 
+	if (self->flags5 & MF5_INCONVERSATION)
+		return;
+
 	if (self->flags4 & MF4_STANDSTILL)
 		return;
 
@@ -1692,6 +1698,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_Wander)
 DEFINE_ACTION_FUNCTION(AActor, A_Look2)
 {
 	AActor *targ;
+
+	if (self->flags5 & MF5_INCONVERSATION)
+		return;
 
 	self->threshold = 0;
 	targ = self->LastHeard;
@@ -1752,6 +1761,9 @@ nosee:
 void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missilestate, bool playactive, bool nightmarefast, bool dontmove)
 {
 	int delta;
+
+	if (actor->flags5 & MF5_INCONVERSATION)
+		return;
 
 	if (actor->flags & MF_INCHASE)
 	{

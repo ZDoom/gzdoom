@@ -724,6 +724,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_LookEx)
 	AActor *targ = NULL; // Shuts up gcc
 	fixed_t dist;
 
+	if (self->flags5 & MF5_INCONVERSATION)
+		return;
+
 	// [RH] Set goal now if appropriate
 	if (self->special == Thing_SetGoal && self->args[0] == 0) 
 	{

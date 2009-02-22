@@ -1,4 +1,5 @@
 ﻿February 22, 2009  (Changes by Graf Zahl)
+- added ML_BLOCKPROJECTILE flag to lines.
 - Fixed: With opl_onechip set the second OPL chip was never set to anything valid
   so it contained an invalid pointer. There were also a few other places that
   simply assumed that the second chip is set to something valid.

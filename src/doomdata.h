@@ -149,6 +149,7 @@ enum ELineFlags
 	ML_3DMIDTEX					= 0x00200000,
 	ML_CHECKSWITCHRANGE			= 0x00400000,
 	ML_FIRSTSIDEONLY			= 0x00800000,	// activated only when crossed from front side
+	ML_BLOCKPROJECTILE			= 0x01000000,
 };
 
 

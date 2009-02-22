@@ -562,7 +562,7 @@ bool PIT_CheckLine (line_t *ld, const FBoundingBox &box, FCheckPosition &tm)
 		return false;
 	}
 
-	if (!(tm.thing->flags & MF_MISSILE) || (ld->flags & ML_BLOCKEVERYTHING))
+	if (!(tm.thing->flags & MF_MISSILE) || (ld->flags & (ML_BLOCKEVERYTHING|ML_BLOCKPROJECTILE)))
 	{
 		if (ld->flags & ML_RAILING)
 		{
@@ -571,6 +571,7 @@ bool PIT_CheckLine (line_t *ld, const FBoundingBox &box, FCheckPosition &tm)
 		else if ((ld->flags & (ML_BLOCKING|ML_BLOCKEVERYTHING)) || 							// explicitly blocking everything
 			(!(tm.thing->flags3 & MF3_NOBLOCKMONST) && (ld->flags & ML_BLOCKMONSTERS)) || 	// block monsters only
 			(tm.thing->player != NULL && (ld->flags & ML_BLOCK_PLAYERS)) ||					// block players
+			((tm.thing->flags & MF_MISSILE) && (ld->flags & ML_BLOCKPROJECTILE)) ||			// block projectiles
 			((ld->flags & ML_BLOCK_FLOATERS) && (tm.thing->flags & MF_FLOAT)))				// block floaters
 		{
 			if (tm.thing->flags2 & MF2_BLASTED)

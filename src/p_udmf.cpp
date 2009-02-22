@@ -628,6 +628,10 @@ struct UDMFParser
 				Flag(ld->flags, ML_FIRSTSIDEONLY, key); 
 				break;
 
+			case NAME_blockprojectiles:
+				Flag(ld->flags, ML_BLOCKPROJECTILE, key); 
+				break;
+
 			default:
 				break;
 			}

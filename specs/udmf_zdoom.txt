@@ -1,5 +1,5 @@
 ===============================================================================
-Universal Doom Map Format ZDoom extensions v1.2 - 21.08.2008
+Universal Doom Map Format ZDoom extensions v1.5 - 22.02.2009
 
 
     Copyright (c) 2008 Christoph Oelckers.
@@ -102,6 +102,7 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       wrapmidtex = <bool>;      // Line's mid textures are wrapped.
       midtex3d = <bool>;        // Actors can walk on mid texture.
       checkswitchrange = <bool>;// Switches can only be activated when vertically reachable.
+      blockprojectiles = <bool>;// Line blocks all projectiles
                     
    }
    
@@ -200,6 +201,7 @@ Note: All <bool> fields default to false unless mentioned otherwise.
    Bit 4 (Value  16): wrapmidtex
    Bit 5 (Value  32): midtex3d
    Bit 6 (Value  64): checkswitchrange
+   Bit 7 (Value 128): firstsideonly
    
    When used in special 208 this arg should be cleared afterward.
    
@@ -229,6 +231,8 @@ integer, not float
 Changed description of class and skill thing flags to avoid the impression that
 this uses array syntax. No functional changes
 
+1.5 22.02.2009
+Added blockprojectiles to lines and firstsideonly to conversion notes
 
 ===============================================================================
 EOF

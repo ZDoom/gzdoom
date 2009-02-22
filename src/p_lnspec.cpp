@@ -2357,6 +2357,39 @@ FUNC(LS_Line_SetTextureOffset)
 	return true;
 }
 
+FUNC(LS_Line_SetBlocking)
+// Line_SetBlocking (id, setflags, clearflags)
+{
+	static const int flagtrans[] =
+	{
+		ML_BLOCKING,
+		ML_BLOCKMONSTERS,
+		ML_BLOCK_PLAYERS,
+		ML_BLOCK_FLOATERS,
+		ML_BLOCKPROJECTILE,
+		ML_BLOCKEVERYTHING,
+		ML_RAILING,
+		-1
+	};
+
+	if (arg0 == 0) return false;
+
+	int setflags = 0;
+	int clearflags = 0;
+
+	for(int i = 0; flagtrans[i] != -1; i++, arg1 >>= 1, arg2 >>= 1)
+	{
+		if (arg1 & 1) setflags |= flagtrans[i];
+		if (arg2 & 1) clearflags |= flagtrans[i];
+	}
+
+	for(int line = -1; (line = P_FindLineFromID (arg0, line)) >= 0; )
+	{
+		lines[line].flags = (lines[line].flags & ~clearflags) | setflags;
+	}
+	return true;
+}
+
 
 
 FUNC(LS_ChangeCamera)
@@ -2942,8 +2975,8 @@ lnSpecFunc LineSpecials[256] =
 	LS_Sector_SetLink,
 	LS_Scroll_Wall,
 	LS_Line_SetTextureOffset,
-	LS_NOP,		// 54
-	LS_NOP,		// 55
+	LS_Sector_ChangeFlags,
+	LS_Line_SetBlocking,
 	LS_NOP,		// 56
 	LS_NOP,		// 57
 	LS_NOP,		// 58

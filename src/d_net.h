@@ -48,7 +48,7 @@
 // Probably not enough.
 #define MAX_MSGLEN		(BACKUPTICS*10)
 #else
-#define MAX_MSGLEN		1400
+#define MAX_MSGLEN		14000
 #endif
 
 #define CMD_SEND	1
@@ -143,5 +143,35 @@ extern	int 			nettics[MAXNETNODES];
 
 extern	ticcmd_t		netcmds[MAXPLAYERS][BACKUPTICS];
 extern	int 			ticdup;
+
+// [RH]
+// New generic packet structure:
+//
+// Header:
+//  One byte with following flags.
+//  One byte with starttic
+//  One byte with master's maketic (master -> slave only!)
+//  If NCMD_RETRANSMIT set, one byte with retransmitfrom
+//  If NCMD_XTICS set, one byte with number of tics (minus 3, so theoretically up to 258 tics in one packet)
+//  If NCMD_QUITTERS, one byte with number of players followed by one byte with each player's consolenum
+//  If NCMD_MULTI, one byte with number of players followed by one byte with each player's consolenum
+//     - The first player's consolenum is not included in this list, because it always matches the sender
+//
+// For each tic:
+//  Two bytes with consistancy check, followed by tic data
+//
+// Setup packets are different, and are described just before D_ArbitrateNetStart().
+
+#define NCMD_EXIT				0x80
+#define NCMD_RETRANSMIT 		0x40
+#define NCMD_SETUP				0x20
+#define NCMD_MULTI				0x10		// multiple players in this packet
+#define NCMD_QUITTERS			0x08		// one or more players just quit (packet server only)
+#define NCMD_COMPRESSED			0x04		// remainder of packet is compressed
+
+#define NCMD_XTICS				0x03		// packet contains >2 tics
+#define NCMD_2TICS				0x02		// packet contains 2 tics
+#define NCMD_1TICS				0x01		// packet contains 1 tic
+#define NCMD_0TICS				0x00		// packet contains 0 tics
 
 #endif

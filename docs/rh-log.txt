@@ -1,4 +1,13 @@
-﻿February 21, 2009  (Changes by Graf Zahl)
+﻿February 21, 2009
+- Added selective compression of network packets. Interestingly, most packets
+  don't actually compress all that well, even the ones that aren't too short
+  to possibly compress. (Maybe make the whole thing one long, never-ending
+  zlib data stream with Z_SYNC_FLUSH used to chunk things at packet
+  boundaries? That would probably help the compression ratio, but it would
+  require changing the way the netcode determines sequence, which would be
+  a much more invasive change.)
+
+February 21, 2009  (Changes by Graf Zahl)
 - Fixed: Heretic's fullscreen HUD crashed when the player had armor without
   a valid icon.
 - Fixed: The StrifePlayer was missing a RunHealth setting.

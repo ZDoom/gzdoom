@@ -67,35 +67,6 @@ EXTERN_CVAR (Int, autosavecount)
 //#define SIMULATEERRORS		(RAND_MAX/3)
 #define SIMULATEERRORS			0
 
-#define NCMD_EXIT				0x80
-#define NCMD_RETRANSMIT 		0x40
-#define NCMD_SETUP				0x20
-#define NCMD_MULTI				0x10		// multiple players in this packet
-#define NCMD_QUITTERS			0x08		// one or more players just quit (packet server only)
-
-#define NCMD_XTICS				0x03		// packet contains >2 tics
-#define NCMD_2TICS				0x02		// packet contains 2 tics
-#define NCMD_1TICS				0x01		// packet contains 1 tic
-#define NCMD_0TICS				0x00		// packet contains 0 tics
-
-// [RH]
-// New generic packet structure:
-//
-// Header:
-//  One byte with above flags.
-//  One byte with starttic
-//  One byte with master's maketic (master -> slave only!)
-//  If NCMD_RETRANSMIT set, one byte with retransmitfrom
-//  If NCMD_XTICS set, one byte with number of tics (minus 3, so theoretically up to 258 tics in one packet)
-//  If NCMD_QUITTERS, one byte with number of players followed by one byte with each player's consolenum
-//  If NCMD_MULTI, one byte with number of players followed by one byte with each player's consolenum
-//     - The first player's consolenum is not included in this list, because it always matches the sender
-//
-// For each tic:
-//  Two bytes with consistancy check, followed by tic data
-//
-// Setup packets are different, and are described just before D_ArbitrateNetStart().
-
 extern BYTE		*demo_p;		// [RH] Special "ticcmds" get recorded in demos
 extern char		savedescription[SAVESTRINGSIZE];
 extern FString	savegamefile;

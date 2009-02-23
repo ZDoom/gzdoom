@@ -1194,17 +1194,22 @@ void P_ConversationCommand (int player, BYTE **stream)
 		break;
 
 	case CONV_SETNULL:
+		if (players[player].ConversationNPC != NULL)
+		{
+			players[player].ConversationNPC->flags5 &= ~MF5_INCONVERSATION;
+		}
 		players[player].ConversationFaceTalker = false;
 		players[player].ConversationNPC = NULL;
 		players[player].ConversationPC = NULL;
 		players[player].ConversationNPCAngle = 0;
-		// fall through
+		break;
+		
 	case CONV_CLOSE:
 		if (players[player].ConversationNPC != NULL)
 		{
 			players[player].ConversationNPC->flags5 &= ~MF5_INCONVERSATION;
 		}
-
+		break;
 
 	default:
 		break;

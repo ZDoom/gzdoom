@@ -125,6 +125,16 @@ static const char *RenderStyles[] =
 
 //==========================================================================
 //
+//==========================================================================
+DEFINE_CLASS_PROPERTY(respawns, 0, FakeInventory)
+{
+	defaults->Respawnable = true;
+}
+
+
+
+//==========================================================================
+//
 // ParseOldDecoration
 //
 // Reads an old style decoration object

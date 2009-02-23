@@ -1,4 +1,10 @@
-﻿February 22, 2009  (Changes by Graf Zahl)
+﻿February 23, 2009  (Changes by Graf Zahl)
+- Fixed: The map name display on the automap was incomplete.
+- Added FakeInventory.Respawns DECORATe property
+- Fixed: Unsetting the MF5_INCONVERSATION flag did not work when quitting the
+  conversation by pressing Escape.
+
+February 22, 2009  (Changes by Graf Zahl)
 - added ML_BLOCKPROJECTILE flag to lines.
 - Fixed: With opl_onechip set the second OPL chip was never set to anything valid
   so it contained an invalid pointer. There were also a few other places that

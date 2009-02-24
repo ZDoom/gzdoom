@@ -553,7 +553,7 @@ void APowerInvisibility::CommonInit()
 	Owner->flags |= MF_SHADOW;
 	// transfer seeker missile blocking (but only if the owner does not already have this flag
 	if (!(Owner->flags5 & MF5_CANTSEEK) && (flags5 & MF5_CANTSEEK)) Owner->flags5 |= MF5_CANTSEEK;
-	else flags &=~MF5_CANTSEEK;
+	else flags5 &= ~MF5_CANTSEEK;
 }
 
 //===========================================================================

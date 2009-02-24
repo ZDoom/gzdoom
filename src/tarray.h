@@ -390,7 +390,7 @@ typedef unsigned int hash_t;
 template<class KT> struct THashTraits
 {
 	// Returns the hash value for a key.
-	hash_t Hash(const KT key) { return hash_t(key); }
+	hash_t Hash(const KT key) { return (hash_t)(intptr_t)key; }
 
 	// Compares two keys, returning zero if they are the same.
 	int Compare(const KT left, const KT right) { return left != right; }

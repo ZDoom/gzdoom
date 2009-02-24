@@ -1,4 +1,6 @@
 ﻿February 23, 2009
+- Changed DEM_ADDSLOTDEFAULT, DEM_ADDSLOT, and DEM_SETSLOT to be more space-
+  efficient.
 - Fixed: player->oldbuttons was copied from the current button set at the end
   of P_PlayerThink(), well before ACS could ever get at it with GetPlayerInput.
 

@@ -30,6 +30,11 @@ FString WeaponSection;
 TArray<FString> KeyConfWeapons;
 bool PlayingKeyConf;
 
+TArray<const PClass *> Weapons_ntoh;
+TMap<const PClass *, int> Weapons_hton;
+
+static int STACK_ARGS ntoh_cmp(const void *a, const void *b);
+
 //===========================================================================
 //
 // AWeapon :: Serialize
@@ -1132,21 +1137,22 @@ void FWeaponSlots::CompleteSetup(const PClass *type)
 	}
 }
 
-void P_CompleteWeaponSetup(int playernum, const PClass *type)
+void P_CompleteWeaponSetup()
 {
 	// Set up the weapon slots locally
-	LocalWeapons.CompleteSetup(type);
+	LocalWeapons.CompleteSetup(players[consoleplayer].mo->GetClass());
 	// Now transmit them across the network
 	for (int i = 0; i < NUM_WEAPON_SLOTS; ++i)
 	{
-		Net_WriteByte(DEM_SETSLOT);
-		Net_WriteByte(playernum);
-		Net_WriteByte(i);
-		Net_WriteByte(LocalWeapons.Slots[i].Size());
-		for(int j = 0; j < LocalWeapons.Slots[i].Size(); j++)
+		if (LocalWeapons.Slots[i].Size() > 0)
 		{
-			const PClass *cls = LocalWeapons.Slots[i].GetWeapon(j);
-			if (cls != NULL) Net_WriteString(cls->TypeName.GetChars());
+			Net_WriteByte(DEM_SETSLOT);
+			Net_WriteByte(i);
+			Net_WriteByte(LocalWeapons.Slots[i].Size());
+			for(int j = 0; j < LocalWeapons.Slots[i].Size(); j++)
+			{
+				Net_WriteWeapon(LocalWeapons.Slots[i].GetWeapon(j));
+			}
 		}
 	}
 }
@@ -1214,18 +1220,6 @@ int FWeaponSlots::RestoreSlots(FConfigFile *config, const char *section)
 // CCMD setslot
 //
 //===========================================================================
-void FWeaponSlots::SetSlot(int slot, TArray<const char *> argv)
-{
-	Slots[slot].Clear();
-	for (int i = 0; i < argv.Size(); ++i)
-	{
-		if (!Slots[slot].AddWeapon (argv[i]))
-		{
-			Printf ("Could not add %s to slot %d\n", argv[i], slot);
-		}
-	}
-}
-
 
 void FWeaponSlots::PrintSettings()
 {
@@ -1272,15 +1266,11 @@ CCMD (setslot)
 	}
 	else if (PlayingKeyConf)
 	{
-		BYTE count = argv.argc()-2;
-		TArray<const char *> weapons;
-
-		weapons.Resize(count);
-		for(int i = 0; i < count; i++)
+		LocalWeapons.Slots[slot].Clear();
+		for (int i = 2; i < argv.argc(); ++i)
 		{
-			weapons[i] = argv[i+2];
+			LocalWeapons.Slots[slot].AddWeapon(argv[i]);
 		}
-		LocalWeapons.SetSlot(slot, weapons);
 	}
 	else
 	{
@@ -1290,12 +1280,11 @@ CCMD (setslot)
 		}
 
 		Net_WriteByte(DEM_SETSLOT);
-		Net_WriteByte(consoleplayer);
 		Net_WriteByte(slot);
 		Net_WriteByte(argv.argc()-2);
 		for (int i = 2; i < argv.argc(); i++)
 		{
-			Net_WriteString(argv[i]);
+			Net_WriteWeapon(PClass::FindClass(argv[i]));
 		}
 	}
 }
@@ -1306,11 +1295,11 @@ CCMD (setslot)
 //
 //===========================================================================
 
-void FWeaponSlots::AddSlot(int slot, const char *name)
+void FWeaponSlots::AddSlot(int slot, const PClass *type, bool feedback)
 {
-	if (!Slots[slot].AddWeapon (name))
+	if (type != NULL && !Slots[slot].AddWeapon(type) && feedback)
 	{
-		Printf ("Could not add %s to slot %zu\n", name, slot);
+		Printf ("Could not add %s to slot %zu\n", type->TypeName.GetChars(), slot);
 	}
 }
 
@@ -1330,14 +1319,13 @@ CCMD (addslot)
 	}
 	else if (PlayingKeyConf)
 	{
-		LocalWeapons.AddSlot(int(slot), argv[2]);
+		LocalWeapons.AddSlot(int(slot), PClass::FindClass(argv[2]), false);
 	}
 	else
 	{
 		Net_WriteByte(DEM_ADDSLOT);
-		Net_WriteByte(consoleplayer);
 		Net_WriteByte(slot);
-		Net_WriteString(argv[2]);
+		Net_WriteWeapon(PClass::FindClass(argv[2]));
 	}
 }
 
@@ -1360,15 +1348,17 @@ CCMD (weaponsection)
 // CCMD addslotdefault
 //
 //===========================================================================
-void FWeaponSlots::AddSlotDefault(int slot, const char *name)
+void FWeaponSlots::AddSlotDefault(int slot, const PClass *type, bool feedback)
 {
-	const PClass *type = PClass::FindClass (name);
-	if (type != NULL && type->IsDescendantOf (RUNTIME_CLASS(AWeapon)))
+	if (type != NULL && type->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
 	{
-		switch (AddDefaultWeapon (slot, type))
+		switch (AddDefaultWeapon(slot, type))
 		{
 		case SLOTDEF_Full:
-			Printf ("Could not add %s to slot %d\n", name, slot);
+			if (feedback)
+			{
+				Printf ("Could not add %s to slot %d\n", type->TypeName.GetChars(), slot);
+			}
 			break;
 
 		default:
@@ -1405,14 +1395,13 @@ CCMD (addslotdefault)
 	}
 	else if (PlayingKeyConf)
 	{
-		LocalWeapons.AddSlotDefault(int(slot), argv[2]);
+		LocalWeapons.AddSlotDefault(int(slot), PClass::FindClass(argv[2]), false);
 	}
 	else
 	{
 		Net_WriteByte(DEM_ADDSLOTDEFAULT);
-		Net_WriteByte(consoleplayer);
 		Net_WriteByte(slot);
-		Net_WriteString(argv[2]);
+		Net_WriteWeapon(PClass::FindClass(argv[2]));
 	}
 }
 
@@ -1437,12 +1426,172 @@ void P_PlaybackKeyConfWeapons()
 
 //===========================================================================
 //
-// CCMD dumpslots
+// P_SetupWeapons_ntohton
 //
-// Dumps a config-friendly listing of the current slot assignments.
+// Initializes the ntoh and hton maps for weapon types. To populate the ntoh
+// array, weapons are sorted first by game, then lexicographically. Weapons
+// from the current game are sorted first, followed by weapons for all other
+// games, and within each block, they are sorted by name.
 //
 //===========================================================================
 
-CCMD (dumpslots)
+void P_SetupWeapons_ntohton()
 {
+	unsigned int i;
+	const PClass *cls;
+
+	Weapons_ntoh.Clear();
+	Weapons_hton.Clear();
+
+	cls = NULL;
+	Weapons_ntoh.Push(cls);		// Index 0 is always NULL.
+	for (i = 0; i < PClass::m_Types.Size(); ++i)
+	{
+		PClass *cls = PClass::m_Types[i];
+
+		if (cls->ActorInfo != NULL && cls->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
+		{
+			Weapons_ntoh.Push(cls);
+		}
+	}
+	qsort(&Weapons_ntoh[1], Weapons_ntoh.Size() - 1, sizeof(Weapons_ntoh[0]), ntoh_cmp);
+	for (i = 0; i < Weapons_ntoh.Size(); ++i)
+	{
+		Weapons_hton[Weapons_ntoh[i]] = i;
+	}
+}
+
+//===========================================================================
+//
+// ntoh_cmp
+//
+// Sorting comparison function used by P_SetupWeapons_ntohton().
+//
+// Weapons that filter for the current game appear first, weapons that filter
+// for any game appear second, and weapons that filter for some other game
+// appear last. The idea here is to try to keep all the weapons that are
+// most likely to be used at the start of the list so that they only need
+// one byte to transmit across the network.
+//
+//===========================================================================
+
+static int STACK_ARGS ntoh_cmp(const void *a, const void *b)
+{
+	const PClass *c1 = *(const PClass **)a;
+	const PClass *c2 = *(const PClass **)b;
+	int g1 = c1->ActorInfo->GameFilter == GAME_Any ? 1 : (c1->ActorInfo->GameFilter & gameinfo.gametype) ? 0 : 2;
+	int g2 = c2->ActorInfo->GameFilter == GAME_Any ? 1 : (c2->ActorInfo->GameFilter & gameinfo.gametype) ? 0 : 2;
+	if (g1 != g2)
+	{
+		return g1 - g2;
+	}
+	return stricmp(c1->TypeName.GetChars(), c2->TypeName.GetChars());
+}
+
+//===========================================================================
+//
+// P_WriteDemoWeaponsChunk
+//
+// Store the list of weapons so that adding new ones does not automatically
+// break demos.
+//
+//===========================================================================
+
+void P_WriteDemoWeaponsChunk(BYTE **demo)
+{
+	WriteWord(Weapons_ntoh.Size(), demo);
+	for (unsigned int i = 1; i < Weapons_ntoh.Size(); ++i)
+	{
+		WriteString(Weapons_ntoh[i]->TypeName.GetChars(), demo);
+	}
+}
+
+//===========================================================================
+//
+// P_ReadDemoWeaponsChunk
+//
+// Restore the list of weapons that was current at the time the demo was
+// recorded.
+//
+//===========================================================================
+
+void P_ReadDemoWeaponsChunk(BYTE **demo)
+{
+	int count, i;
+	const PClass *type;
+	const char *s;
+
+	count = ReadWord(demo);
+	Weapons_ntoh.Resize(count);
+	Weapons_hton.Clear(count);
+
+	Weapons_ntoh[0] = type = NULL;
+	Weapons_hton[type] = 0;
+
+	for (i = 1; i < count; ++i)
+	{
+		s = ReadStringConst(demo);
+		type = PClass::FindClass(s);
+		// If a demo was recorded with a weapon that is no longer present,
+		// should we report it?
+		Weapons_ntoh[i] = type;
+		if (type != NULL)
+		{
+			Weapons_hton[type] = i;
+		}
+	}
+}
+
+//===========================================================================
+//
+// Net_WriteWeapon
+//
+//===========================================================================
+
+void Net_WriteWeapon(const PClass *type)
+{
+	int index, *index_p;
+
+	index_p = Weapons_hton.CheckKey(type);
+	if (index_p == NULL)
+	{
+		index = 0;
+	}
+	else
+	{
+		index = *index_p;
+	}
+	// 32767 weapons better be enough for anybody.
+	assert(index >= 0 && index <= 32767);
+	if (index < 128)
+	{
+		Net_WriteByte(index);
+	}
+	else
+	{
+		Net_WriteByte(0x80 | index);
+		Net_WriteByte(index >> 7);
+	}
+}
+
+//===========================================================================
+//
+// Net_ReadWeapon
+//
+//===========================================================================
+
+const PClass *Net_ReadWeapon(BYTE **stream)
+{
+	int index;
+
+	index = ReadByte(stream);
+	if (index & 0x80)
+	{
+		index = (index & 0x7F) | (ReadByte(stream) << 7);
+	}
+	if (index >= Weapons_ntoh.Size())
+	{
+		return NULL;
+	}
+	return Weapons_ntoh[index];
 }

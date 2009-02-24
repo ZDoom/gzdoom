@@ -2605,6 +2605,7 @@ void D_DoomMain (void)
 	StartScreen->LoadingStatus ("Init game engine", 0x3f);
 	P_Init ();
 
+	P_SetupWeapons_ntohton();
 
 	//SBarInfo support.
 	SBarInfo::Load();

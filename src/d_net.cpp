@@ -2351,35 +2351,33 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 
 	case DEM_SETSLOT:
 		{
-			BYTE playernum = ReadByte(stream);
-			BYTE slot = ReadByte(stream);
-			BYTE count = ReadByte(stream);
-			TArray<const char *> weapons;
-
-			weapons.Resize(count);
-			for(int i = 0; i < count; i++)
+			unsigned int slot = ReadByte(stream);
+			int count = ReadByte(stream);
+			if (slot < NUM_WEAPON_SLOTS)
 			{
-				weapons[i] = ReadStringConst(stream);
+				players[player].weapons.Slots[slot].Clear();
 			}
-			players[playernum].weapons.SetSlot(slot, weapons);
+			for(int i = 0; i < count; ++i)
+			{
+				const PClass *wpn = Net_ReadWeapon(stream);
+				players[player].weapons.AddSlot(slot, wpn, player == consoleplayer);
+			}
 		}
 		break;
 
 	case DEM_ADDSLOT:
 		{
-			BYTE playernum = ReadByte(stream);
-			BYTE slot = ReadByte(stream);
-			const char *weap = ReadStringConst(stream);
-			players[playernum].weapons.AddSlot(slot, weap);
+			int slot = ReadByte(stream);
+			const PClass *wpn = Net_ReadWeapon(stream);
+			players[player].weapons.AddSlot(slot, wpn, player == consoleplayer);
 		}
 		break;
 
 	case DEM_ADDSLOTDEFAULT:
 		{
-			BYTE playernum = ReadByte(stream);
-			BYTE slot = ReadByte(stream);
-			const char *weap = ReadStringConst(stream);
-			players[playernum].weapons.AddSlotDefault(slot, weap);
+			int slot = ReadByte(stream);
+			const PClass *wpn = Net_ReadWeapon(stream);
+			players[player].weapons.AddSlotDefault(slot, wpn, player == consoleplayer);
 		}
 		break;
 
@@ -2503,17 +2501,17 @@ void Net_SkipCommand (int type, BYTE **stream)
 
 		case DEM_SETSLOT:
 			{
-				skip = 3;
-				for(int numweapons = *(*stream + 2); numweapons > 0; numweapons--)
+				skip = 2;
+				for(int numweapons = (*stream)[1]; numweapons > 0; numweapons--)
 				{
-					skip += strlen ((char *)(*stream + skip)) + 1;
+					skip += 1 + ((*stream)[skip] >> 7);
 				}
 			}
 			break;
 
 		case DEM_ADDSLOT:
 		case DEM_ADDSLOTDEFAULT:
-			skip = strlen ((char *)(*stream + 2)) + 3;
+			skip = 2 + ((*stream)[1] >> 7);
 			break;
 
 

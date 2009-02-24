@@ -48,6 +48,7 @@
 #define COMP_ID		BIGE_ID('C','O','M','P')
 #define BODY_ID		BIGE_ID('B','O','D','Y')
 #define NETD_ID		BIGE_ID('N','E','T','D')
+#define WEAP_ID		BIGE_ID('W','E','A','P')
 
 #define	ANGLE2SHORT(x)	((((x)/360) & 65535)
 #define	SHORT2ANGLE(x)	((x)*360)

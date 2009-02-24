@@ -2175,6 +2175,11 @@ void G_BeginRecording (const char *startmap)
 	C_WriteCVars (&demo_p, CVAR_SERVERINFO|CVAR_DEMOSAVE);
 	FinishChunk (&demo_p);
 
+	// Write weapon ordering chunk
+	StartChunk (WEAP_ID, &demo_p);
+	P_WriteDemoWeaponsChunk(&demo_p);
+	FinishChunk (&demo_p);
+
 	// Indicate body is compressed
 	StartChunk (COMP_ID, &demo_p);
 	democompspot = demo_p;
@@ -2299,6 +2304,10 @@ bool G_ProcessIFFDemo (char *mapname)
 
 		case NETD_ID:
 			multiplayer = true;
+			break;
+
+		case WEAP_ID:
+			P_ReadDemoWeaponsChunk(&demo_p);
 			break;
 
 		case BODY_ID:
@@ -2456,19 +2465,16 @@ bool G_CheckDemoStatus (void)
 			endtime = I_GetTime (false) - starttime;
 
 		C_RestoreCVars ();		// [RH] Restore cvars demo might have changed
-
 		M_Free (demobuffer);
+
+		P_SetupWeapons_ntohton();
 		demoplayback = false;
 		netdemo = false;
 		netgame = false;
 		multiplayer = false;
 		singletics = false;
-		{
-			int i;
-
-			for (i = 1; i < MAXPLAYERS; i++)
-				playeringame[i] = 0;
-		}
+		for (int i = 1; i < MAXPLAYERS; i++)
+			playeringame[i] = 0;
 		consoleplayer = 0;
 		players[0].camera = NULL;
 		StatusBar->AttachToPlayer (&players[0]);

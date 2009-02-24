@@ -989,6 +989,7 @@ void G_Ticker ()
 			{
 				G_WriteDemoTiccmd (newcmd, i, buf);
 			}
+			players[i].oldbuttons = cmd->ucmd.buttons;
 			// If the user alt-tabbed away, paused gets set to -1. In this case,
 			// we do not want to read more demo commands until paused is no
 			// longer negative.

@@ -2313,9 +2313,6 @@ void P_PlayerThink (player_t *player)
 			}
 		}
 	}
-
-	// Save buttons
-	player->oldbuttons = cmd->ucmd.buttons;
 }
 
 void P_PredictPlayer (player_t *player)

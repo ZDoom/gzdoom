@@ -1,4 +1,8 @@
-﻿February 23, 2009  (Changes by Graf Zahl)
+﻿February 23, 2009
+- Fixed: player->oldbuttons was copied from the current button set at the end
+  of P_PlayerThink(), well before ACS could ever get at it with GetPlayerInput.
+
+February 23, 2009  (Changes by Graf Zahl)
 - Fixed: The map name display on the automap was incomplete.
 - Added FakeInventory.Respawns DECORATe property
 - Fixed: Unsetting the MF5_INCONVERSATION flag did not work when quitting the

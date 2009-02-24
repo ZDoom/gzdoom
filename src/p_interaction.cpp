@@ -1193,7 +1193,8 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 		}
 	}
 	
-	if (!(target->flags5 & MF5_NOPAIN) && (pr_damagemobj() < painchance) && !(target->flags & MF_SKULLFLY))
+	if (!(target->flags5 & MF5_NOPAIN) && (inflictor == NULL || !(inflictor->flags5 & MF5_PAINLESS)) && 
+		(pr_damagemobj() < painchance) && !(target->flags & MF_SKULLFLY))
 	{
 		if (mod == NAME_Electric)
 		{

@@ -38,6 +38,13 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <new>
+
+#if !defined(_WIN32)
+#include <inttypes.h>		// for intptr_t
+#elif !defined(_MSC_VER)
+#include <stdint.h>			// for mingw
+#endif
+
 #include "m_alloc.h"
 
 class FArchive;

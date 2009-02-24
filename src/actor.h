@@ -306,6 +306,7 @@ enum
 	MF5_BRIGHT			= 0x08000000,	// Actor is always rendered fullbright
 	MF5_CANTSEEK		= 0x10000000,	// seeker missiles cannot home in on this actor
 	MF5_INCONVERSATION	= 0x20000000,	// Actor is having a conversation
+	MF5_PAINLESS		= 0x40000000,	// Actor always inflicts painless damage.
 
 
 // --- mobj.renderflags ---

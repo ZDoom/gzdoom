@@ -1,4 +1,14 @@
-﻿February 24, 2009  (Changes by Graf Zahl)
+﻿February 25, 2009
+- Removed the delay for starting all sounds from one tic at exactly the same
+  DSP position. Without also synchronizing the stopping of sounds, it can
+  cause problems with things like the chainsaw where the sound is stopped and
+  immediately restarted, causing occassional gaps between the stopping of the
+  sound and the starting of the new one. (I added the start synchronization to
+  combat flanging of paired moving polyobjects when moving around, but I think
+  just removing velocity from the player for sound calculations takes care of
+  that well enough.)
+
+February 24, 2009  (Changes by Graf Zahl)
 - Added GCC headers for intptr_t to tarray.h.
 - Added MF5_PAINLESS flag for projectiles that don't make the target go into
   the pain state.

@@ -650,7 +650,7 @@ bool FMODSoundRenderer::Init()
 
 	if (!ShowedBanner)
 	{
-		Printf("FMOD Sound System, copyright © Firelight Technologies Pty, Ltd., 1994-2008.\n");
+		Printf("FMOD Sound System, copyright © Firelight Technologies Pty, Ltd., 1994-2009.\n");
 		ShowedBanner = true;
 	}
 #ifdef _WIN32
@@ -1540,7 +1540,7 @@ bool FMODSoundRenderer::HandleChannelDelay(FMOD::Channel *chan, FISoundChannel *
 	}
 	else
 	{
-		chan->setDelay(FMOD_DELAYTYPE_DSPCLOCK_START, DSPClock.Hi, DSPClock.Lo);
+//		chan->setDelay(FMOD_DELAYTYPE_DSPCLOCK_START, DSPClock.Hi, DSPClock.Lo);
 	}
 	return true;
 }

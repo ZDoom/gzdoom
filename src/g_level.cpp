@@ -1400,6 +1400,7 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 	int i = level.totaltime;
 
 	arc << level.flags
+		<< level.flags2
 		<< level.fadeto
 		<< level.found_secrets
 		<< level.found_items

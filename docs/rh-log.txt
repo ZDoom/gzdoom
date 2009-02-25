@@ -1,4 +1,8 @@
-﻿February 25, 2009
+﻿February 25, 2009  (Changes by Graf Zahl)
+- fixed: level.flags2 was not stored in savegames. Also bumped min. savegame
+  version and removed old compatibility handlings.
+
+February 25, 2009
 - Removed the delay for starting all sounds from one tic at exactly the same
   DSP position. Without also synchronizing the stopping of sounds, it can
   cause problems with things like the chainsaw where the sound is stopped and

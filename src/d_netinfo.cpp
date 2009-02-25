@@ -806,11 +806,6 @@ FArchive &operator<< (FArchive &arc, userinfo_t &info)
 		arc.Read (&info.netname, sizeof(info.netname));
 	}
 	arc << info.team << info.aimdist << info.color << info.skin << info.gender << info.neverswitch;
-	if (SaveVersion >= 1333 && SaveVersion <= 1355) 
-	{
-		int savedaimdist;
-		arc << savedaimdist;
-	}
 	return arc;
 }
 

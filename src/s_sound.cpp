@@ -2010,15 +2010,8 @@ static FArchive &operator<<(FArchive &arc, FSoundChan &chan)
 		<< chan.StartTime
 		<< chan.Rolloff.RolloffType
 		<< chan.Rolloff.MinDistance
-		<< chan.Rolloff.MaxDistance;
-
-	if (SaveVersion >= 1416)
-	{
-		arc << chan.LimitRange;
-	}
-	else 
-	{
-		chan.LimitRange = 256*256;
+		<< chan.Rolloff.MaxDistance
+		<< chan.LimitRange;
 	}
 
 	if (arc.IsLoading())

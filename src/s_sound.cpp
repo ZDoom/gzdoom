@@ -2012,7 +2012,6 @@ static FArchive &operator<<(FArchive &arc, FSoundChan &chan)
 		<< chan.Rolloff.MinDistance
 		<< chan.Rolloff.MaxDistance
 		<< chan.LimitRange;
-	}
 
 	if (arc.IsLoading())
 	{

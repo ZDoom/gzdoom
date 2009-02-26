@@ -4,6 +4,11 @@
   version and removed old compatibility handlings.
 
 February 25, 2009
+- The SFX Reverb unit is now moved so that it serves as an input to the water
+  effect rather than as an input to the ChannelGroup Target Unit. This means
+  the water effect is now applied after any room reverb, rather than in
+  parallel with it.
+- Fixed: UI sounds should not have reverb applied to them.
 - Removed the delay for starting all sounds from one tic at exactly the same
   DSP position. Without also synchronizing the stopping of sounds, it can
   cause problems with things like the chainsaw where the sound is stopped and

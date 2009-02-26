@@ -49,7 +49,8 @@ enum EStartSoundFlags
 	SNDF_LOOP=1,
 	SNDF_NOPAUSE=2,
 	SNDF_AREA=4,
-	SNDF_ABSTIME=8
+	SNDF_ABSTIME=8,
+	SNDF_NOREVERB=16,
 };
 
 class SoundStream

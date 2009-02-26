@@ -72,6 +72,8 @@ private:
 	FISoundChannel *CommonChannelSetup(FMOD::Channel *chan, FISoundChannel *reuse_chan) const;
 	FMOD_MODE SetChanHeadSettings(SoundListener *listener, FMOD::Channel *chan, const FVector3 &pos, bool areasound, FMOD_MODE oldmode) const;
 
+	bool ReconnectSFXReverbUnit();
+
 	bool Init ();
 	void Shutdown ();
 	void DumpDriverCaps(FMOD_CAPS caps, int minfrequency, int maxfrequency);
@@ -93,6 +95,8 @@ private:
 	FMOD::DSP *WaterLP, *WaterReverb;
 	FMOD::DSPConnection *SfxConnection;
 	FMOD::DSP *ChannelGroupTargetUnit;
+	FMOD::DSP *SfxReverbPlaceholder;
+	bool SfxReverbHooked;
 	float LastWaterLP;
 
 	// Just for snd_status display

@@ -1032,6 +1032,7 @@ static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyO
 		if (chanflags & CHAN_LOOP) startflags |= SNDF_LOOP;
 		if (chanflags & CHAN_AREA) startflags |= SNDF_AREA;
 		if (chanflags & (CHAN_UI|CHAN_NOPAUSE)) startflags |= SNDF_NOPAUSE;
+		if (chanflags & CHAN_UI) startflags |= SNDF_NOREVERB;
 
 		if (attenuation > 0)
 		{

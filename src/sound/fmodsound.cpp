@@ -610,6 +610,8 @@ bool FMODSoundRenderer::Init()
 	PrevEnvironment = DefaultEnvironments[0];
 	DSPClock.AsOne = 0;
 	ChannelGroupTargetUnit = NULL;
+	SfxReverbHooked = false;
+	SfxReverbPlaceholder = NULL;
 
 	Printf("I_InitSound: Initializing FMOD\n");
 
@@ -908,6 +910,35 @@ bool FMODSoundRenderer::Init()
 			result = sfx_head->getInput(0, &pausable_head, &SfxConnection);
 			if (result == FMOD_OK)
 			{
+				// The placeholder mixer is for reference to where to connect the SFX
+				// reverb unit once it gets created.
+				result = Sys->createDSPByType(FMOD_DSP_TYPE_MIXER, &SfxReverbPlaceholder);
+				if (result == FMOD_OK)
+				{
+					// Replace the PausableSFX->SFX connection with
+					// PausableSFX->ReverbPlaceholder->SFX.
+					result = SfxReverbPlaceholder->addInput(pausable_head, NULL);
+					if (result == FMOD_OK)
+					{
+						FMOD::DSPConnection *connection;
+						result = sfx_head->addInput(SfxReverbPlaceholder, &connection);
+						if (result == FMOD_OK)
+						{
+							sfx_head->disconnectFrom(pausable_head);
+							SfxReverbPlaceholder->setActive(true);
+							SfxReverbPlaceholder->setBypass(true);
+							// The placeholder now takes the place of the pausable_head
+							// for the following connections.
+							pausable_head = SfxReverbPlaceholder;
+							SfxConnection = connection;
+						}
+					}
+					else
+					{
+						SfxReverbPlaceholder->release();
+						SfxReverbPlaceholder = NULL;
+					}
+				}
 				result = WaterLP->addInput(pausable_head, NULL);
 				WaterLP->setActive(false);
 				WaterLP->setParameter(FMOD_DSP_LOWPASS_CUTOFF, snd_waterlp);
@@ -1017,6 +1048,11 @@ void FMODSoundRenderer::Shutdown()
 		{
 			WaterReverb->release();
 			WaterReverb = NULL;
+		}
+		if (SfxReverbPlaceholder != NULL)
+		{
+			SfxReverbPlaceholder->release();
+			SfxReverbPlaceholder = NULL;
 		}
 
 		Sys->close();
@@ -1389,6 +1425,15 @@ FISoundChannel *FMODSoundRenderer::StartSound(SoundHandle sfx, float vol, int pi
 			chan->stop();
 			return NULL;
 		}
+		if (flags & SNDF_NOREVERB)
+		{
+			FMOD_REVERB_CHANNELPROPERTIES reverb = { 0, };
+			if (FMOD_OK == chan->getReverbProperties(&reverb))
+			{
+				reverb.Room = -10000;
+				chan->setReverbProperties(&reverb);
+			}
+		}
 		chan->setPaused(false);
 		return CommonChannelSetup(chan, reuse_chan);
 	}
@@ -1486,6 +1531,15 @@ FISoundChannel *FMODSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener *
 		{
 			chan->stop();
 			return NULL;
+		}
+		if (flags & SNDF_NOREVERB)
+		{
+			FMOD_REVERB_CHANNELPROPERTIES reverb = { 0, };
+			if (FMOD_OK == chan->getReverbProperties(&reverb))
+			{
+				reverb.Room = -10000;
+				chan->setReverbProperties(&reverb);
+			}
 		}
 		chan->setPaused(false);
 		chan->getPriority(&def_priority);
@@ -1784,13 +1838,13 @@ void FMODSoundRenderer::UpdateListener(SoundListener *listener)
 	bool underwater = false;
 	const ReverbContainer *env;
 
+	underwater = (listener->underwater && snd_waterlp);
 	if (ForcedEnvironment)
 	{
 		env = ForcedEnvironment;
 	}
 	else
 	{
-		underwater = (listener->underwater && snd_waterlp);
 		env = listener->Environment;
 		if (env == NULL)
 		{
@@ -1803,6 +1857,11 @@ void FMODSoundRenderer::UpdateListener(SoundListener *listener)
 		const_cast<ReverbContainer*>(env)->Modified = false;
 		Sys->setReverbProperties((FMOD_REVERB_PROPERTIES *)(&env->Properties));
 		PrevEnvironment = env;
+
+		if (!SfxReverbHooked)
+		{
+			SfxReverbHooked = ReconnectSFXReverbUnit();
+		}
 	}
 
 	if (underwater || env->SoftwareWater)
@@ -1850,6 +1909,65 @@ void FMODSoundRenderer::UpdateListener(SoundListener *listener)
 			}
 		}
 	}
+}
+
+//==========================================================================
+//
+// FMODSoundRenderer :: ReconnectSFXReverbUnit
+//
+// Locates the DSP unit responsible for software 3D reverb. There is only
+// one, and it by default is connected directly to the ChannelGroup Target
+// Unit. Older versions of FMOD created this at startup; newer versions
+// delay creating it until the first call to setReverbProperties, at which
+// point it persists until the system is closed.
+//
+// Upon locating the proper DSP unit, reconnects it to serve as an input to
+// our water DSP chain after the Pausable SFX ChannelGroup.
+//
+//==========================================================================
+
+bool FMODSoundRenderer::ReconnectSFXReverbUnit()
+{
+	FMOD::DSP *unit;
+	FMOD_DSP_TYPE type;
+	int numinputs, i;
+
+	if (ChannelGroupTargetUnit == NULL || SfxReverbPlaceholder == NULL)
+	{
+		return false;
+	}
+	// Look for SFX Reverb unit
+	if (FMOD_OK != ChannelGroupTargetUnit->getNumInputs(&numinputs))
+	{
+		return false;
+	}
+	for (i = numinputs - 1; i >= 0; --i)
+	{
+		if (FMOD_OK == ChannelGroupTargetUnit->getInput(i, &unit, NULL) &&
+			FMOD_OK == unit->getType(&type))
+		{
+			if (type == FMOD_DSP_TYPE_SFXREVERB)
+			{
+				break;
+			}
+		}
+	}
+	if (i < 0)
+	{
+		return false;
+	}
+
+	// Found it! Now move it in the DSP graph to be done before the water
+	// effect.
+	if (FMOD_OK != ChannelGroupTargetUnit->disconnectFrom(unit))
+	{
+		return false;
+	}
+	if (FMOD_OK != SfxReverbPlaceholder->addInput(unit, NULL))
+	{
+		return false;
+	}
+	return true;
 }
 
 //==========================================================================

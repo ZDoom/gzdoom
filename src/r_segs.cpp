@@ -589,6 +589,9 @@ void wallscan_striped (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, 
 	up = uwal;
 	down = most1;
 
+	assert(WallSX1 <= x1);
+	assert(WallSX2 > x2);
+
 	for (int i = 0; i < el->NumUsedLights; ++i)
 	{
 		if (flooding && !el->Lights[i].bFlooder)
@@ -605,7 +608,7 @@ void wallscan_striped (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, 
 				//break;
 			}
 
-			if (j != 3 && (most3[x1] > up[x1] || most3[x2] > up[x2]))
+			if (j != 3 /*&& (most3[x1] > up[x1] || most3[x2] > up[x2])*/)
 			{
 				for (int j = x1; j <= x2; ++j)
 				{

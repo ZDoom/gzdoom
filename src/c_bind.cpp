@@ -153,10 +153,10 @@ static const FBinding DefStrifeBindings[] =
 	{ "backspace", "invdrop" },
 	{ "z", "showpop 3" },
 	{ "k", "showpop 2" },
+	{ "q", "invquery" },
 	{ NULL }
 	// not done
 	// h - use health
-	// q - query inventory
 };
 
 const char *KeyNames[NUM_KEYS] =

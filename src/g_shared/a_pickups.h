@@ -341,6 +341,9 @@ class AHealthPickup : public AInventory
 {
 	DECLARE_CLASS (AHealthPickup, AInventory)
 public:
+	int autousemode;
+
+	virtual void Serialize (FArchive &arc);
 	virtual AInventory *CreateCopy (AActor *other);
 	virtual AInventory *CreateTossable ();
 	virtual bool HandlePickup (AInventory *item);

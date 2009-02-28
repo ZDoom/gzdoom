@@ -2,6 +2,7 @@
 // Most of the MAPINFO is still in hexen.wad.
 skill baby
 {
+	AutoUseHealth
 	AmmoFactor = 1.5
 	DoubleAmmoFactor = 1.5
 	DamageFactor = 0.5

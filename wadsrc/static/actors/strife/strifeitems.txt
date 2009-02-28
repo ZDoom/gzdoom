@@ -8,9 +8,10 @@ ACTOR MedPatch : HealthPickup 2011
 	+FLOORCLIP
 	+INVENTORY.INVBAR
 	Inventory.MaxAmount 20
-	Tag "Med_patch"
+	Tag "Med patch"
 	Inventory.Icon "I_STMP"
 	Inventory.PickupMessage "$TXT_MEDPATCH"
+	HealthPickup.Autouse 3
 	States
 	{
 	Spawn:
@@ -30,9 +31,10 @@ ACTOR MedicalKit : HealthPickup 2012
 	+FLOORCLIP
 	+INVENTORY.INVBAR
 	Inventory.MaxAmount 15
-	Tag "Medical_kit"
+	Tag "Medical kit"
 	Inventory.Icon "I_MDKT"
 	Inventory.PickupMessage "$TXT_MEDICALKIT"
+	HealthPickup.Autouse 3
 	States
 	{
 	Spawn:
@@ -52,7 +54,7 @@ ACTOR SurgeryKit : HealthPickup 83
 	+INVENTORY.INVBAR
 	Health -100
 	Inventory.MaxAmount 5
-	Tag "Surgery_Kit"	// "full_health" in the Teaser
+	Tag "Surgery Kit"	// "full_health" in the Teaser
 	Inventory.Icon "I_FULL"
 	Inventory.PickupMessage "$TXT_SURGERYKIT"
 	States
@@ -92,7 +94,7 @@ ACTOR BeldinsRing : Inventory
 	+FLOORCLIP
 	+INVENTORY.INVBAR
 	ConversationID 173, 165, 169
-	Tag "ring"
+	Tag "Ring"
 	Inventory.Icon "I_RING"
 	Inventory.GiveQuest 1
 	Inventory.PickupMessage "$TXT_BELDINSRING"
@@ -116,7 +118,7 @@ ACTOR OfferingChalice : Inventory 205
 	ConversationID 174, 166, 170
 	Radius 10
 	Height 16
-	Tag "Offering_Chalice"
+	Tag "Offering Chalice"
 	Inventory.Icon "I_RELC"
 	Inventory.PickupMessage "$TXT_OFFERINGCHALICE"
 	Inventory.GiveQuest 2
@@ -137,7 +139,7 @@ ACTOR Ear : Inventory
 	+FLOORCLIP
 	+INVENTORY.INVBAR
 	ConversationID 175, 167, 171
-	Tag "ear"
+	Tag "Ear"
 	Inventory.Icon "I_EARS"
 	Inventory.PickupMessage "$TXT_EAR"
 	Inventory.GiveQuest 9
@@ -162,7 +164,7 @@ ACTOR BrokenPowerCoupling : Inventory 226
 	+INVENTORY.INVBAR
 	Radius 16
 	Height 16
-	Tag "BROKEN_POWER_COUPLING"
+	Tag "Broken Power Coupling"
 	Inventory.MaxAmount 1
 	Inventory.Icon "I_COUP"
 	Inventory.PickupMessage "$TXT_BROKENCOUPLING"
@@ -188,7 +190,7 @@ ACTOR ShadowArmor : PowerupGiver 2024
 	+INVENTORY.INVBAR
 	-INVENTORY.FANCYPICKUPSOUND
 	RenderStyle Translucent
-	Tag "Shadow_armor"
+	Tag "Shadow Armor"
 	Inventory.MaxAmount 2
 	Powerup.Type "Shadow"
 	Inventory.Icon "I_SHD1"
@@ -215,7 +217,7 @@ ACTOR EnvironmentalSuit : PowerupGiver 2025
 	-INVENTORY.FANCYPICKUPSOUND
 	Inventory.MaxAmount 5
 	Powerup.Type "Mask"
-	Tag "Environmental_Suit"
+	Tag "Environmental Suit"
 	Inventory.Icon "I_MASK"
 	Inventory.PickupSound "misc/i_pkup"
 	Inventory.PickupMessage "$TXT_ENVSUIT"
@@ -236,7 +238,7 @@ ACTOR GuardUniform : Inventory 90
 	ConversationID 162, 158, 161
 	+FLOORCLIP
 	+INVENTORY.INVBAR
-	Tag "Guard_Uniform"
+	Tag "Guard Uniform"
 	Inventory.Icon "I_UNIF"
 	Inventory.PickupMessage "$TXT_GUARDUNIFORM"
 	Inventory.GiveQuest 15
@@ -257,7 +259,7 @@ ACTOR OfficersUniform : Inventory 52
 	ConversationID 163, 159, 162
 	+FLOORCLIP
 	+INVENTORY.INVBAR
-	Tag "Officer's_Uniform"
+	Tag "Officer's Uniform"
 	Inventory.Icon "I_OFIC"
 	Inventory.PickupMessage "$TXT_OFFICERSUNIFORM"
 	States
@@ -278,7 +280,7 @@ ACTOR FlameThrowerParts : Inventory
 	+FLOORCLIP
 	+INVENTORY.INVBAR
 	Inventory.Icon "I_BFLM"
-	Tag "flame_thrower_parts"
+	Tag "Flame Thrower Parts"
 	Inventory.PickupMessage "$TXT_FTHROWERPARTS"
 	States
 	{
@@ -298,7 +300,7 @@ ACTOR InterrogatorReport : Inventory
 	Game Strife
 	ConversationID 308, 289, 306
 	+FLOORCLIP
-	Tag "report"
+	Tag "Report"
 	Inventory.PickupMessage "$TXT_REPORT"
 	States
 	{
@@ -317,7 +319,7 @@ ACTOR Info : Inventory
 	ConversationID 300, 282, 299
 	+FLOORCLIP
 	+INVENTORY.INVBAR
-	Tag "info"
+	Tag "Info"
 	Inventory.Icon "I_TOKN"
 	Inventory.PickupMessage "$TXT_INFO"
 	States
@@ -387,7 +389,7 @@ ACTOR DegninOre : Inventory 59 native
 	+FLOORCLIP
 	+INCOMBAT
 	+INVENTORY.INVBAR
-	Tag "Degnin_Ore"
+	Tag "Degnin Ore"
 	DeathSound "ore/explode"
 	Inventory.Icon "I_XPRK"
 	Inventory.PickupMessage "$TXT_DEGNINORE"
@@ -457,7 +459,7 @@ ACTOR Scanner : PowerupGiver 2027 native
 	+FLOORCLIP
 	+INVENTORY.FANCYPICKUPSOUND
 	Inventory.MaxAmount 1
-	Tag "scanner"
+	Tag "Scanner"
 	Inventory.Icon "I_PMUP"
 	Powerup.Type "Scanner"
 	Inventory.PickupSound "misc/i_pkup"
@@ -477,7 +479,7 @@ ACTOR PrisonPass : Key native
 	Game Strife
 	ConversationID 304, 286, 303
 	Inventory.Icon "I_TOKN"
-	Tag "Prison_pass"
+	Tag "Prison Pass"
 	Inventory.PickupMessage "TXT_PRISONPASS"
 	States
 	{
@@ -507,7 +509,7 @@ ACTOR DummyStrifeItem : Inventory native
 ACTOR RaiseAlarm : DummyStrifeItem native
 {	
 	ConversationID 301, 283, 300
-	Tag "alarm"
+	Tag "Alarm"
 }
 
 // Open door tag 222 --------------------------------------------------------

@@ -2,6 +2,7 @@
 
 skill baby
 {
+	AutoUseHealth
 	AmmoFactor = 2
 	DamageFactor = 0.5
 	EasyBossBrain

@@ -58,7 +58,7 @@ ACTOR WeaponSmith : Merchant 116
 	Game Strife
 	ConversationID 2
 	PainSound "smith/pain"
-	Tag "Weapon_Smith"
+	Tag "Weapon Smith"
 }
 
 
@@ -71,7 +71,7 @@ ACTOR BarKeep : Merchant 72
 	ConversationID 3
 	PainSound "barkeep/pain"
 	ActiveSound "barkeep/active"
-	Tag "Bar_Keep"
+	Tag "Bar Keep"
 }
 
 

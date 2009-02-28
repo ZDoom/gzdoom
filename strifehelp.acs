@@ -69,7 +69,7 @@ script << 0 >> (int type, int tag)
 	
 	case 230:
 		i = GetLineRowOffset() & 31;
-		if (CheckInventory (QuestItems[i]))
+		if (CheckInventory (QuestItems[i]) || gametype() == GAME_NET_DEATHMATCH)
 		{
 			Door_Open (tag, VDOORSPEED);
 			clearlinespecial ();
@@ -78,7 +78,7 @@ script << 0 >> (int type, int tag)
 		
 	case 227:
 		i = GetLineRowOffset() & 31;
-		if (CheckInventory (QuestItems[i]))
+		if (CheckInventory (QuestItems[i]) || gametype() == GAME_NET_DEATHMATCH)
 		{
 			Door_Close (tag, VDOORSPEED);
 			clearlinespecial ();
@@ -126,7 +126,7 @@ script << 0 >> (int type, int tag)
 
 	case 193:
 		i = GetLineRowOffset() & 31;
-		if (CheckInventory (QuestItems[i]))
+		if (CheckInventory (QuestItems[i]) || gametype() == GAME_NET_DEATHMATCH)
 		{
 			Floor_LowerToLowest (tag, 8);
 			clearlinespecial ();
@@ -147,7 +147,7 @@ script << 0 >> (int type, int tag)
 
 	case 187:
 		i = GetLineRowOffset() & 31;
-		if (CheckInventory (QuestItems[i]))
+		if (CheckInventory (QuestItems[i]) || gametype() == GAME_NET_DEATHMATCH)
 		{
 			ClearForceField (tag);
 			clearlinespecial ();
@@ -155,7 +155,7 @@ script << 0 >> (int type, int tag)
 		break;
 		
 	case 188:
-		if (CheckInventory ("QuestItem16"))
+		if (CheckInventory ("QuestItem16") || gametype() == GAME_NET_DEATHMATCH)
 		{
 			Door_Open (tag, VDOORSPEED);
 			clearlinespecial ();
@@ -172,7 +172,7 @@ script << 0 >> (int type, int tag)
 
 	case 215:
 		i = (tag % 100) & 31;
-		if (CheckInventory (QuestItems[i]))
+		if (CheckInventory (QuestItems[i]) || gametype() == GAME_NET_DEATHMATCH)
 		{
 			SendToCommunicator (tag/100, 0, 1, 0);
 			clearlinespecial ();
@@ -192,7 +192,7 @@ script << 0 >> (int type, int tag)
 	
 	case 216:
 		i = GetLineRowOffset() & 31;
-		if (CheckInventory (QuestItems[i]))
+		if (CheckInventory (QuestItems[i]) || gametype() == GAME_NET_DEATHMATCH)
 		{
 			Door_Raise (tag, VDOORSPEED, VDOORWAIT);
 		}
@@ -205,6 +205,7 @@ script << 0 >> (int type, int tag)
 		if (gametype() == GAME_NET_DEATHMATCH)
 		{
 			Floor_RaiseByValue (tag, 128, 64);
+			clearlinespecial();
 		}
 		else
 		{
@@ -261,7 +262,7 @@ script << 0 >> (int type, int tag)
 		break;
 		
 	case 232:
-		if (!CheckInventory ("QuestItem18"))
+		if (!CheckInventory ("QuestItem18") && gametype() != GAME_NET_DEATHMATCH)
 		{
 			print (s:"You need the Oracle Pass!");
 			activatorsound ("*usefail", 127);
@@ -382,7 +383,7 @@ script << 0 >> (int type, int tag)
 		break;
 	
 	case 234:
-		if (CheckInventory ("QuestItem3"))
+		if (CheckInventory ("QuestItem3") || gametype() == GAME_NET_DEATHMATCH)
 		{
 			SetResultValue (Door_Raise (tag, VDOORSPEED, VDOORWAIT));
 		}

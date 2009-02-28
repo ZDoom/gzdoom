@@ -700,7 +700,7 @@ bool AActor::UseInventory (AInventory *item)
 		return false;
 	}
 	// Don't use it if you don't actually have any of it.
-	if (item->Amount <= 0)
+	if (item->Amount <= 0 || (item->ObjectFlags & OF_EuthanizeMe))
 	{
 		return false;
 	}
@@ -1876,8 +1876,11 @@ void P_ZMovement (AActor *mo)
 		if (!mo->waterlevel || mo->flags & MF_CORPSE || (mo->player &&
 			!(mo->player->cmd.ucmd.forwardmove | mo->player->cmd.ucmd.sidemove)))
 		{
-			mo->momz -= (fixed_t)(level.gravity * mo->Sector->gravity *
+			fixed_t grav = (fixed_t)(level.gravity * mo->Sector->gravity *
 				FIXED2FLOAT(mo->gravity) * 81.92);
+
+			if (mo->momz == 0) mo->momz -= grav + grav;
+			else mo->momz -= grav;
 		}
 		if (mo->waterlevel > 1)
 		{

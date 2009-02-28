@@ -1,4 +1,17 @@
-﻿February 26, 2009
+﻿February 28, 2009  (Changes by Graf Zahl)
+- Fixed: Strife's quest based line actions also work in Deathmatch.
+- Fixed: Gravity application was not correct. For actors with no vertical 
+  momentum the initial pull is supposed to be twice as strong as when 
+  vertical movement already takes place.
+- added invquery CCMD like in Strife. Also removed all underscores from the
+  tag strings so that they can be printed properly.
+- Fixed: Skill baby was missing 'autousehealth' for all games.
+- Added a new CVAR: sv_disableautohealth
+- Autouse of health items is no longer hardwired to the default item classes. 
+  There's a new property HealthPickup.Autouse. 0 means no autouse, 1 a small 
+  Raven health item, 2 a large Raven health item and 3 a Strife item.
+
+February 26, 2009
 - Removed an early-out in wallscan_striped() that is invalid when drawing a
   skybox.
 

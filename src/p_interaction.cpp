@@ -719,72 +719,89 @@ void AActor::Die (AActor *source, AActor *inflictor)
 // PROC P_AutoUseHealth
 //
 //---------------------------------------------------------------------------
+static int CountHealth(TArray<AInventory *> &Items)
+{
+	int counted = 0;
+	for(unsigned i = 0; i < Items.Size(); i++)
+	{
+		counted += Items[i]->Amount * Items[i]->health;
+	}
+	return counted;
+}
+
+static int UseHealthItems(TArray<AInventory *> &Items, int &saveHealth)
+{
+	int saved = 0;
+
+	while (Items.Size() > 0 && saveHealth > 0)
+	{
+		int maxhealth = 0;
+		int index = -1;
+
+		// Find the largest item in the list
+		for(unsigned i = 0; i < Items.Size(); i++)
+		{
+			if (Items[i]->health > maxhealth)
+			{
+				index = i;
+				maxhealth = Items[i]->Amount;
+			}
+		}
+
+		// Now apply the health items, using the same logic as Heretic anf Hexen.
+		int count = (saveHealth + maxhealth-1) / maxhealth;
+		for(int i = 0; i < count; i++)
+		{
+			saved += maxhealth;
+			saveHealth -= maxhealth;
+			if (--Items[index]->Amount == 0)
+			{
+				if (!(Items[index]->ItemFlags & IF_KEEPDEPLETED))
+				{
+					Items[index]->Destroy ();
+				}
+				Items.Delete(index);
+				break;
+			}
+		}
+	}
+	return saved;
+}
 
 void P_AutoUseHealth(player_t *player, int saveHealth)
 {
-	int i;
-	int count;
-	const PClass *normalType = PClass::FindClass (NAME_ArtiHealth);
-	const PClass *superType = PClass::FindClass (NAME_ArtiSuperHealth);
-	AInventory *normalItem = player->mo->FindInventory (normalType);
-	AInventory *superItem = player->mo->FindInventory (superType);
-	int normalAmount, superAmount;
+	TArray<AInventory *> NormalHealthItems;
+	TArray<AInventory *> LargeHealthItems;
 
-	normalAmount = normalItem != NULL ? normalItem->Amount : 0;
-	superAmount = superItem != NULL ? superItem->Amount : 0;
+	for(AInventory *inv = player->mo->Inventory; inv != NULL; inv = inv->Inventory)
+	{
+		if (inv->Amount > 0 && inv->IsKindOf(RUNTIME_CLASS(AHealthPickup)))
+		{
+			int mode = static_cast<AHealthPickup*>(inv)->autousemode;
+
+			if (mode == 0) NormalHealthItems.Push(inv);
+			else if (mode == 1) LargeHealthItems.Push(inv);
+		}
+	}
+
+	int normalhealth = CountHealth(NormalHealthItems);
+	int largehealth = CountHealth(LargeHealthItems);
 
 	bool skilluse = !!G_SkillProperty(SKILLP_AutoUseHealth);
 
-	if (skilluse && (normalAmount*25 >= saveHealth))
+	if (skilluse && normalhealth >= saveHealth)
 	{ // Use quartz flasks
-		count = (saveHealth+24)/25;
-		for(i = 0; i < count; i++)
-		{
-			player->health += 25;
-			if (--normalItem->Amount == 0)
-			{
-				normalItem->Destroy ();
-				break;
-			}
-		}
+		player->health += UseHealthItems(NormalHealthItems, saveHealth);
 	}
-	else if (superAmount*100 >= saveHealth)
-	{ // Use mystic urns
-		count = (saveHealth+99)/100;
-		for(i = 0; i < count; i++)
-		{
-			player->health += 100;
-			if (--superItem->Amount == 0)
-			{
-				superItem->Destroy ();
-				break;
-			}
-		}
+	else if (largehealth >= saveHealth)
+	{ 
+		// Use mystic urns
+		player->health += UseHealthItems(LargeHealthItems, saveHealth);
 	}
-	else if (skilluse
-		&& (superAmount*100+normalAmount*25 >= saveHealth))
+	else if (skilluse && normalhealth + largehealth >= saveHealth)
 	{ // Use mystic urns and quartz flasks
-		count = (saveHealth+24)/25;
-		saveHealth -= count*25;
-		for(i = 0; i < count; i++)
-		{
-			player->health += 25;
-			if (--normalItem->Amount == 0)
-			{
-				normalItem->Destroy ();
-				break;
-			}
-		}
-		count = (saveHealth+99)/100;
-		for(i = 0; i < count; i++)
-		{
-			player->health += 100;
-			if (--superItem->Amount == 0)
-			{
-				superItem->Destroy ();
-				break;
-			}
-		}
+		player->health += UseHealthItems(NormalHealthItems, saveHealth);
+		if (saveHealth > 0) player->health += UseHealthItems(LargeHealthItems, saveHealth);
 	}
 	player->mo->health = player->health;
 }
@@ -794,22 +811,47 @@ void P_AutoUseHealth(player_t *player, int saveHealth)
 // P_AutoUseStrifeHealth
 //
 //============================================================================
+CVAR(Bool, sv_disableautohealth, false, CVAR_ARCHIVE|CVAR_SERVERINFO)
 
 void P_AutoUseStrifeHealth (player_t *player)
 {
-	static const ENamedName healthnames[2] = { NAME_MedicalKit, NAME_MedPatch };
+	TArray<AInventory *> Items;
 
-	for (int i = 0; i < 2; ++i)
+	for(AInventory *inv = player->mo->Inventory; inv != NULL; inv = inv->Inventory)
 	{
-		const PClass *type = PClass::FindClass (healthnames[i]);
-
-		while (player->health < 50)
+		if (inv->Amount > 0 && inv->IsKindOf(RUNTIME_CLASS(AHealthPickup)))
 		{
-			AInventory *item = player->mo->FindInventory (type);
-			if (item == NULL)
-				break;
-			if (!player->mo->UseInventory (item))
-				break;
+			int mode = static_cast<AHealthPickup*>(inv)->autousemode;
+
+			if (mode == 3) Items.Push(inv);
+		}
+	}
+
+	if (!sv_disableautohealth)
+	{
+		while (Items.Size() > 0)
+		{
+			int maxhealth = 0;
+			int index = -1;
+
+			// Find the largest item in the list
+			for(unsigned i = 0; i < Items.Size(); i++)
+			{
+				if (Items[i]->health > maxhealth)
+				{
+					index = i;
+					maxhealth = Items[i]->Amount;
+				}
+			}
+
+			while (player->health < 50)
+			{
+				if (!player->mo->UseInventory (Items[index]))
+					break;
+			}
+			if (player->health >= 50) return;
+			// Using all of this item was not enough so delete it and restart with the next best one
+			Items.Delete(index);
 		}
 	}
 }

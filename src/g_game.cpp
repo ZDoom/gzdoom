@@ -374,6 +374,17 @@ CCMD (invuse)
 	players[consoleplayer].inventorytics = 0;
 }
 
+CCMD(invquery)
+{
+	AInventory *inv = players[consoleplayer].mo->InvSel;
+	if (inv != NULL)
+	{
+		const char *description = inv->GetClass()->Meta.GetMetaString(AMETA_StrifeName);
+		if (description == NULL) description = inv->GetClass()->TypeName;
+		Printf(PRINT_HIGH, "%s (%dx)\n", description, inv->Amount);
+	}
+}
+
 CCMD (use)
 {
 	if (argv.argc() > 1 && who != NULL)

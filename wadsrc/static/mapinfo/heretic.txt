@@ -1,6 +1,7 @@
 // MAPINFO for Heretic (Shareware and Retail)
 skill baby
 {
+	AutoUseHealth
 	AmmoFactor = 1.5
 	DoubleAmmoFactor = 1.5
 	DamageFactor = 0.5

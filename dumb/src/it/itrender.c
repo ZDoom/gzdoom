@@ -3985,6 +3985,7 @@ static int process_tick(DUMB_IT_SIGRENDERER *sigrenderer)
 
 	process_all_playing(sigrenderer);
 
+	if (sigrenderer->tempo > 0)
 	{
 		LONG_LONG t = sigrenderer->sub_time_left + ((LONG_LONG)TICK_TIME_DIVIDEND << 16) / sigrenderer->tempo;
 		sigrenderer->time_left += (int)(t >> 16);
@@ -4791,6 +4792,13 @@ static DUMB_IT_SIGRENDERER *init_sigrenderer(DUMB_IT_SIGDATA *sigdata, int n_cha
 	sigrenderer->ramp_style = 0;
 	sigrenderer->globalvolume = sigdata->global_volume;
 	sigrenderer->tempo = sigdata->tempo;
+	if (sigrenderer->tempo == 0)
+	{
+		free(callbacks);
+		dumb_destroy_click_remover_array(n_channels, cr);
+		free(sigrenderer);
+		return NULL;
+	}
 
 	for (i = 0; i < DUMB_IT_N_CHANNELS; i++) {
 		IT_CHANNEL *channel = &sigrenderer->channel[i];

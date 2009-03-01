@@ -564,6 +564,7 @@ void AActor::SetOrigin (fixed_t ix, fixed_t iy, fixed_t iz)
 	LinkToWorld ();
 	floorz = Sector->floorplane.ZatPoint (ix, iy);
 	ceilingz = Sector->ceilingplane.ZatPoint (ix, iy);
+	P_FindFloorCeiling(this, true);
 }
 
 FBlockNode *FBlockNode::FreeBlocks = NULL;

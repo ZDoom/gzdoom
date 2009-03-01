@@ -63,7 +63,7 @@ bool ATeleporterBeacon::Use (bool pickup)
 	}
 	else
 	{
-		drop->SetState (drop->SeeState);
+		drop->SetState(drop->FindState(NAME_Drop));
 		drop->target = Owner;
 		return true;
 	}
@@ -112,6 +112,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_Beacon)
 	Spawn<ATeleportFog> (rebel->x + 20*finecosine[an], rebel->y + 20*finesine[an], rebel->z + TELEFOGHEIGHT, ALLOW_REPLACE);
 	if (--self->health < 0)
 	{
-		self->Destroy ();
+		self->SetState(self->FindState(NAME_Death));
 	}
 }

@@ -1,4 +1,9 @@
-﻿February 28, 2009  (Changes by Graf Zahl)
+﻿February 28, 2009
+- Fixed: The TeleporterBeacon tried to enter its See state rather than its
+  Drop state. Also changed it to fade out when it's done rather than
+  disappearing abruptly.
+
+February 28, 2009  (Changes by Graf Zahl)
 - Fixed: Strife's quest based line actions also work in Deathmatch.
 - Fixed: Gravity application was not correct. For actors with no vertical 
   momentum the initial pull is supposed to be twice as strong as when 

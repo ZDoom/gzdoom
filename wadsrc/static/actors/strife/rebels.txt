@@ -138,5 +138,8 @@ ACTOR TeleporterBeacon : Inventory 10 native
 		BEAC A 30
 		BEAC A 160 A_Beacon
 		Wait
+	Death:
+		BEAC A 1 A_FadeOut(0.015)
+		Loop
 	}
 }

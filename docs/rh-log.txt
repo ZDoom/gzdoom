@@ -1,4 +1,6 @@
 ﻿March 1, 2009  (Changes by Graf Zahl)
+- Changed burn and Acolyte death sequences so that they leave corpses that
+  don't vanish.
 - Fixed: AActor::SetOrigin must call P_FindFloorCeiling to get the true
   floor and ceiling heights. Otherwise the actor will fall right through
   3DMidtex textures (and 3D-floors.)

@@ -57,7 +57,7 @@ ACTOR Acolyte : StrifeHumanoid
 		AGRD K 3 A_NoBlocking
 		AGRD L 3
 		AGRD M 3 A_AcolyteDie
-		AGRD N 1400
+		AGRD N -1
 		Stop
 	XDeath:
 		GIBS A 5 A_NoBlocking

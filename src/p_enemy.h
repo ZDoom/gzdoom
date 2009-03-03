@@ -45,6 +45,7 @@ DECLARE_ACTION(A_NoBlocking)
 DECLARE_ACTION(A_Scream)
 DECLARE_ACTION(A_FreezeDeath)
 DECLARE_ACTION(A_FreezeDeathChunks)
+DECLARE_ACTION(A_BossDeath)
 
 void A_Chase(AActor *self);
 void A_FaceTarget (AActor *actor);

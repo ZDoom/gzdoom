@@ -27,6 +27,7 @@ ACTOR Sorcerer1 7
 	+NOTARGET
 	+NOICEDEATH
 	+FLOORCLIP
+	+DONTGIB
 	SeeSound "dsparilserpent/sight"
 	AttackSound "dsparilserpent/attack"
 	PainSound "dsparilserpent/pain"
@@ -128,6 +129,7 @@ ACTOR Sorcerer2
 	+NOTARGET
 	+NOICEDEATH
 	+FLOORCLIP
+	+BOSSDEATH
 	SeeSound "dsparil/sight"
 	AttackSound "dsparil/attack"
 	PainSound "dsparil/pain"

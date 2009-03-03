@@ -38,6 +38,7 @@
 #include "p_effect.h"
 #include "p_terrain.h"
 #include "p_trace.h"
+#include "p_enemy.h"
 
 #include "s_sound.h"
 #include "decallib.h"
@@ -4167,19 +4168,53 @@ void P_DoCrunch (AActor *thing, FChangePosition *cpos)
 		FState * state = thing->FindState(NAME_Crush);
 		if (state != NULL && !(thing->flags & MF_ICECORPSE))
 		{
-			// Clear MF_CORPSE so that this isn't done more than once
-			thing->flags &= ~(MF_CORPSE|MF_SOLID);
+			if (thing->flags4 & MF4_BOSSDEATH) 
+			{
+				CALL_ACTION(A_BossDeath, thing);
+			}
+			thing->flags &= ~MF_SOLID;
+			thing->flags3 |= MF3_DONTGIB;
 			thing->height = thing->radius = 0;
 			thing->SetState (state);
 			return;
 		}
 		if (!(thing->flags & MF_NOBLOOD))
 		{
-			AActor *gib = Spawn ("RealGibs", thing->x, thing->y, thing->z, ALLOW_REPLACE);
-			gib->RenderStyle = thing->RenderStyle;
-			gib->alpha = thing->alpha;
-			gib->height = 0;
-			gib->radius = 0;
+			if (thing->flags4 & MF4_BOSSDEATH) 
+			{
+				CALL_ACTION(A_BossDeath, thing);
+			}
+
+			const PClass *i = PClass::FindClass("RealGibs");
+
+			if (i != NULL)
+			{
+				i = i->ActorInfo->GetReplacement()->Class;
+
+				const AActor *defaults = GetDefaultByType (i);
+				if (defaults->SpawnState == NULL ||
+					sprites[defaults->SpawnState->sprite].numframes == 0)
+				{ 
+					i = NULL;
+				}
+			}
+			if (i == NULL)
+			{
+				// if there's no gib sprite don't crunch it.
+				thing->flags &= ~MF_SOLID;
+				thing->flags3 |= MF3_DONTGIB;
+				thing->height = thing->radius = 0;
+				return;
+			}
+
+			AActor *gib = Spawn (i, thing->x, thing->y, thing->z, ALLOW_REPLACE);
+			if (gib != NULL)
+			{
+				gib->RenderStyle = thing->RenderStyle;
+				gib->alpha = thing->alpha;
+				gib->height = 0;
+				gib->radius = 0;
+			}
 			S_Sound (thing, CHAN_BODY, "misc/fallingsplat", 1, ATTN_IDLE);
 
 			PalEntry bloodcolor = (PalEntry)thing->GetClass()->Meta.GetMetaInt(AMETA_BloodColor);

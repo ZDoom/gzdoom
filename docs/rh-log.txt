@@ -1,4 +1,12 @@
-﻿March 1, 2009  (Changes by Graf Zahl)
+﻿March 3, 2009  (Changes by Graf Zahl)
+- changed: If a monster with the BOSSDEATH flag is crushed A_BossDeath will
+  be called now.
+- fixed: D'Sparil's second form was missing the BOSSDEATH flag.
+- fixed: D'Sparil's first form requires the DONTGIB flag.
+- fixed: Heretic doesn't crush monsters. To handle this in a more generic
+  fashion this depends on the presence of a gib sprite now.
+
+March 1, 2009  (Changes by Graf Zahl)
 - Changed burn and Acolyte death sequences so that they leave corpses that
   don't vanish.
 - Fixed: AActor::SetOrigin must call P_FindFloorCeiling to get the true

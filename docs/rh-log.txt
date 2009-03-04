@@ -1,4 +1,6 @@
 ﻿March 4, 2009
+- Fixed: When using BOOM-style sector flags and specials together, the
+  special was ignored unless it was "secret".
 - Fixed: One byte is too short for DUMB_IT_SIGRENDERER to store song tempo.
   Changed it to a word.
 - Went back to using RDTSC for timing on Win32. Ironically,

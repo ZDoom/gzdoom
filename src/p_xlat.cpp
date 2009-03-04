@@ -343,17 +343,22 @@ int P_TranslateSectorSpecial (int special)
 		if (newmask)
 		{
 			special &= ~newmask;
-			if (SectorMasks[i].op == 1) newmask <<= SectorMasks[i].shift;
-			else if (SectorMasks[i].op == -1) newmask >>= SectorMasks[i].shift;
-			else if (SectorMasks[i].op == 0 && SectorMasks[i].shift ==1) newmask = 0;
+			if (SectorMasks[i].op == 1)
+				newmask <<= SectorMasks[i].shift;
+			else if (SectorMasks[i].op == -1)
+				newmask >>= SectorMasks[i].shift;
+			else if (SectorMasks[i].op == 0 && SectorMasks[i].shift == 1)
+				newmask = 0;
 			mask |= newmask;
 		}
 	}
 	
 	if ((unsigned)special < SectorTranslations.Size())
 	{
-		if (SectorTranslations[special].bitmask_allowed && mask) special = 0;
-		else special = SectorTranslations[special].newtype;
+		if (!SectorTranslations[special].bitmask_allowed && mask)
+			special = 0;
+		else
+			special = SectorTranslations[special].newtype;
 	}
 	return special | mask;
 }

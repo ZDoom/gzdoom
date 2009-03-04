@@ -1,4 +1,11 @@
-﻿March 3, 2009  (Changes by Graf Zahl)
+﻿March 4, 2009
+- Went back to using RDTSC for timing on Win32. Ironically,
+  QueryPerformanceCounter() is obviously using the TSC for its timing on my
+  machine, yet the overhead it has to do to keep the timer sane is apparently
+  visible on a few maps. I suppose I should at some time check clock_gettime()
+  and see if it has similar issues on Linux.
+
+March 3, 2009  (Changes by Graf Zahl)
 - changed: If a monster with the BOSSDEATH flag is crushed A_BossDeath will
   be called now.
 - fixed: D'Sparil's second form was missing the BOSSDEATH flag.

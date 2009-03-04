@@ -103,8 +103,40 @@ private:
 #else
 
 // Windows
+#include "x86.h"
+
 extern double PerfToSec, PerfToMillisec;
-long long QueryPerfCounter();
+
+#ifdef _MSC_VER
+// Trying to include intrin.h here results in some bizarre errors, so I'm just
+// going to duplicate the function prototype instead.
+//#include <intrin.h>
+extern "C" unsigned __int64 __rdtsc(void);
+#pragma intrinsic(__rdtsc)
+inline unsigned __int64 rdtsc()
+{
+#ifndef _M_X64
+	if (CPU.bRDTSC)
+#endif
+	{
+		return __rdtsc();
+	}
+	return 0;
+}
+#else
+inline volatile unsigned long long rdtsc()
+{
+#ifndef __amd64__
+	if (CPU.bRDTSC)
+#endif
+	{
+		register unsigned long long tsc asm("eax");
+		asm volatile ("\trdtsc\n" : : : "eax, "edx");
+		return tsc;
+	}
+	return 0;
+}
+#endif
 
 class cycle_t
 {
@@ -122,16 +154,13 @@ public:
 	
 	void Clock()
 	{
-		// Not using QueryPerformanceCounter directly, so we don't need
-		// to pull in the Windows headers for every single file that
-		// wants to do some profiling.
-		long long time = QueryPerfCounter();
+		long long time = rdtsc();
 		Counter -= time;
 	}
 	
 	void Unclock()
 	{
-		long long time = QueryPerfCounter();
+		long long time = rdtsc();
 		Counter += time;
 	}
 	
@@ -143,6 +172,11 @@ public:
 	double TimeMS()
 	{
 		return Counter * PerfToMillisec;
+	}
+
+	long long GetRawCounter()
+	{
+		return Counter;
 	}
 
 private:

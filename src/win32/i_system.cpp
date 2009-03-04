@@ -372,20 +372,61 @@ void SetLanguageIDs ()
 	}
 }
 
+void CalculateCPUSpeed()
+{
+	LARGE_INTEGER freq;
+
+	QueryPerformanceFrequency (&freq);
+
+	if (freq.QuadPart != 0 && CPU.bRDTSC)
+	{
+		LARGE_INTEGER count1, count2;
+		cycle_t ClockCalibration;
+		DWORD min_diff;
+
+		ClockCalibration.Reset();
+
+		// Count cycles for at least 55 milliseconds.
+        // The performance counter may be very low resolution compared to CPU
+        // speeds today, so the longer we count, the more accurate our estimate.
+        // On the other hand, we don't want to count too long, because we don't
+        // want the user to notice us spend time here, since most users will
+        // probably never use the performance statistics.
+        min_diff = freq.LowPart * 11 / 200;
+
+		// Minimize the chance of task switching during the testing by going very
+		// high priority. This is another reason to avoid timing for too long.
+		SetPriorityClass(GetCurrentProcess(), REALTIME_PRIORITY_CLASS);
+		SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_TIME_CRITICAL);
+
+		// Make sure we start timing on a counter boundary.
+		QueryPerformanceCounter(&count1);
+		do { QueryPerformanceCounter(&count2); } while (count1.QuadPart == count2.QuadPart);
+
+		// Do the timing loop.
+		ClockCalibration.Clock();
+		do { QueryPerformanceCounter(&count1); } while ((count1.QuadPart - count2.QuadPart) < min_diff);
+		ClockCalibration.Unclock();
+
+		SetPriorityClass(GetCurrentProcess(), NORMAL_PRIORITY_CLASS);
+		SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_NORMAL);
+
+		PerfToSec = double(count1.QuadPart - count2.QuadPart) / (double(ClockCalibration.GetRawCounter()) * freq.QuadPart);
+		PerfToMillisec = PerfToSec * 1000.0;
+	}
+
+	Printf ("CPU Speed: %.0f MHz\n", 0.001 / PerfToMillisec);
+}
+
 //
 // I_Init
 //
 
 void I_Init (void)
 {
-	LARGE_INTEGER perf_freq;
-
 	CheckCPUID(&CPU);
+	CalculateCPUSpeed();
 	DumpCPUInfo(&CPU);
-
-	QueryPerformanceFrequency(&perf_freq);
-	PerfToSec = 1 / double(perf_freq.QuadPart);
-	PerfToMillisec = 1000 / double(perf_freq.QuadPart);
 
 	// Use a timer event if possible
 	NewTicArrived = CreateEvent (NULL, FALSE, FALSE, NULL);

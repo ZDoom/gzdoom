@@ -2400,7 +2400,7 @@ void G_DoPlayDemo (void)
 	{
 		const char *eek = "Cannot play non-ZDoom demos.\n(They would go out of sync badly.)\n";
 
-		C_RestoreCVars();
+		C_ForgetCVars();
 		M_Free(demobuffer);
 		demo_p = demobuffer = NULL;
 		if (singledemo)
@@ -2421,7 +2421,6 @@ void G_DoPlayDemo (void)
 	}
 	else
 	{
-	
 		// don't spend a lot of time in loadlevel 
 		precache = false;
 		demonew = true;

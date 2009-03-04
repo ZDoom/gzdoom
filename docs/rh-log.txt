@@ -1,4 +1,10 @@
 ﻿March 4, 2009
+- Fixed: You couldn't easily play with the compatibility options menu during
+  the title screen, because the demo loop reset the server cvars after each
+  attempt to play a demo, even though the demos never actually played. The
+  proper long-term solution would be to make shadow copies of all cvars
+  touched by demos and use those for the demo and the real things for
+  everything else, but this should do for now and is a lot easier.
 - Fixed: When using BOOM-style sector flags and specials together, the
   special was ignored unless it was "secret".
 - Fixed: One byte is too short for DUMB_IT_SIGRENDERER to store song tempo.

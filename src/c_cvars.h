@@ -387,6 +387,8 @@ inline FBaseCVar *cvar_forceset (const char *var_name, const BYTE *value) { retu
 // that might possibly have been changed during the course of demo playback.
 void C_RestoreCVars (void);
 
+void C_ForgetCVars (void);
+
 
 #define CUSTOM_CVAR(type,name,def,flags) \
 	static void cvarfunc_##name(F##type##CVar &); \

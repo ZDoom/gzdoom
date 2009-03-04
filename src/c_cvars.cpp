@@ -1299,6 +1299,17 @@ void C_RestoreCVars (void)
 	for (i = numbackedup; i; i--, backup++)
 	{
 		cvar_set (backup->name, backup->string);
+	}
+	C_ForgetCVars();
+}
+
+void C_ForgetCVars (void)
+{
+	struct backup_s *backup = CVarBackups;
+	int i;
+
+	for (i = numbackedup; i; i--, backup++)
+	{
 		delete[] backup->name;
 		delete[] backup->string;
 		backup->name = backup->string = NULL;

@@ -1,9 +1,11 @@
 ﻿March 4, 2009
+- Fixed: One byte is too short for DUMB_IT_SIGRENDERER to store song tempo.
+  Changed it to a word.
 - Went back to using RDTSC for timing on Win32. Ironically,
   QueryPerformanceCounter() is obviously using the TSC for its timing on my
   machine, yet the overhead it has to do to keep the timer sane is apparently
-  visible on a few maps. I suppose I should at some time check clock_gettime()
-  and see if it has similar issues on Linux.
+  noticeable on a few maps. I suppose I should at some time check
+  clock_gettime() and see if it has similar issues on Linux.
 
 March 3, 2009  (Changes by Graf Zahl)
 - changed: If a monster with the BOSSDEATH flag is crushed A_BossDeath will

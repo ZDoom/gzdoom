@@ -666,8 +666,8 @@ struct DUMB_IT_SIGRENDERER
 	unsigned char globalvolume;
 	signed char globalvolslide;
 
-	unsigned char tempo;
 	signed char temposlide;
+	unsigned short tempo;
 
 	IT_CHANNEL channel[DUMB_IT_N_CHANNELS];
 

@@ -143,6 +143,7 @@ EXTERN_CVAR (Bool, invertmouse)
 EXTERN_CVAR (Bool, lookstrafe)
 EXTERN_CVAR (Int, screenblocks)
 EXTERN_CVAR (Bool, sv_cheats)
+EXTERN_CVAR (Bool, sv_unlimited_pickup)
 
 extern gameinfo_t SharewareGameInfo;
 extern gameinfo_t RegisteredGameInfo;
@@ -2369,6 +2370,7 @@ void D_DoomMain (void)
 	if (Args->CheckParm ("-nomonsters"))	flags |= DF_NO_MONSTERS;
 	if (Args->CheckParm ("-respawn"))		flags |= DF_MONSTERS_RESPAWN;
 	if (Args->CheckParm ("-fast"))			flags |= DF_FAST_MONSTERS;
+	if (Args->CheckParm("-ulp"))	sv_unlimited_pickup = true;
 
 	devparm = !!Args->CheckParm ("-devparm");
 

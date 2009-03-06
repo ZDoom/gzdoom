@@ -326,10 +326,11 @@ AAmmo *AWeapon::AddAmmo (AActor *other, const PClass *ammotype, int amount)
 // Give the owner some more ammo he already has.
 //
 //===========================================================================
+EXTERN_CVAR(Bool, sv_unlimited_pickup)
 
 bool AWeapon::AddExistingAmmo (AAmmo *ammo, int amount)
 {
-	if (ammo != NULL && ammo->Amount < ammo->MaxAmount)
+	if (ammo != NULL && (ammo->Amount < ammo->MaxAmount || sv_unlimited_pickup))
 	{
 		// extra ammo in baby mode and nightmare mode
 		if (!(ItemFlags&IF_IGNORESKILL))
@@ -337,7 +338,7 @@ bool AWeapon::AddExistingAmmo (AAmmo *ammo, int amount)
 			amount = FixedMul(amount, G_SkillProperty(SKILLP_AmmoFactor));
 		}
 		ammo->Amount += amount;
-		if (ammo->Amount > ammo->MaxAmount)
+		if (ammo->Amount > ammo->MaxAmount && !sv_unlimited_pickup)
 		{
 			ammo->Amount = ammo->MaxAmount;
 		}

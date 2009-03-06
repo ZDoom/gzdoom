@@ -67,13 +67,14 @@ const PClass *AAmmo::GetParentAmmo () const
 // AAmmo :: HandlePickup
 //
 //===========================================================================
+EXTERN_CVAR(Bool, sv_unlimited_pickup)
 
 bool AAmmo::HandlePickup (AInventory *item)
 {
 	if (GetClass() == item->GetClass() ||
 		(item->IsKindOf (RUNTIME_CLASS(AAmmo)) && static_cast<AAmmo*>(item)->GetParentAmmo() == GetClass()))
 	{
-		if (Amount < MaxAmount)
+		if (Amount < MaxAmount || sv_unlimited_pickup)
 		{
 			int receiving = item->Amount;
 
@@ -84,7 +85,7 @@ bool AAmmo::HandlePickup (AInventory *item)
 			int oldamount = Amount;
 
 			Amount += receiving;
-			if (Amount > MaxAmount)
+			if (Amount > MaxAmount && !sv_unlimited_pickup)
 			{
 				Amount = MaxAmount;
 			}

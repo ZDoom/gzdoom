@@ -1,4 +1,8 @@
-﻿March 6, 2009  (Changes by Graf Zahl)
+﻿March 7, 2009  (Changes by Graf Zahl)
+- Adjusted some gravity related thresholds for the fix from Feb 28. Also removed
+  some unnecessary floating point math from this code.
+
+March 6, 2009  (Changes by Graf Zahl)
 - Added Hirogen2's patch for unlimited ammo CVAR.
 
 March 4, 2009

@@ -1004,7 +1004,7 @@ static void StackWalk (HANDLE file, void *dumpaddress, DWORD *topOfStack, DWORD 
 			const BYTE *bytep = (BYTE *)code;
 			BYTE peekb;
 
-#define chkbyte(x,m,v) SafeReadMemory(x, &peekb, 1) && ((peekb & m) == v)
+#define chkbyte(x,m,v) (SafeReadMemory(x, &peekb, 1) && ((peekb & m) == v))
 
 			if (chkbyte(bytep - 5, 0xFF, 0xE8) || chkbyte(bytep - 5, 0xFF, 0xE9))
 			{

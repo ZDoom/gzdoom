@@ -1122,6 +1122,7 @@ void STACK_ARGS FScriptPosition::Message (int severity, const char *message, ...
 	case MSG_FATAL:
 		I_Error ("Script error, \"%s\" line %d:\n%s\n",
 			FileName.GetChars(), ScriptLine, composed.GetChars());
+		return;
 	}
 	Printf (level, "%sScript %s, \"%s\" line %d:\n%s%s\n",
 		color, type, FileName.GetChars(), ScriptLine, color, composed.GetChars());

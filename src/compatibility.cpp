@@ -144,6 +144,7 @@ void ParseCompatibility()
 					}
 					else
 					{
+						x = 0;
 						sc.ScriptError("MD5 signature must be a hexadecimal value");
 					}
 				}

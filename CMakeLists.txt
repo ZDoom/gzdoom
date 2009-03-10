@@ -79,6 +79,11 @@ else( JPEG_FOUND )
 	set( JPEG_LIBRARY jpeg )
 endif( JPEG_FOUND )
 
+set( BZIP2_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/bzip2" )
+set( LZMA_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lzma/C" )
+
+add_subdirectory( bzip2 )
+add_subdirectory( lzma )
 add_subdirectory( tools )
 add_subdirectory( snes_spc )
 add_subdirectory( dumb )

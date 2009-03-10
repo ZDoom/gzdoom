@@ -3,6 +3,8 @@
 
 #include <stdio.h>
 #include <zlib.h>
+#include "bzlib.h"
+#include "LzmaDec.h"
 #include "doomtype.h"
 #include "m_swap.h"
 
@@ -140,6 +142,132 @@ private:
 	FileReaderZ &operator= (const FileReaderZ &) { return *this; }
 };
 
+// Wraps around a FileReader to decompress a bzip2 stream
+class FileReaderBZ2
+{
+public:
+	FileReaderBZ2 (FileReader &file);
+	~FileReaderBZ2 ();
+
+	long Read (void *buffer, long len);
+
+	FileReaderBZ2 &operator>> (BYTE &v)
+	{
+		Read (&v, 1);
+		return *this;
+	}
+
+	FileReaderBZ2 &operator>> (SBYTE &v)
+	{
+		Read (&v, 1);
+		return *this;
+	}
+
+	FileReaderBZ2 &operator>> (WORD &v)
+	{
+		Read (&v, 2);
+		v = LittleShort(v);
+		return *this;
+	}
+
+	FileReaderBZ2 &operator>> (SWORD &v)
+	{
+		Read (&v, 2);
+		v = LittleShort(v);
+		return *this;
+	}
+
+	FileReaderBZ2 &operator>> (DWORD &v)
+	{
+		Read (&v, 4);
+		v = LittleLong(v);
+		return *this;
+	}
+
+	FileReaderBZ2 &operator>> (fixed_t &v)
+	{
+		Read (&v, 4);
+		v = LittleLong(v);
+		return *this;
+	}
+
+private:
+	enum { BUFF_SIZE = 4096 };
+
+	FileReader &File;
+	bool SawEOF;
+	bz_stream Stream;
+	BYTE InBuff[BUFF_SIZE];
+
+	void FillBuffer ();
+
+	FileReaderBZ2 &operator= (const FileReaderBZ2 &) { return *this; }
+};
+
+// Wraps around a FileReader to decompress a lzma stream
+class FileReaderLZMA
+{
+public:
+	FileReaderLZMA (FileReader &file, size_t uncompressed_size, bool zip);
+	~FileReaderLZMA ();
+
+	long Read (void *buffer, long len);
+
+	FileReaderLZMA &operator>> (BYTE &v)
+	{
+		Read (&v, 1);
+		return *this;
+	}
+
+	FileReaderLZMA &operator>> (SBYTE &v)
+	{
+		Read (&v, 1);
+		return *this;
+	}
+
+	FileReaderLZMA &operator>> (WORD &v)
+	{
+		Read (&v, 2);
+		v = LittleShort(v);
+		return *this;
+	}
+
+	FileReaderLZMA &operator>> (SWORD &v)
+	{
+		Read (&v, 2);
+		v = LittleShort(v);
+		return *this;
+	}
+
+	FileReaderLZMA &operator>> (DWORD &v)
+	{
+		Read (&v, 4);
+		v = LittleLong(v);
+		return *this;
+	}
+
+	FileReaderLZMA &operator>> (fixed_t &v)
+	{
+		Read (&v, 4);
+		v = LittleLong(v);
+		return *this;
+	}
+
+private:
+	enum { BUFF_SIZE = 4096 };
+
+	FileReader &File;
+	bool SawEOF;
+	CLzmaDec Stream;
+	size_t Size;
+	size_t InPos, InSize;
+	size_t OutProcessed;
+	BYTE InBuff[BUFF_SIZE];
+
+	void FillBuffer ();
+
+	FileReaderLZMA &operator= (const FileReaderLZMA &) { return *this; }
+};
 
 class MemoryReader : public FileReader
 {

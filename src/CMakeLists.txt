@@ -58,8 +58,8 @@ if( WIN32 )
 	set( FMOD_SEARCH_PATHS
 		"C:/Program Files/FMOD SoundSystem/FMOD Programmers API ${WIN_TYPE}/api"
 		"C:/Program Files (x86)/FMOD SoundSystem/FMOD Programmers API ${WIN_TYPE}/api"
-		"E:/Programs/Dev/FMOD/FMOD Programmers API ${WIN_TYPE}/api"
-		"E:/Program Files (x86)/FMOD SoundSystem/FMOD Programmers API ${WIN_TYPE}/api" )
+		# This next one is for me.
+		"E:/Software/Dev/FMOD/${WIN_TYPE}/api" )
 	set( FMOD_INC_PATH_SUFFIXES PATH_SUFFIXES inc )
 	set( FMOD_LIB_PATH_SUFFIXES PATH_SUFFIXES lib )
 	set( NASM_NAMES nasmw nasm )
@@ -362,7 +362,7 @@ add_custom_target( revision_check ALL
 # Libraries ZDoom needs
 
 set( ZDOOM_LIBS ${ZDOOM_LIBS} "${ZLIB_LIBRARIES}" "${JPEG_LIBRARIES}" "${FMOD_LIBRARY}" )
-include_directories( "${ZLIB_INCLUDE_DIR}" "${JPEG_INCLUDE_DIR}" "${FMOD_INCLUDE_DIR}" )
+include_directories( "${ZLIB_INCLUDE_DIR}" "${JPEG_INCLUDE_DIR}" "${FMOD_INCLUDE_DIR}" "${BZIP2_INCLUDE_DIR}" "${LZMA_INCLUDE_DIR}" )
 
 # Start defining source files for ZDoom
 
@@ -690,7 +690,7 @@ add_executable( zdoom WIN32
 set_source_files_properties( xlat/parse_xlat.cpp PROPERTIES OBJECT_DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.c" )
 set_source_files_properties( sc_man.cpp PROPERTIES OBJECT_DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/sc_man_scanner.h" )
 
-target_link_libraries( zdoom ${ZDOOM_LIBS} snes_spc gdtoa dumb )
+target_link_libraries( zdoom ${ZDOOM_LIBS} snes_spc gdtoa dumb bzip2 lzma )
 include_directories( .
 	g_doom
 	g_heretic

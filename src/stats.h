@@ -131,7 +131,7 @@ inline volatile unsigned long long rdtsc()
 #endif
 	{
 		register unsigned long long tsc asm("eax");
-		asm volatile ("\trdtsc\n" : : : "eax, "edx");
+		asm volatile ("\trdtsc\n" : : : "eax", "edx");
 		return tsc;
 	}
 	return 0;

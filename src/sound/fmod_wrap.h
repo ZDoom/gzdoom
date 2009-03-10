@@ -167,16 +167,14 @@ namespace FMOD
 		  FMOD_RESULT getDSPClock            (unsigned int *hi, unsigned int *lo) { return FMOD_System_GetDSPClock(this, hi, lo); }
 
 		// Recording API.
-		  FMOD_RESULT setRecordDriver        (int driver) { return FMOD_System_SetRecordDriver(this, driver); }
-		  FMOD_RESULT getRecordDriver        (int *driver) { return FMOD_System_GetRecordDriver(this, driver); }
 		  FMOD_RESULT getRecordNumDrivers    (int *numdrivers) { return FMOD_System_GetRecordNumDrivers(this, numdrivers); }
 		  FMOD_RESULT getRecordDriverInfo    (int id, char *name, int namelen, FMOD_GUID *guid) { return FMOD_System_GetRecordDriverInfo(this, id, name, namelen, guid); }
 		  FMOD_RESULT getRecordDriverCaps    (int id, FMOD_CAPS *caps, int *minfrequency, int *maxfrequency) { return FMOD_System_GetRecordDriverCaps(this, id, caps, minfrequency, maxfrequency); }
-		  FMOD_RESULT getRecordPosition      (unsigned int *position) { return FMOD_System_GetRecordPosition(this, position); }
+		  FMOD_RESULT getRecordPosition      (int id, unsigned int *position) { return FMOD_System_GetRecordPosition(this, id, position); }
 
-		  FMOD_RESULT recordStart            (Sound *sound, bool loop) { return FMOD_System_RecordStart(this, (FMOD_SOUND *)sound, loop); }
-		  FMOD_RESULT recordStop             () { return FMOD_System_RecordStop(this); }
-		  FMOD_RESULT isRecording            (bool *recording) { FMOD_BOOL b; FMOD_RESULT res = FMOD_System_IsRecording(this, &b); *recording = b; return res; }
+		  FMOD_RESULT recordStart            (int id, Sound *sound, bool loop) { return FMOD_System_RecordStart(this, id, (FMOD_SOUND *)sound, loop); }
+		  FMOD_RESULT recordStop             (int id) { return FMOD_System_RecordStop(this, id); }
+		  FMOD_RESULT isRecording            (int id, bool *recording) { FMOD_BOOL b; FMOD_RESULT res = FMOD_System_IsRecording(this, id, &b); *recording = b; return res; }
 
 		// Geometry API.
 		  FMOD_RESULT createGeometry         (int maxpolygons, int maxvertices, Geometry **geometry) { return FMOD_System_CreateGeometry(this, maxpolygons, maxvertices, (FMOD_GEOMETRY **)geometry); }

@@ -1,6 +1,19 @@
-﻿March 7, 2009  (Changes by Graf Zahl)
+﻿March 10, 2009
+- Added support for zip/pk3 files with LZMA and bzip2 compression to ZDoom.
+- Added more output to zipdir and a -q option to turn it off.
+- Added -u option to zipdir to only recompress those files in a zip that have
+  changed. 
+
+March 7, 2009
+- Added -d and -f options to zipdir. -d forces deflate compression, and -f
+  forces a write of the zip, even if it's newer than all the files it contains.
+
+March 7, 2009  (Changes by Graf Zahl)
 - Adjusted some gravity related thresholds for the fix from Feb 28. Also removed
   some unnecessary floating point math from this code.
+
+March 6, 2009
+- Added support for bzip2 and LZMA compression to zipdir.
 
 March 6, 2009  (Changes by Graf Zahl)
 - Added Hirogen2's patch for unlimited ammo CVAR.

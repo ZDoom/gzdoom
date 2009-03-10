@@ -1,62 +1,72 @@
 #ifndef __W_ZIP
 #define __W_ZIP
 
-#pragma pack(1)
-struct FZipCentralInfo
+#pragma pack(push, 1)
+// FZipCentralInfo
+struct FZipEndOfCentralDirectory
 {
-	// patched together from information from Q3's unzip.c
-	DWORD dwSignature;
-	WORD  wNumberDisk;
-	WORD  wNumberDiskWithCD;
-	WORD  wEntryCount;
-	WORD  wTotalEntryCount;
-	DWORD dwCDSize;
-	DWORD dwCDOffset;
-	WORD  wCommentSize;
+	DWORD	Magic;
+	WORD	DiskNumber;
+	WORD	FirstDisk;
+	WORD	NumEntries;
+	WORD	NumEntriesOnAllDisks;
+	DWORD	DirectorySize;
+	DWORD	DirectoryOffset;
+	WORD	ZipCommentLength;
 };
 
-struct FZipFileInfo
+// FZipFileInfo
+struct FZipCentralDirectoryInfo
 {
-	// patched together from information from Q3's unzip.c
-	DWORD dwSignature;
-	WORD  wVersion;
-	WORD  wRequiredVersion;
-	WORD  wFlags;
-	WORD  wCompression;
-	DWORD dwLastModified;
-	DWORD dwCrc;
-	DWORD dwCompressedSize;
-	DWORD dwSize;
-	WORD  wFileNameSize;
-	WORD  wExtraSize;
-	WORD  wCommentSize;
-	WORD  wDiskStart;
-	WORD  wInternalAttributes;
-	DWORD wExternalAttributes;
-	DWORD dwFileOffset;
+	DWORD	Magic;
+	BYTE	VersionMadeBy[2];
+	BYTE	VersionToExtract[2];
+	WORD	Flags;
+	WORD	Method;
+	WORD	ModTime;
+	WORD	ModDate;
+	DWORD	CRC32;
+	DWORD	CompressedSize;
+	DWORD	UncompressedSize;
+	WORD	NameLength;
+	WORD	ExtraLength;
+	WORD	CommentLength;
+	WORD	StartingDiskNumber;
+	WORD	InternalAttributes;
+	DWORD	ExternalAttributes;
+	DWORD	LocalHeaderOffset;
 	// file name and other variable length info follows
 };
 
-struct FZipLocalHeader
+// FZipLocalHeader
+struct FZipLocalFileHeader
 {
-	// patched together from information from Q3's unzip.c
-	DWORD dwSignature;
-	WORD  wRequiredVersion;
-	WORD  wFlags;
-	WORD  wCompression;
-	DWORD dwLastModified;
-	DWORD dwCrc;
-	DWORD dwCompressedSize;
-	DWORD dwSize;
-	WORD  wFileNameSize;
-	WORD  wExtraSize;
+	DWORD	Magic;
+	BYTE	VersionToExtract[2];
+	WORD	Flags;
+	WORD	Method;
+	WORD	ModTime;
+	WORD	ModDate;
+	DWORD	CRC32;
+	DWORD	CompressedSize;
+	DWORD	UncompressedSize;
+	WORD	NameLength;
+	WORD	ExtraLength;
 	// file name and other variable length info follows
 };
 
 
-#pragma pack()
+#pragma pack(pop)
 
-#define Z_DEFLATED   8
+#define ZIP_LOCALFILE	MAKE_ID('P','K',3,4)
+#define ZIP_CENTRALFILE	MAKE_ID('P','K',1,2)
+#define ZIP_ENDOFDIR	MAKE_ID('P','K',5,6)
+
+#define METHOD_STORED	0
+#define METHOD_DEFLATE	8
+#define METHOD_BZIP2	12
+#define METHOD_LZMA		14
+#define METHOD_PPMD		98
 
 // File header flags.
 #define ZF_ENCRYPTED			0x1

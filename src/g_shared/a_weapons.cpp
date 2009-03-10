@@ -756,7 +756,7 @@ AWeapon *FWeaponSlot::PickWeapon(player_t *player)
 	}
 	if (player->ReadyWeapon != NULL)
 	{
-		for (i = 0; i < Weapons.Size(); i++)
+		for (i = 0; (unsigned)i < Weapons.Size(); i++)
 		{
 			if (Weapons[i].Type == player->ReadyWeapon->GetClass() ||
 				(player->ReadyWeapon->WeaponFlags & WIF_POWERED_UP &&
@@ -1590,7 +1590,7 @@ const PClass *Net_ReadWeapon(BYTE **stream)
 	{
 		index = (index & 0x7F) | (ReadByte(stream) << 7);
 	}
-	if (index >= Weapons_ntoh.Size())
+	if ((unsigned)index >= Weapons_ntoh.Size())
 	{
 		return NULL;
 	}

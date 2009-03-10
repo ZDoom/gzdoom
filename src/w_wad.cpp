@@ -91,6 +91,7 @@ struct FWadCollection::LumpRecord
 {
 	char *		fullname;		// only valid for files loaded from a .zip file
 	char		name[9];
+	BYTE		method;			// zip compression method
 	short		wadnum;
 	WORD		flags;
 	int			position;
@@ -299,7 +300,7 @@ int FWadCollection::AddExternalFile(const char *filename)
 
 static DWORD Zip_FindCentralDir(FileReader * fin)
 {
-	unsigned char* buf;
+	unsigned char buf[BUFREADCOMMENT + 4];
 	DWORD FileSize;
 	DWORD uBackRead;
 	DWORD uMaxBack; // maximum size of global comment
@@ -310,38 +311,35 @@ static DWORD Zip_FindCentralDir(FileReader * fin)
 	FileSize = fin->Tell();
 	uMaxBack = MIN<DWORD>(0xffff, FileSize);
 
-	buf = (unsigned char*)malloc(BUFREADCOMMENT+4);
-	if (buf == NULL) return 0;
-
 	uBackRead = 4;
 	while (uBackRead < uMaxBack)
 	{
 		DWORD uReadSize, uReadPos;
 		int i;
-		if (uBackRead +BUFREADCOMMENT > uMaxBack) 
+		if (uBackRead + BUFREADCOMMENT > uMaxBack) 
 			uBackRead = uMaxBack;
 		else
 			uBackRead += BUFREADCOMMENT;
-		uReadPos = FileSize - uBackRead ;
+		uReadPos = FileSize - uBackRead;
 
-		uReadSize = MIN<DWORD>((BUFREADCOMMENT+4) , (FileSize-uReadPos));
+		uReadSize = MIN<DWORD>((BUFREADCOMMENT + 4), (FileSize - uReadPos));
 
-		if (fin->Seek(uReadPos,SEEK_SET) != 0) break;
+		if (fin->Seek(uReadPos, SEEK_SET) != 0) break;
 
 		if (fin->Read(buf, (SDWORD)uReadSize) != (SDWORD)uReadSize) break;
 
-		for (i=(int)uReadSize-3; (i--)>0;)
-			if (((*(buf+i))==0x50) && ((*(buf+i+1))==0x4b) && 
-				((*(buf+i+2))==0x05) && ((*(buf+i+3))==0x06))
+		for (i = (int)uReadSize - 3; (i--) > 0;)
+		{
+			if (buf[i] == 'P' && buf[i+1] == 'K' && buf[i+2] == 5 && buf[i+3] == 6)
 			{
-				uPosFound = uReadPos+i;
+				uPosFound = uReadPos + i;
 				break;
 			}
+		}
 
-			if (uPosFound!=0)
-				break;
+		if (uPosFound != 0)
+			break;
 	}
-	free(buf);
 	return uPosFound;
 }
 
@@ -373,7 +371,7 @@ void FWadCollection::AddFile (const char *filename, const char * data, int lengt
 	int				startlump;
 	wadlump_t*		fileinfo = NULL, *fileinfo2free = NULL;
 	wadlump_t		singleinfo;
-	TArray<FZipFileInfo *> EmbeddedWADs;
+	TArray<FZipCentralDirectoryInfo *> EmbeddedWADs;
 	void * directory = NULL;
 
 	if (length==-1)
@@ -508,10 +506,10 @@ void FWadCollection::AddFile (const char *filename, const char * data, int lengt
 	else if (header.magic[0] == ZIP_ID)
 	{
 		DWORD centraldir = Zip_FindCentralDir(wadinfo);
-		FZipCentralInfo info;
+		FZipEndOfCentralDirectory info;
 		int skipped = 0;
 
-		if (centraldir==0)
+		if (centraldir == 0)
 		{
 			Printf("\n%s: ZIP file corrupt!\n", filename);
 			return;
@@ -519,56 +517,61 @@ void FWadCollection::AddFile (const char *filename, const char * data, int lengt
 
 		// Read the central directory info.
 		wadinfo->Seek(centraldir, SEEK_SET);
-		wadinfo->Read(&info, sizeof(FZipCentralInfo));
+		wadinfo->Read(&info, sizeof(FZipEndOfCentralDirectory));
 
 		// No multi-disk zips!
-		if (info.wEntryCount != info.wTotalEntryCount ||
-			info.wNumberDiskWithCD != 0 || info.wNumberDisk != 0)
+		if (info.NumEntries != info.NumEntriesOnAllDisks ||
+			info.FirstDisk != 0 || info.DiskNumber != 0)
 		{
 			Printf("\n%s: Multipart Zip files are not supported.\n", filename);
 			return;
 		}
 
-		NumLumps += LittleShort(info.wEntryCount);
+		NumLumps += LittleShort(info.NumEntries);
 		LumpInfo.Resize(NumLumps);
 		lump_p = &LumpInfo[startlump];
 
 		// Load the entire central directory. Too bad that this contains variable length entries...
-		directory = malloc(LittleLong(info.dwCDSize));
-		wadinfo->Seek(LittleLong(info.dwCDOffset), SEEK_SET);
-		wadinfo->Read(directory, LittleLong(info.dwCDSize));
+		directory = malloc(LittleLong(info.DirectorySize));
+		wadinfo->Seek(LittleLong(info.DirectoryOffset), SEEK_SET);
+		wadinfo->Read(directory, LittleLong(info.DirectorySize));
 
-		char * dirptr =(char*)directory;
-		for (int i = 0; i < LittleShort(info.wEntryCount); i++)
+		char *dirptr = (char*)directory;
+		for (int i = 0; i < LittleShort(info.NumEntries); i++)
 		{
-			FZipFileInfo * zip_fh = (FZipFileInfo*)dirptr;
+			FZipCentralDirectoryInfo *zip_fh = (FZipCentralDirectoryInfo *)dirptr;
+
 			char name[256];
 			char base[256];
 
-			int len = LittleShort(zip_fh->wFileNameSize);
-			strncpy(name, dirptr + sizeof(FZipFileInfo), MIN<int>(len, 255));
-			name[len]=0;
-			dirptr += sizeof(FZipFileInfo) + 
-					  LittleShort(zip_fh->wFileNameSize) + 
-					  LittleShort(zip_fh->wExtraSize) + 
-					  LittleShort(zip_fh->wCommentSize);
+			int len = LittleShort(zip_fh->NameLength);
+			strncpy(name, dirptr + sizeof(FZipCentralDirectoryInfo), MIN<int>(len, 255));
+			name[len] = 0;
+			dirptr += sizeof(FZipCentralDirectoryInfo) + 
+					  LittleShort(zip_fh->NameLength) + 
+					  LittleShort(zip_fh->ExtraLength) + 
+					  LittleShort(zip_fh->CommentLength);
 			
 			// skip Directories
-			if(name[len - 1] == '/' && LittleLong(zip_fh->dwSize) == 0) 
+			if(name[len - 1] == '/' && LittleLong(zip_fh->UncompressedSize) == 0) 
 			{
 				skipped++;
 				continue;
 			}
 
-			// Ignore obsolete compression formats
-			if(LittleShort(zip_fh->wCompression) != 0 && LittleShort(zip_fh->wCompression) != Z_DEFLATED)
+			// Ignore unknown compression formats
+			zip_fh->Method = LittleShort(zip_fh->Method);
+			if (zip_fh->Method != METHOD_STORED &&
+				zip_fh->Method != METHOD_DEFLATE &&
+				zip_fh->Method != METHOD_LZMA &&
+				zip_fh->Method != METHOD_BZIP2)
 			{
-				Printf("\n: %s: '%s' uses an unsupported compression algorithm.\n", filename, name);
+				Printf("\n: %s: '%s' uses an unsupported compression algorithm (#%d).\n", filename, name, zip_fh->Method);
 				skipped++;
 				continue;
 			}
 			// Also ignore encrypted entries
-			if(LittleShort(zip_fh->wFlags) & ZF_ENCRYPTED)
+			if(LittleShort(zip_fh->Flags) & ZF_ENCRYPTED)
 			{
 				Printf("\n%s: '%s' is encrypted. Encryption is not supported.\n", filename, name);
 				skipped++;
@@ -591,16 +594,16 @@ void FWadCollection::AddFile (const char *filename, const char * data, int lengt
 			}
 
 			//ExtractFileBase(name, base);
-			char * lname=strrchr(name,'/');
-			if (!lname) lname=name;
+			char *lname = strrchr(name,'/');
+			if (!lname) lname = name;
 			else lname++;
 			strcpy(base, lname);
-			char * dot = strrchr(base,'.');
-			if (dot) *dot=0;
+			char *dot = strrchr(base, '.');
+			if (dot) *dot = 0;
 			uppercopy(lump_p->name, base);
 			lump_p->name[8] = 0;
 			lump_p->fullname = copystring(name);
-			lump_p->size = zip_fh->dwSize;
+			lump_p->size = LittleLong(zip_fh->UncompressedSize);
 
 			// Map some directories to WAD namespaces.
 			// Note that some of these namespaces don't exist in WADS.
@@ -621,15 +624,15 @@ void FWadCollection::AddFile (const char *filename, const char * data, int lengt
 			// Anything that is not in one of these subdirectories or the main directory 
 			// should not be accessible through the standard WAD functions but only through 
 			// the ones which look for the full name.
-			if (lump_p->namespc==-1)
+			if (lump_p->namespc == -1)
 			{
 				memset(lump_p->name, 0, 8);
 			}
 
 			lump_p->wadnum = (WORD)Wads.Size();
-			lump_p->flags = LittleShort(zip_fh->wCompression) == Z_DEFLATED? 
-								LUMPF_COMPRESSED|LUMPF_ZIPFILE : LUMPF_ZIPFILE;
-			lump_p->compressedsize = LittleLong(zip_fh->dwCompressedSize);
+			lump_p->flags = (zip_fh->Method != METHOD_STORED) ? LUMPF_COMPRESSED|LUMPF_ZIPFILE : LUMPF_ZIPFILE;
+			lump_p->method = zip_fh->Method;
+			lump_p->compressedsize = LittleLong(zip_fh->CompressedSize);
 
 			// Since '\' can't be used as a file name's part inside a ZIP
 			// we have to work around this for sprites because it is a valid
@@ -638,15 +641,15 @@ void FWadCollection::AddFile (const char *filename, const char * data, int lengt
 			{
 				char * c;
 
-				while ((c=(char*)memchr(lump_p->name, '^', 8)))
+				while ((c = (char*)memchr(lump_p->name, '^', 8)))
 				{
-					*c='\\';
+					*c = '\\';
 				}
 			}
 
 			// The start of the file will be determined the first time it is accessed.
 			lump_p->flags |= LUMPF_NEEDFILESTART;
-			lump_p->position = LittleLong(zip_fh->dwFileOffset);
+			lump_p->position = LittleLong(zip_fh->LocalHeaderOffset);
 			lump_p++;
 		}
 		// Resize the lump record array to its actual size
@@ -716,28 +719,38 @@ void FWadCollection::AddFile (const char *filename, const char * data, int lengt
 
 		for(unsigned int i = 0; i < EmbeddedWADs.Size(); i++)
 		{
-			FZipFileInfo * zip_fh = EmbeddedWADs[i];
-			FZipLocalHeader localHeader;
+			FZipCentralDirectoryInfo *zip_fh = EmbeddedWADs[i];
+			FZipLocalFileHeader localHeader;
 
-			*wadstr=0;
-			size_t len = LittleShort(zip_fh->wFileNameSize);
-			if (len+strlen(path) > 255) len = 255-strlen(path);
-			strncpy(wadstr, ((char*)zip_fh) + sizeof(FZipFileInfo), len);
-			wadstr[len]=0;
+			*wadstr = 0;
+			size_t len = LittleShort(zip_fh->NameLength);
+			if (len + strlen(path) > 255) len = 255 - strlen(path);
+			strncpy(wadstr, ((char*)zip_fh) + sizeof(FZipCentralDirectoryInfo), len);
+			wadstr[len] = 0;
 
-			DWORD size = LittleLong(zip_fh->dwSize);
-			char * buffer = new char[size];
+			DWORD size = LittleLong(zip_fh->UncompressedSize);
+			char *buffer = new char[size];
 
-			int position = LittleLong(zip_fh->dwFileOffset) ;
+			int position = LittleLong(zip_fh->LocalHeaderOffset) ;
 
 			wadinfo->Seek(position, SEEK_SET);
 			wadinfo->Read(&localHeader, sizeof(localHeader));
-			position += LittleShort(localHeader.wExtraSize) + sizeof(FZipLocalHeader) + LittleShort(zip_fh->wFileNameSize);
+			position += sizeof(FZipLocalFileHeader) + LittleShort(localHeader.ExtraLength) + LittleShort(zip_fh->NameLength);
 
 			wadinfo->Seek(position, SEEK_SET);
-			if (zip_fh->wCompression == Z_DEFLATED)
+			if (LittleShort(zip_fh->Method) == METHOD_DEFLATE)
 			{
 				FileReaderZ frz(*wadinfo, true);
+				frz.Read(buffer, size);
+			}
+			else if (LittleShort(zip_fh->Method) == METHOD_LZMA)
+			{
+				FileReaderLZMA frz(*wadinfo, size, true);
+				frz.Read(buffer, size);
+			}
+			else if (LittleShort(zip_fh->Method) == METHOD_BZIP2)
+			{
+				FileReaderBZ2 frz(*wadinfo);
 				frz.Read(buffer, size);
 			}
 			else
@@ -1746,16 +1759,16 @@ void FWadCollection::SetLumpAddress(LumpRecord *l)
 	// This file is inside a zip and has not been opened before.
 	// Position points to the start of the local file header, which we must
 	// read and skip so that we can get to the actual file data.
-	FZipLocalHeader localHeader;
+	FZipLocalFileHeader localHeader;
 	int skiplen;
 	int address;
 
 	WadFileRecord *wad = Wads[l->wadnum];
 
 	address = wad->Tell();
-	wad->Seek (l->position, SEEK_SET);
-	wad->Read (&localHeader, sizeof(localHeader));
-	skiplen = LittleShort(localHeader.wFileNameSize) + LittleShort(localHeader.wExtraSize);
+	wad->Seek(l->position, SEEK_SET);
+	wad->Read(&localHeader, sizeof(localHeader));
+	skiplen = LittleShort(localHeader.NameLength) + LittleShort(localHeader.ExtraLength);
 	l->position += sizeof(localHeader) + skiplen;
 	l->flags &= ~LUMPF_NEEDFILESTART;
 }
@@ -1792,10 +1805,27 @@ FWadLump FWadCollection::OpenLumpNum (int lump)
 	if (l->flags & LUMPF_COMPRESSED)
 	{
 		// A compressed entry in a .zip file
-		char * buffer = new char[l->size+1];	// the last byte is used as a reference counter
+		char *buffer = new char[l->size + 1];	// the last byte is used as a reference counter
 		buffer[l->size] = 0;
-		FileReaderZ frz(*wad, true);
-		frz.Read(buffer, l->size);
+		if (l->method == METHOD_DEFLATE)
+		{
+			FileReaderZ frz(*wad, true);
+			frz.Read(buffer, l->size);
+		}
+		else if (l->method == METHOD_LZMA)
+		{
+			FileReaderLZMA frz(*wad, l->size, true);
+			frz.Read(buffer, l->size);
+		}
+		else if (l->method == METHOD_BZIP2)
+		{
+			FileReaderBZ2 frz(*wad);
+			frz.Read(buffer, l->size);
+		}
+		else
+		{
+			assert(0);	// Should not get here
+		}
 		return FWadLump(buffer, l->size, true);
 	}
 	else if (l->flags & LUMPF_EXTERNAL)
@@ -1875,10 +1905,27 @@ FWadLump *FWadCollection::ReopenLumpNum (int lump)
 	{
 		// A compressed entry in a .zip file
 		int address = wad->Tell();			// read from the existing WadFileRecord without reopening
-		char * buffer = new char[l->size+1];	// the last byte is used as a reference counter
+		char *buffer = new char[l->size + 1];	// the last byte is used as a reference counter
 		wad->Seek(l->position, SEEK_SET);
-		FileReaderZ frz(*wad, true);
-		frz.Read(buffer, l->size);
+		if (l->method == METHOD_DEFLATE)
+		{
+			FileReaderZ frz(*wad, true);
+			frz.Read(buffer, l->size);
+		}
+		else if (l->method == METHOD_LZMA)
+		{
+			FileReaderLZMA frz(*wad, l->size, true);
+			frz.Read(buffer, l->size);
+		}
+		else if (l->method == METHOD_BZIP2)
+		{
+			FileReaderBZ2 frz(*wad);
+			frz.Read(buffer, l->size);
+		}
+		else
+		{
+			assert(0);	// Should not get here
+		}
 		wad->Seek(address, SEEK_SET);
 		return new FWadLump(buffer, l->size, true);	//... but restore the file pointer afterward!
 	}

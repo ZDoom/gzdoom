@@ -632,7 +632,11 @@ file_sorted_t *sort_files(dir_tree_t *trees, int num_files)
 
 void write_zip(const char *zipname, dir_tree_t *trees, int update)
 {
+#ifdef _WIN32
 	char tempname[_MAX_PATH];
+#else
+	char tempname[PATH_MAX];
+#endif
 	EndOfCentralDirectory dirend;
 	int i, num_files;
 	file_sorted_t *sorted;
@@ -729,10 +733,6 @@ void write_zip(const char *zipname, dir_tree_t *trees, int update)
 					fprintf(stderr, "Could not rename %s to %s: %s\n",
 						tempname, zipname, strerror(errno));
 				}
-			}
-			else
-			{
-				fclose(zip);
 			}
 		}
 	}
@@ -838,10 +838,12 @@ int append_to_zip(FILE *zip_file, file_sorted_t *filep, FILE *ozip, BYTE *odir)
 			i = copy_zip_file(zip_file, file, ozip, dirent);
 			if (i > 0)
 			{
+				free(readbuf);
 				return 0;
 			}
 			if (i < 0)
 			{
+				free(readbuf);
 				fprintf(stderr, "Unable to write %s to zip\n", file->path);
 				return 1;
 			}
@@ -1426,6 +1428,7 @@ int copy_zip_file(FILE *zip, file_entry_t *file, FILE *ozip, CentralDirectoryEnt
 		free(buf);
 		return -1;
 	}
+	free(buf);
 	file->date = lfh.ModDate;
 	file->time = lfh.ModTime;
 	file->uncompressed_size = LittleLong(lfh.UncompressedSize);

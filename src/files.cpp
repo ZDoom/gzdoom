@@ -378,7 +378,7 @@ FileReaderLZMA::FileReaderLZMA (FileReader &file, size_t uncompressed_size, bool
 	OutProcessed = 0;
 
 	// Read zip LZMA properties header
-	if (File.Read(header, sizeof(header)) < sizeof(header))
+	if (File.Read(header, sizeof(header)) < (long)sizeof(header))
 	{
 		I_Error("FileReaderLZMA: File too shart\n");
 	}

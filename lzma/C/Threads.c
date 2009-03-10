@@ -4,6 +4,8 @@ Igor Pavlov
 Public domain */
 
 #include "Threads.h"
+
+#ifdef _WIN32
 #include <process.h>
 
 static WRes GetError()
@@ -111,3 +113,180 @@ WRes CriticalSection_Init(CCriticalSection *p)
   return 0;
 }
 
+#else
+
+#include <pthread.h>
+#include <stdlib.h>
+
+#include <errno.h>
+
+#if defined(__linux__) 
+#define PTHREAD_MUTEX_ERRORCHECK PTHREAD_MUTEX_ERRORCHECK_NP
+#endif
+
+
+WRes Thread_Create(CThread *thread, THREAD_FUNC_RET_TYPE (THREAD_FUNC_CALL_TYPE *startAddress)(void *), void *parameter)
+{ 
+	pthread_attr_t attr;
+	int ret;
+
+	thread->_created = 0;
+
+	ret = pthread_attr_init(&attr);
+	if (ret) return ret;
+
+	ret = pthread_attr_setdetachstate(&attr,PTHREAD_CREATE_JOINABLE);
+	if (ret) return ret;
+
+	ret = pthread_create(&thread->_tid, &attr, (void * (*)(void *))startAddress, parameter);
+
+	/* ret2 = */ pthread_attr_destroy(&attr);
+
+	if (ret) return ret;
+	
+	thread->_created = 1;
+
+	return 0; // SZ_OK;
+}
+
+WRes Thread_Wait(CThread *thread)
+{
+  void *thread_return;
+  int ret;
+
+  if (thread->_created == 0)
+    return EINVAL;
+
+  ret = pthread_join(thread->_tid,&thread_return);
+  thread->_created = 0;
+  
+  return ret;
+}
+
+WRes Thread_Close(CThread *thread)
+{
+    if (!thread->_created) return SZ_OK;
+    
+    pthread_detach(thread->_tid);
+    thread->_tid = 0;
+    thread->_created = 0;
+    return SZ_OK;
+}
+
+WRes Event_Create(CEvent *p, BOOL manualReset, int initialSignaled)
+{
+  pthread_mutex_init(&p->_mutex,0);
+  pthread_cond_init(&p->_cond,0);
+  p->_manual_reset = manualReset;
+  p->_state        = (initialSignaled ? TRUE : FALSE);
+  p->_created = 1;
+  return 0;
+}
+
+WRes Event_Set(CEvent *p) {
+  pthread_mutex_lock(&p->_mutex);
+  p->_state = TRUE;
+  pthread_cond_broadcast(&p->_cond);
+  pthread_mutex_unlock(&p->_mutex);
+  return 0;
+}
+
+WRes Event_Reset(CEvent *p) {
+  pthread_mutex_lock(&p->_mutex);
+  p->_state = FALSE;
+  pthread_mutex_unlock(&p->_mutex);
+  return 0;
+}
+ 
+WRes Event_Wait(CEvent *p) {
+  pthread_mutex_lock(&p->_mutex);
+  while (p->_state == FALSE)
+  {
+     pthread_cond_wait(&p->_cond, &p->_mutex);
+  }
+  if (p->_manual_reset == FALSE)
+  {
+     p->_state = FALSE;
+  }
+  pthread_mutex_unlock(&p->_mutex);
+  return 0;
+}
+
+WRes Event_Close(CEvent *p) { 
+  if (p->_created)
+  {
+    p->_created = 0;
+    pthread_mutex_destroy(&p->_mutex);
+    pthread_cond_destroy(&p->_cond);
+  }
+  return 0;
+}
+
+WRes Semaphore_Create(CSemaphore *p, UInt32 initiallyCount, UInt32 maxCount)
+{
+  pthread_mutex_init(&p->_mutex,0);
+  pthread_cond_init(&p->_cond,0);
+  p->_count    = initiallyCount;
+  p->_maxCount = maxCount;
+  p->_created  = 1;
+  return 0;
+}
+
+WRes Semaphore_ReleaseN(CSemaphore *p, UInt32 releaseCount)
+{
+  UInt32 newCount;
+
+  if (releaseCount < 1) return EINVAL;
+
+  pthread_mutex_lock(&p->_mutex);
+
+  newCount = p->_count + releaseCount;
+  if (newCount > p->_maxCount)
+  {
+    pthread_mutex_unlock(&p->_mutex);
+    return EINVAL;
+  }
+  p->_count = newCount;
+  pthread_cond_broadcast(&p->_cond);
+  pthread_mutex_unlock(&p->_mutex);
+  return 0;
+}
+
+WRes Semaphore_Wait(CSemaphore *p) {
+  pthread_mutex_lock(&p->_mutex);
+  while (p->_count < 1)
+  {
+     pthread_cond_wait(&p->_cond, &p->_mutex);
+  }
+  p->_count--;
+  pthread_mutex_unlock(&p->_mutex);
+  return 0;
+}
+
+WRes Semaphore_Close(CSemaphore *p) {
+  if (p->_created)
+  {
+    p->_created = 0;
+    pthread_mutex_destroy(&p->_mutex);
+    pthread_cond_destroy(&p->_cond);
+  }
+  return 0;
+}
+
+WRes CriticalSection_Init(CCriticalSection * lpCriticalSection)
+{
+	return pthread_mutex_init(&(lpCriticalSection->_mutex),0);
+}
+
+WRes ManualResetEvent_Create(CManualResetEvent *p, int initialSignaled)
+  { return Event_Create(p, TRUE, initialSignaled); }
+
+WRes ManualResetEvent_CreateNotSignaled(CManualResetEvent *p) 
+  { return ManualResetEvent_Create(p, 0); }
+
+WRes AutoResetEvent_Create(CAutoResetEvent *p, int initialSignaled)
+  { return Event_Create(p, FALSE, initialSignaled); }
+WRes AutoResetEvent_CreateNotSignaled(CAutoResetEvent *p) 
+  { return AutoResetEvent_Create(p, 0); }
+
+#endif

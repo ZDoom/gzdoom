@@ -1300,7 +1300,7 @@ void FWeaponSlots::AddSlot(int slot, const PClass *type, bool feedback)
 {
 	if (type != NULL && !Slots[slot].AddWeapon(type) && feedback)
 	{
-		Printf ("Could not add %s to slot %zu\n", type->TypeName.GetChars(), slot);
+		Printf ("Could not add %s to slot %d\n", type->TypeName.GetChars(), slot);
 	}
 }
 

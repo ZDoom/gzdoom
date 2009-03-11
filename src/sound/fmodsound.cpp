@@ -700,13 +700,40 @@ bool FMODSoundRenderer::Init()
 		if (result != FMOD_OK)
 		{
 			Printf(TEXTCOLOR_BLUE"Setting output type '%s' failed. Using default instead. (Error %d)\n", *snd_output, result);
+			eval = FMOD_OUTPUTTYPE_AUTODETECT;
 			Sys->setOutput(FMOD_OUTPUTTYPE_AUTODETECT);
 		}
 	}
 
 	result = Sys->getNumDrivers(&driver);
+#ifdef unix
 	if (result == FMOD_OK)
 	{
+		// On Linux, FMOD defaults to OSS. If OSS is not present, it doesn't
+		// try ALSA, it just fails. We'll try for it, but only if OSS wasn't
+		// explicitly specified for snd_output.
+		if (driver == 0 && eval == FMOD_OUTPUTTYPE_AUTODETECT)
+		{
+			FMOD_OUTPUTTYPE output;
+			if (FMOD_OK == Sys->getOutput(&output))
+			{
+				if (output == FMOD_OUTPUTTYPE_OSS)
+				{
+					Printf(TEXTCOLOR_BLUE"OSS could not be initialized. Trying ALSA.\n");
+					Sys->setOutput(FMOD_OUTPUTTYPE_ALSA);
+					result = Sys->getNumDrivers(&driver);
+				}
+			}
+		}
+	}
+#endif
+	if (result == FMOD_OK)
+	{
+		if (driver == 0)
+		{
+			Printf(TEXTCOLOR_ORANGE"No working sound devices found. Try a different snd_output?\n");
+			return false;
+		}
 		if (snd_driver >= driver)
 		{
 			Printf(TEXTCOLOR_BLUE"Driver %d does not exist. Using 0.\n", *snd_driver);

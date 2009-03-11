@@ -1,4 +1,6 @@
 ﻿March 10, 2009
+- Added sdl_nokeyrepeat to disable key repeating in the menus and console
+  on Linux.
 - Added support for zip/pk3 files with LZMA and bzip2 compression to ZDoom.
 - Added more output to zipdir and a -q option to turn it off.
 - Added -u option to zipdir to only recompress those files in a zip that have

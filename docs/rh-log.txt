@@ -1,4 +1,10 @@
 ﻿March 10, 2009
+- Added an SDL output plugin, so FMOD can produce sound using SDL's audio
+  support instead of its own OSS/ALSA/ESD support. This is selectable by
+  setting snd_output to "sdl".
+- Fixed: On Linux systems with ALSA but no OSS support, trying to start
+  the sound system with snd_output "default" would fail instead of trying
+  to use ALSA.
 - Added sdl_nokeyrepeat to disable key repeating in the menus and console
   on Linux.
 - Added support for zip/pk3 files with LZMA and bzip2 compression to ZDoom.

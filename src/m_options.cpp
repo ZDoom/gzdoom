@@ -1218,6 +1218,7 @@ static valueenum_t Outputs[] =
 #elif defined(unix)
 	{ "OSS",			"OSS" },
 	{ "ALSA",			"ALSA" },
+	{ "SDL",			"SDL" },
 	{ "ESD",			"ESD" },
 #elif defined(__APPLE__)
 	{ "Sound Manager",	"Sound Manager" },

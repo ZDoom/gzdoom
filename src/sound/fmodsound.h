@@ -98,6 +98,7 @@ private:
 	FMOD::DSP *SfxReverbPlaceholder;
 	bool SfxReverbHooked;
 	float LastWaterLP;
+	unsigned int OutputPlugin;
 
 	// Just for snd_status display
 	int Driver_MinFrequency;

@@ -54,6 +54,7 @@ extern HWND Window;
 #include "v_text.h"
 #include "v_video.h"
 #include "v_palette.h"
+#include "cmdlib.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -159,6 +160,7 @@ static const FEnumList OutputNames[] =
 	{ "OSS",					FMOD_OUTPUTTYPE_OSS },
 	{ "ALSA",					FMOD_OUTPUTTYPE_ALSA },
 	{ "ESD",					FMOD_OUTPUTTYPE_ESD },
+	{ "SDL",					666 },
 
 	// Mac
 	{ "Sound Manager",			FMOD_OUTPUTTYPE_SOUNDMANAGER },
@@ -612,6 +614,7 @@ bool FMODSoundRenderer::Init()
 	ChannelGroupTargetUnit = NULL;
 	SfxReverbHooked = false;
 	SfxReverbPlaceholder = NULL;
+	OutputPlugin = 0;
 
 	Printf("I_InitSound: Initializing FMOD\n");
 
@@ -692,11 +695,28 @@ bool FMODSoundRenderer::Init()
 	}
 #endif
 
+#ifndef _WIN32
+	// Try to load SDL output plugin
+	result = Sys->setPluginPath(progdir);	// Should we really look for it in the program directory?
+	result = Sys->loadPlugin("liboutput_sdl.so", &OutputPlugin);
+	if (result != FMOD_OK)
+	{
+		OutputPlugin = 0;
+	}
+#endif
+
 	// Set the user specified output mode.
 	eval = Enum_NumForName(OutputNames, snd_output);
 	if (eval >= 0)
 	{
-		result = Sys->setOutput(FMOD_OUTPUTTYPE(eval));
+		if (eval == 666 && OutputPlugin != 0)
+		{
+			result = Sys->setOutputByPlugin(OutputPlugin);
+		}
+		else
+		{
+			result = Sys->setOutput(FMOD_OUTPUTTYPE(eval));
+		}
 		if (result != FMOD_OK)
 		{
 			Printf(TEXTCOLOR_BLUE"Setting output type '%s' failed. Using default instead. (Error %d)\n", *snd_output, result);
@@ -704,7 +724,7 @@ bool FMODSoundRenderer::Init()
 			Sys->setOutput(FMOD_OUTPUTTYPE_AUTODETECT);
 		}
 	}
-
+	
 	result = Sys->getNumDrivers(&driver);
 #ifdef unix
 	if (result == FMOD_OK)
@@ -1083,6 +1103,11 @@ void FMODSoundRenderer::Shutdown()
 		}
 
 		Sys->close();
+		if (OutputPlugin != 0)
+		{
+			Sys->unloadPlugin(OutputPlugin);
+			OutputPlugin = 0;
+		}
 		Sys->release();
 		Sys = NULL;
 	}

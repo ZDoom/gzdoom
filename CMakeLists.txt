@@ -90,3 +90,7 @@ add_subdirectory( dumb )
 add_subdirectory( gdtoa )
 add_subdirectory( wadsrc )
 add_subdirectory( src )
+
+if( NOT WIN32 )
+	add_subdirectory( output_sdl )
+endif( NOT WIN32 )

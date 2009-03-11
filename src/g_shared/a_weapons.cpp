@@ -1140,19 +1140,22 @@ void FWeaponSlots::CompleteSetup(const PClass *type)
 
 void P_CompleteWeaponSetup()
 {
-	// Set up the weapon slots locally
-	LocalWeapons.CompleteSetup(players[consoleplayer].mo->GetClass());
-	// Now transmit them across the network
-	for (int i = 0; i < NUM_WEAPON_SLOTS; ++i)
+	if (players[consoleplayer].mo != NULL)
 	{
-		if (LocalWeapons.Slots[i].Size() > 0)
+		// Set up the weapon slots locally
+		LocalWeapons.CompleteSetup(players[consoleplayer].mo->GetClass());
+		// Now transmit them across the network
+		for (int i = 0; i < NUM_WEAPON_SLOTS; ++i)
 		{
-			Net_WriteByte(DEM_SETSLOT);
-			Net_WriteByte(i);
-			Net_WriteByte(LocalWeapons.Slots[i].Size());
-			for(int j = 0; j < LocalWeapons.Slots[i].Size(); j++)
+			if (LocalWeapons.Slots[i].Size() > 0)
 			{
-				Net_WriteWeapon(LocalWeapons.Slots[i].GetWeapon(j));
+				Net_WriteByte(DEM_SETSLOT);
+				Net_WriteByte(i);
+				Net_WriteByte(LocalWeapons.Slots[i].Size());
+				for(int j = 0; j < LocalWeapons.Slots[i].Size(); j++)
+				{
+					Net_WriteWeapon(LocalWeapons.Slots[i].GetWeapon(j));
+				}
 			}
 		}
 	}

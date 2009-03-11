@@ -375,6 +375,7 @@ xx(Monsterpush)
 
 xx(ZDoom)
 xx(ZDoomTranslated)
+xx(Vavoom)
 
 xx(Xpanningfloor)
 xx(Ypanningfloor)

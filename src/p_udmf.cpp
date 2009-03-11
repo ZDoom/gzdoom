@@ -104,6 +104,7 @@ enum
 	St=8,
 	Zd=16,
 	Zdt=32,
+	Va=64,
 
 	// will be extended later. Unknown namespaces will always be treated like the base
 	// namespace for each game
@@ -274,7 +275,7 @@ struct UDMFParser
 				break;
 
 			case NAME_Special:
-				CHECK_N(Hx | Zd | Zdt)
+				CHECK_N(Hx | Zd | Zdt | Va)
 				th->special = CheckInt(key);
 				break;
 
@@ -283,7 +284,7 @@ struct UDMFParser
 			case NAME_Arg2:
 			case NAME_Arg3:
 			case NAME_Arg4:
-				CHECK_N(Hx | Zd | Zdt)
+				CHECK_N(Hx | Zd | Zdt | Va)
 				th->args[int(key)-int(NAME_Arg0)] = CheckInt(key);
 				break;
 
@@ -323,7 +324,7 @@ struct UDMFParser
 			case NAME_Class14:
 			case NAME_Class15:
 			case NAME_Class16:
-				CHECK_N(Hx | Zd | Zdt)
+				CHECK_N(Hx | Zd | Zdt | Va)
 				if (CheckBool(key)) th->ClassFilter |= (1<<(int(key)-NAME_Class1));
 				else th->ClassFilter &= ~(1<<(int(key)-NAME_Class1));
 				break;
@@ -333,7 +334,7 @@ struct UDMFParser
 				break;
 
 			case NAME_Dormant:
-				CHECK_N(Hx | Zd | Zdt)
+				CHECK_N(Hx | Zd | Zdt | Va)
 				Flag(th->flags, MTF_DORMANT, key); 
 				break;
 
@@ -350,27 +351,27 @@ struct UDMFParser
 				break;
 
 			case NAME_Translucent:
-				CHECK_N(St | Zd | Zdt)
+				CHECK_N(St | Zd | Zdt | Va)
 				Flag(th->flags, MTF_SHADOW, key); 
 				break;
 
 			case NAME_Invisible:
-				CHECK_N(St | Zd | Zdt)
+				CHECK_N(St | Zd | Zdt | Va)
 				Flag(th->flags, MTF_ALTSHADOW, key); 
 				break;
 
 			case NAME_Friend:	// This maps to Strife's friendly flag
-				CHECK_N(Dm | Zd | Zdt)
+				CHECK_N(Dm | Zd | Zdt | Va)
 				Flag(th->flags, MTF_FRIENDLY, key); 
 				break;
 
 			case NAME_Strifeally:
-				CHECK_N(St | Zd | Zdt)
+				CHECK_N(St | Zd | Zdt | Va)
 				Flag(th->flags, MTF_FRIENDLY, key); 
 				break;
 
 			case NAME_Standing:
-				CHECK_N(St | Zd | Zdt)
+				CHECK_N(St | Zd | Zdt | Va)
 				Flag(th->flags, MTF_STANDSTILL, key); 
 				break;
 
@@ -506,22 +507,22 @@ struct UDMFParser
 				break;
 
 			case NAME_Jumpover:
-				CHECK_N(St | Zd | Zdt)
+				CHECK_N(St | Zd | Zdt | Va)
 				Flag(ld->flags, ML_RAILING, key); 
 				break;
 
 			case NAME_Blockfloating:
-				CHECK_N(St | Zd | Zdt)
+				CHECK_N(St | Zd | Zdt | Va)
 				Flag(ld->flags, ML_BLOCK_FLOATERS, key); 
 				break;
 
 			case NAME_Transparent:	
-				CHECK_N(St | Zd | Zdt)
+				CHECK_N(St | Zd | Zdt | Va)
 				strifetrans = CheckBool(key); 
 				break;
 
 			case NAME_Passuse:
-				CHECK_N(Dm | Zd | Zdt)
+				CHECK_N(Dm | Zd | Zdt | Va)
 				passuse = CheckBool(key); 
 				break;
 
@@ -573,7 +574,7 @@ struct UDMFParser
 			}
 
 			// This switch contains all keys which are ZDoom specific
-			if (namespace_bits & (Zd|Zdt)) switch(key)
+			if (namespace_bits & (Zd|Zdt|Va)) switch(key)
 			{
 			case NAME_Alpha:
 				ld->Alpha = CheckFixed(key);
@@ -708,7 +709,7 @@ struct UDMFParser
 				break;
 			}
 
-			if (namespace_bits & (Zd|Zdt)) switch(key)
+			if (namespace_bits & (Zd|Zdt|Va)) switch(key)
 			{
 			case NAME_offsetx_top:
 				sd->SetTextureXOffset(side_t::top, CheckFixed(key));
@@ -848,7 +849,7 @@ struct UDMFParser
 				break;
 			}
 
-			if (namespace_bits & (Zd|Zdt)) switch(key)
+			if (namespace_bits & (Zd|Zdt|Va)) switch(key)
 			{
 				case NAME_Xpanningfloor:
 					sec->SetXOffset(sector_t::floor, CheckFixed(key));
@@ -1120,6 +1121,10 @@ struct UDMFParser
 				break;
 			case NAME_ZDoomTranslated:
 				namespace_bits = Zdt;
+				break;
+			case NAME_Vavoom:
+				namespace_bits = Va;
+				isTranslated = false;
 				break;
 			case NAME_Hexen:
 				namespace_bits = Hx;

@@ -1,4 +1,9 @@
-﻿March 10, 2009
+﻿March 11, 2009  (Changes by Graf Zahl)
+- Added a Check for the Vavoom namespace to the UDMF parser. Functionally
+  it's 100% identical with ZDoom's own but needs to be checked for in
+  case Vavoom compatible UDMF maps are released.
+
+March 10, 2009
 - Added an SDL output plugin, so FMOD can produce sound using SDL's audio
   support instead of its own OSS/ALSA/ESD support. This is selectable by
   setting snd_output to "sdl".
@@ -17,6 +22,7 @@ March 7, 2009
   forces a write of the zip, even if it's newer than all the files it contains.
 
 March 7, 2009  (Changes by Graf Zahl)
+- Fixed: P_CompleteWeaponSetup was missing a NULL pointer check for the player.
 - Adjusted some gravity related thresholds for the fix from Feb 28. Also removed
   some unnecessary floating point math from this code.
 

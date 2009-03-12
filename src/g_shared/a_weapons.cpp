@@ -28,7 +28,7 @@ END_POINTERS
 
 FString WeaponSection;
 TArray<FString> KeyConfWeapons;
-bool PlayingKeyConf;
+FWeaponSlots *PlayingKeyConf;
 
 TArray<const PClass *> Weapons_ntoh;
 TMap<const PClass *, int> Weapons_hton;
@@ -642,8 +642,6 @@ bool AWeaponGiver::TryPickup(AActor *&toucher)
 
 /* Weapon slots ***********************************************************/
 
-FWeaponSlots LocalWeapons;
-
 //===========================================================================
 //
 // FWeaponSlot :: AddWeapon
@@ -841,6 +839,20 @@ void FWeaponSlot::Sort()
 		}
 		Weapons[j + 1].Type = type;
 		Weapons[j + 1].Position = pos;
+	}
+}
+
+//===========================================================================
+//
+// FWeaponSlots - Copy Constructor
+//
+//===========================================================================
+
+FWeaponSlots::FWeaponSlots(const FWeaponSlots &other)
+{
+	for (int i = 0; i < NUM_WEAPON_SLOTS; ++i)
+	{
+		Slots[i] = other.Slots[i];
 	}
 }
 
@@ -1105,24 +1117,36 @@ void FWeaponSlots::AddExtraWeapons()
 
 //===========================================================================
 //
-// FWeaponSlots :: CompleteSetup
+// FWeaponSlots :: StandardSetup
 //
-// Sets up local weapon slots in this order:
+// Setup weapons in this order:
 // 1. Use slots from player class.
-// 2. Add extra weapons that specify their own slot.
-// 3. Run KEYCONF weapon commands, affecting slots accordingly.
-// 4. Read config slots, overriding current slots. If WeaponSection is set,
+// 2. Add extra weapons that specify their own slots.
+//
+//===========================================================================
+
+void FWeaponSlots::StandardSetup(const PClass *type)
+{
+	SetFromPlayer(type);
+	AddExtraWeapons();
+}
+
+//===========================================================================
+//
+// FWeaponSlots :: LocalSetup
+//
+// Setup weapons in this order:
+// 1. Run KEYCONF weapon commands, affecting slots accordingly.
+// 2. Read config slots, overriding current slots. If WeaponSection is set,
 //    then [<WeaponSection>.<PlayerClass>.Weapons] is tried, followed by
 //    [<WeaponSection>.Weapons] if that did not exist. If WeaponSection is
 //    empty, then the slots are read from [<PlayerClass>.Weapons].
 //
 //===========================================================================
 
-void FWeaponSlots::CompleteSetup(const PClass *type)
+void FWeaponSlots::LocalSetup(const PClass *type)
 {
-	SetFromPlayer(type);
-	AddExtraWeapons();
-	P_PlaybackKeyConfWeapons();
+	P_PlaybackKeyConfWeapons(this);
 	if (WeaponSection.IsNotEmpty())
 	{
 		FString sectionclass(WeaponSection);
@@ -1138,25 +1162,41 @@ void FWeaponSlots::CompleteSetup(const PClass *type)
 	}
 }
 
-void P_CompleteWeaponSetup()
+//===========================================================================
+//
+// FWeaponSlots :: SendDifferences
+//
+// Sends the weapon slots from this instance that differ from other's.
+//
+//===========================================================================
+
+void FWeaponSlots::SendDifferences(const FWeaponSlots &other)
 {
-	if (players[consoleplayer].mo != NULL)
+	int i, j;
+
+	for (i = 0; i < NUM_WEAPON_SLOTS; ++i)
 	{
-		// Set up the weapon slots locally
-		LocalWeapons.CompleteSetup(players[consoleplayer].mo->GetClass());
-		// Now transmit them across the network
-		for (int i = 0; i < NUM_WEAPON_SLOTS; ++i)
+		if (other.Slots[i].Size() == Slots[i].Size())
 		{
-			if (LocalWeapons.Slots[i].Size() > 0)
+			for (j = (int)Slots[i].Size(); j-- > 0; )
 			{
-				Net_WriteByte(DEM_SETSLOT);
-				Net_WriteByte(i);
-				Net_WriteByte(LocalWeapons.Slots[i].Size());
-				for(int j = 0; j < LocalWeapons.Slots[i].Size(); j++)
+				if (other.Slots[i].GetWeapon(j) != Slots[i].GetWeapon(j))
 				{
-					Net_WriteWeapon(LocalWeapons.Slots[i].GetWeapon(j));
+					break;
 				}
 			}
+			if (j < 0)
+			{ // The two slots are the same.
+				continue;
+			}
+		}
+		// The slots differ. Send mine.
+		Net_WriteByte(DEM_SETSLOT);
+		Net_WriteByte(i);
+		Net_WriteByte(Slots[i].Size());
+		for (j = 0; j < Slots[i].Size(); ++j)
+		{
+			Net_WriteWeapon(Slots[i].GetWeapon(j));
 		}
 	}
 }
@@ -1268,12 +1308,12 @@ CCMD (setslot)
 	{
 		KeyConfWeapons.Push(argv.args());
 	}
-	else if (PlayingKeyConf)
+	else if (PlayingKeyConf != NULL)
 	{
-		LocalWeapons.Slots[slot].Clear();
+		PlayingKeyConf->Slots[slot].Clear();
 		for (int i = 2; i < argv.argc(); ++i)
 		{
-			LocalWeapons.Slots[slot].AddWeapon(argv[i]);
+			PlayingKeyConf->Slots[slot].AddWeapon(argv[i]);
 		}
 	}
 	else
@@ -1321,9 +1361,9 @@ CCMD (addslot)
 	{
 		KeyConfWeapons.Push(argv.args());
 	}
-	else if (PlayingKeyConf)
+	else if (PlayingKeyConf != NULL)
 	{
-		LocalWeapons.AddSlot(int(slot), PClass::FindClass(argv[2]), false);
+		PlayingKeyConf->AddSlot(int(slot), PClass::FindClass(argv[2]), false);
 	}
 	else
 	{
@@ -1397,9 +1437,9 @@ CCMD (addslotdefault)
 	{
 		KeyConfWeapons.Push(argv.args());
 	}
-	else if (PlayingKeyConf)
+	else if (PlayingKeyConf != NULL)
 	{
-		LocalWeapons.AddSlotDefault(int(slot), PClass::FindClass(argv[2]), false);
+		PlayingKeyConf->AddSlotDefault(int(slot), PClass::FindClass(argv[2]), false);
 	}
 	else
 	{
@@ -1417,15 +1457,15 @@ CCMD (addslotdefault)
 //
 //===========================================================================
 
-void P_PlaybackKeyConfWeapons()
+void P_PlaybackKeyConfWeapons(FWeaponSlots *slots)
 {
-	PlayingKeyConf = true;
+	PlayingKeyConf = slots;
 	for (unsigned int i = 0; i < KeyConfWeapons.Size(); ++i)
 	{
 		FString cmd(KeyConfWeapons[i]);
 		AddCommandString(cmd.LockBuffer());
 	}
-	PlayingKeyConf = false;
+	PlayingKeyConf = NULL;
 }
 
 //===========================================================================

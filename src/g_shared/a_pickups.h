@@ -16,13 +16,15 @@ class AWeapon;
 class FWeaponSlot
 {
 public:
+	FWeaponSlot() { Clear(); }
+	FWeaponSlot(const FWeaponSlot &other) { Weapons = other.Weapons; }
 	FWeaponSlot &operator= (const FWeaponSlot &other) { Weapons = other.Weapons; return *this; }
 	void Clear() { Weapons.Clear(); }
 	bool AddWeapon (const char *type);
 	bool AddWeapon (const PClass *type);
 	void AddWeaponList (const char *list, bool clear);
 	AWeapon *PickWeapon (player_t *player);
-	int Size () { return (int)Weapons.Size(); }
+	int Size () const { return (int)Weapons.Size(); }
 	int LocateWeapon (const PClass *type);
 
 	inline const PClass *GetWeapon (int index) const
@@ -59,6 +61,9 @@ enum ESlotDef
 
 struct FWeaponSlots
 {
+	FWeaponSlots() { Clear(); }
+	FWeaponSlots(const FWeaponSlots &other);
+
 	FWeaponSlot Slots[NUM_WEAPON_SLOTS];
 
 	AWeapon *PickNextWeapon (player_t *player);
@@ -69,7 +74,9 @@ struct FWeaponSlots
 	ESlotDef AddDefaultWeapon (int slot, const PClass *type);
 	void AddExtraWeapons();
 	void SetFromPlayer(const PClass *type);
-	void CompleteSetup(const PClass *type);
+	void StandardSetup(const PClass *type);
+	void LocalSetup(const PClass *type);
+	void SendDifferences(const FWeaponSlots &other);
 	int RestoreSlots (FConfigFile *config, const char *section);
 	void PrintSettings();
 
@@ -78,8 +85,7 @@ struct FWeaponSlots
 
 };
 
-void P_PlaybackKeyConfWeapons();
-void P_CompleteWeaponSetup();
+void P_PlaybackKeyConfWeapons(FWeaponSlots *slots);
 void Net_WriteWeapon(const PClass *type);
 const PClass *Net_ReadWeapon(BYTE **stream);
 

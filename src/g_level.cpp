@@ -922,7 +922,6 @@ void G_DoLoadLevel (int position, bool autosave)
 	}
 
 	P_SetupLevel (level.mapname, position);
-	P_CompleteWeaponSetup();
 
 	AM_LevelInit();
 

@@ -80,6 +80,7 @@ class APlayerPawn : public AActor
 public:
 	virtual void Serialize (FArchive &arc);
 
+	virtual void PostBeginPlay();
 	virtual void Tick();
 	virtual void AddInventory (AInventory *item);
 	virtual void RemoveInventory (AInventory *item);

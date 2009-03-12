@@ -1,4 +1,8 @@
-﻿March 11, 2009  (Changes by Graf Zahl)
+﻿March 11, 2009
+- Moved weapon slot initialization into APlayerPawn::PostBeginPlay() so that
+  they can be initialized when players respawn in multiplayer.
+
+March 11, 2009  (Changes by Graf Zahl)
 - Added a Check for the Vavoom namespace to the UDMF parser. Functionally
   it's 100% identical with ZDoom's own but needs to be checked for in
   case Vavoom compatible UDMF maps are released.

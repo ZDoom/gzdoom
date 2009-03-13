@@ -1,4 +1,8 @@
-﻿March 11, 2009
+﻿March 12, 2009
+- Fixed: After loading a savegame or unmorphing, a player's weapon slots
+  were empty.
+
+March 11, 2009
 - Moved weapon slot initialization into APlayerPawn::PostBeginPlay() so that
   they can be initialized when players respawn in multiplayer.
 

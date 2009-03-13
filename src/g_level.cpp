@@ -1412,7 +1412,7 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 
 	// Hub transitions must keep the current total time
 	if (!hubLoad)
-		level.totaltime=i;
+		level.totaltime = i;
 
 	if (arc.IsStoring ())
 	{
@@ -1501,9 +1501,19 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 
 	P_SerializePlayers (arc, hubLoad);
 	P_SerializeSounds (arc);
-	if (arc.IsLoading()) for(i=0;i<numsectors;i++)
+	if (arc.IsLoading())
 	{
-		P_Recalculate3DFloors(&sectors[i]);
+		for (i = 0; i < numsectors; i++)
+		{
+			P_Recalculate3DFloors(&sectors[i]);
+		}
+		for (i = 0; i < MAXPLAYERS; ++i)
+		{
+			if (playeringame[i] && players[i].mo != NULL)
+			{
+				players[i].mo->SetupWeaponSlots();
+			}
+		}
 	}
 }
 

@@ -499,7 +499,21 @@ void APlayerPawn::Tick()
 
 void APlayerPawn::PostBeginPlay()
 {
-	// If we're not a voodoo doll, set up our weapons.
+	SetupWeaponSlots();
+}
+
+//===========================================================================
+//
+// APlayerPawn :: SetupWeaponSlots
+//
+// Sets up the default weapon slots for this player. If this is also the
+// local player, determines local modifications and sends those across the
+// network. Ignores voodoo dolls.
+//
+//===========================================================================
+
+void APlayerPawn::SetupWeaponSlots()
+{
 	if (player != NULL && player->mo == this)
 	{
 		player->weapons.StandardSetup(GetClass());

@@ -97,7 +97,7 @@ bool P_MorphPlayer (player_t *activator, player_t *p, const PClass *spawntype, i
 
 	// [MH] Used by SBARINFO to speed up face drawing
 	p->MorphedPlayerClass = 0;
-	for (unsigned int i = 1; i < PlayerClasses.Size (); i++)
+	for (unsigned int i = 1; i < PlayerClasses.Size(); i++)
 	{
 		if (PlayerClasses[i].Type == spawntype)
 		{
@@ -309,6 +309,7 @@ bool P_UndoPlayerMorph (player_t *activator, player_t *player, bool force)
 
 	angle = mo->angle >> ANGLETOFINESHIFT;
 	Spawn(exit_flash, pmo->x + 20*finecosine[angle], pmo->y + 20*finesine[angle], pmo->z + TELEFOGHEIGHT, ALLOW_REPLACE);
+	mo->SetupWeaponSlots();		// Use original class's weapon slots.
 	beastweap = player->ReadyWeapon;
 	if (player->PremorphWeapon != NULL)
 	{

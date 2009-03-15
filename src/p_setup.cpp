@@ -255,7 +255,6 @@ MapData *P_OpenMapData(const char * mapname)
 	MapData * map = new MapData;
 	bool externalfile = !strnicmp(mapname, "file:", 5);
 	
-	
 	if (externalfile)
 	{
 		mapname += 5;
@@ -284,8 +283,12 @@ MapData *P_OpenMapData(const char * mapname)
 		
 		if (lump_name > lump_wad && lump_name > lump_map && lump_name != -1)
 		{
-			int lumpfile=Wads.GetLumpFile(lump_name);
-			int nextfile=Wads.GetLumpFile(lump_name+1);
+			int lumpfile = Wads.GetLumpFile(lump_name);
+			int nextfile = Wads.GetLumpFile(lump_name+1);
+
+			map->file = Wads.GetFileReader(lumpfile);
+			map->CloseOnDestruct = false;
+			map->lumpnum = lump_name;
 
 			if (lumpfile != nextfile)
 			{
@@ -303,10 +306,6 @@ MapData *P_OpenMapData(const char * mapname)
 
 			// This case can only happen if the lump is inside a real WAD file.
 			// As such any special handling for other types of lumps is skipped.
-			map->file = Wads.GetFileReader(lumpfile);
-			map->CloseOnDestruct = false;
-			map->lumpnum = lump_name;
-
 			map->MapLumps[0].FilePos = Wads.GetLumpOffset(lump_name);
 			map->MapLumps[0].Size = Wads.LumpLength(lump_name);
 			map->Encrypted = Wads.IsEncryptedFile(lump_name);

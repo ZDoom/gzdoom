@@ -1,4 +1,14 @@
-﻿March 12, 2009
+﻿March 14, 2009
+- Changed Linux default for fullscreen to false.
+- Removed CVAR_SERVERINFO flag from compatmode. Since it writes to
+  compatflags, that should be enough. Having that flag set for both of
+  them leads to problems with e.g. loading a savegame, where compatflags is
+  restored, then compatmode is restored and it completely undoes whatever
+  compatflags was restored to.
+- Fixed: Trying to start a map for some single file that isn't really a map
+  caused a crash.
+
+March 12, 2009
 - Fixed: After loading a savegame or unmorphing, a player's weapon slots
   were empty.
 

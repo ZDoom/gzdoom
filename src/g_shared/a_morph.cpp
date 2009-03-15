@@ -20,6 +20,9 @@ static FRandom pr_morphmonst ("MorphMonster");
 //
 // Returns true if the player gets turned into a chicken/pig.
 //
+// TODO: Allow morphed players to receive weapon sets (not just one weapon),
+// since they have their own weapon slots now.
+//
 //---------------------------------------------------------------------------
 
 bool P_MorphPlayer (player_t *activator, player_t *p, const PClass *spawntype, int duration, int style, const PClass *enter_flash, const PClass *exit_flash)

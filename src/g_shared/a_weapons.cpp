@@ -171,7 +171,7 @@ bool AWeapon::PickupForAmmo (AWeapon *ownedWeapon)
 		int oldamount1 = 0;
 		int oldamount2 = 0;
 		if (ownedWeapon->Ammo1 != NULL) oldamount1 = ownedWeapon->Ammo1->Amount;
-		if (ownedWeapon->Ammo2 != NULL) oldamount2 = ownedWeapon->Ammo1->Amount;
+		if (ownedWeapon->Ammo2 != NULL) oldamount2 = ownedWeapon->Ammo2->Amount;
 
 		if (AmmoGive1 > 0) gotstuff = AddExistingAmmo (ownedWeapon->Ammo1, AmmoGive1);
 		if (AmmoGive2 > 0) gotstuff |= AddExistingAmmo (ownedWeapon->Ammo2, AmmoGive2);

@@ -1,4 +1,7 @@
-﻿March 14, 2009
+﻿March 15, 2009  (Changes by Graf Zahl)
+- Fixed: AWeapon::PickupForAmmo accessed ammo type 1 when checking ammo type2.
+
+March 14, 2009
 - Changed Linux default for fullscreen to false.
 - Removed CVAR_SERVERINFO flag from compatmode. Since it writes to
   compatflags, that should be enough. Having that flag set for both of

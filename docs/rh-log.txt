@@ -1,4 +1,8 @@
-﻿March 15, 2009  (Changes by Graf Zahl)
+﻿March 16, 2009
+- Added support for loading ZGL2 nodes. (Only useful with UDMF and maps with
+  more than 65534 lines.)
+
+March 15, 2009  (Changes by Graf Zahl)
 - Fixed: AWeapon::PickupForAmmo accessed ammo type 1 when checking ammo type2.
 
 March 14, 2009

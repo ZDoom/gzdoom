@@ -219,7 +219,7 @@ private:
 	double AddIntersection (const node_t &node, int vertex);
 	void AddMinisegs (const node_t &node, DWORD splitseg, DWORD &fset, DWORD &rset);
 	DWORD CheckLoopStart (fixed_t dx, fixed_t dy, int vertex1, int vertex2);
-	DWORD CheckLoopEnd (fixed_t dx, fixed_t dy, int vertex1, int vertex2);
+	DWORD CheckLoopEnd (fixed_t dx, fixed_t dy, int vertex2);
 	void RemoveSegFromVert1 (DWORD segnum, int vertnum);
 	void RemoveSegFromVert2 (DWORD segnum, int vertnum);
 	DWORD AddMiniseg (int v1, int v2, DWORD partner, DWORD seg1, DWORD splitseg);

@@ -749,7 +749,7 @@ void P_LoadZSegs (FileReaderZ &data)
 //
 //===========================================================================
 
-void P_LoadGLZSegs (FileReaderZ &data)
+void P_LoadGLZSegs (FileReaderZ &data, DWORD id)
 {
 	for (int i = 0; i < numsubsectors; ++i)
 	{
@@ -757,10 +757,21 @@ void P_LoadGLZSegs (FileReaderZ &data)
 		{
 			seg_t *seg;
 			DWORD v1, partner;
-			WORD line;
+			DWORD line;
+			WORD lineword;
 			BYTE side;
 
-			data >> v1 >> partner >> line >> side;
+			data >> v1 >> partner;
+			if (id == MAKE_ID('Z','G','L','2'))
+			{
+				data >> line;
+			}
+			else
+			{
+				data >> lineword;
+				line = lineword == 0xFFFF ? 0xFFFFFFFF : lineword;
+			}
+			data >> side;
 
 			seg = &segs[subsectors[i].firstline + j];
 			seg->v1 = &vertexes[v1];
@@ -780,7 +791,7 @@ void P_LoadGLZSegs (FileReaderZ &data)
 			{
 				seg->PartnerSeg = &segs[partner];
 			}
-			if (line != 0xFFFF)
+			if (line != 0xFFFFFFFF)
 			{
 				line_t *ldef;
 
@@ -891,7 +902,7 @@ static void P_LoadZNodes (FileReader &dalump, DWORD id)
 	}
 	else
 	{
-		P_LoadGLZSegs (data);
+		P_LoadGLZSegs (data, id);
 	}
 
 	// Read nodes
@@ -3455,7 +3466,7 @@ void P_SetupLevel (char *lumpname, int position)
 	{
 		// Check for compressed nodes first, then uncompressed nodes
 		FWadLump test;
-		DWORD id = MAKE_ID('X','x','X','x'), idcheck=0;
+		DWORD id = MAKE_ID('X','x','X','x'), idcheck = 0, idcheck2 = 0;
 
 		if (map->MapLumps[ML_ZNODES].Size != 0 && !UsingGLNodes)
 		{
@@ -3467,10 +3478,11 @@ void P_SetupLevel (char *lumpname, int position)
 			// If normal nodes are not present but GL nodes are, use them.
 			map->Seek(ML_GLZNODES);
 			idcheck = MAKE_ID('Z','G','L','N');
+			idcheck2 = MAKE_ID('Z','G','L','2');
 		}
 
 		map->file->Read (&id, 4);
-		if (id == idcheck)
+		if (id == idcheck || id == idcheck2)
 		{
 			try
 			{
@@ -3513,7 +3525,6 @@ void P_SetupLevel (char *lumpname, int position)
 			times[9].Unclock();
 		}
 		else ForceNodeBuild = true;
-
 	}
 	if (ForceNodeBuild)
 	{

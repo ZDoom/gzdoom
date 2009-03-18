@@ -66,7 +66,7 @@
 #include "v_font.h"
 #include "g_level.h"
 #include "doomstat.h"
-
+#include "v_palette.h"
 #include "stats.h"
 
 EXTERN_CVAR (String, language)
@@ -74,6 +74,8 @@ EXTERN_CVAR (String, language)
 extern void CheckCPUID(CPUInfo *cpu);
 
 extern HWND Window, ConWindow, GameTitleWindow;
+extern HANDLE StdOut;
+extern bool FancyStdOut;
 extern HINSTANCE g_hInst;
 
 double PerfToSec, PerfToMillisec;
@@ -554,10 +556,9 @@ void I_SetIWADInfo (const IWADInfo *info)
 
 void I_PrintStr (const char *cp)
 {
-	if (ConWindow == NULL)
+	if (ConWindow == NULL && StdOut == NULL)
 		return;
 
-	static bool newLine = true;
 	HWND edit = ConWindow;
 	char buf[256];
 	int bpos = 0;
@@ -566,17 +567,20 @@ void I_PrintStr (const char *cp)
 	LONG lines_before, lines_after;
 	CHARFORMAT format;
 
-	// Store the current selection and set it to the end so we can append text.
-	SendMessage (edit, EM_EXGETSEL, 0, (LPARAM)&selection);
-	endselection.cpMax = endselection.cpMin = GetWindowTextLength (edit);
-	SendMessage (edit, EM_EXSETSEL, 0, (LPARAM)&endselection);
+	if (edit != NULL)
+	{
+		// Store the current selection and set it to the end so we can append text.
+		SendMessage (edit, EM_EXGETSEL, 0, (LPARAM)&selection);
+		endselection.cpMax = endselection.cpMin = GetWindowTextLength (edit);
+		SendMessage (edit, EM_EXSETSEL, 0, (LPARAM)&endselection);
 
-	// GetWindowTextLength and EM_EXSETSEL can disagree on where the end of
-	// the text is. Find out what EM_EXSETSEL thought it was and use that later.
-	SendMessage (edit, EM_EXGETSEL, 0, (LPARAM)&endselection);
+		// GetWindowTextLength and EM_EXSETSEL can disagree on where the end of
+		// the text is. Find out what EM_EXSETSEL thought it was and use that later.
+		SendMessage (edit, EM_EXGETSEL, 0, (LPARAM)&endselection);
 
-	// Remember how many lines there were before we added text.
-	lines_before = SendMessage (edit, EM_GETLINECOUNT, 0, 0);
+		// Remember how many lines there were before we added text.
+		lines_before = SendMessage (edit, EM_GETLINECOUNT, 0, 0);
+	}
 
 	while (*cp != 0)
 	{
@@ -584,8 +588,15 @@ void I_PrintStr (const char *cp)
 		if ((*cp == 28 && bpos != 0) || bpos == 255)
 		{
 			buf[bpos] = 0;
-			SendMessage (edit, EM_REPLACESEL, FALSE, (LPARAM)buf);
-			newLine = buf[bpos-1] == '\n';
+			if (edit != NULL)
+			{
+				SendMessage (edit, EM_REPLACESEL, FALSE, (LPARAM)buf);
+			}
+			if (StdOut != NULL)
+			{
+				DWORD bytes_written;
+				WriteFile(StdOut, buf, bpos, &bytes_written, NULL);
+			}
 			bpos = 0;
 		}
 		if (*cp != 28)
@@ -602,39 +613,81 @@ void I_PrintStr (const char *cp)
 			{
 				// Change the color of future text added to the control.
 				PalEntry color = V_LogColorFromColorRange (range);
-				// GDI uses BGR colors, but color is RGB, so swap the R and the B.
-				swap (color.r, color.b);
-				// Change the color.
-				format.cbSize = sizeof(format);
-				format.dwMask = CFM_COLOR;
-				format.dwEffects = 0;
-				format.crTextColor = color;
-				SendMessage (edit, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&format);
+				if (StdOut != NULL && FancyStdOut)
+				{
+					// Unfortunately, we are pretty limited here: There are only
+					// eight basic colors, and each comes in a dark and a bright
+					// variety.
+					float h, s, v, r, g, b;
+					WORD attrib = 0;
+
+					RGBtoHSV(color.r / 255.0, color.g / 255.0, color.b / 255.0, &h, &s, &v);
+					if (s != 0)
+					{ // color
+						HSVtoRGB(&r, &g, &b, h, 1, 1);
+						if (r == 1)  attrib  = FOREGROUND_RED;
+						if (g == 1)  attrib |= FOREGROUND_GREEN;
+						if (b == 1)  attrib |= FOREGROUND_BLUE;
+						if (v > 0.6) attrib |= FOREGROUND_INTENSITY;
+					}
+					else
+					{ // gray
+						     if (v < 0.33) attrib = FOREGROUND_INTENSITY;
+						else if (v < 0.90) attrib = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
+						else			   attrib = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY;
+					}
+					SetConsoleTextAttribute(StdOut, attrib);
+				}
+				if (edit != NULL)
+				{
+					// GDI uses BGR colors, but color is RGB, so swap the R and the B.
+					swap (color.r, color.b);
+					// Change the color.
+					format.cbSize = sizeof(format);
+					format.dwMask = CFM_COLOR;
+					format.dwEffects = 0;
+					format.crTextColor = color;
+					SendMessage (edit, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&format);
+				}
 			}
 		}
 	}
 	if (bpos != 0)
 	{
 		buf[bpos] = 0;
-		SendMessage (edit, EM_REPLACESEL, FALSE, (LPARAM)buf); 
-		newLine = buf[bpos-1] == '\n';
-	}
-
-	// If the old selection was at the end of the text, keep it at the end and
-	// scroll. Don't scroll if the selection is anywhere else.
-	if (selection.cpMin == endselection.cpMin && selection.cpMax == endselection.cpMax)
-	{
-		selection.cpMax = selection.cpMin = GetWindowTextLength (edit);
-		lines_after = SendMessage (edit, EM_GETLINECOUNT, 0, 0);
-		if (lines_after > lines_before)
+		if (edit != NULL)
 		{
-			SendMessage (edit, EM_LINESCROLL, 0, lines_after - lines_before);
+			SendMessage (edit, EM_REPLACESEL, FALSE, (LPARAM)buf); 
+		}
+		if (StdOut != NULL)
+		{
+			DWORD bytes_written;
+			WriteFile(StdOut, buf, bpos, &bytes_written, NULL);
 		}
 	}
-	// Restore the previous selection.
-	SendMessage (edit, EM_EXSETSEL, 0, (LPARAM)&selection);
-	// Give the edit control a chance to redraw itself.
-	I_GetEvent ();
+
+	if (edit != NULL)
+	{
+		// If the old selection was at the end of the text, keep it at the end and
+		// scroll. Don't scroll if the selection is anywhere else.
+		if (selection.cpMin == endselection.cpMin && selection.cpMax == endselection.cpMax)
+		{
+			selection.cpMax = selection.cpMin = GetWindowTextLength (edit);
+			lines_after = SendMessage (edit, EM_GETLINECOUNT, 0, 0);
+			if (lines_after > lines_before)
+			{
+				SendMessage (edit, EM_LINESCROLL, 0, lines_after - lines_before);
+			}
+		}
+		// Restore the previous selection.
+		SendMessage (edit, EM_EXSETSEL, 0, (LPARAM)&selection);
+		// Give the edit control a chance to redraw itself.
+		I_GetEvent ();
+	}
+	if (StdOut != NULL && FancyStdOut)
+	{ // Set text back to gray, in case it was changed.
+		SetConsoleTextAttribute(StdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+	}
 }
 
 EXTERN_CVAR (Bool, queryiwad);

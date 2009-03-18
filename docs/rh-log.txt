@@ -1,4 +1,11 @@
-﻿March 16, 2009
+﻿March 17, 2009
+- Added the -norun parameter to quit the game just before video
+  initialization. To be used to check for errors in scripts without actually
+  running the game.
+- Added the -stdout parameter to the Windows version to send all output to
+  a console, like the Linux version has done all along.
+
+March 16, 2009
 - Added support for loading ZGL2 nodes. (Only useful with UDMF and maps with
   more than 65534 lines.)
 

@@ -68,6 +68,10 @@ private:
 	char m_Message[MAX_ERRORTEXT];
 };
 
+class CNoRunExit : public CDoomError
+{
+};
+
 class CRecoverableError : public CDoomError
 {
 public:

@@ -125,6 +125,8 @@ HINSTANCE		g_hInst;
 DWORD			SessionID;
 HANDLE			MainThread;
 DWORD			MainThreadID;
+HANDLE			StdOut;
+bool			FancyStdOut, AttachedStdOut;
 
 // The main window
 HWND			Window;
@@ -806,6 +808,49 @@ void DoMain (HINSTANCE hInstance)
 		// need to extract the ProcessIdToSessionId function from kernel32.dll manually.
 		HMODULE kernel = GetModuleHandle ("kernel32.dll");
 
+		if (Args->CheckParm("-stdout"))
+		{
+			// As a GUI application, we don't normally get a console when we start.
+			// If we were run from the shell and are on XP+, we can attach to its
+			// console. Otherwise, we can create a new one. If we already have a
+			// stdout handle, then we have been redirected and should just use that
+			// handle instead of creating a console window.
+
+			StdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+			if (StdOut != NULL)
+			{
+				// It seems that running from a shell always creates a std output
+				// for us, even if it doesn't go anywhere. (Running from Explorer
+				// does not.) If we can get file information for this handle, it's
+				// a file or pipe, so use it. Otherwise, pretend it wasn't there
+				// and find a console to use instead.
+				BY_HANDLE_FILE_INFORMATION info;
+				if (!GetFileInformationByHandle(StdOut, &info))
+				{
+					StdOut = NULL;
+				}
+			}
+			if (StdOut == NULL)
+			{
+				// AttachConsole was introduced with Windows XP. (OTOH, since we
+				// have to share the console with the shell, I'm not sure if it's
+				// a good idea to actually attach to it.)
+				typedef BOOL (WINAPI *ac)(DWORD);
+				ac attach_console = kernel != NULL ? (ac)GetProcAddress(kernel, "AttachConsole") : NULL;
+				if (attach_console != NULL && attach_console(ATTACH_PARENT_PROCESS))
+				{
+					StdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+					DWORD foo; WriteFile(StdOut, "\n", 1, &foo, NULL);
+					AttachedStdOut = true;
+				}
+				if (StdOut == NULL && AllocConsole())
+				{
+					StdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+				}
+				FancyStdOut = true;
+			}
+		}
+
 		// Set the timer to be as accurate as possible
 		if (timeGetDevCaps (&tc, sizeof(tc)) != TIMERR_NOERROR)
 			TimerPeriod = 1;	// Assume minimum resolution of 1 ms
@@ -906,7 +951,7 @@ void DoMain (HINSTANCE hInstance)
 		if (!Window)
 			I_FatalError ("Could not open window");
 
-		if (kernel != 0)
+		if (kernel != NULL)
 		{
 			typedef BOOL (WINAPI *pts)(DWORD, DWORD *);
 			pts pidsid = (pts)GetProcAddress (kernel, "ProcessIdToSessionId");
@@ -945,6 +990,36 @@ void DoMain (HINSTANCE hInstance)
 
 		I_DetectOS ();
 		D_DoomMain ();
+	}
+	catch (class CNoRunExit &)
+	{
+		I_ShutdownGraphics();
+		if (FancyStdOut && !AttachedStdOut)
+		{ // Outputting to a new console window: Wait for a keypress before quitting.
+			DWORD bytes;
+			HANDLE stdinput = GetStdHandle(STD_INPUT_HANDLE);
+
+			ShowWindow (Window, SW_HIDE);
+			WriteFile(StdOut, "Press any key to exit...", 24, &bytes, NULL);
+			FlushConsoleInputBuffer(stdinput);
+			SetConsoleMode(stdinput, 0);
+			ReadConsole(stdinput, &bytes, 1, &bytes, NULL);
+		}
+		else if (StdOut == NULL)
+		{
+			BOOL bRet;
+			MSG msg;
+
+			RestoreConView();
+			while ((bRet = GetMessage(&msg, NULL, 0, 0)) != 0)
+			{
+				if (bRet == -1)
+				{
+					exit(0);
+				}
+			}
+		}
+		exit(0);
 	}
 	catch (class CDoomError &error)
 	{

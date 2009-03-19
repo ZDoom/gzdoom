@@ -214,15 +214,27 @@ void P_FindFloorCeiling (AActor *actor, bool onlyspawnpos)
 	tmf.x = actor->x;
 	tmf.y = actor->y;
 	tmf.z = actor->z;
-	P_GetFloorCeilingZ(tmf);
 
-	actor->floorz = tmf.floorz;
-	actor->dropoffz = tmf.dropoffz;
-	actor->ceilingz = tmf.ceilingz;
-	actor->floorpic = tmf.floorpic;
-	actor->floorsector = tmf.floorsector;
-	actor->ceilingpic = tmf.ceilingpic;
-	actor->ceilingsector = tmf.ceilingsector;
+	if (!onlyspawnpos)
+	{
+		P_GetFloorCeilingZ(tmf);
+		actor->floorz = tmf.floorz;
+		actor->dropoffz = tmf.dropoffz;
+		actor->ceilingz = tmf.ceilingz;
+		actor->floorpic = tmf.floorpic;
+		actor->floorsector = tmf.floorsector;
+		actor->ceilingpic = tmf.ceilingpic;
+		actor->ceilingsector = tmf.ceilingsector;
+	}
+	else
+	{
+		tmf.ceilingsector = tmf.floorsector = actor->Sector;
+
+		tmf.floorz = tmf.dropoffz = actor->floorz;
+		tmf.ceilingz = actor->ceilingz;
+		tmf.floorpic = actor->floorpic;
+		tmf.ceilingpic = actor->ceilingpic;
+	}
 
 	FBoundingBox box(tmf.x, tmf.y, actor->radius);
 
@@ -248,6 +260,10 @@ void P_FindFloorCeiling (AActor *actor, bool onlyspawnpos)
 		actor->floorsector = tmf.floorsector;
 		actor->ceilingpic = tmf.ceilingpic;
 		actor->ceilingsector = tmf.ceilingsector;
+	}
+	else
+	{
+		actor->floorsector = actor->ceilingsector = actor->Sector;
 	}
 }
 

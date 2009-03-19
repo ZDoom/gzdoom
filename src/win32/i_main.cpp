@@ -697,69 +697,78 @@ void ShowErrorPane(const char *text)
 {
 	if (Window == NULL || ConWindow == NULL)
 	{
-		MessageBox (Window, text,
-			GAMESIG " Fatal Error", MB_OK|MB_ICONSTOP|MB_TASKMODAL);
+		if (text != NULL)
+		{
+			MessageBox (Window, text,
+				GAMESIG " Fatal Error", MB_OK|MB_ICONSTOP|MB_TASKMODAL);
+		}
 		return;
 	}
 
-	SetWindowText (Window, "Fatal Error - " WINDOW_TITLE);
 	if (StartScreen != NULL)	// Ensure that the network pane is hidden.
 	{
 		StartScreen->NetDone();
 	}
-	ErrorIcon = CreateWindowEx (WS_EX_NOPARENTNOTIFY, "STATIC", NULL, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | SS_OWNERDRAW, 0, 0, 0, 0, Window, NULL, g_hInst, NULL);
-	if (ErrorIcon != NULL)
+	if (text != NULL)
 	{
-		SetWindowLong (ErrorIcon, GWL_ID, IDC_ICONPIC);
+		SetWindowText (Window, "Fatal Error - " WINDOW_TITLE);
+		ErrorIcon = CreateWindowEx (WS_EX_NOPARENTNOTIFY, "STATIC", NULL, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | SS_OWNERDRAW, 0, 0, 0, 0, Window, NULL, g_hInst, NULL);
+		if (ErrorIcon != NULL)
+		{
+			SetWindowLong (ErrorIcon, GWL_ID, IDC_ICONPIC);
+		}
 	}
 	ErrorPane = CreateDialogParam (g_hInst, MAKEINTRESOURCE(IDD_ERRORPANE), Window, ErrorPaneProc, (LONG_PTR)NULL);
 
-	CHARRANGE end;
-	CHARFORMAT2 oldformat, newformat;
-	PARAFORMAT2 paraformat;
+	if (text != NULL)
+	{
+		CHARRANGE end;
+		CHARFORMAT2 oldformat, newformat;
+		PARAFORMAT2 paraformat;
 
-	// Append the error message to the log.
-	end.cpMax = end.cpMin = GetWindowTextLength (ConWindow);
-	SendMessage (ConWindow, EM_EXSETSEL, 0, (LPARAM)&end);
+		// Append the error message to the log.
+		end.cpMax = end.cpMin = GetWindowTextLength (ConWindow);
+		SendMessage (ConWindow, EM_EXSETSEL, 0, (LPARAM)&end);
 
-	// Remember current charformat.
-	oldformat.cbSize = sizeof(oldformat);
-	SendMessage (ConWindow, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM)&oldformat);
+		// Remember current charformat.
+		oldformat.cbSize = sizeof(oldformat);
+		SendMessage (ConWindow, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM)&oldformat);
 
-	// Use bigger font and standout colors.
-	newformat.cbSize = sizeof(newformat);
-	newformat.dwMask = CFM_BOLD | CFM_COLOR | CFM_SIZE;
-	newformat.dwEffects = CFE_BOLD;
-	newformat.yHeight = oldformat.yHeight * 5 / 4;
-	newformat.crTextColor = RGB(255,170,170);
-	SendMessage (ConWindow, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&newformat);
+		// Use bigger font and standout colors.
+		newformat.cbSize = sizeof(newformat);
+		newformat.dwMask = CFM_BOLD | CFM_COLOR | CFM_SIZE;
+		newformat.dwEffects = CFE_BOLD;
+		newformat.yHeight = oldformat.yHeight * 5 / 4;
+		newformat.crTextColor = RGB(255,170,170);
+		SendMessage (ConWindow, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&newformat);
 
-	// Indent the rest of the text to make the error message stand out a little more.
-	paraformat.cbSize = sizeof(paraformat);
-	paraformat.dwMask = PFM_STARTINDENT | PFM_OFFSETINDENT | PFM_RIGHTINDENT;
-	paraformat.dxStartIndent = paraformat.dxOffset = paraformat.dxRightIndent = 120;
-	SendMessage (ConWindow, EM_SETPARAFORMAT, 0, (LPARAM)&paraformat);
-	SendMessage (ConWindow, EM_REPLACESEL, FALSE, (LPARAM)"\n");
+		// Indent the rest of the text to make the error message stand out a little more.
+		paraformat.cbSize = sizeof(paraformat);
+		paraformat.dwMask = PFM_STARTINDENT | PFM_OFFSETINDENT | PFM_RIGHTINDENT;
+		paraformat.dxStartIndent = paraformat.dxOffset = paraformat.dxRightIndent = 120;
+		SendMessage (ConWindow, EM_SETPARAFORMAT, 0, (LPARAM)&paraformat);
+		SendMessage (ConWindow, EM_REPLACESEL, FALSE, (LPARAM)"\n");
 
-	// Find out where the error lines start for the error icon display control.
-	SendMessage (ConWindow, EM_EXGETSEL, 0, (LPARAM)&end);
-	ErrorIconChar = end.cpMax;
+		// Find out where the error lines start for the error icon display control.
+		SendMessage (ConWindow, EM_EXGETSEL, 0, (LPARAM)&end);
+		ErrorIconChar = end.cpMax;
 
-	// Now start adding the actual error message.
-	SendMessage (ConWindow, EM_REPLACESEL, FALSE, (LPARAM)"Execution could not continue.\n\n");
+		// Now start adding the actual error message.
+		SendMessage (ConWindow, EM_REPLACESEL, FALSE, (LPARAM)"Execution could not continue.\n\n");
 
-	// Restore old charformat but with light yellow text.
-	oldformat.crTextColor = RGB(255,255,170);
-	SendMessage (ConWindow, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&oldformat);
+		// Restore old charformat but with light yellow text.
+		oldformat.crTextColor = RGB(255,255,170);
+		SendMessage (ConWindow, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&oldformat);
 
-	// Add the error text.
-	SendMessage (ConWindow, EM_REPLACESEL, FALSE, (LPARAM)text);
+		// Add the error text.
+		SendMessage (ConWindow, EM_REPLACESEL, FALSE, (LPARAM)text);
 
-	// Make sure the error text is not scrolled below the window.
-	SendMessage (ConWindow, EM_LINESCROLL, 0, SendMessage (ConWindow, EM_GETLINECOUNT, 0, 0));
-	// The above line scrolled everything off the screen, so pretend to move the scroll
-	// bar thumb, which clamps to not show any extra lines if it doesn't need to.
-	SendMessage (ConWindow, EM_SCROLL, SB_PAGEDOWN, 0);
+		// Make sure the error text is not scrolled below the window.
+		SendMessage (ConWindow, EM_LINESCROLL, 0, SendMessage (ConWindow, EM_GETLINECOUNT, 0, 0));
+		// The above line scrolled everything off the screen, so pretend to move the scroll
+		// bar thumb, which clamps to not show any extra lines if it doesn't need to.
+		SendMessage (ConWindow, EM_SCROLL, SB_PAGEDOWN, 0);
+	}
 
 	BOOL bRet;
 	MSG msg;
@@ -1007,17 +1016,7 @@ void DoMain (HINSTANCE hInstance)
 		}
 		else if (StdOut == NULL)
 		{
-			BOOL bRet;
-			MSG msg;
-
-			RestoreConView();
-			while ((bRet = GetMessage(&msg, NULL, 0, 0)) != 0)
-			{
-				if (bRet == -1)
-				{
-					exit(0);
-				}
-			}
+			ShowErrorPane(NULL);
 		}
 		exit(0);
 	}

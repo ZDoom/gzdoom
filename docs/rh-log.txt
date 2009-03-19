@@ -1,4 +1,8 @@
 ﻿March 18, 2009  (Changes by Graf Zahl)
+- Fixed: S_StopSound may not assume that after stopping a sound channel
+  its link to the next item in the list is still valid.
+- Fixed typo in src/CMakeLists.txt.
+- Fixed: Armor only worked for players.
 - Fixed: P_FindFloorCeiling may not call P_PointInSector if called from
   P_SpawnMapThing. It must use the values the actor has been initialized to
   by LinkToWorldForMapThing.

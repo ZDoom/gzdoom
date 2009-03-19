@@ -42,7 +42,7 @@ foreach( majver ${MAJOR_VERSIONS} )
 		set( FMOD_LOCAL_INC_DIRS ${FMOD_LOCAL_INC_DIRS} "${dir}/api/inc" )
 		set( FMOD_LOCAL_LIB_DIRS ${FMOD_LOCAL_LIB_DIRS} "${dir}/api/lib" )
 	endforeach( dir ${FMOD_DIR_VERSIONS} )
-endforeach( majver ${MAJER_VERSIONS} )
+endforeach( majver ${MAJOR_VERSIONS} )
 
 if( WIN32 )
 	if( X64 )

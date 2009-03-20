@@ -101,11 +101,21 @@ FRandom pr_acs ("ACS");
 
 struct CallReturn
 {
+	CallReturn(int pc, ScriptFunction *func, FBehavior *module, SDWORD *locals, bool discard, FString &str)
+		: ReturnFunction(func),
+		  ReturnModule(module),
+		  ReturnLocals(locals),
+		  ReturnAddress(pc),
+		  bDiscardResult(discard),
+		  StringBuilder(str)
+	{}
+
 	ScriptFunction *ReturnFunction;
 	FBehavior *ReturnModule;
 	SDWORD *ReturnLocals;
 	int ReturnAddress;
 	int bDiscardResult;
+	FString StringBuilder;
 };
 
 static DLevelScript *P_GetScriptGoing (AActor *who, line_t *where, int num, const ScriptPtr *code, FBehavior *module,
@@ -3053,11 +3063,6 @@ int DLevelScript::RunScript ()
 		case PCD_CALL:
 		case PCD_CALLDISCARD:
 			{
-				union
-				{
-					CallReturn *ret;
-					SDWORD *retsp;
-				};
 				int funcnum;
 				int i;
 				ScriptFunction *func;
@@ -3087,13 +3092,9 @@ int DLevelScript::RunScript ()
 					Stack[sp+i] = 0;
 				}
 				sp += i;
-				retsp = &Stack[sp];
-				ret->ReturnAddress = activeBehavior->PC2Ofs (pc);
-				ret->ReturnFunction = activeFunction;
-				ret->ReturnModule = activeBehavior;
-				ret->ReturnLocals = mylocals;
-				ret->bDiscardResult = (pcd == PCD_CALLDISCARD);
-				sp += sizeof(CallReturn)/sizeof(int);
+				::new(&Stack[sp]) CallReturn(activeBehavior->PC2Ofs(pc), activeFunction,
+					activeBehavior, mylocals, pcd == PCD_CALLDISCARD, work);
+				sp += (sizeof(CallReturn) + sizeof(int) - 1) / sizeof(int);
 				pc = module->Ofs2PC (func->Address);
 				activeFunction = func;
 				activeBehavior = module;
@@ -3108,7 +3109,7 @@ int DLevelScript::RunScript ()
 				union
 				{
 					SDWORD *retsp;
-					CallReturn *retState;
+					CallReturn *ret;
 				};
 
 				if (pcd == PCD_RETURNVAL)
@@ -3122,15 +3123,17 @@ int DLevelScript::RunScript ()
 				sp -= sizeof(CallReturn)/sizeof(int);
 				retsp = &Stack[sp];
 				sp = locals - Stack;
-				pc = retState->ReturnModule->Ofs2PC (retState->ReturnAddress);
-				activeFunction = retState->ReturnFunction;
-				activeBehavior = retState->ReturnModule;
+				pc = ret->ReturnModule->Ofs2PC(ret->ReturnAddress);
+				activeFunction = ret->ReturnFunction;
+				activeBehavior = ret->ReturnModule;
 				fmt = activeBehavior->GetFormat();
-				locals = retState->ReturnLocals;
-				if (!retState->bDiscardResult)
+				locals = ret->ReturnLocals;
+				if (!ret->bDiscardResult)
 				{
 					Stack[sp++] = value;
 				}
+				work = ret->StringBuilder;
+				ret->~CallReturn();
 			}
 			break;
 

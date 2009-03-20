@@ -1,4 +1,8 @@
 ﻿March 19, 2009
+- Added the current value of the string buffer to the state saved when
+  making a function call in ACS. Now you can print inside functions and
+  also return values from them for the caller to plug directly into
+  another string without having to save it to a temporary variable.
 - Added an OutputVolume() call after the MusicVolumeChanged() call in
   MIDIStreamer::Play(). Since the state isn't playing yet when
   MusicVolumeChanged() is called, it doesn't do this itself.

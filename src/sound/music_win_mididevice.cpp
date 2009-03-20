@@ -215,10 +215,14 @@ void WinMIDIDevice::Stop()
 //   Bit    14: Select drum set if 1, tone bank if 0
 //
 // My old GUS PnP needed the instruments to be preloaded, or it would miss
-// some notes the first time through the song. I doubt any modern
+// some notes the first time through a song. I doubt any modern
 // hardware has this problem, but since I'd already written the code for
 // ZDoom 1.22 and below, I'm resurrecting it now for completeness, since I'm
 // using preloading for the internal Timidity.
+//
+// NOTETOSELF: Why did I never notice the midiOutCache(Drum)Patches calls
+// before now? Should I switch to them? This code worked on my GUS, but
+// using the APIs intended for caching might be better.
 //
 //==========================================================================
 

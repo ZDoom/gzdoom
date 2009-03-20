@@ -1,4 +1,7 @@
 ﻿March 19, 2009
+- Added an OutputVolume() call after the MusicVolumeChanged() call in
+  MIDIStreamer::Play(). Since the state isn't playing yet when
+  MusicVolumeChanged() is called, it doesn't do this itself.
 - Fixed: P_RailAttack() passed the wrong angle variable to P_TraceBleed().
 
 March 18, 2009  (Changes by Graf Zahl)

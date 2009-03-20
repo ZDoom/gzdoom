@@ -1,4 +1,5 @@
-// MAPINFO for Strife (full version and teaser)
+// MAPINFO for Strife (full version and teaser)
+
 skill baby
 {
 	AutoUseHealth
@@ -54,7 +55,7 @@ gamedefaults
 map MAP01 "AREA 1: sanctuary"
 {
 	next = "MAP02"
-	sky1 = "SKYMNT02", 0
+	sky1 = "SKYMNT02"
 	music = "D_ACTION"
 	cluster = 1
 }
@@ -62,7 +63,7 @@ map MAP01 "AREA 1: sanctuary"
 map MAP02 "AREA 2: town"
 {
 	next = "MAP03"
-	sky1 = "SKYMNT02", 0
+	sky1 = "SKYMNT02"
 	music = "D_TAVERN"
 	cluster = 1
 }
@@ -70,18 +71,17 @@ map MAP02 "AREA 2: town"
 map MAP03 "AREA 3: front base"
 {
 	next = "MAP04"
-	sky1 = "SKYMNT02", 0
+	sky1 = "SKYMNT02"
 	music = "D_DANGER"
 	cluster = 1
 	noallies
-	redirect = "Sigil"
-, "map30"
+	redirect = "Sigil", "map30"
 }
 
 map MAP04 "AREA 4: power station"
 {
 	next = "MAP05"
-	sky1 = "SKYMNT02", 0
+	sky1 = "SKYMNT02"
 	music = "D_FAST"
 	cluster = 1
 }
@@ -89,7 +89,7 @@ map MAP04 "AREA 4: power station"
 map MAP05 "AREA 5: prison"
 {
 	next = "MAP06"
-	sky1 = "SKYMNT02", 0
+	sky1 = "SKYMNT02"
 	music = "D_INTRO"
 	cluster = 1
 }
@@ -97,7 +97,7 @@ map MAP05 "AREA 5: prison"
 map MAP06 "AREA 6: sewers"
 {
 	next = "MAP07"
-	sky1 = "SKYMNT02", 0
+	sky1 = "SKYMNT02"
 	music = "D_DARKER"
 	cluster = 1
 }
@@ -105,17 +105,16 @@ map MAP06 "AREA 6: sewers"
 map MAP07 "AREA 7: castle"
 {
 	next = "MAP08"
-	sky1 = "SKYMNT02", 0
+	sky1 = "SKYMNT02"
 	music = "D_STRIKE"
 	cluster = 1
-	redirect = "Sigil"
-, "map10"
+	redirect = "Sigil", "map10"
 }
 
 map MAP08 "AREA 8: Audience Chamber"
 {
 	next = "MAP09"
-	sky1 = "SKYMNT02", 0
+	sky1 = "SKYMNT02"
 	music = "D_SLIDE"
 	cluster = 1
 }
@@ -123,10 +122,12 @@ map MAP08 "AREA 8: Audience Chamber"
 map MAP09 "AREA 9: Castle: Programmer's Keep"
 {
 	next = "MAP10"
-	sky1 = "SKYMNT02", 0
+	sky1 = "SKYMNT02"
 	music = "D_TRIBAL"
 	cluster = 1
-// These are the sky changes for the first 8 maps
+
+	// These are the sky changes for the first 8 maps
+
 	specialaction = "Programmer", "ACS_Execute", 0, 1, 256
 	specialaction = "Programmer", "ACS_Execute", 0, 2, 256
 	specialaction = "Programmer", "ACS_Execute", 0, 3, 256
@@ -134,16 +135,17 @@ map MAP09 "AREA 9: Castle: Programmer's Keep"
 	specialaction = "Programmer", "ACS_Execute", 0, 5, 256
 	specialaction = "Programmer", "ACS_Execute", 0, 6, 256
 	specialaction = "Programmer", "ACS_Execute", 0, 7, 256
-	specialaction = "Programmer", "ACS_Execute", 0, 8, 256// It seems that Strife was originally going to print the text
-// from the C1TEXT lump when you move from map 9 to map 10, but
-// that idea apparently got scrapped as the game developed. 
-
+	specialaction = "Programmer", "ACS_Execute", 0, 8, 256
+	
+	// It seems that Strife was originally going to print the text
+	// from the C1TEXT lump when you move from map 9 to map 10, but
+	// that idea apparently got scrapped as the game developed. 
 }
 
 map MAP10 "AREA 10: New Front Base"
 {
 	next = "MAP11"
-	sky1 = "SKYMNT01", 0
+	sky1 = "SKYMNT01"
 	music = "D_MARCH"
 	cluster = 1
 }
@@ -151,7 +153,7 @@ map MAP10 "AREA 10: New Front Base"
 map MAP11 "AREA 11: Borderlands"
 {
 	next = "MAP12"
-	sky1 = "SKYMNT01", 0
+	sky1 = "SKYMNT01"
 	music = "D_DANGER"
 	cluster = 1
 }
@@ -159,7 +161,7 @@ map MAP11 "AREA 11: Borderlands"
 map MAP12 "AREA 12: the temple of the oracle"
 {
 	next = "MAP13"
-	sky1 = "SKYMNT01", 0
+	sky1 = "SKYMNT01"
 	music = "D_MOOD"
 	cluster = 1
 }
@@ -167,7 +169,7 @@ map MAP12 "AREA 12: the temple of the oracle"
 map MAP13 "AREA 13: Catacombs"
 {
 	next = "MAP14"
-	sky1 = "SKYMNT01", 0
+	sky1 = "SKYMNT01"
 	music = "D_CASTLE"
 	cluster = 1
 }
@@ -175,7 +177,7 @@ map MAP13 "AREA 13: Catacombs"
 map MAP14 "AREA 14: mines"
 {
 	next = "MAP15"
-	sky1 = "SKYMNT01", 0
+	sky1 = "SKYMNT01"
 	music = "D_DARKER"
 	cluster = 1
 }
@@ -183,7 +185,7 @@ map MAP14 "AREA 14: mines"
 map MAP15 "AREA 15: Fortress: Administration"
 {
 	next = "MAP16"
-	sky1 = "SKYMNT01", 0
+	sky1 = "SKYMNT01"
 	music = "D_ACTION"
 	cluster = 1
 }
@@ -191,7 +193,7 @@ map MAP15 "AREA 15: Fortress: Administration"
 map MAP16 "AREA 16: Fortress: Bishop's Tower"
 {
 	next = "MAP17"
-	sky1 = "SKYMNT01", 0
+	sky1 = "SKYMNT01"
 	music = "D_FIGHT"
 	cluster = 1
 }
@@ -199,7 +201,7 @@ map MAP16 "AREA 16: Fortress: Bishop's Tower"
 map MAP17 "AREA 17: Fortress: The Bailey"
 {
 	next = "MAP18"
-	sky1 = "SKYMNT01", 0
+	sky1 = "SKYMNT01"
 	music = "D_SPENSE"
 	cluster = 1
 }
@@ -207,7 +209,7 @@ map MAP17 "AREA 17: Fortress: The Bailey"
 map MAP18 "AREA 18: Fortress: Stores"
 {
 	next = "MAP19"
-	sky1 = "SKYMNT01", 0
+	sky1 = "SKYMNT01"
 	music = "D_SLIDE"
 	cluster = 1
 }
@@ -215,7 +217,7 @@ map MAP18 "AREA 18: Fortress: Stores"
 map MAP19 "AREA 19: Fortress: Security Complex"
 {
 	next = "MAP20"
-	sky1 = "SKYMNT01", 0
+	sky1 = "SKYMNT01"
 	music = "D_STRIKE"
 	cluster = 1
 }
@@ -223,7 +225,7 @@ map MAP19 "AREA 19: Fortress: Security Complex"
 map MAP20 "AREA 20: Factory: Receiving"
 {
 	next = "MAP21"
-	sky1 = "SKYMNT01", 0
+	sky1 = "SKYMNT01"
 	music = "D_DARK"
 	cluster = 1
 }
@@ -231,7 +233,7 @@ map MAP20 "AREA 20: Factory: Receiving"
 map MAP21 "AREA 21: Factory: Manufacturing"
 {
 	next = "MAP22"
-	sky1 = "SKYMNT01", 0
+	sky1 = "SKYMNT01"
 	music = "D_TECH"
 	cluster = 1
 }
@@ -239,7 +241,7 @@ map MAP21 "AREA 21: Factory: Manufacturing"
 map MAP22 "AREA 22: Factory: Forge"
 {
 	next = "MAP23"
-	sky1 = "SKYMNT01", 0
+	sky1 = "SKYMNT01"
 	music = "D_SLIDE"
 	cluster = 1
 }
@@ -247,7 +249,7 @@ map MAP22 "AREA 22: Factory: Forge"
 map MAP23 "AREA 23: Order Commons"
 {
 	next = "MAP24"
-	sky1 = "SKYMNT01", 0
+	sky1 = "SKYMNT01"
 	music = "D_DRONE"
 	cluster = 1
 }
@@ -255,7 +257,7 @@ map MAP23 "AREA 23: Order Commons"
 map MAP24 "AREA 24: Factory: Conversion Chapel"
 {
 	next = "MAP25"
-	sky1 = "SKYMNT01", 0
+	sky1 = "SKYMNT01"
 	music = "D_PANTHR"
 	cluster = 1
 }
@@ -263,7 +265,7 @@ map MAP24 "AREA 24: Factory: Conversion Chapel"
 map MAP25 "AREA 25: Catacombs: Ruined Temple"
 {
 	next = "MAP26"
-	sky1 = "SKYMNT01", 0
+	sky1 = "SKYMNT01"
 	music = "D_SAD"
 	cluster = 1
 }
@@ -271,7 +273,7 @@ map MAP25 "AREA 25: Catacombs: Ruined Temple"
 map MAP26 "AREA 26: proving grounds"
 {
 	next = "MAP27"
-	sky1 = "SKYMNT01", 0
+	sky1 = "SKYMNT01"
 	music = "D_INSTRY"
 	cluster = 1
 }
@@ -279,7 +281,7 @@ map MAP26 "AREA 26: proving grounds"
 map MAP27 "AREA 27: The Lab"
 {
 	next = "MAP28"
-	sky1 = "SKYMNT01", 0
+	sky1 = "SKYMNT01"
 	music = "D_TECH"
 	cluster = 1
 }
@@ -287,7 +289,7 @@ map MAP27 "AREA 27: The Lab"
 map MAP28 "AREA 28: Alien Ship"
 {
 	next = "MAP29"
-	sky1 = "SKYMNT01", 0
+	sky1 = "SKYMNT01"
 	music = "D_ACTION"
 	cluster = 1
 }
@@ -295,7 +297,7 @@ map MAP28 "AREA 28: Alien Ship"
 map MAP29 "AREA 29: Entity's Lair"
 {
 	next = "EndGameS"
-	sky1 = "SKYMNT01", 0
+	sky1 = "SKYMNT01"
 	music = "D_INSTRY"
 	cluster = 1
 	deathslideshow
@@ -304,7 +306,7 @@ map MAP29 "AREA 29: Entity's Lair"
 map MAP30 "AREA 30: Abandoned Front Base"
 {
 	next = "MAP31"
-	sky1 = "SKYMNT01", 0
+	sky1 = "SKYMNT01"
 	music = "D_DRONE"
 	cluster = 1
 }
@@ -312,7 +314,7 @@ map MAP30 "AREA 30: Abandoned Front Base"
 map MAP31 "AREA 31: Training Facility"
 {
 	next = "MAP01"
-	sky1 = "SKYMNT01", 0
+	sky1 = "SKYMNT01"
 	music = "D_FIGHT"
 	cluster = 1
 }
@@ -320,7 +322,7 @@ map MAP31 "AREA 31: Training Facility"
 map MAP32 "AREA 1: Sanctuary"
 {
 	next = "MAP33"
-	sky1 = "SKYMNT02", 0
+	sky1 = "SKYMNT02"
 	music = "D_MAP1"
 	cluster = 2
 }
@@ -328,7 +330,7 @@ map MAP32 "AREA 1: Sanctuary"
 map MAP33 "AREA 2: Town"
 {
 	next = "MAP34"
-	sky1 = "SKYMNT02", 0
+	sky1 = "SKYMNT02"
 	music = "D_MAP2"
 	cluster = 2
 }
@@ -336,7 +338,7 @@ map MAP33 "AREA 2: Town"
 map MAP34 "AREA 3: Movement Base"
 {
 	next = "EndBuyStrife"
-	sky1 = "SKYMNT02", 0
+	sky1 = "SKYMNT02"
 	music = "D_MAP3"
 	cluster = 2
 	noallies
@@ -361,4 +363,3 @@ episode MAP02 teaser MAP33
 {
 	name = "Quest for the Sigil"
 }
-

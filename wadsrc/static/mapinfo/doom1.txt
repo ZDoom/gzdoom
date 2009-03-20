@@ -1,4 +1,5 @@
-// MAPINFO for Doom 1 (Shareware, Registered, and Retail)
+// MAPINFO for Doom 1 (Shareware, Registered, and Retail)
+
 clearepisodes
 episode e1m1
 {
@@ -28,16 +29,20 @@ episode e4m1
 
 // Registered/Retail Episode 1
 
+defaultmap
+{
+	sucktime = 1
+}
+
 map E1M1 lookup "HUSTR_E1M1"
 {
 	levelnum = 1
 	titlepatch = "WILV00"
 	next = "E1M2"
 	secretnext = "E1M9"
-	sky1 = "SKY1", 0
+	sky1 = "SKY1"
 	cluster = 1
 	par = 30
-	sucktime = 1
 	music = "$MUSIC_E1M1"
 }
 
@@ -47,10 +52,9 @@ map E1M2 lookup "HUSTR_E1M2"
 	titlepatch = "WILV01"
 	next = "E1M3"
 	secretnext = "E1M9"
-	sky1 = "SKY1", 0
+	sky1 = "SKY1"
 	cluster = 1
 	par = 75
-	sucktime = 1
 	music = "$MUSIC_E1M2"
 }
 
@@ -60,10 +64,9 @@ map E1M3 lookup "HUSTR_E1M3"
 	titlepatch = "WILV02"
 	next = "E1M4"
 	secretnext = "E1M9"
-	sky1 = "SKY1", 0
+	sky1 = "SKY1"
 	cluster = 1
 	par = 120
-	sucktime = 1
 	music = "$MUSIC_E1M3"
 }
 
@@ -73,10 +76,9 @@ map E1M4 lookup "HUSTR_E1M4"
 	titlepatch = "WILV03"
 	next = "E1M5"
 	secretnext = "E1M9"
-	sky1 = "SKY1", 0
+	sky1 = "SKY1"
 	cluster = 1
 	par = 90
-	sucktime = 1
 	music = "$MUSIC_E1M4"
 }
 
@@ -86,10 +88,9 @@ map E1M5 lookup "HUSTR_E1M5"
 	titlepatch = "WILV04"
 	next = "E1M6"
 	secretnext = "E1M9"
-	sky1 = "SKY1", 0
+	sky1 = "SKY1"
 	cluster = 1
 	par = 165
-	sucktime = 1
 	music = "$MUSIC_E1M5"
 }
 
@@ -99,10 +100,9 @@ map E1M6 lookup "HUSTR_E1M6"
 	titlepatch = "WILV05"
 	next = "E1M7"
 	secretnext = "E1M9"
-	sky1 = "SKY1", 0
+	sky1 = "SKY1"
 	cluster = 1
 	par = 180
-	sucktime = 1
 	music = "$MUSIC_E1M6"
 }
 
@@ -112,10 +112,9 @@ map E1M7 lookup "HUSTR_E1M7"
 	titlepatch = "WILV06"
 	next = "E1M8"
 	secretnext = "E1M9"
-	sky1 = "SKY1", 0
+	sky1 = "SKY1"
 	cluster = 1
 	par = 180
-	sucktime = 1
 	music = "$MUSIC_E1M7"
 }
 
@@ -125,14 +124,13 @@ map E1M8 lookup "HUSTR_E1M8"
 	titlepatch = "WILV07"
 	next = "EndGame1"
 	secretnext = "E1M9"
-	sky1 = "SKY1", 0
+	sky1 = "SKY1"
 	cluster = 1
 	par = 30
 	nointermission
 	nosoundclipping
 	baronspecial
 	specialaction_lowerfloor
-	sucktime = 1
 	music = "$MUSIC_E1M8"
 }
 
@@ -142,10 +140,9 @@ map E1M9 lookup "HUSTR_E1M9"
 	titlepatch = "WILV08"
 	next = "E1M4"
 	secretnext = "E1M4"
-	sky1 = "SKY1", 0
+	sky1 = "SKY1"
 	cluster = 1
 	par = 165
-	sucktime = 1
 	music = "$MUSIC_E1M9"
 }
 
@@ -157,10 +154,9 @@ map E2M1 lookup "HUSTR_E2M1"
 	titlepatch = "WILV10"
 	next = "E2M2"
 	secretnext = "E2M9"
-	sky1 = "SKY2", 0
+	sky1 = "SKY2"
 	cluster = 2
 	par = 90
-	sucktime = 1
 	music = "$MUSIC_E2M1"
 }
 
@@ -170,10 +166,9 @@ map E2M2 lookup "HUSTR_E2M2"
 	titlepatch = "WILV11"
 	next = "E2M3"
 	secretnext = "E2M9"
-	sky1 = "SKY2", 0
+	sky1 = "SKY2"
 	cluster = 2
 	par = 90
-	sucktime = 1
 	music = "$MUSIC_E2M2"
 }
 
@@ -183,10 +178,9 @@ map E2M3 lookup "HUSTR_E2M3"
 	titlepatch = "WILV12"
 	next = "E2M4"
 	secretnext = "E2M9"
-	sky1 = "SKY2", 0
+	sky1 = "SKY2"
 	cluster = 2
 	par = 90
-	sucktime = 1
 	music = "$MUSIC_E2M3"
 }
 
@@ -196,10 +190,9 @@ map E2M4 lookup "HUSTR_E2M4"
 	titlepatch = "WILV13"
 	next = "E2M5"
 	secretnext = "E2M9"
-	sky1 = "SKY2", 0
+	sky1 = "SKY2"
 	cluster = 2
 	par = 120
-	sucktime = 1
 	music = "$MUSIC_E2M4"
 }
 
@@ -209,10 +202,9 @@ map E2M5 lookup "HUSTR_E2M5"
 	titlepatch = "WILV14"
 	next = "E2M6"
 	secretnext = "E2M9"
-	sky1 = "SKY2", 0
+	sky1 = "SKY2"
 	cluster = 2
 	par = 90
-	sucktime = 1
 	music = "$MUSIC_E2M5"
 }
 
@@ -222,10 +214,9 @@ map E2M6 lookup "HUSTR_E2M6"
 	titlepatch = "WILV15"
 	next = "E2M7"
 	secretnext = "E2M9"
-	sky1 = "SKY2", 0
+	sky1 = "SKY2"
 	cluster = 2
 	par = 360
-	sucktime = 1
 	music = "$MUSIC_E2M6"
 }
 
@@ -235,10 +226,9 @@ map E2M7 lookup "HUSTR_E2M7"
 	titlepatch = "WILV16"
 	next = "E2M8"
 	secretnext = "E2M9"
-	sky1 = "SKY2", 0
+	sky1 = "SKY2"
 	cluster = 2
 	par = 240
-	sucktime = 1
 	music = "$MUSIC_E2M7"
 }
 
@@ -248,14 +238,13 @@ map E2M8 lookup "HUSTR_E2M8"
 	titlepatch = "WILV17"
 	next = "EndGame2"
 	secretnext = "E2M9"
-	sky1 = "SKY2", 0
+	sky1 = "SKY2"
 	cluster = 2
 	par = 30
 	nointermission
 	nosoundclipping
 	cyberdemonspecial
 	specialaction_exitlevel
-	sucktime = 1
 	music = "$MUSIC_E2M8"
 }
 
@@ -265,10 +254,9 @@ map E2M9 lookup "HUSTR_E2M9"
 	titlepatch = "WILV18"
 	next = "E2M6"
 	secretnext = "E2M6"
-	sky1 = "SKY2", 0
+	sky1 = "SKY2"
 	cluster = 2
 	par = 170
-	sucktime = 1
 	music = "$MUSIC_E2M9"
 }
 
@@ -280,10 +268,9 @@ map E3M1 lookup "HUSTR_E3M1"
 	titlepatch = "WILV20"
 	next = "E3M2"
 	secretnext = "E3M9"
-	sky1 = "SKY3", 0
+	sky1 = "SKY3"
 	cluster = 3
 	par = 90
-	sucktime = 1
 	music = "$MUSIC_E3M1"
 }
 
@@ -293,10 +280,9 @@ map E3M2 lookup "HUSTR_E3M2"
 	titlepatch = "WILV21"
 	next = "E3M3"
 	secretnext = "E3M9"
-	sky1 = "SKY3", 0
+	sky1 = "SKY3"
 	cluster = 3
 	par = 45
-	sucktime = 1
 	music = "$MUSIC_E3M2"
 }
 
@@ -306,10 +292,9 @@ map E3M3 lookup "HUSTR_E3M3"
 	titlepatch = "WILV22"
 	next = "E3M4"
 	secretnext = "E3M9"
-	sky1 = "SKY3", 0
+	sky1 = "SKY3"
 	cluster = 3
 	par = 90
-	sucktime = 1
 	music = "$MUSIC_E3M3"
 }
 
@@ -319,10 +304,9 @@ map E3M4 lookup "HUSTR_E3M4"
 	titlepatch = "WILV23"
 	next = "E3M5"
 	secretnext = "E3M9"
-	sky1 = "SKY3", 0
+	sky1 = "SKY3"
 	cluster = 3
 	par = 150
-	sucktime = 1
 	music = "$MUSIC_E3M4"
 }
 
@@ -332,10 +316,9 @@ map E3M5 lookup "HUSTR_E3M5"
 	titlepatch = "WILV24"
 	next = "E3M6"
 	secretnext = "E3M9"
-	sky1 = "SKY3", 0
+	sky1 = "SKY3"
 	cluster = 3
 	par = 90
-	sucktime = 1
 	music = "$MUSIC_E3M5"
 }
 
@@ -345,10 +328,9 @@ map E3M6 lookup "HUSTR_E3M6"
 	titlepatch = "WILV25"
 	next = "E3M7"
 	secretnext = "E3M9"
-	sky1 = "SKY3", 0
+	sky1 = "SKY3"
 	cluster = 3
 	par = 90
-	sucktime = 1
 	music = "$MUSIC_E3M6"
 }
 
@@ -358,10 +340,9 @@ map E3M7 lookup "HUSTR_E3M7"
 	titlepatch = "WILV26"
 	next = "E3M8"
 	secretnext = "E3M9"
-	sky1 = "SKY3", 0
+	sky1 = "SKY3"
 	cluster = 3
 	par = 165
-	sucktime = 1
 	music = "$MUSIC_E3M7"
 }
 
@@ -371,14 +352,13 @@ map E3M8 lookup "HUSTR_E3M8"
 	titlepatch = "WILV27"
 	next = "endbunny"
 	secretnext = "E3M9"
-	sky1 = "SKY3", 0
+	sky1 = "SKY3"
 	cluster = 3
 	par = 30
 	nointermission
 	nosoundclipping
 	spidermastermindspecial
 	specialaction_exitlevel
-	sucktime = 1
 	music = "$MUSIC_E3M8"
 }
 
@@ -388,10 +368,9 @@ map E3M9 lookup "HUSTR_E3M9"
 	titlepatch = "WILV28"
 	next = "E3M7"
 	secretnext = "E3M7"
-	sky1 = "SKY3", 0
+	sky1 = "SKY3"
 	cluster = 3
 	par = 135
-	sucktime = 1
 	music = "$MUSIC_E3M9"
 }
 
@@ -403,9 +382,8 @@ map E4M1 lookup "HUSTR_E4M1"
 	titlepatch = "WILV30"
 	next = "E4M2"
 	secretnext = "E4M9"
-	sky1 = "SKY4", 0
+	sky1 = "SKY4"
 	cluster = 4
-	sucktime = 1
 	music = "$MUSIC_E3M4"
 }
 
@@ -415,9 +393,8 @@ map E4M2 lookup "HUSTR_E4M2"
 	titlepatch = "WILV31"
 	next = "E4M3"
 	secretnext = "E4M9"
-	sky1 = "SKY4", 0
+	sky1 = "SKY4"
 	cluster = 4
-	sucktime = 1
 	music = "$MUSIC_E3M2"
 }
 
@@ -427,9 +404,8 @@ map E4M3 lookup "HUSTR_E4M3"
 	titlepatch = "WILV32"
 	next = "E4M4"
 	secretnext = "E4M9"
-	sky1 = "SKY4", 0
+	sky1 = "SKY4"
 	cluster = 4
-	sucktime = 1
 	music = "$MUSIC_E3M3"
 }
 
@@ -439,9 +415,8 @@ map E4M4 lookup "HUSTR_E4M4"
 	titlepatch = "WILV33"
 	next = "E4M5"
 	secretnext = "E4M9"
-	sky1 = "SKY4", 0
+	sky1 = "SKY4"
 	cluster = 4
-	sucktime = 1
 	music = "$MUSIC_E1M5"
 }
 
@@ -451,9 +426,8 @@ map E4M5 lookup "HUSTR_E4M5"
 	titlepatch = "WILV34"
 	next = "E4M6"
 	secretnext = "E4M9"
-	sky1 = "SKY4", 0
+	sky1 = "SKY4"
 	cluster = 4
-	sucktime = 1
 	music = "$MUSIC_E2M7"
 }
 
@@ -463,11 +437,10 @@ map E4M6 lookup "HUSTR_E4M6"
 	titlepatch = "WILV35"
 	next = "E4M7"
 	secretnext = "E4M9"
-	sky1 = "SKY4", 0
+	sky1 = "SKY4"
 	cluster = 4
 	cyberdemonspecial
 	specialaction_opendoor
-	sucktime = 1
 	music = "$MUSIC_E2M4"
 }
 
@@ -477,9 +450,8 @@ map E4M7 lookup "HUSTR_E4M7"
 	titlepatch = "WILV36"
 	next = "E4M8"
 	secretnext = "E4M9"
-	sky1 = "SKY4", 0
+	sky1 = "SKY4"
 	cluster = 4
-	sucktime = 1
 	music = "$MUSIC_E2M6"
 }
 
@@ -489,13 +461,12 @@ map E4M8 lookup "HUSTR_E4M8"
 	titlepatch = "WILV37"
 	next = "EndGame4"
 	secretnext = "E4M9"
-	sky1 = "SKY4", 0
+	sky1 = "SKY4"
 	cluster = 4
 	nointermission
 	nosoundclipping
 	spidermastermindspecial
 	specialaction_lowerfloor
-	sucktime = 1
 	music = "$MUSIC_E2M5"
 }
 
@@ -505,11 +476,9 @@ map E4M9 lookup "HUSTR_E4M9"
 	titlepatch = "WILV38"
 	next = "E4M3"
 	secretnext = "E4M3"
-	sky1 = "SKY4", 0
+	sky1 = "SKY4"
 	cluster = 4
-	sucktime = 1
 	music = "$MUSIC_E1M9"
-
 }
 
 // Clusters (correspond with same-numbered episode)

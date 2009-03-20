@@ -1,5 +1,7 @@
-// A bare-bones MAPINFO for Hexen.
-// Most of the MAPINFO is still in hexen.wad.
+// A bare-bones MAPINFO for Hexen.
+
+// Most of the MAPINFO is still in hexen.wad.
+
 skill baby
 {
 	AutoUseHealth

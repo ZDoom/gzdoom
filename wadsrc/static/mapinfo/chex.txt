@@ -53,16 +53,20 @@ episode e1m1
 	key = "k"
 }
 
+defaultmap
+{
+	sucktime = 1
+}
+
 map E1M1 lookup "CHUSTR_E1M1"
 {
 	levelnum = 1
 	titlepatch = "WILV00"
 	next = "E1M2"
 	secretnext = "E1M9"
-	sky1 = "SKY1", 0
+	sky1 = "SKY1"
 	cluster = 1
 	par = 30
-	sucktime = 1
 	music = "$MUSIC_E1M1"
 }
 
@@ -72,10 +76,9 @@ map E1M2 lookup "CHUSTR_E1M2"
 	titlepatch = "WILV01"
 	next = "E1M3"
 	secretnext = "E1M9"
-	sky1 = "SKY1", 0
+	sky1 = "SKY1"
 	cluster = 1
 	par = 75
-	sucktime = 1
 	music = "$MUSIC_E1M2"
 }
 
@@ -85,10 +88,9 @@ map E1M3 lookup "CHUSTR_E1M3"
 	titlepatch = "WILV02"
 	next = "E1M4"
 	secretnext = "E1M9"
-	sky1 = "SKY1", 0
+	sky1 = "SKY1"
 	cluster = 1
 	par = 120
-	sucktime = 1
 	music = "$MUSIC_E1M3"
 }
 
@@ -98,10 +100,9 @@ map E1M4 lookup "CHUSTR_E1M4"
 	titlepatch = "WILV03"
 	next = "E1M5"
 	secretnext = "E1M9"
-	sky1 = "SKY1", 0
+	sky1 = "SKY1"
 	cluster = 1
 	par = 90
-	sucktime = 1
 	music = "$MUSIC_E1M4"
 }
 
@@ -111,12 +112,10 @@ map E1M5 lookup "CHUSTR_E1M5"
 	titlepatch = "WILV04"
 	next = "EndGame1"
 	secretnext = "E1M9"
-	sky1 = "SKY1", 0
+	sky1 = "SKY1"
 	cluster = 1
 	par = 165
-	sucktime = 1
 	music = "$MUSIC_E1M5"
-
 }
 
 // Clusters (correspond with same-numbered episode)

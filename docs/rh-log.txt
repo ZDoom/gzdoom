@@ -1,4 +1,7 @@
-﻿March 18, 2009  (Changes by Graf Zahl)
+﻿March 19, 2009
+- Fixed: P_RailAttack() passed the wrong angle variable to P_TraceBleed().
+
+March 18, 2009  (Changes by Graf Zahl)
 - Fixed: S_StopSound may not assume that after stopping a sound channel
   its link to the next item in the list is still valid.
 - Fixed typo in src/CMakeLists.txt.

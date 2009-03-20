@@ -3466,6 +3466,33 @@ void P_RailAttack (AActor *source, int damage, int offset, int color1, int color
 		8192*FRACUNIT, MF_SHOOTABLE, ML_BLOCKEVERYTHING, source, trace,
 		TRACE_PCross|TRACE_Impact, ProcessRailHit);
 
+	// Hurt anything the trace hit
+	unsigned int i;
+	AActor *puffDefaults = puffclass == NULL? NULL : GetDefaultByType (puffclass);
+	FName damagetype = (puffDefaults == NULL || puffDefaults->DamageType == NAME_None) ? FName(NAME_Railgun) : puffDefaults->DamageType;
+
+	for (i = 0; i < RailHits.Size (); i++)
+	{
+		fixed_t x, y, z;
+
+		x = x1 + FixedMul (RailHits[i].Distance, vx);
+		y = y1 + FixedMul (RailHits[i].Distance, vy);
+		z = shootz + FixedMul (RailHits[i].Distance, vz);
+
+		if ((RailHits[i].HitActor->flags & MF_NOBLOOD) ||
+			(RailHits[i].HitActor->flags2 & (MF2_DORMANT|MF2_INVULNERABLE)))
+		{
+			if (puffclass != NULL) P_SpawnPuff (source, puffclass, x, y, z, source->angle - ANG90, 1, PF_HITTHING);
+		}
+		else
+		{
+			P_SpawnBlood (x, y, z, source->angle - ANG180, damage, RailHits[i].HitActor);
+			P_TraceBleed (damage, x, y, z, RailHits[i].HitActor, source->angle, pitch);
+		}
+		P_DamageMobj (RailHits[i].HitActor, source, source, damage, damagetype);
+	}
+
+	// Spawn a decal or puff at the point where the trace ended.
 	if (trace.HitType == TRACE_HitWall)
 	{
 		SpawnShootDecal (source, trace);
@@ -3491,32 +3518,7 @@ void P_RailAttack (AActor *source, int damage, int offset, int color1, int color
 		}
 	}
 
-	// Now hurt anything the trace hit
-	unsigned int i;
-	AActor *puffDefaults = puffclass == NULL? NULL : GetDefaultByType (puffclass);
-	FName damagetype = (puffDefaults == NULL || puffDefaults->DamageType == NAME_None) ? FName(NAME_Railgun) : puffDefaults->DamageType;
-
-	for (i = 0; i < RailHits.Size (); i++)
-	{
-		fixed_t x, y, z;
-
-		x = x1 + FixedMul (RailHits[i].Distance, vx);
-		y = y1 + FixedMul (RailHits[i].Distance, vy);
-		z = shootz + FixedMul (RailHits[i].Distance, vz);
-
-		if ((RailHits[i].HitActor->flags & MF_NOBLOOD) ||
-			(RailHits[i].HitActor->flags2 & (MF2_DORMANT|MF2_INVULNERABLE)))
-		{
-			if (puffclass != NULL) P_SpawnPuff (source, puffclass, x, y, z, source->angle - ANG180, 1, PF_HITTHING);
-		}
-		else
-		{
-			P_SpawnBlood (x, y, z, source->angle - ANG180, damage, RailHits[i].HitActor);
-		}
-		P_DamageMobj (RailHits[i].HitActor, source, source, damage, damagetype);
-		P_TraceBleed (damage, x, y, z, RailHits[i].HitActor, angle, pitch);
-	}
-
+	// Draw the slug's trail.
 	end.X = FIXED2FLOAT(trace.X);
 	end.Y = FIXED2FLOAT(trace.Y);
 	end.Z = FIXED2FLOAT(trace.Z);

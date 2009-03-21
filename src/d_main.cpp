@@ -2239,6 +2239,13 @@ void D_DoomMain (void)
 		I_FatalError ("Cannot find " BASEWAD);
 	}
 
+	// Load zdoom.pk3 alone so that we can get access to the internal gameinfos before 
+	// the IWAD is known.
+	wadlist_t *basewad = (wadlist_t*)M_Malloc(sizeof(wadlist_t) + strlen(wad));
+	strcpy(basewad->name, wad);
+	basewad->next = NULL;
+	Wads.InitMultipleFiles(&basewad);
+
 	iwad_info = &IWADInfos[IdentifyVersion(wad)];
 	I_SetIWADInfo(iwad_info);
 	GameConfig->DoGameSetup (GameNames[gameinfo.gametype]);

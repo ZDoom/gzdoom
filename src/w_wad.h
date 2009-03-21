@@ -224,11 +224,11 @@ protected:
 	class WadFileRecord;
 	struct LumpRecord;
 
-	WORD *FirstLumpIndex;	// [RH] Hashing stuff moved out of lumpinfo structure
-	WORD *NextLumpIndex;
+	DWORD *FirstLumpIndex;	// [RH] Hashing stuff moved out of lumpinfo structure
+	DWORD *NextLumpIndex;
 
-	WORD *FirstLumpIndex_FullName;	// The same information for fully qualified paths from .zips
-	WORD *NextLumpIndex_FullName;
+	DWORD *FirstLumpIndex_FullName;	// The same information for fully qualified paths from .zips
+	DWORD *NextLumpIndex_FullName;
 
 
 	TArray<LumpRecord> LumpInfo;
@@ -249,6 +249,7 @@ private:
 	void ScanForFlatHack (int startlump);
 	void RenameSprites (int startlump);
 	void SetLumpAddress(LumpRecord *l);
+	void DeleteAll();
 };
 
 extern FWadCollection Wads;

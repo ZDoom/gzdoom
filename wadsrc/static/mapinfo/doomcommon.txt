@@ -24,7 +24,7 @@ gameinfo
 	defaultbloodparticlecolor = "ff 00 00"
 	backpacktype = "Backpack"
 	statusbar = "sbarinfo/doom.txt"
-	intermissionmusic = "$MUSIC_INTER"
+	intermissionmusic = "$MUSIC_DM2INT"
 }
 
 skill baby

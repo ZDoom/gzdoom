@@ -51,9 +51,6 @@ extern	bool			devparm;		// DEBUG: launched with -devparm
 // -----------------------------------------------------
 // Game Mode - identify IWAD as shareware, retail etc.
 //
-extern int	gamemode;
-extern int	gamemission;
-
 // -------------------------------------------
 // Selected skill type, map etc.
 //

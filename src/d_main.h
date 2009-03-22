@@ -26,6 +26,7 @@
 #define __D_MAIN__
 
 #include "doomtype.h"
+#include "gametype.h"
 
 struct event_t;
 
@@ -50,6 +51,7 @@ void D_PageTicker (void);
 void D_PageDrawer (void);
 void D_AdvanceDemo (void);
 void D_StartTitle (void);
+void D_AddFile (const char *file);
 
 
 // [RH] Set this to something to draw an icon during the next screen refresh.
@@ -78,6 +80,7 @@ enum EIWADType
 	IWAD_FreeDM,
 	IWAD_ChexQuest,
 	IWAD_ChexQuest3,
+	IWAD_Custom,
 
 	NUM_IWAD_TYPES
 };
@@ -96,6 +99,9 @@ struct IWADInfo
 	const char *Autoname;	// Name of autoload ini section for this IWAD
 	DWORD FgColor;			// Foreground color for title banner
 	DWORD BkColor;			// Background color for title banner
+	EGameType gametype;		// which game are we playing?
+	const char *MapInfo;	// Base mapinfo to load
+	int flags;
 };
 
 extern const IWADInfo IWADInfos[NUM_IWAD_TYPES];

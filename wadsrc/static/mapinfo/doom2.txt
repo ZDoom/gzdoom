@@ -1,4 +1,5 @@
 // MAPINFO for Doom 2
+include "mapinfo/doomcommon.txt"
 
 clearepisodes
 episode map01

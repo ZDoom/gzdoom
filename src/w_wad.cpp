@@ -302,7 +302,7 @@ int FWadCollection::AddExternalFile(const char *filename)
 //
 //-----------------------------------------------------------------------
 
-static DWORD Zip_FindCentralDir(FileReader * fin)
+DWORD Zip_FindCentralDir(FileReader * fin)
 {
 	unsigned char buf[BUFREADCOMMENT + 4];
 	DWORD FileSize;

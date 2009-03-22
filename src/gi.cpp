@@ -37,6 +37,11 @@
 #include "gi.h"
 #include "m_fixed.h"
 #include "v_palette.h"
+#include "sc_man.h"
+#include "w_wad.h"
+#include "i_system.h"
+#include "v_video.h"
+#include "g_level.h"
 
 gameinfo_t gameinfo;
 
@@ -70,512 +75,184 @@ static gameborder_t StrifeBorder =
 	"brdr_bl", "brdr_b", "brdr_br"
 };
 
-gameinfo_t HexenGameInfo =
+// Custom GAMEINFO ------------------------------------------------------------
+
+const char* GameInfoBoarders[] =
 {
-	GI_PAGESARERAW | GI_MAPxx | GI_NOLOOPFINALEMUSIC | GI_INFOINDEXED | GI_ALWAYSFALLINGDAMAGE,
-	"TITLE",
-	"CREDIT",
-	"CREDIT",
-	"HEXEN",
-	280/35,
-	210/35,
-	200/35,
-	"Chat",
-	"hub",
-	"-NOFLAT",
-	"CREDIT",
-	"CREDIT",
-	"CREDIT",
-	{ { "TITLE", {4} } },
-	NULL,
-	33,
-	"F_022",
-	&HereticBorder,
-	32*FRACUNIT,
-	GAME_Hexen,
-	150,
-	"F_SKY",
-	24*FRACUNIT,
-	"xlat/heretic.txt",	// not really correct but this was used before.
-	{ "mapinfo/hexen.txt", NULL },
-	MAKERGB(104,0,0),
-	MAKERGB(255,0,0),
-	"BagOfHolding",	// Hexen doesn't have a backpack so use Heretic's.
-	NULL,
+	"DoomBorder",
+	"HereticBorder",
+	"StrifeBorder",
+	NULL
 };
 
-gameinfo_t HexenDKGameInfo =
-{
-	GI_PAGESARERAW | GI_MAPxx | GI_NOLOOPFINALEMUSIC | GI_INFOINDEXED | GI_ALWAYSFALLINGDAMAGE,
-	"TITLE",
-	"CREDIT",
-	"CREDIT",
-	"HEXEN",
-	280/35,
-	210/35,
-	200/35,
-	"Chat",
-	"hub",
-	"-NOFLAT-",
-	"CREDIT",
-	"CREDIT",
-	"CREDIT",
-	{ { "TITLE", {4} } },
-	NULL,
-	33,
-	"F_022",
-	&HereticBorder,
-	32*FRACUNIT,
-	GAME_Hexen,
-	150,
-	"F_SKY",
-	24*FRACUNIT,
-	"xlat/heretic.txt",	// not really correct but this was used before.
-	{ "mapinfo/hexen.txt", NULL },
-	MAKERGB(104,0,0),
-	MAKERGB(255,0,0),
-	"BagOfHolding",
-	NULL,
-};
+#define GAMEINFOKEY_CSTRING(key, variable, length) \
+	else if(nextKey.CompareNoCase(variable) == 0) \
+	{ \
+		sc.MustGetToken(TK_StringConst); \
+		if(strlen(sc.String) > length) \
+		{ \
+			sc.ScriptError("Value for '%s' can not be longer than %d characters.", #key, length); \
+		} \
+		strcpy(gameinfo.key, sc.String); \
+	}
 
-gameinfo_t HereticGameInfo =
-{
-	GI_PAGESARERAW | GI_INFOINDEXED,
-	"TITLE",
-	"CREDIT",
-	"CREDIT",
-	"MUS_TITL",
-	280/35,
-	210/35,
-	200/35,
-	"misc/chat",
-	"MUS_CPTD",
-	"FLOOR25",
-	"CREDIT",
-	"CREDIT",
-	"CREDIT",
-	{ { "TITLE", {4} } },
-	NULL,
-	17,
-	"FLAT513",
-	&HereticBorder,
-	32*FRACUNIT,
-	GAME_Heretic,
-	150,
-	"F_SKY1",
-	24*FRACUNIT,
-	"xlat/heretic.txt",
-	{ "mapinfo/heretic.txt", NULL },
-	MAKERGB(104,0,0),
-	MAKERGB(255,0,0),
-	"BagOfHolding",
-	NULL,
-};
+#define GAMEINFOKEY_STRINGARRAY(key, variable, length) \
+	else if(nextKey.CompareNoCase(variable) == 0) \
+	{ \
+		gameinfo.key.Clear(); \
+		do \
+		{ \
+			sc.MustGetToken(TK_StringConst); \
+			if(strlen(sc.String) > length) \
+			{ \
+				sc.ScriptError("Value for '%s' can not be longer than %d characters.", #key, length); \
+			} \
+			FName val = sc.String; \
+			gameinfo.key.Push(val); \
+		} \
+		while (sc.CheckToken(',')); \
+	}
 
-gameinfo_t HereticSWGameInfo =
-{
-	GI_PAGESARERAW | GI_SHAREWARE | GI_INFOINDEXED,
-	"TITLE",
-	"CREDIT",
-	"ORDER",
-	"MUS_TITL",
-	280/35,
-	210/35,
-	200/35,
-	"misc/chat",
-	"MUS_CPTD",
-	"FLOOR25",
-	"ORDER",
-	"CREDIT",
-	"CREDIT",
-	{ { "TITLE", {5} } },
-	NULL,
-	17,
-	"FLOOR04",
-	&HereticBorder,
-	32*FRACUNIT,
-	GAME_Heretic,
-	150,
-	"F_SKY1",
-	24*FRACUNIT,
-	"xlat/heretic.txt",
-	{ "mapinfo/heretic.txt", NULL },
-	MAKERGB(104,0,0),
-	MAKERGB(255,0,0),
-	"BagOfHolding",
-	NULL,
-};
+#define GAMEINFOKEY_STRING(key, variable) \
+	else if(nextKey.CompareNoCase(variable) == 0) \
+	{ \
+		sc.MustGetToken(TK_StringConst); \
+		gameinfo.key = sc.String; \
+	}
 
-gameinfo_t SharewareGameInfo =
-{
-	GI_SHAREWARE,
-	"TITLEPIC",
-	"CREDIT",
-	"HELP2",
-	"$MUSIC_INTRO",
-	5,
-	0,
-	200/35,
-	"misc/chat2",
-	"$MUSIC_VICTOR",
-	"FLOOR4_8",
-	"HELP2",
-	"VICTORY2",
-	"HELP2",
-	{ { "HELP1", "HELP2" } },
-	"menu/quit1",
-	1,
-	"FLOOR7_2",
-	&DoomBorder,
-	0,
-	GAME_Doom,
-	100,
-	"F_SKY1",
-	24*FRACUNIT,
-	"xlat/doom.txt",
-	{ "mapinfo/doomcommon.txt", "mapinfo/doom1.txt" },
-	MAKERGB(104,0,0),
-	MAKERGB(255,0,0),
-	"Backpack",
-	"sbarinfo/doom.txt",
-};
+#define GAMEINFOKEY_INT(key, variable) \
+	else if(nextKey.CompareNoCase(variable) == 0) \
+	{ \
+		sc.MustGetNumber(); \
+ 		gameinfo.key = sc.Number; \
+	}
 
-gameinfo_t RegisteredGameInfo =
-{
-	0,
-	"TITLEPIC",
-	"CREDIT",
-	"HELP2",
-	"$MUSIC_INTRO",
-	5,
-	0,
-	200/35,
-	"misc/chat2",
-	"$MUSIC_VICTOR",
-	"FLOOR4_8",
-	"HELP2",
-	"VICTORY2",
-	"ENDPIC",
-	{ { "HELP1", "HELP2" } },
-	"menu/quit1",
-	2,
-	"FLOOR7_2",
-	&DoomBorder,
-	0,
-	GAME_Doom,
-	100,
-	"F_SKY1",
-	24*FRACUNIT,
-	"xlat/doom.txt",
-	{ "mapinfo/doomcommon.txt", "mapinfo/doom1.txt" },
-	MAKERGB(104,0,0),
-	MAKERGB(255,0,0),
-	"Backpack",
-	"sbarinfo/doom.txt",
-};
+#define GAMEINFOKEY_FLOAT(key, variable) \
+	else if(nextKey.CompareNoCase(variable) == 0) \
+	{ \
+		sc.MustGetFloat(); \
+		gameinfo.key = static_cast<float> (sc.Float); \
+	}
 
-gameinfo_t ChexGameInfo =
-{
-	GI_CHEX_QUEST,
-	"TITLEPIC",
-	"CREDIT",
-	"HELP1",
-	"$MUSIC_INTRO",
-	5,
-	0,
-	200/35,
-	"misc/chat2",
-	"$MUSIC_VICTOR",
-	"FLOOR4_8",
-	"HELP2",
-	"VICTORY2",
-	"ENDPIC",
-	{ { "HELP1", "CREDIT" } },
-	"menu/quit1",
-	2,
-	"FLOOR7_2",
-	&DoomBorder,
-	0,
-	GAME_Chex,
-	100,
-	"F_SKY1",
-	24*FRACUNIT,
-	"xlat/doom.txt",
-	{ "mapinfo/chex.txt", NULL },
-	MAKERGB(63,125,57),
-	MAKERGB(95,175,87),
-	"ZorchPack",
-	"sbarinfo/doom.txt",
-};
+#define GAMEINFOKEY_FIXED(key, variable) \
+	else if(nextKey.CompareNoCase(variable) == 0) \
+	{ \
+		sc.MustGetFloat(); \
+		gameinfo.key = static_cast<int> (sc.Float*FRACUNIT); \
+	}
 
-gameinfo_t Chex3GameInfo =
-{
-	GI_CHEX_QUEST,
-	"TITLEPIC",
-	"ENDPIC",
-	"VICTORY2",
-	"$MUSIC_INTRO",
-	5,
-	0,
-	200/35,
-	"misc/chat2",
-	"$MUSIC_VICTOR",
-	"ENDPIC01",
-	"CREDIT",
-	"CREDIT",
-	"ENDPIC",
-	{ { "HELP1", "CREDIT" } },
-	"menu/quit1",
-	2,
-	"FLOOR7_2",
-	&DoomBorder,
-	0,
-	GAME_Chex,
-	100,
-	"F_SKY1",
-	24*FRACUNIT,
-	"xlat/doom.txt",
-	{ "mapinfo/chex.txt", NULL },
-	MAKERGB(63,125,57),
-	MAKERGB(95,175,87),
-	"ZorchPack",
-	"sbarinfo/doom.txt",
-};
+#define GAMEINFOKEY_COLOR(key, variable) \
+	else if(nextKey.CompareNoCase(variable) == 0) \
+	{ \
+		sc.MustGetToken(TK_StringConst); \
+		FString color = sc.String; \
+		FString colorName = V_GetColorStringByName(color); \
+		if(!colorName.IsEmpty()) \
+			color = colorName; \
+		gameinfo.key = V_GetColorFromString(NULL, color); \
+	}
 
-gameinfo_t RetailGameInfo =
-{
-	GI_MENUHACK_RETAIL,
-	"TITLEPIC",
-	"CREDIT",
-	"CREDIT",
-	"$MUSIC_INTRO",
-	5,
-	0,
-	200/35,
-	"misc/chat2",
-	"$MUSIC_VICTOR",
-	"FLOOR4_8",
-	"CREDIT",
-	"VICTORY2",
-	"ENDPIC",
-	{ { "HELP1", "CREDIT" } },
-	"menu/quit1",
-	2,
-	"FLOOR7_2",
-	&DoomBorder,
-	0,
-	GAME_Doom,
-	100,
-	"F_SKY1",
-	24*FRACUNIT,
-	"xlat/doom.txt",
-	{ "mapinfo/doomcommon.txt", "mapinfo/doom1.txt" },
-	MAKERGB(104,0,0),
-	MAKERGB(255,0,0),
-	"Backpack",
-	"sbarinfo/doom.txt",
-};
+#define GAMEINFOKEY_BOOL(key, variable) \
+	else if(nextKey.CompareNoCase(variable) == 0) \
+	{ \
+		if(sc.CheckToken(TK_False)) \
+			gameinfo.key = false; \
+		else \
+		{ \
+			sc.MustGetToken(TK_True); \
+			gameinfo.key = true; \
+		} \
+	}
 
-gameinfo_t CommercialGameInfo =
+void FMapInfoParser::ParseGameInfo()
 {
-	GI_MAPxx | GI_MENUHACK_COMMERCIAL,
-	"TITLEPIC",
-	"CREDIT",
-	"CREDIT",
-	"$MUSIC_DM2TTL",
-	11,
-	0,
-	200/35,
-	"misc/chat",
-	"$MUSIC_READ_M",
-	"SLIME16",
-	"CREDIT",
-	"CREDIT",
-	"CREDIT",
-	{ { "HELP", "CREDIT" } },
-	"menu/quit2",
-	3,
-	"GRNROCK",
-	&DoomBorder,
-	0,
-	GAME_Doom,
-	100,
-	"F_SKY1",
-	24*FRACUNIT,
-	"xlat/doom.txt",
-	{ "mapinfo/doomcommon.txt", "mapinfo/doom2.txt" },
-	MAKERGB(104,0,0),
-	MAKERGB(255,0,0),
-	"Backpack",
-	"sbarinfo/doom.txt",
-};
+	sc.MustGetToken('{');
+	while(sc.GetToken())
+	{
+		if (sc.TokenType == '}') return;
 
-gameinfo_t PlutoniaGameInfo =
-{
-	GI_MAPxx | GI_MENUHACK_COMMERCIAL,
-	"TITLEPIC",
-	"CREDIT",
-	"CREDIT",
-	"$MUSIC_DM2TTL",
-	11,
-	0,
-	200/35,
-	"misc/chat",
-	"$MUSIC_READ_M",
-	"SLIME16",
-	"CREDIT",
-	"CREDIT",
-	"CREDIT",
-	{ { "HELP", "CREDIT" } },
-	"menu/quit2",
-	3,
-	"GRNROCK",
-	&DoomBorder,
-	0,
-	GAME_Doom,
-	100,
-	"F_SKY1",
-	24*FRACUNIT,
-	"xlat/doom.txt",
-	{ "mapinfo/doomcommon.txt", "mapinfo/plutonia.txt" },
-	MAKERGB(104,0,0),
-	MAKERGB(255,0,0),
-	"Backpack",
-	"sbarinfo/doom.txt",
-};
+		sc.TokenMustBe(TK_Identifier);
+		FString nextKey = sc.String;
+		sc.MustGetToken('=');
 
-gameinfo_t TNTGameInfo =
-{
-	GI_MAPxx | GI_MENUHACK_COMMERCIAL,
-	"TITLEPIC",
-	"CREDIT",
-	"CREDIT",
-	"$MUSIC_DM2TTL",
-	11,
-	0,
-	200/35,
-	"misc/chat",
-	"$MUSIC_READ_M",
-	"SLIME16",
-	"CREDIT",
-	"CREDIT",
-	"CREDIT",
-	{ { "HELP", "CREDIT" } },
-	"menu/quit2",
-	3,
-	"GRNROCK",
-	&DoomBorder,
-	0,
-	GAME_Doom,
-	100,
-	"F_SKY1",
-	24*FRACUNIT,
-	"xlat/doom.txt",
-	{ "mapinfo/doomcommon.txt", "mapinfo/tnt.txt" },
-	MAKERGB(104,0,0),
-	MAKERGB(255,0,0),
-	"Backpack",
-	"sbarinfo/doom.txt",
-};
+		if(nextKey.CompareNoCase("border") == 0)
+		{
+			if(sc.CheckToken(TK_Identifier))
+			{
+				switch(sc.MustMatchString(GameInfoBoarders))
+				{
+					default:
+						gameinfo.border = &DoomBorder;
+						break;
+					case 1:
+						gameinfo.border = &HereticBorder;
+						break;
+					case 2:
+						gameinfo.border = &StrifeBorder;
+						break;
+				}
+			}
+			else
+			{
+				// border = {size, offset, tr, t, tl, r, l ,br, b, bl};
+				char *graphics[8] = {DoomBorder.tr, DoomBorder.t, DoomBorder.tl, DoomBorder.r, DoomBorder.l, DoomBorder.br, DoomBorder.b, DoomBorder.bl};
+				sc.MustGetToken('{');
+				sc.MustGetToken(TK_IntConst);
+				DoomBorder.offset = sc.Number;
+				sc.MustGetToken(',');
+				sc.MustGetToken(TK_IntConst);
+				DoomBorder.size = sc.Number;
+				for(int i = 0;i < 8;i++)
+				{
+					sc.MustGetToken(',');
+					sc.MustGetToken(TK_StringConst);
+					int len = int(strlen(sc.String));
+					if(len > 8)
+						sc.ScriptError("Border graphic can not be more than 8 characters long.\n");
+					memcpy(graphics[i], sc.String, len);
+					if(len < 8) // end with a null byte if the string is less than 8 chars.
+						graphics[i][len] = 0;
+				}
+				sc.MustGetToken('}');
+			}
+		}
+		// Insert valid keys here.
+		GAMEINFOKEY_CSTRING(titlePage, "titlePage", 8)
+		GAMEINFOKEY_STRINGARRAY(creditPages, "creditPage", 8)
+		GAMEINFOKEY_STRING(titleMusic, "titleMusic")
+		GAMEINFOKEY_FLOAT(titleTime, "titleTime")
+		GAMEINFOKEY_FLOAT(advisoryTime, "advisoryTime")
+		GAMEINFOKEY_FLOAT(pageTime, "pageTime")
+		GAMEINFOKEY_STRING(chatSound, "chatSound")
+		GAMEINFOKEY_STRING(finaleMusic, "finaleMusic")
+		GAMEINFOKEY_CSTRING(finaleFlat, "finaleFlat", 8)
+		GAMEINFOKEY_STRINGARRAY(finalePages, "finalePage", 8)
+		GAMEINFOKEY_STRINGARRAY(infoPages, "infoPage", 8)
+		GAMEINFOKEY_STRING(quitSound, "quitSound")
+		GAMEINFOKEY_CSTRING(borderFlat, "borderFlat", 8)
+		GAMEINFOKEY_FIXED(telefogheight, "telefogheight")
+		GAMEINFOKEY_INT(defKickback, "defKickback")
+		GAMEINFOKEY_CSTRING(SkyFlatName, "SkyFlatName", 8)
+		GAMEINFOKEY_STRING(translator, "translator")
+		GAMEINFOKEY_COLOR(defaultbloodcolor, "defaultbloodcolor")
+		GAMEINFOKEY_COLOR(defaultbloodparticlecolor, "defaultbloodparticlecolor")
+		GAMEINFOKEY_STRING(backpacktype, "backpacktype")
+		GAMEINFOKEY_STRING(statusbar, "statusbar")
+		GAMEINFOKEY_STRING(intermissionMusic, "intermissionMusic")
+		GAMEINFOKEY_BOOL(noloopfinalemusic, "noloopfinalemusic")
+		GAMEINFOKEY_BOOL(drawreadthis, "drawreadthis")
+		else
+		{
+			// ignore unkown keys.
+			sc.UnGet();
+			SkipToNext();
+		}
+	}
+}
 
-gameinfo_t StrifeGameInfo =
+const char *gameinfo_t::GetFinalePage(unsigned int num) const
 {
-	GI_MAPxx | GI_INFOINDEXED | GI_ALWAYSFALLINGDAMAGE,
-	"TITLEPIC",
-	"CREDIT",
-	"CREDIT",
-	"D_LOGO",
-	280/35,
-	0,
-	200/35,
-	"misc/chat",
-	"d_intro",
-	"-NOFLAT",
-	"CREDIT",
-	"CREDIT",
-	"CREDIT",
-	{ { "CREDIT", {4} } },
-	NULL,
-	49,
-	"F_PAVE01",
-	&StrifeBorder,
-	0,
-	GAME_Strife,
-	150,
-	"F_SKY001",
-	16*FRACUNIT,
-	"xlat/strife.txt",
-	{ "mapinfo/strife.txt", NULL },
-	MAKERGB(104,0,0),
-	MAKERGB(255,0,0),
-	"AmmoSatchel",
-	NULL,
-};
-
-gameinfo_t StrifeTeaserGameInfo =
-{
-	GI_MAPxx | GI_INFOINDEXED | GI_ALWAYSFALLINGDAMAGE | GI_SHAREWARE,
-	"TITLEPIC",
-	"CREDIT",
-	"CREDIT",
-	"D_LOGO",
-	280/35,
-	0,
-	200/35,
-	"misc/chat",
-	"d_intro",
-	"-NOFLAT",
-	"CREDIT",
-	"CREDIT",
-	"CREDIT",
-	{ { "CREDIT", {4} } },
-	NULL,
-	49,
-	"F_PAVE01",
-	&StrifeBorder,
-	0,
-	GAME_Strife,
-	150,
-	"F_SKY001",
-	16*FRACUNIT,
-	"xlat/strife.txt",
-	{ "mapinfo/strife.txt", NULL },
-	MAKERGB(104,0,0),
-	MAKERGB(255,0,0),
-	"AmmoSatchel",
-	NULL,
-};
-
-gameinfo_t StrifeTeaser2GameInfo =
-{
-	GI_MAPxx | GI_INFOINDEXED | GI_ALWAYSFALLINGDAMAGE | GI_SHAREWARE | GI_TEASER2,
-	"TITLEPIC",
-	"CREDIT",
-	"CREDIT",
-	"D_LOGO",
-	280/35,
-	0,
-	200/35,
-	"misc/chat",
-	"d_intro",
-	"-NOFLAT",
-	"CREDIT",
-	"CREDIT",
-	"CREDIT",
-	{ { "CREDIT", {4} } },
-	NULL,
-	49,
-	"F_PAVE01",
-	&StrifeBorder,
-	0,
-	GAME_Strife,
-	150,
-	"F_SKY001",
-	16*FRACUNIT,
-	"xlat/strife.txt",
-	{ "mapinfo/strife.txt", NULL },
-	MAKERGB(104,0,0),
-	MAKERGB(255,0,0),
-	"AmmoSatchel",
-	NULL,
-};
+	if (finalePages.Size() == 0) return "-NOFLAT-";
+	else if (num < 1 || num > finalePages.Size()) return finalePages[0];
+	else return finalePages[num-1];
+}

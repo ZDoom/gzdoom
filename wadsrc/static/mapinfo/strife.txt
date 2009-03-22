@@ -1,5 +1,32 @@
 // MAPINFO for Strife (full version and teaser)
 
+gameinfo
+{
+	titlepage = "TITLEPIC"
+	creditpage = "CREDIT"
+	titlemusic = "D_LOGO"
+	titletime = 8
+	advisorytime = 0
+	pagetime = 5
+	chatsound = "misc/chat"
+	finalemusic = "d_intro"
+	finaleflat = "-NOFLAT-"
+	finalepage = "CREDIT"
+	infopage = "HELP1", "HELP2", "HELP3"
+	quitsound = ""
+	borderflat = "F_PAVE01"
+	border = StrifeBorder
+	telefogheight = 0
+	defkickback = 150
+	skyflatname = "F_SKY001"
+	translator = "xlat/strife.txt"
+	defaultbloodcolor = "68 00 00"
+	defaultbloodparticlecolor = "ff 00 00"
+	backpacktype = "AmmoSatchel"
+	statusbar = ""
+	intermissionmusic = "d_slide"
+}
+
 skill baby
 {
 	AutoUseHealth

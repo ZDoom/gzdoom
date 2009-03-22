@@ -1,5 +1,32 @@
 // MAPINFO for Chex Quest
 
+gameinfo
+{
+	titlepage = "TITLEPIC"
+	creditpage = "CREDIT", "HELP1"
+	titlemusic = "$MUSIC_INTRO"
+	titletime = 5
+	advisorytime = 0
+	pagetime = 5
+	chatsound = "misc/chat2"
+	finalemusic = "$MUSIC_VICTOR"
+	finaleflat = "FLOOR4_8"
+	finalepage = "HELP2", "VICTORY2", "ENDPIC"
+	infopage = "HELP1", "CREDIT"
+	quitsound = "menu/quit1"
+	borderflat = "FLOOR7_2"
+	border = DoomBorder
+	telefogheight = 0
+	defkickback = 100
+	skyflatname = "F_SKY1"
+	translator = "xlat/doom.txt"
+	defaultbloodcolor = "3f 7d 39"
+	defaultbloodparticlecolor = "5f af 57"
+	backpacktype = "ZorchPack"
+	statusbar = "sbarinfo/doom.txt"
+	intermissionmusic = "$MUSIC_INTER"
+}
+
 skill baby
 {
 	AutoUseHealth

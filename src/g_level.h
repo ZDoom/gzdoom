@@ -82,9 +82,10 @@ struct FMapInfoParser
 	void ParseNextMap(char *mapname);
 	level_info_t *ParseMapHeader(level_info_t &defaultinfo);
 	void ParseMapDefinition(level_info_t &leveldef);
+	void ParseGameInfo();
 	void ParseEpisodeInfo ();
 	void ParseSkill ();
-	void ParseMapInfo (int lump, level_info_t &gamedefaults);
+	void ParseMapInfo (int lump, level_info_t &gamedefaults, level_info_t &defaultinfo);
 
 	void ParseOpenBrace();
 	bool ParseCloseBrace();
@@ -500,7 +501,7 @@ level_info_t *CheckLevelRedirect (level_info_t *info);
 
 FString CalcMapName (int episode, int level);
 
-void G_ParseMapInfo (void);
+void G_ParseMapInfo (const char *basemapinfo);
 
 void G_ClearSnapshots (void);
 void P_RemoveDefereds ();

@@ -2,6 +2,34 @@
 
 // Most of the MAPINFO is still in hexen.wad.
 
+gameinfo
+{
+	noloopfinalemusic = true
+	titlepage = "TITLE"
+	creditpage = "CREDIT"
+	titlemusic = "HEXEN"
+	titletime = 8
+	advisorytime = 6
+	pagetime = 5
+	chatsound = "Chat"
+	finalemusic = "hub"
+	finaleflat = "-NOFLAT-"
+	finalepage = "CREDIT"
+	infopage = "HELP1", "HELP2", "CREDIT"
+	quitsound = ""
+	borderflat = "F_022"
+	border = HereticBorder
+	telefogheight = 32
+	defkickback = 150
+	skyflatname = "F_SKY"
+	translator = "xlat/heretic.txt"	// not really correct but this was used before.
+	defaultbloodcolor = "68 00 00"
+	defaultbloodparticlecolor = "ff 00 00"
+	backpacktype = "BagOfHolding"	// Hexen doesn't have a backpack so use Heretic's.
+	statusbar = ""
+	intermissionmusic = "hub"
+}
+
 skill baby
 {
 	AutoUseHealth

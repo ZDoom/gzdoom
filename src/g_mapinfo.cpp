@@ -1763,10 +1763,8 @@ static void SetLevelNum (level_info_t *info, int num)
 //
 //==========================================================================
 
-void FMapInfoParser::ParseMapInfo (int lump, level_info_t &gamedefaults)
+void FMapInfoParser::ParseMapInfo (int lump, level_info_t &gamedefaults, level_info_t &defaultinfo)
 {
-	level_info_t defaultinfo;
-
 	sc.OpenLumpNum(lump);
 
 	defaultinfo = gamedefaults;
@@ -1774,7 +1772,19 @@ void FMapInfoParser::ParseMapInfo (int lump, level_info_t &gamedefaults)
 
 	while (sc.GetString ())
 	{
-		if (sc.Compare("gamedefaults"))
+		if (sc.Compare("include"))
+		{
+			sc.MustGetString();
+			int inclump = Wads.CheckNumForFullName(sc.String, true);
+			if (inclump < 0)
+			{
+				sc.ScriptError("include file '%s' not found", sc.String);
+			}
+			FScanner saved_sc = sc;
+			ParseMapInfo(inclump, gamedefaults, defaultinfo);
+			sc = saved_sc;
+		}
+		else if (sc.Compare("gamedefaults"))
 		{
 			gamedefaults.Reset();
 			ParseMapDefinition(gamedefaults);
@@ -1825,6 +1835,18 @@ void FMapInfoParser::ParseMapInfo (int lump, level_info_t &gamedefaults)
 		{
 			AllSkills.Clear();
 		}
+		else if (sc.Compare("gameinfo"))
+		{
+			if (format_type != FMT_Old)
+			{
+				format_type = FMT_New;
+				ParseGameInfo();
+			}
+			else
+			{
+				sc.ScriptError("gameinfo definitions not supported with old MAPINFO syntax");
+			}
+		}
 		else
 		{
 			sc.ScriptError("%s: Unknown top level keyword", sc.String);
@@ -1841,7 +1863,7 @@ void FMapInfoParser::ParseMapInfo (int lump, level_info_t &gamedefaults)
 //
 //==========================================================================
 
-void G_ParseMapInfo ()
+void G_ParseMapInfo (const char *basemapinfo)
 {
 	int lump, lastlump = 0;
 	level_info_t gamedefaults;
@@ -1849,20 +1871,19 @@ void G_ParseMapInfo ()
 	atterm(ClearEpisodes);
 
 	// Parse the default MAPINFO for the current game.
-	for(int i=0; i<2; i++)
+	if (basemapinfo != NULL)
 	{
-		if (gameinfo.mapinfo[i] != NULL)
-		{
-			FMapInfoParser parse;
-			parse.ParseMapInfo(Wads.GetNumForFullName(gameinfo.mapinfo[i]), gamedefaults);
-		}
+		FMapInfoParser parse;
+		level_info_t defaultinfo;
+		parse.ParseMapInfo(Wads.GetNumForFullName(basemapinfo), gamedefaults, defaultinfo);
 	}
 
 	// Parse any extra MAPINFOs.
 	while ((lump = Wads.FindLump ("MAPINFO", &lastlump)) != -1)
 	{
 		FMapInfoParser parse;
-		parse.ParseMapInfo(lump, gamedefaults);
+		level_info_t defaultinfo;
+		parse.ParseMapInfo(lump, gamedefaults, defaultinfo);
 	}
 	EndSequences.ShrinkToFit ();
 

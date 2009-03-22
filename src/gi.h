@@ -35,37 +35,15 @@
 #define __GI_H__
 
 #include "basictypes.h"
+#include "zstring.h"
 
+// Flags are not user configurable and only depend on the standard IWADs
 #define GI_MAPxx				0x00000001
-#define GI_PAGESARERAW			0x00000002
-#define GI_SHAREWARE			0x00000004
-#define GI_NOLOOPFINALEMUSIC	0x00000008
-#define GI_INFOINDEXED			0x00000010
-#define GI_MENUHACK				0x00000060
-#define GI_MENUHACK_RETAIL		0x00000020
-#define GI_MENUHACK_EXTENDED	0x00000040	// (Heretic)
-#define GI_MENUHACK_COMMERCIAL	0x00000060
-#define GI_ALWAYSFALLINGDAMAGE	0x00000080
-#define GI_TEASER2				0x00000100	// Alternate version of the Strife Teaser
-#define GI_CHEX_QUEST			0x00000200
+#define GI_SHAREWARE			0x00000002
+#define GI_MENUHACK_EXTENDED	0x00000004	// (Heretic)
+#define GI_TEASER2				0x00000008	// Alternate version of the Strife Teaser
 
-#ifndef EGAMETYPE
-#define EGAMETYPE
-enum EGameType
-{
-	GAME_Any	 = 0,
-	GAME_Doom	 = 1,
-	GAME_Heretic = 2,
-	GAME_Hexen	 = 4,
-	GAME_Strife	 = 8,
-	GAME_Chex	 = 16, //Chex is basically Doom, but we need to have a different set of actors.
-
-	GAME_Raven			= GAME_Heretic|GAME_Hexen,
-	GAME_DoomStrife		= GAME_Doom|GAME_Strife,
-	GAME_DoomChex		= GAME_Doom|GAME_Chex,
-	GAME_DoomStrifeChex	= GAME_Doom|GAME_Strife|GAME_Chex
-};
-#endif
+#include "gametype.h"
 
 extern const char *GameNames[17];
 
@@ -86,44 +64,38 @@ typedef struct
 typedef struct
 {
 	int flags;
+	EGameType gametype;
+
 	char titlePage[9];
-	char creditPage1[9];
-	char creditPage2[9];
-	char titleMusic[16];
+	bool drawreadthis;
+	bool noloopfinalemusic;
+	TArray<FName> creditPages;
+	TArray<FName> finalePages;
+	TArray<FName> infoPages;
+
+	FString titleMusic;
 	float titleTime;
 	float advisoryTime;
 	float pageTime;
-	char chatSound[16];
-	char finaleMusic[16];
+	FString chatSound;
+	FString finaleMusic;
 	char finaleFlat[9];
-	char finalePage1[9];
-	char finalePage2[9];
-	char finalePage3[9];
-	union
-	{
-		char infoPage[2][9];
-		struct
-		{
-			char basePage[9];
-			char numPages;
-		} indexed;
-	} info;
-	const char *quitSound;
-	int maxSwitch;
+	FString quitSound;
 	char borderFlat[9];
 	gameborder_t *border;
 	int telefogheight;
-	EGameType gametype;
 	int defKickback;
 	char SkyFlatName[9];
-	fixed_t StepHeight;
-	const char *translator;
-	const char *mapinfo[2];
+	FString translator;
 	DWORD defaultbloodcolor;
 	DWORD defaultbloodparticlecolor;
-	const char *backpacktype;
-	const char *statusbar;
+	FString backpacktype;
+	FString statusbar;
+	FString intermissionMusic;
+
+	const char *GetFinalePage(unsigned int num) const;
 } gameinfo_t;
+
 
 extern gameinfo_t gameinfo;
 

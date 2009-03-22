@@ -1,5 +1,32 @@
 // MAPINFO for Heretic (Shareware and Retail)
 
+gameinfo
+{
+	titlepage = "TITLE"
+	creditpage = "CREDIT"
+	titlemusic = "MUS_TITL"
+	titletime = 8
+	advisorytime = 6
+	pagetime = 5
+	chatsound = "misc/chat"
+	finalemusic = "MUS_CPTD"
+	finaleflat = "FLOOR25"
+	finalepage = "CREDIT"
+	infopage = "HELP1", "HELP2", "CREDIT"
+	quitsound = ""
+	borderflat = "FLAT513"
+	border = HereticBorder
+	telefogheight = 32
+	defkickback = 150
+	skyflatname = "F_SKY1"
+	translator = "xlat/heretic.txt"
+	defaultbloodcolor = "68 00 00"
+	defaultbloodparticlecolor = "ff 00 00"
+	backpacktype = "BagOfHolding"
+	statusbar = ""
+	intermissionmusic = "mus_intr"
+}
+
 skill baby
 {
 	AutoUseHealth

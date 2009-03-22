@@ -103,6 +103,9 @@ void uppercopy (char *to, const char *from);
 // Perform Blood encryption/decryption.
 void BloodCrypt (void *data, int key, int len);
 
+// Locate central directory in a zip file.
+DWORD Zip_FindCentralDir(FileReader * fin);
+
 // A very loose reference to a lump on disk. This is really just a wrapper
 // around the main wad's FILE object with a different length recorded. Since
 // two lumps from the same wad share the same FILE, you cannot read from

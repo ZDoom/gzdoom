@@ -44,18 +44,6 @@ typedef enum
 } GameMode_t;
 
 
-// Mission packs - might be useful for TC stuff?
-typedef enum
-{
-  doom, 		// DOOM 1
-  doom2,		// DOOM 2
-  pack_tnt, 	// TNT mission pack
-  pack_plut,	// Plutonia pack
-  none
-
-} GameMission_t;
-
-
 // If rangecheck is undefined, most parameter validation debugging code
 // will not be compiled
 #ifndef NORANGECHECKING

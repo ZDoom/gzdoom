@@ -1,4 +1,15 @@
-﻿March 19, 2009
+﻿March 22, 2009  (Changes by Graf Zahl)
+- removed gamemode variable. All it was used for were some checks that
+  really should depend on GI_MAPxx.
+- Externalized all internal gameinfo definitions.
+- added include to MAPINFO parser.
+- split IWAD detection code off from d_main.cpp into its own file.
+- disabled gamemission based switch filtering because it is not useful.
+- added GAMEINFO submission by Blzut3 with significant modifications. There
+  is no GAMEINFO lump. Instead all information is placed in MAPINFO, except
+  the data that is needed to decide which WADs to autoload.
+
+March 19, 2009
 - Added the current value of the string buffer to the state saved when
   making a function call in ACS. Now you can print inside functions and
   also return values from them for the caller to plug directly into

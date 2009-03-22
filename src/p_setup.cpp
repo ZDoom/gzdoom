@@ -3370,7 +3370,7 @@ void P_SetupLevel (char *lumpname, int position)
 		{
 			// We need translators only for Doom format maps.
 			// If none has been defined in a map use the game's default.
-			P_LoadTranslator(!level.info->Translator.IsEmpty()? level.info->Translator.GetChars() : gameinfo.translator);
+			P_LoadTranslator(!level.info->Translator.IsEmpty()? level.info->Translator.GetChars() : gameinfo.translator.GetChars());
 		}
 		CheckCompatibility(map);
 

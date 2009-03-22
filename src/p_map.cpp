@@ -162,16 +162,21 @@ static bool PIT_FindFloorCeiling (line_t *ld, const FBoundingBox &box, FCheckPos
 }
 
 
-void P_GetFloorCeilingZ(FCheckPosition &tmf)
+void P_GetFloorCeilingZ(FCheckPosition &tmf, bool get)
 {
-	sector_t *sec = P_PointInSector (tmf.x, tmf.y);
-	tmf.floorsector = sec;
-	tmf.ceilingsector = sec;
+	sector_t *sec;
+	if (get)
+	{
+		sec = P_PointInSector (tmf.x, tmf.y);
+		tmf.floorsector = sec;
+		tmf.ceilingsector = sec;
 
-	tmf.floorz = tmf.dropoffz = sec->floorplane.ZatPoint (tmf.x, tmf.y);
-	tmf.ceilingz = sec->ceilingplane.ZatPoint (tmf.x, tmf.y);
-	tmf.floorpic = sec->GetTexture(sector_t::floor);
-	tmf.ceilingpic = sec->GetTexture(sector_t::ceiling);
+		tmf.floorz = tmf.dropoffz = sec->floorplane.ZatPoint (tmf.x, tmf.y);
+		tmf.ceilingz = sec->ceilingplane.ZatPoint (tmf.x, tmf.y);
+		tmf.floorpic = sec->GetTexture(sector_t::floor);
+		tmf.ceilingpic = sec->GetTexture(sector_t::ceiling);
+	}
+	else sec = tmf.thing->Sector;
 
 #ifdef _3DFLOORS
 	for(unsigned int i=0;i<sec->e->XFloor.ffloors.Size();i++)
@@ -217,14 +222,7 @@ void P_FindFloorCeiling (AActor *actor, bool onlyspawnpos)
 
 	if (!onlyspawnpos)
 	{
-		P_GetFloorCeilingZ(tmf);
-		actor->floorz = tmf.floorz;
-		actor->dropoffz = tmf.dropoffz;
-		actor->ceilingz = tmf.ceilingz;
-		actor->floorpic = tmf.floorpic;
-		actor->floorsector = tmf.floorsector;
-		actor->ceilingpic = tmf.ceilingpic;
-		actor->ceilingsector = tmf.ceilingsector;
+		P_GetFloorCeilingZ(tmf, true);
 	}
 	else
 	{
@@ -234,7 +232,15 @@ void P_FindFloorCeiling (AActor *actor, bool onlyspawnpos)
 		tmf.ceilingz = actor->ceilingz;
 		tmf.floorpic = actor->floorpic;
 		tmf.ceilingpic = actor->ceilingpic;
+		P_GetFloorCeilingZ(tmf, false);
 	}
+	actor->floorz = tmf.floorz;
+	actor->dropoffz = tmf.dropoffz;
+	actor->ceilingz = tmf.ceilingz;
+	actor->floorpic = tmf.floorpic;
+	actor->floorsector = tmf.floorsector;
+	actor->ceilingpic = tmf.ceilingpic;
+	actor->ceilingsector = tmf.ceilingsector;
 
 	FBoundingBox box(tmf.x, tmf.y, actor->radius);
 
@@ -293,7 +299,7 @@ bool P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefr
 	tmf.x = x;
 	tmf.y = y;
 	tmf.z = z;
-	P_GetFloorCeilingZ(tmf);
+	P_GetFloorCeilingZ(tmf, true);
 					
 	spechit.Clear ();
 

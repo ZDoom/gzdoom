@@ -1,3 +1,32 @@
+
+gameinfo
+{
+	titlepage = "TITLEPIC"
+	creditpage = "CREDIT"
+	titlemusic = "$MUSIC_DM2TTL"
+	titletime = 11
+	advisorytime = 0
+	pagetime = 5
+	chatsound = "misc/chat"
+	finalemusic = "$MUSIC_READ_M"
+	finaleflat = "SLIME16"
+	finalepage = "CREDIT"
+	infopage = "HELP", "CREDIT"
+	quitsound = "menu/quit2"
+	borderflat = "GRNROCK"
+	border = DoomBorder
+	telefogheight = 0
+	defkickback = 100
+	skyflatname = "F_SKY1"
+	translator = "xlat/doom.txt"
+	mapinfo = "mapinfo/doom2.txt"
+	defaultbloodcolor = "68 00 00"
+	defaultbloodparticlecolor = "ff 00 00"
+	backpacktype = "Backpack"
+	statusbar = "sbarinfo/doom.txt"
+	intermissionmusic = "$MUSIC_INTER"
+}
+
 skill baby
 {
 	AutoUseHealth

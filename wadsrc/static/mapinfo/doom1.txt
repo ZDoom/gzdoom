@@ -1,4 +1,19 @@
 // MAPINFO for Doom 1 (Shareware, Registered, and Retail)
+include "mapinfo/doomcommon.txt"
+
+gameinfo
+{
+	creditpage = "CREDIT", "HELP2"
+	titlemusic = "$MUSIC_INTRO"
+	titletime = 5
+	finalemusic = "$MUSIC_VICTOR"
+	finaleflat = "FLOOR4_8"
+	finalepage = "HELP2", "VICTORY2", "ENDPIC"
+	infopage = "HELP1", "HELP2"
+	quitsound = "menu/quit1"
+	borderflat = "FLOOR7_2"
+	drawreadthis = true
+}
 
 clearepisodes
 episode e1m1

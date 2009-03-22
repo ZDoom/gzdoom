@@ -189,7 +189,7 @@ void G_SetForEndGame (char *nextmap)
 	{
 		SetEndSequence (nextmap, END_Chess);
 	}
-	else if (gamemode == commercial)
+	else if (gameinfo.gametype == GAME_Doom && (gameinfo.flags & GI_MAPxx))
 	{
 		SetEndSequence (nextmap, END_Cast);
 	}

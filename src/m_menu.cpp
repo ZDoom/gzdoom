@@ -1460,36 +1460,23 @@ void M_DrawReadThis ()
 	FTexture *tex = NULL, *prevpic = NULL;
 	fixed_t alpha;
 
-	if (gameinfo.flags & GI_INFOINDEXED)
+	// Did the mapper choose a custom help page via MAPINFO?
+	if ((level.info != NULL) && level.info->f1[0] != 0)
 	{
-		char name[9];
-		name[8] = 0;
-		Wads.GetLumpName (name, Wads.GetNumForName (gameinfo.info.indexed.basePage, ns_graphics) + InfoType);
-		tex = TexMan[name];
-		if (InfoType > 1)
-		{
-			Wads.GetLumpName (name, Wads.GetNumForName (gameinfo.info.indexed.basePage, ns_graphics) + InfoType - 1);
-			prevpic = TexMan[name];
-		}
+		tex = TexMan.FindTexture(level.info->f1);
+		InfoType = 1;
 	}
-	else
+	
+	if (tex == NULL)
 	{
-		// Did the mapper choose a custom help page via MAPINFO?
-		if ((level.info != NULL) && level.info->f1[0] != 0)
-		{
-			tex = TexMan.FindTexture(level.info->f1);
-		}
-
-		if (tex == NULL)
-		{
-			tex = TexMan[gameinfo.info.infoPage[InfoType-1]];
-		}
-
-		if (InfoType > 1)
-		{
-			prevpic = TexMan[gameinfo.info.infoPage[InfoType-2]];
-		}
+		tex = TexMan[gameinfo.infoPages[InfoType-1].GetChars()];
 	}
+
+	if (InfoType > 1)
+	{
+		prevpic = TexMan[gameinfo.infoPages[InfoType-2].GetChars()];
+	}
+
 	alpha = MIN<fixed_t> (Scale (gametic - InfoTic, OPAQUE, TICRATE/3), OPAQUE);
 	if (alpha < OPAQUE && prevpic != NULL)
 	{
@@ -1975,14 +1962,7 @@ void M_ReadThisMore (int choice)
 {
 	InfoType++;
 	InfoTic = gametic;
-	if (gameinfo.flags & GI_INFOINDEXED)
-	{
-		if (InfoType >= gameinfo.info.indexed.numPages)
-		{
-			M_FinishReadThis (0);
-		}
-	}
-	else if (InfoType > 2)
+	if ((level.info != NULL && level.info->f1[0] != 0) || InfoType > int(gameinfo.infoPages.Size()))
 	{
 		M_FinishReadThis (0);
 	}
@@ -3504,19 +3484,15 @@ void M_Init (void)
 		LINEHEIGHT = 20;
 	}
 
-	switch (gameinfo.flags & GI_MENUHACK)
+	if (!gameinfo.drawreadthis)
 	{
-	case GI_MENUHACK_COMMERCIAL:
 		MainMenu[MainDef.numitems-2] = MainMenu[MainDef.numitems-1];
 		MainDef.numitems--;
 		MainDef.y += 8;
 		ReadDef.routine = M_DrawReadThis;
 		ReadDef.x = 330;
 		ReadDef.y = 165;
-		ReadMenu[0].routine = M_FinishReadThis;
-		break;
-	default:
-		break;
+		//ReadMenu[0].routine = M_FinishReadThis;
 	}
 	M_OptInit ();
 

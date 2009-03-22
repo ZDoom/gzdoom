@@ -1,4 +1,5 @@
 ﻿March 22, 2009  (Changes by Graf Zahl)
+- removed gamemission variable because it wasn't used anywhere.
 - removed gamemode variable. All it was used for were some checks that
   really should depend on GI_MAPxx.
 - Externalized all internal gameinfo definitions.

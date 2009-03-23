@@ -259,7 +259,7 @@ void level_info_t::Reset()
 	intermusicorder = 0;
 	SoundInfo = "";
 	SndSeq = "";
-	strcpy (bordertexture, gameinfo.borderFlat);
+	bordertexture[0] = 0;
 	teamdamage = 0.f;
 	specialactions.Clear();
 }

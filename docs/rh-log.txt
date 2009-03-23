@@ -1,4 +1,8 @@
-﻿March 22, 2009  (Changes by Graf Zahl)
+﻿March 23, 2009  (Changes by Graf Zahl)
+- Changed: Making the gameinfo customizable by MAPINFO requires different
+  checks for map specific border flats.
+
+March 22, 2009  (Changes by Graf Zahl)
 - removed gamemission variable because it wasn't used anywhere.
 - removed gamemode variable. All it was used for were some checks that
   really should depend on GI_MAPxx.

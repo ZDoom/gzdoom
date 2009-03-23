@@ -13,6 +13,7 @@ gameinfo
 	quitsound = "menu/quit1"
 	borderflat = "FLOOR7_2"
 	drawreadthis = true
+	intermissionmusic = "$MUSIC_INTER"
 }
 
 clearepisodes

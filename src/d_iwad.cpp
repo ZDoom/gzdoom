@@ -41,6 +41,7 @@
 #include "w_zip.h"
 #include "v_palette.h"
 #include "m_argv.h"
+#include "m_misc.h"
 #include "c_cvars.h"
 #include "gameconfigfile.h"
 

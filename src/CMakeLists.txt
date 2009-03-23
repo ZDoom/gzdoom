@@ -460,6 +460,7 @@ add_executable( zdoom WIN32
 	configfile.cpp
 	ct_chat.cpp
 	d_dehacked.cpp
+	d_iwad.cpp
 	d_main.cpp
 	d_net.cpp
 	d_netinfo.cpp

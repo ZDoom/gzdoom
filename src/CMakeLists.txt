@@ -507,6 +507,7 @@ add_executable( zdoom WIN32
 	nodebuild_extract.cpp
 	nodebuild_gl.cpp
 	nodebuild_utility.cpp
+	p_3dfloors.cpp
 	p_3dmidtex.cpp
 	p_acs.cpp
 	p_buildmap.cpp

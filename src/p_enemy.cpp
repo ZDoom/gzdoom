@@ -2507,23 +2507,26 @@ AInventory *P_DropItem (AActor *source, const PClass *type, int dropamount, int 
 			}
 		}
 		mo = Spawn (type, source->x, source->y, spawnz, ALLOW_REPLACE);
-		mo->flags |= MF_DROPPED;
-		mo->flags &= ~MF_NOGRAVITY;	// [RH] Make sure it is affected by gravity
-		if (mo->IsKindOf (RUNTIME_CLASS(AInventory)))
+		if (mo != NULL)
 		{
-			AInventory * inv = static_cast<AInventory *>(mo);
-			ModifyDropAmount(inv, dropamount);
-			if (inv->SpecialDropAction (source))
+			mo->flags |= MF_DROPPED;
+			mo->flags &= ~MF_NOGRAVITY;	// [RH] Make sure it is affected by gravity
+			if (!(i_compatflags & COMPATF_NOTOSSDROPS))
 			{
-				return NULL;
+				P_TossItem (mo);
 			}
-			return inv;
+			if (mo->IsKindOf (RUNTIME_CLASS(AInventory)))
+			{
+				AInventory * inv = static_cast<AInventory *>(mo);
+				ModifyDropAmount(inv, dropamount);
+				if (inv->SpecialDropAction (source))
+				{
+					return NULL;
+				}
+				return inv;
+			}
+			// we can't really return an AInventory pointer to a non-inventory item here, can we?
 		}
-		if (!(i_compatflags & COMPATF_NOTOSSDROPS))
-		{
-			P_TossItem (mo);
-		}
-		// we can't really return an AInventory pointer to a non-inventory item here, can we?
 	}
 	return NULL;
 }

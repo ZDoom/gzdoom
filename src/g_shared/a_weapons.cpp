@@ -763,7 +763,7 @@ AWeapon *FWeaponSlot::PickWeapon(player_t *player)
 			{
 				for (j = (unsigned)(i - 1) % Weapons.Size();
 					j != i;
-					j = (unsigned)(j - 1) % Weapons.Size())
+					j = (unsigned)(j + Weapons.Size() - 1) % Weapons.Size())	// + Weapons.Size is to avoid underflows
 				{
 					AWeapon *weap = static_cast<AWeapon *> (player->mo->FindInventory(Weapons[j].Type));
 

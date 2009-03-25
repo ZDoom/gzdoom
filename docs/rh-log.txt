@@ -1,4 +1,8 @@
 ﻿March 25, 2009  (Changes by Graf Zahl)
+- Removed some obsolete code from G_InitLevelLocals that was causing problems
+  with maps that have no name.
+- Fixed: The inner loop in AWeaponSlot::PickWeapon could endlessly loop when
+  the counter variable became negative.
 - Fixed: Implicitly defined clusters were not initialized when being created.
 
 March 24, 2009  (Changes by Graf Zahl)

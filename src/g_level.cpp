@@ -1262,45 +1262,28 @@ void G_InitLevelLocals ()
 
 	G_AirControlChanged ();
 
-	if (!info->LevelName.IsEmpty())
-	{
-		cluster_info_t *clus = FindClusterInfo (info->cluster);
+	cluster_info_t *clus = FindClusterInfo (info->cluster);
 
-		level.partime = info->partime;
-		level.sucktime = info->sucktime;
-		level.cluster = info->cluster;
-		level.clusterflags = clus ? clus->flags : 0;
-		level.flags |= info->flags;
-		level.flags2 |= info->flags2;
-		level.levelnum = info->levelnum;
-		level.Music = info->Music;
-		level.musicorder = info->musicorder;
+	level.partime = info->partime;
+	level.sucktime = info->sucktime;
+	level.cluster = info->cluster;
+	level.clusterflags = clus ? clus->flags : 0;
+	level.flags |= info->flags;
+	level.flags2 |= info->flags2;
+	level.levelnum = info->levelnum;
+	level.Music = info->Music;
+	level.musicorder = info->musicorder;
 
-		level.LevelName = level.info->LookupLevelName();
-		strncpy (level.nextmap, info->nextmap, 8);
-		level.nextmap[8] = 0;
-		strncpy (level.secretmap, info->secretmap, 8);
-		level.secretmap[8] = 0;
-		strncpy (level.skypic1, info->skypic1, 8);
-		level.skypic1[8] = 0;
-		if (!level.skypic2[0])
-			strncpy (level.skypic2, level.skypic1, 8);
-		level.skypic2[8] = 0;
-	}
-	else
-	{
-		level.partime = level.cluster = 0;
-		level.sucktime = 0;
-		level.LevelName = "Unnamed";
-		level.nextmap[0] =
-			level.secretmap[0] = 0;
-		level.Music = "";
-		strcpy (level.skypic1, "SKY1");
-		strcpy (level.skypic2, "SKY1");
-		level.flags = 0;
-		level.flags2 = 0;
-		level.levelnum = 1;
-	}
+	level.LevelName = level.info->LookupLevelName();
+	strncpy (level.nextmap, info->nextmap, 8);
+	level.nextmap[8] = 0;
+	strncpy (level.secretmap, info->secretmap, 8);
+	level.secretmap[8] = 0;
+	strncpy (level.skypic1, info->skypic1, 8);
+	level.skypic1[8] = 0;
+	if (!level.skypic2[0])
+		strncpy (level.skypic2, level.skypic1, 8);
+	level.skypic2[8] = 0;
 
 	compatflags.Callback();
 

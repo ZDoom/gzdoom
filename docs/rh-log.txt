@@ -1,4 +1,7 @@
-﻿March 24, 2009  (Changes by Graf Zahl)
+﻿March 25, 2009  (Changes by Graf Zahl)
+- Fixed: Implicitly defined clusters were not initialized when being created.
+
+March 24, 2009  (Changes by Graf Zahl)
 - Fixed: Item tossing did not work anymore.
 
 March 23, 2009  (Changes by Graf Zahl)

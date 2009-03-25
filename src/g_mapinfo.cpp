@@ -948,6 +948,7 @@ DEFINE_MAP_OPTION(cluster, true)
 	{
 		unsigned int clusterindex = wadclusterinfos.Reserve(1);
 		cluster_info_t *clusterinfo = &wadclusterinfos[clusterindex];
+		clusterinfo->Reset();
 		clusterinfo->cluster = parse.sc.Number;
 		if (parse.HexenHack)
 		{

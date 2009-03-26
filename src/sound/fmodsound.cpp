@@ -1,9 +1,9 @@
 /*
-** i_sound.cpp
+** fmodsound.cpp
 ** System interface for sound; uses FMOD Ex.
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2008 Randy Heit
+** Copyright 1998-2009 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -582,6 +582,28 @@ bool FMODSoundRenderer::IsValid()
 	return InitSuccess;
 }
 
+#ifdef _MSC_VER
+//==========================================================================
+//
+// CheckException
+//
+//==========================================================================
+
+#define FACILITY_VISUALCPP  ((LONG)0x6d)
+#define VcppException(sev,err)  ((sev) | (FACILITY_VISUALCPP<<16) | err)
+
+static int CheckException(DWORD code)
+{
+	if (code == VcppException(ERROR_SEVERITY_ERROR,ERROR_MOD_NOT_FOUND) ||
+		code == VcppException(ERROR_SEVERITY_ERROR,ERROR_PROC_NOT_FOUND))
+	{
+		return EXCEPTION_EXECUTE_HANDLER;
+	}
+	return EXCEPTION_CONTINUE_SEARCH;
+}
+
+#endif
+
 //==========================================================================
 //
 // FMODSoundRenderer :: Init
@@ -619,7 +641,23 @@ bool FMODSoundRenderer::Init()
 	Printf("I_InitSound: Initializing FMOD\n");
 
 	// Create a System object and initialize.
+#ifdef _MSC_VER
+	__try {
+#endif
 	result = FMOD::System_Create(&Sys);
+#ifdef _MSC_VER
+	}
+	__except(CheckException(GetExceptionCode()))
+	{
+		Sys = NULL;
+		Printf(TEXTCOLOR_ORANGE"Failed to load fmodex"
+#ifdef _WIN64
+			"64"
+#endif
+			".dll\n");
+		return false;
+	}
+#endif
 	if (result != FMOD_OK)
 	{
 		Sys = NULL;

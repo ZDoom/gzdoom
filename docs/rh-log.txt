@@ -1,4 +1,6 @@
 ﻿March 25, 2009
+- Made fmodex.dll delay-loaded so the game should no be runnable on Windows
+  95 again, though without sound.
 - Changed gameinfo_t and gameborder_t to be named structs instead of
   typedef'ed anonymous structs.
 - Fixed: P_AutoUseHealth() used autousemodes 0 and 1 instead of 1 and 2.

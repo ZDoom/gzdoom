@@ -1,4 +1,11 @@
-﻿March 25, 2009  (Changes by Graf Zahl)
+﻿March 25, 2009
+- Changed gameinfo_t and gameborder_t to be named structs instead of
+  typedef'ed anonymous structs.
+- Fixed: P_AutoUseHealth() used autousemodes 0 and 1 instead of 1 and 2.
+- Fixed: SBARINFO did not recognize 5:4 aspect ratio.
+- Fixed: screenshot_dir was ignored.
+
+March 25, 2009  (Changes by Graf Zahl)
 - Removed some obsolete code from G_InitLevelLocals that was causing problems
   with maps that have no name.
 - Fixed: The inner loop in AWeaponSlot::PickWeapon could endlessly loop when

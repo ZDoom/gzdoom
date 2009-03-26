@@ -275,7 +275,7 @@ enum //aspect ratios
 	ASPECTRATIO_4_3 = 0,
 	ASPECTRATIO_16_9 = 1,
 	ASPECTRATIO_16_10 = 2,
-	ASPECTRATIO_5_4 = 3,
+	ASPECTRATIO_5_4 = 4,
 };
 
 enum //Key words

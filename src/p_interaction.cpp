@@ -779,8 +779,8 @@ void P_AutoUseHealth(player_t *player, int saveHealth)
 		{
 			int mode = static_cast<AHealthPickup*>(inv)->autousemode;
 
-			if (mode == 0) NormalHealthItems.Push(inv);
-			else if (mode == 1) LargeHealthItems.Push(inv);
+			if (mode == 1) NormalHealthItems.Push(inv);
+			else if (mode == 2) LargeHealthItems.Push(inv);
 		}
 	}
 

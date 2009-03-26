@@ -47,7 +47,7 @@
 
 extern const char *GameNames[17];
 
-typedef struct
+struct gameborder_t
 {
 	BYTE offset;
 	BYTE size;
@@ -59,9 +59,9 @@ typedef struct
 	char bl[8];
 	char b[8];
 	char br[8];
-} gameborder_t;
+};
 
-typedef struct
+struct gameinfo_t
 {
 	int flags;
 	EGameType gametype;
@@ -94,7 +94,7 @@ typedef struct
 	FString intermissionMusic;
 
 	const char *GetFinalePage(unsigned int num) const;
-} gameinfo_t;
+};
 
 
 extern gameinfo_t gameinfo;

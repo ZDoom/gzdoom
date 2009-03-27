@@ -1,6 +1,14 @@
-﻿March 25, 2009
-- Made fmodex.dll delay-loaded so the game should no be runnable on Windows
-  95 again, though without sound.
+﻿March 26, 2009
+- Changed random seed initialization so that it uses the system's
+  cryptographically secure random number generator, if available, instead
+  of the current time.
+- Changed the random number generator from Lee Killough's algorithm to the
+  SFMT607 variant of the Mersenne Twister.
+  <http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/SFMT/index.html>
+
+March 25, 2009
+- Made fmodex.dll delay-loaded so the game should be runnable on Windows 95
+  again, though without sound.
 - Changed gameinfo_t and gameborder_t to be named structs instead of
   typedef'ed anonymous structs.
 - Fixed: P_AutoUseHealth() used autousemodes 0 and 1 instead of 1 and 2.

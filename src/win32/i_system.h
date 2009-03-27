@@ -68,6 +68,9 @@ extern void (*I_FreezeTime) (bool frozen);
 
 fixed_t I_GetTimeFrac (uint32 *ms);
 
+// Return a seed value for the RNG.
+unsigned int I_MakeRNGSeed();
+
 
 //
 // Called by D_DoomLoop,

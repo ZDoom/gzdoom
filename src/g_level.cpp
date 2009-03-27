@@ -480,7 +480,7 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 	{
 		if (!netgame)
 		{ // [RH] Change the random seed for each new single player game
-			rngseed = rngseed*3/2;
+			rngseed = rngseed + 1;
 		}
 		FRandom::StaticClearRandom ();
 		P_ClearACSVars(true);

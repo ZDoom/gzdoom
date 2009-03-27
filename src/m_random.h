@@ -1,57 +1,43 @@
-// Emacs style mode select   -*- C++ -*- 
-//-----------------------------------------------------------------------------
-//
-// $Id: m_random.h,v 1.9 1998/05/01 14:20:31 killough Exp $
-//
-// Copyright (C) 1993-1996 by id Software, Inc.
-//
-// This source is available for distribution and/or modification
-// only under the terms of the DOOM Source Code License as
-// published by id Software. All rights reserved.
-//
-// The source is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
-// for more details.
-//
-// DESCRIPTION:
-//
-//		[RH] We now use BOOM's random number generator
-//
-//-----------------------------------------------------------------------------
-
+/*
+** m_random.h
+** Random number generators
+**
+**---------------------------------------------------------------------------
+** Copyright 2002-2009 Randy Heit
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
 
 #ifndef __M_RANDOM__
 #define __M_RANDOM__
 
 #include <stdio.h>
 #include "basictypes.h"
-
-// killough 1/19/98: rewritten to use a better random number generator
-// in the new engine, although the old one is available for compatibility.
-
-// killough 2/16/98:
-//
-// Make every random number generator local to each control-equivalent block.
-// Critical for demo sync. Changing the order of this list breaks all previous
-// versions' demos. The random number generators are made local to reduce the
-// chances of sync problems. In Doom, if a single random number generator call
-// was off, it would mess up all random number generators. This reduces the
-// chances of it happening by making each RNG local to a control flow block.
-//
-// Notes to developers: if you want to reduce your demo sync hassles, follow
-// this rule: for each call to P_Random you add, add a new class to the enum
-// type below for each block of code which calls P_Random. If two calls to
-// P_Random are not in "control-equivalent blocks", i.e. there are any cases
-// where one is executed, and the other is not, put them in separate classes.
-//
-// Keep all current entries in this list the same, and in the order
-// indicated by the #'s, because they're critical for preserving demo
-// sync. Do not remove entries simply because they become unused later.
-//
-// [RH] Changed to use different class instances for different generators.
-// This makes adding new RNGs easier, because I don't need to recompile every
-// file that uses random numbers.
+#include "sfmt/SFMT.h"
 
 struct PNGHandle;
 
@@ -62,42 +48,169 @@ public:
 	FRandom (const char *name);
 	~FRandom ();
 
-	int operator() ();			// Returns a random number in the range [0,255]
-	int operator() (int mod);	// Returns a random number in the range [0,mod)
-	int Random2();				// Returns rand# - rand#
-	int Random2(int mask);		// Returns (rand# & mask) - (rand# & mask)
-	int HitDice(int count);		// HITDICE macro used in Heretic and Hexen
+	// Returns a random number in the range [0,255]
+	int operator()()
+	{
+		return GenRand32() & 255;
+	}
+
+	// Returns a random number in the range [0,mod)
+	int operator() (int mod)
+	{
+		return GenRand32() % mod;
+	}
+
+	// Returns rand# - rand#
+	int Random2()
+	{
+		return Random2(255);
+	}
+
+// Returns (rand# & mask) - (rand# & mask)
+	int Random2(int mask)
+	{
+		int t = GenRand32() & mask;
+		return t - (GenRand32() & mask);
+	}
+
+	// HITDICE macro used in Heretic and Hexen
+	int HitDice(int count)
+	{
+		return (1 + (GenRand32() & 7)) * count;
+	}
 
 	int Random()				// synonym for ()
 	{
 		return operator()();
 	}
 
-	DWORD GetSeed()
+	void Init(DWORD seed);
+
+	// SFMT interface
+	unsigned int GenRand32();
+	QWORD GenRand64();
+	void FillArray32(DWORD *array, int size);
+	void FillArray64(QWORD *array, int size);
+	void InitGenRand(DWORD seed);
+	void InitByArray(DWORD *init_key, int key_length);
+	int GetMinArraySize32();
+	int GetMinArraySize64();
+
+	/* These real versions are due to Isaku Wada */
+	/** generates a random number on [0,1]-real-interval */
+	static inline double ToReal1(DWORD v)
 	{
-		return Seed;
+		return v * (1.0/4294967295.0); 
+		/* divided by 2^32-1 */ 
 	}
 
+	/** generates a random number on [0,1]-real-interval */
+	inline double GenRand_Real1()
+	{
+		return ToReal1(GenRand32());
+	}
+
+	/** generates a random number on [0,1)-real-interval */
+	static inline double ToReal2(DWORD v)
+	{
+		return v * (1.0/4294967296.0); 
+		/* divided by 2^32 */
+	}
+
+	/** generates a random number on [0,1)-real-interval */
+	inline double GenRand_Real2()
+	{
+		return ToReal2(GenRand32());
+	}
+
+	/** generates a random number on (0,1)-real-interval */
+	static inline double ToReal3(DWORD v)
+	{
+		return (((double)v) + 0.5)*(1.0/4294967296.0); 
+		/* divided by 2^32 */
+	}
+
+	/** generates a random number on (0,1)-real-interval */
+	inline double GenRand_Real3(void)
+	{
+		return ToReal3(GenRand32());
+	}
+	/** These real versions are due to Isaku Wada */
+
+	/** generates a random number on [0,1) with 53-bit resolution*/
+	static inline double ToRes53(QWORD v) 
+	{ 
+		return v * (1.0/18446744073709551616.0L);
+	}
+
+	/** generates a random number on [0,1) with 53-bit resolution from two
+	 * 32 bit integers */
+	static inline double ToRes53Mix(DWORD x, DWORD y) 
+	{ 
+		return ToRes53(x | ((QWORD)y << 32));
+	}
+
+	/** generates a random number on [0,1) with 53-bit resolution
+	 */
+	inline double GenRand_Res53(void) 
+	{ 
+		return ToRes53(GenRand64());
+	} 
+
+	/** generates a random number on [0,1) with 53-bit resolution
+		using 32bit integer.
+	 */
+	inline double GenRand_Res53_Mix() 
+	{ 
+		DWORD x, y;
+
+		x = GenRand32();
+		y = GenRand32();
+		return ToRes53Mix(x, y);
+	}
+
+	// Static interface
 	static void StaticClearRandom ();
 	static DWORD StaticSumSeeds ();
 	static void StaticReadRNGState (PNGHandle *png);
 	static void StaticWriteRNGState (FILE *file);
 	static FRandom *StaticFindRNG(const char *name);
 
-#ifdef _DEBUG
+#ifndef NDEBUG
 	static void StaticPrintSeeds ();
 #endif
 
 private:
-	DWORD Seed;
+#ifndef NDEBUG
+	const char *Name;
+#endif
 	FRandom *Next;
 	DWORD NameCRC;
 
-#ifdef _DEBUG
-	const char *Name;
-#endif
-
 	static FRandom *RNGList;
+
+	/*-------------------------------------------
+	  SFMT internal state, index counter and flag 
+	  -------------------------------------------*/
+
+	void GenRandAll();
+	void GenRandArray(w128_t *array, int size);
+	void PeriodCertification();
+
+	/** the 128-bit internal state array */
+	union
+	{
+		w128_t w128[SFMT::N];
+		unsigned int u[SFMT::N32];
+		QWORD u64[SFMT::N64];
+	} sfmt;
+	/** index counter to the 32-bit internal state array */
+	int idx;
+	/** a flag: it is 0 if and only if the internal state is not yet
+	 * initialized. */
+#ifndef NDEBUG
+	bool initialized;
+#endif
 };
 
 extern DWORD rngseed;			// The starting seed (not part of state)

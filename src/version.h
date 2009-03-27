@@ -54,7 +54,7 @@
 // Version identifier for network games.
 // Bump it every time you do a release unless you're certain you
 // didn't change anything that will affect sync.
-#define NETGAMEVERSION 221
+#define NETGAMEVERSION 222
 
 // Version stored in the ini's [LastRun] section.
 // Bump it if you made some configuration change that you want to
@@ -75,7 +75,7 @@
 // SAVESIG should match SAVEVER.
 
 // MINSAVEVER is the minimum level snapshot version that can be loaded.
-#define MINSAVEVER 1452
+#define MINSAVEVER 1507
 
 #if SVN_REVISION_NUMBER < MINSAVEVER
 // Never write a savegame with a version lower than what we need

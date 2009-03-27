@@ -6294,6 +6294,70 @@
 				</FileConfiguration>
 			</File>
 		</Filter>
+		<Filter
+			Name="SFMT"
+			>
+			<File
+				RelativePath=".\src\sfmt\SFMT-alti.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\sfmt\SFMT-params.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\sfmt\SFMT-params11213.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\sfmt\SFMT-params1279.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\sfmt\SFMT-params132049.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\sfmt\SFMT-params19937.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\sfmt\SFMT-params216091.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\sfmt\SFMT-params2281.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\sfmt\SFMT-params4253.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\sfmt\SFMT-params44497.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\sfmt\SFMT-params607.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\sfmt\SFMT-params86243.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\sfmt\SFMT-sse2.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\sfmt\SFMT.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\sfmt\SFMT.h"
+				>
+			</File>
+		</Filter>
 	</Files>
 	<Globals>
 	</Globals>

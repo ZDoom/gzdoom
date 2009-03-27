@@ -1,33 +1,61 @@
-// Emacs style mode select   -*- C++ -*-
-//-----------------------------------------------------------------------------
-//
-// $Id: m_random.c,v 1.6 1998/05/03 23:13:18 killough Exp $
-//
-// Copyright (C) 1993-1996 by id Software, Inc.
-//
-// This source is available for distribution and/or modification
-// only under the terms of the DOOM Source Code License as
-// published by id Software. All rights reserved.
-//
-// The source is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
-// for more details.
-//
-//
-// DESCRIPTION:
-//      Random number LUT.
-//
-// 1/19/98 killough: Rewrote random number generator for better randomness,
-// while at the same time maintaining demo sync and backward compatibility.
-//
-// 2/16/98 killough: Made each RNG local to each control-equivalent block,
-// to reduce the chances of demo sync problems.
-//
-// [RH] Changed to use different class instances for different RNGs. Be
-// sure to compile with _DEBUG if you want to catch bad RNG names.
-//
-//-----------------------------------------------------------------------------
+/*
+** m_random.cpp
+** Random number generators
+**
+**---------------------------------------------------------------------------
+** Copyright 2002-2009 Randy Heit
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+** This file employs the techniques for improving demo sync and backward
+** compatibility that Lee Killough introduced with BOOM. However, none of
+** the actual code he wrote is left. In contrast to BOOM, each RNG source
+** in ZDoom is implemented as a separate class instance that provides an
+** interface to the high-quality Mersenne Twister. See
+** <http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/SFMT/index.html>.
+**
+** As Killough's description from m_random.h is still mostly relevant,
+** here it is:
+**   killough 2/16/98:
+**
+**   Make every random number generator local to each control-equivalent block.
+**   Critical for demo sync. The random number generators are made local to
+**   reduce the chances of sync problems. In Doom, if a single random number
+**   generator call was off, it would mess up all random number generators.
+**   This reduces the chances of it happening by making each RNG local to a
+**   control flow block.
+**
+**   Notes to developers: if you want to reduce your demo sync hassles, follow
+**   this rule: for each call to P_Random you add, add a new class to the enum
+**   type below for each block of code which calls P_Random. If two calls to
+**   P_Random are not in "control-equivalent blocks", i.e. there are any cases
+**   where one is executed, and the other is not, put them in separate classes.
+*/
+
+// HEADER FILES ------------------------------------------------------------
 
 #include <assert.h>
 
@@ -41,36 +69,73 @@
 #include "c_dispatch.h"
 #include "files.h"
 
+// MACROS ------------------------------------------------------------------
+
 #define RAND_ID MAKE_ID('r','a','N','d')
+
+// TYPES -------------------------------------------------------------------
+
+// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+
+// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+
+// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+
+// EXTERNAL DATA DECLARATIONS ----------------------------------------------
+
+extern FRandom pr_spawnmobj;
+extern FRandom pr_acs;
+extern FRandom pr_chase;
+extern FRandom pr_lost;
+extern FRandom pr_slam;
+extern FRandom pr_exrandom;
+
+// PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 FRandom M_Random;
 
-inline int UpdateSeed (DWORD &seed)
-{
-	DWORD oldseed = seed;
-	seed = oldseed * 1664525ul + 221297ul;
-	return (int)oldseed;
-}
+// Global seed. This is modified predictably to initialize every RNG.
+DWORD rngseed;
 
-DWORD rngseed = 1993;   // killough 3/26/98: The seed
+// PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 FRandom *FRandom::RNGList;
+static TDeletingArray<FRandom *> NewRNGs;
+
+// CODE --------------------------------------------------------------------
+
+//==========================================================================
+//
+// FRandom - Nameless constructor
+//
+// Constructing an RNG in this way means it won't be stored in savegames.
+//
+//==========================================================================
 
 FRandom::FRandom ()
-: Seed (0), Next (NULL), NameCRC (0)
+: NameCRC (0)
 {
-#ifdef _DEBUG
+#ifndef NDEBUG
 	Name = NULL;
+	initialized = false;
 #endif
 	Next = RNGList;
 	RNGList = this;
 }
 
+//==========================================================================
+//
+// FRandom - Named constructor
+//
+// This is the standard way to construct RNGs.
+//
+//==========================================================================
+
 FRandom::FRandom (const char *name)
-: Seed (0)
 {
 	NameCRC = CalcCRC32 ((const BYTE *)name, (unsigned int)strlen (name));
-#ifdef _DEBUG
+#ifndef NDEBUG
+	initialized = false;
 	Name = name;
 	// A CRC of 0 is reserved for nameless RNGs that don't get stored
 	// in savegames. The chance is very low that you would get a CRC of 0,
@@ -87,7 +152,7 @@ FRandom::FRandom (const char *name)
 		probe = probe->Next;
 	}
 
-#ifdef _DEBUG
+#ifndef NDEBUG
 	if (probe != NULL)
 	{
 		// Because RNGs are identified by their CRCs in save games,
@@ -100,6 +165,12 @@ FRandom::FRandom (const char *name)
 	Next = probe;
 	*prev = this;
 }
+
+//==========================================================================
+//
+// FRandom - Destructor
+//
+//==========================================================================
 
 FRandom::~FRandom ()
 {
@@ -122,100 +193,99 @@ FRandom::~FRandom ()
 	}
 }
 
-int FRandom::operator() ()
-{
-	return (UpdateSeed (Seed) >> 20) & 255;
-}
-
-int FRandom::operator() (int mod)
-{
-	if (mod <= 256)
-	{ // The mod is small enough, so a byte is enough to get a good number.
-		return (*this)() % mod;
-	}
-	else
-	{ // For mods > 256, construct a 32-bit int and modulo that.
-		int num = (*this)();
-		num = (num << 8) | (*this)();
-		num = (num << 8) | (*this)();
-		num = (num << 8) | (*this)();
-		return (num&0x7fffffff) % mod;
-	}
-}
-
-int FRandom::Random2 ()
-{
-	int t = (*this)();
-	int u = (*this)();
-	return t - u;
-}
-
-int FRandom::Random2 (int mask)
-{
-	int t = (*this)() & mask;
-	int u = (*this)() & mask;
-	return t - u;
-}
-
-int FRandom::HitDice (int count)
-{
-	return (1 + ((UpdateSeed (Seed) >> 20) & 7)) * count;
-}
-
-// Initialize all the seeds
+//==========================================================================
 //
-// This initialization method is critical to maintaining demo sync.
-// Each seed is initialized according to its class. killough
+// FRandom :: StaticClearRandom
 //
+// Initialize every RNGs. RNGs are seeded based on the global seed and their
+// name, so each different RNG can have a different starting value despite
+// being derived from a common global seed.
+//
+//==========================================================================
 
 void FRandom::StaticClearRandom ()
 {
-	const DWORD seed = rngseed*2+1;	// add 3/26/98: add rngseed
-	FRandom *rng = FRandom::RNGList;
-
 	// go through each RNG and set each starting seed differently
-	while (rng != NULL)
+	for (FRandom *rng = FRandom::RNGList; rng != NULL; rng = rng->Next)
 	{
-		// [RH] Use the RNG's name's CRC to modify the original seed.
-		// This way, new RNGs can be added later, and it doesn't matter
-		// which order they get initialized in.
-		rng->Seed = seed * rng->NameCRC;
-		rng = rng->Next;
+		rng->Init(rngseed);
 	}
 }
 
+//==========================================================================
+//
+// FRandom :: Init
+//
+// Initialize a single RNG with a given seed.
+//
+//==========================================================================
+
+void FRandom::Init(DWORD seed)
+{
+	// [RH] Use the RNG's name's CRC to modify the original seed.
+	// This way, new RNGs can be added later, and it doesn't matter
+	// which order they get initialized in.
+	DWORD seeds[2] = { NameCRC, seed };
+	InitByArray(seeds, 2);
+}
+
+//==========================================================================
+//
+// FRandom :: StaticSumSeeds
+//
 // This function produces a DWORD that can be used to check the consistancy
 // of network games between different machines. Only a select few RNGs are
 // used for the sum, because not all RNGs are important to network sync.
-
-extern FRandom pr_spawnmobj;
-extern FRandom pr_acs;
-extern FRandom pr_chase;
-extern FRandom pr_lost;
-extern FRandom pr_slam;
+//
+//==========================================================================
 
 DWORD FRandom::StaticSumSeeds ()
 {
-	return pr_spawnmobj.Seed + pr_acs.Seed + pr_chase.Seed + pr_lost.Seed + pr_slam.Seed;
+	return
+		pr_spawnmobj.sfmt.u[0] + pr_spawnmobj.idx +
+		pr_acs.sfmt.u[0] + pr_acs.idx +
+		pr_chase.sfmt.u[0] + pr_chase.idx +
+		pr_lost.sfmt.u[0] + pr_lost.idx +
+		pr_slam.sfmt.u[0] + pr_slam.idx;
 }
+
+//==========================================================================
+//
+// FRandom :: StaticWriteRNGState
+//
+// Stores the state of every RNG into a savegame.
+//
+//==========================================================================
 
 void FRandom::StaticWriteRNGState (FILE *file)
 {
 	FRandom *rng;
-	const DWORD seed = rngseed*2+1;
 	FPNGChunkArchive arc (file, RAND_ID);
 
 	arc << rngseed;
 
-	// Only write those RNGs that have been used
 	for (rng = FRandom::RNGList; rng != NULL; rng = rng->Next)
 	{
-		if (rng->NameCRC != 0 && rng->Seed != seed + rng->NameCRC)
+		// Only write those RNGs that have names
+		if (rng->NameCRC != 0)
 		{
-			arc << rng->NameCRC << rng->Seed;
+			arc << rng->NameCRC << rng->idx;
+			for (int i = 0; i < SFMT::N32; ++i)
+			{
+				arc << rng->sfmt.u[i];
+			}
 		}
 	}
 }
+
+//==========================================================================
+//
+// FRandom :: StaticReadRNGState
+//
+// Restores the state of every RNG from a savegame. RNGs that were added
+// since the savegame was created are cleared to their initial value.
+//
+//==========================================================================
 
 void FRandom::StaticReadRNGState (PNGHandle *png)
 {
@@ -241,8 +311,22 @@ void FRandom::StaticReadRNGState (PNGHandle *png)
 			{
 				if (rng->NameCRC == crc)
 				{
-					arc << rng->Seed;
+					arc << rng->idx;
+					for (int i = 0; i < SFMT::N32; ++i)
+					{
+						arc << rng->sfmt.u[i];
+					}
 					break;
+				}
+			}
+			if (rng == NULL)
+			{ // The RNG was removed. Skip it.
+				int idx;
+				DWORD sfmt;
+				arc << idx;
+				for (int i = 0; i < SFMT::N32; ++i)
+				{
+					arc << sfmt;
 				}
 			}
 		}
@@ -250,20 +334,23 @@ void FRandom::StaticReadRNGState (PNGHandle *png)
 	}
 }
 
+//==========================================================================
+//
+// FRandom :: StaticFindRNG
+//
 // This function attempts to find an RNG with the given name.
 // If it can't it will create a new one. Duplicate CRCs will
 // be ignored and if it happens map to the same RNG.
 // This is for use by DECORATE.
-extern FRandom pr_exrandom;
-
-static TDeletingArray<FRandom *> NewRNGs;
+//
+//==========================================================================
 
 FRandom *FRandom::StaticFindRNG (const char *name)
 {
 	DWORD NameCRC = CalcCRC32 ((const BYTE *)name, (unsigned int)strlen (name));
 
 	// Use the default RNG if this one happens to have a CRC of 0.
-	if (NameCRC==0) return &pr_exrandom;
+	if (NameCRC == 0) return &pr_exrandom;
 
 	// Find the RNG in the list, sorted by CRC
 	FRandom **prev = &RNGList, *probe = RNGList;
@@ -285,14 +372,23 @@ FRandom *FRandom::StaticFindRNG (const char *name)
 	return probe;
 }
 
-#ifdef _DEBUG
+//==========================================================================
+//
+// FRandom :: StaticPrintSeeds
+//
+// Prints a snapshot of the current RNG states. This is probably wrong.
+//
+//==========================================================================
+
+#ifndef NDEBUG
 void FRandom::StaticPrintSeeds ()
 {
 	FRandom *rng = RNGList;
 
 	while (rng != NULL)
 	{
-		Printf ("%s: %08x\n", rng->Name, rng->Seed);
+		int idx = rng->idx < SFMT::N32 ? rng->idx : 0;
+		Printf ("%s: %08x .. %d\n", rng->Name, rng->sfmt.u[idx], idx);
 		rng = rng->Next;
 	}
 }

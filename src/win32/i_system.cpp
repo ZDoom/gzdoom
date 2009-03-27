@@ -27,6 +27,7 @@
 #include <direct.h>
 #include <string.h>
 #include <process.h>
+#include <time.h>
 
 #include <stdarg.h>
 #include <sys/types.h>
@@ -36,6 +37,7 @@
 #include <windows.h>
 #include <mmsystem.h>
 #include <richedit.h>
+#include <wincrypt.h>
 
 #define USE_WINDOWS_DWORD
 #include "hardware.h"
@@ -564,7 +566,7 @@ void I_PrintStr (const char *cp)
 	int bpos = 0;
 	CHARRANGE selection;
 	CHARRANGE endselection;
-	LONG lines_before, lines_after;
+	LONG lines_before = 0, lines_after;
 	CHARFORMAT format;
 
 	if (edit != NULL)
@@ -876,10 +878,39 @@ FString I_GetSteamPath()
 	return path;
 }
 
-long long QueryPerfCounter()
+// Return a random seed, preferably one with lots of entropy.
+unsigned int I_MakeRNGSeed()
 {
-	LARGE_INTEGER counter;
+	unsigned int seed;
 
-	QueryPerformanceCounter(&counter);
-	return counter.QuadPart;
+	// If RtlGenRandom is available, use that to avoid increasing the
+	// working set by pulling in all of the crytographic API.
+	HMODULE advapi = GetModuleHandle("advapi32.dll");
+	if (advapi != NULL)
+	{
+		BOOLEAN (APIENTRY *RtlGenRandom)(void *, ULONG) =
+			(BOOLEAN (APIENTRY *)(void *, ULONG))GetProcAddress(advapi, "SystemFunction036");
+		if (RtlGenRandom != NULL)
+		{
+			if (RtlGenRandom(&seed, sizeof(seed)))
+			{
+				return seed;
+			}
+		}
+	}
+
+	// Use the full crytographic API to produce a seed. If that fails,
+	// time() is used as a fallback.
+	HCRYPTPROV prov;
+
+	if (!CryptAcquireContext(&prov, NULL, MS_DEF_PROV, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT))
+	{
+		return (unsigned int)time(NULL);
+	}
+	if (!CryptGenRandom(prov, sizeof(seed), (BYTE *)&seed))
+	{
+		seed = (unsigned int)time(NULL);
+	}
+	CryptReleaseContext(prov, 0);
+	return seed;
 }

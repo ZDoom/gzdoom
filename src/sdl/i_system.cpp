@@ -31,6 +31,7 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/stat.h>
+#include <fcntl.h>
 #ifndef NO_GTK
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
@@ -619,3 +620,26 @@ FString I_GetFromClipboard (bool use_primary_selection)
 #endif
 	return "";
 }
+
+// Return a random seed, preferably one with lots of entropy.
+unsigned int I_MakeRNGSeed()
+{
+	unsigned int seed;
+	int file;
+
+	// Try reading from /dev/urandom first, then /dev/random, then
+	// if all else fails, use a crappy seed from time().
+	seed = time(NULL);
+	file = open("/dev/urandom", O_RDONLY);
+	if (file < 0)
+	{
+		file = open("/dev/random", O_RDONLY);
+	}
+	if (file >= 0)
+	{
+		read(file, &seed, sizeof(seed));
+		close(file);
+	}
+	return seed;
+}
+

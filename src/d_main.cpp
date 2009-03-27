@@ -1580,7 +1580,7 @@ void D_DoomMain (void)
 
 	SetLanguageIDs ();
 
-	rngseed = (DWORD)time (NULL);
+	rngseed = I_MakeRNGSeed();
 	FRandom::StaticClearRandom ();
 	M_FindResponseFile ();
 

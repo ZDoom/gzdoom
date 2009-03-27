@@ -636,6 +636,7 @@ add_executable( zdoom WIN32
 	oplsynth/music_opldumper_mididevice.cpp
 	oplsynth/music_opl_mididevice.cpp
 	oplsynth/opl_mus_player.cpp
+	sfmt/SFMT.cpp
 	sound/fmodsound.cpp
 	sound/i_music.cpp
 	sound/i_sound.cpp

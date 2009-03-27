@@ -1,4 +1,8 @@
-﻿March 26, 2009
+﻿March 27, 2009  (Changes by Graf Zahl)
+- Fixed: Reading the RNG states from a savegame calculated the amounts of
+  RNGs in the savegame wrong.
+
+March 26, 2009
 - Changed random seed initialization so that it uses the system's
   cryptographically secure random number generator, if available, instead
   of the current time.

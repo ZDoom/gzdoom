@@ -269,7 +269,6 @@ void FRandom::StaticWriteRNGState (FILE *file)
 		// Only write those RNGs that have names
 		if (rng->NameCRC != 0)
 		{
-			Printf("Writing RNG %s\n", rng->Name);
 			arc << rng->NameCRC << rng->idx;
 			for (int i = 0; i < SFMT::N32; ++i)
 			{
@@ -313,7 +312,6 @@ void FRandom::StaticReadRNGState (PNGHandle *png)
 			{
 				if (rng->NameCRC == crc)
 				{
-					Printf("Reading RNG %s\n", rng->Name);
 					arc << rng->idx;
 					for (int i = 0; i < SFMT::N32; ++i)
 					{

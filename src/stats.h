@@ -130,7 +130,7 @@ inline volatile unsigned long long rdtsc()
 	if (CPU.bRDTSC)
 #endif
 	{
-		register unsigned long long tsc asm("eax");
+		register unsigned volatile long long tsc asm("eax");
 		asm volatile ("\trdtsc\n" : : : "eax", "edx");
 		return tsc;
 	}

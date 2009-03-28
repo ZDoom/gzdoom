@@ -139,9 +139,10 @@ void R_ClearDrawSegs (void)
 // should use it, since smaller arrays fit better in cache.
 //
 
-typedef struct {
+struct cliprange_t
+{
 	short first, last;		// killough
-} cliprange_t;
+};
 
 
 // newend is one past the last valid seg

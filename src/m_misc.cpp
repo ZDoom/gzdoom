@@ -401,7 +401,7 @@ void M_LoadDefaults ()
 //
 
 
-typedef struct
+struct pcx_t
 {
 	char				manufacturer;
 	char				version;
@@ -424,7 +424,7 @@ typedef struct
 	unsigned short		palette_type;
 	
 	char				filler[58];
-} pcx_t;
+};
 
 
 //

@@ -62,14 +62,14 @@ inline FArchive &operator<< (FArchive &arc, psprnum_t &i)
 }
 */
 
-typedef struct pspdef_s
+struct pspdef_t
 {
 	FState*		state;	// a NULL state means not active
 	int 		tics;
 	fixed_t 	sx;
 	fixed_t 	sy;
 
-} pspdef_t;
+};
 
 class FArchive;
 

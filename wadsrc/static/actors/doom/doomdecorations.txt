@@ -781,3 +781,20 @@ ACTOR BrainStem 81
 	}
 }
 
+
+// Grey stalagmite (unused Doom sprite, definition taken from Skulltag -----
+
+ACTOR Stalagmite 5050
+{
+	Game Doom
+	Radius 16
+	Height 48
+	+SOLID
+	States
+	{
+	Spawn:
+		SMT2 A -1
+		Stop
+	}
+}
+

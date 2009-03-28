@@ -130,12 +130,12 @@ unsigned int I_MSTime (void);
 
 // Directory searching routines
 
-typedef struct
+struct findstate_t
 {
     int count;
     struct dirent **namelist;
     int current;
-} findstate_t;
+};
 
 void *I_FindFirst (const char *filespec, findstate_t *fileinfo);
 int I_FindNext (void *handle, findstate_t *fileinfo);

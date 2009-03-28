@@ -123,10 +123,10 @@ typedef enum
 		
 } animenum_t;
 
-typedef struct
+struct yahpt_t
 {
 	int x, y;
-} yahpt_t;
+};
 
 struct lnode_t
 {
@@ -146,7 +146,7 @@ struct lnode_t
 //
 
 #define MAX_ANIMATION_FRAMES 20
-typedef struct
+struct in_anim_t
 {
 	int			type;	// Made an int so I can use '|'
 	int 		period;	// period in tics between animations
@@ -162,7 +162,7 @@ typedef struct
 	
 	char		levelname[9];
 	char		levelname2[9];
-} in_anim_t;
+};
 
 static TArray<lnode_t> lnodes;
 static TArray<in_anim_t> anims;

@@ -460,13 +460,13 @@ void F_TextWrite (void)
 // Casting by id Software.
 //	 in order of appearance
 //
-typedef struct
+struct castinfo_t
 {
 	const char		*name;
 	const char		*type;
 	const AActor	*info;
 	const PClass	*Class;
-} castinfo_t;
+};
 
 castinfo_t castorder[] =
 {

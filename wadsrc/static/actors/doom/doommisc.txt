@@ -69,9 +69,10 @@ ACTOR DoomUnusedStates
 {
 	States
 	{
+	Label1:
 		SMT2 A -1
 		stop
-	Death:
+	Label2:
 		PLAY N -1
 		stop
 		PLAY S -1

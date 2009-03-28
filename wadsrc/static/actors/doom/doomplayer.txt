@@ -44,14 +44,18 @@ ACTOR DoomPlayer : PlayerPawn
 		PLAY G 4 A_Pain
 		Goto Spawn
 	Death:
-		PLAY H 10 A_PlayerSkinCheck("AltSkinDeath")
+		PLAY H 0 A_PlayerSkinCheck("AltSkinDeath")
+	Death1:
+		PLAY H 10
 		PLAY I 10 A_PlayerScream
 		PLAY J 10 A_NoBlocking
 		PLAY KLM 10
 		PLAY N -1
 		Stop
 	XDeath:
-		PLAY O 5 A_PlayerSkinCheck("AltSkinXDeath")
+		PLAY O 0 A_PlayerSkinCheck("AltSkinXDeath")
+	XDeath1:
+		PLAY O 5
 		PLAY P 5 A_XScream
 		PLAY Q 5 A_NoBlocking
 		PLAY RSTUV 5

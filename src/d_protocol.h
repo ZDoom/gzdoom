@@ -64,7 +64,7 @@ struct zdemoheader_s {
 	BYTE	consoleplayer;
 };
 
-struct usercmd_s
+struct usercmd_t
 {
 	DWORD	buttons;
 	short	pitch;			// up/down
@@ -74,7 +74,6 @@ struct usercmd_s
 	short	sidemove;
 	short	upmove;
 };
-typedef struct usercmd_s usercmd_t;
 
 class FArchive;
 

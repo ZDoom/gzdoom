@@ -1,4 +1,20 @@
-﻿March 27, 2009  (Changes by Graf Zahl)
+﻿March 28, 2009  (Changes by Graf Zahl)
+- Fixed: Dehacked string replacement did not check the clusters' finaleflats.
+- Changed the definition of several typedef'd structs so that they are
+  properly named.
+- Limited DEHSUPP lump lookup to search zdoom.pk3 only. It will no longer
+  be possible to load DEHSUPP lumps from user WADs.
+- Brought back the text-based DEHSUPP parser and changed it to be able to 
+  reference states by label. Also changed label names of 
+  DoomUnusedStates and added proper labels to all states that were
+  previously forced to be the first state of an actor so that the old
+  (limited) method could access them. This was done to address the following
+  bug:
+- Fixed: The player's death states calling A_PlayerSkinCheck should not be
+  part of the state set that is accessible by Dehacked. These will produce
+  error messages when mapped to non-players.
+
+March 27, 2009  (Changes by Graf Zahl)
 - Fixed: Reading the RNG states from a savegame calculated the amounts of
   RNGs in the savegame wrong.
 

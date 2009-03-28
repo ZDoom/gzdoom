@@ -116,7 +116,8 @@ typedef enum {
 
 struct GUIDName;
 
-typedef struct menuitem_s {
+struct menuitem_t
+{
 	itemtype		  type;
 	const char		 *label;
 	union {
@@ -159,7 +160,7 @@ typedef struct menuitem_s {
 		int				  highlight;
 		int				  flagmask;
 	} e;
-} menuitem_t;
+};
 
 struct menu_t {
 	const char	   *texttitle;
@@ -190,7 +191,7 @@ struct valueenum_t {
 	const char *name;	// Name on menu
 };
 
-typedef struct
+struct oldmenuitem_t
 {
 	// -1 = no cursor here, 1 = ok, 2 = arrows ok
 	SBYTE		status;
@@ -206,9 +207,9 @@ typedef struct
 	//	 choice=0:leftarrow,1:rightarrow
 	void		(*routine)(int choice);
 	int			textcolor;
-} oldmenuitem_t;
+};
 
-typedef struct oldmenu_s
+struct oldmenu_t
 {
 	short				numitems;		// # of menu items
 	oldmenuitem_t		*menuitems;		// menu items
@@ -216,9 +217,9 @@ typedef struct oldmenu_s
 	short				x;
 	short				y;				// x,y of menu
 	short				lastOn; 		// last item user was on in menu
-} oldmenu_t;
+};
 
-typedef struct
+struct menustack_t
 {
 	union {
 		menu_t *newmenu;
@@ -226,7 +227,7 @@ typedef struct
 	} menu;
 	bool isNewStyle;
 	bool drawSkull;
-} menustack_t;
+};
 
 extern value_t YesNo[2];
 extern value_t NoYes[2];

@@ -200,25 +200,30 @@ CVAR (Color, am_ovthingcolor_item,		0xe88800,	CVAR_ARCHIVE);
 #define CXMTOF(x)  (MTOF((x)-m_x)/* - f_x*/)
 #define CYMTOF(y)  (f_h - MTOF((y)-m_y)/* + f_y*/)
 
-typedef struct {
+struct  fpoint_t
+{
 	int x, y;
-} fpoint_t;
+};
 
-typedef struct {
+struct fline_t
+{
 	fpoint_t a, b;
-} fline_t;
+};
 
-typedef struct {
+struct mpoint_t
+{
 	fixed_t x,y;
-} mpoint_t;
+};
 
-typedef struct {
+struct mline_t
+{
 	mpoint_t a, b;
-} mline_t;
+};
 
-typedef struct {
+struct islope_t
+{
 	fixed_t slp, islp;
-} islope_t;
+};
 
 
 

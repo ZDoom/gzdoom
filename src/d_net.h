@@ -57,7 +57,7 @@
 //
 // Network packet data.
 //
-typedef struct
+struct doomcom_t
 {
 	DWORD	id;				// should be DOOMCOM_ID
 	SWORD	intnum;			// DOOM executes an int to execute commands
@@ -86,7 +86,7 @@ typedef struct
 // packet data to be sent
 	BYTE	data[MAX_MSGLEN];
 	
-} doomcom_t;
+};
 
 
 class FDynamicBuffer

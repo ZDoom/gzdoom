@@ -41,7 +41,7 @@
 //   bits 9-15: reserved
 
 	//40 bytes
-typedef struct
+struct sectortype
 {
 	SWORD wallptr, wallnum;
 	SDWORD ceilingz, floorz;
@@ -54,7 +54,7 @@ typedef struct
 	BYTE floorpal, floorxpanning, floorypanning;
 	BYTE visibility, filler;
 	SWORD lotag, hitag, extra;
-} sectortype;
+};
 
 //cstat:
 //   bit 0: 1 = Blocking wall (use with clipmove, getzrange)         "B"
@@ -70,7 +70,7 @@ typedef struct
 //   bits 10-15: reserved
 
 	//32 bytes
-typedef struct
+struct walltype
 {
 	SDWORD x, y;
 	SWORD point2, nextwall, nextsector, cstat;
@@ -78,7 +78,7 @@ typedef struct
 	SBYTE shade;
 	BYTE pal, xrepeat, yrepeat, xpanning, ypanning;
 	SWORD lotag, hitag, extra;
-} walltype;
+};
 
 //cstat:
 //   bit 0: 1 = Blocking sprite (use with clipmove, getzrange)       "B"
@@ -96,7 +96,7 @@ typedef struct
 //   bit 15: 1 = Invisible sprite, 0 = not invisible
 
 	//44 bytes
-typedef struct
+struct spritetype
 {
 	SDWORD x, y, z;
 	SWORD cstat, picnum;
@@ -107,7 +107,7 @@ typedef struct
 	SWORD sectnum, statnum;
 	SWORD ang, owner, xvel, yvel, zvel;
 	SWORD lotag, hitag, extra;
-} spritetype;
+};
 
 struct SlopeWork
 {

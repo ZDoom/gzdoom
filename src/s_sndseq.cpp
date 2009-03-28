@@ -89,10 +89,11 @@ typedef enum
 	SS_CMD_END
 } sscmds_t;
 
-typedef struct {
+struct hexenseq_t
+{
 	ENamedName	Name;
 	BYTE		Seqs[4];
-} hexenseq_t;
+};
 
 class DSeqActorNode : public DSeqNode
 {

@@ -1,4 +1,11 @@
-﻿March 28, 2009  (Changes by Graf Zahl)
+﻿March 29, 2009  (Changes by Graf Zahl)
+- Fixed: Altering a link type with Sector_SetLink did not work.
+- Fixed: player.crouchsprite had no proper means of unsetting the crouch
+  sprite which is needed by the ChexPlayer.
+- Fixed: A_ChangeFlags must unlink the actor from the world before changing
+  the NOBLOCKMAP and NOSECTOR flags.
+
+March 28, 2009  (Changes by Graf Zahl)
 - Fixed: Dehacked string replacement did not check the clusters' finaleflats.
 - Changed the definition of several typedef'd structs so that they are
   properly named.

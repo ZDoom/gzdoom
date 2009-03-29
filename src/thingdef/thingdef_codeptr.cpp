@@ -2298,16 +2298,23 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ChangeFlag)
 	if (fd != NULL)
 	{
 		bool kill_before, kill_after;
+		INTBOOL item_before, item_after;
 
 		kill_before = self->CountsAsKill();
+		item_before = self->flags & MF_COUNTITEM;
+
 		if (fd->structoffset == -1)
 		{
 			HandleDeprecatedFlags(self, cls->ActorInfo, expression, fd->flagbit);
 		}
 		else
 		{
-			int *flagp = (int*) (((char*)self) + fd->structoffset);
+			DWORD *flagp = (DWORD*) (((char*)self) + fd->structoffset);
 
+			// If these 2 flags get changed we need to update the blockmap and sector links.
+			bool linkchange = flagp == &self->flags && (fd->flagbit == MF_NOBLOCKMAP || fd->flagbit == MF_NOSECTOR);
+
+			if (linkchange) self->UnlinkFromWorld();
 			if (expression)
 			{
 				*flagp |= fd->flagbit;
@@ -2316,8 +2323,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ChangeFlag)
 			{
 				*flagp &= ~fd->flagbit;
 			}
+			if (linkchange) self->LinkToWorld();
 		}
 		kill_after = self->CountsAsKill();
+		item_after = self->flags & MF_COUNTITEM;
 		// Was this monster previously worth a kill but no longer is?
 		// Or vice versa?
 		if (kill_before != kill_after)
@@ -2329,6 +2338,18 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ChangeFlag)
 			else
 			{ // It no longer counts as a kill.
 				level.total_monsters--;
+			}
+		}
+		// same for items
+		if (item_before != item_after)
+		{
+			if (item_after)
+			{ // It counts as an item now.
+				level.total_items++;
+			}
+			else
+			{ // It no longer counts as an item
+				level.total_items--;
 			}
 		}
 	}

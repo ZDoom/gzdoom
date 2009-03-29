@@ -51,6 +51,9 @@ enum
 	LINK_CEILINGMIRROR=10,
 	LINK_BOTHMIRROR=15,
 
+	LINK_FLOORBITS=5,
+	LINK_CEILINGBITS=10,
+
 	LINK_FLAGMASK = 15
 
 };
@@ -236,26 +239,20 @@ void P_StartLinkedSectorInterpolations(TArray<DInterpolation *> &list, sector_t 
 static void AddSingleSector(extsector_t::linked::plane &scrollplane, sector_t *sector, int movetype)
 {
 	// First we have to check the list if the sector is already in it
-	// If so the move type may have to be adjusted or the link to be removed
+	// If so the move type must be adjusted
 
 	for(unsigned i = 0; i < scrollplane.Sectors.Size(); i++)
 	{
 		if (scrollplane.Sectors[i].Sector == sector)
 		{
-			int oldtype = scrollplane.Sectors[i].Type;
-
-			if ((oldtype & (LINK_FLOOR|LINK_FLOORMIRROR)) && 
-				(movetype & (LINK_FLOORMIRROR|LINK_FLOOR)))
+			if (movetype & LINK_FLOORBITS)
 			{
-				// Invalid combination for floor.
-				movetype &= ~(LINK_FLOOR + LINK_FLOORMIRROR);
+				scrollplane.Sectors[i].Type &= ~LINK_FLOORBITS;
 			}
 
-			if ((oldtype & (LINK_CEILING|LINK_CEILINGMIRROR)) && 
-				(movetype == LINK_CEILINGMIRROR || movetype == LINK_CEILING))
+			if (movetype & LINK_CEILINGBITS)
 			{
-				// Invalid combination for CEILING.
-				movetype &= ~(LINK_CEILING + LINK_CEILINGMIRROR);
+				scrollplane.Sectors[i].Type &= ~LINK_CEILINGBITS;
 			}
 
 			scrollplane.Sectors[i].Type |= movetype;

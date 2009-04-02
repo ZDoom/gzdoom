@@ -1,4 +1,9 @@
-﻿March 29, 2009  (Changes by Graf Zahl)
+﻿April 1, 2008
+- Fixed: SBARINFO's "usessecondaryammo" considered a weapon to not use
+  secondaryammo if ammo2's type was the same as ammo1's, but only if you
+  didn't use the "not" keyword with it.
+
+March 29, 2009  (Changes by Graf Zahl)
 - Fixed: Altering a link type with Sector_SetLink did not work.
 - Fixed: player.crouchsprite had no proper means of unsetting the crouch
   sprite which is needed by the ChexPlayer.

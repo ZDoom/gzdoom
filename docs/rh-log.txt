@@ -1,4 +1,6 @@
 ﻿April 2, 2009
+- Fixed: Doom's status bar was lacking its default face.
+- Fixed: Custom skin face graphics were not added to the texture manager.
 - Fixed: UseHealthItems() gave you health equal to the number of items in
   the stack of health items, rather than the item's proper amount.
 

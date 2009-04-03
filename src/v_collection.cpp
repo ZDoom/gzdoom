@@ -63,6 +63,14 @@ void FImageCollection::Add (const char **patchNames, int numPatches, int namespc
 	for (int i = 0; i < numPatches; ++i)
 	{
 		FTextureID picnum = TexMan.CheckForTexture(patchNames[i], namespc);
+		if (!picnum.isValid())
+		{
+			int lumpnum = Wads.CheckNumForName(patchNames[i], namespc);
+			if (lumpnum >= 0)
+			{
+				picnum = TexMan.CreateTexture(lumpnum, namespc);
+			}
+		}
 		ImageMap[OldCount + i] = picnum;
 	}
 }

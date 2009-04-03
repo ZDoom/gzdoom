@@ -1,4 +1,8 @@
-﻿April 1, 2008
+﻿April 2, 2009
+- Fixed: UseHealthItems() gave you health equal to the number of items in
+  the stack of health items, rather than the item's proper amount.
+
+April 1, 2008
 - Fixed: SBARINFO's "usessecondaryammo" considered a weapon to not use
   secondaryammo if ammo2's type was the same as ammo1's, but only if you
   didn't use the "not" keyword with it.

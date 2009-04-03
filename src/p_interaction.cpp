@@ -744,11 +744,11 @@ static int UseHealthItems(TArray<AInventory *> &Items, int &saveHealth)
 			if (Items[i]->health > maxhealth)
 			{
 				index = i;
-				maxhealth = Items[i]->Amount;
+				maxhealth = Items[i]->health;
 			}
 		}
 
-		// Now apply the health items, using the same logic as Heretic anf Hexen.
+		// Now apply the health items, using the same logic as Heretic and Hexen.
 		int count = (saveHealth + maxhealth-1) / maxhealth;
 		for(int i = 0; i < count; i++)
 		{

@@ -105,5 +105,6 @@ struct IWADInfo
 };
 
 extern const IWADInfo IWADInfos[NUM_IWAD_TYPES];
+extern EIWADType gameiwad;
 
 #endif

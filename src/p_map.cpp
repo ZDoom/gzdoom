@@ -834,6 +834,11 @@ bool PIT_CheckThing (AActor *thing, FCheckPosition &tm)
 		{
 			return true;
 		}
+		// Check for rippers passing through corpses
+		if ((thing->flags & MF_CORPSE) && (tm.thing->flags2 & MF2_RIP) && !(thing->flags & MF_SHOOTABLE))
+		{
+			return true;
+		}
 
 		int clipheight;
 		

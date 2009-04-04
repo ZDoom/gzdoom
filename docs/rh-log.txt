@@ -1,4 +1,9 @@
-﻿April 2, 2009
+﻿April 4, 2009  (Changes by Graf Zahl)
+- added 'damage' to the actor variables exported to DECORATE's expression
+  evaluator.
+- fixed: solid corpses could block ripper missile that originally killed them.
+
+April 2, 2009
 - Fixed: Doom's status bar was lacking its default face.
 - Fixed: Custom skin face graphics were not added to the texture manager.
 - Fixed: UseHealthItems() gave you health equal to the number of items in

@@ -33,6 +33,7 @@ ACTOR Actor native //: Thinker
 	native int tid;
 	native int TIDtoHate;
 	native int waterlevel;
+	native int damage;
 	native fixed_t x;
 	native fixed_t y;
 	native fixed_t z;

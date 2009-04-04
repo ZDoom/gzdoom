@@ -72,6 +72,7 @@ DEFINE_MEMBER_VARIABLE(z, AActor)
 DEFINE_MEMBER_VARIABLE(momx, AActor)
 DEFINE_MEMBER_VARIABLE(momy, AActor)
 DEFINE_MEMBER_VARIABLE(momz, AActor)
+DEFINE_MEMBER_VARIABLE(Damage, AActor)
 
 //==========================================================================
 //

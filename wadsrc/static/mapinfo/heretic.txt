@@ -25,6 +25,13 @@ gameinfo
 	backpacktype = "BagOfHolding"
 	statusbar = ""
 	intermissionmusic = "mus_intr"
+	weaponslot = 1, "Staff", "Gauntlets"
+	weaponslot = 2, "GoldWand"
+	weaponslot = 3, "Crossbow"
+	weaponslot = 4, "Blaster"
+	weaponslot = 5, "SkullRod"
+	weaponslot = 6, "PhoenixRod"
+	weaponslot = 7, "Mace"
 }
 
 skill baby

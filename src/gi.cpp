@@ -175,7 +175,26 @@ void FMapInfoParser::ParseGameInfo()
 		FString nextKey = sc.String;
 		sc.MustGetToken('=');
 
-		if(nextKey.CompareNoCase("border") == 0)
+		if (nextKey.CompareNoCase("weaponslot") == 0)
+		{
+			sc.MustGetToken(TK_IntConst);
+			if (sc.Number < 0 || sc.Number >= 10)
+			{
+				sc.ScriptError("Weapon slot index must be in range [0..9].\n");
+			}
+			int i = sc.Number;
+			gameinfo.DefaultWeaponSlots[i].Clear();
+			sc.MustGetToken(',');
+			do
+			{
+				sc.MustGetString();
+				FName val = sc.String;
+				gameinfo.DefaultWeaponSlots[i].Push(val);
+
+			}
+			while (sc.CheckToken(','));
+		}
+		else if(nextKey.CompareNoCase("border") == 0)
 		{
 			if(sc.CheckToken(TK_Identifier))
 			{

@@ -1117,11 +1117,50 @@ void FWeaponSlots::AddExtraWeapons()
 
 //===========================================================================
 //
+// FWeaponSlots :: SetFromGameInfo
+//
+// If neither the player class nor any defined weapon contain a
+// slot assignment, use the game's defaults
+//
+//===========================================================================
+
+void FWeaponSlots::SetFromGameInfo()
+{
+	unsigned int i;
+
+	// Only if all slots are empty
+	for (i = 0; i < NUM_WEAPON_SLOTS; ++i)
+	{
+		if (Slots[i].Size() > 0) return;
+	}
+
+	// Append extra weapons to the slots.
+	for (i = 0; i < NUM_WEAPON_SLOTS; ++i)
+	{
+		for (unsigned j = 0; j < gameinfo.DefaultWeaponSlots[i].Size(); i++)
+		{
+			const PClass *cls = PClass::FindClass(gameinfo.DefaultWeaponSlots[i][j]);
+			if (cls == NULL)
+			{
+				Printf("Unknown weapon class '%s' found in default weapon slot assignments\n",
+					gameinfo.DefaultWeaponSlots[i][j].GetChars());
+			}
+			else
+			{
+				Slots[i].AddWeapon(cls);
+			}
+		}
+	}
+}
+
+//===========================================================================
+//
 // FWeaponSlots :: StandardSetup
 //
 // Setup weapons in this order:
 // 1. Use slots from player class.
 // 2. Add extra weapons that specify their own slots.
+// 3. If all slots are empty, use the settings from the gameinfo (compatibility fallback)
 //
 //===========================================================================
 
@@ -1129,6 +1168,7 @@ void FWeaponSlots::StandardSetup(const PClass *type)
 {
 	SetFromPlayer(type);
 	AddExtraWeapons();
+	SetFromGameInfo();
 }
 
 //===========================================================================

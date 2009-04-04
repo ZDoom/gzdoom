@@ -25,6 +25,13 @@ gameinfo
 	backpacktype = "ZorchPack"
 	statusbar = "sbarinfo/doom.txt"
 	intermissionmusic = "$MUSIC_INTER"
+	weaponslot = 1, "Bootspoon", "SuperBootspork"
+	weaponslot = 2, "MiniZorcher"
+	weaponslot = 3, "LargeZorcher", "SuperLargeZorcher"
+	weaponslot = 4, "RapidZorcher"
+	weaponslot = 5, "ZorchPropulsor"
+	weaponslot = 6, "PhasingZorcher"
+	weaponslot = 7, "LAZDevice"
 }
 
 skill baby

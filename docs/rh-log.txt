@@ -1,4 +1,9 @@
 ﻿April 4, 2009  (Changes by Graf Zahl)
+- fixed: Any player class inheriting directly from PlayerPawn was left with
+  empty weapon slots due to the recent rewrite of the weapon slot assignment
+  code. To handle such classes each game now defines a default weapon slot
+  setting in its gameinfo. This will be used when a player class without any
+  weapon slot settings is used.
 - added 'damage' to the actor variables exported to DECORATE's expression
   evaluator.
 - fixed: solid corpses could block ripper missile that originally killed them.

@@ -25,6 +25,13 @@ gameinfo
 	backpacktype = "Backpack"
 	statusbar = "sbarinfo/doom.txt"
 	intermissionmusic = "$MUSIC_DM2INT"
+	weaponslot = 1, "Fist", "Chainsaw"
+	weaponslot = 2, "Pistol"
+	weaponslot = 3, "Shotgun", "SuperShotgun"
+	weaponslot = 4, "Chaingun"
+	weaponslot = 5, "RocketLauncher"
+	weaponslot = 6, "PlasmaRifle"
+	weaponslot = 7, "BFG9000"
 }
 
 skill baby

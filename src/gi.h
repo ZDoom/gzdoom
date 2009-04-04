@@ -72,6 +72,7 @@ struct gameinfo_t
 	TArray<FName> creditPages;
 	TArray<FName> finalePages;
 	TArray<FName> infoPages;
+	TArray<FName> DefaultWeaponSlots[10];
 
 	FString titleMusic;
 	float titleTime;

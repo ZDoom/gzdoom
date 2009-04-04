@@ -25,6 +25,14 @@ gameinfo
 	backpacktype = "AmmoSatchel"
 	statusbar = ""
 	intermissionmusic = "d_slide"
+	weaponslot = 1, "PunchDagger"
+	weaponslot = 2, "StrifeCrossbow2", "StrifeCrossbow"
+	weaponslot = 3, "AssaultGun"
+	weaponslot = 4, "MiniMissileLauncher"
+	weaponslot = 5, "StrifeGrenadeLauncher2", "StrifeGrenadeLauncher"
+	weaponslot = 6, "FlameThrower"
+	weaponslot = 7, "Mauler2", "Mauler"
+	weaponslot = 8, "Sigil"
 }
 
 skill baby

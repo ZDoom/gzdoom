@@ -73,6 +73,7 @@ struct FWeaponSlots
 	bool LocateWeapon (const PClass *type, int *const slot, int *const index);
 	ESlotDef AddDefaultWeapon (int slot, const PClass *type);
 	void AddExtraWeapons();
+	void SetFromGameInfo();
 	void SetFromPlayer(const PClass *type);
 	void StandardSetup(const PClass *type);
 	void LocalSetup(const PClass *type);

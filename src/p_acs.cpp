@@ -2648,6 +2648,10 @@ int DLevelScript::GetPlayerInput(int playernum, int inputnum)
 
 	if (playernum < 0)
 	{
+		if (activator == NULL)
+		{
+			return 0;
+		}
 		p = activator->player;
 	}
 	else if (playernum >= MAXPLAYERS || !playeringame[playernum])

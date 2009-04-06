@@ -1107,6 +1107,7 @@ struct UDMFParser
 
 		map->Read(ML_TEXTMAP, buffer);
 		sc.OpenMem(Wads.GetLumpFullName(map->lumpnum), buffer, map->Size(ML_TEXTMAP));
+		delete [] buffer;
 		sc.SetCMode(true);
 		if (sc.CheckString("namespace"))
 		{
@@ -1232,7 +1233,6 @@ struct UDMFParser
 
 		// Create the real linedefs and decompress the sidedefs
 		ProcessLineDefs();
-
 	}
 };
 

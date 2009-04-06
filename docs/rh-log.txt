@@ -1,4 +1,7 @@
-﻿April 4, 2009
+﻿April 6, 2009  (Changes by Graf Zahl)
+- Fixed: The UDMF textmap readbuffer was never freed.
+
+April 4, 2009
 - Fixed: GetPlayerInput() died if you tried to get the input of the activator
   and the activator was the world.
 

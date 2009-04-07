@@ -360,7 +360,7 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, int x, int y, DWORD tag, va_l
 			more_p = va_arg (tags, va_list *);
 			va_end (tags);
 #ifdef __GNUC__
-			__va_copy (tags, *more_p);
+			va_copy (tags, *more_p);
 #else
 			tags = *more_p;
 #endif

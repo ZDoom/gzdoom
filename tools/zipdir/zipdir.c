@@ -88,6 +88,10 @@ static unsigned int LittleLong(unsigned int x)
 // Buffer size for central directory search
 #define BUFREADCOMMENT	(0x400)
 
+#ifndef PATH_MAX
+#define PATH_MAX 4096
+#endif
+
 // TYPES -------------------------------------------------------------------
 
 typedef struct file_entry_s

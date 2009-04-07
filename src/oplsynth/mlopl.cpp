@@ -43,7 +43,7 @@
 *		Added modulation wheel (vibrato) support
 */
 
-#include <malloc.h>
+#include <stdlib.h>
 #include <string.h>
 #ifdef _WIN32
 #include <io.h>

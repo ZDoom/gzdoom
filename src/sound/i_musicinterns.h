@@ -14,7 +14,6 @@
 #define FALSE 0
 #define TRUE 1
 #endif
-#include <fmod.h>
 #include "tempfiles.h"
 #include "oplsynth/opl_mus_player.h"
 #include "c_cvars.h"

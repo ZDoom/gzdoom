@@ -32,7 +32,7 @@
 **
 */
 
-#include <malloc.h>
+#include <stdlib.h>
 #include "i_system.h"
 #include "dobject.h"
 

@@ -23,7 +23,7 @@
 
 #include <math.h>
 #include <stdio.h>
-#include <malloc.h>
+#include <stdlib.h>
 
 #include "timidity.h"
 #include "c_cvars.h"

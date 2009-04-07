@@ -5,7 +5,7 @@
 * bot need to work             *
 *******************************/
 
-#include <malloc.h>
+#include <stdlib.h>
 
 #include "doomtype.h"
 #include "doomdef.h"

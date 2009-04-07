@@ -33,7 +33,7 @@
 */
 
 #include <stdio.h>
-#include <malloc.h>
+#include <stdlib.h>
 #include "tempfiles.h"
 
 FTempFileName::FTempFileName (const char *prefix)

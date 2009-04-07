@@ -45,7 +45,7 @@
 //#include <wtsapi32.h>
 #define NOTIFY_FOR_THIS_SESSION 0
 
-#include <malloc.h>
+#include <stdlib.h>
 #ifdef _MSC_VER
 #include <eh.h>
 #include <new.h>

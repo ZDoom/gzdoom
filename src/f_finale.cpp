@@ -25,7 +25,7 @@
 
 #include <ctype.h>
 #include <math.h>
-#include <malloc.h>
+#include <stdlib.h>
 
 #include "i_system.h"
 #include "m_swap.h"

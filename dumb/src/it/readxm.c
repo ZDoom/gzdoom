@@ -24,7 +24,7 @@
 #include "dumb.h"
 #include "internal/it.h"
 
-#include <malloc.h>
+#include <stdlib.h>
 #include <assert.h>
 
 extern short *DUMBCALLBACK dumb_decode_vorbis(int outlen, const void *oggstream, int sizebytes);

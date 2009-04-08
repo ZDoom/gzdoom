@@ -44,7 +44,7 @@ extern HWND Window;
 #define FALSE 0
 #define TRUE 1
 #endif
-#include <stdlib.h>
+#include <malloc.h>
 
 #include "templates.h"
 #include "fmodsound.h"

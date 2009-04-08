@@ -830,15 +830,20 @@ void FBlockThingsIterator::StartBlock(int x, int y)
 
 AActor *FBlockThingsIterator::Next()
 {
-	while (true)
+	for (;;)
 	{
 		while (block != NULL)
 		{
 			AActor *me = block->Me;
+			FBlockNode *mynode = block;
 			int i;
 
 			block = block->NextActor;
 			// Don't recheck things that were already checked
+			if (mynode->NextBlock == NULL && mynode->PrevBlock == &me->BlockNode)
+			{ // This actor doesn't span blocks, so we know it can only ever be checked once.
+				return me;
+			}
 			for (i = (int)CheckArray.Size() - 1; i >= checkindex; --i)
 			{
 				if (CheckArray[i] == me)

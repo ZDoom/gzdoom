@@ -32,7 +32,7 @@ set( MINOR_VERSIONS "50" "49" "48" "47" "46" "45" "44" "43" "42" "41"
 	"27" "26" "25" "24" "23" "22" "21" "20" "21" "19" "18" "17" "16"
 	"15" "14" "13" "12" "11" "10" "09" "08" "07" "06" "05" "04" "03"
 	"02" "01" "00" )
-set( MAJOR_VERSIONS "22" "20" )
+set( MAJOR_VERSIONS "24" "22" "20" )
 set( FMOD_DIR_VERSIONS ${FMOD_DIR_VERSIONS} "../fmod" )
 foreach( majver ${MAJOR_VERSIONS} )
 	foreach( minver ${MINOR_VERSIONS} )
@@ -301,7 +301,10 @@ endif( NOT NO_ASM )
 # Set up flags for GCC
 
 if( CMAKE_COMPILER_IS_GNUCXX )
-	set( REL_CXX_FLAGS "-fno-rtti -fomit-frame-pointer" )
+	set( REL_CXX_FLAGS "-fno-rtti" )
+	if( NOT PROFILE )
+		set( REL_CXX_FLAGS "${REL_CXX_FLAGS} -fomit-frame-pointer" )
+	endif( NOT PROFILE )
 	set( CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} ${REL_CXX_FLAGS}" )
 	set( CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS_MINSIZEREL} ${REL_CXX_FLAGS}" )
 	set( CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} ${REL_CXX_FLAGS}" )

@@ -6,8 +6,12 @@ IF( NOT CMAKE_BUILD_TYPE )
 		FORCE )
 ENDIF( NOT CMAKE_BUILD_TYPE )
 
-set( ZDOOM_OUTPUT_DIR ${CMAKE_BINARY_DIR} CACHE PATH "Directory where zdoom.pk3 and the executable will be created" )
-set( ZDOOM_EXE_NAME "zdoom" CACHE FILEPATH "Name of the executable to create" )
+set( ZDOOM_OUTPUT_DIR ${CMAKE_BINARY_DIR} CACHE PATH "Directory where zdoom.pk3 and the executable will be created." )
+set( ZDOOM_EXE_NAME "zdoom" CACHE FILEPATH "Name of the executable to create." )
+
+if( CMAKE_COMPILER_IS_GNUCXX )
+	set( PROFILE CACHE 0 BOOL "Enable profiling with gprof for Debug and RelWithDebInfo build types." )
+endif( CMAKE_COMPILER_IS_GNUCXX )
 
 find_package( JPEG )
 find_package( ZLIB )
@@ -59,6 +63,13 @@ set( CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS_MINSIZEREL} ${REL_C_FLAGS}" )
 set( CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} ${REL_C_FLAGS}" )
 set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${DEB_C_FLAGS} -D_DEBUG" )
 
+if( CMAKE_COMPILER_IS_GNUCXX AND PROFILE )
+	set( CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -pg" )
+	set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -pg" )
+	set( CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO} -pg" )
+	set( CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -pg" )
+endif( CMAKE_COMPILER_IS_GNUCXX AND PROFILE )
+	
 if( ZLIB_FOUND )
 	message( STATUS "Using system zlib" )
 else( ZLIB_FOUND )

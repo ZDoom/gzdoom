@@ -33,7 +33,11 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#ifndef __FreeBSD__
 #include <malloc.h>
+#else
+#include <stdlib.h>
+#endif
 #include "i_musicinterns.h"
 #include "templates.h"
 #include "doomdef.h"

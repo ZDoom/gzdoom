@@ -4,6 +4,7 @@ if( COMMAND cmake_policy )
 	cmake_policy( SET CMP0003 NEW )
 endif( COMMAND cmake_policy )
 
+include( CheckCXXSourceCompiles )
 include( CheckFunctionExists )
 include( FindPkgConfig )
 
@@ -151,23 +152,6 @@ else( WIN32 )
 		include_directories( ${FPU_CONTROL_DIR} )
 		add_definitions( -DHAVE_FPU_CONTROL )
 	endif( FPU_CONTROL_DIR )
-
-	include( CheckCXXSourceCompiles )
-	CHECK_CXX_SOURCE_COMPILES(
-		"#include <stdarg.h>
-		int main() { va_list list1, list2; va_copy(list1, list2); return 0; }"
-		HAS_VA_COPY )
-	if( NOT HAS_VA_COPY )
-		CHECK_CXX_SOURCE_COMPILES(
-			"#include <stdarg.h>
-			int main() { va_list list1, list2; __va_copy(list1, list2); return 0; }"
-			HAS___VA_COPY )
-		if( HAS___VA_COPY )
-			add_definitions( -Dva_copy=__va_copy )
-		else( HAS___VA_COPY )
-			message( SEND_ERROR "Compiler does not support va_copy or __va_copy" )
-		endif( HAS___VA_COPY )
-	endif( NOT HAS_VA_COPY )
 endif( WIN32 )
 
 # Decide on the name of the FMOD library we want to use.
@@ -368,6 +352,22 @@ if( UNIX )
 		set( ZDOOM_LIBS ${ZDOOM_LIBS} rt )
 	endif( NOT CLOCK_GETTIME_IN_RT )
 endif( UNIX )
+
+CHECK_CXX_SOURCE_COMPILES(
+	"#include <stdarg.h>
+	int main() { va_list list1, list2; va_copy(list1, list2); return 0; }"
+	HAS_VA_COPY )
+if( NOT HAS_VA_COPY )
+	CHECK_CXX_SOURCE_COMPILES(
+		"#include <stdarg.h>
+		int main() { va_list list1, list2; __va_copy(list1, list2); return 0; }"
+		HAS___VA_COPY )
+	if( HAS___VA_COPY )
+		add_definitions( -Dva_copy=__va_copy )
+	else( HAS___VA_COPY )
+		add_definitions( -DNO_VA_COPY )
+	endif( HAS___VA_COPY )
+endif( NOT HAS_VA_COPY )
 
 # Update svnrevision.h
 

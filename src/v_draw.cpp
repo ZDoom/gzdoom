@@ -300,12 +300,14 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, int x, int y, DWORD tag, va_l
 
 	if (img == NULL || img->UseType == FTexture::TEX_Null)
 	{
+		va_end(tags);
 		return false;
 	}
 
 	// Do some sanity checks on the coordinates.
 	if (x < -16383 || x > 16383 || y < -16383 || y > 16383)
 	{
+		va_end(tags);
 		return false;
 	}
 
@@ -359,7 +361,7 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, int x, int y, DWORD tag, va_l
 		case TAG_MORE:
 			more_p = va_arg (tags, va_list *);
 			va_end (tags);
-#ifdef __GNUC__
+#ifndef NO_VA_COPY
 			va_copy (tags, *more_p);
 #else
 			tags = *more_p;

@@ -894,7 +894,7 @@ static int PatchThing (int thingy)
 		// don't specify a new height.
 		if (info->flags & MF_SPAWNCEILING &&
 			!hadHeight &&
-			thingy <= OrgHeights.Size() && thingy > 0)
+			thingy <= (int)OrgHeights.Size() && thingy > 0)
 		{
 			info->height = OrgHeights[thingy - 1] * FRACUNIT;
 			info->projectilepassheight = 0;
@@ -1069,7 +1069,7 @@ static int PatchFrame (int frameNum)
 		{
 			unsigned int i;
 
-			if (val < OrgSprNames.Size())
+			if (val < (int)OrgSprNames.Size())
 			{
 				for (i = 0; i < sprites.Size(); i++)
 				{

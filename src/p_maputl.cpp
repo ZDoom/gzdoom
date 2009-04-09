@@ -854,7 +854,7 @@ AActor *FBlockThingsIterator::Next()
 			}
 			if (i < 0)
 			{ // Add me to the hash table and return me.
-				if (NumFixedHash < countof(FixedHash))
+				if (NumFixedHash < (int)countof(FixedHash))
 				{
 					entry = &FixedHash[NumFixedHash];
 					entry->Next = Buckets[hash];

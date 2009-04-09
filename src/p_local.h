@@ -274,7 +274,7 @@ class FBlockThingsIterator
 	int NumFixedHash;
 	TArray<HashEntry> DynHash;
 
-	HashEntry *GetHashEntry(int i) { return i < countof(FixedHash) ? &FixedHash[i] : &DynHash[i - countof(FixedHash)]; }
+	HashEntry *GetHashEntry(int i) { return i < (int)countof(FixedHash) ? &FixedHash[i] : &DynHash[i - countof(FixedHash)]; }
 
 	void StartBlock(int x, int y);
 	void SwitchBlock(int x, int y);

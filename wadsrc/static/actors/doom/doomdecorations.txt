@@ -741,6 +741,8 @@ ACTOR ColonGibs 79
 	SpawnID 147
 	Radius 20
 	Height 4
+	+NOBLOCKMAP
+	+MOVEWITHSECTOR
 	States
 	{
 	Spawn:
@@ -757,6 +759,8 @@ ACTOR SmallBloodPool 80
 	SpawnID 148
 	Radius 20
 	Height 1
+	+NOBLOCKMAP
+	+MOVEWITHSECTOR
 	States
 	{
 	Spawn:
@@ -773,6 +777,8 @@ ACTOR BrainStem 81
 	SpawnID 150
 	Radius 20
 	Height 4
+	+NOBLOCKMAP
+	+MOVEWITHSECTOR
 	States
 	{
 	Spawn:

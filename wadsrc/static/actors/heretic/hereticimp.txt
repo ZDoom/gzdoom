@@ -101,6 +101,8 @@ ACTOR HereticImpChunk1
 {
 	Mass 5
 	Radius 4
+	+NOBLOCKMAP
+	+MOVEWITHSECTOR
 	States
 	{
 	Spawn:
@@ -116,6 +118,8 @@ ACTOR HereticImpChunk2
 {
 	Mass 5
 	Radius 4
+	+NOBLOCKMAP
+	+MOVEWITHSECTOR
 	States
 	{
 	Spawn:

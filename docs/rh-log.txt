@@ -1,4 +1,10 @@
-﻿April 8, 2009
+﻿April 9, 2009  (Changes by Graf Zahl)
+- Added NOBLOCKMAP/MOVEWITHSECTOR combination to a few items that had their
+  NOBLOCKMAP flag taken away previously to make them move with a sector.
+  This should fix the performance problem Claustrophobia had with recent
+  ZDoom versions.
+
+April 8, 2009
 - Added MF5_MOVEWITHSECTOR flag, so you can have the benefits of MF_NOBLOCKMAP
   but still have actors that will move up and down with the floor. IceChunk
   now uses both of these flags.

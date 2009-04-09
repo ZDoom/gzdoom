@@ -1,7 +1,8 @@
 ﻿April 8, 2009
 - Performance optimization for FBlockThingsIterator::Next(): Actors that
   exist in only one block don't need to be added to the CheckArray or
-  scanned for in it.
+  scanned for in it. Also changed the array used to keep track of visited
+  actors into a hash table.
 
 April 7, 2009  (Changes by Graf Zahl)
 - added some default definitions for constants that may miss in some headers.

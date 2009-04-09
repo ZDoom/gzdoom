@@ -256,32 +256,39 @@ public:
 
 class FBlockThingsIterator
 {
-	static TArray<AActor *> CheckArray;
-
 	int minx, maxx;
 	int miny, maxy;
 
 	int curx, cury;
 
-	bool dontfreecheck;
-	int checkindex;
-
 	FBlockNode *block;
 
-	void StartBlock(int x, int y);
+	int Buckets[32];
 
-	// The following 3 functions are only for use in the path traverser 
+	struct HashEntry
+	{
+		AActor *Actor;
+		int Next;
+	};
+	HashEntry FixedHash[10];
+	int NumFixedHash;
+	TArray<HashEntry> DynHash;
+
+	HashEntry *GetHashEntry(int i) { return i < countof(FixedHash) ? &FixedHash[i] : &DynHash[i - countof(FixedHash)]; }
+
+	void StartBlock(int x, int y);
+	void SwitchBlock(int x, int y);
+	void ClearHash();
+
+	// The following is only for use in the path traverser 
 	// and therefore declared private.
-	static int GetCheckIndex();
-	static void SetCheckIndex(int newvalue);
-	FBlockThingsIterator(int x, int y, int checkindex);
+	FBlockThingsIterator();
 
 	friend class FPathTraverse;
 
 public:
 	FBlockThingsIterator(int minx, int miny, int maxx, int maxy);
 	FBlockThingsIterator(const FBoundingBox &box);
-	~FBlockThingsIterator();
 	AActor *Next();
 	void Reset() { StartBlock(minx, miny); }
 };
@@ -297,7 +304,7 @@ class FPathTraverse
 	unsigned int count;
 
 	void AddLineIntercepts(int bx, int by);
-	void AddThingIntercepts(int bx, int by, int checkindex);
+	void AddThingIntercepts(int bx, int by, FBlockThingsIterator &it);
 public:
 
 	intercept_t *Next();

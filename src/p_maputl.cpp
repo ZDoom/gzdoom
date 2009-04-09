@@ -737,68 +737,52 @@ line_t *FBlockLinesIterator::Next()
 
 //===========================================================================
 //
-// FBlockThingsIterator :: CheckArray
-//
-//===========================================================================
-
-TArray<AActor *> FBlockThingsIterator::CheckArray(32);
-
-int FBlockThingsIterator::GetCheckIndex()
-{
-	return CheckArray.Size();
-}
-
-void FBlockThingsIterator::SetCheckIndex(int newvalue)
-{
-	CheckArray.Resize(newvalue);
-}
-
-//===========================================================================
-//
 // FBlockThingsIterator :: FBlockThingsIterator
 //
 //===========================================================================
 
-FBlockThingsIterator::FBlockThingsIterator(int x, int y, int check)
+FBlockThingsIterator::FBlockThingsIterator()
+: DynHash(0)
 {
-	checkindex = check;
-	dontfreecheck = true;
-	minx = maxx = x;
-	miny = maxy = y;
-	Reset();
+	minx = maxx = 0;
+	miny = maxy = 0;
+	ClearHash();
+	block = NULL;
 }
 
 FBlockThingsIterator::FBlockThingsIterator(int _minx, int _miny, int _maxx, int _maxy)
+: DynHash(0)
 {
-	checkindex = CheckArray.Size();
-	dontfreecheck = false;
 	minx = _minx;
 	maxx = _maxx;
 	miny = _miny;
 	maxy = _maxy;
+	ClearHash();
 	Reset();
 }
 
 FBlockThingsIterator::FBlockThingsIterator(const FBoundingBox &box)
+: DynHash(0)
 {
-	checkindex = CheckArray.Size();
-	dontfreecheck = false;
 	maxy = (box.Top() - bmaporgy) >> MAPBLOCKSHIFT;
 	miny = (box.Bottom() - bmaporgy) >> MAPBLOCKSHIFT;
 	maxx = (box.Right() - bmaporgx) >> MAPBLOCKSHIFT;
 	minx = (box.Left() - bmaporgx) >> MAPBLOCKSHIFT;
+	ClearHash();
 	Reset();
 }
 
 //===========================================================================
 //
-// FBlockThingsIterator :: FreeCheckArray
+// FBlockThingsIterator :: ClearHash
 //
 //===========================================================================
 
-FBlockThingsIterator::~FBlockThingsIterator()
+void FBlockThingsIterator::ClearHash()
 {
-	if (!dontfreecheck) CheckArray.Resize(checkindex);
+	clearbuf(Buckets, countof(Buckets), -1);
+	NumFixedHash = 0;
+	DynHash.Clear();
 }
 
 //===========================================================================
@@ -824,6 +808,19 @@ void FBlockThingsIterator::StartBlock(int x, int y)
 
 //===========================================================================
 //
+// FBlockThingsIterator :: SwitchBlock
+//
+//===========================================================================
+
+void FBlockThingsIterator::SwitchBlock(int x, int y)
+{
+	minx = maxx = x;
+	miny = maxy = y;
+	StartBlock(x, y);
+}
+
+//===========================================================================
+//
 // FBlockThingsIterator :: Next
 //
 //===========================================================================
@@ -836,6 +833,7 @@ AActor *FBlockThingsIterator::Next()
 		{
 			AActor *me = block->Me;
 			FBlockNode *mynode = block;
+			HashEntry *entry;
 			int i;
 
 			block = block->NextActor;
@@ -844,16 +842,36 @@ AActor *FBlockThingsIterator::Next()
 			{ // This actor doesn't span blocks, so we know it can only ever be checked once.
 				return me;
 			}
-			for (i = (int)CheckArray.Size() - 1; i >= checkindex; --i)
+			size_t hash = ((size_t)me >> 3) % countof(Buckets);
+			for (i = Buckets[hash]; i >= 0; )
 			{
-				if (CheckArray[i] == me)
-				{
+				entry = GetHashEntry(i);
+				if (entry->Actor == me)
+				{ // I've already been checked. Skip to the next actor.
 					break;
 				}
+				i = entry->Next;
 			}
-			if (i < checkindex)
-			{
-				CheckArray.Push (me);
+			if (i < 0)
+			{ // Add me to the hash table and return me.
+				if (NumFixedHash < countof(FixedHash))
+				{
+					entry = &FixedHash[NumFixedHash];
+					entry->Next = Buckets[hash];
+					Buckets[hash] = NumFixedHash++;
+				}
+				else
+				{
+					if (DynHash.Size() == 0)
+					{
+						DynHash.Grow(50);
+					}
+					i = DynHash.Reserve(1);
+					entry = &DynHash[i];
+					entry->Next = Buckets[hash];
+					Buckets[hash] = i + countof(FixedHash);
+				}
+				entry->Actor = me;
 				return me;
 			}
 		}
@@ -941,11 +959,11 @@ void FPathTraverse::AddLineIntercepts(int bx, int by)
 //
 //===========================================================================
 
-void FPathTraverse::AddThingIntercepts (int bx, int by, int checkindex)
+void FPathTraverse::AddThingIntercepts (int bx, int by, FBlockThingsIterator &it)
 {
-	FBlockThingsIterator it(bx, by, checkindex);
 	AActor *thing;
 
+	it.SwitchBlock(bx, by);
 	while ((thing = it.Next()))
 	{
 		int numfronts = 0;
@@ -1180,7 +1198,7 @@ FPathTraverse::FPathTraverse (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, in
 	mapy = yt1;
 		
 	// we want to use one list of checked actors for the entire operation
-	int BTI_CheckIndex = FBlockThingsIterator::GetCheckIndex();
+	FBlockThingsIterator btit;
 	for (count = 0 ; count < 100 ; count++)
 	{
 		if (flags & PT_ADDLINES)
@@ -1190,7 +1208,7 @@ FPathTraverse::FPathTraverse (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, in
 		
 		if (flags & PT_ADDTHINGS)
 		{
-			AddThingIntercepts(mapx, mapy, BTI_CheckIndex);
+			AddThingIntercepts(mapx, mapy, btit);
 		}
 				
 		if (mapx == xt2 && mapy == yt2)
@@ -1228,8 +1246,8 @@ FPathTraverse::FPathTraverse (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, in
 			
 			if (flags & PT_ADDTHINGS)
 			{
-				AddThingIntercepts(mapx + mapxstep, mapy, BTI_CheckIndex);
-				AddThingIntercepts(mapx, mapy + mapystep, BTI_CheckIndex);
+				AddThingIntercepts(mapx + mapxstep, mapy, btit);
+				AddThingIntercepts(mapx, mapy + mapystep, btit);
 			}
 			xintercept += xstep;
 			yintercept += ystep;
@@ -1238,7 +1256,6 @@ FPathTraverse::FPathTraverse (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, in
 			break;
 		}
 	}
-	FBlockThingsIterator::SetCheckIndex(BTI_CheckIndex);
 	maxfrac = FRACUNIT;
 }
 

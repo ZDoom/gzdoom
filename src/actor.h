@@ -307,6 +307,7 @@ enum
 	MF5_CANTSEEK		= 0x10000000,	// seeker missiles cannot home in on this actor
 	MF5_INCONVERSATION	= 0x20000000,	// Actor is having a conversation
 	MF5_PAINLESS		= 0x40000000,	// Actor always inflicts painless damage.
+	MF5_MOVEWITHSECTOR	= 0x80000000,	// P_ChangeSector() will still process this actor if it has MF_NOBLOCKMAP
 
 
 // --- mobj.renderflags ---

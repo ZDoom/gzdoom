@@ -208,6 +208,7 @@ static FFlagDef ActorFlags[]=
 	DEFINE_FLAG(MF5, BRIGHT, AActor, flags5),
 	DEFINE_FLAG(MF5, CANTSEEK, AActor, flags5),
 	DEFINE_FLAG(MF5, PAINLESS, AActor, flags5),
+	DEFINE_FLAG(MF5, MOVEWITHSECTOR, AActor, flags5),
 
 	// Effect flags
 	DEFINE_FLAG(FX, VISIBILITYPULSE, AActor, effects),

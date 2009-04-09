@@ -4647,7 +4647,7 @@ bool P_ChangeSector (sector_t *sector, int crunch, int amt, int floorOrCeil, boo
 
 
 	// [RH] Use different functions for the four different types of sector
-	// movement. Also update the soundorg's z-coordinate for 3D sound.
+	// movement.
 	switch (floorOrCeil)
 	{
 	case 0:
@@ -4694,7 +4694,8 @@ bool P_ChangeSector (sector_t *sector, int crunch, int amt, int floorOrCeil, boo
 			if (!n->visited)								// unprocessed thing found
 			{
 				n->visited = true; 							// mark thing as processed
-				if (!(n->m_thing->flags & MF_NOBLOCKMAP))	//jff 4/7/98 don't do these
+				if (!(n->m_thing->flags & MF_NOBLOCKMAP) ||	//jff 4/7/98 don't do these
+					(n->m_thing->flags5 & MF5_MOVEWITHSECTOR))
 				{
 					iterator (n->m_thing, &cpos);		 			// process it
 					if (iterator2 != NULL) iterator2 (n->m_thing, &cpos);

@@ -1,4 +1,7 @@
 ﻿April 8, 2009
+- Added MF5_MOVEWITHSECTOR flag, so you can have the benefits of MF_NOBLOCKMAP
+  but still have actors that will move up and down with the floor. IceChunk
+  now uses both of these flags.
 - Performance optimization for FBlockThingsIterator::Next(): Actors that
   exist in only one block don't need to be added to the CheckArray or
   scanned for in it. Also changed the array used to keep track of visited

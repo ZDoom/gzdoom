@@ -16,6 +16,8 @@ ACTOR IceChunk
 	+CANNOTPUSH
 	+FLOORCLIP
 	+NOTELEPORT
+	+NOBLOCKMAP
+	+MOVEWITHSECTOR
 
 	action native A_IceSetTics ();
 

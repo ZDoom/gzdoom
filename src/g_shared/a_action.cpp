@@ -294,9 +294,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_FreezeDeathChunks)
 	{
 		CALL_ACTION(A_BossDeath, self);
 	}
-   CALL_ACTION(A_NoBlocking, self);
+	CALL_ACTION(A_NoBlocking, self);
 
-	self->Destroy ();
+	self->SetState(self->FindState(NAME_Null));
 }
 
 //----------------------------------------------------------------------------

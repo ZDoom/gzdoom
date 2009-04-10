@@ -1,4 +1,7 @@
 ﻿April 9, 2009
+- Changed A_FreezeDeathChunks() so that instead of directly destroying an
+  actor, it sets it to the "Null" state, which will make it invisible and
+  destroy it one tic later.
 - Added a NULL pointer check to A_Fire() and copied the target to a local
   variable inside A_VileAttack() so that if P_DamageMobj() destroys the
   target, the function will still have a valid pointer to it (since reading

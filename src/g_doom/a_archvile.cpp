@@ -55,7 +55,7 @@ void A_Fire(AActor *self, int height)
 	angle_t an;
 				
 	dest = self->tracer;
-	if (!dest)
+	if (dest == NULL || self->target == NULL)
 		return;
 				
 	// don't move it if the vile lost sight
@@ -103,33 +103,33 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_VileTarget)
 //
 DEFINE_ACTION_FUNCTION(AActor, A_VileAttack)
 {		
-	AActor *fire;
+	AActor *fire, *target;
 	int an;
 		
-	if (!self->target)
+	if (NULL == (target = self->target))
 		return;
 	
 	A_FaceTarget (self);
 
-	if (!P_CheckSight (self, self->target, 0) )
+	if (!P_CheckSight (self, target, 0) )
 		return;
 
 	S_Sound (self, CHAN_WEAPON, "vile/stop", 1, ATTN_NORM);
-	P_DamageMobj (self->target, self, self, 20, NAME_None);
-	P_TraceBleed (20, self->target);
-	self->target->momz = 1000 * FRACUNIT / self->target->Mass;
+	P_TraceBleed (20, target);
+	P_DamageMobj (target, self, self, 20, NAME_None);
+	target->momz = 1000 * FRACUNIT / target->Mass;
 		
 	an = self->angle >> ANGLETOFINESHIFT;
 
 	fire = self->tracer;
 
-	if (!fire)
-		return;
-				
-	// move the fire between the vile and the player
-	fire->SetOrigin (self->target->x - FixedMul (24*FRACUNIT, finecosine[an]),
-					 self->target->y - FixedMul (24*FRACUNIT, finesine[an]),
-					 self->target->z);
-	
-	P_RadiusAttack (fire, self, 70, 70, NAME_Fire, false);
+	if (fire != NULL)
+	{
+		// move the fire between the vile and the player
+		fire->SetOrigin (target->x - FixedMul (24*FRACUNIT, finecosine[an]),
+						 target->y - FixedMul (24*FRACUNIT, finesine[an]),
+						 target->z);
+		
+		P_RadiusAttack (fire, self, 70, 70, NAME_Fire, false);
+	}
 }

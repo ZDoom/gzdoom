@@ -1,4 +1,11 @@
-﻿April 9, 2009  (Changes by Graf Zahl)
+﻿April 9, 2009
+- Added a NULL pointer check to A_Fire() and copied the target to a local
+  variable inside A_VileAttack() so that if P_DamageMobj() destroys the
+  target, the function will still have a valid pointer to it (since reading
+  it from the actor's instance data invokes the read barrier, which would
+  return NULL).
+
+April 9, 2009  (Changes by Graf Zahl)
 - Added NOBLOCKMAP/MOVEWITHSECTOR combination to a few items that had their
   NOBLOCKMAP flag taken away previously to make them move with a sector.
   This should fix the performance problem Claustrophobia had with recent

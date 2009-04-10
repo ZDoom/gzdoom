@@ -1,4 +1,10 @@
-﻿April 9, 2009
+﻿April 10, 2009  (Changes by Graf Zahl)
+- Extended MF5_MOVEWITHSECTOR so that it always keeps the actor on the ground
+  of a moving floor, regardless of movement speed. For NOBLOCKMAP items this
+  is necessary because otherwise they can be left in the air and it also adds 
+  some options for other things.
+
+April 9, 2009
 - Changed A_FreezeDeathChunks() so that instead of directly destroying an
   actor, it sets it to the "Null" state, which will make it invisible and
   destroy it one tic later.

@@ -268,7 +268,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 		dc_texturemid = MIN (frontsector->GetPlaneTexZ(sector_t::ceiling), backsector->GetPlaneTexZ(sector_t::ceiling));
 	}
 
-	{ // encapsilate the lifetime of rowoffset
+	{ // encapsulate the lifetime of rowoffset
 		fixed_t rowoffset = curline->sidedef->GetTextureYOffset(side_t::mid);
 		if (tex->bWorldPanning)
 		{
@@ -1629,8 +1629,15 @@ void R_StoreWallRange (int start, int stop)
 
 				lwal = (fixed_t *)(openings + ds_p->maskedtexturecol);
 				swal = (fixed_t *)(openings + ds_p->swall);
-				int scaley = TexMan(sidedef->GetTexture(side_t::mid))->yScale;
+				FTexture *pic = TexMan(sidedef->GetTexture(side_t::mid));
+				int scaley = pic->yScale;
 				int xoffset = sidedef->GetTextureXOffset(side_t::mid);
+
+				if (pic->bWorldPanning)
+				{
+					xoffset = MulScale16 (xoffset, pic->xScale);
+				}
+
 				for (i = start; i < stop; i++)
 				{
 					*lwal++ = lwall[i] + xoffset;

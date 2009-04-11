@@ -1,4 +1,7 @@
-﻿April 10, 2009  (Changes by Graf Zahl)
+﻿April 10, 2009
+- Fixed: World panning was ignored for the X offset of masked midtextures.
+
+April 10, 2009  (Changes by Graf Zahl)
 - Extended MF5_MOVEWITHSECTOR so that it always keeps the actor on the ground
   of a moving floor, regardless of movement speed. For NOBLOCKMAP items this
   is necessary because otherwise they can be left in the air and it also adds 

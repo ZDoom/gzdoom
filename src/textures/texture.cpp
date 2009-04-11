@@ -108,7 +108,9 @@ FTexture * FTexture::CreateTexture (int lumpnum, int usetype)
 					int w = tex->GetWidth();
 					int h = tex->GetHeight();
 
-					// Auto-scale flats with dimensions 128x128 and 256x256
+					// Auto-scale flats with dimensions 128x128 and 256x256.
+					// In hindsight, a bad idea, but RandomLag made it sound better than it really is.
+					// Now we're stuck with this stupid behaviour.
 					if (w==128 && h==128) 
 					{
 						tex->xScale = tex->yScale = 2*FRACUNIT;

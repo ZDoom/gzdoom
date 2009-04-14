@@ -238,19 +238,48 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BasicAttack)
 
 //==========================================================================
 //
-// Custom sound functions. These use misc1 and misc2 in the state structure
-// This has been changed to use the parameter array instead of using the
-// misc field directly so they can be used in weapon states
+// Custom sound functions. 
 //
 //==========================================================================
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_PlaySound)
 {
-	ACTION_PARAM_START(1);
+	ACTION_PARAM_START(5);
 	ACTION_PARAM_SOUND(soundid, 0);
+	ACTION_PARAM_INT(channel, 1);
+	ACTION_PARAM_FLOAT(volume, 2);
+	ACTION_PARAM_BOOL(looping, 3);
+	ACTION_PARAM_FLOAT(attenuation, 4);
 
-	S_Sound (self, CHAN_BODY, soundid, 1, ATTN_NORM);
+	if (!looping)
+	{
+		S_Sound (self, channel, soundid, volume, attenuation);
+	}
+	else
+	{
+		if (!S_IsActorPlayingSomething (self, channel&7, soundid))
+		{
+			S_Sound (self, channel | CHAN_LOOP, soundid, volume, attenuation);
+		}
+	}
 }
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_StopSound)
+{
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_INT(slot, 0);
+
+	S_StopSound(self, slot);
+}
+
+//==========================================================================
+//
+// These come from a time when DECORATE constants did not exist yet and
+// the sound interface was less flexible. As a result the parameters are
+// not optimal and these functions have been deprecated in favor of extending
+// A_PlaySound and A_StopSound.
+//
+//==========================================================================
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_PlayWeaponSound)
 {
@@ -258,11 +287,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_PlayWeaponSound)
 	ACTION_PARAM_SOUND(soundid, 0);
 
 	S_Sound (self, CHAN_WEAPON, soundid, 1, ATTN_NORM);
-}
-
-DEFINE_ACTION_FUNCTION(AActor, A_StopSound)
-{
-	S_StopSound(self, CHAN_VOICE);
 }
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_PlaySoundEx)

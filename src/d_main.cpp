@@ -1605,7 +1605,7 @@ void D_DoomMain (void)
 
 	GameConfig->DoGameSetup (GameNames[gameinfo.gametype]);
 
-	if (!(gameinfo.flags & GI_SHAREWARE))
+	if (!(gameinfo.flags & GI_SHAREWARE) && !Args->CheckParm("-noautoload"))
 	{
 		FString file;
 

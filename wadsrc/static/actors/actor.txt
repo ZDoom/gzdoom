@@ -160,11 +160,11 @@ ACTOR Actor native //: Thinker
 	action native A_MeleeAttack();
 	action native A_ComboAttack();
 	action native A_BulletAttack();
-	action native A_PlaySound(sound whattoplay);
+	action native A_PlaySound(sound whattoplay, int slot = CHAN_BODY, float volume = 1.0, bool looping = false, float attenuation = ATTN_NORM);
 	action native A_PlayWeaponSound(sound whattoplay);
 	action native A_FLoopActiveSound();
 	action native A_LoopActiveSound();
-	action native A_StopSound();
+	action native A_StopSound(int slot = CHAN_VOICE);	// Bad default but that's what is originally was...
 	action native A_PlaySoundEx(sound whattoplay, coerce name slot, bool looping = false, int attenuation = 0);
 	action native A_StopSoundEx(coerce name slot);
 	action native A_SeekerMissile(int threshold, int turnmax);

@@ -104,6 +104,15 @@ static BYTE StrifePaletteVals[11*3] =
 	187, 59, 0, 219, 171, 0
 };
 
+static AMColor RavenColors[11];
+static BYTE RavenPaletteVals[11*3] =
+{
+	0x6c,0x54,0x40,  255, 255, 255, 0x74,0x5c,0x48,
+	  75,  50,  16,   88,  93,  86,  208, 176, 133,  
+	 103,  59,  31,  236, 236, 236,    0,   0,   0,
+	   0,   0,   0,    0,   0,   0,
+};
+
 #define MAPBITS 12
 #define MapDiv SafeDivScale12
 #define MapMul MulScale12
@@ -683,6 +692,7 @@ static void AM_initColors (bool overlayed)
 		{
 			DoomColors[i].FromRGB(DoomPaletteVals[j], DoomPaletteVals[j+1], DoomPaletteVals[j+2]);
 			StrifeColors[i].FromRGB(StrifePaletteVals[j], StrifePaletteVals[j+1], StrifePaletteVals[j+2]);
+			RavenColors[i].FromRGB(RavenPaletteVals[j], RavenPaletteVals[j+1], RavenPaletteVals[j+2]);
 		}
 	}
 
@@ -784,6 +794,28 @@ static void AM_initColors (bool overlayed)
 			XHairColor = DoomColors[9];
 			NotSeenColor = DoomColors[10];
 			break;
+
+		case 3:	// Raven
+			// Use colors corresponding to the original Raven's
+			Background = RavenColors[0];
+			YourColor = RavenColors[1];
+			AlmostBackground = DoomColors[2];
+			SecretSectorColor = 		
+				SecretWallColor =
+				WallColor = RavenColors[3];
+			TSWallColor = RavenColors[4];
+			FDWallColor = RavenColors[5];
+			LockedColor =
+				CDWallColor = RavenColors[6];
+			ThingColor = 
+			ThingColor_Item = 
+			ThingColor_Friend = 
+				ThingColor_Monster = RavenColors[7];
+			GridColor = RavenColors[4];
+			XHairColor = RavenColors[9];
+			NotSeenColor = RavenColors[10];
+			break;
+
 	}
 
 	lastpal = palette;
@@ -1433,7 +1465,7 @@ void AM_drawWalls (bool allmap)
 					 lines[i].special == ACS_LockedExecuteDoor ||
 					 (lines[i].special == Generic_Door && lines[i].args[4] !=0 ))
 			{
-				if (am_colorset == 0)
+				if (am_colorset == 0 || am_colorset == 3)	// Raven games show door colors
 				{
 					int P_GetMapColorForLock(int lock);
 					int lock;

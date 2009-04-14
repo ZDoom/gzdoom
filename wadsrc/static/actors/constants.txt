@@ -44,5 +44,28 @@ const int MRF_UNDOBYDEATH = 512;
 const int MRF_UNDOBYDEATHFORCED = 1024;
 const int MRF_UNDOBYDEATHSAVES = 2048;
 
+// constants for A_PlaySound
+enum
+{
+	CHAN_AUTO = 0,
+	CHAN_WEAPON = 1,
+	CHAN_VOICE = 2,
+	CHAN_ITEM = 3,
+	CHAN_BODY = 4,
+
+	// modifier flags
+	CHAN_LISTENERZ = 8,
+	CHAN_MAYBE_LOCAL = 16,
+	CHAN_UI = 32,
+	CHAN_NOPAUSE = 64
+};
+
+// sound attenuation values
+const float ATTN_NONE = 0;
+const float ATTN_NORM = 1;
+const float ATTN_IDLE = 1.001;
+const float ATTN_STATIC = 3;
+
+
 // This is only here to provide one global variable for testing.
 native int testglobalvar;

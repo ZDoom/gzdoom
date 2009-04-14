@@ -1,5 +1,5 @@
 ===============================================================================
-Universal Doom Map Format Specification v1.0 - 05/28/08
+Universal Doom Map Format Specification v1.1 - 03/29/09
 
 Written by James "Quasar" Haley - haleyjd@hotmail.com
 
@@ -13,13 +13,41 @@ SlayeR
 SoM
 et al.
 
-    Copyright (c) 2008 James Haley.
+    Copyright (c) 2009 James Haley.
     Permission is granted to copy, distribute and/or modify this document
     under the terms of the GNU Free Documentation License, Version 1.2
     or any later version published by the Free Software Foundation;
     with no Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
     
 ===============================================================================
+
+
+=======================================
+Preface
+=======================================
+
+The Universal Doom Map Format specification is a collaborative effort to 
+create and maintain a cross-port standardized textual representation for Doom
+engine maps. 
+
+The basic UDMF standard contains a superset of the features of all commercial 
+Doom engine games, and provides facilities for seamless extension in source 
+ports, allowing in-editor access to custom map data which would otherwise be 
+squirreled away in external lumps.
+
+
+=======================================
+Changes in v1.1
+=======================================
+
+This is version 1.1 of the UDMF specification, superceding the previous version
+1.0 with the following adjustments:
+
+* Added Preface.
+* Grammar for identifiers altered to forbid initial numerals.
+* Made use of true/false keywords for boolean-type fields more explicit.
+* Rule added for user-defined fields.
+
 
 =======================================
 I. Grammar / Syntax
@@ -31,7 +59,7 @@ I. Grammar / Syntax
     block := identifier '{' expr_list '}'
     expr_list := assignment_expr expr_list
     assignment_expr := identifier '=' value ';' | nil
-    identifier := [A-Za-z0-9_]+
+    identifier := [A-Za-z_]+[A-Za-z0-9_]*
     value := integer | float | quoted_string | keyword
     integer := [+-]?[1-9]+[0-9]* | 0[0-9]+ | 0x[0-9A-Fa-f]+
     float := [+-]?[0-9]+'.'[0-9]*([eE][+-]?[0-9]+)?
@@ -41,6 +69,9 @@ I. Grammar / Syntax
 
 Global assignments and named/indexed global blocks are the only top-level
 entities supported. Whitespace is strictly ignored.
+
+Keywords are currently restricted to the values true and false, which are
+used as the values of all boolean fields.
 
 Comments are supported as C-style single and multi-line comments:
 
@@ -68,10 +99,16 @@ block-level assignments, and block headers. Compliant parsers should attempt
 to preserve as much of such information as is possible by using a flexible
 mapping such as hashing.
 
-Identifiers and keywords are to be treated as case insensitive.
+For purposes of forward compatibility, user-defined fields are restricted to
+beginning with the string "user_", but are otherwise normal identifiers.
+Implementing editors should not restrict the entry of custom field names to 
+those beginning with "user_", however, in order to avoid problems with 
+out-of-date configurations.
+
+Identifiers and keywords are to be treated as case-insensitive.
 
 A field which specifies "boolean" semantics shall accept keyword value 
-"true" to mean that the field is asserted, and keyword value "false" to 
+true to mean that the field is asserted, and keyword value false to 
 mean that the field is unasserted. Keyword values can only be defined in
 this specification, and not by implementing ports. Use quoted strings
 instead.
@@ -212,6 +249,8 @@ be recognized by all implementing ports and editors (support for the features
 they signify is not necessarily required, such as for ports which do not
 implement Hexen support - all fields unknown to a given port should be 
 ignored and not treated as an error).
+
+All boolean fields take the keyword values true and false.
 
    linedef
    {

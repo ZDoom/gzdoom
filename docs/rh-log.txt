@@ -1,4 +1,7 @@
-﻿April 10, 2009
+﻿April 13, 2009
+- Changed gravity doubling so that it only happens when you run off a ledge.
+
+April 10, 2009
 - Fixed: World panning was ignored for the X offset of masked midtextures.
 
 April 10, 2009  (Changes by Graf Zahl)

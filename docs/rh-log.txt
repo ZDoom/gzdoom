@@ -1,4 +1,7 @@
-﻿April 13, 2009  (Changes by Graf Zahl)
+﻿April 14, 2009
+- Added support for 7z archives.
+
+April 13, 2009  (Changes by Graf Zahl)
 - Added -noautoload option.
 - Added default Raven automap colors set. Needs to be tested because I can't
   compare against the DOS version myself.

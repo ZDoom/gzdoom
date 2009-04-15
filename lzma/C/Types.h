@@ -6,6 +6,10 @@
 
 #include <stddef.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define SZ_OK 0
 
 #define SZ_ERROR_DATA 1
@@ -196,5 +200,9 @@ typedef struct
 
 #define IAlloc_Alloc(p, size) (p)->Alloc((p), size)
 #define IAlloc_Free(p, a) (p)->Free((p), a)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

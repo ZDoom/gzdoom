@@ -30,9 +30,20 @@
 #include "templates.h"
 #include "gi.h"
 
+extern "C" {
+#include "Archive/7z/7zHeader.h"
+#include "Archive/7z/7zExtract.h"
+#include "Archive/7z/7zIn.h"
+#include "7zCrc.h"
+}
+
 // MACROS ------------------------------------------------------------------
 
 #define NULL_INDEX		(0xffff)
+
+// EXTERNAL DATA DECLARATIONS ----------------------------------------------
+
+extern ISzAlloc g_Alloc;
 
 // TYPES -------------------------------------------------------------------
 
@@ -81,6 +92,7 @@ union MergedHeader
 	wadinfo_t wad;
 	rffinfo_t rff;
 	grpinfo_t grp;
+	BYTE sevenzip[k7zSignatureSize];
 };
 
 
@@ -92,32 +104,149 @@ struct FWadCollection::LumpRecord
 	char *		fullname;		// only valid for files loaded from a .zip file
 	char		name[9];
 	BYTE		method;			// zip compression method
+	BYTE		flags;
 	short		wadnum;
-	WORD		flags;
 	int			position;
 	int			size;
 	int			namespc;
 	int			compressedsize;
+
+	void ZipNameSetup(char *name);
+};
+
+struct CZDFileInStream
+{
+	ISeekInStream s;
+	FileReader *File;
+
+	CZDFileInStream(FileReader *_file)
+	{
+		s.Read = Read;
+		s.Seek = Seek;
+		File = _file;
+	}
+
+	static SRes Read(void *pp, void *buf, size_t *size)
+	{
+		CZDFileInStream *p = (CZDFileInStream *)pp;
+		long numread = p->File->Read(buf, (long)*size);
+		if (numread < 0)
+		{
+			*size = 0;
+			return SZ_ERROR_READ;
+		}
+		*size = numread;
+		return SZ_OK;
+	}
+
+	static SRes Seek(void *pp, Int64 *pos, ESzSeek origin)
+	{
+		CZDFileInStream *p = (CZDFileInStream *)pp;
+		int move_method;
+		int res;
+		if (origin == SZ_SEEK_SET)
+		{
+			move_method = SEEK_SET;
+		}
+		else if (origin == SZ_SEEK_CUR)
+		{
+			move_method = SEEK_CUR;
+		}
+		else if (origin == SZ_SEEK_END)
+		{
+			move_method = SEEK_END;
+		}
+		else
+		{
+			return 1;
+		}
+		res = p->File->Seek((long)*pos, move_method);
+		*pos = p->File->Tell();
+		return res;
+	}
+};
+
+struct C7zArchive
+{
+	CSzArEx DB;
+	CZDFileInStream ArchiveStream;
+	CLookToRead LookStream;
+	UInt32 BlockIndex;
+	Byte *OutBuffer;
+	size_t OutBufferSize;
+
+	C7zArchive(FileReader *file) : ArchiveStream(file)
+	{
+		if (g_CrcTable[1] == 0)
+		{
+			CrcGenerateTable();
+		}
+		file->Seek(0, SEEK_SET);
+		LookToRead_CreateVTable(&LookStream, false);
+		LookStream.realStream = &ArchiveStream.s;
+		LookToRead_Init(&LookStream);
+		SzArEx_Init(&DB);
+		BlockIndex = 0xFFFFFFFF;
+		OutBuffer = NULL;
+		OutBufferSize = 0;
+	}
+
+	~C7zArchive()
+	{
+		if (OutBuffer != NULL)
+		{
+			IAlloc_Free(&g_Alloc, OutBuffer);
+		}
+		SzArEx_Free(&DB, &g_Alloc);
+	}
+
+	SRes Open()
+	{
+		return SzArEx_Open(&DB, &LookStream.s, &g_Alloc, &g_Alloc);
+	}
+
+	SRes Extract(UInt32 file_index, char *buffer)
+	{
+		size_t offset, out_size_processed;
+		SRes res = SzAr_Extract(&DB, &LookStream.s, file_index,
+			&BlockIndex, &OutBuffer, &OutBufferSize,
+			&offset, &out_size_processed,
+			&g_Alloc, &g_Alloc);
+		if (res == SZ_OK)
+		{
+			memcpy(buffer, OutBuffer + offset, out_size_processed);
+		}
+		return res;
+	}
 };
 
 class FWadCollection::WadFileRecord : public FileReader
 {
 public:
 	WadFileRecord (FILE *file);
-	WadFileRecord (const char * buffer, int length);
+	WadFileRecord (const char *buffer, int length);
 	~WadFileRecord ();
 
 	long Seek (long offset, int origin);
 	long Read (void *buffer, long len);
 
-	const char * MemoryData;
+	const char *MemoryData;
+	C7zArchive *Archive;
 
-	char *Name;
+	FString Name;
 	DWORD FirstLump;
 	DWORD LastLump;
-
 };
 
+struct FEmbeddedWAD
+{
+	union
+	{
+		C7zArchive *Archive;
+		FZipCentralDirectoryInfo *Zip;
+	};
+	int Position;
+};
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -128,8 +257,6 @@ void W_SysWadInit ();
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static void PrintLastError ();
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -285,7 +412,7 @@ int FWadCollection::AddExternalFile(const char *filename)
 
 	lump.fullname = copystring(filename);
 	memset(lump.name, 0, sizeof(lump.name));
-	lump.wadnum=-1;
+	lump.wadnum = -1;
 	lump.flags = LUMPF_EXTERNAL;
 	lump.position = 0;
 	lump.namespc = ns_global;
@@ -365,7 +492,7 @@ int STACK_ARGS FWadCollection::lumpcmp(const void * a, const void * b)
 }
 
 
-void FWadCollection::AddFile (const char *filename, const char * data, int length)
+void FWadCollection::AddFile (const char *filename, const char *data, int length)
 {
 	WadFileRecord	*wadinfo;
 	MergedHeader	header;
@@ -375,10 +502,10 @@ void FWadCollection::AddFile (const char *filename, const char * data, int lengt
 	int				startlump;
 	wadlump_t*		fileinfo = NULL, *fileinfo2free = NULL;
 	wadlump_t		singleinfo;
-	TArray<FZipCentralDirectoryInfo *> EmbeddedWADs;
-	void * directory = NULL;
+	TArray<FEmbeddedWAD> EmbeddedWADs;
+	void *directory = NULL;
 
-	if (length==-1)
+	if (length == -1)
 	{
 		// open the file and add to directory
 		handle = fopen (filename, "rb");
@@ -409,7 +536,7 @@ void FWadCollection::AddFile (const char *filename, const char * data, int lengt
 		return;
 	}
 
-	wadinfo->Name = copystring (filename);
+	wadinfo->Name = filename;
 
 	if (header.magic[0] == IWAD_ID || header.magic[0] == PWAD_ID)
 	{ // This is a WAD file
@@ -516,6 +643,7 @@ void FWadCollection::AddFile (const char *filename, const char * data, int lengt
 		if (centraldir == 0)
 		{
 			Printf("\n%s: ZIP file corrupt!\n", filename);
+			delete wadinfo;
 			return;
 		}
 
@@ -528,6 +656,7 @@ void FWadCollection::AddFile (const char *filename, const char * data, int lengt
 			info.FirstDisk != 0 || info.DiskNumber != 0)
 		{
 			Printf("\n%s: Multipart Zip files are not supported.\n", filename);
+			delete wadinfo;
 			return;
 		}
 
@@ -546,7 +675,6 @@ void FWadCollection::AddFile (const char *filename, const char * data, int lengt
 			FZipCentralDirectoryInfo *zip_fh = (FZipCentralDirectoryInfo *)dirptr;
 
 			char name[256];
-			char base[256];
 
 			int len = LittleShort(zip_fh->NameLength);
 			strncpy(name, dirptr + sizeof(FZipCentralDirectoryInfo), MIN<int>(len, 255));
@@ -589,67 +717,23 @@ void FWadCollection::AddFile (const char *filename, const char * data, int lengt
 			// They must be extracted and added separately to the lump list.
 			// WADs in subdirectories are added to the lump directory.
 			// Embedded .zips are ignored for now. But they should be allowed later!
-			char * c = strstr(name, ".wad");
-			if (c && strlen(c)==4 && !strchr(name, '/'))
+			char *c = strstr(name, ".wad");
+			if (c && strlen(c) == 4 && !strchr(name, '/'))
 			{
-				EmbeddedWADs.Push(zip_fh);
+				FEmbeddedWAD embed;
+				embed.Zip = zip_fh;
+				embed.Position = -1;
+				EmbeddedWADs.Push(embed);
 				skipped++;
 				continue;
 			}
 
-			//ExtractFileBase(name, base);
-			char *lname = strrchr(name,'/');
-			if (!lname) lname = name;
-			else lname++;
-			strcpy(base, lname);
-			char *dot = strrchr(base, '.');
-			if (dot) *dot = 0;
-			uppercopy(lump_p->name, base);
-			lump_p->name[8] = 0;
-			lump_p->fullname = copystring(name);
+			lump_p->ZipNameSetup(name);
 			lump_p->size = LittleLong(zip_fh->UncompressedSize);
-
-			// Map some directories to WAD namespaces.
-			// Note that some of these namespaces don't exist in WADS.
-			// CheckNumForName will handle any request for these namespaces accordingly.
-			lump_p->namespc =	!strncmp(name, "flats/", 6)			? ns_flats :
-								!strncmp(name, "textures/", 9)		? ns_newtextures :
-								!strncmp(name, "hires/", 6)			? ns_hires :
-								!strncmp(name, "sprites/", 8)		? ns_sprites :
-								!strncmp(name, "colormaps/", 10)	? ns_colormaps :
-								!strncmp(name, "acs/", 4)			? ns_acslibrary :
-								!strncmp(name, "voices/", 7)		? ns_strifevoices :
-								!strncmp(name, "patches/", 8)		? ns_patches :
-								!strncmp(name, "graphics/", 9)		? ns_graphics :
-								!strncmp(name, "sounds/", 7)		? ns_sounds :
-								!strncmp(name, "music/", 6)			? ns_music : 
-								!strchr(name, '/')					? ns_global : -1;
-			
-			// Anything that is not in one of these subdirectories or the main directory 
-			// should not be accessible through the standard WAD functions but only through 
-			// the ones which look for the full name.
-			if (lump_p->namespc == -1)
-			{
-				memset(lump_p->name, 0, 8);
-			}
-
 			lump_p->wadnum = (WORD)Wads.Size();
 			lump_p->flags = (zip_fh->Method != METHOD_STORED) ? LUMPF_COMPRESSED|LUMPF_ZIPFILE : LUMPF_ZIPFILE;
 			lump_p->method = zip_fh->Method;
 			lump_p->compressedsize = LittleLong(zip_fh->CompressedSize);
-
-			// Since '\' can't be used as a file name's part inside a ZIP
-			// we have to work around this for sprites because it is a valid
-			// frame character.
-			if (lump_p->namespc == ns_sprites)
-			{
-				char * c;
-
-				while ((c = (char*)memchr(lump_p->name, '^', 8)))
-				{
-					*c = '\\';
-				}
-			}
 
 			// The start of the file will be determined the first time it is accessed.
 			lump_p->flags |= LUMPF_NEEDFILESTART;
@@ -659,8 +743,89 @@ void FWadCollection::AddFile (const char *filename, const char * data, int lengt
 		// Resize the lump record array to its actual size
 		NumLumps -= skipped;
 		LumpInfo.Resize(NumLumps);
+		Printf (" (%d files)", LittleShort(info.NumEntries) - skipped);
 		
 		// Entries in Zips are sorted alphabetically.
+		qsort(&LumpInfo[startlump], NumLumps - startlump, sizeof(LumpRecord), lumpcmp);
+	}
+	else if (memcmp(header.sevenzip, k7zSignature, k7zSignatureSize) == 0)
+	{
+		C7zArchive *arc = new C7zArchive(wadinfo);
+		int skipped = 0;
+		SRes res;
+
+		res = arc->Open();
+		if (res != SZ_OK)
+		{
+			delete arc;
+			delete wadinfo;
+			Printf("\n%s: ", filename);
+			if (res == SZ_ERROR_UNSUPPORTED)
+			{
+				Printf("Decoder does not support this archive\n");
+			}
+			else if (res == SZ_ERROR_MEM)
+			{
+				Printf("Cannot allocate memory\n");
+			}
+			else if (res == SZ_ERROR_CRC)
+			{
+				Printf("CRC error\n");
+			}
+			else
+			{
+				Printf("error #%d\n", res);
+			}
+			return;
+		}
+		wadinfo->Archive = arc;
+		NumLumps += arc->DB.db.NumFiles;
+		LumpInfo.Resize(NumLumps);
+		lump_p = &LumpInfo[startlump];
+
+		for (int i = 0; i < arc->DB.db.NumFiles; ++i)
+		{
+			CSzFileItem *file = &arc->DB.db.Files[i];
+			char name[256];
+
+			// skip Directories
+			if (file->IsDir)
+			{
+				skipped++;
+				continue;
+			}
+
+			strncpy(name, file->Name, countof(name)-1);
+			name[countof(name)-1] = 0;
+			FixPathSeperator(name);
+			strlwr(name);
+
+			// Check for embedded WADs in the root directory. 
+			char *c = strstr(name, ".wad");
+			if (c && strlen(c) == 4 && !strchr(name, '/'))
+			{
+				FEmbeddedWAD embed;
+				embed.Archive = arc;
+				embed.Position = i;
+				EmbeddedWADs.Push(embed);
+				skipped++;
+				continue;
+			}
+
+			lump_p->ZipNameSetup(name);
+			lump_p->size = file->Size;
+			lump_p->wadnum = (WORD)Wads.Size();
+			lump_p->flags = LUMPF_7ZFILE;
+			lump_p->position = i;
+			lump_p->compressedsize = -1;
+			lump_p++;
+		}
+		// Resize the lump record array to its actual size
+		NumLumps -= skipped;
+		LumpInfo.Resize(NumLumps);
+		Printf (" (%u files)", arc->DB.db.NumFiles - skipped);
+
+		// Entries in archives are sorted alphabetically
 		qsort(&LumpInfo[startlump], NumLumps - startlump, sizeof(LumpRecord), lumpcmp);
 	}
 	else
@@ -678,7 +843,8 @@ void FWadCollection::AddFile (const char *filename, const char * data, int lengt
 	// Fill in lumpinfo
 	if (header.magic[0] != RFF_ID &&
 		header.magic[0] != ZIP_ID &&
-		(header.magic[0] != GRP_ID_0 || header.magic[1] != GRP_ID_1 || header.magic[2] != GRP_ID_2))
+		(header.magic[0] != GRP_ID_0 || header.magic[1] != GRP_ID_1 || header.magic[2] != GRP_ID_2) &&
+		memcmp(header.sevenzip, k7zSignature, k7zSignatureSize))
 	{
 		LumpInfo.Resize(NumLumps);
 		lump_p = &LumpInfo[startlump];
@@ -717,54 +883,147 @@ void FWadCollection::AddFile (const char *filename, const char * data, int lengt
 	if (EmbeddedWADs.Size())
 	{
 		char path[256];
+		size_t len;
+		char *buffer;
 
 		mysnprintf(path, countof(path), "%s:", filename);
-		char * wadstr = path+strlen(path);
+		char *wadstr = path + strlen(path);
 
 		for(unsigned int i = 0; i < EmbeddedWADs.Size(); i++)
 		{
-			FZipCentralDirectoryInfo *zip_fh = EmbeddedWADs[i];
-			FZipLocalFileHeader localHeader;
+			FEmbeddedWAD *embed = &EmbeddedWADs[i];
 
-			*wadstr = 0;
-			size_t len = LittleShort(zip_fh->NameLength);
-			if (len + strlen(path) > 255) len = 255 - strlen(path);
-			strncpy(wadstr, ((char*)zip_fh) + sizeof(FZipCentralDirectoryInfo), len);
-			wadstr[len] = 0;
-
-			DWORD size = LittleLong(zip_fh->UncompressedSize);
-			char *buffer = new char[size];
-
-			int position = LittleLong(zip_fh->LocalHeaderOffset) ;
-
-			wadinfo->Seek(position, SEEK_SET);
-			wadinfo->Read(&localHeader, sizeof(localHeader));
-			position += sizeof(FZipLocalFileHeader) + LittleShort(localHeader.ExtraLength) + LittleShort(zip_fh->NameLength);
-
-			wadinfo->Seek(position, SEEK_SET);
-			if (LittleShort(zip_fh->Method) == METHOD_DEFLATE)
+			if (embed->Position == -1)
 			{
-				FileReaderZ frz(*wadinfo, true);
-				frz.Read(buffer, size);
-			}
-			else if (LittleShort(zip_fh->Method) == METHOD_LZMA)
-			{
-				FileReaderLZMA frz(*wadinfo, size, true);
-				frz.Read(buffer, size);
-			}
-			else if (LittleShort(zip_fh->Method) == METHOD_BZIP2)
-			{
-				FileReaderBZ2 frz(*wadinfo);
-				frz.Read(buffer, size);
+				FZipCentralDirectoryInfo *zip_fh = embed->Zip;
+				FZipLocalFileHeader localHeader;
+
+				*wadstr = 0;
+				len = LittleShort(zip_fh->NameLength);
+				if (len + strlen(path) > 255)
+				{
+					len = 255 - strlen(path);
+				}
+				strncpy(wadstr, ((char*)zip_fh) + sizeof(FZipCentralDirectoryInfo), len);
+				wadstr[len] = 0;
+
+				DWORD size = LittleLong(zip_fh->UncompressedSize);
+				buffer = new char[size];
+
+				int position = LittleLong(zip_fh->LocalHeaderOffset);
+
+				wadinfo->Seek(position, SEEK_SET);
+				wadinfo->Read(&localHeader, sizeof(localHeader));
+				position += sizeof(FZipLocalFileHeader) + LittleShort(localHeader.ExtraLength) + LittleShort(zip_fh->NameLength);
+
+				wadinfo->Seek(position, SEEK_SET);
+				if (LittleShort(zip_fh->Method) == METHOD_DEFLATE)
+				{
+					FileReaderZ frz(*wadinfo, true);
+					frz.Read(buffer, size);
+				}
+				else if (LittleShort(zip_fh->Method) == METHOD_LZMA)
+				{
+					FileReaderLZMA frz(*wadinfo, size, true);
+					frz.Read(buffer, size);
+				}
+				else if (LittleShort(zip_fh->Method) == METHOD_BZIP2)
+				{
+					FileReaderBZ2 frz(*wadinfo);
+					frz.Read(buffer, size);
+				}
+				else
+				{
+					wadinfo->Read(buffer, size);
+				}
+				AddFile(path, buffer, size);
 			}
 			else
 			{
-				wadinfo->Read(buffer, size);
+				CSzFileItem *file = &embed->Archive->DB.db.Files[embed->Position];
+				len = strlen(file->Name);
+				if (len + strlen(path) > 255)
+				{
+					len = 255 - strlen(path);
+				}
+				strncpy(wadstr, file->Name, len);
+				wadstr[len] = 0;
+
+				buffer = new char[file->Size];
+				if (embed->Archive->Extract(embed->Position, buffer) == SZ_OK)
+				{
+					AddFile(path, buffer, file->Size);
+				}
 			}
-			AddFile(path, buffer, size);
 		}
 	}
-	if (directory != NULL) free(directory);
+	if (directory != NULL)
+	{
+		free(directory);
+	}
+}
+
+//==========================================================================
+//
+// FWadCollection :: LumpRecord :: ZipNameSetup
+//
+// For lumps from an archive, determine this lump's wad-compatible name,
+// namespace, and set the fullname.
+//
+//==========================================================================
+
+void FWadCollection::LumpRecord::ZipNameSetup(char *iname)
+{
+	char base[256];
+	char *lname = strrchr(iname,'/');
+	lname = (lname == NULL) ? iname : lname + 1;
+	strcpy(base, lname);
+	char *dot = strrchr(base, '.');
+	if (dot != NULL)
+	{
+		*dot = 0;
+	}
+	uppercopy(name, base);
+	name[8] = 0;
+	fullname = copystring(iname);
+
+	// Map some directories to WAD namespaces.
+	// Note that some of these namespaces don't exist in WADS.
+	// CheckNumForName will handle any request for these namespaces accordingly.
+	namespc =	!strncmp(iname, "flats/", 6)		? ns_flats :
+				!strncmp(iname, "textures/", 9)		? ns_newtextures :
+				!strncmp(iname, "hires/", 6)		? ns_hires :
+				!strncmp(iname, "sprites/", 8)		? ns_sprites :
+				!strncmp(iname, "colormaps/", 10)	? ns_colormaps :
+				!strncmp(iname, "acs/", 4)			? ns_acslibrary :
+				!strncmp(iname, "voices/", 7)		? ns_strifevoices :
+				!strncmp(iname, "patches/", 8)		? ns_patches :
+				!strncmp(iname, "graphics/", 9)		? ns_graphics :
+				!strncmp(iname, "sounds/", 7)		? ns_sounds :
+				!strncmp(iname, "music/", 6)		? ns_music : 
+				!strchr(iname, '/')					? ns_global :
+				-1;
+	
+	// Anything that is not in one of these subdirectories or the main directory 
+	// should not be accessible through the standard WAD functions but only through 
+	// the ones which look for the full name.
+	if (namespc == -1)
+	{
+		memset(name, 0, 8);
+	}
+
+	// Since '\' can't be used as a file name's part inside a ZIP
+	// we have to work around this for sprites because it is a valid
+	// frame character.
+	else if (namespc == ns_sprites)
+	{
+		char *c;
+
+		while ((c = (char*)memchr(name, '^', 8)))
+		{
+			*c = '\\';
+		}
+	}
 }
 
 //==========================================================================
@@ -1797,39 +2056,29 @@ FWadLump FWadCollection::OpenLumpNum (int lump)
 	}
 
 	l = &LumpInfo[lump];
-	wad = l->wadnum >= 0? Wads[l->wadnum] : NULL;
+	wad = l->wadnum >= 0 ? Wads[l->wadnum] : NULL;
 
 	if (l->flags & LUMPF_NEEDFILESTART)
 	{
 		SetLumpAddress(l);
 	}
 
-	if (wad != NULL) wad->Seek (l->position, SEEK_SET);
+	if (l->flags & LUMPF_7ZFILE)
+	{
+		// An entry in a .7z file
+		char *buffer = new char[l->size + 1];	// the last byte is used as a reference counter
 
-	if (l->flags & LUMPF_COMPRESSED)
+	}
+
+	if (wad != NULL)
+	{
+		wad->Seek (l->position, SEEK_SET);
+	}
+
+	if (l->flags & (LUMPF_COMPRESSED | LUMPF_7ZFILE))
 	{
 		// A compressed entry in a .zip file
-		char *buffer = new char[l->size + 1];	// the last byte is used as a reference counter
-		buffer[l->size] = 0;
-		if (l->method == METHOD_DEFLATE)
-		{
-			FileReaderZ frz(*wad, true);
-			frz.Read(buffer, l->size);
-		}
-		else if (l->method == METHOD_LZMA)
-		{
-			FileReaderLZMA frz(*wad, l->size, true);
-			frz.Read(buffer, l->size);
-		}
-		else if (l->method == METHOD_BZIP2)
-		{
-			FileReaderBZ2 frz(*wad);
-			frz.Read(buffer, l->size);
-		}
-		else
-		{
-			assert(0);	// Should not get here
-		}
+		char *buffer = ReadZipLump(l);
 		return FWadLump(buffer, l->size, true);
 	}
 	else if (l->flags & LUMPF_EXTERNAL)
@@ -1841,7 +2090,7 @@ FWadLump FWadCollection::OpenLumpNum (int lump)
 		{
 			FString name;
 
-			name.Format("%s/%s", wad->Name, l->fullname);
+			name << wad->Name << '/' << l->fullname;
 			f = fopen(name, "rb");
 		}
 		else
@@ -1898,38 +2147,18 @@ FWadLump *FWadCollection::ReopenLumpNum (int lump)
 	}
 
 	l = &LumpInfo[lump];
-	wad = l->wadnum >= 0? Wads[l->wadnum] : NULL;
+	wad = l->wadnum >= 0 ? Wads[l->wadnum] : NULL;
 
 	if (l->flags & LUMPF_NEEDFILESTART)
 	{
 		SetLumpAddress(l);
 	}
 
-	if (l->flags & LUMPF_COMPRESSED)
+	if (l->flags & (LUMPF_COMPRESSED | LUMPF_7ZFILE))
 	{
 		// A compressed entry in a .zip file
 		int address = wad->Tell();			// read from the existing WadFileRecord without reopening
-		char *buffer = new char[l->size + 1];	// the last byte is used as a reference counter
-		wad->Seek(l->position, SEEK_SET);
-		if (l->method == METHOD_DEFLATE)
-		{
-			FileReaderZ frz(*wad, true);
-			frz.Read(buffer, l->size);
-		}
-		else if (l->method == METHOD_LZMA)
-		{
-			FileReaderLZMA frz(*wad, l->size, true);
-			frz.Read(buffer, l->size);
-		}
-		else if (l->method == METHOD_BZIP2)
-		{
-			FileReaderBZ2 frz(*wad);
-			frz.Read(buffer, l->size);
-		}
-		else
-		{
-			assert(0);	// Should not get here
-		}
+		char *buffer = ReadZipLump(l);
 		wad->Seek(address, SEEK_SET);
 		return new FWadLump(buffer, l->size, true);	//... but restore the file pointer afterward!
 	}
@@ -1942,7 +2171,7 @@ FWadLump *FWadCollection::ReopenLumpNum (int lump)
 		{
 			FString name;
 
-			name.Format("%s/%s", wad->Name, l->fullname);
+			name << wad->Name << '/' << l->fullname;
 			f = fopen(name, "rb");
 		}
 		else
@@ -1977,13 +2206,57 @@ FWadLump *FWadCollection::ReopenLumpNum (int lump)
 		f = fopen (wad->Name, "rb");
 		if (f == NULL)
 		{
-			I_Error ("Could not reopen %s\n", wad->Name);
+			I_Error ("Could not reopen %s\n", wad->Name.GetChars());
 		}
 
 		fseek (f, l->position, SEEK_SET);
 		return new FWadLump (f, l->size);
 	}
 
+}
+
+//==========================================================================
+//
+// FWadCollection :: ReadZipLump
+//
+// Extracts a compressed file from a zip into memory.
+//
+//==========================================================================
+
+char *FWadCollection::ReadZipLump(LumpRecord *l)
+{
+	WadFileRecord *wad = Wads[l->wadnum];
+	char *buffer = new char[l->size + 1];	// the last byte is used as a reference counter
+	buffer[l->size] = 0;
+
+	if (!(l->flags & LUMPF_7ZFILE))
+	{
+		wad->Seek(l->position, SEEK_SET);
+		if (l->method == METHOD_DEFLATE)
+		{
+			FileReaderZ frz(*wad, true);
+			frz.Read(buffer, l->size);
+		}
+		else if (l->method == METHOD_LZMA)
+		{
+			FileReaderLZMA frz(*wad, l->size, true);
+			frz.Read(buffer, l->size);
+		}
+		else if (l->method == METHOD_BZIP2)
+		{
+			FileReaderBZ2 frz(*wad);
+			frz.Read(buffer, l->size);
+		}
+		else
+		{
+			assert(0);	// Should not get here
+		}
+	}
+	else
+	{
+		wad->Archive->Extract(l->position, buffer);
+	}
+	return buffer;
 }
 
 //==========================================================================
@@ -2142,7 +2415,7 @@ void FWadCollection::SkinHack (int baselump)
 			"The maps in %s will not be loaded because it has a skin.\n"
 			TEXTCOLOR_BLUE
 			"You should remove the skin from the wad to play these maps.\n",
-			Wads[LumpInfo[baselump].wadnum]->Name);
+			Wads[LumpInfo[baselump].wadnum]->Name.GetChars());
 	}
 }
 
@@ -2165,13 +2438,12 @@ void BloodCrypt (void *data, int key, int len)
 // WadFileRecord ------------------------------------------------------------
 
 FWadCollection::WadFileRecord::WadFileRecord (FILE *file)
-: FileReader(file), Name(NULL), FirstLump(0), LastLump(0)
+: FileReader(file), MemoryData(NULL), Archive(NULL), FirstLump(0), LastLump(0)
 {
-	MemoryData=NULL;
 }
 
-FWadCollection::WadFileRecord::WadFileRecord (const char * mem, int len)
-: FileReader(), MemoryData(mem), Name(NULL), FirstLump(0), LastLump(0)
+FWadCollection::WadFileRecord::WadFileRecord (const char *mem, int len)
+: FileReader(), MemoryData(mem), Archive(NULL), FirstLump(0), LastLump(0)
 {
 	Length = len;
 	FilePos = StartPos = 0;
@@ -2179,52 +2451,59 @@ FWadCollection::WadFileRecord::WadFileRecord (const char * mem, int len)
 
 FWadCollection::WadFileRecord::~WadFileRecord ()
 {
-	if (Name != NULL)
-	{
-		delete[] Name;
-	}
 	if (MemoryData != NULL) 
 	{
-		delete [] MemoryData;
+		delete[] MemoryData;
+	}
+	if (Archive != NULL)
+	{
+		delete Archive;
 	}
 }
 
 long FWadCollection::WadFileRecord::Seek (long offset, int origin)
 {
-	if (MemoryData==NULL) return FileReader::Seek(offset, origin);
+	if (MemoryData == NULL)
+	{
+		return FileReader::Seek(offset, origin);
+	}
 	else
 	{
 		switch (origin)
 		{
 		case SEEK_CUR:
-			offset+=FilePos;
+			offset += FilePos;
 			break;
 
 		case SEEK_END:
-			offset+=Length;
+			offset += Length;
 			break;
+
 		default:
 			break;
 		}
-		if (offset<0) offset=0;
-		else if (offset>Length) offset=Length;
-		FilePos=offset;
+		FilePos = clamp<long>(offset, 0, Length);
 		return 0;
 	}
 }
+
 long FWadCollection::WadFileRecord::Read (void *buffer, long len)
 {
-	if (MemoryData==NULL) return FileReader::Read(buffer, len);
+	if (MemoryData == NULL)
+	{
+		return FileReader::Read(buffer, len);
+	}
 	else
 	{
-		if (FilePos+len>Length) len=Length-FilePos;
-		memcpy(buffer, MemoryData+FilePos, len);
-		FilePos+=len;
+		if (FilePos + len > Length)
+		{
+			len = Length - FilePos;
+		}
+		memcpy(buffer, MemoryData + FilePos, len);
+		FilePos += len;
 		return len;
 	}
 }
-
-// FWadLump -----------------------------------------------------------------
 
 // FWadLump -----------------------------------------------------------------
 

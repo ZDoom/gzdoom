@@ -364,7 +364,7 @@ extern "C" void bz_internal_error (int errcode)
 
 static void *SzAlloc(void *p, size_t size) { p = p; return malloc(size); }
 static void SzFree(void *p, void *address) { p = p; free(address); }
-static ISzAlloc g_Alloc = { SzAlloc, SzFree };
+ISzAlloc g_Alloc = { SzAlloc, SzFree };
 
 FileReaderLZMA::FileReaderLZMA (FileReader &file, size_t uncompressed_size, bool zip)
 : File(file), SawEOF(false)

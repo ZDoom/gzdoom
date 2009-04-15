@@ -815,7 +815,7 @@ void FWadCollection::AddFile (const char *filename, const char *data, int length
 			lump_p->ZipNameSetup(name);
 			lump_p->size = file->Size;
 			lump_p->wadnum = (WORD)Wads.Size();
-			lump_p->flags = LUMPF_7ZFILE;
+			lump_p->flags = LUMPF_7ZFILE | LUMPF_ZIPFILE;
 			lump_p->position = i;
 			lump_p->compressedsize = -1;
 			lump_p++;
@@ -2061,13 +2061,6 @@ FWadLump FWadCollection::OpenLumpNum (int lump)
 	if (l->flags & LUMPF_NEEDFILESTART)
 	{
 		SetLumpAddress(l);
-	}
-
-	if (l->flags & LUMPF_7ZFILE)
-	{
-		// An entry in a .7z file
-		char *buffer = new char[l->size + 1];	// the last byte is used as a reference counter
-
 	}
 
 	if (wad != NULL)

@@ -1,4 +1,9 @@
-﻿April 14, 2009
+﻿April 15, 2009
+- Fixed memory leak from leftover code for 7z loading and added the
+  LUMPF_ZIPFILE flag to their contents so they have the same semantics
+  as zips.
+
+April 14, 2009
 - Added support for 7z archives.
 
 April 13, 2009  (Changes by Graf Zahl)

@@ -39,6 +39,7 @@ void AM_Drawer (void);
 // if the level is completed while it is up.
 void AM_Stop (void);
 
+void AM_NewResolution ();
 void AM_ToggleMap ();
 void AM_LevelInit ();
 void AM_SerializeMarkers(FArchive &arc);

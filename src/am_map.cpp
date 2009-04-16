@@ -370,6 +370,7 @@ static fixed_t mapxstart=0; //x-value for the bitmap.
 
 static bool stopped = true;
 
+static void AM_calcMinMaxMtoF();
 
 void AM_rotatePoint (fixed_t *x, fixed_t *y);
 void AM_rotate (fixed_t *x, fixed_t *y, angle_t an);
@@ -395,7 +396,7 @@ void AM_getIslope (mline_t *ml, islope_t *is)
 }
 */
 
-void AM_GetPosition(fixed_t & x, fixed_t & y)
+void AM_GetPosition(fixed_t &x, fixed_t &y)
 {
 	x = (m_x + m_w/2) << FRACTOMAPBITS;
 	y = (m_y + m_h/2) << FRACTOMAPBITS;
@@ -472,14 +473,10 @@ bool AM_addMark ()
 //
 static void AM_findMinMaxBoundaries ()
 {
-	int i;
-	fixed_t a;
-	fixed_t b;
-
 	min_x = min_y = FIXED_MAX;
 	max_x = max_y = FIXED_MIN;
   
-	for (i = 0; i < numvertexes; i++)
+	for (int i = 0; i < numvertexes; i++)
 	{
 		if (vertexes[i].x < min_x)
 			min_x = vertexes[i].x;
@@ -498,8 +495,13 @@ static void AM_findMinMaxBoundaries ()
 	min_w = 2*PLAYERRADIUS; // const? never changed?
 	min_h = 2*PLAYERRADIUS;
 
-	a = MapDiv (SCREENWIDTH << MAPBITS, max_w);
-	b = MapDiv (::ST_Y << MAPBITS, max_h);
+	AM_calcMinMaxMtoF();
+}
+
+static void AM_calcMinMaxMtoF()
+{
+	fixed_t a = MapDiv (SCREENWIDTH << MAPBITS, max_w);
+	fixed_t b = MapDiv (::ST_Y << MAPBITS, max_h);
 
 	min_scale_mtof = a < b ? a : b;
 	max_scale_mtof = MapDiv (SCREENHEIGHT << MAPBITS, 2*PLAYERRADIUS);
@@ -864,9 +866,6 @@ void AM_LevelInit ()
 	scale_ftom = MapDiv(MAPUNIT, scale_mtof);
 }
 
-
-
-
 //
 //
 //
@@ -889,6 +888,8 @@ void AM_Start ()
 	AM_loadPics();
 }
 
+
+
 //
 // set the window scale to the maximum size
 //
@@ -905,6 +906,24 @@ void AM_maxOutWindowScale ()
 {
 	scale_mtof = max_scale_mtof;
 	scale_ftom = MapDiv(MAPUNIT, scale_mtof);
+}
+
+//
+// Called right after the resolution has changed
+//
+void AM_NewResolution()
+{
+	fixed_t oldmin = min_scale_mtof;
+	AM_calcMinMaxMtoF();
+	scale_mtof = Scale(scale_mtof, min_scale_mtof, oldmin);
+	scale_ftom = MapDiv(MAPUNIT, scale_mtof);
+	if (scale_mtof < min_scale_mtof)
+		AM_minOutWindowScale();
+	else if (scale_mtof > max_scale_mtof)
+		AM_maxOutWindowScale();
+	f_w = screen->GetWidth();
+	f_h = ST_Y;
+	AM_activateNewScale();
 }
 
 

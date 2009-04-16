@@ -540,6 +540,7 @@ void D_Display ()
 			C_NewModeAdjust ();
 			// Reload crosshair if transitioned to a different size
 			crosshair.Callback ();
+			AM_NewResolution ();
 		}
 	}
 

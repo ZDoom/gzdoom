@@ -1,4 +1,7 @@
-﻿April 15, 2009
+﻿April 16, 2009
+- Removed obsolete snd_surround cvar.
+
+April 15, 2009
 - Changing screen resolution now adjusts the automap scale to be constant
   relative to screen resolution.
 - Fixed: When FMultiPatchTexture::MakeTexture() needed to work in RGB

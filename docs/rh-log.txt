@@ -1,4 +1,6 @@
 ﻿April 15, 2009
+- Fixed: When FMultiPatchTexture::MakeTexture() needed to work in RGB
+  colorspace, it didn't zero out the temporary buffer.
 - Fixed memory leak from leftover code for 7z loading and added the
   LUMPF_ZIPFILE flag to their contents so they have the same semantics
   as zips.

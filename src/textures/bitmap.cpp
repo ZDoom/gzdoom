@@ -339,8 +339,8 @@ static const CopyFunc copyfuncs[][9]={
 //
 //===========================================================================
 bool ClipCopyPixelRect(int texwidth, int texheight, int &originx, int &originy,
-									const BYTE *&patch, int &srcwidth, int &srcheight, 
-									int &pstep_x, int &pstep_y, int rotate)
+						const BYTE *&patch, int &srcwidth, int &srcheight, 
+						int &pstep_x, int &pstep_y, int rotate)
 {
 	int pixxoffset;
 	int pixyoffset;

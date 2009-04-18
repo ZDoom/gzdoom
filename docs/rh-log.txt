@@ -1,4 +1,7 @@
-﻿April 16, 2009
+﻿April 17, 2009
+- Gave the intermission screen sounds their own SNDINFO entries.
+
+April 16, 2009
 - Removed obsolete snd_surround cvar.
 
 April 15, 2009

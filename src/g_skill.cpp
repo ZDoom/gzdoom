@@ -184,18 +184,17 @@ void FMapInfoParser::ParseSkill ()
 		}
 		else if (sc.Compare("MustConfirm"))
 		{
+			skill.MustConfirm = true;
 			if (format_type == FMT_New) 
 			{
 				if (CheckAssign())
 				{
 					sc.MustGetString();
-					skill.MustConfirm = true;
 					skill.MustConfirmText = sc.String;
 				}
 			}
 			else
 			{
-				skill.MustConfirm = true;
 				if (sc.CheckToken(TK_StringConst))
 				{
 					skill.MustConfirmText = sc.String;

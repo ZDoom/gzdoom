@@ -68,6 +68,7 @@
 
 void P_SpawnSlopeMakers (FMapThing *firstmt, FMapThing *lastmt);
 void P_SetSlopes ();
+void BloodCrypt (void *data, int key, int len);
 
 extern AActor *P_SpawnMapThing (FMapThing *mthing, int position);
 extern bool P_LoadBuildMap (BYTE *mapdata, size_t len, FMapThing **things, int *numthings);

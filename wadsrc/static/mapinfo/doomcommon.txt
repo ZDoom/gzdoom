@@ -25,6 +25,7 @@ gameinfo
 	backpacktype = "Backpack"
 	statusbar = "sbarinfo/doom.txt"
 	intermissionmusic = "$MUSIC_DM2INT"
+	intermissioncounter = true
 	weaponslot = 1, "Fist", "Chainsaw"
 	weaponslot = 2, "Pistol"
 	weaponslot = 3, "Shotgun", "SuperShotgun"

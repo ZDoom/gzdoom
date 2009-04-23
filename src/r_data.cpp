@@ -48,22 +48,22 @@
 #include "v_palette.h"
 
 
-static int R_CountGroup (const char *start, const char *end);
 static int R_CountTexturesX ();
 static int R_CountLumpTextures (int lumpnum);
 
 extern void R_DeinitBuildTiles();
 extern int R_CountBuildTiles();
 
-static struct FakeCmap 
+struct FakeCmap 
 {
 	char name[8];
 	PalEntry blend;
-} *fakecmaps;
+	int lump;
+};
 
-size_t numfakecmaps;
-int firstfakecmap;
+TArray<FakeCmap> fakecmaps;
 BYTE *realcolormaps;
+size_t numfakecmaps;
 
 //==========================================================================
 //
@@ -138,24 +138,39 @@ void R_InitColormaps ()
 	// [RH] Try and convert BOOM colormaps into blending values.
 	//		This is a really rough hack, but it's better than
 	//		not doing anything with them at all (right?)
-	int lastfakecmap = Wads.CheckNumForName ("C_END");
-	firstfakecmap = Wads.CheckNumForName ("C_START");
 
-	if (firstfakecmap == -1 || lastfakecmap == -1)
-		numfakecmaps = 1;
-	else
-		numfakecmaps = lastfakecmap - firstfakecmap;
-	realcolormaps = new BYTE[256*NUMCOLORMAPS*numfakecmaps];
-	fakecmaps = new FakeCmap[numfakecmaps];
+	FakeCmap cm;
 
-	fakecmaps[0].name[0] = 0;
+	cm.name[0] = 0;
+	cm.blend = 0;
+	fakecmaps.Push(cm);
+
+	DWORD NumLumps = Wads.GetNumLumps();
+
+	for (DWORD i = 0; i < NumLumps; i++)
+	{
+		if (Wads.GetLumpNamespace(i) == ns_colormaps)
+		{
+			char name[9];
+			name[8] = 0;
+			Wads.GetLumpName (name, ns_colormaps);
+
+			if (Wads.CheckNumForName (name, ns_colormaps) == i)
+			{
+				strncpy(cm.name, name, 8);
+				cm.blend = 0;
+				fakecmaps.Push(cm);
+			}
+		}
+	}
+	realcolormaps = new BYTE[256*NUMCOLORMAPS*fakecmaps.Size()];
 	R_SetDefaultColormap ("COLORMAP");
 
-	if (numfakecmaps > 1)
+	if (fakecmaps.Size() > 1)
 	{
 		BYTE unremap[256], remap[256], mapin[256];
 		int i;
-		size_t j;
+		unsigned j;
 
 		memcpy (remap, GPalette.Remap, 256);
 		memset (unremap, 0, 256);
@@ -164,12 +179,12 @@ void R_InitColormaps ()
 			unremap[remap[i]] = i;
 		}
 		remap[0] = 0;
-		for (i = ++firstfakecmap, j = 1; j < numfakecmaps; i++, j++)
+		for (j = 1; j < fakecmaps.Size(); j++)
 		{
-			if (Wads.LumpLength (i) >= (NUMCOLORMAPS+1)*256)
+			if (Wads.LumpLength (fakecmaps[j].lump) >= (NUMCOLORMAPS+1)*256)
 			{
 				int k, r, g, b;
-				FWadLump lump = Wads.OpenLumpNum (i);
+				FWadLump lump = Wads.OpenLumpNum (fakecmaps[j].lump);
 				BYTE *const map = realcolormaps + NUMCOLORMAPS*256*j;
 
 				for (k = 0; k < NUMCOLORMAPS; ++k)
@@ -191,12 +206,12 @@ void R_InitColormaps ()
 					g += GPalette.BaseColors[map[k]].g;
 					b += GPalette.BaseColors[map[k]].b;
 				}
-				Wads.GetLumpName (fakecmaps[j].name, i);
 				fakecmaps[j].blend = PalEntry (255, r/256, g/256, b/256);
 			}
 		}
 	}
 	NormalLight.Maps = realcolormaps;
+	numfakecmaps = fakecmaps.Size();
 }
 
 //==========================================================================
@@ -207,11 +222,6 @@ void R_InitColormaps ()
 
 void R_DeinitColormaps ()
 {
-	if (fakecmaps != NULL)
-	{
-		delete[] fakecmaps;
-		fakecmaps = NULL;
-	}
 	if (realcolormaps != NULL)
 	{
 		delete[] realcolormaps;
@@ -229,18 +239,20 @@ void R_DeinitColormaps ()
 
 DWORD R_ColormapNumForName (const char *name)
 {
-	int lump;
-	DWORD blend = 0;
-
 	if (strnicmp (name, "COLORMAP", 8))
 	{	// COLORMAP always returns 0
-		if (-1 != (lump = Wads.CheckNumForName (name, ns_colormaps)) )
-			blend = lump - firstfakecmap + 1;
-		else if (!strnicmp (name, "WATERMAP", 8))
-			blend = MAKEARGB (128,0,0x4f,0xa5);
+		for(int i=fakecmaps.Size()-1; i > 0; i++)
+		{
+			if (!strnicmp(name, fakecmaps[i].name, 8))
+			{
+				return i;
+			}
+		}
+				
+		if (!strnicmp (name, "WATERMAP", 8))
+			return MAKEARGB (128,0,0x4f,0xa5);
 	}
-
-	return blend;
+	return 0;
 }
 
 //==========================================================================
@@ -252,7 +264,7 @@ DWORD R_ColormapNumForName (const char *name)
 DWORD R_BlendForColormap (DWORD map)
 {
 	return APART(map) ? map : 
-		   map < numfakecmaps ? DWORD(fakecmaps[map].blend) : 0;
+		map < fakecmaps.Size() ? DWORD(fakecmaps[map].blend) : 0;
 }
 
 //==========================================================================
@@ -284,36 +296,32 @@ void R_InitData ()
 
 int R_GuesstimateNumTextures ()
 {
-	int numtex;
+	int numtex = 0;
+	
+	for(int i = Wads.GetNumLumps()-1; i>=0; i--)
+	{
+		int space = Wads.GetLumpNamespace(i);
+		switch(space)
+		{
+		case ns_flats:
+		case ns_sprites:
+		case ns_newtextures:
+		case ns_hires:
+		case ns_patches:
+		case ns_graphics:
+			numtex++;
+			break;
 
-	numtex  = R_CountGroup ("S_START", "S_END");
-	numtex += R_CountGroup ("F_START", "F_END");
-	numtex += R_CountGroup ("TX_START", "TX_END");
-	numtex += R_CountGroup ("HI_START", "HI_END");
+		default:
+			if (Wads.GetLumpFlags(i) & LUMPF_MAYBEFLAT) numtex++;
+
+			break;
+		}
+	}
+
 	numtex += R_CountBuildTiles ();
 	numtex += R_CountTexturesX ();
 	return numtex;
-}
-
-//===========================================================================
-//
-// R_CountGroup
-//
-//===========================================================================
-
-static int R_CountGroup (const char *start, const char *end)
-{
-	int startl = Wads.CheckNumForName (start);
-	int endl = Wads.CheckNumForName (end);
-
-	if (startl < 0 || endl < 0)
-	{
-		return 0;
-	}
-	else
-	{
-		return endl - startl - 1;
-	}
 }
 
 //===========================================================================

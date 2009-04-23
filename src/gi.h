@@ -69,6 +69,7 @@ struct gameinfo_t
 	char titlePage[9];
 	bool drawreadthis;
 	bool noloopfinalemusic;
+	bool intermissioncounter;
 	TArray<FName> creditPages;
 	TArray<FName> finalePages;
 	TArray<FName> infoPages;

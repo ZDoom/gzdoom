@@ -25,6 +25,7 @@ gameinfo
 	backpacktype = "AmmoSatchel"
 	statusbar = ""
 	intermissionmusic = "d_slide"
+	intermissioncounter = false
 	weaponslot = 1, "PunchDagger"
 	weaponslot = 2, "StrifeCrossbow2", "StrifeCrossbow"
 	weaponslot = 3, "AssaultGun"

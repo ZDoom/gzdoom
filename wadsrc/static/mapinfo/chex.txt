@@ -25,6 +25,7 @@ gameinfo
 	backpacktype = "ZorchPack"
 	statusbar = "sbarinfo/doom.txt"
 	intermissionmusic = "$MUSIC_INTER"
+	intermissioncounter = true
 	weaponslot = 1, "Bootspoon", "SuperBootspork"
 	weaponslot = 2, "MiniZorcher"
 	weaponslot = 3, "LargeZorcher", "SuperLargeZorcher"

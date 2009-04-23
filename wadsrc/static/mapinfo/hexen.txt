@@ -28,6 +28,7 @@ gameinfo
 	backpacktype = "BagOfHolding"	// Hexen doesn't have a backpack so use Heretic's.
 	statusbar = ""
 	intermissionmusic = "hub"
+	intermissioncounter = false
 	weaponslot = 1, "FWeapFist", "CWeapMace", "MWeapWand"
 	weaponslot = 2, "FWeapAxe", "CWeapStaff", "MWeapFrost"
 	weaponslot = 3, "FWeapHammer", "CWeapFlame", "MWeapLightning"

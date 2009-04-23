@@ -1,4 +1,21 @@
-﻿April 17, 2009
+﻿April 23, 2009  (Changes by Graf Zahl)
+- complete restructuring of resource file handling for more flexibility and future
+  extensions.
+- Removed merging of special namespaces. For the texture manager this has
+  become totally useless so there is no need to do this anymore. Not merging
+  the namespaces also allows a much more reliable detection of lumps belonging
+  to special namespaces so the ScanForFlatHack function is no longer needed.
+  Instead, any lump up to F_END with a length of 4096 will be marked for 
+  inclusion as a flat texture if no F_START marker is found.
+
+April 21, 2009  (Changes by Graf Zahl)
+- fixed MustConfirm parsing in MAPINFO
+
+April 19, 2009  (Changes by Graf Zahl)
+- Made the counting of intermission stats in Doom a GAMEINFO option so that
+  it can be activated in all games.
+
+April 17, 2009
 - Gave the intermission screen sounds their own SNDINFO entries.
 
 April 16, 2009

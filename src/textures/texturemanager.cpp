@@ -377,29 +377,11 @@ void FTextureManager::ReplaceTexture (FTextureID picnum, FTexture *newtexture, b
 //
 //==========================================================================
 
-void FTextureManager::AddGroup(int wadnum, const char * startlump, const char * endlump, int ns, int usetype)
+void FTextureManager::AddGroup(int wadnum, int ns, int usetype)
 {
-	int firsttx;
-	int lasttx;
-
-	if (startlump && endlump)
-	{
-		firsttx = Wads.CheckNumForName (startlump);
-		lasttx = Wads.CheckNumForName (endlump);
-	}
-	else
-	{
-		// If there are no markers we have to search the entire lump directory... :(
-		firsttx = 0;
-		lasttx = Wads.GetNumLumps() - 1;
-	}
-
+	int firsttx = Wads.GetFirstLump(wadnum);
+	int lasttx = Wads.GetLastLump(wadnum);
 	char name[9];
-
-	if (firsttx == -1 || lasttx == -1)
-	{
-		return;
-	}
 
 	name[8] = 0;
 
@@ -408,13 +390,21 @@ void FTextureManager::AddGroup(int wadnum, const char * startlump, const char * 
 	// later ones), the texture is only inserted if it is the one returned
 	// by doing a check by name in the list of wads.
 
-	for (firsttx += 1; firsttx < lasttx; ++firsttx)
+	for (; firsttx <= lasttx; ++firsttx)
 	{
-		if (Wads.GetLumpFile(firsttx) == wadnum && Wads.GetLumpNamespace(firsttx) == ns)
+		if (Wads.GetLumpNamespace(firsttx) == ns)
 		{
 			Wads.GetLumpName (name, firsttx);
 
 			if (Wads.CheckNumForName (name, ns) == firsttx)
+			{
+				CreateTexture (firsttx, usetype);
+			}
+			StartScreen->Progress();
+		}
+		else if (ns == ns_flats && Wads.GetLumpFlags(firsttx) & LUMPF_MAYBEFLAT)
+		{
+			if (Wads.CheckNumForName (name, ns) < firsttx)
 			{
 				CreateTexture (firsttx, usetype);
 			}
@@ -431,8 +421,9 @@ void FTextureManager::AddGroup(int wadnum, const char * startlump, const char * 
 
 void FTextureManager::AddHiresTextures (int wadnum)
 {
-	int firsttx = Wads.CheckNumForName ("HI_START");
-	int lasttx = Wads.CheckNumForName ("HI_END");
+	int firsttx = Wads.GetFirstLump(wadnum);
+	int lasttx = Wads.GetLastLump(wadnum);
+
 	char name[9];
 	TArray<FTextureID> tlist;
 
@@ -443,15 +434,15 @@ void FTextureManager::AddHiresTextures (int wadnum)
 
 	name[8] = 0;
 
-	for (firsttx += 1; firsttx < lasttx; ++firsttx)
+	for (;firsttx <= lasttx; ++firsttx)
 	{
-		if (Wads.GetLumpFile(firsttx) == wadnum)
+		if (Wads.GetLumpNamespace(firsttx) == ns_hires)
 		{
-			tlist.Clear();
 			Wads.GetLumpName (name, firsttx);
 
 			if (Wads.CheckNumForName (name, ns_hires) == firsttx)
 			{
+				tlist.Clear();
 				int amount = ListTextures(name, tlist);
 				if (amount == 0)
 				{
@@ -717,28 +708,27 @@ void FTextureManager::AddTexturesForWad(int wadnum)
 	int lumpcount = Wads.GetNumLumps();
 
 	// First step: Load sprites
-	AddGroup(wadnum, "S_START", "S_END", ns_sprites, FTexture::TEX_Sprite);
+	AddGroup(wadnum, ns_sprites, FTexture::TEX_Sprite);
 
 	// When loading a Zip, all graphics in the patches/ directory should be
 	// added as well.
-	AddGroup(wadnum, NULL, NULL, ns_patches, FTexture::TEX_WallPatch);
+	AddGroup(wadnum, ns_patches, FTexture::TEX_WallPatch);
 
 	// Second step: TEXTUREx lumps
 	LoadTextureX(wadnum);
 
 	// Third step: Flats
-	AddGroup(wadnum, "F_START", "F_END", ns_flats, FTexture::TEX_Flat);
+	AddGroup(wadnum, ns_flats, FTexture::TEX_Flat);
 
 	// Fourth step: Textures (TX_)
-	AddGroup(wadnum, "TX_START", "TX_END", ns_newtextures, FTexture::TEX_Override);
+	AddGroup(wadnum, ns_newtextures, FTexture::TEX_Override);
 
 	// Sixth step: Try to find any lump in the WAD that may be a texture and load as a TEX_MiscPatch
-	for (int i = 0; i < lumpcount; i++)
-	{
-		int file = Wads.GetLumpFile(i);
-		if (file > wadnum) break;	// lumps in the global namespace are ordered by WAD
-		if (file < wadnum) continue;
+	int firsttx = Wads.GetFirstLump(wadnum);
+	int lasttx = Wads.GetLastLump(wadnum);
 
+	for (int i= firsttx; i <= lasttx; i++)
+	{
 		char name[9];
 		Wads.GetLumpName(name, i);
 		name[8]=0;
@@ -766,7 +756,7 @@ void FTextureManager::AddTexturesForWad(int wadnum)
 			if (Wads.CheckLumpName(i, "BLOCKMAP")) continue;
 			if (Wads.CheckLumpName(i, "BEHAVIOR")) continue;
 
-			// Don't bother looking this lump if something later overrides it.
+			// Don't bother looking at this lump if something later overrides it.
 			if (Wads.CheckNumForName(name, ns_graphics) != i) continue;
 
 			// skip this if it has already been added as a wall patch.

@@ -25,6 +25,7 @@ gameinfo
 	backpacktype = "BagOfHolding"
 	statusbar = ""
 	intermissionmusic = "mus_intr"
+	intermissioncounter = false
 	weaponslot = 1, "Staff", "Gauntlets"
 	weaponslot = 2, "GoldWand"
 	weaponslot = 3, "Crossbow"

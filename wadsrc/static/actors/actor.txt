@@ -196,6 +196,7 @@ ACTOR Actor native //: Thinker
 	action native A_KillChildren();
 	action native A_KillSiblings();
 	action native A_CheckFloor(state label);
+	action native A_CheckCeiling(state label);
 	action native A_PlayerSkinCheck(state label);
 	action native A_BasicAttack(int meleedamage, sound meleesound, class<actor> missiletype, float missileheight);
 	action native A_ThrowGrenade(class<Actor> itemtype, float zheight = 0, float xymom = 0, float zmom = 0, bool useammo = true);

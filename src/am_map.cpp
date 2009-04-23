@@ -914,6 +914,11 @@ void AM_maxOutWindowScale ()
 void AM_NewResolution()
 {
 	fixed_t oldmin = min_scale_mtof;
+	
+	if ( oldmin == 0 ) 
+	{
+		return; // [SP] Not in a game, exit!
+	}	
 	AM_calcMinMaxMtoF();
 	scale_mtof = Scale(scale_mtof, min_scale_mtof, oldmin);
 	scale_ftom = MapDiv(MAPUNIT, scale_mtof);

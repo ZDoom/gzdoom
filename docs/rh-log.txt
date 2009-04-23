@@ -1,4 +1,8 @@
 ﻿April 23, 2009  (Changes by Graf Zahl)
+- Added Gez's A_CheckCeiling submission.
+- Fixed: AM_NewResolution crashed when called from outside a level.
+- Added support for Quake PAK files.
+- Improved warning messages for WAD files with incorrect marker usage.
 - complete restructuring of resource file handling for more flexibility and future
   extensions.
 - Removed merging of special namespaces. For the texture manager this has

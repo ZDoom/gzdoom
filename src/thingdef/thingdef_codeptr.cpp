@@ -1967,6 +1967,25 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckFloor)
 
 //===========================================================================
 //
+// A_CheckCeiling
+// [GZ] Totally copied on A_CheckFloor, jumps if actor touches ceiling
+//
+//===========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckCeiling)
+{
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_STATE(jump, 0);
+
+	ACTION_SET_RESULT(false);
+	if (self->z+self->height >= self->ceilingz) // Height needs to be counted
+	{
+		ACTION_JUMP(jump);
+	}
+
+}
+
+//===========================================================================
+//
 // A_Stop
 // resets all momentum of the actor to 0
 //

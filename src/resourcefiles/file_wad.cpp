@@ -169,7 +169,14 @@ void FWadFile::SetNamespace(const char *startmarker, const char *endmarker, name
 			break;
 		}
 	}
-	if (end == -1) return;
+	if (end == -1) 
+	{
+		if (start != -1)
+		{
+			Printf(TEXTCOLOR_YELLOW"WARNING: %s marker without corresponding %s found.\n", startmarker, endmarker);
+		}
+		return;
+	}
 
 	if (start != -1)
 	{
@@ -197,16 +204,19 @@ void FWadFile::SetNamespace(const char *startmarker, const char *endmarker, name
 			}
 		}
 	}
-	else if (flathack)
+	else 
 	{
 		Printf(TEXTCOLOR_YELLOW"WARNING: %s marker without corresponding %s found.\n", endmarker, startmarker);
-		for(int i = 0; i < end; i++)
+		if (flathack)
 		{
-			if (Lumps[i].LumpSize == 4096)
+			for(int i = 0; i < end; i++)
 			{
-				// We can't add this to the flats namespace but 
-				// it needs to be flagged for the texture manager.
-				Lumps[i].Flags |= LUMPF_MAYBEFLAT;
+				if (Lumps[i].LumpSize == 4096)
+				{
+					// We can't add this to the flats namespace but 
+					// it needs to be flagged for the texture manager.
+					Lumps[i].Flags |= LUMPF_MAYBEFLAT;
+				}
 			}
 		}
 	}

@@ -138,14 +138,17 @@ FResourceFile *CheckGRP(const char *filename, FileReader *file)
 {
 	char head[12];
 
-	file->Seek(0, SEEK_SET);
-	file->Read(&head, 12);
-	file->Seek(0, SEEK_SET);
-	if (!memcmp(head, "KenSilverman", 12))
+	if (file->GetLength() >= 12)
 	{
-		FResourceFile *rf = new FGrpFile(filename, file);
-		if (rf->Open()) return rf;
-		delete rf;
+		file->Seek(0, SEEK_SET);
+		file->Read(&head, 12);
+		file->Seek(0, SEEK_SET);
+		if (!memcmp(head, "KenSilverman", 12))
+		{
+			FResourceFile *rf = new FGrpFile(filename, file);
+			if (rf->Open()) return rf;
+			delete rf;
+		}
 	}
 	return NULL;
 }

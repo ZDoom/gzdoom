@@ -80,6 +80,7 @@ bool FLumpFile::Open()
 	Lumps->Namespace = ns_global;
 	Lumps->Flags = 0;
 	Lumps->FullName = NULL;
+	NumLumps = 1;
 	return true;
 }
 

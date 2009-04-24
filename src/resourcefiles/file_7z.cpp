@@ -334,14 +334,17 @@ FResourceFile *Check7Z(const char *filename, FileReader *file)
 {
 	char head[k7zSignatureSize];
 
-	file->Seek(0, SEEK_SET);
-	file->Read(&head, k7zSignatureSize);
-	file->Seek(0, SEEK_SET);
-	if (!memcmp(head, k7zSignature, k7zSignatureSize))
+	if (file->GetLength() >= k7zSignatureSize)
 	{
-		FResourceFile *rf = new F7ZFile(filename, file);
-		if (rf->Open()) return rf;
-		delete rf;
+		file->Seek(0, SEEK_SET);
+		file->Read(&head, k7zSignatureSize);
+		file->Seek(0, SEEK_SET);
+		if (!memcmp(head, k7zSignature, k7zSignatureSize))
+		{
+			FResourceFile *rf = new F7ZFile(filename, file);
+			if (rf->Open()) return rf;
+			delete rf;
+		}
 	}
 	return NULL;
 }

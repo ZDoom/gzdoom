@@ -130,14 +130,17 @@ FResourceFile *CheckPak(const char *filename, FileReader *file)
 {
 	char head[4];
 
-	file->Seek(0, SEEK_SET);
-	file->Read(&head, 4);
-	file->Seek(0, SEEK_SET);
-	if (!memcmp(head, "PACK", 4))
+	if (file->GetLength() >= 12)
 	{
-		FResourceFile *rf = new FPakFile(filename, file);
-		if (rf->Open()) return rf;
-		delete rf;
+		file->Seek(0, SEEK_SET);
+		file->Read(&head, 4);
+		file->Seek(0, SEEK_SET);
+		if (!memcmp(head, "PACK", 4))
+		{
+			FResourceFile *rf = new FPakFile(filename, file);
+			if (rf->Open()) return rf;
+			delete rf;
+		}
 	}
 	return NULL;
 }

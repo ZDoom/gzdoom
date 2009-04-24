@@ -391,14 +391,17 @@ FResourceFile *CheckZip(const char *filename, FileReader *file)
 {
 	char head[4];
 
-	file->Seek(0, SEEK_SET);
-	file->Read(&head, 4);
-	file->Seek(0, SEEK_SET);
-	if (!memcmp(head, "PK\x3\x4", 4))
+	if (file->GetLength() >= sizeof(FZipLocalFileHeader))
 	{
-		FResourceFile *rf = new FZipFile(filename, file);
-		if (rf->Open()) return rf;
-		delete rf;
+		file->Seek(0, SEEK_SET);
+		file->Read(&head, 4);
+		file->Seek(0, SEEK_SET);
+		if (!memcmp(head, "PK\x3\x4", 4))
+		{
+			FResourceFile *rf = new FZipFile(filename, file);
+			if (rf->Open()) return rf;
+			delete rf;
+		}
 	}
 	return NULL;
 }

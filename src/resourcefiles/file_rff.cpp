@@ -235,14 +235,17 @@ FResourceFile *CheckRFF(const char *filename, FileReader *file)
 {
 	char head[4];
 
-	file->Seek(0, SEEK_SET);
-	file->Read(&head, 4);
-	file->Seek(0, SEEK_SET);
-	if (!memcmp(head, "RFF\x1a", 4))
+	if (file->GetLength() >= 16)
 	{
-		FResourceFile *rf = new FRFFFile(filename, file);
-		if (rf->Open()) return rf;
-		delete rf;
+		file->Seek(0, SEEK_SET);
+		file->Read(&head, 4);
+		file->Seek(0, SEEK_SET);
+		if (!memcmp(head, "RFF\x1a", 4))
+		{
+			FResourceFile *rf = new FRFFFile(filename, file);
+			if (rf->Open()) return rf;
+			delete rf;
+		}
 	}
 	return NULL;
 }

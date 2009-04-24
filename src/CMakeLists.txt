@@ -661,7 +661,7 @@ add_executable( zdoom WIN32
 	resourcefiles/file_lump.cpp
 	resourcefiles/file_rff.cpp
 	resourcefiles/file_wad.cpp
-	resourcefiles/file.zip.cpp
+	resourcefiles/file_zip.cpp
 	resourcefiles/file_pak.cpp
 	resourcefiles/resourcefile.cpp
 	sfmt/SFMT.cpp

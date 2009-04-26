@@ -15,7 +15,7 @@ struct FResourceLump
 	char *			FullName;		// only valid for files loaded from a .zip file
 	char			Name[9];
 	BYTE			Flags;
-	BYTE			RefCount;
+	SBYTE			RefCount;
 	char *			Cache;
 	FResourceFile *	Owner;
 	int				Namespace;

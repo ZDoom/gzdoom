@@ -1,4 +1,7 @@
-﻿April 23, 2009  (Changes by Graf Zahl)
+﻿April 25, 2009  (Changes by Graf Zahl)
+- Fixed handling of embedded WADs.
+
+April 23, 2009  (Changes by Graf Zahl)
 - Added Gez's A_CheckCeiling submission.
 - Fixed: AM_NewResolution crashed when called from outside a level.
 - Added support for Quake PAK files.

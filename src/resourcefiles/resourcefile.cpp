@@ -78,7 +78,7 @@ FResourceLump::~FResourceLump()
 		delete [] FullName;
 		FullName = NULL;
 	}
-	if (Cache != NULL)
+	if (Cache != NULL && RefCount >= 0)
 	{
 		delete [] Cache;
 		Cache = NULL;
@@ -150,7 +150,7 @@ void FResourceLump::LumpNameSetup(char *iname)
 void FResourceLump::CheckEmbedded()
 {
 	// Checks for embedded archives
-	const char *c = strstr(Name, ".wad");
+	const char *c = strstr(FullName, ".wad");
 	if (c && strlen(c) == 4 && !strchr(Name, '/'))
 	{
 		// Mark all embedded WADs

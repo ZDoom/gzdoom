@@ -633,6 +633,10 @@ struct UDMFParser
 				Flag(ld->flags, ML_BLOCKPROJECTILE, key); 
 				break;
 
+			case NAME_blockuse:
+				Flag(ld->flags, ML_BLOCKUSE, key); 
+				break;
+
 			default:
 				break;
 			}

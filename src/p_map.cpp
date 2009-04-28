@@ -3636,7 +3636,7 @@ bool P_UseTraverse(AActor *usething, fixed_t endx, fixed_t endy, bool &foundline
 		if (in->d.line->special == 0 || !(in->d.line->activation & (SPAC_Use|SPAC_UseThrough)))
 		{
 	blocked:
-			if (in->d.line->flags & ML_BLOCKEVERYTHING)
+			if (in->d.line->flags & (ML_BLOCKEVERYTHING|ML_BLOCKUSE))
 			{
 				open.range = 0;
 			}

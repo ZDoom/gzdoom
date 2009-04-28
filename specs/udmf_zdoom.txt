@@ -1,5 +1,5 @@
 ===============================================================================
-Universal Doom Map Format ZDoom extensions v1.5 - 22.02.2009
+Universal Doom Map Format ZDoom extensions v1.6 - 28.04.2009
 
 
     Copyright (c) 2008 Christoph Oelckers.
@@ -103,6 +103,7 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       midtex3d = <bool>;        // Actors can walk on mid texture.
       checkswitchrange = <bool>;// Switches can only be activated when vertically reachable.
       blockprojectiles = <bool>;// Line blocks all projectiles
+      blockuse = <bool>;		// Line blocks all use actions
                     
    }
    
@@ -233,6 +234,9 @@ this uses array syntax. No functional changes
 
 1.5 22.02.2009
 Added blockprojectiles to lines and firstsideonly to conversion notes
+
+1.6 28.04.2009
+Added blockuse line flag.
 
 ===============================================================================
 EOF

@@ -1,4 +1,7 @@
-﻿April 25, 2009  (Changes by Graf Zahl)
+﻿April 28, 2009  (Changes by Graf Zahl)
+- Added ML_BLOCKUSE line flag, accessible through UDMF and Line_SetBlocking.
+
+April 25, 2009  (Changes by Graf Zahl)
 - Fixed handling of embedded WADs.
 
 April 23, 2009  (Changes by Graf Zahl)

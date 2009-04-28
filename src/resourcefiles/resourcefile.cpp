@@ -151,7 +151,7 @@ void FResourceLump::CheckEmbedded()
 {
 	// Checks for embedded archives
 	const char *c = strstr(FullName, ".wad");
-	if (c && strlen(c) == 4 && !strchr(Name, '/'))
+	if (c && strlen(c) == 4 && !strchr(FullName, '/'))
 	{
 		// Mark all embedded WADs
 		Flags |= LUMPF_EMBEDDED;

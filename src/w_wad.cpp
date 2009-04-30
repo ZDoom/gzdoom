@@ -418,6 +418,7 @@ int FWadCollection::CheckNumForName (const char *name, int space)
 
 int FWadCollection::CheckNumForName (const char *name, int space, int wadnum, bool exact)
 {
+	FResourceLump *lump;
 	char uname[8];
 	DWORD i;
 
@@ -428,18 +429,16 @@ int FWadCollection::CheckNumForName (const char *name, int space, int wadnum, bo
 
 	uppercopy (uname, name);
 	i = FirstLumpIndex[LumpNameHash (uname) % NumLumps];
-	FResourceLump *lump = LumpInfo[i].lump;
 
 	// If exact is true if will only find lumps in the same WAD, otherwise
 	// also those in earlier WADs.
 
 	while (i != NULL_INDEX &&
-		(*(QWORD *)&lump->Name != *(QWORD *)&uname ||
+		(lump = LumpInfo[i].lump, *(QWORD *)&lump->Name != *(QWORD *)&uname ||
 		lump->Namespace != space ||
 		 (exact? (LumpInfo[i].wadnum != wadnum) : (LumpInfo[i].wadnum > wadnum)) ))
 	{
 		i = NextLumpIndex[i];
-		lump = LumpInfo[i].lump;
 	}
 
 	return i != NULL_INDEX ? i : -1;

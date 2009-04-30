@@ -1,4 +1,10 @@
-﻿April 28, 2009  (Changes by Graf Zahl)
+﻿April 29, 2009
+- Fixed: FWadCollection::CheckNumForName() read the lump each iteration before
+  checking for the end marker. On 32-bit systems, this is -1, but on 64-bit
+  systems, it is a very large integer that is highly unlikely to be in mapped
+  memory.
+
+April 28, 2009  (Changes by Graf Zahl)
 - Added ML_BLOCKUSE line flag, accessible through UDMF and Line_SetBlocking.
 
 April 25, 2009  (Changes by Graf Zahl)

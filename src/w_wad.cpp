@@ -189,6 +189,7 @@ void FWadCollection::InitMultipleFiles (wadlist_t **filenames)
 	{
 		I_FatalError ("W_InitMultipleFiles: no files found");
 	}
+	RenameSprites();
 
 	// [RH] Set up hash table
 	FirstLumpIndex = new DWORD[NumLumps];
@@ -196,6 +197,8 @@ void FWadCollection::InitMultipleFiles (wadlist_t **filenames)
 	FirstLumpIndex_FullName = new DWORD[NumLumps];
 	NextLumpIndex_FullName = new DWORD[NumLumps];
 	InitHashChains ();
+	LumpInfo.ShrinkToFit();
+	Files.ShrinkToFit();
 }
 
 //-----------------------------------------------------------------------
@@ -667,7 +670,7 @@ void FWadCollection::InitHashChains (void)
 //
 //==========================================================================
 
-void FWadCollection::RenameSprites (int startlump)
+void FWadCollection::RenameSprites ()
 {
 	bool renameAll;
 	bool MNTRZfound = false;
@@ -739,64 +742,66 @@ void FWadCollection::RenameSprites (int startlump)
 		break;
 	}
 
-	renameAll = !!Args->CheckParm ("-oldsprites");
 
-	for (DWORD i = startlump + 1;
-		i < NumLumps && 
-		 *(DWORD *)LumpInfo[i].lump->Name != MAKE_ID('S','_','E','N') &&
-		 *(((DWORD *)LumpInfo[i].lump->Name) + 1) != MAKE_ID('D',0,0,0);
-		++i)
+	for (DWORD i=0; i< LumpInfo.Size(); i++)
 	{
-		if (!strncmp(LumpInfo[i].lump->Name, "MNTRZ", 5))
+		// check for full Minotaur animations. If this is not found
+		// some frames need to be renamed.
+		if (LumpInfo[i].lump->Namespace == ns_sprites)
 		{
-			MNTRZfound = true;
-			break;
+			if (*(DWORD *)LumpInfo[i].lump->Name == MAKE_ID('M', 'N', 'T', 'R') && LumpInfo[i].lump->Name[4] == 'Z' )
+			{
+				MNTRZfound = true;
+				break;
+			}
 		}
 	}
 
-	for (DWORD i = startlump + 1;
-		i < NumLumps && 
-		 *(DWORD *)LumpInfo[i].lump->Name != MAKE_ID('S','_','E','N') &&
-		 *(((DWORD *)LumpInfo[i].lump->Name) + 1) != MAKE_ID('D',0,0,0);
-		++i)
+	renameAll = !!Args->CheckParm ("-oldsprites");
+	
+	for (DWORD i = 0; i < LumpInfo.Size(); i++)
 	{
-		// Only sprites in the IWAD normally get renamed
-		if (renameAll || LumpInfo[i].wadnum == IWAD_FILENUM)
+		if (LumpInfo[i].lump->Namespace == ns_sprites)
 		{
-			for (int j = 0; j < numrenames; ++j)
+			// Only sprites in the IWAD normally get renamed
+			if (renameAll || LumpInfo[i].wadnum == IWAD_FILENUM)
 			{
-				if (*(DWORD *)LumpInfo[i].lump->Name == renames[j*2])
+				for (int j = 0; j < numrenames; ++j)
 				{
-					*(DWORD *)LumpInfo[i].lump->Name = renames[j*2+1];
+					if (*(DWORD *)LumpInfo[i].lump->Name == renames[j*2])
+					{
+						*(DWORD *)LumpInfo[i].lump->Name = renames[j*2+1];
+					}
+				}
+				if (gameinfo.gametype == GAME_Hexen)
+				{
+					if (CheckLumpName (i, "ARTIINVU"))
+					{
+						LumpInfo[i].lump->Name[4]='D'; LumpInfo[i].lump->Name[5]='E';
+						LumpInfo[i].lump->Name[6]='F'; LumpInfo[i].lump->Name[7]='N';
+					}
 				}
 			}
-			if (gameinfo.gametype == GAME_Hexen)
-			{
-				if (CheckLumpName (i, "ARTIINVU"))
-				{
-					LumpInfo[i].lump->Name[4]='D'; LumpInfo[i].lump->Name[5]='E';
-					LumpInfo[i].lump->Name[6]='F'; LumpInfo[i].lump->Name[7]='N';
-				}
-			}
-		}
-		if (!MNTRZfound) //gameinfo.gametype == GAME_Hexen && LumpInfo[i].wadnum == IWAD_FILENUM)
-		{
-			if (*(DWORD *)LumpInfo[i].lump->Name == MAKE_ID('M', 'N', 'T', 'R'))
-			{
-				if (LumpInfo[i].lump->Name[4] >= 'F' && LumpInfo[i].lump->Name[4] <= 'K')
-				{
-					LumpInfo[i].lump->Name[4] += 'U' - 'F';
-				}
-			}
-		}
 
-		// When not playing Doom rename all BLOD sprites to BLUD so that
-		// the same blood states can be used everywhere
-		if (!(gameinfo.gametype & GAME_DoomChex))
-		{
-			if (*(DWORD *)LumpInfo[i].lump->Name == MAKE_ID('B', 'L', 'O', 'D'))
+			if (!MNTRZfound)
 			{
-				*(DWORD *)LumpInfo[i].lump->Name = MAKE_ID('B', 'L', 'U', 'D');
+				if (*(DWORD *)LumpInfo[i].lump->Name == MAKE_ID('M', 'N', 'T', 'R'))
+				{
+					if (LumpInfo[i].lump->Name[4] >= 'F' && LumpInfo[i].lump->Name[4] <= 'K')
+					{
+						LumpInfo[i].lump->Name[4] += 'U' - 'F';
+					}
+				}
+			}
+			
+			// When not playing Doom rename all BLOD sprites to BLUD so that
+			// the same blood states can be used everywhere
+			if (!(gameinfo.gametype & GAME_DoomChex))
+			{
+				if (*(DWORD *)LumpInfo[i].lump->Name == MAKE_ID('B', 'L', 'O', 'D'))
+				{
+					*(DWORD *)LumpInfo[i].lump->Name = MAKE_ID('B', 'L', 'U', 'D');
+				}
 			}
 		}
 	}

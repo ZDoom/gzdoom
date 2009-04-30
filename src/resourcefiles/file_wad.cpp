@@ -147,76 +147,107 @@ inline bool FWadFile::IsMarker(int lump, const char *marker)
 
 void FWadFile::SetNamespace(const char *startmarker, const char *endmarker, namespace_t space, bool flathack)
 {
-	int start=-1, end=-1;
 	bool warned = false;
+	int numstartmarkers = 0, numendmarkers = 0;
 	int i;
+	struct Marker
+	{
+		int markertype;
+		int index;
+	};
+	TArray<Marker> markers;
 	
 	for(i = 0; i < (int)NumLumps; i++)
 	{
 		if (IsMarker(i, startmarker))
 		{
-			start = i;
-			break;
+			Marker m = {0, i };
+			markers.Push(m);
+			numstartmarkers++;
 		}
-	}
-	if (!flathack && start == -1) return;
-
-	for(i = NumLumps-1; i > start; i--)
-	{
-		if (IsMarker(i, endmarker))
+		else if (IsMarker(i, endmarker))
 		{
-			end = i;
-			break;
+			Marker m = {1, i };
+			markers.Push(m);
+			numendmarkers++;
 		}
-	}
-	if (end == -1) 
-	{
-		if (start != -1)
-		{
-			Printf(TEXTCOLOR_YELLOW"WARNING: %s marker without corresponding %s found.\n", startmarker, endmarker);
-		}
-		return;
 	}
 
-	if (start != -1)
+	if (numstartmarkers == 0)
 	{
-		for(int i = start+1; i < end; i++)
-		{
-			if (Lumps[i].Namespace != ns_global)
-			{
-				if (!warned)
-				{
-					Printf(TEXTCOLOR_YELLOW"WARNING: Overlapping namespaces found.\n");
-				}
-				warned = true;
-			}
-			else if (IsMarker(i, startmarker))
-			{
-				Printf(TEXTCOLOR_YELLOW"WARNING: Multiple %s markers found.\n", startmarker);
-			}
-			else if (IsMarker(i, endmarker))
-			{
-				Printf(TEXTCOLOR_YELLOW"WARNING: Multiple %s markers found.\n", endmarker);
-			}
-			else
-			{
-				Lumps[i].Namespace = space;
-			}
-		}
-	}
-	else 
-	{
+		if (numendmarkers == 0) return;	// no markers found
+
 		Printf(TEXTCOLOR_YELLOW"WARNING: %s marker without corresponding %s found.\n", endmarker, startmarker);
+
+		
 		if (flathack)
 		{
+			// We have found no F_START but one or more F_END markers.
+			// mark all lumps before the last F_END marker as potential flats.
+			int end = markers[markers.Size()-1].index;
 			for(int i = 0; i < end; i++)
 			{
 				if (Lumps[i].LumpSize == 4096)
 				{
 					// We can't add this to the flats namespace but 
 					// it needs to be flagged for the texture manager.
+					DPrintf("Marking %s as potential flat\n", Lumps[i].Name);
 					Lumps[i].Flags |= LUMPF_MAYBEFLAT;
 				}
+			}
+		}
+		return;
+	}
+
+	i = 0;
+	while (i < markers.Size())
+	{
+		int start, end;
+		if (markers[i].markertype != 0)
+		{
+			Printf(TEXTCOLOR_YELLOW"WARNING: %s marker without corresponding %s found.\n", endmarker, startmarker);
+			i++;
+			continue;
+		}
+		start = i++;
+
+		// skip over subsequent x_START markers
+		while (i < markers.Size() && markers[i].markertype == 0)
+		{
+			Printf(TEXTCOLOR_YELLOW"WARNING: duplicate %s marker found.\n", startmarker);
+			i++;
+			continue;
+		}
+		// same for x_START markers
+		while (i < markers.Size()-1 && (markers[i].markertype == 1 && markers[i+1].markertype == 1))
+		{
+			Printf(TEXTCOLOR_YELLOW"WARNING: duplicate %s marker found.\n", endmarker);
+			i++;
+			continue;
+		}
+		// We found a starting marker but no end marker. Ignore this block.
+		if (i >= markers.Size())
+		{
+			Printf(TEXTCOLOR_YELLOW"WARNING: %s marker without corresponding %s found.\n", startmarker, endmarker);
+			return;
+		}
+		end = i++;
+
+		// we found a marked block
+		DPrintf("Found %s block at (%d-%d)\n", startmarker, markers[start].index, markers[end].index);
+		for(int j = markers[start].index+1; j < markers[end].index; j++)
+		{
+			if (Lumps[j].Namespace != ns_global)
+			{
+				if (!warned)
+				{
+					Printf(TEXTCOLOR_YELLOW"WARNING: Overlapping namespaces found (lump %d.)\n", j);
+				}
+				warned = true;
+			}
+			else
+			{
+				Lumps[j].Namespace = space;
 			}
 		}
 	}

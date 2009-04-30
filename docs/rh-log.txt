@@ -1,4 +1,11 @@
-﻿April 29, 2009
+﻿April 30, 2009  (Changes by Graf Zahl)
+- Fixed: Completely empty patches (8 0-bytes) could not be handled by the
+  texture manager. They now get assigned a new FEmptyTexture object
+  that is just a 1x1 pixel transparent texture.
+- Fixed: Multiple namespace markers of the same type were no longer detected.
+- Fixed sprite renaming.
+
+April 29, 2009
 - Maps defined with Hexen-style MAPINFOs now run their scripts in the proper
   order.
 - Fixed: FWadCollection::CheckNumForName() read the lump each iteration before

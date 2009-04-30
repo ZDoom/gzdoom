@@ -232,7 +232,7 @@ protected:
 	void InitHashChains ();								// [RH] Set up the lumpinfo hashing
 
 private:
-	void RenameSprites (int startlump);
+	void RenameSprites ();
 	void DeleteAll();
 };
 

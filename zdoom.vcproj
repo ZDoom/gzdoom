@@ -5214,6 +5214,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\src\textures\emptytexture.cpp"
+					>
+				</File>
+				<File
 					RelativePath=".\src\textures\flattexture.cpp"
 					>
 				</File>

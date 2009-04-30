@@ -1765,7 +1765,7 @@ static void C_PasteText(FString clip, BYTE *buffer, int len)
 	{
 		// Only paste the first line.
 		long brk = clip.IndexOfAny("\r\n\b");
-		int cliplen = brk >= 0 ? brk : clip.Len();
+		int cliplen = brk >= 0 ? brk : (int)clip.Len();
 
 		// Make sure there's room for the whole thing.
 		if (buffer[0] + cliplen > len)

@@ -145,16 +145,19 @@ inline bool FWadFile::IsMarker(int lump, const char *marker)
 //
 //==========================================================================
 
+// This class was supposed to be local in the function but GCC
+// does not like that.
+struct Marker
+{
+	int markertype;
+	int index;
+};
+
 void FWadFile::SetNamespace(const char *startmarker, const char *endmarker, namespace_t space, bool flathack)
 {
 	bool warned = false;
 	int numstartmarkers = 0, numendmarkers = 0;
 	int i;
-	struct Marker
-	{
-		int markertype;
-		int index;
-	};
 	TArray<Marker> markers;
 	
 	for(i = 0; i < (int)NumLumps; i++)

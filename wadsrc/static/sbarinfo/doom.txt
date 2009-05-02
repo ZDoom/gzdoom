@@ -63,7 +63,8 @@ statusbar fullscreen, fullscreenoffsets // ZDoom HUD
 	}
 	gamemode singleplayer, cooperative, teamgame
 	{
-		drawkeybar 6, vertical, reverserows, auto, -10, 2, 0, 3, auto;
+		// let's hope no mod ever uses 100 keys...
+		drawkeybar 100, vertical, reverserows, auto, -10, 2, 0, 3, auto;
 	}
 }
 

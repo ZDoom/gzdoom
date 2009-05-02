@@ -543,8 +543,11 @@ bool P_NewLookPlayers (AActor *actor, angle_t fov, fixed_t mindist, fixed_t maxd
 	}
 	else if (actor->flags & MF_FRIENDLY)
 	{
-		return P_NewLookEnemies (actor, fov, mindist, maxdist, chasegoal);
-	}
+		if (!deathmatch) // [SP] If you don't see any enemies in deathmatch, look for players.
+			return P_NewLookEnemies (actor, fov, mindist, maxdist, chasegoal);
+		else if ( P_NewLookEnemies (actor, fov, mindist, maxdist, chasegoal) )
+			return true;
+	}	// [SP] if false, and in deathmatch, intentional fall-through
 
 	if (!(gameinfo.gametype & (GAME_DoomStrifeChex)) &&
 		!multiplayer &&
@@ -627,6 +630,16 @@ bool P_NewLookPlayers (AActor *actor, angle_t fov, fixed_t mindist, fixed_t maxd
 
 		if (mindist && dist < mindist)
 			continue;			// [KS] too close
+
+		// [SP] Deathmatch fixes - if we have MF_FRIENDLY we're definitely in deathmatch
+		// We're going to ignore our master, but go after his enemies.
+		if ( actor->flags & MF_FRIENDLY )
+		{
+			if ( actor->FriendPlayer == 0 )
+				continue; // I have no friends, I will ignore players.
+			if ( actor->FriendPlayer == player->mo->FriendPlayer )
+				continue; // This is my master.
+		}
 
 		if (fov)
 		{

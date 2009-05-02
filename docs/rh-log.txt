@@ -1,4 +1,14 @@
-﻿April 30, 2009  (Changes by Graf Zahl)
+﻿May 2, 2009  (Changes by Graf Zahl)
+- Fixed: Doom's fullscreen HUD was limited to 6 keys.
+- Made 'next endgame' work again for cases where it is supposed to be
+  the same as 'next endgame4'.
+- GCC nitpick fix: Classes being used as template parameters may not be
+  defined locally in a function. Fixed FWadFile::SetNamespace for that.
+- Improved error reporting for incorrect textures in maps.
+- Fixed: When music was stopped this was not set in the global music state.
+- Fixed: Friendly monsters did not target enemy players in deathmatch.
+
+April 30, 2009  (Changes by Graf Zahl)
 - Fixed: Completely empty patches (8 0-bytes) could not be handled by the
   texture manager. They now get assigned a new FEmptyTexture object
   that is just a 1x1 pixel transparent texture.

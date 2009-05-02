@@ -111,6 +111,7 @@ enum
 };
 
 
+void SetTexture (sector_t *sector, int index, int position, const char *name8);
 void P_ProcessSideTextures(bool checktranmap, side_t *sd, sector_t *sec, mapsidedef_t *msd, int special, int tag, short *alpha);
 void P_AdjustLine (line_t *ld);
 void P_FinishLoadingLineDef(line_t *ld, int alpha);
@@ -780,7 +781,7 @@ struct UDMFParser
 	//
 	//===========================================================================
 
-	void ParseSector(sector_t *sec)
+	void ParseSector(sector_t *sec, int index)
 	{
 		int lightcolor = -1;
 		int fadecolor = -1;
@@ -824,11 +825,11 @@ struct UDMFParser
 				break;
 
 			case NAME_Texturefloor:
-				sec->SetTexture(sector_t::floor, TexMan.GetTexture (CheckString(key), FTexture::TEX_Flat, FTextureManager::TEXMAN_Overridable));
+				SetTexture(sec, index, sector_t::floor, CheckString(key));
 				break;
 
 			case NAME_Textureceiling:
-				sec->SetTexture(sector_t::ceiling, TexMan.GetTexture (CheckString(key), FTexture::TEX_Flat, FTextureManager::TEXMAN_Overridable));
+				SetTexture(sec, index, sector_t::ceiling, CheckString(key));
 				break;
 
 			case NAME_Lightlevel:
@@ -1209,7 +1210,7 @@ struct UDMFParser
 			else if (sc.Compare("sector"))
 			{
 				sector_t sec;
-				ParseSector(&sec);
+				ParseSector(&sec, ParsedSectors.Size());
 				ParsedSectors.Push(sec);
 			}
 			else if (sc.Compare("vertex"))

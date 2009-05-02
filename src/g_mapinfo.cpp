@@ -760,15 +760,20 @@ void FMapInfoParser::ParseNextMap(char *mapname)
 	}
 	else
 	{
-		sc.MustGetString();
 
+		sc.MustGetString();
 		if (sc.Compare("endgame"))
 		{
+			if (!sc.CheckString("{"))
+			{
+				// Make Demon Eclipse work again
+				sc.UnGet();
+				goto standard_endgame;
+			}
 			newSeq.Advanced = true;
 			newSeq.EndType = END_Pic1;
 			newSeq.PlayTheEnd = false;
 			newSeq.MusicLooping = true;
-			sc.MustGetStringName("{");
 			while (!sc.CheckString("}"))
 			{
 				sc.MustGetString();
@@ -843,6 +848,7 @@ void FMapInfoParser::ParseNextMap(char *mapname)
 			case 'C':	type = END_Cast;		break;
 			case 'W':	type = END_Underwater;	break;
 			case 'S':	type = END_Strife;		break;
+		standard_endgame:
 			default:	type = END_Pic3;		break;
 			}
 			newSeq.EndType = type;

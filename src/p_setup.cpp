@@ -557,6 +557,68 @@ void MapData::GetChecksum(BYTE cksum[16])
 	md5.Final(cksum);
 }
 
+
+//===========================================================================
+//
+// Sets a sidedef's texture and prints a message if it's not present.
+//
+//===========================================================================
+
+static void SetTexture (side_t *side, int position, const char *name8)
+{
+	static const char *positionnames[] = { "top", "middle", "bottom" };
+	static const char *sidenames[] = { "first", "second" };
+	char name[9];
+	strncpy (name, name8, 8);
+	name[8] = 0;
+	FTextureID texture = TexMan.CheckForTexture (name, FTexture::TEX_Wall,
+			FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_TryAny);
+
+	if (!texture.Exists())
+	{
+		// Print an error that lists all references to this sidedef.
+		// We must scan the linedefs manually for all references to this sidedef.
+		for(int i = 0; i < numlines; i++)
+		{
+			for(int j = 0; j < 2; j++)
+			{
+				if (lines[i].sidenum[j] == side - sides)
+				{
+					Printf("Unknown %s texture '%s' on %s side of linedef %d\n",
+						positionnames[position], name, sidenames[j], i);
+				}
+			}
+		}
+		texture = TexMan.GetDefaultTexture();
+	}
+	side->SetTexture(position, texture);
+}
+
+//===========================================================================
+//
+// Sets a sidedef's texture and prints a message if it's not present.
+// (Passing index separately is for UDMF which does not have sectors allocated yet)
+//
+//===========================================================================
+
+void SetTexture (sector_t *sector, int index, int position, const char *name8)
+{
+	static const char *positionnames[] = { "floor", "ceiling" };
+	char name[9];
+	strncpy (name, name8, 8);
+	name[8] = 0;
+	FTextureID texture = TexMan.CheckForTexture (name, FTexture::TEX_Flat,
+			FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_TryAny);
+
+	if (!texture.Exists())
+	{
+		Printf("Unknown %s texture '%s' in sector %d\n",
+			positionnames[position], name, index);
+		texture = TexMan.GetDefaultTexture();
+	}
+	sector->SetTexture(position, texture);
+}
+
 //===========================================================================
 //
 // [RH] Figure out blends for deep water sectors
@@ -1253,10 +1315,8 @@ void P_LoadSectors (MapData * map)
 		ss->ceilingplane.d = ss->GetPlaneTexZ(sector_t::ceiling);
 		ss->ceilingplane.c = -FRACUNIT;
 		ss->ceilingplane.ic = -FRACUNIT;
-		strncpy (fname, ms->floorpic, 8);
-		ss->SetTexture(sector_t::floor, TexMan.GetTexture (fname, FTexture::TEX_Flat, FTextureManager::TEXMAN_Overridable));
-		strncpy (fname, ms->ceilingpic, 8);
-		ss->SetTexture(sector_t::ceiling, TexMan.GetTexture (fname, FTexture::TEX_Flat, FTextureManager::TEXMAN_Overridable));
+		SetTexture(ss, i, sector_t::floor, ms->floorpic);
+		SetTexture(ss, i, sector_t::ceiling, ms->ceilingpic);
 		ss->lightlevel = clamp (LittleShort(ms->lightlevel), (short)0, (short)255);
 		if (map->HasBehavior)
 			ss->special = LittleShort(ms->special);
@@ -2163,8 +2223,7 @@ void P_ProcessSideTextures(bool checktranmap, side_t *sd, sector_t *sec, mapside
 			SetTextureNoErr (sd, side_t::bottom, &fog, msd->bottomtexture, &foggood);
 			SetTextureNoErr (sd, side_t::top, &color, msd->toptexture, &colorgood);
 			strncpy (name, msd->midtexture, 8);
-			sd->SetTexture(side_t::mid, 
-				TexMan.GetTexture (name, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable));
+			SetTexture(sd, side_t::mid, msd->midtexture);
 
 			if (colorgood | foggood)
 			{
@@ -2200,15 +2259,11 @@ void P_ProcessSideTextures(bool checktranmap, side_t *sd, sector_t *sec, mapside
 		}
 		else
 		{
-			strncpy (name, msd->toptexture, 8);
-			sd->SetTexture(side_t::top, TexMan.GetTexture (name, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable));
+			SetTexture(sd, side_t::top, msd->toptexture);
 		}
 
-		strncpy (name, msd->midtexture, 8);
-		sd->SetTexture(side_t::mid, TexMan.GetTexture (name, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable));
-
-		strncpy (name, msd->bottomtexture, 8);
-		sd->SetTexture(side_t::bottom, TexMan.GetTexture (name, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable));
+		SetTexture(sd, side_t::mid, msd->midtexture);
+		SetTexture(sd, side_t::bottom, msd->bottomtexture);
 		break;
 #endif
 
@@ -2230,32 +2285,20 @@ void P_ProcessSideTextures(bool checktranmap, side_t *sd, sector_t *sec, mapside
 			}
 			else
 			{
-				strncpy (name, msd->midtexture, 8);
-				sd->SetTexture(side_t::mid, 
-					TexMan.GetTexture (name, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable));
+				SetTexture(sd, side_t::mid, msd->midtexture);
 			}
 
-			strncpy (name, msd->toptexture, 8);
-			sd->SetTexture(side_t::top, TexMan.GetTexture (name, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable));
-
-			strncpy (name, msd->bottomtexture, 8);
-			sd->SetTexture(side_t::bottom, TexMan.GetTexture (name, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable));
+			SetTexture(sd, side_t::top, msd->toptexture);
+			SetTexture(sd, side_t::bottom, msd->bottomtexture);
 			break;
 		}
 		// Fallthrough for Hexen maps is intentional
 
 	default:			// normal cases
-		strncpy (name, msd->midtexture, 8);
-		sd->SetTexture(side_t::mid, 
-			TexMan.GetTexture (name, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable));
 
-		strncpy (name, msd->toptexture, 8);
-		sd->SetTexture(side_t::top, 
-			TexMan.GetTexture (name, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable));
-
-		strncpy (name, msd->bottomtexture, 8);
-		sd->SetTexture(side_t::bottom, 
-			TexMan.GetTexture (name, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable));
+		SetTexture(sd, side_t::mid, msd->midtexture);
+		SetTexture(sd, side_t::top, msd->toptexture);
+		SetTexture(sd, side_t::bottom, msd->bottomtexture);
 		break;
 	}
 }

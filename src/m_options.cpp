@@ -1127,6 +1127,7 @@ static menuitem_t CompatibilityItems[] = {
 	{ bitflag,	"Inst. moving floors are not silent",		{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_SILENT_INSTANT_FLOORS} },
 	{ bitflag,  "Sector sounds use center as source",		{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_SECTORSOUNDS} },
 	{ bitflag,  "Use Doom heights for missile clipping",	{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_MISSILECLIP} },
+	{ bitflag,  "Allow any bossdeath for level special",		{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_ANYBOSSDEATH} },
 	
 	{ discrete, "Interpolate monster movement",	{&nomonsterinterpolation},		{2.0}, {0.0},	{0.0}, {NoYes} },
 };

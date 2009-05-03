@@ -56,7 +56,25 @@ F84AB4557464A383E93F37CD3A82AC48 // MM2 map03
 	spechitoverflow
 }
 
-96368EB950E33AF62EA6423434E3CEF7 // Hacx map17: There's some switches behind shootable covers in this level
+71C2E6D9CFA3D8750C6A9599FB2453BD // Hacx map03: There are some switches behind 
+96368EB950E33AF62EA6423434E3CEF7 // HacX map17: shootable covers in these levels
 {
 	useblocking
+}
+
+// Cosmetic, but that option was added just for this map so it'd be a shame not to use it
+6BC4D6B73165D8C86CF190D44C87EE70 // Suspended in Dusk map01
+{
+	sectorsounds
+}
+
+7F24BFC1791F0107CE8F30B7FD3D9802 // Community Chest map29
+{
+	wallrun
+}
+
+// Doomsday of UAC: both the barons and the cyberdemon need to activate sector tagged 666
+32FC3115A3162B623F0D0F4E7DEE6861 // e1m8
+{
+	anybossdeath
 }

@@ -2709,7 +2709,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BossDeath)
 						LEVEL_SORCERER2SPECIAL)) == 0)
 		return;
 
-	if (
+	if ((i_compatflags & COMPATF_ANYBOSSDEATH) || ( // [GZ] Added for UAC_DEAD
 		((level.flags & LEVEL_MAP07SPECIAL) && (type == NAME_Fatso || type == NAME_Arachnotron)) ||
 		((level.flags & LEVEL_BRUISERSPECIAL) && (type == NAME_BaronOfHell)) ||
 		((level.flags & LEVEL_CYBORGSPECIAL) && (type == NAME_Cyberdemon)) ||
@@ -2717,7 +2717,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BossDeath)
 		((level.flags & LEVEL_HEADSPECIAL) && (type == NAME_Ironlich)) ||
 		((level.flags & LEVEL_MINOTAURSPECIAL) && (type == NAME_Minotaur)) ||
 		((level.flags & LEVEL_SORCERER2SPECIAL) && (type == NAME_Sorcerer2))
-	   )
+	   ))
 		;
 	else
 		return;

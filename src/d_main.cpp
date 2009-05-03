@@ -490,6 +490,7 @@ CVAR (Flag, compat_silentinstantfloors,compatflags, COMPATF_SILENT_INSTANT_FLOOR
 CVAR (Flag, compat_sectorsounds,compatflags, COMPATF_SECTORSOUNDS);
 CVAR (Flag, compat_missileclip,	compatflags, COMPATF_MISSILECLIP);
 CVAR (Flag, compat_crossdropoff,compatflags, COMPATF_CROSSDROPOFF);
+CVAR (Flag, compat_anybossdeath,compatflags, COMPATF_ANYBOSSDEATH);
 
 //==========================================================================
 //

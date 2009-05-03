@@ -1,4 +1,7 @@
-﻿May 2, 2009  (Changes by Graf Zahl)
+﻿May 3, 2009  (Changes by Graf Zahl)
+- Added more compatibility settings, submitted by Gez.
+
+May 2, 2009  (Changes by Graf Zahl)
 - Fixed: Doom's fullscreen HUD was limited to 6 keys.
 - Made 'next endgame' work again for cases where it is supposed to be
   the same as 'next endgame4'.

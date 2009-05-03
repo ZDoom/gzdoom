@@ -1,4 +1,5 @@
 ﻿May 3, 2009  (Changes by Graf Zahl)
+- fixed: The CHECKSWITCHRANGE line flag was ignored for one sided lines.
 - Added more compatibility settings, submitted by Gez.
 
 May 2, 2009  (Changes by Graf Zahl)

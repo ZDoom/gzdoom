@@ -464,8 +464,7 @@ static int TryFindSwitch (side_t *side, int Where)
 //
 bool P_CheckSwitchRange(AActor *user, line_t *line, int sideno)
 {
-	// if this line is one sided this function must always return success.
-	if (line->sidenum[0] == NO_SIDE || line->sidenum[1] == NO_SIDE) return true;
+	if (line->sidenum[0] == NO_SIDE) return true;
 
 	fixed_t checktop;
 	fixed_t checkbot;
@@ -492,9 +491,18 @@ bool P_CheckSwitchRange(AActor *user, line_t *line, int sideno)
 	checkx = dll.x + FixedMul(dll.dx, inter);
 	checky = dll.y + FixedMul(dll.dy, inter);
 
+	// one sided line
+	if (line->sidenum[1] == NO_SIDE) 
+	{
+	onesided:
+		fixed_t sectorc = line->frontsector->ceilingplane.ZatPoint(checkx, checky);
+		fixed_t sectorf = line->frontsector->floorplane.ZatPoint(checkx, checky);
+		return (user->z + user->height >= sectorf && user->z <= sectorc);
+	}
+
 	// Now get the information from the line.
 	P_LineOpening(open, NULL, line, checkx, checky, user->x, user->y);
-	if (open.range <= 0) return true;
+	if (open.range <= 0) goto onesided;
 
 	if ((TryFindSwitch (side, side_t::top)) != -1)
 	{

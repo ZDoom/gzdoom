@@ -79,6 +79,40 @@ enum
 	imgINVRTGEM2,
 };
 
+#define ADJUST_RELCENTER(x, y, outX, outY) \
+	if(x.RelCenter()) \
+		outX = *x + SCREENWIDTH/(hud_scale ? CleanXfac*2 : 2); \
+	else \
+		outX = *x; \
+	if(y.RelCenter()) \
+		outY = *y + SCREENHEIGHT/(hud_scale ? CleanYfac*2 : 2); \
+	else \
+		outY = *y;
+
+////////////////////////////////////////////////////////////////////////////////
+
+SBarInfoCoordinate::SBarInfoCoordinate(int coord, bool relCenter) :
+	value(coord), relCenter(relCenter)
+{
+}
+
+SBarInfoCoordinate::SBarInfoCoordinate(int value)
+{
+	relCenter = ((value & REL_CENTER) != 0);
+	if(value < 0)
+		this->value = (value | REL_CENTER);
+	else
+		this->value = (value & (~REL_CENTER));
+}
+
+SBarInfoCoordinate &SBarInfoCoordinate::Add(int add)
+{
+	value += add;
+	return *this;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 //Used for shading
 FBarShader::FBarShader(bool vertical, bool reverse) //make an alpha map
 {
@@ -914,8 +948,8 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 				if(!block.fullScreenOffsets)
 				{
 					// Calc real screen coordinates for bar
-					x = (cmd.x + ST_X + xOffset) << FRACBITS;
-					y = (cmd.y + ST_Y + yOffset) << FRACBITS;
+					x = *(cmd.x + ST_X + xOffset) << FRACBITS;
+					y = *(cmd.y + ST_Y + yOffset) << FRACBITS;
 					w = fg->GetScaledWidth() << FRACBITS;
 					h = fg->GetScaledHeight() << FRACBITS;
 					if (Scaled)
@@ -929,10 +963,13 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 				}
 				else
 				{
-					x = cmd.x + xOffset;
-					y = cmd.y + yOffset;
+					ADJUST_RELCENTER(cmd.x,cmd.y,x,y)
+
+					x += xOffset;
+					y += yOffset;
 					w = fg->GetScaledWidth();
 					h = fg->GetScaledHeight();
+
 					if(vid_fps && x < 0 && y >= 0)
 						y += 10;
 				}
@@ -951,15 +988,26 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 					}
 					else
 					{
-						screen->Clear(x, y, x + w, y + h, GPalette.BlackIndex, 0);
+						int clx = x;
+						int cly = y;
+						int clw = x + w;
+						int clh = y + h;
+						if(block.fullScreenOffsets)
+						{
+							clx = x < 0 ? SCREENWIDTH + x : x;
+							cly = y < 0 ? SCREENHEIGHT + y : y;
+							clw = clx+w > SCREENWIDTH ? SCREENWIDTH-clx : clx+w;
+							clh = cly+h > SCREENHEIGHT ? SCREENHEIGHT-cly : cly+h;
+						}
+						screen->Clear(clx, cly, clw, clh, GPalette.BlackIndex, 0);
 					}
 				}
 
 				if(!block.fullScreenOffsets)
 				{
 					// Calc clipping rect for background
-					cx = (cmd.x + ST_X + cmd.special3 + xOffset) << FRACBITS;
-					cy = (cmd.y + ST_Y + cmd.special3 + yOffset) << FRACBITS;
+					cx = *(cmd.x + ST_X + cmd.special3 + xOffset) << FRACBITS;
+					cy = *(cmd.y + ST_Y + cmd.special3 + yOffset) << FRACBITS;
 					cw = (fg->GetScaledWidth() - fg->GetScaledLeftOffset() - cmd.special3 * 2) << FRACBITS;
 					ch = (fg->GetScaledHeight() - fg->GetScaledTopOffset() - cmd.special3 * 2) << FRACBITS;
 					if (Scaled)
@@ -973,8 +1021,10 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 				}
 				else
 				{
-					cx = cmd.x + cmd.special3 + xOffset;
-					cy = cmd.y + cmd.special3 + yOffset;
+					ADJUST_RELCENTER(cmd.x,cmd.y,cx,cy)
+
+					cx += cmd.special3 + xOffset;
+					cy += cmd.special3 + yOffset;
 					cw = fg->GetScaledWidth() - fg->GetScaledLeftOffset() - cmd.special3 * 2;
 					ch = fg->GetScaledHeight() - fg->GetScaledTopOffset() - cmd.special3 * 2;
 					if(vid_fps && x < 0 && y >= 0)
@@ -1128,8 +1178,8 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 				};
 				bool vertical = !!(cmd.flags & DRAWSHADER_VERTICAL);
 				bool reverse = !!(cmd.flags & DRAWSHADER_REVERSE);
-				int x = cmd.x + xOffset;
-				int y = cmd.y + yOffset;
+				SBarInfoCoordinate x = cmd.x + xOffset;
+				SBarInfoCoordinate y = cmd.y + yOffset;
 				int w = cmd.special;
 				int h = cmd.special2;
 				if(!block.fullScreenOffsets)
@@ -1137,16 +1187,22 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 					x += ST_X;
 					y += ST_Y;
 					if(Scaled)
-						screen->VirtualToRealCoordsInt(x, y, w, h, 320, 200, true);
+					{
+						int tmpX = *x;
+						int tmpY = *y;
+						screen->VirtualToRealCoordsInt(tmpX, tmpY, w, h, 320, 200, true);
+						x = tmpX;
+						y = tmpY;
+					}
 				}
 				else
 				{
-					if(vid_fps && x < 0 && y >= 0)
+					if(vid_fps && *x < 0 && *y >= 0)
 						y += 10;
 				}
 				if(!block.fullScreenOffsets)
 				{
-					screen->DrawTexture (shaders[(vertical << 1) + reverse], x, y,
+					screen->DrawTexture (shaders[(vertical << 1) + reverse], *x, *y,
 						DTA_DestWidth, w,
 						DTA_DestHeight, h,
 						DTA_Alpha, alpha,
@@ -1156,7 +1212,10 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 				}
 				else
 				{
-					screen->DrawTexture (shaders[(vertical << 1) + reverse], x, y,
+					int rx, ry;
+					ADJUST_RELCENTER(x,y,rx,ry)
+
+					screen->DrawTexture (shaders[(vertical << 1) + reverse], rx, ry,
 						DTA_DestWidth, w,
 						DTA_DestHeight, h,
 						DTA_Alpha, alpha,
@@ -1392,7 +1451,7 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 }
 
 //draws an image with the specified flags
-void DSBarInfo::DrawGraphic(FTexture* texture, int x, int y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets,
+void DSBarInfo::DrawGraphic(FTexture* texture, SBarInfoCoordinate x, SBarInfoCoordinate y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets,
 	bool translate, bool dim, int offsetflags) //flags
 {
 	if (texture == NULL)
@@ -1410,18 +1469,16 @@ void DSBarInfo::DrawGraphic(FTexture* texture, int x, int y, int xOffset, int yO
 	if(!fullScreenOffsets)
 	{
 		// I'll handle the conversion from fixed to int myself for more control
-		fixed_t fx = (x + ST_X) << FRACBITS;
-		fixed_t fy = (y + ST_Y) << FRACBITS;
+		fixed_t fx = (x + ST_X).Coordinate() << FRACBITS;
+		fixed_t fy = (y + ST_Y).Coordinate() << FRACBITS;
 		fixed_t fw = texture->GetScaledWidth() << FRACBITS;
 		fixed_t fh = texture->GetScaledHeight() << FRACBITS;
 		if(Scaled)
 			screen->VirtualToRealCoords(fx, fy, fw, fh, 320, 200, true);
-		x = fx >> FRACBITS;
-		y = fy >> FRACBITS;
 		// Round to nearest
 		w = (fw + (FRACUNIT>>1)) >> FRACBITS;
 		h = (fh + (FRACUNIT>>1)) >> FRACBITS;
-		screen->DrawTexture(texture, x, y,
+		screen->DrawTexture(texture, (fx >> FRACBITS), (fy >> FRACBITS),
 			DTA_DestWidth, w,
 			DTA_DestHeight, h,
 			DTA_Translation, translate ? getTranslation() : 0,
@@ -1432,11 +1489,14 @@ void DSBarInfo::DrawGraphic(FTexture* texture, int x, int y, int xOffset, int yO
 	}
 	else
 	{
+		int rx, ry;
+		ADJUST_RELCENTER(x,y,rx,ry)
+
 		w = texture->GetScaledWidth();
 		h = texture->GetScaledHeight();
-		if(vid_fps && x < 0 && y >= 0)
-			y += 10;
-		screen->DrawTexture(texture, x, y,
+		if(vid_fps && rx < 0 && ry >= 0)
+			ry += 10;
+		screen->DrawTexture(texture, rx, ry,
 			DTA_DestWidth, w,
 			DTA_DestHeight, h,
 			DTA_Translation, translate ? getTranslation() : 0,
@@ -1448,9 +1508,15 @@ void DSBarInfo::DrawGraphic(FTexture* texture, int x, int y, int xOffset, int yO
 	}
 }
 
-void DSBarInfo::DrawString(const char* str, int x, int y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets, EColorRange translation, int spacing, bool drawshadow)
+void DSBarInfo::DrawString(const char* str, SBarInfoCoordinate x, SBarInfoCoordinate y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets, EColorRange translation, int spacing, bool drawshadow)
 {
 	x += spacing;
+	int ax = *x;
+	int ay = *y;
+	if(fullScreenOffsets)
+	{
+		ADJUST_RELCENTER(x,y,ax,ay)
+	}
 	while(*str != '\0')
 	{
 		if(*str == ' ')
@@ -1474,8 +1540,8 @@ void DSBarInfo::DrawString(const char* str, int x, int y, int xOffset, int yOffs
 			x += (character->LeftOffset+1); //ignore x offsets since we adapt to character size
 
 		int rx, ry, rw, rh;
-		rx = x + xOffset;
-		ry = y + yOffset;
+		rx = ax + xOffset;
+		ry = ay + yOffset;
 		rw = character->GetScaledWidth();
 		rh = character->GetScaledHeight();
 		if(!fullScreenOffsets)
@@ -1487,8 +1553,8 @@ void DSBarInfo::DrawString(const char* str, int x, int y, int xOffset, int yOffs
 		}
 		else
 		{
-			if(vid_fps && x < 0 && y >= 0)
-				y += 10;
+			if(vid_fps && ax < 0 && ay >= 0)
+				ry += 10;
 		}
 		if(drawshadow)
 		{
@@ -1533,15 +1599,15 @@ void DSBarInfo::DrawString(const char* str, int x, int y, int xOffset, int yOffs
 				TAG_DONE);
 		}
 		if(script->spacingCharacter == '\0')
-			x += width + spacing - (character->LeftOffset+1);
+			ax += width + spacing - (character->LeftOffset+1);
 		else //width gets changed at the call to GetChar()
-			x += drawingFont->GetCharWidth((int) script->spacingCharacter) + spacing;
+			ax += drawingFont->GetCharWidth((int) script->spacingCharacter) + spacing;
 		str++;
 	}
 }
 
 //draws the specified number up to len digits
-void DSBarInfo::DrawNumber(int num, int len, int x, int y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets, EColorRange translation, int spacing, bool fillzeros, bool drawshadow)
+void DSBarInfo::DrawNumber(int num, int len, SBarInfoCoordinate x, SBarInfoCoordinate y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets, EColorRange translation, int spacing, bool fillzeros, bool drawshadow)
 {
 	FString value;
 	int maxval = (int) ceil(pow(10., len))-1;
@@ -1570,7 +1636,7 @@ void DSBarInfo::DrawNumber(int num, int len, int x, int y, int xOffset, int yOff
 }
 
 //draws the mug shot
-void DSBarInfo::DrawFace(const char *defaultFace, int accuracy, int stateflags, int x, int y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets)
+void DSBarInfo::DrawFace(const char *defaultFace, int accuracy, int stateflags, SBarInfoCoordinate x, SBarInfoCoordinate y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets)
 {
 	FTexture *face = MugShot.GetFace(CPlayer, defaultFace, accuracy, stateflags);
 	if (face != NULL)
@@ -1579,8 +1645,8 @@ void DSBarInfo::DrawFace(const char *defaultFace, int accuracy, int stateflags, 
 	}
 }
 
-void DSBarInfo::DrawInventoryBar(int type, int num, int x, int y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets, bool alwaysshow,
-	int counterx, int countery, EColorRange translation, bool drawArtiboxes, bool noArrows, bool alwaysshowcounter, int bgalpha)
+void DSBarInfo::DrawInventoryBar(int type, int num, SBarInfoCoordinate x, SBarInfoCoordinate y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets, bool alwaysshow,
+	SBarInfoCoordinate counterx, SBarInfoCoordinate countery, EColorRange translation, bool drawArtiboxes, bool noArrows, bool alwaysshowcounter, int bgalpha)
 { //yes, there is some Copy & Paste here too
 	AInventory *item;
 	int i;
@@ -1592,59 +1658,60 @@ void DSBarInfo::DrawInventoryBar(int type, int num, int x, int y, int xOffset, i
 	{
 		for(item = CPlayer->mo->InvFirst, i = 0; item != NULL && i < num; item = item->NextInv(), ++i)
 		{
+			SBarInfoCoordinate rx = x + i*spacing;
 			if(drawArtiboxes)
 			{
-				DrawGraphic(Images[invBarOffset + imgARTIBOX], x+i*spacing, y, xOffset, yOffset, bgalpha, fullScreenOffsets);
+				DrawGraphic(Images[invBarOffset + imgARTIBOX], rx, y, xOffset, yOffset, bgalpha, fullScreenOffsets);
 			}
 			if(type != GAME_Strife) //Strife draws the cursor before the icons
-				DrawGraphic(TexMan(item->Icon), x+i*spacing, y, xOffset, yOffset, alpha, fullScreenOffsets, false, item->Amount <= 0);
+				DrawGraphic(TexMan(item->Icon), rx, y, xOffset, yOffset, alpha, fullScreenOffsets, false, item->Amount <= 0);
 			if(item == CPlayer->mo->InvSel)
 			{
 				if(type == GAME_Heretic)
 				{
-					DrawGraphic(Images[invBarOffset + imgSELECTBOX], x+i*spacing, y+29, xOffset, yOffset, alpha, fullScreenOffsets);
+					DrawGraphic(Images[invBarOffset + imgSELECTBOX], rx, y+29, xOffset, yOffset, alpha, fullScreenOffsets);
 				}
 				else if(type == GAME_Hexen)
 				{
-					DrawGraphic(Images[invBarOffset + imgSELECTBOX], x+i*spacing, y-1, xOffset, yOffset, alpha, fullScreenOffsets);
+					DrawGraphic(Images[invBarOffset + imgSELECTBOX], rx, y-1, xOffset, yOffset, alpha, fullScreenOffsets);
 				}
 				else if(type == GAME_Strife)
 				{
-					DrawGraphic(Images[invBarOffset + imgCURSOR], x+i*spacing-6, y-2, xOffset, yOffset, alpha, fullScreenOffsets);
+					DrawGraphic(Images[invBarOffset + imgCURSOR], rx-6, y-2, xOffset, yOffset, alpha, fullScreenOffsets);
 				}
 				else
 				{
-					DrawGraphic(Images[invBarOffset + imgSELECTBOX], x+i*spacing, y, xOffset, yOffset, alpha, fullScreenOffsets);
+					DrawGraphic(Images[invBarOffset + imgSELECTBOX], rx, y, xOffset, yOffset, alpha, fullScreenOffsets);
 				}
 			}
 			if(type == GAME_Strife)
-				DrawGraphic(TexMan(item->Icon), x+i*spacing, y, xOffset, yOffset, alpha, fullScreenOffsets, false, item->Amount <= 0);
+				DrawGraphic(TexMan(item->Icon), rx, y, xOffset, yOffset, alpha, fullScreenOffsets, false, item->Amount <= 0);
 			if(alwaysshowcounter || item->Amount != 1)
 			{
-				DrawNumber(item->Amount, 3, counterx+i*spacing, countery, xOffset, yOffset, alpha, fullScreenOffsets, translation);
+				DrawNumber(item->Amount, 3, counterx + (i*spacing), countery, xOffset, yOffset, alpha, fullScreenOffsets, translation);
 			}
 		}
 		for (; i < num && drawArtiboxes; ++i)
 		{
-			DrawGraphic(Images[invBarOffset + imgARTIBOX], x+i*spacing, y, xOffset, yOffset, alpha, fullScreenOffsets);
+			DrawGraphic(Images[invBarOffset + imgARTIBOX], x + (i*spacing), y, xOffset, yOffset, bgalpha, fullScreenOffsets);
 		}
 		// Is there something to the left?
 		if (!noArrows && CPlayer->mo->FirstInv() != CPlayer->mo->InvFirst)
 		{
 			DrawGraphic(Images[!(gametic & 4) ?
-				invBarOffset + imgINVLFGEM1 : invBarOffset + imgINVLFGEM2], (type != GAME_Strife) ? x-12 : x-14, y, xOffset, yOffset, alpha, fullScreenOffsets);
+				invBarOffset + imgINVLFGEM1 : invBarOffset + imgINVLFGEM2], x + ((type != GAME_Strife) ? -12 : -14), y, xOffset, yOffset, alpha, fullScreenOffsets);
 		}
 		// Is there something to the right?
 		if (!noArrows && item != NULL)
 		{
 			DrawGraphic(Images[!(gametic & 4) ?
-				invBarOffset + imgINVRTGEM1 : invBarOffset + imgINVRTGEM2], (type != GAME_Strife) ? x+num*31+2 : x+num*35-4, y, xOffset, yOffset, alpha, fullScreenOffsets);
+				invBarOffset + imgINVRTGEM1 : invBarOffset + imgINVRTGEM2], x + ((type != GAME_Strife) ? num*31+2 : num*35-4), y, xOffset, yOffset, alpha, fullScreenOffsets);
 		}
 	}
 }
 
 //draws heretic/hexen style life gems
-void DSBarInfo::DrawGem(FTexture* chain, FTexture* gem, int value, int x, int y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets, int padleft, int padright, int chainsize,
+void DSBarInfo::DrawGem(FTexture* chain, FTexture* gem, int value, SBarInfoCoordinate x, SBarInfoCoordinate y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets, int padleft, int padright, int chainsize,
 	bool wiggle, bool translate)
 {
 	if(chain == NULL)

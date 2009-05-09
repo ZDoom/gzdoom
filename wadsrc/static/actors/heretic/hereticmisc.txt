@@ -15,7 +15,7 @@ ACTOR Pod 2035
 	+NOBLOCKMONST +DONTGIB +OLDRADIUSDMG
 	DeathSound "world/podexplode"
 	
-	action native A_PodPain ();
+	action native A_PodPain (class<Actor> podtype = "PodGoo");
 	action native A_RemovePod ();
 	
 	States
@@ -69,7 +69,7 @@ ACTOR PodGenerator 43
 	+NOSECTOR
 	+DONTSPLASH
 
-	action native A_MakePod ();
+	action native A_MakePod (class<Actor> podtype = "Pod");
 
 	States
 	{

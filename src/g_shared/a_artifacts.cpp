@@ -552,10 +552,13 @@ IMPLEMENT_CLASS (APowerInvisibility)
 
 void APowerInvisibility::CommonInit()
 {
-	Owner->flags |= MF_SHADOW;
-	// transfer seeker missile blocking (but only if the owner does not already have this flag
-	if (!(Owner->flags5 & MF5_CANTSEEK) && (flags5 & MF5_CANTSEEK)) Owner->flags5 |= MF5_CANTSEEK;
-	else flags5 &= ~MF5_CANTSEEK;
+	if (Owner != NULL)
+	{
+		Owner->flags |= MF_SHADOW;
+		// transfer seeker missile blocking (but only if the owner does not already have this flag
+		if (!(Owner->flags5 & MF5_CANTSEEK) && (flags5 & MF5_CANTSEEK)) Owner->flags5 |= MF5_CANTSEEK;
+		else flags5 &= ~MF5_CANTSEEK;
+	}
 }
 
 //===========================================================================
@@ -1522,7 +1525,10 @@ void APowerDamage::ModifyDamage(int damage, FName damageType, int &newdamage, bo
 
 // Quarter damage powerup ------------------------------------------------------
 
-IMPLEMENT_CLASS( APowerProtection)
+IMPLEMENT_CLASS(APowerProtection)
+
+#define PROTECTION_FLAGS3	(MF3_NORADIUSDMG | MF3_DONTMORPH | MF3_DONTSQUASH | MF3_DONTBLAST | MF3_NOTELEOTHER)
+#define PROTECTION_FLAGS5	(MF5_NOPAIN | MF5_DONTRIP)
 
 //===========================================================================
 //
@@ -1532,8 +1538,19 @@ IMPLEMENT_CLASS( APowerProtection)
 
 void APowerProtection::InitEffect( )
 {
-	// Use sound channel 5 to avoid interference with other actions.
-	if (Owner != NULL) S_Sound(Owner, 5, SeeSound, 1.0f, ATTN_NONE);
+	if (Owner != NULL)
+	{
+		S_Sound(Owner, CHAN_AUTO, SeeSound, 1.0f, ATTN_NONE);
+
+		// Transfer various protection flags if owner does not already have them.
+		// If the owner already has the flag, clear it from the powerup.
+		// If the powerup still has a flag set, add it to the owner.
+		flags3 &= ~(Owner->flags3 & PROTECTION_FLAGS3);
+		Owner->flags3 |= flags3 & PROTECTION_FLAGS3;
+
+		flags5 &= ~(Owner->flags5 & PROTECTION_FLAGS5);
+		Owner->flags5 |= flags5 & PROTECTION_FLAGS5;
+	}
 }
 
 //===========================================================================
@@ -1544,8 +1561,12 @@ void APowerProtection::InitEffect( )
 
 void APowerProtection::EndEffect( )
 {
-	// Use sound channel 5 to avoid interference with other actions.
-	if (Owner != NULL) S_Sound(Owner, 5, DeathSound, 1.0f, ATTN_NONE);
+	if (Owner != NULL)
+	{
+		S_Sound(Owner, CHAN_AUTO, DeathSound, 1.0f, ATTN_NONE);
+		Owner->flags3 &= ~(flags3 & PROTECTION_FLAGS3);
+		Owner->flags5 &= ~(flags5 & PROTECTION_FLAGS5);
+	}
 }
 
 //===========================================================================
@@ -1559,27 +1580,30 @@ void APowerProtection::ModifyDamage(int damage, FName damageType, int &newdamage
 	static const fixed_t def = FRACUNIT/4;
 	if (passive && damage > 0)
 	{
-		const fixed_t * pdf = NULL;
-		DmgFactors * df = GetClass()->ActorInfo->DamageFactors;
+		const fixed_t *pdf = NULL;
+		DmgFactors *df = GetClass()->ActorInfo->DamageFactors;
 		if (df != NULL && df->CountUsed() != 0)
 		{
 			pdf = df->CheckKey(damageType);
-			if (pdf== NULL && damageType != NAME_None) pdf = df->CheckKey(NAME_None);
+			if (pdf == NULL && damageType != NAME_None) pdf = df->CheckKey(NAME_None);
 		}
 		else pdf = &def;
 
 		if (pdf != NULL)
 		{
 			damage = newdamage = FixedMul(damage, *pdf);
-			if (Owner != NULL && *pdf < FRACUNIT) S_Sound(Owner, 5, ActiveSound, 1.0f, ATTN_NONE);
+			if (Owner != NULL && *pdf < FRACUNIT) S_Sound(Owner, CHAN_AUTO, ActiveSound, 1.0f, ATTN_NONE);
 		}
 	}
-	if (Inventory != NULL) Inventory->ModifyDamage(damage, damageType, newdamage, passive);
+	if (Inventory != NULL)
+	{
+		Inventory->ModifyDamage(damage, damageType, newdamage, passive);
+	}
 }
 
 // Drain rune -------------------------------------------------------
 
-IMPLEMENT_CLASS( APowerDrain)
+IMPLEMENT_CLASS(APowerDrain)
 
 //===========================================================================
 //
@@ -1615,7 +1639,7 @@ void APowerDrain::EndEffect( )
 
 // Regeneration rune -------------------------------------------------------
 
-IMPLEMENT_CLASS( APowerRegeneration)
+IMPLEMENT_CLASS(APowerRegeneration)
 
 //===========================================================================
 //
@@ -1650,7 +1674,7 @@ void APowerRegeneration::EndEffect( )
 
 // High jump rune -------------------------------------------------------
 
-IMPLEMENT_CLASS( APowerHighJump)
+IMPLEMENT_CLASS(APowerHighJump)
 
 //===========================================================================
 //
@@ -1685,7 +1709,7 @@ void APowerHighJump::EndEffect( )
 
 // Morph powerup ------------------------------------------------------
 
-IMPLEMENT_CLASS( APowerMorph)
+IMPLEMENT_CLASS(APowerMorph)
 
 //===========================================================================
 //

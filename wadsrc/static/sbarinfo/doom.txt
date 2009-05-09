@@ -120,7 +120,7 @@ statusbar inventory // Standard bar overlay (ZDoom Addition)
 	drawinventorybar Doom, 7, INDEXFONT, 50, 170;
 }
 
-statusbar inventoryfullscreen // ZDoom HUD overlay.
+statusbar inventoryfullscreen, fullscreenoffsets // ZDoom HUD overlay.
 {
-	drawinventorybar Doom, translucent, 7, INDEXFONT, 50, 170;
+	drawinventorybar Doom, translucent, 7, INDEXFONT, -106+center, -31;
 }

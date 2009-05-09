@@ -45,6 +45,41 @@
 class FBarTexture;
 class FScanner;
 
+/**
+ * This class is used to help prevent errors that may occur from adding or 
+ * subtracting from coordinates.
+ *
+ * In order to provide the maximum flexibility, coordinates can be stored as an 
+ * int with the 31st bit representing REL_CENTER.  This class can handle this 
+ * flag.
+ */
+class SBarInfoCoordinate
+{
+	public:
+		static const int	REL_CENTER = 0x40000000;
+
+		SBarInfoCoordinate() {}
+		SBarInfoCoordinate(int coord, bool relCenter);
+		SBarInfoCoordinate(int value);
+
+		SBarInfoCoordinate	&Add(int add);
+		int					Coordinate() const { return value; }
+		bool				RelCenter() const { return relCenter; }
+		int					Value() const { return value | (relCenter ? REL_CENTER : 0); }
+
+		int					operator*	() const { return Coordinate(); }
+		SBarInfoCoordinate	operator+	(int add) const { return SBarInfoCoordinate(*this).Add(add); }
+		SBarInfoCoordinate	operator+	(const SBarInfoCoordinate &other) const { return SBarInfoCoordinate(*this).Add(other.Coordinate()); }
+		SBarInfoCoordinate	operator-	(int sub) const { return SBarInfoCoordinate(*this).Add(-sub); }
+		SBarInfoCoordinate	operator-	(const SBarInfoCoordinate &other) const { return SBarInfoCoordinate(*this).Add(-other.Coordinate()); }
+		void				operator+=	(int add) { Add(add); }
+		void				operator-=	(int sub) { Add(-sub); }
+
+	protected:
+		int		value;
+		bool	relCenter;
+};
+
 struct SBarInfoCommand; //we need to be able to use this before it is defined.
 struct MugShotState;
 
@@ -103,8 +138,8 @@ struct SBarInfoCommand
 	int special3;
 	int special4;
 	int flags;
-	int x;
-	int y;
+	SBarInfoCoordinate x;
+	SBarInfoCoordinate y;
 	int value;
 	int image_index;
 	FTextureID sprite_index;
@@ -136,7 +171,8 @@ struct SBarInfo
 	void ParseSBarInfo(int lump);
 	void ParseSBarInfoBlock(FScanner &sc, SBarInfoBlock &block);
 	void ParseMugShotBlock(FScanner &sc, FMugShotState &state);
-	void getCoordinates(FScanner &sc, SBarInfoCommand &cmd, bool fullScreenOffsets); //retrieves the next two arguments as x and y.
+	void getCoordinates(FScanner &sc, bool fullScreenOffsets, int &x, int &y); //retrieves the next two arguments as x and y.
+	void getCoordinates(FScanner &sc, bool fullScreenOffsets, SBarInfoCoordinate &x, SBarInfoCoordinate &y);
 	int getSignedInteger(FScanner &sc); //returns a signed integer.
 	int newImage(const char* patchname);
 	void Init();
@@ -144,13 +180,13 @@ struct SBarInfo
 	SBarInfo();
 	SBarInfo(int lumpnum);
 	~SBarInfo();
-	static void Load();
+
+	static void	Load();
 };
 
 #define SCRIPT_CUSTOM	0
 #define SCRIPT_DEFAULT	1
 extern SBarInfo *SBarInfoScript[2];
-
 
 // Enums used between the parser and the display
 enum //gametype flags
@@ -359,14 +395,14 @@ public:
 	void SetMugShotState(const char* stateName, bool waitTillDone=false, bool reset=false);
 private:
 	void doCommands(SBarInfoBlock &block, int xOffset=0, int yOffset=0, int alpha=FRACUNIT);
-	void DrawGraphic(FTexture* texture, int x, int y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets, bool translate=false, bool dim=false, int offsetflags=0);
-	void DrawString(const char* str, int x, int y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets, EColorRange translation, int spacing=0, bool drawshadow=false);
-	void DrawNumber(int num, int len, int x, int y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets, EColorRange translation, int spacing=0, bool fillzeros=false, bool drawshadow=false);
-	void DrawFace(const char *defaultFace, int accuracy, int stateflags, int x, int y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets);
+	void DrawGraphic(FTexture* texture, SBarInfoCoordinate x, SBarInfoCoordinate y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets, bool translate=false, bool dim=false, int offsetflags=0);
+	void DrawString(const char* str, SBarInfoCoordinate x, SBarInfoCoordinate y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets, EColorRange translation, int spacing=0, bool drawshadow=false);
+	void DrawNumber(int num, int len, SBarInfoCoordinate x, SBarInfoCoordinate y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets, EColorRange translation, int spacing=0, bool fillzeros=false, bool drawshadow=false);
+	void DrawFace(const char *defaultFace, int accuracy, int stateflags, SBarInfoCoordinate x, SBarInfoCoordinate y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets);
 	int updateState(bool xdth, bool animatedgodmode);
-	void DrawInventoryBar(int type, int num, int x, int y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets, bool alwaysshow,
-		int counterx, int countery, EColorRange translation, bool drawArtiboxes, bool noArrows, bool alwaysshowcounter, int bgalpha);
-	void DrawGem(FTexture* chain, FTexture* gem, int value, int x, int y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets, int padleft, int padright, int chainsize,
+	void DrawInventoryBar(int type, int num, SBarInfoCoordinate x, SBarInfoCoordinate y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets, bool alwaysshow,
+		SBarInfoCoordinate counterx, SBarInfoCoordinate countery, EColorRange translation, bool drawArtiboxes, bool noArrows, bool alwaysshowcounter, int bgalpha);
+	void DrawGem(FTexture* chain, FTexture* gem, int value, SBarInfoCoordinate x, SBarInfoCoordinate y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets, int padleft, int padright, int chainsize,
 		bool wiggle, bool translate);
 	FRemapTable* getTranslation();
 

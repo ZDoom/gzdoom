@@ -1,4 +1,17 @@
-﻿May 3, 2009  (Changes by Graf Zahl)
+﻿May 8, 2009
+- Added transference of a select few flags from PowerProtection to its owner.
+- Added actor type parameters to A_PodPain() and A_MakePod().
+- The savegame path is now passed through NicePath(), since it's user-
+  specifiable.
+- Added save_dir cvar. When non-empty, it controls where savegames go.
+- SBARINFO update:
+  * Added the ability to center things with fullscreenoffsets enabled.  Due
+    to some limitations the syntax is [-]<integer> [+ center].
+  * Fixed: the translucent flag on drawinventorybar didn't work quite right.
+  * Fixed: Extremely minor inaccuracy in the Doom SBarInfo code.  The
+    fullscreen inventory bar wasn't scaled correctly.
+
+May 3, 2009  (Changes by Graf Zahl)
 - fixed: The CHECKSWITCHRANGE line flag was ignored for one sided lines.
 - Added more compatibility settings, submitted by Gez.
 

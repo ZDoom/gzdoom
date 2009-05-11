@@ -1,4 +1,8 @@
-﻿May 8, 2009
+﻿May 11, 2009
+- Added Species property for actors and separated Hexen's Demon1 and Demon2
+  into different species.
+
+May 8, 2009
 - Added transference of a select few flags from PowerProtection to its owner.
 - Added actor type parameters to A_PodPain() and A_MakePod().
 - The savegame path is now passed through NicePath(), since it's user-

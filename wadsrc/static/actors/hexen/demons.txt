@@ -216,6 +216,7 @@ ACTOR Demon2 : Demon1 8080
 {
 	Game Hexen
 	Obituary "$OB_DEMON2"
+	Species "Demon2"
 	States
 	{
 	Spawn:

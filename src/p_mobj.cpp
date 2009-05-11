@@ -291,6 +291,11 @@ void AActor::Serialize (FArchive &arc)
 		<< BlockingMobj
 		<< BlockingLine;
 
+	if (SaveVersion >= 1573)
+	{
+		arc << Species;
+	}
+
 	if (arc.IsStoring ())
 	{
 		int convnum = 0;
@@ -4939,13 +4944,19 @@ bool AActor::IsTeammate (AActor *other)
 // AActor :: GetSpecies
 //
 // Species is defined as the lowest base class that is a monster
-// with no non-monster class in between. This is virtualized, so special
+// with no non-monster class in between. If the actor specifies an explicit
+// species (i.e. not 'None'), that is used. This is virtualized, so special
 // monsters can change this behavior if they like.
 //
 //==========================================================================
 
-const PClass *AActor::GetSpecies()
+FName AActor::GetSpecies()
 {
+	if (Species != NAME_None)
+	{
+		return Species;
+	}
+
 	const PClass *thistype = GetClass();
 
 	if (GetDefaultByType(thistype)->flags3 & MF3_ISMONSTER)
@@ -4958,7 +4969,7 @@ const PClass *AActor::GetSpecies()
 				break;
 		}
 	}
-	return thistype;
+	return thistype->TypeName;
 }
 
 //==========================================================================

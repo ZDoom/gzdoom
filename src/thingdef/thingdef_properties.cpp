@@ -953,6 +953,15 @@ DEFINE_PROPERTY(gravity, F, Actor)
 //==========================================================================
 //
 //==========================================================================
+DEFINE_PROPERTY(species, S, Actor)
+{
+	PROP_STRING_PARM(n, 0);
+	defaults->Species = n;
+}
+
+//==========================================================================
+//
+//==========================================================================
 DEFINE_PROPERTY(clearflags, 0, Actor)
 {
 	defaults->flags=defaults->flags3=defaults->flags4=defaults->flags5=0;

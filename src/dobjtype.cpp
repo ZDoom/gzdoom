@@ -233,7 +233,7 @@ DObject *PClass::CreateNew () const
 	assert (mem != NULL);
 
 	// Set this object's defaults before constructing it.
-	if (Defaults!=NULL)
+	if (Defaults != NULL)
 		memcpy (mem, Defaults, Size);
 	else
 		memset (mem, 0, Size);
@@ -274,14 +274,20 @@ PClass *PClass::CreateDerivedClass (FName name, unsigned int size)
 	type->Size = size;
 	type->Pointers = NULL;
 	type->ConstructNative = ConstructNative;
-	if (!notnew) type->ClassIndex = m_Types.Push (type);
+	if (!notnew)
+	{
+		type->ClassIndex = m_Types.Push (type);
+	}
 	type->Meta = Meta;
+
+	// Set up default instance of the new class.
 	type->Defaults = new BYTE[size];
 	memcpy (type->Defaults, Defaults, Size);
 	if (size > Size)
 	{
 		memset (type->Defaults + Size, 0, size - Size);
 	}
+
 	type->FlatPointers = NULL;
 	type->bRuntimeClass = true;
 	type->ActorInfo = NULL;

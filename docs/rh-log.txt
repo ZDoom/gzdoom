@@ -1,4 +1,12 @@
-﻿May 11, 2009
+﻿May 11, 2009  (Changes by Graf Zahl)
+- Fixed: Some missile spawning functions ignored the FastSpeed setting.
+- Fixed: P_CheckSwitchRange tried to access a line's backsector without
+  checking if it is valid.
+- Fixed: Fast projectile could not be frozen by the Time freezer.
+- Added several new ACS functions: GetActorMomX/Y/Z, GetActorViewHeight,
+  SetActivator, SetActivatorToTarget.
+
+May 11, 2009
 - Added Species property for actors and separated Hexen's Demon1 and Demon2
   into different species.
 

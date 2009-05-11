@@ -2781,14 +2781,20 @@ int DLevelScript::DoClassifyActor(int tid)
 
 enum EACSFunctions
 {
-	GetLineUDMFInt=1,
-	GetLineUDMFFixed,
-	GetThingUDMFInt,
-	GetThingUDMFFixed,
-	GetSectorUDMFInt,
-	GetSectorUDMFFixed,
-	GetSideUDMFInt,
-	GetSideUDMFFixed,
+	ACSF_GetLineUDMFInt=1,
+	ACSF_GetLineUDMFFixed,
+	ACSF_GetThingUDMFInt,
+	ACSF_GetThingUDMFFixed,
+	ACSF_GetSectorUDMFInt,
+	ACSF_GetSectorUDMFFixed,
+	ACSF_GetSideUDMFInt,
+	ACSF_GetSideUDMFFixed,
+	ACSF_GetActorMomX,
+	ACSF_GetActorMomY,
+	ACSF_GetActorMomZ,
+	ACSF_SetActivator,
+	ACSF_SetActivatorToTarget,
+	ACSF_GetActorViewHeight,
 };
 
 int DLevelScript::SideFromID(int id, int side)
@@ -2825,23 +2831,69 @@ int DLevelScript::LineFromID(int id)
 
 int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 {
+	AActor *actor;
 	switch(funcIndex)
 	{
-		case GetLineUDMFInt:
+		case ACSF_GetLineUDMFInt:
 			return GetUDMFInt(UDMF_Line, LineFromID(args[0]), FBehavior::StaticLookupString(args[1]));
-		case GetLineUDMFFixed:
+
+		case ACSF_GetLineUDMFFixed:
 			return GetUDMFFixed(UDMF_Line, LineFromID(args[0]), FBehavior::StaticLookupString(args[1]));
-		case GetThingUDMFInt:
-		case GetThingUDMFFixed:
+
+		case ACSF_GetThingUDMFInt:
+		case ACSF_GetThingUDMFFixed:
 			return 0;	// Not implemented yet
-		case GetSectorUDMFInt:
+
+		case ACSF_GetSectorUDMFInt:
 			return GetUDMFInt(UDMF_Sector, P_FindSectorFromTag(args[0], -1), FBehavior::StaticLookupString(args[1]));
-		case GetSectorUDMFFixed:
+
+		case ACSF_GetSectorUDMFFixed:
 			return GetUDMFFixed(UDMF_Sector, P_FindSectorFromTag(args[0], -1), FBehavior::StaticLookupString(args[1]));
-		case GetSideUDMFInt:
+
+		case ACSF_GetSideUDMFInt:
 			return GetUDMFInt(UDMF_Side, SideFromID(args[0], args[1]), FBehavior::StaticLookupString(args[2]));
-		case GetSideUDMFFixed:
+
+		case ACSF_GetSideUDMFFixed:
 			return GetUDMFFixed(UDMF_Side, SideFromID(args[0], args[1]), FBehavior::StaticLookupString(args[2]));
+
+		case ACSF_GetActorMomX:
+			actor = SingleActorFromTID(args[0], activator);
+			return actor != NULL? actor->momx : 0;
+
+		case ACSF_GetActorMomY:
+			actor = SingleActorFromTID(args[0], activator);
+			return actor != NULL? actor->momy : 0;
+
+		case ACSF_GetActorMomZ:
+			actor = SingleActorFromTID(args[0], activator);
+			return actor != NULL? actor->momz : 0;
+
+		case ACSF_SetActivator:
+			activator = SingleActorFromTID(args[0], NULL);
+			return activator != NULL;
+		
+		case ACSF_SetActivatorToTarget:
+			actor = SingleActorFromTID(args[0], NULL);
+			if (actor != NULL) actor = actor->target;
+			if (actor != NULL) activator = actor;
+			return activator != NULL;
+
+		case ACSF_GetActorViewHeight:
+			actor = SingleActorFromTID(args[0], NULL);
+			if (actor != NULL)
+			{
+				if (actor->player != NULL)
+				{
+					return actor->player->mo->ViewHeight + actor->player->crouchviewdelta;
+				}
+				else
+				{
+					return actor->GetClass()->Meta.GetMetaFixed(AMETA_CameraHeight, actor->height/2);
+				}
+			}
+			else return 0;
+
+
 		default:
 			break;
 	}

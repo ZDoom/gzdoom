@@ -4636,6 +4636,15 @@ void P_PlaySpawnSound(AActor *missile, AActor *spawner)
 	}
 }
 
+static fixed_t GetDefaultSpeed(const PClass *type)
+{
+	if (type == NULL) return 0;
+	else if (G_SkillProperty(SKILLP_FastMonsters))
+		return type->Meta.GetMetaFixed(AMETA_FastSpeed, GetDefaultByType(type)->Speed);
+	else
+		return GetDefaultByType(type)->Speed;
+}
+
 static AActor * SpawnMissile (const PClass *type, fixed_t x, fixed_t y, fixed_t z)
 {
 	AActor *th = Spawn (type, x, y, z, ALLOW_REPLACE);
@@ -4750,14 +4759,14 @@ AActor *P_SpawnMissileAngle (AActor *source, const PClass *type,
 	angle_t angle, fixed_t momz)
 {
 	return P_SpawnMissileAngleZSpeed (source, source->z + 32*FRACUNIT,
-		type, angle, momz, GetDefaultByType (type)->Speed);
+		type, angle, momz, GetDefaultSpeed (type));
 }
 
 AActor *P_SpawnMissileAngleZ (AActor *source, fixed_t z,
 	const PClass *type, angle_t angle, fixed_t momz)
 {
 	return P_SpawnMissileAngleZSpeed (source, z, type, angle, momz,
-		GetDefaultByType (type)->Speed);
+		GetDefaultSpeed (type));
 }
 
 AActor *P_SpawnMissileZAimed (AActor *source, fixed_t z, AActor *dest, const PClass *type)
@@ -4774,7 +4783,7 @@ AActor *P_SpawnMissileZAimed (AActor *source, fixed_t z, AActor *dest, const PCl
 		an += pr_spawnmissile.Random2() << 20;
 	}
 	dist = P_AproxDistance (dest->x - source->x, dest->y - source->y);
-	speed = GetDefaultByType (type)->Speed;
+	speed = GetDefaultSpeed (type);
 	dist /= speed;
 	momz = dist != 0 ? (dest->z - source->z)/dist : speed;
 	return P_SpawnMissileAngleZSpeed (source, z, type, an, momz, speed);

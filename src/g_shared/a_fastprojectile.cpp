@@ -1,6 +1,7 @@
 
 #include "a_sharedglobal.h"
 #include "p_local.h"
+#include "g_level.h"
 
 
 IMPLEMENT_CLASS(AFastProjectile)
@@ -25,6 +26,16 @@ void AFastProjectile::Tick ()
 	PrevX = x;
 	PrevY = y;
 	PrevZ = z;
+
+	if (!(flags5 & MF5_NOTIMEFREEZE))
+	{
+		//Added by MC: Freeze mode.
+		if (bglobal.freeze || level.flags2 & LEVEL2_FROZEN)
+		{
+			return;
+		}
+	}
+
 
 	// [RH] Ripping is a little different than it was in Hexen
 	FCheckPosition tm(!!(flags2 & MF2_RIP));

@@ -3393,11 +3393,14 @@ void P_TraceBleed (int damage, AActor *target, AActor *missile)
 
 void P_TraceBleed (int damage, AActor *target)
 {
-	fixed_t one = pr_tracebleed() << 24;
-	fixed_t two = (pr_tracebleed()-128) << 16;
+	if (target != NULL)
+	{
+		fixed_t one = pr_tracebleed() << 24;
+		fixed_t two = (pr_tracebleed()-128) << 16;
 
-	P_TraceBleed (damage, target->x, target->y, target->z + target->height/2,
-		target, one, two);
+		P_TraceBleed (damage, target->x, target->y, target->z + target->height/2,
+			target, one, two);
+	}
 }
 
 //

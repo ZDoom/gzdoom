@@ -123,6 +123,116 @@ extern TArray<int>		linemap;
 
 #define CHECK_N(f) if (!(namespace_bits&(f))) break;
 
+
+//===========================================================================
+//
+// Storage of UDMF user properties
+//
+//===========================================================================
+
+typedef TMap<int, FUDMFKeys> FUDMFKeyMap;
+
+
+static FUDMFKeyMap UDMFKeys[4];
+// Things must be handled differently
+
+void P_ClearUDMFKeys()
+{
+	for(int i=0;i<4;i++)
+	{
+		UDMFKeys[i].Clear();
+	}
+}
+
+static int STACK_ARGS udmfcmp(const void *a, const void *b)
+{
+	FUDMFKey *A = (FUDMFKey*)a;
+	FUDMFKey *B = (FUDMFKey*)b;
+
+	return int(A->Key) - int(B->Key);
+}
+
+void FUDMFKeys::Sort()
+{
+	qsort(&(*this)[0], Size(), sizeof(FUDMFKey), udmfcmp);
+}
+
+FUDMFKey *FUDMFKeys::Find(FName key)
+{
+	int min = 0, max = Size()-1;
+
+	while (min <= max)
+	{
+		int mid = (min + max) / 2;
+		if ((*this)[mid].Key == key)
+		{
+			return &(*this)[mid];
+		}
+		else if ((*this)[mid].Key <= key)
+		{
+			min = mid + 1;
+		}
+		else
+		{
+			max = mid - 1;
+		}
+	}
+	return NULL;
+}
+
+//===========================================================================
+//
+// Retrieves UDMF user properties
+//
+//===========================================================================
+
+int GetUDMFInt(int type, int index, const char *key)
+{
+	assert(type >=0 && type <=3);
+
+	if (index > 0)
+	{
+		FUDMFKeys *pKeys = UDMFKeys[type].CheckKey(index);
+
+		if (pKeys != NULL)
+		{
+			FUDMFKey *pKey = pKeys->Find(key);
+			if (pKey != NULL)
+			{
+				return FLOAT2FIXED(pKey->IntVal);
+			}
+		}
+	}
+	return 0;
+}
+
+fixed_t GetUDMFFixed(int type, int index, const char *key)
+{
+	assert(type >=0 && type <=3);
+
+	if (index > 0)
+	{
+		FUDMFKeys *pKeys = UDMFKeys[type].CheckKey(index);
+
+		if (pKeys != NULL)
+		{
+			FUDMFKey *pKey = pKeys->Find(key);
+			if (pKey != NULL)
+			{
+				return FLOAT2FIXED(pKey->FloatVal);
+			}
+		}
+	}
+	return 0;
+}
+
+
+//===========================================================================
+//
+// UDMF parser
+//
+//===========================================================================
+
 struct UDMFParser
 {
 	FScanner sc;
@@ -131,6 +241,7 @@ struct UDMFParser
 	bool isTranslated;
 	bool isExtended;
 	bool floordrop;
+	FString parsedString;
 
 	TArray<line_t> ParsedLines;
 	TArray<side_t> ParsedSides;
@@ -148,7 +259,7 @@ struct UDMFParser
 
 	//===========================================================================
 	//
-	// Parses a 'key = value' line of the map but doesn't read the semicolon
+	// Parses a 'key = value' line of the map
 	//
 	//===========================================================================
 
@@ -176,6 +287,13 @@ struct UDMFParser
 				sc.Float = -sc.Float;
 			}
 		}
+		if (sc.TokenType == TK_StringConst)
+		{
+			parsedString = sc.String;
+		}
+		int savedtoken = sc.TokenType;
+		sc.MustGetToken(';');
+		sc.TokenType = savedtoken;
 		return key;
 	}
 
@@ -227,13 +345,68 @@ struct UDMFParser
 		{
 			sc.ScriptMessage("String value expected for key '%s'", key);
 		}
-		return sc.String;
+		return parsedString;
 	}
 
 	void Flag(DWORD &value, int mask, const char *key)
 	{
 		if (CheckBool(key))	value |= mask;
 		else value &= ~mask;
+	}
+
+
+	void AddUserKey(FName key, int kind, int index)
+	{
+		FUDMFKeys &keyarray = UDMFKeys[kind][index];
+
+		for(unsigned i=0; i < keyarray.Size(); i++)
+		{
+			if (keyarray[i].Key == key)
+			{
+				switch (sc.TokenType)
+				{
+				case TK_Int:
+					keyarray[i] = sc.Number;
+					break;
+				case TK_Float:
+					keyarray[i] = sc.Float;
+					break;
+				default:
+				case TK_String:
+					keyarray[i] = parsedString;
+					break;
+				case TK_True:
+					keyarray[i] = 1;
+					break;
+				case TK_False:
+					keyarray[i] = 0;
+					break;
+				}
+				return;
+			}
+		}
+		FUDMFKey ukey;
+		ukey.Key = key;
+		switch (sc.TokenType)
+		{
+		case TK_Int:
+			ukey = sc.Number;
+			break;
+		case TK_Float:
+			ukey = sc.Float;
+			break;
+		default:
+		case TK_String:
+			ukey = parsedString;
+			break;
+		case TK_True:
+			ukey = 1;
+			break;
+		case TK_False:
+			ukey = 0;
+			break;
+		}
+		keyarray.Push(ukey);
 	}
 
 	//===========================================================================
@@ -377,9 +550,12 @@ struct UDMFParser
 				break;
 
 			default:
+				if (!strnicmp("user_", key.GetChars(), 5))
+				{
+					// Custom user key - handle later
+				}
 				break;
 			}
-			sc.MustGetToken(';');
 		}
 		// Thing specials are only valid in namespaces with Hexen-type specials
 		// and in ZDoomTranslated - which will use the translator on them.
@@ -412,7 +588,7 @@ struct UDMFParser
 	//
 	//===========================================================================
 
-	void ParseLinedef(line_t *ld)
+	void ParseLinedef(line_t *ld, int index)
 	{
 		bool passuse = false;
 		bool strifetrans = false;
@@ -435,11 +611,11 @@ struct UDMFParser
 			{
 			case NAME_V1:
 				ld->v1 = (vertex_t*)(intptr_t)CheckInt(key);	// must be relocated later
-				break;
+				continue;
 
 			case NAME_V2:
 				ld->v2 = (vertex_t*)(intptr_t)CheckInt(key);	// must be relocated later
-				break;
+				continue;
 
 			case NAME_Special:
 				ld->special = CheckInt(key);
@@ -449,19 +625,19 @@ struct UDMFParser
 						ld->special = 0;	// NULL all specials which don't exist in Hexen
 				}
 
-				break;
+				continue;
 
 			case NAME_Id:
 				ld->id = CheckInt(key);
-				break;
+				continue;
 
 			case NAME_Sidefront:
 				ld->sidenum[0] = CheckInt(key);
-				break;
+				continue;
 
 			case NAME_Sideback:
 				ld->sidenum[1] = CheckInt(key);
-				break;
+				continue;
 
 			case NAME_Arg0:
 			case NAME_Arg1:
@@ -469,63 +645,63 @@ struct UDMFParser
 			case NAME_Arg3:
 			case NAME_Arg4:
 				ld->args[int(key)-int(NAME_Arg0)] = CheckInt(key);
-				break;
+				continue;
 
 			case NAME_Blocking:
 				Flag(ld->flags, ML_BLOCKING, key); 
-				break;
+				continue;
 
 			case NAME_Blockmonsters:
 				Flag(ld->flags, ML_BLOCKMONSTERS, key); 
-				break;
+				continue;
 
 			case NAME_Twosided:
 				Flag(ld->flags, ML_TWOSIDED, key); 
-				break;
+				continue;
 
 			case NAME_Dontpegtop:
 				Flag(ld->flags, ML_DONTPEGTOP, key); 
-				break;
+				continue;
 
 			case NAME_Dontpegbottom:
 				Flag(ld->flags, ML_DONTPEGBOTTOM, key); 
-				break;
+				continue;
 
 			case NAME_Secret:
 				Flag(ld->flags, ML_SECRET, key); 
-				break;
+				continue;
 
 			case NAME_Blocksound:
 				Flag(ld->flags, ML_SOUNDBLOCK, key); 
-				break;
+				continue;
 
 			case NAME_Dontdraw:
 				Flag(ld->flags, ML_DONTDRAW, key); 
-				break;
+				continue;
 
 			case NAME_Mapped:
 				Flag(ld->flags, ML_MAPPED, key); 
-				break;
+				continue;
 
 			case NAME_Jumpover:
 				CHECK_N(St | Zd | Zdt | Va)
 				Flag(ld->flags, ML_RAILING, key); 
-				break;
+				continue;
 
 			case NAME_Blockfloating:
 				CHECK_N(St | Zd | Zdt | Va)
 				Flag(ld->flags, ML_BLOCK_FLOATERS, key); 
-				break;
+				continue;
 
 			case NAME_Transparent:	
 				CHECK_N(St | Zd | Zdt | Va)
 				strifetrans = CheckBool(key); 
-				break;
+				continue;
 
 			case NAME_Passuse:
 				CHECK_N(Dm | Zd | Zdt | Va)
 				passuse = CheckBool(key); 
-				break;
+				continue;
 
 			default:
 				break;
@@ -536,39 +712,39 @@ struct UDMFParser
 			{
 			case NAME_Playercross:
 				Flag(ld->activation, SPAC_Cross, key); 
-				break;
+				continue;
 
 			case NAME_Playeruse:
 				Flag(ld->activation, SPAC_Use, key); 
-				break;
+				continue;
 
 			case NAME_Monstercross:
 				Flag(ld->activation, SPAC_MCross, key); 
-				break;
+				continue;
 
 			case NAME_Impact:
 				Flag(ld->activation, SPAC_Impact, key); 
-				break;
+				continue;
 
 			case NAME_Playerpush:
 				Flag(ld->activation, SPAC_Push, key); 
-				break;
+				continue;
 
 			case NAME_Missilecross:
 				Flag(ld->activation, SPAC_PCross, key); 
-				break;
+				continue;
 
 			case NAME_Monsteruse:
 				Flag(ld->activation, SPAC_MUse, key); 
-				break;
+				continue;
 
 			case NAME_Monsterpush:
 				Flag(ld->activation, SPAC_MPush, key); 
-				break;
+				continue;
 
 			case NAME_Repeatspecial:
 				Flag(ld->flags, ML_REPEAT_SPECIAL, key); 
-				break;
+				continue;
 
 			default:
 				break;
@@ -579,7 +755,7 @@ struct UDMFParser
 			{
 			case NAME_Alpha:
 				ld->Alpha = CheckFixed(key);
-				break;
+				continue;
 
 			case NAME_Renderstyle:
 			{
@@ -587,61 +763,65 @@ struct UDMFParser
 				if (!stricmp(str, "translucent")) ld->flags &= ~ML_ADDTRANS;
 				else if (!stricmp(str, "add")) ld->flags |= ML_ADDTRANS;
 				else sc.ScriptMessage("Unknown value \"%s\" for 'renderstyle'\n", str);
-				break;
+				continue;
 			}
 
 			case NAME_Anycross:
 				Flag(ld->activation, SPAC_AnyCross, key); 
-				break;
+				continue;
 
 			case NAME_Monsteractivate:
 				Flag(ld->flags, ML_MONSTERSCANACTIVATE, key); 
-				break;
+				continue;
 
 			case NAME_Blockplayers:
 				Flag(ld->flags, ML_BLOCK_PLAYERS, key); 
-				break;
+				continue;
 
 			case NAME_Blockeverything:
 				Flag(ld->flags, ML_BLOCKEVERYTHING, key); 
-				break;
+				continue;
 
 			case NAME_Zoneboundary:
 				Flag(ld->flags, ML_ZONEBOUNDARY, key); 
-				break;
+				continue;
 
 			case NAME_Clipmidtex:
 				Flag(ld->flags, ML_CLIP_MIDTEX, key); 
-				break;
+				continue;
 
 			case NAME_Wrapmidtex:
 				Flag(ld->flags, ML_WRAP_MIDTEX, key); 
-				break;
+				continue;
 
 			case NAME_Midtex3d:
 				Flag(ld->flags, ML_3DMIDTEX, key); 
-				break;
+				continue;
 
 			case NAME_Checkswitchrange:
 				Flag(ld->flags, ML_CHECKSWITCHRANGE, key); 
-				break;
+				continue;
 
 			case NAME_Firstsideonly:
 				Flag(ld->flags, ML_FIRSTSIDEONLY, key); 
-				break;
+				continue;
 
 			case NAME_blockprojectiles:
 				Flag(ld->flags, ML_BLOCKPROJECTILE, key); 
-				break;
+				continue;
 
 			case NAME_blockuse:
 				Flag(ld->flags, ML_BLOCKUSE, key); 
-				break;
+				continue;
 
 			default:
 				break;
 			}
-			sc.MustGetToken(';');
+
+			if (!strnicmp("user_", key.GetChars(), 5))
+			{
+				AddUserKey(key, UDMF_Line, index);
+			}
 		}
 
 		if (isTranslated)
@@ -671,7 +851,7 @@ struct UDMFParser
 	//
 	//===========================================================================
 
-	void ParseSidedef(side_t *sd, mapsidedef_t *sdt)
+	void ParseSidedef(side_t *sd, mapsidedef_t *sdt, int index)
 	{
 		fixed_t texofs[2]={0,0};
 
@@ -688,27 +868,27 @@ struct UDMFParser
 			{
 			case NAME_Offsetx:
 				texofs[0] = CheckInt(key) << FRACBITS;
-				break;
+				continue;
 
 			case NAME_Offsety:
 				texofs[1] = CheckInt(key) << FRACBITS;
-				break;
+				continue;
 
 			case NAME_Texturetop:
 				strncpy(sdt->toptexture, CheckString(key), 8);
-				break;
+				continue;
 
 			case NAME_Texturebottom:
 				strncpy(sdt->bottomtexture, CheckString(key), 8);
-				break;
+				continue;
 
 			case NAME_Texturemiddle:
 				strncpy(sdt->midtexture, CheckString(key), 8);
-				break;
+				continue;
 
 			case NAME_Sector:
 				sd->sector = (sector_t*)(intptr_t)CheckInt(key);
-				break;
+				continue;
 
 			default:
 				break;
@@ -718,53 +898,55 @@ struct UDMFParser
 			{
 			case NAME_offsetx_top:
 				sd->SetTextureXOffset(side_t::top, CheckFixed(key));
-				break;
+				continue;
 
 			case NAME_offsety_top:
 				sd->SetTextureYOffset(side_t::top, CheckFixed(key));
-				break;
+				continue;
 
 			case NAME_offsetx_mid:
 				sd->SetTextureXOffset(side_t::mid, CheckFixed(key));
-				break;
+				continue;
 
 			case NAME_offsety_mid:
 				sd->SetTextureYOffset(side_t::mid, CheckFixed(key));
-				break;
+				continue;
 
 			case NAME_offsetx_bottom:
 				sd->SetTextureXOffset(side_t::bottom, CheckFixed(key));
-				break;
+				continue;
 
 			case NAME_offsety_bottom:
 				sd->SetTextureYOffset(side_t::bottom, CheckFixed(key));
-				break;
+				continue;
 
 			case NAME_light:
 				sd->SetLight(CheckInt(key));
-				break;
+				continue;
 
 			case NAME_lightabsolute:
 				if (CheckBool(key)) sd->Flags |= WALLF_ABSLIGHTING;
 				else sd->Flags &= ~WALLF_ABSLIGHTING;
-				break;
+				continue;
 
 			case NAME_nofakecontrast:
 				if (CheckBool(key)) sd->Flags |= WALLF_NOFAKECONTRAST;
 				else sd->Flags &= WALLF_NOFAKECONTRAST;
-				break;
+				continue;
 
 			case NAME_smoothlighting:
 				if (CheckBool(key)) sd->Flags |= WALLF_SMOOTHLIGHTING;
 				else sd->Flags &= ~WALLF_SMOOTHLIGHTING;
-				break;
+				continue;
 
 			default:
 				break;
 
 			}
-
-			sc.MustGetToken(';');
+			if (!strnicmp("user_", key.GetChars(), 5))
+			{
+				AddUserKey(key, UDMF_Side, index);
+			}
 		}
 		// initialization of these is delayed to allow separate offsets and add them with the global ones.
 		sd->AddTextureXOffset(side_t::top, texofs[0]);
@@ -818,23 +1000,23 @@ struct UDMFParser
 			{
 			case NAME_Heightfloor:
 				sec->SetPlaneTexZ(sector_t::floor, CheckInt(key) << FRACBITS);
-				break;
+				continue;
 
 			case NAME_Heightceiling:
 				sec->SetPlaneTexZ(sector_t::ceiling, CheckInt(key) << FRACBITS);
-				break;
+				continue;
 
 			case NAME_Texturefloor:
 				SetTexture(sec, index, sector_t::floor, CheckString(key));
-				break;
+				continue;
 
 			case NAME_Textureceiling:
 				SetTexture(sec, index, sector_t::ceiling, CheckString(key));
-				break;
+				continue;
 
 			case NAME_Lightlevel:
 				sec->lightlevel = (BYTE)clamp<int>(CheckInt(key), 0, 255);
-				break;
+				continue;
 
 			case NAME_Special:
 				sec->special = (short)CheckInt(key);
@@ -844,11 +1026,11 @@ struct UDMFParser
 					if (sec->special < 0 || sec->special > 255 || !HexenSectorSpecialOk[sec->special])
 						sec->special = 0;	// NULL all unknown specials
 				}
-				break;
+				continue;
 
 			case NAME_Id:
 				sec->tag = (short)CheckInt(key);
-				break;
+				continue;
 
 			default:
 				break;
@@ -858,99 +1040,102 @@ struct UDMFParser
 			{
 				case NAME_Xpanningfloor:
 					sec->SetXOffset(sector_t::floor, CheckFixed(key));
-					break;
+					continue;
 
 				case NAME_Ypanningfloor:
 					sec->SetYOffset(sector_t::floor, CheckFixed(key));
-					break;
+					continue;
 
 				case NAME_Xpanningceiling:
 					sec->SetXOffset(sector_t::ceiling, CheckFixed(key));
-					break;
+					continue;
 
 				case NAME_Ypanningceiling:
 					sec->SetYOffset(sector_t::ceiling, CheckFixed(key));
-					break;
+					continue;
 
 				case NAME_Xscalefloor:
 					sec->SetXScale(sector_t::floor, CheckFixed(key));
-					break;
+					continue;
 
 				case NAME_Yscalefloor:
 					sec->SetYScale(sector_t::floor, CheckFixed(key));
-					break;
+					continue;
 
 				case NAME_Xscaleceiling:
 					sec->SetXScale(sector_t::ceiling, CheckFixed(key));
-					break;
+					continue;
 
 				case NAME_Yscaleceiling:
 					sec->SetYScale(sector_t::ceiling, CheckFixed(key));
-					break;
+					continue;
 
 				case NAME_Rotationfloor:
 					sec->SetAngle(sector_t::floor, CheckAngle(key));
-					break;
+					continue;
 
 				case NAME_Rotationceiling:
 					sec->SetAngle(sector_t::ceiling, CheckAngle(key));
-					break;
+					continue;
 
 				case NAME_Lightfloor:
 					sec->SetPlaneLight(sector_t::floor, CheckInt(key));
-					break;
+					continue;
 
 				case NAME_Lightceiling:
 					sec->SetPlaneLight(sector_t::ceiling, CheckInt(key));
-					break;
+					continue;
 
 				case NAME_Lightfloorabsolute:
 					if (CheckBool(key)) sec->ChangeFlags(sector_t::floor, 0, SECF_ABSLIGHTING);
 					else sec->ChangeFlags(sector_t::floor, SECF_ABSLIGHTING, 0);
-					break;
+					continue;
 
 				case NAME_Lightceilingabsolute:
 					if (CheckBool(key)) sec->ChangeFlags(sector_t::ceiling, 0, SECF_ABSLIGHTING);
 					else sec->ChangeFlags(sector_t::ceiling, SECF_ABSLIGHTING, 0);
-					break;
+					continue;
 
 				case NAME_Gravity:
 					sec->gravity = float(CheckFloat(key));
-					break;
+					continue;
 
 				case NAME_Lightcolor:
 					lightcolor = CheckInt(key);
-					break;
+					continue;
 
 				case NAME_Fadecolor:
 					fadecolor = CheckInt(key);
-					break;
+					continue;
 
 				case NAME_Desaturation:
 					desaturation = int(255*CheckFloat(key));
-					break;
+					continue;
 
 				case NAME_Silent:
 					Flag(sec->Flags, SECF_SILENT, key);
-					break;
+					continue;
 
 				case NAME_NoRespawn:
 					Flag(sec->Flags, SECF_NORESPAWN, key);
-					break;
+					continue;
 
 				case NAME_Nofallingdamage:
 					Flag(sec->Flags, SECF_NOFALLINGDAMAGE, key);
-					break;
+					continue;
 
 				case NAME_Dropactors:
 					Flag(sec->Flags, SECF_FLOORDROP, key);
-					break;
+					continue;
 
 				default:
 					break;
 			}
 				
-			sc.MustGetToken(';');
+			if (!strnicmp("user_", key.GetChars(), 5))
+			{
+				AddUserKey(key, UDMF_Sector, index);
+			}
 		}
 
 		sec->floorplane.d = -sec->GetPlaneTexZ(sector_t::floor);
@@ -1196,14 +1381,14 @@ struct UDMFParser
 			else if (sc.Compare("linedef"))
 			{
 				line_t li;
-				ParseLinedef(&li);
+				ParseLinedef(&li, ParsedLines.Size());
 				ParsedLines.Push(li);
 			}
 			else if (sc.Compare("sidedef"))
 			{
 				side_t si;
 				mapsidedef_t st;
-				ParseSidedef(&si, &st);
+				ParseSidedef(&si, &st, ParsedSides.Size());
 				ParsedSides.Push(si);
 				ParsedSideTextures.Push(st);
 			}

@@ -108,4 +108,7 @@ void P_LoadTranslator(const char *lumpname);
 void P_TranslateLineDef (line_t *ld, maplinedef_t *mld);
 int P_TranslateSectorSpecial (int);
 
+int GetUDMFInt(int type, int index, const char *key);
+fixed_t GetUDMFFixed(int type, int index, const char *key);
+
 #endif

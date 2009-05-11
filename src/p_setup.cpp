@@ -69,6 +69,7 @@
 void P_SpawnSlopeMakers (FMapThing *firstmt, FMapThing *lastmt);
 void P_SetSlopes ();
 void BloodCrypt (void *data, int key, int len);
+void P_ClearUDMFKeys();
 
 extern AActor *P_SpawnMapThing (FMapThing *mthing, int position);
 extern bool P_LoadBuildMap (BYTE *mapdata, size_t len, FMapThing **things, int *numthings);
@@ -2331,6 +2332,7 @@ void P_LoadSideDefs2 (MapData * map)
 		sd->SetTextureYOffset(LittleShort(msd->rowoffset)<<FRACBITS);
 		sd->linenum = NO_INDEX;
 		sd->Flags = 0;
+		sd->Index = i;
 
 		// killough 4/4/98: allow sidedef texture names to be overloaded
 		// killough 4/11/98: refined to allow colormaps to work as wall
@@ -3281,6 +3283,7 @@ void P_FreeLevelData ()
 		delete[] level.Scrolls;
 		level.Scrolls = NULL;
 	}
+	P_ClearUDMFKeys();
 }
 
 extern msecnode_t *headsecnode;

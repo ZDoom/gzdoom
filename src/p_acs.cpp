@@ -70,6 +70,7 @@
 #include "sbarinfo.h"
 #include "cmdlib.h"
 #include "m_png.h"
+#include "p_setup.h"
 
 extern FILE *Logfile;
 
@@ -2405,6 +2406,7 @@ enum
 	APROP_Friendly		= 16,
 	APROP_SpawnHealth   = 17,
 	APROP_Dropped		= 18,
+	APROP_Notarget		= 19,
 };	
 
 // These are needed for ACS's APROP_RenderStyle
@@ -2490,6 +2492,10 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 
 	case APROP_Invulnerable:
 		if (value) actor->flags2 |= MF2_INVULNERABLE; else actor->flags2 &= ~MF2_INVULNERABLE;
+		break;
+
+	case APROP_Notarget:
+		if (value) actor->flags3 |= MF3_NOTARGET; else actor->flags3 &= ~MF3_NOTARGET;
 		break;
 
 	case APROP_JumpZ:
@@ -2595,6 +2601,7 @@ int DLevelScript::GetActorProperty (int tid, int property)
 	case APROP_ChaseGoal:	return !!(actor->flags5 & MF5_CHASEGOAL);
 	case APROP_Frightened:	return !!(actor->flags4 & MF4_FRIGHTENED);
 	case APROP_Friendly:	return !!(actor->flags & MF_FRIENDLY);
+	case APROP_Notarget:	return !!(actor->flags3 & MF3_NOTARGET);
 	case APROP_SpawnHealth: if (actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))
 							{
 								return static_cast<APlayerPawn *>(actor)->MaxHealth;
@@ -2772,8 +2779,80 @@ int DLevelScript::DoClassifyActor(int tid)
 	return classify;
 }
 
+enum EACSFunctions
+{
+	GetLineUDMFInt=1,
+	GetLineUDMFFixed,
+	GetThingUDMFInt,
+	GetThingUDMFFixed,
+	GetSectorUDMFInt,
+	GetSectorUDMFFixed,
+	GetSideUDMFInt,
+	GetSideUDMFFixed,
+};
+
+int DLevelScript::SideFromID(int id, int side)
+{
+	if (side != 0 && side != 1) return -1;
+	
+	if (id == 0)
+	{
+		if (activationline == NULL) return -1;
+		if (activationline->sidenum[side] == NO_SIDE) return -1;
+		return sides[activationline->sidenum[side]].Index;
+	}
+	else
+	{
+		int line = P_FindLineFromID(id, -1);
+		if (line == -1) return -1;
+		if (lines[line].sidenum[side] == NO_SIDE) return -1;
+		return sides[lines[line].sidenum[side]].Index;
+	}
+}
+
+int DLevelScript::LineFromID(int id)
+{
+	if (id == 0)
+	{
+		if (activationline == NULL) return -1;
+		return int(activationline - lines);
+	}
+	else
+	{
+		return P_FindLineFromID(id, -1);
+	}
+}
+
+int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
+{
+	switch(funcIndex)
+	{
+		case GetLineUDMFInt:
+			return GetUDMFInt(UDMF_Line, LineFromID(args[0]), FBehavior::StaticLookupString(args[1]));
+		case GetLineUDMFFixed:
+			return GetUDMFFixed(UDMF_Line, LineFromID(args[0]), FBehavior::StaticLookupString(args[1]));
+		case GetThingUDMFInt:
+		case GetThingUDMFFixed:
+			return 0;	// Not implemented yet
+		case GetSectorUDMFInt:
+			return GetUDMFInt(UDMF_Sector, P_FindSectorFromTag(args[0], -1), FBehavior::StaticLookupString(args[1]));
+		case GetSectorUDMFFixed:
+			return GetUDMFFixed(UDMF_Sector, P_FindSectorFromTag(args[0], -1), FBehavior::StaticLookupString(args[1]));
+		case GetSideUDMFInt:
+			return GetUDMFInt(UDMF_Side, SideFromID(args[0], args[1]), FBehavior::StaticLookupString(args[2]));
+		case GetSideUDMFFixed:
+			return GetUDMFFixed(UDMF_Side, SideFromID(args[0], args[1]), FBehavior::StaticLookupString(args[2]));
+		default:
+			break;
+	}
+
+	return 0;
+}
+
+
 #define NEXTWORD	(LittleLong(*pc++))
 #define NEXTBYTE	(fmt==ACS_LittleEnhanced?getbyte(pc):NEXTWORD)
+#define NEXTSHORT	(fmt==ACS_LittleEnhanced?getshort(pc):NEXTWORD)
 #define STACK(a)	(Stack[sp - (a)])
 #define PushToStack(a)	(Stack[sp++] = (a))
 
@@ -2781,6 +2860,13 @@ inline int getbyte (int *&pc)
 {
 	int res = *(BYTE *)pc;
 	pc = (int *)((BYTE *)pc+1);
+	return res;
+}
+
+inline int getshort (int *&pc)
+{
+	int res = LittleShort( *(SWORD *)pc);
+	pc = (int *)((BYTE *)pc+2);
 	return res;
 }
 
@@ -3062,6 +3148,17 @@ int DLevelScript::RunScript ()
 				((BYTE *)pc)[1], ((BYTE *)pc)[2], ((BYTE *)pc)[3],
 				((BYTE *)pc)[4], ((BYTE *)pc)[5]);
 			pc = (int *)((BYTE *)pc + 6);
+			break;
+
+		case PCD_CALLFUNC:
+			{
+				int argCount = NEXTBYTE;
+				int funcIndex = NEXTSHORT;
+
+				int retval = CallFunction(argCount, funcIndex, &STACK(argCount));
+				sp -= argCount-1;
+				STACK(1) = retval;
+			}
 			break;
 
 		case PCD_CALL:

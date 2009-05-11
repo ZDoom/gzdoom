@@ -147,6 +147,12 @@ void FResourceLump::LumpNameSetup(char *iname)
 	}
 }
 
+//==========================================================================
+//
+// Checks for embedded resource files
+//
+//==========================================================================
+
 void FResourceLump::CheckEmbedded()
 {
 	// Checks for embedded archives
@@ -155,6 +161,7 @@ void FResourceLump::CheckEmbedded()
 	{
 		// Mark all embedded WADs
 		Flags |= LUMPF_EMBEDDED;
+		memset(Name, 0, 8);
 	}
 	/* later
 	else
@@ -162,10 +169,12 @@ void FResourceLump::CheckEmbedded()
 		if (c==NULL) c = strstr(Name, ".zip");
 		if (c==NULL) c = strstr(Name, ".pk3");
 		if (c==NULL) c = strstr(Name, ".7z");
+		if (c==NULL) c = strstr(Name, ".pak");
 		if (c && strlen(c) <= 4)
 		{
 			// Mark all embedded archives in any directory
 			Flags |= LUMPF_EMBEDDED;
+			memset(Name, 0, 8);
 		}
 	}
 	*/

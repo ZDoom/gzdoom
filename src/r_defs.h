@@ -85,6 +85,70 @@ class FBitmap;
 struct FCopyInfo;
 class DInterpolation;
 
+enum
+{
+	UDMF_Line,
+	UDMF_Side,
+	UDMF_Sector,
+	UDMF_Thing
+};
+
+
+struct FUDMFKey
+{
+	enum
+	{
+		UDMF_Int,
+		UDMF_Float,
+		UDMF_String
+	};
+
+	FName Key;
+	int Type;
+	int IntVal;
+	double FloatVal;
+	FString StringVal;
+
+	FUDMFKey()
+	{
+	}
+
+	FUDMFKey& operator =(int val)
+	{
+		Type = UDMF_Int;
+		IntVal = val;
+		FloatVal = val;
+		StringVal = "";
+		return *this;
+	}
+
+	FUDMFKey& operator =(double val)
+	{
+		Type = UDMF_Float;
+		IntVal = int(val);
+		FloatVal = val;
+		StringVal = "";
+		return *this;
+	}
+
+	FUDMFKey& operator =(const FString &val)
+	{
+		Type = UDMF_String;
+		IntVal = strtol(val, NULL, 0);
+		FloatVal = strtod(val, NULL);
+		StringVal = val;
+		return *this;
+	}
+
+};
+
+class FUDMFKeys : public TArray<FUDMFKey>
+{
+public:
+	void Sort();
+	FUDMFKey *Find(FName key);
+};
+
 //
 // The SECTORS record, at runtime.
 // Stores things/mobjs.
@@ -663,6 +727,7 @@ struct side_t
 	WORD		TexelLength;
 	SWORD		Light;
 	BYTE		Flags;
+	int			Index;		// needed to access custom UDMF fields which are stored in loading order.
 
 	int GetLightLevel (bool foggy, int baselight) const;
 

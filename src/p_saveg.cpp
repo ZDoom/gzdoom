@@ -382,6 +382,8 @@ void P_SerializeWorld (FArchive &arc)
 				<< si->Flags
 				<< si->LeftSide
 				<< si->RightSide;
+			if (SaveVersion >= 1575)
+				arc << si->Index;
 			DBaseDecal::SerializeChain (arc, &si->AttachedDecals);
 		}
 	}

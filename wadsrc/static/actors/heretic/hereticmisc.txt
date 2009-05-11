@@ -68,6 +68,7 @@ ACTOR PodGenerator 43
 	+NOBLOCKMAP
 	+NOSECTOR
 	+DONTSPLASH
+	AttackSound "misc/podgrow"
 
 	action native A_MakePod (class<Actor> podtype = "Pod");
 

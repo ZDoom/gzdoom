@@ -2,6 +2,20 @@
 - Added Species property for actors and separated Hexen's Demon1 and Demon2
   into different species.
 
+May 10, 2009  (Changes by Graf Zahl)
+- Added handling for UDMF user keys.
+- Added support for ACS functions that can be defined without recompiling ACC.
+- Fixed: The short lump name for embedded files must be cleared so that they
+  are not found by a normal lump search.
+
+May 9, 2009  (Changes by Graf Zahl)
+- Added AProp_Notarget actor property.
+- Fixed: TraceBleed was missing a NULL pointer check,
+- Fixed: P_RandomChaseDir could crash for friendly monsters that belong to
+  a player which left the game.
+- Changed A_PodGrow so that it plays the generator's attack sound instead of
+  "misc/podgrow".
+
 May 8, 2009
 - Added transference of a select few flags from PowerProtection to its owner.
 - Added actor type parameters to A_PodPain() and A_MakePod().

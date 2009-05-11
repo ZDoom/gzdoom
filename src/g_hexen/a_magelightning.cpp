@@ -51,7 +51,7 @@ int ALightning::SpecialMissileHit (AActor *thing)
 			P_DamageMobj(thing, this, target, 3, NAME_Electric);
 			if (!(S_IsActorPlayingSomething (this, CHAN_WEAPON, -1)))
 			{
-				S_Sound (this, CHAN_WEAPON, "MageLightningZap", 1, ATTN_NORM);
+				S_Sound (this, CHAN_WEAPON, this->AttackSound, 1, ATTN_NORM);
 			}
 			if (thing->flags3&MF3_ISMONSTER && pr_hit() < 64)
 			{
@@ -207,6 +207,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightningClip)
 
 DEFINE_ACTION_FUNCTION(AActor, A_LightningZap)
 {
+
+	const PClass *lightning=PClass::FindClass((ENamedName) self->GetClass()->Meta.GetMetaInt (ACMETA_MissileName, NAME_None));
+	if (lightning == NULL) lightning = PClass::FindClass("LightningZap");
 	AActor *mo;
 	fixed_t deltaZ;
 
@@ -226,7 +229,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightningZap)
 	{
 		deltaZ = -10*FRACUNIT;
 	}
-	mo = Spawn<ALightningZap> (self->x+((pr_zap()-128)*self->radius/256), 
+	mo = Spawn(lightning, self->x+((pr_zap()-128)*self->radius/256), 
 		self->y+((pr_zap()-128)*self->radius/256), 
 		self->z+deltaZ, ALLOW_REPLACE);
 	if (mo)
@@ -246,7 +249,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightningZap)
 	}
 	if ((self->flags3 & MF3_FLOORHUGGER) && pr_zapf() < 160)
 	{
-		S_Sound (self, CHAN_BODY, "MageLightningContinuous", 1, ATTN_NORM);
+		S_Sound (self, CHAN_BODY, self->ActiveSound, 1, ATTN_NORM);
 	}
 }
 
@@ -256,12 +259,16 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightningZap)
 //
 //============================================================================
 
-DEFINE_ACTION_FUNCTION(AActor, A_MLightningAttack)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_MLightningAttack)
 {
+    ACTION_PARAM_START(2);
+    ACTION_PARAM_CLASS(floor, 0);
+    ACTION_PARAM_CLASS(ceiling, 1);
+
 	AActor *fmo, *cmo;
 
-	fmo = P_SpawnPlayerMissile (self, PClass::FindClass ("LightningFloor"));
-	cmo = P_SpawnPlayerMissile (self, PClass::FindClass ("LightningCeiling"));
+	fmo = P_SpawnPlayerMissile (self, floor);
+	cmo = P_SpawnPlayerMissile (self, ceiling);
 	if (fmo)
 	{
 		fmo->special1 = 0;
@@ -319,9 +326,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_ZapMimic)
 
 DEFINE_ACTION_FUNCTION(AActor, A_LastZap)
 {
+	const PClass *lightning=PClass::FindClass((ENamedName) self->GetClass()->Meta.GetMetaInt (ACMETA_MissileName, NAME_None));
+	if (lightning == NULL) lightning = PClass::FindClass("LightningZap");
+
 	AActor *mo;
 
-	mo = Spawn<ALightningZap> (self->x, self->y, self->z, ALLOW_REPLACE);
+	mo = Spawn(lightning, self->x, self->y, self->z, ALLOW_REPLACE);
 	if (mo)
 	{
 		mo->SetState (mo->FindState (NAME_Death));

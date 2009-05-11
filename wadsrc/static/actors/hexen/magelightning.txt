@@ -14,7 +14,7 @@ ACTOR MWeapLightning : MageWeapon 8040
 	Inventory.PickupMessage "$TXT_WEAPON_M3"
 
 	action native A_LightningReady();
-	action native A_MLightningAttack();
+	action native A_MLightningAttack(class<Actor> floor = "LightningFloor", class<Actor> ceiling = "LightningCeiling");
 
 	States
 	{
@@ -53,6 +53,9 @@ ACTOR MWeapLightning : MageWeapon 8040
 
 ACTOR Lightning native
 {
+	MissileType "LightningZap"
+	AttackSound "MageLightningZap"
+	ActiveSound "MageLightningContinuous"
 }
 
 ACTOR LightningCeiling : Lightning

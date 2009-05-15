@@ -157,10 +157,10 @@ void FWadFile::SetNamespace(const char *startmarker, const char *endmarker, name
 {
 	bool warned = false;
 	int numstartmarkers = 0, numendmarkers = 0;
-	int i;
+	unsigned int i;
 	TArray<Marker> markers;
 	
-	for(i = 0; i < (int)NumLumps; i++)
+	for(i = 0; i < NumLumps; i++)
 	{
 		if (IsMarker(i, startmarker))
 		{

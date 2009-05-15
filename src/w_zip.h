@@ -63,6 +63,7 @@ struct FZipLocalFileHeader
 #define ZIP_ENDOFDIR	MAKE_ID('P','K',5,6)
 
 #define METHOD_STORED	0
+#define METHOD_IMPLODE	6
 #define METHOD_DEFLATE	8
 #define METHOD_BZIP2	12
 #define METHOD_LZMA		14

@@ -262,7 +262,7 @@ void FWadCollection::AddFile (const char *filename, FileReader *wadinfo)
 	Printf (" adding %s", filename);
 	startlump = NumLumps;
 
-	for(int i = 0; i < countof(funcs); i++)
+	for(size_t i = 0; i < countof(funcs); i++)
 	{
 		FResourceFile * resfile = funcs[i](filename, wadinfo);
 		if (resfile != NULL)

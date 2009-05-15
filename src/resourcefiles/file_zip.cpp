@@ -40,6 +40,7 @@
 #include "w_wad.h"
 #include "w_zip.h"
 #include "i_system.h"
+#include "explode.h"
 
 #define BUFREADCOMMENT (0x400)
 
@@ -109,6 +110,7 @@ enum
 
 struct FZipLump : public FResourceLump
 {
+	WORD	GPFlags;
 	BYTE	Method;
 	int		CompressedSize;
 	int		Position;
@@ -204,7 +206,7 @@ bool FZipFile::Open()
 
 	char *dirptr = (char*)directory;
 	FZipLump *lump_p = Lumps;
-	for (int i = 0; i < NumLumps; i++)
+	for (DWORD i = 0; i < NumLumps; i++)
 	{
 		FZipCentralDirectoryInfo *zip_fh = (FZipCentralDirectoryInfo *)dirptr;
 
@@ -219,7 +221,7 @@ bool FZipFile::Open()
 				  LittleShort(zip_fh->CommentLength);
 		
 		// skip Directories
-		if(name[len - 1] == '/' && LittleLong(zip_fh->UncompressedSize) == 0) 
+		if (name[len - 1] == '/' && LittleLong(zip_fh->UncompressedSize) == 0) 
 		{
 			skipped++;
 			continue;
@@ -230,14 +232,16 @@ bool FZipFile::Open()
 		if (zip_fh->Method != METHOD_STORED &&
 			zip_fh->Method != METHOD_DEFLATE &&
 			zip_fh->Method != METHOD_LZMA &&
-			zip_fh->Method != METHOD_BZIP2)
+			zip_fh->Method != METHOD_BZIP2 &&
+			zip_fh->Method != METHOD_IMPLODE)
 		{
 			Printf("\n%s: '%s' uses an unsupported compression algorithm (#%d).\n", Filename, name, zip_fh->Method);
 			skipped++;
 			continue;
 		}
 		// Also ignore encrypted entries
-		if(LittleShort(zip_fh->Flags) & ZF_ENCRYPTED)
+		zip_fh->Flags = LittleShort(zip_fh->Flags);
+		if (zip_fh->Flags & ZF_ENCRYPTED)
 		{
 			Printf("\n%s: '%s' is encrypted. Encryption is not supported.\n", Filename, name);
 			skipped++;
@@ -253,6 +257,7 @@ bool FZipFile::Open()
 		// The start of the Reader will be determined the first time it is accessed.
 		lump_p->Flags = LUMPF_ZIPFILE | LUMPFZIP_NEEDFILESTART;
 		lump_p->Method = zip_fh->Method;
+		lump_p->GPFlags = zip_fh->Flags;
 		lump_p->CompressedSize = LittleLong(zip_fh->CompressedSize);
 		lump_p->Position = LittleLong(zip_fh->LocalHeaderOffset);
 		lump_p->CheckEmbedded();
@@ -372,6 +377,13 @@ int FZipLump::FillCache()
 			break;
 		}
 
+		case METHOD_IMPLODE:
+		{
+			FZipExploder exploder;
+			exploder.Explode((unsigned char *)Cache, LumpSize, Owner->Reader, CompressedSize, GPFlags);
+			break;
+		}
+
 		default:
 			assert(0);
 			return 0;
@@ -391,7 +403,7 @@ FResourceFile *CheckZip(const char *filename, FileReader *file)
 {
 	char head[4];
 
-	if (file->GetLength() >= sizeof(FZipLocalFileHeader))
+	if (file->GetLength() >= (long)sizeof(FZipLocalFileHeader))
 	{
 		file->Seek(0, SEEK_SET);
 		file->Read(&head, 4);

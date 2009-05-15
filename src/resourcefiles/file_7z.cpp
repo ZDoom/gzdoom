@@ -265,7 +265,7 @@ bool F7ZFile::Open()
 	Lumps = new F7ZLump[NumLumps];
 
 	F7ZLump *lump_p = Lumps;
-	for (int i = 0; i < NumLumps; ++i)
+	for (DWORD i = 0; i < NumLumps; ++i)
 	{
 		CSzFileItem *file = &Archive->DB.db.Files[i];
 		char name[256];

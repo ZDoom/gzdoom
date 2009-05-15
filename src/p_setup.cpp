@@ -583,7 +583,7 @@ static void SetTexture (side_t *side, int position, const char *name8)
 		{
 			for(int j = 0; j < 2; j++)
 			{
-				if (lines[i].sidenum[j] == side - sides)
+				if (lines[i].sidenum[j] == (DWORD)(side - sides))
 				{
 					Printf("Unknown %s texture '%s' on %s side of linedef %d\n",
 						positionnames[position], name, sidenames[j], i);

@@ -1,4 +1,9 @@
-﻿May 11, 2009  (Changes by Graf Zahl)
+﻿May 14, 2009
+- Fixed non-POD passing in G_BuildSaveName() and other things GCC warned
+  about.
+- Added support for imploded zips.
+
+May 11, 2009  (Changes by Graf Zahl)
 - Fixed: Some missile spawning functions ignored the FastSpeed setting.
 - Fixed: P_CheckSwitchRange tried to access a line's backsector without
   checking if it is valid.

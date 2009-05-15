@@ -833,7 +833,7 @@ void P_RandomChaseDir (AActor *actor)
 
 		if (actor->FriendPlayer != 0)
 		{
-			player = players[actor->FriendPlayer - 1].mo;
+			player = players[i = actor->FriendPlayer - 1].mo;
 		}
 		else
 		{

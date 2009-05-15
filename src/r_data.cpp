@@ -155,7 +155,7 @@ void R_InitColormaps ()
 			name[8] = 0;
 			Wads.GetLumpName (name, ns_colormaps);
 
-			if (Wads.CheckNumForName (name, ns_colormaps) == i)
+			if (Wads.CheckNumForName (name, ns_colormaps) == (int)i)
 			{
 				strncpy(cm.name, name, 8);
 				cm.blend = 0;

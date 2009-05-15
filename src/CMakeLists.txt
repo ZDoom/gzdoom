@@ -656,6 +656,7 @@ add_executable( zdoom WIN32
 	oplsynth/music_opldumper_mididevice.cpp
 	oplsynth/music_opl_mididevice.cpp
 	oplsynth/opl_mus_player.cpp
+	resourcefiles/explode.cpp
 	resourcefiles/file_7z.cpp
 	resourcefiles/file_grp.cpp
 	resourcefiles/file_lump.cpp

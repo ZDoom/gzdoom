@@ -1783,13 +1783,10 @@ FString G_BuildSaveName (const char *prefix, int slot)
 	{
 		slash = "/";
 	}
-	if (slot < 0)
+	name.Format("%s%s%s", leader.GetChars(), slash, prefix);
+	if (slot >= 0)
 	{
-		name.Format ("%s%s%s", leader, slash, prefix);
-	}
-	else
-	{
-		name.Format ("%s%s%s%d.zds", leader, slash, prefix, slot);
+		name.AppendFormat("%d.zds", slot);
 	}
 #ifdef unix
 	if (leader[0] == 0)

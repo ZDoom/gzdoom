@@ -1,4 +1,7 @@
 ﻿May 15, 2009  (Changes by Graf Zahl)
+- Fixed: Monsters should not check the inventory for damage absorbtion when
+  they have the MF5_NODAMAGE flag set.
+- Added patch for saving automap zoom.
 - Added ACS GetChar function.
 - Added Gez's submission for polyobjects being able to crush corpses but made
   it an explicit MAPINFO option only.

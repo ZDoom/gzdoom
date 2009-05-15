@@ -1156,7 +1156,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 	else
 	{
 		// Armor for monsters.
-		if (!(flags & DMG_NO_ARMOR) && target->Inventory != NULL)
+		if (!(flags & DMG_NO_ARMOR) && target->Inventory != NULL && damage > 0)
 		{
 			int newdam = damage;
 			target->Inventory->AbsorbDamage (damage, mod, newdam);

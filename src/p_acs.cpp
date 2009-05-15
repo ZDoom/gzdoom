@@ -2897,7 +2897,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 		case ACSF_GetChar:
 		{
 			const char *p = FBehavior::StaticLookupString(args[0]);
-			if (p != NULL && args[1] >= 0 && args[1] < strlen(p))
+			if (p != NULL && args[1] >= 0 && args[1] < int(strlen(p)))
 			{
 				return p[args[1]];
 			}

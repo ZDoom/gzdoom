@@ -1912,4 +1912,6 @@ void AM_SerializeMarkers(FArchive &arc)
 	{
 		arc << markpoints[i].x << markpoints[i].y;
 	}
+	arc << scale_mtof;
+	arc << scale_ftom; 
 }

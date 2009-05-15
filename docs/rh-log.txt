@@ -1,4 +1,11 @@
-﻿May 14, 2009
+﻿May 14, 2009  (Changes by Graf Zahl)
+- fixed a few Heretic actors:
+  * The pod generator's attacksound was wrong
+  * The teleglitter generators need different flags if they are supposed to work 
+    with z-aware spawning of the glitter.
+  * The knight's axes need the THRUGHOST flag.
+
+May 14, 2009
 - Fixed non-POD passing in G_BuildSaveName() and other things GCC warned
   about.
 - Added support for imploded zips.

@@ -68,7 +68,7 @@ ACTOR PodGenerator 43
 	+NOBLOCKMAP
 	+NOSECTOR
 	+DONTSPLASH
-	AttackSound "misc/podgrow"
+	AttackSound "world/podgrow"
 
 	action native A_MakePod (class<Actor> podtype = "Pod");
 
@@ -88,9 +88,9 @@ ACTOR TeleGlitterGenerator1 74
 	Game Heretic
 	SpawnID 166
 	+NOBLOCKMAP 
-	+NOSECTOR 
 	+NOGRAVITY
 	+DONTSPLASH
+	+MOVEWITHSECTOR
 	States
 	{
 	Spawn:
@@ -106,9 +106,9 @@ ACTOR TeleGlitterGenerator2 52
 	Game Heretic
 	SpawnID 167
 	+NOBLOCKMAP 
-	+NOSECTOR 
 	+NOGRAVITY
 	+DONTSPLASH
+	+MOVEWITHSECTOR
 	States
 	{
 	Spawn:

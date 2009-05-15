@@ -2795,6 +2795,7 @@ enum EACSFunctions
 	ACSF_SetActivator,
 	ACSF_SetActivatorToTarget,
 	ACSF_GetActorViewHeight,
+	ACSF_GetChar,
 };
 
 int DLevelScript::SideFromID(int id, int side)
@@ -2892,6 +2893,19 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 				}
 			}
 			else return 0;
+
+		case ACSF_GetChar:
+		{
+			const char *p = FBehavior::StaticLookupString(args[0]);
+			if (p != NULL && args[1] >= 0 && args[1] < strlen(p))
+			{
+				return p[args[1]];
+			}
+			else 
+			{
+				return 0;
+			}
+		}
 
 
 		default:

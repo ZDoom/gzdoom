@@ -1,4 +1,7 @@
 ﻿May 15, 2009  (Changes by Graf Zahl)
+- Added ACS GetChar function.
+- Added Gez's submission for polyobjects being able to crush corpses but made
+  it an explicit MAPINFO option only.
 - Changed APlayerPawn::DamageFade to a PalEntry from 3 floats.
 - Removed #pragma warnings from cmdlib.h and fixed the places where they were 
   still triggered.

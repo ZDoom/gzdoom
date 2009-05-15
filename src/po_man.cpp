@@ -25,6 +25,7 @@
 #include "r_main.h"
 #include "p_lnspec.h"
 #include "r_interpolate.h"
+#include "g_level.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -780,6 +781,7 @@ void ThrustMobj (AActor *actor, seg_t *seg, FPolyObj *po)
 			P_TraceBleed (po->crush, actor);
 		}
 	}
+	if (level.flags2 & LEVEL2_POLYGRIND) actor->Grind(false); // crush corpses that get caught in a polyobject's way
 }
 
 //==========================================================================

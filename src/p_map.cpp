@@ -38,7 +38,6 @@
 #include "p_effect.h"
 #include "p_terrain.h"
 #include "p_trace.h"
-#include "p_enemy.h"
 
 #include "s_sound.h"
 #include "decallib.h"
@@ -4192,101 +4191,7 @@ void P_FindBelowIntersectors (AActor *actor)
 
 void P_DoCrunch (AActor *thing, FChangePosition *cpos)
 {
-	// crunch bodies to giblets
-	if ((thing->flags & MF_CORPSE) &&
-		!(thing->flags3 & MF3_DONTGIB) &&
-		(thing->health <= 0))
-	{
-		FState * state = thing->FindState(NAME_Crush);
-		if (state != NULL && !(thing->flags & MF_ICECORPSE))
-		{
-			if (thing->flags4 & MF4_BOSSDEATH) 
-			{
-				CALL_ACTION(A_BossDeath, thing);
-			}
-			thing->flags &= ~MF_SOLID;
-			thing->flags3 |= MF3_DONTGIB;
-			thing->height = thing->radius = 0;
-			thing->SetState (state);
-			return;
-		}
-		if (!(thing->flags & MF_NOBLOOD))
-		{
-			if (thing->flags4 & MF4_BOSSDEATH) 
-			{
-				CALL_ACTION(A_BossDeath, thing);
-			}
-
-			const PClass *i = PClass::FindClass("RealGibs");
-
-			if (i != NULL)
-			{
-				i = i->ActorInfo->GetReplacement()->Class;
-
-				const AActor *defaults = GetDefaultByType (i);
-				if (defaults->SpawnState == NULL ||
-					sprites[defaults->SpawnState->sprite].numframes == 0)
-				{ 
-					i = NULL;
-				}
-			}
-			if (i == NULL)
-			{
-				// if there's no gib sprite don't crunch it.
-				thing->flags &= ~MF_SOLID;
-				thing->flags3 |= MF3_DONTGIB;
-				thing->height = thing->radius = 0;
-				return;
-			}
-
-			AActor *gib = Spawn (i, thing->x, thing->y, thing->z, ALLOW_REPLACE);
-			if (gib != NULL)
-			{
-				gib->RenderStyle = thing->RenderStyle;
-				gib->alpha = thing->alpha;
-				gib->height = 0;
-				gib->radius = 0;
-			}
-			S_Sound (thing, CHAN_BODY, "misc/fallingsplat", 1, ATTN_IDLE);
-
-			PalEntry bloodcolor = (PalEntry)thing->GetClass()->Meta.GetMetaInt(AMETA_BloodColor);
-			if (bloodcolor!=0) gib->Translation = TRANSLATION(TRANSLATION_Blood, bloodcolor.a);
-		}
-		if (thing->flags & MF_ICECORPSE)
-		{
-			thing->tics = 1;
-			thing->momx = thing->momy = thing->momz = 0;
-		}
-		else if (thing->player)
-		{
-			thing->flags |= MF_NOCLIP;
-			thing->flags3 |= MF3_DONTGIB;
-			thing->renderflags |= RF_INVISIBLE;
-		}
-		else
-		{
-			thing->Destroy ();
-		}
-		return;		// keep checking
-	}
-
-	// crunch dropped items
-	if (thing->flags & MF_DROPPED)
-	{
-		thing->Destroy ();
-		return;		// keep checking
-	}
-
-	if (!(thing->flags & MF_SOLID) || (thing->flags & MF_NOCLIP))
-	{
-		return;
-	}
-
-	if (!(thing->flags & MF_SHOOTABLE))
-	{
-		return;		// assume it is bloody gibs or something
-	}
-
+	if (!(thing && thing->Grind(true) && cpos)) return;
 	cpos->nofit = true;
 
 	if ((cpos->crushchange > 0) && !(level.maptime & 3))

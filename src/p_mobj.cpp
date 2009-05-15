@@ -59,6 +59,7 @@
 #include "d_event.h"
 #include "colormatcher.h"
 #include "v_palette.h"
+#include "p_enemy.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -961,6 +962,115 @@ void AActor::ConversationAnimation (int animnum)
 
 void AActor::Touch (AActor *toucher)
 {
+}
+
+//============================================================================
+//
+// AActor :: Grind
+//
+// Handles the an actor being crushed by a door, crusher or polyobject.
+// Originally part of P_DoCrunch(), it has been made into its own actor
+// function so that it could be called from a polyobject without hassle.
+// Bool items is true if it should destroy() dropped items, false otherwise.
+//============================================================================
+
+bool AActor::Grind(bool items)
+{
+	// crunch bodies to giblets
+	if ((this->flags & MF_CORPSE) &&
+		!(this->flags3 & MF3_DONTGIB) &&
+		(this->health <= 0))
+	{
+		FState * state = this->FindState(NAME_Crush);
+		if (state != NULL && !(this->flags & MF_ICECORPSE))
+		{
+			if (this->flags4 & MF4_BOSSDEATH) 
+			{
+				CALL_ACTION(A_BossDeath, this);
+			}
+			this->flags &= ~MF_SOLID;
+			this->flags3 |= MF3_DONTGIB;
+			this->height = this->radius = 0;
+			this->SetState (state);
+			return false;
+		}
+		if (!(this->flags & MF_NOBLOOD))
+		{
+			if (this->flags4 & MF4_BOSSDEATH) 
+			{
+				CALL_ACTION(A_BossDeath, this);
+			}
+
+			const PClass *i = PClass::FindClass("RealGibs");
+
+			if (i != NULL)
+			{
+				i = i->ActorInfo->GetReplacement()->Class;
+
+				const AActor *defaults = GetDefaultByType (i);
+				if (defaults->SpawnState == NULL ||
+					sprites[defaults->SpawnState->sprite].numframes == 0)
+				{ 
+					i = NULL;
+				}
+			}
+			if (i == NULL)
+			{
+				// if there's no gib sprite don't crunch it.
+				this->flags &= ~MF_SOLID;
+				this->flags3 |= MF3_DONTGIB;
+				this->height = this->radius = 0;
+				return false;
+			}
+
+			AActor *gib = Spawn (i, this->x, this->y, this->z, ALLOW_REPLACE);
+			if (gib != NULL)
+			{
+				gib->RenderStyle = this->RenderStyle;
+				gib->alpha = this->alpha;
+				gib->height = 0;
+				gib->radius = 0;
+			}
+			S_Sound (this, CHAN_BODY, "misc/fallingsplat", 1, ATTN_IDLE);
+
+			PalEntry bloodcolor = (PalEntry)this->GetClass()->Meta.GetMetaInt(AMETA_BloodColor);
+			if (bloodcolor!=0) gib->Translation = TRANSLATION(TRANSLATION_Blood, bloodcolor.a);
+		}
+		if (this->flags & MF_ICECORPSE)
+		{
+			this->tics = 1;
+			this->momx = this->momy = this->momz = 0;
+		}
+		else if (this->player)
+		{
+			this->flags |= MF_NOCLIP;
+			this->flags3 |= MF3_DONTGIB;
+			this->renderflags |= RF_INVISIBLE;
+		}
+		else
+		{
+			this->Destroy ();
+		}
+		return false;		// keep checking
+	}
+
+	// crunch dropped items
+	if (this->flags & MF_DROPPED)
+	{
+		if (items) this->Destroy (); // Only destroy dropped items if wanted
+		return false;		// keep checking
+	}
+
+	if (!(this->flags & MF_SOLID) || (this->flags & MF_NOCLIP))
+	{
+		return false;
+	}
+
+	if (!(this->flags & MF_SHOOTABLE))
+	{
+		return false;		// assume it is bloody gibs or something
+	}
+	return true;
 }
 
 //============================================================================

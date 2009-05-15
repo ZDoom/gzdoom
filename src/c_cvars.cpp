@@ -242,7 +242,7 @@ float FBaseCVar::ToFloat (UCVarValue value, ECVarType type)
 		return value.Float;
 
 	case CVAR_String:
-		return strtod (value.String, NULL);
+		return (float)strtod (value.String, NULL);
 
 	case CVAR_GUID:
 		return 0.f;
@@ -498,8 +498,8 @@ UCVarValue FBaseCVar::FromString (const char *value, ECVarType type)
 		if (i == 38 && value[i] == 0)
 		{
 			cGUID.Data1 = strtoul (value + 1, NULL, 16);
-			cGUID.Data2 = strtoul (value + 10, NULL, 16);
-			cGUID.Data3 = strtoul (value + 15, NULL, 16);
+			cGUID.Data2 = (WORD)strtoul (value + 10, NULL, 16);
+			cGUID.Data3 = (WORD)strtoul (value + 15, NULL, 16);
 			cGUID.Data4[0] = HexToByte (value + 20);
 			cGUID.Data4[1] = HexToByte (value + 22);
 			cGUID.Data4[2] = HexToByte (value + 25);
@@ -1288,7 +1288,7 @@ void C_BackupCVars (void)
 		}
 		cvar = cvar->m_Next;
 	}
-	numbackedup = backup - CVarBackups;
+	numbackedup = int(backup - CVarBackups);
 }
 
 void C_RestoreCVars (void)

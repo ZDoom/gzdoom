@@ -641,7 +641,7 @@ static int PatchThing (int thingy)
 		}
 		else if (linelen == 11 && stricmp (Line1, "Pain chance") == 0)
 		{
-			info->PainChance = val;
+			info->PainChance = (SWORD)val;
 		}
 		else if (linelen == 12 && stricmp (Line1, "Translucency") == 0)
 		{
@@ -882,7 +882,7 @@ static int PatchThing (int thingy)
 			}
 			else if (stricmp (Line1, "ID #") == 0)
 			{
-				*ednum = val;
+				*ednum = (SWORD)val;
 			}
 		}
 		else Printf (unknown_str, Line1, "Thing", thingy);

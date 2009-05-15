@@ -255,14 +255,14 @@ static menuitem_t MouseItems[] =
 {
 	{ discrete,	"Enable mouse",			{&use_mouse},			{2.0}, {0.0},	{0.0}, {YesNo} },
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
-	{ slider,	"Overall sensitivity",	{&mouse_sensitivity},	{0.5}, {2.5},	{0.1}, {NULL} },
+	{ slider,	"Overall sensitivity",	{&mouse_sensitivity},	{0.5}, {2.5},	{0.1f}, {NULL} },
 	{ discrete,	"Prescale mouse movement",{&m_noprescale},		{2.0}, {0.0},	{0.0}, {NoYes} },
 	{ discrete, "Smooth mouse movement",{&smooth_mouse},			{2.0}, {0.0},	{0.0}, {YesNo} },
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
-	{ slider,	"Turning speed",		{&m_yaw},				{0.5}, {2.5},	{0.1}, {NULL} },
-	{ slider,	"Mouselook speed",		{&m_pitch},				{0.5}, {2.5},	{0.1}, {NULL} },
-	{ slider,	"Forward/Backward speed",{&m_forward},			{0.5}, {2.5},	{0.1}, {NULL} },
-	{ slider,	"Strafing speed",		{&m_side},				{0.5}, {2.5},	{0.1}, {NULL} },
+	{ slider,	"Turning speed",		{&m_yaw},				{0.5}, {2.5},	{0.1f}, {NULL} },
+	{ slider,	"Mouselook speed",		{&m_pitch},				{0.5}, {2.5},	{0.1f}, {NULL} },
+	{ slider,	"Forward/Backward speed",{&m_forward},			{0.5}, {2.5},	{0.1f}, {NULL} },
+	{ slider,	"Strafing speed",		{&m_side},				{0.5}, {2.5},	{0.1f}, {NULL} },
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
 	{ discrete, "Always Mouselook",		{&freelook},			{2.0}, {0.0},	{0.0}, {OnOff} },
 	{ discrete, "Invert Mouse",			{&invertmouse},			{2.0}, {0.0},	{0.0}, {OnOff} },
@@ -330,7 +330,7 @@ static menuitem_t JoystickItems[] =
 {
 	{ discrete,	"Enable joystick",		{&use_joystick},		{2.0}, {0.0},	{0.0}, {YesNo} },
 	{ discrete_guid,"Active joystick",	{&joy_guid},			{0.0}, {0.0},	{0.0}, {NULL} },
-	{ slider,	"Overall sensitivity",	{&joy_speedmultiplier},	{0.9}, {2.0},	{0.2}, {NULL} },
+	{ slider,	"Overall sensitivity",	{&joy_speedmultiplier},	{0.9f}, {2.0},	{0.2f}, {NULL} },
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
 	{ whitetext,"Axis Assignments",		{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
@@ -519,7 +519,7 @@ static menuitem_t VideoItems[] = {
 	{ more,		"Scoreboard Options",	{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)StartScoreboardMenu} },
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
 	{ slider,	"Screen size",			{&screenblocks},	   	{3.0}, {12.0},	{1.0}, {NULL} },
-	{ slider,	"Brightness",			{&Gamma},			   	{1.0}, {3.0},	{0.1}, {NULL} },
+	{ slider,	"Brightness",			{&Gamma},			   	{1.0}, {3.0},	{0.1f}, {NULL} },
 	{ discretes,"Crosshair",			{&crosshair},		   	{8.0}, {0.0},	{0.0}, {NULL} },
 	{ discrete, "Column render mode",	{&r_columnmethod},		{2.0}, {0.0},	{0.0}, {ColumnMethods} },
 	{ discrete, "Stretch short skies",	{&r_stretchsky},	   	{2.0}, {0.0},	{0.0}, {OnOff} },
@@ -1030,7 +1030,7 @@ value_t DF_Crouch[3] = {
 
 static menuitem_t DMFlagsItems[] = {
 	{ discrete, "Teamplay",				{&teamplay},	{2.0}, {0.0}, {0.0}, {OnOff} },
-	{ slider,	"Team damage scalar",	{&teamdamage},	{0.0}, {1.0}, {0.05},{NULL} },
+	{ slider,	"Team damage scalar",	{&teamdamage},	{0.0}, {1.0}, {0.05f},{NULL} },
 	{ redtext,	" ",					{NULL},			{0.0}, {0.0}, {0.0}, {NULL} },
 	{ discrete, "Smart Autoaim",		{&sv_smartaim},	{4.0}, {0.0}, {0.0}, {SmartAim} },
 	{ redtext,	" ",					{NULL},			{0.0}, {0.0}, {0.0}, {NULL} },
@@ -1260,8 +1260,8 @@ static valueenum_t Resamplers[] =
 
 static menuitem_t SoundItems[] =
 {
-	{ slider,	"Sounds volume",		{&snd_sfxvolume},		{0.0}, {1.0},	{0.05}, {NULL} },
-	{ slider,	"Music volume",			{&snd_musicvolume},		{0.0}, {1.0},	{0.05}, {NULL} },
+	{ slider,	"Sounds volume",		{&snd_sfxvolume},		{0.0}, {1.0},	{0.05f}, {NULL} },
+	{ slider,	"Music volume",			{&snd_musicvolume},		{0.0}, {1.0},	{0.05f}, {NULL} },
 	{ discrete, "MIDI device",			{&snd_mididevice},		{0.0}, {0.0},	{0.0}, {NULL} },
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
 	{ discrete, "Underwater reverb",	{&snd_waterreverb},		{2.0}, {0.0},	{0.0}, {OnOff} },
@@ -1797,7 +1797,7 @@ void M_OptDrawer ()
 				int v, vals;
 
 				value = item->a.cvar->GetGenericRep (CVAR_Int);
-				value.Float = value.Int & int(item->c.max);
+				value.Float = float(value.Int & int(item->c.max));
 				vals = (int)item->b.numvalues;
 
 				v = M_FindCurVal (value.Float, item->e.values, vals);
@@ -2380,7 +2380,7 @@ void M_OptResponder (event_t *ev)
 					numvals = (int)item->b.min;
 					value = item->a.cvar->GetGenericRep (CVAR_Int);
 					
-					cur = M_FindCurVal (value.Int & bmask, item->e.values, numvals);
+					cur = M_FindCurVal (float(value.Int & bmask), item->e.values, numvals);
 					if (--cur < 0)
 						cur = numvals - 1;
 
@@ -2529,7 +2529,7 @@ void M_OptResponder (event_t *ev)
 					numvals = (int)item->b.min;
 					value = item->a.cvar->GetGenericRep (CVAR_Int);
 					
-					cur = M_FindCurVal (value.Int & bmask, item->e.values, numvals);
+					cur = M_FindCurVal (float(value.Int & bmask), item->e.values, numvals);
 					if (++cur >= numvals)
 						cur = 0;
 
@@ -2871,9 +2871,9 @@ static void ColorPickerDrawer ()
 static void SetColorPickerSliders ()
 {
 	FColorCVar *cvar = ColorPickerItems[0].a.colorcvar;
-	ColorPickerItems[2].a.fval = RPART(DWORD(*cvar));
-	ColorPickerItems[3].a.fval = GPART(DWORD(*cvar));
-	ColorPickerItems[4].a.fval = BPART(DWORD(*cvar));
+	ColorPickerItems[2].a.fval = float(RPART(DWORD(*cvar)));
+	ColorPickerItems[3].a.fval = float(GPART(DWORD(*cvar)));
+	ColorPickerItems[4].a.fval = float(BPART(DWORD(*cvar)));
 	CurrColorIndex = cvar->GetIndex();
 }
 
@@ -3029,7 +3029,7 @@ void UpdateJoystickMenu ()
 			JoystickItems[line].a.cvar = cvars2[i];
 			JoystickItems[line].b.min = 0.0;
 			JoystickItems[line].c.max = 4.0;
-			JoystickItems[line].d.step = 0.2;
+			JoystickItems[line].d.step = 0.2f;
 			line++;
 
 			JoystickItems[line].type = inverter;
@@ -3055,8 +3055,8 @@ void UpdateJoystickMenu ()
 				JoystickItems[line].type = slider;
 				JoystickItems[line].a.cvar = cvars3[i];
 				JoystickItems[line].b.min = 0.0;
-				JoystickItems[line].c.max = 0.9;
-				JoystickItems[line].d.step = 0.05;
+				JoystickItems[line].c.max = 0.9f;
+				JoystickItems[line].d.step = 0.05f;
 				line++;
 			}
 		}

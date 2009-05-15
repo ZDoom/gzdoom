@@ -236,14 +236,22 @@ static const char *SSStrings[] = {
 	"environment",
 	NULL
 };
-static const char *Attenuations[] = {
-	"none",
-	"normal",
-	"idle",
-	"static",
-	"surround",
-	NULL
+
+struct SSAttenuation
+{
+	const char *name;
+	float value;
 };
+
+static const SSAttenuation Attenuations[] = {
+	{ "none", ATTN_NONE },
+	{ "normal", ATTN_NORM }, 
+	{ "idle", ATTN_IDLE },
+	{ "static", ATTN_STATIC },
+	{ "surround", ATTN_NONE },
+	{ NULL, 0}
+};
+
 static const hexenseq_t HexenSequences[] = {
 	{ NAME_Platform,		{ HexenPlatSeq(0), HexenPlatSeq(1), HexenPlatSeq(3), HexenLastSeq } },
 	{ NAME_PlatformMetal,	{ HexenPlatSeq(2), HexenLastSeq } },
@@ -294,7 +302,7 @@ void DSeqNode::Serialize (FArchive &arc)
 	Super::Serialize (arc);
 	if (arc.IsStoring ())
 	{
-		seqOffset = SN_GetSequenceOffset (m_Sequence, m_SequencePtr);
+		seqOffset = (int)SN_GetSequenceOffset (m_Sequence, m_SequencePtr);
 		arc << seqOffset
 			<< m_DelayUntilTic
 			<< m_Volume
@@ -319,7 +327,7 @@ void DSeqNode::Serialize (FArchive &arc)
 		int delayTics = 0;
 		FSoundID id;
 		float volume;
-		int atten = ATTN_NORM;
+		float atten = ATTN_NORM;
 		int seqnum;
 		unsigned int numchoices;
 
@@ -510,6 +518,7 @@ void S_ParseSndSeq (int levellump)
 	int delaybase;
 	float volumebase;
 	int curseq = -1;
+	fixed_t val;
 
 	// First free the old SNDSEQ data. This allows us to reload this for each level
 	// and specify a level specific SNDSEQ lump!
@@ -662,7 +671,7 @@ void S_ParseSndSeq (int levellump)
 
 				case SS_STRING_VOLUMERAND:
 					sc.MustGetFloat ();
-					volumebase = sc.Float;
+					volumebase = float(sc.Float);
 					ScriptTemp.Push(MakeCommand(SS_CMD_VOLUMERAND, int(sc.Float * (FRACUNIT/100.f))));
 					sc.MustGetFloat ();
 					ScriptTemp.Push(int((sc.Float - volumebase) * (256/100.f)));
@@ -680,8 +689,16 @@ void S_ParseSndSeq (int levellump)
 					break;
 
 				case SS_STRING_ATTENUATION:
-					sc.MustGetString ();
-					ScriptTemp.Push(MakeCommand(SS_CMD_ATTENUATION, sc.MustMatchString(Attenuations)));
+					if (sc.CheckFloat())
+					{
+						val = FLOAT2FIXED(sc.Float);
+					}
+					else
+					{
+						sc.MustGetString ();
+						val = sc.MustMatchString(&Attenuations[0].name, sizeof(Attenuations[0])) << FRACBITS;
+					}
+					ScriptTemp.Push(MakeCommand(SS_CMD_ATTENUATION, val));
 					break;
 
 				case SS_STRING_RANDOMSEQUENCE:
@@ -1143,7 +1160,7 @@ void DSeqNode::Tick ()
 			return;
 
 		case SS_CMD_ATTENUATION:
-			m_Atten = GetData(*m_SequencePtr);
+			m_Atten = FIXED2FLOAT(GetData(*m_SequencePtr));
 			m_SequencePtr++;
 			break;
 

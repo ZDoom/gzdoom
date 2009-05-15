@@ -831,7 +831,7 @@ int FWadCollection::FindLump (const char *name, int *lastlump, bool anyns)
 		if ((anyns || lump->Namespace == ns_global) &&
 			*(QWORD *)&lump->Name == *(QWORD *)&name8)
 		{
-			int lump = lump_p - &LumpInfo[0];
+			int lump = int(lump_p - &LumpInfo[0]);
 			*lastlump = lump + 1;
 			return lump;
 		}

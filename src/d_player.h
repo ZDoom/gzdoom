@@ -132,9 +132,7 @@ public:
 	fixed_t		AttackZOffset;			// attack height, relative to player center
 
 	// [CW] Fades for when you are being damaged.
-	float		RedDamageFade;
-	float		GreenDamageFade;
-	float		BlueDamageFade;
+	PalEntry DamageFade;
 
 	bool UpdateWaterLevel (fixed_t oldz, bool splash);
 	bool ResetAirSupply (bool playgasp = true);

@@ -973,7 +973,7 @@ DEFINE_MAP_OPTION(sky1, true)
 		{
 			parse.sc.Float /= 256;
 		}
-		info->skyspeed1 = parse.sc.Float * (35.f / 1000.f);
+		info->skyspeed1 = float(parse.sc.Float * (35. / 1000.));
 	}
 }
 
@@ -987,7 +987,7 @@ DEFINE_MAP_OPTION(sky2, true)
 		{
 			parse.sc.Float /= 256;
 		}
-		info->skyspeed2 = parse.sc.Float * (35.f / 1000.f);
+		info->skyspeed2 = float(parse.sc.Float * (35. / 1000.));
 	}
 }
 
@@ -1096,14 +1096,14 @@ DEFINE_MAP_OPTION(gravity, true)
 {
 	parse.ParseAssign();
 	parse.sc.MustGetFloat();
-	info->gravity = parse.sc.Float;
+	info->gravity = float(parse.sc.Float);
 }
 
 DEFINE_MAP_OPTION(aircontrol, true)
 {
 	parse.ParseAssign();
 	parse.sc.MustGetFloat();
-	info->aircontrol = parse.sc.Float;
+	info->aircontrol = float(parse.sc.Float);
 }
 
 DEFINE_MAP_OPTION(airsupply, true)
@@ -1212,7 +1212,7 @@ DEFINE_MAP_OPTION(teamdamage, true)
 {
 	parse.ParseAssign();
 	parse.sc.MustGetFloat();
-	info->teamdamage = parse.sc.Float;
+	info->teamdamage = float(parse.sc.Float);
 }
 
 DEFINE_MAP_OPTION(mapbackground, true)

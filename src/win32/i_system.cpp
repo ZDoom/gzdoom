@@ -39,6 +39,10 @@
 #include <richedit.h>
 #include <wincrypt.h>
 
+#ifdef _MSC_VER
+#pragma warning(disable:4244)
+#endif
+
 #define USE_WINDOWS_DWORD
 #include "hardware.h"
 #include "doomerrors.h"

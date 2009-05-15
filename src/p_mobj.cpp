@@ -289,12 +289,8 @@ void AActor::Serialize (FArchive &arc)
 		<< master
 		<< smokecounter
 		<< BlockingMobj
-		<< BlockingLine;
-
-	if (SaveVersion >= 1573)
-	{
-		arc << Species;
-	}
+		<< BlockingLine
+		<< Species;
 
 	if (arc.IsStoring ())
 	{

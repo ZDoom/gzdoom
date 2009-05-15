@@ -2807,7 +2807,7 @@ int FStateExpressions::ResolveAll()
 		if (expressions[i].cloned)
 		{
 			// Now that everything coming before has been resolved we may copy the actual pointer.
-			intptr_t ii = ((intptr_t)expressions[i].expr);
+			unsigned ii = unsigned((intptr_t)expressions[i].expr);
 			expressions[i].expr = expressions[ii].expr;
 		}
 		else if (expressions[i].expr != NULL)

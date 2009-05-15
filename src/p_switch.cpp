@@ -629,7 +629,7 @@ void DActiveButton::Serialize (FArchive &arc)
 	Super::Serialize (arc);
 	if (arc.IsStoring ())
 	{
-		sidenum = m_Side ? m_Side - sides : -1;
+		sidenum = m_Side ? SDWORD(m_Side - sides) : -1;
 	}
 	arc << sidenum << m_Part << m_SwitchDef << m_Frame << m_Timer << bFlippable << m_X << m_Y;
 	if (arc.IsLoading ())

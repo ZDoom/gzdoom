@@ -55,6 +55,10 @@
 #include <ctype.h>
 #include <string.h>
 
+#ifdef _MSC_VER
+#pragma warning(disable:4244)
+#endif
+
 // Compensate for w32api's lack
 #ifndef GET_XBUTTON_WPARAM
 #define GET_XBUTTON_WPARAM(wParam) (HIWORD(wParam))

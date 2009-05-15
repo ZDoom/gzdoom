@@ -18,6 +18,10 @@
 #include "c_cvars.h"
 #include "doomstat.h"
 
+#ifdef _MSC_VER
+#pragma warning(disable:4244)
+#endif
+
 // More w32api lackings
 #ifndef TTM_SETTITLE
 #define TTM_SETTITLEA (WM_USER+32)

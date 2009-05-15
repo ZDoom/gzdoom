@@ -506,7 +506,7 @@ static void ReadReverbDef (int lump)
 			if (ReverbFields[i].Float)
 			{
 				sc.MustGetFloat ();
-				props.*ReverbFields[i].Float = clamp (sc.Float,
+				props.*ReverbFields[i].Float = (float)clamp (sc.Float,
 					double(ReverbFields[i].Min)/1000,
 					double(ReverbFields[i].Max)/1000);
 			}

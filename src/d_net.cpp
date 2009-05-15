@@ -353,7 +353,7 @@ int NetbufferSize ()
 			SkipTicCmd (&skipper, numtics);
 		}
 	}
-	return skipper - netbuffer;
+	return int(skipper - netbuffer);
 }
 
 //
@@ -1232,7 +1232,7 @@ void NetUpdate (void)
 					}
 				}
 			}
-			HSendPacket (i, cmddata - netbuffer);
+			HSendPacket (i, int(cmddata - netbuffer));
 		}
 		else
 		{
@@ -1389,7 +1389,7 @@ bool DoArbitrate (void *userdata)
 		netbuffer[9] = data->gotsetup[0];
 		stream = &netbuffer[10];
 		D_WriteUserInfoStrings (consoleplayer, &stream, true);
-		SendSetup (data->playersdetected, data->gotsetup, stream - netbuffer);
+		SendSetup (data->playersdetected, data->gotsetup, int(stream - netbuffer));
 	}
 	else
 	{ // Send user info for all nodes
@@ -1404,7 +1404,7 @@ bool DoArbitrate (void *userdata)
 					netbuffer[1] = j;
 					stream = &netbuffer[9];
 					D_WriteUserInfoStrings (j, &stream, true);
-					HSendPacket (i, stream - netbuffer);
+					HSendPacket (i, int(stream - netbuffer));
 				}
 			}
 		}
@@ -1414,15 +1414,15 @@ bool DoArbitrate (void *userdata)
 	if (consoleplayer == Net_Arbitrator)
 	{
 		netbuffer[0] = NCMD_SETUP+2;
-		netbuffer[1] = doomcom.ticdup;
-		netbuffer[2] = doomcom.extratics;
+		netbuffer[1] = (BYTE)doomcom.ticdup;
+		netbuffer[2] = (BYTE)doomcom.extratics;
 		netbuffer[3] = NetMode;
 		stream = &netbuffer[4];
 		WriteString (startmap, &stream);
 		WriteLong (rngseed, &stream);
 		C_WriteCVars (&stream, CVAR_SERVERINFO, true);
 
-		SendSetup (data->playersdetected, data->gotsetup, stream - netbuffer);
+		SendSetup (data->playersdetected, data->gotsetup, int(stream - netbuffer));
 	}
 	return false;
 }
@@ -1635,7 +1635,7 @@ void D_QuitNetGame (void)
 			if (playeringame[i] && i != consoleplayer)
 				WriteLong (resendto[nodeforplayer[i]], &foo);
 		}
-		k = foo - netbuffer;
+		k = int(foo - netbuffer);
 	}
 
 	for (i = 0; i < 4; i++)

@@ -498,7 +498,7 @@ int strbin (char *str)
 		}
 	}
 	*str = 0;
-	return str - start;
+	return int(str - start);
 }
 
 // [RH] Replaces the escape sequences in a string with actual escaped characters.

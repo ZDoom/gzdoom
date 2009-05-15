@@ -391,7 +391,7 @@ bool EV_DoDoor (DDoor::EVlDoor type, line_t *line, AActor *thing,
 
 		// get the sector on the second side of activating linedef
 		sec = sides[line->sidenum[1]].sector;
-		secnum = sec-sectors;
+		secnum = int(sec-sectors);
 
 		// if door already has a thinker, use it
 		if (sec->ceilingdata)

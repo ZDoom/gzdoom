@@ -1005,7 +1005,7 @@ static void S_AddSNDINFO (int lump)
 
 					if (IsFloat (sc.String))
 					{
-						attenuation = atof (sc.String);
+						attenuation = (float)atof (sc.String);
 						sc.MustGetString ();
 						if (attenuation > 0)
 						{
@@ -1059,7 +1059,7 @@ static void S_AddSNDINFO (int lump)
 				}
 
 				sc.MustGetFloat ();
-				ambient->volume = sc.Float;
+				ambient->volume = (float)sc.Float;
 				if (ambient->volume > 1)
 					ambient->volume = 1;
 				else if (ambient->volume < 0)
@@ -1168,7 +1168,7 @@ static void S_AddSNDINFO (int lump)
 				S_sfx[sfx].NearLimit = MIN(MAX(sc.Number, 0), 255);
 				if (sc.CheckFloat())
 				{
-					S_sfx[sfx].LimitRange = sc.Float * sc.Float;
+					S_sfx[sfx].LimitRange = float(sc.Float * sc.Float);
 				}
 				}
 				break;
@@ -1207,7 +1207,7 @@ static void S_AddSNDINFO (int lump)
 				sc.MustGetString();
 				sfx = S_FindSoundTentative(sc.String);
 				sc.MustGetFloat();
-				S_sfx[sfx].Volume = sc.Float;
+				S_sfx[sfx].Volume = (float)sc.Float;
 				}
 				break;
 
@@ -1251,9 +1251,9 @@ static void S_AddSNDINFO (int lump)
 					}
 					sc.MustGetFloat();
 				}
-				rolloff->MinDistance = sc.Float;
+				rolloff->MinDistance = (float)sc.Float;
 				sc.MustGetFloat();
-				rolloff->MaxDistance = sc.Float;
+				rolloff->MaxDistance = (float)sc.Float;
 				break;
 			  }
 
@@ -1297,7 +1297,7 @@ static void S_AddSNDINFO (int lump)
 				FString musname (sc.String);
 				sc.MustGetFloat();
 				FMusicVolume *mv = (FMusicVolume *)M_Malloc (sizeof(*mv) + musname.Len());
-				mv->Volume = sc.Float;
+				mv->Volume = (float)sc.Float;
 				strcpy (mv->MusicName, musname);
 				mv->Next = MusicVolumes;
 				MusicVolumes = mv;

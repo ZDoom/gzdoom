@@ -42,6 +42,10 @@
 #include <commctrl.h>
 #include <richedit.h>
 
+#ifdef _MSC_VER
+#pragma warning(disable:4244)
+#endif
+
 //#include <wtsapi32.h>
 #define NOTIFY_FOR_THIS_SESSION 0
 

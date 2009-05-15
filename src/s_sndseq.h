@@ -50,7 +50,7 @@ protected:
 	int m_StopSound;
 	int m_DelayUntilTic;
 	float m_Volume;
-	int m_Atten;
+	float m_Atten;
 	int m_ModeNum;
 
 	TArray<int> m_SequenceChoices;

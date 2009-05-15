@@ -54,8 +54,8 @@ public:
 	void UnGet();
 
 	bool Compare(const char *text);
-	int MatchString(const char **strings, size_t stride = sizeof(char*));
-	int MustMatchString(const char **strings, size_t stride = sizeof(char*));
+	int MatchString(const char * const *strings, size_t stride = sizeof(char*));
+	int MustMatchString(const char * const *strings, size_t stride = sizeof(char*));
 	int GetMessageLine();
 
 	void ScriptError(const char *message, ...);

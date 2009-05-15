@@ -1435,7 +1435,7 @@ void FBehavior::LoadScriptsDirectory ()
 				ScriptPtr  *ptr2 = &Scripts[i];
 
 				ptr2->Number = LittleShort(ptr1->Number);
-				ptr2->Type = LittleShort(ptr1->Type);
+				ptr2->Type = BYTE(LittleShort(ptr1->Type));
 				ptr2->ArgCount = LittleLong(ptr1->ArgCount);
 				ptr2->Address = LittleLong(ptr1->Address);
 			}
@@ -3275,7 +3275,7 @@ int DLevelScript::RunScript ()
 				}
 				sp -= sizeof(CallReturn)/sizeof(int);
 				retsp = &Stack[sp];
-				sp = locals - Stack;
+				sp = int(locals - Stack);
 				pc = ret->ReturnModule->Ofs2PC(ret->ReturnAddress);
 				activeFunction = ret->ReturnFunction;
 				activeBehavior = ret->ReturnModule;
@@ -5493,7 +5493,7 @@ int DLevelScript::RunScript ()
 			}
 			else
 			{
-				PushToStack (activator->player - players);
+				PushToStack (int(activator->player - players));
 			}
 			break;
 
@@ -6181,7 +6181,7 @@ static void addDefered (level_info_t *i, acsdefered_t::EType type, int script, i
 		def->arg2 = arg2;
 		if (who != NULL && who->player != NULL)
 		{
-			def->playernum = who->player - players;
+			def->playernum = int(who->player - players);
 		}
 		else
 		{

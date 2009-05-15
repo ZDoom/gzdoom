@@ -1,4 +1,16 @@
-﻿May 14, 2009  (Changes by Graf Zahl)
+﻿May 15, 2009  (Changes by Graf Zahl)
+- Changed APlayerPawn::DamageFade to a PalEntry from 3 floats.
+- Removed #pragma warnings from cmdlib.h and fixed the places where they were 
+  still triggered.
+  These #pragmas were responsible for >90% of the GCC warnings that were not
+  listed in VC++.
+- Fixed one bug in the process: DSeqNode::m_Atten was never adjusted when the
+  parameter handling of the sound functions for attenuation was changed.
+  Changed m_Atten to a float and fixed the SNDSEQ parser to set proper values. 
+  Also added the option to specify attenuation with direct values in addition 
+  to the predefined names.
+
+May 14, 2009  (Changes by Graf Zahl)
 - fixed a few Heretic actors:
   * The pod generator's attacksound was wrong
   * The teleglitter generators need different flags if they are supposed to work 

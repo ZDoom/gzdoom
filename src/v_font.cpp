@@ -1018,7 +1018,7 @@ void FSingleLumpFont::LoadFON2 (int lump, const BYTE *data)
 		}
 		else
 		{
-			Chars[i].Pic = new FFontChar2 (lump, NULL, data_p - data, widths2[i], FontHeight);
+			Chars[i].Pic = new FFontChar2 (lump, NULL, int(data_p - data), widths2[i], FontHeight);
 			do
 			{
 				SBYTE code = *data_p++;
@@ -1068,7 +1068,7 @@ void FSingleLumpFont::CheckFON1Chars (int lump, const BYTE *data, double *lumino
 	{
 		int destSize = SpaceWidth * FontHeight;
 
-		Chars[i].Pic = new FFontChar2 (lump, PatchRemap, data_p - data, SpaceWidth, FontHeight);
+		Chars[i].Pic = new FFontChar2 (lump, PatchRemap, int(data_p - data), SpaceWidth, FontHeight);
 
 		// Advance to next char's data and count the used colors.
 		do

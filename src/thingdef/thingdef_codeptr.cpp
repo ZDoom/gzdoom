@@ -297,7 +297,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_PlaySoundEx)
 	ACTION_PARAM_BOOL(looping, 2);
 	ACTION_PARAM_INT(attenuation_raw, 3);
 
-	int attenuation;
+	float attenuation;
 	switch (attenuation_raw)
 	{
 		case -1: attenuation = ATTN_STATIC;	break; // drop off rapidly
@@ -1341,7 +1341,7 @@ static bool InitSpawnedItem(AActor *self, AActor *mo, int flags)
 				{
 					// A player always spawns a monster friendly to him
 					mo->flags|=MF_FRIENDLY;
-					mo->FriendPlayer = originator->player-players+1;
+					mo->FriendPlayer = int(originator->player-players+1);
 
 					AActor * attacker=originator->player->attacker;
 					if (attacker)

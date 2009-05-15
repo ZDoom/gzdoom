@@ -256,7 +256,7 @@ bool FZipFile::Open()
 		lump_p->Owner = this;
 		// The start of the Reader will be determined the first time it is accessed.
 		lump_p->Flags = LUMPF_ZIPFILE | LUMPFZIP_NEEDFILESTART;
-		lump_p->Method = zip_fh->Method;
+		lump_p->Method = BYTE(zip_fh->Method);
 		lump_p->GPFlags = zip_fh->Flags;
 		lump_p->CompressedSize = LittleLong(zip_fh->CompressedSize);
 		lump_p->Position = LittleLong(zip_fh->LocalHeaderOffset);

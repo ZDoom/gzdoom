@@ -623,7 +623,7 @@ CCMD (r_visibility)
 	}
 	else if (!netgame)
 	{
-		R_SetVisibility (atof (argv[1]));
+		R_SetVisibility ((float)atof (argv[1]));
 	}
 	else
 	{

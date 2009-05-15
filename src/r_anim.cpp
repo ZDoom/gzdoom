@@ -344,7 +344,7 @@ static void R_InitAnimDefs ()
 
 					if (sc.CheckFloat())
 					{
-						static_cast<FWarpTexture*>(warper)->SetSpeed(sc.Float);
+						static_cast<FWarpTexture*>(warper)->SetSpeed(float(sc.Float));
 					}
 
 					// No decals on warping textures, by default.

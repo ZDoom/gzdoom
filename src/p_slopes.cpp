@@ -315,10 +315,10 @@ static void P_SetSlopesFromVertexHeights(FMapThing *firstmt, FMapThing *lastmt)
 			FVector3 vec1, vec2;
 			int vi1, vi2, vi3;
 
-			vi1 = sec->lines[0]->v1 - vertexes;
-			vi2 = sec->lines[0]->v2 - vertexes;
+			vi1 = int(sec->lines[0]->v1 - vertexes);
+			vi2 = int(sec->lines[0]->v2 - vertexes);
 			vi3 = (sec->lines[1]->v1 == sec->lines[0]->v1 || sec->lines[1]->v1 == sec->lines[0]->v2)?
-				sec->lines[1]->v2 - vertexes : sec->lines[1]->v1 - vertexes;
+				int(sec->lines[1]->v2 - vertexes) : int(sec->lines[1]->v1 - vertexes);
 
 			vt1.X = FIXED2FLOAT(vertexes[vi1].x);
 			vt1.Y = FIXED2FLOAT(vertexes[vi1].y);

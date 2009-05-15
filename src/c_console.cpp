@@ -620,7 +620,7 @@ static int FlushLines (const char *start, const char *stop)
 	return i;
 }
 
-static void AddLine (const char *text, bool more, int len)
+static void AddLine (const char *text, bool more, size_t len)
 {
 	if (BufferRover + len + 1 - ConsoleBuffer > CONSOLESIZE)
 	{
@@ -1401,7 +1401,7 @@ static bool C_HandleKey (event_t *ev, BYTE *buffer, int len)
 		{
 			if (buffer[1] == buffer[0])
 			{
-				buffer[buffer[0] + 2] = ev->data1;
+				buffer[buffer[0] + 2] = BYTE(ev->data1);
 			}
 			else
 			{
@@ -1413,7 +1413,7 @@ static bool C_HandleKey (event_t *ev, BYTE *buffer, int len)
 				for (; e >= c; e--)
 					*(e + 1) = *e;
 
-				*c = ev->data1;
+				*c = char(ev->data1);
 			}
 			buffer[0]++;
 			buffer[1]++;

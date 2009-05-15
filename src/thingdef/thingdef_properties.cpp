@@ -1805,9 +1805,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, crouchsprite, S, PlayerPawn)
 DEFINE_CLASS_PROPERTY_PREFIX(player, damagescreencolor, C, PlayerPawn)
 {
 	PROP_COLOR_PARM(c, 0);
-	defaults->RedDamageFade = RPART (c);
-	defaults->GreenDamageFade = GPART (c);
-	defaults->BlueDamageFade = BPART (c);
+	defaults->DamageFade = c;
 }
 
 //==========================================================================

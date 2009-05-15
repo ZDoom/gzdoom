@@ -543,7 +543,7 @@ void C_DoCommand (const char *cmd, int keynum)
 			;
 	}
 
-	const int len = end - beg;
+	const size_t len = end - beg;
 
 	if (ParsingKeyConf)
 	{
@@ -615,7 +615,7 @@ void C_DoCommand (const char *cmd, int keynum)
 	}
 	else
 	{ // Check for any console vars that match the command
-		FBaseCVar *var = FindCVarSub (beg, len);
+		FBaseCVar *var = FindCVarSub (beg, int(len));
 
 		if (var != NULL)
 		{
@@ -634,7 +634,7 @@ void C_DoCommand (const char *cmd, int keynum)
 		else
 		{ // We don't know how to handle this command
 			char cmdname[64];
-			int minlen = MIN (len, 63);
+			size_t minlen = MIN<size_t> (len, 63);
 
 			memcpy (cmdname, beg, minlen);
 			cmdname[len] = 0;
@@ -801,7 +801,7 @@ static long ParseCommandLine (const char *args, int *argc, char **argv, bool no_
 
 			while (*args && *args > ' ' && *args != '\"')
 				args++;
-			if (*start == '$' && (var = FindCVarSub (start+1, args-start-1)))
+			if (*start == '$' && (var = FindCVarSub (start+1, int(args-start-1))))
 			{
 				val = var->GetGenericRep (CVAR_String);
 				start = val.String;

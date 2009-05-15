@@ -283,7 +283,7 @@ bool F7ZFile::Open()
 		strlwr(name);
 
 		lump_p->LumpNameSetup(name);
-		lump_p->LumpSize = file->Size;
+		lump_p->LumpSize = int(file->Size);
 		lump_p->Owner = this;
 		lump_p->Flags = LUMPF_ZIPFILE;
 		lump_p->Position = i;

@@ -626,7 +626,7 @@ static void GenericParse (FScanner &sc, FGenericParse *parser, const char **keyw
 
 		case GEN_Float:
 			sc.MustGetFloat ();
-			SET_FIELD (float, sc.Float);
+			SET_FIELD (float, float(sc.Float));
 			break;
 
 		case GEN_Time:

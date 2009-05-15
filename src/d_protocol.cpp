@@ -194,7 +194,7 @@ int UnpackUserCmd (usercmd_t *ucmd, const usercmd_t *basis, BYTE **stream)
 			ucmd->roll = ReadWord (stream);
 	}
 
-	return *stream - start;
+	return int(*stream - start);
 }
 
 // Returns the number of bytes written
@@ -284,7 +284,7 @@ int PackUserCmd (const usercmd_t *ucmd, const usercmd_t *basis, BYTE **stream)
 	// Write the packing bits
 	WriteByte (flags, &temp);
 
-	return *stream - start;
+	return int(*stream - start);
 }
 
 FArchive &operator<< (FArchive &arc, ticcmd_t &cmd)
@@ -396,7 +396,7 @@ int SkipTicCmd (BYTE **stream, int count)
 		}
 	}
 
-	skip = flow - *stream;
+	skip = int(flow - *stream);
 	*stream = flow;
 
 	return skip;
@@ -420,7 +420,7 @@ void ReadTicCmd (BYTE **stream, int player, int tic)
 	while ((type = ReadByte (stream)) != DEM_USERCMD && type != DEM_EMPTYUSERCMD)
 		Net_SkipCommand (type, stream);
 
-	NetSpecs[player][ticmod].SetData (start, *stream - start - 1);
+	NetSpecs[player][ticmod].SetData (start, int(*stream - start - 1));
 
 	if (type == DEM_USERCMD)
 	{
@@ -485,7 +485,7 @@ void FinishChunk (BYTE **stream)
 	if (!lenspot)
 		return;
 
-	len = *stream - lenspot - 4;
+	len = int(*stream - lenspot - 4);
 	WriteLong (len, &lenspot);
 	if (len & 1)
 		WriteByte (0, stream);

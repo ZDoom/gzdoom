@@ -539,7 +539,7 @@ static bool ParsePropertyParams(FScanner &sc, FPropertyInfo *prop, AActor *defau
 
 			case 'F':
 				sc.MustGetFloat();
-				conv.f = sc.Float;
+				conv.f = float(sc.Float);
 				break;
 
 			case 'Z':	// an optional string. Does not allow any numerical value.

@@ -1481,7 +1481,7 @@ void DBaseStatusBar::BlendView (float blend[4])
 			cnt = 228;
 
 		APlayerPawn *mo = players[consoleplayer].mo;
-		AddBlend (mo->RedDamageFade / 255, mo->GreenDamageFade / 255, mo->BlueDamageFade / 255, cnt / 255.f, blend);
+		AddBlend (mo->DamageFade.r / 255.f, mo->DamageFade.g / 255.f, mo->DamageFade.b / 255.f, cnt / 255.f, blend);
 	}
 
 	// Unlike Doom, I did not have any utility source to look at to find the

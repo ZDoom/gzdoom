@@ -233,7 +233,8 @@ bool FZipFile::Open()
 			zip_fh->Method != METHOD_DEFLATE &&
 			zip_fh->Method != METHOD_LZMA &&
 			zip_fh->Method != METHOD_BZIP2 &&
-			zip_fh->Method != METHOD_IMPLODE)
+			zip_fh->Method != METHOD_IMPLODE &&
+			zip_fh->Method != METHOD_SHRINK)
 		{
 			Printf("\n%s: '%s' uses an unsupported compression algorithm (#%d).\n", Filename, name, zip_fh->Method);
 			skipped++;
@@ -381,6 +382,12 @@ int FZipLump::FillCache()
 		{
 			FZipExploder exploder;
 			exploder.Explode((unsigned char *)Cache, LumpSize, Owner->Reader, CompressedSize, GPFlags);
+			break;
+		}
+
+		case METHOD_SHRINK:
+		{
+			ShrinkLoop((unsigned char *)Cache, LumpSize, Owner->Reader, LumpSize);
 			break;
 		}
 

@@ -1,4 +1,11 @@
-﻿May 15, 2009  (Changes by Graf Zahl)
+﻿May 15, 2009
+- Found a copy of PKZIP 1.1 and verified that Implode support works with
+  files that use a literal table and 8k dictionary, and that the just-added
+  Shrink support works at all.
+- Replaced the bit-at-a-time Shannon-Fano decoder from GunZip.c64 with the
+  word-at-a-time one from 7-Zip.
+
+May 15, 2009  (Changes by Graf Zahl)
 - Fixed: Monsters should not check the inventory for damage absorbtion when
   they have the MF5_NODAMAGE flag set.
 - Added patch for saving automap zoom.

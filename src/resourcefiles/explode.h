@@ -7,40 +7,33 @@ class FZipExploder
 	FileReader *In;
 	unsigned int InLeft;
 
-	int READBYTE();
-
 	/****************************************************************
-		Huffman tree structures, variables and related routines
-
-		These routines are one-bit-at-a-time decode routines. They
-		are not as fast as multi-bit routines, but maybe a bit easier
-		to understand and use a lot less memory.
-
-		The tree is folded into a table.
-
+	   Shannon-Fano tree structures, variables and related routines
 	 ****************************************************************/
 
-	struct HufNode {
-		unsigned short b0;		/* 0-branch value + leaf node flag */
-		unsigned short b1;		/* 1-branch value + leaf node flag */
-		struct HufNode *jump;	/* 1-branch jump address */
+	enum { kNumBitsInLongestCode = 16 };
+
+	struct DecoderBase
+	{
+		unsigned int Limits[kNumBitsInLongestCode + 2];		// Limits[i] = value limit for symbols with length = i
+		unsigned char Positions[kNumBitsInLongestCode + 2];	// Positions[i] = index in Symbols[] of first symbol with length = i
+		unsigned char Symbols[1];
+
+		bool SetCodeLengths(const unsigned char *codeLengths, const int kNumSymbols);
 	};
 
-	struct HufNode LiteralTree[256];
-	struct HufNode DistanceTree[64];
-	struct HufNode LengthTree[64];
-	struct HufNode *Places;
+	template<int kNumSymbols>
+	struct Decoder : DecoderBase
+	{
+		unsigned char RestOfSymbols[kNumSymbols];
+	};
 
-	unsigned char len;
-	short fpos[17];
-	int *flens;
-	short fmax;
+	Decoder<256> LiteralDecoder;
+	Decoder<64> DistanceDecoder;
+	Decoder<64> LengthDecoder;
 
-	int IsPat();
-	int Rec();
-	int DecodeSFValue(struct HufNode *currentTree);
-	int CreateTree(struct HufNode *currentTree, int numval, int *lengths);
-	int DecodeSF(int *table);
+	int DecodeSFValue(const DecoderBase &currentTree, const unsigned int kNumSymbols);
+	int DecodeSF(unsigned char *table);
 public:
 	int Explode(unsigned char *out, unsigned int outsize, FileReader *in, unsigned int insize, int flags);
 };
@@ -50,3 +43,5 @@ class CExplosionError : CRecoverableError
 public:
 	CExplosionError(const char *message) : CRecoverableError(message) {}
 };
+
+int ShrinkLoop(unsigned char *out, unsigned int outsize, FileReader *in, unsigned int insize);

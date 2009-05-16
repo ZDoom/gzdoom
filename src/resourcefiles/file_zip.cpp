@@ -387,7 +387,7 @@ int FZipLump::FillCache()
 
 		case METHOD_SHRINK:
 		{
-			ShrinkLoop((unsigned char *)Cache, LumpSize, Owner->Reader, LumpSize);
+			ShrinkLoop((unsigned char *)Cache, LumpSize, Owner->Reader, CompressedSize);
 			break;
 		}
 

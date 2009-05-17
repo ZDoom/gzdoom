@@ -6366,11 +6366,11 @@
 			Name="Resource Files"
 			>
 			<File
-				RelativePath=".\src\resourcefiles\explode.cpp"
+				RelativePath=".\src\resourcefiles\ancientzip.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\src\resourcefiles\explode.h"
+				RelativePath=".\src\resourcefiles\ancientzip.h"
 				>
 			</File>
 			<File

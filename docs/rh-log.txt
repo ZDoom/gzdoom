@@ -1,9 +1,16 @@
-﻿May 15, 2009
+﻿May 16, 2009
+- Added input buffering to the Implode and Shrink routines for a marked
+  speedup.
+- Replaced the Shanno-Fano/Huffman reading routines from FZipExploder with
+  ones of my own devising, based solely on the specs in the APPNOTE.
+
+May 15, 2009
 - Found a copy of PKZIP 1.1 and verified that Implode support works with
   files that use a literal table and 8k dictionary, and that the just-added
   Shrink support works at all.
 - Replaced the bit-at-a-time Shannon-Fano decoder from GunZip.c64 with the
-  word-at-a-time one from 7-Zip.
+  word-at-a-time one from 7-Zip for a slight speedup when working with
+  Imploded files.
 
 May 15, 2009  (Changes by Graf Zahl)
 - Fixed: Monsters should not check the inventory for damage absorbtion when

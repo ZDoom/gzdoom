@@ -1521,7 +1521,7 @@ void DSBarInfo::DrawString(const char* str, SBarInfoCoordinate x, SBarInfoCoordi
 	{
 		if(*str == ' ')
 		{
-			x += drawingFont->GetSpaceWidth();
+			ax += drawingFont->GetSpaceWidth();
 			str++;
 			continue;
 		}
@@ -1537,7 +1537,7 @@ void DSBarInfo::DrawString(const char* str, SBarInfoCoordinate x, SBarInfoCoordi
 			continue;
 		}
 		if(script->spacingCharacter == '\0') //If we are monospaced lets use the offset
-			x += (character->LeftOffset+1); //ignore x offsets since we adapt to character size
+			ax += (character->LeftOffset+1); //ignore x offsets since we adapt to character size
 
 		int rx, ry, rw, rh;
 		rx = ax + xOffset;

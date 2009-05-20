@@ -1,4 +1,9 @@
-﻿May 19, 2009
+﻿May 20, 2009  (Changes by Graf Zahl)
+- Fixed: The SBARINFO parser compared an FString in the GAMEINFO with a NULL
+  pointer and tried to load a lump with an empty name as statusbar script
+  for non-Doom games.
+
+May 19, 2009
 - Fixed: SetSoundPaused() still needs to call S_PauseSound() to pause music
   that isn't piped through the digital sound system. (Was removed in r1004.)
 

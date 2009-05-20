@@ -119,7 +119,7 @@ static void FreeSBarInfoScript()
 
 void SBarInfo::Load()
 {
-	if(gameinfo.statusbar != NULL)
+	if(gameinfo.statusbar.IsNotEmpty())
 	{
 		int lump = Wads.CheckNumForFullName(gameinfo.statusbar, true);
 		if(lump != -1)

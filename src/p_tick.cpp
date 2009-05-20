@@ -57,7 +57,7 @@ bool P_CheckTickerPaused ()
 		 && players[consoleplayer].viewz != 1
 		 && wipegamestate == gamestate)
 	{
-		S_PauseSound (!(level.flags2 & LEVEL2_PAUSE_MUSIC_IN_MENUS));
+		S_PauseSound (!(level.flags2 & LEVEL2_PAUSE_MUSIC_IN_MENUS), false);
 		return true;
 	}
 	return false;
@@ -104,7 +104,7 @@ void P_Ticker (void)
 	}
 
 	if ( i == MAXPLAYERS )
-		S_ResumeSound ();
+		S_ResumeSound (false);
 
 	P_ResetSightCounters (false);
 

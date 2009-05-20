@@ -1,4 +1,8 @@
-﻿May 16, 2009
+﻿May 19, 2009
+- Fixed: SetSoundPaused() still needs to call S_PauseSound() to pause music
+  that isn't piped through the digital sound system. (Was removed in r1004.)
+
+May 16, 2009
 - Added input buffering to the Implode and Shrink routines for a marked
   speedup.
 - Replaced the Shanno-Fano/Huffman reading routines from FZipExploder with

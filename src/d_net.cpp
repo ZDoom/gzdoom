@@ -2181,12 +2181,12 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 			if (paused)
 			{
 				paused = 0;
-				S_ResumeSound ();
+				S_ResumeSound (false);
 			}
 			else
 			{
 				paused = player + 1;
-				S_PauseSound (false);
+				S_PauseSound (false, false);
 			}
 			BorderNeedRefresh = screen->GetPageCount ();
 		}

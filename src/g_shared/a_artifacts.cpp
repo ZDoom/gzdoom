@@ -1366,7 +1366,7 @@ void APowerTimeFreezer::InitEffect( )
 		return;
 
 	// When this powerup is in effect, pause the music.
-	S_PauseSound( false );
+	S_PauseSound( false, false );
 
 	// Give the player and his teammates the power to move when time is frozen.
 	Owner->player->cheats |= CF_TIMEFREEZE;
@@ -1441,7 +1441,7 @@ void APowerTimeFreezer::EndEffect( )
 	level.flags2 &= ~LEVEL2_FROZEN;
 
 	// Also, turn the music back on.
-	S_ResumeSound( );
+	S_ResumeSound( false );
 
 	// Nothing more to do if there's no owner.
 	if (( Owner == NULL ) || ( Owner->player == NULL ))

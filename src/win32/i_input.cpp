@@ -1562,6 +1562,7 @@ static void SetSoundPaused (int state)
 	{
 		if (paused <= 0)
 		{
+			S_ResumeSound(true);
 			if (GSnd != NULL)
 			{
 				GSnd->SetInactive(false);
@@ -1580,6 +1581,7 @@ static void SetSoundPaused (int state)
 	{
 		if (paused == 0)
 		{
+			S_PauseSound(false, true);
 			if (GSnd !=  NULL)
 			{
 				GSnd->SetInactive(true);

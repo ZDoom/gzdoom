@@ -58,7 +58,7 @@ ACTOR ThrowingBomb
 	Height 10
 	DamageType "Fire"
 	+NOBLOCKMAP +DROPOFF +MISSILE
-	+HEXENBOUNCE
+	BounceType "HexenCompat"
 	SeeSound "FlechetteBounce"
 	DeathSound "FlechetteExplode"
 

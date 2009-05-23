@@ -129,6 +129,16 @@ void HandleDeprecatedFlags(AActor *defaults, FActorInfo *info, bool set, int ind
 	case DEPF_FIRERESIST:
 		info->SetDamageFactor(NAME_Fire, set? FRACUNIT/2 : FRACUNIT);
 		break;
+	// the bounce flags will set the compatibility bounce modes to remain compatible
+	case DEPF_HERETICBOUNCE:	
+		defaults->bouncetype = set? BOUNCE_HereticCompat : 0;
+		break;
+	case DEPF_HEXENBOUNCE:
+		defaults->bouncetype = set? BOUNCE_HexenCompat : 0;
+		break;
+	case DEPF_DOOMBOUNCE:
+		defaults->bouncetype = set? BOUNCE_DoomCompat : 0;
+		break;
 	case DEPF_PICKUPFLASH:
 		if (set)
 		{
@@ -806,6 +816,16 @@ DEFINE_PROPERTY(bloodtype, Sss, Actor)
 //==========================================================================
 //
 //==========================================================================
+DEFINE_PROPERTY(bouncetype, S, Actor)
+{
+	const char *names[] = { "None", "Doom", "Heretic", "Hexen", "*", "DoomCompat", "HereticCompat", "HexenCompat", NULL };
+	PROP_STRING_PARM(id, 0);
+	defaults->bouncetype = MatchString(id, names);
+}
+
+//==========================================================================
+//
+//==========================================================================
 DEFINE_PROPERTY(bouncefactor, F, Actor)
 {
 	PROP_FIXED_PARM(id, 0);
@@ -1231,6 +1251,24 @@ DEFINE_CLASS_PROPERTY(usesound, S, Inventory)
 {
 	PROP_STRING_PARM(str, 0);
 	defaults->UseSound = str;
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_CLASS_PROPERTY(bouncesound, S, Inventory)
+{
+	PROP_STRING_PARM(str, 0);
+	defaults->BounceSound = str;
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_CLASS_PROPERTY(wallbouncesound, S, Inventory)
+{
+	PROP_STRING_PARM(str, 0);
+	defaults->WallBounceSound = str;
 }
 
 //==========================================================================

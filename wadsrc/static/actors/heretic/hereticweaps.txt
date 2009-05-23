@@ -556,7 +556,7 @@ ACTOR MaceFX1
 	Damage 2
 	Projectile
 	+THRUGHOST
-	+HERETICBOUNCE
+	BounceType "HereticCompat"
 	SeeSound "weapons/maceshoot"
 
 	action native A_MacePL1Check();
@@ -633,7 +633,7 @@ ACTOR MaceFX4 native
 	-NOGRAVITY
 	+TELESTOMP
 	+THRUGHOST
-	+HERETICBOUNCE
+	BounceType "HereticCompat"
 	SeeSound ""
 
 	action native A_DeathBallImpact();

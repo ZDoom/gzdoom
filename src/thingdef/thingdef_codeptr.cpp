@@ -1882,7 +1882,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CountdownArg)
 		}
 		else if (self->flags&MF_SHOOTABLE)
 		{
-			P_DamageMobj (self, NULL, NULL, self->health, NAME_None);
+			P_DamageMobj (self, NULL, NULL, self->health, NAME_None, DMG_FORCED);
 		}
 		else
 		{

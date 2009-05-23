@@ -176,7 +176,7 @@ ACTOR GlassShard native
 	Projectile
 	-ACTIVATEPCROSS
 	-ACTIVATEIMPACT
-	+HEXENBOUNCE
+	BounceType "HexenCompat"
 	BounceFactor 0.3
 }
 

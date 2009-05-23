@@ -1,8 +1,16 @@
-﻿May 22, 2009
+﻿May 22, 2009  (Changes by Graf Zahl)
+- Fixed: A_CountdownArg and A_Die must ensure a certain kill.
+
+May 22, 2009
 - Fixed: When using Win32 mouse, windowed mode, alt-tabbing away and then
   clicking on the window's title bar moved it practically off the screen.
 - Beginnings of i_input.cpp rewrite: Win32 and DirectInput mouse handling has
   been moved into classes.
+
+May 21, 2009  (Changes by Graf Zahl)
+- Changed bounce flags into a property and added real bouncing sound properties.
+  Compatibility modes to preserve use of the SeeSound are present and the old
+  flags map to these.
 
 May 20, 2009  (Changes by Graf Zahl)
 - Fixed: The SBARINFO parser compared an FString in the GAMEINFO with a NULL

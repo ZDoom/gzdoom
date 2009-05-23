@@ -155,7 +155,7 @@ enum
 
 	MF2_DONTREFLECT		= 0x00000001,	// this projectile cannot be reflected
 	MF2_WINDTHRUST		= 0x00000002,	// gets pushed around by the wind specials
-	MF2_BOUNCE1			= 0x00000004,
+	//MF2_BOUNCE1			= 0x00000004,
 	MF2_BLASTED			= 0x00000008,	// actor will temporarily take damage from impact
 	MF2_FLY				= 0x00000010,	// fly mode is active
 	MF2_FLOORCLIP		= 0x00000020,	// if feet are allowed to be clipped
@@ -176,7 +176,7 @@ enum
 	MF2_NODMGTHRUST		= 0x00020000,	// does not thrust target when damaging
 	MF2_TELESTOMP		= 0x00040000,	// mobj can stomp another
 	MF2_FLOATBOB		= 0x00080000,	// use float bobbing z movement
-	MF2_BOUNCE2			= 0x00100000,
+	//MF2_BOUNCE2			= 0x00100000,
 	MF2_IMPACT			= 0x00200000, 	// an MF_MISSILE mobj can activate SPAC_IMPACT
 	MF2_PUSHWALL		= 0x00400000, 	// mobj can push walls
 	MF2_MCROSS			= 0x00800000,	// can activate monster cross lines
@@ -198,11 +198,6 @@ enum
 	// DOOM -	 Like Hexen, but the bounce turns off if its vertical velocity
 	//			 is too low.
 
-	MF2_BOUNCETYPE		= MF2_BOUNCE1|MF2_BOUNCE2,
-	MF2_NOBOUNCE		= 0,
-	MF2_HERETICBOUNCE	= MF2_BOUNCE1,
-	MF2_HEXENBOUNCE		= MF2_BOUNCE2,
-	MF2_DOOMBOUNCE		= MF2_BOUNCE1|MF2_BOUNCE2,
 
 // --- mobj.flags3 ---
 
@@ -372,6 +367,23 @@ enum replace_t
 	ALLOW_REPLACE = 1
 };
 
+enum EBounceType
+{
+	BOUNCE_None=0,
+	BOUNCE_Doom=1,
+	BOUNCE_Heretic=2,
+	BOUNCE_Hexen=3,
+
+	BOUNCE_TypeMask = 3,
+	BOUNCE_UseSeeSound = 4,	// compatibility fallback. Thios will only be 
+							// set by the compatibility handlers for the old bounce flags.
+
+	// combined types
+	BOUNCE_DoomCompat = BOUNCE_Doom | BOUNCE_UseSeeSound,
+	BOUNCE_HereticCompat = BOUNCE_Heretic | BOUNCE_UseSeeSound,
+	BOUNCE_HexenCompat = BOUNCE_Hexen | BOUNCE_UseSeeSound,
+};
+
 // [RH] Like msecnode_t, but for the blockmap
 struct FBlockNode
 {
@@ -518,6 +530,9 @@ public:
 
 	// Actor just hit the floor
 	virtual void HitFloor ();
+
+	// plays bouncing sound
+	void PlayBounceSound(bool onfloor);
 
 	// Called when an actor with MF_MISSILE and MF2_FLOORBOUNCE hits the floor
 	virtual bool FloorBounceMissile (secplane_t &plane);
@@ -708,6 +723,7 @@ public:
 									// but instead tries to come closer for a melee attack.
 									// This is not the same as meleerange
 	fixed_t			maxtargetrange;	// any target farther away cannot be attacked
+	int				bouncetype;		// which bouncing type?
 	fixed_t			bouncefactor;	// Strife's grenades use 50%, Hexen's Flechettes 70.
 	fixed_t			wallbouncefactor;	// The bounce factor for walls can be different.
 	int				bouncecount;	// Strife's grenades only bounce twice before exploding
@@ -746,6 +762,8 @@ public:
 	FSoundIDNoInit DeathSound;
 	FSoundIDNoInit ActiveSound;
 	FSoundIDNoInit UseSound;		// [RH] Sound to play when an actor is used.
+	FSoundIDNoInit BounceSound;
+	FSoundIDNoInit WallBounceSound;
 
 	fixed_t Speed;
 	fixed_t FloatSpeed;

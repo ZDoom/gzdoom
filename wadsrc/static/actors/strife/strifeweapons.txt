@@ -642,11 +642,10 @@ ACTOR HEGrenade
 	Projectile
 	-NOGRAVITY
 	+STRIFEDAMAGE
-	+NOBOUNCESOUND
 	+BOUNCEONACTORS
 	+EXPLODEONWATER
-	+DOOMBOUNCE
 	MaxStepHeight 4
+	BounceType "Doom"
 	BounceFactor 0.5
 	BounceCount 2
 	SeeSound "weapons/hegrenadeshoot"
@@ -680,10 +679,9 @@ ACTOR PhosphorousGrenade
 	Projectile
 	-NOGRAVITY
 	+STRIFEDAMAGE
-	+NOBOUNCESOUND
 	+BOUNCEONACTORS
 	+EXPLODEONWATER
-	+DOOMBOUNCE
+	BounceType "Doom"
 	MaxStepHeight 4
 	BounceFactor 0.5
 	BounceCount 2

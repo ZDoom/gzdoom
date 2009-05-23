@@ -552,15 +552,15 @@ static void ParseInsideDecoration (Baggage &bag, AActor *defaults,
 		}
 		else if (def == DEF_Projectile && sc.Compare ("DoomBounce"))
 		{
-			defaults->flags2 = (defaults->flags2 & ~MF2_BOUNCETYPE) | MF2_DOOMBOUNCE;
+			defaults->bouncetype = BOUNCE_DoomCompat;
 		}
 		else if (def == DEF_Projectile && sc.Compare ("HereticBounce"))
 		{
-			defaults->flags2 = (defaults->flags2 & ~MF2_BOUNCETYPE) | MF2_HERETICBOUNCE;
+			defaults->bouncetype = BOUNCE_HereticCompat;
 		}
 		else if (def == DEF_Projectile && sc.Compare ("HexenBounce"))
 		{
-			defaults->flags2 = (defaults->flags2 & ~MF2_BOUNCETYPE) | MF2_HEXENBOUNCE;
+			defaults->bouncetype = BOUNCE_HexenCompat;
 		}
 		else if (def == DEF_Pickup && sc.Compare ("PickupSound"))
 		{

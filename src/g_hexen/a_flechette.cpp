@@ -371,7 +371,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CheckThrowBomb2)
 		self->SetState (self->SpawnState + 6);
 		self->z = self->floorz;
 		self->momz = 0;
-		self->flags2 &= ~MF2_BOUNCETYPE;
+		self->bouncetype = BOUNCE_None;
 		self->flags &= ~MF_MISSILE;
 	}
 	CALL_ACTION(A_CheckThrowBomb, self);

@@ -457,6 +457,7 @@ enum EDmgFlags
 	DMG_NO_ARMOR = 1,
 	DMG_INFLICTOR_IS_PUFF = 2,
 	DMG_THRUSTLESS = 4,
+	DMG_FORCED = 8,
 };
 
 

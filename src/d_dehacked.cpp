@@ -836,11 +836,10 @@ static int PatchThing (int thingy)
 				if (vchanged[1])
 				{
 					info->flags2 = value[1];
-					if (info->flags2 & MF2_BOUNCE1)
-					{ // If a bex patch specifies FLOORBOUNCE, also set
-						// BOUNCE2, because otherwise it will get HERETICBOUNCE
-						// instead of DOOMBOUNCE.
-						info->flags2 |= MF2_BOUNCE2;
+					if (info->flags2 & 0x00000004)	// old BOUNCE1
+					{ 	
+						info->flags2 &= ~4;
+						info->bouncetype = BOUNCE_DoomCompat;
 					}
 					// Damage types that once were flags but now are not
 					if (info->flags2 & 0x20000000)

@@ -864,7 +864,8 @@ bool PIT_CheckThing (AActor *thing, FCheckPosition &tm)
 			return true;
 		}
 
-		if (tm.thing->flags2 & MF2_BOUNCE2)
+		int bt = tm.thing->bouncetype & BOUNCE_TypeMask;
+		if (bt == BOUNCE_Doom || bt == BOUNCE_Hexen)
 		{
 			if (tm.thing->Damage == 0)
 			{
@@ -2494,7 +2495,8 @@ bool FSlide::BounceWall (AActor *mo)
 	fixed_t         movelen;
 	line_t			*line;
 
-	if (!(mo->flags2 & MF2_BOUNCE2))
+	int bt = mo->bouncetype & BOUNCE_TypeMask;
+	if (bt != BOUNCE_Doom && bt != BOUNCE_Hexen)
 	{
 		return false;
 	}

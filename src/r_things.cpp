@@ -1347,14 +1347,9 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 	// from the viewer, by either water or fake ceilings
 	// killough 4/11/98: improve sprite clipping for underwater/fake ceilings
 
-	heightsec = thing->Sector->heightsec;
+	heightsec = thing->Sector->GetHeightSec();
 
-	if (heightsec != NULL && heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC)
-	{
-		heightsec = NULL;
-	}
-
-	if (heightsec)	// only clip things which are in special sectors
+	if (heightsec != NULL)	// only clip things which are in special sectors
 	{
 		if (fakeside == FAKED_AboveCeiling)
 		{
@@ -2356,12 +2351,7 @@ void R_ProjectParticle (particle_t *particle, const sector_t *sector, int shade,
 		return;
 
 	// Clip particles above the ceiling or below the floor.
-	heightsec = sector->heightsec;
-
-	if (heightsec != NULL && heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC)
-	{
-		heightsec = NULL;
-	}
+	heightsec = sector->GetHeightSec();
 
 	const secplane_t *topplane;
 	const secplane_t *botplane;

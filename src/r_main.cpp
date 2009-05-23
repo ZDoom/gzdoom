@@ -1108,10 +1108,9 @@ void R_SetupFrame (AActor *actor)
 	// killough 3/20/98, 4/4/98: select colormap based on player status
 	// [RH] Can also select a blend
 
-	if (viewsector->heightsec &&
-		!(viewsector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC))
+	const sector_t *s = viewsector->GetHeightSec();
+	if (s != NULL)
 	{
-		const sector_t *s = viewsector->heightsec;
 		newblend = viewz < s->floorplane.ZatPoint (viewx, viewy)
 			? s->bottommap
 			: viewz > s->ceilingplane.ZatPoint (viewx, viewy)

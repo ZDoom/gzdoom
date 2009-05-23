@@ -2971,20 +2971,20 @@ void AActor::Tick ()
 				{
 					continue;
 				}
-				if (flags & MF_NOGRAVITY &&
-					(sec->heightsec == NULL || (sec->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC)))
+				sector_t *heightsec = sec->GetHeightSec();
+				if (flags & MF_NOGRAVITY && heightsec == NULL)
 				{
 					continue;
 				}
 				height = sec->floorplane.ZatPoint (x, y);
 				if (z > height)
 				{
-					if (sec->heightsec == NULL || (sec->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC))
+					if (heightsec == NULL)
 					{
 						continue;
 					}
 
-					waterheight = sec->heightsec->floorplane.ZatPoint (x, y);
+					waterheight = heightsec->floorplane.ZatPoint (x, y);
 					if (waterheight > height && z >= waterheight)
 					{
 						continue;
@@ -3232,8 +3232,8 @@ bool AActor::UpdateWaterLevel (fixed_t oldz, bool dosplash)
 	}
 	else
 	{
-		const sector_t *hsec = Sector->heightsec;
-		if (hsec != NULL && !(hsec->MoreFlags & SECF_IGNOREHEIGHTSEC))
+		const sector_t *hsec = Sector->GetHeightSec();
+		if (hsec != NULL)
 		{
 			fh = hsec->floorplane.ZatPoint (x, y);
 			//if (hsec->MoreFlags & SECF_UNDERWATERMASK)	// also check Boom-style non-swimmable sectors
@@ -3648,9 +3648,8 @@ void AActor::AdjustFloorClip ()
 	// do the floorclipping instead of the terrain type.
 	for (m = touching_sectorlist; m; m = m->m_tnext)
 	{
-		if ((m->m_sector->heightsec == NULL ||
-			 m->m_sector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC) &&
-			m->m_sector->floorplane.ZatPoint (x, y) == z)
+		sector_t *hsec = m->m_sector->GetHeightSec();
+		if (hsec == NULL && m->m_sector->floorplane.ZatPoint (x, y) == z)
 		{
 			fixed_t clip = Terrains[TerrainTypes[m->m_sector->GetTexture(sector_t::floor)]].FootClip;
 			if (clip < shallowestclip)
@@ -4517,16 +4516,14 @@ bool P_HitWater (AActor * thing, sector_t * sec, fixed_t x, fixed_t y, fixed_t z
 		if (planez < z) return false;
 	}
 #endif
-	if (sec->heightsec == NULL ||
-		//!sec->heightsec->waterzone ||
-		(sec->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC) ||
-		!(sec->heightsec->MoreFlags & SECF_CLIPFAKEPLANES))
+	sector_t *hsec = sec->GetHeightSec();
+	if (hsec == NULL || !(hsec->MoreFlags & SECF_CLIPFAKEPLANES))
 	{
 		terrainnum = TerrainTypes[sec->GetTexture(sector_t::floor)];
 	}
 	else
 	{
-		terrainnum = TerrainTypes[sec->heightsec->GetTexture(sector_t::floor)];
+		terrainnum = TerrainTypes[hsec->GetTexture(sector_t::floor)];
 	}
 #ifdef _3DFLOORS
 foundone:
@@ -4542,10 +4539,7 @@ foundone:
 	// don't splash when touching an underwater floor
 	if (thing->waterlevel>=1 && z<=thing->floorz) return Terrains[terrainnum].IsLiquid;
 
-	plane = (sec->heightsec != NULL &&
-		//sec->heightsec->waterzone &&
-		!(sec->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC))
-	  ? &sec->heightsec->floorplane : &sec->floorplane;
+	plane = hsec != NULL? &sec->heightsec->floorplane : &sec->floorplane;
 
 	// Don't splash for living things with small vertical velocities.
 	// There are levels where the constant splashing from the monsters gets extremely annoying
@@ -4642,9 +4636,7 @@ bool P_HitFloor (AActor *thing)
 		}
 #endif
 	}
-	if (m == NULL ||
-		(m->m_sector->heightsec != NULL &&
-		!(m->m_sector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC)))
+	if (m == NULL || m->m_sector->GetHeightSec() != NULL)
 	{ 
 		return false;
 	}

@@ -490,8 +490,8 @@ int P_GetFriction (const AActor *mo, int *frictionfactor)
 			}
 			if ((secfriction(sec) < friction || friction == ORIG_FRICTION) &&
 				(mo->z <= sec->floorplane.ZatPoint (mo->x, mo->y) ||
-				(sec->heightsec && !(sec->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC) &&
-				mo->z <= sec->heightsec->floorplane.ZatPoint (mo->x, mo->y))))
+				(sec->GetHeightSec() != NULL &&
+				 mo->z <= sec->heightsec->floorplane.ZatPoint (mo->x, mo->y))))
 			{
 				friction = secfriction (sec);
 				movefactor = secmovefac (sec);

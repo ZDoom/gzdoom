@@ -1,4 +1,8 @@
-﻿May 22, 2009  (Changes by Graf Zahl)
+﻿May 23, 2009  (Changes by Graf Zahl)
+- Fixed: When setting up a deep water sector with Transfer_Heights the floorclip
+  information of all actors in the sector needs to be updated.
+
+May 22, 2009  (Changes by Graf Zahl)
 - Fixed: A_CountdownArg and A_Die must ensure a certain kill.
 
 May 22, 2009

@@ -636,17 +636,17 @@ CUSTOM_CVAR (Bool, forcewater, false, CVAR_ARCHIVE|CVAR_SERVERINFO)
 
 		for (i = 0; i < numsectors; i++)
 		{
-			if (sectors[i].heightsec &&
-				!(sectors[i].heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC) &&
+			sector_t *hsec = sectors[i].GetHeightSec();
+			if (hsec &&
 				!(sectors[i].heightsec->MoreFlags & SECF_UNDERWATER))
 			{
 				if (self)
 				{
-					sectors[i].heightsec->MoreFlags |= SECF_FORCEDUNDERWATER;
+					hsec->MoreFlags |= SECF_FORCEDUNDERWATER;
 				}
 				else
 				{
-					sectors[i].heightsec->MoreFlags &= ~SECF_FORCEDUNDERWATER;
+					hsec->MoreFlags &= ~SECF_FORCEDUNDERWATER;
 				}
 			}
 		}
@@ -1010,6 +1010,7 @@ void P_SpawnSpecials (void)
 			{
 				sectors[s].heightsec = sec;
 				sec->e->FakeFloor.Sectors.Push(&sectors[s]);
+				sectors[s].AdjustFloorClip();
 			}
 			break;
 
@@ -1747,10 +1748,11 @@ void DPusher::Tick ()
 		thing = node->m_thing;
 		if (!(thing->flags2 & MF2_WINDTHRUST) || (thing->flags & MF_NOCLIP))
 			continue;
+
+		sector_t *hsec = sec->GetHeightSec();
 		if (m_Type == p_wind)
 		{
-			if (sec->heightsec == NULL ||
-				sec->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC)
+			if (hsec == NULL)
 			{ // NOT special water sector
 				if (thing->z > thing->floorz) // above ground
 				{
@@ -1765,7 +1767,7 @@ void DPusher::Tick ()
 			}
 			else // special water sector
 			{
-				ht = sec->heightsec->floorplane.ZatPoint (thing->x, thing->y);
+				ht = hsec->floorplane.ZatPoint (thing->x, thing->y);
 				if (thing->z > ht) // above ground
 				{
 					xspeed = m_Xmag; // full force
@@ -1786,14 +1788,13 @@ void DPusher::Tick ()
 		{
 			const secplane_t *floor;
 
-			if (sec->heightsec == NULL ||
-				(sec->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC))
+			if (hsec == NULL)
 			{ // NOT special water sector
 				floor = &sec->floorplane;
 			}
 			else
 			{ // special water sector
-				floor = &sec->heightsec->floorplane;
+				floor = &hsec->floorplane;
 			}
 			if (thing->z > floor->ZatPoint (thing->x, thing->y))
 			{ // above ground

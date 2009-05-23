@@ -390,14 +390,8 @@ void MessagePump (const SDL_Event &sev)
 			if (sev.active.gain == 0)
 			{ // kill focus
 				FlushDIKState ();
-				if (!paused)
-					S_PauseSound (false);
 			}
-			else
-			{ // set focus
-				if (!paused)
-					S_ResumeSound ();
-			}
+			S_SetSoundPaused(sev.active.gain);
 		}
 		break;
 

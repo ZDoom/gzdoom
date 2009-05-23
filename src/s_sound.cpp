@@ -1671,6 +1671,56 @@ void S_ResumeSound (bool notsfx)
 
 //==========================================================================
 //
+// S_SetSoundPaused
+//
+// Called with state non-zero when the app is active, zero when it isn't.
+//
+//==========================================================================
+
+void S_SetSoundPaused (int state)
+{
+	if (state)
+	{
+		if (paused <= 0)
+		{
+			S_ResumeSound(true);
+			if (GSnd != NULL)
+			{
+				GSnd->SetInactive(false);
+			}
+			if (!netgame
+#ifdef _DEBUG
+				&& !demoplayback
+#endif
+				)
+			{
+				paused = 0;
+			}
+		}
+	}
+	else
+	{
+		if (paused == 0)
+		{
+			S_PauseSound(false, true);
+			if (GSnd !=  NULL)
+			{
+				GSnd->SetInactive(true);
+			}
+			if (!netgame
+#ifdef _DEBUG
+				&& !demoplayback
+#endif
+				)
+			{
+				paused = -1;
+			}
+		}
+	}
+}
+
+//==========================================================================
+//
 // S_EvictAllChannels
 //
 // Forcibly evicts all channels so that there are none playing, but all

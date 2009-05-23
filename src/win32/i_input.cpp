@@ -371,7 +371,6 @@ static BYTE KeyState[256];
 static BYTE DIKState[2][NUM_KEYS];
 static int KeysReadCount;
 static int ActiveDIKState;
-static void SetSoundPaused (int state);
 
 // Convert DIK_* code to ASCII using Qwerty keymap
 static const BYTE Convert [256] =
@@ -738,7 +737,7 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		{
 			SetPriorityClass (GetCurrentProcess (), IDLE_PRIORITY_CLASS);
 		}
-		SetSoundPaused (wParam);
+		S_SetSoundPaused (wParam);
 		break;
 
 	case WM_WTSSESSION_CHANGE:
@@ -1384,50 +1383,6 @@ void I_ShutdownInput ()
 	}
 }
 
-static void SetSoundPaused (int state)
-{
-	if (state)
-	{
-		if (paused <= 0)
-		{
-			S_ResumeSound(true);
-			if (GSnd != NULL)
-			{
-				GSnd->SetInactive(false);
-			}
-			if (!netgame
-#ifdef _DEBUG
-				&& !demoplayback
-#endif
-				)
-			{
-				paused = 0;
-			}
-		}
-	}
-	else
-	{
-		if (paused == 0)
-		{
-			S_PauseSound(false, true);
-			if (GSnd !=  NULL)
-			{
-				GSnd->SetInactive(true);
-			}
-			if (!netgame
-#ifdef _DEBUG
-				&& !demoplayback
-#endif
-				)
-			{
-				paused = -1;
-			}
-		}
-	}
-}
-
-static LONG PrevX, PrevY;
-
 static void SetCursorState(bool visible)
 {
 	HCURSOR usingCursor = visible ? TheArrowCursor : TheInvisibleCursor;
@@ -2055,6 +2010,7 @@ protected:
 	void CenterMouse(int x, int y);
 
 	POINT UngrabbedPointerPos;
+	LONG PrevX, PrevY;
 	bool Grabbed;
 };
 

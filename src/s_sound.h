@@ -318,6 +318,7 @@ void S_StopMusic (bool force);
 // Stop and resume music, during game PAUSE.
 void S_PauseSound (bool notmusic, bool notsfx);
 void S_ResumeSound (bool notsfx);
+void S_SetSoundPaused (int state);
 
 //
 // Updates music & sounds

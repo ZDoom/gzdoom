@@ -1146,7 +1146,7 @@ FMultiPatchTexture::FMultiPatchTexture (FScanner &sc, int usetype)
 	sc.MustGetNumber();
 	Height = sc.Number;
 	UseType = usetype;
-
+	
 	if (sc.CheckString("{"))
 	{
 		while (!sc.CheckString("}"))
@@ -1200,7 +1200,7 @@ FMultiPatchTexture::FMultiPatchTexture (FScanner &sc, int usetype)
 		Parts = new TexPart[NumParts];
 		memcpy(Parts, &parts[0], NumParts * sizeof(*Parts));
 
-		CalcBitSize ();
+		//CalcBitSize ();
 
 		// If this texture is just a wrapper around a single patch, we can simply
 		// forward GetPixels() and GetColumn() calls to that patch.
@@ -1216,6 +1216,16 @@ FMultiPatchTexture::FMultiPatchTexture (FScanner &sc, int usetype)
 			}
 		}
 	}
+	
+	if (Width <= 0 || Height <= 0)
+	{
+		UseType = FTexture::TEX_Null;
+		Printf("Texture %s has invalid dimensions (%d, %d)\n", Name, Width, Height);
+		Width = Height = 1;
+	}
+	CalcBitSize ();
+
+	
 	sc.SetCMode(false);
 }
 

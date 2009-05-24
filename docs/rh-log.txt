@@ -8,6 +8,10 @@
   mouse input would be frozen until the mouse was ungrabbed again.
 
 May 23, 2009  (Changes by Graf Zahl)
+- Fixed: Textures with dimensions <= 0 are invalid and should be treated as NULL 
+  textures. They also must be set to dimensions other than (0,0) to avoid division
+  by zero errors.
+- Fixed: Random spawners did not handle the MF_DROPPED flag.
 - Fixed: When setting up a deep water sector with Transfer_Heights the floorclip
   information of all actors in the sector needs to be updated.
 

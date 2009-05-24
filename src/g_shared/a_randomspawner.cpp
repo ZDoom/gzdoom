@@ -80,6 +80,7 @@ class ARandomSpawner : public AActor
 				newmobj->target = target;
 				newmobj->tracer = tracer;
 				newmobj->CopyFriendliness(this, false);
+				if (!(flags & MF_DROPPED)) newmobj->flags &= ~MF_DROPPED;
 				// Special1 is used to count how many recursions we're in.
 				if (newmobj->IsKindOf(PClass::FindClass("RandomSpawner")))
 					newmobj->special1 = ++special1;

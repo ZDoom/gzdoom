@@ -112,6 +112,9 @@ typedef enum
 	BT_USER4		= 1<<24,
 } buttoncode_t;
 
+// Called by IO functions when input is detected.
+void D_PostEvent (const event_t* ev);
+
 
 //
 // GLOBAL VARIABLES

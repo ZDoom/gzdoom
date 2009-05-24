@@ -54,4 +54,67 @@ extern char *JoyAxisNames[8];
 
 extern void DI_EnumJoy ();
 
+#ifdef USE_WINDOWS_DWORD
+// Don't make these definitions available to the main body of the source code.
+
+class FInputDevice
+{
+public:
+	virtual ~FInputDevice() = 0;
+	virtual bool GetDevice() = 0;
+	virtual void ProcessInput() = 0;
+	virtual bool WndProcHook(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT *result);
+};
+
+class FMouse : public FInputDevice
+{
+public:
+	FMouse();
+
+	virtual void Grab() = 0;
+	virtual void Ungrab() = 0;
+
+protected:
+	void PostMouseMove(int x, int y);
+	void WheelMoved(int wheelmove);
+	void PostButtonEvent(int button, bool down);
+	void ClearButtonState();
+
+	int LastX, LastY;	// for m_filter
+	WORD ButtonState;	// bit mask of current button states (1=down, 0=up)
+};
+
+void I_StartupMouse();
+void I_CheckNativeMouse(bool prefer_native);
+
+// USB HID usage page numbers
+#define HID_GENERIC_DESKTOP_PAGE			0x01
+#define HID_SIMULATION_CONTROLS_PAGE		0x02
+#define HID_VR_CONTROLS_PAGE				0x03
+#define HID_SPORT_CONTROLS_PAGE				0x04
+#define HID_GAME_CONTROLS_PAGE				0x05
+#define HID_GENERIC_DEVICE_CONTROLS_PAGE	0x06
+#define HID_KEYBOARD_PAGE					0x07
+#define HID_LED_PAGE						0x08
+#define HID_BUTTON_PAGE						0x09
+#define HID_ORDINAL_PAGE					0x0a
+#define HID_TELEPHONY_DEVICE_PAGE			0x0b
+#define HID_CONSUMER_PAGE					0x0c
+#define HID_DIGITIZERS_PAGE					0x0d
+#define HID_UNICODE_PAGE					0x10
+#define HID_ALPHANUMERIC_DISPLAY_PAGE		0x14
+#define HID_MEDICAL_INSTRUMENT_PAGE			0x40
+
+// HID Generic Desktop Page usages
+#define HID_GDP_UNDEFINED					0x00
+#define HID_GDP_POINTER						0x01
+#define HID_GDP_MOUSE						0x02
+#define HID_GDP_JOYSTICK					0x04
+#define HID_GDP_GAMEPAD						0x05
+#define HID_GDP_KEYBOARD					0x06
+#define HID_GDP_KEYPAD						0x07
+#define HID_GDP_MULTIAXIS_CONTROLLER		0x08
+#endif
+
+
 #endif

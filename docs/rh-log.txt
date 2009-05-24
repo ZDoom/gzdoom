@@ -1,4 +1,13 @@
-﻿May 23, 2009  (Changes by Graf Zahl)
+﻿May 23, 2009
+- SetCursorState() now calls ShowCursor() again, because capturing the mouse
+  with RIDEV_NOLEGACY apparently prevents SetCursor() from doing anything.
+- Split mouse code off from i_input.cpp into i_mouse.cpp and added raw mouse
+  handling. (WM_INPUT obsoleted most of DirectInput for XP.)
+- Fixed: Similar to the Win32 mouse, using the DirectInput mouse in windowed
+  mode, if you alt-tabbed away and then clicked on the window's title bar,
+  mouse input would be frozen until the mouse was ungrabbed again.
+
+May 23, 2009  (Changes by Graf Zahl)
 - Fixed: When setting up a deep water sector with Transfer_Heights the floorclip
   information of all actors in the sector needs to be updated.
 
@@ -6,6 +15,7 @@ May 22, 2009  (Changes by Graf Zahl)
 - Fixed: A_CountdownArg and A_Die must ensure a certain kill.
 
 May 22, 2009
+- Moved SetSoundPaused() out of i_input.cpp and into s_sound.cpp.
 - Fixed: When using Win32 mouse, windowed mode, alt-tabbing away and then
   clicking on the window's title bar moved it practically off the screen.
 - Beginnings of i_input.cpp rewrite: Win32 and DirectInput mouse handling has

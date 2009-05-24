@@ -103,34 +103,14 @@
 #include "d_event.h"
 #include "v_text.h"
 
-#define DINPUT_BUFFERSIZE	32
+// Prototypes and declarations.
+#include "rawinput.h"
+// Definitions
+#define RIF(name, ret, args) \
+	name##Proto My##name;
+#include "rawinput.h"
 
 
-class FInputDevice
-{
-public:
-	virtual bool GetDevice() = 0;
-	virtual void ProcessInput() = 0;
-	virtual bool WndProcHook(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT *result);
-};
-
-class FMouse : public FInputDevice
-{
-public:
-	FMouse();
-
-	virtual void Grab() = 0;
-	virtual void Ungrab() = 0;
-
-protected:
-	void PostMouseMove(int x, int y);
-	void WheelMoved(int wheelmove);
-	void PostButtonEvent(int button, bool down);
-	void ClearButtonState();
-
-	int LastX, LastY;	// for m_filter
-	WORD ButtonState;	// bit mask of current button states (1=down, 0=up)
-};
 
 #ifdef _DEBUG
 #define INGAME_PRIORITY_CLASS	NORMAL_PRIORITY_CLASS
@@ -139,6 +119,7 @@ protected:
 #define INGAME_PRIORITY_CLASS	NORMAL_PRIORITY_CLASS
 #endif
 
+static void FindRawInputFunctions();
 BOOL DI_InitJoy (void);
 
 extern HINSTANCE g_hInst;
@@ -151,15 +132,10 @@ static HMODULE DInputDLL;
 
 static void KeyRead ();
 static BOOL I_StartupKeyboard ();
-static void I_StartupMouse ();
-static void CenterMouse_Win32 (LONG curx, LONG cury);
-static void DI_Acquire (LPDIRECTINPUTDEVICE8 mouse);
-static void DI_Unacquire (LPDIRECTINPUTDEVICE8 mouse);
-static void SetCursorState (bool visible);
 static HRESULT InitJoystick ();
 
-static bool GUICapture;
-static bool NativeMouse;
+bool GUICapture;
+extern FMouse *Mouse;
 
 bool VidResizing;
 
@@ -175,15 +151,12 @@ EXTERN_CVAR (String, language)
 EXTERN_CVAR (Bool, lookstrafe)
 
 
-typedef enum { none, win32, dinput } mousemode_t;
-static mousemode_t mousemode = none;
-
 extern BOOL paused;
-static bool HaveFocus = false;
+bool HaveFocus;
 static bool noidle = false;
 
-static LPDIRECTINPUT8			g_pdi;
-static LPDIRECTINPUT			g_pdi3;
+LPDIRECTINPUT8			g_pdi;
+LPDIRECTINPUT			g_pdi3;
 
 static LPDIRECTINPUTDEVICE8		g_pJoy;
 
@@ -193,10 +166,6 @@ static LPDIRECTINPUTDEVICE8		g_pJoy;
 // pointer for each device instead of two.
 
 static LPDIRECTINPUTDEVICE8		g_pKey;
-
-FMouse *Mouse;
-
-HCURSOR TheArrowCursor, TheInvisibleCursor;
 
 TArray<GUIDName> JoystickNames;
 
@@ -224,10 +193,6 @@ static const BYTE POVButtons[9] = { 0x01, 0x03, 0x02, 0x06, 0x04, 0x0C, 0x08, 0x
 
 BOOL AppActive = TRUE;
 int SessionState = 0;
-
-CVAR (Bool,  use_mouse,				true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-CVAR (Bool,  m_noprescale,			false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-CVAR (Bool,	 m_filter,				false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 CVAR (Bool,  use_joystick,			false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
@@ -347,26 +312,6 @@ static FBaseCVar * const JoyConfigVars[] =
 	&joy_upspeed
 };
 
-CUSTOM_CVAR (Int, in_mouse, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOINITCALL)
-{
-	if (self < 0)
-	{
-		self = 0;
-	}
-	else if (self > 2)
-	{
-		self = 2;
-	}
-	else if (g_pdi == NULL && g_pdi3 == NULL)
-	{
-		return;
-	}
-	else
-	{
-		I_StartupMouse();
-	}
-}
-
 static BYTE KeyState[256];
 static BYTE DIKState[2][NUM_KEYS];
 static int KeysReadCount;
@@ -439,53 +384,11 @@ static void I_CheckGUICapture ()
 	}
 }
 
-CUSTOM_CVAR(Int, mouse_capturemode, 1, CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
-{
-	if (self < 0) self = 0;
-	else if (self > 2) self = 2;
-}
-
-static bool inGame()
-{
-	switch (mouse_capturemode)
-	{
-	default:
-	case 0:
-		return gamestate == GS_LEVEL;
-	case 1:
-		return gamestate == GS_LEVEL || gamestate == GS_INTERMISSION || gamestate == GS_FINALE;
-	case 2:
-		return true;
-	}
-}
-
-void I_CheckNativeMouse(bool preferNative)
-{
-	bool wantNative = !HaveFocus ||
-		((!screen || !screen->IsFullscreen()) && 
-		(!inGame() || GUICapture || paused || preferNative || !use_mouse || demoplayback));
-
-	//Printf ("%d %d %d\n", wantNative, preferNative, NativeMouse);
-
-	if (wantNative != NativeMouse)
-	{
-		if (wantNative)
-		{
-			Mouse->Ungrab();
-		}
-		else
-		{
-			Mouse->Grab();
-		}
-		NativeMouse = wantNative;
-	}
-}
-
 LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	if (Mouse != NULL)
 	{
-		LRESULT result;
+		LRESULT result = 0;
 
 		if (Mouse->WndProcHook(hWnd, message, wParam, lParam, &result))
 		{
@@ -506,6 +409,8 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 	case WM_HOTKEY:
 		break;
+
+	case WM_INPUT:
 
 	case WM_PAINT:
 		if (screen != NULL && 0)
@@ -1278,14 +1183,13 @@ bool I_InitInput (void *hwnd)
 	Printf ("I_InitInput\n");
 	atterm (I_ShutdownInput);
 
-	NativeMouse = true;
-
 	noidle = !!Args->CheckParm ("-noidle");
 	g_pdi = NULL;
 	g_pdi3 = NULL;
 
-	// Try for DirectInput 8 first, then DirectInput 3 for NT 4's benefit.
+	FindRawInputFunctions();
 
+	// Try for DirectInput 8 first, then DirectInput 3 for NT 4's benefit.
 	DInputDLL = LoadLibrary("dinput8.dll");
 	if (DInputDLL != NULL)
 	{
@@ -1380,16 +1284,6 @@ void I_ShutdownInput ()
 	{
 		FreeLibrary (DInputDLL);
 		DInputDLL = NULL;
-	}
-}
-
-static void SetCursorState(bool visible)
-{
-	HCURSOR usingCursor = visible ? TheArrowCursor : TheInvisibleCursor;
-	SetClassLongPtr(Window, GCLP_HCURSOR, (LONG_PTR)usingCursor);
-	if (HaveFocus)
-	{
-		SetCursor(usingCursor);
 	}
 }
 
@@ -1621,6 +1515,16 @@ CCMD (playmovie)
 
 //==========================================================================
 //
+// FInputDevice - Destructor
+//
+//==========================================================================
+
+FInputDevice::~FInputDevice()
+{
+}
+
+//==========================================================================
+//
 // FInputDevice :: WndProcHook
 //
 // Gives subclasses a chance to intercept window messages. 
@@ -1634,678 +1538,21 @@ bool FInputDevice::WndProcHook(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
 
 //==========================================================================
 //
-// FMouse - Constructor
+// FindRawInputFunctions
+//
+// Finds functions for raw input, if available.
 //
 //==========================================================================
 
-FMouse::FMouse()
+static void FindRawInputFunctions()
 {
-	LastX = LastY = 0;
-	ButtonState = 0;
-}
+	HMODULE user32 = GetModuleHandle("user32.dll");
 
-//==========================================================================
-//
-// FMouse :: PostMouseMove
-//
-// Posts a mouse movement event, potentially averaging it with the previous
-// movement. If there is no movement to post, then no event is generated.
-//
-//==========================================================================
-
-void FMouse::PostMouseMove(int x, int y)
-{
-	event_t ev = { 0 };
-
-	if (m_filter)
+	if (user32 == NULL)
 	{
-		ev.x = (x + LastX) / 2;
-		ev.y = (y + LastY) / 2;
+		return;		// WTF kind of broken system are we running on?
 	}
-	else
-	{
-		ev.x = x;
-		ev.y = y;
-	}
-	LastX = x;
-	LastY = y;
-	if (ev.x | ev.y)
-	{
-		ev.type = EV_Mouse;
-		D_PostEvent(&ev);
-	}
-}
-
-//==========================================================================
-//
-// FMouse :: WheelMoved
-//
-// Generates events for a wheel move. Events are generated for every
-// WHEEL_DELTA units that the wheel has moved. In normal mode, each move
-// generates both a key down and a key up event. In GUI mode, only one
-// event is generated for each unit of movement.
-//
-//==========================================================================
-
-void FMouse::WheelMoved(int wheelmove)
-{
-	event_t ev = { 0 };
-	int dir;
-
-	if (GUICapture)
-	{
-		ev.type = EV_GUI_Event;
-		if (wheelmove < 0)
-		{
-			dir = WHEEL_DELTA;
-			ev.subtype = EV_GUI_WheelDown;
-		}
-		else
-		{
-			dir = -WHEEL_DELTA;
-			ev.subtype = EV_GUI_WheelUp;
-		}
-		ev.data3 = ((KeyState[VK_SHIFT]&128) ? GKM_SHIFT : 0) |
-				   ((KeyState[VK_CONTROL]&128) ? GKM_CTRL : 0) |
-				   ((KeyState[VK_MENU]&128) ? GKM_ALT : 0);
-		while (abs(wheelmove) >= WHEEL_DELTA)
-		{
-			D_PostEvent(&ev);
-			wheelmove += dir;
-		}
-	}
-	else
-	{
-		if (wheelmove < 0)
-		{
-			dir = WHEEL_DELTA;
-			ev.data1 = KEY_MWHEELDOWN;
-		}
-		else
-		{
-			dir = -WHEEL_DELTA;
-			ev.data1 = KEY_MWHEELUP;
-		}
-		while (abs(wheelmove) >= WHEEL_DELTA)
-		{
-			ev.type = EV_KeyDown;
-			D_PostEvent(&ev);
-			ev.type = EV_KeyUp;
-			D_PostEvent(&ev);
-			wheelmove += dir;
-		}
-	}
-}
-
-//==========================================================================
-//
-// FMouse :: PostButtonEvent
-//
-// Posts a mouse button up/down event. Down events are always posted. Up
-// events will only be sent if the button is currently marked as down.
-//
-//==========================================================================
-
-void FMouse::PostButtonEvent(int button, bool down)
-{
-	event_t ev = { 0 };
-	int mask = 1 << button;
-
-	ev.data1 = KEY_MOUSE1 + button;
-	if (down)
-	{
-		ButtonState |= mask;
-		ev.type = EV_KeyDown;
-		D_PostEvent(&ev);
-	}
-	else if (ButtonState & mask)
-	{
-		ButtonState &= ~mask;
-		ev.type = EV_KeyUp;
-		D_PostEvent(&ev);
-	}
-}
-
-//==========================================================================
-//
-// FMouse :: ClearButtonState
-//
-// Sends key up events for all buttons that are currently down and marks
-// them as up. Used when focus is lost and we can no longer track up events,
-// so get them marked up right away.
-//
-//==========================================================================
-
-void FMouse::ClearButtonState()
-{
-	if (ButtonState != 0)
-	{
-		int i, mask;
-		event_t ev = { 0 };
-
-		ev.type = EV_KeyUp;
-		for (i = sizeof(ButtonState) * 8, mask = 1; i > 0; --i, mask <<= 1)
-		{
-			if (ButtonState & mask)
-			{
-				ev.data1 = KEY_MOUSE1 + (int)sizeof(ButtonState) * 8 - i;
-				D_PostEvent(&ev);
-			}
-		}
-		ButtonState = 0;
-	}
-}
-
-class FDInputMouse : public FMouse
-{
-public:
-	FDInputMouse();
-	~FDInputMouse();
-	
-	bool GetDevice();
-	void ProcessInput();
-	void Grab();
-	void Ungrab();
-
-protected:
-	LPDIRECTINPUTDEVICE8 Device;
-};
-
-//==========================================================================
-//
-// FDInputMouse - Constructor
-//
-//==========================================================================
-
-FDInputMouse::FDInputMouse()
-{
-	Device = NULL;
-}
-
-//==========================================================================
-//
-// FDInputMouse - Destructor
-//
-//==========================================================================
-
-FDInputMouse::~FDInputMouse()
-{
-	if (Device != NULL)
-	{
-		Device->Release();
-		Device = NULL;
-	}
-}
-
-//==========================================================================
-//
-// FDInputMouse :: GetDevice
-//
-// Create the device interface and initialize it.
-//
-//==========================================================================
-
-bool FDInputMouse::GetDevice()
-{
-	HRESULT hr;
-
-	if (g_pdi3)
-	{ // DirectInput3 interface
-		hr = g_pdi3->CreateDevice(GUID_SysMouse, (LPDIRECTINPUTDEVICE*)&Device, NULL);
-	}
-	else
-	{ // DirectInput8 interface
-		hr = g_pdi->CreateDevice(GUID_SysMouse, &Device, NULL);
-	}
-	if (FAILED(hr))
-	{
-		return false;
-	}
-	
-	// How many buttons does this mouse have?
-	DIDEVCAPS_DX3 caps = { sizeof(caps) };
-	hr = Device->GetCapabilities((DIDEVCAPS *)&caps);
-	// If that failed, just assume four buttons.
-	if (FAILED(hr))
-	{
-		caps.dwButtons = 4;
-	}
-	// Now select the data format with enough buttons for this mouse.
-	// (Can we use c_dfDIMouse2 with DirectInput3? If so, then we could just set
-	// that unconditionally.)
-	hr = Device->SetDataFormat(caps.dwButtons <= 4 ? &c_dfDIMouse : &c_dfDIMouse2);
-	if (FAILED(hr))
-	{
-ufailit:
-		Device->Release();
-		Device = NULL;
-		return false;
-	}
-	// Set cooperative level.
-	hr = Device->SetCooperativeLevel(Window, DISCL_EXCLUSIVE | DISCL_FOREGROUND);
-	if (FAILED(hr))
-	{
-		goto ufailit;
-	}
-	// Set buffer size so we can use buffered input.
-	DIPROPDWORD prop;
-	prop.diph.dwSize = sizeof(prop);
-	prop.diph.dwHeaderSize = sizeof(prop.diph);
-	prop.diph.dwObj = 0;
-	prop.diph.dwHow = DIPH_DEVICE;
-	prop.dwData = DINPUT_BUFFERSIZE;
-	hr = Device->SetProperty(DIPROP_BUFFERSIZE, &prop.diph);
-	if (FAILED(hr))
-	{
-		goto ufailit;
-	}
-	return true;
-}
-
-//==========================================================================
-//
-// FDInputMouse :: ProcessInput
-//
-// Posts any events that have accumulated since the previous call.
-//
-//==========================================================================
-
-void FDInputMouse::ProcessInput()
-{
-	DIDEVICEOBJECTDATA od;
-	DWORD dwElements;
-	HRESULT hr;
-	int count = 0;
-	int dx, dy;
-
-	dx = 0;
-	dy = 0;
-
-	if (!HaveFocus || NativeMouse)
-		return;
-
-	event_t ev = { 0 };
-	for (;;)
-	{
-		DWORD cbObjectData = g_pdi3 ? sizeof(DIDEVICEOBJECTDATA_DX3) : sizeof(DIDEVICEOBJECTDATA);
-		dwElements = 1;
-		hr = Device->GetDeviceData(cbObjectData, &od, &dwElements, 0);
-		if (hr == DIERR_INPUTLOST || hr == DIERR_NOTACQUIRED)
-		{
-			Grab();
-			hr = Device->GetDeviceData(cbObjectData, &od, &dwElements, 0);
-		}
-
-		/* Unable to read data or no data available */
-		if (FAILED(hr) || !dwElements)
-			break;
-
-		count++;
-
-		/* Look at the element to see what happened */
-		// GCC does not like putting the DIMOFS_ macros in case statements,
-		// so use ifs instead.
-		if (od.dwOfs == (DWORD)DIMOFS_X)
-		{
-			dx += od.dwData;
-		}
-		else if (od.dwOfs == (DWORD)DIMOFS_Y)
-		{
-			dy += od.dwData;
-		}
-		else if (od.dwOfs == (DWORD)DIMOFS_Z)
-		{
-			WheelMoved(od.dwData);
-		}
-		else if (od.dwOfs >= (DWORD)DIMOFS_BUTTON0 && od.dwOfs <= (DWORD)DIMOFS_BUTTON7)
-		{
-			/* [RH] Mouse button events mimic keydown/up events */
-			if (!GUICapture)
-			{
-				PostButtonEvent(od.dwOfs - DIMOFS_BUTTON0, !!(od.dwData & 0x80));
-			}
-		}
-	}
-	PostMouseMove(m_noprescale ? dx : dx<<2, -dy);
-}
-
-//==========================================================================
-//
-// FDInputMouse :: Grab
-//
-//==========================================================================
-
-void FDInputMouse::Grab()
-{
-	Device->Acquire();
-	SetCursorState(NativeMouse);
-}
-
-//==========================================================================
-//
-// FDInputMouse :: Ungrab
-//
-//==========================================================================
-
-void FDInputMouse::Ungrab()
-{
-	Device->Unacquire();
-	SetCursorState(true);
-	ClearButtonState();
-}
-
-class FWin32Mouse : public FMouse
-{
-public:
-	FWin32Mouse();
-	~FWin32Mouse();
-	
-	bool GetDevice();
-	void ProcessInput();
-	bool WndProcHook(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT *result);
-	void Grab();
-	void Ungrab();
-
-protected:
-	void CenterMouse(int x, int y);
-
-	POINT UngrabbedPointerPos;
-	LONG PrevX, PrevY;
-	bool Grabbed;
-};
-
-//==========================================================================
-//
-// FWin32Mouse - Constructor
-//
-//==========================================================================
-
-FWin32Mouse::FWin32Mouse()
-{
-	GetCursorPos(&UngrabbedPointerPos);
-	Grabbed = false;
-}
-
-//==========================================================================
-//
-// FWin32Mouse - Destructor
-//
-//==========================================================================
-
-FWin32Mouse::~FWin32Mouse()
-{
-	Ungrab();
-}
-
-//==========================================================================
-//
-// FWin32Mouse :: GetDevice
-//
-// The Win32 mouse is always available, since it is the lowest common
-// denominator. (Even if it's not connected, it is still considered as
-// "available"; it just won't generate any events.)
-//
-//==========================================================================
-
-bool FWin32Mouse::GetDevice()
-{
-	return true;
-}
-
-//==========================================================================
-//
-// FWin32Mouse :: ProcessInput
-//
-// Get current mouse position and post events if the mouse has moved from
-// last time.
-//
-//==========================================================================
-
-void FWin32Mouse::ProcessInput()
-{
-	POINT pt;
-	int x, y;
-
-	if (!HaveFocus || !Grabbed || !GetCursorPos(&pt))
-	{
-		return;
-	}
-
-	x = pt.x - PrevX;
-	y = PrevY - pt.y;
-
-	if (!m_noprescale)
-	{
-		x *= 3;
-		y *= 2;
-	}
-	if (x | y)
-	{
-		CenterMouse(pt.x, pt.y);
-	}
-	PostMouseMove(x, y);
-}
-
-//==========================================================================
-//
-// FWin32Mouse :: WndProcHook
-//
-// Intercepts mouse-related window messages if the mouse is grabbed.
-//
-//==========================================================================
-
-bool FWin32Mouse::WndProcHook(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT *result)
-{
-	if (!Grabbed)
-	{
-		return false;
-	}
-
-	if (message == WM_SIZE)
-	{
-		if (wParam == SIZE_MAXIMIZED || wParam == SIZE_RESTORED)
-		{
-			CenterMouse(-1, -1);
-			*result = 0;
-			return true;
-		}
-	}
-	else if (message == WM_MOVE)
-	{
-		CenterMouse(-1, -1);
-		*result = 0;
-		return true;
-	}
-	else if (message == WM_SYSCOMMAND)
-	{
-		// Do not enter the window moving and sizing modes while grabbed,
-		// because those require the mouse.
-		wParam &= 0xFFF0;
-		if (wParam == SC_MOVE || wParam == SC_SIZE)
-		{
-			*result = 0;
-			return true;
-		}
-	}
-	else if (message == WM_MOUSEWHEEL)
-	{
-		WheelMoved(HIWORD(wParam));
-		return true;
-	}
-	else if (message >= WM_LBUTTONDOWN && message <= WM_MBUTTONUP)
-	{
-		int action = (message - WM_LBUTTONDOWN) % 3;
-		int button = (message - WM_LBUTTONDOWN) / 3;
-
-		if (action == 2)
-		{ // double clicking we care not about.
-			return false;
-		}
-		event_t ev = { 0 };
-		ev.type = action ? EV_KeyUp : EV_KeyDown;
-		ev.data1 = KEY_MOUSE1 + button;
-		if (action)
-		{
-			ButtonState &= ~(1 << button);
-		}
-		else
-		{
-			ButtonState |= 1 << button;
-		}
-		D_PostEvent(&ev);
-		return true;
-	}
-	else if (message >= WM_XBUTTONDOWN && message <= WM_XBUTTONUP)
-	{
-		// Microsoft's (lack of) documentation for the X buttons is unclear on whether
-		// or not simultaneous pressing of multiple X buttons will ever be merged into
-		// a single message. Winuser.h describes the button field as being filled with
-		// flags, which suggests that it could merge them. My testing
-		// indicates it does not, but I will assume it might in the future.
-		WORD xbuttons = GET_XBUTTON_WPARAM(wParam);
-		event_t ev = { 0 };
-
-		ev.type = (message == WM_XBUTTONDOWN) ? EV_KeyDown : EV_KeyUp;
-
-		// There are only two X buttons defined presently, so I extrapolate from
-		// the current winuser.h values to support up to 8 mouse buttons.
-		for (int i = 0; i < 5; ++i, xbuttons >>= 1)
-		{
-			if (xbuttons & 1)
-			{
-				ev.data1 = KEY_MOUSE4 + i;
-				if (ev.type == EV_KeyDown)
-				{
-					ButtonState |= 1 << (i + 4);
-				}
-				else
-				{
-					ButtonState &= ~(1 << (i + 4));
-				}
-				D_PostEvent(&ev);
-			}
-		}
-		*result = TRUE;
-		return true;
-	}
-	return false;
-}
-
-//==========================================================================
-//
-// FWin32Mouse :: Grab
-//
-// Hides the mouse and locks it inside the window boundaries.
-//
-//==========================================================================
-
-void FWin32Mouse::Grab()
-{
-	RECT rect;
-
-	if (Grabbed)
-	{
-		return;
-	}
-
-	GetCursorPos(&UngrabbedPointerPos);
-	ClipCursor(NULL);		// helps with Win95?
-	GetClientRect(Window, &rect);
-
-	// Reposition the rect so that it only covers the client area.
-	ClientToScreen(Window, (LPPOINT)&rect.left);
-	ClientToScreen(Window, (LPPOINT)&rect.right);
-
-	ClipCursor(&rect);
-	SetCursorState(false);
-	CenterMouse(-1, -1);
-	Grabbed = true;
-}
-
-//==========================================================================
-//
-// FWin32Mouse :: Ungrab
-//
-// Shows the mouse and lets it roam free.
-//
-//==========================================================================
-
-void FWin32Mouse::Ungrab()
-{
-	if (!Grabbed)
-	{
-		return;
-	}
-
-	ClipCursor(NULL);
-	SetCursorPos(UngrabbedPointerPos.x, UngrabbedPointerPos.y);
-	SetCursorState(true);
-	Grabbed = false;
-	ClearButtonState();
-}
-
-//==========================================================================
-//
-// FWin32Mouse :: CenterMouse
-//
-// Moves the mouse to the center of the window, but only if the current
-// position isn't already in the center.
-//
-//==========================================================================
-
-void FWin32Mouse::CenterMouse(int curx, int cury)
-{
-	RECT rect;
-
-	GetWindowRect (Window, &rect);
-
-	int centx = (rect.left + rect.right) >> 1;
-	int centy = (rect.top + rect.bottom) >> 1;
-
-	// Reduce the number of WM_MOUSEMOVE messages that get sent
-	// by only calling SetCursorPos when we really need to.
-	if (centx != curx || centy != cury)
-	{
-		PrevX = centx;
-		PrevY = centy;
-		SetCursorPos (centx, centy);
-	}
-}
-
-static void I_StartupMouse ()
-{
-	mousemode_t new_mousemode;
-
-	if (in_mouse == 1 || (in_mouse == 0 && OSPlatform == os_WinNT4))
-		new_mousemode = win32;
-	else
-		new_mousemode = dinput;
-
-	if (new_mousemode != mousemode)
-	{
-		if (new_mousemode == dinput)
-		{
-			Mouse = new FDInputMouse();
-		}
-		else
-		{
-			Mouse = new FWin32Mouse();
-		}
-		if (!Mouse->GetDevice())
-		{
-			delete Mouse;
-			if (new_mousemode == dinput)
-			{
-				new_mousemode = win32;
-				Mouse = new FWin32Mouse();
-				if (!Mouse->GetDevice())
-				{
-					Mouse = NULL;
-					new_mousemode = none;
-				}
-			}
-		}
-		mousemode = new_mousemode;
-	}
-	HaveFocus = GetFocus() == Window;
+#define RIF(name,ret,args) \
+	My##name = (name##Proto)GetProcAddress(user32, #name);
+#include "rawinput.h"
 }

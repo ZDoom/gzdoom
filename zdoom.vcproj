@@ -1981,6 +1981,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\win32\i_mouse.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\src\win32\i_movie.cpp"
 				>
 			</File>
@@ -1998,6 +2002,10 @@
 			</File>
 			<File
 				RelativePath=".\src\win32\icon2.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\src\win32\rawinput.h"
 				>
 			</File>
 			<File

@@ -5,7 +5,7 @@ if( CMAKE_COMPILER_IS_GNUC )
 endif( CMAKE_COMPILER_IS_GNUC )
 
 add_definitions( -DBZ_NO_STDIO )
-add_library( bzip2
+add_library( bz2
     blocksort.c
     bzlib.c
     compress.c
@@ -13,4 +13,4 @@ add_library( bzip2
     decompress.c
     huffman.c
     randtable.c )
-target_link_libraries( bzip2 )
+target_link_libraries( bz2 )

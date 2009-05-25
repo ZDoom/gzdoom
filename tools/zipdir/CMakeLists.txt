@@ -5,4 +5,4 @@ message(STATUS "${LZMA_INCLUDE_DIR}" )
 include_directories( "${ZLIB_INCLUDE_DIR}" "${BZIP2_INCLUDE_DIR}" "${LZMA_INCLUDE_DIR}" )
 add_executable( zipdir
 	zipdir.c )
-target_link_libraries( zipdir ${ZLIB_LIBRARIES} bzip2 lzma )
+target_link_libraries( zipdir ${ZLIB_LIBRARIES} ${BZIP2_LIBRARIES} lzma )

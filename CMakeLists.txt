@@ -13,6 +13,7 @@ if( CMAKE_COMPILER_IS_GNUCXX )
 	set( PROFILE CACHE 0 BOOL "Enable profiling with gprof for Debug and RelWithDebInfo build types." )
 endif( CMAKE_COMPILER_IS_GNUCXX )
 
+find_package( BZip2 )
 find_package( JPEG )
 find_package( ZLIB )
 
@@ -90,10 +91,18 @@ else( JPEG_FOUND )
 	set( JPEG_LIBRARY jpeg )
 endif( JPEG_FOUND )
 
-set( BZIP2_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/bzip2" )
+if( BZIP2_FOUND )
+	message( STATUS "Using system bzip2 library" )
+else( BZIP2_FOUND )
+	message( STATUS "Using internal bzip2 library" )
+	add_subdirectory( bzip2 )
+	set( BZIP2_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/bzip2" )
+	set( BZIP2_LIBRARIES bz2 )
+	set( BZIP2_LIBRARY bz2 )
+endif( BZIP2_FOUND)
+
 set( LZMA_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lzma/C" )
 
-add_subdirectory( bzip2 )
 add_subdirectory( lzma )
 add_subdirectory( tools )
 add_subdirectory( snes_spc )

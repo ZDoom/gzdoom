@@ -1610,11 +1610,12 @@ void DSBarInfo::DrawString(const char* str, SBarInfoCoordinate x, SBarInfoCoordi
 void DSBarInfo::DrawNumber(int num, int len, SBarInfoCoordinate x, SBarInfoCoordinate y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets, EColorRange translation, int spacing, bool fillzeros, bool drawshadow)
 {
 	FString value;
-	int maxval = (int) ceil(pow(10., len))-1;
+	// 10^9 is a largest we can hold in a 32-bit int.  So if we go any larger we have to toss out the positions limit.
+	int maxval = len <= 9 ? (int) ceil(pow(10., len))-1 : INT_MAX;
 	if(!fillzeros || len == 1)
 		num = clamp(num, -maxval, maxval);
 	else //The community wanted negatives to take the last digit, but we can only do this if there is room
-		num = clamp(num, (int) -(ceil(pow(10., len-1))-1), maxval);
+		num = clamp(num, len <= 9 ? (int) -(ceil(pow(10., len-1))-1) : INT_MIN, maxval);
 	value.Format("%d", num);
 	if(fillzeros)
 	{

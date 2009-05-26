@@ -352,7 +352,7 @@ const char *myasctime ()
 /*																		*/
 /************************************************************************/
 #ifdef _WIN32
-void DoCreatePath(const char * fn)
+void DoCreatePath(const char *fn)
 {
 	char drive[_MAX_DRIVE];
 	char path[PATH_MAX];
@@ -367,17 +367,20 @@ void DoCreatePath(const char * fn)
 	_mkdir(p);
 }
 
-void CreatePath(const char * fn)
+void CreatePath(const char *fn)
 {
-	char name[PATH_MAX];
 	char c = fn[strlen(fn)-1];
 
-	if (c!='\\' && c!='/') 
+	if (c != '\\' && c != '/') 
 	{
-		mysnprintf(name, countof(name), "%s/", fn);
+		FString name(fn);
+		name += '/';
 		DoCreatePath(name);
 	}
-	else DoCreatePath(fn);
+	else
+	{
+		DoCreatePath(fn);
+	}
 }
 #else
 void CreatePath(const char *fn)

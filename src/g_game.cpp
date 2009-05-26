@@ -1777,24 +1777,27 @@ FString G_BuildSaveName (const char *prefix, int slot)
 		{
 			leader = save_dir;
 		}
+#ifdef unix
+		if (leader.IsEmpty())
+		{
+			leader = "~" GAME_DIR;
+		}
+#endif
 	}
 	size_t len = leader.Len();
 	if (leader[0] != '\0' && leader[len-1] != '\\' && leader[len-1] != '/')
 	{
 		slash = "/";
 	}
-	name.Format("%s%s%s", leader.GetChars(), slash, prefix);
+	name << leader << slash;
+	name = NicePath(name);
+	CreatePath(name);
+	name << prefix;
 	if (slot >= 0)
 	{
 		name.AppendFormat("%d.zds", slot);
 	}
-#ifdef unix
-	if (leader[0] == 0)
-	{
-		return GetUserFile (name);
-	}
-#endif
-	return NicePath(name);
+	return name;
 }
 
 CVAR (Int, autosavenum, 0, CVAR_NOSET|CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
@@ -1911,7 +1914,7 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 	insave = true;
 	G_SnapshotLevel ();
 
-	FILE *stdfile = fopen (filename.GetChars(), "wb");
+	FILE *stdfile = fopen (filename, "wb");
 
 	if (stdfile == NULL)
 	{

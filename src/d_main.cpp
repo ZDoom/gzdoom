@@ -783,7 +783,10 @@ void D_ErrorCleanup ()
 	playeringame[0] = 1;
 	players[0].playerstate = PST_LIVE;
 	gameaction = ga_fullconsole;
-	menuactive = MENU_Off;
+	if (gamestate == GS_DEMOSCREEN)
+	{
+		menuactive = MENU_Off;
+	}
 	insave = false;
 }
 

@@ -175,18 +175,9 @@ static void SetCursorState(bool visible)
 {
 	HCURSOR usingCursor = visible ? TheArrowCursor : TheInvisibleCursor;
 	SetClassLongPtr(Window, GCLP_HCURSOR, (LONG_PTR)usingCursor);
-	//if (HaveFocus)
+	if (HaveFocus)
 	{
 		SetCursor(usingCursor);
-		if (visible)
-		{
-			ShowCursor(TRUE);
-		}
-		else
-		{
-			while (ShowCursor(FALSE) >= 0)
-			{ }
-		}
 	}
 }
 
@@ -223,18 +214,33 @@ static bool CaptureMode_InGame()
 
 void I_CheckNativeMouse(bool preferNative)
 {
-	bool wantNative = (GetFocus() != Window) ||
-		((!screen || !screen->IsFullscreen()) && 
-		(!CaptureMode_InGame() || GUICapture || paused || preferNative || !use_mouse || demoplayback));
+	bool windowed = (screen == NULL) || !screen->IsFullscreen();
+	bool want_native;
+
+	if (!windowed)
+	{
+		want_native = false;
+	}
+	else
+	{
+		want_native =
+			(GetForegroundWindow() != Window) ||
+			!CaptureMode_InGame() ||
+			GUICapture ||
+			paused ||
+			preferNative ||
+			!use_mouse ||
+			demoplayback;
+	}
 
 	//Printf ("%d %d %d\n", wantNative, preferNative, NativeMouse);
 
-	if (wantNative != NativeMouse)
+	if (want_native != NativeMouse)
 	{
 		if (Mouse != NULL)
 		{
-			NativeMouse = wantNative;
-			if (wantNative)
+			NativeMouse = want_native;
+			if (want_native)
 			{
 				Mouse->Ungrab();
 			}
@@ -493,6 +499,7 @@ void FRawMouse::ProcessInput()
 //
 //==========================================================================
 
+extern BOOL AppActive;
 void FRawMouse::Grab()
 {
 	if (!Grabbed)
@@ -507,7 +514,8 @@ void FRawMouse::Grab()
 		{
 			GetCursorPos(&UngrabbedPointerPos);
 			Grabbed = true;
-			SetCursorState(false);
+			while (ShowCursor(FALSE) >= 0)
+			{ }
 			// By setting the cursor position, we force the pointer image
 			// to change right away instead of having it delayed until
 			// some time in the future.
@@ -537,7 +545,7 @@ void FRawMouse::Ungrab()
 			Grabbed = false;
 			ClearButtonState();
 		}
-		SetCursorState(true);
+		ShowCursor(TRUE);
 		SetCursorPos(UngrabbedPointerPos.x, UngrabbedPointerPos.y);
 	}
 }
@@ -589,7 +597,7 @@ bool FRawMouse::WndProcHook(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 			}
 			if (raw->data.mouse.usButtonFlags & RI_MOUSE_WHEEL)
 			{
-				WheelMoved(raw->data.mouse.usButtonData);
+				WheelMoved((SHORT)raw->data.mouse.usButtonData);
 			}
 			PostMouseMove(m_noprescale ? raw->data.mouse.lLastX : raw->data.mouse.lLastX<<2,
 				-raw->data.mouse.lLastY);

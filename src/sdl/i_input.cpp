@@ -21,7 +21,8 @@
 static void I_CheckGUICapture ();
 static void I_CheckNativeMouse ();
 
-bool GUICapture;
+static bool GUICapture;
+static bool NativeMouse = true;
 
 extern int paused;
 

@@ -1,4 +1,15 @@
-﻿May 23, 2009
+﻿May 25, 2009
+- I_CheckNativeMouse() now checks the foreground window to determine if the
+  mouse should be grabbed. This fixes the case where you start the game in
+  the background and it grabs the mouse anyway.
+- Changed raw mouse grabbing to call ShowCursor() directly instead of through
+  SetCursorState(), since changing the pointer isn't working with it
+  (probably due to the lack of legacy mouse messages), and the others work
+  fine by setting an invisible cursor.
+- Fixed: Raw mouse input passes wheel movements in an unsigned field, but the
+  value is signed, so it requires a cast to use it.
+
+May 23, 2009
 - SetCursorState() now calls ShowCursor() again, because capturing the mouse
   with RIDEV_NOLEGACY apparently prevents SetCursor() from doing anything.
 - Split mouse code off from i_input.cpp into i_mouse.cpp and added raw mouse

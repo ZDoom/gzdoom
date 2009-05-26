@@ -245,6 +245,14 @@ protected:
 	void EndEffect( );
 };
 
+class APowerDoubleFiringSpeed : public APowerup
+{
+	DECLARE_CLASS( APowerDoubleFiringSpeed, APowerup )
+protected:
+	void InitEffect( );
+	void EndEffect( );
+};
+
 class APowerMorph : public APowerup
 {
 	DECLARE_CLASS( APowerMorph, APowerup )

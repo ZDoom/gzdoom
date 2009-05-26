@@ -772,6 +772,11 @@ void P_MovePsprites (player_t *player)
 				if (psp->tics != -1)	// a -1 tic count never changes
 				{
 					psp->tics--;
+
+					// [BC] Apply double firing speed.
+					if ( psp->tics && ( player->cheats & CF_DOUBLEFIRINGSPEED ))
+						psp->tics--;
+
 					if(!psp->tics)
 					{
 						P_SetPsprite (player, i, psp->state->GetNextState());

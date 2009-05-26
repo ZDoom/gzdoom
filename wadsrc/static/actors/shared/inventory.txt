@@ -294,6 +294,10 @@ ACTOR PowerHighJump : Powerup native
 {
 }
 
+ACTOR PowerDoubleFiringSpeed : Powerup native
+{
+}
+
 ACTOR PowerMorph : Powerup native
 {
 	Powerup.Duration -40

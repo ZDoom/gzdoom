@@ -1,5 +1,5 @@
 ﻿May 25, 2009
-- Specifiying non-existant directories with -savedir or the save_dir cvar now
+- Specifying non-existent directories with -savedir or the save_dir cvar now
   attempts to create them.
 - I_CheckNativeMouse() now checks the foreground window to determine if the
   mouse should be grabbed. This fixes the case where you start the game in

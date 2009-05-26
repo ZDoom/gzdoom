@@ -1707,6 +1707,41 @@ void APowerHighJump::EndEffect( )
 	}
 }
 
+// Double firing speed rune ---------------------------------------------
+
+IMPLEMENT_CLASS(APowerDoubleFiringSpeed)
+
+//===========================================================================
+//
+// APowerDoubleFiringSpeed :: InitEffect
+//
+//===========================================================================
+
+void APowerDoubleFiringSpeed::InitEffect( )
+{
+	if (Owner== NULL || Owner->player == NULL)
+		return;
+
+	// Give the player the power to shoot twice as fast.
+	Owner->player->cheats |= CF_DOUBLEFIRINGSPEED;
+}
+
+//===========================================================================
+//
+// APowerDoubleFiringSpeed :: EndEffect
+//
+//===========================================================================
+
+void APowerDoubleFiringSpeed::EndEffect( )
+{
+	// Nothing to do if there's no owner.
+	if (Owner != NULL && Owner->player != NULL)
+	{
+		// Take away the shooting twice as fast power.
+		Owner->player->cheats &= ~CF_DOUBLEFIRINGSPEED;
+	}
+}
+
 // Morph powerup ------------------------------------------------------
 
 IMPLEMENT_CLASS(APowerMorph)

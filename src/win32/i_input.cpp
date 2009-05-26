@@ -60,18 +60,12 @@
 #endif
 
 // Compensate for w32api's lack
-#ifndef GET_XBUTTON_WPARAM
-#define GET_XBUTTON_WPARAM(wParam) (HIWORD(wParam))
-#endif
 #ifndef WM_WTSSESSION_CHANGE
 #define WM_WTSSESSION_CHANGE 0x02B1
 #define WTS_CONSOLE_CONNECT 1
 #define WTS_CONSOLE_DISCONNECT 2
 #define WTS_SESSION_LOCK 7
 #define WTS_SESSION_UNLOCK 8
-#endif
-#ifndef SetClassLongPtr
-#define SetClassLongPtr SetClassLong
 #endif
 #ifndef PBT_APMSUSPEND
 // w32api does not #define the PBT_ macros in winuser.h like the PSDK does

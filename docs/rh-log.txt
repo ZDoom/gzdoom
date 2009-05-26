@@ -1,4 +1,11 @@
-﻿May 25, 2009
+﻿May 26, 2009
+- Fixed: The Heretic "take weapons" cheat did not remove all the weapons at
+  once. This is because destroying one weapon has a potential to destroy a
+  sister weapon as well. If the sister weapon is the next one in line (as it
+  typically is), it would process that one, not realizing it was no longer
+  part of the inventory, and stop because its Inventory link was NULL.
+
+May 25, 2009
 - Recoverable errors that are caught during the demo loop no longer shut off
   the menu.
 - Specifying non-existent directories with -savedir or the save_dir cvar now

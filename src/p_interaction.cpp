@@ -875,7 +875,7 @@ void P_AutoUseStrifeHealth (player_t *player)
 void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage, FName mod, int flags)
 {
 	unsigned ang;
-	player_t *player;
+	player_t *player = NULL;
 	fixed_t thrust;
 	int temp;
 

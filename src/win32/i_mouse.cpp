@@ -27,6 +27,11 @@
 
 #define DINPUT_BUFFERSIZE	32
 
+// Compensate for w32api's lack
+#ifndef GET_XBUTTON_WPARAM
+#define GET_XBUTTON_WPARAM(wParam) (HIWORD(wParam))
+#endif
+
 // TYPES -------------------------------------------------------------------
 
 class FRawMouse : public FMouse

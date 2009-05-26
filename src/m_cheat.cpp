@@ -391,20 +391,24 @@ void cht_DoCheat (player_t *player, int cheat)
 		{
 			return;
 		}
-		// Take away all weapons that are either non-wimpy or use ammo.
-		for (item = player->mo->Inventory; item != NULL; )
 		{
-			AInventory *next = item->Inventory;
-			if (item->IsKindOf (RUNTIME_CLASS(AWeapon)))
+			// Take away all weapons that are either non-wimpy or use ammo.
+			AInventory **invp = &player->mo->Inventory, **lastinvp;
+			for (item = *invp; item != NULL; item = *invp)
 			{
-				AWeapon *weap = static_cast<AWeapon *> (item);
-				if (!(weap->WeaponFlags & WIF_WIMPY_WEAPON) ||
-					weap->AmmoType1 != NULL)
+				lastinvp = invp;
+				invp = &(*invp)->Inventory;
+				if (item->IsKindOf (RUNTIME_CLASS(AWeapon)))
 				{
-					item->Destroy ();
+					AWeapon *weap = static_cast<AWeapon *> (item);
+					if (!(weap->WeaponFlags & WIF_WIMPY_WEAPON) ||
+						weap->AmmoType1 != NULL)
+					{
+						item->Destroy ();
+						invp = lastinvp;
+					}
 				}
 			}
-			item = next;
 		}
 		msg = GStrings("TXT_CHEATIDKFA");
 		break;

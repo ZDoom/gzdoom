@@ -1,4 +1,5 @@
 ﻿May 27, 2009
+- Removed HaveFocus variable in preference of using GetForegroundWindow().
 - Added Raw Input keyboard handling.
 
 May 26, 2009

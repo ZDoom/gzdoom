@@ -113,7 +113,6 @@ extern HWND Window;
 extern LPDIRECTINPUT8 g_pdi;
 extern LPDIRECTINPUT g_pdi3;
 extern bool GUICapture;
-extern bool HaveFocus;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -180,7 +179,7 @@ static void SetCursorState(bool visible)
 {
 	HCURSOR usingCursor = visible ? TheArrowCursor : TheInvisibleCursor;
 	SetClassLongPtr(Window, GCLP_HCURSOR, (LONG_PTR)usingCursor);
-	if (HaveFocus)
+	if (GetForegroundWindow() == Window)
 	{
 		SetCursor(usingCursor);
 	}
@@ -1177,6 +1176,5 @@ void I_StartupMouse ()
 		MouseMode = new_mousemode;
 		NativeMouse = true;
 	}
-	HaveFocus = (GetFocus() == Window);
 }
 

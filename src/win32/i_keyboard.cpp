@@ -63,7 +63,6 @@ extern HWND Window;
 extern LPDIRECTINPUT8 g_pdi;
 extern LPDIRECTINPUT g_pdi3;
 extern bool GUICapture;
-extern bool HaveFocus;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 

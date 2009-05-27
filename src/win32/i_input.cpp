@@ -145,7 +145,6 @@ EXTERN_CVAR (Bool, lookstrafe)
 
 
 extern BOOL paused;
-bool HaveFocus;
 static bool noidle = false;
 
 LPDIRECTINPUT8			g_pdi;
@@ -376,12 +375,10 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		return 0;
 
 	case WM_KILLFOCUS:
-		HaveFocus = false;
 		I_CheckNativeMouse (true);	// Make sure mouse gets released right away
 		break;
 
 	case WM_SETFOCUS:
-		HaveFocus = true;
 		I_CheckNativeMouse (false);
 		break;
 

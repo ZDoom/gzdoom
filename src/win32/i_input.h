@@ -80,6 +80,7 @@ protected:
 	void PostButtonEvent(int button, bool down);
 	void ClearButtonState();
 
+	int WheelMove;
 	int LastX, LastY;	// for m_filter
 	WORD ButtonState;	// bit mask of current button states (1=down, 0=up)
 };

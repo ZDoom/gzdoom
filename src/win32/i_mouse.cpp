@@ -266,6 +266,7 @@ FMouse::FMouse()
 {
 	LastX = LastY = 0;
 	ButtonState = 0;
+	WheelMove = 0;
 }
 
 //==========================================================================
@@ -316,49 +317,42 @@ void FMouse::WheelMoved(int wheelmove)
 	event_t ev = { 0 };
 	int dir;
 
-	if (GUICapture)
+	WheelMove += wheelmove;
+
+	if (WheelMove < 0)
 	{
-		ev.type = EV_GUI_Event;
-		if (wheelmove < 0)
-		{
-			dir = WHEEL_DELTA;
-			ev.subtype = EV_GUI_WheelDown;
-		}
-		else
-		{
-			dir = -WHEEL_DELTA;
-			ev.subtype = EV_GUI_WheelUp;
-		}
-		/* FIXME
-		ev.data3 = ((KeyState[VK_SHIFT]&128) ? GKM_SHIFT : 0) |
-				   ((KeyState[VK_CONTROL]&128) ? GKM_CTRL : 0) |
-				   ((KeyState[VK_MENU]&128) ? GKM_ALT : 0);
-		*/
-		while (abs(wheelmove) >= WHEEL_DELTA)
-		{
-			D_PostEvent(&ev);
-			wheelmove += dir;
-		}
+		dir = WHEEL_DELTA;
+		ev.data1 = KEY_MWHEELDOWN;
 	}
 	else
 	{
-		if (wheelmove < 0)
-		{
-			dir = WHEEL_DELTA;
-			ev.data1 = KEY_MWHEELDOWN;
-		}
-		else
-		{
-			dir = -WHEEL_DELTA;
-			ev.data1 = KEY_MWHEELUP;
-		}
-		while (abs(wheelmove) >= WHEEL_DELTA)
+		dir = -WHEEL_DELTA;
+		ev.data1 = KEY_MWHEELUP;
+	}
+
+	if (!GUICapture)
+	{
+		while (abs(WheelMove) >= WHEEL_DELTA)
 		{
 			ev.type = EV_KeyDown;
 			D_PostEvent(&ev);
 			ev.type = EV_KeyUp;
 			D_PostEvent(&ev);
-			wheelmove += dir;
+			WheelMove += dir;
+		}
+	}
+	else
+	{
+		ev.type = EV_GUI_Event;
+		ev.subtype = (WheelMove < 0) ? EV_GUI_WheelDown : EV_GUI_WheelUp;
+		if (GetKeyState(VK_SHIFT) & 0x8000)		ev.data3 |= GKM_SHIFT;
+		if (GetKeyState(VK_CONTROL) & 0x8000)	ev.data3 |= GKM_CTRL;
+		if (GetKeyState(VK_MENU) & 0x8000)		ev.data3 |= GKM_ALT;
+		ev.data1 = 0;
+		while (abs(WheelMove) >= WHEEL_DELTA)
+		{
+			D_PostEvent(&ev);
+			WheelMove += dir;
 		}
 	}
 }
@@ -420,6 +414,8 @@ void FMouse::ClearButtonState()
 		}
 		ButtonState = 0;
 	}
+	// Reset mouse wheel accumulation to 0.
+	WheelMove = 0;
 }
 
 //==========================================================================
@@ -967,7 +963,7 @@ bool FWin32Mouse::WndProcHook(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 	}
 	else if (message == WM_MOUSEWHEEL)
 	{
-		WheelMoved(HIWORD(wParam));
+		WheelMoved((SHORT)HIWORD(wParam));
 		return true;
 	}
 	else if (message >= WM_LBUTTONDOWN && message <= WM_MBUTTONUP)

@@ -143,6 +143,7 @@ extern menu_t JoystickMenu;
 EXTERN_CVAR (String, language)
 EXTERN_CVAR (Bool, lookstrafe)
 
+static int WheelDelta;
 
 extern BOOL paused;
 static bool noidle = false;
@@ -414,6 +415,32 @@ bool GUIWndProcHook(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESU
 			ev.subtype = message - WM_MBUTTONDOWN + EV_GUI_MButtonDown;
 		}
 		D_PostEvent(&ev);
+		return true;
+
+	// Note: If the mouse is grabbed, it sends the mouse wheel events itself.
+	case WM_MOUSEWHEEL:
+		if (wParam & MK_SHIFT)				ev.data3 |= GKM_SHIFT;
+		if (wParam & MK_CONTROL)			ev.data3 |= GKM_CTRL;
+		if (GetKeyState(VK_MENU) & 0x8000)	ev.data3 |= GKM_ALT;
+		WheelDelta += (SHORT)HIWORD(wParam);
+		if (WheelDelta < 0)
+		{
+			ev.subtype = EV_GUI_WheelDown;
+			while (WheelDelta <= -WHEEL_DELTA)
+			{
+				D_PostEvent(&ev);
+				WheelDelta += WHEEL_DELTA;
+			}
+		}
+		else
+		{
+			ev.subtype = EV_GUI_WheelUp;
+			while (WheelDelta >= WHEEL_DELTA)
+			{
+				D_PostEvent(&ev);
+				WheelDelta -= WHEEL_DELTA;
+			}
+		}
 		return true;
 	}
 	return false;

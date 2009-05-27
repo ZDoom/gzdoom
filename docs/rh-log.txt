@@ -1,4 +1,8 @@
 ﻿May 27, 2009
+- Fixed: The mouse wheel generated no events in GUI mode if you weren't
+  fullscreen. (e.g. You could no longer scroll the console with the mouse
+  buffer.)
+- Fixed: Wheeling down was seen as wheeling up with the Win32 mouse.
 - EV_GUI_Key(Down|Up|Repeat) events no longer provide shifted key codes
   in data2. This was just unnecessary overhead that wasn't really needed
   anywhere.

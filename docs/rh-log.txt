@@ -1,4 +1,9 @@
 ﻿May 27, 2009
+- EV_GUI_Key(Down|Up|Repeat) events no longer provide shifted key codes
+  in data2. This was just unnecessary overhead that wasn't really needed
+  anywhere.
+- Moved GUI-mode input into a separate function to make the code easier to
+  read.
 - Removed HaveFocus variable in preference of using GetForegroundWindow().
 - Added Raw Input keyboard handling.
 

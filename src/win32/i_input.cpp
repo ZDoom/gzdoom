@@ -295,8 +295,6 @@ static FBaseCVar * const JoyConfigVars[] =
 	&joy_upspeed
 };
 
-static BYTE KeyState[256];
-
 extern int chatmodeon;
 
 static void I_CheckGUICapture ()
@@ -322,6 +320,105 @@ static void I_CheckGUICapture ()
 	}
 }
 
+bool GUIWndProcHook(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT *result)
+{
+	event_t ev = { EV_GUI_Event };
+
+	*result = 0;
+
+	switch (message)
+	{
+	case WM_KEYDOWN:
+	case WM_SYSKEYDOWN:
+	case WM_KEYUP:
+	case WM_SYSKEYUP:
+		if (message == WM_KEYUP || message == WM_SYSKEYUP)
+		{
+			ev.subtype = EV_GUI_KeyUp;
+		}
+		else
+		{
+			ev.subtype = (lParam & 0x40000000) ? EV_GUI_KeyRepeat : EV_GUI_KeyDown;
+		}
+		if (GetKeyState(VK_SHIFT) & 0x8000)		ev.data3 |= GKM_SHIFT;
+		if (GetKeyState(VK_CONTROL) & 0x8000)	ev.data3 |= GKM_CTRL;
+		if (GetKeyState(VK_MENU) & 0x8000)		ev.data3 |= GKM_ALT;
+		if ( (ev.data1 = MapVirtualKey(wParam, 2)) )
+		{
+			D_PostEvent(&ev);
+		}
+		else
+		{
+			switch (wParam)
+			{
+			case VK_PRIOR:	ev.data1 = GK_PGUP;		break;
+			case VK_NEXT:	ev.data1 = GK_PGDN;		break;
+			case VK_END:	ev.data1 = GK_END;		break;
+			case VK_HOME:	ev.data1 = GK_HOME;		break;
+			case VK_LEFT:	ev.data1 = GK_LEFT;		break;
+			case VK_RIGHT:	ev.data1 = GK_RIGHT;	break;
+			case VK_UP:		ev.data1 = GK_UP;		break;
+			case VK_DOWN:	ev.data1 = GK_DOWN;		break;
+			case VK_DELETE:	ev.data1 = GK_DEL;		break;
+			case VK_ESCAPE:	ev.data1 = GK_ESCAPE;	break;
+			case VK_F1:		ev.data1 = GK_F1;		break;
+			case VK_F2:		ev.data1 = GK_F2;		break;
+			case VK_F3:		ev.data1 = GK_F3;		break;
+			case VK_F4:		ev.data1 = GK_F4;		break;
+			case VK_F5:		ev.data1 = GK_F5;		break;
+			case VK_F6:		ev.data1 = GK_F6;		break;
+			case VK_F7:		ev.data1 = GK_F7;		break;
+			case VK_F8:		ev.data1 = GK_F8;		break;
+			case VK_F9:		ev.data1 = GK_F9;		break;
+			case VK_F10:	ev.data1 = GK_F10;		break;
+			case VK_F11:	ev.data1 = GK_F11;		break;
+			case VK_F12:	ev.data1 = GK_F12;		break;
+			}
+			if (ev.data1 != 0)
+			{
+				D_PostEvent(&ev);
+			}
+		}
+		// Return false for key downs so that we can handle special hotkeys
+		// in the main WndProc.
+		return ev.subtype == EV_GUI_KeyUp;
+
+	case WM_CHAR:
+	case WM_SYSCHAR:
+		if (wParam >= ' ')		// only send displayable characters
+		{
+			ev.subtype = EV_GUI_Char;
+			ev.data1 = wParam;
+			ev.data2 = (message == WM_SYSCHAR);
+			D_PostEvent(&ev);
+			return true;
+		}
+		break;
+
+	case WM_LBUTTONDOWN:
+	case WM_LBUTTONUP:
+	case WM_RBUTTONDOWN:
+	case WM_RBUTTONUP:
+	case WM_MBUTTONDOWN:
+	case WM_MBUTTONUP:
+		if (message >= WM_LBUTTONDOWN && message <= WM_LBUTTONDBLCLK)
+		{
+			ev.subtype = message - WM_LBUTTONDOWN + EV_GUI_LButtonDown;
+		}
+		else if (message >= WM_RBUTTONDOWN && message <= WM_RBUTTONDBLCLK)
+		{
+			ev.subtype = message - WM_RBUTTONDOWN + EV_GUI_RButtonDown;
+		}
+		else if (message >= WM_MBUTTONDOWN && message <= WM_MBUTTONDBLCLK)
+		{
+			ev.subtype = message - WM_MBUTTONDOWN + EV_GUI_MButtonDown;
+		}
+		D_PostEvent(&ev);
+		return true;
+	}
+	return false;
+}
+
 bool CallHook(FInputDevice *device, HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT *result)
 {
 	if (device == NULL)
@@ -344,6 +441,11 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 		return result;
 	}
+	if (GUICapture && GUIWndProcHook(hWnd, message, wParam, lParam, &result))
+	{
+		return result;
+	}
+
 	event_t event;
 
 	memset (&event, 0, sizeof(event));
@@ -386,131 +488,28 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		InvalidateRect (Window, NULL, FALSE);
 		break;
 
-	// Being forced to separate my keyboard input handler into
-	// two pieces like this really stinks. (IMHO)
 	case WM_KEYDOWN:
 		// When the EAX editor is open, pressing Ctrl+Tab will switch to it
 		if (EAXEditWindow != 0 && wParam == VK_TAB && !(lParam & 0x40000000) &&
 			(GetKeyState (VK_CONTROL) & 0x8000))
 		{
 			SetForegroundWindow (EAXEditWindow);
-			return 0;
-		}
-		// Intentional fall-through
-	case WM_KEYUP:
-		GetKeyboardState (KeyState);
-		if (GUICapture)
-		{
-			event.type = EV_GUI_Event;
-			if (message == WM_KEYUP)
-			{
-				event.subtype = EV_GUI_KeyUp;
-			}
-			else
-			{
-				event.subtype = (lParam & 0x40000000) ? EV_GUI_KeyRepeat : EV_GUI_KeyDown;
-			}
-			event.data3 = ((KeyState[VK_SHIFT]&128) ? GKM_SHIFT : 0) |
-						  ((KeyState[VK_CONTROL]&128) ? GKM_CTRL : 0) |
-						  ((KeyState[VK_MENU]&128) ? GKM_ALT : 0);
-			if ( (event.data1 = MapVirtualKey (wParam, 2)) )
-			{
-				ToAscii (wParam, (lParam >> 16) & 255, KeyState, (LPWORD)&event.data2, 0);
-				D_PostEvent (&event);
-			}
-			else
-			{
-				switch (wParam)
-				{
-				case VK_PRIOR:	event.data1 = GK_PGUP;		break;
-				case VK_NEXT:	event.data1 = GK_PGDN;		break;
-				case VK_END:	event.data1 = GK_END;		break;
-				case VK_HOME:	event.data1 = GK_HOME;		break;
-				case VK_LEFT:	event.data1 = GK_LEFT;		break;
-				case VK_RIGHT:	event.data1 = GK_RIGHT;		break;
-				case VK_UP:		event.data1 = GK_UP;		break;
-				case VK_DOWN:	event.data1 = GK_DOWN;		break;
-				case VK_DELETE:	event.data1 = GK_DEL;		break;
-				case VK_ESCAPE:	event.data1 = GK_ESCAPE;	break;
-				case VK_F1:		event.data1 = GK_F1;		break;
-				case VK_F2:		event.data1 = GK_F2;		break;
-				case VK_F3:		event.data1 = GK_F3;		break;
-				case VK_F4:		event.data1 = GK_F4;		break;
-				case VK_F5:		event.data1 = GK_F5;		break;
-				case VK_F6:		event.data1 = GK_F6;		break;
-				case VK_F7:		event.data1 = GK_F7;		break;
-				case VK_F8:		event.data1 = GK_F8;		break;
-				case VK_F9:		event.data1 = GK_F9;		break;
-				case VK_F10:	event.data1 = GK_F10;		break;
-				case VK_F11:	event.data1 = GK_F11;		break;
-				case VK_F12:	event.data1 = GK_F12;		break;
-				}
-				if (event.data1 != 0)
-				{
-					event.data2 = event.data1;
-					D_PostEvent (&event);
-				}
-			}
 		}
 		break;
 
-	case WM_CHAR:
-		if (GUICapture && wParam >= ' ')	// only send displayable characters
-		{
-			event.type = EV_GUI_Event;
-			event.subtype = EV_GUI_Char;
-			event.data1 = wParam;
-			D_PostEvent (&event);
-		}
-		break;
-
-	case WM_SYSCHAR:
-		if (GUICapture && wParam >= '0' && wParam <= '9')	// make chat macros work
-		{
-			event.type = EV_GUI_Event;
-			event.subtype = EV_GUI_Char;
-			event.data1 = wParam;
-			event.data2 = 1;
-			D_PostEvent (&event);
-		}
-		if (wParam == '\r' && k_allowfullscreentoggle)
+	case WM_SYSKEYDOWN:
+		// Pressing Alt+Enter can toggle between fullscreen and windowed.
+		if (wParam == VK_RETURN && k_allowfullscreentoggle && !(lParam & 0x40000000))
 		{
 			ToggleFullscreen = !ToggleFullscreen;
 		}
 		break;
 
 	case WM_SYSCOMMAND:
+		// Prevent activation of the window menu with Alt+Space
+		if ((wParam & 0xFFF0) != SC_KEYMENU)
 		{
-			WPARAM cmdType = wParam & 0xfff0;
-
-			// Prevent activation of the window menu with Alt-Space
-			if (cmdType != SC_KEYMENU)
-				return DefWindowProc (hWnd, message, wParam, lParam);
-		}
-		break;
-
-	case WM_LBUTTONDOWN:
-	case WM_LBUTTONUP:
-	case WM_RBUTTONDOWN:
-	case WM_RBUTTONUP:
-	case WM_MBUTTONDOWN:
-	case WM_MBUTTONUP:
-		if (GUICapture)
-		{
-			event.type = EV_GUI_Event;
-			if (message >= WM_LBUTTONDOWN && message <= WM_LBUTTONDBLCLK)
-			{
-				event.subtype = message - WM_LBUTTONDOWN + EV_GUI_LButtonDown;
-			}
-			else if (message >= WM_RBUTTONDOWN && message <= WM_RBUTTONDBLCLK)
-			{
-				event.subtype = message - WM_RBUTTONDOWN + EV_GUI_RButtonDown;
-			}
-			else if (message >= WM_MBUTTONDOWN && message <= WM_MBUTTONDBLCLK)
-			{
-				event.subtype = message - WM_MBUTTONDOWN + EV_GUI_MButtonDown;
-			}
-			D_PostEvent (&event);
+			return DefWindowProc (hWnd, message, wParam, lParam);
 		}
 		break;
 

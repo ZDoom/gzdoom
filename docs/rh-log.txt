@@ -1,4 +1,13 @@
 ﻿May 26, 2009
+- Split DirectInput keyboard handling into a separate file and class. I also
+  switched it to buffered input, and the pause key seems to be properly
+  cooked, so I don't need to look for it with WM_KEYDOWN/UP. Tab doesn't
+  need to be special-cased either, because buffered input never passes on
+  the Tab key when you press Alt+Tab. I have no idea why I special-cased
+  Num Lock, but it seems to be working fine. By setting the exclusive mode
+  to background, I can also avoid special code for releasing all keys when
+  the window loses focus, because I'll still receive those events while the
+  window is in the background.
 - Fixed: The Heretic "take weapons" cheat did not remove all the weapons at
   once. This is because destroying one weapon has a potential to destroy a
   sister weapon as well. If the sister weapon is the next one in line (as it

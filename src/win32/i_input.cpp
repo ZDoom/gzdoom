@@ -124,12 +124,11 @@ extern bool SpawnEAXWindow;
 
 static HMODULE DInputDLL;
 
-static void KeyRead ();
-static BOOL I_StartupKeyboard ();
 static HRESULT InitJoystick ();
 
 bool GUICapture;
 extern FMouse *Mouse;
+extern FInputDevice *Keyboard;
 
 bool VidResizing;
 
@@ -294,8 +293,6 @@ CVAR (Float, joy_forwardspeed,	-1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Float, joy_sidespeed,		 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Float, joy_upspeed,		-1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
-// set this to false to make keypad-enter a usable separate key!
-CVAR (Bool, k_mergekeys, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool, k_allowfullscreentoggle, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 static FBaseCVar * const JoyConfigVars[] =
@@ -307,31 +304,9 @@ static FBaseCVar * const JoyConfigVars[] =
 };
 
 static BYTE KeyState[256];
-static BYTE DIKState[2][NUM_KEYS];
-static int KeysReadCount;
+/*static BYTE DIKState[2][NUM_KEYS];
 static int ActiveDIKState;
 
-// Convert DIK_* code to ASCII using Qwerty keymap
-static const BYTE Convert [256] =
-{
-  //  0    1    2    3    4    5    6    7    8    9    A    B    C    D    E    F
-	  0,  27, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=',   8,   9, // 0
-	'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']',  13,   0, 'a', 's', // 1
-	'd', 'f', 'g', 'h', 'j', 'k', 'l', ';',  39, '`',   0,'\\', 'z', 'x', 'c', 'v', // 2
-	'b', 'n', 'm', ',', '.', '/',   0, '*',   0, ' ',   0,   0,   0,   0,   0,   0, // 3
-	  0,   0,   0,   0,   0,   0,   0, '7', '8', '9', '-', '4', '5', '6', '+', '1', // 4
-	'2', '3', '0', '.',   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0, // 5
-	  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0, // 6
-	  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0, // 7
-
-	  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0, '=',   0,   0, // 8
-	  0, '@', ':', '_',   0,   0,   0,   0,   0,   0,   0,   0,  13,   0,   0,   0, // 9
-	  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0, // A
-	  0,   0,   0, ',',   0, '/',   0,   0,   0,   0,   0,   0,   0,   0,   0,   0, // B
-	  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0, // C
-	  0,   0,   0,   0,   0,   0,   0,   0
-
-};
 
 static void FlushDIKState (int low=0, int high=NUM_KEYS-1)
 {
@@ -352,7 +327,7 @@ static void FlushDIKState (int low=0, int high=NUM_KEYS-1)
 		}
 	}
 }
-
+*/
 extern int chatmodeon;
 
 static void I_CheckGUICapture ()
@@ -373,21 +348,32 @@ static void I_CheckGUICapture ()
 		GUICapture = wantCapt;
 		if (wantCapt)
 		{
-			FlushDIKState ();
+//			FlushDIKState ();
 		}
 	}
 }
 
+bool CallHook(FInputDevice *device, HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT *result)
+{
+	if (device == NULL)
+	{
+		return false;
+	}
+	*result = 0;
+	return device->WndProcHook(hWnd, message, wParam, lParam, result);
+}
+
 LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	if (Mouse != NULL)
-	{
-		LRESULT result = 0;
+	LRESULT result;
 
-		if (Mouse->WndProcHook(hWnd, message, wParam, lParam, &result))
-		{
-			return result;
-		}
+	if (CallHook(Keyboard, hWnd, message, wParam, lParam, &result))
+	{
+		return result;
+	}
+	if (CallHook(Mouse, hWnd, message, wParam, lParam, &result))
+	{
+		return result;
 	}
 	event_t event;
 
@@ -424,7 +410,7 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_KILLFOCUS:
 		if (g_pKey) g_pKey->Unacquire ();
 		
-		FlushDIKState ();
+//		FlushDIKState ();
 		HaveFocus = false;
 		I_CheckNativeMouse (true);	// Make sure mouse gets released right away
 		break;
@@ -510,6 +496,7 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		}
 		else
 		{
+#if 0
 			if (message == WM_KEYUP)
 			{
 				event.type = EV_KeyUp;
@@ -544,6 +531,7 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				DIKState[ActiveDIKState][event.data1] = (event.type == EV_KeyDown);
 				D_PostEvent (&event);
 			}
+#endif
 		}
 		break;
 
@@ -1248,11 +1236,9 @@ bool I_InitInput (void *hwnd)
 // Free all input resources
 void I_ShutdownInput ()
 {
-	if (g_pKey)
+	if (Keyboard != NULL)
 	{
-		g_pKey->Unacquire ();
-		g_pKey->Release ();
-		g_pKey = NULL;
+		delete Keyboard;
 	}
 	if (Mouse != NULL)
 	{
@@ -1281,120 +1267,6 @@ void I_ShutdownInput ()
 	}
 }
 
-// Initialize the keyboard
-static BOOL I_StartupKeyboard (void)
-{
-	HRESULT hr;
-
-	// Obtain an interface to the system key device.
-	if (g_pdi3)
-	{
-		hr = g_pdi3->CreateDevice (GUID_SysKeyboard, (LPDIRECTINPUTDEVICE*)&g_pKey, NULL);
-	}
-	else
-	{
-		hr = g_pdi->CreateDevice (GUID_SysKeyboard, &g_pKey, NULL);
-	}
-
-	if (FAILED(hr))
-	{
-		I_FatalError ("Could not create keyboard device");
-	}
-
-	// Set the data format to "keyboard format".
-	hr = g_pKey->SetDataFormat (&c_dfDIKeyboard);
-
-	if (FAILED(hr))
-	{
-		I_FatalError ("Could not set keyboard data format");
-	}
-
-	// Set the cooperative level.
-	hr = g_pKey->SetCooperativeLevel (Window, DISCL_FOREGROUND|DISCL_NONEXCLUSIVE);
-
-	if (FAILED(hr))
-	{
-		I_FatalError("Could not set keyboard cooperative level");
-	}
-
-	g_pKey->Acquire ();
-	return TRUE;
-}
-
-static void KeyRead ()
-{
-	HRESULT hr;
-	event_t event;
-	BYTE *fromState, *toState;
-	int i;
-
-	if (g_pKey == NULL)
-	{
-		return;
-	}
-
-	memset (&event, 0, sizeof(event));
-	fromState = DIKState[ActiveDIKState];
-	toState = DIKState[ActiveDIKState ^ 1];
-
-	hr = g_pKey->GetDeviceState (256, toState);
-	if (hr == DIERR_INPUTLOST || hr == DIERR_NOTACQUIRED)
-	{
-		hr = g_pKey->Acquire ();
-		if (hr != DI_OK)
-		{
-			return;
-		}
-		hr = g_pKey->GetDeviceState (256, toState);
-	}
-	if (hr != DI_OK)
-	{
-		return;
-	}
-
-	// Successfully got the buffer
-	KeysReadCount++;
-	ActiveDIKState ^= 1;
-
-	// Copy key states not handled here from the old to the new buffer
-	memcpy (toState + 256, fromState + 256, NUM_KEYS - 256);
-	toState[DIK_TAB] = fromState[DIK_TAB];
-	toState[DIK_NUMLOCK] = fromState[DIK_NUMLOCK];
-
-	if (k_mergekeys)
-	{
-		// "Merge" multiple keys that are considered to be the same.
-		// Also clear out the alternate versions after merging.
-		toState[DIK_RETURN]		|= toState[DIK_NUMPADENTER];
-		toState[DIK_LMENU]		|= toState[DIK_RMENU];
-		toState[DIK_LCONTROL]	|= toState[DIK_RCONTROL];
-		toState[DIK_LSHIFT]		|= toState[DIK_RSHIFT];
-
-		toState[DIK_NUMPADENTER] = 0;
-		toState[DIK_RMENU]		 = 0;
-		toState[DIK_RCONTROL]	 = 0;
-		toState[DIK_RSHIFT]		 = 0;
-	}
-
-	// Now generate events for any keys that differ between the states
-	if (!GUICapture)
-	{
-		for (i = 1; i < 256; i++)
-		{
-			if (toState[i] != fromState[i])
-			{
-				event.type = toState[i] ? EV_KeyDown : EV_KeyUp;
-				event.data1 = i;
-				event.data2 = Convert[i];
-				event.data3 = (toState[DIK_LSHIFT] ? GKM_SHIFT : 0) |
-							  (toState[DIK_LCONTROL] ? GKM_CTRL : 0) |
-							  (toState[DIK_LMENU] ? GKM_ALT : 0);
-				D_PostEvent (&event);
-			}
-		}
-	}
-}
-
 void I_GetEvent ()
 {
 	MSG mess;
@@ -1414,8 +1286,10 @@ void I_GetEvent ()
 		}
 	}
 
-	KeyRead ();
-
+	if (Keyboard != NULL)
+	{
+		Keyboard->ProcessInput();
+	}
 	if (Mouse != NULL)
 	{
 		Mouse->ProcessInput();

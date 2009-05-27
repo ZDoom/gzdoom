@@ -1977,6 +1977,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\win32\i_keyboard.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\src\win32\i_main.cpp"
 				>
 			</File>

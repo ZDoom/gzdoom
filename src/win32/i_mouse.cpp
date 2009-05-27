@@ -762,7 +762,6 @@ void FDInputMouse::ProcessInput()
 	DIDEVICEOBJECTDATA od;
 	DWORD dwElements;
 	HRESULT hr;
-	int count = 0;
 	int dx, dy;
 
 	dx = 0;
@@ -786,8 +785,6 @@ void FDInputMouse::ProcessInput()
 		/* Unable to read data or no data available */
 		if (FAILED(hr) || !dwElements)
 			break;
-
-		count++;
 
 		/* Look at the element to see what happened */
 		// GCC does not like putting the DIMOFS_ macros in case statements,

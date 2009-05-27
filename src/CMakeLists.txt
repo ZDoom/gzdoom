@@ -398,6 +398,7 @@ if( WIN32 )
 		win32/i_cd.cpp
 		win32/i_crash.cpp
 		win32/i_input.cpp
+		win32/i_keyboard.cpp
 		win32/i_mouse.cpp
 		win32/i_main.cpp
 		win32/i_movie.cpp

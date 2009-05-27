@@ -86,6 +86,7 @@ protected:
 
 void I_StartupMouse();
 void I_CheckNativeMouse(bool prefer_native);
+void I_StartupKeyboard();
 
 // USB HID usage page numbers
 #define HID_GENERIC_DESKTOP_PAGE			0x01

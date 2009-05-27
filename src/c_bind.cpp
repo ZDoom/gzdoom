@@ -191,14 +191,14 @@ const char *KeyNames[NUM_KEYS] =
 	NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		"voldown",	NULL,		//A8
 	"volup",	NULL,		"webhome",	"kp,",		NULL,		"kp/",		NULL,		"sysrq",	//B0
 	"ralt",		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		//B8
-	NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		"home",		//C0
+	NULL,		NULL,		NULL,		NULL,		NULL,		"pause",	NULL,		"home",		//C0
 	"uparrow",	"pgup",		NULL,		"leftarrow",NULL,		"rightarrow",NULL,		"end",		//C8
 	"downarrow","pgdn",		"ins",		"del",		NULL,		NULL,		NULL,		NULL,		//D0
 	NULL,		NULL,		NULL,		"lwin",		"rwin",		"apps",		"power",	"sleep",	//D8
 	NULL,		NULL,		NULL,		"wake",		NULL,		"search",	"favorites","refresh",	//E0
 	"webstop",	"webforward","webback",	"mycomputer","mail",	"mediaselect",NULL,		NULL,		//E8
 	NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		//F0
-	NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		"pause",	//F8
+	NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		//F8
 
 	// non-keyboard buttons that can be bound
 	"mouse1",	"mouse2",	"mouse3",	"mouse4",		// 8 mouse buttons

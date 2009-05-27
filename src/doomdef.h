@@ -104,6 +104,7 @@ enum ESkillLevels
 // DOOM keyboard definition. Everything below 0x100 matches
 // a DirectInput key code.
 //
+#define KEY_PAUSE				0xc5	// DIK_PAUSE
 #define KEY_RIGHTARROW			0xcd	// DIK_RIGHT
 #define KEY_LEFTARROW			0xcb	// DIK_LEFT
 #define KEY_UPARROW 			0xc8	// DIK_UP
@@ -126,7 +127,6 @@ enum ESkillLevels
 #define KEY_F12 				0x58	// DIK_F12
 
 #define KEY_BACKSPACE			0x0e	// DIK_BACK
-#define KEY_PAUSE				0xff
 
 #define KEY_EQUALS				0x0d	// DIK_EQUALS
 #define KEY_MINUS				0x0c	// DIK_MINUS

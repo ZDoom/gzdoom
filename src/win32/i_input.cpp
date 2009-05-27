@@ -360,8 +360,6 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_HOTKEY:
 		break;
 
-	case WM_INPUT:
-
 	case WM_PAINT:
 		if (screen != NULL && 0)
 		{

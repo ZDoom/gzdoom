@@ -1,4 +1,7 @@
-﻿May 26, 2009
+﻿May 27, 2009
+- Added Raw Input keyboard handling.
+
+May 26, 2009
 - Split DirectInput keyboard handling into a separate file and class. I also
   switched it to buffered input, and the pause key seems to be properly
   cooked, so I don't need to look for it with WM_KEYDOWN/UP. Tab doesn't

@@ -128,7 +128,7 @@ static HRESULT InitJoystick ();
 
 bool GUICapture;
 extern FMouse *Mouse;
-extern FInputDevice *Keyboard;
+extern FKeyboard *Keyboard;
 
 bool VidResizing;
 
@@ -152,13 +152,6 @@ LPDIRECTINPUT8			g_pdi;
 LPDIRECTINPUT			g_pdi3;
 
 static LPDIRECTINPUTDEVICE8		g_pJoy;
-
-// These can also be earlier IDirectInputDevice interfaces.
-// Since IDirectInputDevice8 just added new methods to it
-// without rearranging the old ones, I just maintain one
-// pointer for each device instead of two.
-
-static LPDIRECTINPUTDEVICE8		g_pKey;
 
 TArray<GUIDName> JoystickNames;
 
@@ -304,30 +297,7 @@ static FBaseCVar * const JoyConfigVars[] =
 };
 
 static BYTE KeyState[256];
-/*static BYTE DIKState[2][NUM_KEYS];
-static int ActiveDIKState;
 
-
-static void FlushDIKState (int low=0, int high=NUM_KEYS-1)
-{
-	int i;
-	event_t event;
-	BYTE *state = DIKState[ActiveDIKState];
-
-	memset (&event, 0, sizeof(event));
-	event.type = EV_KeyUp;
-	for (i = low; i <= high; ++i)
-	{
-		if (state[i])
-		{
-			state[i] = 0;
-			event.data1 = i;
-			event.data2 = i < 256 ? Convert[i] : 0;
-			D_PostEvent (&event);
-		}
-	}
-}
-*/
 extern int chatmodeon;
 
 static void I_CheckGUICapture ()
@@ -346,9 +316,9 @@ static void I_CheckGUICapture ()
 	if (wantCapt != GUICapture)
 	{
 		GUICapture = wantCapt;
-		if (wantCapt)
+		if (wantCapt && Keyboard != NULL)
 		{
-//			FlushDIKState ();
+			Keyboard->AllKeysUp();
 		}
 	}
 }
@@ -408,18 +378,11 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		return 0;
 
 	case WM_KILLFOCUS:
-		if (g_pKey) g_pKey->Unacquire ();
-		
-//		FlushDIKState ();
 		HaveFocus = false;
 		I_CheckNativeMouse (true);	// Make sure mouse gets released right away
 		break;
 
 	case WM_SETFOCUS:
-		if (g_pKey)
-		{
-			g_pKey->Acquire();
-		}
 		HaveFocus = true;
 		I_CheckNativeMouse (false);
 		break;
@@ -493,45 +456,6 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					D_PostEvent (&event);
 				}
 			}
-		}
-		else
-		{
-#if 0
-			if (message == WM_KEYUP)
-			{
-				event.type = EV_KeyUp;
-			}
-			else
-			{
-				if (lParam & 0x40000000)
-				{
-					return 0;
-				}
-				else
-				{
-					event.type = EV_KeyDown;
-				}
-			}
-
-			switch (wParam)
-			{
-				case VK_PAUSE:
-					event.data1 = KEY_PAUSE;
-					break;
-				case VK_TAB:
-					event.data1 = DIK_TAB;
-					event.data2 = '\t';
-					break;
-				case VK_NUMLOCK:
-					event.data1 = DIK_NUMLOCK;
-					break;
-			}
-			if (event.data1)
-			{
-				DIKState[ActiveDIKState][event.data1] = (event.type == EV_KeyDown);
-				D_PostEvent (&event);
-			}
-#endif
 		}
 		break;
 

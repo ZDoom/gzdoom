@@ -23,7 +23,7 @@
 
 // TYPES -------------------------------------------------------------------
 
-class FDInputKeyboard : public FInputDevice
+class FDInputKeyboard : public FKeyboard
 {
 public:
 	FDInputKeyboard();
@@ -35,23 +35,20 @@ public:
 
 protected:
 	LPDIRECTINPUTDEVICE8 Device;
-	BYTE KeyStates[256/8];
+};
 
-	int CheckKey(int keynum) const
-	{
-		return KeyStates[keynum >> 3] & (1 << (keynum & 7));
-	}
-	void SetKey(int keynum, bool down)
-	{
-		if (down)
-		{
-			KeyStates[keynum >> 3] |= 1 << (keynum & 7);
-		}
-		else
-		{
-			KeyStates[keynum >> 3] &= ~(1 << (keynum & 7));
-		}
-	}
+class FRawKeyboard : public FKeyboard
+{
+public:
+	FRawKeyboard();
+	~FRawKeyboard();
+
+	bool GetDevice();
+	void ProcessInput();
+	bool WndProcHook(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT *result);
+
+protected:
+	USHORT E1Prefix;
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -71,7 +68,7 @@ extern bool HaveFocus;
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // Convert DIK_* code to ASCII using Qwerty keymap
-static const BYTE Convert [256] =
+static const BYTE Convert[256] =
 {
   //  0    1    2    3    4    5    6    7    8    9    A    B    C    D    E    F
 	  0,  27, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=',   8,   9, // 0
@@ -94,12 +91,162 @@ static const BYTE Convert [256] =
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-FInputDevice *Keyboard;
+FKeyboard *Keyboard;
 
 // Set this to false to make keypad-enter a usable separate key.
 CVAR (Bool, k_mergekeys, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 // CODE --------------------------------------------------------------------
+
+//==========================================================================
+//
+// FKeyboard - Constructor
+//
+//==========================================================================
+
+FKeyboard::FKeyboard()
+{
+	memset(KeyStates, 0, sizeof(KeyStates));
+}
+
+//==========================================================================
+//
+// FKeyboard - Destructor
+//
+//==========================================================================
+
+FKeyboard::~FKeyboard()
+{
+	AllKeysUp();
+}
+
+//==========================================================================
+//
+// FKeyboard :: CheckAndSetKey
+//
+// Returns true if the key was already in the desired, false if it wasn't.
+//
+//==========================================================================
+
+bool FKeyboard::CheckAndSetKey(int keynum, INTBOOL down)
+{
+	BYTE *statebyte = &KeyStates[keynum >> 3];
+	BYTE mask = 1 << (keynum & 7);
+	if (down)
+	{
+		if (*statebyte & mask)
+		{
+			return true;
+		}
+		*statebyte |= mask;
+		return false;
+	}
+	else
+	{
+		if (*statebyte & mask)
+		{
+			*statebyte &= ~mask;
+			return false;
+		}
+		return true;
+	}
+}
+
+//==========================================================================
+//
+// FKeyboard :: AllKeysUp
+//
+// For every key currently marked as down, send a key up event and clear it.
+//
+//==========================================================================
+
+void FKeyboard::AllKeysUp()
+{
+	event_t ev = { 0 };
+	ev.type = EV_KeyUp;
+
+	for (int i = 0; i < 256/8; ++i)
+	{
+		if (KeyStates[i] != 0)
+		{
+			BYTE states = KeyStates[i];
+			int j = 0;
+			KeyStates[i] = 0;
+			do
+			{
+				if (states & 1)
+				{
+					ev.data1 = (i << 3) + j;
+					ev.data2 = Convert[ev.data1];
+					D_PostEvent(&ev);
+				}
+				states >>= 1;
+				++j;
+			}
+			while (states != 0);
+		}
+	}
+}
+
+//==========================================================================
+//
+// FKeyboard :: PostKeyEvent
+//
+// Posts a keyboard event, but only if the state is different from what we
+// currently think it is. (For instance, raw keyboard input sends key
+// down events every time the key automatically repeats, so we want to
+// discard those.)
+//
+//==========================================================================
+
+void FKeyboard::PostKeyEvent(int key, INTBOOL down, bool foreground)
+{
+	event_t ev = { 0 };
+
+//	Printf("key=%02x down=%02x\n", key, down);
+	// "Merge" multiple keys that are considered to be the same. If the
+	// original unmerged key is down, it also needs to go up. (In case
+	// somebody was holding the key down when they changed this setting.)
+	if (k_mergekeys)
+	{
+		if (key == DIK_NUMPADENTER || key == DIK_RMENU || key == DIK_RCONTROL)
+		{
+			k_mergekeys = false;
+			PostKeyEvent(key, false, foreground);
+			k_mergekeys = true;
+			key &= 0x7F;
+		}
+		else if (key == DIK_RSHIFT)
+		{
+			k_mergekeys = false;
+			PostKeyEvent(key, false, foreground);
+			k_mergekeys = true;
+			key = DIK_LSHIFT;
+		}
+	}
+
+	// Generate the event, if appropriate.
+	if (down)
+	{
+		if (!foreground || GUICapture)
+		{ // Do not generate key down events if we are in the background
+		  // or in "GUI Capture" mode.
+			return;
+		}
+		ev.type = EV_KeyDown;
+	}
+	else
+	{
+		ev.type = EV_KeyUp;
+	}
+	if (CheckAndSetKey(key, down))
+	{ // Key is already down or up.
+		return;
+	}
+	ev.data1 = key;
+	ev.data2 = Convert[key];
+	D_PostEvent(&ev);
+}
 
 //==========================================================================
 //
@@ -110,7 +257,6 @@ CVAR (Bool, k_mergekeys, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 FDInputKeyboard::FDInputKeyboard()
 {
 	Device = NULL;
-	memset(KeyStates, 0, sizeof(KeyStates));
 }
 
 //==========================================================================
@@ -199,10 +345,8 @@ void FDInputKeyboard::ProcessInput()
 	DIDEVICEOBJECTDATA od;
 	DWORD dwElements;
 	HRESULT hr;
-	int key;
 	bool foreground = (GetForegroundWindow() == Window);
 
-	event_t ev = { 0 };
 	for (;;)
 	{
 		DWORD cbObjectData = g_pdi3 ? sizeof(DIDEVICEOBJECTDATA_DX3) : sizeof(DIDEVICEOBJECTDATA);
@@ -218,57 +362,9 @@ void FDInputKeyboard::ProcessInput()
 			break;
 		}
 
-		key = od.dwOfs;
-//		Printf("buffer ofs=%02x data=%02x\n", od.dwOfs, od.dwData);
-		if (key >= 1 && key <= 255)
+		if (od.dwOfs >= 1 && od.dwOfs <= 255)
 		{
-			if (k_mergekeys)
-			{
-				// "Merge" multiple keys that are considered to be the same.
-				if (key == DIK_NUMPADENTER)
-				{
-					key = DIK_RETURN;
-				}
-				else if (key == DIK_RMENU)
-				{
-					key = DIK_LMENU;
-				}
-				else if (key == DIK_RCONTROL)
-				{
-					key = DIK_LCONTROL;
-				}
-				else if (key == DIK_RSHIFT)
-				{
-					key = DIK_LSHIFT;
-				}
-			}
-			// Generate an event, but only if it isn't a repeat of the existing state.
-			if (od.dwData & 0x80)
-			{
-				if (!foreground || GUICapture)
-				{ // Do not generate key down events if we are in the background
-				  // or in "GUI Capture" mode.
-					continue;
-				}
-				if (CheckKey(key))
-				{ // Key is already down.
-					continue;
-				}
-				SetKey(key, true);
-				ev.type = EV_KeyDown;
-			}
-			else
-			{
-				if (!CheckKey(key))
-				{ // Key is already up.
-					continue;
-				}
-				SetKey(key, false);
-				ev.type = EV_KeyUp;
-			}
-			ev.data1 = key;
-			ev.data2 = Convert[key];
-			D_PostEvent(&ev);
+			PostKeyEvent(od.dwOfs, od.dwData & 0x80, foreground);
 		}
 	}
 }
@@ -286,12 +382,204 @@ bool FDInputKeyboard::WndProcHook(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 
 //==========================================================================
 //
+// FRawKeyboard - Constructor
+//
+//==========================================================================
+
+FRawKeyboard::FRawKeyboard()
+{
+	E1Prefix = 0;
+}
+
+//==========================================================================
+//
+// FRawKeyboard - Destructor
+//
+//==========================================================================
+
+FRawKeyboard::~FRawKeyboard()
+{
+	if (MyRegisterRawInputDevices != NULL)
+	{
+		RAWINPUTDEVICE rid;
+		rid.usUsagePage = HID_GENERIC_DESKTOP_PAGE;
+		rid.usUsage = HID_GDP_KEYBOARD;
+		rid.dwFlags = RIDEV_REMOVE;
+		rid.hwndTarget = NULL;
+		MyRegisterRawInputDevices(&rid, 1, sizeof(rid));
+	}
+}
+
+//==========================================================================
+//
+// FRawKeyboard :: GetDevice
+//
+// Ensure the API is present and we can listen for keyboard input.
+//
+//==========================================================================
+
+bool FRawKeyboard::GetDevice()
+{
+	RAWINPUTDEVICE rid;
+
+	if (MyRegisterRawInputDevices == NULL)
+	{
+		return false;
+	}
+	rid.usUsagePage = HID_GENERIC_DESKTOP_PAGE;
+	rid.usUsage = HID_GDP_KEYBOARD;
+	rid.dwFlags = RIDEV_INPUTSINK;
+	rid.hwndTarget = Window;
+	if (!MyRegisterRawInputDevices(&rid, 1, sizeof(rid)))
+	{
+		return false;
+	}
+	return true;
+}
+
+//==========================================================================
+//
+// FRawKeyboard :: ProcessInput
+//
+//==========================================================================
+
+void FRawKeyboard::ProcessInput()
+{
+}
+
+//==========================================================================
+//
+// FRawKeyboard :: WndProcHook
+//
+// Convert scan codes to DirectInput key codes. For the most part, this is
+// straight forward: Scan codes without any prefix are passed unmodified.
+// Scan codes with an 0xE0 prefix byte are generally passed by ORing them
+// with 0x80. And scan codes with an 0xE1 prefix are the annowing Pause key
+// which will generate another scan code that looks like Num Lock.
+//
+// This is a bit complicated only because the state of PC key codes is a bit
+// of a mess. Keyboards may use simpler codes internally, but for the sake
+// of compatibility, programs are presented with XT-compatible codes. This
+// means that keys which were originally a shifted form of another key and
+// were split off into a separate key all their own, or which were formerly
+// a separate key and are now part of another key (most notable PrtScn and
+// SysRq), will still generate code sequences that XT-era software will
+// still perceive as the original sequences to use those keys.
+//
+//==========================================================================
+
+bool FRawKeyboard::WndProcHook(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT *result)
+{
+	if (message != WM_INPUT)
+	{
+		return false;
+	}
+	BYTE buffer[40];
+	UINT size = sizeof(buffer);
+	int keycode;
+
+	if (MyGetRawInputData((HRAWINPUT)lParam, RID_INPUT, buffer, &size, sizeof(RAWINPUTHEADER)) > 0)
+	{
+		RAWINPUT *raw = (RAWINPUT *)buffer;
+		if (raw->header.dwType != RIM_TYPEKEYBOARD)
+		{
+			return false;
+		}
+
+		keycode = raw->data.keyboard.MakeCode;
+		if (keycode == 0 && (raw->data.keyboard.Flags & RI_KEY_E0))
+		{ // Even if the make code is 0, we might still be able to extract a
+		  // useful key from the message.
+			if (raw->data.keyboard.VKey >= VK_BROWSER_BACK && raw->data.keyboard.VKey <= VK_LAUNCH_APP2)
+			{
+				static const BYTE MediaKeys[VK_LAUNCH_APP2 - VK_BROWSER_BACK + 1] =
+				{
+					DIK_WEBBACK, DIK_WEBFORWARD, DIK_WEBREFRESH, DIK_WEBSTOP,
+					DIK_WEBSEARCH, DIK_WEBFAVORITES, DIK_WEBHOME,
+
+					DIK_MUTE, DIK_VOLUMEDOWN, DIK_VOLUMEUP,
+					DIK_NEXTTRACK, DIK_PREVTRACK, DIK_MEDIASTOP, DIK_PLAYPAUSE,
+
+					DIK_MAIL, DIK_MEDIASELECT, DIK_MYCOMPUTER, DIK_CALCULATOR
+				};
+				keycode = MediaKeys[raw->data.keyboard.VKey - VK_BROWSER_BACK];
+			}
+		}
+		if (keycode < 1 || keycode > 0xFF)
+		{
+			return false;
+		}
+		if (raw->data.keyboard.Flags & RI_KEY_E1)
+		{
+			E1Prefix = raw->data.keyboard.MakeCode;
+			return false;
+		}
+		if (raw->data.keyboard.Flags & RI_KEY_E0)
+		{
+			if (keycode == DIK_LSHIFT || keycode == DIK_RSHIFT)
+			{ // Ignore fake shifts.
+				return false;
+			}
+			keycode |= 0x80;
+		}
+		// The sequence for an unshifted pause is E1 1D 45 (E1 Prefix +
+		// Control + Num Lock).
+		if (E1Prefix)
+		{
+			if (E1Prefix == 0x1D && keycode == DIK_NUMLOCK)
+			{
+				keycode = DIK_PAUSE;
+				E1Prefix = 0;
+			}
+			else
+			{
+				E1Prefix = 0;
+				return false;
+			}
+		}
+		// If you press Ctrl+Pause, the keyboard sends the Break make code
+		// E0 46 instead of the Pause make code.
+		if (keycode == 0xC6)
+		{
+			keycode = DIK_PAUSE;
+		}
+		// If you press Ctrl+PrtScn (to get SysRq), the keyboard sends
+		// the make code E0 37. If you press PrtScn without any modifiers,
+		// it sends E0 2A E0 37. And if you press Alt+PrtScn, it sends 54
+		// (which is undefined in the charts I can find.)
+		if (keycode == 0x54)
+		{
+			keycode = DIK_SYSRQ;
+		}
+		// If you press any keys in the island between the main keyboard
+		// and the numeric keypad with Num Lock turned on, they generate
+		// a fake shift before their actual codes. They do not generate this
+		// fake shift if Num Lock is off. We unconditionally discard fake
+		// shifts above, so we don't need to do anything special for these,
+		// since they are also prefixed by E0 so we can tell them apart from
+		// their keypad counterparts.
+
+		// Okay, we're done translating the keycode. Post it (or ignore it.)
+		PostKeyEvent(keycode, !(raw->data.keyboard.Flags & RI_KEY_BREAK), 
+			GET_RAWINPUT_CODE_WPARAM(wParam) == RIM_INPUT);
+	}
+	return false;
+}
+
+//==========================================================================
+//
 // I_StartupKeyboard
 //
 //==========================================================================
 
 void I_StartupKeyboard()
 {
+	Keyboard = new FRawKeyboard;
+	if (Keyboard->GetDevice())
+	{
+		return;
+	}
+	delete Keyboard;
 	Keyboard = new FDInputKeyboard;
 	if (!Keyboard->GetDevice())
 	{

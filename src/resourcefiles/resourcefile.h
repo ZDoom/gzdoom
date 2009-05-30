@@ -60,6 +60,7 @@ private:
 	DWORD FirstLump;
 
 public:
+	static FResourceFile *OpenResourceFile(const char *filename, FileReader *file, bool quiet = false);
 	virtual ~FResourceFile();
 	FileReader *GetReader() const { return Reader; }
 	DWORD LumpCount() const { return NumLumps; }
@@ -67,7 +68,7 @@ public:
 	void SetFirstLump(DWORD f) { FirstLump = f; }
 
 	virtual void FindStrifeTeaserVoices ();
-	virtual bool Open() = 0;
+	virtual bool Open(bool quiet) = 0;
 	virtual FResourceLump *GetLump(int no) = 0;
 };
 

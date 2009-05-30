@@ -1,4 +1,7 @@
 ﻿May 30, 2009  (Changes by Graf Zahl)
+- Rewrote IWAD detection code to use the ResourceFile classes instead of
+  reading the WAD directory directly. As a side effect it should now be
+  possible to use Zip and 7z for IWADs, too.
 - Added 'EndTitle' nextmap option which goes to the regular title loop after
   the game has finished.
 - Added NOBOSSRIP flag. Note: we are now at flags6!

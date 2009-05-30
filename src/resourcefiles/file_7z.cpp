@@ -194,7 +194,7 @@ class F7ZFile : public FResourceFile
 
 public:
 	F7ZFile(const char * filename, FileReader *filer);
-	bool Open();
+	bool Open(bool quiet);
 	virtual ~F7ZFile();
 	virtual FResourceLump *GetLump(int no) { return ((unsigned)no < NumLumps)? &Lumps[no] : NULL; }
 };
@@ -230,7 +230,7 @@ F7ZFile::F7ZFile(const char * filename, FileReader *filer)
 //
 //==========================================================================
 
-bool F7ZFile::Open()
+bool F7ZFile::Open(bool quiet)
 {
 	Archive = new C7zArchive(Reader);
 	int skipped = 0;
@@ -241,22 +241,25 @@ bool F7ZFile::Open()
 	{
 		delete Archive;
 		Archive = NULL;
-		Printf("\n"TEXTCOLOR_RED"%s: ", Filename);
-		if (res == SZ_ERROR_UNSUPPORTED)
+		if (!quiet)
 		{
-			Printf("Decoder does not support this archive\n");
-		}
-		else if (res == SZ_ERROR_MEM)
-		{
-			Printf("Cannot allocate memory\n");
-		}
-		else if (res == SZ_ERROR_CRC)
-		{
-			Printf("CRC error\n");
-		}
-		else
-		{
-			Printf("error #%d\n", res);
+			Printf("\n"TEXTCOLOR_RED"%s: ", Filename);
+			if (res == SZ_ERROR_UNSUPPORTED)
+			{
+				Printf("Decoder does not support this archive\n");
+			}
+			else if (res == SZ_ERROR_MEM)
+			{
+				Printf("Cannot allocate memory\n");
+			}
+			else if (res == SZ_ERROR_CRC)
+			{
+				Printf("CRC error\n");
+			}
+			else
+			{
+				Printf("error #%d\n", res);
+			}
 		}
 		return false;
 	}
@@ -292,7 +295,7 @@ bool F7ZFile::Open()
 	}
 	// Resize the lump record array to its actual size
 	NumLumps -= skipped;
-	Printf(", %d lumps\n", NumLumps);
+	if (!quiet) Printf(", %d lumps\n", NumLumps);
 
 	// Entries in archives are sorted alphabetically
 	qsort(&Lumps[0], NumLumps, sizeof(F7ZLump), lumpcmp);
@@ -330,7 +333,7 @@ int F7ZLump::FillCache()
 //
 //==========================================================================
 
-FResourceFile *Check7Z(const char *filename, FileReader *file)
+FResourceFile *Check7Z(const char *filename, FileReader *file, bool quiet)
 {
 	char head[k7zSignatureSize];
 
@@ -342,7 +345,7 @@ FResourceFile *Check7Z(const char *filename, FileReader *file)
 		if (!memcmp(head, k7zSignature, k7zSignatureSize))
 		{
 			FResourceFile *rf = new F7ZFile(filename, file);
-			if (rf->Open()) return rf;
+			if (rf->Open(quiet)) return rf;
 			delete rf;
 		}
 	}

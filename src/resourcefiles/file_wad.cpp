@@ -53,7 +53,7 @@ class FWadFile : public FUncompressedFile
 public:
 	FWadFile(const char * filename, FileReader *file);
 	void FindStrifeTeaserVoices ();
-	bool Open();
+	bool Open(bool quiet);
 };
 
 
@@ -76,7 +76,7 @@ FWadFile::FWadFile(const char *filename, FileReader *file) : FUncompressedFile(f
 //
 //==========================================================================
 
-bool FWadFile::Open()
+bool FWadFile::Open(bool quiet)
 {
 	wadinfo_t header;
 
@@ -90,7 +90,7 @@ bool FWadFile::Open()
 
 	Lumps = new FUncompressedLump[NumLumps];
 
-	Printf(", %d lumps\n", NumLumps);
+	if (!quiet) Printf(", %d lumps\n", NumLumps);
 
 	for(DWORD i = 0; i < NumLumps; i++)
 	{
@@ -104,14 +104,17 @@ bool FWadFile::Open()
 		Lumps[i].FullName = NULL;
 	}
 
-	SetNamespace("S_START", "S_END", ns_sprites);
-	SetNamespace("F_START", "F_END", ns_flats, true);
-	SetNamespace("C_START", "C_END", ns_colormaps);
-	SetNamespace("A_START", "A_END", ns_acslibrary);
-	SetNamespace("TX_START", "TX_END", ns_newtextures);
-	SetNamespace("V_START", "V_END", ns_strifevoices);
-	SetNamespace("HI_START", "HI_END", ns_hires);
-	SkinHack();
+	if (!quiet)	// don't bother with namespaces here. We won't need them.
+	{
+		SetNamespace("S_START", "S_END", ns_sprites);
+		SetNamespace("F_START", "F_END", ns_flats, true);
+		SetNamespace("C_START", "C_END", ns_colormaps);
+		SetNamespace("A_START", "A_END", ns_acslibrary);
+		SetNamespace("TX_START", "TX_END", ns_newtextures);
+		SetNamespace("V_START", "V_END", ns_strifevoices);
+		SetNamespace("HI_START", "HI_END", ns_hires);
+		SkinHack();
+	}
 	delete [] fileinfo;
 	return true;
 }
@@ -358,7 +361,7 @@ void FWadFile::FindStrifeTeaserVoices ()
 //
 //==========================================================================
 
-FResourceFile *CheckWad(const char *filename, FileReader *file)
+FResourceFile *CheckWad(const char *filename, FileReader *file, bool quiet)
 {
 	char head[4];
 
@@ -370,7 +373,7 @@ FResourceFile *CheckWad(const char *filename, FileReader *file)
 		if (!memcmp(head, "IWAD", 4) || !memcmp(head, "PWAD", 4))
 		{
 			FResourceFile *rf = new FWadFile(filename, file);
-			if (rf->Open()) return rf;
+			if (rf->Open(quiet)) return rf;
 			delete rf;
 		}
 	}

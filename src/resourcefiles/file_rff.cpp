@@ -107,7 +107,7 @@ class FRFFFile : public FResourceFile
 public:
 	FRFFFile(const char * filename, FileReader *file);
 	virtual ~FRFFFile();
-	virtual bool Open();
+	virtual bool Open(bool quiet);
 	virtual FResourceLump *GetLump(int no) { return ((unsigned)no < NumLumps)? &Lumps[no] : NULL; }
 };
 
@@ -130,7 +130,7 @@ FRFFFile::FRFFFile(const char *filename, FileReader *file)
 //
 //==========================================================================
 
-bool FRFFFile::Open()
+bool FRFFFile::Open(bool quiet)
 {
 	RFFLump *lumps;
 	RFFInfo header;
@@ -146,7 +146,7 @@ bool FRFFFile::Open()
 
 	Lumps = new FRFFLump[NumLumps];
 
-	Printf(", %d lumps\n", NumLumps);
+	if (!quiet) Printf(", %d lumps\n", NumLumps);
 	for (DWORD i = 0; i < NumLumps; ++i)
 	{
 		if (lumps[i].Extension[0] == 'S' && lumps[i].Extension[1] == 'F' &&
@@ -231,7 +231,7 @@ int FRFFLump::FillCache()
 //
 //==========================================================================
 
-FResourceFile *CheckRFF(const char *filename, FileReader *file)
+FResourceFile *CheckRFF(const char *filename, FileReader *file, bool quiet)
 {
 	char head[4];
 
@@ -243,7 +243,7 @@ FResourceFile *CheckRFF(const char *filename, FileReader *file)
 		if (!memcmp(head, "RFF\x1a", 4))
 		{
 			FResourceFile *rf = new FRFFFile(filename, file);
-			if (rf->Open()) return rf;
+			if (rf->Open(quiet)) return rf;
 			delete rf;
 		}
 	}

@@ -44,6 +44,7 @@
 #include "m_misc.h"
 #include "c_cvars.h"
 #include "gameconfigfile.h"
+#include "resourcefiles/resourcefile.h"
 
 
 CVAR (Bool, queryiwad, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
@@ -188,34 +189,21 @@ static EIWADType ScanIWAD (const char *iwad)
 		Check_e2m1
 	};
 	int lumpsfound[NUM_CHECKLUMPS];
-	size_t i;
-	wadinfo_t header;
-	FILE *f;
 
 	memset (lumpsfound, 0, sizeof(lumpsfound));
-	if ( (f = fopen (iwad, "rb")) )
+	FResourceFile *iwadfile = FResourceFile::OpenResourceFile(iwad, NULL, true);
+
+	if (iwadfile != NULL)
 	{
-		fread (&header, sizeof(header), 1, f);
-		if (header.Magic == IWAD_ID || header.Magic == PWAD_ID)
+		for(DWORD i = 0; i < iwadfile->LumpCount(); i++)
 		{
-			header.NumLumps = LittleLong(header.NumLumps);
-			if (0 == fseek (f, LittleLong(header.InfoTableOfs), SEEK_SET))
-			{
-				for (i = 0; i < (size_t)header.NumLumps; i++)
-				{
-					wadlump_t lump;
-					size_t j;
+			FResourceLump *lump = iwadfile->GetLump(i);
 
-					if (0 == fread (&lump, sizeof(lump), 1, f))
-						break;
-					for (j = 0; j < NUM_CHECKLUMPS; j++)
-						if (strnicmp (lump.Name, checklumps[j], 8) == 0)
-							lumpsfound[j]++;
-				}
-			}
+			for (DWORD j = 0; j < NUM_CHECKLUMPS; j++)
+				if (strnicmp (lump->Name, checklumps[j], 8) == 0)
+					lumpsfound[j]++;
 		}
-
-		fclose (f);
+		delete iwadfile;
 	}
 
 	// Always check for custom iwads first.

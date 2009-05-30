@@ -37,6 +37,7 @@
 #include "resourcefile.h"
 #include "cmdlib.h"
 #include "w_wad.h"
+#include "doomerrors.h"
 
 
 
@@ -242,7 +243,44 @@ int FResourceLump::ReleaseCache()
 	return RefCount;
 }
 
+//==========================================================================
+//
+// Opens a resource file
+//
+//==========================================================================
 
+typedef FResourceFile * (*CheckFunc)(const char *filename, FileReader *file, bool quiet);
+
+FResourceFile *CheckWad(const char *filename, FileReader *file, bool quiet);
+FResourceFile *CheckGRP(const char *filename, FileReader *file, bool quiet);
+FResourceFile *CheckRFF(const char *filename, FileReader *file, bool quiet);
+FResourceFile *CheckPak(const char *filename, FileReader *file, bool quiet);
+FResourceFile *CheckZip(const char *filename, FileReader *file, bool quiet);
+FResourceFile *Check7Z(const char *filename, FileReader *file, bool quiet);
+FResourceFile *CheckLump(const char *filename, FileReader *file, bool quiet);
+
+static CheckFunc funcs[] = { CheckWad, CheckZip, Check7Z, CheckPak, CheckGRP, CheckRFF, CheckLump };
+
+FResourceFile *FResourceFile::OpenResourceFile(const char *filename, FileReader *file, bool quiet)
+{
+	if (file == NULL)
+	{
+		try
+		{
+			file = new FileReader(filename);
+		}
+		catch (CRecoverableError &)
+		{
+			return NULL;
+		}
+	}
+	for(size_t i = 0; i < countof(funcs); i++)
+	{
+		FResourceFile *resfile = funcs[i](filename, file, quiet);
+		if (resfile != NULL) return resfile;
+	}
+	return NULL;
+}
 
 //==========================================================================
 //

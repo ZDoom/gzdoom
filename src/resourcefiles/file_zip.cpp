@@ -143,7 +143,7 @@ class FZipFile : public FResourceFile
 public:
 	FZipFile(const char * filename, FileReader *file);
 	virtual ~FZipFile();
-	bool Open();
+	bool Open(bool quiet);
 	virtual FResourceLump *GetLump(int no) { return ((unsigned)no < NumLumps)? &Lumps[no] : NULL; }
 };
 
@@ -170,7 +170,7 @@ FZipFile::FZipFile(const char * filename, FileReader *file)
 	Lumps = NULL;
 }
 
-bool FZipFile::Open()
+bool FZipFile::Open(bool quiet)
 {
 	DWORD centraldir = Zip_FindCentralDir(Reader);
 	FZipEndOfCentralDirectory info;
@@ -180,7 +180,7 @@ bool FZipFile::Open()
 
 	if (centraldir == 0)
 	{
-		Printf("\n%s: ZIP file corrupt!\n", Filename);
+		if (!quiet) Printf("\n%s: ZIP file corrupt!\n", Filename);
 		return false;
 	}
 
@@ -192,7 +192,7 @@ bool FZipFile::Open()
 	if (info.NumEntries != info.NumEntriesOnAllDisks ||
 		info.FirstDisk != 0 || info.DiskNumber != 0)
 	{
-		Printf("\n%s: Multipart Zip files are not supported.\n", Filename);
+		if (!quiet) Printf("\n%s: Multipart Zip files are not supported.\n", Filename);
 		return false;
 	}
 
@@ -236,7 +236,7 @@ bool FZipFile::Open()
 			zip_fh->Method != METHOD_IMPLODE &&
 			zip_fh->Method != METHOD_SHRINK)
 		{
-			Printf("\n%s: '%s' uses an unsupported compression algorithm (#%d).\n", Filename, name, zip_fh->Method);
+			if (!quiet) Printf("\n%s: '%s' uses an unsupported compression algorithm (#%d).\n", Filename, name, zip_fh->Method);
 			skipped++;
 			continue;
 		}
@@ -244,7 +244,7 @@ bool FZipFile::Open()
 		zip_fh->Flags = LittleShort(zip_fh->Flags);
 		if (zip_fh->Flags & ZF_ENCRYPTED)
 		{
-			Printf("\n%s: '%s' is encrypted. Encryption is not supported.\n", Filename, name);
+			if (!quiet) Printf("\n%s: '%s' is encrypted. Encryption is not supported.\n", Filename, name);
 			skipped++;
 			continue;
 		}
@@ -268,7 +268,7 @@ bool FZipFile::Open()
 	NumLumps -= skipped;
 	free(directory);
 	//LumpInfo.Resize(NumLumps);
-	Printf(", %d lumps\n", NumLumps);
+	if (!quiet) Printf(", %d lumps\n", NumLumps);
 	
 	// Entries in Zips are sorted alphabetically.
 	qsort(Lumps, NumLumps, sizeof(FZipLump), lumpcmp);
@@ -406,7 +406,7 @@ int FZipLump::FillCache()
 //
 //==========================================================================
 
-FResourceFile *CheckZip(const char *filename, FileReader *file)
+FResourceFile *CheckZip(const char *filename, FileReader *file, bool quiet)
 {
 	char head[4];
 
@@ -418,7 +418,7 @@ FResourceFile *CheckZip(const char *filename, FileReader *file)
 		if (!memcmp(head, "PK\x3\x4", 4))
 		{
 			FResourceFile *rf = new FZipFile(filename, file);
-			if (rf->Open()) return rf;
+			if (rf->Open(quiet)) return rf;
 			delete rf;
 		}
 	}

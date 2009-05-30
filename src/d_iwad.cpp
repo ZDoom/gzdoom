@@ -189,15 +189,16 @@ static EIWADType ScanIWAD (const char *iwad)
 		Check_e2m1
 	};
 	int lumpsfound[NUM_CHECKLUMPS];
+	int i;
 
 	memset (lumpsfound, 0, sizeof(lumpsfound));
 	FResourceFile *iwadfile = FResourceFile::OpenResourceFile(iwad, NULL, true);
 
 	if (iwadfile != NULL)
 	{
-		for(DWORD i = 0; i < iwadfile->LumpCount(); i++)
+		for(DWORD ii = 0; ii < iwadfile->LumpCount(); ii++)
 		{
-			FResourceLump *lump = iwadfile->GetLump(i);
+			FResourceLump *lump = iwadfile->GetLump(ii);
 
 			for (DWORD j = 0; j < NUM_CHECKLUMPS; j++)
 				if (strnicmp (lump->Name, checklumps[j], 8) == 0)

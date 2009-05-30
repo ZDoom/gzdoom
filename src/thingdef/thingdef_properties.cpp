@@ -490,6 +490,24 @@ DEFINE_PROPERTY(attacksound, S, Actor)
 //==========================================================================
 //
 //==========================================================================
+DEFINE_PROPERTY(bouncesound, S, Actor)
+{
+	PROP_STRING_PARM(str, 0);
+	defaults->BounceSound = str;
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_PROPERTY(wallbouncesound, S, Actor)
+{
+	PROP_STRING_PARM(str, 0);
+	defaults->WallBounceSound = str;
+}
+
+//==========================================================================
+//
+//==========================================================================
 DEFINE_PROPERTY(painsound, S, Actor)
 {
 	PROP_STRING_PARM(str, 0);
@@ -1251,24 +1269,6 @@ DEFINE_CLASS_PROPERTY(usesound, S, Inventory)
 {
 	PROP_STRING_PARM(str, 0);
 	defaults->UseSound = str;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY(bouncesound, S, Inventory)
-{
-	PROP_STRING_PARM(str, 0);
-	defaults->BounceSound = str;
-}
-
-//==========================================================================
-//
-//==========================================================================
-DEFINE_CLASS_PROPERTY(wallbouncesound, S, Inventory)
-{
-	PROP_STRING_PARM(str, 0);
-	defaults->WallBounceSound = str;
 }
 
 //==========================================================================

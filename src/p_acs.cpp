@@ -2796,6 +2796,9 @@ enum EACSFunctions
 	ACSF_SetActivatorToTarget,
 	ACSF_GetActorViewHeight,
 	ACSF_GetChar,
+	ACSF_GetAirSupply,
+	ACSF_SetAirSupply,
+	ACSF_SetSkyScrollSpeed,
 };
 
 int DLevelScript::SideFromID(int id, int side)
@@ -2907,6 +2910,37 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 			}
 		}
 
+		case ACSF_GetAirSupply:
+		{
+			if (args[0] < 0 || args[0] >= MAXPLAYERS || !playeringame[args[0]])
+			{
+				return 0;
+			}
+			else
+			{
+				return players[args[0]].air_finished - level.time;
+			}
+		}
+
+		case ACSF_SetAirSupply:
+		{
+			if (args[0] < 0 || args[0] >= MAXPLAYERS || !playeringame[args[0]])
+			{
+				return 0;
+			}
+			else
+			{
+				players[args[0]].air_finished = args[1] + level.time;
+				return 1;
+			}
+		}
+
+		case ACSF_SetSkyScrollSpeed:
+		{
+			if (args[0] == 1) level.skyspeed1 = FIXED2FLOAT(args[1]);
+			else if (args[0] == 2) level.skyspeed2 = FIXED2FLOAT(args[1]);
+			return 1;
+		}
 
 		default:
 			break;

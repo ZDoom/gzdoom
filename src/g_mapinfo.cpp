@@ -892,6 +892,11 @@ void FMapInfoParser::ParseNextMap(char *mapname)
 			newSeq.EndType = END_BuyStrife;
 			useseq = true;
 		}
+		else if (sc.Compare("endtitle"))
+		{
+			newSeq.EndType = END_TitleScreen;
+			useseq = true;
+		}
 		else
 		{
 			strncpy (mapname, sc.String, 8);

@@ -752,6 +752,9 @@ bool PIT_CheckThing (AActor *thing, FCheckPosition &tm)
 	if (thing == tm.thing)
 		return true;
 
+	if ((thing->flags2 | tm.thing->flags2) & MF2_THRUACTORS) 
+		return true;
+
 	if (!(thing->flags & (MF_SOLID|MF_SPECIAL|MF_SHOOTABLE)) )
 		return true;	// can't hit thing
 
@@ -967,32 +970,35 @@ bool PIT_CheckThing (AActor *thing, FCheckPosition &tm)
 		}
 		if (tm.DoRipping && !(thing->flags5 & MF5_DONTRIP))
 		{
-			if (tm.LastRipped != thing)
+			if (!(tm.thing->flags6 & MF6_NOBOSSRIP) || !(thing->flags2 & MF2_BOSS))
 			{
-				tm.LastRipped = thing;
-				if (!(thing->flags & MF_NOBLOOD) &&
-					!(thing->flags2 & MF2_REFLECTIVE) &&
-					!(tm.thing->flags3 & MF3_BLOODLESSIMPACT) &&
-					!(thing->flags2 & (MF2_INVULNERABLE|MF2_DORMANT)))
-				{ // Ok to spawn blood
-					P_RipperBlood (tm.thing, thing);
-				}
-				S_Sound (tm.thing, CHAN_BODY, "misc/ripslop", 1, ATTN_IDLE);
-				damage = tm.thing->GetMissileDamage (3, 2);
-				P_DamageMobj (thing, tm.thing, tm.thing->target, damage, tm.thing->DamageType);
-				if (!(tm.thing->flags3 & MF3_BLOODLESSIMPACT))
+				if (tm.LastRipped != thing)
 				{
-					P_TraceBleed (damage, thing, tm.thing);
+					tm.LastRipped = thing;
+					if (!(thing->flags & MF_NOBLOOD) &&
+						!(thing->flags2 & MF2_REFLECTIVE) &&
+						!(tm.thing->flags3 & MF3_BLOODLESSIMPACT) &&
+						!(thing->flags2 & (MF2_INVULNERABLE|MF2_DORMANT)))
+					{ // Ok to spawn blood
+						P_RipperBlood (tm.thing, thing);
+					}
+					S_Sound (tm.thing, CHAN_BODY, "misc/ripslop", 1, ATTN_IDLE);
+					damage = tm.thing->GetMissileDamage (3, 2);
+					P_DamageMobj (thing, tm.thing, tm.thing->target, damage, tm.thing->DamageType);
+					if (!(tm.thing->flags3 & MF3_BLOODLESSIMPACT))
+					{
+						P_TraceBleed (damage, thing, tm.thing);
+					}
+					if (thing->flags2 & MF2_PUSHABLE
+						&& !(tm.thing->flags2 & MF2_CANNOTPUSH))
+					{ // Push thing
+						thing->momx += tm.thing->momx>>2;
+						thing->momy += tm.thing->momy>>2;
+					}
 				}
-				if (thing->flags2 & MF2_PUSHABLE
-					&& !(tm.thing->flags2 & MF2_CANNOTPUSH))
-				{ // Push thing
-					thing->momx += tm.thing->momx>>2;
-					thing->momy += tm.thing->momy>>2;
-				}
+				spechit.Clear ();
+				return true;
 			}
-			spechit.Clear ();
-			return true;
 		}
 		// Do damage
 		damage = tm.thing->GetMissileDamage ((tm.thing->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1);

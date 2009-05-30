@@ -73,7 +73,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Tracer)
 	// adjust direction
 	dest = self->tracer;
 		
-	if (!dest || dest->health <= 0 || self->Speed == 0 || (dest->flags5 & MF5_CANTSEEK))
+	if (!dest || dest->health <= 0 || self->Speed == 0 || !self->CanSeek(dest))
 		return;
 	
 	// change angle 	

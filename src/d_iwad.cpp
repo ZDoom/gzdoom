@@ -71,7 +71,8 @@ const IWADInfo IWADInfos[NUM_IWAD_TYPES] =
 	{ "Strife: Teaser (Old Version)",			NULL,		MAKERGB(224,173,153),	MAKERGB(0,107,101),		GAME_Strife,	"mapinfo/strife.txt",	GI_MAPxx | GI_SHAREWARE },
 	{ "Strife: Teaser (New Version)",			NULL,		MAKERGB(224,173,153),	MAKERGB(0,107,101),		GAME_Strife,	"mapinfo/strife.txt",	GI_MAPxx | GI_SHAREWARE | GI_TEASER2 },
 	{ "Freedoom",								"Freedoom",	MAKERGB(50,84,67),		MAKERGB(198,220,209),	GAME_Doom,		"mapinfo/doom2.txt",	GI_MAPxx },
-	{ "Freedoom \"Demo\"",						"Freedoom1",MAKERGB(50,84,67),		MAKERGB(198,220,209),	GAME_Doom,		"mapinfo/doom1.txt" },
+	{ "Ultimate Freedoom",						"Freedoom1",MAKERGB(50,84,67),		MAKERGB(198,220,209),	GAME_Doom,		"mapinfo/doom1.txt" },
+	{ "Freedoom \"Demo\"",						NULL,		MAKERGB(50,84,67),		MAKERGB(198,220,209),	GAME_Doom,		"mapinfo/doom1.txt" },
 	{ "FreeDM",									"FreeDM",	MAKERGB(50,84,67),		MAKERGB(198,220,209),	GAME_Doom,		"mapinfo/doom2.txt",	GI_MAPxx },
 	{ "Chex(R) Quest",							"Chex1",	MAKERGB(255,255,0),		MAKERGB(0,192,0),		GAME_Chex,		"mapinfo/chex.txt" },
 	{ "Chex(R) Quest 3",						"Chex3",	MAKERGB(255,255,0),		MAKERGB(0,192,0),		GAME_Chex,		"mapinfo/chex3.txt" },
@@ -98,6 +99,7 @@ static const char *IWADNames[] =
 	"strife0.wad",
 	"freedoom.wad", // Freedoom.wad is distributed as Doom2.wad, but this allows to have both in the same directory.
 	"freedoom1.wad",
+	"freedoomu.wad",
 	"freedm.wad",
 	"chex.wad",
 	"chex3.wad",
@@ -117,6 +119,7 @@ static const char *IWADNames[] =
 	"STRIFE0.WAD",
 	"FREEDOOM.WAD",
 	"FREEDOOM1.WAD",
+	"FREEDOOMU.WAD",
 	"FREEDM.WAD",
 	"CHEX.WAD",
 	"CHEX3.WAD",
@@ -211,59 +214,7 @@ static EIWADType ScanIWAD (const char *iwad)
 				}
 			}
 		}
-#if 0
-		else if (header.Magic == ZIP_ID)
-		{ // Using a zip as an IWAD replacement requires that the key lumps be in the global scope.
-		  // This is because most of them will be "Custom IWADs" so all that we really should need
-		  // to find is GAMEINFO, but why limit ourselves?
-			header.NumLumps = 0;
-			FileReader *reader = new FileReader(f);
-			DWORD centraldir = Zip_FindCentralDir(reader);
-			delete reader;
-			if (fseek(f, centraldir, SEEK_SET) == 0)
-			{
-				// First locate directory
-				FZipEndOfCentralDirectory directory;
-				if (0 != fread(&directory, sizeof(directory), 1, f) && LittleLong(directory.Magic) == 0x06054b50)
-				{
-					header.NumLumps += LittleLong(directory.NumEntries);
-					if (fseek(f, LittleLong(directory.DirectoryOffset), SEEK_SET) == 0)
-					{
-						// Scan directory for lumps in the global scope with key names.
-						do
-						{
-							FZipCentralDirectoryInfo entry;
-							if (0 == fread(&entry, sizeof(entry), 1, f))
-								break;
-							if (LittleLong(entry.Magic) == 0x02014b50)
-							{
-								// Now determine the lump's short name
-								char* fullname = new char[LittleLong(entry.NameLength)];
-								if (0 == fread(fullname, LittleLong(entry.NameLength), 1, f))
-								{
-									delete[] fullname;
-									break;
-								}
-								FString name = fullname;
-								delete[] fullname;
-		
-								if(name.LastIndexOf('/') != -1)
-									continue;
-								name.Truncate(name.LastIndexOf('.'));
-		
-								for (size_t j = 0; j < NUM_CHECKLUMPS; j++)
-									if (strnicmp (name, checklumps[j], 8) == 0)
-										lumpsfound[j]++;
-							}
-							else
-								break;
-						}
-						while(true);
-					}
-				}
-			}
-		}
-#endif
+
 		fclose (f);
 	}
 
@@ -369,7 +320,14 @@ static EIWADType ScanIWAD (const char *iwad)
 		{
 			if (lumpsfound[Check_FreeDoom])
 			{
-				return IWAD_FreeDoom1;
+				if (!lumpsfound[Check_e2m1])
+				{
+					return IWAD_FreeDoom1;
+				}
+				else
+				{
+					return IWAD_FreeDoomU;
+				}
 			}
 			for (i = Check_e2m1; i < NUM_CHECKLUMPS; i++)
 			{

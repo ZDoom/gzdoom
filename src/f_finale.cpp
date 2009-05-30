@@ -49,6 +49,7 @@
 #include "g_level.h"
 #include "d_event.h"
 #include "v_palette.h"
+#include "d_main.h"
 
 static void FadePic ();
 static void GetFinaleText (const char *msgLumpName);
@@ -1276,6 +1277,9 @@ void F_Drawer (void)
 			break;
 		case END_Demon:
 			F_DemonScroll ();
+			break;
+		case END_TitleScreen:
+			D_StartTitle ();
 			break;
 		}
 		break;

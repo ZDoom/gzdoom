@@ -233,6 +233,7 @@ void AActor::Serialize (FArchive &arc)
 		<< flags3
 		<< flags4
 		<< flags5
+		<< flags6
 		<< special1
 		<< special2
 		<< health
@@ -1405,6 +1406,26 @@ int P_FaceMobj (AActor *source, AActor *target, angle_t *delta)
 
 //----------------------------------------------------------------------------
 //
+// CanSeek
+//
+// Checks if a seeker missile can home in on its target
+//
+//----------------------------------------------------------------------------
+
+bool AActor::CanSeek(AActor *target) const
+{
+	if (target->flags5 & MF5_CANTSEEK) return false;
+	if ((flags2 & MF2_DONTSEEKINVISIBLE) && 
+		((target->flags & MF_SHADOW) || 
+		 target->renderflags & RF_INVISIBLE || 
+		 target->RenderStyle.IsVisible(target->alpha)
+		)
+	   ) return false;
+	return true;
+}
+
+//----------------------------------------------------------------------------
+//
 // FUNC P_SeekerMissile
 //
 // The missile's tracer field must be the target.  Returns true if
@@ -1421,7 +1442,7 @@ bool P_SeekerMissile (AActor *actor, angle_t thresh, angle_t turnMax)
 	AActor *target;
 
 	target = actor->tracer;
-	if (target == NULL || actor->Speed == 0 || (target->flags5 & MF5_CANTSEEK))
+	if (target == NULL || actor->Speed == 0 || !actor->CanSeek(target))
 	{
 		return false;
 	}

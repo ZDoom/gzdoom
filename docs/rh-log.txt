@@ -1,4 +1,18 @@
-﻿May 27, 2009
+﻿May 30, 2009  (Changes by Graf Zahl)
+- Added 'EndTitle' nextmap option which goes to the regular title loop after
+  the game has finished.
+- Added NOBOSSRIP flag. Note: we are now at flags6!
+- Added SetSkyScrollSpeed(int skyplane, fixed speed) ACS function.
+- Added THRUACTORS flag that disables all actor<->actor collision detection.
+- Added DONTSEEKINVISIBLE flag for missiles that can't home in on invisible
+  targets.
+- Added SFX_TRANSFERPITCH flag to A_SpawnItemEx.
+- Added Ultimate Freedoom IWAD detection.
+- Added GetAirSupply and SetAirSupply functions to ACS.
+- Fixed: The *surface sound was not played when drowning was switched off
+  by setting the level's air supply to 0.
+
+May 27, 2009
 - Fixed: The mouse wheel generated no events in GUI mode if you weren't
   fullscreen. (e.g. You could no longer scroll the console with the mouse
   buffer.)

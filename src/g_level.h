@@ -414,7 +414,8 @@ enum EndTypes
 	END_Underwater,
 	END_Chess,
 	END_Strife,
-	END_BuyStrife
+	END_BuyStrife,
+	END_TitleScreen
 };
 
 struct EndSequence

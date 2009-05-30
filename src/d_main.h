@@ -74,6 +74,7 @@ enum EIWADType
 	IWAD_StrifeTeaser,
 	IWAD_StrifeTeaser2,
 	IWAD_FreeDoom,
+	IWAD_FreeDoomU,
 	IWAD_FreeDoom1,
 	IWAD_FreeDM,
 	IWAD_ChexQuest,

@@ -965,7 +965,8 @@ bool APlayerPawn::ResetAirSupply (bool playgasp)
 	{
 		S_Sound (this, CHAN_VOICE, "*gasp", 1, ATTN_NORM);
 	}
-	player->air_finished = level.time + level.airsupply;
+	if (level.airsupply> 0) player->air_finished = level.time + level.airsupply;
+	else player->air_finished = INT_MAX;
 	return wasdrowning;
 }
 
@@ -2330,7 +2331,7 @@ void P_PlayerThink (player_t *player)
 		}
 
 		// Handle air supply
-		if (level.airsupply > 0)
+		//if (level.airsupply > 0)
 		{
 			if (player->mo->waterlevel < 3 ||
 				(player->mo->flags2 & MF2_INVULNERABLE) ||

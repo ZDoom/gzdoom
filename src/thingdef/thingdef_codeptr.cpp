@@ -1296,6 +1296,7 @@ enum SIX_Flags
 	SIXF_TELEFRAG=64,
 	// 128 is used by Skulltag!
 	SIXF_TRANSFERAMBUSHFLAG=256,
+	SIXF_TRANSFERPITCH=512,
 };
 
 
@@ -1311,6 +1312,7 @@ static bool InitSpawnedItem(AActor *self, AActor *mo, int flags)
 		}
 
 		mo->angle=self->angle;
+		if (flags & SIXF_TRANSFERPITCH) mo->pitch = self->pitch;
 		while (originator && isMissile(originator)) originator = originator->target;
 
 		if (flags & SIXF_TELEFRAG) 

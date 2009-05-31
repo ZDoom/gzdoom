@@ -755,6 +755,9 @@ bool PIT_CheckThing (AActor *thing, FCheckPosition &tm)
 	if ((thing->flags2 | tm.thing->flags2) & MF2_THRUACTORS) 
 		return true;
 
+	if ((tm.thing->flags6 & MF6_THRUSPECIES) && (tm.thing->Species == thing->Species))
+		return true;
+
 	if (!(thing->flags & (MF_SOLID|MF_SPECIAL|MF_SHOOTABLE)) )
 		return true;	// can't hit thing
 
@@ -836,6 +839,12 @@ bool PIT_CheckThing (AActor *thing, FCheckPosition &tm)
 		{
 			return true;
 		}
+
+		if ((tm.thing->flags6 & MF6_MTHRUSPECIES) 
+			&& tm.thing->target // NULL pointer check
+			&& (tm.thing->target->GetSpecies() == thing->GetSpecies()))
+			return true;
+
 		// Check for rippers passing through corpses
 		if ((thing->flags & MF_CORPSE) && (tm.thing->flags2 & MF2_RIP) && !(thing->flags & MF_SHOOTABLE))
 		{

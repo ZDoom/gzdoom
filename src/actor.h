@@ -305,6 +305,8 @@ enum
 	MF5_MOVEWITHSECTOR	= 0x80000000,	// P_ChangeSector() will still process this actor if it has MF_NOBLOCKMAP
 
 	MF6_NOBOSSRIP		= 0x00000001,	// For rippermissiles: Don't rip through bosses.
+	MF6_THRUSPECIES		= 0x00000002,	// Actors passes through other of the same species.
+	MF6_MTHRUSPECIES	= 0x00000004,	// Missile passes through actors of its shooter's species.
 
 
 // --- mobj.renderflags ---

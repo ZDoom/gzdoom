@@ -316,7 +316,7 @@ enum
 	WIF_ALT_USES_BOTH =		0x00000100, // alternate fire uses both ammo
 	WIF_WIMPY_WEAPON =		0x00000200, // change away when ammo for another weapon is replenished
 	WIF_POWERED_UP =		0x00000400, // this is a tome-of-power'ed version of its sister
-
+	WIF_AMMO_CHECKBOTH =	0x00000800, // check for both primary and secondary fire before switching it off
 	WIF_NO_AUTO_SWITCH =	0x00001000,	// never switch to this weapon when it's picked up
 	WIF_STAFF2_KICKBACK =	0x00002000, // the powered-up Heretic staff has special kickba
 

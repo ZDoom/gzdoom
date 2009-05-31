@@ -438,7 +438,7 @@ bool AWeapon::CheckAmmo (int fireMode, bool autoSwitch, bool requireAmmo)
 	{ // If this weapon has no alternate fire, then there is never enough ammo for it
 		enough &= 1;
 	}
-	if ((enough & enoughmask) == enoughmask)
+	if (((enough & enoughmask) == enoughmask) || (enough && (WeaponFlags & WIF_AMMO_CHECKBOTH)))
 	{
 		return true;
 	}

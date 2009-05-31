@@ -1,4 +1,5 @@
 ﻿May 31, 2009  (Changes by Graf Zahl)
+- Added Gez's AMMO_CHECKBOTH submission.
 - Added Gez's THRUSPECIES submission.
 - Added loading directories into the lump directory.
 - fixed: The Dehacked parser could not parse flag values with the highest bit

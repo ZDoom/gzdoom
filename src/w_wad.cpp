@@ -183,7 +183,7 @@ void FWadCollection::InitMultipleFiles (wadlist_t **filenames, const char *loadd
 		M_Free (*filenames);
 		*filenames = next;
 	}
-	AddFile(loaddir, NULL, true);
+	if (loaddir != NULL) AddFile(loaddir, NULL, true);
 
 	NumLumps = LumpInfo.Size();
 	if (NumLumps == 0)

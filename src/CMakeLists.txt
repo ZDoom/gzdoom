@@ -666,6 +666,7 @@ add_executable( zdoom WIN32
 	resourcefiles/file_wad.cpp
 	resourcefiles/file_zip.cpp
 	resourcefiles/file_pak.cpp
+	resourcefiles/file_directory.cpp
 	resourcefiles/resourcefile.cpp
 	sfmt/SFMT.cpp
 	sound/fmodsound.cpp

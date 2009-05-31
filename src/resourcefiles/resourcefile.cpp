@@ -94,10 +94,10 @@ FResourceLump::~FResourceLump()
 //
 //==========================================================================
 
-void FResourceLump::LumpNameSetup(char *iname)
+void FResourceLump::LumpNameSetup(const char *iname)
 {
 	char base[256];
-	char *lname = strrchr(iname,'/');
+	const char *lname = strrchr(iname,'/');
 	lname = (lname == NULL) ? iname : lname + 1;
 	strcpy(base, lname);
 	char *dot = strrchr(base, '.');
@@ -258,6 +258,7 @@ FResourceFile *CheckPak(const char *filename, FileReader *file, bool quiet);
 FResourceFile *CheckZip(const char *filename, FileReader *file, bool quiet);
 FResourceFile *Check7Z(const char *filename, FileReader *file, bool quiet);
 FResourceFile *CheckLump(const char *filename, FileReader *file, bool quiet);
+FResourceFile *CheckDir(const char *filename, FileReader *file, bool quiet);
 
 static CheckFunc funcs[] = { CheckWad, CheckZip, Check7Z, CheckPak, CheckGRP, CheckRFF, CheckLump };
 
@@ -282,6 +283,11 @@ FResourceFile *FResourceFile::OpenResourceFile(const char *filename, FileReader 
 	return NULL;
 }
 
+FResourceFile *FResourceFile::OpenDirectory(const char *filename)
+{
+	return CheckDir(filename, NULL, false);
+}
+
 //==========================================================================
 //
 // Resource file base class
@@ -290,14 +296,15 @@ FResourceFile *FResourceFile::OpenResourceFile(const char *filename, FileReader 
 
 FResourceFile::FResourceFile(const char *filename, FileReader *r)
 {
-	Filename = copystring(filename);
+	if (filename != NULL) Filename = copystring(filename);
+	else Filename = NULL;
 	Reader = r;
 }
 
 
 FResourceFile::~FResourceFile()
 {
-	delete [] Filename;
+	if (Filename != NULL) delete [] Filename;
 	delete Reader;
 }
 

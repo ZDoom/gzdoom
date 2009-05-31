@@ -160,7 +160,7 @@ void FWadCollection::DeleteAll ()
 //
 //==========================================================================
 
-void FWadCollection::InitMultipleFiles (wadlist_t **filenames)
+void FWadCollection::InitMultipleFiles (wadlist_t **filenames, const char *loaddir)
 {
 	int numfiles;
 
@@ -183,6 +183,7 @@ void FWadCollection::InitMultipleFiles (wadlist_t **filenames)
 		M_Free (*filenames);
 		*filenames = next;
 	}
+	AddFile(loaddir, NULL, true);
 
 	NumLumps = LumpInfo.Size();
 	if (NumLumps == 0)
@@ -229,11 +230,11 @@ int FWadCollection::AddExternalFile(const char *filename)
 // [RH] Removed reload hack
 //==========================================================================
 
-void FWadCollection::AddFile (const char *filename, FileReader *wadinfo)
+void FWadCollection::AddFile (const char *filename, FileReader *wadinfo, bool isdir)
 {
 	int				startlump;
 
-	if (wadinfo == NULL)
+	if (wadinfo == NULL && !isdir)
 	{
 		try
 		{
@@ -250,7 +251,10 @@ void FWadCollection::AddFile (const char *filename, FileReader *wadinfo)
 	Printf (" adding %s", filename);
 	startlump = NumLumps;
 
-	FResourceFile *resfile = FResourceFile::OpenResourceFile(filename, wadinfo);
+	FResourceFile *resfile;
+	
+	if (!isdir) resfile = FResourceFile::OpenResourceFile(filename, wadinfo);
+	else resfile = FResourceFile::OpenDirectory(filename);
 
 	if (resfile != NULL)
 	{

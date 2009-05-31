@@ -802,7 +802,7 @@ static int PatchThing (int thingy)
 						// Force the top 4 bits to 0 so that the user is forced
 						// to use the mnemonics to change them. And MF_SLIDE doesn't
 						// exist anymore, so 0 that too.
-						value[0] |= atoi(strval) & 0x0fffdfff;
+						value[0] |= strtoul(strval, NULL, 10) & 0x0fffdfff;
 						vchanged[0] = true;
 					}
 					else

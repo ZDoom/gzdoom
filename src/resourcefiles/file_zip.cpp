@@ -267,7 +267,7 @@ bool FZipFile::Open(bool quiet)
 	// Resize the lump record array to its actual size
 	NumLumps -= skipped;
 	free(directory);
-	//LumpInfo.Resize(NumLumps);
+
 	if (!quiet) Printf(", %d lumps\n", NumLumps);
 	
 	// Entries in Zips are sorted alphabetically.

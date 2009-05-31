@@ -1182,14 +1182,14 @@ CCMD (endgame)
 //
 //==========================================================================
 
-void D_AddFile (const char *file)
+void D_AddFile (const char *file, bool check)
 {
 	if (file == NULL)
 	{
 		return;
 	}
 
-	if (!FileExists (file))
+	if (check && !FileExists (file))
 	{
 		const char *f = BaseFileSearch (file, ".wad");
 		if (f == NULL)
@@ -1702,8 +1702,11 @@ void D_DoomMain (void)
 	files2->Destroy();
 	files3->Destroy();
 
+	const char *loaddir = Args->CheckValue("-dir");
+	// FIXME: consider the search path list for directory, too.
+
 	Printf ("W_Init: Init WADfiles.\n");
-	Wads.InitMultipleFiles (&wadfiles);
+	Wads.InitMultipleFiles (&wadfiles, loaddir);
 
 	// [RH] Initialize localizable strings.
 	GStrings.LoadStrings (false);

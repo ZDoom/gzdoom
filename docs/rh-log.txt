@@ -1,4 +1,10 @@
-﻿May 30, 2009  (Changes by Graf Zahl)
+﻿May 31, 2009  (Changes by Graf Zahl)
+- Added loading directories into the lump directory.
+- fixed: The Dehacked parser could not parse flag values with the highest bit
+  set because it used atoi to convert the string into a number.
+- fixed: bouncing sounds were limited to inventory items.
+
+May 30, 2009  (Changes by Graf Zahl)
 - Rewrote IWAD detection code to use the ResourceFile classes instead of
   reading the WAD directory directly. As a side effect it should now be
   possible to use Zip and 7z for IWADs, too.

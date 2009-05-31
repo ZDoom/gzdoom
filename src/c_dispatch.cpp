@@ -52,6 +52,7 @@
 #include "m_crc32.h"
 #include "v_text.h"
 #include "d_net.h"
+#include "d_main.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -1367,7 +1368,6 @@ void FConsoleAlias::SafeDelete ()
 	}
 }
 
-extern void D_AddFile (const char *file);
 static BYTE PullinBad = 2;
 static const char *PullinFile;
 

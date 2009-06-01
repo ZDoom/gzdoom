@@ -61,7 +61,7 @@ private:
 
 public:
 	static FResourceFile *OpenResourceFile(const char *filename, FileReader *file, bool quiet = false);
-	static FResourceFile *FResourceFile::OpenDirectory(const char *filename);
+	static FResourceFile *OpenDirectory(const char *filename);
 	virtual ~FResourceFile();
 	FileReader *GetReader() const { return Reader; }
 	DWORD LumpCount() const { return NumLumps; }

@@ -208,7 +208,9 @@ int FDirectory::AddDirectory(const char *dirpath)
 
 int FDirectory::AddDirectory(const char *dirpath)
 {
-	char *argv [2] = {dirpath, NULL };
+	char *argv [2] = {NULL, NULL };
+	argv[0] = new char[strlen(dirpath)+1];
+	strcpy(argv[0], dirpath);
 	FTS *fts;
 	FTSENT *ent;
 	int count = 0;
@@ -216,7 +218,7 @@ int FDirectory::AddDirectory(const char *dirpath)
 	fts = fts_open(argv, FTS_LOGICAL, NULL);
 	if (fts == NULL)
 	{
-		Printf "Failed to start directory traversal: %s\n", strerror(errno));
+		Printf("Failed to start directory traversal: %s\n", strerror(errno));
 		return NULL;
 	}
 	while ((ent = fts_read(fts)) != NULL)
@@ -240,6 +242,7 @@ int FDirectory::AddDirectory(const char *dirpath)
 		count++;
 	}
 	fts_close(fts);
+	delete[] argv[0];
 	return count;
 }
 #endif

@@ -241,6 +241,7 @@ enum //drawnumber flags
 	DRAWNUMBER_WHENNOTZERO = 0x40000,
 	DRAWNUMBER_POWERUPTIME = 0x80000,
 	DRAWNUMBER_DRAWSHADOW = 0x100000,
+	DRAWNUMBER_AIRTIME = 0x200000,
 };
 
 enum //drawbar flags (will go into special2)

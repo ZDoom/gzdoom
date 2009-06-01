@@ -606,6 +606,8 @@ void SBarInfo::ParseSBarInfoBlock(FScanner &sc, SBarInfoBlock &block)
 						cmd.flags |= DRAWNUMBER_TOTALSECRETS;
 					else if(sc.Compare("armorclass"))
 						cmd.flags |= DRAWNUMBER_ARMORCLASS;
+					else if(sc.Compare("airtime"))
+						cmd.flags |= DRAWNUMBER_AIRTIME;
 					else if(sc.Compare("globalvar"))
 					{
 						cmd.flags |= DRAWNUMBER_GLOBALVAR;
@@ -926,6 +928,8 @@ void SBarInfo::ParseSBarInfoBlock(FScanner &sc, SBarInfoBlock &block)
 					cmd.flags = DRAWNUMBER_ITEMS;
 				else if(sc.Compare("secrets"))
 					cmd.flags = DRAWNUMBER_SECRETS;
+				else if(sc.Compare("airtime"))
+					cmd.flags = DRAWNUMBER_AIRTIME;
 				else if(sc.Compare("poweruptime"))
 				{
 					cmd.flags |= DRAWNUMBER_POWERUPTIME;

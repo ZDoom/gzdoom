@@ -710,6 +710,13 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 						value = 0;
 					}
 				}
+				else if(cmd.flags & DRAWNUMBER_AIRTIME)
+				{
+					if(CPlayer->mo->waterlevel < 3)
+						value = level.airsupply/TICRATE;
+					else
+						value = clamp<int>((CPlayer->air_finished - level.time + (TICRATE-1))/TICRATE, 0, INT_MAX);
+				}
 				bool fillzeros = !!(cmd.flags & DRAWNUMBER_FILLZEROS);
 				bool drawshadow = !!(cmd.flags & DRAWNUMBER_DRAWSHADOW);
 				EColorRange translation = cmd.translation;
@@ -920,6 +927,11 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 						else
 							max = powerupGiver->EffectTics + 1;
 					}
+				}
+				else if(cmd.flags & DRAWNUMBER_AIRTIME)
+				{
+					value = clamp<int>(CPlayer->air_finished - level.time, 0, INT_MAX);
+					max = level.airsupply;
 				}
 				if(cmd.special3 != 0)
 					value = max - value; //invert since the new drawing method requires drawing the bg on the fg.

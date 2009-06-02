@@ -100,7 +100,7 @@ void FManaBar::SetVial (FTexture *pic, AActor *actor, const PClass *manaType)
 
 	ammo = actor->FindInventory (manaType);
 	level = ammo != NULL ? ammo->Amount : 0;
-	level = MIN (22*level/MAX_MANA, 22);
+	level = MIN (22*level/ammo->MaxAmount, 22);
 	if (VialPic != pic || VialLevel != level)
 	{
 		VialPic = pic;

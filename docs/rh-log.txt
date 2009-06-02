@@ -1,4 +1,8 @@
-﻿June 1, 2009  (Changes by Graf Zahl)
+﻿June 2, 2009  (Changes by Graf Zahl)
+- Fixed: The Hexen status bar still uses MAX_MANA for some calculations instead
+  of MaxAmount.
+
+June 1, 2009  (Changes by Graf Zahl)
 - Added Blzut3's submission for displaying underwater stats in SBARINFO.
 
 May 31, 2009  (Changes by Graf Zahl)

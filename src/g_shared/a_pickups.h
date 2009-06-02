@@ -5,8 +5,6 @@
 #include "info.h"
 #include "s_sound.h"
 
-#define MAX_MANA				200
-
 #define NUM_WEAPON_SLOTS		10
 
 class player_t;

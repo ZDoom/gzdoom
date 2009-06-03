@@ -343,7 +343,7 @@ protected:
 class MUSSong2 : public MIDIStreamer
 {
 public:
-	MUSSong2(FILE *file, char *musiccache, int length, EMIDIDevice type);
+	MUSSong2(FILE *file, BYTE *musiccache, int length, EMIDIDevice type);
 	~MUSSong2();
 
 	MusInfo *GetOPLDumper(const char *filename);
@@ -369,7 +369,7 @@ protected:
 class MIDISong2 : public MIDIStreamer
 {
 public:
-	MIDISong2(FILE *file, char *musiccache, int length, EMIDIDevice type);
+	MIDISong2(FILE *file, BYTE *musiccache, int length, EMIDIDevice type);
 	~MIDISong2();
 
 	MusInfo *GetOPLDumper(const char *filename);
@@ -431,7 +431,7 @@ protected:
 class TimiditySong : public StreamSong
 {
 public:
-	TimiditySong (FILE *file, char * musiccache, int length);
+	TimiditySong (FILE *file, BYTE *musiccache, int length);
 	~TimiditySong ();
 	void Play (bool looping, int subsong);
 	void Stop ();
@@ -469,7 +469,7 @@ protected:
 class OPLMUSSong : public StreamSong
 {
 public:
-	OPLMUSSong (FILE *file, char *musiccache, int length);
+	OPLMUSSong (FILE *file, BYTE *musiccache, int length);
 	~OPLMUSSong ();
 	void Play (bool looping, int subsong);
 	bool IsPlaying ();
@@ -524,7 +524,12 @@ public:
 
 // Module played via foo_dumb -----------------------------------------------
 
-MusInfo *MOD_OpenSong(FILE *file, char *musiccache, int len);
+MusInfo *MOD_OpenSong(FILE *file, BYTE *musiccache, int len);
+
+// Music played via Game Music Emu ------------------------------------------
+
+const char *GME_CheckFormat(uint32 header);
+MusInfo *GME_OpenSong(FILE *file, BYTE *musiccache, int len, const char *fmt);
 
 // --------------------------------------------------------------------------
 

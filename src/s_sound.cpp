@@ -2231,7 +2231,7 @@ bool S_StartMusic (const char *m_id)
 // specified, it will only be played if the specified CD is in a drive.
 //==========================================================================
 
-TArray<char> musiccache;
+TArray<BYTE> musiccache;
 
 bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 {

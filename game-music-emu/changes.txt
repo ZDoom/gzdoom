@@ -1,0 +1,218 @@
+Game_Music_Emu Change Log
+-------------------------
+
+Game_Music_Emu 0.5.2
+--------------------
+- *TONS* of changes and improvements. You should re-read the new header
+files and documentation as the changes will allow you to simplify your
+code a lot (it might even be simpler to just rewrite it). Existing code
+should continue to work without changes in most cases (see Deprecated
+features in gme.txt).
+
+- New file formats: AY, HES, KSS, SAP, NSFE
+
+- All-new comprehensive C interface (also usable from C++). Simplifies
+many things, especially file loading, and brings everything together in
+one header file (gme.h).
+
+- Information tags and track names and times can be accessed for all
+game music formats
+
+- New features supported by all emulators: end of track fading,
+automatic silence detection, adjustable song tempo, seek to new time in
+track
+
+- Updated mini player example to support track names and times, echo,
+tempo, and channel muting, and added visual waveform display
+
+- Improved configuration to use blargg_config.h, which you can modify
+and keep when you update to a newer libary version. Includes flag for
+library to automatically handle gzipped files using zlib (so you don't
+need to use Gzip_File_Reader anymore).
+
+- GBS: Fixed wave channel to not reset waveform when APU is powered off
+(affected Garfield). Also improved invalid bank selection (affected Game
+& Watch and others).
+
+- VGM: Added support for alternate noise shifter register
+configurations, used by other systems like the BBC Micro.
+
+- SPC: Removed IPL ROM dump from emulator, as none of the SPC files I
+scanned needed it, and an SPC file can include a copy if necessary. Also
+re-enabled supposed clamping in gaussian interpolation between the third
+and fourth lookups, though I don't know whether it matters
+
+- Added Music_Emu::load_mem() to use music data already in memory
+(without copying it)
+
+- Added Music_Emu::warning(), which reports minor problems when loading
+and playing a music file
+
+- Added Music_Emu::set_gain() for uniform adjustment of gain. Can only
+be set during initialization, so not useful as a general volume control.
+
+- Added custom operator new to ensure that no exceptions are thrown in
+the library (I'd use std::nothrow if it were part of pre-ISO (ARM) C++)
+
+- Added BLIP_BUFFER_FAST flag to blargg_config.h to use a lower quality
+bandlimited synthesis in "classic" emulators, which might help
+performance on ancient processors (measure first!). Don't use this
+unless absolutely necessary, as quality suffers.
+
+- Improved performance a bit for x86 platforms
+
+- Text files now in DOS newline format so they will open in Notepad
+properly
+
+- Removed requirement that file header structures not have any padding
+added to the end
+
+- Fixed common bug in all CPU emulators where negative program counter
+could crash emulator (occurred during a negative branch from the
+beginning of memory). Also fixed related bug in Z80 emulator for
+IX/IY+displacement mode.
+
+- Eliminated all warnings when compiling on gcc 4.0. The following
+generates no diagnostics:
+
+	gcc -S gme/*.cpp -o /dev/null -ansi -fno-gnu-keywords
+	-fno-nonansi-builtins -pedantic -W -Wabi -Wall -Wcast-align
+	-Wcast-qual -Wchar-subscripts -Wdisabled-optimization -Werror
+	-Winline -Wlong-long -Wmultichar -Winvalid-offsetof
+	-Wnon-virtual-dtor -Woverloaded-virtual -Wparentheses
+	-Wpointer-arith -Wredundant-decls -Wreorder -Wsign-compare
+	-Wsign-promo -Wunknown-pragmas -Wwrite-strings
+
+
+Game_Music_Emu 0.3.0
+--------------------
+- Added more demos, including music player using the SDL multimedia
+library for sound, and improved documentation
+
+- All: Improved interface to emulators to allow simpler setup and
+loading. Instead of various init() functions, all now support
+set_sample_rate( long rate ) and load( const char* file_path ).
+
+- All: Removed error return from start_track() and play(), and added
+error_count() to get the total number of emulation errors since the
+track was last started. See demos for examples of new usage.
+
+- All: Fixed mute_voices() muting to be preserved after loading files
+and starting tracks, instead of being cleared as it was whenever a track
+was started
+
+- VGM: Rewrote Vgm_Emu to support Sega Genesis/Mega Drive FM sound at
+any sample rate with optional FM oversampling, support for alternate
+YM2612 sound cores, and support for optional YM2413
+
+- VGM: Added tempo control, useful for slowing 60Hz NTSC Sega Genesis
+music to 50Hz PAL
+
+- VGM: Removed Vgm_Emu::track_data(), since I realized that this
+information is already present in the VGM header (oops!)
+
+- GYM: Changed Gym_Emu::track_length() operation (see Gym_Emu.h)
+
+- NSF: Added support for Sunsoft FME-7 sound chip used by Gimmick
+soundtrack
+
+- NSF: Fixed Namco 106 problems with Final Lap and others
+
+- Moved library sources to gme/ directory to reduce clutter, and merged
+boost/ functionality into blargg_common.h
+
+- Added Gzip_File_Reader for transparently using gzipped files
+
+
+Game_Music_Emu 0.2.4
+--------------------
+- Created a discussion forum for problems and feedback:
+http://groups-beta.google.com/group/blargg-sound-libs
+
+- Changed error return value of Blip_Buffer::sample_rate() (also for
+Stereo_Buffer, Effects_Buffer, etc.) to blargg_err_t (defined in
+blargg_common.h), to make error reporting consistent with other
+functions. This means the "no error" return value is the opposite of
+what it was before, which will break current code which checks the error
+return value:
+
+	// current code (broken)
+	if ( !buf.sample_rate( samples_per_sec ) )
+		out_of_memory();
+	
+	// quick-and-dirty fix (just remove the ! operation)
+	if ( buf.sample_rate( samples_per_sec ) )
+		out_of_memory();
+	
+	// proper fix
+	blargg_err_t error = buf.sample_rate( samples_per_sec );
+	if ( error )
+		report_error( error );
+
+- Implemented workaround for MSVC++ 6 compiler limitations, allowing it
+to work on that compiler again
+
+- Added sample clamping to avoid wrap-around at high volumes, allowing
+higher volume with little distortion
+
+- Added to-do list and design notes
+
+- Added Music_Emu::skip( long sample_count ) to skip ahead in current
+track
+
+- Added Gym_Emu::track_length() and Vgm_Emu::track_length() for
+determining the length of non-looped GYM and VGM files
+
+- Partially implemented DMC non-linearity when its value is directly set
+using $4011, which reduces previously over-emphasized "popping" of
+percussion on some games (TMNT II in particular)
+
+- Fixed Fir_Resampler, used for SPC and GYM playback (was incorrectly
+using abs() instead of fabs()...argh)
+
+- Fixed SPC emulation bugs: eliminated clicks in Plok! soundtrack and
+now stops sample slightly earlier than the end, as the SNES does. Fixed
+a totally broken CPU addressing mode.
+
+- Fixed Konami VRC6 saw wave (was very broken before). Now VRC6 music
+sounds decent
+
+- Fixed a minor GBS emulation bug
+
+- Fixed GYM loop point bug when track was restarted before loop point
+had been reached
+
+- Made default GBS frequency equalization less muffled
+
+- Added pseudo-surround effect removal for SPC files
+
+- Added Music_Emu::voice_names() which returns names for each voice.
+
+- Added BLARGG_SOURCE_BEGIN which allows custom compiler options to be
+easily set for library sources
+
+- Changed assignment of expansion sound chips in Nsf_Emu to be spread
+more evenly when using Effects_Buffer
+
+- Changed 'size_t' values in Blip_Buffer interface to 'long'
+
+- Changed demo to generate a WAVE sound file rather than an AIFF file
+
+
+Game_Music_Emu 0.2.0
+--------------------
+- Redid framework and rewrote/cleaned up emulators
+
+- Changed licensing to GNU Lesser General Public License (LGPL)
+
+- Added Sega Genesis GYM and Super Nintendo SPC emulators
+
+- Added Namco-106 and Konami VRC6 sound chip support to NSF emulator
+
+- Eliminated use of static mutable data in emulators, allowing
+multi-instance safety
+
+
+Game_Music_Emu 0.1.0
+--------------------
+- First release

@@ -513,7 +513,7 @@ static DUMBFILE_SYSTEM mem_dfs = {
 //
 //==========================================================================
 
-DUMBFILE *dumb_read_allfile(dumbfile_mem_status *filestate, char *start, FILE *file, char *musiccache, int lenhave, int lenfull)
+DUMBFILE *dumb_read_allfile(dumbfile_mem_status *filestate, BYTE *start, FILE *file, BYTE *musiccache, int lenhave, int lenfull)
 {
 	filestate->size = lenfull;
 	filestate->offset = 0;
@@ -857,13 +857,13 @@ static void MOD_SetAutoChip(DUH *duh)
 //
 //==========================================================================
 
-MusInfo *MOD_OpenSong(FILE *file, char *musiccache, int size)
+MusInfo *MOD_OpenSong(FILE *file, BYTE *musiccache, int size)
 {
 	DUH *duh = 0;
 	int headsize;
 	union
 	{
-		char start[64];
+		BYTE start[64];
 		DWORD dstart[64/4];
 	};
 	dumbfile_mem_status filestate;
@@ -881,7 +881,7 @@ MusInfo *MOD_OpenSong(FILE *file, char *musiccache, int size)
 
 	atterm(dumb_exit);
 
-	filestate.ptr = (BYTE *)start;
+	filestate.ptr = start;
 	filestate.offset = 0;
 	headsize = MIN((int)sizeof(start), size);
 	if (musiccache != NULL)
@@ -921,9 +921,9 @@ MusInfo *MOD_OpenSong(FILE *file, char *musiccache, int size)
 	}
 	else if (size >= 1168 &&
 		/*start[28] == 0x1A &&*/ start[29] == 2 &&
-		( ! strnicmp( &start[20], "!Scream!", 8 ) ||
-		  ! strnicmp( &start[20], "BMOD2STM", 8 ) ||
-		!   strnicmp( &start[20], "WUZAMOD!", 8 ) ) )
+		( !memcmp( &start[20], "!Scream!", 8 ) ||
+		  !memcmp( &start[20], "BMOD2STM", 8 ) ||
+		  !memcmp( &start[20], "WUZAMOD!", 8 ) ) )
 	{
 		if ((f = dumb_read_allfile(&filestate, start, file, musiccache, headsize, size)))
 		{
@@ -1050,7 +1050,7 @@ MusInfo *MOD_OpenSong(FILE *file, char *musiccache, int size)
 			fseek(file, fpos, SEEK_SET);
 		}
 	}
-	if (filestate.ptr != (BYTE *)start && filestate.ptr != (BYTE *)musiccache)
+	if (filestate.ptr != (BYTE *)start && filestate.ptr != musiccache)
 	{
 		delete[] const_cast<BYTE *>(filestate.ptr);
 	}

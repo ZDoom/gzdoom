@@ -10,7 +10,7 @@ CUSTOM_CVAR (Bool, opl_onechip, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 	}
 }
 
-OPLMUSSong::OPLMUSSong (FILE *file, char *musiccache, int len)
+OPLMUSSong::OPLMUSSong (FILE *file, BYTE *musiccache, int len)
 {
 	int samples = int(OPL_SAMPLE_RATE / 14);
 

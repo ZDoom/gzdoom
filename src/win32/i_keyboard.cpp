@@ -21,6 +21,11 @@
 
 #define DINPUT_BUFFERSIZE	32
 
+// Hi, w32api!
+#ifndef GET_RAWINPUT_CODE_WPARAM
+#define GET_RAWINPUT_CODE_WPARAM(wParam)	((wParam) & 0xff)
+#endif
+
 // TYPES -------------------------------------------------------------------
 
 class FDInputKeyboard : public FKeyboard

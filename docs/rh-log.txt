@@ -1,4 +1,7 @@
-﻿June 2, 2009  (Changes by Graf Zahl)
+﻿June 2, 2009
+- Swapped snes_spc out for the full Game Music Emu library.
+
+June 2, 2009  (Changes by Graf Zahl)
 - Fixed: The Hexen status bar still uses MAX_MANA for some calculations instead
   of MaxAmount.
 

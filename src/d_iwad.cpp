@@ -189,7 +189,7 @@ static EIWADType ScanIWAD (const char *iwad)
 		Check_e2m1
 	};
 	int lumpsfound[NUM_CHECKLUMPS];
-	int i;
+	size_t i;
 
 	memset (lumpsfound, 0, sizeof(lumpsfound));
 	FResourceFile *iwadfile = FResourceFile::OpenResourceFile(iwad, NULL, true);

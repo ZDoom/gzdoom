@@ -52,7 +52,7 @@ void OPLmusicBlock::Restart()
 	LastOffset = 0;
 }
 
-OPLmusicFile::OPLmusicFile (FILE *file, char *musiccache, int len)
+OPLmusicFile::OPLmusicFile (FILE *file, BYTE *musiccache, int len)
 	: ScoreLen (len)
 {
 	if (io == NULL)

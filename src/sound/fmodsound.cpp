@@ -78,8 +78,6 @@ struct FEnumList
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-FMOD_RESULT SPC_CreateCodec(FMOD::System *sys);
-
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
@@ -1081,12 +1079,6 @@ bool FMODSoundRenderer::Init()
 				ChannelGroupTargetUnit = NULL;
 			}
 		}
-	}
-
-	result = SPC_CreateCodec(Sys);
-	if (result != FMOD_OK)
-	{
-		Printf(TEXTCOLOR_BLUE"  Could not register SPC codec. (Error %d)\n", result);
 	}
 
 	if (FMOD_OK != Sys->getSoftwareFormat(&OutputRate, NULL, NULL, NULL, NULL, NULL))

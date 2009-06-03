@@ -73,10 +73,23 @@ extern void ChildSigHandler (int signum);
 #include "stats.h"
 #include "timidity/timidity.h"
 
+#define GZIP_ID1		31
+#define GZIP_ID2		139
+#define GZIP_CM			8
+#define GZIP_ID			MAKE_ID(GZIP_ID1,GZIP_ID2,GZIP_CM,0)
+
+#define GZIP_FTEXT		1
+#define GZIP_FHCRC		2
+#define GZIP_FEXTRA		4
+#define GZIP_FNAME		8
+#define GZIP_FCOMMENT	16
+
 EXTERN_CVAR (Int, snd_samplerate)
 EXTERN_CVAR (Int, snd_mididevice)
 
 static bool MusicDown = true;
+
+static BYTE *ungzip(BYTE *data, int *size);
 
 MusInfo *currSong;
 int		nomusic = 0;
@@ -275,11 +288,13 @@ MusInfo *I_RegisterURLSong (const char *url)
 	return NULL;
 }
 
-MusInfo *I_RegisterSong (const char *filename, char *musiccache, int offset, int len, int device)
+MusInfo *I_RegisterSong (const char *filename, BYTE *musiccache, int offset, int len, int device)
 {
 	FILE *file;
 	MusInfo *info = NULL;
 	DWORD id;
+	const char *fmt;
+	BYTE *ungzipped;
 
 	if (nomusic)
 	{
@@ -315,14 +330,45 @@ MusInfo *I_RegisterSong (const char *filename, char *musiccache, int offset, int
 	else 
 	{
 		file = NULL;
-		memcpy(&id, &musiccache[0], 4);
+		id = *(DWORD *)musiccache;
 	}
 
 #ifndef _WIN32
 	// non-windows platforms don't support MDEV_MIDI so map to MDEV_FMOD
-	if (device == MDEV_MMAPI) device = MDEV_FMOD;
+	if (device == MDEV_MMAPI)
+		device = MDEV_FMOD;
 #endif
 
+	// Check for gzip compression. Some formats are expected to have players
+	// that can handle it, so it simplifies things if we make all songs
+	// gzippable.
+	ungzipped = NULL;
+	if ((id & MAKE_ID(255,255,255,0)) == GZIP_ID)
+	{
+		if (offset != -1)
+		{
+			BYTE *gzipped = new BYTE[len];
+			if (fread(gzipped, 1, len, file) != (size_t)len)
+			{
+				delete[] gzipped;
+				fclose(file);
+				return NULL;
+			}
+			ungzipped = ungzip(gzipped, &len);
+			delete[] gzipped;
+		}
+		else
+		{
+			ungzipped = ungzip(musiccache, &len);
+		}
+		if (ungzipped == NULL)
+		{
+			fclose(file);
+			return NULL;
+		}
+		musiccache = ungzipped;
+		id = *(DWORD *)ungzipped;
+	}
 
 	// Check for MUS format
 	if (id == MAKE_ID('M','U','S',0x1a))
@@ -417,7 +463,7 @@ MusInfo *I_RegisterSong (const char *filename, char *musiccache, int offset, int
 				- if explicitly selected by $mididevice 
 				- when snd_mididevice  is -2 and no midi device is set for the song
 
-			  FMod:
+			  FMOD:
 				- if explicitly selected by $mididevice 
 				- when snd_mididevice  is -1 and no midi device is set for the song
 				- as fallback when Timidity failed unless snd_mididevice is >= 0
@@ -481,6 +527,11 @@ MusInfo *I_RegisterSong (const char *filename, char *musiccache, int offset, int
 				info = new OPLMUSSong (file, musiccache, len);
 			}
 		}
+		// Check for game music
+		else if ((fmt = GME_CheckFormat(id)) != NULL)
+		{
+			info = GME_OpenSong(file, musiccache, len, fmt);
+		}
 		// Check for module formats
 		else
 		{
@@ -526,20 +577,22 @@ MusInfo *I_RegisterSong (const char *filename, char *musiccache, int offset, int
 				fclose (file);
 				file = NULL;
 			}
-			info = new StreamSong (offset >=0 ? filename : musiccache, offset, len);
+			info = new StreamSong (offset >= 0 ? filename : (const char *)musiccache, offset, len);
 		}
 	}
-
 
 	if (info && !info->IsValid ())
 	{
 		delete info;
 		info = NULL;
 	}
-
 	if (file != NULL)
 	{
 		fclose (file);
+	}
+	if (ungzipped != NULL)
+	{
+		delete[] ungzipped;
 	}
 
 	return info;
@@ -556,6 +609,88 @@ MusInfo *I_RegisterCDSong (int track, int id)
 	}
 
 	return info;
+}
+
+//==========================================================================
+//
+// ungzip
+//
+// VGZ files are compressed with gzip, so we need to uncompress them before
+// handing them to GME.
+//
+//==========================================================================
+
+BYTE *ungzip(BYTE *data, int *complen)
+{
+	const BYTE *max = data + *complen - 8;
+	const BYTE *compstart = data + 10;
+	BYTE flags = data[3];
+	unsigned isize;
+	BYTE *newdata;
+	z_stream stream;
+	int err;
+
+	// Find start of compressed data stream
+	if (flags & GZIP_FEXTRA)
+	{
+		compstart += 2 + LittleShort(*(WORD *)(data + 10));
+	}
+	if (flags & GZIP_FNAME)
+	{
+		while (compstart < max && *compstart != 0)
+		{
+			compstart++;
+		}
+	}
+	if (flags & GZIP_FCOMMENT)
+	{
+		while (compstart < max && *compstart != 0)
+		{
+			compstart++;
+		}
+	}
+	if (flags & GZIP_FHCRC)
+	{
+		compstart += 2;
+	}
+	if (compstart >= max - 1)
+	{
+		return NULL;
+	}
+
+	// Decompress
+	isize = LittleLong(*(DWORD *)(data + *complen - 4));
+	newdata = new BYTE[isize];
+
+	stream.next_in = (Bytef *)compstart;
+	stream.avail_in = (uInt)(max - compstart);
+	stream.next_out = newdata;
+	stream.avail_out = isize;
+	stream.zalloc = (alloc_func)0;
+	stream.zfree = (free_func)0;
+
+	err = inflateInit2(&stream, -MAX_WBITS);
+	if (err != Z_OK)
+	{
+		delete[] newdata;
+		return NULL;
+	}
+
+	err = inflate(&stream, Z_FINISH);
+	if (err != Z_STREAM_END)
+	{
+		inflateEnd(&stream);
+		delete[] newdata;
+		return NULL;
+	}
+	err = inflateEnd(&stream);
+	if (err != Z_OK)
+	{
+		delete[] newdata;
+		return NULL;
+	}
+	*complen = isize;
+	return newdata;
 }
 
 void I_UpdateMusic()

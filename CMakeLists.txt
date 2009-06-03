@@ -105,7 +105,7 @@ set( LZMA_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lzma/C" )
 
 add_subdirectory( lzma )
 add_subdirectory( tools )
-add_subdirectory( snes_spc )
+add_subdirectory( game-music-emu )
 add_subdirectory( dumb )
 add_subdirectory( gdtoa )
 add_subdirectory( wadsrc )

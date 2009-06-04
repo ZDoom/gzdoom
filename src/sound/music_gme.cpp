@@ -37,7 +37,6 @@
 // Uncomment if you are using the DLL version of GME.
 //#define GME_DLL
 
-#define USE_WINDOWS_DWORD
 #include "i_musicinterns.h"
 #include "c_cvars.h"
 #include "critsec.h"

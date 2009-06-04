@@ -7,6 +7,9 @@
 #ifndef _WIN32_WINNT
 #define _WIN32_WINNT 0x0400
 #endif
+#ifndef USE_WINDOWS_DWORD
+#define USE_WINDOWS_DWORD
+#endif
 #include <windows.h>
 #include <mmsystem.h>
 #else

@@ -1581,7 +1581,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, duration, I, Inventory)
 	}
 	else
 	{
-		I_Error("\"powerup.color\" requires an actor of type \"Powerup\"\n");
+		I_Error("\"powerup.duration\" requires an actor of type \"Powerup\"\n");
 		return;
 	}
 

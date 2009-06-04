@@ -95,12 +95,18 @@ const BYTE *FManaBar::GetPixels ()
 
 void FManaBar::SetVial (FTexture *pic, AActor *actor, const PClass *manaType)
 {
-	int level;
+	int level, max;
 	AInventory *ammo;
 
 	ammo = actor->FindInventory (manaType);
-	level = ammo != NULL ? ammo->Amount : 0;
-	level = MIN (22*level/ammo->MaxAmount, 22);
+	level = 0; max = 200;
+	if (ammo != NULL)
+	{
+		level = ammo->Amount;
+		max = ammo->MaxAmount;
+		if (!max) max = 1;
+	}
+	level = MIN (22*level/max, 22);
 	if (VialPic != pic || VialLevel != level)
 	{
 		VialPic = pic;

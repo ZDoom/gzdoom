@@ -50,6 +50,8 @@
 CVAR (Bool, queryiwad, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 CVAR (String, defaultiwad, "", CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 
+EIWADType gameiwad;
+
 // If autoname is NULL, that's either because that game doesn't allow
 // loading of external wads or because it's already caught by the
 // general game-specific wads section.
@@ -633,6 +635,7 @@ static EIWADType IdentifyVersion (const char *zdoom_wad)
 const IWADInfo *D_FindIWAD(const char *basewad)
 {
 	EIWADType iwadType = IdentifyVersion(basewad);
+	gameiwad = iwadType;
 	const IWADInfo *iwad_info = &IWADInfos[iwadType];
 	I_SetIWADInfo(iwad_info);
 	return iwad_info;

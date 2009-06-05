@@ -1,4 +1,7 @@
-﻿June 2, 2009
+﻿June 5, 2009  (Changes by Graf Zahl)
+- Added Gez's GetArmorType submission
+
+June 2, 2009
 - Swapped snes_spc out for the full Game Music Emu library.
 
 June 2, 2009  (Changes by Graf Zahl)

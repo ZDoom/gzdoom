@@ -101,6 +101,9 @@ xx(ArtiSuperHealth)
 xx(MedicalKit)
 xx(MedPatch)
 
+// Armor
+xx(BasicArmor)
+
 // The Wings of Wrath
 xx(ArtiFly)
 

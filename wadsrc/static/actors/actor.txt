@@ -175,6 +175,7 @@ ACTOR Actor native //: Thinker
 	action native A_JumpIfHealthLower(int health, state label);
 	action native A_JumpIfCloser(float distance, state label);
 	action native A_JumpIfInventory(class<Inventory> itemtype, int itemamount, state label);
+	action native A_JumpIfArmorType(string Type, state label);
 	action native A_GiveInventory(class<Inventory> itemtype, int amount = 0);
 	action native A_TakeInventory(class<Inventory> itemtype, int amount = 0);
 	action native A_SpawnItem(class<Actor> itemtype, float distance = 0, float zheight = 0, bool useammo = true, bool transfer_translation = false);

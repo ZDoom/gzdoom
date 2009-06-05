@@ -22,7 +22,7 @@ IMPLEMENT_CLASS (AHexenArmor)
 void ABasicArmor::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
-	arc << SavePercent << BonusCount << MaxAbsorb << MaxFullAbsorb << AbsorbCount;
+	arc << SavePercent << BonusCount << MaxAbsorb << MaxFullAbsorb << AbsorbCount << ArmorType;
 }
 
 //===========================================================================
@@ -77,6 +77,7 @@ AInventory *ABasicArmor::CreateCopy (AActor *other)
 	copy->MaxAmount = MaxAmount;
 	copy->Icon = Icon;
 	copy->BonusCount = BonusCount;
+	copy->ArmorType = ArmorType;
 	GoAwayAndDie ();
 	return copy;
 }
@@ -237,6 +238,7 @@ bool ABasicArmorPickup::Use (bool pickup)
 	armor->Icon = Icon;
 	armor->MaxAbsorb = MaxAbsorb;
 	armor->MaxFullAbsorb = MaxFullAbsorb;
+	armor->ArmorType = this->GetClass()->TypeName;
 	return true;
 }
 
@@ -320,6 +322,7 @@ bool ABasicArmorBonus::Use (bool pickup)
 		armor->Icon = Icon;
 		armor->SavePercent = SavePercent;
 		armor->MaxAbsorb = MaxAbsorb;
+		armor->ArmorType = this->GetClass()->TypeName;
 		armor->MaxFullAbsorb = MaxFullAbsorb;
 	}
 

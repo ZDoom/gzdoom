@@ -72,6 +72,8 @@
 #include "m_png.h"
 #include "p_setup.h"
 
+#include "g_shared/a_pickups.h"
+
 extern FILE *Logfile;
 
 FRandom pr_acs ("ACS");
@@ -2799,6 +2801,7 @@ enum EACSFunctions
 	ACSF_GetAirSupply,
 	ACSF_SetAirSupply,
 	ACSF_SetSkyScrollSpeed,
+	ACSF_GetArmorType,
 };
 
 int DLevelScript::SideFromID(int id, int side)
@@ -2940,6 +2943,21 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 			if (args[0] == 1) level.skyspeed1 = FIXED2FLOAT(args[1]);
 			else if (args[0] == 2) level.skyspeed2 = FIXED2FLOAT(args[1]);
 			return 1;
+		}
+
+		case ACSF_GetArmorType:
+		{
+			if (args[1] < 0 || args[1] >= MAXPLAYERS || !playeringame[args[1]])
+			{
+				return 0;
+			}
+			else
+			{
+				FName p(FBehavior::StaticLookupString(args[0]));
+				ABasicArmor * armor = (ABasicArmor *) players[args[1]].mo->FindInventory(NAME_BasicArmor);
+				if (armor->ArmorType == p) return 1;
+			}
+			return 0;
 		}
 
 		default:

@@ -212,6 +212,7 @@ static FFlagDef ActorFlags[]=
 	DEFINE_FLAG(MF6, NOBOSSRIP, AActor, flags6),
 	DEFINE_FLAG(MF6, THRUSPECIES, AActor, flags6),
 	DEFINE_FLAG(MF6, MTHRUSPECIES, AActor, flags6),
+	DEFINE_FLAG(MF6, FORCEPAIN, AActor, flags6),
 
 	// Effect flags
 	DEFINE_FLAG(FX, VISIBILITYPULSE, AActor, effects),

@@ -1,4 +1,9 @@
 ﻿June 5, 2009  (Changes by Graf Zahl)
+- Added MF6_FORCEPAIN flag that forces the target to go into the pain state
+  regardless of pain chance.
+- Changed screenblocks CVAR to be settable per game.
+- Added SpawnSpotForced and SpawnSpotFacingForced ACS functions.
+- Added pushfactor actor property.
 - Added Gez's GetArmorType submission
 
 June 2, 2009

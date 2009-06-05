@@ -1037,8 +1037,8 @@ bool PIT_CheckThing (AActor *thing, FCheckPosition &tm)
 	if (thing->flags2 & MF2_PUSHABLE && !(tm.thing->flags2 & MF2_CANNOTPUSH) &&
 		(tm.thing->player == NULL || !(tm.thing->player->cheats & CF_PREDICTING)))
 	{ // Push thing
-		thing->momx += tm.thing->momx >> 2;
-		thing->momy += tm.thing->momy >> 2;
+		thing->momx += FixedMul(tm.thing->momx, thing->pushfactor);
+		thing->momy += FixedMul(tm.thing->momy, thing->pushfactor);
 	}
 	solid = (thing->flags & MF_SOLID) &&
 			!(thing->flags & MF_NOCLIP) &&

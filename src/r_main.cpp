@@ -686,7 +686,7 @@ void R_ExecuteSetViewSize ()
 //
 //==========================================================================
 
-CUSTOM_CVAR (Int, screenblocks, 10, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CUSTOM_CVAR (Int, screenblocks, 10, CVAR_ARCHIVE)
 {
 	if (self > 12)
 		self = 12;

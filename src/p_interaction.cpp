@@ -1123,6 +1123,8 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 				damage = newdam;
 				if (damage <= 0)
 				{
+					// If MF&_FORCEPAIN is set make the player enter the pain state.
+					if (inflictor != NULL && (inflictor->flags6 & MF6_FORCEPAIN)) goto dopain;
 					return;
 				}
 			}
@@ -1254,8 +1256,10 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 		}
 	}
 	
+dopain:
 	if (!(target->flags5 & MF5_NOPAIN) && (inflictor == NULL || !(inflictor->flags5 & MF5_PAINLESS)) && 
-		(pr_damagemobj() < painchance) && !(target->flags & MF_SKULLFLY))
+		(pr_damagemobj() < painchance || (inflictor != NULL && (inflictor->flags6 & MF6_FORCEPAIN))) && 
+		!(target->flags & MF_SKULLFLY))
 	{
 		if (mod == NAME_Electric)
 		{

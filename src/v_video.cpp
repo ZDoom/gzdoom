@@ -1526,6 +1526,15 @@ CUSTOM_CVAR (Bool, vid_nowidescreen, false, CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
 	}
 }
 
+CUSTOM_CVAR (Int, vid_aspect, 0, CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
+{
+	setsizeneeded = true;
+	if (StatusBar != NULL)
+	{
+		StatusBar->ScreenSizeChanged();
+	}
+}
+
 // Tries to guess the physical dimensions of the screen based on the
 // screen's pixel dimensions. Can return:
 // 0: 4:3
@@ -1534,6 +1543,11 @@ CUSTOM_CVAR (Bool, vid_nowidescreen, false, CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
 // 4: 5:4
 int CheckRatio (int width, int height)
 {
+	if ((vid_aspect >=1) && (vid_aspect <=4))
+	{
+		// [SP] User wants to force aspect ratio; let them.
+		return vid_aspect == 3? 0: int(vid_aspect);
+	}
 	if (vid_nowidescreen)
 	{
 		if (!vid_tft)

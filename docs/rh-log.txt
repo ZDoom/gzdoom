@@ -1,4 +1,7 @@
 ﻿June 6, 2009  (Changes by Graf Zahl)
+- Added Hirogen2's unlimited pickup patch.
+- Added railgun performance customization CVARs by Spleen.
+- Added aspect ratio override submission by SoulPriestess.
 - Added a 'resetinventory' MAPINFO option.
 - Added MF6_NOFEAR flag.
 - Added A_MonsterRefire(probability, jumptarget).

@@ -1740,7 +1740,6 @@ void D_DoomMain (void)
 	if (Args->CheckParm ("-nomonsters"))	flags |= DF_NO_MONSTERS;
 	if (Args->CheckParm ("-respawn"))		flags |= DF_MONSTERS_RESPAWN;
 	if (Args->CheckParm ("-fast"))			flags |= DF_FAST_MONSTERS;
-	if (Args->CheckParm("-ulp"))	sv_unlimited_pickup = true;
 
 	devparm = !!Args->CheckParm ("-devparm");
 

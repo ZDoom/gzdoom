@@ -295,6 +295,7 @@ void AActor::Serialize (FArchive &arc)
 		<< smokecounter
 		<< BlockingMobj
 		<< BlockingLine
+		<< pushfactor
 		<< Species;
 
 	if (arc.IsStoring ())

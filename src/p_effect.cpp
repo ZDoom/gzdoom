@@ -52,6 +52,9 @@
 #include "colormatcher.h"
 
 CVAR (Int, cl_rockettrails, 1, CVAR_ARCHIVE);
+CVAR (Bool, r_rail_smartspiral, 0, CVAR_ARCHIVE);
+CVAR (Int, r_rail_spiralsparsity, 1, CVAR_ARCHIVE);
+CVAR (Int, r_rail_trailsparsity, 1, CVAR_ARCHIVE);
 
 #define FADEFROMTTL(a)	(255/(a))
 
@@ -512,12 +515,15 @@ void P_DrawRailTrail (AActor *source, const FVector3 &start, const FVector3 &end
 	step = dir * 3;
 
 	// Create the outer spiral.
-	if (color1 != -1)
+	if (color1 != -1 && (!r_rail_smartspiral || color2 == -1) && r_rail_spiralsparsity > 0)
 	{
+		FVector3 spiral_step = step * r_rail_spiralsparsity;
+		int spiral_steps = steps * r_rail_spiralsparsity;
+		
 		color1 = color1 == 0 ? -1 : ColorMatcher.Pick(RPART(color1), GPART(color1), BPART(color1));
 		pos = start;
 		deg = FAngle(270);
-		for (i = steps; i; i--)
+		for (i = spiral_steps; i; i--)
 		{
 			particle_t *p = NewParticle ();
 			FVector3 tempvec;
@@ -538,8 +544,8 @@ void P_DrawRailTrail (AActor *source, const FVector3 &start, const FVector3 &end
 			p->x = FLOAT2FIXED(tempvec.X);
 			p->y = FLOAT2FIXED(tempvec.Y);
 			p->z = FLOAT2FIXED(tempvec.Z);
-			pos += step;
-			deg += FAngle(14);
+			pos += spiral_step;
+			deg += FAngle(r_rail_spiralsparsity * 14);
 
 			if (color1 == -1)
 			{
@@ -562,13 +568,16 @@ void P_DrawRailTrail (AActor *source, const FVector3 &start, const FVector3 &end
 	}
 
 	// Create the inner trail.
-	if (color2 != -1)
+	if (color2 != -1 && r_rail_trailsparsity > 0)
 	{
+		FVector3 trail_step = step * r_rail_trailsparsity;
+		int trail_steps = steps * r_rail_trailsparsity;
+
 		color2 = color2 == 0 ? -1 : ColorMatcher.Pick(RPART(color2), GPART(color2), BPART(color2));
 		FVector3 diff(0, 0, 0);
 
 		pos = start;
-		for (i = steps; i; i--)
+		for (i = trail_steps; i; i--)
 		{
 			particle_t *p = JitterParticle (33);
 
@@ -594,7 +603,7 @@ void P_DrawRailTrail (AActor *source, const FVector3 &start, const FVector3 &end
 			p->z = FLOAT2FIXED(postmp.Z);
 			if (color1 != -1)
 				p->accz -= FRACUNIT/4096;
-			pos += step;
+			pos += trail_step;
 
 			if (color2 == -1)
 			{

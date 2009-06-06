@@ -1,8 +1,8 @@
 ﻿June 5, 2009
 - Added support for horizontal mouse wheels, and set invprev/invnext as
-  default bindings for it. (Only works with Raw Input on XP. Vista has
-  support through Win32 mouse, as well. DirectInput does not support it at
-  all, because the DirectInput mouse device does not expose this control.)
+  default bindings for it. This is Vista only. DirectInput mouse (in_mouse 2)
+  does not support it, because the DirectInput mouse device does not expose
+  this control.
 - Added a label for the F16 key and mapped the kp= key on a Mac keyboard to
   the PC98 equivalent so it will be identified as kp=. (Interestingly, F13-
   F16 and kp= only generate events when using Raw Input, not when using

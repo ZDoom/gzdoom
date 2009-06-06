@@ -228,6 +228,10 @@ void FKeyboard::PostKeyEvent(int key, INTBOOL down, bool foreground)
 			key = DIK_LSHIFT;
 		}
 	}
+	if (key == 0x59)
+	{ // Turn kp= on a Mac keyboard into kp= on a PC98 keyboard.
+		key = DIK_NUMPADEQUALS;
+	}
 
 	// Generate the event, if appropriate.
 	if (down)

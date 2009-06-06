@@ -179,7 +179,7 @@ const char *KeyNames[NUM_KEYS] =
 	"kp8",		"kp9",		"kp-",		"kp4",		"kp5",		"kp6",		"kp+",		"kp1",		//48
 	"kp2",		"kp3",		"kp0",		"kp.",		NULL,		NULL,		"oem102",	"f11",		//50
 	"f12",		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		//58
-	NULL,		NULL,		NULL,		NULL,		"f13",		"f14",		"f15",		NULL,		//60
+	NULL,		NULL,		NULL,		NULL,		"f13",		"f14",		"f15",		"f16",		//60
 	NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		//68
 	"kana",		NULL,		NULL,		"abnt_c1",	NULL,		NULL,		NULL,		NULL,		//70
 	NULL,		"convert",	NULL,		"noconvert",NULL,		"yen",		"abnt_c2",	NULL,		//78

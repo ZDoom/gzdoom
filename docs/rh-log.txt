@@ -1,4 +1,10 @@
-﻿June 5, 2009  (Changes by Graf Zahl)
+﻿June 5, 2009
+- Added a label for the F16 key and mapped the kp= key on a Mac keyboard to
+  the PC98 equivalent so it will be identified as kp=. (Interestingly, F13-
+  F16 and kp= only generate events when using Raw Input, not when using
+  DirectInput.
+
+June 5, 2009  (Changes by Graf Zahl)
 - Added MF6_FORCEPAIN flag that forces the target to go into the pain state
   regardless of pain chance.
 - Changed screenblocks CVAR to be settable per game.

@@ -53,8 +53,10 @@ enum EGUIEvent
 	EV_GUI_RButtonDown,
 	EV_GUI_RButtonUp,
 	EV_GUI_RButtonDblClick,
-	EV_GUI_WheelDown,		// data3: shift/ctrl/alt
-	EV_GUI_WheelUp			// data3: shift/ctrl/alt
+	EV_GUI_WheelUp,			// data3: shift/ctrl/alt
+	EV_GUI_WheelDown,		// "
+	EV_GUI_WheelRight,		// "
+	EV_GUI_WheelLeft,		// "
 };
 
 enum GUIKeyModifiers

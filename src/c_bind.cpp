@@ -70,6 +70,8 @@ static const FBinding DefBindings[] =
 	{ "0", "slot 0" },
 	{ "[", "invprev" },
 	{ "]", "invnext" },
+	{ "mwheelleft", "invprev" },
+	{ "mwheelright", "invnext" },
 	{ "enter", "invuse" },
 	{ "-", "sizedown" },
 	{ "=", "sizeup" },
@@ -243,6 +245,7 @@ const char *KeyNames[NUM_KEYS] =
 	"pov4up",	"pov4right","pov4down",	"pov4left",		// Fourth POV hat
 
 	"mwheelup",	"mwheeldown",							// the mouse wheel
+	"mwheelright", "mwheelleft",
 };
 
 static FString Bindings[NUM_KEYS];

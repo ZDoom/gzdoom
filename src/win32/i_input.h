@@ -76,11 +76,11 @@ public:
 
 protected:
 	void PostMouseMove(int x, int y);
-	void WheelMoved(int wheelmove);
+	void WheelMoved(int axis, int wheelmove);
 	void PostButtonEvent(int button, bool down);
 	void ClearButtonState();
 
-	int WheelMove;
+	int WheelMove[2];
 	int LastX, LastY;	// for m_filter
 	WORD ButtonState;	// bit mask of current button states (1=down, 0=up)
 };

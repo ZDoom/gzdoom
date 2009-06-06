@@ -1428,11 +1428,11 @@ static bool C_HandleKey (event_t *ev, BYTE *buffer, int len)
 	case EV_GUI_WheelDown:
 		if (!(ev->data3 & GKM_SHIFT))
 		{
-			data1 = GK_PGDN + ev->subtype - EV_GUI_WheelDown;
+			data1 = GK_PGDN + EV_GUI_WheelDown - ev->subtype;
 		}
 		else
 		{
-			data1 = GK_DOWN + ev->subtype - EV_GUI_WheelDown;
+			data1 = GK_DOWN + EV_GUI_WheelDown - ev->subtype;
 		}
 		// Intentional fallthrough
 

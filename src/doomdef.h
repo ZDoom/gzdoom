@@ -167,8 +167,10 @@ enum ESkillLevels
 
 #define KEY_MWHEELUP			0x198
 #define KEY_MWHEELDOWN			0x199
+#define KEY_MWHEELRIGHT			0x19A
+#define KEY_MWHEELLEFT			0x19B
 
-#define NUM_KEYS				0x19A
+#define NUM_KEYS				0x19C
 
 #define JOYAXIS_NONE			0
 #define JOYAXIS_YAW				1

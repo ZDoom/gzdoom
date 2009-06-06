@@ -32,6 +32,12 @@
 #define GET_XBUTTON_WPARAM(wParam) (HIWORD(wParam))
 #endif
 
+// Only present in Vista SDK, and it probably isn't available with w32api,
+// either.
+#ifndef WM_MOUSEHWHEEL
+#define WM_MOUSEHWHEEL	0x20e
+#endif
+
 // TYPES -------------------------------------------------------------------
 
 class FRawMouse : public FMouse
@@ -266,7 +272,8 @@ FMouse::FMouse()
 {
 	LastX = LastY = 0;
 	ButtonState = 0;
-	WheelMove = 0;
+	WheelMove[0] = 0;
+	WheelMove[1] = 0;
 }
 
 //==========================================================================
@@ -308,18 +315,20 @@ void FMouse::PostMouseMove(int x, int y)
 // Generates events for a wheel move. Events are generated for every
 // WHEEL_DELTA units that the wheel has moved. In normal mode, each move
 // generates both a key down and a key up event. In GUI mode, only one
-// event is generated for each unit of movement.
+// event is generated for each unit of movement. Axis can be 0 for up/down
+// or 1 for left/right.
 //
 //==========================================================================
 
-void FMouse::WheelMoved(int wheelmove)
+void FMouse::WheelMoved(int axis, int wheelmove)
 {
+	assert(axis == 0 || axis == 1);
 	event_t ev = { 0 };
 	int dir;
 
-	WheelMove += wheelmove;
+	WheelMove[axis] += wheelmove;
 
-	if (WheelMove < 0)
+	if (WheelMove[axis] < 0)
 	{
 		dir = WHEEL_DELTA;
 		ev.data1 = KEY_MWHEELDOWN;
@@ -329,30 +338,31 @@ void FMouse::WheelMoved(int wheelmove)
 		dir = -WHEEL_DELTA;
 		ev.data1 = KEY_MWHEELUP;
 	}
+	ev.data1 += axis * 2;
 
 	if (!GUICapture)
 	{
-		while (abs(WheelMove) >= WHEEL_DELTA)
+		while (abs(WheelMove[axis]) >= WHEEL_DELTA)
 		{
 			ev.type = EV_KeyDown;
 			D_PostEvent(&ev);
 			ev.type = EV_KeyUp;
 			D_PostEvent(&ev);
-			WheelMove += dir;
+			WheelMove[axis] += dir;
 		}
 	}
 	else
 	{
 		ev.type = EV_GUI_Event;
-		ev.subtype = (WheelMove < 0) ? EV_GUI_WheelDown : EV_GUI_WheelUp;
+		ev.subtype = ev.data1 - KEY_MWHEELUP + EV_GUI_WheelUp;
 		if (GetKeyState(VK_SHIFT) & 0x8000)		ev.data3 |= GKM_SHIFT;
 		if (GetKeyState(VK_CONTROL) & 0x8000)	ev.data3 |= GKM_CTRL;
 		if (GetKeyState(VK_MENU) & 0x8000)		ev.data3 |= GKM_ALT;
 		ev.data1 = 0;
-		while (abs(WheelMove) >= WHEEL_DELTA)
+		while (abs(WheelMove[axis]) >= WHEEL_DELTA)
 		{
 			D_PostEvent(&ev);
-			WheelMove += dir;
+			WheelMove[axis] += dir;
 		}
 	}
 }
@@ -415,7 +425,8 @@ void FMouse::ClearButtonState()
 		ButtonState = 0;
 	}
 	// Reset mouse wheel accumulation to 0.
-	WheelMove = 0;
+	WheelMove[0] = 0;
+	WheelMove[1] = 0;
 }
 
 //==========================================================================
@@ -597,7 +608,11 @@ bool FRawMouse::WndProcHook(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 			}
 			if (raw->data.mouse.usButtonFlags & RI_MOUSE_WHEEL)
 			{
-				WheelMoved((SHORT)raw->data.mouse.usButtonData);
+				WheelMoved(0, (SHORT)raw->data.mouse.usButtonData);
+			}
+			else if (raw->data.mouse.usButtonFlags & 0x800)	// horizontal mouse wheel
+			{
+				WheelMoved(1, (SHORT)raw->data.mouse.usButtonData);
 			}
 			PostMouseMove(m_noprescale ? raw->data.mouse.lLastX : raw->data.mouse.lLastX<<2,
 				-raw->data.mouse.lLastY);
@@ -794,7 +809,7 @@ void FDInputMouse::ProcessInput()
 		}
 		else if (od.dwOfs == (DWORD)DIMOFS_Z)
 		{
-			WheelMoved(od.dwData);
+			WheelMoved(0, od.dwData);
 		}
 		else if (od.dwOfs >= (DWORD)DIMOFS_BUTTON0 && od.dwOfs <= (DWORD)DIMOFS_BUTTON7)
 		{
@@ -963,7 +978,12 @@ bool FWin32Mouse::WndProcHook(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 	}
 	else if (message == WM_MOUSEWHEEL)
 	{
-		WheelMoved((SHORT)HIWORD(wParam));
+		WheelMoved(0, (SHORT)HIWORD(wParam));
+		return true;
+	}
+	else if (message == WM_MOUSEHWHEEL)
+	{
+		WheelMoved(1, (SHORT)HIWORD(wParam));
 		return true;
 	}
 	else if (message >= WM_LBUTTONDOWN && message <= WM_MBUTTONUP)

@@ -198,6 +198,7 @@ enum ELevelFlags
 
 	LEVEL2_SMOOTHLIGHTING		= 0x01000000,	// Level uses the smooth lighting feature.
 	LEVEL2_POLYGRIND			= 0x02000000,	// Polyobjects grind corpses to gibs.
+	LEVEL2_RESETINVENTORY		= 0x04000000,	// Resets player inventory when starting this level (unless in a hub)
 };
 
 

@@ -724,11 +724,14 @@ void P_NewChaseDir(AActor * actor)
 		deltax = actor->target->x - actor->x;
 		deltay = actor->target->y - actor->y;
 
-		if ((actor->target->player != NULL && (actor->target->player->cheats & CF_FRIGHTENING)) || 
-			(actor->flags4 & MF4_FRIGHTENED))
+		if (!(actor->flags6 & MF6_NOFEAR))
 		{
-			deltax = -deltax;
-			deltay = -deltay;
+			if ((actor->target->player != NULL && (actor->target->player->cheats & CF_FRIGHTENING)) || 
+				(actor->flags4 & MF4_FRIGHTENED))
+			{
+				deltax = -deltax;
+				deltay = -deltay;
+			}
 		}
 	}
 	else

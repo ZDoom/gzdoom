@@ -1316,6 +1316,7 @@ MapFlagHandlers[] =
 	{ "nocheckswitchrange",				MITYPE_CLRFLAG2,	LEVEL2_CHECKSWITCHRANGE, 0 },
 	{ "grinding_polyobj",				MITYPE_SETFLAG2,	LEVEL2_POLYGRIND, 0 },
 	{ "no_grinding_polyobj",			MITYPE_CLRFLAG2,	LEVEL2_POLYGRIND, 0 },
+	{ "resetinventory",					MITYPE_SETFLAG2,	LEVEL2_RESETINVENTORY, 0 },
 	{ "unfreezesingleplayerconversations",MITYPE_SETFLAG2,	LEVEL2_CONV_SINGLE_UNFREEZE, 0 },
 	{ "nobotnodes",						MITYPE_IGNORE,	0, 0 },		// Skulltag option: nobotnodes
 	{ "compat_shorttex",				MITYPE_COMPATFLAG, COMPATF_SHORTTEX},

@@ -549,6 +549,8 @@ static bool		g_nomonsters;
 void G_ChangeLevel(const char *levelname, int position, bool keepFacing, int nextSkill, 
 				   bool nointermission, bool resetinv, bool nomonsters)
 {
+	level_info_t *nextinfo = NULL;
+
 	if (unloading)
 	{
 		Printf (TEXTCOLOR_RED "Unloading scripts cannot exit the level again.\n");
@@ -559,7 +561,7 @@ void G_ChangeLevel(const char *levelname, int position, bool keepFacing, int nex
 
 	if (strncmp(levelname, "enDSeQ", 6))
 	{
-		level_info_t *nextinfo = FindLevelInfo (nextlevel)->CheckLevelRedirect ();
+		nextinfo = FindLevelInfo (nextlevel)->CheckLevelRedirect ();
 		if (nextinfo)
 		{
 			nextlevel = nextinfo->mapname;
@@ -573,12 +575,20 @@ void G_ChangeLevel(const char *levelname, int position, bool keepFacing, int nex
 	if (nointermission) level.flags |= LEVEL_NOINTERMISSION;
 
 	cluster_info_t *thiscluster = FindClusterInfo (level.cluster);
-	cluster_info_t *nextcluster = FindClusterInfo (FindLevelInfo (nextlevel)->cluster);
+	cluster_info_t *nextcluster = nextinfo? FindClusterInfo (nextinfo->cluster) : NULL;
 
 	startpos = position;
 	startkeepfacing = keepFacing;
 	gameaction = ga_completed;
 	resetinventory = resetinv;
+		
+	if (nextinfo != NULL) 
+	{
+		if (thiscluster != nextcluster || (thiscluster && !(thiscluster->flags & CLUSTER_HUB)))
+		{
+			resetinventory |= !!(nextinfo->flags2 & LEVEL2_RESETINVENTORY);
+		}
+	}
 
 	bglobal.End();	//Added by MC:
 

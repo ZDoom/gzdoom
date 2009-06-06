@@ -4272,6 +4272,7 @@ AActor *P_SpawnPuff (AActor *source, const PClass *pufftype, fixed_t x, fixed_t 
 
 	puff = Spawn (pufftype, x, y, z, ALLOW_REPLACE);
 	if (puff == NULL) return NULL;
+	if (source != NULL) puff->angle = R_PointToAngle2(x, y, source->x, source->y);
 
 	// If a puff has a crash state and an actor was not hit,
 	// it will enter the crash state. This is used by the StrifeSpark

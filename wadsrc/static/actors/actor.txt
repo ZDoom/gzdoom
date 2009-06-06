@@ -236,6 +236,9 @@ ACTOR Actor native //: Thinker
 	action native A_RemoveForcefield();
 	action native A_DropWeaponPieces(class<Actor> p1, class<Actor> p2, class<Actor> p3);
 	action native A_PigPain ();
+	
+	action native A_JumpIfTargetInSight(state label);
+	action native A_MonsterRefire(int chance, state label);
 
 	States
 	{

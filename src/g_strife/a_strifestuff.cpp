@@ -674,6 +674,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ItBurnsItBurns)
 		self->player->ReadyWeapon = NULL;
 		self->player->PendingWeapon = WP_NOCHANGE;
 		self->player->playerstate = PST_LIVE;
+		self->player->extralight = 3;
 	}
 }
 
@@ -705,6 +706,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_HandLower)
 		{
 			P_SetPsprite (self->player, ps_weapon, NULL);
 		}
+		if (self->player->extralight > 0) self->player->extralight--;
 	}
 }
 

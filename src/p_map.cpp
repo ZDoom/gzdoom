@@ -1011,21 +1011,25 @@ bool PIT_CheckThing (AActor *thing, FCheckPosition &tm)
 		}
 		// Do damage
 		damage = tm.thing->GetMissileDamage ((tm.thing->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1);
-		if (damage > 0)
+		// [GZ] If MF6_FORCEPAIN is set, we need to call P_DamageMobj even if damage is 0!
+		if ((damage > 0) || (tm.thing->flags6 & MF6_FORCEPAIN)) 
 		{
 			P_DamageMobj (thing, tm.thing, tm.thing->target, damage, tm.thing->DamageType);
-			if ((tm.thing->flags5 & MF5_BLOODSPLATTER) &&
-				!(thing->flags & MF_NOBLOOD) &&
-				!(thing->flags2 & MF2_REFLECTIVE) &&
-				!(thing->flags2 & (MF2_INVULNERABLE|MF2_DORMANT)) &&
-				!(tm.thing->flags3 & MF3_BLOODLESSIMPACT) &&
-				(pr_checkthing() < 192))
+			if (damage > 0)
 			{
-				P_BloodSplatter (tm.thing->x, tm.thing->y, tm.thing->z, thing);
-			}
-			if (!(tm.thing->flags3 & MF3_BLOODLESSIMPACT))
-			{
-				P_TraceBleed (damage, thing, tm.thing);
+				if ((tm.thing->flags5 & MF5_BLOODSPLATTER) &&
+					!(thing->flags & MF_NOBLOOD) &&
+					!(thing->flags2 & MF2_REFLECTIVE) &&
+					!(thing->flags2 & (MF2_INVULNERABLE|MF2_DORMANT)) &&
+					!(tm.thing->flags3 & MF3_BLOODLESSIMPACT) &&
+					(pr_checkthing() < 192))
+				{
+					P_BloodSplatter (tm.thing->x, tm.thing->y, tm.thing->z, thing);
+				}
+				if (!(tm.thing->flags3 & MF3_BLOODLESSIMPACT))
+				{
+					P_TraceBleed (damage, thing, tm.thing);
+				}
 			}
 		}
 		else if (damage < 0)
@@ -3239,7 +3243,8 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 						trace.Actor, srcangle, srcpitch);
 				}
 			}
-			if (damage) 
+			// [GZ] If MF6_FORCEPAIN is set, we need to call P_DamageMobj even if damage is 0!
+			if (damage || puff->flags6 & MF6_FORCEPAIN) 
 			{
 				int flags = DMG_INFLICTOR_IS_PUFF;
 				// Allow MF5_PIERCEARMOR on a weapon as well.

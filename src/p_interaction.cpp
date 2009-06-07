@@ -878,6 +878,9 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 	player_t *player = NULL;
 	fixed_t thrust;
 	int temp;
+	int painchance = 0;
+	FState * woundstate = NULL;
+	PainChanceList * pc = NULL;
 
 	if (target == NULL || !(target->flags & MF_SHOOTABLE))
 	{ // Shouldn't happen
@@ -1233,7 +1236,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 		return;
 	}
 
-	FState * woundstate = target->FindState(NAME_Wound, mod);
+	woundstate = target->FindState(NAME_Wound, mod);
 	if (woundstate != NULL)
 	{
 		int woundhealth = RUNTIME_TYPE(target)->Meta.GetMetaInt (AMETA_WoundHealth, 6);
@@ -1244,9 +1247,9 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 			return;
 		}
 	}
-	
-	PainChanceList * pc = target->GetClass()->ActorInfo->PainChances;
-	int painchance = target->PainChance;
+
+	pc = target->GetClass()->ActorInfo->PainChances;
+	painchance = target->PainChance;
 	if (pc != NULL)
 	{
 		BYTE * ppc = pc->CheckKey(mod);

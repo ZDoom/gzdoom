@@ -1,4 +1,7 @@
-﻿June 6, 2009
+﻿June 7, 2009  (Changes by Graf Zahl)
+- Added Karate Chris's poison cloud fix.
+
+June 6, 2009
 - Added per-tier texture scaling with these new UDMF sidedef properties:
   * scalex_top
   * scaley_top

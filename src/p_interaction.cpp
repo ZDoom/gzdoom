@@ -1388,11 +1388,11 @@ bool AActor::OkayToSwitchTarget (AActor *other)
 //
 //==========================================================================
 
-void P_PoisonPlayer (player_t *player, AActor *poisoner, AActor *source, int poison)
+bool P_PoisonPlayer (player_t *player, AActor *poisoner, AActor *source, int poison)
 {
 	if((player->cheats&CF_GODMODE) || (player->mo->flags2 & MF2_INVULNERABLE))
 	{
-		return;
+		return false;
 	}
 	if (source != NULL && source->player != player && player->mo->IsTeammate (source))
 	{
@@ -1407,6 +1407,7 @@ void P_PoisonPlayer (player_t *player, AActor *poisoner, AActor *source, int poi
 			player->poisoncount = 100;
 		}
 	}
+	return true;
 }
 
 //==========================================================================
@@ -1490,6 +1491,7 @@ void P_PoisonDamage (player_t *player, AActor *source, int damage,
 		P_SetMobjState(target, target->info->painstate);
 	}
 */
+	return;
 }
 
 bool CheckCheatmode ();

@@ -274,9 +274,10 @@ int APoisonCloud::DoSpecialDamage (AActor *victim, int damage)
 			{
 				P_PoisonDamage (victim->player, this,
 					15+(pr_poisoncloudd()&15), false); // Don't play painsound
-				P_PoisonPlayer (victim->player, this, this->target, 50);
 
-				S_Sound (victim, CHAN_VOICE, "*poison", 1, ATTN_NORM);
+				// If successful, play the posion sound.
+				if (P_PoisonPlayer (victim->player, this, this->target, 50))
+					S_Sound (victim, CHAN_VOICE, "*poison", 1, ATTN_NORM);
 			}
 		}	
 		return -1;

@@ -1,5 +1,5 @@
 ===============================================================================
-Universal Doom Map Format ZDoom extensions v1.6 - 28.04.2009
+Universal Doom Map Format ZDoom extensions v1.7 - 07.06.2009
 
 
     Copyright (c) 2008 Christoph Oelckers.
@@ -109,6 +109,12 @@ Note: All <bool> fields default to false unless mentioned otherwise.
    
    sidedef
    {
+      scalex_top = <float>;    // X scale for upper texture, Default = 1.0.
+      scaley_top = <float>;    // y scale for upper texture, Default = 1.0.
+      scalex_mid = <float>;    // X scale for mid texture, Default = 1.0.
+      scaley_mid = <float>;    // y scale for mid texture, Default = 1.0.
+      scalex_bottom = <float>; // X scale for lower texture, Default = 1.0.
+      scaley_bottom = <float>; // y scale for lower texture, Default = 1.0.
       offsetx_top = <float>;    // X offset for upper texture, Default = 0.0.
       offsety_top = <float>;    // y offset for upper texture, Default = 0.0.
       offsetx_mid = <float>;    // X offset for mid texture, Default = 0.0.
@@ -122,6 +128,8 @@ Note: All <bool> fields default to false unless mentioned otherwise.
                                 // relative to the owning sector's light level.
       nofakecontrast = <bool>;	// Disables use of fake contrast on this sidedef.
       smoothlighting = <bool>;	// Use smooth fake contrast.
+      clipmidtex = <bool>;      // Side's mid textures are clipped to floor and ceiling.
+      wrapmidtex = <bool>;      // Side's mid textures are wrapped.
    }
    
    sector
@@ -237,6 +245,9 @@ Added blockprojectiles to lines and firstsideonly to conversion notes
 
 1.6 28.04.2009
 Added blockuse line flag.
+
+1.7 07.06.2009
+Added sidedef scaling properties and side specific clipmidtex and wrapmidtex.
 
 ===============================================================================
 EOF

@@ -36,6 +36,7 @@ struct drawseg_t
 	fixed_t		sz1, sz2;		// z for left, right of parent seg on screen
 	fixed_t		siz1, siz2;		// 1/z for left, right of parent seg on screen
 	fixed_t		cx, cy, cdx, cdy;
+	fixed_t		yrepeat;
 	BYTE 		silhouette;		// 0=none, 1=bottom, 2=top, 3=both
 	BYTE		bFogBoundary;
 	int			shade;

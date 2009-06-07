@@ -1,4 +1,16 @@
-﻿June 6, 2009  (Changes by Graf Zahl)
+﻿June 6, 2009
+- Added per-tier texture scaling with these new UDMF sidedef properties:
+  * scalex_top
+  * scaley_top
+  * scalex_mid
+  * scaley_mid
+  * scalex_bottom
+  * scalex_bottom
+- Added sidedef versions of the linedef flags wrapmidtex and clipmidtex (via
+  UDMF; names are the same). If the flag is set on the line, it applies to
+  both sides. Otherwise, each side can control them individually.
+
+June 6, 2009  (Changes by Graf Zahl)
 - Added Hirogen2's unlimited pickup patch.
 - Added railgun performance customization CVARs by Spleen.
 - Added aspect ratio override submission by SoulPriestess.

@@ -701,10 +701,12 @@ class DBaseDecal;
 
 enum
 {
-	WALLF_ABSLIGHTING	= 1,	// Light is absolute instead of relative
-	WALLF_NOAUTODECALS	= 2,	// Do not attach impact decals to this wall
+	WALLF_ABSLIGHTING	 = 1,	// Light is absolute instead of relative
+	WALLF_NOAUTODECALS	 = 2,	// Do not attach impact decals to this wall
 	WALLF_NOFAKECONTRAST = 4,	// Don't do fake contrast for this wall in side_t::GetLightLevel
 	WALLF_SMOOTHLIGHTING = 8,   // Similar to autocontrast but applies to all angles.
+	WALLF_CLIP_MIDTEX	 = 16,	// Like the line counterpart, but only for this side.
+	WALLF_WRAP_MIDTEX	 = 32,	// Like the line counterpart, but only for this side.
 };
 
 struct side_t
@@ -719,6 +721,8 @@ struct side_t
 	{
 		fixed_t xoffset;
 		fixed_t yoffset;
+		fixed_t xscale;
+		fixed_t yscale;
 		FTextureID texture;
 		TObjPtr<DInterpolation> interpolation;
 		//int Light;
@@ -786,6 +790,32 @@ struct side_t
 	void AddTextureYOffset(int which, fixed_t delta)
 	{
 		textures[which].yoffset += delta;
+	}
+
+	void SetTextureXScale(int which, fixed_t scale)
+	{
+		textures[which].xscale = scale;
+	}
+	void SetTextureXScale(fixed_t scale)
+	{
+		textures[top].xscale = textures[mid].xscale = textures[bottom].xscale = scale;
+	}
+	fixed_t GetTextureXScale(int which) const
+	{
+		return textures[which].xscale;
+	}
+
+	void SetTextureYScale(int which, fixed_t scale)
+	{
+		textures[which].yscale = scale;
+	}
+	void SetTextureYScale(fixed_t scale)
+	{
+		textures[top].yscale = textures[mid].yscale = textures[bottom].yscale = scale;
+	}
+	fixed_t GetTextureYScale(int which) const
+	{
+		return textures[which].yscale;
 	}
 
 	DInterpolation *SetInterpolation(int position);

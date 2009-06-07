@@ -348,10 +348,13 @@ struct UDMFParser
 		return parsedString;
 	}
 
-	void Flag(DWORD &value, int mask, const char *key)
+	template<typename T>
+	void Flag(T &value, int mask, const char *key)
 	{
-		if (CheckBool(key))	value |= mask;
-		else value &= ~mask;
+		if (CheckBool(key))
+			value |= mask;
+		else
+			value &= ~mask;
 	}
 
 
@@ -859,6 +862,8 @@ struct UDMFParser
 		strncpy(sdt->bottomtexture, "-", 8);
 		strncpy(sdt->toptexture, "-", 8);
 		strncpy(sdt->midtexture, "-", 8);
+		sd->SetTextureXScale(FRACUNIT);
+		sd->SetTextureYScale(FRACUNIT);
 
 		sc.MustGetToken('{');
 		while (!sc.CheckToken('}'))
@@ -920,23 +925,52 @@ struct UDMFParser
 				sd->SetTextureYOffset(side_t::bottom, CheckFixed(key));
 				continue;
 
+			case NAME_scalex_top:
+				sd->SetTextureXScale(side_t::top, CheckFixed(key));
+				continue;
+
+			case NAME_scaley_top:
+				sd->SetTextureYScale(side_t::top, CheckFixed(key));
+				continue;
+
+			case NAME_scalex_mid:
+				sd->SetTextureXScale(side_t::mid, CheckFixed(key));
+				continue;
+
+			case NAME_scaley_mid:
+				sd->SetTextureYScale(side_t::mid, CheckFixed(key));
+				continue;
+
+			case NAME_scalex_bottom:
+				sd->SetTextureXScale(side_t::bottom, CheckFixed(key));
+				continue;
+
+			case NAME_scaley_bottom:
+				sd->SetTextureYScale(side_t::bottom, CheckFixed(key));
+				continue;
+
 			case NAME_light:
 				sd->SetLight(CheckInt(key));
 				continue;
 
 			case NAME_lightabsolute:
-				if (CheckBool(key)) sd->Flags |= WALLF_ABSLIGHTING;
-				else sd->Flags &= ~WALLF_ABSLIGHTING;
+				Flag(sd->Flags, WALLF_ABSLIGHTING, key);
 				continue;
 
 			case NAME_nofakecontrast:
-				if (CheckBool(key)) sd->Flags |= WALLF_NOFAKECONTRAST;
-				else sd->Flags &= WALLF_NOFAKECONTRAST;
+				Flag(sd->Flags, WALLF_NOFAKECONTRAST, key);
 				continue;
 
 			case NAME_smoothlighting:
-				if (CheckBool(key)) sd->Flags |= WALLF_SMOOTHLIGHTING;
-				else sd->Flags &= ~WALLF_SMOOTHLIGHTING;
+				Flag(sd->Flags, WALLF_SMOOTHLIGHTING, key);
+				continue;
+
+			case NAME_Wrapmidtex:
+				Flag(sd->Flags, WALLF_WRAP_MIDTEX, key);
+				continue;
+
+			case NAME_Clipmidtex:
+				Flag(sd->Flags, WALLF_CLIP_MIDTEX, key);
 				continue;
 
 			default:

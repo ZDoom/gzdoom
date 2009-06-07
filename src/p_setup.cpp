@@ -2330,6 +2330,8 @@ void P_LoadSideDefs2 (MapData * map)
 
 		sd->SetTextureXOffset(LittleShort(msd->textureoffset)<<FRACBITS);
 		sd->SetTextureYOffset(LittleShort(msd->rowoffset)<<FRACBITS);
+		sd->SetTextureXScale(FRACUNIT);
+		sd->SetTextureYScale(FRACUNIT);
 		sd->linenum = NO_INDEX;
 		sd->Flags = 0;
 		sd->Index = i;

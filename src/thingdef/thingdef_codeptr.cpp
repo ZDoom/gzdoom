@@ -1705,14 +1705,15 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FadeIn)
 //===========================================================================
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FadeOut)
 {
-	ACTION_PARAM_START(1);
+	ACTION_PARAM_START(2);
 	ACTION_PARAM_FIXED(reduce, 0);
-	
+	ACTION_PARAM_BOOL(remove, 1);
+
 	if (reduce == 0) reduce = FRACUNIT/10;
 
 	self->RenderStyle.Flags &= ~STYLEF_Alpha1;
 	self->alpha -= reduce;
-	if (self->alpha<=0) self->Destroy();
+	if (self->alpha<=0 && remove) self->Destroy();
 }
 
 //===========================================================================

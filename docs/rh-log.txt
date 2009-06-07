@@ -1,4 +1,5 @@
 ﻿June 7, 2009  (Changes by Graf Zahl)
+- added PERSISTENTPOWER and TRANSFERPOINTERS submissions by Gez.
 - fixed FORCEPAIN logic.
 - added Gez's infinite ammo powerup and random spawner fix patches.
 - reduced size of Hexen's flames to fix bug in Deathkings MAP01.

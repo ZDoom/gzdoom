@@ -129,6 +129,7 @@ enum
 	IF_CREATECOPYMOVED	= 1<<15,	// CreateCopy changed the owner (copy's Owner field holds new owner).
 	IF_INITEFFECTFAILED	= 1<<16,	// CreateCopy tried to activate a powerup and activation failed (can happen with PowerMorph)
 	IF_NOATTENPICKUPSOUND = 1<<17,	// Play pickup sound with ATTN_NONE
+	IF_PERSISTENTPOWER	= 1<<18,	// Powerup is kept when travelling between levels
 };
 
 struct vissprite_t;

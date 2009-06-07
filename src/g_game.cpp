@@ -1104,7 +1104,8 @@ void G_PlayerFinishLevel (int player, EFinishLevelType mode, bool resetinventory
 		next = item->Inventory;
 		if (item->IsKindOf (RUNTIME_CLASS(APowerup)))
 		{
-			if (deathmatch || mode != FINISH_SameHub || !(item->ItemFlags & IF_HUBPOWER))
+			if (deathmatch || ((mode != FINISH_SameHub || !(item->ItemFlags & IF_HUBPOWER))
+				&& !(item->ItemFlags & IF_PERSISTENTPOWER))) // Keep persistent powers in non-deathmatch games
 			{
 				item->Destroy ();
 			}

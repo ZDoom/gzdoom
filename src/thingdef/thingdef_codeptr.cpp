@@ -1317,6 +1317,7 @@ enum SIX_Flags
 	// 128 is used by Skulltag!
 	SIXF_TRANSFERAMBUSHFLAG=256,
 	SIXF_TRANSFERPITCH=512,
+	SIXF_TRANSFERPOINTERS=1024,
 };
 
 
@@ -1329,6 +1330,12 @@ static bool InitSpawnedItem(AActor *self, AActor *mo, int flags)
 		if ((flags & SIXF_TRANSFERTRANSLATION) && !(mo->flags2 & MF2_DONTTRANSLATE))
 		{
 			mo->Translation = self->Translation;
+		}
+		if (flags & SIXF_TRANSFERPOINTERS)
+		{
+			mo->target = self->target;
+			mo->master = self->master; // This will be overridden later if SIXF_SETMASTER is set
+			mo->tracer = self->tracer;
 		}
 
 		mo->angle=self->angle;
@@ -1378,7 +1385,7 @@ static bool InitSpawnedItem(AActor *self, AActor *mo, int flags)
 				}
 			}
 		}
-		else 
+		else if (!(flags & SIXF_TRANSFERPOINTERS))
 		{
 			// If this is a missile or something else set the target to the originator
 			mo->target=originator? originator : self;

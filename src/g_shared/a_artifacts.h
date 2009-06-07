@@ -253,6 +253,14 @@ protected:
 	void EndEffect( );
 };
 
+class APowerInfiniteAmmo : public APowerup
+{
+	DECLARE_CLASS( APowerInfiniteAmmo, APowerup )
+protected:
+	void InitEffect( );
+	void EndEffect( );
+};
+
 class APowerMorph : public APowerup
 {
 	DECLARE_CLASS( APowerMorph, APowerup )

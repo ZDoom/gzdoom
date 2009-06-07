@@ -1,4 +1,7 @@
 ﻿June 7, 2009  (Changes by Graf Zahl)
+- added Gez's infinite ammo powerup and random spawner fix patches.
+- reduced size of Hexen's flames to fix bug in Deathkings MAP01.
+- added checks for sidedef scaling values 
 - Added Karate Chris's poison cloud fix.
 
 June 6, 2009

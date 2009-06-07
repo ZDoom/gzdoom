@@ -109,17 +109,11 @@ ACTOR HexenArmor : Armor native
 	+Inventory.UNDROPPABLE
 }
 
-ACTOR DehackedPickup : Inventory native
-{
-}
+ACTOR DehackedPickup : Inventory native {}
 
-ACTOR FakeInventory : Inventory native
-{
-}
+ACTOR FakeInventory : Inventory native {}
 
-ACTOR CustomInventory : Inventory native
-{
-}
+ACTOR CustomInventory : Inventory native {}
 
 Actor Health : Inventory native 
 {
@@ -148,9 +142,7 @@ ACTOR PowerupGiver : Inventory native
 	Inventory.PickupSound "misc/p_pkup"
 }
 
-ACTOR Powerup : Inventory native
-{
-}
+ACTOR Powerup : Inventory native {}
 
 ACTOR PowerInvulnerable : Powerup native
 {
@@ -170,9 +162,7 @@ ACTOR PowerInvisibility : Powerup native
 	Powerup.Duration -60
 }
 
-ACTOR PowerGhost : PowerInvisibility native
-{
-}
+ACTOR PowerGhost : PowerInvisibility native {}
 
 ACTOR PowerShadow : PowerInvisibility native
 {
@@ -199,9 +189,7 @@ ACTOR PowerLightAmp : Powerup native
 	Powerup.Duration -120
 }
 
-ACTOR PowerTorch : PowerLightAmp native
-{
-}
+ACTOR PowerTorch : PowerLightAmp native {}
 
 ACTOR PowerFlight : Powerup native
 {
@@ -290,22 +278,21 @@ ACTOR PowerRegeneration : Powerup native
 	Powerup.Duration -120
 }
 
-ACTOR PowerHighJump : Powerup native
-{
-}
+ACTOR PowerHighJump : Powerup native {}
 
-ACTOR PowerDoubleFiringSpeed : Powerup native
-{
-}
+ACTOR PowerDoubleFiringSpeed : Powerup native {}
 
 ACTOR PowerMorph : Powerup native
 {
 	Powerup.Duration -40
 }
 
-ACTOR MapRevealer : Inventory native
+ACTOR PowerInfiniteAmmo : Powerup native
 {
+	Powerup.Duration -30
 }
+
+ACTOR MapRevealer : Inventory native {}
 
 ACTOR PuzzleItem : Inventory native 
 {
@@ -342,7 +329,4 @@ Actor WeaponHolder : Inventory native
 	+INVENTORY.UNDROPPABLE
 }
 
-Actor WeaponPiece : Inventory native
-{
-}
-
+Actor WeaponPiece : Inventory native {}

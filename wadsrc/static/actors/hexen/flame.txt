@@ -58,6 +58,7 @@ ACTOR FlameSmall : SwitchableDecoration 10501
 	SpawnID 97
 	+NOTELEPORT
 	+INVISIBLE
+	Radius 15
 	RenderStyle Add
 	States
 	{
@@ -90,6 +91,7 @@ ACTOR FlameLarge : SwitchableDecoration 10503
 	SpawnID 99
 	+NOTELEPORT
 	+INVISIBLE
+	Radius 15
 	RenderStyle Add
 	States
 	{

@@ -184,7 +184,7 @@ static void SpawnFly(AActor *self, const PClass *spawntype, FSoundID sound)
 				if (di->Name != NAME_None)
 				{
 					n -= di->amount; // logically, none of the -1 values have survived by now.
-					if (n > -1) di = di->Next; // If we get into the negatives, we've reached the end of the list.
+					if ((di->Next != NULL) && (n > -1)) di = di->Next; else n = -1;
 				}
 			}
 

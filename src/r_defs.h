@@ -794,11 +794,11 @@ struct side_t
 
 	void SetTextureXScale(int which, fixed_t scale)
 	{
-		textures[which].xscale = scale;
+		textures[which].xscale = scale <= 0? FRACUNIT : scale;
 	}
 	void SetTextureXScale(fixed_t scale)
 	{
-		textures[top].xscale = textures[mid].xscale = textures[bottom].xscale = scale;
+		textures[top].xscale = textures[mid].xscale = textures[bottom].xscale = scale <= 0? FRACUNIT : scale;
 	}
 	fixed_t GetTextureXScale(int which) const
 	{
@@ -807,11 +807,11 @@ struct side_t
 
 	void SetTextureYScale(int which, fixed_t scale)
 	{
-		textures[which].yscale = scale;
+		textures[which].yscale = scale <= 0? FRACUNIT : scale;
 	}
 	void SetTextureYScale(fixed_t scale)
 	{
-		textures[top].yscale = textures[mid].yscale = textures[bottom].yscale = scale;
+		textures[top].yscale = textures[mid].yscale = textures[bottom].yscale = scale <= 0? FRACUNIT : scale;
 	}
 	fixed_t GetTextureYScale(int which) const
 	{

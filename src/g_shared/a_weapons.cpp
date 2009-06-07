@@ -404,7 +404,7 @@ bool AWeapon::CheckAmmo (int fireMode, bool autoSwitch, bool requireAmmo)
 	int count1, count2;
 	int enough, enoughmask;
 
-	if (dmflags & DF_INFINITE_AMMO)
+	if ((dmflags & DF_INFINITE_AMMO) || (Owner->player->cheats & CF_INFINITEAMMO))
 	{
 		return true;
 	}
@@ -462,7 +462,7 @@ bool AWeapon::CheckAmmo (int fireMode, bool autoSwitch, bool requireAmmo)
 
 bool AWeapon::DepleteAmmo (bool altFire, bool checkEnough)
 {
-	if (!(dmflags & DF_INFINITE_AMMO))
+	if (!((dmflags & DF_INFINITE_AMMO) || (Owner->player->cheats & CF_INFINITEAMMO)))
 	{
 		if (checkEnough && !CheckAmmo (altFire ? AltFire : PrimaryFire, false))
 		{

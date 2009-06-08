@@ -158,7 +158,7 @@ static WORD DIKToKeySym[256] =
 	SDLK_KP8, SDLK_KP9, SDLK_KP_MINUS, SDLK_KP4, SDLK_KP5, SDLK_KP6, SDLK_KP_PLUS, SDLK_KP1,
 	SDLK_KP2, SDLK_KP3, SDLK_KP0, SDLK_KP_PERIOD, 0, 0, 0, SDLK_F11,
 	SDLK_F12, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, SDLK_F13, SDLK_F14, SDLK_F15, 0,
+	0, 0, 0, 0, SDLK_F13, SDLK_F14, SDLK_F15, SDLK_F16,
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
@@ -170,14 +170,14 @@ static WORD DIKToKeySym[256] =
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, SDLK_KP_DIVIDE, 0, SDLK_SYSREQ,
 	SDLK_RALT, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, SDLK_HOME,
+	0, 0, 0, 0, 0, SDLK_PAUSE, 0, SDLK_HOME,
 	SDLK_UP, SDLK_PAGEUP, 0, SDLK_LEFT, 0, SDLK_RIGHT, 0, SDLK_END,
 	SDLK_DOWN, SDLK_PAGEDOWN, SDLK_INSERT, SDLK_DELETE, 0, 0, 0, 0,
 	0, 0, 0, SDLK_LSUPER, SDLK_RSUPER, SDLK_MENU, SDLK_POWER, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, SDLK_PAUSE
+	0, 0, 0, 0, 0, 0, 0, 0
 };
 
 static void FlushDIKState (int low=0, int high=NUM_KEYS-1)

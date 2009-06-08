@@ -201,7 +201,7 @@ void GMESong::Play(bool looping, int track)
 {
 	m_Status = STATE_Stopped;
 	m_Looping = looping;
-	if (StartTrack(0) && m_Stream->Play(looping, 1))
+	if (StartTrack(track) && m_Stream->Play(looping, 1))
 	{
 		m_Status = STATE_Playing;
 	}

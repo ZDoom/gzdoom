@@ -2926,7 +2926,7 @@ void aim_t::AimTraverse (fixed_t startx, fixed_t starty, fixed_t endx, fixed_t e
 					pitch_friend=thingpitch;
 				}
 			}
-			else if (!(th->flags3&MF3_ISMONSTER) )
+			else if (!(th->flags3&MF3_ISMONSTER) && th->player == NULL)
 			{
 				if (sv_smartaim < 3)
 				{

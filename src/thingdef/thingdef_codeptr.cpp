@@ -1783,24 +1783,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckSight)
 
 //===========================================================================
 //
-// A_JumpIfTargetInSight
-// jumps if monster can see its target
-//
-//===========================================================================
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInSight)
-{
-	ACTION_PARAM_START(1);
-	ACTION_PARAM_STATE(jump, 0);
-
-	ACTION_SET_RESULT(false);	// Jumps should never set the result for inventory state chains!
-	if (self->target == NULL || !P_CheckSight(self, self->target,4)) return; 
-	ACTION_JUMP(jump);
-
-}
-
-
-//===========================================================================
-//
 // Inventory drop
 //
 //===========================================================================
@@ -2210,6 +2192,62 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInLOS)
 
 	ACTION_JUMP(jump);
 }
+
+
+//==========================================================================
+//
+// A_JumpIfInTargetLOS (state label, optional fixed fov, optional bool
+// projectiletarget)
+//
+//==========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfInTargetLOS)
+{
+	ACTION_PARAM_START(3);
+	ACTION_PARAM_STATE(jump, 0);
+	ACTION_PARAM_ANGLE(fov, 1);
+	ACTION_PARAM_BOOL(projtarg, 2);
+
+	angle_t an;
+	AActor *target;
+
+	ACTION_SET_RESULT(false);	// Jumps should never set the result for inventory state chains!
+
+	if (self->flags & MF_MISSILE && projtarg)
+	{
+		if (self->flags2 & MF2_SEEKERMISSILE)
+			target = self->tracer;
+		else
+			target = NULL;
+	}
+	else
+	{
+		target = self->target;
+	}
+
+	if (!target) return; // [KS] Let's not call P_CheckSight unnecessarily in this case.
+
+	if (!P_CheckSight (target, self, 1))
+		return;
+
+	if (fov && (fov < ANGLE_MAX))
+	{
+		an = R_PointToAngle2 (self->x,
+							  self->y,
+							  target->x,
+							  target->y)
+			- self->angle;
+
+		if (an > (fov / 2) && an < (ANGLE_MAX - (fov / 2)))
+		{
+			return; // [KS] Outside of FOV - return
+		}
+
+	}
+
+	ACTION_JUMP(jump);
+}
+
 
 //===========================================================================
 //

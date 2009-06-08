@@ -1,4 +1,9 @@
-﻿June 7, 2009  (Changes by Graf Zahl)
+﻿June 8, 2009
+- Fixed: The RAWINPUT buffer that GetRawInputData() fills in is 40 bytes on
+  Win32 but 48 bytes on Win64, so Raw Mouse on x64 builds was getting random
+  data off the stack because I also interpreted the error return incorrectly.
+
+June 7, 2009  (Changes by Graf Zahl)
 - added parameter to A_FadeOut so that removing the actor can be made an option.
 - added PERSISTENTPOWER and TRANSFERPOINTERS submissions by Gez.
 - fixed FORCEPAIN logic.

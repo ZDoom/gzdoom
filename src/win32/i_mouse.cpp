@@ -575,12 +575,14 @@ bool FRawMouse::WndProcHook(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 	}
 	if (message == WM_INPUT)
 	{
-		BYTE buffer[40];
+		BYTE buffer[sizeof(RAWINPUT)];
 		UINT size = sizeof(buffer);
 		int i;
 		USHORT mask;
+		UINT gridret;
 
-		if (MyGetRawInputData((HRAWINPUT)lParam, RID_INPUT, buffer, &size, sizeof(RAWINPUTHEADER)) > 0)
+		gridret = MyGetRawInputData((HRAWINPUT)lParam, RID_INPUT, buffer, &size, sizeof(RAWINPUTHEADER));
+		if (gridret != (UINT)-1 && gridret > 0)
 		{
 			RAWINPUT *raw = (RAWINPUT *)buffer;
 			if (raw->header.dwType != RIM_TYPEMOUSE)

@@ -2357,6 +2357,57 @@ FUNC(LS_Line_SetTextureOffset)
 	return true;
 }
 
+FUNC(LS_Line_SetTextureScale)
+// Line_SetTextureScale (id, x, y, side, flags)
+{
+	const fixed_t NO_CHANGE = 32767<<FRACBITS;
+
+	if (arg0 == 0 || arg3 < 0 || arg3 > 1)
+		return false;
+
+	for(int line = -1; (line = P_FindLineFromID (arg0, line)) >= 0; )
+	{
+		if (lines[line].sidenum[arg3] != NO_SIDE)
+		{
+			side_t *side = &sides[lines[line].sidenum[arg3]];
+
+			if ((arg4&8)==0)
+			{
+				// set
+				if (arg1 != NO_CHANGE)
+				{
+					if (arg4&1) side->SetTextureXScale(side_t::top, arg1);
+					if (arg4&2) side->SetTextureXScale(side_t::mid, arg1);
+					if (arg4&4) side->SetTextureXScale(side_t::bottom, arg1);
+				}
+				if (arg2 != NO_CHANGE)
+				{
+					if (arg4&1) side->SetTextureYScale(side_t::top, arg2);
+					if (arg4&2) side->SetTextureYScale(side_t::mid, arg2);
+					if (arg4&4) side->SetTextureYScale(side_t::bottom, arg2);
+				}
+			}
+			else
+			{
+				// add
+				if (arg1 != NO_CHANGE)
+				{
+					if (arg4&1) side->MultiplyTextureXScale(side_t::top, arg1);
+					if (arg4&2) side->MultiplyTextureXScale(side_t::mid, arg1);
+					if (arg4&4) side->MultiplyTextureXScale(side_t::bottom, arg1);
+				}
+				if (arg2 != NO_CHANGE)
+				{
+					if (arg4&1) side->MultiplyTextureYScale(side_t::top, arg2);
+					if (arg4&2) side->MultiplyTextureYScale(side_t::mid, arg2);
+					if (arg4&4) side->MultiplyTextureYScale(side_t::bottom, arg2);
+				}
+			}
+		}
+	}
+	return true;
+}
+
 FUNC(LS_Line_SetBlocking)
 // Line_SetBlocking (id, setflags, clearflags)
 {
@@ -2978,7 +3029,7 @@ lnSpecFunc LineSpecials[256] =
 	LS_Line_SetTextureOffset,
 	LS_Sector_ChangeFlags,
 	LS_Line_SetBlocking,
-	LS_NOP,		// 56
+	LS_Line_SetTextureScale,
 	LS_NOP,		// 57
 	LS_NOP,		// 58
 	LS_NOP,		// 59

@@ -2957,7 +2957,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 			{
 				FName p(FBehavior::StaticLookupString(args[0]));
 				ABasicArmor * armor = (ABasicArmor *) players[args[1]].mo->FindInventory(NAME_BasicArmor);
-				if (armor->ArmorType == p) return 1;
+				if (armor && armor->ArmorType == p) return armor->Amount;
 			}
 			return 0;
 		}

@@ -60,7 +60,7 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def);
 //
 // ParseParameter
 //
-// Parses aparameter - either a default in a function declaration 
+// Parses a parameter - either a default in a function declaration 
 // or an argument in a function call.
 //
 //==========================================================================

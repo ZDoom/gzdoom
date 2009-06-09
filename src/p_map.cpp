@@ -826,6 +826,13 @@ bool PIT_CheckThing (AActor *thing, FCheckPosition &tm)
 			return false;
 		}
 	}
+	// Check for players touching a thing with MF6_BUMPSPECIAL
+	// A blind recreation of what the Skulltag code is probably like.
+	if (tm.thing->player && (thing->flags6 & MF6_BUMPSPECIAL) && thing->special)
+	{
+		LineSpecials[thing->special] (NULL, tm.thing, false, thing->args[0], 
+			thing->args[1], thing->args[2], thing->args[3], thing->args[4]);
+	}
 	// Check for missile
 	if (tm.thing->flags & MF_MISSILE)
 	{

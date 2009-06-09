@@ -214,6 +214,7 @@ static FFlagDef ActorFlags[]=
 	DEFINE_FLAG(MF6, MTHRUSPECIES, AActor, flags6),
 	DEFINE_FLAG(MF6, FORCEPAIN, AActor, flags6),
 	DEFINE_FLAG(MF6, NOFEAR, AActor, flags6),
+	DEFINE_FLAG(MF6, BUMPSPECIAL, AActor, flags6),
 
 	// Effect flags
 	DEFINE_FLAG(FX, VISIBILITYPULSE, AActor, effects),
@@ -234,9 +235,12 @@ static FFlagDef ActorFlags[]=
 	DEFINE_DEPRECATED_FLAG(HERETICBOUNCE),
 	DEFINE_DEPRECATED_FLAG(HEXENBOUNCE),
 	DEFINE_DEPRECATED_FLAG(DOOMBOUNCE),
-	DEFINE_DUMMY_FLAG(NONETID),
-	DEFINE_DUMMY_FLAG(ALLOWCLIENTSPAWN),
-	DEFINE_DUMMY_FLAG(CLIENTSIDEONLY),
+
+// Various Skulltag flags that are quite irrelevant to ZDoom
+	DEFINE_DUMMY_FLAG(NONETID),				// netcode-based
+	DEFINE_DUMMY_FLAG(ALLOWCLIENTSPAWN),	// netcode-based
+	DEFINE_DUMMY_FLAG(CLIENTSIDEONLY),	    // netcode-based
+	DEFINE_DUMMY_FLAG(EXPLODEONDEATH),	    // seems useless
 };
 
 static FFlagDef InventoryFlags[] =
@@ -281,6 +285,7 @@ static FFlagDef WeaponFlags[] =
 	DEFINE_FLAG(WIF, CHEATNOTWEAPON, AWeapon, WeaponFlags),
 	DEFINE_FLAG(WIF, NO_AUTO_SWITCH, AWeapon, WeaponFlags),
 	DEFINE_FLAG(WIF, AMMO_CHECKBOTH, AWeapon, WeaponFlags),
+	DEFINE_FLAG(WIF, NOAUTOAIM, AWeapon, WeaponFlags),
 	
 	DEFINE_DUMMY_FLAG(NOLMS),
 };

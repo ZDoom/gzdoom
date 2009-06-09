@@ -25,6 +25,7 @@ ACTOR Inventory native
 	action native A_LoadShotgun2();
 	action native A_CloseShotgun2();
 	action native A_FireCGun();
+	action native A_FireSTGrenade(class<Actor> grenadetype = "Grenade");
 	action native A_FireMissile();
 	action native A_FirePlasma();
 	action native A_FireRailgun();

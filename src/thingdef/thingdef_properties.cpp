@@ -1263,6 +1263,14 @@ DEFINE_CLASS_PROPERTY(pickupsound, S, Inventory)
 }
 
 //==========================================================================
+// Dummy for Skulltag compatibility...
+//==========================================================================
+DEFINE_CLASS_PROPERTY(pickupannouncerentry, S, Inventory)
+{
+	PROP_STRING_PARM(str, 0);
+}
+
+//==========================================================================
 //
 //==========================================================================
 DEFINE_CLASS_PROPERTY(respawntics, I, Inventory)

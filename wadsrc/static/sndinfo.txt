@@ -201,6 +201,9 @@ weapons/plasmax			dsfirxpl
 weapons/bfgf			dsbfg
 weapons/bfgx			dsrxplod
 weapons/railgf			railgf1
+weapons/grbnce          dsbounce
+weapons/grenlx			dsgrnexp
+weapons/grenlf			dsglaunc
 
 // Problem: weapons/rocklx needs to be unlimited but
 // is also used for the MAP30 brain explosion.

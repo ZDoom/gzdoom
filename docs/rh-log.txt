@@ -1,4 +1,13 @@
 ﻿June 9, 2009  (Changes by Graf Zahl)
+- Added Gez's Skulltag feature patch, including:
+    * BUMPSPECIAL flag: actors with this flag will run their special if collided on by a player
+    * WEAPON.NOAUTOAIM flag, though it is restricted to attacks that spawn a missile (it will 
+	  not affect autoaim settings for a hitscan or railgun, and that's deliberate)
+    * A_FireSTGrenade codepointer, extended to be parameterizable
+    * The grenade (as the default actor for A_FireSTGrenade)
+    * Protective armors à la RedArmor: they work with a DamageFactor; for example to 
+	  recreate the RedArmor from Skulltag, copy its code from skulltag.pk3 but remove 
+	  the "native" keyword and add DamageFactor "Fire" 0.1 to its properties.
 - Fixed: I_ShutdownInput must NULL all pointers because it can be called twice
   if an ENDOOM screen is displayed.
 - Fixed: R_DrawSkyStriped used frontyScale without initializing it first.

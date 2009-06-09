@@ -342,6 +342,45 @@ ACTOR Rocket
 
 // --------------------------------------------------------------------------
 //
+// Grenade -- Taken and adapted from Skulltag
+//
+// --------------------------------------------------------------------------
+
+ACTOR Grenade
+{
+	SpawnID 216
+	Radius 8
+	Height 8
+	Speed 25
+	Damage 20
+	Projectile
+	-NOGRAVITY
+	+RANDOMIZE
+	+DEHEXPLOSION
+	+GRENADETRAIL
+	BounceType "Doom"
+	Gravity 0.25
+	SeeSound "weapons/grenlf"
+	DeathSound "weapons/grenlx"
+	BounceSound "weapons/grbnce"
+	Obituary "$OB_GRENADE"
+	DamageType Grenade
+
+	States
+	{
+	Spawn:
+		SGRN A 1 Bright 
+		Loop
+	Death:
+		MISL B 8 Bright A_Explode
+		MISL C 6 Bright
+		MISL D 4 Bright
+		Stop
+	}
+}
+
+// --------------------------------------------------------------------------
+//
 // Plasma rifle
 //
 // --------------------------------------------------------------------------

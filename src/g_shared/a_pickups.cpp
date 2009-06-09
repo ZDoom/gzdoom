@@ -1387,7 +1387,7 @@ IMPLEMENT_CLASS (AHealth)
 
 //===========================================================================
 //
-// AHealth :: TryPickup
+// AHealth :: PickupMessage
 //
 //===========================================================================
 const char *AHealth::PickupMessage ()

@@ -362,6 +362,34 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireMissile)
 }
 
 //
+// A_FireSTGrenade: not exactly backported from ST, but should work the same
+//
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireSTGrenade)
+{
+	player_t *player;
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_CLASS(grenade, 0);
+	if (grenade == NULL) return;
+
+	if (NULL == (player = self->player))
+	{
+		return;
+	}
+	AWeapon *weapon = self->player->ReadyWeapon;
+	if (weapon != NULL)
+	{
+		if (!weapon->DepleteAmmo (weapon->bAltFire))
+			return;
+	}
+		
+	// Temporarily raise the pitch to send the grenade slightly upwards
+	fixed_t SavedPlayerPitch = self->pitch;
+	self->pitch -= (1152 << FRACBITS);
+	P_SpawnPlayerMissile(self, grenade);
+	self->pitch = SavedPlayerPitch;
+}
+
+//
 // A_FirePlasma
 //
 DEFINE_ACTION_FUNCTION(AActor, A_FirePlasma)

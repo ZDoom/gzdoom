@@ -1184,10 +1184,12 @@ void I_ShutdownInput ()
 	if (Keyboard != NULL)
 	{
 		delete Keyboard;
+		Keyboard = NULL;
 	}
 	if (Mouse != NULL)
 	{
 		delete Mouse;
+		Mouse = NULL;
 	}
 	if (g_pJoy)
 	{

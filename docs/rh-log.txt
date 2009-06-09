@@ -1,4 +1,6 @@
 ﻿June 9, 2009  (Changes by Graf Zahl)
+- Fixed: I_ShutdownInput must NULL all pointers because it can be called twice
+  if an ENDOOM screen is displayed.
 - Fixed: R_DrawSkyStriped used frontyScale without initializing it first.
 - Fixed: P_LineAttack may not check the puff actor for MF6_FORCEPAIN because
   it's not necessarily spawned yet. 

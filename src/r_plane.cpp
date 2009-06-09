@@ -906,7 +906,7 @@ static void R_DrawSkyStriped (visplane_t *pl)
 		{
 			lastskycol[x] = 0xffffffff;
 		}
-		wallscan (pl->minx, pl->maxx, top, bot, swall, lwall, frontyScale,
+		wallscan (pl->minx, pl->maxx, top, bot, swall, lwall, rw_pic->yScale,
 			backskytex == NULL ? R_GetOneSkyColumn : R_GetTwoSkyColumns);
 		yl = yh;
 		yh += drawheight;

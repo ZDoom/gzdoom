@@ -974,6 +974,7 @@ static bool FindMostRecentWeapon(player_t *player, int *slot, int *index)
 AWeapon *FWeaponSlots::PickNextWeapon(player_t *player)
 {
 	int startslot, startindex;
+	int slotschecked = 0;
 
 	if (player->mo == NULL)
 	{
@@ -997,6 +998,7 @@ AWeapon *FWeaponSlots::PickNextWeapon(player_t *player)
 			if (++index >= Slots[slot].Size())
 			{
 				index = 0;
+				slotschecked++;
 				if (++slot >= NUM_WEAPON_SLOTS)
 				{
 					slot = 0;
@@ -1009,7 +1011,7 @@ AWeapon *FWeaponSlots::PickNextWeapon(player_t *player)
 				return weap;
 			}
 		}
-		while (slot != startslot || index != startindex);
+		while ((slot != startslot || index != startindex) && slotschecked < NUM_WEAPON_SLOTS);
 	}
 	return player->ReadyWeapon;
 }
@@ -1027,6 +1029,7 @@ AWeapon *FWeaponSlots::PickNextWeapon(player_t *player)
 AWeapon *FWeaponSlots::PickPrevWeapon (player_t *player)
 {
 	int startslot, startindex;
+	int slotschecked = 0;
 
 	if (player->mo == NULL)
 	{
@@ -1049,6 +1052,7 @@ AWeapon *FWeaponSlots::PickPrevWeapon (player_t *player)
 		{
 			if (--index < 0)
 			{
+				slotschecked++;
 				if (--slot < 0)
 				{
 					slot = NUM_WEAPON_SLOTS - 1;
@@ -1062,7 +1066,7 @@ AWeapon *FWeaponSlots::PickPrevWeapon (player_t *player)
 				return weap;
 			}
 		}
-		while (slot != startslot || index != startindex);
+		while ((slot != startslot || index != startindex) && slotschecked < NUM_WEAPON_SLOTS);
 	}
 	return player->ReadyWeapon;
 }

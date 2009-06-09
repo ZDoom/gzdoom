@@ -1,4 +1,16 @@
-﻿June 8, 2009
+﻿June 9, 2009  (Changes by Graf Zahl)
+- Fixed: R_DrawSkyStriped used frontyScale without initializing it first.
+- Fixed: P_LineAttack may not check the puff actor for MF6_FORCEPAIN because
+  it's not necessarily spawned yet. 
+- Fixed: FWeaponSlots::PickNext/PrevWeapon must be limited to one iteration
+  through the weapon slots. Otherwise they will hang if there's no weapons
+  in a player's inventory.
+- Added Line_SetTextureScale.
+- Fixed: sv_smartaim 3 treated the player like a shootable decoration.
+- Added A_CheckIfInTargetLOS
+- Removed redundant A_CheckIfTargetInSight.
+	
+June 8, 2009
 - Fixed: The initial play of a GME song always started track 0.
 - Fixed: The RAWINPUT buffer that GetRawInputData() fills in is 40 bytes on
   Win32 but 48 bytes on Win64, so Raw Mouse on x64 builds was getting random

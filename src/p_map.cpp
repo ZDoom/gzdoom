@@ -755,7 +755,7 @@ bool PIT_CheckThing (AActor *thing, FCheckPosition &tm)
 	if ((thing->flags2 | tm.thing->flags2) & MF2_THRUACTORS) 
 		return true;
 
-	if ((tm.thing->flags6 & MF6_THRUSPECIES) && (tm.thing->Species == thing->Species))
+	if ((tm.thing->flags6 & MF6_THRUSPECIES) && (tm.thing->GetSpecies() == thing->GetSpecies()))
 		return true;
 
 	if (!(thing->flags & (MF_SOLID|MF_SPECIAL|MF_SHOOTABLE)) )

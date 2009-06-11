@@ -57,13 +57,15 @@ extern void DI_EnumJoy ();
 #ifdef USE_WINDOWS_DWORD
 // Don't make these definitions available to the main body of the source code.
 
+struct tagRAWINPUT;
+
 class FInputDevice
 {
 public:
 	virtual ~FInputDevice() = 0;
 	virtual bool GetDevice() = 0;
 	virtual void ProcessInput();
-	virtual bool ProcessRawInput(RAWINPUT *raw, int code);
+	virtual bool ProcessRawInput(tagRAWINPUT *raw, int code);
 	virtual bool WndProcHook(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT *result);
 };
 

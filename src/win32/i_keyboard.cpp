@@ -21,11 +21,6 @@
 
 #define DINPUT_BUFFERSIZE	32
 
-// Hi, w32api!
-#ifndef GET_RAWINPUT_CODE_WPARAM
-#define GET_RAWINPUT_CODE_WPARAM(wParam)	((wParam) & 0xff)
-#endif
-
 // TYPES -------------------------------------------------------------------
 
 class FDInputKeyboard : public FKeyboard
@@ -36,7 +31,6 @@ public:
 	
 	bool GetDevice();
 	void ProcessInput();
-	bool WndProcHook(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT *result);
 
 protected:
 	LPDIRECTINPUTDEVICE8 Device;
@@ -49,8 +43,7 @@ public:
 	~FRawKeyboard();
 
 	bool GetDevice();
-	void ProcessInput();
-	bool WndProcHook(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT *result);
+	bool ProcessRawInput(RAWINPUT *rawinput, int code);
 
 protected:
 	USHORT E1Prefix;
@@ -377,16 +370,8 @@ void FDInputKeyboard::ProcessInput()
 	}
 }
 
-//==========================================================================
-//
-// FDInputKeyboard :: WndProcHook
-//
-//==========================================================================
-
-bool FDInputKeyboard::WndProcHook(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT *result)
-{
-	return false;
-}
+/**************************************************************************/
+/**************************************************************************/
 
 //==========================================================================
 //
@@ -447,17 +432,7 @@ bool FRawKeyboard::GetDevice()
 
 //==========================================================================
 //
-// FRawKeyboard :: ProcessInput
-//
-//==========================================================================
-
-void FRawKeyboard::ProcessInput()
-{
-}
-
-//==========================================================================
-//
-// FRawKeyboard :: WndProcHook
+// FRawKeyboard :: ProcessRawInput
 //
 // Convert scan codes to DirectInput key codes. For the most part, this is
 // straight forward: Scan codes without any prefix are passed unmodified.
@@ -476,102 +451,88 @@ void FRawKeyboard::ProcessInput()
 //
 //==========================================================================
 
-bool FRawKeyboard::WndProcHook(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT *result)
+bool FRawKeyboard::ProcessRawInput(RAWINPUT *raw, int code)
 {
-	if (message != WM_INPUT)
+	if (raw->header.dwType != RIM_TYPEKEYBOARD)
 	{
 		return false;
 	}
-	BYTE buffer[40];
-	UINT size = sizeof(buffer);
-	int keycode;
+	int keycode = raw->data.keyboard.MakeCode;
+	if (keycode == 0 && (raw->data.keyboard.Flags & RI_KEY_E0))
+	{ // Even if the make code is 0, we might still be able to extract a
+	  // useful key from the message.
+		if (raw->data.keyboard.VKey >= VK_BROWSER_BACK && raw->data.keyboard.VKey <= VK_LAUNCH_APP2)
+		{
+			static const BYTE MediaKeys[VK_LAUNCH_APP2 - VK_BROWSER_BACK + 1] =
+			{
+				DIK_WEBBACK, DIK_WEBFORWARD, DIK_WEBREFRESH, DIK_WEBSTOP,
+				DIK_WEBSEARCH, DIK_WEBFAVORITES, DIK_WEBHOME,
 
-	if (MyGetRawInputData((HRAWINPUT)lParam, RID_INPUT, buffer, &size, sizeof(RAWINPUTHEADER)) > 0)
+				DIK_MUTE, DIK_VOLUMEDOWN, DIK_VOLUMEUP,
+				DIK_NEXTTRACK, DIK_PREVTRACK, DIK_MEDIASTOP, DIK_PLAYPAUSE,
+
+				DIK_MAIL, DIK_MEDIASELECT, DIK_MYCOMPUTER, DIK_CALCULATOR
+			};
+			keycode = MediaKeys[raw->data.keyboard.VKey - VK_BROWSER_BACK];
+		}
+	}
+	if (keycode < 1 || keycode > 0xFF)
 	{
-		RAWINPUT *raw = (RAWINPUT *)buffer;
-		if (raw->header.dwType != RIM_TYPEKEYBOARD)
-		{
+		return false;
+	}
+	if (raw->data.keyboard.Flags & RI_KEY_E1)
+	{
+		E1Prefix = raw->data.keyboard.MakeCode;
+		return false;
+	}
+	if (raw->data.keyboard.Flags & RI_KEY_E0)
+	{
+		if (keycode == DIK_LSHIFT || keycode == DIK_RSHIFT)
+		{ // Ignore fake shifts.
 			return false;
 		}
-
-		keycode = raw->data.keyboard.MakeCode;
-		if (keycode == 0 && (raw->data.keyboard.Flags & RI_KEY_E0))
-		{ // Even if the make code is 0, we might still be able to extract a
-		  // useful key from the message.
-			if (raw->data.keyboard.VKey >= VK_BROWSER_BACK && raw->data.keyboard.VKey <= VK_LAUNCH_APP2)
-			{
-				static const BYTE MediaKeys[VK_LAUNCH_APP2 - VK_BROWSER_BACK + 1] =
-				{
-					DIK_WEBBACK, DIK_WEBFORWARD, DIK_WEBREFRESH, DIK_WEBSTOP,
-					DIK_WEBSEARCH, DIK_WEBFAVORITES, DIK_WEBHOME,
-
-					DIK_MUTE, DIK_VOLUMEDOWN, DIK_VOLUMEUP,
-					DIK_NEXTTRACK, DIK_PREVTRACK, DIK_MEDIASTOP, DIK_PLAYPAUSE,
-
-					DIK_MAIL, DIK_MEDIASELECT, DIK_MYCOMPUTER, DIK_CALCULATOR
-				};
-				keycode = MediaKeys[raw->data.keyboard.VKey - VK_BROWSER_BACK];
-			}
-		}
-		if (keycode < 1 || keycode > 0xFF)
-		{
-			return false;
-		}
-		if (raw->data.keyboard.Flags & RI_KEY_E1)
-		{
-			E1Prefix = raw->data.keyboard.MakeCode;
-			return false;
-		}
-		if (raw->data.keyboard.Flags & RI_KEY_E0)
-		{
-			if (keycode == DIK_LSHIFT || keycode == DIK_RSHIFT)
-			{ // Ignore fake shifts.
-				return false;
-			}
-			keycode |= 0x80;
-		}
-		// The sequence for an unshifted pause is E1 1D 45 (E1 Prefix +
-		// Control + Num Lock).
-		if (E1Prefix)
-		{
-			if (E1Prefix == 0x1D && keycode == DIK_NUMLOCK)
-			{
-				keycode = DIK_PAUSE;
-				E1Prefix = 0;
-			}
-			else
-			{
-				E1Prefix = 0;
-				return false;
-			}
-		}
-		// If you press Ctrl+Pause, the keyboard sends the Break make code
-		// E0 46 instead of the Pause make code.
-		if (keycode == 0xC6)
+		keycode |= 0x80;
+	}
+	// The sequence for an unshifted pause is E1 1D 45 (E1 Prefix +
+	// Control + Num Lock).
+	if (E1Prefix)
+	{
+		if (E1Prefix == 0x1D && keycode == DIK_NUMLOCK)
 		{
 			keycode = DIK_PAUSE;
+			E1Prefix = 0;
 		}
-		// If you press Ctrl+PrtScn (to get SysRq), the keyboard sends
-		// the make code E0 37. If you press PrtScn without any modifiers,
-		// it sends E0 2A E0 37. And if you press Alt+PrtScn, it sends 54
-		// (which is undefined in the charts I can find.)
-		if (keycode == 0x54)
+		else
 		{
-			keycode = DIK_SYSRQ;
+			E1Prefix = 0;
+			return false;
 		}
-		// If you press any keys in the island between the main keyboard
-		// and the numeric keypad with Num Lock turned on, they generate
-		// a fake shift before their actual codes. They do not generate this
-		// fake shift if Num Lock is off. We unconditionally discard fake
-		// shifts above, so we don't need to do anything special for these,
-		// since they are also prefixed by E0 so we can tell them apart from
-		// their keypad counterparts.
-
-		// Okay, we're done translating the keycode. Post it (or ignore it.)
-		PostKeyEvent(keycode, !(raw->data.keyboard.Flags & RI_KEY_BREAK), 
-			GET_RAWINPUT_CODE_WPARAM(wParam) == RIM_INPUT);
 	}
-	return false;
+	// If you press Ctrl+Pause, the keyboard sends the Break make code
+	// E0 46 instead of the Pause make code.
+	if (keycode == 0xC6)
+	{
+		keycode = DIK_PAUSE;
+	}
+	// If you press Ctrl+PrtScn (to get SysRq), the keyboard sends
+	// the make code E0 37. If you press PrtScn without any modifiers,
+	// it sends E0 2A E0 37. And if you press Alt+PrtScn, it sends 54
+	// (which is undefined in the charts I can find.)
+	if (keycode == 0x54)
+	{
+		keycode = DIK_SYSRQ;
+	}
+	// If you press any keys in the island between the main keyboard
+	// and the numeric keypad with Num Lock turned on, they generate
+	// a fake shift before their actual codes. They do not generate this
+	// fake shift if Num Lock is off. We unconditionally discard fake
+	// shifts above, so we don't need to do anything special for these,
+	// since they are also prefixed by E0 so we can tell them apart from
+	// their keypad counterparts.
+
+	// Okay, we're done translating the keycode. Post it (or ignore it.)
+	PostKeyEvent(keycode, !(raw->data.keyboard.Flags & RI_KEY_BREAK), code == RIM_INPUT);
+	return true;
 }
 
 //==========================================================================

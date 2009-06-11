@@ -1,4 +1,11 @@
-﻿June 9, 2009  (Changes by Graf Zahl)
+﻿June 10, 2009
+- Moved Raw Input processing into a seperate method of FInputDevice so that
+  all the devices can share the same setup code.
+
+June 9, 2009
+- Removed F16 mapping for SDL, because I guess it's not present in SDL 1.2.
+
+June 9, 2009  (Changes by Graf Zahl)
 - Added Gez's Skulltag feature patch, including:
     * BUMPSPECIAL flag: actors with this flag will run their special if collided on by a player
     * WEAPON.NOAUTOAIM flag, though it is restricted to attacks that spawn a missile (it will 

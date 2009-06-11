@@ -47,7 +47,7 @@ public:
 	~FRawMouse();
 
 	bool GetDevice();
-	void ProcessInput();
+	bool ProcessRawInput(RAWINPUT *rawinput, int code);
 	bool WndProcHook(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT *result);
 	void Grab();
 	void Ungrab();
@@ -494,23 +494,10 @@ bool FRawMouse::GetDevice()
 
 //==========================================================================
 //
-// FRawMouse :: ProcessInput
-//
-// All input comes through WM_INPUT messages, so nothing to do here.
-//
-//==========================================================================
-
-void FRawMouse::ProcessInput()
-{
-}
-
-//==========================================================================
-//
 // FRawMouse :: Grab
 //
 //==========================================================================
 
-extern BOOL AppActive;
 void FRawMouse::Grab()
 {
 	if (!Grabbed)
@@ -563,6 +550,49 @@ void FRawMouse::Ungrab()
 
 //==========================================================================
 //
+// FRawMouse :: ProcessRawInput
+//
+//==========================================================================
+
+bool FRawMouse::ProcessRawInput(RAWINPUT *raw, int code)
+{
+	if (!Grabbed || raw->header.dwType != RIM_TYPEMOUSE)
+	{
+		return false;
+	}
+	// Check buttons. The up and down motions are stored in the usButtonFlags field.
+	// The ulRawButtons field, unfortunately, is device-dependant, and may well
+	// not contain any data at all. This means it is apparently impossible
+	// to read more than five mouse buttons with Windows, because RI_MOUSE_WHEEL
+	// gets in the way when trying to extrapolate to more than five.
+	for (int i = 0, mask = 1; i < 5; ++i)
+	{
+		if (raw->data.mouse.usButtonFlags & mask)	// button down
+		{
+			PostButtonEvent(i, true);
+		}
+		mask <<= 1;
+		if (raw->data.mouse.usButtonFlags & mask)	// button up
+		{
+			PostButtonEvent(i, false);
+		}
+		mask <<= 1;
+	}
+	if (raw->data.mouse.usButtonFlags & RI_MOUSE_WHEEL)
+	{
+		WheelMoved(0, (SHORT)raw->data.mouse.usButtonData);
+	}
+	else if (raw->data.mouse.usButtonFlags & 0x800)	// horizontal mouse wheel
+	{
+		WheelMoved(1, (SHORT)raw->data.mouse.usButtonData);
+	}
+	PostMouseMove(m_noprescale ? raw->data.mouse.lLastX : raw->data.mouse.lLastX<<2,
+		-raw->data.mouse.lLastY);
+	return true;
+}
+
+//==========================================================================
+//
 // FRawMouse :: WndProcHook
 //
 //==========================================================================
@@ -573,55 +603,7 @@ bool FRawMouse::WndProcHook(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 	{
 		return false;
 	}
-	if (message == WM_INPUT)
-	{
-		BYTE buffer[sizeof(RAWINPUT)];
-		UINT size = sizeof(buffer);
-		int i;
-		USHORT mask;
-		UINT gridret;
-
-		gridret = MyGetRawInputData((HRAWINPUT)lParam, RID_INPUT, buffer, &size, sizeof(RAWINPUTHEADER));
-		if (gridret != (UINT)-1 && gridret > 0)
-		{
-			RAWINPUT *raw = (RAWINPUT *)buffer;
-			if (raw->header.dwType != RIM_TYPEMOUSE)
-			{
-				return false;
-			}
-
-			// Check buttons. The up and down motions are stored in the usButtonFlags field.
-			// The ulRawButtons field, unfortunately, is device-dependant, and may well
-			// not contain any data at all. This means it is apparently impossible
-			// to read more than five mouse buttons with Windows, because RI_MOUSE_WHEEL
-			// gets in the way when trying to extrapolate to more than five.
-			for (i = 0, mask = 1; i < 5; ++i)
-			{
-				if (raw->data.mouse.usButtonFlags & mask)	// button down
-				{
-					PostButtonEvent(i, true);
-				}
-				mask <<= 1;
-				if (raw->data.mouse.usButtonFlags & mask)	// button up
-				{
-					PostButtonEvent(i, false);
-				}
-				mask <<= 1;
-			}
-			if (raw->data.mouse.usButtonFlags & RI_MOUSE_WHEEL)
-			{
-				WheelMoved(0, (SHORT)raw->data.mouse.usButtonData);
-			}
-			else if (raw->data.mouse.usButtonFlags & 0x800)	// horizontal mouse wheel
-			{
-				WheelMoved(1, (SHORT)raw->data.mouse.usButtonData);
-			}
-			PostMouseMove(m_noprescale ? raw->data.mouse.lLastX : raw->data.mouse.lLastX<<2,
-				-raw->data.mouse.lLastY);
-		}
-		return false;
-	}
-	else if (message == WM_SYSCOMMAND)
+	if (message == WM_SYSCOMMAND)
 	{
 		wParam &= 0xFFF0;
 		if (wParam == SC_MOVE || wParam == SC_SIZE)
@@ -631,6 +613,9 @@ bool FRawMouse::WndProcHook(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 	}
 	return false;
 }
+
+/**************************************************************************/
+/**************************************************************************/
 
 //==========================================================================
 //
@@ -1128,6 +1113,9 @@ void FWin32Mouse::CenterMouse(int curx, int cury)
 	}
 }
 
+/**************************************************************************/
+/**************************************************************************/
+
 //==========================================================================
 //
 // I_StartupMouse
@@ -1195,4 +1183,3 @@ void I_StartupMouse ()
 		NativeMouse = true;
 	}
 }
-

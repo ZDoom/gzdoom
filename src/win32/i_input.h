@@ -62,7 +62,8 @@ class FInputDevice
 public:
 	virtual ~FInputDevice() = 0;
 	virtual bool GetDevice() = 0;
-	virtual void ProcessInput() = 0;
+	virtual void ProcessInput();
+	virtual bool ProcessRawInput(RAWINPUT *raw, int code);
 	virtual bool WndProcHook(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT *result);
 };
 

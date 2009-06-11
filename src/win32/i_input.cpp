@@ -71,6 +71,10 @@
 // w32api does not #define the PBT_ macros in winuser.h like the PSDK does
 #include <pbt.h>
 #endif
+#ifndef GET_RAWINPUT_CODE_WPARAM
+#define GET_RAWINPUT_CODE_WPARAM(wParam)	((wParam) & 0xff)
+#endif
+
 
 #define USE_WINDOWS_DWORD
 #include "c_dispatch.h"
@@ -459,6 +463,32 @@ bool CallHook(FInputDevice *device, HWND hWnd, UINT message, WPARAM wParam, LPAR
 LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	LRESULT result;
+
+	if (message == WM_INPUT)
+	{
+		if (MyGetRawInputData != NULL)
+		{
+			UINT size;
+
+			if (!MyGetRawInputData((HRAWINPUT)lParam, RID_INPUT, NULL, &size, sizeof(RAWINPUTHEADER)) &&
+				size != 0)
+			{
+				BYTE *buffer = (BYTE *)alloca(size);
+				if (MyGetRawInputData((HRAWINPUT)lParam, RID_INPUT, buffer, &size, sizeof(RAWINPUTHEADER)) == size)
+				{
+					int code = GET_RAWINPUT_CODE_WPARAM(wParam);
+					if (Keyboard == NULL || !Keyboard->ProcessRawInput((RAWINPUT *)buffer, code))
+					{
+						if (Mouse != NULL)
+						{
+							Mouse->ProcessRawInput((RAWINPUT *)buffer, code);
+						}
+					}
+				}
+			}
+		}
+		return DefWindowProc(hWnd, message, wParam, lParam);
+	}
 
 	if (CallHook(Keyboard, hWnd, message, wParam, lParam, &result))
 	{
@@ -1336,6 +1366,34 @@ CCMD (playmovie)
 
 FInputDevice::~FInputDevice()
 {
+}
+
+//==========================================================================
+//
+// FInputDevice :: ProcessInput
+//
+// Gives subclasses an opportunity to do input handling that doesn't involve
+// window messages.
+//
+//==========================================================================
+
+void FInputDevice::ProcessInput()
+{
+}
+
+//==========================================================================
+//
+// FInputDevice :: ProcessRawInput
+//
+// Gives subclasses a chance to handle WM_INPUT messages. This is not part
+// of WndProcHook so that we only need to fill the RAWINPUT buffer once
+// per message and be sure it gets cleaned up properly.
+//
+//==========================================================================
+
+bool FInputDevice::ProcessRawInput(RAWINPUT *raw, int code)
+{
+	return false;
 }
 
 //==========================================================================

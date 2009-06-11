@@ -224,7 +224,7 @@ void FWadFile::SetNamespace(const char *startmarker, const char *endmarker, name
 			i++;
 			continue;
 		}
-		// same for x_START markers
+		// same for x_END markers
 		while (i < markers.Size()-1 && (markers[i].markertype == 1 && markers[i+1].markertype == 1))
 		{
 			Printf(TEXTCOLOR_YELLOW"WARNING: duplicate %s marker found.\n", endmarker);
@@ -235,13 +235,16 @@ void FWadFile::SetNamespace(const char *startmarker, const char *endmarker, name
 		if (i >= markers.Size())
 		{
 			Printf(TEXTCOLOR_YELLOW"WARNING: %s marker without corresponding %s found.\n", startmarker, endmarker);
-			return;
+			end = NumLumps;
 		}
-		end = i++;
+		else
+		{
+			end = markers[i++].index;
+		}
 
 		// we found a marked block
-		DPrintf("Found %s block at (%d-%d)\n", startmarker, markers[start].index, markers[end].index);
-		for(int j = markers[start].index+1; j < markers[end].index; j++)
+		DPrintf("Found %s block at (%d-%d)\n", startmarker, markers[start].index, end);
+		for(int j = markers[start].index + 1; j < end; j++)
 		{
 			if (Lumps[j].Namespace != ns_global)
 			{

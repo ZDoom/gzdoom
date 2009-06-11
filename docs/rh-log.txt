@@ -1,4 +1,8 @@
 ﻿June 10, 2009
+- Changed wad namespacing so that wads with a missing end marker will be
+  loaded as if they had one more lump with that end marker. This matches the
+  behaviour of previously released ZDooms. (The warning is still present, so
+  there's no excuse to release more wads like this.)
 - Moved Raw Input processing into a seperate method of FInputDevice so that
   all the devices can share the same setup code.
 

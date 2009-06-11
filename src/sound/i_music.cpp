@@ -528,7 +528,7 @@ MusInfo *I_RegisterSong (const char *filename, BYTE *musiccache, int offset, int
 			}
 		}
 		// Check for game music
-		else if ((fmt = GME_CheckFormat(id)) != NULL)
+		else if ((fmt = GME_CheckFormat(id)) != NULL && fmt[0] != '\0')
 		{
 			info = GME_OpenSong(file, musiccache, len, fmt);
 		}

@@ -1039,12 +1039,20 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 			
 			ang = R_PointToAngle2 (origin->x, origin->y,
 				target->x, target->y);
-			thrust = damage*(FRACUNIT>>3)*kickback / target->Mass;
+
+
+			// Calculate this as float to avoid overflows so that the
+			// clamping that had to be done here can be removed.
+			thrust = FLOAT2FIXED((damage * 0.125 * kickback) / target->Mass);
+
 			// [RH] If thrust overflows, use a more reasonable amount
+			/* old fixed point code that could overflow.
+			thrust = damage*(FRACUNIT>>3)*kickback / target->Mass;
 			if (thrust < 0 || thrust > 10*FRACUNIT)
 			{
 				thrust = 10*FRACUNIT;
 			}
+			*/
 			// make fall forwards sometimes
 			if ((damage < 40) && (damage > target->health)
 				 && (target->z - origin->z > 64*FRACUNIT)

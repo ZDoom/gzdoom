@@ -307,6 +307,7 @@ public:
 	void LoadTextureDefs(int wadnum, const char *lumpname);
 	void ParseXTexture(FScanner &sc, int usetype);
 	void SortTexturesByType(int start, int end);
+	bool AreTexturesCompatible (FTextureID picnum1, FTextureID picnum2);
 
 	FTextureID CreateTexture (int lumpnum, int usetype=FTexture::TEX_Any);	// Also calls AddTexture
 	FTextureID AddTexture (FTexture *texture);
@@ -344,6 +345,7 @@ private:
 	TArray<int> Translation;
 	int HashFirst[HASH_SIZE];
 	FTextureID DefaultTexture;
+	TArray<int> FirstTextureForFile;
 };
 
 extern FTextureManager TexMan;

@@ -373,6 +373,40 @@ void FTextureManager::ReplaceTexture (FTextureID picnum, FTexture *newtexture, b
 
 //==========================================================================
 //
+// FTextureManager :: AreTexturesCompatible
+//
+// Checks if 2 textures are compatible for a ranged animation
+//
+//==========================================================================
+
+bool FTextureManager::AreTexturesCompatible (FTextureID picnum1, FTextureID picnum2)
+{
+	int index1 = picnum1.GetIndex();
+	int index2 = picnum2.GetIndex();
+	if (unsigned(index1) >= Textures.Size() || unsigned(index2) >= Textures.Size())
+		return false;
+
+	FTexture *texture1 = Textures[index1].Texture;
+	FTexture *texture2 = Textures[index2].Texture;
+
+	// both textures must be the same type.
+	if (texture1 == NULL || texture2 == NULL || texture1->UseType != texture2->UseType)
+		return false;
+
+	// both textures must be from the same file
+	for(unsigned i = 0; i < FirstTextureForFile.Size() - 1; i++)
+	{
+		if (index1 >= FirstTextureForFile[i] && index1 < FirstTextureForFile[i+1])
+		{
+			return (index2 >= FirstTextureForFile[i] && index2 < FirstTextureForFile[i+1]);
+		}
+	}
+	return false;
+}
+
+
+//==========================================================================
+//
 // FTextureManager :: AddGroup
 //
 //==========================================================================
@@ -707,6 +741,8 @@ void FTextureManager::AddTexturesForWad(int wadnum)
 	int firsttexture = Textures.Size();
 	int lumpcount = Wads.GetNumLumps();
 
+	FirstTextureForFile.Push(firsttexture);
+
 	// First step: Load sprites
 	AddGroup(wadnum, ns_sprites, FTexture::TEX_Sprite);
 
@@ -857,7 +893,12 @@ void FTextureManager::Init()
 	{
 		AddTexturesForWad(i);
 	}
+
+	// Add one marker so that the last WAD is easier to handle and treat
+	// Build tiles as a completely separate block.
+	FirstTextureForFile.Push(Textures.Size());
 	R_InitBuildTiles ();
+	FirstTextureForFile.Push(Textures.Size());
 
 	DefaultTexture = CheckForTexture ("-NOFLAT-", FTexture::TEX_Override, 0);
 

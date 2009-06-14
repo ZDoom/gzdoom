@@ -199,18 +199,6 @@ void R_InitPicAnims (void)
 					tex2->Name, pic2.GetIndex(), tex2->GetSourceLump(), Wads.GetLumpFile(tex2->GetSourceLump()));
 			}
 
-			/* FIXME: doesn't work with hires texture replacements.
-			int l1 = tex1->GetSourceLump();
-			int l2 = tex2->GetSourceLump();
-
-			if (tex1->UseType == FTexture::TEX_Wall && l1 != l2)
-			{
-				// Animated walls must be in the same definition lumo
-				continue;
-			}
-			*/
-
-
 			// [RH] Allow for backward animations as well as forward.
 			if (pic1 > pic2)
 			{
@@ -244,16 +232,19 @@ void R_InitPicAnims (void)
 
 void R_AddSimpleAnim (FTextureID picnum, int animcount, int animtype, DWORD speedmin, DWORD speedrange)
 {
-	FAnimDef *anim = (FAnimDef *)M_Malloc (sizeof(FAnimDef));
-	anim->CurFrame = 0;
-	anim->BasePic = picnum;
-	anim->NumFrames = animcount;
-	anim->AnimType = animtype;
-	anim->SwitchTime = 0;
-	anim->Frames[0].SpeedMin = speedmin;
-	anim->Frames[0].SpeedRange = speedrange;
-	anim->Frames[0].FramePic = anim->BasePic;
-	Anims.AddAnim (anim);
+	if (TexMan.AreTexturesCompatible(picnum, picnum + (animcount - 1)))
+	{
+		FAnimDef *anim = (FAnimDef *)M_Malloc (sizeof(FAnimDef));
+		anim->CurFrame = 0;
+		anim->BasePic = picnum;
+		anim->NumFrames = animcount;
+		anim->AnimType = animtype;
+		anim->SwitchTime = 0;
+		anim->Frames[0].SpeedMin = speedmin;
+		anim->Frames[0].SpeedRange = speedrange;
+		anim->Frames[0].FramePic = anim->BasePic;
+		Anims.AddAnim (anim);
+	}
 }
 
 //==========================================================================

@@ -271,6 +271,7 @@ enum
 	COMPATF_MISSILECLIP		= 1 << 19,	// Use original Doom heights for clipping against projectiles
 	COMPATF_CROSSDROPOFF	= 1 << 20,	// monsters can't be pushed over dropoffs
 	COMPATF_ANYBOSSDEATH	= 1 << 21,	// [GZ] Any monster which calls BOSSDEATH counts for level specials
+	COMPATF_MINOTAUR		= 1 << 22,	// Minotaur's floor flame is exploded immediately when feet are clipped
 };
 
 // Emulate old bugs for select maps. These are not exposed by a cvar

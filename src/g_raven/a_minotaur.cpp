@@ -379,10 +379,18 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurAtk3)
 	}
 	else
 	{
-		mo = P_SpawnMissile (self, self->target, PClass::FindClass("MinotaurFX2"));
-		if (mo != NULL)
+		if (self->floorclip > 0 && (i_compatflags & COMPATF_MINOTAUR))
 		{
-			S_Sound (mo, CHAN_WEAPON, "minotaur/attack1", 1, ATTN_NORM);
+			// only play the sound. 
+			S_Sound (mo, CHAN_WEAPON, "minotaur/fx2hit", 1, ATTN_NORM);
+		}
+		else
+		{
+			mo = P_SpawnMissile (self, self->target, PClass::FindClass("MinotaurFX2"));
+			if (mo != NULL)
+			{
+				S_Sound (mo, CHAN_WEAPON, "minotaur/attack1", 1, ATTN_NORM);
+			}
 		}
 	}
 	if (pr_minotauratk3() < 192 && self->special2 == 0)

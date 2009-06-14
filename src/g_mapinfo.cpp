@@ -1337,6 +1337,7 @@ MapFlagHandlers[] =
 	{ "compat_sectorsounds",			MITYPE_COMPATFLAG, COMPATF_SECTORSOUNDS},
 	{ "compat_missileclip",				MITYPE_COMPATFLAG, COMPATF_MISSILECLIP},
 	{ "compat_crossdropoff",			MITYPE_COMPATFLAG, COMPATF_CROSSDROPOFF},
+	{ "compat_minotaur",				MITYPE_COMPATFLAG, COMPATF_MINOTAUR},
 	{ "cd_start_track",					MITYPE_EATNEXT,	0, 0 },
 	{ "cd_end1_track",					MITYPE_EATNEXT,	0, 0 },
 	{ "cd_end2_track",					MITYPE_EATNEXT,	0, 0 },

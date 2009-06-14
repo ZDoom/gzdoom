@@ -1497,6 +1497,7 @@ bool P_SeekerMissile (AActor *actor, angle_t thresh, angle_t turnMax)
 
 fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly) 
 {
+	static int pushtime = 0;
 	bool bForceSlide = scrollx || scrolly;
 	angle_t angle;
 	fixed_t ptryx, ptryy;
@@ -1656,11 +1657,16 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 	// last actor ripped through is recorded so that if the projectile
 	// passes through more than one actor this tic, each one takes damage
 	// and not just the first one.
+	pushtime++;
 
 	FCheckPosition tm(!!(mo->flags2 & MF2_RIP));
 
+
 	do
 	{
+		if (i_compatflags & COMPATF_WALLRUN) pushtime++;
+		tm.PushTime = pushtime;
+
 		ptryx = startx + Scale (xmove, step, steps);
 		ptryy = starty + Scale (ymove, step, steps);
 
@@ -1720,7 +1726,7 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 					fixed_t tx, ty;
 					tx = 0, ty = onestepy;
 					walkplane = P_CheckSlopeWalk (mo, tx, ty);
-					if (P_TryMove (mo, mo->x + tx, mo->y + ty, true, walkplane))
+					if (P_TryMove (mo, mo->x + tx, mo->y + ty, true, walkplane, tm))
 					{
 						mo->momx = 0;
 					}
@@ -1728,7 +1734,7 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 					{
 						tx = onestepx, ty = 0;
 						walkplane = P_CheckSlopeWalk (mo, tx, ty);
-						if (P_TryMove (mo, mo->x + tx, mo->y + ty, true, walkplane))
+						if (P_TryMove (mo, mo->x + tx, mo->y + ty, true, walkplane, tm))
 						{
 							mo->momy = 0;
 						}

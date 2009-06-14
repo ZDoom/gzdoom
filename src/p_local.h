@@ -350,11 +350,13 @@ struct FCheckPosition
 	// ripping damage once per tic instead of once per move.
 	bool			DoRipping;
 	AActor			*LastRipped;
+	int				PushTime;
 
 	FCheckPosition(bool rip=false)
 	{
 		DoRipping = rip;
 		LastRipped = NULL;
+		PushTime = 0;
 	}
 };
 

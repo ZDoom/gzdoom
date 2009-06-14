@@ -1,4 +1,20 @@
-﻿June 10, 2009
+﻿June 14, 2009  (Changes by Graf Zahl)
+- added a compatibility option to restore the original Heretic bug where
+  a Minotaur couldn't spawn floor flames when standing in water having its
+  feet clipped.
+- added vid_vsync to display options.
+- fixed: Animations of type 'Range' must be disabled if the textures don't
+  come from the same definition unit (i.e both containing file and use type
+  are identical.)
+- changed: Item pushing is now only done once per P_XYMovement call.
+- Increased the push factor of Heretic's pod to 0.5 so that its behavior
+  more closely matches the original which depended on several bugs in the engine.
+- Removed damage thrust clamping in P_DamageMobj and changed the thrust calculation
+  to use floats to prevent overflows. The prevention of the overflows was the
+  only reason the clamping was done.
+- Added Raven's dagger-like vector sprite for the player to the automap code.
+
+June 10, 2009
 - Changed wad namespacing so that wads with a missing end marker will be
   loaded as if they had one more lump with that end marker. This matches the
   behaviour of previously released ZDooms. (The warning is still present, so

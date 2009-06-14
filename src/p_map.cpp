@@ -1008,8 +1008,12 @@ bool PIT_CheckThing (AActor *thing, FCheckPosition &tm)
 					if (thing->flags2 & MF2_PUSHABLE
 						&& !(tm.thing->flags2 & MF2_CANNOTPUSH))
 					{ // Push thing
-						thing->momx += tm.thing->momx>>2;
-						thing->momy += tm.thing->momy>>2;
+						if (thing->lastpush != tm.PushTime)
+						{
+							thing->momx += FixedMul(tm.thing->momx, thing->pushfactor);
+							thing->momy += FixedMul(tm.thing->momy, thing->pushfactor);
+							thing->lastpush = tm.PushTime;
+						}
 					}
 				}
 				spechit.Clear ();
@@ -1048,8 +1052,12 @@ bool PIT_CheckThing (AActor *thing, FCheckPosition &tm)
 	if (thing->flags2 & MF2_PUSHABLE && !(tm.thing->flags2 & MF2_CANNOTPUSH) &&
 		(tm.thing->player == NULL || !(tm.thing->player->cheats & CF_PREDICTING)))
 	{ // Push thing
-		thing->momx += FixedMul(tm.thing->momx, thing->pushfactor);
-		thing->momy += FixedMul(tm.thing->momy, thing->pushfactor);
+		if (thing->lastpush != tm.PushTime)
+		{
+			thing->momx += FixedMul(tm.thing->momx, thing->pushfactor);
+			thing->momy += FixedMul(tm.thing->momy, thing->pushfactor);
+			thing->lastpush = tm.PushTime;
+		}
 	}
 	solid = (thing->flags & MF_SOLID) &&
 			!(thing->flags & MF_NOCLIP) &&

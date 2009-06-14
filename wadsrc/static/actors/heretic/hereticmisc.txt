@@ -14,6 +14,7 @@ ACTOR Pod 2035
 	+CANPASS +TELESTOMP +DONTMORPH
 	+NOBLOCKMONST +DONTGIB +OLDRADIUSDMG
 	DeathSound "world/podexplode"
+	PushFactor 0.5
 	
 	action native A_PodPain (class<Actor> podtype = "PodGoo");
 	action native A_RemovePod ();

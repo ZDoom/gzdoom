@@ -382,7 +382,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurAtk3)
 		if (self->floorclip > 0 && (i_compatflags & COMPATF_MINOTAUR))
 		{
 			// only play the sound. 
-			S_Sound (mo, CHAN_WEAPON, "minotaur/fx2hit", 1, ATTN_NORM);
+			S_Sound (self, CHAN_WEAPON, "minotaur/fx2hit", 1, ATTN_NORM);
 		}
 		else
 		{

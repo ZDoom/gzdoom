@@ -217,7 +217,7 @@ int FWadCollection::AddExternalFile(const char *filename)
 	FWadCollection::LumpRecord *lumprec = &LumpInfo[LumpInfo.Reserve(1)];
 	lumprec->lump = lump;
 	lumprec->wadnum = -1;
-	return 0;	// later
+	return LumpInfo.Size()-1;	// later
 }
 
 //==========================================================================

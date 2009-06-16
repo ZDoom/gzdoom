@@ -1,4 +1,8 @@
-﻿June 14, 2009  (Changes by Graf Zahl)
+﻿June 16, 2009  (Changes by Graf Zahl)
+- Reintroduced damage thrust clamping but with a higher threshold. The clamping
+  is now also done in floating point before any fixed point overflows can occur.
+
+June 14, 2009  (Changes by Graf Zahl)
 - added a compatibility option to restore the original Heretic bug where
   a Minotaur couldn't spawn floor flames when standing in water having its
   feet clipped.

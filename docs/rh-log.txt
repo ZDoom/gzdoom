@@ -1,4 +1,12 @@
-﻿June 16, 2009  (Changes by Graf Zahl)
+﻿June 19, 2009  (Changes by Graf Zahl)
+- Changed AWeaponGiver to keep the weapon actor around instead of respawning a new
+  one for each call.
+- Fixed: AWeaponGiver::TryPickup checked the wrong item for ammo to give.
+- fixed: FRandom::Random2(int mask) must return the difference between 2 byte values
+  for compatibility.
+- fixed: The sound name world/volcano/shoot was accidentally destroyed in the source.
+
+June 16, 2009  (Changes by Graf Zahl)
 - Reintroduced damage thrust clamping but with a higher threshold. The clamping
   is now also done in floating point before any fixed point overflows can occur.
 

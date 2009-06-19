@@ -69,8 +69,8 @@ public:
 // Returns (rand# & mask) - (rand# & mask)
 	int Random2(int mask)
 	{
-		int t = GenRand32() & mask;
-		return t - (GenRand32() & mask);
+		int t = GenRand32() & mask & 255;
+		return t - (GenRand32() & mask & 255);
 	}
 
 	// HITDICE macro used in Heretic and Hexen

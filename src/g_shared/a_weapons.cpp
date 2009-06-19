@@ -618,23 +618,30 @@ IMPLEMENT_CLASS(AWeaponGiver)
 bool AWeaponGiver::TryPickup(AActor *&toucher)
 {
 	FDropItem *di = GetDropItems();
+	AWeapon *weap;
 
 	if (di != NULL)
 	{
 		const PClass *ti = PClass::FindClass(di->Name);
 		if (ti->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
 		{
-			AWeapon *weap = static_cast<AWeapon*>(Spawn(di->Name, 0, 0, 0, NO_REPLACE));
-			if (weap != NULL)
+			if (master == NULL)
 			{
-				weap->ItemFlags &= ~IF_ALWAYSPICKUP;	// use the flag of this item only.
-				if (weap->AmmoGive1 >= 0) weap->AmmoGive1 = AmmoGive1;
-				if (weap->AmmoGive2 >= 0) weap->AmmoGive2 = AmmoGive2;
-				bool res = weap->CallTryPickup(toucher);
-				if (!res) weap->Destroy();
-				else GoAwayAndDie();
-				return res;
+				master = weap = static_cast<AWeapon*>(Spawn(di->Name, 0, 0, 0, NO_REPLACE));
+				if (weap != NULL)
+				{
+					weap->ItemFlags &= ~IF_ALWAYSPICKUP;	// use the flag of this item only.
+					if (AmmoGive1 >= 0) weap->AmmoGive1 = AmmoGive1;
+					if (AmmoGive2 >= 0) weap->AmmoGive2 = AmmoGive2;
+					weap->BecomeItem();
+				}
+				else return false;
 			}
+
+			weap = barrier_cast<AWeapon*>(master);
+			bool res = weap->CallTryPickup(toucher);
+			if (res) GoAwayAndDie();
+			return res;
 		}
 	}
 	return false;

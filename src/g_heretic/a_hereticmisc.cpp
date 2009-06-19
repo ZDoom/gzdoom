@@ -173,7 +173,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_VolcanoBlast)
 		blast->momx = FixedMul (1*FRACUNIT, finecosine[angle]);
 		blast->momy = FixedMul (1*FRACUNIT, finesine[angle]);
 		blast->momz = (FRACUNIT*5/2) + (pr_blast() << 10);
-		S_Sound (blast, CHAN_BODY, "world/self/shoot", 1, ATTN_NORM);
+		S_Sound (blast, CHAN_BODY, "world/volcano/shoot", 1, ATTN_NORM);
 		P_CheckMissileSpawn (blast);
 	}
 }

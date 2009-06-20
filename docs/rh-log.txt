@@ -1,4 +1,13 @@
-﻿June 19, 2009  (Changes by Graf Zahl)
+﻿June 19, 2009
+- The reorganized DirectInput game controller code finally compiles. (Ugh! It
+  took far too long to reach this point.) Manual axis configuration is
+  currently disabled, since I need to rewrite that, too. The eventual point of
+  this is that the code will be modular enough that I can just plop in
+  routines for XInput controllers and driver-less PlayStation 2 adapters
+  without much fuss, since the old joystick code was very much DirectInput-
+  centric.
+
+June 19, 2009  (Changes by Graf Zahl)
 - Changed AWeaponGiver to keep the weapon actor around instead of respawning a new
   one for each call.
 - Fixed: AWeaponGiver::TryPickup checked the wrong item for ammo to give.

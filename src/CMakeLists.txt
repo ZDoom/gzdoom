@@ -111,7 +111,8 @@ if( WIN32 )
 		comctl32
 		comdlg32
 		ws2_32
-		setupapi )
+		setupapi
+		oleaut32 )
 else( WIN32 )
 	option( NO_GTK "Disable GTK+ dialogs (Not applicable to Windows)" )
 	option( VALGRIND "Add special Valgrind sequences to self-modifying code" )
@@ -400,6 +401,7 @@ if( WIN32 )
 		win32/i_input.cpp
 		win32/i_keyboard.cpp
 		win32/i_mouse.cpp
+		win32/i_dijoy.cpp
 		win32/i_main.cpp
 		win32/i_movie.cpp
 		win32/i_system.cpp

@@ -98,8 +98,6 @@ class Win32Video : public IVideo
 	bool m_IteratorFS;
 	bool m_IsFullscreen;
 
-	bool m_CalledCoInitialize;
-
 	void AddMode (int x, int y, int bits, int baseHeight, int doubling);
 	void FreeModes ();
 

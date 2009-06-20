@@ -290,6 +290,7 @@ menu_t MouseMenu =
  *=======================================*/
 
 EXTERN_CVAR (Bool, use_joystick)
+#if 0
 EXTERN_CVAR (Float, joy_speedmultiplier)
 EXTERN_CVAR (Int, joy_xaxis)
 EXTERN_CVAR (Int, joy_yaxis)
@@ -313,6 +314,7 @@ EXTERN_CVAR (Float, joy_forwardspeed)
 EXTERN_CVAR (Float, joy_sidespeed)
 EXTERN_CVAR (Float, joy_upspeed)
 EXTERN_CVAR (GUID, joy_guid)
+#endif
 
 static value_t JoyAxisMapNames[6] =
 {
@@ -332,9 +334,11 @@ static value_t Inversion[2] =
 
 static menuitem_t JoystickItems[] =
 {
+#if 0
 	{ discrete,	"Enable joystick",		{&use_joystick},		{2.0}, {0.0},	{0.0}, {YesNo} },
 	{ discrete_guid,"Active joystick",	{&joy_guid},			{0.0}, {0.0},	{0.0}, {NULL} },
 	{ slider,	"Overall sensitivity",	{&joy_speedmultiplier},	{0.9f}, {2.0},	{0.2f}, {NULL} },
+#endif
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
 	{ whitetext,"Axis Assignments",		{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
@@ -1629,6 +1633,7 @@ int M_FindCurVal (float cur, valuestring_t *values, int numvals)
 	return v;
 }
 
+#if 0
 int M_FindCurGUID (const GUID &guid, GUIDName *values, int numvals)
 {
 	int v;
@@ -1639,6 +1644,7 @@ int M_FindCurGUID (const GUID &guid, GUIDName *values, int numvals)
 
 	return v;
 }
+#endif
 
 const char *M_FindCurVal(const char *cur, valueenum_t *values, int numvals)
 {
@@ -1896,6 +1902,7 @@ void M_OptDrawer ()
 			}
 			break;
 
+#if 0
 			case discrete_guid:
 			{
 				int v, vals;
@@ -1916,6 +1923,7 @@ void M_OptDrawer ()
 
 			}
 			break;
+#endif
 
 			case nochoice:
 				screen->DrawText (SmallFont, CR_GOLD, indent + 14, y,
@@ -2409,6 +2417,7 @@ void M_OptResponder (event_t *ev)
 				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
 				break;
 
+#if 0
 			case discrete_guid:
 				{
 					int cur;
@@ -2423,6 +2432,7 @@ void M_OptResponder (event_t *ev)
 				}
 				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
 				break;
+#endif
 
 			case inverter:
 				value = item->a.cvar->GetGenericRep (CVAR_Float);
@@ -2558,6 +2568,7 @@ void M_OptResponder (event_t *ev)
 				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
 				break;
 
+#if 0
 			case discrete_guid:
 				{
 					int cur;
@@ -2572,6 +2583,7 @@ void M_OptResponder (event_t *ev)
 				}
 				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
 				break;
+#endif
 
 			case inverter:
 				value = item->a.cvar->GetGenericRep (CVAR_Float);
@@ -2983,6 +2995,7 @@ CCMD (menu_mouse)
 
 void UpdateJoystickMenu ()
 {
+#if 0
 	static FIntCVar * const cvars[8] =
 	{
 		&joy_xaxis, &joy_yaxis, &joy_zaxis,
@@ -3090,6 +3103,7 @@ void UpdateJoystickMenu ()
 	{
 		CalcIndent (&JoystickMenu);
 	}
+#endif
 }
 
 static void JoystickOptions ()

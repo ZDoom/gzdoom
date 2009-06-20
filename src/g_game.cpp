@@ -41,6 +41,7 @@
 #include "m_random.h"
 #include "m_crc32.h"
 #include "i_system.h"
+#include "i_input.h"
 #include "p_saveg.h"
 #include "p_tick.h"
 #include "d_main.h"
@@ -575,22 +576,39 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 	if (Button_MoveUp.bDown)		cmd->ucmd.buttons |= BT_MOVEUP;
 	if (Button_ShowScores.bDown)	cmd->ucmd.buttons |= BT_SHOWSCORES;
 
-	// [RH] Scale joystick moves to full range of allowed speeds
-	if (JoyAxes[JOYAXIS_PITCH] != 0)
+	// Handle joysticks/game controllers.
+	float joyaxes[NUM_JOYAXIS];
+
+	I_GetAxes(joyaxes);
+
+	// Remap some axes depending on button state.
+	if (Button_Strafe.bDown || (Button_Mlook.bDown && lookstrafe))
 	{
-		G_AddViewPitch (int((JoyAxes[JOYAXIS_PITCH] * 2048) / 256));
+		joyaxes[JOYAXIS_Side] = -joyaxes[JOYAXIS_Yaw];
+		joyaxes[JOYAXIS_Yaw] = 0;
+	}
+	if (Button_Mlook.bDown)
+	{
+		joyaxes[JOYAXIS_Pitch] = joyaxes[JOYAXIS_Forward];
+		joyaxes[JOYAXIS_Forward] = 0;
+	}
+
+	if (joyaxes[JOYAXIS_Pitch] != 0)
+	{
+		G_AddViewPitch(int(joyaxes[JOYAXIS_Pitch] * 2048));
 		LocalKeyboardTurner = true;
 	}
-	if (JoyAxes[JOYAXIS_YAW] != 0)
+	if (joyaxes[JOYAXIS_Yaw] != 0)
 	{
-		G_AddViewAngle (int((-1280 * JoyAxes[JOYAXIS_YAW]) / 256));
+		G_AddViewAngle(int(-1280 * joyaxes[JOYAXIS_Yaw]));
 		LocalKeyboardTurner = true;
 	}
 
-	side += int((MAXPLMOVE * JoyAxes[JOYAXIS_SIDE]) / 256);
-	forward += int((JoyAxes[JOYAXIS_FORWARD] * MAXPLMOVE) / 256);
-	fly += int(JoyAxes[JOYAXIS_UP] * 8);
+	side += int(MAXPLMOVE * joyaxes[JOYAXIS_Side]);
+	forward += int(joyaxes[JOYAXIS_Forward] * MAXPLMOVE);
+	fly += int(joyaxes[JOYAXIS_Up] * 2048);
 
+	// Handle mice.
 	if (!Button_Mlook.bDown && !freelook)
 	{
 		forward += (int)((float)mousey * m_forward);
@@ -609,6 +627,7 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 
 	mousex = mousey = 0;
 
+	// Build command.
 	if (forward > MAXPLMOVE)
 		forward = MAXPLMOVE;
 	else if (forward < -MAXPLMOVE)

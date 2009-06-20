@@ -35,24 +35,15 @@
 #define __I_INPUT_H__
 
 #include "doomtype.h"
+#include "doomdef.h"
 
 bool I_InitInput (void *hwnd);
 void I_ShutdownInput ();
 void I_PutInClipboard (const char *str);
 FString I_GetFromClipboard (bool windows_has_no_selection_clipboard);
 
-void I_GetEvent ();
-
-struct GUIDName
-{
-	GUID ID;
-	char *Name;
-};
-
-extern TArray<GUIDName> JoystickNames;
-extern char *JoyAxisNames[8];
-
-extern void DI_EnumJoy ();
+void I_GetEvent();
+void I_GetAxes(float axes[NUM_JOYAXIS]);
 
 #ifdef USE_WINDOWS_DWORD
 // Don't make these definitions available to the main body of the source code.
@@ -118,9 +109,26 @@ protected:
 	void PostKeyEvent(int keynum, INTBOOL down, bool foreground);
 };
 
+class FJoystickCollection : public FInputDevice
+{
+public:
+	virtual void AddAxes(float axes[NUM_JOYAXIS]) = 0;
+};
+
+enum
+{
+	INPUT_DIJoy,
+	INPUT_XInput,
+	INPUT_PS2EMS,
+	NUM_JOYDEVICES
+};
+
+extern FJoystickCollection *JoyDevices[NUM_JOYDEVICES];
+
 void I_StartupMouse();
 void I_CheckNativeMouse(bool prefer_native);
 void I_StartupKeyboard();
+void I_StartupJoystick();
 
 // USB HID usage page numbers
 #define HID_GENERIC_DESKTOP_PAGE			0x01

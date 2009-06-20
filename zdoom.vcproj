@@ -1969,6 +1969,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\win32\i_dijoy.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\src\win32\i_input.cpp"
 				>
 			</File>

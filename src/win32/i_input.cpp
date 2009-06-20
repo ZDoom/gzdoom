@@ -3,7 +3,7 @@
 ** Handles input from keyboard, mouse, and joystick
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2006 Randy Heit
+** Copyright 1998-2009 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -47,8 +47,8 @@
 #endif
 #include <windows.h>
 #include <mmsystem.h>
-#include <dbt.h>
 #include <dinput.h>
+#include <malloc.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -128,8 +128,6 @@ extern bool SpawnEAXWindow;
 
 static HMODULE DInputDLL;
 
-static HRESULT InitJoystick ();
-
 bool GUICapture;
 extern FMouse *Mouse;
 extern FKeyboard *Keyboard;
@@ -141,11 +139,9 @@ extern BOOL vidactive;
 extern HWND Window, ConWindow;
 extern HWND EAXEditWindow;
 
-extern void UpdateJoystickMenu ();
-extern menu_t JoystickMenu;
-
 EXTERN_CVAR (String, language)
 EXTERN_CVAR (Bool, lookstrafe)
+EXTERN_CVAR (Bool, use_joystick)
 
 static int WheelDelta;
 
@@ -155,150 +151,11 @@ static bool noidle = false;
 LPDIRECTINPUT8			g_pdi;
 LPDIRECTINPUT			g_pdi3;
 
-static LPDIRECTINPUTDEVICE8		g_pJoy;
-
-TArray<GUIDName> JoystickNames;
-
-static DIDEVCAPS JoystickCaps;
-
-float JoyAxes[6];
-static int JoyActive;
-static BYTE JoyButtons[128];
-static BYTE JoyPOV[4];
-static BYTE JoyAxisMap[8];
-static float JoyAxisThresholds[8];
-char *JoyAxisNames[8];
-static const size_t Axes[8] =
-{
-	myoffsetof(DIJOYSTATE2,lX),
-	myoffsetof(DIJOYSTATE2,lY),
-	myoffsetof(DIJOYSTATE2,lZ),
-	myoffsetof(DIJOYSTATE2,lRx),
-	myoffsetof(DIJOYSTATE2,lRy),
-	myoffsetof(DIJOYSTATE2,lRz),
-	myoffsetof(DIJOYSTATE2,rglSlider[0]),
-	myoffsetof(DIJOYSTATE2,rglSlider[1])
-};
-static const BYTE POVButtons[9] = { 0x01, 0x03, 0x02, 0x06, 0x04, 0x0C, 0x08, 0x09, 0x00 };
 
 BOOL AppActive = TRUE;
 int SessionState = 0;
 
-CVAR (Bool,  use_joystick,			false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-
-CUSTOM_CVAR (GUID, joy_guid,		NULL, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOINITCALL)
-{
-	if (g_pJoy != NULL)
-	{
-		DIDEVICEINSTANCE inst = { sizeof(DIDEVICEINSTANCE), };
-
-		if (SUCCEEDED(g_pJoy->GetDeviceInfo (&inst)) && self != inst.guidInstance)
-		{
-			DI_InitJoy ();
-			UpdateJoystickMenu ();
-		}
-	}
-	else
-	{
-		DI_InitJoy ();
-		UpdateJoystickMenu ();
-	}
-}
-
-static void MapAxis (FIntCVar &var, int num)
-{
-	if (var < JOYAXIS_NONE || var > JOYAXIS_UP)
-	{
-		var = JOYAXIS_NONE;
-	}
-	else
-	{
-		JoyAxisMap[num] = var;
-	}
-}
-
-CUSTOM_CVAR (Int, joy_xaxis,	JOYAXIS_YAW,	 CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-{
-	MapAxis (self, 0);
-}
-CUSTOM_CVAR (Int, joy_yaxis,	JOYAXIS_FORWARD, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-{
-	MapAxis (self, 1);
-}
-CUSTOM_CVAR (Int, joy_zaxis,	JOYAXIS_SIDE,	 CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-{
-	MapAxis (self, 2);
-}
-CUSTOM_CVAR (Int, joy_xrot,		JOYAXIS_NONE,	 CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-{
-	MapAxis (self, 3);
-}
-CUSTOM_CVAR (Int, joy_yrot,		JOYAXIS_NONE,	 CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-{
-	MapAxis (self, 4);
-}
-CUSTOM_CVAR (Int, joy_zrot,		JOYAXIS_PITCH,	 CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-{
-	MapAxis (self, 5);
-}
-CUSTOM_CVAR (Int, joy_slider,	JOYAXIS_NONE,	 CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-{
-	MapAxis (self, 6);
-}
-CUSTOM_CVAR (Int, joy_dial,		JOYAXIS_NONE,	 CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-{
-	MapAxis (self, 7);
-}
-
-CUSTOM_CVAR (Float, joy_xthreshold,		0.15f,	CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-{
-	JoyAxisThresholds[0] = clamp (self * 256.f, 0.f, 256.f);
-}
-CUSTOM_CVAR (Float, joy_ythreshold,		0.15f,	CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-{
-	JoyAxisThresholds[1] = clamp (self * 256.f, 0.f, 256.f);
-}
-CUSTOM_CVAR (Float, joy_zthreshold,		0.15f,	CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-{
-	JoyAxisThresholds[2] = clamp (self * 256.f, 0.f, 256.f);
-}
-CUSTOM_CVAR (Float, joy_xrotthreshold,	0.15f,	CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-{
-	JoyAxisThresholds[3] = clamp (self * 256.f, 0.f, 256.f);
-}
-CUSTOM_CVAR (Float, joy_yrotthreshold,	0.15f,	CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-{
-	JoyAxisThresholds[4] = clamp (self * 256.f, 0.f, 256.f);
-}
-CUSTOM_CVAR (Float, joy_zrotthreshold,	0.15f,	CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-{
-	JoyAxisThresholds[5] = clamp (self * 256.f, 0.f, 256.f);
-}
-CUSTOM_CVAR (Float, joy_sliderthreshold,	0.f,	CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-{
-	JoyAxisThresholds[6] = clamp (self * 256.f, 0.f, 256.f);
-}
-CUSTOM_CVAR (Float, joy_dialthreshold,	0.f,	CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-{
-	JoyAxisThresholds[7] = clamp (self * 256.f, 0.f, 256.f);
-}
-
-CVAR (Float, joy_speedmultiplier,1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-CVAR (Float, joy_yawspeed,		-1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-CVAR (Float, joy_pitchspeed,	-.75f,CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-CVAR (Float, joy_forwardspeed,	-1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-CVAR (Float, joy_sidespeed,		 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-CVAR (Float, joy_upspeed,		-1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-
 CVAR (Bool, k_allowfullscreentoggle, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-
-static FBaseCVar * const JoyConfigVars[] =
-{
-	&joy_xaxis, &joy_yaxis, &joy_zaxis, &joy_xrot, &joy_yrot, &joy_zrot, &joy_slider, &joy_dial,
-	&joy_xthreshold, &joy_ythreshold, &joy_zthreshold, &joy_xrotthreshold, &joy_yrotthreshold, &joy_zrotthreshold, &joy_sliderthreshold, &joy_dialthreshold,
-	&joy_speedmultiplier, &joy_yawspeed, &joy_pitchspeed, &joy_forwardspeed, &joy_sidespeed,
-	&joy_upspeed
-};
 
 extern int chatmodeon;
 
@@ -498,14 +355,17 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 		return result;
 	}
+	for (int i = 0; i < NUM_JOYDEVICES; ++i)
+	{
+		if (CallHook(JoyDevices[i], hWnd, message, wParam, lParam, &result))
+		{
+			return result;
+		}
+	}
 	if (GUICapture && GUIWndProcHook(hWnd, message, wParam, lParam, &result))
 	{
 		return result;
 	}
-
-	event_t event;
-
-	memset (&event, 0, sizeof(event));
 
 	switch (message)
 	{
@@ -669,74 +529,6 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		}
 		break;
 
-	case WM_DEVICECHANGE:
-		if (wParam == DBT_DEVNODES_CHANGED ||
-			wParam == DBT_DEVICEARRIVAL ||
-			wParam == DBT_CONFIGCHANGED)
-		{
-			unsigned int i;
-			TArray<GUID> oldjoys;
-
-			for (i = 0; i < JoystickNames.Size(); ++i)
-			{
-				oldjoys.Push (JoystickNames[i].ID);
-			}
-
-			DI_EnumJoy ();
-
-			// If a new joystick was added and the joystick menu is open,
-			// switch to it.
-			if (menuactive != MENU_Off && CurrentMenu == &JoystickMenu)
-			{
-				for (i = 0; i < JoystickNames.Size(); ++i)
-				{
-					bool wasListed = false;
-
-					for (unsigned int j = 0; j < oldjoys.Size(); ++j)
-					{
-						if (oldjoys[j] == JoystickNames[i].ID)
-						{
-							wasListed = true;
-							break;
-						}
-					}
-					if (!wasListed)
-					{
-						joy_guid = JoystickNames[i].ID;
-						break;
-					}
-				}
-			}
-
-			// If the current joystick was removed,
-			// try to switch to a different one.
-			if (g_pJoy != NULL)
-			{
-				DIDEVICEINSTANCE inst = { sizeof(DIDEVICEINSTANCE), };
-
-				if (SUCCEEDED(g_pJoy->GetDeviceInfo (&inst)))
-				{
-					for (i = 0; i < JoystickNames.Size(); ++i)
-					{
-						if (JoystickNames[i].ID == inst.guidInstance)
-						{
-							break;
-						}
-					}
-					if (i == JoystickNames.Size ())
-					{
-						DI_InitJoy ();
-					}
-				}
-			}
-			else
-			{
-				DI_InitJoy ();
-			}
-			UpdateJoystickMenu ();
-		}
-		break;
-
 	case WM_PALETTECHANGED:
 		if ((HWND)wParam == Window)
 			break;
@@ -762,376 +554,6 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 	return 0;
 }
-
-/****** Joystick stuff ******/
-
-void DI_JoyCheck ()
-{
-	float mul;
-	event_t event;
-	HRESULT hr;
-	DIJOYSTATE2 js;
-	int i;
-	BYTE pov;
-
-	if (g_pJoy == NULL)
-	{
-		return;
-	}
-
-	hr = g_pJoy->Poll ();
-	if (FAILED(hr))
-	{
-		do
-		{
-			hr = g_pJoy->Acquire ();
-		}
-		while (hr == DIERR_INPUTLOST);
-		if (FAILED(hr))
-			return;
-	}
-
-	hr = g_pJoy->GetDeviceState (sizeof(DIJOYSTATE2), &js);
-	if (FAILED(hr))
-		return;
-
-	mul = joy_speedmultiplier;
-	if (Button_Speed.bDown)
-	{
-		mul *= 0.5f;
-	}
-
-	for (i = 0; i < 6; ++i)
-	{
-		JoyAxes[i] = 0.f;
-	}
-
-	for (i = 0; i < 8; ++i)
-	{
-		int vaxis = JoyAxisMap[i];
-
-		if (vaxis != JOYAXIS_NONE)
-		{
-			if (vaxis == JOYAXIS_YAW && (Button_Strafe.bDown ||
-				(Button_Mlook.bDown && lookstrafe)))
-			{
-				vaxis = JOYAXIS_SIDE;
-			}
-			else if (vaxis == JOYAXIS_FORWARD && Button_Mlook.bDown)
-			{
-				vaxis = JOYAXIS_PITCH;
-			}
-
-			float axisval = *((LONG *)((BYTE *)&js + Axes[i]));
-			if (fabsf(axisval) > JoyAxisThresholds[i])
-			{
-				if (axisval > 0.f)
-				{
-					axisval -= JoyAxisThresholds[i];
-				}
-				else
-				{
-					axisval += JoyAxisThresholds[i];
-				}
-				JoyAxes[vaxis] += axisval * mul * 256.f / (256.f - JoyAxisThresholds[i]);
-			}
-		}
-	}
-
-	JoyAxes[JOYAXIS_YAW] *= joy_yawspeed;
-	JoyAxes[JOYAXIS_PITCH] *= joy_pitchspeed;
-	JoyAxes[JOYAXIS_FORWARD] *= joy_forwardspeed;
-	JoyAxes[JOYAXIS_SIDE] *= joy_sidespeed;
-	JoyAxes[JOYAXIS_UP] *= joy_upspeed;
-
-	event.data2 = event.data3 = 0;
-
-	// Send button up/down events
-
-	for (i = 0; i < 128; ++i)
-	{
-		if ((js.rgbButtons[i] ^ JoyButtons[i]) & 0x80)
-		{
-			event.data1 = KEY_FIRSTJOYBUTTON + i;
-			if (JoyButtons[i])
-			{
-				event.type = EV_KeyUp;
-				JoyButtons[i] = 0;
-			}
-			else
-			{
-				event.type = EV_KeyDown;
-				JoyButtons[i] = 0x80;
-			}
-			D_PostEvent (&event);
-		}
-	}
-
-	for (i = 0; i < 4; ++i)
-	{
-		if (LOWORD(js.rgdwPOV[i]) == 0xFFFF)
-		{
-			pov = 8;
-		}
-		else
-		{
-			pov = ((js.rgdwPOV[i] + 2250) % 36000) / 4500;
-		}
-		pov = POVButtons[pov];
-		for (int j = 0; j < 4; ++j)
-		{
-			BYTE mask = 1 << j;
-
-			if ((JoyPOV[i] ^ pov) & mask)
-			{
-				event.data1 = KEY_JOYPOV1_UP + i*4 + j;
-				event.type = (pov & mask) ? EV_KeyDown : EV_KeyUp;
-				D_PostEvent (&event);
-			}
-		}
-		JoyPOV[i] = pov;
-	}
-}
-
-bool SetJoystickSection (bool create)
-{
-	DIDEVICEINSTANCE inst = { sizeof(DIDEVICEINSTANCE), };
-	char section[80] = "Joystick.";
-
-	if (g_pJoy != NULL && SUCCEEDED(g_pJoy->GetDeviceInfo (&inst)))
-	{
-		FormatGUID (section + 9, countof(section) - 9, inst.guidInstance);
-		strcpy (section + 9 + 38, ".Axes");
-		return GameConfig->SetSection (section, create);
-	}
-	else
-	{
-		return false;
-	}
-}
-
-void LoadJoystickConfig ()
-{
-	if (SetJoystickSection (false))
-	{
-		for (size_t i = 0; i < countof(JoyConfigVars); ++i)
-		{
-			const char *val = GameConfig->GetValueForKey (JoyConfigVars[i]->GetName());
-			UCVarValue cval;
-
-			if (val != NULL)
-			{
-				cval.String = const_cast<char *>(val);
-				JoyConfigVars[i]->SetGenericRep (cval, CVAR_String);
-			}
-		}
-	}
-}
-
-void SaveJoystickConfig ()
-{
-	if (SetJoystickSection (true))
-	{
-		GameConfig->ClearCurrentSection ();
-		for (size_t i = 0; i < countof(JoyConfigVars); ++i)
-		{
-			UCVarValue cval = JoyConfigVars[i]->GetGenericRep (CVAR_String);
-			GameConfig->SetValueForKey (JoyConfigVars[i]->GetName(), cval.String);
-		}
-	}
-}
-
-BOOL CALLBACK EnumJoysticksCallback (LPCDIDEVICEINSTANCE lpddi, LPVOID pvRef)
-{
-	GUIDName name;
-
-	JoyActive++;
-	name.ID = lpddi->guidInstance;
-	name.Name = copystring (lpddi->tszInstanceName);
-	JoystickNames.Push (name);
-	return DIENUM_CONTINUE;
-}
-
-void DI_EnumJoy ()
-{
-	unsigned int i;
-
-	for (i = 0; i < JoystickNames.Size(); ++i)
-	{
-		delete[] JoystickNames[i].Name;
-	}
-
-	JoyActive = 0;
-	JoystickNames.Clear ();
-
-	if (g_pdi != NULL && !Args->CheckParm ("-nojoy"))
-	{
-		g_pdi->EnumDevices (DI8DEVCLASS_GAMECTRL, EnumJoysticksCallback, NULL, DIEDFL_ALLDEVICES);
-	}
-}
-
-BOOL DI_InitJoy (void)
-{
-	HRESULT hr;
-	unsigned int i;
-
-	if (g_pdi == NULL)
-	{
-		return TRUE;
-	}
-
-	if (g_pJoy != NULL)
-	{
-		SaveJoystickConfig ();
-		g_pJoy->Release ();
-		g_pJoy = NULL;
-	}
-
-	if (JoystickNames.Size() == 0)
-	{
-		return TRUE;
-	}
-
-	// Try to obtain the joystick specified by joy_guid
-	for (i = 0; i < JoystickNames.Size(); ++i)
-	{
-		if (JoystickNames[i].ID == joy_guid)
-		{
-			hr = g_pdi->CreateDevice (JoystickNames[i].ID, &g_pJoy, NULL);
-			if (FAILED(hr))
-			{
-				i = JoystickNames.Size();
-			}
-			break;
-		}
-	}
-
-	// If the preferred joystick could not be obtained, grab the first
-	// one available.
-	if (i == JoystickNames.Size())
-	{
-		for (i = 0; i <= JoystickNames.Size(); ++i)
-		{
-			hr = g_pdi->CreateDevice (JoystickNames[i].ID, &g_pJoy, NULL);
-			if (SUCCEEDED(hr))
-			{
-				break;
-			}
-		}
-	}
-
-	if (i == JoystickNames.Size())
-	{
-		JoyActive = 0;
-		return TRUE;
-	}
-
-	if (FAILED (InitJoystick ()))
-	{
-		JoyActive = 0;
-		g_pJoy->Release ();
-		g_pJoy = NULL;
-	}
-	else
-	{
-		LoadJoystickConfig ();
-		joy_guid = JoystickNames[i].ID;
-	}
-
-	return TRUE;
-}
-
-BOOL CALLBACK EnumAxesCallback (LPCDIDEVICEOBJECTINSTANCE lpddoi, LPVOID pvRef)
-{
-	DIPROPRANGE diprg =
-	{
-		{
-			sizeof (DIPROPRANGE),
-			sizeof (DIPROPHEADER),
-			lpddoi->dwType,
-			DIPH_BYID
-		},
-		-256,
-		+256
-	};
-	if (lpddoi->wUsagePage == 1)
-	{
-		if (lpddoi->wUsage >= 0x30 && lpddoi->wUsage <= 0x37)
-		{
-			JoyAxisNames[lpddoi->wUsage-0x30] = copystring (lpddoi->tszName);
-		}
-	}
-	if (FAILED(g_pJoy->SetProperty (DIPROP_RANGE, &diprg.diph)))
-	{
-		return DIENUM_STOP;
-	}
-	else
-	{
-		return DIENUM_CONTINUE;
-	}
-}
-
-static HRESULT InitJoystick ()
-{
-	HRESULT hr;
-
-	memset (JoyPOV, 9, sizeof(JoyPOV));
-	for (int i = 0; i < 8; ++i)
-	{
-		if (JoyAxisNames[i])
-		{
-			delete[] JoyAxisNames[i];
-			JoyAxisNames[i] = NULL;
-		}
-	}
-
-	hr = g_pJoy->SetDataFormat (&c_dfDIJoystick2);
-	if (FAILED(hr))
-	{
-		Printf (PRINT_BOLD, "Could not set joystick data format.\n");
-		return hr;
-	}
-
-	hr = g_pJoy->SetCooperativeLevel (Window, DISCL_EXCLUSIVE|DISCL_FOREGROUND);
-	if (FAILED(hr))
-	{
-		Printf (PRINT_BOLD, "Could not set joystick cooperative level.\n");
-		return hr;
-	}
-
-	JoystickCaps.dwSize = sizeof(JoystickCaps);
-	hr = g_pJoy->GetCapabilities (&JoystickCaps);
-	if (FAILED(hr))
-	{
-		Printf (PRINT_BOLD, "Could not query joystick capabilities.\n");
-		return hr;
-	}
-
-	hr = g_pJoy->EnumObjects (EnumAxesCallback, NULL, DIDFT_AXIS);
-	if (FAILED(hr))
-	{
-		Printf (PRINT_BOLD, "Could not set joystick axes ranges.\n");
-		return hr;
-	}
-
-	g_pJoy->Acquire ();
-
-	return S_OK;
-}
-
-/****** Stuff from Andy Bay's mymouse.c ******/
-
-/****************************************************************************
- *
- *		DIInit
- *
- *		Initialize the DirectInput variables.
- *
- ****************************************************************************/
-
-
-// [RH] Used to obtain DirectInput access to the mouse.
-//		(Preferred for Win95, but buggy under NT 4.)
 
 bool I_InitInput (void *hwnd)
 {
@@ -1198,8 +620,7 @@ bool I_InitInput (void *hwnd)
 	I_StartupMouse();
 
 	Printf ("I_StartupJoystick\n");
-	DI_EnumJoy ();
-	DI_InitJoy ();
+	I_StartupJoystick();
 
 	Printf ("I_StartupKeyboard\n");
 	I_StartupKeyboard();
@@ -1221,11 +642,13 @@ void I_ShutdownInput ()
 		delete Mouse;
 		Mouse = NULL;
 	}
-	if (g_pJoy)
+	for (int i = 0; i < NUM_JOYDEVICES; ++i)
 	{
-		SaveJoystickConfig ();
-		g_pJoy->Release ();
-		g_pJoy = NULL;
+		if (JoyDevices[i] != NULL)
+		{
+			delete JoyDevices[i];
+			JoyDevices[i] = NULL;
+		}
 	}
 	if (g_pdi)
 	{
@@ -1273,7 +696,6 @@ void I_GetEvent ()
 	}
 }
 
-
 //
 // I_StartTic
 //
@@ -1292,7 +714,33 @@ void I_StartFrame ()
 {
 	if (use_joystick)
 	{
-		DI_JoyCheck ();
+		for (int i = 0; i < NUM_JOYDEVICES; ++i)
+		{
+			if (JoyDevices[i] != NULL)
+			{
+				JoyDevices[i]->ProcessInput();
+			}
+		}
+	}
+}
+
+void I_GetAxes(float axes[NUM_JOYAXIS])
+{
+	int i;
+
+	for (i = 0; i < NUM_JOYAXIS; ++i)
+	{
+		axes[i] = 0;
+	}
+	if (use_joystick)
+	{
+		for (i = 0; i < NUM_JOYDEVICES; ++i)
+		{
+			if (JoyDevices[i] != NULL)
+			{
+				JoyDevices[i]->AddAxes(axes);
+			}
+		}
 	}
 }
 

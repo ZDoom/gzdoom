@@ -207,8 +207,6 @@ EXTERN_CVAR (Bool, developer)
 
 extern bool ToggleFullscreen;
 
-extern float JoyAxes[6];
-
 extern int Net_Arbitrator;
 
 EXTERN_CVAR (Bool, var_friction)

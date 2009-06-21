@@ -460,3 +460,11 @@ void I_StartFrame ()
 		InitKeySymMap ();
 	}
 }
+
+void I_GetAxes(float axes[NUM_JOYAXIS])
+{
+	for (int i = 0; i < NUM_JOYAXIS; ++i)
+	{
+		axes[i] = 0;
+	}
+}

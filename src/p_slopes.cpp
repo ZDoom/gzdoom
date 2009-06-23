@@ -462,7 +462,7 @@ void P_SpawnSlopeMakers (FMapThing *firstmt, FMapThing *lastmt)
 static void P_AlignPlane (sector_t *sec, line_t *line, int which)
 {
 	sector_t *refsec;
-	int bestdist;
+	double bestdist;
 	vertex_t *refvert = (*sec->lines)->v1;	// Shut up, GCC
 	int i;
 	line_t **probe;
@@ -471,23 +471,19 @@ static void P_AlignPlane (sector_t *sec, line_t *line, int which)
 		return;
 
 	// Find furthest vertex from the reference line. It, along with the two ends
-	// of the line will define the plane.
+	// of the line, will define the plane.
 	bestdist = 0;
 	for (i = sec->linecount*2, probe = sec->lines; i > 0; i--)
 	{
-		int dist;
+		double dist;
 		vertex_t *vert;
-
-		// Do calculations with only the upper bits, because the lower ones
-		// are all zero, and we would overflow for a lot of distances if we
-		// kept them around.
 
 		if (i & 1)
 			vert = (*probe++)->v2;
 		else
 			vert = (*probe)->v1;
-		dist = abs (((line->v1->y - vert->y) >> FRACBITS) * (line->dx >> FRACBITS) -
-					((line->v1->x - vert->x) >> FRACBITS) * (line->dy >> FRACBITS));
+		dist = fabs((double(line->v1->y) - vert->y) * line->dx -
+					(double(line->v1->x) - vert->x) * line->dy);
 
 		if (dist > bestdist)
 		{

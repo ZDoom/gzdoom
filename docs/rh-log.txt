@@ -1,4 +1,9 @@
-﻿June 19, 2009
+﻿June 22, 2009
+- Fixed: Since UDMF allows for fractional vertex coordinates, it is no longer
+  safe for P_AlignPlane() to truncate coordinates when searching for the
+  furthest vertex from the line.
+
+June 19, 2009
 - The reorganized DirectInput game controller code finally compiles. (Ugh! It
   took far too long to reach this point.) Manual axis configuration is
   currently disabled, since I need to rewrite that, too. The eventual point of

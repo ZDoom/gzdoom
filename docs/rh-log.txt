@@ -1,4 +1,9 @@
 ﻿June 22, 2009
+- Changed the definition of SBarInfoCoordinate to use bitfields to pack its
+  members into 32 bits so that it can be stored in a plain old int without
+  any transformations. The transformation coord -> int -> coord was
+  destructive if the coordinate value was negative, causing the final
+  coordinate to be centered even if the original was not.
 - SBARINFO patch: Enable forcescaled with fullscreenoffsets.
 - Fixed: Since UDMF allows for fractional vertex coordinates, it is no longer
   safe for P_AlignPlane() to truncate coordinates when searching for the

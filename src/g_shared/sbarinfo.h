@@ -49,23 +49,21 @@ class FScanner;
  * This class is used to help prevent errors that may occur from adding or 
  * subtracting from coordinates.
  *
- * In order to provide the maximum flexibility, coordinates can be stored as an 
- * int with the 31st bit representing REL_CENTER.  This class can handle this 
- * flag.
+ * In order to provide the maximum flexibility, coordinates are packed into
+ * an int with one bit reserved for relCenter.
  */
 class SBarInfoCoordinate
 {
 	public:
-		static const int	REL_CENTER = 0x40000000;
-
 		SBarInfoCoordinate() {}
 		SBarInfoCoordinate(int coord, bool relCenter);
-		SBarInfoCoordinate(int value);
 
 		SBarInfoCoordinate	&Add(int add);
 		int					Coordinate() const { return value; }
 		bool				RelCenter() const { return relCenter; }
-		int					Value() const { return value | (relCenter ? REL_CENTER : 0); }
+		void				Set(int coord, bool center) { value = coord; relCenter = center; }
+		void				SetCoord(int coord) { value = coord; }
+		void				SetRelCenter(bool center) { relCenter = center; }
 
 		int					operator*	() const { return Coordinate(); }
 		SBarInfoCoordinate	operator+	(int add) const { return SBarInfoCoordinate(*this).Add(add); }
@@ -76,8 +74,8 @@ class SBarInfoCoordinate
 		void				operator-=	(int sub) { Add(-sub); }
 
 	protected:
-		int		value;
-		bool	relCenter;
+		unsigned relCenter:1;
+		int		 value:31;
 };
 
 struct SBarInfoCommand; //we need to be able to use this before it is defined.
@@ -171,8 +169,7 @@ struct SBarInfo
 	void ParseSBarInfo(int lump);
 	void ParseSBarInfoBlock(FScanner &sc, SBarInfoBlock &block);
 	void ParseMugShotBlock(FScanner &sc, FMugShotState &state);
-	void getCoordinates(FScanner &sc, bool fullScreenOffsets, int &x, int &y); //retrieves the next two arguments as x and y.
-	void getCoordinates(FScanner &sc, bool fullScreenOffsets, SBarInfoCoordinate &x, SBarInfoCoordinate &y);
+	void getCoordinates(FScanner &sc, bool fullScreenOffsets, SBarInfoCoordinate &x, SBarInfoCoordinate &y); //retrieves the next two arguments as x and y.
 	int getSignedInteger(FScanner &sc); //returns a signed integer.
 	int newImage(const char* patchname);
 	void Init();

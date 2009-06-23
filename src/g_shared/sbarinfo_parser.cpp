@@ -765,12 +765,12 @@ void SBarInfo::ParseSBarInfoBlock(FScanner &sc, SBarInfoBlock &block)
 						sc.MustGetToken(',');
 				}
 				this->getCoordinates(sc, block.fullScreenOffsets, cmd.x, cmd.y);
-				cmd.special2 = *(cmd.x + 30);
-				cmd.special3 = *(cmd.y + 24);
+				*(SBarInfoCoordinate*)&cmd.special2 = cmd.x + 30;
+				*(SBarInfoCoordinate*)&cmd.special3 = cmd.y + 24;
 				cmd.translation = CR_GOLD;
 				if(sc.CheckToken(',')) //more font information
 				{
-					this->getCoordinates(sc, block.fullScreenOffsets, cmd.special2, cmd.special3);
+					this->getCoordinates(sc, block.fullScreenOffsets, *(SBarInfoCoordinate*)&cmd.special2, *(SBarInfoCoordinate*)&cmd.special3);
 					if(sc.CheckToken(','))
 					{
 						sc.MustGetToken(TK_Identifier);
@@ -847,12 +847,12 @@ void SBarInfo::ParseSBarInfoBlock(FScanner &sc, SBarInfoBlock &block)
 
 				sc.MustGetToken(',');
 				this->getCoordinates(sc, block.fullScreenOffsets, cmd.x, cmd.y);
-				cmd.special2 = *(cmd.x + 26);
-				cmd.special3 = *(cmd.y + 22);
+				*(SBarInfoCoordinate*)&cmd.special2 = cmd.x + 26;
+				*(SBarInfoCoordinate*)&cmd.special3 = cmd.y + 22;
 				cmd.translation = CR_GOLD;
 				if(sc.CheckToken(',')) //more font information
 				{
-					this->getCoordinates(sc, block.fullScreenOffsets, cmd.special2, cmd.special3);
+					this->getCoordinates(sc, block.fullScreenOffsets, *(SBarInfoCoordinate*)&cmd.special2, *(SBarInfoCoordinate*)&cmd.special3);
 					if(sc.CheckToken(','))
 					{
 						sc.MustGetToken(TK_Identifier);
@@ -1346,11 +1346,11 @@ void SBarInfo::ParseMugShotBlock(FScanner &sc, FMugShotState &state)
 	}
 }
 
-void SBarInfo::getCoordinates(FScanner &sc, bool fullScreenOffsets, int &x, int &y)
+void SBarInfo::getCoordinates(FScanner &sc, bool fullScreenOffsets, SBarInfoCoordinate &x, SBarInfoCoordinate &y)
 {
 	bool negative = false;
 	bool relCenter = false;
-	int *coords[2] = {&x, &y};
+	SBarInfoCoordinate *coords[2] = {&x, &y};
 	for(int i = 0;i < 2;i++)
 	{
 		negative = false;
@@ -1361,7 +1361,7 @@ void SBarInfo::getCoordinates(FScanner &sc, bool fullScreenOffsets, int &x, int 
 		// [-]INT center
 		negative = sc.CheckToken('-');
 		sc.MustGetToken(TK_IntConst);
-		*coords[i] = negative ? -sc.Number : sc.Number;
+		coords[i]->Set(negative ? -sc.Number : sc.Number, false);
 		if(sc.CheckToken('+'))
 		{
 			sc.MustGetToken(TK_Identifier);
@@ -1371,24 +1371,12 @@ void SBarInfo::getCoordinates(FScanner &sc, bool fullScreenOffsets, int &x, int 
 		}
 		if(fullScreenOffsets)
 		{
-			if(relCenter)
-				*coords[i] |= SBarInfoCoordinate::REL_CENTER;
-			else
-				*coords[i] &= ~SBarInfoCoordinate::REL_CENTER;
+			coords[i]->SetRelCenter(relCenter);
 		}
 	}
 
 	if(!fullScreenOffsets)
-		y = (negative ? -sc.Number : sc.Number) - (200 - this->height);
-}
-
-void SBarInfo::getCoordinates(FScanner &sc, bool fullScreenOffsets, SBarInfoCoordinate &x, SBarInfoCoordinate &y)
-{
-	int tmpX = *x;
-	int tmpY = *y;
-	getCoordinates(sc, fullScreenOffsets, tmpX, tmpY);
-	x = tmpX;
-	y = tmpY;
+		y.SetCoord((negative ? -sc.Number : sc.Number) - (200 - this->height));
 }
 
 int SBarInfo::getSignedInteger(FScanner &sc)
@@ -1497,8 +1485,8 @@ SBarInfoCommand::SBarInfoCommand() //sets the default values for more predicable
 	special3 = 0;
 	special4 = 0;
 	flags = 0;
-	x = 0;
-	y = 0;
+	x.Set(0, 0);
+	y.Set(0, 0);
 	value = 0;
 	image_index = 0;
 	sprite_index.SetInvalid();

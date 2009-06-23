@@ -96,15 +96,6 @@ SBarInfoCoordinate::SBarInfoCoordinate(int coord, bool relCenter) :
 {
 }
 
-SBarInfoCoordinate::SBarInfoCoordinate(int value)
-{
-	relCenter = ((value & REL_CENTER) != 0);
-	if(value < 0)
-		this->value = (value | REL_CENTER);
-	else
-		this->value = (value & (~REL_CENTER));
-}
-
 SBarInfoCoordinate &SBarInfoCoordinate::Add(int add)
 {
 	value += add;
@@ -765,7 +756,7 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 						{
 							drawingFont = cmd.font;
 						}
-						DrawNumber(CPlayer->mo->InvSel->Amount, 3, cmd.special2, cmd.special3, xOffset, yOffset, alpha, block.fullScreenOffsets, cmd.translation, cmd.special4, false, !!(cmd.flags & DRAWSELECTEDINVENTORY_DRAWSHADOW));
+						DrawNumber(CPlayer->mo->InvSel->Amount, 3, *(SBarInfoCoordinate*)&cmd.special2, *(SBarInfoCoordinate*)&cmd.special3, xOffset, yOffset, alpha, block.fullScreenOffsets, cmd.translation, cmd.special4, false, !!(cmd.flags & DRAWSELECTEDINVENTORY_DRAWSHADOW));
 					}
 				}
 				else if((cmd.flags & DRAWSELECTEDINVENTORY_ALTERNATEONEMPTY))
@@ -794,7 +785,7 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 				{
 					drawingFont = cmd.font;
 				}
-				DrawInventoryBar(cmd.special, cmd.value, cmd.x, cmd.y, xOffset, yOffset, alpha, block.fullScreenOffsets, alwaysshow, cmd.special2, cmd.special3, cmd.translation, artibox, noarrows, alwaysshowcounter, bgalpha);
+				DrawInventoryBar(cmd.special, cmd.value, cmd.x, cmd.y, xOffset, yOffset, alpha, block.fullScreenOffsets, alwaysshow, *(SBarInfoCoordinate*)&cmd.special2, *(SBarInfoCoordinate*)&cmd.special3, cmd.translation, artibox, noarrows, alwaysshowcounter, bgalpha);
 				break;
 			}
 			case SBARINFO_DRAWBAR:
@@ -1208,8 +1199,8 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 						int tmpX = *x;
 						int tmpY = *y;
 						screen->VirtualToRealCoordsInt(tmpX, tmpY, w, h, 320, 200, true);
-						x = tmpX;
-						y = tmpY;
+						x.SetCoord(tmpX);
+						y.SetCoord(tmpY);
 					}
 				}
 				else

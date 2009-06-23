@@ -1,4 +1,5 @@
 ﻿June 22, 2009
+- SBARINFO patch: Enable forcescaled with fullscreenoffsets.
 - Fixed: Since UDMF allows for fractional vertex coordinates, it is no longer
   safe for P_AlignPlane() to truncate coordinates when searching for the
   furthest vertex from the line.

@@ -265,10 +265,13 @@ void DSBarInfo::Draw (EHudState state)
 	{
 		hud = STBAR_NONE;
 	}
+	bool oldhud_scale = hud_scale;
 	if(script->huds[hud].forceScaled) //scale the statusbar
 	{
 		SetScaled(true, true);
 		setsizeneeded = true;
+		if(script->huds[hud].fullScreenOffsets)
+			hud_scale = true;
 	}
 	doCommands(script->huds[hud], 0, 0, script->huds[hud].alpha);
 	if(CPlayer->inventorytics > 0 && !(level.flags & LEVEL_NOINVENTORYBAR))
@@ -301,6 +304,8 @@ void DSBarInfo::Draw (EHudState state)
 		doCommands(script->huds[popbar], script->popups[currentPopup-1].getXOffset(), script->popups[currentPopup-1].getYOffset(),
 			script->popups[currentPopup-1].getAlpha(script->huds[popbar].alpha));
 	}
+	if(script->huds[hud].forceScaled && script->huds[hud].fullScreenOffsets)
+		hud_scale = oldhud_scale;
 }
 
 void DSBarInfo::NewGame ()

@@ -1,6 +1,8 @@
 #ifndef X86_H
 #define X86_H
 
+#include "basictypes.h"
+
 struct CPUInfo	// 92 bytes
 {
 	char VendorID[16];
@@ -77,6 +79,7 @@ struct CPUInfo	// 92 bytes
 
 
 extern "C" CPUInfo CPU;
+struct PalEntry;
 
 void CheckCPUID (CPUInfo *cpu);
 void DumpCPUInfo (const CPUInfo *cpu);

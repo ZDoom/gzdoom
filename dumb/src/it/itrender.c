@@ -3555,14 +3555,15 @@ static void process_playing(DUMB_IT_SIGRENDERER *sigrenderer, IT_PLAYING *playin
 	playing->sample_vibrato_time += playing->sample->vibrato_speed;
 }
 
-#if !defined(_WIN32) || !defined(__GNUC__)
-static double log2(double x) {return log(x)/log(2.0f);}
-#endif
+// Apparently some GCCs have problems here so renaming the function sounds like a better idea.
+//#if !defined(_WIN32) || !defined(__GNUC__)
+static double mylog2(double x) {return log(x)/log(2.0f);}
+//#endif
 
 static int delta_to_note(float delta, int base)
 {
 	double note;
-	note = log2(delta * 65536.f / (float)base)*12.0f+60.5f;
+	note = mylog2(delta * 65536.f / (float)base)*12.0f+60.5f;
 	if (note > 119) note = 119;
 	else if (note < 0) note = 0;
 	return (int)note;
@@ -3985,7 +3986,6 @@ static int process_tick(DUMB_IT_SIGRENDERER *sigrenderer)
 
 	process_all_playing(sigrenderer);
 
-	if (sigrenderer->tempo > 0)
 	{
 		LONG_LONG t = sigrenderer->sub_time_left + ((LONG_LONG)TICK_TIME_DIVIDEND << 16) / sigrenderer->tempo;
 		sigrenderer->time_left += (int)(t >> 16);
@@ -4792,13 +4792,6 @@ static DUMB_IT_SIGRENDERER *init_sigrenderer(DUMB_IT_SIGDATA *sigdata, int n_cha
 	sigrenderer->ramp_style = 0;
 	sigrenderer->globalvolume = sigdata->global_volume;
 	sigrenderer->tempo = sigdata->tempo;
-	if (sigrenderer->tempo == 0)
-	{
-		free(callbacks);
-		dumb_destroy_click_remover_array(n_channels, cr);
-		free(sigrenderer);
-		return NULL;
-	}
 
 	for (i = 0; i < DUMB_IT_N_CHANNELS; i++) {
 		IT_CHANNEL *channel = &sigrenderer->channel[i];

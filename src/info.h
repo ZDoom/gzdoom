@@ -165,8 +165,8 @@ struct FActorInfo
 		return FindState(1, &name);
 	}
 
-	FActorInfo *GetReplacement ();
-	FActorInfo *GetReplacee ();
+	FActorInfo *GetReplacement (bool lookskill=true);
+	FActorInfo *GetReplacee (bool lookskill=true);
 
 	PClass *Class;
 	FState *OwnedStates;

@@ -533,6 +533,8 @@ int G_SkillProperty(ESkillProperty prop);
 
 typedef TMap<FName, FString> SkillMenuNames;
 
+typedef TMap<FName, FName> SkillActorReplacement;
+
 struct FSkillInfo
 {
 	FName Name;
@@ -554,6 +556,8 @@ struct FSkillInfo
 	FString MustConfirmText;
 	char Shortcut;
 	FString TextColor;
+	SkillActorReplacement Replace;
+	SkillActorReplacement Replaced;
 
 	FSkillInfo() {}
 	FSkillInfo(const FSkillInfo &other)
@@ -562,6 +566,11 @@ struct FSkillInfo
 	}
 	FSkillInfo &operator=(const FSkillInfo &other);
 	int GetTextColor() const;
+
+	void SetReplacement(FName a, FName b);
+	FName GetReplacement(FName a);
+	void SetReplacedBy(FName b, FName a);
+	FName GetReplacedBy(FName b);
 };
 
 extern TArray<FSkillInfo> AllSkills;

@@ -1,4 +1,7 @@
-﻿June 25, 2009
+﻿June 26, 2009  (Changes by Graf Zahl)
+- Added Gez's actor replacement per skill submission.
+
+June 25, 2009
 - Joystick axes can be configured in the menu again. TODO: Config saving
   and loading, XInput, allow axes to be used as buttons (for the Xbox
   controller's trigger buttons), allow the joystick to move through the

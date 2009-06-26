@@ -171,6 +171,17 @@ void FActorInfo::RegisterIDs ()
 FActorInfo *FActorInfo::GetReplacement (bool lookskill)
 {
 	FName skillrepname = AllSkills[gameskill].GetReplacement(this->Class->TypeName);
+	if (skillrepname != NAME_None && PClass::FindClass(skillrepname) == NULL)
+	{
+		Printf("Warning: incorrect actor name in definition of skill %s: \n\
+			   class %s is replaced by inexistent class %s\n\
+			   Skill replacement will be ignored for this actor.\n", 
+			   AllSkills[gameskill].Name.GetChars(), 
+			   this->Class->TypeName.GetChars(), skillrepname.GetChars());
+		AllSkills[gameskill].SetReplacement(this->Class->TypeName, NAME_None);
+		AllSkills[gameskill].SetReplacedBy(skillrepname, NAME_None);
+		lookskill = false; skillrepname = NAME_None;
+	}
 	if (Replacement == NULL && (!lookskill || skillrepname == NAME_None))
 	{
 		return this;
@@ -183,7 +194,7 @@ FActorInfo *FActorInfo::GetReplacement (bool lookskill)
 	// Handle skill-based replacement here. It has precedence on DECORATE replacement
 	// in that the skill replacement is applied first, followed by DECORATE replacement
 	// on the actor indicated by the skill replacement.
-	if (lookskill && skillrepname != NAME_None && PClass::FindClass(skillrepname) != NULL)
+	if (lookskill && (skillrepname != NAME_None))
 	{
 		rep = PClass::FindClass(skillrepname)->ActorInfo;
 	}
@@ -202,7 +213,16 @@ FActorInfo *FActorInfo::GetReplacement (bool lookskill)
 
 FActorInfo *FActorInfo::GetReplacee (bool lookskill)
 {
-	FName skillrepname = AllSkills[gameskill].GetReplacedBy(this->Class->TypeName);
+	FName skillrepname = AllSkills[gameskill].GetReplacedBy(this->Class->TypeName);	if (skillrepname != NAME_None && PClass::FindClass(skillrepname) == NULL)	{
+		Printf("Warning: incorrect actor name in definition of skill %s: \
+			   inexistent class %s is replaced by class %s\n\
+			   Skill replacement will be ignored for this actor.\n", 
+			   AllSkills[gameskill].Name.GetChars(), 
+			   skillrepname.GetChars(), this->Class->TypeName.GetChars());
+		AllSkills[gameskill].SetReplacedBy(this->Class->TypeName, NAME_None);
+		AllSkills[gameskill].SetReplacement(skillrepname, NAME_None);
+		lookskill = false; 
+	}
 	if (Replacee == NULL && (!lookskill || skillrepname == NAME_None))
 	{
 		return this;
@@ -211,13 +231,7 @@ FActorInfo *FActorInfo::GetReplacee (bool lookskill)
 	// potential infinite recursion.
 	FActorInfo *savedrep = Replacee;
 	Replacee = NULL;
-	FActorInfo *rep = savedrep;
-	if (lookskill && skillrepname != NAME_None && PClass::FindClass(skillrepname) != NULL)
-	{
-		rep = PClass::FindClass(skillrepname)->ActorInfo;
-	}
-	rep = rep->GetReplacee (false);
-	Replacee = savedrep;
+	FActorInfo *rep = savedrep;	if (lookskill && (skillrepname != NAME_None) && (PClass::FindClass(skillrepname) != NULL))	{		rep = PClass::FindClass(skillrepname)->ActorInfo;	}	rep = rep->GetReplacee (false);	Replacee = savedrep;
 	return rep;
 }
 

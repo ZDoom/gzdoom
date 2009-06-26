@@ -92,7 +92,7 @@ enum
 ////////////////////////////////////////////////////////////////////////////////
 
 SBarInfoCoordinate::SBarInfoCoordinate(int coord, bool relCenter) :
-	value(coord), relCenter(relCenter)
+	 relCenter(relCenter), value(coord)
 {
 }
 

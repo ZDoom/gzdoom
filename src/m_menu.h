@@ -101,7 +101,7 @@ typedef enum {
 	discretes,
 	cdiscrete,
 	ediscrete,
-	discrete_guid,
+	discrete_joy,
 	control,
 	screenres,
 	bitflag,
@@ -112,9 +112,13 @@ typedef enum {
 	colorpicker,
 	intslider,
 	palettegrid,
+	joy_sens,
+	joy_slider,
+	joy_map,
+	joy_inverter,
 } itemtype;
 
-struct GUIDName;
+struct IJoystickConfig;
 
 struct menuitem_t
 {
@@ -127,6 +131,7 @@ struct menuitem_t
 		FColorCVar		 *colorcvar;
 		int				  selmode;
 		float			  fval;
+		int				  joyselection;
 	} a;
 	union {
 		float			  min;		/* aka numvalues aka invflag */
@@ -152,13 +157,14 @@ struct menuitem_t
 		struct value_t	 *values;
 		struct valuestring_t *valuestrings;
 		struct valueenum_t	 *enumvalues;
-		GUIDName		 *guidvalues;
+		TArray<IJoystickConfig *>	 *joyvalues;
 		char			 *command;
 		void			(*cfunc)(FBaseCVar *cvar, float newval);
 		void			(*mfunc)(void);
 		void			(*lfunc)(int);
 		int				  highlight;
 		int				  flagmask;
+		int				  joyslidernum;
 	} e;
 };
 

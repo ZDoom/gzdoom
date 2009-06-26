@@ -584,7 +584,7 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 	// Remap some axes depending on button state.
 	if (Button_Strafe.bDown || (Button_Mlook.bDown && lookstrafe))
 	{
-		joyaxes[JOYAXIS_Side] = -joyaxes[JOYAXIS_Yaw];
+		joyaxes[JOYAXIS_Side] = joyaxes[JOYAXIS_Yaw];
 		joyaxes[JOYAXIS_Yaw] = 0;
 	}
 	if (Button_Mlook.bDown)
@@ -604,7 +604,7 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 		LocalKeyboardTurner = true;
 	}
 
-	side += int(MAXPLMOVE * joyaxes[JOYAXIS_Side]);
+	side -= int(MAXPLMOVE * joyaxes[JOYAXIS_Side]);
 	forward += int(joyaxes[JOYAXIS_Forward] * MAXPLMOVE);
 	fly += int(joyaxes[JOYAXIS_Up] * 2048);
 

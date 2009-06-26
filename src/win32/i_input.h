@@ -43,7 +43,25 @@ void I_PutInClipboard (const char *str);
 FString I_GetFromClipboard (bool windows_has_no_selection_clipboard);
 
 void I_GetEvent();
+
+struct NOVTABLE IJoystickConfig
+{
+	virtual FString GetName() = 0;
+	virtual float GetSensitivity() = 0;
+	virtual void SetSensitivity(float scale) = 0;
+
+	virtual int GetNumAxes() = 0;
+	virtual float GetAxisDeadZone(int axis) = 0;
+	virtual EJoyAxis GetAxisMap(int axis) = 0;
+	virtual const char *GetAxisName(int axis) = 0;
+	virtual float GetAxisScale(int axis) = 0;
+
+	virtual void SetAxisDeadZone(int axis, float zone) = 0;
+	virtual void SetAxisMap(int axis, EJoyAxis gameaxis) = 0;
+	virtual void SetAxisScale(int axis, float scale) = 0;
+};
 void I_GetAxes(float axes[NUM_JOYAXIS]);
+void I_GetJoysticks(TArray<IJoystickConfig *> &sticks);
 
 #ifdef USE_WINDOWS_DWORD
 // Don't make these definitions available to the main body of the source code.
@@ -109,10 +127,11 @@ protected:
 	void PostKeyEvent(int keynum, INTBOOL down, bool foreground);
 };
 
-class FJoystickCollection : public FInputDevice
+class NOVTABLE FJoystickCollection : public FInputDevice
 {
 public:
 	virtual void AddAxes(float axes[NUM_JOYAXIS]) = 0;
+	virtual void GetDevices(TArray<IJoystickConfig *> &sticks) = 0;
 };
 
 enum

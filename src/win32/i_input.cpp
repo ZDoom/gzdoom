@@ -744,6 +744,18 @@ void I_GetAxes(float axes[NUM_JOYAXIS])
 	}
 }
 
+void I_GetJoysticks(TArray<IJoystickConfig *> &sticks)
+{
+	sticks.Clear();
+	for (int i = 0; i < NUM_JOYDEVICES; ++i)
+	{
+		if (JoyDevices[i] != NULL)
+		{
+			JoyDevices[i]->GetDevices(sticks);
+		}
+	}
+}
+
 void I_PutInClipboard (const char *str)
 {
 	if (str == NULL || !OpenClipboard (Window))

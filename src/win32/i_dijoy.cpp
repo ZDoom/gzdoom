@@ -120,7 +120,7 @@ public:
 
 // TYPES -------------------------------------------------------------------
 
-class FDInputJoystick : public FInputDevice
+class FDInputJoystick : public FInputDevice, IJoystickConfig
 {
 public:
 	FDInputJoystick(const GUID *instance, FString &name);
@@ -133,6 +133,21 @@ public:
 	bool LoadConfig();
 	FString GetIdentifier();
 	void SetDefaultConfig();
+
+	// IJoystick interface
+	FString GetName();
+	float GetSensitivity();
+	virtual void SetSensitivity(float scale);
+
+	int GetNumAxes();
+	float GetAxisDeadZone(int axis);
+	EJoyAxis GetAxisMap(int axis);
+	const char *GetAxisName(int axis);
+	float GetAxisScale(int axis);
+
+	void SetAxisDeadZone(int axis, float deadzone);
+	void SetAxisMap(int axis, EJoyAxis gameaxis);
+	void SetAxisScale(int axis, float scale);
 
 protected:
 	struct AxisInfo
@@ -188,6 +203,7 @@ public:
 	void ProcessInput();
 	bool WndProcHook(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT *result);
 	void AddAxes(float axes[NUM_JOYAXIS]);
+	void GetDevices(TArray<IJoystickConfig *> &sticks);
 
 protected:
 	struct Enumerator
@@ -447,7 +463,7 @@ void FDInputJoystick::AddAxes(float axes[NUM_JOYAXIS])
 			axisval = (axisval - deadzone) / (1.0 - deadzone);
 		}
 		// Add to the game axis.
-		axes[Axes[i].GameAxis] += float(axisval * mul * Axes[i].Multiplier);
+		axes[Axes[i].GameAxis] -= float(axisval * mul * Axes[i].Multiplier);
 	}
 }
 
@@ -803,28 +819,174 @@ void FDInputJoystick::SetDefaultConfig()
 	// Two axes? Horizontal is yaw and vertical is forward.
 	if (Axes.Size() == 2)
 	{
-		Axes[0].GameAxis = JOYAXIS_Yaw;			Axes[0].Multiplier = -1;
+		Axes[0].GameAxis = JOYAXIS_Yaw;
 		Axes[1].GameAxis = JOYAXIS_Forward;
 	}
 	// Three axes? First two are movement, third is yaw.
 	else if (Axes.Size() >= 3)
 	{
 		Axes[0].GameAxis = JOYAXIS_Side;
-		Axes[1].GameAxis = JOYAXIS_Forward;		Axes[1].Multiplier = -1;
-		Axes[2].GameAxis = JOYAXIS_Yaw;			Axes[2].Multiplier = -1;
+		Axes[1].GameAxis = JOYAXIS_Forward;
+		Axes[2].GameAxis = JOYAXIS_Yaw;
 		// Four axes? First two are movement, last two are looking around.
 		if (Axes.Size() >= 4)
 		{
-			Axes[3].GameAxis = JOYAXIS_Pitch;	Axes[3].Multiplier = -0.75f;
+			Axes[3].GameAxis = JOYAXIS_Pitch;	Axes[3].Multiplier = 0.75f;
 			// Five axes? Use the fifth one for moving up and down.
 			if (Axes.Size() >= 5)
 			{
-				Axes[4].GameAxis = JOYAXIS_Up;	Axes[4].Multiplier = -1;
+				Axes[4].GameAxis = JOYAXIS_Up;
 			}
 		}
 	}
 	// If there is only one axis, then we make no assumptions about how
 	// the user might want to use it.
+}
+
+//===========================================================================
+//
+// FDInputJoystick :: GetName
+//
+//===========================================================================
+
+FString FDInputJoystick::GetName()
+{
+	return Name;
+}
+
+//===========================================================================
+//
+// FDInputJoystick :: GetSensitivity
+//
+//===========================================================================
+
+float FDInputJoystick::GetSensitivity()
+{
+	return Multiplier;
+}
+
+//===========================================================================
+//
+// FDInputJoystick :: SetSensitivity
+//
+//===========================================================================
+
+void FDInputJoystick::SetSensitivity(float scale)
+{
+	Multiplier = scale;
+}
+
+//===========================================================================
+//
+// FDInputJoystick :: GetNumAxes
+//
+//===========================================================================
+
+int FDInputJoystick::GetNumAxes()
+{
+	return (int)Axes.Size();
+}
+
+//===========================================================================
+//
+// FDInputJoystick :: GetAxisDeadZone
+//
+//===========================================================================
+
+float FDInputJoystick::GetAxisDeadZone(int axis)
+{
+	if (unsigned(axis) >= Axes.Size())
+	{
+		return 0;
+	}
+	return Axes[axis].DeadZone;
+}
+
+//===========================================================================
+//
+// FDInputJoystick :: GetAxisMap
+//
+//===========================================================================
+
+EJoyAxis FDInputJoystick::GetAxisMap(int axis)
+{
+	if (unsigned(axis) >= Axes.Size())
+	{
+		return JOYAXIS_None;
+	}
+	return Axes[axis].GameAxis;
+}
+
+//===========================================================================
+//
+// FDInputJoystick :: GetAxisName
+//
+//===========================================================================
+
+const char *FDInputJoystick::GetAxisName(int axis)
+{
+	if (unsigned(axis) < Axes.Size())
+	{
+		return Axes[axis].Name;
+	}
+	return "Invalid";
+}
+
+//===========================================================================
+//
+// FDInputJoystick :: GetAxisScale
+//
+//===========================================================================
+
+float FDInputJoystick::GetAxisScale(int axis)
+{
+	if (unsigned(axis) >= Axes.Size())
+	{
+		return 0;
+	}
+	return Axes[axis].Multiplier;
+}
+
+//===========================================================================
+//
+// FDInputJoystick :: SetAxisDeadZone
+//
+//===========================================================================
+
+void FDInputJoystick::SetAxisDeadZone(int axis, float deadzone)
+{
+	if (unsigned(axis) < Axes.Size())
+	{
+		Axes[axis].DeadZone = clamp(deadzone, 0.f, 1.f);
+	}
+}
+
+//===========================================================================
+//
+// FDInputJoystick :: SetAxisMap
+//
+//===========================================================================
+
+void FDInputJoystick::SetAxisMap(int axis, EJoyAxis gameaxis)
+{
+	if (unsigned(axis) < Axes.Size())
+	{
+		Axes[axis].GameAxis = (unsigned(gameaxis) < NUM_JOYAXIS) ? gameaxis : JOYAXIS_None;
+	}
+}
+
+//===========================================================================
+//
+// FDInputJoystick :: SetAxisScale
+//
+//===========================================================================
+
+void FDInputJoystick::SetAxisScale(int axis, float scale)
+{
+	if (unsigned(axis) < Axes.Size())
+	{
+		Axes[axis].Multiplier = scale;
+	}
 }
 
 //===========================================================================
@@ -899,6 +1061,23 @@ void FDInputJoystickManager :: AddAxes(float axes[NUM_JOYAXIS])
 	for (unsigned i = 0; i < Devices.Size(); ++i)
 	{
 		Devices[i]->AddAxes(axes);
+	}
+}
+
+//===========================================================================
+//
+// FDInputJoystickManager :: GetJoysticks
+//
+// Adds the IJoystick interfaces for each device we created to the sticks
+// array.
+//
+//===========================================================================
+
+void FDInputJoystickManager::GetDevices(TArray<IJoystickConfig *> &sticks)
+{
+	for (unsigned i = 0; i < Devices.Size(); ++i)
+	{
+		sticks.Push(Devices[i]);
 	}
 }
 
@@ -1161,7 +1340,7 @@ void FDInputJoystickManager::EnumDevices()
 			// Append numbers.
 			for (k = i - 1; k < j; ++k)
 			{
-				controllers[k].Name.AppendFormat(" %d", k - i - 2);
+				controllers[k].Name.AppendFormat(" #%d", k - i + 2);
 			}
 		}
 	}

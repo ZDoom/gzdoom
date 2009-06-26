@@ -3,7 +3,7 @@
 ** New options menu code
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2006 Randy Heit
+** Copyright 1998-2009 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -289,7 +289,10 @@ menu_t MouseMenu =
  *
  *=======================================*/
 
+#define SELECTED_JOYSTICK	(Joysticks[JoystickItems[1].a.joyselection])
 EXTERN_CVAR (Bool, use_joystick)
+void UpdateJoystickMenu();
+
 #if 0
 EXTERN_CVAR (Float, joy_speedmultiplier)
 EXTERN_CVAR (Int, joy_xaxis)
@@ -318,12 +321,12 @@ EXTERN_CVAR (GUID, joy_guid)
 
 static value_t JoyAxisMapNames[6] =
 {
-	{ 0.0, "None" },
-	{ 1.0, "Turning" },
-	{ 2.0, "Looking Up/Down" },
-	{ 3.0, "Moving Forward" },
-	{ 4.0, "Strafing" },
-	{ 5.0, "Moving Up/Down" }
+	{ (float)JOYAXIS_None, "None" },
+	{ (float)JOYAXIS_Yaw, "Turning" },
+	{ (float)JOYAXIS_Pitch, "Looking Up/Down" },
+	{ (float)JOYAXIS_Forward, "Moving Forward" },
+	{ (float)JOYAXIS_Side, "Strafing" },
+	{ (float)JOYAXIS_Up, "Moving Up/Down" }
 };
 
 static value_t Inversion[2] =
@@ -332,55 +335,13 @@ static value_t Inversion[2] =
 	{ 1.0, "Inverted" }
 };
 
-static menuitem_t JoystickItems[] =
-{
-#if 0
-	{ discrete,	"Enable joystick",		{&use_joystick},		{2.0}, {0.0},	{0.0}, {YesNo} },
-	{ discrete_guid,"Active joystick",	{&joy_guid},			{0.0}, {0.0},	{0.0}, {NULL} },
-	{ slider,	"Overall sensitivity",	{&joy_speedmultiplier},	{0.9f}, {2.0},	{0.2f}, {NULL} },
-#endif
-	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
-	{ whitetext,"Axis Assignments",		{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
-	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
-	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
-	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
-	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
-	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
-	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
-	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
-	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
+static TArray<IJoystickConfig *> Joysticks;
 
-	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
-	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
-	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
-	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
-	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
-	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
-	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
-	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
-	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
-	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
-	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
-	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
-	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
-	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
-	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
-	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
-	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
-	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
-	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
-	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
-	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
-	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
-};
+static TArray<menuitem_t> JoystickItems;
 
 menu_t JoystickMenu =
 {
 	"JOYSTICK OPTIONS",
-	0,
-	countof(JoystickItems),
-	0,
-	JoystickItems,
 };
 
 
@@ -1633,19 +1594,6 @@ int M_FindCurVal (float cur, valuestring_t *values, int numvals)
 	return v;
 }
 
-#if 0
-int M_FindCurGUID (const GUID &guid, GUIDName *values, int numvals)
-{
-	int v;
-
-	for (v = 0; v < numvals; v++)
-		if (memcmp (&values[v].ID, &guid, sizeof(GUID)) == 0)
-			break;
-
-	return v;
-}
-#endif
-
 const char *M_FindCurVal(const char *cur, valueenum_t *values, int numvals)
 {
 	for (int v = 0; v < numvals; ++v)
@@ -1753,7 +1701,23 @@ void M_OptDrawer ()
 
 		if (item->type != screenres)
 		{
-			width = SmallFont->StringWidth (item->label);
+			const char *label;
+			if (item->type != discrete_joy)
+			{
+				label = item->label;
+			}
+			else
+			{
+				if (item->e.joyvalues->Size() == 0)
+				{
+					label = "No devices connected";
+				}
+				else
+				{
+					label = (*item->e.joyvalues)[item->a.joyselection]->GetName();
+				}
+			}
+			width = SmallFont->StringWidth(label);
 			switch (item->type)
 			{
 			case more:
@@ -1767,6 +1731,13 @@ void M_OptDrawer ()
 			case rightmore:
 				x = indent + 14;
 				color = item->type != rightmore ? CR_GREEN : MoreColor;
+				break;
+
+			case discrete_joy:
+				x = 160 - width / 2;
+				// Move cursor to the left of this item.
+				indent = x - 14;
+				color = ValueColor;
 				break;
 
 			case redtext:
@@ -1802,7 +1773,7 @@ void M_OptDrawer ()
 					? CR_YELLOW : LabelColor;
 				break;
 			}
-			screen->DrawText (SmallFont, color, x, y, item->label, DTA_Clean, true, DTA_ColorOverlay, overlay, TAG_DONE);
+			screen->DrawText (SmallFont, color, x, y, label, DTA_Clean, true, DTA_ColorOverlay, overlay, TAG_DONE);
 
 			switch (item->type)
 			{
@@ -1846,11 +1817,19 @@ void M_OptDrawer ()
 			case discrete:
 			case cdiscrete:
 			case inverter:
+			case joy_map:
 			{
 				int v, vals;
 
 				overlay = 0;
-				value = item->a.cvar->GetGenericRep (CVAR_Float);
+				if (item->type == joy_map)
+				{
+					value.Float = (float)SELECTED_JOYSTICK->GetAxisMap(item->a.joyselection);
+				}
+				else
+				{
+					value = item->a.cvar->GetGenericRep (CVAR_Float);
+				}
 				if (item->type == inverter)
 				{
 					value.Float = (value.Float < 0.f);
@@ -1902,32 +1881,35 @@ void M_OptDrawer ()
 			}
 			break;
 
-#if 0
-			case discrete_guid:
-			{
-				int v, vals;
-
-				vals = (int)item->b.numvalues;
-				v = M_FindCurGUID (*(item->a.guidcvar), item->e.guidvalues, vals);
-
-				if (v == vals)
-				{
-					UCVarValue val = item->a.guidcvar->GetGenericRep (CVAR_String);
-					screen->DrawText (SmallFont, ValueColor, indent + 14, y, val.String, DTA_Clean, true, TAG_DONE);
-				}
-				else
-				{
-					screen->DrawText (SmallFont, ValueColor, indent + 14, y, item->e.guidvalues[v].Name,
-						DTA_Clean, true, TAG_DONE);
-				}
-
-			}
-			break;
-#endif
-
 			case nochoice:
 				screen->DrawText (SmallFont, CR_GOLD, indent + 14, y,
 					(item->e.values[(int)item->b.min]).name, DTA_Clean, true, TAG_DONE);
+				break;
+
+			case joy_sens:
+				value.Float = SELECTED_JOYSTICK->GetSensitivity();
+				M_DrawSlider (indent + 14, y + labelofs, item->b.min, item->c.max, value.Float);
+				break;
+
+			case joy_slider:
+				if (item->e.joyslidernum == 0)
+				{
+					value.Float = SELECTED_JOYSTICK->GetAxisScale(item->a.joyselection);
+				}
+				else
+				{
+					assert(item->e.joyslidernum == 1);
+					value.Float = SELECTED_JOYSTICK->GetAxisDeadZone(item->a.joyselection);
+				}
+				M_DrawSlider (indent + 14, y + labelofs, item->b.min, item->c.max, fabs(value.Float));
+				break;
+
+			case joy_inverter:
+				assert(item->e.joyslidernum == 0);
+				value.Float = SELECTED_JOYSTICK->GetAxisScale(item->a.joyselection);
+				screen->DrawText(SmallFont, ValueColor, indent + 14, y,
+					(value.Float < 0) ? "Yes" : "No",
+					DTA_Clean, true, TAG_DONE);
 				break;
 
 			case slider:
@@ -2356,6 +2338,47 @@ void M_OptResponder (event_t *ev)
 				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
 				break;
 
+			case joy_sens:
+				value.Float = SELECTED_JOYSTICK->GetSensitivity() - item->d.step;
+				if (value.Float < item->b.min)
+					value.Float = item->b.min;
+				SELECTED_JOYSTICK->SetSensitivity(value.Float);
+				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
+				break;
+
+			case joy_slider:
+				if (item->e.joyslidernum == 0)
+				{
+					value.Float = SELECTED_JOYSTICK->GetAxisScale(item->a.joyselection);
+				}
+				else
+				{
+					assert(item->e.joyslidernum == 1);
+					value.Float = SELECTED_JOYSTICK->GetAxisDeadZone(item->a.joyselection);
+				}
+				if (value.Float >= 0)
+				{
+					value.Float -= item->d.step;
+					if (value.Float < item->b.min)
+						value.Float = item->b.min;
+				}
+				else
+				{
+					value.Float += item->d.step;
+					if (value.Float < -item->c.max)
+						value.Float = -item->c.max;
+				}
+				if (item->e.joyslidernum == 0)
+				{
+					SELECTED_JOYSTICK->SetAxisScale(item->a.joyselection, value.Float);
+				}
+				else
+				{
+					SELECTED_JOYSTICK->SetAxisDeadZone(item->a.joyselection, value.Float);
+				}
+				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
+				break;
+
 			case palettegrid:
 				SelColorIndex = (SelColorIndex - 1) & 15;
 				S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", 1, ATTN_NONE);
@@ -2364,12 +2387,20 @@ void M_OptResponder (event_t *ev)
 			case discretes:
 			case discrete:
 			case cdiscrete:
+			case joy_map:
 				{
 					int cur;
 					int numvals;
 
 					numvals = (int)item->b.min;
-					value = item->a.cvar->GetGenericRep (CVAR_Float);
+					if (item->type == joy_map)
+					{
+						value.Float = (float)SELECTED_JOYSTICK->GetAxisMap(item->a.joyselection);
+					}
+					else
+					{
+						value = item->a.cvar->GetGenericRep (CVAR_Float);
+					}
 					if (item->type != discretes)
 					{
 						cur = M_FindCurVal (value.Float, item->e.values, numvals);
@@ -2382,7 +2413,14 @@ void M_OptResponder (event_t *ev)
 						cur = numvals - 1;
 
 					value.Float = item->type != discretes ? item->e.values[cur].value : item->e.valuestrings[cur].value;
-					item->a.cvar->SetGenericRep (value, CVAR_Float);
+					if (item->type == joy_map)
+					{
+						SELECTED_JOYSTICK->SetAxisMap(item->a.joyselection, (EJoyAxis)(int)value.Float);
+					}
+					else
+					{
+						item->a.cvar->SetGenericRep (value, CVAR_Float);
+					}
 
 					// Hack hack. Rebuild list of resolutions
 					if (item->e.values == Depths)
@@ -2417,27 +2455,26 @@ void M_OptResponder (event_t *ev)
 				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
 				break;
 
-#if 0
-			case discrete_guid:
+			case discrete_joy:
+				if (--item->a.joyselection < 0)
 				{
-					int cur;
-					int numvals;
-
-					numvals = (int)item->b.numvalues;
-					cur = M_FindCurGUID (*(item->a.guidcvar), item->e.guidvalues, numvals);
-					if (--cur < 0)
-						cur = numvals - 1;
-
-					*(item->a.guidcvar) = item->e.guidvalues[cur].ID;
+					item->a.joyselection = item->e.joyvalues->Size() - 1;
 				}
-				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
+				UpdateJoystickMenu();
+				S_Sound(CHAN_VOICE|CHAN_UI, "menu/change", 1, ATTN_NONE);
 				break;
-#endif
 
 			case inverter:
 				value = item->a.cvar->GetGenericRep (CVAR_Float);
 				value.Float = -value.Float;
 				item->a.cvar->SetGenericRep (value, CVAR_Float);
+				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
+				break;
+
+			case joy_inverter:
+				assert(item->e.joyslidernum == 0);
+				value.Float = SELECTED_JOYSTICK->GetAxisScale(item->a.joyselection);
+				SELECTED_JOYSTICK->SetAxisScale(item->a.joyselection, -value.Float);
 				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
 				break;
 
@@ -2507,6 +2544,47 @@ void M_OptResponder (event_t *ev)
 				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
 				break;
 
+			case joy_sens:
+				value.Float = SELECTED_JOYSTICK->GetSensitivity() + item->d.step;
+				if (value.Float > item->c.max)
+					value.Float = item->c.max;
+				SELECTED_JOYSTICK->SetSensitivity(value.Float);
+				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
+				break;
+
+			case joy_slider:
+				if (item->e.joyslidernum == 0)
+				{
+					value.Float = SELECTED_JOYSTICK->GetAxisScale(item->a.joyselection);
+				}
+				else
+				{
+					assert(item->e.joyslidernum == 1);
+					value.Float = SELECTED_JOYSTICK->GetAxisDeadZone(item->a.joyselection);
+				}
+				if (value.Float >= 0)
+				{
+					value.Float += item->d.step;
+					if (value.Float > item->c.max)
+						value.Float = item->c.max;
+				}
+				else
+				{
+					value.Float -= item->d.step;
+					if (value.Float > item->b.min)
+						value.Float = -item->b.min;
+				}
+				if (item->e.joyslidernum == 0)
+				{
+					SELECTED_JOYSTICK->SetAxisScale(item->a.joyselection, value.Float);
+				}
+				else
+				{
+					SELECTED_JOYSTICK->SetAxisDeadZone(item->a.joyselection, value.Float);
+				}
+				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
+				break;
+
 			case palettegrid:
 				SelColorIndex = (SelColorIndex + 1) & 15;
 				S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", 1, ATTN_NONE);
@@ -2515,12 +2593,20 @@ void M_OptResponder (event_t *ev)
 			case discretes:
 			case discrete:
 			case cdiscrete:
+			case joy_map:
 				{
 					int cur;
 					int numvals;
 
 					numvals = (int)item->b.min;
-					value = item->a.cvar->GetGenericRep (CVAR_Float);
+					if (item->type == joy_map)
+					{
+						value.Float = (float)SELECTED_JOYSTICK->GetAxisMap(item->a.joyselection);
+					}
+					else
+					{
+						value = item->a.cvar->GetGenericRep (CVAR_Float);
+					}
 					if (item->type != discretes)
 					{
 						cur = M_FindCurVal (value.Float, item->e.values, numvals);
@@ -2533,7 +2619,14 @@ void M_OptResponder (event_t *ev)
 						cur = 0;
 
 					value.Float = item->type != discretes ? item->e.values[cur].value : item->e.valuestrings[cur].value;
-					item->a.cvar->SetGenericRep (value, CVAR_Float);
+					if (item->type == joy_map)
+					{
+						SELECTED_JOYSTICK->SetAxisMap(item->a.joyselection, (EJoyAxis)(int)value.Float);
+					}
+					else
+					{
+						item->a.cvar->SetGenericRep (value, CVAR_Float);
+					}
 
 					// Hack hack. Rebuild list of resolutions
 					if (item->e.values == Depths)
@@ -2568,27 +2661,26 @@ void M_OptResponder (event_t *ev)
 				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
 				break;
 
-#if 0
-			case discrete_guid:
+			case discrete_joy:
+				if ((unsigned)++item->a.joyselection >= item->e.joyvalues->Size())
 				{
-					int cur;
-					int numvals;
-
-					numvals = (int)item->b.numvalues;
-					cur = M_FindCurGUID (*(item->a.guidcvar), item->e.guidvalues, numvals);
-					if (++cur >= numvals)
-						cur = 0;
-
-					*(item->a.guidcvar) = item->e.guidvalues[cur].ID;
+					item->a.joyselection = 0;
 				}
-				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
+				UpdateJoystickMenu();
+				S_Sound(CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
 				break;
-#endif
 
 			case inverter:
 				value = item->a.cvar->GetGenericRep (CVAR_Float);
 				value.Float = -value.Float;
 				item->a.cvar->SetGenericRep (value, CVAR_Float);
+				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
+				break;
+
+			case joy_inverter:
+				assert(item->e.joyslidernum == 0);
+				value.Float = SELECTED_JOYSTICK->GetAxisScale(item->a.joyselection);
+				SELECTED_JOYSTICK->SetAxisScale(item->a.joyselection, -value.Float);
 				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
 				break;
 
@@ -2741,6 +2833,13 @@ void M_OptResponder (event_t *ev)
 			value = item->a.cvar->GetGenericRep (CVAR_Float);
 			value.Float = -value.Float;
 			item->a.cvar->SetGenericRep (value, CVAR_Float);
+			S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
+		}
+		else if (item->type == joy_inverter)
+		{
+			assert(item->e.joyslidernum == 0);
+			value.Float = SELECTED_JOYSTICK->GetAxisScale(item->a.joyselection);
+			SELECTED_JOYSTICK->SetAxisScale(item->a.joyselection, -value.Float);
 			S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
 		}
 		else if (item->type == screenres)
@@ -2995,34 +3094,96 @@ CCMD (menu_mouse)
 
 void UpdateJoystickMenu ()
 {
-#if 0
-	static FIntCVar * const cvars[8] =
-	{
-		&joy_xaxis, &joy_yaxis, &joy_zaxis,
-		&joy_xrot, &joy_yrot, &joy_zrot,
-		&joy_slider, &joy_dial
-	};
-	static FFloatCVar * const cvars2[5] =
-	{
-		&joy_yawspeed, &joy_pitchspeed, &joy_forwardspeed,
-		&joy_sidespeed, &joy_upspeed
-	};
-	static FFloatCVar * const cvars3[8] =
-	{
-		&joy_xthreshold, &joy_ythreshold, &joy_zthreshold,
-		&joy_xrotthreshold, &joy_yrotthreshold, &joy_zrotthreshold,
-		&joy_sliderthreshold, &joy_dialthreshold
-	};
+	int i;
+	menuitem_t item = { whitetext };
+	int itemnum;
+	IJoystickConfig *joy;
 
-	int i, line;
-
-	if (JoystickNames.Size() == 0)
+	if (JoystickItems.Size() > 1)
 	{
-		JoystickItems[0].type = redtext;
-		JoystickItems[0].label = "No joysticks connected";
-		line = 1;
+		itemnum = JoystickItems[1].a.joyselection;
 	}
 	else
+	{
+		itemnum = 0;
+	}
+	JoystickItems.Clear();
+	I_GetJoysticks(Joysticks);
+	if (Joysticks.Size() == 0)
+	{
+		item.type = redtext;
+		item.label = "No joysticks connected";
+		JoystickItems.Push(item);
+	}
+	else
+	{
+		item.type = discrete;
+		item.label = "Enable joystick";
+		item.a.cvar = &use_joystick;
+		item.b.numvalues = 2;
+		item.e.values = YesNo;
+		JoystickItems.Push(item);
+
+		item.type = discrete_joy;
+		item.label = "Change settings for";
+		item.a.joyselection = itemnum;
+		item.e.joyvalues = &Joysticks;
+		JoystickItems.Push(item);
+
+		item.type = joy_sens;
+		item.label = "Overall sensitivity";
+		item.b.min = 0.5f;
+		item.c.max = 2.f;
+		item.d.step = 0.2f;
+		JoystickItems.Push(item);
+
+		item.type = redtext;
+		item.label = " ";
+		JoystickItems.Push(item);
+
+		joy = Joysticks[itemnum];
+		if (joy->GetNumAxes() > 0)
+		{
+			item.type = whitetext;
+			item.label = "Axis Configuration";
+			JoystickItems.Push(item);
+
+			for (i = 0; i < joy->GetNumAxes(); ++i)
+			{
+				item.type = redtext;
+				item.label = " ";
+				JoystickItems.Push(item);
+
+				item.type = joy_map;
+				item.label = joy->GetAxisName(i);
+				item.a.joyselection = i;
+				item.b.numvalues = countof(JoyAxisMapNames);
+				item.e.values = JoyAxisMapNames;
+				JoystickItems.Push(item);
+
+				item.type = joy_slider;
+				item.label = "Sensitivity";
+				item.b.min = 0;
+				item.c.max = 4;
+				item.d.step = 0.2f;
+				item.e.joyslidernum = 0;
+				JoystickItems.Push(item);
+
+				item.type = joy_inverter;
+				item.label = "Invert";
+				JoystickItems.Push(item);
+
+				item.type = joy_slider;
+				item.label = "Dead Zone";
+				item.b.position = 1;
+				item.c.max = 0.9f;
+				item.d.step = 0.05f;
+				item.e.joyslidernum = 1;
+				JoystickItems.Push(item);
+			}
+		}
+	}
+#if 0
 	{
 		JoystickItems[0].type = discrete;
 		JoystickItems[0].label = "Enable joystick";
@@ -3093,17 +3254,17 @@ void UpdateJoystickMenu ()
 			}
 		}
 	}
-
-	JoystickMenu.numitems = line;
-	if (JoystickMenu.lastOn >= line)
+#endif
+	JoystickMenu.items = &JoystickItems[0];
+	JoystickMenu.numitems = JoystickItems.Size();
+	if (JoystickMenu.lastOn >= JoystickMenu.numitems)
 	{
-		JoystickMenu.lastOn = line - 1;
+		JoystickMenu.lastOn = JoystickMenu.numitems - 1;
 	}
 	if (screen != NULL)
 	{
-		CalcIndent (&JoystickMenu);
+		CalcIndent(&JoystickMenu);
 	}
-#endif
 }
 
 static void JoystickOptions ()

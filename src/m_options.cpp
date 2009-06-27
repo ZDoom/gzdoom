@@ -291,7 +291,6 @@ menu_t MouseMenu =
 
 #define SELECTED_JOYSTICK	(Joysticks[JoystickItems[1].a.joyselection])
 EXTERN_CVAR (Bool, use_joystick)
-void UpdateJoystickMenu();
 
 #if 0
 EXTERN_CVAR (Float, joy_speedmultiplier)
@@ -2460,7 +2459,7 @@ void M_OptResponder (event_t *ev)
 				{
 					item->a.joyselection = item->e.joyvalues->Size() - 1;
 				}
-				UpdateJoystickMenu();
+				UpdateJoystickMenu(NULL);
 				S_Sound(CHAN_VOICE|CHAN_UI, "menu/change", 1, ATTN_NONE);
 				break;
 
@@ -2666,7 +2665,7 @@ void M_OptResponder (event_t *ev)
 				{
 					item->a.joyselection = 0;
 				}
-				UpdateJoystickMenu();
+				UpdateJoystickMenu(NULL);
 				S_Sound(CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
 				break;
 
@@ -3092,7 +3091,7 @@ CCMD (menu_mouse)
 	MouseOptions ();
 }
 
-void UpdateJoystickMenu ()
+void UpdateJoystickMenu(IJoystickConfig *selected)
 {
 	int i;
 	menuitem_t item = { whitetext };
@@ -3109,6 +3108,21 @@ void UpdateJoystickMenu ()
 	}
 	JoystickItems.Clear();
 	I_GetJoysticks(Joysticks);
+	if ((unsigned)itemnum >= Joysticks.Size())
+	{
+		itemnum = Joysticks.Size() - 1;
+	}
+	if (selected != NULL)
+	{
+		for (i = 0; (unsigned)i < Joysticks.Size(); ++i)
+		{
+			if (Joysticks[i] == selected)
+			{
+				itemnum = i;
+				break;
+			}
+		}
+	}
 	if (Joysticks.Size() == 0)
 	{
 		item.type = redtext;
@@ -3269,7 +3283,7 @@ void UpdateJoystickMenu ()
 
 static void JoystickOptions ()
 {
-	UpdateJoystickMenu ();
+	UpdateJoystickMenu (NULL);
 	M_SwitchMenu (&JoystickMenu);
 }
 

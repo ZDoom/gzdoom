@@ -1,4 +1,5 @@
 ﻿June 26, 2009
+- Attaching and detaching joysticks once again updates the joystick menu.
 - Added joystick axis -> button mapping.
 
 June 26, 2009  (Changes by Graf Zahl)

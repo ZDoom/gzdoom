@@ -119,6 +119,7 @@ typedef enum {
 } itemtype;
 
 struct IJoystickConfig;
+void UpdateJoystickMenu(IJoystickConfig *selected);
 
 struct menuitem_t
 {

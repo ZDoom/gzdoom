@@ -217,7 +217,7 @@ protected:
 	};
 	TArray<FDInputJoystick *> Devices;
 
-	void EnumDevices();
+	FDInputJoystick *EnumDevices();
 
 	static BOOL CALLBACK EnumCallback(LPCDIDEVICEINSTANCE lpddi, LPVOID pvRef);
 	static int STACK_ARGS NameSort(const void *a, const void *b);
@@ -1120,76 +1120,22 @@ void FDInputJoystickManager::GetDevices(TArray<IJoystickConfig *> &sticks)
 
 bool FDInputJoystickManager::WndProcHook(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT *result)
 {
-	if (message != WM_DEVICECHANGE ||
-		(wParam != DBT_DEVNODES_CHANGED &&
+	if (message != WM_DEVICECHANGE)
+	{
+		return false;
+	}
+#ifdef _DEBUG
+	char out[64];
+	mysnprintf(out, countof(out), "WM_DEVICECHANGE wParam=%d\n", wParam);
+	OutputDebugString(out);
+#endif
+	if ((wParam != DBT_DEVNODES_CHANGED &&
 		 wParam != DBT_DEVICEARRIVAL &&
 		 wParam != DBT_CONFIGCHANGED))
 	{
 		return false;
 	}
-	EnumDevices();
-#if 0
-	unsigned int i;
-	TArray<GUID> oldjoys;
-
-	for (i = 0; i < JoystickNames.Size(); ++i)
-	{
-		oldjoys.Push (JoystickNames[i].ID);
-	}
-
-	DI_EnumJoy ();
-
-	// If a new joystick was added and the joystick menu is open,
-	// switch to it.
-	if (menuactive != MENU_Off && CurrentMenu == &JoystickMenu)
-	{
-		for (i = 0; i < JoystickNames.Size(); ++i)
-		{
-			bool wasListed = false;
-
-			for (unsigned int j = 0; j < oldjoys.Size(); ++j)
-			{
-				if (oldjoys[j] == JoystickNames[i].ID)
-				{
-					wasListed = true;
-					break;
-				}
-			}
-			if (!wasListed)
-			{
-				joy_guid = JoystickNames[i].ID;
-				break;
-			}
-		}
-	}
-
-	// If the current joystick was removed,
-	// try to switch to a different one.
-	if (g_pJoy != NULL)
-	{
-		DIDEVICEINSTANCE inst = { sizeof(DIDEVICEINSTANCE), };
-
-		if (SUCCEEDED(g_pJoy->GetDeviceInfo (&inst)))
-		{
-			for (i = 0; i < JoystickNames.Size(); ++i)
-			{
-				if (JoystickNames[i].ID == inst.guidInstance)
-				{
-					break;
-				}
-			}
-			if (i == JoystickNames.Size ())
-			{
-				DI_InitJoy ();
-			}
-		}
-	}
-	else
-	{
-		DI_InitJoy ();
-	}
-	UpdateJoystickMenu ();
-#endif
+	UpdateJoystickMenu(EnumDevices());
 	// Return false so that other devices can handle this too if they want.
 	return false;
 }
@@ -1340,12 +1286,14 @@ int FDInputJoystickManager::NameSort(const void *a, const void *b)
 // FDInputJoystickManager :: EnumDevices
 //
 // Find out what DirectInput game controllers are on the system and create
-// FDInputJoystick objects for them.
+// FDInputJoystick objects for them. May return a pointer to the first new
+// device found.
 //
 //===========================================================================
 
-void FDInputJoystickManager::EnumDevices()
+FDInputJoystick *FDInputJoystickManager::EnumDevices()
 {
+	FDInputJoystick *newone = NULL;
 	TArray<Enumerator> controllers;
 	unsigned i, j, k;
 
@@ -1406,6 +1354,10 @@ void FDInputJoystickManager::EnumDevices()
 			{
 				device->Marked = true;
 				Devices.Push(device);
+				if (newone == NULL)
+				{
+					newone = device;
+				}
 			}
 		}
 	}
@@ -1426,6 +1378,7 @@ void FDInputJoystickManager::EnumDevices()
 		}
 	}
 	Devices.Resize(i);
+	return newone;
 }
 
 //===========================================================================

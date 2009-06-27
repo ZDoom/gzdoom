@@ -1,4 +1,8 @@
-﻿June 26, 2009
+﻿June 27, 2009  (Changes by Graf Zahl)
+- Added Gez's submissions for A_M_Saw customization, area damage and 
+  pitch for A_FireCustomMissile.
+
+June 26, 2009
 - Attaching and detaching joysticks once again updates the joystick menu.
 - Added joystick axis -> button mapping.
 

@@ -261,7 +261,7 @@ enum
 	MF4_SYNCHRONIZED	= 0x00200000,	// For actors spawned at load-time only: Do not randomize tics
 	MF4_NOTARGETSWITCH	= 0x00400000,	// monster never switches target until current one is dead
 	MF4_VFRICTION		= 0x00800000,	// Internal flag used by A_PainAttack to push a monster down
-	MF4_DONTHURTSPECIES	= 0x01000000,	// Don't hurt one's own kind with explosions (hitscans, too?)
+	MF4_DONTHARMCLASS	= 0x01000000,	// Don't hurt one's own kind with explosions (hitscans, too?)
 	MF4_SHIELDREFLECT	= 0x02000000,
 	MF4_DEFLECT			= 0x04000000,	// different projectile reflection styles
 	MF4_ALLOWPARTICLES	= 0x08000000,	// this puff type can be replaced by particles
@@ -310,6 +310,7 @@ enum
 	MF6_FORCEPAIN		= 0x00000008,	// forces target into painstate (unless it has the NOPAIN flag)
 	MF6_NOFEAR			= 0x00000010,	// Not scared of frightening players
 	MF6_BUMPSPECIAL		= 0x00000020,	// Actor executes its special when being collided (as the ST flag)
+	MF6_DONTHARMSPECIES = 0x00000040,	// Don't hurt one's own species with explosions (hitscans, too?)
 
 
 // --- mobj.renderflags ---

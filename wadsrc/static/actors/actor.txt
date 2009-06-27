@@ -122,7 +122,7 @@ ACTOR Actor native //: Thinker
 	action native A_SetFloat();
 	action native A_UnsetFloat();
 
-	action native A_M_Saw();
+	action native A_M_Saw(sound fullsound = "weapons/sawfull", sound hitsound = "weapons/sawhit", int damage = 2, class<Actor> pufftype = "BulletPuff");
 
 	action native A_ScreamAndUnblock();
 	action native A_ActiveAndUnblock();
@@ -212,7 +212,7 @@ ACTOR Actor native //: Thinker
 	action native A_CustomComboAttack(class<Actor> missiletype, float spawnheight, int damage, sound meleesound = "", name damagetype = "none", bool bleed = true);
 	action native A_Burst(class<Actor> chunktype);
 	action native A_RadiusThrust(int force = 128, int distance = -1, bool affectsource = true);
-	action native A_Explode(int damage = -1, int distance = -1, bool hurtsource = true, bool alert = false);
+	action native A_Explode(int damage = -1, int distance = -1, bool hurtsource = true, bool alert = false, int fulldamagedistance = 0);
 	action native A_Stop();
 	action native A_Respawn(bool fog = true);
 	action native A_BarrelDestroy();

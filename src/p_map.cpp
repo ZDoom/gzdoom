@@ -3907,13 +3907,15 @@ CUSTOM_CVAR (Float, splashfactor, 1.f, CVAR_SERVERINFO)
 // Source is the creature that caused the explosion at spot.
 //
 void P_RadiusAttack (AActor *bombspot, AActor *bombsource, int bombdamage, int bombdistance, FName bombmod,
-	bool DamageSource, bool bombdodamage)
+	bool DamageSource, bool bombdodamage, int fulldamagedistance)
 {
 	if (bombdistance <= 0)
 		return;
+	fulldamagedistance = clamp<int>(fulldamagedistance, 0, bombdistance-1);
 
-	float bombdistancefloat = 1.f / (float)bombdistance;
+	float bombdistancefloat = 1.f / (float)(bombdistance - fulldamagedistance);
 	float bombdamagefloat = (float)bombdamage;
+
 	FVector3 bombvec(FIXED2FLOAT(bombspot->x), FIXED2FLOAT(bombspot->y), FIXED2FLOAT(bombspot->z));
 
 	FBlockThingsIterator it(FBoundingBox(bombspot->x, bombspot->y, bombdistance<<FRACBITS));
@@ -3936,12 +3938,14 @@ void P_RadiusAttack (AActor *bombspot, AActor *bombsource, int bombdamage, int b
 
 		// a much needed option: monsters that fire explosive projectiles cannot 
 		// be hurt by projectiles fired by a monster of the same type.
-		// Controlled by the DONTHURTSPECIES flag.
-		if (bombsource && 
-			thing->GetClass() == bombsource->GetClass() && 
-			!thing->player &&
-			bombsource->flags4 & MF4_DONTHURTSPECIES
-			) continue;
+		// Controlled by the DONTHARMCLASS and DONTHARMSPECIES flags.
+		if ((bombsource && !thing->player) // code common to both checks
+		&& ( // Class check first
+			((bombsource->flags4 & MF4_DONTHARMCLASS) && (thing->GetClass() == bombsource->GetClass()))
+			|| // Nigh-identical species check second
+			((bombsource->flags6 & MF6_DONTHARMSPECIES) && (thing->GetSpecies() == bombsource->GetSpecies()))
+			)
+		)	continue;
 
 		// Barrels always use the original code, since this makes
 		// them far too "active." BossBrains also use the old code
@@ -3992,6 +3996,7 @@ void P_RadiusAttack (AActor *bombspot, AActor *bombsource, int bombdamage, int b
 					len = 0.f;
 			}
 			len /= FRACUNIT;
+			len = clamp<float>(len - (float)fulldamagedistance, 0, len);
 			points = bombdamagefloat * (1.f - len * bombdistancefloat);
 			if (thing == bombsource)
 			{
@@ -4055,7 +4060,8 @@ void P_RadiusAttack (AActor *bombspot, AActor *bombsource, int bombdamage, int b
 
 			if (P_CheckSight (thing, bombspot, 1))
 			{ // OK to damage; target is in direct path
-				int damage = Scale (bombdamage, bombdistance-dist, bombdistance);
+				dist = clamp<int>(dist - fulldamagedistance, 0, dist);
+				int damage = Scale (bombdamage, bombdistance-dist, bombdistance-fulldamagedistance);
 				damage = (int)((float)damage * splashfactor);
 
 				damage = Scale(damage, thing->GetClass()->Meta.GetMetaFixed(AMETA_RDFactor, FRACUNIT), FRACUNIT);
@@ -4068,7 +4074,6 @@ void P_RadiusAttack (AActor *bombspot, AActor *bombsource, int bombdamage, int b
 		}
 	}
 }
-
 
 
 //

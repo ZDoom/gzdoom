@@ -8,7 +8,7 @@ ACTOR Inventory native
 	action native A_JumpIfNoAmmo(state label);
 	action native A_CustomPunch(int damage, bool norandom = false, bool useammo = true, class<Actor> pufftype = "BulletPuff", float range = 0);
 	action native A_FireBullets(float spread_xy, float spread_z, int numbullets, int damageperbullet, class<Actor> pufftype = "BulletPuff", bool useammo = true, float range = 0);
-	action native A_FireCustomMissile(class<Actor> missiletype, float angle = 0, bool useammo = true, int spawnofs_xy = 0, float spawnheight = 0, bool aimatangle = false);
+	action native A_FireCustomMissile(class<Actor> missiletype, float angle = 0, bool useammo = true, int spawnofs_xy = 0, float spawnheight = 0, bool aimatangle = false, float pitch = 0);
 	action native A_RailAttack(int damage, int spawnofs_xy = 0, int useammo = true, color color1 = "", color color2 = "", bool silent = false, float maxdiff = 0, class<Actor> pufftype = "BulletPuff");
 	action native A_Light(int extralight);
 	action native A_Light0();

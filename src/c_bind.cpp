@@ -246,6 +246,11 @@ const char *KeyNames[NUM_KEYS] =
 
 	"mwheelup",	"mwheeldown",							// the mouse wheel
 	"mwheelright", "mwheelleft",
+
+	"axis1plus","axis1minus","axis2plus","axis2minus",	// joystick axes as buttons
+	"axis3plus","axis3minus","axis4plus","axis4minus",
+	"axis5plus","axis5minus","axis6plus","axis6minus",
+	"axis7plus","axis7minus","axis8plus","axis8minus",
 };
 
 static FString Bindings[NUM_KEYS];

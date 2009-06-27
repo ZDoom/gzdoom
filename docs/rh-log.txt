@@ -1,4 +1,7 @@
-﻿June 26, 2009  (Changes by Graf Zahl)
+﻿June 26, 2009
+- Added joystick axis -> button mapping.
+
+June 26, 2009  (Changes by Graf Zahl)
 - Added Gez's actor replacement per skill submission.
 
 June 25, 2009

@@ -102,7 +102,7 @@ enum ESkillLevels
 
 //
 // DOOM keyboard definition. Everything below 0x100 matches
-// a DirectInput key code.
+// a mode 1 keyboard scan code.
 //
 #define KEY_PAUSE				0xc5	// DIK_PAUSE
 #define KEY_RIGHTARROW			0xcd	// DIK_RIGHT
@@ -170,7 +170,25 @@ enum ESkillLevels
 #define KEY_MWHEELRIGHT			0x19A
 #define KEY_MWHEELLEFT			0x19B
 
-#define NUM_KEYS				0x19C
+#define KEY_JOYAXIS1PLUS		0x19C
+#define KEY_JOYAXIS1MINUS		0x19D
+#define KEY_JOYAXIS2PLUS		0x19E
+#define KEY_JOYAXIS2MINUS		0x19F
+#define KEY_JOYAXIS3PLUS		0x1A0
+#define KEY_JOYAXIS3MINUS		0x1A1
+#define KEY_JOYAXIS4PLUS		0x1A2
+#define KEY_JOYAXIS4MINUS		0x1A3
+#define KEY_JOYAXIS5PLUS		0x1A4
+#define KEY_JOYAXIS5MINUS		0x1A5
+#define KEY_JOYAXIS6PLUS		0x1A6
+#define KEY_JOYAXIS6MINUS		0x1A7
+#define KEY_JOYAXIS7PLUS		0x1A8
+#define KEY_JOYAXIS7MINUS		0x1A9
+#define KEY_JOYAXIS8PLUS		0x1AA
+#define KEY_JOYAXIS8MINUS		0x1AB
+#define NUM_JOYAXISBUTTONS		8
+
+#define NUM_KEYS				0x1AC
 
 enum EJoyAxis
 {

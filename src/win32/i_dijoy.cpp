@@ -118,6 +118,8 @@ public:
 
 // MACROS ------------------------------------------------------------------
 
+#define DEFAULT_DEADZONE			0.25f
+
 // TYPES -------------------------------------------------------------------
 
 class FDInputJoystick : public FInputDevice, IJoystickConfig
@@ -157,10 +159,11 @@ protected:
 		DWORD Type;
 		DWORD Ofs;
 		LONG Min, Max;
-		LONG Value;
+		float Value;
 		float DeadZone;
 		float Multiplier;
 		EJoyAxis GameAxis;
+		BYTE ButtonValue;
 	};
 	struct ButtonInfo
 	{
@@ -189,6 +192,7 @@ protected:
 	bool ReorderAxisPair(const GUID &x, const GUID &y, int pos);
 	HRESULT SetDataFormat();
 	bool SetConfigSection(bool create);
+	void GenerateButtonEvents(int oldbuttons, int newbuttons, int numbuttons, int base);
 
 	friend class FDInputJoystickManager;
 };
@@ -369,11 +373,42 @@ void FDInputJoystick::ProcessInput()
 		return;
 	}
 
-	// Copy axis values. They will be returned in a separate call.
+	// Convert axis values to floating point and save them for a later call
+	// to AddAxes(). Axes that are past their dead zone will also be translated
+	// into button presses.
 	for (i = 0; i < Axes.Size(); ++i)
 	{
 		AxisInfo *info = &Axes[i];
-		info->Value = *(LONG *)(state + info->Ofs);
+		LONG value = *(LONG *)(state + info->Ofs);
+		double deadzone = info->DeadZone;
+		double axisval;
+		BYTE buttonstate;
+
+		// Scale to [-1.0, 1.0]
+		axisval = (value - info->Min) * 2.0 / (info->Max - info->Min) - 1.0;
+		// Cancel out dead zone
+		if (fabs(axisval) < deadzone)
+		{
+			axisval = 0;
+			buttonstate = 0;
+		}
+		// Make the dead zone the new 0
+		else if (axisval < 0)
+		{
+			axisval = (axisval + deadzone) / (1.0 - deadzone);
+			buttonstate = 2;	// button minus
+		}
+		else
+		{
+			axisval = (axisval - deadzone) / (1.0 - deadzone);
+			buttonstate = 1;	// button plus
+		}
+		info->Value = float(axisval);
+		if (i < NUM_JOYAXISBUTTONS)
+		{
+			GenerateButtonEvents(info->ButtonValue, buttonstate, 2, KEY_JOYAXIS1PLUS + i*2);
+		}
+		info->ButtonValue = buttonstate;
 	}
 
 	// Compare button states and generate events for buttons that have changed.
@@ -397,7 +432,7 @@ void FDInputJoystick::ProcessInput()
 	{
 		ButtonInfo *info = &POVs[i];
 		DWORD povangle = *(DWORD *)(state + info->Ofs);
-		int pov, changed;
+		int pov;
 
 		// Smoosh POV angles down into octants. 8 is centered.
 		pov = (LOWORD(povangle) == 0xFFFF) ? 8 : ((povangle + 2250) % 36000) / 4500;
@@ -406,20 +441,31 @@ void FDInputJoystick::ProcessInput()
 		pov = POVButtons[pov];
 
 		// Send events for POV "buttons" that have changed.
-		changed = pov ^ info->Value;
-		if (changed != 0)
+		GenerateButtonEvents(info->Value, pov, 4, KEY_JOYPOV1_UP + i*4);
+		info->Value = pov;
+	}
+}
+
+//===========================================================================
+//
+// FDInputJoystick :: GenerateButtonEvents
+//
+//===========================================================================
+
+void FDInputJoystick::GenerateButtonEvents(int oldbuttons, int newbuttons, int numbuttons, int base)
+{
+	int changed = oldbuttons ^ newbuttons;
+	if (changed != 0)
+	{
+		event_t ev = { 0 };
+		int mask = 1;
+		for (int j = 0; j < 4; mask <<= 1, ++j)
 		{
-			int j, mask;
-			info->Value = pov;
-			mask = 1;
-			for (j = 0; j < 4; mask <<= 1, ++j)
+			if (changed & mask)
 			{
-				if (changed & mask)
-				{
-					ev.data1 = KEY_JOYPOV1_UP + i*4 + j;
-					ev.type = (pov & mask) ? EV_KeyDown : EV_KeyUp;
-					D_PostEvent(&ev);
-				}
+				ev.data1 = base + j;
+				ev.type = (newbuttons & mask) ? EV_KeyDown : EV_KeyUp;
+				D_PostEvent(&ev);
 			}
 		}
 	}
@@ -443,27 +489,8 @@ void FDInputJoystick::AddAxes(float axes[NUM_JOYAXIS])
 
 	for (unsigned i = 0; i < Axes.Size(); ++i)
 	{
-		double axisval = Axes[i].Value;
-		float deadzone = Axes[i].DeadZone;
-
-		// Scale to [-1.0, 1.0]
-		axisval = (Axes[i].Value - Axes[i].Min) * 2.0 / (Axes[i].Max - Axes[i].Min) - 1.0;
-		// Cancel out dead zone
-		if (fabs(axisval) < deadzone)
-		{
-			continue;
-		}
-		// Make the dead zone the new 0
-		if (axisval < 0)
-		{
-			axisval = (axisval + deadzone) / (1.0 - deadzone);
-		}
-		else
-		{
-			axisval = (axisval - deadzone) / (1.0 - deadzone);
-		}
 		// Add to the game axis.
-		axes[Axes[i].GameAxis] -= float(axisval * mul * Axes[i].Multiplier);
+		axes[Axes[i].GameAxis] -= float(Axes[i].Value * mul * Axes[i].Multiplier);
 	}
 }
 
@@ -540,7 +567,8 @@ BOOL CALLBACK FDInputJoystick::EnumObjectsCallback(LPCDIDEVICEOBJECTINSTANCE lpd
 		info.Min = diprg.lMin;
 		info.Max = diprg.lMax;
 		info.GameAxis = JOYAXIS_None;
-		info.Value = (diprg.lMin + diprg.lMax) / 2;
+		info.Value = 0;
+		info.ButtonValue = 0;
 		joy->Axes.Push(info);
 	}
 	return DIENUM_CONTINUE;
@@ -808,7 +836,7 @@ void FDInputJoystick::SetDefaultConfig()
 	Multiplier = 1;
 	for (unsigned i = 0; i < Axes.Size(); ++i)
 	{
-		Axes[i].DeadZone = 0.25f;
+		Axes[i].DeadZone = DEFAULT_DEADZONE;
 		Axes[i].Multiplier = 1;
 	}
 	// Triggers on a 360 controller have a much smaller deadzone.

@@ -1,4 +1,12 @@
-﻿June 27, 2009  (Changes by Graf Zahl)
+﻿June 27, 2009
+- Fixed some improper preprocessor lines in autostart/autozend.cpp.
+- Added XInput support. For the benefit of people compiling with MinGW,
+  the CMakeLists.txt checks for xinput.h and disables it if it cannot
+  be found. (And much to my surprise, I accidentally discovered that if you
+  have the DirectX SDK installed, those headers actually do work with GCC,
+  though they add a few extra warnings.)
+
+June 27, 2009  (Changes by Graf Zahl)
 - Added Gez's submissions for A_M_Saw customization, area damage and 
   pitch for A_FireCustomMissile.
 

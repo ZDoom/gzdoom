@@ -147,7 +147,11 @@ extern FJoystickCollection *JoyDevices[NUM_JOYDEVICES];
 void I_StartupMouse();
 void I_CheckNativeMouse(bool prefer_native);
 void I_StartupKeyboard();
-void I_StartupJoystick();
+void I_StartupXInput();
+void I_StartupDirectInputJoystick();
+
+void Joy_GenerateButtonEvents(int oldbuttons, int newbuttons, int numbuttons, int base);
+double Joy_RemoveDeadZone(double axisval, double deadzone, BYTE *buttons);
 
 // USB HID usage page numbers
 #define HID_GENERIC_DESKTOP_PAGE			0x01

@@ -2005,6 +2005,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\win32\i_xinput.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\src\win32\icon1.ico"
 				>
 			</File>

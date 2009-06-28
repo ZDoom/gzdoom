@@ -1700,6 +1700,7 @@ void M_OptDrawer ()
 
 		if (item->type != screenres)
 		{
+			FString somestring;
 			const char *label;
 			if (item->type != discrete_joy)
 			{
@@ -1713,7 +1714,8 @@ void M_OptDrawer ()
 				}
 				else
 				{
-					label = (*item->e.joyvalues)[item->a.joyselection]->GetName();
+					somestring = (*item->e.joyvalues)[item->a.joyselection]->GetName();
+					label = somestring;
 				}
 			}
 			width = SmallFont->StringWidth(label);

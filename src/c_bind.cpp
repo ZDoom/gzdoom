@@ -251,6 +251,14 @@ const char *KeyNames[NUM_KEYS] =
 	"axis3plus","axis3minus","axis4plus","axis4minus",
 	"axis5plus","axis5minus","axis6plus","axis6minus",
 	"axis7plus","axis7minus","axis8plus","axis8minus",
+
+	"lstickright","lstickleft","lstickdown","lstickup",			// Gamepad axis-based buttons
+	"rstickright","rstickleft","rstickdown","rstickup",
+
+	"dpadup","dpaddown","dpadleft","dpadright",	// Gamepad buttons
+	"pad_start","pad_back","lthumb","rthumb",
+	"lshoulder","rshoulder","ltrigger","rtrigger",
+	"pad_a", "pad_b", "pad_x", "pad_y"
 };
 
 static FString Bindings[NUM_KEYS];

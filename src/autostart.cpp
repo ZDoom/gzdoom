@@ -92,7 +92,7 @@ void *GRegHead __attribute__((section(GREG_SECTION))) = 0;
 void *MRegHead __attribute__((section(MREG_SECTION))) = 0;
 void *YRegHead __attribute__((section(YREG_SECTION))) = 0;
 
-#elif
+#else
 
 #error Please fix autostart.cpp for your compiler
 

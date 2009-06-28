@@ -136,7 +136,7 @@ public:
 	FString GetIdentifier();
 	void SetDefaultConfig();
 
-	// IJoystick interface
+	// IJoystickConfig interface
 	FString GetName();
 	float GetSensitivity();
 	virtual void SetSensitivity(float scale);
@@ -192,7 +192,6 @@ protected:
 	bool ReorderAxisPair(const GUID &x, const GUID &y, int pos);
 	HRESULT SetDataFormat();
 	bool SetConfigSection(bool create);
-	void GenerateButtonEvents(int oldbuttons, int newbuttons, int numbuttons, int base);
 
 	friend class FDInputJoystickManager;
 };
@@ -380,33 +379,17 @@ void FDInputJoystick::ProcessInput()
 	{
 		AxisInfo *info = &Axes[i];
 		LONG value = *(LONG *)(state + info->Ofs);
-		double deadzone = info->DeadZone;
 		double axisval;
 		BYTE buttonstate;
 
 		// Scale to [-1.0, 1.0]
 		axisval = (value - info->Min) * 2.0 / (info->Max - info->Min) - 1.0;
 		// Cancel out dead zone
-		if (fabs(axisval) < deadzone)
-		{
-			axisval = 0;
-			buttonstate = 0;
-		}
-		// Make the dead zone the new 0
-		else if (axisval < 0)
-		{
-			axisval = (axisval + deadzone) / (1.0 - deadzone);
-			buttonstate = 2;	// button minus
-		}
-		else
-		{
-			axisval = (axisval - deadzone) / (1.0 - deadzone);
-			buttonstate = 1;	// button plus
-		}
+		axisval = Joy_RemoveDeadZone(axisval, info->DeadZone, &buttonstate);
 		info->Value = float(axisval);
 		if (i < NUM_JOYAXISBUTTONS)
 		{
-			GenerateButtonEvents(info->ButtonValue, buttonstate, 2, KEY_JOYAXIS1PLUS + i*2);
+			Joy_GenerateButtonEvents(info->ButtonValue, buttonstate, 2, KEY_JOYAXIS1PLUS + i*2);
 		}
 		info->ButtonValue = buttonstate;
 	}
@@ -441,33 +424,8 @@ void FDInputJoystick::ProcessInput()
 		pov = POVButtons[pov];
 
 		// Send events for POV "buttons" that have changed.
-		GenerateButtonEvents(info->Value, pov, 4, KEY_JOYPOV1_UP + i*4);
+		Joy_GenerateButtonEvents(info->Value, pov, 4, KEY_JOYPOV1_UP + i*4);
 		info->Value = pov;
-	}
-}
-
-//===========================================================================
-//
-// FDInputJoystick :: GenerateButtonEvents
-//
-//===========================================================================
-
-void FDInputJoystick::GenerateButtonEvents(int oldbuttons, int newbuttons, int numbuttons, int base)
-{
-	int changed = oldbuttons ^ newbuttons;
-	if (changed != 0)
-	{
-		event_t ev = { 0 };
-		int mask = 1;
-		for (int j = 0; j < 4; mask <<= 1, ++j)
-		{
-			if (changed & mask)
-			{
-				ev.data1 = base + j;
-				ev.type = (newbuttons & mask) ? EV_KeyDown : EV_KeyUp;
-				D_PostEvent(&ev);
-			}
-		}
 	}
 }
 
@@ -838,11 +796,12 @@ void FDInputJoystick::SetDefaultConfig()
 	{
 		Axes[i].DeadZone = DEFAULT_DEADZONE;
 		Axes[i].Multiplier = 1;
+		Axes[i].GameAxis = JOYAXIS_None;
 	}
 	// Triggers on a 360 controller have a much smaller deadzone.
 	if (Axes.Size() == 5 && Axes[4].Guid == GUID_ZAxis)
 	{
-		Axes[4].DeadZone = 30 / 32768.f;
+		Axes[4].DeadZone = 30 / 256.f;
 	}
 	// Two axes? Horizontal is yaw and vertical is forward.
 	if (Axes.Size() == 2)
@@ -1094,7 +1053,7 @@ void FDInputJoystickManager :: AddAxes(float axes[NUM_JOYAXIS])
 
 //===========================================================================
 //
-// FDInputJoystickManager :: GetJoysticks
+// FDInputJoystickManager :: GetDevices
 //
 // Adds the IJoystick interfaces for each device we created to the sticks
 // array.
@@ -1150,12 +1109,16 @@ bool FDInputJoystickManager::WndProcHook(HWND hWnd, UINT message, WPARAM wParam,
 
 BOOL CALLBACK FDInputJoystickManager::EnumCallback(LPCDIDEVICEINSTANCE lpddi, LPVOID pvRef)
 {
-	TArray<Enumerator> *all = (TArray<Enumerator> *)pvRef;
-	Enumerator thisone;
+	// Do not add XInput devices if XInput was initialized.
+	if (JoyDevices[INPUT_XInput] == NULL || !IsXInputDevice(&lpddi->guidProduct))
+	{
+		TArray<Enumerator> *all = (TArray<Enumerator> *)pvRef;
+		Enumerator thisone;
 
-	thisone.Instance = lpddi->guidInstance;
-	thisone.Name = lpddi->tszInstanceName;
-	all->Push(thisone);
+		thisone.Instance = lpddi->guidInstance;
+		thisone.Name = lpddi->tszInstanceName;
+		all->Push(thisone);
+	}
 	return DIENUM_CONTINUE;
 }
 
@@ -1383,15 +1346,72 @@ FDInputJoystick *FDInputJoystickManager::EnumDevices()
 
 //===========================================================================
 //
-// I_StartupJoystick
+// I_StartupDirectInputJoystick
 //
 //===========================================================================
 
-void I_StartupJoystick()
+void I_StartupDirectInputJoystick()
 {
 	FJoystickCollection *joys = new FDInputJoystickManager;
 	if (joys->GetDevice())
 	{
 		JoyDevices[INPUT_DIJoy] = joys;
+	}
+}
+
+//===========================================================================
+//
+// Joy_RemoveDeadZone
+//
+//===========================================================================
+
+double Joy_RemoveDeadZone(double axisval, double deadzone, BYTE *buttons)
+{
+	// Cancel out deadzone.
+	if (fabs(axisval) < deadzone)
+	{
+		axisval = 0;
+		*buttons = 0;
+	}
+	// Make the dead zone the new 0.
+	else if (axisval < 0)
+	{
+		axisval = (axisval + deadzone) / (1.0 - deadzone);
+		*buttons = 2;	// button minus
+	}
+	else
+	{
+		axisval = (axisval - deadzone) / (1.0 - deadzone);
+		*buttons = 1;	// button plus
+	}
+	return axisval;
+}
+
+//===========================================================================
+//
+// Joy_GenerateButtonEvents
+//
+// Provided two bitmasks for a set of buttons, generates events to reflect
+// any changes from the old to new set, where base is the key for bit 0,
+// base+1 is the key for bit 1, etc.
+//
+//===========================================================================
+
+void Joy_GenerateButtonEvents(int oldbuttons, int newbuttons, int numbuttons, int base)
+{
+	int changed = oldbuttons ^ newbuttons;
+	if (changed != 0)
+	{
+		event_t ev = { 0 };
+		int mask = 1;
+		for (int j = 0; j < numbuttons; mask <<= 1, ++j)
+		{
+			if (changed & mask)
+			{
+				ev.data1 = base + j;
+				ev.type = (newbuttons & mask) ? EV_KeyDown : EV_KeyUp;
+				D_PostEvent(&ev);
+			}
+		}
 	}
 }

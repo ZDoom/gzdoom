@@ -188,7 +188,34 @@ enum ESkillLevels
 #define KEY_JOYAXIS8MINUS		0x1AB
 #define NUM_JOYAXISBUTTONS		8
 
-#define NUM_KEYS				0x1AC
+#define KEY_PAD_LTHUMB_RIGHT	0x1AC
+#define KEY_PAD_LTHUMB_LEFT		0x1AD
+#define KEY_PAD_LTHUMB_DOWN		0x1AE
+#define KEY_PAD_LTHUMB_UP		0x1AF
+
+#define KEY_PAD_RTHUMB_RIGHT	0x1B0
+#define KEY_PAD_RTHUMB_LEFT		0x1B1
+#define KEY_PAD_RTHUMB_DOWN		0x1B2
+#define KEY_PAD_RTHUMB_UP		0x1B3
+
+#define KEY_PAD_DPAD_UP			0x1B4
+#define KEY_PAD_DPAD_DOWN		0x1B5
+#define KEY_PAD_DPAD_LEFT		0x1B6
+#define KEY_PAD_DPAD_RIGHT		0x1B7
+#define KEY_PAD_START			0x1B8
+#define KEY_PAD_BACK			0x1B9
+#define KEY_PAD_LTHUMB			0x1BA
+#define KEY_PAD_RTHUMB			0x1BB
+#define KEY_PAD_LSHOULDER		0x1BC
+#define KEY_PAD_RSHOULDER		0x1BD
+#define KEY_PAD_LTRIGGER		0x1BE
+#define KEY_PAD_RTRIGGER		0x1BF
+#define KEY_PAD_A				0x1C0
+#define KEY_PAD_B				0x1C1
+#define KEY_PAD_X				0x1C2
+#define KEY_PAD_Y				0x1C3
+
+#define NUM_KEYS				0x1C4
 
 enum EJoyAxis
 {

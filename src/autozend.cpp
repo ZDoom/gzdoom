@@ -64,7 +64,7 @@ void *GRegTail __attribute__((section(GREG_SECTION))) = 0;
 void *MRegTail __attribute__((section(MREG_SECTION))) = 0;
 void *YRegTail __attribute__((section(YREG_SECTION))) = 0;
 
-#elif
+#else
 
 #error Please fix autozend.cpp for your compiler
 

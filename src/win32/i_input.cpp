@@ -619,11 +619,14 @@ bool I_InitInput (void *hwnd)
 	Printf ("I_StartupMouse\n");
 	I_StartupMouse();
 
-	Printf ("I_StartupJoystick\n");
-	I_StartupJoystick();
-
 	Printf ("I_StartupKeyboard\n");
 	I_StartupKeyboard();
+
+	Printf ("I_StartupXInput\n");
+	I_StartupXInput();
+
+	Printf ("I_StartupDirectInputJoystick\n");
+	I_StartupDirectInputJoystick();
 
 	return TRUE;
 }

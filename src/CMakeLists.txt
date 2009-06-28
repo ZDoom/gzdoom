@@ -73,6 +73,16 @@ if( WIN32 )
 	else( NOT D3D_INCLUDE_DIR )
 		include_directories( ${D3D_INCLUDE_DIR} )
 	endif( NOT D3D_INCLUDE_DIR )
+	
+	find_path( XINPUT_INCLUDE_DIR xinput.h
+		PATHS ENV DXSDK_DIR
+		PATH_SUFFIXES Include )
+	if( NOT XINPUT_INCLUDE_DIR )
+		message( SEND_ERROR "Could not find xinput.h. XInput will be disabled." )
+		add_definitions( -DNO_XINPUT )
+	else( NOT XINPUT_INCLUDE_DIR )
+		include_directories( ${XINPUT_INCLUDE_DIR} )
+	endif( NOT XINPUT_INCLUDE_DIR )
 
 	find_library( DX_ddraw_LIBRARY ddraw
 		PATHS ENV DXSDK_DIR
@@ -402,6 +412,7 @@ if( WIN32 )
 		win32/i_keyboard.cpp
 		win32/i_mouse.cpp
 		win32/i_dijoy.cpp
+		win32/i_xinput.cpp
 		win32/i_main.cpp
 		win32/i_movie.cpp
 		win32/i_system.cpp

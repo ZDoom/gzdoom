@@ -771,8 +771,8 @@ void ThrustMobj (AActor *actor, seg_t *seg, FPolyObj *po)
 
 	thrustX = FixedMul (force, finecosine[thrustAngle]);
 	thrustY = FixedMul (force, finesine[thrustAngle]);
-	actor->momx += thrustX;
-	actor->momy += thrustY;
+	actor->velx += thrustX;
+	actor->vely += thrustY;
 	if (po->crush)
 	{
 		if (po->bHurtOnTouch || !P_CheckMove (actor, actor->x + thrustX, actor->y + thrustY))

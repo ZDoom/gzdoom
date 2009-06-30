@@ -64,9 +64,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_PotteryExplode)
 		mo->SetState (mo->SpawnState + (pr_pottery()%5));
 		if (mo)
 		{
-			mo->momz = ((pr_pottery()&7)+5)*(3*FRACUNIT/4);
-			mo->momx = (pr_pottery.Random2())<<(FRACBITS-6);
-			mo->momy = (pr_pottery.Random2())<<(FRACBITS-6);
+			mo->velz = ((pr_pottery()&7)+5)*(3*FRACUNIT/4);
+			mo->velx = (pr_pottery.Random2())<<(FRACBITS-6);
+			mo->vely = (pr_pottery.Random2())<<(FRACBITS-6);
 		}
 	}
 	S_Sound (mo, CHAN_BODY, "PotteryExplode", 1, ATTN_NORM);
@@ -166,9 +166,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_CorpseExplode)
 		if (mo)
 		{
 			mo->SetState (mo->SpawnState + (pr_foo()%3));
-			mo->momz = ((pr_foo()&7)+5)*(3*FRACUNIT/4);
-			mo->momx = pr_foo.Random2()<<(FRACBITS-6);
-			mo->momy = pr_foo.Random2()<<(FRACBITS-6);
+			mo->velz = ((pr_foo()&7)+5)*(3*FRACUNIT/4);
+			mo->velx = pr_foo.Random2()<<(FRACBITS-6);
+			mo->vely = pr_foo.Random2()<<(FRACBITS-6);
 		}
 	}
 	// Spawn a skull
@@ -176,9 +176,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_CorpseExplode)
 	if (mo)
 	{
 		mo->SetState (mo->SpawnState + 3);
-		mo->momz = ((pr_foo()&7)+5)*(3*FRACUNIT/4);
-		mo->momx = pr_foo.Random2()<<(FRACBITS-6);
-		mo->momy = pr_foo.Random2()<<(FRACBITS-6);
+		mo->velz = ((pr_foo()&7)+5)*(3*FRACUNIT/4);
+		mo->velx = pr_foo.Random2()<<(FRACBITS-6);
+		mo->vely = pr_foo.Random2()<<(FRACBITS-6);
 	}
 	S_Sound (self, CHAN_BODY, self->DeathSound, 1, ATTN_IDLE);
 	self->Destroy ();
@@ -220,7 +220,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LeafThrust)
 {
 	if (pr_leafthrust() <= 96)
 	{
-		self->momz += (pr_leafthrust()<<9)+FRACUNIT;
+		self->velz += (pr_leafthrust()<<9)+FRACUNIT;
 	}
 }
 
@@ -241,14 +241,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_LeafCheck)
 	angle_t ang = self->target ? self->target->angle : self->angle;
 	if (pr_leafcheck() > 64)
 	{
-		if (!self->momx && !self->momy)
+		if (!self->velx && !self->vely)
 		{
 			P_ThrustMobj (self, ang, (pr_leafcheck()<<9)+FRACUNIT);
 		}
 		return;
 	}
 	self->SetState (self->SpawnState + 7);
-	self->momz = (pr_leafcheck()<<9)+FRACUNIT;
+	self->velz = (pr_leafcheck()<<9)+FRACUNIT;
 	P_ThrustMobj (self, ang, (pr_leafcheck()<<9)+2*FRACUNIT);
 	self->flags |= MF_MISSILE;
 }
@@ -283,9 +283,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_SoAExplode)
 		if (mo)
 		{
 			mo->SetState (mo->SpawnState + i);
-			mo->momz = ((pr_soaexplode()&7)+5)*FRACUNIT;
-			mo->momx = pr_soaexplode.Random2()<<(FRACBITS-6);
-			mo->momy = pr_soaexplode.Random2()<<(FRACBITS-6);
+			mo->velz = ((pr_soaexplode()&7)+5)*FRACUNIT;
+			mo->velx = pr_soaexplode.Random2()<<(FRACBITS-6);
+			mo->vely = pr_soaexplode.Random2()<<(FRACBITS-6);
 		}
 	}
 	if (self->args[0]>=0 && self->args[0]<=255 && SpawnableThings[self->args[0]])

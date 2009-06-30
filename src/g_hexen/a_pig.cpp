@@ -37,7 +37,7 @@ void APigPlayer::MorphPlayerThink ()
 	{
 		return;
 	}
-	if(!(momx | momy) && pr_pigplayerthink() < 64)
+	if(!(velx | vely) && pr_pigplayerthink() < 64)
 	{ // Snout sniff
 		if (player->ReadyWeapon != NULL)
 		{
@@ -98,6 +98,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_PigPain)
 	CALL_ACTION(A_Pain, self);
 	if (self->z <= self->floorz)
 	{
-		self->momz = FRACUNIT*7/2;
+		self->velz = FRACUNIT*7/2;
 	}
 }

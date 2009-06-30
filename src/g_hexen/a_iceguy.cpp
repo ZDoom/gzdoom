@@ -66,9 +66,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_IceGuyChase)
 			self->z+60*FRACUNIT, ALLOW_REPLACE);
 		if (mo)
 		{
-			mo->momx = self->momx;
-			mo->momy = self->momy;
-			mo->momz = self->momz;
+			mo->velx = self->velx;
+			mo->vely = self->vely;
+			mo->velz = self->velz;
 			mo->target = self;
 		}
 	}
@@ -109,9 +109,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_IceGuyAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_IceGuyDie)
 {
-	self->momx = 0;
-	self->momy = 0;
-	self->momz = 0;
+	self->velx = 0;
+	self->vely = 0;
+	self->velz = 0;
 	self->height = self->GetDefault()->height;
 	CALL_ACTION(A_FreezeDeathChunks, self);
 }

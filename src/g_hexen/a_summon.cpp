@@ -36,7 +36,7 @@ bool AArtiDarkServant::Use (bool pickup)
 	{
 		mo->target = Owner;
 		mo->tracer = Owner;
-		mo->momz = 5*FRACUNIT;
+		mo->velz = 5*FRACUNIT;
 	}
 	return true;
 }

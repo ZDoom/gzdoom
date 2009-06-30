@@ -982,7 +982,7 @@ DEFINE_PROPERTY(cameraheight, F, Actor)
 DEFINE_PROPERTY(vspeed, F, Actor)
 {
 	PROP_FIXED_PARM(i, 0);
-	defaults->momz = i;
+	defaults->velz = i;
 }
 
 //==========================================================================

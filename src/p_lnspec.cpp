@@ -871,12 +871,12 @@ FUNC(LS_ThrustThing)
 static void ThrustThingHelper (AActor *it, angle_t angle, int force, INTBOOL nolimit)
 {
 	angle >>= ANGLETOFINESHIFT;
-	it->momx += force * finecosine[angle];
-	it->momy += force * finesine[angle];
+	it->velx += force * finecosine[angle];
+	it->vely += force * finesine[angle];
 	if (!nolimit)
 	{
-		it->momx = clamp<fixed_t> (it->momx, -MAXMOVE, MAXMOVE);
-		it->momy = clamp<fixed_t> (it->momy, -MAXMOVE, MAXMOVE);
+		it->velx = clamp<fixed_t> (it->velx, -MAXMOVE, MAXMOVE);
+		it->vely = clamp<fixed_t> (it->vely, -MAXMOVE, MAXMOVE);
 	}
 }
 
@@ -897,18 +897,18 @@ FUNC(LS_ThrustThingZ)	// [BC]
 		while ( (victim = iterator.Next ()) )
 		{
 			if (!arg3)
-				victim->momz = thrust;
+				victim->velz = thrust;
 			else
-				victim->momz += thrust;
+				victim->velz += thrust;
 		}
 		return true;
 	}
 	else if (it)
 	{
 		if (!arg3)
-			it->momz = thrust;
+			it->velz = thrust;
 		else
-			it->momz += thrust;
+			it->velz += thrust;
 		return true;
 	}
 	return false;
@@ -1386,7 +1386,7 @@ static bool DoThingRaise(AActor *thing)
 	
 	AActor *info = thing->GetDefault ();
 
-	thing->momx = thing->momy = 0;
+	thing->velx = thing->vely = 0;
 
 	// [RH] Check against real height and radius
 	fixed_t oldheight = thing->height;
@@ -1455,8 +1455,8 @@ FUNC(LS_Thing_Stop)
 	{
 		if (it != NULL)
 		{
-			it->momx = it->momy = it->momz = 0;
-			if (it->player != NULL) it->player->momx = it->player->momy = 0;
+			it->velx = it->vely = it->velz = 0;
+			if (it->player != NULL) it->player->velx = it->player->vely = 0;
 			ok = true;
 		}
 	}
@@ -1466,8 +1466,8 @@ FUNC(LS_Thing_Stop)
 
 		while ( (target = iterator.Next ()) )
 		{
-			target->momx = target->momy = target->momz = 0;
-			if (target->player != NULL) target->player->momx = target->player->momy = 0;
+			target->velx = target->vely = target->velz = 0;
+			if (target->player != NULL) target->player->velx = target->player->vely = 0;
 			ok = true;
 		}
 	}
@@ -2899,9 +2899,9 @@ FUNC(LS_GlassBreak)
 				glass->angle = an;
 				an >>= ANGLETOFINESHIFT;
 				speed = pr_glass() & 3;
-				glass->momx = finecosine[an] * speed;
-				glass->momy = finesine[an] * speed;
-				glass->momz = (pr_glass() & 7) << FRACBITS;
+				glass->velx = finecosine[an] * speed;
+				glass->vely = finesine[an] * speed;
+				glass->velz = (pr_glass() & 7) << FRACBITS;
 				// [RH] Let the shards stick around longer than they did in Strife.
 				glass->tics += pr_glass();
 			}

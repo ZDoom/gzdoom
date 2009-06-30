@@ -910,7 +910,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 		else if (target->flags & MF_ICECORPSE) // frozen
 		{
 			target->tics = 1;
-			target->momx = target->momy = target->momz = 0;
+			target->velx = target->vely = target->velz = 0;
 		}
 		return;
 	}
@@ -946,7 +946,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 	}
 	if (target->flags & MF_SKULLFLY)
 	{
-		target->momx = target->momy = target->momz = 0;
+		target->velx = target->vely = target->velz = 0;
 	}
 	if (!(flags & DMG_FORCED))	// DMG_FORCED skips all special damage checks
 	{
@@ -1064,17 +1064,17 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 				(source->player->ReadyWeapon->WeaponFlags & WIF_STAFF2_KICKBACK))
 			{
 				// Staff power level 2
-				target->momx += FixedMul (10*FRACUNIT, finecosine[ang]);
-				target->momy += FixedMul (10*FRACUNIT, finesine[ang]);
+				target->velx += FixedMul (10*FRACUNIT, finecosine[ang]);
+				target->vely += FixedMul (10*FRACUNIT, finesine[ang]);
 				if (!(target->flags & MF_NOGRAVITY))
 				{
-					target->momz += 5*FRACUNIT;
+					target->velz += 5*FRACUNIT;
 				}
 			}
 			else
 			{
-				target->momx += FixedMul (thrust, finecosine[ang]);
-				target->momy += FixedMul (thrust, finesine[ang]);
+				target->velx += FixedMul (thrust, finecosine[ang]);
+				target->vely += FixedMul (thrust, finesine[ang]);
 			}
 		}
 	}

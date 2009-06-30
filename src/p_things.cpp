@@ -262,7 +262,7 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 						fixed_t spot[3] = { targ->x, targ->y, targ->z+targ->height/2 };
 						FVector3 aim(float(spot[0] - mobj->x), float(spot[1] - mobj->y), float(spot[2] - mobj->z));
 
-						if (leadTarget && speed > 0 && (targ->momx | targ->momy | targ->momz))
+						if (leadTarget && speed > 0 && (targ->velx | targ->vely | targ->velz))
 						{
 							// Aiming at the target's position some time in the future
 							// is basically just an application of the law of sines:
@@ -271,14 +271,14 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 							// with the math. I don't think I would have thought of using
 							// trig alone had I been left to solve it by myself.
 
-							FVector3 tvel(targ->momx, targ->momy, targ->momz);
+							FVector3 tvel(targ->velx, targ->vely, targ->velz);
 							if (!(targ->flags & MF_NOGRAVITY) && targ->waterlevel < 3)
 							{ // If the target is subject to gravity and not underwater,
 							  // assume that it isn't moving vertically. Thanks to gravity,
 							  // even if we did consider the vertical component of the target's
 							  // velocity, we would still miss more often than not.
 								tvel.Z = 0.0;
-								if ((targ->momx | targ->momy) == 0)
+								if ((targ->velx | targ->vely) == 0)
 								{
 									goto nolead;
 								}
@@ -302,18 +302,18 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 							FVector3 aimvec = rm * aim;
 							// And make the projectile follow that vector at the desired speed.
 							double aimscale = fspeed / dist;
-							mobj->momx = fixed_t (aimvec[0] * aimscale);
-							mobj->momy = fixed_t (aimvec[1] * aimscale);
-							mobj->momz = fixed_t (aimvec[2] * aimscale);
-							mobj->angle = R_PointToAngle2 (0, 0, mobj->momx, mobj->momy);
+							mobj->velx = fixed_t (aimvec[0] * aimscale);
+							mobj->vely = fixed_t (aimvec[1] * aimscale);
+							mobj->velz = fixed_t (aimvec[2] * aimscale);
+							mobj->angle = R_PointToAngle2 (0, 0, mobj->velx, mobj->vely);
 						}
 						else
 						{
 nolead:						mobj->angle = R_PointToAngle2 (mobj->x, mobj->y, targ->x, targ->y);
 							aim.Resize (fspeed);
-							mobj->momx = fixed_t(aim[0]);
-							mobj->momy = fixed_t(aim[1]);
-							mobj->momz = fixed_t(aim[2]);
+							mobj->velx = fixed_t(aim[0]);
+							mobj->vely = fixed_t(aim[1]);
+							mobj->velz = fixed_t(aim[2]);
 						}
 						if (mobj->flags2 & MF2_SEEKERMISSILE)
 						{
@@ -323,19 +323,19 @@ nolead:						mobj->angle = R_PointToAngle2 (mobj->x, mobj->y, targ->x, targ->y);
 					else
 					{
 						mobj->angle = angle;
-						mobj->momx = FixedMul (speed, finecosine[angle>>ANGLETOFINESHIFT]);
-						mobj->momy = FixedMul (speed, finesine[angle>>ANGLETOFINESHIFT]);
-						mobj->momz = vspeed;
+						mobj->velx = FixedMul (speed, finecosine[angle>>ANGLETOFINESHIFT]);
+						mobj->vely = FixedMul (speed, finesine[angle>>ANGLETOFINESHIFT]);
+						mobj->velz = vspeed;
 					}
 					// Set the missile's speed to reflect the speed it was spawned at.
 					if (mobj->flags & MF_MISSILE)
 					{
-						mobj->Speed = fixed_t (sqrt (double(mobj->momx)*mobj->momx + double(mobj->momy)*mobj->momy + double(mobj->momz)*mobj->momz));
+						mobj->Speed = fixed_t (sqrt (double(mobj->velx)*mobj->velx + double(mobj->vely)*mobj->vely + double(mobj->velz)*mobj->velz));
 					}
 					// Hugger missiles don't have any vertical velocity
 					if (mobj->flags3 & (MF3_FLOORHUGGER|MF3_CEILINGHUGGER))
 					{
-						mobj->momz = 0;
+						mobj->velz = 0;
 					}
 					if (mobj->flags & MF_SPECIAL)
 					{

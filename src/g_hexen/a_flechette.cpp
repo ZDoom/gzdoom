@@ -111,11 +111,11 @@ bool AArtiPoisonBag3::Use (bool pickup)
 		angle_t pitch = (angle_t)Owner->pitch >> ANGLETOFINESHIFT;
 
 		mo->angle = Owner->angle+(((pr_poisonbag()&7)-4)<<24);
-		mo->momz = 4*FRACUNIT + 2*finesine[pitch];
+		mo->velz = 4*FRACUNIT + 2*finesine[pitch];
 		mo->z += 2*finesine[pitch];
 		P_ThrustMobj (mo, mo->angle, mo->Speed);
-		mo->momx += Owner->momx>>1;
-		mo->momy += Owner->momy>>1;
+		mo->velx += Owner->velx >> 1;
+		mo->vely += Owner->vely >> 1;
 		mo->target = Owner;
 		mo->tics -= pr_poisonbag()&3;
 		P_CheckMissileSpawn (mo);
@@ -242,7 +242,7 @@ IMPLEMENT_CLASS (APoisonCloud)
 
 void APoisonCloud::BeginPlay ()
 {
-	momx = 1; // missile objects must move to impact other objects
+	velx = 1; // missile objects must move to impact other objects
 	special1 = 24+(pr_poisoncloud()&7);
 	special2 = 0;
 }
@@ -362,16 +362,16 @@ DEFINE_ACTION_FUNCTION(AActor, A_CheckThrowBomb)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CheckThrowBomb2)
 {
-	// [RH] Check using actual velocity, although the momz < 2 check still stands
-	//if (abs(self->momx) < FRACUNIT*3/2 && abs(self->momy) < FRACUNIT*3/2
-	//	&& self->momz < 2*FRACUNIT)
-	if (self->momz < 2*FRACUNIT &&
-		TMulScale32 (self->momx, self->momx, self->momy, self->momy, self->momz, self->momz)
+	// [RH] Check using actual velocity, although the velz < 2 check still stands
+	//if (abs(self->velx) < FRACUNIT*3/2 && abs(self->vely) < FRACUNIT*3/2
+	//	&& self->velz < 2*FRACUNIT)
+	if (self->velz < 2*FRACUNIT &&
+		TMulScale32 (self->velx, self->velx, self->vely, self->vely, self->velz, self->velz)
 		< (3*3)/(2*2))
 	{
 		self->SetState (self->SpawnState + 6);
 		self->z = self->floorz;
-		self->momz = 0;
+		self->velz = 0;
 		self->bouncetype = BOUNCE_None;
 		self->flags &= ~MF_MISSILE;
 	}

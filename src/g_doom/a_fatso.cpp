@@ -46,8 +46,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FatAttack1)
 	{
 		missile->angle += FATSPREAD;
 		an = missile->angle >> ANGLETOFINESHIFT;
-		missile->momx = FixedMul (missile->Speed, finecosine[an]);
-		missile->momy = FixedMul (missile->Speed, finesine[an]);
+		missile->velx = FixedMul (missile->Speed, finecosine[an]);
+		missile->vely = FixedMul (missile->Speed, finesine[an]);
 	}
 }
 
@@ -74,8 +74,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FatAttack2)
 	{
 		missile->angle -= FATSPREAD*2;
 		an = missile->angle >> ANGLETOFINESHIFT;
-		missile->momx = FixedMul (missile->Speed, finecosine[an]);
-		missile->momy = FixedMul (missile->Speed, finesine[an]);
+		missile->velx = FixedMul (missile->Speed, finecosine[an]);
+		missile->vely = FixedMul (missile->Speed, finesine[an]);
 	}
 }
 
@@ -99,8 +99,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FatAttack3)
 	{
 		missile->angle -= FATSPREAD/2;
 		an = missile->angle >> ANGLETOFINESHIFT;
-		missile->momx = FixedMul (missile->Speed, finecosine[an]);
-		missile->momy = FixedMul (missile->Speed, finesine[an]);
+		missile->velx = FixedMul (missile->Speed, finecosine[an]);
+		missile->vely = FixedMul (missile->Speed, finesine[an]);
 	}
 
 	missile = P_SpawnMissile (self, self->target, spawntype);
@@ -108,8 +108,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FatAttack3)
 	{
 		missile->angle += FATSPREAD/2;
 		an = missile->angle >> ANGLETOFINESHIFT;
-		missile->momx = FixedMul (missile->Speed, finecosine[an]);
-		missile->momy = FixedMul (missile->Speed, finesine[an]);
+		missile->velx = FixedMul (missile->Speed, finecosine[an]);
+		missile->vely = FixedMul (missile->Speed, finesine[an]);
 	}
 }
 
@@ -149,9 +149,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Mushroom)
 			mo = P_SpawnMissile (self, target, spawntype); // Launch fireball
 			if (mo != NULL)
 			{
-				mo->momx >>= 1;
-				mo->momy >>= 1;				  // Slow it down a bit
-				mo->momz >>= 1;
+				mo->velx >>= 1;
+				mo->vely >>= 1;				  // Slow it down a bit
+				mo->velz >>= 1;
 				mo->flags &= ~MF_NOGRAVITY;   // Make debris fall under gravity
 			}
 		}

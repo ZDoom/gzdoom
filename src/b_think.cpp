@@ -88,7 +88,7 @@ void FCajunMaster::ThinkForMove (AActor *actor, ticcmd_t *cmd)
 	dist = b->dest ? P_AproxDistance(actor->x-b->dest->x, actor->y-b->dest->y) : 0;
 
 	if (b->missile &&
-		((!b->missile->momx || !b->missile->momy) || !Check_LOS(actor, b->missile, SHOOTFOV*3/2)))
+		((!b->missile->velx || !b->missile->vely) || !Check_LOS(actor, b->missile, SHOOTFOV*3/2)))
 	{
 		b->sleft = !b->sleft;
 		b->missile = NULL; //Probably ended its travel.

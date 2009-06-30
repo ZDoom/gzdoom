@@ -524,13 +524,13 @@ int P_GetMoveFactor (const AActor *mo, int *frictionp)
 		// phares 3/11/98: you start off slowly, then increase as
 		// you get better footing
 
-		int momentum = P_AproxDistance(mo->momx,mo->momy);
+		int velocity = P_AproxDistance(mo->velx, mo->vely);
 
-		if (momentum > MORE_FRICTION_MOMENTUM<<2)
+		if (velocity > MORE_FRICTION_VELOCITY<<2)
 			movefactor <<= 3;
-		else if (momentum > MORE_FRICTION_MOMENTUM<<1)
+		else if (velocity > MORE_FRICTION_VELOCITY<<1)
 			movefactor <<= 2;
-		else if (momentum > MORE_FRICTION_MOMENTUM)
+		else if (velocity > MORE_FRICTION_VELOCITY)
 			movefactor <<= 1;
 	}
 
@@ -812,9 +812,9 @@ bool PIT_CheckThing (AActor *thing, FCheckPosition &tm)
 	{
 		if (!(thing->flags2 & MF2_BOSS) && (thing->flags3 & MF3_ISMONSTER))
 		{
-			thing->momx += tm.thing->momx;
-			thing->momy += tm.thing->momy;
-			if ((thing->momx + thing->momy) > 3*FRACUNIT)
+			thing->velx += tm.thing->velx;
+			thing->vely += tm.thing->vely;
+			if ((thing->velx + thing->vely) > 3*FRACUNIT)
 			{
 				damage = (tm.thing->Mass / 100) + 1;
 				P_DamageMobj (thing, tm.thing, tm.thing, damage, tm.thing->DamageType);
@@ -1010,8 +1010,8 @@ bool PIT_CheckThing (AActor *thing, FCheckPosition &tm)
 					{ // Push thing
 						if (thing->lastpush != tm.PushTime)
 						{
-							thing->momx += FixedMul(tm.thing->momx, thing->pushfactor);
-							thing->momy += FixedMul(tm.thing->momy, thing->pushfactor);
+							thing->velx += FixedMul(tm.thing->velx, thing->pushfactor);
+							thing->vely += FixedMul(tm.thing->vely, thing->pushfactor);
 							thing->lastpush = tm.PushTime;
 						}
 					}
@@ -1054,8 +1054,8 @@ bool PIT_CheckThing (AActor *thing, FCheckPosition &tm)
 	{ // Push thing
 		if (thing->lastpush != tm.PushTime)
 		{
-			thing->momx += FixedMul(tm.thing->momx, thing->pushfactor);
-			thing->momy += FixedMul(tm.thing->momy, thing->pushfactor);
+			thing->velx += FixedMul(tm.thing->velx, thing->pushfactor);
+			thing->vely += FixedMul(tm.thing->vely, thing->pushfactor);
 			thing->lastpush = tm.PushTime;
 		}
 	}
@@ -1427,7 +1427,7 @@ void P_FakeZMovement (AActor *mo)
 //
 // adjust height
 //
-	mo->z += mo->momz;
+	mo->z += mo->velz;
 	if ((mo->flags&MF_FLOAT) && mo->target)
 	{ // float down towards target if too close
 		if (!(mo->flags & MF_SKULLFLY) && !(mo->flags & MF_INFLOAT))
@@ -1584,12 +1584,12 @@ bool P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 			// is not blocked.
 			if (thing->z+thing->height > tmceilingz)
 			{
-				thing->momz = -8*FRACUNIT;
+				thing->velz = -8*FRACUNIT;
 				goto pushline;
 			}
 			else if (thing->z < tmfloorz && tmfloorz-tmdropoffz > thing->MaxDropOffHeight)
 			{
-				thing->momz = 8*FRACUNIT;
+				thing->velz = 8*FRACUNIT;
 				goto pushline;
 			}
 #endif
@@ -1619,7 +1619,7 @@ bool P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 		}
 
 		// compatibility check: Doom originally did not allow monsters to cross dropoffs at all.
-		// If the compatibility flag is on, only allow this when the momentum comes from a scroller
+		// If the compatibility flag is on, only allow this when the velocity comes from a scroller
 		if ((i_compatflags & COMPATF_CROSSDROPOFF) && !(thing->flags4 & MF4_SCROLLMOVE))
 		{
 			dropoff = false;
@@ -1669,8 +1669,8 @@ bool P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 			{
 				thing->player->prev = thing->player->dest;
 				thing->player->dest = NULL;
-				thing->momx = 0;
-				thing->momy = 0;
+				thing->velx = 0;
+				thing->vely = 0;
 				thing->z = oldz;
 				return false;
 			}
@@ -1981,7 +1981,7 @@ void FSlide::HitSlideLine (line_t* ld)
 																	//   |
 	// Under icy conditions, if the angle of approach to the wall	//   V
 	// is more than 45 degrees, then you'll bounce and lose half
-	// your momentum. If less than 45 degrees, you'll slide along
+	// your velocity. If less than 45 degrees, you'll slide along
 	// the wall. 45 is arbitrary and is believable.
 
 	// Check for the special cases of horz or vert walls.
@@ -1997,7 +1997,7 @@ void FSlide::HitSlideLine (line_t* ld)
 	{
 		if (icyfloor && (abs(tmymove) > abs(tmxmove)))
 		{
-			tmxmove /= 2; // absorb half the momentum
+			tmxmove /= 2; // absorb half the velocity
 			tmymove = -tmymove/2;
 			if (slidemo->player && slidemo->health > 0 && !(slidemo->player->cheats & CF_PREDICTING))
 			{
@@ -2013,7 +2013,7 @@ void FSlide::HitSlideLine (line_t* ld)
 	{
 		if (icyfloor && (abs(tmxmove) > abs(tmymove)))
 		{
-			tmxmove = -tmxmove/2; // absorb half the momentum
+			tmxmove = -tmxmove/2; // absorb half the velocity
 			tmymove /= 2;
 			if (slidemo->player && slidemo->health > 0 && !(slidemo->player->cheats & CF_PREDICTING))
 			{
@@ -2194,7 +2194,7 @@ void FSlide::SlideTraverse (fixed_t startx, fixed_t starty, fixed_t endx, fixed_
 //
 // P_SlideMove
 //
-// The momx / momy move is bad, so try to slide along a wall.
+// The velx / vely move is bad, so try to slide along a wall.
 //
 // Find the first line hit, move flush to it, and slide along it
 //
@@ -2289,16 +2289,16 @@ void FSlide::SlideMove (AActor *mo, fixed_t tryx, fixed_t tryy, int numsteps)
 
 	HitSlideLine (bestslideline); 	// clip the moves
 
-	mo->momx = tmxmove * numsteps;
-	mo->momy = tmymove * numsteps;
+	mo->velx = tmxmove * numsteps;
+	mo->vely = tmymove * numsteps;
 
 	// killough 10/98: affect the bobbing the same way (but not voodoo dolls)
 	if (mo->player && mo->player->mo == mo)
 	{
-		if (abs(mo->player->momx) > abs(mo->momx))
-			mo->player->momx = mo->momx;
-		if (abs(mo->player->momy) > abs(mo->momy))
-			mo->player->momy = mo->momy;
+		if (abs(mo->player->velx) > abs(mo->velx))
+			mo->player->velx = mo->velx;
+		if (abs(mo->player->vely) > abs(mo->vely))
+			mo->player->vely = mo->vely;
 	}
 
 	walkplane = P_CheckSlopeWalk (mo, tmxmove, tmymove);
@@ -2421,8 +2421,8 @@ const secplane_t * P_CheckSlopeWalk (AActor *actor, fixed_t &xmove, fixed_t &ymo
 					}
 					if (dopush)
 					{
-						xmove = actor->momx = plane->a * 2;
-						ymove = actor->momy = plane->b * 2;
+						xmove = actor->velx = plane->a * 2;
+						ymove = actor->vely = plane->b * 2;
 					}
 					return (actor->floorsector == actor->Sector) ? plane : NULL;
 				}
@@ -2539,7 +2539,7 @@ bool FSlide::BounceWall (AActor *mo)
 //
 // trace along the three leading corners
 //
-	if (mo->momx > 0)
+	if (mo->velx > 0)
 	{
 		leadx = mo->x+mo->radius;
 	}
@@ -2547,7 +2547,7 @@ bool FSlide::BounceWall (AActor *mo)
 	{
 		leadx = mo->x-mo->radius;
 	}
-	if (mo->momy > 0)
+	if (mo->vely > 0)
 	{
 		leady = mo->y+mo->radius;
 	}
@@ -2557,7 +2557,7 @@ bool FSlide::BounceWall (AActor *mo)
 	}
 	bestslidefrac = FRACUNIT+1;
 	bestslideline = mo->BlockingLine;
-	if (BounceTraverse(leadx, leady, leadx+mo->momx, leady+mo->momy) && mo->BlockingLine == NULL)
+	if (BounceTraverse(leadx, leady, leadx+mo->velx, leady+mo->vely) && mo->BlockingLine == NULL)
 	{ // Could not find a wall, so bounce off the floor/ceiling instead.
 		fixed_t floordist = mo->z - mo->floorz;
 		fixed_t ceildist = mo->ceilingz - mo->z;
@@ -2594,14 +2594,14 @@ bool FSlide::BounceWall (AActor *mo)
 	{
 		lineangle += ANG180;
 	}
-	moveangle = R_PointToAngle2 (0, 0, mo->momx, mo->momy);
+	moveangle = R_PointToAngle2 (0, 0, mo->velx, mo->vely);
 	deltaangle = (2*lineangle)-moveangle;
 	mo->angle = deltaangle;
 
 	lineangle >>= ANGLETOFINESHIFT;
 	deltaangle >>= ANGLETOFINESHIFT;
 
-	movelen = P_AproxDistance (mo->momx, mo->momy);
+	movelen = P_AproxDistance (mo->velx, mo->vely);
 	movelen = FixedMul(movelen, mo->wallbouncefactor);
 
 	FBoundingBox box(mo->x, mo->y, mo->radius);
@@ -2614,8 +2614,8 @@ bool FSlide::BounceWall (AActor *mo)
 	{
 		movelen = 2*FRACUNIT;
 	}
-	mo->momx = FixedMul(movelen, finecosine[deltaangle]);
-	mo->momy = FixedMul(movelen, finesine[deltaangle]);
+	mo->velx = FixedMul(movelen, finecosine[deltaangle]);
+	mo->vely = FixedMul(movelen, finesine[deltaangle]);
 	return true;
 }
 
@@ -3412,11 +3412,11 @@ void P_TraceBleed (int damage, AActor *target, AActor *missile)
 		return;
 	}
 
-	if (missile->momz != 0)
+	if (missile->velz != 0)
 	{
 		double aim;
 
-		aim = atan ((double)missile->momz / (double)P_AproxDistance (missile->x - target->x, missile->y - target->y));
+		aim = atan ((double)missile->velz / (double)P_AproxDistance (missile->x - target->x, missile->y - target->y));
 		pitch = -(int)(aim * ANGLE_180/PI);
 	}
 	else
@@ -4006,7 +4006,7 @@ void P_RadiusAttack (AActor *bombspot, AActor *bombsource, int bombdamage, int b
 
 			if (points > 0.f && P_CheckSight (thing, bombspot, 1))
 			{ // OK to damage; target is in direct path
-				float momz;
+				float velz;
 				float thrust;
 				int damage = (int)points;
 
@@ -4024,19 +4024,20 @@ void P_RadiusAttack (AActor *bombspot, AActor *bombsource, int bombdamage, int b
 						{
 							thrust *= selfthrustscale;
 						}
-						momz = (float)(thing->z + (thing->height>>1) - bombspot->z) * thrust;
+						velz = (float)(thing->z + (thing->height>>1) - bombspot->z) * thrust;
 						if (bombsource != thing)
 						{
-							momz *= 0.5f;
+							velz *= 0.5f;
 						}
 						else
 						{
-							momz *= 0.8f;
+							velz *= 0.8f;
 						}
 						angle_t ang = R_PointToAngle2 (bombspot->x, bombspot->y, thing->x, thing->y) >> ANGLETOFINESHIFT;
-						thing->momx += fixed_t (finecosine[ang] * thrust);
-						thing->momy += fixed_t (finesine[ang] * thrust);
-						if (bombdodamage) thing->momz += (fixed_t)momz;	// this really doesn't work well
+						thing->velx += fixed_t (finecosine[ang] * thrust);
+						thing->vely += fixed_t (finesine[ang] * thrust);
+						if (bombdodamage)
+							thing->velz += (fixed_t)velz;	// this really doesn't work well
 					}
 				}
 			}
@@ -4256,8 +4257,8 @@ void P_DoCrunch (AActor *thing, FChangePosition *cpos)
 				mo = Spawn (bloodcls, thing->x, thing->y,
 					thing->z + thing->height/2, ALLOW_REPLACE);
 
-				mo->momx = pr_crunch.Random2 () << 12;
-				mo->momy = pr_crunch.Random2 () << 12;
+				mo->velx = pr_crunch.Random2 () << 12;
+				mo->vely = pr_crunch.Random2 () << 12;
 				if (bloodcolor != 0 && !(mo->flags2 & MF2_DONTTRANSLATE))
 				{
 					mo->Translation = TRANSLATION(TRANSLATION_Blood, bloodcolor.a);
@@ -4379,7 +4380,7 @@ void PIT_FloorDrop (AActor *thing, FChangePosition *cpos)
 
 	if (oldfloorz == thing->floorz) return;
 
-	if (thing->momz == 0 &&
+	if (thing->velz == 0 &&
 		(!(thing->flags & MF_NOGRAVITY) ||
 		 (thing->z == oldfloorz && !(thing->flags & MF_NOLIFTDROP))))
 	{

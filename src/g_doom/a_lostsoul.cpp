@@ -35,14 +35,14 @@ void A_SkullAttack(AActor *self, fixed_t speed)
 	S_Sound (self, CHAN_VOICE, self->AttackSound, 1, ATTN_NORM);
 	A_FaceTarget (self);
 	an = self->angle >> ANGLETOFINESHIFT;
-	self->momx = FixedMul (speed, finecosine[an]);
-	self->momy = FixedMul (speed, finesine[an]);
+	self->velx = FixedMul (speed, finecosine[an]);
+	self->vely = FixedMul (speed, finesine[an]);
 	dist = P_AproxDistance (dest->x - self->x, dest->y - self->y);
 	dist = dist / speed;
 	
 	if (dist < 1)
 		dist = 1;
-	self->momz = (dest->z+(dest->height>>1) - self->z) / dist;
+	self->velz = (dest->z + (dest->height>>1) - self->z) / dist;
 }
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SkullAttack)

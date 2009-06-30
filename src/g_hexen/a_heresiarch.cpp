@@ -176,11 +176,11 @@ class ASorcFX1 : public AActor
 public:
 	bool FloorBounceMissile (secplane_t &plane)
 	{
-		fixed_t orgmomz = momz;
+		fixed_t orgvelz = velz;
 
 		if (!Super::FloorBounceMissile (plane))
 		{
-			momz = -orgmomz;		// no energy absorbed
+			velz = -orgvelz;		// no energy absorbed
 			return false;
 		}
 		return true;
@@ -668,7 +668,7 @@ void A_SorcOffense2(AActor *actor)
 		dist = P_AproxDistance(dest->x - mo->x, dest->y - mo->y);
 		dist = dist/mo->Speed;
 		if(dist < 1) dist = 1;
-		mo->momz = (dest->z-mo->z)/dist;
+		mo->velz = (dest->z - mo->z) / dist;
 	}
 }
 
@@ -713,9 +713,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnFizzle)
 		if (mo)
 		{
 			rangle = angle + ((pr_heresiarch()%5) << 1);
-			mo->momx = FixedMul(pr_heresiarch()%speed,finecosine[rangle]);
-			mo->momy = FixedMul(pr_heresiarch()%speed,finesine[rangle]);
-			mo->momz = FRACUNIT*2;
+			mo->velx = FixedMul(pr_heresiarch()%speed, finecosine[rangle]);
+			mo->vely = FixedMul(pr_heresiarch()%speed, finesine[rangle]);
+			mo->velz = FRACUNIT*2;
 		}
 	}
 }
@@ -912,9 +912,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcBallPop)
 	S_Sound (self, CHAN_BODY, "SorcererBallPop", 1, ATTN_NONE);
 	self->flags &= ~MF_NOGRAVITY;
 	self->gravity = FRACUNIT/8;
-	self->momx = ((pr_heresiarch()%10)-5) << FRACBITS;
-	self->momy = ((pr_heresiarch()%10)-5) << FRACBITS;
-	self->momz = (2+(pr_heresiarch()%3)) << FRACBITS;
+	self->velx = ((pr_heresiarch()%10)-5) << FRACBITS;
+	self->vely = ((pr_heresiarch()%10)-5) << FRACBITS;
+	self->velz = (2+(pr_heresiarch()%3)) << FRACBITS;
 	self->special2 = 4*FRACUNIT;		// Initial bounce factor
 	self->args[4] = BOUNCE_TIME_UNIT;	// Bounce time unit
 	self->args[3] = 5;					// Bounce time in seconds

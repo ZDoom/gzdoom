@@ -42,7 +42,7 @@ bool FCajunMaster::Reachable (AActor *looker, AActor *rtarget)
 	fixed_t estimated_dist = P_AproxDistance (looker->x - rtarget->x, looker->y - rtarget->y);
 	bool reachable = true;
 
-	FPathTraverse it(looker->x+looker->momx, looker->y+looker->momy, rtarget->x, rtarget->y, PT_ADDLINES|PT_ADDTHINGS);
+	FPathTraverse it(looker->x+looker->velx, looker->y+looker->vely, rtarget->x, rtarget->y, PT_ADDLINES|PT_ADDTHINGS);
 	intercept_t *in;
 	while ((in = it.Next()))
 	{
@@ -56,8 +56,8 @@ bool FCajunMaster::Reachable (AActor *looker, AActor *rtarget)
 		frac = in->frac - FixedDiv (4*FRACUNIT, MAX_TRAVERSE_DIST);
 		dist = FixedMul (frac, MAX_TRAVERSE_DIST);
 
-		hitx = it.Trace().x + FixedMul (looker->momx, frac);
-		hity = it.Trace().y + FixedMul (looker->momy, frac);
+		hitx = it.Trace().x + FixedMul (looker->velx, frac);
+		hity = it.Trace().y + FixedMul (looker->vely, frac);
 
 		if (in->isaline)
 		{
@@ -171,8 +171,8 @@ void FCajunMaster::Dofire (AActor *actor, ticcmd_t *cmd)
 	no_fire = true;
 	//actor->player->angle = R_PointToAngle2(actor->x, actor->y, actor->player->enemy->x, actor->player->enemy->y);
 	//Distance to enemy.
-	dist = P_AproxDistance ((actor->x + actor->momx) - (enemy->x + enemy->momx),
-		(actor->y + actor->momy) - (enemy->y + enemy->momy));
+	dist = P_AproxDistance ((actor->x + actor->velx) - (enemy->x + enemy->velx),
+		(actor->y + actor->vely) - (enemy->y + enemy->vely));
 
 	//FIRE EACH TYPE OF WEAPON DIFFERENT: Here should all the different weapons go.
 	if (actor->player->ReadyWeapon->WeaponFlags & WIF_BOT_MELEE)
@@ -225,7 +225,7 @@ void FCajunMaster::Dofire (AActor *actor, ticcmd_t *cmd)
 shootmissile:
 		dist = P_AproxDistance (actor->x - enemy->x, actor->y - enemy->y);
 		m = dist / GetDefaultByType (actor->player->ReadyWeapon->ProjectileType)->Speed;
-		SetBodyAt (enemy->x + enemy->momx*m*2, enemy->y + enemy->momy*m*2, enemy->z, 1);
+		SetBodyAt (enemy->x + enemy->velx*m*2, enemy->y + enemy->vely*m*2, enemy->z, 1);
 		actor->player->angle = R_PointToAngle2 (actor->x, actor->y, body1->x, body1->y);
 		if (Check_LOS (actor, enemy, SHOOTFOV))
 			no_fire = false;
@@ -485,16 +485,16 @@ fixed_t FCajunMaster::FakeFire (AActor *source, AActor *dest, ticcmd_t *cmd)
 	velocity[1] = FIXED2FLOAT(dest->y - source->y);
 	velocity[2] = FIXED2FLOAT(dest->z - source->z);
 	velocity.MakeUnit();
-	th->momx = FLOAT2FIXED(velocity[0] * speed);
-	th->momy = FLOAT2FIXED(velocity[1] * speed);
-	th->momz = FLOAT2FIXED(velocity[2] * speed);
+	th->velx = FLOAT2FIXED(velocity[0] * speed);
+	th->vely = FLOAT2FIXED(velocity[1] * speed);
+	th->velz = FLOAT2FIXED(velocity[2] * speed);
 
 	fixed_t dist = 0;
 
 	while (dist < SAFE_SELF_MISDIST)
 	{
 		dist += th->Speed;
-		th->SetOrigin (th->x + th->momx, th->y + th->momy, th->z + th->momz);
+		th->SetOrigin (th->x + th->velx, th->y + th->vely, th->z + th->velz);
 		if (!CleanAhead (th, th->x, th->y, cmd))
 			break;
 	}
@@ -509,8 +509,8 @@ angle_t FCajunMaster::FireRox (AActor *bot, AActor *enemy, ticcmd_t *cmd)
 	AActor *actor;
 	int m;
 
-	SetBodyAt (bot->x + FixedMul(bot->momx, 5*FRACUNIT),
-			   bot->y + FixedMul(bot->momy, 5*FRACUNIT),
+	SetBodyAt (bot->x + FixedMul(bot->velx, 5*FRACUNIT),
+			   bot->y + FixedMul(bot->vely, 5*FRACUNIT),
 			   bot->z + (bot->height / 2), 2);
 
 	actor = bglobal.body2;
@@ -521,8 +521,8 @@ angle_t FCajunMaster::FireRox (AActor *bot, AActor *enemy, ticcmd_t *cmd)
 	//Predict.
 	m = (((dist+1)/FRACUNIT) / GetDefaultByName("Rocket")->Speed);
 
-	SetBodyAt (enemy->x + FixedMul (enemy->momx, (m+2*FRACUNIT)),
-			   enemy->y + FixedMul(enemy->momy, (m+2*FRACUNIT)), ONFLOORZ, 1);
+	SetBodyAt (enemy->x + FixedMul(enemy->velx, (m+2*FRACUNIT)),
+			   enemy->y + FixedMul(enemy->vely, (m+2*FRACUNIT)), ONFLOORZ, 1);
 	dist = P_AproxDistance(actor->x-bglobal.body1->x, actor->y-bglobal.body1->y);
 	//try the predicted location
 	if (P_CheckSight (actor, bglobal.body1, 1)) //See the predicted location, so give a test missile

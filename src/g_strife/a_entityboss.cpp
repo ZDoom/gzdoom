@@ -76,7 +76,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnEntity)
 	{
 		entity->angle = self->angle;
 		entity->CopyFriendliness(self, true);
-		entity->momz = 5*FRACUNIT;
+		entity->velz = 5*FRACUNIT;
 		entity->tracer = self;
 	}
 }
@@ -101,16 +101,16 @@ DEFINE_ACTION_FUNCTION(AActor, A_EntityDeath)
 	//second->target = self->target;
 	A_FaceTarget (second);
 	an = second->angle >> ANGLETOFINESHIFT;
-	second->momx += FixedMul (finecosine[an], 320000);
-	second->momy += FixedMul (finesine[an], 320000);
+	second->velx += FixedMul (finecosine[an], 320000);
+	second->vely += FixedMul (finesine[an], 320000);
 
 	an = (self->angle + ANGLE_90) >> ANGLETOFINESHIFT;
 	second = Spawn("EntitySecond", SpawnX + FixedMul (secondRadius, finecosine[an]),
 		SpawnY + FixedMul (secondRadius, finesine[an]), SpawnZ, ALLOW_REPLACE);
 	second->CopyFriendliness(self, true);
 	//second->target = self->target;
-	second->momx = FixedMul (secondRadius, finecosine[an]) << 2;
-	second->momy = FixedMul (secondRadius, finesine[an]) << 2;
+	second->velx = FixedMul (secondRadius, finecosine[an]) << 2;
+	second->vely = FixedMul (secondRadius, finesine[an]) << 2;
 	A_FaceTarget (second);
 
 	an = (self->angle - ANGLE_90) >> ANGLETOFINESHIFT;
@@ -118,7 +118,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_EntityDeath)
 		SpawnY + FixedMul (secondRadius, finesine[an]), SpawnZ, ALLOW_REPLACE);
 	second->CopyFriendliness(self, true);
 	//second->target = self->target;
-	second->momx = FixedMul (secondRadius, finecosine[an]) << 2;
-	second->momy = FixedMul (secondRadius, finesine[an]) << 2;
+	second->velx = FixedMul (secondRadius, finecosine[an]) << 2;
+	second->vely = FixedMul (secondRadius, finesine[an]) << 2;
 	A_FaceTarget (second);
 }

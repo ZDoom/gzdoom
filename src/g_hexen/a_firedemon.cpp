@@ -62,9 +62,9 @@ void A_FiredSpawnRock (AActor *actor)
 	if (mo)
 	{
 		mo->target = actor;
-		mo->momx = (pr_firedemonrock() - 128) <<10;
-		mo->momy = (pr_firedemonrock() - 128) <<10;
-		mo->momz = (pr_firedemonrock() << 10);
+		mo->velx = (pr_firedemonrock() - 128) <<10;
+		mo->vely = (pr_firedemonrock() - 128) <<10;
+		mo->velz = (pr_firedemonrock() << 10);
 		mo->special1 = 2;		// Number bounces
 	}
 
@@ -96,11 +96,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_FiredRocks)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SmBounce)
 {
-	// give some more momentum (x,y,&z)
+	// give some more velocity (x,y,&z)
 	self->z = self->floorz + FRACUNIT;
-	self->momz = (2*FRACUNIT) + (pr_smbounce() << 10);
-	self->momx = pr_smbounce()%3<<FRACBITS;
-	self->momy = pr_smbounce()%3<<FRACBITS;
+	self->velz = (2*FRACUNIT) + (pr_smbounce() << 10);
+	self->velx = pr_smbounce()%3<<FRACBITS;
+	self->vely = pr_smbounce()%3<<FRACBITS;
 }
 
 //============================================================================
@@ -157,7 +157,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FiredChase)
 	else
 	{
 		self->special2 = 0;
-		self->momx = self->momy = 0;
+		self->velx = self->vely = 0;
 		dist = P_AproxDistance (self->x - target->x, self->y - target->y);
 		if (dist < FIREDEMON_ATTACK_RANGE)
 		{
@@ -169,8 +169,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_FiredChase)
 				else
 					ang -= ANGLE_90;
 				ang >>= ANGLETOFINESHIFT;
-				self->momx = finecosine[ang] << 3; //FixedMul (8*FRACUNIT, finecosine[ang]);
-				self->momy = finesine[ang] << 3; //FixedMul (8*FRACUNIT, finesine[ang]);
+				self->velx = finecosine[ang] << 3; //FixedMul (8*FRACUNIT, finecosine[ang]);
+				self->vely = finesine[ang] << 3; //FixedMul (8*FRACUNIT, finesine[ang]);
 				self->special2 = 3;		// strafe time
 			}
 		}
@@ -222,15 +222,15 @@ DEFINE_ACTION_FUNCTION(AActor, A_FiredSplotch)
 	mo = Spawn ("FireDemonSplotch1", self->x, self->y, self->z, ALLOW_REPLACE);
 	if (mo)
 	{
-		mo->momx = (pr_firedemonsplotch() - 128) << 11;
-		mo->momy = (pr_firedemonsplotch() - 128) << 11;
-		mo->momz = (pr_firedemonsplotch() << 10) + FRACUNIT*3;
+		mo->velx = (pr_firedemonsplotch() - 128) << 11;
+		mo->vely = (pr_firedemonsplotch() - 128) << 11;
+		mo->velz = (pr_firedemonsplotch() << 10) + FRACUNIT*3;
 	}
 	mo = Spawn ("FireDemonSplotch2", self->x, self->y, self->z, ALLOW_REPLACE);
 	if (mo)
 	{
-		mo->momx = (pr_firedemonsplotch() - 128) << 11;
-		mo->momy = (pr_firedemonsplotch() - 128) << 11;
-		mo->momz = (pr_firedemonsplotch() << 10) + FRACUNIT*3;
+		mo->velx = (pr_firedemonsplotch() - 128) << 11;
+		mo->vely = (pr_firedemonsplotch() - 128) << 11;
+		mo->velz = (pr_firedemonsplotch() << 10) + FRACUNIT*3;
 	}
 }

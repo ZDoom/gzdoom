@@ -97,7 +97,7 @@ void P_SpawnTeleportFog(fixed_t x, fixed_t y, fixed_t z, int spawnid)
 //
 
 bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, angle_t angle,
-				 bool useFog, bool sourceFog, bool keepOrientation, bool bHaltMomentum)
+				 bool useFog, bool sourceFog, bool keepOrientation, bool bHaltVelocity)
 {
 	fixed_t oldx;
 	fixed_t oldy;
@@ -189,13 +189,13 @@ bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, angle_t angle,
 		if (thing->player)
 		{
 			// [RH] Zoom player's field of vision
-			// [BC] && bHaltMomentum.
-			if (telezoom && thing->player->mo == thing && bHaltMomentum)
+			// [BC] && bHaltVelocity.
+			if (telezoom && thing->player->mo == thing && bHaltVelocity)
 				thing->player->FOV = MIN (175.f, thing->player->DesiredFOV + 45.f);
 		}
 	}
-	// [BC] && bHaltMomentum.
-	if (thing->player && (useFog || !keepOrientation) && bHaltMomentum)
+	// [BC] && bHaltVelocity.
+	if (thing->player && (useFog || !keepOrientation) && bHaltVelocity)
 	{
 		// Freeze player for about .5 sec
 		if (thing->Inventory == NULL || thing->Inventory->GetSpeedFactor() <= FRACUNIT)
@@ -204,16 +204,16 @@ bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, angle_t angle,
 	if (thing->flags & MF_MISSILE)
 	{
 		angle >>= ANGLETOFINESHIFT;
-		thing->momx = FixedMul (thing->Speed, finecosine[angle]);
-		thing->momy = FixedMul (thing->Speed, finesine[angle]);
+		thing->velx = FixedMul (thing->Speed, finecosine[angle]);
+		thing->vely = FixedMul (thing->Speed, finesine[angle]);
 	}
-	// [BC] && bHaltMomentum.
-	else if (!keepOrientation && bHaltMomentum) // no fog doesn't alter the player's momentum
+	// [BC] && bHaltVelocity.
+	else if (!keepOrientation && bHaltVelocity) // no fog doesn't alter the player's momentum
 	{
-		thing->momx = thing->momy = thing->momz = 0;
-		// killough 10/98: kill all bobbing momentum too
+		thing->velx = thing->vely = thing->velz = 0;
+		// killough 10/98: kill all bobbing velocity too
 		if (player)
-			player->momx = player->momy = 0;
+			player->velx = player->vely = 0;
 	}
 	return true;
 }
@@ -310,13 +310,13 @@ static AActor *SelectTeleDest (int tid, int tag)
 }
 
 bool EV_Teleport (int tid, int tag, line_t *line, int side, AActor *thing, bool fog,
-				  bool sourceFog, bool keepOrientation, bool haltMomentum)
+				  bool sourceFog, bool keepOrientation, bool haltVelocity)
 {
 	AActor *searcher;
 	fixed_t z;
 	angle_t angle = 0;
 	fixed_t s = 0, c = 0;
-	fixed_t momx = 0, momy = 0;
+	fixed_t velx = 0, vely = 0;
 
 	if (thing == NULL)
 	{ // Teleport function called with an invalid actor
@@ -348,9 +348,9 @@ bool EV_Teleport (int tid, int tag, line_t *line, int side, AActor *thing, bool 
 		s = finesine[angle>>ANGLETOFINESHIFT];
 		c = finecosine[angle>>ANGLETOFINESHIFT];
 
-		// Momentum of thing crossing teleporter linedef
-		momx = thing->momx;
-		momy = thing->momy;
+		// Velocity of thing crossing teleporter linedef
+		velx = thing->velx;
+		vely = thing->vely;
 
 		z = searcher->z;
 	}
@@ -362,7 +362,7 @@ bool EV_Teleport (int tid, int tag, line_t *line, int side, AActor *thing, bool 
 	{
 		z = ONFLOORZ;
 	}
-	if (P_Teleport (thing, searcher->x, searcher->y, z, searcher->angle, fog, sourceFog, keepOrientation, haltMomentum))
+	if (P_Teleport (thing, searcher->x, searcher->y, z, searcher->angle, fog, sourceFog, keepOrientation, haltVelocity))
 	{
 		// [RH] Lee Killough's changes for silent teleporters from BOOM
 		if (!fog && line && keepOrientation)
@@ -370,11 +370,11 @@ bool EV_Teleport (int tid, int tag, line_t *line, int side, AActor *thing, bool 
 			// Rotate thing according to difference in angles
 			thing->angle += angle;
 
-			// Rotate thing's momentum to come out of exit just like it entered
-			thing->momx = FixedMul(momx, c) - FixedMul(momy, s);
-			thing->momy = FixedMul(momy, c) + FixedMul(momx, s);
+			// Rotate thing's velocity to come out of exit just like it entered
+			thing->velx = FixedMul(velx, c) - FixedMul(vely, s);
+			thing->vely = FixedMul(vely, c) + FixedMul(velx, s);
 		}
-		if ((momx | momy) == 0 && thing->player != NULL && thing->player->mo == thing)
+		if ((velx | vely) == 0 && thing->player != NULL && thing->player->mo == thing)
 		{
 			thing->player->mo->PlayIdle ();
 		}
@@ -442,7 +442,7 @@ bool EV_SilentLineTeleport (line_t *line, int side, AActor *thing, int id, INTBO
 			}
 
 			// Get the angle between the two linedefs, for rotating
-			// orientation and momentum. Rotate 180 degrees, and flip
+			// orientation and velocity. Rotate 180 degrees, and flip
 			// the position across the exit linedef, if reversed.
 			angle_t angle =
 				R_PointToAngle2(0, 0, l->dx, l->dy) -
@@ -496,22 +496,22 @@ bool EV_SilentLineTeleport (line_t *line, int side, AActor *thing, int id, INTBO
 			// Rotate thing's orientation according to difference in linedef angles
 			thing->angle += angle;
 
-			// Momentum of thing crossing teleporter linedef
-			x = thing->momx;
-			y = thing->momy;
+			// Velocity of thing crossing teleporter linedef
+			x = thing->velx;
+			y = thing->vely;
 
-			// Rotate thing's momentum to come out of exit just like it entered
-			thing->momx = DMulScale16 (x, c, -y, s);
-			thing->momy = DMulScale16 (y, c,  x, s);
+			// Rotate thing's velocity to come out of exit just like it entered
+			thing->velx = DMulScale16 (x, c, -y, s);
+			thing->vely = DMulScale16 (y, c,  x, s);
 
 			// Adjust a player's view, in case there has been a height change
 			if (player && player->mo == thing)
 			{
-				// Adjust player's local copy of momentum
-				x = player->momx;
-				y = player->momy;
-				player->momx = DMulScale16 (x, c, -y, s);
-				player->momy = DMulScale16 (y, c,  x, s);
+				// Adjust player's local copy of velocity
+				x = player->velx;
+				y = player->vely;
+				player->velx = DMulScale16 (x, c, -y, s);
+				player->vely = DMulScale16 (y, c,  x, s);
 
 				// Save the current deltaviewheight, used in stepping
 				fixed_t deltaviewheight = player->deltaviewheight;

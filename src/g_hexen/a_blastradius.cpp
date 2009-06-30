@@ -102,8 +102,8 @@ void AArtiBlastRadius::BlastActor (AActor *victim, fixed_t strength)
 	angle >>= ANGLETOFINESHIFT;
 	if (strength < BLAST_FULLSTRENGTH)
 	{
-		victim->momx = FixedMul (strength, finecosine[angle]);
-		victim->momy = FixedMul (strength, finesine[angle]);
+		victim->velx = FixedMul (strength, finecosine[angle]);
+		victim->vely = FixedMul (strength, finesine[angle]);
 		if (victim->player)
 		{
 			// Players handled automatically
@@ -125,8 +125,8 @@ void AArtiBlastRadius::BlastActor (AActor *victim, fixed_t strength)
 			}
 #endif
 		}
-		victim->momx = FixedMul (BLAST_SPEED, finecosine[angle]);
-		victim->momy = FixedMul (BLAST_SPEED, finesine[angle]);
+		victim->velx = FixedMul (BLAST_SPEED, finecosine[angle]);
+		victim->vely = FixedMul (BLAST_SPEED, finesine[angle]);
 
 		// Spawn blast puff
 		ang = R_PointToAngle2 (victim->x, victim->y, Owner->x, Owner->y);
@@ -137,8 +137,8 @@ void AArtiBlastRadius::BlastActor (AActor *victim, fixed_t strength)
 		mo = Spawn ("BlastEffect", x, y, z, ALLOW_REPLACE);
 		if (mo)
 		{
-			mo->momx = victim->momx;
-			mo->momy = victim->momy;
+			mo->velx = victim->velx;
+			mo->vely = victim->vely;
 		}
 
 		if (victim->flags & MF_MISSILE)
@@ -146,13 +146,13 @@ void AArtiBlastRadius::BlastActor (AActor *victim, fixed_t strength)
 			// [RH] Floor and ceiling huggers should not be blasted vertically.
 			if (!(victim->flags3 & (MF3_FLOORHUGGER|MF3_CEILINGHUGGER)))
 			{
-				victim->momz = 8*FRACUNIT;
-				mo->momz = victim->momz;
+				victim->velz = 8*FRACUNIT;
+				mo->velz = victim->velz;
 			}
 		}
 		else
 		{
-			victim->momz = (1000 / victim->Mass) << FRACBITS;
+			victim->velz = (1000 / victim->Mass) << FRACBITS;
 		}
 		if (victim->player)
 		{

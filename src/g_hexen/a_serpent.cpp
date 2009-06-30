@@ -208,8 +208,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_SerpentSpawnGibs)
 			self->floorz+FRACUNIT, ALLOW_REPLACE);
 		if (mo)
 		{
-			mo->momx = (pr_serpentgibs()-128)<<6;
-			mo->momy = (pr_serpentgibs()-128)<<6;
+			mo->velx = (pr_serpentgibs()-128)<<6;
+			mo->vely = (pr_serpentgibs()-128)<<6;
 			mo->floorclip = 6*FRACUNIT;
 		}
 	}

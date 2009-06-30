@@ -702,17 +702,17 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomMissile)
 				self->y-=y;
 
 				// It is not necessary to use the correct angle here.
-				// The only important thing is that the horizontal momentum is correct.
+				// The only important thing is that the horizontal velocity is correct.
 				// Therefore use 0 as the missile's angle and simplify the calculations accordingly.
-				// The actual momentum vector is set below.
+				// The actual velocity vector is set below.
 				if (missile)
 				{
 					fixed_t vx = finecosine[pitch>>ANGLETOFINESHIFT];
 					fixed_t vz = finesine[pitch>>ANGLETOFINESHIFT];
 
-					missile->momx = FixedMul (vx, missile->Speed);
-					missile->momy = 0;
-					missile->momz = FixedMul (vz, missile->Speed);
+					missile->velx = FixedMul (vx, missile->Speed);
+					missile->vely = 0;
+					missile->velz = FixedMul (vz, missile->Speed);
 				}
 
 				break;
@@ -720,17 +720,17 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomMissile)
 
 			if (missile)
 			{
-				// Use the actual momentum instead of the missile's Speed property
+				// Use the actual velocity instead of the missile's Speed property
 				// so that this can handle missiles with a high vertical velocity 
 				// component properly.
-				FVector3 velocity (missile->momx, missile->momy, 0);
+				FVector3 velocity (missile->velx, missile->vely, 0);
 
 				fixed_t missilespeed = (fixed_t)velocity.Length();
 
 				missile->angle += Angle;
 				ang = missile->angle >> ANGLETOFINESHIFT;
-				missile->momx = FixedMul (missilespeed, finecosine[ang]);
-				missile->momy = FixedMul (missilespeed, finesine[ang]);
+				missile->velx = FixedMul (missilespeed, finecosine[ang]);
+				missile->vely = FixedMul (missilespeed, finesine[ang]);
 	
 				// handle projectile shooting projectiles - track the
 				// links back to a real owner
@@ -1022,12 +1022,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireCustomMissile)
 			{
 				// This original implementation is to aim straight ahead and then offset
 				// the angle from the resulting direction. 
-				FVector3 velocity(misl->momx, misl->momy, 0);
+				FVector3 velocity(misl->velx, misl->vely, 0);
 				fixed_t missilespeed = (fixed_t)velocity.Length();
 				misl->angle += Angle;
 				angle_t an = misl->angle >> ANGLETOFINESHIFT;
-				misl->momx = FixedMul (missilespeed, finecosine[an]);
-				misl->momy = FixedMul (missilespeed, finesine[an]);
+				misl->velx = FixedMul (missilespeed, finecosine[an]);
+				misl->vely = FixedMul (missilespeed, finesine[an]);
 			}
 		}
 	}
@@ -1176,8 +1176,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomRailgun)
 	if (aim)
 	{
 		saved_angle = self->angle = R_PointToAngle2 (self->x, self->y,
-										self->target->x - self->target->momx * 3,
-										self->target->y - self->target->momy * 3);
+										self->target->x - self->target->velx * 3,
+										self->target->y - self->target->vely * 3);
 
 		if (aim == CRF_AIMDIRECT)
 		{
@@ -1187,8 +1187,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomRailgun)
 			self->y += Spawnofs_XY * finesine[self->angle];
 			Spawnofs_XY = 0;
 			self->angle = R_PointToAngle2 (self->x, self->y,
-											self->target->x - self->target->momx * 3,
-											self->target->y - self->target->momy * 3);
+											self->target->x - self->target->velx * 3,
+											self->target->y - self->target->vely * 3);
 		}
 
 		if (self->target->flags & MF_SHADOW)
@@ -1317,7 +1317,7 @@ enum SIX_Flags
 	SIXF_TRANSFERTRANSLATION=1,
 	SIXF_ABSOLUTEPOSITION=2,
 	SIXF_ABSOLUTEANGLE=4,
-	SIXF_ABSOLUTEMOMENTUM=8,
+	SIXF_ABSOLUTEVELOCITY=8,
 	SIXF_SETMASTER=16,
 	SIXF_NOCHECKPOSITION=32,
 	SIXF_TELEFRAG=64,
@@ -1466,9 +1466,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnItemEx)
 	ACTION_PARAM_FIXED(xofs, 1);
 	ACTION_PARAM_FIXED(yofs, 2);
 	ACTION_PARAM_FIXED(zofs, 3);
-	ACTION_PARAM_FIXED(xmom, 4);
-	ACTION_PARAM_FIXED(ymom, 5);
-	ACTION_PARAM_FIXED(zmom, 6);
+	ACTION_PARAM_FIXED(xvel, 4);
+	ACTION_PARAM_FIXED(yvel, 5);
+	ACTION_PARAM_FIXED(zvel, 6);
 	ACTION_PARAM_ANGLE(Angle, 7);
 	ACTION_PARAM_INT(flags, 8);
 	ACTION_PARAM_INT(chance, 9);
@@ -1506,24 +1506,25 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnItemEx)
 		y = self->y + FixedMul(xofs, finesine[ang]) - FixedMul(yofs, finecosine[ang]);
 	}
 
-	if (!(flags & SIXF_ABSOLUTEMOMENTUM))
+	if (!(flags & SIXF_ABSOLUTEVELOCITY))
 	{
 		// Same orientation issue here!
-		fixed_t newxmom = FixedMul(xmom, finecosine[ang]) + FixedMul(ymom, finesine[ang]);
-		ymom = FixedMul(xmom, finesine[ang]) - FixedMul(ymom, finecosine[ang]);
-		xmom = newxmom;
+		fixed_t newxvel = FixedMul(xvel, finecosine[ang]) + FixedMul(yvel, finesine[ang]);
+		yvel = FixedMul(xvel, finesine[ang]) - FixedMul(yvel, finecosine[ang]);
+		xvel = newxvel;
 	}
 
-	AActor * mo = Spawn( missile, x, y, self->z - self->floorclip + zofs, ALLOW_REPLACE);
+	AActor * mo = Spawn(missile, x, y, self->z - self->floorclip + zofs, ALLOW_REPLACE);
 	bool res = InitSpawnedItem(self, mo, flags);
 	ACTION_SET_RESULT(res);	// for an inventory item's use state
 	if (mo)
 	{
-		mo->momx=xmom;
-		mo->momy=ymom;
-		mo->momz=zmom;
-		mo->angle=Angle;
-		if (flags & SIXF_TRANSFERAMBUSHFLAG) mo->flags = (mo->flags&~MF_AMBUSH) | (self->flags & MF_AMBUSH);
+		mo->velx = xvel;
+		mo->vely = yvel;
+		mo->velz = zvel;
+		mo->angle = Angle;
+		if (flags & SIXF_TRANSFERAMBUSHFLAG)
+			mo->flags = (mo->flags&~MF_AMBUSH) | (self->flags & MF_AMBUSH);
 	}
 }
 
@@ -1539,8 +1540,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ThrowGrenade)
 	ACTION_PARAM_START(5);
 	ACTION_PARAM_CLASS(missile, 0);
 	ACTION_PARAM_FIXED(zheight, 1);
-	ACTION_PARAM_FIXED(xymom, 2);
-	ACTION_PARAM_FIXED(zmom, 3);
+	ACTION_PARAM_FIXED(xyvel, 2);
+	ACTION_PARAM_FIXED(zvel, 3);
 	ACTION_PARAM_BOOL(useammo, 4);
 
 	if (missile == NULL) return;
@@ -1565,18 +1566,20 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ThrowGrenade)
 		int pitch = self->pitch;
 
 		P_PlaySpawnSound(bo, self);
-		if (xymom) bo->Speed=xymom;
-		bo->angle = self->angle+(((pr_grenade()&7)-4)<<24);
-		bo->momz = zmom + 2*finesine[pitch>>ANGLETOFINESHIFT];
+		if (xyvel)
+			bo->Speed = xyvel;
+		bo->angle = self->angle + (((pr_grenade()&7) - 4) << 24);
+		bo->velz = zvel + 2*finesine[pitch>>ANGLETOFINESHIFT];
 		bo->z += 2 * finesine[pitch>>ANGLETOFINESHIFT];
 		P_ThrustMobj(bo, bo->angle, bo->Speed);
-		bo->momx += self->momx>>1;
-		bo->momy += self->momy>>1;
+		bo->velx += self->velx >> 1;
+		bo->vely += self->vely >> 1;
 		bo->target= self;
 		if (bo->flags4&MF4_RANDOMIZE) 
 		{
-			bo->tics -= pr_grenade()&3;
-			if (bo->tics<1) bo->tics=1;
+			bo->tics -= pr_grenade() & 3;
+			if (bo->tics < 1)
+				bo->tics = 1;
 		}
 		P_CheckMissileSpawn (bo);
 	} 
@@ -1592,12 +1595,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ThrowGrenade)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Recoil)
 {
 	ACTION_PARAM_START(1);
-	ACTION_PARAM_FIXED(xymom, 0);
+	ACTION_PARAM_FIXED(xyvel, 0);
 
 	angle_t angle = self->angle + ANG180;
 	angle >>= ANGLETOFINESHIFT;
-	self->momx += FixedMul (xymom, finecosine[angle]);
-	self->momy += FixedMul (xymom, finesine[angle]);
+	self->velx += FixedMul (xyvel, finecosine[angle]);
+	self->vely += FixedMul (xyvel, finesine[angle]);
 }
 
 
@@ -1757,9 +1760,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnDebris)
 		if (mo && i < mo->GetClass()->ActorInfo->NumOwnedStates)
 		{
 			mo->SetState (mo->GetClass()->ActorInfo->OwnedStates + i);
-			mo->momz = FixedMul(mult_v, ((pr_spawndebris()&7)+5)*FRACUNIT);
-			mo->momx = FixedMul(mult_h, pr_spawndebris.Random2()<<(FRACBITS-6));
-			mo->momy = FixedMul(mult_h, pr_spawndebris.Random2()<<(FRACBITS-6));
+			mo->velz = FixedMul(mult_v, ((pr_spawndebris()&7)+5)*FRACUNIT);
+			mo->velx = FixedMul(mult_h, pr_spawndebris.Random2()<<(FRACBITS-6));
+			mo->vely = FixedMul(mult_h, pr_spawndebris.Random2()<<(FRACBITS-6));
 		}
 	}
 }
@@ -1945,7 +1948,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Burst)
 
    if (chunk == NULL) return;
 
-   self->momx = self->momy = self->momz = 0;
+   self->velx = self->vely = self->velz = 0;
    self->height = self->GetDefault()->height;
 
    // [RH] In Hexen, this creates a random number of shards (range [24,56])
@@ -1964,9 +1967,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Burst)
 
 	  if (mo)
       {
-         mo->momz = FixedDiv(mo->z-self->z, self->height)<<2;
-         mo->momx = pr_burst.Random2 () << (FRACBITS-7);
-         mo->momy = pr_burst.Random2 () << (FRACBITS-7);
+         mo->velz = FixedDiv(mo->z - self->z, self->height)<<2;
+         mo->velx = pr_burst.Random2 () << (FRACBITS-7);
+         mo->vely = pr_burst.Random2 () << (FRACBITS-7);
          mo->RenderStyle = self->RenderStyle;
          mo->alpha = self->alpha;
 		 mo->CopyFriendliness(self, true);
@@ -2024,18 +2027,17 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckCeiling)
 //===========================================================================
 //
 // A_Stop
-// resets all momentum of the actor to 0
+// resets all velocity of the actor to 0
 //
 //===========================================================================
 DEFINE_ACTION_FUNCTION(AActor, A_Stop)
 {
-	self->momx = self->momy = self->momz = 0;
+	self->velx = self->vely = self->velz = 0;
 	if (self->player && self->player->mo == self && !(self->player->cheats & CF_PREDICTING))
 	{
-		self->player->mo->PlayIdle ();
-		self->player->momx = self->player->momy = 0;
+		self->player->mo->PlayIdle();
+		self->player->velx = self->player->vely = 0;
 	}
-	
 }
 
 //===========================================================================

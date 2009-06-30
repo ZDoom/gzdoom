@@ -29,12 +29,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpectreChunkSmall)
 		int t;
 
 		t = pr_spectrechunk() & 15;
-		foo->momx = (t - (pr_spectrechunk() & 7)) << FRACBITS;
+		foo->velx = (t - (pr_spectrechunk() & 7)) << FRACBITS;
 		
 		t = pr_spectrechunk() & 15;
-		foo->momy = (t - (pr_spectrechunk() & 7)) << FRACBITS;
+		foo->vely = (t - (pr_spectrechunk() & 7)) << FRACBITS;
 
-		foo->momz = (pr_spectrechunk() & 15) << FRACBITS;
+		foo->velz = (pr_spectrechunk() & 15) << FRACBITS;
 	}
 }
 
@@ -47,12 +47,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpectreChunkLarge)
 		int t;
 
 		t = pr_spectrechunk() & 7;
-		foo->momx = (t - (pr_spectrechunk() & 15)) << FRACBITS;
+		foo->velx = (t - (pr_spectrechunk() & 15)) << FRACBITS;
 		
 		t = pr_spectrechunk() & 7;
-		foo->momy = (t - (pr_spectrechunk() & 15)) << FRACBITS;
+		foo->vely = (t - (pr_spectrechunk() & 15)) << FRACBITS;
 
-		foo->momz = (pr_spectrechunk() & 7) << FRACBITS;
+		foo->velz = (pr_spectrechunk() & 7) << FRACBITS;
 	}
 
 }
@@ -64,7 +64,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Spectre3Attack)
 
 	AActor *foo = Spawn("SpectralLightningV2", self->x, self->y, self->z + 32*FRACUNIT, ALLOW_REPLACE);
 
-	foo->momz = -12*FRACUNIT;
+	foo->velz = -12*FRACUNIT;
 	foo->target = self;
 	foo->health = -2;
 	foo->tracer = self->target;

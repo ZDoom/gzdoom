@@ -117,7 +117,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_VileAttack)
 	S_Sound (self, CHAN_WEAPON, "vile/stop", 1, ATTN_NORM);
 	P_TraceBleed (20, target);
 	P_DamageMobj (target, self, self, 20, NAME_None);
-	target->momz = 1000 * FRACUNIT / target->Mass;
+	target->velz = 1000 * FRACUNIT / target->Mass;
 		
 	an = self->angle >> ANGLETOFINESHIFT;
 

@@ -38,9 +38,12 @@ ACTOR Actor native //: Thinker
 	native fixed_t x;
 	native fixed_t y;
 	native fixed_t z;
-	native fixed_t momx;
-	native fixed_t momy;
-	native fixed_t momz;
+	native fixed_t velx;
+	native fixed_t vely;
+	native fixed_t velz;
+	native fixed_t momx;	// alias for velx
+	native fixed_t momy;	// alias for vely
+	native fixed_t momz;	// alias for velz
 
 	action native A_MonsterRail();
 	action native A_BFGSpray(class<Actor> spraytype = "BFGExtra", int numrays = 40, int damagecount = 15);
@@ -180,7 +183,7 @@ ACTOR Actor native //: Thinker
 	action native A_GiveInventory(class<Inventory> itemtype, int amount = 0);
 	action native A_TakeInventory(class<Inventory> itemtype, int amount = 0);
 	action native A_SpawnItem(class<Actor> itemtype, float distance = 0, float zheight = 0, bool useammo = true, bool transfer_translation = false);
-	action native A_SpawnItemEx(class<Actor> itemtype, float xofs = 0, float yofs = 0, float zofs = 0, float xmom = 0, float ymom = 0, float zmom = 0, float angle = 0, int flags = 0, int failchance = 0);
+	action native A_SpawnItemEx(class<Actor> itemtype, float xofs = 0, float yofs = 0, float zofs = 0, float xvel = 0, float yvel = 0, float zvel = 0, float angle = 0, int flags = 0, int failchance = 0);
 	action native A_Print(string whattoprint, float time = 0, string fontname = "");
 	action native A_SetTranslucent(float alpha, int style = 0);
 	action native A_FadeIn(float reduce = 0.1);
@@ -201,9 +204,9 @@ ACTOR Actor native //: Thinker
 	action native A_CheckCeiling(state label);
 	action native A_PlayerSkinCheck(state label);
 	action native A_BasicAttack(int meleedamage, sound meleesound, class<actor> missiletype, float missileheight);
-	action native A_ThrowGrenade(class<Actor> itemtype, float zheight = 0, float xymom = 0, float zmom = 0, bool useammo = true);
+	action native A_ThrowGrenade(class<Actor> itemtype, float zheight = 0, float xyvel = 0, float zvel = 0, bool useammo = true);
 
-	action native A_Recoil(float xymom);
+	action native A_Recoil(float xyvel);
 	action native A_JumpIfInTargetInventory(class<Inventory> itemtype, int amount, state label);
 	action native A_GiveToTarget(class<Inventory> itemtype, int amount = 0);
 	action native A_TakeFromTarget(class<Inventory> itemtype, int amount = 0);

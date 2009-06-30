@@ -191,7 +191,7 @@ enum ECheatCommand
 	CHT_PUZZLE,
 	CHT_MDK,			// Kill actor player is aiming at
 	CHT_ANUBIS,
-	CHT_NOMOMENTUM,
+	CHT_NOVELOCITY,
 	CHT_DONNYTRUMP,
 	CHT_LEGO,
 	CHT_RESSURECT,		// [GRB]

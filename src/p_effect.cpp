@@ -235,7 +235,7 @@ static void MakeFountain (AActor *actor, int color1, int color2)
 
 void P_RunEffect (AActor *actor, int effects)
 {
-	angle_t moveangle = R_PointToAngle2(0,0,actor->momx,actor->momy);
+	angle_t moveangle = R_PointToAngle2(0,0,actor->velx,actor->vely);
 	particle_t *particle;
 	int i;
 
@@ -245,7 +245,7 @@ void P_RunEffect (AActor *actor, int effects)
 
 		fixed_t backx = actor->x - FixedMul (finecosine[(moveangle)>>ANGLETOFINESHIFT], actor->radius*2);
 		fixed_t backy = actor->y - FixedMul (finesine[(moveangle)>>ANGLETOFINESHIFT], actor->radius*2);
-		fixed_t backz = actor->z - (actor->height>>3) * (actor->momz>>16) + (2*actor->height)/3;
+		fixed_t backz = actor->z - (actor->height>>3) * (actor->velz>>16) + (2*actor->height)/3;
 
 		angle_t an = (moveangle + ANG90) >> ANGLETOFINESHIFT;
 		int speed;
@@ -253,9 +253,9 @@ void P_RunEffect (AActor *actor, int effects)
 		particle = JitterParticle (3 + (M_Random() & 31));
 		if (particle) {
 			fixed_t pathdist = M_Random()<<8;
-			particle->x = backx - FixedMul(actor->momx, pathdist);
-			particle->y = backy - FixedMul(actor->momy, pathdist);
-			particle->z = backz - FixedMul(actor->momz, pathdist);
+			particle->x = backx - FixedMul(actor->velx, pathdist);
+			particle->y = backy - FixedMul(actor->vely, pathdist);
+			particle->z = backz - FixedMul(actor->velz, pathdist);
 			speed = (M_Random () - 128) * (FRACUNIT/200);
 			particle->velx += FixedMul (speed, finecosine[an]);
 			particle->vely += FixedMul (speed, finesine[an]);
@@ -268,9 +268,9 @@ void P_RunEffect (AActor *actor, int effects)
 			particle_t *particle = JitterParticle (3 + (M_Random() & 31));
 			if (particle) {
 				fixed_t pathdist = M_Random()<<8;
-				particle->x = backx - FixedMul(actor->momx, pathdist);
-				particle->y = backy - FixedMul(actor->momy, pathdist);
-				particle->z = backz - FixedMul(actor->momz, pathdist) + (M_Random() << 10);
+				particle->x = backx - FixedMul(actor->velx, pathdist);
+				particle->y = backy - FixedMul(actor->vely, pathdist);
+				particle->z = backz - FixedMul(actor->velz, pathdist) + (M_Random() << 10);
 				speed = (M_Random () - 128) * (FRACUNIT/200);
 				particle->velx += FixedMul (speed, finecosine[an]);
 				particle->vely += FixedMul (speed, finesine[an]);
@@ -292,7 +292,7 @@ void P_RunEffect (AActor *actor, int effects)
 		P_DrawSplash2 (6,
 			actor->x - FixedMul (finecosine[(moveangle)>>ANGLETOFINESHIFT], actor->radius*2),
 			actor->y - FixedMul (finesine[(moveangle)>>ANGLETOFINESHIFT], actor->radius*2),
-			actor->z - (actor->height>>3) * (actor->momz>>16) + (2*actor->height)/3,
+			actor->z - (actor->height>>3) * (actor->velz>>16) + (2*actor->height)/3,
 			moveangle + ANG180, 2, 2);
 	}
 	if (effects & FX_FOUNTAINMASK)

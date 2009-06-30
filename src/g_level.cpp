@@ -1167,9 +1167,9 @@ void G_FinishTravel ()
 			pawn->x = pawndup->x;
 			pawn->y = pawndup->y;
 			pawn->z = pawndup->z;
-			pawn->momx = pawndup->momx;
-			pawn->momy = pawndup->momy;
-			pawn->momz = pawndup->momz;
+			pawn->velx = pawndup->velx;
+			pawn->vely = pawndup->vely;
+			pawn->velz = pawndup->velz;
 			pawn->Sector = pawndup->Sector;
 			pawn->floorz = pawndup->floorz;
 			pawn->ceilingz = pawndup->ceilingz;

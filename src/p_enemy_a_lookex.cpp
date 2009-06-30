@@ -681,7 +681,7 @@ bool P_NewLookPlayers (AActor *actor, angle_t fov, fixed_t mindist, fixed_t maxd
 		{
 			if ((P_AproxDistance (player->mo->x - actor->x,
 					player->mo->y - actor->y) > 2*MELEERANGE)
-				&& P_AproxDistance (player->mo->momx, player->mo->momy)
+				&& P_AproxDistance (player->mo->velx, player->mo->vely)
 				< 5*FRACUNIT)
 			{ // Player is sneaking - can't detect
 				return false;

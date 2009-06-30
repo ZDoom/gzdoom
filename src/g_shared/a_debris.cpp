@@ -15,7 +15,7 @@ public:
 	{
 		if (!Super::FloorBounceMissile (plane))
 		{
-			if (abs (momz) < (FRACUNIT/2))
+			if (abs (velz) < (FRACUNIT/2))
 			{
 				Destroy ();
 			}
@@ -49,7 +49,7 @@ void P_SpawnDirt (AActor *actor, fixed_t radius)
 		mo = Spawn (dtype, x, y, z, ALLOW_REPLACE);
 		if (mo)
 		{
-			mo->momz = pr_dirt()<<10;
+			mo->velz = pr_dirt()<<10;
 		}
 	}
 }

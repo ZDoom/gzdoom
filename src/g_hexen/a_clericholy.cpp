@@ -460,8 +460,8 @@ static void CHolySeekerMissile (AActor *actor, angle_t thresh, angle_t turnMax)
 		actor->angle -= delta;
 	}
 	angle = actor->angle>>ANGLETOFINESHIFT;
-	actor->momx = FixedMul (actor->Speed, finecosine[angle]);
-	actor->momy = FixedMul (actor->Speed, finesine[angle]);
+	actor->velx = FixedMul (actor->Speed, finecosine[angle]);
+	actor->vely = FixedMul (actor->Speed, finesine[angle]);
 	if (!(level.time&15) 
 		|| actor->z > target->z+(target->height)
 		|| actor->z+actor->height < target->z)
@@ -485,7 +485,7 @@ static void CHolySeekerMissile (AActor *actor, angle_t thresh, angle_t turnMax)
 		{
 			dist = 1;
 		}
-		actor->momz = deltaZ/dist;
+		actor->velz = deltaZ / dist;
 	}
 	return;
 }
@@ -532,9 +532,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_CHolySeek)
 	self->health--;
 	if (self->health <= 0)
 	{
-		self->momx >>= 2;
-		self->momy >>= 2;
-		self->momz = 0;
+		self->velx >>= 2;
+		self->vely >>= 2;
+		self->velz = 0;
 		self->SetState (self->FindState(NAME_Death));
 		self->tics -= pr_holyseek()&3;
 		return;

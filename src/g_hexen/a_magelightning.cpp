@@ -42,8 +42,8 @@ int ALightning::SpecialMissileHit (AActor *thing)
 	{
 		if (thing->Mass != INT_MAX)
 		{
-			thing->momx += momx>>4;
-			thing->momy += momy>>4;
+			thing->velx += velx>>4;
+			thing->vely += vely>>4;
 		}
 		if ((!thing->player && !(thing->flags2&MF2_BOSS))
 			|| !(level.time&1))
@@ -191,8 +191,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightningClip)
 		else
 		{
 			self->angle = R_PointToAngle2(self->x, self->y, target->x, target->y);
-			self->momx = 0;
-			self->momy = 0;
+			self->velx = 0;
+			self->vely = 0;
 			P_ThrustMobj (self, self->angle, self->Speed>>1);
 		}
 	}
@@ -235,16 +235,16 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightningZap)
 	if (mo)
 	{
 		mo->lastenemy = self;
-		mo->momx = self->momx;
-		mo->momy = self->momy;
+		mo->velx = self->velx;
+		mo->vely = self->vely;
 		mo->target = self->target;
 		if (self->flags3 & MF3_FLOORHUGGER)
 		{
-			mo->momz = 20*FRACUNIT;
+			mo->velz = 20*FRACUNIT;
 		}
 		else 
 		{
-			mo->momz = -20*FRACUNIT;
+			mo->velz = -20*FRACUNIT;
 		}
 	}
 	if ((self->flags3 & MF3_FLOORHUGGER) && pr_zapf() < 160)
@@ -312,8 +312,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_ZapMimic)
 		}
 		else
 		{
-			self->momx = mo->momx;
-			self->momy = mo->momy;
+			self->velx = mo->velx;
+			self->vely = mo->vely;
 		}
 	}
 }
@@ -335,7 +335,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LastZap)
 	if (mo)
 	{
 		mo->SetState (mo->FindState (NAME_Death));
-		mo->momz = 40*FRACUNIT;
+		mo->velz = 40*FRACUNIT;
 		mo->Damage = 0;
 	}
 }

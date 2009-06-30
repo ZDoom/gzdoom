@@ -57,8 +57,8 @@ static void DragonSeek (AActor *actor, angle_t thresh, angle_t turnMax)
 		actor->angle -= delta;
 	}
 	angle = actor->angle>>ANGLETOFINESHIFT;
-	actor->momx = FixedMul (actor->Speed, finecosine[angle]);
-	actor->momy = FixedMul (actor->Speed, finesine[angle]);
+	actor->velx = FixedMul (actor->Speed, finecosine[angle]);
+	actor->vely = FixedMul (actor->Speed, finesine[angle]);
 	if (actor->z+actor->height < target->z ||
 		target->z+target->height < actor->z)
 	{
@@ -68,7 +68,7 @@ static void DragonSeek (AActor *actor, angle_t thresh, angle_t turnMax)
 		{
 			dist = 1;
 		}
-		actor->momz = (target->z-actor->z)/dist;
+		actor->velz = (target->z - actor->z)/dist;
 	}
 	else
 	{

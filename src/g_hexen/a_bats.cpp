@@ -73,10 +73,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_BatMove)
 		newangle = self->angle - ANGLE_1*self->args[4];
 	}
 
-	// Adjust momentum vector to new direction
+	// Adjust velocity vector to new direction
 	newangle >>= ANGLETOFINESHIFT;
-	self->momx = FixedMul (self->Speed, finecosine[newangle]);
-	self->momy = FixedMul (self->Speed, finesine[newangle]);
+	self->velx = FixedMul (self->Speed, finecosine[newangle]);
+	self->vely = FixedMul (self->Speed, finesine[newangle]);
 
 	if (pr_batmove()<15)
 	{

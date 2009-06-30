@@ -59,7 +59,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Sor1Chase)
 DEFINE_ACTION_FUNCTION(AActor, A_Srcr1Attack)
 {
 	AActor *mo;
-	fixed_t momz;
+	fixed_t velz;
 	angle_t angle;
 
 	if (!self->target)
@@ -85,10 +85,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_Srcr1Attack)
 		mo = P_SpawnMissileZ (self, self->z + 48*FRACUNIT, self->target, fx);
 		if (mo != NULL)
 		{
-			momz = mo->momz;
+			velz = mo->velz;
 			angle = mo->angle;
-			P_SpawnMissileAngleZ (self, self->z + 48*FRACUNIT, fx, angle-ANGLE_1*3, momz);
-			P_SpawnMissileAngleZ (self, self->z + 48*FRACUNIT, fx, angle+ANGLE_1*3, momz);
+			P_SpawnMissileAngleZ (self, self->z + 48*FRACUNIT, fx, angle-ANGLE_1*3, velz);
+			P_SpawnMissileAngleZ (self, self->z + 48*FRACUNIT, fx, angle+ANGLE_1*3, velz);
 		}
 		if (self->health < self->GetDefault()->health/3)
 		{ // Maybe attack again
@@ -153,7 +153,7 @@ void P_DSparilTeleport (AActor *actor)
 		S_Sound (actor, CHAN_BODY, "misc/teleport", 1, ATTN_NORM);
 		actor->z = actor->floorz;
 		actor->angle = spot->angle;
-		actor->momx = actor->momy = actor->momz = 0;
+		actor->velx = actor->vely = actor->velz = 0;
 	}
 }
 
@@ -236,9 +236,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_BlueSpark)
 	for (i = 0; i < 2; i++)
 	{
 		mo = Spawn("Sorcerer2FXSpark", self->x, self->y, self->z, ALLOW_REPLACE);
-		mo->momx = pr_bluespark.Random2() << 9;
-		mo->momy = pr_bluespark.Random2() << 9;
-		mo->momz = FRACUNIT + (pr_bluespark()<<8);
+		mo->velx = pr_bluespark.Random2() << 9;
+		mo->vely = pr_bluespark.Random2() << 9;
+		mo->velz = FRACUNIT + (pr_bluespark()<<8);
 	}
 }
 
@@ -265,7 +265,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_GenWizard)
 		{ // [RH] Make the new wizards inherit D'Sparil's target
 			mo->CopyFriendliness (self->target, true);
 
-			self->momx = self->momy = self->momz = 0;
+			self->velx = self->vely = self->velz = 0;
 			self->SetState (self->FindState(NAME_Death));
 			self->flags &= ~MF_MISSILE;
 			mo->master = self->target;

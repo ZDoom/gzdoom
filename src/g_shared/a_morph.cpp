@@ -113,7 +113,7 @@ bool P_MorphPlayer (player_t *activator, player_t *p, const PClass *spawntype, i
 	p->MorphExitFlash = (exit_flash) ? exit_flash : RUNTIME_CLASS(ATeleportFog);
 	p->health = morphed->health;
 	p->mo = morphed;
-	p->momx = p->momy = 0;
+	p->velx = p->vely = 0;
 	morphed->ObtainInventory (actor);
 	// Remove all armor
 	for (item = morphed->Inventory; item != NULL; )
@@ -232,11 +232,11 @@ bool P_UndoPlayerMorph (player_t *activator, player_t *player, bool force)
 	mo->player = player;
 	mo->reactiontime = 18;
 	mo->flags = pmo->special2 & ~MF_JUSTHIT;
-	mo->momx = 0;
-	mo->momy = 0;
-	player->momx = 0;
-	player->momy = 0;
-	mo->momz = pmo->momz;
+	mo->velx = 0;
+	mo->vely = 0;
+	player->velx = 0;
+	player->vely = 0;
+	mo->velz = pmo->velz;
 	if (!(pmo->special2 & MF_JUSTHIT))
 	{
 		mo->renderflags &= ~RF_INVISIBLE;
@@ -451,9 +451,9 @@ bool P_UndoMonsterMorph (AMorphedMonster *beast, bool force)
 	if (!(beast->FlagsSave & MF_JUSTHIT))
 		actor->renderflags &= ~RF_INVISIBLE;
 	actor->health = actor->GetDefault()->health;
-	actor->momx = beast->momx;
-	actor->momy = beast->momy;
-	actor->momz = beast->momz;
+	actor->velx = beast->velx;
+	actor->vely = beast->vely;
+	actor->velz = beast->velz;
 	actor->tid = beast->tid;
 	actor->special = beast->special;
 	memcpy (actor->args, beast->args, sizeof(actor->args));

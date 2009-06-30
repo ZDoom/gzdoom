@@ -29,8 +29,8 @@ int AWhirlwind::DoSpecialDamage (AActor *target, int damage)
 	int randVal;
 
 	target->angle += pr_foo.Random2() << 20;
-	target->momx += pr_foo.Random2() << 10;
-	target->momy += pr_foo.Random2() << 10;
+	target->velx += pr_foo.Random2() << 10;
+	target->vely += pr_foo.Random2() << 10;
 	if ((level.time & 16) && !(target->flags2 & MF2_BOSS))
 	{
 		randVal = pr_foo();
@@ -38,10 +38,10 @@ int AWhirlwind::DoSpecialDamage (AActor *target, int damage)
 		{
 			randVal = 160;
 		}
-		target->momz += randVal << 11;
-		if (target->momz > 12*FRACUNIT)
+		target->velz += randVal << 11;
+		if (target->velz > 12*FRACUNIT)
 		{
-			target->momz = 12*FRACUNIT;
+			target->velz = 12*FRACUNIT;
 		}
 	}
 	if (!(level.time & 7))
@@ -111,9 +111,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_LichAttack)
 				}
 				fire->target = baseFire->target;
 				fire->angle = baseFire->angle;
-				fire->momx = baseFire->momx;
-				fire->momy = baseFire->momy;
-				fire->momz = baseFire->momz;
+				fire->velx = baseFire->velx;
+				fire->vely = baseFire->vely;
+				fire->velz = baseFire->velz;
 				fire->Damage = 0;
 				fire->health = (i+1) * 2;
 				P_CheckMissileSpawn (fire);
@@ -146,7 +146,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_WhirlwindSeek)
 	self->health -= 3;
 	if (self->health < 0)
 	{
-		self->momx = self->momy = self->momz = 0;
+		self->velx = self->vely = self->velz = 0;
 		self->SetState (self->FindState(NAME_Death));
 		self->flags &= ~MF_MISSILE;
 		return;
@@ -182,9 +182,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_LichIceImpact)
 		shard->target = self->target;
 		shard->angle = angle;
 		angle >>= ANGLETOFINESHIFT;
-		shard->momx = FixedMul (shard->Speed, finecosine[angle]);
-		shard->momy = FixedMul (shard->Speed, finesine[angle]);
-		shard->momz = -FRACUNIT*6/10;
+		shard->velx = FixedMul (shard->Speed, finecosine[angle]);
+		shard->vely = FixedMul (shard->Speed, finesine[angle]);
+		shard->velz = -FRACUNIT*6/10;
 		P_CheckMissileSpawn (shard);
 	}
 }

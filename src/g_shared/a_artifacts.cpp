@@ -961,9 +961,9 @@ void APowerFlight::InitEffect ()
 	Owner->flags |= MF_NOGRAVITY;
 	if (Owner->z <= Owner->floorz)
 	{
-		Owner->momz = 4*FRACUNIT;	// thrust the player in the air a bit
+		Owner->velz = 4*FRACUNIT;	// thrust the player in the air a bit
 	}
-	if (Owner->momz <= -35*FRACUNIT)
+	if (Owner->velz <= -35*FRACUNIT)
 	{ // stop falling scream
 		S_StopSound (Owner, CHAN_VOICE);
 	}
@@ -1200,7 +1200,7 @@ void APowerSpeed::DoEffect ()
 	if (Inventory != NULL && Inventory->GetSpeedFactor() > FRACUNIT)
 		return;
 
-	if (P_AproxDistance (Owner->momx, Owner->momy) <= 12*FRACUNIT)
+	if (P_AproxDistance (Owner->velx, Owner->vely) <= 12*FRACUNIT)
 		return;
 
 	AActor *speedMo = Spawn<APlayerSpeedTrail> (Owner->x, Owner->y, Owner->z, NO_REPLACE);

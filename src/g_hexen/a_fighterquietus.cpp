@@ -76,9 +76,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DropWeaponPieces)
 			AActor *piece = Spawn (cls, self->x, self->y, self->z, ALLOW_REPLACE);
 			if (piece != NULL)
 			{
-				piece->momx = self->momx + finecosine[fineang];
-				piece->momy = self->momy + finesine[fineang];
-				piece->momz = self->momz;
+				piece->velx = self->velx + finecosine[fineang];
+				piece->vely = self->vely + finesine[fineang];
+				piece->velz = self->velz;
 				piece->flags |= MF_DROPPED;
 				fineang += FINEANGLES/3;
 				j = (j == 0) ? (pr_quietusdrop() & 1) + 1 : 3-j;

@@ -1,4 +1,11 @@
 ﻿June 30, 2009
+- Enough with this "momentum" garbage. What Doom calls "momentum" is really
+  velocity, and now it's known as such. The actor variables momx/momy/momz
+  are now known as velx/vely/velz, and the ACS functions GetActorMomX/Y/Z
+  are now known as GetActorVelX/Y/Z. For compatibility, momx/momy/momz will
+  continue to work as aliases from DECORATE. The ACS functions, however,
+  require you to use the new name, since they never saw an official release
+  yet.
 - Added A_ZoomFactor. This lets weapons scale their player's FOV. Each weapon
   maintains its own FOV scale independent from any other weapons the player
   may have.

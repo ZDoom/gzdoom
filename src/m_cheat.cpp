@@ -108,9 +108,9 @@ void cht_DoCheat (player_t *player, int cheat)
 			msg = GStrings("STSTR_NCOFF");
 		break;
 
-	case CHT_NOMOMENTUM:
-		player->cheats ^= CF_NOMOMENTUM;
-		if (player->cheats & CF_NOMOMENTUM)
+	case CHT_NOVELOCITY:
+		player->cheats ^= CF_NOVELOCITY;
+		if (player->cheats & CF_NOVELOCITY)
 			msg = GStrings("TXT_LEADBOOTSON");
 		else
 			msg = GStrings("TXT_LEADBOOTSOFF");

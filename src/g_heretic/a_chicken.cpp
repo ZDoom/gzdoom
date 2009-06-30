@@ -41,13 +41,13 @@ void AChickenPlayer::MorphPlayerThink ()
 	{
 		return;
 	}
-	if (!(momx | momy) && pr_chickenplayerthink () < 160)
+	if (!(velx | vely) && pr_chickenplayerthink () < 160)
 	{ // Twitch view angle
 		angle += pr_chickenplayerthink.Random2 () << 19;
 	}
 	if ((z <= floorz) && (pr_chickenplayerthink() < 32))
 	{ // Jump and noise
-		momz += JumpZ;
+		velz += JumpZ;
 
 		FState * painstate = FindState(NAME_Pain);
 		if (painstate != NULL) SetState (painstate);
@@ -102,9 +102,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_Feathers)
 	{
 		mo = Spawn("Feather", self->x, self->y, self->z+20*FRACUNIT, NO_REPLACE);
 		mo->target = self;
-		mo->momx = pr_feathers.Random2() << 8;
-		mo->momy = pr_feathers.Random2() << 8;
-		mo->momz = FRACUNIT + (pr_feathers() << 9);
+		mo->velx = pr_feathers.Random2() << 8;
+		mo->vely = pr_feathers.Random2() << 8;
+		mo->velz = FRACUNIT + (pr_feathers() << 9);
 		mo->SetState (mo->SpawnState + (pr_feathers()&7));
 	}
 }

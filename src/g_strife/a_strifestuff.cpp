@@ -591,9 +591,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_TossGib)
 	an = pr_gibtosser() << 24;
 	gib->angle = an;
 	speed = pr_gibtosser() & 15;
-	gib->momx = speed * finecosine[an >> ANGLETOFINESHIFT];
-	gib->momy = speed * finesine[an >> ANGLETOFINESHIFT];
-	gib->momz = (pr_gibtosser() & 15) << FRACBITS;
+	gib->velx = speed * finecosine[an >> ANGLETOFINESHIFT];
+	gib->vely = speed * finesine[an >> ANGLETOFINESHIFT];
+	gib->velz = (pr_gibtosser() & 15) << FRACBITS;
 }
 
 //============================================================================
@@ -639,8 +639,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_CheckTerrain)
 			fixed_t speed = (anglespeed % 10) << (FRACBITS - 4);
 			angle_t finean = (anglespeed / 10) << (32-3);
 			finean >>= ANGLETOFINESHIFT;
-			self->momx += FixedMul (speed, finecosine[finean]);
-			self->momy += FixedMul (speed, finesine[finean]);
+			self->velx += FixedMul (speed, finecosine[finean]);
+			self->vely += FixedMul (speed, finesine[finean]);
 		}
 	}
 }
@@ -681,7 +681,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ItBurnsItBurns)
 DEFINE_ACTION_FUNCTION(AActor, A_DropFire)
 {
 	AActor *drop = Spawn("FireDroplet", self->x, self->y, self->z + 24*FRACUNIT, ALLOW_REPLACE);
-	drop->momz = -FRACUNIT;
+	drop->velz = -FRACUNIT;
 	P_RadiusAttack (self, self, 64, 64, NAME_Fire, false);
 }
 

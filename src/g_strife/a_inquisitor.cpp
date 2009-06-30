@@ -58,13 +58,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_InquisitorAttack)
 	proj = P_SpawnMissileZAimed (self, self->z, self->target, PClass::FindClass("InquisitorShot"));
 	if (proj != NULL)
 	{
-		proj->momz += 9*FRACUNIT;
+		proj->velz += 9*FRACUNIT;
 	}
 	self->angle += ANGLE_45/16;
 	proj = P_SpawnMissileZAimed (self, self->z, self->target, PClass::FindClass("InquisitorShot"));
 	if (proj != NULL)
 	{
-		proj->momz += 16*FRACUNIT;
+		proj->velz += 16*FRACUNIT;
 	}
 	self->z -= 32*FRACBITS;
 }
@@ -83,15 +83,15 @@ DEFINE_ACTION_FUNCTION(AActor, A_InquisitorJump)
 	A_FaceTarget (self);
 	an = self->angle >> ANGLETOFINESHIFT;
 	speed = self->Speed * 2/3;
-	self->momx += FixedMul (speed, finecosine[an]);
-	self->momy += FixedMul (speed, finesine[an]);
+	self->velx += FixedMul (speed, finecosine[an]);
+	self->vely += FixedMul (speed, finesine[an]);
 	dist = P_AproxDistance (self->target->x - self->x, self->target->y - self->y);
 	dist /= speed;
 	if (dist < 1)
 	{
 		dist = 1;
 	}
-	self->momz = (self->target->z - self->z) / dist;
+	self->velz = (self->target->z - self->z) / dist;
 	self->reactiontime = 60;
 	self->flags |= MF_NOGRAVITY;
 }
@@ -100,8 +100,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_InquisitorCheckLand)
 {
 	self->reactiontime--;
 	if (self->reactiontime < 0 ||
-		self->momx == 0 ||
-		self->momy == 0 ||
+		self->velx == 0 ||
+		self->vely == 0 ||
 		self->z <= self->floorz)
 	{
 		self->SetState (self->SeeState);
@@ -121,8 +121,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_TossArm)
 {
 	AActor *foo = Spawn("InquisitorArm", self->x, self->y, self->z + 24*FRACUNIT, ALLOW_REPLACE);
 	foo->angle = self->angle - ANGLE_90 + (pr_inq.Random2() << 22);
-	foo->momx = FixedMul (foo->Speed, finecosine[foo->angle >> ANGLETOFINESHIFT]) >> 3;
-	foo->momy = FixedMul (foo->Speed, finesine[foo->angle >> ANGLETOFINESHIFT]) >> 3;
-	foo->momz = pr_inq() << 10;
+	foo->velx = FixedMul (foo->Speed, finecosine[foo->angle >> ANGLETOFINESHIFT]) >> 3;
+	foo->vely = FixedMul (foo->Speed, finesine[foo->angle >> ANGLETOFINESHIFT]) >> 3;
+	foo->velz = pr_inq() << 10;
 }
 

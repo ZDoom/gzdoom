@@ -20,7 +20,7 @@ ACTOR Demon1 31
 	DeathSound "DemonDeath"
 	ActiveSound "DemonActive"
 	Obituary "$OB_DEMON1"
-	const int ChunkFlags = SXF_TRANSFERTRANSLATION|SXF_ABSOLUTEMOMENTUM;
+	const int ChunkFlags = SXF_TRANSFERTRANSLATION|SXF_ABSOLUTEVELOCITY;
 	States
 	{
 	Spawn:

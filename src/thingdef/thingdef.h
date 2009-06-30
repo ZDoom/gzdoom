@@ -342,6 +342,10 @@ int MatchString (const char *in, const char **strings);
 	static FVariableInfo GlobalDef__##name = { #name, myoffsetof(cls, name), RUNTIME_CLASS(cls) }; \
 	MSVC_MSEG FVariableInfo *infoptr_GlobalDef__##name GCC_MSEG = &GlobalDef__##name;
 
+#define DEFINE_MEMBER_VARIABLE_ALIAS(name, alias, cls) \
+	static FVariableInfo GlobalDef__##name = { #name, myoffsetof(cls, alias), RUNTIME_CLASS(cls) }; \
+	MSVC_MSEG FVariableInfo *infoptr_GlobalDef__##name GCC_MSEG = &GlobalDef__##name;
+
 	
 
 

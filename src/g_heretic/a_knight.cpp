@@ -27,8 +27,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_DripBlood)
 	x = self->x + (pr_dripblood.Random2 () << 11);
 	y = self->y + (pr_dripblood.Random2 () << 11);
 	mo = Spawn ("Blood", x, y, self->z, ALLOW_REPLACE);
-	mo->momx = pr_dripblood.Random2 () << 10;
-	mo->momy = pr_dripblood.Random2 () << 10;
+	mo->velx = pr_dripblood.Random2 () << 10;
+	mo->vely = pr_dripblood.Random2 () << 10;
 	mo->gravity = FRACUNIT/8;
 }
 

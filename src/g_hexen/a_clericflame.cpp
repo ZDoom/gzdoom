@@ -94,9 +94,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_CFlameAttack)
 DEFINE_ACTION_FUNCTION(AActor, A_CFlamePuff)
 {
 	self->renderflags &= ~RF_INVISIBLE;
-	self->momx = 0;
-	self->momy = 0;
-	self->momz = 0;
+	self->velx = 0;
+	self->vely = 0;
+	self->velz = 0;
 	S_Sound (self, CHAN_BODY, "ClericFlameExplode", 1, ATTN_NORM);
 }
 
@@ -130,8 +130,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_CFlameMissile)
 			{
 				mo->angle = an<<ANGLETOFINESHIFT;
 				mo->target = self->target;
-				mo->momx = mo->special1 = FixedMul(FLAMESPEED, finecosine[an]);
-				mo->momy = mo->special2 = FixedMul(FLAMESPEED, finesine[an]);
+				mo->velx = mo->special1 = FixedMul(FLAMESPEED, finecosine[an]);
+				mo->vely = mo->special2 = FixedMul(FLAMESPEED, finesine[an]);
 				mo->tics -= pr_missile()&3;
 			}
 			mo = Spawn ("CircleFlame", BlockingMobj->x-FixedMul(dist, finecosine[an]),
@@ -141,8 +141,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_CFlameMissile)
 			{
 				mo->angle = ANG180+(an<<ANGLETOFINESHIFT);
 				mo->target = self->target;
-				mo->momx = mo->special1 = FixedMul(-FLAMESPEED, finecosine[an]);
-				mo->momy = mo->special2 = FixedMul(-FLAMESPEED, finesine[an]);
+				mo->velx = mo->special1 = FixedMul(-FLAMESPEED, finecosine[an]);
+				mo->vely = mo->special2 = FixedMul(-FLAMESPEED, finesine[an]);
 				mo->tics -= pr_missile()&3;
 			}
 		}
@@ -161,7 +161,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CFlameRotate)
 	int an;
 
 	an = (self->angle+ANG90)>>ANGLETOFINESHIFT;
-	self->momx = self->special1+FixedMul(FLAMEROTSPEED, finecosine[an]);
-	self->momy = self->special2+FixedMul(FLAMEROTSPEED, finesine[an]);
+	self->velx = self->special1+FixedMul(FLAMEROTSPEED, finecosine[an]);
+	self->vely = self->special2+FixedMul(FLAMEROTSPEED, finesine[an]);
 	self->angle += ANG90/15;
 }

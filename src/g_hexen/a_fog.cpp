@@ -85,7 +85,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FogMove)
 	}
 
 	angle = self->angle>>ANGLETOFINESHIFT;
-	self->momx = FixedMul(speed, finecosine[angle]);
-	self->momy = FixedMul(speed, finesine[angle]);
+	self->velx = FixedMul(speed, finecosine[angle]);
+	self->vely = FixedMul(speed, finesine[angle]);
 }
 

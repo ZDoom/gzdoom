@@ -44,7 +44,7 @@ void AFastProjectile::Tick ()
 	int count = 8;
 	if (radius > 0)
 	{
-		while ( ((abs(momx) >> shift) > radius) || ((abs(momy) >> shift) > radius))
+		while ( ((abs(velx) >> shift) > radius) || ((abs(vely) >> shift) > radius))
 		{
 			// we need to take smaller steps.
 			shift++;
@@ -53,11 +53,11 @@ void AFastProjectile::Tick ()
 	}
 
 	// Handle movement
-	if (momx || momy || (z != floorz) || momz)
+	if (velx || vely || (z != floorz) || velz)
 	{
-		xfrac = momx>>shift;
-		yfrac = momy>>shift;
-		zfrac = momz>>shift;
+		xfrac = velx >> shift;
+		yfrac = vely >> shift;
+		zfrac = velz >> shift;
 		changexy = xfrac || yfrac;
 		int ripcount = count >> 3;
 		for (i = 0; i < count; i++)

@@ -306,7 +306,6 @@ ACTOR PuzzleItem : Inventory native
 
 Actor Weapon : Inventory native
 {
-
 	Inventory.PickupSound "misc/w_pkup"
 	Weapon.DefaultKickback 
 	States
@@ -315,6 +314,9 @@ Actor Weapon : Inventory native
 		SHTG E 0 A_Light0
 		Stop
 	}
+	
+	action native A_ZoomFactor(float scale = 1, int flags = 0);
+	const int ZOOM_INSTANT = 1;
 }
 
 ACTOR WeaponGiver : Weapon native

@@ -59,6 +59,10 @@ void AWeapon::Serialize (FArchive &arc)
 		<< Ammo1 << Ammo2 << SisterWeapon << GivenAsMorphWeapon
 		<< bAltFire
 		<< ReloadCounter;
+	if (SaveVersion >= 1688)
+	{
+		arc << FOVScale;
+	}
 }
 
 //===========================================================================
@@ -1689,4 +1693,28 @@ const PClass *Net_ReadWeapon(BYTE **stream)
 		return NULL;
 	}
 	return Weapons_ntoh[index];
+}
+
+//===========================================================================
+//
+// A_ZoomFactor
+//
+//===========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AWeapon, A_ZoomFactor)
+{
+	ACTION_PARAM_START(2);
+	ACTION_PARAM_FLOAT(zoom, 0);
+	ACTION_PARAM_INT(flags, 1);
+
+	if (self->player != NULL && self->player->ReadyWeapon != NULL)
+	{
+		zoom = 1 / clamp(zoom, 0.1f, 50.f);
+		self->player->ReadyWeapon->FOVScale = zoom;
+		if (flags & 1)
+		{
+			// Make the zoom instant.
+			self->player->FOV = self->player->DesiredFOV * zoom;
+		}
+	}
 }

@@ -1,4 +1,11 @@
-﻿June 27, 2009
+﻿June 30, 2009
+- Added A_ZoomFactor. This lets weapons scale their player's FOV. Each weapon
+  maintains its own FOV scale independent from any other weapons the player
+  may have.
+- Fixed: When parsing DECORATE functions that were not exported, the parser
+  crashed after giving you the warning.
+
+June 27, 2009
 - Fixed some improper preprocessor lines in autostart/autozend.cpp.
 - Added XInput support. For the benefit of people compiling with MinGW,
   the CMakeLists.txt checks for xinput.h and disables it if it cannot

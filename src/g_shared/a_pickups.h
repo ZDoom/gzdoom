@@ -264,6 +264,7 @@ public:
 	TObjPtr<AAmmo> Ammo1, Ammo2;
 	TObjPtr<AWeapon> SisterWeapon;
 	bool GivenAsMorphWeapon;
+	float FOVScale;
 
 	bool bAltFire;	// Set when this weapon's alternate fire is used.
 

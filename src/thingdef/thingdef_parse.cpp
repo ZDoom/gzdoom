@@ -857,31 +857,34 @@ static void ParseActionDef (FScanner &sc, PClass *cls)
 		}
 	}
 	sc.MustGetToken(';');
-	PSymbolActionFunction *sym = new PSymbolActionFunction(funcname);
-	sym->Arguments = args;
-	sym->Function = afd->Function;
-	if (hasdefaults)
+	if (afd != NULL)
 	{
-		sym->defaultparameterindex = StateParams.Size();
-		for(unsigned int i = 0; i < DefaultParams.Size(); i++)
+		PSymbolActionFunction *sym = new PSymbolActionFunction(funcname);
+		sym->Arguments = args;
+		sym->Function = afd->Function;
+		if (hasdefaults)
 		{
-			StateParams.Add(DefaultParams[i], cls, true);
+			sym->defaultparameterindex = StateParams.Size();
+			for(unsigned int i = 0; i < DefaultParams.Size(); i++)
+			{
+				StateParams.Add(DefaultParams[i], cls, true);
+			}
 		}
-	}
-	else
-	{
-		sym->defaultparameterindex = -1;
-	}
-	if (error)
-	{
-		FScriptPosition::ErrorCounter++;
-	}
-	else if (cls->Symbols.AddSymbol (sym) == NULL)
-	{
-		delete sym;
-		sc.ScriptMessage ("'%s' is already defined in class '%s'.",
-			funcname.GetChars(), cls->TypeName.GetChars());
-		FScriptPosition::ErrorCounter++;
+		else
+		{
+			sym->defaultparameterindex = -1;
+		}
+		if (error)
+		{
+			FScriptPosition::ErrorCounter++;
+		}
+		else if (cls->Symbols.AddSymbol (sym) == NULL)
+		{
+			delete sym;
+			sc.ScriptMessage ("'%s' is already defined in class '%s'.",
+				funcname.GetChars(), cls->TypeName.GetChars());
+			FScriptPosition::ErrorCounter++;
+		}
 	}
 }
 

@@ -1996,16 +1996,24 @@ void P_PlayerThink (player_t *player)
 	}
 
 	// [RH] Zoom the player's FOV
-	if (player->FOV != player->DesiredFOV)
+	float desired = player->DesiredFOV;
+	// Adjust FOV using on the currently held weapon.
+	if (player->playerstate != PST_DEAD &&		// No adjustment while dead.
+		player->ReadyWeapon != NULL &&			// No adjustment if no weapon.
+		player->ReadyWeapon->FOVScale != 0)		// No adjustment if the adjustment is zero.
 	{
-		if (fabsf (player->FOV - player->DesiredFOV) < 7.f)
+		desired *= player->ReadyWeapon->FOVScale;
+	}
+	if (player->FOV != desired)
+	{
+		if (fabsf (player->FOV - desired) < 7.f)
 		{
-			player->FOV = player->DesiredFOV;
+			player->FOV = desired;
 		}
 		else
 		{
-			float zoom = MAX(7.f, fabsf (player->FOV - player->DesiredFOV) * 0.025f);
-			if (player->FOV > player->DesiredFOV)
+			float zoom = MAX(7.f, fabsf(player->FOV - desired) * 0.025f);
+			if (player->FOV > desired)
 			{
 				player->FOV = player->FOV - zoom;
 			}

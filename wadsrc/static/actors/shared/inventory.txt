@@ -161,14 +161,24 @@ ACTOR PowerStrength : Powerup native
 ACTOR PowerInvisibility : Powerup native
 {
 	Powerup.Duration -60
+	Powerup.Strength 80
+	Powerup.Mode "Fuzzy"
 }
 
-ACTOR PowerGhost : PowerInvisibility native {}
+ACTOR PowerGhost : PowerInvisibility
+{
+	+GHOST
+	Powerup.Duration -60
+	Powerup.Strength 60
+	Powerup.Mode "None"
+}
 
 ACTOR PowerShadow : PowerInvisibility native
 {
-	Powerup.Duration -55
 	+INVENTORY.HUBPOWER
+	Powerup.Duration -55
+	Powerup.Strength 75
+	Powerup.Mode "Cumulative"
 }
 
 ACTOR PowerIronFeet : Powerup native

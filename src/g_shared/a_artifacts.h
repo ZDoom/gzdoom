@@ -30,7 +30,8 @@ public:
 
 	int EffectTics;
 	PalEntry BlendColor;
-	FNameNoInit mode;
+	FNameNoInit Mode;
+	fixed_t Strength;
 
 protected:
 	virtual void InitEffect ();
@@ -49,7 +50,8 @@ public:
 	const PClass *PowerupType;
 	int EffectTics;			// Non-0 to override the powerup's default tics
 	PalEntry BlendColor;	// Non-0 to override the powerup's default blend
-	FNameNoInit mode;		// Meaning depends on powerup - currently only of use for Invulnerability
+	FNameNoInit Mode;		// Meaning depends on powerup - used for Invulnerability and Invisibility
+	fixed_t Strength;		// Meaning depends on powerup - currently used only by Invisibility
 };
 
 class APowerInvulnerable : public APowerup
@@ -77,6 +79,7 @@ class APowerInvisibility : public APowerup
 {
 	DECLARE_CLASS (APowerInvisibility, APowerup)
 protected:
+	bool HandlePickup (AInventory *item);
 	void CommonInit ();
 	void InitEffect ();
 	void DoEffect ();
@@ -84,21 +87,10 @@ protected:
 	int AlterWeaponSprite (vissprite_t *vis);
 };
 
-class APowerGhost : public APowerInvisibility
-{
-	DECLARE_CLASS (APowerGhost, APowerInvisibility)
-protected:
-	void InitEffect ();
-	int AlterWeaponSprite (vissprite_t *vis);
-};
-
+// Needed only for m_cheat.cpp now
 class APowerShadow : public APowerInvisibility
 {
 	DECLARE_CLASS (APowerShadow, APowerInvisibility)
-protected:
-	bool HandlePickup (AInventory *item);
-	void InitEffect ();
-	int AlterWeaponSprite (vissprite_t *vis);
 };
 
 class APowerIronFeet : public APowerup

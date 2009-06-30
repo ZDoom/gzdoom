@@ -24,6 +24,10 @@ xx(Spray)
 xx(Ghost)
 xx(Reflective)
 
+// Invisibility types
+xx(Cumulative)
+xx(Fuzzy)
+
 // Healingradius types
 xx(Mana)
 xx(Armor)

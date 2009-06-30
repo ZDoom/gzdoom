@@ -1011,8 +1011,12 @@ DEFINE_PROPERTY(species, S, Actor)
 //==========================================================================
 DEFINE_PROPERTY(clearflags, 0, Actor)
 {
-	defaults->flags=defaults->flags3=defaults->flags4=defaults->flags5=0;
-	defaults->flags2&=MF2_ARGSDEFINED;	// this flag must not be cleared
+	defaults->flags =
+		defaults->flags3 =
+		defaults->flags4 =
+		defaults->flags5 =
+		defaults->flags6 = 0;
+	defaults->flags2 &= MF2_ARGSDEFINED;	// this flag must not be cleared
 }
 
 //==========================================================================

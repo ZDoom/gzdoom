@@ -1710,11 +1710,14 @@ DEFINE_ACTION_FUNCTION_PARAMS(AWeapon, A_ZoomFactor)
 	if (self->player != NULL && self->player->ReadyWeapon != NULL)
 	{
 		zoom = 1 / clamp(zoom, 0.1f, 50.f);
-		self->player->ReadyWeapon->FOVScale = zoom;
 		if (flags & 1)
-		{
-			// Make the zoom instant.
+		{ // Make the zoom instant.
 			self->player->FOV = self->player->DesiredFOV * zoom;
 		}
+		if (flags & 2)
+		{ // Disable pitch/yaw scaling.
+			zoom = -zoom;
+		}
+		self->player->ReadyWeapon->FOVScale = zoom;
 	}
 }

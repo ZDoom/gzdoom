@@ -1,4 +1,6 @@
 ﻿June 30, 2009
+- A_ZoomFactor now scales turning with the FOV by default. ZOOM_NOSCALETURNING
+  will leave it unaltered.
 - Added Gez's PowerInvisibility changes.
 - Fixed: clearflags did not clear flags6.
 - Added A_SetAngle, A_SetPitch, A_ScaleVelocity, and A_ChangeVelocity.

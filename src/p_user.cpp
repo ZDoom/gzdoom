@@ -2002,7 +2002,9 @@ void P_PlayerThink (player_t *player)
 		player->ReadyWeapon != NULL &&			// No adjustment if no weapon.
 		player->ReadyWeapon->FOVScale != 0)		// No adjustment if the adjustment is zero.
 	{
-		desired *= player->ReadyWeapon->FOVScale;
+		// A negative scale is used top prevent G_AddViewAngle/G_AddViewPitch
+		// from scaling with the FOV scale.
+		desired *= fabs(player->ReadyWeapon->FOVScale);
 	}
 	if (player->FOV != desired)
 	{
@@ -2087,7 +2089,7 @@ void P_PlayerThink (player_t *player)
 		{
 			int crouchdir = player->crouching;
 		
-			if (crouchdir==0)
+			if (crouchdir == 0)
 			{
 				crouchdir = (player->cmd.ucmd.buttons & BT_CROUCH)? -1 : 1;
 			}

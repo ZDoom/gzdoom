@@ -520,7 +520,7 @@ void *I_FindFirst (const char *filespec, findstate_t *fileinfo)
 {
 	FString dir;
 	
-	char *slash = strrchr (filespec, '/');
+	const char *slash = strrchr (filespec, '/');
 	if (slash)
 	{
 		pattern = slash+1;

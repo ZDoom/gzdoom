@@ -1,4 +1,5 @@
 ﻿June 30, 2009
+- Added A_SetAngle, A_SetPitch, A_ScaleVelocity, and A_ChangeVelocity.
 - Enough with this "momentum" garbage. What Doom calls "momentum" is really
   velocity, and now it's known as such. The actor variables momx/momy/momz
   are now known as velx/vely/velz, and the ACS functions GetActorMomX/Y/Z

@@ -2533,7 +2533,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RemoveChildren)
 
 //===========================================================================
 //
-// keep firing unless target got out of sight
+// A_MonsterRefire
+//
+// Keep firing unless target got out of sight
 //
 //===========================================================================
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_MonsterRefire)
@@ -2557,3 +2559,101 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_MonsterRefire)
 	}
 }
 
+//===========================================================================
+//
+// A_SetAngle
+//
+// Set actor's angle (in degrees).
+//
+//===========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetAngle)
+{
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_ANGLE(angle, 0);
+	self->angle = angle;
+}
+
+//===========================================================================
+//
+// A_SetPitch
+//
+// Set actor's pitch (in degrees).
+//
+//===========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetPitch)
+{
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_ANGLE(pitch, 0);
+	self->pitch = pitch;
+}
+
+//===========================================================================
+//
+// A_ScaleVelocity
+//
+// Scale actor's velocity.
+//
+//===========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ScaleVelocity)
+{
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_FIXED(scale, 0);
+
+	INTBOOL was_moving = self->velx | self->vely | self->velz;
+
+	self->velx = FixedMul(self->velx, scale);
+	self->vely = FixedMul(self->vely, scale);
+	self->velz = FixedMul(self->velz, scale);
+
+	// If the actor was previously moving but now is not, and is a player,
+	// update its player variables. (See A_Stop.)
+	if (was_moving &&
+		self->player != NULL &&
+		self->player->mo == self &&
+		!(self->player->cheats & CF_PREDICTING) &&
+		!(self->velx | self->vely | self->velz))
+	{
+		self->player->mo->PlayIdle();
+		self->player->velx = self->player->vely = 0;
+	}
+}
+
+//===========================================================================
+//
+// A_ChangeVelocity
+//
+//===========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ChangeVelocity)
+{
+	ACTION_PARAM_START(4);
+	ACTION_PARAM_FIXED(x, 0);
+	ACTION_PARAM_FIXED(y, 1);
+	ACTION_PARAM_FIXED(z, 2);
+	ACTION_PARAM_INT(flags, 3);
+
+	fixed_t vx = x, vy = y, vz = z;
+	fixed_t sina = finesine[self->angle >> ANGLETOFINESHIFT];
+	fixed_t cosa = finecosine[self->angle >> ANGLETOFINESHIFT];
+
+	if (flags & 1)	// relative axes - make x, y relative to actor's current angle
+	{
+		vx = DMulScale16(x, cosa, -y, sina);
+		vy = DMulScale16(x, sina,  y, cosa);
+	}
+	if (flags & 2)	// discard old velocity - replace old velocity with new velocity
+	{
+		self->velx = vx;
+		self->vely = vy;
+		self->velz = vz;
+	}
+	else	// add new velocity to old velocity
+	{
+		self->velx += vx;
+		self->vely += vy;
+		self->velz += vz;
+	}
+}

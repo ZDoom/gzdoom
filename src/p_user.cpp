@@ -425,6 +425,10 @@ void APlayerPawn::Serialize (FArchive &arc)
 		<< InvSel
 		<< MorphWeapon
 		<< DamageFade;
+	if (SaveVersion >= 1695)
+	{
+		arc << PlayerFlags;
+	}
 }
 
 //===========================================================================

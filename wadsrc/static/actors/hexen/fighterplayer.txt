@@ -8,6 +8,8 @@ ACTOR FighterPlayer : PlayerPawn
 	Height 64
 	Speed 1
 	+NOSKIN
+	+NODAMAGETHRUST
+	+NOTHRUSTWHENINVUL
 	PainSound "PlayerFighterPain"
 	RadiusDamageFactor 0.25
 	Player.JumpZ 9.75

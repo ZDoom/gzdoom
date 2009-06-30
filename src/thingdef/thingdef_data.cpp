@@ -264,7 +264,6 @@ static FFlagDef InventoryFlags[] =
 	DEFINE_FLAG(IF, PERSISTENTPOWER, AInventory, ItemFlags),
 
 	DEFINE_DEPRECATED_FLAG(PICKUPFLASH),
-
 };
 
 static FFlagDef WeaponFlags[] =
@@ -292,13 +291,20 @@ static FFlagDef WeaponFlags[] =
 	DEFINE_DUMMY_FLAG(NOLMS),
 };
 
+static FFlagDef PlayerPawnFlags[] =
+{
+	// PlayerPawn flags
+	DEFINE_FLAG(PPF, NOTHRUSTWHENINVUL, APlayerPawn, PlayerFlags),
+};
+
 static const struct { const PClass *Type; FFlagDef *Defs; int NumDefs; } FlagLists[] =
 {
-	{ RUNTIME_CLASS(AActor), 		ActorFlags,		sizeof(ActorFlags)/sizeof(FFlagDef) },
-	{ RUNTIME_CLASS(AInventory), 	InventoryFlags,	sizeof(InventoryFlags)/sizeof(FFlagDef) },
-	{ RUNTIME_CLASS(AWeapon), 		WeaponFlags,	sizeof(WeaponFlags)/sizeof(FFlagDef) }
+	{ RUNTIME_CLASS(AActor), 		ActorFlags,		countof(ActorFlags) },
+	{ RUNTIME_CLASS(AInventory), 	InventoryFlags,	countof(InventoryFlags) },
+	{ RUNTIME_CLASS(AWeapon), 		WeaponFlags,	countof(WeaponFlags) },
+	{ RUNTIME_CLASS(APlayerPawn),	PlayerPawnFlags,countof(PlayerPawnFlags) },
 };
-#define NUM_FLAG_LISTS 3
+#define NUM_FLAG_LISTS (countof(FlagLists))
 
 //==========================================================================
 //

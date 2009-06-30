@@ -9,6 +9,8 @@ ACTOR MagePlayer : PlayerPawn
 	Height 64
 	Speed 1
 	+NOSKIN
+	+NODAMAGETHRUST
+	+NOTHRUSTWHENINVUL
 	PainSound "PlayerMagePain"
 	RadiusDamageFactor 0.25
 	Player.JumpZ 9.75

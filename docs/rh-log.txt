@@ -1,4 +1,8 @@
 ﻿June 30, 2009
+- MF2_NODMGTHRUST now works with players, too. (Previously, it was only for
+  missiles.) Also added PPF_NOTHRUSTWHILEINVUL to prevent invulnerable players
+  from being thrusted while taking damage. (Non-players were already
+  unthrusted.)
 - A_ZoomFactor now scales turning with the FOV by default. ZOOM_NOSCALETURNING
   will leave it unaltered.
 - Added Gez's PowerInvisibility changes.

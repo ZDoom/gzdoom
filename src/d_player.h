@@ -118,6 +118,7 @@ public:
 	int			crouchsprite;
 	int			MaxHealth;
 	int			RunHealth;
+	int			PlayerFlags;
 	TObjPtr<AInventory> InvFirst;		// first inventory item displayed on inventory bar
 	TObjPtr<AInventory> InvSel;			// selected inventory item
 
@@ -143,6 +144,14 @@ public:
 class APlayerChunk : public APlayerPawn
 {
 	DECLARE_CLASS (APlayerChunk, APlayerPawn)
+};
+
+//
+// PlayerPawn flags
+//
+enum
+{
+	PPF_NOTHRUSTWHENINVUL = 1,	// Attacks do not thrust the player if they are invulnerable.
 };
 
 //

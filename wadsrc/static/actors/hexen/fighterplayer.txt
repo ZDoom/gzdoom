@@ -12,7 +12,7 @@ ACTOR FighterPlayer : PlayerPawn
 	+NOTHRUSTWHENINVUL
 	PainSound "PlayerFighterPain"
 	RadiusDamageFactor 0.25
-	Player.JumpZ 9.75
+	Player.JumpZ 9
 	Player.Viewheight 48
 	Player.ColorRange 246, 254
 	Player.SpawnClass "Fighter"

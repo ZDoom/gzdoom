@@ -1,4 +1,6 @@
 ﻿June 30, 2009
+- Dropped the Hexen player classes' JumpZ down to 9, since the original value
+  now works as it originally did.
 - MF2_NODMGTHRUST now works with players, too. (Previously, it was only for
   missiles.) Also added PPF_NOTHRUSTWHILEINVUL to prevent invulnerable players
   from being thrusted while taking damage. (Non-players were already

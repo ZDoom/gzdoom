@@ -13,7 +13,7 @@ ACTOR MagePlayer : PlayerPawn
 	+NOTHRUSTWHENINVUL
 	PainSound "PlayerMagePain"
 	RadiusDamageFactor 0.25
-	Player.JumpZ 9.75
+	Player.JumpZ 9
 	Player.Viewheight 48
 	Player.ColorRange 146, 163
 	Player.SpawnClass "Mage"

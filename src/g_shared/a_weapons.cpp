@@ -62,6 +62,10 @@ void AWeapon::Serialize (FArchive &arc)
 	if (SaveVersion >= 1688)
 	{
 		arc << FOVScale;
+		if (SaveVersion >= 1700)
+		{
+			arc << Crosshair;
+		}
 	}
 }
 

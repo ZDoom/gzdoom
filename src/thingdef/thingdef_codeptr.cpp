@@ -2040,6 +2040,18 @@ DEFINE_ACTION_FUNCTION(AActor, A_Stop)
 	}
 }
 
+static void CheckStopped(AActor *self)
+{
+	if (self->player != NULL &&
+		self->player->mo == self &&
+		!(self->player->cheats & CF_PREDICTING) &&
+		!(self->velx | self->vely | self->velz))
+	{
+		self->player->mo->PlayIdle();
+		self->player->velx = self->player->vely = 0;
+	}
+}
+
 //===========================================================================
 //
 // A_Respawn
@@ -2610,14 +2622,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ScaleVelocity)
 
 	// If the actor was previously moving but now is not, and is a player,
 	// update its player variables. (See A_Stop.)
-	if (was_moving &&
-		self->player != NULL &&
-		self->player->mo == self &&
-		!(self->player->cheats & CF_PREDICTING) &&
-		!(self->velx | self->vely | self->velz))
+	if (was_moving)
 	{
-		self->player->mo->PlayIdle();
-		self->player->velx = self->player->vely = 0;
+		CheckStopped(self);
 	}
 }
 
@@ -2634,6 +2641,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ChangeVelocity)
 	ACTION_PARAM_FIXED(y, 1);
 	ACTION_PARAM_FIXED(z, 2);
 	ACTION_PARAM_INT(flags, 3);
+
+	INTBOOL was_moving = self->velx | self->vely | self->velz;
 
 	fixed_t vx = x, vy = y, vz = z;
 	fixed_t sina = finesine[self->angle >> ANGLETOFINESHIFT];
@@ -2655,5 +2664,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ChangeVelocity)
 		self->velx += vx;
 		self->vely += vy;
 		self->velz += vz;
+	}
+
+	if (was_moving)
+	{
+		CheckStopped(self);
 	}
 }

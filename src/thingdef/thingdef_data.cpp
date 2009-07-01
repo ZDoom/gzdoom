@@ -297,7 +297,7 @@ static FFlagDef PlayerPawnFlags[] =
 	DEFINE_FLAG(PPF, NOTHRUSTWHENINVUL, APlayerPawn, PlayerFlags),
 };
 
-static const struct { const PClass *Type; FFlagDef *Defs; int NumDefs; } FlagLists[] =
+static const struct FFlagList { const PClass *Type; FFlagDef *Defs; int NumDefs; } FlagLists[] =
 {
 	{ RUNTIME_CLASS(AActor), 		ActorFlags,		countof(ActorFlags) },
 	{ RUNTIME_CLASS(AInventory), 	InventoryFlags,	countof(InventoryFlags) },
@@ -344,7 +344,7 @@ static FFlagDef *FindFlag (FFlagDef *flags, int numflags, const char *flag)
 FFlagDef *FindFlag (const PClass *type, const char *part1, const char *part2)
 {
 	FFlagDef *def;
-	int i;
+	size_t i;
 
 	if (part2 == NULL)
 	{ // Search all lists
@@ -534,7 +534,7 @@ static int STACK_ARGS varcmp(const void * a, const void * b)
 void InitThingdef()
 {
 	// Sort the flag lists
-	for (int i = 0; i < NUM_FLAG_LISTS; ++i)
+	for (size_t i = 0; i < NUM_FLAG_LISTS; ++i)
 	{
 		qsort (FlagLists[i].Defs, FlagLists[i].NumDefs, sizeof(FFlagDef), flagcmp);
 	}

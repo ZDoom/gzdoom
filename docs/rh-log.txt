@@ -1,4 +1,5 @@
 ﻿June 30, 2009
+- Added A_SetCrosshair.
 - Added A_WeaponBob.
 - Dropped the Hexen player classes' JumpZ down to 9, since the original value
   now works as it originally did.

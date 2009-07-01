@@ -329,6 +329,8 @@ Actor Weapon : Inventory native
 	action native A_ZoomFactor(float scale = 1, int flags = 0);
 	const int ZOOM_INSTANT = 1;
 	const int ZOOM_NOSCALETURNING = 2;
+	
+	action native A_SetCrosshair(int xhair);
 }
 
 ACTOR WeaponGiver : Weapon native

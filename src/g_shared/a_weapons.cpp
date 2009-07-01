@@ -1721,3 +1721,20 @@ DEFINE_ACTION_FUNCTION_PARAMS(AWeapon, A_ZoomFactor)
 		self->player->ReadyWeapon->FOVScale = zoom;
 	}
 }
+
+//===========================================================================
+//
+// A_SetCrosshair
+//
+//===========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AWeapon, A_SetCrosshair)
+{
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_INT(xhair, 0);
+
+	if (self->player != NULL && self->player->ReadyWeapon != NULL)
+	{
+		self->player->ReadyWeapon->Crosshair = xhair;
+	}
+}

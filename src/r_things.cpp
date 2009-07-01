@@ -52,7 +52,6 @@
 #include "v_palette.h"
 
 
-extern FTexture *CrosshairImage;
 extern fixed_t globaluclip, globaldclip;
 
 

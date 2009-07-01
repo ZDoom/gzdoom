@@ -51,8 +51,8 @@ protected:
 	void CalcFracPos (side_t *wall, fixed_t x, fixed_t y);
 	void Remove ();
 
-	static void SpreadLeft (fixed_t r, vertex_t *v1, side_t *feelwall, F3DFloor * ffloor);
-	static void SpreadRight (fixed_t r, side_t *feelwall, fixed_t wallsize, F3DFloor * ffloor);
+	static void SpreadLeft (fixed_t r, vertex_t *v1, side_t *feelwall, F3DFloor *ffloor);
+	static void SpreadRight (fixed_t r, side_t *feelwall, fixed_t wallsize, F3DFloor *ffloor);
 };
 
 class DImpactDecal : public DBaseDecal

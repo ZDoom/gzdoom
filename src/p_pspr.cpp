@@ -67,8 +67,8 @@ void P_SetPsprite (player_t *player, int position, FState *state)
 
 	if (position == ps_weapon)
 	{
-		// A_WeaponReady will re-set this as needed
-		player->cheats &= ~CF_WEAPONREADY;
+		// A_WeaponReady will re-set these as needed
+		player->cheats &= ~(CF_WEAPONREADY | CF_WEAPONBOBBING);
 	}
 
 	psp = &player->psprites[position];
@@ -312,7 +312,7 @@ void P_BobWeapon (player_t *player, pspdef_t *psp, fixed_t *x, fixed_t *y)
 	// [RH] Smooth transitions between bobbing and not-bobbing frames.
 	// This also fixes the bug where you can "stick" a weapon off-center by
 	// shooting it when it's at the peak of its swing.
-	bobtarget = (player->cheats & CF_WEAPONREADY) ? player->bob : 0;
+	bobtarget = (player->cheats & CF_WEAPONBOBBING) ? player->bob : 0;
 	if (curbob != bobtarget)
 	{
 		if (abs (bobtarget - curbob) <= 1*FRACUNIT)
@@ -343,6 +343,29 @@ void P_BobWeapon (player_t *player, pspdef_t *psp, fixed_t *x, fixed_t *y)
 		*x = 0;
 		*y = 0;
 	}
+}
+
+//---------------------------------------------------------------------------
+//
+// PROC A_WeaponBob
+//
+// The player's weapon will bob, but they cannot fire it at this time.
+//
+//---------------------------------------------------------------------------
+
+DEFINE_ACTION_FUNCTION(AInventory, A_WeaponBob)
+{
+	player_t *player = self->player;
+
+	if (player == NULL || player->ReadyWeapon == NULL)
+	{
+		return;
+	}
+
+	// Prepare for bobbing action.
+	player->cheats |= CF_WEAPONBOBBING;
+	player->psprites[ps_weapon].sx = 0;
+	player->psprites[ps_weapon].sy = WEAPONTOP;
 }
 
 //---------------------------------------------------------------------------
@@ -387,7 +410,7 @@ DEFINE_ACTION_FUNCTION(AInventory, A_WeaponReady)
 	}
 
 	// Prepare for bobbing and firing action.
-	player->cheats |= CF_WEAPONREADY;
+	player->cheats |= CF_WEAPONREADY | CF_WEAPONBOBBING;
 	player->psprites[ps_weapon].sx = 0;
 	player->psprites[ps_weapon].sy = WEAPONTOP;
 }

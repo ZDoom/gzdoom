@@ -194,6 +194,7 @@ typedef enum
 	CF_DOUBLEFIRINGSPEED= 1 << 21,		// Player owns a double firing speed artifact
 	CF_EXTREMELYDEAD	= 1 << 22,		// [RH] Reliably let the status bar know about extreme deaths.
 	CF_INFINITEAMMO		= 1 << 23,		// Player owns an infinite ammo artifact
+	CF_WEAPONBOBBING	= 1 << 24,		// [HW] Bob weapon while the player is moving
 } cheat_t;
 
 #define WPIECE1		1

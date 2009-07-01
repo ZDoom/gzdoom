@@ -208,7 +208,7 @@ void DBaseDecal::SetShade (int r, int g, int b)
 }
 
 // Returns the texture the decal stuck to.
-FTextureID DBaseDecal::StickToWall (side_t *wall, fixed_t x, fixed_t y, F3DFloor * ffloor)
+FTextureID DBaseDecal::StickToWall (side_t *wall, fixed_t x, fixed_t y, F3DFloor *ffloor)
 {
 	// Stick the decal at the end of the chain so it appears on top
 	DBaseDecal *next, **prev;
@@ -431,7 +431,7 @@ static side_t *NextWall (const side_t *wall)
 	return NULL;
 }
 
-void DBaseDecal::SpreadLeft (fixed_t r, vertex_t *v1, side_t *feelwall, F3DFloor * ffloor)
+void DBaseDecal::SpreadLeft (fixed_t r, vertex_t *v1, side_t *feelwall, F3DFloor *ffloor)
 {
 	fixed_t ldx, ldy;
 
@@ -475,7 +475,7 @@ void DBaseDecal::SpreadLeft (fixed_t r, vertex_t *v1, side_t *feelwall, F3DFloor
 	}
 }
 
-void DBaseDecal::SpreadRight (fixed_t r, side_t *feelwall, fixed_t wallsize, F3DFloor * ffloor)
+void DBaseDecal::SpreadRight (fixed_t r, side_t *feelwall, fixed_t wallsize, F3DFloor *ffloor)
 {
 	vertex_t *v1;
 	fixed_t x, y, ldx, ldy;
@@ -535,7 +535,7 @@ void DBaseDecal::Spread (const FDecalTemplate *tpl, side_t *wall, fixed_t x, fix
 	SpreadZ = z;
 
 	// Try spreading left first
-		SpreadLeft (rorg - DecalLeft, v1, wall, ffloor);
+	SpreadLeft (rorg - DecalLeft, v1, wall, ffloor);
 	SpreadStack.Clear ();
 
 	// Then try spreading right

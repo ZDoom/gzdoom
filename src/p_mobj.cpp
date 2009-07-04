@@ -859,7 +859,8 @@ void AActor::CopyFriendliness (AActor *other, bool changeTarget)
 	{
 		// LastHeard must be set as well so that A_Look can react to the new target if called
 		LastHeard = target = other->target;
-	}
+	}	
+	health = SpawnHealth();	
 	level.total_monsters += CountsAsKill();
 }
 
@@ -3369,6 +3370,7 @@ AActor *AActor::StaticSpawn (const PClass *type, fixed_t ix, fixed_t iy, fixed_t
 	actor->y = actor->PrevY = iy;
 	actor->z = actor->PrevZ = iz;
 	actor->picnum.SetInvalid();
+	actor->health = actor->SpawnHealth();
 
 	FRandom &rng = bglobal.m_Thinking ? pr_botspawnmobj : pr_spawnmobj;
 
@@ -5256,7 +5258,7 @@ void AActor::Crash()
 		if (crashstate == NULL)
 		{
 			int gibhealth = -abs(GetClass()->Meta.GetMetaInt (AMETA_GibHealth,
-				gameinfo.gametype & GAME_DoomChex ? -GetDefault()->health : -GetDefault()->health/2));
+				gameinfo.gametype & GAME_DoomChex ? -SpawnHealth() : -SpawnHealth()/2));
 
 			if (health < gibhealth)
 			{ // Extreme death
@@ -5281,6 +5283,23 @@ void AActor::SetIdle()
 	SetState(idle);
 }
 
+int AActor::SpawnHealth()
+{
+	if (!(flags3 & MF3_ISMONSTER) || GetDefault()->health == 0)
+	{
+		return GetDefault()->health;
+	}
+	else if (flags & MF_FRIENDLY)
+	{
+		int adj = FixedMul(GetDefault()->health, G_SkillProperty(SKILLP_FriendlyHealth));
+		return (adj <= 0) ? 1 : adj;
+	}
+	else
+	{
+		int adj = FixedMul(GetDefault()->health, G_SkillProperty(SKILLP_MonsterHealth));
+		return (adj <= 0) ? 1 : adj;
+	}
+}
 FDropItem *AActor::GetDropItems()
 {
 	unsigned int index = GetClass()->Meta.GetMetaInt (ACMETA_DropItems) - 1;

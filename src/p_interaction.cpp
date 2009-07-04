@@ -319,19 +319,20 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker)
 EXTERN_CVAR (Int, fraglimit)
 
 static int GibHealth(AActor *actor)
-{
+{	
 	return -abs(
 		actor->GetClass()->Meta.GetMetaInt (
 			AMETA_GibHealth,
 			gameinfo.gametype & GAME_DoomChex ?
-				-actor->GetDefault()->health :
-				-actor->GetDefault()->health/2));
+				-actor->SpawnHealth() :
+				-actor->SpawnHealth()/2));		
 }
 
 void AActor::Die (AActor *source, AActor *inflictor)
 {
 	// Handle possible unmorph on death
 	bool wasgibbed = (health < GibHealth(this));
+
 	AActor *realthis = NULL;
 	int realstyle = 0;
 	int realhealth = 0;
@@ -1264,10 +1265,10 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 		}
 	}
 	
-dopain:
-	if (!(target->flags5 & MF5_NOPAIN) && (inflictor == NULL || !(inflictor->flags5 & MF5_PAINLESS)) && 
-		(pr_damagemobj() < painchance || (inflictor != NULL && (inflictor->flags6 & MF6_FORCEPAIN))) && 
-		!(target->flags & MF_SKULLFLY))
+dopain:	
+	if (!(target->flags5 & MF5_NOPAIN) && (inflictor == NULL || !(inflictor->flags5 & MF5_PAINLESS)) &&
+		!G_SkillProperty(SKILLP_NoPain) && (pr_damagemobj() < painchance ||
+		(inflictor != NULL && (inflictor->flags6 & MF6_FORCEPAIN))) && !(target->flags & MF_SKULLFLY))
 	{
 		if (mod == NAME_Electric)
 		{

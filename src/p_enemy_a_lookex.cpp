@@ -199,7 +199,7 @@ AActor *LookForEnemiesInBlockEx (AActor *lookee, int index)
 		{
 			AActor *targ = other->target;
 			if (targ && targ->target == other && pr_skiptarget() > 100 && lookee->IsFriend (targ) &&
-				targ->health*2 >= targ->GetDefault()->health)
+				targ->health*2 >= targ->SpawnHealth())
 			{
 				continue;
 			}

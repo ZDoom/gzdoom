@@ -1,4 +1,7 @@
-﻿July 3, 2009
+﻿July 4, 2009  (Changes by Graf Zahl)
+- Added code submissions for non-piercing railguns and new skill options.
+
+July 3, 2009
 - ZDoom now disables the input method editor, since it has no east-Asian
   support, and having it open a composition window when you're only expecting
   a single keypress is not so good.

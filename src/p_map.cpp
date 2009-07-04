@@ -3472,7 +3472,29 @@ static bool ProcessRailHit (FTraceResults &res)
 	return true;
 }
 
-void P_RailAttack (AActor *source, int damage, int offset, int color1, int color2, float maxdiff, bool silent, const PClass *puffclass)
+static bool ProcessNoPierceRailHit (FTraceResults &res)
+{
+	if (res.HitType != TRACE_HitActor)
+	{
+		return false;
+	}
+
+	// Invulnerable things completely block the shot
+	if (res.Actor->flags2 & MF2_INVULNERABLE)
+	{
+		return false;
+	}
+
+	// Only process the first hit
+	SRailHit newhit;
+	newhit.HitActor = res.Actor;
+	newhit.Distance = res.Distance - 10*FRACUNIT;	// put blood in front
+	RailHits.Push (newhit);
+
+	return false;
+}
+
+void P_RailAttack (AActor *source, int damage, int offset, int color1, int color2, float maxdiff, bool silent, const PClass *puffclass, bool pierce)
 {
 	fixed_t vx, vy, vz;
 	angle_t angle, pitch;
@@ -3513,9 +3535,18 @@ void P_RailAttack (AActor *source, int damage, int offset, int color1, int color
 	start.Y = FIXED2FLOAT(y1);
 	start.Z = FIXED2FLOAT(shootz);
 
-	Trace (x1, y1, shootz, source->Sector, vx, vy, vz,
-		8192*FRACUNIT, MF_SHOOTABLE, ML_BLOCKEVERYTHING, source, trace,
-		TRACE_PCross|TRACE_Impact, ProcessRailHit);
+	if (pierce)
+	{
+		Trace (x1, y1, shootz, source->Sector, vx, vy, vz,
+			8192*FRACUNIT, MF_SHOOTABLE, ML_BLOCKEVERYTHING, source, trace,
+			TRACE_PCross|TRACE_Impact, ProcessRailHit);
+	}
+	else
+	{
+		Trace (x1, y1, shootz, source->Sector, vx, vy, vz,
+			8192*FRACUNIT, MF_SHOOTABLE, ML_BLOCKEVERYTHING, source, trace,
+			TRACE_PCross|TRACE_Impact, ProcessNoPierceRailHit);
+	}
 
 	// Hurt anything the trace hit
 	unsigned int i;

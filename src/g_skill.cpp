@@ -72,6 +72,9 @@ void FMapInfoParser::ParseSkill ()
 	skill.TextColor = "";
 	skill.Replace.Clear();
 	skill.Replaced.Clear();
+	skill.MonsterHealth = FRACUNIT;
+	skill.FriendlyHealth = FRACUNIT;
+	skill.NoPain = false;
 
 	sc.MustGetString();
 	skill.Name = sc.String;
@@ -226,6 +229,22 @@ void FMapInfoParser::ParseSkill ()
 			sc.MustGetString();
 			skill.TextColor.Format("[%s]", sc.String);
 		}
+		else if (sc.Compare("MonsterHealth"))
+		{
+			ParseAssign();
+			sc.MustGetFloat();
+			skill.MonsterHealth = FLOAT2FIXED(sc.Float);				
+		}
+		else if (sc.Compare("FriendlyHealth"))
+		{
+			ParseAssign();
+			sc.MustGetFloat();
+			skill.FriendlyHealth = FLOAT2FIXED(sc.Float);
+		}
+		else if (sc.Compare("NoPain"))
+		{
+			skill.NoPain = true;
+		}
 		else if (!ParseCloseBrace())
 		{
 			// Unknown
@@ -302,6 +321,15 @@ int G_SkillProperty(ESkillProperty prop)
 
 		case SKILLP_ACSReturn:
 			return AllSkills[gameskill].ACSReturn;
+		
+		case SKILLP_MonsterHealth:
+			return AllSkills[gameskill].MonsterHealth;
+
+		case SKILLP_FriendlyHealth:
+			return AllSkills[gameskill].FriendlyHealth;
+
+		case SKILLP_NoPain:			
+			return AllSkills[gameskill].NoPain;			
 		}
 	}
 	return 0;
@@ -353,6 +381,9 @@ FSkillInfo &FSkillInfo::operator=(const FSkillInfo &other)
 	TextColor = other.TextColor;
 	Replace = other.Replace;
 	Replaced = other.Replaced;
+	MonsterHealth = other.MonsterHealth;
+	FriendlyHealth = other.FriendlyHealth;
+	NoPain = other.NoPain;
 	return *this;
 }
 

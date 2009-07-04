@@ -76,7 +76,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Srcr1Attack)
 	}
 
 	const PClass *fx = PClass::FindClass("SorcererFX1");
-	if (self->health > (self->GetDefault()->health/3)*2)
+	if (self->health > (self->SpawnHealth()/3)*2)
 	{ // Spit one fireball
 		P_SpawnMissileZ (self, self->z + 48*FRACUNIT, self->target, fx );
 	}
@@ -90,7 +90,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Srcr1Attack)
 			P_SpawnMissileAngleZ (self, self->z + 48*FRACUNIT, fx, angle-ANGLE_1*3, velz);
 			P_SpawnMissileAngleZ (self, self->z + 48*FRACUNIT, fx, angle+ANGLE_1*3, velz);
 		}
-		if (self->health < self->GetDefault()->health/3)
+		if (self->health < self->SpawnHealth()/3)
 		{ // Maybe attack again
 			if (self->special1)
 			{ // Just attacked, so don't attack again
@@ -171,7 +171,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Srcr2Decide)
 		192, 120, 120, 120, 64, 64, 32, 16, 0
 	};
 
-	unsigned int chanceindex = self->health / (self->GetDefault()->health/8);
+	unsigned int chanceindex = self->health / ((self->SpawnHealth()/8 == 0) ? 1 : self->SpawnHealth()/8);
 	if (chanceindex >= countof(chance))
 	{
 		chanceindex = countof(chance) - 1;
@@ -205,7 +205,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Srcr2Attack)
 		P_TraceBleed (damage, self->target, self);
 		return;
 	}
-	chance = self->health < self->GetDefault()->health/2 ? 96 : 48;
+	chance = self->health < self->SpawnHealth()/2 ? 96 : 48;
 	if (pr_s2a() < chance)
 	{ // Wizard spawners
 

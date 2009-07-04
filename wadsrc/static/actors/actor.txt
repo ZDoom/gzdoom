@@ -175,7 +175,7 @@ ACTOR Actor native //: Thinker
 	action native A_Jump(int chance, state label, ...);
 	action native A_CustomMissile(class<Actor> missiletype, float spawnheight = 32, int spawnofs_xy = 0, float angle = 0, int flags = 0, float pitch = 0);
 	action native A_CustomBulletAttack(float spread_xy, float spread_z, int	numbullets, int damageperbullet, class<Actor> pufftype = "BulletPuff", float range = 0, bool aimfacing = false);
-	action native A_CustomRailgun(int damage, int spawnofs_xy = 0, color color1 = "", color color2 = "", bool silent = false, bool aim = false, float maxdiff = 0, class<Actor> pufftype = "BulletPuff");
+	action native A_CustomRailgun(int damage, int spawnofs_xy = 0, color color1 = "", color color2 = "", int flags = 0, bool aim = false, float maxdiff = 0, class<Actor> pufftype = "BulletPuff");
 	action native A_JumpIfHealthLower(int health, state label);
 	action native A_JumpIfCloser(float distance, state label);
 	action native A_JumpIfInventory(class<Inventory> itemtype, int itemamount, state label);

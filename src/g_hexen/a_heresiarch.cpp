@@ -426,7 +426,7 @@ void A_StopBalls(AActor *scary)
 	{
 		actor->StopBall = RUNTIME_CLASS(ASorcBall2);	// Blue
 	}
-	else if((actor->health < (actor->GetDefault()->health >> 1)) &&
+	else if((actor->health < (actor->SpawnHealth() >> 1)) &&
 			(chance < 200))
 	{
 		actor->StopBall = RUNTIME_CLASS(ASorcBall3);	// Green
@@ -566,7 +566,7 @@ void ASorcBall3::CastSorcererSpell ()
 	ang1 = angle - ANGLE_45;
 	ang2 = angle + ANGLE_45;
 	const PClass *cls = PClass::FindClass("SorcFX3");
-	if (health < (GetDefault()->health/3))
+	if (health < (SpawnHealth()/3))
 	{	// Spawn 2 at a time
 		mo = P_SpawnMissileAngle(parent, cls, ang1, 4*FRACUNIT);
 		if (mo) mo->target = parent;

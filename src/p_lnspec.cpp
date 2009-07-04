@@ -993,8 +993,8 @@ FUNC(LS_DamageThing)
 			else
 			{
 				it->health -= arg0;
-				if (it->GetDefault()->health < it->health)
-					it->health = it->GetDefault()->health;
+				if (it->SpawnHealth() < it->health)
+					it->health = it->SpawnHealth();
 			}
 		}
 		else if (arg0 > 0)

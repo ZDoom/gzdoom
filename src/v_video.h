@@ -195,13 +195,6 @@ public:
 	void STACK_ARGS DrawText (FFont *font, int normalcolor, int x, int y, const char *string, ...);
 	void STACK_ARGS DrawChar (FFont *font, int normalcolor, int x, int y, BYTE character, ...);
 
-protected:
-	BYTE *Buffer;
-	int Width;
-	int Height;
-	int Pitch;
-	int LockCount;
-
 	struct DrawParms
 	{
 		fixed_t x, y;
@@ -233,6 +226,13 @@ protected:
 		INTBOOL bilinear;
 		FRenderStyle style;
 	};
+
+protected:
+	BYTE *Buffer;
+	int Width;
+	int Height;
+	int Pitch;
+	int LockCount;
 
 	bool ClipBox (int &left, int &top, int &width, int &height, const BYTE *&src, const int srcpitch) const;
 	virtual void STACK_ARGS DrawTextureV (FTexture *img, int x, int y, uint32 tag, va_list tags);

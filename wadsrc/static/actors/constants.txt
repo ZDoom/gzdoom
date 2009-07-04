@@ -51,6 +51,9 @@ const int MRF_UNDOBYDEATH = 512;
 const int MRF_UNDOBYDEATHFORCED = 1024;
 const int MRF_UNDOBYDEATHSAVES = 2048;
 
+const int RGF_SILENT = 1;
+const int RGF_NOPIERCING = 2;
+
 // constants for A_PlaySound
 enum
 {

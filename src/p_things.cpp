@@ -393,12 +393,12 @@ int P_Thing_Damage (int tid, AActor *whofor0, int amount, FName type)
 			{
 				P_DamageMobj (actor, NULL, whofor0, amount, type);
 			}
-			else if (actor->health < actor->GetDefault()->health)
+			else if (actor->health < actor->SpawnHealth())
 			{
 				actor->health -= amount;
-				if (actor->health > actor->GetDefault()->health)
+				if (actor->health > actor->SpawnHealth())
 				{
-					actor->health = actor->GetDefault()->health;
+					actor->health = actor->SpawnHealth();
 				}
 				if (actor->player != NULL)
 				{

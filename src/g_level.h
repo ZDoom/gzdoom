@@ -527,7 +527,10 @@ enum ESkillProperty
 	SKILLP_AutoUseHealth,
 	SKILLP_SpawnFilter,
 	SKILLP_EasyBossBrain,
-	SKILLP_ACSReturn
+	SKILLP_ACSReturn,
+	SKILLP_MonsterHealth,
+	SKILLP_FriendlyHealth,
+	SKILLP_NoPain
 };
 int G_SkillProperty(ESkillProperty prop);
 
@@ -558,6 +561,9 @@ struct FSkillInfo
 	FString TextColor;
 	SkillActorReplacement Replace;
 	SkillActorReplacement Replaced;
+	fixed_t MonsterHealth;
+	fixed_t FriendlyHealth;
+	bool NoPain;
 
 	FSkillInfo() {}
 	FSkillInfo(const FSkillInfo &other)

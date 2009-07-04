@@ -2129,11 +2129,13 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 								spawned->FriendPlayer = player + 1;
 								spawned->flags |= MF_FRIENDLY;
 								spawned->LastHeard = players[player].mo;
+								spawned->health = spawned->SpawnHealth();
 							}
 							else if (type == DEM_SUMMONFOE || type == DEM_SUMMONFOE2)
 							{
 								spawned->FriendPlayer = 0;
 								spawned->flags &= ~MF_FRIENDLY;
+								spawned->health = spawned->SpawnHealth();
 							}
 						}
 						if (type >= DEM_SUMMON2 && type <= DEM_SUMMONFOE2)

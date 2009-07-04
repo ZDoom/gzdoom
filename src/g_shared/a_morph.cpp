@@ -450,7 +450,7 @@ bool P_UndoMonsterMorph (AMorphedMonster *beast, bool force)
 	actor->flags4 = (actor->flags4 & ~MF4_NOHATEPLAYERS) | (beast->flags4 & MF4_NOHATEPLAYERS);
 	if (!(beast->FlagsSave & MF_JUSTHIT))
 		actor->renderflags &= ~RF_INVISIBLE;
-	actor->health = actor->GetDefault()->health;
+	actor->health = actor->SpawnHealth();
 	actor->velx = beast->velx;
 	actor->vely = beast->vely;
 	actor->velz = beast->velz;

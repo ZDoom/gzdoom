@@ -639,6 +639,9 @@ public:
 	// Enter the crash state
 	void Crash();
 
+	// Return starting health adjusted by skill level
+	int SpawnHealth();
+
 	// Check for monsters that count as kill but excludes all friendlies.
 	bool CountsAsKill() const
 	{

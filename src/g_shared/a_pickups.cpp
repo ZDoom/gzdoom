@@ -233,7 +233,7 @@ bool P_GiveBody (AActor *actor, int num)
 	}
 	else
 	{
-		max = actor->GetDefault()->health;
+		max = actor->SpawnHealth();
 		if (num < 0)
 		{
 			num = max * -num / 100;

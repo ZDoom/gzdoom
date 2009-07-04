@@ -215,7 +215,6 @@ void FMapInfoParser::ParseGameInfo()
 			{
 				// border = {size, offset, tr, t, tl, r, l ,br, b, bl};
 				char *graphics[8] = {DoomBorder.tr, DoomBorder.t, DoomBorder.tl, DoomBorder.r, DoomBorder.l, DoomBorder.br, DoomBorder.b, DoomBorder.bl};
-				sc.MustGetToken('{');
 				sc.MustGetToken(TK_IntConst);
 				DoomBorder.offset = sc.Number;
 				sc.MustGetToken(',');
@@ -232,7 +231,6 @@ void FMapInfoParser::ParseGameInfo()
 					if(len < 8) // end with a null byte if the string is less than 8 chars.
 						graphics[i][len] = 0;
 				}
-				sc.MustGetToken('}');
 			}
 		}
 		// Insert valid keys here.

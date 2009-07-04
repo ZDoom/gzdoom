@@ -1,4 +1,7 @@
-﻿June 30, 2009
+﻿July 3, 2009
+- Fixed: The border definition in MAPINFO's gameinfo block used extra braces.
+
+June 30, 2009
 - Added A_SetCrosshair.
 - Added A_WeaponBob.
 - Dropped the Hexen player classes' JumpZ down to 9, since the original value

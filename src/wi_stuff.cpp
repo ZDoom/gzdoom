@@ -1648,7 +1648,7 @@ void WI_updateStats ()
 {
 	WI_updateAnimatedBack ();
 
-	if ((!gameinfo.intermissioncounter || acceleratestage) && sp_state != 10)
+	if (acceleratestage && sp_state != 10)
 	{
 		if (acceleratestage)
 		{
@@ -1673,7 +1673,7 @@ void WI_updateStats ()
 			if (!(bcnt&3))
 				S_Sound (CHAN_VOICE | CHAN_UI, "intermission/tick", 1, ATTN_NONE);
 		}
-		if (cnt_kills[0] >= plrs[me].skills)
+		if (!gameinfo.intermissioncounter || cnt_kills[0] >= plrs[me].skills)
 		{
 			cnt_kills[0] = plrs[me].skills;
 			S_Sound (CHAN_VOICE | CHAN_UI, "intermission/nextstage", 1, ATTN_NONE);
@@ -1689,7 +1689,7 @@ void WI_updateStats ()
 			if (!(bcnt&3))
 				S_Sound (CHAN_VOICE | CHAN_UI, "intermission/tick", 1, ATTN_NONE);
 		}
-		if (cnt_items[0] >= plrs[me].sitems)
+		if (!gameinfo.intermissioncounter || cnt_items[0] >= plrs[me].sitems)
 		{
 			cnt_items[0] = plrs[me].sitems;
 			S_Sound (CHAN_VOICE | CHAN_UI, "intermission/nextstage", 1, ATTN_NONE);
@@ -1705,7 +1705,7 @@ void WI_updateStats ()
 			if (!(bcnt&3))
 				S_Sound (CHAN_VOICE | CHAN_UI, "intermission/tick", 1, ATTN_NONE);
 		}
-		if (cnt_secret[0] >= plrs[me].ssecret)
+		if (!gameinfo.intermissioncounter || cnt_secret[0] >= plrs[me].ssecret)
 		{
 			cnt_secret[0] = plrs[me].ssecret;
 			S_Sound (CHAN_VOICE | CHAN_UI, "intermission/nextstage", 1, ATTN_NONE);
@@ -1724,13 +1724,13 @@ void WI_updateStats ()
 			cnt_total_time += 3;
 		}
 
-		if (cnt_time >= plrs[me].stime / TICRATE)
+		if (!gameinfo.intermissioncounter || cnt_time >= plrs[me].stime / TICRATE)
 			cnt_time = plrs[me].stime / TICRATE;
 
-		if (cnt_total_time >= wbs->totaltime / TICRATE)
+		if (!gameinfo.intermissioncounter || cnt_total_time >= wbs->totaltime / TICRATE)
 			cnt_total_time = wbs->totaltime / TICRATE;
 
-		if (cnt_par >= wbs->partime / TICRATE)
+		if (!gameinfo.intermissioncounter || cnt_par >= wbs->partime / TICRATE)
 		{
 			cnt_par = wbs->partime / TICRATE;
 

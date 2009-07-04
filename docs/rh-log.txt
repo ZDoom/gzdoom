@@ -1,4 +1,6 @@
 ﻿July 3, 2009
+- Fixed: Setting intermissioncounter to false in gameinfo drew all the stats
+  at once, instead of revealing them one line at a time.
 - Fixed: The border definition in MAPINFO's gameinfo block used extra braces.
 
 June 30, 2009

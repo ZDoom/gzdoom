@@ -1,4 +1,7 @@
 ﻿July 3, 2009
+- ZDoom now disables the input method editor, since it has no east-Asian
+  support, and having it open a composition window when you're only expecting
+  a single keypress is not so good.
 - Fixed: Setting intermissioncounter to false in gameinfo drew all the stats
   at once, instead of revealing them one line at a time.
 - Fixed: The border definition in MAPINFO's gameinfo block used extra braces.

@@ -3,7 +3,7 @@
 ** System-specific startup code. Eventually calls D_DoomMain.
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2007 Randy Heit
+** Copyright 1998-2009 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -916,6 +916,18 @@ void DoMain (HINSTANCE hInstance)
 */
 		width = 512;
 		height = 384;
+
+		// Disable the input method editor (not present in Win95/NT4)
+		HMODULE imm32 = LoadLibrary("imm32.dll");
+		if (imm32 != NULL)
+		{
+			BOOL (WINAPI *DisableIME)(DWORD) = (BOOL(WINAPI *)(DWORD))GetProcAddress(imm32, "ImmDisableIME");
+			if (DisableIME != NULL)
+			{
+				DisableIME(0);
+			}
+			FreeLibrary(imm32);
+		}
 
 		// Many Windows structures that specify their size do so with the first
 		// element. DEVMODE is not one of those structures.

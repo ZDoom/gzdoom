@@ -2409,6 +2409,7 @@ enum
 	APROP_SpawnHealth   = 17,
 	APROP_Dropped		= 18,
 	APROP_Notarget		= 19,
+	APROP_Species		= 20,
 };	
 
 // These are needed for ACS's APROP_RenderStyle
@@ -2557,6 +2558,10 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 	case APROP_ActiveSound:
 		actor->ActiveSound = FBehavior::StaticLookupString(value);
 		break;
+
+	case APROP_Species:
+		actor->Species = FBehavior::StaticLookupString(value);
+		break;
 	}
 }
 
@@ -2623,6 +2628,53 @@ int DLevelScript::GetActorProperty (int tid, int property)
 							}
 	default:				return 0;
 	}
+}
+
+
+
+int DLevelScript::CheckActorProperty (int tid, int property, int value)
+{
+	AActor *actor = SingleActorFromTID (tid, activator);
+	const char *string = NULL;
+	if (actor == NULL)
+	{
+		return 0;
+	}
+	switch (property)
+	{
+		// Default
+		default:				return 0;
+
+		// Straightforward integer values:
+		case APROP_Health:
+		case APROP_Speed:
+		case APROP_Damage:
+		case APROP_Alpha:
+		case APROP_RenderStyle:
+		case APROP_Gravity:
+		case APROP_SpawnHealth:
+		case APROP_JumpZ:
+			return (GetActorProperty(tid, property) == value);
+
+		// Boolean values need to compare to a binary version of value
+		case APROP_Ambush:
+		case APROP_Dropped:
+		case APROP_ChaseGoal:
+		case APROP_Frightened:
+		case APROP_Friendly:
+		case APROP_Notarget:
+			return (GetActorProperty(tid, property) == (!!value));
+
+		// Strings are not covered by GetActorProperty, so make the check here
+		case APROP_SeeSound:	string = actor->SeeSound; break;
+		case APROP_AttackSound:	string = actor->AttackSound; break;
+		case APROP_PainSound:	string = actor->PainSound; break;
+		case APROP_DeathSound:	string = actor->DeathSound; break;
+		case APROP_ActiveSound:	string = actor->ActiveSound; break; 
+		case APROP_Species:		string = actor->GetSpecies(); break;
+	}
+	if (string == NULL) string = "";
+	return (!stricmp(string, FBehavior::StaticLookupString(value)));
 }
 
 enum
@@ -2804,6 +2856,7 @@ enum EACSFunctions
 	ACSF_GetArmorType,
 	ACSF_SpawnSpotForced,
 	ACSF_SpawnSpotFacingForced,
+	ACSF_CheckActorProperty,
 };
 
 int DLevelScript::SideFromID(int id, int side)
@@ -2967,6 +3020,9 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 
 		case ACSF_SpawnSpotFacingForced:
 			return DoSpawnSpotFacing(args[0], args[1], args[2], true);
+
+		case ACSF_CheckActorProperty:
+			return (CheckActorProperty(args[0], args[1], args[2]));
 
 		default:
 			break;

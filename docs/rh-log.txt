@@ -1,4 +1,7 @@
-﻿July 4, 2009  (Changes by Graf Zahl)
+﻿July 5, 2009  (Changes by Graf Zahl)
+- Added Gez's CheckActorProperty submission.
+
+July 4, 2009  (Changes by Graf Zahl)
 - Added code submissions for non-piercing railguns and new skill options.
 
 July 3, 2009

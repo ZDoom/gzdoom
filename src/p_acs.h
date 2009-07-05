@@ -725,6 +725,7 @@ protected:
 	void SetActorProperty (int tid, int property, int value);
 	void DoSetActorProperty (AActor *actor, int property, int value);
 	int GetActorProperty (int tid, int property);
+	int CheckActorProperty (int tid, int property, int value);
 	int GetPlayerInput (int playernum, int inputnum);
 
 	int LineFromID(int id);

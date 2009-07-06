@@ -1279,19 +1279,24 @@ void FMODSoundRenderer::PrintDriversList()
 FString FMODSoundRenderer::GatherStats()
 {
 	int channels;
-	float dsp, stream, update, total;
+	float dsp, stream, update, geometry, total;
 	FString out;
 
 	channels = 0;
-	total = update = stream = dsp = 0;
+	total = update = geometry = stream = dsp = 0;
 	Sys->getChannelsPlaying(&channels);
-	Sys->getCPUUsage(&dsp, &stream, &update, &total);
+	Sys->getCPUUsage(&dsp, &stream,
+#if FMOD_VERSION >= 0x42501
+		&geometry,
+#endif
+		&update, &total);
 
 	out.Format ("%d channels,"TEXTCOLOR_YELLOW"%5.2f"TEXTCOLOR_NORMAL"%% CPU "
 		"(DSP:"TEXTCOLOR_YELLOW"%2.2f"TEXTCOLOR_NORMAL"%%  "
 		"Stream:"TEXTCOLOR_YELLOW"%2.2f"TEXTCOLOR_NORMAL"%%  "
+		"Geometry:"TEXTCOLOR_YELLOW"%2.2f"TEXTCOLOR_NORMAL"%%  "
 		"Update:"TEXTCOLOR_YELLOW"%2.2f"TEXTCOLOR_NORMAL"%%)",
-		channels, total, dsp, stream, update);
+		channels, total, dsp, stream, geometry, update);
 	return out;
 }
 

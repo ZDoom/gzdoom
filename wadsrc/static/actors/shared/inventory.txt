@@ -15,8 +15,7 @@ ACTOR Inventory native
 	action native A_Light1();
 	action native A_Light2();
 	action native A_LightInverse();
-	action native A_WeaponReady();
-	action native A_WeaponBob();
+	action native A_WeaponReady(int flags = 0);
 	action native A_Lower();
 	action native A_Raise();
 	action native A_FirePistol();

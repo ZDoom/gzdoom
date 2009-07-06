@@ -345,50 +345,21 @@ void P_BobWeapon (player_t *player, pspdef_t *psp, fixed_t *x, fixed_t *y)
 	}
 }
 
-//---------------------------------------------------------------------------
-//
-// PROC A_WeaponBob
-//
-// The player's weapon will bob, but they cannot fire it at this time.
-//
-//---------------------------------------------------------------------------
-
-DEFINE_ACTION_FUNCTION(AInventory, A_WeaponBob)
-{
-	player_t *player = self->player;
-
-	if (player == NULL || player->ReadyWeapon == NULL)
-	{
-		return;
-	}
-
-	// Prepare for bobbing action.
-	player->cheats |= CF_WEAPONBOBBING;
-	player->psprites[ps_weapon].sx = 0;
-	player->psprites[ps_weapon].sy = WEAPONTOP;
-}
-
-//---------------------------------------------------------------------------
+//============================================================================
 //
 // PROC A_WeaponReady
 //
-// The player can fire the weapon or change to another weapon at this time.
+// Readies a weapon for firing or bobbing with its two ancillary functions,
+// DoReadyWeaponToFire() and DoReadyWeaponToBob().
 //
-//---------------------------------------------------------------------------
+//============================================================================
 
-DEFINE_ACTION_FUNCTION(AInventory, A_WeaponReady)
+void DoReadyWeaponToFire (AActor * self)
 {
-	player_t *player = self->player;
+	player_t *player;
 	AWeapon *weapon;
 
-	if (NULL == player)
-	{
-		return;
-	}
-
-	weapon = player->ReadyWeapon;
-
-	if (NULL == weapon)
+	if (!self || !(player = self->player) || !(weapon = player->ReadyWeapon))
 	{
 		return;
 	}
@@ -409,10 +380,39 @@ DEFINE_ACTION_FUNCTION(AInventory, A_WeaponReady)
 		}
 	}
 
-	// Prepare for bobbing and firing action.
-	player->cheats |= CF_WEAPONREADY | CF_WEAPONBOBBING;
+	// Prepare for firing action.
+	player->cheats |= CF_WEAPONREADY;
+	return;
+}
+
+void DoReadyWeaponToBob (AActor * self)
+{
+	player_t *player;
+
+	if (!self || !(player = self->player) || !(player->ReadyWeapon))
+	{
+		return;
+	}
+
+	// Prepare for bobbing action.
+	player->cheats |= CF_WEAPONBOBBING;
 	player->psprites[ps_weapon].sx = 0;
 	player->psprites[ps_weapon].sy = WEAPONTOP;
+}
+
+enum EWRF_Options
+{
+	WRF_NoBob = 1,
+	WRF_NoFire = 2,
+};
+
+DEFINE_ACTION_FUNCTION_PARAMS(AInventory, A_WeaponReady)
+{
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_INT(paramflags, 0);
+
+	if (!(paramflags & WRF_NoFire)) DoReadyWeaponToFire(self);
+	if (!(paramflags & WRF_NoBob)) DoReadyWeaponToBob(self);
 }
 
 //---------------------------------------------------------------------------

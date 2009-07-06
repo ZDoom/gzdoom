@@ -59,6 +59,7 @@ public:
 	void DrawWaveDebug(int mode);
 
 private:
+	DWORD ActiveFMODVersion;
 	int SFXPaused;
 	bool InitSuccess;
 	bool DSPLocked;

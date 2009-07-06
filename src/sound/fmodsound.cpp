@@ -671,27 +671,33 @@ bool FMODSoundRenderer::Init()
 	}
 
 	const char *wrongver = NULL;
-	if (version < FMOD_VERSION)
+	if (version < 0x42000)
 	{
 		wrongver = "an old";
 	}
+#if FMOD_VERSION < 0x42700
+	else if ((version & 0xFFFF00) > 0x42600)
+#else
 	else if ((version & 0xFFFF00) > (FMOD_VERSION & 0xFFFF00))
+#endif
 	{
 		wrongver = "a new";
 	}
 	if (wrongver != NULL)
 	{
 		Printf (" "TEXTCOLOR_ORANGE"Error! You are using %s version of FMOD (%x.%02x.%02x).\n"
-				" "TEXTCOLOR_ORANGE"This program requires version %x.%02x.%02x\n",
+				" "TEXTCOLOR_ORANGE"This program was built for version %x.%02x.%02x\n",
 				wrongver,
 				version >> 16, (version >> 8) & 255, version & 255,
 				FMOD_VERSION >> 16, (FMOD_VERSION >> 8) & 255, FMOD_VERSION & 255);
 		return false;
 	}
+	ActiveFMODVersion = version;
 
 	if (!ShowedBanner)
 	{
 		Printf("FMOD Sound System, copyright © Firelight Technologies Pty, Ltd., 1994-2009.\n");
+		Printf("Loaded FMOD version %x.%02x.%02x\n", version >> 16, (version >> 8) & 255, version & 255);
 		ShowedBanner = true;
 	}
 #ifdef _WIN32
@@ -1285,11 +1291,31 @@ FString FMODSoundRenderer::GatherStats()
 	channels = 0;
 	total = update = geometry = stream = dsp = 0;
 	Sys->getChannelsPlaying(&channels);
-	Sys->getCPUUsage(&dsp, &stream,
 #if FMOD_VERSION >= 0x42501
-		&geometry,
+	// We were built with an FMOD with the geometry parameter.
+	if (ActiveFMODVersion >= 0x42501)
+	{ // And we are running with an FMOD that includes it.
+		FMOD_System_GetCPUUsage((FMOD_SYSTEM *)Sys, &dsp, &stream, &geometry, &update, &total);
+	}
+	else
+	{ // And we are running with an FMOD that does not include it.
+	  // Cast the function to the appropriate type and call through the cast,
+	  // since the headers are for the newer version.
+		((FMOD_RESULT (F_API *)(FMOD_SYSTEM *, float *, float *, float *, float *))
+			FMOD_System_GetCPUUsage)((FMOD_SYSTEM *)Sys, &dsp, &stream, &update, &total);
+	}
+#else
+	// Same as above, except the headers we used do not include the geometry parameter.
+	if (ActiveFMODVersion >= 0x42501)
+	{
+		((FMOD_RESULT (F_API *)(FMOD_SYSTEM *, float *, float *, float *, float *, float *))
+			FMOD_System_GetCPUUsage)((FMOD_SYSTEM *)Sys, &dsp, &stream, &geometry, &update, &total);
+	}
+	else
+	{
+		FMOD_System_GetCPUUsage((FMOD_SYSTEM *)Sys, &dsp, &stream, &update, &total);
+	}
 #endif
-		&update, &total);
 
 	out.Format ("%d channels,"TEXTCOLOR_YELLOW"%5.2f"TEXTCOLOR_NORMAL"%% CPU "
 		"(DSP:"TEXTCOLOR_YELLOW"%2.2f"TEXTCOLOR_NORMAL"%%  "

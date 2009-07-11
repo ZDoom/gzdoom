@@ -1,3 +1,5 @@
+#ifndef NO_XINPUT
+
 // HEADER FILES ------------------------------------------------------------
 
 #define WIN32_LEAN_AND_MEAN
@@ -26,8 +28,6 @@
 
 // MACROS ------------------------------------------------------------------
 
-#ifndef NO_XINPUT
-
 // TYPES -------------------------------------------------------------------
 
 typedef DWORD (WINAPI *XInputGetStateType)(DWORD index, XINPUT_STATE *state);
@@ -43,8 +43,6 @@ public:
 
 	void ProcessInput();
 	void AddAxes(float axes[NUM_JOYAXIS]);
-	FString GetIdentifier();
-	void SetDefaultConfig();
 	bool IsConnected() { return Connected; }
 
 	// IJoystickConfig interface
@@ -61,6 +59,14 @@ public:
 	void SetAxisDeadZone(int axis, float deadzone);
 	void SetAxisMap(int axis, EJoyAxis gameaxis);
 	void SetAxisScale(int axis, float scale);
+
+	bool IsSensitivityDefault();
+	bool IsAxisDeadZoneDefault(int axis);
+	bool IsAxisMapDefault(int axis);
+	bool IsAxisScaleDefault(int axis);
+
+	void SetDefaultConfig();
+	FString GetIdentifier();
 
 protected:
 	struct AxisInfo
@@ -170,7 +176,7 @@ FXInputController::FXInputController(int index)
 {
 	Index = index;
 	Connected = false;
-	SetDefaultConfig();
+	M_LoadJoystickConfig(this);
 }
 
 //==========================================================================
@@ -181,6 +187,7 @@ FXInputController::FXInputController(int index)
 
 FXInputController::~FXInputController()
 {
+	M_SaveJoystickConfig(this);
 }
 
 //==========================================================================
@@ -421,6 +428,17 @@ void FXInputController::SetSensitivity(float scale)
 
 //==========================================================================
 //
+// FXInputController :: IsSensitivityDefault
+//
+//==========================================================================
+
+bool FXInputController::IsSensitivityDefault()
+{
+	return Multiplier == 1;
+}
+
+//==========================================================================
+//
 // FXInputController :: GetNumAxes
 //
 //==========================================================================
@@ -530,6 +548,51 @@ void FXInputController::SetAxisScale(int axis, float scale)
 	{
 		Axes[axis].Multiplier = scale;
 	}
+}
+
+//===========================================================================
+//
+// FXInputController :: IsAxisDeadZoneDefault
+//
+//===========================================================================
+
+bool FXInputController::IsAxisDeadZoneDefault(int axis)
+{
+	if (unsigned(axis) < NUM_AXES)
+	{
+		return Axes[axis].DeadZone == DefaultAxes[axis].DeadZone;
+	}
+	return true;
+}
+
+//===========================================================================
+//
+// FXInputController :: IsAxisScaleDefault
+//
+//===========================================================================
+
+bool FXInputController::IsAxisScaleDefault(int axis)
+{
+	if (unsigned(axis) < NUM_AXES)
+	{
+		return Axes[axis].Multiplier == DefaultAxes[axis].Multiplier;
+	}
+	return true;
+}
+
+//===========================================================================
+//
+// FXInputController :: IsAxisMapDefault
+//
+//===========================================================================
+
+bool FXInputController::IsAxisMapDefault(int axis)
+{
+	if (unsigned(axis) < NUM_AXES)
+	{
+		return Axes[axis].GameAxis == DefaultAxes[axis].GameAxis;
+	}
+	return true;
 }
 
 //==========================================================================
@@ -694,4 +757,3 @@ void I_StartupXInput()
 }
 
 #endif
-

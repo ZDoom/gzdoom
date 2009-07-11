@@ -53,6 +53,7 @@
 
 #include "i_music.h"
 #include "i_input.h"
+#include "m_joy.h"
 
 #include "v_video.h"
 #include "v_text.h"

@@ -412,6 +412,7 @@ if( WIN32 )
 		win32/i_keyboard.cpp
 		win32/i_mouse.cpp
 		win32/i_dijoy.cpp
+		win32/i_rawps2.cpp
 		win32/i_xinput.cpp
 		win32/i_main.cpp
 		win32/i_movie.cpp
@@ -527,6 +528,7 @@ add_executable( zdoom WIN32
 	m_argv.cpp
 	m_bbox.cpp
 	m_cheat.cpp
+	m_joy.cpp
 	m_menu.cpp
 	m_misc.cpp
 	m_options.cpp

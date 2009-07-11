@@ -75,6 +75,7 @@
 #include "d_net.h"
 #include "d_event.h"
 #include "p_acs.h"
+#include "m_joy.h"
 
 #include <zlib.h>
 

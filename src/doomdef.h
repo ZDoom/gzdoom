@@ -217,18 +217,6 @@ enum ESkillLevels
 
 #define NUM_KEYS				0x1C4
 
-enum EJoyAxis
-{
-	JOYAXIS_None = -1,
-	JOYAXIS_Yaw,
-	JOYAXIS_Pitch,
-	JOYAXIS_Forward,
-	JOYAXIS_Side,
-	JOYAXIS_Up,
-//	JOYAXIS_Roll,		// Ha ha. No roll for you.
-	NUM_JOYAXIS,
-};
-
 // [RH] dmflags bits (based on Q2's)
 enum
 {

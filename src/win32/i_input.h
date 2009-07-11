@@ -44,26 +44,9 @@ FString I_GetFromClipboard (bool windows_has_no_selection_clipboard);
 
 void I_GetEvent();
 
-struct NOVTABLE IJoystickConfig
-{
-	virtual FString GetName() = 0;
-	virtual float GetSensitivity() = 0;
-	virtual void SetSensitivity(float scale) = 0;
-
-	virtual int GetNumAxes() = 0;
-	virtual float GetAxisDeadZone(int axis) = 0;
-	virtual EJoyAxis GetAxisMap(int axis) = 0;
-	virtual const char *GetAxisName(int axis) = 0;
-	virtual float GetAxisScale(int axis) = 0;
-
-	virtual void SetAxisDeadZone(int axis, float zone) = 0;
-	virtual void SetAxisMap(int axis, EJoyAxis gameaxis) = 0;
-	virtual void SetAxisScale(int axis, float scale) = 0;
-};
-void I_GetAxes(float axes[NUM_JOYAXIS]);
-void I_GetJoysticks(TArray<IJoystickConfig *> &sticks);
-
 #ifdef USE_WINDOWS_DWORD
+#include "m_joy.h"
+
 // Don't make these definitions available to the main body of the source code.
 
 struct tagRAWINPUT;
@@ -138,7 +121,7 @@ enum
 {
 	INPUT_DIJoy,
 	INPUT_XInput,
-	INPUT_PS2EMS,
+	INPUT_RawPS2,
 	NUM_JOYDEVICES
 };
 
@@ -149,8 +132,11 @@ void I_CheckNativeMouse(bool prefer_native);
 void I_StartupKeyboard();
 void I_StartupXInput();
 void I_StartupDirectInputJoystick();
+void I_StartupRawPS2();
+bool I_IsPS2Adapter(DWORD vidpid);
 
 void Joy_GenerateButtonEvents(int oldbuttons, int newbuttons, int numbuttons, int base);
+void Joy_GenerateButtonEvents(int oldbuttons, int newbuttons, int numbuttons, const int *keys);
 double Joy_RemoveDeadZone(double axisval, double deadzone, BYTE *buttons);
 
 // USB HID usage page numbers

@@ -336,9 +336,12 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					int code = GET_RAWINPUT_CODE_WPARAM(wParam);
 					if (Keyboard == NULL || !Keyboard->ProcessRawInput((RAWINPUT *)buffer, code))
 					{
-						if (Mouse != NULL)
+						if (Mouse == NULL || !Mouse->ProcessRawInput((RAWINPUT *)buffer, code))
 						{
-							Mouse->ProcessRawInput((RAWINPUT *)buffer, code);
+							if (JoyDevices[INPUT_RawPS2] != NULL)
+							{
+								JoyDevices[INPUT_RawPS2]->ProcessRawInput((RAWINPUT *)buffer, code);
+							}
 						}
 					}
 				}
@@ -624,6 +627,9 @@ bool I_InitInput (void *hwnd)
 
 	Printf ("I_StartupXInput\n");
 	I_StartupXInput();
+
+	Printf ("I_StartupRawPS2\n");
+	I_StartupRawPS2();
 
 	Printf ("I_StartupDirectInputJoystick\n");
 	I_StartupDirectInputJoystick();

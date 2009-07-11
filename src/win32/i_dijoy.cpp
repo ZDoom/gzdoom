@@ -131,10 +131,6 @@ public:
 	bool GetDevice();
 	void ProcessInput();
 	void AddAxes(float axes[NUM_JOYAXIS]);
-	void SaveConfig();
-	bool LoadConfig();
-	FString GetIdentifier();
-	void SetDefaultConfig();
 
 	// IJoystickConfig interface
 	FString GetName();
@@ -151,6 +147,14 @@ public:
 	void SetAxisMap(int axis, EJoyAxis gameaxis);
 	void SetAxisScale(int axis, float scale);
 
+	bool IsSensitivityDefault();
+	bool IsAxisDeadZoneDefault(int axis);
+	bool IsAxisMapDefault(int axis);
+	bool IsAxisScaleDefault(int axis);
+
+	void SetDefaultConfig();
+	FString GetIdentifier();
+
 protected:
 	struct AxisInfo
 	{
@@ -160,9 +164,9 @@ protected:
 		DWORD Ofs;
 		LONG Min, Max;
 		float Value;
-		float DeadZone;
-		float Multiplier;
-		EJoyAxis GameAxis;
+		float DeadZone, DefaultDeadZone;
+		float Multiplier, DefaultMultiplier;
+		EJoyAxis GameAxis, DefaultGameAxis;
 		BYTE ButtonValue;
 	};
 	struct ButtonInfo
@@ -220,7 +224,6 @@ protected:
 
 	static BOOL CALLBACK EnumCallback(LPCDIDEVICEINSTANCE lpddi, LPVOID pvRef);
 	static int STACK_ARGS NameSort(const void *a, const void *b);
-	static int STACK_ARGS GUIDSort(const void *a, const void *b);
 	static bool IsXInputDevice(const GUID *guid);
 };
 
@@ -282,7 +285,12 @@ FDInputJoystick::FDInputJoystick(const GUID *instance, FString &name)
 
 FDInputJoystick::~FDInputJoystick()
 {
-	SAFE_RELEASE(Device);
+	if (Device != NULL)
+	{
+		M_SaveJoystickConfig(this);
+		Device->Release();
+		Device = NULL;
+	}
 	if (DataFormat.rgodf != NULL)
 	{
 		delete[] DataFormat.rgodf;
@@ -323,7 +331,7 @@ bool FDInputJoystick::GetDevice()
 		return false;
 	}
 	Device->Acquire();
-	LoadConfig();
+	M_LoadJoystickConfig(this);
 	Warmup = 4;
 	return true;
 }
@@ -682,107 +690,6 @@ FString FDInputJoystick::GetIdentifier()
 
 //===========================================================================
 //
-// FDInputJoystick :: SetConfigSection
-//
-// Sets up the config for reading or writing this controller's axis config. 
-//
-//===========================================================================
-
-bool FDInputJoystick::SetConfigSection(bool create)
-{
-	FString id = GetIdentifier();
-	id += ".Axes";
-	return GameConfig->SetSection(id, create);
-	DIDEVICEINSTANCE inst = { sizeof(DIDEVICEINSTANCE), };
-}
-
-//===========================================================================
-//
-// FDInputJoystick :: LoadConfig
-//
-//===========================================================================
-
-bool FDInputJoystick::LoadConfig()
-{
-	char key[32];
-	const char *value;
-	int axislen;
-
-	SetDefaultConfig();
-	if (!SetConfigSection(false))
-	{
-		return false;
-	}
-	value = GameConfig->GetValueForKey("Multiplier");
-	if (value != NULL)
-	{
-		Multiplier = (float)atof(value);
-	}
-	for (unsigned i = 0; i < Axes.Size(); ++i)
-	{
-		axislen = mysnprintf(key, countof(key), "Axis%u", i);
-
-		mysnprintf(key + axislen, countof(key) - axislen, "deadzone");
-		value = GameConfig->GetValueForKey(key);
-		if (value != NULL)
-		{
-			Axes[i].DeadZone = (float)atof(value);
-		}
-		mysnprintf(key + axislen, countof(key) - axislen, "multiplier");
-		value = GameConfig->GetValueForKey(key);
-		if (value != NULL)
-		{
-			Axes[i].Multiplier = (float)atof(value);
-		}
-		mysnprintf(key + axislen, countof(key) - axislen, "gameaxis");
-		value = GameConfig->GetValueForKey(key);
-		if (value != NULL)
-		{
-			Axes[i].GameAxis = (EJoyAxis)atoi(value);
-			if (Axes[i].GameAxis < JOYAXIS_None || Axes[i].GameAxis >= NUM_JOYAXIS)
-			{
-				Axes[i].GameAxis = JOYAXIS_None;
-			}
-		}
-	}
-	return true;
-}
-
-//===========================================================================
-//
-// FDInputJoystick :: SaveConfig
-//
-//===========================================================================
-
-void FDInputJoystick::SaveConfig()
-{
-	char key[32], value[32];
-	int axislen;
-
-	if (SetConfigSection(true))
-	{
-		GameConfig->ClearCurrentSection();
-		mysnprintf(value, countof(value), "%g", Multiplier);
-		GameConfig->SetValueForKey("Multiplier", value);
-		for (unsigned i = 0; i < Axes.Size(); ++i)
-		{
-			axislen = mysnprintf(key, countof(key), "Axis%u", i);
-
-			mysnprintf(key + axislen, countof(key) - axislen, "deadzone");
-			mysnprintf(value, countof(value), "%g", Axes[i].DeadZone);
-			GameConfig->SetValueForKey(key, value);
-			mysnprintf(key + axislen, countof(key) - axislen, "multiplier");
-			mysnprintf(value, countof(value), "%g", Axes[i].Multiplier);
-			GameConfig->SetValueForKey(key, value);
-			mysnprintf(key + axislen, countof(key) - axislen, "gameaxis");
-			mysnprintf(value, countof(value), "%d", Axes[i].GameAxis);
-			GameConfig->SetValueForKey(key, value);
-		}
-	}
-}
-
-//===========================================================================
-//
 // FDInputJoystick :: SetDefaultConfig
 //
 // Try for a reasonable default axis configuration.
@@ -791,8 +698,10 @@ void FDInputJoystick::SaveConfig()
 
 void FDInputJoystick::SetDefaultConfig()
 {
+	unsigned i;
+
 	Multiplier = 1;
-	for (unsigned i = 0; i < Axes.Size(); ++i)
+	for (i = 0; i < Axes.Size(); ++i)
 	{
 		Axes[i].DeadZone = DEFAULT_DEADZONE;
 		Axes[i].Multiplier = 1;
@@ -828,6 +737,14 @@ void FDInputJoystick::SetDefaultConfig()
 	}
 	// If there is only one axis, then we make no assumptions about how
 	// the user might want to use it.
+
+	// Preserve defaults for config saving.
+	for (i = 0; i < Axes.Size(); ++i)
+	{
+		Axes[i].DefaultDeadZone = Axes[i].DeadZone;
+		Axes[i].DefaultMultiplier = Axes[i].Multiplier;
+		Axes[i].DefaultGameAxis = Axes[i].GameAxis;
+	}
 }
 
 //===========================================================================
@@ -861,6 +778,17 @@ float FDInputJoystick::GetSensitivity()
 void FDInputJoystick::SetSensitivity(float scale)
 {
 	Multiplier = scale;
+}
+
+//===========================================================================
+//
+// FDInputJoystick :: IsSensitivityDefault
+//
+//===========================================================================
+
+bool FDInputJoystick::IsSensitivityDefault()
+{
+	return Multiplier == 1;
 }
 
 //===========================================================================
@@ -974,6 +902,51 @@ void FDInputJoystick::SetAxisScale(int axis, float scale)
 	{
 		Axes[axis].Multiplier = scale;
 	}
+}
+
+//===========================================================================
+//
+// FDInputJoystick :: IsAxisDeadZoneDefault
+//
+//===========================================================================
+
+bool FDInputJoystick::IsAxisDeadZoneDefault(int axis)
+{
+	if (unsigned(axis) < Axes.Size())
+	{
+		return Axes[axis].DeadZone == Axes[axis].DefaultDeadZone;
+	}
+	return true;
+}
+
+//===========================================================================
+//
+// FDInputJoystick :: IsAxisScaleDefault
+//
+//===========================================================================
+
+bool FDInputJoystick::IsAxisScaleDefault(int axis)
+{
+	if (unsigned(axis) < Axes.Size())
+	{
+		return Axes[axis].Multiplier == Axes[axis].DefaultMultiplier;
+	}
+	return true;
+}
+
+//===========================================================================
+//
+// FDInputJoystick :: IsAxisMapDefault
+//
+//===========================================================================
+
+bool FDInputJoystick::IsAxisMapDefault(int axis)
+{
+	if (unsigned(axis) < Axes.Size())
+	{
+		return Axes[axis].GameAxis == Axes[axis].DefaultGameAxis;
+	}
+	return true;
 }
 
 //===========================================================================
@@ -1109,8 +1082,10 @@ bool FDInputJoystickManager::WndProcHook(HWND hWnd, UINT message, WPARAM wParam,
 
 BOOL CALLBACK FDInputJoystickManager::EnumCallback(LPCDIDEVICEINSTANCE lpddi, LPVOID pvRef)
 {
+	// Do not add PS2 adapters if Raw PS2 Input was initialized.
 	// Do not add XInput devices if XInput was initialized.
-	if (JoyDevices[INPUT_XInput] == NULL || !IsXInputDevice(&lpddi->guidProduct))
+	if ((JoyDevices[INPUT_RawPS2] == NULL || !I_IsPS2Adapter(lpddi->guidProduct.Data1)) &&
+		(JoyDevices[INPUT_XInput] == NULL || !IsXInputDevice(&lpddi->guidProduct)))
 	{
 		TArray<Enumerator> *all = (TArray<Enumerator> *)pvRef;
 		Enumerator thisone;
@@ -1409,6 +1384,25 @@ void Joy_GenerateButtonEvents(int oldbuttons, int newbuttons, int numbuttons, in
 			if (changed & mask)
 			{
 				ev.data1 = base + j;
+				ev.type = (newbuttons & mask) ? EV_KeyDown : EV_KeyUp;
+				D_PostEvent(&ev);
+			}
+		}
+	}
+}
+
+void Joy_GenerateButtonEvents(int oldbuttons, int newbuttons, int numbuttons, const int *keys)
+{
+	int changed = oldbuttons ^ newbuttons;
+	if (changed != 0)
+	{
+		event_t ev = { 0 };
+		int mask = 1;
+		for (int j = 0; j < numbuttons; mask <<= 1, ++j)
+		{
+			if (changed & mask)
+			{
+				ev.data1 = keys[j];
 				ev.type = (newbuttons & mask) ? EV_KeyDown : EV_KeyUp;
 				D_PostEvent(&ev);
 			}

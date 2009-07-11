@@ -17,6 +17,7 @@
 #include "dikeys.h"
 #include "templates.h"
 #include "s_sound.h"
+#include "m_joy.h"
 
 static void I_CheckGUICapture ();
 static void I_CheckNativeMouse ();
@@ -459,6 +460,11 @@ void I_StartFrame ()
 	{
 		InitKeySymMap ();
 	}
+}
+
+void I_GetJoysticks(TArray<IJoystickConfig *> &sticks)
+{
+	sticks.Clear();
 }
 
 void I_GetAxes(float axes[NUM_JOYAXIS])

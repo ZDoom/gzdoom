@@ -685,6 +685,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\m_joy.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\src\m_menu.cpp"
 				>
 			</File>
@@ -1374,6 +1378,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\m_joy.h"
+				>
+			</File>
+			<File
 				RelativePath=".\src\m_menu.h"
 				>
 			</File>
@@ -1994,6 +2002,10 @@
 			</File>
 			<File
 				RelativePath=".\src\win32\i_movie.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\win32\i_rawps2.cpp"
 				>
 			</File>
 			<File

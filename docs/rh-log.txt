@@ -1,4 +1,11 @@
-﻿July 6, 2009  (Changes by Graf Zahl)
+﻿July 10, 2009
+- Added joystick config loading and saving support; moved generic joystick
+  interfaces to m_joy.h.
+
+July 9, 2009
+- Added Raw Input PS2 adapter support.
+
+July 6, 2009  (Changes by Graf Zahl)
 - Added Gez's A_WeaponReady enhancement submission.
 
 July 5, 2009  (Changes by Graf Zahl)

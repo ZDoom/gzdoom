@@ -1,4 +1,8 @@
 ﻿July 12, 2009  (Changes by Graf Zahl)
+- Backported 2 fixes from Skulltag:
+  * A_SentinelAttack must check for a NULL target
+  * Monsters with CANTLEAVEFLOORPIC could not move because their floor
+    texture was not initialized.
 - Fixed: The 'idclev' cheat set the player's health to 0 which caused the
   level to end when in a sector of type 'end level when health below 10'.
 

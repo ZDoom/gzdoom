@@ -42,6 +42,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_SentinelAttack)
 {
 	AActor *missile, *trail;
 
+	// [BB] Without a target the P_SpawnMissileZAimed call will crash.
+	if (!self->target)
+	{
+		return;
+	}
+
 	missile = P_SpawnMissileZAimed (self, self->z + 32*FRACUNIT, self->target, PClass::FindClass("SentinelFX2"));
 
 	if (missile != NULL && (missile->velx | missile->vely) != 0)

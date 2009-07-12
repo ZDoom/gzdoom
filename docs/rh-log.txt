@@ -1,4 +1,12 @@
-﻿July 10, 2009
+﻿July 12, 2009  (Changes by Graf Zahl)
+- Fixed: The 'idclev' cheat set the player's health to 0 which caused the
+  level to end when in a sector of type 'end level when health below 10'.
+
+July 11, 2009  (Changes by Graf Zahl)
+- Fixed: The 'kill' cheat set the player to nonshootable even if it did not
+  succeed.
+
+July 10, 2009
 - Added joystick config loading and saving support; moved generic joystick
   interfaces to m_joy.h.
 

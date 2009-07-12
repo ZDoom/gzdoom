@@ -1043,7 +1043,7 @@ void cht_Suicide (player_t *plyr)
 		plyr->mo->flags |= MF_SHOOTABLE;
 		plyr->mo->flags2 &= ~MF2_INVULNERABLE;
 		P_DamageMobj (plyr->mo, plyr->mo, plyr->mo, 1000000, NAME_Suicide);
-		plyr->mo->flags &= ~MF_SHOOTABLE;
+		if (plyr->mo->health <= 0) plyr->mo->flags &= ~MF_SHOOTABLE;
 	}
 }
 

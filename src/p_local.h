@@ -140,6 +140,7 @@ bool	P_MoveThing(AActor *source, fixed_t x, fixed_t y, fixed_t z, bool fog);
 bool	P_Thing_Move (int tid, AActor *source, int mapspot, bool fog);
 int		P_Thing_Damage (int tid, AActor *whofor0, int amount, FName type);
 void P_RemoveThing(AActor * actor);
+bool P_Thing_Raise(AActor *thing);
 
 //
 // P_ENEMY

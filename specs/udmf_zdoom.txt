@@ -130,6 +130,7 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       smoothlighting = <bool>;	// Use smooth fake contrast.
       clipmidtex = <bool>;      // Side's mid textures are clipped to floor and ceiling.
       wrapmidtex = <bool>;      // Side's mid textures are wrapped.
+	  nodecals = <bool>;		// Disables decals on the sidedef.
    }
    
    sector

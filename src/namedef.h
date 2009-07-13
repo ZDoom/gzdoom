@@ -301,6 +301,7 @@ xx(Heightceiling)
 xx(Lightlevel)
 xx(Texturefloor)
 xx(Textureceiling)
+xx(Nodecals)
 
 xx(Skill1)
 xx(Skill2)

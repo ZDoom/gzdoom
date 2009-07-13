@@ -1,4 +1,9 @@
-﻿July 12, 2009  (Changes by Graf Zahl)
+﻿July 13, 2009  (Changes by Graf Zahl)
+- added submission for raising master/children/siblings.
+- added submission for no decals on wall option.
+- removed some useless code from SpawnMissile function.
+
+July 12, 2009  (Changes by Graf Zahl)
 - Backported 2 fixes from Skulltag:
   * A_SentinelAttack must check for a NULL target
   * Monsters with CANTLEAVEFLOORPIC could not move because their floor

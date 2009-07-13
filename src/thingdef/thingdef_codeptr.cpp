@@ -2551,6 +2551,78 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RemoveChildren)
 
 //===========================================================================
 //
+// A_RemoveSiblings
+//
+//===========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RemoveSiblings)
+{
+   TThinkerIterator<AActor> it;
+   AActor * mo;
+   ACTION_PARAM_START(1);
+   ACTION_PARAM_BOOL(removeall,0);
+
+   while ( (mo = it.Next()) )
+   {
+      if ( ( mo->master == self->master ) && ( mo != self ) && ( ( mo->health <= 0 ) || removeall) )
+      {
+		P_RemoveThing(mo);
+      }
+   }
+}
+
+//===========================================================================
+//
+// A_RaiseMaster
+//
+//===========================================================================
+DEFINE_ACTION_FUNCTION(AActor, A_RaiseMaster)
+{
+   if (self->master != NULL)
+   {
+      P_Thing_Raise(self->master);
+   }
+}
+
+//===========================================================================
+//
+// A_RaiseChildren
+//
+//===========================================================================
+DEFINE_ACTION_FUNCTION(AActor, A_RaiseChildren)
+{
+   TThinkerIterator<AActor> it;
+   AActor * mo;
+
+   while (mo = it.Next())
+   {
+      if ( mo->master == self )
+      {
+		P_Thing_Raise(mo);
+      }
+   }
+}
+
+//===========================================================================
+//
+// A_RaiseSiblings
+//
+//===========================================================================
+DEFINE_ACTION_FUNCTION(AActor, A_RaiseSiblings)
+{
+   TThinkerIterator<AActor> it;
+   AActor * mo;
+
+   while ( (mo = it.Next()) )
+   {
+      if ( ( mo->master == self->master ) && ( mo != self ) )
+      {
+		P_Thing_Raise(mo);
+      }
+   }
+}
+
+//===========================================================================
+//
 // A_MonsterRefire
 //
 // Keep firing unless target got out of sight

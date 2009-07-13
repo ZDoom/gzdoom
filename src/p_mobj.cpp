@@ -4796,26 +4796,6 @@ static fixed_t GetDefaultSpeed(const PClass *type)
 		return GetDefaultByType(type)->Speed;
 }
 
-static AActor * SpawnMissile (const PClass *type, fixed_t x, fixed_t y, fixed_t z)
-{
-	AActor *th = Spawn (type, x, y, z, ALLOW_REPLACE);
-
-	if (th != NULL)
-	{
-		// Force floor huggers to the floor and ceiling huggers to the ceiling
-		if (th->flags3 & MF3_FLOORHUGGER)
-		{
-			z = th->floorz;
-		}
-		else if (th->flags3 & MF3_CEILINGHUGGER)
-		{
-			z = th->ceilingz - th->height;
-		}
-	}
-	return th;
-}
-
-
 //---------------------------------------------------------------------------
 //
 // FUNC P_SpawnMissile
@@ -4851,7 +4831,7 @@ AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z,
 		z -= source->floorclip;
 	}
 
-	AActor *th = SpawnMissile (type, x, y, z);
+	AActor *th = Spawn (type, x, y, z, ALLOW_REPLACE);
 	
 	P_PlaySpawnSound(th, source);
 	th->target = source;		// record missile's originator
@@ -4966,7 +4946,7 @@ AActor *P_SpawnMissileAngleZSpeed (AActor *source, fixed_t z,
 		z -= source->floorclip;
 	}
 
-	mo = SpawnMissile (type, source->x, source->y, z);
+	mo = Spawn (type, source->x, source->y, z, ALLOW_REPLACE);
 
 	P_PlaySpawnSound(mo, source);
 	mo->target = owner != NULL ? owner : source; // Originator

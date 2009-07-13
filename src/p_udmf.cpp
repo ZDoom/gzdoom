@@ -973,6 +973,10 @@ struct UDMFParser
 				Flag(sd->Flags, WALLF_CLIP_MIDTEX, key);
 				continue;
 
+			case NAME_Nodecals:
+				Flag(sd->Flags, WALLF_NOAUTODECALS, key);
+				continue;
+
 			default:
 				break;
 

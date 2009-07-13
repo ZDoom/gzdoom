@@ -633,6 +633,7 @@ ACTOR MaceFX4 native
 	-NOGRAVITY
 	+TELESTOMP
 	+THRUGHOST
+	-NOTELEPORT
 	BounceType "HereticCompat"
 	SeeSound ""
 

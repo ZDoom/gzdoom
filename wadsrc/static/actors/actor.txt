@@ -197,9 +197,13 @@ ACTOR Actor native //: Thinker
 	action native A_JumpIf(bool expression, state label);
 	action native A_RemoveMaster();
 	action native A_RemoveChildren(bool removeall = false);
+	action native A_RemoveSiblings(bool removeall = false);
 	action native A_KillMaster();
 	action native A_KillChildren();
 	action native A_KillSiblings();
+	action native A_RaiseMaster();
+	action native A_RaiseChildren();
+	action native A_RaiseSiblings();
 	action native A_CheckFloor(state label);
 	action native A_CheckCeiling(state label);
 	action native A_PlayerSkinCheck(state label);

@@ -1,4 +1,19 @@
-﻿July 13, 2009  (Changes by Graf Zahl)
+﻿July 14, 2009
+- Split the joystick menu into two parts: A top level with general options
+  and a list of all attached controllers, and a second level for configuring
+  an individual controller.
+- Fixed: Pressing Up at the top of a menu with more lines than fit on screen
+  would find an incorrect bottom position if the menu had a custom top height.
+- Added the cvars joy_dinput, joy_ps2raw, and joy_xinput to enable/disable
+  specific game controller input systems independant of each other.
+- Device change broadcasts are now sent to the Doom event queue, so
+  device scanning can be handled in one common place.
+- Added a fast version of IsXInputDevice that uses the Raw Input device
+  list, because querying WMI for this information is painfully slow.
+- Added support for compiling with FMOD Ex 4.26+ and running the game
+  with an older DLL. This combination will now produce sound.
+
+July 13, 2009  (Changes by Graf Zahl)
 - added submission for raising master/children/siblings.
 - added submission for no decals on wall option.
 - removed some useless code from SpawnMissile function.

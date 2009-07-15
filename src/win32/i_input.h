@@ -115,6 +115,7 @@ class NOVTABLE FJoystickCollection : public FInputDevice
 public:
 	virtual void AddAxes(float axes[NUM_JOYAXIS]) = 0;
 	virtual void GetDevices(TArray<IJoystickConfig *> &sticks) = 0;
+	virtual IJoystickConfig *Rescan() = 0;
 };
 
 enum
@@ -134,10 +135,6 @@ void I_StartupXInput();
 void I_StartupDirectInputJoystick();
 void I_StartupRawPS2();
 bool I_IsPS2Adapter(DWORD vidpid);
-
-void Joy_GenerateButtonEvents(int oldbuttons, int newbuttons, int numbuttons, int base);
-void Joy_GenerateButtonEvents(int oldbuttons, int newbuttons, int numbuttons, const int *keys);
-double Joy_RemoveDeadZone(double axisval, double deadzone, BYTE *buttons);
 
 // USB HID usage page numbers
 #define HID_GENERIC_DESKTOP_PAGE			0x01

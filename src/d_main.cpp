@@ -101,6 +101,7 @@
 #include "v_palette.h"
 #include "m_cheat.h"
 #include "compatibility.h"
+#include "m_joy.h"
 
 EXTERN_CVAR(Bool, hud_althud)
 void DrawHUD();
@@ -240,6 +241,8 @@ void D_ProcessEvents (void)
 	for (; eventtail != eventhead ; eventtail = (eventtail+1)&(MAXEVENTS-1))
 	{
 		ev = &events[eventtail];
+		if (ev->type == EV_DeviceChange)
+			UpdateJoystickMenu(I_UpdateDeviceList());
 		if (C_Responder (ev))
 			continue;				// console ate the event
 		if (M_Responder (ev))
@@ -260,6 +263,11 @@ void D_ProcessEvents (void)
 
 void D_PostEvent (const event_t *ev)
 {
+	// Do not post duplicate consecutive EV_DeviceChange events.
+	if (ev->type == EV_DeviceChange && events[eventhead].type == EV_DeviceChange)
+	{
+		return;
+	}
 	events[eventhead] = *ev;
 	if (ev->type == EV_Mouse && !testpolymost && !paused && menuactive == MENU_Off &&
 		ConsoleState != c_down && ConsoleState != c_falling)

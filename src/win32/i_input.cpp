@@ -47,6 +47,7 @@
 #endif
 #include <windows.h>
 #include <mmsystem.h>
+#include <dbt.h>
 #include <dinput.h>
 #include <malloc.h>
 
@@ -118,7 +119,8 @@
 #endif
 
 static void FindRawInputFunctions();
-BOOL DI_InitJoy (void);
+FJoystickCollection *JoyDevices[NUM_JOYDEVICES];
+
 
 extern HINSTANCE g_hInst;
 extern DWORD SessionID;
@@ -551,6 +553,16 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_ERASEBKGND:
 		return true;
 
+	case WM_DEVICECHANGE:
+		if (wParam == DBT_DEVNODES_CHANGED ||
+			wParam == DBT_DEVICEARRIVAL ||
+			wParam == DBT_CONFIGCHANGED)
+		{
+			event_t ev = { EV_DeviceChange };
+			D_PostEvent(&ev);
+		}
+		return DefWindowProc (hWnd, message, wParam, lParam);
+
 	default:
 		return DefWindowProc (hWnd, message, wParam, lParam);
 	}
@@ -763,6 +775,24 @@ void I_GetJoysticks(TArray<IJoystickConfig *> &sticks)
 			JoyDevices[i]->GetDevices(sticks);
 		}
 	}
+}
+
+// If a new controller was added, returns a pointer to it.
+IJoystickConfig *I_UpdateDeviceList()
+{
+	IJoystickConfig *newone = NULL;
+	for (int i = 0; i < NUM_JOYDEVICES; ++i)
+	{
+		if (JoyDevices[i] != NULL)
+		{
+			IJoystickConfig *thisnewone = JoyDevices[i]->Rescan();
+			if (newone == NULL)
+			{
+				newone = thisnewone;
+			}
+		}
+	}
+	return newone;
 }
 
 void I_PutInClipboard (const char *str)

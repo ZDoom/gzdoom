@@ -120,6 +120,7 @@ public:
 	bool WndProcHook(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT *result);
 	void AddAxes(float axes[NUM_JOYAXIS]);
 	void GetDevices(TArray<IJoystickConfig *> &sticks);
+	IJoystickConfig *Rescan();
 
 protected:
 	HMODULE XInputDLL;
@@ -135,6 +136,13 @@ protected:
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
+
+CUSTOM_CVAR(Bool, joy_xinput, true, CVAR_GLOBALCONFIG|CVAR_ARCHIVE|CVAR_NOINITCALL)
+{
+	I_StartupXInput();
+	event_t ev = { EV_DeviceChange };
+	D_PostEvent(&ev);
+}
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -736,16 +744,42 @@ bool FXInputManager::WndProcHook(HWND hWnd, UINT message, WPARAM wParam, LPARAM 
 
 //===========================================================================
 //
+// FXInputManager :: Rescan
+//
+//===========================================================================
+
+IJoystickConfig *FXInputManager::Rescan()
+{
+	return NULL;
+}
+
+//===========================================================================
+//
 // I_StartupXInput
 //
 //===========================================================================
 
 void I_StartupXInput()
 {
-	FJoystickCollection *joys = new FXInputManager;
-	if (joys->GetDevice())
+	if (!joy_xinput || !use_joystick || Args->CheckParm("-nojoy"))
 	{
-		JoyDevices[INPUT_XInput] = joys;
+		if (JoyDevices[INPUT_XInput] != NULL)
+		{
+			delete JoyDevices[INPUT_XInput];
+			JoyDevices[INPUT_XInput] = NULL;
+			UpdateJoystickMenu(NULL);
+		}
+	}
+	else
+	{
+		if (JoyDevices[INPUT_XInput] == NULL)
+		{
+			FJoystickCollection *joys = new FXInputManager;
+			if (joys->GetDevice())
+			{
+				JoyDevices[INPUT_XInput] = joys;
+			}
+		}
 	}
 }
 

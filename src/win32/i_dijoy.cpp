@@ -9,7 +9,6 @@
 #include <wbemidl.h>
 #endif
 #include <oleauto.h>
-#include <dbt.h>
 #include <malloc.h>
 
 #define USE_WINDOWS_DWORD
@@ -28,6 +27,7 @@
 #include "cmdlib.h"
 #include "v_text.h"
 #include "m_argv.h"
+#include "rawinput.h"
 
 // WBEMIDL BITS -- because w32api doesn't have this, either -----------------
 
@@ -208,9 +208,9 @@ public:
 
 	bool GetDevice();
 	void ProcessInput();
-	bool WndProcHook(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT *result);
 	void AddAxes(float axes[NUM_JOYAXIS]);
 	void GetDevices(TArray<IJoystickConfig *> &sticks);
+	IJoystickConfig *Rescan();
 
 protected:
 	struct Enumerator
@@ -225,6 +225,8 @@ protected:
 	static BOOL CALLBACK EnumCallback(LPCDIDEVICEINSTANCE lpddi, LPVOID pvRef);
 	static int STACK_ARGS NameSort(const void *a, const void *b);
 	static bool IsXInputDevice(const GUID *guid);
+	static bool IsXInputDeviceFast(const GUID *guid);
+	static bool IsXInputDeviceSlow(const GUID *guid);
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -245,8 +247,12 @@ extern HWND Window;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-CVAR (Bool,  use_joystick,			false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-FJoystickCollection *JoyDevices[NUM_JOYDEVICES];
+CUSTOM_CVAR(Bool, joy_dinput, true, CVAR_GLOBALCONFIG|CVAR_ARCHIVE|CVAR_NOINITCALL)
+{
+	I_StartupDirectInputJoystick();
+	event_t ev = { EV_DeviceChange };
+	D_PostEvent(&ev);
+}
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -981,7 +987,7 @@ FDInputJoystickManager::~FDInputJoystickManager()
 
 bool FDInputJoystickManager::GetDevice()
 {
-	if (g_pdi == NULL || !use_joystick || Args->CheckParm("-nojoy"))
+	if (g_pdi == NULL)
 	{
 		return false;
 	}
@@ -1043,37 +1049,6 @@ void FDInputJoystickManager::GetDevices(TArray<IJoystickConfig *> &sticks)
 
 //===========================================================================
 //
-// FDInputJoystickManager :: WndProcHook
-//
-// Listen for device change broadcasts and rescan the attached devices
-// when they are received.
-//
-//===========================================================================
-
-bool FDInputJoystickManager::WndProcHook(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT *result)
-{
-	if (message != WM_DEVICECHANGE)
-	{
-		return false;
-	}
-#ifdef _DEBUG
-	char out[64];
-	mysnprintf(out, countof(out), "WM_DEVICECHANGE wParam=%d\n", wParam);
-	OutputDebugString(out);
-#endif
-	if ((wParam != DBT_DEVNODES_CHANGED &&
-		 wParam != DBT_DEVICEARRIVAL &&
-		 wParam != DBT_CONFIGCHANGED))
-	{
-		return false;
-	}
-	UpdateJoystickMenu(EnumDevices());
-	// Return false so that other devices can handle this too if they want.
-	return false;
-}
-
-//===========================================================================
-//
 // FDInputJoystickManager :: EnumCallback							STATIC
 //
 // Adds each DirectInput game controller to a TArray.
@@ -1101,16 +1076,46 @@ BOOL CALLBACK FDInputJoystickManager::EnumCallback(LPCDIDEVICEINSTANCE lpddi, LP
 //
 // FDInputJoystickManager :: IsXInputDevice							STATIC
 //
-// Pretty much copied straight from the article "XInput and DirectInput".
-//
-// Enum each PNP device using WMI and check each device ID to see if it
-// contains "IG_" (ex. "VID_045E&PID_028E&IG_00"). If it does, then it's an
-// XInput device. Unfortunately this information can not be found by just
-// using DirectInput.
+// Does the DirectInput product GUID correspond to an XInput controller?
+
+// If the product's device ID contains contains "IG_"
+// (ex. "VID_045E&PID_028E&IG_00"), then it is an XInput device.
+// Unfortunately this information can not be found by just using DirectInput.
 //
 //===========================================================================
 
 bool FDInputJoystickManager::IsXInputDevice(const GUID *guid)
+{
+	if (MyGetRawInputDeviceList == NULL || MyGetRawInputDeviceInfoA == NULL)
+	{
+		return IsXInputDeviceSlow(guid);
+	}
+	else
+	{
+		return IsXInputDeviceFast(guid);
+	}
+}
+
+//===========================================================================
+//
+// FDInputJoystickManager :: IsXInputDeviceSlow						STATIC
+//
+// Pretty much copied straight from the article "XInput and DirectInput".
+//
+// Enum each PNP device using WMI and check each device ID. This is
+// Microsoft's reference implementation, but it is damn slow. After
+// a hardware change, connecting to the WMI server can take nearly three
+// seconds, and creating the instance enumerator consistantly takes longer
+// than 0.25 seconds.
+//
+// The XInput DLL can apparently be hacked fairly simply to work with
+// Windows 2000, and since Raw Input wasn't introduced until XP, I think
+// that's reason enough to keep this version around, despite it being
+// so horrendously slow.
+//
+//===========================================================================
+
+bool FDInputJoystickManager::IsXInputDeviceSlow(const GUID *guid)
 {
 	IWbemLocator *wbemlocator = NULL;
 	IEnumWbemClassObject *enumdevices = NULL;
@@ -1198,6 +1203,71 @@ cleanup:
 	SAFE_RELEASE(enumdevices);
 	SAFE_RELEASE(wbemlocator);
 	SAFE_RELEASE(wbemservices);
+	return isxinput;
+}
+
+//===========================================================================
+//
+// FDInputJoystickManager :: IsXInputDeviceFast						STATIC
+//
+// The theory of operation is the same as for IsXInputDeviceSlow, except that
+// we use the Raw Input device list to find the device ID instead of WMI.
+// This generally takes ~0.02 ms on my machine, though it occasionally spikes
+// at over 1 ms. Either way, it is a huge order of magnitude faster than WMI.
+// (around 10,000 times faster, in fact!)
+//
+//===========================================================================
+
+bool FDInputJoystickManager::IsXInputDeviceFast(const GUID *guid)
+{
+	UINT nDevices, numDevices;
+	RAWINPUTDEVICELIST *devices;
+	UINT i;
+	bool isxinput = false;
+
+	if (MyGetRawInputDeviceList(NULL, &nDevices, sizeof(RAWINPUTDEVICELIST)) != 0)
+	{
+		return false;
+	}
+	if ((devices = (RAWINPUTDEVICELIST *)malloc(sizeof(RAWINPUTDEVICELIST) * nDevices)) == NULL)
+	{
+		return false;
+	}
+	if ((numDevices = MyGetRawInputDeviceList(devices, &nDevices, sizeof(RAWINPUTDEVICELIST))) == (UINT)-1)
+	{
+		free(devices);
+		return false;
+	}
+	for (i = 0; i < numDevices; ++i)
+	{
+		// I am making the assumption here that all possible XInput devices
+		// will report themselves as generic HID devices and not as keyboards
+		// or mice.
+		if (devices[i].dwType == RIM_TYPEHID)
+		{
+			RID_DEVICE_INFO rdi;
+			UINT cbSize;
+
+			cbSize = rdi.cbSize = sizeof(rdi);
+			if (MyGetRawInputDeviceInfoA(devices[i].hDevice, RIDI_DEVICEINFO, &rdi, &cbSize) >= 0)
+			{
+				if(MAKELONG(rdi.hid.dwVendorId, rdi.hid.dwProductId) == guid->Data1)
+				{
+					char name[256];
+					UINT namelen = countof(name);
+					UINT reslen;
+
+					reslen = MyGetRawInputDeviceInfoA(devices[i].hDevice, RIDI_DEVICENAME, name, &namelen);
+					if (reslen != (UINT)-1)
+					{
+						isxinput = (strstr(name, "IG_") != NULL);
+						break;
+					}
+				}
+			}
+		}
+	}
+	free(devices);
 	return isxinput;
 }
 
@@ -1321,90 +1391,44 @@ FDInputJoystick *FDInputJoystickManager::EnumDevices()
 
 //===========================================================================
 //
+// FDInputJoystickManager :: Rescan
+//
+// Used by the joy_ps2raw and joy_xinput callbacks to rescan the
+// DirectInput devices, since their presence or absence can affect the
+// results of the scan.
+//
+//===========================================================================
+
+IJoystickConfig *FDInputJoystickManager::Rescan()
+{
+	return EnumDevices();
+}
+
+//===========================================================================
+//
 // I_StartupDirectInputJoystick
 //
 //===========================================================================
 
 void I_StartupDirectInputJoystick()
 {
-	FJoystickCollection *joys = new FDInputJoystickManager;
-	if (joys->GetDevice())
+	if (!joy_dinput || !use_joystick || Args->CheckParm("-nojoy"))
 	{
-		JoyDevices[INPUT_DIJoy] = joys;
-	}
-}
-
-//===========================================================================
-//
-// Joy_RemoveDeadZone
-//
-//===========================================================================
-
-double Joy_RemoveDeadZone(double axisval, double deadzone, BYTE *buttons)
-{
-	// Cancel out deadzone.
-	if (fabs(axisval) < deadzone)
-	{
-		axisval = 0;
-		*buttons = 0;
-	}
-	// Make the dead zone the new 0.
-	else if (axisval < 0)
-	{
-		axisval = (axisval + deadzone) / (1.0 - deadzone);
-		*buttons = 2;	// button minus
+		if (JoyDevices[INPUT_DIJoy] != NULL)
+		{
+			delete JoyDevices[INPUT_DIJoy];
+			JoyDevices[INPUT_DIJoy] = NULL;
+			UpdateJoystickMenu(NULL);
+		}
 	}
 	else
 	{
-		axisval = (axisval - deadzone) / (1.0 - deadzone);
-		*buttons = 1;	// button plus
-	}
-	return axisval;
-}
-
-//===========================================================================
-//
-// Joy_GenerateButtonEvents
-//
-// Provided two bitmasks for a set of buttons, generates events to reflect
-// any changes from the old to new set, where base is the key for bit 0,
-// base+1 is the key for bit 1, etc.
-//
-//===========================================================================
-
-void Joy_GenerateButtonEvents(int oldbuttons, int newbuttons, int numbuttons, int base)
-{
-	int changed = oldbuttons ^ newbuttons;
-	if (changed != 0)
-	{
-		event_t ev = { 0 };
-		int mask = 1;
-		for (int j = 0; j < numbuttons; mask <<= 1, ++j)
+		if (JoyDevices[INPUT_DIJoy] == NULL)
 		{
-			if (changed & mask)
+			FJoystickCollection *joys = new FDInputJoystickManager;
+			if (joys->GetDevice())
 			{
-				ev.data1 = base + j;
-				ev.type = (newbuttons & mask) ? EV_KeyDown : EV_KeyUp;
-				D_PostEvent(&ev);
-			}
-		}
-	}
-}
-
-void Joy_GenerateButtonEvents(int oldbuttons, int newbuttons, int numbuttons, const int *keys)
-{
-	int changed = oldbuttons ^ newbuttons;
-	if (changed != 0)
-	{
-		event_t ev = { 0 };
-		int mask = 1;
-		for (int j = 0; j < numbuttons; mask <<= 1, ++j)
-		{
-			if (changed & mask)
-			{
-				ev.data1 = keys[j];
-				ev.type = (newbuttons & mask) ? EV_KeyDown : EV_KeyUp;
-				D_PostEvent(&ev);
+				JoyDevices[INPUT_DIJoy] = joys;
 			}
 		}
 	}

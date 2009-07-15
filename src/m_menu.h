@@ -94,6 +94,7 @@ typedef enum {
 	rightmore,
 	safemore,
 	rsafemore,
+	joymore,
 	slider,
 	absslider,
 	inverter,
@@ -101,7 +102,6 @@ typedef enum {
 	discretes,
 	cdiscrete,
 	ediscrete,
-	discrete_joy,
 	control,
 	screenres,
 	bitflag,
@@ -158,7 +158,6 @@ struct menuitem_t
 		struct value_t	 *values;
 		struct valuestring_t *valuestrings;
 		struct valueenum_t	 *enumvalues;
-		TArray<IJoystickConfig *>	 *joyvalues;
 		char			 *command;
 		void			(*cfunc)(FBaseCVar *cvar, float newval);
 		void			(*mfunc)(void);

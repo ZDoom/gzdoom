@@ -474,3 +474,8 @@ void I_GetAxes(float axes[NUM_JOYAXIS])
 		axes[i] = 0;
 	}
 }
+
+IJoystickConfig *I_UpdateDeviceList()
+{
+	return NULL;
+}

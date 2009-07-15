@@ -1179,6 +1179,8 @@ void FMODSoundRenderer::PrintStatus()
 	unsigned int bufferlength;
 	int numbuffers;
 
+	Printf ("Loaded FMOD version: "TEXTCOLOR_GREEN"%x.%02x.%02x\n", ActiveFMODVersion >> 16,
+		(ActiveFMODVersion >> 8) & 255, ActiveFMODVersion & 255);
 	if (FMOD_OK == Sys->getOutput(&output))
 	{
 		Printf ("Output type: "TEXTCOLOR_GREEN"%s\n", Enum_NameForNum(OutputNames, output));
@@ -1361,11 +1363,12 @@ SoundStream *FMODSoundRenderer::CreateStream (SoundStreamCallback callback, int 
 	FMODStreamCapsule *capsule;
 	FMOD::Sound *sound;
 	FMOD_RESULT result;
-	FMOD_CREATESOUNDEXINFO exinfo = { sizeof(exinfo), };
+	FMOD_CREATESOUNDEXINFO exinfo;
 	FMOD_MODE mode;
 	int sample_shift;
 	int channel_shift;
-	
+
+	InitCreateSoundExInfo(&exinfo);
 	capsule = new FMODStreamCapsule (userdata, callback, this);
 
 	mode = FMOD_2D | FMOD_OPENUSER | FMOD_LOOP_NORMAL | FMOD_SOFTWARE | FMOD_CREATESTREAM | FMOD_OPENONLY;
@@ -1434,11 +1437,12 @@ SoundStream *FMODSoundRenderer::CreateStream (SoundStreamCallback callback, int 
 SoundStream *FMODSoundRenderer::OpenStream(const char *filename_or_data, int flags, int offset, int length)
 {
 	FMOD_MODE mode;
-	FMOD_CREATESOUNDEXINFO exinfo = { sizeof(exinfo), };
+	FMOD_CREATESOUNDEXINFO exinfo;
 	FMOD::Sound *stream;
 	FMOD_RESULT result;
 	bool url;
 
+	InitCreateSoundExInfo(&exinfo);
 	mode = FMOD_SOFTWARE | FMOD_2D | FMOD_CREATESTREAM;
 	if (flags & SoundStream::Loop)
 	{
@@ -2129,11 +2133,12 @@ void FMODSoundRenderer::UpdateSounds()
 
 SoundHandle FMODSoundRenderer::LoadSoundRaw(BYTE *sfxdata, int length, int frequency, int channels, int bits)
 {
-	FMOD_CREATESOUNDEXINFO exinfo = { sizeof(exinfo), };
+	FMOD_CREATESOUNDEXINFO exinfo;
 	SoundHandle retval = { NULL };
 
 	if (length == 0) return retval;
 
+	InitCreateSoundExInfo(&exinfo);
 	exinfo.length = length;
 	exinfo.numchannels = channels;
 	exinfo.defaultfrequency = frequency;
@@ -2184,11 +2189,12 @@ SoundHandle FMODSoundRenderer::LoadSoundRaw(BYTE *sfxdata, int length, int frequ
 
 SoundHandle FMODSoundRenderer::LoadSound(BYTE *sfxdata, int length)
 {
-	FMOD_CREATESOUNDEXINFO exinfo = { sizeof(exinfo), };
+	FMOD_CREATESOUNDEXINFO exinfo;
 	SoundHandle retval = { NULL };
 
 	if (length == 0) return retval;
 
+	InitCreateSoundExInfo(&exinfo);
 	exinfo.length = length;
 
 	const FMOD_MODE samplemode = FMOD_3D | FMOD_OPENMEMORY | FMOD_SOFTWARE;
@@ -2623,7 +2629,7 @@ void FMODSoundRenderer::DrawSpectrum(float *spectrumarray, int x, int y, int wid
 
 short *FMODSoundRenderer::DecodeSample(int outlen, const void *coded, int sizebytes, ECodecType type)
 {
-	FMOD_CREATESOUNDEXINFO exinfo = { sizeof(exinfo), };
+	FMOD_CREATESOUNDEXINFO exinfo;
 	FMOD::Sound *sound;
 	FMOD_SOUND_FORMAT format;
 	int channels;
@@ -2631,6 +2637,7 @@ short *FMODSoundRenderer::DecodeSample(int outlen, const void *coded, int sizeby
 	FMOD_RESULT result;
 	short *outbuf;
 
+	InitCreateSoundExInfo(&exinfo);
 	if (type == CODEC_Vorbis)
 	{
 		exinfo.suggestedsoundtype = FMOD_SOUND_TYPE_OGGVORBIS;
@@ -2666,4 +2673,29 @@ short *FMODSoundRenderer::DecodeSample(int outlen, const void *coded, int sizeby
 		return NULL;
 	}
 	return outbuf;
+}
+
+//==========================================================================
+//
+// FMODSoundRenderer :: InitCreateSoundExInfo
+//
+// Allow for compiling with 4.26 APIs while still running with older DLLs.
+//
+//==========================================================================
+
+void FMODSoundRenderer::InitCreateSoundExInfo(FMOD_CREATESOUNDEXINFO *exinfo) const
+{
+#if FMOD_VERSION >= 0x42600
+	if (ActiveFMODVersion < 0x42600)
+	{
+		// This parameter was added for 4.26.00, and trying to pass it to older
+		// DLLs will fail.
+		exinfo->cbsize = myoffsetof(FMOD_CREATESOUNDEXINFO, ignoresetfilesystem);
+	}
+	else
+#endif
+	{
+		exinfo->cbsize = sizeof(exinfo);
+	}
+	memset((BYTE *)exinfo + sizeof(exinfo->cbsize), 0, exinfo->cbsize - sizeof(exinfo->cbsize));
 }

@@ -38,7 +38,8 @@ enum EGenericEvent
 	EV_KeyDown,		// data1: scan code, data2: Qwerty ASCII code
 	EV_KeyUp,		// same
 	EV_Mouse,		// x, y: mouse movement deltas
-	EV_GUI_Event	// subtype specifies actual event
+	EV_GUI_Event,	// subtype specifies actual event
+	EV_DeviceChange,// a device has been connected or removed
 };
 
 // Event structure.

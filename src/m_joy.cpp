@@ -2,6 +2,7 @@
 
 #include "m_joy.h"
 #include "gameconfigfile.h"
+#include "d_event.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -14,6 +15,23 @@
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
+
+EXTERN_CVAR(Bool, joy_ps2raw)
+EXTERN_CVAR(Bool, joy_dinput)
+EXTERN_CVAR(Bool, joy_xinput)
+
+// PUBLIC DATA DEFINITIONS -------------------------------------------------
+
+CUSTOM_CVAR(Bool, use_joystick, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOINITCALL)
+{
+#ifdef _WIN32
+	joy_ps2raw.Callback();
+	joy_dinput.Callback();
+	joy_xinput.Callback();
+#endif
+}
+
+// PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
 
@@ -139,6 +157,83 @@ void M_SaveJoystickConfig(IJoystickConfig *joy)
 		if (GameConfig->SectionIsEmpty())
 		{
 			GameConfig->DeleteCurrentSection();
+		}
+	}
+}
+
+
+//===========================================================================
+//
+// Joy_RemoveDeadZone
+//
+//===========================================================================
+
+double Joy_RemoveDeadZone(double axisval, double deadzone, BYTE *buttons)
+{
+	// Cancel out deadzone.
+	if (fabs(axisval) < deadzone)
+	{
+		axisval = 0;
+		*buttons = 0;
+	}
+	// Make the dead zone the new 0.
+	else if (axisval < 0)
+	{
+		axisval = (axisval + deadzone) / (1.0 - deadzone);
+		*buttons = 2;	// button minus
+	}
+	else
+	{
+		axisval = (axisval - deadzone) / (1.0 - deadzone);
+		*buttons = 1;	// button plus
+	}
+	return axisval;
+}
+
+//===========================================================================
+//
+// Joy_GenerateButtonEvents
+//
+// Provided two bitmasks for a set of buttons, generates events to reflect
+// any changes from the old to new set, where base is the key for bit 0,
+// base+1 is the key for bit 1, etc.
+//
+//===========================================================================
+
+void Joy_GenerateButtonEvents(int oldbuttons, int newbuttons, int numbuttons, int base)
+{
+	int changed = oldbuttons ^ newbuttons;
+	if (changed != 0)
+	{
+		event_t ev = { 0 };
+		int mask = 1;
+		for (int j = 0; j < numbuttons; mask <<= 1, ++j)
+		{
+			if (changed & mask)
+			{
+				ev.data1 = base + j;
+				ev.type = (newbuttons & mask) ? EV_KeyDown : EV_KeyUp;
+				D_PostEvent(&ev);
+			}
+		}
+	}
+}
+
+void Joy_GenerateButtonEvents(int oldbuttons, int newbuttons, int numbuttons, const int *keys)
+{
+	int changed = oldbuttons ^ newbuttons;
+	if (changed != 0)
+	{
+		event_t ev = { 0 };
+		int mask = 1;
+		for (int j = 0; j < numbuttons; mask <<= 1, ++j)
+		{
+			if (changed & mask)
+			{
+				ev.data1 = keys[j];
+				ev.type = (newbuttons & mask) ? EV_KeyDown : EV_KeyUp;
+				D_PostEvent(&ev);
+			}
 		}
 	}
 }

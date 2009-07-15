@@ -74,6 +74,7 @@ private:
 	FMOD_MODE SetChanHeadSettings(SoundListener *listener, FMOD::Channel *chan, const FVector3 &pos, bool areasound, FMOD_MODE oldmode) const;
 
 	bool ReconnectSFXReverbUnit();
+	void InitCreateSoundExInfo(FMOD_CREATESOUNDEXINFO *exinfo) const;
 
 	bool Init ();
 	void Shutdown ();

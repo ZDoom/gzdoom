@@ -5,7 +5,6 @@
 #include <windows.h>
 #include <malloc.h>
 #include <limits.h>
-#include <dbt.h>
 
 #define USE_WINDOWS_DWORD
 #include "i_input.h"
@@ -150,12 +149,11 @@ public:
 
 	bool GetDevice();
 	bool ProcessRawInput(RAWINPUT *raw, int code);
-	bool WndProcHook(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT *result);
 	void AddAxes(float axes[NUM_JOYAXIS]);
 	void GetDevices(TArray<IJoystickConfig *> &sticks);
+	IJoystickConfig *Rescan();
 
 protected:
-	HMODULE XInputDLL;
 	TArray<FRawPS2Controller *> Devices;
 	bool Registered;
 
@@ -199,6 +197,13 @@ struct PS2Descriptor
 extern HWND Window;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
+
+CUSTOM_CVAR(Bool, joy_ps2raw, true, CVAR_GLOBALCONFIG|CVAR_ARCHIVE|CVAR_NOINITCALL)
+{
+	I_StartupRawPS2();
+	event_t ev = { EV_DeviceChange };
+	D_PostEvent(&ev);
+}
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -940,37 +945,6 @@ void FRawPS2Manager::GetDevices(TArray<IJoystickConfig *> &sticks)
 
 //===========================================================================
 //
-// FRawPS2Manager :: WndProcHook
-//
-// Listen for device change broadcasts and rescan the attached devices
-// when they are received.
-//
-//===========================================================================
-
-bool FRawPS2Manager::WndProcHook(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT *result)
-{
-	if (message != WM_DEVICECHANGE)
-	{
-		return false;
-	}
-#ifdef _DEBUG
-	char out[64];
-	mysnprintf(out, countof(out), "WM_DEVICECHANGE wParam=%d\n", wParam);
-	OutputDebugString(out);
-#endif
-	if ((wParam != DBT_DEVNODES_CHANGED &&
-		 wParam != DBT_DEVICEARRIVAL &&
-		 wParam != DBT_CONFIGCHANGED))
-	{
-		return false;
-	}
-	UpdateJoystickMenu(EnumDevices());
-	// Return false so that other devices can handle this too if they want.
-	return false;
-}
-
-//===========================================================================
-//
 // FRawPS2Manager :: ProcessRawInput
 //
 //===========================================================================
@@ -992,6 +966,17 @@ bool FRawPS2Manager::ProcessRawInput(RAWINPUT *raw, int code)
 		}
 	}
 	return false;
+}
+
+//===========================================================================
+//
+// FRawPS2Manager :: Rescan
+//
+//===========================================================================
+
+IJoystickConfig *FRawPS2Manager::Rescan()
+{
+	return EnumDevices();
 }
 
 //===========================================================================
@@ -1292,10 +1277,25 @@ void FRawPS2Manager::DoRegister()
 
 void I_StartupRawPS2()
 {
-	FJoystickCollection *joys = new FRawPS2Manager;
-	if (joys->GetDevice())
+	if (!joy_ps2raw || !use_joystick || Args->CheckParm("-nojoy"))
 	{
-		JoyDevices[INPUT_RawPS2] = joys;
+		if (JoyDevices[INPUT_RawPS2] != NULL)
+		{
+			delete JoyDevices[INPUT_RawPS2];
+			JoyDevices[INPUT_RawPS2] = NULL;
+			UpdateJoystickMenu(NULL);
+		}
+	}
+	else
+	{
+		if (JoyDevices[INPUT_RawPS2] == NULL)
+		{
+			FJoystickCollection *joys = new FRawPS2Manager;
+			if (joys->GetDevice())
+			{
+				JoyDevices[INPUT_RawPS2] = joys;
+			}
+		}
 	}
 }
 

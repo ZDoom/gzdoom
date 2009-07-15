@@ -2695,7 +2695,7 @@ void FMODSoundRenderer::InitCreateSoundExInfo(FMOD_CREATESOUNDEXINFO *exinfo) co
 	else
 #endif
 	{
-		exinfo->cbsize = sizeof(exinfo);
+		exinfo->cbsize = sizeof(*exinfo);
 	}
 	memset((BYTE *)exinfo + sizeof(exinfo->cbsize), 0, exinfo->cbsize - sizeof(exinfo->cbsize));
 }

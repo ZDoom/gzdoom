@@ -381,7 +381,10 @@ DHUDMessage *DBaseStatusBar::DetachMessage (DHUDMessage *msg)
 		*prev = probe->Next;
 		probe->Next = NULL;
 		// Redraw the status bar in case it was covered
-		SB_state = screen->GetPageCount ();
+		if (screen != NULL)
+		{
+			SB_state = screen->GetPageCount();
+		}
 	}
 	return probe;
 }
@@ -401,7 +404,10 @@ DHUDMessage *DBaseStatusBar::DetachMessage (DWORD id)
 		*prev = probe->Next;
 		probe->Next = NULL;
 		// Redraw the status bar in case it was covered
-		SB_state = screen->GetPageCount ();
+		if (screen != NULL)
+		{
+			SB_state = screen->GetPageCount();
+		}
 	}
 	return probe;
 }

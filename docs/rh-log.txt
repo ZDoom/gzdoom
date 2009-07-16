@@ -1,4 +1,5 @@
 ﻿July 16, 2009
+- Added a NULL screen check when detaching HUD messages.
 - Added HotWax's A_SetArg.
 - Gez's patch for more A_WeaponReady flags:
   * WRF_NOBOB (1): Weapon won't bob

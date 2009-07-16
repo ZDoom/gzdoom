@@ -1,4 +1,7 @@
-﻿July 14, 2009
+﻿July 15, 2009
+- Attempt to add support for Microsoft's SideWinder Strategic Commander.
+
+July 14, 2009
 - Split the joystick menu into two parts: A top level with general options
   and a list of all attached controllers, and a second level for configuring
   an individual controller.

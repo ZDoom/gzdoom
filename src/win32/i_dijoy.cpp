@@ -218,6 +218,11 @@ protected:
 		GUID Instance;
 		FString Name;
 	};
+	struct EnumData
+	{
+		TArray<Enumerator> *All;
+		bool GenericDevices;
+	};
 	TArray<FDInputJoystick *> Devices;
 
 	FDInputJoystick *EnumDevices();
@@ -1057,17 +1062,26 @@ void FDInputJoystickManager::GetDevices(TArray<IJoystickConfig *> &sticks)
 
 BOOL CALLBACK FDInputJoystickManager::EnumCallback(LPCDIDEVICEINSTANCE lpddi, LPVOID pvRef)
 {
+	EnumData *data = (EnumData *)pvRef;
+
+	// Special check for the Microsoft SideWinder Strategic Commander,
+	// which for some odd reason reports itself as a generic device and
+	// not a game controller.
+	if (data->GenericDevices && lpddi->guidProduct.Data1 != MAKELONG(0x45e, 0x0033))
+	{
+		return DIENUM_CONTINUE;
+	}
+
 	// Do not add PS2 adapters if Raw PS2 Input was initialized.
 	// Do not add XInput devices if XInput was initialized.
 	if ((JoyDevices[INPUT_RawPS2] == NULL || !I_IsPS2Adapter(lpddi->guidProduct.Data1)) &&
 		(JoyDevices[INPUT_XInput] == NULL || !IsXInputDevice(&lpddi->guidProduct)))
 	{
-		TArray<Enumerator> *all = (TArray<Enumerator> *)pvRef;
 		Enumerator thisone;
 
 		thisone.Instance = lpddi->guidInstance;
 		thisone.Name = lpddi->tszInstanceName;
-		all->Push(thisone);
+		data->All->Push(thisone);
 	}
 	return DIENUM_CONTINUE;
 }
@@ -1303,9 +1317,16 @@ FDInputJoystick *FDInputJoystickManager::EnumDevices()
 {
 	FDInputJoystick *newone = NULL;
 	TArray<Enumerator> controllers;
+	EnumData data;
 	unsigned i, j, k;
 
-	g_pdi->EnumDevices(DI8DEVCLASS_GAMECTRL, EnumCallback, &controllers, DIEDFL_ALLDEVICES);
+	// Find all game controllers
+	data.All = &controllers;
+	data.GenericDevices = false;
+	g_pdi->EnumDevices(DI8DEVCLASS_GAMECTRL, EnumCallback, &data, DIEDFL_ALLDEVICES);
+	// Again, just for the Strategic Commander
+	data.GenericDevices = true;
+	g_pdi->EnumDevices(DI8DEVCLASS_DEVICE, EnumCallback, &data, DIEDFL_ALLDEVICES);
 
 	// Sort by name so that devices with duplicate names can have numbers appended.
 	qsort(&controllers[0], controllers.Size(), sizeof(Enumerator), NameSort);

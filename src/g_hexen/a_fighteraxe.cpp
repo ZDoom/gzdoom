@@ -82,8 +82,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeCheckReady)
 	}
 	else
 	{
-		DoReadyWeaponToFire(self);
-		DoReadyWeaponToBob(self);
+		DoReadyWeapon(self);
 	}
 }
 
@@ -107,8 +106,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeCheckReadyG)
 	}
 	else
 	{
-		DoReadyWeaponToFire(self);
-		DoReadyWeaponToBob(self);
+		DoReadyWeapon(self);
 	}
 }
 

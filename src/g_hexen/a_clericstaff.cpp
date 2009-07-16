@@ -195,8 +195,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CStaffCheckBlink)
 		}
 		else 
 		{
-			DoReadyWeaponToFire(self);
-			DoReadyWeaponToBob(self);
+			DoReadyWeapon(self);
 		}
 	}
 }

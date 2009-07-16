@@ -68,7 +68,7 @@ void P_SetPsprite (player_t *player, int position, FState *state)
 	if (position == ps_weapon)
 	{
 		// A_WeaponReady will re-set these as needed
-		player->cheats &= ~(CF_WEAPONREADY | CF_WEAPONBOBBING);
+		player->cheats &= ~(CF_WEAPONREADY | CF_WEAPONREADYALT | CF_WEAPONBOBBING | CF_WEAPONSWITCHOK);
 	}
 
 	psp = &player->psprites[position];
@@ -349,12 +349,20 @@ void P_BobWeapon (player_t *player, pspdef_t *psp, fixed_t *x, fixed_t *y)
 //
 // PROC A_WeaponReady
 //
-// Readies a weapon for firing or bobbing with its two ancillary functions,
-// DoReadyWeaponToFire() and DoReadyWeaponToBob().
+// Readies a weapon for firing or bobbing with its three ancillary functions,
+// DoReadyWeaponToSwitch(), DoReadyWeaponToFire() and DoReadyWeaponToBob().
 //
 //============================================================================
 
-void DoReadyWeaponToFire (AActor * self)
+void DoReadyWeaponToSwitch (AActor * self)
+{
+	// Prepare for switching action.
+	player_t *player;
+	if (self && (player = self->player))
+		player->cheats |= CF_WEAPONSWITCHOK;
+}
+
+void DoReadyWeaponToFire (AActor * self, bool prim, bool alt)
 {
 	player_t *player;
 	AWeapon *weapon;
@@ -381,29 +389,36 @@ void DoReadyWeaponToFire (AActor * self)
 	}
 
 	// Prepare for firing action.
-	player->cheats |= CF_WEAPONREADY;
+	player->cheats |= ((prim ? CF_WEAPONREADY : 0) | (alt ? CF_WEAPONREADYALT : 0));
 	return;
 }
 
 void DoReadyWeaponToBob (AActor * self)
 {
-	player_t *player;
-
-	if (!self || !(player = self->player) || !(player->ReadyWeapon))
+	if (self && self->player && self->player->ReadyWeapon)
 	{
-		return;
+		// Prepare for bobbing action.
+		self->player->cheats |= CF_WEAPONBOBBING;
+		self->player->psprites[ps_weapon].sx = 0;
+		self->player->psprites[ps_weapon].sy = WEAPONTOP;
 	}
+}
 
-	// Prepare for bobbing action.
-	player->cheats |= CF_WEAPONBOBBING;
-	player->psprites[ps_weapon].sx = 0;
-	player->psprites[ps_weapon].sy = WEAPONTOP;
+// This function replaces calls to A_WeaponReady in other codepointers.
+void DoReadyWeapon(AActor * self)
+{
+	DoReadyWeaponToBob(self);
+	DoReadyWeaponToFire(self);
+	DoReadyWeaponToSwitch(self);
 }
 
 enum EWRF_Options
 {
 	WRF_NoBob = 1,
-	WRF_NoFire = 2,
+	WRF_NoFire = 12,
+	WRF_NoSwitch = 2,
+	WRF_NoPrimary = 4,
+	WRF_NoSecondary = 8,
 };
 
 DEFINE_ACTION_FUNCTION_PARAMS(AInventory, A_WeaponReady)
@@ -411,15 +426,17 @@ DEFINE_ACTION_FUNCTION_PARAMS(AInventory, A_WeaponReady)
 	ACTION_PARAM_START(1);
 	ACTION_PARAM_INT(paramflags, 0);
 
-	if (!(paramflags & WRF_NoFire)) DoReadyWeaponToFire(self);
-	if (!(paramflags & WRF_NoBob)) DoReadyWeaponToBob(self);
+	if (!(paramflags & WRF_NoSwitch))	DoReadyWeaponToSwitch(self);
+	if ((paramflags & WRF_NoFire) != WRF_NoFire)	DoReadyWeaponToFire(self, 
+		(!(paramflags & WRF_NoPrimary)), (!(paramflags & WRF_NoSecondary)));
+	if (!(paramflags & WRF_NoBob))	DoReadyWeaponToBob(self);
 }
 
 //---------------------------------------------------------------------------
 //
 // PROC P_CheckWeaponFire
 //
-// The player can fire the weapon or change to another weapon at this time.
+// The player can fire the weapon.
 // [RH] This was in A_WeaponReady before, but that only works well when the
 // weapon's ready frames have a one tic delay.
 //
@@ -432,15 +449,8 @@ void P_CheckWeaponFire (player_t *player)
 	if (weapon == NULL)
 		return;
 
-	// Put the weapon away if the player has a pending weapon or has died.
-	if ((player->morphTics == 0 && player->PendingWeapon != WP_NOCHANGE) || player->health <= 0)
-	{
-		P_SetPsprite (player, ps_weapon, weapon->GetDownState());
-		return;
-	}
-
 	// Check for fire. Some weapons do not auto fire.
-	if (player->cmd.ucmd.buttons & BT_ATTACK)
+	if ((player->cheats & CF_WEAPONREADY) && (player->cmd.ucmd.buttons & BT_ATTACK))
 	{
 		if (!player->attackdown || !(weapon->WeaponFlags & WIF_NOAUTOFIRE))
 		{
@@ -449,7 +459,7 @@ void P_CheckWeaponFire (player_t *player)
 			return;
 		}
 	}
-	else if (player->cmd.ucmd.buttons & BT_ALTATTACK)
+	else if ((player->cheats & CF_WEAPONREADYALT) && (player->cmd.ucmd.buttons & BT_ALTATTACK))
 	{
 		if (!player->attackdown || !(weapon->WeaponFlags & WIF_NOAUTOFIRE))
 		{
@@ -461,6 +471,30 @@ void P_CheckWeaponFire (player_t *player)
 	else
 	{
 		player->attackdown = false;
+	}
+}
+
+//---------------------------------------------------------------------------
+//
+// PROC P_CheckWeaponSwitch
+//
+// The player can change to another weapon at this time.
+// [GZ] This was cut from P_CheckWeaponFire.
+//
+//---------------------------------------------------------------------------
+
+void P_CheckWeaponSwitch (player_t *player)
+{
+	AWeapon *weapon;
+
+	if (!player || !(weapon = player->ReadyWeapon))
+		return;
+
+	// Put the weapon away if the player has a pending weapon or has died.
+	if ((player->morphTics == 0 && player->PendingWeapon != WP_NOCHANGE) || player->health <= 0)
+	{
+		P_SetPsprite (player, ps_weapon, weapon->GetDownState());
+		return;
 	}
 }
 
@@ -809,9 +843,13 @@ void P_MovePsprites (player_t *player)
 		}
 		player->psprites[ps_flash].sx = player->psprites[ps_weapon].sx;
 		player->psprites[ps_flash].sy = player->psprites[ps_weapon].sy;
-		if (player->cheats & CF_WEAPONREADY)
+		if (player->cheats & (CF_WEAPONREADY | CF_WEAPONREADYALT))
 		{
 			P_CheckWeaponFire (player);
+		}
+		if (player->cheats & CF_WEAPONSWITCHOK)
+		{
+			P_CheckWeaponSwitch (player);
 		}
 	}
 }

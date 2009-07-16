@@ -89,8 +89,10 @@ void P_BobWeapon (player_t *player, pspdef_t *psp, fixed_t *x, fixed_t *y);
 angle_t P_BulletSlope (AActor *mo, AActor **pLineTarget = NULL);
 void P_GunShot (AActor *mo, bool accurate, const PClass *pufftype, angle_t pitch);
 
+void DoReadyWeapon(AActor * self);
 void DoReadyWeaponToBob(AActor * self);
-void DoReadyWeaponToFire(AActor * self);
+void DoReadyWeaponToFire(AActor * self, bool primary = true, bool secondary = true);
+void DoReadyWeaponToSwitch(AActor * self);
 
 DECLARE_ACTION(A_Raise)
 DECLARE_ACTION(A_ReFire)

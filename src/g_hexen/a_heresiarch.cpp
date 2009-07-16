@@ -18,7 +18,7 @@
 // Sorcerer Variables
 //		special1		Angle of ball 1 (all others relative to that)
 //		StopBall		which ball to stop at in stop mode (MT_???)
-//		args[0]			Denfense time
+//		args[0]			Defense time
 //		args[1]			Number of full rotations since stopping mode
 //		args[2]			Target orbit speed for acceleration/deceleration
 //		args[3]			Movement mode (see SORC_ macros)

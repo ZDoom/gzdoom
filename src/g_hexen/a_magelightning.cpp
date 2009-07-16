@@ -126,8 +126,7 @@ int ALightningZap::SpecialMissileHit (AActor *thing)
 
 DEFINE_ACTION_FUNCTION(AActor, A_LightningReady)
 {
-	DoReadyWeaponToFire(self);
-	DoReadyWeaponToBob(self);
+	DoReadyWeapon(self);
 	if (pr_lightningready() < 160)
 	{
 		S_Sound (self, CHAN_WEAPON, "MageLightningReady", 1, ATTN_NORM);

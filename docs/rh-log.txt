@@ -1,4 +1,13 @@
-﻿July 15, 2009
+﻿July 16, 2009
+- Added HotWax's A_SetArg.
+- Gez's patch for more A_WeaponReady flags:
+  * WRF_NOBOB (1): Weapon won't bob
+  * WRF_NOFIRE (12): Weapon won't fire at all
+  * WRF_NOSWITCH (2): Weapon can't be switched off
+  * WRF_NOPRIMARY (4): Weapon will not fire its main attack
+  * WRF_NOSECONDARY (8): Weapon will not fire its alt attack
+
+July 15, 2009
 - Attempt to add support for Microsoft's SideWinder Strategic Commander.
 
 July 14, 2009

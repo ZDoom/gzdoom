@@ -249,6 +249,7 @@ ACTOR Actor native //: Thinker
 	action native A_SetPitch(float pitch);
 	action native A_ScaleVelocity(float scale);
 	action native A_ChangeVelocity(float x = 0, float y = 0, float z = 0, int flags = 0);
+	action native A_SetArg(int pos, int value);
 
 	States
 	{

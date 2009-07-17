@@ -149,7 +149,8 @@ PalEntry APowerup::GetBlend ()
 		BlendColor == GOLDCOLOR ||
 		// [BC] HAX!
 		BlendColor == REDCOLOR ||
-		BlendColor == GREENCOLOR) 
+		BlendColor == GREENCOLOR ||
+		BlendColor == BLUECOLOR)
 		return 0;
 
 	return BlendColor;
@@ -199,11 +200,16 @@ void APowerup::DoEffect ()
 			{
 				Owner->player->fixedcolormap = GREENCOLORMAP;
 			}
+			else if (BlendColor == BLUECOLOR)
+			{
+				Owner->player->fixedcolormap = BLUECOLORMAP;
+			}
 		}
 		else if ((BlendColor == INVERSECOLOR && Owner->player->fixedcolormap == INVERSECOLORMAP) || 
 				 (BlendColor == GOLDCOLOR && Owner->player->fixedcolormap == GOLDCOLORMAP) ||
 				 (BlendColor == REDCOLOR && Owner->player->fixedcolormap == REDCOLORMAP) ||
-				 (BlendColor == GREENCOLOR && Owner->player->fixedcolormap == GREENCOLORMAP))
+				 (BlendColor == GREENCOLOR && Owner->player->fixedcolormap == GREENCOLORMAP) ||
+				 (BlendColor == BLUECOLOR && Owner->player->fixedcolormap == BLUECOLORMAP))
 		{
 			Owner->player->fixedcolormap = 0;
 		}

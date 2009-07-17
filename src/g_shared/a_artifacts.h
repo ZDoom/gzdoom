@@ -3,12 +3,13 @@
 
 #include "a_pickups.h"
 
-#define INVERSECOLOR 0x00345678
-#define GOLDCOLOR 0x009abcde
+#define INVERSECOLOR	0x00345678
+#define GOLDCOLOR		0x009abcde
 
 // [BC] More hacks!
-#define REDCOLOR 0x00beefee
-#define GREENCOLOR 0x00beefad
+#define REDCOLOR		0x00beefee
+#define GREENCOLOR		0x00beefad
+#define BLUECOLOR		0x00befeed
 
 class player_t;
 

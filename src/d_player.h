@@ -184,7 +184,7 @@ typedef enum
 	CF_INSTANTWEAPSWITCH= 1 << 11,		// [RH] Switch weapons instantly
 	CF_TOTALLYFROZEN	= 1 << 12,		// [RH] All players can do is press +use
 	CF_PREDICTING		= 1 << 13,		// [RH] Player movement is being predicted
-	CF_WEAPONREADY		= 1 << 14,		// [RH] Weapon is in the ready state, so bob it when walking
+	CF_WEAPONREADY		= 1 << 14,		// [RH] Weapon is in the ready state and can fire its primary attack
 	CF_TIMEFREEZE		= 1 << 15,		// Player has an active time freezer
 	CF_DRAIN			= 1 << 16,		// Player owns a drain powerup
 	CF_REGENERATION		= 1 << 17,		// Player owns a regeneration artifact
@@ -195,6 +195,8 @@ typedef enum
 	CF_EXTREMELYDEAD	= 1 << 22,		// [RH] Reliably let the status bar know about extreme deaths.
 	CF_INFINITEAMMO		= 1 << 23,		// Player owns an infinite ammo artifact
 	CF_WEAPONBOBBING	= 1 << 24,		// [HW] Bob weapon while the player is moving
+	CF_WEAPONREADYALT	= 1 << 25,		// Weapon can fire its secondary attack
+	CF_WEAPONSWITCHOK	= 1 << 26,		// It is okay to switch away from this weapon
 } cheat_t;
 
 #define WPIECE1		1

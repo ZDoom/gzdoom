@@ -84,6 +84,7 @@ extern BYTE GoldColormap[256];
 // [BC] New Skulltag colormaps.
 extern BYTE RedColormap[256];
 extern BYTE GreenColormap[256];
+extern BYTE BlueColormap[256];
 extern BYTE DesaturateColormap[31][256];
 extern FPalette GPalette;
 extern "C" {

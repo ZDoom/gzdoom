@@ -416,11 +416,11 @@ const BYTE *FMultiPatchTexture::GetColumn (unsigned int column, const Span **spa
 
 //==========================================================================
 //
-// FMultiPatchTexture :: GetColumn
+// GetBlendMap
 //
 //==========================================================================
 
-BYTE * GetBlendMap(PalEntry blend, BYTE *blendwork)
+BYTE *GetBlendMap(PalEntry blend, BYTE *blendwork)
 {
 
 	switch (blend.a==0 ? blend.r : -1)

@@ -1570,6 +1570,11 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, color, C_f, Inventory)
 			*pBlendColor = GREENCOLOR;
 			return;
 		}
+		else if (!stricmp(name, "BLUEMAP"))
+		{
+			*pBlendColor = BLUECOLOR;
+			return;
+		}
 
 		color = V_GetColor(NULL, name);
 	}

@@ -1,4 +1,9 @@
-﻿July 16, 2009
+﻿July 17, 2009  (Changes by Graf Zahl)
+- fixed blue colormap
+- Added parameters to A_VileAttack.
+- Removed redundant definition of use_joystick from SDL/i_input.cpp.
+
+July 16, 2009
 - Turned net decompression into a non fatal error. It now drops the packet
   and waits for the sender to send a new, hopefully good, packet.
 - Reduced potential for overflow in R_ProjectSprite().

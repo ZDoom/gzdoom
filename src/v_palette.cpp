@@ -443,8 +443,8 @@ void InitPalette ()
 		intensity = ((GPalette.BaseColors[c].r * 77 +
 			 GPalette.BaseColors[c].g * 143 +
 			 GPalette.BaseColors[c].b * 37));
-		shade[c] = ColorMatcher.Pick (
-			MIN( 255, ( intensity + ( intensity / 2 )) >> 8 ), 0, 0 );
+		shade[c] = ColorMatcher.Pick (0, 0, 
+			MIN( 255, ( intensity + ( intensity / 2 )) >> 8 ));
 	}
 
 	// desaturated colormaps

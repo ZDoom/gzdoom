@@ -101,8 +101,16 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_VileTarget)
 //
 // A_VileAttack
 //
-DEFINE_ACTION_FUNCTION(AActor, A_VileAttack)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_VileAttack)
 {		
+	ACTION_PARAM_START(5);
+	ACTION_PARAM_SOUND(snd,0);
+	ACTION_PARAM_INT(dmg,1);
+	ACTION_PARAM_INT(blastdmg,2);
+	ACTION_PARAM_INT(blastrad,2);
+	ACTION_PARAM_FIXED(thrust,3);
+	ACTION_PARAM_NAME(dmgtype,4);
+
 	AActor *fire, *target;
 	int an;
 		
@@ -114,10 +122,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_VileAttack)
 	if (!P_CheckSight (self, target, 0) )
 		return;
 
-	S_Sound (self, CHAN_WEAPON, "vile/stop", 1, ATTN_NORM);
-	P_TraceBleed (20, target);
-	P_DamageMobj (target, self, self, 20, NAME_None);
-	target->velz = 1000 * FRACUNIT / target->Mass;
+	S_Sound (self, CHAN_WEAPON, snd, 1, ATTN_NORM);
+	P_TraceBleed (dmg, target);
+	P_DamageMobj (target, self, self, dmg, NAME_None);
+	target->velz = Scale(thrust, 1000, target->Mass);
 		
 	an = self->angle >> ANGLETOFINESHIFT;
 
@@ -130,6 +138,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_VileAttack)
 						 target->y - FixedMul (24*FRACUNIT, finesine[an]),
 						 target->z);
 		
-		P_RadiusAttack (fire, self, 70, 70, NAME_Fire, false);
+		P_RadiusAttack (fire, self, blastdmg, blastrad, dmgtype, false);
 	}
 }

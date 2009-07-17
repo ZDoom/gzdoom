@@ -60,7 +60,7 @@ ACTOR Actor native //: Thinker
 	action native A_VileChase();
 	action native A_VileStart();
 	action native A_VileTarget(class<Actor> fire = "ArchvileFire");
-	action native A_VileAttack();	
+	action native A_VileAttack(sound snd = "vile/stop", int initialdmg = 20, int blastdmg = 70, int blastradius = 70, float thrustfac = 1.0, name damagetype = "Fire");
 	action native A_StartFire();
 	action native A_Fire(float spawnheight = 0);
 	action native A_FireCrackle();

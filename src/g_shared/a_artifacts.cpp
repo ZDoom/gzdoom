@@ -278,19 +278,21 @@ bool APowerup::HandlePickup (AInventory *item)
 			power->ItemFlags |= IF_PICKUPGOOD;
 			return true;
 		}
-		// If it's not blinking yet, you can't replenish the power unless the
-		// powerup is required to be picked up.
-		if (EffectTics > BLINKTHRESHOLD && !(power->ItemFlags & IF_ALWAYSPICKUP))
-		{
-			return true;
-		}
-		// Only increase the EffectTics, not decrease it.
-		// Color also gets transferred only when the new item has an effect.
+		// Color gets transferred if the new item has an effect.
+
+		// Increase the effect's duration.
 		if (power->ItemFlags & IF_ADDITIVETIME) 
 		{
 			EffectTics += power->EffectTics;
 			BlendColor = power->BlendColor;
 		}
+		// If it's not blinking yet, you can't replenish the power unless the
+		// powerup is required to be picked up.
+		else if (EffectTics > BLINKTHRESHOLD && !(power->ItemFlags & IF_ALWAYSPICKUP))
+		{
+			return true;
+		}
+		// Reset the effect duration.
 		else if (power->EffectTics > EffectTics)
 		{
 			EffectTics = power->EffectTics;

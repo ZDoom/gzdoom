@@ -1,4 +1,7 @@
 ﻿July 16, 2009
+- Moved the IF_ADDITIVETIME check earlier in APowerup::HandlePickup so
+  that additive time powerups can be activated before the existing
+  power has entered its blink threshold.
 - Added a "BlueMap" for powerup colors.
 - Added a NULL screen check when detaching HUD messages.
 - Added HotWax's A_SetArg.

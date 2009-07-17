@@ -1381,7 +1381,7 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 	vis->RenderStyle = thing->RenderStyle;
 	vis->FillColor = thing->fillcolor;
 	vis->xscale = xscale;
-	vis->yscale = Scale (InvZtoScale, yscale, tz)>>4;
+	vis->yscale = Scale (InvZtoScale, yscale, tz << 4);
 	vis->depth = tz;
 	vis->idepth = (DWORD)DivScale32 (1, tz) >> 1;	// tz is 20.12, so idepth ought to be 12.20, but
 	vis->cx = tx2;									// signed math makes it 13.19

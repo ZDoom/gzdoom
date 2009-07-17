@@ -1,4 +1,5 @@
 ﻿July 16, 2009
+- Reduced potential for overflow in R_ProjectSprite().
 - Moved the IF_ADDITIVETIME check earlier in APowerup::HandlePickup so
   that additive time powerups can be activated before the existing
   power has entered its blink threshold.

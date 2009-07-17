@@ -292,7 +292,10 @@ void PacketGet (void)
 //			Printf("recv %d/%lu\n", c, msgsize + 1);
 			if (err != Z_OK)
 			{
-				I_Error("Net decompression failed (zlib error %d)\n", err);
+				Printf("Net decompression failed (zlib error %d)\n", err);
+				// Pretend no packet
+				doomcom.remotenode = -1;
+				return;
 			}
 			c = msgsize + 1;
 		}

@@ -1,4 +1,6 @@
 ﻿July 16, 2009
+- Turned net decompression into a non fatal error. It now drops the packet
+  and waits for the sender to send a new, hopefully good, packet.
 - Reduced potential for overflow in R_ProjectSprite().
 - Moved the IF_ADDITIVETIME check earlier in APowerup::HandlePickup so
   that additive time powerups can be activated before the existing

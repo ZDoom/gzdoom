@@ -593,18 +593,10 @@ void FRawPS2Controller::NeutralInput()
 
 void FRawPS2Controller::AddAxes(float axes[NUM_JOYAXIS])
 {
-	float mul = Multiplier;
-	int i;
-
-	if (Button_Speed.bDown)
-	{
-		mul *= 0.5f;
-	}
-
 	// Add to game axes.
-	for (i = 0; i < NUM_AXES; ++i)
+	for (int i = 0; i < NUM_AXES; ++i)
 	{
-		axes[Axes[i].GameAxis] -= float(Axes[i].Value * mul * Axes[i].Multiplier);
+		axes[Axes[i].GameAxis] -= float(Axes[i].Value * Multiplier * Axes[i].Multiplier);
 	}
 }
 

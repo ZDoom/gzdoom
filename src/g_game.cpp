@@ -458,6 +458,18 @@ CCMD (select)
 	who->player->inventorytics = 5*TICRATE;
 }
 
+static inline int joyint(double val)
+{
+	if (val >= 0)
+	{
+		return int(ceil(val));
+	}
+	else
+	{
+		return int(floor(val));
+	}
+}
+
 //
 // G_BuildTiccmd
 // Builds a ticcmd from all of the available inputs
@@ -605,10 +617,10 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 		LocalKeyboardTurner = true;
 	}
 
-	side -= int(MAXPLMOVE * joyaxes[JOYAXIS_Side]);
-	forward += int(joyaxes[JOYAXIS_Forward] * MAXPLMOVE);
-	fly += int(joyaxes[JOYAXIS_Up] * 2048);
-
+	side -= joyint(sidemove[speed] * joyaxes[JOYAXIS_Side]);
+	forward += joyint(joyaxes[JOYAXIS_Forward] * forwardmove[speed]);
+	fly += joyint(joyaxes[JOYAXIS_Up] * 2048);
+Printf("%d %d %.9f %.9f\n", forward, side, joyaxes[JOYAXIS_Forward], joyaxes[JOYAXIS_Side]);
 	// Handle mice.
 	if (!Button_Mlook.bDown && !freelook)
 	{

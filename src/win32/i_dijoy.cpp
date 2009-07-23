@@ -458,16 +458,10 @@ void FDInputJoystick::ProcessInput()
 
 void FDInputJoystick::AddAxes(float axes[NUM_JOYAXIS])
 {
-	float mul = Multiplier;
-	if (Button_Speed.bDown)
-	{
-		mul *= 0.5f;
-	}
-
 	for (unsigned i = 0; i < Axes.Size(); ++i)
 	{
 		// Add to the game axis.
-		axes[Axes[i].GameAxis] -= float(Axes[i].Value * mul * Axes[i].Multiplier);
+		axes[Axes[i].GameAxis] -= float(Axes[i].Value * Multiplier * Axes[i].Multiplier);
 	}
 }
 

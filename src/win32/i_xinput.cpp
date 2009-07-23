@@ -267,7 +267,7 @@ void FXInputController::ProcessThumbstick(int value, AxisInfo *axis, int base)
 	BYTE buttonstate;
 	double axisval;
 	
-	axisval = (value - SHRT_MIN) * 2.0 / (SHRT_MAX - SHRT_MIN) - 1.0;
+	axisval = (value - SHRT_MIN) * 2.0 / 65536 - 1.0;
 	axisval = Joy_RemoveDeadZone(axisval, axis->DeadZone, &buttonstate);
 	Joy_GenerateButtonEvents(axis->ButtonValue, buttonstate, 2, base);
 	axis->ButtonValue = buttonstate;
@@ -354,18 +354,10 @@ void FXInputController::Detached()
 
 void FXInputController::AddAxes(float axes[NUM_JOYAXIS])
 {
-	float mul = Multiplier;
-	int i;
-
-	if (Button_Speed.bDown)
-	{
-		mul *= 0.5f;
-	}
-
 	// Add to game axes.
-	for (i = 0; i < NUM_AXES; ++i)
+	for (int i = 0; i < NUM_AXES; ++i)
 	{
-		axes[Axes[i].GameAxis] -= float(Axes[i].Value * mul * Axes[i].Multiplier);
+		axes[Axes[i].GameAxis] -= float(Axes[i].Value * Multiplier * Axes[i].Multiplier);
 	}
 }
 

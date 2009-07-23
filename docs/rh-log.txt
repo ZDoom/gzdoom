@@ -1,4 +1,10 @@
 ﻿July 22, 2009
+- Removed specific Button_Speed handling from the controllers' AddAxes()
+  methods. Analog axes now respond Button_Speed and cl_run in exactly the
+  same way as digital buttons do.
+- Changed rounding slightly for analog axis -> integer in G_BuildTiccmd().
+- Fixed: FXInputController::ProcessThumbstick() was slightly off when it
+  converted to the range [-1.0,+1.0].
 - Added default bindings for the Xbox 360 controller buttons.
 - Fixed: Redefining an existing skill would set that skills ACSReturn to be
   the same as the next new skill defined, if neither definition explicitly set

@@ -89,10 +89,6 @@ static const FBinding DefBindings[] =
 	{ "mouse2", "+strafe" },
 	{ "mouse3", "+forward" },
 	{ "mouse4", "+speed" },
-	{ "joy1", "+attack" },
-	{ "joy2", "+strafe" },
-	{ "joy3", "+speed" },
-	{ "joy4", "+use" },
 	{ "capslock", "toggle cl_run" },
 	{ "f1", "menu_help" },
 	{ "f2", "menu_save" },
@@ -113,6 +109,27 @@ static const FBinding DefBindings[] =
 	{ "f12", "spynext" },
 	{ "mwheeldown", "weapnext" },
 	{ "mwheelup", "weapprev" },
+
+	// Generic joystick buttons
+	{ "joy1", "+attack" },
+	{ "joy2", "+strafe" },
+	{ "joy3", "+speed" },
+	{ "joy4", "+use" },
+
+	// Xbox 360 / PS2 controllers
+	{ "pad_a", "+use" },
+	{ "pad_y", "+jump" },
+	{ "rtrigger", "+attack" },
+	{ "ltrigger", "+altattack" },
+	{ "lshoulder", "weapprev" },
+	{ "rshoulder", "weapnext" },
+	{ "dpadleft", "invprev" },
+	{ "dpadright", "invnext" },
+	{ "dpaddown", "invuse" },
+	{ "dpadup", "togglemap" },
+	{ "pad_start", "pause" },
+	{ "pad_back", "menu_main" },
+	{ "lthumb", "crouch" },
 	{ NULL }
 };
 

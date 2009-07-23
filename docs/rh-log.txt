@@ -1,4 +1,5 @@
 ﻿July 22, 2009
+- Added default bindings for the Xbox 360 controller buttons.
 - Fixed: Redefining an existing skill would set that skills ACSReturn to be
   the same as the next new skill defined, if neither definition explicitly set
   the value for ACSReturn.

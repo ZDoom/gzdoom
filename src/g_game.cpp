@@ -608,19 +608,19 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 
 	if (joyaxes[JOYAXIS_Pitch] != 0)
 	{
-		G_AddViewPitch(int(joyaxes[JOYAXIS_Pitch] * 2048));
+		G_AddViewPitch(joyint(joyaxes[JOYAXIS_Pitch] * 2048));
 		LocalKeyboardTurner = true;
 	}
 	if (joyaxes[JOYAXIS_Yaw] != 0)
 	{
-		G_AddViewAngle(int(-1280 * joyaxes[JOYAXIS_Yaw]));
+		G_AddViewAngle(joyint(-1280 * joyaxes[JOYAXIS_Yaw]));
 		LocalKeyboardTurner = true;
 	}
 
 	side -= joyint(sidemove[speed] * joyaxes[JOYAXIS_Side]);
 	forward += joyint(joyaxes[JOYAXIS_Forward] * forwardmove[speed]);
 	fly += joyint(joyaxes[JOYAXIS_Up] * 2048);
-Printf("%d %d %.9f %.9f\n", forward, side, joyaxes[JOYAXIS_Forward], joyaxes[JOYAXIS_Side]);
+
 	// Handle mice.
 	if (!Button_Mlook.bDown && !freelook)
 	{

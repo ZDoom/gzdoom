@@ -143,7 +143,46 @@ ActionList
 	SpawnSound, SpawnFly, SpawnFly, SpawnFly, Fire,
 	Fire, Fire, Fire, Fire, Fire, Fire, Fire,
 	NULL, NULL, BrainExplode, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, Scream, NULL, Explode
+	NULL, NULL, NULL, Scream, NULL, Explode,
+	
+	// 156 NULLs so we can get to MBF-specific entries
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL,
+
+	// Now, these are all new to MBF.
+	Die, Scream, Detonate, NULL, Look, Look,
+	Chase, Chase, Chase, Chase, Chase, Chase, Chase, Chase,
+	FaceTarget, FaceTarget, SargAttack, NULL, Pain, NULL, Scream,
+	NULL, Fall, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, BFGsound,
+	NULL/*FireOldBFG*/, NULL/*FireOldBFG*/, NULL/*FireOldBFG*/, NULL/*FireOldBFG*/, NULL/*FireOldBFG*/, NULL/*FireOldBFG*/, NULL/*FireOldBFG*/, NULL/*FireOldBFG*/,
+	NULL/*FireOldBFG*/, NULL/*FireOldBFG*/, NULL/*FireOldBFG*/, NULL/*FireOldBFG*/, NULL/*FireOldBFG*/, NULL/*FireOldBFG*/, NULL/*FireOldBFG*/, NULL/*FireOldBFG*/,
+	NULL/*FireOldBFG*/, NULL/*FireOldBFG*/, NULL/*FireOldBFG*/, NULL/*FireOldBFG*/, NULL/*FireOldBFG*/, NULL/*FireOldBFG*/, NULL/*FireOldBFG*/, NULL/*FireOldBFG*/,
+	NULL/*FireOldBFG*/, NULL/*FireOldBFG*/, NULL/*FireOldBFG*/, NULL/*FireOldBFG*/, NULL/*FireOldBFG*/, NULL/*FireOldBFG*/, NULL/*FireOldBFG*/, NULL/*FireOldBFG*/,
+	NULL/*FireOldBFG*/, NULL/*FireOldBFG*/, NULL/*FireOldBFG*/, NULL/*FireOldBFG*/, NULL/*FireOldBFG*/, NULL/*FireOldBFG*/, NULL/*FireOldBFG*/, NULL/*FireOldBFG*/,
+	Light0, ReFire, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	Look, Chase, Chase, Chase, CHase, FaceTarget,
+	NULL/*BetaSkullAttack*/, NULL, NULL, Pain, NULL,
+	NULL, NULL, NULL, NULL, Scream, NULL, Fall, Stop,
+	Mushroom
 };
 
 // DeHackEd made the erroneous assumption that if a state didn't appear in

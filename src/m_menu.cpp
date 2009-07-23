@@ -112,7 +112,6 @@ protected:
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-void M_DrawSlider (int x, int y, float min, float max, float cur);
 void R_GetPlayerTranslation (int color, FPlayerSkin *skin, FRemapTable *table);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -2230,9 +2229,9 @@ static void M_PlayerSetupDrawer ()
 	x = SmallFont->StringWidth ("Green") + 8 + PSetupDef.x;
 	color = players[consoleplayer].userinfo.color;
 
-	M_DrawSlider (x, PSetupDef.y + LINEHEIGHT*2+yo, 0.0f, 255.0f, float(RPART(color)));
-	M_DrawSlider (x, PSetupDef.y + LINEHEIGHT*3+yo, 0.0f, 255.0f, float(GPART(color)));
-	M_DrawSlider (x, PSetupDef.y + LINEHEIGHT*4+yo, 0.0f, 255.0f, float(BPART(color)));
+	M_DrawSlider (x, PSetupDef.y + LINEHEIGHT*2+yo, 0.0f, 255.0f, float(RPART(color)), -1);
+	M_DrawSlider (x, PSetupDef.y + LINEHEIGHT*3+yo, 0.0f, 255.0f, float(GPART(color)), -1);
+	M_DrawSlider (x, PSetupDef.y + LINEHEIGHT*4+yo, 0.0f, 255.0f, float(BPART(color)), -1);
 
 	// [GRB] Draw class setting
 	int pclass = players[consoleplayer].userinfo.PlayerClass;

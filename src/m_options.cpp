@@ -262,12 +262,12 @@ static menuitem_t MouseItems[] =
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
 	{ slider,	"Overall sensitivity",	{&mouse_sensitivity},	{0.5}, {2.5},	{0.1f}, {NULL} },
 	{ discrete,	"Prescale mouse movement",{&m_noprescale},		{2.0}, {0.0},	{0.0}, {NoYes} },
-	{ discrete, "Smooth mouse movement",{&smooth_mouse},			{2.0}, {0.0},	{0.0}, {YesNo} },
+	{ discrete, "Smooth mouse movement",{&smooth_mouse},		{2.0}, {0.0},	{0.0}, {YesNo} },
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
-	{ slider,	"Turning speed",		{&m_yaw},				{0.5}, {2.5},	{0.1f}, {NULL} },
-	{ slider,	"Mouselook speed",		{&m_pitch},				{0.5}, {2.5},	{0.1f}, {NULL} },
-	{ slider,	"Forward/Backward speed",{&m_forward},			{0.5}, {2.5},	{0.1f}, {NULL} },
-	{ slider,	"Strafing speed",		{&m_side},				{0.5}, {2.5},	{0.1f}, {NULL} },
+	{ slider,	"Turning speed",		{&m_yaw},				{0.0}, {2.5},	{0.1f}, {NULL} },
+	{ slider,	"Mouselook speed",		{&m_pitch},				{0.0}, {2.5},	{0.1f}, {NULL} },
+	{ slider,	"Forward/Backward speed",{&m_forward},			{0.0}, {2.5},	{0.1f}, {NULL} },
+	{ slider,	"Strafing speed",		{&m_side},				{0.0}, {2.5},	{0.1f}, {NULL} },
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
 	{ discrete, "Always Mouselook",		{&freelook},			{2.0}, {0.0},	{0.0}, {OnOff} },
 	{ discrete, "Invert Mouse",			{&invertmouse},			{2.0}, {0.0},	{0.0}, {OnOff} },
@@ -1545,21 +1545,22 @@ bool M_StartOptionsMenu (void)
 	return true;
 }
 
-void M_DrawSlider (int x, int y, float min, float max, float cur)
+void M_DrawSlider (int x, int y, double min, double max, double cur,int fracdigits)
 {
-	float range;
+	double range;
 
 	range = max - min;
-
-	if (cur > max)
-		cur = max;
-	else if (cur < min)
-		cur = min;
-
-	cur -= min;
+	cur = clamp(cur, min, max) - min;
 
 	M_DrawConText(CR_WHITE, x, y, "\x10\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x12");
-	M_DrawConText(CR_ORANGE, x + 5 + (int)((cur * 78.f) / range), y, "\x13");
+	M_DrawConText(CR_ORANGE, x + 5 + (int)((cur * 78) / range), y, "\x13");
+
+	if (fracdigits >= 0)
+	{
+		char textbuf[16];
+		mysnprintf(textbuf, countof(textbuf), "%.*f", fracdigits, cur);
+		screen->DrawText(SmallFont, CR_DARKGRAY, x + 12*8 + 4, y, textbuf, DTA_Clean, true, TAG_DONE);
+	}
 }
 
 int M_FindCurVal (float cur, value_t *values, int numvals)
@@ -1882,7 +1883,7 @@ void M_OptDrawer ()
 
 			case joy_sens:
 				value.Float = SELECTED_JOYSTICK->GetSensitivity();
-				M_DrawSlider (indent + 14, y + labelofs, item->b.min, item->c.max, value.Float);
+				M_DrawSlider (indent + 14, y + labelofs, item->b.min, item->c.max, value.Float, 1);
 				break;
 
 			case joy_slider:
@@ -1895,7 +1896,7 @@ void M_OptDrawer ()
 					assert(item->e.joyslidernum == 1);
 					value.Float = SELECTED_JOYSTICK->GetAxisDeadZone(item->a.joyselection);
 				}
-				M_DrawSlider (indent + 14, y + labelofs, item->b.min, item->c.max, fabs(value.Float));
+				M_DrawSlider (indent + 14, y + labelofs, item->b.min, item->c.max, fabs(value.Float), 3);
 				break;
 
 			case joy_inverter:
@@ -1908,16 +1909,16 @@ void M_OptDrawer ()
 
 			case slider:
 				value = item->a.cvar->GetGenericRep (CVAR_Float);
-				M_DrawSlider (indent + 14, y + labelofs, item->b.min, item->c.max, value.Float);
+				M_DrawSlider (indent + 14, y + labelofs, item->b.min, item->c.max, value.Float, 1);
 				break;
 
 			case absslider:
 				value = item->a.cvar->GetGenericRep (CVAR_Float);
-				M_DrawSlider (indent + 14, y + labelofs, item->b.min, item->c.max, fabs(value.Float));
+				M_DrawSlider (indent + 14, y + labelofs, item->b.min, item->c.max, fabs(value.Float), 1);
 				break;
 
 			case intslider:
-				M_DrawSlider (indent + 14, y + labelofs, item->b.min, item->c.max, item->a.fval);
+				M_DrawSlider (indent + 14, y + labelofs, item->b.min, item->c.max, item->a.fval, 0);
 				break;
 
 			case control:
@@ -2967,7 +2968,7 @@ static void ColorPickerDrawer ()
 	DWORD oldColor = DWORD(*ColorPickerItems[0].a.colorcvar) | 0xFF000000;
 
 	int x = screen->GetWidth()*2/3;
-	int y = (15 + BigFont->GetHeight() + SmallFont->GetHeight()*2 - 102) * CleanYfac + screen->GetHeight()/2;
+	int y = (15 + BigFont->GetHeight() + SmallFont->GetHeight()*5 - 90) * CleanYfac + screen->GetHeight()/2;
 
 	screen->Clear (x, y, x + 48*CleanXfac, y + 48*CleanYfac, -1, oldColor);
 	screen->Clear (x + 48*CleanXfac, y, x + 48*2*CleanXfac, y + 48*CleanYfac, -1, newColor);
@@ -3102,9 +3103,9 @@ static void UpdateJoystickConfigMenu(IJoystickConfig *joy)
 
 		item.type = joy_sens;
 		item.label = "Overall sensitivity";
-		item.b.min = 0.5f;
-		item.c.max = 2.f;
-		item.d.step = 0.2f;
+		item.b.min = 0;
+		item.c.max = 2;
+		item.d.step = 0.1f;
 		JoystickConfigItems.Push(item);
 
 		item.type = redtext;
@@ -3134,7 +3135,7 @@ static void UpdateJoystickConfigMenu(IJoystickConfig *joy)
 				item.label = "Sensitivity";
 				item.b.min = 0;
 				item.c.max = 4;
-				item.d.step = 0.2f;
+				item.d.step = 0.1f;
 				item.e.joyslidernum = 0;
 				JoystickConfigItems.Push(item);
 

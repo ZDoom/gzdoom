@@ -1,4 +1,11 @@
-﻿July 17, 2009  (Changes by Graf Zahl)
+﻿July 22, 2009
+- Slider controls in the options menu now display their values
+  numerically next to the slider.
+- The minimum value for m_yaw, m_pitch, m_forward, and m_side from the
+  menu has been dropped from 0.5 to 0, so those particular mouse motions can
+  be disabled entirely without using the console.
+
+July 17, 2009  (Changes by Graf Zahl)
 - fixed blue colormap
 - Added parameters to A_VileAttack.
 - Removed redundant definition of use_joystick from SDL/i_input.cpp.

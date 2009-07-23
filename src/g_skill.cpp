@@ -42,6 +42,7 @@
 #include "v_font.h"
 
 TArray<FSkillInfo> AllSkills;
+int DefaultSkill = -1;
 
 //==========================================================================
 //
@@ -52,6 +53,8 @@ TArray<FSkillInfo> AllSkills;
 void FMapInfoParser::ParseSkill ()
 {
 	FSkillInfo skill;
+	bool thisisdefault = false;
+	bool acsreturnisset = false;
 
 	skill.AmmoFactor = FRACUNIT;
 	skill.DoubleAmmoFactor = 2*FRACUNIT;
@@ -65,7 +68,7 @@ void FMapInfoParser::ParseSkill ()
 	skill.RespawnLimit = 0;
 	skill.Aggressiveness = FRACUNIT;
 	skill.SpawnFilter = 0;
-	skill.ACSReturn = AllSkills.Size();
+	skill.ACSReturn = 0;
 	skill.MenuNameIsLump = false;
 	skill.MustConfirm = false;
 	skill.Shortcut = 0;
@@ -163,6 +166,7 @@ void FMapInfoParser::ParseSkill ()
 			ParseAssign();
 			sc.MustGetNumber ();
 			skill.ACSReturn = sc.Number;
+			acsreturnisset = true;
 		}
 		else if (sc.Compare("ReplaceActor"))
 		{
@@ -245,6 +249,14 @@ void FMapInfoParser::ParseSkill ()
 		{
 			skill.NoPain = true;
 		}
+		else if (sc.Compare("DefaultSkill"))
+		{
+			if (DefaultSkill >= 0)
+			{
+				sc.ScriptError("%s is already the default skill\n", AllSkills[DefaultSkill].Name.GetChars());
+			}
+			thisisdefault = true;
+		}
 		else if (!ParseCloseBrace())
 		{
 			// Unknown
@@ -261,9 +273,25 @@ void FMapInfoParser::ParseSkill ()
 	{
 		if (AllSkills[i].Name == skill.Name)
 		{
+			if (!acsreturnisset)
+			{ // Use the ACS return for the skill we are overwriting.
+				skill.ACSReturn = AllSkills[i].ACSReturn;
+			}
 			AllSkills[i] = skill;
+			if (thisisdefault)
+			{
+				DefaultSkill = i;
+			}
 			return;
 		}
+	}
+	if (!acsreturnisset)
+	{
+		skill.ACSReturn = AllSkills.Size();
+	}
+	if (thisisdefault)
+	{
+		DefaultSkill = AllSkills.Size();
 	}
 	AllSkills.Push(skill);
 }

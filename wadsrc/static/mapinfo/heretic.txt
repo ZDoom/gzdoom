@@ -58,6 +58,7 @@ skill normal
 	DoubleAmmoFactor = 1.5
 	SpawnFilter = Normal
 	Name = "$MNU_BRINGEST"
+	DefaultSkill
 }
 
 skill hard

@@ -580,6 +580,7 @@ struct FSkillInfo
 };
 
 extern TArray<FSkillInfo> AllSkills;
+extern int DefaultSkill;
 
 
 

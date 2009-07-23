@@ -1,4 +1,10 @@
 ﻿July 22, 2009
+- Fixed: Redefining an existing skill would set that skills ACSReturn to be
+  the same as the next new skill defined, if neither definition explicitly set
+  the value for ACSReturn.
+- Added a DefaultSkill property. Adding it to a skill will cause that skill
+  to be the default one selected in the menu. If none is specified as the
+  default, then the middle skill is the default.
 - Slider controls in the options menu now display their values
   numerically next to the slider.
 - The minimum value for m_yaw, m_pitch, m_forward, and m_side from the

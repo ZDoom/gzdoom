@@ -59,6 +59,7 @@ skill normal
 	SpawnFilter = Normal
 	PicName = "M_HURT"
 	Key = "v"
+	DefaultSkill
 }
 
 skill hard

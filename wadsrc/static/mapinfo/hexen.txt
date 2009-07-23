@@ -67,6 +67,7 @@ skill normal
 	playerclassname = "fighter", "$MNU_WARRIOR"
 	playerclassname = "cleric", "$MNU_PRIEST"
 	playerclassname = "mage", "$MNU_SORCERER"
+	DefaultSkill
 }
 
 skill hard

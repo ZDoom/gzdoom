@@ -1,4 +1,7 @@
-﻿July 22, 2009
+﻿July 24, 2009  (Changes by Graf Zahl)
+- Fixed: using custom automap backgrounds crashed.
+
+July 22, 2009
 - Added extra states to dehsupp for the MBF additions.
 - Removed specific Button_Speed handling from the controllers' AddAxes()
   methods. Analog axes now respond to Button_Speed and cl_run in exactly the

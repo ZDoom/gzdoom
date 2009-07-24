@@ -262,7 +262,7 @@ bool P_UndoPlayerMorph (player_t *activator, player_t *player, bool force)
 
 	if ((player->health > 0) || undobydeathsaves)
 	{
-		player->health = mo->health = mo->GetDefault()->health;
+		player->health = mo->health = mo->SpawnHealth();
 	}
 	else // killed when morphed so stay dead
 	{

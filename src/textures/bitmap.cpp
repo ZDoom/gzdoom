@@ -523,6 +523,7 @@ void FBitmap::CopyPixelData(int originx, int originy, const BYTE * patch, int sr
 		BYTE *buffer = data + 4*originx + Pitch*originy;
 		PalEntry penew[256];
 
+		memset(penew, 0, sizeof(penew));
 		if (inf && inf->blend)
 		{
 			iCopyColors<cPalEntry, cBGRA, bCopy>((BYTE*)penew, (const BYTE*)palette, 256, 4, inf);

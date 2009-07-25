@@ -1,4 +1,8 @@
-﻿July 24, 2009  (Changes by Graf Zahl)
+﻿July 25, 2009  (Changes by Graf Zahl)
+- Fixed: The composer for complex multipatch textures did not clear the palette
+  buffer before filling it.
+
+July 24, 2009  (Changes by Graf Zahl)
 - Fixed: using custom automap backgrounds crashed.
 
 July 22, 2009

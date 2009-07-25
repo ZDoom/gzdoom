@@ -180,10 +180,10 @@ bool SightCheck::PTR_SightTraverse (intercept_t *in)
 						fixed_t ffb_bottom=rover2->bottom.plane->ZatPoint(trX, trY);
 						fixed_t ffb_top=rover2->top.plane->ZatPoint(trX, trY);
 
-						if (ffb_bottom >= ff_bottom && ffb_bottom<=ff_top ||
-							ffb_top <= ff_top && ffb_top >= ff_bottom ||
-							ffb_top >= ff_top && ffb_bottom <= ff_bottom ||
-							ffb_top <= ff_top && ffb_bottom >= ff_bottom)
+						if ( (ffb_bottom >= ff_bottom && ffb_bottom<=ff_top) ||
+							(ffb_top <= ff_top && ffb_top >= ff_bottom) ||
+							(ffb_top >= ff_top && ffb_bottom <= ff_bottom) ||
+							(ffb_top <= ff_top && ffb_bottom >= ff_bottom) )
 						{
 							return false;
 						}

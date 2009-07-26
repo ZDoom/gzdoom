@@ -105,7 +105,7 @@ protected:
 	void Attached();
 	void Detached();
 
-	static void ProcessThumbstick(int value, AxisInfo *axis, int base);
+	static void ProcessThumbstick(int value1, AxisInfo *axis1, int value2, AxisInfo *axis2, int base);
 	static void ProcessTrigger(int value, AxisInfo *axis, int base);
 };
 
@@ -195,6 +195,12 @@ FXInputController::FXInputController(int index)
 
 FXInputController::~FXInputController()
 {
+	// Send button up events before destroying this.
+	ProcessThumbstick(0, &Axes[AXIS_ThumbLX], 0, &Axes[AXIS_ThumbLY], KEY_PAD_LTHUMB_RIGHT);
+	ProcessThumbstick(0, &Axes[AXIS_ThumbRX], 0, &Axes[AXIS_ThumbRY], KEY_PAD_RTHUMB_RIGHT);
+	ProcessTrigger(0, &Axes[AXIS_LeftTrigger], KEY_PAD_LTRIGGER);
+	ProcessTrigger(0, &Axes[AXIS_RightTrigger], KEY_PAD_RTRIGGER);
+	Joy_GenerateButtonEvents(LastButtons, 0, 16, KEY_PAD_DPAD_UP);
 	M_SaveJoystickConfig(this);
 }
 
@@ -239,10 +245,10 @@ void FXInputController::ProcessInput()
 
 	// Convert axes to floating point and cancel out deadzones.
 	// XInput's Y axes are reversed compared to DirectInput.
-	ProcessThumbstick(state.Gamepad.sThumbLX, &Axes[AXIS_ThumbLX], KEY_PAD_LTHUMB_RIGHT);
-	ProcessThumbstick(-state.Gamepad.sThumbLY, &Axes[AXIS_ThumbLY], KEY_PAD_LTHUMB_DOWN);
-	ProcessThumbstick(state.Gamepad.sThumbRX, &Axes[AXIS_ThumbRX], KEY_PAD_RTHUMB_RIGHT);
-	ProcessThumbstick(-state.Gamepad.sThumbRY, &Axes[AXIS_ThumbRY], KEY_PAD_RTHUMB_DOWN);
+	ProcessThumbstick(state.Gamepad.sThumbLX, &Axes[AXIS_ThumbLX],
+					 -state.Gamepad.sThumbLY, &Axes[AXIS_ThumbLY], KEY_PAD_LTHUMB_RIGHT);
+	ProcessThumbstick(state.Gamepad.sThumbRX, &Axes[AXIS_ThumbRX],
+					 -state.Gamepad.sThumbRY, &Axes[AXIS_ThumbRY], KEY_PAD_RTHUMB_RIGHT);
 	ProcessTrigger(state.Gamepad.bLeftTrigger, &Axes[AXIS_LeftTrigger], KEY_PAD_LTRIGGER);
 	ProcessTrigger(state.Gamepad.bRightTrigger, &Axes[AXIS_RightTrigger], KEY_PAD_RTRIGGER);
 
@@ -257,21 +263,28 @@ void FXInputController::ProcessInput()
 //
 // FXInputController :: ProcessThumbstick							STATIC
 //
-// Converts one axis of a thumb stick to floating point, cancels out the
-// deadzone, and generates button up/down events for that axis.
+// Converts both axes of a thumb stick to floating point, cancels out the
+// deadzone, and generates button up/down events for them.
 //
 //==========================================================================
 
-void FXInputController::ProcessThumbstick(int value, AxisInfo *axis, int base)
+void FXInputController::ProcessThumbstick(int value1, AxisInfo *axis1,
+	int value2, AxisInfo *axis2, int base)
 {
 	BYTE buttonstate;
-	double axisval;
+	double axisval1, axisval2;
 	
-	axisval = (value - SHRT_MIN) * 2.0 / 65536 - 1.0;
-	axisval = Joy_RemoveDeadZone(axisval, axis->DeadZone, &buttonstate);
-	Joy_GenerateButtonEvents(axis->ButtonValue, buttonstate, 2, base);
-	axis->ButtonValue = buttonstate;
-	axis->Value = float(axisval);
+	axisval1 = (value1 - SHRT_MIN) * 2.0 / 65536 - 1.0;
+	axisval2 = (value2 - SHRT_MIN) * 2.0 / 65536 - 1.0;
+	axisval1 = Joy_RemoveDeadZone(axisval1, axis1->DeadZone, NULL);
+	axisval2 = Joy_RemoveDeadZone(axisval2, axis2->DeadZone, NULL);
+	axis1->Value = float(axisval1);
+	axis2->Value = float(axisval2);
+
+	// We store all four buttons in the first axis and ignore the second.
+	buttonstate = Joy_XYAxesToButtons(axisval1, axisval2);
+	Joy_GenerateButtonEvents(axis1->ButtonValue, buttonstate, 4, base);
+	axis1->ButtonValue = buttonstate;
 }
 
 //==========================================================================
@@ -331,9 +344,9 @@ void FXInputController::Detached()
 	int i;
 
 	Connected = false;
-	for (i = 0; i < 4; ++i)
+	for (i = 0; i < 4; i += 2)
 	{
-		ProcessThumbstick(0, &Axes[i], KEY_PAD_LTHUMB_RIGHT + i*2);
+		ProcessThumbstick(0, &Axes[i], 0, &Axes[i+1], KEY_PAD_LTHUMB_RIGHT + i*2);
 	}
 	for (i = 0; i < 2; ++i)
 	{

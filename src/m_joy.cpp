@@ -33,6 +33,9 @@ CUSTOM_CVAR(Bool, use_joystick, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOINI
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+// Bits 0 is X+, 1 is X-, 2 is Y+, and 3 is Y-.
+static BYTE JoyAngleButtons[8] = { 1, 1+4, 4, 2+4, 2, 2+8, 8, 1+8 };
+
 // CODE --------------------------------------------------------------------
 
 //==========================================================================
@@ -170,24 +173,67 @@ void M_SaveJoystickConfig(IJoystickConfig *joy)
 
 double Joy_RemoveDeadZone(double axisval, double deadzone, BYTE *buttons)
 {
+	BYTE butt;
+
 	// Cancel out deadzone.
 	if (fabs(axisval) < deadzone)
 	{
 		axisval = 0;
-		*buttons = 0;
+		butt = 0;
 	}
 	// Make the dead zone the new 0.
 	else if (axisval < 0)
 	{
 		axisval = (axisval + deadzone) / (1.0 - deadzone);
-		*buttons = 2;	// button minus
+		butt = 2;	// button minus
 	}
 	else
 	{
 		axisval = (axisval - deadzone) / (1.0 - deadzone);
-		*buttons = 1;	// button plus
+		butt = 1;	// button plus
+	}
+	if (buttons != NULL)
+	{
+		*buttons = butt;
 	}
 	return axisval;
+}
+
+//===========================================================================
+//
+// Joy_XYAxesToButtons
+//
+// Given two axes, returns a button set for them. They should have already
+// been sent through Joy_RemoveDeadZone. For axes that share the same
+// physical stick, the angle the stick forms should determine whether or
+// not the four component buttons are present. Going by deadzone alone gives
+// you huge areas where you have to buttons pressed and thin strips where
+// you only have one button pressed. For DirectInput gamepads, there is
+// not much standard for how the right stick is presented, so we can only
+// do this for the left stick for those, since X and Y axes are pretty
+// standard. For XInput and Raw PS2 controllers, both sticks are processed
+// through here.
+//
+//===========================================================================
+
+int Joy_XYAxesToButtons(double x, double y)
+{
+	if (x == 0 && y == 0)
+	{
+		return 0;
+	}
+	double rad = atan2(y, x);
+	if (rad < 0)
+	{
+		rad += 2*M_PI;
+	}
+	// The circle is divided into eight segments for corresponding
+	// button combinations. Each segment is pi/4 radians wide. We offset
+	// by half this so that the segments are centered around the ideal lines
+	// their buttons represent instead of being right on the lines.
+	rad += M_PI/8;		// Offset
+	rad *= 4/M_PI;		// Convert range from [0,2pi) to [0,8)
+	return JoyAngleButtons[int(rad) & 7];
 }
 
 //===========================================================================

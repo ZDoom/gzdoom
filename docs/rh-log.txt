@@ -1,4 +1,20 @@
-﻿July 25, 2009  (Changes by Graf Zahl)
+﻿July 25, 2009
+- Joystick devices now send key up events for any buttons that are held
+  down when they are destroyed.
+- Changed the joystick enable-y menu items to be nonrepeatable so that you
+  can't create several device scans per second. Changing them with a
+  controller is also disabled so that you can't, for example, toggle XInput
+  support using an XInput controller and have things go haywire when the
+  game receives an infinite number of key down events when the controller
+  is reinitialized with the other input system.
+- Changed menu input to use a consolidated set of buttons, so most menus
+  can be navigated with a controller as well as a keyboard.
+- Changed the way that X/Y analog axes are converted to digital axes.
+  Previously, this was done by checking if each axis was outside its deadzone.
+  Now they are checked together based on their angle, so straight up/down/
+  left/right are much easier to achieve.
+
+July 25, 2009  (Changes by Graf Zahl)
 - Fixed: The composer for complex multipatch textures did not clear the palette
   buffer before filling it.
 

@@ -124,6 +124,7 @@ typedef enum {
 struct IJoystickConfig;
 void UpdateJoystickMenu(IJoystickConfig *selected);
 
+// Yeargh! It's a monster!
 struct menuitem_t
 {
 	itemtype		  type;
@@ -150,7 +151,7 @@ struct menuitem_t
 		int				  key2;
 		char			 *res2;
 		void			 *extra;
-		float			  discretecenter;
+		float			  discretecenter;	// 1 to center or 2 to disable repeat (do I even use centered discretes?)
 	} c;
 	union {
 		float			  step;
@@ -237,6 +238,25 @@ struct menustack_t
 	bool isNewStyle;
 	bool drawSkull;
 };
+
+enum EMenuKey
+{
+	MKEY_Up,
+	MKEY_Down,
+	MKEY_Left,
+	MKEY_Right,
+	MKEY_PageUp,
+	MKEY_PageDown,
+	//----------------- Keys past here do not repeat.
+	MKEY_Enter,
+	MKEY_Back,		// Back to previous menu
+	MKEY_Clear,		// Clear keybinding/flip player sprite preview
+
+	NUM_MKEYS
+};
+
+void M_ButtonHandler(EMenuKey key, bool repeat);
+void M_OptButtonHandler(EMenuKey key, bool repeat);
 
 extern value_t YesNo[2];
 extern value_t NoYes[2];

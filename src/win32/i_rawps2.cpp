@@ -136,7 +136,7 @@ protected:
 	void Detached();
 	void NeutralInput();
 
-	static void ProcessThumbstick(int value, AxisInfo *axis, int base);
+	static void ProcessThumbstick(int value1, AxisInfo *axis1, int value2, AxisInfo *axis2, int base);
 
 	friend class FRawPS2Manager;
 };
@@ -375,6 +375,8 @@ FRawPS2Controller::FRawPS2Controller(HANDLE handle, EAdapterType type, int seque
 
 FRawPS2Controller::~FRawPS2Controller()
 {
+	// Make sure to send any key ups before destroying this.
+	NeutralInput();
 	M_SaveJoystickConfig(this);
 }
 
@@ -463,19 +465,19 @@ bool FRawPS2Controller::ProcessInput(RAWHID *raw, int code)
 	}
 
 	// Convert axes to floating point and cancel out deadzones.
-	ProcessThumbstick(rawdata[desc->LeftX], &Axes[AXIS_ThumbLX], KEY_PAD_LTHUMB_RIGHT);
-	ProcessThumbstick(rawdata[desc->LeftY], &Axes[AXIS_ThumbLY], KEY_PAD_LTHUMB_DOWN);
+	ProcessThumbstick(rawdata[desc->LeftX], &Axes[AXIS_ThumbLX],
+					  rawdata[desc->LeftY], &Axes[AXIS_ThumbLY], KEY_PAD_LTHUMB_RIGHT);
 
 	// If we know we are digital, ignore the right stick.
 	if (digital)
 	{
-		ProcessThumbstick(0x80, &Axes[AXIS_ThumbRX], KEY_PAD_RTHUMB_RIGHT);
-		ProcessThumbstick(0x80, &Axes[AXIS_ThumbRY], KEY_PAD_RTHUMB_DOWN);
+		ProcessThumbstick(0x80, &Axes[AXIS_ThumbRX],
+						  0x80, &Axes[AXIS_ThumbRY], KEY_PAD_RTHUMB_RIGHT);
 	}
 	else
 	{
-		ProcessThumbstick(rawdata[desc->RightX], &Axes[AXIS_ThumbRX], KEY_PAD_RTHUMB_RIGHT);
-		ProcessThumbstick(rawdata[desc->RightY], &Axes[AXIS_ThumbRY], KEY_PAD_RTHUMB_DOWN);
+		ProcessThumbstick(rawdata[desc->RightX], &Axes[AXIS_ThumbRX],
+						  rawdata[desc->RightY], &Axes[AXIS_ThumbRY], KEY_PAD_RTHUMB_RIGHT);
 	}
 
 	// Generate events for buttons that have changed.
@@ -506,21 +508,27 @@ bool FRawPS2Controller::ProcessInput(RAWHID *raw, int code)
 //
 // FRawPS2Controller :: ProcessThumbstick							STATIC
 //
-// Converts one axis of a thumb stick to floating point, cancels out the
-// deadzone, and generates button up/down events for that axis.
+// Converts both axie of a thumb stick to floating point, cancels out the
+// deadzone, and generates button up/down events for them.
 //
 //==========================================================================
 
-void FRawPS2Controller::ProcessThumbstick(int value, AxisInfo *axis, int base)
+void FRawPS2Controller::ProcessThumbstick(int value1, AxisInfo *axis1, int value2, AxisInfo *axis2, int base)
 {
 	BYTE buttonstate;
-	double axisval;
+	double axisval1, axisval2;
 	
-	axisval = value * (2.0 / 255) - 1.0;
-	axisval = Joy_RemoveDeadZone(axisval, axis->DeadZone, &buttonstate);
-	Joy_GenerateButtonEvents(axis->ButtonValue, buttonstate, 2, base);
-	axis->ButtonValue = buttonstate;
-	axis->Value = float(axisval);
+	axisval1 = value1 * (2.0 / 255) - 1.0;
+	axisval2 = value2 * (2.0 / 255) - 1.0;
+	axisval1 = Joy_RemoveDeadZone(axisval1, axis1->DeadZone, NULL);
+	axisval2 = Joy_RemoveDeadZone(axisval2, axis2->DeadZone, NULL);
+	axis1->Value = float(axisval1);
+	axis2->Value = float(axisval2);
+
+	// We store all four buttons in the first axis and ignore the second.
+	buttonstate = Joy_XYAxesToButtons(axisval1, axisval2);
+	Joy_GenerateButtonEvents(axis1->ButtonValue, buttonstate, 4, base);
+	axis1->ButtonValue = buttonstate;
 }
 
 //==========================================================================
@@ -573,11 +581,9 @@ void FRawPS2Controller::Detached()
 
 void FRawPS2Controller::NeutralInput()
 {
-	int i;
-
-	for (i = 0; i < NUM_AXES; ++i)
+	for (int i = 0; i < NUM_AXES; i += 2)
 	{
-		ProcessThumbstick(0x80, &Axes[i], KEY_PAD_LTHUMB_RIGHT + i*2);
+		ProcessThumbstick(0x80, &Axes[i], 0x80, &Axes[i+1], KEY_PAD_LTHUMB_RIGHT + i*2);
 	}
 	Joy_GenerateButtonEvents(LastButtons, 0, 16, ButtonKeys);
 	LastButtons = 0;

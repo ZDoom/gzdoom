@@ -79,6 +79,9 @@
 #define SELECTOR_XOFFSET	(-28)
 #define SELECTOR_YOFFSET	(-1)
 
+#define KEY_REPEAT_DELAY	(TICRATE*5/12)
+#define KEY_REPEAT_RATE		(3)
+
 // TYPES -------------------------------------------------------------------
 
 struct FSaveGameNode : public Node
@@ -149,6 +152,7 @@ static void M_ExtractSaveData (const FSaveGameNode *file);
 static void M_UnloadSaveData ();
 static void M_InsertSaveNode (FSaveGameNode *node);
 static bool M_SaveLoadResponder (event_t *ev);
+static void M_SaveLoadButtonHandler(EMenuKey key);
 static void M_DeleteSaveResponse (int choice);
 
 static void M_DrawMainMenu ();
@@ -205,6 +209,8 @@ int				skullAnimCounter;	// skull animation counter
 bool			drawSkull;			// [RH] don't always draw skull
 bool			M_DemoNoPlay;
 bool			OptionsActive;
+FButtonStatus	MenuButtons[NUM_MKEYS];
+int				MenuButtonTickers[NUM_MKEYS];
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -2783,184 +2789,346 @@ bool M_Responder (event_t *ev)
 {
 	int ch;
 	int i;
+	EMenuKey mkey = NUM_MKEYS;
+	bool keyup = true;
 
 	ch = -1;
 
+	if (chatmodeon)
+	{
+		return false;
+	}
 	if (menuactive == MENU_Off && ev->type == EV_KeyDown)
 	{
 		// Pop-up menu?
 		if (ev->data1 == KEY_ESCAPE)
 		{
-			M_StartControlPanel (true);
-			M_SetupNextMenu (TopLevelMenu);
+			M_StartControlPanel(true);
+			M_SetupNextMenu(TopLevelMenu);
 			return true;
 		}
 		// If devparm is set, pressing F1 always takes a screenshot no matter
 		// what it's bound to. (for those who don't bother to read the docs)
 		if (devparm && ev->data1 == KEY_F1)
 		{
-			G_ScreenShot (NULL);
+			G_ScreenShot(NULL);
 			return true;
 		}
+		return false;
 	}
-	else if (ev->type == EV_GUI_Event && menuactive == MENU_On && !chatmodeon)
+	if (menuactive == MENU_WaitKey && OptionsActive)
 	{
-		if (ev->subtype == EV_GUI_KeyDown || ev->subtype == EV_GUI_KeyRepeat)
-		{
-			ch = ev->data1;
-		}
-		else if (ev->subtype == EV_GUI_Char && genStringEnter)
-		{
-			ch = ev->data1;
-			if (saveCharIndex < genStringLen &&
-				(genStringEnter==2 || (size_t)SmallFont->StringWidth (savegamestring) < (genStringLen-1)*8))
-			{
-				savegamestring[saveCharIndex] = ch;
-				savegamestring[++saveCharIndex] = 0;
-			}
-			return true;
-		}
-		else if (ev->subtype == EV_GUI_Char && messageToPrint && messageNeedsInput)
-		{
-			ch = ev->data1;
-		}
-	}
-	
-	if (OptionsActive && !chatmodeon)
-	{
-		M_OptResponder (ev);
+		M_OptResponder(ev);
 		return true;
 	}
-	
-	if (ch == -1)
-		return false;
-
-	// Save Game string input
-	// [RH] and Player Name string input
-	if (genStringEnter)
+	if (menuactive != MENU_On && menuactive != MENU_OnNoPause &&
+		!genStringEnter && !messageToPrint)
 	{
+		return false;
+	}
+
+	// There are a few input sources we are interested in:
+	//
+	// EV_KeyDown / EV_KeyUp : joysticks/gamepads/controllers
+	// EV_GUI_KeyDown / EV_GUI_KeyUp : the keyboard
+	// EV_GUI_Char : printable characters, which we want in string input mode
+	//
+	// This code previously listened for EV_GUI_KeyRepeat to handle repeating
+	// in the menus, but that doesn't work with gamepads, so now we combine
+	// the multiple inputs into buttons and handle the repetition manually.
+	//
+	// FIXME: genStringEnter and messageToPrint do not play well with game
+	// controllers. In fact, you can still interact with the rest of
+	// the menu using a controller while the menu waits for input. Especially
+	// bad if you, say, select quit from the main menu. (Ideally,
+	// genStringEnter will pop up a keypad if it detects a controller is
+	// being used to navigate the menu. At the very least, it should
+	// disable the controller.)
+	if (ev->type == EV_GUI_Event)
+	{
+		// Save game and player name string input
+		if (genStringEnter)
+		{
+			if (ev->subtype == EV_GUI_Char)
+			{
+				if (saveCharIndex < genStringLen &&
+					(genStringEnter == 2 || (size_t)SmallFont->StringWidth(savegamestring) < (genStringLen-1)*8))
+				{
+					savegamestring[saveCharIndex] = (char)ev->data1;
+					savegamestring[++saveCharIndex] = 0;
+				}
+				return true;
+			}
+			if (ev->subtype == EV_GUI_KeyDown || ev->subtype == EV_GUI_KeyUp)
+			{
+				ch = ev->data1;
+
+				if (genStringEnter)
+				{
+					switch (ch)
+					{
+					case '\b':
+						if (saveCharIndex > 0)
+						{
+							saveCharIndex--;
+							savegamestring[saveCharIndex] = 0;
+						}
+						break;
+
+					case GK_ESCAPE:
+						genStringEnter = 0;
+						genStringCancel ();	// [RH] Function to call when escape is pressed
+						break;
+
+					case '\r':
+						if (savegamestring[0])
+						{
+							genStringEnter = 0;
+							if (messageToPrint)
+								M_ClearMenus ();
+							genStringEnd (SelSaveGame);	// [RH] Function to call when enter is pressed
+						}
+						break;
+					}
+					return true;
+				}
+			}
+		}
+		if (ev->subtype != EV_GUI_KeyDown && ev->subtype != EV_GUI_KeyUp)
+		{
+			return false;
+		}
+		ch = ev->data1;
+		keyup = ev->subtype == EV_GUI_KeyUp;
 		switch (ch)
 		{
-		case '\b':
-			if (saveCharIndex > 0)
+		case GK_ESCAPE:			mkey = MKEY_Back;		break;
+		case GK_RETURN:			mkey = MKEY_Enter;		break;
+		case GK_UP:				mkey = MKEY_Up;			break;
+		case GK_DOWN:			mkey = MKEY_Down;		break;
+		case GK_LEFT:			mkey = MKEY_Left;		break;
+		case GK_RIGHT:			mkey = MKEY_Right;		break;
+		case GK_BACKSPACE:		mkey = MKEY_Clear;		break;
+		case GK_PGUP:			mkey = MKEY_PageUp;		break;
+		case GK_PGDN:			mkey = MKEY_PageDown;	break;
+		default:
+			if (ch == ' ' && currentMenu == &PSetupDef)
 			{
-				saveCharIndex--;
-				savegamestring[saveCharIndex] = 0;
+				mkey = MKEY_Clear;
 			}
-			break;
-
-		case GK_ESCAPE:
-			genStringEnter = 0;
-			genStringCancel ();	// [RH] Function to call when escape is pressed
-			break;
-								
-		case '\r':
-			if (savegamestring[0])
+			else if (!keyup && !OptionsActive)
 			{
-				genStringEnter = 0;
+				ch = tolower (ch);
 				if (messageToPrint)
-					M_ClearMenus ();
-				genStringEnd (SelSaveGame);	// [RH] Function to call when enter is pressed
+				{
+					// Take care of any messages that need input
+					ch = tolower (ch);
+					if (messageNeedsInput)
+					{
+						// For each printable keystroke, both EV_GUI_KeyDown and
+						// EV_GUI_Char will be generated, in that order. If we close
+						// the menu after the first event arrives and the fullscreen
+						// console is up, the console will get the EV_GUI_Char event
+						// next. Therefore, the message input should only respond to
+						// EV_GUI_Char events (sans Escape, which only generates
+						// EV_GUI_KeyDown.)
+						if (ev->subtype != EV_GUI_Char && ch != GK_ESCAPE)
+						{
+//							return false;
+						}
+						if (ch != ' ' && ch != 'n' && ch != 'y' && ch != GK_ESCAPE)
+						{
+							return false;
+						}
+					}
+
+					menuactive = messageLastMenuActive;
+					messageToPrint = 0;
+					if (messageRoutine)
+						messageRoutine (ch);
+
+					if (menuactive != MENU_Off)
+					{
+						M_DeactivateMenuInput();
+					}
+					SB_state = screen->GetPageCount();	// refresh the status bar
+					BorderNeedRefresh = screen->GetPageCount();
+					S_Sound(CHAN_VOICE | CHAN_UI, "menu/dismiss", 1, ATTN_NONE);
+					return true;
+				}
+				else
+				{
+					// Search for a menu item associated with the pressed key.
+					for (i = (itemOn + 1) % currentMenu->numitems;
+						 i != itemOn;
+						 i = (i + 1) % currentMenu->numitems)
+					{
+						if (currentMenu->menuitems[i].alphaKey == ch)
+						{
+							break;
+						}
+					}
+					if (currentMenu->menuitems[i].alphaKey == ch)
+					{
+						itemOn = i;
+						S_Sound(CHAN_VOICE | CHAN_UI, "menu/cursor", 1, ATTN_NONE);
+						return true;
+					}
+				}
 			}
 			break;
 		}
-		return true;
+	}
+	else if (ev->type == EV_KeyDown || ev->type == EV_KeyUp)
+	{
+		keyup = ev->type == EV_KeyUp;
+		ch = ev->data1;
+		switch (ch)
+		{
+		case KEY_JOY1:
+		case KEY_PAD_A:
+			mkey = MKEY_Enter;
+			break;
+
+		case KEY_JOY2:
+		case KEY_PAD_B:
+			mkey = MKEY_Back;
+			break;
+
+		case KEY_JOY3:
+		case KEY_PAD_X:
+			mkey = MKEY_Clear;
+			break;
+
+		case KEY_JOY5:
+		case KEY_PAD_LSHOULDER:
+			mkey = MKEY_PageUp;
+			break;
+
+		case KEY_JOY6:
+		case KEY_PAD_RSHOULDER:
+			mkey = MKEY_PageDown;
+			break;
+
+		case KEY_PAD_DPAD_UP:
+		case KEY_PAD_LTHUMB_UP:
+		case KEY_JOYAXIS1MINUS:
+		case KEY_JOYPOV1_UP:
+			mkey = MKEY_Up;
+			break;
+
+		case KEY_PAD_DPAD_DOWN:
+		case KEY_PAD_LTHUMB_DOWN:
+		case KEY_JOYAXIS1PLUS:
+		case KEY_JOYPOV1_DOWN:
+			mkey = MKEY_Down;
+			break;
+
+		case KEY_PAD_DPAD_LEFT:
+		case KEY_PAD_LTHUMB_LEFT:
+		case KEY_JOYAXIS2MINUS:
+		case KEY_JOYPOV1_LEFT:
+			mkey = MKEY_Left;
+			break;
+
+		case KEY_PAD_DPAD_RIGHT:
+		case KEY_PAD_LTHUMB_RIGHT:
+		case KEY_JOYAXIS2PLUS:
+		case KEY_JOYPOV1_RIGHT:
+			mkey = MKEY_Right;
+			break;
+		}
 	}
 
-	// Take care of any messages that need input
-	if (messageToPrint)
+	if (mkey != NUM_MKEYS)
 	{
-		ch = tolower (ch);
-		if (messageNeedsInput)
+		if (keyup)
 		{
-			// For each printable keystroke, both EV_GUI_KeyDown and
-			// EV_GUI_Char will be generated, in that order. If we close
-			// the menu after the first event arrives and the fullscreen
-			// console is up, the console will get the EV_GUI_Char event
-			// next. Therefore, the message input should only respond to
-			// EV_GUI_Char events (sans Escape, which only generates
-			// EV_GUI_KeyDown.)
-			if (ev->subtype != EV_GUI_Char && ch != GK_ESCAPE)
+			MenuButtons[mkey].ReleaseKey(ch);
+		}
+		else
+		{
+			if (MenuButtons[mkey].PressKey(ch))
 			{
-				return false;
-			}
-			if (ch != ' ' && ch != 'n' && ch != 'y' && ch != GK_ESCAPE)
-			{
-				return false;
+				if (mkey <= MKEY_PageDown)
+				{
+					MenuButtonTickers[mkey] = KEY_REPEAT_DELAY;
+				}
+				M_ButtonHandler(mkey, false);
 			}
 		}
-
-		menuactive = messageLastMenuActive;
-		messageToPrint = 0;
-		if (messageRoutine)
-			messageRoutine (ch);
-
-		if (menuactive != MENU_Off)
-		{
-			M_DeactivateMenuInput ();
-		}
-		SB_state = screen->GetPageCount ();	// refresh the statbar
-		BorderNeedRefresh = screen->GetPageCount ();
-		S_Sound (CHAN_VOICE | CHAN_UI, "menu/dismiss", 1, ATTN_NONE);
-		return true;
 	}
 
-	if (ch == GK_ESCAPE)
-	{
-		// [RH] Escape now moves back one menu instead of quitting
-		//		the menu system. Thus, backspace is ignored.
-		currentMenu->lastOn = itemOn;
-		M_PopMenuStack ();
-		return true;
-	}
-
-	if (currentMenu == &SaveDef || currentMenu == &LoadDef)
+	if (ev->type == EV_GUI_Event && (currentMenu == &SaveDef || currentMenu == &LoadDef))
 	{
 		return M_SaveLoadResponder (ev);
 	}
 
-	// Keys usable within menu
-	switch (ch)
+	// Eat key downs, but let the rest through.
+	return !keyup;
+}
+
+void M_ButtonHandler(EMenuKey key, bool repeat)
+{
+	if (OptionsActive)
 	{
-	case GK_DOWN:
+		M_OptButtonHandler(key, repeat);
+		return;
+	}
+	if (key == MKEY_Back)
+	{
+		// Save the cursor position on the current menu, and pop it off the stack
+		// to go back to the previous menu.
+		currentMenu->lastOn = itemOn;
+		M_PopMenuStack();
+		return;
+	}
+	if (currentMenu == &SaveDef || currentMenu == &LoadDef)
+	{
+		M_SaveLoadButtonHandler(key);
+		return;
+	}
+	switch (key)
+	{
+	case MKEY_Down:
 		do
 		{
-			if (itemOn+1 > currentMenu->numitems-1)
+			if (itemOn + 1 >= currentMenu->numitems)
 				itemOn = 0;
 			else itemOn++;
 			S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", 1, ATTN_NONE);
-		} while(currentMenu->menuitems[itemOn].status==-1);
-		return true;
+		} while (currentMenu->menuitems[itemOn].status == -1);
+		break;
 
-	case GK_UP:
+	case MKEY_Up:
 		do
 		{
-			if (!itemOn)
-				itemOn = currentMenu->numitems-1;
+			if (itemOn == 0)
+				itemOn = currentMenu->numitems - 1;
 			else itemOn--;
 			S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", 1, ATTN_NONE);
-		} while(currentMenu->menuitems[itemOn].status==-1);
-		return true;
+		} while (currentMenu->menuitems[itemOn].status == -1);
+		break;
 
-	case GK_LEFT:
+	case MKEY_Left:
 		if (currentMenu->menuitems[itemOn].routine &&
 			currentMenu->menuitems[itemOn].status == 2)
 		{
 			S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
 			currentMenu->menuitems[itemOn].routine(0);
 		}
-		return true;
+		break;
 
-	case GK_RIGHT:
+	case MKEY_Right:
 		if (currentMenu->menuitems[itemOn].routine &&
 			currentMenu->menuitems[itemOn].status == 2)
 		{
 			S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
 			currentMenu->menuitems[itemOn].routine(1);
 		}
-		return true;
+		break;
 
-	case '\r':
+	case MKEY_Enter:
 		if (currentMenu->menuitems[itemOn].routine &&
 			currentMenu->menuitems[itemOn].status)
 		{
@@ -2976,47 +3144,75 @@ bool M_Responder (event_t *ev)
 				S_Sound (CHAN_VOICE | CHAN_UI, "menu/choose", 1, ATTN_NONE);
 			}
 		}
-		return true;
+		break;
 
-	case ' ':
+	case MKEY_Clear:
 		if (currentMenu == &PSetupDef)
 		{
 			PlayerRotation ^= 8;
-			break;
-		}
-		// intentional fall-through
-
-	default:
-		if (ch)
-		{
-			ch = tolower (ch);
-			for (i = (itemOn + 1) % currentMenu->numitems;
-				 i != itemOn;
-				 i = (i + 1) % currentMenu->numitems)
-			{
-				if (currentMenu->menuitems[i].alphaKey == ch)
-				{
-					break;
-				}
-			}
-			if (currentMenu->menuitems[i].alphaKey == ch)
-			{
-				itemOn = i;
-				S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", 1, ATTN_NONE);
-				return true;
-			}
 		}
 		break;
 	}
-
-	// [RH] Menu eats all keydown events while active
-	return (ev->subtype == EV_GUI_KeyDown);
 }
 
-bool M_SaveLoadResponder (event_t *ev)
+static void M_SaveLoadButtonHandler(EMenuKey key)
 {
-	char workbuf[512];
+	if (SelSaveGame == NULL || SelSaveGame->Succ == NULL)
+	{
+		return;
+	}
+	switch (key)
+	{
+	case MKEY_Up:
+		if (SelSaveGame != SaveGames.Head)
+		{
+			if (SelSaveGame == TopSaveGame)
+			{
+				TopSaveGame = static_cast<FSaveGameNode *>(TopSaveGame->Pred);
+			}
+			SelSaveGame = static_cast<FSaveGameNode *>(SelSaveGame->Pred);
+		}
+		else
+		{
+			SelSaveGame = static_cast<FSaveGameNode *>(SaveGames.TailPred);
+		}
+		M_UnloadSaveData ();
+		M_ExtractSaveData (SelSaveGame);
+		break;
 
+	case MKEY_Down:
+		if (SelSaveGame != SaveGames.TailPred)
+		{
+			SelSaveGame = static_cast<FSaveGameNode *>(SelSaveGame->Succ);
+		}
+		else
+		{
+			SelSaveGame = TopSaveGame =
+				static_cast<FSaveGameNode *>(SaveGames.Head);
+		}
+		M_UnloadSaveData ();
+		M_ExtractSaveData (SelSaveGame);
+		break;
+
+	case MKEY_Enter:
+		if (currentMenu == &LoadDef)
+		{
+			M_LoadSelect (SelSaveGame);
+		}
+		else
+		{
+			M_SaveSelect (SelSaveGame);
+		}
+		break;
+	}
+}
+
+static bool M_SaveLoadResponder (event_t *ev)
+{
+	if (ev->subtype != EV_GUI_KeyDown)
+	{
+		return false;
+	}
 	if (SelSaveGame != NULL && SelSaveGame->Succ != NULL)
 	{
 		switch (ev->data1)
@@ -3024,6 +3220,8 @@ bool M_SaveLoadResponder (event_t *ev)
 		case GK_F1:
 			if (!SelSaveGame->Filename.IsEmpty())
 			{
+				char workbuf[512];
+
 				mysnprintf (workbuf, countof(workbuf), "File on disk:\n%s", SelSaveGame->Filename.GetChars());
 				if (SaveComment != NULL)
 				{
@@ -3031,37 +3229,6 @@ bool M_SaveLoadResponder (event_t *ev)
 				}
 				SaveComment = V_BreakLines (SmallFont, 216*screen->GetWidth()/640/CleanXfac, workbuf);
 			}
-			break;
-
-		case GK_UP:
-			if (SelSaveGame != SaveGames.Head)
-			{
-				if (SelSaveGame == TopSaveGame)
-				{
-					TopSaveGame = static_cast<FSaveGameNode *>(TopSaveGame->Pred);
-				}
-				SelSaveGame = static_cast<FSaveGameNode *>(SelSaveGame->Pred);
-			}
-			else
-			{
-				SelSaveGame = static_cast<FSaveGameNode *>(SaveGames.TailPred);
-			}
-			M_UnloadSaveData ();
-			M_ExtractSaveData (SelSaveGame);
-			break;
-
-		case GK_DOWN:
-			if (SelSaveGame != SaveGames.TailPred)
-			{
-				SelSaveGame = static_cast<FSaveGameNode *>(SelSaveGame->Succ);
-			}
-			else
-			{
-				SelSaveGame = TopSaveGame =
-					static_cast<FSaveGameNode *>(SaveGames.Head);
-			}
-			M_UnloadSaveData ();
-			M_ExtractSaveData (SelSaveGame);
 			break;
 
 		case GK_DEL:
@@ -3082,20 +3249,9 @@ bool M_SaveLoadResponder (event_t *ev)
 				M_UnloadSaveData ();
 			}
 			break;
-
-		case '\r':
-			if (currentMenu == &LoadDef)
-			{
-				M_LoadSelect (SelSaveGame);
-			}
-			else
-			{
-				M_SaveSelect (SelSaveGame);
-			}
 		}
 	}
-
-	return (ev->subtype == EV_GUI_KeyDown);
+	return true;
 }
 
 static void M_LoadSelect (const FSaveGameNode *file)
@@ -3166,7 +3322,11 @@ void M_StartControlPanel (bool makeSound)
 	// intro might call this repeatedly
 	if (menuactive == MENU_On)
 		return;
-	
+
+	for (int i = 0; i < NUM_MKEYS; ++i)
+	{
+		MenuButtons[i].ResetTriggers();
+	}
 	drawSkull = true;
 	MenuStackDepth = 0;
 	currentMenu = TopLevelMenu;
@@ -3437,7 +3597,21 @@ void M_Ticker (void)
 		skullAnimCounter = 8;
 	}
 	if (currentMenu == &PSetupDef || currentMenu == &ClassMenuDef)
-		M_PlayerSetupTicker ();
+	{
+		M_PlayerSetupTicker();
+	}
+
+	for (int i = 0; i < NUM_MKEYS; ++i)
+	{
+		if (MenuButtons[i].bDown)
+		{
+			if (MenuButtonTickers[i] > 0 &&	--MenuButtonTickers[i] <= 0)
+			{
+				MenuButtonTickers[i] = KEY_REPEAT_RATE;
+				M_ButtonHandler(EMenuKey(i), true);
+			}
+		}
+	}
 }
 
 

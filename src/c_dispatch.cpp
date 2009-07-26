@@ -421,7 +421,7 @@ FButtonStatus *FindButton (unsigned int key)
 	return bit ? bit->Button : NULL;
 }
 
-void FButtonStatus::PressKey (int keynum)
+bool FButtonStatus::PressKey (int keynum)
 {
 	int i, open;
 
@@ -445,22 +445,26 @@ void FButtonStatus::PressKey (int keynum)
 			}
 			else if (Keys[i] == keynum)
 			{ // Key is already down; do nothing
-				return;
+				return false;
 			}
 		}
 		if (open < 0)
 		{ // No free key slots, so do nothing
 			Printf ("More than %u keys pressed for a single action!\n", MAX_KEYS);
-			return;
+			return false;
 		}
 		Keys[open] = keynum;
 	}
+	BYTE wasdown = bDown;
 	bDown = bWentDown = true;
+	// Returns true if this key caused the button to go down.
+	return !wasdown;
 }
 
-void FButtonStatus::ReleaseKey (int keynum)
+bool FButtonStatus::ReleaseKey (int keynum)
 {
 	int i, numdown, match;
+	BYTE wasdown = bDown;
 
 	keynum &= KEY_DBLCLICKED-1;
 
@@ -488,7 +492,7 @@ void FButtonStatus::ReleaseKey (int keynum)
 		}
 		if (match < 0)
 		{ // Key was not down; do nothing
-			return;
+			return false;
 		}
 		Keys[match] = 0;
 		bWentUp = true;
@@ -497,6 +501,8 @@ void FButtonStatus::ReleaseKey (int keynum)
 			bDown = false;
 		}
 	}
+	// Returns true if releasing this key caused the button to go up.
+	return wasdown && !bDown;
 }
 
 void ResetButtonTriggers ()

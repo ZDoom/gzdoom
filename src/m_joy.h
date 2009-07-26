@@ -51,6 +51,7 @@ void M_SaveJoystickConfig(IJoystickConfig *joy);
 
 void Joy_GenerateButtonEvents(int oldbuttons, int newbuttons, int numbuttons, int base);
 void Joy_GenerateButtonEvents(int oldbuttons, int newbuttons, int numbuttons, const int *keys);
+int Joy_XYAxesToButtons(double x, double y);
 double Joy_RemoveDeadZone(double axisval, double deadzone, BYTE *buttons);
 
 // These ought to be provided by a system-specific i_input.cpp.

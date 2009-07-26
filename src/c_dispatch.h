@@ -140,8 +140,8 @@ struct FButtonStatus
 	BYTE bWentUp;			// Button went up this tic
 	BYTE padTo16Bytes;
 
-	void PressKey (int keynum);
-	void ReleaseKey (int keynum);
+	bool PressKey (int keynum);		// Returns true if this key caused the button to be pressed.
+	bool ReleaseKey (int keynum);	// Returns true if this key is no longer pressed.
 	void ResetTriggers () { bWentDown = bWentUp = false; }
 };
 

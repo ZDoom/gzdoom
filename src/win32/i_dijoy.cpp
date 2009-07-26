@@ -296,6 +296,8 @@ FDInputJoystick::FDInputJoystick(const GUID *instance, FString &name)
 
 FDInputJoystick::~FDInputJoystick()
 {
+	unsigned int i;
+
 	if (Device != NULL)
 	{
 		M_SaveJoystickConfig(this);
@@ -305,6 +307,31 @@ FDInputJoystick::~FDInputJoystick()
 	if (DataFormat.rgodf != NULL)
 	{
 		delete[] DataFormat.rgodf;
+	}
+	// Send key ups before destroying this.
+	if (Axes.Size() == 1)
+	{
+		Joy_GenerateButtonEvents(Axes[0].ButtonValue, 0, 2, KEY_JOYAXIS1PLUS);
+	}
+	else
+	{
+		Joy_GenerateButtonEvents(Axes[1].ButtonValue, 0, 4, KEY_JOYAXIS1PLUS);
+		for (i = 2; i < Axes.Size(); ++i)
+		{
+			Joy_GenerateButtonEvents(Axes[i].ButtonValue, 0, 2, KEY_JOYAXIS1PLUS + i*2);
+		}
+	}
+	for (i = 0; i < Buttons.Size(); ++i)
+	{
+		if (Buttons[i].Value)
+		{
+			event_t ev = { EV_KeyUp };
+			ev.data1 = KEY_FIRSTJOYBUTTON + i;
+		}
+	}
+	for (i = 0; i < POVs.Size(); ++i)
+	{
+		Joy_GenerateButtonEvents(POVs[i].Value, 0, 4, KEY_JOYPOV1_UP + i*4);
 	}
 }
 
@@ -399,16 +426,23 @@ void FDInputJoystick::ProcessInput()
 		AxisInfo *info = &Axes[i];
 		LONG value = *(LONG *)(state + info->Ofs);
 		double axisval;
-		BYTE buttonstate;
+		BYTE buttonstate = 0;
 
 		// Scale to [-1.0, 1.0]
 		axisval = (value - info->Min) * 2.0 / (info->Max - info->Min) - 1.0;
 		// Cancel out dead zone
 		axisval = Joy_RemoveDeadZone(axisval, info->DeadZone, &buttonstate);
 		info->Value = float(axisval);
-		if (i < NUM_JOYAXISBUTTONS)
+		if (i < NUM_JOYAXISBUTTONS && (i > 2 || Axes.Size() == 1))
 		{
 			Joy_GenerateButtonEvents(info->ButtonValue, buttonstate, 2, KEY_JOYAXIS1PLUS + i*2);
+		}
+		else if (i == 1)
+		{
+			// Since we sorted the axes, we know that the first two are definitely X and Y.
+			// They are probably a single stick, so use angular position to determine buttons.
+			buttonstate = Joy_XYAxesToButtons(axisval, Axes[0].Value);
+			Joy_GenerateButtonEvents(info->ButtonValue, buttonstate, 4, KEY_JOYAXIS1PLUS);
 		}
 		info->ButtonValue = buttonstate;
 	}

@@ -144,12 +144,11 @@ static void SpawnFly(AActor *self, const PClass *spawntype, FSoundID sound)
 	AActor *targ;
 	int r;
 		
-	// [GZ] Should be more fiable than a countdown...
-	if (self->reactiontime > level.maptime)
+	// [GZ] Should be more viable than a countdown...
+	if (self->reactiontime == 0 || self->reactiontime > level.maptime)
 		return; // still flying
 		
 	targ = self->target;
-
 
 	if (spawntype != NULL)
 	{

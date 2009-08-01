@@ -1,4 +1,10 @@
-﻿July 25, 2009
+﻿July 31, 2009
+- Changed A_SpawnFly to do nothing if reactiontime is 0. Reactiontime was
+  originally a counter, so if it started at 0, A_SpawnFly would effectively 
+  never spawn anything. Fixes Dehacked patches that use A_SpawnSound to
+  play a sound without shooting boss cubes, since it also calls A_SpawnFly.
+
+July 25, 2009
 - Joystick devices now send key up events for any buttons that are held
   down when they are destroyed.
 - Changed the joystick enable-y menu items to be nonrepeatable so that you

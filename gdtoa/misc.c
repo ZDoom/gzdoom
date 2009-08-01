@@ -617,7 +617,7 @@ b2d
 {
 	ULong *xa, *xa0, w, y, z;
 	int k;
-	double d;
+	U d;
 #ifdef VAX
 	ULong d0, d1;
 #else
@@ -681,7 +681,7 @@ d2b
 #ifdef KR_headers
 	(d, e, bits) double d; int *e, *bits;
 #else
-	(double d, int *e, int *bits)
+	(double _d, int *e, int *bits)
 #endif
 {
 	Bigint *b;
@@ -690,13 +690,18 @@ d2b
 #endif
 	int de, k;
 	ULong *x, y, z;
+	U d;
 #ifdef VAX
 	ULong d0, d1;
-	d0 = word0(d) >> 16 | word0(d) << 16;
-	d1 = word1(d) >> 16 | word1(d) << 16;
 #else
 #define d0 word0(d)
 #define d1 word1(d)
+#endif
+
+	dval(d) = _d;
+#ifdef VAX
+	d0 = word0(d) >> 16 | word0(d) << 16;
+	d1 = word1(d) >> 16 | word1(d) << 16;
 #endif
 
 #ifdef Pack_32

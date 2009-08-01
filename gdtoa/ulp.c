@@ -36,12 +36,13 @@ ulp
 #ifdef KR_headers
 	(x) double x;
 #else
-	(double x)
+	(double _x)
 #endif
 {
 	Long L;
-	double a;
+	U x, a;
 
+	dval(x) = _x;
 	L = (word0(x) & Exp_mask) - (P-1)*Exp_msk1;
 #ifndef Sudden_Underflow
 	if (L > 0) {
@@ -66,5 +67,5 @@ ulp
 			}
 		}
 #endif
-	return a;
+	return dval(a);
 	}

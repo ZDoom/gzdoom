@@ -294,10 +294,13 @@ rvOK
 #ifdef KR_headers
 mantbits(d) double d;
 #else
-mantbits(double d)
+mantbits(double _d)
 #endif
 {
 	ULong L;
+	U d;
+
+	dval(d) = _d;
 #ifdef VAX
 	L = word1(d) << 16 | word1(d) >> 16;
 	if (L)
@@ -328,7 +331,8 @@ strtodg
 	int j, k, nbits, nd, nd0, nf, nz, nz0, rd, rvbits, rve, rve1, sign;
 	int sudden_underflow;
 	CONST char *s, *s0, *s1;
-	double adj, adj0, rv, tol;
+	double adj0, tol;
+	U adj, rv;
 	Long L;
 	ULong y, z;
 	Bigint *ab, *bb, *bb1, *bd, *bd0, *bs, *delta, *rvb, *rvb0;

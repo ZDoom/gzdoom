@@ -158,7 +158,8 @@ gdtoa
 	int rdir, s2, s5, spec_case, try_quick;
 	Long L;
 	Bigint *b, *b1, *delta, *mlo, *mhi, *mhi1, *S;
-	double d, d2, ds, eps;
+	double d2, ds;
+	U d, eps;
 	char *s, *s0;
 
 #ifndef MULTIPLE_THREADS

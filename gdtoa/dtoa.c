@@ -80,7 +80,7 @@ dtoa
 	(d, mode, ndigits, decpt, sign, rve)
 	double d; int mode, ndigits, *decpt, *sign; char **rve;
 #else
-	(double d, int mode, int ndigits, int *decpt, int *sign, char **rve)
+	(double _d, int mode, int ndigits, int *decpt, int *sign, char **rve)
 #endif
 {
  /*	Arguments ndigits, decpt, sign are similar to those
@@ -126,7 +126,8 @@ dtoa
 	ULong x;
 #endif
 	Bigint *b, *b1, *delta, *mlo, *mhi, *S;
-	double d2, ds, eps;
+	U d, d2, eps;
+	double ds;
 	char *s, *s0;
 #ifdef Honor_FLT_ROUNDS
 	int rounding;
@@ -142,6 +143,7 @@ dtoa
 		}
 #endif
 
+	dval(d) = _d;
 	if (word0(d) & Sign_bit) {
 		/* set sign for everything, including 0's and NaNs */
 		*sign = 1;

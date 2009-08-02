@@ -13,7 +13,13 @@ struct FResourceLump
 
 	int				LumpSize;
 	char *			FullName;		// only valid for files loaded from a .zip file
-	char			Name[9];
+	union
+	{
+		char		Name[9];
+
+		DWORD		dwName;			// These are for accessing the first 4 or 8 chars of
+		QWORD		qwName;			// Name as a unit without breaking strict aliasing rules
+	};
 	BYTE			Flags;
 	SBYTE			RefCount;
 	char *			Cache;

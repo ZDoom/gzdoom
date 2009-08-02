@@ -765,12 +765,12 @@ void SBarInfo::ParseSBarInfoBlock(FScanner &sc, SBarInfoBlock &block)
 						sc.MustGetToken(',');
 				}
 				this->getCoordinates(sc, block.fullScreenOffsets, cmd.x, cmd.y);
-				*(SBarInfoCoordinate*)&cmd.special2 = cmd.x + 30;
-				*(SBarInfoCoordinate*)&cmd.special3 = cmd.y + 24;
+				cmd.sbcoord2 = cmd.x + 30;
+				cmd.sbcoord3 = cmd.y + 24;
 				cmd.translation = CR_GOLD;
 				if(sc.CheckToken(',')) //more font information
 				{
-					this->getCoordinates(sc, block.fullScreenOffsets, *(SBarInfoCoordinate*)&cmd.special2, *(SBarInfoCoordinate*)&cmd.special3);
+					this->getCoordinates(sc, block.fullScreenOffsets, cmd.sbcoord2, cmd.sbcoord3);
 					if(sc.CheckToken(','))
 					{
 						sc.MustGetToken(TK_Identifier);
@@ -847,12 +847,12 @@ void SBarInfo::ParseSBarInfoBlock(FScanner &sc, SBarInfoBlock &block)
 
 				sc.MustGetToken(',');
 				this->getCoordinates(sc, block.fullScreenOffsets, cmd.x, cmd.y);
-				*(SBarInfoCoordinate*)&cmd.special2 = cmd.x + 26;
-				*(SBarInfoCoordinate*)&cmd.special3 = cmd.y + 22;
+				cmd.sbcoord2 = cmd.x + 26;
+				cmd.sbcoord3 = cmd.y + 22;
 				cmd.translation = CR_GOLD;
 				if(sc.CheckToken(',')) //more font information
 				{
-					this->getCoordinates(sc, block.fullScreenOffsets, *(SBarInfoCoordinate*)&cmd.special2, *(SBarInfoCoordinate*)&cmd.special3);
+					this->getCoordinates(sc, block.fullScreenOffsets, cmd.sbcoord2, cmd.sbcoord3);
 					if(sc.CheckToken(','))
 					{
 						sc.MustGetToken(TK_Identifier);

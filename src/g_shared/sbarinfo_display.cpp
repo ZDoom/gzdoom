@@ -91,11 +91,6 @@ enum
 
 ////////////////////////////////////////////////////////////////////////////////
 
-SBarInfoCoordinate::SBarInfoCoordinate(int coord, bool relCenter) :
-	 relCenter(relCenter), value(coord)
-{
-}
-
 SBarInfoCoordinate &SBarInfoCoordinate::Add(int add)
 {
 	value += add;
@@ -756,7 +751,7 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 						{
 							drawingFont = cmd.font;
 						}
-						DrawNumber(CPlayer->mo->InvSel->Amount, 3, *(SBarInfoCoordinate*)&cmd.special2, *(SBarInfoCoordinate*)&cmd.special3, xOffset, yOffset, alpha, block.fullScreenOffsets, cmd.translation, cmd.special4, false, !!(cmd.flags & DRAWSELECTEDINVENTORY_DRAWSHADOW));
+						DrawNumber(CPlayer->mo->InvSel->Amount, 3, cmd.sbcoord2, cmd.sbcoord3, xOffset, yOffset, alpha, block.fullScreenOffsets, cmd.translation, cmd.special4, false, !!(cmd.flags & DRAWSELECTEDINVENTORY_DRAWSHADOW));
 					}
 				}
 				else if((cmd.flags & DRAWSELECTEDINVENTORY_ALTERNATEONEMPTY))
@@ -785,7 +780,7 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 				{
 					drawingFont = cmd.font;
 				}
-				DrawInventoryBar(cmd.special, cmd.value, cmd.x, cmd.y, xOffset, yOffset, alpha, block.fullScreenOffsets, alwaysshow, *(SBarInfoCoordinate*)&cmd.special2, *(SBarInfoCoordinate*)&cmd.special3, cmd.translation, artibox, noarrows, alwaysshowcounter, bgalpha);
+				DrawInventoryBar(cmd.special, cmd.value, cmd.x, cmd.y, xOffset, yOffset, alpha, block.fullScreenOffsets, alwaysshow, cmd.sbcoord2, cmd.sbcoord3, cmd.translation, artibox, noarrows, alwaysshowcounter, bgalpha);
 				break;
 			}
 			case SBARINFO_DRAWBAR:

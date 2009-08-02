@@ -150,7 +150,7 @@ void F_StartFinale (const char *music, int musicorder, int cdtrack, unsigned int
 
 	if (ending)
 	{
-		FinaleSequence = *((WORD *)&level.nextmap[6]);
+		FinaleSequence = level.EndSequence;
 		if (EndSequences[FinaleSequence].EndType == END_Chess)
 		{
 			TEXTSPEED = 3;	// Slow the text to its original rate to match the music.
@@ -244,7 +244,7 @@ void F_Ticker ()
 					// [RH] Don't automatically advance end-of-game messages
 					if (interrupt)
 					{
-						FinaleSequence = *((WORD *)&level.nextmap[6]);
+						FinaleSequence = level.EndSequence;
 						if (EndSequences[FinaleSequence].EndType == END_Cast)
 						{
 							F_StartCast ();

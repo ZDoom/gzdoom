@@ -67,7 +67,6 @@
 #include "r_translate.h"
 #include "a_morph.h"
 #include "colormatcher.h"
-#include "autosegs.h"
 
 
 //==========================================================================

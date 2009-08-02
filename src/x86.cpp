@@ -73,9 +73,9 @@ haveid:
 
 	// Get vendor ID
 	__cpuid(foo, 0);
-	((int *)cpu->VendorID)[0] = foo[1];
-	((int *)cpu->VendorID)[1] = foo[3];
-	((int *)cpu->VendorID)[2] = foo[2];
+	cpu->VendorID[0] = foo[1];
+	cpu->VendorID[1] = foo[3];
+	cpu->VendorID[2] = foo[2];
 	if (foo[1] == MAKE_ID('A','u','t','h') &&
 		foo[3] == MAKE_ID('e','n','t','i') &&
 		foo[2] == MAKE_ID('c','A','M','D'))
@@ -85,9 +85,9 @@ haveid:
 
 	// Get features flags and other info
 	__cpuid(foo, 1);
-	((int *)cpu)[17] = foo[1];	// Store brand index and other stuff
-	((int *)cpu)[18] = foo[2];	// Store extended feature flags
-	((int *)cpu)[19] = foo[3];	// Store feature flags
+	cpu->FeatureFlags[0] = foo[1];	// Store brand index and other stuff
+	cpu->FeatureFlags[1] = foo[2];	// Store extended feature flags
+	cpu->FeatureFlags[2] = foo[3];	// Store feature flags
 
 	// If CLFLUSH instruction is supported, get the real cache line size.
 	if (foo[3] & (1 << 19))
@@ -115,9 +115,9 @@ haveid:
 
 	if (maxext >= 0x80000004)
 	{ // Get processor brand string.
-		__cpuid((int *)&cpu->CPUString[0],  0x80000002);
-		__cpuid((int *)&cpu->CPUString[16], 0x80000003);
-		__cpuid((int *)&cpu->CPUString[32], 0x80000004);
+		__cpuid((int *)&cpu->dwCPUString[0], 0x80000002);
+		__cpuid((int *)&cpu->dwCPUString[4], 0x80000003);
+		__cpuid((int *)&cpu->dwCPUString[8], 0x80000004);
 	}
 
 	if (cpu->bIsAMD)
@@ -125,7 +125,7 @@ haveid:
 		if (maxext >= 0x80000005)
 		{ // Get data L1 cache info.
 			__cpuid(foo, 0x80000005);
-			*(int *)(&cpu->DataL1LineSize) = foo[2];
+			cpu->AMD_DataL1Info = foo[2];
 		}
 		if (maxext >= 0x80000001)
 		{ // Get AMD-specific feature flags.

@@ -417,7 +417,7 @@ FPropertyInfo *FindProperty(const char * string)
 //
 //==========================================================================
 
-AFuncDesc * FindFunction(const char * string)
+AFuncDesc *FindFunction(const char * string)
 {
 	int min = 0, max = AFTable.Size()-1;
 
@@ -444,7 +444,7 @@ AFuncDesc * FindFunction(const char * string)
 
 //==========================================================================
 //
-// Find a varIABLE by name using a binary search
+// Find a variable by name using a binary search
 //
 //==========================================================================
 
@@ -541,11 +541,11 @@ void InitThingdef()
 
 	// Create a sorted list of properties
 	{
-		TAutoSegIterator<FPropertyInfo *, &GRegHead, &GRegTail> probe;
+		FAutoSegIterator probe(GRegHead, GRegTail);
 
-		while (++probe != NULL)
+		while (*++probe != NULL)
 		{
-			properties.Push(probe);
+			properties.Push((FPropertyInfo *)*probe);
 		}
 		properties.ShrinkToFit();
 		qsort(&properties[0], properties.Size(), sizeof(properties[0]), propcmp);
@@ -553,11 +553,11 @@ void InitThingdef()
 
 	// Create a sorted list of native action functions
 	{
-		TAutoSegIterator<AFuncDesc *, &ARegHead, &ARegTail> probe;
+		FAutoSegIterator probe(ARegHead, ARegTail);
 
-		while (++probe != NULL)
+		while (*++probe != NULL)
 		{
-			AFTable.Push(*probe);
+			AFTable.Push(*(AFuncDesc *)*probe);
 		}
 		AFTable.ShrinkToFit();
 		qsort(&AFTable[0], AFTable.Size(), sizeof(AFTable[0]), funccmp);
@@ -565,11 +565,11 @@ void InitThingdef()
 
 	// Create a sorted list of native variables
 	{
-		TAutoSegIterator<FVariableInfo *, &MRegHead, &MRegTail> probe;
+		FAutoSegIterator probe(MRegHead, MRegTail);
 
-		while (++probe != NULL)
+		while (*++probe != NULL)
 		{
-			variables.Push(probe);
+			variables.Push((FVariableInfo *)*probe);
 		}
 		variables.ShrinkToFit();
 		qsort(&variables[0], variables.Size(), sizeof(variables[0]), varcmp);

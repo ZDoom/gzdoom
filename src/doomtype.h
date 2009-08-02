@@ -155,9 +155,9 @@ enum
 struct PalEntry
 {
 	PalEntry () {}
-	PalEntry (DWORD argb) { *(DWORD *)this = argb; }
-	operator DWORD () const { return *(DWORD *)this; }
-	PalEntry &operator= (DWORD other) { *(DWORD *)this = other; return *this; }
+	PalEntry (DWORD argb) { d = argb; }
+	operator DWORD () const { return d; }
+	PalEntry &operator= (DWORD other) { d = other; return *this; }
 	PalEntry InverseColor() const { PalEntry nc; nc.a = a; nc.r = 255 - r; nc.g = 255 - g; nc.b = 255 - b; return nc; }
 #ifdef WORDS_BIGENDIAN
 	PalEntry (BYTE ir, BYTE ig, BYTE ib) : a(0), r(ir), g(ig), b(ib) {}
@@ -166,7 +166,14 @@ struct PalEntry
 #else
 	PalEntry (BYTE ir, BYTE ig, BYTE ib) : b(ib), g(ig), r(ir), a(0) {}
 	PalEntry (BYTE ia, BYTE ir, BYTE ig, BYTE ib) : b(ib), g(ig), r(ir), a(ia) {}
-	BYTE b,g,r,a;
+	union
+	{
+		struct
+		{
+			BYTE b,g,r,a;
+		};
+		DWORD d;
+	};
 #endif
 };
 
@@ -186,5 +193,21 @@ template <typename T, size_t N>
 char ( &_ArraySizeHelper( T (&array)[N] ))[N];
 
 #define countof( array ) (sizeof( _ArraySizeHelper( array ) ))
+
+// Auto-registration sections for GCC.
+// Apparently, you cannot do string concatenation inside section attributes.
+#ifdef __MACH__
+#define SECTION_AREG "__DATA,areg"
+#define SECTION_CREG "__DATA,creg"
+#define SECTION_GREG "__DATA,greg"
+#define SECTION_MREG "__DATA,mreg"
+#define SECTION_YREG "__DATA,yreg"
+#else
+#define SECTION_AREG "areg"
+#define SECTION_CREG "creg"
+#define SECTION_GREG "greg"
+#define SECTION_MREG "mreg"
+#define SECTION_YREG "yreg"
+#endif
 
 #endif

@@ -345,9 +345,9 @@ void R_InitSpriteDefs ()
 	for (i = 0; i < max; ++i)
 	{
 		FTexture *tex = TexMan.ByIndex(i);
-		if (tex->UseType == FTexture::TEX_Sprite && strlen (tex->Name) >= 6)
+		if (tex->UseType == FTexture::TEX_Sprite && strlen(tex->Name) >= 6)
 		{
-			DWORD bucket = *(DWORD *)tex->Name % max;
+			DWORD bucket = tex->dwName % max;
 			hashes[i].Next = hashes[bucket].Head;
 			hashes[bucket].Head = i;
 		}
@@ -363,14 +363,14 @@ void R_InitSpriteDefs ()
 		}
 				
 		maxframe = -1;
-		intname = *(DWORD *)sprites[i].name;
+		intname = sprites[i].dwName;
 
 		// scan the lumps, filling in the frames for whatever is found
 		int hash = hashes[intname % max].Head;
 		while (hash != -1)
 		{
 			FTexture *tex = TexMan[hash];
-			if (*(DWORD *)tex->Name == intname)
+			if (tex->dwName == intname)
 			{
 				R_InstallSpriteLump (FTextureID(hash), tex->Name[4] - 'A', tex->Name[5], false);
 
@@ -673,7 +673,7 @@ void R_InitSkins (void)
 			{
 				char name[9];
 				Wads.GetLumpName (name, base+1);
-				intname = *(DWORD *)name;
+				memcpy(&intname, name, 4);
 			}
 
 			int basens = Wads.GetLumpNamespace(base);
@@ -703,8 +703,10 @@ void R_InitSkins (void)
 				for (k = base + 1; Wads.GetLumpNamespace(k) == basens; k++)
 				{
 					char lname[9];
+					DWORD lnameint;
 					Wads.GetLumpName (lname, k);
-					if (*(DWORD *)lname == intname)
+					memcpy(&lnameint, lname, 4);
+					if (lnameint == intname)
 					{
 						FTextureID picnum = TexMan.CreateTexture(k, FTexture::TEX_SkinSprite);
 						R_InstallSpriteLump (picnum, lname[4] - 'A', lname[5], false);

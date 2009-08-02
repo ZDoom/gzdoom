@@ -71,11 +71,11 @@ void PClass::StaticInit ()
 	}
 	qsort (head + 1, tail - head - 1, sizeof(REGINFO), cregcmp);
 
-	TAutoSegIterator<ClassReg *, &CRegHead, &CRegTail> probe;
+	FAutoSegIterator probe(CRegHead, CRegTail);
 
-	while (++probe != NULL)
+	while (*++probe != NULL)
 	{
-		probe->RegisterClass ();
+		((ClassReg *)*probe)->RegisterClass ();
 	}
 }
 
@@ -153,7 +153,7 @@ void PClass::StaticFreeData (PClass *type)
 	}
 }
 
-void ClassReg::RegisterClass ()
+void ClassReg::RegisterClass () const
 {
 	assert (MyClass != NULL);
 

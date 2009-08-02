@@ -36,7 +36,7 @@
 
 #include "doomtype.h"
 #include "doomdef.h"
-#include "autosegs.h"
+//#include "autosegs.h"
 #include "sc_man.h"
 
 struct level_info_t;
@@ -51,7 +51,7 @@ class FScanner;
 #define GCC_YSEG
 #else
 #define MSVC_YSEG
-#define GCC_YSEG __attribute__((section(YREG_SECTION)))
+#define GCC_YSEG __attribute__((section(SECTION_YREG)))
 #endif
 
 
@@ -355,7 +355,18 @@ struct FLevelLocals
 	int			levelnum;
 	int			lumpnum;
 	FString		LevelName;
-	char		mapname[256];			// the server name (base1, etc)
+	union
+	{
+		char		mapname[256];		// the server name (base1, etc)
+		// The endsequence is embedded in the name so that it can be
+		// carried around as a name. The first 6 character ought to
+		// match the string "enDSeQ".
+		struct
+		{
+			char	pad[6];
+			WORD	EndSequence;
+		};
+	};
 	char		nextmap[9];				// go here when fraglimit is hit
 	char		secretmap[9];			// map to go to when used secret exit
 

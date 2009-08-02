@@ -175,8 +175,7 @@ struct AFuncDesc
 	actionf_p Function;
 };
 
-AFuncDesc * FindFunction(const char * string);
-
+AFuncDesc *FindFunction(const char * string);
 
 
 void ParseStates(FScanner &sc, FActorInfo *actor, AActor *defaults, Baggage &bag);
@@ -250,11 +249,11 @@ enum EDefinitionType
 #define GCC_MSEG
 #else
 #define MSVC_ASEG
-#define GCC_ASEG __attribute__((section(AREG_SECTION)))
+#define GCC_ASEG __attribute__((section(SECTION_AREG)))
 #define MSVC_PSEG
-#define GCC_PSEG __attribute__((section(GREG_SECTION)))
+#define GCC_PSEG __attribute__((section(SECTION_GREG)))
 #define MSVC_MSEG
-#define GCC_MSEG __attribute__((section(MREG_SECTION)))
+#define GCC_MSEG __attribute__((section(SECTION_MREG)))
 #endif
 
 

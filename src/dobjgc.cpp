@@ -270,7 +270,7 @@ void Mark(DObject **obj)
 	{
 		if (lobj->ObjectFlags & OF_EuthanizeMe)
 		{
-			*obj = NULL;
+			*obj = (DObject *)NULL;
 		}
 		else if (lobj->IsWhite())
 		{

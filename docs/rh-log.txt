@@ -1,4 +1,16 @@
-﻿July 31, 2009
+﻿August 1, 2009
+- Removed -fno-strict-aliasing from the GCC flags for ZDoom and fixed the
+  issues that caused its inclusion. Is an optimized GCC build any faster
+  for being able to use strict aliasing rules? I dunno. It's still slower
+  than a VC++ build.
+  
+  I did run into two cases where TAutoSegIterator caused intractable problems
+  with breaking strict aliasing rules, so I removed the templating from it,
+  and the caller is now responsible for casting the probe value from void *.
+
+July 31, 2009
+- Removed #include "autosegs.h" from several files that did not need it
+  (in particular, dobject.h when not compiling with VC++).
 - gdtoa now performs all type aliasing through unions. -Wall has been added
   to the GCC flags for the library to help verify this.
 - Changed A_SpawnFly to do nothing if reactiontime is 0. Reactiontime was

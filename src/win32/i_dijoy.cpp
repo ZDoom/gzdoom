@@ -1293,7 +1293,7 @@ bool FDInputJoystickManager::IsXInputDeviceFast(const GUID *guid)
 			cbSize = rdi.cbSize = sizeof(rdi);
 			if (MyGetRawInputDeviceInfoA(devices[i].hDevice, RIDI_DEVICEINFO, &rdi, &cbSize) >= 0)
 			{
-				if(MAKELONG(rdi.hid.dwVendorId, rdi.hid.dwProductId) == guid->Data1)
+				if(MAKELONG(rdi.hid.dwVendorId, rdi.hid.dwProductId) == (LONG)guid->Data1)
 				{
 					char name[256];
 					UINT namelen = countof(name);

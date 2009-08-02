@@ -732,8 +732,10 @@ HANDLE WriteTextReport ()
 
 		for (i = 0; i < 8; ++i)
 		{
-			Writef (file, "MM%d=%08x%08x\r\n", i, *(DWORD *)(&ctxt->FloatSave.RegisterArea[20*i+4]),
-				*(DWORD *)(&ctxt->FloatSave.RegisterArea[20*i]));
+			DWORD d0, d1;
+			memcpy(&d0, &ctxt->FloatSave.RegisterArea[20*i+4], sizeof(DWORD));
+			memcpy(&d1, &ctxt->FloatSave.RegisterArea[20*i], sizeof(DWORD));
+			Writef (file, "MM%d=%08x%08x\r\n", i, d0, d1);
 		}
 #else
 		for (i = 0; i < 8; ++i)
@@ -2115,7 +2117,9 @@ repeat:
 			{
 				if (i <= read - 4)
 				{
-					buff_p += mysnprintf (buff_p, buff_end - buff_p, " %08lx", *(DWORD *)&buf16[i]);
+					DWORD d;
+					memcpy(&d, &buf16[i], sizeof(d));
+					buff_p += mysnprintf (buff_p, buff_end - buff_p, " %08lx", d);
 					i += 4;
 				}
 				else

@@ -50,6 +50,7 @@
 #include "p_acs.h"
 #include "doomstat.h"
 #include "d_player.h"
+#include "autosegs.h"
 
 int FindEndSequence (int type, const char *picname);
 
@@ -1434,14 +1435,14 @@ void FMapInfoParser::ParseMapDefinition(level_info_t &info)
 		}
 		else
 		{
-			TAutoSegIterator<FMapOptInfo*, &YRegHead, &YRegTail> probe;
+			FAutoSegIterator probe(YRegHead, YRegTail);
 			bool success = false;
 
-			while (++probe != NULL)
+			while (*++probe != NULL)
 			{
-				if (sc.Compare(probe->name))
+				if (sc.Compare(((FMapOptInfo *)(*probe))->name))
 				{
-					probe->handler(*this, &info);
+					((FMapOptInfo *)(*probe))->handler(*this, &info);
 					success = true;
 					break;
 				}

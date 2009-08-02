@@ -1070,7 +1070,11 @@ struct spriteframe_t
 //
 struct spritedef_t
 {
-	char name[5];
+	union
+	{
+		char name[5];
+		DWORD dwName;
+	};
 	BYTE numframes;
 	WORD spriteframes;
 };

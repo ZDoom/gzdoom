@@ -49,7 +49,6 @@
 #include "p_lnspec.h"
 #include "doomstat.h"
 #include "thingdef_exp.h"
-#include "autosegs.h"
 
 int testglobalvar = 1337;	// just for having one global variable to test with
 DEFINE_GLOBAL_VARIABLE(testglobalvar)

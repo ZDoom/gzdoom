@@ -36,9 +36,6 @@
 
 #include <stdlib.h>
 #include "doomtype.h"
-#ifndef _MSC_VER
-#include "autosegs.h"
-#endif
 
 struct PClass;
 
@@ -146,7 +143,7 @@ struct ClassReg
 	const size_t *Pointers;
 	void (*ConstructNative)(void *);
 
-	void RegisterClass();
+	void RegisterClass() const;
 };
 
 enum EInPlace { EC_InPlace };
@@ -177,7 +174,7 @@ private: \
 #	pragma data_seg()
 #	define _DECLARE_TI(cls) __declspec(allocate(".creg$u")) ClassReg *cls::RegistrationInfoPtr = &cls::RegistrationInfo;
 #else
-#	define _DECLARE_TI(cls) ClassReg *cls::RegistrationInfoPtr __attribute__((section(CREG_SECTION))) = &cls::RegistrationInfo;
+#	define _DECLARE_TI(cls) ClassReg *cls::RegistrationInfoPtr __attribute__((section(SECTION_CREG))) = &cls::RegistrationInfo;
 #endif
 
 #define _IMP_PCLASS(cls,ptrs,create) \
@@ -323,7 +320,17 @@ namespace GC
 	// Unroots an object.
 	void DelSoftRoot(DObject *obj);
 
-	template<class T> void Mark(T *&obj) { Mark((DObject **)&obj); }
+	template<class T> void Mark(T *&obj)
+	{
+		union
+		{
+			T *t;
+			DObject *o;
+		};
+		o = obj;
+		Mark(&o);
+		obj = t;
+	}
 	template<class T> void Mark(TObjPtr<T> &obj);
 }
 
@@ -334,6 +341,7 @@ template<class T>
 class TObjPtr
 {
 	T *p;
+	DObject *o;		// For GC::Mark below to make GCC's strict aliasing happy
 public:
 	TObjPtr() throw()
 	{
@@ -398,6 +406,7 @@ public:
 	}
 
 	template<class U> friend inline FArchive &operator<<(FArchive &arc, TObjPtr<U> &o);
+	template<class U> friend inline void GC::Mark(TObjPtr<U> &obj);
 	friend class DObject;
 };
 
@@ -413,7 +422,10 @@ template<class T,class U> inline T barrier_cast(TObjPtr<U> &o)
 	return static_cast<T>(static_cast<U *>(o));
 }
 
-template<class T> void GC::Mark(TObjPtr<T> &obj) { GC::Mark((DObject **)&obj); }
+template<class T> inline void GC::Mark(TObjPtr<T> &obj)
+{
+	GC::Mark(&obj.o);
+}
 
 class DObject
 {

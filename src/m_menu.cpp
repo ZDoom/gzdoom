@@ -3152,6 +3152,9 @@ void M_ButtonHandler(EMenuKey key, bool repeat)
 			PlayerRotation ^= 8;
 		}
 		break;
+
+	default:
+		break;		// Keep GCC quiet
 	}
 }
 
@@ -3204,6 +3207,9 @@ static void M_SaveLoadButtonHandler(EMenuKey key)
 			M_SaveSelect (SelSaveGame);
 		}
 		break;
+
+	default:
+		break;		// Keep GCC quiet
 	}
 }
 

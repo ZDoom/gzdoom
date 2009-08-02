@@ -9,6 +9,7 @@ union FMD5Holder
 {
 	BYTE Bytes[16];
 	DWORD DWords[4];
+	hash_t Hash;
 };
 
 struct FCompatValues
@@ -21,7 +22,7 @@ struct FMD5HashTraits
 {
 	hash_t Hash(const FMD5Holder key)
 	{
-		return *(hash_t *)key.Bytes;
+		return key.Hash;
 	}
 	int Compare(const FMD5Holder left, const FMD5Holder right)
 	{

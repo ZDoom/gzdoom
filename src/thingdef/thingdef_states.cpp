@@ -39,7 +39,6 @@
 */
 
 #include "actor.h"
-#include "autosegs.h"
 #include "info.h"
 #include "sc_man.h"
 #include "tarray.h"

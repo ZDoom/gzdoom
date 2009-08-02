@@ -55,9 +55,6 @@ class FScanner;
 class SBarInfoCoordinate
 {
 	public:
-		SBarInfoCoordinate() {}
-		SBarInfoCoordinate(int coord, bool relCenter);
-
 		SBarInfoCoordinate	&Add(int add);
 		int					Coordinate() const { return value; }
 		bool				RelCenter() const { return relCenter; }
@@ -132,8 +129,16 @@ struct SBarInfoCommand
 
 	int type;
 	int special;
-	int special2;
-	int special3;
+	union
+	{
+		int special2;
+		SBarInfoCoordinate sbcoord2;
+	};
+	union
+	{
+		int special3;
+		SBarInfoCoordinate sbcoord3;
+	};
 	int special4;
 	int flags;
 	SBarInfoCoordinate x;

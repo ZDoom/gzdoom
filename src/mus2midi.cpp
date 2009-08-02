@@ -41,6 +41,7 @@
 
 #include "m_swap.h"
 #include "mus2midi.h"
+#include "doomdef.h"
 
 static const BYTE StaticMIDIhead[] =
 { 'M','T','h','d', 0, 0, 0, 6,
@@ -52,7 +53,7 @@ static const BYTE StaticMIDIhead[] =
 0, 255, 81, 3, 0x07, 0xa1, 0x20
 };
 
-static const BYTE MUSMagic[4] = { 'M','U','S',0x1a };
+static const DWORD MUSMagic = MAKE_ID('M','U','S',0x1a);
 
 static const BYTE CtrlTranslate[15] =
 {
@@ -122,7 +123,7 @@ bool ProduceMIDI (const BYTE *musBuf, TArray<BYTE> &outFile)
 	long trackLen;
 	
 	// Do some validation of the MUS file
-	if (*(DWORD *)MUSMagic != musHead->Magic)
+	if (MUSMagic != musHead->Magic)
 		return false;
 	
 	if (LittleShort(musHead->NumChans) > 15)

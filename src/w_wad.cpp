@@ -369,7 +369,11 @@ int FWadCollection::GetNumWads () const
 
 int FWadCollection::CheckNumForName (const char *name, int space)
 {
-	char uname[8];
+	union
+	{
+		char uname[8];
+		QWORD qname;
+	};
 	DWORD i;
 
 	if (name == NULL)
@@ -391,7 +395,7 @@ int FWadCollection::CheckNumForName (const char *name, int space)
 	{
 		FResourceLump *lump = LumpInfo[i].lump;
 
-		if (*(QWORD *)&lump->Name == *(QWORD *)&uname)
+		if (lump->qwName == qname)
 		{
 			if (lump->Namespace == space) break;
 			// If the lump is from one of the special namespaces exclusive to Zips
@@ -411,7 +415,11 @@ int FWadCollection::CheckNumForName (const char *name, int space)
 int FWadCollection::CheckNumForName (const char *name, int space, int wadnum, bool exact)
 {
 	FResourceLump *lump;
-	char uname[8];
+	union
+	{
+		char uname[8];
+		QWORD qname;
+	};
 	DWORD i;
 
 	if (wadnum < 0)
@@ -426,7 +434,7 @@ int FWadCollection::CheckNumForName (const char *name, int space, int wadnum, bo
 	// also those in earlier WADs.
 
 	while (i != NULL_INDEX &&
-		(lump = LumpInfo[i].lump, *(QWORD *)&lump->Name != *(QWORD *)&uname ||
+		(lump = LumpInfo[i].lump, lump->qwName != qname ||
 		lump->Namespace != space ||
 		 (exact? (LumpInfo[i].wadnum != wadnum) : (LumpInfo[i].wadnum > wadnum)) ))
 	{
@@ -738,7 +746,7 @@ void FWadCollection::RenameSprites ()
 		// some frames need to be renamed.
 		if (LumpInfo[i].lump->Namespace == ns_sprites)
 		{
-			if (*(DWORD *)LumpInfo[i].lump->Name == MAKE_ID('M', 'N', 'T', 'R') && LumpInfo[i].lump->Name[4] == 'Z' )
+			if (LumpInfo[i].lump->dwName == MAKE_ID('M', 'N', 'T', 'R') && LumpInfo[i].lump->Name[4] == 'Z' )
 			{
 				MNTRZfound = true;
 				break;
@@ -757,9 +765,9 @@ void FWadCollection::RenameSprites ()
 			{
 				for (int j = 0; j < numrenames; ++j)
 				{
-					if (*(DWORD *)LumpInfo[i].lump->Name == renames[j*2])
+					if (LumpInfo[i].lump->dwName == renames[j*2])
 					{
-						*(DWORD *)LumpInfo[i].lump->Name = renames[j*2+1];
+						LumpInfo[i].lump->dwName = renames[j*2+1];
 					}
 				}
 				if (gameinfo.gametype == GAME_Hexen)
@@ -774,7 +782,7 @@ void FWadCollection::RenameSprites ()
 
 			if (!MNTRZfound)
 			{
-				if (*(DWORD *)LumpInfo[i].lump->Name == MAKE_ID('M', 'N', 'T', 'R'))
+				if (LumpInfo[i].lump->dwName == MAKE_ID('M', 'N', 'T', 'R'))
 				{
 					if (LumpInfo[i].lump->Name[4] >= 'F' && LumpInfo[i].lump->Name[4] <= 'K')
 					{
@@ -787,9 +795,9 @@ void FWadCollection::RenameSprites ()
 			// the same blood states can be used everywhere
 			if (!(gameinfo.gametype & GAME_DoomChex))
 			{
-				if (*(DWORD *)LumpInfo[i].lump->Name == MAKE_ID('B', 'L', 'O', 'D'))
+				if (LumpInfo[i].lump->dwName == MAKE_ID('B', 'L', 'O', 'D'))
 				{
-					*(DWORD *)LumpInfo[i].lump->Name = MAKE_ID('B', 'L', 'U', 'D');
+					LumpInfo[i].lump->dwName = MAKE_ID('B', 'L', 'U', 'D');
 				}
 			}
 		}
@@ -807,7 +815,11 @@ void FWadCollection::RenameSprites ()
 
 int FWadCollection::FindLump (const char *name, int *lastlump, bool anyns)
 {
-	char name8[8];
+	union
+	{
+		char name8[8];
+		QWORD qname;
+	};
 	LumpRecord *lump_p;
 
 	uppercopy (name8, name);
@@ -817,8 +829,7 @@ int FWadCollection::FindLump (const char *name, int *lastlump, bool anyns)
 	{
 		FResourceLump *lump = lump_p->lump;
 
-		if ((anyns || lump->Namespace == ns_global) &&
-			*(QWORD *)&lump->Name == *(QWORD *)&name8)
+		if ((anyns || lump->Namespace == ns_global) && lump->qwName == qname)
 		{
 			int lump = int(lump_p - &LumpInfo[0]);
 			*lastlump = lump + 1;

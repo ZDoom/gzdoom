@@ -58,11 +58,13 @@ void *YRegTail = 0;
 
 #elif defined(__GNUC__)
 
-void *ARegTail __attribute__((section(AREG_SECTION))) = 0;
-void *CRegTail __attribute__((section(CREG_SECTION))) = 0;
-void *GRegTail __attribute__((section(GREG_SECTION))) = 0;
-void *MRegTail __attribute__((section(MREG_SECTION))) = 0;
-void *YRegTail __attribute__((section(YREG_SECTION))) = 0;
+#include "doomtype.h"
+
+void *ARegTail __attribute__((section(SECTION_AREG))) = 0;
+void *CRegTail __attribute__((section(SECTION_CREG))) = 0;
+void *GRegTail __attribute__((section(SECTION_GREG))) = 0;
+void *MRegTail __attribute__((section(SECTION_MREG))) = 0;
+void *YRegTail __attribute__((section(SECTION_YREG))) = 0;
 
 #else
 

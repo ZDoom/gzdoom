@@ -35,22 +35,6 @@
 #ifndef AUTOSEGS_H
 #define AUTOSEGS_H
 
-#ifdef __GNUC__
-#ifdef __MACH__
-#define AREG_SECTION "__DATA,areg"
-#define CREG_SECTION "__DATA,creg"
-#define GREG_SECTION "__DATA,greg"
-#define MREG_SECTION "__DATA,mreg"
-#define YREG_SECTION "__DATA,yreg"
-#else
-#define AREG_SECTION "areg"
-#define CREG_SECTION "creg"
-#define GREG_SECTION "greg"
-#define MREG_SECTION "mreg"
-#define YREG_SECTION "yreg"
-#endif
-#endif
-
 #define REGMARKER(x) (x)
 typedef void *REGINFO;
 
@@ -74,56 +58,45 @@ extern REGINFO MRegTail;
 extern REGINFO YRegHead;
 extern REGINFO YRegTail;
 
-template<class T, REGINFO *_head, REGINFO *_tail>
-class TAutoSegIteratorNoArrow
+class FAutoSegIterator
 {
 	public:
-		TAutoSegIteratorNoArrow ()
+		FAutoSegIterator(REGINFO &head, REGINFO &tail)
 		{
 			// Weirdness. Mingw's linker puts these together backwards.
-			if (_head < _tail)
+			if (&head <= &tail)
 			{
-				Head = _head;
-				Tail = _tail;
+				Head = &head;
+				Tail = &tail;
 			}
 			else
 			{
-				Head = _tail;
-				Tail = _head;
+				Head = &tail;
+				Tail = &head;
 			}
-			Probe = (T *)REGMARKER(Head);
+			Probe = Head;
 		}
-		operator T () const
+		REGINFO operator*() const
 		{
 			return *Probe;
 		}
-		TAutoSegIteratorNoArrow &operator++()
+		FAutoSegIterator &operator++()
 		{
 			do
 			{
 				++Probe;
-			} while (*Probe == 0 && Probe < (T *)REGMARKER(Tail));
+			} while (*Probe == 0 && Probe < Tail);
 			return *this;
 		}
-		void Reset ()
+		void Reset()
 		{
-			Probe = (T *)REGMARKER(Head);
+			Probe = Head;
 		}
 
 	protected:
-		T *Probe;
+		REGINFO *Probe;
 		REGINFO *Head;
 		REGINFO *Tail;
-};
-
-template<class T, REGINFO *head, REGINFO *tail>
-class TAutoSegIterator : public TAutoSegIteratorNoArrow<T, head, tail>
-{
-	public:
-		T operator->() const
-		{
-			return *(this->Probe);
-		}
 };
 
 #endif

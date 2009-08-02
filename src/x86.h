@@ -5,26 +5,41 @@
 
 struct CPUInfo	// 92 bytes
 {
-	char VendorID[16];
-	char CPUString[48];
+	union
+	{
+		char VendorID[16];
+		DWORD dwVendorID[4];
+	};
+	union
+	{
+		char CPUString[48];
+		DWORD dwCPUString[12];
+	};
 
-	BYTE Stepping;
-	BYTE Model;
-	BYTE Family;
-	BYTE Type;
+	union
+	{
+		struct
+		{
+			BYTE Stepping;
+			BYTE Model;
+			BYTE Family;
+			BYTE Type;
 
-	BYTE BrandIndex;
-	BYTE CLFlush;
-	BYTE CPUCount;
-	BYTE APICID;
+			BYTE BrandIndex;
+			BYTE CLFlush;
+			BYTE CPUCount;
+			BYTE APICID;
 
-	DWORD bSSE3:1;
-	DWORD DontCare1:8;
-	DWORD bSSSE3:1;
-	DWORD DontCare1a:9;
-	DWORD bSSE41:1;
-	DWORD bSSE42:1;
-	DWORD DontCare2a:11;
+			DWORD bSSE3:1;
+			DWORD DontCare1:8;
+			DWORD bSSSE3:1;
+			DWORD DontCare1a:9;
+			DWORD bSSE41:1;
+			DWORD bSSE42:1;
+			DWORD DontCare2a:11;
+		};
+		DWORD FeatureFlags[3];
+	};
 
 	DWORD bFPU:1;
 	DWORD bVME:1;
@@ -71,10 +86,17 @@ struct CPUInfo	// 92 bytes
 	BYTE AMDFamily;
 	BYTE bIsAMD;
 
-	BYTE DataL1LineSize;
-	BYTE DataL1LinesPerTag;
-	BYTE DataL1Associativity;
-	BYTE DataL1SizeKB;
+	union
+	{
+		struct
+		{
+			BYTE DataL1LineSize;
+			BYTE DataL1LinesPerTag;
+			BYTE DataL1Associativity;
+			BYTE DataL1SizeKB;
+		};
+		DWORD AMD_DataL1Info;
+	};
 };
 
 

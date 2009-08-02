@@ -2169,6 +2169,9 @@ void M_OptButtonHandler(EMenuKey key, bool repeat)
 
 	switch (key)
 	{
+	default:
+		break;		// Keep GCC quiet
+
 	case MKEY_Down:
 		if (CurrentMenu->numitems > 1)
 		{
@@ -3289,7 +3292,7 @@ void UpdateJoystickMenu(IJoystickConfig *selected)
 			break;
 		}
 	}
-	if (i == Joysticks.Size())
+	if (i == (int)Joysticks.Size())
 	{
 		SELECTED_JOYSTICK = NULL;
 		if (CurrentMenu == &JoystickConfigMenu)

@@ -92,8 +92,10 @@ static inline DWORD SWAP_DWORD(DWORD x)		{ return _byteswap_ulong(x); }
 static inline QWORD SWAP_QWORD(QWORD x)		{ return _byteswap_uint64(x); }
 static inline void SWAP_DOUBLE(double &dst, double &src)
 {
-	union twiddle { QWORD q; double d; } *tdst = (twiddle *)&dst, *tsrc = (twiddle *)&src;
-	tdst->q = _byteswap_uint64(tsrc->q);
+	union twiddle { QWORD q; double d; } tdst, tsrc;
+	tsrc.d = src;
+	tdst.q = _byteswap_uint64(tsrc.q);
+	dst = tdst.d;
 }
 #else
 static inline WORD  SWAP_WORD(WORD x)		{ return (((x)<<8) | ((x)>>8)); }
@@ -108,17 +110,22 @@ static inline QWORD SWAP_QWORD(QWORD x)
 }
 static inline void SWAP_DOUBLE(double &dst, double &src)
 {
-	union twiddle { double f; DWORD d[2]; } *tdst = (twiddle *)&dst, *tsrc = (twiddle *)&src;
+	union twiddle { double f; DWORD d[2]; } tdst, tsrc;
 	DWORD t;
-	t = tsrc->d[0];
-	tdst->d[0] = SWAP_DWORD(tsrc->d[1]);
-	tdst->d[1] = SWAP_DWORD(t);
+
+	tsrc.f = src;
+	t = tsrc.d[0];
+	tdst.d[0] = SWAP_DWORD(tsrc.d[1]);
+	tdst.d[1] = SWAP_DWORD(t);
+	dst = tdst.f;
 }
 #endif
 static inline void SWAP_FLOAT(float &x)
 {
-	union twiddle { DWORD i; float f; } *t = (twiddle *)&x;
-	t->i = SWAP_DWORD(t->i);
+	union twiddle { DWORD i; float f; } t;
+	t.f = x;
+	t.i = SWAP_DWORD(t.i);
+	x = t.f;
 }
 #endif
 
@@ -1278,11 +1285,11 @@ int FArchive::ReadSprite ()
 		Read (&name, 4);
 		hint = ReadCount ();
 
-		if (hint >= NumStdSprites || *(DWORD *)&sprites[hint].name != name)
+		if (hint >= NumStdSprites || sprites[hint].dwName != name)
 		{
 			for (hint = NumStdSprites; hint-- != 0; )
 			{
-				if (*(DWORD *)&sprites[hint].name == name)
+				if (sprites[hint].dwName == name)
 				{
 					break;
 				}

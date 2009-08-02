@@ -101,7 +101,11 @@ public:
 
 	int SourceLump;
 
-	char Name[9];
+	union
+	{
+		char Name[9];
+		DWORD dwName;		// Used with sprites
+	};
 	BYTE UseType;	// This texture's primary purpose
 
 	BYTE bNoDecals:1;		// Decals should not stick to texture

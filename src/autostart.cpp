@@ -86,11 +86,13 @@ void *YRegHead = 0;
 
 #elif defined(__GNUC__)
 
-void *ARegHead __attribute__((section(AREG_SECTION))) = 0;
-void *CRegHead __attribute__((section(CREG_SECTION))) = 0;
-void *GRegHead __attribute__((section(GREG_SECTION))) = 0;
-void *MRegHead __attribute__((section(MREG_SECTION))) = 0;
-void *YRegHead __attribute__((section(YREG_SECTION))) = 0;
+#include "doomtype.h"
+
+void *ARegHead __attribute__((section(SECTION_AREG))) = 0;
+void *CRegHead __attribute__((section(SECTION_CREG))) = 0;
+void *GRegHead __attribute__((section(SECTION_GREG))) = 0;
+void *MRegHead __attribute__((section(SECTION_MREG))) = 0;
+void *YRegHead __attribute__((section(SECTION_YREG))) = 0;
 
 #else
 

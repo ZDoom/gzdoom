@@ -324,7 +324,14 @@ if( CMAKE_COMPILER_IS_GNUCXX )
 	set( CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS_MINSIZEREL} ${REL_CXX_FLAGS}" )
 	set( CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} ${REL_CXX_FLAGS}" )
 
-	set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-unused -fno-strict-aliasing" )
+	set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-unused" )
+
+	# Remove extra warnings when using the official DirectX headers.
+	# Also, TDM-GCC 4.4.0 no longer accepts glibc-style printf formats as valid,
+	# which is a royal pain. The previous version I had been using was fine with them.
+	if( WIN32 )
+		set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unknown-pragmas -Wno-comment -Wno-format" )
+	endif( WIN32 )
 
 	if( NOT NO_STRIP )
 		set (CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} -s" )

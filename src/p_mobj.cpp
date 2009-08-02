@@ -4877,6 +4877,30 @@ AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z,
 	return (!checkspawn || P_CheckMissileSpawn (th)) ? th : NULL;
 }
 
+AActor * P_OldSpawnMissile(AActor * source, AActor * dest, const PClass *type)
+{
+	angle_t an;
+	fixed_t dist;
+	AActor *th = Spawn (type, source->x, source->y, source->z + 4*8*FRACUNIT, ALLOW_REPLACE);
+
+	P_PlaySpawnSound(th, source);
+	th->target = source;		// record missile's originator
+
+	th->angle = an = R_PointToAngle2 (source->x, source->y, dest->x, dest->y);
+	an >>= ANGLETOFINESHIFT;
+	th->velx = FixedMul (th->Speed, finecosine[an]);
+	th->vely = FixedMul (th->Speed, finesine[an]);
+
+	dist = P_AproxDistance (dest->x - source->x, dest->y - source->y);
+	if (th->Speed) dist = dist / th->Speed;
+
+	if (dist < 1)
+		dist = 1;
+
+	th->velz = (dest->z - source->z) / dist;
+	P_CheckMissileSpawn(th);
+	return th;
+}
 //---------------------------------------------------------------------------
 //
 // FUNC P_SpawnMissileAngle

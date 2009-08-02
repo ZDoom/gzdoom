@@ -118,13 +118,16 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FatAttack3)
 // Original idea: Linguica
 //
 
+AActor * P_OldSpawnMissile(AActor * source, AActor * dest, const PClass *type);
+
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Mushroom)
 {
 	int i, j;
 
-	ACTION_PARAM_START(2);
+	ACTION_PARAM_START(3);
 	ACTION_PARAM_CLASS(spawntype, 0);
 	ACTION_PARAM_INT(n, 1);
+	ACTION_PARAM_INT(flags, 2);
 
 	if (n == 0) n = self->GetMissileDamage (0, 1);
 	if (spawntype == NULL) spawntype = PClass::FindClass("FatShot");
@@ -146,7 +149,14 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Mushroom)
 			target->x = self->x + (i << FRACBITS); // Aim in many directions from source
 			target->y = self->y + (j << FRACBITS);
 			target->z = self->z + (P_AproxDistance(i,j) << (FRACBITS+2)); // Aim up fairly high
-			mo = P_SpawnMissile (self, target, spawntype); // Launch fireball
+			if (flags == 0 && self->state->Misc1 == 0)
+			{
+				mo = P_SpawnMissile (self, target, spawntype); // Launch fireball
+			}
+			else
+			{
+				mo = P_OldSpawnMissile (self, target, spawntype); // Launch fireball
+			}
 			if (mo != NULL)
 			{
 				mo->velx >>= 1;

@@ -1,4 +1,11 @@
-﻿August 1, 2009
+﻿August 2, 2009  (Changes by Graf Zahl)
+- Fixed: The big endian version of PalEntry did not add the DWORD d field.
+- Fixed: TObjPtr did not use a union to map its 2 pointers together.
+- Added a compatibility mode for A_Mushroom. For DECORATE it is an additional
+  parameter but to force it for Dehacked mods some minor hacks using the
+  Misc1 variable were needed.
+
+August 1, 2009
 - Moved the terget->velz assignment to the end of A_VileAttack to remove the
   influence of vertical thrust from the radius attack, since ZDoom does
   explosions in three dimensions, but Doom only did it in two.

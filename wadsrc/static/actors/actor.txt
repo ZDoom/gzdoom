@@ -100,7 +100,7 @@ ACTOR Actor native //: Thinker
 	action native A_BrainExplode();
 	action native A_Die(name damagetype = "none");
 	action native A_Detonate();
-	action native A_Mushroom(class<Actor> spawntype = "FatShot", int numspawns = 0);
+	action native A_Mushroom(class<Actor> spawntype = "FatShot", int numspawns = 0, int flags = 0);
 	action native A_CallSpecial(int special, int arg1=0, int arg2=0, int arg3=0, int arg4=0, int arg5=0);
 
 	action native A_SetFloorClip();

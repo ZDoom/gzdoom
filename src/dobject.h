@@ -340,8 +340,11 @@ namespace GC
 template<class T>
 class TObjPtr
 {
-	T *p;
-	DObject *o;		// For GC::Mark below to make GCC's strict aliasing happy
+	union
+	{
+		T *p;
+		DObject *o;
+	};
 public:
 	TObjPtr() throw()
 	{

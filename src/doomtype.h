@@ -162,7 +162,14 @@ struct PalEntry
 #ifdef WORDS_BIGENDIAN
 	PalEntry (BYTE ir, BYTE ig, BYTE ib) : a(0), r(ir), g(ig), b(ib) {}
 	PalEntry (BYTE ia, BYTE ir, BYTE ig, BYTE ib) : a(ia), r(ir), g(ig), b(ib) {}
-	BYTE a,r,g,b;
+	union
+	{
+		struct
+		{
+			BYTE a,r,g,b;
+		};
+		DWORD d;
+	};
 #else
 	PalEntry (BYTE ir, BYTE ig, BYTE ib) : b(ib), g(ig), r(ir), a(0) {}
 	PalEntry (BYTE ia, BYTE ir, BYTE ig, BYTE ib) : b(ib), g(ig), r(ir), a(ia) {}

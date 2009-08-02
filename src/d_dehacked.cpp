@@ -1715,6 +1715,11 @@ static int PatchCodePtrs (int dummy)
 					}
 				}
 				SetPointer(state, sym);
+				// Hack to trigger compatible mode for A_Mushroom when called from Dehacked mods
+				if (symname.CompareNoCase("A_Mushroom"))
+				{
+					state->Misc1 = 1;
+				}
 			}
 		}
 	}

@@ -1,4 +1,7 @@
 ﻿August 1, 2009
+- Restored the reactiontime countdown for A_SpawnFly, since some Dehacked
+  mod could conceivable rely on it. The deadline is now kept in special2
+  and used in preference as long as it is non-zero.
 - Removed -fno-strict-aliasing from the GCC flags for ZDoom and fixed the
   issues that caused its inclusion. Is an optimized GCC build any faster
   for being able to use strict aliasing rules? I dunno. It's still slower

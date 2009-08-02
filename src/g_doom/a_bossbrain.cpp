@@ -111,18 +111,18 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BrainSpit)
 			// if the target had the same y coordinate as the spitter.
 			if ((spit->velx | spit->vely) == 0)
 			{
-				spit->reactiontime = 0;
+				spit->special2 = 0;
 			}
 			else if (abs(spit->vely) > abs(spit->velx))
 			{
-				spit->reactiontime = (targ->y - self->y) / spit->vely;
+				spit->special2 = (targ->y - self->y) / spit->vely;
 			}
 			else
 			{
-				spit->reactiontime = (targ->x - self->x) / spit->velx;
+				spit->special2 = (targ->x - self->x) / spit->velx;
 			}
 			// [GZ] Calculates when the projectile will have reached destination
-			spit->reactiontime += level.maptime;
+			spit->special2 += level.maptime;
 		}
 
 		if (!isdefault)
@@ -145,8 +145,16 @@ static void SpawnFly(AActor *self, const PClass *spawntype, FSoundID sound)
 	int r;
 		
 	// [GZ] Should be more viable than a countdown...
-	if (self->reactiontime == 0 || self->reactiontime > level.maptime)
-		return; // still flying
+	if (self->special2 != 0)
+	{
+		if (self->special2 > level.maptime)
+			return;		// still flying
+	}
+	else
+	{
+		if (self->reactiontime == 0 || --self->reactiontime != 0)
+			return;		// still flying
+	}
 		
 	targ = self->target;
 

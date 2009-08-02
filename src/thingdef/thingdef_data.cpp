@@ -253,7 +253,6 @@ static FFlagDef InventoryFlags[] =
 	DEFINE_FLAG(IF, UNDROPPABLE, AInventory, ItemFlags),
 	DEFINE_FLAG(IF, INVBAR, AInventory, ItemFlags),
 	DEFINE_FLAG(IF, HUBPOWER, AInventory, ItemFlags),
-	DEFINE_FLAG(IF, INTERHUBSTRIP, AInventory, ItemFlags),
 	DEFINE_FLAG(IF, ALWAYSPICKUP, AInventory, ItemFlags),
 	DEFINE_FLAG(IF, FANCYPICKUPSOUND, AInventory, ItemFlags),
 	DEFINE_FLAG(IF, BIGPOWERUP, AInventory, ItemFlags),
@@ -264,6 +263,7 @@ static FFlagDef InventoryFlags[] =
 	DEFINE_FLAG(IF, PERSISTENTPOWER, AInventory, ItemFlags),
 
 	DEFINE_DEPRECATED_FLAG(PICKUPFLASH),
+	DEFINE_DEPRECATED_FLAG(INTERHUBSTRIP),
 };
 
 static FFlagDef WeaponFlags[] =

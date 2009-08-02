@@ -1181,7 +1181,7 @@ void G_PlayerFinishLevel (int player, EFinishLevelType mode, bool resetinventory
 		while (item != NULL)
 		{
 			next = item->Inventory;
-			if (item->ItemFlags & IF_INTERHUBSTRIP)
+			if (item->InterHubAmount < 1)
 			{
 				item->Destroy ();
 			}
@@ -1190,14 +1190,13 @@ void G_PlayerFinishLevel (int player, EFinishLevelType mode, bool resetinventory
 	}
 
 	if (mode == FINISH_NoHub && !(level.flags2 & LEVEL2_KEEPFULLINVENTORY))
-	{ // Reduce all owned (visible) inventory to 1 item each
+	{ // Reduce all owned (visible) inventory to defined maximum interhub amount
 		for (item = p->mo->Inventory; item != NULL; item = item->Inventory)
 		{
-			// There may be depletable items with an amount of 0.
-			// Those need to stay at 0; the rest get dropped to 1.
-			if (item->ItemFlags & IF_INVBAR && item->Amount > 1)
+			// If the player is carrying more samples of an item than allowed, reduce amount accordingly
+			if (item->ItemFlags & IF_INVBAR && item->Amount > item->InterHubAmount)
 			{
-				item->Amount = 1;
+				item->Amount = item->InterHubAmount;
 			}
 		}
 	}

@@ -119,7 +119,7 @@ enum
 	IF_UNDROPPABLE		= 1<<5,		// The player cannot manually drop the item
 	IF_INVBAR			= 1<<6,		// Item appears in the inventory bar
 	IF_HUBPOWER			= 1<<7,		// Powerup is kept when moving in a hub
-	IF_INTERHUBSTRIP	= 1<<8,		// Item is removed when travelling between hubs
+//	IF_INTERHUBSTRIP	= 1<<8,		// Item is removed when travelling between hubs
 	IF_ADDITIVETIME		= 1<<9,		// when picked up while another item is active, time is added instead of replaced.
 	IF_ALWAYSPICKUP		= 1<<10,	// For IF_AUTOACTIVATE, MaxAmount=0 items: Always "pick up", even if it doesn't do anything
 	IF_FANCYPICKUPSOUND	= 1<<11,	// Play pickup sound in "surround" mode
@@ -165,6 +165,7 @@ public:
 	TObjPtr<AActor> Owner;		// Who owns this item? NULL if it's still a pickup.
 	int Amount;					// Amount of item this instance has
 	int MaxAmount;				// Max amount of item this instance can have
+	int InterHubAmount;			// Amount of item that can be kept between hubs or levels
 	int RespawnTics;			// Tics from pickup time to respawn time
 	FTextureID Icon;			// Icon to show on status bar or HUD
 	int DropTime;				// Countdown after dropping

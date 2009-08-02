@@ -466,7 +466,7 @@ CUSTOM_CVAR(Int, compatmode, 0, CVAR_ARCHIVE|CVAR_NOINITCALL)
 		break;
 
 	case 3:
-		v = COMPATF_TRACE|COMPATF_SOUNDTARGET|COMPATF_BOOMSCROLL;
+		v = COMPATF_TRACE|COMPATF_SOUNDTARGET|COMPATF_BOOMSCROLL|COMPATF_MUSHROOM;
 		break;
 
 	case 4:
@@ -499,6 +499,7 @@ CVAR (Flag, compat_missileclip,	compatflags, COMPATF_MISSILECLIP);
 CVAR (Flag, compat_crossdropoff,compatflags, COMPATF_CROSSDROPOFF);
 CVAR (Flag, compat_anybossdeath,compatflags, COMPATF_ANYBOSSDEATH);
 CVAR (Flag, compat_minotaur,	compatflags, COMPATF_MINOTAUR);
+CVAR (Flag, compat_mushroom,	compatflags, COMPATF_MUSHROOM);
 
 //==========================================================================
 //

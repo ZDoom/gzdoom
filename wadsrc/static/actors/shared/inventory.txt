@@ -2,6 +2,7 @@ ACTOR Inventory native
 {
 	Inventory.Amount 1
 	Inventory.MaxAmount 1
+	Inventory.InterHubAmount 1
 	Inventory.UseSound "misc/invuse"
 	Inventory.PickupSound "misc/i_pkup"
 	

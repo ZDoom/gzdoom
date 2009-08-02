@@ -1340,6 +1340,7 @@ MapFlagHandlers[] =
 	{ "compat_crossdropoff",			MITYPE_COMPATFLAG, COMPATF_CROSSDROPOFF},
 	{ "compat_anybossdeath",			MITYPE_COMPATFLAG, COMPATF_ANYBOSSDEATH},
 	{ "compat_minotaur",				MITYPE_COMPATFLAG, COMPATF_MINOTAUR},
+	{ "compat_mushroom",				MITYPE_COMPATFLAG, COMPATF_MUSHROOM},
 	{ "cd_start_track",					MITYPE_EATNEXT,	0, 0 },
 	{ "cd_end1_track",					MITYPE_EATNEXT,	0, 0 },
 	{ "cd_end2_track",					MITYPE_EATNEXT,	0, 0 },

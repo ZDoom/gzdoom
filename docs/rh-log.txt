@@ -1,4 +1,6 @@
 ﻿August 2, 2009  (Changes by Graf Zahl)
+- Added A_Mushroom compatibility option for Dehacked.
+- Added Gez's submission for interhubamount DECORATE property.
 - Fixed: The big endian version of PalEntry did not add the DWORD d field.
 - Fixed: TObjPtr did not use a union to map its 2 pointers together.
 - Added a compatibility mode for A_Mushroom. For DECORATE it is an additional

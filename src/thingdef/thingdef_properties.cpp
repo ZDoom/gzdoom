@@ -148,6 +148,8 @@ void HandleDeprecatedFlags(AActor *defaults, FActorInfo *info, bool set, int ind
 			static_cast<AInventory*>(defaults)->PickupFlash = NULL;
 		}
 		break;
+	case DEPF_INTERHUBSTRIP: // Old system was 0 or 1, so if the flag is cleared, assume 1.
+		static_cast<AInventory*>(defaults)->InterHubAmount = set ? 0 : 1;
 	default:
 		break;	// silence GCC
 	}
@@ -1218,6 +1220,15 @@ DEFINE_CLASS_PROPERTY(icon, S, Inventory)
 				"Icon '%s' for '%s' not found\n", i, info->Class->TypeName.GetChars());
 		}
 	}
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_CLASS_PROPERTY(interhubamount, I, Inventory)
+{
+	PROP_INT_PARM(i, 0);
+	defaults->InterHubAmount = i;
 }
 
 //==========================================================================

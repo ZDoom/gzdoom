@@ -1,4 +1,10 @@
 ﻿August 1, 2009
+- Moved the terget->velz assignment to the end of A_VileAttack to remove the
+  influence of vertical thrust from the radius attack, since ZDoom does
+  explosions in three dimensions, but Doom only did it in two.
+- Fixed: The last three parameters to A_VileAttack had their references off
+  by one. Most notably as a result, the blast radius was used as the thrust,
+  so it sent you flying far faster than it should have.
 - Restored the reactiontime countdown for A_SpawnFly, since some Dehacked
   mod could conceivable rely on it. The deadline is now kept in special2
   and used in preference as long as it is non-zero.

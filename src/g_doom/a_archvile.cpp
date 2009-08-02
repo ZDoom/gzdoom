@@ -103,16 +103,16 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_VileTarget)
 //
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_VileAttack)
 {		
-	ACTION_PARAM_START(5);
+	ACTION_PARAM_START(6);
 	ACTION_PARAM_SOUND(snd,0);
 	ACTION_PARAM_INT(dmg,1);
 	ACTION_PARAM_INT(blastdmg,2);
-	ACTION_PARAM_INT(blastrad,2);
-	ACTION_PARAM_FIXED(thrust,3);
-	ACTION_PARAM_NAME(dmgtype,4);
+	ACTION_PARAM_INT(blastrad,3);
+	ACTION_PARAM_FIXED(thrust,4);
+	ACTION_PARAM_NAME(dmgtype,5);
 
 	AActor *fire, *target;
-	int an;
+	angle_t an;
 		
 	if (NULL == (target = self->target))
 		return;
@@ -125,10 +125,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_VileAttack)
 	S_Sound (self, CHAN_WEAPON, snd, 1, ATTN_NORM);
 	P_TraceBleed (dmg, target);
 	P_DamageMobj (target, self, self, dmg, NAME_None);
-	target->velz = Scale(thrust, 1000, target->Mass);
 		
 	an = self->angle >> ANGLETOFINESHIFT;
-
 	fire = self->tracer;
 
 	if (fire != NULL)
@@ -140,4 +138,5 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_VileAttack)
 		
 		P_RadiusAttack (fire, self, blastdmg, blastrad, dmgtype, false);
 	}
+	target->velz = Scale(thrust, 1000, target->Mass);
 }

@@ -1,4 +1,9 @@
 ﻿August 2, 2009  (Changes by Graf Zahl)
+- Changed: DEHACKED parsing is disabled now when a user supplied DEHSUPP lump
+  is found. This mimics the old behavior which also disabled DEHACKED when
+  the DEHSUPP lump was incompatible with the current engine. This behavior is
+  needed to ensure that WADs that contain a ZDaemon-exclusive DEHSUPP lump
+  continue to work as intended.
 - Added A_Mushroom compatibility option for Dehacked.
 - Added Gez's submission for interhubamount DECORATE property.
 - Fixed: The big endian version of PalEntry did not add the DWORD d field.

@@ -2258,14 +2258,21 @@ static bool LoadDehSupp ()
 	{
 		// Make sure we only get the DEHSUPP lump from zdoom.pk3
 		// User modifications are not supported!
-		int lump = Wads.CheckNumForFullName ("dehsupp.txt", 0);
-		bool gotnames = false;
-		int i;
+		int lump = Wads.CheckNumForName("DEHSUPP");
 
 		if (lump == -1)
 		{
 			return false;
 		}
+
+		if (Wads.GetLumpFile(lump) > 0)
+		{
+			Printf("Warning: DEHSUPP no longer supported. DEHACKED patch disabled.\n");
+			return false;
+		}
+		bool gotnames = false;
+		int i;
+
 
 		if (++DehUseCount > 1)
 		{

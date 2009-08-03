@@ -2099,8 +2099,20 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 	case DEM_SUMMONFOE2:
 		{
 			const PClass *typeinfo;
+			int angle;
+			SWORD tid;
+			BYTE special;
+			int args[5];
 
 			s = ReadString (stream);
+			if (type >= DEM_SUMMON2 && type <= DEM_SUMMONFOE2)
+			{
+				angle = ReadWord(stream);
+				tid = ReadWord(stream);
+				special = ReadByte(stream);
+				for(i = 0; i < 5; i++) args[i] = ReadLong(stream);
+			}
+
 			typeinfo = PClass::FindClass (s);
 			if (typeinfo != NULL && typeinfo->ActorInfo != NULL)
 			{
@@ -2140,8 +2152,13 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 						}
 						if (type >= DEM_SUMMON2 && type <= DEM_SUMMONFOE2)
 						{
-							int angle = ReadWord(stream);
 							spawned->angle = source->angle - (ANGLE_1 * angle);
+							spawned->tid = tid;
+							spawned->special = special;
+							for(i = 0; i < 5; i++) {
+								spawned->args[i] = args[i];
+							}
+							if(tid) spawned->AddToHash();
 						}
 					}
 				}
@@ -2406,10 +2423,13 @@ void Net_SkipCommand (int type, BYTE **stream)
 
 		case DEM_GIVECHEAT:
 		case DEM_TAKECHEAT:
+			skip = strlen ((char *)(*stream)) + 3;
+			break;
+
 		case DEM_SUMMON2:
 		case DEM_SUMMONFRIEND2:
 		case DEM_SUMMONFOE2:
-			skip = strlen ((char *)(*stream)) + 3;
+			skip = strlen ((char *)(*stream)) + 26;
 			break;
 
 		case DEM_MUSICCHANGE:

@@ -1,4 +1,8 @@
-﻿August 2, 2009  (Changes by Graf Zahl)
+﻿August 3, 2009  (Changes by Graf Zahl)
+- Added kgsws's SummonActor enhancement and bumped netgame and demo versions
+  because this submission changes an existing command.
+
+August 2, 2009  (Changes by Graf Zahl)
 - Changed: DEHACKED parsing is disabled now when a user supplied DEHSUPP lump
   is found. This mimics the old behavior which also disabled DEHACKED when
   the DEHSUPP lump was incompatible with the current engine. This behavior is

@@ -421,8 +421,17 @@ static void SummonActor (int command, int command2, FCommandLine argv)
 		Net_WriteByte (argv.argc() > 2 ? command2 : command);
 		Net_WriteString (type->TypeName.GetChars());
 
-		if (argv.argc () > 2)
-			Net_WriteWord (atoi (argv[2]));
+		if (argv.argc () > 2) {
+			Net_WriteWord (atoi (argv[2])); // angle
+			if (argv.argc () > 3) Net_WriteWord (atoi (argv[3])); // TID
+			else Net_WriteWord (0);
+			if (argv.argc () > 4) Net_WriteByte (atoi (argv[4])); // special
+			else Net_WriteByte (0);
+			for(int i = 5; i < 10; i++) { // args[5]
+				if(i < argv.argc()) Net_WriteLong (atoi (argv[i]));
+				else Net_WriteLong (0);
+			}
+		}
 	}
 }
 

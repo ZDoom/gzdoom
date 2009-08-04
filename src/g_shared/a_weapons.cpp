@@ -776,9 +776,9 @@ AWeapon *FWeaponSlot::PickWeapon(player_t *player)
 				 player->ReadyWeapon->SisterWeapon != NULL &&
 				 player->ReadyWeapon->SisterWeapon->GetClass() == Weapons[i].Type))
 			{
-				for (j = (unsigned)(i - 1) % Weapons.Size();
+				for (j = (i == 0 ? Weapons.Size() - 1 : i - 1);
 					j != i;
-					j = (unsigned)(j + Weapons.Size() - 1) % Weapons.Size())	// + Weapons.Size is to avoid underflows
+					j = (j == 0 ? Weapons.Size() - 1 : j - 1))
 				{
 					AWeapon *weap = static_cast<AWeapon *> (player->mo->FindInventory(Weapons[j].Type));
 

@@ -1,4 +1,8 @@
-﻿August 3, 2009  (Changes by Graf Zahl)
+﻿August 4, 2009
+- Fixed: FWeaponSlot::PickWeapon() wrapped around improperly when the starting
+  value for i was 0.
+
+August 3, 2009  (Changes by Graf Zahl)
 - Added kgsws's SummonActor enhancement and bumped netgame and demo versions
   because this submission changes an existing command.
 

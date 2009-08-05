@@ -261,18 +261,6 @@ void DElevator::Tick ()
 
 	if (m_Direction < 0)	// moving down
 	{
-		res = MoveCeiling (m_Speed, m_CeilingDestDist, m_Direction);
-		if (res == ok || res == pastdest)
-		{
-			res = MoveFloor (m_Speed, m_FloorDestDist, m_Direction);
-			if (res == crushed)
-			{
-				MoveCeiling (m_Speed, oldceiling, -m_Direction);
-			}
-		}
-	}
-	else // up
-	{
 		res = MoveFloor (m_Speed, m_FloorDestDist, m_Direction);
 		if (res == ok || res == pastdest)
 		{
@@ -280,6 +268,18 @@ void DElevator::Tick ()
 			if (res == crushed)
 			{
 				MoveFloor (m_Speed, oldfloor, -m_Direction);
+			}
+		}
+	}
+	else // up
+	{
+		res = MoveCeiling (m_Speed, m_CeilingDestDist, m_Direction);
+		if (res == ok || res == pastdest)
+		{
+			res = MoveFloor (m_Speed, m_FloorDestDist, m_Direction);
+			if (res == crushed)
+			{
+				MoveCeiling (m_Speed, oldceiling, -m_Direction);
 			}
 		}
 	}

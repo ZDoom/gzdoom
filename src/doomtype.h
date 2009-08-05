@@ -155,9 +155,9 @@ enum
 struct PalEntry
 {
 	PalEntry () {}
-	PalEntry (DWORD argb) { d = argb; }
-	operator DWORD () const { return d; }
-	PalEntry &operator= (DWORD other) { d = other; return *this; }
+	PalEntry (uint32 argb) { d = argb; }
+	operator uint32 () const { return d; }
+	PalEntry &operator= (uint32 other) { d = other; return *this; }
 	PalEntry InverseColor() const { PalEntry nc; nc.a = a; nc.r = 255 - r; nc.g = 255 - g; nc.b = 255 - b; return nc; }
 #ifdef WORDS_BIGENDIAN
 	PalEntry (BYTE ir, BYTE ig, BYTE ib) : a(0), r(ir), g(ig), b(ib) {}
@@ -168,7 +168,7 @@ struct PalEntry
 		{
 			BYTE a,r,g,b;
 		};
-		DWORD d;
+		uint32 d;
 	};
 #else
 	PalEntry (BYTE ir, BYTE ig, BYTE ib) : b(ib), g(ig), r(ir), a(0) {}
@@ -179,7 +179,7 @@ struct PalEntry
 		{
 			BYTE b,g,r,a;
 		};
-		DWORD d;
+		uint32 d;
 	};
 #endif
 };

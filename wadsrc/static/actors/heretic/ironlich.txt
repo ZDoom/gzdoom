@@ -154,6 +154,7 @@ ACTOR Whirlwind native
 	-ACTIVATEMCROSS
 	+SEEKERMISSILE
 	+EXPLOCOUNT
+	+StepMissile
 	RenderStyle Translucent
 	Alpha 0.4
 	

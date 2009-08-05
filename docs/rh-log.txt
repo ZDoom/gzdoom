@@ -1,4 +1,7 @@
 ﻿August 4, 2009
+- Added the MF6_STEPMISSILE flag so that the Whirlwind can "walk" up steps.
+- Changed the dword definition of PalEntry to uint32 so that it has one
+  consistent definition across all source files.
 - Swapped the order of floor and ceiling moves in DElevator::Tick() so that
   if an elevator contains an actor exactly the same height as it, it will not
   be blocked.

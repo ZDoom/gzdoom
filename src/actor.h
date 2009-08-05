@@ -311,6 +311,7 @@ enum
 	MF6_NOFEAR			= 0x00000010,	// Not scared of frightening players
 	MF6_BUMPSPECIAL		= 0x00000020,	// Actor executes its special when being collided (as the ST flag)
 	MF6_DONTHARMSPECIES = 0x00000040,	// Don't hurt one's own species with explosions (hitscans, too?)
+	MF6_STEPMISSILE		= 0x00000080,	// Missile can "walk" up steps
 
 
 // --- mobj.renderflags ---

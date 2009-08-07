@@ -1,4 +1,5 @@
 ﻿August 6, 2009
+- Added MF6_NOTELEPORT flag.
 - Fixed: M_QuitResponse() tried to play a sound even when none was specified
   in the gameinfo.
 - Added Yes/No selections for Y/N messages so that you can answer them

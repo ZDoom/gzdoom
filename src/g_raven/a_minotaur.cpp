@@ -471,7 +471,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurRoam)
 
 	if (self1->StartTime >= 0 && (level.maptime - self1->StartTime) >= MAULATORTICS)
 	{
-		P_DamageMobj (self1, NULL, NULL, 1000000, NAME_None);
+		P_DamageMobj (self1, NULL, NULL, TELEFRAG_DAMAGE, NAME_None);
 		return;
 	}
 
@@ -587,7 +587,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurChase)
 
 	if (self1->StartTime >= 0 && (level.maptime - self1->StartTime) >= MAULATORTICS)
 	{
-		P_DamageMobj (self1, NULL, NULL, 1000000, NAME_None);
+		P_DamageMobj (self1, NULL, NULL, TELEFRAG_DAMAGE, NAME_None);
 		return;
 	}
 

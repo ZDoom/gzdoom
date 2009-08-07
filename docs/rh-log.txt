@@ -1,4 +1,7 @@
 ﻿August 6, 2009
+- Added TELEFRAG_DAMAGE constant, and changed the two places that still used
+  1000 as the threshold for god mode damage to use it instead. (Players with
+  MF2_INVULNERABLE set already used 1000000 as their threshold.)
 - Added MF6_NOTELEPORT flag.
 - Fixed: M_QuitResponse() tried to play a sound even when none was specified
   in the gameinfo.

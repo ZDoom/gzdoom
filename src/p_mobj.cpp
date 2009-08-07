@@ -1098,7 +1098,7 @@ bool AActor::Massacre ()
 		do
 		{
 			prevhealth = health;
-			P_DamageMobj (this, NULL, NULL, 1000000, NAME_Massacre);
+			P_DamageMobj (this, NULL, NULL, TELEFRAG_DAMAGE, NAME_Massacre);
 		}
 		while (health != prevhealth && health > 0);	//abort if the actor wasn't hurt.
 		return true;
@@ -2000,13 +2000,13 @@ void P_MonsterFallingDamage (AActor *mo)
 	vel = abs(mo->velz);
 	if (vel > 35*FRACUNIT)
 	{ // automatic death
-		damage = 1000000;
+		damage = TELEFRAG_DAMAGE;
 	}
 	else
 	{
 		damage = ((vel - (23*FRACUNIT))*6)>>FRACBITS;
 	}
-	damage = 1000000;	// always kill 'em
+	damage = TELEFRAG_DAMAGE;	// always kill 'em
 	P_DamageMobj (mo, NULL, NULL, damage, NAME_Falling);
 }
 

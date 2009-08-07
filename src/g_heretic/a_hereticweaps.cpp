@@ -357,7 +357,7 @@ int AMaceFX4::DoSpecialDamage (AActor *target, int damage)
 			return -1;
 		}
 	}
-	return 1000000; // Something's gonna die
+	return TELEFRAG_DAMAGE; // Something's gonna die
 }
 
 //----------------------------------------------------------------------------

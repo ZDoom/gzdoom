@@ -1003,7 +1003,7 @@ FUNC(LS_DamageThing)
 		}
 		else
 		{ // If zero damage, guarantee a kill
-			P_DamageMobj (it, NULL, NULL, 1000000, MODtoDamageType (arg1));
+			P_DamageMobj (it, NULL, NULL, TELEFRAG_DAMAGE, MODtoDamageType (arg1));
 		}
 	}
 
@@ -1147,7 +1147,7 @@ FUNC(LS_Thing_Destroy)
 		{
 			AActor *temp = iterator.Next ();
 			if (actor->flags & MF_SHOOTABLE)
-				P_DamageMobj (actor, NULL, it, arg1 ? 1000000 : actor->health, NAME_None);
+				P_DamageMobj (actor, NULL, it, arg1 ? TELEFRAG_DAMAGE : actor->health, NAME_None);
 			actor = temp;
 		}
 	}

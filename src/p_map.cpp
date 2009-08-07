@@ -355,7 +355,7 @@ bool P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefr
 		// [RH] Some Heretic/Hexen monsters can telestomp
 		if (StompAlwaysFrags && !(th->flags6 & MF6_NOTELEFRAG))
 		{
-			P_DamageMobj (th, thing, thing, 1000000, NAME_Telefrag, DMG_THRUSTLESS);
+			P_DamageMobj (th, thing, thing, TELEFRAG_DAMAGE, NAME_Telefrag, DMG_THRUSTLESS);
 			continue;
 		}
 		return false;
@@ -421,7 +421,7 @@ void P_PlayerStartStomp (AActor *actor)
 		if (actor->z + actor->height < th->z)
 			continue;        // underneath
 
-		P_DamageMobj (th, actor, actor, 1000000, NAME_Telefrag);
+		P_DamageMobj (th, actor, actor, TELEFRAG_DAMAGE, NAME_Telefrag);
 	}
 }
 

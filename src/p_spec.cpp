@@ -142,7 +142,7 @@ bool CheckIfExitIsGood (AActor *self, level_info_t *info)
 	// Is this a deathmatch game and we're not allowed to exit?
 	if ((deathmatch || alwaysapplydmflags) && (dmflags & DF_NO_EXIT))
 	{
-		P_DamageMobj (self, self, self, 1000000, NAME_Exit);
+		P_DamageMobj (self, self, self, TELEFRAG_DAMAGE, NAME_Exit);
 		return false;
 	}
 	// Is this a singleplayer game and the next map is part of the same hub and we're dead?

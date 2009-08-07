@@ -889,7 +889,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 	}
 
 	// Spectral targets only take damage from spectral projectiles.
-	if (target->flags4 & MF4_SPECTRAL && damage < 1000000)
+	if (target->flags4 & MF4_SPECTRAL && damage < TELEFRAG_DAMAGE)
 	{
 		if (inflictor == NULL || !(inflictor->flags4 & MF4_SPECTRAL))
 		{
@@ -915,7 +915,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 		}
 		return;
 	}
-	if ((target->flags2 & MF2_INVULNERABLE) && damage < 1000000 && !(flags & DMG_FORCED))
+	if ((target->flags2 & MF2_INVULNERABLE) && damage < TELEFRAG_DAMAGE && !(flags & DMG_FORCED))
 	{ // actor is invulnerable
 		if (target->player == NULL)
 		{
@@ -1103,14 +1103,9 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 
 		if (!(flags & DMG_FORCED))
 		{
-			if ((target->flags2 & MF2_INVULNERABLE) && damage < 1000000)
+			if (damage < TELEFRAG_DAMAGE && ((target->flags2 & MF2_INVULNERABLE) ||
+				(target->player->cheats & CF_GODMODE)))
 			{ // player is invulnerable, so don't hurt him
-				return;
-			}
-
-			if (damage < 1000 && ((target->player->cheats & CF_GODMODE)
-				|| (target->player->mo->flags2 & MF2_INVULNERABLE)))
-			{
 				return;
 			}
 
@@ -1118,7 +1113,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 			if (source != NULL && player != source->player && target->IsTeammate (source))
 			{
 				FriendlyFire = true;
-				if (damage < 1000000)
+				if (damage < TELEFRAG_DAMAGE)
 				{ // Still allow telefragging :-(
 					damage = (int)((float)damage * level.teamdamage);
 					if (damage <= 0)
@@ -1437,7 +1432,8 @@ void P_PoisonDamage (player_t *player, AActor *source, int damage,
 	{
 		return;
 	}
-	if (target->flags2&MF2_INVULNERABLE && damage < 1000000)
+	if (damage < TELEFRAG_DAMAGE && ((target->flags2 & MF2_INVULNERABLE) ||
+		(player->cheats & CF_GODMODE)))
 	{ // target is invulnerable
 		return;
 	}
@@ -1445,11 +1441,6 @@ void P_PoisonDamage (player_t *player, AActor *source, int damage,
 	{
 		// Take half damage in trainer mode
 		damage = FixedMul(damage, G_SkillProperty(SKILLP_DamageFactor));
-	}
-	if(damage < 1000 && ((player->cheats&CF_GODMODE)
-		|| (player->mo->flags2 & MF2_INVULNERABLE)))
-	{
-		return;
 	}
 	if (damage >= player->health
 		&& (G_SkillProperty(SKILLP_AutoUseHealth) || deathmatch)

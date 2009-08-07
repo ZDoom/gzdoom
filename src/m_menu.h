@@ -52,7 +52,7 @@ void M_Deinit ();
 
 // Called by intro code to force menu up upon a keypress,
 // does nothing if menu is already up.
-void M_StartControlPanel (bool makeSound);
+void M_StartControlPanel (bool makeSound, bool wantTop=false);
 
 // Turns off the menu
 void M_ClearMenus ();
@@ -257,6 +257,7 @@ enum EMenuKey
 
 void M_ButtonHandler(EMenuKey key, bool repeat);
 void M_OptButtonHandler(EMenuKey key, bool repeat);
+void M_DrawConText (int color, int x, int y, const char *str);
 
 extern value_t YesNo[2];
 extern value_t NoYes[2];

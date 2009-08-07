@@ -8,6 +8,8 @@ PRESSKEY = "press a key.";
 PRESSYN = "press y or n.";
 
 QUITMSG = "are you sure you want to\nquit this great game?";
+TXT_YES = "Yes";
+TXT_NO = "No";
 
 // Quit Doom 1 messages
 QUITMSG1 = "please don't leave, there's more\ndemons to toast!";

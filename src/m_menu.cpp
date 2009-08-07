@@ -172,7 +172,8 @@ void M_DrawFrame (int x, int y, int width, int height);
 static void M_DrawSaveLoadBorder (int x,int y, int len);
 static void M_DrawSaveLoadCommon ();
 static void M_SetupNextMenu (oldmenu_t *menudef);
-static void M_StartMessage (const char *string, void(*routine)(int), bool input);
+static void M_StartMessage (const char *string, void(*routine)(int));
+static void M_EndMessage (int key);
 
 // [RH] For player setup menu.
 	   void M_PlayerSetup ();
@@ -222,9 +223,9 @@ static FSaveGameNode *lastSaveSlot;	// Used for highlighting the most recently u
 static int 		messageToPrint;			// 1 = message to be printed
 static const char *messageString;		// ...and here is the message string!
 static EMenuState messageLastMenuActive;
-static bool		messageNeedsInput;		// timed message = no input from user
-static void	  (*messageRoutine)(int response);
+static void	  (*messageRoutine)(int response);	// Non-NULL if only Y/N should close message
 static int		showSharewareMessage;
+static int		messageSelection;		// 0 {Yes) or 1 (No) [if messageRoutine is non-NULL]
 
 static int 		genStringEnter;	// we are going to be entering a savegame string
 static size_t	genStringLen;	// [RH] Max # of chars that can be entered
@@ -606,8 +607,7 @@ static oldmenu_t SaveDef =
 // through console commands.
 CCMD (menu_main)
 {
-	M_StartControlPanel (true);
-	M_SetupNextMenu (TopLevelMenu);
+	M_StartControlPanel (true, true);
 }
 
 CCMD (menu_load)
@@ -1295,9 +1295,9 @@ void M_LoadGame (int choice)
 	if (netgame)
 	{
 		if(gameinfo.gametype == GAME_Chex)
-			M_StartMessage (GStrings("CLOADNET"), NULL, false);
+			M_StartMessage (GStrings("CLOADNET"), NULL);
 		else
-			M_StartMessage (GStrings("LOADNET"), NULL, false);
+			M_StartMessage (GStrings("LOADNET"), NULL);
 		return;
 	}
 		
@@ -1370,7 +1370,7 @@ void M_SaveGame (int choice)
 {
 	if (!usergame || (players[consoleplayer].health <= 0 && !multiplayer))
 	{
-		M_StartMessage (GStrings("SAVEDEAD"), NULL, false);
+		M_StartMessage (GStrings("SAVEDEAD"), NULL);
 		return;
 	}
 
@@ -1430,7 +1430,7 @@ void M_QuickSave ()
 	else
 		mysnprintf (tempstring, countof(tempstring), GStrings("QSPROMPT"), quickSaveSlot->Title);
 	strcpy (savegamestring, quickSaveSlot->Title);
-	M_StartMessage (tempstring, M_QuickSaveResponse, true);
+	M_StartMessage (tempstring, M_QuickSaveResponse);
 }
 
 
@@ -1453,9 +1453,9 @@ void M_QuickLoad ()
 	if (netgame)
 	{
 		if(gameinfo.gametype == GAME_Chex)
-			M_StartMessage (GStrings("CQLOADNET"), NULL, false);
+			M_StartMessage (GStrings("CQLOADNET"), NULL);
 		else
-			M_StartMessage (GStrings("QLOADNET"), NULL, false);
+			M_StartMessage (GStrings("QLOADNET"), NULL);
 		return;
 	}
 		
@@ -1471,7 +1471,7 @@ void M_QuickLoad ()
 		mysnprintf (tempstring, countof(tempstring), GStrings("CQLPROMPT"), quickSaveSlot->Title);
 	else
 		mysnprintf (tempstring, countof(tempstring), GStrings("QLPROMPT"), quickSaveSlot->Title);
-	M_StartMessage (tempstring, M_QuickLoadResponse, true);
+	M_StartMessage (tempstring, M_QuickLoadResponse);
 }
 
 //
@@ -1574,9 +1574,9 @@ void M_NewGame(int choice)
 	if (netgame && !demoplayback)
 	{
 		if(gameinfo.gametype == GAME_Chex)
-			M_StartMessage (GStrings("CNEWGAME"), NULL, false);
+			M_StartMessage (GStrings("CNEWGAME"), NULL);
 		else
-			M_StartMessage (GStrings("NEWGAME"), NULL, false);
+			M_StartMessage (GStrings("NEWGAME"), NULL);
 		return;
 	}
 
@@ -1794,7 +1794,7 @@ void M_ChooseSkill (int choice)
 		if (*msg==0) msg = GStrings("NIGHTMARE");
 		if (*msg=='$') msg = GStrings(msg+1);
 		confirmskill = choice;
-		M_StartMessage (msg, M_VerifyNightmare, true);
+		M_StartMessage (msg, M_VerifyNightmare);
 		return;
 	}
 
@@ -1813,12 +1813,12 @@ void M_Episode (int choice)
 	{
 		if (gameinfo.gametype == GAME_Doom)
 		{
-			M_StartMessage(GStrings("SWSTRING"),NULL,false);
+			M_StartMessage(GStrings("SWSTRING"), NULL);
 			//M_SetupNextMenu(&ReadDef);
 		}
 		else if (gameinfo.gametype == GAME_Chex)
 		{
-			M_StartMessage(GStrings("CSWSTRING"),NULL,false);
+			M_StartMessage(GStrings("CSWSTRING"), NULL);
 		}
 		else
 		{
@@ -1856,9 +1856,9 @@ static void SCClass (int option)
 	if (netgame)
 	{
 		if(gameinfo.gametype == GAME_Chex)
-			M_StartMessage (GStrings("CNEWGAME"), NULL, false);
+			M_StartMessage (GStrings("CNEWGAME"), NULL);
 		else
-			M_StartMessage (GStrings("NEWGAME"), NULL, false);
+			M_StartMessage (GStrings("NEWGAME"), NULL);
 		return;
 	}
 
@@ -1892,9 +1892,9 @@ static void M_ChooseClass (int choice)
 	if (netgame)
 	{
 		if(gameinfo.gametype == GAME_Chex)
-			M_StartMessage (GStrings("CNEWGAME"), NULL, false);
+			M_StartMessage (GStrings("CNEWGAME"), NULL);
 		else
-			M_StartMessage (GStrings("NEWGAME"), NULL, false);
+			M_StartMessage (GStrings("NEWGAME"), NULL);
 		return;
 	}
 
@@ -1953,16 +1953,16 @@ void M_EndGame(int choice)
 	if (netgame)
 	{
 		if(gameinfo.gametype == GAME_Chex)
-			M_StartMessage(GStrings("CNETEND"),NULL,false);
+			M_StartMessage(GStrings("CNETEND"), NULL);
 		else
-			M_StartMessage(GStrings("NETEND"),NULL,false);
+			M_StartMessage(GStrings("NETEND"), NULL);
 		return;
 	}
 
 	if(gameinfo.gametype == GAME_Chex)
-		M_StartMessage(GStrings("CENDGAME"),M_EndGameResponse,true);
+		M_StartMessage(GStrings("CENDGAME"), M_EndGameResponse);
 	else
-		M_StartMessage(GStrings("ENDGAME"),M_EndGameResponse,true);
+		M_StartMessage(GStrings("ENDGAME"), M_EndGameResponse);
 }
 
 
@@ -2005,7 +2005,7 @@ void M_QuitResponse(int ch)
 		return;
 	if (!netgame)
 	{
-		if (gameinfo.quitSound)
+		if (gameinfo.quitSound.IsNotEmpty())
 		{
 			S_Sound (CHAN_VOICE | CHAN_UI, gameinfo.quitSound, 1, ATTN_NONE);
 			I_WaitVBL (105);
@@ -2049,7 +2049,7 @@ void M_QuitGame (int choice)
 		EndString = GStrings("RAVENQUITMSG");
 	}
 
-	M_StartMessage (EndString, M_QuitResponse, true);
+	M_StartMessage (EndString, M_QuitResponse);
 }
 
 
@@ -2736,19 +2736,19 @@ static void M_SlidePlayerBlue (int choice)
 //
 //		Menu Functions
 //
-void M_StartMessage (const char *string, void (*routine)(int), bool input)
+void M_StartMessage (const char *string, void (*routine)(int))
 {
 	C_HideConsole ();
 	messageLastMenuActive = menuactive;
 	messageToPrint = 1;
 	messageString = string;
 	messageRoutine = routine;
-	messageNeedsInput = input;
+	messageSelection = 0;
 	if (menuactive == MENU_Off)
 	{
 		M_ActivateMenuInput ();
 	}
-	if (input)
+	if (messageRoutine != NULL)
 	{
 		S_StopSound (CHAN_VOICE);
 		S_Sound (CHAN_VOICE | CHAN_UI, "menu/prompt", 1, ATTN_NONE);
@@ -2756,6 +2756,22 @@ void M_StartMessage (const char *string, void (*routine)(int), bool input)
 	return;
 }
 
+void M_EndMessage(int key)
+{
+	menuactive = messageLastMenuActive;
+	messageToPrint = 0;
+	if (messageRoutine != NULL)
+	{
+		messageRoutine(key);
+	}
+	if (menuactive != MENU_Off)
+	{
+		M_DeactivateMenuInput();
+	}
+	SB_state = screen->GetPageCount();	// refresh the status bar
+	BorderNeedRefresh = screen->GetPageCount();
+	S_Sound(CHAN_VOICE | CHAN_UI, "menu/dismiss", 1, ATTN_NONE);
+}
 
 
 //
@@ -2803,8 +2819,7 @@ bool M_Responder (event_t *ev)
 		// Pop-up menu?
 		if (ev->data1 == KEY_ESCAPE)
 		{
-			M_StartControlPanel(true);
-			M_SetupNextMenu(TopLevelMenu);
+			M_StartControlPanel(true, true);
 			return true;
 		}
 		// If devparm is set, pressing F1 always takes a screenshot no matter
@@ -2900,6 +2915,15 @@ bool M_Responder (event_t *ev)
 		}
 		ch = ev->data1;
 		keyup = ev->subtype == EV_GUI_KeyUp;
+		if (messageToPrint && messageRoutine == NULL)
+		{
+			if (!keyup && !OptionsActive)
+			{
+				D_RemoveNextCharEvent();
+				M_EndMessage(ch);
+				return true;
+			}
+		}
 		switch (ch)
 		{
 		case GK_ESCAPE:			mkey = MKEY_Back;		break;
@@ -2923,37 +2947,13 @@ bool M_Responder (event_t *ev)
 				{
 					// Take care of any messages that need input
 					ch = tolower (ch);
-					if (messageNeedsInput)
+					assert(messageRoutine != NULL);
+					if (ch != ' ' && ch != 'n' && ch != 'y')
 					{
-						// For each printable keystroke, both EV_GUI_KeyDown and
-						// EV_GUI_Char will be generated, in that order. If we close
-						// the menu after the first event arrives and the fullscreen
-						// console is up, the console will get the EV_GUI_Char event
-						// next. Therefore, the message input should only respond to
-						// EV_GUI_Char events (sans Escape, which only generates
-						// EV_GUI_KeyDown.)
-						if (ev->subtype != EV_GUI_Char && ch != GK_ESCAPE)
-						{
-//							return false;
-						}
-						if (ch != ' ' && ch != 'n' && ch != 'y' && ch != GK_ESCAPE)
-						{
-							return false;
-						}
+						return false;
 					}
-
-					menuactive = messageLastMenuActive;
-					messageToPrint = 0;
-					if (messageRoutine)
-						messageRoutine (ch);
-
-					if (menuactive != MENU_Off)
-					{
-						M_DeactivateMenuInput();
-					}
-					SB_state = screen->GetPageCount();	// refresh the status bar
-					BorderNeedRefresh = screen->GetPageCount();
-					S_Sound(CHAN_VOICE | CHAN_UI, "menu/dismiss", 1, ATTN_NONE);
+					D_RemoveNextCharEvent();
+					M_EndMessage(ch);
 					return true;
 				}
 				else
@@ -3038,6 +3038,12 @@ bool M_Responder (event_t *ev)
 			mkey = MKEY_Right;
 			break;
 		}
+		// Any button press will work for messages without callbacks
+		if (!keyup && messageToPrint && messageRoutine == NULL)
+		{
+			M_EndMessage(ch);
+			return true;
+		}
 	}
 
 	if (mkey != NUM_MKEYS)
@@ -3048,14 +3054,12 @@ bool M_Responder (event_t *ev)
 		}
 		else
 		{
-			if (MenuButtons[mkey].PressKey(ch))
+			MenuButtons[mkey].PressKey(ch);
+			if (mkey <= MKEY_PageDown)
 			{
-				if (mkey <= MKEY_PageDown)
-				{
-					MenuButtonTickers[mkey] = KEY_REPEAT_DELAY;
-				}
-				M_ButtonHandler(mkey, false);
+				MenuButtonTickers[mkey] = KEY_REPEAT_DELAY;
 			}
+			M_ButtonHandler(mkey, false);
 		}
 	}
 
@@ -3077,10 +3081,35 @@ void M_ButtonHandler(EMenuKey key, bool repeat)
 	}
 	if (key == MKEY_Back)
 	{
-		// Save the cursor position on the current menu, and pop it off the stack
-		// to go back to the previous menu.
-		currentMenu->lastOn = itemOn;
-		M_PopMenuStack();
+		if (genStringEnter)
+		{
+			// Cancel string entry.
+			genStringEnter = 0;
+			genStringCancel();
+		}
+		else if (messageToPrint)
+		{
+			M_EndMessage(GK_ESCAPE);
+		}
+		else
+		{
+			// Save the cursor position on the current menu, and pop it off the stack
+			// to go back to the previous menu.
+			currentMenu->lastOn = itemOn;
+			M_PopMenuStack();
+		}
+		return;
+	}
+	if (messageToPrint)
+	{
+		if (key == MKEY_Down || key == MKEY_Up)
+		{
+			messageSelection ^= 1;
+		}
+		else if (key == MKEY_Enter)
+		{
+			M_EndMessage(messageSelection == 0 ? 'y' : 'n');
+		}
 		return;
 	}
 	if (currentMenu == &SaveDef || currentMenu == &LoadDef)
@@ -3244,7 +3273,7 @@ static bool M_SaveLoadResponder (event_t *ev)
 				EndString.Format("%s" TEXTCOLOR_WHITE "%s" TEXTCOLOR_NORMAL "?\n\n%s",
 					GStrings("MNU_DELETESG"), SelSaveGame->Title, GStrings("PRESSYN"));
 					
-				M_StartMessage (EndString, M_DeleteSaveResponse, true);
+				M_StartMessage (EndString, M_DeleteSaveResponse);
 			}
 			break;
 
@@ -3279,12 +3308,16 @@ static void M_LoadSelect (const FSaveGameNode *file)
 //
 // User wants to save. Start string input for M_Responder
 //
+static void M_CancelSaveName ()
+{
+}
+
 static void M_SaveSelect (const FSaveGameNode *file)
 {
 	// we are going to be intercepting all chars
 	genStringEnter = 1;
 	genStringEnd = M_DoSave;
-	genStringCancel = M_ClearMenus;
+	genStringCancel = M_CancelSaveName;
 	genStringLen = SAVESTRINGSIZE-1;
 
 	if (file != &NewSaveNode)
@@ -3323,7 +3356,7 @@ static void M_DeleteSaveResponse (int choice)
 //
 // M_StartControlPanel
 //
-void M_StartControlPanel (bool makeSound)
+void M_StartControlPanel (bool makeSound, bool wantTop)
 {
 	// intro might call this repeatedly
 	if (menuactive == MENU_On)
@@ -3331,12 +3364,20 @@ void M_StartControlPanel (bool makeSound)
 
 	for (int i = 0; i < NUM_MKEYS; ++i)
 	{
-		MenuButtons[i].ResetTriggers();
+		MenuButtons[i].ReleaseKey(0);
 	}
 	drawSkull = true;
 	MenuStackDepth = 0;
-	currentMenu = TopLevelMenu;
-	itemOn = currentMenu->lastOn;
+	if (wantTop)
+	{
+		M_SetupNextMenu(TopLevelMenu);
+	}
+	else
+	{
+		// Just a default. The caller ought to call M_SetupNextMenu() next.
+		currentMenu = TopLevelMenu;
+		itemOn = currentMenu->lastOn;
+	}
 	C_HideConsole ();				// [RH] Make sure console goes bye bye.
 	OptionsActive = false;			// [RH] Make sure none of the options menus appear.
 	M_ActivateMenuInput ();
@@ -3373,6 +3414,7 @@ void M_Drawer ()
 	// Horiz. & Vertically center string and print it.
 	if (messageToPrint)
 	{
+		int fontheight = SmallFont->GetHeight();
 		screen->Dim (fade);
 		BorderNeedRefresh = screen->GetPageCount ();
 		SB_state = screen->GetPageCount ();
@@ -3387,10 +3429,19 @@ void M_Drawer ()
 		{
 			screen->DrawText (SmallFont, CR_UNTRANSLATED, 160 - lines[i].Width/2, y, lines[i].Text,
 				DTA_Clean, true, TAG_DONE);
-			y += SmallFont->GetHeight ();
+			y += fontheight;
 		}
-
 		V_FreeBrokenLines (lines);
+		if (messageRoutine != NULL)
+		{
+			y += fontheight;
+			screen->DrawText(SmallFont, CR_UNTRANSLATED, 160, y, GStrings["TXT_YES"], DTA_Clean, true, TAG_DONE);
+			screen->DrawText(SmallFont, CR_UNTRANSLATED, 160, y + fontheight + 1, GStrings["TXT_NO"], DTA_Clean, true, TAG_DONE);
+			if (skullAnimCounter < 6)
+			{
+				M_DrawConText(CR_RED, 150, y + (fontheight + 1) * messageSelection, "\xd");
+			}
+		}
 	}
 	else if (menuactive != MENU_Off)
 	{

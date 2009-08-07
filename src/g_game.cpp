@@ -859,7 +859,7 @@ bool G_Responder (event_t *ev)
 				stricmp (cmd, "bumpgamma") &&
 				stricmp (cmd, "screenshot")))
 			{
-				M_StartControlPanel (true);
+				M_StartControlPanel (true, true);
 				return true;
 			}
 			else

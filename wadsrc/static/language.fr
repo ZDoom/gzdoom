@@ -13,6 +13,8 @@ D_CDROM = "VERSION CD-ROM: DEFAULT.CFG DANS C:\\DOOMDATA\n";
 PRESSKEY = "APPUYEZ SUR UNE TOUCHE.";
 PRESSYN = "APPUYEZ SUR Y OU N";
 QUITMSG = "VOUS VOULEZ VRAIMENT\nQUITTER CE SUPER JEU?";
+TXT_YES = "Oui";
+TXT_NO = "Non";
 
 // QuitDoom1 messages
 QUITMSG1 = "ne partez pas,Il ya encore\ndes démons a griller!";

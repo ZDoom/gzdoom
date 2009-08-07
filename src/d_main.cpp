@@ -241,6 +241,8 @@ void D_ProcessEvents (void)
 	for (; eventtail != eventhead ; eventtail = (eventtail+1)&(MAXEVENTS-1))
 	{
 		ev = &events[eventtail];
+		if (ev->type == EV_None)
+			continue;
 		if (ev->type == EV_DeviceChange)
 			UpdateJoystickMenu(I_UpdateDeviceList());
 		if (C_Responder (ev))
@@ -291,6 +293,41 @@ void D_PostEvent (const event_t *ev)
 		}
 	}
 	eventhead = (eventhead+1)&(MAXEVENTS-1);
+}
+
+//==========================================================================
+//
+// D_RemoveNextCharEvent
+//
+// Removes the next EV_GUI_Char event in the input queue. Used by the menu,
+// since it (generally) consumes EV_GUI_KeyDown events and not EV_GUI_Char
+// events, and it needs to ensure that there is no left over input when it's
+// done. If there are multiple EV_GUI_KeyDowns before the EV_GUI_Char, then
+// there are dead chars involved, so those should be removed, too. We do
+// this by changing the message type to EV_None rather than by actually
+// removing the event from the queue.
+// 
+//==========================================================================
+
+void D_RemoveNextCharEvent()
+{
+	assert(events[eventtail].type == EV_GUI_Event && events[eventtail].subtype == EV_GUI_KeyDown);
+	for (int evnum = eventtail; evnum != eventhead; evnum = (evnum+1) & (MAXEVENTS-1))
+	{
+		event_t *ev = &events[evnum];
+		if (ev->type != EV_GUI_Event)
+			break;
+		if (ev->subtype == EV_GUI_KeyDown || ev->subtype == EV_GUI_Char)
+		{
+			ev->type = EV_None;
+			if (ev->subtype == EV_GUI_Char)
+				break;
+		}
+		else
+		{
+			break;
+		}
+	}
 }
 
 //==========================================================================

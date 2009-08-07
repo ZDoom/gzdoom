@@ -772,7 +772,7 @@ bool FMODSoundRenderer::Init()
 	if (result == FMOD_OK)
 	{
 		// On Linux, FMOD defaults to OSS. If OSS is not present, it doesn't
-		// try ALSA, it just fails. We'll try for it, but only if OSS wasn't
+		// try ALSA; it just fails. We'll try for it, but only if OSS wasn't
 		// explicitly specified for snd_output.
 		if (driver == 0 && eval == FMOD_OUTPUTTYPE_AUTODETECT)
 		{

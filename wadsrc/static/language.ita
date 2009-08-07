@@ -10,6 +10,8 @@ PRESSKEY = "premi un tasto.";
 PRESSYN = "premi y oppure n.";
 
 QUITMSG = "Sei sicuro di volere uscire\nda questo grandioso gioco?";
+TXT_YES = "Si";
+TXT_NO = "No";
 
 // QuitDoom1 messages
 QUITMSG1 = "per favore non uscire, ci sono altri\ndemoni da ammazzare!";

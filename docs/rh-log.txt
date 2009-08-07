@@ -1,4 +1,24 @@
-﻿August 4, 2009
+﻿August 6, 2009
+- Fixed: M_QuitResponse() tried to play a sound even when none was specified
+  in the gameinfo.
+- Added Yes/No selections for Y/N messages so that you can answer them
+  entirely with a joystick.
+- Fixed: Starting the menu at the title screen with a key other than Escape
+  left the top level menu out of the menu stack.
+- Changed the save menu so that cancelling input of a new save name only
+  deactivates that control and does not completely close the menus.
+- Fixed "any key" messages to override input to menus hidden beneath them and
+  to work with joysticks.
+- Removed the input parameter from M_StartMessage and the corresponding
+  messageNeedsInput global, because it was redundant. Any messages that want
+  a Y/N response also supply a callback, and messages that don't care which
+  key you press don't supply a callback.
+- Changed MKEY_Back so that it cancels out of text entry fields before
+  backing to the previous menu, which it already did for the keyboard.
+- Changed the menu responder so that key downs always produce results,
+  regardless of whether or not an equivalent key is already down.
+
+August 4, 2009
 - Added the MF6_STEPMISSILE flag so that the Whirlwind can "walk" up steps.
 - Changed the dword definition of PalEntry to uint32 so that it has one
   consistent definition across all source files.

@@ -27,6 +27,7 @@ Actor PlayerPawn : Actor native
 	Player.ColorRange 0,0
 	Player.SoundClass "player"
 	Player.DamageScreenColor "ff 00 00"
+	Player.MugShotMaxHealth 0
 }
 
 Actor PlayerChunk : PlayerPawn native

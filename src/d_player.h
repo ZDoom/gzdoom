@@ -117,6 +117,7 @@ public:
 
 	int			crouchsprite;
 	int			MaxHealth;
+	int			MugShotMaxHealth;
 	int			RunHealth;
 	int			PlayerFlags;
 	TObjPtr<AInventory> InvFirst;		// first inventory item displayed on inventory bar

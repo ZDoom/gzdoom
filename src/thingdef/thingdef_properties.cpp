@@ -1863,6 +1863,15 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, maxhealth, I, PlayerPawn)
 //==========================================================================
 //
 //==========================================================================
+DEFINE_CLASS_PROPERTY_PREFIX(player, mugshotmaxhealth, I, PlayerPawn)
+{
+	PROP_INT_PARM(z, 0);
+	defaults->MugShotMaxHealth = z;
+}
+
+//==========================================================================
+//
+//==========================================================================
 DEFINE_CLASS_PROPERTY_PREFIX(player, runhealth, I, PlayerPawn)
 {
 	PROP_INT_PARM(z, 0);

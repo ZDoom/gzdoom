@@ -1,4 +1,7 @@
 ﻿August 6, 2009
+- Added player MugShotMaxHealth property. Negative values use the player's
+  max health as the mug shot max health, zero uses 100 as the mug shot max
+  health, and positive values used directly as the mug shot max health.
 - Added buddha cheat.
 - Added TELEFRAG_DAMAGE constant, and changed the two places that still used
   1000 as the threshold for god mode damage to use it instead. (Players with

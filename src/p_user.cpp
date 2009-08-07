@@ -1820,7 +1820,7 @@ void P_FallingDamage (AActor *actor)
 	{
 		S_Sound (actor, CHAN_AUTO, "*land", 1, ATTN_NORM);
 		P_NoiseAlert (actor, actor, true);
-		if (damage == 1000000 && (actor->player->cheats & CF_GODMODE))
+		if (damage == 1000000 && (actor->player->cheats & (CF_GODMODE | CF_BUDDHA)))
 		{
 			damage = 999;
 		}

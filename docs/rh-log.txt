@@ -1,4 +1,5 @@
 ﻿August 6, 2009
+- Added buddha cheat.
 - Added TELEFRAG_DAMAGE constant, and changed the two places that still used
   1000 as the threshold for god mode damage to use it instead. (Players with
   MF2_INVULNERABLE set already used 1000000 as their threshold.)

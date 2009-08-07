@@ -1149,9 +1149,20 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 			P_AutoUseStrifeHealth (player);
 			player->mo->health = player->health;
 		}
-		if (player->health < 0)
+		if (player->health <= 0)
 		{
-			player->health = 0;
+			// [SP] Buddha cheat: if the player is about to die, rescue him to 1 health.
+			// This does not save the player if damage >= TELEFRAG_DAMAGE, still need to
+			// telefrag him right? ;) (Unfortunately the damage is "absorbed" by armor,
+			// but telefragging should still do enough damage to kill the player)
+			if ((player->cheats & CF_BUDDHA) && damage < TELEFRAG_DAMAGE)
+			{
+				target->health = player->health = 1;
+			}
+			else
+			{
+				player->health = 0;
+			}
 		}
 		player->LastDamageType = mod;
 		player->attacker = source;
@@ -1465,18 +1476,25 @@ void P_PoisonDamage (player_t *player, AActor *source, int damage,
 	target->health -= damage;
 	if (target->health <= 0)
 	{ // Death
-		target->special1 = damage;
-		if (player && inflictor && !player->morphTics)
-		{ // Check for flame death
-			if ((inflictor->DamageType == NAME_Fire)
-				&& (target->health > -50) && (damage > 25))
-			{
-				target->DamageType = NAME_Fire;
-			}
-			else target->DamageType = inflictor->DamageType;
+		if ( player->cheats & CF_BUDDHA )
+		{ // [SP] Save the player... 
+			player->health = target->health = 1;
 		}
-		target->Die (source, source);
-		return;
+		else
+		{
+			target->special1 = damage;
+			if (player && inflictor && !player->morphTics)
+			{ // Check for flame death
+				if ((inflictor->DamageType == NAME_Fire)
+					&& (target->health > -50) && (damage > 25))
+				{
+					target->DamageType = NAME_Fire;
+				}
+				else target->DamageType = inflictor->DamageType;
+			}
+			target->Die (source, source);
+			return;
+		}
 	}
 	if (!(level.time&63) && playPainSound)
 	{

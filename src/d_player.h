@@ -197,6 +197,7 @@ typedef enum
 	CF_WEAPONBOBBING	= 1 << 24,		// [HW] Bob weapon while the player is moving
 	CF_WEAPONREADYALT	= 1 << 25,		// Weapon can fire its secondary attack
 	CF_WEAPONSWITCHOK	= 1 << 26,		// It is okay to switch away from this weapon
+	CF_BUDDHA			= 1 << 27,		// [SP] Buddha mode - take damage, but don't die
 } cheat_t;
 
 #define WPIECE1		1

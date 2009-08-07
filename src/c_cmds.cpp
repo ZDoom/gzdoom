@@ -130,6 +130,15 @@ CCMD (iddqd)
 	Net_WriteByte (CHT_IDDQD);
 }
 
+CCMD (buddha)
+{
+	if (CheckCheatmode())
+		return;
+
+	Net_WriteByte(DEM_GENERICCHEAT);
+	Net_WriteByte(CHT_BUDDHA);
+}
+
 CCMD (notarget)
 {
 	if (CheckCheatmode ())

@@ -100,6 +100,14 @@ void cht_DoCheat (player_t *player, int cheat)
 		SB_state = screen->GetPageCount ();
 		break;
 
+	case CHT_BUDDHA:
+		player->cheats ^= CF_BUDDHA;
+		if (player->cheats & CF_BUDDHA)
+			msg = GStrings("TXT_BUDDHAON");
+		else
+			msg = GStrings("TXT_BUDDHAOFF");
+		break;
+
 	case CHT_NOCLIP:
 		player->cheats ^= CF_NOCLIP;
 		if (player->cheats & CF_NOCLIP)

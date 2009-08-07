@@ -278,6 +278,8 @@ STSTR_BEHOLD = "inVuln, Str, Inviso, Rad, Allmap, or Lite-amp";
 STSTR_BEHOLDX = "Power-up Toggled";
 STSTR_CHOPPERS = "... doesn't suck - GM";
 STSTR_CLEV = "Changing Level...\n";
+TXT_BUDDHAON = "Buddha mode ON";
+TXT_BUDDHAOFF = "Buddha mode OFF";
 
 E1TEXT =
 	"Once you beat the big badasses and\n"

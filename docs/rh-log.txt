@@ -1,4 +1,15 @@
-﻿August 6, 2009
+﻿August 7, 2009
+- Changed the DWORDs in dobject.h into uint32s, since they were preventing
+  edit-and-continue from working for the Windows source files.
+- When a WM_KEYDOWN message is received with VK_PROCESSKEY, the scan key is
+  now used to retrieve the real virtual key for the message. This fixes the
+  previous issue that caused me to completely disable the IME.
+- Removed the code that disables the IME, since it also disables the ability
+  to switch between keyboard layouts that do not use an IME.
+- TranslateMessage() is no longer called if GUI capture mode is off, so no
+  dead key processing is performed until it might be useful.
+
+August 6, 2009
 - Added player MugShotMaxHealth property. Negative values use the player's
   max health as the mug shot max health, zero uses 100 as the mug shot max
   health, and positive values used directly as the mug shot max health.

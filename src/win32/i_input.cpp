@@ -207,6 +207,12 @@ bool GUIWndProcHook(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESU
 		if (GetKeyState(VK_SHIFT) & 0x8000)		ev.data3 |= GKM_SHIFT;
 		if (GetKeyState(VK_CONTROL) & 0x8000)	ev.data3 |= GKM_CTRL;
 		if (GetKeyState(VK_MENU) & 0x8000)		ev.data3 |= GKM_ALT;
+		if (wParam == VK_PROCESSKEY)
+		{ // Use the scan code to determine the real virtual-key code.
+		  // ImmGetVirtualKey() will supposedly do this, but it just returns
+		  // VK_PROCESSKEY again.
+			wParam = MapVirtualKey((lParam >> 16) & 255, 1);
+		}
 		if ( (ev.data1 = MapVirtualKey(wParam, 2)) )
 		{
 			D_PostEvent(&ev);
@@ -702,7 +708,10 @@ void I_GetEvent ()
 			exit (mess.wParam);
 		if (EAXEditWindow == 0 || !IsDialogMessage (EAXEditWindow, &mess))
 		{
-			TranslateMessage (&mess);
+			if (GUICapture)
+			{
+				TranslateMessage (&mess);
+			}
 			DispatchMessage (&mess);
 		}
 	}

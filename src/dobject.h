@@ -90,11 +90,11 @@ enum EMetaType
 class FMetaData
 {
 private:
-	FMetaData (EMetaType type, DWORD id) : Type(type), ID(id) {}
+	FMetaData (EMetaType type, uint32 id) : Type(type), ID(id) {}
 
 	FMetaData *Next;
 	EMetaType Type;
-	DWORD ID;
+	uint32 ID;
 	union
 	{
 		int Int;
@@ -113,19 +113,19 @@ public:
 	~FMetaTable();
 	FMetaTable &operator = (const FMetaTable &other);
 
-	void SetMetaInt (DWORD id, int parm);
-	void SetMetaFixed (DWORD id, fixed_t parm);
-	void SetMetaString (DWORD id, const char *parm);	// The string is copied
+	void SetMetaInt (uint32 id, int parm);
+	void SetMetaFixed (uint32 id, fixed_t parm);
+	void SetMetaString (uint32 id, const char *parm);	// The string is copied
 
-	int GetMetaInt (DWORD id, int def=0) const;
-	fixed_t GetMetaFixed (DWORD id, fixed_t def=0) const;
-	const char *GetMetaString (DWORD id) const;
+	int GetMetaInt (uint32 id, int def=0) const;
+	fixed_t GetMetaFixed (uint32 id, fixed_t def=0) const;
+	const char *GetMetaString (uint32 id) const;
 
-	FMetaData *FindMeta (EMetaType type, DWORD id) const;
+	FMetaData *FindMeta (EMetaType type, uint32 id) const;
 
 private:
 	FMetaData *Meta;
-	FMetaData *FindMetaDef (EMetaType type, DWORD id);
+	FMetaData *FindMetaDef (EMetaType type, uint32 id);
 	void FreeMeta ();
 	void CopyMeta (const FMetaTable *other);
 };
@@ -249,7 +249,7 @@ namespace GC
 	extern DObject *Root;
 
 	// Current white value for potentially-live objects.
-	extern DWORD CurrentWhite;
+	extern uint32 CurrentWhite;
 
 	// Current collector state.
 	extern EGCState State;
@@ -264,7 +264,7 @@ namespace GC
 	extern int StepMul;
 
 	// Current white value for known-dead objects.
-	static inline DWORD OtherWhite()
+	static inline uint32 OtherWhite()
 	{
 		return CurrentWhite ^ OF_WhiteBits;
 	}
@@ -446,7 +446,7 @@ private:
 public:
 	DObject *ObjNext;			// Keep track of all allocated objects
 	DObject *GCNext;			// Next object in this collection list
-	DWORD ObjectFlags;			// Flags for this object
+	uint32 ObjectFlags;			// Flags for this object
 
 public:
 	DObject ();

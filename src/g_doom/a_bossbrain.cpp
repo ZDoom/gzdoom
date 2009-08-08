@@ -166,59 +166,67 @@ static void SpawnFly(AActor *self, const PClass *spawntype, FSoundID sound)
 
 	FName SpawnName;
 
-	if (self->master != NULL)
+	FDropItem *di;   // di will be our drop item list iterator
+	FDropItem *drop; // while drop stays as the reference point.
+	int n = 0;
+
+	// First see if this cube has its own actor list
+	drop = self->GetDropItems();
+
+	// If not, then default back to its master's list
+	if (drop == NULL && self->master != NULL)
+		drop = self->master->GetDropItems();
+
+	if (drop != NULL)
 	{
-		FDropItem *di;   // di will be our drop item list iterator
-		FDropItem *drop; // while drop stays as the reference point.
-		int n=0;
-
-		drop = di = self->master->GetDropItems();
-		if (di != NULL)
+		for (di = drop; di != NULL; di = di->Next)
 		{
-			while (di != NULL)
+			if (di->Name != NAME_None)
 			{
-				if (di->Name != NAME_None)
+				if (di->amount < 0)
 				{
-					if (di->amount < 0) di->amount = 1; // default value is -1, we need a positive value.
-					n += di->amount; // this is how we can weight the list.
-					di = di->Next;
+					di->amount = 1; // default value is -1, we need a positive value.
 				}
+				n += di->amount; // this is how we can weight the list.
 			}
-			di = drop;
-			n = pr_spawnfly(n);
-			while (n > 0)
-			{
-				if (di->Name != NAME_None)
-				{
-					n -= di->amount; // logically, none of the -1 values have survived by now.
-					if ((di->Next != NULL) && (n > -1)) di = di->Next; else n = -1;
-				}
-			}
-
-			SpawnName = di->Name;
 		}
+		di = drop;
+		n = pr_spawnfly(n);
+		while (n > 0)
+		{
+			if (di->Name != NAME_None)
+			{
+				n -= di->amount; // logically, none of the -1 values have survived by now.
+			}
+			if ((di->Next != NULL) && (n >= 0))
+			{
+				di = di->Next;
+			}
+			else
+			{
+				n = -1;
+			}
+		}
+		SpawnName = di->Name;
 	}
 	if (SpawnName == NAME_None)
 	{
-		const char *type;
 		// Randomly select monster to spawn.
 		r = pr_spawnfly ();
 
 		// Probability distribution (kind of :),
 		// decreasing likelihood.
-			 if (r < 50)  type = "DoomImp";
-		else if (r < 90)  type = "Demon";
-		else if (r < 120) type = "Spectre";
-		else if (r < 130) type = "PainElemental";
-		else if (r < 160) type = "Cacodemon";
-		else if (r < 162) type = "Archvile";
-		else if (r < 172) type = "Revenant";
-		else if (r < 192) type = "Arachnotron";
-		else if (r < 222) type = "Fatso";
-		else if (r < 246) type = "HellKnight";
-		else			  type = "BaronOfHell";
-
-		SpawnName = type;
+			 if (r < 50)  SpawnName = "DoomImp";
+		else if (r < 90)  SpawnName = "Demon";
+		else if (r < 120) SpawnName = "Spectre";
+		else if (r < 130) SpawnName = "PainElemental";
+		else if (r < 160) SpawnName = "Cacodemon";
+		else if (r < 162) SpawnName = "Archvile";
+		else if (r < 172) SpawnName = "Revenant";
+		else if (r < 192) SpawnName = "Arachnotron";
+		else if (r < 222) SpawnName = "Fatso";
+		else if (r < 246) SpawnName = "HellKnight";
+		else			  SpawnName = "BaronOfHell";
 	}
 	spawntype = PClass::FindClass(SpawnName);
 	if (spawntype != NULL)

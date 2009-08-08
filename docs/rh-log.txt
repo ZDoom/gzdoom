@@ -1,4 +1,7 @@
 ﻿August 7, 2009
+- Added support for per-SpawnShot spawn lists. (Also fixed a potential
+  infinite loop, though I'm not sure the parser allowed this condition to
+  happen.)
 - Changed the DWORDs in dobject.h into uint32s, since they were preventing
   edit-and-continue from working for the Windows source files.
 - When a WM_KEYDOWN message is received with VK_PROCESSKEY, the scan key is

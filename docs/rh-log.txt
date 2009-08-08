@@ -1,4 +1,10 @@
 ﻿August 7, 2009
+- If SetActivatorToTarget is used for a player-run script, and the player is
+  alive, it now sets the activator to the actor the player is aiming at. I
+  also noticed that this looked like it was a quick copy'n'paste job from
+  SetActivator. It returns false if the activator at the end of the function
+  was the world, but it never sets the activator to the world. I'm not sure
+  that's the best use of the return value.
 - Added support for per-SpawnShot spawn lists. (Also fixed a potential
   infinite loop, though I'm not sure the parser allowed this condition to
   happen.)

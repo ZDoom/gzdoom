@@ -2935,9 +2935,23 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 			return activator != NULL;
 		
 		case ACSF_SetActivatorToTarget:
-			actor = SingleActorFromTID(args[0], NULL);
-			if (actor != NULL) actor = actor->target;
-			if (actor != NULL) activator = actor;
+			// [KS] I revised this a little bit
+			actor = SingleActorFromTID(args[0], activator);
+			if (actor != NULL)
+			{
+				if (actor->player != NULL && actor->player->playerstate == PST_LIVE)
+				{
+					P_BulletSlope(actor, &actor);
+				}
+				else
+				{
+					actor = actor->target;
+				}
+			}
+			if (actor != NULL)
+			{
+				activator = actor;
+			}
 			return activator != NULL;
 
 		case ACSF_GetActorViewHeight:

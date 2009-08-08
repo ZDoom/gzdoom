@@ -2951,8 +2951,9 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 			if (actor != NULL)
 			{
 				activator = actor;
+				return 1;
 			}
-			return activator != NULL;
+			return 0;
 
 		case ACSF_GetActorViewHeight:
 			actor = SingleActorFromTID(args[0], NULL);

@@ -1,4 +1,8 @@
-﻿August 7, 2009
+﻿August 8, 2009
+- Changed the return value of SetActivatorToTarget to match the description
+  in the wiki.
+
+August 7, 2009
 - If SetActivatorToTarget is used for a player-run script, and the player is
   alive, it now sets the activator to the actor the player is aiming at. I
   also noticed that this looked like it was a quick copy'n'paste job from

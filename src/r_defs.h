@@ -590,6 +590,21 @@ struct sector_t
 		return (MoreFlags & SECF_IGNOREHEIGHTSEC)? NULL : heightsec;
 	}
 
+	void ChangeLightLevel(int newval)
+	{
+		lightlevel = (BYTE)clamp(lightlevel + newval, 0, 255);
+	}
+
+	void SetLightLevel(int newval)
+	{
+		lightlevel = (BYTE)clamp(newval, 0, 255);
+	}
+
+	int GetLightLevel() const
+	{
+		return lightlevel;
+	}
+
 
 	// Member variables
 	fixed_t		CenterFloor () const { return floorplane.ZatPoint (soundorg[0], soundorg[1]); }

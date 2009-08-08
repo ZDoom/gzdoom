@@ -92,7 +92,7 @@ void DLightningThinker::LightningFlash ()
 				if (LightningLightLevels[numsectors+(j>>3)] & (1<<(j&7)) &&
 					LightningLightLevels[j] < tempSec->lightlevel-4)
 				{
-					tempSec->lightlevel -= 4;
+					tempSec->ChangeLightLevel(-4);
 				}
 			}
 		}					
@@ -103,7 +103,7 @@ void DLightningThinker::LightningFlash ()
 			{
 				if (LightningLightLevels[numsectors+(j>>3)] & (1<<(j&7)))
 				{
-					tempSec->lightlevel = LightningLightLevels[j];
+					tempSec->SetLightLevel(LightningLightLevels[j]);
 				}
 			}
 			memset (&LightningLightLevels[numsectors], 0, (numsectors+7)/8);
@@ -128,19 +128,19 @@ void DLightningThinker::LightningFlash ()
 			LightningLightLevels[numsectors+(j>>3)] |= 1<<(j&7);
 			if (special == Light_IndoorLightning1)
 			{
-				tempSec->lightlevel = MIN<int> (tempSec->lightlevel+64, flashLight);
+				tempSec->SetLightLevel(MIN<int> (tempSec->lightlevel+64, flashLight));
 			}
 			else if (special == Light_IndoorLightning2)
 			{
-				tempSec->lightlevel = MIN<int> (tempSec->lightlevel+32, flashLight);
+				tempSec->SetLightLevel(MIN<int> (tempSec->lightlevel+32, flashLight));
 			}
 			else
 			{
-				tempSec->lightlevel = flashLight;
+				tempSec->SetLightLevel(flashLight);
 			}
 			if (tempSec->lightlevel < LightningLightLevels[j])
 			{
-				tempSec->lightlevel = LightningLightLevels[j];
+				tempSec->SetLightLevel(LightningLightLevels[j]);
 			}
 		}
 	}

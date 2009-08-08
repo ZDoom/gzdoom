@@ -90,7 +90,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightGoesOut)
 	vertex_t *spot;
 	fixed_t newheight;
 
-	sec->lightlevel = 0;
+	sec->SetLightLevel(0);
 
 	newheight = sec->FindLowestFloorSurrounding (&spot);
 	sec->floorplane.d = sec->floorplane.PointToDist (spot, newheight);

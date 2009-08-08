@@ -24,6 +24,7 @@
 #define __R_DEFS_H__
 
 #include "doomdef.h"
+#include "templates.h"
 
 // Some more or less basic data types
 // we depend on.

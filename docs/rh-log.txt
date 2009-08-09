@@ -1,4 +1,11 @@
-﻿August 8, 2009
+﻿August 9, 2009  (Changes by Graf Zahl)
+- Fixed: A_EntityAttack did not spawn the correct missiles.
+
+August 8, 2009  (Changes by Graf Zahl)
+- replaced all code that changed a sector's light level with a setter function.
+- Fixed: The FeatureFlags array in the CPUInfo struct was not mapped to the flags properly.
+
+August 8, 2009
 - Changed the return value of SetActivatorToTarget to match the description
   in the wiki.
 

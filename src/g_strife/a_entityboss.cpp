@@ -25,7 +25,7 @@ void A_SpectralMissile (AActor *self, const char *missilename)
 	if (self->target != NULL)
 	{
 		AActor *missile = P_SpawnMissileXYZ (self->x, self->y, self->z + 32*FRACUNIT, 
-			self, self->target, PClass::FindClass("SpectralLightningBigV2"), false);
+			self, self->target, PClass::FindClass(missilename), false);
 		if (missile != NULL)
 		{
 			missile->tracer = self->target;

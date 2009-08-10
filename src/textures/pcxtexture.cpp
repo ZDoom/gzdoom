@@ -91,7 +91,7 @@ public:
 	void Unload ();
 	FTextureFormat GetFormat ();
 
-	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf = NULL);
+	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int w, int h, int rotate, FCopyInfo *inf = NULL);
 	bool UseBasePalette();
 
 protected:
@@ -545,7 +545,7 @@ void FPCXTexture::MakeTexture()
 //
 //===========================================================================
 
-int FPCXTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)
+int FPCXTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int w, int h, int rotate, FCopyInfo *inf)
 {
 	PalEntry pe[256];
 	PCXHeader header;
@@ -557,6 +557,9 @@ int FPCXTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCo
 	lump.Read(&header, sizeof(header));
 
 	bitcount = header.bitsPerPixel * header.numColorPlanes;
+
+	if (w < 0 || w > Width) w = Width;
+	if (h < 0 || h > Height) h = Height;
 
 	if (bitcount < 24)
 	{
@@ -599,13 +602,13 @@ int FPCXTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCo
 			lump.Seek(sizeof(header), SEEK_SET);
 			ReadPCX8bits (Pixels, lump, &header);
 		}
-		bmp->CopyPixelData(x, y, Pixels, Width, Height, 1, Width, rotate, pe, inf);
+		bmp->CopyPixelData(x, y, Pixels, w, h, 1, Width, rotate, pe, inf);
 	}
 	else
 	{
 		Pixels = new BYTE[Width*Height * 3];
 		ReadPCX24bits (Pixels, lump, &header, 3);
-		bmp->CopyPixelDataRGB(x, y, Pixels, Width, Height, 3, Width*3, rotate, CF_RGB, inf);
+		bmp->CopyPixelDataRGB(x, y, Pixels, w, h, 3, Width*3, rotate, CF_RGB, inf);
 	}
 	delete [] Pixels;
 	return 0;

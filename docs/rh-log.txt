@@ -1,4 +1,8 @@
-﻿August 9, 2009  (Changes by Graf Zahl)
+﻿August 10, 2009  (Changes by Graf Zahl)
+- Fixed: The true color texture compositing code did not clip the edges
+  of multipatch textures used as patches on other multipatch textures.
+
+August 9, 2009  (Changes by Graf Zahl)
 - Fixed: A_EntityAttack did not spawn the correct missiles.
 
 August 8, 2009  (Changes by Graf Zahl)

@@ -168,7 +168,7 @@ public:
 	const BYTE *GetPixels ();
 	void Unload ();
 	FTextureFormat GetFormat ();
-	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf = NULL);
+	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int w, int h, int rotate, FCopyInfo *inf = NULL);
 	bool UseBasePalette();
 
 protected:
@@ -445,7 +445,7 @@ void FJPEGTexture::MakeTexture ()
 //
 //===========================================================================
 
-int FJPEGTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)
+int FJPEGTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int w, int h, int rotate, FCopyInfo *inf)
 {
 	PalEntry pe[256];
 
@@ -459,6 +459,9 @@ int FJPEGTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FC
 	cinfo.err->output_message = JPEG_OutputMessage;
 	cinfo.err->error_exit = JPEG_ErrorExit;
 	jpeg_create_decompress(&cinfo);
+
+	if (w < 0 || w > Width) w = Width;
+	if (h < 0 || h > Height) h = Height;
 
 	try
 	{
@@ -488,18 +491,18 @@ int FJPEGTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FC
 		switch (cinfo.out_color_space)
 		{
 		case JCS_RGB:
-			bmp->CopyPixelDataRGB(x, y, buff, cinfo.output_width, cinfo.output_height, 
+			bmp->CopyPixelDataRGB(x, y, buff, w, h, 
 				3, cinfo.output_width * cinfo.output_components, rotate, CF_RGB, inf);
 			break;
 
 		case JCS_GRAYSCALE:
 			for(int i=0;i<256;i++) pe[i]=PalEntry(255,i,i,i);	// default to a gray map
-			bmp->CopyPixelData(x, y, buff, cinfo.output_width, cinfo.output_height, 
+			bmp->CopyPixelData(x, y, buff, w, h, 
 				1, cinfo.output_width, rotate, pe, inf);
 			break;
 
 		case JCS_CMYK:
-			bmp->CopyPixelDataRGB(x, y, buff, cinfo.output_width, cinfo.output_height, 
+			bmp->CopyPixelDataRGB(x, y, buff, w, h, 
 				4, cinfo.output_width * cinfo.output_components, rotate, CF_CMYK, inf);
 			break;
 

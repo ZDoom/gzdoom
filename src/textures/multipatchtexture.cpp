@@ -158,7 +158,7 @@ public:
 	void Unload ();
 	virtual void SetFrontSkyLayer ();
 
-	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf = NULL);
+	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int w, int h, int rotate, FCopyInfo *inf = NULL);
 	int GetSourceLump() { return DefinitionLump; }
 
 protected:
@@ -551,10 +551,13 @@ void FMultiPatchTexture::MakeTexture ()
 //
 //===========================================================================
 
-int FMultiPatchTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)
+int FMultiPatchTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int w, int h, int rotate, FCopyInfo *inf)
 {
 	int retv = -1;
 	FCopyInfo info;
+
+	if (w < 0 || w > Width) w = Width;
+	if (h < 0 || h > Height) h = Height;
 
 	for(int i=0;i<NumParts;i++)
 	{
@@ -569,7 +572,10 @@ int FMultiPatchTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rota
 			if (Parts[i].Translation != NULL)
 			{
 				// Using a translation forces downconversion to the base palette
-				ret = Parts[i].Texture->CopyTrueColorTranslated(bmp, x+Parts[i].OriginX, y+Parts[i].OriginY, Parts[i].Rotate, Parts[i].Translation, &info);
+				ret = Parts[i].Texture->CopyTrueColorTranslated(bmp, 
+					x+Parts[i].OriginX, y+Parts[i].OriginY, 
+					w-Parts[i].OriginX, h-Parts[i].OriginY, 
+					Parts[i].Rotate, Parts[i].Translation, &info);
 			}
 			else
 			{
@@ -597,7 +603,10 @@ int FMultiPatchTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rota
 						info.blend = BLEND_OVERLAY;
 					}
 				}
-				ret = Parts[i].Texture->CopyTrueColorPixels(bmp, x+Parts[i].OriginX, y+Parts[i].OriginY, Parts[i].Rotate, &info);
+				ret = Parts[i].Texture->CopyTrueColorPixels(bmp, 
+						x+Parts[i].OriginX, y+Parts[i].OriginY, 
+						w-Parts[i].OriginX, h-Parts[i].OriginY, 
+						Parts[i].Rotate, &info);
 			}
 		}
 		else
@@ -610,8 +619,11 @@ int FMultiPatchTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rota
 			if (bmp1.Create(Parts[i].Texture->GetWidth(), Parts[i].Texture->GetHeight()))
 			{
 				Parts[i].Texture->CopyTrueColorPixels(&bmp1, 0, 0);
-				bmp->CopyPixelDataRGB(x+Parts[i].OriginX, y+Parts[i].OriginY, bmp1.GetPixels(), 
-					bmp1.GetWidth(), bmp1.GetHeight(), 4, bmp1.GetPitch()*4, Parts[i].Rotate, CF_BGRA, inf);
+				bmp->CopyPixelDataRGB(
+					x+Parts[i].OriginX, y+Parts[i].OriginY, bmp1.GetPixels(),
+					MIN<int>(w-Parts[i].OriginX, bmp1.GetWidth()), 
+					MIN<int>(h-Parts[i].OriginY, bmp1.GetHeight()), 
+					4, bmp1.GetPitch()*4, Parts[i].Rotate, CF_BGRA, inf);
 			}
 		}
 

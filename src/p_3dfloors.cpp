@@ -333,7 +333,6 @@ bool P_CheckFor3DCeilingHit(AActor * mo)
 // that the given sector uses to light floors/ceilings/walls according to the 3D floors.
 //
 //==========================================================================
-#define CenterSpot(sec) (vertex_t*)&(sec)->soundorg[0]
 
 void P_Recalculate3DFloors(sector_t * sector)
 {

@@ -58,7 +58,7 @@ public:
 	const BYTE *GetPixels ();
 	void Unload ();
 	FTextureFormat GetFormat ();
-	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf = NULL);
+	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int w, int h, int rotate, FCopyInfo *inf = NULL);
 	bool UseBasePalette();
 
 protected:
@@ -577,7 +577,7 @@ void FPNGTexture::MakeTexture ()
 //
 //===========================================================================
 
-int FPNGTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)
+int FPNGTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int w, int h, int rotate, FCopyInfo *inf)
 {
 	// Parse pre-IDAT chunks. I skip the CRCs. Is that bad?
 	PalEntry pe[256];
@@ -586,6 +586,9 @@ int FPNGTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCo
 	static char bpp[]={1, 0, 3, 1, 2, 0, 4};
 	int pixwidth = Width * bpp[ColorType];
 	int transpal=false;
+
+	if (w < 0 || w > Width) w = Width;
+	if (h < 0 || h > Height) h = Height;
 
 	if (SourceLump >= 0)
 	{
@@ -640,20 +643,20 @@ int FPNGTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCo
 	{
 	case 0:
 	case 3:
-		bmp->CopyPixelData(x, y, Pixels, Width, Height, 1, Width, rotate, pe, inf);
+		bmp->CopyPixelData(x, y, Pixels, w, h, 1, Width, rotate, pe, inf);
 		break;
 
 	case 2:
-		bmp->CopyPixelDataRGB(x, y, Pixels, Width, Height, 3, pixwidth, rotate, CF_RGB, inf);
+		bmp->CopyPixelDataRGB(x, y, Pixels, w, h, 3, pixwidth, rotate, CF_RGB, inf);
 		break;
 
 	case 4:
-		bmp->CopyPixelDataRGB(x, y, Pixels, Width, Height, 2, pixwidth, rotate, CF_IA, inf);
+		bmp->CopyPixelDataRGB(x, y, Pixels, w, h, 2, pixwidth, rotate, CF_IA, inf);
 		transpal = -1;
 		break;
 
 	case 6:
-		bmp->CopyPixelDataRGB(x, y, Pixels, Width, Height, 4, pixwidth, rotate, CF_RGBA, inf);
+		bmp->CopyPixelDataRGB(x, y, Pixels, w, h, 4, pixwidth, rotate, CF_RGBA, inf);
 		transpal = -1;
 		break;
 

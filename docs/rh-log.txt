@@ -1,4 +1,7 @@
-﻿August 10, 2009  (Changes by Graf Zahl)
+﻿August 10, 2009
+- Fixed: The UDMF loader did not initialize the sectors' sectornum property.
+
+August 10, 2009  (Changes by Graf Zahl)
 - Fixed: The true color texture compositing code did not clip the edges
   of multipatch textures used as patches on other multipatch textures.
 

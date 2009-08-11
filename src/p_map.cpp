@@ -1385,6 +1385,14 @@ bool P_TestMobjZ (AActor *actor, bool quick, AActor **pOnmobj)
 		{
 			continue;
 		}
+		if ((actor->flags2 | thing->flags2) & MF2_THRUACTORS)
+		{
+			continue;
+		}
+		if ((actor->flags6 & MF6_THRUSPECIES) && (thing->GetSpecies() == actor->GetSpecies()))
+		{
+			continue;
+		}
 		if (!(thing->flags & MF_SOLID))
 		{ // Can't hit thing
 			continue;

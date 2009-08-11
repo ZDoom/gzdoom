@@ -738,8 +738,8 @@ void D_Display ()
 		int x;
 
 		tex = TexMan[gameinfo.gametype & (GAME_DoomStrifeChex) ? "M_PAUSE" : "PAUSED"];
-		x = (SCREENWIDTH - tex->GetWidth()*CleanXfac)/2 +
-			tex->LeftOffset*CleanXfac;
+		x = (SCREENWIDTH - tex->GetScaledWidth() * CleanXfac)/2 +
+			tex->GetScaledLeftOffset() * CleanXfac;
 		screen->DrawTexture (tex, x, 4, DTA_CleanNoMove, true, TAG_DONE);
 	}
 
@@ -752,7 +752,7 @@ void D_Display ()
 		if (picnum.isValid())
 		{
 			FTexture *tex = TexMan[picnum];
-			screen->DrawTexture (tex, 160-tex->GetWidth()/2, 100-tex->GetHeight()/2,
+			screen->DrawTexture (tex, 160 - tex->GetScaledWidth()/2, 100 - tex->GetScaledHeight()/2,
 				DTA_320x200, true, TAG_DONE);
 		}
 		NoWipe = 10;

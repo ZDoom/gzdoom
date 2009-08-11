@@ -1,4 +1,8 @@
-﻿August 10, 2009
+﻿August 11, 2009  (Changes by Graf Zahl)
+- Fixed: The pause sprite was not centered correctly when it was a scaled
+  graphic.
+
+August 10, 2009
 - Fixed: P_TestMobjZ() needs THRUSPECIES and THRUACTORS checks, too.
 - Fixed: The UDMF loader did not initialize the sectors' sectornum property.
 

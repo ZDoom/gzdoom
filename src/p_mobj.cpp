@@ -5160,7 +5160,8 @@ bool AActor::IsFriend (AActor *other)
 		return !deathmatch ||
 			FriendPlayer == other->FriendPlayer ||
 			FriendPlayer == 0 ||
-			other->FriendPlayer == 0;
+			other->FriendPlayer == 0 ||
+			players[FriendPlayer-1].mo->IsTeammate(players[other->FriendPlayer-1].mo);
 	}
 	return false;
 }
@@ -5184,7 +5185,8 @@ bool AActor::IsHostile (AActor *other)
 		return deathmatch &&
 			FriendPlayer != other->FriendPlayer &&
 			FriendPlayer !=0 &&
-			other->FriendPlayer != 0;
+			other->FriendPlayer != 0 &&
+			!players[FriendPlayer-1].mo->IsTeammate(players[other->FriendPlayer-1].mo);
 	}
 	return true;
 }

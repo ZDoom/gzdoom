@@ -2276,26 +2276,42 @@ int DLevelScript::DoSpawn (int type, fixed_t x, fixed_t y, fixed_t z, int tid, i
 
 int DLevelScript::DoSpawnSpot (int type, int spot, int tid, int angle, bool force)
 {
-	FActorIterator iterator (spot);
-	AActor *aspot;
 	int spawned = 0;
 
-	while ( (aspot = iterator.Next ()) )
+	if (spot != 0)
 	{
-		spawned += DoSpawn (type, aspot->x, aspot->y, aspot->z, tid, angle, force);
+		FActorIterator iterator (spot);
+		AActor *aspot;
+
+		while ( (aspot = iterator.Next ()) )
+		{
+			spawned += DoSpawn (type, aspot->x, aspot->y, aspot->z, tid, angle, force);
+		}
+	}
+	else if (activator != NULL)
+	{
+			spawned += DoSpawn (type, activator->x, activator->y, activator->z, tid, angle, force);
 	}
 	return spawned;
 }
 
 int DLevelScript::DoSpawnSpotFacing (int type, int spot, int tid, bool force)
 {
-	FActorIterator iterator (spot);
-	AActor *aspot;
 	int spawned = 0;
 
-	while ( (aspot = iterator.Next ()) )
+	if (spot != 0)
 	{
-		spawned += DoSpawn (type, aspot->x, aspot->y, aspot->z, tid, aspot->angle >> 24, force);
+		FActorIterator iterator (spot);
+		AActor *aspot;
+
+		while ( (aspot = iterator.Next ()) )
+		{
+			spawned += DoSpawn (type, aspot->x, aspot->y, aspot->z, tid, aspot->angle >> 24, force);
+		}
+	}
+	else if (activator != NULL)
+	{
+			spawned += DoSpawn (type, activator->x, activator->y, activator->z, tid, activator->angle >> 24, force);
 	}
 	return spawned;
 }

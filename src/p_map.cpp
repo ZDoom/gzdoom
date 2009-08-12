@@ -4064,25 +4064,28 @@ void P_RadiusAttack (AActor *bombspot, AActor *bombsource, int bombdamage, int b
 
 					if (!bombdodamage || !(bombspot->flags2 & MF2_NODMGTHRUST))
 					{
-						thrust = points * 0.5f / (float)thing->Mass;
-						if (bombsource == thing)
+						if (bombsource == NULL  || !(bombsource->flags2 & MF2_NODMGTHRUST))
 						{
-							thrust *= selfthrustscale;
+							thrust = points * 0.5f / (float)thing->Mass;
+							if (bombsource == thing)
+							{
+								thrust *= selfthrustscale;
+							}
+							velz = (float)(thing->z + (thing->height>>1) - bombspot->z) * thrust;
+							if (bombsource != thing)
+							{
+								velz *= 0.5f;
+							}
+							else
+							{
+								velz *= 0.8f;
+							}
+							angle_t ang = R_PointToAngle2 (bombspot->x, bombspot->y, thing->x, thing->y) >> ANGLETOFINESHIFT;
+							thing->velx += fixed_t (finecosine[ang] * thrust);
+							thing->vely += fixed_t (finesine[ang] * thrust);
+							if (bombdodamage)
+								thing->velz += (fixed_t)velz;	// this really doesn't work well
 						}
-						velz = (float)(thing->z + (thing->height>>1) - bombspot->z) * thrust;
-						if (bombsource != thing)
-						{
-							velz *= 0.5f;
-						}
-						else
-						{
-							velz *= 0.8f;
-						}
-						angle_t ang = R_PointToAngle2 (bombspot->x, bombspot->y, thing->x, thing->y) >> ANGLETOFINESHIFT;
-						thing->velx += fixed_t (finecosine[ang] * thrust);
-						thing->vely += fixed_t (finesine[ang] * thrust);
-						if (bombdodamage)
-							thing->velz += (fixed_t)velz;	// this really doesn't work well
 					}
 				}
 			}

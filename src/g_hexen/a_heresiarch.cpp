@@ -657,7 +657,7 @@ void A_SorcOffense2(AActor *actor)
 	}
 
 	index = actor->args[4] << 5;
-	actor->args[4] += 15;
+	actor->args[4] = (actor->args[4] + 15) & 255;
 	delta = (finesine[index])*SORCFX4_SPREAD_ANGLE;
 	delta = (delta>>FRACBITS)*ANGLE_1;
 	ang1 = actor->angle + delta;

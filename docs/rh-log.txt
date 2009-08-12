@@ -1,4 +1,16 @@
-﻿August 11, 2009  (Changes by Graf Zahl)
+﻿August 12, 2009  (Changes by Graf Zahl)
+- Fixed: A_SorcOffense2 depended on args being bytes and overflowing.
+- Fixed: Even though P_DamageMobj checked an attack's originator
+  for MF2_NODMGTHRUST the same check was missing from P_RadiusAttack.
+- Fixed: A_MinotaurRoam should not assume without check that it was
+  called by a MinotaurFriend.
+- Fixed: The Minotaur declared A_MntrFloorFire which it did not use.
+- Fixed: All Spawnspot functions did not check for a spot tid of 0 as
+  the script's activator.
+- Fixed: Friendly monsters ignored team association of their owning
+  players.
+
+August 11, 2009  (Changes by Graf Zahl)
 - Fixed: The pause sprite was not centered correctly when it was a scaled
   graphic.
 
@@ -98,7 +110,7 @@ August 2, 2009  (Changes by Graf Zahl)
   Misc1 variable were needed.
 
 August 1, 2009
-- Moved the terget->velz assignment to the end of A_VileAttack to remove the
+- Moved the target->velz assignment to the end of A_VileAttack to remove the
   influence of vertical thrust from the radius attack, since ZDoom does
   explosions in three dimensions, but Doom only did it in two.
 - Fixed: The last three parameters to A_VileAttack had their references off

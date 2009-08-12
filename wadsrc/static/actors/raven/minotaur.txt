@@ -29,7 +29,6 @@ ACTOR Minotaur 9 native
 	action native A_MinotaurAtk2();
 	action native A_MinotaurAtk3();
 	action native A_MinotaurCharge();
-	action native A_MntrFloorFire();
 	action native A_MinotaurLook();
 	action native A_MinotaurRoam();
 	action native A_MinotaurChase();

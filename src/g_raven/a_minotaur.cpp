@@ -464,34 +464,37 @@ void P_MinotaurSlam (AActor *source, AActor *target)
 
 DEFINE_ACTION_FUNCTION(AActor, A_MinotaurRoam)
 {
-	AMinotaurFriend *self1 = static_cast<AMinotaurFriend *> (self);
-
 	// In case pain caused him to skip his fade in.
-	self1->RenderStyle = STYLE_Normal;
+	self->RenderStyle = STYLE_Normal;
 
-	if (self1->StartTime >= 0 && (level.maptime - self1->StartTime) >= MAULATORTICS)
+	if (self->IsKindOf(RUNTIME_CLASS(AMinotaurFriend)))
 	{
-		P_DamageMobj (self1, NULL, NULL, TELEFRAG_DAMAGE, NAME_None);
-		return;
+		AMinotaurFriend *self1 = static_cast<AMinotaurFriend *> (self);
+
+		if (self1->StartTime >= 0 && (level.maptime - self1->StartTime) >= MAULATORTICS)
+		{
+			P_DamageMobj (self1, NULL, NULL, TELEFRAG_DAMAGE, NAME_None);
+			return;
+		}
 	}
 
 	if (pr_minotaurroam() < 30)
-		CALL_ACTION(A_MinotaurLook, self1);		// adjust to closest target
+		CALL_ACTION(A_MinotaurLook, self);		// adjust to closest target
 
 	if (pr_minotaurroam() < 6)
 	{
 		//Choose new direction
-		self1->movedir = pr_minotaurroam() % 8;
-		FaceMovementDirection (self1);
+		self->movedir = pr_minotaurroam() % 8;
+		FaceMovementDirection (self);
 	}
-	if (!P_Move(self1))
+	if (!P_Move(self))
 	{
 		// Turn
 		if (pr_minotaurroam() & 1)
-			self1->movedir = (++self1->movedir)%8;
+			self->movedir = (++self->movedir)%8;
 		else
-			self1->movedir = (self1->movedir+7)%8;
-		FaceMovementDirection (self1);
+			self->movedir = (self->movedir+7)%8;
+		FaceMovementDirection (self);
 	}
 }
 

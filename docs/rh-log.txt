@@ -1,4 +1,6 @@
 ﻿August 12, 2009  (Changes by Graf Zahl)
+- Fixed: paletted texture composition with part translucent patches
+  did not work.
 - Fixed: A_SorcOffense2 depended on args being bytes and overflowing.
 - Fixed: Even though P_DamageMobj checked an attack's originator
   for MF2_NODMGTHRUST the same check was missing from P_RadiusAttack.

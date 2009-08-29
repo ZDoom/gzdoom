@@ -615,11 +615,6 @@ void wallscan_striped (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, 
 		{
 			int j = WallMost (most3, el->Lights[i].Plane);
 
-			if (most3[x1] > dwal[x1] && most3[x2] > dwal[x2])
-			{ // Done - does not work as well as I thought it would
-				//break;
-			}
-
 			if (j != 3 /*&& (most3[x1] > up[x1] || most3[x2] > up[x2])*/)
 			{
 				for (int j = x1; j <= x2; ++j)

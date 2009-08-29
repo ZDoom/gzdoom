@@ -1,4 +1,9 @@
 ﻿August 28, 2009
+- Fixed: The first lighting plane added to a light stack had the bOverlaps
+  flag set, causing it to be ignored during rendering. Why this didn't cause
+  more trouble, I don't know.
+- Fixed: The UDMF parser passed the wrong value for "default alpha" for
+  TranslucentLine to P_FinishLoadingLineDef().
 - Fixed: genStringEnter mode acted on key up events rather than key repeat
   events.
 

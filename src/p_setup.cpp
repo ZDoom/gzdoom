@@ -1771,7 +1771,7 @@ void P_FinishLoadingLineDef(line_t *ld, int alpha)
 
 	case TranslucentLine:			// killough 4/11/98: translucent 2s textures
 		// [RH] Second arg controls how opaque it is.
-		if (alpha == -32767)
+		if (alpha == SHRT_MIN)
 		{
 			alpha = ld->args[1];
 			additive = !!ld->args[2];
@@ -2002,7 +2002,7 @@ static void P_AllocateSideDefs (int count)
 	for (i = 0; i < count; i++)
 	{
 		sidetemp[i].a.special = sidetemp[i].a.tag = 0;
-		sidetemp[i].a.alpha = -32767;
+		sidetemp[i].a.alpha = SHRT_MIN;
 		sidetemp[i].a.map = NO_SIDE;
 	}
 	if (count < numsides)
@@ -2988,7 +2988,7 @@ void FExtraLight::InsertLight (const secplane_t &inplane, line_t *line, int type
 
 	vertex_t **triangle = line->frontsector->Triangle;
 	int i, j;
-	fixed_t diff = 0;
+	fixed_t diff = FIXED_MAX;
 	secplane_t plane = inplane;
 
 	if (type != 2)

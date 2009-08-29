@@ -183,9 +183,11 @@ void P_Attach3dMidtexLinesToSector(sector_t *sector, int lineid, int tag, bool c
 			scrollplane.AttachedLines.Push(&lines[i]);
 
 			v = int(lines[i].frontsector - sectors);
+			assert(v < numsectors);
 			found_sectors[v>>3] |= 1 << (v&7);
 
 			v = int(lines[i].backsector - sectors);
+			assert(v < numsectors);
 			found_sectors[v>>3] |= 1 << (v&7);
 		}
 	}

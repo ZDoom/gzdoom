@@ -1,4 +1,8 @@
-﻿August 12, 2009  (Changes by Graf Zahl)
+﻿August 28, 2009
+- Fixed: genStringEnter mode acted on key up events rather than key repeat
+  events.
+
+August 12, 2009  (Changes by Graf Zahl)
 - Fixed: paletted texture composition with part translucent patches
   did not work.
 - Fixed: A_SorcOffense2 depended on args being bytes and overflowing.
@@ -29,7 +33,8 @@ August 9, 2009  (Changes by Graf Zahl)
 
 August 8, 2009  (Changes by Graf Zahl)
 - replaced all code that changed a sector's light level with a setter function.
-- Fixed: The FeatureFlags array in the CPUInfo struct was not mapped to the flags properly.
+- Fixed: The FeatureFlags array in the CPUInfo struct was not mapped to the
+  flags properly.
 
 August 8, 2009
 - Changed the return value of SetActivatorToTarget to match the description

@@ -2874,44 +2874,48 @@ bool M_Responder (event_t *ev)
 				}
 				return true;
 			}
-			if (ev->subtype == EV_GUI_KeyDown || ev->subtype == EV_GUI_KeyUp)
+			ch = ev->data1;
+			if ((ev->subtype == EV_GUI_KeyDown || ev->subtype == EV_GUI_KeyRepeat) &&
+				ch == '\b')
 			{
-				ch = ev->data1;
-
-				if (genStringEnter)
+				if (saveCharIndex > 0)
 				{
-					switch (ch)
-					{
-					case '\b':
-						if (saveCharIndex > 0)
-						{
-							saveCharIndex--;
-							savegamestring[saveCharIndex] = 0;
-						}
-						break;
-
-					case GK_ESCAPE:
-						genStringEnter = 0;
-						genStringCancel ();	// [RH] Function to call when escape is pressed
-						break;
-
-					case '\r':
-						if (savegamestring[0])
-						{
-							genStringEnter = 0;
-							if (messageToPrint)
-								M_ClearMenus ();
-							genStringEnd (SelSaveGame);	// [RH] Function to call when enter is pressed
-						}
-						break;
-					}
-					return true;
+					saveCharIndex--;
+					savegamestring[saveCharIndex] = 0;
 				}
+			}
+			else if (ev->subtype == EV_GUI_KeyDown)
+			{
+				if (ch == GK_ESCAPE)
+				{
+					genStringEnter = 0;
+					genStringCancel();	// [RH] Function to call when escape is pressed
+				}
+				else if (ch == '\r')
+				{
+					if (savegamestring[0])
+					{
+						genStringEnter = 0;
+						if (messageToPrint)
+							M_ClearMenus ();
+						genStringEnd (SelSaveGame);	// [RH] Function to call when enter is pressed
+					}
+				}
+			}
+			if (ev->subtype == EV_GUI_KeyDown || ev->subtype == EV_GUI_KeyRepeat)
+			{
+				return true;
 			}
 		}
 		if (ev->subtype != EV_GUI_KeyDown && ev->subtype != EV_GUI_KeyUp)
 		{
 			return false;
+		}
+		if (ev->subtype == EV_GUI_KeyRepeat)
+		{
+			// We do our own key repeat handling but still want to eat the
+			// OS's repeated keys.
+			return true;
 		}
 		ch = ev->data1;
 		keyup = ev->subtype == EV_GUI_KeyUp;

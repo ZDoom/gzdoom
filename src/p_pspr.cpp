@@ -186,6 +186,7 @@ void P_BringUpWeapon (player_t *player)
 			S_Sound (player->mo, CHAN_WEAPON, weapon->UpSound, 1, ATTN_NORM);
 		}
 		newstate = weapon->GetUpState ();
+		player->refire = 0;
 	}
 	else
 	{

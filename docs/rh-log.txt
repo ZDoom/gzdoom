@@ -1,4 +1,5 @@
 ﻿August 29, 2009  (Changes by Graf Zahl)
+- fixed: R_InitColormaps was broken since the resource file code rewrite.
 - fixed: WIF_STAFF2_KICKBACK did not work anymore because it depended on conditions
   that were changed some time ago.
 - fixed: The damage inflictor for a rail attack was the shooter, not the puff.

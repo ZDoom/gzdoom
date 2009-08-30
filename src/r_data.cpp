@@ -153,12 +153,13 @@ void R_InitColormaps ()
 		{
 			char name[9];
 			name[8] = 0;
-			Wads.GetLumpName (name, ns_colormaps);
+			Wads.GetLumpName (name, i);
 
 			if (Wads.CheckNumForName (name, ns_colormaps) == (int)i)
 			{
 				strncpy(cm.name, name, 8);
 				cm.blend = 0;
+				cm.lump = i;
 				fakecmaps.Push(cm);
 			}
 		}
@@ -241,7 +242,7 @@ DWORD R_ColormapNumForName (const char *name)
 {
 	if (strnicmp (name, "COLORMAP", 8))
 	{	// COLORMAP always returns 0
-		for(int i=fakecmaps.Size()-1; i > 0; i++)
+		for(int i=fakecmaps.Size()-1; i > 0; i--)
 		{
 			if (!strnicmp(name, fakecmaps[i].name, 8))
 			{

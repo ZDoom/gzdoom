@@ -1472,17 +1472,23 @@ bool P_SeekerMissile (AActor *actor, angle_t thresh, angle_t turnMax)
 	angle = actor->angle>>ANGLETOFINESHIFT;
 	actor->velx = FixedMul (actor->Speed, finecosine[angle]);
 	actor->vely = FixedMul (actor->Speed, finesine[angle]);
-	if (actor->z + actor->height < target->z ||
-		target->z + target->height < actor->z)
-	{ // Need to seek vertically
-		dist = P_AproxDistance (target->x - actor->x, target->y - actor->y);
-		dist = dist / actor->Speed;
-		if (dist < 1)
-		{
-			dist = 1;
+
+	if (!(actor->flags3 & (MF3_FLOORHUGGER|MF3_CEILINGHUGGER)))
+	{
+		if (actor->z + actor->height < target->z ||
+			target->z + target->height < actor->z)
+		{ // Need to seek vertically
+			dist = P_AproxDistance (target->x - actor->x, target->y - actor->y);
+			dist = dist / actor->Speed;
+			if (dist < 1)
+			{
+				dist = 1;
+			}
+			actor->velz = ((target->z+target->height/2) - (actor->z+actor->height/2)) / dist;
 		}
-		actor->velz = ((target->z+target->height/2) - (actor->z+actor->height/2)) / dist;
 	}
+
+
 	return true;
 }
 

@@ -88,7 +88,8 @@ void	F_AdvanceSlideshow ();
 // F_StartFinale
 //
 void F_StartFinale (const char *music, int musicorder, int cdtrack, unsigned int cdid, const char *flat, 
-					const char *text, INTBOOL textInLump, INTBOOL finalePic, INTBOOL lookupText, bool ending)
+					const char *text, INTBOOL textInLump, INTBOOL finalePic, INTBOOL lookupText, 
+					bool ending, int endsequence)
 {
 	bool loopmusic = ending ? !gameinfo.noloopfinalemusic : true;
 	gameaction = ga_nothing;
@@ -146,11 +147,12 @@ void F_StartFinale (const char *music, int musicorder, int cdtrack, unsigned int
 	FinaleEndCount = 70;
 	FadeDir = -1;
 	FinaleEnding = ending;
+	FinaleSequence = endsequence;
+
 	S_StopAllChannels ();
 
 	if (ending)
 	{
-		FinaleSequence = level.EndSequence;
 		if (EndSequences[FinaleSequence].EndType == END_Chess)
 		{
 			TEXTSPEED = 3;	// Slow the text to its original rate to match the music.
@@ -244,7 +246,6 @@ void F_Ticker ()
 					// [RH] Don't automatically advance end-of-game messages
 					if (interrupt)
 					{
-						FinaleSequence = level.EndSequence;
 						if (EndSequences[FinaleSequence].EndType == END_Cast)
 						{
 							F_StartCast ();

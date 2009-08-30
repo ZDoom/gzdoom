@@ -170,7 +170,8 @@ void P_Attach3dMidtexLinesToSector(sector_t *sector, int lineid, int tag, bool c
 					// Only consider two-sided lines with the 3DMIDTEX flag
 					continue;
 				}
-				found_lines[line>>3] |= 1 << (line&7);
+				int lineno = int(ln-lines);
+				found_lines[lineno>>3] |= 1 << (lineno&7);
 			}
 		}
 	}

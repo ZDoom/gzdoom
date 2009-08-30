@@ -1825,7 +1825,7 @@ FString G_BuildSaveName (const char *prefix, int slot)
 #ifdef unix
 		if (leader.IsEmpty())
 		{
-			leader = "~" GAME_DIR;
+			leader = "~/" GAME_DIR;
 		}
 #endif
 	}

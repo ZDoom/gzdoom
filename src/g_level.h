@@ -240,12 +240,19 @@ typedef TMap<FName, FOptionalMapinfoDataPtr> FOptData;
 
 struct level_info_t
 {
-	char		mapname[9];
 	int			levelnum;
+	
+	char		mapname[9];
 	char		pname[9];
-	char		nextmap[9];
-	char		secretmap[9];
+	char		nextmap[11];	// The endsequence string is 10 chars so we need more space here
+	char		secretmap[11];
 	char		skypic1[9];
+	char		skypic2[9];
+	char		fadetable[9];
+	char		f1[9];
+	char		bordertexture[9];
+	char		mapbg[9];
+
 	int			cluster;
 	int			partime;
 	int			sucktime;
@@ -253,14 +260,11 @@ struct level_info_t
 	DWORD		flags2;
 	FString		Music;
 	FString		LevelName;
-	char		fadetable[9];
 	SBYTE		WallVertLight, WallHorizLight;
-	char		f1[9];
 	int			musicorder;
 	FCompressedMemFile	*snapshot;
 	DWORD		snapshotVer;
 	struct acsdefered_t *defered;
-	char		skypic2[9];
 	float		skyspeed1;
 	float		skyspeed2;
 	DWORD		fadeto;
@@ -287,8 +291,6 @@ struct level_info_t
 
 	FString		SoundInfo;
 	FString		SndSeq;
-	char		bordertexture[9];
-	char		mapbg[9];
 
 	float		teamdamage;
 
@@ -355,20 +357,9 @@ struct FLevelLocals
 	int			levelnum;
 	int			lumpnum;
 	FString		LevelName;
-	union
-	{
-		char		mapname[256];		// the server name (base1, etc)
-		// The endsequence is embedded in the name so that it can be
-		// carried around as a name. The first 6 character ought to
-		// match the string "enDSeQ".
-		struct
-		{
-			char	pad[6];
-			WORD	EndSequence;
-		};
-	};
-	char		nextmap[9];				// go here when fraglimit is hit
-	char		secretmap[9];			// map to go to when used secret exit
+	char		mapname[256];			// the lump name (E1M1, MAP01, etc)
+	char		nextmap[11];			// go here when using the regular exit
+	char		secretmap[11];			// map to go to when used secret exit
 
 	DWORD		flags;
 	DWORD		flags2;

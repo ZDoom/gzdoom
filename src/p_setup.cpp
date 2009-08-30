@@ -1323,7 +1323,7 @@ void P_LoadSectors (MapData * map)
 			ss->special = LittleShort(ms->special);
 		else	// [RH] Translate to new sector special
 			ss->special = P_TranslateSectorSpecial (LittleShort(ms->special));
-		ss->oldspecial = !!(ss->special&SECRET_MASK);
+		ss->secretsector = !!(ss->special&SECRET_MASK);
 		ss->tag = LittleShort(ms->tag);
 		ss->thinglist = NULL;
 		ss->touching_thinglist = NULL;		// phares 3/14/98

@@ -1063,7 +1063,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 				thrust *= 4;
 			}
 			ang >>= ANGLETOFINESHIFT;
-			if (source && source->player && (source == inflictor)
+			if (source && source->player && (flags & DMG_INFLICTOR_IS_PUFF)
 				&& source->player->ReadyWeapon != NULL &&
 				(source->player->ReadyWeapon->WeaponFlags & WIF_STAFF2_KICKBACK))
 			{

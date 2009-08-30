@@ -693,7 +693,7 @@ struct sector_t
 	FExtraLight *ExtraLights;
 
 	vertex_t *Triangle[3];	// Three points that can define a plane
-	short						oldspecial;			//jff 2/16/98 remembers if sector WAS secret (automap)
+	short						secretsector;		//jff 2/16/98 remembers if sector WAS secret (automap)
 	int							sectornum;			// for comparing sector copies
 
 	extsector_t	*				e;		// This stores data that requires construction/destruction. Such data must not be copied by R_FakeFlat.

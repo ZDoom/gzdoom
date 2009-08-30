@@ -335,7 +335,7 @@ void P_SerializeWorld (FArchive &arc)
 			<< sec->Flags
 			<< sec->FloorSkyBox << sec->CeilingSkyBox
 			<< sec->ZoneNumber
-			<< sec->oldspecial
+			<< sec->secretsector
 			<< sec->interpolations[0]
 			<< sec->interpolations[1]
 			<< sec->interpolations[2]

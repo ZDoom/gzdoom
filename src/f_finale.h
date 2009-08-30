@@ -43,7 +43,8 @@ void F_Drawer ();
 
 
 void F_StartFinale (const char *music, int musicorder, int cdtrack, unsigned int cdid, const char *flat, 
-					const char *text, INTBOOL textInLump, INTBOOL finalePic, INTBOOL lookupText, bool ending);
+					const char *text, INTBOOL textInLump, INTBOOL finalePic, INTBOOL lookupText, 
+					bool ending, int endsequence = 0);
 
 void F_StartSlideshow ();
 

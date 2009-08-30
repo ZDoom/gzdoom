@@ -3567,6 +3567,11 @@ void P_RailAttack (AActor *source, int damage, int offset, int color1, int color
 	AActor *puffDefaults = puffclass == NULL? NULL : GetDefaultByType (puffclass);
 	FName damagetype = (puffDefaults == NULL || puffDefaults->DamageType == NAME_None) ? FName(NAME_Railgun) : puffDefaults->DamageType;
 
+	// used as damage inflictor
+	AActor *thepuff = NULL;
+	
+	if (puffclass != NULL) thepuff = Spawn (puffclass, source->x, source->y, source->z, ALLOW_REPLACE);
+
 	for (i = 0; i < RailHits.Size (); i++)
 	{
 		fixed_t x, y, z;
@@ -3585,7 +3590,7 @@ void P_RailAttack (AActor *source, int damage, int offset, int color1, int color
 			P_SpawnBlood (x, y, z, source->angle - ANG180, damage, RailHits[i].HitActor);
 			P_TraceBleed (damage, x, y, z, RailHits[i].HitActor, source->angle, pitch);
 		}
-		P_DamageMobj (RailHits[i].HitActor, source, source, damage, damagetype);
+		P_DamageMobj (RailHits[i].HitActor, thepuff? thepuff:source, source, damage, damagetype, DMG_INFLICTOR_IS_PUFF);
 	}
 
 	// Spawn a decal or puff at the point where the trace ended.
@@ -3597,22 +3602,20 @@ void P_RailAttack (AActor *source, int damage, int offset, int color1, int color
 		trace.CrossedWater == NULL &&
 		trace.Sector->heightsec == NULL)
 	{
-		AActor *thepuff = Spawn (puffclass, trace.X, trace.Y, trace.Z, ALLOW_REPLACE);
 		if (thepuff != NULL)
 		{
+			thepuff->SetOrigin(trace.X, trace.Y, trace.Z);
 			P_HitWater (thepuff, trace.Sector);
-			thepuff->Destroy ();
 		}
 	}
 	if (trace.CrossedWater)
 	{
-		AActor *thepuff = Spawn (puffclass, 0, 0, 0, ALLOW_REPLACE);
 		if (thepuff != NULL)
 		{
 			SpawnDeepSplash (source, trace, thepuff, vx, vy, vz, shootz);
-			thepuff->Destroy ();
 		}
 	}
+	thepuff->Destroy ();
 
 	// Draw the slug's trail.
 	end.X = FIXED2FLOAT(trace.X);

@@ -1373,9 +1373,31 @@ static int PatchPointer (int ptrNum)
 {
 	int result;
 
-	if (ptrNum >= 0 && ptrNum < 448) {
+	// Hack for some Boom dehacked patches that are of the form Pointer 0 (x statenumber)
+	char * key;
+	int indexnum;
+	key=strchr(Line2, '(');
+	if (key++) key=strchr(key, ' '); else key=NULL;
+	if ((ptrNum == 0) && key++)
+	{
+		*strchr(key, ')') = '\0';
+		indexnum = atoi(key);
+		for (ptrNum = 0; (unsigned int) ptrNum < CodePConv.Size(); ++ptrNum)
+		{
+			if (CodePConv[ptrNum] == indexnum) break;
+		}
+		DPrintf("Final ptrNum: %i\n", ptrNum);
+	}
+	// End of hack.
+
+	// 448 Doom states with codepointers + 74 extra MBF states with codepointers = 522 total
+	// Better to just use the size of the array rather than a hardcoded value.
+	if (ptrNum >= 0 && (unsigned int) ptrNum < CodePConv.Size())
+	{
 		DPrintf ("Pointer %d\n", ptrNum);
-	} else {
+	}
+	else
+	{
 		Printf ("Pointer %d out of range.\n", ptrNum);
 		ptrNum = -1;
 	}

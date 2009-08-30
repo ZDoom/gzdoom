@@ -117,28 +117,31 @@ DEFINE_ACTION_FUNCTION(AActor, A_Tracer2)
 	self->velx = FixedMul (self->Speed, finecosine[exact]);
 	self->vely = FixedMul (self->Speed, finesine[exact]);
 
-	// change slope
-	dist = P_AproxDistance (dest->x - self->x, dest->y - self->y);
-	dist /= self->Speed;
+	if (!(self->flags3 & (MF3_FLOORHUGGER|MF3_CEILINGHUGGER)))
+	{
+		// change slope
+		dist = P_AproxDistance (dest->x - self->x, dest->y - self->y);
+		dist /= self->Speed;
 
-	if (dist < 1)
-	{
-		dist = 1;
-	}
-	if (dest->height >= 56*FRACUNIT)
-	{
-		slope = (dest->z+40*FRACUNIT - self->z) / dist;
-	}
-	else
-	{
-		slope = (dest->z + self->height*2/3 - self->z) / dist;
-	}
-	if (slope < self->velz)
-	{
-		self->velz -= FRACUNIT/8;
-	}
-	else
-	{
-		self->velz += FRACUNIT/8;
+		if (dist < 1)
+		{
+			dist = 1;
+		}
+		if (dest->height >= 56*FRACUNIT)
+		{
+			slope = (dest->z+40*FRACUNIT - self->z) / dist;
+		}
+		else
+		{
+			slope = (dest->z + self->height*2/3 - self->z) / dist;
+		}
+		if (slope < self->velz)
+		{
+			self->velz -= FRACUNIT/8;
+		}
+		else
+		{
+			self->velz += FRACUNIT/8;
+		}
 	}
 }

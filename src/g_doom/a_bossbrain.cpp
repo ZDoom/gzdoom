@@ -141,7 +141,8 @@ static void SpawnFly(AActor *self, const PClass *spawntype, FSoundID sound)
 {
 	AActor *newmobj;
 	AActor *fog;
-	AActor *targ;
+	AActor *eye = self->master; // The eye is the spawnshot's master, not the target!
+	AActor *targ = self->target; // Unlike other projectiles, the target is the intended destination.
 	int r;
 		
 	// [GZ] Should be more viable than a countdown...
@@ -155,9 +156,7 @@ static void SpawnFly(AActor *self, const PClass *spawntype, FSoundID sound)
 		if (self->reactiontime == 0 || --self->reactiontime != 0)
 			return;		// still flying
 	}
-		
-	targ = self->target;
-
+	
 	if (spawntype != NULL)
 	{
 		fog = Spawn (spawntype, targ->x, targ->y, targ->z, ALLOW_REPLACE);
@@ -174,8 +173,8 @@ static void SpawnFly(AActor *self, const PClass *spawntype, FSoundID sound)
 	drop = self->GetDropItems();
 
 	// If not, then default back to its master's list
-	if (drop == NULL && self->master != NULL)
-		drop = self->master->GetDropItems();
+	if (drop == NULL && eye != NULL)
+		drop = eye->GetDropItems();
 
 	if (drop != NULL)
 	{
@@ -192,7 +191,7 @@ static void SpawnFly(AActor *self, const PClass *spawntype, FSoundID sound)
 		}
 		di = drop;
 		n = pr_spawnfly(n);
-		while (n > 0)
+		while (n >= 0)
 		{
 			if (di->Name != NAME_None)
 			{
@@ -235,8 +234,6 @@ static void SpawnFly(AActor *self, const PClass *spawntype, FSoundID sound)
 		if (newmobj != NULL)
 		{
 			// Make the new monster hate what the boss eye hates
-			AActor *eye = self->target;
-
 			if (eye != NULL)
 			{
 				newmobj->CopyFriendliness (eye, false);

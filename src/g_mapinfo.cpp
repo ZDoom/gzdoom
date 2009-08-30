@@ -901,6 +901,7 @@ void FMapInfoParser::ParseNextMap(char *mapname)
 		else
 		{
 			strncpy (mapname, sc.String, 8);
+			mapname[8] = 0;
 		}
 		if (useseq)
 		{
@@ -915,8 +916,8 @@ void FMapInfoParser::ParseNextMap(char *mapname)
 			{
 				seqnum = (int)EndSequences.Push (newSeq);
 			}
-			strcpy (mapname, "enDSeQ");
-			*((WORD *)(mapname + 6)) = (WORD)seqnum;
+			// mapname can point to nextmap and secretmap which are both 12 characters long
+			mysnprintf(mapname, 11, "enDSeQ%04x", (WORD)seqnum);
 		}
 	}
 }

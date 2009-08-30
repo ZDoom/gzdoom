@@ -1,4 +1,35 @@
-﻿August 28, 2009
+﻿August 29, 2009  (Changes by Graf Zahl)
+- fixed: WIF_STAFF2_KICKBACK did not work anymore because it depended on conditions
+  that were changed some time ago.
+- fixed: The damage inflictor for a rail attack was the shooter, not the puff.
+- Fixed: Floor and ceiling huggers may not change their z-velocity when seeking.
+- Fixed: UDMF set the secret sector flag before parsing the sector's properties,
+  resulting in it always being false.
+- Renamed sector's oldspecial variable to secretsector to better reflect its
+  only use.
+- Fixed: A_BrainSpit stored as the SpawnShot's target the intended BossTarget, 
+  not itself contrarily to other projectile spawning functions. 
+  A_SpawnFly then used the target for CopyFriendliness, thinking it'll be the 
+  BossEye when in fact it wasn't.
+- Added Gez's submission for a DEHACKED hack introduced by Boom.
+  (using code pointers of the form 'Pointer 0 (x statenumber)'.
+- fixed: Attaching 3DMidtex lines by sector tag did not work because lines
+  were marked by index in the sector's line list but needed to be marked by
+  line index in the global array.
+- fixed: On Linux ZDoom was creating a directory called "~.zdoom" for 
+  save files because of a missing slash.
+- fixed: UDMF was unable to read floating point values in exponential format
+  because the C Mode scanner was missing a definition for them.
+- fixed: The recent changes for removing pointer aliasing got the end sequence
+  info from an incorrect variable. To make this more robust the sequence index
+  is now stored as a hexadecimal string to avoid storing binary data in a string.
+  Also moved end sequence lookup from f_finale.cpp to the calling code so that
+  the proper end sequences can be retrieved for secret exits, too.
+
+August 28, 2009  (Changes by Graf Zahl)
+- fixed: Switching a weapon did not reset the refire counter.
+
+August 28, 2009
 - Fixed: The first lighting plane added to a light stack had the bOverlaps
   flag set, causing it to be ignored during rendering. Why this didn't cause
   more trouble, I don't know.

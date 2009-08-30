@@ -168,8 +168,7 @@ static void SetEndSequence (char *nextmap, int type)
 		newseq.EndType = type;
 		seqnum = (int)EndSequences.Push (newseq);
 	}
-	strcpy (nextmap, "enDSeQ");
-	*((WORD *)(nextmap + 6)) = (WORD)seqnum;
+	mysnprintf(nextmap, sizeof(nextmap), "enDSeQ%04x", (WORD)seqnum);
 }
 
 //==========================================================================
@@ -712,7 +711,7 @@ void G_DoCompleted (void)
 	{
 		if (strncmp (nextlevel, "enDSeQ", 6) == 0)
 		{
-			wminfo.next = FString(nextlevel, 8);
+			wminfo.next = nextlevel;
 			wminfo.LName1 = NULL;
 		}
 		else
@@ -1022,7 +1021,7 @@ void G_WorldDone (void)
 			thiscluster->flags & CLUSTER_EXITTEXTINLUMP,
 			thiscluster->flags & CLUSTER_FINALEPIC,
 			thiscluster->flags & CLUSTER_LOOKUPEXITTEXT,
-			true);
+			true, strtol(nextlevel.GetChars()+6, NULL, 16));
 	}
 	else
 	{
@@ -1285,10 +1284,10 @@ void G_InitLevelLocals ()
 	level.musicorder = info->musicorder;
 
 	level.LevelName = level.info->LookupLevelName();
-	strncpy (level.nextmap, info->nextmap, 8);
-	level.nextmap[8] = 0;
-	strncpy (level.secretmap, info->secretmap, 8);
-	level.secretmap[8] = 0;
+	strncpy (level.nextmap, info->nextmap, 10);
+	level.nextmap[10] = 0;
+	strncpy (level.secretmap, info->secretmap, 10);
+	level.secretmap[10] = 0;
 	strncpy (level.skypic1, info->skypic1, 8);
 	level.skypic1[8] = 0;
 	if (!level.skypic2[0])

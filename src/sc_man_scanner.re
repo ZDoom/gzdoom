@@ -249,6 +249,7 @@ std2:
 
 		[-]						{ goto negative_check; }
 		((D* [.] D+) | (D+ [.] D*))	{ goto normal_token; }	/* decimal number */
+		(D+ E FS?) | (D* "." D+ E? FS?) | (D+ "." D* E? FS?)	{ goto normal_token; }	/* float with exponent */
 		"::"					{ goto normal_token; }
 		"&&"					{ goto normal_token; }
 		"=="					{ goto normal_token; }

@@ -1013,7 +1013,6 @@ struct UDMFParser
 		sec->SetYScale(sector_t::floor, FRACUNIT);
 		sec->SetXScale(sector_t::ceiling, FRACUNIT);
 		sec->SetYScale(sector_t::ceiling, FRACUNIT);
-		sec->oldspecial = !!(sec->special&SECRET_MASK);
 		sec->thinglist = NULL;
 		sec->touching_thinglist = NULL;		// phares 3/14/98
 		sec->seqType = (level.flags & LEVEL_SNDSEQTOTALCTRL)? 0:-1;
@@ -1177,6 +1176,7 @@ struct UDMFParser
 			}
 		}
 
+		sec->secretsector = !!(sec->special&SECRET_MASK);
 		sec->floorplane.d = -sec->GetPlaneTexZ(sector_t::floor);
 		sec->floorplane.c = FRACUNIT;
 		sec->floorplane.ic = FRACUNIT;

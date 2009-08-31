@@ -58,7 +58,7 @@
 #define __cdecl
 #endif
 
-#ifndef WORDS_BIGENDIAN
+#ifndef __BIG_ENDIAN__
 #define MAKE_ID(a,b,c,d)	((a)|((b)<<8)|((c)<<16)|((d)<<24))
 #define LittleShort(x)		(x)
 #define LittleLong(x)		(x)

@@ -21,7 +21,7 @@
 #include "md5.h"
 #include "templates.h"
 
-#ifdef WORDS_BIGENDIAN
+#ifdef __BIG_ENDIAN__
 void byteSwap(DWORD *buf, unsigned words)
 {
 	BYTE *p = (BYTE *)buf;

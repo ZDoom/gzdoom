@@ -1,4 +1,8 @@
-﻿August 29, 2009  (Changes by Graf Zahl)
+﻿August 31, 2009
+- Replaced the use of autoconf's WORDS_BIGENDIAN with __BIG_ENDIAN__, since
+  latter comes predefined by GCC.
+
+August 29, 2009  (Changes by Graf Zahl)
 - fixed: R_InitColormaps was broken since the resource file code rewrite.
 - fixed: WIF_STAFF2_KICKBACK did not work anymore because it depended on conditions
   that were changed some time ago.

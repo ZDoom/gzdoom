@@ -60,7 +60,7 @@ union QWORD_UNION
 	QWORD AsOne;
 	struct
 	{
-#ifdef WORDS_BIG_ENDIAN
+#ifdef __BIG_ENDIAN__
 		unsigned int Hi, Lo;
 #else
 		unsigned int Lo, Hi;

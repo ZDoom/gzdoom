@@ -88,7 +88,7 @@
 // Maximum number of files that might appear in a crash report.
 #define MAX_FILES 5
 
-#ifndef WORDS_BIGENDIAN
+#ifndef __BIG_ENDIAN__
 #define MAKE_ID(a,b,c,d)	((a)|((b)<<8)|((c)<<16)|((d)<<24))
 #else
 #define MAKE_ID(a,b,c,d)	((d)|((c)<<8)|((b)<<16)|((a)<<24))

@@ -587,7 +587,7 @@ static void ParseGen(SFFile *sf2, FileReader *f, DWORD chunkid, DWORD chunklen)
 	{
 		gen->Oper = read_uword(f);
 		gen->uAmount = read_uword(f);
-#ifdef WORDS_BIGENDIAN
+#ifdef __BIG_ENDIAN__
 		if (gen->Oper == GEN_keyRange || gen->Oper == GEN_velRange)
 		{
 			// Reswap range generators

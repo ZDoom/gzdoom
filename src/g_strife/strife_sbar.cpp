@@ -172,7 +172,7 @@ void FHealthBar::MakeTexture ()
 
 void FHealthBar::FillBar (int min, int max, BYTE light, BYTE dark)
 {
-#ifdef WORDS_BIGENDIAN
+#ifdef __BIG_ENDIAN__
 	SDWORD fill = (light << 24) | (dark << 16) | (light << 8) | dark;
 #else
 	SDWORD fill = light | (dark << 8) | (light << 16) | (dark << 24);

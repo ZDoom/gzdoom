@@ -114,10 +114,8 @@ FTexture *TGATexture_TryCreate(FileReader & file, int lumpnum)
 	
 	file.Seek(0, SEEK_SET);
 	file.Read(&hdr, sizeof(hdr));
-#ifdef WORDS_BIGENDIAN
 	hdr.width = LittleShort(hdr.width);
 	hdr.height = LittleShort(hdr.height);
-#endif
 	
 	// Not much that can be done here because TGA does not have a proper
 	// header to be identified with.
@@ -130,10 +128,8 @@ FTexture *TGATexture_TryCreate(FileReader & file, int lumpnum)
 
 	file.Seek(0, SEEK_SET);
 	file.Read(&hdr, sizeof(hdr));
-#ifdef WORDS_BIGENDIAN
 	hdr.width = LittleShort(hdr.width);
 	hdr.height = LittleShort(hdr.height);
-#endif
 
 	return new FTGATexture(lumpnum, &hdr);
 }
@@ -303,12 +299,10 @@ void FTGATexture::MakeTexture ()
 	lump.Read(&hdr, sizeof(hdr));
 	lump.Seek(hdr.id_len, SEEK_CUR);
 	
-#ifdef WORDS_BIGENDIAN
 	hdr.width = LittleShort(hdr.width);
 	hdr.height = LittleShort(hdr.height);
 	hdr.cm_first = LittleShort(hdr.cm_first);
 	hdr.cm_length = LittleShort(hdr.cm_length);
-#endif
 
 	if (hdr.has_cm)
 	{
@@ -507,12 +501,10 @@ int FTGATexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int w, int h, i
 	if (w < 0 || w > Width) w = Width;
 	if (h < 0 || h > Height) h = Height;
 
-#ifdef WORDS_BIGENDIAN
 	hdr.width = LittleShort(hdr.width);
 	hdr.height = LittleShort(hdr.height);
 	hdr.cm_first = LittleShort(hdr.cm_first);
 	hdr.cm_length = LittleShort(hdr.cm_length);
-#endif
 
 	if (hdr.has_cm)
 	{

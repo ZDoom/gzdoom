@@ -231,7 +231,7 @@ FTexture *DDSTexture_TryCreate (FileReader &data, int lumpnum)
 	data.Seek (4, SEEK_SET);
 	data.Read (&surfdesc, sizeof(surfdesc));
 
-#ifdef WORDS_BIGENDIAN
+#ifdef __BIG_ENDIAN__
 	// Every single element of the header is a DWORD
 	for (unsigned int i = 0; i < sizeof(DDSURFACEDESC2) / 4; ++i)
 	{

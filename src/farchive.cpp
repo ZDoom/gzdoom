@@ -79,7 +79,7 @@
 #define NEW_SPRITE			((BYTE)11)	// A new sprite name follows
 #define OLD_SPRITE			((BYTE)12)	// Reference to an old sprite name follows
 
-#ifdef WORDS_BIGENDIAN
+#ifdef __BIG_ENDIAN__
 static inline WORD SWAP_WORD(x) { return x; }
 static inline DWORD SWAP_DWORD(x) { return x; }
 static inline QWORD SWAP_QWORD(x) { return x; }

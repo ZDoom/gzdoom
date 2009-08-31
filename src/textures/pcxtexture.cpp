@@ -125,11 +125,9 @@ FTexture * PCXTexture_TryCreate(FileReader & file, int lumpnum)
 		return NULL;
 	}
 
-#ifdef WORDS_BIGENDIAN
 	hdr.xmin = LittleShort(hdr.xmin);
 	hdr.xmax = LittleShort(hdr.xmax);
 	hdr.bytesPerScanLine = LittleShort(hdr.bytesPerScanLine);
-#endif
 
 	if (hdr.manufacturer != 10 || hdr.encoding != 1) return NULL;
 	if (hdr.version != 0 && hdr.version != 2 && hdr.version != 3 && hdr.version != 4 && hdr.version != 5) return NULL;

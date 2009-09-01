@@ -40,6 +40,16 @@ static BYTE JoyAngleButtons[8] = { 1, 1+4, 4, 2+4, 2, 2+8, 8, 1+8 };
 
 //==========================================================================
 //
+// IJoystickConfig - Virtual Destructor
+//
+//==========================================================================
+
+IJoystickConfig::~IJoystickConfig()
+{
+}
+
+//==========================================================================
+//
 // M_SetJoystickConfigSection
 //
 // Sets up the config for reading or writing this controller's axis config. 

@@ -44,7 +44,11 @@ extern HWND Window;
 #define FALSE 0
 #define TRUE 1
 #endif
+#ifdef __APPLE__
+#include <stdlib.h>
+#else
 #include <malloc.h>
+#endif
 
 #include "templates.h"
 #include "fmodsound.h"

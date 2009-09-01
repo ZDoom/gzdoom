@@ -32,12 +32,16 @@
 **
 */
 
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__)
 #include <stdlib.h>
 #include <malloc_np.h>
+#elif defined(__APPLE__)
+#include <stdlib.h>
+#include <malloc/malloc.h>
 #else
 #include <malloc.h>
 #endif
+
 #include "i_system.h"
 #include "dobject.h"
 
@@ -46,7 +50,9 @@
 #define _malloc_dbg(s,b,f,l)	malloc(s)
 #define _realloc_dbg(p,s,b,f,l)	realloc(p,s)
 #endif
-#ifndef _WIN32
+#if defined(__APPLE__)
+#define _msize(p)				malloc_size(p)
+#elif !defined(_WIN32)
 #define _msize(p)				malloc_usable_size(p)	// from glibc/FreeBSD
 #endif
 

@@ -27,6 +27,56 @@
 
 // Endianess handling.
 // WAD files are stored little endian.
+
+#ifdef __APPLE__
+#include <CoreFoundation/CoreFoundation.h>
+
+inline short LittleShort(short x)
+{
+	return (short)CFSwapInt16LittleToHost((uint16_t)x);
+}
+
+inline unsigned short LittleShort(unsigned short x)
+{
+	return CFSwapInt16LittleToHost(x);
+}
+
+inline short LittleShort(int x)
+{
+	return CFSwapInt16LittleToHost((uint16_t)x);
+}
+
+inline int LittleLong(int x)
+{
+	return CFSwapInt32LittleToHost((uint32_t)x);
+}
+
+inline unsigned int LittleLong(unsigned int x)
+{
+	return CFSwapInt32LittleToHost(x);
+}
+
+inline short BigShort(short x)
+{
+	return (short)CFSwapInt16BigToHost((uint16_t)x);
+}
+
+inline unsigned short BigShort(unsigned short x)
+{
+	return CFSwapInt16BigToHost(x);
+}
+
+inline int BigLong(int x)
+{
+	return CFSwapInt32BigToHost((uint32_t)x);
+}
+
+inline unsigned int BigLong(unsigned int x)
+{
+	return CFSwapInt32BigToHost(x);
+}
+
+#else
 #ifdef __BIG_ENDIAN__
 
 // Swap 16bit, that is, MSB and LSB byte.
@@ -123,5 +173,5 @@ inline int BigLong (int x)
 #endif
 
 #endif // __BIG_ENDIAN__
-
+#endif // __APPLE__
 #endif // __M_SWAP_H__

@@ -488,6 +488,7 @@ void DoBlending (const PalEntry *from, PalEntry *to, int count, int r, int g, in
 			to[i] = t;
 		}
 	}
+#if defined(_M_X64) || defined(_M_IX86) || defined(__i386__) || defined(__amd64__)
 	else if (CPU.bSSE2)
 	{
 		if (count >= 4)
@@ -503,6 +504,7 @@ void DoBlending (const PalEntry *from, PalEntry *to, int count, int r, int g, in
 			to += not3count;
 		}
 	}
+#endif
 #ifdef X86_ASM
 	else if (CPU.bMMX)
 	{

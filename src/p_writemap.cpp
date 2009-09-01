@@ -19,7 +19,7 @@ static int WriteBLOCKMAP (FILE *file);
 static int WriteBEHAVIOR (FILE *file);
 
 #define APPEND(pos,name) \
-	lumps[pos].FilePos = LittleLong(ftell (file)); \
+	lumps[pos].FilePos = LittleLong((int)ftell (file)); \
 	lumps[pos].Size = LittleLong(Write##name (file)); \
 	memcpy (lumps[pos].Name, #name, sizeof(#name)-1);
 
@@ -101,8 +101,8 @@ static int WriteTHINGS (FILE *file)
 	mt.x = LittleShort(short(mo->x >> FRACBITS));
 	mt.y = LittleShort(short(mo->y >> FRACBITS));
 	mt.angle = LittleShort(short(MulScale32 (mo->angle >> ANGLETOFINESHIFT, 360)));
-	mt.type = LittleShort(1);
-	mt.flags = LittleShort(7|224|MTF_SINGLE);
+	mt.type = LittleShort((short)1);
+	mt.flags = LittleShort((short)(7|224|MTF_SINGLE));
 	fwrite (&mt, sizeof(mt), 1, file);
 	return sizeof (mt);
 }
@@ -184,7 +184,7 @@ static int WriteSEGS (FILE *file)
 			ms.v1 = LittleShort(short(segs[i].v1 - vertexes));
 			ms.v2 = LittleShort(short(segs[i].v2 - vertexes));
 			ms.linedef = LittleShort(short(segs[i].linedef - lines));
-			ms.side = LittleShort(DWORD(segs[i].sidedef - sides) == segs[i].linedef->sidenum[0] ? 0 : 1);
+			ms.side = DWORD(segs[i].sidedef - sides) == segs[i].linedef->sidenum[0] ? 0 : LittleShort((short)1);
 			ms.angle = LittleShort(short(R_PointToAngle2 (segs[i].v1->x, segs[i].v1->y, segs[i].v2->x, segs[i].v2->y)>>16));
 			fwrite (&ms, sizeof(ms), 1, file);
 		}
@@ -247,7 +247,7 @@ static int WriteSECTORS (FILE *file)
 		ms.ceilingheight = LittleShort(short(sectors[i].GetPlaneTexZ(sector_t::ceiling) >> FRACBITS));
 		uppercopy (ms.floorpic, GetTextureName (sectors[i].GetTexture(sector_t::floor)));
 		uppercopy (ms.ceilingpic, GetTextureName (sectors[i].GetTexture(sector_t::ceiling)));
-		ms.lightlevel = LittleShort(sectors[i].lightlevel);
+		ms.lightlevel = LittleShort((short)sectors[i].lightlevel);
 		ms.special = LittleShort(sectors[i].special);
 		ms.tag = LittleShort(sectors[i].tag);
 		fwrite (&ms, sizeof(ms), 1, file);

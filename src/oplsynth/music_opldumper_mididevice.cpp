@@ -214,7 +214,7 @@ void DiskWriterIO::OPLdeinit()
 
 			fseek(File, 12, SEEK_SET);
 			len[0] = LittleLong(CurIntTime);
-			len[1] = LittleLong(where_am_i - 24);
+			len[1] = LittleLong(DWORD(where_am_i - 24));
 			fwrite(len, 4, 2, File);
 		}
 		fclose(File);

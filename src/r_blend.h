@@ -129,7 +129,7 @@ private:
 	operator int() const { return STYLE_Normal; }
 };
 
-extern const FRenderStyle LegacyRenderStyles[STYLE_Count];
+extern FRenderStyle LegacyRenderStyles[STYLE_Count];
 
 inline FRenderStyle &FRenderStyle::operator= (ERenderStyle legacy)
 {

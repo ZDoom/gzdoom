@@ -298,7 +298,7 @@ static long ParseCommandLine (const char *args, int *argc, char **argv)
 }
 
 
-#ifdef unix
+#if defined(unix) || defined(__APPLE__)
 FString GetUserFile (const char *file, bool nodir)
 {
 	FString path;
@@ -447,10 +447,10 @@ void WritePCXfile (FILE *file, const BYTE *buffer, const PalEntry *palette,
 	pcx.bits_per_pixel = 8;				// 256 (or more) colors
 	pcx.xmin = 0;
 	pcx.ymin = 0;
-	pcx.xmax = LittleShort(width-1);
-	pcx.ymax = LittleShort(height-1);
-	pcx.hdpi = LittleShort(75);
-	pcx.vdpi = LittleShort(75);
+	pcx.xmax = LittleShort((unsigned short)(width-1));
+	pcx.ymax = LittleShort((unsigned short)(height-1));
+	pcx.hdpi = LittleShort((unsigned short)75);
+	pcx.vdpi = LittleShort((unsigned short)75);
 	memset (pcx.palette, 0, sizeof(pcx.palette));
 	pcx.reserved = 0;
 	pcx.color_planes = (color_type == SS_PAL) ? 1 : 3;	// chunky image

@@ -272,7 +272,9 @@ inline int FNodeBuilder::PointOnSide (int x, int y, int x1, int y1, int dx, int 
 
 inline int FNodeBuilder::ClassifyLine (node_t &node, const FPrivSeg *seg, int &sidev1, int &sidev2)
 {
-#ifdef __SSE2__
+#if !defined(_M_IX86) && !defined(_M_X64) && !defined(__i386__) && !defined(__amd64__)
+	return ClassifyLine2 (node, seg, sidev1, sidev2);
+#elif defined(__SSE2__)
 	// If compiling with SSE2 support everywhere, just use the SSE2 version.
 	return ClassifyLineSSE2 (node, seg, sidev1, sidev2);
 #elif defined(_MSC_VER) && _MSC_VER < 1300

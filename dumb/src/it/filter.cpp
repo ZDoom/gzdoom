@@ -1,3 +1,4 @@
+#if defined(_M_IX86) || defined(_M_X64) || defined(__i386__)
 #if defined(_DEBUG) && defined(_MSC_VER)
 #include <crtdbg.h>
 #endif
@@ -277,3 +278,4 @@ static void it_filter_sse(DUMB_CLICK_REMOVER *cr, IT_FILTER_STATE *state, sample
 	state->currsample = currsample;
 	state->prevsample = prevsample;
 }
+#endif

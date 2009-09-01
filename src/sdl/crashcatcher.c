@@ -383,7 +383,7 @@ int cc_install_handlers(int num_signals, int *signals, const char *logfile, int 
 
 	sa.sa_sigaction = crash_catcher;
 	
-#ifndef __FreeBSD__
+#if !defined(__FreeBSD__) && !defined(__APPLE__)
 	sa.sa_flags = SA_ONESHOT | SA_NODEFER | SA_SIGINFO;
 #else
 	sa.sa_flags = SA_NODEFER | SA_SIGINFO;

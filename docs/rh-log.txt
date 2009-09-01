@@ -1,4 +1,5 @@
 ﻿August 31, 2009
+- Basic Mac support: Everything compiles but does not yet link.
 - Replaced the use of autoconf's WORDS_BIGENDIAN with __BIG_ENDIAN__, since
   latter comes predefined by GCC.
 

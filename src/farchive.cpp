@@ -80,10 +80,10 @@
 #define OLD_SPRITE			((BYTE)12)	// Reference to an old sprite name follows
 
 #ifdef __BIG_ENDIAN__
-static inline WORD SWAP_WORD(x) { return x; }
-static inline DWORD SWAP_DWORD(x) { return x; }
-static inline QWORD SWAP_QWORD(x) { return x; }
-static inline void SWAP_FLOAT(x) { }
+static inline WORD SWAP_WORD(WORD x) { return x; }
+static inline DWORD SWAP_DWORD(DWORD x) { return x; }
+static inline QWORD SWAP_QWORD(QWORD x) { return x; }
+static inline void SWAP_FLOAT(float x) { }
 static inline void SWAP_DOUBLE(double &dst, double src) { dst = src; }
 #else
 #ifdef _MSC_VER

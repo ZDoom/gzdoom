@@ -124,21 +124,43 @@ if( WIN32 )
 		setupapi
 		oleaut32 )
 else( WIN32 )
-	option( NO_GTK "Disable GTK+ dialogs (Not applicable to Windows)" )
-	option( VALGRIND "Add special Valgrind sequences to self-modifying code" )
+	if( APPLE )
+		set( FMOD_SEARCH_PATHS "/Developer/FMOD Programmers API Mac/api" )
+		set( FMOD_INC_PATH_SUFFIXES PATH_SUFFIXES inc )
+		set( FMOD_LIB_PATH_SUFFIXES PATH_SUFFIXES lib )
+		set( NO_GTK ON )
+	else( APPLE )
+		option( NO_GTK "Disable GTK+ dialogs (Not applicable to Windows)" )
+		option( VALGRIND "Add special Valgrind sequences to self-modifying code" )
 
-	set( FMOD_SEARCH_PATHS
-		/usr/local/include
-		/usr/local/include/fmodex
-		/usr/include
-		/usr/include/fmodex
-		/opt/local/include
-		/opt/local/include/fmodex
-		/opt/include
-		/opt/include/fmodex )
-	set( FMOD_INC_PATH_SUFFIXES PATH_SUFFIXES fmodex )
+		set( FMOD_SEARCH_PATHS
+			/usr/local/include
+			/usr/local/include/fmodex
+			/usr/include
+			/usr/include/fmodex
+			/opt/local/include
+			/opt/local/include/fmodex
+			/opt/include
+			/opt/include/fmodex )
+		set( FMOD_INC_PATH_SUFFIXES PATH_SUFFIXES fmodex )
+
+		# Use GTK+ for the IWAD picker, if available.
+		if( NOT NO_GTK )
+			pkg_check_modules( GTK2 gtk+-2.0 )
+			if( GTK2_FOUND )
+				set( ZDOOM_LIBS ${ZDOOM_LIBS} ${GTK2_LIBRARIES} )
+				include_directories( ${GTK2_INCLUDE_DIRS} )
+			else( GTK2_FOUND )
+				set( NO_GTK ON )
+			endif( GTK2_FOUND )
+		endif( NOT NO_GTK )
+	endif( APPLE )
 	set( NASM_NAMES nasm )
-
+	
+	if( NO_GTK )
+		add_definitions( -DNO_GTK=1 )
+	endif( NO_GTK )
+	
 	# Non-Windows version also needs SDL
 	find_package( SDL )
 	if( NOT SDL_FOUND )
@@ -147,21 +169,6 @@ else( WIN32 )
 	set( ZDOOM_LIBS "${SDL_LIBRARY}" )
 	include_directories( "${SDL_INCLUDE_DIR}" )
 
-	# Use GTK+ for the IWAD picker, if available.
-	if( NOT NO_GTK )
-		pkg_check_modules( GTK2 gtk+-2.0 )
-		if( GTK2_FOUND )
-			set( ZDOOM_LIBS ${ZDOOM_LIBS} ${GTK2_LIBRARIES} )
-			include_directories( ${GTK2_INCLUDE_DIRS} )
-		else( GTK2_FOUND )
-			set( NO_GTK ON )
-		endif( GTK2_FOUND )
-	endif( NOT NO_GTK )
-	
-	if( NO_GTK )
-		add_definitions( -DNO_GTK=1 )
-	endif( NO_GTK )
-	
 	find_path( FPU_CONTROL_DIR fpu_control.h )
 	if( FPU_CONTROL_DIR )
 		include_directories( ${FPU_CONTROL_DIR} )
@@ -206,15 +213,15 @@ endif( FMOD_INCLUDE_DIR )
 
 # Search for FMOD library
 
-if( WIN32 )
+if( WIN32 OR APPLE )
 	find_library( FMOD_LIBRARY ${FMOD_LIB_NAME}
 		PATHS ${FMOD_SEARCH_PATHS}
 		${FMOD_LIB_PATH_SUFFIXES} )
-else( WIN32 )
+else( WIN32 OR APPLE )
 	find_library( FMOD_LIBRARY
 		NAMES ${FMOD_VERSIONS}
 		PATHS ${FMOD_LOCAL_LIB_DIRS} )
-endif( WIN32 )
+endif( WIN32 OR APPLE )
 
 if( FMOD_LIBRARY )
 	message( STATUS "FMOD library found at ${FMOD_LIBRARY}" )
@@ -224,6 +231,13 @@ endif( FMOD_LIBRARY )
 
 
 # Search for NASM
+
+if( CMAKE_SYSTEM_PROCESSOR MATCHES powerpc )
+	if( NOT NO_ASM )
+		message( STATUS "Disabling assembly code for PowerPC." )
+		set( NO_ASM ON )
+	endif( NOT NO_ASM )
+endif( CMAKE_SYSTEM_PROCESSOR MATCHES powerpc )
 
 if( NOT NO_ASM )
 	if( UNIX AND X64 )
@@ -484,10 +498,17 @@ add_custom_command( OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/sc_man_scanner.h
 
 include_directories( ${CMAKE_CURRENT_BINARY_DIR} )
 
+if( CMAKE_SYSTEM_PROCESSOR MATCHES powerpc )
+	set( X86_SOURCES )
+else( CMAKE_SYSTEM_PROCESSOR MATCHES powerpc )
+	set( X86_SOURCES nodebuild_classify_sse2.cpp x86.cpp )
+endif( CMAKE_SYSTEM_PROCESSOR MATCHES powerpc )
+
 add_executable( zdoom WIN32
 	autostart.cpp
 	${ASM_SOURCES}
 	${SYSTEM_SOURCES}
+	${SSE_SOURCES}
 	am_map.cpp
 	b_bot.cpp
 	b_func.cpp
@@ -550,7 +571,6 @@ add_executable( zdoom WIN32
 	name.cpp
 	nodebuild.cpp
 	nodebuild_classify_nosse2.cpp
-	nodebuild_classify_sse2.cpp
 	nodebuild_events.cpp
 	nodebuild_extract.cpp
 	nodebuild_gl.cpp
@@ -629,7 +649,6 @@ add_executable( zdoom WIN32
 	v_video.cpp
 	w_wad.cpp
 	wi_stuff.cpp
-	x86.cpp
 	zstrformat.cpp
 	zstring.cpp
 	g_doom/a_doommisc.cpp

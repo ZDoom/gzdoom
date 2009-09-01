@@ -36,7 +36,7 @@
 
 #include "zstring.h"
 
-#ifdef unix
+#ifndef _WIN32
 
 #ifdef NO_CLOCK_GETTIME
 class cycle_t

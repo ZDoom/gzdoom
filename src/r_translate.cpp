@@ -729,8 +729,8 @@ void R_InitTranslationTables ()
 	// Full alpha
 	for (i = 0; i < 16; ++i)
 	{
-		ShadeFakeColormap[i].Color = -1;
-		ShadeFakeColormap[i].Desaturate = -1;
+		ShadeFakeColormap[i].Color = ~0u;
+		ShadeFakeColormap[i].Desaturate = ~0u;
 		ShadeFakeColormap[i].Next = NULL;
 		ShadeFakeColormap[i].Maps = table;
 

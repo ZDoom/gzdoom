@@ -34,6 +34,10 @@ typedef int SRes;
 #define RINOK(x) { int __result__ = (x); if (__result__ != 0) return __result__; }
 #endif
 
+#if defined(__APPLE__) && !__LP64__
+#define _LZMA_UINT32_IS_ULONG
+#endif
+	
 #ifndef ZCONF_H
 typedef unsigned char Byte;
 #endif

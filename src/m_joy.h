@@ -20,6 +20,8 @@ enum EJoyAxis
 // Generic configuration interface for a controller.
 struct NOVTABLE IJoystickConfig
 {
+	virtual ~IJoystickConfig() = 0;
+	
 	virtual FString GetName() = 0;
 	virtual float GetSensitivity() = 0;
 	virtual void SetSensitivity(float scale) = 0;

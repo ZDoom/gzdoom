@@ -663,7 +663,7 @@ TimidityWaveWriterMIDIDevice::TimidityWaveWriterMIDIDevice(const char *filename,
 		if (3 != fwrite(work, 4, 3, File)) goto fail;
 
 		fmt.ChunkID = MAKE_ID('f','m','t',' ');
-		fmt.ChunkLen = LittleLong(sizeof(fmt) - 8);
+		fmt.ChunkLen = LittleLong(DWORD(sizeof(fmt) - 8));
 		fmt.FormatTag = LittleShort(0xFFFE);		// WAVE_FORMAT_EXTENSIBLE
 		fmt.Channels = LittleShort(2);
 		fmt.SamplesPerSec = LittleLong((int)Renderer->rate);
@@ -712,12 +712,12 @@ TimidityWaveWriterMIDIDevice::~TimidityWaveWriterMIDIDevice()
 		DWORD size;
 
 		// data chunk size
-		size = LittleLong(pos - 8);
+		size = LittleLong(DWORD(pos - 8));
 		if (0 == fseek(File, 4, SEEK_SET))
 		{
 			if (1 == fwrite(&size, 4, 1, File))
 			{
-				size = LittleLong(pos - 12 - sizeof(FmtChunk) - 8);
+				size = LittleLong(DWORD(pos - 12 - sizeof(FmtChunk) - 8));
 				if (0 == fseek(File, 4 + sizeof(FmtChunk) + 4, SEEK_CUR))
 				{
 					if (1 == fwrite(&size, 4, 1, File))

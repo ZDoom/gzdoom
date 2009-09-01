@@ -435,8 +435,8 @@ static void Parse_wlnk(DLS_Data *data, RIFF_Chunk *chunk, DLS_Region *region)
 	WAVELINK *wlnk = (WAVELINK *)chunk->data;
 	wlnk->fusOptions = LittleShort(wlnk->fusOptions);
 	wlnk->usPhaseGroup = LittleShort(wlnk->usPhaseGroup);
-	wlnk->ulChannel = LittleShort(wlnk->ulChannel);
-	wlnk->ulTableIndex = LittleShort(wlnk->ulTableIndex);
+	wlnk->ulChannel = LittleLong((unsigned int)wlnk->ulChannel);
+	wlnk->ulTableIndex = LittleLong((unsigned int)wlnk->ulTableIndex);
 	region->wlnk = wlnk;
 }
 

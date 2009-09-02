@@ -1,4 +1,11 @@
-﻿August 31, 2009
+﻿September 1, 2009
+- Fixed: Some dmadds wads used zero-length sprites as placeholders. When you
+  ran dmadds to combine it with the IWAD's sprites, they would be replaced by
+  the IWAD's sprites, so when loading such wads, we should ignore those as
+  valid sprites. (Thanks to entryway for finding this.) See 22ventry's
+  22sprite.wad for an example.
+
+August 31, 2009
 - Basic Mac support: Everything compiles but does not yet link.
 - Replaced the use of autoconf's WORDS_BIGENDIAN with __BIG_ENDIAN__, since
   latter comes predefined by GCC.

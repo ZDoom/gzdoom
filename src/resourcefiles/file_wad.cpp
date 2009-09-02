@@ -250,9 +250,17 @@ void FWadFile::SetNamespace(const char *startmarker, const char *endmarker, name
 			{
 				if (!warned)
 				{
-					Printf(TEXTCOLOR_YELLOW"WARNING: Overlapping namespaces found (lump %d.)\n", j);
+					Printf(TEXTCOLOR_YELLOW"WARNING: Overlapping namespaces found (lump %d)\n", j);
 				}
 				warned = true;
+			}
+			else if (space == ns_sprites && Lumps[j].LumpSize < 8)
+			{
+				// sf 26/10/99:
+				// ignore sprite lumps smaller than 8 bytes (the smallest possible)
+				// in size -- this was used by some dmadds wads
+				// as an 'empty' graphics resource
+				DPrintf(" Skipped empty sprite %s (lump %d)\n", Lumps[j].Name, j);
 			}
 			else
 			{

@@ -18,6 +18,7 @@
 
 int		Q_filelength (FILE *f);
 bool FileExists (const char *filename);
+bool DirEntryExists (const char *pathname);
 
 extern	FString progdir;
 

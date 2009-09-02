@@ -1,4 +1,11 @@
 ﻿September 1, 2009
+- Added directory detection to the -file parameter. This obsoletes -dir, so
+  that parameter is now gone.
+- Removed automatic ".wad" appending from FWadCollection::InitMultipleFiles()
+  since it isn't needed and prevented files without extensions from being
+  loaded. D_AddFile() already takes care of adding the extension if the
+  name as-given does not exist.
+- Fixed: Loading single files did not print a newline in the startup text.
 - Fixed: A_JumpIf(InTarget)Inventory jumped if the check amount was greater
   than the item's max amount and the item was maxed.
 - Fixed: Some dmadds wads used zero-length sprites as placeholders. When you

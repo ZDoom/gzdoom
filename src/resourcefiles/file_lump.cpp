@@ -67,7 +67,7 @@ FLumpFile::FLumpFile(const char *filename, FileReader *file) : FUncompressedFile
 //
 //==========================================================================
 
-bool FLumpFile::Open(bool)
+bool FLumpFile::Open(bool quiet)
 {
 	FString name(ExtractFileBase (Filename));
 
@@ -81,6 +81,10 @@ bool FLumpFile::Open(bool)
 	Lumps->Flags = 0;
 	Lumps->FullName = NULL;
 	NumLumps = 1;
+	if (!quiet)
+	{
+		Printf("\n");
+	}
 	return true;
 }
 

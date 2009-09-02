@@ -1,4 +1,6 @@
 ﻿September 1, 2009
+- Fixed: A_JumpIf(InTarget)Inventory jumped if the check amount was greater
+  than the item's max amount and the item was maxed.
 - Fixed: Some dmadds wads used zero-length sprites as placeholders. When you
   ran dmadds to combine it with the IWAD's sprites, they would be replaced by
   the IWAD's sprites, so when loading such wads, we should ignore those as

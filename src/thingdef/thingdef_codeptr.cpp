@@ -506,12 +506,19 @@ void DoJumpIfInventory(AActor * owner, DECLARE_PARAMINFO)
 
 	if (!Type || owner == NULL) return;
 
-	AInventory * Item=owner->FindInventory(Type);
+	AInventory *Item = owner->FindInventory(Type);
 
 	if (Item)
 	{
-		if (ItemAmount>0 && Item->Amount>=ItemAmount) ACTION_JUMP(JumpOffset);
-		else if (Item->Amount>=Item->MaxAmount) ACTION_JUMP(JumpOffset);
+		if (ItemAmount > 0)
+		{
+			if (Item->Amount >= ItemAmount)
+				ACTION_JUMP(JumpOffset);
+		}
+		else if (Item->Amount >= Item->MaxAmount)
+		{
+			ACTION_JUMP(JumpOffset);
+		}
 	}
 }
 

@@ -1,4 +1,7 @@
-﻿September 1, 2009
+﻿September 2, 2009  (Changes by Graf Zahl)
+- fixed: The newly altered WAD code could not load embedded WADs anymore.
+
+September 1, 2009
 - Added directory detection to the -file parameter. This obsoletes -dir, so
   that parameter is now gone.
 - Removed automatic ".wad" appending from FWadCollection::InitMultipleFiles()

@@ -1,4 +1,8 @@
-﻿September 2, 2009  (Changes by Graf Zahl)
+﻿September 3, 2009  (Changes by Graf Zahl)
+- fixed: Weapons must first check if they can be switched and afterwards
+  if they can be fired. These checks were reversed.
+
+September 2, 2009  (Changes by Graf Zahl)
 - fixed: The newly altered WAD code could not load embedded WADs anymore.
 
 September 1, 2009

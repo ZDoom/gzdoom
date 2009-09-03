@@ -980,8 +980,8 @@ int write_central_dir(FILE *zip, file_sorted_t *filep)
 	dir.ModTime = file->time;
 	dir.ModDate = file->date;
 	dir.CRC32 = file->crc32;
-	dir.CompressedSize = file->compressed_size;
-	dir.UncompressedSize = file->uncompressed_size;
+	dir.CompressedSize = LittleLong(file->compressed_size);
+	dir.UncompressedSize = LittleLong(file->uncompressed_size);
 	dir.NameLength = LittleShort((unsigned short)strlen(filep->path_in_zip));
 	dir.ExtraLength = 0;
 	dir.CommentLength = 0;

@@ -298,7 +298,7 @@ static long ParseCommandLine (const char *args, int *argc, char **argv)
 }
 
 
-#if defined(unix) || defined(__APPLE__)
+#if defined(unix)
 FString GetUserFile (const char *file, bool nodir)
 {
 	FString path;

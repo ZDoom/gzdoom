@@ -1,9 +1,3 @@
-#ifdef _MSC_VER
-#include <intrin.h>
-#endif
-#include <mmintrin.h>
-#include <emmintrin.h>
-
 #include "doomtype.h"
 #include "doomdef.h"
 #include "x86.h"
@@ -12,6 +6,24 @@ extern "C"
 {
 	CPUInfo CPU;
 }
+
+#if !defined(__amd64__) && !defined(__i386__) && !defined(_M_IX86) && !defined(_M_X64)
+void CheckCPUID(CPUInfo *cpu)
+{
+	memset(cpu, 0, sizeof(*cpu));
+	cpu->DataL1LineSize = 32;	// Assume a 32-byte cache line
+}
+
+void DumpCPUInfo(const CPUInfo *cpu)
+{
+}
+#else
+
+#ifdef _MSC_VER
+#include <intrin.h>
+#endif
+#include <mmintrin.h>
+#include <emmintrin.h>
 
 #ifdef __GNUC__
 #define __cpuid(output, func) __asm__ __volatile__("cpuid" : "=a" ((output)[0]),\
@@ -342,3 +354,4 @@ void DoBlending_SSE2(const PalEntry *from, PalEntry *to, int count, int r, int g
 		}
 	}
 }
+#endif

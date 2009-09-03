@@ -111,6 +111,6 @@ add_subdirectory( gdtoa )
 add_subdirectory( wadsrc )
 add_subdirectory( src )
 
-if( NOT WIN32 )
+if( NOT WIN32 AND NOT APPLE )
 	add_subdirectory( output_sdl )
-endif( NOT WIN32 )
+endif( NOT WIN32 AND NOT APPLE )

@@ -1,12 +1,15 @@
-#if defined(_M_IX86) || defined(_M_X64) || defined(__i386__)
 #if defined(_DEBUG) && defined(_MSC_VER)
 #include <crtdbg.h>
 #endif
+
+#if defined(_M_IX86) || defined(_M_X64) || defined(__i386__) || defined(__amd64__)
 #ifdef _MSC_VER
 #include <intrin.h>
 #endif
-#include <math.h>
 #include <xmmintrin.h>
+#define HAVE_SSE_VERSION 1
+#endif
+#include <math.h>
 
 #include "dumb.h"
 
@@ -61,7 +64,7 @@ static bool query_cpu_feature_set(/*unsigned p_value*/) {
 }
 
 static const bool g_have_sse = query_cpu_feature_set(/*CPU_HAVE_SSE*/);
-#elif defined(_M_X64)
+#elif defined(_M_X64) || defined(__amd64__)
 
 enum {g_have_sse2 = true, g_have_sse = true, g_have_3dnow = false};
 
@@ -191,6 +194,7 @@ static void it_filter_int(DUMB_CLICK_REMOVER *cr, IT_FILTER_STATE *state, sample
 	state->prevsample = prevsample;
 }
 
+#if HAVE_SSE_VERSION
 static void it_filter_sse(DUMB_CLICK_REMOVER *cr, IT_FILTER_STATE *state, sample_t *dst, int32 pos, sample_t *src, int32 size, int step, int sampfreq, int cutoff, int resonance)
 {
 	__m128 data, impulse;

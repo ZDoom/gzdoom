@@ -35,6 +35,10 @@
 #include <stdio.h>
 #include <time.h>
 
+#ifdef __APPLE__
+#include <CoreServices/CoreServices.h>
+#endif
+
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -541,6 +545,19 @@ FString FGameConfigFile::GetConfigPath (bool tryProg)
 		path += "zdoom.ini";
 	}
 	return path;
+#elif defined(__APPLE__)
+	char cpath[PATH_MAX];
+	FSRef folder;
+	
+	if (noErr == FSFindFolder(kUserDomain, kPreferencesFolderType, kCreateFolder, &folder) &&
+		noErr == FSRefMakePath(&folder, (UInt8*)cpath, PATH_MAX))
+	{
+		path = cpath;
+		path += "zdoom.ini";
+		return path;
+	}
+	// Ungh.
+	return "zdoom.ini";
 #else
 	return GetUserFile ("zdoom.ini");
 #endif

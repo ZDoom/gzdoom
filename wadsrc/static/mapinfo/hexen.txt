@@ -33,7 +33,7 @@ gameinfo
 	weaponslot = 2, "FWeapAxe", "CWeapStaff", "MWeapFrost"
 	weaponslot = 3, "FWeapHammer", "CWeapFlame", "MWeapLightning"
 	weaponslot = 4, "FWeapQuietus", "CWeapWraithverge", "MWeapBloodscourge"
-	dimcolor = "00 ff 00"
+	dimcolor = "00 00 ff"
 	dimamount = 0.2
 }
 

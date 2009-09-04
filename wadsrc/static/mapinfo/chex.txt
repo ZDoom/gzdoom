@@ -33,6 +33,8 @@ gameinfo
 	weaponslot = 5, "ZorchPropulsor"
 	weaponslot = 6, "PhasingZorcher"
 	weaponslot = 7, "LAZDevice"
+	dimcolor = "ff d7 00"
+	dimamount = 0.2
 }
 
 skill baby

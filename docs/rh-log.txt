@@ -1,4 +1,7 @@
-﻿September 3, 2009  (Changes by Graf Zahl)
+﻿September 5, 2009  (Changes by Graf Zahl)
+- made menu dimming a mapping option but kept the CVARS as user override.
+
+September 3, 2009  (Changes by Graf Zahl)
 - fixed: Weapons must first check if they can be switched and afterwards
   if they can be fired. These checks were reversed.
 

@@ -259,6 +259,8 @@ void FMapInfoParser::ParseGameInfo()
 		GAMEINFOKEY_BOOL(noloopfinalemusic, "noloopfinalemusic")
 		GAMEINFOKEY_BOOL(drawreadthis, "drawreadthis")
 		GAMEINFOKEY_BOOL(intermissioncounter, "intermissioncounter")
+		GAMEINFOKEY_COLOR(dimcolor, "dimcolor")
+		GAMEINFOKEY_FLOAT(dimamount, "dimamount")
 		else
 		{
 			// ignore unkown keys.

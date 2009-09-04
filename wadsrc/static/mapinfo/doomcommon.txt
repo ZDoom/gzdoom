@@ -32,6 +32,8 @@ gameinfo
 	weaponslot = 5, "RocketLauncher"
 	weaponslot = 6, "PlasmaRifle"
 	weaponslot = 7, "BFG9000"
+	dimcolor = "ff d7 00"
+	dimamount = 0.2
 }
 
 skill baby

@@ -34,6 +34,8 @@ gameinfo
 	weaponslot = 6, "FlameThrower"
 	weaponslot = 7, "Mauler2", "Mauler"
 	weaponslot = 8, "Sigil"
+	dimcolor = "ff d7 00"
+	dimamount = 0.2
 }
 
 skill baby

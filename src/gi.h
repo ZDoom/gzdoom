@@ -94,6 +94,8 @@ struct gameinfo_t
 	FString backpacktype;
 	FString statusbar;
 	FString intermissionMusic;
+	DWORD dimcolor;
+	float dimamount;
 
 	const char *GetFinalePage(unsigned int num) const;
 };

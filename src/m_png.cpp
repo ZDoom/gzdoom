@@ -181,7 +181,7 @@ bool M_CreatePNG (FILE *file, const BYTE *buffer, const PalEntry *palette,
 //
 // M_CreateDummyPNG
 //
-// Like M_CreatePNG, but the image is always a grayscale 1x1 blacksquare.
+// Like M_CreatePNG, but the image is always a grayscale 1x1 black square.
 //
 //==========================================================================
 

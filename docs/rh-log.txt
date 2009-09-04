@@ -1,5 +1,12 @@
-﻿September 5, 2009  (Changes by Graf Zahl)
+September 5, 2009  (Changes by Graf Zahl)
 - made menu dimming a mapping option but kept the CVARS as user override.
+
+September 4, 2009
+- Fixed: S_LoadSound() did not byte-swap the frequency and length it reads
+  from DMX sounds.
+- Fixed: PNGTexture must not use the FArchive >> operator as a short hand
+  for reading 4-byte integers, because that operator works with little
+  endian numbers--a no-op on Intel processors, but bad joojoo on PowerPCs.
 
 September 3, 2009  (Changes by Graf Zahl)
 - fixed: Weapons must first check if they can be switched and afterwards

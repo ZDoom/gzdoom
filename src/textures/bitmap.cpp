@@ -131,7 +131,7 @@ void iCopyColors(BYTE *pout, const BYTE *pin, int count, int step, FCopyInfo *in
 		break;
 
 	case BLEND_GREENMAP:
-		// Skulltags's Guardsphere map
+		// Skulltag's Guardsphere map
 		for(i=0;i<count;i++)
 		{
 			a = TSrc::A(pin);

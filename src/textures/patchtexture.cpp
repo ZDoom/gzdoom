@@ -81,7 +81,7 @@ static bool CheckIfPatch(FileReader & file)
 	file.Seek(0, SEEK_SET);
 	file.Read(data, file.GetLength());
 	
-	const patch_t * foo = (const patch_t *)data;
+	const patch_t *foo = (const patch_t *)data;
 	
 	int height = LittleShort(foo->height);
 	int width = LittleShort(foo->width);

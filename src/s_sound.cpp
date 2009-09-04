@@ -1255,7 +1255,7 @@ sfxinfo_t *S_LoadSound(sfxinfo_t *sfx)
 			FWadLump wlump = Wads.OpenLumpNum(sfx->lumpnum);
 			sfxstart = sfxdata = new BYTE[size];
 			wlump.Read(sfxdata, size);
-			SDWORD len = ((SDWORD *)sfxdata)[1];
+			SDWORD len = LittleLong(((SDWORD *)sfxdata)[1]);
 
 			// If the sound is raw, just load it as such.
 			// Otherwise, try the sound as DMX format.
@@ -1272,7 +1272,7 @@ sfxinfo_t *S_LoadSound(sfxinfo_t *sfx)
 				}
 				else
 				{
-					frequency = ((WORD *)sfxdata)[1];
+					frequency = LittleShort(((WORD *)sfxdata)[1]);
 					if (frequency == 0)
 					{
 						frequency = 11025;

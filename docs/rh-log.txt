@@ -2,6 +2,7 @@ September 5, 2009  (Changes by Graf Zahl)
 - made menu dimming a mapping option but kept the CVARS as user override.
 
 September 4, 2009
+- Add an alternate PIC-compliant __cpuid macro in x86.cpp.
 - Fixed: S_LoadSound() did not byte-swap the frequency and length it reads
   from DMX sounds.
 - Fixed: PNGTexture must not use the FArchive >> operator as a short hand

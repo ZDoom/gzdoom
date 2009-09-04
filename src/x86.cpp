@@ -25,9 +25,20 @@ void DumpCPUInfo(const CPUInfo *cpu)
 #include <mmintrin.h>
 #include <emmintrin.h>
 
+
 #ifdef __GNUC__
+#if defined(__i386__) && defined(__PIC__)
+// %ebx may by the PIC register. */
+#define __cpuid(output, func) \
+	__asm__ __volatile__("xchgl\t%%ebx, %1\n\t" \
+						 "cpuid\n\t" \
+						 "xchgl\t%%ebx, %1\n\t" \
+		: "=a" ((output)[0]), "=r" ((output)[1]), "=c" ((output)[2]), "=d" ((output)[3]) \
+		: "a" (func));
+#else
 #define __cpuid(output, func) __asm__ __volatile__("cpuid" : "=a" ((output)[0]),\
 	"=b" ((output)[1]), "=c" ((output)[2]), "=d" ((output)[3]) : "a" (func));
+#endif
 #endif
 
 void CheckCPUID(CPUInfo *cpu)

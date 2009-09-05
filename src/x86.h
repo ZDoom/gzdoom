@@ -21,15 +21,15 @@ struct CPUInfo	// 92 bytes
 	BYTE Family;
 	BYTE Type;
 
-	BYTE BrandIndex;
-	BYTE CLFlush;
-	BYTE CPUCount;
-	BYTE APICID;
-
 	union
 	{
 		struct
 		{
+			BYTE BrandIndex;
+			BYTE CLFlush;
+			BYTE CPUCount;
+			BYTE APICID;
+
 			DWORD bSSE3:1;
 			DWORD DontCare1:8;
 			DWORD bSSSE3:1;
@@ -78,7 +78,7 @@ struct CPUInfo	// 92 bytes
 			DWORD b3DNowPlus:1;
 			DWORD b3DNow:1;
 		};
-		DWORD FeatureFlags[3];
+		DWORD FeatureFlags[4];
 	};
 
 	BYTE AMDStepping;

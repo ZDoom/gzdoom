@@ -96,9 +96,9 @@ haveid:
 
 	// Get vendor ID
 	__cpuid(foo, 0);
-	cpu->VendorID[0] = foo[1];
-	cpu->VendorID[1] = foo[3];
-	cpu->VendorID[2] = foo[2];
+	cpu->dwVendorID[0] = foo[1];
+	cpu->dwVendorID[1] = foo[3];
+	cpu->dwVendorID[2] = foo[2];
 	if (foo[1] == MAKE_ID('A','u','t','h') &&
 		foo[3] == MAKE_ID('e','n','t','i') &&
 		foo[2] == MAKE_ID('c','A','M','D'))
@@ -162,9 +162,9 @@ haveid:
 				cpu->AMDFamily += (foo[0] >> 20) & 0xFF;
 				cpu->AMDModel |= (foo[0] >> 12) & 0xF0;
 			}
+			cpu->FeatureFlags[3] = foo[3];	// AMD feature flags
 		}
 	}
-
 #endif
 }
 

@@ -816,18 +816,18 @@ static void R_CreatePlayerTranslation (float h, float s, float v, FPlayerSkin *s
 	// the current one.
 	if (skin->othergame)
 	{
-		memcpy (table->Remap, OtherGameSkinRemap, 256);
-		memcpy (table->Palette, OtherGameSkinPalette, sizeof(table->Palette));
+		memcpy (table->Remap, OtherGameSkinRemap, table->NumEntries);
+		memcpy (table->Palette, OtherGameSkinPalette, sizeof(*table->Palette) * table->NumEntries);
 	}
 	else
 	{
-		for (i = 0; i < 256; ++i)
+		for (i = 0; i < table->NumEntries; ++i)
 		{
 			table->Remap[i] = i;
 		}
-		memcpy(table->Palette, GPalette.BaseColors, sizeof(table->Palette));
+		memcpy(table->Palette, GPalette.BaseColors, sizeof(*table->Palette) * table->NumEntries);
 	}
-	for (i = 1; i < 256; ++i)
+	for (i = 1; i < table->NumEntries; ++i)
 	{
 		table->Palette[i].a = 255;
 	}

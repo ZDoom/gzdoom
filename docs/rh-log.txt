@@ -2,6 +2,10 @@ September 5, 2009  (Changes by Graf Zahl)
 - made menu dimming a mapping option but kept the CVARS as user override.
 
 September 4, 2009
+- Fixed: R_CreatePlayerTranslation() only initialized the first truecolor
+  palette entry.
+- Fixed: D3DPal::Update() used BorderColor == 0 as the condition for skipping
+  an entry. It should be SM14 as in UploadPalette().
 - Fixed: The aliasing of CPUInfo was still wrong. (Yarr! The things I do
   for you, GCC!) The AMD feature flags weren't stored anywhere, either; not
   that it really matters.

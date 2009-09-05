@@ -8,12 +8,12 @@ struct CPUInfo	// 92 bytes
 	union
 	{
 		char VendorID[16];
-		DWORD dwVendorID[4];
+		uint32 dwVendorID[4];
 	};
 	union
 	{
 		char CPUString[48];
-		DWORD dwCPUString[12];
+		uint32 dwCPUString[12];
 	};
 
 	BYTE Stepping;
@@ -30,55 +30,55 @@ struct CPUInfo	// 92 bytes
 			BYTE CPUCount;
 			BYTE APICID;
 
-			DWORD bSSE3:1;
-			DWORD DontCare1:8;
-			DWORD bSSSE3:1;
-			DWORD DontCare1a:9;
-			DWORD bSSE41:1;
-			DWORD bSSE42:1;
-			DWORD DontCare2a:11;
+			uint32 bSSE3:1;
+			uint32 DontCare1:8;
+			uint32 bSSSE3:1;
+			uint32 DontCare1a:9;
+			uint32 bSSE41:1;
+			uint32 bSSE42:1;
+			uint32 DontCare2a:11;
 
-			DWORD bFPU:1;
-			DWORD bVME:1;
-			DWORD bDE:1;
-			DWORD bPSE:1;
-			DWORD bRDTSC:1;
-			DWORD bMSR:1;
-			DWORD bPAE:1;
-			DWORD bMCE:1;
-			DWORD bCX8:1;
-			DWORD bAPIC:1;
-			DWORD bReserved1:1;
-			DWORD bSEP:1;
-			DWORD bMTRR:1;
-			DWORD bPGE:1;
-			DWORD bMCA:1;
-			DWORD bCMOV:1;
-			DWORD bPAT:1;
-			DWORD bPSE36:1;
-			DWORD bPSN:1;
-			DWORD bCFLUSH:1;
-			DWORD bReserved2:1;
-			DWORD bDS:1;
-			DWORD bACPI:1;
-			DWORD bMMX:1;
-			DWORD bFXSR:1;
-			DWORD bSSE:1;
-			DWORD bSSE2:1;
-			DWORD bSS:1;
-			DWORD bHTT:1;
-			DWORD bTM:1;
-			DWORD bReserved3:1;
-			DWORD bPBE:1;
+			uint32 bFPU:1;
+			uint32 bVME:1;
+			uint32 bDE:1;
+			uint32 bPSE:1;
+			uint32 bRDTSC:1;
+			uint32 bMSR:1;
+			uint32 bPAE:1;
+			uint32 bMCE:1;
+			uint32 bCX8:1;
+			uint32 bAPIC:1;
+			uint32 bReserved1:1;
+			uint32 bSEP:1;
+			uint32 bMTRR:1;
+			uint32 bPGE:1;
+			uint32 bMCA:1;
+			uint32 bCMOV:1;
+			uint32 bPAT:1;
+			uint32 bPSE36:1;
+			uint32 bPSN:1;
+			uint32 bCFLUSH:1;
+			uint32 bReserved2:1;
+			uint32 bDS:1;
+			uint32 bACPI:1;
+			uint32 bMMX:1;
+			uint32 bFXSR:1;
+			uint32 bSSE:1;
+			uint32 bSSE2:1;
+			uint32 bSS:1;
+			uint32 bHTT:1;
+			uint32 bTM:1;
+			uint32 bReserved3:1;
+			uint32 bPBE:1;
 
-			DWORD DontCare2:22;
-			DWORD bMMXPlus:1;		// AMD's MMX extensions
-			DWORD bMMXAgain:1;		// Just a copy of bMMX above
-			DWORD DontCare3:6;
-			DWORD b3DNowPlus:1;
-			DWORD b3DNow:1;
+			uint32 DontCare2:22;
+			uint32 bMMXPlus:1;		// AMD's MMX extensions
+			uint32 bMMXAgain:1;		// Just a copy of bMMX above
+			uint32 DontCare3:6;
+			uint32 b3DNowPlus:1;
+			uint32 b3DNow:1;
 		};
-		DWORD FeatureFlags[4];
+		uint32 FeatureFlags[4];
 	};
 
 	BYTE AMDStepping;
@@ -95,7 +95,7 @@ struct CPUInfo	// 92 bytes
 			BYTE DataL1Associativity;
 			BYTE DataL1SizeKB;
 		};
-		DWORD AMD_DataL1Info;
+		uint32 AMD_DataL1Info;
 	};
 };
 

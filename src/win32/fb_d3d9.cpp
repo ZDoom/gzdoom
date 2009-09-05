@@ -150,6 +150,7 @@ public:
 
 	IDirect3DTexture9 *Tex;
 	D3DCOLOR BorderColor;
+	bool DoColorSkip;
 
 	bool Update();
 
@@ -2033,7 +2034,7 @@ D3DPal::D3DPal(FRemapTable *remap, D3DFB *fb)
 		count = 256;
 		// If the palette isn't big enough, then we don't need to
 		// worry about setting the gamma ramp.
-		BorderColor = (remap->NumEntries >= 256 - 8) ? ~0 : 0;
+		DoColorSkip = (remap->NumEntries >= 256 - 8);
 	}
 	else
 	{
@@ -2043,8 +2044,9 @@ D3DPal::D3DPal(FRemapTable *remap, D3DFB *fb)
 		for (pow2count = 1; pow2count < remap->NumEntries; pow2count <<= 1)
 		{ }
 		count = pow2count;
-		BorderColor = 0;
+		DoColorSkip = false;
 	}
+	BorderColor = 0;
 	RoundedPaletteSize = count;
 	if (SUCCEEDED(fb->D3DDevice->CreateTexture(count, 1, 1, 0, 
 		D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &Tex, NULL)))
@@ -2104,7 +2106,7 @@ bool D3DPal::Update()
 	pal = Remap->Palette;
 
 	// See explanation in UploadPalette() for skipat rationale.
-	skipat = MIN(Remap->NumEntries, BorderColor != 0 ? 256 - 8 : 256);
+	skipat = MIN(Remap->NumEntries, DoColorSkip ? 256 - 8 : 256);
 
 	for (i = 0; i < skipat; ++i)
 	{

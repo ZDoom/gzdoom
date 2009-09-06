@@ -291,7 +291,7 @@ FTextureID DBaseDecal::StickToWall (side_t *wall, fixed_t x, fixed_t y, F3DFloor
 		}
 		else
 		{
-			tex = sides[ffloor->master->sidenum[0]].GetTexture(side_t::mid);
+			tex = ffloor->master->sidedef[0]->GetTexture(side_t::mid);
 		}
 	}
 #endif

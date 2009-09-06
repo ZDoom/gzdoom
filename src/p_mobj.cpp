@@ -5086,14 +5086,6 @@ AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z,
 
 	i = GetDefaultByType (type)->flags3;
 
-	if (i & MF3_FLOORHUGGER)
-	{
-		z = ONFLOORZ;
-	}
-	else if (i & MF3_CEILINGHUGGER)
-	{
-		z = ONCEILINGZ;
-	}
 	if (z != ONFLOORZ && z != ONCEILINGZ)
 	{
 		// Doom spawns missiles 4 units lower than hitscan attacks for players.
@@ -5127,7 +5119,13 @@ AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z,
 
 	MissileActor->velx = FixedMul (vx, speed);
 	MissileActor->vely = FixedMul (vy, speed);
-	MissileActor->velz = FixedMul (vz, speed);
+	if (th->flags3 & (MF3_FLOORHUGGER|MF3_CEILINGHUGGER))
+	{
+		MissileActor->velz = 0;
+	}
+	else
+	{
+		MissileActor->velz = FixedMul (vz, speed);
 
 	if (MissileActor->flags4 & MF4_SPECTRAL)
 		MissileActor->health = -1;

@@ -1,4 +1,6 @@
 September 5, 2009
+- Added the frandom decorate function, which is exactly like random except
+  that it works with floating point instead of integers.
 - Split the bounce types completely into separate flags and consolidated
   the various bounce-related flags spread across the different Actor flags
   field into a single BounceFlags field.

@@ -540,6 +540,7 @@ public:
 
 class FxRandom : public FxExpression
 {
+protected:
 	FRandom * rng;
 	FxExpression *min, *max;
 
@@ -552,7 +553,18 @@ public:
 	ExpVal EvalExpression (AActor *self);
 };
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
+class FxFRandom : public FxRandom
+{
+public:
+	FxFRandom(FRandom *, FxExpression *mi, FxExpression *ma, const FScriptPosition &pos);
+	ExpVal EvalExpression (AActor *self);
+};
 
 //==========================================================================
 //

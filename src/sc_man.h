@@ -209,6 +209,7 @@ enum
 	TK_Abs,
 	TK_Random,
 	TK_Random2,
+	TK_FRandom,
 
 	TK_LastToken
 };

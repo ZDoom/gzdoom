@@ -359,6 +359,29 @@ static FxExpression *ParseExpression0 (FScanner &sc, const PClass *cls)
 
 		return new FxRandom(rng, min, max, sc);
 	}
+	else if (sc.CheckToken(TK_FRandom))
+	{
+		FRandom *rng;
+
+		if (sc.CheckToken('['))
+		{
+			sc.MustGetToken(TK_Identifier);
+			rng = FRandom::StaticFindRNG(sc.String);
+			sc.MustGetToken(']');
+		}
+		else
+		{
+			rng = &pr_exrandom;
+		}
+		sc.MustGetToken('(');
+
+		FxExpression *min = ParseExpressionM (sc, cls);
+		sc.MustGetToken(',');
+		FxExpression *max = ParseExpressionM (sc, cls);
+		sc.MustGetToken(')');
+
+		return new FxFRandom(rng, min, max, sc);
+	}
 	else if (sc.CheckToken(TK_Random2))
 	{
 		FRandom *rng;

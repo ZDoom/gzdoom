@@ -1661,7 +1661,6 @@ ExpVal FxRandom::EvalExpression (AActor *self)
 		int minval = min->EvalExpression (self).GetInt();
 		int maxval = max->EvalExpression (self).GetInt();
 
-
 		if (maxval < minval)
 		{
 			swap (maxval, minval);
@@ -1672,6 +1671,53 @@ ExpVal FxRandom::EvalExpression (AActor *self)
 	else
 	{
 		val.Int = (*rng)();
+	}
+	return val;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+FxFRandom::FxFRandom(FRandom *r, FxExpression *mi, FxExpression *ma, const FScriptPosition &pos)
+: FxRandom(r, NULL, NULL, pos)
+{
+	if (mi != NULL && ma != NULL)
+	{
+		min = mi;
+		max = ma;
+	}
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+ExpVal FxFRandom::EvalExpression (AActor *self)
+{
+	ExpVal val;
+	val.Type = VAL_Float;
+	int random = (*rng)(0x40000000);
+	double frandom = random / double(0x40000000);
+
+	if (min != NULL && max != NULL)
+	{
+		double minval = min->EvalExpression (self).GetFloat();
+		double maxval = max->EvalExpression (self).GetFloat();
+
+		if (maxval < minval)
+		{
+			swap (maxval, minval);
+		}
+
+		val.Float = frandom * (maxval - minval) + minval;
+	}
+	else
+	{
+		val.Float = frandom;
 	}
 	return val;
 }

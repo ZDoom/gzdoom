@@ -129,14 +129,17 @@ void HandleDeprecatedFlags(AActor *defaults, FActorInfo *info, bool set, int ind
 		info->SetDamageFactor(NAME_Fire, set? FRACUNIT/2 : FRACUNIT);
 		break;
 	// the bounce flags will set the compatibility bounce modes to remain compatible
-	case DEPF_HERETICBOUNCE:	
-		defaults->bouncetype = set? BOUNCE_HereticCompat : 0;
+	case DEPF_HERETICBOUNCE:
+		defaults->BounceFlags &= ~BOUNCE_TypeMask;
+		if (set) defaults->BounceFlags |= BOUNCE_HereticCompat;
 		break;
 	case DEPF_HEXENBOUNCE:
-		defaults->bouncetype = set? BOUNCE_HexenCompat : 0;
+		defaults->BounceFlags &= ~BOUNCE_TypeMask;
+		if (set) defaults->BounceFlags |= BOUNCE_HexenCompat;
 		break;
 	case DEPF_DOOMBOUNCE:
-		defaults->bouncetype = set? BOUNCE_DoomCompat : 0;
+		defaults->BounceFlags &= ~BOUNCE_TypeMask;
+		if (set) defaults->BounceFlags |= BOUNCE_DoomCompat;
 		break;
 	case DEPF_PICKUPFLASH:
 		if (set)
@@ -846,9 +849,19 @@ DEFINE_PROPERTY(bloodtype, Sss, Actor)
 //==========================================================================
 DEFINE_PROPERTY(bouncetype, S, Actor)
 {
-	const char *names[] = { "None", "Doom", "Heretic", "Hexen", "*", "DoomCompat", "HereticCompat", "HexenCompat", NULL };
+	static const char *names[] = { "None", "Doom", "Heretic", "Hexen", "DoomCompat", "HereticCompat", "HexenCompat", NULL };
+	static const BYTE flags[] = { BOUNCE_None,
+		BOUNCE_Doom, BOUNCE_Heretic, BOUNCE_Hexen,
+		BOUNCE_DoomCompat, BOUNCE_HereticCompat, BOUNCE_HexenCompat };
 	PROP_STRING_PARM(id, 0);
-	defaults->bouncetype = MatchString(id, names);
+	int match = MatchString(id, names);
+	if (match < 0)
+	{
+		I_Error("Unknown bouncetype %s", id);
+		match = 0;
+	}
+	defaults->BounceFlags &= ~(BOUNCE_TypeMask | BOUNCE_UseSeeSound);
+	defaults->BounceFlags |= flags[match];
 }
 
 //==========================================================================

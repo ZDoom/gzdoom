@@ -839,7 +839,7 @@ static int PatchThing (int thingy)
 					if (info->flags2 & 0x00000004)	// old BOUNCE1
 					{ 	
 						info->flags2 &= ~4;
-						info->bouncetype = BOUNCE_DoomCompat;
+						info->BounceFlags = BOUNCE_DoomCompat;
 					}
 					// Damage types that once were flags but now are not
 					if (info->flags2 & 0x20000000)

@@ -1,3 +1,11 @@
+September 5, 2009
+- Split the bounce types completely into separate flags and consolidated
+  the various bounce-related flags spread across the different Actor flags
+  field into a single BounceFlags field.
+- Fixed: P_BounceWall() should calculate the XY velocity using a real
+  square root and not P_AproxDistance(), because the latter can cause
+  them to speed up or slow down.
+
 September 5, 2009  (Changes by Graf Zahl)
 - made menu dimming a mapping option but kept the CVARS as user override.
 

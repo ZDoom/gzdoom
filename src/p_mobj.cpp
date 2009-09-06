@@ -280,9 +280,36 @@ void AActor::Serialize (FArchive &arc)
 		<< MeleeState
 		<< MissileState
 		<< MaxDropOffHeight 
-		<< MaxStepHeight
-		<< bouncetype
-		<< bouncefactor
+		<< MaxStepHeight;
+	if (SaveVersion < 1796)
+	{
+		int bouncetype, bounceflags;
+		arc << bouncetype;
+
+		bounceflags = 0;
+		if (bouncetype & 4)
+			bounceflags |= BOUNCE_UseSeeSound;
+		bouncetype &= 3;
+			 if (bouncetype == 1)	bounceflags |= BOUNCE_Doom;
+		else if (bouncetype == 2)	bounceflags |= BOUNCE_Heretic;
+		else if (bouncetype == 3)	bounceflags |= BOUNCE_Hexen;
+		if (flags3 & 0x00800000)
+			flags3 &= ~0x00800000, bounceflags |= BOUNCE_CanBounceWater;
+		if (flags3 & 0x01000000)
+			flags3 &= ~0x01000000, bounceflags |= BOUNCE_NoWallSound;
+		if (flags4 & 0x80000000)
+			flags4 &= ~0x80000000, bounceflags |= BOUNCE_Quiet;
+		if (flags5 & 0x00000008)
+			flags5 &= ~0x00000008, bounceflags |= BOUNCE_AllActors;
+		if (flags5 & 0x00000010)
+			flags5 &= ~0x00000010, bounceflags |= BOUNCE_ExplodeOnWater;
+		BounceFlags = bounceflags;
+	}
+	else
+	{
+		arc << BounceFlags;
+	}
+	arc << bouncefactor
 		<< wallbouncefactor
 		<< bouncecount
 		<< maxtargetrange
@@ -1258,14 +1285,14 @@ void P_ExplodeMissile (AActor *mo, line_t *line, AActor *target)
 
 void AActor::PlayBounceSound(bool onfloor)
 {
-	if (!onfloor && (flags3 & MF3_NOWALLBOUNCESND))
+	if (!onfloor && (BounceFlags & BOUNCE_NoWallSound))
 	{
 		return;
 	}
 
-	if (!(flags4 & MF4_NOBOUNCESOUND))
+	if (!(BounceFlags & BOUNCE_Quiet))
 	{
-		if (bouncetype & BOUNCE_UseSeeSound)
+		if (BounceFlags & BOUNCE_UseSeeSound)
 		{
 			S_Sound (this, CHAN_VOICE, SeeSound, 1, ATTN_IDLE);
 		}
@@ -1292,16 +1319,27 @@ bool AActor::FloorBounceMissile (secplane_t &plane)
 	if (z <= floorz && P_HitFloor (this))
 	{
 		// Landed in some sort of liquid
-		if (flags5 & MF5_EXPLODEONWATER)
+		if (BounceFlags & BOUNCE_ExplodeOnWater)
 		{
 			P_ExplodeMissile(this, NULL, NULL);
 			return true;
 		}
-		if (!(flags3 & MF3_CANBOUNCEWATER))
+		if (!(BounceFlags & BOUNCE_CanBounceWater))
 		{
 			Destroy ();
 			return true;
 		}
+	}
+
+	if (plane.c < 0)
+	{ // on ceiling
+		if (!(BounceFlags & BOUNCE_Ceilings))
+			return true;
+	}
+	else
+	{ // on floor
+		if (!(BounceFlags & BOUNCE_Floors))
+			return true;
 	}
 
 	// The amount of bounces is limited
@@ -1312,9 +1350,8 @@ bool AActor::FloorBounceMissile (secplane_t &plane)
 	}
 
 	fixed_t dot = TMulScale16 (velx, plane.a, vely, plane.b, velz, plane.c);
-	int bt = bouncetype & BOUNCE_TypeMask;
 
-	if (bt == BOUNCE_Heretic)
+	if (BounceFlags & BOUNCE_HereticType)
 	{
 		velx -= MulScale15 (plane.a, dot);
 		vely -= MulScale15 (plane.b, dot);
@@ -1327,18 +1364,17 @@ bool AActor::FloorBounceMissile (secplane_t &plane)
 	}
 
 	// The reflected velocity keeps only about 70% of its original speed
-	long bouncescale = 0x4000 * bouncefactor;
-	velx = MulScale30 (velx - MulScale15 (plane.a, dot), bouncescale);
-	vely = MulScale30 (vely - MulScale15 (plane.b, dot), bouncescale);
-	velz = MulScale30 (velz - MulScale15 (plane.c, dot), bouncescale);
+	velx = FixedMul (velx - MulScale15 (plane.a, dot), bouncefactor);
+	vely = FixedMul (vely - MulScale15 (plane.b, dot), bouncefactor);
+	velz = FixedMul (velz - MulScale15 (plane.c, dot), bouncefactor);
 	angle = R_PointToAngle2 (0, 0, velx, vely);
 
 	PlayBounceSound(true);
-	if (bt == BOUNCE_Doom)
+	if (BounceFlags & BOUNCE_AutoOff)
 	{
 		if (!(flags & MF_NOGRAVITY) && (velz < 3*FRACUNIT))
 		{
-			bouncetype = BOUNCE_None;
+			BounceFlags &= ~BOUNCE_TypeMask;
 		}
 	}
 	return false;
@@ -1765,10 +1801,9 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 				steps = 0;
 				if (BlockingMobj)
 				{
-					int bt = mo->bouncetype & BOUNCE_TypeMask;
-					if (bt == BOUNCE_Doom || bt == BOUNCE_Hexen)
+					if (mo->BounceFlags & BOUNCE_Actors)
 					{
-						if (mo->flags5&MF5_BOUNCEONACTORS ||
+						if ((mo->BounceFlags & BOUNCE_AllActors) ||
 							(BlockingMobj->flags2 & MF2_REFLECTIVE) ||
 							((!BlockingMobj->player) &&
 							 (!(BlockingMobj->flags3 & MF3_ISMONSTER))))
@@ -2129,7 +2164,7 @@ void P_ZMovement (AActor *mo, fixed_t oldfloorz)
 				(!(gameinfo.gametype & GAME_DoomChex) || !(mo->flags & MF_NOCLIP)))
 			{
 				mo->z = mo->floorz;
-				if (mo->bouncetype != BOUNCE_None)
+				if (mo->BounceFlags & BOUNCE_Floors)
 				{
 					mo->FloorBounceMissile (mo->floorsector->floorplane);
 					return;
@@ -2222,7 +2257,7 @@ void P_ZMovement (AActor *mo, fixed_t oldfloorz)
 		if (mo->z + mo->height > mo->ceilingz)
 		{
 			mo->z = mo->ceilingz - mo->height;
-			if (mo->bouncetype != BOUNCE_None)
+			if (mo->BounceFlags & BOUNCE_Ceilings)
 			{	// ceiling bounce
 				mo->FloorBounceMissile (mo->ceilingsector->ceilingplane);
 				return;

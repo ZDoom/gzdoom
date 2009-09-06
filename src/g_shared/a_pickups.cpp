@@ -55,7 +55,7 @@ const PClass *AAmmo::GetParentAmmo () const
 {
 	const PClass *type = GetClass ();
 
-	while (type->ParentClass != RUNTIME_CLASS(AAmmo))
+	while (type->ParentClass != RUNTIME_CLASS(AAmmo) && type->ParentClass != NULL)
 	{
 		type = type->ParentClass;
 	}
@@ -128,7 +128,7 @@ AInventory *AAmmo::CreateCopy (AActor *other)
 		amount = FixedMul(amount, G_SkillProperty(SKILLP_AmmoFactor));
 	}
 
-	if (GetClass()->ParentClass != RUNTIME_CLASS(AAmmo))
+	if (GetClass()->ParentClass != RUNTIME_CLASS(AAmmo) && GetClass() != RUNTIME_CLASS(AAmmo))
 	{
 		const PClass *type = GetParentAmmo();
 		assert (type->ActorInfo != NULL);

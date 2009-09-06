@@ -1,4 +1,5 @@
 September 6, 2009  (Changes by Graf Zahl)
+- fixed: Trying to pick up an object of the Ammo base class caused a crash.
 - changed line_t's sidenum into sidedef pointers.
 - changed side_t's linenum into a linedef pointer.
 - Added PinkSilver's SetActorVelocity code submission (with optimizations.)

@@ -1290,7 +1290,7 @@ void R_DrawSkyPlane (visplane_t *pl)
 			const line_t *l = &lines[(pl->sky & ~PL_SKYFLAT)-1];
 
 			// Sky transferred from first sidedef
-			const side_t *s = *l->sidenum + sides;
+			const side_t *s = l->sidedef[0];
 			int pos;
 
 			// Texture comes from upper texture of reference sidedef

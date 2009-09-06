@@ -539,8 +539,8 @@ static void LoadWalls (walltype *walls, int numwalls, sectortype *bsec)
 		}
 
 		j = int(intptr_t(sides[i].linedef));
-		lines[j].sidenum[0] = i;
-		lines[j].sidenum[1] = walls[i].nextwall;
+		lines[j].sidedef[0] = (side_t*)(intptr_t)i;
+		lines[j].sidedef[1] = (side_t*)(intptr_t)walls[i].nextwall;
 		lines[j].v1 = FindVertex (walls[i].x, walls[i].y);
 		lines[j].v2 = FindVertex (walls[walls[i].point2].x, walls[walls[i].point2].y);
 		lines[j].frontsector = sides[i].sector;
@@ -621,18 +621,24 @@ static void LoadWalls (walltype *walls, int numwalls, sectortype *bsec)
 			CalcPlane (slope, sectors[i].ceilingplane);
 		}
 		int linenum = int(intptr_t(sides[bsec->wallptr].linedef));
+		int sidenum = int(intptr_t(lines[linenum].sidedef[1]));
 		if (bsec->floorstat & 64)
 		{ // floor is aligned to first wall
-			R_AlignFlat (linenum, lines[linenum].sidenum[1] == (DWORD)bsec->wallptr, 0);
+			R_AlignFlat (linenum, sidenum == (DWORD)bsec->wallptr, 0);
 		}
 		if (bsec->ceilingstat & 64)
 		{ // ceiling is aligned to first wall
-			R_AlignFlat (linenum, lines[linenum].sidenum[1] == (DWORD)bsec->wallptr, 0);
+			R_AlignFlat (linenum, sidenum == (DWORD)bsec->wallptr, 0);
 		}
 	}
 	for(i = 0; i < numsides; i++)
 	{
 		sides[i].linedef = &lines[intptr_t(sides[i].linedef)];
+	}
+	for(i = 0; i < numlines; i++)
+	{
+		lines[i].sidedef[0] = &sides[intptr_t(lines[i].sidedef[0])];
+		lines[i].sidedef[1] = &sides[intptr_t(lines[i].sidedef[1])];
 	}
 }
 

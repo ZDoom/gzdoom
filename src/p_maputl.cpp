@@ -139,7 +139,7 @@ void P_LineOpening (FLineOpening &open, AActor *actor, const line_t *linedef,
 	sector_t *front, *back;
 	fixed_t fc, ff, bc, bf;
 
-	if (linedef->sidenum[1] == NO_SIDE)
+	if (linedef->sidedef[1] == NULL)
 	{
 		// single sided line
 		open.range = 0;

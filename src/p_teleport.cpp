@@ -397,7 +397,7 @@ bool EV_SilentLineTeleport (line_t *line, int side, AActor *thing, int id, INTBO
 	int i;
 	line_t *l;
 
-	if (side || thing->flags2 & MF2_NOTELEPORT || !line || line->sidenum[1] == NO_SIDE)
+	if (side || thing->flags2 & MF2_NOTELEPORT || !line || line->sidedef[1] == NULL)
 		return false;
 
 	for (i = -1; (i = P_FindLineFromID (id, i)) >= 0; )
@@ -476,8 +476,8 @@ bool EV_SilentLineTeleport (line_t *line, int side, AActor *thing, int id, INTBO
 			// Height of thing above ground
 			fixed_t z;
 			
-			z = thing->z - sides[line->sidenum[1]].sector->floorplane.ZatPoint (thing->x, thing->y)
-				+ sides[l->sidenum[0]].sector->floorplane.ZatPoint (x, y);
+			z = thing->z - line->backsector->floorplane.ZatPoint (thing->x, thing->y)
+				+ l->frontsector->floorplane.ZatPoint (x, y);
 
 			// Attempt to teleport, aborting if blocked
 			// Adjust z position to be same height above ground as before.

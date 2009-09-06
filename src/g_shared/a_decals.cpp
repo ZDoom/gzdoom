@@ -175,10 +175,9 @@ void DBaseDecal::SerializeChain (FArchive &arc, DBaseDecal **first)
 void DBaseDecal::GetXY (side_t *wall, fixed_t &ox, fixed_t &oy) const
 {
 	line_t *line = wall->linedef;
-	DWORD wallnum = DWORD(wall - sides);
 	vertex_t *v1, *v2;
 
-	if (line->sidenum[0] == wallnum)
+	if (line->sidedef[0] == wall)
 	{
 		v1 = line->v1;
 		v2 = line->v2;
@@ -235,7 +234,7 @@ FTextureID DBaseDecal::StickToWall (side_t *wall, fixed_t x, fixed_t y, F3DFloor
 	FTextureID tex;
 
 	line = wall->linedef;
-	if (line->sidenum[0] == DWORD(wall - sides))
+	if (line->sidedef[0] == wall)
 	{
 		front = line->frontsector;
 		back = line->backsector;
@@ -307,7 +306,7 @@ fixed_t DBaseDecal::GetRealZ (const side_t *wall) const
 	const line_t *line = wall->linedef;
 	const sector_t *front, *back;
 
-	if (line->sidenum[0] == DWORD(wall - sides))
+	if (line->sidedef[0] == wall)
 	{
 		front = line->frontsector;
 		back = line->backsector;
@@ -359,10 +358,9 @@ fixed_t DBaseDecal::GetRealZ (const side_t *wall) const
 void DBaseDecal::CalcFracPos (side_t *wall, fixed_t x, fixed_t y)
 {
 	line_t *line = line = wall->linedef;
-	DWORD wallnum = DWORD(wall - sides);
 	vertex_t *v1, *v2;
 
-	if (line->sidenum[0] == wallnum)
+	if (line->sidedef[0] == wall)
 	{
 		v1 = line->v1;
 		v2 = line->v2;
@@ -393,7 +391,7 @@ void DBaseDecal::CalcFracPos (side_t *wall, fixed_t x, fixed_t y)
 static void GetWallStuff (side_t *wall, vertex_t *&v1, fixed_t &ldx, fixed_t &ldy)
 {
 	line_t *line = line = wall->linedef;
-	if (line->sidenum[0] == DWORD(wall - sides))
+	if (line->sidedef[0] == wall)
 	{
 		v1 = line->v1;
 		ldx = line->dx;
@@ -415,18 +413,17 @@ static fixed_t Length (fixed_t dx, fixed_t dy)
 static side_t *NextWall (const side_t *wall)
 {
 	line_t *line = line = wall->linedef;;
-	DWORD wallnum = DWORD(wall - sides);
 
-	if (line->sidenum[0] == wallnum)
+	if (line->sidedef[0] == wall)
 	{
-		if (line->sidenum[1] != NO_SIDE)
+		if (line->sidedef[1] != NULL)
 		{
-			return sides + line->sidenum[1];
+			return line->sidedef[1];
 		}
 	}
-	else if (line->sidenum[1] == wallnum)
+	else if (line->sidedef[1] == wall)
 	{
-		return sides + line->sidenum[0];
+		return line->sidedef[0];
 	}
 	return NULL;
 }
@@ -775,7 +772,7 @@ void ADecal::BeginPlay ()
 			if (trace.HitType == TRACE_HitWall)
 			{
 				decal = new DBaseDecal (this);
-				wall = sides + trace.Line->sidenum[trace.Side];
+				wall = trace.Line->sidedef[trace.Side];
 				decal->StickToWall (wall, trace.X, trace.Y, trace.ffloor);
 				tpl->ApplyToDecal (decal, wall);
 				// Spread decal to nearby walls if it does not all fit on this one

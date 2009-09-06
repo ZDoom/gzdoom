@@ -599,7 +599,7 @@ struct UDMFParser
 		memset(ld, 0, sizeof(*ld));
 		ld->Alpha = FRACUNIT;
 		ld->id = -1;
-		ld->sidenum[0] = ld->sidenum[1] = NO_SIDE;
+		ld->sidedef[0] = ld->sidedef[1] = NULL;
 		if (level.flags2 & LEVEL2_CLIPMIDTEX) ld->flags |= ML_CLIP_MIDTEX;
 		if (level.flags2 & LEVEL2_WRAPMIDTEX) ld->flags |= ML_WRAP_MIDTEX;
 		if (level.flags2 & LEVEL2_CHECKSWITCHRANGE) ld->flags |= ML_CHECKSWITCHRANGE;
@@ -635,11 +635,11 @@ struct UDMFParser
 				continue;
 
 			case NAME_Sidefront:
-				ld->sidenum[0] = CheckInt(key);
+				ld->sidedef[0] = (side_t*)(intptr_t)(1 + CheckInt(key));
 				continue;
 
 			case NAME_Sideback:
-				ld->sidenum[1] = CheckInt(key);
+				ld->sidedef[1] = (side_t*)(intptr_t)(1 + CheckInt(key));
 				continue;
 
 			case NAME_Arg0:
@@ -1281,9 +1281,9 @@ struct UDMFParser
 				ParsedLines[i].v1 = &vertexes[v1i];
 				ParsedLines[i].v2 = &vertexes[v2i];
 
-				if (ParsedLines[i].sidenum[0] != NO_SIDE)
+				if (ParsedLines[i].sidedef[0] != NULL)
 					sidecount++;
-				if (ParsedLines[i].sidenum[1] != NO_SIDE)
+				if (ParsedLines[i].sidedef[1] != NULL)
 					sidecount++;
 				linemap.Push(i+skipped);
 				i++;
@@ -1302,13 +1302,13 @@ struct UDMFParser
 
 			for(int sd = 0; sd < 2; sd++)
 			{
-				if (lines[line].sidenum[sd] != NO_SIDE)
+				if (lines[line].sidedef[sd] != NULL)
 				{
-					int mapside = lines[line].sidenum[sd];
+					int mapside = int(intptr_t(lines[line].sidedef[sd]))-1;
 					sides[side] = ParsedSides[mapside];
 					sides[side].linedef = &lines[line];
 					sides[side].sector = &sectors[intptr_t(sides[side].sector)];
-					lines[line].sidenum[sd] = side;
+					lines[line].sidedef[sd] = &sides[side];
 
 					P_ProcessSideTextures(!isExtended, &sides[side], sides[side].sector, &ParsedSideTextures[mapside],
 						lines[line].special, lines[line].args[0], &tempalpha[sd]);

@@ -1176,9 +1176,9 @@ void P_ExplodeMissile (AActor *mo, line_t *line, AActor *target)
 	if (line != NULL && cl_missiledecals)
 	{
 		int side = P_PointOnLineSide (mo->x, mo->y, line);
-		if (line->sidenum[side] == NO_SIDE)
+		if (line->sidedef[side] == NULL)
 			side ^= 1;
-		if (line->sidenum[side] != NO_SIDE)
+		if (line->sidedef[side] != NULL)
 		{
 			FDecalBase *base = mo->DecalGenerator;
 			if (base != NULL)
@@ -1212,9 +1212,9 @@ void P_ExplodeMissile (AActor *mo, line_t *line, AActor *target)
 
 					F3DFloor * ffloor=NULL;
 #ifdef _3DFLOORS
-					if (line->sidenum[side^1]!=NO_SIDE)
+					if (line->sidedef[side^1] != NULL)
 					{
-						sector_t * backsector=sides[line->sidenum[side^1]].sector;
+						sector_t * backsector = line->sidedef[side^1]->sector;
 						extsector_t::xfloor &xf = backsector->e->XFloor;
 						// find a 3D-floor to stick to
 						for(unsigned int i=0;i<xf.ffloors.Size();i++)
@@ -1234,7 +1234,7 @@ void P_ExplodeMissile (AActor *mo, line_t *line, AActor *target)
 #endif
 
 					DImpactDecal::StaticCreate (base->GetDecal (),
-						x, y, z, sides + line->sidenum[side], ffloor);
+						x, y, z, line->sidedef[side], ffloor);
 				}
 			}
 		}
@@ -1729,7 +1729,7 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 					if (mo->BlockingLine != NULL &&
 						mo->player && mo->waterlevel && mo->waterlevel < 3 &&
 						(mo->player->cmd.ucmd.forwardmove | mo->player->cmd.ucmd.sidemove) &&
-						mo->BlockingLine->sidenum[1] != NO_SIDE)
+						mo->BlockingLine->sidedef[1] != NULL)
 					{
 						mo->velz = WATER_JUMP_SPEED;
 					}

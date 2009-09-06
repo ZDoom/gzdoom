@@ -465,12 +465,12 @@ static int TryFindSwitch (side_t *side, int Where)
 bool P_CheckSwitchRange(AActor *user, line_t *line, int sideno)
 {
 	// Activated from an empty side -> always succeed
-	if (line->sidenum[sideno] == NO_SIDE) return true;
+	side_t *side = line->sidedef[sideno];
+	if (side == NULL) return true;
 
 	fixed_t checktop;
 	fixed_t checkbot;
-	side_t *side = &sides[line->sidenum[sideno]];
-	sector_t *front = sides[line->sidenum[sideno]].sector;
+	sector_t *front = side->sector;
 	FLineOpening open;
 
 	// 3DMIDTEX forces CHECKSWITCHRANGE because otherwise it might cause problems.
@@ -492,7 +492,7 @@ bool P_CheckSwitchRange(AActor *user, line_t *line, int sideno)
 	checky = dll.y + FixedMul(dll.dy, inter);
 
 	// one sided line
-	if (line->sidenum[1] == NO_SIDE) 
+	if (line->sidedef[1] == NULL) 
 	{
 	onesided:
 		fixed_t sectorc = front->ceilingplane.ZatPoint(checkx, checky);

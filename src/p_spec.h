@@ -195,7 +195,7 @@ void	P_SetSectorFriction (int tag, int amount, bool alterFlag);
 //
 inline side_t *getSide (int currentSector, int line, int side)
 {
-	return &sides[ (sectors[currentSector].lines[line])->sidenum[side] ];
+	return (sectors[currentSector].lines[line])->sidedef[side];
 }
 
 //
@@ -206,7 +206,7 @@ inline side_t *getSide (int currentSector, int line, int side)
 //
 inline sector_t *getSector (int currentSector, int line, int side)
 {
-	return sides[ (sectors[currentSector].lines[line])->sidenum[side] ].sector;
+	return (sectors[currentSector].lines[line])->sidedef[side]->sector;
 }
 
 

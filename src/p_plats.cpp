@@ -260,7 +260,7 @@ manual_plat:
 		if (change)
 		{
 			if (line)
-				sec->SetTexture(sector_t::floor, sides[line->sidenum[0]].sector->GetTexture(sector_t::floor));
+				sec->SetTexture(sector_t::floor, line->sidedef[0]->sector->GetTexture(sector_t::floor));
 			if (change == 1)
 				sec->special &= SECRET_MASK;	// Stop damage and other stuff, if any
 		}

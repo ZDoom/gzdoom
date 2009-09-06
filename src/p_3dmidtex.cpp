@@ -56,8 +56,8 @@ bool P_Scroll3dMidtex(sector_t *sector, int crush, fixed_t move, bool ceiling)
 	{
 		line_t *l = scrollplane.AttachedLines[i];
 
-		sides[l->sidenum[0]].AddTextureYOffset(side_t::mid, move);
-		sides[l->sidenum[1]].AddTextureYOffset(side_t::mid, move);
+		l->sidedef[0]->AddTextureYOffset(side_t::mid, move);
+		l->sidedef[1]->AddTextureYOffset(side_t::mid, move);
 	}
 
 	// Second step: Check all sectors whether the move is ok.
@@ -87,8 +87,8 @@ void P_Start3dMidtexInterpolations(TArray<DInterpolation *> &list, sector_t *sec
 	{
 		line_t *l = scrollplane.AttachedLines[i];
 
-		list.Push(sides[l->sidenum[0]].SetInterpolation(side_t::mid));
-		list.Push(sides[l->sidenum[1]].SetInterpolation(side_t::mid));
+		list.Push(l->sidedef[0]->SetInterpolation(side_t::mid));
+		list.Push(l->sidedef[1]->SetInterpolation(side_t::mid));
 	}
 }
 
@@ -215,11 +215,10 @@ void P_Attach3dMidtexLinesToSector(sector_t *sector, int lineid, int tag, bool c
 //============================================================================
 bool P_GetMidTexturePosition(const line_t *line, int sideno, fixed_t *ptextop, fixed_t *ptexbot)
 {
-	side_t *side = &sides[line->sidenum[sideno]];
-	FTextureID texnum = side->GetTexture(side_t::mid);
-
-	if (line->sidenum[0]==NO_SIDE || line->sidenum[1]==NO_SIDE || !texnum.isValid()) return false;
+	if (line->sidedef[0]==NULL || line->sidedef[1]==NULL) return false;
 	
+	side_t *side = line->sidedef[sideno];
+	FTextureID texnum = side->GetTexture(side_t::mid);
 	FTexture * tex= TexMan(texnum);
 	if (!tex) return false;
 

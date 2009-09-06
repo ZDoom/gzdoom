@@ -371,10 +371,10 @@ void P_SerializeWorld (FArchive &arc)
 
 		for (j = 0; j < 2; j++)
 		{
-			if (li->sidenum[j] == NO_SIDE)
+			if (li->sidedef[j] == NULL)
 				continue;
 
-			side_t *si = &sides[li->sidenum[j]];
+			side_t *si = li->sidedef[j];
 			arc << si->textures[side_t::top]
 				<< si->textures[side_t::mid]
 				<< si->textures[side_t::bottom]

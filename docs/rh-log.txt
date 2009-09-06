@@ -1,4 +1,5 @@
 September 6, 2009  (Changes by Graf Zahl)
+- changed line_t's sidenum into sidedef pointers.
 - changed side_t's linenum into a linedef pointer.
 - Added PinkSilver's SetActorVelocity code submission (with optimizations.)
 

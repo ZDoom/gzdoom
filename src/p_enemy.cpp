@@ -141,19 +141,19 @@ void P_RecursiveSound (sector_t *sec, AActor *soundtarget, bool splash, int soun
 	for (i = 0; i < sec->linecount; i++)
 	{
 		check = sec->lines[i];
-		if (check->sidenum[1] == NO_SIDE ||
+		if (check->sidedef[1] == NULL ||
 			!(check->flags & ML_TWOSIDED))
 		{
 			continue;
 		}
 		
 		// Early out for intra-sector lines
-		if (sides[check->sidenum[0]].sector==sides[check->sidenum[1]].sector) continue;
+		if (check->sidedef[0]->sector == check->sidedef[1]->sector) continue;
 
-		if ( sides[ check->sidenum[0] ].sector == sec)
-			other = sides[ check->sidenum[1] ].sector;
+		if ( check->sidedef[0]->sector == sec)
+			other = check->sidedef[1]->sector;
 		else
-			other = sides[ check->sidenum[0] ].sector;
+			other = check->sidedef[0]->sector;
 
 		// check for closed door
 		if ((sec->floorplane.ZatPoint (check->v1->x, check->v1->y) >=

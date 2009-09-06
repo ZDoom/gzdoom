@@ -121,8 +121,8 @@ static int WriteLINEDEFS (FILE *file)
 		{
 			mld.args[j] = (BYTE)lines[i].args[j];
 		}
-		mld.sidenum[0] = LittleShort(WORD(lines[i].sidenum[0]));
-		mld.sidenum[1] = LittleShort(WORD(lines[i].sidenum[1]));
+		mld.sidenum[0] = LittleShort(WORD(lines[i].sidedef[0] - sides));
+		mld.sidenum[1] = LittleShort(WORD(lines[i].sidedef[1] - sides));
 		fwrite (&mld, sizeof(mld), 1, file);
 	}
 	return numlines * sizeof(mld);
@@ -184,7 +184,7 @@ static int WriteSEGS (FILE *file)
 			ms.v1 = LittleShort(short(segs[i].v1 - vertexes));
 			ms.v2 = LittleShort(short(segs[i].v2 - vertexes));
 			ms.linedef = LittleShort(short(segs[i].linedef - lines));
-			ms.side = DWORD(segs[i].sidedef - sides) == segs[i].linedef->sidenum[0] ? 0 : LittleShort((short)1);
+			ms.side = segs[i].sidedef == segs[i].linedef->sidedef[0] ? 0 : LittleShort((short)1);
 			ms.angle = LittleShort(short(R_PointToAngle2 (segs[i].v1->x, segs[i].v1->y, segs[i].v2->x, segs[i].v2->y)>>16));
 			fwrite (&ms, sizeof(ms), 1, file);
 		}

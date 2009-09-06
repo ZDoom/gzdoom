@@ -120,7 +120,7 @@ void FNodeBuilder::MakeSegsFromSides ()
 
 	for (i = 0; i < Level.NumLines; ++i)
 	{
-		if (Level.Lines[i].sidenum[0] != NO_SIDE)
+		if (Level.Lines[i].sidedef[0] != NULL)
 		{
 			CreateSeg (i, 0);
 		}
@@ -129,10 +129,10 @@ void FNodeBuilder::MakeSegsFromSides ()
 			Printf ("Linedef %d does not have a front side.\n", i);
 		}
 
-		if (Level.Lines[i].sidenum[1] != NO_SIDE)
+		if (Level.Lines[i].sidedef[1] != NULL)
 		{
 			j = CreateSeg (i, 1);
-			if (Level.Lines[i].sidenum[0] != NO_SIDE)
+			if (Level.Lines[i].sidedef[0] != NULL)
 			{
 				Segs[j-1].partner = j;
 				Segs[j].partner = j-1;
@@ -169,7 +169,8 @@ int FNodeBuilder::CreateSeg (int linenum, int sidenum)
 		seg.v1 = (int)(size_t)Level.Lines[linenum].v2;
 	}
 	seg.linedef = linenum;
-	seg.sidedef = Level.Lines[linenum].sidenum[sidenum];
+	side_t *sd = Level.Lines[linenum].sidedef[sidenum];
+	seg.sidedef = sd != NULL? int(sd - sides) : int(NO_SIDE);
 	seg.nextforvert = Vertices[seg.v1].segs;
 	seg.nextforvert2 = Vertices[seg.v2].segs2;
 

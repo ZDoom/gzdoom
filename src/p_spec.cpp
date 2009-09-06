@@ -234,7 +234,7 @@ bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType)
 	{
 		if (activationType == SPAC_Use || activationType == SPAC_Impact)
 		{
-			P_ChangeSwitchTexture (&sides[line->sidenum[0]], repeat, special);
+			P_ChangeSwitchTexture (line->sidedef[0], repeat, special);
 		}
 	}
 	// some old WADs use this method to create walls that change the texture when shot.
@@ -247,7 +247,7 @@ bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType)
 		line->args[0] &&										// only if there's a tag (which is stored in the first arg)
 		P_FindSectorFromTag (line->args[0], -1) == -1)			// only if no sector is tagged to this linedef
 	{
-		P_ChangeSwitchTexture (&sides[line->sidenum[0]], repeat, special);
+		P_ChangeSwitchTexture (line->sidedef[0], repeat, special);
 		line->special = 0;
 	}
 // end of changed code
@@ -778,14 +778,14 @@ DWallLightTransfer::DWallLightTransfer (sector_t *srcSec, int target, BYTE flags
 
 	for (linenum = -1; (linenum = P_FindLineFromID (target, linenum)) >= 0; )
 	{
-		if (flags & WLF_SIDE1 && lines[linenum].sidenum[0]!=NO_SIDE)
+		if (flags & WLF_SIDE1 && lines[linenum].sidedef[0] != NULL)
 		{
-			sides[lines[linenum].sidenum[0]].Flags |= wallflags;
+			lines[linenum].sidedef[0]->Flags |= wallflags;
 		}
 
-		if (flags & WLF_SIDE2 && lines[linenum].sidenum[1]!=NO_SIDE)
+		if (flags & WLF_SIDE2 && lines[linenum].sidedef[1] != NULL)
 		{
-			sides[lines[linenum].sidenum[1]].Flags |= wallflags;
+			lines[linenum].sidedef[1]->Flags |= wallflags;
 		}
 	}
 	ChangeStatNum(STAT_LIGHTTRANSFER);
@@ -810,14 +810,14 @@ void DWallLightTransfer::DoTransfer (BYTE lightlevel, int target, BYTE flags)
 	{
 		line_t * line = &lines[linenum];
 
-		if (flags & WLF_SIDE1 && line->sidenum[0]!=NO_SIDE)
+		if (flags & WLF_SIDE1 && line->sidedef[0] != NULL)
 		{
-			sides[line->sidenum[0]].SetLight(lightlevel);
+			line->sidedef[0]->SetLight(lightlevel);
 		}
 
-		if (flags & WLF_SIDE2 && line->sidenum[1]!=NO_SIDE)
+		if (flags & WLF_SIDE2 && line->sidedef[1] != NULL)
 		{
-			sides[line->sidenum[1]].SetLight(lightlevel);
+			line->sidedef[1]->SetLight(lightlevel);
 		}
 	}
 }
@@ -981,7 +981,7 @@ void P_SpawnSpecials (void)
 		// killough 3/7/98:
 		// support for drawn heights coming from different sector
 		case Transfer_Heights:
-			sec = sides[lines[i].sidenum[0]].sector;
+			sec = lines[i].frontsector;
 			if (lines[i].args[1] & 2)
 			{
 				sec->MoreFlags |= SECF_FAKEFLOORONLY;
@@ -1017,19 +1017,19 @@ void P_SpawnSpecials (void)
 		// killough 3/16/98: Add support for setting
 		// floor lighting independently (e.g. lava)
 		case Transfer_FloorLight:
-			new DLightTransfer (sides[*lines[i].sidenum].sector, lines[i].args[0], true);
+			new DLightTransfer (lines[i].frontsector, lines[i].args[0], true);
 			break;
 
 		// killough 4/11/98: Add support for setting
 		// ceiling lighting independently
 		case Transfer_CeilingLight:
-			new DLightTransfer (sides[*lines[i].sidenum].sector, lines[i].args[0], false);
+			new DLightTransfer (lines[i].frontsector, lines[i].args[0], false);
 			break;
 
 		// [Graf Zahl] Add support for setting lighting
 		// per wall independently
 		case Transfer_WallLight:
-			new DWallLightTransfer (sides[*lines[i].sidenum].sector, lines[i].args[0], lines[i].args[1]);
+			new DWallLightTransfer (lines[i].frontsector, lines[i].args[0], lines[i].args[1]);
 			break;
 
 		case Sector_Attach3dMidtex:
@@ -1290,7 +1290,7 @@ DScroller::DScroller (fixed_t dx, fixed_t dy, const line_t *l,
 	m_Parts = scrollpos;
 	if ((m_Control = control) != -1)
 		m_LastHeight = sectors[control].CenterFloor() + sectors[control].CenterCeiling();
-	m_Affectee = *l->sidenum;
+	m_Affectee = int(l->sidedef[0] - sides);
 	sides[m_Affectee].Flags |= WALLF_NOAUTODECALS;
 	m_Interpolations[0] = m_Interpolations[1] = m_Interpolations[2] = NULL;
 
@@ -1347,7 +1347,7 @@ static void P_SpawnScrollers(void)
 			{
 				// if 1, then displacement
 				// if 2, then accelerative (also if 3)
-				control = int(sides[*l->sidenum].sector - sectors);
+				control = int(l->sidedef[0]->sector - sectors);
 				if (l->args[1] & 2)
 					accel = 1;
 			}
@@ -1400,36 +1400,41 @@ static void P_SpawnScrollers(void)
 
 		case Scroll_Texture_Offsets:
 			// killough 3/2/98: scroll according to sidedef offsets
-			s = lines[i].sidenum[0];
+			s = int(lines[i].sidedef[0] - sides);
 			new DScroller (DScroller::sc_side, -sides[s].GetTextureXOffset(side_t::mid),
 				sides[s].GetTextureYOffset(side_t::mid), -1, s, accel, SCROLLTYPE(l->args[0]));
 			break;
 
 		case Scroll_Texture_Left:
+			s = int(lines[i].sidedef[0] - sides);
 			new DScroller (DScroller::sc_side, l->args[0] * (FRACUNIT/64), 0,
-						   -1, lines[i].sidenum[0], accel, SCROLLTYPE(l->args[1]));
+						   -1, s, accel, SCROLLTYPE(l->args[1]));
 			break;
 
 		case Scroll_Texture_Right:
+			s = int(lines[i].sidedef[0] - sides);
 			new DScroller (DScroller::sc_side, l->args[0] * (-FRACUNIT/64), 0,
-						   -1, lines[i].sidenum[0], accel, SCROLLTYPE(l->args[1]));
+						   -1, s, accel, SCROLLTYPE(l->args[1]));
 			break;
 
 		case Scroll_Texture_Up:
+			s = int(lines[i].sidedef[0] - sides);
 			new DScroller (DScroller::sc_side, 0, l->args[0] * (FRACUNIT/64),
-						   -1, lines[i].sidenum[0], accel, SCROLLTYPE(l->args[1]));
+						   -1, s, accel, SCROLLTYPE(l->args[1]));
 			break;
 
 		case Scroll_Texture_Down:
+			s = int(lines[i].sidedef[0] - sides);
 			new DScroller (DScroller::sc_side, 0, l->args[0] * (-FRACUNIT/64),
-						   -1, lines[i].sidenum[0], accel, SCROLLTYPE(l->args[1]));
+						   -1, s, accel, SCROLLTYPE(l->args[1]));
 			break;
 
 		case Scroll_Texture_Both:
+			s = int(lines[i].sidedef[0] - sides);
 			if (l->args[0] == 0) {
 				dx = (l->args[1] - l->args[2]) * (FRACUNIT/64);
 				dy = (l->args[4] - l->args[3]) * (FRACUNIT/64);
-				new DScroller (DScroller::sc_side, dx, dy, -1, lines[i].sidenum[0], accel);
+				new DScroller (DScroller::sc_side, dx, dy, -1, s, accel);
 			}
 			break;
 

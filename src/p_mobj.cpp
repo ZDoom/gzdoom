@@ -5119,13 +5119,14 @@ AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z,
 
 	MissileActor->velx = FixedMul (vx, speed);
 	MissileActor->vely = FixedMul (vy, speed);
-	if (th->flags3 & (MF3_FLOORHUGGER|MF3_CEILINGHUGGER))
+	if (MissileActor->flags3 & (MF3_FLOORHUGGER|MF3_CEILINGHUGGER))
 	{
 		MissileActor->velz = 0;
 	}
 	else
 	{
 		MissileActor->velz = FixedMul (vz, speed);
+	}
 
 	if (MissileActor->flags4 & MF4_SPECTRAL)
 		MissileActor->health = -1;

@@ -1,3 +1,6 @@
+September 6, 2009  (Changes by Graf Zahl)
+- Added PinkSilver's SetActorVelocity code submission (with optimizations.)
+
 September 5, 2009
 - Added the frandom decorate function, which is exactly like random except
   that it works with floating point instead of integers.

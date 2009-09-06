@@ -478,6 +478,26 @@ bool P_Thing_Raise(AActor *thing)
 	return true;
 }
 
+void P_Thing_SetVelocity(AActor *actor, fixed_t vx, fixed_t vy, fixed_t vz, bool add)
+{
+	if (actor != NULL)
+	{
+		if (!add)
+		{
+			actor->velx = actor->vely = actor->velz = 0;
+			if (actor->player != NULL) actor->player->velx = actor->player->vely = 0;
+		}
+		actor->velx += vx;
+		actor->vely += vy;
+		actor->velz += vz;
+		if (actor->player != NULL)
+		{
+			actor->player->velx += vx;
+			actor->player->vely += vy;
+		}
+	}
+}
+
 
 CCMD (dumpspawnables)
 {

@@ -2873,6 +2873,7 @@ enum EACSFunctions
 	ACSF_SpawnSpotForced,
 	ACSF_SpawnSpotFacingForced,
 	ACSF_CheckActorProperty,
+    ACSF_SetActorVelocity,
 };
 
 int DLevelScript::SideFromID(int id, int side)
@@ -3054,6 +3055,22 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 
 		case ACSF_CheckActorProperty:
 			return (CheckActorProperty(args[0], args[1], args[2]));
+        
+        case ACSF_SetActorVelocity:
+            if (args[0] == 0)
+            {
+				P_Thing_SetVelocity(activator, args[1], args[2], args[3], !!args[4]);
+            }
+            else
+            {
+                TActorIterator<AActor> iterator (args[0]);
+                
+                while ( (actor = iterator.Next ()) )
+                {
+					P_Thing_SetVelocity(actor, args[1], args[2], args[3], !!args[4]);
+                }
+            }
+			return 0;
 
 		default:
 			break;

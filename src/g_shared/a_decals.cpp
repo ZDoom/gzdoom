@@ -174,7 +174,7 @@ void DBaseDecal::SerializeChain (FArchive &arc, DBaseDecal **first)
 
 void DBaseDecal::GetXY (side_t *wall, fixed_t &ox, fixed_t &oy) const
 {
-	line_t *line = &lines[wall->linenum];
+	line_t *line = wall->linedef;
 	DWORD wallnum = DWORD(wall - sides);
 	vertex_t *v1, *v2;
 
@@ -234,7 +234,7 @@ FTextureID DBaseDecal::StickToWall (side_t *wall, fixed_t x, fixed_t y, F3DFloor
 	line_t *line;
 	FTextureID tex;
 
-	line = &lines[wall->linenum];
+	line = wall->linedef;
 	if (line->sidenum[0] == DWORD(wall - sides))
 	{
 		front = line->frontsector;
@@ -304,7 +304,7 @@ FTextureID DBaseDecal::StickToWall (side_t *wall, fixed_t x, fixed_t y, F3DFloor
 
 fixed_t DBaseDecal::GetRealZ (const side_t *wall) const
 {
-	const line_t *line = &lines[wall->linenum];
+	const line_t *line = wall->linedef;
 	const sector_t *front, *back;
 
 	if (line->sidenum[0] == DWORD(wall - sides))
@@ -358,7 +358,7 @@ fixed_t DBaseDecal::GetRealZ (const side_t *wall) const
 
 void DBaseDecal::CalcFracPos (side_t *wall, fixed_t x, fixed_t y)
 {
-	line_t *line = &lines[wall->linenum];
+	line_t *line = line = wall->linedef;
 	DWORD wallnum = DWORD(wall - sides);
 	vertex_t *v1, *v2;
 
@@ -392,7 +392,7 @@ void DBaseDecal::CalcFracPos (side_t *wall, fixed_t x, fixed_t y)
 
 static void GetWallStuff (side_t *wall, vertex_t *&v1, fixed_t &ldx, fixed_t &ldy)
 {
-	line_t *line = &lines[wall->linenum];
+	line_t *line = line = wall->linedef;
 	if (line->sidenum[0] == DWORD(wall - sides))
 	{
 		v1 = line->v1;
@@ -414,7 +414,7 @@ static fixed_t Length (fixed_t dx, fixed_t dy)
 
 static side_t *NextWall (const side_t *wall)
 {
-	line_t *line = &lines[wall->linenum];
+	line_t *line = line = wall->linedef;;
 	DWORD wallnum = DWORD(wall - sides);
 
 	if (line->sidenum[0] == wallnum)
@@ -540,7 +540,7 @@ void DBaseDecal::Spread (const FDecalTemplate *tpl, side_t *wall, fixed_t x, fix
 
 	// Then try spreading right
 	SpreadRight (rorg + DecalRight, wall,
-			Length (lines[wall->linenum].dx, lines[wall->linenum].dy), ffloor);
+			Length (wall->linedef->dx, wall->linedef->dy), ffloor);
 	SpreadStack.Clear ();
 }
 

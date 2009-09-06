@@ -1306,7 +1306,7 @@ struct UDMFParser
 				{
 					int mapside = lines[line].sidenum[sd];
 					sides[side] = ParsedSides[mapside];
-					sides[side].linenum = line;
+					sides[side].linedef = &lines[line];
 					sides[side].sector = &sectors[intptr_t(sides[side].sector)];
 					lines[line].sidenum[sd] = side;
 

@@ -156,6 +156,7 @@ public:
 //
 class DSectorEffect;
 struct sector_t;
+struct line_t;
 struct FRemapTable;
 
 enum
@@ -348,10 +349,6 @@ struct FExtraLight
 	void InsertLight (const secplane_t &plane, line_t *line, int type);
 };
 
-// this substructure contains a few sector properties that are stored in dynamic arrays
-// These must not be copied by R_FakeFlat etc. or bad things will happen.
-struct sector_t;
-
 struct FLinkedSector
 {
 	sector_t *Sector;
@@ -359,6 +356,8 @@ struct FLinkedSector
 };
 
 
+// this substructure contains a few sector properties that are stored in dynamic arrays
+// These must not be copied by R_FakeFlat etc. or bad things will happen.
 struct extsector_t
 {
 	// Boom sector transfer information
@@ -747,7 +746,8 @@ struct side_t
 	sector_t*	sector;			// Sector the SideDef is facing.
 	DBaseDecal*	AttachedDecals;	// [RH] Decals bound to the wall
 	part		textures[3];
-	DWORD		linenum;
+	line_t		*linedef;
+	//DWORD		linenum;
 	DWORD		LeftSide, RightSide;	// [RH] Group walls into loops
 	WORD		TexelLength;
 	SWORD		Light;

@@ -1,4 +1,5 @@
 September 6, 2009  (Changes by Graf Zahl)
+- changed side_t's linenum into a linedef pointer.
 - Added PinkSilver's SetActorVelocity code submission (with optimizations.)
 
 September 5, 2009

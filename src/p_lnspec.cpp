@@ -1867,8 +1867,8 @@ static void SetWallScroller (int id, int sidechoice, fixed_t dx, fixed_t dy, int
 		{
 			int wallnum = scroller->GetWallNum ();
 
-			if (wallnum >= 0 && lines[sides[wallnum].linenum].id == id &&
-				lines[sides[wallnum].linenum].sidenum[sidechoice] == (DWORD)wallnum &&
+			if (wallnum >= 0 && sides[wallnum].linedef->id == id &&
+				sides[wallnum].linedef->sidenum[sidechoice] == (DWORD)wallnum &&
 				Where == scroller->GetScrollParts())
 			{
 				scroller->Destroy ();
@@ -1886,8 +1886,8 @@ static void SetWallScroller (int id, int sidechoice, fixed_t dx, fixed_t dy, int
 			while ( (collect.Obj = iterator.Next ()) )
 			{
 				if ((collect.RefNum = ((DScroller *)collect.Obj)->GetWallNum ()) != -1 &&
-					lines[sides[collect.RefNum].linenum].id == id &&
-					lines[sides[collect.RefNum].linenum].sidenum[sidechoice] == (DWORD)collect.RefNum &&
+					sides[collect.RefNum].linedef->id == id &&
+					sides[collect.RefNum].linedef->sidenum[sidechoice] == (DWORD)collect.RefNum &&
 					Where == ((DScroller *)collect.Obj)->GetScrollParts())
 				{
 					((DScroller *)collect.Obj)->SetRate (dx, dy);

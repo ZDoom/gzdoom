@@ -1755,13 +1755,13 @@ void P_FinishLoadingLineDef(line_t *ld, int alpha)
 
 	if (ld->sidenum[0] != NO_SIDE)
 	{
-		sides[ld->sidenum[0]].linenum = linenum;
+		sides[ld->sidenum[0]].linedef = ld;
 		sides[ld->sidenum[0]].TexelLength = len;
 
 	}
 	if (ld->sidenum[1] != NO_SIDE)
 	{
-		sides[ld->sidenum[1]].linenum = linenum;
+		sides[ld->sidenum[1]].linedef = ld;
 		sides[ld->sidenum[1]].TexelLength = len;
 	}
 
@@ -2056,7 +2056,7 @@ static void P_LoopSidedefs ()
 	{
 		// For each vertex, build a list of sidedefs that use that vertex
 		// as their left edge.
-		line_t *line = &lines[sides[i].linenum];
+		line_t *line = sides[i].linedef;
 		int lineside = (line->sidenum[0] != (DWORD)i);
 		int vert = int((lineside ? line->v2 : line->v1) - vertexes);
 		
@@ -2075,7 +2075,7 @@ static void P_LoopSidedefs ()
 	for (i = 0; i < numsides; ++i)
 	{
 		DWORD right;
-		line_t *line = &lines[sides[i].linenum];
+		line_t *line = sides[i].linedef;
 
 		// If the side's line only exists in a single sector,
 		// then consider that line to be a self-contained loop
@@ -2110,7 +2110,7 @@ static void P_LoopSidedefs ()
 				line_t *leftline, *rightline;
 				angle_t ang1, ang2, ang;
 
-				leftline = &lines[sides[i].linenum];
+				leftline = sides[i].linedef;
 				ang1 = R_PointToAngle2 (0, 0, leftline->dx, leftline->dy);
 				if (!sidetemp[i].b.lineside)
 				{
@@ -2121,7 +2121,7 @@ static void P_LoopSidedefs ()
 				{
 					if (sides[right].LeftSide == NO_SIDE)
 					{
-						rightline = &lines[sides[right].linenum];
+						rightline = sides[right].linedef;
 						if (rightline->frontsector != rightline->backsector)
 						{
 							ang2 = R_PointToAngle2 (0, 0, rightline->dx, rightline->dy);
@@ -2332,7 +2332,7 @@ void P_LoadSideDefs2 (MapData * map)
 		sd->SetTextureYOffset(LittleShort(msd->rowoffset)<<FRACBITS);
 		sd->SetTextureXScale(FRACUNIT);
 		sd->SetTextureYScale(FRACUNIT);
-		sd->linenum = NO_INDEX;
+		sd->linedef = NULL;
 		sd->Flags = 0;
 		sd->Index = i;
 

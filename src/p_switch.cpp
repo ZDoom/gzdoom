@@ -576,7 +576,7 @@ bool P_ChangeSwitchTexture (side_t *side, int useAgain, BYTE special, bool *ques
 	//		facing a big sector (and which wasn't necessarily for the
 	//		button just activated, either).
 	fixed_t pt[2];
-	line_t *line = &lines[side->linenum];
+	line_t *line = side->linedef;
 	bool playsound;
 
 	pt[0] = line->v1->x + (line->dx >> 1);

@@ -1146,8 +1146,8 @@ void DScroller::Tick ()
 				sides[m_Affectee].AddTextureXOffset(side_t::top, dx);
 				sides[m_Affectee].AddTextureYOffset(side_t::top, dy);
 			}
-			if (m_Parts & scw_mid && (lines[sides[m_Affectee].linenum].backsector == NULL ||
-				!(lines[sides[m_Affectee].linenum].flags&ML_3DMIDTEX)))
+			if (m_Parts & scw_mid && (sides[m_Affectee].linedef->backsector == NULL ||
+				!(sides[m_Affectee].linedef->flags&ML_3DMIDTEX)))
 			{
 				sides[m_Affectee].AddTextureXOffset(side_t::mid, dx);
 				sides[m_Affectee].AddTextureYOffset(side_t::mid, dy);
@@ -1226,8 +1226,8 @@ DScroller::DScroller (EScrollType type, fixed_t dx, fixed_t dy,
 		{
 			m_Interpolations[0] = sides[m_Affectee].SetInterpolation(side_t::top);
 		}
-		if (m_Parts & scw_mid && (lines[sides[m_Affectee].linenum].backsector == NULL ||
-			!(lines[sides[m_Affectee].linenum].flags&ML_3DMIDTEX)))
+		if (m_Parts & scw_mid && (sides[m_Affectee].linedef->backsector == NULL ||
+			!(sides[m_Affectee].linedef->flags&ML_3DMIDTEX)))
 		{
 			m_Interpolations[1] = sides[m_Affectee].SetInterpolation(side_t::mid);
 		}
@@ -1298,8 +1298,8 @@ DScroller::DScroller (fixed_t dx, fixed_t dy, const line_t *l,
 	{
 		m_Interpolations[0] = sides[m_Affectee].SetInterpolation(side_t::top);
 	}
-	if (m_Parts & scw_mid && (lines[sides[m_Affectee].linenum].backsector == NULL ||
-		!(lines[sides[m_Affectee].linenum].flags&ML_3DMIDTEX)))
+	if (m_Parts & scw_mid && (sides[m_Affectee].linedef->backsector == NULL ||
+		!(sides[m_Affectee].linedef->flags&ML_3DMIDTEX)))
 	{
 		m_Interpolations[1] = sides[m_Affectee].SetInterpolation(side_t::mid);
 	}

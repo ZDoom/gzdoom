@@ -646,7 +646,7 @@ int FPNGTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int w, int h, i
 
 	lump->Seek (StartOfIDAT, SEEK_SET);
 	lump->Read(&len, 4);
-	lump->Read(&len, 4);
+	lump->Read(&id, 4);
 	M_ReadIDAT (lump, Pixels, Width, Height, pixwidth, BitDepth, ColorType, Interlace, BigLong((unsigned int)len));
 	delete lump;
 

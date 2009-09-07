@@ -40,24 +40,13 @@ void ABasicArmor::Tick ()
 	AbsorbCount = 0;
 	if (!Icon.isValid())
 	{
-		switch (gameinfo.gametype)
-		{
-		case GAME_Chex:
-		case GAME_Doom:
-			Icon = TexMan.CheckForTexture (SavePercent == FRACUNIT/3 ? "ARM1A0" : "ARM2A0", FTexture::TEX_Any);
-			break;
+		const char *icon = gameinfo.ArmorIcon1;
 
-		case GAME_Heretic:
-			Icon = TexMan.CheckForTexture (SavePercent == FRACUNIT/2 ? "SHLDA0" : "SHD2A0", FTexture::TEX_Any);
-			break;
+		if (SavePercent >= gameinfo.Armor2Percent && gameinfo.ArmorIcon2[0] != 0)
+			icon = gameinfo.ArmorIcon2;
 
-		case GAME_Strife:
-			Icon = TexMan.CheckForTexture (SavePercent == FRACUNIT/3 ? "I_ARM2" : "I_ARM1", FTexture::TEX_Any);
-			break;
-		
-		default:
-			break;
-		}
+		if (icon[0] != 0)
+			Icon = TexMan.CheckForTexture (icon, FTexture::TEX_Any);
 	}
 }
 

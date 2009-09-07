@@ -688,7 +688,7 @@ void cht_Give (player_t *player, const char *name, int amount)
 		{
 			ABasicArmorPickup *armor = Spawn<ABasicArmorPickup> (0,0,0, NO_REPLACE);
 			armor->SaveAmount = 100*deh.BlueAC;
-			armor->SavePercent = gameinfo.gametype != GAME_Heretic ? FRACUNIT/2 : FRACUNIT*3/4;
+			armor->SavePercent = gameinfo.Armor2Percent > 0? gameinfo.Armor2Percent : FRACUNIT/2;
 			if (!armor->CallTryPickup (player->mo))
 			{
 				armor->Destroy ();

@@ -233,6 +233,21 @@ void FMapInfoParser::ParseGameInfo()
 				}
 			}
 		}
+		else if(nextKey.CompareNoCase("armoricons") == 0)
+		{
+			sc.MustGetToken(TK_StringConst);
+			strncpy(gameinfo.ArmorIcon1, sc.String, 8);
+			gameinfo.ArmorIcon1[8] = 0;
+			if (sc.CheckToken(','))
+			{
+				sc.MustGetToken(TK_FloatConst);
+				gameinfo.Armor2Percent = FLOAT2FIXED(sc.Float);
+				sc.MustGetToken(',');
+				sc.MustGetToken(TK_StringConst);
+				strncpy(gameinfo.ArmorIcon2, sc.String, 8);
+				gameinfo.ArmorIcon2[8] = 0;
+			}
+		}
 		// Insert valid keys here.
 		GAMEINFOKEY_CSTRING(titlePage, "titlePage", 8)
 		GAMEINFOKEY_STRINGARRAY(creditPages, "creditPage", 8)

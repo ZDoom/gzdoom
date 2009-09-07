@@ -82,12 +82,15 @@ struct gameinfo_t
 	FString chatSound;
 	FString finaleMusic;
 	char finaleFlat[9];
-	FString quitSound;
 	char borderFlat[9];
+	char SkyFlatName[9];
+	char ArmorIcon1[9];
+	char ArmorIcon2[9];
+	fixed_t Armor2Percent;
+	FString quitSound;
 	gameborder_t *border;
 	int telefogheight;
 	int defKickback;
-	char SkyFlatName[9];
 	FString translator;
 	DWORD defaultbloodcolor;
 	DWORD defaultbloodparticlecolor;

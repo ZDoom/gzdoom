@@ -1961,29 +1961,27 @@ void D_DoomMain (void)
 	// [RH] Try adding .deh and .bex files on the command line.
 	// If there are none, try adding any in the config file.
 
-	//if (gameinfo.gametype == GAME_Doom)
+	if (!ConsiderPatches ("-deh", ".deh") &&
+		!ConsiderPatches ("-bex", ".bex") &&
+		(gameinfo.gametype == GAME_Doom) &&
+		GameConfig->SetSection ("Doom.DefaultDehacked"))
 	{
-		if (!ConsiderPatches ("-deh", ".deh") &&
-			!ConsiderPatches ("-bex", ".bex") &&
-			(gameinfo.gametype == GAME_Doom) &&
-			GameConfig->SetSection ("Doom.DefaultDehacked"))
-		{
-			const char *key;
-			const char *value;
+		const char *key;
+		const char *value;
 
-			while (GameConfig->NextInSection (key, value))
+		while (GameConfig->NextInSection (key, value))
+		{
+			if (stricmp (key, "Path") == 0 && FileExists (value))
 			{
-				if (stricmp (key, "Path") == 0 && FileExists (value))
-				{
-					Printf ("Applying patch %s\n", value);
-					DoDehPatch (value, true);
-				}
+				Printf ("Applying patch %s\n", value);
+				DoDehPatch (value, true);
 			}
 		}
-
-		DoDehPatch (NULL, true);	// See if there's a patch in a PWAD
-		FinishDehPatch ();			// Create replacements for dehacked pickups
 	}
+
+	DoDehPatch (NULL, true);	// See if there's a patch in a PWAD
+	FinishDehPatch ();			// Create replacements for dehacked pickups
+
 	FActorInfo::StaticSetActorNums ();
 
 

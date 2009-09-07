@@ -23,6 +23,7 @@ gameinfo
 	defaultbloodcolor = "68 00 00"
 	defaultbloodparticlecolor = "ff 00 00"
 	backpacktype = "AmmoSatchel"
+	armoricons = "I_ARM2", 0.5, "I_ARM1"
 	statusbar = ""
 	intermissionmusic = "d_slide"
 	intermissioncounter = false

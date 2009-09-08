@@ -478,7 +478,7 @@ bool P_Thing_Raise(AActor *thing)
 	return true;
 }
 
-void P_Thing_SetVelocity(AActor *actor, fixed_t vx, fixed_t vy, fixed_t vz, bool add)
+void P_Thing_SetVelocity(AActor *actor, fixed_t vx, fixed_t vy, fixed_t vz, bool add, bool setbob)
 {
 	if (actor != NULL)
 	{
@@ -490,7 +490,7 @@ void P_Thing_SetVelocity(AActor *actor, fixed_t vx, fixed_t vy, fixed_t vz, bool
 		actor->velx += vx;
 		actor->vely += vy;
 		actor->velz += vz;
-		if (actor->player != NULL)
+		if (setbob && actor->player != NULL)
 		{
 			actor->player->velx += vx;
 			actor->player->vely += vy;

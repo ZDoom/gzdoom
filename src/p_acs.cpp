@@ -3059,7 +3059,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
         case ACSF_SetActorVelocity:
             if (args[0] == 0)
             {
-				P_Thing_SetVelocity(activator, args[1], args[2], args[3], !!args[4]);
+				P_Thing_SetVelocity(activator, args[1], args[2], args[3], !!args[4], !!args[5]);
             }
             else
             {
@@ -3067,7 +3067,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
                 
                 while ( (actor = iterator.Next ()) )
                 {
-					P_Thing_SetVelocity(actor, args[1], args[2], args[3], !!args[4]);
+					P_Thing_SetVelocity(actor, args[1], args[2], args[3], !!args[4], !!args[5]);
                 }
             }
 			return 0;

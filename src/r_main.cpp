@@ -223,6 +223,27 @@ static bool NoInterpolateView;
 
 //==========================================================================
 //
+// SlopeDiv
+//
+// Utility function, called by R_PointToAngle.
+//
+//==========================================================================
+
+angle_t SlopeDiv (unsigned int num, unsigned den)
+{
+	unsigned int ans;
+
+	if (den < 512)
+		return (ANG45 - 1); //tantoangle[SLOPERANGE]
+
+	ans = (num << 3) / (den >> 8);
+
+	return ans <= SLOPERANGE ? tantoangle[ans] : (ANG45 - 1);
+}
+
+
+//==========================================================================
+//
 // R_PointToAngle
 //
 // To get a global angle from cartesian coordinates, the coordinates are
@@ -242,65 +263,56 @@ angle_t R_PointToAngle2 (fixed_t x1, fixed_t y1, fixed_t x, fixed_t y)
 		return 0;
 	}
 
-	fixed_t ax = abs (x);
-	fixed_t ay = abs (y);
-	int div;
-	angle_t angle;
-
-	if (ax > ay)
-	{
-		swap (ax, ay);
-	}
-	div = SlopeDiv (ax, ay);
-	angle = tantoangle[div];
-
 	if (x >= 0)
 	{
 		if (y >= 0)
 		{
 			if (x > y)
 			{ // octant 0
-				return angle;
+				return SlopeDiv(y, x);
 			}
 			else
 			{ // octant 1
-				return ANG90 - 1 - angle;
+				return ANG90 - 1 - SlopeDiv(x, y);
 			}
 		}
 		else // y < 0
 		{
-			if (x > -y)
+			y = -y;
+			if (x > y)
 			{ // octant 8
-				return (angle_t)-(SDWORD)angle;
+				return 0 - SlopeDiv(y, x);
 			}
 			else
 			{ // octant 7
-				return ANG270 + angle;
+				return ANG270 + SlopeDiv(x, y);
 			}
 		}
 	}
 	else // x < 0
 	{
+		x = -x;
 		if (y >= 0)
 		{
-			if (-x > y)
+			if (x > y)
 			{ // octant 3
-				return ANG180 - 1 - angle;
+				return ANG180 - 1 - SlopeDiv(y, x);
 			}
 			else
 			{ // octant 2
-				return ANG90 + angle;
+				return ANG90 + SlopeDiv(x, y);
 			}
 		}
 		else // y < 0
 		{
-			if (x < y)
+			y = -y;
+			if (x > y)
 			{ // octant 4
-				return ANG180 + angle;
+				return ANG180 + SlopeDiv(y, x);
 			}
 			else
 			{ // octant 5
-				return ANG270 - 1 - angle;
+				return ANG270 - 1 - SlopeDiv(x, y);
 			}
 		}
 	}

@@ -105,21 +105,6 @@ inline angle_t abs (angle_t ang)
 //	without additional checking.
 extern angle_t			tantoangle[SLOPERANGE+1];
 
-
-// Utility function,
-//	called by R_PointToAngle.
-inline int SlopeDiv (unsigned int num, unsigned den)
-{
-	unsigned int ans;
-
-	if (den < 512)
-		return SLOPERANGE;
-
-	ans = (num << 3) / (den >> 8);
-
-	return ans <= SLOPERANGE ? ans : SLOPERANGE;
-}
-
 inline double bam2rad(angle_t ang)
 {
 	return double(ang >> 1) * (PI / ANGLE_90);

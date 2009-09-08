@@ -1,3 +1,11 @@
+September 8, 2009
+- Because entryway timed it, here is a new version of R_PointToAngle2 that is
+  closer to the original. The old code was shorter but a little slower. The
+  new code is a bit faster than the original with VC++ and about the same
+  with GCC. Interestingly, GCC produces code for Killough's version that
+  performs about the same as the original, but when compiled with VC++,
+  Killough's is notably worse.
+
 September 8, 2009  (Changes by Graf Zahl)
 - moved ENDOOM lump name definition into gameinfo.
 - moved default item drop style into gameinfo.

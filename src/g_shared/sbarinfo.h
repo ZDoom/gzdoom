@@ -270,6 +270,7 @@ enum //drawinventorybar flags
 	DRAWINVENTORYBAR_NOARROWS = 0x4,
 	DRAWINVENTORYBAR_ALWAYSSHOWCOUNTER = 0x8,
 	DRAWINVENTORYBAR_TRANSLUCENT = 0x10,
+	DRAWINVENTORYBAR_VERTICAL = 0x20,
 };
 
 enum //drawgem flags
@@ -404,7 +405,7 @@ private:
 	void DrawFace(const char *defaultFace, int accuracy, int stateflags, SBarInfoCoordinate x, SBarInfoCoordinate y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets);
 	int updateState(bool xdth, bool animatedgodmode);
 	void DrawInventoryBar(int type, int num, SBarInfoCoordinate x, SBarInfoCoordinate y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets, bool alwaysshow,
-		SBarInfoCoordinate counterx, SBarInfoCoordinate countery, EColorRange translation, bool drawArtiboxes, bool noArrows, bool alwaysshowcounter, int bgalpha);
+		SBarInfoCoordinate counterx, SBarInfoCoordinate countery, EColorRange translation, bool drawArtiboxes, bool noArrows, bool alwaysshowcounter, int bgalpha, bool vertical);
 	void DrawGem(FTexture* chain, FTexture* gem, int value, SBarInfoCoordinate x, SBarInfoCoordinate y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets, int padleft, int padright, int chainsize,
 		bool wiggle, bool translate);
 	FRemapTable* getTranslation();

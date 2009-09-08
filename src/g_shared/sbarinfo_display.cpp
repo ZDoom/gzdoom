@@ -765,6 +765,7 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 				bool artibox = true;
 				bool noarrows = false;
 				bool alwaysshowcounter = false;
+				bool vertical = false;
 				int bgalpha = alpha;
 				if((cmd.flags & DRAWINVENTORYBAR_ALWAYSSHOW))
 					alwaysshow = true;
@@ -776,11 +777,13 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 					alwaysshowcounter = true;
 				if(cmd.flags & DRAWINVENTORYBAR_TRANSLUCENT)
 					bgalpha = fixed_t((((double) alpha / (double) FRACUNIT) * ((double) HX_SHADOW / (double) FRACUNIT)) * FRACUNIT);
+				if((cmd.flags & DRAWINVENTORYBAR_VERTICAL))
+					vertical = true;
 				if(drawingFont != cmd.font)
 				{
 					drawingFont = cmd.font;
 				}
-				DrawInventoryBar(cmd.special, cmd.value, cmd.x, cmd.y, xOffset, yOffset, alpha, block.fullScreenOffsets, alwaysshow, cmd.sbcoord2, cmd.sbcoord3, cmd.translation, artibox, noarrows, alwaysshowcounter, bgalpha);
+				DrawInventoryBar(cmd.special, cmd.value, cmd.x, cmd.y, xOffset, yOffset, alpha, block.fullScreenOffsets, alwaysshow, cmd.sbcoord2, cmd.sbcoord3, cmd.translation, artibox, noarrows, alwaysshowcounter, bgalpha, vertical);
 				break;
 			}
 			case SBARINFO_DRAWBAR:
@@ -1650,11 +1653,15 @@ void DSBarInfo::DrawFace(const char *defaultFace, int accuracy, int stateflags, 
 }
 
 void DSBarInfo::DrawInventoryBar(int type, int num, SBarInfoCoordinate x, SBarInfoCoordinate y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets, bool alwaysshow,
-	SBarInfoCoordinate counterx, SBarInfoCoordinate countery, EColorRange translation, bool drawArtiboxes, bool noArrows, bool alwaysshowcounter, int bgalpha)
+	SBarInfoCoordinate counterx, SBarInfoCoordinate countery, EColorRange translation, bool drawArtiboxes, bool noArrows, bool alwaysshowcounter, int bgalpha, bool vertical)
 { //yes, there is some Copy & Paste here too
 	AInventory *item;
 	int i;
-	int spacing = (type != GAME_Strife) ? Images[invBarOffset + imgARTIBOX]->GetScaledWidth() + 1 : Images[invBarOffset + imgCURSOR]->GetScaledWidth() - 1;
+	int spacing = 0;
+	if(!vertical)
+		spacing = (type != GAME_Strife) ? Images[invBarOffset + imgARTIBOX]->GetScaledWidth() + 1 : Images[invBarOffset + imgCURSOR]->GetScaledWidth() - 1;
+	else
+		spacing = (type != GAME_Strife) ? Images[invBarOffset + imgARTIBOX]->GetScaledHeight() + 1 : Images[invBarOffset + imgCURSOR]->GetScaledHeight() - 1;
 
 	// If the player has no artifacts, don't draw the bar
 	CPlayer->mo->InvFirst = ValidateInvFirst(num);
@@ -1662,54 +1669,57 @@ void DSBarInfo::DrawInventoryBar(int type, int num, SBarInfoCoordinate x, SBarIn
 	{
 		for(item = CPlayer->mo->InvFirst, i = 0; item != NULL && i < num; item = item->NextInv(), ++i)
 		{
-			SBarInfoCoordinate rx = x + i*spacing;
+			SBarInfoCoordinate rx = x + (!vertical ? i*spacing : 0);
+			SBarInfoCoordinate ry = y + (vertical ? i*spacing : 0);
 			if(drawArtiboxes)
 			{
-				DrawGraphic(Images[invBarOffset + imgARTIBOX], rx, y, xOffset, yOffset, bgalpha, fullScreenOffsets);
+				DrawGraphic(Images[invBarOffset + imgARTIBOX], rx, ry, xOffset, yOffset, bgalpha, fullScreenOffsets);
 			}
 			if(type != GAME_Strife) //Strife draws the cursor before the icons
-				DrawGraphic(TexMan(item->Icon), rx, y, xOffset, yOffset, alpha, fullScreenOffsets, false, item->Amount <= 0);
+				DrawGraphic(TexMan(item->Icon), rx, ry, xOffset, yOffset, alpha, fullScreenOffsets, false, item->Amount <= 0);
 			if(item == CPlayer->mo->InvSel)
 			{
 				if(type == GAME_Heretic)
 				{
-					DrawGraphic(Images[invBarOffset + imgSELECTBOX], rx, y+29, xOffset, yOffset, alpha, fullScreenOffsets);
+					DrawGraphic(Images[invBarOffset + imgSELECTBOX], rx, ry+29, xOffset, yOffset, alpha, fullScreenOffsets);
 				}
 				else if(type == GAME_Hexen)
 				{
-					DrawGraphic(Images[invBarOffset + imgSELECTBOX], rx, y-1, xOffset, yOffset, alpha, fullScreenOffsets);
+					DrawGraphic(Images[invBarOffset + imgSELECTBOX], rx, ry-1, xOffset, yOffset, alpha, fullScreenOffsets);
 				}
 				else if(type == GAME_Strife)
 				{
-					DrawGraphic(Images[invBarOffset + imgCURSOR], rx-6, y-2, xOffset, yOffset, alpha, fullScreenOffsets);
+					DrawGraphic(Images[invBarOffset + imgCURSOR], rx-6, ry-2, xOffset, yOffset, alpha, fullScreenOffsets);
 				}
 				else
 				{
-					DrawGraphic(Images[invBarOffset + imgSELECTBOX], rx, y, xOffset, yOffset, alpha, fullScreenOffsets);
+					DrawGraphic(Images[invBarOffset + imgSELECTBOX], rx, ry, xOffset, yOffset, alpha, fullScreenOffsets);
 				}
 			}
 			if(type == GAME_Strife)
-				DrawGraphic(TexMan(item->Icon), rx, y, xOffset, yOffset, alpha, fullScreenOffsets, false, item->Amount <= 0);
+				DrawGraphic(TexMan(item->Icon), rx, ry, xOffset, yOffset, alpha, fullScreenOffsets, false, item->Amount <= 0);
 			if(alwaysshowcounter || item->Amount != 1)
 			{
-				DrawNumber(item->Amount, 3, counterx + (i*spacing), countery, xOffset, yOffset, alpha, fullScreenOffsets, translation);
+				DrawNumber(item->Amount, 3, counterx+(!vertical ? i*spacing : 0), countery+(vertical ? i*spacing : 0), xOffset, yOffset, alpha, fullScreenOffsets, translation);
 			}
 		}
 		for (; i < num && drawArtiboxes; ++i)
 		{
-			DrawGraphic(Images[invBarOffset + imgARTIBOX], x + (i*spacing), y, xOffset, yOffset, bgalpha, fullScreenOffsets);
+			DrawGraphic(Images[invBarOffset + imgARTIBOX], x + (!vertical ? (i*spacing) : 0), y + (vertical ? (i*spacing) : 0), xOffset, yOffset, bgalpha, fullScreenOffsets);
 		}
 		// Is there something to the left?
 		if (!noArrows && CPlayer->mo->FirstInv() != CPlayer->mo->InvFirst)
 		{
+			int offset = type != GAME_Strife ? -12 : 14;
 			DrawGraphic(Images[!(gametic & 4) ?
-				invBarOffset + imgINVLFGEM1 : invBarOffset + imgINVLFGEM2], x + ((type != GAME_Strife) ? -12 : -14), y, xOffset, yOffset, alpha, fullScreenOffsets);
+				invBarOffset + imgINVLFGEM1 : invBarOffset + imgINVLFGEM2], x + (!vertical ? offset : 0), y + (vertical ? offset : 0), xOffset, yOffset, alpha, fullScreenOffsets);
 		}
 		// Is there something to the right?
 		if (!noArrows && item != NULL)
 		{
+			int offset = type != GAME_Strife ? num*31+2 : num*35-4;
 			DrawGraphic(Images[!(gametic & 4) ?
-				invBarOffset + imgINVRTGEM1 : invBarOffset + imgINVRTGEM2], x + ((type != GAME_Strife) ? num*31+2 : num*35-4), y, xOffset, yOffset, alpha, fullScreenOffsets);
+				invBarOffset + imgINVRTGEM1 : invBarOffset + imgINVRTGEM2], x + (!vertical ? offset : 0), y + (vertical ? offset : 0), xOffset, yOffset, alpha, fullScreenOffsets);
 		}
 	}
 }

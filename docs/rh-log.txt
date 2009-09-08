@@ -1,3 +1,6 @@
+September 7, 2009
+- Applied vertical SBARINFO inventory bar patch.
+
 September 7, 2009  (Changes by Graf Zahl)
 - moved definition of games' default armor icons into gameinfo definition.
 - fixed: The PNG loader for true color textures overwrote the IDAT size with

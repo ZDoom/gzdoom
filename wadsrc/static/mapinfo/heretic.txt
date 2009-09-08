@@ -36,6 +36,10 @@ gameinfo
 	weaponslot = 7, "Mace"
 	dimcolor = "00 00 ff"
 	dimamount = 0.2
+	definventorymaxamount = 16
+	defaultrespawntime = 12
+	defaultdropstyle = 1
+	endoom = "ENDTEXT"
 }
 
 skill baby

@@ -326,7 +326,7 @@ int G_SkillProperty(ESkillProperty prop)
 
 		case SKILLP_Respawn:
 			if (dmflags & DF_MONSTERS_RESPAWN && AllSkills[gameskill].RespawnCounter==0) 
-				return TICRATE * (gameinfo.gametype != GAME_Strife ? 12 : 16);
+				return TICRATE * gameinfo.defaultrespawntime;
 			return AllSkills[gameskill].RespawnCounter;
 
 		case SKILLP_RespawnLimit:

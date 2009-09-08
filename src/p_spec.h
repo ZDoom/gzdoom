@@ -432,6 +432,7 @@ public:
 		platToggle,
 		platDownToNearestFloor,
 		platDownToLowestCeiling,
+		platRaiseAndStayLockout,
 	};
 
 	void Serialize (FArchive &arc);

@@ -276,6 +276,11 @@ void FMapInfoParser::ParseGameInfo()
 		GAMEINFOKEY_BOOL(intermissioncounter, "intermissioncounter")
 		GAMEINFOKEY_COLOR(dimcolor, "dimcolor")
 		GAMEINFOKEY_FLOAT(dimamount, "dimamount")
+		GAMEINFOKEY_INT(definventorymaxamount, "definventorymaxamount")
+		GAMEINFOKEY_INT(defaultrespawntime, "defaultrespawntime")
+		GAMEINFOKEY_INT(defaultrespawntime, "defaultrespawntime")
+		GAMEINFOKEY_INT(defaultdropstyle, "defaultdropstyle")
+		GAMEINFOKEY_CSTRING(Endoom, "endoom", 8)
 		else
 		{
 			// ignore unkown keys.

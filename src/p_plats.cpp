@@ -90,9 +90,9 @@ void DPlat::Tick ()
 
 				switch (m_Type)
 				{
+					case platRaiseAndStayLockout:
+						break;
 					case platRaiseAndStay:
-						if (gameinfo.gametype == GAME_Heretic)
-							break;
 					case platDownByValue:
 					case platDownWaitUpStay:
 					case platDownWaitUpStayStone:
@@ -157,6 +157,7 @@ void DPlat::Tick ()
 		{
 			case platUpByValueStay:
 			case platRaiseAndStay:
+			case platRaiseAndStayLockout:
 				Destroy ();
 			default:
 				break;
@@ -268,6 +269,7 @@ manual_plat:
 		switch (type)
 		{
 		case DPlat::platRaiseAndStay:
+		case DPlat::platRaiseAndStayLockout:
 			newheight = sec->FindNextHighestFloor (&spot);
 			plat->m_High = sec->floorplane.PointToDist (spot, newheight);
 			plat->m_Low = sec->floorplane.d;

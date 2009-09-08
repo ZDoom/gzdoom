@@ -1090,10 +1090,12 @@ void ST_Endoom()
 {
 	if (showendoom == 0) exit(0);
 
-	int endoom_lump = Wads.CheckNumForName (
-		gameinfo.gametype & GAME_DoomChex ? "ENDOOM" : 
-		gameinfo.gametype == GAME_Heretic? "ENDTEXT" :
-		gameinfo.gametype == GAME_Strife? "ENDSTRF" : NULL);
+	if (gameinfo.Endoom[0] == 0) 
+	{
+		exit(0);
+	}
+
+	int endoom_lump = Wads.CheckNumForName (gameinfo.Endoom);
 
 	BYTE endoom_screen[4000];
 	BYTE *font;

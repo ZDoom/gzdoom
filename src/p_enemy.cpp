@@ -2558,7 +2558,7 @@ AInventory *P_DropItem (AActor *source, const PClass *type, int dropamount, int 
 void P_TossItem (AActor *item)
 {
 	int style = sv_dropstyle;
-	if (style==0) style= (gameinfo.gametype == GAME_Strife)? 2:1;
+	if (style==0) style= gameinfo.defaultdropstyle;
 	
 	if (style==2)
 	{

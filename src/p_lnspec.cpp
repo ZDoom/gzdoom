@@ -698,9 +698,25 @@ FUNC(LS_Plat_UpNearestWaitDownStay)
 }
 
 FUNC(LS_Plat_RaiseAndStayTx0)
-// Plat_RaiseAndStayTx0 (tag, speed)
+// Plat_RaiseAndStayTx0 (tag, speed, lockout)
 {
-	return EV_DoPlat (arg0, ln, DPlat::platRaiseAndStay, 0, SPEED(arg1), 0, 0, 1);
+	DPlat::EPlatType type;
+
+	switch (arg3)
+	{
+		case 1:
+			type = DPlat::platRaiseAndStay;
+			break;
+		case 2:
+			type = DPlat::platRaiseAndStayLockout;
+			break;
+		default:
+			type = gameinfo.gametype == GAME_Heretic? DPlat::platRaiseAndStayLockout : DPlat::platRaiseAndStay;
+			break;
+	}
+
+
+	return EV_DoPlat (arg0, ln, type, 0, SPEED(arg1), 0, 0, 1);
 }
 
 FUNC(LS_Plat_UpByValueStayTx)

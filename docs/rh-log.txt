@@ -1,3 +1,11 @@
+September 8, 2009  (Changes by Graf Zahl)
+- moved ENDOOM lump name definition into gameinfo.
+- moved default item drop style into gameinfo.
+- moved default respawn time into gameinfo.
+- moved default inventory max amount into gameinfo.
+- turned Heretic's blocking of the sector for LS_Plat_RaiseAndStayTx0 into
+  a parameter instead of having the game mode decide. 
+
 September 7, 2009
 - Applied vertical SBARINFO inventory bar patch.
 

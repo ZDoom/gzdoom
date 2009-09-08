@@ -86,6 +86,7 @@ struct gameinfo_t
 	char SkyFlatName[9];
 	char ArmorIcon1[9];
 	char ArmorIcon2[9];
+	char Endoom[9];
 	fixed_t Armor2Percent;
 	FString quitSound;
 	gameborder_t *border;
@@ -99,6 +100,9 @@ struct gameinfo_t
 	FString intermissionMusic;
 	DWORD dimcolor;
 	float dimamount;
+	int definventorymaxamount;
+	int defaultrespawntime;
+	int defaultdropstyle;
 
 	const char *GetFinalePage(unsigned int num) const;
 };

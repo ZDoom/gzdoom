@@ -10,7 +10,7 @@ set( ZDOOM_OUTPUT_DIR ${CMAKE_BINARY_DIR} CACHE PATH "Directory where zdoom.pk3 
 set( ZDOOM_EXE_NAME "zdoom" CACHE FILEPATH "Name of the executable to create." )
 
 if( CMAKE_COMPILER_IS_GNUCXX )
-	set( PROFILE CACHE 0 BOOL "Enable profiling with gprof for Debug and RelWithDebInfo build types." )
+	set( PROFILE 0 CACHE BOOL "Enable profiling with gprof for Debug and RelWithDebInfo build types." )
 endif( CMAKE_COMPILER_IS_GNUCXX )
 
 find_package( BZip2 )

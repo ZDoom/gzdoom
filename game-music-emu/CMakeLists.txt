@@ -2,7 +2,9 @@ cmake_minimum_required( VERSION 2.4 )
 include( CheckCXXCompilerFlag )
 
 # I don't plan on debugging this, so make it a release build.
-set( CMAKE_BUILD_TYPE "RelWithDebInfo" )
+if( NOT CMAKE_BUILD_TYPE MATCHES "Release" )
+	set( CMAKE_BUILD_TYPE "RelWithDebInfo" )
+endif( NOT CMAKE_BUILD_TYPE MATCHES "Release" )
 
 if( CMAKE_COMPILER_IS_GNUCXX )
 	set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall" )

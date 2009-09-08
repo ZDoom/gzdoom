@@ -3,7 +3,9 @@ cmake_minimum_required( VERSION 2.4 )
 # DUMB is much slower in a Debug build than a Release build, so we force a Release
 # build here, since we're not maintaining DUMB, only using it.
 # Comment out the below line to allow Debug builds.
-set( CMAKE_BUILD_TYPE "RelWithDebInfo" )
+if( NOT CMAKE_BUILD_TYPE MATCHES "Release" )
+	set( CMAKE_BUILD_TYPE "RelWithDebInfo" )
+endif( NOT CMAKE_BUILD_TYPE MATCHES "Release" )
 
 set( CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -D_DEBUG -DDEBUGMODE=1" )
 

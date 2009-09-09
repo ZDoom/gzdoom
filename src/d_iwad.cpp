@@ -398,34 +398,6 @@ static int CheckIWAD (const char *doomwaddir, WadStuff *wads)
 
 //==========================================================================
 //
-// CheckIWADinEnvDir
-//
-// Checks for an IWAD in a path that contains one or more environment
-// variables.
-//
-//==========================================================================
-
-static int CheckIWADinEnvDir (const char *str, WadStuff *wads)
-{
-	FString expanded = ExpandEnvVars (str);
-
-	if (!expanded.IsEmpty())
-	{
-		char *dir = expanded.LockBuffer ();
-		FixPathSeperator (dir);
-		expanded.UnlockBuffer ();
-		if (expanded[expanded.Len() - 1] != '/')
-		{
-			expanded += '/';
-		}
-		return CheckIWAD (expanded, wads);
-	}
-	return false;
-}
-
-
-//==========================================================================
-//
 // IdentifyVersion
 //
 // Tries to find an IWAD in one of four directories under DOS or Win32:
@@ -484,21 +456,10 @@ static EIWADType IdentifyVersion (const char *zdoom_wad)
 			{
 				if (stricmp (key, "Path") == 0)
 				{
-					if (strchr (value, '$') != NULL)
-					{
-						CheckIWADinEnvDir (value, wads);
-					}
-#ifdef unix
-					else if (*value == '~' && (*(value + 1) == 0 || *(value + 1) == '/'))
-					{
-						FString homepath = GetUserFile (*(value + 1) ? value + 2 : value + 1, true);
-						CheckIWAD (homepath, wads);
-					}
-#endif
-					else
-					{
-						CheckIWAD (value, wads);
-					}
+					FString nice = NicePath(value);
+					FixPathSeperator(nice.LockBuffer());
+					nice.UnlockBuffer();
+					CheckIWAD(nice, wads);
 				}
 			}
 		}

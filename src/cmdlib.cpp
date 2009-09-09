@@ -512,12 +512,17 @@ void CreatePath(const char *fn)
 		{
 			*p = '\0';
 		}
-		printf("%s\n", copy);
+		struct stat info;
+		if (stat(copy, &info) == 0)
+		{
+			if (info.st_mode & S_IFDIR)
+				goto exists;
+		}
 		if (mkdir(copy, 0755) == -1)
 		{ // failed
 			return;
 		}
-		if (p != NULL)
+exists:	if (p != NULL)
 		{
 			*p = '/';
 		}

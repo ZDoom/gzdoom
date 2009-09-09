@@ -78,6 +78,9 @@ EXTERN_CVAR (Bool, wi_percents)
 
 FGameConfigFile::FGameConfigFile ()
 {
+#ifdef __APPLE__
+	FString user_docs, user_app_support, local_app_support;
+#endif
 	FString pathname;
 	
 	bMigrating = false;
@@ -102,11 +105,38 @@ FGameConfigFile::FGameConfigFile ()
 		SetSection ("IWADSearch.Directories", true);
 		SetValueForKey ("Path", ".", true);
 		SetValueForKey ("Path", "$DOOMWADDIR", true);
-#ifndef unix
+#ifdef __APPLE__
+		char cpath[PATH_MAX];
+		FSRef folder;
+		
+		if (noErr == FSFindFolder(kUserDomain, kDocumentsFolderType, kCreateFolder, &folder) &&
+			noErr == FSRefMakePath(&folder, (UInt8*)cpath, PATH_MAX))
+		{
+			user_docs << cpath << "/" GAME_DIR;
+			SetValueForKey("Path", user_docs, true);
+		}
+		else
+		{
+			SetValueForKey("Path", "~/" GAME_DIR, true);
+		}
+		if (noErr == FSFindFolder(kUserDomain, kApplicationSupportFolderType, kCreateFolder, &folder) &&
+			noErr == FSRefMakePath(&folder, (UInt8*)cpath, PATH_MAX))
+		{
+			user_app_support << cpath << "/" GAME_DIR;
+			SetValueForKey("Path", user_app_support, true);
+		}
+		SetValueForKey ("Path", "$PROGDIR", true);
+		if (noErr == FSFindFolder(kLocalDomain, kApplicationSupportFolderType, kCreateFolder, &folder) &&
+			noErr == FSRefMakePath(&folder, (UInt8*)cpath, PATH_MAX))
+		{
+			local_app_support << cpath << "/" GAME_DIR;
+			SetValueForKey("Path", local_app_support, true);
+		}
+#elif !defined(unix)
 		SetValueForKey ("Path", "$HOME", true);
 		SetValueForKey ("Path", "$PROGDIR", true);
 #else
-		SetValueForKey ("Path", HOME_DIR, true);
+		SetValueForKey ("Path", "~/" GAME_DIR, true);
 		SetValueForKey ("Path", SHARE_DIR, true);
 #endif
 	}
@@ -115,7 +145,12 @@ FGameConfigFile::FGameConfigFile ()
 	if (!SetSection ("FileSearch.Directories"))
 	{
 		SetSection ("FileSearch.Directories", true);
-#ifndef unix
+#ifdef __APPLE__
+		SetValueForKey ("Path", user_docs, true);
+		SetValueForKey ("Path", user_app_support, true);
+		SetValueForKey ("Path", "$PROGDIR", true);
+		SetValueForKey ("Path", local_app_support, true);
+#elif !defined(unix)
 		SetValueForKey ("Path", "$PROGDIR", true);
 #else
 		SetValueForKey ("Path", SHARE_DIR, true);
@@ -576,7 +611,16 @@ void FGameConfigFile::CreateStandardAutoExec(const char *section, bool start)
 	if (!SetSection(section))
 	{
 		FString path;
-#ifndef unix
+#ifdef __APPLE__
+		char cpath[PATH_MAX];
+		FSRef folder;
+		
+		if (noErr == FSFindFolder(kUserDomain, kDocumentsFolderType, kCreateFolder, &folder) &&
+			noErr == FSRefMakePath(&folder, (UInt8*)cpath, PATH_MAX))
+		{
+			path << cpath << "/" GAME_DIR "/autoexec.cfg";
+		}
+#elif !defined(unix)
 		path = "$PROGDIR/autoexec.cfg";
 #else
 		path = GetUserFile ("autoexec.cfg");

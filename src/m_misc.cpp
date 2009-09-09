@@ -31,6 +31,9 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <time.h>
+#ifdef __APPLE__
+#include <CoreServices/CoreServices.h>
+#endif
 
 #include "doomtype.h"
 #include "version.h"
@@ -299,33 +302,25 @@ static long ParseCommandLine (const char *args, int *argc, char **argv)
 
 
 #if defined(unix)
-FString GetUserFile (const char *file, bool nodir)
+FString GetUserFile (const char *file)
 {
 	FString path;
+	struct stat info;
 
-	if (nodir)
+	path = NicePath("~/" GAME_DIR "/");
+	if (stat (path, &info) == -1)
 	{
-		path = NicePath("~/");
+		if (mkdir (path, S_IRUSR | S_IWUSR | S_IXUSR) == -1)
+		{
+			I_FatalError ("Failed to create %s directory:\n%s",
+				path.GetChars(), strerror (errno));
+		}
 	}
 	else
 	{
-		struct stat info;
-
-		path = NicePath("~/" GAME_DIR "/");
-		if (stat (path, &info) == -1)
+		if (!S_ISDIR(info.st_mode))
 		{
-			if (mkdir (path, S_IRUSR | S_IWUSR | S_IXUSR) == -1)
-			{
-				I_FatalError ("Failed to create %s directory:\n%s",
-					path.GetChars(), strerror (errno));
-			}
-		}
-		else
-		{
-			if (!S_ISDIR(info.st_mode))
-			{
-				I_FatalError ("%s must be a directory", path.GetChars());
-			}
+			I_FatalError ("%s must be a directory", path.GetChars());
 		}
 	}
 	path += file;
@@ -638,7 +633,7 @@ void M_ScreenShot (const char *filename)
 	// find a file name to save it to
 	if (filename == NULL || filename[0] == '\0')
 	{
-#ifndef unix
+#if !defined(unix) && !defined(__APPLE__)
 		if (Args->CheckParm ("-cdrom"))
 		{
 			autoname = CDROM_DIR "\\";
@@ -652,11 +647,24 @@ void M_ScreenShot (const char *filename)
 			{
 				autoname = screenshot_dir;
 			}
-			dirlen = strlen(autoname);
+			dirlen = autoname.Len();
 			if (dirlen == 0)
 			{
 #ifdef unix
 				autoname = "~/.zdoom/screenshots/";
+#elif defined(__APPLE__)
+				char cpath[PATH_MAX];
+				FSRef folder;
+				
+				if (noErr == FSFindFolder(kUserDomain, kDocumentsFolderType, kCreateFolder, &folder) &&
+					noErr == FSRefMakePath(&folder, (UInt8*)cpath, PATH_MAX))
+				{
+					autoname << cpath << "/" GAME_DIR "/Screenshots/";
+				}
+				else
+				{
+					autoname = "~";
+				}
 #else
 				autoname = progdir;
 #endif

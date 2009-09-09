@@ -1,3 +1,9 @@
+September 9, 2009
+- Look for files in Mac-like places on Macs.
+- Fixed: The non-Windows CreatePath can fail if part of the path already
+  exists, because mkdir will return an error code for trying to recreate
+  an existing directory.
+
 September 8, 2009
 - Because entryway timed it, here is a new version of R_PointToAngle2 that is
   closer to the original. The old code was shorter but a little slower. The

@@ -27,6 +27,9 @@
 #include <stdio.h>
 #include <stddef.h>
 #include <time.h>
+#ifdef __APPLE__
+#include <CoreServices/CoreServices.h>
+#endif
 
 #include "templates.h"
 #include "version.h"
@@ -1812,7 +1815,7 @@ FString G_BuildSaveName (const char *prefix, int slot)
 	leader = Args->CheckValue ("-savedir");
 	if (leader.IsEmpty())
 	{
-#ifndef unix
+#if !defined(unix) && !defined(__APPLE__)
 		if (Args->CheckParm ("-cdrom"))
 		{
 			leader = CDROM_DIR "/";
@@ -1826,6 +1829,18 @@ FString G_BuildSaveName (const char *prefix, int slot)
 		if (leader.IsEmpty())
 		{
 			leader = "~/" GAME_DIR;
+		}
+#elif defined(__APPLE__)
+		if (leader.IsEmpty())
+		{
+			char cpath[PATH_MAX];
+			FSRef folder;
+
+			if (noErr == FSFindFolder(kUserDomain, kDocumentsFolderType, kCreateFolder, &folder) &&
+				noErr == FSRefMakePath(&folder, (UInt8*)cpath, PATH_MAX))
+			{
+				leader << cpath << "/" GAME_DIR "/Savegames/";
+			}
 		}
 #endif
 	}

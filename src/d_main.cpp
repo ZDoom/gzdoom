@@ -1426,34 +1426,12 @@ static const char *BaseFileSearch (const char *file, const char *ext, bool lookf
 		{
 			if (stricmp (key, "Path") == 0)
 			{
-				const char *dir;
-				FString homepath;
+				FString dir;
 
-				if (*value == '$')
+				dir = NicePath(value);
+				if (dir.IsNotEmpty())
 				{
-					if (stricmp (value + 1, "progdir") == 0)
-					{
-						dir = progdir;
-					}
-					else
-					{
-						dir = getenv (value + 1);
-					}
-				}
-#ifdef unix
-				else if (*value == '~' && (*(value + 1) == 0 || *(value + 1) == '/'))
-				{
-					homepath = GetUserFile (*(value + 1) ? value + 2 : value + 1, true);
-					dir = homepath;
-				}
-#endif
-				else
-				{
-					dir = value;
-				}
-				if (dir != NULL)
-				{
-					mysnprintf (wad, countof(wad), "%s%s%s", dir, dir[strlen (dir) - 1] != '/' ? "/" : "", file);
+					mysnprintf (wad, countof(wad), "%s%s%s", dir.GetChars(), dir[dir.Len() - 1] != '/' ? "/" : "", file);
 					if (DirEntryExists (wad))
 					{
 						return wad;
@@ -1862,7 +1840,7 @@ void D_DoomMain (void)
 		Printf ("%s", GStrings("D_DEVSTR"));
 	}
 
-#ifndef unix
+#if !defined(unix) && !defined(__APPLE__)
 	// We do not need to support -cdrom under Unix, because all the files
 	// that would go to c:\\zdoomdat are already stored in .zdoom inside
 	// the user's home directory.

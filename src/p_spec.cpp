@@ -1311,7 +1311,7 @@ DScroller::DScroller (fixed_t dx, fixed_t dy, const line_t *l,
 
 // Amount (dx,dy) vector linedef is shifted right to get scroll amount
 #define SCROLL_SHIFT 5
-#define SCROLLTYPE(i) ((i)<=0 ? 7:(i))
+#define SCROLLTYPE(i) (((i) <= 0) || ((i) & ~7) ? 7 : (i))
 
 // Initialize the scrollers
 static void P_SpawnScrollers(void)

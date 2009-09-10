@@ -1,3 +1,8 @@
+September 10, 2009
+- Changed the SCROLLTYPE define so that any extra bits set cause it to default
+  to 7. This effects action.wad, MAP02, lines 12054 and 12059, which had them
+  at 128, so they no longer scrolled in r832+.
+
 September 9, 2009
 - Look for files in Mac-like places on Macs.
 - Fixed: The non-Windows CreatePath can fail if part of the path already

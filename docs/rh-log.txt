@@ -1,4 +1,7 @@
 September 10, 2009
+- Fixed: If a damaged actor has negative mass, it needs to have its damage
+  thrust set to maximum instead of 0. See Action Doom's broken glass
+  "CommanderKeens".
 - Changed the SCROLLTYPE define so that any extra bits set cause it to default
   to 7. This effects action.wad, MAP02, lines 12054 and 12059, which had them
   at 128, so they no longer scrolled in r832+.

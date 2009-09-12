@@ -3193,18 +3193,29 @@ lnSpecFunc LineSpecials[256] =
 	LS_Ceiling_CrushRaiseAndStaySilA
 };
 
-struct FLineSpecial
-{
-	const char *name;
-	BYTE number;
-	SBYTE min_args;
-	SBYTE max_args;
-};
-
-#define DEFINE_SPECIAL(name, num, min, max) {#name, num, min, max},
-static FLineSpecial LineSpecialNames[]={
+#define DEFINE_SPECIAL(name, num, min, max, mmax) {#name, num, min, max, mmax},
+static FLineSpecial LineSpecialNames[] = {
 #include "actionspecials.h"
 };
+const FLineSpecial *LineSpecialsInfo[256];
+
+static int STACK_ARGS lscmp (const void * a, const void * b)
+{
+	return stricmp( ((FLineSpecial*)a)->name, ((FLineSpecial*)b)->name);
+}
+
+static struct InitLineSpecials
+{
+	InitLineSpecials()
+	{
+		qsort(LineSpecialNames, countof(LineSpecialNames), sizeof(FLineSpecial), lscmp);
+		for (size_t i = 0; i < countof(LineSpecialNames); ++i)
+		{
+			assert(LineSpecialsInfo[LineSpecialNames[i].number] == NULL);
+			LineSpecialsInfo[LineSpecialNames[i].number] = &LineSpecialNames[i];
+		}
+	}
+} DoInit;
 
 //==========================================================================
 //
@@ -3213,22 +3224,9 @@ static FLineSpecial LineSpecialNames[]={
 // Finds a line special and also returns the min and max argument count.
 //
 //==========================================================================
-static int STACK_ARGS lscmp (const void * a, const void * b)
-{
-	return stricmp( ((FLineSpecial*)a)->name, ((FLineSpecial*)b)->name);
-}
-
 
 int P_FindLineSpecial (const char *string, int *min_args, int *max_args)
 {
-	static bool sorted=false;
-
-	if (!sorted)
-	{
-		qsort(LineSpecialNames, countof(LineSpecialNames), sizeof(FLineSpecial), lscmp);
-		sorted = true;
-	}
-
 	int min = 0, max = countof(LineSpecialNames) - 1;
 
 	while (min <= max)
@@ -3252,4 +3250,3 @@ int P_FindLineSpecial (const char *string, int *min_args, int *max_args)
 	}
 	return 0;
 }
-

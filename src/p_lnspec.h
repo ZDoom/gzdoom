@@ -37,11 +37,22 @@
 
 #include "doomtype.h"
 
-#define DEFINE_SPECIAL(name, num, min, max) name = num,
+#define DEFINE_SPECIAL(name, num, min, max, map) name = num,
 
 typedef enum {
 #include "actionspecials.h"
 } linespecial_t;
+
+struct FLineSpecial
+{
+	const char *name;
+	BYTE number;
+	SBYTE min_args;
+	SBYTE max_args;
+	BYTE map_args;
+};
+
+extern const FLineSpecial *LineSpecialsInfo[256];
 
 typedef enum {
 	Init_Gravity = 0,

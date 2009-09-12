@@ -1,3 +1,10 @@
+September 11, 2009
+- Added warning messages when loading maps that have non-zero values in
+  unused line argument fields, because these maps could potentially break
+  in the future if the argument is later assigned a meaning. (Hopefully
+  all the argument counts in actionspecials.h are accurate. I found a
+  few that were wrong.)
+
 September 10, 2009
 - Fixed: If a damaged actor has negative mass, it needs to have its damage
   thrust set to maximum instead of 0. See Action Doom's broken glass

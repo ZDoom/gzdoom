@@ -972,7 +972,8 @@ void P_SpawnSpecials (void)
 	P_SpawnFriction();	// phares 3/12/98: New friction model using linedefs
 	P_SpawnPushers();	// phares 3/20/98: New pusher model using linedefs
 
-	for (i=0; i<numlines; i++)
+	for (i = 0; i < numlines; i++)
+	{
 		switch (lines[i].special)
 		{
 			int s;
@@ -1090,7 +1091,7 @@ void P_SpawnSpecials (void)
 			}
 			break;
 		}
-
+	}
 	// [RH] Start running any open scripts on this map
 	FBehavior::StaticStartTypedScripts (SCRIPT_Open, NULL, false);
 }
@@ -1325,6 +1326,21 @@ static void P_SpawnScrollers(void)
 		fixed_t dy;
 		int control = -1, accel = 0;		// no control sector or acceleration
 		int special = l->special;
+
+		// Check for undefined parameters that are non-zero and output messages for them.
+		// We don't report for specials we don't understand.
+		if (special != 0)
+		{
+			int max = LineSpecialsInfo[special] != NULL ? LineSpecialsInfo[special]->map_args : countof(l->args);
+			for (int arg = max; arg < countof(l->args); ++arg)
+			{
+				if (l->args[arg] != 0)
+				{
+					Printf("Line %d (type %d:%s), arg %d is %d (should be 0)\n",
+						i, special, LineSpecialsInfo[special]->name, arg+1, l->args[arg]);
+				}
+			}
+		}
 
 		// killough 3/7/98: Types 245-249 are same as 250-254 except that the
 		// first side's sector's heights cause scrolling when they change, and

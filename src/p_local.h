@@ -380,10 +380,12 @@ void	P_FakeZMovement (AActor *mo);
 bool	P_TryMove (AActor* thing, fixed_t x, fixed_t y, bool dropoff, const secplane_t * onfloor, FCheckPosition &tm);
 bool	P_TryMove (AActor* thing, fixed_t x, fixed_t y, bool dropoff, const secplane_t * onfloor = NULL);
 bool	P_CheckMove(AActor *thing, fixed_t x, fixed_t y);
+void	P_ApplyTorque(AActor *mo);
 bool	P_TeleportMove (AActor* thing, fixed_t x, fixed_t y, fixed_t z, bool telefrag);	// [RH] Added z and telefrag parameters
 void	P_PlayerStartStomp (AActor *actor);		// [RH] Stomp on things for a newly spawned player
 void	P_SlideMove (AActor* mo, fixed_t tryx, fixed_t tryy, int numsteps);
 bool	P_BounceWall (AActor *mo);
+bool	P_BounceActor (AActor *mo, AActor * BlockingMobj);
 bool	P_CheckSight (const AActor* t1, const AActor* t2, int flags=0);
 void	P_ResetSightCounters (bool full);
 void	P_UseLines (player_t* player);

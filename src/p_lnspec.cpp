@@ -3250,13 +3250,3 @@ int P_FindLineSpecial (const char *string, int *min_args, int *max_args)
 	}
 	return 0;
 }
-
-const char *GetSpecialName(int num)
-{
-	for(int i = 0; i < countof(LineSpecialNames); i++)
-	{
-		if (LineSpecialNames[i].number == num)
-			return LineSpecialNames[i].name;
-	}
-	return "(unknown)";
-}

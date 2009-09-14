@@ -360,7 +360,7 @@ StateMap
 	BloodyTwitch,		Spawn, 4,	// S_BLOODYTWITCH - S_BLOODYTWITCH4
 	DoomUnusedStates,	Label2, 2,	// S_DEADTORSO - S_DEADBOTTOM
 	HeadsOnAStick,		Spawn, 1,	// S_HEADSONSTICK
-	RealGibs,			Spawn, 1,	// S_GIBS
+	Actor,				GenericCrush, 1,	// S_GIBS
 	HeadOnAStick,		Spawn, 1,	// S_HEADONASTICK
 	HeadCandles,		Spawn, 2,	// S_HEADCANDLES - S_HEADCANDLES2
 	DeadStick,			Spawn, 1,	// S_DEADSTICK

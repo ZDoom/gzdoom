@@ -499,16 +499,22 @@ CUSTOM_CVAR(Int, compatmode, 0, CVAR_ARCHIVE|CVAR_NOINITCALL)
 	case 2:	// same as 1 but stricter (NO_PASSMOBJ and INVISIBILITY are also set)
 		v = COMPATF_SHORTTEX|COMPATF_STAIRINDEX|COMPATF_USEBLOCKING|COMPATF_NODOORLIGHT|
 			COMPATF_TRACE|COMPATF_MISSILECLIP|COMPATF_SOUNDTARGET|COMPATF_NO_PASSMOBJ|COMPATF_LIMITPAIN|
-			COMPATF_DEHHEALTH|COMPATF_INVISIBILITY|COMPATF_CROSSDROPOFF;
+			COMPATF_DEHHEALTH|COMPATF_INVISIBILITY|COMPATF_CROSSDROPOFF|COMPATF_CORPSEGIBS;
 		break;
 
-	case 3:
-		v = COMPATF_TRACE|COMPATF_SOUNDTARGET|COMPATF_BOOMSCROLL|COMPATF_MUSHROOM;
+	case 3: // Boom compat mode
+		v = COMPATF_TRACE|COMPATF_SOUNDTARGET|COMPATF_BOOMSCROLL;
 		break;
 
-	case 4:
+	case 4: // Old ZDoom compat mode
 		v = COMPATF_SOUNDTARGET;
 		break;
+
+	case 5: // MBF compat mode
+		v = COMPATF_TRACE|COMPATF_SOUNDTARGET|COMPATF_BOOMSCROLL|COMPATF_MUSHROOM|
+			COMPATF_MBFDEHACKED|COMPATF_MBFTORQUE|COMPATF_MBFMONSTERMOVE|COMPATF_NOBLOCKFRIENDS;
+		break;
+
 	}
 	compatflags = v;
 }
@@ -537,6 +543,11 @@ CVAR (Flag, compat_crossdropoff,compatflags, COMPATF_CROSSDROPOFF);
 CVAR (Flag, compat_anybossdeath,compatflags, COMPATF_ANYBOSSDEATH);
 CVAR (Flag, compat_minotaur,	compatflags, COMPATF_MINOTAUR);
 CVAR (Flag, compat_mushroom,	compatflags, COMPATF_MUSHROOM);
+CVAR (Flag, compat_mbfdehacked,	compatflags, COMPATF_MBFDEHACKED);
+CVAR (Flag, compat_mbftorque,	compatflags, COMPATF_MBFTORQUE);
+CVAR (Flag, compat_mbfmonstermove,compatflags, COMPATF_MBFMONSTERMOVE);
+CVAR (Flag, compat_corpsegibs,	compatflags, COMPATF_CORPSEGIBS);
+CVAR (Flag, compat_noblockfriends,compatflags,COMPATF_NOBLOCKFRIENDS);
 
 //==========================================================================
 //

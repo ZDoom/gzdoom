@@ -883,7 +883,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 	FState * woundstate = NULL;
 	PainChanceList * pc = NULL;
 
-	if (target == NULL || !(target->flags & MF_SHOOTABLE))
+	if (target == NULL || !((target->flags & MF_SHOOTABLE) || (target->flags6 & MF6_VULNERABLE)))
 	{ // Shouldn't happen
 		return;
 	}

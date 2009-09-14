@@ -118,7 +118,7 @@ Thing_SetSprite, 126, -1, -1)
 #endif
 DEFINE_SPECIAL(Thing_SetSpecial, 127, 5, 5, 5)
 DEFINE_SPECIAL(ThrustThingZ, 128, 4, 4, 4)
-DEFINE_SPECIAL(UsePuzzleItem, 129, 1, 1, 1)
+DEFINE_SPECIAL(UsePuzzleItem, 129, 2, 5, 5)
 DEFINE_SPECIAL(Thing_Activate, 130, 1, 1, 1)
 DEFINE_SPECIAL(Thing_Deactivate, 131, 1, 1, 1)
 DEFINE_SPECIAL(Thing_Remove, 132, 1, 1, 1)

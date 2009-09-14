@@ -1737,7 +1737,17 @@ void DPusher::Tick ()
 
 		while ((thing = it.Next()))
 		{
-			if ((thing->flags2 & MF2_WINDTHRUST) && !(thing->flags & MF_NOCLIP))
+			// Normal ZDoom is based only on the WINDTHRUST flag, with the noclip cheat as an exemption.
+			bool pusharound = ((thing->flags2 & MF2_WINDTHRUST) && !(thing->flags & MF_NOCLIP));
+					
+			// MBF allows any sentient or shootable thing to be affected, but players with a fly cheat aren't.
+			if (compatflags & COMPATF_MBFMONSTERMOVE)
+			{
+				pusharound = ((pusharound || (thing->IsSentient()) || (thing->flags & MF_SHOOTABLE)) // Add categories here
+					&& (!(thing->player && (thing->flags & (MF_NOGRAVITY))))); // Exclude flying players here
+			}
+
+			if ((pusharound) )
 			{
 				int sx = m_X;
 				int sy = m_Y;

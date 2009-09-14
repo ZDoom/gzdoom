@@ -1,5 +1,8 @@
 September 14, 2009  (Changes by Graf Zahl)
+- Fixed: Argument count for UsePuzzleItem was wrong.
 - Added a few things from Gez's experimental build:
+  * MBF grenade and bouncing code.
+  * several compatibility options.
   * info CCMD to print extended actor information (not fully implemented yet)
   * summonmbf CCMD.
   * Beta BFG code pointer (but not the related missiles yet.)

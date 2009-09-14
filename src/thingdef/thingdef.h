@@ -48,6 +48,8 @@ enum EStateDefineFlags
 	SDF_WAIT = 3,
 	SDF_LABEL = 4,
 	SDF_INDEX = 5,
+	SDF_MASK = 7,
+	SDF_DEHACKED = 8,	// Identify a state as having been modified by a dehacked lump
 };
 
 struct FStateDefine

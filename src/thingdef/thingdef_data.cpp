@@ -214,6 +214,10 @@ static FFlagDef ActorFlags[]=
 	DEFINE_FLAG(MF6, DONTHARMSPECIES, AActor, flags6),
 	DEFINE_FLAG(MF6, STEPMISSILE, AActor, flags6),
 	DEFINE_FLAG(MF6, NOTELEFRAG, AActor, flags6),
+	DEFINE_FLAG(MF6, TOUCHY, AActor, flags6),
+	DEFINE_FLAG(MF6, CANJUMP, AActor, flags6),
+	DEFINE_FLAG(MF6, JUMPDOWN, AActor, flags6),
+	DEFINE_FLAG(MF6, VULNERABLE, AActor, flags6),
 
 	// Effect flags
 	DEFINE_FLAG(FX, VISIBILITYPULSE, AActor, effects),

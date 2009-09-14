@@ -320,7 +320,12 @@ enum
 	COMPATF_CROSSDROPOFF	= 1 << 20,	// monsters can't be pushed over dropoffs
 	COMPATF_ANYBOSSDEATH	= 1 << 21,	// [GZ] Any monster which calls BOSSDEATH counts for level specials
 	COMPATF_MINOTAUR		= 1 << 22,	// Minotaur's floor flame is exploded immediately when feet are clipped
-	COMPATF_MUSHROOM		= 1 << 23,	// Force original velocity calculations for A_Mushroom in Dehacked oods.
+	COMPATF_MUSHROOM		= 1 << 23,	// Force original velocity calculations for A_Mushroom in Dehacked mods.
+	COMPATF_MBFDEHACKED		= 1 << 24,	// Allow a state's miscs to be out of offset ranges, for use as params.
+	COMPATF_MBFTORQUE		= 1 << 25,	// Uses MBF-style pseudo torque simulation.
+	COMPATF_MBFMONSTERMOVE	= 1 << 26,	// Monsters are affected by friction and pushers/pullers.
+	COMPATF_CORPSEGIBS		= 1 << 27,	// Crushed monsters are turned into gibs, rather than replaced by gibs.
+	COMPATF_NOBLOCKFRIENDS	= 1 << 28,	// Friendly monsters aren't blocked by monster-blocking lines.
 };
 
 // Emulate old bugs for select maps. These are not exposed by a cvar
@@ -330,6 +335,7 @@ enum
 	BCOMPATF_SETSLOPEOVERFLOW	= 1 << 0,	// SetSlope things can overflow
 	BCOMPATF_RESETPLAYERSPEED	= 1 << 1,	// Set player speed to 1.0 when changing maps
 	BCOMPATF_SPECHITOVERFLOW	= 1 << 2,	// Emulate spechit overflow (e.g. Strain MAP07)
+	BCOMPATF_VILEGHOSTS			= 1 << 3,	// Monsters' radius and height aren't restored properly when resurrected.
 };
 
 // phares 3/20/98:

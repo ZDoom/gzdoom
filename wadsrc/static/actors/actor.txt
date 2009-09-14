@@ -269,6 +269,9 @@ ACTOR Actor native //: Thinker
 		"----" A 5 A_GenericFreezeDeath
 		"----" A 1 A_FreezeDeathChunks
 		Wait
+	GenericCrush:
+		POL5 A -1
+		Stop
 	}
 }
 

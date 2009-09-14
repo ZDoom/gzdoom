@@ -78,6 +78,7 @@ static FCompatOption Options[] =
 	{ "setslopeoverflow",		0, BCOMPATF_SETSLOPEOVERFLOW },
 	{ "resetplayerspeed",		0, BCOMPATF_RESETPLAYERSPEED },
 	{ "spechitoverflow",		0, BCOMPATF_SPECHITOVERFLOW },
+	{ "vileghosts",				0, BCOMPATF_VILEGHOSTS },
 
 	// list copied from g_mapinfo.cpp
 	{ "shorttex",				COMPATF_SHORTTEX, 0 },
@@ -101,6 +102,11 @@ static FCompatOption Options[] =
 	{ "wallrun",				COMPATF_WALLRUN, 0 },		// [GZ] Added for CC MAP29
 	{ "anybossdeath",			COMPATF_ANYBOSSDEATH, 0},	// [GZ] Added for UAC_DEAD
 	{ "mushroom",				COMPATF_MUSHROOM, 0},
+	{ "mbfdehacked",			COMPATF_MBFDEHACKED, 0},
+	{ "mbftorque",				COMPATF_MBFTORQUE, 0},
+	{ "mbfmonstermove",			COMPATF_MBFMONSTERMOVE, 0 },
+	{ "corpsegibs",				COMPATF_CORPSEGIBS, 0 },
+	{ "noblockfriends",			COMPATF_NOBLOCKFRIENDS, 0 },
 	{ NULL, 0, 0 }
 };
 

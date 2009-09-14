@@ -87,8 +87,7 @@ ACTOR RealGibs
 	States
 	{
 	Spawn:
-		POL5 A -1
-		Stop
+		goto GenericCrush
 	}
 }
 

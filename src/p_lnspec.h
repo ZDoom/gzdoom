@@ -196,6 +196,5 @@ typedef int (*lnSpecFunc)(struct line_t	*line,
 extern lnSpecFunc LineSpecials[256];
 
 int P_FindLineSpecial (const char *string, int *min_args=NULL, int *max_args=NULL);
-const char *GetSpecialName(int num);
 
 #endif //__P_LNSPEC_H__

@@ -309,7 +309,13 @@ enum
 	MF6_DONTHARMSPECIES = 0x00000040,	// Don't hurt one's own species with explosions (hitscans, too?)
 	MF6_STEPMISSILE		= 0x00000080,	// Missile can "walk" up steps
 	MF6_NOTELEFRAG		= 0x00000100,	// [HW] Actor can't be telefragged
-
+	MF6_TOUCHY			= 0x00000200,	// From MBF: killough 11/98: dies when solids touch it
+	MF6_CANJUMP			= 0x00000400,	// From MBF: a dedicated flag instead of the BOUNCES+FLOAT+sentient combo
+	MF6_JUMPDOWN		= 0x00000800,	// From MBF: generalization of dog behavior wrt. dropoffs.
+	MF6_VULNERABLE		= 0x00001000,	// Actor can be damaged (even if not shootable).
+	MF6_ARMED			= 0x00002000,	// From MBF: Object is armed (for MF6_TOUCHY objects)
+	MF6_FALLING			= 0x00004000,	// From MBF: Object is falling (for pseudotorque simulation)
+	MF6_LINEDONE		= 0x00008000,	// From MBF: Object has already run a line effect
 
 // --- mobj.renderflags ---
 

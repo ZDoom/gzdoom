@@ -875,11 +875,7 @@ static void DrawConversationMenu ()
 	}
 	else
 	{
-		speakerName = cp->ConversationNPC->GetClass()->Meta.GetMetaString (AMETA_StrifeName);
-		if (speakerName == NULL)
-		{
-			speakerName = "Person";
-		}
+		speakerName = cp->mo->GetTag("Person");
 	}
 
 	// Dim the screen behind the dialogue (but only if there is no backdrop).

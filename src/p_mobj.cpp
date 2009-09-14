@@ -280,36 +280,9 @@ void AActor::Serialize (FArchive &arc)
 		<< MeleeState
 		<< MissileState
 		<< MaxDropOffHeight 
-		<< MaxStepHeight;
-	if (SaveVersion < 1796)
-	{
-		int BounceFlags, bounceflags;
-		arc << BounceFlags;
-
-		bounceflags = 0;
-		if (BounceFlags & 4)
-			bounceflags |= BOUNCE_UseSeeSound;
-		BounceFlags &= 3;
-			 if (BounceFlags == 1)	bounceflags |= BOUNCE_Doom;
-		else if (BounceFlags == 2)	bounceflags |= BOUNCE_Heretic;
-		else if (BounceFlags == 3)	bounceflags |= BOUNCE_Hexen;
-		if (flags3 & 0x00800000)
-			flags3 &= ~0x00800000, bounceflags |= BOUNCE_CanBounceWater;
-		if (flags3 & 0x01000000)
-			flags3 &= ~0x01000000, bounceflags |= BOUNCE_NoWallSound;
-		if (flags4 & 0x80000000)
-			flags4 &= ~0x80000000, bounceflags |= BOUNCE_Quiet;
-		if (flags5 & 0x00000008)
-			flags5 &= ~0x00000008, bounceflags |= BOUNCE_AllActors;
-		if (flags5 & 0x00000010)
-			flags5 &= ~0x00000010, bounceflags |= BOUNCE_ExplodeOnWater;
-		BounceFlags = bounceflags;
-	}
-	else
-	{
-		arc << BounceFlags;
-	}
-	arc << bouncefactor
+		<< MaxStepHeight
+		<< BounceFlags
+		<< bouncefactor
 		<< wallbouncefactor
 		<< bouncecount
 		<< maxtargetrange
@@ -323,11 +296,12 @@ void AActor::Serialize (FArchive &arc)
 		<< BlockingMobj
 		<< BlockingLine
 		<< pushfactor
-		<< Species;
+		<< Species
+		<< Score
+		<< Tag;
 
-	if (SaveVersion >= 1819)
-		arc << Score;
-		
+	for(int i=0; i<10; i++) arc << uservar[i];
+
 	if (arc.IsStoring ())
 	{
 		int convnum = 0;
@@ -5443,6 +5417,14 @@ fixed_t AActor::GetGravity() const
 bool AActor::IsSentient() const
 {
 	return health > 0 || SeeState != NULL;
+}
+
+
+const char *AActor::GetTag(const char *def) const
+{
+	if (Tag != NAME_None) return Tag.GetChars();
+	else if (def) return def;
+	else return GetClass()->TypeName.GetChars();
 }
 
 

@@ -26,6 +26,7 @@ ACTOR Actor native //: Thinker
 	native fixed_t alpha;
 	native angle_t angle;
 	native int args[5];
+	native int uservar[10];
 	native fixed_t ceilingz;
 	native fixed_t floorz;
 	native int health;
@@ -254,6 +255,7 @@ ACTOR Actor native //: Thinker
 	action native A_ScaleVelocity(float scale);
 	action native A_ChangeVelocity(float x = 0, float y = 0, float z = 0, int flags = 0);
 	action native A_SetArg(int pos, int value);
+	action native A_SetVar(int pos, int value);
 	action native A_SetSpecial(int spec, int arg0, int arg1, int arg2, int arg3, int arg4);
 
 	States

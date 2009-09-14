@@ -302,7 +302,7 @@ DEFINE_PROPERTY(skip_super, 0, Actor)
 DEFINE_PROPERTY(tag, S, Actor)
 {
 	PROP_STRING_PARM(str, 0);
-	info->Class->Meta.SetMetaString(AMETA_StrifeName, str);
+	defaults->Tag = str;
 }
 
 //==========================================================================

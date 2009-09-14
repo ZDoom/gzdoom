@@ -93,6 +93,8 @@ EXTERN_CVAR(Int, showendoom)
 EXTERN_CVAR(Bool, hud_althud)
 EXTERN_CVAR(Int, compatmode)
 EXTERN_CVAR (Bool, vid_vsync)
+EXTERN_CVAR(Bool, displaynametags)
+
 //
 // defaulted values
 //
@@ -499,6 +501,7 @@ static menuitem_t VideoItems[] = {
 	{ discrete, "Rocket Trails",		{&cl_rockettrails},		{4.0}, {0.0},	{0.0}, {RocketTrailTypes} },
 	{ discrete, "Blood Type",			{&cl_bloodtype},	   	{3.0}, {0.0},	{0.0}, {BloodTypes} },
 	{ discrete, "Bullet Puff Type",		{&cl_pufftype},			{2.0}, {0.0},	{0.0}, {PuffTypes} },
+	{ discrete, "Display nametags",		{&displaynametags},		{2.0}, {0.0},	{0.0}, {YesNo} },
 };
 
 #define CROSSHAIR_INDEX 7

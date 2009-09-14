@@ -2426,7 +2426,7 @@ enum
 	APROP_Dropped		= 18,
 	APROP_Notarget		= 19,
 	APROP_Species		= 20,
-	// APROP_Nametag
+	APROP_NameTag		= 21,
 	APROP_Score			= 22,
 };	
 
@@ -2583,6 +2583,13 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 
 	case APROP_Score:
 		actor->Score = value;
+
+	case APROP_NameTag:
+		actor->Tag = FBehavior::StaticLookupString(value);
+		break;
+
+	default:
+		// do nothing.
 		break;
 	}
 }
@@ -2695,6 +2702,7 @@ int DLevelScript::CheckActorProperty (int tid, int property, int value)
 		case APROP_DeathSound:	string = actor->DeathSound; break;
 		case APROP_ActiveSound:	string = actor->ActiveSound; break; 
 		case APROP_Species:		string = actor->GetSpecies(); break;
+		case APROP_NameTag:		string = actor->GetTag(); break;
 	}
 	if (string == NULL) string = "";
 	return (!stricmp(string, FBehavior::StaticLookupString(value)));
@@ -2881,6 +2889,8 @@ enum EACSFunctions
 	ACSF_SpawnSpotFacingForced,
 	ACSF_CheckActorProperty,
     ACSF_SetActorVelocity,
+	ACSF_SetUserVariable,
+	ACSF_GetUserVariable,
 };
 
 int DLevelScript::SideFromID(int id, int side)
@@ -3078,6 +3088,42 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
                 }
             }
 			return 0;
+
+		case ACSF_SetUserVariable:
+		{
+			int cnt = 0;
+			if (args[1] >= 0 && args[1] < 10)
+			{
+				if (args[0] == 0)
+				{
+					if (activator != NULL)
+					{
+						activator->uservar[args[1]] = args[2];
+					}
+					cnt++;
+				}
+				else
+				{
+					TActorIterator<AActor> iterator (args[0]);
+	                
+					while ( (actor = iterator.Next ()) )
+					{
+						actor->uservar[args[1]] = args[2];
+						cnt++;
+					}
+				}
+			}
+			return cnt;
+		}
+		
+		case ACSF_GetUserVariable:
+			if (args[1] >= 0 && args[1] < 10)
+			{
+				activator = SingleActorFromTID(args[0], NULL);
+				return activator != NULL? activator->uservar[args[1]] : 0;
+			}
+			else return 0;
+		
 
 		default:
 			break;

@@ -58,15 +58,9 @@ void AWeapon::Serialize (FArchive &arc)
 		<< MoveCombatDist
 		<< Ammo1 << Ammo2 << SisterWeapon << GivenAsMorphWeapon
 		<< bAltFire
-		<< ReloadCounter;
-	if (SaveVersion >= 1688)
-	{
-		arc << FOVScale;
-		if (SaveVersion >= 1700)
-		{
-			arc << Crosshair;
-		}
-	}
+		<< ReloadCounter
+		<< FOVScale
+		<< Crosshair;
 }
 
 //===========================================================================

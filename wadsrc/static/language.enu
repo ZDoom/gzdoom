@@ -115,6 +115,10 @@ PD_YELLOWSO = "You need a yellow skull to activate this object";
 GGSAVED = "game saved.";
 HUSTR_MSGU = "[Message unsent]";
 PICKUP_PISTOL_DROPPED = "Picked up a pistol.";
+BETA_BONUS1 = "You pick up a demonic dagger.";
+BETA_BONUS2 = "You pick up a skullchest.";
+BETA_BONUS3 = "You pick up an evil sceptre.";
+BETA_BONUS4 = "You pick up an unholy bible.";
 
 // Level names
 HUSTR_E1M1 = "E1M1: Hangar";
@@ -634,6 +638,7 @@ OB_SPIDER = "%o stood in awe of the spider demon.";
 OB_BABY = "%o let an arachnotron get %h.";
 OB_CYBORG = "%o was splattered by a cyberdemon.";
 OB_WOLFSS = "%o met a Nazi.";
+OB_DOG = "%o was mauled by a dog.";
 
 OB_CHICKEN = "%o was pecked to death.";
 OB_BEAST = "%o was charred by a weredragon.";
@@ -707,6 +712,7 @@ OB_MPBFG_BOOM = "%o was splintered by %k's BFG.";
 OB_MPBFG_SPLASH = "%o couldn't hide from %k's BFG.";
 OB_MPTELEFRAG = "%o was telefragged by %k.";
 OB_RAILGUN = "%o was railed by %k.";
+OB_MPBFG_MBF = "%o was burned by %k's BFG.";
 
 // Same as OB_MPTELEFRAG, but shown when a monster telefrags you
 OB_MONTELEFRAG = "%o was telefragged.";

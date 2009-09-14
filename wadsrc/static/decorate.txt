@@ -45,6 +45,7 @@
 #include "actors/doom/spidermaster.txt"
 #include "actors/doom/keen.txt"
 #include "actors/doom/bossbrain.txt"
+#include "actors/doom/dog.txt"
 
 #include "actors/doom/deadthings.txt"
 #include "actors/doom/doomammo.txt"

@@ -636,11 +636,7 @@ private:
 					continue;
 				}
 
-				label = item->GetClass()->Meta.GetMetaString (AMETA_StrifeName);
-				if (label == NULL)
-				{
-					label = item->GetClass()->TypeName.GetChars();
-				}
+				label = item->GetTag();
 
 				int colnum = ((i-pos) / 5) & (KeyPopScroll > 0 ? 3 : 1);
 				int rownum = (i % 5) * 18;

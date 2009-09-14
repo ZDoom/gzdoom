@@ -425,6 +425,13 @@ brain/cube			dsboscub
 brain/cubeboom			dsfirxpl
 $alias brain/spawn		misc/teleport
 
+// Marine's Best Friend
+dog/active			dsdgact
+dog/attack			dsdgatk
+dog/death			dsdgdth
+dog/pain			dsdgpain
+dog/sight			dsdgsit
+
 
 //============================================================================
 //

@@ -78,6 +78,7 @@ DEFINE_MEMBER_VARIABLE_ALIAS(momy, vely, AActor)
 DEFINE_MEMBER_VARIABLE_ALIAS(momz, velz, AActor)
 DEFINE_MEMBER_VARIABLE(Damage, AActor)
 DEFINE_MEMBER_VARIABLE(Score, AActor)
+DEFINE_MEMBER_VARIABLE(uservar, AActor)
 
 //==========================================================================
 //

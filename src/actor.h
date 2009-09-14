@@ -712,6 +712,7 @@ public:
 
 	fixed_t GetGravity() const;
 	bool IsSentient() const;
+	const char *GetTag(const char *def = NULL) const;
 
 
 // info for drawing
@@ -779,6 +780,7 @@ public:
 	int				tid;			// thing identifier
 	int				special;		// special
 	int				args[5];		// special arguments
+	int				uservar[10];		// user variables, accessible by DECORATE and ACS
 
 	AActor			*inext, **iprev;// Links to other mobjs in same bucket
 	TObjPtr<AActor> goal;			// Monster's goal if not chasing anything
@@ -802,6 +804,7 @@ public:
 	int				lastpush;
 	int				activationtype;	// How the thing behaves when activated with USESPECIAL or BUMPSPECIAL
 	int				Score;			// manipulated by score items, ACS or DECORATE. The engine doesn't use this itself for anything.
+	FNameNoInit		Tag;			// Strife's tag name. FIXME: should be case sensitive!
 
 	AActor			*BlockingMobj;	// Actor that blocked the last move
 	line_t			*BlockingLine;	// Line that blocked the last move

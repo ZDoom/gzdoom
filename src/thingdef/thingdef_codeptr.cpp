@@ -2852,3 +2852,22 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetSpecial)
 	self->args[4] = arg4;
 }
 
+//===========================================================================
+//
+// A_SetVar
+//
+//===========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetUserVar)
+{
+	ACTION_PARAM_START(2);
+	ACTION_PARAM_INT(pos, 0);
+	ACTION_PARAM_INT(value, 1);	
+
+	if (pos < 0 || pos > 9)
+		return;
+	
+	// Set the value of the specified arg
+	self->uservar[pos] = value;
+}
+

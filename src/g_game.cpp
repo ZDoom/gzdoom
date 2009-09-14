@@ -110,6 +110,24 @@ CVAR (Bool, chasedemo, false, 0);
 CVAR (Bool, storesavepic, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool, longsavemessages, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (String, save_dir, "", CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
+EXTERN_CVAR (Float, con_midtime);
+
+//==========================================================================
+//
+// CVAR displaynametags
+//
+// Selects whether to display name tags or not when changing weapons
+//
+//==========================================================================
+
+CUSTOM_CVAR (Bool, displaynametags, 0, CVAR_ARCHIVE)
+{
+	if (self != 0 && self != 1)
+	{
+		self = 0;
+	}
+}
+
 
 gameaction_t	gameaction;
 gamestate_t 	gamestate = GS_STARTUP;
@@ -335,6 +353,10 @@ CCMD (invnext)
 				who->InvSel = who->Inventory;
 			}
 		}
+		if (displaynametags && StatusBar && SmallFont 
+			&& gamestate == GS_LEVEL && level.time > con_midtime && who->InvSel)
+			StatusBar->AttachMessage (new DHUDMessage (SmallFont, who->InvSel->GetTag(), 
+			2.5f, 0.375f, 0, 0, CR_YELLOW, con_midtime), MAKE_ID('S','I','N','V'));
 	}
 	who->player->inventorytics = 5*TICRATE;
 }
@@ -362,6 +384,10 @@ CCMD (invprev)
 			}
 			who->InvSel = item;
 		}
+		if (displaynametags && StatusBar && SmallFont 
+			&& gamestate == GS_LEVEL && level.time > con_midtime && who->InvSel)
+			StatusBar->AttachMessage (new DHUDMessage (SmallFont, who->InvSel->GetTag(), 
+			2.5f, 0.375f, 0, 0, CR_YELLOW, con_midtime), MAKE_ID('S','I','N','V'));
 	}
 	who->player->inventorytics = 5*TICRATE;
 }
@@ -385,9 +411,7 @@ CCMD(invquery)
 	AInventory *inv = players[consoleplayer].mo->InvSel;
 	if (inv != NULL)
 	{
-		const char *description = inv->GetClass()->Meta.GetMetaString(AMETA_StrifeName);
-		if (description == NULL) description = inv->GetClass()->TypeName;
-		Printf(PRINT_HIGH, "%s (%dx)\n", description, inv->Amount);
+		Printf(PRINT_HIGH, "%s (%dx)\n", inv->GetTag(), inv->Amount);
 	}
 }
 

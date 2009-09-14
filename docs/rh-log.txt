@@ -1,6 +1,16 @@
 September 14, 2009  (Changes by Graf Zahl)
 - Fixed: Argument count for UsePuzzleItem was wrong.
 - Added a few things from Gez's experimental build:
+  * MBF's dog (definition only, no sprites yet.)
+  * User variables. There's an array of 10. They can be set and checked in
+    both DECORATE and ACS.
+  * Made the tag name changeable but eliminated the redundancy of having
+    both the meta property and the individual actor's one. Having one is
+	fully sufficient. TO BE FIXED: Names are case insensitive but this
+	should better be case sensitive. Unfortunately there's currently nothing
+	better than FName to store a string inside an actor without severely
+	complicating matters. Also bumped savegame version to avoid problems
+	with this change.
   * MBF grenade and bouncing code.
   * several compatibility options.
   * info CCMD to print extended actor information (not fully implemented yet)

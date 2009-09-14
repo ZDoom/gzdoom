@@ -1,4 +1,5 @@
 September 14, 2009  (Changes by Graf Zahl)
+- Added PinkSilver's A_LookEx fix.
 - added resources needed for MBF support.
 - removed unused score items from DECORATE file.
 - Fixed: Argument count for UsePuzzleItem was wrong.

@@ -2139,6 +2139,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Respawn)
 	{
 		AActor *defs = self->GetDefault();
 		self->health = defs->health;
+        
+        // [KS] Don't keep target, because it could be self if the monster committed suicide
+        self->target = NULL;
+        self->LastHeard = NULL;
 
 		self->flags  = (defs->flags & ~MF_FRIENDLY) | (self->flags & MF_FRIENDLY);
 		self->flags2 = defs->flags2;

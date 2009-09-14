@@ -782,12 +782,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_LookEx)
 					}
 				}
 			}
-
-			if (targ && targ->player && (targ->player->cheats & CF_NOTARGET))
-			{
-				return;
-			}
-		}
+        }
+        
+        if (targ && targ->player && (targ->player->cheats & CF_NOTARGET))
+        {
+            return;
+        }
 	}
 
 	// [RH] Andy Baker's stealth monsters
@@ -811,36 +811,40 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_LookEx)
 				}
 
 				// Let the self wander around aimlessly looking for a fight
-				if (self->SeeState != NULL)
-				{
-					if (!(self->flags & MF_INCHASE))
-					{
-						if (seestate)
-						{
-							self->SetState (seestate);
-						}
-						else
-						{
-							self->SetState (self->SeeState);
-						}
-					}
-				}
-				else
-				{
-					CALL_ACTION(A_Wander, self);
-				}
+                if (!(self->flags & MF_INCHASE))
+                {
+                    if (seestate)
+                    {
+                        self->SetState (seestate);
+                    }
+                    else
+                    {
+                        if (self->SeeState != NULL)
+                        {
+                            self->SetState (self->SeeState);
+                        }
+                        else
+                        {
+                            CALL_ACTION(A_Wander, self);
+                        }
+                    }
+                }
 			}
 		}
 		else
 		{
 			self->target = targ; //We already have a target?
+            
+            // [KS] The target can become ourselves in rare circumstances (like
+            // if we committed suicide), so if that's the case, just ignore it.
+            if (self->target == self) self->target = NULL;
 
-			if (targ != NULL)
+			if (self->target != NULL)
 			{
 				if (self->flags & MF_AMBUSH)
 				{
-					dist = P_AproxDistance (targ->x - self->x,
-											targ->y - self->y);
+					dist = P_AproxDistance (self->target->x - self->x,
+											self->target->y - self->y);
 					if (P_CheckSight (self, self->target, 2) &&
 						(!minseedist || dist > minseedist) &&
 						(!maxseedist || dist < maxseedist))

@@ -1,7 +1,10 @@
 September 14, 2009  (Changes by Graf Zahl)
+- added resources needed for MBF support.
+- removed unused score items from DECORATE file.
 - Fixed: Argument count for UsePuzzleItem was wrong.
 - Added a few things from Gez's experimental build:
-  * MBF Dehacked emulation.
+  * MBF Dehacked emulation but removed the COMPATF_MBFDEHACKED flag because
+    it wouldn't work and is more or less useless anyway.
   * MBF's dog (definition only, no sprites yet.)
   * User variables. There's an array of 10. They can be set and checked in
     both DECORATE and ACS.

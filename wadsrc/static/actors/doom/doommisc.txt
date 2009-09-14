@@ -83,30 +83,11 @@ ACTOR DoomUnusedStates
 	}
 }
 
-Actor DemonicDagger : ScoreItem
-{
-	Inventory.PickupMessage "$BETA_BONUS1"
-	States
-	{
-	Spawn:
-		BON1 A 6
-		Loop
-	}
-}
-
-Actor SkullChest : ScoreItem
-{
-	Inventory.PickupMessage "$BETA_BONUS2"
-	States
-	{
-	Spawn:
-		BON2 A 6
-		Loop
-	}
-}
+// MBF Beta emulation items
 
 Actor EvilSceptre : ScoreItem 2016
 {
+	Game Doom
 	Inventory.PickupMessage "$BETA_BONUS3"
 	States
 	{
@@ -118,6 +99,7 @@ Actor EvilSceptre : ScoreItem 2016
 
 Actor UnholyBible : ScoreItem 2017
 {
+	Game Doom
 	Inventory.PickupMessage "$BETA_BONUS4"
 	States
 	{

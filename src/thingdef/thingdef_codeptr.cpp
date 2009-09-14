@@ -2871,3 +2871,41 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetUserVar)
 	self->uservar[pos] = value;
 }
 
+// A few action functions for super-duper enhanced MBF compatibility. They're all deprecated and shouldn't be used in
+// DECORATE. The other MBF new functions, A_Detonate, A_Mushroom and A_Die are all already elsewhere, and as for
+// A_PlaySound, it is an instance of name conflict, so it has been given a default sound to work from dehacked as well.
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Turn)
+{
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_ANGLE(angle, 0);
+	self->angle += angle;
+}
+
+//
+// This allows linedef effects to be activated inside deh frames.
+//
+
+void P_TranslateLineDef (line_t *ld, maplinedef_t *mld);
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_LineEffect)
+{
+	ACTION_PARAM_START(2);
+	ACTION_PARAM_INT(special, 0);
+	ACTION_PARAM_INT(tag, 1);
+
+	line_t junk; maplinedef_t oldjunk;
+	bool res = false;
+	if (!(self->flags6 & MF6_LINEDONE))						// Unless already used up
+	{
+		if ((oldjunk.special = special))					// Linedef type
+		{
+			oldjunk.tag = tag;								// Sector tag for linedef
+			P_TranslateLineDef(&junk, &oldjunk);			// Turn into native type
+			res = !!LineSpecials[junk.special](NULL, self, false, junk.args[0], 
+				junk.args[1], junk.args[2], junk.args[3], junk.args[4]); 
+			if (res && !(junk.flags & ML_REPEAT_SPECIAL))	// If only once,
+				self->flags6 |= MF6_LINEDONE;				// no more for this thing
+		}
+	}
+	ACTION_SET_RESULT(res);
+}

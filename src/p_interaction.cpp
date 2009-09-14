@@ -1017,13 +1017,12 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 
 		damage = target->TakeSpecialDamage (inflictor, source, damage, mod);
 	}
-
 	if (damage == -1)
 	{
 		return;
 	}
 	// Push the target unless the source's weapon's kickback is 0.
-	// (i.e. Guantlets/Chainsaw)
+	// (i.e. Gauntlets/Chainsaw)
 	if (inflictor && inflictor != target	// [RH] Not if hurting own self
 		&& !(target->flags & MF_NOCLIP)
 		&& !(inflictor->flags2 & MF2_NODMGTHRUST)
@@ -1047,13 +1046,13 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 
 			// Calculate this as float to avoid overflows so that the
 			// clamping that had to be done here can be removed.
-			double fltthrust;
+            double fltthrust;
 
-			fltthrust = mod == NAME_MDK ? 10 : 32;
-			if (target->Mass > 0)
-			{
-				fltthrust = clamp((damage * 0.125 * kickback) / target->Mass, 0., fltthrust);
-			}
+            fltthrust = mod == NAME_MDK ? 10 : 32;
+            if (target->Mass > 0)
+            {
+                fltthrust = clamp((damage * 0.125 * kickback) / target->Mass, 0., fltthrust);
+            }
 
 			thrust = FLOAT2FIXED(fltthrust);
 

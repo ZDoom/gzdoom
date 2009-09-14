@@ -325,6 +325,9 @@ void AActor::Serialize (FArchive &arc)
 		<< pushfactor
 		<< Species;
 
+	if (SaveVersion >= 1819)
+		arc << Score;
+		
 	if (arc.IsStoring ())
 	{
 		int convnum = 0;
@@ -1845,7 +1848,7 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 													BlockingMobj->y,
 													mo->x, mo->y);
 
-				// Change angle for deflection/reflection
+					// Change angle for deflection/reflection
 					if (mo->AdjustReflectionAngle (BlockingMobj, angle))
 					{
 						goto explode;
@@ -2054,12 +2057,13 @@ void P_MonsterFallingDamage (AActor *mo)
 //
 // P_ZMovement
 //
+
 void P_ZMovement (AActor *mo, fixed_t oldfloorz)
 {
 	fixed_t dist;
 	fixed_t delta;
-	fixed_t oldz = mo->z;
-
+	fixed_t oldz = mo->z;	
+	
 //	
 // check for smooth step up
 //
@@ -2084,8 +2088,7 @@ void P_ZMovement (AActor *mo, fixed_t oldfloorz)
 		if (!mo->waterlevel || mo->flags & MF_CORPSE || (mo->player &&
 			!(mo->player->cmd.ucmd.forwardmove | mo->player->cmd.ucmd.sidemove)))
 		{
-			fixed_t grav = (fixed_t)(level.gravity * mo->Sector->gravity *
-				FIXED2FLOAT(mo->gravity) * 81.92);
+			fixed_t grav = mo->GetGravity();
 
 			// [RH] Double gravity only if running off a ledge. Coming down from
 			// an upward thrust (e.g. a jump) should not double it.
@@ -3404,7 +3407,7 @@ AActor *AActor::StaticSpawn (const PClass *type, fixed_t ix, fixed_t iy, fixed_t
 
 
 	AActor *actor;
-
+	
 	actor = static_cast<AActor *>(const_cast<PClass *>(type)->CreateNew ());
 
 	actor->x = actor->PrevX = ix;
@@ -5347,6 +5350,7 @@ int AActor::SpawnHealth()
 		return (adj <= 0) ? 1 : adj;
 	}
 }
+
 FDropItem *AActor::GetDropItems()
 {
 	unsigned int index = GetClass()->Meta.GetMetaInt (ACMETA_DropItems) - 1;
@@ -5357,6 +5361,21 @@ FDropItem *AActor::GetDropItems()
 	}
 	return NULL;
 }
+
+fixed_t AActor::GetGravity() const
+{
+	if (flags & MF_NOGRAVITY) return 0;
+	return fixed_t(level.gravity * Sector->gravity * FIXED2FLOAT(gravity) * 81.92);
+}
+
+// killough 11/98:
+// Whether an object is "sentient" or not. Used for environmental influences.
+// (left precisely the same as MBF even though it doesn't make much sense.)
+bool AActor::IsSentient() const
+{
+	return health > 0 || SeeState != NULL;
+}
+
 
 //----------------------------------------------------------------------------
 //
@@ -5388,3 +5407,68 @@ int StoreDropItemChain(FDropItem *chain)
 	return DropItemList.Push (chain) + 1;
 }
 
+void PrintMiscActorInfo(AActor * query)
+{
+	if (query)
+	{
+		int flagi;
+		int querystyle = STYLE_Count;
+		for (int style = STYLE_None; style < STYLE_Count; ++style)
+		{ // Check for a legacy render style that matches.
+			if (LegacyRenderStyles[style] == query->RenderStyle)
+			{
+				querystyle = style;
+				break;
+			}
+		}
+		static const char * renderstyles[]= {"None", "Normal", "Fuzzy", "SoulTrans",
+			"OptFuzzy", "Stencil", "Translucent", "Add", "Shaded", "TranslucentStencil"};
+
+		/*
+		Printf("%s %x has the following flags:\n\tflags1: %x", 
+			query->GetNameTag().GetChars(), query, query->flags);
+		*/
+		for (flagi = 0; flagi < 31; flagi++)
+			if (query->flags & 1<<flagi) Printf(" %s", FLAG_NAME(1<<flagi, flags));
+		Printf("\n\tflags2: %x", query->flags2);
+		for (flagi = 0; flagi < 31; flagi++)
+			if (query->flags2 & 1<<flagi) Printf(" %s", FLAG_NAME(1<<flagi, flags2));
+		Printf("\n\tflags3: %x", query->flags3);
+		for (flagi = 0; flagi < 31; flagi++)
+			if (query->flags3 & 1<<flagi) Printf(" %s", FLAG_NAME(1<<flagi, flags3));
+		Printf("\n\tflags4: %x", query->flags4);
+		for (flagi = 0; flagi < 31; flagi++)
+			if (query->flags4 & 1<<flagi) Printf(" %s", FLAG_NAME(1<<flagi, flags4));
+		Printf("\n\tflags5: %x", query->flags5);
+		for (flagi = 0; flagi < 31; flagi++)
+			if (query->flags5 & 1<<flagi) Printf(" %s", FLAG_NAME(1<<flagi, flags5));
+		Printf("\n\tflags6: %x", query->flags6);
+		for (flagi = 0; flagi < 31; flagi++)
+			if (query->flags6 & 1<<flagi) Printf(" %s", FLAG_NAME(1<<flagi, flags6));
+
+		/*
+		Printf("\nIts bounce style and factors are %s and f:%f, w:%f; its bounce flags are:\n\tflagsb: %x", 
+			bouncestyles[bt], FIXED2FLOAT(query->bouncefactor), 
+			FIXED2FLOAT(query->wallbouncefactor), query->BounceFlags);
+		for (flagi = 0; flagi < 31; flagi++)
+			if (query->BounceFlags & 1<<flagi) Printf(" %s", flagnamesb[flagi]);
+		*/
+		Printf("\nIts render style is %i:%s with alpha %f and the following render flags:\n\tflagsr: %x", 
+			querystyle, (querystyle < STYLE_Count ? renderstyles[querystyle] : "Unknown"),
+			FIXED2FLOAT(query->alpha), query->renderflags);
+		/*
+		for (flagi = 0; flagi < 31; flagi++)
+			if (query->renderflags & 1<<flagi) Printf(" %s", flagnamesr[flagi]);
+		*/
+		Printf("\nIts thing special and arguments are %s(%i, %i, %i, %i, %i), and its specials are %i and %i.",
+			GetSpecialName(query->special), query->args[0], query->args[1],
+			query->args[2], query->args[3], query->args[4],
+			query->special1, query->special2);
+		Printf("\nIts coordinates are x: %f, y: %f, z:%f, floor:%f, ceiling:%f.",
+			FIXED2FLOAT(query->x), FIXED2FLOAT(query->y), FIXED2FLOAT(query->z),
+			FIXED2FLOAT(query->floorz), FIXED2FLOAT(query->ceilingz));
+		Printf("\nIts speed is %f and velocity is x:%f, y:%f, z:%f, combined:%f.\n",
+			FIXED2FLOAT(query->Speed), FIXED2FLOAT(query->velx), FIXED2FLOAT(query->vely), FIXED2FLOAT(query->velz),
+			sqrt(pow(FIXED2FLOAT(query->velx), 2) + pow(FIXED2FLOAT(query->vely), 2) + pow(FIXED2FLOAT(query->velz), 2)));
+	}
+}

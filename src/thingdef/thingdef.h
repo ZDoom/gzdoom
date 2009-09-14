@@ -5,6 +5,7 @@
 #include "info.h"
 #include "s_sound.h"
 #include "sc_man.h"
+#include "cmdlib.h"
 
 
 class FScanner;
@@ -25,6 +26,9 @@ struct FFlagDef
 
 FFlagDef *FindFlag (const PClass *type, const char *part1, const char *part2);
 void HandleDeprecatedFlags(AActor *defaults, FActorInfo *info, bool set, int index);
+const char *GetFlagName(int flagnum, int flagoffset);
+
+#define FLAG_NAME(flagnum, flagvar) GetFlagName(flagnum, myoffsetof(AActor, flagvar))
 
 
 //==========================================================================
@@ -120,7 +124,7 @@ public:
 	~FStateExpressions();
 	int Add(FxExpression *x, const PClass *o, bool c);
 	int Reserve(int num, const PClass *cls);
-	void Set(int num, FxExpression *x);
+	void Set(int num, FxExpression *x, bool cloned = false);
 	void Copy(int dest, int src, int cnt);
 	int ResolveAll();
 	FxExpression *Get(int no);

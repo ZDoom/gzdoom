@@ -376,15 +376,19 @@ bool P_Move (AActor *actor)
 
 	fixed_t tryx, tryy, deltax, deltay, origx, origy;
 	bool try_ok;
-	int speed;
+	int speed = actor->Speed;
 	int movefactor = ORIG_FRICTION_FACTOR;
 	int friction = ORIG_FRICTION;
 
 	if (actor->flags2 & MF2_BLASTED)
+	{
 		return true;
+	}
 
 	if (actor->movedir == DI_NODIR)
+	{
 		return false;
+	}
 
 	// [RH] Instead of yanking non-floating monsters to the ground,
 	// let gravity drop them down, unless they're moving down a step.
@@ -490,6 +494,7 @@ bool P_Move (AActor *actor)
 			else
 				actor->z -= actor->FloatSpeed;
 
+
 			// [RH] Check to make sure there's nothing in the way of the float
 			if (P_TestMobjZ (actor))
 			{
@@ -500,7 +505,9 @@ bool P_Move (AActor *actor)
 		}
 
 		if (!spechit.Size ())
+		{
 			return false;
+		}
 
 		// open any specials
 		actor->movedir = DI_NODIR;
@@ -684,7 +691,7 @@ void P_DoNewChaseDir (AActor *actor, fixed_t deltax, fixed_t deltay)
 			return;
 	}
 
-	actor->movedir = DI_NODIR;	// can not move
+	actor->movedir = DI_NODIR;	// cannot move
 }
 
 
@@ -2315,7 +2322,7 @@ void A_Chase(AActor *self)
 // A_FaceTarget
 //
 //=============================================================================
-void A_FaceTarget(AActor *self)
+void A_FaceTarget (AActor *self)
 {
 	if (!self->target)
 		return;

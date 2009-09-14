@@ -25,8 +25,11 @@ xx(Ghost)
 xx(Reflective)
 
 // Invisibility types
+xx(Additive)
 xx(Cumulative)
 xx(Fuzzy)
+xx(Opaque)
+xx(Stencil)
 
 // Healingradius types
 xx(Mana)

@@ -154,6 +154,7 @@ enum EDemoCommand
 	DEM_ADDSLOTDEFAULT,	// 55
 	DEM_ADDSLOT,		// 56
 	DEM_SETSLOT,		// 57
+	DEM_SUMMONMBF,
 };
 
 // The following are implemented by cht_DoCheat in m_cheat.cpp

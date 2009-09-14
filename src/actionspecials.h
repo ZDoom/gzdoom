@@ -7,13 +7,13 @@ DEFINE_SPECIAL(Polyobj_ExplicitLine, 5, -1, -1, 5)
 DEFINE_SPECIAL(Polyobj_MoveTimes8, 6, 4, 4, 4)
 DEFINE_SPECIAL(Polyobj_DoorSwing, 7, 4, 4, 4)
 DEFINE_SPECIAL(Polyobj_DoorSlide, 8, 5, 5, 5)
-DEFINE_SPECIAL(Line_Horizon, 9, -1, 0, 0)	// [RH] draw one-sided wall at horizon
+DEFINE_SPECIAL(Line_Horizon, 9, -1, 0, 0)   // [RH] draw one-sided wall at horizon
 DEFINE_SPECIAL(Door_Close, 10, 2, 3, 3)
 DEFINE_SPECIAL(Door_Open, 11, 2, 3, 3)
 DEFINE_SPECIAL(Door_Raise, 12, 3, 4, 4)
 DEFINE_SPECIAL(Door_LockedRaise, 13, 4, 5, 5)
 DEFINE_SPECIAL(Door_Animated, 14, 3, 3, 3)
-DEFINE_SPECIAL(Autosave, 15, 0, 0, 0)	// [RH] Save the game *now*
+DEFINE_SPECIAL(Autosave, 15, 0, 0, 0)   // [RH] Save the game *now*
 DEFINE_SPECIAL(Transfer_WallLight, 16, -1, -1, 2)
 DEFINE_SPECIAL(Thing_Raise, 17, 1, 1, 1)
 DEFINE_SPECIAL(StartConversation, 18, 1, 2, 2)
@@ -31,13 +31,13 @@ DEFINE_SPECIAL(Pillar_Build, 29, 3, 3, 3)
 DEFINE_SPECIAL(Pillar_Open, 30, 4, 4, 4)
 DEFINE_SPECIAL(Stairs_BuildDownSync, 31, 4, 4, 4)
 DEFINE_SPECIAL(Stairs_BuildUpSync, 32, 4, 4, 4)
-DEFINE_SPECIAL(ForceField, 33, 0, 0, 0)	// [RH] Strife's forcefield special (148)
-DEFINE_SPECIAL(ClearForceField, 34, 1, 1, 1)	// [RH] Remove Strife's forcefield from tagged sectors
+DEFINE_SPECIAL(ForceField, 33, 0, 0, 0) // [RH] Strife's forcefield special (148)
+DEFINE_SPECIAL(ClearForceField, 34, 1, 1, 1)    // [RH] Remove Strife's forcefield from tagged sectors
 DEFINE_SPECIAL(Floor_RaiseByValueTimes8, 35, 3, 3, 3)
 DEFINE_SPECIAL(Floor_LowerByValueTimes8, 36, 3, 3, 3)
 DEFINE_SPECIAL(Floor_MoveToValue, 37, 3, 4, 4)
-DEFINE_SPECIAL(Ceiling_Waggle, 38, 5, 5, 4)	// [RH] Complement of Floor_Waggle
-DEFINE_SPECIAL(Teleport_ZombieChanger, 39, 2, 2, 2)	// [RH] Needed for Strife
+DEFINE_SPECIAL(Ceiling_Waggle, 38, 5, 5, 4) // [RH] Complement of Floor_Waggle
+DEFINE_SPECIAL(Teleport_ZombieChanger, 39, 2, 2, 2) // [RH] Needed for Strife
 DEFINE_SPECIAL(Ceiling_LowerByValue, 40, 3, 3, 3)
 DEFINE_SPECIAL(Ceiling_RaiseByValue, 41, 3, 3, 3)
 DEFINE_SPECIAL(Ceiling_CrushAndRaise, 42, 3, 4, 4)
@@ -105,9 +105,8 @@ DEFINE_SPECIAL(Light_Strobe, 116, 5, 5, 5)
 DEFINE_SPECIAL(Light_Stop, 117, 1, 1, 1)
 
 DEFINE_SPECIAL(Thing_Damage, 119, 2, 3, 3)
-DEFINE_SPECIAL(Radius_Quake, 120, 5, 5, 5)	// Earthquake
+DEFINE_SPECIAL(Radius_Quake, 120, 5, 5, 5)  // Earthquake
 DEFINE_SPECIAL(Line_SetIdentification, 121, -1, -1, 5)
-
 #if 0 // Skull Tag specials that might be added later
 Thing_SetGravity, 122, -1, -1)
 Thing_ReverseGravity, 123, -1, -1)
@@ -140,7 +139,7 @@ DEFINE_SPECIAL(Teleport_NoStop, 154, 2, 3, 3)
 DEFINE_SPECIAL(FS_Execute, 158, 1, 4, 4)
 DEFINE_SPECIAL(Sector_SetPlaneReflection, 159, 3, 3, 3)
 DEFINE_SPECIAL(Sector_Set3DFloor, 160, -1, -1, 5)
-DEFINE_SPECIAL(Sector_SetContents, 161, -1, -1, 5)	// It probably doesn't use 5 args. Oh well.
+DEFINE_SPECIAL(Sector_SetContents, 161, -1, -1, 3)
 
 // [RH] Begin new specials for ZDoom
 DEFINE_SPECIAL(Generic_Crusher2, 169, 5, 5, 5)

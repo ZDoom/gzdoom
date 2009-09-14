@@ -21,6 +21,7 @@ static FRandom pr_fireshotgun2 ("FireSG2");
 static FRandom pr_fireplasma ("FirePlasma");
 static FRandom pr_firerail ("FireRail");
 static FRandom pr_bfgspray ("BFGSpray");
+static FRandom pr_oldbfg ("OldBFG");
 
 //
 // A_Punch
@@ -553,3 +554,48 @@ DEFINE_ACTION_FUNCTION(AActor, A_BFGsound)
 	S_Sound (self, CHAN_WEAPON, "weapons/bfgf", 1, ATTN_NORM);
 }
 
+//
+// A_FireOldBFG
+//
+// This function emulates Doom's Pre-Beta BFG
+// By Lee Killough 6/6/98, 7/11/98, 7/19/98, 8/20/98
+//
+// This code may not be used in other mods without appropriate credit given.
+// Code leeches will be telefragged.
+
+DEFINE_ACTION_FUNCTION(AActor, A_FireOldBFG)
+{
+	const PClass * plasma[] = {PClass::FindClass("PlasmaBall1"), PClass::FindClass("PlasmaBall2")};
+	AActor * mo = NULL;
+
+	player_t *player;
+
+	if (NULL == (player = self->player))
+	{
+		return;
+	}
+
+	AWeapon *weapon = self->player->ReadyWeapon;
+	if (weapon != NULL)
+	{
+		if (!weapon->DepleteAmmo (weapon->bAltFire))
+			return;
+	}
+	self->player->extralight = 2;
+
+	// Save values temporarily
+	angle_t SavedPlayerAngle = self->angle;
+	fixed_t SavedPlayerPitch = self->pitch;
+	bool doesautoaim = !(self->player->ReadyWeapon->WeaponFlags & WIF_NOAUTOAIM);
+	self->player->ReadyWeapon->WeaponFlags |= WIF_NOAUTOAIM; // No autoaiming that gun
+	for (int i = 0; i < 2; i++) // Spawn two plasma balls in sequence
+    {
+		self->angle += ((pr_oldbfg()&127) - 64) * (ANG90/768);
+		self->pitch += ((pr_oldbfg()&127) - 64) * (ANG90/640);
+		mo = P_SpawnPlayerMissile (self, plasma[i]);
+		// Restore saved values
+		self->angle = SavedPlayerAngle;
+		self->pitch = SavedPlayerPitch;
+    }
+	if (doesautoaim) self->player->ReadyWeapon->WeaponFlags &= ~WIF_NOAUTOAIM; // Restore autoaim setting
+}

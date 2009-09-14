@@ -44,6 +44,7 @@ ACTOR Actor native //: Thinker
 	native fixed_t momx;	// alias for velx
 	native fixed_t momy;	// alias for vely
 	native fixed_t momz;	// alias for velz
+	native int score;
 
 	action native A_MonsterRail();
 	action native A_BFGSpray(class<Actor> spraytype = "BFGExtra", int numrays = 40, int damagecount = 15);
@@ -186,6 +187,8 @@ ACTOR Actor native //: Thinker
 	action native A_SpawnItem(class<Actor> itemtype, float distance = 0, float zheight = 0, bool useammo = true, bool transfer_translation = false);
 	action native A_SpawnItemEx(class<Actor> itemtype, float xofs = 0, float yofs = 0, float zofs = 0, float xvel = 0, float yvel = 0, float zvel = 0, float angle = 0, int flags = 0, int failchance = 0);
 	action native A_Print(string whattoprint, float time = 0, string fontname = "");
+	action native A_PrintBold(string whattoprint, float time = 0, string fontname = "");
+	action native A_Log(string whattoprint);
 	action native A_SetTranslucent(float alpha, int style = 0);
 	action native A_FadeIn(float reduce = 0.1);
 	action native A_FadeOut(float reduce = 0.1, bool remove = true);
@@ -220,7 +223,7 @@ ACTOR Actor native //: Thinker
 	action native A_CustomComboAttack(class<Actor> missiletype, float spawnheight, int damage, sound meleesound = "", name damagetype = "none", bool bleed = true);
 	action native A_Burst(class<Actor> chunktype);
 	action native A_RadiusThrust(int force = 128, int distance = -1, bool affectsource = true);
-	action native A_Explode(int damage = -1, int distance = -1, bool hurtsource = true, bool alert = false, int fulldamagedistance = 0);
+	action native A_Explode(int damage = -1, int distance = -1, bool hurtsource = true, bool alert = false, int fulldamagedistance = 0, int nails = 0, int naildamage = 10);
 	action native A_Stop();
 	action native A_Respawn(bool fog = true);
 	action native A_BarrelDestroy();
@@ -246,11 +249,12 @@ ACTOR Actor native //: Thinker
 	action native A_DropWeaponPieces(class<Actor> p1, class<Actor> p2, class<Actor> p3);
 	action native A_PigPain ();
 	action native A_MonsterRefire(int chance, state label);
-	action native A_SetAngle(float angle);
+	action native A_SetAngle(float angle = 0);
 	action native A_SetPitch(float pitch);
 	action native A_ScaleVelocity(float scale);
 	action native A_ChangeVelocity(float x = 0, float y = 0, float z = 0, int flags = 0);
 	action native A_SetArg(int pos, int value);
+	action native A_SetSpecial(int spec, int arg0, int arg1, int arg2, int arg3, int arg4);
 
 	States
 	{

@@ -849,10 +849,11 @@ DEFINE_PROPERTY(bloodtype, Sss, Actor)
 //==========================================================================
 DEFINE_PROPERTY(bouncetype, S, Actor)
 {
-	static const char *names[] = { "None", "Doom", "Heretic", "Hexen", "DoomCompat", "HereticCompat", "HexenCompat", NULL };
-	static const BYTE flags[] = { BOUNCE_None,
+	static const char *names[] = { "None", "Doom", "Heretic", "Hexen", "DoomCompat", "HereticCompat", "HexenCompat", "Grenade", "Classic", NULL };
+	static const int flags[] = { BOUNCE_None,
 		BOUNCE_Doom, BOUNCE_Heretic, BOUNCE_Hexen,
-		BOUNCE_DoomCompat, BOUNCE_HereticCompat, BOUNCE_HexenCompat };
+		BOUNCE_DoomCompat, BOUNCE_HereticCompat, BOUNCE_HexenCompat,
+		BOUNCE_Grenade, BOUNCE_Classic, };
 	PROP_STRING_PARM(id, 0);
 	int match = MatchString(id, names);
 	if (match < 0)
@@ -1294,7 +1295,6 @@ DEFINE_CLASS_PROPERTY(pickupsound, S, Inventory)
 //==========================================================================
 DEFINE_CLASS_PROPERTY(pickupannouncerentry, S, Inventory)
 {
-	PROP_STRING_PARM(str, 0);
 }
 
 //==========================================================================

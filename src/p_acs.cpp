@@ -2426,6 +2426,8 @@ enum
 	APROP_Dropped		= 18,
 	APROP_Notarget		= 19,
 	APROP_Species		= 20,
+	// APROP_Nametag
+	APROP_Score			= 22,
 };	
 
 // These are needed for ACS's APROP_RenderStyle
@@ -2578,6 +2580,10 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 	case APROP_Species:
 		actor->Species = FBehavior::StaticLookupString(value);
 		break;
+
+	case APROP_Score:
+		actor->Score = value;
+		break;
 	}
 }
 
@@ -2642,6 +2648,7 @@ int DLevelScript::GetActorProperty (int tid, int property)
 							{
 								return 0;
 							}
+	case APROP_Score:		return actor->Score;
 	default:				return 0;
 	}
 }

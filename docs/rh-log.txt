@@ -1,5 +1,14 @@
 September 14, 2009  (Changes by Graf Zahl)
 - Added a few things from Gez's experimental build:
+  * info CCMD to print extended actor information (not fully implemented yet)
+  * summonmbf CCMD.
+  * Beta BFG code pointer (but not the related missiles yet.)
+  * PowerInvisibility enhancements.
+  * ScoreItem with one significant change: Added a score variable that can be
+    checked through ACS and DECORATE. The engine itself will do nothing with it.
+  * Nailgun option for A_Explode.
+  * A_PrintBold and A_Log.
+  * A_SetSpecial.
   * Beta Lost Soul (added DoomEdNum 9037 to it)
   * A_Mushroom extensions
   * Vavoom compatible MAPINFO keynames.

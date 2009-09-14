@@ -35,6 +35,7 @@ ACTOR Inventory native
 	action native A_RailWait();
 	action native A_BFGsound();
 	action native A_FireBFG();
+	action native A_FireOldBFG();
 	action native A_ReFire();
 	action native A_ClearReFire();
 	action native A_CheckReload();
@@ -68,6 +69,14 @@ ACTOR Inventory native
 		TNT1 A 1
 		Stop
 	}
+}
+
+Actor ScoreItem : Inventory native
+{
+	Height 10
+	+COUNTITEM
+	Inventory.Amount 1
+	+Inventory.ALWAYSPICKUP
 }
 
 Actor Ammo : Inventory native
@@ -161,6 +170,7 @@ ACTOR PowerStrength : Powerup native
 
 ACTOR PowerInvisibility : Powerup native
 {
+	+SHADOW
 	Powerup.Duration -60
 	Powerup.Strength 80
 	Powerup.Mode "Fuzzy"

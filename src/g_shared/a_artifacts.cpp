@@ -553,7 +553,7 @@ void APowerStrength::Tick ()
 
 PalEntry APowerStrength::GetBlend ()
 {
-	// slowly fade the berzerk out
+	// slowly fade the berserk out
 	int cnt = 12 - (EffectTics >> 6);
 
 	if (cnt > 0)
@@ -570,35 +570,10 @@ PalEntry APowerStrength::GetBlend ()
 IMPLEMENT_CLASS (APowerInvisibility)
 IMPLEMENT_CLASS (APowerShadow)
 
-//===========================================================================
-//
-// APowerInvisibility :: CommonInit
-//
-// stuff that's done for all subclasses
-//
-//===========================================================================
-
-void APowerInvisibility::CommonInit()
-{
-	if (Owner != NULL)
-	{
-		Owner->flags |= MF_SHADOW;
-		fixed_t ts = MIN(Strength * (special1 + 1), FRACUNIT);
-		Owner->alpha = clamp<fixed_t>((OPAQUE - ts), 0, OPAQUE);
-		Owner->RenderStyle = (Mode == NAME_Fuzzy ? STYLE_OptFuzzy : STYLE_Translucent);
-		// CommonInit() is called every tic by DoEffect, so the flag trick must happen only once!
-		if (special2 == 0)
-		{
-			// transfer seeker missile blocking (but only if the owner does not already have this flag
-			if (!(Owner->flags5 & MF5_CANTSEEK) && (flags5 & MF5_CANTSEEK))	Owner->flags5 |= MF5_CANTSEEK;
-			else flags5 &= ~MF5_CANTSEEK;
-			// transfer ghost flag likewise
-			if (!(Owner->flags3 & MF3_GHOST) && (flags3 & MF3_GHOST)) Owner->flags3 |= MF3_GHOST;
-			else flags3 &= ~MF3_GHOST;
-			special2 = 1;
-		}
-	}
-}
+// Invisibility flag combos
+#define INVISIBILITY_FLAGS1	(MF_SHADOW | MF_STEALTH)
+#define INVISIBILITY_FLAGS3	(MF3_GHOST)
+#define INVISIBILITY_FLAGS5	(MF5_CANTSEEK)
 
 //===========================================================================
 //
@@ -608,7 +583,39 @@ void APowerInvisibility::CommonInit()
 
 void APowerInvisibility::InitEffect ()
 {
-	CommonInit();
+	// This used to call CommonInit(), which used to contain all the code that's repeated every
+	// tic, plus the following code that needs to happen once and only once.
+	// The CommonInit() code has been moved to DoEffect(), so this now ends with a call to DoEffect(),
+	// and DoEffect() no longer needs to call InitEffect(). CommonInit() has been removed for being redundant.
+	if (Owner != NULL)
+	{
+		flags &= ~(Owner->flags  & INVISIBILITY_FLAGS1);
+		Owner->flags  |= flags & INVISIBILITY_FLAGS1;
+		flags3 &= ~(Owner->flags3 & INVISIBILITY_FLAGS3);
+		Owner->flags3 |= flags3 & INVISIBILITY_FLAGS3;
+		flags5 &= ~(Owner->flags5 & INVISIBILITY_FLAGS5);
+		Owner->flags5 |= flags5 & INVISIBILITY_FLAGS5;
+
+		// Finds out what's the normal alpha and render style for the owner. 
+		// First assume it's what it currently is.
+		//OwnersNormalStyle = Owner->RenderStyle;
+		//OwnersNormalAlpha = Owner->alpha;
+		// Then look if there aren't active invis powerups and look what they're saying.
+		/*AInventory *item = Owner->Inventory;
+		while (item != NULL)
+		{
+			if (item->IsKindOf(RUNTIME_CLASS(APowerInvisibility)) && item != this)
+			{
+				OwnersNormalStyle = static_cast<APowerInvisibility*>(item)->OwnersNormalStyle;
+				OwnersNormalAlpha = static_cast<APowerInvisibility*>(item)->OwnersNormalAlpha;
+				item = NULL; // No need to look further
+			}
+			else item = item->Inventory;
+		}
+		Printf("Owner's normal style is found to be %i, normal alpha is found to be %i.\n",
+			OwnersNormalStyle, OwnersNormalAlpha>>FRACBITS);*/
+		DoEffect();
+	}
 }
 
 //===========================================================================
@@ -621,7 +628,31 @@ void APowerInvisibility::DoEffect ()
 	Super::DoEffect();
 	// Due to potential interference with other PowerInvisibility items
 	// the effect has to be refreshed each tic.
-	InitEffect();
+	fixed_t ts = Strength * (special1 + 1); if (ts > FRACUNIT) ts = FRACUNIT;
+	Owner->alpha = clamp<fixed_t>((/*OwnersNormalAlpha*/OPAQUE - ts), 0, OPAQUE);
+	switch (Mode)
+	{
+	case (NAME_Fuzzy):
+		Owner->RenderStyle = STYLE_OptFuzzy;
+		break;
+	case (NAME_Opaque):
+		Owner->RenderStyle = STYLE_Normal;
+		break;
+	case (NAME_Additive):
+		Owner->RenderStyle = STYLE_Add;
+		break;
+	case (NAME_Stencil):
+		Owner->RenderStyle = STYLE_Stencil;
+		break;
+	case (NAME_None):
+	case (NAME_Translucent):
+		Owner->RenderStyle = STYLE_Translucent;
+		break;
+	default: // Something's wrong
+		Owner->RenderStyle = STYLE_Normal;
+		Owner->alpha = OPAQUE;
+		break;
+	}
 }
 
 //===========================================================================
@@ -634,11 +665,12 @@ void APowerInvisibility::EndEffect ()
 {
 	if (Owner != NULL)
 	{
-		if (flags5 & MF5_CANTSEEK) Owner->flags5 &= ~MF5_CANTSEEK;
-		if (flags3 & MF3_GHOST) Owner->flags3 &= ~MF3_GHOST;
-		Owner->flags &= ~MF_SHADOW;
-		Owner->RenderStyle = STYLE_Normal;
-		Owner->alpha = OPAQUE;
+		Owner->flags  &= ~(flags  & INVISIBILITY_FLAGS1);
+		Owner->flags3 &= ~(flags3 & INVISIBILITY_FLAGS3);
+		Owner->flags5 &= ~(flags5 & INVISIBILITY_FLAGS5);
+
+		Owner->RenderStyle = STYLE_Normal;//OwnersNormalStyle;
+		Owner->alpha = OPAQUE;//OwnersNormalAlpha;
 
 		// Check whether there are other invisibility items and refresh their effect.
 		// If this isn't done there will be one incorrectly drawn frame when this
@@ -648,7 +680,7 @@ void APowerInvisibility::EndEffect ()
 		{
 			if (item->IsKindOf(RUNTIME_CLASS(APowerInvisibility)) && item != this)
 			{
-				static_cast<APowerInvisibility*>(item)->InitEffect();
+				static_cast<APowerInvisibility*>(item)->DoEffect();
 			}
 			item = item->Inventory;
 		}
@@ -667,16 +699,36 @@ int APowerInvisibility::AlterWeaponSprite (vissprite_t *vis)
 	// Blink if the powerup is wearing off
 	if (changed == 0 && EffectTics < 4*32 && !(EffectTics & 8))
 	{
-		vis->RenderStyle = STYLE_Normal;
-		vis->alpha = OPAQUE;
+		vis->RenderStyle = STYLE_Normal;//OwnersNormalStyle;
+		vis->alpha = OPAQUE;//OwnersNormalAlpha;
 		return 1;
 	}
 	else if (changed == 1)
 	{
 		// something else set the weapon sprite back to opaque but this item is still active.
-		fixed_t ts = MIN(Strength * (special1 + 1), FRACUNIT);
-		vis->alpha = clamp<fixed_t>((OPAQUE - ts), 0, OPAQUE);
-		vis->RenderStyle = (Mode == NAME_Fuzzy ? STYLE_OptFuzzy : STYLE_Translucent);
+		fixed_t ts = Strength * (special1 + 1); if (ts > FRACUNIT) ts = FRACUNIT;
+		vis->alpha = clamp<fixed_t>((/*OwnersNormalAlpha*/OPAQUE - ts), 0, OPAQUE);
+		switch (Mode)
+		{
+		case (NAME_Fuzzy):
+			vis->RenderStyle = STYLE_OptFuzzy;
+			break;
+		case (NAME_Opaque):
+			vis->RenderStyle = STYLE_Normal;
+			break;
+		case (NAME_Additive):
+			vis->RenderStyle = STYLE_Add;
+			break;
+		case (NAME_Stencil):
+			vis->RenderStyle = STYLE_Stencil;
+			break;
+		case (NAME_None):
+		case (NAME_Cumulative):
+		case (NAME_Translucent):
+		default:
+			vis->RenderStyle = STYLE_Translucent;
+			break;
+		}
 	}
 	// Handling of Strife-like cumulative invisibility powerups, the weapon itself shouldn't become invisible
 	if ((vis->alpha < TRANSLUC25 && special1 > 0) || (vis->alpha == 0))

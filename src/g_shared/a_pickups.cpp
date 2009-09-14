@@ -1728,3 +1728,30 @@ bool AMapRevealer::TryPickup (AActor *&toucher)
 	return true;
 }
 
+
+//===========================================================================
+//
+// AScoreItem
+//
+//===========================================================================
+
+IMPLEMENT_CLASS(AScoreItem)
+
+//===========================================================================
+//
+// AScoreItem :: TryPickup
+//
+// This function does nothing much. Theoretically, the player could have a
+// score property which would be incremented by the score items' own score
+// property (probably using the Amount property for that), but that is not
+// needed for the moment.
+//
+//===========================================================================
+
+bool AScoreItem::TryPickup (AActor *&toucher)
+{
+	toucher->Score += Amount;
+	GoAwayAndDie();
+	return true;
+}
+

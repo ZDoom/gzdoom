@@ -704,8 +704,7 @@ bool FScanner::GetFloat ()
 		Float = (float)strtod (String, &stopper);
 		if (*stopper != 0)
 		{
-			I_Error ("SC_GetFloat: Bad numeric constant \"%s\".\n"
-				"Script %s, Line %d\n", String, ScriptName.GetChars(), Line);
+			ScriptError ("SC_GetFloat: Bad numeric constant \"%s\".", String);
 		}
 		Number = (int)Float;
 		return true;

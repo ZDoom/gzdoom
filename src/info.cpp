@@ -211,7 +211,9 @@ FActorInfo *FActorInfo::GetReplacement (bool lookskill)
 
 FActorInfo *FActorInfo::GetReplacee (bool lookskill)
 {
-	FName skillrepname = AllSkills[gameskill].GetReplacedBy(this->Class->TypeName);	if (skillrepname != NAME_None && PClass::FindClass(skillrepname) == NULL)	{
+	FName skillrepname = AllSkills[gameskill].GetReplacedBy(this->Class->TypeName);
+	if (skillrepname != NAME_None && PClass::FindClass(skillrepname) == NULL)
+	{
 		Printf("Warning: incorrect actor name in definition of skill %s: \
 			   inexistent class %s is replaced by class %s\n\
 			   Skill replacement will be ignored for this actor.\n", 
@@ -229,7 +231,12 @@ FActorInfo *FActorInfo::GetReplacee (bool lookskill)
 	// potential infinite recursion.
 	FActorInfo *savedrep = Replacee;
 	Replacee = NULL;
-	FActorInfo *rep = savedrep;	if (lookskill && (skillrepname != NAME_None) && (PClass::FindClass(skillrepname) != NULL))	{		rep = PClass::FindClass(skillrepname)->ActorInfo;	}	rep = rep->GetReplacee (false);	Replacee = savedrep;
+	FActorInfo *rep = savedrep;
+	if (lookskill && (skillrepname != NAME_None) && (PClass::FindClass(skillrepname) != NULL))
+	{
+		rep = PClass::FindClass(skillrepname)->ActorInfo;
+	}
+	rep = rep->GetReplacee (false);	Replacee = savedrep;
 	return rep;
 }
 
@@ -443,6 +450,11 @@ CCMD (summon)
 CCMD (summonfriend)
 {
 	SummonActor (DEM_SUMMONFRIEND, DEM_SUMMONFRIEND2, argv);
+}
+
+CCMD (summonmbf)
+{
+	SummonActor (DEM_SUMMONMBF, DEM_SUMMONFRIEND2, argv);
 }
 
 CCMD (summonfoe)

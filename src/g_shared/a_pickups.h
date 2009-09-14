@@ -475,4 +475,16 @@ public:
 	bool bDepleted;
 };
 
+
+// A score item is picked up without being added to the inventory.
+// Contrarily to FakeInventory, it does nothing.
+class AScoreItem : public AInventory
+{
+	DECLARE_CLASS (AScoreItem, AInventory)
+
+public:
+	bool TryPickup(AActor *&toucher);
+};
+
+
 #endif //__A_PICKUPS_H__

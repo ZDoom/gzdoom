@@ -81,11 +81,12 @@ class APowerInvisibility : public APowerup
 	DECLARE_CLASS (APowerInvisibility, APowerup)
 protected:
 	bool HandlePickup (AInventory *item);
-	void CommonInit ();
 	void InitEffect ();
 	void DoEffect ();
 	void EndEffect ();
 	int AlterWeaponSprite (vissprite_t *vis);
+//	FRenderStyle OwnersNormalStyle;
+//	fixed_t OwnersNormalAlpha;
 };
 
 // Needed only for m_cheat.cpp now

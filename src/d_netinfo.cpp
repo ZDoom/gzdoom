@@ -839,5 +839,6 @@ CCMD (playerinfo)
 		Printf ("PlayerClass: %s (%d)\n",
 			ui->PlayerClass == -1 ? "Random" : PlayerClasses[ui->PlayerClass].Type->Meta.GetMetaString (APMETA_DisplayName),
 			ui->PlayerClass);
+		PrintMiscActorInfo(players[i].mo);
 	}
 }

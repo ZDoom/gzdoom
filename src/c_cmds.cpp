@@ -778,8 +778,29 @@ CCMD(linetarget)
 			linetarget->GetClass()->TypeName.GetChars(),
 			linetarget->health,
 			linetarget->SpawnHealth());
+		PrintMiscActorInfo(linetarget);
 	}
 	else Printf("No target found\n");
+}
+
+// As linetarget, but also give info about non-shootable actors
+CCMD(info)
+{
+	AActor *linetarget;
+
+	if (CheckCheatmode () || players[consoleplayer].mo == NULL) return;
+	P_AimLineAttack(players[consoleplayer].mo,players[consoleplayer].mo->angle,MISSILERANGE, &linetarget, 0,
+		false, false, true);
+	if (linetarget)
+	{
+		Printf("Target=%s, Health=%d, Spawnhealth=%d\n",
+			linetarget->GetClass()->TypeName.GetChars(),
+			linetarget->health,
+			linetarget->SpawnHealth());
+		PrintMiscActorInfo(linetarget);
+	}
+	else Printf("No target found. Info cannot find actors that have\
+				the NOBLOCKMAP flag or have height/radius of 0.\n");
 }
 
 //-----------------------------------------------------------------------------

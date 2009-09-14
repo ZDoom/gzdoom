@@ -137,6 +137,7 @@ ACTOR RandomSpawner native
 	+NOBLOCKMAP
 	+NOSECTOR
 	+NOGRAVITY
+	+THRUACTORS
 }
 
 // Fast projectiles -----------------------------------------------------------

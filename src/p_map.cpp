@@ -1314,7 +1314,8 @@ bool P_CheckPosition (AActor *thing, fixed_t x, fixed_t y, FCheckPosition &tm)
 
 	while ((ld = it.Next()))
 	{
-		if (!PIT_CheckLine(ld, box, tm)) return false;
+		if (!PIT_CheckLine(ld, box, tm))
+			return false;
 	}
 
 	if (tm.ceilingz - tm.floorz < thing->height)
@@ -2667,7 +2668,7 @@ struct aim_t
 	bool AimTraverse3DFloors(const divline_t &trace, intercept_t * in);
 #endif
 
-	void AimTraverse (fixed_t startx, fixed_t starty, fixed_t endx, fixed_t endy);
+	void AimTraverse (fixed_t startx, fixed_t starty, fixed_t endx, fixed_t endy, bool checknonshootable = false);
 
 };
 
@@ -2784,7 +2785,7 @@ bool aim_t::AimTraverse3DFloors(const divline_t &trace, intercept_t * in)
 //
 //============================================================================
 
-void aim_t::AimTraverse (fixed_t startx, fixed_t starty, fixed_t endx, fixed_t endy)
+void aim_t::AimTraverse (fixed_t startx, fixed_t starty, fixed_t endx, fixed_t endy, bool checknonshootable)
 {
 	FPathTraverse it(startx, starty, endx, endy, PT_ADDLINES|PT_ADDTHINGS);
 	intercept_t *in;
@@ -2839,18 +2840,20 @@ void aim_t::AimTraverse (fixed_t startx, fixed_t starty, fixed_t endx, fixed_t e
 		if (th == shootthing)
 			continue;					// can't shoot self
 
-		if (!(th->flags&MF_SHOOTABLE))
-			continue;					// corpse or something
-
-		// check for physical attacks on a ghost
-		if ((th->flags3 & MF3_GHOST) && 
-			shootthing->player &&	// [RH] Be sure shootthing is a player
-			shootthing->player->ReadyWeapon &&
-			(shootthing->player->ReadyWeapon->flags2 & MF2_THRUGHOST))
+		if (!checknonshootable)			// For info CCMD, ignore stuff about GHOST and SHOOTABLE flags
 		{
-			continue;
+ 			if (!(th->flags&MF_SHOOTABLE))
+				continue;					// corpse or something
+
+			// check for physical attacks on a ghost
+			if ((th->flags3 & MF3_GHOST) && 
+				shootthing->player &&	// [RH] Be sure shootthing is a player
+				shootthing->player->ReadyWeapon &&
+				(shootthing->player->ReadyWeapon->flags2 & MF2_THRUGHOST))
+			{
+				continue;
+			}
 		}
-			
 		dist = FixedMul (attackrange, in->frac);
 
 #ifdef _3DFLOORS
@@ -2974,6 +2977,11 @@ void aim_t::AimTraverse (fixed_t startx, fixed_t starty, fixed_t endx, fixed_t e
 			aimpitch=thingpitch;
 			return;
 		}
+		if (checknonshootable)
+		{
+			linetarget=th;
+			aimpitch=thingpitch;
+		}
 	}
 }
 
@@ -2982,7 +2990,7 @@ void aim_t::AimTraverse (fixed_t startx, fixed_t starty, fixed_t endx, fixed_t e
 // P_AimLineAttack
 //
 //============================================================================
-fixed_t P_AimLineAttack (AActor *t1, angle_t angle, fixed_t distance, AActor **pLineTarget, fixed_t vrange, bool forcenosmart, bool check3d)
+fixed_t P_AimLineAttack (AActor *t1, angle_t angle, fixed_t distance, AActor **pLineTarget, fixed_t vrange, bool forcenosmart, bool check3d, bool checknonshootable)
 {
 	fixed_t x2;
 	fixed_t y2;
@@ -3051,7 +3059,7 @@ fixed_t P_AimLineAttack (AActor *t1, angle_t angle, fixed_t distance, AActor **p
 	}
 #endif
 
-	aim.AimTraverse (t1->x, t1->y, x2, y2);
+	aim.AimTraverse (t1->x, t1->y, x2, y2, checknonshootable);
 
 	if (!aim.linetarget) 
 	{
@@ -4123,7 +4131,6 @@ void P_RadiusAttack (AActor *bombspot, AActor *bombsource, int bombdamage, int b
 		}
 	}
 }
-
 
 //
 // SECTOR HEIGHT CHANGING

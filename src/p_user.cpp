@@ -2535,7 +2535,7 @@ void player_t::Serialize (FArchive &arc)
 		<< ConversationPC
 		<< ConversationNPCAngle
 		<< ConversationFaceTalker;
-		
+
 	for (i = 0; i < MAXPLAYERS; i++)
 		arc << frags[i];
 	for (i = 0; i < NUMPSPRITES; i++)

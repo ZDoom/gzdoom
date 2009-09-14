@@ -67,7 +67,7 @@ struct TVector2
 	}
 
 	TVector2 (double a, double b)
-		: X(a), Y(b)
+		: X(vec_t(a)), Y(vec_t(b))
 	{
 	}
 

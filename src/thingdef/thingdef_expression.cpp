@@ -75,6 +75,7 @@ DEFINE_MEMBER_VARIABLE_ALIAS(momx, velx, AActor)
 DEFINE_MEMBER_VARIABLE_ALIAS(momy, vely, AActor)
 DEFINE_MEMBER_VARIABLE_ALIAS(momz, velz, AActor)
 DEFINE_MEMBER_VARIABLE(Damage, AActor)
+DEFINE_MEMBER_VARIABLE(Score, AActor)
 
 //==========================================================================
 //
@@ -2812,13 +2813,13 @@ int FStateExpressions::Reserve(int num, const PClass *cls)
 //
 //==========================================================================
 
-void FStateExpressions::Set(int num, FxExpression *x)
+void FStateExpressions::Set(int num, FxExpression *x, bool cloned)
 {
 	if (num >= 0 && num < int(Size()))
 	{
 		assert(expressions[num].expr == NULL || expressions[num].cloned);
 		expressions[num].expr = x;
-		expressions[num].cloned = false;
+		expressions[num].cloned = cloned;
 	}
 }
 

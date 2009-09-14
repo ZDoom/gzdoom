@@ -560,12 +560,14 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfArmorType)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Explode)
 {
-	ACTION_PARAM_START(5);
+	ACTION_PARAM_START(7);
 	ACTION_PARAM_INT(damage, 0);
 	ACTION_PARAM_INT(distance, 1);
 	ACTION_PARAM_BOOL(hurtSource, 2);
 	ACTION_PARAM_BOOL(alert, 3);
 	ACTION_PARAM_INT(fulldmgdistance, 4);
+	ACTION_PARAM_INT(nails, 5);
+	ACTION_PARAM_INT(naildamage, 6);
 
 	if (damage < 0)	// get parameters from metadata
 	{
@@ -577,6 +579,21 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Explode)
 	else
 	{
 		if (distance <= 0) distance = damage;
+	}
+	// NailBomb effect, from SMMU but not from its source code: instead it was implemented and
+	// generalized from the documentation at http://www.doomworld.com/eternity/engine/codeptrs.html
+
+	if (nails)
+	{
+		angle_t ang;
+		for (int i = 0; i < nails; i++)
+		{
+			ang = i*(ANGLE_MAX/nails);
+			// Comparing the results of a test wad with Eternity, it seems A_NailBomb does not aim
+			P_LineAttack (self, ang, MISSILERANGE, 0,
+				//P_AimLineAttack (self, ang, MISSILERANGE), 
+				naildamage, NAME_None, NAME_BulletPuff);
+		}
 	}
 
 	P_RadiusAttack (self, self->target, damage, distance, self->DamageType, hurtSource, true, fulldmgdistance);
@@ -1675,6 +1692,47 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Print)
 	}
 }
 
+//===========================================================================
+//
+// A_PrintBold
+//
+//===========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_PrintBold)
+{
+	ACTION_PARAM_START(3);
+	ACTION_PARAM_STRING(text, 0);
+	ACTION_PARAM_FLOAT(time, 1);
+	ACTION_PARAM_NAME(fontname, 2);
+
+	float saved = con_midtime;
+	FFont *font = NULL;
+	
+	if (fontname != NAME_None)
+	{
+		font = V_GetFont(fontname);
+	}
+	if (time > 0)
+	{
+		con_midtime = time;
+	}
+	
+	C_MidPrintBold(font != NULL ? font : SmallFont, text);
+	con_midtime = saved;
+}
+
+//===========================================================================
+//
+// A_Log
+//
+//===========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Log)
+{
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_STRING(text, 0);
+	Printf("%s\n", text);
+}
 
 //===========================================================================
 //
@@ -2769,3 +2827,28 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetArg)
 		self->args[pos] = value;
 	}
 }
+
+//===========================================================================
+//
+// A_SetSpecial
+//
+//===========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetSpecial)
+{
+	ACTION_PARAM_START(6);
+	ACTION_PARAM_INT(spec, 0);
+	ACTION_PARAM_INT(arg0, 1);	
+	ACTION_PARAM_INT(arg1, 2);	
+	ACTION_PARAM_INT(arg2, 3);	
+	ACTION_PARAM_INT(arg3, 4);	
+	ACTION_PARAM_INT(arg4, 5);	
+	
+	self->special = spec;
+	self->args[0] = arg0;
+	self->args[1] = arg1;
+	self->args[2] = arg2;
+	self->args[3] = arg3;
+	self->args[4] = arg4;
+}
+

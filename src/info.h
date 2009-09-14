@@ -55,8 +55,8 @@ struct FState
 {
 	WORD		sprite;
 	SWORD		Tics;
-	SBYTE		Misc1;
-	BYTE		Misc2;
+	long		Misc1;			// Was changed to SBYTE, reverted to long for MBF compat
+	long		Misc2;			// Was changed to BYTE, reverted to long for MBF compat
 	BYTE		Frame;
 	BYTE		DefineFlags;	// Unused byte so let's use it during state creation.
 	FState		*NextState;

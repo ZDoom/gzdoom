@@ -1109,7 +1109,6 @@ static menuitem_t CompatibilityItems[] = {
 	{ bitflag,  "Allow any bossdeath for level special",	{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_ANYBOSSDEATH} },
 	{ bitflag,  "No Minotaur floor flames in water",		{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_MINOTAUR} },
 	{ bitflag,  "Original A_Mushroom speed in DEH mods",	{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_MUSHROOM} },
-	{ bitflag,	"Allow MBF DeHackEd parameters",			{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_MBFDEHACKED} },
 	{ bitflag,	"Allow MBF pseudo-torque effects",			{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_MBFTORQUE} },
 	{ bitflag,	"Monster movement is affected by effects",	{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_MBFMONSTERMOVE} },
 	{ bitflag,	"Crushed monsters can be resurrected",		{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_CORPSEGIBS} },

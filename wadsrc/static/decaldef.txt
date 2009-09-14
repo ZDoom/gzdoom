@@ -522,6 +522,78 @@ decal RevenantScorch
 	randomflipy
 }
 
+/***** MBF OldBFG plasma scorches ******************************************/
+
+
+decal GreenPlasmaScorch1
+{
+	pic PLS1A0
+	add 1.0
+	fullbright
+	animator GoAway
+	lowerdecal DoomImpScorch
+}
+
+decal GreenPlasmaScorch2
+{
+	pic PLS1B0
+	add 1.0
+	fullbright
+	animator GoAway
+	lowerdecal DoomImpScorch
+}
+
+decal GreenPlasmaScorch3
+{
+	pic PLS1C0
+	add 1.0
+	fullbright
+	animator GoAway
+	lowerdecal DoomImpScorch
+}
+
+decal GreenPlasmaScorch4
+{
+	pic PLS1D0
+	add 1.0
+	fullbright
+	animator GoAway
+	lowerdecal DoomImpScorch
+}
+
+decalgroup GreenPlasmaScorch
+{
+	GreenPlasmaScorch1	1
+	GreenPlasmaScorch2	1
+	GreenPlasmaScorch3	1
+	GreenPlasmaScorch4	1
+}
+
+decal RedPlasmaScorch1
+{
+	pic PLS2A0
+	add 1.0
+	fullbright
+	animator GoAway
+	lowerdecal PlasmaScorchLower1
+}
+
+decal RedPlasmaScorch2
+{
+	pic PLS2B0
+	add 1.0
+	fullbright
+	animator GoAway
+	lowerdecal PlasmaScorchLower2
+}
+
+decalgroup RedPlasmaScorch
+{
+	RedPlasmaScorch1	1
+	RedPlasmaScorch2	1
+}
+
+
 // Graf Zahl provided definitions for the other games.
 
 /***** Crossbow ************************************************************/
@@ -975,6 +1047,8 @@ generator Chaingun			BulletChip
 generator PlasmaBall			PlasmaScorch
 generator Rocket			Scorch
 generator BFGBall			BFGLightning
+generator PlasmaBall1		GreenPlasmaScorch
+generator PlasmaBall2		RedPlasmaScorch
 
 generator MarinePistol			BulletChip
 generator MarineShotgun			BulletChip

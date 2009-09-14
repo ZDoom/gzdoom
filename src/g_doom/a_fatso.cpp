@@ -151,7 +151,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Mushroom)
 			target->x = self->x + (i << FRACBITS);    // Aim in many directions from source
 			target->y = self->y + (j << FRACBITS);
 			target->z = self->z + (P_AproxDistance(i,j) * vrange); // Aim up fairly high
-			if (flags == 0 && (self->state->Misc1 == 0 || !(i_compatflags & COMPATF_MUSHROOM)))
+			if (flags == 0 && (!(self->state->DefineFlags & SDF_DEHACKED) || !(i_compatflags & COMPATF_MUSHROOM)))
 			{
 				mo = P_SpawnMissile (self, target, spawntype); // Launch fireball
 			}

@@ -239,7 +239,17 @@ CodePConv
 	733, 734, 735, 736, 737, 738, 739, 740, 741, 743,
 	745, 746, 750, 751, 766, 774, 777, 779, 780, 783,
 	784, 785, 786, 787, 788, 789, 790, 791, 792, 793,
-	794, 795, 796, 797, 798, 801, 809, 811
+	794, 795, 796, 797, 798, 801, 809, 811, // 448th
+	// Now for the 74 MBF states with code pointers
+	968, 969, 970, 972, 973, 974, 975, 976, 977, 978,
+	979, 980, 981, 982, 983, 984, 986, 988, 990, 999,
+	1000, 1001, 1002, 1003, 1004, 1005, 1006, 1007,
+	1008, 1009, 1010, 1011, 1012, 1013, 1014, 1015,
+	1016, 1017, 1018, 1019, 1020, 1021, 1022, 1023,
+	1024, 1025, 1026, 1027, 1028, 1029, 1030, 1031,
+	1032, 1033, 1034, 1035, 1036, 1037, 1038, 1039,
+	1040, 1041, 1056, 1057, 1058, 1059, 1060, 1061,
+	1062, 1065, 1071, 1073, 1074, 1075 // Total: 522
 };
 
 // Sprite names in the order Doom originally had them.
@@ -258,7 +268,8 @@ OrgSprNames
 	POL3,POL1,POL6,GOR2,GOR3,GOR4,GOR5,SMIT,COL1,COL2,
 	COL3,COL4,CAND,CBRA,COL6,TRE1,TRE2,ELEC,CEYE,FSKU,
 	COL5,TBLU,TGRN,TRED,SMBT,SMGT,SMRT,HDB1,HDB2,HDB3,
-	HDB4,HDB5,HDB6,POB1,POB2,BRS1,TLMP,TLP2
+	HDB4,HDB5,HDB6,POB1,POB2,BRS1,TLMP,TLP2,
+	TNT1,DOGS,PLS1,PLS2,BON3,BON4	// Added by MBF
 };
 
 StateMap
@@ -400,6 +411,17 @@ StateMap
 	BrainStem,			Spawn, 1,	// S_BRAINSTEM
 	TechLamp,			Spawn, 4,	// S_TECHLAMP - S_TECHLAMP4
 	TechLamp2,			Spawn, 4	// S_TECH2LAMP - S_TECH2LAMP4
+	DoomUnusedStates,	TNT, 1,			// [MBF] S_TNT1							967
+	Grenade,			Grenade, 1,		// [MBF] S_GRENADE						968
+	Grenade,			Detonate, 3,	// [MBF] S_DETONATE - S_DETONATE3		969-971
+	Dog,				Spawn, 27,		// [MBF] S_DOGS_STND - S_DOGS_RAISE6	972-998
+	BFG9000,			OldFire, 43,	// [MBF] S_OLDBFG1 - S_OLDBFG43			999-1041
+	PlasmaBall1,		Spawn, 7,		// [MBF] S_PLS1BALL - S_PLS1EXP5		1042-1048
+	PlasmaBall2,		Spawn, 5,		// [MBF] S_PLS2BALL - S_PLS2BALLX3		1049-1053
+	EvilSceptre,		Spawn, 1,		// [MBF] S_BON3							1054
+	UnholyBible,		Spawn, 1,		// [MBF] S_BON4							1055
+	BetaSkull,			Spawn, 19,		// [MBF] S_BSKUL_STND - S_BSKUL_DIE8	1056-1074
+	Grenade,			Mushroom, 1,	// [MBF] S_MUSHROOM						1075
 };
 
 // Sound equivalences. When a patch tries to change a sound, use these sound names.
@@ -654,7 +676,16 @@ InfoNames
 	HangTNoBrain,
 	ColonGibs,
 	SmallBloodPool,
-	BrainStem
+	BrainStem,
+// Boom additional actors:
+	PointPusher,
+	PointPuller,
+// MBF additional actors:
+	Dog,
+	PlasmaBall1,
+	PlasmaBall2,
+	EvilSceptre,
+	UnholyBible
 };
 
 ThingBits
@@ -672,6 +703,7 @@ ThingBits
 	10, 0, DROPOFF,
 	11, 0, PICKUP,
 	12, 0, NOCLIP,
+	13, 0, SLIDE,
 	14, 0, FLOAT,
 	15, 0, TELEPORT,
 	16, 0, MISSILE,
@@ -691,7 +723,10 @@ ThingBits
 	28, 0, UNUSED2,			// BOOM compatibility
 	29, 0, UNUSED3,			// BOOM compatibility
 	30, 0, UNUSED4,			// BOOM compatibility
-	 2, 2, TRANSLUCENT,		// BOOM compatibility?
+	28, 0, TOUCHY,			// MBF compatibility
+	29, 0, BOUNCES,			// MBF compatibility
+	30, 0, FRIEND,			// MBF compatibility
+	31, 0, TRANSLUCENT,		// BOOM compatibility
 	30, 0, STEALTH,
 	 1, 2, TRANSLUC25,
 	 2, 2, TRANSLUC50,
@@ -772,4 +807,23 @@ WeaponNames
 	BFG9000,
 	Chainsaw,
 	SuperShotgun
+};
+
+// Codepointer aliases
+// The idea is that, rather than add redundant codepointers for compatibility,
+// or codepointers that would require to transform ZDoom's underlying architecture
+// because they refer to things, sounds or states by their DeHackEd numbers,
+// we can translate their parameters and transform them into standard functions
+// when parsing a DEHACKED lump. 
+Aliases
+{
+	A_Mushroom,		A_Mushroom,				5,
+	A_Spawn,		A_SpawnItem,			5,
+	A_Turn,			A_Turn,					1,
+	A_Face,			A_SetAngle,				1,
+	A_Scratch,		A_CustomMeleeAttack,	5,	// 19 characters for "A_CustomMeleeAttack"!
+	A_PlaySound,	A_PlaySound,			5,	// A function name any longer and the definition
+	A_RandomJump,	A_Jump,					3,	// for CodePointerAlias would need to be updated.
+	A_LineEffect,	A_LineEffect,			2,
+	A_NailBomb,		A_Explode,				7,
 };

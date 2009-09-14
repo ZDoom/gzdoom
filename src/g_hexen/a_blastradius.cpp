@@ -59,8 +59,9 @@ bool AArtiBlastRadius::Use (bool pickup)
 		else if (!(mo->flags3 & MF3_ISMONSTER) &&
 			!(mo->player) &&
 			!(mo->flags & MF_MISSILE) &&
-			!(mo->flags3 & MF3_CANBLAST))
-		{	// Must be monster, player, or missile
+			!(mo->flags3 & MF3_CANBLAST) &&
+			!(mo->flags6 & MF6_TOUCHY))
+		{	// Must be monster, player, missile, or touchy
 			continue;
 		}
 		if (mo->flags2 & MF2_DORMANT)
@@ -161,6 +162,11 @@ void AArtiBlastRadius::BlastActor (AActor *victim, fixed_t strength)
 		else
 		{
 			victim->flags2 |= MF2_BLASTED;
+		}
+		if (victim->flags6 & MF6_TOUCHY)
+		{ // Touchy objects die when blasted
+			victim->flags6 &= ~MF6_ARMED; // Disarm
+			P_DamageMobj(victim, Owner, Owner, victim->health, NAME_Melee, DMG_FORCED);
 		}
 	}
 }

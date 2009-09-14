@@ -77,5 +77,52 @@ ACTOR DoomUnusedStates
 		stop
 		PLAY S -1
 		stop
+	TNT: // MBF compatibility
+		TNT1 A -1
+		Loop
+	}
+}
+
+Actor DemonicDagger : ScoreItem
+{
+	Inventory.PickupMessage "$BETA_BONUS1"
+	States
+	{
+	Spawn:
+		BON1 A 6
+		Loop
+	}
+}
+
+Actor SkullChest : ScoreItem
+{
+	Inventory.PickupMessage "$BETA_BONUS2"
+	States
+	{
+	Spawn:
+		BON2 A 6
+		Loop
+	}
+}
+
+Actor EvilSceptre : ScoreItem 2016
+{
+	Inventory.PickupMessage "$BETA_BONUS3"
+	States
+	{
+	Spawn:
+		BON3 A 6
+		Loop
+	}
+}
+
+Actor UnholyBible : ScoreItem 2017
+{
+	Inventory.PickupMessage "$BETA_BONUS4"
+	States
+	{
+	Spawn:
+		BON4 A 6
+		Loop
 	}
 }

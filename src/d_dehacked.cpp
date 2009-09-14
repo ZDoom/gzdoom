@@ -64,11 +64,14 @@
 #include "v_palette.h"
 #include "a_sharedglobal.h"
 #include "thingdef/thingdef.h"
+#include "thingdef/thingdef_exp.h"
 #include "vectors.h"
 #include "dobject.h"
 #include "r_translate.h"
 #include "sc_man.h"
+#include "i_system.h"
 #include "doomerrors.h"
+#include "p_effect.h"
 
 // [SO] Just the way Randy said to do it :)
 // [RH] Made this CVAR_SERVERINFO
@@ -141,6 +144,23 @@ static TArray<StyleName> StyleNames;
 
 static TArray<const PClass *> AmmoNames;
 static TArray<const PClass *> WeaponNames;
+
+// DeHackEd trickery to support MBF-style parameters
+// List of states that are hacked to use a codepointer
+struct MBFParamState
+{
+	FState * state;
+	int pointer;
+};
+static TArray<MBFParamState *> MBFParamStates;
+// Data on how to correctly modify the codepointers
+struct CodePointerAlias
+{
+	char name[20];
+	char alias[20];
+	BYTE params;
+};
+static TArray<CodePointerAlias> MBFCodePointers;
 
 // Miscellaneous info that used to be constant
 DehInfo deh =
@@ -309,7 +329,6 @@ static void PushTouchedActor(PClass *cls)
 static int HandleMode (const char *mode, int num)
 {
 	int i = 0;
-
 	while (Modes[i].name && stricmp (Modes[i].name, mode))
 		i++;
 
@@ -575,12 +594,145 @@ static int GetLine (void)
 	}
 }
 
+// This enum must be in sync with the Aliases array in DEHSUPP.
+enum MBFCodePointers
+{
+	// Die and Detonate are not in this list because these codepointers have
+	// no dehacked arguments and therefore do not need special handling.
+	// NailBomb has no argument but is implemented as new parameters for A_Explode.
+	MBF_Mushroom,	// misc1 = vrange (arg +3), misc2 = hrange (arg+4)
+	MBF_Spawn,		// misc1 = type (arg +0), misc2 = Z-pos (arg +2)
+	MBF_Turn,		// misc1 = angle (in degrees) (arg +0 but factor in current actor angle too)
+	MBF_Face,		// misc1 = angle (in degrees) (arg +0)
+	MBF_Scratch,	// misc1 = damage, misc 2 = sound
+	MBF_PlaySound,	// misc1 = sound, misc2 = attenuation none (true) or normal (false)
+	MBF_RandomJump,	// misc1 = state, misc2 = probability
+	MBF_LineEffect,	// misc1 = Boom linedef type, misc2 = sector tag
+	SMMU_NailBomb,	// No misc, but it's basically A_Explode with an added effect
+};
+
+int PrepareStateParameters(FState * state, int numparams, const PClass *cls);// Should probably be in a .h file.
+
+// Hacks the parameter list for the given state so as to convert MBF-args (misc1 and misc2) into real args.
+
+void SetDehParams(FState * state, int codepointer)
+{
+	int value1 = state->GetMisc1();
+	int value2 = state->GetMisc2();
+	if (!(value1|value2)) return;
+	
+	// Fakey fake script position thingamajig. Because NULL cannot be used instead.
+	// Even if the lump was parsed by an FScanner, there would hardly be a way to
+	// identify which line is troublesome.
+	FScriptPosition * pos = new FScriptPosition(FString("DEHACKED"), 0);
+	
+	// Let's identify the codepointer we're dealing with.
+	PSymbolActionFunction * sym; PSymbol * s;	
+	s = RUNTIME_CLASS(AInventory)->Symbols.FindSymbol(FName(MBFCodePointers[codepointer].name), true);
+	if (!s || s->SymbolType != SYM_ActionFunction) return;
+	sym = static_cast<PSymbolActionFunction*>(s);
+
+
+	// Bleargh! This will all have to be redone once scripting works
+
+	// Not sure exactly why the index for a state is greater by one point than the index for a symbol.
+	DPrintf("SetDehParams: Paramindex is %d, default is %d.\n", 
+		state->ParameterIndex-1, sym->defaultparameterindex);
+	if (state->ParameterIndex-1 == sym->defaultparameterindex)
+	{
+		int a = PrepareStateParameters(state, MBFCodePointers[codepointer].params+1, 
+			FState::StaticFindStateOwner(state)) -1;
+		int b = sym->defaultparameterindex;
+		//		StateParams.Copy(a, b, MBFParams[codepointer]);
+		// Meh, function doesn't work. For some reason it resets the paramindex to the default value.
+		// For instance, a dehacked Commander Keen calling A_Explode would result in a crash as
+		// ACTION_PARAM_INT(damage, 0) would properly evaluate at paramindex 1377, but then 
+		// ACTION_PARAM_INT(distance, 1) would improperly evaluate at paramindex 148! Now I'm not sure
+		// whether it's a genuine problem or working as intended and merely not appropriate for the
+		// task at hand here. So rather than modify it, I use a simple for loop of Set()s and Get()s,
+		// with a small modification to Set() that I know will have no repercussion anywhere else.
+		for (int i = 0; i<MBFCodePointers[codepointer].params; i++)
+		{
+			StateParams.Set(a+i, StateParams.Get(b+i), true);
+		}
+		DPrintf("New paramindex is %d.\n", state->ParameterIndex-1);
+	}
+	int ParamIndex = state->ParameterIndex - 1;
+
+	switch (codepointer)
+	{
+	case MBF_Mushroom:
+		StateParams.Set(ParamIndex+2, new FxConstant(1, *pos)); // Flag
+		// NOTE: Do not convert to float here because it will lose precision. It must be double.
+		if (value1) StateParams.Set(ParamIndex+3, new FxConstant(value1/65536., *pos)); // vrange
+		if (value2) StateParams.Set(ParamIndex+4, new FxConstant(value2/65536., *pos)); // hrange
+		break;
+	case MBF_Spawn:
+		if (InfoNames[value1-1] == NULL)
+		{
+			I_Error("No class found for dehackednum %d!\n", value1+1);
+			return;
+		}
+		StateParams.Set(ParamIndex+0, new FxConstant(InfoNames[value1-1], *pos));	// type
+		StateParams.Set(ParamIndex+2, new FxConstant(value2, *pos));				// height
+		break;
+	case MBF_Turn:
+		// Intentional fall through. I tried something more complicated by creating an
+		// FxExpression that corresponded to "variable angle + angle" so as to use A_SetAngle
+		// as well, but it became an overcomplicated mess that didn't even work as I had to
+		// create a compile context as well and couldn't get it right.
+	case MBF_Face:
+		StateParams.Set(ParamIndex+0, new FxConstant(value1, *pos)); // angle
+		break;
+	case MBF_Scratch:	// misc1 = damage, misc 2 = sound
+		StateParams.Set(ParamIndex+0, new FxConstant(value1, *pos));							// damage
+		if (value2) StateParams.Set(ParamIndex+1, new FxConstant(SoundMap[value2-1], *pos));	// hit sound
+		break;
+	case MBF_PlaySound:
+		StateParams.Set(ParamIndex+0, new FxConstant(SoundMap[value1-1], *pos));			// soundid
+		StateParams.Set(ParamIndex+4, new FxConstant((value2?ATTN_NONE:ATTN_NORM), *pos));	// attenuation
+		break;
+	case MBF_RandomJump:
+		StateParams.Set(ParamIndex+0, new FxConstant(2, *pos));					// count
+		StateParams.Set(ParamIndex+1, new FxConstant(value2, *pos));			// maxchance
+		StateParams.Set(ParamIndex+2, new FxConstant(FindState(value1), *pos));	// jumpto
+		break;
+	case MBF_LineEffect:
+		// This is the second MBF codepointer that couldn't be translated easily.
+		// Calling P_TranslateLineDef() here was a simple matter, as was adding an
+		// extra parameter to A_CallSpecial so as to replicate the LINEDONE stuff,
+		// but unfortunately DEHACKED lumps are processed before the map translation
+		// arrays are initialized so this didn't work.
+		StateParams.Set(ParamIndex+0, new FxConstant(value1, *pos));	// special
+		StateParams.Set(ParamIndex+1, new FxConstant(value2, *pos));	// tag
+		break;
+	case SMMU_NailBomb:
+		// That one does not actually have MBF-style parameters. But since
+		// we're aliasing it to an extension of A_Explode...
+		StateParams.Set(ParamIndex+5, new FxConstant(30, *pos));	// nails
+		StateParams.Set(ParamIndex+6, new FxConstant(10, *pos));	// naildamage
+		break;
+	default:
+		// This simply should not happen.
+		Printf("Unmanaged dehacked codepointer alias num %i\n", codepointer);
+	}
+}
+
 static int PatchThing (int thingy)
 {
 	enum
 	{
+		// Boom flags
 		MF_TRANSLATION	= 0x0c000000,	// if 0x4 0x8 or 0xc, use a translation
 		MF_TRANSSHIFT	= 26,			// table for player colormaps
+		// A couple of Boom flags that don't exist in ZDoom
+		MF_SLIDE		= 0x00002000,	// Player: keep info about sliding along walls.
+		MF_TRANSLUCENT	= 0x80000000,	// Translucent sprite?
+		// MBF flags: TOUCHY is remapped to flags6, FRIEND is turned into FRIENDLY,
+		// and finally BOUNCES is replaced by bouncetypes with the BOUNCES_MBF bit.
+		MF_TOUCHY		= 0x10000000,	// killough 11/98: dies when solids touch it
+		MF_BOUNCES		= 0x20000000,	// killough 7/11/98: for beta BFG fireballs
+		MF_FRIEND		= 0x40000000,	// killough 7/18/98: friendly monsters
 	};
 
 	int result;
@@ -793,20 +945,26 @@ static int PatchThing (int thingy)
 			{
 				DWORD value[4] = { 0, 0, 0 };
 				bool vchanged[4] = { false, false, false };
+				// ZDoom used to block the upper range of bits to force use of mnemonics for extra flags.
+				// MBF also defined extra flags in the same range, but without forcing mnemonics. For MBF
+				// compatibility, the upper bits are freed, but we have conflicts between the ZDoom bits
+				// and the MBF bits. The only such flag exposed to DEHSUPP, though, is STEALTH -- the others
+				// are not available through mnemonics, and aren't available either through their bit value.
+				// So if we find the STEALTH keyword, it's a ZDoom mod, otherwise assume assume FRIEND.
+				bool zdoomflags = false;
 				char *strval;
 
 				for (strval = Line2; (strval = strtok (strval, ",+| \t\f\r")); strval = NULL)
 				{
 					if (IsNum (strval))
 					{
-						// Force the top 4 bits to 0 so that the user is forced
-						// to use the mnemonics to change them. And MF_SLIDE doesn't
-						// exist anymore, so 0 that too.
-						value[0] |= strtoul(strval, NULL, 10) & 0x0fffdfff;
+						value[0] |= (unsigned long)strtol(strval, NULL, 10);
 						vchanged[0] = true;
 					}
 					else
 					{
+						// STEALTH FRIEND HACK!
+						if (!stricmp(strval, "STEALTH")) zdoomflags = true;
 						unsigned i;
 						for(i = 0; i < BitNames.Size(); i++)
 						{
@@ -825,11 +983,109 @@ static int PatchThing (int thingy)
 				}
 				if (vchanged[0])
 				{
+				/*	Just some testing info				
+					Printf("value[0]: %x   %i\n", value[0], value[0]);
+					for (int flagi = 0; flagi < 31; flagi++)
+						if (value[0] & 1<<flagi) Printf(" %s", flagnamesd[flagi]);
+					Printf("\n");*/
+
+					if (value[0] & MF_SLIDE)
+					{
+						// SLIDE (which occupies in Doom what is the MF_INCHASE slot in ZDoom)
+						value[0] &= ~MF_SLIDE; // clean the slot
+						// Nothing else to do, this flag is never actually used.
+					}
 					if (value[0] & MF_TRANSLATION)
 					{
 						info->Translation = TRANSLATION (TRANSLATION_Standard,
 							((value[0] & MF_TRANSLATION) >> (MF_TRANSSHIFT))-1);
 						value[0] &= ~MF_TRANSLATION;
+					}
+					if (value[0] & MF_TOUCHY)
+					{
+						// TOUCHY (which occupies in MBF what is the MF_UNMORPHED slot in ZDoom)
+						value[0] &= ~MF_TOUCHY; // clean the slot
+						info->flags6 |= MF6_TOUCHY; // remap the flag
+					}
+					if (value[0] & MF_BOUNCES)
+					{
+						// BOUNCES (which occupies in MBF the MF_NOLIFTDROP slot)
+						// This flag is especially convoluted as what it does depend on what
+						// other flags the actor also has, and whether it's "sentient" or not.
+						value[0] &= ~MF_BOUNCES; // clean the slot
+
+						// MBF considers that things that bounce can be damaged, even if not shootable.
+						info->flags6 |= MF6_VULNERABLE;
+						// MBF also considers that bouncers pass through blocking lines as projectiles.
+						info->flags3 |= MF3_NOBLOCKMONST;
+						// MBF also considers that bouncers that explode are grenades, and MBF grenades
+						// are supposed to hurt everything, except cyberdemons if they're fired by cybies.
+						// Let's translate that in a more generic way as grenades which hurt everything
+						// except the class of their shooter. Yes, it does diverge a bit from MBF, as for
+						// example a dehacked arachnotron that shoots grenade would kill itself quickly
+						// in MBF and will not here. But class-specific checks are cumbersome and limiting.
+						info->flags4 |= (MF4_FORCERADIUSDMG | MF4_DONTHARMCLASS);
+
+						// MBF bouncing missiles rebound on floors and ceiling, but not on walls.
+						// This is different from BOUNCE_Heretic behavior as in Heretic the missiles
+						// die when they bounce, while in MBF they will continue to bounce until they
+						// collide with a wall or a solid actor.
+						if (value[0] & MF_MISSILE) info->BounceFlags = BOUNCE_Classic;
+						// MBF bouncing actors that do not have the missile flag will also rebound on
+						// walls, and this does correspond roughly to the ZDoom bounce style.
+						else info->BounceFlags = BOUNCE_Grenade;
+
+						// MBF grenades are dehacked rockets that gain the BOUNCES flag but
+						// lose the MISSILE flag, so they can be identified here easily.
+						if (!(value[0] & MF_MISSILE) && info->effects & FX_ROCKET)
+						{
+							info->effects &= ~FX_ROCKET;	// replace rocket trail
+							info->effects |= FX_GRENADE;	// by grenade trail
+						}
+
+						// MBF bounce factors depend on flag combos:
+						enum
+						{
+							MBF_BOUNCE_NOGRAVITY	= FRACUNIT,				// With NOGRAVITY: full momentum
+							MBF_BOUNCE_FLOATDROPOFF	= (FRACUNIT * 85) / 100,// With FLOAT and DROPOFF: 85%
+							MBF_BOUNCE_FLOAT		= (FRACUNIT * 70) / 100,// With FLOAT alone: 70%
+							MBF_BOUNCE_DEFAULT		= (FRACUNIT * 45) / 100,// Without the above flags: 45%
+							MBF_BOUNCE_WALL			= (FRACUNIT * 50) / 100,// Bouncing off walls: 50%
+						};
+						info->bouncefactor = ((value[0] & MF_NOGRAVITY) ? MBF_BOUNCE_NOGRAVITY
+							: (value[0] & MF_FLOAT) ? (value[0] & MF_DROPOFF) ? MBF_BOUNCE_FLOATDROPOFF
+							: MBF_BOUNCE_FLOAT : MBF_BOUNCE_DEFAULT);
+
+						info->wallbouncefactor = ((value[0] & MF_NOGRAVITY) ? MBF_BOUNCE_NOGRAVITY : MBF_BOUNCE_WALL);
+
+						// MBF sentient actors with BOUNCE and FLOAT are able to "jump" by floating up.
+						if (info->IsSentient())
+						{
+							if (value[0] & MF_FLOAT) info->flags6 |= MF6_CANJUMP;
+						}
+						// Non sentient actors can be damaged but they shouldn't bleed.
+						else
+						{
+							value[0] |= MF_NOBLOOD;
+						}
+					}
+					if (zdoomflags && (value [0] & MF_STEALTH))
+					{
+						// STEALTH FRIEND HACK!
+					}
+					else if (value[0] & MF_FRIEND) 
+					{
+						// FRIEND (which occupies in MBF the MF_STEALTH slot)
+						value[0] &= ~MF_FRIEND; // clean the slot
+						value[0] |= MF_FRIENDLY; // remap the flag to its ZDoom equivalent
+						// MBF friends are not blocked by monster blocking lines:
+						info->flags3 |= MF3_NOBLOCKMONST;
+					}
+					if (value[0] & MF_TRANSLUCENT)
+					{
+						// TRANSLUCENT (which occupies in Boom the MF_ICECORPSE slot)
+						value[0] &= ~MF_TRANSLUCENT; // clean the slot
+						vchanged[2] = true; value[2] |= 2; // let the TRANSLUCxx code below handle it
 					}
 					info->flags = value[0];
 				}
@@ -1044,25 +1300,11 @@ static int PatchFrame (int frameNum)
 		}
 		else if (keylen == 9 && stricmp (Line1, "Unknown 1") == 0)
 		{
-			if (val < -128 || val > 127)
-			{
-				Printf ("Frame %d: misc1 is out of range\n", frameNum);
-			}
-			else
-			{
-				misc1 = val;
-			}
+			misc1 = val;
 		}
 		else if (keylen == 9 && stricmp (Line1, "Unknown 2") == 0)
 		{
-			if (val < 0 || val > 255)
-			{
-				Printf ("Frame %d: misc2 is out of range\n", frameNum);
-			}
-			else
-			{
-				info->Misc2 = val;
-			}
+			info->Misc2 = val;
 		}
 		else if (keylen == 13 && stricmp (Line1, "Sprite number") == 0)
 		{
@@ -1105,11 +1347,7 @@ static int PatchFrame (int frameNum)
 
 	if (info != &dummy)
 	{
-		if (misc1 != 0 && tics > 254)
-		{
-			Printf ("Frame %d: Misc1 must be 0 if tics >254\n", frameNum);
-			misc1 = 0;
-		}
+		info->DefineFlags |= SDF_DEHACKED;	// Signals the state has been modified by dehacked
 		if ((unsigned)(frame & 0x7fff) > 63)
 		{
 			Printf ("Frame %d: Subnumber must be in range [0,63]\n", frameNum);
@@ -1118,6 +1356,8 @@ static int PatchFrame (int frameNum)
 		info->Misc1 = misc1;
 		info->Frame = (frame & 0x3f) |
 			(frame & 0x8000 ? SF_FULLBRIGHT : 0);
+		Printf("Misc1 patched to %d, Misc2 patched to %d in state %x (framenum %d)\n", 
+			info->Misc1, info->Misc2, info, frameNum);
 	}
 
 	return result;
@@ -1357,15 +1597,31 @@ static int PatchWeapon (int weapNum)
 	return result;
 }
 
-static void SetPointer(FState *state, PSymbol *sym)
+static void SetPointer(FState *state, PSymbol *sym, int frame = 0)
 {
+	Printf("Changing the pointer for state %d (%x)\n", frame, state);
 	if (sym==NULL || sym->SymbolType != SYM_ActionFunction)
 	{
 		state->SetAction(NULL);
+		return;
 	}
 	else
 	{
+		FString symname = sym->SymbolName;
 		state->SetAction(static_cast<PSymbolActionFunction*>(sym));
+
+		// Note: CompareNoCase() calls stricmp() and therefore returns 0 when they're the same.
+		for (unsigned int i = 0; i < MBFCodePointers.Size(); i++)
+		{
+			if (!symname.CompareNoCase(MBFCodePointers[i].name))
+			{
+				MBFParamState * newstate = new MBFParamState;
+				newstate->state = state;
+				newstate->pointer = i;
+				MBFParamStates.Push(newstate);
+				break; // No need to cycle through the rest of the list.
+			}
+		}
 	}
 }
 
@@ -1414,8 +1670,10 @@ static int PatchPointer (int ptrNum)
 					SetPointer(state, NULL);
 				else
 				{
-					SetPointer(state, Actions[index]);
+					SetPointer(state, Actions[index], CodePConv[ptrNum]);
 				}
+				DPrintf("%s has a hacked state for pointer num %i with index %i\nLine1=%s, Line2=%s\n", 
+					state->StaticFindStateOwner(state)->TypeName.GetChars(), ptrNum, index, Line1, Line2);
 			}
 			else
 			{
@@ -1720,6 +1978,16 @@ static int PatchCodePtrs (int dummy)
 				else
 					symname.Format("A_%s", Line2);
 
+				// Let's consider as aliases some redundant MBF pointer
+				for (unsigned int i = 0; i < MBFCodePointers.Size(); i++)
+				{
+					if (!symname.CompareNoCase(MBFCodePointers[i].alias))
+					{
+						symname = MBFCodePointers[i].name;
+						Printf("%s --> %s\n", MBFCodePointers[i].alias, MBFCodePointers[i].name);
+					}
+				}
+
 				// This skips the action table and goes directly to the internal symbol table
 				// DEH compatible functions are easy to recognize.
 				PSymbol *sym = RUNTIME_CLASS(AInventory)->Symbols.FindSymbol(symname, true);
@@ -1736,12 +2004,7 @@ static int PatchCodePtrs (int dummy)
 						sym = NULL;
 					}
 				}
-				SetPointer(state, sym);
-				// Hack to trigger compatible mode for A_Mushroom when called from Dehacked mods
-				if (symname.CompareNoCase("A_Mushroom"))
-				{
-					state->Misc1 = 1;
-				}
+				SetPointer(state, sym, frame);
 			}
 		}
 	}
@@ -2233,6 +2496,15 @@ static void UnloadDehSupp ()
 {
 	if (--DehUseCount <= 0)
 	{
+		// Handle MBF params here, before the required arrays are cleared
+		for (unsigned int i=0; i < MBFParamStates.Size(); i++)
+		{
+			SetDehParams(MBFParamStates[i]->state, MBFParamStates[i]->pointer);
+		}
+		MBFParamStates.Clear();
+		MBFParamStates.ShrinkToFit();
+		MBFCodePointers.Clear();
+		MBFCodePointers.ShrinkToFit();
 		// StateMap is not freed here, because if you load a second
 		// dehacked patch through some means other than including it
 		// in the first patch, it won't see the state information
@@ -2559,6 +2831,27 @@ static bool LoadDehSupp ()
 						sc.ScriptError("Unknown weapon type '%s'", sc.String);
 					}
 					WeaponNames.Push(cls);
+					if (sc.CheckString("}")) break;
+					sc.MustGetStringName(",");
+				}
+			}
+			else if (sc.Compare("Aliases"))
+			{
+				sc.MustGetStringName("{");
+				while (!sc.CheckString("}"))
+				{
+					CodePointerAlias temp;
+					sc.MustGetString();
+					strncpy(temp.alias, sc.String, 19);
+					temp.alias[19]=0;
+					sc.MustGetStringName(",");
+					sc.MustGetString();
+					strncpy(temp.name, sc.String, 19);
+					temp.name[19]=0;
+					sc.MustGetStringName(",");
+					sc.MustGetNumber();
+					temp.params = sc.Number;
+					MBFCodePointers.Push(temp);
 					if (sc.CheckString("}")) break;
 					sc.MustGetStringName(",");
 				}

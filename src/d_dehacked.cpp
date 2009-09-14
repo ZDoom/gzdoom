@@ -983,12 +983,6 @@ static int PatchThing (int thingy)
 				}
 				if (vchanged[0])
 				{
-				/*	Just some testing info				
-					Printf("value[0]: %x   %i\n", value[0], value[0]);
-					for (int flagi = 0; flagi < 31; flagi++)
-						if (value[0] & 1<<flagi) Printf(" %s", flagnamesd[flagi]);
-					Printf("\n");*/
-
 					if (value[0] & MF_SLIDE)
 					{
 						// SLIDE (which occupies in Doom what is the MF_INCHASE slot in ZDoom)
@@ -1356,8 +1350,6 @@ static int PatchFrame (int frameNum)
 		info->Misc1 = misc1;
 		info->Frame = (frame & 0x3f) |
 			(frame & 0x8000 ? SF_FULLBRIGHT : 0);
-		Printf("Misc1 patched to %d, Misc2 patched to %d in state %x (framenum %d)\n", 
-			info->Misc1, info->Misc2, info, frameNum);
 	}
 
 	return result;
@@ -1599,7 +1591,6 @@ static int PatchWeapon (int weapNum)
 
 static void SetPointer(FState *state, PSymbol *sym, int frame = 0)
 {
-	Printf("Changing the pointer for state %d (%x)\n", frame, state);
 	if (sym==NULL || sym->SymbolType != SYM_ActionFunction)
 	{
 		state->SetAction(NULL);

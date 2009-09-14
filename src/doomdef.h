@@ -321,10 +321,9 @@ enum
 	COMPATF_ANYBOSSDEATH	= 1 << 21,	// [GZ] Any monster which calls BOSSDEATH counts for level specials
 	COMPATF_MINOTAUR		= 1 << 22,	// Minotaur's floor flame is exploded immediately when feet are clipped
 	COMPATF_MUSHROOM		= 1 << 23,	// Force original velocity calculations for A_Mushroom in Dehacked mods.
-	COMPATF_MBFTORQUE		= 1 << 25,	// Uses MBF-style pseudo torque simulation.
-	COMPATF_MBFMONSTERMOVE	= 1 << 26,	// Monsters are affected by friction and pushers/pullers.
-	COMPATF_CORPSEGIBS		= 1 << 27,	// Crushed monsters are turned into gibs, rather than replaced by gibs.
-	COMPATF_NOBLOCKFRIENDS	= 1 << 28,	// Friendly monsters aren't blocked by monster-blocking lines.
+	COMPATF_MBFMONSTERMOVE	= 1 << 24,	// Monsters are affected by friction and pushers/pullers.
+	COMPATF_CORPSEGIBS		= 1 << 25,	// Crushed monsters are turned into gibs, rather than replaced by gibs.
+	COMPATF_NOBLOCKFRIENDS	= 1 << 26,	// Friendly monsters aren't blocked by monster-blocking lines.
 };
 
 // Emulate old bugs for select maps. These are not exposed by a cvar

@@ -2871,9 +2871,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetUserVar)
 	self->uservar[pos] = value;
 }
 
-// A few action functions for super-duper enhanced MBF compatibility. They're all deprecated and shouldn't be used in
-// DECORATE. The other MBF new functions, A_Detonate, A_Mushroom and A_Die are all already elsewhere, and as for
-// A_PlaySound, it is an instance of name conflict, so it has been given a default sound to work from dehacked as well.
+//===========================================================================
+//
+// A_Turn
+//
+//===========================================================================
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Turn)
 {
@@ -2882,9 +2884,14 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Turn)
 	self->angle += angle;
 }
 
+//===========================================================================
+//
+// A_LineEffect
 //
 // This allows linedef effects to be activated inside deh frames.
 //
+//===========================================================================
+
 
 void P_TranslateLineDef (line_t *ld, maplinedef_t *mld);
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_LineEffect)

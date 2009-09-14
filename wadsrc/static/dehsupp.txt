@@ -410,7 +410,7 @@ StateMap
 	SmallBloodPool,		Spawn, 1,	// S_SMALLPOOL
 	BrainStem,			Spawn, 1,	// S_BRAINSTEM
 	TechLamp,			Spawn, 4,	// S_TECHLAMP - S_TECHLAMP4
-	TechLamp2,			Spawn, 4	// S_TECH2LAMP - S_TECH2LAMP4
+	TechLamp2,			Spawn, 4,	// S_TECH2LAMP - S_TECH2LAMP4
 	DoomUnusedStates,	TNT, 1,			// [MBF] S_TNT1							967
 	Grenade,			Grenade, 1,		// [MBF] S_GRENADE						968
 	Grenade,			Detonate, 3,	// [MBF] S_DETONATE - S_DETONATE3		969-971

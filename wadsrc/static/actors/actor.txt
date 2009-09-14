@@ -259,7 +259,7 @@ ACTOR Actor native //: Thinker
 	action native A_ScaleVelocity(float scale);
 	action native A_ChangeVelocity(float x = 0, float y = 0, float z = 0, int flags = 0);
 	action native A_SetArg(int pos, int value);
-	action native A_SetVar(int pos, int value);
+	action native A_SetUserVar(int pos, int value);
 	action native A_SetSpecial(int spec, int arg0, int arg1, int arg2, int arg3, int arg4);
 
 	States

@@ -412,6 +412,22 @@ bool P_Move (AActor *actor)
 
 	speed = actor->Speed;
 
+#if 0	// todo
+
+	// killough 10/98: allow dogs to drop off of taller ledges sometimes.
+	// dropoff==1 means always allow it, dropoff==2 means only up to 128 high,
+	// and only if the target is immediately on the other side of the line.
+
+	if (actor->flags6 & MF6_JUMPDOWN && target &&
+			!(target->IsFriend(actor)) &&
+			P_AproxDistance(actor->x - target->x,
+							actor->y - target->y) < FRACUNIT*144 &&
+			P_Random(pr_dropoff) < 235)
+	{
+		dropoff = 2;
+	}
+#endif
+
 	// [RH] I'm not so sure this is such a good idea
 	// [GZ] That's why it's compat-optioned.
 	if (compatflags & COMPATF_MBFMONSTERMOVE)

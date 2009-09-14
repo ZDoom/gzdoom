@@ -102,7 +102,6 @@ static FCompatOption Options[] =
 	{ "wallrun",				COMPATF_WALLRUN, 0 },		// [GZ] Added for CC MAP29
 	{ "anybossdeath",			COMPATF_ANYBOSSDEATH, 0},	// [GZ] Added for UAC_DEAD
 	{ "mushroom",				COMPATF_MUSHROOM, 0},
-	{ "mbftorque",				COMPATF_MBFTORQUE, 0},
 	{ "mbfmonstermove",			COMPATF_MBFMONSTERMOVE, 0 },
 	{ "corpsegibs",				COMPATF_CORPSEGIBS, 0 },
 	{ "noblockfriends",			COMPATF_NOBLOCKFRIENDS, 0 },

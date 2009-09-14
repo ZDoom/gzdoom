@@ -512,7 +512,7 @@ CUSTOM_CVAR(Int, compatmode, 0, CVAR_ARCHIVE|CVAR_NOINITCALL)
 
 	case 5: // MBF compat mode
 		v = COMPATF_TRACE|COMPATF_SOUNDTARGET|COMPATF_BOOMSCROLL|COMPATF_MUSHROOM|
-			COMPATF_MBFTORQUE|COMPATF_MBFMONSTERMOVE|COMPATF_NOBLOCKFRIENDS;
+			COMPATF_MBFMONSTERMOVE|COMPATF_NOBLOCKFRIENDS;
 		break;
 
 	}
@@ -543,7 +543,6 @@ CVAR (Flag, compat_crossdropoff,compatflags, COMPATF_CROSSDROPOFF);
 CVAR (Flag, compat_anybossdeath,compatflags, COMPATF_ANYBOSSDEATH);
 CVAR (Flag, compat_minotaur,	compatflags, COMPATF_MINOTAUR);
 CVAR (Flag, compat_mushroom,	compatflags, COMPATF_MUSHROOM);
-CVAR (Flag, compat_mbftorque,	compatflags, COMPATF_MBFTORQUE);
 CVAR (Flag, compat_mbfmonstermove,compatflags, COMPATF_MBFMONSTERMOVE);
 CVAR (Flag, compat_corpsegibs,	compatflags, COMPATF_CORPSEGIBS);
 CVAR (Flag, compat_noblockfriends,compatflags,COMPATF_NOBLOCKFRIENDS);

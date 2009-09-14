@@ -947,6 +947,12 @@ DEFINE_MAP_OPTION(secretnext, true)
 	parse.ParseNextMap(info->secretmap);
 }
 
+DEFINE_MAP_OPTION(secret, true) // Just an alias for secretnext, for Vavoom compatibility
+{
+	parse.ParseAssign();
+	parse.ParseNextMap(info->secretmap);
+}
+
 DEFINE_MAP_OPTION(cluster, true)
 {
 	parse.ParseAssign();
@@ -996,6 +1002,14 @@ DEFINE_MAP_OPTION(sky2, true)
 		}
 		info->skyspeed2 = float(parse.sc.Float * (35. / 1000.));
 	}
+}
+
+// Vavoom compatibility
+DEFINE_MAP_OPTION(skybox, true)
+{
+	parse.ParseAssign();
+	parse.ParseLumpOrTextureName(info->skypic1);
+	info->skyspeed1 = 0;
 }
 
 DEFINE_MAP_OPTION(fade, true)

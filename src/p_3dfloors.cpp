@@ -168,13 +168,19 @@ static int P_Set3DFloor(line_t * line, int param,int param2, int alpha)
 					if (l->args[0]) 
 					{
 						// Yes, Vavoom's 3D-floor definitions suck!
-						static DWORD vavoomcolors[]={
-							0, 0x101080, 0x801010, 0x108010, 0x287020, 0xf0f010};
+						// The content list changed in r1783 of Vavoom to be unified
+						// among all its supported games, so it has now ten different
+						// values instead of just five.
+						static DWORD vavoomcolors[]={VC_EMPTY, 
+							VC_WATER, VC_LAVA, VC_NUKAGE, VC_SLIME, VC_HELLSLIME,
+							VC_BLOOD, VC_SLUDGE, VC_HAZARD, VC_BOOMWATER};
 						flags|=FF_SWIMMABLE|FF_BOTHPLANES|FF_ALLSIDES|FF_FLOOD;
 
-						l->frontsector->ColorMap = GetSpecialLights (l->frontsector->ColorMap->Color, 
-																	 vavoomcolors[l->args[0]], 
-																	 l->frontsector->ColorMap->Desaturate);
+						l->frontsector->ColorMap = 
+							GetSpecialLights (l->frontsector->ColorMap->Color, 
+											  vavoomcolors[l->args[0]]&VC_COLORMASK, 
+											  (vavoomcolors[l->args[0]]&VC_ALPHAMASK)>>24);
+										//	  l->frontsector->ColorMap->Desaturate);
 					}
 					alpha=(alpha*255)/100;
 					break;

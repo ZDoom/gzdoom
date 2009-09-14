@@ -13,6 +13,7 @@
 */
 
  FRandom pr_lost ("LostMissileRange");
+ FRandom pr_oldsoul ("BetaLostSoul");
 
 //
 // SkullAttack
@@ -53,6 +54,21 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SkullAttack)
 	if (n <= 0) n = SKULLSPEED;
 	A_SkullAttack(self, n);
 }
+
+
+
+DEFINE_ACTION_FUNCTION(AActor, A_BetaSkullAttack)
+{
+	int damage;
+	if (!self || !self->target || self->target->GetSpecies() == self->GetSpecies())
+		return;
+	S_Sound (self, CHAN_WEAPON, self->AttackSound, 1, ATTN_NORM);
+	A_FaceTarget(self);
+	damage = (pr_oldsoul()%8+1)*self->Damage;
+	P_DamageMobj(self->target, self, self, damage, NAME_None);
+}
+
+
 
 //==========================================================================
 //

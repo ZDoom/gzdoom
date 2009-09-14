@@ -124,12 +124,14 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Mushroom)
 {
 	int i, j;
 
-	ACTION_PARAM_START(3);
+	ACTION_PARAM_START(5);
 	ACTION_PARAM_CLASS(spawntype, 0);
 	ACTION_PARAM_INT(n, 1);
 	ACTION_PARAM_INT(flags, 2);
+	ACTION_PARAM_FIXED(vrange, 3);
+	ACTION_PARAM_FIXED(hrange, 4);
 
-	if (n == 0) n = self->GetMissileDamage (0, 1);
+	if (n == 0) n = self->Damage; // GetMissileDamage (0, 1);
 	if (spawntype == NULL) spawntype = PClass::FindClass("FatShot");
 
 	P_RadiusAttack (self, self->target, 128, 128, self->DamageType, true);
@@ -141,14 +143,14 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Mushroom)
 	// Now launch mushroom cloud
 	AActor *target = Spawn("Mapspot", 0, 0, 0, NO_REPLACE);	// We need something to aim at.
 	target->height = self->height;
-	for (i = -n; i <= n; i += 8)
+ 	for (i = -n; i <= n; i += 8)
 	{
-		for (j = -n; j <= n; j += 8)
+ 		for (j = -n; j <= n; j += 8)
 		{
 			AActor *mo;
-			target->x = self->x + (i << FRACBITS); // Aim in many directions from source
+			target->x = self->x + (i << FRACBITS);    // Aim in many directions from source
 			target->y = self->y + (j << FRACBITS);
-			target->z = self->z + (P_AproxDistance(i,j) << (FRACBITS+2)); // Aim up fairly high
+			target->z = self->z + (P_AproxDistance(i,j) * vrange); // Aim up fairly high
 			if (flags == 0 && (self->state->Misc1 == 0 || !(i_compatflags & COMPATF_MUSHROOM)))
 			{
 				mo = P_SpawnMissile (self, target, spawntype); // Launch fireball
@@ -158,10 +160,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Mushroom)
 				mo = P_OldSpawnMissile (self, target, spawntype); // Launch fireball
 			}
 			if (mo != NULL)
-			{
-				mo->velx >>= 1;
-				mo->vely >>= 1;				  // Slow it down a bit
-				mo->velz >>= 1;
+			{	// Slow it down a bit
+				mo->velx = FixedMul(mo->velx, hrange);
+				mo->vely = FixedMul(mo->vely, hrange);
+				mo->velz = FixedMul(mo->velz, hrange);
 				mo->flags &= ~MF_NOGRAVITY;   // Make debris fall under gravity
 			}
 		}

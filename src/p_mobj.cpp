@@ -283,16 +283,16 @@ void AActor::Serialize (FArchive &arc)
 		<< MaxStepHeight;
 	if (SaveVersion < 1796)
 	{
-		int bouncetype, bounceflags;
-		arc << bouncetype;
+		int BounceFlags, bounceflags;
+		arc << BounceFlags;
 
 		bounceflags = 0;
-		if (bouncetype & 4)
+		if (BounceFlags & 4)
 			bounceflags |= BOUNCE_UseSeeSound;
-		bouncetype &= 3;
-			 if (bouncetype == 1)	bounceflags |= BOUNCE_Doom;
-		else if (bouncetype == 2)	bounceflags |= BOUNCE_Heretic;
-		else if (bouncetype == 3)	bounceflags |= BOUNCE_Hexen;
+		BounceFlags &= 3;
+			 if (BounceFlags == 1)	bounceflags |= BOUNCE_Doom;
+		else if (BounceFlags == 2)	bounceflags |= BOUNCE_Heretic;
+		else if (BounceFlags == 3)	bounceflags |= BOUNCE_Hexen;
 		if (flags3 & 0x00800000)
 			flags3 &= ~0x00800000, bounceflags |= BOUNCE_CanBounceWater;
 		if (flags3 & 0x01000000)
@@ -2124,7 +2124,7 @@ void P_ZMovement (AActor *mo, fixed_t oldfloorz)
 //
 	if ((mo->flags & MF_FLOAT) && !(mo->flags2 & MF2_DORMANT) && mo->target)
 	{	// float down towards target if too close
-		if (!(mo->flags & MF_SKULLFLY) && !(mo->flags & MF_INFLOAT))
+		if (!(mo->flags & (MF_SKULLFLY | MF_INFLOAT)))
 		{
 			dist = P_AproxDistance (mo->x - mo->target->x, mo->y - mo->target->y);
 			delta = (mo->target->z + (mo->height>>1)) - mo->z;
@@ -2171,8 +2171,8 @@ void P_ZMovement (AActor *mo, fixed_t oldfloorz)
 				}
 				else if (mo->flags3 & MF3_NOEXPLODEFLOOR)
 				{
-					mo->velz = 0;
 					P_HitFloor (mo);
+					mo->velz = 0;
 					return;
 				}
 				else if (mo->flags3 & MF3_FLOORHUGGER)
@@ -2262,12 +2262,12 @@ void P_ZMovement (AActor *mo, fixed_t oldfloorz)
 				mo->FloorBounceMissile (mo->ceilingsector->ceilingplane);
 				return;
 			}
-			if (mo->velz > 0)
-				mo->velz = 0;
 			if (mo->flags & MF_SKULLFLY)
 			{	// the skull slammed into something
 				mo->velz = -mo->velz;
 			}
+			if (mo->velz > 0)
+				mo->velz = 0;
 			if (mo->flags & MF_MISSILE &&
 				(!(gameinfo.gametype & GAME_DoomChex) || !(mo->flags & MF_NOCLIP)))
 			{
@@ -4942,6 +4942,7 @@ AActor * P_OldSpawnMissile(AActor * source, AActor * dest, const PClass *type)
 	P_CheckMissileSpawn(th);
 	return th;
 }
+
 //---------------------------------------------------------------------------
 //
 // FUNC P_SpawnMissileAngle

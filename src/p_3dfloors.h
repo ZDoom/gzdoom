@@ -39,7 +39,22 @@ typedef enum
   
 } ffloortype_e;
 
-
+// This is for the purpose of Sector_SetContents:
+enum : unsigned int
+{
+	VC_EMPTY = 0, // Here's the original values of the color shifts in Vavoom, and in ARGB:
+	VC_WATER	 = 0x80825032,	// 130, 80, 50, 128		-> 80.82.50.32 (was 0x101080)
+	VC_LAVA		 = 0x96FF5000,	// 255, 80, 0, 150		-> 96.FF.50.00 (was 0xf0f010)
+	VC_NUKAGE	 = 0x9632FF32,	// 50, 255, 50, 150		-> 96.32.FF.32 (was 0x108010)
+	VC_SLIME	 = 0x96001905,	// 0, 25, 5, 150		-> 96.00.19.05 (was 0x287020)
+	VC_HELLSLIME = 0x96FF5000,	// 255, 80, 0, 150		-> 96.FF.50.00 (wasn't covered)
+	VC_BLOOD	 = 0x96A00A0A,	// 160, 16, 16, 150		-> 96.A0.0A.0A (was 0x801010)
+	VC_SLUDGE	 = 0x9680A080,	// 128, 160, 128, 150	-> 96.80.A0.80 (wasn't covered)
+	VC_HAZARD	 = 0x8080A080,	// 128, 160, 128, 128	-> 80.80.A0.80 (wasn't covered)
+	VC_BOOMWATER = 0x80004FA5,	// Boom WATERMAP:		-> 80.00.4F.A5 (wasn't covered)
+	VC_ALPHAMASK = 0xFF000000,
+	VC_COLORMASK = 0x00FFFFFF,
+};
 
 #ifdef _3DFLOORS
 

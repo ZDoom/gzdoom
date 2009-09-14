@@ -270,7 +270,7 @@ public:
 	// killough 10/98: used for realistic bobbing (i.e. not simply overall speed)
 	// mo->velx and mo->vely represent true velocity experienced by player.
 	// This only represents the thrust that the player applies himself.
-	// This avoids anomolies with such things as Boom ice and conveyors.
+	// This avoids anomalies with such things as Boom ice and conveyors.
 	fixed_t		velx, vely;				// killough 10/98
 
 	bool		centering;

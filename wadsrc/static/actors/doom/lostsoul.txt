@@ -49,3 +49,33 @@ ACTOR LostSoul 3006
 		Stop
 	}
 }
+
+Actor BetaSkull : LostSoul 9037
+{
+	States
+	{
+	Spawn:
+		SKUL A 10 A_Look
+		Loop
+	See:
+		SKUL BCDA 5 A_Chase
+		Loop
+	Missile:
+		SKUL E 4 A_FaceTarget
+		SKUL F 5 A_BetaSkullAttack
+		SKUL F 4
+		Goto See
+	Pain:
+		SKUL G 4
+		SKUL H 2 A_Pain
+		SKUL I 4
+		Goto See
+	Death:
+		SKUL JKLM 5
+		SKUL N 5 A_Scream
+		SKUL O 5
+		SKUL P 5 A_Fall
+		SKUL Q 5 A_Stop
+		Wait
+	}
+}

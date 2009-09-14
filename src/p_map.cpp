@@ -1594,12 +1594,12 @@ bool P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 #else
 			// When flying, slide up or down blocking lines until the actor
 			// is not blocked.
-			if (thing->z+thing->height > tmceilingz)
+			if (thing->z+thing->height > tm.ceilingz)
 			{
 				thing->velz = -8*FRACUNIT;
 				goto pushline;
 			}
-			else if (thing->z < tmfloorz && tmfloorz-tmdropoffz > thing->MaxDropOffHeight)
+			else if (thing->z < tm.floorz && tm.floorz-tm.dropoffz > thing->MaxDropOffHeight)
 			{
 				thing->velz = 8*FRACUNIT;
 				goto pushline;

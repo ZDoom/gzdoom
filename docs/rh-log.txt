@@ -1,3 +1,9 @@
+September 14, 2009  (Changes by Graf Zahl)
+- Added a few things from Gez's experimental build:
+  * Beta Lost Soul (added DoomEdNum 9037 to it)
+  * A_Mushroom extensions
+  * Vavoom compatible MAPINFO keynames.
+
 September 11, 2009
 - Added warning messages when loading maps that have non-zero values in
   unused line argument fields, because these maps could potentially break

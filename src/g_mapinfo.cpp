@@ -1356,7 +1356,6 @@ MapFlagHandlers[] =
 	{ "compat_anybossdeath",			MITYPE_COMPATFLAG, COMPATF_ANYBOSSDEATH},
 	{ "compat_minotaur",				MITYPE_COMPATFLAG, COMPATF_MINOTAUR},
 	{ "compat_mushroom",				MITYPE_COMPATFLAG, COMPATF_MUSHROOM},
-	{ "compat_mbfdehacked",				MITYPE_COMPATFLAG, COMPATF_MBFDEHACKED},
 	{ "compat_mbftorque",				MITYPE_COMPATFLAG, COMPATF_MBFTORQUE},
 	{ "compat_mbfmonstermove",			MITYPE_COMPATFLAG, COMPATF_MBFMONSTERMOVE},
 	{ "compat_corpsegibs",				MITYPE_COMPATFLAG, COMPATF_CORPSEGIBS},

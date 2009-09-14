@@ -543,7 +543,6 @@ CVAR (Flag, compat_crossdropoff,compatflags, COMPATF_CROSSDROPOFF);
 CVAR (Flag, compat_anybossdeath,compatflags, COMPATF_ANYBOSSDEATH);
 CVAR (Flag, compat_minotaur,	compatflags, COMPATF_MINOTAUR);
 CVAR (Flag, compat_mushroom,	compatflags, COMPATF_MUSHROOM);
-CVAR (Flag, compat_mbfdehacked,	compatflags, COMPATF_MBFDEHACKED);
 CVAR (Flag, compat_mbftorque,	compatflags, COMPATF_MBFTORQUE);
 CVAR (Flag, compat_mbfmonstermove,compatflags, COMPATF_MBFMONSTERMOVE);
 CVAR (Flag, compat_corpsegibs,	compatflags, COMPATF_CORPSEGIBS);

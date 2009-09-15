@@ -40,7 +40,7 @@ typedef enum
 } ffloortype_e;
 
 // This is for the purpose of Sector_SetContents:
-enum : unsigned int
+enum E3DFloorContents : unsigned int
 {
 	VC_EMPTY = 0, // Here's the original values of the color shifts in Vavoom, and in ARGB:
 	VC_WATER	 = 0x80825032,	// 130, 80, 50, 128		-> 80.82.50.32 (was 0x101080)

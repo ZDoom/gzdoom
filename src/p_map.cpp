@@ -2674,7 +2674,7 @@ bool P_BounceWall (AActor *mo)
 	return slide.BounceWall(mo);
 }
 
-extern FRandom pr_bounce ("Bounce");
+extern FRandom pr_bounce;
 bool P_BounceActor (AActor *mo, AActor * BlockingMobj)
 {
 	if (mo && BlockingMobj && ((mo->BounceFlags & BOUNCE_AllActors)

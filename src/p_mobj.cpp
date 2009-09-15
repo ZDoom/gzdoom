@@ -87,7 +87,7 @@ EXTERN_CVAR (Int,  cl_rockettrails)
 
 static bool SpawningMapThing;
 static FRandom pr_explodemissile ("ExplodeMissile");
-static FRandom pr_bounce ("Bounce");
+FRandom pr_bounce ("Bounce");
 static FRandom pr_reflect ("Reflect");
 static FRandom pr_nightmarerespawn ("NightmareRespawn");
 static FRandom pr_botspawnmobj ("BotSpawnActor");

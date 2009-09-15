@@ -441,6 +441,7 @@ enum EThingSpecialActivationType
 	THINGSPEC_TriggerTargets = 4,	// The trigger changes its target to the thing
 	THINGSPEC_MonsterTrigger = 8,	// The thing can be triggered by a monster
 	THINGSPEC_MissileTrigger = 16,	// The thing can be triggered by a projectile
+	THINGSPEC_ClearSpecial = 32,	// Clears special after successful activation
 };
 
 // [RH] Like msecnode_t, but for the blockmap

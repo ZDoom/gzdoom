@@ -395,18 +395,14 @@ void HandleActorFlag(FScanner &sc, Baggage &bag, const char *part1, const char *
 //
 //==========================================================================
 
-static int ParseMorphStyle (FScanner &sc)
+struct FParseValue
 {
- 	static const char * morphstyles[]={
-		"MRF_ADDSTAMINA", "MRF_FULLHEALTH", "MRF_UNDOBYTOMEOFPOWER", "MRF_UNDOBYCHAOSDEVICE",
-		"MRF_FAILNOTELEFRAG", "MRF_FAILNOLAUGH", "MRF_WHENINVULNERABLE", "MRF_LOSEACTUALWEAPON",
-		"MRF_NEWTIDBEHAVIOUR", "MRF_UNDOBYDEATH", "MRF_UNDOBYDEATHFORCED", "MRF_UNDOBYDEATHSAVES", NULL};
+	const char *Name;
+	int Flag;
+};
 
- 	static const int morphstyle_values[]={
-		MORPH_ADDSTAMINA, MORPH_FULLHEALTH, MORPH_UNDOBYTOMEOFPOWER, MORPH_UNDOBYCHAOSDEVICE,
-		MORPH_FAILNOTELEFRAG, MORPH_FAILNOLAUGH, MORPH_WHENINVULNERABLE, MORPH_LOSEACTUALWEAPON,
-		MORPH_NEWTIDBEHAVIOUR, MORPH_UNDOBYDEATH, MORPH_UNDOBYDEATHFORCED, MORPH_UNDOBYDEATHSAVES};
-
+int ParseFlagExpressionString(FScanner &sc, const FParseValue *vals)
+{
 	// May be given flags by number...
 	if (sc.CheckNumber())
 	{
@@ -422,7 +418,7 @@ static int ParseMorphStyle (FScanner &sc)
 	do
 	{
 		sc.MustGetString();
-		style |= morphstyle_values[sc.MustMatchString(morphstyles)];
+		style |= vals[sc.MustMatchString(&vals->Name, sizeof (*vals))].Flag;
 	}
 	while (sc.CheckString("|"));
 	if (gotparen)
@@ -431,6 +427,46 @@ static int ParseMorphStyle (FScanner &sc)
 	}
 
 	return style;
+}
+
+
+
+static int ParseMorphStyle (FScanner &sc)
+{
+ 	static const FParseValue morphstyles[]={
+		{ "MRF_ADDSTAMINA",			MORPH_ADDSTAMINA},
+		{ "MRF_FULLHEALTH",			MORPH_FULLHEALTH}, 
+		{ "MRF_UNDOBYTOMEOFPOWER",	MORPH_UNDOBYTOMEOFPOWER},  
+		{ "MRF_UNDOBYCHAOSDEVICE",	MORPH_UNDOBYCHAOSDEVICE},
+		{ "MRF_FAILNOTELEFRAG",		MORPH_FAILNOTELEFRAG}, 
+		{ "MRF_FAILNOLAUGH",		MORPH_FAILNOLAUGH}, 
+		{ "MRF_WHENINVULNERABLE",	MORPH_WHENINVULNERABLE}, 
+		{ "MRF_LOSEACTUALWEAPON",	MORPH_LOSEACTUALWEAPON},
+		{ "MRF_NEWTIDBEHAVIOUR",	MORPH_NEWTIDBEHAVIOUR}, 
+		{ "MRF_UNDOBYDEATH",		MORPH_UNDOBYDEATH}, 
+		{ "MRF_UNDOBYDEATHFORCED",	MORPH_UNDOBYDEATHFORCED},  
+		{ "MRF_UNDOBYDEATHSAVES",	MORPH_UNDOBYDEATHSAVES},
+		{ NULL, 0 }
+	};
+
+	return ParseFlagExpressionString(sc, morphstyles);
+}
+
+static int ParseThingActivation (FScanner &sc)
+{
+ 	static const FParseValue activationstyles[]={
+
+		{ "THINGSPEC_Default",				THINGSPEC_Default},
+		{ "THINGSPEC_ThingActs",			THINGSPEC_ThingActs},
+		{ "THINGSPEC_ThingTargets",			THINGSPEC_ThingTargets},
+		{ "THINGSPEC_TriggerTargets",		THINGSPEC_TriggerTargets},
+		{ "THINGSPEC_MonsterTrigger",		THINGSPEC_MonsterTrigger},
+		{ "THINGSPEC_MissileTrigger",		THINGSPEC_MissileTrigger},
+		{ "THINGSPEC_ClearSpecial",			THINGSPEC_ClearSpecial},
+		{ NULL, 0 }
+	};
+
+	return ParseFlagExpressionString(sc, activationstyles);
 }
 
 //==========================================================================

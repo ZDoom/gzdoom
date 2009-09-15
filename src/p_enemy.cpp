@@ -61,6 +61,7 @@ static FRandom pr_dropitem ("DropItem");
 static FRandom pr_look2 ("LookyLooky");
 static FRandom pr_look3 ("IGotHooky");
 static FRandom pr_slook ("SlooK");
+static FRandom pr_dropoff ("Dropoff");
 
 static FRandom pr_skiptarget("SkipTarget");
 
@@ -380,6 +381,7 @@ bool P_Move (AActor *actor)
 	int speed = actor->Speed;
 	int movefactor = ORIG_FRICTION_FACTOR;
 	int friction = ORIG_FRICTION;
+	int dropoff = 0;
 
 	if (actor->flags2 & MF2_BLASTED)
 	{
@@ -410,23 +412,18 @@ bool P_Move (AActor *actor)
 	if ((unsigned)actor->movedir >= 8)
 		I_Error ("Weird actor->movedir!");
 
-	speed = actor->Speed;
-
-#if 0	// todo
-
 	// killough 10/98: allow dogs to drop off of taller ledges sometimes.
 	// dropoff==1 means always allow it, dropoff==2 means only up to 128 high,
 	// and only if the target is immediately on the other side of the line.
+	AActor *target = actor->target;
 
-	if (actor->flags6 & MF6_JUMPDOWN && target &&
+	if ((actor->flags6 & MF6_JUMPDOWN) && target &&
 			!(target->IsFriend(actor)) &&
-			P_AproxDistance(actor->x - target->x,
-							actor->y - target->y) < FRACUNIT*144 &&
-			P_Random(pr_dropoff) < 235)
+			P_AproxDistance(actor->x - target->x, actor->y - target->y) < FRACUNIT*144 &&
+			pr_dropoff() < 235)
 	{
 		dropoff = 2;
 	}
-#endif
 
 	// [RH] I'm not so sure this is such a good idea
 	// [GZ] That's why it's compat-optioned.
@@ -479,12 +476,12 @@ bool P_Move (AActor *actor)
 	try_ok = true;
 	for(int i=1; i < steps; i++)
 	{
-		try_ok = P_TryMove(actor, origx + Scale(deltax, i, steps), origy + Scale(deltay, i, steps), false, false, tm);
+		try_ok = P_TryMove(actor, origx + Scale(deltax, i, steps), origy + Scale(deltay, i, steps), dropoff, false, tm);
 		if (!try_ok) break;
 	}
 
 	// killough 3/15/98: don't jump over dropoffs:
-	if (try_ok) try_ok = P_TryMove (actor, tryx, tryy, false, false, tm);
+	if (try_ok) try_ok = P_TryMove (actor, tryx, tryy, dropoff, false, tm);
 
 	// [GrafZahl] Interpolating monster movement as it is done here just looks bad
 	// so make it switchable!

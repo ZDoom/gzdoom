@@ -834,6 +834,29 @@ bool PIT_CheckThing (AActor *thing, FCheckPosition &tm)
 		P_DamageMobj (thing, NULL, NULL, thing->health, NAME_None, DMG_FORCED);  // kill object
 		return true;
 	}
+
+	// Check for MF6_BUMPSPECIAL
+	// By default, only players can activate things by bumping into them
+	if ((thing->flags6 & MF6_BUMPSPECIAL))
+	{
+		if (((tm.thing->player != NULL)
+		|| ((thing->activationtype & THINGSPEC_MonsterTrigger) && (thing->flags3 & MF3_ISMONSTER))
+		|| ((thing->activationtype & THINGSPEC_MissileTrigger) && (thing->flags & MF_MISSILE))
+		))
+		{	// Target switching mechanism
+			if (thing->activationtype & THINGSPEC_ThingTargets) thing->target = tm.thing;
+			if (thing->activationtype & THINGSPEC_TriggerTargets) tm.thing->target = thing;
+			// Run the special
+			
+			int res = LineSpecials[thing->special] (NULL, 
+				((thing->activationtype & THINGSPEC_ThingActs) ? thing : tm.thing), // Who triggers?
+				false, thing->args[0], thing->args[1], thing->args[2], thing->args[3], thing->args[4]);
+
+			if (thing->activationtype & THINGSPEC_ClearSpecial && res) thing->special = 0;
+
+		}
+	}
+
 	// Check for skulls slamming into things
 	if (tm.thing->flags & MF_SKULLFLY)
 	{
@@ -859,13 +882,6 @@ bool PIT_CheckThing (AActor *thing, FCheckPosition &tm)
 			}
 			return false;
 		}
-	}
-	// Check for players touching a thing with MF6_BUMPSPECIAL
-	// A blind recreation of what the Skulltag code is probably like.
-	if (tm.thing->player && (thing->flags6 & MF6_BUMPSPECIAL) && thing->special)
-	{
-		LineSpecials[thing->special] (NULL, tm.thing, false, thing->args[0], 
-			thing->args[1], thing->args[2], thing->args[3], thing->args[4]);
 	}
 	// Check for missile or non-solid MBF bouncer
 	if (tm.thing->flags & MF_MISSILE || ((tm.thing->BounceFlags & BOUNCE_MBF) && !(tm.thing->flags & MF_SOLID)))
@@ -1537,7 +1553,7 @@ static void CheckForPushSpecial (line_t *line, int side, AActor *mobj)
 // crossing special lines unless MF_TELEPORT is set.
 //
 bool P_TryMove (AActor *thing, fixed_t x, fixed_t y,
-				bool dropoff, // killough 3/15/98: allow dropoff as option
+				int dropoff, // killough 3/15/98: allow dropoff as option
 				const secplane_t *onfloor, // [RH] Let P_TryMove keep the thing on the floor
 				FCheckPosition &tm)
 {
@@ -1666,6 +1682,13 @@ bool P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 		{
 			dropoff = false;
 		}
+
+		if (dropoff==2 &&  // large jump down (e.g. dogs)
+			(tm.floorz-tm.dropoffz > 128*FRACUNIT || thing->target == NULL || thing->target->z >tm.dropoffz))
+		{
+				dropoff = false;
+		}
+
 
 		// killough 3/15/98: Allow certain objects to drop off
 		if ((!dropoff && !(thing->flags & (MF_DROPOFF|MF_FLOAT|MF_MISSILE))) || (thing->flags5&MF5_NODROPOFF))
@@ -1894,7 +1917,7 @@ pushline:
 }
 
 bool P_TryMove (AActor *thing, fixed_t x, fixed_t y,
-				bool dropoff, // killough 3/15/98: allow dropoff as option
+				int dropoff, // killough 3/15/98: allow dropoff as option
 				const secplane_t *onfloor) // [RH] Let P_TryMove keep the thing on the floor
 {
 	FCheckPosition tm;
@@ -3745,12 +3768,20 @@ bool P_UseTraverse(AActor *usething, fixed_t endx, fixed_t endy, bool &foundline
 			// Check thing
 
 			// Check for puzzle item use or USESPECIAL flag
+			// Extended to use the same activationtype mechanism as BUMPSPECIAL does
 			if (in->d.thing->flags5 & MF5_USESPECIAL || in->d.thing->special == UsePuzzleItem)
-			{
-				if (LineSpecials[in->d.thing->special] (NULL, usething, false,
+			{	// Target switching mechanism
+				if (in->d.thing->activationtype & THINGSPEC_ThingTargets) in->d.thing->target = usething;
+				if (in->d.thing->activationtype & THINGSPEC_TriggerTargets) usething->target = in->d.thing;
+				// Run the special
+				if (LineSpecials[in->d.thing->special] (NULL, // Who triggers?
+					((in->d.thing->activationtype & THINGSPEC_ThingActs) ? in->d.thing : usething), false, 
 					in->d.thing->args[0], in->d.thing->args[1], in->d.thing->args[2],
 					in->d.thing->args[3], in->d.thing->args[4]))
+				{
+					if (in->d.thing->activationtype & THINGSPEC_ClearSpecial) in->d.thing->special = 0;
 					return true;
+				}
 			}
 			// Dead things can't talk.
 			if (in->d.thing->health <= 0)

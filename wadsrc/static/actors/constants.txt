@@ -61,6 +61,18 @@ const int MRF_UNDOBYDEATHSAVES = 2048;
 const int RGF_SILENT = 1;
 const int RGF_NOPIERCING = 2;
 
+enum
+{
+	THINGSPEC_Default = 0,
+	THINGSPEC_ThingActs = 1,
+	THINGSPEC_ThingTargets = 2,
+	THINGSPEC_TriggerTargets = 4,
+	THINGSPEC_MonsterTrigger = 8,
+	THINGSPEC_MissileTrigger = 16,
+	THINGSPEC_ClearSpecial = 32,
+};
+
+
 // constants for A_PlaySound
 enum
 {

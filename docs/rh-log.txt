@@ -1,4 +1,5 @@
 September 15, 2009  (Changes by Graf Zahl)
+- added PinkSilver's A_Respawn enhancement patch.
 - added RandomSpawner update from Gez's experimental build.
 - added thing activation types for BUMPSPECIAL and USESPECIAL. Also added
   a new ClearSpecial flag to the activation type.

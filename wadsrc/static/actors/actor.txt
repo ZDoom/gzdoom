@@ -230,7 +230,7 @@ ACTOR Actor native //: Thinker
 	action native A_RadiusThrust(int force = 128, int distance = -1, bool affectsource = true);
 	action native A_Explode(int damage = -1, int distance = -1, bool hurtsource = true, bool alert = false, int fulldamagedistance = 0, int nails = 0, int naildamage = 10);
 	action native A_Stop();
-	action native A_Respawn(bool fog = true);
+	action native A_Respawn(int flags = 1);
 	action native A_BarrelDestroy();
 	action native A_QueueCorpse();
 	action native A_DeQueueCorpse();

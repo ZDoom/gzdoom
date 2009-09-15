@@ -33,6 +33,11 @@ const int LOF_DONTCHASEGOAL = 4;
 const int LOF_NOSEESOUND = 8;
 const int LOF_FULLVOLSEESOUND = 16;
 
+// Flags for A_Respawn
+const int RSF_FOG = 1;
+const int RSF_KEEPTARGET = 2;
+const int RSF_TELEFRAG = 4;
+
 // Flags for A_ChangeVelocity
 const int CVF_RELATIVE = 1;
 const int CVF_REPLACE = 2;

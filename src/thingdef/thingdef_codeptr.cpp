@@ -2122,27 +2122,58 @@ static void CheckStopped(AActor *self)
 // A_Respawn
 //
 //===========================================================================
+
+enum RS_Flags
+{
+	RSF_FOG=1,
+	RSF_KEEPTARGET=2,
+	RSF_TELEFRAG=4,
+};
+
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Respawn)
 {
 	ACTION_PARAM_START(1);
-	ACTION_PARAM_BOOL(fog, 0);
+	ACTION_PARAM_INT(flags, 0);
 
 	fixed_t x = self->SpawnPoint[0];
 	fixed_t y = self->SpawnPoint[1];
+	bool oktorespawn = false;
 	sector_t *sec;
 
 	self->flags |= MF_SOLID;
 	sec = P_PointInSector (x, y);
-	self->SetOrigin (x, y, sec->floorplane.ZatPoint (x, y));
 	self->height = self->GetDefault()->height;
-	if (P_TestMobjLocation (self))
+
+	if (flags & RSF_TELEFRAG)
+	{
+		// [KS] DIE DIE DIE DIE erm *ahem* =)
+		if (P_TeleportMove (self, x, y, sec->floorplane.ZatPoint (x, y), true)) oktorespawn = true;
+	}
+	else
+	{
+		self->SetOrigin (x, y, sec->floorplane.ZatPoint (x, y));
+		if (P_TestMobjLocation (self)) oktorespawn = true;
+	}
+
+	if (oktorespawn)
 	{
 		AActor *defs = self->GetDefault();
 		self->health = defs->health;
-        
-        // [KS] Don't keep target, because it could be self if the monster committed suicide
-        self->target = NULL;
-        self->LastHeard = NULL;
+
+		// [KS] Don't keep target, because it could be self if the monster committed suicide
+		//      ...Actually it's better off an option, so you have better control over monster behavior.
+		if (!(flags & RSF_KEEPTARGET))
+		{
+			self->target = NULL;
+			self->LastHeard = NULL;
+			self->lastenemy = NULL;
+		}
+		else
+		{
+			// Don't attack yourself (Re: "Marine targets itself after suicide")
+			if (self->target == self) self->target = NULL;
+			if (self->lastenemy == self) self->lastenemy = NULL;
+		}
 
 		self->flags  = (defs->flags & ~MF_FRIENDLY) | (self->flags & MF_FRIENDLY);
 		self->flags2 = defs->flags2;
@@ -2152,7 +2183,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Respawn)
 		self->SetState (self->SpawnState);
 		self->renderflags &= ~RF_INVISIBLE;
 
-		if (fog)
+		if (flags & RSF_FOG)
 		{
 			Spawn<ATeleportFog> (x, y, self->z + TELEFOGHEIGHT, ALLOW_REPLACE);
 		}

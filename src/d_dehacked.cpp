@@ -1602,7 +1602,7 @@ static void SetPointer(FState *state, PSymbol *sym, int frame = 0)
 	}
 	else
 	{
-		FString symname = sym->SymbolName;
+		FString symname = sym->SymbolName.GetChars();
 		state->SetAction(static_cast<PSymbolActionFunction*>(sym));
 
 		// Note: CompareNoCase() calls stricmp() and therefore returns 0 when they're the same.

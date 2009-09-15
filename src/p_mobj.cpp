@@ -5416,7 +5416,7 @@ fixed_t AActor::GetGravity() const
 // (left precisely the same as MBF even though it doesn't make much sense.)
 bool AActor::IsSentient() const
 {
-	return health > 0 || SeeState != NULL;
+	return health > 0 && SeeState != NULL;
 }
 
 

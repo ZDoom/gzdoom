@@ -178,8 +178,8 @@ static int P_Set3DFloor(line_t * line, int param,int param2, int alpha)
 
 						l->frontsector->ColorMap = 
 							GetSpecialLights (l->frontsector->ColorMap->Color, 
-											  vavoomcolors[l->args[0]]&VC_COLORMASK, 
-											  (vavoomcolors[l->args[0]]&VC_ALPHAMASK)>>24);
+											  (unsigned int)(vavoomcolors[l->args[0]]&VC_COLORMASK), 
+											  (unsigned int)(vavoomcolors[l->args[0]]&VC_ALPHAMASK)>>24);
 										//	  l->frontsector->ColorMap->Desaturate);
 					}
 					alpha=(alpha*255)/100;

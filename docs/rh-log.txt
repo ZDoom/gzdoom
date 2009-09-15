@@ -1,3 +1,9 @@
+September 15, 2009  (Changes by Graf Zahl)
+- fixed: The Dehacked flags parser fix from May 31 (r1624) was undone by
+  yesterday's additions. Changed it so that the parser first checks for 
+  the presence of a '-' sign before deciding whether to use strtol or
+  strtoul to convert the string into a number.
+
 September 14, 2009  (Changes by Graf Zahl)
 - Added PinkSilver's A_LookEx fix.
 - added resources needed for MBF support.

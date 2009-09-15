@@ -958,7 +958,11 @@ static int PatchThing (int thingy)
 				{
 					if (IsNum (strval))
 					{
-						value[0] |= (unsigned long)strtol(strval, NULL, 10);
+						// I have no idea why everyone insists on using strtol here even though it fails
+						// dismally if a value is parsed where the highest bit it set. Do people really
+						// use negative values here? Let's better be safe and check both.
+						if (strchr(strval, '-')) value[0] |= (unsigned long)strtol(strval, NULL, 10);
+						else value[0] |= (unsigned long)strtoul(strval, NULL, 10);
 						vchanged[0] = true;
 					}
 					else

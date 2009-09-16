@@ -1,4 +1,5 @@
 September 16, 2009  (Changes by Graf Zahl)
+- Fixed: A_LookEx did not work for monsters having the MF_NOSECTOR flag.
 - Fixed: The deprecated flag handler for the old bounce flags needs to clear
   BOUNCE_MBF and BOUNCE_UseSeeSound, too, when clearing one of these flags.
 - Fixed: When adding the AVOIDMELEE code the code was accidentally changed so that

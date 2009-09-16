@@ -1741,10 +1741,7 @@ IMPLEMENT_CLASS(AScoreItem)
 //
 // AScoreItem :: TryPickup
 //
-// This function does nothing much. Theoretically, the player could have a
-// score property which would be incremented by the score items' own score
-// property (probably using the Amount property for that), but that is not
-// needed for the moment.
+// Adds the value (Amount) of the item to the toucher's Score property.
 //
 //===========================================================================
 

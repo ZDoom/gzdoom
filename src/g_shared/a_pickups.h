@@ -477,7 +477,7 @@ public:
 
 
 // A score item is picked up without being added to the inventory.
-// Contrarily to FakeInventory, it does nothing.
+// It differs from FakeInventory by doing nothing more than increasing the player's score.
 class AScoreItem : public AInventory
 {
 	DECLARE_CLASS (AScoreItem, AInventory)

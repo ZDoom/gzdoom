@@ -1,4 +1,12 @@
 September 16, 2009  (Changes by Graf Zahl)
+- Gez's misc. bugs patch:
+* Moves the dog sound out of the Doom-specific sounds in SNDINFO to address this,
+* Renames the dog actor to MBFHelperDog to prevent name conflicts,
+* Adds APROP_Score to CheckActorProperty,
+* Completes the randomspawner update (the reason I moved the recursion counter out of 
+  special1 was that I found some projectiles had this set to them, for example in 
+  A_LichAttack, but I forgot to add transfer for them),
+* Provides centered sprites for beta plasma balls if this is deemed deserving correction.
 - Added some pieces of MBF's friendly AI.
 - Cleaned up A_LookEx code and merged most of it with the base functions.
   The major difference was a common piece of code that was repeated 5 times

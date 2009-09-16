@@ -1,4 +1,4 @@
-ACTOR Dog 888
+ACTOR MBFHelperDog 888
 {
 	Game Doom
 	Health 500

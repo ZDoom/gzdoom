@@ -104,6 +104,7 @@ enum
 	ATAG_SREGISTER,			// pointer to a string register
 	ATAG_AREGISTER,			// pointer to an address register
 
+	ATAG_STATE,				// pointer to FState
 };
 
 class VMFunction : public DObject
@@ -758,14 +759,14 @@ public:
 	void ParamObject(DObject *obj)
 	{
 		Reg.a[RegA] = obj;
-		Reg.atag[RegA] = true;
+		Reg.atag[RegA] = ATAG_OBJECT;
 		RegA++;
 	}
 
-	void ParamPointer(void *ptr)
+	void ParamPointer(void *ptr, VM_UBTYE atag)
 	{
 		Reg.a[RegA] = ptr;
-		Reg.atag[RegA] = false;
+		Reg.atag[RegA] = atag;
 		RegA++;
 	}
 

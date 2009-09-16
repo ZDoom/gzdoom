@@ -533,11 +533,14 @@ begin:
 		{ // No return values
 			return 0;
 		}
-		assert(a < numret);
-		SetReturn(reg, f, &ret[a], B, C);
+		assert(ret != NULL || numret == 0);
+		if (a < numret)
+		{
+			SetReturn(reg, f, &ret[a], B, C);
+		}
 		if (B & REGT_FINAL)
 		{
-			return a + 1;
+			return MIN(numret, a + 1);
 		}
 		NEXTOP;
 	OP(RESULT):

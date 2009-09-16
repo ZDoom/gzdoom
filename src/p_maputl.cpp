@@ -40,7 +40,7 @@
 #include "r_state.h"
 #include "templates.h"
 
-static AActor *RoughBlockCheck (AActor *mo, int index);
+static AActor *RoughBlockCheck (AActor *mo, int index, void *);
 
 
 //==========================================================================
@@ -1278,7 +1278,7 @@ AActor *P_RoughMonsterSearch (AActor *mo, int distance)
 	return P_BlockmapSearch (mo, distance, RoughBlockCheck);
 }
 
-AActor *P_BlockmapSearch (AActor *mo, int distance, AActor *(*check)(AActor*, int))
+AActor *P_BlockmapSearch (AActor *mo, int distance, AActor *(*check)(AActor*, int, void *), void *params)
 {
 	int blockX;
 	int blockY;
@@ -1297,7 +1297,7 @@ AActor *P_BlockmapSearch (AActor *mo, int distance, AActor *(*check)(AActor*, in
 	
 	if (startX >= 0 && startX < bmapwidth && startY >= 0 && startY < bmapheight)
 	{
-		if ( (target = check (mo, startY*bmapwidth+startX)) )
+		if ( (target = check (mo, startY*bmapwidth+startX, params)) )
 		{ // found a target right away
 			return target;
 		}
@@ -1334,7 +1334,7 @@ AActor *P_BlockmapSearch (AActor *mo, int distance, AActor *(*check)(AActor*, in
 		// Trace the first block section (along the top)
 		for (; blockIndex <= firstStop; blockIndex++)
 		{
-			if ( (target = check (mo, blockIndex)) )
+			if ( (target = check (mo, blockIndex, params)) )
 			{
 				return target;
 			}
@@ -1342,7 +1342,7 @@ AActor *P_BlockmapSearch (AActor *mo, int distance, AActor *(*check)(AActor*, in
 		// Trace the second block section (right edge)
 		for (blockIndex--; blockIndex <= secondStop; blockIndex += bmapwidth)
 		{
-			if ( (target = check (mo, blockIndex)) )
+			if ( (target = check (mo, blockIndex, params)) )
 			{
 				return target;
 			}
@@ -1350,7 +1350,7 @@ AActor *P_BlockmapSearch (AActor *mo, int distance, AActor *(*check)(AActor*, in
 		// Trace the third block section (bottom edge)
 		for (blockIndex -= bmapwidth; blockIndex >= thirdStop; blockIndex--)
 		{
-			if ( (target = check (mo, blockIndex)) )
+			if ( (target = check (mo, blockIndex, params)) )
 			{
 				return target;
 			}
@@ -1358,7 +1358,7 @@ AActor *P_BlockmapSearch (AActor *mo, int distance, AActor *(*check)(AActor*, in
 		// Trace the final block section (left edge)
 		for (blockIndex++; blockIndex > finalStop; blockIndex -= bmapwidth)
 		{
-			if ( (target = check (mo, blockIndex)) )
+			if ( (target = check (mo, blockIndex, params)) )
 			{
 				return target;
 			}
@@ -1373,7 +1373,7 @@ AActor *P_BlockmapSearch (AActor *mo, int distance, AActor *(*check)(AActor*, in
 //
 //===========================================================================
 
-static AActor *RoughBlockCheck (AActor *mo, int index)
+static AActor *RoughBlockCheck (AActor *mo, int index, void *)
 {
 	FBlockNode *link;
 

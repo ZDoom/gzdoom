@@ -216,7 +216,7 @@ enum
 	MF3_NOBLOCKMONST	= 0x00100000,	// Can cross ML_BLOCKMONSTERS lines
 	MF3_CRASHED			= 0x00200000,	// Actor entered its crash state
 	MF3_FULLVOLDEATH	= 0x00400000,	// DeathSound is played full volume (for missiles)
-	/*					= 0x00800000,	*/
+	MF3_AVOIDMELEE		= 0x00800000,	// Avoids melee attacks (same as MBF's monster_backing but must be explicitly set)
 	/*				    = 0x01000000,	*/
 	MF3_FOILINVUL		= 0x02000000,	// Actor can hurt MF2_INVULNERABLE things
 	MF3_NOTELEOTHER		= 0x04000000,	// Monster is unaffected by teleport other artifact
@@ -809,14 +809,6 @@ public:
 
 	AActor			*BlockingMobj;	// Actor that blocked the last move
 	line_t			*BlockingLine;	// Line that blocked the last move
-
-	// [KS] These temporary-use properties are needed to allow A_LookEx to pass its parameters to
-	// LookFor*InBlock in P_BlockmapSearch so that friendly enemies and monsters that look for
-	// other monsters can find their targets properly. If there's a cleaner way of doing this,
-	// feel free to remove these and use that method instead.
-	fixed_t			LookExMinDist;	// Minimum sight distance
-	fixed_t			LookExMaxDist;	// Maximum sight distance
-	angle_t			LookExFOV;		// Field of Vision
 
 	// a linked list of sectors where this object appears
 	struct msecnode_t	*touching_sectorlist;				// phares 3/14/98

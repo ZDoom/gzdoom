@@ -238,7 +238,7 @@ static void SpawnFly(AActor *self, const PClass *spawntype, FSoundID sound)
 			{
 				newmobj->CopyFriendliness (eye, false);
 			}
-			if (newmobj->SeeState != NULL && P_LookForPlayers (newmobj, true))
+			if (newmobj->SeeState != NULL && P_LookForPlayers (newmobj, true, NULL))
 				newmobj->SetState (newmobj->SeeState);
 
 			if (!(newmobj->ObjectFlags & OF_EuthanizeMe))

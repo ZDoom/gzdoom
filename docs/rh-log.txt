@@ -1,4 +1,10 @@
 September 16, 2009  (Changes by Graf Zahl)
+- Added some pieces of MBF's friendly AI.
+- Cleaned up A_LookEx code and merged most of it with the base functions.
+  The major difference was a common piece of code that was repeated 5 times
+  throughout the code so I moved it into a subfunction.
+- Changed P_BlockmapSearch to pass a user parameter to its callback so that
+  A_LookEx does not need to store its info inside the actor itself.
 - fixed: The linetarget CCMD duplicated all of the info CCMD. 
 - fixed: PrintActorInfo crashed due to some incomplete implementation.
 

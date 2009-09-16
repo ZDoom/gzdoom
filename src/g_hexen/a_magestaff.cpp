@@ -19,7 +19,7 @@ void A_DropBloodscourgePieces (AActor *);
 void A_MStaffAttack (AActor *actor);
 void A_MStaffPalette (AActor *actor);
 
-static AActor *FrontBlockCheck (AActor *mo, int index);
+static AActor *FrontBlockCheck (AActor *mo, int index, void *);
 static divline_t BlockCheckLine;
 
 //==========================================================================
@@ -254,7 +254,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MStaffTrack)
 //
 //============================================================================
 
-static AActor *FrontBlockCheck (AActor *mo, int index)
+static AActor *FrontBlockCheck (AActor *mo, int index, void *)
 {
 	FBlockNode *link;
 

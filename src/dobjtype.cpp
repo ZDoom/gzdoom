@@ -467,7 +467,17 @@ const PClass *PClass::NativeClass() const
 
 // Symbol tables ------------------------------------------------------------
 
+IMPLEMENT_ABSTRACT_CLASS(PSymbol);
+IMPLEMENT_CLASS(PSymbolConst);
+IMPLEMENT_CLASS(PSymbolVariable);
+IMPLEMENT_CLASS(PSymbolActionFunction);
+
 PSymbol::~PSymbol()
+{
+}
+
+PSymbolTable::PSymbolTable()
+: ParentSymbolTable(NULL)
 {
 }
 
@@ -476,12 +486,18 @@ PSymbolTable::~PSymbolTable ()
 	ReleaseSymbols();
 }
 
-void PSymbolTable::ReleaseSymbols()
+void PSymbolTable::MarkSymbols()
 {
 	for (unsigned int i = 0; i < Symbols.Size(); ++i)
 	{
-		delete Symbols[i];
+		GC::Mark(Symbols[i]);
 	}
+}
+
+void PSymbolTable::ReleaseSymbols()
+{
+	// The GC will take care of deleting the symbols. We just need to
+	// clear our references to them.
 	Symbols.Clear();
 }
 

@@ -382,7 +382,7 @@ protected:
 	DFrameBuffer () {}
 
 private:
-	DWORD LastMS, LastSec, FrameCount, LastCount, LastTic;
+	uint32 LastMS, LastSec, FrameCount, LastCount, LastTic;
 };
 
 

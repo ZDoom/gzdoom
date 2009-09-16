@@ -149,10 +149,10 @@ static TArray<const PClass *> WeaponNames;
 // List of states that are hacked to use a codepointer
 struct MBFParamState
 {
-	FState * state;
+	FState *state;
 	int pointer;
 };
-static TArray<MBFParamState *> MBFParamStates;
+static TArray<MBFParamState> MBFParamStates;
 // Data on how to correctly modify the codepointers
 struct CodePointerAlias
 {
@@ -1610,9 +1610,9 @@ static void SetPointer(FState *state, PSymbol *sym, int frame = 0)
 		{
 			if (!symname.CompareNoCase(MBFCodePointers[i].name))
 			{
-				MBFParamState * newstate = new MBFParamState;
-				newstate->state = state;
-				newstate->pointer = i;
+				MBFParamState newstate;
+				newstate.state = state;
+				newstate.pointer = i;
 				MBFParamStates.Push(newstate);
 				break; // No need to cycle through the rest of the list.
 			}
@@ -2494,7 +2494,7 @@ static void UnloadDehSupp ()
 		// Handle MBF params here, before the required arrays are cleared
 		for (unsigned int i=0; i < MBFParamStates.Size(); i++)
 		{
-			SetDehParams(MBFParamStates[i]->state, MBFParamStates[i]->pointer);
+			SetDehParams(MBFParamStates[i].state, MBFParamStates[i].pointer);
 		}
 		MBFParamStates.Clear();
 		MBFParamStates.ShrinkToFit();

@@ -6446,6 +6446,34 @@
 				>
 			</File>
 		</Filter>
+		<Filter
+			Name="ZScript"
+			>
+			<File
+				RelativePath=".\zscript\vm.h"
+				>
+			</File>
+			<File
+				RelativePath=".\zscript\vmdisasm.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\zscript\vmexec.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\zscript\vmexec.h"
+				>
+			</File>
+			<File
+				RelativePath=".\zscript\vmframe.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\zscript\vmops.h"
+				>
+			</File>
+		</Filter>
 	</Files>
 	<Globals>
 	</Globals>

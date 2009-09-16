@@ -327,6 +327,15 @@ static void MarkRoot()
 		SectorMarker->SecNum = 0;
 	}
 	Mark(SectorMarker);
+	// Mark symbol tables
+	for (unsigned j = 0; j < PClass::m_Types.Size(); ++j)
+	{
+		PClass *cls = PClass::m_Types[j];
+		if (cls != NULL)
+		{
+			cls->Symbols.MarkSymbols();
+		}
+	}
 	// Mark bot stuff.
 	Mark(bglobal.firstthing);
 	Mark(bglobal.body1);

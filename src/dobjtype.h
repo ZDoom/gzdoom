@@ -16,8 +16,10 @@ enum ESymbolType
 	SYM_ActionFunction
 };
 
-struct PSymbol
+class PSymbol : public DObject
 {
+	DECLARE_ABSTRACT_CLASS(PSymbol, DObject);
+public:
 	virtual ~PSymbol();
 
 	ESymbolType SymbolType;
@@ -29,8 +31,10 @@ protected:
 
 // A constant value ---------------------------------------------------------
 
-struct PSymbolConst : public PSymbol
+class PSymbolConst : public PSymbol
 {
+	DECLARE_CLASS(PSymbolConst, PSymbol);
+public:
 	int ValueType;
 	union
 	{
@@ -39,17 +43,21 @@ struct PSymbolConst : public PSymbol
 	};
 
 	PSymbolConst(FName name) : PSymbol(name, SYM_Const) {}
+	PSymbolConst() : PSymbol(NAME_None, SYM_Const) {}
 };
 
 // A variable ---------------------------------------------------------
 
-struct PSymbolVariable : public PSymbol
+class PSymbolVariable : public PSymbol
 {
+	DECLARE_CLASS(PSymbolVariable, PSymbol);
+public:
 	FExpressionType ValueType;
 	int size;
 	intptr_t offset;
 
 	PSymbolVariable(FName name) : PSymbol(name, SYM_Variable) {}
+	PSymbolVariable() : PSymbol(NAME_None, SYM_Variable) {}
 };
 
 // An action function -------------------------------------------------------
@@ -74,25 +82,26 @@ struct FState;
 struct StateCallData;
 typedef void (*actionf_p)(AActor *self, AActor *stateowner, FState *state, int parameters, StateCallData *statecall);
 
-struct PSymbolActionFunction : public PSymbol
+class PSymbolActionFunction : public PSymbol
 {
+	DECLARE_CLASS(PSymbolActionFunction, PSymbol);
+public:
 	FString Arguments;
 	actionf_p Function;
 	int defaultparameterindex;
 
 	PSymbolActionFunction(FName name) : PSymbol(name, SYM_ActionFunction) {}
+	PSymbolActionFunction() : PSymbol(NAME_None, SYM_ActionFunction) {}
 };
 
 // A symbol table -----------------------------------------------------------
 
-class PSymbolTable
+struct PSymbolTable
 {
-public:
-	PSymbolTable() : ParentSymbolTable(NULL)
-	{
-	}
-
+	PSymbolTable();
 	~PSymbolTable();
+
+	void MarkSymbols();
 
 	// Sets the table to use for searches if this one doesn't contain the
 	// requested symbol.

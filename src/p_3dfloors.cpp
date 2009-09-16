@@ -74,14 +74,14 @@ static void P_Add3DFloor(sector_t* sec, sector_t* sec2, line_t* master, int flag
 		ffloor->bottom.plane = &sec2->floorplane;
 		ffloor->bottom.texture = &sec2->planes[sector_t::floor].Texture;
 		ffloor->bottom.texheight = &sec2->planes[sector_t::floor].TexZ;
-		ffloor->bottom.isceiling = false;
+		ffloor->bottom.isceiling = sector_t::floor;
 	}
 	else 
 	{
 		ffloor->bottom.plane = &sec2->ceilingplane;
 		ffloor->bottom.texture = &sec2->planes[sector_t::ceiling].Texture;
 		ffloor->bottom.texheight = &sec2->planes[sector_t::ceiling].TexZ;
-		ffloor->bottom.isceiling = true;
+		ffloor->bottom.isceiling = sector_t::ceiling;
 	}
 	
 	if (!(flags&FF_FIX))
@@ -90,7 +90,7 @@ static void P_Add3DFloor(sector_t* sec, sector_t* sec2, line_t* master, int flag
 		ffloor->top.texture = &sec2->planes[sector_t::ceiling].Texture;
 		ffloor->top.texheight = &sec2->planes[sector_t::ceiling].TexZ;
 		ffloor->toplightlevel = &sec2->lightlevel;
-		ffloor->top.isceiling = true;
+		ffloor->top.isceiling = sector_t::ceiling;
 	}
 	else	// FF_FIX is a special case to patch rendering holes
 	{
@@ -98,7 +98,7 @@ static void P_Add3DFloor(sector_t* sec, sector_t* sec2, line_t* master, int flag
 		ffloor->top.texture = &sec2->planes[sector_t::floor].Texture;
 		ffloor->top.texheight = &sec2->planes[sector_t::floor].TexZ;
 		ffloor->toplightlevel = &sec->lightlevel;
-		ffloor->top.isceiling = false;
+		ffloor->top.isceiling = sector_t::floor;
 		ffloor->top.model = sec;
 	}
 
@@ -117,12 +117,14 @@ static void P_Add3DFloor(sector_t* sec, sector_t* sec2, line_t* master, int flag
 			// fortunately this plane won't be rendered - otherwise this wouldn't work...
 			ffloor->bottom.plane=&sec->floorplane;
 			ffloor->bottom.model=sec;
+			ffloor->bottom.isceiling = sector_t::floor;
 		}
 	}
 
 	ffloor->flags  = flags;
 	ffloor->master = master;
 	ffloor->alpha  = transluc;
+	ffloor->top.vindex = ffloor->bottom.vindex = -1;
 
 	// The engine cannot handle sloped translucent floors. Sorry
 	if (ffloor->top.plane->a || ffloor->top.plane->b || ffloor->bottom.plane->a || ffloor->bottom.plane->b)

@@ -1,3 +1,7 @@
+September 16, 2009  (Changes by Graf Zahl)
+- fixed: The linetarget CCMD duplicated all of the info CCMD. 
+- fixed: PrintActorInfo crashed due to some incomplete implementation.
+
 September 15, 2009  (Changes by Graf Zahl)
 - added PinkSilver's A_Respawn enhancement patch.
 - added RandomSpawner update from Gez's experimental build.

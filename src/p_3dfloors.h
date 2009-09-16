@@ -73,7 +73,8 @@ struct F3DFloor
 		const FTextureID *	texture;
 		const fixed_t *		texheight;
 		sector_t *		model;
-		bool			isceiling;
+		int				isceiling;
+		int				vindex;
 	};
 
 	planeref			bottom;

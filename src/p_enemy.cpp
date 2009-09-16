@@ -1841,7 +1841,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_LookEx)
 	{
 		if (!(flags & LOF_NOSOUNDCHECK))
 		{
-			targ = self->flags & MF_NOSECTOR)? 	self->Sector->SoundTarget : self->LastHeard;
+			targ = (self->flags & MF_NOSECTOR)? self->Sector->SoundTarget : self->LastHeard;
 			if (targ != NULL)
 			{
 				// [RH] If the soundtarget is dead, don't chase it

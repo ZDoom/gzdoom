@@ -399,7 +399,7 @@ enum EBounceFlags
 	// for them that are not present in ZDoom, so it is necessary to identify it properly.
 	BOUNCE_MBF = 1<<12,			// This in itself is not a valid mode, but replaces MBF's MF_BOUNCE flag.
 
-	BOUNCE_TypeMask = BOUNCE_Walls | BOUNCE_Floors | BOUNCE_Ceilings | BOUNCE_Actors | BOUNCE_AutoOff | BOUNCE_HereticType,
+	BOUNCE_TypeMask = BOUNCE_Walls | BOUNCE_Floors | BOUNCE_Ceilings | BOUNCE_Actors | BOUNCE_AutoOff | BOUNCE_HereticType | BOUNCE_MBF,
 
 	// The three "standard" types of bounciness are:
 	// HERETIC - Missile will only bounce off the floor once and then enter
@@ -760,6 +760,7 @@ public:
 	BYTE			movedir;		// 0-7
 	SBYTE			visdir;
 	SWORD			movecount;		// when 0, select a new dir
+	SWORD			strafecount;	// for MF3_AVOIDMELEE
 	TObjPtr<AActor> target;			// thing being chased/attacked (or NULL)
 									// also the originator for missiles
 	TObjPtr<AActor>	lastenemy;		// Last known enemy -- killough 2/15/98

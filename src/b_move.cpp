@@ -342,7 +342,7 @@ void FCajunMaster::TurnToAng (AActor *actor)
 
 		if(actor->player->enemy)
 			if(!actor->player->dest) //happens when running after item in combat situations, or normal, prevents weak turns
-				if(actor->player->ReadyWeapon->ProjectileType == NULL && !(actor->player->ReadyWeapon->WeaponFlags & WIF_BOT_MELEE))
+				if(actor->player->ReadyWeapon->ProjectileType == NULL && !(actor->player->ReadyWeapon->WeaponFlags & WIF_MELEEWEAPON))
 					if(Check_LOS(actor, actor->player->enemy, SHOOTFOV+5*ANGLE_1))
 						maxturn = 3;
 	}

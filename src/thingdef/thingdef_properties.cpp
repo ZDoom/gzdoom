@@ -130,15 +130,15 @@ void HandleDeprecatedFlags(AActor *defaults, FActorInfo *info, bool set, int ind
 		break;
 	// the bounce flags will set the compatibility bounce modes to remain compatible
 	case DEPF_HERETICBOUNCE:
-		defaults->BounceFlags &= ~BOUNCE_TypeMask;
+		defaults->BounceFlags &= ~(BOUNCE_TypeMask|BOUNCE_UseSeeSound);
 		if (set) defaults->BounceFlags |= BOUNCE_HereticCompat;
 		break;
 	case DEPF_HEXENBOUNCE:
-		defaults->BounceFlags &= ~BOUNCE_TypeMask;
+		defaults->BounceFlags &= ~(BOUNCE_TypeMask|BOUNCE_UseSeeSound);
 		if (set) defaults->BounceFlags |= BOUNCE_HexenCompat;
 		break;
 	case DEPF_DOOMBOUNCE:
-		defaults->BounceFlags &= ~BOUNCE_TypeMask;
+		defaults->BounceFlags &= ~(BOUNCE_TypeMask|BOUNCE_UseSeeSound);
 		if (set) defaults->BounceFlags |= BOUNCE_DoomCompat;
 		break;
 	case DEPF_PICKUPFLASH:

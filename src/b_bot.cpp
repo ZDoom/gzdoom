@@ -136,7 +136,6 @@ void InitBotStuff()
 		{ "SkullRod", 27000000, 0, "HornRodFX1" },
 		{ "SkullRodPowered", 27000000, 0, "HornRodFX2" },
 		{ "PhoenixRod", 18350080, WIF_BOT_REACTION_SKILL_THING|WIF_BOT_EXPLOSIVE, "PhoenixFX1" },
-		{ "PhoenixRodPowered", 0, WIF_BOT_MELEE, "PhoenixFX2" },
 		{ "Mace", 27000000, WIF_BOT_REACTION_SKILL_THING, "MaceFX2" },
 		{ "MacePowered", 27000000, WIF_BOT_REACTION_SKILL_THING|WIF_BOT_EXPLOSIVE, "MaceFX4" },
 		{ "FWeapHammer", 22000000, 0, "HammerMissile" },

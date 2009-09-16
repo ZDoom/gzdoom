@@ -354,12 +354,14 @@ void FTGATexture::MakeTexture ()
 	int step_x = (hdr.bpp>>3);
 	int Pitch = Width * step_x;
 
+	/*
 	if (hdr.img_desc&32)
 	{
 		ptr += (Width-1) * step_x;
 		step_x =- step_x;
 	}
-	if (!(hdr.img_desc&64))
+	*/
+	if (!(hdr.img_desc&32))
 	{
 		ptr += (Height-1) * Pitch;
 		Pitch = -Pitch;
@@ -557,12 +559,14 @@ int FTGATexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int w, int h, i
 	int step_x = (hdr.bpp>>3);
 	int Pitch = Width * step_x;
 
+	/*
 	if (hdr.img_desc&32)
 	{
 		ptr += (Width-1) * step_x;
 		step_x =- step_x;
 	}
-	if (!(hdr.img_desc&64))
+	*/
+	if (!(hdr.img_desc&32))
 	{
 		ptr += (Height-1) * Pitch;
 		Pitch = -Pitch;

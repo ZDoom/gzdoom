@@ -175,7 +175,7 @@ void FCajunMaster::Dofire (AActor *actor, ticcmd_t *cmd)
 		(actor->y + actor->vely) - (enemy->y + enemy->vely));
 
 	//FIRE EACH TYPE OF WEAPON DIFFERENT: Here should all the different weapons go.
-	if (actor->player->ReadyWeapon->WeaponFlags & WIF_BOT_MELEE)
+	if (actor->player->ReadyWeapon->WeaponFlags & WIF_MELEEWEAPON)
 	{
 		if ((actor->player->ReadyWeapon->ProjectileType != NULL))
 		{

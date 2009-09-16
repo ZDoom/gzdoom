@@ -240,6 +240,7 @@ void AActor::Serialize (FArchive &arc)
 		<< movedir
 		<< visdir
 		<< movecount
+		<< strafecount
 		<< target
 		<< lastenemy
 		<< LastHeard

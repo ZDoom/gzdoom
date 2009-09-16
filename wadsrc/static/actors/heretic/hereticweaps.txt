@@ -1034,6 +1034,7 @@ ACTOR PhoenixRodPowered : PhoenixRod native
 {
 	Game Heretic
 	+WEAPON.POWERED_UP
+	+WEAPON.MELEEWEAPON
 	Weapon.SisterWeapon "PhoenixRod"
 	Weapon.AmmoGive 0
 

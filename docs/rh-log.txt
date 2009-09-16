@@ -1,4 +1,10 @@
 September 16, 2009  (Changes by Graf Zahl)
+- Fixed: The deprecated flag handler for the old bounce flags needs to clear
+  BOUNCE_MBF and BOUNCE_UseSeeSound, too, when clearing one of these flags.
+- Fixed: When adding the AVOIDMELEE code the code was accidentally changed so that
+  friendly monsters could no longer acquire targets by themselves.
+- Renamed WIF_BOT_MELEE to WIF_MELEEWEAPON because it's no longer a bot only flag.
+- Added MBF's monster_backing feature as an actor flag: AVOIDMELEE.
 - Gez's misc. bugs patch:
 * Moves the dog sound out of the Doom-specific sounds in SNDINFO to address this,
 * Renames the dog actor to MBFHelperDog to prevent name conflicts,

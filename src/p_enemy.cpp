@@ -65,6 +65,7 @@ static FRandom pr_dropoff ("Dropoff");
 static FRandom pr_defect ("Defect");
 
 static FRandom pr_skiptarget("SkipTarget");
+static FRandom pr_enemystrafe("EnemyStrafe");
 
 // movement interpolation is fine for objects that are moved by their own
 // velocity. But for monsters it is problematic.
@@ -772,9 +773,7 @@ void P_NewChaseDir(AActor * actor)
 	fixed_t deltax;
 	fixed_t deltay;
 
-#ifdef MBF_STUFF
 	actor->strafecount = 0;
-#endif
 
 	if ((actor->flags5&MF5_CHASEGOAL || actor->goal == actor->target) && actor->goal!=NULL)
 	{
@@ -882,15 +881,16 @@ void P_NewChaseDir(AActor * actor)
 	else
 #endif
 
-#ifdef MBF_STUFF
 	// MBF's monster_backing option. Made an actor flag instead. Also cleaned the code up to make it readable.
 	// Todo: implement the movement logic
+	AActor *target = actor->target;
 	if (target->health > 0 && !actor->IsFriend(target))
     {   // Live enemy target
 
 		if (actor->flags3 & MF3_AVOIDMELEE)
 		{
 			bool ismeleeattacker = false;
+			fixed_t dist = P_AproxDistance(actor->x-target->x, actor->y-target->y);
 			if (target->player == NULL)
 			{
 				ismeleeattacker = (target->MissileState == NULL && dist < (target->meleerange + target->radius)*2);
@@ -899,7 +899,7 @@ void P_NewChaseDir(AActor * actor)
 			{
 				// melee range of player weapon is a parameter of the action function and cannot be checked here.
 				// Add a new weapon property?
-				ismeleeattacker = (target->player->ReadyWeapon->WeaponFlags & WIF_BOT_MELEE && dist < MELEERANGE*3);
+				ismeleeattacker = (target->player->ReadyWeapon->WeaponFlags & WIF_MELEEWEAPON && dist < MELEERANGE*3);
 			}
 			if (ismeleeattacker)
 			{
@@ -908,18 +908,14 @@ void P_NewChaseDir(AActor * actor)
 			}
 	    }
 	}
-#endif
-
 
 	P_DoNewChaseDir(actor, deltax, deltay);
 
-#ifdef MBF_STUFF
 	// If strafing, set movecount to strafecount so that old Doom
 	// logic still works the same, except in the strafing part
 
 	if (actor->strafecount)
 		actor->movecount = actor->strafecount;
-#endif
 
 }
 
@@ -1566,7 +1562,7 @@ bool P_LookForPlayers (AActor *actor, INTBOOL allaround, FLookExParams *params)
 		}
 #endif
 		// [SP] If you don't see any enemies in deathmatch, look for players (but only when friend to a specific player.)
-		if (actor->FriendPlayer == 0) return false;
+		if (actor->FriendPlayer == 0) return result;
 		if (result || !deathmatch) return true;
 
 
@@ -2156,7 +2152,11 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 	}
 
 	// turn towards movement direction if not there yet
-	if (actor->movedir < 8)
+	if (actor->strafecount)
+	{
+		A_FaceTarget(actor);
+	}
+	else if (actor->movedir < 8)
 	{
 		actor->angle &= (angle_t)(7<<29);
 		delta = actor->angle - (actor->movedir << 29);
@@ -2403,6 +2403,9 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 	//
 	// chase towards player
 	//
+
+	if (actor->strafecount)
+		actor->strafecount--;
 
 	// class bosses don't do this when strafing
 	if ((!fastchase || !actor->FastChaseStrafeCount) && !dontmove)

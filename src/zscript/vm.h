@@ -763,7 +763,7 @@ public:
 		RegA++;
 	}
 
-	void ParamPointer(void *ptr, VM_UBTYE atag)
+	void ParamPointer(void *ptr, VM_UBYTE atag)
 	{
 		Reg.a[RegA] = ptr;
 		Reg.atag[RegA] = atag;

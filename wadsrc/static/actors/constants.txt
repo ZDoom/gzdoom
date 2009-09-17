@@ -99,7 +99,3 @@ const float ATTN_NONE = 0;
 const float ATTN_NORM = 1;
 const float ATTN_IDLE = 1.001;
 const float ATTN_STATIC = 3;
-
-
-// This is only here to provide one global variable for testing.
-native int testglobalvar;

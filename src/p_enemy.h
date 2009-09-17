@@ -6,7 +6,7 @@
 struct sector_t;
 class AActor;
 class AInventory;
-struct PClass;
+class PClass;
 
 
 enum dirtype_t

@@ -43,6 +43,7 @@
 
 #include "dobject.h"
 #include "doomdef.h"
+#include "vm.h"
 
 const BYTE SF_FULLBRIGHT = 0x40;
 
@@ -60,7 +61,7 @@ struct FState
 	BYTE		Frame;
 	BYTE		DefineFlags;	// Unused byte so let's use it during state creation.
 	FState		*NextState;
-	actionf_p	ActionFunc;
+	VMFunction	*ActionFunc;
 	int			ParameterIndex;
 
 	inline int GetFrame() const
@@ -93,29 +94,20 @@ struct FState
 	}
 	void SetAction(PSymbolActionFunction *func, bool setdefaultparams = true)
 	{
+#if 0
 		if (func != NULL)
 		{
 			ActionFunc = func->Function;
 			if (setdefaultparams) ParameterIndex = func->defaultparameterindex+1;
 		}
 		else 
+#endif
 		{
 			ActionFunc = NULL;
 			if (setdefaultparams) ParameterIndex = 0;
 		}
 	}
-	inline bool CallAction(AActor *self, AActor *stateowner, StateCallData *statecall = NULL)
-	{
-		if (ActionFunc != NULL)
-		{
-			ActionFunc(self, stateowner, this, ParameterIndex-1, statecall);
-			return true;
-		}
-		else
-		{
-			return false;
-		}
-	}
+	bool CallAction(AActor *self, AActor *stateowner, StateCallData *statecall = NULL);
 	static const PClass *StaticFindStateOwner (const FState *state);
 	static const PClass *StaticFindStateOwner (const FState *state, const FActorInfo *info);
 };

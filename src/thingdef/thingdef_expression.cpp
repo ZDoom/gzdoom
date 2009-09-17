@@ -50,9 +50,6 @@
 #include "doomstat.h"
 #include "thingdef_exp.h"
 
-int testglobalvar = 1337;	// just for having one global variable to test with
-DEFINE_GLOBAL_VARIABLE(testglobalvar)
-
 // Accessible actor member variables
 DEFINE_MEMBER_VARIABLE(alpha, AActor)
 DEFINE_MEMBER_VARIABLE(angle, AActor)

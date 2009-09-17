@@ -101,7 +101,7 @@ struct PSymbolTable
 	PSymbolTable();
 	~PSymbolTable();
 
-	void MarkSymbols();
+	size_t MarkSymbols();
 
 	// Sets the table to use for searches if this one doesn't contain the
 	// requested symbol.
@@ -126,8 +126,11 @@ private:
 
 // Meta-info for every class derived from DObject ---------------------------
 
-struct PClass
+class PClass : public DObject
 {
+	DECLARE_CLASS(PClass, DObject);
+	HAS_OBJECT_POINTERS;
+public:
 	static void StaticInit ();
 	static void StaticShutdown ();
 	static void StaticFreeData (PClass *type);
@@ -149,6 +152,8 @@ struct PClass
 	void (*ConstructNative)(void *);
 
 	// The rest are all functions and static data ----------------
+	PClass();
+	~PClass();
 	void InsertIntoHash ();
 	DObject *CreateNew () const;
 	PClass *CreateDerivedClass (FName name, unsigned int size);
@@ -156,6 +161,7 @@ struct PClass
 	void BuildFlatPointers ();
 	void FreeStateList();
 	const PClass *NativeClass() const;
+	size_t PropagateMark();
 
 	// Returns true if this type is an ancestor of (or same as) the passed type.
 	bool IsAncestorOf (const PClass *ti) const

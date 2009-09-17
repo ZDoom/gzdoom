@@ -147,6 +147,7 @@ int Pause = DEFAULT_GCPAUSE;
 int StepMul = DEFAULT_GCMUL;
 int StepCount;
 size_t Dept;
+bool FinalGC;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -239,8 +240,8 @@ static DObject **SweepList(DObject **p, size_t count, size_t *finalize_count)
 				// be in a thinker list, then I need to add write barriers for every time a
 				// thinker pointer is changed. This seems easier and perfectly reasonable, since
 				// a live thinker that isn't on a thinker list isn't much of a thinker.
-				assert(!curr->IsKindOf(RUNTIME_CLASS(DThinker)) || (curr->ObjectFlags & OF_Sentinel));
-				assert(!curr->IsKindOf(RUNTIME_CLASS(DInterpolation)));
+				assert(FinalGC || !curr->IsKindOf(RUNTIME_CLASS(DThinker)) || (curr->ObjectFlags & OF_Sentinel));
+				assert(FinalGC || !curr->IsKindOf(RUNTIME_CLASS(DInterpolation)));
 				curr->Destroy();
 			}
 			curr->ObjectFlags |= OF_Cleanup;
@@ -327,14 +328,10 @@ static void MarkRoot()
 		SectorMarker->SecNum = 0;
 	}
 	Mark(SectorMarker);
-	// Mark symbol tables
+	// Mark classes
 	for (unsigned j = 0; j < PClass::m_Types.Size(); ++j)
 	{
-		PClass *cls = PClass::m_Types[j];
-		if (cls != NULL)
-		{
-			cls->Symbols.MarkSymbols();
-		}
+		Mark(PClass::m_Types[j]);
 	}
 	// Mark bot stuff.
 	Mark(bglobal.firstthing);

@@ -52,17 +52,17 @@
 
 void cht_DoCheat (player_t *player, int cheat)
 {
-	static const PClass *BeholdPowers[9] =
+	static const PClass *const *BeholdPowers[9] =
 	{
-		RUNTIME_CLASS(APowerInvulnerable),
-		RUNTIME_CLASS(APowerStrength),
-		RUNTIME_CLASS(APowerInvisibility),
-		RUNTIME_CLASS(APowerIronFeet),
+		&RUNTIME_CLASS(APowerInvulnerable),
+		&RUNTIME_CLASS(APowerStrength),
+		&RUNTIME_CLASS(APowerInvisibility),
+		&RUNTIME_CLASS(APowerIronFeet),
 		NULL, // MapRevealer
-		RUNTIME_CLASS(APowerLightAmp),
-		RUNTIME_CLASS(APowerShadow),
-		RUNTIME_CLASS(APowerMask),
-		RUNTIME_CLASS(APowerTargeter)
+		&RUNTIME_CLASS(APowerLightAmp),
+		&RUNTIME_CLASS(APowerShadow),
+		&RUNTIME_CLASS(APowerMask),
+		&RUNTIME_CLASS(APowerTargeter)
 	};
 	const PClass *type;
 	AInventory *item;
@@ -248,12 +248,12 @@ void cht_DoCheat (player_t *player, int cheat)
 		}
 		else if (player->mo != NULL && player->health >= 0)
 		{
-			item = player->mo->FindInventory (BeholdPowers[i]);
+			item = player->mo->FindInventory (*BeholdPowers[i]);
 			if (item == NULL)
 			{
 				if (i != 0)
 				{
-					player->mo->GiveInventoryType (BeholdPowers[i]);
+					player->mo->GiveInventoryType (*BeholdPowers[i]);
 					if (cheat == CHT_BEHOLDS)
 					{
 						P_GiveBody (player->mo, -100);

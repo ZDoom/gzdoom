@@ -48,10 +48,9 @@
 #include "a_sharedglobal.h"
 #include "dsectoreffect.h"
 
-PClass DObject::_StaticType;
 ClassReg DObject::RegistrationInfo =
 {
-	&DObject::_StaticType,			// MyClass
+	NULL,							// MyClass
 	"DObject",						// Name
 	NULL,							// ParentType
 	sizeof(DObject),				// SizeOf
@@ -458,9 +457,12 @@ size_t DObject::StaticPointerSubstitution (DObject *old, DObject *notOld)
 	int i;
 
 	// Go through all objects.
+	i = 0;DObject *last=0;
 	for (probe = GC::Root; probe != NULL; probe = probe->ObjNext)
 	{
+		i++;
 		changed += probe->PointerSubstitution(old, notOld);
+		last = probe;
 	}
 
 	// Go through the bodyque.

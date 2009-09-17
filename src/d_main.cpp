@@ -1691,12 +1691,10 @@ void D_DoomMain (void)
 	execFiles = new DArgs;
 	GameConfig->AddAutoexec (execFiles, GameNames[gameinfo.gametype]);
 	D_MultiExec (execFiles, true);
-	execFiles->Destroy();
 
 	// Run .cfg files at the start of the command line.
 	execFiles = Args->GatherFiles (NULL, ".cfg", false);
 	D_MultiExec (execFiles, true);
-	execFiles->Destroy();
 
 	C_ExecCmdLineParams ();		// [RH] do all +set commands on the command line
 
@@ -1730,10 +1728,6 @@ void D_DoomMain (void)
 			D_AddWildFile (files3->GetArg (i));
 		}
 	}
-	files->Destroy();
-	files1->Destroy();
-	files2->Destroy();
-	files3->Destroy();
 
 	Printf ("W_Init: Init WADfiles.\n");
 	Wads.InitMultipleFiles (&wadfiles);

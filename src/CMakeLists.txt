@@ -771,6 +771,9 @@ add_executable( zdoom WIN32
 	timidity/resample.cpp
 	timidity/timidity.cpp
 	xlat/parse_xlat.cpp
+	zscript/vmdisasm.cpp
+	zscript/vmexec.cpp
+	zscript/vmframe.cpp
 	autozend.cpp )
 
 set_source_files_properties( xlat/parse_xlat.cpp PROPERTIES OBJECT_DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.c" )
@@ -790,6 +793,7 @@ include_directories( .
 	thingdef
 	timidity
 	xlat
+	zscript
 	../game-music-emu/gme
 	../gdtoa
 	../dumb/include

@@ -733,13 +733,13 @@ static void ParseActorProperty(FScanner &sc, Baggage &bag)
 
 	if (prop != NULL)
 	{
-		if (bag.Info->Class->IsDescendantOf(prop->cls))
+		if (bag.Info->Class->IsDescendantOf(*prop->cls))
 		{
 			ParsePropertyParams(sc, prop, (AActor *)bag.Info->Class->Defaults, bag);
 		}
 		else
 		{
-			sc.ScriptMessage("\"%s\" requires an actor of type \"%s\"\n", propname.GetChars(), prop->cls->TypeName.GetChars());
+			sc.ScriptMessage("\"%s\" requires an actor of type \"%s\"\n", propname.GetChars(), (*prop->cls)->TypeName.GetChars());
 			FScriptPosition::ErrorCounter++;
 		}
 	}

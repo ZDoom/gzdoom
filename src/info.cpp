@@ -39,9 +39,8 @@
 #include "m_fixed.h"
 #include "c_dispatch.h"
 #include "d_net.h"
-
 #include "gi.h"
-
+#include "vm.h"
 #include "actor.h"
 #include "r_state.h"
 #include "i_system.h"
@@ -52,6 +51,21 @@
 
 extern void LoadActors ();
 
+bool FState::CallAction(AActor *self, AActor *stateowner, StateCallData *statecall)
+{
+	if (ActionFunc != NULL)
+	{
+		//ActionFunc(self, stateowner, this, ParameterIndex-1, statecall);
+		VMFrameStack stack;
+		VMValue params[5] = { self, stateowner, this, ParameterIndex - 1, VMValue(statecall, ATAG_STATE) };
+		stack.Call(ActionFunc, params, countof(params), NULL, 0, NULL);
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
 
 //==========================================================================
 //

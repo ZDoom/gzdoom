@@ -243,10 +243,9 @@ enum EDefinitionType
 };
 
 #if defined(_MSC_VER)
-#pragma data_seg(".areg$u")
-#pragma data_seg(".greg$u")
-#pragma data_seg(".mreg$u")
-#pragma data_seg()
+#pragma section(".areg$u",read)
+#pragma section(".greg$u",read)
+#pragma section(".mreg$u",read)
 
 #define MSVC_ASEG __declspec(allocate(".areg$u"))
 #define GCC_ASEG
@@ -283,7 +282,7 @@ struct FPropertyInfo
 {
 	const char *name;
 	const char *params;
-	const PClass *cls;
+	const PClass * const *cls;
 	PropHandler Handler;
 	int category;
 };
@@ -292,7 +291,7 @@ struct FVariableInfo
 {
 	const char *name;
 	intptr_t address;
-	const PClass *owner;
+	const PClass * const *owner;
 };
 
 
@@ -304,14 +303,14 @@ int MatchString (const char *in, const char **strings);
 #define DEFINE_PROPERTY_BASE(name, paramlist, clas, cat) \
 	static void Handler_##name##_##paramlist##_##clas(A##clas *defaults, FActorInfo *info, Baggage &bag, FPropParam *params); \
 	static FPropertyInfo Prop_##name##_##paramlist##_##clas = \
-		{ #name, #paramlist, RUNTIME_CLASS(A##clas), (PropHandler)Handler_##name##_##paramlist##_##clas, cat }; \
+		{ #name, #paramlist, &RUNTIME_CLASS(A##clas), (PropHandler)Handler_##name##_##paramlist##_##clas, cat }; \
 	MSVC_PSEG FPropertyInfo *infoptr_##name##_##paramlist##_##clas GCC_PSEG = &Prop_##name##_##paramlist##_##clas; \
 	static void Handler_##name##_##paramlist##_##clas(A##clas *defaults, FActorInfo *info, Baggage &bag, FPropParam *params)
 
 #define DEFINE_PREFIXED_PROPERTY_BASE(prefix, name, paramlist, clas, cat) \
 	static void Handler_##name##_##paramlist##_##clas(A##clas *defaults, FActorInfo *info, Baggage &bag, FPropParam *params); \
 	static FPropertyInfo Prop_##name##_##paramlist##_##clas = \
-{ #prefix"."#name, #paramlist, RUNTIME_CLASS(A##clas), (PropHandler)Handler_##name##_##paramlist##_##clas, cat }; \
+{ #prefix"."#name, #paramlist, &RUNTIME_CLASS(A##clas), (PropHandler)Handler_##name##_##paramlist##_##clas, cat }; \
 	MSVC_PSEG FPropertyInfo *infoptr_##name##_##paramlist##_##clas GCC_PSEG = &Prop_##name##_##paramlist##_##clas; \
 	static void Handler_##name##_##paramlist##_##clas(A##clas *defaults, FActorInfo *info, Baggage &bag, FPropParam *params)
 
@@ -340,16 +339,12 @@ int MatchString (const char *in, const char **strings);
 	int var = params[(no)+1].i== 0? params[(no)+2].i : V_GetColor(NULL, params[(no)+2].s);
 
 
-#define DEFINE_GLOBAL_VARIABLE(name) \
-	static FVariableInfo GlobalDef__##name = { #name, intptr_t(&name), NULL }; \
-	MSVC_MSEG FVariableInfo *infoptr_GlobalDef__##name GCC_MSEG = &GlobalDef__##name;
-
 #define DEFINE_MEMBER_VARIABLE(name, cls) \
-	static FVariableInfo GlobalDef__##name = { #name, myoffsetof(cls, name), RUNTIME_CLASS(cls) }; \
+	static FVariableInfo GlobalDef__##name = { #name, myoffsetof(cls, name), &RUNTIME_CLASS(cls) }; \
 	MSVC_MSEG FVariableInfo *infoptr_GlobalDef__##name GCC_MSEG = &GlobalDef__##name;
 
 #define DEFINE_MEMBER_VARIABLE_ALIAS(name, alias, cls) \
-	static FVariableInfo GlobalDef__##name = { #name, myoffsetof(cls, alias), RUNTIME_CLASS(cls) }; \
+	static FVariableInfo GlobalDef__##name = { #name, myoffsetof(cls, alias), &RUNTIME_CLASS(cls) }; \
 	MSVC_MSEG FVariableInfo *infoptr_GlobalDef__##name GCC_MSEG = &GlobalDef__##name;
 
 	

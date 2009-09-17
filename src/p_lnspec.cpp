@@ -2504,19 +2504,19 @@ FUNC(LS_SetPlayerProperty)
 	// Add or remove a power
 	if (arg2 >= PROP_INVULNERABILITY && arg2 <= PROP_SPEED)
 	{
-		static const PClass *powers[11] =
+		static const PClass * const *powers[11] =
 		{
-			RUNTIME_CLASS(APowerInvulnerable),
-			RUNTIME_CLASS(APowerStrength),
-			RUNTIME_CLASS(APowerInvisibility),
-			RUNTIME_CLASS(APowerIronFeet),
+			&RUNTIME_CLASS(APowerInvulnerable),
+			&RUNTIME_CLASS(APowerStrength),
+			&RUNTIME_CLASS(APowerInvisibility),
+			&RUNTIME_CLASS(APowerIronFeet),
 			NULL, // MapRevealer
-			RUNTIME_CLASS(APowerLightAmp),
-			RUNTIME_CLASS(APowerWeaponLevel2),
-			RUNTIME_CLASS(APowerFlight),
+			&RUNTIME_CLASS(APowerLightAmp),
+			&RUNTIME_CLASS(APowerWeaponLevel2),
+			&RUNTIME_CLASS(APowerFlight),
 			NULL,
 			NULL,
-			RUNTIME_CLASS(APowerSpeed)
+			&RUNTIME_CLASS(APowerSpeed)
 		};
 		int power = arg2 - PROP_INVULNERABILITY;
 
@@ -2531,7 +2531,7 @@ FUNC(LS_SetPlayerProperty)
 			{ // Give power to activator
 				if (power != 4)
 				{
-					APowerup *item = static_cast<APowerup*>(it->GiveInventoryType (powers[power]));
+					APowerup *item = static_cast<APowerup*>(it->GiveInventoryType (*powers[power]));
 					if (item != NULL && power == 0) item->BlendColor = INVERSECOLOR;
 				}
 				else if (it->player - players == consoleplayer)
@@ -2543,7 +2543,7 @@ FUNC(LS_SetPlayerProperty)
 			{ // Take power from activator
 				if (power != 4)
 				{
-					AInventory *item = it->FindInventory (powers[power]);
+					AInventory *item = it->FindInventory (*powers[power]);
 					if (item != NULL)
 					{
 						item->Destroy ();
@@ -2568,7 +2568,7 @@ FUNC(LS_SetPlayerProperty)
 				{ // Give power
 					if (power != 4)
 					{
-						players[i].mo->GiveInventoryType (powers[power]);
+						players[i].mo->GiveInventoryType (*powers[power]);
 					}
 					else if (i == consoleplayer)
 					{
@@ -2579,7 +2579,7 @@ FUNC(LS_SetPlayerProperty)
 				{ // Take power
 					if (power != 4)
 					{
-						AInventory *item = players[i].mo->FindInventory (powers[power]);
+						AInventory *item = players[i].mo->FindInventory (*powers[power]);
 						if (item != NULL)
 						{
 							item->Destroy ();

@@ -7,7 +7,7 @@ class FBitmap;
 struct FRemapTable;
 struct FCopyInfo;
 class FScanner;
-struct PClass;
+class PClass;
 class FArchive;
 
 // Texture IDs

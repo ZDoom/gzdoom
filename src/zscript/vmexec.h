@@ -540,7 +540,7 @@ begin:
 		}
 		if (B & REGT_FINAL)
 		{
-			return MIN(numret, a + 1);
+			return a < numret ? a + 1 : numret;
 		}
 		NEXTOP;
 	OP(RESULT):

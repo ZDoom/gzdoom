@@ -37,7 +37,7 @@
 #include <stdlib.h>
 #include "doomtype.h"
 
-struct PClass;
+class PClass;
 
 class FArchive;
 
@@ -130,29 +130,28 @@ private:
 	void CopyMeta (const FMetaTable *other);
 };
 
-#define RUNTIME_TYPE(object)	(object->GetClass())	// Passed an object, returns the type of that object
-#define RUNTIME_CLASS(cls)		(&cls::_StaticType)		// Passed a class name, returns a PClass representing that class
-#define NATIVE_TYPE(object)		(object->StaticType())	// Passed an object, returns the type of the C++ class representing the object
+#define RUNTIME_TYPE(object)	(object->GetClass())			// Passed an object, returns the type of that object
+#define RUNTIME_CLASS(cls)		(cls::RegistrationInfo.MyClass)	// Passed a native class name, returns a PClass representing that class
+#define NATIVE_TYPE(object)		(object->StaticType())			// Passed an object, returns the type of the C++ class representing the object
 
 struct ClassReg
 {
 	PClass *MyClass;
 	const char *Name;
-	PClass *ParentType;
+	ClassReg *ParentType;
 	unsigned int SizeOf;
 	const size_t *Pointers;
 	void (*ConstructNative)(void *);
 
-	void RegisterClass() const;
+	PClass *RegisterClass();
 };
 
 enum EInPlace { EC_InPlace };
 
 #define DECLARE_ABSTRACT_CLASS(cls,parent) \
 public: \
-	static PClass _StaticType; \
-	virtual PClass *StaticType() const { return &_StaticType; } \
-	static ClassReg RegistrationInfo, *RegistrationInfoPtr; \
+	virtual PClass *StaticType() const { return RegistrationInfo.MyClass; } \
+	static ClassReg RegistrationInfo, * const RegistrationInfoPtr; \
 private: \
 	typedef parent Super; \
 	typedef cls ThisClass;
@@ -170,19 +169,17 @@ private: \
 #define END_POINTERS			~(size_t)0 };
 
 #if defined(_MSC_VER)
-#	pragma data_seg(".creg$u")
-#	pragma data_seg()
-#	define _DECLARE_TI(cls) __declspec(allocate(".creg$u")) ClassReg *cls::RegistrationInfoPtr = &cls::RegistrationInfo;
+#	pragma section(".creg$u",read)
+#	define _DECLARE_TI(cls) __declspec(allocate(".creg$u")) ClassReg * const cls::RegistrationInfoPtr = &cls::RegistrationInfo;
 #else
-#	define _DECLARE_TI(cls) ClassReg *cls::RegistrationInfoPtr __attribute__((section(SECTION_CREG))) = &cls::RegistrationInfo;
+#	define _DECLARE_TI(cls) ClassReg * const cls::RegistrationInfoPtr __attribute__((section(SECTION_CREG))) = &cls::RegistrationInfo;
 #endif
 
 #define _IMP_PCLASS(cls,ptrs,create) \
-	PClass cls::_StaticType; \
 	ClassReg cls::RegistrationInfo = {\
-		RUNTIME_CLASS(cls), \
+		NULL, \
 		#cls, \
-		RUNTIME_CLASS(cls::Super), \
+		&cls::Super::RegistrationInfo, \
 		sizeof(cls), \
 		ptrs, \
 		create }; \
@@ -262,6 +259,9 @@ namespace GC
 
 	// Size of GC steps.
 	extern int StepMul;
+
+	// Is this the final collection just before exit?
+	extern bool FinalGC;
 
 	// Current white value for known-dead objects.
 	static inline uint32 OtherWhite()
@@ -433,9 +433,8 @@ template<class T> inline void GC::Mark(TObjPtr<T> &obj)
 class DObject
 {
 public:
-	static PClass _StaticType;
-	virtual PClass *StaticType() const { return &_StaticType; }
-	static ClassReg RegistrationInfo, *RegistrationInfoPtr;
+	virtual PClass *StaticType() const { return RegistrationInfo.MyClass; }
+	static ClassReg RegistrationInfo, * const RegistrationInfoPtr;
 	static void InPlaceConstructor (void *mem);
 private:
 	typedef DObject ThisClass;

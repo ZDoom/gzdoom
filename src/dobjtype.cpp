@@ -38,6 +38,10 @@
 #include "templates.h"
 #include "autosegs.h"
 
+IMPLEMENT_POINTY_CLASS(PClass)
+ DECLARE_POINTER(ParentClass)
+END_POINTERS
+
 TArray<PClass *> PClass::m_RuntimeActors;
 TArray<PClass *> PClass::m_Types;
 PClass *PClass::TypeHash[PClass::HASH_SIZE];
@@ -48,34 +52,28 @@ static const size_t TheEnd = ~(size_t)0;
 
 static int STACK_ARGS cregcmp (const void *a, const void *b)
 {
-	// VC++ introduces NULLs in the sequence. GCC seems to work as expected and not do it.
-	const ClassReg *class1 = *(const ClassReg **)a;
-	const ClassReg *class2 = *(const ClassReg **)b;
-	if (class1 == NULL) return 1;
-	if (class2 == NULL) return -1;
-	return strcmp (class1->Name, class2->Name);
+	const PClass *class1 = *(const PClass **)a;
+	const PClass *class2 = *(const PClass **)b;
+	return strcmp(class1->TypeName, class2->TypeName);
 }
 
 void PClass::StaticInit ()
 {
 	atterm (StaticShutdown);
 
-	// Sort classes by name to remove dependance on how the compiler ordered them.
-	REGINFO *head = &CRegHead;
-	REGINFO *tail = &CRegTail;
-
-	// MinGW's linker is linking the object files backwards for me now...
-	if (head > tail)
-	{
-		swap (head, tail);
-	}
-	qsort (head + 1, tail - head - 1, sizeof(REGINFO), cregcmp);
-
 	FAutoSegIterator probe(CRegHead, CRegTail);
 
 	while (*++probe != NULL)
 	{
 		((ClassReg *)*probe)->RegisterClass ();
+	}
+
+	// Keep actors in consistant order. I did this before, though I'm not
+	// sure if this is really necessary to maintain any sort of sync.
+	qsort(&m_Types[0], m_Types.Size(), sizeof(m_Types[0]), cregcmp);
+	for (unsigned int i = 0; i < m_Types.Size(); ++i)
+	{
+		m_Types[i]->ClassIndex = i;
 	}
 }
 
@@ -114,6 +112,24 @@ void PClass::StaticShutdown ()
 	bShutdown = true;
 }
 
+PClass::PClass()
+{
+	Size = sizeof(DObject);
+	ParentClass = NULL;
+	Pointers = NULL;
+	FlatPointers = NULL;
+	ActorInfo = NULL;
+	HashNext = NULL;
+	Defaults = NULL;
+	bRuntimeClass = false;
+	ClassIndex = ~0;
+}
+
+PClass::~PClass()
+{
+	Symbols.ReleaseSymbols();
+}
+
 void PClass::StaticFreeData (PClass *type)
 {
 	if (type->Defaults != NULL)
@@ -142,7 +158,7 @@ void PClass::StaticFreeData (PClass *type)
 		}
 		delete type->ActorInfo;
 		type->ActorInfo = NULL;
-	}
+	}/*
 	if (type->bRuntimeClass)
 	{
 		delete type;
@@ -150,22 +166,32 @@ void PClass::StaticFreeData (PClass *type)
 	else
 	{
 		type->Symbols.ReleaseSymbols();
-	}
+	}*/
 }
 
-void ClassReg::RegisterClass () const
+PClass *ClassReg::RegisterClass()
 {
-	assert (MyClass != NULL);
+	// MyClass may have already been created by a previous recursive call.
+	// Or this may be a recursive call for a previously created class.
+	if (MyClass != NULL)
+	{
+		return MyClass;
+	}
 
 	// Add type to list
-	MyClass->ClassIndex = PClass::m_Types.Push (MyClass);
-
-	MyClass->TypeName = FName(Name+1);
-	MyClass->ParentClass = ParentType;
-	MyClass->Size = SizeOf;
-	MyClass->Pointers = Pointers;
-	MyClass->ConstructNative = ConstructNative;
-	MyClass->InsertIntoHash ();
+	PClass *cls = new PClass;
+	MyClass = cls;
+	PClass::m_Types.Push(cls);
+	cls->TypeName = FName(Name+1);
+	if (ParentType != NULL)
+	{
+		cls->ParentClass = ParentType->RegisterClass();
+	}
+	cls->Size = SizeOf;
+	cls->Pointers = Pointers;
+	cls->ConstructNative = ConstructNative;
+	cls->InsertIntoHash();
+	return cls;
 }
 
 void PClass::InsertIntoHash ()
@@ -465,6 +491,28 @@ const PClass *PClass::NativeClass() const
 	return cls;
 }
 
+size_t PClass::PropagateMark()
+{
+	size_t marked;
+
+	// Mark symbols
+	marked = Symbols.MarkSymbols();
+
+	// Mark state functions
+	if (ActorInfo != NULL)
+	{
+		for (int i = 0; i < ActorInfo->NumOwnedStates; ++i)
+		{
+			if (ActorInfo->OwnedStates[i].ActionFunc != NULL)
+			{
+				GC::Mark(ActorInfo->OwnedStates[i].ActionFunc);
+			}
+		}
+//		marked += ActorInfo->NumOwnedStates * sizeof(FState);
+	}
+	return marked + Super::PropagateMark();
+}
+
 // Symbol tables ------------------------------------------------------------
 
 IMPLEMENT_ABSTRACT_CLASS(PSymbol);
@@ -486,12 +534,13 @@ PSymbolTable::~PSymbolTable ()
 	ReleaseSymbols();
 }
 
-void PSymbolTable::MarkSymbols()
+size_t PSymbolTable::MarkSymbols()
 {
 	for (unsigned int i = 0; i < Symbols.Size(); ++i)
 	{
 		GC::Mark(Symbols[i]);
 	}
+	return Symbols.Size() * sizeof(Symbols[0]);
 }
 
 void PSymbolTable::ReleaseSymbols()

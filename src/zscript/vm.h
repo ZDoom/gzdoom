@@ -409,13 +409,12 @@ struct VMValue
 		Type = REGT_POINTER;
 		return *this;
 	}
-	VMValue &operator=(void *v)
+	void SetPointer(void *v, VM_UBYTE atag=ATAG_GENERIC)
 	{
 		Kill();
 		a = v;
-		atag = ATAG_GENERIC;
-		Type = REGT_POINTER;
-		return *this;
+		atag = atag;
+		Type = atag;
 	}
 	void SetNil()
 	{

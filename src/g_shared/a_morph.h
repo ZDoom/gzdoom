@@ -25,7 +25,7 @@ enum
 	MORPH_UNDOBYDEATHSAVES	= 0x00000800,	// Actor (if unmorphed when killed) regains their health and doesn't die
 };
 
-struct PClass;
+class PClass;
 class AActor;
 class player_t;
 class AMorphedMonster;

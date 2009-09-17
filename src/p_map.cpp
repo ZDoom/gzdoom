@@ -4906,7 +4906,7 @@ msecnode_t *P_AddSecnode (sector_t *s, AActor *thing, msecnode_t *nextnode)
 
 	if (s == 0)
 	{
-		I_FatalError ("AddSecnode of 0 for %s\n", thing->_StaticType.TypeName.GetChars());
+		I_FatalError ("AddSecnode of 0 for %s\n", thing->GetClass()->TypeName.GetChars());
 	}
 
 	node = nextnode;

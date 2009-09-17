@@ -36,7 +36,7 @@
 #define AUTOSEGS_H
 
 #define REGMARKER(x) (x)
-typedef void *REGINFO;
+typedef void * const REGINFO;
 
 // List of Action functons
 extern REGINFO ARegHead;

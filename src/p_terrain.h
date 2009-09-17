@@ -37,7 +37,7 @@
 #include "s_sound.h"
 #include "textures/textures.h"
 
-struct PClass;
+class PClass;
 
 // This is just a wrapper class so that I don't have to expose FTextureID's implementation
 // to anything that doesn't really need it.

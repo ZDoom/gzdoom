@@ -311,12 +311,12 @@ static FFlagDef PlayerPawnFlags[] =
 	DEFINE_FLAG(PPF, NOTHRUSTWHENINVUL, APlayerPawn, PlayerFlags),
 };
 
-static const struct FFlagList { const PClass *Type; FFlagDef *Defs; int NumDefs; } FlagLists[] =
+static const struct FFlagList { const PClass * const *Type; FFlagDef *Defs; int NumDefs; } FlagLists[] =
 {
-	{ RUNTIME_CLASS(AActor), 		ActorFlags,		countof(ActorFlags) },
-	{ RUNTIME_CLASS(AInventory), 	InventoryFlags,	countof(InventoryFlags) },
-	{ RUNTIME_CLASS(AWeapon), 		WeaponFlags,	countof(WeaponFlags) },
-	{ RUNTIME_CLASS(APlayerPawn),	PlayerPawnFlags,countof(PlayerPawnFlags) },
+	{ &RUNTIME_CLASS(AActor), 		ActorFlags,		countof(ActorFlags) },
+	{ &RUNTIME_CLASS(AInventory), 	InventoryFlags,	countof(InventoryFlags) },
+	{ &RUNTIME_CLASS(AWeapon), 		WeaponFlags,	countof(WeaponFlags) },
+	{ &RUNTIME_CLASS(APlayerPawn),	PlayerPawnFlags,countof(PlayerPawnFlags) },
 };
 #define NUM_FLAG_LISTS (countof(FlagLists))
 
@@ -364,7 +364,7 @@ FFlagDef *FindFlag (const PClass *type, const char *part1, const char *part2)
 	{ // Search all lists
 		for (i = 0; i < NUM_FLAG_LISTS; ++i)
 		{
-			if (type->IsDescendantOf (FlagLists[i].Type))
+			if (type->IsDescendantOf (*FlagLists[i].Type))
 			{
 				def = FindFlag (FlagLists[i].Defs, FlagLists[i].NumDefs, part1);
 				if (def != NULL)
@@ -378,9 +378,9 @@ FFlagDef *FindFlag (const PClass *type, const char *part1, const char *part2)
 	{ // Search just the named list
 		for (i = 0; i < NUM_FLAG_LISTS; ++i)
 		{
-			if (stricmp (FlagLists[i].Type->TypeName.GetChars(), part1) == 0)
+			if (stricmp ((*FlagLists[i].Type)->TypeName.GetChars(), part1) == 0)
 			{
-				if (type->IsDescendantOf (FlagLists[i].Type))
+				if (type->IsDescendantOf (*FlagLists[i].Type))
 				{
 					return FindFlag (FlagLists[i].Defs, FlagLists[i].NumDefs, part2);
 				}
@@ -403,7 +403,7 @@ FFlagDef *FindFlag (const PClass *type, const char *part1, const char *part2)
 
 const char *GetFlagName(int flagnum, int flagoffset)
 {
-	for(int i=0; i<countof(ActorFlags); i++)
+	for(size_t i = 0; i < countof(ActorFlags); i++)
 	{
 		if (ActorFlags[i].flagbit == flagnum && ActorFlags[i].structoffset == flagoffset)
 		{
@@ -489,8 +489,8 @@ FVariableInfo *FindVariable(const char * string, const PClass *cls)
 		int mid = (min + max) / 2;
 		int lexval;
 		
-		if (cls < variables[mid]->owner) lexval = -1;
-		else if (cls > variables[mid]->owner) lexval = 1;
+		if (cls < *variables[mid]->owner) lexval = -1;
+		else if (cls > *variables[mid]->owner) lexval = 1;
 		else lexval = stricmp (string, variables[mid]->name);
 
 		if (lexval == 0)

@@ -1332,7 +1332,7 @@ static void P_SpawnScrollers(void)
 		if (special != 0)
 		{
 			int max = LineSpecialsInfo[special] != NULL ? LineSpecialsInfo[special]->map_args : countof(l->args);
-			for (int arg = max; arg < countof(l->args); ++arg)
+			for (int arg = max; arg < (int)countof(l->args); ++arg)
 			{
 				if (l->args[arg] != 0)
 				{

@@ -300,7 +300,8 @@ bool P_AddSectorLinks(sector_t *control, int tag, INTBOOL ceiling, int movetype)
 	int param = movetype;
 
 	// can't be done if the control sector is moving.
-	if ((ceiling && control->ceilingdata) || (!ceiling && control->floordata)) return false;
+	if ((ceiling && control->PlaneMoving(sector_t::ceiling)) || 
+		(!ceiling && control->PlaneMoving(sector_t::floor))) return false;
 
 	// Make sure we have only valid combinations
 	movetype &= LINK_FLAGMASK;

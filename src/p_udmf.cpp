@@ -1125,13 +1125,13 @@ struct UDMFParser
 					continue;
 
 				case NAME_Lightfloorabsolute:
-					if (CheckBool(key)) sec->ChangeFlags(sector_t::floor, 0, SECF_ABSLIGHTING);
-					else sec->ChangeFlags(sector_t::floor, SECF_ABSLIGHTING, 0);
+					if (CheckBool(key)) sec->ChangeFlags(sector_t::floor, 0, PLANEF_ABSLIGHTING);
+					else sec->ChangeFlags(sector_t::floor, PLANEF_ABSLIGHTING, 0);
 					continue;
 
 				case NAME_Lightceilingabsolute:
-					if (CheckBool(key)) sec->ChangeFlags(sector_t::ceiling, 0, SECF_ABSLIGHTING);
-					else sec->ChangeFlags(sector_t::ceiling, SECF_ABSLIGHTING, 0);
+					if (CheckBool(key)) sec->ChangeFlags(sector_t::ceiling, 0, PLANEF_ABSLIGHTING);
+					else sec->ChangeFlags(sector_t::ceiling, PLANEF_ABSLIGHTING, 0);
 					continue;
 
 				case NAME_Gravity:

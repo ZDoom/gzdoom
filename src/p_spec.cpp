@@ -692,12 +692,12 @@ DLightTransfer::DLightTransfer (sector_t *srcSec, int target, bool copyFloor)
 	if (copyFloor)
 	{
 		for (secnum = -1; (secnum = P_FindSectorFromTag (target, secnum)) >= 0; )
-			sectors[secnum].ChangeFlags(sector_t::floor, 0, SECF_ABSLIGHTING);
+			sectors[secnum].ChangeFlags(sector_t::floor, 0, PLANEF_ABSLIGHTING);
 	}
 	else
 	{
 		for (secnum = -1; (secnum = P_FindSectorFromTag (target, secnum)) >= 0; )
-			sectors[secnum].ChangeFlags(sector_t::ceiling, 0, SECF_ABSLIGHTING);
+			sectors[secnum].ChangeFlags(sector_t::ceiling, 0, PLANEF_ABSLIGHTING);
 	}
 	ChangeStatNum (STAT_LIGHTTRANSFER);
 }

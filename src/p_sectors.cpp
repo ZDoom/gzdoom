@@ -761,3 +761,12 @@ void sector_t::ClosestPoint(fixed_t fx, fixed_t fy, fixed_t &ox, fixed_t &oy) co
 	ox = fixed_t(bestx);
 	oy = fixed_t(besty);
 }
+
+
+bool sector_t::PlaneMoving(int pos)
+{
+	if (pos == floor)
+		return (floordata != NULL || (planes[floor].Flags & PLANEF_BLOCKED));
+	else
+		return (ceilingdata != NULL || (planes[ceiling].Flags & PLANEF_BLOCKED));
+}

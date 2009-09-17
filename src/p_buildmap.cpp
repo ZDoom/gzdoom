@@ -381,7 +381,7 @@ static void LoadSectors (sectortype *bsec)
 		sec->SetXOffset(sector_t::floor, (bsec->floorxpanning << FRACBITS) + (32 << FRACBITS));
 		sec->SetYOffset(sector_t::floor, bsec->floorypanning << FRACBITS);
 		sec->SetPlaneLight(sector_t::floor, SHADE2LIGHT (bsec->floorshade));
-		sec->ChangeFlags(sector_t::floor, 0, SECF_ABSLIGHTING);
+		sec->ChangeFlags(sector_t::floor, 0, PLANEF_ABSLIGHTING);
 
 		sec->SetPlaneTexZ(sector_t::ceiling, -(LittleLong(bsec->ceilingz) << 8));
 		sec->ceilingplane.d = sec->GetPlaneTexZ(sector_t::ceiling);
@@ -399,7 +399,7 @@ static void LoadSectors (sectortype *bsec)
 		sec->SetXOffset(sector_t::ceiling, (bsec->ceilingxpanning << FRACBITS) + (32 << FRACBITS));
 		sec->SetYOffset(sector_t::ceiling, bsec->ceilingypanning << FRACBITS);
 		sec->SetPlaneLight(sector_t::ceiling, SHADE2LIGHT (bsec->ceilingshade));
-		sec->ChangeFlags(sector_t::ceiling, 0, SECF_ABSLIGHTING);
+		sec->ChangeFlags(sector_t::ceiling, 0, PLANEF_ABSLIGHTING);
 
 		sec->lightlevel = (sec->GetPlaneLight(sector_t::floor) + sec->GetPlaneLight(sector_t::ceiling)) / 2;
 

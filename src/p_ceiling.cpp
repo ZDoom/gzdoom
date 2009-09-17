@@ -232,7 +232,7 @@ bool EV_DoCeiling (DCeiling::ECeiling type, line_t *line,
 		sec = &sectors[secnum];
 manual_ceiling:
 		// if ceiling already moving, don't start a second function on it
-		if (sec->ceilingdata)
+		if (sec->PlaneMoving(sector_t::ceiling))
 		{
 			if (!manual)
 				continue;

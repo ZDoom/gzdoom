@@ -270,7 +270,7 @@ void R_ClearClipSegs (short left, short right)
 
 int GetFloorLight (const sector_t *sec)
 {
-	if (sec->GetFlags(sector_t::floor) & SECF_ABSLIGHTING)
+	if (sec->GetFlags(sector_t::floor) & PLANEF_ABSLIGHTING)
 	{
 		return sec->GetPlaneLight(sector_t::floor);
 	}
@@ -282,7 +282,7 @@ int GetFloorLight (const sector_t *sec)
 
 int GetCeilingLight (const sector_t *sec)
 {
-	if (sec->GetFlags(sector_t::ceiling) & SECF_ABSLIGHTING)
+	if (sec->GetFlags(sector_t::ceiling) & PLANEF_ABSLIGHTING)
 	{
 		return sec->GetPlaneLight(sector_t::ceiling);
 	}

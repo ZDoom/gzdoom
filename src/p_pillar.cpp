@@ -205,7 +205,7 @@ bool EV_DoPillar (DPillar::EPillar type, int tag, fixed_t speed, fixed_t height,
 	{
 		sector_t *sec = &sectors[secnum];
 
-		if (sec->floordata || sec->ceilingdata)
+		if (sec->PlaneMoving(sector_t::floor) || sec->PlaneMoving(sector_t::ceiling))
 			continue;
 
 		fixed_t flor, ceil;

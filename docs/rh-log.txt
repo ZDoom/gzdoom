@@ -1,3 +1,8 @@
+September 17, 2009  (Changes by Graf Zahl)
+- Renamed plane flags from SECF_* to PLANEF_*.
+- Changed Heretic's plat raise type to use a flag to block further sector movement
+  instead of keeping the dead thinker around to block the sector.
+
 September 16, 2009  (Changes by Graf Zahl)
 - Fixed: A_LookEx did not work for monsters having the MF_NOSECTOR flag.
 - Fixed: The deprecated flag handler for the old bounce flags needs to clear
@@ -16897,7 +16902,7 @@ November 14, 2000
   into c_cvars.cpp. Virtual inline functions are not inlined and cause the
   function to be generated for every source file the class is used in.
 - Fixed bug with Transfer_CeilingLight special. I was or'ing CeilingLight
-  with SECF_ABSLIGHTING instead of CeilingFlags.
+  with PLANEF_ABSLIGHTING instead of CeilingFlags.
 
 November 11, 2000
 - Slopes don't work in mirrors. :-(

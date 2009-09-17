@@ -5476,10 +5476,7 @@ void PrintMiscActorInfo(AActor * query)
 		static const char * renderstyles[]= {"None", "Normal", "Fuzzy", "SoulTrans",
 			"OptFuzzy", "Stencil", "Translucent", "Add", "Shaded", "TranslucentStencil"};
 
-		/*
-		Printf("%s %x has the following flags:\n\tflags1: %x", 
-			query->GetNameTag().GetChars(), query, query->flags);
-		*/
+		Printf("%s has the following flags:\n\tflags: %x", query->GetTag(), query->flags);
 		for (flagi = 0; flagi < 31; flagi++)
 			if (query->flags & 1<<flagi) Printf(" %s", FLAG_NAME(1<<flagi, flags));
 		Printf("\n\tflags2: %x", query->flags2);
@@ -5497,23 +5494,20 @@ void PrintMiscActorInfo(AActor * query)
 		Printf("\n\tflags6: %x", query->flags6);
 		for (flagi = 0; flagi < 31; flagi++)
 			if (query->flags6 & 1<<flagi) Printf(" %s", FLAG_NAME(1<<flagi, flags6));
-
-		/*
-		Printf("\nIts bounce style and factors are %s and f:%f, w:%f; its bounce flags are:\n\tflagsb: %x", 
-			bouncestyles[bt], FIXED2FLOAT(query->bouncefactor), 
+		Printf("\nIts bounce style and factors are %x and f:%f, w:%f; its bounce flags are:\n\tflagsb: %x", 
+			query->BounceFlags, FIXED2FLOAT(query->bouncefactor), 
 			FIXED2FLOAT(query->wallbouncefactor), query->BounceFlags);
-		for (flagi = 0; flagi < 31; flagi++)
-			if (query->BounceFlags & 1<<flagi) Printf(" %s", flagnamesb[flagi]);
+		/*for (flagi = 0; flagi < 31; flagi++)
+			if (query->BounceFlags & 1<<flagi) Printf(" %s", flagnamesb[flagi]);*/
 		Printf("\nIts render style is %i:%s with alpha %f and the following render flags:\n\tflagsr: %x", 
 			querystyle, (querystyle < STYLE_Count ? renderstyles[querystyle] : "Unknown"),
 			FIXED2FLOAT(query->alpha), query->renderflags);
-		for (flagi = 0; flagi < 31; flagi++)
-			if (query->renderflags & 1<<flagi) Printf(" %s", flagnamesr[flagi]);
-		*/
+		/*for (flagi = 0; flagi < 31; flagi++)
+			if (query->renderflags & 1<<flagi) Printf(" %s", flagnamesr[flagi]);*/
 		Printf("\nIts thing special and arguments are %s(%i, %i, %i, %i, %i), and its specials are %i and %i.",
-			LineSpecialsInfo[query->special]->name, query->args[0], query->args[1],
-			query->args[2], query->args[3], query->args[4],
-			query->special1, query->special2);
+			(query->special ? LineSpecialsInfo[query->special]->name : "None"),
+			query->args[0], query->args[1], query->args[2], query->args[3], 
+			query->args[4],	query->special1, query->special2);
 		Printf("\nIts coordinates are x: %f, y: %f, z:%f, floor:%f, ceiling:%f.",
 			FIXED2FLOAT(query->x), FIXED2FLOAT(query->y), FIXED2FLOAT(query->z),
 			FIXED2FLOAT(query->floorz), FIXED2FLOAT(query->ceilingz));

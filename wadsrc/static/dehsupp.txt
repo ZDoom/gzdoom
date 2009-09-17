@@ -414,7 +414,7 @@ StateMap
 	DoomUnusedStates,	TNT, 1,			// [MBF] S_TNT1							967
 	Grenade,			Grenade, 1,		// [MBF] S_GRENADE						968
 	Grenade,			Detonate, 3,	// [MBF] S_DETONATE - S_DETONATE3		969-971
-	Dog,				Spawn, 27,		// [MBF] S_DOGS_STND - S_DOGS_RAISE6	972-998
+	MBFHelperDog,		Spawn, 27,		// [MBF] S_DOGS_STND - S_DOGS_RAISE6	972-998
 	BFG9000,			OldFire, 43,	// [MBF] S_OLDBFG1 - S_OLDBFG43			999-1041
 	PlasmaBall1,		Spawn, 7,		// [MBF] S_PLS1BALL - S_PLS1EXP5		1042-1048
 	PlasmaBall2,		Spawn, 5,		// [MBF] S_PLS2BALL - S_PLS2BALLX3		1049-1053
@@ -681,7 +681,7 @@ InfoNames
 	PointPusher,
 	PointPuller,
 // MBF additional actors:
-	Dog,
+	MBFHelperDog,
 	PlasmaBall1,
 	PlasmaBall2,
 	EvilSceptre,

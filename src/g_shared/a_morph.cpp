@@ -192,10 +192,11 @@ bool P_UndoPlayerMorph (player_t *activator, player_t *player, bool force)
 		return false;
 	}
 
-	if ((pmo->flags2 & MF2_INVULNERABLE) && ((player != activator) || (!(player->MorphStyle & MORPH_WHENINVULNERABLE))))
-	{ // Immune when invulnerable unless this is something we initiated.
-		// If the WORLD is the initiator, the same player should be given
-		// as the activator; WORLD initiated actions should always succeed.
+	if ((pmo->flags2 & MF2_INVULNERABLE) // If the player is invulnerable
+		&& ((player != activator)		// and either did not decide to unmorph,
+		|| (!((player->MorphStyle & MORPH_WHENINVULNERABLE)  // or the morph style does not allow it
+		&& (player->MorphStyle != MORPH_OLDEFFECTS))))) // (but standard morph styles always allow it),
+	{ // Then the player is immune to the unmorph.
 		return false;
 	}
 

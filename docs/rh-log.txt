@@ -1,4 +1,7 @@
 September 17, 2009  (Changes by Graf Zahl)
+- Fixed: Unmorphing while invulnerable was blocked.
+- Various cleanup changes.
+- fixed Dog's class name in DEHSUPP.
 - Renamed plane flags from SECF_* to PLANEF_*.
 - Changed Heretic's plat raise type to use a flag to block further sector movement
   instead of keeping the dead thinker around to block the sector.

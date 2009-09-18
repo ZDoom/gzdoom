@@ -17,7 +17,7 @@ enum
 	MORPH_UNDOBYCHAOSDEVICE	= 0x00000008,	// Player unmorphs upon activating a Chaos Device
 	MORPH_FAILNOTELEFRAG	= 0x00000010,	// Player stays morphed if unmorph by Tome of Power fails
 	MORPH_FAILNOLAUGH		= 0x00000020,	// Player doesn't laugh if unmorph by Chaos Device fails
-	MORPH_WHENINVULNERABLE	= 0x00000040,	// Player can morph (or scripted unmorph) when invulnerable but ONLY if doing it to themselves
+	MORPH_WHENINVULNERABLE	= 0x00000040,	// Player can morph when invulnerable but ONLY if doing it to themselves
 	MORPH_LOSEACTUALWEAPON	= 0x00000080,	// Player loses specified morph weapon only (not "whichever they have when unmorphing")
 	MORPH_NEWTIDBEHAVIOUR	= 0x00000100,	// Actor TID is by default transferred from the old actor to the new actor
 	MORPH_UNDOBYDEATH		= 0x00000200,	// Actor unmorphs when killed and (unless MORPH_UNDOBYDEATHSAVES) stays dead
@@ -32,7 +32,7 @@ class AMorphedMonster;
 
 bool P_MorphPlayer (player_t *activator, player_t *player, const PClass *morphclass, int duration = 0, int style = 0,
 					const PClass *enter_flash = NULL, const PClass *exit_flash = NULL);
-bool P_UndoPlayerMorph (player_t *activator, player_t *player, bool force = false);
+bool P_UndoPlayerMorph (player_t *activator, player_t *player, int unmorphflag = 0, bool force = false);
 bool P_MorphMonster (AActor *actor, const PClass *morphclass, int duration = 0, int style = 0,
 					 const PClass *enter_flash = NULL, const PClass *exit_flash = NULL);
 bool P_UndoMonsterMorph (AMorphedMonster *beast, bool force = false);

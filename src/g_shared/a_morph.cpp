@@ -173,7 +173,7 @@ bool P_MorphPlayer (player_t *activator, player_t *p, const PClass *spawntype, i
 //
 //----------------------------------------------------------------------------
 
-bool P_UndoPlayerMorph (player_t *activator, player_t *player, bool force)
+bool P_UndoPlayerMorph (player_t *activator, player_t *player, int unmorphflag, bool force)
 {
 	AWeapon *beastweap;
 	APlayerPawn *mo;
@@ -192,10 +192,12 @@ bool P_UndoPlayerMorph (player_t *activator, player_t *player, bool force)
 		return false;
 	}
 
-	if ((pmo->flags2 & MF2_INVULNERABLE) // If the player is invulnerable
-		&& ((player != activator)		// and either did not decide to unmorph,
-		|| (!((player->MorphStyle & MORPH_WHENINVULNERABLE)  // or the morph style does not allow it
-		&& (player->MorphStyle != MORPH_OLDEFFECTS))))) // (but standard morph styles always allow it),
+	bool DeliberateUnmorphIsOkay = !!(player->MorphStyle & unmorphflag);
+
+    if ((pmo->flags2 & MF2_INVULNERABLE) // If the player is invulnerable
+        && ((player != activator)       // and either did not decide to unmorph,
+        || (!((player->MorphStyle & MORPH_WHENINVULNERABLE)  // or the morph style does not allow it
+        || (DeliberateUnmorphIsOkay))))) // (but standard morph styles always allow it),
 	{ // Then the player is immune to the unmorph.
 		return false;
 	}

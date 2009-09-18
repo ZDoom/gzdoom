@@ -1230,7 +1230,7 @@ void G_PlayerFinishLevel (int player, EFinishLevelType mode, bool resetinventory
 
 	if (p->morphTics)
 	{ // Undo morph
-		P_UndoPlayerMorph (p, p, true);
+		P_UndoPlayerMorph (p, p, 0, true);
 	}
 
 	// Clears the entire inventory and gives back the defaults for starting a game

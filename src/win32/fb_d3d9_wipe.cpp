@@ -164,7 +164,7 @@ bool D3DFB::WipeStartScreen(int type)
 	// Create another texture to copy the final wipe screen to so
 	// we can still gamma correct the wipe. Since this is just for
 	// gamma correction, it's okay to fail (though not desirable.)
-	if (PixelDoubling || (GammaFixerShader != NULL && Windowed))
+	if (PixelDoubling || (Shaders[SHADER_GammaCorrection] != NULL && Windowed))
 	{
 		if (SUCCEEDED(TempRenderTexture->GetSurfaceLevel(0, &tsurf)))
 		{
@@ -384,7 +384,7 @@ bool D3DFB::Wiper_Crossfade::Run(int ticks, D3DFB *fb)
 	fb->D3DDevice->SetFVF(D3DFVF_FBVERTEX);
 	fb->SetTexture(0, fb->FinalWipeScreen);
 	fb->SetAlphaBlend(D3DBLENDOP_ADD, D3DBLEND_SRCALPHA, D3DBLEND_INVSRCALPHA);
-	fb->SetPixelShader(fb->PlainShader);
+	fb->SetPixelShader(fb->Shaders[SHADER_NormalColor]);
 	fb->D3DDevice->DrawPrimitiveUP(D3DPT_TRIANGLEFAN, 2, verts, sizeof(FBVERTEX));
 
 	return Clock >= 32;
@@ -442,7 +442,7 @@ bool D3DFB::Wiper_Melt::Run(int ticks, D3DFB *fb)
 	fb->D3DDevice->SetFVF(D3DFVF_FBVERTEX);
 	fb->SetTexture(0, fb->FinalWipeScreen);
 	fb->SetAlphaBlend(D3DBLENDOP(0));
-	fb->SetPixelShader(fb->PlainShader);
+	fb->SetPixelShader(fb->Shaders[SHADER_NormalColor]);
 	fb->D3DDevice->DrawPrimitiveUP(D3DPT_TRIANGLEFAN, 2, verts, sizeof(FBVERTEX));
 
 	int i, dy;
@@ -504,7 +504,7 @@ D3DFB::Wiper_Burn::Wiper_Burn(D3DFB *fb)
 	Density = 4;
 	BurnTime = 0;
 	memset(BurnArray, 0, sizeof(BurnArray));
-	if (fb->BurnShader == NULL || FAILED(fb->D3DDevice->CreateTexture(WIDTH, HEIGHT, 1,
+	if (fb->Shaders[SHADER_BurnWipe] == NULL || FAILED(fb->D3DDevice->CreateTexture(WIDTH, HEIGHT, 1,
 		D3DUSAGE_DYNAMIC, D3DFMT_L8, D3DPOOL_DEFAULT, &BurnTexture, NULL)))
 	{
 		BurnTexture = NULL;
@@ -593,7 +593,7 @@ bool D3DFB::Wiper_Burn::Run(int ticks, D3DFB *fb)
 	fb->SetTexture(0, fb->FinalWipeScreen);
 	fb->SetTexture(1, BurnTexture);
 	fb->SetAlphaBlend(D3DBLENDOP_ADD, D3DBLEND_SRCALPHA, D3DBLEND_INVSRCALPHA);
-	fb->SetPixelShader(fb->BurnShader);
+	fb->SetPixelShader(fb->Shaders[SHADER_BurnWipe]);
 	fb->D3DDevice->SetSamplerState(1, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
 	if (fb->SM14)
 	{

@@ -102,6 +102,7 @@ void R_InitSprites ();
 void R_DeinitSprites ();
 void R_ClearSprites ();
 void R_DrawMasked ();
+void R_DrawRemainingPlayerSprites ();
 
 void R_ClipVisSprite (vissprite_t *vis, int xl, int xh);
 

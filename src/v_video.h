@@ -101,6 +101,8 @@ enum
 	DTA_RenderStyle,	// same as render style for actors
 	DTA_ColorOverlay,	// DWORD: ARGB to overlay on top of image; limited to black for software
 	DTA_BilinearFilter,	// bool: apply bilinear filtering to the image
+	DTA_SpecialColormap,// pointer to FSpecialColormapParameters (likely to be forever hardware-only)
+	DTA_ColormapStyle,	// pointer to FColormapStyle (hardware-only)
 
 	// For DrawText calls:
 	DTA_TextLen,		// stop after this many characters, even if \0 not hit
@@ -225,6 +227,8 @@ public:
 		INTBOOL masked;
 		INTBOOL bilinear;
 		FRenderStyle style;
+		struct FSpecialColormapParameters *specialcolormap;
+		struct FColormapStyle *colormapstyle;
 	};
 
 protected:
@@ -349,11 +353,15 @@ public:
 	// Begin 2D drawing operations. This is like Update, but it doesn't end
 	// the scene, and it doesn't present the image yet. If you are going to
 	// be covering the entire screen with 2D elements, then pass false to
-	// avoid copying the software bufferer to the screen.
+	// avoid copying the software buffer to the screen.
 	// Returns true if hardware-accelerated 2D has been entered, false if not.
 	virtual bool Begin2D(bool copy3d);
 
 	// DrawTexture calls after Begin2D use native textures.
+
+	// Draws the blending rectangle over the viewwindow if in hardware-
+	// accelerated 2D mode.
+	virtual void DrawBlendingRect();
 
 	// Create a native texture from a game texture.
 	virtual FNativeTexture *CreateTexture(FTexture *gametex, bool wrapping);

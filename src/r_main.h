@@ -30,6 +30,7 @@
 #include "d_player.h"
 #include "r_data.h"
 #include "r_state.h"
+#include "v_palette.h"
 
 
 //
@@ -87,12 +88,6 @@ extern bool				r_dontmaplines;
 // tables based on 1/z for walls and z for flats and only recognized
 // 16 discrete light levels. The terminology I use is borrowed from Build.
 //
-
-#define INVERSECOLORMAP			32
-#define GOLDCOLORMAP			33
-#define REDCOLORMAP				34
-#define GREENCOLORMAP			35
-#define BLUECOLORMAP			36
 
 // The size of a single colormap, in bits
 #define COLORMAPSHIFT			8

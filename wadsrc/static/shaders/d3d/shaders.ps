@@ -1,0 +1,116 @@
+sampler2D Image : register(s0);
+sampler1D Palette : register(s1);
+
+float4 PaletteMod : register(c2);
+float4 Weights : register(c6);		// RGB->Gray weighting { 77/256.0, 143/256.0, 37/256.0, 1 }
+float4 Gamma : register(c7);
+
+float4 TextureLookup(float2 tex_coord)
+{
+#if PALTEX
+	float index = tex2D(Image, tex_coord).x;
+	index = index * PaletteMod.x + PaletteMod.y;
+	return tex1D(Palette, index);
+#else
+	return tex2D(Image, tex_coord);
+#endif
+}
+
+float4 Invert(float4 rgb)
+{
+#if INVERT
+	rgb.rgb = Weights.www - rgb.xyz;
+#endif
+	return rgb;
+}
+
+float Grayscale(float4 rgb)
+{
+	return dot(rgb.rgb, Weights.rgb);
+}
+
+float4 SampleTexture(float2 tex_coord)
+{
+	return Invert(TextureLookup(tex_coord));
+}
+
+// Normal color calculation for most drawing modes.
+
+float4 NormalColor(float2 tex_coord : TEXCOORD0, float4 Flash : COLOR0, float4 InvFlash : COLOR1) : COLOR
+{
+	return Flash + SampleTexture(tex_coord) * InvFlash;
+}
+
+// Copy the red channel to the alpha channel. Pays no attention to palettes.
+
+float4 RedToAlpha(float2 tex_coord : TEXCOORD0, float4 Flash : COLOR0, float4 InvFlash : COLOR1) : COLOR
+{
+	float4 color = Invert(tex2D(Image, tex_coord));
+	color.a = color.r;
+	return Flash + color * InvFlash;
+}
+
+// Just return the value of c0.
+
+float4 VertexColor(float4 color : COLOR0) : COLOR
+{
+	return color;
+}
+
+// Emulate one of the special colormaps. (Invulnerability, gold, etc.)
+
+float4 SpecialColormap(float2 tex_coord : TEXCOORD0, float4 icolor : COLOR0) : COLOR
+{
+	// We can't store values greater than 1.0 in a color register, so we multiply
+	// intensity by 2 and expect the caller to divide icolor by 2.
+	float4 color = SampleTexture(tex_coord);
+	float intensity = 2 * Grayscale(color);
+	color.rgb = icolor.rgb * intensity;
+	return color;
+}
+
+// In-game colormap effect: fade to a particular color and multiply by another, with 
+// optional desaturation of the original color. Desaturation is packed into color.a.
+// Fade level is packed int fade.a. Fade.rgb has been premultiplied by alpha.
+float4 InGameColormap(float2 tex_coord : TEXCOORD0, float4 color : COLOR0, float4 fade : COLOR1) : COLOR
+{
+	float4 rgb = SampleTexture(tex_coord);
+
+	// Desaturate
+#if DESAT
+	float3 intensity;
+	float invdesat;
+	intensity.rgb = Grayscale(rgb) * color.a;
+	invdesat = Weights.w - color.a;
+	rgb.rgb = intensity + rgb * invdesat;
+#endif
+
+	// Fade
+	rgb.rgb = rgb.rgb * fade.aaa + fade.rgb;
+
+	// Shade
+	rgb.rgb = rgb.rgb * color.rgb;
+	return rgb;
+}
+
+// Windowed gamma correction.
+
+float4 GammaCorrection(float2 tex_coord : TEXCOORD0) : COLOR
+{
+	float4 color = tex2D(Image, tex_coord);
+	color.rgb = pow(color.rgb, Gamma.rgb);
+	return color;
+}
+
+// The burn wipe effect.
+
+sampler2D NewScreen : register(s0);
+sampler2D Burn : register(s1);
+
+float4 BurnWipe(float2 coord[2] : TEXCOORD0) : COLOR
+{
+	float4 color = tex2D(NewScreen, coord[0]);
+	float4 alpha = tex2D(Burn, coord[1]);
+	color.a = alpha.r * 2;
+	return color;
+}

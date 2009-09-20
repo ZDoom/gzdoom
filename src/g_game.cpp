@@ -1195,7 +1195,8 @@ void G_PlayerFinishLevel (int player, EFinishLevelType mode, bool resetinventory
 	p->mo->RenderStyle = STYLE_Normal;
 	p->mo->alpha = FRACUNIT;
 	p->extralight = 0;					// cancel gun flashes
-	p->fixedcolormap = 0;				// cancel ir goggles
+	p->fixedcolormap = NOFIXEDCOLORMAP;	// cancel ir goggles
+	p->fixedlightlevel = -1;
 	p->damagecount = 0; 				// no palette changes
 	p->bonuscount = 0;
 	p->poisoncount = 0;

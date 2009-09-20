@@ -426,16 +426,16 @@ BYTE *GetBlendMap(PalEntry blend, BYTE *blendwork)
 	switch (blend.a==0 ? blend.r : -1)
 	{
 	case BLEND_INVERSEMAP:
-		return InverseColormap;
+		return SpecialColormaps[INVERSECOLORMAP];
 
 	case BLEND_GOLDMAP:
-		return GoldColormap;
+		return SpecialColormaps[GOLDCOLORMAP];
 
 	case BLEND_REDMAP:
-		return RedColormap;
+		return SpecialColormaps[REDCOLORMAP];
 
 	case BLEND_GREENMAP:
-		return GreenColormap;
+		return SpecialColormaps[GREENCOLORMAP];
 
 	case BLEND_ICEMAP:
 		return TranslationToTable(TRANSLATION(TRANSLATION_Standard, 7))->Remap;

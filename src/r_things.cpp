@@ -50,6 +50,7 @@
 #include "r_plane.h"
 #include "r_segs.h"
 #include "v_palette.h"
+#include "r_translate.h"
 
 
 extern fixed_t globaluclip, globaldclip;
@@ -73,6 +74,10 @@ fixed_t			pspriteyscale;
 fixed_t 		pspritexiscale;
 fixed_t			sky1scale;			// [RH] Sky 1 scale factor
 fixed_t			sky2scale;			// [RH] Sky 2 scale factor
+
+vissprite_t		*VisPSprites[NUMPSPRITES];
+int				VisPSpritesX1[NUMPSPRITES];
+FDynamicColormap *VisPSpritesBaseColormap[NUMPSPRITES];
 
 static int		spriteshade;
 
@@ -1430,50 +1435,40 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 	if (vis->RenderStyle.Flags & STYLEF_FadeToBlack)
 	{
 		if (invertcolormap)
-		{
-			// Fade to white
+		{ // Fade to white
 			mybasecolormap = GetSpecialLights(mybasecolormap->Color, MAKERGB(255,255,255), mybasecolormap->Desaturate);
 			invertcolormap = false;
 		}
 		else
-		{
-			// Fade to black
+		{ // Fade to black
 			mybasecolormap = GetSpecialLights(mybasecolormap->Color, MAKERGB(0,0,0), mybasecolormap->Desaturate);
 		}
 	}
 
 	// get light level
-	if (fixedlightlev)
-	{
-		if (invertcolormap)
-		{
-			mybasecolormap = GetSpecialLights(mybasecolormap->Color, mybasecolormap->Fade.InverseColor(), mybasecolormap->Desaturate);
-		}
-		vis->colormap = mybasecolormap->Maps + fixedlightlev;
-	}
-	else if (fixedcolormap)
-	{
-		// fixed map
+	if (fixedcolormap != NULL)
+	{ // fixed map
 		vis->colormap = fixedcolormap;
-	}
-	else if (!foggy && ((thing->renderflags & RF_FULLBRIGHT) || (thing->flags5 & MF5_BRIGHT)))
-	{
-		// full bright
-		if (invertcolormap)
-		{
-			mybasecolormap = GetSpecialLights(mybasecolormap->Color, mybasecolormap->Fade.InverseColor(), mybasecolormap->Desaturate);
-		}
-		vis->colormap = mybasecolormap->Maps;
 	}
 	else
 	{
-		// diminished light
 		if (invertcolormap)
 		{
 			mybasecolormap = GetSpecialLights(mybasecolormap->Color, mybasecolormap->Fade.InverseColor(), mybasecolormap->Desaturate);
 		}
-		vis->colormap = mybasecolormap->Maps + (GETPALOOKUP (
-			(fixed_t)DivScale12 (r_SpriteVisibility, tz), spriteshade) << COLORMAPSHIFT);
+		if (fixedlightlev >= 0)
+		{
+			vis->colormap = mybasecolormap->Maps + fixedlightlev;
+		}
+		else if (!foggy && ((thing->renderflags & RF_FULLBRIGHT) || (thing->flags5 & MF5_BRIGHT)))
+		{ // full bright
+			vis->colormap = mybasecolormap->Maps;
+		}
+		else
+		{ // diminished light
+			vis->colormap = mybasecolormap->Maps + (GETPALOOKUP (
+				(fixed_t)DivScale12 (r_SpriteVisibility, tz), spriteshade) << COLORMAPSHIFT);
+		}
 	}
 }
 
@@ -1522,7 +1517,10 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, fixed_t sx, fixed_
 	WORD				flip;
 	FTexture*			tex;
 	vissprite_t*		vis;
-	vissprite_t 		avis;
+	static vissprite_t	avis[NUMPSPRITES];
+	bool noaccel;
+
+	assert(pspnum >= 0 && pspnum < NUMPSPRITES);
 
 	// decide which patch to use
 	if ( (unsigned)psp->state->sprite >= (unsigned)sprites.Size ())
@@ -1550,7 +1548,7 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, fixed_t sx, fixed_
 
 	tx -= tex->GetScaledLeftOffset() << FRACBITS;
 	x1 = (centerxfrac + FixedMul (tx, pspritexscale)) >>FRACBITS;
-
+	VisPSpritesX1[pspnum] = x1;
 
 	// off the right side
 	if (x1 > viewwidth)
@@ -1564,7 +1562,7 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, fixed_t sx, fixed_
 		return;
 	
 	// store information in a vissprite
-	vis = &avis;
+	vis = &avis[pspnum];
 	vis->renderflags = owner->renderflags;
 	vis->floorclip = 0;
 
@@ -1619,6 +1617,7 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, fixed_t sx, fixed_
 	if (vis->x1 > x1)
 		vis->startfrac += vis->xiscale*(vis->x1-x1);
 
+	noaccel = false;
 	if (pspnum <= ps_flash)
 	{
 		vis->alpha = owner->alpha;
@@ -1639,67 +1638,92 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, fixed_t sx, fixed_
 		if (vis->RenderStyle.Flags & STYLEF_FadeToBlack)
 		{
 			if (invertcolormap)
-			{
-				// Fade to white
+			{ // Fade to white
 				mybasecolormap = GetSpecialLights(mybasecolormap->Color, MAKERGB(255,255,255), mybasecolormap->Desaturate);
 				invertcolormap = false;
 			}
 			else
-			{
-				// Fade to black
+			{ // Fade to black
 				mybasecolormap = GetSpecialLights(mybasecolormap->Color, MAKERGB(0,0,0), mybasecolormap->Desaturate);
 			}
 		}
 
-		if (fixedlightlev)
-		{
-			if (invertcolormap)
-			{
-				mybasecolormap = GetSpecialLights(mybasecolormap->Color, mybasecolormap->Fade.InverseColor(), mybasecolormap->Desaturate);
-			}
-			vis->colormap = mybasecolormap->Maps + fixedlightlev;
-		}
-		else if (fixedcolormap)
-		{
-			// fixed color
+		if (fixedcolormap != NULL)
+		{ // fixed color
 			vis->colormap = fixedcolormap;
-		}
-		else if (!foggy && psp->state->GetFullbright())
-		{
-			// full bright
-			if (invertcolormap)
-			{
-				mybasecolormap = GetSpecialLights(mybasecolormap->Color, mybasecolormap->Fade.InverseColor(), mybasecolormap->Desaturate);
-			}
-			vis->colormap = mybasecolormap->Maps;	// [RH] use basecolormap
 		}
 		else
 		{
-			// local light
 			if (invertcolormap)
 			{
 				mybasecolormap = GetSpecialLights(mybasecolormap->Color, mybasecolormap->Fade.InverseColor(), mybasecolormap->Desaturate);
 			}
-			vis->colormap = mybasecolormap->Maps + (GETPALOOKUP (0, spriteshade) << COLORMAPSHIFT);
+			if (fixedlightlev >= 0)
+			{
+				vis->colormap = mybasecolormap->Maps + fixedlightlev;
+			}
+			else if (!foggy && psp->state->GetFullbright())
+			{ // full bright
+				vis->colormap = mybasecolormap->Maps;	// [RH] use basecolormap
+			}
+			else
+			{ // local light
+				vis->colormap = mybasecolormap->Maps + (GETPALOOKUP (0, spriteshade) << COLORMAPSHIFT);
+			}
 		}
 		if (camera->Inventory != NULL)
 		{
+			lighttable_t *oldcolormap = vis->colormap;
 			camera->Inventory->AlterWeaponSprite (vis);
+			if (vis->colormap != oldcolormap)
+			{
+				// The colormap has changed. Is it one we can easily identify?
+				// If not, then don't bother trying to identify it for
+				// hardware accelerated drawing.
+				if (vis->colormap < SpecialColormaps[0] || vis->colormap >= SpecialColormaps[NUM_SPECIALCOLORMAPS])
+				{
+					noaccel = true;
+				}
+				// Has the basecolormap changed? If so, we can't hardware accelerate it,
+				// since we don't know what it is anymore.
+				else if (vis->colormap < mybasecolormap->Maps ||
+					vis->colormap >= mybasecolormap->Maps + NUMCOLORMAPS*256)
+				{
+					noaccel = true;
+				}
+			}
 		}
+		VisPSpritesBaseColormap[pspnum] = mybasecolormap;
 	}
 	else
 	{
+		VisPSpritesBaseColormap[pspnum] = basecolormap;
 		vis->RenderStyle = STYLE_Normal;
 	}
-		
+
+	// Check for hardware-assisted 2D. If it's available, and this sprite is not
+	// fuzzy, don't draw it until after the switch to 2D mode.
+	if (!noaccel && RenderTarget == screen && (DFrameBuffer *)screen->Accel2D)
+	{
+		FRenderStyle style = vis->RenderStyle;
+		style.CheckFuzz();
+		if (style.BlendOp != STYLEOP_Fuzz)
+		{
+			VisPSprites[pspnum] = vis;
+			return;
+		}
+	}
 	R_DrawVisSprite (vis);
 }
 
 
 
+//==========================================================================
 //
 // R_DrawPlayerSprites
 //
+//==========================================================================
+
 void R_DrawPlayerSprites (void)
 {
 	int 		i;
@@ -1708,7 +1732,7 @@ void R_DrawPlayerSprites (void)
 	sector_t*	sec;
 	static sector_t tempsec;
 	int			floorlight, ceilinglight;
-	
+
 	if (!r_drawplayersprites ||
 		!camera->player ||
 		(players[consoleplayer].cheats & CF_CHASECAM))
@@ -1763,6 +1787,80 @@ void R_DrawPlayerSprites (void)
 
 		centeryfrac = centerhack;
 		centery = centerhack >> FRACBITS;
+	}
+}
+
+//==========================================================================
+//
+// R_DrawRemainingPlayerSprites
+//
+// Called from D_Display to draw sprites that were not drawn by
+// R_DrawPlayerSprites().
+//
+//==========================================================================
+
+void R_DrawRemainingPlayerSprites()
+{
+	for (int i = 0; i < NUMPSPRITES; ++i)
+	{
+		vissprite_t *vis;
+		
+		vis = VisPSprites[i];
+		VisPSprites[i] = NULL;
+
+		if (vis != NULL)
+		{
+			FDynamicColormap *colormap = VisPSpritesBaseColormap[i];
+			bool flip = vis->xiscale < 0;
+			FSpecialColormapParameters *special = NULL;
+			PalEntry overlay = 0;
+			FColormapStyle colormapstyle;
+			bool usecolormapstyle = false;
+
+			if (vis->colormap >= SpecialColormaps[0] && vis->colormap < SpecialColormaps[NUM_SPECIALCOLORMAPS])
+			{
+				ptrdiff_t specialmap = (vis->colormap - SpecialColormaps[0]) >> 8;
+				if (SpecialColormapParms[specialmap].Inverted)
+				{
+					vis->RenderStyle.Flags ^= STYLEF_InvertSource;
+				}
+				special = &SpecialColormapParms[specialmap];
+			}
+			else if (colormap->Color == PalEntry(255,255,255) &&
+				colormap->Desaturate == 0)
+			{
+				overlay = colormap->Fade;
+				overlay.a = BYTE(((vis->colormap - colormap->Maps) >> 8) * 255 / NUMCOLORMAPS);
+			}
+			else
+			{
+				usecolormapstyle = true;
+				colormapstyle.Color = colormap->Color;
+				colormapstyle.Fade = colormap->Fade;
+				colormapstyle.Desaturate = colormap->Desaturate;
+				colormapstyle.FadeLevel = ((vis->colormap - colormap->Maps) >> 8) / float(NUMCOLORMAPS);
+			}
+			screen->DrawTexture(vis->pic,
+				viewwindowx + VisPSpritesX1[i],
+				viewwindowy + viewheight/2 - MulScale32(vis->texturemid, vis->yscale) - 1,
+				DTA_DestWidth, FixedMul(vis->pic->GetWidth(), vis->xscale),
+				DTA_DestHeight, FixedMul(vis->pic->GetHeight(), vis->yscale),
+				DTA_Translation, TranslationToTable(vis->Translation),
+				DTA_FlipX, flip,
+				DTA_TopOffset, 0,
+				DTA_LeftOffset, 0,
+				DTA_ClipLeft, viewwindowx,
+				DTA_ClipTop, viewwindowy,
+				DTA_ClipRight, viewwindowx + viewwidth,
+				DTA_ClipBottom, viewwindowy + viewheight,
+				DTA_Alpha, vis->alpha,
+				DTA_RenderStyle, vis->RenderStyle,
+				DTA_FillColor, vis->FillColor,
+				DTA_SpecialColormap, special,
+				DTA_ColorOverlay, overlay,
+				DTA_ColormapStyle, usecolormapstyle ? &colormapstyle : NULL,
+				TAG_DONE);
+		}
 	}
 }
 
@@ -2423,7 +2521,7 @@ void R_ProjectParticle (particle_t *particle, const sector_t *sector, int shade,
 	vis->floorclip = 0;
 	vis->heightsec = heightsec;
 
-	if (fixedlightlev)
+	if (fixedlightlev >= 0)
 	{
 		vis->colormap = map + fixedlightlev;
 	}

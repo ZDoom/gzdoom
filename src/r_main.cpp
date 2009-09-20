@@ -1159,45 +1159,23 @@ void R_SetupFrame (AActor *actor)
 	}
 
 	fixedcolormap = NULL;
-	fixedlightlev = 0;
+	fixedlightlev = -1;
 
-	if (player != NULL && camera == player->mo && player->fixedcolormap)
+	if (player != NULL && camera == player->mo)
 	{
-		if (player->fixedcolormap < NUMCOLORMAPS)
+		if (player->fixedcolormap >= 0 && player->fixedcolormap < NUM_SPECIALCOLORMAPS)
 		{
-			fixedlightlev = player->fixedcolormap*256;
-			fixedcolormap = NormalLight.Maps;
+			fixedcolormap = SpecialColormaps[player->fixedcolormap];
 		}
-		else switch (player->fixedcolormap)
+		else if (player->fixedlightlevel >= 0 && player->fixedlightlevel < NUMCOLORMAPS)
 		{
-		case INVERSECOLORMAP:
-			fixedcolormap = InverseColormap;
-			break;
-
-		case REDCOLORMAP:
-			fixedcolormap = RedColormap;
-			break;
-
-		case GREENCOLORMAP:
-			fixedcolormap = GreenColormap;
-			break;
-
-		case BLUECOLORMAP:
-			fixedcolormap = BlueColormap;
-			break;
-
-		case GOLDCOLORMAP:
-			fixedcolormap = GoldColormap;
-			break;
-
-		default:
-			break;
+			fixedlightlev = player->fixedlightlevel * 256;
 		}
 	}
 	// [RH] Inverse light for shooting the Sigil
-	else if (extralight == INT_MIN)
+	if (fixedcolormap == NULL && extralight == INT_MIN)
 	{
-		fixedcolormap = InverseColormap;
+		fixedcolormap = SpecialColormaps[INVERSECOLORMAP];
 		extralight = 0;
 	}
 

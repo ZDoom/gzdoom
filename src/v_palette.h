@@ -79,18 +79,41 @@ struct FDynamicColormap
 	FDynamicColormap *Next;
 };
 
-extern BYTE InverseColormap[256];
-extern BYTE GoldColormap[256];
-// [BC] New Skulltag colormaps.
-extern BYTE RedColormap[256];
-extern BYTE GreenColormap[256];
-extern BYTE BlueColormap[256];
+// For hardware-accelerated weapon sprites in colored sectors
+struct FColormapStyle
+{
+	PalEntry Color;
+	PalEntry Fade;
+	int Desaturate;
+	float FadeLevel;
+};
+
+// Special colormaps, like invulnerability.
+enum
+{
+	NOFIXEDCOLORMAP = -1,
+	INVERSECOLORMAP,
+	GOLDCOLORMAP,
+	REDCOLORMAP,		// [BC] New Skulltag colormaps.
+	GREENCOLORMAP,
+	BLUECOLORMAP,
+
+	NUM_SPECIALCOLORMAPS
+};
+struct FSpecialColormapParameters
+{
+	float Colorize[3];
+	bool Inverted;
+};
+extern FSpecialColormapParameters SpecialColormapParms[NUM_SPECIALCOLORMAPS];
+extern BYTE SpecialColormaps[NUM_SPECIALCOLORMAPS][256];
+
+
 extern BYTE DesaturateColormap[31][256];
 extern FPalette GPalette;
 extern "C" {
 extern FDynamicColormap NormalLight;
 }
-
 // The color overlay to use for depleted items
 #define DIM_OVERLAY MAKEARGB(170,0,0,0)
 

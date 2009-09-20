@@ -205,7 +205,7 @@ void APowerup::DoEffect ()
 				 (BlendColor == GREENCOLOR && Owner->player->fixedcolormap == GREENCOLORMAP) ||
 				 (BlendColor == BLUECOLOR && Owner->player->fixedcolormap == BLUECOLORMAP))
 		{
-			Owner->player->fixedcolormap = 0;
+			Owner->player->fixedcolormap = NOFIXEDCOLORMAP;
 		}
 	}
 }
@@ -471,7 +471,7 @@ void APowerInvulnerable::EndEffect ()
 
 	if (Owner->player != NULL)
 	{
-		Owner->player->fixedcolormap = 0;
+		Owner->player->fixedcolormap = NOFIXEDCOLORMAP;
 	}
 }
 
@@ -711,7 +711,7 @@ int APowerInvisibility::AlterWeaponSprite (vissprite_t *vis)
 	if ((vis->alpha < TRANSLUC25 && special1 > 0) || (vis->alpha == 0))
 	{
 		vis->alpha = clamp<fixed_t>((OPAQUE - Strength), 0, OPAQUE);
-		vis->colormap = InverseColormap;
+		vis->colormap = SpecialColormaps[INVERSECOLORMAP];
 	}
 	return -1;	// This item is valid so another one shouldn't reset the translucency
 }
@@ -830,11 +830,11 @@ void APowerLightAmp::DoEffect ()
 	{
 		if (EffectTics > BLINKTHRESHOLD || (EffectTics & 8))
 		{	
-			Owner->player->fixedcolormap = 1;
+			Owner->player->fixedlightlevel = 1;
 		}
 		else
 		{
-			Owner->player->fixedcolormap = 0;
+			Owner->player->fixedlightlevel = -1;
 		}
 	}
 }
@@ -849,7 +849,7 @@ void APowerLightAmp::EndEffect ()
 {
 	if (Owner != NULL && Owner->player != NULL && Owner->player->fixedcolormap < NUMCOLORMAPS)
 	{
-		Owner->player->fixedcolormap = 0;
+		Owner->player->fixedlightlevel = -1;
 	}
 }
 
@@ -894,22 +894,22 @@ void APowerTorch::DoEffect ()
 		{
 			if (NewTorch != 0)
 			{
-				if (Owner->player->fixedcolormap + NewTorchDelta > 7
-					|| Owner->player->fixedcolormap + NewTorchDelta < 1
-					|| NewTorch == Owner->player->fixedcolormap)
+				if (Owner->player->fixedlightlevel + NewTorchDelta > 7
+					|| Owner->player->fixedlightlevel + NewTorchDelta < 0
+					|| NewTorch == Owner->player->fixedlightlevel)
 				{
 					NewTorch = 0;
 				}
 				else
 				{
-					Owner->player->fixedcolormap += NewTorchDelta;
+					Owner->player->fixedlightlevel += NewTorchDelta;
 				}
 			}
 			else
 			{
 				NewTorch = (pr_torch() & 7) + 1;
-				NewTorchDelta = (NewTorch == Owner->player->fixedcolormap) ?
-					0 : ((NewTorch > Owner->player->fixedcolormap) ? 1 : -1);
+				NewTorchDelta = (NewTorch == Owner->player->fixedlightlevel) ?
+					0 : ((NewTorch > Owner->player->fixedlightlevel) ? 1 : -1);
 			}
 		}
 	}

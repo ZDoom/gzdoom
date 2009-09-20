@@ -3899,7 +3899,8 @@ APlayerPawn *P_SpawnPlayer (FMapThing *mthing, bool tempplayer)
 	p->MorphStyle = 0;
 	p->MorphExitFlash = NULL;
 	p->extralight = 0;
-	p->fixedcolormap = 0;
+	p->fixedcolormap = NOFIXEDCOLORMAP;
+	p->fixedlightlevel = -1;
 	p->viewheight = mobj->ViewHeight;
 	p->inconsistant = 0;
 	p->attacker = NULL;

@@ -1,3 +1,24 @@
+September 19, 2009
+- Fixed: Wall drawing handled fixed light levels improperly (but did not
+  completely ignore them, either).
+- Separated light level fixing out of player_t's fixedcolormap parameter.
+  Using a fixed light level (e.g. PowerTorch) will no longer wipe out
+  colored lighting.
+- Moved the blending rectangle drawing into a separate discrete stage, since
+  doing it while copying the 3D view window to the display now blends
+  underneath the weapon instead of on top of it.
+- Consolidated the special colormaps into a single 2D table.
+- Tweaked the special colormaps slightly to make the true color results more
+  closely match the paletted approximations.
+- fb_d3d9_shaders.h was getting unwieldy, so I moved the shaders out of the
+  executable and into zdoom.pk3. Shaders are still precompiled so I don't need
+  to pull in a dependancy on D3DX.
+- Added a few more shaders to accomodate drawing weapons with all the in-game
+  lighting models. These are accessed with the new DrawTexture tags
+  DTA_SpecialColormap and DTA_ColormapStyle.
+- Player weapon sprites are now drawn using Direct3D and receive all the
+  benefits thereof.
+
 September 17, 2009  (Changes by Graf Zahl)
 - Fixed: Unmorphing while invulnerable was blocked.
 - Various cleanup changes.

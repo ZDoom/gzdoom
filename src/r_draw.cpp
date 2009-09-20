@@ -2205,7 +2205,7 @@ ESPSResult R_SetPatchStyle (FRenderStyle style, fixed_t alpha, int translation, 
 		hcolfunc_post4 = rt_shaded4cols;
 		dc_color = fixedcolormap ? fixedcolormap[APART(color)] : basecolormap->Maps[APART(color)];
 		dc_colormap = (basecolormap = &ShadeFakeColormap[16-alpha])->Maps;
-		if (fixedlightlev && !fixedcolormap)
+		if (fixedlightlev >= 0 && fixedcolormap == NULL)
 		{
 			dc_colormap += fixedlightlev;
 		}

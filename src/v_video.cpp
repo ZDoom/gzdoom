@@ -1258,6 +1258,17 @@ void DFrameBuffer::WriteSavePic (player_t *player, FILE *file, int width, int he
 	delete pic;
 }
 
+//===========================================================================
+//
+// 
+//
+//===========================================================================
+
+void DFrameBuffer::DrawRemainingPlayerSprites()
+{
+	R_DrawRemainingPlayerSprites();
+}
+
 
 
 FNativePalette::~FNativePalette()

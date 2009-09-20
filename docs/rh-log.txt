@@ -1,3 +1,8 @@
+September 20, 2009  (Changes by Graf Zahl)
+- Changed call to R_DrawRemainingPlayerSprites into a virtual function
+  of DFrameBuffer because its implementation is specific to the software
+  renderer and needs to be overridable.
+
 September 19, 2009
 - Fixed: Wall drawing handled fixed light levels improperly (but did not
   completely ignore them, either).

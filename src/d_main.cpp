@@ -681,7 +681,7 @@ void D_Display ()
 				SB_state = screen->GetPageCount();
 				BorderNeedRefresh = screen->GetPageCount();
 			}
-			R_DrawRemainingPlayerSprites();
+			screen->DrawRemainingPlayerSprites();
 			screen->DrawBlendingRect();
 			if (automapactive)
 			{

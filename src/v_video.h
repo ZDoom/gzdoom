@@ -348,6 +348,9 @@ public:
 	// renders view to a savegame picture
 	virtual void WriteSavePic (player_t *player, FILE *file, int width, int height);
 
+	// draws player sprites with hardware acceleration (only useful for software rendering)
+	virtual void DrawRemainingPlayerSprites();
+
 	bool Accel2D;	// If true, 2D drawing can be accelerated.
 
 	// Begin 2D drawing operations. This is like Update, but it doesn't end

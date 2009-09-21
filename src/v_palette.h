@@ -88,25 +88,43 @@ struct FColormapStyle
 	float FadeLevel;
 };
 
-// Special colormaps, like invulnerability.
 enum
 {
 	NOFIXEDCOLORMAP = -1,
-	INVERSECOLORMAP,
-	GOLDCOLORMAP,
-	REDCOLORMAP,		// [BC] New Skulltag colormaps.
-	GREENCOLORMAP,
-	BLUECOLORMAP,
-
-	NUM_SPECIALCOLORMAPS
+	INVERSECOLORMAP,	// the inverse map is used explicitly in a few places.
 };
-struct FSpecialColormapParameters
+
+
+struct FSpecialColormap
 {
 	float Colorize[3];
 	bool Inverted;
+	BYTE Colormap[256];
+	PalEntry GrayscaleToColor[256];
 };
-extern FSpecialColormapParameters SpecialColormapParms[NUM_SPECIALCOLORMAPS];
-extern BYTE SpecialColormaps[NUM_SPECIALCOLORMAPS][256];
+
+extern TArray<FSpecialColormap> SpecialColormaps;
+
+// some utility functions to store special colormaps in powerup blends
+#define SPECIALCOLORMAP_MASK 0x00ff0000
+
+inline int MakeSpecialColormap(int index)
+{
+	return index | SPECIALCOLORMAP_MASK;
+}
+
+inline bool IsSpecialColormap(int map)
+{
+	return (map & SPECIALCOLORMAP_MASK) == SPECIALCOLORMAP_MASK;
+}
+
+inline int GetSpecialColormap(int blend)
+{
+	return IsSpecialColormap(blend)? blend & ~SPECIALCOLORMAP_MASK : NOFIXEDCOLORMAP;
+}
+
+int AddSpecialColormap(double r, double g, double b, bool inv);
+
 
 
 extern BYTE DesaturateColormap[31][256];

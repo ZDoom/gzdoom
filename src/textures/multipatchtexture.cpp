@@ -425,23 +425,15 @@ BYTE *GetBlendMap(PalEntry blend, BYTE *blendwork)
 
 	switch (blend.a==0 ? blend.r : -1)
 	{
-	case BLEND_INVERSEMAP:
-		return SpecialColormaps[INVERSECOLORMAP];
-
-	case BLEND_GOLDMAP:
-		return SpecialColormaps[GOLDCOLORMAP];
-
-	case BLEND_REDMAP:
-		return SpecialColormaps[REDCOLORMAP];
-
-	case BLEND_GREENMAP:
-		return SpecialColormaps[GREENCOLORMAP];
-
 	case BLEND_ICEMAP:
 		return TranslationToTable(TRANSLATION(TRANSLATION_Standard, 7))->Remap;
 
 	default:
-		if (blend.r >= BLEND_DESATURATE1 && blend.r <= BLEND_DESATURATE31)
+		if (blend.r >= BLEND_SPECIALCOLORMAP1)
+		{
+			return SpecialColormaps[blend.r - BLEND_SPECIALCOLORMAP1].Colormap;
+		}
+		else if (blend.r >= BLEND_DESATURATE1 && blend.r <= BLEND_DESATURATE31)
 		{
 			return DesaturateColormap[blend.r - BLEND_DESATURATE1];
 		}
@@ -1044,22 +1036,29 @@ void FMultiPatchTexture::ParsePatch(FScanner &sc, TexPart & part)
 			}
 			else if (sc.Compare("Translation"))
 			{
+				int match;
+
 				bComplex = true;
 				if (part.Translation != NULL) delete part.Translation;
 				part.Translation = NULL;
 				part.Blend = 0;
-				static const char *maps[] = { "inverse", "gold", "red", "green", "ice", "desaturate", NULL };
+				static const char *maps[] = { "inverse", "gold", "red", "green", "blue", NULL };
 				sc.MustGetString();
-				int match = sc.MatchString(maps);
+
+				match = sc.MatchString(maps);
 				if (match >= 0)
 				{
-					part.Blend.r = 1 + match;
-					if (part.Blend.r == BLEND_DESATURATE1)
-					{
-						sc.MustGetStringName(",");
-						sc.MustGetNumber();
-						part.Blend.r += clamp(sc.Number-1, 0, 30);
-					}
+					part.Blend.r = BLEND_SPECIALCOLORMAP1 + match;
+				}
+				else if (sc.Compare("ICE"))
+				{
+					part.Blend.r = BLEND_ICEMAP;
+				}
+				else if (sc.Compare("DESATURATE"))
+				{
+					sc.MustGetStringName(",");
+					sc.MustGetNumber();
+					part.Blend.r = BLEND_DESATURATE1 + clamp(sc.Number-1, 0, 30);
 				}
 				else
 				{

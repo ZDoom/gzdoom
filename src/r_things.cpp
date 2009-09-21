@@ -1680,7 +1680,8 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, fixed_t sx, fixed_
 				// The colormap has changed. Is it one we can easily identify?
 				// If not, then don't bother trying to identify it for
 				// hardware accelerated drawing.
-				if (vis->colormap < SpecialColormaps[0] || vis->colormap >= SpecialColormaps[NUM_SPECIALCOLORMAPS])
+				if (vis->colormap < SpecialColormaps[0].Colormap || 
+					vis->colormap >= SpecialColormaps[SpecialColormaps.Size()].Colormap)
 				{
 					noaccel = true;
 				}
@@ -1812,19 +1813,21 @@ void R_DrawRemainingPlayerSprites()
 		{
 			FDynamicColormap *colormap = VisPSpritesBaseColormap[i];
 			bool flip = vis->xiscale < 0;
-			FSpecialColormapParameters *special = NULL;
+			FSpecialColormap *special = NULL;
 			PalEntry overlay = 0;
 			FColormapStyle colormapstyle;
 			bool usecolormapstyle = false;
 
-			if (vis->colormap >= SpecialColormaps[0] && vis->colormap < SpecialColormaps[NUM_SPECIALCOLORMAPS])
+			if (vis->colormap >= SpecialColormaps[0].Colormap && 
+				vis->colormap < SpecialColormaps[SpecialColormaps.Size()].Colormap)
 			{
-				ptrdiff_t specialmap = (vis->colormap - SpecialColormaps[0]) >> 8;
-				if (SpecialColormapParms[specialmap].Inverted)
+				// Yuck! There needs to be a better way to store colormaps in the vissprite... :(
+				ptrdiff_t specialmap = (vis->colormap - SpecialColormaps[0].Colormap) / sizeof(FSpecialColormap);
+				if (SpecialColormaps[specialmap].Inverted)
 				{
 					vis->RenderStyle.Flags ^= STYLEF_InvertSource;
 				}
-				special = &SpecialColormapParms[specialmap];
+				special = &SpecialColormaps[specialmap];
 			}
 			else if (colormap->Color == PalEntry(255,255,255) &&
 				colormap->Desaturate == 0)

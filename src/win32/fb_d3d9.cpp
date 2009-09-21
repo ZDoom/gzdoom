@@ -3089,6 +3089,7 @@ bool D3DFB::SetStyle(D3DTex *tex, DrawParms &parms, D3DCOLOR &color0, D3DCOLOR &
 
 	stencilling = false;
 	quad.Palette = NULL;
+	quad.Flags = 0;
 
 	switch (style.BlendOp)
 	{
@@ -3124,7 +3125,7 @@ bool D3DFB::SetStyle(D3DTex *tex, DrawParms &parms, D3DCOLOR &color0, D3DCOLOR &
 		quad.ShaderNum = BQS_SpecialColormap;
 		color0 = D3DCOLOR_COLORVALUE(parms.specialcolormap->Colorize[0]/2,
 			parms.specialcolormap->Colorize[1]/2, parms.specialcolormap->Colorize[2]/2, 1);
-		color1 = 0;
+		color1 = D3DCOLOR_ARGB(255,0,0,0);
 	}
 	else if (parms.colormapstyle != NULL)
 	{ // Emulate the fading from an in-game colormap (colorized, faded, and desaturated)

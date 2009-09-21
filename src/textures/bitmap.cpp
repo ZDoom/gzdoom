@@ -35,6 +35,7 @@
 #include "bitmap.h"
 #include "templates.h"
 #include "r_translate.h"
+#include "v_palette.h"
 
 
 //===========================================================================
@@ -70,86 +71,6 @@ void iCopyColors(BYTE *pout, const BYTE *pin, int count, int step, FCopyInfo *in
 		}
 		break;
 
-	case BLEND_INVERSEMAP:
-		// Doom's inverted invulnerability map
-		for(i=0;i<count;i++)
-		{
-			a = TSrc::A(pin);
-			if (TBlend::ProcessAlpha0() || a)
-			{
-				gray = clamp<int>(255 - TSrc::Gray(pin),0,255);
-
-				TBlend::OpC(pout[TDest::RED], gray, a, inf);
-				TBlend::OpC(pout[TDest::GREEN], gray, a, inf);
-				TBlend::OpC(pout[TDest::BLUE], gray, a, inf);
-				TBlend::OpA(pout[TDest::ALPHA], a, inf);
-			}
-			pout+=4;
-			pin+=step;
-		}
-		break;
-
-	case BLEND_GOLDMAP:
-		// Heretic's golden invulnerability map
-		for(i=0;i<count;i++)
-		{
-			a = TSrc::A(pin);
-			if (TBlend::ProcessAlpha0() || a)
-			{
-				gray = TSrc::Gray(pin);
-				r=clamp<int>(gray+(gray>>1),0,255);
-				g=clamp<int>(gray-(gray>>2),0,255);
-
-				TBlend::OpC(pout[TDest::RED], r, a, inf);
-				TBlend::OpC(pout[TDest::GREEN], g, a, inf);
-				TBlend::OpC(pout[TDest::BLUE], 0, a, inf);
-				TBlend::OpA(pout[TDest::ALPHA], a, inf);
-			}
-			pout+=4;
-			pin+=step;
-		}
-		break;
-
-	case BLEND_REDMAP:
-		// Skulltag's red Doomsphere map
-		for(i=0;i<count;i++)
-		{
-			a = TSrc::A(pin);
-			if (TBlend::ProcessAlpha0() || a)
-			{
-				gray = TSrc::Gray(pin);
-				r=clamp<int>(gray+(gray>>1),0,255);
-
-				TBlend::OpC(pout[TDest::RED], r, a, inf);
-				TBlend::OpC(pout[TDest::GREEN], 0, a, inf);
-				TBlend::OpC(pout[TDest::BLUE], 0, a, inf);
-				TBlend::OpA(pout[TDest::ALPHA], a, inf);
-			}
-			pout+=4;
-			pin+=step;
-		}
-		break;
-
-	case BLEND_GREENMAP:
-		// Skulltag's Guardsphere map
-		for(i=0;i<count;i++)
-		{
-			a = TSrc::A(pin);
-			if (TBlend::ProcessAlpha0() || a)
-			{
-				gray = TSrc::Gray(pin);
-				r=clamp<int>(gray+(gray>>1),0,255);
-
-				TBlend::OpC(pout[TDest::RED], r, a, inf);
-				TBlend::OpC(pout[TDest::GREEN], r, a, inf);
-				TBlend::OpC(pout[TDest::BLUE], gray, a, inf);
-				TBlend::OpA(pout[TDest::ALPHA], a, inf);
-			}
-			pout+=4;
-			pin+=step;
-		}
-		break;
-
 	case BLEND_ICEMAP:
 		// Create the ice translation table, based on Hexen's.
 		// Since this is done in True Color the purplish tint is fully preserved - even in Doom!
@@ -171,7 +92,28 @@ void iCopyColors(BYTE *pout, const BYTE *pin, int count, int step, FCopyInfo *in
 		break;
 
 	default:
-		if (inf->blend >= BLEND_DESATURATE1 && inf->blend<=BLEND_DESATURATE31)
+
+		if (inf->blend >= BLEND_SPECIALCOLORMAP1)
+		{
+			FSpecialColormap *cm = &SpecialColormaps[inf->blend - BLEND_SPECIALCOLORMAP1];
+			for(i=0;i<count;i++)
+			{
+				a = TSrc::A(pin);
+				if (TBlend::ProcessAlpha0() || a)
+				{
+					gray = clamp<int>(255 - TSrc::Gray(pin),0,255);
+
+					PalEntry pe = cm->GrayscaleToColor[gray];
+					TBlend::OpC(pout[TDest::RED], pe.r , a, inf);
+					TBlend::OpC(pout[TDest::GREEN], pe.g, a, inf);
+					TBlend::OpC(pout[TDest::BLUE], pe.b, a, inf);
+					TBlend::OpA(pout[TDest::ALPHA], a, inf);
+				}
+				pout+=4;
+				pin+=step;
+			}
+		}
+		else if (inf->blend >= BLEND_DESATURATE1 && inf->blend<=BLEND_DESATURATE31)
 		{
 			// Desaturated light settings.
 			fac=inf->blend-BLEND_DESATURATE1+1;

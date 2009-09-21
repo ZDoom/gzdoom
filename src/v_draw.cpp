@@ -584,7 +584,7 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, int x, int y, DWORD tag, va_l
 			break;
 
 		case DTA_SpecialColormap:
-			parms->specialcolormap = va_arg (tags, FSpecialColormapParameters *);
+			parms->specialcolormap = va_arg (tags, FSpecialColormap *);
 			break;
 
 		case DTA_ColormapStyle:

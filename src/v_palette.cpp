@@ -61,10 +61,16 @@ extern "C" {
 FDynamicColormap NormalLight;
 }
 FPalette GPalette;
-BYTE SpecialColormaps[NUM_SPECIALCOLORMAPS][256];
+TArray<FSpecialColormap> SpecialColormaps;
 BYTE DesaturateColormap[31][256];
 
-FSpecialColormapParameters SpecialColormapParms[NUM_SPECIALCOLORMAPS] =
+struct FSpecialColormapParameters
+{
+	float Colorize[3];
+	bool Inverted;
+};
+
+static FSpecialColormapParameters SpecialColormapParms[] =
 {
 	// Doom invulnerability is an inverted grayscale.
 	// Strife uses it when firing the Sigil
@@ -355,10 +361,57 @@ static bool FixBuildPalette (BYTE *opal, int lump, bool blood)
 	return true;
 }
 
+int AddSpecialColormap(double r, double g, double b, bool inv)
+{
+	for(unsigned i=0; i<SpecialColormaps.Size(); i++)
+	{
+		if (SpecialColormaps[i].Colorize[0] == r &&
+			SpecialColormaps[i].Colorize[1] == g &&
+			SpecialColormaps[i].Colorize[2] == b &&
+			SpecialColormaps[i].Inverted == inv)
+		{
+			return i;	// The map already exists
+		}
+	}
+
+	FSpecialColormap *cm = &SpecialColormaps[SpecialColormaps.Reserve(1)];
+
+	cm->Colorize[0] = float(r);
+	cm->Colorize[1] = float(g);
+	cm->Colorize[2] = float(b);
+	cm->Inverted = inv;
+
+	for (int c = 0; c < 256; c++)
+	{
+		double intensity = (GPalette.BaseColors[c].r * 77 +
+							GPalette.BaseColors[c].g * 143 +
+							GPalette.BaseColors[c].b * 37) / 256.0;
+		if (inv)
+		{
+			intensity = 255 - intensity;
+		}
+
+		PalEntry pe = PalEntry(	MIN(255, int(intensity*r)), 
+								MIN(255, int(intensity*g)), 
+								MIN(255, int(intensity*b)));
+
+		cm->Colormap[c] = ColorMatcher.Pick(pe);
+
+		// This table is used by the texture composition code
+		for(int i = 0;i < 256; i++)
+		{
+			intensity = inv? 255-i : i;
+			cm->GrayscaleToColor[i] = PalEntry(	MIN(255, int(intensity*r)), 
+												MIN(255, int(intensity*g)), 
+												MIN(255, int(intensity*b)));
+		}
+	}
+	return SpecialColormaps.Size() - 1;
+}
+
 void InitPalette ()
 {
 	BYTE pal[768];
-	BYTE *shade;
 	int c;
 	bool usingBuild = false;
 	int lump;
@@ -398,37 +451,18 @@ void InitPalette ()
 	NormalLight.Fade = 0;
 	// NormalLight.Maps is set by R_InitColormaps()
 
-	// build special maps (e.g. invulnerability)
-	double intensity;
+	// build default special maps (e.g. invulnerability)
+	SpecialColormaps.Clear();
 
 	for (int i = 0; i < countof(SpecialColormapParms); ++i)
 	{
-		double r, g, b;
-		bool inv;
-
-		shade = SpecialColormaps[i];
-		r = SpecialColormapParms[i].Colorize[0];
-		g = SpecialColormapParms[i].Colorize[1];
-		b = SpecialColormapParms[i].Colorize[2];
-		inv = SpecialColormapParms[i].Inverted;
-		for (c = 0; c < 256; c++)
-		{
-			intensity = (GPalette.BaseColors[c].r * 77 +
-						 GPalette.BaseColors[c].g * 143 +
-						 GPalette.BaseColors[c].b * 37) / 256.0;
-			if (inv)
-			{
-				intensity = 255 - intensity;
-			}
-			shade[c] = ColorMatcher.Pick(
-				MIN(255, int(intensity*r)), MIN(255, int(intensity*g)), MIN(255, int(intensity*b)));
-		}
+		AddSpecialColormap(SpecialColormapParms[i].Colorize[0], SpecialColormapParms[i].Colorize[1],
+			SpecialColormapParms[i].Colorize[2], SpecialColormapParms[i].Inverted);
 	}
-
 	// desaturated colormaps
 	for(int m = 0; m < 31; m++)
 	{
-		shade = DesaturateColormap[m];
+		BYTE *shade = DesaturateColormap[m];
 		for (c = 0; c < 256; c++)
 		{
 			int intensity = (GPalette.BaseColors[c].r * 77 +

@@ -1,3 +1,10 @@
+September 21, 2009  (Changes by Graf Zahl)
+- Fixed: When drawing with a special colormap the quad's flags weren't cleared
+  which could cause crashes.
+- Added custom special colormaps to DECORATE.
+- Cleaned up special colormap code and removed lots of dependencies on the
+  knowledge of the tables' contents.
+
 September 20, 2009  (Changes by Graf Zahl)
 - Changed call to R_DrawRemainingPlayerSprites into a virtual function
   of DFrameBuffer because its implementation is specific to the software

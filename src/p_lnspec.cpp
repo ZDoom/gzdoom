@@ -2532,7 +2532,10 @@ FUNC(LS_SetPlayerProperty)
 				if (power != 4)
 				{
 					APowerup *item = static_cast<APowerup*>(it->GiveInventoryType (powers[power]));
-					if (item != NULL && power == 0) item->BlendColor = INVERSECOLOR;
+					if (item != NULL && power == 0 && arg1 == 1) 
+					{
+						item->BlendColor = MakeSpecialColormap(INVERSECOLORMAP);
+					}
 				}
 				else if (it->player - players == consoleplayer)
 				{
@@ -2568,7 +2571,11 @@ FUNC(LS_SetPlayerProperty)
 				{ // Give power
 					if (power != 4)
 					{
-						players[i].mo->GiveInventoryType (powers[power]);
+						APowerup *item = static_cast<APowerup*>(players[i].mo->GiveInventoryType (powers[power]));
+						if (item != NULL && power == 0 && arg1 == 1) 
+						{
+							item->BlendColor = MakeSpecialColormap(INVERSECOLORMAP);
+						}
 					}
 					else if (i == consoleplayer)
 					{

@@ -1556,7 +1556,8 @@ DEFINE_CLASS_PROPERTY(weapon, S, WeaponPiece)
 //==========================================================================
 DEFINE_CLASS_PROPERTY_PREFIX(powerup, color, C_f, Inventory)
 {
-	PROP_INT_PARM(i, 0);
+	static const char *specialcolormapnames[] = {
+		"INVERSEMAP", "GOLDMAP", "REDMAP", "GREENMAP", "BLUEMAP", NULL };
 
 	int alpha;
 	PalEntry * pBlendColor;
@@ -1582,30 +1583,11 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, color, C_f, Inventory)
 	{
 		PROP_STRING_PARM(name, 1);
 
-		if (!stricmp(name, "INVERSEMAP"))
+		// We must check the old special colormap names for compatibility
+		int v = MatchString(name, specialcolormapnames);
+		if (v >= 0)
 		{
-			*pBlendColor = INVERSECOLOR;
-			return;
-		}
-		else if (!stricmp(name, "GOLDMAP"))
-		{
-			*pBlendColor = GOLDCOLOR;
-			return;
-		}
-		// [BC] Yay, more hacks.
-		else if (!stricmp(name, "REDMAP" ))
-		{
-			*pBlendColor = REDCOLOR;
-			return;
-		}
-		else if (!stricmp(name, "GREENMAP" ))
-		{
-			*pBlendColor = GREENCOLOR;
-			return;
-		}
-		else if (!stricmp(name, "BLUEMAP"))
-		{
-			*pBlendColor = BLUECOLOR;
+			*pBlendColor = MakeSpecialColormap(v);
 			return;
 		}
 
@@ -1621,6 +1603,37 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, color, C_f, Inventory)
 	alpha=clamp<int>(alpha, 0, 255);
 	if (alpha!=0) *pBlendColor = MAKEARGB(alpha, 0, 0, 0) | color;
 	else *pBlendColor = 0;
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_CLASS_PROPERTY_PREFIX(powerup, colormap, FFFI, Inventory)
+{
+	PalEntry * pBlendColor;
+
+	if (info->Class->IsDescendantOf(RUNTIME_CLASS(APowerup)))
+	{
+		pBlendColor = &((APowerup*)defaults)->BlendColor;
+	}
+	else if (info->Class->IsDescendantOf(RUNTIME_CLASS(APowerupGiver)))
+	{
+		pBlendColor = &((APowerupGiver*)defaults)->BlendColor;
+	}
+	else
+	{
+		I_Error("\"powerup.colormap\" requires an actor of type \"Powerup\"\n");
+		return;
+	}
+
+	PROP_FLOAT_PARM(r, 0);
+	PROP_FLOAT_PARM(g, 1);
+	PROP_FLOAT_PARM(b, 2);
+	PROP_INT_PARM(inv, 3);
+
+
+
+	*pBlendColor = MakeSpecialColormap(AddSpecialColormap(r, g, b, !!inv));
 }
 
 //==========================================================================

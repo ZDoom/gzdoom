@@ -1163,9 +1163,9 @@ void R_SetupFrame (AActor *actor)
 
 	if (player != NULL && camera == player->mo)
 	{
-		if (player->fixedcolormap >= 0 && player->fixedcolormap < NUM_SPECIALCOLORMAPS)
+		if (player->fixedcolormap >= 0 && player->fixedcolormap < (int)SpecialColormaps.Size())
 		{
-			fixedcolormap = SpecialColormaps[player->fixedcolormap];
+			fixedcolormap = SpecialColormaps[player->fixedcolormap].Colormap;
 		}
 		else if (player->fixedlightlevel >= 0 && player->fixedlightlevel < NUMCOLORMAPS)
 		{
@@ -1175,7 +1175,7 @@ void R_SetupFrame (AActor *actor)
 	// [RH] Inverse light for shooting the Sigil
 	if (fixedcolormap == NULL && extralight == INT_MIN)
 	{
-		fixedcolormap = SpecialColormaps[INVERSECOLORMAP];
+		fixedcolormap = SpecialColormaps[INVERSECOLORMAP].Colormap;
 		extralight = 0;
 	}
 

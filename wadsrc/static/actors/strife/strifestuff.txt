@@ -177,6 +177,7 @@ ACTOR ExplosiveBarrel2 94
 	Height 32
 	ConversationID 204, -1, -1
 	+SOLID +SHOOTABLE +NOBLOOD +OLDRADIUSDMG
+	DeathSound "world/barrelx"
 	+INCOMBAT
 	States
 	{

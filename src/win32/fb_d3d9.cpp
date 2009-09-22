@@ -2569,7 +2569,10 @@ void STACK_ARGS D3DFB::DrawTextureV (FTexture *img, int x, int y, uint32 tags_fi
 			EndQuadBatch();
 			BeginQuadBatch();
 		}
-		RECT scissor = { parms.lclip, parms.uclip, parms.rclip, parms.dclip };
+		RECT scissor = {
+			parms.lclip, parms.uclip + LBOffsetI,
+			parms.rclip, parms.dclip + LBOffsetI
+		};
 		D3DDevice->SetScissorRect(&scissor);
 		D3DDevice->SetRenderState(D3DRS_SCISSORTESTENABLE, TRUE);
 	}

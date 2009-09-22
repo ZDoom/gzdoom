@@ -1638,9 +1638,9 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, colormap, FFFfff, Inventory)
 		PROP_FLOAT_PARM(r1, 0);
 		PROP_FLOAT_PARM(g1, 1);
 		PROP_FLOAT_PARM(b1, 2);
-		PROP_FLOAT_PARM(r2, 0);
-		PROP_FLOAT_PARM(g2, 1);
-		PROP_FLOAT_PARM(b2, 2);
+		PROP_FLOAT_PARM(r2, 3);
+		PROP_FLOAT_PARM(g2, 4);
+		PROP_FLOAT_PARM(b2, 5);
 		*pBlendColor = MakeSpecialColormap(AddSpecialColormap(r1, g1, b1, r2, g2, b2));
 	}
 	else

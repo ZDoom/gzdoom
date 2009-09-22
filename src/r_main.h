@@ -121,6 +121,7 @@ extern int				extralight, r_actualextralight;
 extern bool				foggy;
 extern int				fixedlightlev;
 extern lighttable_t*	fixedcolormap;
+extern FSpecialColormap*realfixedcolormap;
 
 
 //

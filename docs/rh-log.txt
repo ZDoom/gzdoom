@@ -1,4 +1,7 @@
 September 21, 2009
+- For hardware 2D, apply fixed colormaps when copying to video memory instead
+  of doing it directly during the rendering, in order to improve visual
+  fidelity for colormaps that aren't grayscale.
 - Added support for defining the full color range of a special colormap.
 - Moved the code for specialcolormap and colormapstyle in D3DFB::SetStyle()
   at the end of the normally-colored block so that they get all the proper

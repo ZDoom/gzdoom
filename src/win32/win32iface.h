@@ -310,7 +310,7 @@ private:
 		SHADER_VertexColor,
 
 		SHADER_SpecialColormap,
-		SHADER_SpecialColorMapPal,
+		SHADER_SpecialColormapPal,
 
 		SHADER_InGameColormap,
 		SHADER_InGameColormapDesat,

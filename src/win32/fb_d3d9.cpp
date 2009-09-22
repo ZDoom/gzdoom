@@ -61,7 +61,7 @@
 #include "v_pfx.h"
 #include "stats.h"
 #include "doomerrors.h"
-#include "r_draw.h"
+#include "r_main.h"
 #include "r_translate.h"
 #include "f_wipe.h"
 #include "st_stuff.h"
@@ -1074,19 +1074,30 @@ void D3DFB::Draw3DPart(bool copy3d)
 
 	SetTexture (0, FBTexture);
 	SetPaletteTexture(PaletteTexture, 256, BorderColor);
-	SetPixelShader(Shaders[SHADER_NormalColorPal]);
 	D3DDevice->SetFVF (D3DFVF_FBVERTEX);
 	memset(Constant, 0, sizeof(Constant));
 	SetAlphaBlend(D3DBLENDOP(0));
 	EnableAlphaTest(FALSE);
+	SetPixelShader(Shaders[SHADER_NormalColorPal]);
 	if (copy3d)
 	{
 		FBVERTEX verts[4];
 		D3DCOLOR color0, color1;
 		if (Accel2D)
 		{
-			color0 = 0;
-			color1 = 0xFFFFFFF;
+			if (realfixedcolormap == NULL)
+			{
+				color0 = 0;
+				color1 = 0xFFFFFFF;
+			}
+			else
+			{
+				color0 = D3DCOLOR_COLORVALUE(realfixedcolormap->ColorizeStart[0]/2,
+					realfixedcolormap->ColorizeStart[1]/2, realfixedcolormap->ColorizeStart[2]/2, 0);
+				color1 = D3DCOLOR_COLORVALUE(realfixedcolormap->ColorizeEnd[0]/2,
+					realfixedcolormap->ColorizeEnd[1]/2, realfixedcolormap->ColorizeEnd[2]/2, 1);
+				SetPixelShader(Shaders[SHADER_SpecialColormapPal]);
+			}
 		}
 		else
 		{
@@ -1096,6 +1107,7 @@ void D3DFB::Draw3DPart(bool copy3d)
 		CalcFullscreenCoords(verts, Accel2D, false, color0, color1);
 		D3DDevice->DrawPrimitiveUP(D3DPT_TRIANGLEFAN, 2, verts, sizeof(FBVERTEX));
 	}
+	SetPixelShader(Shaders[SHADER_NormalColorPal]);
 }
 
 //==========================================================================

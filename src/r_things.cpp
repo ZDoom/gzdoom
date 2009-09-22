@@ -1648,9 +1648,9 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, fixed_t sx, fixed_
 			}
 		}
 
-		if (fixedcolormap != NULL)
+		if (realfixedcolormap != NULL)
 		{ // fixed color
-			vis->colormap = fixedcolormap;
+			vis->colormap = realfixedcolormap->Colormap;
 		}
 		else
 		{

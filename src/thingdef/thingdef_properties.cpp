@@ -1601,7 +1601,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, color, C_f, Inventory)
 	else alpha = 255/3;
 
 	alpha=clamp<int>(alpha, 0, 255);
-	if (alpha!=0) *pBlendColor = MAKEARGB(alpha, 0, 0, 0) | color;
+	if (alpha != 0) *pBlendColor = MAKEARGB(alpha, 0, 0, 0) | color;
 	else *pBlendColor = 0;
 }
 

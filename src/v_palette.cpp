@@ -35,6 +35,7 @@
 #include <stddef.h>
 #include <string.h>
 #include <math.h>
+#include <float.h>
 #ifdef _WIN32
 #include <io.h>
 #else
@@ -360,24 +361,25 @@ static bool FixBuildPalette (BYTE *opal, int lump, bool blood)
 	return true;
 }
 
-int AddSpecialColormap(double r1, double g1, double b1, double r2, double g2, double b2)
+int AddSpecialColormap(float r1, float g1, float b1, float r2, float g2, float b2)
 {
 	// Clamp these in range for the hardware shader.
-	r1 = clamp(r1, 0.0, 2.0);
-	g1 = clamp(g1, 0.0, 2.0);
-	b1 = clamp(b1, 0.0, 2.0);
-	r2 = clamp(r2, 0.0, 2.0);
-	g2 = clamp(g2, 0.0, 2.0);
-	b2 = clamp(b2, 0.0, 2.0);
+	r1 = clamp(r1, 0.0f, 2.0f);
+	g1 = clamp(g1, 0.0f, 2.0f);
+	b1 = clamp(b1, 0.0f, 2.0f);
+	r2 = clamp(r2, 0.0f, 2.0f);
+	g2 = clamp(g2, 0.0f, 2.0f);
+	b2 = clamp(b2, 0.0f, 2.0f);
 
 	for(unsigned i=0; i<SpecialColormaps.Size(); i++)
 	{
-		if (SpecialColormaps[i].ColorizeStart[0] == r1 &&
-			SpecialColormaps[i].ColorizeStart[1] == g1 &&
-			SpecialColormaps[i].ColorizeStart[2] == b1 &&
-			SpecialColormaps[i].ColorizeEnd[0] == r2 &&
-			SpecialColormaps[i].ColorizeEnd[1] == g2 &&
-			SpecialColormaps[i].ColorizeEnd[2] == b2)
+		// Avoid precision issues here when trying to find a proper match.
+		if (fabs(SpecialColormaps[i].ColorizeStart[0]- r1) < FLT_EPSILON &&
+			fabs(SpecialColormaps[i].ColorizeStart[1]- g1) < FLT_EPSILON &&
+			fabs(SpecialColormaps[i].ColorizeStart[2]- b1) < FLT_EPSILON &&
+			fabs(SpecialColormaps[i].ColorizeEnd[0]- r2) < FLT_EPSILON &&
+			fabs(SpecialColormaps[i].ColorizeEnd[1]- g2) < FLT_EPSILON &&
+			fabs(SpecialColormaps[i].ColorizeEnd[2]- b2) < FLT_EPSILON)
 		{
 			return i;	// The map already exists
 		}
@@ -412,7 +414,12 @@ int AddSpecialColormap(double r1, double g1, double b1, double r2, double g2, do
 		cm->Colormap[c] = ColorMatcher.Pick(pe);
 
 		// This table is used by the texture composition code
-		cm->GrayscaleToColor[c] = pe;
+		for(int i = 0;i < 256; i++)
+		{
+			cm->GrayscaleToColor[i] = PalEntry(	MIN(255, int(r1 + i*r2)), 
+												MIN(255, int(g1 + i*g2)), 
+												MIN(255, int(b1 + i*b2)));
+		}
 	}
 	return SpecialColormaps.Size() - 1;
 }

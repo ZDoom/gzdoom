@@ -1,3 +1,16 @@
+September 22, 2009  (Changes by Graf Zahl)
+- Added a check to Dehacked code which tries to set the blend color.
+  It must set it to 0 if the alpha is 0 to avoid problems with special
+  colormap detection.
+- Changed SPECIALCOLORMAP_MASK again so that it does not interfere with
+  any valid setting. It must use a value with a 0-alpha because these
+  are guaranteed not to be produced by the DECORATE code elsewhere.
+- Fixed precision issues with AddFixedColormap's search for identical colormaps.
+- Added custom colormap support to texture composition code.
+- Fixed initialization of FSpecialColormap::GrayscaleToColor. This is not
+  a mapping from the palette but from a [0,255] grayscale ramp and used to
+  apply colormaps to true color images for texture composition.
+
 September 21, 2009
 - For hardware 2D, apply fixed colormaps when copying to video memory instead
   of doing it directly during the rendering, in order to improve visual

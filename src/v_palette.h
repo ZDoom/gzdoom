@@ -106,7 +106,7 @@ struct FSpecialColormap
 extern TArray<FSpecialColormap> SpecialColormaps;
 
 // some utility functions to store special colormaps in powerup blends
-#define SPECIALCOLORMAP_MASK 0xBEEF0000
+#define SPECIALCOLORMAP_MASK 0x00b60000
 
 inline int MakeSpecialColormap(int index)
 {
@@ -124,7 +124,7 @@ inline int GetSpecialColormap(int blend)
 	return IsSpecialColormap(blend) ? blend & 0xFFFF : NOFIXEDCOLORMAP;
 }
 
-int AddSpecialColormap(double r1, double g1, double b1, double r2, double g2, double b2);
+int AddSpecialColormap(float r1, float g1, float b1, float r2, float g2, float b2);
 
 
 

@@ -1793,13 +1793,17 @@ static int PatchMisc (int dummy)
 					{
 						Printf ("Bad powerup color description \"%s\" for %s\n", Line2, Line1);
 					}
-					else
+					else if (a > 0)
 					{
 						static_cast<APowerup *>(GetDefaultByType (types[i]))->BlendColor = PalEntry(
 							BYTE(clamp(a,0.f,1.f)*255.f),
 							clamp(r,0,255),
 							clamp(g,0,255),
 							clamp(b,0,255));
+					}
+					else
+					{
+						static_cast<APowerup *>(GetDefaultByType (types[i]))->BlendColor = 0;
 					}
 				}
 			}

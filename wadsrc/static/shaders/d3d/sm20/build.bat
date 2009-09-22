@@ -9,9 +9,7 @@ fxc ..\shaders.ps /Tps_2_0 /O3 /ERedToAlpha -DINVERT=1 /FoRedToAlphaInv.pso
 fxc ..\shaders.ps /Tps_2_0 /O3 /EVertexColor /FoVertexColor.pso
 
 fxc ..\shaders.ps /Tps_2_0 /O3 /ESpecialColormap -DPALTEX=0 -DINVERT=0 /FoSpecialColormap.pso
-fxc ..\shaders.ps /Tps_2_0 /O3 /ESpecialColormap -DPALTEX=0 -DINVERT=1 /FoSpecialColormapInv.pso
 fxc ..\shaders.ps /Tps_2_0 /O3 /ESpecialColormap -DPALTEX=1 -DINVERT=0 /FoSpecialColormapPal.pso
-fxc ..\shaders.ps /Tps_2_0 /O3 /ESpecialColormap -DPALTEX=1 -DINVERT=1 /FoSpecialColormapPalInv.pso
 
 fxc ..\shaders.ps /Tps_2_0 /O3 /EInGameColormap -DPALTEX=0 -DINVERT=0 -DDESAT=0 /FoInGameColormap.pso
 fxc ..\shaders.ps /Tps_2_0 /O3 /EInGameColormap -DPALTEX=0 -DINVERT=0 -DDESAT=1 /FoInGameColormapDesat.pso

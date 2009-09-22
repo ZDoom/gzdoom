@@ -1608,7 +1608,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, color, C_f, Inventory)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_CLASS_PROPERTY_PREFIX(powerup, colormap, FFFI, Inventory)
+DEFINE_CLASS_PROPERTY_PREFIX(powerup, colormap, FFFfff, Inventory)
 {
 	PalEntry * pBlendColor;
 
@@ -1626,14 +1626,27 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, colormap, FFFI, Inventory)
 		return;
 	}
 
-	PROP_FLOAT_PARM(r, 0);
-	PROP_FLOAT_PARM(g, 1);
-	PROP_FLOAT_PARM(b, 2);
-	PROP_INT_PARM(inv, 3);
-
-
-
-	*pBlendColor = MakeSpecialColormap(AddSpecialColormap(r, g, b, !!inv));
+	if (PROP_PARM_COUNT == 3)
+	{
+		PROP_FLOAT_PARM(r, 0);
+		PROP_FLOAT_PARM(g, 1);
+		PROP_FLOAT_PARM(b, 2);
+		*pBlendColor = MakeSpecialColormap(AddSpecialColormap(0, 0, 0, r, g, b));
+	}
+	else if (PROP_PARM_COUNT == 6)
+	{
+		PROP_FLOAT_PARM(r1, 0);
+		PROP_FLOAT_PARM(g1, 1);
+		PROP_FLOAT_PARM(b1, 2);
+		PROP_FLOAT_PARM(r2, 0);
+		PROP_FLOAT_PARM(g2, 1);
+		PROP_FLOAT_PARM(b2, 2);
+		*pBlendColor = MakeSpecialColormap(AddSpecialColormap(r1, g1, b1, r2, g2, b2));
+	}
+	else
+	{
+		I_Error("\"power.colormap\" must have either 3 or 6 parameters\n");
+	}
 }
 
 //==========================================================================

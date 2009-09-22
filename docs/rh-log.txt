@@ -1,4 +1,8 @@
 September 21, 2009
+- Added support for defining the full color range of a special colormap.
+- Moved the code for specialcolormap and colormapstyle in D3DFB::SetStyle()
+  at the end of the normally-colored block so that they get all the proper
+  texture format setup.
 - Fixed: In letterbox modes, the clipping window needs to be adjusted down.
 
 September 21, 2009  (Changes by Graf Zahl)

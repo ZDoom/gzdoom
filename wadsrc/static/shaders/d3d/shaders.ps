@@ -59,13 +59,15 @@ float4 VertexColor(float4 color : COLOR0) : COLOR
 
 // Emulate one of the special colormaps. (Invulnerability, gold, etc.)
 
-float4 SpecialColormap(float2 tex_coord : TEXCOORD0, float4 icolor : COLOR0) : COLOR
+float4 SpecialColormap(float2 tex_coord : TEXCOORD0, float4 start : COLOR0, float4 end : COLOR1) : COLOR
 {
-	// We can't store values greater than 1.0 in a color register, so we multiply
-	// intensity by 2 and expect the caller to divide icolor by 2.
 	float4 color = SampleTexture(tex_coord);
-	float intensity = 2 * Grayscale(color);
-	color.rgb = icolor.rgb * intensity;
+	float4 range = end - start;
+	// We can't store values greater than 1.0 in a color register, so we multiply
+	// the final result by 2 and expect the caller to divide the start and end by 2.
+	color.rgb = 2 * (start + Grayscale(color) * range);
+	// Duplicate alpha semantics of NormalColor.
+	color.a = start.a + color.a * end.a;
 	return color;
 }
 

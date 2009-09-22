@@ -97,8 +97,8 @@ enum
 
 struct FSpecialColormap
 {
-	float Colorize[3];
-	bool Inverted;
+	float ColorizeStart[3];
+	float ColorizeEnd[3];
 	BYTE Colormap[256];
 	PalEntry GrayscaleToColor[256];
 };
@@ -124,7 +124,7 @@ inline int GetSpecialColormap(int blend)
 	return IsSpecialColormap(blend) ? blend & 0xFFFF : NOFIXEDCOLORMAP;
 }
 
-int AddSpecialColormap(double r, double g, double b, bool inv);
+int AddSpecialColormap(double r1, double g1, double b1, double r2, double g2, double b2);
 
 
 
@@ -152,7 +152,7 @@ void V_SetBlend (int blendr, int blendg, int blendb, int blenda);
 // V_ForceBlend()
 //
 // Normally, V_SetBlend() does nothing if the new blend is the
-// same as the old. This function will performing the blending
+// same as the old. This function will perform the blending
 // even if the blend hasn't changed.
 void V_ForceBlend (int blendr, int blendg, int blendb, int blenda);
 

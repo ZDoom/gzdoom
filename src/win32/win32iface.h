@@ -226,6 +226,7 @@ public:
 	bool Lock (bool buffered);
 	void Unlock ();
 	void Update ();
+	void Flip ();
 	PalEntry *GetPalette ();
 	void GetFlashedPalette (PalEntry palette[256]);
 	void UpdatePalette ();
@@ -332,6 +333,7 @@ private:
 	bool CreateResources();
 	void ReleaseResources();
 	bool LoadShaders();
+	void CreateBlockSurfaces();
 	bool CreateFBTexture();
 	bool CreatePaletteTexture();
 	bool CreateGrayPaletteTexture();
@@ -404,6 +406,7 @@ private:
 	bool SM14;
 	bool GatheringWipeScreen;
 	bool AALines;
+	BYTE BlockNum;
 	D3DPal *Palettes;
 	D3DTex *Textures;
 	PackingTexture *Packs;
@@ -427,6 +430,7 @@ private:
 
 	IDirect3DPixelShader9 *Shaders[NUM_SHADERS];
 
+	IDirect3DSurface9 *BlockSurface[2];
 	IDirect3DSurface9 *OldRenderTarget;
 	IDirect3DTexture9 *InitialWipeScreen, *FinalWipeScreen;
 

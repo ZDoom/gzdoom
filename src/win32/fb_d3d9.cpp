@@ -246,6 +246,7 @@ CUSTOM_CVAR(Bool, vid_hw2d, true, CVAR_NOINITCALL)
 	BorderNeedRefresh = SB_state = screen->GetPageCount();
 }
 
+CVAR(Bool, d3d_antilag, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Int, d3d_showpacks, 0, 0)
 CVAR(Bool, vid_hwaalines, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
@@ -276,6 +277,8 @@ D3DFB::D3DFB (int width, int height, bool fullscreen)
 	{
 		Shaders[i] = NULL;
 	}
+	BlockSurface[0] = NULL;
+	BlockSurface[1] = NULL;
 	FBFormat = D3DFMT_UNKNOWN;
 	PalFormat = D3DFMT_UNKNOWN;
 	VSync = vid_vsync;
@@ -531,6 +534,7 @@ bool D3DFB::CreateResources()
 	{
 		return false;
 	}
+	CreateBlockSurfaces();
 	return true;
 }
 
@@ -640,6 +644,8 @@ void D3DFB::ReleaseDefaultPoolItems()
 	SAFE_RELEASE( InitialWipeScreen );
 	SAFE_RELEASE( VertexBuffer );
 	SAFE_RELEASE( IndexBuffer );
+	SAFE_RELEASE( BlockSurface[0] );
+	SAFE_RELEASE( BlockSurface[1] );
 }
 
 //==========================================================================
@@ -674,8 +680,33 @@ bool D3DFB::Reset ()
 	{
 		return false;
 	}
+	CreateBlockSurfaces();
 	SetInitialState();
 	return true;
+}
+
+//==========================================================================
+//
+// D3DFB :: CreateBlockSurfaces
+//
+// Create blocking surfaces for antilag. It's okay if these can't be
+// created; antilag just won't work.
+//
+//==========================================================================
+
+void D3DFB::CreateBlockSurfaces()
+{
+	BlockNum = 0;
+	if (SUCCEEDED(D3DDevice->CreateOffscreenPlainSurface(16, 16, D3DFMT_A8R8G8B8,
+		D3DPOOL_DEFAULT, &BlockSurface[0], 0)))
+	{
+		if (FAILED(D3DDevice->CreateOffscreenPlainSurface(16, 16, D3DFMT_A8R8G8B8,
+			D3DPOOL_DEFAULT, &BlockSurface[1], 0)))
+		{
+			BlockSurface[0]->Release();
+			BlockSurface[0] = NULL;
+		}
+	}
 }
 
 //==========================================================================
@@ -921,10 +952,7 @@ void D3DFB::Update ()
 			DrawRateStuff();
 			DrawPackedTextures(d3d_showpacks);
 			EndBatch();		// Make sure all batched primitives are drawn.
-			DoWindowedGamma();
-			D3DDevice->EndScene();
-			D3DDevice->Present(NULL, NULL, NULL, NULL);
-			InScene = false;
+			Flip();
 		}
 		In2D = 0;
 		return;
@@ -987,10 +1015,7 @@ void D3DFB::Update ()
 	Draw3DPart(In2D <= 1);
 	if (In2D == 0)
 	{
-		DoWindowedGamma();
-		D3DDevice->EndScene();
-		D3DDevice->Present(NULL, NULL, NULL, NULL);
-		InScene = false;
+		Flip();
 	}
 
 	BlitCycles.Unclock();
@@ -998,6 +1023,30 @@ void D3DFB::Update ()
 
 	Buffer = NULL;
 	UpdatePending = false;
+}
+
+void D3DFB::Flip()
+{
+	assert(InScene);
+
+	DoWindowedGamma();
+	D3DDevice->EndScene();
+
+	// Attempt to counter input lag.
+	if (d3d_antilag && BlockSurface[0] != NULL)
+	{
+		D3DLOCKED_RECT lr;
+		volatile int dummy;
+		D3DDevice->ColorFill(BlockSurface[BlockNum], NULL, D3DCOLOR_ARGB(0xFF,0,0x20,0x50));
+		BlockNum ^= 1;
+		if (!FAILED((BlockSurface[BlockNum]->LockRect(&lr, NULL, D3DLOCK_READONLY))))
+		{
+			dummy = *(int *)lr.pBits;
+			BlockSurface[BlockNum]->UnlockRect();
+		}
+	}
+	D3DDevice->Present(NULL, NULL, NULL, NULL);
+	InScene = false;
 }
 
 bool D3DFB::PaintToWindow ()

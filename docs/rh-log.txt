@@ -1,3 +1,12 @@
+September 22, 2009
+- Added a technique to try and minimize input lag with vsync enabled: Two
+  surfaces are alternately locked for read-only access each frame, forcing
+  the driver to stop buffering more than one frame at a time. The input lag
+  on my system doesn't seem to be as bad as it once was (I can no longer
+  see it obviously with my naked eye), but turning antilag on "feels"
+  slightly more responsive. The cvar d3d_antilag turns this technique on and
+  off. See <http://www.xyzw.de/c120.html> for more details.
+
 September 22, 2009  (Changes by Graf Zahl)
 - Added a check to Dehacked code which tries to set the blend color.
   It must set it to 0 if the alpha is 0 to avoid problems with special

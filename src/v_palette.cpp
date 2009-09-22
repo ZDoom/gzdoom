@@ -412,14 +412,14 @@ int AddSpecialColormap(float r1, float g1, float b1, float r2, float g2, float b
 								MIN(255, int(b1 + intensity*b2)));
 
 		cm->Colormap[c] = ColorMatcher.Pick(pe);
+	}
 
-		// This table is used by the texture composition code
-		for(int i = 0;i < 256; i++)
-		{
-			cm->GrayscaleToColor[i] = PalEntry(	MIN(255, int(r1 + i*r2)), 
-												MIN(255, int(g1 + i*g2)), 
-												MIN(255, int(b1 + i*b2)));
-		}
+	// This table is used by the texture composition code
+	for(int i = 0;i < 256; i++)
+	{
+		cm->GrayscaleToColor[i] = PalEntry(	MIN(255, int(r1 + i*r2)), 
+											MIN(255, int(g1 + i*g2)), 
+											MIN(255, int(b1 + i*b2)));
 	}
 	return SpecialColormaps.Size() - 1;
 }

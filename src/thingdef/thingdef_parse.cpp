@@ -617,6 +617,10 @@ static bool ParsePropertyParams(FScanner &sc, FPropertyInfo *prop, AActor *defau
 			case 'M':	// special case. An expression-aware parser will not need this.
 				conv.i = ParseMorphStyle(sc);
 				break;
+				
+			case 'N':	// special case. An expression-aware parser will not need this.
+				conv.i = ParseThingActivation(sc);
+				break;
 
 			case 'L':	// Either a number or a list of strings
 				if (sc.CheckNumber())

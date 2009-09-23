@@ -92,21 +92,7 @@ struct FState
 	{
 		Frame = (Frame & SF_FULLBRIGHT) | (frame-'A');
 	}
-	void SetAction(PSymbolActionFunction *func, bool setdefaultparams = true)
-	{
-#if 0
-		if (func != NULL)
-		{
-			ActionFunc = func->Function;
-			if (setdefaultparams) ParameterIndex = func->defaultparameterindex+1;
-		}
-		else 
-#endif
-		{
-			ActionFunc = NULL;
-			if (setdefaultparams) ParameterIndex = 0;
-		}
-	}
+	void SetAction(PSymbolActionFunction *func, bool setdefaultparams = true);
 	bool CallAction(AActor *self, AActor *stateowner, StateCallData *statecall = NULL);
 	static const PClass *StaticFindStateOwner (const FState *state);
 	static const PClass *StaticFindStateOwner (const FState *state, const FActorInfo *info);

@@ -14,8 +14,10 @@ typedef unsigned short		VM_UHALF;
 typedef signed short		VM_SHALF;
 typedef unsigned int		VM_UWORD;
 typedef signed int			VM_SWORD;
+typedef VM_UBYTE			VM_ATAG;
 
 #define VM_EPSILON			(1/1024.0)
+#define VM_OPSIZE			4		// Number of bytes used by one opcode
 
 enum
 {
@@ -109,7 +111,7 @@ enum
 
 class VMFunction : public DObject
 {
-	DECLARE_CLASS(VMFunction, DObject);
+	DECLARE_ABSTRACT_CLASS(VMFunction, DObject);
 public:
 	bool Native;
 };
@@ -409,7 +411,7 @@ struct VMValue
 		Type = REGT_POINTER;
 		return *this;
 	}
-	void SetPointer(void *v, VM_UBYTE atag=ATAG_GENERIC)
+	void SetPointer(void *v, VM_ATAG atag=ATAG_GENERIC)
 	{
 		Kill();
 		a = v;
@@ -614,9 +616,9 @@ struct VMFrame
 		return (void **)(GetRegS() + NumRegS);
 	}
 
-	VM_UBYTE *GetRegATag() const
+	VM_ATAG *GetRegATag() const
 	{
-		return (VM_UBYTE *)(GetRegD() + NumRegD);
+		return (VM_ATAG *)(GetRegD() + NumRegD);
 	}
 
 	VMValue *GetParam() const
@@ -626,12 +628,12 @@ struct VMFrame
 
 	void *GetExtra() const
 	{
-		VM_UBYTE *ptag = GetRegATag();
-		ptrdiff_t ofs = ptag - (VM_UBYTE *)this;
+		VM_ATAG *ptag = GetRegATag();
+		ptrdiff_t ofs = ptag - (VM_ATAG *)this;
 		return (VM_UBYTE *)this + ((ofs + NumRegA + 15) & ~15);
 	}
 
-	void GetAllRegs(int *&d, double *&f, FString *&s, void **&a, VM_UBYTE *&atag, VMValue *&param) const
+	void GetAllRegs(int *&d, double *&f, FString *&s, void **&a, VM_ATAG *&atag, VMValue *&param) const
 	{
 		// Calling the individual functions produces suboptimal code. :(
 		param = GetParam();
@@ -639,7 +641,7 @@ struct VMFrame
 		s = (FString *)(f + NumRegF);
 		a = (void **)(s + NumRegS);
 		d = (int *)(a + NumRegA);
-		atag = (VM_UBYTE *)(d + NumRegD);
+		atag = (VM_ATAG *)(d + NumRegD);
 	}
 
 	void InitRegS();
@@ -660,7 +662,7 @@ struct VMRegisters
 	double *f;
 	FString *s;
 	void **a;
-	VM_UBYTE *atag;
+	VM_ATAG *atag;
 	VMValue *param;
 };
 
@@ -669,15 +671,33 @@ struct VMException : public DObject
 	DECLARE_CLASS(VMFunction, DObject);
 };
 
+union FVoidObj
+{
+	DObject *o;
+	void *v;
+};
+
 class VMScriptFunction : public VMFunction
 {
 	DECLARE_CLASS(VMScriptFunction, VMFunction);
 public:
-	const VM_UBYTE *Code;
+	VMScriptFunction();
+	~VMScriptFunction();
+	size_t PropagateMark();
+	VM_UBYTE *AllocCode(int numops);
+	int *AllocKonstD(int numkonst);
+	double *AllocKonstF(int numkonst);
+	FString *AllocKonstS(int numkonst);
+	FVoidObj *AllocKonstA(int numkonst);
+
+	VM_ATAG *KonstATags() { return (VM_UBYTE *)(KonstA + NumKonstA); }
+	const VM_ATAG *KonstATags() const { return (VM_UBYTE *)(KonstA + NumKonstA); }
+
+	VM_UBYTE *Code;
 	int *KonstD;
 	double *KonstF;
 	FString *KonstS;
-	void **KonstA;
+	FVoidObj *KonstA;
 	int ExtraSpace;
 	int NumCodeBytes;
 	VM_UBYTE NumRegD;
@@ -724,8 +744,13 @@ class VMNativeFunction : public VMFunction
 {
 	DECLARE_CLASS(VMNativeFunction, VMFunction);
 public:
+	typedef int (*NativeCallType)(VMFrameStack *stack, VMValue *param, int numparam, VMReturn *ret, int numret);
+
+	VMNativeFunction() : NativeCall(NULL) { Native = true; }
+	VMNativeFunction(NativeCallType call) : NativeCall(call) { Native = true; }
+
 	// Return value is the number of results.
-	int (*NativeCall)(VMFrameStack *stack, VMValue *param, int numparam, VMReturn *ret, int numret);
+	NativeCallType NativeCall;
 };
 
 
@@ -762,7 +787,7 @@ public:
 		RegA++;
 	}
 
-	void ParamPointer(void *ptr, VM_UBYTE atag)
+	void ParamPointer(void *ptr, VM_ATAG atag)
 	{
 		Reg.a[RegA] = ptr;
 		Reg.atag[RegA] = atag;

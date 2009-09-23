@@ -51,6 +51,72 @@
 
 extern void LoadActors ();
 
+int CallDecorateAction(VMFrameStack *stack, VMValue *param, int numparam, VMReturn *ret, int numret)
+{
+	assert(numparam == 6);
+	actionf_p action = (actionf_p)param[5].a;
+	action((AActor *)param[0].a, (AActor *)param[1].a, (FState *)param[2].a, param[3].i, (StateCallData *)param[4].a);
+	return 0;
+}
+
+void FState::SetAction(PSymbolActionFunction *func, bool setdefaultparams)
+{
+	if (func != NULL)
+	{
+		// All generated functions use this code.
+		static const VM_UBYTE codetemplate[] =
+		{
+			OP_PARAM,		0, REGT_POINTER, 0,
+			OP_PARAM,		0, REGT_POINTER, 1,
+			OP_PARAM,		0, REGT_POINTER, 2,
+			OP_PARAM,		0, REGT_INT, 0,
+			OP_PARAM,		0, REGT_POINTER, 3,
+			OP_PARAM,		0, REGT_POINTER|REGT_KONST, 0,
+			OP_CALL_K,		1, 6, 0,
+			OP_RET,			0, REGT_NIL, 0
+		};
+
+		// Find the CallDecorateAction function. If not found, create it and install it
+		// in Actor.
+		VMFunction *callfunc;
+		PSymbol *sym = RUNTIME_CLASS(AActor)->Symbols.FindSymbol("CallDecorateAction", false);
+		if (sym == NULL)
+		{
+			PSymbolVMFunction *symfunc = new PSymbolVMFunction("CallDecorateAction");
+			VMNativeFunction *calldec = new VMNativeFunction(CallDecorateAction);
+			symfunc->Function = calldec;
+			sym = symfunc;
+			RUNTIME_CLASS(AActor)->Symbols.AddSymbol(sym);
+		}
+		assert(sym->SymbolType == SYM_VMFunction);
+		assert(((PSymbolVMFunction *)sym)->Function != NULL);
+		callfunc = ((PSymbolVMFunction *)sym)->Function;
+
+		// Create a function for this state.
+		VMScriptFunction *vmfunc = new VMScriptFunction;
+		VM_UBYTE *code = vmfunc->AllocCode(sizeof(codetemplate)/VM_OPSIZE);
+		memcpy(code, codetemplate, sizeof(codetemplate));
+		FVoidObj *konsta = vmfunc->AllocKonstA(2);
+		VM_ATAG *atag = vmfunc->KonstATags();
+		konsta[0].v = func->Function;
+		konsta[1].o = callfunc;
+		atag[0] = ATAG_GENERIC;
+		atag[1] = ATAG_OBJECT;
+		vmfunc->NumRegA = 4;
+		vmfunc->NumRegD = 1;
+		vmfunc->MaxParam = 6;
+		vmfunc->NumArgs = 5;
+		ActionFunc = vmfunc;
+
+		if (setdefaultparams) ParameterIndex = func->defaultparameterindex+1;
+	}
+	else 
+	{
+		ActionFunc = NULL;
+		if (setdefaultparams) ParameterIndex = 0;
+	}
+}
+
 bool FState::CallAction(AActor *self, AActor *stateowner, StateCallData *statecall)
 {
 	if (ActionFunc != NULL)

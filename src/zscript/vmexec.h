@@ -20,7 +20,8 @@ static int Exec(VMFrameStack *stack, const VM_UBYTE *pc, VMReturn *ret, int numr
 	const int *konstd;
 	const double *konstf;
 	const FString *konsts;
-	void * const *konsta;
+	const FVoidObj *konsta;
+	const VM_ATAG *konstatag;
 
 	if (f->Func != NULL && !f->Func->Native)
 	{
@@ -29,6 +30,7 @@ static int Exec(VMFrameStack *stack, const VM_UBYTE *pc, VMReturn *ret, int numr
 		konstf = sfunc->KonstF;
 		konsts = sfunc->KonstS;
 		konsta = sfunc->KonstA;
+		konstatag = sfunc->KonstATags();
 	}
 	else
 	{
@@ -37,6 +39,7 @@ static int Exec(VMFrameStack *stack, const VM_UBYTE *pc, VMReturn *ret, int numr
 		konstf = NULL;
 		konsts = NULL;
 		konsta = NULL;
+		konstatag = NULL;
 	}
 
 	void *ptr;
@@ -72,8 +75,8 @@ begin:
 		NEXTOP;
 	OP(LKP):
 		ASSERTA(a); ASSERTKA(BC);
-		reg.a[a] = konsta[BC];
-		reg.atag[a] = ATAG_OBJECT;
+		reg.a[a] = konsta[BC].v;
+		reg.atag[a] = konstatag[BC];
 		NEXTOP;
 	OP(LFP):
 		ASSERTA(a); assert(sfunc != NULL); assert(sfunc->ExtraSpace > 0);
@@ -439,7 +442,7 @@ begin:
 					break;
 				case REGT_POINTER | REGT_KONST:
 					assert(C < sfunc->NumKonstA);
-					::new(param) VMValue(konsta[C]);
+					::new(param) VMValue(konsta[C].v, konstatag[C]);
 					break;
 				case REGT_FLOAT:
 					if (b & REGT_MULTIREG)
@@ -486,7 +489,8 @@ begin:
 		NEXTOP;
 	OP(CALL_K):
 		ASSERTKA(a);
-		ptr = sfunc->KonstA[a];
+		assert(konstatag[a] == ATAG_OBJECT);
+		ptr = konsta[a].o;
 		goto Do_CALL;
 	OP(CALL):
 		ASSERTA(a);
@@ -572,7 +576,8 @@ begin:
 		else
 		{
 			ASSERTKA(B);
-			throw((VMException *)konsta[B]);
+			assert(konstatag[B] == ATAG_OBJECT);
+			throw((VMException *)konsta[B].o);
 		}
 		NEXTOP;
 	OP(CATCH):
@@ -1224,7 +1229,7 @@ begin:
 		NEXTOP;
 	OP(EQA_K):
 		ASSERTA(B); ASSERTKA(C);
-		CMPJMP(reg.a[B] == konsta[C]);
+		CMPJMP(reg.a[B] == konsta[C].v);
 		NEXTOP;
 	}
 	}
@@ -1254,7 +1259,8 @@ begin:
 				{
 					assert(pc[1] == 3);
 					ASSERTKA(b);
-					type = (PClass *)konsta[b];
+					assert(konstatag[b] == ATAG_OBJECT);
+					type = (PClass *)konsta[b].o;
 				}
 				ASSERTA(pc[3]);
 				if (type == extype)
@@ -1414,7 +1420,7 @@ static void FillReturns(const VMRegisters &reg, VMFrame *frame, VMReturn *return
 static void SetReturn(const VMRegisters &reg, VMFrame *frame, VMReturn *ret, VM_UBYTE regtype, int regnum)
 {
 	const void *src;
-	VM_UBYTE atag;
+	VM_ATAG atag;
 	VMScriptFunction *func = static_cast<VMScriptFunction *>(frame->Func);
 
 	assert(func != NULL && !func->Native);
@@ -1478,8 +1484,8 @@ static void SetReturn(const VMRegisters &reg, VMFrame *frame, VMReturn *ret, VM_
 		if (regtype & REGT_KONST)
 		{
 			assert(regnum < func->NumKonstA);
-			ret->SetPointer(func->KonstA[regnum]);
-			atag = ATAG_OBJECT;
+			ret->SetPointer(func->KonstA[regnum].v);
+			atag = func->KonstATags()[regnum];
 		}
 		else
 		{

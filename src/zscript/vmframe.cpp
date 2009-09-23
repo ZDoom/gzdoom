@@ -1,6 +1,95 @@
 #include <new>
 #include "vm.h"
 
+IMPLEMENT_CLASS(VMException)
+IMPLEMENT_ABSTRACT_CLASS(VMFunction)
+IMPLEMENT_CLASS(VMScriptFunction)
+IMPLEMENT_CLASS(VMNativeFunction)
+
+VMScriptFunction::VMScriptFunction()
+{
+	Native = false;
+	Code = NULL;
+	KonstD = NULL;
+	KonstF = NULL;
+	KonstS = NULL;
+	KonstA = NULL;
+	ExtraSpace = 0;
+	NumCodeBytes = 0;
+	NumRegD = 0;
+	NumRegF = 0;
+	NumRegS = 0;
+	NumRegA = 0;
+	NumKonstD = 0;
+	NumKonstF = 0;
+	NumKonstS = 0;
+	NumKonstA = 0;
+	MaxParam = 0;
+	NumArgs = 0;
+}
+
+VMScriptFunction::~VMScriptFunction()
+{
+	if (Code != NULL)		M_Free(Code);
+	if (KonstD != NULL)		M_Free(KonstD);
+	if (KonstF != NULL)		M_Free(KonstF);
+	if (KonstS != NULL)		delete[] KonstS;
+	if (KonstA != NULL)		M_Free(KonstA);
+}
+
+VM_UBYTE *VMScriptFunction::AllocCode(int numops)
+{
+	assert(Code == NULL && numops > 0);
+	numops *= VM_OPSIZE;
+	NumCodeBytes = numops;
+	return Code = (VM_UBYTE *)M_Malloc(numops);
+}
+
+int *VMScriptFunction::AllocKonstD(int numkonst)
+{
+	assert(KonstD == NULL && numkonst > 0);
+	NumKonstD = numkonst;
+	return KonstD = (int *)M_Malloc(numkonst * sizeof(int));
+}
+
+double *VMScriptFunction::AllocKonstF(int numkonst)
+{
+	assert(KonstF == NULL && numkonst > 0);
+	NumKonstF = numkonst;
+	return KonstF = (double *)M_Malloc(numkonst * sizeof(double));
+}
+
+FString *VMScriptFunction::AllocKonstS(int numkonst)
+{
+	assert(KonstS == NULL && numkonst > 0);
+	NumKonstS = numkonst;
+	return KonstS = new FString[numkonst];
+}
+
+FVoidObj *VMScriptFunction::AllocKonstA(int numkonst)
+{
+	assert(KonstA == NULL && numkonst > 0);
+	NumKonstA = numkonst;
+	return KonstA = (FVoidObj *)M_Malloc(numkonst * sizeof(FVoidObj) + numkonst);
+}
+
+size_t VMScriptFunction::PropagateMark()
+{
+	if (KonstA != NULL)
+	{
+		FVoidObj *konsta = KonstA;
+		VM_UBYTE *atag = KonstATags();
+		for (int count = NumKonstA; count > 0; --count)
+		{
+			if (*atag++ == ATAG_OBJECT)
+			{
+				GC::Mark(konsta->o);
+			}
+			konsta++;
+		}
+	}
+	return NumKonstA * sizeof(void *) + Super::PropagateMark();
+}
 
 //===========================================================================
 //

@@ -778,7 +778,6 @@ CCMD(linetarget)
 			linetarget->GetClass()->TypeName.GetChars(),
 			linetarget->health,
 			linetarget->SpawnHealth());
-		PrintMiscActorInfo(linetarget);
 	}
 	else Printf("No target found\n");
 }

@@ -2684,6 +2684,7 @@ int DLevelScript::CheckActorProperty (int tid, int property, int value)
 		case APROP_Gravity:
 		case APROP_SpawnHealth:
 		case APROP_JumpZ:
+		case APROP_Score:
 			return (GetActorProperty(tid, property) == value);
 
 		// Boolean values need to compare to a binary version of value

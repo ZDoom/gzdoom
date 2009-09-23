@@ -377,7 +377,7 @@ bool EV_DoFloor (DFloor::EFloor floortype, line_t *line, int tag,
 
 manual_floor:
 		// ALREADY MOVING?	IF SO, KEEP GOING...
-		if (sec->floordata)
+		if (sec->PlaneMoving(sector_t::floor))
 		{
 			if (manual)
 				continue;
@@ -748,7 +748,7 @@ manual_stair:
 		// ALREADY MOVING?	IF SO, KEEP GOING...
 		//jff 2/26/98 add special lockout condition to wait for entire
 		//staircase to build before retriggering
-		if (sec->floordata || sec->stairlock)
+		if (sec->PlaneMoving(sector_t::floor) || sec->stairlock)
 		{
 			if (!manual)
 				continue;
@@ -800,7 +800,7 @@ manual_stair:
 
 					// if sector's floor already moving, look for another
 					//jff 2/26/98 special lockout condition for retriggering
-					if (tsec->floordata || tsec->stairlock)
+					if (tsec->PlaneMoving(sector_t::floor) || tsec->stairlock)
 					{
 						prev = sec;
 						sec = tsec;
@@ -833,7 +833,7 @@ manual_stair:
 
 					// if sector's floor already moving, look for another
 					//jff 2/26/98 special lockout condition for retriggering
-					if (tsec->floordata || tsec->stairlock)
+					if (tsec->PlaneMoving(sector_t::floor) || tsec->stairlock)
 						continue;
 
 					ok = true;
@@ -917,7 +917,7 @@ bool EV_DoDonut (int tag, fixed_t pillarspeed, fixed_t slimespeed)
 		s1 = &sectors[secnum];					// s1 is pillar's sector
 				
 		// ALREADY MOVING?	IF SO, KEEP GOING...
-		if (s1->floordata)
+		if (s1->PlaneMoving(sector_t::floor))
 			continue;
 						
 		rtn = true;
@@ -925,7 +925,7 @@ bool EV_DoDonut (int tag, fixed_t pillarspeed, fixed_t slimespeed)
 		if (!s2)								// note lowest numbered line around
 			continue;							// pillar must be two-sided
 
-		if (s2->floordata)
+		if (s2->PlaneMoving(sector_t::floor))
 			continue;
 
 		for (i = 0; i < s2->linecount; i++)
@@ -1007,7 +1007,7 @@ bool EV_DoElevator (line_t *line, DElevator::EElevator elevtype,
 		sec = &sectors[secnum];
 
 		// If either floor or ceiling is already activated, skip it
-		if (sec->floordata || sec->ceilingdata) //jff 2/22/98
+		if (sec->PlaneMoving(sector_t::floor) || sec->ceilingdata) //jff 2/22/98
 			continue;
 
 		// create and initialize new elevator thinker
@@ -1225,7 +1225,8 @@ bool EV_StartWaggle (int tag, int height, int speed, int offset,
 	while ((sectorIndex = P_FindSectorFromTag(tag, sectorIndex)) >= 0)
 	{
 		sector = &sectors[sectorIndex];
-		if ((!ceiling && sector->floordata) || (ceiling && sector->ceilingdata))
+		if ((!ceiling && sector->PlaneMoving(sector_t::floor)) || 
+			(ceiling && sector->PlaneMoving(sector_t::ceiling)))
 		{ // Already busy with another thinker
 			continue;
 		}

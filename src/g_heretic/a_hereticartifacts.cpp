@@ -24,7 +24,7 @@ bool AArtiTomeOfPower::Use (bool pickup)
 {
 	if (Owner->player->morphTics && (Owner->player->MorphStyle & MORPH_UNDOBYTOMEOFPOWER))
 	{ // Attempt to undo chicken
-		if (!P_UndoPlayerMorph (Owner->player, Owner->player))
+		if (!P_UndoPlayerMorph (Owner->player, Owner->player, MORPH_UNDOBYTOMEOFPOWER))
 		{ // Failed
 			if (!(Owner->player->MorphStyle & MORPH_FAILNOTELEFRAG))
 			{

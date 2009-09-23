@@ -139,14 +139,7 @@ PalEntry APowerup::GetBlend ()
 	if (EffectTics <= BLINKTHRESHOLD && !(EffectTics & 8))
 		return 0;
 
-	if (BlendColor == INVERSECOLOR ||
-		BlendColor == GOLDCOLOR ||
-		// [BC] HAX!
-		BlendColor == REDCOLOR ||
-		BlendColor == GREENCOLOR ||
-		BlendColor == BLUECOLOR)
-		return 0;
-
+	if (IsSpecialColormap(BlendColor)) return 0;
 	return BlendColor;
 }
 
@@ -175,37 +168,19 @@ void APowerup::DoEffect ()
 
 	if (EffectTics > 0)
 	{
-		int oldcolormap = Owner->player->fixedcolormap;
-		if (EffectTics > BLINKTHRESHOLD || (EffectTics & 8))
+		int Colormap = GetSpecialColormap(BlendColor);
+
+		if (Colormap != NOFIXEDCOLORMAP)
 		{
-			if (BlendColor == INVERSECOLOR)
+			if (EffectTics > BLINKTHRESHOLD || (EffectTics & 8))
 			{
-				Owner->player->fixedcolormap = INVERSECOLORMAP;
+				Owner->player->fixedcolormap = Colormap;
 			}
-			else if (BlendColor == GOLDCOLOR)
+			else if (Owner->player->fixedcolormap == Colormap)	
 			{
-				Owner->player->fixedcolormap = GOLDCOLORMAP;
+				// only unset if the fixed colormap comes from this item
+				Owner->player->fixedcolormap = NOFIXEDCOLORMAP;
 			}
-			else if (BlendColor == REDCOLOR)
-			{
-				Owner->player->fixedcolormap = REDCOLORMAP;
-			}
-			else if (BlendColor == GREENCOLOR)
-			{
-				Owner->player->fixedcolormap = GREENCOLORMAP;
-			}
-			else if (BlendColor == BLUECOLOR)
-			{
-				Owner->player->fixedcolormap = BLUECOLORMAP;
-			}
-		}
-		else if ((BlendColor == INVERSECOLOR && Owner->player->fixedcolormap == INVERSECOLORMAP) || 
-				 (BlendColor == GOLDCOLOR && Owner->player->fixedcolormap == GOLDCOLORMAP) ||
-				 (BlendColor == REDCOLOR && Owner->player->fixedcolormap == REDCOLORMAP) ||
-				 (BlendColor == GREENCOLOR && Owner->player->fixedcolormap == GREENCOLORMAP) ||
-				 (BlendColor == BLUECOLOR && Owner->player->fixedcolormap == BLUECOLORMAP))
-		{
-			Owner->player->fixedcolormap = 0;
 		}
 	}
 }
@@ -471,7 +446,7 @@ void APowerInvulnerable::EndEffect ()
 
 	if (Owner->player != NULL)
 	{
-		Owner->player->fixedcolormap = 0;
+		Owner->player->fixedcolormap = NOFIXEDCOLORMAP;
 	}
 }
 
@@ -565,7 +540,7 @@ IMPLEMENT_CLASS (APowerInvisibility)
 IMPLEMENT_CLASS (APowerShadow)
 
 // Invisibility flag combos
-#define INVISIBILITY_FLAGS1	(MF_SHADOW | MF_STEALTH)
+#define INVISIBILITY_FLAGS1	(MF_SHADOW)
 #define INVISIBILITY_FLAGS3	(MF3_GHOST)
 #define INVISIBILITY_FLAGS5	(MF5_CANTSEEK)
 
@@ -590,24 +565,6 @@ void APowerInvisibility::InitEffect ()
 		flags5 &= ~(Owner->flags5 & INVISIBILITY_FLAGS5);
 		Owner->flags5 |= flags5 & INVISIBILITY_FLAGS5;
 
-		// Finds out what's the normal alpha and render style for the owner. 
-		// First assume it's what it currently is.
-		//OwnersNormalStyle = Owner->RenderStyle;
-		//OwnersNormalAlpha = Owner->alpha;
-		// Then look if there aren't active invis powerups and look what they're saying.
-		/*AInventory *item = Owner->Inventory;
-		while (item != NULL)
-		{
-			if (item->IsKindOf(RUNTIME_CLASS(APowerInvisibility)) && item != this)
-			{
-				OwnersNormalStyle = static_cast<APowerInvisibility*>(item)->OwnersNormalStyle;
-				OwnersNormalAlpha = static_cast<APowerInvisibility*>(item)->OwnersNormalAlpha;
-				item = NULL; // No need to look further
-			}
-			else item = item->Inventory;
-		}
-		Printf("Owner's normal style is found to be %i, normal alpha is found to be %i.\n",
-			OwnersNormalStyle, OwnersNormalAlpha>>FRACBITS);*/
 		DoEffect();
 	}
 }
@@ -623,7 +580,7 @@ void APowerInvisibility::DoEffect ()
 	// Due to potential interference with other PowerInvisibility items
 	// the effect has to be refreshed each tic.
 	fixed_t ts = Strength * (special1 + 1); if (ts > FRACUNIT) ts = FRACUNIT;
-	Owner->alpha = clamp<fixed_t>((/*OwnersNormalAlpha*/OPAQUE - ts), 0, OPAQUE);
+	Owner->alpha = clamp<fixed_t>((OPAQUE - ts), 0, OPAQUE);
 	switch (Mode)
 	{
 	case (NAME_Fuzzy):
@@ -639,6 +596,7 @@ void APowerInvisibility::DoEffect ()
 		Owner->RenderStyle = STYLE_Stencil;
 		break;
 	case (NAME_None):
+	case (NAME_Cumulative):
 	case (NAME_Translucent):
 		Owner->RenderStyle = STYLE_Translucent;
 		break;
@@ -663,8 +621,8 @@ void APowerInvisibility::EndEffect ()
 		Owner->flags3 &= ~(flags3 & INVISIBILITY_FLAGS3);
 		Owner->flags5 &= ~(flags5 & INVISIBILITY_FLAGS5);
 
-		Owner->RenderStyle = STYLE_Normal;//OwnersNormalStyle;
-		Owner->alpha = OPAQUE;//OwnersNormalAlpha;
+		Owner->RenderStyle = STYLE_Normal;
+		Owner->alpha = OPAQUE;
 
 		// Check whether there are other invisibility items and refresh their effect.
 		// If this isn't done there will be one incorrectly drawn frame when this
@@ -693,15 +651,15 @@ int APowerInvisibility::AlterWeaponSprite (vissprite_t *vis)
 	// Blink if the powerup is wearing off
 	if (changed == 0 && EffectTics < 4*32 && !(EffectTics & 8))
 	{
-		vis->RenderStyle = STYLE_Normal;//OwnersNormalStyle;
-		vis->alpha = OPAQUE;//OwnersNormalAlpha;
+		vis->RenderStyle = STYLE_Normal;
+		vis->alpha = OPAQUE;
 		return 1;
 	}
 	else if (changed == 1)
 	{
 		// something else set the weapon sprite back to opaque but this item is still active.
 		fixed_t ts = Strength * (special1 + 1); if (ts > FRACUNIT) ts = FRACUNIT;
-		vis->alpha = clamp<fixed_t>((/*OwnersNormalAlpha*/OPAQUE - ts), 0, OPAQUE);
+		vis->alpha = clamp<fixed_t>((OPAQUE - ts), 0, OPAQUE);
 		switch (Mode)
 		{
 		case (NAME_Fuzzy):
@@ -728,7 +686,7 @@ int APowerInvisibility::AlterWeaponSprite (vissprite_t *vis)
 	if ((vis->alpha < TRANSLUC25 && special1 > 0) || (vis->alpha == 0))
 	{
 		vis->alpha = clamp<fixed_t>((OPAQUE - Strength), 0, OPAQUE);
-		vis->colormap = InverseColormap;
+		vis->colormap = SpecialColormaps[INVERSECOLORMAP].Colormap;
 	}
 	return -1;	// This item is valid so another one shouldn't reset the translucency
 }
@@ -847,11 +805,11 @@ void APowerLightAmp::DoEffect ()
 	{
 		if (EffectTics > BLINKTHRESHOLD || (EffectTics & 8))
 		{	
-			Owner->player->fixedcolormap = 1;
+			Owner->player->fixedlightlevel = 1;
 		}
 		else
 		{
-			Owner->player->fixedcolormap = 0;
+			Owner->player->fixedlightlevel = -1;
 		}
 	}
 }
@@ -866,7 +824,7 @@ void APowerLightAmp::EndEffect ()
 {
 	if (Owner != NULL && Owner->player != NULL && Owner->player->fixedcolormap < NUMCOLORMAPS)
 	{
-		Owner->player->fixedcolormap = 0;
+		Owner->player->fixedlightlevel = -1;
 	}
 }
 
@@ -911,22 +869,22 @@ void APowerTorch::DoEffect ()
 		{
 			if (NewTorch != 0)
 			{
-				if (Owner->player->fixedcolormap + NewTorchDelta > 7
-					|| Owner->player->fixedcolormap + NewTorchDelta < 1
-					|| NewTorch == Owner->player->fixedcolormap)
+				if (Owner->player->fixedlightlevel + NewTorchDelta > 7
+					|| Owner->player->fixedlightlevel + NewTorchDelta < 0
+					|| NewTorch == Owner->player->fixedlightlevel)
 				{
 					NewTorch = 0;
 				}
 				else
 				{
-					Owner->player->fixedcolormap += NewTorchDelta;
+					Owner->player->fixedlightlevel += NewTorchDelta;
 				}
 			}
 			else
 			{
 				NewTorch = (pr_torch() & 7) + 1;
-				NewTorchDelta = (NewTorch == Owner->player->fixedcolormap) ?
-					0 : ((NewTorch > Owner->player->fixedcolormap) ? 1 : -1);
+				NewTorchDelta = (NewTorch == Owner->player->fixedlightlevel) ?
+					0 : ((NewTorch > Owner->player->fixedlightlevel) ? 1 : -1);
 			}
 		}
 	}

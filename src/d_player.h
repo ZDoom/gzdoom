@@ -303,7 +303,8 @@ public:
 	TObjPtr<AActor>		poisoner;		// NULL for non-player actors
 	TObjPtr<AActor>		attacker;		// who did damage (NULL for floors)
 	int			extralight;				// so gun flashes light up areas
-	int			fixedcolormap;			// can be set to REDCOLORMAP, etc.
+	short		fixedcolormap;			// can be set to REDCOLORMAP, etc.
+	short		fixedlightlevel;
 	pspdef_t	psprites[NUMPSPRITES];	// view sprites (gun, etc)
 	int			morphTics;				// player is a chicken/pig if > 0
 	BYTE		MorphedPlayerClass;		// [MH] (for SBARINFO) class # for this player instance when morphed

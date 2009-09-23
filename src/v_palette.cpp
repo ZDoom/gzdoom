@@ -35,6 +35,7 @@
 #include <stddef.h>
 #include <string.h>
 #include <math.h>
+#include <float.h>
 #ifdef _WIN32
 #include <io.h>
 #else
@@ -61,15 +62,34 @@ extern "C" {
 FDynamicColormap NormalLight;
 }
 FPalette GPalette;
-BYTE InverseColormap[256];
-BYTE GoldColormap[256];
-// [BC] New Skulltag colormaps.
-BYTE RedColormap[256];
-BYTE GreenColormap[256];
-BYTE BlueColormap[256];
+TArray<FSpecialColormap> SpecialColormaps;
 BYTE DesaturateColormap[31][256];
 
-static void FreeSpecialLights();;
+struct FSpecialColormapParameters
+{
+	float Start[3], End[3];
+};
+
+static FSpecialColormapParameters SpecialColormapParms[] =
+{
+	// Doom invulnerability is an inverted grayscale.
+	// Strife uses it when firing the Sigil
+	{ {    1,    1,   1 }, { 0, 0, 0 } },
+
+	// Heretic invulnerability is a golden shade.
+	{ { 0, 0, 0 }, {  1.5, 0.75,   0 }, },
+
+	// [BC] Build the Doomsphere colormap. It is red!
+	{ { 0, 0, 0 }, {  1.5,    0,   0 } },
+
+	// [BC] Build the Guardsphere colormap. It's a greenish-white kind of thing.
+	{ { 0, 0, 0 }, { 1.25,  1.5,   1 } },
+
+	// Build a blue colormap.
+	{{ 0, 0, 0 },  {    0,    0, 1.5 } },
+};
+
+static void FreeSpecialLights();
 
 FColorMatcher ColorMatcher;
 
@@ -341,10 +361,72 @@ static bool FixBuildPalette (BYTE *opal, int lump, bool blood)
 	return true;
 }
 
+int AddSpecialColormap(float r1, float g1, float b1, float r2, float g2, float b2)
+{
+	// Clamp these in range for the hardware shader.
+	r1 = clamp(r1, 0.0f, 2.0f);
+	g1 = clamp(g1, 0.0f, 2.0f);
+	b1 = clamp(b1, 0.0f, 2.0f);
+	r2 = clamp(r2, 0.0f, 2.0f);
+	g2 = clamp(g2, 0.0f, 2.0f);
+	b2 = clamp(b2, 0.0f, 2.0f);
+
+	for(unsigned i=0; i<SpecialColormaps.Size(); i++)
+	{
+		// Avoid precision issues here when trying to find a proper match.
+		if (fabs(SpecialColormaps[i].ColorizeStart[0]- r1) < FLT_EPSILON &&
+			fabs(SpecialColormaps[i].ColorizeStart[1]- g1) < FLT_EPSILON &&
+			fabs(SpecialColormaps[i].ColorizeStart[2]- b1) < FLT_EPSILON &&
+			fabs(SpecialColormaps[i].ColorizeEnd[0]- r2) < FLT_EPSILON &&
+			fabs(SpecialColormaps[i].ColorizeEnd[1]- g2) < FLT_EPSILON &&
+			fabs(SpecialColormaps[i].ColorizeEnd[2]- b2) < FLT_EPSILON)
+		{
+			return i;	// The map already exists
+		}
+	}
+
+	FSpecialColormap *cm = &SpecialColormaps[SpecialColormaps.Reserve(1)];
+
+	cm->ColorizeStart[0] = float(r1);
+	cm->ColorizeStart[1] = float(g1);
+	cm->ColorizeStart[2] = float(b1);
+	cm->ColorizeEnd[0] = float(r2);
+	cm->ColorizeEnd[1] = float(g2);
+	cm->ColorizeEnd[2] = float(b2);
+
+	r2 -= r1;
+	g2 -= g1;
+	b2 -= b1;
+	r1 *= 255;
+	g1 *= 255;
+	b1 *= 255;
+
+	for (int c = 0; c < 256; c++)
+	{
+		double intensity = (GPalette.BaseColors[c].r * 77 +
+							GPalette.BaseColors[c].g * 143 +
+							GPalette.BaseColors[c].b * 37) / 256.0;
+
+		PalEntry pe = PalEntry(	MIN(255, int(r1 + intensity*r2)), 
+								MIN(255, int(g1 + intensity*g2)), 
+								MIN(255, int(b1 + intensity*b2)));
+
+		cm->Colormap[c] = ColorMatcher.Pick(pe);
+	}
+
+	// This table is used by the texture composition code
+	for(int i = 0;i < 256; i++)
+	{
+		cm->GrayscaleToColor[i] = PalEntry(	MIN(255, int(r1 + i*r2)), 
+											MIN(255, int(g1 + i*g2)), 
+											MIN(255, int(b1 + i*b2)));
+	}
+	return SpecialColormaps.Size() - 1;
+}
+
 void InitPalette ()
 {
 	BYTE pal[768];
-	BYTE *shade;
 	int c;
 	bool usingBuild = false;
 	int lump;
@@ -384,76 +466,22 @@ void InitPalette ()
 	NormalLight.Fade = 0;
 	// NormalLight.Maps is set by R_InitColormaps()
 
-	// build special maps (e.g. invulnerability)
-	int intensity;
+	// build default special maps (e.g. invulnerability)
+	SpecialColormaps.Clear();
 
-	// Doom invulnerability is an inverted grayscale.
-	// Strife uses it when firing the Sigil
-	shade = InverseColormap;
-
-	for (c = 0; c < 256; c++)
+	for (int i = 0; i < countof(SpecialColormapParms); ++i)
 	{
-		intensity = (65535 -
-			(GPalette.BaseColors[c].r * 77 +
-			 GPalette.BaseColors[c].g * 143 +
-			 GPalette.BaseColors[c].b * 37)) >> 8;
-		shade[c] = ColorMatcher.Pick (intensity, intensity, intensity);
+		AddSpecialColormap(SpecialColormapParms[i].Start[0], SpecialColormapParms[i].Start[1],
+			SpecialColormapParms[i].Start[2], SpecialColormapParms[i].End[0],
+			SpecialColormapParms[i].End[1], SpecialColormapParms[i].End[2]);
 	}
-
-	// Heretic invulnerability is a golden shade.
-	shade = GoldColormap;
-
-	for (c = 0; c < 256; c++)
-	{
-		intensity = GPalette.BaseColors[c].r * 77 +
-					GPalette.BaseColors[c].g * 143 +
-					GPalette.BaseColors[c].b * 37;
-		shade[c] = ColorMatcher.Pick (
-			MIN (255, (intensity+intensity/2)>>8), intensity>>8, 0);
-	}
-
-	// [BC] Build the Doomsphere colormap. It is red!
-	shade = RedColormap;
-	for (c = 0; c < 256; c++)
-	{
-		intensity = ((GPalette.BaseColors[c].r * 77 +
-			 GPalette.BaseColors[c].g * 143 +
-			 GPalette.BaseColors[c].b * 37));
-		shade[c] = ColorMatcher.Pick (
-			MIN( 255, ( intensity + ( intensity / 2 )) >> 8 ), 0, 0 );
-	}
-
-	// [BC] Build the Guardsphere colormap. It's a greenish-white kind of thing.
-	shade = GreenColormap;
-	for (c = 0; c < 256; c++)
-	{
-		intensity = GPalette.BaseColors[c].r * 77 +
-					GPalette.BaseColors[c].g * 143 +
-					GPalette.BaseColors[c].b * 37;
-		shade[c] = ColorMatcher.Pick (
-			MIN( 255, ( intensity + ( intensity / 2 )) >> 8 ),
-			MIN( 255, ( intensity + ( intensity / 2 )) >> 8 ), 
-			intensity>>8 );
-	}
-
-	// Build a blue colormap.
-	shade = BlueColormap;
-	for (c = 0; c < 256; c++)
-	{
-		intensity = ((GPalette.BaseColors[c].r * 77 +
-			 GPalette.BaseColors[c].g * 143 +
-			 GPalette.BaseColors[c].b * 37));
-		shade[c] = ColorMatcher.Pick (0, 0, 
-			MIN( 255, ( intensity + ( intensity / 2 )) >> 8 ));
-	}
-
 	// desaturated colormaps
 	for(int m = 0; m < 31; m++)
 	{
-		shade = DesaturateColormap[m];
+		BYTE *shade = DesaturateColormap[m];
 		for (c = 0; c < 256; c++)
 		{
-			intensity = (GPalette.BaseColors[c].r * 77 +
+			int intensity = (GPalette.BaseColors[c].r * 77 +
 						GPalette.BaseColors[c].g * 143 +
 						GPalette.BaseColors[c].b * 37) / 255;
 

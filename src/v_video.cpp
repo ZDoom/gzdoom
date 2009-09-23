@@ -1101,6 +1101,20 @@ bool DFrameBuffer::Begin2D (bool copy3d)
 
 //==========================================================================
 //
+// DFrameBuffer :: DrawBlendingRect
+//
+// In hardware 2D modes, the blending rect needs to be drawn separately
+// from transferring the 3D scene to video memory, because the weapon
+// sprite is drawn on top of that.
+//
+//==========================================================================
+
+void DFrameBuffer::DrawBlendingRect()
+{
+}
+
+//==========================================================================
+//
 // DFrameBuffer :: CreateTexture
 //
 // Creates a native texture for a game texture, if supported.
@@ -1242,6 +1256,17 @@ void DFrameBuffer::WriteSavePic (player_t *player, FILE *file, int width, int he
 	pic->Destroy();
 	pic->ObjectFlags |= OF_YesReallyDelete;
 	delete pic;
+}
+
+//===========================================================================
+//
+// 
+//
+//===========================================================================
+
+void DFrameBuffer::DrawRemainingPlayerSprites()
+{
+	R_DrawRemainingPlayerSprites();
 }
 
 

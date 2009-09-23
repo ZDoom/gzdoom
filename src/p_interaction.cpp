@@ -882,6 +882,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 	int painchance = 0;
 	FState * woundstate = NULL;
 	PainChanceList * pc = NULL;
+	bool justhit = false;
 
 	if (target == NULL || !((target->flags & MF_SHOOTABLE) || (target->flags6 & MF6_VULNERABLE)))
 	{ // Shouldn't happen
@@ -893,12 +894,6 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 	{
 		if (inflictor == NULL || !(inflictor->flags4 & MF4_SPECTRAL))
 		{
-			/*
-			if (target->MissileState != NULL)
-			{
-				target->SetState (target->MissileState);
-			}
-			*/
 			return;
 		}
 	}
@@ -1285,7 +1280,7 @@ dopain:
 		{
 			if (pr_lightning() < 96)
 			{
-				target->flags |= MF_JUSTHIT; // fight back!
+				justhit = true;
 				FState * painstate = target->FindState(NAME_Pain, mod);
 				if (painstate != NULL) target->SetState (painstate);
 			}
@@ -1300,7 +1295,7 @@ dopain:
 		}
 		else
 		{
-			target->flags |= MF_JUSTHIT; // fight back!
+			justhit = true;
 			FState * painstate = target->FindState(NAME_Pain, mod);
 			if (painstate != NULL) target->SetState (painstate);
 			if (mod == NAME_PoisonCloud)
@@ -1345,6 +1340,11 @@ dopain:
 			}
 		}
 	}
+
+	// killough 11/98: Don't attack a friend, unless hit by that friend.
+	if (justhit && (target->target == source || !target->target || !target->IsFriend(target->target)))
+		target->flags |= MF_JUSTHIT;    // fight back!
+
 }
 
 bool AActor::OkayToSwitchTarget (AActor *other)

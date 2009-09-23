@@ -1407,7 +1407,7 @@ void R_DrawNormalPlane (visplane_t *pl, fixed_t alpha, bool masked)
 	planeheight = abs (FixedMul (pl->height.d, -pl->height.ic) - viewz);
 
 	GlobVis = FixedDiv (r_FloorVisibility, planeheight);
-	if (fixedlightlev)
+	if (fixedlightlev >= 0)
 		ds_colormap = basecolormap->Maps + fixedlightlev, plane_shade = false;
 	else if (fixedcolormap)
 		ds_colormap = fixedcolormap, plane_shade = false;
@@ -1545,7 +1545,7 @@ void R_DrawTiltedPlane (visplane_t *pl, fixed_t alpha, bool masked)
 	if (pl->height.c > 0)
 		planelightfloat = -planelightfloat;
 
-	if (fixedlightlev)
+	if (fixedlightlev >= 0)
 		ds_colormap = basecolormap->Maps + fixedlightlev, plane_shade = false;
 	else if (fixedcolormap)
 		ds_colormap = fixedcolormap, plane_shade = false;

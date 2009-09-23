@@ -111,6 +111,8 @@ class ARandomSpawner : public AActor
 			newmobj->args[2]    = args[2];
 			newmobj->args[3]    = args[3];
 			newmobj->args[4]    = args[4];
+			newmobj->special1   = special1;
+			newmobj->special2   = special2;
 			newmobj->SpawnFlags = SpawnFlags;
 			newmobj->HandleSpawnFlags();
 			newmobj->tid        = tid;

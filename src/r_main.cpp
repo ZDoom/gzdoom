@@ -140,6 +140,7 @@ int 			validcount = 1; 	// increment every time a check is made
 FDynamicColormap*basecolormap;		// [RH] colormap currently drawing with
 int				fixedlightlev;
 lighttable_t	*fixedcolormap;
+FSpecialColormap *realfixedcolormap;
 float			WallTMapScale;
 float			WallTMapScale2;
 
@@ -1158,46 +1159,36 @@ void R_SetupFrame (AActor *actor)
 		}
 	}
 
+	realfixedcolormap = NULL;
 	fixedcolormap = NULL;
-	fixedlightlev = 0;
+	fixedlightlev = -1;
 
-	if (player != NULL && camera == player->mo && player->fixedcolormap)
+	if (player != NULL && camera == player->mo)
 	{
-		if (player->fixedcolormap < NUMCOLORMAPS)
+		if (player->fixedcolormap >= 0 && player->fixedcolormap < (int)SpecialColormaps.Size())
 		{
-			fixedlightlev = player->fixedcolormap*256;
-			fixedcolormap = NormalLight.Maps;
+			realfixedcolormap = &SpecialColormaps[player->fixedcolormap];
+			if (RenderTarget == screen && (DFrameBuffer *)screen->Accel2D)
+			{
+				// Render everything fullbright. The copy to video memory will
+				// apply the special colormap, so it won't be restricted to the
+				// palette.
+				fixedcolormap = realcolormaps;
+			}
+			else
+			{
+				fixedcolormap = SpecialColormaps[player->fixedcolormap].Colormap;
+			}
 		}
-		else switch (player->fixedcolormap)
+		else if (player->fixedlightlevel >= 0 && player->fixedlightlevel < NUMCOLORMAPS)
 		{
-		case INVERSECOLORMAP:
-			fixedcolormap = InverseColormap;
-			break;
-
-		case REDCOLORMAP:
-			fixedcolormap = RedColormap;
-			break;
-
-		case GREENCOLORMAP:
-			fixedcolormap = GreenColormap;
-			break;
-
-		case BLUECOLORMAP:
-			fixedcolormap = BlueColormap;
-			break;
-
-		case GOLDCOLORMAP:
-			fixedcolormap = GoldColormap;
-			break;
-
-		default:
-			break;
+			fixedlightlev = player->fixedlightlevel * 256;
 		}
 	}
 	// [RH] Inverse light for shooting the Sigil
-	else if (extralight == INT_MIN)
+	if (fixedcolormap == NULL && extralight == INT_MIN)
 	{
-		fixedcolormap = InverseColormap;
+		fixedcolormap = SpecialColormaps[INVERSECOLORMAP].Colormap;
 		extralight = 0;
 	}
 

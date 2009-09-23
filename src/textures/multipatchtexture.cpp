@@ -423,27 +423,19 @@ const BYTE *FMultiPatchTexture::GetColumn (unsigned int column, const Span **spa
 BYTE *GetBlendMap(PalEntry blend, BYTE *blendwork)
 {
 
-	switch (blend.a==0 ? blend.r : -1)
+	switch (blend.a==0 ? int(blend) : -1)
 	{
-	case BLEND_INVERSEMAP:
-		return InverseColormap;
-
-	case BLEND_GOLDMAP:
-		return GoldColormap;
-
-	case BLEND_REDMAP:
-		return RedColormap;
-
-	case BLEND_GREENMAP:
-		return GreenColormap;
-
 	case BLEND_ICEMAP:
 		return TranslationToTable(TRANSLATION(TRANSLATION_Standard, 7))->Remap;
 
 	default:
-		if (blend.r >= BLEND_DESATURATE1 && blend.r <= BLEND_DESATURATE31)
+		if (blend >= BLEND_SPECIALCOLORMAP1)
 		{
-			return DesaturateColormap[blend.r - BLEND_DESATURATE1];
+			return SpecialColormaps[blend - BLEND_SPECIALCOLORMAP1].Colormap;
+		}
+		else if (blend >= BLEND_DESATURATE1 && blend <= BLEND_DESATURATE31)
+		{
+			return DesaturateColormap[blend - BLEND_DESATURATE1];
 		}
 		else 
 		{
@@ -1044,22 +1036,29 @@ void FMultiPatchTexture::ParsePatch(FScanner &sc, TexPart & part)
 			}
 			else if (sc.Compare("Translation"))
 			{
+				int match;
+
 				bComplex = true;
 				if (part.Translation != NULL) delete part.Translation;
 				part.Translation = NULL;
 				part.Blend = 0;
-				static const char *maps[] = { "inverse", "gold", "red", "green", "ice", "desaturate", NULL };
+				static const char *maps[] = { "inverse", "gold", "red", "green", "blue", NULL };
 				sc.MustGetString();
-				int match = sc.MatchString(maps);
+
+				match = sc.MatchString(maps);
 				if (match >= 0)
 				{
-					part.Blend.r = 1 + match;
-					if (part.Blend.r == BLEND_DESATURATE1)
-					{
-						sc.MustGetStringName(",");
-						sc.MustGetNumber();
-						part.Blend.r += clamp(sc.Number-1, 0, 30);
-					}
+					part.Blend = BLEND_SPECIALCOLORMAP1 + match;
+				}
+				else if (sc.Compare("ICE"))
+				{
+					part.Blend = BLEND_ICEMAP;
+				}
+				else if (sc.Compare("DESATURATE"))
+				{
+					sc.MustGetStringName(",");
+					sc.MustGetNumber();
+					part.Blend = BLEND_DESATURATE1 + clamp(sc.Number-1, 0, 30);
 				}
 				else
 				{
@@ -1074,6 +1073,36 @@ void FMultiPatchTexture::ParsePatch(FScanner &sc, TexPart & part)
 					while (sc.CheckString(","));
 				}
 
+			}
+			else if (sc.Compare("Colormap"))
+			{
+				float r1,g1,b1;
+				float r2,g2,b2;
+
+				sc.MustGetFloat();
+				r1 = (float)sc.Float;
+				sc.MustGetStringName(",");
+				sc.MustGetFloat();
+				g1 = (float)sc.Float;
+				sc.MustGetStringName(",");
+				sc.MustGetFloat();
+				b1 = (float)sc.Float;
+				if (!sc.CheckString(","))
+				{
+					part.Blend = AddSpecialColormap(0,0,0, r1, g1, b1);
+				}
+				else
+				{
+					sc.MustGetFloat();
+					r2 = (float)sc.Float;
+					sc.MustGetStringName(",");
+					sc.MustGetFloat();
+					g2 = (float)sc.Float;
+					sc.MustGetStringName(",");
+					sc.MustGetFloat();
+					b2 = (float)sc.Float;
+					part.Blend = AddSpecialColormap(r1, g1, b1, r2, g2, b2);
+				}
 			}
 			else if (sc.Compare("Blend"))
 			{
@@ -1101,10 +1130,14 @@ void FMultiPatchTexture::ParsePatch(FScanner &sc, TexPart & part)
 					sc.MustGetStringName(",");
 					part.Blend = MAKERGB(r, g, b);
 				}
+				// Blend.a may never be 0 here.
 				if (sc.CheckString(","))
 				{
 					sc.MustGetFloat();
-					part.Blend.a = clamp<int>(int(sc.Float*255), 1, 254);
+					if (sc.Float > 0.f)
+						part.Blend.a = clamp<int>(int(sc.Float*255), 1, 254);
+					else
+						part.Blend = 0;
 				}
 				else part.Blend.a = 255;
 			}

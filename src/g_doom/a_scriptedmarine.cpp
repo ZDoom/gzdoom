@@ -168,7 +168,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_M_Refire)
 	{
 		if (self->MissileState && pr_m_refire() < 160)
 		{ // Look for a new target most of the time
-			if (P_LookForPlayers (self, true) && P_CheckMissileRange (self))
+			if (P_LookForPlayers (self, true, NULL) && P_CheckMissileRange (self))
 			{ // Found somebody new and in range, so don't stop shooting
 				return;
 			}

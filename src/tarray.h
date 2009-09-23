@@ -120,12 +120,12 @@ public:
 		}
 	}
 	// Return a reference to an element
-	T &operator[] (unsigned int index) const
+	T &operator[] (size_t index) const
 	{
 		return Array[index];
 	}
 	// Returns the value of an element
-	TT operator() (unsigned int index) const
+	TT operator() (size_t index) const
 	{
 		return Array[index];
 	}

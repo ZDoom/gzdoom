@@ -114,10 +114,10 @@ union FRenderStyle
 		BYTE DestAlpha;	// Of ERenderAlpha type
 		BYTE Flags;
 	};
-	DWORD AsDWORD;
+	uint32 AsDWORD;
 
 	inline FRenderStyle &operator= (ERenderStyle legacy);
-	operator DWORD() const { return AsDWORD; }
+	operator uint32() const { return AsDWORD; }
 	bool operator==(const FRenderStyle &o) const { return AsDWORD == o.AsDWORD; }
 	void CheckFuzz();
 	bool IsVisible(fixed_t alpha) const throw();

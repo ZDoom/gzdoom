@@ -213,7 +213,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_DragonFlight)
 	}
 	else
 	{
-		P_LookForPlayers (self, true);
+		P_LookForPlayers (self, true, NULL);
 	}
 }
 

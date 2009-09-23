@@ -61,13 +61,14 @@
 #include "v_pfx.h"
 #include "stats.h"
 #include "doomerrors.h"
-#include "r_draw.h"
+#include "r_main.h"
 #include "r_translate.h"
 #include "f_wipe.h"
 #include "st_stuff.h"
 #include "win32iface.h"
 #include "doomstat.h"
 #include "v_palette.h"
+#include "w_wad.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -168,6 +169,7 @@ enum
 	BQF_WrapUV			= 16,
 	BQF_InvertSource	= 32,
 	BQF_DisableAlphaTest= 64,
+	BQF_Desaturated		= 128,
 };
 
 // Shaders for a buffered quad
@@ -176,7 +178,9 @@ enum
 	BQS_PalTex,
 	BQS_Plain,
 	BQS_RedToAlpha,
-	BQS_ColorOnly
+	BQS_ColorOnly,
+	BQS_SpecialColormap,
+	BQS_InGameColormap,
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -207,7 +211,33 @@ extern cycle_t BlitCycles;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-#include "fb_d3d9_shaders.h"
+const char *const D3DFB::ShaderNames[D3DFB::NUM_SHADERS] =
+{
+	"NormalColor.pso",
+	"NormalColorPal.pso",
+	"NormalColorInv.pso",
+	"NormalColorPalInv.pso",
+
+	"RedToAlpha.pso",
+	"RedToAlphaInv.pso",
+
+	"VertexColor.pso",
+
+	"SpecialColormap.pso",
+	"SpecialColorMapPal.pso",
+
+	"InGameColormap.pso",
+	"InGameColormapDesat.pso",
+	"InGameColormapInv.pso",
+	"InGameColormapInvDesat.pso",
+	"InGameColormapPal.pso",
+	"InGameColormapPalDesat.pso",
+	"InGameColormapPalInv.pso",
+	"InGameColormapPalInvDesat.pso",
+
+	"BurnWipe.pso",
+	"GammaCorrection.pso",
+};
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -216,10 +246,17 @@ CUSTOM_CVAR(Bool, vid_hw2d, true, CVAR_NOINITCALL)
 	BorderNeedRefresh = SB_state = screen->GetPageCount();
 }
 
+CVAR(Bool, d3d_antilag, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Int, d3d_showpacks, 0, 0)
 CVAR(Bool, vid_hwaalines, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 // CODE --------------------------------------------------------------------
+
+//==========================================================================
+//
+// D3DFB - Constructor
+//
+//==========================================================================
 
 D3DFB::D3DFB (int width, int height, bool fullscreen)
 	: BaseWinFB (width, height)
@@ -236,15 +273,12 @@ D3DFB::D3DFB (int width, int height, bool fullscreen)
 	ScreenshotSurface = NULL;
 	FinalWipeScreen = NULL;
 	PaletteTexture = NULL;
-	PalTexShader = NULL;
-	InvPalTexShader = NULL;
-	PalTexBilinearShader = NULL;
-	PlainShader = NULL;
-	InvPlainShader = NULL;
-	RedToAlphaShader = NULL;
-	ColorOnlyShader = NULL;
-	GammaFixerShader = NULL;
-	BurnShader = NULL;
+	for (int i = 0; i < NUM_SHADERS; ++i)
+	{
+		Shaders[i] = NULL;
+	}
+	BlockSurface[0] = NULL;
+	BlockSurface[1] = NULL;
 	FBFormat = D3DFMT_UNKNOWN;
 	PalFormat = D3DFMT_UNKNOWN;
 	VSync = vid_vsync;
@@ -350,6 +384,12 @@ D3DFB::D3DFB (int width, int height, bool fullscreen)
 	}
 }
 
+//==========================================================================
+//
+// D3DFB - Destructor
+//
+//==========================================================================
+
 D3DFB::~D3DFB ()
 {
 	ReleaseResources();
@@ -357,8 +397,15 @@ D3DFB::~D3DFB ()
 	delete[] QuadExtra;
 }
 
+//==========================================================================
+//
+// D3DFB :: SetInitialState
+//
 // Called after initial device creation and reset, when everything is set
 // to D3D's defaults.
+//
+//==========================================================================
+
 void D3DFB::SetInitialState()
 {
 	AlphaBlendEnabled = FALSE;
@@ -398,9 +445,9 @@ void D3DFB::SetInitialState()
 		D3DDevice->SetGammaRamp(0, 0, &ramp);
 	}
 
-	// Used by the inverse color shaders
-	float ones[4] = { 1, 1, 1, 1 };
-	D3DDevice->SetPixelShaderConstantF(6, ones, 1);
+	// This constant is used for grayscaling weights (.xyz) and color inversion (.w)
+	float weights[4] = { 77/256.f, 143/256.f, 37/256.f, 1 };
+	D3DDevice->SetPixelShaderConstantF(PSCONST_Weights, weights, 1);
 
 	// D3DRS_ALPHATESTENABLE defaults to FALSE
 	// D3DRS_ALPHAREF defaults to 0
@@ -409,6 +456,12 @@ void D3DFB::SetInitialState()
 
 	CurBorderColor = 0;
 }
+
+//==========================================================================
+//
+// D3DFB :: FillPresentParameters
+//
+//==========================================================================
 
 void D3DFB::FillPresentParameters (D3DPRESENT_PARAMETERS *pp, bool fullscreen, bool vsync)
 {
@@ -427,7 +480,13 @@ void D3DFB::FillPresentParameters (D3DPRESENT_PARAMETERS *pp, bool fullscreen, b
 	}
 }
 
-bool D3DFB::CreateResources ()
+//==========================================================================
+//
+// D3DFB :: CreateResources
+//
+//==========================================================================
+
+bool D3DFB::CreateResources()
 {
 	Packs = NULL;
 	if (!Windowed)
@@ -444,55 +503,27 @@ bool D3DFB::CreateResources ()
 		LOG2 ("Resize window to %dx%d\n", sizew, sizeh);
 		VidResizing = true;
 		// Make sure the window has a border in windowed mode
-		SetWindowLong (Window, GWL_STYLE, WS_VISIBLE|WS_OVERLAPPEDWINDOW);
-		if (GetWindowLong (Window, GWL_EXSTYLE) & WS_EX_TOPMOST)
+		SetWindowLong(Window, GWL_STYLE, WS_VISIBLE|WS_OVERLAPPEDWINDOW);
+		if (GetWindowLong(Window, GWL_EXSTYLE) & WS_EX_TOPMOST)
 		{
 			// Direct3D 9 will apparently add WS_EX_TOPMOST to fullscreen windows,
 			// and removing it is a little tricky. Using SetWindowLongPtr to clear it
 			// will not do the trick, but sending the window behind everything will.
-			SetWindowPos (Window, HWND_BOTTOM, 0, 0, sizew, sizeh,
+			SetWindowPos(Window, HWND_BOTTOM, 0, 0, sizew, sizeh,
 				SWP_DRAWFRAME | SWP_NOCOPYBITS | SWP_NOMOVE);
-			SetWindowPos (Window, HWND_TOP, 0, 0, 0, 0, SWP_NOCOPYBITS | SWP_NOMOVE | SWP_NOSIZE);
+			SetWindowPos(Window, HWND_TOP, 0, 0, 0, 0, SWP_NOCOPYBITS | SWP_NOMOVE | SWP_NOSIZE);
 		}
 		else
 		{
-			SetWindowPos (Window, NULL, 0, 0, sizew, sizeh,
+			SetWindowPos(Window, NULL, 0, 0, sizew, sizeh,
 				SWP_DRAWFRAME | SWP_NOCOPYBITS | SWP_NOMOVE | SWP_NOZORDER);
 		}
-		I_RestoreWindowedPos ();
+		I_RestoreWindowedPos();
 		VidResizing = false;
 	}
-	SM14 = false;
-	if (FAILED(D3DDevice->CreatePixelShader (PalTexShader20Def, &PalTexShader)) &&
-		(SM14 = true, FAILED(D3DDevice->CreatePixelShader (PalTexShader14Def, &PalTexShader))))
+	if (!LoadShaders())
 	{
 		return false;
-	}
-	if (FAILED(D3DDevice->CreatePixelShader (InvPalTexShader20Def, &InvPalTexShader)) &&
-		(SM14 = true, FAILED(D3DDevice->CreatePixelShader (InvPalTexShader14Def, &InvPalTexShader))))
-	{
-		return false;
-	}
-	if (FAILED(D3DDevice->CreatePixelShader (PlainShaderDef, &PlainShader)) ||
-		FAILED(D3DDevice->CreatePixelShader (InvPlainShaderDef, &InvPlainShader)) ||
-		FAILED(D3DDevice->CreatePixelShader (RedToAlphaDef, &RedToAlphaShader)) ||
-		FAILED(D3DDevice->CreatePixelShader (ColorOnlyDef, &ColorOnlyShader)))
-	{
-		return false;
-	}
-	if (FAILED(D3DDevice->CreatePixelShader (GammaFixerDef, &GammaFixerShader)))
-	{
-// Cannot print during screen creation.
-//		Printf ("Using Shader Model 1.4: Windowed mode gamma will not work.\n");
-		GammaFixerShader = NULL;
-	}
-	if (FAILED(D3DDevice->CreatePixelShader(PalTexBilinearDef, &PalTexBilinearShader)))
-	{
-		PalTexBilinearShader = PalTexShader;
-	}
-	if (FAILED(D3DDevice->CreatePixelShader (BurnShaderDef, &BurnShader)))
-	{
-		BurnShader = NULL;
 	}
 	if (!CreateFBTexture() ||
 		!CreatePaletteTexture())
@@ -503,8 +534,65 @@ bool D3DFB::CreateResources ()
 	{
 		return false;
 	}
+	CreateBlockSurfaces();
 	return true;
 }
+
+//==========================================================================
+//
+// D3DFB :: LoadShaders
+//
+// Returns true if all required shaders were loaded. (Gamma and burn wipe
+// are the only ones not considered "required".)
+//
+//==========================================================================
+
+bool D3DFB::LoadShaders()
+{
+	static const char *const models[] = { "30/", "20/", "14/" };
+	FString shaderdir, shaderpath;
+	int model, i, lump;
+
+	// We determine the best available model simply by trying them all in
+	// order of decreasing preference.
+	for (model = 0; model < countof(models); ++model)
+	{
+		shaderdir = "shaders/d3d/sm";
+		shaderdir += models[model];
+		for (i = 0; i < NUM_SHADERS; ++i)
+		{
+			shaderpath = shaderdir;
+			shaderpath += ShaderNames[i];
+			lump = Wads.CheckNumForFullName(shaderpath);
+			if (lump >= 0)
+			{
+				FMemLump data = Wads.ReadLump(lump);
+				if (FAILED(D3DDevice->CreatePixelShader((DWORD *)data.GetMem(), &Shaders[i])) &&
+					i != SHADER_GammaCorrection && i != SHADER_BurnWipe)
+				{
+					break;
+				}
+			}
+		}
+		if (i == NUM_SHADERS)
+		{ // Success!
+			SM14 = (model == countof(models) - 1);
+			return true;
+		}
+		// Failure. Release whatever managed to load (which is probably nothing.)
+		for (i = 0; i < NUM_SHADERS; ++i)
+		{
+			SAFE_RELEASE( Shaders[i] );
+		}
+	}
+	return false;
+}
+
+//==========================================================================
+//
+// D3DFB :: ReleaseResources
+//
+//==========================================================================
 
 void D3DFB::ReleaseResources ()
 {
@@ -515,22 +603,10 @@ void D3DFB::ReleaseResources ()
 	SAFE_RELEASE( ScreenshotSurface );
 	SAFE_RELEASE( ScreenshotTexture );
 	SAFE_RELEASE( PaletteTexture );
-	if (PalTexBilinearShader != NULL)
+	for (int i = 0; i < NUM_SHADERS; ++i)
 	{
-		if (PalTexBilinearShader != PalTexShader)
-		{
-			PalTexBilinearShader->Release();
-		}
-		PalTexBilinearShader = NULL;
+		SAFE_RELEASE( Shaders[i] );
 	}
-	SAFE_RELEASE( PalTexShader );
-	SAFE_RELEASE( InvPalTexShader );
-	SAFE_RELEASE( PlainShader );
-	SAFE_RELEASE( InvPlainShader );
-	SAFE_RELEASE( RedToAlphaShader );
-	SAFE_RELEASE( ColorOnlyShader );
-	SAFE_RELEASE( GammaFixerShader );
-	SAFE_RELEASE( BurnShader );
 	if (ScreenWipe != NULL)
 	{
 		delete ScreenWipe;
@@ -545,7 +621,14 @@ void D3DFB::ReleaseResources ()
 	GatheringWipeScreen = false;
 }
 
+//==========================================================================
+//
+// D3DFB :: ReleaseDefaultPoolItems
+//
 // Free resources created with D3DPOOL_DEFAULT.
+//
+//==========================================================================
+
 void D3DFB::ReleaseDefaultPoolItems()
 {
 	SAFE_RELEASE( FBTexture );
@@ -561,7 +644,15 @@ void D3DFB::ReleaseDefaultPoolItems()
 	SAFE_RELEASE( InitialWipeScreen );
 	SAFE_RELEASE( VertexBuffer );
 	SAFE_RELEASE( IndexBuffer );
+	SAFE_RELEASE( BlockSurface[0] );
+	SAFE_RELEASE( BlockSurface[1] );
 }
+
+//==========================================================================
+//
+// D3DFB :: Reset
+//
+//==========================================================================
 
 bool D3DFB::Reset ()
 {
@@ -589,8 +680,33 @@ bool D3DFB::Reset ()
 	{
 		return false;
 	}
+	CreateBlockSurfaces();
 	SetInitialState();
 	return true;
+}
+
+//==========================================================================
+//
+// D3DFB :: CreateBlockSurfaces
+//
+// Create blocking surfaces for antilag. It's okay if these can't be
+// created; antilag just won't work.
+//
+//==========================================================================
+
+void D3DFB::CreateBlockSurfaces()
+{
+	BlockNum = 0;
+	if (SUCCEEDED(D3DDevice->CreateOffscreenPlainSurface(16, 16, D3DFMT_A8R8G8B8,
+		D3DPOOL_DEFAULT, &BlockSurface[0], 0)))
+	{
+		if (FAILED(D3DDevice->CreateOffscreenPlainSurface(16, 16, D3DFMT_A8R8G8B8,
+			D3DPOOL_DEFAULT, &BlockSurface[1], 0)))
+		{
+			BlockSurface[0]->Release();
+			BlockSurface[0] = NULL;
+		}
+	}
 }
 
 //==========================================================================
@@ -836,10 +952,7 @@ void D3DFB::Update ()
 			DrawRateStuff();
 			DrawPackedTextures(d3d_showpacks);
 			EndBatch();		// Make sure all batched primitives are drawn.
-			DoWindowedGamma();
-			D3DDevice->EndScene();
-			D3DDevice->Present(NULL, NULL, NULL, NULL);
-			InScene = false;
+			Flip();
 		}
 		In2D = 0;
 		return;
@@ -881,7 +994,7 @@ void D3DFB::Update ()
 		}
 		psgamma[2] = psgamma[1] = psgamma[0] = igamma;
 		psgamma[3] = 1;
-		D3DDevice->SetPixelShaderConstantF(7, psgamma, 1);
+		D3DDevice->SetPixelShaderConstantF(PSCONST_Gamma, psgamma, 1);
 	}
 	
 	if (NeedPalUpdate)
@@ -902,10 +1015,7 @@ void D3DFB::Update ()
 	Draw3DPart(In2D <= 1);
 	if (In2D == 0)
 	{
-		DoWindowedGamma();
-		D3DDevice->EndScene();
-		D3DDevice->Present(NULL, NULL, NULL, NULL);
-		InScene = false;
+		Flip();
 	}
 
 	BlitCycles.Unclock();
@@ -913,6 +1023,30 @@ void D3DFB::Update ()
 
 	Buffer = NULL;
 	UpdatePending = false;
+}
+
+void D3DFB::Flip()
+{
+	assert(InScene);
+
+	DoWindowedGamma();
+	D3DDevice->EndScene();
+
+	// Attempt to counter input lag.
+	if (d3d_antilag && BlockSurface[0] != NULL)
+	{
+		D3DLOCKED_RECT lr;
+		volatile int dummy;
+		D3DDevice->ColorFill(BlockSurface[BlockNum], NULL, D3DCOLOR_ARGB(0xFF,0,0x20,0x50));
+		BlockNum ^= 1;
+		if (!FAILED((BlockSurface[BlockNum]->LockRect(&lr, NULL, D3DLOCK_READONLY))))
+		{
+			dummy = *(int *)lr.pBits;
+			BlockSurface[BlockNum]->UnlockRect();
+		}
+	}
+	D3DDevice->Present(NULL, NULL, NULL, NULL);
+	InScene = false;
 }
 
 bool D3DFB::PaintToWindow ()
@@ -971,7 +1105,7 @@ void D3DFB::Draw3DPart(bool copy3d)
 	D3DDevice->SetRenderState(D3DRS_ANTIALIASEDLINEENABLE, vid_hwaalines);
 	assert(OldRenderTarget == NULL);
 	if (TempRenderTexture != NULL &&
-		((Windowed && GammaFixerShader && TempRenderTexture != FinalWipeScreen) || GatheringWipeScreen || PixelDoubling))
+		((Windowed && Shaders[SHADER_GammaCorrection] && TempRenderTexture != FinalWipeScreen) || GatheringWipeScreen || PixelDoubling))
 	{
 		IDirect3DSurface9 *targetsurf;
 		if (SUCCEEDED(TempRenderTexture->GetSurfaceLevel(0, &targetsurf)))
@@ -989,17 +1123,40 @@ void D3DFB::Draw3DPart(bool copy3d)
 
 	SetTexture (0, FBTexture);
 	SetPaletteTexture(PaletteTexture, 256, BorderColor);
-	SetPixelShader(PalTexShader);
 	D3DDevice->SetFVF (D3DFVF_FBVERTEX);
 	memset(Constant, 0, sizeof(Constant));
 	SetAlphaBlend(D3DBLENDOP(0));
 	EnableAlphaTest(FALSE);
+	SetPixelShader(Shaders[SHADER_NormalColorPal]);
 	if (copy3d)
 	{
 		FBVERTEX verts[4];
-		CalcFullscreenCoords(verts, Accel2D, false, FlashColor0, FlashColor1);
+		D3DCOLOR color0, color1;
+		if (Accel2D)
+		{
+			if (realfixedcolormap == NULL)
+			{
+				color0 = 0;
+				color1 = 0xFFFFFFF;
+			}
+			else
+			{
+				color0 = D3DCOLOR_COLORVALUE(realfixedcolormap->ColorizeStart[0]/2,
+					realfixedcolormap->ColorizeStart[1]/2, realfixedcolormap->ColorizeStart[2]/2, 0);
+				color1 = D3DCOLOR_COLORVALUE(realfixedcolormap->ColorizeEnd[0]/2,
+					realfixedcolormap->ColorizeEnd[1]/2, realfixedcolormap->ColorizeEnd[2]/2, 1);
+				SetPixelShader(Shaders[SHADER_SpecialColormapPal]);
+			}
+		}
+		else
+		{
+			color0 = FlashColor0;
+			color1 = FlashColor1;
+		}
+		CalcFullscreenCoords(verts, Accel2D, false, color0, color1);
 		D3DDevice->DrawPrimitiveUP(D3DPT_TRIANGLEFAN, 2, verts, sizeof(FBVERTEX));
 	}
+	SetPixelShader(Shaders[SHADER_NormalColorPal]);
 }
 
 //==========================================================================
@@ -1039,7 +1196,7 @@ void D3DFB::DoWindowedGamma()
 		D3DDevice->SetRenderTarget(0, OldRenderTarget);
 		D3DDevice->SetFVF(D3DFVF_FBVERTEX);
 		SetTexture(0, TempRenderTexture);
-		SetPixelShader((Windowed && GammaFixerShader != NULL) ? GammaFixerShader : PlainShader);
+		SetPixelShader(Shaders[(Windowed && Shaders[SHADER_GammaCorrection]) ? SHADER_GammaCorrection : SHADER_NormalColor]);
 		SetAlphaBlend(D3DBLENDOP(0));
 		EnableAlphaTest(FALSE);
 		D3DDevice->DrawPrimitiveUP(D3DPT_TRIANGLEFAN, 2, verts, sizeof(FBVERTEX));
@@ -2150,6 +2307,23 @@ bool D3DFB::Begin2D(bool copy3d)
 
 //==========================================================================
 //
+// D3DFB :: DrawBlendingRect
+//
+// Call after Begin2D to blend the 3D view.
+//
+//==========================================================================
+
+void D3DFB::DrawBlendingRect()
+{
+	if (!In2D || !Accel2D)
+	{
+		return;
+	}
+	Dim(FlashColor, FlashAmount / 256.f, viewwindowx, viewwindowy, viewwidth, viewheight);
+}
+
+//==========================================================================
+//
 // D3DFB :: CreateTexture
 //
 // Returns a native texture that wraps a FTexture.
@@ -2278,7 +2452,7 @@ void D3DFB::EndLineBatch()
 	VertexBuffer->Unlock();
 	if (VertexPos > 0)
 	{
-		SetPixelShader(ColorOnlyShader);
+		SetPixelShader(Shaders[SHADER_VertexColor]);
 		SetAlphaBlend(D3DBLENDOP_ADD, D3DBLEND_SRCALPHA, D3DBLEND_INVSRCALPHA);
 		D3DDevice->SetStreamSource(0, VertexBuffer, 0, sizeof(FBVERTEX));
 		D3DDevice->DrawPrimitive(D3DPT_LINELIST, 0, VertexPos / 2);
@@ -2357,7 +2531,7 @@ void D3DFB::DrawPixel(int x, int y, int palcolor, uint32 color)
 		float(x), float(y), 0, 1, color
 	};
 	EndBatch();		// Draw out any batched operations.
-	SetPixelShader(ColorOnlyShader);
+	SetPixelShader(Shaders[SHADER_VertexColor]);
 	SetAlphaBlend(D3DBLENDOP_ADD, D3DBLEND_SRCALPHA, D3DBLEND_INVSRCALPHA);
 	D3DDevice->DrawPrimitiveUP(D3DPT_POINTLIST, 1, &pt, sizeof(FBVERTEX));
 }
@@ -2454,7 +2628,10 @@ void STACK_ARGS D3DFB::DrawTextureV (FTexture *img, int x, int y, uint32 tags_fi
 			EndQuadBatch();
 			BeginQuadBatch();
 		}
-		RECT scissor = { parms.lclip, parms.uclip, parms.rclip, parms.dclip };
+		RECT scissor = {
+			parms.lclip, parms.uclip + LBOffsetI,
+			parms.rclip, parms.dclip + LBOffsetI
+		};
 		D3DDevice->SetScissorRect(&scissor);
 		D3DDevice->SetRenderState(D3DRS_SCISSORTESTENABLE, TRUE);
 	}
@@ -2845,26 +3022,38 @@ void D3DFB::EndQuadBatch()
 		// Set the pixel shader
 		if (quad->ShaderNum == BQS_PalTex)
 		{
-			if (!(quad->Flags & BQF_Bilinear))
-			{
-				SetPixelShader((quad->Flags & BQF_InvertSource) ? InvPalTexShader : PalTexShader);
-			}
-			else
-			{
-				SetPixelShader(PalTexBilinearShader);
-			}
+			SetPixelShader(Shaders[(quad->Flags & BQF_InvertSource) ?
+				SHADER_NormalColorPalInv : SHADER_NormalColorPal]);
 		}
 		else if (quad->ShaderNum == BQS_Plain)
 		{
-			SetPixelShader((quad->Flags & BQF_InvertSource) ? InvPlainShader : PlainShader);
+			SetPixelShader(Shaders[(quad->Flags & BQF_InvertSource) ?
+				SHADER_NormalColorInv : SHADER_NormalColor]);
 		}
 		else if (quad->ShaderNum == BQS_RedToAlpha)
 		{
-			SetPixelShader(RedToAlphaShader);
+			SetPixelShader(Shaders[(quad->Flags & BQF_InvertSource) ?
+				SHADER_RedToAlphaInv : SHADER_RedToAlpha]);
 		}
 		else if (quad->ShaderNum == BQS_ColorOnly)
 		{
-			SetPixelShader(ColorOnlyShader);
+			SetPixelShader(Shaders[SHADER_VertexColor]);
+		}
+		else if (quad->ShaderNum == BQS_SpecialColormap)
+		{
+			int select;
+
+			select = !!(quad->Flags & BQF_Paletted);
+			SetPixelShader(Shaders[SHADER_SpecialColormap + select]);
+		}
+		else if (quad->ShaderNum == BQS_InGameColormap)
+		{
+			int select;
+
+			select = !!(quad->Flags & BQF_Desaturated);
+			select |= !!(quad->Flags & BQF_InvertSource) << 1;
+			select |= !!(quad->Flags & BQF_Paletted) << 2;
+			SetPixelShader(Shaders[SHADER_InGameColormap + select]);
 		}
 
 		// Set the texture clamp addressing mode
@@ -2961,6 +3150,7 @@ bool D3DFB::SetStyle(D3DTex *tex, DrawParms &parms, D3DCOLOR &color0, D3DCOLOR &
 
 	stencilling = false;
 	quad.Palette = NULL;
+	quad.Flags = 0;
 
 	switch (style.BlendOp)
 	{
@@ -3047,10 +3237,42 @@ bool D3DFB::SetStyle(D3DTex *tex, DrawParms &parms, D3DCOLOR &color0, D3DCOLOR &
 		{
 			quad.Flags |= BQF_InvertSource;
 		}
+
+		if (parms.specialcolormap != NULL)
+		{ // Emulate an invulnerability or similar colormap.
+			float *start, *end;
+			start = parms.specialcolormap->ColorizeStart;
+			end = parms.specialcolormap->ColorizeEnd;
+			if (quad.Flags & BQF_InvertSource)
+			{
+				quad.Flags &= ~BQF_InvertSource;
+				swap(start, end);
+			}
+			quad.ShaderNum = BQS_SpecialColormap;
+			color0 = D3DCOLOR_RGBA(DWORD(start[0]/2*255), DWORD(start[1]/2*255), DWORD(start[2]/2*255), color0 >> 24);
+			color1 = D3DCOLOR_RGBA(DWORD(end[0]/2*255), DWORD(end[1]/2*255), DWORD(end[2]/2*255), color1 >> 24);
+		}
+		else if (parms.colormapstyle != NULL)
+		{ // Emulate the fading from an in-game colormap (colorized, faded, and desaturated)
+			if (parms.colormapstyle->Desaturate != 0)
+			{
+				quad.Flags |= BQF_Desaturated;
+			}
+			quad.ShaderNum = BQS_InGameColormap;
+			color0 = D3DCOLOR_ARGB(parms.colormapstyle->Desaturate,
+				parms.colormapstyle->Color.r,
+				parms.colormapstyle->Color.g,
+				parms.colormapstyle->Color.b);
+			double fadelevel = parms.colormapstyle->FadeLevel;
+			color1 = D3DCOLOR_ARGB(DWORD((1 - fadelevel) * 255),
+				DWORD(parms.colormapstyle->Fade.r * fadelevel),
+				DWORD(parms.colormapstyle->Fade.g * fadelevel),
+				DWORD(parms.colormapstyle->Fade.b * fadelevel));
+		}
 	}
 
 	// For unmasked images, force the alpha from the image data to be ignored.
-	if (!parms.masked)
+	if (!parms.masked && quad.ShaderNum != BQS_InGameColormap)
 	{
 		color0 = (color0 & D3DCOLOR_RGBA(255, 255, 255, 0)) | D3DCOLOR_COLORVALUE(0, 0, 0, alpha);
 		color1 &= D3DCOLOR_RGBA(255, 255, 255, 0);
@@ -3187,7 +3409,7 @@ void D3DFB::SetPaletteTexture(IDirect3DTexture9 *texture, int count, D3DCOLOR bo
 	if (SM14)
 	{
 		// Shader Model 1.4 only uses 256-color palettes.
-		SetConstant(2, 1.f, 0.5f / 256.f, 0, 0);
+		SetConstant(PSCONST_PaletteMod, 1.f, 0.5f / 256.f, 0, 0);
 		if (border_color != 0 && CurBorderColor != border_color)
 		{
 			CurBorderColor = border_color;
@@ -3208,13 +3430,14 @@ void D3DFB::SetPaletteTexture(IDirect3DTexture9 *texture, int count, D3DCOLOR bo
 		// The constant register c2 is used to hold the multiplier in the
 		// x part and the adder in the y part.
 		float fcount = 1 / float(count);
-		SetConstant(2, pc * fcount, pal * fcount, 0, 0);
+		SetConstant(PSCONST_PaletteMod, pc * fcount, pal * fcount, 0, 0);
 	}
 	SetTexture(1, texture);
 }
 
 void D3DFB::SetPalTexBilinearConstants(PackingTexture *tex)
 {
+#if 0
 	float con[8];
 
 	// Don't bother doing anything if the constants won't be used.
@@ -3233,4 +3456,5 @@ void D3DFB::SetPalTexBilinearConstants(PackingTexture *tex)
 	con[7] = con[3];
 
 	D3DDevice->SetPixelShaderConstantF(3, con, 2);
+#endif
 }

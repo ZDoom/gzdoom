@@ -63,9 +63,15 @@ const int MRF_UNDOBYDEATH = 512;
 const int MRF_UNDOBYDEATHFORCED = 1024;
 const int MRF_UNDOBYDEATHSAVES = 2048;
 
+// Flags for A_RailAttack and A_CustomRailgun
 const int RGF_SILENT = 1;
 const int RGF_NOPIERCING = 2;
 
+// Flags for A_Mushroom
+const int MSF_Standard = 0;
+const int MSF_Classic = 1;
+
+// Activation flags
 enum
 {
 	THINGSPEC_Default = 0,
@@ -76,7 +82,6 @@ enum
 	THINGSPEC_MissileTrigger = 16,
 	THINGSPEC_ClearSpecial = 32,
 };
-
 
 // constants for A_PlaySound
 enum

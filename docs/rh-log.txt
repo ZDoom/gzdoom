@@ -1,3 +1,101 @@
+September 22, 2009
+- Added a technique to try and minimize input lag with vsync enabled: Two
+  surfaces are alternately locked for read-only access each frame, forcing
+  the driver to stop buffering more than one frame at a time. The input lag
+  on my system doesn't seem to be as bad as it once was (I can no longer
+  see it obviously with my naked eye), but turning antilag on "feels"
+  slightly more responsive. The cvar d3d_antilag turns this technique on and
+  off. See <http://www.xyzw.de/c120.html> for more details.
+
+September 22, 2009  (Changes by Graf Zahl)
+- Added a check to Dehacked code which tries to set the blend color.
+  It must set it to 0 if the alpha is 0 to avoid problems with special
+  colormap detection.
+- Changed SPECIALCOLORMAP_MASK again so that it does not interfere with
+  any valid setting. It must use a value with a 0-alpha because these
+  are guaranteed not to be produced by the DECORATE code elsewhere.
+- Fixed precision issues with AddFixedColormap's search for identical colormaps.
+- Added custom colormap support to texture composition code.
+- Fixed initialization of FSpecialColormap::GrayscaleToColor. This is not
+  a mapping from the palette but from a [0,255] grayscale ramp and used to
+  apply colormaps to true color images for texture composition.
+
+September 21, 2009
+- For hardware 2D, apply fixed colormaps when copying to video memory instead
+  of doing it directly during the rendering, in order to improve visual
+  fidelity for colormaps that aren't grayscale.
+- Added support for defining the full color range of a special colormap.
+- Moved the code for specialcolormap and colormapstyle in D3DFB::SetStyle()
+  at the end of the normally-colored block so that they get all the proper
+  texture format setup.
+- Fixed: In letterbox modes, the clipping window needs to be adjusted down.
+
+September 21, 2009  (Changes by Graf Zahl)
+- Fixed: When drawing with a special colormap the quad's flags weren't cleared
+  which could cause crashes.
+- Added custom special colormaps to DECORATE.
+- Cleaned up special colormap code and removed lots of dependencies on the
+  knowledge of the tables' contents.
+
+September 20, 2009  (Changes by Graf Zahl)
+- Changed call to R_DrawRemainingPlayerSprites into a virtual function
+  of DFrameBuffer because its implementation is specific to the software
+  renderer and needs to be overridable.
+
+September 19, 2009
+- Fixed: Wall drawing handled fixed light levels improperly (but did not
+  completely ignore them, either).
+- Separated light level fixing out of player_t's fixedcolormap parameter.
+  Using a fixed light level (e.g. PowerTorch) will no longer wipe out
+  colored lighting.
+- Moved the blending rectangle drawing into a separate discrete stage, since
+  doing it while copying the 3D view window to the display now blends
+  underneath the weapon instead of on top of it.
+- Consolidated the special colormaps into a single 2D table.
+- Tweaked the special colormaps slightly to make the true color results more
+  closely match the paletted approximations.
+- fb_d3d9_shaders.h was getting unwieldy, so I moved the shaders out of the
+  executable and into zdoom.pk3. Shaders are still precompiled so I don't need
+  to pull in a dependancy on D3DX.
+- Added a few more shaders to accomodate drawing weapons with all the in-game
+  lighting models. These are accessed with the new DrawTexture tags
+  DTA_SpecialColormap and DTA_ColormapStyle.
+- Player weapon sprites are now drawn using Direct3D and receive all the
+  benefits thereof.
+
+September 17, 2009  (Changes by Graf Zahl)
+- Fixed: Unmorphing while invulnerable was blocked.
+- Various cleanup changes.
+- fixed Dog's class name in DEHSUPP.
+- Renamed plane flags from SECF_* to PLANEF_*.
+- Changed Heretic's plat raise type to use a flag to block further sector movement
+  instead of keeping the dead thinker around to block the sector.
+
+September 16, 2009  (Changes by Graf Zahl)
+- Fixed: A_LookEx did not work for monsters having the MF_NOSECTOR flag.
+- Fixed: The deprecated flag handler for the old bounce flags needs to clear
+  BOUNCE_MBF and BOUNCE_UseSeeSound, too, when clearing one of these flags.
+- Fixed: When adding the AVOIDMELEE code the code was accidentally changed so that
+  friendly monsters could no longer acquire targets by themselves.
+- Renamed WIF_BOT_MELEE to WIF_MELEEWEAPON because it's no longer a bot only flag.
+- Added MBF's monster_backing feature as an actor flag: AVOIDMELEE.
+- Gez's misc. bugs patch:
+* Moves the dog sound out of the Doom-specific sounds in SNDINFO to address this,
+* Renames the dog actor to MBFHelperDog to prevent name conflicts,
+* Adds APROP_Score to CheckActorProperty,
+* Completes the randomspawner update (the reason I moved the recursion counter out of 
+  special1 was that I found some projectiles had this set to them, for example in 
+  A_LichAttack, but I forgot to add transfer for them),
+* Provides centered sprites for beta plasma balls if this is deemed deserving correction.
+- Added some pieces of MBF's friendly AI.
+- Cleaned up A_LookEx code and merged most of it with the base functions.
+  The major difference was a common piece of code that was repeated 5 times
+  throughout the code so I moved it into a subfunction.
+- Changed P_BlockmapSearch to pass a user parameter to its callback so that
+  A_LookEx does not need to store its info inside the actor itself.
+- fixed: The linetarget CCMD duplicated all of the info CCMD. 
+- fixed: PrintActorInfo crashed due to some incomplete implementation.
+
 September 15, 2009  (Changes by Graf Zahl)
 - added PinkSilver's A_Respawn enhancement patch.
 - added RandomSpawner update from Gez's experimental build.
@@ -16872,7 +16970,7 @@ November 14, 2000
   into c_cvars.cpp. Virtual inline functions are not inlined and cause the
   function to be generated for every source file the class is used in.
 - Fixed bug with Transfer_CeilingLight special. I was or'ing CeilingLight
-  with SECF_ABSLIGHTING instead of CeilingFlags.
+  with PLANEF_ABSLIGHTING instead of CeilingFlags.
 
 November 11, 2000
 - Slopes don't work in mirrors. :-(

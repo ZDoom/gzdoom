@@ -130,15 +130,15 @@ void HandleDeprecatedFlags(AActor *defaults, FActorInfo *info, bool set, int ind
 		break;
 	// the bounce flags will set the compatibility bounce modes to remain compatible
 	case DEPF_HERETICBOUNCE:
-		defaults->BounceFlags &= ~BOUNCE_TypeMask;
+		defaults->BounceFlags &= ~(BOUNCE_TypeMask|BOUNCE_UseSeeSound);
 		if (set) defaults->BounceFlags |= BOUNCE_HereticCompat;
 		break;
 	case DEPF_HEXENBOUNCE:
-		defaults->BounceFlags &= ~BOUNCE_TypeMask;
+		defaults->BounceFlags &= ~(BOUNCE_TypeMask|BOUNCE_UseSeeSound);
 		if (set) defaults->BounceFlags |= BOUNCE_HexenCompat;
 		break;
 	case DEPF_DOOMBOUNCE:
-		defaults->BounceFlags &= ~BOUNCE_TypeMask;
+		defaults->BounceFlags &= ~(BOUNCE_TypeMask|BOUNCE_UseSeeSound);
 		if (set) defaults->BounceFlags |= BOUNCE_DoomCompat;
 		break;
 	case DEPF_PICKUPFLASH:
@@ -1556,7 +1556,8 @@ DEFINE_CLASS_PROPERTY(weapon, S, WeaponPiece)
 //==========================================================================
 DEFINE_CLASS_PROPERTY_PREFIX(powerup, color, C_f, Inventory)
 {
-	PROP_INT_PARM(i, 0);
+	static const char *specialcolormapnames[] = {
+		"INVERSEMAP", "GOLDMAP", "REDMAP", "GREENMAP", "BLUEMAP", NULL };
 
 	int alpha;
 	PalEntry * pBlendColor;
@@ -1582,30 +1583,11 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, color, C_f, Inventory)
 	{
 		PROP_STRING_PARM(name, 1);
 
-		if (!stricmp(name, "INVERSEMAP"))
+		// We must check the old special colormap names for compatibility
+		int v = MatchString(name, specialcolormapnames);
+		if (v >= 0)
 		{
-			*pBlendColor = INVERSECOLOR;
-			return;
-		}
-		else if (!stricmp(name, "GOLDMAP"))
-		{
-			*pBlendColor = GOLDCOLOR;
-			return;
-		}
-		// [BC] Yay, more hacks.
-		else if (!stricmp(name, "REDMAP" ))
-		{
-			*pBlendColor = REDCOLOR;
-			return;
-		}
-		else if (!stricmp(name, "GREENMAP" ))
-		{
-			*pBlendColor = GREENCOLOR;
-			return;
-		}
-		else if (!stricmp(name, "BLUEMAP"))
-		{
-			*pBlendColor = BLUECOLOR;
+			*pBlendColor = MakeSpecialColormap(v);
 			return;
 		}
 
@@ -1619,8 +1601,52 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, color, C_f, Inventory)
 	else alpha = 255/3;
 
 	alpha=clamp<int>(alpha, 0, 255);
-	if (alpha!=0) *pBlendColor = MAKEARGB(alpha, 0, 0, 0) | color;
+	if (alpha != 0) *pBlendColor = MAKEARGB(alpha, 0, 0, 0) | color;
 	else *pBlendColor = 0;
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_CLASS_PROPERTY_PREFIX(powerup, colormap, FFFfff, Inventory)
+{
+	PalEntry * pBlendColor;
+
+	if (info->Class->IsDescendantOf(RUNTIME_CLASS(APowerup)))
+	{
+		pBlendColor = &((APowerup*)defaults)->BlendColor;
+	}
+	else if (info->Class->IsDescendantOf(RUNTIME_CLASS(APowerupGiver)))
+	{
+		pBlendColor = &((APowerupGiver*)defaults)->BlendColor;
+	}
+	else
+	{
+		I_Error("\"powerup.colormap\" requires an actor of type \"Powerup\"\n");
+		return;
+	}
+
+	if (PROP_PARM_COUNT == 3)
+	{
+		PROP_FLOAT_PARM(r, 0);
+		PROP_FLOAT_PARM(g, 1);
+		PROP_FLOAT_PARM(b, 2);
+		*pBlendColor = MakeSpecialColormap(AddSpecialColormap(0, 0, 0, r, g, b));
+	}
+	else if (PROP_PARM_COUNT == 6)
+	{
+		PROP_FLOAT_PARM(r1, 0);
+		PROP_FLOAT_PARM(g1, 1);
+		PROP_FLOAT_PARM(b1, 2);
+		PROP_FLOAT_PARM(r2, 3);
+		PROP_FLOAT_PARM(g2, 4);
+		PROP_FLOAT_PARM(b2, 5);
+		*pBlendColor = MakeSpecialColormap(AddSpecialColormap(r1, g1, b1, r2, g2, b2));
+	}
+	else
+	{
+		I_Error("\"power.colormap\" must have either 3 or 6 parameters\n");
+	}
 }
 
 //==========================================================================

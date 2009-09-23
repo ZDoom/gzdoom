@@ -226,6 +226,7 @@ public:
 	bool Lock (bool buffered);
 	void Unlock ();
 	void Update ();
+	void Flip ();
 	PalEntry *GetPalette ();
 	void GetFlashedPalette (PalEntry palette[256]);
 	void UpdatePalette ();
@@ -244,6 +245,7 @@ public:
 	void ReleaseScreenshotBuffer();
 	void SetBlendingRect (int x1, int y1, int x2, int y2);
 	bool Begin2D (bool copy3d);
+	void DrawBlendingRect ();
 	FNativeTexture *CreateTexture (FTexture *gametex, bool wrapping);
 	FNativePalette *CreatePalette (FRemapTable *remap);
 	void STACK_ARGS DrawTextureV (FTexture *img, int x, int y, uint32 tag, va_list tags);
@@ -290,9 +292,48 @@ private:
 		PackingTexture *Texture;
 	};
 
+	enum
+	{
+		PSCONST_PaletteMod = 2,
+		PSCONST_Weights = 6,
+		PSCONST_Gamma = 7,
+	};
+	enum
+	{
+		SHADER_NormalColor,
+		SHADER_NormalColorPal,
+		SHADER_NormalColorInv,
+		SHADER_NormalColorPalInv,
+
+		SHADER_RedToAlpha,
+		SHADER_RedToAlphaInv,
+
+		SHADER_VertexColor,
+
+		SHADER_SpecialColormap,
+		SHADER_SpecialColormapPal,
+
+		SHADER_InGameColormap,
+		SHADER_InGameColormapDesat,
+		SHADER_InGameColormapInv,
+		SHADER_InGameColormapInvDesat,
+		SHADER_InGameColormapPal,
+		SHADER_InGameColormapPalDesat,
+		SHADER_InGameColormapPalInv,
+		SHADER_InGameColormapPalInvDesat,
+
+		SHADER_BurnWipe,
+		SHADER_GammaCorrection,
+
+		NUM_SHADERS
+	};
+	static const char *const ShaderNames[NUM_SHADERS];
+
 	void SetInitialState();
 	bool CreateResources();
 	void ReleaseResources();
+	bool LoadShaders();
+	void CreateBlockSurfaces();
 	bool CreateFBTexture();
 	bool CreatePaletteTexture();
 	bool CreateGrayPaletteTexture();
@@ -365,6 +406,7 @@ private:
 	bool SM14;
 	bool GatheringWipeScreen;
 	bool AALines;
+	BYTE BlockNum;
 	D3DPal *Palettes;
 	D3DTex *Textures;
 	PackingTexture *Packs;
@@ -386,13 +428,9 @@ private:
 	int QuadBatchPos;
 	enum { BATCH_None, BATCH_Quads, BATCH_Lines } BatchType;
 
-	IDirect3DPixelShader9 *PalTexShader, *PalTexBilinearShader, *InvPalTexShader;
-	IDirect3DPixelShader9 *PlainShader, *InvPlainShader;
-	IDirect3DPixelShader9 *RedToAlphaShader;
-	IDirect3DPixelShader9 *ColorOnlyShader;
-	IDirect3DPixelShader9 *GammaFixerShader;
-	IDirect3DPixelShader9 *BurnShader;
+	IDirect3DPixelShader9 *Shaders[NUM_SHADERS];
 
+	IDirect3DSurface9 *BlockSurface[2];
 	IDirect3DSurface9 *OldRenderTarget;
 	IDirect3DTexture9 *InitialWipeScreen, *FinalWipeScreen;
 

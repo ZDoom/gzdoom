@@ -320,7 +320,7 @@ public:
 #define PT_ADDLINES 	1
 #define PT_ADDTHINGS	2
 
-AActor *P_BlockmapSearch (AActor *origin, int distance, AActor *(*func)(AActor *, int));
+AActor *P_BlockmapSearch (AActor *mo, int distance, AActor *(*check)(AActor*, int, void *), void *params = NULL);
 AActor *P_RoughMonsterSearch (AActor *mo, int distance);
 
 //

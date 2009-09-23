@@ -299,7 +299,8 @@ inline FArchive &operator<< (FArchive &arc, secplane_t &plane)
 // Ceiling/floor flags
 enum
 {
-	SECF_ABSLIGHTING	= 1		// floor/ceiling light is absolute, not relative
+	PLANEF_ABSLIGHTING	= 1,	// floor/ceiling light is absolute, not relative
+	PLANEF_BLOCKED		= 2		// can not be moved anymore.
 };
 
 // Internal sector flags
@@ -604,6 +605,8 @@ struct sector_t
 	{
 		return lightlevel;
 	}
+
+	bool PlaneMoving(int pos);
 
 
 	// Member variables

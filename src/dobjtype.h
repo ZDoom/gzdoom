@@ -13,7 +13,8 @@ enum ESymbolType
 {
 	SYM_Const,
 	SYM_Variable,
-	SYM_ActionFunction
+	SYM_ActionFunction,
+	SYM_VMFunction
 };
 
 class PSymbol : public DObject
@@ -92,6 +93,20 @@ public:
 
 	PSymbolActionFunction(FName name) : PSymbol(name, SYM_ActionFunction) {}
 	PSymbolActionFunction() : PSymbol(NAME_None, SYM_ActionFunction) {}
+};
+
+// A symbol table -----------------------------------------------------------
+
+class VMFunction;
+class PSymbolVMFunction : public PSymbol
+{
+	DECLARE_CLASS(PSymbolVMFunction, PSymbol);
+	HAS_OBJECT_POINTERS;
+public:
+	VMFunction *Function;
+
+	PSymbolVMFunction(FName name) : PSymbol(name, SYM_VMFunction) {}
+	PSymbolVMFunction() : PSymbol(NAME_None, SYM_VMFunction) {}
 };
 
 // A symbol table -----------------------------------------------------------

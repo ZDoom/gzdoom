@@ -25,6 +25,25 @@ enum dirtype_t
 
 extern fixed_t xspeed[8], yspeed[8];
 
+enum LO_Flags
+{
+	LOF_NOSIGHTCHECK = 1,
+	LOF_NOSOUNDCHECK = 2,
+	LOF_DONTCHASEGOAL = 4,
+	LOF_NOSEESOUND = 8,
+	LOF_FULLVOLSEESOUND = 16,
+};
+
+struct FLookExParams
+{
+	angle_t fov;
+	fixed_t mindist;
+	fixed_t maxdist;
+	fixed_t maxheardist;
+	int flags;
+	FState *seestate;
+};
+
 void P_RecursiveSound (sector_t *sec, AActor *soundtarget, bool splash, int soundblocks);
 bool P_HitFriend (AActor *self);
 void P_NoiseAlert (AActor *target, AActor *emmiter, bool splash=false);
@@ -32,9 +51,9 @@ bool P_CheckMeleeRange2 (AActor *actor);
 bool P_Move (AActor *actor);
 bool P_TryWalk (AActor *actor);
 void P_NewChaseDir (AActor *actor);
-bool P_LookForPlayers (AActor *actor, INTBOOL allaround);
 AInventory *P_DropItem (AActor *source, const PClass *type, int special, int chance);
 void P_TossItem (AActor *item);
+bool P_LookForPlayers (AActor *actor, INTBOOL allaround, FLookExParams *params);
 
 DECLARE_ACTION(A_Look)
 DECLARE_ACTION(A_Wander)

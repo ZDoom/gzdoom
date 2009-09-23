@@ -50,6 +50,13 @@ misc/icebreak			icebrk1a
 // Retail Doom and Strife use 200.
 $rolloff * 200 1200
 
+// Marine's Best Friend -- not just for marines anymore!
+dog/active			dsdgact
+dog/attack			dsdgatk
+dog/death			dsdgdth
+dog/pain			dsdgpain
+dog/sight			dsdgsit
+
 /****************************************************************************/
 /*																			*/
 /* DOOM SOUNDS																*/
@@ -424,13 +431,6 @@ brain/spit			dsbospit
 brain/cube			dsboscub
 brain/cubeboom			dsfirxpl
 $alias brain/spawn		misc/teleport
-
-// Marine's Best Friend
-dog/active			dsdgact
-dog/attack			dsdgatk
-dog/death			dsdgdth
-dog/pain			dsdgpain
-dog/sight			dsdgsit
 
 
 //============================================================================

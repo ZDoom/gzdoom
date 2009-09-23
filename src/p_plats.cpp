@@ -91,7 +91,10 @@ void DPlat::Tick ()
 				switch (m_Type)
 				{
 					case platRaiseAndStayLockout:
-						break;
+						// Instead of keeping the dead thinker like Heretic did let's 
+						// better use a flag to avoid problems elsewhere. For example,
+						// keeping the thinker would make tagwait wait indefinitely.
+						m_Sector->planes[sector_t::floor].Flags |= PLANEF_BLOCKED; 
 					case platRaiseAndStay:
 					case platDownByValue:
 					case platDownWaitUpStay:
@@ -236,7 +239,7 @@ bool EV_DoPlat (int tag, line_t *line, DPlat::EPlatType type, int height,
 		sec = &sectors[secnum];
 
 manual_plat:
-		if (sec->floordata)
+		if (sec->PlaneMoving(sector_t::floor))
 		{
 			if (!manual)
 				continue;

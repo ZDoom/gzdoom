@@ -801,10 +801,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\p_enemy_a_lookex.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\src\p_floor.cpp"
 				>
 			</File>
@@ -1941,10 +1937,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\win32\fb_d3d9_shaders.h"
-				>
-			</File>
-			<File
 				RelativePath=".\src\win32\fb_d3d9_wipe.cpp"
 				>
 			</File>
@@ -2034,6 +2026,10 @@
 			</File>
 			<File
 				RelativePath=".\src\win32\resource.h"
+				>
+			</File>
+			<File
+				RelativePath=".\wadsrc\static\shaders\d3d9\shaders.ps"
 				>
 			</File>
 			<File

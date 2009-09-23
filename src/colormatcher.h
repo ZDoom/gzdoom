@@ -43,6 +43,11 @@ public:
 
 	void SetPalette (const DWORD *palette);
 	BYTE Pick (int r, int g, int b);
+	BYTE Pick (PalEntry pe)
+	{
+		return Pick(pe.r, pe.g, pe.b);
+	}
+
 	FColorMatcher &operator= (const FColorMatcher &other);
 
 private:

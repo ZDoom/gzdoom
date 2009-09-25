@@ -1,4 +1,7 @@
 September 24, 2009
+- Changed P_XYMovement() to not call P_SlideMove() if the act of being
+  blocked changed the actor's velocity. I'm not entirely happy with this,
+  but it gets push-activated force fields to work.
 - Fixed: FMultiPatchTexture::CopyTrueColorPixels() should clear the buffer
   first before drawing into it if the copy op passed to it is OP_OVERWRITE.
   FTexture::FillBuffer() sets this to erase whatever texture might have been

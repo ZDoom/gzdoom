@@ -1736,6 +1736,8 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 */
 		// [RH] If walking on a slope, stay on the slope
 		// killough 3/15/98: Allow objects to drop off
+		fixed_t startvelx = mo->velx, startvely = mo->vely;
+
 		if (!P_TryMove (mo, ptryx, ptryy, true, walkplane, tm))
 		{
 			// blocked move
@@ -1759,34 +1761,43 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 					{
 						mo->velz = WATER_JUMP_SPEED;
 					}
-					if (player && (i_compatflags & COMPATF_WALLRUN))
+					// If the blocked move executed any push specials that changed the
+					// actor's velocity, do not attempt to slide.
+					if (mo->velx == startvelx && mo->vely == startvely)
 					{
-					// [RH] Here is the key to wall running: The move is clipped using its full speed.
-					// If the move is done a second time (because it was too fast for one move), it
-					// is still clipped against the wall at its full speed, so you effectively
-					// execute two moves in one tic.
-						P_SlideMove (mo, mo->velx, mo->vely, 1);
+						if (player && (i_compatflags & COMPATF_WALLRUN))
+						{
+						// [RH] Here is the key to wall running: The move is clipped using its full speed.
+						// If the move is done a second time (because it was too fast for one move), it
+						// is still clipped against the wall at its full speed, so you effectively
+						// execute two moves in one tic.
+							P_SlideMove (mo, mo->velx, mo->vely, 1);
+						}
+						else
+						{
+							P_SlideMove (mo, onestepx, onestepy, totalsteps);
+						}
+						if ((mo->velx | mo->vely) == 0)
+						{
+							steps = 0;
+						}
+						else
+						{
+							if (!player || !(i_compatflags & COMPATF_WALLRUN))
+							{
+								xmove = mo->velx;
+								ymove = mo->vely;
+								onestepx = xmove / steps;
+								onestepy = ymove / steps;
+								P_CheckSlopeWalk (mo, xmove, ymove);
+							}
+							startx = mo->x - Scale (xmove, step, steps);
+							starty = mo->y - Scale (ymove, step, steps);
+						}
 					}
 					else
-					{
-						P_SlideMove (mo, onestepx, onestepy, totalsteps);
-					}
-					if ((mo->velx | mo->vely) == 0)
 					{
 						steps = 0;
-					}
-					else
-					{
-						if (!player || !(i_compatflags & COMPATF_WALLRUN))
-						{
-							xmove = mo->velx;
-							ymove = mo->vely;
-							onestepx = xmove / steps;
-							onestepy = ymove / steps;
-							P_CheckSlopeWalk (mo, xmove, ymove);
-						}
-						startx = mo->x - Scale (xmove, step, steps);
-						starty = mo->y - Scale (ymove, step, steps);
 					}
 				}
 				else

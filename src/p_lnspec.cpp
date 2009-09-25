@@ -2796,7 +2796,9 @@ FUNC(LS_ForceField)
 	if (it != NULL)
 	{
 		P_DamageMobj (it, NULL, NULL, 16, NAME_None);
-		P_ThrustMobj (it, it->angle + ANGLE_180, 0x7D000);
+		angle_t an = (it->angle + ANGLE_180) >> ANGLETOFINESHIFT;
+		it->velx = FixedMul(0x7D000, finecosine[an]);
+		it->vely = FixedMul(0x7D000, finesine[an]);
 	}
 	return true;
 }

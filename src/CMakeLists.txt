@@ -770,6 +770,7 @@ add_executable( zdoom WIN32
 	timidity/resample.cpp
 	timidity/timidity.cpp
 	xlat/parse_xlat.cpp
+	zscript/vmbuilder.cpp
 	zscript/vmdisasm.cpp
 	zscript/vmexec.cpp
 	zscript/vmframe.cpp

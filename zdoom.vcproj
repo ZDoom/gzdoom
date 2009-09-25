@@ -6450,6 +6450,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\zscript\vmbuilder.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\zscript\vmbuilder.h"
+				>
+			</File>
+			<File
 				RelativePath=".\src\zscript\vmdisasm.cpp"
 				>
 			</File>

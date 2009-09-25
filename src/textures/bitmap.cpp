@@ -477,3 +477,17 @@ void FBitmap::CopyPixelData(int originx, int originy, const BYTE * patch, int sr
 	}
 }
 
+//===========================================================================
+//
+// Clear buffer
+//
+//===========================================================================
+void FBitmap::Zero()
+{
+	BYTE *buffer = data;
+	for (int y = 0; y < Height; ++y)
+	{
+		memset(buffer, 0, Width*4);
+		buffer += Pitch;
+	}
+}

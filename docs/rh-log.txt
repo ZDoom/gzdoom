@@ -1,3 +1,9 @@
+September 24, 2009
+- Fixed: FMultiPatchTexture::CopyTrueColorPixels() should clear the buffer
+  first before drawing into it if the copy op passed to it is OP_OVERWRITE.
+  FTexture::FillBuffer() sets this to erase whatever texture might have been
+  in the space it is going into.
+
 September 22, 2009
 - Added a technique to try and minimize input lag with vsync enabled: Two
   surfaces are alternately locked for read-only access each frame, forcing

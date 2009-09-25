@@ -116,6 +116,7 @@ public:
 		return data;
 	}
 
+	void Zero();
 
 	virtual void CopyPixelDataRGB(int originx, int originy, const BYTE *patch, int srcwidth, 
 								int srcheight, int step_x, int step_y, int rotate, int ct, FCopyInfo *inf = NULL);

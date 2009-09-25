@@ -398,9 +398,24 @@ template<class KT> struct THashTraits
 {
 	// Returns the hash value for a key.
 	hash_t Hash(const KT key) { return (hash_t)(intptr_t)key; }
+	hash_t Hash(double key) { return ((hash_t *)&key)[0] ^ ((hash_t *)&key)[1]; }
 
 	// Compares two keys, returning zero if they are the same.
 	int Compare(const KT left, const KT right) { return left != right; }
+};
+
+template<> struct THashTraits<float>
+{
+	// Use all bits when hashing singles instead of converting them to ints.
+	hash_t Hash(float key) { return *((hash_t *)&key); }
+	int Compare(float left, float right) { return left != right; }
+};
+
+template<> struct THashTraits<double>
+{
+	// Use all bits when hashing doubles instead of converting them to ints.
+	hash_t Hash(double key) { return ((hash_t *)&key)[0] ^ ((hash_t *)&key)[1]; }
+	int Compare(double left, double right) { return left != right; }
 };
 
 template<class VT> struct TValueTraits

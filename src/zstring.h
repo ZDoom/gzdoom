@@ -316,4 +316,12 @@ inline FName &FName::operator = (const FString &text) { Index = NameData.FindNam
 inline FName &FNameNoInit::operator = (const FString &text) { Index = NameData.FindName (text, text.Len(), false); return *this; }
 
 
+// Hash FStrings on their contents. (used by TMap)
+extern unsigned int SuperFastHash (const char *data, size_t len);
+template<> struct THashTraits<FString>
+{
+	hash_t Hash(const FString &key) { return (hash_t)SuperFastHash(key, key.Len()); }
+	int Compare(const FString &left, const FString &right) { return left.Compare(right); }
+};
+
 #endif

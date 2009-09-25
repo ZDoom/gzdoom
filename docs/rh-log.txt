@@ -1,4 +1,8 @@
 September 24, 2009
+- Fixed: "give health" without an amount would set your health to IDDQD health
+  instead of the player class's maximum.
+- Fixed: A_CStaffCheck() assumed the player's max health was 100 instead
+  of getting checking for the true maximum.
 - Changed P_XYMovement() to not call P_SlideMove() if the act of being
   blocked changed the actor's velocity. I'm not entirely happy with this,
   but it gets push-activated force fields to work.

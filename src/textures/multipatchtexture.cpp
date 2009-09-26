@@ -550,7 +550,7 @@ int FMultiPatchTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int w, i
 	if (w < 0 || w > Width) w = Width;
 	if (h < 0 || h > Height) h = Height;
 
-	if (inf->op == OP_OVERWRITE)
+	if (inf != NULL && inf->op == OP_OVERWRITE)
 	{
 		bmp->Zero();
 	}

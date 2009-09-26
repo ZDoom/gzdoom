@@ -576,9 +576,9 @@ int FMultiPatchTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int w, i
 			else
 			{
 				PalEntry b = Parts[i].Blend;
-				if (b.a == 0 && b.r != BLEND_NONE)
+				if (b.a == 0 && b != BLEND_NONE)
 				{
-					info.blend = EBlend(b.r);
+					info.blend = EBlend(b.d);
 				}
 				else if (b.a != 0)
 				{

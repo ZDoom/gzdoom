@@ -1,4 +1,6 @@
 September 26, 2009
+- Fixed: R_DrawPSprite() did not initialize the colormap for the targeter
+  vissprites.
 - Added a check for SPAC_AnyCross to P_TestActivateLine() before the "monster"
   activation checks. They are actually non-player checks and interfered with
   SPAC_AnyCross.

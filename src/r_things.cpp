@@ -1699,6 +1699,7 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, fixed_t sx, fixed_
 	else
 	{
 		VisPSpritesBaseColormap[pspnum] = basecolormap;
+		vis->colormap = basecolormap->Maps;
 		vis->RenderStyle = STYLE_Normal;
 	}
 

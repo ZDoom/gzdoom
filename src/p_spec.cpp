@@ -311,7 +311,10 @@ bool P_TestActivateLine (line_t *line, AActor *mo, int side, int activationType)
 			return false;
 		}
 	}
-
+	if (activationType == SPAC_AnyCross && (lineActivation & activationType))
+	{
+		return true;
+	}
 	if (mo && !mo->player &&
 		!(mo->flags & MF_MISSILE) &&
 		!(line->flags & ML_MONSTERSCANACTIVATE) &&

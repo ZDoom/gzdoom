@@ -1,4 +1,7 @@
 September 26, 2009
+- Added a check for SPAC_AnyCross to P_TestActivateLine() before the "monster"
+  activation checks. They are actually non-player checks and interfered with
+  SPAC_AnyCross.
 - idclev and hxvisit are no longer considered cheats, however, they are still
   invalid for net games. hxvisit was erroneously accepted for net games
   before, which it shouldn't have, since it's basically idclev for Hexen.

@@ -253,7 +253,7 @@ CCMD (chase)
 
 CCMD (idclev)
 {
-	if (CheckCheatmode () || netgame)
+	if (netgame)
 		return;
 
 	if ((argv.argc() > 1) && (*(argv[1] + 2) == 0) && *(argv[1] + 1) && *argv[1])
@@ -291,7 +291,7 @@ CCMD (idclev)
 
 CCMD (hxvisit)
 {
-	if (CheckCheatmode ())
+	if (netgame)
 		return;
 
 	if ((argv.argc() > 1) && (*(argv[1] + 2) == 0) && *(argv[1] + 1) && *argv[1])

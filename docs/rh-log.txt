@@ -1,3 +1,8 @@
+September 26, 2009
+- idclev and hxvisit are no longer considered cheats, however, they are still
+  invalid for net games. hxvisit was erroneously accepted for net games
+  before, which it shouldn't have, since it's basically idclev for Hexen.
+
 September 24, 2009
 - Fixed: "give health" without an amount would set your health to IDDQD health
   instead of the player class's maximum.

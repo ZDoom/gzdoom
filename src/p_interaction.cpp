@@ -1088,6 +1088,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 	//
 	if (player)
 	{
+		
         //Added by MC: Lets bots look allround for enemies if they survive an ambush.
         if (player->isbot)
 		{
@@ -1103,8 +1104,9 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 
 		if (!(flags & DMG_FORCED))
 		{
-			if (damage < TELEFRAG_DAMAGE && ((target->flags2 & MF2_INVULNERABLE) ||
-				(target->player->cheats & CF_GODMODE)))
+			// check the real player, not a voodoo doll here for invulnerability effects
+			if (damage < TELEFRAG_DAMAGE && ((player->mo->flags2 & MF2_INVULNERABLE) ||
+				(player->cheats & CF_GODMODE)))
 			{ // player is invulnerable, so don't hurt him
 				return;
 			}

@@ -1,4 +1,8 @@
 September 27, 2009  (Changes by Graf Zahl)
+- Fixed: Floor and ceiling huggers' velocity was wrong when used with
+  P_SpawnPlayerMissile.
+- Fixed: When hitting a voodoo doll the real player needs to be checked for 
+  invulnerability.
 - Fixed: G_QueueBody was not notifying the translation that it was changed.
 - Fixed: The multitexture composition code was missing a NULL pointer check.
 - fixed: The changes for new colormap handling in FMultipatchtexture were incomplete.

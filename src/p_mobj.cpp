@@ -5177,16 +5177,16 @@ AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z,
 	vz = -finesine[pitch>>ANGLETOFINESHIFT];
 	speed = MissileActor->Speed;
 
-	MissileActor->velx = FixedMul (vx, speed);
-	MissileActor->vely = FixedMul (vy, speed);
+	FVector3 vec(vx, vy, vz);
+
 	if (MissileActor->flags3 & (MF3_FLOORHUGGER|MF3_CEILINGHUGGER))
 	{
-		MissileActor->velz = 0;
+		vec.Z = 0;
 	}
-	else
-	{
-		MissileActor->velz = FixedMul (vz, speed);
-	}
+	vec.Resize(speed);
+	MissileActor->velx = (fixed_t)vec.X;
+	MissileActor->vely = (fixed_t)vec.Y;
+	MissileActor->velz = (fixed_t)vec.Z;
 
 	if (MissileActor->flags4 & MF4_SPECTRAL)
 		MissileActor->health = -1;

@@ -1,3 +1,9 @@
+September 27, 2009  (Changes by Graf Zahl)
+- Fixed: G_QueueBody was not notifying the translation that it was changed.
+- Fixed: The multitexture composition code was missing a NULL pointer check.
+- fixed: The changes for new colormap handling in FMultipatchtexture were incomplete.
+  Some code was still checking Blend.r instead of the full variable for colormap indices.
+
 September 26, 2009
 - Fixed: R_DrawPSprite() did not initialize the colormap for the targeter
   vissprites.

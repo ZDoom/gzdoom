@@ -1,3 +1,6 @@
+September 28, 2009  (Changes by Graf Zahl)
+- Added Gez's A_Blast submission.
+
 September 27, 2009  (Changes by Graf Zahl)
 - Fixed: Floor and ceiling huggers' velocity was wrong when used with
   P_SpawnPlayerMissile.

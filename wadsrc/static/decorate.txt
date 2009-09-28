@@ -28,6 +28,7 @@
 #include "actors/shared/setcolor.txt"
 #include "actors/shared/sectoraction.txt"
 #include "actors/shared/action.txt"
+#include "actors/shared/dog.txt"
 
 #include "actors/doom/doomplayer.txt"
 #include "actors/doom/possessed.txt"
@@ -45,7 +46,6 @@
 #include "actors/doom/spidermaster.txt"
 #include "actors/doom/keen.txt"
 #include "actors/doom/bossbrain.txt"
-#include "actors/doom/dog.txt"
 
 #include "actors/doom/deadthings.txt"
 #include "actors/doom/doomammo.txt"

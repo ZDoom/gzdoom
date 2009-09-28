@@ -71,6 +71,11 @@ const int RGF_NOPIERCING = 2;
 const int MSF_Standard = 0;
 const int MSF_Classic = 1;
 
+// Flags for A_Blast
+const int BF_USEAMMO = 1;
+const int BF_DONTWARN = 2;
+const int BF_AFFECTBOSSES = 4;
+
 // Activation flags
 enum
 {
@@ -82,6 +87,14 @@ enum
 	THINGSPEC_MissileTrigger = 16,
 	THINGSPEC_ClearSpecial = 32,
 };
+// Shorter aliases for same
+const int AF_Default = 0;
+const int AF_ThingActs = 1;
+const int AF_ThingTargets = 2;
+const int AF_TriggerTargets = 4;
+const int AF_MonsterTrigger = 8;
+const int AF_MissileTrigger = 16;
+const int AF_ClearSpecial = 32;
 
 // constants for A_PlaySound
 enum

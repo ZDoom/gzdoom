@@ -1,20 +1,19 @@
 ACTOR MBFHelperDog 888
 {
-	Game Doom
 	Health 500
-    Speed 10
+	Speed 10
 	PainChance 180
-    Radius 12
-    Height 28
-    Mass 100
-    Monster
-    +JUMPDOWN
-    ActiveSound "dog/active"
-    AttackSound "dog/attack"
-    DeathSound "dog/death"
-    PainSound "dog/pain"
-    SeeSound "dog/sight"
-    Obituary "$OB_DOG"
+	Radius 12
+	Height 28
+	Mass 100
+	Monster
+	+JUMPDOWN
+	ActiveSound "dog/active"
+	AttackSound "dog/attack"
+	DeathSound "dog/death"
+	PainSound "dog/pain"
+	SeeSound "dog/sight"
+	Obituary "$OB_DOG"
 	States
 	{
 	Spawn:

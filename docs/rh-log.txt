@@ -1,4 +1,5 @@
 September 28, 2009  (Changes by Graf Zahl)
+- Added BHS's death special flags submission.
 - Added Gez's A_Blast submission.
 
 September 27, 2009  (Changes by Graf Zahl)

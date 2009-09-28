@@ -86,6 +86,8 @@ enum
 	THINGSPEC_MonsterTrigger = 8,
 	THINGSPEC_MissileTrigger = 16,
 	THINGSPEC_ClearSpecial = 32,
+	THINGSPEC_NoDeathSpecial = 64,
+	THINGSPEC_TriggerActs = 128,
 };
 // Shorter aliases for same
 const int AF_Default = 0;

@@ -463,6 +463,8 @@ static int ParseThingActivation (FScanner &sc)
 		{ "THINGSPEC_MonsterTrigger",		THINGSPEC_MonsterTrigger},
 		{ "THINGSPEC_MissileTrigger",		THINGSPEC_MissileTrigger},
 		{ "THINGSPEC_ClearSpecial",			THINGSPEC_ClearSpecial},
+		{ "THINGSPEC_NoDeathSpecial",		THINGSPEC_NoDeathSpecial},
+		{ "THINGSPEC_TriggerActs",			THINGSPEC_TriggerActs},
 		{ NULL, 0 }
 	};
 

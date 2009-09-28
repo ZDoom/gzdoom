@@ -442,6 +442,8 @@ enum EThingSpecialActivationType
 	THINGSPEC_MonsterTrigger = 8,	// The thing can be triggered by a monster
 	THINGSPEC_MissileTrigger = 16,	// The thing can be triggered by a projectile
 	THINGSPEC_ClearSpecial = 32,	// Clears special after successful activation
+	THINGSPEC_NoDeathSpecial = 64,	// Don't activate special on death
+	THINGSPEC_TriggerActs = 128,	// The trigger is the activator of the special (overrides LEVEL_ACTOWNSPECIAL Hexen hack)
 };
 
 // [RH] Like msecnode_t, but for the blockmap

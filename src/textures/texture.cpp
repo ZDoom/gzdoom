@@ -316,8 +316,9 @@ void FTexture::CopyToBlock (BYTE *dest, int dwidth, int dheight, int xpos, int y
 	int srcheight = Height;
 	int step_x = Height;
 	int step_y = 1;
+	FClipRect cr = {0, 0, dwidth, dheight};
 
-	if (ClipCopyPixelRect(dwidth, dheight, xpos, ypos, pixels, srcwidth, srcheight, step_x, step_y, rotate))
+	if (ClipCopyPixelRect(&cr, xpos, ypos, pixels, srcwidth, srcheight, step_x, step_y, rotate))
 	{
 		dest += ypos + dheight * xpos;
 		if (translation == NULL)
@@ -498,7 +499,7 @@ void FTexture::FillBuffer(BYTE *buff, int pitch, int height, FTextureFormat fmt)
 	{
 		FCopyInfo inf = {OP_OVERWRITE, };
 		FBitmap bmp(buff, pitch, pitch/4, height);
-		CopyTrueColorPixels(&bmp, 0, 0, -1, -1, 0, &inf); 
+		CopyTrueColorPixels(&bmp, 0, 0, 0, &inf); 
 		break;
 	}
 
@@ -519,23 +520,19 @@ void FTexture::FillBuffer(BYTE *buff, int pitch, int height, FTextureFormat fmt)
 //
 //===========================================================================
 
-int FTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int w, int h, int rotate, FCopyInfo *inf)
+int FTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)
 {
 	PalEntry *palette = screen->GetPalette();
 	for(int i=1;i<256;i++) palette[i].a = 255;	// set proper alpha values
-	if (w < 0 || w > Width) w = Width;
-	if (h < 0 || h > Height) h = Height;
-	bmp->CopyPixelData(x, y, GetPixels(), w, h, Height, 1, rotate, palette, inf);
+	bmp->CopyPixelData(x, y, GetPixels(), Width, Height, Height, 1, rotate, palette, inf);
 	for(int i=1;i<256;i++) palette[i].a = 0;
 	return 0;
 }
 
-int FTexture::CopyTrueColorTranslated(FBitmap *bmp, int x, int y, int w, int h, int rotate, FRemapTable *remap, FCopyInfo *inf)
+int FTexture::CopyTrueColorTranslated(FBitmap *bmp, int x, int y, int rotate, FRemapTable *remap, FCopyInfo *inf)
 {
 	PalEntry *palette = remap->Palette;
-	if (w < 0 || w > Width) w = Width;
-	if (h < 0 || h > Height) h = Height;
-	bmp->CopyPixelData(x, y, GetPixels(), w, h, Height, 1, rotate, palette, inf);
+	bmp->CopyPixelData(x, y, GetPixels(), Width, Height, Height, 1, rotate, palette, inf);
 	return 0;
 }
 

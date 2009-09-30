@@ -1,3 +1,9 @@
+September 30, 2009  (Changes by Graf Zahl)
+- Fixed: Coordinate handling for multipatch texture compositing was not correct
+  for true color. Instead of using a clipping rectangle on the destination it
+  tried to alter the source offsets which produced incorrect results for
+  mirrored or rotated patches.
+
 September 29, 2009
 - Fixed: Alt+F4 no longer quit the program.
 

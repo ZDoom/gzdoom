@@ -182,7 +182,7 @@ protected:
 	void DecompressDXT3 (FWadLump &lump, bool premultiplied, BYTE *tcbuf = NULL);
 	void DecompressDXT5 (FWadLump &lump, bool premultiplied, BYTE *tcbuf = NULL);
 
-	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int w, int h, int rotate, FCopyInfo *inf = NULL);
+	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf = NULL);
 	bool UseBasePalette();
 
 	friend class FTexture;
@@ -874,7 +874,7 @@ void FDDSTexture::DecompressDXT5 (FWadLump &lump, bool premultiplied, BYTE *tcbu
 //
 //===========================================================================
 
-int FDDSTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int w, int h, int rotate, FCopyInfo *inf)
+int FDDSTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)
 {
 	FWadLump lump = Wads.OpenLumpNum (SourceLump);
 
@@ -899,11 +899,8 @@ int FDDSTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int w, int h, i
 		DecompressDXT5 (lump, Format == ID_DXT4, TexBuffer);
 	}
 
-	if (w < 0 || w > Width) w = Width;
-	if (h < 0 || h > Height) h = Height;
-
 	// All formats decompress to RGBA.
-	bmp->CopyPixelDataRGB(x, y, TexBuffer, w, h, 4, Width*4, rotate, CF_RGBA, inf);
+	bmp->CopyPixelDataRGB(x, y, TexBuffer, Width, Height, 4, Width*4, rotate, CF_RGBA, inf);
 	delete [] TexBuffer;
 	return -1;
 }	

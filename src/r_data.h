@@ -49,7 +49,7 @@ public:
 	FWarpTexture (FTexture *source);
 	~FWarpTexture ();
 
-	virtual int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int w=-1, int h=-1, int rotate=0, FCopyInfo *inf = NULL);
+	virtual int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate=0, FCopyInfo *inf = NULL);
 	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
 	const BYTE *GetPixels ();
 	void Unload ();
@@ -93,8 +93,6 @@ public:
 	void Unload ();
 	bool CheckModified ();
 	void RenderView (AActor *viewpoint, int fov);
-	void RenderGLView(AActor *viewpoint, int fov);
-	void NeedUpdate() { bNeedsUpdate=true; }
 
 protected:
 	DSimpleCanvas *Canvas;

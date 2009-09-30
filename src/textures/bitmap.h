@@ -41,6 +41,13 @@
 
 struct FCopyInfo;
 
+struct FClipRect
+{
+	int x, y, width, height;
+
+	bool Intersect(int ix, int iy, int iw, int ih);
+};
+
 class FBitmap
 {
 protected:
@@ -49,6 +56,8 @@ protected:
 	int Height;
 	int Pitch;
 	bool FreeBuffer;
+	FClipRect ClipRect;
+
 
 public:
 	FBitmap()
@@ -57,6 +66,7 @@ public:
 		Width = Height = 0;
 		Pitch = 0;
 		FreeBuffer = false;
+		ClipRect.x = ClipRect.y = ClipRect.width = ClipRect.height = 0;
 	}
 
 	FBitmap(BYTE *buffer, int pitch, int width, int height)
@@ -67,6 +77,9 @@ public:
 		Width = width;
 		Height = height;
 		FreeBuffer = false;
+		ClipRect.x = ClipRect.y = 0;
+		ClipRect.width = width;
+		ClipRect.height = height;
 	}
 
 	virtual ~FBitmap()
@@ -88,6 +101,9 @@ public:
 		Height = h;
 		data = new BYTE[4*w*h];
 		FreeBuffer = true;
+		ClipRect.x = ClipRect.y = 0;
+		ClipRect.width = w;
+		ClipRect.height = h;
 		return data != NULL;
 	}
 
@@ -116,7 +132,28 @@ public:
 		return data;
 	}
 
+	void SetClipRect(FClipRect &clip)
+	{
+		ClipRect = clip;
+	}
+
+	void IntersectClipRect(FClipRect &clip)
+	{
+		ClipRect.Intersect(clip.x, clip.y, clip.width, clip.height);
+	}
+
+	void IntersectClipRect(int cx, int cy, int cw, int ch)
+	{
+		ClipRect.Intersect(cx, cy, cw, ch);
+	}
+
+	const FClipRect &GetClipRect() const
+	{
+		return ClipRect;
+	}
+
 	void Zero();
+
 
 	virtual void CopyPixelDataRGB(int originx, int originy, const BYTE *patch, int srcwidth, 
 								int srcheight, int step_x, int step_y, int rotate, int ct, FCopyInfo *inf = NULL);
@@ -126,9 +163,9 @@ public:
 
 };
 
-bool ClipCopyPixelRect(int texwidth, int texheight, int &originx, int &originy,
-									const BYTE *&patch, int &srcwidth, int &srcheight, 
-									int &step_x, int &step_y, int rotate);
+bool ClipCopyPixelRect(const FClipRect *cr, int &originx, int &originy,
+						const BYTE *&patch, int &srcwidth, int &srcheight, 
+						int &step_x, int &step_y, int rotate);
 
 //===========================================================================
 // 

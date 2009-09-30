@@ -151,8 +151,8 @@ public:
 	// Returns the whole texture, stored in column-major order
 	virtual const BYTE *GetPixels () = 0;
 	
-	virtual int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int w=-1, int h=-1, int rotate=0, FCopyInfo *inf = NULL);
-	int CopyTrueColorTranslated(FBitmap *bmp, int x, int y,int w, int h, int rotate, FRemapTable *remap, FCopyInfo *inf = NULL);
+	virtual int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate=0, FCopyInfo *inf = NULL);
+	int CopyTrueColorTranslated(FBitmap *bmp, int x, int y, int rotate, FRemapTable *remap, FCopyInfo *inf = NULL);
 	virtual bool UseBasePalette();
 	virtual int GetSourceLump() { return SourceLump; }
 	virtual FTexture *GetRedirect(bool wantwarped);

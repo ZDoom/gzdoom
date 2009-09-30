@@ -1,3 +1,6 @@
+September 29, 2009
+- Fixed: Alt+F4 no longer quit the program.
+
 September 28, 2009  (Changes by Graf Zahl)
 - Added BHS's death special flags submission.
 - Added Gez's A_Blast submission.

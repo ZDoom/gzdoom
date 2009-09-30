@@ -431,6 +431,11 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		{
 			ToggleFullscreen = !ToggleFullscreen;
 		}
+		// Pressing Alt+F4 quits the program.
+		if (wParam == VK_F4 && !(lParam & 0x40000000))
+		{
+			PostQuitMessage(0);
+		}
 		break;
 
 	case WM_SYSCOMMAND:

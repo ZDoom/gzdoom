@@ -570,7 +570,7 @@ int FMultiPatchTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int w, i
 				// Using a translation forces downconversion to the base palette
 				ret = Parts[i].Texture->CopyTrueColorTranslated(bmp, 
 					x+Parts[i].OriginX, y+Parts[i].OriginY, 
-					w-Parts[i].OriginX, h-Parts[i].OriginY, 
+					Parts[i].Texture->GetWidth(), Parts[i].Texture->GetHeight(), 
 					Parts[i].Rotate, Parts[i].Translation, &info);
 			}
 			else
@@ -601,7 +601,7 @@ int FMultiPatchTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int w, i
 				}
 				ret = Parts[i].Texture->CopyTrueColorPixels(bmp, 
 						x+Parts[i].OriginX, y+Parts[i].OriginY, 
-						w-Parts[i].OriginX, h-Parts[i].OriginY, 
+						Parts[i].Texture->GetWidth(), Parts[i].Texture->GetHeight(), 
 						Parts[i].Rotate, &info);
 			}
 		}
@@ -617,8 +617,7 @@ int FMultiPatchTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int w, i
 				Parts[i].Texture->CopyTrueColorPixels(&bmp1, 0, 0);
 				bmp->CopyPixelDataRGB(
 					x+Parts[i].OriginX, y+Parts[i].OriginY, bmp1.GetPixels(),
-					MIN<int>(w-Parts[i].OriginX, bmp1.GetWidth()), 
-					MIN<int>(h-Parts[i].OriginY, bmp1.GetHeight()), 
+					bmp1.GetWidth(), bmp1.GetHeight(), 
 					4, bmp1.GetPitch()*4, Parts[i].Rotate, CF_BGRA, inf);
 			}
 		}

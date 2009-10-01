@@ -203,7 +203,7 @@ void DThinker::SerializeAll(FArchive &arc, bool hubLoad)
 			// before the crash - which is not the case with all other options.
 
 			//DestroyAllThinkers();
-			I_FatalError(err.GetMessage());
+			I_FatalError("%s", err.GetMessage());
 			throw;
 		}
 		bSerialOverride = false;

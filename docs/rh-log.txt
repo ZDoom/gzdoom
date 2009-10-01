@@ -1,3 +1,16 @@
+October 1, 2009  (Changes by Graf Zahl)
+- Fixed some GCC warnings.
+- fixed: The BossCube could be blocked by floors and ceiling resulting
+  in incorrect movement. I changed it so that A_BrainSpit now sets the
+  MF5_NOINTERACTION flag for anything it spawns that has the MF_NOCLIP
+  flag. For travelling cubes active collision detection makes no sense
+  and only causes problems. This should also make the boss brain
+  work in the other games which previously were excluded by a game mode
+  check in the movement code.
+- fixed: ACS's GetUserVariable did not work for the script activator.
+- fixed: Moving floors could be blocked by 2 actors without MF2_PASSMOBJ
+  overlapping each other (common mapping bug, check Herian 2 MAP30.)
+
 September 30, 2009  (Changes by Graf Zahl)
 - Fixed: Coordinate handling for multipatch texture compositing was not correct
   for true color. Instead of using a clipping rectangle on the destination it

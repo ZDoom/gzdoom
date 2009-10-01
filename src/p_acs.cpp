@@ -3118,12 +3118,14 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 		}
 		
 		case ACSF_GetUserVariable:
+		{
 			if (args[1] >= 0 && args[1] < 10)
 			{
-				activator = SingleActorFromTID(args[0], NULL);
-				return activator != NULL? activator->uservar[args[1]] : 0;
+				AActor *a = args[0] == 0 ? (AActor *)activator : SingleActorFromTID(args[0], NULL); 
+				return a != NULL? a->uservar[args[1]] : 0;
 			}
 			else return 0;
+		}
 		
 
 		default:

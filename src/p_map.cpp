@@ -4323,6 +4323,13 @@ void P_FindAboveIntersectors (AActor *actor)
 		{ // Don't clip against self
 			continue;
 		}
+		if (!((thing->flags2 | actor->flags2) & MF2_PASSMOBJ) && !((thing->flags3 | actor->flags3) & MF3_ISMONSTER))
+		{
+			// Don't bother if both things don't have MF2_PASSMOBJ set and aren't monsters.
+			// These things would always block each other which in nearly every situation is 
+			// not what is wanted here.
+			continue;
+		}
 		if (thing->z >= actor->z &&
 			thing->z <= actor->z + actor->height)
 		{ // Thing intersects above the base
@@ -4363,6 +4370,13 @@ void P_FindBelowIntersectors (AActor *actor)
 		}
 		if (thing == actor)
 		{ // Don't clip against self
+			continue;
+		}
+		if (!((thing->flags2 | actor->flags2) & MF2_PASSMOBJ) && !((thing->flags3 | actor->flags3) & MF3_ISMONSTER))
+		{
+			// Don't bother if both things don't have MF2_PASSMOBJ set and aren't monsters.
+			// These things would always block each other which in nearly every situation is 
+			// not what is wanted here.
 			continue;
 		}
 		if (thing->z + thing->height <= actor->z + actor->height &&

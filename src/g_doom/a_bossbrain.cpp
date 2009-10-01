@@ -103,6 +103,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BrainSpit)
 		// spawn brain missile
 		spit = P_SpawnMissile (self, targ, spawntype);
 
+		// Boss cubes should move freely to their destination so it's
+		// probably best to disable all collision detection for them.
+		if (spit->flags & MF_NOCLIP) spit->flags5 |= MF5_NOINTERACTION;
+
 		if (spit != NULL)
 		{
 			spit->target = targ;

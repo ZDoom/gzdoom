@@ -357,7 +357,7 @@ fixed_t DBaseDecal::GetRealZ (const side_t *wall) const
 
 void DBaseDecal::CalcFracPos (side_t *wall, fixed_t x, fixed_t y)
 {
-	line_t *line = line = wall->linedef;
+	line_t *line = wall->linedef;
 	vertex_t *v1, *v2;
 
 	if (line->sidedef[0] == wall)
@@ -390,7 +390,7 @@ void DBaseDecal::CalcFracPos (side_t *wall, fixed_t x, fixed_t y)
 
 static void GetWallStuff (side_t *wall, vertex_t *&v1, fixed_t &ldx, fixed_t &ldy)
 {
-	line_t *line = line = wall->linedef;
+	line_t *line = wall->linedef;
 	if (line->sidedef[0] == wall)
 	{
 		v1 = line->v1;
@@ -412,7 +412,7 @@ static fixed_t Length (fixed_t dx, fixed_t dy)
 
 static side_t *NextWall (const side_t *wall)
 {
-	line_t *line = line = wall->linedef;;
+	line_t *line = wall->linedef;
 
 	if (line->sidedef[0] == wall)
 	{

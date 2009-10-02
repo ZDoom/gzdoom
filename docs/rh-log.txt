@@ -1,3 +1,6 @@
+October 2, 2009  (Changes by Graf Zahl)
+- fixed: Savegames stored the global fixed light levels when saving a player.
+
 October 1, 2009  (Changes by Graf Zahl)
 - Fixed some GCC warnings.
 - fixed: The BossCube could be blocked by floors and ceiling resulting

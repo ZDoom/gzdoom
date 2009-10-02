@@ -2514,19 +2514,25 @@ void player_t::Serialize (FArchive &arc)
 		int fixedmap;
 		arc << fixedmap;
 		fixedcolormap = NOFIXEDCOLORMAP;
-		fixedlightlev = -1;
+		fixedlightlevel = -1;
 		if (fixedmap >= NUMCOLORMAPS)
 		{
 			fixedcolormap = fixedmap - NUMCOLORMAPS;
 		}
 		else if (fixedmap > 0)
 		{
-			fixedlightlev = fixedmap;
+			fixedlightlevel = fixedmap;
 		}
+	}
+	else if (SaveVersion < 1893)
+	{
+		int ll;
+		arc	<< fixedcolormap << ll;
+		fixedlightlevel = ll;
 	}
 	else
 	{
-		arc	<< fixedcolormap << fixedlightlev;
+		arc	<< fixedcolormap << fixedlightlevel;
 	}
 	arc << morphTics
 		<< MorphedPlayerClass

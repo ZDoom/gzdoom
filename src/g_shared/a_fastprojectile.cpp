@@ -113,5 +113,20 @@ void AFastProjectile::Tick ()
 
 void AFastProjectile::Effect()
 {
+	//if (pr_smoke() < 128)	// [RH] I think it looks better if it's consistent
+	{
+		FName name = (ENamedName) this->GetClass()->Meta.GetMetaInt (ACMETA_MissileName, NAME_None);
+		if (name != NAME_None)
+		{
+			fixed_t hitz = z-8*FRACUNIT;
+			if (hitz < floorz)
+			{
+				hitz = floorz;
+			}
+		
+			const PClass *trail = PClass::FindClass(name);
+			Spawn (trail, x, y, hitz, ALLOW_REPLACE);
+		}
+	}
 }
 

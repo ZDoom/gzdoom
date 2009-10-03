@@ -1,3 +1,11 @@
+October 3, 2009  (Changes by Graf Zahl)
+- Added Gez's MageWandMissile customization patch but moved the new functionality
+  into the FastProjectile base class and removed the native MageWandMissile
+  class, using the generic functionality instead.
+- Fixed: GetReplacement and GetReplacee always checked the skill definitions,
+  even if they weren't supposed to be used. It was also missing a range check
+  for 'gameskill'.
+
 October 2, 2009  (Changes by Graf Zahl)
 - fixed: Savegames stored the global fixed light levels when saving a player.
 

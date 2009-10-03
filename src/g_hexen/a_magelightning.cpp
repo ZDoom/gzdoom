@@ -208,8 +208,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightningClip)
 DEFINE_ACTION_FUNCTION(AActor, A_LightningZap)
 {
 
-	const PClass *lightning=PClass::FindClass((ENamedName) self->GetClass()->Meta.GetMetaInt (ACMETA_MissileName, NAME_None));
-	if (lightning == NULL) lightning = PClass::FindClass("LightningZap");
+	const PClass *lightning=PClass::FindClass((ENamedName) self->GetClass()->Meta.GetMetaInt (ACMETA_MissileName, NAME_LightningZap));
 	AActor *mo;
 	fixed_t deltaZ;
 
@@ -326,8 +325,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ZapMimic)
 
 DEFINE_ACTION_FUNCTION(AActor, A_LastZap)
 {
-	const PClass *lightning=PClass::FindClass((ENamedName) self->GetClass()->Meta.GetMetaInt (ACMETA_MissileName, NAME_None));
-	if (lightning == NULL) lightning = PClass::FindClass("LightningZap");
+	const PClass *lightning=PClass::FindClass((ENamedName) self->GetClass()->Meta.GetMetaInt (ACMETA_MissileName, NAME_LightningZap));
 
 	AActor *mo;
 

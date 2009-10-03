@@ -168,17 +168,22 @@ void FActorInfo::RegisterIDs ()
 
 FActorInfo *FActorInfo::GetReplacement (bool lookskill)
 {
-	FName skillrepname = AllSkills[gameskill].GetReplacement(this->Class->TypeName);
-	if (skillrepname != NAME_None && PClass::FindClass(skillrepname) == NULL)
+	FName skillrepname;
+	
+	if (lookskill && AllSkills.Size() > (unsigned)gameskill)
 	{
-		Printf("Warning: incorrect actor name in definition of skill %s: \n\
-			   class %s is replaced by inexistent class %s\n\
-			   Skill replacement will be ignored for this actor.\n", 
-			   AllSkills[gameskill].Name.GetChars(), 
-			   this->Class->TypeName.GetChars(), skillrepname.GetChars());
-		AllSkills[gameskill].SetReplacement(this->Class->TypeName, NAME_None);
-		AllSkills[gameskill].SetReplacedBy(skillrepname, NAME_None);
-		lookskill = false; skillrepname = NAME_None;
+		skillrepname = AllSkills[gameskill].GetReplacement(this->Class->TypeName);
+		if (skillrepname != NAME_None && PClass::FindClass(skillrepname) == NULL)
+		{
+			Printf("Warning: incorrect actor name in definition of skill %s: \n"
+				   "class %s is replaced by non-existent class %s\n"
+				   "Skill replacement will be ignored for this actor.\n", 
+				   AllSkills[gameskill].Name.GetChars(), 
+				   this->Class->TypeName.GetChars(), skillrepname.GetChars());
+			AllSkills[gameskill].SetReplacement(this->Class->TypeName, NAME_None);
+			AllSkills[gameskill].SetReplacedBy(skillrepname, NAME_None);
+			lookskill = false; skillrepname = NAME_None;
+		}
 	}
 	if (Replacement == NULL && (!lookskill || skillrepname == NAME_None))
 	{
@@ -211,17 +216,22 @@ FActorInfo *FActorInfo::GetReplacement (bool lookskill)
 
 FActorInfo *FActorInfo::GetReplacee (bool lookskill)
 {
-	FName skillrepname = AllSkills[gameskill].GetReplacedBy(this->Class->TypeName);
-	if (skillrepname != NAME_None && PClass::FindClass(skillrepname) == NULL)
+	FName skillrepname;
+	
+	if (lookskill && AllSkills.Size() > (unsigned)gameskill)
 	{
-		Printf("Warning: incorrect actor name in definition of skill %s: \
-			   inexistent class %s is replaced by class %s\n\
-			   Skill replacement will be ignored for this actor.\n", 
-			   AllSkills[gameskill].Name.GetChars(), 
-			   skillrepname.GetChars(), this->Class->TypeName.GetChars());
-		AllSkills[gameskill].SetReplacedBy(this->Class->TypeName, NAME_None);
-		AllSkills[gameskill].SetReplacement(skillrepname, NAME_None);
-		lookskill = false; 
+		FName skillrepname = AllSkills[gameskill].GetReplacedBy(this->Class->TypeName);
+		if (skillrepname != NAME_None && PClass::FindClass(skillrepname) == NULL)
+		{
+			Printf("Warning: incorrect actor name in definition of skill %s: \n"
+				   "non-existent class %s is replaced by class %s\n"
+				   "Skill replacement will be ignored for this actor.\n", 
+				   AllSkills[gameskill].Name.GetChars(), 
+				   skillrepname.GetChars(), this->Class->TypeName.GetChars());
+			AllSkills[gameskill].SetReplacedBy(this->Class->TypeName, NAME_None);
+			AllSkills[gameskill].SetReplacement(skillrepname, NAME_None);
+			lookskill = false; 
+		}
 	}
 	if (Replacee == NULL && (!lookskill || skillrepname == NAME_None))
 	{

@@ -17,32 +17,6 @@ static FRandom pr_smoke ("MWandSmoke");
 
 void A_MWandAttack (AActor *actor);
 
-// Wand Missile -------------------------------------------------------------
-
-class AMageWandMissile : public AFastProjectile
-{
-	DECLARE_CLASS(AMageWandMissile, AFastProjectile)
-public:
-	void Effect ();
-};
-
-IMPLEMENT_CLASS (AMageWandMissile)
-
-void AMageWandMissile::Effect ()
-{
-	fixed_t hitz;
-
-	//if (pr_smoke() < 128)	// [RH] I think it looks better if it's consistent
-	{
-		hitz = z-8*FRACUNIT;
-		if (hitz < floorz)
-		{
-			hitz = floorz;
-		}
-		Spawn ("MageWandSmoke", x, y, hitz, ALLOW_REPLACE);
-	}
-}
-
 //============================================================================
 //
 // A_MWandAttack

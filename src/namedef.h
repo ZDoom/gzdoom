@@ -129,6 +129,9 @@ xx(FWeapQuietus)
 xx(CWeapWraithverge)
 xx(MWeapBloodscourge)
 
+// Misc Hexen classes
+xx(LightningZap)
+
 // Ammo and weapon names for the Strife status bar
 xx(ClipOfBullets)
 xx(PoisonBolts)

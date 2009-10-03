@@ -27,6 +27,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_MWandAttack)
 {
 	AActor *mo;
 
-	mo = P_SpawnPlayerMissile (self, RUNTIME_CLASS(AMageWandMissile));
+	mo = P_SpawnPlayerMissile (self, PClass::FindClass("MageWandMissile"));
 	S_Sound (self, CHAN_WEAPON, "MageWandFire", 1, ATTN_NORM);
 }

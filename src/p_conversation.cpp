@@ -875,7 +875,7 @@ static void DrawConversationMenu ()
 	}
 	else
 	{
-		speakerName = cp->mo->GetTag("Person");
+		speakerName = cp->ConversationNPC->GetTag("Person");
 	}
 
 	// Dim the screen behind the dialogue (but only if there is no backdrop).

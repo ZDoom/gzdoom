@@ -1,3 +1,7 @@
+October 4, 2009  (Changes by Graf Zahl)
+- Fixed: The conversation code tried to get the player's tag instead of the
+  NPC's he is talking to when it had no given name.
+
 October 3, 2009  (Changes by Graf Zahl)
 - Added Gez's MageWandMissile customization patch but moved the new functionality
   into the FastProjectile base class and removed the native MageWandMissile

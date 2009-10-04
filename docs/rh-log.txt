@@ -1,4 +1,5 @@
 October 4, 2009  (Changes by Graf Zahl)
+- Deleted a_magewand.cpp because it only contained unused code.
 - Fixed: The conversation code tried to get the player's tag instead of the
   NPC's he is talking to when it had no given name.
 

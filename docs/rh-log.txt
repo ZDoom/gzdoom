@@ -1,3 +1,6 @@
+October 8, 2009  (Changes by Graf Zahl)
+- fixed: Teleport_EndGame did not set the end sequence name properly.
+
 October 7, 2009
 - Since I am currently without a primary video card and stuck with this
   Mobility Radeon 9000 (on a PCI card, no less!), I have decided to give the

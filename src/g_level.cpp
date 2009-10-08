@@ -168,7 +168,7 @@ static void SetEndSequence (char *nextmap, int type)
 		newseq.EndType = type;
 		seqnum = (int)EndSequences.Push (newseq);
 	}
-	mysnprintf(nextmap, sizeof(nextmap), "enDSeQ%04x", (WORD)seqnum);
+	mysnprintf(nextmap, 11, "enDSeQ%04x", (WORD)seqnum);
 }
 
 //==========================================================================

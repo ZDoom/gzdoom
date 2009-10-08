@@ -1,3 +1,10 @@
+October 8, 2009
+- Reinstated the off-by-one check in D3DFB from r399. I thought I could get by
+  at just fixing it at a specific value, since the supply of SM14 cards isn't
+  all that diverse and all from ATI, but apparently Radeon 8500s and 9000s
+  have different precision levels in their pixel shaders. See bug report
+  <http://forum.zdoom.org/viewtopic.php?p=444523>
+
 October 8, 2009  (Changes by Graf Zahl)
 - Added a PainThreshold actor property.
 - fixed: Teleport_EndGame did not set the end sequence name properly.

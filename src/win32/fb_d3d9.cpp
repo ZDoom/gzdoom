@@ -281,8 +281,6 @@ D3DFB::D3DFB (int width, int height, bool fullscreen)
 	GammaShader = NULL;
 	BlockSurface[0] = NULL;
 	BlockSurface[1] = NULL;
-	FBFormat = D3DFMT_UNKNOWN;
-	PalFormat = D3DFMT_UNKNOWN;
 	VSync = vid_vsync;
 	BlendingRect.left = 0;
 	BlendingRect.top = 0;
@@ -298,6 +296,7 @@ D3DFB::D3DFB (int width, int height, bool fullscreen)
 	QuadExtra = new BufferedQuad[MAX_QUAD_BATCH];
 	Packs = NULL;
 	PixelDoubling = 0;
+	SkipAt = -1;
 
 	Gamma = 1.0;
 	FlashColor0 = 0;
@@ -787,7 +786,6 @@ bool D3DFB::CreatePaletteTexture ()
 	{
 		return false;
 	}
-	PalFormat = D3DFMT_A8R8G8B8;
 	return true;
 }
 
@@ -1277,28 +1275,144 @@ void D3DFB::UpdateGammaTexture(float igamma)
 	}
 }
 
+//==========================================================================
+//
+// D3DFB :: DoOffByOneCheck
+//
+// Pixel Shader 1.x does not have enough precision to properly map a "color"
+// from the source texture to an index in the palette texture. The best we
+// can do is use 255 pixels of the palette and get the 256th from the
+// texture border color. This routine determines which pixel of the texture
+// is skipped so that we don't use it for palette data.
+//
+//==========================================================================
+
+void D3DFB::DoOffByOneCheck ()
+{
+	IDirect3DSurface9 *savedrendertarget;
+	IDirect3DSurface9 *testsurf, *readsurf;
+	D3DLOCKED_RECT lockrect;
+	RECT testrect = { 0, 0, 256, 1 };
+	float texright = 256.f / float(FBWidth);
+	float texbot = 1.f / float(FBHeight);
+	FBVERTEX verts[4] =
+	{
+		{ -0.5f,  -0.5f, 0.5f, 1.f, 0, ~0,      0.f,    0.f },
+		{ 255.5f, -0.5f, 0.5f, 1.f, 0, ~0, texright,    0.f },
+		{ 255.5f,  0.5f, 0.5f, 1.f, 0, ~0, texright, texbot },
+		{ -0.5f,   0.5f, 0.5f, 1.f, 0, ~0,      0.f, texbot }
+	};
+	int i, c;
+
+	if (SkipAt >= 0)
+	{
+		return;
+	}
+
+	// Create an easily recognizable R3G3B2 palette.
+	if (SUCCEEDED(PaletteTexture->LockRect(0, &lockrect, NULL, 0)))
+	{
+		BYTE *pal = (BYTE *)(lockrect.pBits);
+		for (i = 0; i < 256; ++i)
+		{
+			pal[i*4+0] = (i & 0x03) << 6;		// blue
+			pal[i*4+1] = (i & 0x1C) << 3;		// green
+			pal[i*4+2] = (i & 0xE0);			// red;
+			pal[i*4+3] = 255;
+		}
+		PaletteTexture->UnlockRect (0);
+	}
+	else
+	{
+		return;
+	}
+	// Prepare a texture with values 0-256.
+	if (SUCCEEDED(FBTexture->LockRect(0, &lockrect, &testrect, 0)))
+	{
+		for (i = 0; i < 256; ++i)
+		{
+			((BYTE *)lockrect.pBits)[i] = i;
+		}
+		FBTexture->UnlockRect(0);
+	}
+	else
+	{
+		return;
+	}
+	// Create a render target that we can draw it to.
+	if (FAILED(D3DDevice->GetRenderTarget(0, &savedrendertarget)))
+	{
+		return;
+	}
+	if (FAILED(D3DDevice->CreateRenderTarget(256, 1, D3DFMT_A8R8G8B8, D3DMULTISAMPLE_NONE, 0, FALSE, &testsurf, NULL)))
+	{
+		return;
+	}
+	if (FAILED(D3DDevice->CreateOffscreenPlainSurface(256, 1, D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM, &readsurf, NULL)))
+	{
+		testsurf->Release();
+		return;
+	}
+	if (FAILED(D3DDevice->SetRenderTarget(0, testsurf)))
+	{
+		testsurf->Release();
+		readsurf->Release();
+		return;
+	}
+	// Write it to the render target using the pixel shader.
+	D3DDevice->BeginScene();
+	D3DDevice->SetTexture(0, FBTexture);
+	D3DDevice->SetTexture(1, PaletteTexture);
+	D3DDevice->SetFVF(D3DFVF_FBVERTEX);
+	D3DDevice->SetPixelShader(Shaders[SHADER_NormalColorPal]);
+	SetConstant(PSCONST_PaletteMod, 1.f, 0.5f / 256.f, 0, 0);
+	D3DDevice->DrawPrimitiveUP(D3DPT_TRIANGLEFAN, 2, verts, sizeof(FBVERTEX));
+	D3DDevice->EndScene();
+	D3DDevice->SetRenderTarget(0, savedrendertarget);
+	savedrendertarget->Release();
+	// Now read it back and see where it skips an entry
+	if (SUCCEEDED(D3DDevice->GetRenderTargetData(testsurf, readsurf)) &&
+		SUCCEEDED(readsurf->LockRect(&lockrect, &testrect, D3DLOCK_READONLY)))
+	{
+		const BYTE *pix = (const BYTE *)lockrect.pBits;
+		for (i = 0; i < 256; ++i, pix += 4)
+		{
+			c = (pix[0] >> 6) |					// blue
+				((pix[1] >> 5) << 2) |			// green
+				((pix[2] >> 5) << 5);			// red
+			if (c != i)
+			{
+				break;
+			}
+		}
+	}
+	readsurf->UnlockRect();
+	readsurf->Release();
+	testsurf->Release();
+	SkipAt = i;
+}
+
 void D3DFB::UploadPalette ()
 {
 	D3DLOCKED_RECT lockrect;
 
-	if (SUCCEEDED(PaletteTexture->LockRect (0, &lockrect, NULL, 0)))
+	if (SkipAt < 0)
+	{
+		if (SM14)
+		{
+			DoOffByOneCheck();
+		}
+		else
+		{
+			SkipAt = 256;
+		}
+	}
+	if (SUCCEEDED(PaletteTexture->LockRect(0, &lockrect, NULL, 0)))
 	{
 		BYTE *pix = (BYTE *)lockrect.pBits;
-		int i, skipat;
+		int i;
 
-		// It is impossible to get the Radeon 9000 to do the proper palette
-		// lookup. It *will* skip at least one entry in the palette. So we
-		// let it and have it look at the texture border color for color 255.
-		// I assume that every other card based on a related graphics chipset
-		// is similarly affected, which basically means that all Shader Model
-		// 1.4 cards suffer from this problem, since they all use some variant
-		// of the ATI R200.
-		//
-		// [Oh, gee. Looking over the old documentation, I guess this is
-		// documented that PS 1.x cards don't have a lot of precision.]
-		skipat = SM14 ? 256 - 8 : 256;
-
-		for (i = 0; i < skipat; ++i, pix += 4)
+		for (i = 0; i < SkipAt; ++i, pix += 4)
 		{
 			pix[0] = SourcePalette[i].b;
 			pix[1] = SourcePalette[i].g;
@@ -1314,7 +1428,7 @@ void D3DFB::UploadPalette ()
 			pix[2] = SourcePalette[i].r;
 			pix[3] = 255;
 		}
-		PaletteTexture->UnlockRect (0);
+		PaletteTexture->UnlockRect(0);
 		BorderColor = D3DCOLOR_XRGB(SourcePalette[255].r, SourcePalette[255].g, SourcePalette[255].b);
 	}
 }

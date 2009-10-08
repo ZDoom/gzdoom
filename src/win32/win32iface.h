@@ -338,6 +338,7 @@ private:
 	bool CreatePaletteTexture();
 	bool CreateGammaTexture();
 	bool CreateVertexes();
+	void DoOffByOneCheck();
 	void UploadPalette();
 	void UpdateGammaTexture(float igamma);
 	void FillPresentParameters (D3DPRESENT_PARAMETERS *pp, bool fullscreen, bool vsync);
@@ -391,14 +392,13 @@ private:
 	int FlashAmount;
 	int TrueHeight;
 	int PixelDoubling;
+	int SkipAt;
 	int LBOffsetI;
 	float LBOffset;
 	float Gamma;
 	bool UpdatePending;
 	bool NeedPalUpdate;
 	bool NeedGammaUpdate;
-	D3DFORMAT FBFormat;
-	D3DFORMAT PalFormat;
 	int FBWidth, FBHeight;
 	bool VSync;
 	RECT BlendingRect;

@@ -1268,49 +1268,54 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 		}
 	}
 
-	pc = target->GetClass()->ActorInfo->PainChances;
-	painchance = target->PainChance;
-	if (pc != NULL)
-	{
-		BYTE * ppc = pc->CheckKey(mod);
-		if (ppc != NULL)
-		{
-			painchance = *ppc;
-		}
-	}
 	
-dopain:	
 	if (!(target->flags5 & MF5_NOPAIN) && (inflictor == NULL || !(inflictor->flags5 & MF5_PAINLESS)) &&
-		!G_SkillProperty(SKILLP_NoPain) && (pr_damagemobj() < painchance ||
-		(inflictor != NULL && (inflictor->flags6 & MF6_FORCEPAIN))) && !(target->flags & MF_SKULLFLY))
+		!G_SkillProperty(SKILLP_NoPain) && !(target->flags & MF_SKULLFLY))
 	{
-		if (mod == NAME_Electric)
+
+		pc = target->GetClass()->ActorInfo->PainChances;
+		painchance = target->PainChance;
+		if (pc != NULL)
 		{
-			if (pr_lightning() < 96)
+			BYTE * ppc = pc->CheckKey(mod);
+			if (ppc != NULL)
+			{
+				painchance = *ppc;
+			}
+		}
+
+		if ((damage > target->PainThreshold && pr_damagemobj() < painchance) ||
+			(inflictor != NULL && (inflictor->flags6 & MF6_FORCEPAIN)))
+		{
+dopain:	
+			if (mod == NAME_Electric)
+			{
+				if (pr_lightning() < 96)
+				{
+					justhit = true;
+					FState * painstate = target->FindState(NAME_Pain, mod);
+					if (painstate != NULL) target->SetState (painstate);
+				}
+				else
+				{ // "electrocute" the target
+					target->renderflags |= RF_FULLBRIGHT;
+					if ((target->flags3 & MF3_ISMONSTER) && pr_lightning() < 128)
+					{
+						target->Howl ();
+					}
+				}
+			}
+			else
 			{
 				justhit = true;
 				FState * painstate = target->FindState(NAME_Pain, mod);
 				if (painstate != NULL) target->SetState (painstate);
-			}
-			else
-			{ // "electrocute" the target
-				target->renderflags |= RF_FULLBRIGHT;
-				if ((target->flags3 & MF3_ISMONSTER) && pr_lightning() < 128)
+				if (mod == NAME_PoisonCloud)
 				{
-					target->Howl ();
-				}
-			}
-		}
-		else
-		{
-			justhit = true;
-			FState * painstate = target->FindState(NAME_Pain, mod);
-			if (painstate != NULL) target->SetState (painstate);
-			if (mod == NAME_PoisonCloud)
-			{
-				if ((target->flags3 & MF3_ISMONSTER) && pr_poison() < 128)
-				{
-					target->Howl ();
+					if ((target->flags3 & MF3_ISMONSTER) && pr_poison() < 128)
+					{
+						target->Howl ();
+					}
 				}
 			}
 		}

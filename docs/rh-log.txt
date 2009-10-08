@@ -1,4 +1,5 @@
 October 8, 2009  (Changes by Graf Zahl)
+- Added a PainThreshold actor property.
 - fixed: Teleport_EndGame did not set the end sequence name properly.
 
 October 7, 2009

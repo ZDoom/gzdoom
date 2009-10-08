@@ -1,3 +1,11 @@
+October 7, 2009
+- Since I am currently without a primary video card and stuck with this
+  Mobility Radeon 9000 (on a PCI card, no less!), I have decided to give the
+  PS14 support some loving: D3D windowed gamma now works on these cards using
+  a texture lookup for the gamma table. Sadly, this halves my framerate, so
+  setting gamma to 1 will skip the gamma correction, as it was before, for
+  full speed. (On my 8800 GT, the gamma correction was free.)
+
 October 4, 2009  (Changes by Graf Zahl)
 - Deleted a_magewand.cpp because it only contained unused code.
 - Fixed: The conversation code tried to get the player's tag instead of the

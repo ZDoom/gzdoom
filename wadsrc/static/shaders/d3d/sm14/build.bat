@@ -22,4 +22,4 @@ fxc ..\shaders.ps /Tps_1_4 /LD -DPS14=1 /EInGameColormap -DPALTEX=1 -DINVERT=1 -
 
 fxc ..\shaders.ps /Tps_1_4 /LD -DPS14=1 /EBurnWipe /FoBurnWipe.pso
 
-@rem PS1.4 does not support the pow instruction, so no windowed gamma correction for it.
+fxc ..\shaders.ps /Tps_1_4 /LD -DPS14=1 /EGammaCorrection /FoGammaCorrection.pso

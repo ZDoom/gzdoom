@@ -336,9 +336,10 @@ private:
 	void CreateBlockSurfaces();
 	bool CreateFBTexture();
 	bool CreatePaletteTexture();
-	bool CreateGrayPaletteTexture();
+	bool CreateGammaTexture();
 	bool CreateVertexes();
 	void UploadPalette();
+	void UpdateGammaTexture(float igamma);
 	void FillPresentParameters (D3DPRESENT_PARAMETERS *pp, bool fullscreen, bool vsync);
 	void CalcFullscreenCoords (FBVERTEX verts[4], bool viewarea_only, bool can_double, D3DCOLOR color0, D3DCOLOR color1) const;
 	bool Reset();
@@ -381,7 +382,7 @@ private:
 	float Constant[3][4];
 	D3DCOLOR CurBorderColor;
 	IDirect3DPixelShader9 *CurPixelShader;
-	IDirect3DTexture9 *Texture[2];
+	IDirect3DTexture9 *Texture[5];
 
 	PalEntry SourcePalette[256];
 	D3DCOLOR BorderColor;
@@ -415,6 +416,7 @@ private:
 	IDirect3DTexture9 *FBTexture;
 	IDirect3DTexture9 *TempRenderTexture;
 	IDirect3DTexture9 *PaletteTexture;
+	IDirect3DTexture9 *GammaTexture;
 	IDirect3DTexture9 *ScreenshotTexture;
 	IDirect3DSurface9 *ScreenshotSurface;
 
@@ -429,6 +431,7 @@ private:
 	enum { BATCH_None, BATCH_Quads, BATCH_Lines } BatchType;
 
 	IDirect3DPixelShader9 *Shaders[NUM_SHADERS];
+	IDirect3DPixelShader9 *GammaShader;
 
 	IDirect3DSurface9 *BlockSurface[2];
 	IDirect3DSurface9 *OldRenderTarget;

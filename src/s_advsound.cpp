@@ -1940,7 +1940,7 @@ void AAmbientSound::Serialize (FArchive &arc)
 		else
 		{
 			arc << NextCheck;
-			if (checktime != INT_MAX)
+			if (NextCheck != INT_MAX)
 			{
 				NextCheck += gametic;
 			}

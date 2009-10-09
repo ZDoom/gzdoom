@@ -1441,9 +1441,14 @@ bool P_TestMobjZ (AActor *actor, bool quick, AActor **pOnmobj)
 		{ // Can't hit thing
 			continue;
 		}
-		if (thing->flags & (MF_SPECIAL|MF_NOCLIP|MF_CORPSE))
-		{ // [RH] Corpses and specials and noclippers don't block moves
+		if (thing->flags & (MF_SPECIAL|MF_NOCLIP))
+		{ // [RH] Specials and noclippers don't block moves
 			continue;
+		}
+		if (thing->flags & (MF_CORPSE))
+		{ // Corpses need a few more checks
+			if (!(actor->flags & MF_ICECORPSE))
+				continue;
 		}
 		if (!(thing->flags4 & MF4_ACTLIKEBRIDGE) && (actor->flags & MF_SPECIAL))
 		{ // [RH] Only bridges block pickup items
@@ -4315,9 +4320,14 @@ void P_FindAboveIntersectors (AActor *actor)
 		{ // Can't hit thing
 			continue;
 		}
-		if (thing->flags & (MF_CORPSE|MF_SPECIAL))
+		if (thing->flags & (MF_SPECIAL))
 		{ // [RH] Corpses and specials don't block moves
 			continue;
+		}
+		if (thing->flags & (MF_CORPSE))
+		{ // Corpses need a few more checks
+			if (!(actor->flags & MF_ICECORPSE))
+				continue;
 		}
 		if (thing == actor)
 		{ // Don't clip against self
@@ -4364,9 +4374,14 @@ void P_FindBelowIntersectors (AActor *actor)
 		{ // Can't hit thing
 			continue;
 		}
-		if (thing->flags & (MF_CORPSE|MF_SPECIAL))
+		if (thing->flags & (MF_SPECIAL))
 		{ // [RH] Corpses and specials don't block moves
 			continue;
+		}
+		if (thing->flags & (MF_CORPSE))
+		{ // Corpses need a few more checks
+			if (!(actor->flags & MF_ICECORPSE))
+				continue;
 		}
 		if (thing == actor)
 		{ // Don't clip against self

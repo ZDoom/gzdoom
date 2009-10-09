@@ -1061,6 +1061,30 @@ FUNC(LS_HealThing)
 	return it ? true : false;
 }
 
+// So that things activated/deactivated by ACS or DECORATE *and* by 
+// the BUMPSPECIAL or USESPECIAL flags work correctly both ways.
+void DoActivateThing(AActor * thing, AActor * activator)
+{
+	if (thing->activationtype & THINGSPEC_Activate)
+	{
+		thing->activationtype &= ~THINGSPEC_Activate; // Clear flag
+		if (thing->activationtype & THINGSPEC_Switch) // Set other flag if switching
+			thing->activationtype |= THINGSPEC_Deactivate;
+	}
+	thing->Activate (activator);
+}
+
+void DoDeactivateThing(AActor * thing, AActor * activator)
+{
+	if (thing->activationtype & THINGSPEC_Deactivate)
+	{
+		thing->activationtype &= ~THINGSPEC_Deactivate; // Clear flag
+		if (thing->activationtype & THINGSPEC_Switch) // Set other flag if switching
+			thing->activationtype |= THINGSPEC_Activate;
+	}
+	thing->Deactivate (activator);
+}
+
 FUNC(LS_Thing_Activate)
 // Thing_Activate (tid)
 {
@@ -1076,7 +1100,7 @@ FUNC(LS_Thing_Activate)
 			// Actor might remove itself as part of activation, so get next
 			// one before activating it.
 			AActor *temp = iterator.Next ();
-			actor->Activate (it);
+			DoActivateThing(actor, it);
 			actor = temp;
 			count++;
 		}
@@ -1085,7 +1109,7 @@ FUNC(LS_Thing_Activate)
 	}
 	else if (it != NULL)
 	{
-		it->Activate(it);
+		DoActivateThing(it, it);
 		return true;
 	}
 	return false;
@@ -1106,7 +1130,7 @@ FUNC(LS_Thing_Deactivate)
 			// Actor might removes itself as part of deactivation, so get next
 			// one before we activate it.
 			AActor *temp = iterator.Next ();
-			actor->Deactivate (it);
+			DoDeactivateThing(actor, it);
 			actor = temp;
 			count++;
 		}
@@ -1115,7 +1139,7 @@ FUNC(LS_Thing_Deactivate)
 	}
 	else if (it != NULL)
 	{
-		it->Deactivate(it);
+		DoDeactivateThing(it, it);
 		return true;
 	}
 	return false;

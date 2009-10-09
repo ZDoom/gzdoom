@@ -465,6 +465,9 @@ static int ParseThingActivation (FScanner &sc)
 		{ "THINGSPEC_ClearSpecial",			THINGSPEC_ClearSpecial},
 		{ "THINGSPEC_NoDeathSpecial",		THINGSPEC_NoDeathSpecial},
 		{ "THINGSPEC_TriggerActs",			THINGSPEC_TriggerActs},
+		{ "THINGSPEC_Activate",				THINGSPEC_Activate},
+		{ "THINGSPEC_Deactivate",			THINGSPEC_Deactivate},
+		{ "THINGSPEC_Switch",				THINGSPEC_Switch},
 		{ NULL, 0 }
 	};
 

@@ -1,4 +1,5 @@
 October 9, 2009  (Changes by Graf Zahl)
+- Added Gez's thing activation submission.
 - added a NULL pointer check to fog spawning in unmorphing code.
 - fixed: frozen corpses need to be treated as solid by z-movement code.
 - fixed: AAmbientSound::Serialize was adjusting its timer value for savegames

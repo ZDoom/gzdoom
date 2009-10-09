@@ -431,19 +431,23 @@ enum EBounceFlags
 
 };
 
-// Used to affect the logic for MF5_USESPECIAL and MF6_BUMPSPECIAL
+// Used to affect the logic for thing activation through death, USESPECIAL and BUMPSPECIAL
 // "thing" refers to what has the flag and the special, "trigger" refers to what used or bumped it
 enum EThingSpecialActivationType
 {
-	THINGSPEC_Default = 0,			// Normal behavior: a player must be the trigger, and is the activator
-	THINGSPEC_ThingActs = 1,		// The thing itself is the activator of the special
-	THINGSPEC_ThingTargets = 2,		// The thing changes its target to the trigger
-	THINGSPEC_TriggerTargets = 4,	// The trigger changes its target to the thing
-	THINGSPEC_MonsterTrigger = 8,	// The thing can be triggered by a monster
-	THINGSPEC_MissileTrigger = 16,	// The thing can be triggered by a projectile
-	THINGSPEC_ClearSpecial = 32,	// Clears special after successful activation
-	THINGSPEC_NoDeathSpecial = 64,	// Don't activate special on death
-	THINGSPEC_TriggerActs = 128,	// The trigger is the activator of the special (overrides LEVEL_ACTOWNSPECIAL Hexen hack)
+	THINGSPEC_Default			= 0,		// Normal behavior: a player must be the trigger, and is the activator
+	THINGSPEC_ThingActs			= 1,		// The thing itself is the activator of the special
+	THINGSPEC_ThingTargets		= 1<<1,		// The thing changes its target to the trigger
+	THINGSPEC_TriggerTargets	= 1<<2,		// The trigger changes its target to the thing
+	THINGSPEC_MonsterTrigger	= 1<<3,		// The thing can be triggered by a monster
+	THINGSPEC_MissileTrigger	= 1<<4,		// The thing can be triggered by a projectile
+	THINGSPEC_ClearSpecial		= 1<<5,		// Clears special after successful activation
+	THINGSPEC_NoDeathSpecial	= 1<<6,		// Don't activate special on death
+	THINGSPEC_TriggerActs		= 1<<7,		// The trigger is the activator of the special
+											// (overrides LEVEL_ACTOWNSPECIAL Hexen hack)
+	THINGSPEC_Activate			= 1<<8,		// The thing is activated when triggered
+	THINGSPEC_Deactivate		= 1<<9,		// The thing is deactivated when triggered
+	THINGSPEC_Switch			= 1<<10,	// The thing is alternatively activated and deactivated when triggered
 };
 
 // [RH] Like msecnode_t, but for the blockmap
@@ -807,6 +811,7 @@ public:
 	fixed_t			pushfactor;
 	int				lastpush;
 	int				activationtype;	// How the thing behaves when activated with USESPECIAL or BUMPSPECIAL
+	int				lastbump;		// Last time the actor was bumped, used to control BUMPSPECIAL
 	int				Score;			// manipulated by score items, ACS or DECORATE. The engine doesn't use this itself for anything.
 	FNameNoInit		Tag;			// Strife's tag name. FIXME: should be case sensitive!
 

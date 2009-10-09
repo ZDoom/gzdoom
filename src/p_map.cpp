@@ -837,24 +837,13 @@ bool PIT_CheckThing (AActor *thing, FCheckPosition &tm)
 
 	// Check for MF6_BUMPSPECIAL
 	// By default, only players can activate things by bumping into them
-	if ((thing->flags6 & MF6_BUMPSPECIAL))
+	if ((thing->flags6 & MF6_BUMPSPECIAL) && ((tm.thing->player != NULL)
+		|| ((thing->activationtype & THINGSPEC_MonsterTrigger) && (tm.thing->flags3 & MF3_ISMONSTER))
+		|| ((thing->activationtype & THINGSPEC_MissileTrigger) && (tm.thing->flags & MF_MISSILE))
+		) && (level.maptime > thing->lastbump)) // Leave the bumper enough time to go away
 	{
-		if (((tm.thing->player != NULL)
-		|| ((thing->activationtype & THINGSPEC_MonsterTrigger) && (thing->flags3 & MF3_ISMONSTER))
-		|| ((thing->activationtype & THINGSPEC_MissileTrigger) && (thing->flags & MF_MISSILE))
-		))
-		{	// Target switching mechanism
-			if (thing->activationtype & THINGSPEC_ThingTargets) thing->target = tm.thing;
-			if (thing->activationtype & THINGSPEC_TriggerTargets) tm.thing->target = thing;
-			// Run the special
-			
-			int res = LineSpecials[thing->special] (NULL, 
-				((thing->activationtype & THINGSPEC_ThingActs) ? thing : tm.thing), // Who triggers?
-				false, thing->args[0], thing->args[1], thing->args[2], thing->args[3], thing->args[4]);
-
-			if (thing->activationtype & THINGSPEC_ClearSpecial && res) thing->special = 0;
-
-		}
+		if (P_ActivateThingSpecial(thing, tm.thing))
+			thing->lastbump = level.maptime + TICRATE;
 	}
 
 	// Check for skulls slamming into things
@@ -3775,18 +3764,9 @@ bool P_UseTraverse(AActor *usething, fixed_t endx, fixed_t endy, bool &foundline
 			// Check for puzzle item use or USESPECIAL flag
 			// Extended to use the same activationtype mechanism as BUMPSPECIAL does
 			if (in->d.thing->flags5 & MF5_USESPECIAL || in->d.thing->special == UsePuzzleItem)
-			{	// Target switching mechanism
-				if (in->d.thing->activationtype & THINGSPEC_ThingTargets) in->d.thing->target = usething;
-				if (in->d.thing->activationtype & THINGSPEC_TriggerTargets) usething->target = in->d.thing;
-				// Run the special
-				if (LineSpecials[in->d.thing->special] (NULL, // Who triggers?
-					((in->d.thing->activationtype & THINGSPEC_ThingActs) ? in->d.thing : usething), false, 
-					in->d.thing->args[0], in->d.thing->args[1], in->d.thing->args[2],
-					in->d.thing->args[3], in->d.thing->args[4]))
-				{
-					if (in->d.thing->activationtype & THINGSPEC_ClearSpecial) in->d.thing->special = 0;
+			{
+				if (P_ActivateThingSpecial(in->d.thing, usething))
 					return true;
-				}
 			}
 			// Dead things can't talk.
 			if (in->d.thing->health <= 0)
@@ -5179,4 +5159,68 @@ static void SpawnDeepSplash (AActor *t1, const FTraceResults &trace, AActor *puf
 			P_HitWater (puff != NULL? puff:t1, P_PointInSector(hitx, hity), hitx, hity, hitz);
 		}
 	}
+}
+
+//=============================================================================
+//
+// P_ActivateThingSpecial
+//
+// Handles the code for things activated by death, USESPECIAL or BUMPSPECIAL
+//
+//=============================================================================
+
+bool P_ActivateThingSpecial(AActor * thing, AActor * trigger, bool death)
+{
+	bool res = false;
+
+	// Target switching mechanism
+	if (thing->activationtype & THINGSPEC_ThingTargets)		thing->target = trigger;
+	if (thing->activationtype & THINGSPEC_TriggerTargets)	trigger->target = thing;
+
+	// State change mechanism. The thing needs to be not dead and to have at least one of the relevant flags
+	if (!death && (thing->activationtype & (THINGSPEC_Activate|THINGSPEC_Deactivate|THINGSPEC_Switch)))
+	{
+		// If a switchable thing does not know whether it should be activated
+		// or deactivated, the default is to activate it.
+		if ((thing->activationtype & THINGSPEC_Switch) 
+			&& !(thing->activationtype & (THINGSPEC_Activate|THINGSPEC_Deactivate)))
+		{
+			thing->activationtype |= THINGSPEC_Activate;
+		}
+		// Can it be activated?
+		if (thing->activationtype & THINGSPEC_Activate)
+		{
+			thing->activationtype &= ~THINGSPEC_Activate; // Clear flag
+			if (thing->activationtype & THINGSPEC_Switch) // Set other flag if switching
+				thing->activationtype |= THINGSPEC_Deactivate;
+			thing->Activate(trigger);
+			res = true;
+		}
+		// If not, can it be deactivated?
+		else if (thing->activationtype & THINGSPEC_Deactivate)
+		{
+			thing->activationtype &= ~THINGSPEC_Deactivate; // Clear flag
+			if (thing->activationtype & THINGSPEC_Switch)	// Set other flag if switching
+				thing->activationtype |= THINGSPEC_Activate;
+			thing->Deactivate(trigger);
+			res = true;
+		}
+	}
+
+	// Run the special, if any
+	if (thing->special)
+	{
+		res = !! LineSpecials[thing->special] (NULL,
+			// TriggerActs overrides the level flag, which only concerns thing activated by death
+			(((death && level.flags & LEVEL_ACTOWNSPECIAL && !(thing->activationtype & THINGSPEC_TriggerActs))
+			|| (thing->activationtype & THINGSPEC_ThingActs)) // Who triggers?
+			? thing : trigger), 
+			false, thing->args[0], thing->args[1], thing->args[2], thing->args[3], thing->args[4]);
+
+		// Clears the special if it was run on thing's death or if flag is set.
+		if (death || (thing->activationtype & THINGSPEC_ClearSpecial && res)) thing->special = 0;
+	}
+
+	// Returns the result
+	return res;
 }

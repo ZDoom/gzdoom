@@ -1072,7 +1072,7 @@ DEFINE_PROPERTY(projectile, 0, Actor)
 //==========================================================================
 DEFINE_PROPERTY(activation, N, Actor)
 {
-	// How the thing behaves when activated with MF5_USESPECIAL or MF6_BUMPSPECIAL
+	// How the thing behaves when activated by death, USESPECIAL or BUMPSPECIAL
 	PROP_INT_PARM(val, 0);
 	defaults->activationtype = val;
 }

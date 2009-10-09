@@ -420,17 +420,11 @@ void AActor::Die (AActor *source, AActor *inflictor)
 	//		the activator of the script.
 	// New: In Hexen, the thing that died is the activator,
 	//		so now a level flag selects who the activator gets to be.
-	if (special && (!(flags & MF_SPECIAL) || (flags3 & MF3_ISMONSTER)) && !(activationtype & THINGSPEC_NoDeathSpecial))
+	// Everything is now moved to P_ActivateThingSpecial().
+	if (special && (!(flags & MF_SPECIAL) || (flags3 & MF3_ISMONSTER))
+		&& !(activationtype & THINGSPEC_NoDeathSpecial))
 	{
-		// Activation flags override LEVEL_ACTOWNSPECIAL if set.
-		AActor *activator = (activationtype & THINGSPEC_TriggerActs ? source : 
-			(activationtype & THINGSPEC_ThingActs ? this : (level.flags & LEVEL_ACTOWNSPECIAL ? this : source)));
-		if (activationtype & THINGSPEC_ThingTargets)
-			this->target = source;
-		if (activationtype & THINGSPEC_TriggerTargets)
-			source->target = this;
-		LineSpecials[special] (NULL, activator, false, args[0], args[1], args[2], args[3], args[4]);
-		special = 0;
+		P_ActivateThingSpecial(this, source, true); 
 	}
 
 	if (CountsAsKill())

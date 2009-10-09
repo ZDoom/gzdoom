@@ -300,6 +300,10 @@ void AActor::Serialize (FArchive &arc)
 		<< Species
 		<< Score
 		<< Tag;
+	if (SaveVersion >= 1904)
+	{
+		arc << lastpush << lastbump;
+	}
 
 	if (SaveVersion >= 1900)
 	{
@@ -3670,7 +3674,7 @@ void AActor::Activate (AActor *activator)
 		if (flags2 & MF2_DORMANT)
 		{
 			flags2 &= ~MF2_DORMANT;
-			FState *state = FindState("Active");
+			FState *state = FindState(NAME_Active);
 			if (state != NULL) 
 			{
 				SetState(state);
@@ -3690,7 +3694,7 @@ void AActor::Deactivate (AActor *activator)
 		if (!(flags2 & MF2_DORMANT))
 		{
 			flags2 |= MF2_DORMANT;
-			FState *state = FindState("Inactive");
+			FState *state = FindState(NAME_Inactive);
 			if (state != NULL) 
 			{
 				SetState(state);

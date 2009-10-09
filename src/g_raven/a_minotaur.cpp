@@ -82,49 +82,6 @@ void AMinotaurFriend::Serialize (FArchive &arc)
 	arc << StartTime;
 }
 
-bool AMinotaurFriend::IsOkayToAttack (AActor *link)
-{
-	if ((link->flags3 & MF3_ISMONSTER) && (link != tracer))
-	{
-		if (!((link->flags ^ flags) & MF_FRIENDLY))
-		{ // Don't attack friends
-			if (link->flags & MF_FRIENDLY)
-			{
-				if (!deathmatch || link->FriendPlayer == 0 || FriendPlayer == 0 ||
-					link->FriendPlayer != FriendPlayer)
-				{
-					return false;
-				}
-			}
-			else
-			{
-				return false;
-			}
-		}
-		if (!(link->flags&MF_SHOOTABLE))
-		{
-			return false;
-		}
-		if (link->flags2&MF2_DORMANT)
-		{
-			return false;
-		}
-		if ((link->flags5 & MF5_SUMMONEDMONSTER) &&	(link->tracer == tracer))
-		{
-			return false;
-		}
-		if (multiplayer && !deathmatch && link->player)
-		{
-			return false;
-		}
-		if (P_CheckSight (this, link))
-		{
-			return true;
-		}
-	}
-	return false;
-}
-
 void AMinotaurFriend::Die (AActor *source, AActor *inflictor)
 {
 	Super::Die (source, inflictor);

@@ -2693,36 +2693,59 @@ void AActor::PlayActiveSound ()
 
 bool AActor::IsOkayToAttack (AActor *link)
 {
-	if (player)				// Minotaur looking around player
+	if (!(player							// Original AActor::IsOkayToAttack was only for players
+	//	|| (flags  & MF_FRIENDLY)			// Maybe let friendly monsters use the function as well?
+		|| (flags5 & MF5_SUMMONEDMONSTER)	// AMinotaurFriend has its own version, generalized to other summoned monsters
+		|| (flags2 & MF2_SEEKERMISSILE)))	// AHolySpirit and AMageStaffFX2 as well, generalized to other seeker missiles
+	{	// Normal monsters and other actors always return false.
+		return false;
+	}
+	// Standard things to eliminate: an actor shouldn't attack itself,
+	// or a non-shootable, dormant, non-player-and-non-monster actor.
+	if (link == this)									return false;
+	if (!(link->player||(link->flags3 & MF3_ISMONSTER)))return false;
+	if (!(link->flags & MF_SHOOTABLE))					return false;
+	if (link->flags2 & MF2_DORMANT)						return false;
+
+	// An actor shouldn't attack friendly actors. The reference depends
+	// on the type of actor: for a player's actor, itself; for a projectile,
+	// its target; and for a summoned minion, its tracer.
+	AActor * Friend = NULL;
+	if (player)											Friend = this;
+	else if (flags5 & MF5_SUMMONEDMONSTER)				Friend = tracer;
+	else if (flags2 & MF2_SEEKERMISSILE)				Friend = target;
+	else if ((flags & MF_FRIENDLY) && FriendPlayer)		Friend = players[FriendPlayer-1].mo;
+
+	// Friend checks
+	if (link == Friend)									return false;
+	if (Friend == NULL)									return false;
+	if (Friend->IsFriend(link))							return false;
+	if ((link->flags5 & MF5_SUMMONEDMONSTER)			// No attack against minions on the same side
+		&& (link->tracer == Friend))					return false;
+	if (multiplayer && !deathmatch						// No attack against fellow players in coop
+		&& link->player && Friend->player)				return false;
+	if (((flags & link->flags) & MF_FRIENDLY)			// No friendly infighting amongst minions
+		&& IsFriend(link))								return false;
+
+	// Now that all the actor checks are made, the line of sight can be checked
+	if (P_CheckSight (this, link))
 	{
-		if ((link->flags3 & MF3_ISMONSTER) || (link->player && (link != this)))
+		// AMageStaffFX2::IsOkayToAttack had an extra check here, generalized with a flag,
+		// to only allow the check to succeed if the enemy was in a ~84° FOV of the player
+		if (flags3 & MF3_SCREENSEEKER)
 		{
-			if (IsFriend(link))
-			{
-				return false;
-			}
-			if (!(link->flags & MF_SHOOTABLE))
-			{
-				return false;
-			}
-			if (link->flags2 & MF2_DORMANT)
-			{
-				return false;
-			}
-			if ((link->flags5 & MF5_SUMMONEDMONSTER) && (link->tracer == this))
-			{
-				return false;
-			}
-			if (multiplayer && !deathmatch && link->player)
-			{
-				return false;
-			}
-			if (P_CheckSight (this, link))
+			angle_t angle = R_PointToAngle2(Friend->x, 
+				Friend->y, link->x, link->y) - Friend->angle;
+			angle >>= 24;
+			if (angle>226 || angle<30)
 			{
 				return true;
 			}
 		}
+		// Other actors are not concerned by this check
+		else return true;
 	}
+	// The sight check was failed, or the angle wasn't right for a screenseeker
 	return false;
 }
 

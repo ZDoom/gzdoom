@@ -178,7 +178,7 @@ ACTOR Actor native //: Thinker
 	action native A_StopSound(int slot = CHAN_VOICE);	// Bad default but that's what is originally was...
 	action native A_PlaySoundEx(sound whattoplay, coerce name slot, bool looping = false, int attenuation = 0);
 	action native A_StopSoundEx(coerce name slot);
-	action native A_SeekerMissile(int threshold, int turnmax);
+	action native A_SeekerMissile(int threshold, int turnmax, int flags = 0, int chance = 50, int distance = 10);
 	action native A_Jump(int chance = 256, state label, ...);
 	action native A_CustomMissile(class<Actor> missiletype, float spawnheight = 32, int spawnofs_xy = 0, float angle = 0, int flags = 0, float pitch = 0);
 	action native A_CustomBulletAttack(float spread_xy, float spread_z, int	numbullets, int damageperbullet, class<Actor> pufftype = "BulletPuff", float range = 0, bool aimfacing = false);

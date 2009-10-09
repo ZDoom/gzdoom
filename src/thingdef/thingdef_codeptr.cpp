@@ -342,12 +342,24 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_StopSoundEx)
 // Generic seeker missile function
 //
 //==========================================================================
+static FRandom pr_seekermissile ("SeekerMissile");
+enum
+{
+	SMF_LOOK = 1,
+};
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SeekerMissile)
 {
-	ACTION_PARAM_START(2);
+	ACTION_PARAM_START(5);
 	ACTION_PARAM_INT(ang1, 0);
 	ACTION_PARAM_INT(ang2, 1);
+	ACTION_PARAM_INT(flags, 2);
+	ACTION_PARAM_INT(chance, 3);
+	ACTION_PARAM_INT(distance, 4);
 
+	if ((flags & SMF_LOOK) && (self->tracer == 0) && (pr_seekermissile()<chance))
+	{
+		self->tracer = P_RoughMonsterSearch (self, distance);
+	}
 	P_SeekerMissile(self, clamp<int>(ang1, 0, 90) * ANGLE_1, clamp<int>(ang2, 0, 90) * ANGLE_1);
 }
 

@@ -145,36 +145,6 @@ bool AHolySpirit::SpecialBlastHandling (AActor *source, fixed_t strength)
 	return true;
 }
 
-bool AHolySpirit::IsOkayToAttack (AActor *link)
-{
-	if ((link->flags3&MF3_ISMONSTER ||
-		(link->player && link != target))
-		&& !(link->flags2&MF2_DORMANT))
-	{
-		if (target != NULL && link->IsFriend(target))
-		{
-			return false;
-		}
-		if (!(link->flags & MF_SHOOTABLE))
-		{
-			return false;
-		}
-		if (multiplayer && !deathmatch && link->player && target != NULL && target->player)
-		{
-			return false;
-		}
-		if (link == target)
-		{
-			return false;
-		}
-		else if (P_CheckSight (this, link))
-		{
-			return true;
-		}
-	}
-	return false;
-}
-
 //============================================================================
 //
 // A_CHolyAttack2 

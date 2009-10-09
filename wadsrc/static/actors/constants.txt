@@ -76,6 +76,9 @@ const int BF_USEAMMO = 1;
 const int BF_DONTWARN = 2;
 const int BF_AFFECTBOSSES = 4;
 
+// Flags for A_SeekerMissile
+const int SMF_LOOK = 1;
+
 // Activation flags
 enum
 {
@@ -97,6 +100,8 @@ const int AF_TriggerTargets = 4;
 const int AF_MonsterTrigger = 8;
 const int AF_MissileTrigger = 16;
 const int AF_ClearSpecial = 32;
+const int AF_NoDeathSpecial = 64;
+const int AF_TriggerActs = 128;
 
 // constants for A_PlaySound
 enum

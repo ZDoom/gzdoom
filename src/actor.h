@@ -217,7 +217,7 @@ enum
 	MF3_CRASHED			= 0x00200000,	// Actor entered its crash state
 	MF3_FULLVOLDEATH	= 0x00400000,	// DeathSound is played full volume (for missiles)
 	MF3_AVOIDMELEE		= 0x00800000,	// Avoids melee attacks (same as MBF's monster_backing but must be explicitly set)
-	/*				    = 0x01000000,	*/
+	MF3_SCREENSEEKER    = 0x01000000,	// Fails the IsOkayToAttack test if potential target is outside player FOV
 	MF3_FOILINVUL		= 0x02000000,	// Actor can hurt MF2_INVULNERABLE things
 	MF3_NOTELEOTHER		= 0x04000000,	// Monster is unaffected by teleport other artifact
 	MF3_BLOODLESSIMPACT	= 0x08000000,	// Projectile does not leave blood
@@ -608,7 +608,7 @@ public:
 	virtual bool SpecialBlastHandling (AActor *source, fixed_t strength);
 
 	// Called by RoughBlockCheck
-	virtual bool IsOkayToAttack (AActor *target);
+	bool IsOkayToAttack (AActor *target);
 
 	// Plays the actor's ActiveSound if its voice isn't already making noise.
 	void PlayActiveSound ();

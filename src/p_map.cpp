@@ -1519,7 +1519,7 @@ void P_FakeZMovement (AActor *mo)
 
 static void CheckForPushSpecial (line_t *line, int side, AActor *mobj)
 {
-	if (line->special)
+	if (line->special && !(mobj->flags6 & MF6_NOTRIGGER))
 	{
 		if (mobj->flags2 & MF2_PUSHWALL)
 		{
@@ -1795,7 +1795,7 @@ bool P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 			// see if the line was crossed
 			side = P_PointOnLineSide (thing->x, thing->y, ld);
 			oldside = P_PointOnLineSide (oldx, oldy, ld);
-			if (side != oldside && ld->special)
+			if (side != oldside && ld->special && !(thing->flags6 & MF6_NOTRIGGER))
 			{
 				if (thing->player)
 				{
@@ -3231,12 +3231,20 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 		t1->player->ReadyWeapon != NULL &&
 		(t1->player->ReadyWeapon->flags2 & MF2_THRUGHOST));
 
+	AActor *puffDefaults = GetDefaultByType (pufftype);
+
+	int tflags;
+	if (puffDefaults != NULL && puffDefaults->flags6 & MF6_NOTRIGGER) tflags = TRACE_NoSky;
+	else tflags = TRACE_NoSky|TRACE_Impact;
+
 	if (!Trace (t1->x, t1->y, shootz, t1->Sector, vx, vy, vz, distance,
 		MF_SHOOTABLE, ML_BLOCKEVERYTHING, t1, trace,
-		TRACE_NoSky|TRACE_Impact, hitGhosts ? CheckForGhost : CheckForSpectral))
+		tflags, hitGhosts ? CheckForGhost : CheckForSpectral))
 	{ // hit nothing
-		AActor *puffDefaults = GetDefaultByType (pufftype);
-		if (puffDefaults->ActiveSound)
+		if (puffDefaults == NULL)
+		{
+		}
+		else if (puffDefaults->ActiveSound)
 		{ // Play miss sound
 			S_Sound (t1, CHAN_WEAPON, puffDefaults->ActiveSound, 1, ATTN_NORM);
 		}
@@ -3629,22 +3637,28 @@ void P_RailAttack (AActor *source, int damage, int offset, int color1, int color
 	start.Y = FIXED2FLOAT(y1);
 	start.Z = FIXED2FLOAT(shootz);
 
+	int flags;
+
+	AActor *puffDefaults = puffclass == NULL? NULL : GetDefaultByType (puffclass);
+
+	if (puffDefaults != NULL && puffDefaults->flags6 & MF6_NOTRIGGER) flags = 0;
+	else flags = TRACE_PCross|TRACE_Impact;
+
 	if (pierce)
 	{
 		Trace (x1, y1, shootz, source->Sector, vx, vy, vz,
 			8192*FRACUNIT, MF_SHOOTABLE, ML_BLOCKEVERYTHING, source, trace,
-			TRACE_PCross|TRACE_Impact, ProcessRailHit);
+			flags, ProcessRailHit);
 	}
 	else
 	{
 		Trace (x1, y1, shootz, source->Sector, vx, vy, vz,
 			8192*FRACUNIT, MF_SHOOTABLE, ML_BLOCKEVERYTHING, source, trace,
-			TRACE_PCross|TRACE_Impact, ProcessNoPierceRailHit);
+			flags, ProcessNoPierceRailHit);
 	}
 
 	// Hurt anything the trace hit
 	unsigned int i;
-	AActor *puffDefaults = puffclass == NULL? NULL : GetDefaultByType (puffclass);
 	FName damagetype = (puffDefaults == NULL || puffDefaults->DamageType == NAME_None) ? FName(NAME_Railgun) : puffDefaults->DamageType;
 
 	// used as damage inflictor

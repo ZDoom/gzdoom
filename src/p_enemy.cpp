@@ -583,15 +583,19 @@ bool P_Move (AActor *actor)
 		line_t *ld;
 		int good = 0;
 		
-		while (spechit.Pop (ld))
+		if (!(actor->flags6 & MF6_NOTRIGGER))
 		{
-			// [RH] let monsters push lines, as well as use them
-			if (((actor->flags4 & MF4_CANUSEWALLS) && P_ActivateLine (ld, actor, 0, SPAC_Use)) ||
-				((actor->flags2 & MF2_PUSHWALL) && P_ActivateLine (ld, actor, 0, SPAC_Push)))
+			while (spechit.Pop (ld))
 			{
-				good |= ld == actor->BlockingLine ? 1 : 2;
+				// [RH] let monsters push lines, as well as use them
+				if (((actor->flags4 & MF4_CANUSEWALLS) && P_ActivateLine (ld, actor, 0, SPAC_Use)) ||
+					((actor->flags2 & MF2_PUSHWALL) && P_ActivateLine (ld, actor, 0, SPAC_Push)))
+				{
+					good |= ld == actor->BlockingLine ? 1 : 2;
+				}
 			}
 		}
+		else spechit.Clear();
 		return good && ((pr_opendoor() >= 203) ^ (good & 1));
 	}
 	else

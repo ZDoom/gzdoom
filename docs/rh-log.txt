@@ -1,3 +1,6 @@
+October 10, 2009  (Changes by Graf Zahl)
+- Added MF6_NOTRIGGER flag that disables all line actions for an actor.
+
 October 9, 2009  (Changes by Graf Zahl)
 - Added Gez's seeker missile submission.
 - Added Gez's thing activation submission.

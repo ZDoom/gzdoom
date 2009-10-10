@@ -316,6 +316,7 @@ enum
 	MF6_ARMED			= 0x00002000,	// From MBF: Object is armed (for MF6_TOUCHY objects)
 	MF6_FALLING			= 0x00004000,	// From MBF: Object is falling (for pseudotorque simulation)
 	MF6_LINEDONE		= 0x00008000,	// From MBF: Object has already run a line effect
+	MF6_NOTRIGGER		= 0x00010000,	// actor cannot trigger any line actions
 
 // --- mobj.renderflags ---
 

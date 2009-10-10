@@ -2428,6 +2428,7 @@ enum
 	APROP_Species		= 20,
 	APROP_NameTag		= 21,
 	APROP_Score			= 22,
+	APROP_Notrigger		= 23,
 };	
 
 // These are needed for ACS's APROP_RenderStyle
@@ -2517,6 +2518,10 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 
 	case APROP_Notarget:
 		if (value) actor->flags3 |= MF3_NOTARGET; else actor->flags3 &= ~MF3_NOTARGET;
+		break;
+
+	case APROP_Notrigger:
+		if (value) actor->flags6 |= MF6_NOTRIGGER; else actor->flags6 &= ~MF6_NOTRIGGER;
 		break;
 
 	case APROP_JumpZ:
@@ -2638,6 +2643,7 @@ int DLevelScript::GetActorProperty (int tid, int property)
 	case APROP_Frightened:	return !!(actor->flags4 & MF4_FRIGHTENED);
 	case APROP_Friendly:	return !!(actor->flags & MF_FRIENDLY);
 	case APROP_Notarget:	return !!(actor->flags3 & MF3_NOTARGET);
+	case APROP_Notrigger:	return !!(actor->flags6 & MF6_NOTRIGGER);
 	case APROP_SpawnHealth: if (actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))
 							{
 								return static_cast<APlayerPawn *>(actor)->MaxHealth;
@@ -2694,6 +2700,7 @@ int DLevelScript::CheckActorProperty (int tid, int property, int value)
 		case APROP_Frightened:
 		case APROP_Friendly:
 		case APROP_Notarget:
+		case APROP_Notrigger:
 			return (GetActorProperty(tid, property) == (!!value));
 
 		// Strings are not covered by GetActorProperty, so make the check here

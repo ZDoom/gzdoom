@@ -49,6 +49,7 @@
 #include "p_lnspec.h"
 #include "doomstat.h"
 #include "thingdef_exp.h"
+#include "vmbuilder.h"
 
 // Accessible actor member variables
 DEFINE_MEMBER_VARIABLE(alpha, AActor)
@@ -76,6 +77,11 @@ DEFINE_MEMBER_VARIABLE_ALIAS(momz, velz, AActor)
 DEFINE_MEMBER_VARIABLE(Damage, AActor)
 DEFINE_MEMBER_VARIABLE(Score, AActor)
 DEFINE_MEMBER_VARIABLE(uservar, AActor)
+
+ExpEmit::ExpEmit(VMFunctionBuilder *build, int type)
+: RegNum(build->Registers[type].Get(1)), RegType(type)
+{
+}
 
 //==========================================================================
 //
@@ -244,6 +250,18 @@ ExpVal FxExpression::EvalExpression (AActor *self)
 	return val;
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+ExpEmit FxExpression::Emit (VMFunctionBuilder *build)
+{
+	ScriptPosition.Message(MSG_ERROR, "Unemitted expression found");
+	return ExpEmit();
+}
+
 
 //==========================================================================
 //
@@ -306,6 +324,80 @@ void FxExpression::RequestAddress()
 	ScriptPosition.Message(MSG_ERROR, "invalid dereference\n");
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxParameter::FxParameter(FxExpression *operand)
+: FxExpression(operand->ScriptPosition)
+{
+	Operand = operand;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxParameter::~FxParameter()
+{
+	SAFE_DELETE(Operand);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxExpression *FxParameter::Resolve(FCompileContext& ctx)
+{
+	CHECKRESOLVED();
+	SAFE_RESOLVE(Operand, ctx);
+	return this;
+}
+
+ExpEmit FxParameter::Emit(VMFunctionBuilder *build)
+{
+	if (Operand->isConstant())
+	{
+		ExpVal val = Operand->EvalExpression(NULL);
+		if (val.Type == VAL_Int || val.Type == VAL_Sound || val.Type == VAL_Name || val.Type == VAL_Color)
+		{
+			build->Emit(OP_PARAM, 0, REGT_INT | REGT_KONST, build->GetConstantInt(val.Int));
+		}
+		else if (val.Type == VAL_Float)
+		{
+			build->Emit(OP_PARAM, 0, REGT_FLOAT | REGT_KONST, build->GetConstantFloat(val.Int));
+		}
+		else if (val.Type == VAL_Class || val.Type == VAL_Object)
+		{
+			build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, build->GetConstantAddress(val.pointer, ATAG_OBJECT));
+		}
+		else if (val.Type == VAL_State)
+		{
+			build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, build->GetConstantAddress(val.pointer, ATAG_STATE));
+		}
+		else
+		{
+			ScriptPosition.Message(MSG_ERROR, "Cannot emit needed constant");
+		}
+	}
+	else
+	{
+		ExpEmit where = Operand->Emit(build);
+
+		if (where.RegNum == REGT_NIL)
+		{
+			ScriptPosition.Message(MSG_ERROR, "Attempted to pass a non-value");
+			build->Emit(OP_PARAM, 0, where.RegType, where.RegNum);
+		}
+	}
+	return ExpEmit();
+}
 
 //==========================================================================
 //
@@ -352,8 +444,6 @@ FxExpression *FxConstant::MakeConstant(PSymbol *sym, const FScriptPosition &pos)
 	}
 	return x;
 }
-
-
 
 //==========================================================================
 //
@@ -430,6 +520,100 @@ ExpVal FxIntCast::EvalExpression (AActor *self)
 	return baseval;
 }
 
+ExpEmit FxIntCast::Emit(VMFunctionBuilder *build)
+{
+	ExpEmit from = basex->Emit(build);
+	assert(!from.Konst);
+	assert(basex->ValueType == VAL_Float);
+	ExpEmit to(build, REGT_INT);
+	build->Emit(OP_CAST, to.RegNum, from.RegNum, CAST_F2I);
+	return to;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxFloatCast::FxFloatCast(FxExpression *x)
+: FxExpression(x->ScriptPosition)
+{
+	basex=x;
+	ValueType = VAL_Float;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxFloatCast::~FxFloatCast()
+{
+	SAFE_DELETE(basex);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxExpression *FxFloatCast::Resolve(FCompileContext &ctx)
+{
+	CHECKRESOLVED();
+	SAFE_RESOLVE(basex, ctx);
+
+	if (basex->ValueType == VAL_Float)
+	{
+		FxExpression *x = basex;
+		basex = NULL;
+		delete this;
+		return x;
+	}
+	else if (basex->ValueType == VAL_Int)
+	{
+		if (basex->isConstant())
+		{
+			ExpVal constval = basex->EvalExpression(NULL);
+			FxExpression *x = new FxConstant(constval.GetFloat(), ScriptPosition);
+			delete this;
+			return x;
+		}
+		return this;
+	}
+	else
+	{
+		ScriptPosition.Message(MSG_ERROR, "Numeric type expected");
+		delete this;
+		return NULL;
+	}
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+ExpVal FxFloatCast::EvalExpression (AActor *self)
+{
+	ExpVal baseval = basex->EvalExpression(self);
+	baseval.Float = baseval.GetFloat();
+	baseval.Type = VAL_Float;
+	return baseval;
+}
+
+ExpEmit FxFloatCast::Emit(VMFunctionBuilder *build)
+{
+	ExpEmit from = basex->Emit(build);
+	assert(!from.Konst);
+	assert(basex->ValueType == VAL_Int);
+	ExpEmit to(build, REGT_FLOAT);
+	build->Emit(OP_CAST, to.RegNum, from.RegNum, CAST_I2F);
+	return to;
+}
 
 //==========================================================================
 //
@@ -478,6 +662,11 @@ FxExpression *FxPlusSign::Resolve(FCompileContext& ctx)
 		delete this;
 		return NULL;
 	}
+}
+
+ExpEmit FxPlusSign::Emit(VMFunctionBuilder *build)
+{
+	return Operand->Emit(build);
 }
 
 //==========================================================================
@@ -559,6 +748,23 @@ ExpVal FxMinusSign::EvalExpression (AActor *self)
 	return ret;
 }
 
+ExpEmit FxMinusSign::Emit(VMFunctionBuilder *build)
+{
+	assert(ValueType.Type == Operand->ValueType.Type);
+	ExpEmit from = Operand->Emit(build);
+	assert(from.Konst != 0);
+	// Do it in-place.
+	if (ValueType == VAL_Int)
+	{
+		build->Emit(OP_NEG, from.RegNum, from.RegNum, 0);
+	}
+	else
+	{
+		assert(ValueType == VAL_Float);
+		build->Emit(OP_NEG, from.RegNum, from.RegNum, 0);
+	}
+	return from;
+}
 
 //==========================================================================
 //
@@ -639,6 +845,17 @@ ExpVal FxUnaryNotBitwise::EvalExpression (AActor *self)
 	return ret;
 }
 
+ExpEmit FxUnaryNotBitwise::Emit(VMFunctionBuilder *build)
+{
+	assert(ValueType.Type == Operand->ValueType.Type);
+	assert(ValueType == VAL_Int);
+	ExpEmit from = Operand->Emit(build);
+	assert(from.Konst != 0);
+	// Do it in-place.
+	build->Emit(OP_NOT, from.RegNum, from.RegNum, 0);
+	return from;
+}
+
 //==========================================================================
 //
 //
@@ -716,6 +933,36 @@ ExpVal FxUnaryNotBoolean::EvalExpression (AActor *self)
 	return ret;
 }
 
+ExpEmit FxUnaryNotBoolean::Emit(VMFunctionBuilder *build)
+{
+	ExpEmit from = Operand->Emit(build);
+	assert(from.Konst != 0);
+	ExpEmit to(build, REGT_INT);
+	build->FreeReg(from.RegType, from.RegNum);
+
+	// Preload result with 0.
+	build->Emit(OP_LI, to.RegNum, 0, 0);
+
+	// Check source against 0.
+	if (from.RegType == REGT_INT)
+	{
+		build->Emit(OP_EQ_R, 0, from.RegNum, to.RegNum);
+	}
+	else if (from.RegType == REGT_FLOAT)
+	{
+		build->Emit(OP_EQF_K, 0, from.RegNum, build->GetConstantFloat(0));
+	}
+	else if (from.RegNum == REGT_POINTER)
+	{
+		build->Emit(OP_EQA_K, 0, from.RegNum, build->GetConstantAddress(NULL, ATAG_GENERIC));
+	}
+	build->Emit(OP_JMP, 1);
+
+	// Reload result with 1 if the comparison fell through.
+	build->Emit(OP_LI, to.RegNum, 1);
+	return to;
+}
+
 //==========================================================================
 //
 //
@@ -786,6 +1033,17 @@ bool FxBinary::ResolveLR(FCompileContext& ctx, bool castnumeric)
 	return true;
 }
 
+void FxBinary::Promote()
+{
+	if (left->ValueType == VAL_Float && right->ValueType == VAL_Int)
+	{
+		right = new FxFloatCast(right);
+	}
+	else if (left->ValueType == VAL_Int && right->ValueType == VAL_Float)
+	{
+		left = new FxFloatCast(left);
+	}
+}
 
 //==========================================================================
 //
@@ -845,6 +1103,7 @@ FxExpression *FxAddSub::Resolve(FCompileContext& ctx)
 
 		}
 	}
+	Promote();
 	return this;
 }
 
@@ -878,6 +1137,72 @@ ExpVal FxAddSub::EvalExpression (AActor *self)
 
 	}
 	return ret;
+}
+
+ExpEmit FxAddSub::Emit(VMFunctionBuilder *build)
+{
+	assert(Operator == '+' || Operator == '-');
+	ExpEmit op1 = left->Emit(build);
+	ExpEmit op2 = right->Emit(build);
+	if (Operator == '+')
+	{
+		// Since addition is commutative, only the second operand may be a constant.
+		if (op1.Konst)
+		{
+			swap(op1, op2);
+		}
+		assert(!op1.Konst);
+		build->FreeReg(op1.RegType, op1.RegNum);
+		if (!op2.Konst)
+		{
+			build->FreeReg(op2.RegType, op2.RegNum);
+		}
+		if (ValueType == VAL_Float)
+		{
+			assert(op1.RegType == REGT_FLOAT && op2.RegType == REGT_FLOAT);
+			ExpEmit to(build, REGT_FLOAT);
+			build->Emit(op2.Konst ? OP_ADDF_RK : OP_ADDF_RR, to.RegNum, op1.RegNum, op2.RegNum);
+			return to;
+		}
+		else
+		{
+			assert(ValueType == VAL_Int);
+			assert(op1.RegType == REGT_INT && op2.RegType == REGT_INT);
+			ExpEmit to(build, REGT_INT);
+			build->Emit(op2.Konst ? OP_ADD_RK : OP_ADD_RR, to.RegNum, op1.RegNum, op2.RegNum);
+			return to;
+		}
+	}
+	else
+	{
+		// Subtraction is not commutative, so either side may be constant (but not both).
+		assert(!op1.Konst || !op2.Konst);
+		if (!op1.Konst)
+		{
+			build->FreeReg(op1.RegType, op1.RegNum);
+		}
+		if (!op2.Konst)
+		{
+			build->FreeReg(op2.RegType, op2.RegNum);
+		}
+		if (ValueType == VAL_Float)
+		{
+			assert(op1.RegType == REGT_FLOAT && op2.RegType == REGT_FLOAT);
+			ExpEmit to(build, REGT_FLOAT);
+			build->Emit(op1.Konst ? OP_SUBF_KR : op2.Konst ? OP_SUBF_RK : OP_SUBF_RR,
+				to.RegNum, op1.RegNum, op2.RegNum);
+			return to;
+		}
+		else
+		{
+			assert(ValueType == VAL_Int);
+			assert(op1.RegType == REGT_INT && op2.RegType == REGT_INT);
+			ExpEmit to(build, REGT_INT);
+			build->Emit(op1.Konst ? OP_SUB_KR : op2.Konst ? OP_SUB_RK : OP_SUB_RR,
+				to.RegNum, op1.RegNum, op2.RegNum);
+			return to;
+		}
+	}
 }
 
 //==========================================================================
@@ -955,6 +1280,7 @@ FxExpression *FxMulDiv::Resolve(FCompileContext& ctx)
 
 		}
 	}
+	Promote();
 	return this;
 }
 
@@ -1001,6 +1327,74 @@ ExpVal FxMulDiv::EvalExpression (AActor *self)
 
 	}
 	return ret;
+}
+
+ExpEmit FxMulDiv::Emit(VMFunctionBuilder *build)
+{
+	ExpEmit op1 = left->Emit(build);
+	ExpEmit op2 = right->Emit(build);
+
+	if (Operator == '*')
+	{
+		// Multiplication is commutative, so only the second operand may be constant.
+		if (op1.Konst)
+		{
+			swap(op1, op2);
+		}
+		assert(!op1.Konst);
+		if (!op2.Konst)
+		{
+			build->FreeReg(op2.RegType, op2.RegNum);
+		}
+		if (ValueType == VAL_Float)
+		{
+			assert(op1.RegType == REGT_FLOAT && op2.RegType == REGT_FLOAT);
+			ExpEmit to(build, REGT_FLOAT);
+			build->Emit(op2.Konst ? OP_MULF_RK : OP_MULF_RR, to.RegNum, op1.RegNum, op2.RegNum);
+			return to;
+		}
+		else
+		{
+			assert(ValueType == VAL_Int);
+			assert(op1.RegType == REGT_INT && op2.RegType == REGT_INT);
+			ExpEmit to(build, REGT_INT);
+			build->Emit(op2.Konst ? OP_MUL_RK : OP_MUL_RR, to.RegNum, op1.RegNum, op2.RegNum);
+			return to;
+		}
+	}
+	else
+	{
+		// Division is not commutative, so either side may be constant (but not both).
+		assert(!op1.Konst || !op2.Konst);
+		assert(Operator == '%' || Operator == '/');
+		if (!op1.Konst)
+		{
+			build->FreeReg(op1.RegType, op1.RegNum);
+		}
+		if (!op2.Konst)
+		{
+			build->FreeReg(op2.RegType, op2.RegNum);
+		}
+		if (ValueType == VAL_Float)
+		{
+			assert(op1.RegType == REGT_FLOAT && op2.RegType == REGT_FLOAT);
+			ExpEmit to(build, REGT_FLOAT);
+			build->Emit(Operator == '/' ? (op1.Konst ? OP_DIVF_KR : op2.Konst ? OP_DIVF_RK : OP_DIVF_RR)
+				: (op1.Konst ? OP_MODF_KR : op2.Konst ? OP_MODF_RK : OP_MODF_RR),
+				to.RegNum, op1.RegNum, op2.RegNum);
+			return to;
+		}
+		else
+		{
+			assert(ValueType == VAL_Int);
+			assert(op1.RegType == REGT_INT && op2.RegType == REGT_INT);
+			ExpEmit to(build, REGT_INT);
+			build->Emit(Operator == '/' ? (op1.Konst ? OP_DIV_KR : op2.Konst ? OP_DIV_RK : OP_DIV_RR)
+				: (op1.Konst ? OP_MOD_KR : op2.Konst ? OP_MOD_RK : OP_MOD_RR),
+				to.RegNum, op1.RegNum, op2.RegNum);
+			return to;
+		}
+	}
 }
 
 //==========================================================================
@@ -1057,6 +1451,7 @@ FxExpression *FxCompareRel::Resolve(FCompileContext& ctx)
 		delete this;
 		return e;
 	}
+	Promote();
 	ValueType = VAL_Int;
 	return this;
 }
@@ -1095,6 +1490,53 @@ ExpVal FxCompareRel::EvalExpression (AActor *self)
 	return ret;
 }
 
+ExpEmit FxCompareRel::Emit(VMFunctionBuilder *build)
+{
+	ExpEmit op1 = left->Emit(build);
+	ExpEmit op2 = right->Emit(build);
+	assert(op1.RegType == op2.RegType);
+	assert(op1.RegType == REGT_INT || op1.RegType == REGT_FLOAT);
+	assert(!op1.Konst || !op2.Konst);
+	assert(Operator == '<' || Operator == '>' || Operator == TK_Geq || Operator == TK_Leq);
+	static const VM_UBYTE InstrMap[][4] =
+	{
+		{ OP_LT_RR, OP_LTF_RR, 0 },	// <
+		{ OP_LE_RR, OP_LEF_RR, 1 },	// >
+		{ OP_LT_RR, OP_LTF_RR, 1 },	// >=
+		{ OP_LE_RR, OP_LE_RR, 0 }	// <=
+	};
+	int instr, check, index;
+
+	index = Operator == '<' ? 0 :
+			Operator == '>' ? 1 :
+			Operator == TK_Geq ? 2 : 3;
+	instr = InstrMap[index][op1.RegType == REGT_INT ? 0 : 1];
+	check = InstrMap[index][2];
+	if (op2.Konst)
+	{
+		instr += 1;
+	}
+	else
+	{
+		build->FreeReg(op2.RegType, op2.RegNum);
+	}
+	if (op1.Konst)
+	{
+		instr += 2;
+	}
+	else
+	{
+		build->FreeReg(op1.RegType, op1.RegNum);
+	}
+	ExpEmit to(build, op1.RegType);
+
+	// See FxUnaryNotBoolean for comments, since it's the same thing.
+	build->Emit(OP_LI, to.RegNum, 0, 0);
+	build->Emit(instr, check, op1.RegNum, op2.RegNum);
+	build->Emit(OP_JMP, 1);
+	build->Emit(OP_LI, to.RegNum, 1);
+	return to;
+}
 
 //==========================================================================
 //
@@ -1162,6 +1604,7 @@ cont:
 		delete this;
 		return e;
 	}
+	Promote();
 	ValueType = VAL_Int;
 	return this;
 }
@@ -1184,7 +1627,7 @@ ExpVal FxCompareEq::EvalExpression (AActor *self)
 		double v2 = right->EvalExpression(self).GetFloat();
 		ret.Int = Operator == TK_Eq? v1 == v2 : v1 != v2;
 	}
-	else if (ValueType == VAL_Int)
+	else if (left->ValueType == VAL_Int)
 	{
 		int v1 = left->EvalExpression(self).GetInt();
 		int v2 = right->EvalExpression(self).GetInt();
@@ -1198,6 +1641,42 @@ ExpVal FxCompareEq::EvalExpression (AActor *self)
 	return ret;
 }
 
+ExpEmit FxCompareEq::Emit(VMFunctionBuilder *build)
+{
+	ExpEmit op1 = left->Emit(build);
+	ExpEmit op2 = right->Emit(build);
+	assert(op1.RegType == op2.RegType);
+	assert(op1.RegType == REGT_INT || op1.RegType == REGT_FLOAT || op1.RegType == REGT_POINTER);
+	int instr;
+
+	// Only the second operand may be constant.
+	if (op1.Konst)
+	{
+		swap(op1, op2);
+	}
+	assert(!op1.Konst);
+
+	instr = op1.RegType == REGT_INT ? OP_EQ_R :
+			op1.RegType == REGT_FLOAT ? OP_EQF_R :
+			OP_EQA_R;
+	build->FreeReg(op1.RegType, op1.RegNum);
+	if (!op2.Konst)
+	{
+		build->FreeReg(op2.RegType, op2.RegNum);
+	}
+	else
+	{
+		instr += 1;
+	}
+	ExpEmit to(build, op1.RegType);
+
+	// See FxUnaryNotBoolean for comments, since it's the same thing.
+	build->Emit(OP_LI, to.RegNum, 0, 0);
+	build->Emit(instr, Operator != TK_Eq, op1.RegNum, op2.RegNum);
+	build->Emit(OP_JMP, 1);
+	build->Emit(OP_LI, to.RegNum, 1);
+	return to;
+}
 
 //==========================================================================
 //
@@ -1291,6 +1770,82 @@ ExpVal FxBinaryInt::EvalExpression (AActor *self)
 		Operator == '^'? v1 ^ v2 : 0;
 
 	return ret;
+}
+
+ExpEmit FxBinaryInt::Emit(VMFunctionBuilder *build)
+{
+	assert(left->ValueType == VAL_Int);
+	assert(right->ValueType == VAL_Int);
+	static const VM_UBYTE InstrMap[][4] =
+	{
+		{ OP_SLL_RR, OP_SLL_KR, OP_SLL_RI },	// TK_LShift
+		{ OP_SRA_RR, OP_SRA_KR, OP_SRA_RI },	// TK_RShift
+		{ OP_SRL_RR, OP_SRL_KR, OP_SRL_RI },	// TK_URShift
+		{ OP_AND_RR, 0,         OP_AND_RK },	// '&'
+		{ OP_OR_RR,  0,			OP_OR_RK  },	// '|'
+		{ OP_XOR_RR, 0,         OP_XOR_RK },	// '^'
+	};
+	int index, instr, rop;
+	ExpEmit op1, op2;
+
+	index = Operator == TK_LShift ? 0 :
+			Operator == TK_RShift ? 1 :
+			Operator == TK_URShift ? 2 :
+			Operator == '&' ? 3 :
+			Operator == '|' ? 4 :
+			Operator == '^' ? 5 : -1;
+	assert(index >= 0);
+	op1 = left->Emit(build);
+	if (index < 3)
+	{ // Shift instructions use right-hand immediates instead of constant registers.
+		if (right->isConstant())
+		{
+			rop = right->EvalExpression(NULL).GetInt();
+			op2.Konst = true;
+		}
+		else
+		{
+			op2 = right->Emit(build);
+			assert(!op2.Konst);
+			build->FreeReg(op2.RegType, op2.RegNum);
+			rop = op2.RegNum;
+		}
+	}
+	else
+	{ // The other operators only take a constant on the right-hand side.
+		op2 = right->Emit(build);
+		if (op1.Konst)
+		{
+			swap(op1, op2);
+		}
+		assert(!op1.Konst);
+		rop = op2.RegNum;
+		if (!op2.Konst)
+		{
+			build->FreeReg(op2.RegType, op2.RegNum);
+		}
+	}
+	if (!op1.Konst)
+	{
+		build->FreeReg(op1.RegType, op1.RegNum);
+		if (!op2.Konst)
+		{
+			instr = InstrMap[index][0];
+		}
+		else
+		{
+			instr = InstrMap[index][2];
+		}
+	}
+	else
+	{
+		assert(!op2.Konst);
+		instr = InstrMap[index][1];
+	}
+	assert(instr != 0);
+	ExpEmit to(build, REGT_INT);
+	build->Emit(instr, to.RegNum, op1.RegNum, rop);
+	return to;
 }
 
 //==========================================================================
@@ -1402,6 +1957,14 @@ FxExpression *FxBinaryLogical::Resolve(FCompileContext& ctx)
 			return x;
 		}
 	}
+	if (left->ValueType != VAL_Int && left->ValueType != VAL_Sound)
+	{
+		left = new FxIntCast(left);
+	}
+	if (right->ValueType != VAL_Int && right->ValueType != VAL_Sound)
+	{
+		right = new FxIntCast(right);
+	}
 	return this;
 }
 
@@ -1430,6 +1993,59 @@ ExpVal FxBinaryLogical::EvalExpression (AActor *self)
 	return ret;
 }
 
+ExpEmit FxBinaryLogical::Emit(VMFunctionBuilder *build)
+{
+	// This is not the "right" way to do these, but it works for now.
+	// (Problem: No information sharing is done between nodes to reduce the
+	// code size if you have something like a1 && a2 && a3 && ... && an.)
+	assert(left->ValueType == VAL_Int && right->ValueType == VAL_Int);
+	ExpEmit op1 = left->Emit(build);
+	assert(!op1.Konst);
+	int zero = build->GetConstantInt(0);
+	build->FreeReg(op1.RegType, op1.RegNum);
+
+	if (Operator == TK_AndAnd)
+	{
+		build->Emit(OP_EQ_K, 1, op1.RegNum, zero);
+		// If op1 is 0, skip evaluation of op2.
+		size_t patchspot = build->Emit(OP_JMP, 0, 0, 0);
+
+		// Evaluate op2.
+		ExpEmit op2 = right->Emit(build);
+		assert(!op2.Konst);
+		build->FreeReg(op2.RegType, op2.RegNum);
+
+		ExpEmit to(build, REGT_INT);
+		build->Emit(OP_EQ_K, 0, op2.RegNum, zero);
+		build->Emit(OP_JMP, 2);
+		build->Emit(OP_LI, to.RegNum, 1);
+		build->Emit(OP_JMP, 1);
+		size_t target = build->Emit(OP_LI, to.RegNum, 0);
+		build->Backpatch(patchspot, target);
+		return to;
+	}
+	else
+	{
+		assert(Operator == TK_OrOr);
+		build->Emit(OP_EQ_K, 0, op1.RegNum, zero);
+		// If op1 is not 0, skip evaluation of op2.
+		size_t patchspot = build->Emit(OP_JMP, 0, 0, 0);
+
+		// Evaluate op2.
+		ExpEmit op2 = right->Emit(build);
+		assert(!op2.Konst);
+		build->FreeReg(op2.RegType, op2.RegNum);
+
+		ExpEmit to(build, REGT_INT);
+		build->Emit(OP_EQ_K, 1, op2.RegNum, zero);
+		build->Emit(OP_JMP, 2);
+		build->Emit(OP_LI, to.RegNum, 0);
+		build->Emit(OP_JMP, 1);
+		size_t target = build->Emit(OP_LI, to.RegNum, 1);
+		build->Backpatch(patchspot, target);
+		return to;
+	}
+}
 
 //==========================================================================
 //
@@ -1490,6 +2106,20 @@ FxExpression *FxConditional::Resolve(FCompileContext& ctx)
 		return e;
 	}
 
+	if (ValueType == VAL_Float)
+	{
+		if (truex->ValueType != VAL_Float)
+		{
+			truex = new FxFloatCast(truex);
+			RESOLVE(truex, ctx);
+		}
+		if (falsex->ValueType != VAL_Float)
+		{
+			falsex = new FxFloatCast(falsex);
+			RESOLVE(falsex, ctx);
+		}
+	}
+
 	return this;
 }
 
@@ -1506,6 +2136,78 @@ ExpVal FxConditional::EvalExpression (AActor *self)
 
 	FxExpression *e = result? truex:falsex;
 	return e->EvalExpression(self);
+}
+
+ExpEmit FxConditional::Emit(VMFunctionBuilder *build)
+{
+	ExpEmit out;
+
+	// The true and false expressions ought to be assigned to the
+	// same temporary instead of being copied to it. Oh well; good enough
+	// for now.
+	ExpEmit cond = condition->Emit(build);
+	assert(cond.RegType == REGT_INT && !cond.Konst);
+
+	// Test condition.
+	build->Emit(OP_EQ_K, 1, cond.RegNum, build->GetConstantInt(0));
+	size_t patchspot = build->Emit(OP_JMP, 0);
+
+	// Evaluate true expression.
+	if (truex->isConstant() && truex->ValueType == VAL_Int)
+	{
+		out = ExpEmit(build, REGT_INT);
+		build->EmitLoadInt(out.RegNum, truex->EvalExpression(NULL).GetInt());
+	}
+	else
+	{
+		ExpEmit trueop = truex->Emit(build);
+		if (trueop.Konst)
+		{
+			assert(trueop.RegType == REGT_FLOAT);
+			out = ExpEmit(build, REGT_FLOAT);
+			build->Emit(OP_LKF, out.RegNum, trueop.RegNum);
+		}
+		else
+		{
+			// Use the register returned by the true condition as the
+			// target for the false condition.
+			out = trueop;
+		}
+	}
+
+	// Evaluate false expression.
+	build->BackpatchToHere(patchspot);
+	if (falsex->isConstant() && falsex->ValueType == VAL_Int)
+	{
+		build->EmitLoadInt(out.RegNum, falsex->EvalExpression(NULL).GetInt());
+	}
+	else
+	{
+		ExpEmit falseop = falsex->Emit(build);
+		if (falseop.Konst)
+		{
+			assert(falseop.RegType == REGT_FLOAT);
+			build->Emit(OP_LKF, out.RegNum, falseop.RegNum);
+		}
+		else
+		{
+			// Move result from the register returned by "false" to the one
+			// returned by "true" so that only one register is returned by
+			// this tree.
+			build->FreeReg(falseop.RegType, falseop.RegNum);
+			if (falseop.RegType == REGT_INT)
+			{
+				build->Emit(OP_MOVE, out.RegNum, falseop.RegNum, 0);
+			}
+			else
+			{
+				assert(falseop.RegType == REGT_FLOAT);
+				build->Emit(OP_MOVEF, out.RegNum, falseop.RegNum, 0);
+			}
+		}
+	}
+
+	return out;
 }
 
 //==========================================================================
@@ -1597,6 +2299,23 @@ ExpVal FxAbs::EvalExpression (AActor *self)
 	return value;
 }
 
+ExpEmit FxAbs::Emit(VMFunctionBuilder *build)
+{
+	ExpEmit absofsteal = val->Emit(build);
+	assert(!absofsteal.Konst);
+	ExpEmit out(build, absofsteal.RegType);
+	if (absofsteal.RegType == REGT_INT)
+	{
+		build->Emit(OP_ABS, out.RegNum, absofsteal.RegNum, 0);
+	}
+	else
+	{
+		assert(absofsteal.RegType == REGT_FLOAT);
+		build->Emit(OP_FLOP, out.RegNum, absofsteal.RegNum, FLOP_ABS);
+	}
+	return out;
+}
+
 //==========================================================================
 //
 //
@@ -1676,6 +2395,85 @@ ExpVal FxRandom::EvalExpression (AActor *self)
 	return val;
 }
 
+int DecoRandom(VMFrameStack *stack, VMValue *param, int numparam, VMReturn *ret, int numret)
+{
+	assert(numparam >= 1 && numparam <= 3);
+	FRandom *rng = reinterpret_cast<FRandom *>(param[0].a);
+	if (numparam == 1)
+	{
+		ret->SetInt((*rng)());
+	}
+	else if (numparam == 2)
+	{
+		int maskval = param[1].i;
+		ret->SetInt(rng->Random2(maskval));
+	}
+	else if (numparam == 3)
+	{
+		int min = param[1].i, max = param[2].i;
+		if (max < min)
+		{
+			swap(max, min);
+		}
+		ret->SetInt((*rng)(max - min + 1) + min);
+	}
+	return 1;
+}
+
+ExpEmit FxRandom::Emit(VMFunctionBuilder *build)
+{
+	// Find the DecoRandom function. If not found, create it and install it
+	// in Actor.
+	VMFunction *callfunc;
+	PSymbol *sym = RUNTIME_CLASS(AActor)->Symbols.FindSymbol("DecoRandom", false);
+	if (sym == NULL)
+	{
+		PSymbolVMFunction *symfunc = new PSymbolVMFunction("DecoRandom");
+		VMNativeFunction *calldec = new VMNativeFunction(DecoRandom);
+		symfunc->Function = calldec;
+		sym = symfunc;
+		RUNTIME_CLASS(AActor)->Symbols.AddSymbol(sym);
+	}
+	assert(sym->SymbolType == SYM_VMFunction);
+	assert(((PSymbolVMFunction *)sym)->Function != NULL);
+	callfunc = ((PSymbolVMFunction *)sym)->Function;
+
+	build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, build->GetConstantAddress(rng, ATAG_RNG));
+	if (min != NULL && max != NULL)
+	{
+		ExpEmit op = min->Emit(build);
+		assert(op.RegType == REGT_INT);
+		if (op.Konst)
+		{
+			build->Emit(OP_PARAM, 0, REGT_INT | REGT_KONST, op.RegNum);
+		}
+		else
+		{
+			build->FreeReg(REGT_INT, op.RegNum);
+			build->Emit(OP_PARAM, 0, REGT_INT, op.RegNum);
+		}
+		op = max->Emit(build);
+		assert(op.RegType == REGT_INT);
+		if (op.Konst)
+		{
+			build->Emit(OP_PARAM, 0, REGT_INT | REGT_KONST, op.RegNum);
+		}
+		else
+		{
+			build->FreeReg(REGT_INT, op.RegNum);
+			build->Emit(OP_PARAM, 0, REGT_INT, op.RegNum);
+		}
+		build->Emit(OP_CALL_K, build->GetConstantAddress(callfunc, ATAG_OBJECT), 3, 1);
+	}
+	else
+	{
+		build->Emit(OP_CALL_K, build->GetConstantAddress(callfunc, ATAG_OBJECT), 1, 1);
+	}
+	ExpEmit out(build, REGT_INT);
+	build->Emit(OP_RESULT, 0, REGT_INT, out.RegNum);
+	return out;
+}
+
 //==========================================================================
 //
 //
@@ -1721,6 +2519,84 @@ ExpVal FxFRandom::EvalExpression (AActor *self)
 		val.Float = frandom;
 	}
 	return val;
+}
+
+int DecoFRandom(VMFrameStack *stack, VMValue *param, int numparam, VMReturn *ret, int numret)
+{
+	assert(numparam == 1 || numparam == 3);
+	FRandom *rng = reinterpret_cast<FRandom *>(param[0].a);
+
+	int random = (*rng)(0x40000000);
+	double frandom = random / double(0x40000000);
+
+	if (numparam == 3)
+	{
+		double min = param[1].f, max = param[2].f;
+		if (max < min)
+		{
+			swap(max, min);
+		}
+		ret->SetFloat(frandom * (max - min) + min);
+	}
+	else
+	{
+		ret->SetFloat(frandom);
+	}
+	return 1;
+}
+
+ExpEmit FxFRandom::Emit(VMFunctionBuilder *build)
+{
+	// Find the DecoFRandom function. If not found, create it and install it
+	// in Actor.
+	VMFunction *callfunc;
+	PSymbol *sym = RUNTIME_CLASS(AActor)->Symbols.FindSymbol("DecoFRandom", false);
+	if (sym == NULL)
+	{
+		PSymbolVMFunction *symfunc = new PSymbolVMFunction("DecoFRandom");
+		VMNativeFunction *calldec = new VMNativeFunction(DecoFRandom);
+		symfunc->Function = calldec;
+		sym = symfunc;
+		RUNTIME_CLASS(AActor)->Symbols.AddSymbol(sym);
+	}
+	assert(sym->SymbolType == SYM_VMFunction);
+	assert(((PSymbolVMFunction *)sym)->Function != NULL);
+	callfunc = ((PSymbolVMFunction *)sym)->Function;
+
+	build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, build->GetConstantAddress(rng, ATAG_RNG));
+	if (min != NULL && max != NULL)
+	{
+		ExpEmit op = min->Emit(build);
+		assert(op.RegType == REGT_FLOAT);
+		if (op.Konst)
+		{
+			build->Emit(OP_PARAM, 0, REGT_FLOAT | REGT_KONST, op.RegNum);
+		}
+		else
+		{
+			build->FreeReg(REGT_FLOAT, op.RegNum);
+			build->Emit(OP_PARAM, 0, REGT_FLOAT, op.RegNum);
+		}
+		op = max->Emit(build);
+		assert(op.RegType == REGT_FLOAT);
+		if (op.Konst)
+		{
+			build->Emit(OP_PARAM, 0, REGT_FLOAT | REGT_KONST, op.RegNum);
+		}
+		else
+		{
+			build->FreeReg(REGT_FLOAT, op.RegNum);
+			build->Emit(OP_PARAM, 0, REGT_FLOAT, op.RegNum);
+		}
+		build->Emit(OP_CALL_K, build->GetConstantAddress(callfunc, ATAG_OBJECT), 3, 1);
+	}
+	else
+	{
+		build->Emit(OP_CALL_K, build->GetConstantAddress(callfunc, ATAG_OBJECT), 1, 1);
+	}
+	ExpEmit out(build, REGT_FLOAT);
+	build->Emit(OP_RESULT, 0, REGT_FLOAT, out.RegNum);
+	return out;
 }
 
 //==========================================================================
@@ -1776,6 +2652,42 @@ ExpVal FxRandom2::EvalExpression (AActor *self)
 	maskval.Type = VAL_Int;
 	maskval.Int = rng->Random2(imaskval);
 	return maskval;
+}
+
+ExpEmit FxRandom2::Emit(VMFunctionBuilder *build)
+{
+	// Find the DecoRandom function. If not found, create it and install it
+	// in Actor.
+	VMFunction *callfunc;
+	PSymbol *sym = RUNTIME_CLASS(AActor)->Symbols.FindSymbol("DecoRandom", false);
+	if (sym == NULL)
+	{
+		PSymbolVMFunction *symfunc = new PSymbolVMFunction("DecoRandom");
+		VMNativeFunction *calldec = new VMNativeFunction(DecoRandom);
+		symfunc->Function = calldec;
+		sym = symfunc;
+		RUNTIME_CLASS(AActor)->Symbols.AddSymbol(sym);
+	}
+	assert(sym->SymbolType == SYM_VMFunction);
+	assert(((PSymbolVMFunction *)sym)->Function != NULL);
+	callfunc = ((PSymbolVMFunction *)sym)->Function;
+
+	build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, build->GetConstantAddress(rng, ATAG_RNG));
+	ExpEmit op = mask->Emit(build);
+	assert(op.RegType == REGT_INT);
+	if (op.Konst)
+	{
+		build->Emit(OP_PARAM, 0, REGT_INT | REGT_KONST, op.RegNum);
+	}
+	else
+	{
+		build->FreeReg(REGT_INT, op.RegNum);
+		build->Emit(OP_PARAM, 0, REGT_INT, op.RegNum);
+	}
+	build->Emit(OP_CALL_K, build->GetConstantAddress(callfunc, ATAG_OBJECT), 2, 1);
+	ExpEmit out(build, REGT_INT);
+	build->Emit(OP_RESULT, 0, REGT_INT, out.RegNum);
+	return out;
 }
 
 //==========================================================================
@@ -1861,7 +2773,7 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 		newex = new FxCVar(cv, ScriptPosition);
 	}
 	*/
-	// amd line specials
+	// and line specials
 	else if ((num = P_FindLineSpecial(Identifier, NULL, NULL)))
 	{
 		ScriptPosition.Message(MSG_DEBUGLOG, "Resolving name '%s' as line special %d\n", Identifier.GetChars(), num);
@@ -1922,6 +2834,12 @@ ExpVal FxSelf::EvalExpression (AActor *self)
 	ret.Type = VAL_Object;
 	ret.pointer = self;
 	return ret;
+}
+
+ExpEmit FxSelf::Emit(VMFunctionBuilder *build)
+{
+	// self is always the first pointer passed to the function;
+	return ExpEmit(0, REGT_POINTER);
 }
 
 //==========================================================================
@@ -2003,7 +2921,6 @@ ExpVal FxGlobalVariable::EvalExpression (AActor *self)
 	}
 	return ret;
 }
-
 
 //==========================================================================
 //
@@ -2122,6 +3039,90 @@ ExpVal FxClassMember::EvalExpression (AActor *self)
 	return ret;
 }
 
+ExpEmit FxClassMember::Emit(VMFunctionBuilder *build)
+{
+	ExpEmit obj = classx->Emit(build);
+	assert(obj.RegType == REGT_POINTER);
+
+	if (AddressRequested)
+	{
+		if (membervar->offset == 0)
+		{
+			return obj;
+		}
+		if (!obj.Konst)
+		{
+			build->FreeReg(obj.RegType, obj.RegNum);
+		}
+		ExpEmit out(build, REGT_POINTER);
+		build->Emit(OP_ADDA_RK, out.RegNum, obj.RegNum, build->GetConstantInt((int)membervar->offset));
+		return out;
+	}
+
+	int offsetreg = build->GetConstantInt((int)membervar->offset);
+	ExpEmit loc, tmp;
+
+	if (obj.Konst)
+	{
+		// If the situation where we are dereferencing a constant
+		// pointer is common, then it would probably be worthwhile
+		// to add new opcodes for those. But as of right now, I
+		// don't expect it to be a particularly common case.
+		ExpEmit newobj(build, REGT_POINTER);
+		build->Emit(OP_LKP, newobj.RegNum, obj.RegNum);
+		obj = newobj;
+	}
+
+	switch (membervar->ValueType.Type)
+	{
+	case VAL_Int:
+	case VAL_Sound:
+	case VAL_Name:
+	case VAL_Color:
+		loc = ExpEmit(build, REGT_INT);
+		build->Emit(OP_LW, loc.RegNum, obj.RegNum, offsetreg);
+		break;
+
+	case VAL_Bool:
+		loc = ExpEmit(build, REGT_INT);
+		// Some implementations have 1 byte bools, and others have
+		// 4 byte bools. For all I know, there might be some with
+		// 2 byte bools, too.
+		build->Emit((sizeof(bool) == 1 ? OP_LBU : sizeof(bool) == 2 ? OP_LHU : OP_LW),
+			loc.RegNum, obj.RegNum, offsetreg);
+		break;
+
+	case VAL_Float:
+		loc = ExpEmit(build, REGT_FLOAT);
+		build->Emit(OP_LDP, loc.RegNum, obj.RegNum, offsetreg);
+		break;
+
+	case VAL_Fixed:
+		loc = ExpEmit(build, REGT_FLOAT);
+		build->Emit(OP_LX, loc.RegNum, obj.RegNum, offsetreg);
+		break;
+
+	case VAL_Angle:
+		loc = ExpEmit(build, REGT_FLOAT);
+		tmp = ExpEmit(build, REGT_INT);
+		build->Emit(OP_LW, tmp.RegNum, obj.RegNum, offsetreg);
+		build->Emit(OP_CAST, loc.RegNum, tmp.RegNum, CAST_I2F);
+		build->Emit(OP_MULF_RK, loc.RegNum, loc.RegNum, build->GetConstantFloat(90.0 / ANGLE_90));
+		build->FreeReg(tmp.RegType, tmp.RegNum);
+		break;
+
+	case VAL_Object:
+	case VAL_Class:
+		loc = ExpEmit(build, REGT_POINTER);
+		build->Emit(OP_LO, loc.RegNum, obj.RegNum, offsetreg);
+		break;
+
+	default:
+		assert(0);
+	}
+	build->FreeReg(obj.RegType, obj.RegNum);
+	return loc;
+}
 
 
 //==========================================================================
@@ -2235,6 +3236,37 @@ ExpVal FxArrayElement::EvalExpression (AActor *self)
 	return ret;
 }
 
+ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
+{
+	ExpEmit start = Array->Emit(build);
+	ExpEmit dest(build, REGT_INT);
+	if (start.Konst)
+	{
+		ExpEmit tmpstart(build, REGT_POINTER);
+		build->Emit(OP_LKP, tmpstart.RegNum, start.RegNum);
+		start = tmpstart;
+	}
+	if (index->isConstant())
+	{
+		int indexval = index->EvalExpression(NULL).GetInt();
+		if (indexval < 0 || indexval >= Array->ValueType.size)
+		{
+			I_Error("Array index out of bounds");
+		}
+		indexval <<= 2;
+		build->Emit(OP_LW, dest.RegNum, start.RegNum, build->GetConstantInt(indexval));
+	}
+	else
+	{
+		ExpEmit indexv(index->Emit(build));
+		build->Emit(OP_SLL_RI, indexv.RegNum, indexv.RegNum, 2);
+		build->Emit(OP_BOUND, indexv.RegNum, Array->ValueType.size);
+		build->Emit(OP_LW_R, dest.RegNum, start.RegNum, indexv.RegNum);
+		build->FreeReg(indexv.RegType, indexv.RegNum);
+	}
+	build->FreeReg(start.RegType, start.RegNum);
+	return dest;
+}
 
 //==========================================================================
 //
@@ -2412,6 +3444,64 @@ ExpVal FxActionSpecialCall::EvalExpression (AActor *self)
 	return ret;
 }
 
+int DecoCallLineSpecial(VMFrameStack *stack, VMValue *param, int numparam, VMReturn *ret, int numret)
+{
+	assert(numparam > 2 && numparam < 7);
+	assert(numret == 1);
+	assert(param[0].Type == REGT_INT);
+	assert(param[1].Type == REGT_POINTER);
+	int v[5] = { 0 };
+
+	for (int i = 2; i < numparam; ++i)
+	{
+		v[i - 2] = param[i].i;
+	}
+	ret->SetInt(LineSpecials[param[0].i](NULL, reinterpret_cast<AActor*>(param[1].a), false, v[0], v[1], v[2], v[3], v[4]));
+	return 1;
+}
+
+ExpEmit FxActionSpecialCall::Emit(VMFunctionBuilder *build)
+{
+	assert(Self == NULL);
+	unsigned i = 0;
+
+	build->Emit(OP_PARAM, 0, REGT_INT | REGT_KONST, build->GetConstantInt(Special));	// pass special number
+	build->Emit(OP_PARAM, 0, REGT_POINTER, 0);		// pass self
+	if (ArgList != NULL)
+	{
+		for (; i < ArgList->Size(); ++i)
+		{
+			ExpEmit arg((*ArgList)[i]->Emit(build));
+			assert(arg.RegType == REGT_INT);
+			build->Emit(OP_PARAM, 0, arg.RegType | (arg.Konst ? REGT_KONST : 0), arg.RegNum);
+			if (!arg.Konst)
+			{
+				build->FreeReg(arg.RegType, arg.RegNum);
+			}
+		}
+	}
+	// Find the DecoCallLineSpecial function. If not found, create it and install it
+	// in Actor.
+	VMFunction *callfunc;
+	PSymbol *sym = RUNTIME_CLASS(AActor)->Symbols.FindSymbol("DecoCallLineSpecial", false);
+	if (sym == NULL)
+	{
+		PSymbolVMFunction *symfunc = new PSymbolVMFunction("DecoCallLineSpecial");
+		VMNativeFunction *calldec = new VMNativeFunction(DecoCallLineSpecial);
+		symfunc->Function = calldec;
+		sym = symfunc;
+		RUNTIME_CLASS(AActor)->Symbols.AddSymbol(sym);
+	}
+	assert(sym->SymbolType == SYM_VMFunction);
+	assert(((PSymbolVMFunction *)sym)->Function != NULL);
+	callfunc = ((PSymbolVMFunction *)sym)->Function;
+
+	ExpEmit dest(build, REGT_INT);
+	build->Emit(OP_CALL_K, build->GetConstantAddress(callfunc, ATAG_OBJECT), 2 + i, 1);
+	build->Emit(OP_RESULT, 0, REGT_INT, dest.RegNum);
+	return dest;
+}
+
 //==========================================================================
 //
 //
@@ -2466,6 +3556,19 @@ FxExpression *FxGlobalFunctionCall::Resolve(FCompileContext& ctx)
 		delete this;
 		return NULL;
 	}
+	if ((*ArgList)[0]->isConstant())
+	{
+		double v = (*ArgList)[0]->EvalExpression(NULL).GetFloat();
+		v *= M_PI / 180.0;		// convert from degrees to radians
+		v = (Name == NAME_Sin) ? sin(v) : cos(v);
+		FxExpression *x = new FxConstant(v, ScriptPosition);
+		delete this;
+		return x;
+	}
+	if ((*ArgList)[0]->ValueType == VAL_Int)
+	{
+		(*ArgList)[0] = new FxFloatCast((*ArgList)[0]);
+	}
 	ValueType = VAL_Float;
 	return this;
 }
@@ -2490,6 +3593,15 @@ ExpVal FxGlobalFunctionCall::EvalExpression (AActor *self)
 	return ret;
 }
 
+ExpEmit FxGlobalFunctionCall::Emit(VMFunctionBuilder *build)
+{
+	ExpEmit v = (*ArgList)[0]->Emit(build);
+	assert(!v.Konst && v.RegType == REGT_FLOAT);
+
+	build->Emit(OP_MULF_RK, v.RegNum, v.RegNum, build->GetConstantFloat(M_PI / 180.0));
+	build->Emit(OP_FLOP, v.RegNum, v.RegNum, (Name == NAME_Sin) ? FLOP_SIN : FLOP_COS);
+	return v;
+}
 
 //==========================================================================
 //
@@ -2595,6 +3707,60 @@ ExpVal FxClassTypeCast::EvalExpression (AActor *self)
 	return ret;
 }
 
+int DecoNameToClass(VMFrameStack *stack, VMValue *param, int numparam, VMReturn *ret, int numret)
+{
+	assert(numparam == 2);
+	assert(numret == 1);
+	assert(param[0].Type == REGT_INT);
+	assert(param[1].Type == REGT_POINTER);
+	assert(ret->RegType == REGT_POINTER);
+
+	FName clsname = ENamedName(param[0].i);
+	const PClass *cls = PClass::FindClass(clsname);
+	const PClass *desttype = reinterpret_cast<PClass *>(param[0].a);
+
+	if (!cls->IsDescendantOf(desttype))
+	{
+		Printf("class '%s' is not compatible with '%s'", clsname.GetChars(), desttype->TypeName.GetChars());
+		cls = NULL;
+	}
+	ret->SetPointer(const_cast<PClass *>(cls));
+	return 1;
+}
+
+ExpEmit FxClassTypeCast::Emit(VMFunctionBuilder *build)
+{
+	if (basex->ValueType != VAL_Name)
+	{
+		return ExpEmit(build->GetConstantAddress(NULL, ATAG_OBJECT), REGT_POINTER, true);
+	}
+	ExpEmit clsname = basex->Emit(build);
+	assert(!clsname.Konst);
+	ExpEmit dest(build, REGT_POINTER);
+	build->Emit(OP_PARAM, 0, clsname.RegType, clsname.RegNum);
+	build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, build->GetConstantAddress(const_cast<PClass *>(desttype), ATAG_OBJECT));
+
+	// Find the DecoNameToClass function. If not found, create it and install it
+	// in Actor.
+	VMFunction *callfunc;
+	PSymbol *sym = RUNTIME_CLASS(AActor)->Symbols.FindSymbol("DecoNameToClass", false);
+	if (sym == NULL)
+	{
+		PSymbolVMFunction *symfunc = new PSymbolVMFunction("DecoNameToClass");
+		VMNativeFunction *calldec = new VMNativeFunction(DecoNameToClass);
+		symfunc->Function = calldec;
+		sym = symfunc;
+		RUNTIME_CLASS(AActor)->Symbols.AddSymbol(sym);
+	}
+	assert(sym->SymbolType == SYM_VMFunction);
+	assert(((PSymbolVMFunction *)sym)->Function != NULL);
+	callfunc = ((PSymbolVMFunction *)sym)->Function;
+
+	build->Emit(OP_CALL_K, build->GetConstantAddress(callfunc, ATAG_OBJECT), 2, 1);
+	build->Emit(OP_RESULT, 0, REGT_POINTER, dest.RegNum);
+	build->FreeReg(clsname.RegType, clsname.RegNum);
+	return dest;
+}
 
 //==========================================================================
 //
@@ -2742,6 +3908,64 @@ ExpVal FxMultiNameState::EvalExpression (AActor *self)
 	return ret;
 }
 
+int DecoFindMultiNameState(VMFrameStack *stack, VMValue *param, int numparam, VMReturn *ret, int numret)
+{
+	assert(numparam > 1);
+	assert(numret == 1);
+	assert(param[0].Type == REGT_POINTER);
+	assert(ret->RegType == REGT_POINTER);
+
+	FName *names = (FName *)alloca((numparam - 1) * sizeof(FName));
+	for (int i = 1; i < numparam; ++i)
+	{
+		names[i - 1] = ENamedName(param[i].i);
+	}
+	AActor *self = reinterpret_cast<AActor *>(param[0].a);
+	FState *state = self->GetClass()->ActorInfo->FindState(numparam - 1, names);
+	if (state == NULL)
+	{
+		const char *dot = "";
+		Printf("Jump target '");
+ 		for (int i = 0; i < numparam - 1; i++)
+		{
+			Printf("%s%s", dot, names[i].GetChars());
+			dot = ".";
+		}
+		Printf("' not found in %s\n", self->GetClass()->TypeName.GetChars());
+	}
+	ret->SetPointer(state);
+	return 1;
+}
+
+ExpEmit FxMultiNameState::Emit(VMFunctionBuilder *build)
+{
+	ExpEmit dest(build, REGT_POINTER);
+	build->Emit(OP_PARAM, 0, REGT_POINTER, 0);		// pass self
+	for (unsigned i = 0; i < names.Size(); ++i)
+	{
+		build->Emit(OP_PARAM, 0, REGT_INT | REGT_KONST, build->GetConstantInt(names[i]));
+	}
+
+	// Find the DecoFindMultiNameState function. If not found, create it and install it
+	// in Actor.
+	VMFunction *callfunc;
+	PSymbol *sym = RUNTIME_CLASS(AActor)->Symbols.FindSymbol("DecoFindMultiNameState", false);
+	if (sym == NULL)
+	{
+		PSymbolVMFunction *symfunc = new PSymbolVMFunction("DecoFindMultiNameState");
+		VMNativeFunction *calldec = new VMNativeFunction(DecoFindMultiNameState);
+		symfunc->Function = calldec;
+		sym = symfunc;
+		RUNTIME_CLASS(AActor)->Symbols.AddSymbol(sym);
+	}
+	assert(sym->SymbolType == SYM_VMFunction);
+	assert(((PSymbolVMFunction *)sym)->Function != NULL);
+	callfunc = ((PSymbolVMFunction *)sym)->Function;
+
+	build->Emit(OP_CALL_K, build->GetConstantAddress(callfunc, ATAG_OBJECT), names.Size() + 1, 1);
+	build->Emit(OP_RESULT, 0, REGT_POINTER, dest.RegNum);
+	return dest;
+}
 
 
 //==========================================================================
@@ -2903,4 +4127,3 @@ FxExpression *FStateExpressions::Get(int num)
 		return expressions[num].expr;
 	return NULL;
 }
-

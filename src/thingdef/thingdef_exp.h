@@ -42,12 +42,14 @@
 
 #include "m_random.h"
 
+
 #define CHECKRESOLVED() if (isresolved) return this; isresolved=true;
 #define SAFE_DELETE(p) if (p!=NULL) { delete p; p=NULL; }
 #define RESOLVE(p,c) if (p!=NULL) p = p->Resolve(c)
 #define ABORT(p) if (!(p)) { delete this; return NULL; }
 #define SAFE_RESOLVE(p,c) RESOLVE(p,c); ABORT(p) 
 
+class VMFunctionBuilder;
 extern PSymbolTable		 GlobalSymbols;
 
 //==========================================================================
@@ -142,6 +144,15 @@ struct ExpVal
 
 };
 
+struct ExpEmit
+{
+	ExpEmit() : RegNum(0), RegType(REGT_NIL) {}
+	ExpEmit(int reg, int type) : RegNum(reg), RegType(type) {}
+	ExpEmit(int reg, int type, bool konst)  : RegNum(reg), RegType(type), Konst(konst) {}
+	ExpEmit(VMFunctionBuilder *build, int type);
+
+	BYTE RegNum, RegType, Konst;
+};
 
 //==========================================================================
 //
@@ -166,10 +177,23 @@ public:
 	virtual bool isConstant() const;
 	virtual void RequestAddress();
 
+	virtual ExpEmit Emit(VMFunctionBuilder *build);
+
 	FScriptPosition ScriptPosition;
 	FExpressionType ValueType;
 
 	bool isresolved;
+};
+
+class FxParameter : public FxExpression
+{
+	FxExpression *Operand;
+
+public:
+	FxParameter(FxExpression*);
+	~FxParameter();
+	FxExpression *Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
 //==========================================================================
@@ -310,6 +334,21 @@ public:
 	FxExpression *Resolve(FCompileContext&);
 
 	ExpVal EvalExpression (AActor *self);
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+class FxFloatCast : public FxExpression
+{
+	FxExpression *basex;
+
+public:
+
+	FxFloatCast(FxExpression *x);
+	~FxFloatCast();
+	FxExpression *Resolve(FCompileContext&);
+
+	ExpVal EvalExpression (AActor *self);
+	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
 
@@ -327,6 +366,7 @@ public:
 	FxPlusSign(FxExpression*);
 	~FxPlusSign();
 	FxExpression *Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
 //==========================================================================
@@ -344,6 +384,7 @@ public:
 	~FxMinusSign();
 	FxExpression *Resolve(FCompileContext&);
 	ExpVal EvalExpression (AActor *self);
+	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
 //==========================================================================
@@ -361,6 +402,7 @@ public:
 	~FxUnaryNotBitwise();
 	FxExpression *Resolve(FCompileContext&);
 	ExpVal EvalExpression (AActor *self);
+	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
 //==========================================================================
@@ -378,6 +420,7 @@ public:
 	~FxUnaryNotBoolean();
 	FxExpression *Resolve(FCompileContext&);
 	ExpVal EvalExpression (AActor *self);
+	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
 //==========================================================================
@@ -396,6 +439,7 @@ public:
 	FxBinary(int, FxExpression*, FxExpression*);
 	~FxBinary();
 	bool ResolveLR(FCompileContext& ctx, bool castnumeric);
+	void Promote();
 };
 
 //==========================================================================
@@ -411,6 +455,7 @@ public:
 	FxAddSub(int, FxExpression*, FxExpression*);
 	FxExpression *Resolve(FCompileContext&);
 	ExpVal EvalExpression (AActor *self);
+	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
 //==========================================================================
@@ -426,6 +471,7 @@ public:
 	FxMulDiv(int, FxExpression*, FxExpression*);
 	FxExpression *Resolve(FCompileContext&);
 	ExpVal EvalExpression (AActor *self);
+	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
 //==========================================================================
@@ -441,6 +487,7 @@ public:
 	FxCompareRel(int, FxExpression*, FxExpression*);
 	FxExpression *Resolve(FCompileContext&);
 	ExpVal EvalExpression (AActor *self);
+	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
 //==========================================================================
@@ -456,6 +503,7 @@ public:
 	FxCompareEq(int, FxExpression*, FxExpression*);
 	FxExpression *Resolve(FCompileContext&);
 	ExpVal EvalExpression (AActor *self);
+	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
 //==========================================================================
@@ -471,6 +519,7 @@ public:
 	FxBinaryInt(int, FxExpression*, FxExpression*);
 	FxExpression *Resolve(FCompileContext&);
 	ExpVal EvalExpression (AActor *self);
+	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
 //==========================================================================
@@ -491,6 +540,7 @@ public:
 	FxExpression *Resolve(FCompileContext&);
 
 	ExpVal EvalExpression (AActor *self);
+	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
 //==========================================================================
@@ -511,6 +561,7 @@ public:
 	FxExpression *Resolve(FCompileContext&);
 
 	ExpVal EvalExpression (AActor *self);
+	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
 //==========================================================================
@@ -530,6 +581,7 @@ public:
 	FxExpression *Resolve(FCompileContext&);
 
 	ExpVal EvalExpression (AActor *self);
+	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
 //==========================================================================
@@ -551,6 +603,7 @@ public:
 	FxExpression *Resolve(FCompileContext&);
 
 	ExpVal EvalExpression (AActor *self);
+	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
 //==========================================================================
@@ -564,6 +617,7 @@ class FxFRandom : public FxRandom
 public:
 	FxFRandom(FRandom *, FxExpression *mi, FxExpression *ma, const FScriptPosition &pos);
 	ExpVal EvalExpression (AActor *self);
+	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
 //==========================================================================
@@ -584,6 +638,7 @@ public:
 	FxExpression *Resolve(FCompileContext&);
 
 	ExpVal EvalExpression (AActor *self);
+	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
 
@@ -623,6 +678,7 @@ public:
 	FxExpression *Resolve(FCompileContext&);
 	void RequestAddress();
 	ExpVal EvalExpression (AActor *self);
+	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
 //==========================================================================
@@ -637,6 +693,7 @@ public:
 	FxSelf(const FScriptPosition&);
 	FxExpression *Resolve(FCompileContext&);
 	ExpVal EvalExpression (AActor *self);
+	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
 //==========================================================================
@@ -657,6 +714,7 @@ public:
 	FxExpression *Resolve(FCompileContext&);
 	//void RequestAddress();
 	ExpVal EvalExpression (AActor *self);
+	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
 
@@ -700,6 +758,7 @@ public:
 	~FxActionSpecialCall();
 	FxExpression *Resolve(FCompileContext&);
 	ExpVal EvalExpression (AActor *self);
+	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
 //==========================================================================
@@ -719,6 +778,7 @@ public:
 	~FxGlobalFunctionCall();
 	FxExpression *Resolve(FCompileContext&);
 	ExpVal EvalExpression (AActor *self);
+	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
 
@@ -739,6 +799,7 @@ public:
 	~FxClassTypeCast();
 	FxExpression *Resolve(FCompileContext&);
 	ExpVal EvalExpression (AActor *self);
+	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
 //==========================================================================
@@ -775,6 +836,7 @@ public:
 	FxMultiNameState(const char *statestring, const FScriptPosition &pos);
 	FxExpression *Resolve(FCompileContext&);
 	ExpVal EvalExpression (AActor *self);
+	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
 

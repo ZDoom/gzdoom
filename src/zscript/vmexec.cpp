@@ -30,8 +30,8 @@
 #define JMPOFS(x)		((*(VM_SWORD *)(x) >> 6) & ~3)
 #endif
 
-#define KC				(konst[C])
-#define RC				(reg.i[C])
+#define KC				(konstd[C])
+#define RC				(reg.d[C])
 
 #define PA				(reg.a[A])
 #define PB				(reg.a[B])
@@ -61,11 +61,12 @@ enum
 	X_READ_NIL,
 	X_WRITE_NIL,
 	X_TOO_MANY_TRIES,
+	X_ARRAY_OUT_OF_BOUNDS
 };
 
 #define GETADDR(a,o,x) \
-	if (a == 0) { THROW(x); } \
-	ptr = (VM_SBYTE *)a + x \
+	if (a == NULL) { THROW(x); } \
+	ptr = (VM_SBYTE *)a + o
 
 static const VM_UWORD ZapTable[16] =
 {

@@ -586,6 +586,13 @@ begin:
 		assert(0);
 		NEXTOP;
 
+	OP(BOUND):
+		if (reg.d[a] >= BC)
+		{
+			THROW(X_ARRAY_OUT_OF_BOUNDS);
+		}
+		NEXTOP;
+
 	OP(CONCAT):
 		ASSERTS(a); ASSERTS(B); ASSERTS(C);
 		{

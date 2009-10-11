@@ -61,10 +61,10 @@ VMScriptFunction *VMFunctionBuilder::MakeFunction()
 	}
 
 	// Assign required register space.
-	func->NumRegD = IntRegisters.MostUsed;
-	func->NumRegF = FloatRegisters.MostUsed;
-	func->NumRegA = AddressRegisters.MostUsed;
-	func->NumRegS = StringRegisters.MostUsed;
+	func->NumRegD = Registers[REGT_INT].MostUsed;
+	func->NumRegF = Registers[REGT_FLOAT].MostUsed;
+	func->NumRegA = Registers[REGT_POINTER].MostUsed;
+	func->NumRegS = Registers[REGT_STRING].MostUsed;
 	func->MaxParam = MaxParam;
 
 	// Technically, there's no reason why we can't end the function with
@@ -274,7 +274,7 @@ VMFunctionBuilder::RegAvailability::RegAvailability()
 
 //==========================================================================
 //
-// VMFunctionBuilder :: RegAvailibity :: GetReg
+// VMFunctionBuilder :: RegAvailibity :: Get
 //
 // Gets one or more unused registers. If getting multiple registers, they
 // will all be consecutive. Returns -1 if there were not enough consecutive
@@ -286,7 +286,7 @@ VMFunctionBuilder::RegAvailability::RegAvailability()
 //
 //==========================================================================
 
-int VMFunctionBuilder::RegAvailability::GetReg(int count)
+int VMFunctionBuilder::RegAvailability::Get(int count)
 {
 	VM_UWORD mask;
 	int i, firstbit;
@@ -368,13 +368,13 @@ int VMFunctionBuilder::RegAvailability::GetReg(int count)
 
 //==========================================================================
 //
-// VMFunctionBuilder :: RegAvailibity :: ReturnReg
+// VMFunctionBuilder :: RegAvailibity :: Return
 //
 // Marks a range of registers as free again.
 //
 //==========================================================================
 
-void VMFunctionBuilder::RegAvailability::ReturnReg(int reg, int count)
+void VMFunctionBuilder::RegAvailability::Return(int reg, int count)
 {
 	assert(count >= 1 && count <= 32);
 	assert(reg >= 0 && reg + count <= 256);
@@ -406,8 +406,108 @@ void VMFunctionBuilder::RegAvailability::ReturnReg(int reg, int count)
 	}
 }
 
-void VMFunctionBuilder::RegAvailability::Dump()
+//==========================================================================
+//
+// VMFunctionBuilder :: Emit
+//
+// Just dumbly output an instruction. Returns instruction position, not
+// byte position. (Because all instructions are exactly four bytes long.)
+//
+//==========================================================================
+
+size_t VMFunctionBuilder::Emit(int opcode, int opa, int opb, int opc)
 {
-	Printf("%032B %032B %032B %032B\n%032B %032B %032B %032B\n",
-		Used[0], Used[1], Used[2], Used[3], Used[4], Used[5], Used[6], Used[7]);
+	assert(opcode >= 0 && opcode < NUM_OPS);
+	assert(opa >= 0 && opa <= 255);
+	assert(opb >= 0 && opb <= 255);
+	assert(opc >= 0 && opc <= 255);
+	size_t loc = Code.Reserve(4);
+	VM_UBYTE *code = &Code[loc];
+	code[0] = opcode;
+	code[1] = opa;
+	code[2] = opb;
+	code[3] = opc;
+	return loc / 4;
+}
+
+size_t VMFunctionBuilder::Emit(int opcode, int opa, VM_SHALF opbc)
+{
+	assert(opcode >= 0 && opcode < NUM_OPS);
+	assert(opa >= 0 && opa <= 255);
+	assert(opbc >= -32768 && opbc <= 32767);
+	size_t loc = Code.Reserve(4);
+	VM_UBYTE *code = &Code[loc];
+	code[0] = opcode;
+	code[1] = opa;
+	*(VM_SHALF *)&code[2] = opbc;
+	return loc / 4;
+}
+
+size_t VMFunctionBuilder::Emit(int opcode, int opabc)
+{
+	assert(opcode >= 0 && opcode < NUM_OPS);
+	assert(opabc >= -(1 << 23) && opabc <= (1 << 24) - 1);
+	size_t loc = Code.Reserve(4);
+#ifdef __BIG_ENDIAN__
+	*(VM_UWORD *)&Code[loc] = (opabc & 0xFFFFFF) | (opcode << 24);
+#else
+	*(VM_UWORD *)&Code[loc] = opcode | (opabc << 8);
+#endif
+	return loc / 4;
+}
+
+//==========================================================================
+//
+// VMFunctionBuilder :: EmitLoadInt
+//
+// Loads an integer constant into a register, using either an immediate
+// value or a constant register, as appropriate.
+//
+//==========================================================================
+
+size_t VMFunctionBuilder::EmitLoadInt(int regnum, int value)
+{
+	assert(regnum >= 0 && regnum < Registers[REGT_INT].MostUsed);
+	if (value >= -32768 && value <= 32767)
+	{
+		return Emit(OP_LI, regnum, value);
+	}
+	else
+	{
+		return Emit(OP_LK, regnum, GetConstantInt(value));
+	}
+}
+
+//==========================================================================
+//
+// VMFunctionBuilder :: Backpatch
+//
+// Store a JMP instruction at <loc> that points at <target>.
+//
+//==========================================================================
+
+void VMFunctionBuilder::Backpatch(size_t loc, size_t target)
+{
+	assert(loc < Code.Size() / 4);
+	int offset = int(target - loc - 1);
+	assert(offset >= -(1 << 24) && offset <= (1 << 24) - 1);
+#ifdef __BIG_ENDIAN__
+	*(VM_UWORD *)&Code[loc * 4] = (offset & 0xFFFFFF) | (OP_JMP << 24);
+#else
+	*(VM_UWORD *)&Code[loc * 4] = OP_JMP | (offset << 8);
+#endif
+}
+
+//==========================================================================
+//
+// VMFunctionBuilder :: BackpatchToHere
+//
+// Store a JMP instruction at <loc> that points to the current code gen
+// location.
+//
+//==========================================================================
+
+void VMFunctionBuilder::BackpatchToHere(size_t loc)
+{
+	Backpatch(loc, Code.Size() / 4);
 }

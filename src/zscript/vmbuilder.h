@@ -11,9 +11,8 @@ public:
 	{
 	public:
 		RegAvailability();
-		int GetReg(int count);		// Returns the first register in the range
-		void ReturnReg(int reg, int count);
-		void Dump();
+		int Get(int count);			// Returns the first register in the range
+		void Return(int reg, int count);
 
 	private:
 		VM_UWORD Used[256/32];		// Bitmap of used registers (bit set means reg is used)
@@ -35,6 +34,12 @@ public:
 
 	// Returns the address of the newly-emitted instruction.
 	size_t Emit(int opcode, int opa, int opb, int opc);
+	size_t Emit(int opcode, int opa, VM_SHALF opbc);
+	size_t Emit(int opcode, int opabc);
+	size_t EmitLoadInt(int regnum, int value);
+
+	void Backpatch(size_t addr, size_t target);
+	void BackpatchToHere(size_t addr);
 
 	// Write out complete constant tables.
 	void FillIntConstants(int *konst);
@@ -46,10 +51,10 @@ public:
 	void ParamChange(int delta);
 
 	// Track available registers.
-	RegAvailability IntRegisters;
-	RegAvailability FloatRegisters;
-	RegAvailability AddressRegisters;
-	RegAvailability StringRegisters;
+	RegAvailability Registers[4];
+
+	// Free a register.
+	void FreeReg(int regtype, int regnum);
 
 private:
 	struct AddrKonst

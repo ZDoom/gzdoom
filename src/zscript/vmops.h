@@ -73,7 +73,7 @@ xx(DYNCAST_K,	dyncast,RPRPKP),
 xx(TEST,	test,	RII16),		// if (dA != BC) then pc++
 xx(JMP,		jmp,	I24),		// pc += ABC		-- The ABC fields contain a signed 24-bit offset.
 xx(IJMP,	ijmp,	RII16),		// pc += dA + BC	-- BC is a signed offset. The target instruction must be a JMP.
-xx(PARAM,	param,	__BCP),		// push parameter encoded in BC for function call or result for return
+xx(PARAM,	param,	__BCP),		// push parameter encoded in BC for function call (B=regtype, C=regnum)
 xx(CALL,	call,	RPI8I8),	// Call function pkA with parameter count B and expected result count C
 xx(CALL_K,	call,	KPI8I8),
 xx(RESULT,	result,	__BCP),		// Result should go in register encoded in BC (in caller, after CALL)
@@ -87,6 +87,7 @@ xx(CATCH,	catch,	CATCH),		// A == 0: continue search on next try
 								// A == 2: (pB == <type of exception thrown>) then pc++ ; next instruction must JMP to another CATCH
 								// A == 3: (pkB == <type of exception thrown>) then pc++ ; next instruction must JMP to another CATCH
 								// for A > 0, exception is stored in pC
+xx(BOUND,	bound,	RII16),		// if rA >= BC, throw exception
 
 // String instructions.
 xx(CONCAT,		concat,	RSRSRS),		// sA = sB.. ... ..sC
@@ -129,7 +130,7 @@ xx(MAX_RR,		max,	RIRIRI),		// dA = max(dB,dkC)
 xx(MAX_RK,		max,	RIRIKI),
 xx(ABS,			abs,	RIRI),			// dA = abs(dB)
 xx(NEG,			neg,	RIRI),			// dA = -dB
-xx(NOT,			not,	RIRI),			// dA = !dB
+xx(NOT,			not,	RIRI),			// dA = ~dB
 xx(SEXT,		sext,	RIRII8),		// dA = dB, sign extended by shifting left then right by C
 xx(ZAP_R,		zap,	RIRIRI),		// dA = dB, with bytes zeroed where bits in C/dC are one
 xx(ZAP_I,		zap,	RIRII8),

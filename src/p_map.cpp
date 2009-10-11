@@ -161,6 +161,12 @@ static bool PIT_FindFloorCeiling (line_t *ld, const FBoundingBox &box, FCheckPos
 }
 
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 void P_GetFloorCeilingZ(FCheckPosition &tmf, bool get)
 {
 	sector_t *sec;
@@ -278,6 +284,7 @@ void P_FindFloorCeiling (AActor *actor, bool onlyspawnpos)
 	}
 }
 
+//==========================================================================
 //
 // TELEPORT MOVE
 // 
@@ -291,6 +298,9 @@ void P_FindFloorCeiling (AActor *actor, bool onlyspawnpos)
 //		move was made, so the height checking I added for 1.13 could
 //		potentially erroneously indicate the move was okay if the thing
 //		was being teleported between two non-overlapping height ranges.
+//
+//==========================================================================
+
 bool P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefrag)
 {
 	FCheckPosition tmf;
@@ -389,12 +399,15 @@ bool P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefr
 	return true;
 }
 
+//==========================================================================
 //
 // [RH] P_PlayerStartStomp
 //
 // Like P_TeleportMove, but it doesn't move anything, and only monsters and other
 // players get telefragged.
 //
+//==========================================================================
+
 void P_PlayerStartStomp (AActor *actor)
 {
 	AActor *th;
@@ -425,6 +438,12 @@ void P_PlayerStartStomp (AActor *actor)
 	}
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 inline fixed_t secfriction (const sector_t *sec)
 {
 	fixed_t friction = Terrains[TerrainTypes[sec->GetTexture(sector_t::floor)]].Friction;
@@ -437,12 +456,15 @@ inline fixed_t secmovefac (const sector_t *sec)
 	return movefactor != 0 ? movefactor : sec->movefactor;
 }
 
+//==========================================================================
 //
 // killough 8/28/98:
 //
 // P_GetFriction()
 //
 // Returns the friction associated with a particular mobj.
+//
+//==========================================================================
 
 int P_GetFriction (const AActor *mo, int *frictionfactor)
 {
@@ -511,11 +533,15 @@ int P_GetFriction (const AActor *mo, int *frictionfactor)
 	return friction;
 }
 
+//==========================================================================
+//
 // phares 3/19/98
 // P_GetMoveFactor() returns the value by which the x,y
 // movements are multiplied to add to player movement.
 //
 // killough 8/28/98: rewritten
+//
+//==========================================================================
 
 int P_GetMoveFactor (const AActor *mo, int *frictionp)
 {
@@ -550,10 +576,14 @@ int P_GetMoveFactor (const AActor *mo, int *frictionp)
 // MOVEMENT ITERATOR FUNCTIONS
 //
 
+//==========================================================================
+//
 //
 // PIT_CheckLine
 // Adjusts tmfloorz and tmceilingz as lines are contacted
 //
+//
+//==========================================================================
 
 static // killough 3/26/98: make static
 bool PIT_CheckLine (line_t *ld, const FBoundingBox &box, FCheckPosition &tm)
@@ -1130,40 +1160,7 @@ bool PIT_CheckThing (AActor *thing, FCheckPosition &tm)
 ===============================================================================
 */
 
-//----------------------------------------------------------------------------
-//
-// FUNC P_TestMobjLocation
-//
-// Returns true if the mobj is not blocked by anything at its current
-// location, otherwise returns false.
-//
-//----------------------------------------------------------------------------
-
-bool P_TestMobjLocation (AActor *mobj)
-{
-	int flags;
-
-	flags = mobj->flags;
-	mobj->flags &= ~MF_PICKUP;
-	if (P_CheckPosition(mobj, mobj->x, mobj->y))
-	{ // XY is ok, now check Z
-		mobj->flags = flags;
-		fixed_t z = mobj->z;
-		if (mobj->flags2 & MF2_FLOATBOB)
-		{
-			z -= FloatBobOffsets[(mobj->FloatBobPhase + level.maptime - 1) & 63];
-		}
-		if ((z < mobj->floorz) || (z + mobj->height > mobj->ceilingz))
-		{ // Bad Z
-			return false;
-		}
-		return true;
-	}
-	mobj->flags = flags;
-	return false;
-}
-
-
+//==========================================================================
 //
 // P_CheckPosition
 // This is purely informative, nothing is modified
@@ -1187,6 +1184,9 @@ bool P_TestMobjLocation (AActor *mobj)
 //	numspeciallines
 //  AActor *BlockingMobj = pointer to thing that blocked position (NULL if not
 //   blocked, or blocked by a line).
+//
+//==========================================================================
+
 bool P_CheckPosition (AActor *thing, fixed_t x, fixed_t y, FCheckPosition &tm)
 {
 	sector_t *newsec;
@@ -1373,6 +1373,40 @@ bool P_CheckPosition (AActor *thing, fixed_t x, fixed_t y)
 	return P_CheckPosition(thing, x, y, tm);
 }
 
+//----------------------------------------------------------------------------
+//
+// FUNC P_TestMobjLocation
+//
+// Returns true if the mobj is not blocked by anything at its current
+// location, otherwise returns false.
+//
+//----------------------------------------------------------------------------
+
+bool P_TestMobjLocation (AActor *mobj)
+{
+	int flags;
+
+	flags = mobj->flags;
+	mobj->flags &= ~MF_PICKUP;
+	if (P_CheckPosition(mobj, mobj->x, mobj->y))
+	{ // XY is ok, now check Z
+		mobj->flags = flags;
+		fixed_t z = mobj->z;
+		if (mobj->flags2 & MF2_FLOATBOB)
+		{
+			z -= FloatBobOffsets[(mobj->FloatBobPhase + level.maptime - 1) & 63];
+		}
+		if ((z < mobj->floorz) || (z + mobj->height > mobj->ceilingz))
+		{ // Bad Z
+			return false;
+		}
+		return true;
+	}
+	mobj->flags = flags;
+	return false;
+}
+
+
 //=============================================================================
 //
 // P_CheckOnmobj(AActor *thing)
@@ -1541,11 +1575,14 @@ static void CheckForPushSpecial (line_t *line, int side, AActor *mobj)
 	}
 }
 
+//==========================================================================
 //
 // P_TryMove
 // Attempt to move to a new position,
 // crossing special lines unless MF_TELEPORT is set.
 //
+//==========================================================================
+
 bool P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 				int dropoff, // killough 3/15/98: allow dropoff as option
 				const secplane_t *onfloor, // [RH] Let P_TryMove keep the thing on the floor
@@ -1920,10 +1957,12 @@ bool P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 
 
 
+//==========================================================================
 //
 // P_CheckMove
 // Similar to P_TryMove but doesn't actually move the actor. Used for polyobject crushing
 //
+//==========================================================================
 
 bool P_CheckMove(AActor *thing, fixed_t x, fixed_t y)
 {
@@ -1999,10 +2038,13 @@ bool P_CheckMove(AActor *thing, fixed_t x, fixed_t y)
 
 
 
+//==========================================================================
 //
 // SLIDE MOVE
 // Allows the player to slide along any angled walls.
 //
+//==========================================================================
+
 struct FSlide
 {
 	fixed_t 		bestslidefrac;
@@ -2025,12 +2067,15 @@ struct FSlide
 	bool BounceWall (AActor *mo);
 };
 
+//==========================================================================
 //
 // P_HitSlideLine
 // Adjusts the xmove / ymove
 // so that the next move will slide along the wall.
 // If the floor is icy, then you can bounce off a wall.				// phares
 //
+//==========================================================================
+
 void FSlide::HitSlideLine (line_t* ld)
 {
 	int 	side;
@@ -2164,9 +2209,12 @@ void FSlide::HitSlideLine (line_t* ld)
 }
 
 
+//==========================================================================
 //
 // PTR_SlideTraverse
 //
+//==========================================================================
+
 void FSlide::SlideTraverse (fixed_t startx, fixed_t starty, fixed_t endx, fixed_t endy)
 {
 	FLineOpening open;
@@ -2255,6 +2303,7 @@ void FSlide::SlideTraverse (fixed_t startx, fixed_t starty, fixed_t endx, fixed_
 
 
 
+//==========================================================================
 //
 // P_SlideMove
 //
@@ -2264,6 +2313,8 @@ void FSlide::SlideTraverse (fixed_t startx, fixed_t starty, fixed_t endx, fixed_
 //
 // This is a kludgy mess.
 //
+//==========================================================================
+
 void FSlide::SlideMove (AActor *mo, fixed_t tryx, fixed_t tryy, int numsteps)
 {
 	fixed_t leadx, leady;
@@ -2691,6 +2742,12 @@ bool P_BounceWall (AActor *mo)
 	return slide.BounceWall(mo);
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 extern FRandom pr_bounce;
 bool P_BounceActor (AActor *mo, AActor * BlockingMobj)
 {
@@ -3065,6 +3122,7 @@ void aim_t::AimTraverse (fixed_t startx, fixed_t starty, fixed_t endx, fixed_t e
 // P_AimLineAttack
 //
 //============================================================================
+
 fixed_t P_AimLineAttack (AActor *t1, angle_t angle, fixed_t distance, AActor **pLineTarget, fixed_t vrange, bool forcenosmart, bool check3d, bool checknonshootable)
 {
 	fixed_t x2;
@@ -3154,15 +3212,11 @@ fixed_t P_AimLineAttack (AActor *t1, angle_t angle, fixed_t distance, AActor **p
 }
 
 
-/*
-=================
-=
-= P_LineAttack
-=
-= if damage == 0, it is just a test trace that will leave linetarget set
-=
-=================
-*/
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 static bool CheckForGhost (FTraceResults &res)
 {
@@ -3198,6 +3252,14 @@ static bool CheckForSpectral (FTraceResults &res)
 	return false;
 }
 
+//==========================================================================
+//
+// P_LineAttack
+//
+// if damage == 0, it is just a test trace that will leave linetarget set
+//
+//==========================================================================
+
 AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 				   int pitch, int damage, FName damageType, const PClass *pufftype, bool ismeleeattack)
 {
@@ -3231,7 +3293,8 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 		t1->player->ReadyWeapon != NULL &&
 		(t1->player->ReadyWeapon->flags2 & MF2_THRUGHOST));
 
-	AActor *puffDefaults = GetDefaultByType (pufftype);
+	// Need to check defaults of replacement here
+	AActor *puffDefaults = GetDefaultByType(pufftype->ActorInfo->GetReplacement()->Class);
 
 	int tflags;
 	if (puffDefaults != NULL && puffDefaults->flags6 & MF6_NOTRIGGER) tflags = TRACE_NoSky;
@@ -3416,6 +3479,12 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 	return NULL;
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 void P_TraceBleed (int damage, fixed_t x, fixed_t y, fixed_t z, AActor *actor, angle_t angle, int pitch)
 {
 	if (!cl_bloodsplats)
@@ -3505,6 +3574,12 @@ void P_TraceBleed (int damage, AActor *target, angle_t angle, int pitch)
 		target, angle, pitch);
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 void P_TraceBleed (int damage, AActor *target, AActor *missile)
 {
 	int pitch;
@@ -3530,6 +3605,12 @@ void P_TraceBleed (int damage, AActor *target, AActor *missile)
 		pitch);
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 void P_TraceBleed (int damage, AActor *target)
 {
 	if (target != NULL)
@@ -3542,9 +3623,12 @@ void P_TraceBleed (int damage, AActor *target)
 	}
 }
 
+//==========================================================================
 //
 // [RH] Rail gun stuffage
 //
+//==========================================================================
+
 struct SRailHit
 {
 	AActor *HitActor;
@@ -3574,6 +3658,12 @@ static bool ProcessRailHit (FTraceResults &res)
 	return true;
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 static bool ProcessNoPierceRailHit (FTraceResults &res)
 {
 	if (res.HitType != TRACE_HitActor)
@@ -3595,6 +3685,12 @@ static bool ProcessNoPierceRailHit (FTraceResults &res)
 
 	return false;
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 void P_RailAttack (AActor *source, int damage, int offset, int color1, int color2, float maxdiff, bool silent, const PClass *puffclass, bool pierce)
 {
@@ -3639,7 +3735,8 @@ void P_RailAttack (AActor *source, int damage, int offset, int color1, int color
 
 	int flags;
 
-	AActor *puffDefaults = puffclass == NULL? NULL : GetDefaultByType (puffclass);
+	AActor *puffDefaults = puffclass == NULL? 
+							NULL : GetDefaultByType (puffclass->ActorInfo->GetReplacement()->Class);
 
 	if (puffDefaults != NULL && puffDefaults->flags6 & MF6_NOTRIGGER) flags = 0;
 	else flags = TRACE_PCross|TRACE_Impact;
@@ -3718,9 +3815,12 @@ void P_RailAttack (AActor *source, int damage, int offset, int color1, int color
 	P_DrawRailTrail (source, start, end, color1, color2, maxdiff, silent);
 }
 
+//==========================================================================
 //
 // [RH] P_AimCamera
 //
+//==========================================================================
+
 CVAR (Float, chase_height, -8.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Float, chase_dist, 90.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
@@ -3758,9 +3858,11 @@ void P_AimCamera (AActor *t1, fixed_t &CameraX, fixed_t &CameraY, fixed_t &Camer
 }
 
 
+//==========================================================================
 //
 // USE LINES
 //
+//==========================================================================
 
 bool P_UseTraverse(AActor *usething, fixed_t endx, fixed_t endy, bool &foundline)
 {
@@ -3885,6 +3987,8 @@ bool P_UseTraverse(AActor *usething, fixed_t endx, fixed_t endy, bool &foundline
 	return false;
 }
 
+//==========================================================================
+//
 // Returns false if a "oof" sound should be made because of a blocking
 // linedef. Makes 2s middles which are impassable, as well as 2s uppers
 // and lowers which block the player, cause the sound effect when the
@@ -3894,6 +3998,7 @@ bool P_UseTraverse(AActor *usething, fixed_t endx, fixed_t endy, bool &foundline
 //
 // by Lee Killough
 //
+//==========================================================================
 
 bool P_NoWayTraverse (AActor *usething, fixed_t endx, fixed_t endy)
 {
@@ -3905,7 +4010,7 @@ bool P_NoWayTraverse (AActor *usething, fixed_t endx, fixed_t endy)
 		line_t *ld = in->d.line;
 		FLineOpening open;
 
-		// [GrafZahl] de-obfuscated. Was I the only one who was unable to makes sense out of
+		// [GrafZahl] de-obfuscated. Was I the only one who was unable to make sense out of
 		// this convoluted mess?
 		if (ld->special) continue;
 		if (ld->flags&(ML_BLOCKING|ML_BLOCKEVERYTHING|ML_BLOCK_PLAYERS)) return true;
@@ -3918,14 +4023,13 @@ bool P_NoWayTraverse (AActor *usething, fixed_t endx, fixed_t endy)
 	return false;
 }
 
-/*
-================
-=
-= P_UseLines
-=
-= Looks for special lines in front of the player to activate
-================
-*/
+//==========================================================================
+//
+// P_UseLines
+//
+// Looks for special lines in front of the player to activate
+//
+//==========================================================================
 
 void P_UseLines (player_t *player)
 {
@@ -4028,9 +4132,13 @@ bool P_UsePuzzleItem (AActor *PuzzleItemUser, int PuzzleItemType)
 	return false;
 }
 
+//==========================================================================
 //
 // RADIUS ATTACK
 //
+//
+//==========================================================================
+
 
 // [RH] Damage scale to apply to thing that shot the missile.
 static float selfthrustscale;
@@ -4043,10 +4151,13 @@ CUSTOM_CVAR (Float, splashfactor, 1.f, CVAR_SERVERINFO)
 		selfthrustscale = 1.f / self;
 }
 
+//==========================================================================
 //
 // P_RadiusAttack
 // Source is the creature that caused the explosion at spot.
 //
+//==========================================================================
+
 void P_RadiusAttack (AActor *bombspot, AActor *bombsource, int bombdamage, int bombdistance, FName bombmod,
 	bool DamageSource, bool bombdodamage, int fulldamagedistance)
 {
@@ -4222,6 +4333,7 @@ void P_RadiusAttack (AActor *bombspot, AActor *bombsource, int bombdamage, int b
 	}
 }
 
+//==========================================================================
 //
 // SECTOR HEIGHT CHANGING
 // After modifying a sector's floor or ceiling height,
@@ -4240,6 +4352,8 @@ void P_RadiusAttack (AActor *bombspot, AActor *bombsource, int bombdamage, int b
 //		DOOM crushing behavior set crushchange to 10 or -1
 //		if no crushing is desired.
 //
+//==========================================================================
+
 
 struct FChangePosition
 {
@@ -5131,6 +5245,12 @@ void P_CreateSecNodeList (AActor *thing, fixed_t x, fixed_t y)
 	}
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 void SpawnShootDecal (AActor *t1, const FTraceResults &trace)
 {
 	FDecalBase *decalbase = NULL;
@@ -5149,6 +5269,12 @@ void SpawnShootDecal (AActor *t1, const FTraceResults &trace)
 			trace.X, trace.Y, trace.Z, trace.Line->sidedef[trace.Side], trace.ffloor);
 	}
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 static void SpawnDeepSplash (AActor *t1, const FTraceResults &trace, AActor *puff,
 	fixed_t vx, fixed_t vy, fixed_t vz, fixed_t shootz)

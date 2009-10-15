@@ -2933,6 +2933,23 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Turn)
 
 //===========================================================================
 //
+// A_Quake
+//
+//===========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Quake)
+{
+	ACTION_PARAM_START(5);
+	ACTION_PARAM_INT(intensity, 0);
+	ACTION_PARAM_INT(duration, 1);
+	ACTION_PARAM_INT(damrad, 2);
+	ACTION_PARAM_INT(tremrad, 3);
+	ACTION_PARAM_SOUND(sound, 4);
+	P_StartQuake(self, 0, intensity, duration, damrad, tremrad, sound);
+}
+
+//===========================================================================
+//
 // A_LineEffect
 //
 // This allows linedef effects to be activated inside deh frames.

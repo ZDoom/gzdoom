@@ -1,3 +1,6 @@
+October 15, 2009  (Changes by Graf Zahl)
+- added better earthquake functions for ACS and DECORATE.
+
 October 10, 2009  (Changes by Graf Zahl)
 - Added MF6_NOTRIGGER flag that disables all line actions for an actor.
 

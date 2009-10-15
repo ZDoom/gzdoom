@@ -128,7 +128,7 @@ class DEarthquake : public DThinker
 	DECLARE_CLASS (DEarthquake, DThinker)
 	HAS_OBJECT_POINTERS
 public:
-	DEarthquake (AActor *center, int intensity, int duration, int damrad, int tremrad);
+	DEarthquake (AActor *center, int intensity, int duration, int damrad, int tremrad, FSoundID quakesfx);
 
 	void Serialize (FArchive &arc);
 	void Tick ();

@@ -2899,6 +2899,7 @@ enum EACSFunctions
     ACSF_SetActorVelocity,
 	ACSF_SetUserVariable,
 	ACSF_GetUserVariable,
+	ACSF_Radius_Quake2,
 };
 
 int DLevelScript::SideFromID(int id, int side)
@@ -3133,7 +3134,10 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 			}
 			else return 0;
 		}
-		
+
+		case ACSF_Radius_Quake2:
+			P_StartQuake(activator, args[0], args[1], args[2], args[3], args[4], FBehavior::StaticLookupString(args[5]));
+			break;
 
 		default:
 			break;

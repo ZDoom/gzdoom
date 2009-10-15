@@ -817,13 +817,16 @@ bool FStateDefinitions::SetLoop()
 //==========================================================================
 //
 // AddStates
-// adds some state to the current definition set
+//
+// Adds some state to the current definition set. Returns the number of
+// states added. Positive = no errors, negative = errors.
 //
 //==========================================================================
 
-bool FStateDefinitions::AddStates(FState *state, const char *framechars)
+int FStateDefinitions::AddStates(FState *state, const char *framechars)
 {
 	bool error = false;
+	int count = 0;
 	while (*framechars)
 	{
 		int frame;
@@ -834,17 +837,18 @@ bool FStateDefinitions::AddStates(FState *state, const char *framechars)
 			frame = ((*framechars)&223)-'A';
 
 		framechars++;
-		if (frame<0 || frame>28)
+		if (frame < 0 || frame > 28)
 		{
 			frame = 0;
 			error = true;
 		}
 
-		state->Frame=(state->Frame&(SF_FULLBRIGHT))|frame;
+		state->Frame = (state->Frame&(SF_FULLBRIGHT)) | frame;
 		StateArray.Push(*state);
+		++count;
 	}
 	laststate = &StateArray[StateArray.Size() - 1];
-	return !error;
+	return !error ? count : -count;
 }
 
 //==========================================================================

@@ -812,6 +812,7 @@ void VMSelectEngine(EVMEngine engine);
 extern int (*VMExec)(VMFrameStack *stack, const VM_UBYTE *pc, VMReturn *ret, int numret);
 void VMFillParams(VMValue *params, VMFrame *callee, int numparam);
 
+void VMDumpConstants(const VMScriptFunction *func);
 void VMDisasm(const VM_UBYTE *code, int codesize, const VMScriptFunction *func);
 
 #endif

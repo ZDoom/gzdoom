@@ -611,8 +611,6 @@ enum MBFCodePointers
 	SMMU_NailBomb,	// No misc, but it's basically A_Explode with an added effect
 };
 
-int PrepareStateParameters(FState * state, int numparams, const PClass *cls);// Should probably be in a .h file.
-
 // Hacks the parameter list for the given state so as to convert MBF-args (misc1 and misc2) into real args.
 
 void SetDehParams(FState * state, int codepointer)
@@ -636,6 +634,7 @@ void SetDehParams(FState * state, int codepointer)
 	// Bleargh! This will all have to be redone once scripting works
 
 	// Not sure exactly why the index for a state is greater by one point than the index for a symbol.
+#if 0
 	DPrintf("SetDehParams: Paramindex is %d, default is %d.\n", 
 		state->ParameterIndex-1, sym->defaultparameterindex);
 	if (state->ParameterIndex-1 == sym->defaultparameterindex)
@@ -716,6 +715,7 @@ void SetDehParams(FState * state, int codepointer)
 		// This simply should not happen.
 		Printf("Unmanaged dehacked codepointer alias num %i\n", codepointer);
 	}
+#endif
 }
 
 static int PatchThing (int thingy)

@@ -56,18 +56,7 @@
 #include "colormatcher.h"
 #include "thingdef_exp.h"
 
-//==========================================================================
-//***
-// PrepareStateParameters
-// creates an empty parameter list for a parameterized function call
-//
-//==========================================================================
-int PrepareStateParameters(FState * state, int numparams, const PClass *cls)
-{
-	int paramindex=StateParams.Reserve(numparams, cls);
-	state->ParameterIndex = paramindex+1;
-	return paramindex;
-}
+TDeletingArray<FStateTempCall *> StateTempCalls;
 
 //==========================================================================
 //***
@@ -75,7 +64,7 @@ int PrepareStateParameters(FState * state, int numparams, const PClass *cls)
 // handles action specials as code pointers
 //
 //==========================================================================
-bool DoActionSpecials(FScanner &sc, FState & state, Baggage &bag)
+bool DoActionSpecials(FScanner &sc, FState & state, Baggage &bag, FStateTempCall *tcall)
 {
 	int i;
 	int min_args, max_args;
@@ -85,17 +74,14 @@ bool DoActionSpecials(FScanner &sc, FState & state, Baggage &bag)
 
 	if (special > 0 && min_args >= 0)
 	{
-
-		int paramindex=PrepareStateParameters(&state, 6, bag.Info->Class);
-
-		StateParams.Set(paramindex, new FxConstant(special, sc));
+		tcall->Parameters.Push(new FxParameter(new FxConstant(special, sc)));
 
 		// Make this consistent with all other parameter parsing
 		if (sc.CheckToken('('))
 		{
 			for (i = 0; i < 5;)
 			{
-				StateParams.Set(paramindex+i+1, ParseExpression (sc, bag.Info->Class));
+				tcall->Parameters.Push(new FxParameter(ParseExpression(sc, bag.Info->Class)));
 				i++;
 				if (!sc.CheckToken (',')) break;
 			}
@@ -153,7 +139,8 @@ void ParseStates(FScanner &sc, FActorInfo * actor, AActor * defaults, Baggage &b
 {
 	FString statestring;
 	FState state;
-	char lastsprite[5]="";
+	char lastsprite[5] = "";
+	FStateTempCall *tcall = NULL;
 
 	sc.MustGetStringName ("{");
 	sc.SetEscape(false);	// disable escape sequences in the state parser
@@ -238,6 +225,10 @@ do_stop:
 
 			sc.MustGetNumber();
 			state.Tics = clamp<int>(sc.Number, -1, 32767);
+			if (tcall == NULL)
+			{
+				tcall = new FStateTempCall;
+			}
 
 			while (sc.GetString() && !sc.Crossed)
 			{
@@ -262,7 +253,7 @@ do_stop:
 				// Make the action name lowercase to satisfy the gperf hashers
 				strlwr (sc.String);
 
-				if (DoActionSpecials(sc, state, bag))
+				if (DoActionSpecials(sc, state, bag, tcall))
 				{
 					goto endofstate;
 				}
@@ -292,19 +283,19 @@ do_stop:
 							}
 						}
 						
-						int paramindex = PrepareStateParameters(&state, numparams, bag.Info->Class);
-						int paramstart = paramindex;
+//						int paramindex = PrepareStateParameters(&state, numparams, bag.Info->Class);
+//						int paramstart = paramindex;
 						bool varargs = params[numparams - 1] == '+';
-						int varargcount=0;
+						int argcount = 0;
 
 
 						if (varargs)
 						{
-							paramindex++;
+//							paramindex++;
 						}
 						else if (afd->defaultparameterindex > -1)
 						{
-							StateParams.Copy(paramindex, afd->defaultparameterindex, int(afd->Arguments.Len()));
+//							StateParams.Copy(paramindex, afd->defaultparameterindex, int(afd->Arguments.Len()));
 						}
 
 						while (*params)
@@ -338,19 +329,17 @@ do_stop:
 								// Use the generic parameter parser for everything else
 								x = ParseParameter(sc, bag.Info->Class, *params, false);
 							}
-							StateParams.Set(paramindex++, x);
+//							StateParams.Set(paramindex++, x);
+							tcall->Parameters.Push(new FxParameter(x));
 							params++;
-							if (varargs)
-							{
-								varargcount++;
-							}
+							argcount++;
 							if (*params)
 							{
 								if (*params == '+')
 								{
 									if (sc.CheckString(")"))
 									{
-										StateParams.Set(paramstart, new FxConstant(varargcount, sc));
+//										StateParams.Set(paramstart, new FxConstant(argcount, sc));
 										goto endofstate;
 									}
 									params--;
@@ -380,11 +369,25 @@ do_stop:
 			}
 			sc.UnGet();
 endofstate:
-			if (!bag.statedef.AddStates(&state, statestring))
+			int count = bag.statedef.AddStates(&state, statestring);
+			if (count < 0)
 			{
 				sc.ScriptError ("Invalid frame character string '%s'", statestring.GetChars());
+				count = -count;
+			}
+			if (tcall->Parameters.Size() != 0)
+			{
+				tcall->ActorInfo = actor;
+				tcall->FirstState = bag.statedef.GetStateCount() - count;
+				tcall->NumStates = count;
+				StateTempCalls.Push(tcall);
+				tcall = NULL;
 			}
 		}
+	}
+	if (tcall != NULL)
+	{
+		delete tcall;
 	}
 	sc.SetEscape(true);	// re-enable escape sequences
 }

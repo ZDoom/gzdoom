@@ -101,6 +101,63 @@ const VMOpInfo OpInfo[NUM_OPS] =
 
 static int print_reg(int col, int arg, int mode, int immshift, const VMScriptFunction *func);
 
+void VMDumpConstants(const VMScriptFunction *func)
+{
+	char tmp[21];
+	int i, j, k, kk;
+
+	if (func->KonstD != NULL && func->NumKonstD != 0)
+	{
+		Printf("\nConstant integers:\n");
+		kk = (func->NumKonstD + 3) / 4;
+		for (i = 0; i < kk; ++i)
+		{
+			for (j = 0, k = i; j < 4 && k < func->NumKonstD; j++, k += kk)
+			{
+				mysnprintf(tmp, countof(tmp), "%3d. %d", k, func->KonstD[k]);
+				Printf("%-20s", tmp);
+			}
+			Printf("\n");
+		}
+	}
+	if (func->KonstF != NULL && func->NumKonstF != 0)
+	{
+		Printf("\nConstant floats:\n");
+		kk = (func->NumKonstF + 3) / 4;
+		for (i = 0; i < kk; ++i)
+		{
+			for (j = 0, k = i; j < 4 && k < func->NumKonstF; j++, k += kk)
+			{
+				mysnprintf(tmp, countof(tmp), "%3d. %.16f", k, func->KonstF[k]);
+				Printf("%-20s", tmp);
+			}
+			Printf("\n");
+		}
+	}
+	if (func->KonstA != NULL && func->NumKonstA != 0)
+	{
+		Printf("\nConstant addresses:\n");
+		kk = (func->NumKonstA + 3) / 4;
+		for (i = 0; i < kk; ++i)
+		{
+			for (j = 0, k = i; j < 4 && k < func->NumKonstA; j++, k += kk)
+			{
+				mysnprintf(tmp, countof(tmp), "%3d. %p", k, func->KonstA[k]);
+				Printf("%-20s", tmp);
+			}
+			Printf("\n");
+		}
+	}
+	if (func->KonstS != NULL && func->NumKonstS != 0)
+	{
+		Printf("\nConstant strings:\n");
+		for (i = 0; i < func->NumKonstS; ++i)
+		{
+			Printf("%3d. %s\n", func->KonstS[k].GetChars());
+		}
+	}
+}
+
 void VMDisasm(const VM_UBYTE *code, int codesize, const VMScriptFunction *func)
 {
 	const char *name;
@@ -129,13 +186,13 @@ void VMDisasm(const VM_UBYTE *code, int codesize, const VMScriptFunction *func)
 			a &= CMP_CHECK | CMP_APPROX;
 		}
 
-		printf("%08x: %02x%02x%02x%02x %-8s", i, code[i], code[i+1], code[i+2], code[i+3], name);
+		Printf("%08x: %02x%02x%02x%02x %-8s", i, code[i], code[i+1], code[i+2], code[i+3], name);
 		col = 0;
 		switch (code[i])
 		{
 		case OP_JMP:
 		case OP_TRY:
-			col = printf("%08x", i + 4 + JMPOFS(&code[i]));
+			col = Printf("%08x", i + 4 + JMPOFS(&code[i]));
 			break;
 
 		case OP_RET:
@@ -151,7 +208,7 @@ void VMDisasm(const VM_UBYTE *code, int codesize, const VMScriptFunction *func)
 					col += print_reg(col, *(VM_UHALF *)&code[i+2], MODE_PARAM, 16, func);
 					if (code[i+2] & REGT_FINAL)
 					{
-						col += printf(" [final]");
+						col += Printf(" [final]");
 					}
 				}
 			}
@@ -229,14 +286,14 @@ void VMDisasm(const VM_UBYTE *code, int codesize, const VMScriptFunction *func)
 		{
 			col = 30;
 		}
-		printf("%*c", 30 - col, ';');
+		Printf("%*c", 30 - col, ';');
 		if (code[i] == OP_JMP || code[i] == OP_TRY)
 		{
-			printf("%d\n", JMPOFS(&code[i]) >> 2);
+			Printf("%d\n", JMPOFS(&code[i]) >> 2);
 		}
 		else
 		{
-			printf("%d,%d,%d\n", code[i+1], code[i+2], code[i+3]);
+			Printf("%d,%d,%d\n", code[i+1], code[i+2], code[i+3]);
 		}
 	}
 }
@@ -249,57 +306,57 @@ static int print_reg(int col, int arg, int mode, int immshift, const VMScriptFun
 	}
 	if (col > 0)
 	{
-		col = printf(",");
+		col = Printf(",");
 	}
 	switch(mode)
 	{
 	case MODE_I:
-		return col+printf("d%d", arg);
+		return col+Printf("d%d", arg);
 	case MODE_F:
-		return col+printf("f%d", arg);
+		return col+Printf("f%d", arg);
 	case MODE_S:
-		return col+printf("s%d", arg);
+		return col+Printf("s%d", arg);
 	case MODE_P:
-		return col+printf("a%d", arg);
+		return col+Printf("a%d", arg);
 	case MODE_V:
-		return col+printf("v%d", arg);
+		return col+Printf("v%d", arg);
 
 	case MODE_KI:
 		if (func != NULL)
 		{
-			return col+printf("%d", func->KonstD[arg]);
+			return col+Printf("%d", func->KonstD[arg]);
 		}
-		return printf("kd%d", arg);
+		return Printf("kd%d", arg);
 	case MODE_KF:
 		if (func != NULL)
 		{
-			return col+printf("%f", func->KonstF[arg]);
+			return col+Printf("%f", func->KonstF[arg]);
 		}
-		return col+printf("kf%d", arg);
+		return col+Printf("kf%d", arg);
 	case MODE_KS:
 		if (func != NULL)
 		{
-			return col+printf("\"%s\"", func->KonstS[arg].GetChars());
+			return col+Printf("\"%s\"", func->KonstS[arg].GetChars());
 		}
-		return col+printf("ks%d", arg);
+		return col+Printf("ks%d", arg);
 	case MODE_KP:
 		if (func != NULL)
 		{
-			return col+printf("%p", func->KonstA[arg]);
+			return col+Printf("%p", func->KonstA[arg]);
 		}
-		return col+printf("ka%d", arg);
+		return col+Printf("ka%d", arg);
 	case MODE_KV:
 		if (func != NULL)
 		{
-			return col+printf("(%f,%f,%f)", func->KonstF[arg], func->KonstF[arg+1], func->KonstF[arg+2]);
+			return col+Printf("(%f,%f,%f)", func->KonstF[arg], func->KonstF[arg+1], func->KonstF[arg+2]);
 		}
-		return col+printf("kv%d", arg);
+		return col+Printf("kv%d", arg);
 
 	case MODE_IMMS:
-		return col+printf("%d", (arg << immshift) >> immshift);
+		return col+Printf("%d", (arg << immshift) >> immshift);
 
 	case MODE_IMMZ:
-		return col+printf("%d", arg);
+		return col+Printf("%d", arg);
 
 	case MODE_PARAM:
 		{
@@ -308,15 +365,15 @@ static int print_reg(int col, int arg, int mode, int immshift, const VMScriptFun
 			switch (p.RegType & (REGT_TYPE | REGT_KONST | REGT_MULTIREG))
 			{
 			case REGT_INT:
-				return col+printf("d%d", p.RegNum);
+				return col+Printf("d%d", p.RegNum);
 			case REGT_FLOAT:
-				return col+printf("f%d", p.RegNum);
+				return col+Printf("f%d", p.RegNum);
 			case REGT_STRING:
-				return col+printf("s%d", p.RegNum);
+				return col+Printf("s%d", p.RegNum);
 			case REGT_POINTER:
-				return col+printf("a%d", p.RegNum);
+				return col+Printf("a%d", p.RegNum);
 			case REGT_FLOAT | REGT_MULTIREG:
-				return col+printf("v%d", p.RegNum);
+				return col+Printf("v%d", p.RegNum);
 			case REGT_INT | REGT_KONST:
 				return col+print_reg(0, p.RegNum, MODE_KI, 0, func);
 			case REGT_FLOAT | REGT_KONST:
@@ -328,7 +385,11 @@ static int print_reg(int col, int arg, int mode, int immshift, const VMScriptFun
 			case REGT_FLOAT | REGT_MULTIREG | REGT_KONST:
 				return col+print_reg(0, p.RegNum, MODE_KV, 0, func);
 			default:
-				return col+printf("param[t=%d,%c,%c,n=%d]",
+				if (p.RegType == REGT_NIL)
+				{
+					return col+Printf("nil");
+				}
+				return col+Printf("param[t=%d,%c,%c,n=%d]",
 					p.RegType & REGT_TYPE,
 					p.RegType & REGT_KONST ? 'k' : 'r',
 					p.RegType & REGT_MULTIREG ? 'm' : 's',
@@ -337,7 +398,7 @@ static int print_reg(int col, int arg, int mode, int immshift, const VMScriptFun
 		}
 
 	default:
-		return col+printf("$%d", arg);
+		return col+Printf("$%d", arg);
 	}
 	return col;
 }

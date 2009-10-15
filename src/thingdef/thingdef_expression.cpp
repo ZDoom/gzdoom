@@ -79,7 +79,7 @@ DEFINE_MEMBER_VARIABLE(Score, AActor)
 DEFINE_MEMBER_VARIABLE(uservar, AActor)
 
 ExpEmit::ExpEmit(VMFunctionBuilder *build, int type)
-: RegNum(build->Registers[type].Get(1)), RegType(type)
+: RegNum(build->Registers[type].Get(1)), RegType(type), Konst(false)
 {
 }
 
@@ -371,7 +371,7 @@ ExpEmit FxParameter::Emit(VMFunctionBuilder *build)
 		}
 		else if (val.Type == VAL_Float)
 		{
-			build->Emit(OP_PARAM, 0, REGT_FLOAT | REGT_KONST, build->GetConstantFloat(val.Int));
+			build->Emit(OP_PARAM, 0, REGT_FLOAT | REGT_KONST, build->GetConstantFloat(val.Float));
 		}
 		else if (val.Type == VAL_Class || val.Type == VAL_Object)
 		{
@@ -390,9 +390,13 @@ ExpEmit FxParameter::Emit(VMFunctionBuilder *build)
 	{
 		ExpEmit where = Operand->Emit(build);
 
-		if (where.RegNum == REGT_NIL)
+		if (where.RegType == REGT_NIL)
 		{
 			ScriptPosition.Message(MSG_ERROR, "Attempted to pass a non-value");
+			build->Emit(OP_PARAM, 0, where.RegType, where.RegNum);
+		}
+		else
+		{
 			build->Emit(OP_PARAM, 0, where.RegType, where.RegNum);
 		}
 	}
@@ -443,6 +447,40 @@ FxExpression *FxConstant::MakeConstant(PSymbol *sym, const FScriptPosition &pos)
 		x = NULL;
 	}
 	return x;
+}
+
+ExpEmit FxConstant::Emit(VMFunctionBuilder *build)
+{
+	ExpEmit out;
+
+	out.Konst = true;
+	if (value.Type == VAL_Int || value.Type == VAL_Sound || value.Type == VAL_Name || value.Type == VAL_Color)
+	{
+		out.RegType = REGT_INT;
+		out.RegNum = build->GetConstantInt(value.Int);
+	}
+	else if (value.Type == VAL_Float)
+	{
+		out.RegType = REGT_FLOAT;
+		out.RegNum = build->GetConstantFloat(value.Float);
+	}
+	else if (value.Type == VAL_Class || value.Type == VAL_Object)
+	{
+		out.RegType = REGT_POINTER;
+		out.RegNum = build->GetConstantAddress(value.pointer, ATAG_OBJECT);
+	}
+	else if (value.Type == VAL_State)
+	{
+		out.RegType = REGT_POINTER;
+		out.RegNum = build->GetConstantAddress(value.pointer, ATAG_STATE);
+	}
+	else
+	{
+		ScriptPosition.Message(MSG_ERROR, "Cannot emit needed constant");
+		out.RegType = REGT_NIL;
+		out.RegNum = 0;
+	}
+	return out;
 }
 
 //==========================================================================
@@ -610,6 +648,7 @@ ExpEmit FxFloatCast::Emit(VMFunctionBuilder *build)
 	ExpEmit from = basex->Emit(build);
 	assert(!from.Konst);
 	assert(basex->ValueType == VAL_Int);
+	build->FreeReg(from.RegType, from.RegNum);
 	ExpEmit to(build, REGT_FLOAT);
 	build->Emit(OP_CAST, to.RegNum, from.RegNum, CAST_I2F);
 	return to;
@@ -1033,15 +1072,15 @@ bool FxBinary::ResolveLR(FCompileContext& ctx, bool castnumeric)
 	return true;
 }
 
-void FxBinary::Promote()
+void FxBinary::Promote(FCompileContext &ctx)
 {
 	if (left->ValueType == VAL_Float && right->ValueType == VAL_Int)
 	{
-		right = new FxFloatCast(right);
+		right = (new FxFloatCast(right))->Resolve(ctx);
 	}
 	else if (left->ValueType == VAL_Int && right->ValueType == VAL_Float)
 	{
-		left = new FxFloatCast(left);
+		left = (new FxFloatCast(left))->Resolve(ctx);
 	}
 }
 
@@ -1103,7 +1142,7 @@ FxExpression *FxAddSub::Resolve(FCompileContext& ctx)
 
 		}
 	}
-	Promote();
+	Promote(ctx);
 	return this;
 }
 
@@ -1280,7 +1319,7 @@ FxExpression *FxMulDiv::Resolve(FCompileContext& ctx)
 
 		}
 	}
-	Promote();
+	Promote(ctx);
 	return this;
 }
 
@@ -1342,6 +1381,7 @@ ExpEmit FxMulDiv::Emit(VMFunctionBuilder *build)
 			swap(op1, op2);
 		}
 		assert(!op1.Konst);
+		build->FreeReg(op1.RegType, op1.RegNum);
 		if (!op2.Konst)
 		{
 			build->FreeReg(op2.RegType, op2.RegNum);
@@ -1451,7 +1491,7 @@ FxExpression *FxCompareRel::Resolve(FCompileContext& ctx)
 		delete this;
 		return e;
 	}
-	Promote();
+	Promote(ctx);
 	ValueType = VAL_Int;
 	return this;
 }
@@ -1604,7 +1644,7 @@ cont:
 		delete this;
 		return e;
 	}
-	Promote();
+	Promote(ctx);
 	ValueType = VAL_Int;
 	return this;
 }
@@ -2357,6 +2397,14 @@ FxExpression *FxRandom::Resolve(FCompileContext &ctx)
 	CHECKRESOLVED();
 	if (min && max)
 	{
+		if (min->ValueType != VAL_Int)
+		{
+			min = new FxIntCast(min);
+		}
+		if (max->ValueType != VAL_Int)
+		{
+			max = new FxIntCast(max);
+		}
 		RESOLVE(min, ctx);
 		RESOLVE(max, ctx);
 		ABORT(min && max);

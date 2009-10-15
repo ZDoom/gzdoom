@@ -64,6 +64,7 @@
 #include "thingdef.h"
 #include "thingdef_exp.h"
 #include "a_sharedglobal.h"
+#include "vmbuilder.h"
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 void InitThingdef();
@@ -279,8 +280,42 @@ void FinishActor(const FScriptPosition &sc, FActorInfo *info, Baggage &bag)
 static void FinishThingdef()
 {
 	int errorcount = StateParams.ResolveAll();
+	unsigned i, j;
 
-	for (unsigned i = 0;i < PClass::m_Types.Size(); i++)
+	for (i = 0; i < StateTempCalls.Size(); ++i)
+	{
+		FStateTempCall *tcall = StateTempCalls[i];
+		FCompileContext ctx(tcall->ActorInfo->Class, true);
+		for (j = 0; j < tcall->Parameters.Size(); ++j)
+		{
+			tcall->Parameters[j]->Resolve(ctx);
+		}
+		VMFunctionBuilder buildit;
+		for (j = 0; j < tcall->Parameters.Size(); ++j)
+		{
+			FxExpression *p = /*new FxParameter*/(tcall->Parameters[j]);
+			p->Emit(&buildit);
+			delete p;
+		}
+		// FIXME: Call a real function
+		buildit.Emit(OP_CALL_K, buildit.GetConstantAddress(NULL, ATAG_OBJECT), j, 0);
+		VMScriptFunction *func = buildit.MakeFunction();
+#if 1
+		const char *marks = "=======================================================";
+		char label[40];
+		int labellen = mysnprintf(label, countof(label), "Function %s.States[%d] (*%d)",
+			tcall->ActorInfo->Class->TypeName.GetChars(),
+			tcall->FirstState, tcall->NumStates);
+		Printf("\n%.*s %s %.*s", MAX(3, 38 - labellen / 2), marks, label, MAX(3, 38 - labellen / 2), marks);
+		VMDumpConstants(func);
+		Printf("\nDisassembly:\n");
+		VMDisasm(func->Code, func->NumCodeBytes / 4, func);
+#endif
+		//if(i==6) I_Error("Poop");
+	}
+	I_Error("Poop");
+
+	for (i = 0; i < PClass::m_Types.Size(); i++)
 	{
 		PClass * ti = PClass::m_Types[i];
 

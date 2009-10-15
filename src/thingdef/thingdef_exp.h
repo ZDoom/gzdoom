@@ -314,6 +314,7 @@ public:
 		return true;
 	}
 	ExpVal EvalExpression (AActor *self);
+	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
 
@@ -439,7 +440,7 @@ public:
 	FxBinary(int, FxExpression*, FxExpression*);
 	~FxBinary();
 	bool ResolveLR(FCompileContext& ctx, bool castnumeric);
-	void Promote();
+	void Promote(FCompileContext &ctx);
 };
 
 //==========================================================================

@@ -99,9 +99,8 @@ public:
 	bool SetStop();
 	bool SetWait();
 	bool SetLoop();
-	bool AddStates(FState *state, const char *framechars);
+	int AddStates(FState *state, const char *framechars);
 	int GetStateCount() const { return StateArray.Size(); }
-
 };
 
 //==========================================================================
@@ -109,6 +108,15 @@ public:
 //
 //
 //==========================================================================
+
+struct FStateTempCall
+{
+	FActorInfo *ActorInfo;
+	int FirstState;
+	int NumStates;
+	TArray<FxExpression *> Parameters;
+};
+extern TDeletingArray<FStateTempCall *> StateTempCalls;
 
 struct FStateExpression
 {

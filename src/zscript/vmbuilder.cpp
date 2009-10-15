@@ -227,6 +227,10 @@ int VMFunctionBuilder::GetConstantString(FString val)
 
 int VMFunctionBuilder::GetConstantAddress(void *ptr, VM_ATAG tag)
 {
+	if (ptr == NULL)
+	{ // Make all NULL pointers generic. (Or should we allow typed NULLs?)
+		tag = ATAG_GENERIC;
+	}
 	AddrKonst *locp = AddressConstants.CheckKey(ptr);
 	if (locp != NULL)
 	{

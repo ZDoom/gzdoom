@@ -886,8 +886,9 @@ bool PIT_CheckThing (AActor *thing, FCheckPosition &tm)
 	// Check for blasted thing running into another
 	if ((tm.thing->flags2 & MF2_BLASTED) && (thing->flags & MF_SHOOTABLE))
 	{
-		if (!(thing->flags2 & MF2_BOSS) && (thing->flags3 & MF3_ISMONSTER))
+		if (!(thing->flags2 & MF2_BOSS) && (thing->flags3 & MF3_ISMONSTER) && !(thing->flags3 & MF3_DONTBLAST))
 		{
+			// ideally this should take the mass factor into account
 			thing->velx += tm.thing->velx;
 			thing->vely += tm.thing->vely;
 			if ((thing->velx + thing->vely) > 3*FRACUNIT)

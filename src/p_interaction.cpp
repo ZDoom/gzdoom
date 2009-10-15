@@ -1009,6 +1009,8 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 				if (damage <= 0) return;
 			}
 		}
+		damage = FixedMul(damage, target->DamageFactor);
+		if (damage <= 0) return;
 
 		damage = target->TakeSpecialDamage (inflictor, source, damage, mod);
 	}

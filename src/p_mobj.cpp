@@ -309,6 +309,10 @@ void AActor::Serialize (FArchive &arc)
 	{
 		arc << PainThreshold;
 	}
+	if (SaveVersion >= 1914)
+	{
+		arc << DamageFactor;
+	}
 
 	for(int i=0; i<10; i++) arc << uservar[i];
 

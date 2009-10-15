@@ -850,6 +850,7 @@ public:
 	SWORD PainChance;
 	int PainThreshold;
 	FNameNoInit DamageType;
+	fixed_t DamageFactor;
 
 	FState *SpawnState;
 	FState *SeeState;

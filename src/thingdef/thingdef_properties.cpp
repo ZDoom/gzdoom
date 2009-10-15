@@ -924,18 +924,25 @@ DEFINE_PROPERTY(damagetype, S, Actor)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_PROPERTY(damagefactor, SF, Actor)
+DEFINE_PROPERTY(damagefactor, ZF, Actor)
 {
 	PROP_STRING_PARM(str, 0);
 	PROP_FIXED_PARM(id, 1);
 
-	if (info->DamageFactors == NULL) info->DamageFactors=new DmgFactors;
+	if (str == NULL)
+	{
+		defaults->DamageFactor = id;
+	}
+	else
+	{
+		if (info->DamageFactors == NULL) info->DamageFactors=new DmgFactors;
 
-	FName dmgType;
-	if (!stricmp(str, "Normal")) dmgType = NAME_None;
-	else dmgType=str;
+		FName dmgType;
+		if (!stricmp(str, "Normal")) dmgType = NAME_None;
+		else dmgType=str;
 
-	(*info->DamageFactors)[dmgType]=id;
+		(*info->DamageFactors)[dmgType]=id;
+	}
 }
 
 //==========================================================================

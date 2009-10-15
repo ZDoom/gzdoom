@@ -1,4 +1,9 @@
 October 15, 2009  (Changes by Graf Zahl)
+- added ACS CheckActprClass function
+- fixed: When a blasted actor collided with another one this other actor's
+  DONTBLAST flag was not checked.
+- added a global DamageFactor actor property. All damage this actor takes is multiplied
+  by this factor in addition to damage type specific damage factors.
 - added better earthquake functions for ACS and DECORATE.
 
 October 10, 2009  (Changes by Graf Zahl)

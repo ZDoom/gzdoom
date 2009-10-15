@@ -282,6 +282,7 @@ static void FinishThingdef()
 	int errorcount = StateParams.ResolveAll();
 	unsigned i, j;
 
+	FILE *dump = fopen("disasm.txt", "w");
 	for (i = 0; i < StateTempCalls.Size(); ++i)
 	{
 		FStateTempCall *tcall = StateTempCalls[i];
@@ -306,13 +307,14 @@ static void FinishThingdef()
 		int labellen = mysnprintf(label, countof(label), "Function %s.States[%d] (*%d)",
 			tcall->ActorInfo->Class->TypeName.GetChars(),
 			tcall->FirstState, tcall->NumStates);
-		Printf("\n%.*s %s %.*s", MAX(3, 38 - labellen / 2), marks, label, MAX(3, 38 - labellen / 2), marks);
-		VMDumpConstants(func);
-		Printf("\nDisassembly:\n");
-		VMDisasm(func->Code, func->NumCodeBytes / 4, func);
+		fprintf(dump, "\n%.*s %s %.*s", MAX(3, 38 - labellen / 2), marks, label, MAX(3, 38 - labellen / 2), marks);
+		VMDumpConstants(dump, func);
+		fprintf(dump, "\nDisassembly:\n");
+		VMDisasm(dump, func->Code, func->NumCodeBytes / 4, func);
 #endif
 		//if(i==6) I_Error("Poop");
 	}
+	fclose(dump);
 	I_Error("Poop");
 
 	for (i = 0; i < PClass::m_Types.Size(); i++)

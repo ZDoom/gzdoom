@@ -395,6 +395,13 @@ begin:
 		assert(*pc == OP_JMP);
 		pc += (1 + *((VM_SHALF *)pc + 1)) << 2;
 		NEXTOP;
+	OP(PARAMI):
+		assert(f->NumParam < sfunc->MaxParam);
+		{
+			VMValue *param = &reg.param[f->NumParam++];
+			::new(param) VMValue(ABCs);
+		}
+		NEXTOP;
 	OP(PARAM):
 		assert(f->NumParam < sfunc->MaxParam);
 		{

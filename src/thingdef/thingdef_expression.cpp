@@ -334,6 +334,7 @@ FxParameter::FxParameter(FxExpression *operand)
 : FxExpression(operand->ScriptPosition)
 {
 	Operand = operand;
+	ValueType = operand->ValueType;
 }
 
 //==========================================================================
@@ -357,7 +358,21 @@ FxExpression *FxParameter::Resolve(FCompileContext& ctx)
 {
 	CHECKRESOLVED();
 	SAFE_RESOLVE(Operand, ctx);
+	ValueType = Operand->ValueType;
 	return this;
+}
+
+static void EmitConstantInt(VMFunctionBuilder *build, int val)
+{
+	// If it fits in 24 bits, use PARAMI instead of PARAM.
+	if ((val << 8) >> 8)
+	{
+		build->Emit(OP_PARAMI, val);
+	}
+	else
+	{
+		build->Emit(OP_PARAM, 0, REGT_INT | REGT_KONST, build->GetConstantInt(val));
+	}
 }
 
 ExpEmit FxParameter::Emit(VMFunctionBuilder *build)
@@ -367,7 +382,7 @@ ExpEmit FxParameter::Emit(VMFunctionBuilder *build)
 		ExpVal val = Operand->EvalExpression(NULL);
 		if (val.Type == VAL_Int || val.Type == VAL_Sound || val.Type == VAL_Name || val.Type == VAL_Color)
 		{
-			build->Emit(OP_PARAM, 0, REGT_INT | REGT_KONST, build->GetConstantInt(val.Int));
+			EmitConstantInt(build, val.Int);
 		}
 		else if (val.Type == VAL_Float)
 		{
@@ -398,6 +413,7 @@ ExpEmit FxParameter::Emit(VMFunctionBuilder *build)
 		else
 		{
 			build->Emit(OP_PARAM, 0, where.RegType, where.RegNum);
+			build->FreeReg(where.RegType, where.RegNum);
 		}
 	}
 	return ExpEmit();
@@ -2366,8 +2382,8 @@ FxRandom::FxRandom(FRandom * r, FxExpression *mi, FxExpression *ma, const FScrip
 {
 	if (mi != NULL && ma != NULL)
 	{
-		min = new FxIntCast(mi);
-		max = new FxIntCast(ma);
+		min = new FxParameter(new FxIntCast(mi));
+		max = new FxParameter(new FxIntCast(ma));
 	}
 	else min = max = NULL;
 	rng = r;
@@ -2397,17 +2413,11 @@ FxExpression *FxRandom::Resolve(FCompileContext &ctx)
 	CHECKRESOLVED();
 	if (min && max)
 	{
-		if (min->ValueType != VAL_Int)
-		{
-			min = new FxIntCast(min);
-		}
-		if (max->ValueType != VAL_Int)
-		{
-			max = new FxIntCast(max);
-		}
 		RESOLVE(min, ctx);
 		RESOLVE(max, ctx);
 		ABORT(min && max);
+		assert(min->ValueType == VAL_Int);
+		assert(max->ValueType == VAL_Int);
 	}
 	return this;
 };
@@ -2489,28 +2499,8 @@ ExpEmit FxRandom::Emit(VMFunctionBuilder *build)
 	build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, build->GetConstantAddress(rng, ATAG_RNG));
 	if (min != NULL && max != NULL)
 	{
-		ExpEmit op = min->Emit(build);
-		assert(op.RegType == REGT_INT);
-		if (op.Konst)
-		{
-			build->Emit(OP_PARAM, 0, REGT_INT | REGT_KONST, op.RegNum);
-		}
-		else
-		{
-			build->FreeReg(REGT_INT, op.RegNum);
-			build->Emit(OP_PARAM, 0, REGT_INT, op.RegNum);
-		}
-		op = max->Emit(build);
-		assert(op.RegType == REGT_INT);
-		if (op.Konst)
-		{
-			build->Emit(OP_PARAM, 0, REGT_INT | REGT_KONST, op.RegNum);
-		}
-		else
-		{
-			build->FreeReg(REGT_INT, op.RegNum);
-			build->Emit(OP_PARAM, 0, REGT_INT, op.RegNum);
-		}
+		min->Emit(build);
+		max->Emit(build);
 		build->Emit(OP_CALL_K, build->GetConstantAddress(callfunc, ATAG_OBJECT), 3, 1);
 	}
 	else
@@ -2532,8 +2522,8 @@ FxFRandom::FxFRandom(FRandom *r, FxExpression *mi, FxExpression *ma, const FScri
 {
 	if (mi != NULL && ma != NULL)
 	{
-		min = mi;
-		max = ma;
+		min = new FxParameter(new FxFloatCast(mi));
+		max = new FxParameter(new FxFloatCast(ma));
 	}
 }
 
@@ -2614,28 +2604,8 @@ ExpEmit FxFRandom::Emit(VMFunctionBuilder *build)
 	build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, build->GetConstantAddress(rng, ATAG_RNG));
 	if (min != NULL && max != NULL)
 	{
-		ExpEmit op = min->Emit(build);
-		assert(op.RegType == REGT_FLOAT);
-		if (op.Konst)
-		{
-			build->Emit(OP_PARAM, 0, REGT_FLOAT | REGT_KONST, op.RegNum);
-		}
-		else
-		{
-			build->FreeReg(REGT_FLOAT, op.RegNum);
-			build->Emit(OP_PARAM, 0, REGT_FLOAT, op.RegNum);
-		}
-		op = max->Emit(build);
-		assert(op.RegType == REGT_FLOAT);
-		if (op.Konst)
-		{
-			build->Emit(OP_PARAM, 0, REGT_FLOAT | REGT_KONST, op.RegNum);
-		}
-		else
-		{
-			build->FreeReg(REGT_FLOAT, op.RegNum);
-			build->Emit(OP_PARAM, 0, REGT_FLOAT, op.RegNum);
-		}
+		min->Emit(build);
+		max->Emit(build);
 		build->Emit(OP_CALL_K, build->GetConstantAddress(callfunc, ATAG_OBJECT), 3, 1);
 	}
 	else
@@ -2659,6 +2629,7 @@ FxRandom2::FxRandom2(FRandom *r, FxExpression *m, const FScriptPosition &pos)
 	rng = r;
 	if (m) mask = new FxIntCast(m);
 	else mask = new FxConstant(-1, pos);
+	mask = new FxParameter(mask);
 	ValueType = VAL_Int;
 }
 
@@ -2721,17 +2692,7 @@ ExpEmit FxRandom2::Emit(VMFunctionBuilder *build)
 	callfunc = ((PSymbolVMFunction *)sym)->Function;
 
 	build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, build->GetConstantAddress(rng, ATAG_RNG));
-	ExpEmit op = mask->Emit(build);
-	assert(op.RegType == REGT_INT);
-	if (op.Konst)
-	{
-		build->Emit(OP_PARAM, 0, REGT_INT | REGT_KONST, op.RegNum);
-	}
-	else
-	{
-		build->FreeReg(REGT_INT, op.RegNum);
-		build->Emit(OP_PARAM, 0, REGT_INT, op.RegNum);
-	}
+	mask->Emit(build);
 	build->Emit(OP_CALL_K, build->GetConstantAddress(callfunc, ATAG_OBJECT), 2, 1);
 	ExpEmit out(build, REGT_INT);
 	build->Emit(OP_RESULT, 0, REGT_INT, out.RegNum);
@@ -3513,17 +3474,22 @@ ExpEmit FxActionSpecialCall::Emit(VMFunctionBuilder *build)
 	assert(Self == NULL);
 	unsigned i = 0;
 
-	build->Emit(OP_PARAM, 0, REGT_INT | REGT_KONST, build->GetConstantInt(Special));	// pass special number
+	build->Emit(OP_PARAMI, Special);				// pass special number
 	build->Emit(OP_PARAM, 0, REGT_POINTER, 0);		// pass self
 	if (ArgList != NULL)
 	{
 		for (; i < ArgList->Size(); ++i)
 		{
-			ExpEmit arg((*ArgList)[i]->Emit(build));
-			assert(arg.RegType == REGT_INT);
-			build->Emit(OP_PARAM, 0, arg.RegType | (arg.Konst ? REGT_KONST : 0), arg.RegNum);
-			if (!arg.Konst)
+			FxExpression *argex = (*ArgList)[i];
+			assert(argex->ValueType == VAL_Int);
+			if (argex->isConstant())
 			{
+				EmitConstantInt(build, argex->EvalExpression(NULL).GetInt());
+			}
+			else
+			{
+				ExpEmit arg(argex->Emit(build));
+				build->Emit(OP_PARAM, 0, arg.RegType, arg.RegNum);
 				build->FreeReg(arg.RegType, arg.RegNum);
 			}
 		}
@@ -3991,7 +3957,7 @@ ExpEmit FxMultiNameState::Emit(VMFunctionBuilder *build)
 	build->Emit(OP_PARAM, 0, REGT_POINTER, 0);		// pass self
 	for (unsigned i = 0; i < names.Size(); ++i)
 	{
-		build->Emit(OP_PARAM, 0, REGT_INT | REGT_KONST, build->GetConstantInt(names[i]));
+		EmitConstantInt(build, names[i]);
 	}
 
 	// Find the DecoFindMultiNameState function. If not found, create it and install it

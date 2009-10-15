@@ -465,6 +465,10 @@ size_t VMFunctionBuilder::Emit(int opcode, int opabc)
 #else
 	*(VM_UWORD *)&Code[loc] = opcode | (opabc << 8);
 #endif
+	if (opcode == OP_PARAMI)
+	{
+		ParamChange(1);
+	}
 	return loc / 4;
 }
 

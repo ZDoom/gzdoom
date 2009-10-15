@@ -74,6 +74,7 @@ xx(TEST,	test,	RII16),		// if (dA != BC) then pc++
 xx(JMP,		jmp,	I24),		// pc += ABC		-- The ABC fields contain a signed 24-bit offset.
 xx(IJMP,	ijmp,	RII16),		// pc += dA + BC	-- BC is a signed offset. The target instruction must be a JMP.
 xx(PARAM,	param,	__BCP),		// push parameter encoded in BC for function call (B=regtype, C=regnum)
+xx(PARAMI,	parami,	I24),		// push immediate, signed integer for function call
 xx(CALL,	call,	RPI8I8),	// Call function pkA with parameter count B and expected result count C
 xx(CALL_K,	call,	KPI8I8),
 xx(RESULT,	result,	__BCP),		// Result should go in register encoded in BC (in caller, after CALL)
@@ -106,7 +107,7 @@ xx(SRA_RI,		sra,	RIRII8),
 xx(SRA_KR,		sra,	RIKIRI),
 xx(ADD_RR,		add,	RIRIRI),		// dA = dB + dkC
 xx(ADD_RK,		add,	RIRIKI),
-xx(ADDI,		add,	RIRIIs),		// dA = dB + C		-- C is a signed 8-bit constant
+xx(ADDI,		addi,	RIRIIs),		// dA = dB + C		-- C is a signed 8-bit constant
 xx(SUB_RR,		sub,	RIRIRI),		// dA = dkB - dkC
 xx(SUB_RK,		sub,	RIRIKI),
 xx(SUB_KR,		sub,	RIKIRI),

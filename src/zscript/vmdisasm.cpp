@@ -95,8 +95,10 @@ const VMOpInfo OpInfo[NUM_OPS] =
 };
 
 #ifdef WORDS_BIGENDIAN
+#define ABCs(x)			((*(VM_SWORD *)(x) << 8) >> 8)
 #define JMPOFS(x)		((*(VM_SWORD *)(x) << 8) >> 6)
 #else
+#define ABCs(x)			(*(VM_SWORD *)(x) >> 8)
 #define JMPOFS(x)		((*(VM_SWORD *)(x) >> 6) & ~3)
 #endif
 
@@ -212,6 +214,10 @@ void VMDisasm(FILE *out, const VM_UBYTE *code, int codesize, const VMScriptFunct
 		case OP_JMP:
 		case OP_TRY:
 			col = printf_wrapper(out, "%08x", i + 4 + JMPOFS(&code[i]));
+			break;
+
+		case OP_PARAMI:
+			col = printf_wrapper(out, "%d", i + 4 + ABCs(&code[i]));
 			break;
 
 		case OP_RET:

@@ -25,8 +25,10 @@
 #define BCs				(*(VM_SHALF *)(pc - 2))
 
 #ifdef WORDS_BIGENDIAN
+#define ABCs			((*(VM_SWORD *)(pc - 4) << 8) >> 8)
 #define JMPOFS(x)		((*(VM_SWORD *)(x) << 8) >> 6)
 #else
+#define ABCs			(*(VM_SWORD *)(pc - 4) >> 8)
 #define JMPOFS(x)		((*(VM_SWORD *)(x) >> 6) & ~3)
 #endif
 

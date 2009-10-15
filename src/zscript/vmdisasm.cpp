@@ -217,7 +217,7 @@ void VMDisasm(FILE *out, const VM_UBYTE *code, int codesize, const VMScriptFunct
 			break;
 
 		case OP_PARAMI:
-			col = printf_wrapper(out, "%d", i + 4 + ABCs(&code[i]));
+			col = printf_wrapper(out, "%d", ABCs(&code[i]));
 			break;
 
 		case OP_RET:

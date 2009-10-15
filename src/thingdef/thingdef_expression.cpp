@@ -365,7 +365,7 @@ FxExpression *FxParameter::Resolve(FCompileContext& ctx)
 static void EmitConstantInt(VMFunctionBuilder *build, int val)
 {
 	// If it fits in 24 bits, use PARAMI instead of PARAM.
-	if ((val << 8) >> 8)
+	if (((val << 8) >> 8) == val)
 	{
 		build->Emit(OP_PARAMI, val);
 	}

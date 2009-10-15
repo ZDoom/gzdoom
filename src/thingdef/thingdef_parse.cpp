@@ -151,6 +151,21 @@ FxExpression *ParseParameter(FScanner &sc, PClass *cls, char type, bool constant
 		{
 			sc.ScriptError("Default parameter must be constant.");
 		}
+		// Do automatic coercion between ints and floats.
+		if (type == 'x' || type == 'X')
+		{
+			if (x->ValueType != VAL_Int)
+			{
+				x = new FxIntCast(x);
+			}
+		}
+		else
+		{
+			if (x->ValueType != VAL_Float)
+			{
+				x = new FxFloatCast(x);
+			}
+		}
 		break;
 
 	default:

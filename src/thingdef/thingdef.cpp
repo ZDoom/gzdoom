@@ -303,7 +303,7 @@ static void FinishThingdef()
 		VMScriptFunction *func = buildit.MakeFunction();
 #if 1
 		const char *marks = "=======================================================";
-		char label[40];
+		char label[64];
 		int labellen = mysnprintf(label, countof(label), "Function %s.States[%d] (*%d)",
 			tcall->ActorInfo->Class->TypeName.GetChars(),
 			tcall->FirstState, tcall->NumStates);

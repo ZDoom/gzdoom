@@ -146,12 +146,13 @@ struct ExpVal
 
 struct ExpEmit
 {
-	ExpEmit() : RegNum(0), RegType(REGT_NIL) {}
-	ExpEmit(int reg, int type) : RegNum(reg), RegType(type) {}
-	ExpEmit(int reg, int type, bool konst)  : RegNum(reg), RegType(type), Konst(konst) {}
+	ExpEmit() : RegNum(0), RegType(REGT_NIL), Konst(false), Fixed(false) {}
+	ExpEmit(int reg, int type) : RegNum(reg), RegType(type), Konst(false), Fixed(false) {}
+	ExpEmit(int reg, int type, bool konst)  : RegNum(reg), RegType(type), Konst(konst), Fixed(false) {}
 	ExpEmit(VMFunctionBuilder *build, int type);
+	void Free(VMFunctionBuilder *build);
 
-	BYTE RegNum, RegType, Konst;
+	BYTE RegNum, RegType, Konst:1, Fixed:1;
 };
 
 //==========================================================================

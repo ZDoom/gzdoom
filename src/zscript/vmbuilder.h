@@ -50,9 +50,6 @@ public:
 	// Track available registers.
 	RegAvailability Registers[4];
 
-	// Free a register.
-	void FreeReg(int regtype, int regnum) { Registers[regtype].Return(regnum, 1); }
-
 private:
 	struct AddrKonst
 	{

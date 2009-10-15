@@ -79,8 +79,16 @@ DEFINE_MEMBER_VARIABLE(Score, AActor)
 DEFINE_MEMBER_VARIABLE(uservar, AActor)
 
 ExpEmit::ExpEmit(VMFunctionBuilder *build, int type)
-: RegNum(build->Registers[type].Get(1)), RegType(type), Konst(false)
+: RegNum(build->Registers[type].Get(1)), RegType(type), Konst(false), Fixed(false)
 {
+}
+
+void ExpEmit::Free(VMFunctionBuilder *build)
+{
+	if (!Fixed && !Konst)
+	{
+		build->Registers[RegType].Return(RegNum, 1);
+	}
 }
 
 //==========================================================================
@@ -413,7 +421,7 @@ ExpEmit FxParameter::Emit(VMFunctionBuilder *build)
 		else
 		{
 			build->Emit(OP_PARAM, 0, where.RegType, where.RegNum);
-			build->FreeReg(where.RegType, where.RegNum);
+			where.Free(build);
 		}
 	}
 	return ExpEmit();
@@ -664,7 +672,7 @@ ExpEmit FxFloatCast::Emit(VMFunctionBuilder *build)
 	ExpEmit from = basex->Emit(build);
 	assert(!from.Konst);
 	assert(basex->ValueType == VAL_Int);
-	build->FreeReg(from.RegType, from.RegNum);
+	from.Free(build);
 	ExpEmit to(build, REGT_FLOAT);
 	build->Emit(OP_CAST, to.RegNum, from.RegNum, CAST_I2F);
 	return to;
@@ -991,9 +999,9 @@ ExpVal FxUnaryNotBoolean::EvalExpression (AActor *self)
 ExpEmit FxUnaryNotBoolean::Emit(VMFunctionBuilder *build)
 {
 	ExpEmit from = Operand->Emit(build);
-	assert(from.Konst != 0);
+	assert(!from.Konst);
 	ExpEmit to(build, REGT_INT);
-	build->FreeReg(from.RegType, from.RegNum);
+	from.Free(build);
 
 	// Preload result with 0.
 	build->Emit(OP_LI, to.RegNum, 0, 0);
@@ -1207,11 +1215,8 @@ ExpEmit FxAddSub::Emit(VMFunctionBuilder *build)
 			swap(op1, op2);
 		}
 		assert(!op1.Konst);
-		build->FreeReg(op1.RegType, op1.RegNum);
-		if (!op2.Konst)
-		{
-			build->FreeReg(op2.RegType, op2.RegNum);
-		}
+		op1.Free(build);
+		op2.Free(build);
 		if (ValueType == VAL_Float)
 		{
 			assert(op1.RegType == REGT_FLOAT && op2.RegType == REGT_FLOAT);
@@ -1232,14 +1237,8 @@ ExpEmit FxAddSub::Emit(VMFunctionBuilder *build)
 	{
 		// Subtraction is not commutative, so either side may be constant (but not both).
 		assert(!op1.Konst || !op2.Konst);
-		if (!op1.Konst)
-		{
-			build->FreeReg(op1.RegType, op1.RegNum);
-		}
-		if (!op2.Konst)
-		{
-			build->FreeReg(op2.RegType, op2.RegNum);
-		}
+		op1.Free(build);
+		op2.Free(build);
 		if (ValueType == VAL_Float)
 		{
 			assert(op1.RegType == REGT_FLOAT && op2.RegType == REGT_FLOAT);
@@ -1397,11 +1396,8 @@ ExpEmit FxMulDiv::Emit(VMFunctionBuilder *build)
 			swap(op1, op2);
 		}
 		assert(!op1.Konst);
-		build->FreeReg(op1.RegType, op1.RegNum);
-		if (!op2.Konst)
-		{
-			build->FreeReg(op2.RegType, op2.RegNum);
-		}
+		op1.Free(build);
+		op2.Free(build);
 		if (ValueType == VAL_Float)
 		{
 			assert(op1.RegType == REGT_FLOAT && op2.RegType == REGT_FLOAT);
@@ -1423,14 +1419,8 @@ ExpEmit FxMulDiv::Emit(VMFunctionBuilder *build)
 		// Division is not commutative, so either side may be constant (but not both).
 		assert(!op1.Konst || !op2.Konst);
 		assert(Operator == '%' || Operator == '/');
-		if (!op1.Konst)
-		{
-			build->FreeReg(op1.RegType, op1.RegNum);
-		}
-		if (!op2.Konst)
-		{
-			build->FreeReg(op2.RegType, op2.RegNum);
-		}
+		op1.Free(build);
+		op2.Free(build);
 		if (ValueType == VAL_Float)
 		{
 			assert(op1.RegType == REGT_FLOAT && op2.RegType == REGT_FLOAT);
@@ -1574,7 +1564,7 @@ ExpEmit FxCompareRel::Emit(VMFunctionBuilder *build)
 	}
 	else
 	{
-		build->FreeReg(op2.RegType, op2.RegNum);
+		op2.Free(build);
 	}
 	if (op1.Konst)
 	{
@@ -1582,7 +1572,7 @@ ExpEmit FxCompareRel::Emit(VMFunctionBuilder *build)
 	}
 	else
 	{
-		build->FreeReg(op1.RegType, op1.RegNum);
+		op1.Free(build);
 	}
 	ExpEmit to(build, op1.RegType);
 
@@ -1715,10 +1705,10 @@ ExpEmit FxCompareEq::Emit(VMFunctionBuilder *build)
 	instr = op1.RegType == REGT_INT ? OP_EQ_R :
 			op1.RegType == REGT_FLOAT ? OP_EQF_R :
 			OP_EQA_R;
-	build->FreeReg(op1.RegType, op1.RegNum);
+	op1.Free(build);
 	if (!op2.Konst)
 	{
-		build->FreeReg(op2.RegType, op2.RegNum);
+		op2.Free(build);
 	}
 	else
 	{
@@ -1863,7 +1853,7 @@ ExpEmit FxBinaryInt::Emit(VMFunctionBuilder *build)
 		{
 			op2 = right->Emit(build);
 			assert(!op2.Konst);
-			build->FreeReg(op2.RegType, op2.RegNum);
+			op2.Free(build);
 			rop = op2.RegNum;
 		}
 	}
@@ -1876,14 +1866,11 @@ ExpEmit FxBinaryInt::Emit(VMFunctionBuilder *build)
 		}
 		assert(!op1.Konst);
 		rop = op2.RegNum;
-		if (!op2.Konst)
-		{
-			build->FreeReg(op2.RegType, op2.RegNum);
-		}
+		op2.Free(build);
 	}
 	if (!op1.Konst)
 	{
-		build->FreeReg(op1.RegType, op1.RegNum);
+		op1.Free(build);
 		if (!op2.Konst)
 		{
 			instr = InstrMap[index][0];
@@ -2058,7 +2045,7 @@ ExpEmit FxBinaryLogical::Emit(VMFunctionBuilder *build)
 	ExpEmit op1 = left->Emit(build);
 	assert(!op1.Konst);
 	int zero = build->GetConstantInt(0);
-	build->FreeReg(op1.RegType, op1.RegNum);
+	op1.Free(build);
 
 	if (Operator == TK_AndAnd)
 	{
@@ -2069,7 +2056,7 @@ ExpEmit FxBinaryLogical::Emit(VMFunctionBuilder *build)
 		// Evaluate op2.
 		ExpEmit op2 = right->Emit(build);
 		assert(!op2.Konst);
-		build->FreeReg(op2.RegType, op2.RegNum);
+		op2.Free(build);
 
 		ExpEmit to(build, REGT_INT);
 		build->Emit(OP_EQ_K, 0, op2.RegNum, zero);
@@ -2090,7 +2077,7 @@ ExpEmit FxBinaryLogical::Emit(VMFunctionBuilder *build)
 		// Evaluate op2.
 		ExpEmit op2 = right->Emit(build);
 		assert(!op2.Konst);
-		build->FreeReg(op2.RegType, op2.RegNum);
+		op2.Free(build);
 
 		ExpEmit to(build, REGT_INT);
 		build->Emit(OP_EQ_K, 1, op2.RegNum, zero);
@@ -2250,7 +2237,7 @@ ExpEmit FxConditional::Emit(VMFunctionBuilder *build)
 			// Move result from the register returned by "false" to the one
 			// returned by "true" so that only one register is returned by
 			// this tree.
-			build->FreeReg(falseop.RegType, falseop.RegNum);
+			falseop.Free(build);
 			if (falseop.RegType == REGT_INT)
 			{
 				build->Emit(OP_MOVE, out.RegNum, falseop.RegNum, 0);
@@ -2848,7 +2835,9 @@ ExpVal FxSelf::EvalExpression (AActor *self)
 ExpEmit FxSelf::Emit(VMFunctionBuilder *build)
 {
 	// self is always the first pointer passed to the function;
-	return ExpEmit(0, REGT_POINTER);
+	ExpEmit me(0, REGT_POINTER);
+	me.Fixed = true;
+	return me;
 }
 
 //==========================================================================
@@ -3059,10 +3048,7 @@ ExpEmit FxClassMember::Emit(VMFunctionBuilder *build)
 		{
 			return obj;
 		}
-		if (!obj.Konst)
-		{
-			build->FreeReg(obj.RegType, obj.RegNum);
-		}
+		obj.Free(build);
 		ExpEmit out(build, REGT_POINTER);
 		build->Emit(OP_ADDA_RK, out.RegNum, obj.RegNum, build->GetConstantInt((int)membervar->offset));
 		return out;
@@ -3117,7 +3103,7 @@ ExpEmit FxClassMember::Emit(VMFunctionBuilder *build)
 		build->Emit(OP_LW, tmp.RegNum, obj.RegNum, offsetreg);
 		build->Emit(OP_CAST, loc.RegNum, tmp.RegNum, CAST_I2F);
 		build->Emit(OP_MULF_RK, loc.RegNum, loc.RegNum, build->GetConstantFloat(90.0 / ANGLE_90));
-		build->FreeReg(tmp.RegType, tmp.RegNum);
+		tmp.Free(build);
 		break;
 
 	case VAL_Object:
@@ -3129,7 +3115,7 @@ ExpEmit FxClassMember::Emit(VMFunctionBuilder *build)
 	default:
 		assert(0);
 	}
-	build->FreeReg(obj.RegType, obj.RegNum);
+	obj.Free(build);
 	return loc;
 }
 
@@ -3271,9 +3257,9 @@ ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 		build->Emit(OP_SLL_RI, indexv.RegNum, indexv.RegNum, 2);
 		build->Emit(OP_BOUND, indexv.RegNum, Array->ValueType.size);
 		build->Emit(OP_LW_R, dest.RegNum, start.RegNum, indexv.RegNum);
-		build->FreeReg(indexv.RegType, indexv.RegNum);
+		indexv.Free(build);
 	}
-	build->FreeReg(start.RegType, start.RegNum);
+	start.Free(build);
 	return dest;
 }
 
@@ -3490,7 +3476,7 @@ ExpEmit FxActionSpecialCall::Emit(VMFunctionBuilder *build)
 			{
 				ExpEmit arg(argex->Emit(build));
 				build->Emit(OP_PARAM, 0, arg.RegType, arg.RegNum);
-				build->FreeReg(arg.RegType, arg.RegNum);
+				arg.Free(build);
 			}
 		}
 	}
@@ -3772,7 +3758,7 @@ ExpEmit FxClassTypeCast::Emit(VMFunctionBuilder *build)
 
 	build->Emit(OP_CALL_K, build->GetConstantAddress(callfunc, ATAG_OBJECT), 2, 1);
 	build->Emit(OP_RESULT, 0, REGT_POINTER, dest.RegNum);
-	build->FreeReg(clsname.RegType, clsname.RegNum);
+	clsname.Free(build);
 	return dest;
 }
 

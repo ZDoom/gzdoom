@@ -292,6 +292,10 @@ static void FinishThingdef()
 			tcall->Parameters[j]->Resolve(ctx);
 		}
 		VMFunctionBuilder buildit;
+		// Allocate registers used to pass parameters in.
+		// self, stateowner, state, statecalldata (all are pointers)
+		buildit.Registers[REGT_POINTER].Get(4);
+		// Emit code for action parameters.
 		for (j = 0; j < tcall->Parameters.Size(); ++j)
 		{
 			FxExpression *p = /*new FxParameter*/(tcall->Parameters[j]);
@@ -308,6 +312,8 @@ static void FinishThingdef()
 			tcall->ActorInfo->Class->TypeName.GetChars(),
 			tcall->FirstState, tcall->NumStates);
 		fprintf(dump, "\n%.*s %s %.*s", MAX(3, 38 - labellen / 2), marks, label, MAX(3, 38 - labellen / 2), marks);
+		fprintf(dump, "\nInteger regs: %-3d  Float regs: %-3d  Address regs: %-3d  String regs: %-3d\nStack size: %d\n",
+			func->NumRegD, func->NumRegF, func->NumRegA, func->NumRegS, func->MaxParam);
 		VMDumpConstants(dump, func);
 		fprintf(dump, "\nDisassembly:\n");
 		VMDisasm(dump, func->Code, func->NumCodeBytes / 4, func);

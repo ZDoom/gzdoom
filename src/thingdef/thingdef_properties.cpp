@@ -186,7 +186,7 @@ int MatchString (const char *in, const char **strings)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_INFO_PROPERTY(game, T, Actor)
+DEFINE_INFO_PROPERTY(game, S, Actor)
 {
 	PROP_STRING_PARM(str, 0);
 	if (!stricmp(str, "Doom"))
@@ -1302,7 +1302,7 @@ DEFINE_CLASS_PROPERTY(pickupflash, S, Inventory)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_CLASS_PROPERTY(pickupmessage, S, Inventory)
+DEFINE_CLASS_PROPERTY(pickupmessage, T, Inventory)
 {
 	PROP_STRING_PARM(str, 0);
 	info->Class->Meta.SetMetaString(AIMETA_PickupMessage, str);
@@ -1354,7 +1354,7 @@ DEFINE_CLASS_PROPERTY(givequest, I, Inventory)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_CLASS_PROPERTY(lowmessage, IS, Health)
+DEFINE_CLASS_PROPERTY(lowmessage, IT, Health)
 {
 	PROP_INT_PARM(i, 0);
 	PROP_STRING_PARM(str, 1);
@@ -1383,7 +1383,7 @@ DEFINE_CLASS_PROPERTY(number, I, PuzzleItem)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_CLASS_PROPERTY(failmessage, S, PuzzleItem)
+DEFINE_CLASS_PROPERTY(failmessage, T, PuzzleItem)
 {
 	PROP_STRING_PARM(str, 0);
 	info->Class->Meta.SetMetaString(AIMETA_PuzzFailMessage, str);

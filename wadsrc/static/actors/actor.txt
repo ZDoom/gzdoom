@@ -224,7 +224,7 @@ ACTOR Actor native //: Thinker
 	action native A_JumpIfInTargetInventory(class<Inventory> itemtype, int amount, state label);
 	action native A_GiveToTarget(class<Inventory> itemtype, int amount = 0);
 	action native A_TakeFromTarget(class<Inventory> itemtype, int amount = 0);
-	action native A_CountdownArg(int argnum);
+	action native A_CountdownArg(int argnum, state targstate = "");
 	action native A_CustomMeleeAttack(int damage = 0, sound meleesound = "", sound misssound = "", name damagetype = "none", bool bleed = true);
 	action native A_CustomComboAttack(class<Actor> missiletype, float spawnheight, int damage, sound meleesound = "", name damagetype = "none", bool bleed = true);
 	action native A_Burst(class<Actor> chunktype);

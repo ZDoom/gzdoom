@@ -63,7 +63,8 @@ enum EOuterKeywords
 	OUT_IFHERETIC,
 	OUT_IFHEXEN,
 	OUT_IFSTRIFE,
-	OUT_ENDIF
+	OUT_ENDIF,
+	OUT_DEFAULTTERRAIN
 };
 
 enum ETerrainKeywords
@@ -125,6 +126,7 @@ static void GenericParse (FScanner &sc, FGenericParse *parser, const char **keyw
 	void *fields, const char *type, FName name);
 static void ParseDamage (FScanner &sc, int keyword, void *fields);
 static void ParseFriction (FScanner &sc, int keyword, void *fields);
+static void ParseDefault (FScanner &sc);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -133,6 +135,7 @@ static void ParseFriction (FScanner &sc, int keyword, void *fields);
 FTerrainTypeArray TerrainTypes;
 TArray<FSplashDef> Splashes;
 TArray<FTerrainDef> Terrains;
+WORD DefaultTerrainType;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -146,6 +149,7 @@ static const char *OuterKeywords[] =
 	"ifhexen",
 	"ifstrife",
 	"endif",
+	"defaultterrain",
 	NULL
 };
 
@@ -222,27 +226,7 @@ static FGenericParse TerrainParser[] =
 	{ GEN_Bool,   {theoffsetof(FTerrainDef, AllowProtection)} },
 };
 
-/*
-struct
-{
-	char *name;
-	int type;
-	bool Heretic;
-}
- TerrainTypeDefs[] =
-{
-	{ "FLTWAWA1", FLOOR_WATER, true },
-	{ "FLTFLWW1", FLOOR_WATER, true },
-	{ "FLTLAVA1", FLOOR_LAVA, true },
-	{ "FLATHUH1", FLOOR_LAVA, true },
-	{ "FLTSLUD1", FLOOR_SLUDGE, true },
-	{ "X_005", FLOOR_WATER, false },
-	{ "X_001", FLOOR_LAVA, false },
-	{ "X_009", FLOOR_SLUDGE, false },
-	{ "F_033", FLOOR_ICE, false },
-	{ "END", -1 }
-};
-*/
+
 
 // CODE --------------------------------------------------------------------
 
@@ -258,9 +242,9 @@ void P_InitTerrainTypes ()
 	int lump;
 	int size;
 
-	size = (TexMan.NumTextures()+1)*sizeof(BYTE);
+	size = (TexMan.NumTextures()+1);
 	TerrainTypes.Resize(size);
-	memset (&TerrainTypes[0], 0, size);
+	TerrainTypes.Clear();
 
 	MakeDefaultTerrain ();
 
@@ -341,6 +325,10 @@ static void ParseOuter (FScanner &sc)
 
 			case OUT_FLOOR:
 				ParseFloor (sc);
+				break;
+
+			case OUT_DEFAULTTERRAIN:
+				ParseDefault (sc);
 				break;
 
 			case OUT_IFDOOM:
@@ -676,7 +664,27 @@ static void ParseFloor (FScanner &sc)
 		Printf ("Unknown terrain %s\n", sc.String);
 		terrain = 0;
 	}
-	TerrainTypes[picnum] = terrain;
+	TerrainTypes.Set(picnum.GetIndex(), terrain);
+}
+
+//==========================================================================
+//
+// ParseFloor
+//
+//==========================================================================
+
+static void ParseDefault (FScanner &sc)
+{
+	int terrain;
+
+	sc.MustGetString ();
+	terrain = FindTerrain (sc.String);
+	if (terrain == -1)
+	{
+		Printf ("Unknown terrain %s\n", sc.String);
+		terrain = 0;
+	}
+	DefaultTerrainType = terrain;
 }
 
 //==========================================================================

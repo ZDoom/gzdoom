@@ -396,9 +396,48 @@ void FRemapTable::AddColorRange(int start, int end, int _r1,int _g1, int _b1, in
 //
 //----------------------------------------------------------------------------
 
+void FRemapTable::AddDesaturation(int start, int end, float r1,float g1, float b1, float r2, float g2, float b2)
+{
+	r1 = clamp(r1, 0.0f, 2.0f);
+	g1 = clamp(g1, 0.0f, 2.0f);
+	b1 = clamp(b1, 0.0f, 2.0f);
+	r2 = clamp(r2, 0.0f, 2.0f);
+	g2 = clamp(g2, 0.0f, 2.0f);
+	b2 = clamp(b2, 0.0f, 2.0f);
+
+	r2 -= r1;
+	g2 -= g1;
+	b2 -= b1;
+	r1 *= 255;
+	g1 *= 255;
+	b1 *= 255;
+
+	for(int c=start; c < end; c++)
+	{
+		double intensity = (GPalette.BaseColors[c].r * 77 +
+							GPalette.BaseColors[c].g * 143 +
+							GPalette.BaseColors[c].b * 37) / 256.0;
+
+		PalEntry pe = PalEntry(	MIN(255, int(r1 + intensity*r2)), 
+								MIN(255, int(g1 + intensity*g2)), 
+								MIN(255, int(b1 + intensity*b2)));
+
+		Remap[c] = ColorMatcher.Pick(pe);
+		Palette[c] = pe;
+		Palette[c].a = c==0? 0:255;
+	}
+}
+
+//----------------------------------------------------------------------------
+//
+//
+//
+//----------------------------------------------------------------------------
+
 void FRemapTable::AddToTranslation(const char * range)
 {
 	int start,end;
+	bool desaturated = false;
 	FScanner sc;
 
 	sc.OpenMem("translation", range, int(strlen(range)));
@@ -412,7 +451,15 @@ void FRemapTable::AddToTranslation(const char * range)
 		sc.MustGetToken(TK_IntConst);
 		end = sc.Number;
 		sc.MustGetToken('=');
-		if (!sc.CheckToken('['))
+		if (start < 0 || start > 255 || end < 0 || end > 255)
+		{
+			sc.ScriptError("Palette index out of range");
+			return;
+		}
+
+		sc.MustGetAnyToken();
+
+		if (sc.TokenType != '[' && sc.TokenType != '%')
 		{
 			int pal1,pal2;
 
@@ -423,7 +470,7 @@ void FRemapTable::AddToTranslation(const char * range)
 			pal2 = sc.Number;
 			AddIndexRange(start, end, pal1, pal2);
 		}
-		else
+		else if (sc.TokenType == '[')
 		{ 
 			// translation using RGB values
 			int r1,g1,b1,r2,g2,b2;
@@ -455,6 +502,46 @@ void FRemapTable::AddToTranslation(const char * range)
 			sc.MustGetToken(']');
 
 			AddColorRange(start, end, r1, g1, b1, r2, g2, b2);
+		}
+		else if (sc.TokenType == '%')
+		{
+			// translation using RGB values
+			float r1,g1,b1,r2,g2,b2;
+
+			sc.MustGetToken('[');
+			sc.MustGetAnyToken();
+			if (sc.TokenType != TK_IntConst) sc.TokenMustBe(TK_FloatConst);
+			r1 = float(sc.Float);
+			sc.MustGetToken(',');
+
+			sc.MustGetAnyToken();
+			if (sc.TokenType != TK_IntConst) sc.TokenMustBe(TK_FloatConst);
+			g1 = float(sc.Float);
+			sc.MustGetToken(',');
+
+			sc.MustGetAnyToken();
+			if (sc.TokenType != TK_IntConst) sc.TokenMustBe(TK_FloatConst);
+			b1 = float(sc.Float);
+			sc.MustGetToken(']');
+			sc.MustGetToken(':');
+			sc.MustGetToken('[');
+
+			sc.MustGetAnyToken();
+			if (sc.TokenType != TK_IntConst) sc.TokenMustBe(TK_FloatConst);
+			r2 = float(sc.Float);
+			sc.MustGetToken(',');
+
+			sc.MustGetAnyToken();
+			if (sc.TokenType != TK_IntConst) sc.TokenMustBe(TK_FloatConst);
+			g2 = float(sc.Float);
+			sc.MustGetToken(',');
+
+			sc.MustGetAnyToken();
+			if (sc.TokenType != TK_IntConst) sc.TokenMustBe(TK_FloatConst);
+			b2 = float(sc.Float);
+			sc.MustGetToken(']');
+
+			AddDesaturation(start, end, r1, g1, b1, r2, g2, b2);
 		}
 	}
 	catch (CRecoverableError &err)

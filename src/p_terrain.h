@@ -39,24 +39,35 @@
 
 struct PClass;
 
-// This is just a wrapper class so that I don't have to expose FTextureID's implementation
-// to anything that doesn't really need it.
+extern WORD DefaultTerrainType;
+
+
 class FTerrainTypeArray
 {
 public:
-	TArray<BYTE> Types;
+	TArray<WORD> Types;
 
-	BYTE &operator [](FTextureID tex)
+	WORD operator [](FTextureID tex) const
 	{
-		return Types[tex.GetIndex()];
+		WORD type = Types[tex.GetIndex()];
+		return type == 0xffff? DefaultTerrainType : type;
 	}
-	BYTE &operator [](int texnum)
+	WORD operator [](int texnum) const
 	{
-		return Types[texnum];
+		WORD type = Types[texnum];
+		return type == 0xffff? DefaultTerrainType : type;
 	}
 	void Resize(unsigned newsize)
 	{
 		Types.Resize(newsize);
+	}
+	void Clear()
+	{
+		memset (&Types[0], 0xff, Types.Size()*sizeof(WORD));
+	}
+	void Set(int index, int value)
+	{
+		Types[index] = value;
 	}
 };
 

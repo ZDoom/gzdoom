@@ -592,9 +592,13 @@ static bool ParsePropertyParams(FScanner &sc, FPropertyInfo *prop, AActor *defau
 				// fall through
 
 			case 'S':
-			case 'T':
 				sc.MustGetString();
 				conv.s = strings[strings.Reserve(1)] = sc.String;
+				break;
+
+			case 'T':
+				sc.MustGetString();
+				conv.s = strings[strings.Reserve(1)] = strbin1(sc.String);
 				break;
 
 			case 'C':

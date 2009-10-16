@@ -1699,7 +1699,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Print)
 			con_midtime = time;
 		}
 		
-		C_MidPrint(font != NULL ? font : SmallFont, text);
+		FString formatted = strbin1(text);
+		C_MidPrint(font != NULL ? font : SmallFont, formatted.GetChars());
 		con_midtime = saved;
 	}
 }
@@ -1729,7 +1730,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_PrintBold)
 		con_midtime = time;
 	}
 	
-	C_MidPrintBold(font != NULL ? font : SmallFont, text);
+	FString formatted = strbin1(text);
+	C_MidPrintBold(font != NULL ? font : SmallFont, formatted.GetChars());
 	con_midtime = saved;
 }
 
@@ -1987,8 +1989,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_KillSiblings)
 //===========================================================================
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CountdownArg)
 {
-	ACTION_PARAM_START(1);
+	ACTION_PARAM_START(2);
 	ACTION_PARAM_INT(cnt, 0);
+	ACTION_PARAM_STATE(state, 1);
 
 	if (cnt<0 || cnt>=5) return;
 	if (!self->args[cnt]--)
@@ -2003,7 +2006,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CountdownArg)
 		}
 		else
 		{
-			self->SetState(self->FindState(NAME_Death));
+			// can't use "Death" as default parameter with current DECORATE parser.
+			if (state == NULL) state = self->FindState(NAME_Death);
+			self->SetState(state);
 		}
 	}
 

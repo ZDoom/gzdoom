@@ -252,7 +252,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LoadShotgun2)
 DEFINE_ACTION_FUNCTION(AActor, A_CloseShotgun2)
 {
 	S_Sound (self, CHAN_WEAPON, "weapons/sshotc", 1, ATTN_NORM);
-	CALL_ACTION(A_ReFire, self);
+	A_ReFire (self);
 }
 
 

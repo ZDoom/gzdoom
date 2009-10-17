@@ -94,14 +94,6 @@ const VMOpInfo OpInfo[NUM_OPS] =
 #include "vmops.h"
 };
 
-#ifdef WORDS_BIGENDIAN
-#define ABCs(x)			((*(VM_SWORD *)(x) << 8) >> 8)
-#define JMPOFS(x)		((*(VM_SWORD *)(x) << 8) >> 6)
-#else
-#define ABCs(x)			(*(VM_SWORD *)(x) >> 8)
-#define JMPOFS(x)		((*(VM_SWORD *)(x) >> 6) & ~3)
-#endif
-
 static int print_reg(FILE *out, int col, int arg, int mode, int immshift, const VMScriptFunction *func);
 
 static int printf_wrapper(FILE *f, const char *fmt, ...)
@@ -179,21 +171,21 @@ void VMDumpConstants(FILE *out, const VMScriptFunction *func)
 	}
 }
 
-void VMDisasm(FILE *out, const VM_UBYTE *code, int codesize, const VMScriptFunction *func)
+void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction *func)
 {
 	const char *name;
 	int col;
 	int mode;
 	int a;
 
-	for (int i = 0; i < codesize; i += 4)
+	for (int i = 0; i < codesize; ++i)
 	{
-		name = OpInfo[code[i]].Name;
-		mode = OpInfo[code[i]].Mode;
-		a = code[i+1];
+		name = OpInfo[code[i].op].Name;
+		mode = OpInfo[code[i].op].Mode;
+		a = code[i].a;
 
 		// String comparison encodes everything in a single instruction.
-		if (code[i] == OP_CMPS)
+		if (code[i].op == OP_CMPS)
 		{
 			switch (a & CMP_METHOD_MASK)
 			{
@@ -207,31 +199,31 @@ void VMDisasm(FILE *out, const VM_UBYTE *code, int codesize, const VMScriptFunct
 			a &= CMP_CHECK | CMP_APPROX;
 		}
 
-		printf_wrapper(out, "%08x: %02x%02x%02x%02x %-8s", i, code[i], code[i+1], code[i+2], code[i+3], name);
+		printf_wrapper(out, "%08x: %02x%02x%02x%02x %-8s", i << 2, code[i].op, code[i].a, code[i].b, code[i].c, name);
 		col = 0;
-		switch (code[i])
+		switch (code[i].op)
 		{
 		case OP_JMP:
 		case OP_TRY:
-			col = printf_wrapper(out, "%08x", i + 4 + JMPOFS(&code[i]));
+			col = printf_wrapper(out, "%08x", i + 4 + (code[i].i24 << 2));
 			break;
 
 		case OP_PARAMI:
-			col = printf_wrapper(out, "%d", ABCs(&code[i]));
+			col = printf_wrapper(out, "%d", code[i].i24);
 			break;
 
 		case OP_RET:
-			if (code[i+2] != REGT_NIL)
+			if (code[i].b != REGT_NIL)
 			{
-				if ((code[i+2] & REGT_FINAL) && a == 0)
+				if ((code[i].b & REGT_FINAL) && a == 0)
 				{
-					col = print_reg(out, 0, *(VM_UHALF *)&code[i+2], MODE_PARAM, 16, func);
+					col = print_reg(out, 0, code[i].i16u, MODE_PARAM, 16, func);
 				}
 				else
 				{
 					col = print_reg(out, 0, a, (mode & MODE_ATYPE) >> MODE_ASHIFT, 24, func);
-					col += print_reg(out, col, *(VM_UHALF *)&code[i+2], MODE_PARAM, 16, func);
-					if (code[i+2] & REGT_FINAL)
+					col += print_reg(out, col, code[i].i16u, MODE_PARAM, 16, func);
+					if (code[i].b & REGT_FINAL)
 					{
 						col += printf_wrapper(out, " [final]");
 					}
@@ -242,7 +234,7 @@ void VMDisasm(FILE *out, const VM_UBYTE *code, int codesize, const VMScriptFunct
 		default:
 			if ((mode & MODE_BCTYPE) == MODE_BCCAST)
 			{
-				switch (code[i+3])
+				switch (code[i].c)
 				{
 				case CAST_I2F:
 					mode = MODE_AF | MODE_BI | MODE_CUNUSED;
@@ -273,11 +265,11 @@ void VMDisasm(FILE *out, const VM_UBYTE *code, int codesize, const VMScriptFunct
 			col = print_reg(out, 0, a, (mode & MODE_ATYPE) >> MODE_ASHIFT, 24, func);
 			if ((mode & MODE_BCTYPE) == MODE_BCTHROW)
 			{
-				mode = (code[i+1] == 0) ? (MODE_BP | MODE_CUNUSED) : (MODE_BKP | MODE_CUNUSED);
+				mode = (code[i].a == 0) ? (MODE_BP | MODE_CUNUSED) : (MODE_BKP | MODE_CUNUSED);
 			}
 			else if ((mode & MODE_BCTYPE) == MODE_BCCATCH)
 			{
-				switch (code[i+1])
+				switch (code[i].a)
 				{
 				case 0:
 					mode = MODE_BUNUSED | MODE_CUNUSED;
@@ -298,12 +290,12 @@ void VMDisasm(FILE *out, const VM_UBYTE *code, int codesize, const VMScriptFunct
 			}
 			if ((mode & (MODE_BTYPE | MODE_CTYPE)) == MODE_BCJOINT)
 			{
-				col += print_reg(out, col, *(VM_UHALF *)&code[i+2], (mode & MODE_BCTYPE) >> MODE_BCSHIFT, 16, func);
+				col += print_reg(out, col, code[i].i16u, (mode & MODE_BCTYPE) >> MODE_BCSHIFT, 16, func);
 			}
 			else
 			{
-				col += print_reg(out, col, code[i+2], (mode & MODE_BTYPE) >> MODE_BSHIFT, 24, func);
-				col += print_reg(out, col, code[i+3], (mode & MODE_CTYPE) >> MODE_CSHIFT, 24, func);
+				col += print_reg(out, col, code[i].b, (mode & MODE_BTYPE) >> MODE_BSHIFT, 24, func);
+				col += print_reg(out, col, code[i].c, (mode & MODE_CTYPE) >> MODE_CSHIFT, 24, func);
 			}
 			break;
 		}
@@ -312,13 +304,13 @@ void VMDisasm(FILE *out, const VM_UBYTE *code, int codesize, const VMScriptFunct
 			col = 30;
 		}
 		printf_wrapper(out, "%*c", 30 - col, ';');
-		if (code[i] == OP_JMP || code[i] == OP_TRY)
+		if (code[i].op == OP_JMP || code[i].op == OP_TRY || code[i].op == OP_PARAMI)
 		{
-			printf_wrapper(out, "%d\n", JMPOFS(&code[i]) >> 2);
+			printf_wrapper(out, "%d\n", code[i].i24);
 		}
 		else
 		{
-			printf_wrapper(out, "%d,%d,%d\n", code[i+1], code[i+2], code[i+3]);
+			printf_wrapper(out, "%d,%d,%d\n", code[i].a, code[i].b, code[i].c);
 		}
 	}
 }
@@ -385,40 +377,46 @@ static int print_reg(FILE *out, int col, int arg, int mode, int immshift, const 
 
 	case MODE_PARAM:
 		{
-			union { VM_UHALF Together; struct { VM_UBYTE RegType, RegNum; }; } p;
-			p.Together = arg;
-			switch (p.RegType & (REGT_TYPE | REGT_KONST | REGT_MULTIREG))
+			int regtype, regnum;
+#ifdef __BIG_ENDIAN__
+			regtype = (arg >> 8) & 255;
+			regnum = arg & 255;
+#else
+			regtype = arg & 255;
+			regnum = (arg >> 8) & 255;
+#endif
+			switch (regtype & (REGT_TYPE | REGT_KONST | REGT_MULTIREG))
 			{
 			case REGT_INT:
-				return col+printf_wrapper(out, "d%d", p.RegNum);
+				return col+printf_wrapper(out, "d%d", regnum);
 			case REGT_FLOAT:
-				return col+printf_wrapper(out, "f%d", p.RegNum);
+				return col+printf_wrapper(out, "f%d", regnum);
 			case REGT_STRING:
-				return col+printf_wrapper(out, "s%d", p.RegNum);
+				return col+printf_wrapper(out, "s%d", regnum);
 			case REGT_POINTER:
-				return col+printf_wrapper(out, "a%d", p.RegNum);
+				return col+printf_wrapper(out, "a%d", regnum);
 			case REGT_FLOAT | REGT_MULTIREG:
-				return col+printf_wrapper(out, "v%d", p.RegNum);
+				return col+printf_wrapper(out, "v%d", regnum);
 			case REGT_INT | REGT_KONST:
-				return col+print_reg(out, 0, p.RegNum, MODE_KI, 0, func);
+				return col+print_reg(out, 0, regnum, MODE_KI, 0, func);
 			case REGT_FLOAT | REGT_KONST:
-				return col+print_reg(out, 0, p.RegNum, MODE_KF, 0, func);
+				return col+print_reg(out, 0, regnum, MODE_KF, 0, func);
 			case REGT_STRING | REGT_KONST:
-				return col+print_reg(out, 0, p.RegNum, MODE_KS, 0, func);
+				return col+print_reg(out, 0, regnum, MODE_KS, 0, func);
 			case REGT_POINTER | REGT_KONST:
-				return col+print_reg(out, 0, p.RegNum, MODE_KP, 0, func);
+				return col+print_reg(out, 0, regnum, MODE_KP, 0, func);
 			case REGT_FLOAT | REGT_MULTIREG | REGT_KONST:
-				return col+print_reg(out, 0, p.RegNum, MODE_KV, 0, func);
+				return col+print_reg(out, 0, regnum, MODE_KV, 0, func);
 			default:
-				if (p.RegType == REGT_NIL)
+				if (regtype == REGT_NIL)
 				{
 					return col+printf_wrapper(out, "nil");
 				}
 				return col+printf_wrapper(out, "param[t=%d,%c,%c,n=%d]",
-					p.RegType & REGT_TYPE,
-					p.RegType & REGT_KONST ? 'k' : 'r',
-					p.RegType & REGT_MULTIREG ? 'm' : 's',
-					p.RegNum);
+					regtype & REGT_TYPE,
+					regtype & REGT_KONST ? 'k' : 'r',
+					regtype & REGT_MULTIREG ? 'm' : 's',
+					regnum);
 			}
 		}
 

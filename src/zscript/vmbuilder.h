@@ -70,7 +70,7 @@ private:
 	int MaxParam;
 	int ActiveParam;
 
-	TArray<VM_UBYTE> Code;
+	TArray<VMOP> Code;
 
 	// PARAM increases ActiveParam; CALL decreases it.
 	void ParamChange(int delta);

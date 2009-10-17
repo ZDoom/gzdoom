@@ -316,7 +316,7 @@ static void FinishThingdef()
 			func->NumRegD, func->NumRegF, func->NumRegA, func->NumRegS, func->MaxParam);
 		VMDumpConstants(dump, func);
 		fprintf(dump, "\nDisassembly:\n");
-		VMDisasm(dump, func->Code, func->NumCodeBytes / 4, func);
+		VMDisasm(dump, func->Code, func->CodeSize, func);
 #endif
 		//if(i==6) I_Error("Poop");
 	}

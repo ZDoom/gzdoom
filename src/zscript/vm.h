@@ -17,7 +17,41 @@ typedef signed int			VM_SWORD;
 typedef VM_UBYTE			VM_ATAG;
 
 #define VM_EPSILON			(1/1024.0)
-#define VM_OPSIZE			4		// Number of bytes used by one opcode
+
+union VMOP
+{
+	struct
+	{
+		VM_UBYTE op, a, b, c;
+	};
+	struct
+	{
+		VM_SBYTE pad0, as, bs, cs;
+	};
+	struct
+	{
+		VM_SWORD pad1:8, i24:24;
+	};
+	struct
+	{
+		VM_SWORD pad2:16, i16:16;
+	};
+	struct
+	{
+		VM_UHALF pad3, i16u;
+	};
+	VM_UWORD word;
+
+	// Interesting fact: VC++ produces better code for i16 when it's defined
+	// as a bitfield than when it's defined as two discrete units.
+	// Compare:
+	//		mov		eax,dword ptr [op]		; As two discrete units
+	//		shr		eax,10h
+	//		movsx	eax,ax
+	// versus:
+	//		mov		eax,dword ptr [op]		; As a bitfield
+	//		sar		eax,10h
+};
 
 enum
 {
@@ -685,7 +719,7 @@ public:
 	VMScriptFunction();
 	~VMScriptFunction();
 	size_t PropagateMark();
-	VM_UBYTE *AllocCode(int numops);
+	VMOP *AllocCode(int numops);
 	int *AllocKonstD(int numkonst);
 	double *AllocKonstF(int numkonst);
 	FString *AllocKonstS(int numkonst);
@@ -694,13 +728,13 @@ public:
 	VM_ATAG *KonstATags() { return (VM_UBYTE *)(KonstA + NumKonstA); }
 	const VM_ATAG *KonstATags() const { return (VM_UBYTE *)(KonstA + NumKonstA); }
 
-	VM_UBYTE *Code;
+	VMOP *Code;
 	int *KonstD;
 	double *KonstF;
 	FString *KonstS;
 	FVoidObj *KonstA;
 	int ExtraSpace;
-	int NumCodeBytes;
+	int CodeSize;			// Size of code in instructions (not bytes)
 	VM_UBYTE NumRegD;
 	VM_UBYTE NumRegF;
 	VM_UBYTE NumRegS;
@@ -809,10 +843,10 @@ enum EVMEngine
 };
 
 void VMSelectEngine(EVMEngine engine);
-extern int (*VMExec)(VMFrameStack *stack, const VM_UBYTE *pc, VMReturn *ret, int numret);
+extern int (*VMExec)(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret);
 void VMFillParams(VMValue *params, VMFrame *callee, int numparam);
 
 void VMDumpConstants(FILE *out, const VMScriptFunction *func);
-void VMDisasm(FILE *out, const VM_UBYTE *code, int codesize, const VMScriptFunction *func);
+void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction *func);
 
 #endif

@@ -15,7 +15,7 @@ VMScriptFunction::VMScriptFunction()
 	KonstS = NULL;
 	KonstA = NULL;
 	ExtraSpace = 0;
-	NumCodeBytes = 0;
+	CodeSize = 0;
 	NumRegD = 0;
 	NumRegF = 0;
 	NumRegS = 0;
@@ -37,12 +37,11 @@ VMScriptFunction::~VMScriptFunction()
 	if (KonstA != NULL)		M_Free(KonstA);
 }
 
-VM_UBYTE *VMScriptFunction::AllocCode(int numops)
+VMOP *VMScriptFunction::AllocCode(int numops)
 {
 	assert(Code == NULL && numops > 0);
-	numops *= VM_OPSIZE;
-	NumCodeBytes = numops;
-	return Code = (VM_UBYTE *)M_Malloc(numops);
+	CodeSize = numops;
+	return Code = (VMOP *)M_Malloc(numops * sizeof(VMOP));
 }
 
 int *VMScriptFunction::AllocKonstD(int numkonst)

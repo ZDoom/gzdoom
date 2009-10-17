@@ -9,7 +9,7 @@
 
 #if COMPGOTO
 #define OP(x)	x
-#define NEXTOP	do { unsigned op = *pc; a = pc[1]; pc += 4; goto *ops[op]; } while(0)
+#define NEXTOP	do { unsigned op = pc->op; a = pc->a; pc++; goto *ops[op]; } while(0)
 #else
 #define OP(x)	case OP_##x
 #define NEXTOP	break
@@ -17,20 +17,14 @@
 
 #define luai_nummod(a,b)        ((a) - floor((a)/(b))*(b))
 
-#define A				(*(pc - 3))
-#define B				(*(pc - 2))
-#define C				(			*(pc - 1))
-#define Cs				(*(VM_SBYTE *)(pc - 1))
-#define BC				(*(VM_UHALF *)(pc - 2))
-#define BCs				(*(VM_SHALF *)(pc - 2))
-
-#ifdef WORDS_BIGENDIAN
-#define ABCs			((*(VM_SWORD *)(pc - 4) << 8) >> 8)
-#define JMPOFS(x)		((*(VM_SWORD *)(x) << 8) >> 6)
-#else
-#define ABCs			(*(VM_SWORD *)(pc - 4) >> 8)
-#define JMPOFS(x)		((*(VM_SWORD *)(x) >> 6) & ~3)
-#endif
+#define A				(pc[-1].a)
+#define B				(pc[-1].b)
+#define C				(pc[-1].c)
+#define Cs				(pc[-1].cs)
+#define BC				(pc[-1].i16u)
+#define BCs				(pc[-1].i16)
+#define ABCs			(pc[-1].i24)
+#define JMPOFS(x)		((x)->i24)
 
 #define KC				(konstd[C])
 #define RC				(reg.d[C])
@@ -52,10 +46,10 @@
 
 #define CMPJMP(test) \
 	if ((test) == (a & CMP_CHECK)) { \
-		assert(*pc == OP_JMP); \
-		pc += 4 + JMPOFS(pc); \
+		assert(pc->op == OP_JMP); \
+		pc += 1 + JMPOFS(pc); \
 	} else { \
-		pc += 4; \
+		pc += 1; \
 	}
 
 enum
@@ -112,7 +106,7 @@ struct VMExec_Unchecked
 #undef assert
 #include <assert.h>
 
-int (*VMExec)(VMFrameStack *stack, const VM_UBYTE *pc, VMReturn *ret, int numret) =
+int (*VMExec)(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret) =
 #ifdef NDEBUG
 VMExec_Unchecked::Exec
 #else

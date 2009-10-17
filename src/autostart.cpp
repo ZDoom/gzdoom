@@ -98,11 +98,11 @@ __declspec(allocate(".yreg$a")) void *const YRegHead = 0;
 // (There are linker scripts, but that apparently involves extracting the
 // default script from ld and then modifying it.)
 
-void *ARegHead const __attribute__((section(SECTION_AREG))) = 0;
-void *CRegHead const __attribute__((section(SECTION_CREG))) = 0;
-void *GRegHead const __attribute__((section(SECTION_GREG))) = 0;
-void *MRegHead const __attribute__((section(SECTION_MREG))) = 0;
-void *YRegHead const __attribute__((section(SECTION_YREG))) = 0;
+void *const ARegHead __attribute__((section(SECTION_AREG))) = 0;
+void *const CRegHead __attribute__((section(SECTION_CREG))) = 0;
+void *const GRegHead __attribute__((section(SECTION_GREG))) = 0;
+void *const MRegHead __attribute__((section(SECTION_MREG))) = 0;
+void *const YRegHead __attribute__((section(SECTION_YREG))) = 0;
 
 #else
 

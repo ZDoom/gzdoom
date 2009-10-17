@@ -39,7 +39,7 @@ VMScriptFunction *VMFunctionBuilder::MakeFunction()
 	VMScriptFunction *func = new VMScriptFunction;
 
 	// Copy code block.
-	memcpy(func->AllocCode(Code.Size()), &Code[0], Code.Size());
+	memcpy(func->AllocCode(Code.Size()), &Code[0], Code.Size() * sizeof(VMOP));
 
 	// Create constant tables.
 	if (NumIntConstants > 0)
@@ -425,12 +425,6 @@ size_t VMFunctionBuilder::Emit(int opcode, int opa, int opb, int opc)
 	assert(opa >= 0 && opa <= 255);
 	assert(opb >= 0 && opb <= 255);
 	assert(opc >= 0 && opc <= 255);
-	size_t loc = Code.Reserve(4);
-	VM_UBYTE *code = &Code[loc];
-	code[0] = opcode;
-	code[1] = opa;
-	code[2] = opb;
-	code[3] = opc;
 	if (opcode == OP_PARAM)
 	{
 		ParamChange(1);
@@ -439,7 +433,12 @@ size_t VMFunctionBuilder::Emit(int opcode, int opa, int opb, int opc)
 	{
 		ParamChange(-opb);
 	}
-	return loc / 4;
+	VMOP op;
+	op.op = opcode;
+	op.a = opa;
+	op.b = opb;
+	op.c = opc;
+	return Code.Push(op);
 }
 
 size_t VMFunctionBuilder::Emit(int opcode, int opa, VM_SHALF opbc)
@@ -447,29 +446,25 @@ size_t VMFunctionBuilder::Emit(int opcode, int opa, VM_SHALF opbc)
 	assert(opcode >= 0 && opcode < NUM_OPS);
 	assert(opa >= 0 && opa <= 255);
 	assert(opbc >= -32768 && opbc <= 32767);
-	size_t loc = Code.Reserve(4);
-	VM_UBYTE *code = &Code[loc];
-	code[0] = opcode;
-	code[1] = opa;
-	*(VM_SHALF *)&code[2] = opbc;
-	return loc / 4;
+	VMOP op;
+	op.op = opcode;
+	op.a = opa;
+	op.i16 = opbc;
+	return Code.Push(op);
 }
 
 size_t VMFunctionBuilder::Emit(int opcode, int opabc)
 {
 	assert(opcode >= 0 && opcode < NUM_OPS);
 	assert(opabc >= -(1 << 23) && opabc <= (1 << 24) - 1);
-	size_t loc = Code.Reserve(4);
-#ifdef __BIG_ENDIAN__
-	*(VM_UWORD *)&Code[loc] = (opabc & 0xFFFFFF) | (opcode << 24);
-#else
-	*(VM_UWORD *)&Code[loc] = opcode | (opabc << 8);
-#endif
 	if (opcode == OP_PARAMI)
 	{
 		ParamChange(1);
 	}
-	return loc / 4;
+	VMOP op;
+	op.op = opcode;
+	op.i24 = opabc;
+	return Code.Push(op);
 }
 
 //==========================================================================
@@ -504,14 +499,11 @@ size_t VMFunctionBuilder::EmitLoadInt(int regnum, int value)
 
 void VMFunctionBuilder::Backpatch(size_t loc, size_t target)
 {
-	assert(loc < Code.Size() / 4);
+	assert(loc < Code.Size());
 	int offset = int(target - loc - 1);
-	assert(offset >= -(1 << 24) && offset <= (1 << 24) - 1);
-#ifdef __BIG_ENDIAN__
-	*(VM_UWORD *)&Code[loc * 4] = (offset & 0xFFFFFF) | (OP_JMP << 24);
-#else
-	*(VM_UWORD *)&Code[loc * 4] = OP_JMP | (offset << 8);
-#endif
+	assert(((offset << 8) >> 8) == offset);
+	Code[loc].op = OP_JMP;
+	Code[loc].i24 = offset;
 }
 
 //==========================================================================
@@ -525,5 +517,5 @@ void VMFunctionBuilder::Backpatch(size_t loc, size_t target)
 
 void VMFunctionBuilder::BackpatchToHere(size_t loc)
 {
-	Backpatch(loc, Code.Size() / 4);
+	Backpatch(loc, Code.Size());
 }

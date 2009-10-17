@@ -3,7 +3,7 @@
 #endif
 
 
-static int Exec(VMFrameStack *stack, const VM_UBYTE *pc, VMReturn *ret, int numret)
+static int Exec(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret)
 {
 #if COMPGOTO
 	static const void * const ops[256] =
@@ -12,7 +12,7 @@ static int Exec(VMFrameStack *stack, const VM_UBYTE *pc, VMReturn *ret, int numr
 #include "vmops.h"
 	};
 #endif
-	const VM_UBYTE *exception_frames[MAX_TRY_DEPTH];
+	const VMOP *exception_frames[MAX_TRY_DEPTH];
 	int try_depth = 0;
 	VMFrame *f = stack->TopFrame();
 	VMScriptFunction *sfunc;
@@ -52,7 +52,7 @@ begin:
 	{
 #if !COMPGOTO
 	VM_UBYTE op;
-	for(;;) switch(op = pc[0], a = pc[1], pc += 4, op)
+	for(;;) switch(op = pc->op, a = pc->a, pc++, op)
 #else
 	NEXTOP;
 #endif
@@ -383,17 +383,17 @@ begin:
 		ASSERTD(a);
 		if (reg.d[a] != BC)
 		{
-			pc += 4;
+			pc++;
 		}
 		NEXTOP;
 	OP(JMP):
-		pc += JMPOFS(pc - 4);
+		pc += JMPOFS(pc - 1);
 		NEXTOP;
 	OP(IJMP):
 		ASSERTD(a);
-		pc += (BCs + reg.d[a]) << 2;
-		assert(*pc == OP_JMP);
-		pc += (1 + *((VM_SHALF *)pc + 1)) << 2;
+		pc += (BCs + reg.d[a]);
+		assert(pc->op == OP_JMP);
+		pc += 1 + JMPOFS(pc);
 		NEXTOP;
 	OP(PARAMI):
 		assert(f->NumParam < sfunc->MaxParam);
@@ -536,7 +536,7 @@ begin:
 			{
 				reg.param[--f->NumParam].~VMValue();
 			}
-			pc += C * 4;		// Skip RESULTs
+			pc += C;			// Skip RESULTs
 		}
 		NEXTOP;
 	OP(RET):
@@ -567,8 +567,8 @@ begin:
 		{
 			THROW(X_TOO_MANY_TRIES);
 		}
-		assert(*(pc + JMPOFS(pc - 4)) == OP_CATCH);
-		exception_frames[try_depth++] = pc + JMPOFS(pc - 4);
+		assert((pc + JMPOFS(pc - 1))->op == OP_CATCH);
+		exception_frames[try_depth++] = pc + JMPOFS(pc - 1);
 		NEXTOP;
 	OP(UNTRY):
 		assert(a <= try_depth);
@@ -664,12 +664,12 @@ begin:
 			}
 			if (cmp == (a & CMP_CHECK))
 			{
-				assert(*pc == OP_JMP);
-				pc += 4 + JMPOFS(pc);
+				assert(pc->op == OP_JMP);
+				pc += 1 + JMPOFS(pc);
 			}
 			else
 			{
-				pc += 4;
+				pc += 1;
 			}
 		}
 		NEXTOP;
@@ -1255,48 +1255,48 @@ begin:
 		while(--try_depth >= 0)
 		{
 			pc = exception_frames[try_depth];
-			assert(pc[0] == OP_CATCH);
-			while (pc[1] > 1)
+			assert(pc->op == OP_CATCH);
+			while (pc->a > 1)
 			{
 				// CATCH must be followed by JMP if it doesn't terminate a catch chain.
-				assert(pc[4] == OP_JMP);
+				assert(pc[1].op == OP_JMP);
 
 				PClass *type;
-				int b = pc[2];
+				int b = pc->b;
 
-				if (pc[1] == 2)
+				if (pc->a == 2)
 				{
 					ASSERTA(b);
 					type = (PClass *)reg.a[b];
 				}
 				else
 				{
-					assert(pc[1] == 3);
+					assert(pc->a == 3);
 					ASSERTKA(b);
 					assert(konstatag[b] == ATAG_OBJECT);
 					type = (PClass *)konsta[b].o;
 				}
-				ASSERTA(pc[3]);
+				ASSERTA(pc->c);
 				if (type == extype)
 				{
 					// Found a handler. Store the exception in pC, skip the JMP,
 					// and begin executing its code.
-					reg.a[pc[3]] = exception;
-					reg.atag[pc[3]] = ATAG_OBJECT;
-					pc += 8;
+					reg.a[pc->c] = exception;
+					reg.atag[pc->c] = ATAG_OBJECT;
+					pc += 2;
 					goto begin;
 				}
 				// This catch didn't handle it. Try the next one.
-				pc += 4 + JMPOFS(pc + 4);
-				assert(pc[0] == OP_CATCH);
+				pc += 1 + JMPOFS(pc + 1);
+				assert(pc->op == OP_CATCH);
 			}
-			if (pc[1] == 1)
+			if (pc->a == 1)
 			{
 				// Catch any type of VMException. This terminates the chain.
-				ASSERTA(pc[3]);
-				reg.a[pc[3]] = exception;
-				reg.atag[pc[3]] = ATAG_OBJECT;
-				pc += 4;
+				ASSERTA(pc->c);
+				reg.a[pc->c] = exception;
+				reg.atag[pc->c] = ATAG_OBJECT;
+				pc += 1;
 				goto begin;
 			}
 			// This frame failed. Try the next one out.
@@ -1382,18 +1382,18 @@ static void DoCast(const VMRegisters &reg, const VMFrame *f, int a, int b, int c
 //
 //===========================================================================
 
-static void FillReturns(const VMRegisters &reg, VMFrame *frame, VMReturn *returns, const VM_UBYTE *retval, int numret)
+static void FillReturns(const VMRegisters &reg, VMFrame *frame, VMReturn *returns, const VMOP *retval, int numret)
 {
 	int i, type, num;
 	VMReturn *ret;
 
 	assert(REGT_INT == 0 && REGT_FLOAT == 1 && REGT_STRING == 2 && REGT_POINTER == 3);
 
-	for (i = 0, ret = returns; i < numret; ++i, ++ret, retval += 4)
+	for (i = 0, ret = returns; i < numret; ++i, ++ret, ++retval)
 	{
-		assert(retval[0] == OP_RESULT);				// opcode
-		ret->RegType = type = retval[2];
-		ret->RegNum = num = retval[3];
+		assert(retval->op == OP_RESULT);				// opcode
+		ret->RegType = type = retval->b;
+		ret->RegNum = num = retval->c;
 		assert(!(type & REGT_KONST));
 		type &= REGT_TYPE;
 		if (type < REGT_STRING)

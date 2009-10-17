@@ -38,26 +38,27 @@ VMScriptFunction *VMFunctionBuilder::MakeFunction()
 {
 	VMScriptFunction *func = new VMScriptFunction;
 
+	func->Alloc(Code.Size(), NumIntConstants, NumFloatConstants, NumStringConstants, NumAddressConstants);
+
 	// Copy code block.
-	memcpy(func->AllocCode(Code.Size()), &Code[0], Code.Size() * sizeof(VMOP));
+	memcpy(func->Code, &Code[0], Code.Size() * sizeof(VMOP));
 
 	// Create constant tables.
 	if (NumIntConstants > 0)
 	{
-		FillIntConstants(func->AllocKonstD(NumIntConstants));
+		FillIntConstants(func->KonstD);
 	}
 	if (NumFloatConstants > 0)
 	{
-		FillFloatConstants(func->AllocKonstF(NumFloatConstants));
+		FillFloatConstants(func->KonstF);
 	}
 	if (NumAddressConstants > 0)
 	{
-		func->AllocKonstA(NumAddressConstants);
 		FillAddressConstants(func->KonstA, func->KonstATags());
 	}
 	if (NumStringConstants > 0)
 	{
-		FillStringConstants(func->AllocKonstS(NumStringConstants));
+		FillStringConstants(func->KonstS);
 	}
 
 	// Assign required register space.

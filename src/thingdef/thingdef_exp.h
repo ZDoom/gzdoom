@@ -342,10 +342,10 @@ public:
 		isresolved = true;
 	}
 
-	FxConstant(const char *str, const FScriptPosition &pos) : FxExpression(pos)
+	FxConstant(const FString &str, const FScriptPosition &pos) : FxExpression(pos)
 	{
 		ValueType = VAL_String;
-		value = ExpVal(FString(str));
+		value = ExpVal(str);
 		isresolved = true;
 	}
 

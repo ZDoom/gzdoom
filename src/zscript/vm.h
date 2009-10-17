@@ -719,11 +719,7 @@ public:
 	VMScriptFunction();
 	~VMScriptFunction();
 	size_t PropagateMark();
-	VMOP *AllocCode(int numops);
-	int *AllocKonstD(int numkonst);
-	double *AllocKonstF(int numkonst);
-	FString *AllocKonstS(int numkonst);
-	FVoidObj *AllocKonstA(int numkonst);
+	void Alloc(int numops, int numkonstd, int numkonstf, int numkonsts, int numkonsta);
 
 	VM_ATAG *KonstATags() { return (VM_UBYTE *)(KonstA + NumKonstA); }
 	const VM_ATAG *KonstATags() const { return (VM_UBYTE *)(KonstA + NumKonstA); }

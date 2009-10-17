@@ -94,9 +94,9 @@ void FState::SetAction(PSymbolActionFunction *func, bool setdefaultparams)
 
 		// Create a function for this state.
 		VMScriptFunction *vmfunc = new VMScriptFunction;
-		VMOP *code = vmfunc->AllocCode(sizeof(codetemplate)/sizeof(VMOP));
-		memcpy(code, codetemplate, sizeof(codetemplate));
-		FVoidObj *konsta = vmfunc->AllocKonstA(2);
+		vmfunc->Alloc(sizeof(codetemplate)/sizeof(VMOP), 0, 0, 0, 2);
+		memcpy(vmfunc->Code, codetemplate, sizeof(codetemplate));
+		FVoidObj *konsta = vmfunc->KonstA;
 		VM_ATAG *atag = vmfunc->KonstATags();
 		konsta[0].v = (void *)func->Function;
 		konsta[1].o = callfunc;

@@ -30,46 +30,79 @@ VMScriptFunction::VMScriptFunction()
 
 VMScriptFunction::~VMScriptFunction()
 {
-	if (Code != NULL)		M_Free(Code);
-	if (KonstD != NULL)		M_Free(KonstD);
-	if (KonstF != NULL)		M_Free(KonstF);
-	if (KonstS != NULL)		delete[] KonstS;
-	if (KonstA != NULL)		M_Free(KonstA);
+	if (Code != NULL)
+	{
+		if (KonstS != NULL)
+		{
+			for (int i = 0; i < NumKonstS; ++i)
+			{
+				KonstS[i].~FString();
+			}
+		}
+		M_Free(Code);
+	}
 }
 
-VMOP *VMScriptFunction::AllocCode(int numops)
+void VMScriptFunction::Alloc(int numops, int numkonstd, int numkonstf, int numkonsts, int numkonsta)
 {
-	assert(Code == NULL && numops > 0);
+	assert(Code == NULL);
+	assert(numops > 0);
+	assert(numkonstd >= 0 && numkonstd <= 255);
+	assert(numkonstf >= 0 && numkonstf <= 255);
+	assert(numkonsts >= 0 && numkonsts <= 255);
+	assert(numkonsta >= 0 && numkonsta <= 255);
+	void *mem = M_Malloc(numops * sizeof(VMOP) +
+						 numkonstd * sizeof(int) +
+						 numkonstf * sizeof(double) +
+						 numkonsts * sizeof(FString) +
+						 numkonsta * (sizeof(FVoidObj) + 1));
+	Code = (VMOP *)mem;
+	mem = (void *)((VMOP *)mem + numops);
+
+	if (numkonstd > 0)
+	{
+		KonstD = (int *)mem;
+		mem = (void *)((int *)mem + numkonstd);
+	}
+	else
+	{
+		KonstD = NULL;
+	}
+	if (numkonstf > 0)
+	{
+		KonstF = (double *)mem;
+		mem = (void *)((double *)mem + numkonstf);
+	}
+	else
+	{
+		KonstF = NULL;
+	}
+	if (numkonsts > 0)
+	{
+		KonstS = (FString *)mem;
+		for (int i = 0; i < numkonsts; ++i)
+		{
+			::new(&KonstS[i]) FString;
+		}
+		mem = (void *)((FString *)mem + numkonsts);
+	}
+	else
+	{
+		KonstS = NULL;
+	}
+	if (numkonsta > 0)
+	{
+		KonstA = (FVoidObj *)mem;
+	}
+	else
+	{
+		KonstA = NULL;
+	}
 	CodeSize = numops;
-	return Code = (VMOP *)M_Malloc(numops * sizeof(VMOP));
-}
-
-int *VMScriptFunction::AllocKonstD(int numkonst)
-{
-	assert(KonstD == NULL && numkonst > 0);
-	NumKonstD = numkonst;
-	return KonstD = (int *)M_Malloc(numkonst * sizeof(int));
-}
-
-double *VMScriptFunction::AllocKonstF(int numkonst)
-{
-	assert(KonstF == NULL && numkonst > 0);
-	NumKonstF = numkonst;
-	return KonstF = (double *)M_Malloc(numkonst * sizeof(double));
-}
-
-FString *VMScriptFunction::AllocKonstS(int numkonst)
-{
-	assert(KonstS == NULL && numkonst > 0);
-	NumKonstS = numkonst;
-	return KonstS = new FString[numkonst];
-}
-
-FVoidObj *VMScriptFunction::AllocKonstA(int numkonst)
-{
-	assert(KonstA == NULL && numkonst > 0);
-	NumKonstA = numkonst;
-	return KonstA = (FVoidObj *)M_Malloc(numkonst * sizeof(FVoidObj) + numkonst);
+	NumKonstD = numkonstd;
+	NumKonstF = numkonstf;
+	NumKonstS = numkonsts;
+	NumKonstA = numkonsta;
 }
 
 size_t VMScriptFunction::PropagateMark()

@@ -1,3 +1,6 @@
+October 17, 2009  (Changes by Graf Zahl)
+- fixed: The translation addition broke parsing of palette index based translations.
+
 October 16, 2009  (Changes by Graf Zahl)
 - added 'defaultterrain' option to terrain parser for mods that want to have
   a different default terrain than a generic solid surface.

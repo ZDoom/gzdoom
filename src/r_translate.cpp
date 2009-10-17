@@ -463,7 +463,7 @@ void FRemapTable::AddToTranslation(const char * range)
 		{
 			int pal1,pal2;
 
-			sc.MustGetToken(TK_IntConst);
+			sc.TokenMustBe(TK_IntConst);
 			pal1 = sc.Number;
 			sc.MustGetToken(':');
 			sc.MustGetToken(TK_IntConst);

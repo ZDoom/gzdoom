@@ -1,7 +1,7 @@
 October 17, 2009  (Changes by Graf Zahl)
-- Fixed: The rail sound used the shooter's position for calculating the sound origin
-  but should use the camera position instead to get the correct position for
-  the closest point along the trail.
+- Fixed: 3DMidtex checks were treating the Null texture as a valid texture.
+- Fixed: The rail sound's position was not clamped to the actual range between
+  the trail's start and end point.
 - Fixed: Explosions no longer caused splashes.
 - Fixed: Copying translations to lower decals had the shade color check wrong.
 - Fixed: Waggling floors did not moved attached geometry.

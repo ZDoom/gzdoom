@@ -219,6 +219,7 @@ bool P_GetMidTexturePosition(const line_t *line, int sideno, fixed_t *ptextop, f
 	
 	side_t *side = line->sidedef[sideno];
 	FTextureID texnum = side->GetTexture(side_t::mid);
+	if (!texnum.isValid()) return false;
 	FTexture * tex= TexMan(texnum);
 	if (!tex) return false;
 

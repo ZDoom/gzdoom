@@ -166,7 +166,7 @@ void VMDumpConstants(FILE *out, const VMScriptFunction *func)
 		printf_wrapper(out, "\nConstant strings:\n");
 		for (i = 0; i < func->NumKonstS; ++i)
 		{
-			printf_wrapper(out, "%3d. %s\n", func->KonstS[k].GetChars());
+			printf_wrapper(out, "%3d. %s\n", i, func->KonstS[i].GetChars());
 		}
 	}
 }
@@ -353,7 +353,7 @@ static int print_reg(FILE *out, int col, int arg, int mode, int immshift, const 
 	case MODE_KS:
 		if (func != NULL)
 		{
-			return col+printf_wrapper(out, "\"%s\"", func->KonstS[arg].GetChars());
+			return col+printf_wrapper(out, "\"%.27s\"", func->KonstS[arg].GetChars());
 		}
 		return col+printf_wrapper(out, "ks%d", arg);
 	case MODE_KP:

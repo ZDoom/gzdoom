@@ -97,6 +97,57 @@ struct ExpVal
 		void *pointer;
 	};
 
+	ExpVal()
+	{
+		Type = VAL_Int;
+		Int = 0;
+	}
+
+	~ExpVal()
+	{
+		if (Type == VAL_String)
+		{
+			((FString *)&pointer)->~FString();
+		}
+	}
+
+	ExpVal(const FString &str)
+	{
+		Type = VAL_String;
+		::new(&pointer) FString(str);
+	}
+
+	ExpVal(const ExpVal &o)
+	{
+		Type = o.Type;
+		if (o.Type == VAL_String)
+		{
+			::new(&pointer) FString(*(FString *)&o.pointer);
+		}
+		else
+		{
+			memcpy(&Float, &o.Float, 8);
+		}
+	}
+
+	ExpVal &operator=(const ExpVal &o)
+	{
+		if (Type == VAL_String)
+		{
+			((FString *)&pointer)->~FString();
+		}
+		Type = o.Type;
+		if (o.Type == VAL_String)
+		{
+			::new(&pointer) FString(*(FString *)&o.pointer);
+		}
+		else
+		{
+			memcpy(&Float, &o.Float, 8);
+		}
+		return *this;
+	}
+
 	int GetInt() const
 	{
 		return Type == VAL_Int? Int : Type == VAL_Float? int(Float) : 0;
@@ -105,6 +156,11 @@ struct ExpVal
 	double GetFloat() const
 	{
 		return Type == VAL_Int? double(Int) : Type == VAL_Float? Float : 0;
+	}
+
+	const FString GetString() const
+	{
+		return Type == VAL_String ? *(FString *)&pointer : Type == VAL_Name ? FString(FName(ENamedName(Int)).GetChars()) : "";
 	}
 
 	bool GetBool() const
@@ -283,6 +339,13 @@ public:
 	{
 		ValueType = value.Type = VAL_Name;
 		value.Int = val;
+		isresolved = true;
+	}
+
+	FxConstant(const char *str, const FScriptPosition &pos) : FxExpression(pos)
+	{
+		ValueType = VAL_String;
+		value = ExpVal(FString(str));
 		isresolved = true;
 	}
 

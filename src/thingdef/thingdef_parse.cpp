@@ -85,12 +85,21 @@ FxExpression *ParseParameter(FScanner &sc, PClass *cls, char type, bool constant
 		x = new FxClassTypeCast(RUNTIME_CLASS(AActor), new FxConstant(FName(sc.String), sc));
 		break;
 
+	case 'N':
+	case 'n':		// name
 	case 'T':
 	case 't':		// String
 		sc.SetEscape(true);
 		sc.MustGetString();
 		sc.SetEscape(false);
-		x = new FxConstant(sc.String[0]? FName(sc.String) : NAME_None, sc);
+		if (type == 'n' || type == 'N')
+		{
+			x = new FxConstant(sc.String[0] ? FName(sc.String) : NAME_None, sc);
+		}
+		else
+		{
+			x = new FxConstant(strbin1(sc.String), sc);
+		}
 		break;
 
 	case 'C':
@@ -855,7 +864,7 @@ static void ParseActionDef (FScanner &sc, PClass *cls)
 
 			case TK_Sound:		type = 's';		break;
 			case TK_String:		type = 't';		break;
-			case TK_Name:		type = 't';		break;
+			case TK_Name:		type = 'n';		break;
 			case TK_State:		type = 'l';		break;
 			case TK_Color:		type = 'c';		break;
 			case TK_Class:

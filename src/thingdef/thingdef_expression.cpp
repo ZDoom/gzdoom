@@ -37,6 +37,7 @@
 **
 */
 
+#include <malloc.h>
 #include "actor.h"
 #include "sc_man.h"
 #include "tarray.h"
@@ -404,8 +405,13 @@ ExpEmit FxParameter::Emit(VMFunctionBuilder *build)
 		{
 			build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, build->GetConstantAddress(val.pointer, ATAG_STATE));
 		}
+		else if (val.Type == VAL_String)
+		{
+			build->Emit(OP_PARAM, 0, REGT_STRING | REGT_KONST, build->GetConstantString(val.GetString()));
+		}
 		else
 		{
+			build->Emit(OP_PARAM, 0, REGT_NIL, 0);
 			ScriptPosition.Message(MSG_ERROR, "Cannot emit needed constant");
 		}
 	}
@@ -497,6 +503,11 @@ ExpEmit FxConstant::Emit(VMFunctionBuilder *build)
 	{
 		out.RegType = REGT_POINTER;
 		out.RegNum = build->GetConstantAddress(value.pointer, ATAG_STATE);
+	}
+	else if (value.Type == VAL_String)
+	{
+		out.RegType = REGT_STRING;
+		out.RegNum = build->GetConstantString(value.GetString());
 	}
 	else
 	{

@@ -1,4 +1,11 @@
 October 17, 2009  (Changes by Graf Zahl)
+- Fixed: The rail sound used the shooter's position for calculating the sound origin
+  but should use the camera position instead to get the correct position for
+  the closest point along the trail.
+- Fixed: Explosions no longer caused splashes.
+- Fixed: Copying translations to lower decals had the shade color check wrong.
+- Fixed: Waggling floors did not moved attached geometry.
+- Cleaned up p_floor.cpp so that related parts of the code are grouped together.
 - fixed: The translation addition broke parsing of palette index based translations.
 
 October 16, 2009  (Changes by Graf Zahl)

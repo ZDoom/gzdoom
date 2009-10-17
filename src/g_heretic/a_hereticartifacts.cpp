@@ -51,10 +51,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_TimeBomb)
 	self->RenderStyle = STYLE_Add;
 	self->alpha = FRACUNIT;
 	P_RadiusAttack (self, self->target, 128, 128, self->DamageType, true);
-	if (self->z <= self->floorz + (128<<FRACBITS))
-	{
-		P_HitFloor (self);
-	}
+	P_CheckSplash(self, 128<<FRACBITS);
 }
 
 class AArtiTimeBomb : public AInventory

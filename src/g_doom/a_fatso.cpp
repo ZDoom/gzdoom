@@ -135,10 +135,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Mushroom)
 	if (spawntype == NULL) spawntype = PClass::FindClass("FatShot");
 
 	P_RadiusAttack (self, self->target, 128, 128, self->DamageType, true);
-	if (self->z <= self->floorz + (128<<FRACBITS))
-	{
-		P_HitFloor (self);
-	}
+	P_CheckSplash(self, 128<<FRACBITS);
 
 	// Now launch mushroom cloud
 	AActor *target = Spawn("Mapspot", 0, 0, 0, NO_REPLACE);	// We need something to aim at.

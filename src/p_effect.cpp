@@ -472,17 +472,33 @@ void P_DrawRailTrail (AActor *source, const FVector3 &start, const FVector3 &end
 			}
 			else
 			{
+
 				// Only consider sound in 2D (for now, anyway)
 				// [BB] You have to devide by lengthsquared here, not multiply with it.
-				r = ((start.Y - FIXED2FLOAT(mo->y)) * (-dir.Y) -
-					(start.X - FIXED2FLOAT(mo->x)) * (dir.X)) / lengthsquared;
+
+				r = ((start.Y - FIXED2FLOAT(viewy)) * (-dir.Y) - (start.X - FIXED2FLOAT(viewx)) * (dir.X)) / lengthsquared;
+				r = clamp<double>(r, 0., 1.);
 
 				dirz = dir.Z;
 				dir.Z = 0;
 				point = start + r * dir;
 				dir.Z = dirz;
 
-				S_Sound (FLOAT2FIXED(point.X), FLOAT2FIXED(point.Y), mo->z,
+#if 0
+				Printf("Start = (%1.4f,%1.4f), End = (%1.4f,%1.4f), Dir =(%1.4f,%1.4f), View = (%1.4f,%1.4f), Point = (%1.4f,%1.4f), r=%1.4f\n",
+					start.X, start.Y, end.X, end.Y, dir.X, dir.Y, FIXED2FLOAT(viewx), FIXED2FLOAT(viewy),
+					point.X, point.Y, r);
+
+				FVector3 _start = start;
+				FVector3 _end = end;
+				FVector3 view(FIXED2FLOAT(viewx), FIXED2FLOAT(viewy), 0);
+				point.Z = _start.Z = _end.Z = 0;
+
+				Printf("S: %1.4f, E: %1.4f, H: %1.4f P: %1.4f\n",
+					(_start-view).Length(), (_end-view).Length(), (((_start+_end)/2)-view).Length(), (point-view).Length());
+#endif
+
+				S_Sound (FLOAT2FIXED(point.X), FLOAT2FIXED(point.Y), viewz,
 					CHAN_WEAPON, sound, 1, ATTN_NORM);
 			}
 		}

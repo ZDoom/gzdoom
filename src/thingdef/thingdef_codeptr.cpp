@@ -609,10 +609,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Explode)
 	}
 
 	P_RadiusAttack (self, self->target, damage, distance, self->DamageType, hurtSource, true, fulldmgdistance);
-	if (self->z <= self->floorz + (distance<<FRACBITS))
-	{
-		P_HitFloor (self);
-	}
+	P_CheckSplash(self, distance<<FRACBITS);
 	if (alert && self->target != NULL && self->target->player != NULL)
 	{
 		validcount++;
@@ -637,10 +634,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusThrust)
 	if (distance <= 0) distance = force;
 
 	P_RadiusAttack (self, self->target, force, distance, self->DamageType, affectSource, false);
-	if (self->z <= self->floorz + (distance<<FRACBITS))
-	{
-		P_HitFloor (self);
-	}
+	P_CheckSplash(self, distance<<FRACBITS);
 }
 
 //==========================================================================

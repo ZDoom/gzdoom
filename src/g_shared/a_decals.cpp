@@ -641,12 +641,13 @@ DImpactDecal *DImpactDecal::StaticCreate (const FDecalTemplate *tpl, fixed_t x, 
 	{
 		if (tpl->LowerDecal)
 		{
-			int lowercolor = color;
+			int lowercolor;
 			const FDecalTemplate * tpl_low = tpl->LowerDecal->GetDecal();
 
 			// If the default color of the lower decal is the same as the main decal's
 			// apply the custom color as well.
-			if (tpl->ShadeColor == tpl_low->ShadeColor) lowercolor=0;
+			if (tpl->ShadeColor != tpl_low->ShadeColor) lowercolor=0;
+			else lowercolor = color;
 			StaticCreate (tpl_low, x, y, z, wall, ffloor, lowercolor);
 		}
 		DImpactDecal::CheckMax();

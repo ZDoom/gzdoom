@@ -74,10 +74,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Explode512)
 	{
 		self->target->player->extralight = 5;
 	}
-	if (self->z <= self->floorz + (512<<FRACBITS))
-	{
-		P_HitFloor (self);
-	}
+	P_CheckSplash(self, 512<<FRACBITS);
 
 	// Strife didn't do this next part, but it looks good
 	self->RenderStyle = STYLE_Add;

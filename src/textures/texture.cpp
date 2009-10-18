@@ -146,6 +146,7 @@ FTexture::FTexture (const char *name, int lumpnum)
   bMasked(true), bAlphaTexture(false), bHasCanvas(false), bWarped(0), bComplex(false),
   Rotations(0xFFFF), Width(0), Height(0), WidthMask(0), Native(NULL)
 {
+	id.SetInvalid();
 	if (name != NULL)
 	{
 		uppercopy(Name, name);

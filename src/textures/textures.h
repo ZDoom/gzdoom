@@ -100,6 +100,7 @@ public:
 	fixed_t		yScale;
 
 	int SourceLump;
+	FTextureID id;
 
 	union
 	{
@@ -156,6 +157,7 @@ public:
 	virtual bool UseBasePalette();
 	virtual int GetSourceLump() { return SourceLump; }
 	virtual FTexture *GetRedirect(bool wantwarped);
+	FTextureID GetID() const { return id; }
 
 	virtual void Unload () = 0;
 
@@ -276,6 +278,12 @@ public:
 		FTextureID texnum = GetTexture (texname, FTexture::TEX_MiscPatch);
 		if (texnum.texnum==-1) return NULL;
 		return Textures[Translation[texnum.texnum]].Texture;
+	}
+
+	FTexture *ByIndexTranslated(int i)
+	{
+		if (unsigned(i) >= Textures.Size()) return NULL;
+		return Textures[Translation[i]].Texture;
 	}
 
 	void SetTranslation (FTextureID fromtexnum, FTextureID totexnum)

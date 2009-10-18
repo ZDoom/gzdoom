@@ -1,3 +1,7 @@
+October 18, 2009  (Changes by Graf Zahl)
+- fixed: FMultiPatchTexture::MakeTexture was missing a range check for the
+  special colormap index.
+
 October 17, 2009  (Changes by Graf Zahl)
 - Fixed: 3DMidtex checks were treating the Null texture as a valid texture.
 - Fixed: The rail sound's position was not clamped to the actual range between

@@ -429,7 +429,7 @@ BYTE *GetBlendMap(PalEntry blend, BYTE *blendwork)
 		return TranslationToTable(TRANSLATION(TRANSLATION_Standard, 7))->Remap;
 
 	default:
-		if (blend >= BLEND_SPECIALCOLORMAP1)
+		if (blend >= BLEND_SPECIALCOLORMAP1 && blend < BLEND_SPECIALCOLORMAP1 + SpecialColormaps.Size())
 		{
 			return SpecialColormaps[blend - BLEND_SPECIALCOLORMAP1].Colormap;
 		}

@@ -1,3 +1,7 @@
+October 19, 2009  (Changes by Graf Zahl)
+- fixed: Setting the first state's duration of a fast projectile to 0 caused
+  an underflow and blocked all further state changes.
+
 October 18, 2009  (Changes by Graf Zahl)
 - fixed: FMultiPatchTexture::MakeTexture was missing a range check for the
   special colormap index.

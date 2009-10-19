@@ -99,7 +99,7 @@ void AFastProjectile::Tick ()
 	// Advance the state
 	if (tics != -1)
 	{
-		tics--;
+		if (tics > 0) tics--;
 		while (!tics)
 		{
 			if (!SetState (state->GetNextState ()))

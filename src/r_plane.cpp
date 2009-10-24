@@ -745,8 +745,8 @@ inline void R_MakeSpans (int x, int t1, int b1, int t2, int b2, void (*mapfunc)(
 static FTexture *frontskytex, *backskytex;
 static angle_t skyflip;
 static int frontpos, backpos;
-static fixed_t frontxScale, backxScale;
 static fixed_t frontyScale;
+static fixed_t frontcyl, backcyl;
 int frontiScale;
 
 extern fixed_t swall[MAXWIDTH];
@@ -765,15 +765,15 @@ static int skycolplace;
 static const BYTE *R_GetOneSkyColumn (FTexture *fronttex, int x)
 {
 	angle_t column = (viewangle + xtoviewangle[x]) ^ skyflip;
-	return fronttex->GetColumn (MulScale32((column >> sky1shift) + frontpos, frontxScale), NULL);
+	return fronttex->GetColumn((MulScale16(column, frontcyl) + frontpos) >> FRACBITS, NULL);
 }
 
 // Get a column of sky when there are two overlapping sky textures
 static const BYTE *R_GetTwoSkyColumns (FTexture *fronttex, int x)
 {
 	DWORD ang = (viewangle + xtoviewangle[x]) ^ skyflip;
-	DWORD angle1 = (DWORD)MulScale32((ang >> sky1shift) + frontpos, frontxScale);
-	DWORD angle2 = (DWORD)MulScale32((ang >> sky2shift) + backpos, backxScale);
+	DWORD angle1 = (DWORD)((MulScale16(ang, frontcyl) + frontpos) >> FRACBITS);
+	DWORD angle2 = (DWORD)((MulScale16(ang, backcyl) + backpos) >> FRACBITS);
 
 	// Check if this column has already been built. If so, there's
 	// no reason to waste time building it again.
@@ -847,12 +847,6 @@ static void R_DrawSky (visplane_t *pl)
 
 	rw_pic = frontskytex;
 	rw_offset = 0;
-
-	frontxScale = rw_pic->xScale;
-	if (backskytex != NULL)
-	{
-		backxScale = backskytex->xScale;
-	}
 
 	frontyScale = rw_pic->yScale;
 	dc_texturemid = MulScale16 (skytexturemid/*-viewz*/, frontyScale);
@@ -1250,6 +1244,7 @@ ADD_STAT(skyboxes)
 void R_DrawSkyPlane (visplane_t *pl)
 {
 	FTextureID sky1tex, sky2tex;
+	double frontdpos, backdpos;
 
 	if ((level.flags & LEVEL_SWAPSKIES) && !(level.flags & LEVEL_DOUBLESKY))
 	{
@@ -1272,15 +1267,18 @@ void R_DrawSkyPlane (visplane_t *pl)
 			else
 				backskytex = NULL;
 			skyflip = 0;
-			frontpos = sky1pos;
-			backpos = sky2pos;
+			frontdpos = sky1pos;
+			backdpos = sky2pos;
+			frontcyl = sky1cyl;
+			backcyl = sky2cyl;
 		}
 		else if (pl->sky == PL_SKYFLAT)
 		{	// use sky2
 			frontskytex = TexMan(sky2tex);
 			backskytex = NULL;
+			frontcyl = sky2cyl;
 			skyflip = 0;
-			frontpos = sky2pos;
+			frontdpos = sky2pos;
 		}
 		else
 		{	// MBF's linedef-controlled skies
@@ -1313,7 +1311,7 @@ void R_DrawSkyPlane (visplane_t *pl)
 			// to allow sky rotation as well as careful positioning.
 			// However, the offset is scaled very small, so that it
 			// allows a long-period of sky rotation.
-			frontpos = (-s->GetTextureXOffset(pos)) >> 6;
+			frontdpos = (-s->GetTextureXOffset(pos)) >> 6;
 
 			// Vertical offset allows careful sky positioning.
 			dc_texturemid = s->GetTextureYOffset(pos) - 28*FRACUNIT;
@@ -1324,12 +1322,18 @@ void R_DrawSkyPlane (visplane_t *pl)
 			// to make it easier to use the new feature, while to still
 			// allow old sky textures to be used.
 			skyflip = l->args[2] ? 0u : ~0u;
+
+			frontcyl = MAX(frontskytex->GetWidth(), frontskytex->xScale >> (16 - 10));
+			if (skystretch && frontskytex->GetScaledWidth() < 512)
+			{
+				frontcyl >>= 1;
+			}
 		}
 	}
-//	frontpos = FixedMul(frontpos, frontskytex->xScale/2);
+	frontpos = int(fmod(frontdpos, double(sky1cyl * 65536.0)));
 	if (backskytex != NULL)
 	{
-		backpos = FixedMul(backpos, backskytex->xScale);
+		backpos = int(fmod(backdpos, double(sky2cyl * 65536.0)));
 	}
 
 	bool fakefixed = false;

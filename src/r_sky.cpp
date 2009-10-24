@@ -47,9 +47,8 @@ int			skystretch;
 fixed_t		skyheight;					
 fixed_t		skyiscale;
 
-int			sky1shift,		sky2shift;
-fixed_t		sky1pos=0,		sky1speed=0;
-fixed_t		sky2pos=0,		sky2speed=0;
+fixed_t		sky1cyl,		sky2cyl;
+double		sky1pos,		sky2pos;
 
 // [RH] Stretch sky texture if not taller than 128 pixels?
 CUSTOM_CVAR (Bool, r_stretchsky, true, CVAR_ARCHIVE)
@@ -114,10 +113,26 @@ void R_InitSkyMap ()
 		skyscale = Scale (skyscale, 2048, FieldOfView);
 	}
 
-	// The (standard Doom) sky map is 256*128*4 maps.
-	int swidth = skytex1->GetScaledWidth();
-	sky1shift = 22 - 16 + (skystretch && swidth < 512) - (swidth >= 1024 && skytex1->xScale >= 4*FRACUNIT);
-	swidth = skytex2->GetScaledWidth();
-	sky2shift = 22 - 16 + (skystretch && swidth < 512) - (swidth >= 1024 && skytex2->xScale >= 4*FRACUNIT);
+	// The standard Doom sky texture is 256 pixels wide, repeated 4 times over 360 degrees,
+	// giving a total sky width of 1024 pixels. So if the sky texture is no wider than 1024,
+	// we map it to a cylinder with circumfrence 1024. For larger ones, we use the width of
+	// the texture as the cylinder's circumfrence.
+	sky1cyl = MAX(skytex1->GetWidth(), skytex1->xScale >> (16 - 10));
+	sky2cyl = MAX(skytex2->GetWidth(), skytex2->xScale >> (16 - 10));
+
+	// If we are stretching short skies, we also stretch them horizontally by halving the
+	// circumfrence of the sky cylinder, unless the texture is 512 or more pixels wide,
+	// in which case we only stretch it vertically.
+	if (skystretch)
+	{
+		if (skytex1->GetScaledWidth() < 512)
+		{
+			sky1cyl >>= 1;
+		}
+		if (skytex2->GetScaledWidth() < 512)
+		{
+			sky2cyl >>= 1;
+		}
+	}
 }
 

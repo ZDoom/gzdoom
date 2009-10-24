@@ -1,3 +1,8 @@
+October 24, 2009
+- Rewrote wide sky texture scaling again. This time, it should work for any
+  size textures at any scale. I also tried doing sky scrolling on the sky
+  cylinder, but that didn't look so good, so I left it in screen space.
+
 October 23, 2009
 - Fixed: When giving completely new ammo, the backpack did not clamp the
   amount given to the ammo's max amount.

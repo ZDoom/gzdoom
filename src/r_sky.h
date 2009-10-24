@@ -24,11 +24,11 @@
 
 #include "textures/textures.h"
 
-extern int		sky1shift,		sky2shift;
 
 extern FTextureID	skyflatnum;
+extern fixed_t		sky1cyl,		sky2cyl;
 extern FTextureID	sky1texture,	sky2texture;
-extern fixed_t	sky1pos,		sky2pos;
+extern double		sky1pos,		sky2pos;
 extern fixed_t	skytexturemid;
 extern int		skystretch;
 extern fixed_t	skyiscale;

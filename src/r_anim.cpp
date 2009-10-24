@@ -834,6 +834,6 @@ void R_UpdateAnimations (DWORD mstime)
 
 	// Scroll the sky
 	double ms = (double)mstime * FRACUNIT;
-	sky1pos = fixed_t(fmod (ms * level.skyspeed1, double(TexMan[sky1texture]->GetWidth() << FRACBITS)));
-	sky2pos = fixed_t(fmod (ms * level.skyspeed2, double(TexMan[sky2texture]->GetWidth() << FRACBITS)));
+	sky1pos = fixed_t(fmod (ms * level.skyspeed1, double(TexMan[sky1texture]->GetScaledWidth() << FRACBITS)));
+	sky2pos = fixed_t(fmod (ms * level.skyspeed2, double(TexMan[sky2texture]->GetScaledWidth() << FRACBITS)));
 }

@@ -1,3 +1,7 @@
+October 23, 2009
+- Fixed drawing of wide high resolution skies. (At least for the samples I
+  received. I'm not convinced that it's yet fixed for the general case.)
+
 October 19, 2009  (Changes by Graf Zahl)
 - fixed: Setting the first state's duration of a fast projectile to 0 caused
   an underflow and blocked all further state changes.

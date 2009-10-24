@@ -115,11 +115,9 @@ void R_InitSkyMap ()
 	}
 
 	// The (standard Doom) sky map is 256*128*4 maps.
-	sky1shift = 22+skystretch-16;
-	sky2shift = 22+skystretch-16;
-	if (skytex1->WidthBits >= 9)
-		sky1shift -= skystretch;
-	if (skytex2->WidthBits >= 9)
-		sky2shift -= skystretch;
+	int swidth = skytex1->GetScaledWidth();
+	sky1shift = 22 - 16 + (skystretch && swidth < 512) - (swidth >= 1024 && skytex1->xScale >= 4*FRACUNIT);
+	swidth = skytex2->GetScaledWidth();
+	sky2shift = 22 - 16 + (skystretch && swidth < 512) - (swidth >= 1024 && skytex2->xScale >= 4*FRACUNIT);
 }
 

@@ -764,17 +764,16 @@ static int skycolplace;
 // Get a column of sky when there is only one sky texture.
 static const BYTE *R_GetOneSkyColumn (FTexture *fronttex, int x)
 {
-	angle_t column = MulScale16 (frontxScale, viewangle + xtoviewangle[x]);
-
-	return fronttex->GetColumn ((((column^skyflip) >> sky1shift) + frontpos) >> FRACBITS, NULL);
+	angle_t column = (viewangle + xtoviewangle[x]) ^ skyflip;
+	return fronttex->GetColumn (MulScale32((column >> sky1shift) + frontpos, frontxScale), NULL);
 }
 
 // Get a column of sky when there are two overlapping sky textures
 static const BYTE *R_GetTwoSkyColumns (FTexture *fronttex, int x)
 {
-	DWORD ang = (viewangle + xtoviewangle[x])^skyflip;
-	DWORD angle1 = (((DWORD)MulScale16 (frontxScale, ang) >> sky1shift) + frontpos) >> FRACBITS;
-	DWORD angle2 = (((DWORD)MulScale16 (backxScale, ang) >> sky2shift) + backpos) >> FRACBITS;
+	DWORD ang = (viewangle + xtoviewangle[x]) ^ skyflip;
+	DWORD angle1 = (DWORD)MulScale32((ang >> sky1shift) + frontpos, frontxScale);
+	DWORD angle2 = (DWORD)MulScale32((ang >> sky2shift) + backpos, backxScale);
 
 	// Check if this column has already been built. If so, there's
 	// no reason to waste time building it again.
@@ -825,7 +824,6 @@ static void R_DrawSky (visplane_t *pl)
 	dc_iscale = skyiscale >> skystretch;
 
 	clearbuf (swall+pl->minx, pl->maxx-pl->minx+1, dc_iscale<<2);
-	rw_offset = frontpos;
 
 	if (MirrorFlags & RF_XFLIP)
 	{
@@ -1327,6 +1325,11 @@ void R_DrawSkyPlane (visplane_t *pl)
 			// allow old sky textures to be used.
 			skyflip = l->args[2] ? 0u : ~0u;
 		}
+	}
+//	frontpos = FixedMul(frontpos, frontskytex->xScale/2);
+	if (backskytex != NULL)
+	{
+		backpos = FixedMul(backpos, backskytex->xScale);
 	}
 
 	bool fakefixed = false;

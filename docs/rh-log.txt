@@ -1,4 +1,6 @@
 October 23, 2009
+- Fixed: When giving completely new ammo, the backpack did not clamp the
+  amount given to the ammo's max amount.
 - Fixed drawing of wide high resolution skies. (At least for the samples I
   received. I'm not convinced that it's yet fixed for the general case.)
 

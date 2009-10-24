@@ -1569,7 +1569,7 @@ void ABackpackItem::Serialize (FArchive &arc)
 AInventory *ABackpackItem::CreateCopy (AActor *other)
 {
 	// Find every unique type of ammo. Give it to the player if
-	// he doesn't have it already, and double it's maximum capacity.
+	// he doesn't have it already, and double its maximum capacity.
 	for (unsigned int i = 0; i < PClass::m_Types.Size(); ++i)
 	{
 		const PClass *type = PClass::m_Types[i];
@@ -1588,7 +1588,14 @@ AInventory *ABackpackItem::CreateCopy (AActor *other)
 			{ // The player did not have the ammo. Add it.
 				ammo = static_cast<AAmmo *>(Spawn (type, 0, 0, 0, NO_REPLACE));
 				ammo->Amount = bDepleted ? 0 : amount;
-				if (ammo->BackpackMaxAmount > ammo->MaxAmount) ammo->MaxAmount = ammo->BackpackMaxAmount;
+				if (ammo->BackpackMaxAmount > ammo->MaxAmount)
+				{
+					ammo->MaxAmount = ammo->BackpackMaxAmount;
+				}
+				if (ammo->Amount > ammo->MaxAmount)
+				{
+					ammo->Amount = ammo->MaxAmount;
+				}
 				ammo->AttachToOwner (other);
 			}
 			else

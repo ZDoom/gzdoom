@@ -248,13 +248,13 @@ static void ParseEnum (FScanner &sc, PSymbolTable *symt, PClass *cls)
 
 //==========================================================================
 //
-// ActorConstDef
+// ParseNativeVariable
 //
-// Parses a constant definition.
+// Parses a native variable declaration.
 //
 //==========================================================================
 
-static void ParseVariable (FScanner &sc, PSymbolTable * symt, PClass *cls)
+static void ParseNativeVariable (FScanner &sc, PSymbolTable * symt, PClass *cls)
 {
 	FExpressionType valuetype;
 
@@ -319,12 +319,77 @@ static void ParseVariable (FScanner &sc, PSymbolTable * symt, PClass *cls)
 	PSymbolVariable *sym = new PSymbolVariable(symname);
 	sym->offset = vi->address;	// todo
 	sym->ValueType = valuetype;
+	sym->bUserVar = false;
 
 	if (symt->AddSymbol (sym) == NULL)
 	{
 		delete sym;
 		sc.ScriptError ("'%s' is already defined in '%s'.",
 			symname.GetChars(), cls? cls->TypeName.GetChars() : "Global");
+	}
+}
+
+//==========================================================================
+//
+// ParseUserVariable
+//
+// Parses a user variable declaration.
+//
+//==========================================================================
+
+static void ParseUserVariable (FScanner &sc, PSymbolTable *symt, PClass *cls)
+{
+	FExpressionType valuetype;
+
+	// Only non-native classes may have user variables.
+	if (!cls->bRuntimeClass)
+	{
+		sc.ScriptError("Native classes may not have user variables");
+	}
+
+	// Read the type and make sure it's int.
+	sc.MustGetAnyToken();
+	if (sc.TokenType == TK_Int)
+	{
+		valuetype = VAL_Int;
+	}
+	else
+	{
+		sc.ScriptError("User variables must be of type int");
+	}
+
+	sc.MustGetToken(TK_Identifier);
+	// For now, restrict user variables to those that begin with "user_" to guarantee
+	// no clashes with internal member variable names.
+	if (sc.StringLen < 6 || strnicmp("user_", sc.String, 5) != 0)
+	{
+		sc.ScriptError("User variable names must begin with \"user_\"");
+	}
+
+	FName symname = sc.String;
+	if (sc.CheckToken('['))
+	{
+		FxExpression *expr = ParseExpression(sc, cls);
+		int maxelems = expr->EvalExpression(NULL).GetInt();
+		delete expr;
+		sc.MustGetToken(']');
+		if (maxelems <= 0)
+		{
+			sc.ScriptError("Array size must be positive");
+		}
+		valuetype.MakeArray(maxelems);
+	}
+	sc.MustGetToken(';');
+
+	PSymbolVariable *sym = new PSymbolVariable(symname);
+	sym->offset = cls->Extend(sizeof(int) * (valuetype.Type == VAL_Array ? valuetype.size : 1));
+	sym->ValueType = valuetype;
+	sym->bUserVar = true;
+	if (symt->AddSymbol(sym) == NULL)
+	{
+		delete sym;
+		sc.ScriptError ("'%s' is already defined in '%s'.",
+			symname.GetChars(), cls ? cls->TypeName.GetChars() : "Global");
 	}
 }
 
@@ -1064,7 +1129,11 @@ static void ParseActor(FScanner &sc)
 			break;
 
 		case TK_Native:
-			ParseVariable (sc, &info->Class->Symbols, info->Class);
+			ParseNativeVariable (sc, &info->Class->Symbols, info->Class);
+			break;
+
+		case TK_Var:
+			ParseUserVariable (sc, &info->Class->Symbols, info->Class);
 			break;
 
 		case TK_Identifier:
@@ -1125,7 +1194,7 @@ void ParseDecorate (FScanner &sc)
 			break;
 
 		case TK_Native:
-			ParseVariable(sc, &GlobalSymbols, NULL);
+			ParseNativeVariable(sc, &GlobalSymbols, NULL);
 			break;
 
 		case ';':

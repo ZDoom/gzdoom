@@ -175,6 +175,7 @@ enum
 	TK_Exec,
 	TK_DefaultProperties,
 	TK_Native,
+	TK_Var,
 	TK_Out,
 	TK_Ref,
 	TK_Event,

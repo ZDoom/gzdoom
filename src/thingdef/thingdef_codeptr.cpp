@@ -1744,6 +1744,19 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Log)
 
 //===========================================================================
 //
+// A_LogInt
+//
+//===========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_LogInt)
+{
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_INT(num, 0);
+	Printf("%d\n", num);
+}
+
+//===========================================================================
+//
 // A_SetTranslucent
 //
 //===========================================================================
@@ -2900,21 +2913,63 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetSpecial)
 
 //===========================================================================
 //
-// A_SetVar
+// A_SetUserVar
 //
 //===========================================================================
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetUserVar)
 {
 	ACTION_PARAM_START(2);
-	ACTION_PARAM_INT(pos, 0);
+	ACTION_PARAM_NAME(varname, 0);
 	ACTION_PARAM_INT(value, 1);	
 
-	if (pos < 0 || pos > 9)
+	PSymbol *sym = self->GetClass()->Symbols.FindSymbol(varname, true);
+	PSymbolVariable *var;
+
+	if (sym == NULL || sym->SymbolType != SYM_Variable ||
+		!(var = static_cast<PSymbolVariable *>(sym))->bUserVar ||
+		var->ValueType.Type != VAL_Int)
+	{
+		Printf("%s is not a user variable in class %s\n", varname.GetChars(),
+			self->GetClass()->TypeName.GetChars());
 		return;
-	
-	// Set the value of the specified arg
-	self->uservar[pos] = value;
+	}
+	// Set the value of the specified user variable.
+	*(int *)(reinterpret_cast<BYTE *>(self) + var->offset) = value;
+}
+
+//===========================================================================
+//
+// A_SetUserArray
+//
+//===========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetUserArray)
+{
+	ACTION_PARAM_START(3);
+	ACTION_PARAM_NAME(varname, 0);
+	ACTION_PARAM_INT(pos, 1);
+	ACTION_PARAM_INT(value, 2);
+
+	PSymbol *sym = self->GetClass()->Symbols.FindSymbol(varname, true);
+	PSymbolVariable *var;
+
+	if (sym == NULL || sym->SymbolType != SYM_Variable ||
+		!(var = static_cast<PSymbolVariable *>(sym))->bUserVar ||
+		var->ValueType.Type != VAL_Array || var->ValueType.BaseType != VAL_Int)
+	{
+		Printf("%s is not a user array in class %s\n", varname.GetChars(),
+			self->GetClass()->TypeName.GetChars());
+		return;
+	}
+	if (pos < 0 || pos >= var->ValueType.size)
+	{
+		Printf("%d is out of bounds in array %s in class %s\n", pos, varname.GetChars(),
+			self->GetClass()->TypeName.GetChars());
+		return;
+	}
+	// Set the value of the specified user array at index pos.
+	((int *)(reinterpret_cast<BYTE *>(self) + var->offset))[pos] = value;
 }
 
 //===========================================================================

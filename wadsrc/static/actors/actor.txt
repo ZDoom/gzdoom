@@ -27,7 +27,6 @@ ACTOR Actor native //: Thinker
 	native fixed_t alpha;
 	native angle_t angle;
 	native int args[5];
-	native int uservar[10];
 	native fixed_t ceilingz;
 	native fixed_t floorz;
 	native int health;
@@ -47,6 +46,7 @@ ACTOR Actor native //: Thinker
 	native fixed_t momy;	// alias for vely
 	native fixed_t momz;	// alias for velz
 	native int score;
+
 	// Meh, MBF redundant functions. Only for DeHackEd support.
 	action native A_Turn(float angle = 0);
 	action native A_LineEffect(int boomspecial = 0, int tag = 0);
@@ -195,6 +195,7 @@ ACTOR Actor native //: Thinker
 	action native A_Print(string whattoprint, float time = 0, string fontname = "");
 	action native A_PrintBold(string whattoprint, float time = 0, string fontname = "");
 	action native A_Log(string whattoprint);
+	action native A_LogInt(int whattoprint);
 	action native A_SetTranslucent(float alpha, int style = 0);
 	action native A_FadeIn(float reduce = 0.1);
 	action native A_FadeOut(float reduce = 0.1, bool remove = true);
@@ -261,7 +262,8 @@ ACTOR Actor native //: Thinker
 	action native A_ScaleVelocity(float scale);
 	action native A_ChangeVelocity(float x = 0, float y = 0, float z = 0, int flags = 0);
 	action native A_SetArg(int pos, int value);
-	action native A_SetUserVar(int pos, int value);
+	action native A_SetUserVar(name varname, int value);
+	action native A_SetUserArray(name varname, int index, int value);
 	action native A_SetSpecial(int spec, int arg0 = 0, int arg1 = 0, int arg2 = 0, int arg3 = 0, int arg4 = 0);
 	action native A_Quake(int intensity, int duration, int damrad, int tremrad, sound sfx = "world/quake");
 

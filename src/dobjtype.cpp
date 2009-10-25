@@ -118,7 +118,7 @@ void PClass::StaticFreeData (PClass *type)
 {
 	if (type->Defaults != NULL)
 	{
-		delete[] type->Defaults;
+		M_Free(type->Defaults);
 		type->Defaults = NULL;
 	}
 	type->FreeStateList ();
@@ -281,7 +281,7 @@ PClass *PClass::CreateDerivedClass (FName name, unsigned int size)
 	type->Meta = Meta;
 
 	// Set up default instance of the new class.
-	type->Defaults = new BYTE[size];
+	type->Defaults = (BYTE *)M_Malloc(size);
 	memcpy (type->Defaults, Defaults, Size);
 	if (size > Size)
 	{
@@ -313,6 +313,19 @@ PClass *PClass::CreateDerivedClass (FName name, unsigned int size)
 		m_RuntimeActors.Push (type);
 	}
 	return type;
+}
+
+// Add <extension> bytes to the end of this class. Returns the
+// previous size of the class.
+unsigned int PClass::Extend(unsigned int extension)
+{
+	assert(this->bRuntimeClass);
+
+	unsigned int oldsize = Size;
+	Size += extension;
+	Defaults = (BYTE *)M_Realloc(Defaults, Size);
+	memset(Defaults + oldsize, 0, extension);
+	return oldsize;
 }
 
 // Like FindClass but creates a placeholder if no class

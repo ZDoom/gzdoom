@@ -1,4 +1,8 @@
 October 24, 2009
+- Removed the Actor uservar array and replaced it with user-defined variables.
+  A_SetUserVar/SetUserVariable/GetUserVariable now take a variable name
+  instead of an array index. A_SetUserArray/SetUserArray/GetUserArray
+  have been added to access elements in user-defined arrays.
 - Rewrote wide sky texture scaling again. This time, it should work for any
   size textures at any scale. I also tried doing sky scrolling on the sky
   cylinder, but that didn't look so good, so I left it in screen space.

@@ -456,6 +456,7 @@ public:
 	inline bool IsKindOf (const PClass *base) const;
 	inline bool IsA (const PClass *type) const;
 
+	void SerializeUserVars(FArchive &arc);
 	virtual void Serialize (FArchive &arc);
 
 	// For catching Serialize functions in derived classes

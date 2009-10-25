@@ -2908,6 +2908,8 @@ enum EACSFunctions
 	ACSF_GetUserVariable,
 	ACSF_Radius_Quake2,
 	ACSF_CheckActorClass,
+	ACSF_SetUserArray,
+	ACSF_GetUserArray,
 };
 
 int DLevelScript::SideFromID(int id, int side)
@@ -2940,6 +2942,67 @@ int DLevelScript::LineFromID(int id)
 	{
 		return P_FindLineFromID(id, -1);
 	}
+}
+
+static void SetUserVariable(AActor *self, FName varname, int index, int value)
+{
+	PSymbol *sym = self->GetClass()->Symbols.FindSymbol(varname, true);
+	int max;
+	PSymbolVariable *var;
+
+	if (sym == NULL || sym->SymbolType != SYM_Variable ||
+		!(var = static_cast<PSymbolVariable *>(sym))->bUserVar)
+	{
+		return;
+	}
+	if (var->ValueType.Type == VAL_Int)
+	{
+		max = 1;
+	}
+	else if (var->ValueType.Type == VAL_Array && var->ValueType.BaseType == VAL_Int)
+	{
+		max = var->ValueType.size;
+	}
+	else
+	{
+		return;
+	}
+	// Set the value of the specified user variable.
+	if (index >= 0 && index < max)
+	{
+		((int *)(reinterpret_cast<BYTE *>(self) + var->offset))[index] = value;
+	}
+}
+
+static int GetUserVariable(AActor *self, FName varname, int index)
+{
+	PSymbol *sym = self->GetClass()->Symbols.FindSymbol(varname, true);
+	int max;
+	PSymbolVariable *var;
+
+	if (sym == NULL || sym->SymbolType != SYM_Variable ||
+		!(var = static_cast<PSymbolVariable *>(sym))->bUserVar)
+	{
+		return 0;
+	}
+	if (var->ValueType.Type == VAL_Int)
+	{
+		max = 1;
+	}
+	else if (var->ValueType.Type == VAL_Array && var->ValueType.BaseType == VAL_Int)
+	{
+		max = var->ValueType.size;
+	}
+	else
+	{
+		return 0;
+	}
+	// Get the value of the specified user variable.
+	if (index >= 0 && index < max)
+	{
+		return ((int *)(reinterpret_cast<BYTE *>(self) + var->offset))[index];
+	}
+	return 0;
 }
 
 int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
@@ -3109,23 +3172,24 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 		case ACSF_SetUserVariable:
 		{
 			int cnt = 0;
-			if (args[1] >= 0 && args[1] < 10)
+			FName varname(FBehavior::StaticLookupString(args[1]), true);
+			if (varname != NAME_None)
 			{
 				if (args[0] == 0)
 				{
 					if (activator != NULL)
 					{
-						activator->uservar[args[1]] = args[2];
+						SetUserVariable(activator, varname, 0, args[2]);
 					}
 					cnt++;
 				}
 				else
 				{
-					TActorIterator<AActor> iterator (args[0]);
+					TActorIterator<AActor> iterator(args[0]);
 	                
-					while ( (actor = iterator.Next ()) )
+					while ( (actor = iterator.Next()) )
 					{
-						actor->uservar[args[1]] = args[2];
+						SetUserVariable(actor, varname, 0, args[2]);
 						cnt++;
 					}
 				}
@@ -3135,12 +3199,52 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 		
 		case ACSF_GetUserVariable:
 		{
-			if (args[1] >= 0 && args[1] < 10)
+			FName varname(FBehavior::StaticLookupString(args[1]), true);
+			if (varname != NAME_None)
 			{
 				AActor *a = args[0] == 0 ? (AActor *)activator : SingleActorFromTID(args[0], NULL); 
-				return a != NULL? a->uservar[args[1]] : 0;
+				return a != NULL ? GetUserVariable(a, varname, 0) : 0;
 			}
-			else return 0;
+			return 0;
+		}
+
+		case ACSF_SetUserArray:
+		{
+			int cnt = 0;
+			FName varname(FBehavior::StaticLookupString(args[1]), true);
+			if (varname != NAME_None)
+			{
+				if (args[0] == 0)
+				{
+					if (activator != NULL)
+					{
+						SetUserVariable(activator, varname, args[2], args[3]);
+					}
+					cnt++;
+				}
+				else
+				{
+					TActorIterator<AActor> iterator(args[0]);
+	                
+					while ( (actor = iterator.Next()) )
+					{
+						SetUserVariable(actor, varname, args[2], args[3]);
+						cnt++;
+					}
+				}
+			}
+			return cnt;
+		}
+		
+		case ACSF_GetUserArray:
+		{
+			FName varname(FBehavior::StaticLookupString(args[1]), true);
+			if (varname != NAME_None)
+			{
+				AActor *a = args[0] == 0 ? (AActor *)activator : SingleActorFromTID(args[0], NULL); 
+				return a != NULL ? GetUserVariable(a, varname, args[2]) : 0;
+			}
+			return 0;
 		}
 
 		case ACSF_Radius_Quake2:

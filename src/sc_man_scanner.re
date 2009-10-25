@@ -109,6 +109,7 @@ std2:
 		'exec'						{ RET(TK_Exec); }
 		'defaultproperties'			{ RET(TK_DefaultProperties); }
 		'native'					{ RET(TK_Native); }
+		'var'						{ RET(TK_Var); }
 		'out'						{ RET(TK_Out); }
 		'ref'						{ RET(TK_Ref); }
 		'event'						{ RET(TK_Event); }

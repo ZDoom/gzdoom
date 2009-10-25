@@ -506,6 +506,88 @@ size_t DObject::StaticPointerSubstitution (DObject *old, DObject *notOld)
 	return changed;
 }
 
+void DObject::SerializeUserVars(FArchive &arc)
+{
+	PSymbolTable *symt;
+	FName varname;
+	DWORD count, j;
+	int *varloc;
+
+	if (SaveVersion < 1933)
+	{
+		return;
+	}
+
+	symt = &GetClass()->Symbols;
+
+	if (arc.IsStoring())
+	{
+		// Write all user variables.
+		for (; symt != NULL; symt = symt->ParentSymbolTable)
+		{
+			for (unsigned i = 0; i < symt->Symbols.Size(); ++i)
+			{
+				PSymbol *sym = symt->Symbols[i];
+				if (sym->SymbolType == SYM_Variable)
+				{
+					PSymbolVariable *var = static_cast<PSymbolVariable *>(sym);
+					if (var->bUserVar)
+					{
+						count = var->ValueType.Type == VAL_Array ? var->ValueType.size : 1;
+						varloc = (int *)(reinterpret_cast<BYTE *>(this) + var->offset);
+
+						arc << var->SymbolName;
+						arc.WriteCount(count);
+						for (j = 0; j < count; ++j)
+						{
+							arc << varloc[j];
+						}
+					}
+				}
+			}
+		}
+		// Write terminator.
+		varname = NAME_None;
+		arc << varname;
+	}
+	else
+	{
+		// Read user variables until 'None' is encountered.
+		arc << varname;
+		while (varname != NAME_None)
+		{
+			PSymbol *sym = symt->FindSymbol(varname, true);
+			DWORD wanted = 0;
+
+			if (sym != NULL && sym->SymbolType == SYM_Variable)
+			{
+				PSymbolVariable *var = static_cast<PSymbolVariable *>(sym);
+
+				if (var->bUserVar)
+				{
+					wanted = var->ValueType.Type == VAL_Array ? var->ValueType.size : 1;
+					varloc = (int *)(reinterpret_cast<BYTE *>(this) + var->offset);
+				}
+			}
+			count = arc.ReadCount();
+			for (j = 0; j < MIN(wanted, count); ++j)
+			{
+				arc << varloc[j];
+			}
+			if (wanted < count)
+			{
+				// Ignore remaining values from archive.
+				for (; j < count; ++j)
+				{
+					int foo;
+					arc << foo;
+				}
+			}
+			arc << varname;
+		}
+	}
+}
+
 void DObject::Serialize (FArchive &arc)
 {
 	ObjectFlags |= OF_SerialSuccess;

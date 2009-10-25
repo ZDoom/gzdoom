@@ -3,7 +3,7 @@
 ** Implements an archiver for DObject serialization.
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2006 Randy Heit
+** Copyright 1998-2009 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -1074,6 +1074,7 @@ FArchive &FArchive::WriteObject (DObject *obj)
 			WriteClass (type);
 //			Printf ("Make class %s (%u)\n", type->Name, m_File->Tell());
 			MapObject (obj);
+			obj->SerializeUserVars (*this);
 			obj->Serialize (*this);
 			obj->CheckIfSerialized ();
 		}
@@ -1105,6 +1106,7 @@ FArchive &FArchive::WriteObject (DObject *obj)
 				WriteCount (m_TypeMap[type->ClassIndex].toArchive);
 //				Printf ("Reuse class %s (%u)\n", type->Name, m_File->Tell());
 				MapObject (obj);
+				obj->SerializeUserVars (*this);
 				obj->Serialize (*this);
 				obj->CheckIfSerialized ();
 			}
@@ -1160,6 +1162,7 @@ FArchive &FArchive::ReadObject (DObject* &obj, PClass *wanttype)
 			// stored in the archive.
 			AActor *tempobj = static_cast<AActor *>(type->CreateNew ());
 			MapObject (obj != NULL ? obj : tempobj);
+			tempobj->SerializeUserVars (*this);
 			tempobj->Serialize (*this);
 			tempobj->CheckIfSerialized ();
 			// If this player is not present anymore, keep the new body
@@ -1187,6 +1190,7 @@ FArchive &FArchive::ReadObject (DObject* &obj, PClass *wanttype)
 //		Printf ("New class: %s (%u)\n", type->Name, m_File->Tell());
 		obj = type->CreateNew ();
 		MapObject (obj);
+		obj->SerializeUserVars (*this);
 		obj->Serialize (*this);
 		obj->CheckIfSerialized ();
 		break;
@@ -1201,6 +1205,7 @@ FArchive &FArchive::ReadObject (DObject* &obj, PClass *wanttype)
 
 			AActor *tempobj = static_cast<AActor *>(type->CreateNew ());
 			MapObject (obj != NULL ? obj : tempobj);
+			tempobj->SerializeUserVars (*this);
 			tempobj->Serialize (*this);
 			tempobj->CheckIfSerialized ();
 			if (obj != NULL)
@@ -1225,6 +1230,7 @@ FArchive &FArchive::ReadObject (DObject* &obj, PClass *wanttype)
 //		Printf ("Use class: %s (%u)\n", type->Name, m_File->Tell());
 		obj = type->CreateNew ();
 		MapObject (obj);
+		obj->SerializeUserVars (*this);
 		obj->Serialize (*this);
 		obj->CheckIfSerialized ();
 		break;

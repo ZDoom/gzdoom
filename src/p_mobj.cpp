@@ -314,7 +314,13 @@ void AActor::Serialize (FArchive &arc)
 		arc << DamageFactor;
 	}
 
-	for(int i=0; i<10; i++) arc << uservar[i];
+	// Skip past uservar array in old savegames
+	if (SaveVersion < 1933)
+	{
+		int foo;
+		for (int i = 0; i < 10; ++i)
+			arc << foo;
+	}
 
 	if (arc.IsStoring ())
 	{

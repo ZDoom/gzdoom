@@ -1,4 +1,5 @@
 October 24, 2009  (Changes by Graf Zahl)
+- fixed: sector_t::GetHeightSec checked the wrong MoreFlags.
 - made max. view pitch a property of the renderer so that it's overridable without
   changing game code.
 - made SpawningMapThing an argument of AActor::StaticSpawn instead of a global

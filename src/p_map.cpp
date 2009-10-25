@@ -4328,7 +4328,7 @@ void P_RadiusAttack (AActor *bombspot, AActor *bombsource, int bombdamage, int b
 			if (P_CheckSight (thing, bombspot, 1))
 			{ // OK to damage; target is in direct path
 				dist = clamp<int>(dist - fulldamagedistance, 0, dist);
-				int damage = Scale (bombdamage, bombdistance-dist, bombdistance-fulldamagedistance);
+				int damage = Scale (bombdamage, bombdistance-dist, bombdistance);
 				damage = (int)((float)damage * splashfactor);
 
 				damage = Scale(damage, thing->GetClass()->Meta.GetMetaFixed(AMETA_RDFactor, FRACUNIT), FRACUNIT);

@@ -1,3 +1,12 @@
+October 24, 2009  (Changes by Graf Zahl)
+- made max. view pitch a property of the renderer so that it's overridable without
+  changing game code.
+- made SpawningMapThing an argument of AActor::StaticSpawn instead of a global
+  variable.
+- added a stub to the DECORATE parser for defining dynamic lights directly
+  in DECORATE. This is needed so that ZDoom remains compatible with any DECORATE 
+  which uses this GZDoom feature in the future.
+
 October 24, 2009
 - Removed the Actor uservar array and replaced it with user-defined variables.
   A_SetUserVar/SetUserVariable/GetUserVariable now take a variable name

@@ -346,7 +346,7 @@ menu_t JoystickConfigMenu =
  *
  *=======================================*/
 
-static menuitem_t ControlsItems[] =
+menuitem_t ControlsItems[] =
 {
 	{ redtext,"ENTER to change, BACKSPACE to clear", {NULL}, {0.0}, {0.0}, {0.0}, {NULL} },
 	{ redtext,	" ",					{NULL},	{0.0}, {0.0}, {0.0}, {NULL} },

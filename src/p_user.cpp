@@ -2156,13 +2156,11 @@ void P_PlayerThink (player_t *player)
 				player->mo->pitch -= look;
 				if (look > 0)
 				{ // look up
-					if (player->mo->pitch < -ANGLE_1*MAX_UP_ANGLE)
-						player->mo->pitch = -ANGLE_1*MAX_UP_ANGLE;
+					player->mo->pitch = MAX(player->mo->pitch, screen->GetMaxViewPitch(false));
 				}
 				else
 				{ // look down
-					if (player->mo->pitch > ANGLE_1*MAX_DN_ANGLE)
-						player->mo->pitch = ANGLE_1*MAX_DN_ANGLE;
+					player->mo->pitch = MIN(player->mo->pitch, screen->GetMaxViewPitch(true));
 				}
 			}
 		}

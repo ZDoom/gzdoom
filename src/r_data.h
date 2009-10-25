@@ -93,6 +93,7 @@ public:
 	void Unload ();
 	bool CheckModified ();
 	void RenderView (AActor *viewpoint, int fov);
+	void NeedUpdate() { bNeedsUpdate=true; }
 
 protected:
 	DSimpleCanvas *Canvas;

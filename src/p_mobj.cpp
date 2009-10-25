@@ -85,7 +85,6 @@ EXTERN_CVAR (Int,  cl_rockettrails)
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static bool SpawningMapThing;
 static FRandom pr_explodemissile ("ExplodeMissile");
 FRandom pr_bounce ("Bounce");
 static FRandom pr_reflect ("Reflect");
@@ -560,6 +559,7 @@ bool AActor::SetState (FState *newstate)
 		newstate = newstate->GetNextState();
 	} while (tics == 0);
 
+	screen->StateChanged(this);
 	return true;
 }
 
@@ -619,6 +619,7 @@ bool AActor::SetStateNF (FState *newstate)
 		newstate = newstate->GetNextState();
 	} while (tics == 0);
 
+	screen->StateChanged(this);
 	return true;
 }
 
@@ -3459,7 +3460,7 @@ bool AActor::UpdateWaterLevel (fixed_t oldz, bool dosplash)
 //
 //==========================================================================
 
-AActor *AActor::StaticSpawn (const PClass *type, fixed_t ix, fixed_t iy, fixed_t iz, replace_t allowreplacement)
+AActor *AActor::StaticSpawn (const PClass *type, fixed_t ix, fixed_t iy, fixed_t iz, replace_t allowreplacement, bool SpawningMapThing)
 {
 	if (type == NULL)
 	{
@@ -3623,6 +3624,7 @@ AActor *AActor::StaticSpawn (const PClass *type, fixed_t ix, fixed_t iy, fixed_t
 	{
 		level.total_items++;
 	}
+	screen->StateChanged(actor);
 	return actor;
 }
 
@@ -4339,9 +4341,7 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	else
 		z = ONFLOORZ;
 
-	SpawningMapThing = true;
-	mobj = Spawn (i, x, y, z, NO_REPLACE);
-	SpawningMapThing = false;
+	mobj = AActor::StaticSpawn (i, x, y, z, NO_REPLACE, true);
 
 	if (z == ONFLOORZ)
 		mobj->z += mthing->z;

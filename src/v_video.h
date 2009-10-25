@@ -351,6 +351,15 @@ public:
 	// draws player sprites with hardware acceleration (only useful for software rendering)
 	virtual void DrawRemainingPlayerSprites();
 
+	// notifies the renderer that an actor has changed state.
+	virtual void StateChanged(AActor *actor);
+
+	// notify the renderer that serialization of the curent level is about to start/end
+	virtual void StartSerialize(FArchive &arc);
+	virtual void EndSerialize(FArchive &arc);
+
+	virtual int GetMaxViewPitch(bool down);
+
 	bool Accel2D;	// If true, 2D drawing can be accelerated.
 
 	// Begin 2D drawing operations. This is like Update, but it doesn't end

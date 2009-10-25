@@ -55,6 +55,7 @@
 #include "i_system.h"
 #include "colormatcher.h"
 #include "thingdef_exp.h"
+#include "version.h"
 
 //==========================================================================
 //***
@@ -255,6 +256,20 @@ do_stop:
 					sc.MustGetStringName (",");
 					sc.MustGetNumber();
 					state.Misc2 = sc.Number;
+					sc.MustGetStringName(")");
+					continue;
+				}
+				if (sc.Compare("LIGHT"))
+				{
+					sc.MustGetStringName("(");
+					do
+					{
+						sc.MustGetString();
+						#ifdef DYNLIGHT
+							AddStateLight(&state, sc.String);
+						#endif
+					}
+					while (sc.CheckString(","));
 					sc.MustGetStringName(")");
 					continue;
 				}

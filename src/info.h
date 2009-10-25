@@ -59,6 +59,7 @@ struct FState
 	long		Misc2;			// Was changed to BYTE, reverted to long for MBF compat
 	BYTE		Frame;
 	BYTE		DefineFlags;	// Unused byte so let's use it during state creation.
+	short		Light;
 	FState		*NextState;
 	actionf_p	ActionFunc;
 	int			ParameterIndex;
@@ -211,5 +212,6 @@ extern FDoomEdMap DoomEdMap;
 
 int GetSpriteIndex(const char * spritename);
 TArray<FName> &MakeStateNameList(const char * fname);
+void AddStateLight(FState *state, const char *lname);
 
 #endif	// __INFO_H__

@@ -84,6 +84,16 @@
 #include "g_hub.h"
 
 
+#ifndef STAT
+#define STAT_NEW(map)
+#define STAT_END(newl)
+#define STAT_SAVE(arc, hub)
+#else
+void STAT_NEW(const char *lev);
+void STAT_END(const char *newl);
+void STAT_SAVE(FArchive &arc, bool hubload);
+#endif
+
 EXTERN_CVAR (Float, sv_gravity)
 EXTERN_CVAR (Float, sv_aircontrol)
 EXTERN_CVAR (Int, disableautosave)
@@ -495,6 +505,8 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 		// force players to be initialized upon first level load
 		for (i = 0; i < MAXPLAYERS; i++)
 			players[i].playerstate = PST_ENTER;	// [BC]
+
+		STAT_NEW(mapname);
 	}
 
 	usergame = !bTitleLevel;		// will be set false if a demo
@@ -595,6 +607,8 @@ void G_ChangeLevel(const char *levelname, int position, bool keepFacing, int nex
 	unloading = true;
 	FBehavior::StaticStartTypedScripts (SCRIPT_Unloading, NULL, false, 0, true);
 	unloading = false;
+
+	STAT_END(nextlevel);
 
 	if (thiscluster && (thiscluster->flags & CLUSTER_HUB))
 	{
@@ -1389,6 +1403,8 @@ void G_AirControlChanged ()
 void G_SerializeLevel (FArchive &arc, bool hubLoad)
 {
 	int i = level.totaltime;
+	
+	screen->StartSerialize(arc);
 
 	arc << level.flags
 		<< level.flags2
@@ -1507,6 +1523,8 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 			}
 		}
 	}
+	screen->EndSerialize(arc);
+	STAT_SAVE(arc, hubLoad);
 }
 
 //==========================================================================

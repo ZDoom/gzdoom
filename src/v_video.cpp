@@ -1269,7 +1269,48 @@ void DFrameBuffer::DrawRemainingPlayerSprites()
 	R_DrawRemainingPlayerSprites();
 }
 
+//===========================================================================
+//
+// notify the renderer that an actor has changed state
+//
+//===========================================================================
 
+void DFrameBuffer::StateChanged(AActor *actor)
+{
+}
+
+//===========================================================================
+//
+// notify the renderer that serialization of the curent level is about to start/end
+//
+//===========================================================================
+
+void DFrameBuffer::StartSerialize(FArchive &arc)
+{
+}
+
+void DFrameBuffer::EndSerialize(FArchive &arc)
+{
+}
+
+//===========================================================================
+//
+// Get max. view angle (renderer specific information so it goes here now)
+//
+//===========================================================================
+#define MAX_DN_ANGLE	56		// Max looking down angle
+#define MAX_UP_ANGLE	32		// Max looking up angle
+
+int DFrameBuffer::GetMaxViewPitch(bool down)
+{
+	return down? MAX_DN_ANGLE*ANGLE_1 : -MAX_UP_ANGLE*ANGLE_1;
+}
+
+//===========================================================================
+//
+// 
+//
+//===========================================================================
 
 FNativePalette::~FNativePalette()
 {

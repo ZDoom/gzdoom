@@ -120,7 +120,6 @@ void PO_Init (void);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static FPolyObj *GetPolyobj (int polyNum);
 static int GetPolyobjMirror (int poly);
 static void UpdateSegBBox (seg_t *seg);
 static void RotatePt (int an, fixed_t *x, fixed_t *y, fixed_t startSpotX,
@@ -184,7 +183,7 @@ DPolyAction::DPolyAction (int polyNum)
 
 void DPolyAction::Destroy()
 {
-	FPolyObj *poly = GetPolyobj (m_PolyObj);
+	FPolyObj *poly = PO_GetPolyobj (m_PolyObj);
 
 	if (poly->specialdata == NULL || poly->specialdata == this)
 	{
@@ -197,7 +196,7 @@ void DPolyAction::Destroy()
 
 void DPolyAction::SetInterpolation ()
 {
-	FPolyObj *poly = GetPolyobj (m_PolyObj);
+	FPolyObj *poly = PO_GetPolyobj (m_PolyObj);
 	m_Interpolation = poly->SetInterpolation();
 }
 
@@ -278,7 +277,7 @@ void DRotatePoly::Tick ()
 		m_Dist -= absSpeed;
 		if (m_Dist == 0)
 		{
-			FPolyObj *poly = GetPolyobj (m_PolyObj);
+			FPolyObj *poly = PO_GetPolyobj (m_PolyObj);
 			if (poly->specialdata == this)
 			{
 				poly->specialdata = NULL;
@@ -307,7 +306,7 @@ bool EV_RotatePoly (line_t *line, int polyNum, int speed, int byteAngle,
 	DRotatePoly *pe;
 	FPolyObj *poly;
 
-	if ( (poly = GetPolyobj(polyNum)) )
+	if ( (poly = PO_GetPolyobj(polyNum)) )
 	{
 		if (poly->specialdata && !overRide)
 		{ // poly is already moving
@@ -338,9 +337,9 @@ bool EV_RotatePoly (line_t *line, int polyNum, int speed, int byteAngle,
 	poly->specialdata = pe;
 	SN_StartSequence (poly, poly->seqType, SEQ_DOOR, 0);
 	
-	while ( (mirror = GetPolyobjMirror( polyNum)) )
+	while ( (mirror = GetPolyobjMirror(polyNum)) )
 	{
-		poly = GetPolyobj(mirror);
+		poly = PO_GetPolyobj(mirror);
 		if (poly == NULL)
 		{
 			I_Error ("EV_RotatePoly: Invalid polyobj num: %d\n", polyNum);
@@ -390,7 +389,7 @@ void DMovePoly::Tick ()
 		m_Dist -= absSpeed;
 		if (m_Dist <= 0)
 		{
-			poly = GetPolyobj (m_PolyObj);
+			poly = PO_GetPolyobj (m_PolyObj);
 			if (poly->specialdata == this)
 			{
 				poly->specialdata = NULL;
@@ -421,7 +420,7 @@ bool EV_MovePoly (line_t *line, int polyNum, int speed, angle_t angle,
 	FPolyObj *poly;
 	angle_t an;
 
-	if ( (poly = GetPolyobj(polyNum)) )
+	if ( (poly = PO_GetPolyobj(polyNum)) )
 	{
 		if (poly->specialdata && !overRide)
 		{ // poly is already moving
@@ -455,7 +454,7 @@ bool EV_MovePoly (line_t *line, int polyNum, int speed, angle_t angle,
 
 	while ( (mirror = GetPolyobjMirror(polyNum)) )
 	{
-		poly = GetPolyobj(mirror);
+		poly = PO_GetPolyobj(mirror);
 		if (poly && poly->specialdata && !overRide)
 		{ // mirroring poly is already in motion
 			break;
@@ -493,7 +492,7 @@ void DPolyDoor::Tick ()
 	{
 		if (!--m_Tics)
 		{
-			poly = GetPolyobj (m_PolyObj);
+			poly = PO_GetPolyobj (m_PolyObj);
 			SN_StartSequence (poly, poly->seqType, SEQ_DOOR, m_Close);
 		}
 		return;
@@ -507,7 +506,7 @@ void DPolyDoor::Tick ()
 			m_Dist -= absSpeed;
 			if (m_Dist <= 0)
 			{
-				poly = GetPolyobj (m_PolyObj);
+				poly = PO_GetPolyobj (m_PolyObj);
 				SN_StopSequence (poly);
 				if (!m_Close)
 				{
@@ -531,7 +530,7 @@ void DPolyDoor::Tick ()
 		}
 		else
 		{
-			poly = GetPolyobj (m_PolyObj);
+			poly = PO_GetPolyobj (m_PolyObj);
 			if (poly->crush || !m_Close)
 			{ // continue moving if the poly is a crusher, or is opening
 				return;
@@ -560,7 +559,7 @@ void DPolyDoor::Tick ()
 			m_Dist -= absSpeed;
 			if (m_Dist <= 0)
 			{
-				poly = GetPolyobj (m_PolyObj);
+				poly = PO_GetPolyobj (m_PolyObj);
 				SN_StopSequence (poly);
 				if (!m_Close)
 				{
@@ -581,7 +580,7 @@ void DPolyDoor::Tick ()
 		}
 		else
 		{
-			poly = GetPolyobj (m_PolyObj);
+			poly = PO_GetPolyobj (m_PolyObj);
 			if(poly->crush || !m_Close)
 			{ // continue moving if the poly is a crusher, or is opening
 				return;
@@ -614,7 +613,7 @@ bool EV_OpenPolyDoor (line_t *line, int polyNum, int speed, angle_t angle,
 	DPolyDoor *pd;
 	FPolyObj *poly;
 
-	if( (poly = GetPolyobj(polyNum)) )
+	if( (poly = PO_GetPolyobj(polyNum)) )
 	{
 		if (poly->specialdata)
 		{ // poly is already moving
@@ -649,7 +648,7 @@ bool EV_OpenPolyDoor (line_t *line, int polyNum, int speed, angle_t angle,
 
 	while ( (mirror = GetPolyobjMirror (polyNum)) )
 	{
-		poly = GetPolyobj (mirror);
+		poly = PO_GetPolyobj (mirror);
 		if (poly && poly->specialdata)
 		{ // mirroring poly is already in motion
 			break;
@@ -683,11 +682,11 @@ bool EV_OpenPolyDoor (line_t *line, int polyNum, int speed, angle_t angle,
 
 //==========================================================================
 //
-// GetPolyobj
+// PO_GetPolyobj
 //
 //==========================================================================
 
-static FPolyObj *GetPolyobj (int polyNum)
+FPolyObj *PO_GetPolyobj (int polyNum)
 {
 	int i;
 
@@ -844,7 +843,7 @@ bool PO_MovePolyobj (int num, int x, int y, bool force)
 {
 	FPolyObj *po;
 
-	if (!(po = GetPolyobj (num)))
+	if (!(po = PO_GetPolyobj (num)))
 	{
 		I_Error ("PO_MovePolyobj: Invalid polyobj number: %d\n", num);
 	}
@@ -954,7 +953,7 @@ bool PO_RotatePolyobj (int num, angle_t angle)
 	FPolyObj *po;
 	bool blocked;
 
-	if(!(po = GetPolyobj(num)))
+	if(!(po = PO_GetPolyobj(num)))
 	{
 		I_Error("PO_RotatePolyobj: Invalid polyobj number: %d\n", num);
 	}
@@ -1662,7 +1661,7 @@ bool PO_Busy (int polyobj)
 {
 	FPolyObj *poly;
 
-	poly = GetPolyobj (polyobj);
+	poly = PO_GetPolyobj (polyobj);
 	if (poly == NULL || poly->specialdata == NULL)
 	{
 		return false;

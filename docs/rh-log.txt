@@ -1,4 +1,11 @@
 October 26, 2009
+- Added new sound sequence ACS functions:
+    SoundSequenceOnActor(int tid, string seqname);
+    SoundSequenceOnSector(int tag, string seqname, int location);
+    SoundSequenceOnPolyobj(int polynum, string seqname);
+  SoundSequenceOnSector takes an extra parameter that specifies where in the
+  sector the sound comes from (floor, ceiling, interior, or all of it). See
+  the SECSEQ defines in zdefs.acs.
 - Fixed: R_RenderDecal() must save various Wall globals, because the originals
   may still be needed. In particular, when drawing a seg with a midtexture is
   split by foreground geometry, the first drawseg generated from it will have

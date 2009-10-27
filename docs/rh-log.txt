@@ -1,3 +1,12 @@
+October 26, 2009
+- Fixed: R_RenderDecal() must save various Wall globals, because the originals
+  may still be needed. In particular, when drawing a seg with a midtexture is
+  split by foreground geometry, the first drawseg generated from it will have
+  the correct WallSZ1,2 values, but subsequent ones will have whatever
+  R_RenderDecal() left behind. These values are used to calculate the upper
+  and lower bounds of the midtexture. (Ironically, my work to Build-ify things
+  had done away with these globals, but that's gone now.)
+
 October 24, 2009  (Changes by Graf Zahl)
 - fixed: sector_t::GetHeightSec checked the wrong MoreFlags.
 - made max. view pitch a property of the renderer so that it's overridable without

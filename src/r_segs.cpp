@@ -2246,6 +2246,15 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 	// to a wall, we use the wall's angle instead of the decal's. This is
 	// pretty much the same as what R_AddLine() does.
 
+	fixed_t savetx1, savetx2, savety1, savety2, savesz1, savesz2;
+
+	savetx1 = WallTX1;
+	savetx2 = WallTX2;
+	savety1 = WallTY1;
+	savety2 = WallTY2;
+	savesz1 = WallSZ1;
+	savesz2 = WallSZ2;
+
 	x2 = WallSpriteTile->GetWidth();
 	x1 = WallSpriteTile->LeftOffset;
 	x2 = x2 - x1;
@@ -2277,43 +2286,43 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 
 	if (WallTX1 >= -WallTY1)
 	{
-		if (WallTX1 > WallTY1) return;	// left edge is off the right side
-		if (WallTY1 == 0) return;
+		if (WallTX1 > WallTY1) goto done;	// left edge is off the right side
+		if (WallTY1 == 0) goto done;
 		x1 = (centerxfrac + Scale (WallTX1, centerxfrac, WallTY1)) >> FRACBITS;
 		if (WallTX1 >= 0) x1 = MIN (viewwidth, x1+1); // fix for signed divide
 		WallSZ1 = WallTY1;
 	}
 	else
 	{
-		if (WallTX2 < -WallTY2) return;	// wall is off the left side
+		if (WallTX2 < -WallTY2) goto done;	// wall is off the left side
 		fixed_t den = WallTX1 - WallTX2 - WallTY2 + WallTY1;	
-		if (den == 0) return;
+		if (den == 0) goto done;
 		x1 = 0;
 		WallSZ1 = WallTY1 + Scale (WallTY2 - WallTY1, WallTX1 + WallTY1, den);
 	}
 
 	if (WallSZ1 < TOO_CLOSE_Z)
-		return;
+		goto done;
 
 	if (WallTX2 <= WallTY2)
 	{
-		if (WallTX2 < -WallTY2) return;	// right edge is off the left side
-		if (WallTY2 == 0) return;
+		if (WallTX2 < -WallTY2) goto done;	// right edge is off the left side
+		if (WallTY2 == 0) goto done;
 		x2 = (centerxfrac + Scale (WallTX2, centerxfrac, WallTY2)) >> FRACBITS;
 		if (WallTX2 >= 0) x2 = MIN (viewwidth, x2+1);	// fix for signed divide
 		WallSZ2 = WallTY2;
 	}
 	else
 	{
-		if (WallTX1 > WallTY1) return;	// wall is off the right side
+		if (WallTX1 > WallTY1) goto done;	// wall is off the right side
 		fixed_t den = WallTY2 - WallTY1 - WallTX2 + WallTX1;
-		if (den == 0) return;
+		if (den == 0) goto done;
 		x2 = viewwidth;
 		WallSZ2 = WallTY1 + Scale (WallTY2 - WallTY1, WallTX1 - WallTY1, den);
 	}
 
 	if (x1 >= x2 || x1 > clipper->x2 || x2 <= clipper->x1 || WallSZ2 < TOO_CLOSE_Z)
-		return;
+		goto done;
 
 	if (MirrorFlags & RF_XFLIP)
 	{
@@ -2340,7 +2349,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 		{
 			if (pass != 0)
 			{
-				return;
+				goto done;
 			}
 			mceilingclip = walltop;
 			mfloorclip = wallbottom;
@@ -2361,7 +2370,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 	case RF_CLIPUPPER:
 		if (pass != 0)
 		{
-			return;
+			goto done;
 		}
 		mceilingclip = walltop;
 		mfloorclip = ceilingclip;
@@ -2370,7 +2379,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 	case RF_CLIPMID:
 		if (curline->backsector != NULL && pass != 2)
 		{
-			return;
+			goto done;
 		}
 		mceilingclip = openings + clipper->sprtopclip - clipper->x1;
 		mfloorclip = openings + clipper->sprbottomclip - clipper->x1;
@@ -2379,7 +2388,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 	case RF_CLIPLOWER:
 		if (pass != 0)
 		{
-			return;
+			goto done;
 		}
 		mceilingclip = floorclip;
 		mfloorclip = wallbottom;
@@ -2400,7 +2409,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 	}
 	if (x1 >= x2)
 	{
-		return;
+		goto done;
 	}
 
 	swap (x1, WallSX1);
@@ -2523,6 +2532,13 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 	hcolfunc_post4 = rt_map4cols;
 
 	R_FinishSetPatchStyle ();
+done:
+	WallTX1 = savetx1;
+	WallTX2 = savetx2;
+	WallTY1 = savety1;
+	WallTY2 = savety2;
+	WallSZ1 = savesz1;
+	WallSZ2 = savesz2;
 }
 
 static void WallSpriteColumn (void (*drawfunc)(const BYTE *column, const FTexture::Span *spans))

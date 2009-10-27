@@ -1,6 +1,8 @@
 October 26, 2009
 - Changes to both A_MonsterRail() and A_CustomRailgun(): Save actor's pitch,
-  use a larger aiming range, and ignore non-targets in P_AimLineAttack().
+  use a larger aiming range, ignore non-targets in P_AimLineAttack(), and
+  aim at the target anyway even if P_AimLineAttack() decides it has no
+  chance of hitting.
 - Added another parameter to P_AimLineAttack(): A target to be aimed at. If
   this is non-NULL, then all actors between the shooter and the target will
   be ignored.

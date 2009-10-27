@@ -2704,6 +2704,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MonsterRail)
 		return;
 
 	fixed_t saved_pitch = self->pitch;
+	AActor *linetarget;
 
 	// [RH] Andy Baker's stealth monsters
 	if (self->flags & MF_STEALTH)
@@ -2718,7 +2719,15 @@ DEFINE_ACTION_FUNCTION(AActor, A_MonsterRail)
 									self->target->x,
 									self->target->y);
 
-	self->pitch = P_AimLineAttack (self, self->angle, MISSILERANGE, NULL, ANGLE_1*60, false, false, false, self->target);
+	self->pitch = P_AimLineAttack (self, self->angle, MISSILERANGE, &linetarget, ANGLE_1*60, false, false, false, self->target);
+	if (linetarget == NULL)
+	{
+		// We probably won't hit the target, but aim at it anyway so we don't look stupid.
+		FVector2 xydiff(self->target->x - self->x, self->target->y - self->y);
+		double zdiff = (self->target->z + (self->target->height>>1)) -
+						(self->z + (self->height>>1) - self->floorclip);
+		self->pitch = int(atan2(zdiff, xydiff.Length()) * ANGLE_180 / -M_PI);
+	}
 
 	// Let the aim trail behind the player
 	self->angle = R_PointToAngle2 (self->x,

@@ -1,4 +1,9 @@
 October 26, 2009
+- Changes to both A_MonsterRail() and A_CustomRailgun(): Save actor's pitch,
+  use a larger aiming range, and ignore non-targets in P_AimLineAttack().
+- Added another parameter to P_AimLineAttack(): A target to be aimed at. If
+  this is non-NULL, then all actors between the shooter and the target will
+  be ignored.
 - Added new sound sequence ACS functions:
     SoundSequenceOnActor(int tid, string seqname);
     SoundSequenceOnSector(int tag, string seqname, int location);

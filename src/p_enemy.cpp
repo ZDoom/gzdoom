@@ -2703,6 +2703,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_MonsterRail)
 	if (!self->target)
 		return;
 
+	fixed_t saved_pitch = self->pitch;
+
 	// [RH] Andy Baker's stealth monsters
 	if (self->flags & MF_STEALTH)
 	{
@@ -2716,7 +2718,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MonsterRail)
 									self->target->x,
 									self->target->y);
 
-	self->pitch = P_AimLineAttack (self, self->angle, MISSILERANGE);
+	self->pitch = P_AimLineAttack (self, self->angle, MISSILERANGE, NULL, ANGLE_1*60, false, false, false, self->target);
 
 	// Let the aim trail behind the player
 	self->angle = R_PointToAngle2 (self->x,
@@ -2730,6 +2732,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MonsterRail)
     }
 
 	P_RailAttack (self, self->GetMissileDamage (0, 1), 0);
+	self->pitch = saved_pitch;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_Scream)

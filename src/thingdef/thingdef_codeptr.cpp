@@ -1182,6 +1182,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomRailgun)
 	fixed_t saved_x = self->x;
 	fixed_t saved_y = self->y;
 	angle_t saved_angle = self->angle;
+	fixed_t saved_pitch = self->pitch;
 
 	if (aim && self->target == NULL)
 	{
@@ -1198,15 +1199,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomRailgun)
 
 	if (aim)
 	{
-
 		self->angle = R_PointToAngle2 (self->x,
 										self->y,
 										self->target->x,
 										self->target->y);
-
 	}
-
-	self->pitch = P_AimLineAttack (self, self->angle, MISSILERANGE);
+	self->pitch = P_AimLineAttack (self, self->angle, MISSILERANGE, NULL, ANGLE_1*60, false, false, false, self->target);
 
 	// Let the aim trail behind the player
 	if (aim)
@@ -1242,6 +1240,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomRailgun)
 	self->x = saved_x;
 	self->y = saved_y;
 	self->angle = saved_angle;
+	self->pitch = saved_pitch;
 }
 
 //===========================================================================

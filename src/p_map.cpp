@@ -1091,8 +1091,7 @@ bool PIT_CheckThing (AActor *thing, FCheckPosition &tm)
 		}
 		// Do damage
 		damage = tm.thing->GetMissileDamage ((tm.thing->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1);
-		// [GZ] If MF6_FORCEPAIN is set, we need to call P_DamageMobj even if damage is 0!
-		if ((damage >= 0) || (tm.thing->flags6 & MF6_FORCEPAIN)) 
+		if (damage >= 0)
 		{
 			P_DamageMobj (thing, tm.thing, tm.thing->target, damage, tm.thing->DamageType);
 			if (damage > 0)
@@ -1112,7 +1111,7 @@ bool PIT_CheckThing (AActor *thing, FCheckPosition &tm)
 				}
 			}
 		}
-		else if (damage < 0)
+		else
 		{
 			P_GiveBody (thing, -damage);
 		}

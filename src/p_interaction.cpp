@@ -931,7 +931,8 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 	}
 	if (inflictor != NULL)
 	{
-		if (inflictor->flags5 & MF5_PIERCEARMOR) flags |= DMG_NO_ARMOR;
+		if (inflictor->flags5 & MF5_PIERCEARMOR)
+			flags |= DMG_NO_ARMOR;
 	}
 	
 	MeansOfDeath = mod;
@@ -981,21 +982,22 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 			{
 				return;
 			}
-
 		}
 		// Handle active damage modifiers (e.g. PowerDamage)
 		if (source != NULL && source->Inventory != NULL)
 		{
 			int olddam = damage;
 			source->Inventory->ModifyDamage(olddam, mod, damage, false);
-			if (olddam != damage && damage <= 0) return;
+			if (olddam != damage && damage <= 0)
+				return;
 		}
 		// Handle passive damage modifiers (e.g. PowerProtection)
 		if (target->Inventory != NULL)
 		{
 			int olddam = damage;
 			target->Inventory->ModifyDamage(olddam, mod, damage, true);
-			if (olddam != damage && damage <= 0) return;
+			if (olddam != damage && damage <= 0)
+				return;
 		}
 
 		DmgFactors * df = target->GetClass()->ActorInfo->DamageFactors;
@@ -1006,11 +1008,13 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 			if (pdf != NULL)
 			{
 				damage = FixedMul(damage, *pdf);
-				if (damage <= 0) return;
+				if (damage <= 0)
+					return;
 			}
 		}
 		damage = FixedMul(damage, target->DamageFactor);
-		if (damage <= 0) return;
+		if (damage < 0)
+			return;
 
 		damage = target->TakeSpecialDamage (inflictor, source, damage, mod);
 	}
@@ -1039,7 +1043,6 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 			
 			ang = R_PointToAngle2 (origin->x, origin->y,
 				target->x, target->y);
-
 
 			// Calculate this as float to avoid overflows so that the
 			// clamping that had to be done here can be removed.
@@ -1131,8 +1134,9 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 				damage = newdam;
 				if (damage <= 0)
 				{
-					// If MF&_FORCEPAIN is set make the player enter the pain state.
-					if (inflictor != NULL && (inflictor->flags6 & MF6_FORCEPAIN)) goto dopain;
+					// If MF6_FORCEPAIN is set, make the player enter the pain state.
+					if (inflictor != NULL && (inflictor->flags6 & MF6_FORCEPAIN))
+						goto dopain;
 					return;
 				}
 			}
@@ -1268,7 +1272,6 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 	if (!(target->flags5 & MF5_NOPAIN) && (inflictor == NULL || !(inflictor->flags5 & MF5_PAINLESS)) &&
 		!G_SkillProperty(SKILLP_NoPain) && !(target->flags & MF_SKULLFLY))
 	{
-
 		pc = target->GetClass()->ActorInfo->PainChances;
 		painchance = target->PainChance;
 		if (pc != NULL)
@@ -1280,7 +1283,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 			}
 		}
 
-		if ((damage > target->PainThreshold && pr_damagemobj() < painchance) ||
+		if ((damage >= target->PainThreshold && pr_damagemobj() < painchance) ||
 			(inflictor != NULL && (inflictor->flags6 & MF6_FORCEPAIN)))
 		{
 dopain:	
@@ -1289,8 +1292,9 @@ dopain:
 				if (pr_lightning() < 96)
 				{
 					justhit = true;
-					FState * painstate = target->FindState(NAME_Pain, mod);
-					if (painstate != NULL) target->SetState (painstate);
+					FState *painstate = target->FindState(NAME_Pain, mod);
+					if (painstate != NULL)
+						target->SetState(painstate);
 				}
 				else
 				{ // "electrocute" the target
@@ -1304,8 +1308,9 @@ dopain:
 			else
 			{
 				justhit = true;
-				FState * painstate = target->FindState(NAME_Pain, mod);
-				if (painstate != NULL) target->SetState (painstate);
+				FState *painstate = target->FindState(NAME_Pain, mod);
+				if (painstate != NULL)
+					target->SetState(painstate);
 				if (mod == NAME_PoisonCloud)
 				{
 					if ((target->flags3 & MF3_ISMONSTER) && pr_poison() < 128)
@@ -1353,7 +1358,6 @@ dopain:
 	// killough 11/98: Don't attack a friend, unless hit by that friend.
 	if (justhit && (target->target == source || !target->target || !target->IsFriend(target->target)))
 		target->flags |= MF_JUSTHIT;    // fight back!
-
 }
 
 bool AActor::OkayToSwitchTarget (AActor *other)

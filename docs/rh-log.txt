@@ -1,3 +1,8 @@
+October 28, 2009
+- Fixed: Do not exit P_DamageMobj early if damage is 0, so we can still get
+  the side effects from it. PainThreshold also needs to be inclusive, as
+  the docs already state.
+
 October 26, 2009
 - Changes to both A_MonsterRail() and A_CustomRailgun(): Save actor's pitch,
   use a larger aiming range, ignore non-targets in P_AimLineAttack(), and

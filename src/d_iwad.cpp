@@ -77,8 +77,10 @@ const IWADInfo IWADInfos[NUM_IWAD_TYPES] =
 	{ "Ultimate Freedoom",						"Freedoom1",MAKERGB(50,84,67),		MAKERGB(198,220,209),	GAME_Doom,		"mapinfo/doom1.txt" },
 	{ "Freedoom \"Demo\"",						NULL,		MAKERGB(50,84,67),		MAKERGB(198,220,209),	GAME_Doom,		"mapinfo/doom1.txt" },
 	{ "FreeDM",									"FreeDM",	MAKERGB(50,84,67),		MAKERGB(198,220,209),	GAME_Doom,		"mapinfo/doom2.txt",	GI_MAPxx },
+	{ "Blasphemer",								"Blasphemer",MAKERGB(115,0,0),		MAKERGB(0,0,0),			GAME_Heretic,	"mapinfo/heretic.txt" },
 	{ "Chex(R) Quest",							"Chex1",	MAKERGB(255,255,0),		MAKERGB(0,192,0),		GAME_Chex,		"mapinfo/chex.txt" },
 	{ "Chex(R) Quest 3",						"Chex3",	MAKERGB(255,255,0),		MAKERGB(0,192,0),		GAME_Chex,		"mapinfo/chex3.txt" },
+	{ "Action Doom 2: Urban Brawl",				"UrbanBrawl",MAKERGB(168,168,0),	MAKERGB(168,0,0),		GAME_Doom,		"mapinfo/doom2.txt" },
 	//{ "ZDoom Engine",							NULL,		MAKERGB(168,0,0),		MAKERGB(168,168,168) },
 };
 
@@ -104,8 +106,11 @@ static const char *IWADNames[] =
 	"freedoom1.wad",
 	"freedoomu.wad",
 	"freedm.wad",
+	"blasphem.wad",
+	"blasphemer.wad",
 	"chex.wad",
 	"chex3.wad",
+	"action2.wad",
 #ifdef unix
 	"DOOM2.WAD",    // Also look for all-uppercase names
 	"PLUTONIA.WAD",
@@ -124,8 +129,11 @@ static const char *IWADNames[] =
 	"FREEDOOM1.WAD",
 	"FREEDOOMU.WAD",
 	"FREEDM.WAD",
+	"BLASPHEM.WAD",
+	"BLASPHEMER.WAD",
 	"CHEX.WAD",
 	"CHEX3.WAD",
+	"ACTION2.WAD",
 #endif
 	NULL
 };
@@ -141,6 +149,7 @@ static EIWADType ScanIWAD (const char *iwad)
 {
 	static const char checklumps[][8] =
 	{
+		"AD2LIB",
 		"E1M1",
 		"E4M2",
 		"MAP01",
@@ -154,6 +163,7 @@ static EIWADType ScanIWAD (const char *iwad)
 		"MAP33",
 		"INVCURS",
 		{ 'F','R','E','E','D','O','O','M' },
+		{ 'B','L','A','S','P','H','E','M' },
 		"W94_1",
 		{ 'P','O','S','S','H','0','M','0' },
 		"CYCLA1",
@@ -169,6 +179,7 @@ static EIWADType ScanIWAD (const char *iwad)
 #define NUM_CHECKLUMPS (sizeof(checklumps)/8)
 	enum
 	{
+		Check_ad2lib,
 		Check_e1m1,
 		Check_e4m1,
 		Check_map01,
@@ -182,6 +193,7 @@ static EIWADType ScanIWAD (const char *iwad)
 		Check_map33,
 		Check_invcurs,
 		Check_FreeDoom,
+		Check_Blasphem,
 		Check_W94_1,
 		Check_POSSH0M0,
 		Check_Cycla1,
@@ -237,7 +249,11 @@ static EIWADType ScanIWAD (const char *iwad)
 	}
 	else if (lumpsfound[Check_map01])
 	{
-		if (lumpsfound[Check_FreeDoom])
+		if (lumpsfound[Check_ad2lib])
+		{
+			return IWAD_ActionDoom2;
+		}
+		else if (lumpsfound[Check_FreeDoom])
 		{
 			// Is there a 100% reliable way to tell FreeDoom and FreeDM
 			// apart based solely on the lump names?
@@ -287,7 +303,11 @@ static EIWADType ScanIWAD (const char *iwad)
 			}
 			else
 			{
-				if (lumpsfound[Check_Extended])
+				if (lumpsfound[Check_Blasphem])
+				{
+					return IWAD_Blasphemer;
+				}
+				else if (lumpsfound[Check_Extended])
 				{
 					return IWAD_HereticExtended;
 				}

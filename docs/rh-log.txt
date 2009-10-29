@@ -1,4 +1,5 @@
 October 28, 2009
+- Added Gez's patch for IWAD detection of Blasphemer and Action Doom 2.
 - Fixed: 0 damage projectiles did not call P_DamageMobj.
 - Fixed: Do not exit P_DamageMobj early if damage is 0, so we can still get
   the side effects from it. PainThreshold also needs to be inclusive, as

@@ -2187,6 +2187,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 	fixed_t zpos;
 	int needrepeat = 0;
 	sector_t *front, *back;
+	bool calclighting;
 
 	if (decal->RenderFlags & RF_INVISIBLE || !viewactive || !decal->PicNum.isValid())
 		return;
@@ -2430,7 +2431,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 	}
 
 	// Prepare lighting
-	bool calclighting = false;
+	calclighting = false;
 
 	rw_light = rw_lightleft + (x1 - WallSX1) * rw_lightstep;
 	if (fixedlightlev >= 0)

@@ -1,3 +1,11 @@
+October 29, 2009
+- Fixed: S_EvictAllChannels() must replace the channel's start time with its
+  position when evicting sounds, because restarting the sound system causes
+  the DSP clock to restart at 0, so start times that were recorded before
+  the reset are no longer applicable after the reset.
+- Fixed: S_StopChannel() always set the channel's actor to NULL, eliminating
+  origin information when resetting the sound system.
+
 October 28, 2009
 - Added Gez's patch for IWAD detection of Blasphemer and Action Doom 2.
 - Fixed: 0 damage projectiles did not call P_DamageMobj.

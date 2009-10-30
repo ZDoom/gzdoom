@@ -1,4 +1,7 @@
 October 29, 2009
+- Fixed: An unspecified save_dir will now save to the program directory on
+  Windows. (Other operating systems already use the user's home directory
+  instead.)
 - Fixed: S_EvictAllChannels() must replace the channel's start time with its
   position when evicting sounds, because restarting the sound system causes
   the DSP clock to restart at 0, so start times that were recorded before

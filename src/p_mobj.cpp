@@ -1018,7 +1018,7 @@ bool AActor::Grind(bool items)
 		if (state == NULL 												// Only use the default crushed state if:
 			&& !(flags & MF_NOBLOOD)						// 1. the monster bleeeds,
 			&& (i_compatflags & COMPATF_CORPSEGIBS)			// 2. the compat setting is on,
-			&& player != NULL)								// 3. and the thing isn't a player.
+			&& player == NULL)								// 3. and the thing isn't a player.
 		{
 			isgeneric = true;
 			state = FindState(NAME_GenericCrush);

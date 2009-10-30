@@ -2435,7 +2435,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 	FDynamicColormap *usecolormap = basecolormap;
 
 	// Decals that are added to the scene must fade to black.
-	if (decal->RenderStyle.BlendOp == STYLEOP_Add && usecolormap->Fade != 0)
+	if (decal->RenderStyle == LegacyRenderStyles[STYLE_Add] && usecolormap->Fade != 0)
 	{
 		usecolormap = GetSpecialLights(usecolormap->Color, 0, usecolormap->Desaturate);
 	}

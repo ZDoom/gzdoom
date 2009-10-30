@@ -2432,14 +2432,21 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 
 	// Prepare lighting
 	calclighting = false;
+	FDynamicColormap *usecolormap = basecolormap;
+
+	// Decals that are added to the scene must fade to black.
+	if (decal->RenderStyle.BlendOp == STYLEOP_Add && usecolormap->Fade != 0)
+	{
+		usecolormap = GetSpecialLights(usecolormap->Color, 0, usecolormap->Desaturate);
+	}
 
 	rw_light = rw_lightleft + (x1 - WallSX1) * rw_lightstep;
 	if (fixedlightlev >= 0)
-		dc_colormap = basecolormap->Maps + fixedlightlev;
+		dc_colormap = usecolormap->Maps + fixedlightlev;
 	else if (fixedcolormap != NULL)
 		dc_colormap = fixedcolormap;
 	else if (!foggy && (decal->RenderFlags & RF_FULLBRIGHT))
-		dc_colormap = basecolormap->Maps;
+		dc_colormap = usecolormap->Maps;
 	else
 		calclighting = true;
 
@@ -2486,7 +2493,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 			{
 				if (calclighting)
 				{ // calculate lighting
-					dc_colormap = basecolormap->Maps + (GETPALOOKUP (rw_light, wallshade) << COLORMAPSHIFT);
+					dc_colormap = usecolormap->Maps + (GETPALOOKUP (rw_light, wallshade) << COLORMAPSHIFT);
 				}
 
 				WallSpriteColumn (R_DrawMaskedColumn);
@@ -2497,7 +2504,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 			{
 				if (calclighting)
 				{ // calculate lighting
-					dc_colormap = basecolormap->Maps + (GETPALOOKUP (rw_light, wallshade) << COLORMAPSHIFT);
+					dc_colormap = usecolormap->Maps + (GETPALOOKUP (rw_light, wallshade) << COLORMAPSHIFT);
 				}
 				rt_initcols();
 				for (int zz = 4; zz; --zz)
@@ -2512,7 +2519,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 			{
 				if (calclighting)
 				{ // calculate lighting
-					dc_colormap = basecolormap->Maps + (GETPALOOKUP (rw_light, wallshade) << COLORMAPSHIFT);
+					dc_colormap = usecolormap->Maps + (GETPALOOKUP (rw_light, wallshade) << COLORMAPSHIFT);
 				}
 
 				WallSpriteColumn (R_DrawMaskedColumn);

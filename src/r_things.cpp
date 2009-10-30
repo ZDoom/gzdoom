@@ -1432,6 +1432,12 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 
 	FDynamicColormap *mybasecolormap = basecolormap;
 
+	// Sprites that are added to the scene must fade to black.
+	if (vis->RenderStyle.BlendOp == STYLEOP_Add && mybasecolormap->Fade != 0)
+	{
+		mybasecolormap = GetSpecialLights(mybasecolormap->Color, 0, mybasecolormap->Desaturate);
+	}
+
 	if (vis->RenderStyle.Flags & STYLEF_FadeToBlack)
 	{
 		if (invertcolormap)

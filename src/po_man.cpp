@@ -1545,6 +1545,7 @@ static void TranslateToStartSpot (int tag, int originX, int originY)
 	validcount++;
 	for (i = 0; i < po->numsegs; i++, tempSeg++, tempPt++)
 	{
+		(*tempSeg)->sidedef->Flags |= WALLF_POLYOBJ;
 		if ((*tempSeg)->linedef->validcount != validcount)
 		{
 			(*tempSeg)->linedef->bbox[BOXTOP] -= deltaY;
@@ -1581,14 +1582,6 @@ static void TranslateToStartSpot (int tag, int originX, int originY)
 		I_Error ("PO_TranslateToStartSpot: Multiple polyobjs in a single subsector.\n");
 	}
 	sub->poly = po;
-	// Reassign the sides of the polyobj to its new sector.
-	sector_t *sec = P_PointInSector (avg.x << FRACBITS, avg.y << FRACBITS);
-	for (i = 0; i < po->numsegs; ++i)
-	{
-		po->segs[i]->linedef->frontsector = sec;
-		po->segs[i]->linedef->sidedef[0]->sector = sec;
-		po->segs[i]->frontsector = sec;
-	}
 }
 
 //==========================================================================

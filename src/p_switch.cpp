@@ -490,11 +490,25 @@ bool P_CheckSwitchRange(AActor *user, line_t *line, int sideno)
 	dlu.dy = finesine[user->angle >> ANGLETOFINESHIFT];
 	inter = P_InterceptVector(&dll, &dlu);
 
-	checkx = dll.x + FixedMul(dll.dx, inter);
-	checky = dll.y + FixedMul(dll.dy, inter);
 
-	// one sided line
-	if (line->sidedef[1] == NULL) 
+	// Polyobjects must test the containing sector, not the one they originate from.
+	if (line->sidedef[0]->Flags & WALLF_POLYOBJ)
+	{
+		// Get a check point slightly inside the polyobject so that this still works
+		// if the polyobject lies directly on a sector boundary
+		checkx = dll.x + FixedMul(dll.dx, inter + (FRACUNIT/100));
+		checky = dll.y + FixedMul(dll.dy, inter + (FRACUNIT/100));
+		front = P_PointInSector(checkx, checky);
+	}
+	else
+	{
+		checkx = dll.x + FixedMul(dll.dx, inter);
+		checky = dll.y + FixedMul(dll.dy, inter);
+	}
+
+
+	// one sided line or polyobject
+	if (line->sidedef[1] == NULL || (line->sidedef[0]->Flags & WALLF_POLYOBJ))
 	{
 	onesided:
 		fixed_t sectorc = front->ceilingplane.ZatPoint(checkx, checky);

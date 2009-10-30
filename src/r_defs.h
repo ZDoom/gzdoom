@@ -725,6 +725,7 @@ enum
 	WALLF_SMOOTHLIGHTING = 8,   // Similar to autocontrast but applies to all angles.
 	WALLF_CLIP_MIDTEX	 = 16,	// Like the line counterpart, but only for this side.
 	WALLF_WRAP_MIDTEX	 = 32,	// Like the line counterpart, but only for this side.
+	WALLF_POLYOBJ		 = 64,	// This wall belongs to a polyobject.
 };
 
 struct side_t

@@ -1,4 +1,8 @@
 October 29, 2009
+- Make TranslateToStartSpot() set the new sector references for a polyobj's
+  walls so that P_CheckSwitchRange() will work with them.
+- Fixed: If P_ActivateLine() failed in P_UseTraverse() it would not play
+  the *usefail sound.
 - Fixed: An unspecified save_dir will now save to the program directory on
   Windows. (Other operating systems already use the user's home directory
   instead.)

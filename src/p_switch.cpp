@@ -466,7 +466,8 @@ bool P_CheckSwitchRange(AActor *user, line_t *line, int sideno)
 {
 	// Activated from an empty side -> always succeed
 	side_t *side = line->sidedef[sideno];
-	if (side == NULL) return true;
+	if (side == NULL)
+		return true;
 
 	fixed_t checktop;
 	fixed_t checkbot;
@@ -474,7 +475,8 @@ bool P_CheckSwitchRange(AActor *user, line_t *line, int sideno)
 	FLineOpening open;
 
 	// 3DMIDTEX forces CHECKSWITCHRANGE because otherwise it might cause problems.
-	if (!(line->flags & (ML_3DMIDTEX|ML_CHECKSWITCHRANGE))) return true;
+	if (!(line->flags & (ML_3DMIDTEX|ML_CHECKSWITCHRANGE)))
+		return true;
 
 	// calculate the point where the user would touch the wall.
 	divline_t dll, dlu;
@@ -502,7 +504,8 @@ bool P_CheckSwitchRange(AActor *user, line_t *line, int sideno)
 
 	// Now get the information from the line.
 	P_LineOpening(open, NULL, line, checkx, checky, user->x, user->y);
-	if (open.range <= 0) goto onesided;
+	if (open.range <= 0)
+		goto onesided;
 
 	if ((TryFindSwitch (side, side_t::top)) != -1)
 	{
@@ -516,7 +519,8 @@ bool P_CheckSwitchRange(AActor *user, line_t *line, int sideno)
 	{
 		// 3DMIDTEX lines will force a mid texture check if no switch is found on this line
 		// to keep compatibility with Eternity's implementation.
-		if (!P_GetMidTexturePosition(line, sideno, &checktop, &checkbot)) return false;
+		if (!P_GetMidTexturePosition(line, sideno, &checktop, &checkbot))
+			return false;
 		return user->z < checktop || user->z + user->height > checkbot;
 	}
 	else

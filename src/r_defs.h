@@ -871,7 +871,7 @@ struct line_t
 	DWORD		flags;
 	DWORD		activation;	// activation type
 	int			special;
-	fixed_t		Alpha;		// <--- translucency (0-255/255=opaque)
+	fixed_t		Alpha;		// <--- translucency (0=invisibile, FRACUNIT=opaque)
 	int			id;			// <--- same as tag or set with Line_SetIdentification
 	int			args[5];	// <--- hexen-style arguments (expanded to ZDoom's full width)
 	int			firstid, nextid;

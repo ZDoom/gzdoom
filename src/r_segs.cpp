@@ -2188,6 +2188,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 	int needrepeat = 0;
 	sector_t *front, *back;
 	bool calclighting;
+	FDynamicColormap *usecolormap;
 
 	if (decal->RenderFlags & RF_INVISIBLE || !viewactive || !decal->PicNum.isValid())
 		return;
@@ -2432,7 +2433,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 
 	// Prepare lighting
 	calclighting = false;
-	FDynamicColormap *usecolormap = basecolormap;
+	usecolormap = basecolormap;
 
 	// Decals that are added to the scene must fade to black.
 	if (decal->RenderStyle == LegacyRenderStyles[STYLE_Add] && usecolormap->Fade != 0)

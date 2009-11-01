@@ -1848,7 +1848,7 @@ void R_DrawRemainingPlayerSprites()
 			}
 			screen->DrawTexture(vis->pic,
 				viewwindowx + VisPSpritesX1[i],
-				viewwindowy + viewheight/2 - (vis->texturemid / 65536.0) * (vis->yscale / 65536.0) - 1,
+				viewwindowy + viewheight/2 - (vis->texturemid / 65536.0) * (vis->yscale / 65536.0) - 0.5,
 				DTA_DestWidthF, FIXED2FLOAT(vis->pic->GetWidth() * vis->xscale),
 				DTA_DestHeightF, FIXED2FLOAT(vis->pic->GetHeight() * vis->yscale),
 				DTA_Translation, TranslationToTable(vis->Translation),

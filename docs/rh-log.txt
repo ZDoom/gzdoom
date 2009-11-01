@@ -1,3 +1,24 @@
+October 31, 2009
+- Changed all coordinates for DrawTexture() to floating point so that the
+  player sprites will retain the same precision they had when they were
+  rendered as part of the 3D view. (needed for propery alignment of flashes
+  on top of weapon sprites) It worked just fine for D3D, but software
+  rendering was another matter. I consequently did battle with imprecisions
+  in the whole masked texture drawing routines that had previously been
+  partially masked by only drawing on whole pixel boundaries. Particularly,
+  the tops of posts are calculated by multiplying by spryscale, and the
+  texture mapping coordinates are calculated by multiplying by dc_iscale
+  (where dc_iscale = 1 / spryscale). Since these are both 16.16 fixed point
+  values, there is a significant variance. For best results, the drawing
+  routines should only use one of these values, but that would mean
+  introducing division into the inner loop. If the division removed the
+  necessity for the fudge code in R_DrawMaskedColumn(), would it be worth it?
+  Or would the divide be slower than the fudging? Or would I be better off
+  doing it like Build and using transparent pixel checks instead, not
+  bothering with skipping transparent areas? For now, I chop off the
+  fractional part of the top coordinate for software drawing, since it was
+  the easiest thing to do (even if it wasn't the most correct thing to do).
+
 October 29, 2009
 - Fixed: Sprites and decals that are drawn with addition must fade to black.
 - Make TranslateToStartSpot() set the new sector references for a polyobj's

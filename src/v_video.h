@@ -87,8 +87,8 @@ enum
 	DTA_VirtualHeight,	// pretend the canvas is this tall
 	DTA_TopOffset,		// override texture's top offset
 	DTA_LeftOffset,		// override texture's left offset
-	DTA_CenterOffset,	// override texture's left and top offsets and set them for the texture's middle
-	DTA_CenterBottomOffset,// override texture's left and top offsets and set them for the texture's bottom middle
+	DTA_CenterOffset,	// bool: override texture's left and top offsets and set them for the texture's middle
+	DTA_CenterBottomOffset,// bool: override texture's left and top offsets and set them for the texture's bottom middle
 	DTA_WindowLeft,		// don't draw anything left of this column (on source, not dest)
 	DTA_WindowRight,	// don't draw anything at or to the right of this column (on source, not dest)
 	DTA_ClipTop,		// don't draw anything above this row (on dest, not source)
@@ -103,6 +103,16 @@ enum
 	DTA_BilinearFilter,	// bool: apply bilinear filtering to the image
 	DTA_SpecialColormap,// pointer to FSpecialColormapParameters (likely to be forever hardware-only)
 	DTA_ColormapStyle,	// pointer to FColormapStyle (hardware-only)
+
+	// floating point duplicates of some of the above:
+	DTA_DestWidthF,
+	DTA_DestHeightF,
+	DTA_TopOffsetF,
+	DTA_LeftOffsetF,
+	DTA_VirtualWidthF,
+	DTA_VirtualHeightF,
+	DTA_WindowLeftF,
+	DTA_WindowRightF,
 
 	// For DrawText calls:
 	DTA_TextLen,		// stop after this many characters, even if \0 not hit
@@ -188,9 +198,12 @@ public:
 	// Text drawing functions -----------------------------------------------
 
 	// 2D Texture drawing
-	void STACK_ARGS DrawTexture (FTexture *img, int x, int y, int tags, ...);
+	void STACK_ARGS DrawTexture (FTexture *img, double x, double y, int tags, ...);
 	void FillBorder (FTexture *img);	// Fills the border around a 4:3 part of the screen on non-4:3 displays
-	void VirtualToRealCoords(fixed_t &x, fixed_t &y, fixed_t &w, fixed_t &h, int vwidth, int vheight, bool vbottom=false, bool handleaspect=true) const;
+	void VirtualToRealCoords(double &x, double &y, double &w, double &h, double vwidth, double vheight, bool vbottom=false, bool handleaspect=true) const;
+
+	// Code that uses these (i.e. SBARINFO) should probably be evaluated for using doubles all around instead.
+	void VirtualToRealCoordsFixed(fixed_t &x, fixed_t &y, fixed_t &w, fixed_t &h, int vwidth, int vheight, bool vbottom=false, bool handleaspect=true) const;
 	void VirtualToRealCoordsInt(int &x, int &y, int &w, int &h, int vwidth, int vheight, bool vbottom=false, bool handleaspect=true) const;
 
 	// 2D Text drawing
@@ -199,21 +212,23 @@ public:
 
 	struct DrawParms
 	{
-		fixed_t x, y;
-		int texwidth;
-		int texheight;
-		int windowleft;
-		int windowright;
+		double x, y;
+		double texwidth;
+		double texheight;
+		double destwidth;
+		double destheight;
+		double virtWidth;
+		double virtHeight;
+		double windowleft;
+		double windowright;
 		int dclip;
 		int uclip;
 		int lclip;
 		int rclip;
-		fixed_t destwidth;
-		fixed_t destheight;
-		int top;
-		int left;
+		double top;
+		double left;
 		fixed_t alpha;
-		int fillcolor;
+		uint32 fillcolor;
 		FRemapTable *remap;
 		const BYTE *translation;
 		DWORD colorOverlay;
@@ -221,8 +236,6 @@ public:
 		INTBOOL flipX;
 		fixed_t shadowAlpha;
 		int shadowColor;
-		int virtWidth;
-		int virtHeight;
 		INTBOOL keepratio;
 		INTBOOL masked;
 		INTBOOL bilinear;
@@ -239,8 +252,8 @@ protected:
 	int LockCount;
 
 	bool ClipBox (int &left, int &top, int &width, int &height, const BYTE *&src, const int srcpitch) const;
-	virtual void STACK_ARGS DrawTextureV (FTexture *img, int x, int y, uint32 tag, va_list tags);
-	bool ParseDrawTextureTags (FTexture *img, int x, int y, uint32 tag, va_list tags, DrawParms *parms, bool hw) const;
+	virtual void STACK_ARGS DrawTextureV (FTexture *img, double x, double y, uint32 tag, va_list tags);
+	bool ParseDrawTextureTags (FTexture *img, double x, double y, uint32 tag, va_list tags, DrawParms *parms, bool hw) const;
 
 	DCanvas() {}
 
@@ -339,7 +352,7 @@ public:
 	// Tells the device to recreate itself with the new setting from vid_refreshrate.
 	virtual void NewRefreshRate ();
 
-	// Set the rect defining the area effected by blending.
+	// Set the rect defining the area affected by blending.
 	virtual void SetBlendingRect (int x1, int y1, int x2, int y2);
 
 	// render 3D view
@@ -470,6 +483,7 @@ extern "C" void ASM_PatchPitch (void);
 #endif
 
 int CheckRatio (int width, int height);
+static inline int CheckRatio (double width, double height) { return CheckRatio(int(width), int(height)); }
 extern const int BaseRatioSizes[5][4];
 
 

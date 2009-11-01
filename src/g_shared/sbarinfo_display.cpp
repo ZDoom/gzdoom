@@ -960,7 +960,7 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 					h = fg->GetScaledHeight() << FRACBITS;
 					if (Scaled)
 					{
-						screen->VirtualToRealCoords(x, y, w, h, 320, 200, true);
+						screen->VirtualToRealCoordsFixed(x, y, w, h, 320, 200, true);
 					}
 					x >>= FRACBITS;
 					y >>= FRACBITS;
@@ -1018,7 +1018,7 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 					ch = (fg->GetScaledHeight() - fg->GetScaledTopOffset() - cmd.special3 * 2) << FRACBITS;
 					if (Scaled)
 					{
-						screen->VirtualToRealCoords(cx, cy, cw, ch, 320, 200, true);
+						screen->VirtualToRealCoordsFixed(cx, cy, cw, ch, 320, 200, true);
 					}
 					cx >>= FRACBITS;
 					cy >>= FRACBITS;
@@ -1480,7 +1480,7 @@ void DSBarInfo::DrawGraphic(FTexture* texture, SBarInfoCoordinate x, SBarInfoCoo
 		fixed_t fw = texture->GetScaledWidth() << FRACBITS;
 		fixed_t fh = texture->GetScaledHeight() << FRACBITS;
 		if(Scaled)
-			screen->VirtualToRealCoords(fx, fy, fw, fh, 320, 200, true);
+			screen->VirtualToRealCoordsFixed(fx, fy, fw, fh, 320, 200, true);
 		// Round to nearest
 		w = (fw + (FRACUNIT>>1)) >> FRACBITS;
 		h = (fh + (FRACUNIT>>1)) >> FRACBITS;

@@ -89,14 +89,14 @@ static int PalFromRGB(uint32 rgb)
 	return LastPal;
 }
 
-void STACK_ARGS DCanvas::DrawTexture (FTexture *img, int x, int y, int tags_first, ...)
+void STACK_ARGS DCanvas::DrawTexture (FTexture *img, double x, double y, int tags_first, ...)
 {
 	va_list tags;
 	va_start(tags, tags_first);
 	DrawTextureV(img, x, y, tags_first, tags);
 }
 
-void STACK_ARGS DCanvas::DrawTextureV(FTexture *img, int x, int y, uint32 tag, va_list tags)
+void STACK_ARGS DCanvas::DrawTextureV(FTexture *img, double x, double y, uint32 tag, va_list tags)
 {
 	FTexture::Span unmaskedSpan[2];
 	const FTexture::Span **spanptr, *spans;
@@ -154,8 +154,8 @@ void STACK_ARGS DCanvas::DrawTextureV(FTexture *img, int x, int y, uint32 tag, v
 	BYTE *destorgsave = dc_destorg;
 	dc_destorg = screen->GetBuffer();
 
-	fixed_t x0 = parms.x - Scale (parms.left, parms.destwidth, parms.texwidth);
-	fixed_t y0 = parms.y - Scale (parms.top, parms.destheight, parms.texheight);
+	double x0 = parms.x - parms.left * parms.destwidth / parms.texwidth;
+	double y0 = parms.y - parms.top * parms.destheight / parms.texheight;
 
 	if (mode != DontDraw)
 	{
@@ -174,31 +174,43 @@ void STACK_ARGS DCanvas::DrawTextureV(FTexture *img, int x, int y, uint32 tag, v
 		fixed_t centeryback = centeryfrac;
 		centeryfrac = 0;
 
-		sprtopscreen = y0;
-		spryscale = parms.destheight / img->GetHeight();
+		sprtopscreen = FLOAT2FIXED(y0);
+		// There is not enough precision in the drawing routines to keep the full
+		// precision for y0. :(
+		sprtopscreen &= ~(FRACUNIT - 1);
 
+		double yscale = parms.destheight / img->GetHeight();
+		double iyscale = 1 / yscale;
+
+		spryscale = FLOAT2FIXED(yscale);
+
+#if 0
 		// Fix precision errors that are noticeable at some resolutions
-		if (((y0 + parms.destheight) >> FRACBITS) > ((y0 + spryscale * img->GetHeight()) >> FRACBITS))
+		if ((y0 + parms.destheight) > (y0 + yscale * img->GetHeight()))
 		{
 			spryscale++;
 		}
+#endif
 
 		sprflipvert = false;
-		dc_iscale = 0xffffffffu / (unsigned)spryscale;
-		dc_texturemid = FixedMul (-y0, dc_iscale);
+		//dc_iscale = FLOAT2FIXED(iyscale);
+		//dc_texturemid = FLOAT2FIXED((-y0) * iyscale);
+		//dc_iscale = 0xffffffffu / (unsigned)spryscale;
+		dc_iscale = DivScale32(1, spryscale);
+		dc_texturemid = FixedMul(-sprtopscreen, dc_iscale) + FixedMul(centeryfrac-FRACUNIT, dc_iscale);
 		fixed_t frac = 0;
-		fixed_t xiscale = DivScale32 (img->GetWidth(), parms.destwidth);
-		int x2 = (x0 + parms.destwidth) >> FRACBITS;
+		double xiscale = parms.texwidth / parms.destwidth;
+		double x2 = x0 + parms.destwidth;
 
 		if (bottomclipper[0] != parms.dclip)
 		{
-			clearbufshort (bottomclipper, screen->GetWidth(), (short)parms.dclip);
+			clearbufshort(bottomclipper, screen->GetWidth(), (short)parms.dclip);
 		}
 		if (parms.uclip != 0)
 		{
 			if (topclipper[0] != parms.uclip)
 			{
-				clearbufshort (topclipper, screen->GetWidth(), (short)parms.uclip);
+				clearbufshort(topclipper, screen->GetWidth(), (short)parms.uclip);
 			}
 			mceilingclip = topclipper;
 		}
@@ -214,48 +226,53 @@ void STACK_ARGS DCanvas::DrawTextureV(FTexture *img, int x, int y, uint32 tag, v
 			xiscale = -xiscale;
 		}
 
-		dc_x = x0 >> FRACBITS;
 		if (parms.windowleft > 0 || parms.windowright < parms.texwidth)
 		{
-			fixed_t xscale = parms.destwidth / parms.texwidth;
-			dc_x += (parms.windowleft * xscale) >> FRACBITS;
-			frac += parms.windowleft << FRACBITS;
-			x2 -= ((parms.texwidth - parms.windowright) * xscale) >> FRACBITS;
+			double xscale = parms.destwidth / parms.texwidth;
+			x0 += parms.windowleft * xscale;
+			frac += FLOAT2FIXED(parms.windowleft);
+			x2 -= (parms.texwidth - parms.windowright) * xscale;
 		}
-		if (dc_x < parms.lclip)
+		if (x0 < parms.lclip)
 		{
-			frac += (parms.lclip - dc_x) * xiscale;
-			dc_x = parms.lclip;
+			frac += FLOAT2FIXED((parms.lclip - x0) * xiscale);
+			x0 = parms.lclip;
 		}
 		if (x2 > parms.rclip)
 		{
 			x2 = parms.rclip;
 		}
 
-		if (parms.destheight < 32*FRACUNIT)
+		// Drawing short output ought to fit in the data cache well enough
+		// if we draw one column at a time, so do that, since it's simpler.
+		if (parms.destheight < 32 || (parms.dclip - parms.uclip) < 32)
 		{
 			mode = DoDraw0;
 		}
+
+		dc_x = int(x0);
+		int x2_i = int(x2);
+		fixed_t xiscale_i = FLOAT2FIXED(xiscale);
 
 		if (mode == DoDraw0)
 		{
 			// One column at a time
 			stop4 = dc_x;
 		}
-		else	 // DoDraw1
+		else	 // DoDraw1`
 		{
 			// Up to four columns at a time
-			stop4 = x2 & ~3;
+			stop4 = x2_i & ~3;
 		}
 
-		if (dc_x < x2)
+		if (dc_x < x2_i)
 		{
 			while ((dc_x < stop4) && (dc_x & 3))
 			{
-				pixels = img->GetColumn (frac >> FRACBITS, spanptr);
-				R_DrawMaskedColumn (pixels, spans);
+				pixels = img->GetColumn(frac >> FRACBITS, spanptr);
+				R_DrawMaskedColumn(pixels, spans);
 				dc_x++;
-				frac += xiscale;
+				frac += xiscale_i;
 			}
 
 			while (dc_x < stop4)
@@ -263,20 +280,20 @@ void STACK_ARGS DCanvas::DrawTextureV(FTexture *img, int x, int y, uint32 tag, v
 				rt_initcols();
 				for (int zz = 4; zz; --zz)
 				{
-					pixels = img->GetColumn (frac >> FRACBITS, spanptr);
-					R_DrawMaskedColumnHoriz (pixels, spans);
+					pixels = img->GetColumn(frac >> FRACBITS, spanptr);
+					R_DrawMaskedColumnHoriz(pixels, spans);
 					dc_x++;
-					frac += xiscale;
+					frac += xiscale_i;
 				}
-				rt_draw4cols (dc_x - 4);
+				rt_draw4cols(dc_x - 4);
 			}
 
-			while (dc_x < x2)
+			while (dc_x < x2_i)
 			{
-				pixels = img->GetColumn (frac >> FRACBITS, spanptr);
-				R_DrawMaskedColumn (pixels, spans);
+				pixels = img->GetColumn(frac >> FRACBITS, spanptr);
+				R_DrawMaskedColumn(pixels, spans);
 				dc_x++;
-				frac += xiscale;
+				frac += xiscale_i;
 			}
 		}
 		centeryfrac = centeryback;
@@ -287,11 +304,11 @@ void STACK_ARGS DCanvas::DrawTextureV(FTexture *img, int x, int y, uint32 tag, v
 
 	if (ticdup != 0 && menuactive == MENU_Off)
 	{
-		NetUpdate ();
+		NetUpdate();
 	}
 }
 
-bool DCanvas::ParseDrawTextureTags (FTexture *img, int x, int y, DWORD tag, va_list tags, DrawParms *parms, bool hw) const
+bool DCanvas::ParseDrawTextureTags (FTexture *img, double x, double y, DWORD tag, va_list tags, DrawParms *parms, bool hw) const
 {
 	INTBOOL boolval;
 	int intval;
@@ -313,8 +330,8 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, int x, int y, DWORD tag, va_l
 
 	virtBottom = false;
 
-	parms->texwidth = img->GetScaledWidth();
-	parms->texheight = img->GetScaledHeight();
+	parms->texwidth = img->GetScaledWidthDouble();
+	parms->texheight = img->GetScaledHeightDouble();
 
 	parms->windowleft = 0;
 	parms->windowright = parms->texwidth;
@@ -322,8 +339,8 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, int x, int y, DWORD tag, va_l
 	parms->uclip = 0;
 	parms->lclip = 0;
 	parms->rclip = this->GetWidth();
-	parms->destwidth = parms->windowright << FRACBITS;
-	parms->destheight = parms->texheight << FRACBITS;
+	parms->destwidth = parms->windowright;
+	parms->destheight = parms->texheight;
 	parms->top = img->GetScaledTopOffset();
 	parms->left = img->GetScaledLeftOffset();
 	parms->alpha = FRACUNIT;
@@ -344,10 +361,12 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, int x, int y, DWORD tag, va_l
 	parms->specialcolormap = NULL;
 	parms->colormapstyle = NULL;
 
-	parms->x = x << FRACBITS;
-	parms->y = y << FRACBITS;
+	parms->x = x;
+	parms->y = y;
 
-	// Parse the tag list for attributes
+	// Parse the tag list for attributes. (For floating point attributes,
+	// consider that the C ABI dictates that all floats be promoted to
+	// doubles when passed as function arguments.)
 	while (tag != TAG_DONE)
 	{
 		va_list *more_p;
@@ -357,11 +376,11 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, int x, int y, DWORD tag, va_l
 		{
 		case TAG_IGNORE:
 		default:
-			data = va_arg (tags, DWORD);
+			data = va_arg(tags, DWORD);
 			break;
 
 		case TAG_MORE:
-			more_p = va_arg (tags, va_list *);
+			more_p = va_arg(tags, va_list *);
 			va_end (tags);
 #ifndef NO_VA_COPY
 			va_copy (tags, *more_p);
@@ -371,35 +390,43 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, int x, int y, DWORD tag, va_l
 			break;
 
 		case DTA_DestWidth:
-			parms->destwidth = va_arg (tags, int) << FRACBITS;
+			parms->destwidth = va_arg(tags, int);
+			break;
+
+		case DTA_DestWidthF:
+			parms->destwidth = va_arg(tags, double);
 			break;
 
 		case DTA_DestHeight:
-			parms->destheight = va_arg (tags, int) << FRACBITS;
+			parms->destheight = va_arg(tags, int);
+			break;
+
+		case DTA_DestHeightF:
+			parms->destheight = va_arg(tags, double);
 			break;
 
 		case DTA_Clean:
-			boolval = va_arg (tags, INTBOOL);
+			boolval = va_arg(tags, INTBOOL);
 			if (boolval)
 			{
-				parms->x = (parms->x - 160*FRACUNIT) * CleanXfac + (Width * (FRACUNIT/2));
-				parms->y = (parms->y - 100*FRACUNIT) * CleanYfac + (Height * (FRACUNIT/2));
-				parms->destwidth = parms->texwidth * CleanXfac * FRACUNIT;
-				parms->destheight = parms->texheight * CleanYfac * FRACUNIT;
+				parms->x = (parms->x - 160.0) * CleanXfac + (Width * 0.5);
+				parms->y = (parms->y - 100.0) * CleanYfac + (Height * 0.5);
+				parms->destwidth = parms->texwidth * CleanXfac;
+				parms->destheight = parms->texheight * CleanYfac;
 			}
 			break;
 
 		case DTA_CleanNoMove:
-			boolval = va_arg (tags, INTBOOL);
+			boolval = va_arg(tags, INTBOOL);
 			if (boolval)
 			{
-				parms->destwidth = parms->texwidth * CleanXfac * FRACUNIT;
-				parms->destheight = parms->texheight * CleanYfac * FRACUNIT;
+				parms->destwidth = parms->texwidth * CleanXfac;
+				parms->destheight = parms->texheight * CleanYfac;
 			}
 			break;
 
 		case DTA_320x200:
-			boolval = va_arg (tags, INTBOOL);
+			boolval = va_arg(tags, INTBOOL);
 			if (boolval)
 			{
 				parms->virtWidth = 320;
@@ -408,7 +435,7 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, int x, int y, DWORD tag, va_l
 			break;
 
 		case DTA_Bottom320x200:
-			boolval = va_arg (tags, INTBOOL);
+			boolval = va_arg(tags, INTBOOL);
 			if (boolval)
 			{
 				parms->virtWidth = 320;
@@ -421,99 +448,123 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, int x, int y, DWORD tag, va_l
 			{
 				bool xright = parms->x < 0;
 				bool ybot = parms->y < 0;
-				intval = va_arg (tags, int);
+				intval = va_arg(tags, int);
 
 				if (hud_scale)
 				{
 					parms->x *= CleanXfac;
 					if (intval == HUD_HorizCenter)
-						parms->x += Width * FRACUNIT / 2;
+						parms->x += Width * 0.5;
 					else if (xright)
-						parms->x = Width * FRACUNIT + parms->x;
+						parms->x = Width + parms->x;
 					parms->y *= CleanYfac;
 					if (ybot)
-						parms->y = Height * FRACUNIT + parms->y;
-					parms->destwidth = parms->texwidth * CleanXfac * FRACUNIT;
-					parms->destheight = parms->texheight * CleanYfac * FRACUNIT;
+						parms->y = Height + parms->y;
+					parms->destwidth = parms->texwidth * CleanXfac;
+					parms->destheight = parms->texheight * CleanYfac;
 				}
 				else
 				{
 					if (intval == HUD_HorizCenter)
-						parms->x += Width * FRACUNIT / 2;
+						parms->x += Width * 0.5;
 					else if (xright)
-						parms->x = Width * FRACUNIT + parms->x;
+						parms->x = Width + parms->x;
 					if (ybot)
-						parms->y = Height * FRACUNIT + parms->y;
+						parms->y = Height + parms->y;
 				}
 			}
 			break;
 
 		case DTA_VirtualWidth:
-			parms->virtWidth = va_arg (tags, int);
+			parms->virtWidth = va_arg(tags, int);
+			break;
+
+		case DTA_VirtualWidthF:
+			parms->virtWidth = va_arg(tags, double);
 			break;
 			
 		case DTA_VirtualHeight:
-			parms->virtHeight = va_arg (tags, int);
+			parms->virtHeight = va_arg(tags, int);
+			break;
+
+		case DTA_VirtualHeightF:
+			parms->virtHeight = va_arg(tags, double);
 			break;
 
 		case DTA_Alpha:
-			parms->alpha = MIN<fixed_t> (FRACUNIT, va_arg (tags, fixed_t));
+			parms->alpha = MIN<fixed_t>(FRACUNIT, va_arg (tags, fixed_t));
 			break;
 
 		case DTA_AlphaChannel:
-			parms->alphaChannel = va_arg (tags, INTBOOL);
+			parms->alphaChannel = va_arg(tags, INTBOOL);
 			break;
 
 		case DTA_FillColor:
-			parms->fillcolor = va_arg (tags, int);
+			parms->fillcolor = va_arg(tags, uint32);
 			break;
 
 		case DTA_Translation:
-			parms->remap = va_arg (tags, FRemapTable *);
+			parms->remap = va_arg(tags, FRemapTable *);
 			break;
 
 		case DTA_ColorOverlay:
-			parms->colorOverlay = va_arg (tags, DWORD);
+			parms->colorOverlay = va_arg(tags, DWORD);
 			break;
 
 		case DTA_FlipX:
-			parms->flipX = va_arg (tags, INTBOOL);
+			parms->flipX = va_arg(tags, INTBOOL);
 			break;
 
 		case DTA_TopOffset:
-			parms->top = va_arg (tags, int);
+			parms->top = va_arg(tags, int);
+			break;
+
+		case DTA_TopOffsetF:
+			parms->top = va_arg(tags, double);
 			break;
 
 		case DTA_LeftOffset:
-			parms->left = va_arg (tags, int);
+			parms->left = va_arg(tags, int);
+			break;
+
+		case DTA_LeftOffsetF:
+			parms->left = va_arg(tags, double);
 			break;
 
 		case DTA_CenterOffset:
-			if (va_arg (tags, int))
+			if (va_arg(tags, int))
 			{
-				parms->left = parms->texwidth / 2;
-				parms->top = parms->texheight / 2;
+				parms->left = parms->texwidth * 0.5;
+				parms->top = parms->texheight * 0.5;
 			}
 			break;
 
 		case DTA_CenterBottomOffset:
-			if (va_arg (tags, int))
+			if (va_arg(tags, int))
 			{
-				parms->left = parms->texwidth / 2;
+				parms->left = parms->texwidth * 0.5;
 				parms->top = parms->texheight;
 			}
 			break;
 
 		case DTA_WindowLeft:
-			parms->windowleft = va_arg (tags, int);
+			parms->windowleft = va_arg(tags, int);
+			break;
+
+		case DTA_WindowLeftF:
+			parms->windowleft = va_arg(tags, double);
 			break;
 
 		case DTA_WindowRight:
-			parms->windowright = va_arg (tags, int);
+			parms->windowright = va_arg(tags, int);
+			break;
+
+		case DTA_WindowRightF:
+			parms->windowright = va_arg(tags, double);
 			break;
 
 		case DTA_ClipTop:
-			parms->uclip = va_arg (tags, int);
+			parms->uclip = va_arg(tags, int);
 			if (parms->uclip < 0)
 			{
 				parms->uclip = 0;
@@ -521,7 +572,7 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, int x, int y, DWORD tag, va_l
 			break;
 
 		case DTA_ClipBottom:
-			parms->dclip = va_arg (tags, int);
+			parms->dclip = va_arg(tags, int);
 			if (parms->dclip > this->GetHeight())
 			{
 				parms->dclip = this->GetHeight();
@@ -529,7 +580,7 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, int x, int y, DWORD tag, va_l
 			break;
 
 		case DTA_ClipLeft:
-			parms->lclip = va_arg (tags, int);
+			parms->lclip = va_arg(tags, int);
 			if (parms->lclip < 0)
 			{
 				parms->lclip = 0;
@@ -537,7 +588,7 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, int x, int y, DWORD tag, va_l
 			break;
 
 		case DTA_ClipRight:
-			parms->rclip = va_arg (tags, int);
+			parms->rclip = va_arg(tags, int);
 			if (parms->rclip > this->GetWidth())
 			{
 				parms->rclip = this->GetWidth();
@@ -545,15 +596,15 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, int x, int y, DWORD tag, va_l
 			break;
 
 		case DTA_ShadowAlpha:
-			parms->shadowAlpha = MIN<fixed_t> (FRACUNIT, va_arg (tags, fixed_t));
+			parms->shadowAlpha = MIN<fixed_t>(FRACUNIT, va_arg (tags, fixed_t));
 			break;
 
 		case DTA_ShadowColor:
-			parms->shadowColor = va_arg (tags, int);
+			parms->shadowColor = va_arg(tags, int);
 			break;
 
 		case DTA_Shadow:
-			boolval = va_arg (tags, INTBOOL);
+			boolval = va_arg(tags, INTBOOL);
 			if (boolval)
 			{
 				parms->shadowAlpha = FRACUNIT/2;
@@ -566,32 +617,32 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, int x, int y, DWORD tag, va_l
 			break;
 
 		case DTA_Masked:
-			parms->masked = va_arg (tags, INTBOOL);
+			parms->masked = va_arg(tags, INTBOOL);
 			break;
 
 		case DTA_BilinearFilter:
-			parms->bilinear = va_arg (tags, INTBOOL);
+			parms->bilinear = va_arg(tags, INTBOOL);
 			break;
 
 		case DTA_KeepRatio:
 			// I think this is a terribly misleading name, since it actually turns
 			// *off* aspect ratio correction.
-			parms->keepratio = va_arg (tags, INTBOOL);
+			parms->keepratio = va_arg(tags, INTBOOL);
 			break;
 
 		case DTA_RenderStyle:
-			parms->style.AsDWORD = va_arg (tags, DWORD);
+			parms->style.AsDWORD = va_arg(tags, DWORD);
 			break;
 
 		case DTA_SpecialColormap:
-			parms->specialcolormap = va_arg (tags, FSpecialColormap *);
+			parms->specialcolormap = va_arg(tags, FSpecialColormap *);
 			break;
 
 		case DTA_ColormapStyle:
-			parms->colormapstyle = va_arg (tags, FColormapStyle *);
+			parms->colormapstyle = va_arg(tags, FColormapStyle *);
 			break;
 		}
-		tag = va_arg (tags, DWORD);
+		tag = va_arg(tags, DWORD);
 	}
 	va_end (tags);
 
@@ -645,66 +696,72 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, int x, int y, DWORD tag, va_l
 	return true;
 }
 
-void DCanvas::VirtualToRealCoords(fixed_t &x, fixed_t &y, fixed_t &w, fixed_t &h,
-	int vwidth, int vheight, bool vbottom, bool handleaspect) const
+void DCanvas::VirtualToRealCoords(double &x, double &y, double &w, double &h,
+	double vwidth, double vheight, bool vbottom, bool handleaspect) const
 {
 	int myratio = handleaspect ? CheckRatio (Width, Height) : 0;
-	int right = x + w;
-	int bottom = y + h;
+	double right = x + w;
+	double bottom = y + h;
 
 	if (myratio != 0 && myratio != 4)
 	{ // The target surface is either 16:9 or 16:10, so expand the
 	  // specified virtual size to avoid undesired stretching of the
 	  // image. Does not handle non-4:3 virtual sizes. I'll worry about
 	  // those if somebody expresses a desire to use them.
-		x = Scale(x - vwidth*FRACUNIT/2,
-				  Width*960,
-				  vwidth*BaseRatioSizes[myratio][0])
-			+ Width*FRACUNIT/2;
-		w = Scale(right - vwidth*FRACUNIT/2,
-				  Width*960,
-				  vwidth*BaseRatioSizes[myratio][0])
-			+ Width*FRACUNIT/2 - x;
+		x = (x - vwidth * 0.5) * Width * 960 / (vwidth * BaseRatioSizes[myratio][0]) + Width * 0.5;
+		w = (right - vwidth * 0.5) * Width * 960 / (vwidth * BaseRatioSizes[myratio][0]) + Width * 0.5 - x;
 	}
 	else
 	{
-		x = Scale (x, Width, vwidth);
-		w = Scale (right, Width, vwidth) - x;
+		x = x * Width / vwidth;
+		w = right * Width / vwidth - x;
 	}
 	if (myratio == 4)
 	{ // The target surface is 5:4
-		y = Scale(y - vheight*FRACUNIT/2,
-				  Height*600,
-				  vheight*BaseRatioSizes[myratio][1])
-			+ Height*FRACUNIT/2;
-		h = Scale(bottom - vheight*FRACUNIT/2,
-				  Height*600,
-				  vheight*BaseRatioSizes[myratio][1])
-			+ Height*FRACUNIT/2 - y;
+		y = (y - vheight * 0.5) * Height * 600 / (vheight * BaseRatioSizes[myratio][1]) + Height * 0.5;
+		h = (bottom - vheight * 0.5) * Height * 600 / (vheight * BaseRatioSizes[myratio][1]) + Height * 0.5 - y;
 		if (vbottom)
 		{
-			y += (Height - Height * BaseRatioSizes[myratio][3] / 48) << (FRACBITS - 1);
+			y += (Height - Height * BaseRatioSizes[myratio][3] / 48.0) * 0.5;
 		}
 	}
 	else
 	{
-		y = Scale (y, Height, vheight);
-		h = Scale (bottom, Height, vheight) - y;
+		y = y * Height / vheight;
+		h = bottom * Height / vheight - y;
 	}
+}
+
+void DCanvas::VirtualToRealCoordsFixed(fixed_t &x, fixed_t &y, fixed_t &w, fixed_t &h,
+	int vwidth, int vheight, bool vbottom, bool handleaspect) const
+{
+	double dx, dy, dw, dh;
+
+	dx = FIXED2FLOAT(x);
+	dy = FIXED2FLOAT(y);
+	dw = FIXED2FLOAT(w);
+	dh = FIXED2FLOAT(h);
+	VirtualToRealCoords(dx, dy, dw, dh, vwidth, vheight, vbottom, handleaspect);
+	x = FLOAT2FIXED(dx);
+	y = FLOAT2FIXED(dy);
+	w = FLOAT2FIXED(dw);
+	h = FLOAT2FIXED(dh);
 }
 
 void DCanvas::VirtualToRealCoordsInt(int &x, int &y, int &w, int &h,
 	int vwidth, int vheight, bool vbottom, bool handleaspect) const
 {
-	x <<= FRACBITS;
-	y <<= FRACBITS;
-	w <<= FRACBITS;
-	h <<= FRACBITS;
-	VirtualToRealCoords(x, y, w, h, vwidth, vheight, vbottom, handleaspect);
-	x >>= FRACBITS;
-	y >>= FRACBITS;
-	w >>= FRACBITS;
-	h >>= FRACBITS;
+	double dx, dy, dw, dh;
+
+	dx = x;
+	dy = y;
+	dw = w;
+	dh = h;
+	VirtualToRealCoords(dx, dy, dw, dh, vwidth, vheight, vbottom, handleaspect);
+	x = int(dx + 0.5);
+	y = int(dy + 0.5);
+	w = int(dx + dw + 0.5) - x;
+	h = int(dy + dh + 0.5) - y;
 }
 
 void DCanvas::FillBorder (FTexture *img)

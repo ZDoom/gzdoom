@@ -2734,7 +2734,7 @@ void D3DFB::DrawPixel(int x, int y, int palcolor, uint32 color)
 //
 //==========================================================================
 
-void STACK_ARGS D3DFB::DrawTextureV (FTexture *img, int x, int y, uint32 tags_first, va_list tags)
+void STACK_ARGS D3DFB::DrawTextureV (FTexture *img, double x, double y, uint32 tags_first, va_list tags)
 {
 	if (In2D < 2)
 	{
@@ -2759,17 +2759,17 @@ void STACK_ARGS D3DFB::DrawTextureV (FTexture *img, int x, int y, uint32 tags_fi
 
 	CheckQuadBatch();
 
-	float xscale = float(parms.destwidth) / parms.texwidth / 65536.f;
-	float yscale = float(parms.destheight) / parms.texheight / 65536.f;
-	float x0 = float(parms.x) / 65536.f - float(parms.left) * xscale;
-	float y0 = float(parms.y) / 65536.f - float(parms.top) * yscale;
-	float x1 = x0 + float(parms.destwidth) / 65536.f; 
-	float y1 = y0 + float(parms.destheight) / 65536.f;
+	double xscale = parms.destwidth / parms.texwidth;
+	double yscale = parms.destheight / parms.texheight;
+	double x0 = parms.x - parms.left * xscale;
+	double y0 = parms.y - parms.top * yscale;
+	double x1 = x0 + parms.destwidth;
+	double y1 = y0 + parms.destheight;
 	float u0 = tex->Box->Left;
 	float v0 = tex->Box->Top;
 	float u1 = tex->Box->Right;
 	float v1 = tex->Box->Bottom;
-	float uscale = 1.f / tex->Box->Owner->Width;
+	double uscale = 1.f / tex->Box->Owner->Width;
 	bool scissoring = false;
 
 	if (parms.flipX)
@@ -2779,9 +2779,9 @@ void STACK_ARGS D3DFB::DrawTextureV (FTexture *img, int x, int y, uint32 tags_fi
 	if (parms.windowleft > 0 || parms.windowright < parms.texwidth)
 	{
 		x0 += parms.windowleft * xscale;
-		u0 += parms.windowleft * uscale;
+		u0 = float(u0 + parms.windowleft * uscale);
 		x1 -= (parms.texwidth - parms.windowright) * xscale;
-		u1 -= (parms.texwidth - parms.windowright) * uscale;
+		u1 = float(u1 - (parms.texwidth - parms.windowright) * uscale);
 	}
 #if 0
 	float vscale = 1.f / tex->Box->Owner->Height / yscale;
@@ -2841,6 +2841,7 @@ void STACK_ARGS D3DFB::DrawTextureV (FTexture *img, int x, int y, uint32 tags_fi
 
 	float yoffs = GatheringWipeScreen ? 0.5f : 0.5f - LBOffset;
 
+#if 0
 	// Coordinates are truncated to integers, because that's effectively
 	// what the software renderer does. The hardware will instead round
 	// to nearest, it seems.
@@ -2848,11 +2849,18 @@ void STACK_ARGS D3DFB::DrawTextureV (FTexture *img, int x, int y, uint32 tags_fi
 	y0 = floorf(y0) - yoffs;
 	x1 = floorf(x1) - 0.5f;
 	y1 = floorf(y1) - yoffs;
+#else
+	x0 = x0 - 0.5f;
+	y0 = y0 - yoffs;
+	x1 = x1 - 0.5f;
+	y1 = y1 - yoffs;
+#endif
 
 	FBVERTEX *vert = &VertexData[VertexPos];
 
-	vert[0].x = x0;
-	vert[0].y = y0;
+	// Fill the vertex buffer.
+	vert[0].x = float(x0);
+	vert[0].y = float(y0);
 	vert[0].z = 0;
 	vert[0].rhw = 1;
 	vert[0].color0 = color0;
@@ -2860,8 +2868,8 @@ void STACK_ARGS D3DFB::DrawTextureV (FTexture *img, int x, int y, uint32 tags_fi
 	vert[0].tu = u0;
 	vert[0].tv = v0;
 
-	vert[1].x = x1;
-	vert[1].y = y0;
+	vert[1].x = float(x1);
+	vert[1].y = float(y0);
 	vert[1].z = 0;
 	vert[1].rhw = 1;
 	vert[1].color0 = color0;
@@ -2869,8 +2877,8 @@ void STACK_ARGS D3DFB::DrawTextureV (FTexture *img, int x, int y, uint32 tags_fi
 	vert[1].tu = u1;
 	vert[1].tv = v0;
 
-	vert[2].x = x1;
-	vert[2].y = y1;
+	vert[2].x = float(x1);
+	vert[2].y = float(y1);
 	vert[2].z = 0;
 	vert[2].rhw = 1;
 	vert[2].color0 = color0;
@@ -2878,8 +2886,8 @@ void STACK_ARGS D3DFB::DrawTextureV (FTexture *img, int x, int y, uint32 tags_fi
 	vert[2].tu = u1;
 	vert[2].tv = v1;
 
-	vert[3].x = x0;
-	vert[3].y = y1;
+	vert[3].x = float(x0);
+	vert[3].y = float(y1);
 	vert[3].z = 0;
 	vert[3].rhw = 1;
 	vert[3].color0 = color0;
@@ -2887,6 +2895,7 @@ void STACK_ARGS D3DFB::DrawTextureV (FTexture *img, int x, int y, uint32 tags_fi
 	vert[3].tu = u0;
 	vert[3].tv = v1;
 
+	// Fill the vertex index buffer.
 	IndexData[IndexPos    ] = VertexPos;
 	IndexData[IndexPos + 1] = VertexPos + 1;
 	IndexData[IndexPos + 2] = VertexPos + 2;
@@ -2894,6 +2903,7 @@ void STACK_ARGS D3DFB::DrawTextureV (FTexture *img, int x, int y, uint32 tags_fi
 	IndexData[IndexPos + 4] = VertexPos + 2;
 	IndexData[IndexPos + 5] = VertexPos + 3;
 
+	// Batch the quad.
 	QuadBatchPos++;
 	VertexPos += 4;
 	IndexPos += 6;

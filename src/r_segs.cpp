@@ -2434,11 +2434,13 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 	// Prepare lighting
 	calclighting = false;
 	usecolormap = basecolormap;
+	bool rereadcolormap = true;
 
 	// Decals that are added to the scene must fade to black.
 	if (decal->RenderStyle == LegacyRenderStyles[STYLE_Add] && usecolormap->Fade != 0)
 	{
 		usecolormap = GetSpecialLights(usecolormap->Color, 0, usecolormap->Desaturate);
+		rereadcolormap = false;
 	}
 
 	rw_light = rw_lightleft + (x1 - WallSX1) * rw_lightstep;
@@ -2472,6 +2474,12 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 		ESPSResult mode;
 
 		mode = R_SetPatchStyle (decal->RenderStyle, decal->Alpha, decal->Translation, decal->AlphaColor);
+
+		// R_SetPatchStyle can modify basecolormap.
+		if (rereadcolormap)
+		{
+			usecolormap = basecolormap;
+		}
 
 		if (mode == DontDraw)
 		{

@@ -2071,7 +2071,10 @@ void D_DoomMain (void)
 		if (autostart || netgame)
 		{
 			// Do not do any screenwipes when autostarting a game.
-			NoWipe = 35;
+			if (!Args->CheckParm("-warpwipe"))
+			{
+				NoWipe = TICRATE;
+			}
 			CheckWarpTransMap (startmap, true);
 			if (demorecording)
 				G_BeginRecording (startmap);

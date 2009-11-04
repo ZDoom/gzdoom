@@ -1,3 +1,7 @@
+November 3, 2009
+- Added a command line option -warpwipe to perform the screen wipe if you
+  start with -warp or +map.
+
 October 31, 2009
 - Changed all coordinates for DrawTexture() to floating point so that the
   player sprites will retain the same precision they had when they were

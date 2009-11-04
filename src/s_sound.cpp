@@ -250,7 +250,7 @@ void S_NoiseDebug (void)
 		screen->DrawText(SmallFont, color, 380, y, temp, TAG_DONE);
 
 		// Audibility
-		mysnprintf(temp, countof(temp), "%.2g", GSnd->GetAudibility(chan));
+		mysnprintf(temp, countof(temp), "%.4f", GSnd->GetAudibility(chan));
 		screen->DrawText(SmallFont, color, 460, y, temp, TAG_DONE);
 
 		y += 8;
@@ -1125,7 +1125,6 @@ void S_RestartSound(FSoundChan *chan)
 	if (chan->ChanFlags & (CHAN_UI|CHAN_NOPAUSE)) startflags |= SNDF_NOPAUSE;
 	if (chan->ChanFlags & CHAN_ABSTIME) startflags |= SNDF_ABSTIME;
 
-	chan->ChanFlags &= ~(CHAN_EVICTED|CHAN_ABSTIME);
 	if (chan->ChanFlags & CHAN_IS3D)
 	{
 		FVector3 pos, vel;
@@ -1142,11 +1141,13 @@ void S_RestartSound(FSoundChan *chan)
 		SoundListener listener;
 		S_SetListener(listener, players[consoleplayer].camera);
 
+		chan->ChanFlags &= ~(CHAN_EVICTED|CHAN_ABSTIME);
 		ochan = (FSoundChan*)GSnd->StartSound3D(sfx->data, &listener, chan->Volume, &chan->Rolloff, chan->DistanceScale, chan->Pitch,
 			chan->Priority, pos, vel, chan->EntChannel, startflags, chan);
 	}
 	else
 	{
+		chan->ChanFlags &= ~(CHAN_EVICTED|CHAN_ABSTIME);
 		ochan = (FSoundChan*)GSnd->StartSound(sfx->data, chan->Volume, chan->Pitch, startflags, chan);
 	}
 	assert(ochan == NULL || ochan == chan);

@@ -1,4 +1,7 @@
 November 3, 2009
+- Fixed: S_RestartSound() cleared the evicted flag even if the sound
+  was not restarted because it was too close to too many other identical
+  sounds that were already playing.
 - Added virtual status and audibility to the noise debug display.
 - Added a command line option -warpwipe to perform the screen wipe if you
   start with -warp or +map.

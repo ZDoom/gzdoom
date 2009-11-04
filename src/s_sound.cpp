@@ -164,6 +164,7 @@ void S_NoiseDebug (void)
 	screen->DrawText (SmallFont, CR_GOLD, 300, y, "chan", TAG_DONE);
 	screen->DrawText (SmallFont, CR_GOLD, 340, y, "pri", TAG_DONE);
 	screen->DrawText (SmallFont, CR_GOLD, 380, y, "flags", TAG_DONE);
+	screen->DrawText (SmallFont, CR_GOLD, 460, y, "aud", TAG_DONE);
 	y += 8;
 
 	if (Channels == NULL)
@@ -236,7 +237,7 @@ void S_NoiseDebug (void)
 		screen->DrawText(SmallFont, color, 340, y, temp, TAG_DONE);
 
 		// Flags
-		mysnprintf(temp, countof(temp), "%s3%sZ%sU%sM%sN%sA%sL%sE",
+		mysnprintf(temp, countof(temp), "%s3%sZ%sU%sM%sN%sA%sL%sE%sV",
 			(chan->ChanFlags & CHAN_IS3D)			? TEXTCOLOR_GREEN : TEXTCOLOR_BLACK,
 			(chan->ChanFlags & CHAN_LISTENERZ)		? TEXTCOLOR_GREEN : TEXTCOLOR_BLACK,
 			(chan->ChanFlags & CHAN_UI)				? TEXTCOLOR_GREEN : TEXTCOLOR_BLACK,
@@ -244,8 +245,13 @@ void S_NoiseDebug (void)
 			(chan->ChanFlags & CHAN_NOPAUSE)		? TEXTCOLOR_GREEN : TEXTCOLOR_BLACK,
 			(chan->ChanFlags & CHAN_AREA)			? TEXTCOLOR_GREEN : TEXTCOLOR_BLACK,
 			(chan->ChanFlags & CHAN_LOOP)			? TEXTCOLOR_GREEN : TEXTCOLOR_BLACK,
-			(chan->ChanFlags & CHAN_EVICTED)		? TEXTCOLOR_GREEN : TEXTCOLOR_BLACK);
+			(chan->ChanFlags & CHAN_EVICTED)		? TEXTCOLOR_GREEN : TEXTCOLOR_BLACK,
+			(chan->ChanFlags & CHAN_VIRTUAL)		? TEXTCOLOR_GREEN : TEXTCOLOR_BLACK);
 		screen->DrawText(SmallFont, color, 380, y, temp, TAG_DONE);
+
+		// Audibility
+		mysnprintf(temp, countof(temp), "%.2g", GSnd->GetAudibility(chan));
+		screen->DrawText(SmallFont, color, 460, y, temp, TAG_DONE);
 
 		y += 8;
 		if (chan->PrevChan == &Channels)
@@ -2000,6 +2006,25 @@ void S_ChannelEnded(FISoundChannel *ichan)
 			schan->ChanFlags |= CHAN_EVICTED;
 			schan->SysChannel = NULL;
 		}
+	}
+}
+
+//==========================================================================
+//
+// S_ChannelVirtualChanged (callback for sound interface code)
+//
+//==========================================================================
+
+void S_ChannelVirtualChanged(FISoundChannel *ichan, bool is_virtual)
+{
+	FSoundChan *schan = static_cast<FSoundChan*>(ichan);
+	if (is_virtual)
+	{
+		schan->ChanFlags |= CHAN_VIRTUAL;
+	}
+	else
+	{
+		schan->ChanFlags &= ~CHAN_VIRTUAL;
 	}
 }
 

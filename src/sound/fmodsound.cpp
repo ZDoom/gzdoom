@@ -1848,6 +1848,27 @@ unsigned int FMODSoundRenderer::GetPosition(FISoundChannel *chan)
 
 //==========================================================================
 //
+// FMODSoundRenderer :: GetAudibility
+//
+// Returns the audible volume of the channel, after rollof and any other
+// factors are applied.
+//
+//==========================================================================
+
+float FMODSoundRenderer::GetAudibility(FISoundChannel *chan)
+{
+	float aud;
+
+	if (chan == NULL || chan->SysChannel == NULL)
+	{
+		return 0;
+	}
+	((FMOD::Channel *)chan->SysChannel)->getAudibility(&aud);
+	return aud;
+}
+
+//==========================================================================
+//
 // FMODSoundRenderer :: SetSfxPaused
 //
 //==========================================================================
@@ -2284,16 +2305,19 @@ unsigned int FMODSoundRenderer::GetSampleLength(SoundHandle sfx)
 FMOD_RESULT F_CALLBACK FMODSoundRenderer::ChannelCallback
 	(FMOD_CHANNEL *channel, FMOD_CHANNEL_CALLBACKTYPE type, void *data1, void *data2)
 {
-	if (type != FMOD_CHANNEL_CALLBACKTYPE_END)
-	{
-		return FMOD_OK;
-	}
 	FMOD::Channel *chan = (FMOD::Channel *)channel;
 	FISoundChannel *schan;
 
 	if (chan->getUserData((void **)&schan) == FMOD_OK && schan != NULL)
 	{
-		S_ChannelEnded(schan);
+		if (type == FMOD_CHANNEL_CALLBACKTYPE_END)
+		{
+			S_ChannelEnded(schan);
+		}
+		else if (type == FMOD_CHANNEL_CALLBACKTYPE_VIRTUALVOICE)
+		{
+			S_ChannelVirtualChanged(schan, data1 != 0);
+		}
 	}
 	return FMOD_OK;
 }

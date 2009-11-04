@@ -1,4 +1,5 @@
 November 3, 2009
+- Added virtual status and audibility to the noise debug display.
 - Added a command line option -warpwipe to perform the screen wipe if you
   start with -warp or +map.
 

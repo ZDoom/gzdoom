@@ -175,6 +175,12 @@ public:
 		return 0;
 	}
 
+	// Gets a channel's audibility (real volume).
+	float GetAudibility(FISoundChannel *chan)
+	{
+		return 0;
+	}
+
 	// Synchronizes following sound startups.
 	void Sync (bool sync)
 	{

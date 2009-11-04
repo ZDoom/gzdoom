@@ -112,6 +112,9 @@ public:
 	// Returns position of sound on this channel, in samples.
 	virtual unsigned int GetPosition(FISoundChannel *chan) = 0;
 
+	// Gets a channel's audibility (real volume).
+	virtual float GetAudibility(FISoundChannel *chan) = 0;
+
 	// Synchronizes following sound startups.
 	virtual void Sync (bool sync) = 0;
 
@@ -142,6 +145,7 @@ void I_InitSound ();
 void I_ShutdownSound ();
 
 void S_ChannelEnded(FISoundChannel *schan);
+void S_ChannelVirtualChanged(FISoundChannel *schan, bool is_virtual);
 float S_GetRolloff(FRolloffInfo *rolloff, float distance, bool logarithmic);
 FISoundChannel *S_GetChannel(void *syschan);
 

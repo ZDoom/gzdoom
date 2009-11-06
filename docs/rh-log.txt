@@ -1,3 +1,7 @@
+November 5, 2009  (Changes by Graf Zahl)
+- fixed: The 'new format only' flag for MAPINFO options was never checked.
+  (ZDoom itself doesn't use it yet so it's only relevant for child ports.)
+  
 November 3, 2009
 - Fixed: S_RestartSound() cleared the evicted flag even if the sound
   was not restarted because it was too close to too many other identical

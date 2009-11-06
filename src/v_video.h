@@ -403,6 +403,8 @@ public:
 	virtual bool WipeDo(int ticks);
 	virtual void WipeCleanup();
 
+	DWORD GetLastFPS() const { return LastCount; }
+
 #ifdef _WIN32
 	virtual void PaletteChanged () = 0;
 	virtual int QueryNewPalette () = 0;

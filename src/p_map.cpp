@@ -2752,8 +2752,8 @@ extern FRandom pr_bounce;
 bool P_BounceActor (AActor *mo, AActor * BlockingMobj)
 {
 	if (mo && BlockingMobj && ((mo->BounceFlags & BOUNCE_AllActors)
-		|| ((mo->flags & MF_MISSILE) && (BlockingMobj->flags2 & MF2_REFLECTIVE)
-		|| ((!BlockingMobj->player) && (!(BlockingMobj->flags3 & MF3_ISMONSTER))))
+		|| ((mo->flags & MF_MISSILE) && (BlockingMobj->flags2 & MF2_REFLECTIVE))
+		|| ((BlockingMobj->player == NULL) && (!(BlockingMobj->flags3 & MF3_ISMONSTER)))
 		))
 	{
 		fixed_t speed;

@@ -1,3 +1,10 @@
+November 7, 2009
+- Fixed: R_GetOneSkyColumn() and R_GetTwoSkyColumns are mulscaling an
+  unsigned integer that can use all 32 bits. They must therefore use
+  the unsigned mul instruction rather than the signed imul instruction.
+- Fixed several signed/unsigned comparison and possibly uninitialized
+  variable warnings flagged by GCC.
+
 November 5, 2009  (Changes by Graf Zahl)
 - fixed: The 'new format only' flag for MAPINFO options was never checked.
   (ZDoom itself doesn't use it yet so it's only relevant for child ports.)

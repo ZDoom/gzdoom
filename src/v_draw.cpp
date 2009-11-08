@@ -669,7 +669,7 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, double x, double y, DWORD tag
 
 	if (parms->style.BlendOp == 255)
 	{
-		if (parms->fillcolor != -1)
+		if (parms->fillcolor != ~0u)
 		{
 			if (parms->alphaChannel)
 			{

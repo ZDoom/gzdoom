@@ -29,7 +29,7 @@
 #define alloca __builtin_alloca
 #endif
 
-inline SDWORD Scale (SDWORD a, SDWORD b, SDWORD c)
+static inline SDWORD Scale (SDWORD a, SDWORD b, SDWORD c)
 {
 	SDWORD result, dummy;
 
@@ -47,7 +47,7 @@ inline SDWORD Scale (SDWORD a, SDWORD b, SDWORD c)
 	return result;
 }
 
-inline SDWORD MulScale (SDWORD a, SDWORD b, SDWORD c)
+static inline SDWORD MulScale (SDWORD a, SDWORD b, SDWORD c)
 {
 	SDWORD result, dummy;
 
@@ -65,7 +65,7 @@ inline SDWORD MulScale (SDWORD a, SDWORD b, SDWORD c)
 }
 
 #define MAKECONSTMulScale(s) \
-inline SDWORD MulScale##s (SDWORD a, SDWORD b) { return ((SQWORD)a * b) >> s; }
+static inline SDWORD MulScale##s (SDWORD a, SDWORD b) { return ((SQWORD)a * b) >> s; }
 
 MAKECONSTMulScale(1)
 MAKECONSTMulScale(2)
@@ -101,8 +101,10 @@ MAKECONSTMulScale(31)
 MAKECONSTMulScale(32)
 #undef MAKECONSTMulScale
 
+static inline DWORD UMulScale16(DWORD a, DWORD b) { return ((QWORD)a * b) >> 16; }
+
 #define MAKECONSTDMulScale(s) \
-	inline SDWORD DMulScale##s (SDWORD a, SDWORD b, SDWORD c, SDWORD d) \
+	static inline SDWORD DMulScale##s (SDWORD a, SDWORD b, SDWORD c, SDWORD d) \
 	{ \
 		return (((SQWORD)a * b) + ((SQWORD)c * d)) >> s; \
 	}
@@ -142,7 +144,7 @@ MAKECONSTDMulScale(32)
 #undef MAKECONSTDMulScale
 
 #define MAKECONSTTMulScale(s) \
-	inline SDWORD TMulScale##s (SDWORD a, SDWORD b, SDWORD c, SDWORD d, SDWORD e, SDWORD ee) \
+	static inline SDWORD TMulScale##s (SDWORD a, SDWORD b, SDWORD c, SDWORD d, SDWORD e, SDWORD ee) \
 	{ \
 		return (((SQWORD)a * b) + ((SQWORD)c * d) + ((SQWORD)e * ee)) >> s; \
 	}
@@ -181,7 +183,7 @@ MAKECONSTTMulScale(31)
 MAKECONSTTMulScale(32)
 #undef MAKECONSTTMulScale
 
-inline SDWORD BoundMulScale (SDWORD a, SDWORD b, SDWORD c)
+static inline SDWORD BoundMulScale (SDWORD a, SDWORD b, SDWORD c)
 {
 	union {
 		long long big;
@@ -195,7 +197,7 @@ inline SDWORD BoundMulScale (SDWORD a, SDWORD b, SDWORD c)
 	return u.l;
 }
 
-inline SDWORD DivScale (SDWORD a, SDWORD b, SDWORD c)
+static inline SDWORD DivScale (SDWORD a, SDWORD b, SDWORD c)
 {
 	SDWORD result, dummy;
 	SDWORD lo = a << c;
@@ -212,7 +214,7 @@ inline SDWORD DivScale (SDWORD a, SDWORD b, SDWORD c)
 	return result;
 }
 
-inline SDWORD DivScale1 (SDWORD a, SDWORD b)
+static inline SDWORD DivScale1 (SDWORD a, SDWORD b)
 {
 	SDWORD result, dummy;
 
@@ -229,7 +231,7 @@ inline SDWORD DivScale1 (SDWORD a, SDWORD b)
 }
 
 #define MAKECONSTDivScale(s) \
-	inline SDWORD DivScale##s (SDWORD a, SDWORD b) \
+	static inline SDWORD DivScale##s (SDWORD a, SDWORD b) \
 	{ \
 		SDWORD result, dummy; \
 		asm volatile \
@@ -275,7 +277,7 @@ MAKECONSTDivScale(30)
 MAKECONSTDivScale(31)
 #undef MAKECONSTDivScale
 
-inline SDWORD DivScale32 (SDWORD a, SDWORD b)
+static inline SDWORD DivScale32 (SDWORD a, SDWORD b)
 {
 	SDWORD result, dummy;
 
@@ -290,7 +292,7 @@ inline SDWORD DivScale32 (SDWORD a, SDWORD b)
 	return result;
 }
 
-inline void clearbuf (void *buff, int count, SDWORD clear)
+static inline void clearbuf (void *buff, int count, SDWORD clear)
 {
 	int dummy1, dummy2;
 	asm volatile
@@ -303,7 +305,7 @@ inline void clearbuf (void *buff, int count, SDWORD clear)
 		);
 }
 
-inline void clearbufshort (void *buff, unsigned int count, WORD clear)
+static inline void clearbufshort (void *buff, unsigned int count, WORD clear)
 {
 	asm volatile
 		("shr $1,%%ecx\n\t"
@@ -315,7 +317,7 @@ inline void clearbufshort (void *buff, unsigned int count, WORD clear)
 		:"%cc");
 }
 
-inline SDWORD ksgn (SDWORD a)
+static inline SDWORD ksgn (SDWORD a)
 {
 	SDWORD result, dummy;
 
@@ -330,7 +332,7 @@ inline SDWORD ksgn (SDWORD a)
 	return result;
 }
 
-inline int toint (float v)
+static inline int toint (float v)
 {
 	volatile QWORD result;
 
@@ -342,7 +344,7 @@ inline int toint (float v)
 	return result;
 }
 
-inline int quickertoint (float v)
+static inline int quickertoint (float v)
 {
 	volatile int result;
 

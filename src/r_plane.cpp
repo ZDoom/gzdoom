@@ -765,15 +765,15 @@ static int skycolplace;
 static const BYTE *R_GetOneSkyColumn (FTexture *fronttex, int x)
 {
 	angle_t column = (viewangle + xtoviewangle[x]) ^ skyflip;
-	return fronttex->GetColumn((MulScale16(column, frontcyl) + frontpos) >> FRACBITS, NULL);
+	return fronttex->GetColumn((UMulScale16(column, frontcyl) + frontpos) >> FRACBITS, NULL);
 }
 
 // Get a column of sky when there are two overlapping sky textures
 static const BYTE *R_GetTwoSkyColumns (FTexture *fronttex, int x)
 {
 	DWORD ang = (viewangle + xtoviewangle[x]) ^ skyflip;
-	DWORD angle1 = (DWORD)((MulScale16(ang, frontcyl) + frontpos) >> FRACBITS);
-	DWORD angle2 = (DWORD)((MulScale16(ang, backcyl) + backpos) >> FRACBITS);
+	DWORD angle1 = (DWORD)((UMulScale16(ang, frontcyl) + frontpos) >> FRACBITS);
+	DWORD angle2 = (DWORD)((UMulScale16(ang, backcyl) + backpos) >> FRACBITS);
 
 	// Check if this column has already been built. If so, there's
 	// no reason to waste time building it again.
@@ -1244,7 +1244,7 @@ ADD_STAT(skyboxes)
 void R_DrawSkyPlane (visplane_t *pl)
 {
 	FTextureID sky1tex, sky2tex;
-	double frontdpos, backdpos;
+	double frontdpos = 0, backdpos = 0;
 
 	if ((level.flags & LEVEL_SWAPSKIES) && !(level.flags & LEVEL_DOUBLESKY))
 	{
@@ -1330,10 +1330,10 @@ void R_DrawSkyPlane (visplane_t *pl)
 			}
 		}
 	}
-	frontpos = int(fmod(frontdpos, double(sky1cyl * 65536.0)));
+	frontpos = int(fmod(frontdpos, sky1cyl * 65536.0));
 	if (backskytex != NULL)
 	{
-		backpos = int(fmod(backdpos, double(sky2cyl * 65536.0)));
+		backpos = int(fmod(backdpos, sky2cyl * 65536.0));
 	}
 
 	bool fakefixed = false;

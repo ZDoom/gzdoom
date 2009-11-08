@@ -417,7 +417,7 @@ void D3DFB::SetInitialState()
 	CurPixelShader = NULL;
 	memset(Constant, 0, sizeof(Constant));
 
-	for (int i = 0; i < countof(Texture); ++i)
+	for (unsigned i = 0; i < countof(Texture); ++i)
 	{
 		Texture[i] = NULL;
 		D3DDevice->SetSamplerState(i, D3DSAMP_ADDRESSU, (i == 1 && SM14) ? D3DTADDRESS_BORDER : D3DTADDRESS_CLAMP);
@@ -558,7 +558,8 @@ bool D3DFB::LoadShaders()
 {
 	static const char models[][4] = { "30/", "20/", "14/" };
 	FString shaderdir, shaderpath;
-	int model, i, lump;
+	unsigned model, i;
+	int lump;
 
 	// We determine the best available model simply by trying them all in
 	// order of decreasing preference.
@@ -3594,7 +3595,7 @@ void D3DFB::SetPixelShader(IDirect3DPixelShader9 *shader)
 
 void D3DFB::SetTexture(int tnum, IDirect3DTexture9 *texture)
 {
-	assert(tnum >= 0 && tnum < countof(Texture));
+	assert(unsigned(tnum) < countof(Texture));
 	if (Texture[tnum] != texture)
 	{
 		Texture[tnum] = texture;

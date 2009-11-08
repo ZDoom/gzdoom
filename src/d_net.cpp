@@ -2100,9 +2100,9 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 	case DEM_SUMMONFOE2:
 		{
 			const PClass *typeinfo;
-			int angle;
-			SWORD tid;
-			BYTE special;
+			int angle = 0;
+			SWORD tid = 0;
+			BYTE special = 0;
 			int args[5];
 
 			s = ReadString (stream);

@@ -1337,11 +1337,11 @@ static void P_SpawnScrollers(void)
 		if (special != 0)
 		{
 			int max = LineSpecialsInfo[special] != NULL ? LineSpecialsInfo[special]->map_args : countof(l->args);
-			for (int arg = max; arg < countof(l->args); ++arg)
+			for (unsigned arg = max; arg < countof(l->args); ++arg)
 			{
 				if (l->args[arg] != 0)
 				{
-					Printf("Line %d (type %d:%s), arg %d is %d (should be 0)\n",
+					Printf("Line %d (type %d:%s), arg %u is %d (should be 0)\n",
 						i, special, LineSpecialsInfo[special]->name, arg+1, l->args[arg]);
 				}
 			}

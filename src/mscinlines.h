@@ -82,6 +82,13 @@ __forceinline SDWORD MulScale32 (SDWORD a, SDWORD b)
 	__asm mov eax,edx
 }
 
+__forceinline DWORD UMulScale16(DWORD a, DWORD b)
+{
+	__asm mov eax,a
+	__asm mul b
+	__asm shrd eax,edx,16
+}
+
 __forceinline SDWORD DMulScale (SDWORD a, SDWORD b, SDWORD c, SDWORD d, SDWORD s)
 {
 	__asm mov eax,a

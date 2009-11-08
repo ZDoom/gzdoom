@@ -1,4 +1,6 @@
 November 7, 2009
+- Fixed: The x64 Release build was configured to use the 32-bit GME, and
+  neither release nor debug builds built the library.
 - Fixed: R_GetOneSkyColumn() and R_GetTwoSkyColumns are mulscaling an
   unsigned integer that can use all 32 bits. They must therefore use
   the unsigned mul instruction rather than the signed imul instruction.

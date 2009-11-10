@@ -12,7 +12,7 @@
 #endif
 
 #ifndef _MSC_VER
-#define static __forceinline inline
+#define __forceinline inline
 #endif
 
 static __forceinline SDWORD Scale (SDWORD a, SDWORD b, SDWORD c)

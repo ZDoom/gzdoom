@@ -310,7 +310,14 @@ bool F7ZFile::Open(bool quiet)
 
 F7ZFile::~F7ZFile()
 {
-	if (Lumps != NULL) delete [] Lumps;
+	if (Lumps != NULL)
+	{
+		delete[] Lumps;
+	}
+	if (Archive != NULL)
+	{
+		delete Archive;
+	}
 }
 
 //==========================================================================

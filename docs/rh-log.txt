@@ -1,3 +1,7 @@
+November 9, 2009
+- Maps inside zips can now satisfy the map checks for IWAD detection.
+- Fixed: F7ZFile did not delete its Archive when destroyed.
+
 November 7, 2009
 - Fixed: The x64 Release build was configured to use the 32-bit GME, and
   neither release nor debug builds built the library.

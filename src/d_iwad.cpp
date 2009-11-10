@@ -176,7 +176,7 @@ static EIWADType ScanIWAD (const char *iwad)
 		{ 'S','P','I','D','A','1','D','1' },
 
 	};
-#define NUM_CHECKLUMPS (sizeof(checklumps)/8)
+#define NUM_CHECKLUMPS (countof(checklumps))
 	enum
 	{
 		Check_ad2lib,
@@ -202,7 +202,7 @@ static EIWADType ScanIWAD (const char *iwad)
 		Check_Gameinfo,
 		Check_e2m1
 	};
-	int lumpsfound[NUM_CHECKLUMPS];
+	bool lumpsfound[NUM_CHECKLUMPS];
 	size_t i;
 
 	memset (lumpsfound, 0, sizeof(lumpsfound));
@@ -213,10 +213,44 @@ static EIWADType ScanIWAD (const char *iwad)
 		for(DWORD ii = 0; ii < iwadfile->LumpCount(); ii++)
 		{
 			FResourceLump *lump = iwadfile->GetLump(ii);
+			size_t j;
 
-			for (DWORD j = 0; j < NUM_CHECKLUMPS; j++)
-				if (strnicmp (lump->Name, checklumps[j], 8) == 0)
-					lumpsfound[j]++;
+			for (j = 0; j < NUM_CHECKLUMPS; j++)
+			{
+				if (!lumpsfound[j])
+				{
+					if (strnicmp (lump->Name, checklumps[j], 8) == 0)
+					{
+						lumpsfound[j] = true;
+						break;
+					}
+					// Check for maps inside zips, too.
+					else if (lump->FullName != NULL)
+					{
+						if (checklumps[j][0] == 'E' && checklumps[j][2] == 'M' && checklumps[j][4] == '\0')
+						{
+							if (strnicmp(lump->FullName, "maps/", 5) == 0 &&
+								strnicmp(lump->FullName + 5, checklumps[j], 4) == 0 &&
+								stricmp(lump->FullName + 9, ".wad") == 0)
+							{
+								lumpsfound[j] = true;
+								break;
+							}
+						}
+						else if (checklumps[j][0] == 'M' && checklumps[j][1] == 'A' && checklumps[j][2] == 'P' &&
+								 checklumps[j][5] == '\0')
+						{
+							if (strnicmp(lump->FullName, "maps/", 5) == 0 &&
+								strnicmp(lump->FullName + 5, checklumps[j], 5) == 0 &&
+								stricmp(lump->FullName + 10, ".wad") == 0)
+							{
+								lumpsfound[j] = true;
+								break;
+							}
+						}
+					}
+				}
+			}
 		}
 		delete iwadfile;
 	}

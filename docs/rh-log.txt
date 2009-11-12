@@ -1,4 +1,5 @@
 November 11, 2009
+- Fixed: The framerate was not capped before starting a game.
 - Removed the one embedded DeHackEd lump restriction.
 - Fixed: nofreeaim in P_SpawnPlayerMissile() was broken.
 - Fixed: MBF sky Y offsets were ignored. X offsets should also be applied to

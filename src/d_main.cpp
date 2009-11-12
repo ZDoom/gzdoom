@@ -860,6 +860,9 @@ void D_DoomLoop ()
 {
 	int lasttic = 0;
 
+	// Clamp the timer to TICRATE until the playloop has been entered.
+	r_NoInterpolate = true;
+
 	for (;;)
 	{
 		try

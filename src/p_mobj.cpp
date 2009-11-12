@@ -5204,6 +5204,10 @@ AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z,
 	if (linetarget == NULL)
 	{
 		an = angle;
+		if (nofreeaim || !level.IsFreelookAllowed())
+		{
+			pitch = 0;
+		}
 	}
 	if (pLineTarget) *pLineTarget = linetarget;
 

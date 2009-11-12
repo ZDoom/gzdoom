@@ -285,6 +285,7 @@ static int PatchPars (int);
 static int PatchCodePtrs (int);
 static int PatchMusic (int);
 static int DoInclude (int);
+static bool DoDehPatch();
 
 static const struct {
 	const char *name;
@@ -2260,7 +2261,7 @@ static int DoInclude (int dummy)
 			}
 		}
 
-		DoDehPatch (path, false);
+		D_LoadDehFile(path);
 
 		if (data != path)
 		{
@@ -2280,105 +2281,70 @@ static int DoInclude (int dummy)
 	return GetLine();
 }
 
-void DoDehPatch (const char *patchfile, bool autoloading, int lump)
+int D_LoadDehLumps()
 {
-	char file[256];
-	int cont;
-	int filelen = 0;	// Be quiet, gcc
+	int lastlump = 0, lumpnum, count = 0;
 
-	PatchFile = NULL;
-	PatchName = NULL;
-
-	if (lump < 0)
+	while ((lumpnum = Wads.FindLump("DEHACKED", &lastlump)) >= 0)
 	{
-		lump = Wads.CheckNumForName ("DEHACKED");
+		count += D_LoadDehLump(lumpnum);
 	}
+	return count;
+}
 
-	if (lump >= 0 && autoloading)
+bool D_LoadDehLump(int lumpnum)
+{
+	int filelen = Wads.LumpLength(lumpnum);
+
+	PatchName = copystring(Wads.GetLumpFullPath(lumpnum));
+	PatchFile = new char[filelen + 1];
+	Wads.ReadLump(lumpnum, PatchFile);
+	PatchFile[filelen] = '\0';		// terminate with a '\0' character
+	return DoDehPatch();
+}
+
+bool D_LoadDehFile(const char *patchfile)
+{
+	FILE *deh;
+
+	deh = fopen(patchfile, "rb");
+	if (deh != NULL)
 	{
-		// Execute the DEHACKED lump as a patch.
-		strcpy (file, "DEHACKED lump");
-		filelen = Wads.LumpLength (lump);
-		if ( (PatchFile = new char[filelen + 1]) )
-		{
-			Wads.ReadLump (lump, PatchFile);
-		}
-		else
-		{
-			Printf ("Not enough memory to apply patch\n");
-			return;
-		}
-	}
-	else if (patchfile)
-	{
-		// Try to use patchfile as a patch.
-		FILE *deh;
+		int filelen = Q_filelength(deh);
 
-		strcpy (file, patchfile);
-		FixPathSeperator (file);
-		DefaultExtension (file, ".deh");
-
-		if ( !(deh = fopen (file, "rb")) )
-		{
-			strcpy (file, patchfile);
-			FixPathSeperator (file);
-			DefaultExtension (file, ".bex");
-			deh = fopen (file, "rb");
-		}
-
-		if (deh)
-		{
-			filelen = Q_filelength (deh);
-			if ( (PatchFile = new char[filelen + 1]) )
-			{
-				fread (PatchFile, 1, filelen, deh);
-				fclose (deh);
-				PatchName = copystring (patchfile);
-				FixPathSeperator (PatchName);
-			}
-		}
-
-		if (!PatchFile)
-		{
-			// Couldn't find it on disk, try reading it from a lump
-			lump = Wads.CheckNumForFullName(patchfile, true);
-			if (lump == -1)
-			{
-				// Compatibility fallback. It's just here because
-				// some WAD may need it. Should be deleted it it can
-				// be confirmed that nothing uses this case.
-				FString filebase(ExtractFileBase (patchfile));
-				lump = Wads.CheckNumForName (filebase);
-			}
-			if (lump >= 0)
-			{
-				filelen = Wads.LumpLength (lump);
-				if ( (PatchFile = new char[filelen + 1]) )
-				{
-					Wads.ReadLump (lump, PatchFile);
-				}
-				else
-				{
-					Printf ("Not enough memory to apply patch\n");
-					return;
-				}
-			}
-		}
-
-		if (!PatchFile)
-		{
-			Printf ("Could not open DeHackEd patch \"%s\"\n", file);
-			return;
-		}
+		PatchName = copystring(patchfile);
+		PatchFile = new char[filelen + 1];
+		fread(PatchFile, 1, filelen, deh);
+		fclose(deh);
+		PatchFile[filelen] = '\0';		// terminate with a '\0' character
+		return DoDehPatch();
 	}
 	else
 	{
-		// Nothing to do.
-		return;
+		// Couldn't find it in the filesystem; try from a lump instead.
+		int lumpnum = Wads.CheckNumForFullName(patchfile, true);
+		if (lumpnum < 0)
+		{
+			// Compatibility fallback. It's just here because
+			// some WAD may need it. Should be deleted if it can
+			// be confirmed that nothing uses this case.
+			FString filebase(ExtractFileBase(patchfile));
+			lumpnum = Wads.CheckNumForName(filebase);
+		}
+		if (lumpnum >= 0)
+		{
+			return D_LoadDehLump(lumpnum);
+		}
 	}
+	Printf ("Could not open DeHackEd patch \"%s\"\n", patchfile);
+	return false;
+}
 
-	// End file with a NULL for our parser
-	PatchFile[filelen] = 0;
+static bool DoDehPatch()
+{
+	Printf("Adding dehacked patch %s\n", PatchName);
+
+	int cont;
 
 	dversion = pversion = -1;
 	cont = 0;
@@ -2386,10 +2352,10 @@ void DoDehPatch (const char *patchfile, bool autoloading, int lump)
 	{
 		if (PatchFile[25] < '3')
 		{
-			if (PatchName != NULL) delete[] PatchName;
+			delete[] PatchName;
 			delete[] PatchFile;
-			Printf (PRINT_BOLD, "\"%s\" is an old and unsupported DeHackEd patch\n", file);
-			return;
+			Printf (PRINT_BOLD, "\"%s\" is an old and unsupported DeHackEd patch\n", PatchFile);
+			return false;
 		}
 		PatchPt = strchr (PatchFile, '\n');
 		while ((cont = GetLine()) == 1)
@@ -2399,10 +2365,10 @@ void DoDehPatch (const char *patchfile, bool autoloading, int lump)
 		}
 		if (!cont || dversion == -1 || pversion == -1)
 		{
-			if (PatchName != NULL) delete[] PatchName;
+			delete[] PatchName;
 			delete[] PatchFile;
-			Printf (PRINT_BOLD, "\"%s\" is not a DeHackEd patch file\n", file);
-			return;
+			Printf (PRINT_BOLD, "\"%s\" is not a DeHackEd patch file\n", PatchFile);
+			return false;
 		}
 	}
 	else
@@ -2412,7 +2378,7 @@ void DoDehPatch (const char *patchfile, bool autoloading, int lump)
 		pversion = 6;
 		PatchPt = PatchFile;
 		while ((cont = GetLine()) == 1)
-			;
+		{}
 	}
 
 	if (pversion != 6)
@@ -2439,10 +2405,10 @@ void DoDehPatch (const char *patchfile, bool autoloading, int lump)
 	if (!LoadDehSupp ())
 	{
 		Printf ("Could not load DEH support data\n");
-		if (PatchName != NULL) delete[] PatchName;
-		delete[] PatchFile;
 		UnloadDehSupp ();
-		return;
+		delete[] PatchName;
+		delete[] PatchFile;
+		return false;
 	}
 
 	do
@@ -2459,10 +2425,10 @@ void DoDehPatch (const char *patchfile, bool autoloading, int lump)
 	} while (cont);
 
 	UnloadDehSupp ();
-	if (PatchName != NULL) delete[] PatchName;
+	delete[] PatchName;
 	delete[] PatchFile;
 	Printf ("Patch installed\n");
-
+	return true;
 }
 
 static inline bool CompareLabel (const char *want, const BYTE *have)

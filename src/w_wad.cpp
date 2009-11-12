@@ -832,6 +832,7 @@ int FWadCollection::FindLump (const char *name, int *lastlump, bool anyns)
 
 	uppercopy (name8, name);
 
+	assert(lastlump != NULL && *lastlump >= 0);
 	lump_p = &LumpInfo[*lastlump];
 	while (lump_p < &LumpInfo[NumLumps])
 	{

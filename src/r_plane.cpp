@@ -747,6 +747,8 @@ static angle_t skyflip;
 static int frontpos, backpos;
 static fixed_t frontyScale;
 static fixed_t frontcyl, backcyl;
+static fixed_t skymid;
+static angle_t skyangle;
 int frontiScale;
 
 extern fixed_t swall[MAXWIDTH];
@@ -764,14 +766,14 @@ static int skycolplace;
 // Get a column of sky when there is only one sky texture.
 static const BYTE *R_GetOneSkyColumn (FTexture *fronttex, int x)
 {
-	angle_t column = (viewangle + xtoviewangle[x]) ^ skyflip;
+	angle_t column = (skyangle + xtoviewangle[x]) ^ skyflip;
 	return fronttex->GetColumn((UMulScale16(column, frontcyl) + frontpos) >> FRACBITS, NULL);
 }
 
 // Get a column of sky when there are two overlapping sky textures
 static const BYTE *R_GetTwoSkyColumns (FTexture *fronttex, int x)
 {
-	DWORD ang = (viewangle + xtoviewangle[x]) ^ skyflip;
+	DWORD ang = (skyangle + xtoviewangle[x]) ^ skyflip;
 	DWORD angle1 = (DWORD)((UMulScale16(ang, frontcyl) + frontpos) >> FRACBITS);
 	DWORD angle2 = (DWORD)((UMulScale16(ang, backcyl) + backpos) >> FRACBITS);
 
@@ -849,7 +851,7 @@ static void R_DrawSky (visplane_t *pl)
 	rw_offset = 0;
 
 	frontyScale = rw_pic->yScale;
-	dc_texturemid = MulScale16 (skytexturemid/*-viewz*/, frontyScale);
+	dc_texturemid = MulScale16 (skymid, frontyScale);
 
 	if (1 << frontskytex->HeightBits == frontskytex->GetHeight())
 	{ // The texture tiles nicely
@@ -881,7 +883,7 @@ static void R_DrawSkyStriped (visplane_t *pl)
 	// So that I don't have to worry about fractional precision, chop off the
 	// fractional part of centeryfrac.
 	centeryfrac = centery << FRACBITS;
-	topfrac = (skytexturemid + iscale * (1-centery)) % (frontskytex->GetHeight() << FRACBITS);
+	topfrac = (skymid + iscale * (1-centery)) % (frontskytex->GetHeight() << FRACBITS);
 	if (topfrac < 0) topfrac += frontskytex->GetHeight() << FRACBITS;
 	yl = 0;
 	yh = (short)MulScale32 ((frontskytex->GetHeight() << FRACBITS) - topfrac, frontyScale);
@@ -1255,6 +1257,8 @@ void R_DrawSkyPlane (visplane_t *pl)
 		sky1tex = sky1texture;
 	}
 	sky2tex = sky2texture;
+	skymid = skytexturemid;
+	skyangle = viewangle;
 
 	if (pl->picnum == skyflatnum)
 	{
@@ -1311,10 +1315,10 @@ void R_DrawSkyPlane (visplane_t *pl)
 			// to allow sky rotation as well as careful positioning.
 			// However, the offset is scaled very small, so that it
 			// allows a long-period of sky rotation.
-			frontdpos = (-s->GetTextureXOffset(pos)) >> 6;
+			skyangle += s->GetTextureXOffset(pos);
 
 			// Vertical offset allows careful sky positioning.
-			dc_texturemid = s->GetTextureYOffset(pos) - 28*FRACUNIT;
+			skymid = s->GetTextureYOffset(pos) - 28*FRACUNIT;
 
 			// We sometimes flip the picture horizontally.
 			//

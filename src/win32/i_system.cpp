@@ -145,7 +145,7 @@ int I_GetTimePolled (bool saveMS)
 	}
 
 	tm = timeGetTime();
-	if (!basetime)
+	if (basetime == 0)
 		basetime = tm;
 
 	if (saveMS)
@@ -186,44 +186,18 @@ void I_FreezeTimePolled (bool frozen)
 }
 
 
-static int tics;
-static DWORD ted_start, ted_next;
-
-int I_GetTimeEventDriven (bool saveMS)
-{
-	if (saveMS)
-	{
-		TicStart = ted_start;
-		TicNext = ted_next;
-	}
-	return tics;
-}
-
 int I_WaitForTicEvent (int prevtic)
 {
 	assert(!TicFrozen);
+
+	int tics = I_GetTimePolled(false);
 	while (prevtic >= tics)
 	{
 		WaitForSingleObject(NewTicArrived, 1000/TICRATE);
+		tics = I_GetTimePolled(false);
 	}
 
 	return tics;
-}
-
-void CALLBACK TimerTicked (UINT id, UINT msg, DWORD_PTR user, DWORD_PTR dw1, DWORD_PTR dw2)
-{
-	if (!TicFrozen)
-	{
-		tics++;
-	}
-	ted_start = timeGetTime ();
-	ted_next = ted_start + MillisecondsPerTic;
-	SetEvent (NewTicArrived);
-}
-
-void I_FreezeTimeEventDriven(bool frozen)
-{
-	TicFrozen = frozen;
 }
 
 // Returns the fractional amount of a tic passed since the most recent tic
@@ -453,21 +427,14 @@ void I_Init (void)
 		{
 			delay = 1000/TICRATE;
 		}
-		TimerEventID = timeSetEvent
-			(
-				delay,
-				0,
-				TimerTicked,
-				0,
-				TIME_PERIODIC
-			);
+		TimerEventID = timeSetEvent(delay, 0, (LPTIMECALLBACK)NewTicArrived, 0, TIME_PERIODIC | TIME_CALLBACK_EVENT_SET);
 		MillisecondsPerTic = delay;
 	}
 	if (TimerEventID != 0)
 	{
-		I_GetTime = I_GetTimeEventDriven;
+		I_GetTime = I_GetTimePolled;
 		I_WaitForTic = I_WaitForTicEvent;
-		I_FreezeTime = I_FreezeTimeEventDriven;
+		I_FreezeTime = I_FreezeTimePolled;
 	}
 	else
 	{	// If no timer event, busy-loop with timeGetTime

@@ -1,4 +1,11 @@
 November 11, 2009
+- Modified the event-driven ticks to use the same code for calculating the
+  time as the polled timer so that the timer does not start running until the
+  first time it is used.
+- Removed the srand() call from D_DoomMain(), because it started the game
+  timer running prematurely, and we never call rand() anywhere. (Not to
+  mention, even if we did use rand(), always seeding it with 0 is rather
+  pointless.)
 - Fixed: The framerate was not capped before starting a game.
 - Removed the one embedded DeHackEd lump restriction.
 - Fixed: nofreeaim in P_SpawnPlayerMissile() was broken.

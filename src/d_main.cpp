@@ -1597,8 +1597,6 @@ void D_DoomMain (void)
 	const char *wad;
 	DArgs *execFiles;
 
-	srand(I_MSTime());
-
 	// Set the FPU precision to 53 significant bits. This is the default
 	// for Visual C++, but not for GCC, so some slight math variances
 	// might crop up if we leave it alone.

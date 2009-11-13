@@ -823,7 +823,7 @@ static void R_DrawSky (visplane_t *pl)
  	if (pl->minx > pl->maxx)
 		return;
 
-	dc_iscale = skyiscale >> skystretch;
+	dc_iscale = skyiscale;
 
 	clearbuf (swall+pl->minx, pl->maxx-pl->minx+1, dc_iscale<<2);
 
@@ -864,7 +864,7 @@ static void R_DrawSky (visplane_t *pl)
 	}
 	else
 	{ // The texture does not tile nicely
-		frontyScale = DivScale16 (skyscale << skystretch, frontyScale);
+		frontyScale = DivScale16 (skyscale, frontyScale);
 		frontiScale = DivScale32 (1, frontyScale);
 		R_DrawSkyStriped (pl);
 	}
@@ -1328,9 +1328,9 @@ void R_DrawSkyPlane (visplane_t *pl)
 			skyflip = l->args[2] ? 0u : ~0u;
 
 			frontcyl = MAX(frontskytex->GetWidth(), frontskytex->xScale >> (16 - 10));
-			if (skystretch && frontskytex->GetScaledWidth() < 512)
+			if (skystretch)
 			{
-				frontcyl >>= 1;
+				skymid = Scale(skymid, frontskytex->GetScaledHeight(), SKYSTRETCH_HEIGHT);
 			}
 		}
 	}

@@ -30,10 +30,11 @@ extern fixed_t		sky1cyl,		sky2cyl;
 extern FTextureID	sky1texture,	sky2texture;
 extern double		sky1pos,		sky2pos;
 extern fixed_t	skytexturemid;
-extern int		skystretch;
 extern fixed_t	skyiscale;
 extern fixed_t	skyscale;
-extern fixed_t	skyheight;
+extern bool		skystretch;
+
+#define SKYSTRETCH_HEIGHT 228
 
 // Called whenever the sky changes.
 void R_InitSkyMap		();

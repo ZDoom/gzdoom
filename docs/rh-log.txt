@@ -1,4 +1,13 @@
 November 12, 2009
+- Improved sky stretching a bit: It now only stretches the sky as tall as it
+  needs to be: 228 pixels, not 256. It no longer stretches horizontally,
+  either.
+  
+  The reason it stretches to 228 and not 200 pixels is because Doom shifted
+  its sky texture down 28 pixels. By stretching to 228 pixels, we can keep
+  the sky tiled at the same height on the horizon. Skies 200 pixels tall
+  (or more) will continue to tile at the center of the screen when looking
+  directly ahead.
 - Cleaned up win32/i_system.cpp.
 - Put back the previous event-driven ticker, except now the timer isn't
   started until the first time it is needed.

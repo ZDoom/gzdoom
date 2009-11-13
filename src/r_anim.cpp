@@ -405,6 +405,17 @@ static void R_InitAnimDefs ()
 			{
 				P_ParseAnimatedDoor (sc);
 			}
+			else if (sc.Compare("skyoffset"))
+			{
+				sc.MustGetString ();
+				FTextureID picnum = TexMan.CheckForTexture (sc.String, FTexture::TEX_Wall, texflags);
+				sc.MustGetNumber();
+				if (picnum.Exists())
+				{
+					FTexture *tex = TexMan[picnum];
+					tex->SkyOffset = sc.Number;
+				}
+			}
 			else
 			{
 				sc.ScriptError (NULL);

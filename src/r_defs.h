@@ -606,6 +606,11 @@ struct sector_t
 		return lightlevel;
 	}
 
+	secplane_t &GetSecPlane(int pos)
+	{
+		return pos == floor? floorplane:ceilingplane;
+	}
+
 	bool PlaneMoving(int pos);
 
 

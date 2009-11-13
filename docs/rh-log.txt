@@ -1,3 +1,8 @@
+November 12, 2009
+- Cleaned up win32/i_system.cpp.
+- Put back the previous event-driven ticker, except now the timer isn't
+  started until the first time it is needed.
+
 November 11, 2009
 - Modified the event-driven ticks to use the same code for calculating the
   time as the polled timer so that the timer does not start running until the

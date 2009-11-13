@@ -1,25 +1,38 @@
-// Emacs style mode select	 -*- C++ -*- 
-//-----------------------------------------------------------------------------
-//
-// $Id:$
-//
-// Copyright (C) 1993-1996 by id Software, Inc.
-//
-// This source is available for distribution and/or modification
-// only under the terms of the DOOM Source Code License as
-// published by id Software. All rights reserved.
-//
-// The source is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
-// for more details.
-//
-// $Log:$
-//
-// DESCRIPTION:
-//
-//-----------------------------------------------------------------------------
+/*
+** i_system.cpp
+** Timers, pre-console output, IWAD selection, and misc system routines.
+**
+**---------------------------------------------------------------------------
+** Copyright 1998-2009 Randy Heit
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
 
+// HEADER FILES ------------------------------------------------------------
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -38,10 +51,6 @@
 #include <mmsystem.h>
 #include <richedit.h>
 #include <wincrypt.h>
-
-#ifdef _MSC_VER
-#pragma warning(disable:4244)
-#endif
 
 #define USE_WINDOWS_DWORD
 #include "hardware.h"
@@ -75,23 +84,51 @@
 #include "v_palette.h"
 #include "stats.h"
 
-EXTERN_CVAR (String, language)
+// MACROS ------------------------------------------------------------------
+
+// TYPES -------------------------------------------------------------------
+
+// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 extern void CheckCPUID(CPUInfo *cpu);
+extern void LayoutMainWindow(HWND hWnd, HWND pane);
+
+// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+
+// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+
+static void CalculateCPUSpeed();
+static void I_SelectTimer();
+
+static int I_GetTimePolled(bool saveMS);
+static int I_WaitForTicPolled(int prevtic);
+static void I_FreezeTimePolled(bool frozen);
+static int I_GetTimeEventDriven(bool saveMS);
+static int I_WaitForTicEvent(int prevtic);
+static void I_FreezeTimeEventDriven(bool frozen);
+static void CALLBACK TimerTicked(UINT id, UINT msg, DWORD_PTR user, DWORD_PTR dw1, DWORD_PTR dw2);
+
+// EXTERNAL DATA DECLARATIONS ----------------------------------------------
+
+EXTERN_CVAR(String, language);
+EXTERN_CVAR (Bool, queryiwad);
 
 extern HWND Window, ConWindow, GameTitleWindow;
 extern HANDLE StdOut;
 extern bool FancyStdOut;
 extern HINSTANCE g_hInst;
+extern FILE *Logfile;
+
+// PUBLIC DATA DEFINITIONS -------------------------------------------------
+
+CVAR (String, queryiwad_key, "shift", CVAR_GLOBALCONFIG|CVAR_ARCHIVE);
 
 double PerfToSec, PerfToMillisec;
-
 UINT TimerPeriod;
 UINT TimerEventID;
 UINT MillisecondsPerTic;
 HANDLE NewTicArrived;
 uint32 LanguageIDs[4];
-void CalculateCPUSpeed ();
 
 const IWADInfo *DoomStartupInfo;
 
@@ -100,42 +137,159 @@ int (*I_WaitForTic) (int);
 void (*I_FreezeTime) (bool frozen);
 
 os_t OSPlatform;
+bool gameisdead;
 
-void I_Tactile (int on, int off, int total)
+// PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+static ticcmd_t emptycmd;
+static bool HasExited;
+
+static DWORD basetime = 0;
+// These are for the polled timer.
+static DWORD TicStart;
+static DWORD TicNext;
+static int TicFrozen;
+
+// These are for the event-driven timer.
+static int tics;
+static DWORD ted_start, ted_next;
+
+static WadStuff *WadList;
+static int NumWads;
+static int DefaultWad;
+
+// CODE --------------------------------------------------------------------
+
+//==========================================================================
+//
+// I_Tactile
+//
+// Doom calls it when you take damage, so presumably it could be converted
+// to something compatible with force feedback.
+//
+//==========================================================================
+
+void I_Tactile(int on, int off, int total)
 {
   // UNUSED.
   on = off = total = 0;
 }
 
-ticcmd_t emptycmd;
-ticcmd_t *I_BaseTiccmd(void)
+//==========================================================================
+//
+// I_BaseTiccmd
+//
+// Returns an empty ticcmd. I have no idea why this should be system-
+// specific.
+//
+//==========================================================================
+
+ticcmd_t *I_BaseTiccmd()
 {
 	return &emptycmd;
 }
 
-static DWORD basetime = 0;
+// Stubs that select the timer to use and then call into it ----------------
 
-// [RH] Returns time in milliseconds
-unsigned int I_MSTime (void)
+//==========================================================================
+//
+// I_GetTimeSelect
+//
+//==========================================================================
+
+static int I_GetTimeSelect(bool saveMS)
 {
-	DWORD tm;
-
-	tm = timeGetTime();
-	if (!basetime)
-		basetime = tm;
-
-	return tm - basetime;
+	I_SelectTimer();
+	return I_GetTime(saveMS);
 }
 
-static DWORD TicStart;
-static DWORD TicNext;
-static int TicFrozen;
+//==========================================================================
+//
+// I_WaitForTicSelect
+//
+//==========================================================================
 
+static int I_WaitForTicSelect(int prevtic)
+{
+	I_SelectTimer();
+	return I_WaitForTic(prevtic);
+}
+
+//==========================================================================
 //
-// I_GetTime
-// returns time in 1/35th second tics
+// I_SelectTimer
 //
-int I_GetTimePolled (bool saveMS)
+// Tries to create a timer event for efficent CPU use when the FPS is
+// capped. Failing that, it sets things up for a polling timer instead.
+//
+//==========================================================================
+
+static void I_SelectTimer()
+{
+	assert(basetime == 0);
+
+	// Use a timer event if possible.
+	NewTicArrived = CreateEvent(NULL, FALSE, FALSE, NULL);
+	if (NewTicArrived)
+	{
+		UINT delay;
+		char *cmdDelay;
+
+		cmdDelay = Args->CheckValue("-timerdelay");
+		delay = 0;
+		if (cmdDelay != 0)
+		{
+			delay = atoi(cmdDelay);
+		}
+		if (delay == 0)
+		{
+			delay = 1000/TICRATE;
+		}
+		MillisecondsPerTic = delay;
+		TimerEventID = timeSetEvent(delay, 0, TimerTicked, 0, TIME_PERIODIC);
+	}
+	// Get the current time as the basetime.
+	basetime = timeGetTime();
+	// Set timer functions.
+	if (TimerEventID != 0)
+	{
+		I_GetTime = I_GetTimeEventDriven;
+		I_WaitForTic = I_WaitForTicEvent;
+		I_FreezeTime = I_FreezeTimeEventDriven;
+	}
+	else
+	{
+		I_GetTime = I_GetTimePolled;
+		I_WaitForTic = I_WaitForTicPolled;
+		I_FreezeTime = I_FreezeTimePolled;
+	}
+}
+
+//==========================================================================
+//
+// I_MSTime
+//
+// Returns the current time in milliseconds, where 0 is the first call
+// to I_GetTime or I_WaitForTic.
+//
+//==========================================================================
+
+unsigned int I_MSTime()
+{
+	assert(basetime != 0);
+	return timeGetTime() - basetime;
+}
+
+//==========================================================================
+//
+// I_GetTimePolled
+//
+// Returns the current time in tics. If saveMS is true, then calls to
+// I_GetTimeFrac() will use this tic as 0 and the next tic as 1.
+//
+//==========================================================================
+
+static int I_GetTimePolled(bool saveMS)
 {
 	DWORD tm;
 
@@ -146,8 +300,9 @@ int I_GetTimePolled (bool saveMS)
 
 	tm = timeGetTime();
 	if (basetime == 0)
+	{
 		basetime = tm;
-
+	}
 	if (saveMS)
 	{
 		TicStart = tm;
@@ -157,18 +312,35 @@ int I_GetTimePolled (bool saveMS)
 	return ((tm-basetime)*TICRATE)/1000;
 }
 
-int I_WaitForTicPolled (int prevtic)
+//==========================================================================
+//
+// I_WaitForTicPolled
+//
+// Busy waits until the current tic is greater than prevtic. Time must not
+// be frozen.
+//
+//==========================================================================
+
+static int I_WaitForTicPolled(int prevtic)
 {
 	int time;
 
 	assert(TicFrozen == 0);
 	while ((time = I_GetTimePolled(false)) <= prevtic)
-		;
+	{ }
 
 	return time;
 }
 
-void I_FreezeTimePolled (bool frozen)
+//==========================================================================
+//
+// I_FreezeTimePolled
+//
+// Freeze/unfreeze the timer.
+//
+//==========================================================================
+
+static void I_FreezeTimePolled(bool frozen)
 {
 	if (frozen)
 	{
@@ -185,26 +357,92 @@ void I_FreezeTimePolled (bool frozen)
 	}
 }
 
+//==========================================================================
+//
+// I_GetTimeEventDriven
+//
+// Returns the current tick counter. This is incremented asynchronously as
+// the timer event fires.
+//
+//==========================================================================
 
-int I_WaitForTicEvent (int prevtic)
+static int I_GetTimeEventDriven(bool saveMS)
 {
-	assert(!TicFrozen);
-
-	int tics = I_GetTimePolled(false);
-	while (prevtic >= tics)
+	if (saveMS)
 	{
-		WaitForSingleObject(NewTicArrived, 1000/TICRATE);
-		tics = I_GetTimePolled(false);
+		TicStart = ted_start;
+		TicNext = ted_next;
 	}
-
 	return tics;
 }
 
-// Returns the fractional amount of a tic passed since the most recent tic
-fixed_t I_GetTimeFrac (uint32 *ms)
+//==========================================================================
+//
+// I_WaitForTicEvent
+//
+// Waits on the timer event as long as the current tic is not later than
+// prevtic.
+//
+//==========================================================================
+
+static int I_WaitForTicEvent(int prevtic)
+{
+	assert(!TicFrozen);
+	while (prevtic >= tics)
+	{
+		WaitForSingleObject(NewTicArrived, 1000/TICRATE);
+	}
+	return tics;
+}
+
+//==========================================================================
+//
+// I_FreezeTimeEventDriven
+//
+// Freeze/unfreeze the ticker.
+//
+//==========================================================================
+
+static void I_FreezeTimeEventDriven(bool frozen)
+{
+	TicFrozen = frozen;
+}
+
+//==========================================================================
+//
+// TimerTicked
+//
+// Advance the tick count and signal the NewTicArrived event.
+//
+//==========================================================================
+
+static void CALLBACK TimerTicked(UINT id, UINT msg, DWORD_PTR user, DWORD_PTR dw1, DWORD_PTR dw2)
+{
+	if (!TicFrozen)
+	{
+		tics++;
+	}
+	ted_start = timeGetTime ();
+	ted_next = ted_start + MillisecondsPerTic;
+	SetEvent(NewTicArrived);
+}
+
+//==========================================================================
+//
+// I_GetTimeFrac
+//
+// Returns the fractional amount of a tic passed since the most recently
+// saved tic.
+//
+//==========================================================================
+
+fixed_t I_GetTimeFrac(uint32 *ms)
 {
 	DWORD now = timeGetTime();
-	if (ms) *ms = TicNext;
+	if (ms != NULL)
+	{
+		*ms = TicNext;
+	}
 	DWORD step = TicNext - TicStart;
 	if (step == 0)
 	{
@@ -217,15 +455,30 @@ fixed_t I_GetTimeFrac (uint32 *ms)
 	}
 }
 
-void I_WaitVBL (int count)
+//==========================================================================
+//
+// I_WaitVBL
+//
+// I_WaitVBL is never used to actually synchronize to the vertical blank.
+// Instead, it's used for delay purposes. Doom used a 70 Hz display mode,
+// so that's what we use to determine how long to wait for.
+//
+//==========================================================================
+
+void I_WaitVBL(int count)
 {
-	// I_WaitVBL is never used to actually synchronize to the
-	// vertical blank. Instead, it's used for delay purposes.
-	Sleep (1000 * count / 70);
+	Sleep(1000 * count / 70);
 }
 
-// [RH] Detect the OS the game is running under
-void I_DetectOS (void)
+//==========================================================================
+//
+// I_DetectOS
+//
+// Determine which version of Windows the game is running on.
+//
+//==========================================================================
+
+void I_DetectOS(void)
 {
 	OSVERSIONINFO info;
 	const char *osname;
@@ -303,19 +556,24 @@ void I_DetectOS (void)
 	}
 }
 
+//==========================================================================
 //
 // SubsetLanguageIDs
 //
-static void SubsetLanguageIDs (LCID id, LCTYPE type, int idx)
+// Helper function for SetLanguageIDs.
+//
+//==========================================================================
+
+static void SubsetLanguageIDs(LCID id, LCTYPE type, int idx)
 {
 	char buf[8];
 	LCID langid;
 	char *idp;
 
-	if (!GetLocaleInfo (id, type, buf, 8))
+	if (!GetLocaleInfo(id, type, buf, 8))
 		return;
-	langid = MAKELCID (strtoul(buf, NULL, 16), SORT_DEFAULT);
-	if (!GetLocaleInfo (langid, LOCALE_SABBREVLANGNAME, buf, 8))
+	langid = MAKELCID(strtoul(buf, NULL, 16), SORT_DEFAULT);
+	if (!GetLocaleInfo(langid, LOCALE_SABBREVLANGNAME, buf, 8))
 		return;
 	idp = (char *)(&LanguageIDs[idx]);
 	memset (idp, 0, 4);
@@ -325,20 +583,23 @@ static void SubsetLanguageIDs (LCID id, LCTYPE type, int idx)
 	idp[3] = 0;
 }
 
+//==========================================================================
 //
 // SetLanguageIDs
 //
-void SetLanguageIDs ()
+//==========================================================================
+
+void SetLanguageIDs()
 {
-	size_t langlen = strlen (language);
+	size_t langlen = strlen(language);
 
 	if (langlen < 2 || langlen > 3)
 	{
-		memset (LanguageIDs, 0, sizeof(LanguageIDs));
-		SubsetLanguageIDs (LOCALE_USER_DEFAULT, LOCALE_ILANGUAGE, 0);
-		SubsetLanguageIDs (LOCALE_USER_DEFAULT, LOCALE_IDEFAULTLANGUAGE, 1);
-		SubsetLanguageIDs (LOCALE_SYSTEM_DEFAULT, LOCALE_ILANGUAGE, 2);
-		SubsetLanguageIDs (LOCALE_SYSTEM_DEFAULT, LOCALE_IDEFAULTLANGUAGE, 3);
+		memset(LanguageIDs, 0, sizeof(LanguageIDs));
+		SubsetLanguageIDs(LOCALE_USER_DEFAULT, LOCALE_ILANGUAGE, 0);
+		SubsetLanguageIDs(LOCALE_USER_DEFAULT, LOCALE_IDEFAULTLANGUAGE, 1);
+		SubsetLanguageIDs(LOCALE_SYSTEM_DEFAULT, LOCALE_ILANGUAGE, 2);
+		SubsetLanguageIDs(LOCALE_SYSTEM_DEFAULT, LOCALE_IDEFAULTLANGUAGE, 3);
 	}
 	else
 	{
@@ -353,6 +614,16 @@ void SetLanguageIDs ()
 		LanguageIDs[3] = lang;
 	}
 }
+
+//==========================================================================
+//
+// CalculateCPUSpeed
+//
+// Make a decent guess at how much time elapses between TSC steps. This can
+// vary over runtime depending on power management settings, so should not
+// be used anywhere that truely accurate timing actually matters.
+//
+//==========================================================================
 
 void CalculateCPUSpeed()
 {
@@ -400,81 +671,60 @@ void CalculateCPUSpeed()
 	Printf ("CPU Speed: %.0f MHz\n", 0.001 / PerfToMillisec);
 }
 
+//==========================================================================
 //
 // I_Init
 //
+//==========================================================================
 
-void I_Init (void)
+void I_Init()
 {
 	CheckCPUID(&CPU);
 	CalculateCPUSpeed();
 	DumpCPUInfo(&CPU);
 
-	// Use a timer event if possible
-	NewTicArrived = CreateEvent (NULL, FALSE, FALSE, NULL);
-	if (NewTicArrived)
-	{
-		UINT delay;
-		char *cmdDelay;
-
-		cmdDelay = Args->CheckValue ("-timerdelay");
-		delay = 0;
-		if (cmdDelay != 0)
-		{
-			delay = atoi (cmdDelay);
-		}
-		if (delay == 0)
-		{
-			delay = 1000/TICRATE;
-		}
-		TimerEventID = timeSetEvent(delay, 0, (LPTIMECALLBACK)NewTicArrived, 0, TIME_PERIODIC | TIME_CALLBACK_EVENT_SET);
-		MillisecondsPerTic = delay;
-	}
-	if (TimerEventID != 0)
-	{
-		I_GetTime = I_GetTimePolled;
-		I_WaitForTic = I_WaitForTicEvent;
-		I_FreezeTime = I_FreezeTimePolled;
-	}
-	else
-	{	// If no timer event, busy-loop with timeGetTime
-		I_GetTime = I_GetTimePolled;
-		I_WaitForTic = I_WaitForTicPolled;
-		I_FreezeTime = I_FreezeTimePolled;
-	}
+	I_GetTime = I_GetTimeSelect;
+	I_WaitForTic = I_WaitForTicSelect;
 
 	atterm (I_ShutdownSound);
 	I_InitSound ();
 }
 
+//==========================================================================
 //
 // I_Quit
 //
-static int has_exited;
+//==========================================================================
 
-void I_Quit (void)
+void I_Quit()
 {
-	has_exited = 1;		/* Prevent infinitely recursive exits -- killough */
+	HasExited = true;		/* Prevent infinitely recursive exits -- killough */
 
-	if (TimerEventID)
-		timeKillEvent (TimerEventID);
-	if (NewTicArrived)
-		CloseHandle (NewTicArrived);
-
-	timeEndPeriod (TimerPeriod);
-
+	if (TimerEventID != 0)
+	{
+		timeKillEvent(TimerEventID);
+	}
+	if (NewTicArrived != NULL)
+	{
+		CloseHandle(NewTicArrived);
+	}
+	timeEndPeriod(TimerPeriod);
 	if (demorecording)
+	{
 		G_CheckDemoStatus();
+	}
 }
 
 
+//==========================================================================
 //
-// I_Error
+// I_FatalError
 //
-extern FILE *Logfile;
-bool gameisdead;
+// Throw an error that will end the game.
+//
+//==========================================================================
 
-void STACK_ARGS I_FatalError (const char *error, ...)
+void STACK_ARGS I_FatalError(const char *error, ...)
 {
 	static BOOL alreadyThrown = false;
 	gameisdead = true;
@@ -484,50 +734,72 @@ void STACK_ARGS I_FatalError (const char *error, ...)
 		alreadyThrown = true;
 		char errortext[MAX_ERRORTEXT];
 		va_list argptr;
-		va_start (argptr, error);
-		myvsnprintf (errortext, MAX_ERRORTEXT, error, argptr);
-		va_end (argptr);
+		va_start(argptr, error);
+		myvsnprintf(errortext, MAX_ERRORTEXT, error, argptr);
+		va_end(argptr);
 
 		// Record error to log (if logging)
 		if (Logfile)
 		{
-			fprintf (Logfile, "\n**** DIED WITH FATAL ERROR:\n%s\n", errortext);
-			fflush (Logfile);
+			fprintf(Logfile, "\n**** DIED WITH FATAL ERROR:\n%s\n", errortext);
+			fflush(Logfile);
 		}
 
-		throw CFatalError (errortext);
+		throw CFatalError(errortext);
 	}
 
-	if (!has_exited)	// If it hasn't exited yet, exit now -- killough
+	if (!HasExited)		// If it hasn't exited yet, exit now -- killough
 	{
-		has_exited = 1;	// Prevent infinitely recursive exits -- killough
+		HasExited = 1;	// Prevent infinitely recursive exits -- killough
 		exit(-1);
 	}
 }
 
-void STACK_ARGS I_Error (const char *error, ...)
+//==========================================================================
+//
+// I_Error
+//
+// Throw an error that will send us to the console if we are far enough
+// along in the startup process.
+//
+//==========================================================================
+
+void STACK_ARGS I_Error(const char *error, ...)
 {
 	va_list argptr;
 	char errortext[MAX_ERRORTEXT];
 
-	va_start (argptr, error);
-	myvsnprintf (errortext, MAX_ERRORTEXT, error, argptr);
-	va_end (argptr);
+	va_start(argptr, error);
+	myvsnprintf(errortext, MAX_ERRORTEXT, error, argptr);
+	va_end(argptr);
 
-	throw CRecoverableError (errortext);
+	throw CRecoverableError(errortext);
 }
 
-extern void LayoutMainWindow (HWND hWnd, HWND pane);
+//==========================================================================
+//
+// I_SetIWADInfo
+//
+//==========================================================================
 
-void I_SetIWADInfo (const IWADInfo *info)
+void I_SetIWADInfo(const IWADInfo *info)
 {
 	DoomStartupInfo = info;
 
 	// Make the startup banner show itself
-	LayoutMainWindow (Window, NULL);
+	LayoutMainWindow(Window, NULL);
 }
 
-void I_PrintStr (const char *cp)
+//==========================================================================
+//
+// I_PrintStr
+//
+// Send output to the list box shown during startup (and hidden during
+// gameplay).
+//
+//==========================================================================
+
+void I_PrintStr(const char *cp)
 {
 	if (ConWindow == NULL && StdOut == NULL)
 		return;
@@ -543,16 +815,16 @@ void I_PrintStr (const char *cp)
 	if (edit != NULL)
 	{
 		// Store the current selection and set it to the end so we can append text.
-		SendMessage (edit, EM_EXGETSEL, 0, (LPARAM)&selection);
-		endselection.cpMax = endselection.cpMin = GetWindowTextLength (edit);
-		SendMessage (edit, EM_EXSETSEL, 0, (LPARAM)&endselection);
+		SendMessage(edit, EM_EXGETSEL, 0, (LPARAM)&selection);
+		endselection.cpMax = endselection.cpMin = GetWindowTextLength(edit);
+		SendMessage(edit, EM_EXSETSEL, 0, (LPARAM)&endselection);
 
 		// GetWindowTextLength and EM_EXSETSEL can disagree on where the end of
 		// the text is. Find out what EM_EXSETSEL thought it was and use that later.
-		SendMessage (edit, EM_EXGETSEL, 0, (LPARAM)&endselection);
+		SendMessage(edit, EM_EXGETSEL, 0, (LPARAM)&endselection);
 
 		// Remember how many lines there were before we added text.
-		lines_before = SendMessage (edit, EM_GETLINECOUNT, 0, 0);
+		lines_before = (LONG)SendMessage(edit, EM_GETLINECOUNT, 0, 0);
 	}
 
 	while (*cp != 0)
@@ -563,7 +835,7 @@ void I_PrintStr (const char *cp)
 			buf[bpos] = 0;
 			if (edit != NULL)
 			{
-				SendMessage (edit, EM_REPLACESEL, FALSE, (LPARAM)buf);
+				SendMessage(edit, EM_REPLACESEL, FALSE, (LPARAM)buf);
 			}
 			if (StdOut != NULL)
 			{
@@ -579,13 +851,13 @@ void I_PrintStr (const char *cp)
 		else
 		{
 			const BYTE *color_id = (const BYTE *)cp + 1;
-			EColorRange range = V_ParseFontColor (color_id, CR_UNTRANSLATED, CR_YELLOW);
+			EColorRange range = V_ParseFontColor(color_id, CR_UNTRANSLATED, CR_YELLOW);
 			cp = (const char *)color_id;
 
 			if (range != CR_UNDEFINED)
 			{
 				// Change the color of future text added to the control.
-				PalEntry color = V_LogColorFromColorRange (range);
+				PalEntry color = V_LogColorFromColorRange(range);
 				if (StdOut != NULL && FancyStdOut)
 				{
 					// Unfortunately, we are pretty limited here: There are only
@@ -594,7 +866,7 @@ void I_PrintStr (const char *cp)
 					float h, s, v, r, g, b;
 					WORD attrib = 0;
 
-					RGBtoHSV(color.r / 255.0, color.g / 255.0, color.b / 255.0, &h, &s, &v);
+					RGBtoHSV(color.r / 255.f, color.g / 255.f, color.b / 255.f, &h, &s, &v);
 					if (s != 0)
 					{ // color
 						HSVtoRGB(&r, &g, &b, h, 1, 1);
@@ -614,13 +886,13 @@ void I_PrintStr (const char *cp)
 				if (edit != NULL)
 				{
 					// GDI uses BGR colors, but color is RGB, so swap the R and the B.
-					swap (color.r, color.b);
+					swap(color.r, color.b);
 					// Change the color.
 					format.cbSize = sizeof(format);
 					format.dwMask = CFM_COLOR;
 					format.dwEffects = 0;
 					format.crTextColor = color;
-					SendMessage (edit, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&format);
+					SendMessage(edit, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&format);
 				}
 			}
 		}
@@ -630,7 +902,7 @@ void I_PrintStr (const char *cp)
 		buf[bpos] = 0;
 		if (edit != NULL)
 		{
-			SendMessage (edit, EM_REPLACESEL, FALSE, (LPARAM)buf); 
+			SendMessage(edit, EM_REPLACESEL, FALSE, (LPARAM)buf); 
 		}
 		if (StdOut != NULL)
 		{
@@ -646,16 +918,16 @@ void I_PrintStr (const char *cp)
 		if (selection.cpMin == endselection.cpMin && selection.cpMax == endselection.cpMax)
 		{
 			selection.cpMax = selection.cpMin = GetWindowTextLength (edit);
-			lines_after = SendMessage (edit, EM_GETLINECOUNT, 0, 0);
+			lines_after = (LONG)SendMessage(edit, EM_GETLINECOUNT, 0, 0);
 			if (lines_after > lines_before)
 			{
-				SendMessage (edit, EM_LINESCROLL, 0, lines_after - lines_before);
+				SendMessage(edit, EM_LINESCROLL, 0, lines_after - lines_before);
 			}
 		}
 		// Restore the previous selection.
-		SendMessage (edit, EM_EXSETSEL, 0, (LPARAM)&selection);
+		SendMessage(edit, EM_EXSETSEL, 0, (LPARAM)&selection);
 		// Give the edit control a chance to redraw itself.
-		I_GetEvent ();
+		I_GetEvent();
 	}
 	if (StdOut != NULL && FancyStdOut)
 	{ // Set text back to gray, in case it was changed.
@@ -663,21 +935,24 @@ void I_PrintStr (const char *cp)
 	}
 }
 
-EXTERN_CVAR (Bool, queryiwad);
-CVAR (String, queryiwad_key, "shift", CVAR_GLOBALCONFIG|CVAR_ARCHIVE);
-static WadStuff *WadList;
-static int NumWads;
-static int DefaultWad;
+//==========================================================================
+//
+// SetQueryIWAD
+//
+// The user had the "Don't ask again" box checked when they closed the
+// IWAD selection dialog.
+//
+//==========================================================================
 
-static void SetQueryIWad (HWND dialog)
+static void SetQueryIWad(HWND dialog)
 {
-	HWND checkbox = GetDlgItem (dialog, IDC_DONTASKIWAD);
-	int state = SendMessage (checkbox, BM_GETCHECK, 0, 0);
+	HWND checkbox = GetDlgItem(dialog, IDC_DONTASKIWAD);
+	int state = (int)SendMessage(checkbox, BM_GETCHECK, 0, 0);
 	bool query = (state != BST_CHECKED);
 
 	if (!query && queryiwad)
 	{
-		MessageBox (dialog,
+		MessageBox(dialog,
 			"You have chosen not to show this dialog box in the future.\n"
 			"If you wish to see it again, hold down SHIFT while starting " GAMENAME ".",
 			"Don't ask me this again",
@@ -687,7 +962,15 @@ static void SetQueryIWad (HWND dialog)
 	queryiwad = query;
 }
 
-BOOL CALLBACK IWADBoxCallback (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+//==========================================================================
+//
+// IWADBoxCallback
+//
+// Dialog proc for the IWAD selector.
+//
+//==========================================================================
+
+BOOL CALLBACK IWADBoxCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	HWND ctrl;
 	int i;
@@ -700,32 +983,32 @@ BOOL CALLBACK IWADBoxCallback (HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 			TCHAR label[256];
 			FString newlabel;
 
-			GetWindowText (hDlg, label, countof(label));
-			newlabel.Format (GAMESIG " " DOTVERSIONSTR_NOREV ": %s", label);
-			SetWindowText (hDlg, newlabel.GetChars());
+			GetWindowText(hDlg, label, countof(label));
+			newlabel.Format(GAMESIG " " DOTVERSIONSTR_NOREV ": %s", label);
+			SetWindowText(hDlg, newlabel.GetChars());
 		}
 		// Populate the list with all the IWADs found
-		ctrl = GetDlgItem (hDlg, IDC_IWADLIST);
+		ctrl = GetDlgItem(hDlg, IDC_IWADLIST);
 		for (i = 0; i < NumWads; i++)
 		{
 			FString work;
-			const char *filepart = strrchr (WadList[i].Path, '/');
+			const char *filepart = strrchr(WadList[i].Path, '/');
 			if (filepart == NULL)
 				filepart = WadList[i].Path;
 			else
 				filepart++;
-			work.Format ("%s (%s)", IWADInfos[WadList[i].Type].Name, filepart);
-			SendMessage (ctrl, LB_ADDSTRING, 0, (LPARAM)work.GetChars());
-			SendMessage (ctrl, LB_SETITEMDATA, i, (LPARAM)i);
+			work.Format("%s (%s)", IWADInfos[WadList[i].Type].Name, filepart);
+			SendMessage(ctrl, LB_ADDSTRING, 0, (LPARAM)work.GetChars());
+			SendMessage(ctrl, LB_SETITEMDATA, i, (LPARAM)i);
 		}
-		SendMessage (ctrl, LB_SETCURSEL, DefaultWad, 0);
-		SetFocus (ctrl);
+		SendMessage(ctrl, LB_SETCURSEL, DefaultWad, 0);
+		SetFocus(ctrl);
 		// Set the state of the "Don't ask me again" checkbox
-		ctrl = GetDlgItem (hDlg, IDC_DONTASKIWAD);
-		SendMessage (ctrl, BM_SETCHECK, queryiwad ? BST_UNCHECKED : BST_CHECKED, 0);
+		ctrl = GetDlgItem(hDlg, IDC_DONTASKIWAD);
+		SendMessage(ctrl, BM_SETCHECK, queryiwad ? BST_UNCHECKED : BST_CHECKED, 0);
 		// Make sure the dialog is in front. If SHIFT was pressed to force it visible,
 		// then the other window will normally be on top.
-		SetForegroundWindow (hDlg);
+		SetForegroundWindow(hDlg);
 		break;
 
 	case WM_COMMAND:
@@ -736,24 +1019,32 @@ BOOL CALLBACK IWADBoxCallback (HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 		else if (LOWORD(wParam) == IDOK ||
 			(LOWORD(wParam) == IDC_IWADLIST && HIWORD(wParam) == LBN_DBLCLK))
 		{
-			SetQueryIWad (hDlg);
+			SetQueryIWad(hDlg);
 			ctrl = GetDlgItem (hDlg, IDC_IWADLIST);
-			EndDialog (hDlg, SendMessage (ctrl, LB_GETCURSEL, 0, 0));
+			EndDialog(hDlg, SendMessage (ctrl, LB_GETCURSEL, 0, 0));
 		}
 		break;
 	}
 	return FALSE;
 }
 
-int I_PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
+//==========================================================================
+//
+// I_PickIWad
+//
+// Open a dialog to pick the IWAD, if there is more than one found.
+//
+//==========================================================================
+
+int I_PickIWad(WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 {
 	int vkey;
 
-	if (stricmp (queryiwad_key, "shift") == 0)
+	if (stricmp(queryiwad_key, "shift") == 0)
 	{
 		vkey = VK_SHIFT;
 	}
-	else if (stricmp (queryiwad_key, "control") == 0 || stricmp (queryiwad_key, "ctrl") == 0)
+	else if (stricmp(queryiwad_key, "control") == 0 || stricmp (queryiwad_key, "ctrl") == 0)
 	{
 		vkey = VK_CONTROL;
 	}
@@ -767,13 +1058,21 @@ int I_PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 		NumWads = numwads;
 		DefaultWad = defaultiwad;
 
-		return DialogBox (g_hInst, MAKEINTRESOURCE(IDD_IWADDIALOG),
+		return (int)DialogBox(g_hInst, MAKEINTRESOURCE(IDD_IWADDIALOG),
 			(HWND)Window, (DLGPROC)IWADBoxCallback);
 	}
 	return defaultiwad;
 }
 
-bool I_WriteIniFailed ()
+//==========================================================================
+//
+// I_WriteIniFailed
+//
+// Display a message when the config failed to save.
+//
+//==========================================================================
+
+bool I_WriteIniFailed()
 {
 	char *lpMsgBuf;
 	FString errortext;
@@ -790,22 +1089,55 @@ bool I_WriteIniFailed ()
 	);
 	errortext.Format ("The config file %s could not be written:\n%s", GameConfig->GetPathName(), lpMsgBuf);
 	LocalFree (lpMsgBuf);
-	return MessageBox (Window, errortext.GetChars(), GAMENAME " configuration not saved", MB_ICONEXCLAMATION | MB_RETRYCANCEL) == IDRETRY;
+	return MessageBox(Window, errortext.GetChars(), GAMENAME " configuration not saved", MB_ICONEXCLAMATION | MB_RETRYCANCEL) == IDRETRY;
 }
 
-void *I_FindFirst (const char *filespec, findstate_t *fileinfo)
+//==========================================================================
+//
+// I_FindFirst
+//
+// Start a pattern matching sequence.
+//
+//==========================================================================
+
+void *I_FindFirst(const char *filespec, findstate_t *fileinfo)
 {
-	return FindFirstFileA (filespec, (LPWIN32_FIND_DATAA)fileinfo);
-}
-int I_FindNext (void *handle, findstate_t *fileinfo)
-{
-	return !FindNextFileA ((HANDLE)handle, (LPWIN32_FIND_DATAA)fileinfo);
+	return FindFirstFileA(filespec, (LPWIN32_FIND_DATAA)fileinfo);
 }
 
-int I_FindClose (void *handle)
+//==========================================================================
+//
+// I_FindNext
+//
+// Return the next file in a pattern matching sequence.
+//
+//==========================================================================
+
+int I_FindNext(void *handle, findstate_t *fileinfo)
 {
-	return FindClose ((HANDLE)handle);
+	return !FindNextFileA((HANDLE)handle, (LPWIN32_FIND_DATAA)fileinfo);
 }
+
+//==========================================================================
+//
+// I_FindClose
+//
+// Finish a pattern matching sequence.
+//
+//==========================================================================
+
+int I_FindClose(void *handle)
+{
+	return FindClose((HANDLE)handle);
+}
+
+//==========================================================================
+//
+// QueryPathKey
+//
+// Returns the value of a registry key into the output variable value.
+//
+//==========================================================================
 
 static bool QueryPathKey(HKEY key, const char *keypath, const char *valname, FString &value)
 {
@@ -833,6 +1165,15 @@ static bool QueryPathKey(HKEY key, const char *keypath, const char *valname, FSt
 	return value.IsNotEmpty();
 }
 
+//==========================================================================
+//
+// I_GetSteamPath
+//
+// Check the registry for the path to Steam, so that we can search for
+// IWADs that were bought with Steam.
+//
+//==========================================================================
+
 FString I_GetSteamPath()
 {
 	FString path;
@@ -849,7 +1190,14 @@ FString I_GetSteamPath()
 	return path;
 }
 
-// Return a random seed, preferably one with lots of entropy.
+//==========================================================================
+//
+// I_MakeRNGSeed
+//
+// Returns a 32-bit random seed, preferably one with lots of entropy.
+//
+//==========================================================================
+
 unsigned int I_MakeRNGSeed()
 {
 	unsigned int seed;

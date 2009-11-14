@@ -1,3 +1,12 @@
+November 13, 2009
+- More sky changes: Textures taller than 200 pixels but shorter than 241
+  are scaled to the height of a 200 pixel tall sky. Skies taller than 240
+  use the same scale as a 240 tall sky but are shifted down to make the
+  top of the texture align with the top of the screen when looking fully up.
+  Thus, by using a sky texture with a height of 240 or more pixels, the sky
+  will be drawn with square pixels instead of the vertically elongated ones
+  imposed by Doom's native 320x200 resolution.
+
 November 12, 2009
 - Improved sky stretching a bit: It now only stretches the sky as tall as it
   needs to be: 228 pixels, not 256. It no longer stretches horizontally,

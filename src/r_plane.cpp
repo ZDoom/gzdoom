@@ -866,6 +866,14 @@ static void R_DrawSky (visplane_t *pl)
 	{ // The texture does not tile nicely
 		frontyScale = DivScale16 (skyscale, frontyScale);
 		frontiScale = DivScale32 (1, frontyScale);
+		// Sodding crap. Fixed point sucks when you want precision.
+		// TODO (if I'm feeling adventurous): Rewrite the renderer to use floating point
+		// coordinates to keep as much precision as possible until the final
+		// rasterization stage so fudges like this aren't needed.
+		if (viewheight <= 600)
+		{
+			skymid -= FRACUNIT;
+		}
 		R_DrawSkyStriped (pl);
 	}
 }

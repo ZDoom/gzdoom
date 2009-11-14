@@ -82,27 +82,36 @@ void R_InitSkyMap ()
 		sky2texture = sky1texture;
 	}
 
-	// Skies between [128,200) are stretched to 200 pixels. Shorter skies do
-	// not stretch because it is assumed they are meant to tile, and taller
-	// skies do not stretch because they provide enough information for no
-	// repetition when looking all the way up.
+	// There are various combinations for sky rendering depending on how tall the sky is:
+	//        h <  128: Unstretched and tiled, centered on horizon
+	// 128 <= h <  200: Can possibly be stretched. When unstretched, the baseline is
+	//                  28 rows below the horizon so that the top of the texture
+	//                  aligns with the top of the screen when looking straight ahead.
+	//                  When stretched, it is scaled to 228 pixels with the baseline
+	//                  in the same location as an unstretched 128-tall sky, so the top
+	//					of the texture aligns with the top of the screen when looking
+	//                  fully up.
+	//        h == 200: Unstretched, baseline is on horizon, and top is at the top of
+	//                  the screen when looking fully up.
+	// 200 <  h <= 240: Squashed to consume the same height as a 200-pixel tall sky
+	//                  and aligned on the horizon.
+	//        h >  240: Same scale as a 240-tall sky, but the baseline is shifted down
+	//                  so that the top of the texture is at the top of the screen
+	//                  when looking fully up.
 	skyheight = skytex1->GetScaledHeight();
-	if (skyheight < 200)
+	skystretch = false;
+	skytexturemid = 0;
+	if (skyheight >= 128 && skyheight < 200)
 	{
 		skystretch = (r_stretchsky
 					  && skyheight >= 128
 					  && level.IsFreelookAllowed()
 					  && !(level.flags & LEVEL_FORCENOSKYSTRETCH)) ? 1 : 0;
-		// The sky is shifted down from center so that it is entirely visible
-		// when looking straight ahead.
 		skytexturemid = -28*FRACUNIT;
 	}
-	else
+	else if (skyheight > 240)
 	{
-		// The sky is directly centered so that it is entirely visible when
-		// looking fully up.
-		skytexturemid = 0;
-		skystretch = false;
+		skytexturemid = (240 - skyheight) << FRACBITS;
 	}
 
 	if (viewwidth != 0 && viewheight != 0)
@@ -115,7 +124,13 @@ void R_InitSkyMap ()
 		skyscale = Scale (skyscale, 2048, FieldOfView);
 	}
 
-	if (skystretch)
+	if (skyheight > 200)
+	{
+		int sheight = MIN(skyheight, 240);
+		skyscale = Scale(skyscale, 200, sheight);
+		skyiscale = Scale(skyiscale, sheight, 200);
+	}
+	else if (skystretch)
 	{
 		skyscale = Scale(skyscale, SKYSTRETCH_HEIGHT, skyheight);
 		skyiscale = Scale(skyiscale, skyheight, SKYSTRETCH_HEIGHT);

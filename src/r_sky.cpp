@@ -64,6 +64,10 @@ extern fixed_t freelookviewheight;
 // Called whenever the view size changes.
 //
 //==========================================================================
+CUSTOM_CVAR(Bool, r_scaletallskies, true, CVAR_ARCHIVE)
+{
+	R_InitSkyMap();
+}
 
 void R_InitSkyMap ()
 {
@@ -109,9 +113,13 @@ void R_InitSkyMap ()
 					  && !(level.flags & LEVEL_FORCENOSKYSTRETCH)) ? 1 : 0;
 		skytexturemid = -28*FRACUNIT;
 	}
-	else if (skyheight > 240)
+	else if (r_scaletallskies && skyheight > 240)
 	{
 		skytexturemid = (240 - skyheight) << FRACBITS;
+	}
+	else if (!r_scaletallskies && skyheight > 200)
+	{
+		skytexturemid = (200 - skyheight) << FRACBITS;
 	}
 
 	if (viewwidth != 0 && viewheight != 0)
@@ -124,13 +132,13 @@ void R_InitSkyMap ()
 		skyscale = Scale (skyscale, 2048, FieldOfView);
 	}
 
-	if (skyheight > 200)
+	if (r_scaletallskies && skyheight > 200)
 	{
 		int sheight = MIN(skyheight, 240);
 		skyscale = Scale(skyscale, 200, sheight);
 		skyiscale = Scale(skyiscale, sheight, 200);
 	}
-	else if (skystretch)
+	else if (skyheight < 200 && skystretch)
 	{
 		skyscale = Scale(skyscale, SKYSTRETCH_HEIGHT, skyheight);
 		skyiscale = Scale(skyiscale, skyheight, SKYSTRETCH_HEIGHT);

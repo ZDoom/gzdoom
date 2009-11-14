@@ -1,3 +1,8 @@
+November 14, 2009  (Changes by Graf Zahl)
+- added a r_scaletallskies CVAR so that sky positioning can be checked
+  more easily.
+- fixed: Skies with a height of exactly 200 pixels should not be stretched.
+  
 November 13, 2009
 - More sky changes: Textures taller than 200 pixels but shorter than 241
   are scaled to the height of a 200 pixel tall sky. Skies taller than 240

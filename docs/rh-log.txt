@@ -1,4 +1,5 @@
 November 14, 2009  (Changes by Graf Zahl)
+- Added skillinfo fix by Gez.
 - added a r_scaletallskies CVAR so that sky positioning can be checked
   more easily.
 - fixed: Skies with a height of exactly 200 pixels should not be stretched.

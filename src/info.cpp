@@ -220,7 +220,7 @@ FActorInfo *FActorInfo::GetReplacee (bool lookskill)
 	
 	if (lookskill && AllSkills.Size() > (unsigned)gameskill)
 	{
-		FName skillrepname = AllSkills[gameskill].GetReplacedBy(this->Class->TypeName);
+		skillrepname = AllSkills[gameskill].GetReplacedBy(this->Class->TypeName);
 		if (skillrepname != NAME_None && PClass::FindClass(skillrepname) == NULL)
 		{
 			Printf("Warning: incorrect actor name in definition of skill %s: \n"

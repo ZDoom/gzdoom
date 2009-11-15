@@ -491,6 +491,16 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, double x, double y, DWORD tag
 			parms->virtHeight = va_arg(tags, double);
 			break;
 
+		case DTA_Fullscreen:
+			boolval = va_arg(tags, INTBOOL);
+			if (boolval)
+			{
+				parms->x = parms->y = 0;
+				parms->virtWidth = img->GetScaledWidthDouble();
+				parms->virtHeight = img->GetScaledHeightDouble();
+			}
+			break;
+
 		case DTA_Alpha:
 			parms->alpha = MIN<fixed_t>(FRACUNIT, va_arg (tags, fixed_t));
 			break;

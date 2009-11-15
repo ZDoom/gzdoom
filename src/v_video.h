@@ -103,6 +103,7 @@ enum
 	DTA_BilinearFilter,	// bool: apply bilinear filtering to the image
 	DTA_SpecialColormap,// pointer to FSpecialColormapParameters (likely to be forever hardware-only)
 	DTA_ColormapStyle,	// pointer to FColormapStyle (hardware-only)
+	DTA_Fullscreen,		// Draw image fullscreen (same as DTA_VirtualWidth/Height with graphics size.)
 
 	// floating point duplicates of some of the above:
 	DTA_DestWidthF,

@@ -595,8 +595,8 @@ void WI_updateAnimatedBack()
 void WI_drawBackground()
 {
 	unsigned int i;
-	int animwidth=320;		// For a flat fill or clear background scale animations to 320x200
-	int animheight=200;
+	double animwidth=320;		// For a flat fill or clear background scale animations to 320x200
+	double animheight=200;
 
 	if (background)
 	{
@@ -606,11 +606,10 @@ void WI_drawBackground()
 			// scale all animations below to fit the size of the base pic
 			// The base pic is always scaled to fit the screen so this allows
 			// placing the animations precisely where they belong on the base pic
-			animwidth = background->GetWidth();
-			animheight = background->GetHeight();
+			animwidth = background->GetScaledWidth();
+			animheight = background->GetScaledHeight();
 			screen->FillBorder (NULL);
-			screen->DrawTexture(background, 0, 0, DTA_VirtualWidth, animwidth,
-				DTA_VirtualHeight, animheight, TAG_DONE);
+			screen->DrawTexture(background, 0, 0, DTA_Fullscreen, true, TAG_DONE);
 		}
 		else 
 		{
@@ -666,7 +665,7 @@ void WI_drawBackground()
 		}
 		if (a->ctr >= 0)
 			screen->DrawTexture(a->p[a->ctr], a->loc.x, a->loc.y, 
-								DTA_VirtualWidth, animwidth, DTA_VirtualHeight, animheight, TAG_DONE);
+								DTA_VirtualWidthF, animwidth, DTA_VirtualHeightF, animheight, TAG_DONE);
 	}
 }
 

@@ -809,8 +809,8 @@ void F_DemonScroll ()
 	int yval;
 	FTexture *final1 = TexMan(tex1);
 	FTexture *final2 = TexMan(tex2);
-	int fwidth = final1->GetWidth();
-	int fheight = final1->GetHeight();
+	int fwidth = final1->GetScaledWidth();
+	int fheight = final1->GetScaledHeight();
 
 	if (FinaleCount < 70)
 	{
@@ -884,10 +884,7 @@ void F_DrawUnderwater(void)
 		// intentional fall-through
 	case 2:
 		pic = TexMan("E2END");
-		screen->DrawTexture (pic, 0, 0,
-			DTA_VirtualWidth, pic->GetWidth(),
-			DTA_VirtualHeight, pic->GetHeight(),
-			TAG_DONE);
+		screen->DrawTexture (pic, 0, 0, DTA_Fullscreen, true, TAG_DONE);
 		screen->FillBorder (NULL);
 		paused = false;
 		menuactive = MENU_Off;
@@ -907,10 +904,7 @@ void F_DrawUnderwater(void)
 		screen->UpdatePalette ();
 
 		pic = TexMan("TITLE");
-		screen->DrawTexture (pic, 0, 0,
-			DTA_VirtualWidth, pic->GetWidth(),
-			DTA_VirtualHeight, pic->GetHeight(),
-			TAG_DONE);
+		screen->DrawTexture (pic, 0, 0, DTA_Fullscreen, true, TAG_DONE);
 		screen->FillBorder (NULL);
 		NoWipe = 0;
 		break;
@@ -960,8 +954,8 @@ void F_BunnyScroll (void)
 	V_MarkRect (0, 0, SCREENWIDTH, SCREENHEIGHT);
 
 	tex = TexMan(tex1);
-	fwidth = tex->GetWidth();
-	fheight = tex->GetHeight();
+	fwidth = tex->GetScaledWidth();
+	fheight = tex->GetScaledHeight();
 
 	scrolled = clamp (((signed)FinaleCount-230)*fwidth/640, 0, fwidth);
 
@@ -1315,25 +1309,24 @@ void F_Drawer (void)
 	if (picname != NULL)
 	{
 		FTexture *pic = TexMan[picname];
-		screen->DrawTexture (pic, 0, 0,
-			DTA_VirtualWidth, pic->GetWidth(),
-			DTA_VirtualHeight, pic->GetHeight(),
-			TAG_DONE);
+		screen->DrawTexture (pic, 0, 0, DTA_Fullscreen, true, TAG_DONE);
 		screen->FillBorder (NULL);
 		if (FinaleStage >= 14)
 		{ // Chess pic, draw the correct character graphic
+			double w = pic->GetScaledWidthDouble();
+			double h = pic->GetScaledHeightDouble();
 			if (multiplayer)
 			{
 				screen->DrawTexture (TexMan["CHESSALL"], 20, 0,
-					DTA_VirtualWidth, pic->GetWidth(),
-					DTA_VirtualHeight, pic->GetHeight(), TAG_DONE);
+					DTA_VirtualWidth, w,
+					DTA_VirtualHeight, h, TAG_DONE);
 			}
 			else if (players[consoleplayer].CurrentPlayerClass > 0)
 			{
 				picname = players[consoleplayer].CurrentPlayerClass == 1 ? "CHESSC" : "CHESSM";
 				screen->DrawTexture (TexMan[picname], 60, 0,
-					DTA_VirtualWidth, pic->GetWidth(),
-					DTA_VirtualHeight, pic->GetHeight(), TAG_DONE);
+					DTA_VirtualWidth, w,
+					DTA_VirtualHeight, h, TAG_DONE);
 			}
 		}
 	}

@@ -953,8 +953,7 @@ void D_PageDrawer (void)
 	if (Page != NULL)
 	{
 		screen->DrawTexture (Page, 0, 0,
-			DTA_VirtualWidth, Page->GetWidth(),
-			DTA_VirtualHeight, Page->GetHeight(),
+			DTA_Fullscreen, true,
 			DTA_Masked, false,
 			DTA_BilinearFilter, true,
 			TAG_DONE);

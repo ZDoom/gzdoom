@@ -1,4 +1,7 @@
 November 15, 2009  (Changes by Graf Zahl)
+- fixed: fullscreen images with texture scaling used the unscaled size for
+  positioning. To avoid future problems with them I added a new DTA_Fullscreen
+  option for DrawTexture.
 - fixed: The sky baseline position needs to take texture scaling into account.
 
 November 14, 2009

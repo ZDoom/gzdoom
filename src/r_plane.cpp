@@ -1313,7 +1313,7 @@ void R_DrawSkyPlane (visplane_t *pl)
 			}
 
 			frontskytex = TexMan(s->GetTexture(pos));
-			if (frontskytex->UseType == FTexture::TEX_Null)
+			if (frontskytex == NULL || frontskytex->UseType == FTexture::TEX_Null)
 			{ // [RH] The blank texture: Use normal sky instead.
 				goto sky1;
 			}

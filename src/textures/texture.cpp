@@ -144,7 +144,7 @@ FTexture::FTexture (const char *name, int lumpnum)
   WidthBits(0), HeightBits(0), xScale(FRACUNIT), yScale(FRACUNIT), SourceLump(lumpnum),
   UseType(TEX_Any), bNoDecals(false), bNoRemap0(false), bWorldPanning(false),
   bMasked(true), bAlphaTexture(false), bHasCanvas(false), bWarped(0), bComplex(false),
-  Rotations(0xFFFF), Width(0), Height(0), WidthMask(0), Native(NULL)
+  Rotations(0xFFFF), SkyOffset(0), Width(0), Height(0), WidthMask(0), Native(NULL)
 {
 	id.SetInvalid();
 	if (name != NULL)

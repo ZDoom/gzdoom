@@ -110,6 +110,7 @@ void R_InitSkyMap ()
 	{
 		skytexturemid = (200 - skyheight) << FRACBITS;
 	}
+	skytexturemid = FixedMul(skytexturemid, skytex1->yScale);
 
 	if (viewwidth != 0 && viewheight != 0)
 	{

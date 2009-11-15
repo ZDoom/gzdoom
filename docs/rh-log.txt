@@ -1,3 +1,6 @@
+November 15, 2009  (Changes by Graf Zahl)
+- fixed: The sky baseline position needs to take texture scaling into account.
+
 November 14, 2009
 - Do not squash skies taller than 200 into square pixels.
 

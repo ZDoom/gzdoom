@@ -64,10 +64,6 @@ extern fixed_t freelookviewheight;
 // Called whenever the view size changes.
 //
 //==========================================================================
-CUSTOM_CVAR(Bool, r_scaletallskies, true, CVAR_ARCHIVE)
-{
-	R_InitSkyMap();
-}
 
 void R_InitSkyMap ()
 {
@@ -97,11 +93,8 @@ void R_InitSkyMap ()
 	//                  fully up.
 	//        h == 200: Unstretched, baseline is on horizon, and top is at the top of
 	//                  the screen when looking fully up.
-	// 200 <  h <= 240: Squashed to consume the same height as a 200-pixel tall sky
-	//                  and aligned on the horizon.
-	//        h >  240: Same scale as a 240-tall sky, but the baseline is shifted down
-	//                  so that the top of the texture is at the top of the screen
-	//                  when looking fully up.
+	//        h >  200: Unstretched, but the baseline is shifted down so that the top
+	//                  of the texture is at the top of the screen when looking fully up.
 	skyheight = skytex1->GetScaledHeight();
 	skystretch = false;
 	skytexturemid = 0;
@@ -113,11 +106,7 @@ void R_InitSkyMap ()
 					  && !(level.flags & LEVEL_FORCENOSKYSTRETCH)) ? 1 : 0;
 		skytexturemid = -28*FRACUNIT;
 	}
-	else if (r_scaletallskies && skyheight > 240)
-	{
-		skytexturemid = (240 - skyheight) << FRACBITS;
-	}
-	else if (!r_scaletallskies && skyheight > 200)
+	else if (skyheight > 200)
 	{
 		skytexturemid = (200 - skyheight) << FRACBITS;
 	}
@@ -132,13 +121,7 @@ void R_InitSkyMap ()
 		skyscale = Scale (skyscale, 2048, FieldOfView);
 	}
 
-	if (r_scaletallskies && skyheight > 200)
-	{
-		int sheight = MIN(skyheight, 240);
-		skyscale = Scale(skyscale, 200, sheight);
-		skyiscale = Scale(skyiscale, sheight, 200);
-	}
-	else if (skyheight < 200 && skystretch)
+	if (skystretch)
 	{
 		skyscale = Scale(skyscale, SKYSTRETCH_HEIGHT, skyheight);
 		skyiscale = Scale(skyiscale, skyheight, SKYSTRETCH_HEIGHT);

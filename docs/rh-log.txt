@@ -1,4 +1,7 @@
 November 17, 2009  (Changes by Graf Zahl)
+- fixed: R_PointToAngle could overflow with very long vectors passed to 
+  it. This caused rendering bugs on some maps. (Interestingly the only
+  other port having a safeguard for this in place was PrBoom.)
 - reverted the change that makes 0-damage projectiles call P_DamageMobj.
   Both Hexen and Heretic depend on such projectiles not doing it as do many
   mods that create snow/rain effects plus any terrain splash mod.

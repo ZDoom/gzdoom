@@ -1091,7 +1091,7 @@ bool PIT_CheckThing (AActor *thing, FCheckPosition &tm)
 		}
 		// Do damage
 		damage = tm.thing->GetMissileDamage ((tm.thing->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1);
-		if (damage >= 0)
+		if ((damage > 0) || (tm.thing->flags6 & MF6_FORCEPAIN)) 
 		{
 			P_DamageMobj (thing, tm.thing, tm.thing->target, damage, tm.thing->DamageType);
 			if (damage > 0)

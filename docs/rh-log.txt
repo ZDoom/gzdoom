@@ -1,3 +1,8 @@
+November 17, 2009  (Changes by Graf Zahl)
+- reverted the change that makes 0-damage projectiles call P_DamageMobj.
+  Both Hexen and Heretic depend on such projectiles not doing it as do many
+  mods that create snow/rain effects plus any terrain splash mod.
+
 November 15, 2009  (Changes by Graf Zahl)
 - fixed: fullscreen images with texture scaling used the unscaled size for
   positioning. To avoid future problems with them I added a new DTA_Fullscreen

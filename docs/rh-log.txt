@@ -1,4 +1,6 @@
 November 17, 2009  (Changes by Graf Zahl)
+- fixed: P_NowayTraverse was called with a trace distance of 128 instead of
+  the 64 that should have been used.
 - fixed: R_PointToAngle could overflow with very long vectors passed to 
   it. This caused rendering bugs on some maps. (Interestingly the only
   other port having a safeguard for this in place was PrBoom.)

@@ -1650,6 +1650,10 @@ FISoundChannel *FMODSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener *
 		}
 		if (!HandleChannelDelay(chan, reuse_chan, flags & (SNDF_ABSTIME | SNDF_LOOP), freq))
 		{
+			// FMOD seems to get confused if you stop a channel right after
+			// starting it, so hopefully this function will never fail.
+			// (Presumably you need an update between them, but I haven't
+			// tested this hypothesis.)
 			chan->stop();
 			return NULL;
 		}
@@ -1672,6 +1676,19 @@ FISoundChannel *FMODSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener *
 	GRolloff = NULL;
 	//DPrintf ("Sound %s failed to play: %d\n", sfx->name.GetChars(), result);
 	return 0;
+}
+
+//==========================================================================
+//
+// FMODSoundRenderer :: MarkStartTime
+//
+// Marks a channel's start time without actually playing it.
+//
+//==========================================================================
+
+void FMODSoundRenderer::MarkStartTime(FISoundChannel *chan)
+{
+	Sys->getDSPClock(&chan->StartTime.Hi, &chan->StartTime.Lo);
 }
 
 //==========================================================================
@@ -1704,11 +1721,26 @@ bool FMODSoundRenderer::HandleChannelDelay(FMOD::Channel *chan, FISoundChannel *
 			}
 			reuse_chan->StartTime.AsOne = QWORD(nowtime.AsOne - seekpos * OutputRate / freq);
 		}
-		else
+		else if (reuse_chan->StartTime.AsOne != 0)
 		{
 			QWORD difftime = nowtime.AsOne - reuse_chan->StartTime.AsOne;
 			if (difftime > 0)
 			{
+				// Clamp the position of looping sounds to be within the sound.
+				// If we try to start it several minutes past its normal end,
+				// FMOD doesn't like that.
+				if (flags & SNDF_LOOP)
+				{
+					FMOD::Sound *sound;
+					if (FMOD_OK == chan->getCurrentSound(&sound))
+					{
+						unsigned int len;
+						if (FMOD_OK == sound->getLength(&len, FMOD_TIMEUNIT_MS))
+						{
+							difftime %= len;
+						}
+					}
+				}
 				return chan->setPosition((unsigned int)(difftime / OutputRate), FMOD_TIMEUNIT_MS) == FMOD_OK;
 			}
 		}

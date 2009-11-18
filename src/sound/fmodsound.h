@@ -33,6 +33,9 @@ public:
 	// Stops a sound channel.
 	void StopChannel (FISoundChannel *chan);
 
+	// Marks a channel's start time without actually playing it.
+	void MarkStartTime (FISoundChannel *chan);
+
 	// Returns position of sound on this channel, in samples.
 	unsigned int GetPosition(FISoundChannel *chan);
 

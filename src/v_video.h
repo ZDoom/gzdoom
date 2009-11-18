@@ -232,7 +232,7 @@ public:
 		uint32 fillcolor;
 		FRemapTable *remap;
 		const BYTE *translation;
-		DWORD colorOverlay;
+		uint32 colorOverlay;
 		INTBOOL alphaChannel;
 		INTBOOL flipX;
 		fixed_t shadowAlpha;
@@ -404,7 +404,7 @@ public:
 	virtual bool WipeDo(int ticks);
 	virtual void WipeCleanup();
 
-	DWORD GetLastFPS() const { return LastCount; }
+	uint32 GetLastFPS() const { return LastCount; }
 
 #ifdef _WIN32
 	virtual void PaletteChanged () = 0;
@@ -418,7 +418,7 @@ protected:
 	DFrameBuffer () {}
 
 private:
-	DWORD LastMS, LastSec, FrameCount, LastCount, LastTic;
+	uint32 LastMS, LastSec, FrameCount, LastCount, LastTic;
 };
 
 

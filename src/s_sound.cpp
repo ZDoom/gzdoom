@@ -1053,6 +1053,7 @@ static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyO
 	if (chan == NULL && (chanflags & CHAN_LOOP))
 	{
 		chan = (FSoundChan*)S_GetChannel(NULL);
+		GSnd->MarkStartTime(chan);
 		chanflags |= CHAN_EVICTED;
 	}
 	if (attenuation > 0)

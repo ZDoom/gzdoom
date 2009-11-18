@@ -1,3 +1,15 @@
+November 17, 2009
+- Fixed two bugs in FMODSoundRenderer::HandleChannelDelay():
+  * Looping sounds that have been playing for a very long time, were evicted,
+    and then were restarted need to have their positions clamped to lie
+    within the bounds of the sounds. If we try to set a start position very
+    far beyond the end, it will overflow inside FMOD and not work.
+  * A start time of 0 is not actually valid and means the sound was never
+    assigned a start time.
+- The latter bug also reveals a problem with starting looped sounds evicted:
+  They need to be assigned a start time so if they should have the opportunity
+  to start later, they will be properly synchronized.
+
 November 17, 2009  (Changes by Graf Zahl)
 - fixed: P_NowayTraverse was called with a trace distance of 128 instead of
   the 64 that should have been used.

@@ -159,7 +159,7 @@ public:
 		return NULL;
 	}
 
-	// Starts a sound. (No, not really.)
+	// Starts a sound.
 	FISoundChannel *StartSound (SoundHandle sfx, float vol, int pitch, int chanflags, FISoundChannel *reuse_chan)
 	{
 		return NULL;
@@ -167,6 +167,11 @@ public:
 	FISoundChannel *StartSound3D (SoundHandle sfx, SoundListener *listener, float vol, FRolloffInfo *rolloff, float distscale, int pitch, int priority, const FVector3 &pos, const FVector3 &vel, int channum, int chanflags, FISoundChannel *reuse_chan)
 	{
 		return NULL;
+	}
+
+	// Marks a channel's start time without actually playing it.
+	void MarkStartTime (FISoundChannel *chan)
+	{
 	}
 
 	// Returns position of sound on this channel, in samples.

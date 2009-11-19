@@ -328,7 +328,7 @@ angle_t R_PointToAngle2 (fixed_t x1, fixed_t y1, fixed_t x, fixed_t y)
 		// we have to use the slower but more precise floating point atan2 function here.
 		// (use quickertoint to speed this up because the CRT's conversion is rather slow and
 		//  this is used in time critical code.)
-		return quickertoint((float)(atan2f(float(y-viewy), float(x-viewx)) * (ANGLE_180/M_PI)));
+		return quickertoint((float)(atan2f(float(y), float(x)) * (ANGLE_180/M_PI)));
 	}
 }
 

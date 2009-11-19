@@ -3,7 +3,7 @@
 ** Code to let ZDoom use Direct3D 9 as a simple framebuffer
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2008 Randy Heit
+** Copyright 1998-2009 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -96,6 +96,9 @@ struct D3DFB::PackedTexture
 
 	// Texture coordinates for this image
 	float Left, Top, Right, Bottom;
+
+	// Texture has extra space on the border?
+	bool Padded;
 };
 
 struct D3DFB::PackingTexture
@@ -1830,9 +1833,12 @@ D3DFB::PackedTexture *D3DFB::AllocPackedTexture(int w, int h, bool wrapping, D3D
 		bestpack = new PackingTexture(this, w, h, format);
 		bestpack->OneUse = true;
 		bestbox = bestpack->GetBestFit(w, h, area);
+		bestbox->Padded = false;
 	}
 	else
 	{ // Try to find space in an existing packing texture.
+		w += 2; // Add padding
+		h += 2;
 		int bestarea = INT_MAX;
 		int bestareaever = w * h;
 		bestpack = NULL;
@@ -1861,6 +1867,7 @@ D3DFB::PackedTexture *D3DFB::AllocPackedTexture(int w, int h, bool wrapping, D3D
 			bestpack = new PackingTexture(this, 256, 256, format);
 			bestbox = bestpack->GetBestFit(w, h, bestarea);
 		}
+		bestbox->Padded = true;
 	}
 	bestpack->AllocateImage(bestbox, w, h);
 	return bestbox;
@@ -1990,10 +1997,10 @@ void D3DFB::PackingTexture::AllocateImage(D3DFB::PackedTexture *box, int w, int 
 	box->Area.right = box->Area.left + w;
 	box->Area.bottom = box->Area.top + h;
 
-	box->Left = float(box->Area.left) / Width;
-	box->Right = float(box->Area.right) / Width;
-	box->Top = float(box->Area.top) / Height;
-	box->Bottom = float(box->Area.bottom) / Height;
+	box->Left = float(box->Area.left + box->Padded) / Width;
+	box->Right = float(box->Area.right - box->Padded) / Width;
+	box->Top = float(box->Area.top + box->Padded) / Height;
+	box->Bottom = float(box->Area.bottom - box->Padded) / Height;
 
 	// Remove it from the empty list.
 	*(box->Prev) = box->Next;
@@ -2012,7 +2019,6 @@ void D3DFB::PackingTexture::AllocateImage(D3DFB::PackedTexture *box, int w, int 
 	box->Prev = &UsedList;
 
 	// If we didn't use the whole box, split the remainder into the empty list.
-
 	if (box->Area.bottom + 7 < start.bottom && box->Area.right + 7 < start.right)
 	{
 		// Split like this:
@@ -2236,6 +2242,7 @@ bool D3DTex::CheckWrapping(bool wrapping)
 	// If it needs to wrap, then it can't be packed inside another texture.
 	return Box->Owner->OneUse;
 }
+
 //==========================================================================
 //
 // D3DTex :: Create
@@ -2280,6 +2287,7 @@ bool D3DTex::Update()
 	D3DSURFACE_DESC desc;
 	D3DLOCKED_RECT lrect;
 	RECT rect;
+	BYTE *dest;
 
 	assert(Box != NULL);
 	assert(Box->Owner != NULL);
@@ -2295,7 +2303,45 @@ bool D3DTex::Update()
 	{
 		return false;
 	}
-	GameTex->FillBuffer((BYTE *)lrect.pBits, lrect.Pitch, GameTex->GetHeight(), ToTexFmt(desc.Format));
+	dest = (BYTE *)lrect.pBits;
+	if (Box->Padded)
+	{
+		dest += lrect.Pitch + (desc.Format == D3DFMT_L8 ? 1 : 4);
+	}
+	GameTex->FillBuffer(dest, lrect.Pitch, GameTex->GetHeight(), ToTexFmt(desc.Format));
+	if (Box->Padded)
+	{
+		// Clear top padding row.
+		dest = (BYTE *)lrect.pBits;
+		int numbytes = GameTex->GetWidth() + 2;
+		if (desc.Format != D3DFMT_L8)
+		{
+			numbytes <<= 2;
+		}
+		memset(dest, 0, numbytes);
+		dest += lrect.Pitch;
+		// Clear left and right padding columns.
+		if (desc.Format == D3DFMT_L8)
+		{
+			for (int y = Box->Area.bottom - Box->Area.top - 2; y > 0; --y)
+			{
+				dest[0] = 0;
+				dest[numbytes-1] = 0;
+				dest += lrect.Pitch;
+			}
+		}
+		else
+		{
+			for (int y = Box->Area.bottom - Box->Area.top - 2; y > 0; --y)
+			{
+				*(DWORD *)dest = 0;
+				*(DWORD *)(dest + numbytes - 4) = 0;
+				dest += lrect.Pitch;
+			}
+		}
+		// Clear bottom padding row.
+		memset(dest, 0, numbytes);
+	}
 	Box->Owner->Tex->UnlockRect(0);
 	return true;
 }

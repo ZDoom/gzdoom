@@ -1,3 +1,7 @@
+November 18, 2009
+- Added padding around packed textures to compensate for apparent NVidia
+  texture coordinate imprecision.
+
 November 17, 2009
 - Fixed two bugs in FMODSoundRenderer::HandleChannelDelay():
   * Looping sounds that have been playing for a very long time, were evicted,

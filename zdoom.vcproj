@@ -1594,6 +1594,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\xs_Float.h"
+				>
+			</File>
+			<File
 				RelativePath=".\src\zstring.h"
 				>
 			</File>

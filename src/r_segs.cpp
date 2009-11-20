@@ -2006,29 +2006,29 @@ void PrepWall (fixed_t *swall, fixed_t *lwall, fixed_t walxrepeat)
 	x = WallSX1;
 
 	l = top / bot;
-	swall[x] = quickertoint (l * WallDepthScale + WallDepthOrg);
-	lwall[x] = quickertoint (l * xrepeat);
+	swall[x] = xs_RoundToInt(l * WallDepthScale + WallDepthOrg);
+	lwall[x] = xs_RoundToInt(l * xrepeat);
 	// As long as l is invalid, step one column at a time so that
 	// we can get as many correct texture columns as possible.
 	while (l > 1.0 && x+1 < WallSX2)
 	{
 		l = (top += WallUoverZstep) / (bot += WallInvZstep);
 		x++;
-		swall[x] = quickertoint (l * WallDepthScale + WallDepthOrg);
-		lwall[x] = quickertoint (l * xrepeat);
+		swall[x] = xs_RoundToInt(l * WallDepthScale + WallDepthOrg);
+		lwall[x] = xs_RoundToInt(l * xrepeat);
 	}
 	l *= xrepeat;
 	while (x+4 < WallSX2)
 	{
 		top += topinc; bot += botinc;
 		ol = l; l = top / bot;
-		swall[x+4] = quickertoint (l * WallDepthScale + WallDepthOrg);
-		lwall[x+4] = quickertoint (l *= xrepeat);
+		swall[x+4] = xs_RoundToInt(l * WallDepthScale + WallDepthOrg);
+		lwall[x+4] = xs_RoundToInt(l *= xrepeat);
 
 		i = (ol+l) * 0.5f;
-		lwall[x+2] = quickertoint (i);
-		lwall[x+1] = quickertoint ((ol+i) * 0.5f);
-		lwall[x+3] = quickertoint ((l+i) * 0.5f);
+		lwall[x+2] = xs_RoundToInt(i);
+		lwall[x+1] = xs_RoundToInt((ol+i) * 0.5f);
+		lwall[x+3] = xs_RoundToInt((l+i) * 0.5f);
 		swall[x+2] = ((swall[x]+swall[x+4])>>1);
 		swall[x+1] = ((swall[x]+swall[x+2])>>1);
 		swall[x+3] = ((swall[x+4]+swall[x+2])>>1);
@@ -2038,25 +2038,25 @@ void PrepWall (fixed_t *swall, fixed_t *lwall, fixed_t walxrepeat)
 	{
 		top += topinc * 0.5f; bot += botinc * 0.5f;
 		ol = l; l = top / bot;
-		swall[x+2] = quickertoint (l * WallDepthScale + WallDepthOrg);
-		lwall[x+2] = quickertoint (l *= xrepeat);
+		swall[x+2] = xs_RoundToInt(l * WallDepthScale + WallDepthOrg);
+		lwall[x+2] = xs_RoundToInt(l *= xrepeat);
 
-		lwall[x+1] = quickertoint ((l+ol)*0.5f);
+		lwall[x+1] = xs_RoundToInt((l+ol)*0.5f);
 		swall[x+1] = (swall[x]+swall[x+2])>>1;
 		x += 2;
 	}
 	if (x+1 < WallSX2)
 	{
 		l = (top + WallUoverZstep) / (bot + WallInvZstep);
-		swall[x+1] = quickertoint (l * WallDepthScale + WallDepthOrg);
-		lwall[x+1] = quickertoint (l * xrepeat);
+		swall[x+1] = xs_RoundToInt(l * WallDepthScale + WallDepthOrg);
+		lwall[x+1] = xs_RoundToInt(l * xrepeat);
 	}
 	/*
 	for (x = WallSX1; x < WallSX2; x++)
 	{
 		frac = top / bot;
-		lwall[x] = quickertoint (frac * xrepeat);
-		swall[x] = quickertoint (frac * WallDepthScale + WallDepthOrg);
+		lwall[x] = xs_RoundToInt(frac * xrepeat);
+		swall[x] = xs_RoundToInt(frac * WallDepthScale + WallDepthOrg);
 		top += WallUoverZstep;
 		bot += WallInvZstep;
 	}
@@ -2108,39 +2108,39 @@ void PrepLWall (fixed_t *lwall, fixed_t walxrepeat)
 	x = WallSX1;
 
 	l = top / bot;
-	lwall[x] = quickertoint (l * xrepeat);
+	lwall[x] = xs_RoundToInt(l * xrepeat);
 	// As long as l is invalid, step one column at a time so that
 	// we can get as many correct texture columns as possible.
 	while (l > 1.0 && x+1 < WallSX2)
 	{
 		l = (top += WallUoverZstep) / (bot += WallInvZstep);
-		lwall[++x] = quickertoint (l * xrepeat);
+		lwall[++x] = xs_RoundToInt(l * xrepeat);
 	}
 	l *= xrepeat;
 	while (x+4 < WallSX2)
 	{
 		top += topinc; bot += botinc;
 		ol = l; l = top / bot;
-		lwall[x+4] = quickertoint (l *= xrepeat);
+		lwall[x+4] = xs_RoundToInt(l *= xrepeat);
 
 		i = (ol+l) * 0.5f;
-		lwall[x+2] = quickertoint (i);
-		lwall[x+1] = quickertoint ((ol+i) * 0.5f);
-		lwall[x+3] = quickertoint ((l+i) * 0.5f);
+		lwall[x+2] = xs_RoundToInt(i);
+		lwall[x+1] = xs_RoundToInt((ol+i) * 0.5f);
+		lwall[x+3] = xs_RoundToInt((l+i) * 0.5f);
 		x += 4;
 	}
 	if (x+2 < WallSX2)
 	{
 		top += topinc * 0.5f; bot += botinc * 0.5f;
 		ol = l; l = top / bot;
-		lwall[x+2] = quickertoint (l *= xrepeat);
-		lwall[x+1] = quickertoint ((l+ol)*0.5f);
+		lwall[x+2] = xs_RoundToInt(l *= xrepeat);
+		lwall[x+1] = xs_RoundToInt((l+ol)*0.5f);
 		x += 2;
 	}
 	if (x+1 < WallSX2)
 	{
 		l = (top + WallUoverZstep) / (bot + WallInvZstep);
-		lwall[x+1] = quickertoint (l * xrepeat);
+		lwall[x+1] = xs_RoundToInt(l * xrepeat);
 	}
 
 	// fix for rounding errors

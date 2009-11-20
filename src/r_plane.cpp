@@ -336,7 +336,7 @@ void R_MapTiltedPlane (int y, int x1)
 	{
 		uz = (iz + plane_sz[0]*width) * planelightfloat;
 		vz = iz * planelightfloat;
-		R_CalcTiltedLighting (toint (vz), toint (uz), width);
+		R_CalcTiltedLighting (xs_RoundToInt(vz), xs_RoundToInt(uz), width);
 	}
 
 	uz = plane_su[2] + plane_su[1]*(centery-y) + plane_su[0]*(x1-centerx);

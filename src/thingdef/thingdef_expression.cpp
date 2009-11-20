@@ -49,6 +49,7 @@
 #include "p_lnspec.h"
 #include "doomstat.h"
 #include "thingdef_exp.h"
+#include "m_fixed.h"
 
 int testglobalvar = 1337;	// just for having one global variable to test with
 DEFINE_GLOBAL_VARIABLE(testglobalvar)

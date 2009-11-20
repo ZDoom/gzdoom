@@ -201,13 +201,3 @@ static __forceinline SDWORD ksgn (SDWORD a)
 	else if (a > 0) return 1;
 	else return 0;
 }
-
-static __forceinline int toint (float v)
-{
-	return int(v);
-}
-
-static __forceinline int quickertoint (float v)
-{
-	return int(v);
-}

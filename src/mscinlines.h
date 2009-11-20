@@ -348,20 +348,4 @@ __forceinline SDWORD ksgn (SDWORD a)
 	__asm adc eax,0
 }
 
-__forceinline int toint (float v)
-{
-	SQWORD res;
-	__asm fld v;
-	__asm fistp res;
-	return (int)res;
-}
-
-__forceinline int quickertoint (float v)
-{
-	SDWORD res;
-	__asm fld v;
-	__asm fistp res;
-	return (int)res;
-}
-
 #pragma warning (default: 4035)

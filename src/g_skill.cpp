@@ -40,6 +40,7 @@
 #include "gi.h"
 #include "templates.h"
 #include "v_font.h"
+#include "m_fixed.h"
 
 TArray<FSkillInfo> AllSkills;
 int DefaultSkill = -1;

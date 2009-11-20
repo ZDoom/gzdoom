@@ -1,3 +1,15 @@
+November 19, 2009
+- Replaced toint/quickertoint with the portable routines from xs_Float.h. The
+  former used fistp, which is not portable across platforms, so cannot be
+  used in the play simulation. They were only suitable for the renderer.
+  xs_Float.h also has a very fast float->fixed conversion, so FLOAT2FIXED
+  uses that now.
+  (And I also learned that the FPU's round to nearest is not the rounding I
+  learned in grade school but actually Banker's Rounding. I had no idea.)
+  (Also, also, the only thing that could have made quickertoint faster than
+  toint was that it stored a 32-bit int. I never timed them, and I doubt in
+  practice there was any real difference between the two.)
+
 November 18, 2009
 - Added padding around packed textures to compensate for apparent NVidia
   texture coordinate imprecision.

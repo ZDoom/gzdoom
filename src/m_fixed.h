@@ -20,6 +20,8 @@
 #include "basicinlines.h"
 #endif
 
+#include "xs_Float.h"
+
 #define MAKESAFEDIVSCALE(x) \
 	inline SDWORD SafeDivScale##x (SDWORD a, SDWORD b) \
 	{ \
@@ -133,5 +135,9 @@ inline SDWORD ModDiv (SDWORD num, SDWORD den, SDWORD *dmval)
 	*dmval = num / den;
 	return num % den;
 }
+
+
+#define FLOAT2FIXED(f)		xs_Fix<16>::ToFix(f)
+#define FIXED2FLOAT(f)		((f) / float(65536))
 
 #endif

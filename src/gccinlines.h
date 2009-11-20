@@ -331,27 +331,3 @@ static inline SDWORD ksgn (SDWORD a)
 		:"%cc");
 	return result;
 }
-
-static inline int toint (float v)
-{
-	volatile QWORD result;
-
-	asm volatile
-		("fistpq %0"
-		:"=m" (result)
-		:"t" (v)
-		:"%st");
-	return result;
-}
-
-static inline int quickertoint (float v)
-{
-	volatile int result;
-
-	asm volatile
-		("fistpl %0"
-		:"=m" (result)
-		:"t" (v)
-		:"%st");
-	return result;
-}

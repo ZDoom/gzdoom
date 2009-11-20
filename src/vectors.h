@@ -1230,7 +1230,4 @@ typedef TRotator<float>		FRotator;
 typedef TMatrix3x3<float>	FMatrix3x3;
 typedef TAngle<float>		FAngle;
 
-#define FLOAT2FIXED(f)		fixed_t((f) * float(65536))
-#define FIXED2FLOAT(f)		((f) / float(65536))
-
 #endif

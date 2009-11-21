@@ -65,3 +65,14 @@ sector 50 =	Wind_West_Medium;
 sector 51 =	Wind_West_Strong;
 
 
+lineflag 0 = ML_BLOCKING;
+lineflag 1 = ML_BLOCKMONSTERS;
+lineflag 2 = ML_TWOSIDED;
+lineflag 3 = ML_DONTPEGTOP;
+lineflag 4 = ML_DONTPEGBOTTOM;
+lineflag 5 = ML_SECRET;
+lineflag 6 = ML_SOUNDBLOCK;
+lineflag 7 = ML_DONTDRAW;
+lineflag 8 = ML_MAPPED;
+lineflag 9 = ML_PASSTHROUGH;
+lineflag 10 = ML_3DMIDTEX;

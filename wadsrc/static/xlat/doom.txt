@@ -28,3 +28,15 @@ sector 22 = LightSequenceStart;
 sector 23 = LightSequenceSpecial1;
 sector 24 =	LightSequenceSpecial2;
 
+lineflag 0 = ML_BLOCKING;
+lineflag 1 = ML_BLOCKMONSTERS;
+lineflag 2 = ML_TWOSIDED;
+lineflag 3 = ML_DONTPEGTOP;
+lineflag 4 = ML_DONTPEGBOTTOM;
+lineflag 5 = ML_SECRET;
+lineflag 6 = ML_SOUNDBLOCK;
+lineflag 7 = ML_DONTDRAW;
+lineflag 8 = ML_MAPPED;
+lineflag 9 = ML_PASSTHROUGH;
+lineflag 10 = ML_3DMIDTEX;
+lineflag 11 & (ML_BLOCKING|ML_BLOCKMONSTERS|ML_TWOSIDED|ML_DONTPEGTOP|ML_DONTPEGBOTTOM|ML_SECRET|ML_SOUNDBLOCK|ML_DONTDRAW|ML_MAPPED);

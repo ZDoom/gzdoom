@@ -68,38 +68,35 @@ void P_TranslateLineDef (line_t *ld, maplinedef_t *mld)
 	DWORD flags = LittleShort(mld->flags);
 	INTBOOL passthrough;
 
-	if (flags & ML_TRANSLUCENT_STRIFE)
+	DWORD flags1 = flags;
+	DWORD newflags = 0;
+
+	for(int i=0;i<16;i++)
 	{
-		ld->Alpha = FRACUNIT*3/4;
-	}
-	if (gameinfo.gametype == GAME_Strife)
-	{
-		if (flags & ML_RAILING_STRIFE)
+		if ((flags & (1<<i)) && LineFlagTranslations[i].ismask)
 		{
-			flags |= ML_RAILING;
+			flags1 &= LineFlagTranslations[i].newvalue;
 		}
-		if (flags & ML_BLOCK_FLOATERS_STRIFE)
-		{
-			flags |= ML_BLOCK_FLOATERS;
-		}
-		passthrough = 0;
 	}
-	else
+	for(int i=0;i<16;i++)
 	{
-		if (gameinfo.gametype & GAME_DoomChex)
+		if ((flags1 & (1<<i)) && !LineFlagTranslations[i].ismask)
 		{
-			if (flags & ML_RESERVED_ETERNITY)
+			switch (LineFlagTranslations[i].newvalue)
 			{
-				flags &= 0x1FF;
+			case -1:
+				passthrough = true;
+				break;
+			case -2:
+				ld->Alpha = FRACUNIT*3/4;
+				break;
+			default:
+				newflags |= LineFlagTranslations[i].newvalue;
+				break;
 			}
 		}
-		if (flags & ML_3DMIDTEX_ETERNITY)
-		{
-			flags |= ML_3DMIDTEX;
-		}
-		passthrough = (flags & ML_PASSUSE_BOOM);
 	}
-	flags = flags & 0xFFFF01FF;	// Ignore flags unknown to DOOM
+	flags = newflags;
 
 	// For purposes of maintaining BOOM compatibility, each
 	// line also needs to have its ID set to the same as its tag.

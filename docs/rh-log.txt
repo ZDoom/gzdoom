@@ -1,3 +1,6 @@
+November 22, 2009  (Changes by Graf Zahl)
+- extended Doom map format linedef translator so that it also handles the flags.
+
 November 19, 2009
 - Replaced toint/quickertoint with the portable routines from xs_Float.h. The
   former used fistp, which is not portable across platforms, so cannot be

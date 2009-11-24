@@ -1,4 +1,6 @@
 November 24, 2009  (Changes by Graf Zahl)
+- Fixed: EV_DoDonut, EV_DoElevator and EV_StartWaggle did not to any 0-tag
+  checks.
 - Fixed: Doom line type 44 (lower ceiling to 8 above floor) must halt
   movement if blocked which essentially means it acts like a Hexen-style
   crusher.

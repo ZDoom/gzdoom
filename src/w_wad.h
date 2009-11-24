@@ -154,7 +154,7 @@ public:
 	enum { IWAD_FILENUM = 1 };
 
 	void InitMultipleFiles (wadlist_t **filenames);
-	void AddFile (const char *filename, FileReader *wadinfo = NULL);
+	void AddFile (char *filename, FileReader *wadinfo = NULL);
 	int CheckIfWadLoaded (const char *name);
 
 	const char *GetWadName (int wadnum) const;

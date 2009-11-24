@@ -222,7 +222,7 @@ int FWadCollection::AddExternalFile(const char *filename)
 // [RH] Removed reload hack
 //==========================================================================
 
-void FWadCollection::AddFile (const char *filename, FileReader *wadinfo)
+void FWadCollection::AddFile (char *filename, FileReader *wadinfo)
 {
 	int startlump;
 	bool isdir = false;
@@ -252,6 +252,7 @@ void FWadCollection::AddFile (const char *filename, FileReader *wadinfo)
 				return;
 			}
 		}
+		FixPathSeperator(filename);
 	}
 
 	Printf (" adding %s", filename);

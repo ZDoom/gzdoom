@@ -1,3 +1,9 @@
+November 23, 2009
+- Fixed: FWadCollection::AddFile() did not call FixPathSeperator(), so
+  savegames would hold the full file path for wads that had been specified
+  with backslash characters, because GetWadName() would not trim off the
+  path.
+
 November 22, 2009  (Changes by Graf Zahl)
 - extended Doom map format linedef translator so that it also handles the flags.
 

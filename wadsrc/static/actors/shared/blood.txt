@@ -7,6 +7,7 @@ ACTOR Blood
 	Mass 5
 	+NOBLOCKMAP
 	+NOTELEPORT
+	+ALLOWPARTICLES
 	States
 	{
 	Spawn:
@@ -30,6 +31,7 @@ ACTOR BloodSplatter
 	+DROPOFF
 	+NOTELEPORT
 	+CANNOTPUSH
+	+ALLOWPARTICLES
 	Mass 5
 	States
 	{
@@ -53,6 +55,7 @@ ACTOR AxeBlood
 	+DROPOFF
 	+NOTELEPORT
 	+CANNOTPUSH
+	+ALLOWPARTICLES
 	Mass 5
 	States
 	{

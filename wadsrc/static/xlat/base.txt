@@ -43,7 +43,7 @@ include "xlat/defines.i"
  41 = USE,		Ceiling_LowerToFloor (tag, C_SLOW)
  42 = USE|REP,		Door_Close (tag, D_SLOW)
  43 = USE|REP,		Ceiling_LowerToFloor (tag, C_SLOW)
- 44 = WALK,		Ceiling_LowerAndCrush (tag, C_SLOW, 0)
+ 44 = WALK,		Ceiling_LowerAndCrush (tag, C_SLOW, 0, 2)
  45 = USE|REP,		Floor_LowerToHighest (tag, F_SLOW, 128)
  46 = SHOOT|REP|MONST,	Door_Open (tag, D_SLOW)
  47 = SHOOT,		Plat_RaiseAndStayTx0 (tag, P_SLOW/2)

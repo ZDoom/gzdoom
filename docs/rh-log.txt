@@ -1,4 +1,7 @@
 November 24, 2009  (Changes by Graf Zahl)
+- Fixed: Doom line type 44 (lower ceiling to 8 above floor) must halt
+  movement if blocked which essentially means it acts like a Hexen-style
+  crusher.
 - Fixed: Not all places checking for player start spots did it correctly.
   The editor number for player start spot 5 is now stored in the game info
   so that there's only one place where this check needs to be done.

@@ -103,6 +103,7 @@ struct gameinfo_t
 	int definventorymaxamount;
 	int defaultrespawntime;
 	int defaultdropstyle;
+	int player5start;
 
 	const char *GetFinalePage(unsigned int num) const;
 };

@@ -3838,17 +3838,13 @@ APlayerPawn *P_SpawnPlayer (FMapThing *mthing, bool tempplayer)
 	// [RH] Things 4001-? are also multiplayer starts. Just like 1-4.
 	//		To make things simpler, figure out which player is being
 	//		spawned here.
-	if (mthing->type <= 4 || gameinfo.gametype == GAME_Strife)		// don't forget Strife's starts 5-8 here!
+	if (mthing->type <= 4)
 	{
 		playernum = mthing->type - 1;
 	}
-	else if (gameinfo.gametype != GAME_Hexen)
-	{
-		playernum = mthing->type - 4001 + 4;
-	}
 	else
 	{
-		playernum = mthing->type - 9100 + 4;
+		playernum = mthing->type - gameinfo.player5start + 4;
 	}
 
 	// not playing?
@@ -4140,12 +4136,9 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	}
 	else
 	{
-		const int base = (gameinfo.gametype == GAME_Strife) ? 5 :
-						 (gameinfo.gametype == GAME_Hexen) ? 9100 : 4001;
-
-		if (mthing->type >= base && mthing->type < base + MAXPLAYERS - 4)
+		if (mthing->type >= gameinfo.player5start && mthing->type < gameinfo.player5start + MAXPLAYERS - 4)
 		{
-			pnum = mthing->type - base + 4;
+			pnum = mthing->type - gameinfo.player5start + 4;
 		}
 	}
 

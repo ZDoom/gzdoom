@@ -3157,11 +3157,20 @@ fixed_t P_AimLineAttack (AActor *t1, angle_t angle, fixed_t distance, AActor **p
 		}
 		else
 		{
-			// 35 degrees is approximately what Doom used. You cannot have a
-			// vrange of 0 degrees, because then toppitch and bottompitch will
-			// be equal, and PTR_AimTraverse will never find anything to shoot at
-			// if it crosses a line.
-			vrange = clamp (t1->player->userinfo.GetAimDist(), ANGLE_1/2, ANGLE_1*35);
+			// [BB] Disable autoaim on weapons with WIF_NOAUTOAIM.
+			AWeapon *weapon = t1->player->ReadyWeapon;
+			if ( weapon && (weapon->WeaponFlags & WIF_NOAUTOAIM) )
+			{
+				vrange = ANGLE_1/2;
+			}
+			else
+			{
+				// 35 degrees is approximately what Doom used. You cannot have a
+				// vrange of 0 degrees, because then toppitch and bottompitch will
+				// be equal, and PTR_AimTraverse will never find anything to shoot at
+				// if it crosses a line.
+				vrange = clamp (t1->player->userinfo.aimdist, ANGLE_1/2, ANGLE_1*35);
+			}
 		}
 	}
 	aim.toppitch = t1->pitch - vrange;

@@ -1475,10 +1475,8 @@ void G_DeathMatchSpawnPlayer (int playernum)
 	{
 		if (playernum < 4)
 			spot->type = playernum+1;
-		else if (gameinfo.gametype != GAME_Hexen)
-			spot->type = playernum+4001-4;	// [RH] > 4 players
-		else
-			spot->type = playernum+9100-4;
+		else 
+			spot->type = playernum + gameinfo.player5start - 4;
 	}
 
 	AActor *mo = P_SpawnPlayer (spot);
@@ -1569,17 +1567,13 @@ void G_DoReborn (int playernum, bool freshbot)
 					// fake as other player
 					// [RH] These numbers should be common across all games. Or better yet, not
 					// used at all outside P_SpawnMapThing().
-					if (playernum < 4 || gameinfo.gametype == GAME_Strife)
+					if (playernum < 4)
 					{
 						playerstarts[i].type = playernum + 1;
 					}
-					else if (gameinfo.gametype == GAME_Hexen)
-					{
-						playerstarts[i].type = playernum + 9100 - 4;
-					}
 					else
 					{
-						playerstarts[i].type = playernum + 4001 - 4;
+						playerstarts[i].type = playernum + gameinfo.player5start - 4;
 					}
 					AActor *mo = P_SpawnPlayer (&playerstarts[i]);
 					if (mo != NULL) P_PlayerStartStomp(mo);

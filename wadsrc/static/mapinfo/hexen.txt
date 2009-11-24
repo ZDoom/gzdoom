@@ -38,6 +38,7 @@ gameinfo
 	definventorymaxamount = 25
 	defaultrespawntime = 12
 	defaultdropstyle = 1
+	player5start = 9100
 }
 
 skill baby

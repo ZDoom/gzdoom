@@ -1,3 +1,9 @@
+November 24, 2009  (Changes by Graf Zahl)
+- Fixed: Not all places checking for player start spots did it correctly.
+  The editor number for player start spot 5 is now stored in the game info
+  so that there's only one place where this check needs to be done.
+- Fixed: WIF_NOAUTOAIM only worked for projectiles.
+
 November 23, 2009
 - Added Windows 7 (aka Windows NT 6.1) and Server 2008 identification to
   I_DetectOS().

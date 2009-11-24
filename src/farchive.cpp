@@ -1395,7 +1395,7 @@ const PClass *FArchive::ReadClass ()
 	FName zaname(typeName.val, true);
 	if (zaname != NAME_None)
 	{
-		for (unsigned int i = 0; i < PClass::m_Types.Size(); i++)
+		for (unsigned int i = PClass::m_Types.Size(); i-- > 0; )
 		{
 			if (PClass::m_Types[i]->TypeName == zaname)
 			{

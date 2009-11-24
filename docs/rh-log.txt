@@ -1,4 +1,6 @@
 November 23, 2009
+- Added Windows 7 (aka Windows NT 6.1) and Server 2008 identification to
+  I_DetectOS().
 - Fixed: ArtiPork did not use all its sprite frames.
 - Fixed: FWadCollection::AddFile() did not call FixPathSeperator(), so
   savegames would hold the full file path for wads that had been specified

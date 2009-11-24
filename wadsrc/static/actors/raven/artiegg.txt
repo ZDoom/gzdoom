@@ -94,7 +94,7 @@ ACTOR ArtiPork : CustomInventory 30
 	States
 	{
 	Spawn:
-		PORK ABCB 6
+		PORK ABCDEFGH 6
 		Loop
 	Use:
 		TNT1 A 0 A_FireCustomMissile("PorkFX", -15, 0, 0, 0, 1)

@@ -1,4 +1,5 @@
 November 23, 2009
+- Fixed: ArtiPork did not use all its sprite frames.
 - Fixed: FWadCollection::AddFile() did not call FixPathSeperator(), so
   savegames would hold the full file path for wads that had been specified
   with backslash characters, because GetWadName() would not trim off the

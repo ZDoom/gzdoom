@@ -315,18 +315,21 @@ void FRemapTable::AddIndexRange(int start, int end, int pal1, int pal2)
 	}
 	else if (start == end)
 	{
+		start = GPalette.Remap[start];
+		pal1 = GPalette.Remap[pal1];
 		Remap[start] = pal1;
 		Palette[start] = GPalette.BaseColors[pal1];
-		Palette[start].a = start==0? 0:255;
+		Palette[start].a = start == 0 ? 0 : 255;
 		return;
 	}
 	palcol = pal1 << FRACBITS;
 	palstep = ((pal2 << FRACBITS) - palcol) / (end - start);
 	for (int i = start; i <= end; palcol += palstep, ++i)
 	{
-		Remap[i] = palcol >> FRACBITS;
-		Palette[i] = GPalette.BaseColors[palcol >> FRACBITS];
-		Palette[i].a = i==0? 0:255;
+		int j = GPalette.Remap[i], k = GPalette.Remap[palcol >> FRACBITS];
+		Remap[j] = k;
+		Palette[j] = GPalette.BaseColors[k];
+		Palette[j].a = j == 0 ? 0 : 255;
 	}
 }
 
@@ -368,10 +371,10 @@ void FRemapTable::AddColorRange(int start, int end, int _r1,int _g1, int _b1, in
 	}
 	if (start == end)
 	{
-		Remap[start] = ColorMatcher.Pick
-			(r >> FRACBITS, g >> FRACBITS, b >> FRACBITS);
+		start = GPalette.Remap[start];
+		Remap[start] = ColorMatcher.Pick(r >> FRACBITS, g >> FRACBITS, b >> FRACBITS);
 		Palette[start] = PalEntry(r >> FRACBITS, g >> FRACBITS, b >> FRACBITS);
-		Palette[start].a = start==0? 0:255;
+		Palette[start].a = start == 0 ? 0 : 255;
 	}
 	else
 	{
@@ -380,9 +383,9 @@ void FRemapTable::AddColorRange(int start, int end, int _r1,int _g1, int _b1, in
 		bs /= (end - start);
 		for (int i = start; i <= end; ++i)
 		{
-			Remap[i] = ColorMatcher.Pick
-				(r >> FRACBITS, g >> FRACBITS, b >> FRACBITS);
-			Palette[i] = PalEntry(start==0? 0:255, r >> FRACBITS, g >> FRACBITS, b >> FRACBITS);
+			int j = GPalette.Remap[i];
+			Remap[j] = ColorMatcher.Pick(r >> FRACBITS, g >> FRACBITS, b >> FRACBITS);
+			Palette[j] = PalEntry(j == 0 ? 0 : 255, r >> FRACBITS, g >> FRACBITS, b >> FRACBITS);
 			r += rs;
 			g += gs;
 			b += bs;
@@ -412,7 +415,7 @@ void FRemapTable::AddDesaturation(int start, int end, float r1,float g1, float b
 	g1 *= 255;
 	b1 *= 255;
 
-	for(int c=start; c < end; c++)
+	for(int c = start; c < end; c++)
 	{
 		double intensity = (GPalette.BaseColors[c].r * 77 +
 							GPalette.BaseColors[c].g * 143 +
@@ -422,9 +425,11 @@ void FRemapTable::AddDesaturation(int start, int end, float r1,float g1, float b
 								MIN(255, int(g1 + intensity*g2)), 
 								MIN(255, int(b1 + intensity*b2)));
 
-		Remap[c] = ColorMatcher.Pick(pe);
-		Palette[c] = pe;
-		Palette[c].a = c==0? 0:255;
+		int cc = GPalette.Remap[c];
+
+		Remap[cc] = ColorMatcher.Pick(pe);
+		Palette[cc] = pe;
+		Palette[cc].a = cc == 0 ? 0:255;
 	}
 }
 

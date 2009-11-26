@@ -1,3 +1,7 @@
+November 25, 2009
+- Make the palette indexes used by FRemapTable subject to the global remap
+  table, just as the images they translate are.
+
 November 24, 2009  (Changes by Graf Zahl)
 - Added MF4_ALLOWPARTICLES checks to blood spawning code.
 - Fixed: EV_DoDonut, EV_DoElevator and EV_StartWaggle did not to any 0-tag

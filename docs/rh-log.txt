@@ -1,3 +1,8 @@
+November 27, 2009  (Changes by Graf Zahl)
+- fixed: The charge attack of Heretic's imp is not precisely the same
+  as A_SkullAttack with a different speed so A_ImpMsAttack has been
+  reinstated.
+
 November 25, 2009
 - Make the palette indexes used by FRemapTable subject to the global remap
   table, just as the images they translate are.

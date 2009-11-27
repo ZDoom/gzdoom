@@ -22,9 +22,6 @@ static const PClass *GetSpawnType(DECLARE_PARAMINFO)
 }
 
 
-#define SKULLSPEED (20*FRACUNIT)
-void A_SkullAttack(AActor *self, fixed_t speed);
-
 //
 // A_PainShootSkull
 // Spawn a lost soul and launch it at the target

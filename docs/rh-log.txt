@@ -1,4 +1,6 @@
 November 27, 2009  (Changes by Graf Zahl)
+- fixed an uninitialized variable in p_xlat.cpp (Thanks, MSVC for not
+  warning about such an obvious problem! :( )
 - fixed: The charge attack of Heretic's imp is not precisely the same
   as A_SkullAttack with a different speed so A_ImpMsAttack has been
   reinstated.

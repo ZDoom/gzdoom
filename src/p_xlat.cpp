@@ -66,7 +66,7 @@ void P_TranslateLineDef (line_t *ld, maplinedef_t *mld)
 	unsigned short special = (unsigned short) LittleShort(mld->special);
 	short tag = LittleShort(mld->tag);
 	DWORD flags = LittleShort(mld->flags);
-	INTBOOL passthrough;
+	INTBOOL passthrough = 0;
 
 	DWORD flags1 = flags;
 	DWORD newflags = 0;

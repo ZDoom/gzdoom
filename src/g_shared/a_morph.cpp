@@ -177,7 +177,7 @@ bool P_UndoPlayerMorph (player_t *activator, player_t *player, int unmorphflag, 
 {
 	AWeapon *beastweap;
 	APlayerPawn *mo;
-	AActor *pmo;
+	APlayerPawn *pmo;
 	angle_t angle;
 
 	pmo = player->mo;
@@ -330,7 +330,7 @@ bool P_UndoPlayerMorph (player_t *activator, player_t *player, int unmorphflag, 
 	}
 	if (correctweapon)
 	{ // Better "lose morphed weapon" semantics
-		const PClass *morphweapon = PClass::FindClass (mo->MorphWeapon);
+		const PClass *morphweapon = PClass::FindClass (pmo->MorphWeapon);
 		if (morphweapon != NULL && morphweapon->IsDescendantOf (RUNTIME_CLASS(AWeapon)))
 		{
 			AWeapon *OriginalMorphWeapon = static_cast<AWeapon *>(mo->FindInventory (morphweapon));

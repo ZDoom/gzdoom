@@ -1828,7 +1828,8 @@ D3DFB::PackedTexture *D3DFB::AllocPackedTexture(int w, int h, bool wrapping, D3D
 	PackedTexture *bestbox;
 	int area;
 
-	if (w > 256 || h > 256 || wrapping)
+	// check for 254 to account for padding
+	if (w > 254 || h > 254 || wrapping)
 	{ // Create a new packing texture.
 		bestpack = new PackingTexture(this, w, h, format);
 		bestpack->OneUse = true;

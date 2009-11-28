@@ -1,3 +1,8 @@
+November 28, 2009  (Changes by Graf Zahl)
+- fixed: Morph weapons weren't destroyed because the code checked for 
+  them in the unmorphed player class.
+- fixed: With padding the largest texture to fit into a page is 254x254.
+
 November 27, 2009  (Changes by Graf Zahl)
 - fixed an uninitialized variable in p_xlat.cpp (Thanks, MSVC for not
   warning about such an obvious problem! :( )

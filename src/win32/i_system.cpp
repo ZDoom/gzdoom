@@ -282,6 +282,22 @@ unsigned int I_MSTime()
 
 //==========================================================================
 //
+// I_FPSTime
+//
+// Returns the current system time in milliseconds. This is used by the FPS
+// meter of DFrameBuffer::DrawRateStuff(). Since the screen can display
+// before the play simulation is ready to begin, this needs to be
+// separate from I_MSTime().
+//
+//==========================================================================
+
+unsigned int I_FPSTime()
+{
+	return timeGetTime();
+}
+
+//==========================================================================
+//
 // I_GetTimePolled
 //
 // Returns the current time in tics. If saveMS is true, then calls to

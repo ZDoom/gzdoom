@@ -838,7 +838,7 @@ void DFrameBuffer::DrawRateStuff ()
 	// Draws frame time and cumulative fps
 	if (vid_fps)
 	{
-		DWORD ms = I_MSTime ();
+		DWORD ms = I_FPSTime();
 		DWORD howlong = ms - LastMS;
 		if (howlong >= 0)
 		{
@@ -876,7 +876,7 @@ void DFrameBuffer::DrawRateStuff ()
 		// Buffer can be NULL if we're doing hardware accelerated 2D
 		if (buffer != NULL)
 		{
-			buffer += (GetHeight()-1)*GetPitch();
+			buffer += (GetHeight()-1) * GetPitch();
 			
 			for (i = 0; i < tics*2; i += 2)		buffer[i] = 0xff;
 			for ( ; i < 20*2; i += 2)			buffer[i] = 0x00;

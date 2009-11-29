@@ -1,4 +1,6 @@
 November 28, 2009
+- Fixed: The FPS meter cannot use I_MSTime(), because if the game is started
+  with +vid_fps 1, it can need the time before the timer is ready to start.
 - Initialize TempRenderTexture and the back buffer to black upon creation.
 - Fixed: Windowed mode always needs to draw to the temporary surface, even
   when not gamma correcting, so that D3DFB::GetCurrentScreen() can read from

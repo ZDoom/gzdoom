@@ -124,6 +124,12 @@ unsigned int I_MSTime (void)
 	return time - BaseTime;
 }
 
+// Exactly the same thing, but based does no modification to the time.
+unsigned int I_FPSTime()
+{
+	return SDL_GetTicks();
+}
+
 //
 // I_GetTime
 // returns time in 1/35th second tics

@@ -132,6 +132,7 @@ bool I_WriteIniFailed ();
 
 // [RH] Returns millisecond-accurate time
 unsigned int I_MSTime (void);
+unsigned int I_FPSTime();
 
 // [RH] Title banner to display during startup
 extern const IWADInfo *DoomStartupInfo;

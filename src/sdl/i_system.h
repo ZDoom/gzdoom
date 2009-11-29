@@ -126,6 +126,7 @@ bool I_WriteIniFailed ();
 
 // [RH] Returns millisecond-accurate time
 unsigned int I_MSTime (void);
+unsigned int I_FPSTime();
 
 
 // Directory searching routines

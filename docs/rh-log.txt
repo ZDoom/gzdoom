@@ -1,3 +1,7 @@
+November 28, 2009
+- Use the spawned class's scale as default for ScriptedMarine instead of
+  DoomPlayer.
+
 November 28, 2009  (Changes by Graf Zahl)
 - fixed: Morph weapons weren't destroyed because the code checked for 
   them in the unmorphed player class.

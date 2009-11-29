@@ -464,6 +464,9 @@ void D3DFB::SetInitialState()
 	AlphaTestEnabled = FALSE;
 
 	CurBorderColor = 0;
+
+	// Clear to black, just in case it wasn't done already.
+	D3DDevice->Clear(0, NULL, D3DCLEAR_TARGET, D3DCOLOR_XRGB(0,0,0), 0, 0);
 }
 
 //==========================================================================
@@ -753,6 +756,20 @@ void D3DFB::KillNativeTexs()
 	}
 }
 
+//==========================================================================
+//
+// D3DFB :: CreateFBTexture
+//
+// Creates the "Framebuffer" texture. With the advent of hardware-assisted
+// 2D, this is something of a misnomer now. The FBTexture is only used for
+// uploading the software 3D image to video memory so that it can be drawn
+// to the real frame buffer.
+//
+// It also creates the TempRenderTexture, since this seemed like a
+// convenient place to do so.
+//
+//==========================================================================
+
 bool D3DFB::CreateFBTexture ()
 {
 	if (FAILED(D3DDevice->CreateTexture (Width, Height, 1, D3DUSAGE_DYNAMIC, D3DFMT_L8, D3DPOOL_DEFAULT, &FBTexture, NULL)))
@@ -781,8 +798,24 @@ bool D3DFB::CreateFBTexture ()
 	{
 		TempRenderTexture = NULL;
 	}
+	else
+	{
+		// Initialize the TempRenderTexture to black.
+		IDirect3DSurface9 *surf;
+		if (SUCCEEDED(TempRenderTexture->GetSurfaceLevel(0, &surf)))
+		{
+			D3DDevice->ColorFill(surf, NULL, D3DCOLOR_XRGB(0,0,0));
+			surf->Release();
+		}
+	}
 	return true;
 }
+
+//==========================================================================
+//
+// D3DFB :: CreatePaletteTexture
+//
+//==========================================================================
 
 bool D3DFB::CreatePaletteTexture ()
 {
@@ -792,6 +825,12 @@ bool D3DFB::CreatePaletteTexture ()
 	}
 	return true;
 }
+
+//==========================================================================
+//
+// D3DFB :: CreateGammaTexture
+//
+//==========================================================================
 
 bool D3DFB::CreateGammaTexture ()
 {
@@ -805,6 +844,12 @@ bool D3DFB::CreateGammaTexture ()
 	}
 	return false;
 }
+
+//==========================================================================
+//
+// D3DFB :: CreateVertexes
+//
+//==========================================================================
 
 bool D3DFB::CreateVertexes ()
 {
@@ -824,6 +869,12 @@ bool D3DFB::CreateVertexes ()
 	}
 	return true;
 }
+
+//==========================================================================
+//
+// D3DFB :: CalcFullscreenCoords
+//
+//==========================================================================
 
 void D3DFB::CalcFullscreenCoords (FBVERTEX verts[4], bool viewarea_only, bool can_double, D3DCOLOR color0, D3DCOLOR color1) const
 {
@@ -898,34 +949,76 @@ void D3DFB::CalcFullscreenCoords (FBVERTEX verts[4], bool viewarea_only, bool ca
 	verts[3].tv = tmyb;
 }
 
+//==========================================================================
+//
+// D3DFB :: GetPageCount
+//
+//==========================================================================
+
 int D3DFB::GetPageCount ()
 {
 	return 1;
 }
 
+//==========================================================================
+//
+// D3DFB :: PaletteChanged
+//
+//==========================================================================
+
 void D3DFB::PaletteChanged ()
 {
 }
+
+//==========================================================================
+//
+// D3DFB :: QueryNewPalette
+//
+//==========================================================================
 
 int D3DFB::QueryNewPalette ()
 {
 	return 0;
 }
 
+//==========================================================================
+//
+// D3DFB :: IsValid
+//
+//==========================================================================
+
 bool D3DFB::IsValid ()
 {
 	return D3DDevice != NULL;
 }
+
+//==========================================================================
+//
+// D3DFB :: GetHR
+//
+//==========================================================================
 
 HRESULT D3DFB::GetHR ()
 {
 	return 0;
 }
 
+//==========================================================================
+//
+// D3DFB :: IsFullscreen
+//
+//==========================================================================
+
 bool D3DFB::IsFullscreen ()
 {
 	return !Windowed;
 }
+
+//==========================================================================
+//
+// D3DFB :: Lock
+//
+//==========================================================================
 
 bool D3DFB::Lock ()
 {
@@ -943,6 +1036,12 @@ bool D3DFB::Lock (bool buffered)
 	Buffer = MemBuffer;
 	return false;
 }
+
+//==========================================================================
+//
+// D3DFB :: Unlock
+//
+//==========================================================================
 
 void D3DFB::Unlock ()
 {
@@ -963,10 +1062,17 @@ void D3DFB::Unlock ()
 	}
 }
 
+//==========================================================================
+//
+// D3DFB :: Update
+//
 // When In2D == 0: Copy buffer to screen and present
 // When In2D == 1: Copy buffer to screen but do not present
 // When In2D == 2: Set up for 2D drawing but do not draw anything
 // When In2D == 3: Present and set In2D to 0
+//
+//==========================================================================
+
 void D3DFB::Update ()
 {
 	if (In2D == 3)
@@ -1061,6 +1167,12 @@ void D3DFB::Update ()
 	UpdatePending = false;
 }
 
+//==========================================================================
+//
+// D3DFB :: Flip
+//
+//==========================================================================
+
 void D3DFB::Flip()
 {
 	assert(InScene);
@@ -1085,6 +1197,12 @@ void D3DFB::Flip()
 	InScene = false;
 }
 
+//==========================================================================
+//
+// D3DFB :: PaintToWindow
+//
+//==========================================================================
+
 bool D3DFB::PaintToWindow ()
 {
 	HRESULT hr;
@@ -1105,6 +1223,14 @@ bool D3DFB::PaintToWindow ()
 	Draw3DPart(true);
 	return true;
 }
+
+//==========================================================================
+//
+// D3DFB :: Draw3DPart
+//
+// The software 3D part, to be exact.
+//
+//==========================================================================
 
 void D3DFB::Draw3DPart(bool copy3d)
 {

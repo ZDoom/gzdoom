@@ -1,4 +1,5 @@
 November 28, 2009
+- Initialize TempRenderTexture and the back buffer to black upon creation.
 - Fixed: Windowed mode always needs to draw to the temporary surface, even
   when not gamma correcting, so that D3DFB::GetCurrentScreen() can read from
   it.

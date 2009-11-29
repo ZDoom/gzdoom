@@ -3120,14 +3120,14 @@ lnSpecFunc LineSpecials[256] =
 	LS_NOP,		// 151 Team_UseFP
 	LS_NOP,		// 152 Team_Score
 	LS_NOP,		// 153 Team_Init
-	LS_NOP,		// 154 Var_Lock
+	LS_Teleport_NoStop,
 	LS_NOP,		// 155 Team_RemoveItem
 	LS_NOP,		// 156 Team_GiveItem		// [BC] End
 	LS_NOP,		// 157
-	LS_NOP,		// 158
-	LS_NOP,		// 159
-	LS_NOP,		// 160
-	LS_NOP,		// 161
+	LS_NOP,		// 158 (FS_Execute in GZDoom)
+	LS_NOP,		// 159 (Sector_SetPlaneReflection in GZDoom)
+	LS_NOP,		// 160 (Sector_Set3DFloor in GZDoom and Vavoom)
+	LS_NOP,		// 161 (Sector_SetContents in GZDoom and Vavoom)
 	LS_NOP,		// 162
 	LS_NOP,		// 163
 	LS_NOP,		// 164

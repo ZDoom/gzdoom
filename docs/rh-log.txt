@@ -1,3 +1,8 @@
+November 29, 2009  (Changes by Graf Zahl)
+- fixed: Line_SetBlocking and Line_SetTextureScale were not in the list
+  of action specials used by DECORATE or MAPINFO.
+- fixed: Teleport_NoStop was not in the line special function table.
+
 November 28, 2009
 - Fixed: The FPS meter cannot use I_MSTime(), because if the game is started
   with +vid_fps 1, it can need the time before the timer is ready to start.

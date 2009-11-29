@@ -1,4 +1,7 @@
 November 28, 2009
+- Fixed: Windowed mode always needs to draw to the temporary surface, even
+  when not gamma correcting, so that D3DFB::GetCurrentScreen() can read from
+  it.
 - Use the spawned class's scale as default for ScriptedMarine instead of
   DoomPlayer.
 

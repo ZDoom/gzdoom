@@ -164,7 +164,7 @@ bool D3DFB::WipeStartScreen(int type)
 	// Create another texture to copy the final wipe screen to so
 	// we can still gamma correct the wipe. Since this is just for
 	// gamma correction, it's okay to fail (though not desirable.)
-	if (PixelDoubling || (Shaders[SHADER_GammaCorrection] != NULL && Windowed))
+	if (PixelDoubling || Windowed)
 	{
 		if (SUCCEEDED(TempRenderTexture->GetSurfaceLevel(0, &tsurf)))
 		{

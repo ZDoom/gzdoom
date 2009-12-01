@@ -162,30 +162,6 @@ public:
 	int RoundedPaletteSize;
 };
 
-// Flags for a buffered quad
-enum
-{
-	BQF_GamePalette		= 1,
-	BQF_CustomPalette	= 7,
-		BQF_Paletted	= 7,
-	BQF_Bilinear		= 8,
-	BQF_WrapUV			= 16,
-	BQF_InvertSource	= 32,
-	BQF_DisableAlphaTest= 64,
-	BQF_Desaturated		= 128,
-};
-
-// Shaders for a buffered quad
-enum
-{
-	BQS_PalTex,
-	BQS_Plain,
-	BQS_RedToAlpha,
-	BQS_ColorOnly,
-	BQS_SpecialColormap,
-	BQS_InGameColormap,
-};
-
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -1709,11 +1685,13 @@ void D3DFB::ReleaseScreenshotBuffer()
 //
 //==========================================================================
 
-IDirect3DTexture9 *D3DFB::GetCurrentScreen()
+IDirect3DTexture9 *D3DFB::GetCurrentScreen(D3DPOOL pool)
 {
 	IDirect3DTexture9 *tex;
 	IDirect3DSurface9 *tsurf, *surf;
 	D3DSURFACE_DESC desc;
+
+	assert(pool == D3DPOOL_SYSTEMMEM || pool == D3DPOOL_DEFAULT);
 
 	if (Windowed || PixelDoubling)
 	{
@@ -1752,8 +1730,8 @@ IDirect3DTexture9 *D3DFB::GetCurrentScreen()
 		desc.Format = D3DFMT_A8R8G8B8;
 	}
 
-	if (FAILED(D3DDevice->CreateTexture(desc.Width, desc.Height, 1, 0,
-		desc.Format, D3DPOOL_SYSTEMMEM, &tex, NULL)))
+	// Read the image data into system memory.
+	if (FAILED(D3DDevice->CreateTexture(desc.Width, desc.Height, 1, 0, desc.Format, D3DPOOL_SYSTEMMEM, &tex, NULL)))
 	{
 		return NULL;
 	}
@@ -1789,6 +1767,39 @@ IDirect3DTexture9 *D3DFB::GetCurrentScreen()
 			tex->Release();
 			return NULL;
 		}
+	}
+
+	// If the caller wants the screen in video memory, create a new texture, and copy back to that.
+	if (pool == D3DPOOL_DEFAULT)
+	{
+		IDirect3DTexture9 *vtex;
+		IDirect3DSurface9 *vsurf;
+
+		if (FAILED(D3DDevice->CreateTexture(FBWidth, FBHeight, 1, 0, desc.Format, D3DPOOL_DEFAULT, &vtex, NULL)))
+		{
+			surf->Release();
+			tex->Release();
+			return NULL;
+		}
+		if (FAILED(vtex->GetSurfaceLevel(0, &vsurf)))
+		{
+			vtex->Release();
+			surf->Release();
+			tex->Release();
+			return NULL;
+		}
+		if (FAILED(D3DDevice->UpdateSurface(surf, NULL, vsurf, NULL)))
+		{
+			vsurf->Release();
+			vtex->Release();
+			surf->Release();
+			tex->Release();
+			return NULL;
+		}
+		surf->Release();
+		tex->Release();
+		surf = vsurf;
+		tex = vtex;
 	}
 	surf->Release();
 	return tex;
@@ -1861,7 +1872,7 @@ void D3DFB::DrawPackedTextures(int packnum)
 			quad->ShaderNum = BQS_Plain;
 		}
 		quad->Palette = NULL;
-		quad->Texture = pack;
+		quad->Texture = pack->Tex;
 
 		float x0 = float(x) - 0.5f;
 		float y0 = float(y) - 0.5f;
@@ -3007,7 +3018,7 @@ void STACK_ARGS D3DFB::DrawTextureV (FTexture *img, double x, double y, uint32 t
 		return;
 	}
 
-	QuadExtra[QuadBatchPos].Texture = tex->Box->Owner;
+	QuadExtra[QuadBatchPos].Texture = tex->Box->Owner->Tex;
 	if (parms.bilinear)
 	{
 		QuadExtra[QuadBatchPos].Flags |= BQF_Bilinear;
@@ -3148,7 +3159,7 @@ void D3DFB::FlatFill(int left, int top, int right, int bottom, FTexture *src, bo
 		quad->ShaderNum = BQS_Plain;
 	}
 	quad->Palette = NULL;
-	quad->Texture = tex->Box->Owner;
+	quad->Texture = tex->Box->Owner->Tex;
 
 	vert[0].x = x0;
 	vert[0].y = y0;
@@ -3380,11 +3391,13 @@ void D3DFB::EndQuadBatch()
 		{
 			SetPaletteTexture(quad->Palette->Tex, quad->Palette->RoundedPaletteSize, quad->Palette->BorderColor);
 		}
+#if 0
 		// Set paletted bilinear filtering (IF IT WORKED RIGHT!)
 		if ((quad->Flags & (BQF_Paletted | BQF_Bilinear)) == (BQF_Paletted | BQF_Bilinear))
 		{
 			SetPalTexBilinearConstants(quad->Texture);
 		}
+#endif
 
 		// Set the alpha blending
 		SetAlphaBlend(D3DBLENDOP(quad->BlendOp), D3DBLEND(quad->SrcBlend), D3DBLEND(quad->DestBlend));
@@ -3442,7 +3455,7 @@ void D3DFB::EndQuadBatch()
 		// Set the texture
 		if (quad->Texture != NULL)
 		{
-			SetTexture(0, quad->Texture->Tex);
+			SetTexture(0, quad->Texture);
 		}
 
 		// Draw the quad

@@ -1,3 +1,11 @@
+November 30, 2009
+- The initial wipe screen is now kept in video memory. I had previously
+  assumed that since the wipes only run at 35 FPS, the time spent DMA'ing
+  it from system to video memory would be acceptable. Apparently I was wrong.
+  In particular, updating the same surface several times probably has to
+  synchronize between each one, making melt particularly slower than it
+  needs to be.
+
 November 29, 2009  (Changes by Graf Zahl)
 - fixed: Line_SetBlocking and Line_SetTextureScale were not in the list
   of action specials used by DECORATE or MAPINFO.

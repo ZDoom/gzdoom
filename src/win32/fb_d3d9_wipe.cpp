@@ -159,7 +159,7 @@ bool D3DFB::WipeStartScreen(int type)
 		return false;
 	}
 
-	InitialWipeScreen = GetCurrentScreen();
+	InitialWipeScreen = GetCurrentScreen(D3DPOOL_DEFAULT);
 
 	// Create another texture to copy the final wipe screen to so
 	// we can still gamma correct the wipe. Since this is just for
@@ -338,6 +338,27 @@ D3DFB::Wiper::~Wiper()
 {
 }
 
+//==========================================================================
+//
+// D3DFB :: Wiper :: DrawScreen
+//
+// Draw either the initial or target screen completely to the screen.
+//
+//==========================================================================
+
+void D3DFB::Wiper::DrawScreen(D3DFB *fb, IDirect3DTexture9 *tex,
+	D3DBLENDOP blendop, D3DCOLOR color0, D3DCOLOR color1)
+{
+	FBVERTEX verts[4];
+
+	fb->CalcFullscreenCoords(verts, false, false, color0, color1);
+	fb->D3DDevice->SetFVF(D3DFVF_FBVERTEX);
+	fb->SetTexture(0, tex);
+	fb->SetAlphaBlend(blendop, D3DBLEND_SRCALPHA, D3DBLEND_INVSRCALPHA);
+	fb->SetPixelShader(fb->Shaders[SHADER_NormalColor]);
+	fb->D3DDevice->DrawPrimitiveUP(D3DPT_TRIANGLEFAN, 2, verts, sizeof(FBVERTEX));
+}
+
 // WIPE: CROSSFADE ---------------------------------------------------------
 
 //==========================================================================
@@ -363,29 +384,12 @@ bool D3DFB::Wiper_Crossfade::Run(int ticks, D3DFB *fb)
 {
 	Clock += ticks;
 
-	// Put the initial screen back to the buffer, presumably with DMA.
-	IDirect3DSurface9 *source = NULL, *target = NULL;
-
-	if (SUCCEEDED(fb->InitialWipeScreen->GetSurfaceLevel(0, &source)) &&
-		SUCCEEDED(fb->D3DDevice->GetRenderTarget(0, &target)))
-	{
-		fb->D3DDevice->UpdateSurface(source, NULL, target, NULL);
-		target->Release();
-	}
-	if (source != NULL)
-	{
-		source->Release();
-	}
+	// Put the initial screen back to the buffer.
+	DrawScreen(fb, fb->InitialWipeScreen);
 
 	// Draw the new screen on top of it.
-	FBVERTEX verts[4];
-
-	fb->CalcFullscreenCoords(verts, false, false, D3DCOLOR_COLORVALUE(0,0,0,Clock / 32.f), D3DCOLOR_RGBA(255,255,255,0));
-	fb->D3DDevice->SetFVF(D3DFVF_FBVERTEX);
-	fb->SetTexture(0, fb->FinalWipeScreen);
-	fb->SetAlphaBlend(D3DBLENDOP_ADD, D3DBLEND_SRCALPHA, D3DBLEND_INVSRCALPHA);
-	fb->SetPixelShader(fb->Shaders[SHADER_NormalColor]);
-	fb->D3DDevice->DrawPrimitiveUP(D3DPT_TRIANGLEFAN, 2, verts, sizeof(FBVERTEX));
+	DrawScreen(fb, fb->FinalWipeScreen, D3DBLENDOP_ADD,
+		D3DCOLOR_COLORVALUE(0,0,0,Clock / 32.f), D3DCOLOR_RGBA(255,255,255,0));
 
 	return Clock >= 32;
 }
@@ -422,28 +426,8 @@ D3DFB::Wiper_Melt::Wiper_Melt()
 
 bool D3DFB::Wiper_Melt::Run(int ticks, D3DFB *fb)
 {
-	IDirect3DSurface9 *source = NULL, *target;
-
-	if (FAILED(fb->InitialWipeScreen->GetSurfaceLevel(0, &source)) ||
-		FAILED(fb->D3DDevice->GetRenderTarget(0, &target)))
-	{
-		// A fat lot of good we can do if we can't get these two surfaces.
-		if (source != NULL)
-		{
-			source->Release();
-		}
-		return true;
-	}
-
 	// Draw the new screen on the bottom.
-	FBVERTEX verts[4];
-
-	fb->CalcFullscreenCoords(verts, false, false, 0, 0xFFFFFFFF);
-	fb->D3DDevice->SetFVF(D3DFVF_FBVERTEX);
-	fb->SetTexture(0, fb->FinalWipeScreen);
-	fb->SetAlphaBlend(D3DBLENDOP(0));
-	fb->SetPixelShader(fb->Shaders[SHADER_NormalColor]);
-	fb->D3DDevice->DrawPrimitiveUP(D3DPT_TRIANGLEFAN, 2, verts, sizeof(FBVERTEX));
+	DrawScreen(fb, fb->FinalWipeScreen);
 
 	int i, dy;
 	int fbwidth = fb->Width;
@@ -481,13 +465,82 @@ bool D3DFB::Wiper_Melt::Run(int ticks, D3DFB *fb)
 				dpt.y += fb->LBOffsetI;
 				if (rect.bottom > rect.top)
 				{
-					fb->D3DDevice->UpdateSurface(source, &rect, target, &dpt);
+					fb->CheckQuadBatch();
+
+					BufferedQuad *quad = &fb->QuadExtra[fb->QuadBatchPos];
+					FBVERTEX *vert = &fb->VertexData[fb->VertexPos];
+					WORD *index = &fb->IndexData[fb->IndexPos];
+
+					quad->Group1 = 0;
+					quad->Flags = BQF_DisableAlphaTest;
+					quad->ShaderNum = BQS_Plain;
+					quad->Palette = NULL;
+					quad->Texture = fb->InitialWipeScreen;
+
+					// Fill the vertex buffer.
+					float u0 = rect.left / float(fb->FBWidth);
+					float v0 = 0;
+					float u1 = rect.right / float(fb->FBWidth);
+					float v1 = (rect.bottom - rect.top) / float(fb->FBHeight);
+
+					float x0 = float(rect.left) - 0.5f;
+					float x1 = float(rect.right) - 0.5f;
+					float y0 = float(dpt.y) - 0.5f;
+					float y1 = float(fbheight) - 0.5f;
+
+					vert[0].x = x0;
+					vert[0].y = y0;
+					vert[0].z = 0;
+					vert[0].rhw = 1;
+					vert[0].color0 = 0;
+					vert[0].color1 = 0xFFFFFFF;
+					vert[0].tu = u0;
+					vert[0].tv = v0;
+
+					vert[1].x = x1;
+					vert[1].y = y0;
+					vert[1].z = 0;
+					vert[1].rhw = 1;
+					vert[1].color0 = 0;
+					vert[1].color1 = 0xFFFFFFF;
+					vert[1].tu = u1;
+					vert[1].tv = v0;
+
+					vert[2].x = x1;
+					vert[2].y = y1;
+					vert[2].z = 0;
+					vert[2].rhw = 1;
+					vert[2].color0 = 0;
+					vert[2].color1 = 0xFFFFFFF;
+					vert[2].tu = u1;
+					vert[2].tv = v1;
+
+					vert[3].x = x0;
+					vert[3].y = y1;
+					vert[3].z = 0;
+					vert[3].rhw = 1;
+					vert[3].color0 = 0;
+					vert[3].color1 = 0xFFFFFFF;
+					vert[3].tu = u0;
+					vert[3].tv = v1;
+
+					// Fill the vertex index buffer.
+					index[0] = fb->VertexPos;
+					index[1] = fb->VertexPos + 1;
+					index[2] = fb->VertexPos + 2;
+					index[3] = fb->VertexPos;
+					index[4] = fb->VertexPos + 2;
+					index[5] = fb->VertexPos + 3;
+
+					// Batch the quad.
+					fb->QuadBatchPos++;
+					fb->VertexPos += 4;
+					fb->IndexPos += 6;
 				}
 			}
 		}
 	}
-	target->Release();
-	source->Release();
+	fb->EndQuadBatch();
 	return done;
 }
 
@@ -561,18 +614,7 @@ bool D3DFB::Wiper_Burn::Run(int ticks, D3DFB *fb)
 	}
 
 	// Put the initial screen back to the buffer.
-	IDirect3DSurface9 *source = NULL, *target;
-
-	if (SUCCEEDED(fb->InitialWipeScreen->GetSurfaceLevel(0, &source)) &&
-		SUCCEEDED(fb->D3DDevice->GetRenderTarget(0, &target)))
-	{
-		fb->D3DDevice->UpdateSurface(source, NULL, target, NULL);
-		target->Release();
-	}
-	if (source != NULL)
-	{
-		source->Release();
-	}
+	DrawScreen(fb, fb->InitialWipeScreen);
 
 	// Burn the new screen on top of it.
 	float top = fb->LBOffset - 0.5f;

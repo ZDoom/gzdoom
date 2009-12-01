@@ -289,7 +289,7 @@ private:
 			DWORD Group1;
 		};
 		D3DPal *Palette;
-		PackingTexture *Texture;
+		IDirect3DTexture9 *Texture;
 	};
 
 	enum
@@ -344,7 +344,7 @@ private:
 	void FillPresentParameters (D3DPRESENT_PARAMETERS *pp, bool fullscreen, bool vsync);
 	void CalcFullscreenCoords (FBVERTEX verts[4], bool viewarea_only, bool can_double, D3DCOLOR color0, D3DCOLOR color1) const;
 	bool Reset();
-	IDirect3DTexture9 *GetCurrentScreen();
+	IDirect3DTexture9 *GetCurrentScreen(D3DPOOL pool=D3DPOOL_SYSTEMMEM);
 	void ReleaseDefaultPoolItems();
 	void KillNativePals();
 	void KillNativeTexs();
@@ -444,6 +444,9 @@ private:
 	public:
 		virtual ~Wiper();
 		virtual bool Run(int ticks, D3DFB *fb) = 0;
+
+		void DrawScreen(D3DFB *fb, IDirect3DTexture9 *tex,
+			D3DBLENDOP blendop=D3DBLENDOP(0), D3DCOLOR color0=0, D3DCOLOR color1=0xFFFFFFF);
 	};
 
 	class Wiper_Melt;			friend class Wiper_Melt;
@@ -451,6 +454,30 @@ private:
 	class Wiper_Crossfade;		friend class Wiper_Crossfade;
 
 	Wiper *ScreenWipe;
+};
+
+// Flags for a buffered quad
+enum
+{
+	BQF_GamePalette		= 1,
+	BQF_CustomPalette	= 7,
+		BQF_Paletted	= 7,
+	BQF_Bilinear		= 8,
+	BQF_WrapUV			= 16,
+	BQF_InvertSource	= 32,
+	BQF_DisableAlphaTest= 64,
+	BQF_Desaturated		= 128,
+};
+
+// Shaders for a buffered quad
+enum
+{
+	BQS_PalTex,
+	BQS_Plain,
+	BQS_RedToAlpha,
+	BQS_ColorOnly,
+	BQS_SpecialColormap,
+	BQS_InGameColormap,
 };
 
 #if 0

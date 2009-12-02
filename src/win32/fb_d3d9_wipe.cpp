@@ -173,14 +173,14 @@ bool D3DFB::WipeStartScreen(int type)
 					1, D3DUSAGE_RENDERTARGET, desc.Format, D3DPOOL_DEFAULT,
 					&FinalWipeScreen, NULL)))
 			{
-				FinalWipeScreen = TempRenderTexture;
+				(FinalWipeScreen = TempRenderTexture)->AddRef();
 			}
 			tsurf->Release();
 		}
 	}
 	else
 	{
-		FinalWipeScreen = TempRenderTexture;
+		(FinalWipeScreen = TempRenderTexture)->AddRef();
 	}
 
 	// Make even fullscreen model render to the TempRenderTexture, so
@@ -229,7 +229,11 @@ void D3DFB::WipeEndScreen()
 
 	// If these are different, reverse their roles so we don't need to
 	// waste time copying from TempRenderTexture to FinalWipeScreen.
-	swap(FinalWipeScreen, TempRenderTexture);
+	if (FinalWipeScreen != TempRenderTexture)
+	{
+		swap(RenderTexture[CurrRenderTexture], FinalWipeScreen);
+		TempRenderTexture = RenderTexture[CurrRenderTexture];
+	}
 
 	// At this point, InitialWipeScreen holds the screen we are wiping from.
 	// FinalWipeScreen holds the screen we are wiping to, which may be the
@@ -315,11 +319,7 @@ void D3DFB::WipeCleanup()
 		ScreenWipe = NULL;
 	}
 	SAFE_RELEASE( InitialWipeScreen );
-	if (FinalWipeScreen != NULL && FinalWipeScreen != TempRenderTexture)
-	{
-		FinalWipeScreen->Release();
-	}
-	FinalWipeScreen = NULL;
+	SAFE_RELEASE( FinalWipeScreen );
 	GatheringWipeScreen = false;
 	if (!Accel2D)
 	{

@@ -247,6 +247,8 @@ D3DFB::D3DFB (int width, int height, bool fullscreen)
 	IndexBuffer = NULL;
 	FBTexture = NULL;
 	TempRenderTexture = NULL;
+	RenderTexture[0] = NULL;
+	RenderTexture[1] = NULL;
 	InitialWipeScreen = NULL;
 	ScreenshotTexture = NULL;
 	ScreenshotSurface = NULL;
@@ -277,6 +279,8 @@ D3DFB::D3DFB (int width, int height, bool fullscreen)
 	Packs = NULL;
 	PixelDoubling = 0;
 	SkipAt = -1;
+	CurrRenderTexture = 0;
+	RenderTextureToggle = 0;
 
 	Gamma = 1.0;
 	FlashColor0 = 0;
@@ -624,15 +628,9 @@ void D3DFB::ReleaseResources ()
 void D3DFB::ReleaseDefaultPoolItems()
 {
 	SAFE_RELEASE( FBTexture );
-	if (FinalWipeScreen != NULL)
-	{
-		if (FinalWipeScreen != TempRenderTexture)
-		{
-			FinalWipeScreen->Release();
-		}
-		FinalWipeScreen = NULL;
-	}
-	SAFE_RELEASE( TempRenderTexture );
+	SAFE_RELEASE( FinalWipeScreen );
+	SAFE_RELEASE( RenderTexture[0] );
+	SAFE_RELEASE( RenderTexture[1] );
 	SAFE_RELEASE( InitialWipeScreen );
 	SAFE_RELEASE( VertexBuffer );
 	SAFE_RELEASE( IndexBuffer );
@@ -772,24 +770,42 @@ bool D3DFB::CreateFBTexture ()
 		FBWidth = Width;
 		FBHeight = Height;
 	}
-	if (FAILED(D3DDevice->CreateTexture(FBWidth, FBHeight, 1, D3DUSAGE_RENDERTARGET, D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &TempRenderTexture, NULL)))
+	RenderTextureToggle = 0;
+	RenderTexture[0] = NULL;
+	RenderTexture[1] = NULL;
+	if (FAILED(D3DDevice->CreateTexture(FBWidth, FBHeight, 1, D3DUSAGE_RENDERTARGET, D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &RenderTexture[0], NULL)))
 	{
-		TempRenderTexture = NULL;
+		return false;
+	}
+	if (Windowed || PixelDoubling)
+	{
+		// Windowed or pixel doubling: Create another render texture so we can flip between them.
+		RenderTextureToggle = 1;
+		if (FAILED(D3DDevice->CreateTexture(FBWidth, FBHeight, 1, D3DUSAGE_RENDERTARGET, D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &RenderTexture[1], NULL)))
+		{
+			return false;
+		}
 	}
 	else
 	{
-		// Initialize the TempRenderTexture to black.
+		// Fullscreen and not pixel doubling: Create a render target to have the back buffer copied to.
+		if (FAILED(D3DDevice->CreateRenderTarget(Width, Height, D3DFMT_X8R8G8B8, D3DMULTISAMPLE_NONE, 0, FALSE, &FrontCopySurface, NULL)))
+		{
+			return false;
+		}
+	}
+	// Initialize the TempRenderTextures to black.
+	for (int i = 0; i <= RenderTextureToggle; ++i)
+	{
 		IDirect3DSurface9 *surf;
-		if (SUCCEEDED(TempRenderTexture->GetSurfaceLevel(0, &surf)))
+		if (SUCCEEDED(RenderTexture[i]->GetSurfaceLevel(0, &surf)))
 		{
 			D3DDevice->ColorFill(surf, NULL, D3DCOLOR_XRGB(0,0,0));
 			surf->Release();
 		}
 	}
-	if (FAILED(D3DDevice->CreateRenderTarget(Width, Height, D3DFMT_X8R8G8B8, D3DMULTISAMPLE_NONE, 0, FALSE, &FrontCopySurface, NULL)))
-	{
-		return false;
-	}
+	TempRenderTexture = RenderTexture[0];
+	CurrRenderTexture = 0;
 	return true;
 }
 
@@ -1179,6 +1195,13 @@ void D3DFB::Flip()
 	}
 	D3DDevice->Present(NULL, NULL, NULL, NULL);
 	InScene = false;
+
+	if (RenderTextureToggle)
+	{
+		// Flip the TempRenderTexture to the other one now.
+		CurrRenderTexture ^= RenderTextureToggle;
+		TempRenderTexture = RenderTexture[CurrRenderTexture];
+	}
 }
 
 //==========================================================================
@@ -1198,10 +1221,10 @@ void D3DFB::CopyNextFrontBuffer()
 	if (Windowed || PixelDoubling)
 	{
 		// Windowed mode or pixel doubling: TempRenderTexture has what we want
+		SAFE_RELEASE( FrontCopySurface );
 		if (SUCCEEDED(TempRenderTexture->GetSurfaceLevel(0, &backbuff)))
 		{
-			D3DDevice->StretchRect(backbuff, NULL, FrontCopySurface, NULL, D3DTEXF_NONE);
-			backbuff->Release();
+			FrontCopySurface = backbuff;
 		}
 	}
 	else

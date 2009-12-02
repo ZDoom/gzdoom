@@ -395,6 +395,8 @@ private:
 	int PixelDoubling;
 	int SkipAt;
 	int LBOffsetI;
+	int RenderTextureToggle;
+	int CurrRenderTexture;
 	float LBOffset;
 	float Gamma;
 	bool UpdatePending;
@@ -415,7 +417,7 @@ private:
 
 	IDirect3DDevice9 *D3DDevice;
 	IDirect3DTexture9 *FBTexture;
-	IDirect3DTexture9 *TempRenderTexture;
+	IDirect3DTexture9 *TempRenderTexture, *RenderTexture[2];
 	IDirect3DTexture9 *PaletteTexture;
 	IDirect3DTexture9 *GammaTexture;
 	IDirect3DTexture9 *ScreenshotTexture;

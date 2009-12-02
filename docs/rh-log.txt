@@ -1,3 +1,11 @@
+December 1, 2009
+- Added another surface to receive a copy of the top back buffer immediately
+  before it is presented. This effectively produces a copy of the front
+  buffer without the performance penalty of GetFrontBufferData, so fullscreen
+  wipe preparation and screenshots are faster now. At lower resolutions,
+  always copying the backbuffer does incur a slight FPS hit, but it's
+  practically free at higher resolutions.
+
 November 30, 2009
 - The initial wipe screen is now kept in video memory. I had previously
   assumed that since the wipes only run at 35 FPS, the time spent DMA'ing

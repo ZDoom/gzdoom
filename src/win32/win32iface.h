@@ -363,6 +363,7 @@ private:
 	void BeginLineBatch();
 	void EndLineBatch();
 	void EndBatch();
+	void CopyNextFrontBuffer();
 
 	D3DCAPS9 DeviceCaps;
 
@@ -419,6 +420,7 @@ private:
 	IDirect3DTexture9 *GammaTexture;
 	IDirect3DTexture9 *ScreenshotTexture;
 	IDirect3DSurface9 *ScreenshotSurface;
+	IDirect3DSurface9 *FrontCopySurface;
 
 	IDirect3DVertexBuffer9 *VertexBuffer;
 	FBVERTEX *VertexData;

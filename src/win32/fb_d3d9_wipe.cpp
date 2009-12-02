@@ -459,10 +459,9 @@ bool D3DFB::Wiper_Melt::Run(int ticks, D3DFB *fb)
 				dpt.x = i * fbwidth / WIDTH;
 				dpt.y = MAX(0, y[i] * fbheight / HEIGHT);
 				rect.left = dpt.x;
-				rect.top = fb->LBOffsetI;
+				rect.top = 0;
 				rect.right = (i + 1) * fbwidth / WIDTH;
-				rect.bottom = fbheight - dpt.y + fb->LBOffsetI;
-				dpt.y += fb->LBOffsetI;
+				rect.bottom = fbheight - dpt.y;
 				if (rect.bottom > rect.top)
 				{
 					fb->CheckQuadBatch();
@@ -485,8 +484,8 @@ bool D3DFB::Wiper_Melt::Run(int ticks, D3DFB *fb)
 
 					float x0 = float(rect.left) - 0.5f;
 					float x1 = float(rect.right) - 0.5f;
-					float y0 = float(dpt.y) - 0.5f;
-					float y1 = float(fbheight) - 0.5f;
+					float y0 = float(dpt.y + fb->LBOffsetI) - 0.5f;
+					float y1 = float(fbheight + fb->LBOffsetI) - 0.5f;
 
 					vert[0].x = x0;
 					vert[0].y = y0;

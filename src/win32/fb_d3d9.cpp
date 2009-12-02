@@ -253,6 +253,7 @@ D3DFB::D3DFB (int width, int height, bool fullscreen)
 	FinalWipeScreen = NULL;
 	PaletteTexture = NULL;
 	GammaTexture = NULL;
+	FrontCopySurface = NULL;
 	for (int i = 0; i < NUM_SHADERS; ++i)
 	{
 		Shaders[i] = NULL;
@@ -637,6 +638,7 @@ void D3DFB::ReleaseDefaultPoolItems()
 	SAFE_RELEASE( IndexBuffer );
 	SAFE_RELEASE( BlockSurface[0] );
 	SAFE_RELEASE( BlockSurface[1] );
+	SAFE_RELEASE( FrontCopySurface );
 }
 
 //==========================================================================
@@ -748,14 +750,14 @@ void D3DFB::KillNativeTexs()
 
 bool D3DFB::CreateFBTexture ()
 {
-	if (FAILED(D3DDevice->CreateTexture (Width, Height, 1, D3DUSAGE_DYNAMIC, D3DFMT_L8, D3DPOOL_DEFAULT, &FBTexture, NULL)))
+	if (FAILED(D3DDevice->CreateTexture(Width, Height, 1, D3DUSAGE_DYNAMIC, D3DFMT_L8, D3DPOOL_DEFAULT, &FBTexture, NULL)))
 	{
 		int pow2width, pow2height, i;
 
 		for (i = 1; i < Width; i <<= 1) {} pow2width = i;
 		for (i = 1; i < Height; i <<= 1) {} pow2height = i;
 
-		if (FAILED(D3DDevice->CreateTexture (pow2width, pow2height, 1, D3DUSAGE_DYNAMIC, D3DFMT_L8, D3DPOOL_DEFAULT, &FBTexture, NULL)))
+		if (FAILED(D3DDevice->CreateTexture(pow2width, pow2height, 1, D3DUSAGE_DYNAMIC, D3DFMT_L8, D3DPOOL_DEFAULT, &FBTexture, NULL)))
 		{
 			return false;
 		}
@@ -770,7 +772,7 @@ bool D3DFB::CreateFBTexture ()
 		FBWidth = Width;
 		FBHeight = Height;
 	}
-	if (FAILED(D3DDevice->CreateTexture (FBWidth, FBHeight, 1, D3DUSAGE_RENDERTARGET, D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &TempRenderTexture, NULL)))
+	if (FAILED(D3DDevice->CreateTexture(FBWidth, FBHeight, 1, D3DUSAGE_RENDERTARGET, D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &TempRenderTexture, NULL)))
 	{
 		TempRenderTexture = NULL;
 	}
@@ -783,6 +785,10 @@ bool D3DFB::CreateFBTexture ()
 			D3DDevice->ColorFill(surf, NULL, D3DCOLOR_XRGB(0,0,0));
 			surf->Release();
 		}
+	}
+	if (FAILED(D3DDevice->CreateRenderTarget(Width, Height, D3DFMT_X8R8G8B8, D3DMULTISAMPLE_NONE, 0, FALSE, &FrontCopySurface, NULL)))
+	{
+		return false;
 	}
 	return true;
 }
@@ -1156,6 +1162,8 @@ void D3DFB::Flip()
 	DoWindowedGamma();
 	D3DDevice->EndScene();
 
+	CopyNextFrontBuffer();
+
 	// Attempt to counter input lag.
 	if (d3d_antilag && BlockSurface[0] != NULL)
 	{
@@ -1171,6 +1179,42 @@ void D3DFB::Flip()
 	}
 	D3DDevice->Present(NULL, NULL, NULL, NULL);
 	InScene = false;
+}
+
+//==========================================================================
+//
+// D3DFB :: CopyNextFrontBuffer
+//
+// Duplicates the contents of the back buffer that will become the front
+// buffer upon Present into FrontCopySurface so that we can get the
+// contents of the display without wasting time in GetFrontBufferData().
+//
+//==========================================================================
+
+void D3DFB::CopyNextFrontBuffer()
+{
+	IDirect3DSurface9 *backbuff;
+
+	if (Windowed || PixelDoubling)
+	{
+		// Windowed mode or pixel doubling: TempRenderTexture has what we want
+		if (SUCCEEDED(TempRenderTexture->GetSurfaceLevel(0, &backbuff)))
+		{
+			D3DDevice->StretchRect(backbuff, NULL, FrontCopySurface, NULL, D3DTEXF_NONE);
+			backbuff->Release();
+		}
+	}
+	else
+	{
+		// Fullscreen, not pixel doubled: The back buffer has what we want,
+		// but it might be letter boxed.
+		if (SUCCEEDED(D3DDevice->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &backbuff)))
+		{
+			RECT srcrect = { 0, LBOffsetI, Width, LBOffsetI + Height };
+			D3DDevice->StretchRect(backbuff, &srcrect, FrontCopySurface, NULL, D3DTEXF_NONE);
+			backbuff->Release();
+		}
+	}
 }
 
 //==========================================================================
@@ -1688,50 +1732,25 @@ void D3DFB::ReleaseScreenshotBuffer()
 IDirect3DTexture9 *D3DFB::GetCurrentScreen(D3DPOOL pool)
 {
 	IDirect3DTexture9 *tex;
-	IDirect3DSurface9 *tsurf, *surf;
+	IDirect3DSurface9 *surf;
 	D3DSURFACE_DESC desc;
+	HRESULT hr;
 
 	assert(pool == D3DPOOL_SYSTEMMEM || pool == D3DPOOL_DEFAULT);
 
-	if (Windowed || PixelDoubling)
+	if (FAILED(FrontCopySurface->GetDesc(&desc)))
 	{
-		// The texture we read into must have the same pixel format as
-		// the TempRenderTexture.
-		if (SUCCEEDED(TempRenderTexture->GetSurfaceLevel(0, &tsurf)))
-		{
-			if (FAILED(tsurf->GetDesc(&desc)))
-			{
-				tsurf->Release();
-				return NULL;
-			}
-			tsurf->Release();
-		}
-		else
-		{
-			return NULL;
-		}
+		return NULL;
+	}
+	if (pool == D3DPOOL_SYSTEMMEM)
+	{
+		hr = D3DDevice->CreateTexture(desc.Width, desc.Height, 1, 0, desc.Format, D3DPOOL_SYSTEMMEM, &tex, NULL);
 	}
 	else
 	{
-		if (SUCCEEDED(D3DDevice->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &tsurf)))
-		{
-			if (FAILED(tsurf->GetDesc(&desc)))
-			{
-				tsurf->Release();
-				return NULL;
-			}
-			tsurf->Release();
-		}
-		else
-		{
-			return NULL;
-		}
-		// GetFrontBufferData works only with this format
-		desc.Format = D3DFMT_A8R8G8B8;
+		hr = D3DDevice->CreateTexture(FBWidth, FBHeight, 1, D3DUSAGE_RENDERTARGET, desc.Format, D3DPOOL_DEFAULT, &tex, NULL);
 	}
-
-	// Read the image data into system memory.
-	if (FAILED(D3DDevice->CreateTexture(desc.Width, desc.Height, 1, 0, desc.Format, D3DPOOL_SYSTEMMEM, &tex, NULL)))
+	if (FAILED(hr))
 	{
 		return NULL;
 	}
@@ -1740,68 +1759,23 @@ IDirect3DTexture9 *D3DFB::GetCurrentScreen(D3DPOOL pool)
 		tex->Release();
 		return NULL;
 	}
-
-	if (!Windowed && !PixelDoubling)
+	if (pool == D3DPOOL_SYSTEMMEM)
 	{
-		if (FAILED(D3DDevice->GetFrontBufferData(0, surf)))
-		{
-			surf->Release();
-			tex->Release();
-			return NULL;
-		}
+		// Video -> System memory : use GetRenderTargetData
+		hr = D3DDevice->GetRenderTargetData(FrontCopySurface, surf);
 	}
 	else
 	{
-		if (SUCCEEDED(TempRenderTexture->GetSurfaceLevel(0, &tsurf)))
-		{
-			if (FAILED(D3DDevice->GetRenderTargetData(tsurf, surf)))
-			{
-				tsurf->Release();
-				tex->Release();
-				return NULL;
-			}
-			tsurf->Release();
-		}
-		else
-		{
-			tex->Release();
-			return NULL;
-		}
-	}
-
-	// If the caller wants the screen in video memory, create a new texture, and copy back to that.
-	if (pool == D3DPOOL_DEFAULT)
-	{
-		IDirect3DTexture9 *vtex;
-		IDirect3DSurface9 *vsurf;
-
-		if (FAILED(D3DDevice->CreateTexture(FBWidth, FBHeight, 1, 0, desc.Format, D3DPOOL_DEFAULT, &vtex, NULL)))
-		{
-			surf->Release();
-			tex->Release();
-			return NULL;
-		}
-		if (FAILED(vtex->GetSurfaceLevel(0, &vsurf)))
-		{
-			vtex->Release();
-			surf->Release();
-			tex->Release();
-			return NULL;
-		}
-		if (FAILED(D3DDevice->UpdateSurface(surf, NULL, vsurf, NULL)))
-		{
-			vsurf->Release();
-			vtex->Release();
-			surf->Release();
-			tex->Release();
-			return NULL;
-		}
-		surf->Release();
-		tex->Release();
-		surf = vsurf;
-		tex = vtex;
+		// Video -> Video memory : use StretchRect
+		RECT destrect = { 0, 0, Width, Height };
+		hr = D3DDevice->StretchRect(FrontCopySurface, NULL, surf, &destrect, D3DTEXF_POINT);
 	}
 	surf->Release();
+	if (FAILED(hr))
+	{
+		tex->Release();
+		return NULL;
+	}
 	return tex;
 }
 

@@ -831,13 +831,32 @@ bool PIT_CheckThing (AActor *thing, FCheckPosition &tm)
 			}
 		}
 	}
+
+	// Both things overlap in x or y direction
+	bool unblocking = false;
+
+	if (tm.FromPMove)
+	{
+		fixed_t newdist = P_AproxDistance(thing->x - tm.x, thing->y - tm.y);
+		fixed_t olddist = P_AproxDistance(thing->x - tm.thing->x, thing->y - tm.thing->y);
+
+		// Both actors already overlap. To prevent them from remaining stuck allow the move if it
+		// takes them further apart.
+		if (newdist > olddist)
+		{
+			// ... but not if they did not overlap in z-direction before but would after the move.
+			unblocking = !((tm.thing->x >= thing->x + thing->height && tm.x < thing->x + thing->height) ||
+							(tm.thing->x + tm.thing->height <= thing->x && tm.x + tm.thing->height > thing->x));
+		}
+	}
+
 	// [RH] If the other thing is a bridge, then treat the moving thing as if it had MF2_PASSMOBJ, so
 	// you can use a scrolling floor to move scenery items underneath a bridge.
 	if ((tm.thing->flags2 & MF2_PASSMOBJ || thing->flags4 & MF4_ACTLIKEBRIDGE) && !(i_compatflags & COMPATF_NO_PASSMOBJ))
 	{ // check if a mobj passed over/under another object
 		if (tm.thing->flags3 & thing->flags3 & MF3_DONTOVERLAP)
 		{ // Some things prefer not to overlap each other, if possible
-			return false;
+			return unblocking;
 		}
 		if ((tm.thing->z >= topz) || (tm.thing->z + tm.thing->height <= thing->z))
 		{
@@ -1145,7 +1164,7 @@ bool PIT_CheckThing (AActor *thing, FCheckPosition &tm)
 	// despite another solid thing being in the way.
 	// killough 4/11/98: Treat no-clipping things as not blocking
 
-	return !solid;
+	return !solid || unblocking;
 
 	// return !(thing->flags & MF_SOLID);	// old code -- killough
 }

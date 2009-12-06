@@ -346,6 +346,7 @@ struct FCheckPosition
 	sector_t		*ceilingsector;
 	bool			touchmidtex;
 	bool			floatok;
+	bool			FromPMove;
 	line_t			*ceilingline;
 	AActor			*stepthing;
 	// [RH] These are used by PIT_CheckThing and P_XYMovement to apply
@@ -359,6 +360,7 @@ struct FCheckPosition
 		DoRipping = rip;
 		LastRipped = NULL;
 		PushTime = 0;
+		FromPMove = false;
 	}
 };
 

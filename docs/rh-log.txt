@@ -1,3 +1,12 @@
+December 6, 2009  (Changes by Graf Zahl)
+- added some code that prevents overlapping monsters from getting stuck in
+  each other. PIT_CheckThing will return true under the following contitions 
+  now:
+  * It was called from P_Move
+  * The actor that is blocking the move already overlaps with the monster
+    that is being moved.
+  * the move will take the 2 actors further apart.  
+
 December 1, 2009
 - Added another surface to receive a copy of the top back buffer immediately
   before it is presented. This effectively produces a copy of the front

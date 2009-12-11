@@ -1,4 +1,7 @@
 December 11, 2009  (Changes by Graf Zahl)
+- fixed: Auto-COMPAT_SHORTTEX for IWADs must be set per IWAD, not in general
+  for Doom.
+- added autodetection of Harmony's IWAD.
 - Added SnailMan's updated language.ita file.
 
 December 11, 2009

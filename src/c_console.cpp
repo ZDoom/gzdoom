@@ -1843,7 +1843,7 @@ static const char logbar[] = "\n<------------------------------->\n";
 
 void C_MidPrint (FFont *font, const char *msg)
 {
-	if (StatusBar == NULL)
+	if (StatusBar == NULL || screen == NULL)
 		return;
 
 	if (msg != NULL)

@@ -1190,7 +1190,7 @@ bool AInventory::TryPickup (AActor *&toucher)
 		ItemFlags &= ~IF_PICKUPGOOD;
 		GoAwayAndDie ();
 	}
-	else if (MaxAmount == 0)
+	else if (MaxAmount == 0 && !IsKindOf(RUNTIME_CLASS(AAmmo)))
 	{
 		// Special case: If an item's MaxAmount is 0, you can still pick it
 		// up if it is autoactivate-able.

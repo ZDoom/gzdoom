@@ -1,3 +1,8 @@
+December 11, 2009
+- Fixed: You should still be able to pick up ammo that has a max amount set
+  at 0.
+- Added a few NULL screen checks.
+
 December 6, 2009  (Changes by Graf Zahl)
 - added some code that prevents overlapping monsters from getting stuck in
   each other. PIT_CheckThing will return true under the following contitions 

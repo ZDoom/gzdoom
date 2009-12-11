@@ -1,3 +1,6 @@
+December 11, 2009  (Changes by Graf Zahl)
+- Added SnailMan's updated language.ita file.
+
 December 11, 2009
 - Fixed: You should still be able to pick up ammo that has a max amount set
   at 0.

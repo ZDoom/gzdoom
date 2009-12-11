@@ -31,6 +31,25 @@ QUITMSG12 = "senti amico, esci adesso\ne perdi il tuo body count!";
 QUITMSG13 = "esci pure. quanto tornerai\nti aspettero' con un bastone.";
 QUITMSG14 = "sei fortunato che non ti picchi\nper aver pensato di andartene.";
 
+// Quit Strife messages
+QUITMSG15 = "dove stai andando?!\ne la ribellione?";
+QUITMSG16 = "macellus interruptus...\nche presa in giro!";
+QUITMSG17 = "ma tu sei la speranza\n-- la mia unica possibilita'!!";
+QUITMSG18 = "nessuno gira le spalle a Blackbird.";
+QUITMSG19 = "pensavo tu fossi diverso...";
+QUITMSG20 = "ma bravo! uccidi e scappi!";
+QUITMSG21 = "puoi uscire...\nma non puoi nasconderti...";
+QUITMSG22 = "eehi, che problema c'e'?\nla mamma ha detto che e' ora di cena?";
+
+// Quit Chex messages
+QUITMSG23 = "Non uscire ora, ci sono ancora\nflemoidi a piede libero!";
+QUITMSG24 = "Non arrenderti -- i flemoidi\nci sopraffaranno!";
+QUITMSG25 = "Non andartene ora.\nCi serve il tuo aiuto!";
+QUITMSG26 = "Spero tu stia solo facendo un\nbreak per prendere un Chex(R) party mix.";
+QUITMSG27 = "non uscire ora!\nCi serve il tuo aiuto!";
+QUITMSG28 = "Non abbandonare la\nFederazione Intergalattica dei Cereali!";
+QUITMSG29 = "Il vero guerriero Chex(R)\nnon si arrenderebbe cosi' in fretta!";
+
 LOADNET = "non puoi caricare una partita durante un netgame!\n\npremi un tasto.";
 QLOADNET = "non puoi fare un quickload durante un netgame!\n\npremi un tasto.";
 QSAVESPOT = "non hai ancora scelto uno slot per il quicksave!\n\npremi un tasto.";
@@ -91,6 +110,7 @@ PD_REDK = "Ti serve una chiave rossa per aprire questa porta";
 PD_YELLOWK = "Ti serve una chiave gialla per aprire questa porta";
 GGSAVED = "gioco salvato";
 HUSTR_MSGU = "[Messaggio non inviato]";
+PICKUP_PISTOL_DROPPED = "Raccolta una pistola.";
 
 // Level names
 HUSTR_E1M1 = "E1M1: Hangar";
@@ -254,6 +274,8 @@ STSTR_BEHOLD = "inVuln, BerSerk, Invisib, Tuta anti-Rad, MAppa, o Amplif-Luce";
 STSTR_BEHOLDX = "Power-up concesso/tolto";
 STSTR_CHOPPERS = "Ora vai e segali tutti!";
 STSTR_CLEV = "Cambio di livello...\n";
+TXT_BUDDHAON = "Modalita' Buddha attivata";
+TXT_BUDDHAOFF = "Modalita' Buddha disattivata";
 
 E1TEXT =
 	"Una volta che hai eliminato i cattivi e\n"
@@ -559,13 +581,15 @@ PD_BLUESO = "ti serve una chiave-teschio blu per attivare questo oggetto ";
 PD_REDSO = "ti serve una chiave-teschio rossa per attivare questo oggetto ";
 PD_YELLOWSO = "ti serve una chiave-teschio gialla per attivare questo oggetto ";
 
+PD_ALLKEYS = "Ti servono tutte le chiavi";
+
 
 // Gameflow messages
 TXT_FRAGLIMIT = "Fraglimit raggiunto.";
 TXT_TIMELIMIT = "Timelimit raggiunto.";
 
 // Spree messages
-SPREEKILLSELF = "%o stava bene finche' %g non si e' ucciso!";
+SPREEKILLSELF = "%o stava andando bene finche' non si e' ucciso da solo!";
 SPREEOVER = "La sequela di frag di %o e' stata terminata da %k";
 SPREE5 = "%k e' preda di un momento omicida!";
 SPREE10 = "%k sta facendo un massacro!";
@@ -578,6 +602,10 @@ MULTI2 = "Frag doppio!";
 MULTI3 = "Frag multiplo!";
 MULTI4 = "Frag ultra!";
 MULTI5 = "Frag DA PAURA!";
+//MULTI2 = "Double kill!";
+//MULTI3 = "Multi kill!";
+//MULTI4 = "Ultra kill!";
+//MULTI5 = "Monster kill!";
 
 // Obituary strings
 // First the self-kills, then the other-kills
@@ -588,24 +616,24 @@ OB_EXIT = "%o ha provato a uscire.";
 OB_WATER = "%o non sapeva nuotare.";
 OB_SLIME = "%o e' mutato.";
 OB_LAVA = "%o si e' sciolto.";
-OB_BARREL = "%o e' esploso.";
+OB_BARREL = "%o ha fatto bum.";
 OB_SPLASH = "%o si e' trovato nel posto sbagliato.";
 OB_R_SPLASH = "%o avrebbe dovuto allontanarsi.";
 OB_ROCKET = "%o avrebbe dovuto allontanarsi.";
 OB_KILLEDSELF = "%o ha ucciso se stesso.";
 
-OB_STEALTHBABY = "%o pensava che %g avesse visto un arachnotron.";
-OB_STEALTHVILE = "%o pensava che %g avesse visto un Arch-Vile.";
-OB_STEALTHBARON = "%o pensava che %g avesse visto un Barone Infernale.";
-OB_STEALTHCACO = "%o pensava che %g avesse visto un cacodemone.";
-OB_STEALTHCHAINGUY = "%o pensava che %g avesse visto uno zombie commando.";
-OB_STEALTHDEMON = "%o pensava che %g avesse visto un demone.";
-OB_STEALTHKNIGHT = "%o pensava che %g avesse visto un Cavaliere Infernale.";
-OB_STEALTHIMP = "%o pensava che %g avesse visto un imp.";
-OB_STEALTHFATSO = "%o pensava che %g avesse visto un mancubo.";
-OB_STEALTHUNDEAD = "%o pensava che %g avesse visto un revenant.";
-OB_STEALTHSHOTGUY = "%o pensava che %g avesse visto un sergente.";
-OB_STEALTHZOMBIE = "%o pensava che %g avesse visto uno zombie.";
+OB_STEALTHBABY = "a %o sembrava di aver visto un arachnotron.";
+OB_STEALTHVILE = "a %o sembrava di aver visto un Arch-Vile.";
+OB_STEALTHBARON = "a %o sembrava di aver visto un Barone Infernale.";
+OB_STEALTHCACO = "a %o sembrava di aver visto un cacodemone.";
+OB_STEALTHCHAINGUY = "a %o sembrava di aver visto uno zombie commando.";
+OB_STEALTHDEMON = "a %o sembrava di aver visto un demone.";
+OB_STEALTHKNIGHT = "a %o sembrava di aver visto un Cavaliere Infernale.";
+OB_STEALTHIMP = "a %o sembrava di aver visto un imp.";
+OB_STEALTHFATSO = "a %o sembrava di aver visto un mancubo.";
+OB_STEALTHUNDEAD = "a %o sembrava di aver visto un revenant.";
+OB_STEALTHSHOTGUY = "a %o sembrava di aver visto un sergente.";
+OB_STEALTHZOMBIE = "a %o sembrava di aver visto uno zombie.";
 OB_UNDEADHIT = "%o e' stato massacrato da un revenant.";
 OB_IMPHIT = "%o e' stato squarciato da un imp.";
 OB_CACOHIT = "%o si e' avvicinato troppo a un cacodemone.";
@@ -629,6 +657,7 @@ OB_BABY = "%o ha permesso che un arachnotron l'uccidesse.";
 OB_CYBORG = "%o e' stato spiaccicato da un Cyberdemonio.";
 OB_WOLFSS = "%o ha incontrato un Nazista.";
 
+OB_DOG = "%o e' stato sbranato da un cane.";
 OB_CHICKEN = "%o e' stato beccato a morte.";
 OB_BEAST = "%o e' stato carbonizzato da una bestia.";
 OB_CLINK = "%o e' stato squarciato da un lapillo.";
@@ -667,7 +696,7 @@ OB_MONTELEFRAG = "%o si e' fatto telefraggare.";
 
 OB_DEFAULT = "%o e' morto.";
 OB_FRIENDLY1 = "%k falcia via un compagno.";
-OB_FRIENDLY2 = "%k controlla gli occhiali di %p.";
+OB_FRIENDLY2 = "%k si controlla gli occhiali.";
 OB_FRIENDLY3 = "%k regala un frag all'altro team.";
 OB_FRIENDLY4 = "%k perde un altro amico.";
 
@@ -1016,3 +1045,95 @@ BBA_SCROTUM = "%o ha subito la separazione dello scroto";
 BBA_POPULATION = "%o si e' offerto per il controllo della popolazione";
 BBA_SUICIDE = "%o si e' suicidato";
 BBA_DARWIN = "%o ha ricevuto il Darwin Award";
+
+// Chex Quest Strings
+CHUSTR_E1M1 = "E1M1: Zona di Atterraggio";
+CHUSTR_E1M2 = "E1M2: Struttura di Immagazzinamento";
+CHUSTR_E1M3 = "E1M3: Laboratorio Sperimentale";
+CHUSTR_E1M4 = "E1M4: Arboreto";
+CHUSTR_E1M5 = "E1M5: Caverne di Bazoik";
+
+CE1TEXT =
+		"Missione compiuta.\n"
+		"\n"
+		"Sei preparato per la prossima missione?\n"
+		"\n"
+		"\n"
+		"\n"
+		"\n"
+		"\n"
+		"\n"
+		"Premi il tasto 'esc' per continuare...";
+
+CE2TEXT = "Ce l'hai fatta!";
+CE3TEXT = "Meraviglioso!";
+CE4TEXT = "Fantastico";
+
+CLOADNET = "non puoi caricare una quest durante una net quest!\n\npress a key.";
+CQSPROMPT = "sovrascrivere il salvataggio\n\n'%s'?\n\npremi y oppure n.";
+CQLOADNET = "non puoi fare un quickload durante una netquest!\n\npremi un tasto.";
+CQLPROMPT = "vuoi fare un quickload della quest\n\n'%s'?\n\npremi y oppure n.";
+CNEWGAME = "non puoi iniziare una nuova quest\ndurante una quest in rete.\n\npremi un tasto.";
+
+CNIGHTMARE = "Attento, sara' dura.\nVuoi continuare?\n\npremi y oppure n.";
+
+CSWSTRING = "questa e' Chex(R) Quest. cerca\n\nfuturi livelli su www.chexquest.com.\n\npremi un tasto.";
+
+CNETEND = "non puoi terminare una netquest!\n\npremi un tasto";
+CENDGAME = "sei sicuro di voler terminare la quest?\n\npremi y oppure n.";
+
+GOTCHEXARMOR = "Raccolta un'Armatura Chex(R).";
+GOTSUPERCHEXARMOR = "Raccolta la Super Armatura Chex(R)!";
+GOTWATER = "Raccolto un bicchiere d'acqua.";
+GOTREPELLENT = "Raccolto del repellente allo slime.";
+GOTBREAKFAST = "Colazione da supercarica!";
+GOTCBLUEKEY = "Raccolta una chiave blu.";
+GOTCYELLOWKEY = "Raccolta una chiave gialla.";
+GOTCREDKEY = "Raccolta una chiave rossa.";
+GOTFRUIT = "Raccolto un vassoio di frutta.";
+GOTVEGETABLESNEED = "La verdura ti fa DAVVERO bene!";
+GOTVEGETABLES = "Raccolto un vassoio di verdura.";
+GOTSLIMESUIT = "Raccolto un vestito a prova di slime";
+GOTCHEXMAP = "Trovata una mappa computerizzata";
+
+GOTZORCHRECHARGE = "Raccolta una ricarica di mini zorch.";
+GOTMINIZORCHPACK = "Raccolta una scatola di mini zorch.";
+GOTPROPULSORRECHARGE = "Raccolta una ricarica di zorch a propulsione.";
+GOTPROPULSORPACK = "Raccolta una scatola di zorch a propulsione.";
+GOTPHASINGZORCHERRECHARGE = "Raccolta una ricarica per zorcher a phasing";
+GOTPHASINGZORCHERPACK = "Raccolta una scatola per zorcher a phasing.";
+GOTLARGEZORCHERRECHARGE = "Raccolta una ricarica per zorcher grande.";
+GOTLARGEZORCHERPACK = "Raccolta una scatola per zorcher grande.";
+GOTZORCHPACK = "Raccolto uno ZorchZaino!";
+
+GOTLAZDEVICE = "Hai trovato il dispositivo LAZ! Cavolo!";
+GOTRAPIDZORCHER = "Hai trovato il zorcher rapido!";
+GOTSUPERBOOTSPORK = "Hai trovato il super bootspork!";
+GOTZORCHPROPULSOR = "Hai trovato il propulsore zorch!";
+GOTPHASINGZORCHER = "Hai trovato il zorcher a phasing!";
+GOTLARGEZORCHER = "Hai trovato il zorcher grande!";
+GOTSUPERLARGEZORCHER = "Hai trovato il mega zorcher!";
+GOTMINIZORCHER = "Raccolto un mini zorcher.";
+
+STSTR_CDQDON = "Modalita' invincibile attivata";
+STSTR_CDQDOFF = "Modalita' invincibile disattivata";
+STSTR_CFAADDED = "Zorch aggiunto";
+STSTR_CKFAADDED = "Super Zorch aggiunto";
+STSTR_CCHOPPERS = "... Mangia Chex(R)!";
+
+OB_COMMONUS = "%o e' stato coperto di slime da un flemoid.";
+OB_BIPEDICUS = "%o e' stato coperto di slime da un  bipedicus.";
+OB_BIPEDICUS2 = "%o e' stato coperto di slime da un bipedicus corazzato.";
+OB_CYCLOPTIS = "%o e' stato coperto di slime da un cycloptis.";
+OB_FLEMBRANE = "%o e' stato sconfitto dalla Flembrana.";
+
+OB_MPSPOON = "%o e' stato imboccato da %k.";
+OB_MPBOOTSPORK = "%o e' stato mischiato ben bene dal bootspork di %k.";
+OB_MPZORCH = "%o e' stato zorchato da %k.";
+OB_MPMEGAZORCH = "%o e' stato colpito dal mega-zorcher di %k.";
+OB_MPRAPIDZORCH = "%o e' stato rapid-zorchato da %k.";
+OB_MPPROPULSOR = "%o e' stato zorchato dal propulsore di %k.";
+OB_MPP_SPLASH = "%o e' stato colpito dal propulsore di %k.";
+OB_MPPHASEZORCH = "%o e' stato phase-zorchato da %k.";
+OB_MPLAZ_BOOM = "%o e' stato preda del dispositivo LAZ di %k.";
+OB_MPLAZ_SPLASH = "%o e' stato lazzato da %k.";

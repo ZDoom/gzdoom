@@ -468,6 +468,7 @@ enum EDmgFlags
 	DMG_INFLICTOR_IS_PUFF = 2,
 	DMG_THRUSTLESS = 4,
 	DMG_FORCED = 8,
+	DMG_NO_FACTOR = 16,
 };
 
 

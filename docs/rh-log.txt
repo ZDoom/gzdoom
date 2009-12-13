@@ -1,4 +1,6 @@
 December 12, 2009
+- Added a DMG_NO_FACTOR flag for P_DamageMobj(). A_KillChildren, A_KillMaster,
+  and A_KillSiblings now use it.
 - Added a damage type parameter to A_KillChildren, A_KillMaster, and
   A_KillSiblings. 
 

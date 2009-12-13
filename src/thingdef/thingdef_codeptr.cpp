@@ -1958,7 +1958,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_KillMaster)
 
 	if (self->master != NULL)
 	{
-		P_DamageMobj(self->master, self, self, self->master->health, damagetype, DMG_NO_ARMOR);
+		P_DamageMobj(self->master, self, self, self->master->health, damagetype, DMG_NO_ARMOR | DMG_NO_FACTOR);
 	}
 }
 
@@ -1979,7 +1979,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_KillChildren)
 	{
 		if (mo->master == self)
 		{
-			P_DamageMobj(mo, self, self, mo->health, damagetype, DMG_NO_ARMOR);
+			P_DamageMobj(mo, self, self, mo->health, damagetype, DMG_NO_ARMOR | DMG_NO_FACTOR);
 		}
 	}
 }
@@ -2001,7 +2001,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_KillSiblings)
 	{
 		if (mo->master == self->master && mo != self)
 		{
-			P_DamageMobj(mo, self, self, mo->health, damagetype, DMG_NO_ARMOR);
+			P_DamageMobj(mo, self, self, mo->health, damagetype, DMG_NO_ARMOR | DMG_NO_FACTOR);
 		}
 	}
 }

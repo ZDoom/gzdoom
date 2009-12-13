@@ -1000,21 +1000,24 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 				return;
 		}
 
-		DmgFactors * df = target->GetClass()->ActorInfo->DamageFactors;
-		if (df != NULL)
+		if (!(flags & DMG_NO_FACTOR))
 		{
-			fixed_t * pdf = df->CheckKey(mod);
-			if (pdf== NULL && mod != NAME_None) pdf = df->CheckKey(NAME_None);
-			if (pdf != NULL)
+			DmgFactors *df = target->GetClass()->ActorInfo->DamageFactors;
+			if (df != NULL)
 			{
-				damage = FixedMul(damage, *pdf);
-				if (damage <= 0)
-					return;
+				fixed_t *pdf = df->CheckKey(mod);
+				if (pdf== NULL && mod != NAME_None) pdf = df->CheckKey(NAME_None);
+				if (pdf != NULL)
+				{
+					damage = FixedMul(damage, *pdf);
+					if (damage <= 0)
+						return;
+				}
 			}
+			damage = FixedMul(damage, target->DamageFactor);
+			if (damage < 0)
+				return;
 		}
-		damage = FixedMul(damage, target->DamageFactor);
-		if (damage < 0)
-			return;
 
 		damage = target->TakeSpecialDamage (inflictor, source, damage, mod);
 	}

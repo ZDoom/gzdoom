@@ -229,7 +229,7 @@ void FWarp2Texture::MakeTexture (DWORD time)
 
 FTexture *FWarpTexture::GetRedirect(bool wantwarped)
 {
-	if (!wantwarped) return SourcePic;
+	if (!wantwarped) return SourcePic->GetRedirect(false);
 	else return this;
 }
 

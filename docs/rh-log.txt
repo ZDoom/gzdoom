@@ -1,3 +1,7 @@
+December 13, 2009  (Changes by Graf Zahl)
+- fixed: old-style DECORATE definitions with non-alphanumeric characters in
+  the name produced an error.
+
 December 12, 2009
 - Added a DMG_NO_FACTOR flag for P_DamageMobj(). A_KillChildren, A_KillMaster,
   and A_KillSiblings now use it.

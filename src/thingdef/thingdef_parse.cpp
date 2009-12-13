@@ -1229,9 +1229,6 @@ void ParseDecorate (FScanner &sc)
 				break;
 			}
 		default:
-			// without the option of game filters following, anything but an opening brace
-			// here means a syntax error.
-			sc.MustGetStringName("{");
 			sc.RestorePos(pos);
 			ParseOldDecoration(sc, DEF_Decoration);
 			break;

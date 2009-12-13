@@ -1951,11 +1951,14 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIf)
 // A_KillMaster
 //
 //===========================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_KillMaster)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_KillMaster)
 {
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_NAME(damagetype, 0);
+
 	if (self->master != NULL)
 	{
-		P_DamageMobj(self->master, self, self, self->master->health, NAME_None, DMG_NO_ARMOR);
+		P_DamageMobj(self->master, self, self, self->master->health, damagetype, DMG_NO_ARMOR);
 	}
 }
 
@@ -1964,16 +1967,19 @@ DEFINE_ACTION_FUNCTION(AActor, A_KillMaster)
 // A_KillChildren
 //
 //===========================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_KillChildren)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_KillChildren)
 {
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_NAME(damagetype, 0);
+
 	TThinkerIterator<AActor> it;
-	AActor * mo;
+	AActor *mo;
 
 	while ( (mo = it.Next()) )
 	{
 		if (mo->master == self)
 		{
-			P_DamageMobj(mo, self, self, mo->health, NAME_None, DMG_NO_ARMOR);
+			P_DamageMobj(mo, self, self, mo->health, damagetype, DMG_NO_ARMOR);
 		}
 	}
 }
@@ -1983,16 +1989,19 @@ DEFINE_ACTION_FUNCTION(AActor, A_KillChildren)
 // A_KillSiblings
 //
 //===========================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_KillSiblings)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_KillSiblings)
 {
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_NAME(damagetype, 0);
+
 	TThinkerIterator<AActor> it;
-	AActor * mo;
+	AActor *mo;
 
 	while ( (mo = it.Next()) )
 	{
 		if (mo->master == self->master && mo != self)
 		{
-			P_DamageMobj(mo, self, self, mo->health, NAME_None, DMG_NO_ARMOR);
+			P_DamageMobj(mo, self, self, mo->health, damagetype, DMG_NO_ARMOR);
 		}
 	}
 }

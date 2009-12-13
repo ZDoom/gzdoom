@@ -209,9 +209,9 @@ ACTOR Actor native //: Thinker
 	action native A_RemoveMaster();
 	action native A_RemoveChildren(bool removeall = false);
 	action native A_RemoveSiblings(bool removeall = false);
-	action native A_KillMaster();
-	action native A_KillChildren();
-	action native A_KillSiblings();
+	action native A_KillMaster(name damagetype = "none");
+	action native A_KillChildren(name damagetype = "none");
+	action native A_KillSiblings(name damagetype = "none");
 	action native A_RaiseMaster();
 	action native A_RaiseChildren();
 	action native A_RaiseSiblings();

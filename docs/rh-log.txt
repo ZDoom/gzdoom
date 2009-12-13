@@ -1,3 +1,7 @@
+December 12, 2009
+- Added a damage type parameter to A_KillChildren, A_KillMaster, and
+  A_KillSiblings. 
+
 December 11, 2009  (Changes by Graf Zahl)
 - fixed: Auto-COMPAT_SHORTTEX for IWADs must be set per IWAD, not in general
   for Doom.

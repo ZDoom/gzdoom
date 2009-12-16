@@ -1,5 +1,6 @@
 December 16, 2009  (Changes by Graf Zahl)
-- fixed:P_DamageMobj just set an ice corpse's velocity to 0 to make it shatter.
+- Fixed: Morphed players tried endlessly to switch to a weapon they picked up.
+- fixed: P_DamageMobj just set an ice corpse's velocity to 0 to make it shatter.
   But that's insufficient because it doesn't factor in any subsequent velocity
   change that happens between the damaging and the next call to A_FreezeDeathChunks.
 - fixed: The TimeFreezer did not freeze other players' controls in a

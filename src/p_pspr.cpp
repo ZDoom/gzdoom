@@ -505,6 +505,11 @@ void P_CheckWeaponSwitch (player_t *player)
 		P_SetPsprite (player, ps_weapon, weapon->GetDownState());
 		return;
 	}
+	else if (player->morphTics != 0)
+	{
+		// morphed classes cannot change weapons so don't even try again.
+		player->PendingWeapon = WP_NOCHANGE;
+	}
 }
 
 //---------------------------------------------------------------------------

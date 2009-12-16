@@ -3325,8 +3325,15 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 		t1->player->ReadyWeapon != NULL &&
 		(t1->player->ReadyWeapon->flags2 & MF2_THRUGHOST));
 
-	// Need to check defaults of replacement here
+	// We need to check the defaults of the replacement here
 	AActor *puffDefaults = GetDefaultByType(pufftype->ActorInfo->GetReplacement()->Class);
+
+	// if the puff uses a non-standard damage type this will override default and melee damage type.
+	// All other explicitly passed damage types (currenty only MDK) will be preserved.
+	if ((damageType == NAME_None || damageType == NAME_Melee) && puffDefaults->DamageType != NAME_None)
+	{
+		damageType = puffDefaults->DamageType;
+	}
 
 	int tflags;
 	if (puffDefaults != NULL && puffDefaults->flags6 & MF6_NOTRIGGER) tflags = TRACE_NoSky;
@@ -3417,14 +3424,14 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 			hitz = shootz + FixedMul (vz, trace.Distance);
 
 			// Spawn bullet puffs or blood spots, depending on target type.
-			AActor *puffDefaults = GetDefaultByType (pufftype);
 			if ((puffDefaults->flags3 & MF3_PUFFONACTORS) ||
 				(trace.Actor->flags & MF_NOBLOOD) ||
 				(trace.Actor->flags2 & (MF2_INVULNERABLE|MF2_DORMANT)))
 			{
+				// We must pass the unreplaced puff type here 
 				puff = P_SpawnPuff (t1, pufftype, hitx, hity, hitz, angle - ANG180, 2, flags|PF_HITTHING);
 			}
-			if (!(GetDefaultByType(pufftype)->flags3&MF3_BLOODLESSIMPACT))
+			if (!(puffDefaults->flags3&MF3_BLOODLESSIMPACT))
 			{
 				if (!bloodsplatter && !axeBlood &&
 					!(trace.Actor->flags & MF_NOBLOOD) &&

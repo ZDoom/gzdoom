@@ -233,18 +233,19 @@ DEFINE_ACTION_FUNCTION(AActor, A_FreezeDeathChunks)
 	int numChunks;
 	AActor *mo;
 	
-	if (self->velx || self->vely || self->velz)
+	if ((self->velx || self->vely || self->velz) && !(self->flags6 & MF6_SHATTERING))
 	{
 		self->tics = 3*TICRATE;
 		return;
 	}
+	self->velx = self->vely = self->velz = 0;
 	S_Sound (self, CHAN_BODY, "misc/icebreak", 1, ATTN_NORM);
 
 	// [RH] In Hexen, this creates a random number of shards (range [24,56])
 	// with no relation to the size of the self shattering. I think it should
 	// base the number of shards on the size of the dead thing, so bigger
 	// things break up into more shards than smaller things.
-	// An self with radius 20 and height 64 creates ~40 chunks.
+	// An actor with radius 20 and height 64 creates ~40 chunks.
 	numChunks = MAX<int> (4, (self->radius>>FRACBITS)*(self->height>>FRACBITS)/32);
 	i = (pr_freeze.Random2()) % (numChunks/4);
 	for (i = MAX (24, numChunks + i); i >= 0; i--)

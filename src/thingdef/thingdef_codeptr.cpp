@@ -834,7 +834,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomBulletAttack)
 			int angle = bangle + pr_cabullet.Random2() * (Spread_XY / 255);
 			int slope = bslope + pr_cabullet.Random2() * (Spread_Z / 255);
 			int damage = ((pr_cabullet()%3)+1) * DamagePerBullet;
-			P_LineAttack(self, angle, Range, slope, damage, GetDefaultByType(pufftype)->DamageType, pufftype);
+			P_LineAttack(self, angle, Range, slope, damage, NAME_None, pufftype);
 		}
     }
 }
@@ -986,7 +986,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireBullets)
 	if ((NumberOfBullets==1 && !player->refire) || NumberOfBullets==0)
 	{
 		int damage = ((pr_cwbullet()%3)+1)*DamagePerBullet;
-		P_LineAttack(self, bangle, Range, bslope, damage, GetDefaultByType(PuffType)->DamageType, PuffType);
+		P_LineAttack(self, bangle, Range, bslope, damage, NAME_None, PuffType);
 	}
 	else 
 	{
@@ -996,7 +996,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireBullets)
 			int angle = bangle + pr_cwbullet.Random2() * (Spread_XY / 255);
 			int slope = bslope + pr_cwbullet.Random2() * (Spread_Z / 255);
 			int damage = ((pr_cwbullet()%3)+1) * DamagePerBullet;
-			P_LineAttack(self, angle, Range, slope, damage, GetDefaultByType(PuffType)->DamageType, PuffType);
+			P_LineAttack(self, angle, Range, slope, damage, NAME_None, PuffType);
 		}
 	}
 }
@@ -1104,7 +1104,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomPunch)
 
 	if (!PuffType) PuffType = PClass::FindClass(NAME_BulletPuff);
 
-	P_LineAttack (self, angle, Range, pitch, Damage, GetDefaultByType(PuffType)->DamageType, PuffType, true);
+	P_LineAttack (self, angle, Range, pitch, Damage, NAME_None, PuffType, true);
 
 	// turn to face target
 	if (linetarget)

@@ -906,6 +906,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 		else if (target->flags & MF_ICECORPSE) // frozen
 		{
 			target->tics = 1;
+			target->flags6 |= MF6_SHATTERING;
 			target->velx = target->vely = target->velz = 0;
 		}
 		return;

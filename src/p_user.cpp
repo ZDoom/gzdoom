@@ -614,6 +614,12 @@ bool APlayerPawn::UseInventory (AInventory *item)
 	{ // You can't use items if you're totally frozen
 		return false;
 	}
+	if (( level.flags2 & LEVEL2_FROZEN ) && ( player == NULL || !( player->cheats & CF_TIMEFREEZE )))
+	{
+		// Time frozen
+		return false;
+	}
+
 	if (!Super::UseInventory (item))
 	{
 		// Heretic and Hexen advance the inventory cursor if the use failed.
@@ -2053,8 +2059,12 @@ void P_PlayerThink (player_t *player)
 		player->mo->flags &= ~MF_JUSTATTACKED;
 	}
 
+	bool totallyfrozen = (player->cheats & CF_TOTALLYFROZEN || gamestate == GS_TITLELEVEL ||
+		(( level.flags2 & LEVEL2_FROZEN ) && ( player == NULL || !( player->cheats & CF_TIMEFREEZE )))
+		);
+
 	// [RH] Being totally frozen zeros out most input parameters.
-	if (player->cheats & CF_TOTALLYFROZEN || gamestate == GS_TITLELEVEL)
+	if (totallyfrozen)
 	{
 		if (gamestate == GS_TITLELEVEL)
 		{
@@ -2086,7 +2096,7 @@ void P_PlayerThink (player_t *player)
 	}
 	if (player->morphTics == 0 && player->health > 0 && level.IsCrouchingAllowed())
 	{
-		if (!(player->cheats & CF_TOTALLYFROZEN))
+		if (!totallyfrozen)
 		{
 			int crouchdir = player->crouching;
 		

@@ -1,3 +1,13 @@
+December 16, 2009  (Changes by Graf Zahl)
+- fixed:P_DamageMobj just set an ice corpse's velocity to 0 to make it shatter.
+  But that's insufficient because it doesn't factor in any subsequent velocity
+  change that happens between the damaging and the next call to A_FreezeDeathChunks.
+- fixed: The TimeFreezer did not freeze other players' controls in a
+  multiplayer game.
+- fixed: DECORATE's 'gravity' property incorrectly messed around with the
+  NOGRAVITY flag.
+- fixed: Hitscan attacks didn't check the puff's replacement for damage types.
+
 December 13, 2009  (Changes by Graf Zahl)
 - fixed: old-style DECORATE definitions with non-alphanumeric characters in
   the name produced an error.

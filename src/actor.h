@@ -317,6 +317,7 @@ enum
 	MF6_FALLING			= 0x00004000,	// From MBF: Object is falling (for pseudotorque simulation)
 	MF6_LINEDONE		= 0x00008000,	// From MBF: Object has already run a line effect
 	MF6_NOTRIGGER		= 0x00010000,	// actor cannot trigger any line actions
+	MF6_SHATTERING		= 0x00020000,	// marks an ice corpse for forced shattering
 
 // --- mobj.renderflags ---
 

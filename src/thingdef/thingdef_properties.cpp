@@ -1026,7 +1026,6 @@ DEFINE_PROPERTY(gravity, F, Actor)
 
 	if (i < 0) I_Error ("Gravity must not be negative.");
 	defaults->gravity = i;
-	if (i == 0) defaults->flags |= MF_NOGRAVITY;
 }
 
 //==========================================================================

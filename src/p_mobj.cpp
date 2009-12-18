@@ -3358,7 +3358,7 @@ void AActor::Tick ()
 bool AActor::UpdateWaterLevel (fixed_t oldz, bool dosplash)
 {
 	BYTE lastwaterlevel = waterlevel;
-	fixed_t fh=FIXED_MIN;
+	fixed_t fh = FIXED_MIN;
 	bool reset=false;
 
 	waterlevel = 0;
@@ -3393,18 +3393,21 @@ bool AActor::UpdateWaterLevel (fixed_t oldz, bool dosplash)
 						}
 					}
 				}
-				else if (z + height > hsec->ceilingplane.ZatPoint (x, y))
+				else if (!(hsec->MoreFlags & SECF_FAKEFLOORONLY) && (z + height > hsec->ceilingplane.ZatPoint (x, y)))
 				{
 					waterlevel = 3;
 				}
 				else
 				{
-					waterlevel=0;
+					waterlevel = 0;
 				}
 			}
 			// even non-swimmable deep water must be checked here to do the splashes correctly
 			// But the water level must be reset when this function returns
-			if (!(hsec->MoreFlags&SECF_UNDERWATERMASK)) reset=true;
+			if (!(hsec->MoreFlags&SECF_UNDERWATERMASK))
+			{
+				reset = true;
+			}
 		}
 #ifdef _3DFLOORS
 		else
@@ -3449,8 +3452,11 @@ bool AActor::UpdateWaterLevel (fixed_t oldz, bool dosplash)
 	{
 		P_HitWater(this, Sector, FIXED_MIN, FIXED_MIN, fh, true);
 	}
-	boomwaterlevel=waterlevel;
-	if (reset) waterlevel=lastwaterlevel;
+	boomwaterlevel = waterlevel;
+	if (reset)
+	{
+		waterlevel = lastwaterlevel;
+	}
 	return false;	// we did the splash ourselves
 }
 

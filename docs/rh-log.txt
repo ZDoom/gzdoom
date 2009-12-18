@@ -1,4 +1,7 @@
 December 17, 2009
+- Fixed: Using Transfer_Heights with the SECF_UNDERWATER and
+  SECF_FAKEFLOORONLY flags applied the water effect to the ceiling and not
+  just the floor.
 - Replaced sprite sorting with a stable sort. Performance at the start of
   nuts.wad seems the same.
 

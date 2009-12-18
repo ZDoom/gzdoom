@@ -2020,6 +2020,15 @@ void R_SplitVisSprites ()
 }
 #endif
 
+#ifdef __GNUC__
+static void swap(vissprite_t *&a, vissprite_t *&b)
+{
+	vissprite_t *t = a;
+	a = b;
+	b = t;
+}
+#endif
+
 void R_SortVisSprites (bool (*compare)(vissprite_t *, vissprite_t *), size_t first)
 {
 	int i;

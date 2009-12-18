@@ -23,6 +23,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <algorithm>
 
 #include "templates.h"
 #include "doomdef.h"
@@ -1883,13 +1884,9 @@ void R_DrawRemainingPlayerSprites()
 //		gain compared to the old function.
 //
 // Sort vissprites by depth, far to near
-static int STACK_ARGS sv_compare (const void *arg1, const void *arg2)
+static bool sv_compare(vissprite_t *a, vissprite_t *b)
 {
-	int diff = (*(vissprite_t **)arg2)->idepth - (*(vissprite_t **)arg1)->idepth;
-	// If two sprites are the same distance, then the higher one gets precedence
-	if (diff == 0)
-		return (*(vissprite_t **)arg2)->gzt - (*(vissprite_t **)arg1)->gzt;
-	return diff;
+	return a->idepth > b->idepth;
 }
 
 #if 0
@@ -2023,7 +2020,7 @@ void R_SplitVisSprites ()
 }
 #endif
 
-void R_SortVisSprites (int (STACK_ARGS *compare)(const void *, const void *), size_t first)
+void R_SortVisSprites (bool (*compare)(vissprite_t *, vissprite_t *), size_t first)
 {
 	int i;
 	vissprite_t **spr;
@@ -2046,7 +2043,7 @@ void R_SortVisSprites (int (STACK_ARGS *compare)(const void *, const void *), si
 		spritesorter[i] = *spr;
 	}
 
-	qsort (spritesorter, vsprcount, sizeof (vissprite_t *), compare);
+	std::stable_sort(&spritesorter[0], &spritesorter[vsprcount], compare);
 }
 
 

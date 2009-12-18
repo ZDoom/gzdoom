@@ -1,3 +1,7 @@
+December 17, 2009
+- Replaced sprite sorting with a stable sort. Performance at the start of
+  nuts.wad seems the same.
+
 December 16, 2009  (Changes by Graf Zahl)
 - Fixed: Morphed players tried endlessly to switch to a weapon they picked up.
 - fixed: P_DamageMobj just set an ice corpse's velocity to 0 to make it shatter.

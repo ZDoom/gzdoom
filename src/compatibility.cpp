@@ -105,6 +105,7 @@ static FCompatOption Options[] =
 	{ "mbfmonstermove",			COMPATF_MBFMONSTERMOVE, 0 },
 	{ "corpsegibs",				COMPATF_CORPSEGIBS, 0 },
 	{ "noblockfriends",			COMPATF_NOBLOCKFRIENDS, 0 },
+	{ "spritesort",				COMPATF_SPRITESORT, 0 },
 	{ NULL, 0, 0 }
 };
 

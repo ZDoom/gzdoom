@@ -2047,9 +2047,22 @@ void R_SortVisSprites (bool (*compare)(vissprite_t *, vissprite_t *), size_t fir
 		spritesortersize = MaxVisSprites;
 	}
 
-	for (i = 0, spr = firstvissprite; i < vsprcount; i++, spr++)
+	if (!(i_compatflags & COMPATF_SPRITESORT))
 	{
-		spritesorter[i] = *spr;
+		for (i = 0, spr = firstvissprite; i < vsprcount; i++, spr++)
+		{
+			spritesorter[i] = *spr;
+		}
+	}
+	else
+	{
+		// If the compatibility option is on sprites of equal distance need to
+		// be sorted in inverse order. This is most easily achieved by
+		// filling the sort array backwards before the sort.
+		for (i = 0, spr = firstvissprite + vsprcount-1; i < vsprcount; i++, spr--)
+		{
+			spritesorter[i] = *spr;
+		}
 	}
 
 	std::stable_sort(&spritesorter[0], &spritesorter[vsprcount], compare);

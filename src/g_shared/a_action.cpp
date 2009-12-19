@@ -163,6 +163,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_FreezeDeath)
 	self->flags2 |= MF2_PUSHABLE|MF2_TELESTOMP|MF2_PASSMOBJ|MF2_SLIDE;
 	self->flags3 |= MF3_CRASHED;
 	self->height = self->GetDefault()->height;
+	// Remove fuzz effects from frozen actors.
+	if (self->RenderStyle.BlendOp >= STYLEOP_Fuzz && self->RenderStyle.BlendOp <= STYLEOP_FuzzOrRevSub)
+	{
+		self->RenderStyle = STYLE_Normal;
+	}
+
 	S_Sound (self, CHAN_BODY, "misc/freeze", 1, ATTN_NORM);
 
 	// [RH] Andy Baker's stealth monsters
@@ -178,7 +184,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FreezeDeath)
 		self->player->poisoncount = 0;
 		self->player->bonuscount = 0;
 	}
-	else if (self->flags3&MF3_ISMONSTER && self->special)
+	else if (self->flags3 & MF3_ISMONSTER && self->special)
 	{ // Initiate monster death actions
 		LineSpecials [self->special] (NULL, self, false, self->args[0],
 			self->args[1], self->args[2], self->args[3], self->args[4]);

@@ -1,3 +1,8 @@
+December 18, 2009
+- A_FreezeDeath() now removes fuzz effects.
+- In mus2midi.cpp, added range checking to MUS_SYSEVENT and MUS_CTRLCHANGE,
+  and masking for note-off keys, note-on velocities, and program changes.
+
 December 18, 2009  (Changes by Graf Zahl)
 - added all known maps requiring inverted sprite sorting to compatibility.txt.
 - added compatibility option to invert sprite sorting. Apparently Doom.exe

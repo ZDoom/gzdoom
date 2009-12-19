@@ -121,7 +121,8 @@ bool ProduceMIDI (const BYTE *musBuf, TArray<BYTE> &outFile)
 	BYTE chanUsed[16];
 	BYTE lastVel[16];
 	long trackLen;
-	
+	bool no_op;
+
 	// Do some validation of the MUS file
 	if (MUSMagic != musHead->Magic)
 		return false;
@@ -178,12 +179,13 @@ bool ProduceMIDI (const BYTE *musBuf, TArray<BYTE> &outFile)
 		
 		midStatus = channel;
 		midArgs = 0;		// Most events have two args (0 means 2, 1 means 1)
-		
+		no_op = false;
+
 		switch (event & 0x70)
 		{
 		case MUS_NOTEOFF:
 			midStatus |= MIDI_NOTEOFF;
-			mid1 = t;
+			mid1 = t & 127;
 			mid2 = 64;
 			break;
 			
@@ -192,7 +194,7 @@ bool ProduceMIDI (const BYTE *musBuf, TArray<BYTE> &outFile)
 			mid1 = t & 127;
 			if (t & 128)
 			{
-				lastVel[channel] = musBuf[mus_p++];;
+				lastVel[channel] = musBuf[mus_p++] & 127;
 			}
 			mid2 = lastVel[channel];
 			break;
@@ -204,9 +206,16 @@ bool ProduceMIDI (const BYTE *musBuf, TArray<BYTE> &outFile)
 			break;
 			
 		case MUS_SYSEVENT:
-			midStatus |= MIDI_CTRLCHANGE;
-			mid1 = CtrlTranslate[t];
-			mid2 = t == 12 ? LittleShort(musHead->NumChans) : 0;
+			if (t < 10 || t > 14)
+			{
+				no_op = true;
+			}
+			else
+			{
+				midStatus |= MIDI_CTRLCHANGE;
+				mid1 = CtrlTranslate[t];
+				mid2 = t == 12 /* Mono */ ? LittleShort(musHead->NumChans) : 0;
+			}
 			break;
 			
 		case MUS_CTRLCHANGE:
@@ -214,25 +223,37 @@ bool ProduceMIDI (const BYTE *musBuf, TArray<BYTE> &outFile)
 			{ // program change
 				midArgs = 1;
 				midStatus |= MIDI_PRGMCHANGE;
-				mid1 = musBuf[mus_p++];
+				mid1 = musBuf[mus_p++] & 127;
 				mid2 = 0;	// Assign mid2 just to make GCC happy
 			}
-			else
+			else if (t > 0 && t < 10)
 			{
 				midStatus |= MIDI_CTRLCHANGE;
 				mid1 = CtrlTranslate[t];
 				mid2 = musBuf[mus_p++];
 			}
+			else
+			{
+				no_op = true;
+			}
 			break;
 			
 		case MUS_SCOREEND:
-			midStatus = 0xff;
-			mid1 = 0x2f;
-			mid2 = 0x00;
+			midStatus = MIDI_META;
+			mid1 = MIDI_META_EOT;
+			mid2 = 0;
 			break;
 			
 		default:
 			return false;
+		}
+
+		if (no_op)
+		{
+			// A system-specific event with no data is a no-op.
+			midStatus = MIDI_META;
+			mid1 = MIDI_META_SSPEC;
+			mid2 = 0;
 		}
 
 		WriteVarLen (outFile, deltaTime);

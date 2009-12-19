@@ -1421,7 +1421,8 @@ DEFINE_CLASS_PROPERTY(ammogive2, I, Weapon)
 DEFINE_CLASS_PROPERTY(ammotype, S, Weapon)
 {
 	PROP_STRING_PARM(str, 0);
-	defaults->AmmoType1 = FindClassTentative(str, "Ammo");
+	if (!stricmp(str, "none") || *str == 0) defaults->AmmoType1 = NULL;
+	else defaults->AmmoType1 = FindClassTentative(str, "Ammo");
 }
 
 //==========================================================================
@@ -1430,7 +1431,8 @@ DEFINE_CLASS_PROPERTY(ammotype, S, Weapon)
 DEFINE_CLASS_PROPERTY(ammotype1, S, Weapon)
 {
 	PROP_STRING_PARM(str, 0);
-	defaults->AmmoType1 = FindClassTentative(str, "Ammo");
+	if (!stricmp(str, "none") || *str == 0) defaults->AmmoType1 = NULL;
+	else defaults->AmmoType1 = FindClassTentative(str, "Ammo");
 }
 
 //==========================================================================
@@ -1439,7 +1441,8 @@ DEFINE_CLASS_PROPERTY(ammotype1, S, Weapon)
 DEFINE_CLASS_PROPERTY(ammotype2, S, Weapon)
 {
 	PROP_STRING_PARM(str, 0);
-	defaults->AmmoType2 = FindClassTentative(str, "Ammo");
+	if (!stricmp(str, "none") || *str == 0) defaults->AmmoType1 = NULL;
+	else defaults->AmmoType2 = FindClassTentative(str, "Ammo");
 }
 
 //==========================================================================

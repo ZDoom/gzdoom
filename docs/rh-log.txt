@@ -1,3 +1,7 @@
+December 19, 2009  (Changes by Graf Zahl)
+- Fixed: It was not possible to set the ammo type of a weapon explicitly to
+  'none'.
+
 December 18, 2009
 - A_FreezeDeath() now removes fuzz effects.
 - In mus2midi.cpp, added range checking to MUS_SYSEVENT and MUS_CTRLCHANGE,

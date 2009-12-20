@@ -1,3 +1,7 @@
+December 20, 2009  (Changes by Graf Zahl)
+- Fixed: The Dehacked parser could read past the end of the file if the last
+  element was improperly defined.
+
 December 19, 2009
 - Extended MF3_SKYEXPLODE to apply to horizon walls as well.
 

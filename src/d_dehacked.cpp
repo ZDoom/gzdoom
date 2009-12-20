@@ -252,6 +252,7 @@ DehSpriteMappings[] =
 #define CHECKKEY(a,b)		if (!stricmp (Line1, (a))) (b) = atoi(Line2);
 
 static char *PatchFile, *PatchPt, *PatchName;
+static int PatchSize;
 static char *Line1, *Line2;
 static int	 dversion, pversion;
 static bool  including, includenotext;
@@ -427,7 +428,7 @@ static bool ReadChars (char **stuff, int size)
 			size++;
 
 		PatchPt++;
-	} while (--size);
+	} while (--size && *PatchPt != 0);
 
 	*str = 0;
 	return true;
@@ -524,7 +525,7 @@ static char *igets (void)
 {
 	char *line;
 
-	if (*PatchPt == '\0')
+	if (*PatchPt == '\0' || PatchPt >= PatchFile + PatchSize )
 		return NULL;
 
 	line = PatchPt;
@@ -2205,7 +2206,7 @@ static int DoInclude (int dummy)
 {
 	char *data;
 	int savedversion, savepversion;
-	char *savepatchfile, *savepatchpt, *savepatchname;
+	char *savepatchfile, *savepatchpt, *savepatchname, savepatchsize;
 
 	if (including)
 	{
@@ -2239,6 +2240,7 @@ static int DoInclude (int dummy)
 		savepatchname = PatchName;
 		savepatchfile = PatchFile;
 		savepatchpt = PatchPt;
+		savepatchsize = PatchSize;
 		savedversion = dversion;
 		savepversion = pversion;
 		including = true;
@@ -2272,6 +2274,7 @@ static int DoInclude (int dummy)
 		PatchName = savepatchname;
 		PatchFile = savepatchfile;
 		PatchPt = savepatchpt;
+		PatchSize = savepatchsize;
 		dversion = savedversion;
 		pversion = savepversion;
 	}
@@ -2294,12 +2297,12 @@ int D_LoadDehLumps()
 
 bool D_LoadDehLump(int lumpnum)
 {
-	int filelen = Wads.LumpLength(lumpnum);
+	PatchSize = Wads.LumpLength(lumpnum);
 
 	PatchName = copystring(Wads.GetLumpFullPath(lumpnum));
-	PatchFile = new char[filelen + 1];
+	PatchFile = new char[PatchSize + 1];
 	Wads.ReadLump(lumpnum, PatchFile);
-	PatchFile[filelen] = '\0';		// terminate with a '\0' character
+	PatchFile[PatchSize] = '\0';		// terminate with a '\0' character
 	return DoDehPatch();
 }
 
@@ -2310,13 +2313,13 @@ bool D_LoadDehFile(const char *patchfile)
 	deh = fopen(patchfile, "rb");
 	if (deh != NULL)
 	{
-		int filelen = Q_filelength(deh);
+		PatchSize = Q_filelength(deh);
 
 		PatchName = copystring(patchfile);
-		PatchFile = new char[filelen + 1];
-		fread(PatchFile, 1, filelen, deh);
+		PatchFile = new char[PatchSize + 1];
+		fread(PatchFile, 1, PatchSize, deh);
 		fclose(deh);
-		PatchFile[filelen] = '\0';		// terminate with a '\0' character
+		PatchFile[PatchSize] = '\0';		// terminate with a '\0' character
 		return DoDehPatch();
 	}
 	else

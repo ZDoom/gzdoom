@@ -1190,7 +1190,7 @@ void P_ExplodeMissile (AActor *mo, line_t *line, AActor *target)
 		return;
 	}
 
-	if (line != NULL && line->special == Line_Horizon)
+	if (line != NULL && line->special == Line_Horizon && !(mo->flags3 & MF3_SKYEXPLODE))
 	{
 		// [RH] Don't explode missiles on horizon lines.
 		mo->Destroy ();
@@ -1901,22 +1901,24 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 				}
 explode:
 				// explode a missile
-				if (tm.ceilingline &&
-					tm.ceilingline->backsector &&
-					tm.ceilingline->backsector->GetTexture(sector_t::ceiling) == skyflatnum &&
-					mo->z >= tm.ceilingline->backsector->ceilingplane.ZatPoint (mo->x, mo->y) && //killough
-					!(mo->flags3 & MF3_SKYEXPLODE))
+				if (!(mo->flags3 & MF3_SKYEXPLODE))
 				{
-					// Hack to prevent missiles exploding against the sky.
-					// Does not handle sky floors.
-					mo->Destroy ();
-					return oldfloorz;
-				}
-				// [RH] Don't explode on horizon lines.
-				if (mo->BlockingLine != NULL && mo->BlockingLine->special == Line_Horizon)
-				{
-					mo->Destroy ();
-					return oldfloorz;
+					if (tm.ceilingline &&
+						tm.ceilingline->backsector &&
+						tm.ceilingline->backsector->GetTexture(sector_t::ceiling) == skyflatnum &&
+						mo->z >= tm.ceilingline->backsector->ceilingplane.ZatPoint (mo->x, mo->y))
+					{
+						// Hack to prevent missiles exploding against the sky.
+						// Does not handle sky floors.
+						mo->Destroy ();
+						return oldfloorz;
+					}
+					// [RH] Don't explode on horizon lines.
+					if (mo->BlockingLine != NULL && mo->BlockingLine->special == Line_Horizon)
+					{
+						mo->Destroy ();
+						return oldfloorz;
+					}
 				}
 				P_ExplodeMissile (mo, mo->BlockingLine, BlockingMobj);
 				return oldfloorz;

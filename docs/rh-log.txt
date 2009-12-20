@@ -1,3 +1,6 @@
+December 19, 2009
+- Extended MF3_SKYEXPLODE to apply to horizon walls as well.
+
 December 19, 2009  (Changes by Graf Zahl)
 - Fixed: It was not possible to set the ammo type of a weapon explicitly to
   'none'.

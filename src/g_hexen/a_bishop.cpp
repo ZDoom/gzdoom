@@ -60,7 +60,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_BishopAttack2)
 	if (mo != NULL)
 	{
 		mo->tracer = self->target;
-		mo->special2 = 16; // High word == x/y, Low word == z
 	}
 	self->special1--;
 }
@@ -77,10 +76,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_BishopMissileWeave)
 	int weaveXY, weaveZ;
 	int angle;
 
-	if (self->special2 == 0) self->special2 = 16;
+	// for compatibility this needs to set the value itself if it was never done by the projectile itself
+	if (self->weaveindex == -1) self->weaveindex = 16;
 
-	weaveXY = self->special2 >> 16;
-	weaveZ = self->special2 & 0xFFFF;
+	// since these values are now user configurable we have to do a proper range check to avoid array overflows.
+	weaveXY = (self->weaveindex >> 16) & 63;
+	weaveZ = (self->weaveindex & 63);
 	angle = (self->angle + ANG90) >> ANGLETOFINESHIFT;
 	newX = self->x - FixedMul (finecosine[angle], FloatBobOffsets[weaveXY]<<1);
 	newY = self->y - FixedMul (finesine[angle], FloatBobOffsets[weaveXY]<<1);
@@ -91,7 +92,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BishopMissileWeave)
 	self->z -= FloatBobOffsets[weaveZ];
 	weaveZ = (weaveZ + 2) & 63;
 	self->z += FloatBobOffsets[weaveZ];	
-	self->special2 = weaveZ + (weaveXY<<16);
+	self->weaveindex = weaveZ + (weaveXY<<16);
 }
 
 //============================================================================

@@ -312,6 +312,14 @@ void AActor::Serialize (FArchive &arc)
 	{
 		arc << DamageFactor;
 	}
+	if (SaveVersion >= 2036)
+	{
+		arc << weaveindex;
+	}
+	else
+	{
+		weaveindex = special2;
+	}
 
 	// Skip past uservar array in old savegames
 	if (SaveVersion < 1933)

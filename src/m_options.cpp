@@ -94,6 +94,7 @@ EXTERN_CVAR(Bool, hud_althud)
 EXTERN_CVAR(Int, compatmode)
 EXTERN_CVAR (Bool, vid_vsync)
 EXTERN_CVAR(Bool, displaynametags)
+EXTERN_CVAR (Int, snd_channels)
 
 //
 // defaulted values
@@ -1252,6 +1253,7 @@ static menuitem_t SoundItems[] =
 	{ discrete, "Underwater reverb",	{&snd_waterreverb},		{2.0}, {0.0},	{0.0}, {OnOff} },
 	{ slider,	"Underwater cutoff",	{&snd_waterlp},			{0.0}, {2000.0},{50.0}, {NULL} },
 	{ discrete, "Randomize pitches",	{&snd_pitched},			{2.0}, {0.0},	{0.0}, {OnOff} },
+	{ slider,	"Sound channels",		{&snd_channels},		{8.0}, {256.0},	{8.0}, {NULL} },
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
 	{ more,		"Restart sound",		{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)MakeSoundChanges} },
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },

@@ -764,6 +764,7 @@ public:
 	DWORD			flags6;			// Shit! Where did all the flags go?
 	int				special1;		// Special info
 	int				special2;		// Special info
+	int				weaveindex;		// Separated from special2 because it's used by globally accessible functions.
 	int 			health;
 	BYTE			movedir;		// 0-7
 	SBYTE			visdir;

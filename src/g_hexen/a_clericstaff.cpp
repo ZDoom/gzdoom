@@ -135,12 +135,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_CStaffAttack)
 	mo = P_SpawnPlayerMissile (self, RUNTIME_CLASS(ACStaffMissile), self->angle-(ANG45/15));
 	if (mo)
 	{
-		mo->special2 = 32;
+		mo->weaveindex = 32;
 	}
 	mo = P_SpawnPlayerMissile (self, RUNTIME_CLASS(ACStaffMissile), self->angle+(ANG45/15));
 	if (mo)
 	{
-		mo->special2 = 0;
+		mo->weaveindex = 0;
 	}
 	S_Sound (self, CHAN_WEAPON, "ClericCStaffFire", 1, ATTN_NORM);
 }
@@ -157,7 +157,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_CStaffMissileSlither)
 	int weaveXY;
 	int angle;
 
-	weaveXY = self->special2;
+	if (self->weaveindex == -1) self->weaveindex = 0;
+
+	// since these values are now user configurable we have to do a proper range check to avoid array overflows.
+	weaveXY = self->weaveindex & 63;
 	angle = (self->angle+ANG90)>>ANGLETOFINESHIFT;
 	newX = self->x-FixedMul(finecosine[angle], FloatBobOffsets[weaveXY]);
 	newY = self->y-FixedMul(finesine[angle], FloatBobOffsets[weaveXY]);
@@ -165,7 +168,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CStaffMissileSlither)
 	newX += FixedMul(finecosine[angle], FloatBobOffsets[weaveXY]);
 	newY += FixedMul(finesine[angle], FloatBobOffsets[weaveXY]);
 	P_TryMove (self, newX, newY, true);
-	self->special2 = weaveXY;
+	self->weaveindex = weaveXY;
 }
 
 //============================================================================

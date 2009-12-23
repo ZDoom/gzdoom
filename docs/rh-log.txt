@@ -1,3 +1,8 @@
+December 23, 2009  (Changes by Graf Zahl)
+- made the initial weave index for A_BishopMissileWeave and A_CStaffMissileSlither
+  a configurable actor property.
+- added a menu item for snd_channels.
+
 December 20, 2009  (Changes by Graf Zahl)
 - Fixed: The Dehacked parser could read past the end of the file if the last
   element was improperly defined.

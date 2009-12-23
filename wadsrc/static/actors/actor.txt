@@ -19,6 +19,7 @@ ACTOR Actor native //: Thinker
 	Gravity 1
 	DamageFactor 1.0
 	PushFactor 0.25
+	WeaveIndex -1
 
 	// Variables for the expression evaluator
 	// NOTE: fixed_t and angle_t are only used here to ensure proper conversion

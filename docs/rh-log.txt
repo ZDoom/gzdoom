@@ -1,3 +1,6 @@
+December 24, 2009  (Changes by Graf Zahl)
+- fixed: The UDMF blockfloaters flag was misnamed. Changed to match the spec.
+
 December 23, 2009  (Changes by Graf Zahl)
 - made the initial weave index for A_BishopMissileWeave and A_CStaffMissileSlither
   a configurable actor property.

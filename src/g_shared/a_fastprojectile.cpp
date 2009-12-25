@@ -125,7 +125,14 @@ void AFastProjectile::Effect()
 			}
 		
 			const PClass *trail = PClass::FindClass(name);
-			Spawn (trail, x, y, hitz, ALLOW_REPLACE);
+			if (trail != NULL)
+			{
+				AActor *act = Spawn (trail, x, y, hitz, ALLOW_REPLACE);
+				if (act != NULL)
+				{
+					act->angle = this->angle;
+				}
+			}
 		}
 	}
 }

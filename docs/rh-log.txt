@@ -1,3 +1,7 @@
+December 24, 2009
+- Changed AFastProjectile::Effect() so that it sets the spawned trail to face
+  same direction as the projectile.
+
 December 24, 2009  (Changes by Graf Zahl)
 - fixed: The UDMF blockfloaters flag was misnamed. Changed to match the spec.
 

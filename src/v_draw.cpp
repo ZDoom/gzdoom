@@ -59,6 +59,9 @@ int CleanXfac, CleanYfac;
 // [RH] Effective screen sizes that the above scale values give you
 int CleanWidth, CleanHeight;
 
+// Above minus 1 (or 1, if they are already 1)
+int CleanXfac_1, CleanYfac_1, CleanWidth_1, CleanHeight_1;
+
 CVAR (Bool, hud_scale, false, CVAR_ARCHIVE);
 
 // For routines that take RGB colors, cache the previous lookup in case there
@@ -422,6 +425,15 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, double x, double y, DWORD tag
 			{
 				parms->destwidth = parms->texwidth * CleanXfac;
 				parms->destheight = parms->texheight * CleanYfac;
+			}
+			break;
+
+		case DTA_CleanNoMove_1:
+			boolval = va_arg(tags, INTBOOL);
+			if (boolval)
+			{
+				parms->destwidth = parms->texwidth * CleanXfac_1;
+				parms->destheight = parms->texheight * CleanYfac_1;
 			}
 			break;
 

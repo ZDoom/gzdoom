@@ -2120,6 +2120,26 @@ static void M_PlayerSetupTicker (void)
 	}
 }
 
+
+static void M_DrawPlayerSlider (int x, int y, int cur)
+{
+	const int range = 255;
+
+	x = (x - 160) * CleanXfac + screen->GetWidth() / 2;
+	y = (y - 100) * CleanYfac + screen->GetHeight() / 2;
+
+	screen->DrawText (ConFont, CR_WHITE, x, y,
+		"\x10\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x12",
+		DTA_CellX, 8 * CleanXfac,
+		DTA_CellY, 8 * CleanYfac,
+		TAG_DONE);
+	screen->DrawText (ConFont, CR_ORANGE, x + (5 + (int)((cur * 78) / range)) * CleanXfac, y,
+		"\x13",
+		DTA_CellX, 8 * CleanXfac,
+		DTA_CellY, 8 * CleanYfac,
+		TAG_DONE);
+}
+
 static void M_PlayerSetupDrawer ()
 {
 	int x, xo, yo;
@@ -2251,9 +2271,9 @@ static void M_PlayerSetupDrawer ()
 	x = SmallFont->StringWidth ("Green") + 8 + PSetupDef.x;
 	color = players[consoleplayer].userinfo.color;
 
-	M_DrawSlider (x, PSetupDef.y + LINEHEIGHT*2+yo, 0.0f, 255.0f, float(RPART(color)), -1);
-	M_DrawSlider (x, PSetupDef.y + LINEHEIGHT*3+yo, 0.0f, 255.0f, float(GPART(color)), -1);
-	M_DrawSlider (x, PSetupDef.y + LINEHEIGHT*4+yo, 0.0f, 255.0f, float(BPART(color)), -1);
+	M_DrawPlayerSlider (x, PSetupDef.y + LINEHEIGHT*2+yo, RPART(color));
+	M_DrawPlayerSlider (x, PSetupDef.y + LINEHEIGHT*3+yo, GPART(color));
+	M_DrawPlayerSlider (x, PSetupDef.y + LINEHEIGHT*4+yo, BPART(color));
 
 	// [GRB] Draw class setting
 	int pclass = players[consoleplayer].userinfo.PlayerClass;
@@ -3443,7 +3463,13 @@ void M_Drawer ()
 			screen->DrawText(SmallFont, CR_UNTRANSLATED, 160, y + fontheight + 1, GStrings["TXT_NO"], DTA_Clean, true, TAG_DONE);
 			if (skullAnimCounter < 6)
 			{
-				M_DrawConText(CR_RED, 150, y + (fontheight + 1) * messageSelection, "\xd");
+				screen->DrawText(ConFont, CR_RED,
+					(150 - 160) * CleanXfac + screen->GetWidth() / 2,
+					(y + (fontheight + 1) * messageSelection - 100) * CleanYfac + screen->GetHeight() / 2,
+					"\xd",
+					DTA_CellX, 8 * CleanXfac,
+					DTA_CellY, 8 * CleanYfac,
+					TAG_DONE);
 			}
 		}
 	}

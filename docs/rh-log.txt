@@ -1,4 +1,9 @@
 December 24, 2009
+- The options menu no longer scales up so quickly, so it can fit wider text
+  onscreen. In addition, it now uses the whole height available to it. Also,
+  at lower resolutions, items on the compatibility options menu now cut off
+  the beginning of the option label rather than the option setting, making
+  this menu useable where previously it was not.
 - Added a channel parameter to the sector overload of SN_StopSequence() so
   it can be properly paired with calls to SN_StartSequence().
 - Fixed: P_CheckPlayerSprites() ignored the MF4_NOSKIN flag.  It now also sets

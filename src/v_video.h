@@ -42,6 +42,7 @@
 #include "c_cvars.h"
 
 extern int CleanWidth, CleanHeight, CleanXfac, CleanYfac;
+extern int CleanWidth_1, CleanHeight_1, CleanXfac_1, CleanYfac_1;
 extern int DisplayWidth, DisplayHeight, DisplayBits;
 
 bool V_DoModeSetup (int width, int height, int bits);
@@ -79,6 +80,7 @@ enum
 	DTA_320x200,		// bool: scale texture size and position to fit on a virtual 320x200 screen
 	DTA_Bottom320x200,	// bool: same as DTA_320x200 but centers virtual screen on bottom for 1280x1024 targets
 	DTA_CleanNoMove,	// bool: like DTA_Clean but does not reposition output position
+	DTA_CleanNoMove_1,	// bool: like DTA_CleanNoMove, but uses Clean[XY]fac_1 instead
 	DTA_FlipX,			// bool: flip image horizontally	//FIXME: Does not work with DTA_Window(Left|Right)
 	DTA_ShadowColor,	// color of shadow
 	DTA_ShadowAlpha,	// alpha of shadow

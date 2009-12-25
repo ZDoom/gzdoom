@@ -1494,11 +1494,9 @@ void M_DrawConText (int color, int x, int y, const char *str)
 {
 	int len = (int)strlen(str);
 
-	x = (x - 160) * CleanXfac + screen->GetWidth() / 2;
-	y = (y - 100) * CleanYfac + screen->GetHeight() / 2;
 	screen->DrawText (ConFont, color, x, y, str,
-		DTA_CellX, 8 * CleanXfac,
-		DTA_CellY, 8 * CleanYfac,
+		DTA_CellX, 8 * CleanXfac_1,
+		DTA_CellY, 8 * CleanYfac_1,
 		TAG_DONE);
 }
 
@@ -1558,7 +1556,8 @@ bool M_StartOptionsMenu (void)
 	return true;
 }
 
-void M_DrawSlider (int x, int y, double min, double max, double cur,int fracdigits)
+// Draw a slider. Set fracdigits negative to not display the current value numerically.
+static void M_DrawSlider (int x, int y, double min, double max, double cur,int fracdigits)
 {
 	double range;
 
@@ -1572,7 +1571,7 @@ void M_DrawSlider (int x, int y, double min, double max, double cur,int fracdigi
 	{
 		char textbuf[16];
 		mysnprintf(textbuf, countof(textbuf), "%.*f", fracdigits, cur);
-		screen->DrawText(SmallFont, CR_DARKGRAY, x + 12*8 + 4, y, textbuf, DTA_Clean, true, TAG_DONE);
+		screen->DrawText(SmallFont, CR_DARKGRAY, x + (12*8 + 4) * CleanXfac_1, y, textbuf, DTA_CleanNoMove_1, true, TAG_DONE);
 	}
 }
 
@@ -1643,6 +1642,7 @@ void M_OptDrawer ()
 	DWORD overlay;
 	int labelofs;
 	int indent;
+	int cursorspace;
 
 	if (!CurrentMenu->DontDim)
 	{
@@ -1663,9 +1663,9 @@ void M_OptDrawer ()
 		if (BigFont && CurrentMenu->texttitle)
 		{
 			screen->DrawText (BigFont, gameinfo.gametype & GAME_DoomChex ? CR_RED : CR_UNTRANSLATED,
-				160-BigFont->StringWidth (CurrentMenu->texttitle)/2, 10,
-				CurrentMenu->texttitle, DTA_Clean, true, TAG_DONE);
-			y = 15 + BigFont->GetHeight ();
+				(screen->GetWidth() - BigFont->StringWidth(CurrentMenu->texttitle) * CleanXfac_1) / 2, 10*CleanYfac_1,
+				CurrentMenu->texttitle, DTA_CleanNoMove_1, true, TAG_DONE);
+			y = 15 + BigFont->GetHeight();
 		}
 		else
 		{
@@ -1674,7 +1674,7 @@ void M_OptDrawer ()
 	}
 	if (gameinfo.gametype & GAME_Raven)
 	{
-		labelofs = 2;
+		labelofs = 2 * CleanXfac_1;
 		y -= 2;
 		fontheight = 9;
 	}
@@ -1683,9 +1683,13 @@ void M_OptDrawer ()
 		labelofs = 0;
 		fontheight = 8;
 	}
-	ytop = y + CurrentMenu->scrolltop * 8;
+	cursorspace = 14 * CleanXfac_1;
+	y *= CleanYfac_1;
+	fontheight *= CleanYfac_1;
+	ytop = y + CurrentMenu->scrolltop * 8 * CleanYfac_1;
+	int lastrow = screen->GetHeight() - SmallFont->GetHeight() * CleanYfac_1;
 
-	for (i = 0; i < CurrentMenu->numitems && y <= 200 - SmallFont->GetHeight(); i++, y += fontheight)
+	for (i = 0; i < CurrentMenu->numitems && y <= lastrow; i++, y += fontheight)
 	{
 		if (i == CurrentMenu->scrolltop)
 		{
@@ -1696,15 +1700,30 @@ void M_OptDrawer ()
 		overlay = 0;
 		if (item->type == discrete && item->c.discretecenter == 1)
 		{
-			indent = 160;
+			indent = screen->GetWidth() / 2;
 		}
 		else if (item->type == joymore)
 		{
-			indent = 4;
+			indent = 4 * CleanXfac_1;
 		}
 		else
 		{
 			indent = CurrentMenu->indent;
+			if (indent > 280)
+			{ // kludge for the compatibility options with their extremely long labels
+				if (indent + 40 <= CleanWidth_1)
+				{
+					indent = (screen->GetWidth() - ((indent + 40) * CleanXfac_1)) / 2 + indent * CleanXfac_1;
+				}
+				else
+				{
+					indent = screen->GetWidth() - 40 * CleanXfac_1;
+				}
+			}
+			else
+			{
+				indent = (indent - 160) * CleanXfac_1 + screen->GetWidth() / 2;
+			}
 		}
 
 		if (item->type != screenres)
@@ -1727,7 +1746,7 @@ void M_OptDrawer ()
 					label = somestring;
 				}
 			}
-			width = SmallFont->StringWidth(label);
+			width = SmallFont->StringWidth(label) * CleanXfac_1;
 			switch (item->type)
 			{
 			case more:
@@ -1737,34 +1756,34 @@ void M_OptDrawer ()
 				break;
 
 			case joymore:
-				x = 20;
+				x = 20 * CleanXfac_1;
 				color = MoreColor;
 				break;
 
 			case numberedmore:
 			case rsafemore:
 			case rightmore:
-				x = indent + 14;
+				x = indent + cursorspace;
 				color = item->type != rightmore ? CR_GREEN : MoreColor;
 				break;
 
 			case redtext:
-				x = 160 - width / 2;
+				x = screen->GetWidth() / 2 - width / 2;
 				color = LabelColor;
 				break;
 
 			case whitetext:
-				x = 160 - width / 2;
+				x = screen->GetWidth() / 2 - width / 2;
 				color = CR_GOLD;//ValueColor;
 				break;
 
 			case listelement:
-				x = indent + 14;
+				x = indent + cursorspace;
 				color = LabelColor;
 				break;
 
 			case colorpicker:
-				x = indent + 14;
+				x = indent + cursorspace;
 				color = MoreColor;
 				break;
 
@@ -1781,7 +1800,7 @@ void M_OptDrawer ()
 					? CR_YELLOW : LabelColor;
 				break;
 			}
-			screen->DrawText (SmallFont, color, x, y, label, DTA_Clean, true, DTA_ColorOverlay, overlay, TAG_DONE);
+			screen->DrawText (SmallFont, color, x, y, label, DTA_CleanNoMove_1, true, DTA_ColorOverlay, overlay, TAG_DONE);
 
 			switch (item->type)
 			{
@@ -1791,8 +1810,8 @@ void M_OptDrawer ()
 					char tbuf[16];
 
 					mysnprintf (tbuf, countof(tbuf), "%d.", item->b.position);
-					x = indent - SmallFont->StringWidth (tbuf);
-					screen->DrawText (SmallFont, CR_GREY, x, y, tbuf, DTA_Clean, true, TAG_DONE);
+					x = indent - SmallFont->StringWidth (tbuf) * CleanXfac_1;
+					screen->DrawText (SmallFont, CR_GREY, x, y, tbuf, DTA_CleanNoMove_1, true, TAG_DONE);
 				}
 				break;
 
@@ -1808,14 +1827,14 @@ void M_OptDrawer ()
 
 				if (v == vals)
 				{
-					screen->DrawText (SmallFont, ValueColor, indent + 14, y, "Unknown",
-						DTA_Clean, true, TAG_DONE);
+					screen->DrawText (SmallFont, ValueColor, indent + cursorspace, y, "Unknown",
+						DTA_CleanNoMove_1, true, TAG_DONE);
 				}
 				else
 				{
 					screen->DrawText (SmallFont, item->type == cdiscrete ? v : ValueColor,
-						indent + 14, y, item->e.values[v].name,
-						DTA_Clean, true, TAG_DONE);
+						indent + cursorspace, y, item->e.values[v].name,
+						DTA_CleanNoMove_1, true, TAG_DONE);
 				}
 
 			}
@@ -1865,15 +1884,15 @@ void M_OptDrawer ()
 
 				if (v == vals)
 				{
-					screen->DrawText (SmallFont, ValueColor, indent + 14, y, "Unknown",
-						DTA_Clean, true, DTA_ColorOverlay, overlay, TAG_DONE);
+					screen->DrawText (SmallFont, ValueColor, indent + cursorspace, y, "Unknown",
+						DTA_CleanNoMove_1, true, DTA_ColorOverlay, overlay, TAG_DONE);
 				}
 				else
 				{
 					screen->DrawText (SmallFont, item->type == cdiscrete ? v : ValueColor,
-						indent + 14, y,
+						indent + cursorspace, y,
 						item->type != discretes ? item->e.values[v].name : item->e.valuestrings[v].name.GetChars(),
-						DTA_Clean, true, DTA_ColorOverlay, overlay, TAG_DONE);
+						DTA_CleanNoMove_1, true, DTA_ColorOverlay, overlay, TAG_DONE);
 				}
 
 			}
@@ -1885,18 +1904,18 @@ void M_OptDrawer ()
 
 				value = item->a.cvar->GetGenericRep (CVAR_String);
 				v = M_FindCurVal(value.String, item->e.enumvalues, (int)item->b.numvalues);
-				screen->DrawText(SmallFont, ValueColor, indent + 14, y, v, DTA_Clean, true, TAG_DONE);
+				screen->DrawText(SmallFont, ValueColor, indent + cursorspace, y, v, DTA_CleanNoMove_1, true, TAG_DONE);
 			}
 			break;
 
 			case nochoice:
-				screen->DrawText (SmallFont, CR_GOLD, indent + 14, y,
-					(item->e.values[(int)item->b.min]).name, DTA_Clean, true, TAG_DONE);
+				screen->DrawText (SmallFont, CR_GOLD, indent + cursorspace, y,
+					(item->e.values[(int)item->b.min]).name, DTA_CleanNoMove_1, true, TAG_DONE);
 				break;
 
 			case joy_sens:
 				value.Float = SELECTED_JOYSTICK->GetSensitivity();
-				M_DrawSlider (indent + 14, y + labelofs, item->b.min, item->c.max, value.Float, 1);
+				M_DrawSlider (indent + cursorspace, y + labelofs, item->b.min, item->c.max, value.Float, 1);
 				break;
 
 			case joy_slider:
@@ -1909,29 +1928,29 @@ void M_OptDrawer ()
 					assert(item->e.joyslidernum == 1);
 					value.Float = SELECTED_JOYSTICK->GetAxisDeadZone(item->a.joyselection);
 				}
-				M_DrawSlider (indent + 14, y + labelofs, item->b.min, item->c.max, fabs(value.Float), 3);
+				M_DrawSlider (indent + cursorspace, y + labelofs, item->b.min, item->c.max, fabs(value.Float), 3);
 				break;
 
 			case joy_inverter:
 				assert(item->e.joyslidernum == 0);
 				value.Float = SELECTED_JOYSTICK->GetAxisScale(item->a.joyselection);
-				screen->DrawText(SmallFont, ValueColor, indent + 14, y,
+				screen->DrawText(SmallFont, ValueColor, indent + cursorspace, y,
 					(value.Float < 0) ? "Yes" : "No",
-					DTA_Clean, true, TAG_DONE);
+					DTA_CleanNoMove_1, true, TAG_DONE);
 				break;
 
 			case slider:
 				value = item->a.cvar->GetGenericRep (CVAR_Float);
-				M_DrawSlider (indent + 14, y + labelofs, item->b.min, item->c.max, value.Float, 1);
+				M_DrawSlider (indent + cursorspace, y + labelofs, item->b.min, item->c.max, value.Float, 1);
 				break;
 
 			case absslider:
 				value = item->a.cvar->GetGenericRep (CVAR_Float);
-				M_DrawSlider (indent + 14, y + labelofs, item->b.min, item->c.max, fabs(value.Float), 1);
+				M_DrawSlider (indent + cursorspace, y + labelofs, item->b.min, item->c.max, fabs(value.Float), 1);
 				break;
 
 			case intslider:
-				M_DrawSlider (indent + 14, y + labelofs, item->b.min, item->c.max, item->a.fval, 0);
+				M_DrawSlider (indent + cursorspace, y + labelofs, item->b.min, item->c.max, item->a.fval, 0);
 				break;
 
 			case control:
@@ -1941,12 +1960,12 @@ void M_OptDrawer ()
 				C_NameKeys (description, item->b.key1, item->c.key2);
 				if (description[0])
 				{
-					M_DrawConText(CR_WHITE, indent + 14, y-1+labelofs, description);
+					M_DrawConText(CR_WHITE, indent + cursorspace, y-1+labelofs, description);
 				}
 				else
 				{
-					screen->DrawText(SmallFont, CR_BLACK, indent + 14, y + labelofs, "---",
-						DTA_Clean, true, TAG_DONE);
+					screen->DrawText(SmallFont, CR_BLACK, indent + cursorspace, y + labelofs, "---",
+						DTA_CleanNoMove_1, true, TAG_DONE);
 				}
 			}
 			break;
@@ -1954,9 +1973,9 @@ void M_OptDrawer ()
 			case colorpicker:
 			{
 				int box_x, box_y;
-				box_x = (indent - 35 - 160) * CleanXfac + screen->GetWidth()/2;
-				box_y = (y - ((gameinfo.gametype & GAME_Raven) ? 99 : 100)) * CleanYfac + screen->GetHeight()/2;
-				screen->Clear (box_x, box_y, box_x + 32*CleanXfac, box_y + (fontheight-1)*CleanYfac,
+				box_x = indent - 35 * CleanXfac_1;
+				box_y = (gameinfo.gametype & GAME_Raven) ? y - CleanYfac_1 : y;
+				screen->Clear (box_x, box_y, box_x + 32*CleanXfac_1, box_y + fontheight-CleanYfac_1,
 					item->a.colorcvar->GetIndex(), 0);
 			}
 			break;
@@ -1965,12 +1984,12 @@ void M_OptDrawer ()
 			{
 				int box_x, box_y;
 				int x1, p;
-				const int w = fontheight*CleanXfac;
-				const int h = fontheight*CleanYfac;
+				const int w = fontheight;
+				const int h = fontheight;
 
-				box_y = (y - 98) * CleanYfac + screen->GetHeight()/2;
+				box_y = y - 2 * CleanYfac_1;
 				p = 0;
-				box_x = (indent - 32 - 160) * CleanXfac + screen->GetWidth()/2;
+				box_x = indent - 32 * CleanXfac_1;
 				for (x1 = 0, p = int(item->b.min * 16); x1 < 16; ++p, ++x1)
 				{
 					screen->Clear (box_x, box_y, box_x + w, box_y + h, p, 0);
@@ -2025,7 +2044,7 @@ void M_OptDrawer ()
 				}
 
 				screen->DrawText (SmallFont, ValueColor,
-					indent + 14, y, str, DTA_Clean, true, TAG_DONE);
+					indent + cursorspace, y, str, DTA_CleanNoMove_1, true, TAG_DONE);
 			}
 			break;
 
@@ -2037,12 +2056,13 @@ void M_OptDrawer ()
 				i == CurrentItem &&
 				(skullAnimCounter < 6 || menuactive == MENU_WaitKey))
 			{
-				M_DrawConText(CR_RED, indent + 3, y-1+labelofs, "\xd");
+				M_DrawConText(CR_RED, indent + 3 * CleanXfac_1, y-CleanYfac_1+labelofs, "\xd");
 			}
 		}
 		else
 		{
 			char *str = NULL;
+			int colwidth = screen->GetWidth() / 3;
 
 			for (x = 0; x < 3; x++)
 			{
@@ -2059,13 +2079,13 @@ void M_OptDrawer ()
 					else
 						color = CR_BRICK;	//LabelColor;
 
-					screen->DrawText (SmallFont, color, 104 * x + 20, y, str, DTA_Clean, true, TAG_DONE);
+					screen->DrawText (SmallFont, color, colwidth * x + 20 * CleanXfac_1, y, str, DTA_CleanNoMove_1, true, TAG_DONE);
 				}
 			}
 
 			if (i == CurrentItem && ((item->a.selmode != -1 && (skullAnimCounter < 6 || menuactive == MENU_WaitKey)) || testingmode))
 			{
-				M_DrawConText(CR_RED, item->a.selmode * 104 + 8, y-1 + labelofs, "\xd");
+				M_DrawConText(CR_RED, item->a.selmode * colwidth + 8 * CleanXfac_1, y - CleanYfac_1 + labelofs, "\xd");
 			}
 		}
 	}
@@ -2076,11 +2096,11 @@ void M_OptDrawer ()
 
 	if (CanScrollUp)
 	{
-		M_DrawConText(CR_ORANGE, 3, ytop + labelofs, "\x1a");
+		M_DrawConText(CR_ORANGE, 3 * CleanXfac_1, ytop + labelofs, "\x1a");
 	}
 	if (CanScrollDown)
 	{
-		M_DrawConText(CR_ORANGE, 3, y - 8 + labelofs, "\x1b");
+		M_DrawConText(CR_ORANGE, 3 * CleanXfac_1, y - 8*CleanYfac_1 + labelofs, "\x1b");
 	}
 
 	if (flagsvar)
@@ -2103,8 +2123,8 @@ void M_OptDrawer ()
 			}
 		}
 		screen->DrawText (SmallFont, ValueColor,
-			160 - (SmallFont->StringWidth (flagsblah) >> 1), 0, flagsblah,
-			DTA_Clean, true, TAG_DONE);
+			(screen->GetWidth() - SmallFont->StringWidth (flagsblah) * CleanXfac_1) / 2, 0, flagsblah,
+			DTA_CleanNoMove_1, true, TAG_DONE);
 	}
 }
 
@@ -2257,31 +2277,33 @@ void M_OptButtonHandler(EMenuKey key, bool repeat)
 				}
 				if (CurrentItem < 0)
 				{
-					int maxitems, rowheight;
+					int ytop, maxitems, rowheight;
 
 					// Figure out how many lines of text fit on the menu
 					if (CurrentMenu->y != 0)
 					{
-						maxitems = CurrentMenu->y;
+						ytop = CurrentMenu->y;
 					}
 					else if (BigFont && CurrentMenu->texttitle)
 					{
-						maxitems = 15 + BigFont->GetHeight ();
+						ytop = 15 + BigFont->GetHeight ();
 					}
 					else
 					{
-						maxitems = 15;
+						ytop = 15;
 					}
 					if (!(gameinfo.gametype & GAME_DoomChex))
 					{
-						maxitems -= 2;
+						ytop -= 2;
 						rowheight = 9;
 					}
 					else
 					{
 						rowheight = 8;
 					}
-					maxitems = (200 - SmallFont->GetHeight () - maxitems) / rowheight + 1;
+					ytop *= CleanYfac_1;
+					rowheight *= CleanYfac_1;
+					maxitems = (screen->GetHeight() - SmallFont->GetHeight() - ytop) / rowheight + 1;
 
 					CurrentMenu->scrollpos = MAX (0,CurrentMenu->numitems - maxitems + CurrentMenu->scrolltop);
 					CurrentItem = CurrentMenu->numitems - 1;
@@ -2989,16 +3011,16 @@ static void ColorPickerDrawer ()
 	DWORD oldColor = DWORD(*ColorPickerItems[0].a.colorcvar) | 0xFF000000;
 
 	int x = screen->GetWidth()*2/3;
-	int y = (15 + BigFont->GetHeight() + SmallFont->GetHeight()*5 - 90) * CleanYfac + screen->GetHeight()/2;
+	int y = (15 + BigFont->GetHeight() + SmallFont->GetHeight()*5 - 10) * CleanYfac_1;
 
-	screen->Clear (x, y, x + 48*CleanXfac, y + 48*CleanYfac, -1, oldColor);
-	screen->Clear (x + 48*CleanXfac, y, x + 48*2*CleanXfac, y + 48*CleanYfac, -1, newColor);
+	screen->Clear (x, y, x + 48*CleanXfac_1, y + 48*CleanYfac_1, -1, oldColor);
+	screen->Clear (x + 48*CleanXfac_1, y, x + 48*2*CleanXfac_1, y + 48*CleanYfac_1, -1, newColor);
 
-	y += 49*CleanYfac;
-	screen->DrawText (SmallFont, CR_GRAY, x+(24-SmallFont->StringWidth("Old")/2)*CleanXfac, y,
-		"Old", DTA_CleanNoMove, true, TAG_DONE);
-	screen->DrawText (SmallFont, CR_WHITE, x+(48+24-SmallFont->StringWidth("New")/2)*CleanXfac, y,
-		"New", DTA_CleanNoMove, true, TAG_DONE);
+	y += 49*CleanYfac_1;
+	screen->DrawText (SmallFont, CR_GRAY, x+(24-SmallFont->StringWidth("Old")/2)*CleanXfac_1, y,
+		"Old", DTA_CleanNoMove_1, true, TAG_DONE);
+	screen->DrawText (SmallFont, CR_WHITE, x+(48+24-SmallFont->StringWidth("New")/2)*CleanXfac_1, y,
+		"New", DTA_CleanNoMove_1, true, TAG_DONE);
 }
 
 static void SetColorPickerSliders ()
@@ -3099,11 +3121,12 @@ static void DrawJoystickConfigMenuHeader()
 {
 	FString joyname = SELECTED_JOYSTICK->GetName();
 	screen->DrawText(BigFont, gameinfo.gametype & GAME_DoomChex ? CR_RED : CR_UNTRANSLATED,
-		160-BigFont->StringWidth(CurrentMenu->texttitle)/2, 5,
-		CurrentMenu->texttitle, DTA_Clean, true, TAG_DONE);
+		(screen->GetWidth() - BigFont->StringWidth(CurrentMenu->texttitle) * CleanXfac_1) / 2,
+		5 * CleanYfac_1,
+		CurrentMenu->texttitle, DTA_CleanNoMove_1, true, TAG_DONE);
 	screen->DrawText(SmallFont, gameinfo.gametype & GAME_DoomChex ? CR_RED : CR_UNTRANSLATED,
-		160-SmallFont->StringWidth(joyname)/2, 8 + BigFont->GetHeight(),
-		joyname, DTA_Clean, true, TAG_DONE);
+		(screen->GetWidth() - SmallFont->StringWidth(joyname) * CleanXfac_1) / 2, (8 + BigFont->GetHeight()) * CleanYfac_1,
+		joyname, DTA_CleanNoMove_1, true, TAG_DONE);
 }
 
 static void UpdateJoystickConfigMenu(IJoystickConfig *joy)

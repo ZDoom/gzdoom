@@ -1,4 +1,8 @@
 December 25, 2009  (Changes by Graf Zahl)
+- Fixed: Decals could spread to walls which had a decal-less texture or
+  were flagged not to have decals.
+- Fixed: DBaseDecal/DImpactDecal::CloneSelf never checked the return value
+  from their StickToWall call and left unplaced decals behind if that happened.
 - Reintroduced Doom.exe's player_t::usedown variable so that respawning a
   player does not immediately activate switches. oldbuttons was not usable
   for this. This also required that CopyPlayer preserves this info.

@@ -133,7 +133,7 @@ void DDoor::Tick ()
 
 		if (res == pastdest)
 		{
-			SN_StopSequence (m_Sector);
+			SN_StopSequence (m_Sector, CHAN_CEILING);
 			switch (m_Type)
 			{
 			case doorRaise:
@@ -179,7 +179,7 @@ void DDoor::Tick ()
 
 		if (res == pastdest)
 		{
-			SN_StopSequence (m_Sector);
+			SN_StopSequence (m_Sector, CHAN_CEILING);
 			switch (m_Type)
 			{
 			case doorRaise:

@@ -1,4 +1,6 @@
 December 24, 2009
+- Added a channel parameter to the sector overload of SN_StopSequence() so
+  it can be properly paired with calls to SN_StartSequence().
 - Fixed: P_CheckPlayerSprites() ignored the MF4_NOSKIN flag.  It now also sets
   the X scale, so switching skins while morphed does not produce weird
   stretching upon unmorphing.

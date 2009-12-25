@@ -849,7 +849,7 @@ DSeqNode *SN_StartSequence (sector_t *sector, int chan, int sequence, seqtype_t 
 {
 	if (!nostop)
 	{
-		SN_StopSequence (sector);
+		SN_StopSequence (sector, chan);
 	}
 	if (TwiddleSeqNum (sequence, type))
 	{
@@ -963,9 +963,23 @@ void SN_StopSequence (AActor *actor)
 	SN_DoStop (actor);
 }
 
-void SN_StopSequence (sector_t *sector)
+void SN_StopSequence (sector_t *sector, int chan)
 {
-	SN_DoStop (sector);
+	DSeqNode *node;
+
+	for (node = DSeqNode::FirstSequence(); node; )
+	{
+		DSeqNode *next = node->NextSequence();
+		if (node->Source() == sector)
+		{
+			assert(node->IsKindOf(RUNTIME_CLASS(DSeqSectorNode)));
+			if ((static_cast<DSeqSectorNode *>(node)->Channel & 7) == chan)
+			{
+				node->StopAndDestroy ();
+			}
+		}
+		node = next;
+	}
 }
 
 void SN_StopSequence (FPolyObj *poly)

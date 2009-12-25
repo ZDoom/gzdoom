@@ -112,7 +112,7 @@ void DCeiling::Tick ()
 				m_Sector->SetTexture(sector_t::ceiling, m_Texture);
 				// fall through
 			default:
-				SN_StopSequence (m_Sector);
+				SN_StopSequence (m_Sector, CHAN_CEILING);
 				Destroy ();
 				break;
 			}
@@ -145,7 +145,7 @@ void DCeiling::Tick ()
 				m_Sector->SetTexture(sector_t::ceiling, m_Texture);
 				// fall through
 			default:
-				SN_StopSequence (m_Sector);
+				SN_StopSequence (m_Sector, CHAN_CEILING);
 				Destroy ();
 				break;
 			}
@@ -500,7 +500,7 @@ bool EV_CeilingCrushStop (int tag)
 	{
 		if (scan->m_Tag == tag && scan->m_Direction != 0)
 		{
-			SN_StopSequence (scan->m_Sector);
+			SN_StopSequence (scan->m_Sector, CHAN_CEILING);
 			scan->m_OldDirection = scan->m_Direction;
 			scan->m_Direction = 0;		// in-stasis;
 			rtn = true;

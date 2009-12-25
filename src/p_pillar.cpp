@@ -98,7 +98,7 @@ void DPillar::Tick ()
 
 	if (r == pastdest && s == pastdest)
 	{
-		SN_StopSequence (m_Sector);
+		SN_StopSequence (m_Sector, CHAN_FLOOR);
 		Destroy ();
 	}
 	else

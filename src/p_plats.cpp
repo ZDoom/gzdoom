@@ -82,7 +82,7 @@ void DPlat::Tick ()
 		}
 		else if (res == pastdest)
 		{
-			SN_StopSequence (m_Sector);
+			SN_StopSequence (m_Sector, CHAN_FLOOR);
 			if (m_Type != platToggle)
 			{
 				m_Count = m_Wait;
@@ -121,7 +121,7 @@ void DPlat::Tick ()
 
 		if (res == pastdest)
 		{
-			SN_StopSequence (m_Sector);
+			SN_StopSequence (m_Sector, CHAN_FLOOR);
 			// if not an instant toggle, start waiting
 			if (m_Type != platToggle)		//jff 3/14/98 toggle up down
 			{								// is silent, instant, no waiting

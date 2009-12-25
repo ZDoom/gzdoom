@@ -126,7 +126,7 @@ void DFloor::Tick ()
 	
 	if (res == pastdest)
 	{
-		SN_StopSequence (m_Sector);
+		SN_StopSequence (m_Sector, CHAN_FLOOR);
 
 		if (m_Type == buildStair)
 			m_Type = waitStair;
@@ -530,7 +530,7 @@ bool EV_FloorCrushStop (int tag)
 		if (sec->floordata && sec->floordata->IsKindOf (RUNTIME_CLASS(DFloor)) &&
 			barrier_cast<DFloor *>(sec->floordata)->m_Type == DFloor::floorRaiseAndCrush)
 		{
-			SN_StopSequence (sec);
+			SN_StopSequence (sec, CHAN_FLOOR);
 			sec->floordata->Destroy ();
 			sec->floordata = NULL;
 		}
@@ -959,7 +959,7 @@ void DElevator::Tick ()
 	if (res == pastdest)	// if destination height acheived
 	{
 		// make floor stop sound
-		SN_StopSequence (m_Sector);
+		SN_StopSequence (m_Sector, CHAN_FLOOR);
 
 		m_Sector->floordata = NULL;		//jff 2/22/98
 		m_Sector->ceilingdata = NULL;	//jff 2/22/98

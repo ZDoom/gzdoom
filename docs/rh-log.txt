@@ -1,4 +1,7 @@
 December 24, 2009
+- Fixed: P_CheckPlayerSprites() ignored the MF4_NOSKIN flag.  It now also sets
+  the X scale, so switching skins while morphed does not produce weird
+  stretching upon unmorphing.
 - Fixed: Calling S_ChangeMusic() with the same song but a different looping
   flag now restarts the song so that the new looping setting can be applied.
   (This was easier than modifying every music handler to support modifying

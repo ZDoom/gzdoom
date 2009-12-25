@@ -2288,10 +2288,13 @@ void P_PlayerThink (player_t *player)
 			}
 		}
 		// check for use
-		if ((cmd->ucmd.buttons & BT_USE) && !player->usedown)
+		if (cmd->ucmd.buttons & BT_USE)
 		{
-			player->usedown = true;
-			P_UseLines (player);
+			if (!player->usedown)
+			{
+				player->usedown = true;
+				P_UseLines (player);
+			}
 		}
 		else
 		{

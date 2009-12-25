@@ -312,13 +312,34 @@ void AActor::Serialize (FArchive &arc)
 	{
 		arc << DamageFactor;
 	}
-	if (SaveVersion >= 2036)
+	if (SaveVersion > 2036)
 	{
-		arc << weaveindex;
+		arc << WeaveIndexXY << WeaveIndexZ;
 	}
 	else
 	{
-		weaveindex = special2;
+		int index;
+
+		if (SaveVersion < 2036)
+		{
+			index = special2;
+		}
+		else
+		{
+			arc << index;
+		}
+		// A_BishopMissileWeave and A_CStaffMissileSlither stored the weaveXY
+		// value in different parts of the index.
+		if (this->IsKindOf(PClass::FindClass("BishopFX")))
+		{
+			WeaveIndexXY = index >> 16;
+			WeaveIndexZ = index;
+		}
+		else
+		{
+			WeaveIndexXY = index;
+			WeaveIndexZ = 0;
+		}
 	}
 
 	// Skip past uservar array in old savegames

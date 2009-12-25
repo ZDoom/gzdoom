@@ -76,12 +76,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_BishopMissileWeave)
 	int weaveXY, weaveZ;
 	int angle;
 
-	// for compatibility this needs to set the value itself if it was never done by the projectile itself
-	if (self->weaveindex == -1) self->weaveindex = 16;
-
 	// since these values are now user configurable we have to do a proper range check to avoid array overflows.
-	weaveXY = (self->weaveindex >> 16) & 63;
-	weaveZ = (self->weaveindex & 63);
+	weaveXY = self->WeaveIndexXY & 63;
+	weaveZ = self->WeaveIndexZ & 63;
 	angle = (self->angle + ANG90) >> ANGLETOFINESHIFT;
 	newX = self->x - FixedMul (finecosine[angle], FloatBobOffsets[weaveXY]<<1);
 	newY = self->y - FixedMul (finesine[angle], FloatBobOffsets[weaveXY]<<1);
@@ -92,7 +89,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_BishopMissileWeave)
 	self->z -= FloatBobOffsets[weaveZ];
 	weaveZ = (weaveZ + 2) & 63;
 	self->z += FloatBobOffsets[weaveZ];	
-	self->weaveindex = weaveZ + (weaveXY<<16);
+	self->WeaveIndexXY = weaveXY;
+	self->WeaveIndexZ = weaveZ;
 }
 
 //============================================================================

@@ -905,10 +905,19 @@ DEFINE_PROPERTY(bouncecount, I, Actor)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_PROPERTY(weaveindex, I, Actor)
+DEFINE_PROPERTY(weaveindexXY, I, Actor)
 {
 	PROP_INT_PARM(id, 0);
-	defaults->weaveindex = id;
+	defaults->WeaveIndexXY = id;
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_PROPERTY(weaveindexZ, I, Actor)
+{
+	PROP_INT_PARM(id, 0);
+	defaults->WeaveIndexZ = id;
 }
 
 //==========================================================================

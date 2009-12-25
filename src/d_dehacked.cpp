@@ -2205,8 +2205,8 @@ static int PatchStrings (int dummy)
 static int DoInclude (int dummy)
 {
 	char *data;
-	int savedversion, savepversion;
-	char *savepatchfile, *savepatchpt, *savepatchname, savepatchsize;
+	int savedversion, savepversion, savepatchsize;
+	char *savepatchfile, *savepatchpt, *savepatchname;
 
 	if (including)
 	{

@@ -1,4 +1,5 @@
 December 24, 2009
+- Fixed: savepatchsize was declared incorrectly in d_dehacked.cpp:DoInclude().
 - Changed AFastProjectile::Effect() so that it sets the spawned trail to face
   same direction as the projectile.
 

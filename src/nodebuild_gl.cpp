@@ -117,7 +117,7 @@ void FNodeBuilder::FixSplitSharers (const node_t &node)
 
 		while (event != NULL && next != NULL && event->Info.Vertex != v2)
 		{
-			D(Printf("Forced split of seg %d(%d->%d) at %d(%d,%d)\n", seg,
+			D(Printf(PRINT_LOG, "Forced split of seg %d(%d->%d) at %d(%d,%d)\n", seg,
 				Segs[seg].v1, Segs[seg].v2,
 				event->Info.Vertex,
 				Vertices[event->Info.Vertex].x>>16,
@@ -209,7 +209,7 @@ void FNodeBuilder::AddMinisegs (const node_t &node, DWORD splitseg, DWORD &fset,
 						);
 				}
 
-				D(Printf ("**Minisegs** %d/%d added %d(%d,%d)->%d(%d,%d)\n", fnseg, bnseg,
+				D(Printf (PRINT_LOG, "**Minisegs** %d/%d added %d(%d,%d)->%d(%d,%d)\n", fnseg, bnseg,
 					prev->Info.Vertex,
 					Vertices[prev->Info.Vertex].x>>16, Vertices[prev->Info.Vertex].y>>16,
 					event->Info.Vertex,

@@ -115,7 +115,7 @@ int FNodeBuilder::CreateNode (DWORD set, fixed_t bbox[4])
 
 		SplitSegs (set, node, splitseg, set1, set2);
 		D(PrintSet (1, set1));
-		D(Printf ("(%d,%d) delta (%d,%d) from seg %d\n", node.x>>16, node.y>>16, node.dx>>16, node.dy>>16, splitseg));
+		D(Printf (PRINT_LOG, "(%d,%d) delta (%d,%d) from seg %d\n", node.x>>16, node.y>>16, node.dx>>16, node.dy>>16, splitseg));
 		D(PrintSet (2, set2));
 		node.intchildren[0] = CreateNode (set1, node.bbox[0]);
 		node.intchildren[1] = CreateNode (set2, node.bbox[1]);
@@ -138,7 +138,7 @@ int FNodeBuilder::CreateSubsector (DWORD set, fixed_t bbox[4])
 	bbox[BOXTOP] = bbox[BOXRIGHT] = INT_MIN;
 	bbox[BOXBOTTOM] = bbox[BOXLEFT] = INT_MAX;
 
-	D(Printf ("Subsector from set %d\n", set));
+	D(Printf (PRINT_LOG, "Subsector from set %d\n", set));
 
 	assert (set != DWORD_MAX);
 
@@ -163,7 +163,7 @@ int FNodeBuilder::CreateSubsector (DWORD set, fixed_t bbox[4])
 		C_SetTicker (MulScale16 (SegsStuffed, (SDWORD)Segs.Size()));
 	}
 
-	D(Printf ("bbox (%d,%d)-(%d,%d)\n", bbox[BOXLEFT]>>16, bbox[BOXBOTTOM]>>16, bbox[BOXRIGHT]>>16, bbox[BOXTOP]>>16));
+	D(Printf (PRINT_LOG, "bbox (%d,%d)-(%d,%d)\n", bbox[BOXLEFT]>>16, bbox[BOXBOTTOM]>>16, bbox[BOXRIGHT]>>16, bbox[BOXTOP]>>16));
 
 	return ssnum;
 }
@@ -293,7 +293,7 @@ bool FNodeBuilder::CheckSubsector (DWORD set, node_t &node, DWORD &splitseg, int
 
 	do
 	{
-		D(Printf (" - seg %d(%d,%d)-(%d,%d) line %d front %d back %d\n", seg,
+		D(Printf (PRINT_LOG, " - seg %d(%d,%d)-(%d,%d) line %d front %d back %d\n", seg,
 			Vertices[Segs[seg].v1].x>>16, Vertices[Segs[seg].v1].y>>16,
 			Vertices[Segs[seg].v2].x>>16, Vertices[Segs[seg].v2].y>>16,
 			Segs[seg].linedef, Segs[seg].frontsector, Segs[seg].backsector));
@@ -330,7 +330,7 @@ bool FNodeBuilder::CheckSubsector (DWORD set, node_t &node, DWORD &splitseg, int
 		return false;
 	}
 
-	D(Printf("Need to synthesize a splitter for set %d on seg %d\n", set, seg));
+	D(Printf(PRINT_LOG, "Need to synthesize a splitter for set %d on seg %d\n", set, seg));
 	splitseg = DWORD_MAX;
 
 	// This is a very simple and cheap "fix" for subsectors with segs
@@ -364,7 +364,7 @@ bool FNodeBuilder::CheckSubsectorOverlappingSegs (DWORD set, node_t &node, DWORD
 				{ // Do not put minisegs into a new subsector.
 					swap (seg1, seg2);
 				}
-				D(Printf("Need to synthesize a splitter for set %d on seg %d (ov)\n", set, seg2));
+				D(Printf(PRINT_LOG, "Need to synthesize a splitter for set %d on seg %d (ov)\n", set, seg2));
 				splitseg = DWORD_MAX;
 
 				return ShoveSegBehind (set, node, seg2, seg1);
@@ -424,6 +424,8 @@ int FNodeBuilder::SelectSplitter (DWORD set, node_t &node, DWORD &splitseg, int 
 
 	memset (&PlaneChecked[0], 0, PlaneChecked.Size());
 
+	D(Printf (PRINT_LOG, "Processing set %d\n", set));
+
 	while (seg != DWORD_MAX)
 	{
 		FPrivSeg *pseg = &Segs[seg];
@@ -445,7 +447,7 @@ int FNodeBuilder::SelectSplitter (DWORD set, node_t &node, DWORD &splitseg, int 
 
 				int value = Heuristic (node, set, nosplit);
 
-				D(Printf ("Seg %5d (%5d,%5d)-(%5d,%5d) scores %d\n", seg, node.x>>16, node.y>>16,
+				D(Printf (PRINT_LOG, "Seg %5d, ld %d (%5d,%5d)-(%5d,%5d) scores %d\n", seg, Segs[seg].linedef, node.x>>16, node.y>>16,
 					(node.x+node.dx)>>16, (node.y+node.dy)>>16, value));
 
 				if (value > bestvalue)
@@ -469,11 +471,11 @@ int FNodeBuilder::SelectSplitter (DWORD set, node_t &node, DWORD &splitseg, int 
 
 	if (bestseg == DWORD_MAX)
 	{ // No lines split any others into two sets, so this is a convex region.
-	D(Printf ("set %d, step %d, nosplit %d has no good splitter (%d)\n", set, step, nosplit, nosplitters));
+	D(Printf (PRINT_LOG, "set %d, step %d, nosplit %d has no good splitter (%d)\n", set, step, nosplit, nosplitters));
 		return nosplitters ? -1 : 0;
 	}
 
-	D(Printf ("split seg %u in set %d, score %d, step %d, nosplit %d\n", bestseg, set, bestvalue, step, nosplit));
+	D(Printf (PRINT_LOG, "split seg %u in set %d, score %d, step %d, nosplit %d\n", bestseg, set, bestvalue, step, nosplit));
 
 	splitseg = bestseg;
 	SetNodeFromSeg (node, &Segs[bestseg]);
@@ -581,7 +583,7 @@ int FNodeBuilder::Heuristic (node_t &node, DWORD set, bool honorNoSplit)
 			{
 				if (honorNoSplit)
 				{
-					D(Printf ("Splits seg %d\n", i));
+					D(Printf (PRINT_LOG, "Splits seg %d\n", i));
 					return -1;
 				}
 				else
@@ -627,7 +629,7 @@ int FNodeBuilder::Heuristic (node_t &node, DWORD set, bool honorNoSplit)
 	// determine which sector it lies inside.
 	if (realSegs[0] == 0 || realSegs[1] == 0)
 	{
-		D(Printf ("Leaves a side with only mini segs\n"));
+		D(Printf (PRINT_LOG, "Leaves a side with only mini segs\n"));
 		return -1;
 	}
 
@@ -636,7 +638,7 @@ int FNodeBuilder::Heuristic (node_t &node, DWORD set, bool honorNoSplit)
 	// is not neccesarily bad, just undesirable.
 	if (honorNoSplit && (specialSegs[0] == realSegs[0] || specialSegs[1] == realSegs[1]))
 	{
-		D(Printf ("Leaves a side with only special segs\n"));
+		D(Printf (PRINT_LOG, "Leaves a side with only special segs\n"));
 		return -1;
 	}
 
@@ -908,7 +910,7 @@ DWORD FNodeBuilder::SplitSeg (DWORD segnum, int splitvert, int v1InFront)
 
 	Segs.Push (newseg);
 
-	D(Printf ("Split seg %d to get seg %d\n", segnum, newnum));
+	D(Printf (PRINT_LOG, "Split seg %d to get seg %d\n", segnum, newnum));
 
 	return newnum;
 }
@@ -988,14 +990,14 @@ double FNodeBuilder::InterceptVector (const node_t &splitter, const FPrivSeg &se
 
 void FNodeBuilder::PrintSet (int l, DWORD set)
 {
-	Printf ("set %d:\n", l);
+	Printf (PRINT_LOG, "set %d:\n", l);
 	for (; set != DWORD_MAX; set = Segs[set].next)
 	{
-		Printf ("\t%u(%td):%d(%d,%d)-%d(%d,%d) ", set, Segs[set].frontsector-sectors,
+		Printf (PRINT_LOG, "\t%u(%td):%d(%d,%d)-%d(%d,%d) ", set, Segs[set].frontsector-sectors,
 			Segs[set].v1,
 			Vertices[Segs[set].v1].x>>16, Vertices[Segs[set].v1].y>>16,
 			Segs[set].v2,
 			Vertices[Segs[set].v2].x>>16, Vertices[Segs[set].v2].y>>16);
 	}
-	Printf ("*\n");
+	Printf (PRINT_LOG, "*\n");
 }

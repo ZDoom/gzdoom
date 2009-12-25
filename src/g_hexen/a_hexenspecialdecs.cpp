@@ -348,6 +348,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BellReset2)
 {
 	self->flags |= MF_SHOOTABLE;
 	self->flags &= ~MF_CORPSE;
+	self->flags6 &= ~MF6_KILLED;
 	self->health = 5;
 }
 

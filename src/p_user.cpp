@@ -222,6 +222,7 @@ player_t::player_t()
   centering(0),
   turnticks(0),
   attackdown(0),
+  usedown(0),
   oldbuttons(0),
   health(0),
   inventorytics(0),
@@ -2287,9 +2288,14 @@ void P_PlayerThink (player_t *player)
 			}
 		}
 		// check for use
-		if ((cmd->ucmd.buttons & BT_USE) && !(player->oldbuttons & BT_USE))
+		if ((cmd->ucmd.buttons & BT_USE) && !player->usedown)
 		{
+			player->usedown = true;
 			P_UseLines (player);
+		}
+		else
+		{
+			player->usedown = false;
 		}
 		// Morph counter
 		if (player->morphTics)

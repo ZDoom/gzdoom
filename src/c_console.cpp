@@ -81,7 +81,6 @@ static bool C_TabCompleteList ();
 static bool TabbedLast;		// True if last key pressed was tab
 static bool TabbedList;		// True if tab list was shown
 CVAR (Bool, con_notablist, false, CVAR_ARCHIVE)
-CVAR (Bool, con_ticker, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 static FTextureID conback;
 static DWORD conshade;
@@ -1105,23 +1104,17 @@ static void C_DrawNotifyText ()
 
 void C_InitTicker (const char *label, unsigned int max, bool showpercent)
 {
-	if (con_ticker)
-	{
-		TickerPercent = showpercent;
-		TickerMax = max;
-		TickerLabel = label;
-		TickerAt = 0;
-		maybedrawnow (true, false);
-	}
+	TickerPercent = showpercent;
+	TickerMax = max;
+	TickerLabel = label;
+	TickerAt = 0;
+	maybedrawnow (true, false);
 }
 
 void C_SetTicker (unsigned int at, bool forceUpdate)
 {
-	if (con_ticker)
-	{
-		TickerAt = at > TickerMax ? TickerMax : at;
-		maybedrawnow (true, TickerVisible ? forceUpdate : false);
-	}
+	TickerAt = at > TickerMax ? TickerMax : at;
+	maybedrawnow (true, TickerVisible ? forceUpdate : false);
 }
 
 void C_DrawConsole (bool hw2d)

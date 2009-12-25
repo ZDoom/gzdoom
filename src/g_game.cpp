@@ -1316,7 +1316,7 @@ void G_PlayerReborn (int player)
 
     p->skill = b_skill;	//Added by MC:
 
-	p->oldbuttons = ~0, p->attackdown = true;	// don't do anything immediately
+	p->oldbuttons = ~0, p->attackdown = true; p->usedown = true;	// don't do anything immediately
 	p->original_oldbuttons = ~0;
 	p->playerstate = PST_LIVE;
 

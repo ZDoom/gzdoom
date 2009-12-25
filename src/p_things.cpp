@@ -466,6 +466,8 @@ bool P_Thing_Raise(AActor *thing)
 	thing->flags2 = info->flags2;
 	thing->flags3 = info->flags3;
 	thing->flags4 = info->flags4;
+	thing->flags5 = info->flags5;
+	thing->flags6 = info->flags6;
 	thing->health = info->health;
 	thing->target = NULL;
 	thing->lastenemy = NULL;

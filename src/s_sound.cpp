@@ -2307,6 +2307,7 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 	}
 
 	if (!mus_playing.name.IsEmpty() &&
+		mus_playing.handle != NULL &&
 		stricmp (mus_playing.name, musicname) == 0 &&
 		mus_playing.handle->m_Looping == looping)
 	{

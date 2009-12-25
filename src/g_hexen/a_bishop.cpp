@@ -72,25 +72,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BishopAttack2)
 
 DEFINE_ACTION_FUNCTION(AActor, A_BishopMissileWeave)
 {
-	fixed_t newX, newY;
-	int weaveXY, weaveZ;
-	int angle;
-
-	// since these values are now user configurable we have to do a proper range check to avoid array overflows.
-	weaveXY = self->WeaveIndexXY & 63;
-	weaveZ = self->WeaveIndexZ & 63;
-	angle = (self->angle + ANG90) >> ANGLETOFINESHIFT;
-	newX = self->x - FixedMul (finecosine[angle], FloatBobOffsets[weaveXY]<<1);
-	newY = self->y - FixedMul (finesine[angle], FloatBobOffsets[weaveXY]<<1);
-	weaveXY = (weaveXY + 2) & 63;
-	newX += FixedMul (finecosine[angle], FloatBobOffsets[weaveXY]<<1);
-	newY += FixedMul (finesine[angle], FloatBobOffsets[weaveXY]<<1);
-	P_TryMove (self, newX, newY, true);
-	self->z -= FloatBobOffsets[weaveZ];
-	weaveZ = (weaveZ + 2) & 63;
-	self->z += FloatBobOffsets[weaveZ];	
-	self->WeaveIndexXY = weaveXY;
-	self->WeaveIndexZ = weaveZ;
+	A_Weave(self, 2, 2, 2*FRACUNIT, FRACUNIT);
 }
 
 //============================================================================

@@ -3021,6 +3021,58 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Quake)
 
 //===========================================================================
 //
+// A_Weave
+//
+//===========================================================================
+
+void A_Weave(AActor *self, int xyspeed, int zspeed, fixed_t xydist, fixed_t zdist)
+{
+	fixed_t newX, newY;
+	int weaveXY, weaveZ;
+	int angle;
+	fixed_t dist;
+
+	weaveXY = self->WeaveIndexXY & 63;
+	weaveZ = self->WeaveIndexZ & 63;
+	angle = (self->angle + ANG90) >> ANGLETOFINESHIFT;
+
+	if (xydist != 0 && xyspeed != 0)
+	{
+		dist = FixedMul(FloatBobOffsets[weaveXY], xydist);
+		newX = self->x - FixedMul (finecosine[angle], dist);
+		newY = self->y - FixedMul (finesine[angle], dist);
+		weaveXY = (weaveXY + xyspeed) & 63;
+		dist = FixedMul(FloatBobOffsets[weaveXY], xydist);
+		newX += FixedMul (finecosine[angle], dist);
+		newY += FixedMul (finesine[angle], dist);
+		P_TryMove (self, newX, newY, true);
+		self->WeaveIndexXY = weaveXY;
+	}
+
+	if (zdist != 0 && zspeed != 0)
+	{
+		self->z -= FixedMul(FloatBobOffsets[weaveZ], zdist);
+		weaveZ = (weaveZ + zspeed) & 63;
+		self->z += FixedMul(FloatBobOffsets[weaveZ], zdist);
+		self->WeaveIndexZ = weaveZ;
+	}
+}
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Weave)
+{
+	ACTION_PARAM_START(4);
+	ACTION_PARAM_INT(xspeed, 0);
+	ACTION_PARAM_INT(yspeed, 1);
+	ACTION_PARAM_FIXED(xdist, 2);
+	ACTION_PARAM_FIXED(ydist, 3);
+	A_Weave(self, xspeed, yspeed, xdist, ydist);
+}
+
+
+
+
+//===========================================================================
+//
 // A_LineEffect
 //
 // This allows linedef effects to be activated inside deh frames.

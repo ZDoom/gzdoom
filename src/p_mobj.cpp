@@ -1206,7 +1206,7 @@ void P_ExplodeMissile (AActor *mo, line_t *line, AActor *target)
 	
 	FState *nextstate=NULL;
 	
-	if (target != NULL && target->flags & (MF_SHOOTABLE|MF_CORPSE))
+	if (target != NULL && ((target->flags & MF_SHOOTABLE) || (target->flags6 & MF6_KILLED)) )
 	{
 		if (target->flags & MF_NOBLOOD) nextstate = mo->FindState(NAME_Crash);
 		if (nextstate == NULL) nextstate = mo->FindState(NAME_Death, NAME_Extreme);
@@ -5472,7 +5472,7 @@ int AActor::TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, FN
 
 void AActor::Crash()
 {
-	if ((flags & MF_CORPSE) &&
+	if ((flags6 & MF6_KILLED) &&
 		!(flags3 & MF3_CRASHED) &&
 		!(flags & MF_ICECORPSE))
 	{

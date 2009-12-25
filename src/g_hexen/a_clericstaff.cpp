@@ -153,20 +153,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CStaffAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CStaffMissileSlither)
 {
-	fixed_t newX, newY;
-	int weaveXY;
-	int angle;
-
-	// since these values are now user configurable we have to do a proper range check to avoid array overflows.
-	weaveXY = self->WeaveIndexXY & 63;
-	angle = (self->angle+ANG90)>>ANGLETOFINESHIFT;
-	newX = self->x-FixedMul(finecosine[angle], FloatBobOffsets[weaveXY]);
-	newY = self->y-FixedMul(finesine[angle], FloatBobOffsets[weaveXY]);
-	weaveXY = (weaveXY+3)&63;
-	newX += FixedMul(finecosine[angle], FloatBobOffsets[weaveXY]);
-	newY += FixedMul(finesine[angle], FloatBobOffsets[weaveXY]);
-	P_TryMove (self, newX, newY, true);
-	self->WeaveIndexXY = weaveXY;
+	A_Weave(self, 3, 0, FRACUNIT, 0);
 }
 
 //============================================================================

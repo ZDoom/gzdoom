@@ -318,6 +318,7 @@ enum
 	MF6_LINEDONE		= 0x00008000,	// From MBF: Object has already run a line effect
 	MF6_NOTRIGGER		= 0x00010000,	// actor cannot trigger any line actions
 	MF6_SHATTERING		= 0x00020000,	// marks an ice corpse for forced shattering
+	MF6_KILLED			= 0x00040000,	// Something that was killed (but not necessarily a corpse)
 
 // --- mobj.renderflags ---
 

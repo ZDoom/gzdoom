@@ -1,3 +1,20 @@
+December 25, 2009  (Changes by Graf Zahl)
+- Reintroduced Doom.exe's player_t::usedown variable so that respawning a
+  player does not immediately activate switches. oldbuttons was not usable
+  for this. This also required that CopyPlayer preserves this info.
+- Fixed: When restarting the music there was a NULL pointer check missing
+  so it crashed when the game was started wi
+- Fixed: If the Use key is used to respawn the player it must be cleared
+  so that it doesn't trigger any subsequent actions after respawning.
+- Fixed: Resurrecting a monster did not restore flags5 and flags6.
+- Fixed: Projectiles which killed a non-monster were unable to determine
+  what precisely they hit because MF_CORPSE is only valid for monsters.
+  A new flag, MF6_KILLED that gets set for all objects that die, was added
+  for this case.
+- Added a generic A_Weave function that exposes all possible options of
+  A_BishopMissileWeave and A_CStaffMissileSlither. These 2 functions are
+  no longer needed from DECORATE and therefore deprecated.
+
 December 24, 2009
 - The options menu no longer scales up so quickly, so it can fit wider text
   onscreen. In addition, it now uses the whole height available to it. Also,

@@ -222,6 +222,7 @@ ACTOR Actor native //: Thinker
 	action native A_PlayerSkinCheck(state label);
 	action native A_BasicAttack(int meleedamage, sound meleesound, class<actor> missiletype, float missileheight);
 	action native A_ThrowGrenade(class<Actor> itemtype, float zheight = 0, float xyvel = 0, float zvel = 0, bool useammo = true);
+	action native A_Weave(int xspeed, int yspeed, float xdist, float ydist);
 
 	action native A_Recoil(float xyvel);
 	action native A_JumpIfInTargetInventory(class<Inventory> itemtype, int amount, state label);

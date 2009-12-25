@@ -1,4 +1,8 @@
 December 24, 2009
+- Fixed: Calling S_ChangeMusic() with the same song but a different looping
+  flag now restarts the song so that the new looping setting can be applied.
+  (This was easier than modifying every music handler to support modifying
+  loop changes on the fly, which seems like overkill.)
 - Fixed: savepatchsize was declared incorrectly in d_dehacked.cpp:DoInclude().
 - Changed AFastProjectile::Effect() so that it sets the spawned trail to face
   same direction as the projectile.

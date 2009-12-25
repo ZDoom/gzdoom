@@ -2306,7 +2306,9 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 		}
 	}
 
-	if (!mus_playing.name.IsEmpty() && stricmp (mus_playing.name, musicname) == 0)
+	if (!mus_playing.name.IsEmpty() &&
+		stricmp (mus_playing.name, musicname) == 0 &&
+		mus_playing.handle->m_Looping == looping)
 	{
 		if (order != mus_playing.baseorder)
 		{

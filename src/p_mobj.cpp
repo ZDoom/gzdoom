@@ -5472,7 +5472,7 @@ int AActor::TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, FN
 
 void AActor::Crash()
 {
-	if ((flags6 & MF6_KILLED) &&
+	if (((flags & MF_CORPSE) || (flags6 & MF6_KILLED)) &&
 		!(flags3 & MF3_CRASHED) &&
 		!(flags & MF_ICECORPSE))
 	{

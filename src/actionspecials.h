@@ -55,6 +55,7 @@ DEFINE_SPECIAL(Line_SetTextureOffset, 53, 5, 5, 5)
 DEFINE_SPECIAL(Sector_ChangeFlags, 54, 3, 3, 3)
 DEFINE_SPECIAL(Line_SetBlocking, 55, 3, 3, 3)
 DEFINE_SPECIAL(Line_SetTextureScale, 56, 5, 5, 5)
+DEFINE_SPECIAL(Sector_SetPortal, 57, -1, -1, 5)
 
 DEFINE_SPECIAL(Plat_PerpetualRaise, 60, 3, 3, 3)
 DEFINE_SPECIAL(Plat_Stop, 61, 1, 1, 1)

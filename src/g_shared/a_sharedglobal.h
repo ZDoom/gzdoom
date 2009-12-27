@@ -89,14 +89,22 @@ public:
 class ASkyViewpoint : public AActor
 {
 	DECLARE_CLASS (ASkyViewpoint, AActor)
+	HAS_OBJECT_POINTERS
 public:
 	void Serialize (FArchive &arc);
 	void BeginPlay ();
 	void Destroy ();
 	bool bInSkybox;
 	bool bAlways;
-	ASkyViewpoint *Mate;
+	TObjPtr<ASkyViewpoint> Mate;
 	fixed_t PlaneAlpha;
+};
+
+class AStackPoint : public ASkyViewpoint
+{
+	DECLARE_CLASS (AStackPoint, ASkyViewpoint)
+public:
+	void BeginPlay ();
 };
 
 class DFlashFader : public DThinker

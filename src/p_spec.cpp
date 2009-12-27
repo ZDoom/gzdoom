@@ -59,6 +59,7 @@
 #include "statnums.h"
 #include "g_level.h"
 #include "v_font.h"
+#include "a_sharedglobal.h"
 
 // State.
 #include "r_state.h"
@@ -827,6 +828,50 @@ void DWallLightTransfer::DoTransfer (BYTE lightlevel, int target, BYTE flags)
 	}
 }
 
+void P_SpawnPortal(line_t *line, int sectortag, INTBOOL ceiling, int alpha)
+{
+	for (int i=0;i<numlines;i++)
+	{
+		// We must look for the reference line with a linear search unless we want to waste the line ID for it
+		// which is not a good idea.
+		if (lines[i].special == Sector_SetPortal &&
+			lines[i].args[0] == sectortag &&
+			lines[i].args[1] == 0 &&
+			lines[i].args[2] == ceiling &&
+			lines[i].args[3] == 1)
+		{
+			fixed_t x1 = (line->v1->x + line->v2->x) >> 1;
+			fixed_t y1 = (line->v1->y + line->v2->y) >> 1;
+			fixed_t x2 = (lines[i].v1->x + lines[i].v2->x) >> 1;
+			fixed_t y2 = (lines[i].v1->y + lines[i].v2->y) >> 1;
+
+			AStackPoint *anchor = Spawn<AStackPoint>(x1, y1, 0, NO_REPLACE);
+			AStackPoint *reference = Spawn<AStackPoint>(x2, y2, 0, NO_REPLACE);
+
+			reference->Mate = anchor;
+			anchor->Mate = reference;
+
+			// This is so that the renderer can distinguish these portals from
+			// the ones spawned with the '*StackLookOnly' things.
+			reference->flags |= MF_JUSTATTACKED;
+			anchor->flags |= MF_JUSTATTACKED;
+
+		    for (int s=-1; (s = P_FindSectorFromTag(sectortag,s)) >= 0;)
+			{
+				if (ceiling)
+				{
+					if (sectors[s].CeilingSkyBox == NULL) sectors[s].CeilingSkyBox = reference;
+				}
+				else
+				{
+					if (sectors[s].FloorSkyBox == NULL) sectors[s].FloorSkyBox = reference;
+				}
+			}
+			return;
+		}
+	}
+}
+
 
 //
 // P_SpawnSpecials
@@ -1046,6 +1091,18 @@ void P_SpawnSpecials (void)
 			if (lines[i].args[0] == 0)
 			{
 				P_AddSectorLinks(lines[i].frontsector, lines[i].args[1], lines[i].args[2], lines[i].args[3]);
+			}
+			break;
+
+		case Sector_SetPortal:
+			// arg 0 = sector tag
+			// arg 1 = type (must be 0, other values reserved for later use)
+			// arg 2 = 0:floor, 1:ceiling
+			// arg 3 = 0: anchor, 1: reference line
+			// arg 4 = for the anchor only: alpha
+			if (lines[i].args[1] == 0 && lines[i].args[3] == 0)
+			{
+				P_SpawnPortal(&lines[i], lines[i].args[0], lines[i].args[2], lines[i].args[4]);
 			}
 			break;
 

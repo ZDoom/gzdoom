@@ -828,6 +828,19 @@ void DWallLightTransfer::DoTransfer (BYTE lightlevel, int target, BYTE flags)
 	}
 }
 
+
+inline void SetPortal(sector_t *sector, INTBOOL ceiling, AStackPoint *portal)
+{
+	if (ceiling)
+	{
+		if (sector->CeilingSkyBox == NULL) sector->CeilingSkyBox = portal;
+	}
+	else
+	{
+		if (sector->FloorSkyBox == NULL) sector->FloorSkyBox = portal;
+	}
+}
+
 void P_SpawnPortal(line_t *line, int sectortag, INTBOOL ceiling, int alpha)
 {
 	for (int i=0;i<numlines;i++)
@@ -858,15 +871,32 @@ void P_SpawnPortal(line_t *line, int sectortag, INTBOOL ceiling, int alpha)
 
 		    for (int s=-1; (s = P_FindSectorFromTag(sectortag,s)) >= 0;)
 			{
-				if (ceiling)
+				SetPortal(&sectors[s], ceiling, reference);
+			}
+
+			for (int j=0;j<numlines;j++)
+			{
+				// Check if this portal needs to be copied to other sectors
+				// This must be done here to ensure that it gets done only after the portal is set up
+				if (lines[i].special == Sector_SetPortal &&
+					lines[i].args[1] == 1 &&
+					lines[i].args[2] == ceiling &&
+					lines[i].args[3] == sectortag)
 				{
-					if (sectors[s].CeilingSkyBox == NULL) sectors[s].CeilingSkyBox = reference;
-				}
-				else
-				{
-					if (sectors[s].FloorSkyBox == NULL) sectors[s].FloorSkyBox = reference;
+					if (lines[i].args[0] == 0)
+					{
+						SetPortal(lines[i].frontsector, ceiling, reference);
+					}
+					else
+					{
+						for (int s=-1; (s = P_FindSectorFromTag(lines[i].args[0],s)) >= 0;)
+						{
+							SetPortal(&sectors[s], ceiling, reference);
+						}
+					}
 				}
 			}
+
 			return;
 		}
 	}

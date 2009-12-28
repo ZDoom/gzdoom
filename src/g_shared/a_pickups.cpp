@@ -1638,7 +1638,7 @@ bool ABackpackItem::HandlePickup (AInventory *item)
 		{
 			if (probe->GetClass()->ParentClass == RUNTIME_CLASS(AAmmo))
 			{
-				if (probe->Amount < probe->MaxAmount)
+				if (probe->Amount < probe->MaxAmount || sv_unlimited_pickup)
 				{
 					int amount = static_cast<AAmmo*>(probe->GetDefault())->BackpackAmount;
 					// extra ammo in baby mode and nightmare mode
@@ -1647,7 +1647,7 @@ bool ABackpackItem::HandlePickup (AInventory *item)
 						amount = FixedMul(amount, G_SkillProperty(SKILLP_AmmoFactor));
 					}
 					probe->Amount += amount;
-					if (probe->Amount > probe->MaxAmount)
+					if (probe->Amount > probe->MaxAmount && !sv_unlimited_pickup)
 					{
 						probe->Amount = probe->MaxAmount;
 					}

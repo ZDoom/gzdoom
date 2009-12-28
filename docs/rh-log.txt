@@ -1,4 +1,5 @@
 December 27, 2009  (Changes by Graf Zahl)
+- added Hirogen2's Backpack fix for sv_unlimited_pickup.
 - added a linedef based method to define portals. Portals defined this way
   still have the same limitations as those defines with the portal things.
 

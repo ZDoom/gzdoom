@@ -157,50 +157,6 @@ void AStackPoint::BeginPlay ()
 }
 
 //---------------------------------------------------------------------------
-// Upper stacks go in the top sector. Lower stacks go in the bottom sector.
-
-class AUpperStackLookOnly : public AStackPoint
-{
-	DECLARE_CLASS (AUpperStackLookOnly, AStackPoint)
-public:
-	void PostBeginPlay ();
-};
-
-class ALowerStackLookOnly : public AStackPoint
-{
-	DECLARE_CLASS (ALowerStackLookOnly, AStackPoint)
-public:
-	void PostBeginPlay ();
-};
-
-IMPLEMENT_CLASS (AUpperStackLookOnly)
-IMPLEMENT_CLASS (ALowerStackLookOnly)
-
-void AUpperStackLookOnly::PostBeginPlay ()
-{
-	Super::PostBeginPlay ();
-	TActorIterator<ALowerStackLookOnly> it (tid);
-	Sector->FloorSkyBox = it.Next();
-	if (Sector->FloorSkyBox != NULL)
-	{
-		Sector->FloorSkyBox->Mate = this;
-		Sector->FloorSkyBox->PlaneAlpha = Scale (args[0], OPAQUE, 255);
-	}
-}
-
-void ALowerStackLookOnly::PostBeginPlay ()
-{
-	Super::PostBeginPlay ();
-	TActorIterator<AUpperStackLookOnly> it (tid);
-	Sector->CeilingSkyBox = it.Next();
-	if (Sector->CeilingSkyBox != NULL)
-	{
-		Sector->CeilingSkyBox->Mate = this;
-		Sector->CeilingSkyBox->PlaneAlpha = Scale (args[0], OPAQUE, 255);
-	}
-}
-
-//---------------------------------------------------------------------------
 
 class ASectorSilencer : public AActor
 {

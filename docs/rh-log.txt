@@ -1,3 +1,15 @@
+December 28, 2009  (Changes by Graf Zahl)
+- merged all portals with the same displacement together. While this provides
+  a mild performance increase it's not what I hoped it would do...
+- Moved portal initialization for the portal things to P_SpawnSpecials
+  instead of having the things self-initialize in PostBeginPlay. This was
+  done to ensure that the portals are fully set up when the game begins.
+  Otherwise there is no decent way to let the renderer post-process this
+  information during setup.
+- Changed: For 800x600 the default scaling handling of the options menu
+  makes it become too small so for any resolution with a width between 
+  800 and 959 it has been reverted to the regular clean scaling factor.
+
 December 27, 2009  (Changes by Graf Zahl)
 - added Hirogen2's Backpack fix for sv_unlimited_pickup.
 - added a linedef based method to define portals. Portals defined this way

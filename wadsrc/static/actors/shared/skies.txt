@@ -19,11 +19,11 @@ ACTOR StackPoint : SkyViewpoint native
 {
 }
 
-ACTOR UpperStackLookOnly : StackPoint 9077 native 
+ACTOR UpperStackLookOnly : StackPoint 9077
 {
 }
 
-ACTOR LowerStackLookOnly : StackPoint 9078 native 
+ACTOR LowerStackLookOnly : StackPoint 9078
 {
 }
 

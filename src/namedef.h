@@ -64,6 +64,9 @@ xx(Wind)
 xx(PointPusher)
 xx(PointPuller)
 
+xx(UpperStackLookOnly)
+xx(LowerStackLookOnly)
+
 xx(BulletPuff)
 xx(StrifePuff)
 xx(MaulerPuff)

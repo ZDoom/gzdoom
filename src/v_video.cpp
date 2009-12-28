@@ -1398,10 +1398,21 @@ bool V_DoModeSetup (int width, int height, int bits)
 	assert(CleanWidth >= 320);
 	assert(CleanHeight >= 200);
 
-	CleanXfac_1 = MAX(CleanXfac - 1, 1);
-	CleanYfac_1 = MAX(CleanYfac - 1, 1);
-	CleanWidth_1 = width / CleanXfac_1;
-	CleanHeight_1 = height / CleanYfac_1;
+	if (width < 800 || width >= 960)
+	{
+		CleanXfac_1 = MAX(CleanXfac - 1, 1);
+		CleanYfac_1 = MAX(CleanYfac - 1, 1);
+		CleanWidth_1 = width / CleanXfac_1;
+		CleanHeight_1 = height / CleanYfac_1;
+	}
+	else // if the width is between 800 and 960 the ratio between the screensize and CleanXFac-1 becomes too large.
+	{
+		CleanXfac_1 = CleanXfac;
+		CleanYfac_1 = CleanYfac;
+		CleanWidth_1 = CleanWidth;
+		CleanHeight_1 = CleanHeight;
+	}
+
 
 	DisplayWidth = width;
 	DisplayHeight = height;

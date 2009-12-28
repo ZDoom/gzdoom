@@ -1,4 +1,7 @@
 December 28, 2009  (Changes by Graf Zahl)
+- Added full sound definitions for Heretic's ChickenPlayer and Hexen's
+  PigPlayer (submitted by NeuralStunner.)
+- Added unmorph fix by Gez.
 - merged all portals with the same displacement together. While this provides
   a mild performance increase it's not what I hoped it would do...
 - Moved portal initialization for the portal things to P_SpawnSpecials

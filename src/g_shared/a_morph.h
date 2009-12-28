@@ -23,6 +23,9 @@ enum
 	MORPH_UNDOBYDEATH		= 0x00000200,	// Actor unmorphs when killed and (unless MORPH_UNDOBYDEATHSAVES) stays dead
 	MORPH_UNDOBYDEATHFORCED	= 0x00000400,	// Actor (if unmorphed when killed) forces unmorph (not very useful with UNDOBYDEATHSAVES)
 	MORPH_UNDOBYDEATHSAVES	= 0x00000800,	// Actor (if unmorphed when killed) regains their health and doesn't die
+	MORPH_UNDOBYTIMEOUT		= 0x00001000,	// Player unmorphs once countdown expires
+
+	MORPH_STANDARDUNDOING	= MORPH_UNDOBYTOMEOFPOWER | MORPH_UNDOBYCHAOSDEVICE | MORPH_UNDOBYTIMEOUT,
 };
 
 struct PClass;

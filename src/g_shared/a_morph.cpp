@@ -192,7 +192,7 @@ bool P_UndoPlayerMorph (player_t *activator, player_t *player, int unmorphflag, 
 		return false;
 	}
 
-	bool DeliberateUnmorphIsOkay = !!(player->MorphStyle & unmorphflag);
+	bool DeliberateUnmorphIsOkay = !!(MORPH_STANDARDUNDOING & unmorphflag);
 
     if ((pmo->flags2 & MF2_INVULNERABLE) // If the player is invulnerable
         && ((player != activator)       // and either did not decide to unmorph,

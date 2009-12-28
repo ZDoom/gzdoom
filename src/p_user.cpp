@@ -2309,7 +2309,7 @@ void P_PlayerThink (player_t *player)
 			}
 			if (!--player->morphTics)
 			{ // Attempt to undo the chicken/pig
-				P_UndoPlayerMorph (player, player);
+				P_UndoPlayerMorph (player, player, MORPH_UNDOBYTIMEOUT);
 			}
 		}
 		// Cycle psprites

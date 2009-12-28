@@ -545,6 +545,10 @@ $playersound	player	male	*jump		plrjmp
 $playersound	player	male	*burndeath	hedat1
 
 $playeralias	chicken male	*usefail	chicken/peck
+$PlayerAlias   	Chicken Male   	*Grunt   	chicken/pain
+$PlayerAlias   	Chicken Male   	*Land      	chicken/pain
+$PlayerAlias   	Chicken Male   	*Jump      	chicken/active
+$PlayerAlias   	Chicken Male   	*EvilLaugh 	chicken/active
 
 chicken/sight			chicpai
 chicken/pain			chicpai
@@ -887,6 +891,14 @@ $playeralias	mage	male	*puzzfail	PuzzleFailMage
 $playersound	mage	male	*jump		mgjump
 
 $playeralias	pig		male	*usefail	PigActive1
+$PlayerAlias   	Pig     Male   	*UseFail   	PigActive1
+$playeralias   	Pig     Male   	*PuzzFail   PigActive2
+$PlayerAlias   	Pig     Male   	*Grunt   	PigActive1
+$PlayerAlias   	Pig     Male   	*Land      	PigActive2
+$PlayerAlias   	Pig     Male   	*Jump      	PigActive1
+$PlayerAlias   	Pig     Male   	*Poison   	PigActive2
+$PlayerAlias   	Pig     Male   	*Falling   	PigPain
+$PlayerAlias   	Pig     Male   	*Splat   	PigDeath
 
 $alias world/drip		Ambient10
 $alias world/watersplash	WaterSplash

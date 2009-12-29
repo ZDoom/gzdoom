@@ -1,3 +1,12 @@
+December 28, 2009
+- Fixed: Shooting up and down with AArtiPoisonBag3::Use() was completely
+  broken. I don't know what I thinking when I plugged in 2*finesine[pitch]
+  for Hexen's lookdir, because that's totally wrong. Not only is the
+  magnitude far too low, but it also aims in the opposite direction you
+  are looking. The new code only attempts to be close to Hexen's original
+  while looking straight ahead and extrapolates that to other angles using
+  proper 3D math.
+
 December 28, 2009  (Changes by Graf Zahl)
 - Added full sound definitions for Heretic's ChickenPlayer and Hexen's
   PigPlayer (submitted by NeuralStunner.)

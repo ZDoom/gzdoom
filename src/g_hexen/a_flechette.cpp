@@ -104,21 +104,38 @@ bool AArtiPoisonBag3::Use (bool pickup)
 {
 	AActor *mo;
 
-	mo = Spawn ("ThrowingBomb", Owner->x, Owner->y, 
+	mo = Spawn("ThrowingBomb", Owner->x, Owner->y, 
 		Owner->z-Owner->floorclip+35*FRACUNIT + (Owner->player? Owner->player->crouchoffset : 0), ALLOW_REPLACE);
 	if (mo)
 	{
-		angle_t pitch = (angle_t)Owner->pitch >> ANGLETOFINESHIFT;
+		mo->angle = Owner->angle + (((pr_poisonbag()&7) - 4) << 24);
 
-		mo->angle = Owner->angle+(((pr_poisonbag()&7)-4)<<24);
-		mo->velz = 4*FRACUNIT + 2*finesine[pitch];
-		mo->z += 2*finesine[pitch];
-		P_ThrustMobj (mo, mo->angle, mo->Speed);
-		mo->velx += Owner->velx >> 1;
-		mo->vely += Owner->vely >> 1;
+		/* Original flight code from Hexen
+		 * mo->momz = 4*FRACUNIT+((player->lookdir)<<(FRACBITS-4));
+		 * mo->z += player->lookdir<<(FRACBITS-4);
+		 * P_ThrustMobj(mo, mo->angle, mo->info->speed);
+		 * mo->momx += player->mo->momx>>1;
+		 * mo->momy += player->mo->momy>>1;
+		 */
+
+		// When looking straight ahead, it uses a z velocity of 4 while the xy velocity
+		// is as set by the projectile. To accomodate this with a proper trajectory, we
+		// aim the projectile ~20 degrees higher than we're looking at and increase the
+		// speed we fire at accordingly.
+		angle_t orgpitch = angle_t(-Owner->pitch) >> ANGLETOFINESHIFT;
+		angle_t modpitch = angle_t(0xDC00000 - Owner->pitch) >> ANGLETOFINESHIFT;
+		angle_t angle = mo->angle >> ANGLETOFINESHIFT;
+		fixed_t speed = fixed_t(sqrt((double)mo->Speed*mo->Speed + (4.0*65536*4*65536)));
+		fixed_t xyscale = FixedMul(speed, finecosine[modpitch]);
+
+		mo->velz = FixedMul(speed, finesine[modpitch]);
+		mo->velx = FixedMul(xyscale, finecosine[angle]) + (Owner->velx >> 1);
+		mo->vely = FixedMul(xyscale, finesine[angle]) + (Owner->vely >> 1);
+		mo->z += FixedMul(mo->Speed, finesine[orgpitch]);
+
 		mo->target = Owner;
 		mo->tics -= pr_poisonbag()&3;
-		P_CheckMissileSpawn (mo);
+		P_CheckMissileSpawn(mo);
 		return true;
 	}
 	return false;

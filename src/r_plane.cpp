@@ -1105,10 +1105,12 @@ void R_DrawSkyBoxes ()
 			// Don't let gun flashes brighten the sky box
 			extralight = 0;
 			R_SetVisibility (sky->args[0] * 0.25f);
-			viewx = sky->x;
-			viewy = sky->y;
-			viewz = sky->z;
-			viewangle = savedangle + sky->angle;
+
+			viewx = sky->PrevX + FixedMul(r_TicFrac, sky->x - sky->PrevX);
+			viewy = sky->PrevY + FixedMul(r_TicFrac, sky->y - sky->PrevY);
+			viewz = sky->PrevZ + FixedMul(r_TicFrac, sky->z - sky->PrevZ);
+			viewangle = savedangle + sky->PrevAngle + FixedMul(r_TicFrac, sky->angle - sky->PrevAngle);
+
 			R_CopyStackedViewParameters();
 		}
 		else

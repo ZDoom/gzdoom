@@ -26,6 +26,7 @@ void AFastProjectile::Tick ()
 	PrevX = x;
 	PrevY = y;
 	PrevZ = z;
+	PrevAngle = angle;
 
 	if (!(flags5 & MF5_NOTIMEFREEZE))
 	{

@@ -585,6 +585,7 @@ void AActorMover::Activate (AActor *activator)
 	tracer->PrevX = tracer->x;
 	tracer->PrevY = tracer->y;
 	tracer->PrevZ = tracer->z;
+	tracer->PrevAngle = tracer->angle;
 }
 
 void AActorMover::Deactivate (AActor *activator)

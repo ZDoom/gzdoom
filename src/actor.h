@@ -570,6 +570,7 @@ public:
 
 	// BeginPlay: Called just after the actor is created
 	virtual void BeginPlay ();
+	virtual void PostBeginPlay ();
 	// LevelSpawned: Called after BeginPlay if this actor was spawned by the world
 	virtual void LevelSpawned ();
 	// Translates SpawnFlags into in-game flags.
@@ -579,6 +580,7 @@ public:
 	virtual void Deactivate (AActor *activator);
 
 	virtual void Tick ();
+	void DoTick ();
 
 	// Smallest yaw interval for a mapthing to be spawned with
 	virtual angle_t AngleIncrements ();
@@ -868,6 +870,10 @@ public:
 
 	// [RH] Used to interpolate the view to get >35 FPS
 	fixed_t PrevX, PrevY, PrevZ;
+	angle_t PrevAngle;
+
+	fixed_t LastX, LastY, LastZ;
+	angle_t LastAngle;
 
 	// ThingIDs
 	static void ClearTIDHashes ();

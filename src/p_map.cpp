@@ -392,9 +392,9 @@ bool P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefr
 		R_ResetViewInterpolation ();
 	}
 
-	thing->LastX = thing->PrevX = x;
-	thing->LastY = thing->PrevY = y;
-	thing->LastZ = thing->PrevZ = z;
+	thing->PrevX = x;
+	thing->PrevY = y;
+	thing->PrevZ = z;
 
 	return true;
 }

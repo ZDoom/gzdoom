@@ -3,6 +3,15 @@ December 30, 2009  (Changes by Graf Zahl)
   it happened outside the moved actor's Tick function. This got particularly
   obvious with moving skybox viewpoints (See Daedalus's MAP21 intro for a good
   example.)
+  Fixing this exposed a design flaw in the thinker system:
+  Having every single actor default to the highest available statnum means that 
+  nothing can be placed in a slot where it is guaranteed to be run after all actors 
+  have ticked. But this is required for any thinker that moves an actor 
+  (i.e. AActorMover and DSectorEffect.) With DSectorEffect it just went unnoticed 
+  because they were added at the end of the list so almost nothing they moved was
+  behind them in a thinker list. However, when an actor was spawned on a moving 
+  floor it did not move smoothly. The default statnum is now 100 so that there's 
+  sufficient slots above where such thinkers can be placed.
 
 December 28, 2009
 - Fixed: Shooting up and down with AArtiPoisonBag3::Use() was completely

@@ -898,16 +898,14 @@ void P_SetupPortals()
 					fixed_t deltay2 = points[j]->Mate->y - points[j]->y;
 					if (deltax1 == deltax2 && deltay1 == deltay2)
 					{
-						if (points[j]->Sector->FloorSkyBox == points[j])
-							points[j]->Sector->FloorSkyBox == points[i];
+						if (points[j]->Sector->FloorSkyBox == points[j]->Mate)
+							points[j]->Sector->FloorSkyBox = points[i]->Mate;
 
-						if (points[j]->Sector->CeilingSkyBox == points[j])
-							points[j]->Sector->CeilingSkyBox == points[i];
+						if (points[j]->Sector->CeilingSkyBox == points[j]->Mate)
+							points[j]->Sector->CeilingSkyBox = points[i]->Mate;
 
 						points[j]->special1 = 1;
-						break;
 					}
-
 				}
 			}
 		}

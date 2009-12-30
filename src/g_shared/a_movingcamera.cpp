@@ -213,6 +213,7 @@ void APathFollower::BeginPlay ()
 	Super::BeginPlay ();
 	PrevNode = CurrNode = NULL;
 	bActive = false;
+	ChangeStatNum(STAT_ACTORMOVER);
 }
 
 void APathFollower::PostBeginPlay ()

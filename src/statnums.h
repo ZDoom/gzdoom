@@ -1,3 +1,5 @@
+#ifndef __STATNUMS_H
+#define __STATNUMS_H
 /*
 ** statnums.h
 **
@@ -56,4 +58,10 @@ enum
 	STAT_LIGHTTRANSFER,						// A sector light transfer. These must be ticked after the light effects!!!
 	STAT_EARTHQUAKE,						// Earthquake actors
 	STAT_MAPMARKER,							// Map marker actors
+
+	STAT_DEFAULT = 100,
+	STAT_SECTOREFFECT,
+	STAT_ACTORMOVER,
 };
+
+#endif

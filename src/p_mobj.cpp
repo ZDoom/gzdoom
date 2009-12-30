@@ -434,10 +434,10 @@ void AActor::Serialize (FArchive &arc)
 				Speed = GetDefault()->Speed;
 			}
 		}
-		LastX = PrevX = x;
-		LastY = PrevY = y;
-		LastZ = PrevZ = z;
-		LastAngle = PrevAngle = angle;
+		PrevX = x;
+		PrevY = y;
+		PrevZ = z;
+		PrevAngle = angle;
 		UpdateWaterLevel(z, false);
 	}
 }
@@ -2806,7 +2806,7 @@ void AActor::SetShade (int r, int g, int b)
 //
 // P_MobjThinker
 //
-void AActor::DoTick ()
+void AActor::Tick ()
 {
 	// [RH] Data for Heretic/Hexen scrolling sectors
 	static const BYTE HexenScrollDirs[8] = { 64, 0, 192, 128, 96, 32, 224, 160 };
@@ -2835,6 +2835,13 @@ void AActor::DoTick ()
 		Destroy();
 		return;
 	}
+
+	// This is necessary to properly interpolate movement outside this function
+	// like from an ActorMover
+	PrevX = x;
+	PrevY = y;
+	PrevZ = z;
+	PrevAngle = angle;
 
 	if (flags5 & MF5_NOINTERACTION)
 	{
@@ -3375,23 +3382,6 @@ void AActor::DoTick ()
 	}
 }
 
-void AActor::Tick()
-{
-	// This is necessary to properly interpolate movement outside this function
-	// like from an ActorMover
-	PrevX = LastX;
-	PrevY = LastY;
-	PrevZ = LastZ;
-	PrevAngle = LastAngle;
-
-	DoTick();
-
-	LastX = x;
-	LastY = y;
-	LastZ = z;
-	LastAngle = angle;
-}
-
 //==========================================================================
 //
 // AActor::UpdateWaterLevel
@@ -3531,9 +3521,9 @@ AActor *AActor::StaticSpawn (const PClass *type, fixed_t ix, fixed_t iy, fixed_t
 	
 	actor = static_cast<AActor *>(const_cast<PClass *>(type)->CreateNew ());
 
-	actor->x = actor->LastX = actor->PrevX = ix;
-	actor->y = actor->LastY = actor->PrevY = iy;
-	actor->z = actor->LastZ = actor->PrevZ = iz;
+	actor->x = actor->PrevX = ix;
+	actor->y = actor->PrevY = iy;
+	actor->z = actor->PrevZ = iz;
 	actor->picnum.SetInvalid();
 	actor->health = actor->SpawnHealth();
 
@@ -4418,7 +4408,7 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	mobj->tid = mthing->thingid;
 	mobj->AddToHash ();
 
-	mobj->LastAngle = mobj->PrevAngle = mobj->angle = (DWORD)((mthing->angle * UCONST64(0x100000000)) / 360);
+	mobj->PrevAngle = mobj->angle = (DWORD)((mthing->angle * UCONST64(0x100000000)) / 360);
 	mobj->BeginPlay ();
 	if (!(mobj->ObjectFlags & OF_EuthanizeMe))
 	{

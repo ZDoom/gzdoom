@@ -27,12 +27,14 @@
 #include "p_local.h"
 #include "p_3dmidtex.h"
 #include "r_interpolate.h"
+#include "statnums.h"
 
 IMPLEMENT_CLASS (DSectorEffect)
 
 DSectorEffect::DSectorEffect ()
 {
 	m_Sector = NULL;
+	ChangeStatNum(STAT_SECTOREFFECT);
 }
 
 void DSectorEffect::Destroy()

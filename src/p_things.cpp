@@ -142,9 +142,9 @@ bool P_MoveThing(AActor *source, fixed_t x, fixed_t y, fixed_t z, bool fog)
 			Spawn<ATeleportFog> (x, y, z + TELEFOGHEIGHT, ALLOW_REPLACE);
 			Spawn<ATeleportFog> (oldx, oldy, oldz + TELEFOGHEIGHT, ALLOW_REPLACE);
 		}
-		source->LastX = source->PrevX = x;
-		source->LastY = source->PrevY = y;
-		source->LastZ = source->PrevZ = z;
+		source->PrevX = x;
+		source->PrevY = y;
+		source->PrevZ = z;
 		return true;
 	}
 	else

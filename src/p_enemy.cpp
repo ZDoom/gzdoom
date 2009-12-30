@@ -523,9 +523,9 @@ bool P_Move (AActor *actor)
 	// so make it switchable
 	if (nomonsterinterpolation)
 	{
-		actor->LastX = actor->PrevX = actor->x;
-		actor->LastY = actor->PrevY = actor->y;
-		actor->LastZ = actor->PrevZ = actor->z;
+		actor->PrevX = actor->x;
+		actor->PrevY = actor->y;
+		actor->PrevZ = actor->z;
 	}
 
 	if (try_ok && friction > ORIG_FRICTION)
@@ -2435,8 +2435,8 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 			{
 				if (nomonsterinterpolation)
 				{
-					actor->LastX = actor->PrevX = oldX;
-					actor->LastY = actor->PrevY = oldY;
+					actor->PrevX = oldX;
+					actor->PrevY = oldY;
 				}
 			}
 			P_NewChaseDir (actor);

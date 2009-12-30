@@ -580,7 +580,6 @@ public:
 	virtual void Deactivate (AActor *activator);
 
 	virtual void Tick ();
-	void DoTick ();
 
 	// Smallest yaw interval for a mapthing to be spawned with
 	virtual angle_t AngleIncrements ();
@@ -871,9 +870,6 @@ public:
 	// [RH] Used to interpolate the view to get >35 FPS
 	fixed_t PrevX, PrevY, PrevZ;
 	angle_t PrevAngle;
-
-	fixed_t LastX, LastY, LastZ;
-	angle_t LastAngle;
 
 	// ThingIDs
 	static void ClearTIDHashes ();

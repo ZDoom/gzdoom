@@ -32,9 +32,9 @@
 IMPLEMENT_CLASS (DSectorEffect)
 
 DSectorEffect::DSectorEffect ()
+: DThinker(STAT_SECTOREFFECT)
 {
 	m_Sector = NULL;
-	ChangeStatNum(STAT_SECTOREFFECT);
 }
 
 void DSectorEffect::Destroy()

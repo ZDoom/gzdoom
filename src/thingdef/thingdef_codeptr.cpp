@@ -1592,8 +1592,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ThrowGrenade)
 
 	if (ACTION_CALL_FROM_WEAPON())
 	{
-		// Used from a weapon so use some ammo
-		AWeapon * weapon=self->player->ReadyWeapon;
+		// Used from a weapon, so use some ammo
+		AWeapon *weapon = self->player->ReadyWeapon;
 
 		if (!weapon) return;
 		if (useammo && !weapon->DepleteAmmo(weapon->bAltFire)) return;
@@ -1607,17 +1607,33 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ThrowGrenade)
 			ALLOW_REPLACE);
 	if (bo)
 	{
-		int pitch = self->pitch;
-
 		P_PlaySpawnSound(bo, self);
-		if (xyvel)
+		if (xyvel != 0)
 			bo->Speed = xyvel;
 		bo->angle = self->angle + (((pr_grenade()&7) - 4) << 24);
-		bo->velz = zvel + 2*finesine[pitch>>ANGLETOFINESHIFT];
-		bo->z += 2 * finesine[pitch>>ANGLETOFINESHIFT];
-		P_ThrustMobj(bo, bo->angle, bo->Speed);
-		bo->velx += self->velx >> 1;
-		bo->vely += self->vely >> 1;
+
+		angle_t pitch = angle_t(-self->pitch) >> ANGLETOFINESHIFT;
+		angle_t angle = bo->angle >> ANGLETOFINESHIFT;
+
+		// There are two vectors we are concerned about here: xy and z. We rotate
+		// them separately according to the shooter's pitch and then sum them to
+		// get the final velocity vector to shoot with.
+
+		fixed_t xy_xyscale = FixedMul(bo->Speed, finecosine[pitch]);
+		fixed_t xy_velz = FixedMul(bo->Speed, finesine[pitch]);
+		fixed_t xy_velx = FixedMul(xy_xyscale, finecosine[angle]);
+		fixed_t xy_vely = FixedMul(xy_xyscale, finesine[angle]);
+
+		pitch = angle_t(self->pitch) >> ANGLETOFINESHIFT;
+		fixed_t z_xyscale = FixedMul(zvel, finesine[pitch]);
+		fixed_t z_velz = FixedMul(zvel, finecosine[pitch]);
+		fixed_t z_velx = FixedMul(z_xyscale, finecosine[angle]);
+		fixed_t z_vely = FixedMul(z_xyscale, finesine[angle]);
+
+		bo->velx = xy_velx + z_velx + (self->velx >> 1);
+		bo->vely = xy_vely + z_vely + (self->vely >> 1);
+		bo->velz = xy_velz + z_velz;
+
 		bo->target= self;
 		P_CheckMissileSpawn (bo);
 	} 

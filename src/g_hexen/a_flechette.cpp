@@ -125,7 +125,7 @@ bool AArtiPoisonBag3::Use (bool pickup)
 		angle_t orgpitch = angle_t(-Owner->pitch) >> ANGLETOFINESHIFT;
 		angle_t modpitch = angle_t(0xDC00000 - Owner->pitch) >> ANGLETOFINESHIFT;
 		angle_t angle = mo->angle >> ANGLETOFINESHIFT;
-		fixed_t speed = FLOAT2FIXED(sqrt((double)mo->Speed*mo->Speed + (4.0*65536*4*65536)));
+		fixed_t speed = fixed_t(sqrt((double)mo->Speed*mo->Speed + (4.0*65536*4*65536)));
 		fixed_t xyscale = FixedMul(speed, finecosine[modpitch]);
 
 		mo->velz = FixedMul(speed, finesine[modpitch]);

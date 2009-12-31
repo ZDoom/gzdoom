@@ -2,6 +2,8 @@
 #include "a_sharedglobal.h"
 #include "p_local.h"
 #include "g_level.h"
+#include "r_sky.h"
+#include "p_lnspec.h"
 
 
 IMPLEMENT_CLASS(AFastProjectile)
@@ -72,6 +74,26 @@ void AFastProjectile::Tick ()
 				
 				if (!P_TryMove (this, x + xfrac,y + yfrac, true, false, tm))
 				{ // Blocked move
+					if (!(flags3 & MF3_SKYEXPLODE))
+					{
+						if (tm.ceilingline &&
+							tm.ceilingline->backsector &&
+							tm.ceilingline->backsector->GetTexture(sector_t::ceiling) == skyflatnum &&
+							z >= tm.ceilingline->backsector->ceilingplane.ZatPoint (x, y))
+						{
+							// Hack to prevent missiles exploding against the sky.
+							// Does not handle sky floors.
+							Destroy ();
+							return;
+						}
+						// [RH] Don't explode on horizon lines.
+						if (BlockingLine != NULL && BlockingLine->special == Line_Horizon)
+						{
+							Destroy ();
+							return;
+						}
+					}
+
 					P_ExplodeMissile (this, BlockingLine, BlockingMobj);
 					return;
 				}
@@ -79,6 +101,15 @@ void AFastProjectile::Tick ()
 			z += zfrac;
 			if (z <= floorz)
 			{ // Hit the floor
+
+				if (floorpic == skyflatnum && !(flags3 & MF3_SKYEXPLODE))
+				{
+					// [RH] Just remove the missile without exploding it
+					//		if this is a sky floor.
+					Destroy ();
+					return;
+				}
+
 				z = floorz;
 				P_HitFloor (this);
 				P_ExplodeMissile (this, NULL, NULL);
@@ -86,6 +117,13 @@ void AFastProjectile::Tick ()
 			}
 			if (z + height > ceilingz)
 			{ // Hit the ceiling
+
+				if (ceilingpic == skyflatnum &&  !(flags3 & MF3_SKYEXPLODE))
+				{
+					Destroy ();
+					return;
+				}
+
 				z = ceilingz - height;
 				P_ExplodeMissile (this, NULL, NULL);
 				return;

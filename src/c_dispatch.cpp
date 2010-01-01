@@ -1376,6 +1376,7 @@ void FConsoleAlias::SafeDelete ()
 
 static BYTE PullinBad = 2;
 static const char *PullinFile;
+extern TArray<FString> allwads;
 
 int C_ExecFile (const char *file, bool usePullin)
 {
@@ -1492,7 +1493,7 @@ CCMD (pullin)
 						FixPathSeperator (path);
 					}
 				}
-				D_AddFile (path);
+				D_AddFile (allwads, path);
 				if (path != argv[i])
 				{
 					delete[] path;

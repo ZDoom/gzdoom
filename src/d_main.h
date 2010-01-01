@@ -49,7 +49,7 @@ void D_PageTicker (void);
 void D_PageDrawer (void);
 void D_AdvanceDemo (void);
 void D_StartTitle (void);
-void D_AddFile (const char *file, bool check = true);
+void D_AddFile (TArray<FString> &wadfiles, const char *file, bool check = true);
 
 
 // [RH] Set this to something to draw an icon during the next screen refresh.

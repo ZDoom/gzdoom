@@ -484,7 +484,7 @@ static int CheckIWAD (const char *doomwaddir, WadStuff *wads)
 //
 //==========================================================================
 
-static EIWADType IdentifyVersion (const char *zdoom_wad)
+static EIWADType IdentifyVersion (TArray<FString> &wadfiles, const char *zdoom_wad)
 {
 	WadStuff wads[countof(IWADNames)];
 	size_t foundwads[NUM_IWAD_TYPES] = { 0 };
@@ -630,14 +630,14 @@ static EIWADType IdentifyVersion (const char *zdoom_wad)
 		exit (0);
 
 	// zdoom.pk3 must always be the first file loaded and the IWAD second.
-	D_AddFile (zdoom_wad);
+	D_AddFile (wadfiles, zdoom_wad);
 
 	if (wads[pickwad].Type == IWAD_HexenDK)
 	{ // load hexen.wad before loading hexdd.wad
-		D_AddFile (wads[foundwads[IWAD_Hexen]-1].Path);
+		D_AddFile (wadfiles, wads[foundwads[IWAD_Hexen]-1].Path);
 	}
 
-	D_AddFile (wads[pickwad].Path);
+	D_AddFile (wadfiles, wads[pickwad].Path);
 
 	if (wads[pickwad].Type == IWAD_Strife)
 	{ // Try to load voices.wad along with strife1.wad
@@ -653,16 +653,16 @@ static EIWADType IdentifyVersion (const char *zdoom_wad)
 			path = FString (wads[pickwad].Path.GetChars(), lastslash + 1);
 		}
 		path += "voices.wad";
-		D_AddFile (path);
+		D_AddFile (wadfiles, path);
 	}
 
 	return wads[pickwad].Type;
 }
 
 
-const IWADInfo *D_FindIWAD(const char *basewad)
+const IWADInfo *D_FindIWAD(TArray<FString> &wadfiles, const char *basewad)
 {
-	EIWADType iwadType = IdentifyVersion(basewad);
+	EIWADType iwadType = IdentifyVersion(wadfiles, basewad);
 	gameiwad = iwadType;
 	const IWADInfo *iwad_info = &IWADInfos[iwadType];
 	I_SetIWADInfo(iwad_info);

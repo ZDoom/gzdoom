@@ -118,7 +118,7 @@ extern void R_ExecuteSetViewSize ();
 extern void G_NewInit ();
 extern void SetupPlayerClasses ();
 extern bool CheckCheatmode ();
-extern const IWADInfo *D_FindIWAD(const char *basewad);
+const IWADInfo *D_FindIWAD(TArray<FString> &wadfiles, const char *basewad);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -182,7 +182,7 @@ CVAR (Int, wipetype, 1, CVAR_ARCHIVE);
 CVAR (Int, snd_drawoutput, 0, 0);
 
 bool DrawFSHUD;				// [RH] Draw fullscreen HUD?
-wadlist_t *wadfiles;		// [RH] remove limit on # of loaded wads
+TArray<FString> allwads;
 bool devparm;				// started game with -devparm
 const char *D_DrawIcon;	// [RH] Patch name of icon to draw on next refresh
 int NoWipe;				// [RH] Allow wipe? (Needs to be set each time)
@@ -204,7 +204,6 @@ cycle_t FrameCycles;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static wadlist_t **wadtail = &wadfiles;
 static int demosequence;
 static int pagetic;
 
@@ -1242,7 +1241,7 @@ CCMD (endgame)
 //
 //==========================================================================
 
-void D_AddFile (const char *file, bool check)
+void D_AddFile (TArray<FString> &wadfiles, const char *file, bool check)
 {
 	if (file == NULL)
 	{
@@ -1259,12 +1258,10 @@ void D_AddFile (const char *file, bool check)
 		}
 		file = f;
 	}
-	wadlist_t *wad = (wadlist_t *)M_Malloc (sizeof(*wad) + strlen(file));
 
-	*wadtail = wad;
-	wad->next = NULL;
-	strcpy (wad->name, file);
-	wadtail = &wad->next;
+	FString f = file;
+	FixPathSeperator(f);
+	wadfiles.Push(f);
 }
 
 //==========================================================================
@@ -1273,13 +1270,13 @@ void D_AddFile (const char *file, bool check)
 //
 //==========================================================================
 
-void D_AddWildFile (const char *value)
+void D_AddWildFile (TArray<FString> &wadfiles, const char *value)
 {
 	const char *wadfile = BaseFileSearch (value, ".wad");
 
 	if (wadfile != NULL)
 	{
-		D_AddFile (wadfile);
+		D_AddFile (wadfiles, wadfile);
 	}
 	else
 	{ // Try pattern matching
@@ -1309,12 +1306,12 @@ void D_AddWildFile (const char *value)
 				{
 					if (sep == NULL)
 					{
-						D_AddFile (I_FindName (&findstate));
+						D_AddFile (wadfiles, I_FindName (&findstate));
 					}
 					else
 					{
 						strcpy (sep+1, I_FindName (&findstate));
-						D_AddFile (path);
+						D_AddFile (wadfiles, path);
 					}
 				}
 			} while (I_FindNext (handle, &findstate) == 0);
@@ -1331,7 +1328,7 @@ void D_AddWildFile (const char *value)
 //
 //==========================================================================
 
-void D_AddConfigWads (const char *section)
+void D_AddConfigWads (TArray<FString> &wadfiles, const char *section)
 {
 	if (GameConfig->SetSection (section))
 	{
@@ -1345,7 +1342,7 @@ void D_AddConfigWads (const char *section)
 			{
 				// D_AddWildFile resets GameConfig's position, so remember it
 				GameConfig->GetPosition (pos);
-				D_AddWildFile (value);
+				D_AddWildFile (wadfiles, value);
 				// Reset GameConfig's position to get next wad
 				GameConfig->SetPosition (pos);
 			}
@@ -1361,7 +1358,7 @@ void D_AddConfigWads (const char *section)
 //
 //==========================================================================
 
-static void D_AddDirectory (const char *dir)
+static void D_AddDirectory (TArray<FString> &wadfiles, const char *dir)
 {
 	char curdir[PATH_MAX];
 
@@ -1391,7 +1388,7 @@ static void D_AddDirectory (const char *dir)
 					if (!(I_FindAttr (&findstate) & FA_DIREC))
 					{
 						strcpy (skindir + stuffstart, I_FindName (&findstate));
-						D_AddFile (skindir);
+						D_AddFile (wadfiles, skindir);
 					}
 				} while (I_FindNext (handle, &findstate) == 0);
 				I_FindClose (handle);
@@ -1584,6 +1581,53 @@ void D_MultiExec (DArgs *list, bool usePullin)
 	}
 }
 
+static void GetCmdLineFiles(TArray<FString> &wadfiles)
+{
+	DArgs *files = Args->GatherFiles ("-file", ".wad", true);
+	DArgs *files1 = Args->GatherFiles (NULL, ".zip", false);
+	DArgs *files2 = Args->GatherFiles (NULL, ".pk3", false);
+	DArgs *files3 = Args->GatherFiles (NULL, ".txt", false);
+	if (files->NumArgs() > 0 || files1->NumArgs() > 0 || files2->NumArgs() > 0 || files3->NumArgs() > 0)
+	{
+		// Check for -file in shareware
+		if (gameinfo.flags & GI_SHAREWARE)
+		{
+			I_FatalError ("You cannot -file with the shareware version. Register!");
+		}
+
+		// the files gathered are wadfile/lump names
+		for (int i = 0; i < files->NumArgs(); i++)
+		{
+			D_AddWildFile (wadfiles, files->GetArg (i));
+		}
+		for (int i = 0; i < files1->NumArgs(); i++)
+		{
+			D_AddWildFile (wadfiles, files1->GetArg (i));
+		}
+		for (int i = 0; i < files2->NumArgs(); i++)
+		{
+			D_AddWildFile (wadfiles, files2->GetArg (i));
+		}
+		for (int i = 0; i < files3->NumArgs(); i++)
+		{
+			D_AddWildFile (wadfiles, files3->GetArg (i));
+		}
+	}
+	files->Destroy();
+	files1->Destroy();
+	files2->Destroy();
+	files3->Destroy();
+}
+
+static void CopyFiles(TArray<FString> &to, TArray<FString> &from)
+{
+	unsigned int ndx = to.Reserve(from.Size());
+	for(unsigned i=0;i<from.Size(); i++)
+	{
+		to[ndx+i] = from[i];
+	}
+}
+
 //==========================================================================
 //
 // D_DoomMain
@@ -1596,6 +1640,7 @@ void D_DoomMain (void)
 	char *v;
 	const char *wad;
 	DArgs *execFiles;
+	TArray<FString> pwads;
 
 	// Set the FPU precision to 53 significant bits. This is the default
 	// for Visual C++, but not for GCC, so some slight math variances
@@ -1640,7 +1685,7 @@ void D_DoomMain (void)
 	// Load zdoom.pk3 alone so that we can get access to the internal gameinfos before 
 	// the IWAD is known.
 
-	const IWADInfo *iwad_info = D_FindIWAD(wad);
+	const IWADInfo *iwad_info = D_FindIWAD(allwads, wad);
 	gameinfo.gametype = iwad_info->gametype;
 	gameinfo.flags = iwad_info->flags;
 
@@ -1657,7 +1702,7 @@ void D_DoomMain (void)
 		// it for something else, so this gets to stay here.
 		wad = BaseFileSearch ("zvox.wad", NULL);
 		if (wad)
-			D_AddFile (wad);
+			D_AddFile (allwads, wad);
 	
 		// [RH] Add any .wad files in the skins directory
 #ifdef unix
@@ -1666,27 +1711,27 @@ void D_DoomMain (void)
 		file = progdir;
 #endif
 		file += "skins";
-		D_AddDirectory (file);
+		D_AddDirectory (allwads, file);
 
 #ifdef unix
 		file = NicePath("~/" GAME_DIR "/skins");
-		D_AddDirectory (file);
+		D_AddDirectory (allwads, file);
 #endif	
 
 		// Add common (global) wads
-		D_AddConfigWads ("Global.Autoload");
+		D_AddConfigWads (allwads, "Global.Autoload");
 
 		// Add game-specific wads
 		file = GameNames[gameinfo.gametype];
 		file += ".Autoload";
-		D_AddConfigWads (file);
+		D_AddConfigWads (allwads, file);
 
 		// Add IWAD-specific wads
 		if (iwad_info->Autoname != NULL)
 		{
 			file = iwad_info->Autoname;
 			file += ".Autoload";
-			D_AddConfigWads(file);
+			D_AddConfigWads(allwads, file);
 		}
 	}
 
@@ -1703,43 +1748,13 @@ void D_DoomMain (void)
 
 	C_ExecCmdLineParams ();		// [RH] do all +set commands on the command line
 
-	DArgs *files = Args->GatherFiles ("-file", ".wad", true);
-	DArgs *files1 = Args->GatherFiles (NULL, ".zip", false);
-	DArgs *files2 = Args->GatherFiles (NULL, ".pk3", false);
-	DArgs *files3 = Args->GatherFiles (NULL, ".txt", false);
-	if (files->NumArgs() > 0 || files1->NumArgs() > 0 || files2->NumArgs() > 0 || files3->NumArgs() > 0)
-	{
-		// Check for -file in shareware
-		if (gameinfo.flags & GI_SHAREWARE)
-		{
-			I_FatalError ("You cannot -file with the shareware version. Register!");
-		}
+	GetCmdLineFiles(pwads);
 
-		// the files gathered are wadfile/lump names
-		for (int i = 0; i < files->NumArgs(); i++)
-		{
-			D_AddWildFile (files->GetArg (i));
-		}
-		for (int i = 0; i < files1->NumArgs(); i++)
-		{
-			D_AddWildFile (files1->GetArg (i));
-		}
-		for (int i = 0; i < files2->NumArgs(); i++)
-		{
-			D_AddWildFile (files2->GetArg (i));
-		}
-		for (int i = 0; i < files3->NumArgs(); i++)
-		{
-			D_AddWildFile (files3->GetArg (i));
-		}
-	}
-	files->Destroy();
-	files1->Destroy();
-	files2->Destroy();
-	files3->Destroy();
+	CopyFiles(allwads, pwads);
 
 	Printf ("W_Init: Init WADfiles.\n");
-	Wads.InitMultipleFiles (&wadfiles);
+	Wads.InitMultipleFiles (allwads);
+	allwads.Clear();
 
 	// [RH] Initialize localizable strings.
 	GStrings.LoadStrings (false);
@@ -2043,7 +2058,7 @@ void D_DoomMain (void)
 
 	V_Init2();
 
-	files = Args->GatherFiles ("-playdemo", ".lmp", false);
+	DArgs *files = Args->GatherFiles ("-playdemo", ".lmp", false);
 	if (files->NumArgs() > 0)
 	{
 		singledemo = true;				// quit after one demo

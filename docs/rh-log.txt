@@ -1,4 +1,7 @@
 January 1, 2010  (Changes by Graf Zahl)
+- replaced wadlist_t with an array of FStrings and added a list parameter to
+  everything that eventually calls D_AddFile. Also create the list of files
+  loaded on the command line separately to allow further checks on them.
 - fixed: The node builder did not check if all segs could be split properly.
   Also removed some fudging that tried to work around this case but produced
   a broken BSP tree on other maps.

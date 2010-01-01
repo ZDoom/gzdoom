@@ -2712,6 +2712,7 @@ static void P_GroupLines (bool buildmap)
 	FBoundingBox		bbox;
 	bool				flaggedNoFronts = false;
 	unsigned int		ii, jj;
+	TArray<int>			nosector;
 
 	for (i = 0; i < (int)countof(times); ++i)
 	{
@@ -2722,7 +2723,13 @@ static void P_GroupLines (bool buildmap)
 	times[0].Clock();
 	for (i = 0; i < numsubsectors; i++)
 	{
-		subsectors[i].sector = segs[subsectors[i].firstline].sidedef->sector;
+		side_t *side = segs[subsectors[i].firstline].sidedef;
+		if (side != NULL) subsectors[i].sector = side->sector;
+		else
+		{
+			subsectors[i].sector = NULL;
+			nosector.Push(i);
+		}
 		subsectors[i].validcount = validcount;
 
 		double accumx = 0.0, accumy = 0.0;
@@ -2736,6 +2743,48 @@ static void P_GroupLines (bool buildmap)
 		}
 		subsectors[i].CenterX = fixed_t(accumx * 0.5 / subsectors[i].numlines);
 		subsectors[i].CenterY = fixed_t(accumy * 0.5 / subsectors[i].numlines);
+	}
+	for(unsigned i=0;i<nosector.Size(); i++)
+	{
+		subsector_t *sub = &subsectors[nosector[i]];
+		for(unsigned j=0;j<sub->numlines; j++)
+		{
+			seg_t *seg = &segs[sub->firstline + j];
+			if (seg->frontsector != NULL)
+			{
+				sub->sector = seg->frontsector;
+				break;
+			}
+			if (seg->PartnerSeg != NULL && seg->PartnerSeg->backsector != NULL)
+			{
+				sub->sector = seg->PartnerSeg->backsector;
+				break;
+			}
+		}
+		// we still haven't found a matching sector. Check the back sides of this subsector's segs next
+		if (sub->sector == NULL)	
+		{
+			for(unsigned j=0;j<sub->numlines; j++)
+			{
+				seg_t *seg = &segs[sub->firstline + j];
+				if (seg->backsector != NULL)
+				{
+					sub->sector = seg->backsector;
+					break;
+				}
+				if (seg->PartnerSeg != NULL && seg->PartnerSeg->frontsector != NULL)
+				{
+					sub->sector = seg->PartnerSeg->frontsector;
+					break;
+				}
+			}
+		}
+		if (sub->sector == NULL)
+		{
+			sub->sector = &sectors[0];	// prevent crashes. This hopefully does not matter because
+										// any subsector going through here is malformed.
+			Printf("Unable to assign a sector to subsector %d\n", subsectors[i].firstline);
+		}
 	}
 	times[0].Unclock();
 

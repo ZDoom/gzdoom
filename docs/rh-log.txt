@@ -1,3 +1,10 @@
+January 1, 2010  (Changes by Graf Zahl)
+- fixed: The node builder did not check if all segs could be split properly.
+  Also removed some fudging that tried to work around this case but produced
+  a broken BSP tree on other maps.
+- Added Blzut3's Solaris patch.
+- Fixed: Heretic's Weredragon (Beast) should not have a melee state.
+
 January 1, 2010  (SBARINFO update)
 - Reorganized the SBarInfo code.
 - Added interpolate(<speed>) flag to drawnumber, drawbar, and drawgem.  The old
@@ -6,10 +13,6 @@ January 1, 2010  (SBARINFO update)
 - As an extension to the previous you can now use comparison operators on
   inventory items and armortype in drawswitchableimage.
   
-January 1, 2010  (Changes by Graf Zahl)
-- Added Blzut3's Solaris patch.
-- Fixed: Heretic's Weredragon (Beast) should not have a melee state.
-
 December 31, 2009  (Changes by Graf Zahl)
 - fixed: FastProjectile was missing all sky checks when the projectile's move
   was blocked.

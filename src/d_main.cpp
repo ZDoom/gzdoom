@@ -1656,7 +1656,7 @@ static FString ParseGameInfo(TArray<FString> &pwads, const char *fn, const char 
 		{
 			do
 			{
-				sc.MustGetToken(TK_StringConst);
+				sc.MustGetString();
 
 				// Try looking for the wad in the same directory as the .wad
 				// before looking for it in the current directory.

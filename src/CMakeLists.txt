@@ -696,8 +696,7 @@ add_executable( zdoom WIN32
 	g_shared/a_weaponpiece.cpp
 	g_shared/a_weapons.cpp
 	g_shared/hudmessages.cpp
-	g_shared/sbarinfo_display.cpp
-	g_shared/sbarinfo_parser.cpp
+	g_shared/sbarinfo.cpp
 	g_shared/sbar_mugshot.cpp
 	g_shared/shared_hud.cpp
 	g_shared/shared_sbar.cpp

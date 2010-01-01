@@ -67,7 +67,6 @@
 #include "c_bind.h"
 #include "info.h"
 #include "r_translate.h"
-#include "sbarinfo.h"
 #include "cmdlib.h"
 #include "m_png.h"
 #include "p_setup.h"

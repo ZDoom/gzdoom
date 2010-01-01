@@ -1,3 +1,11 @@
+January 1, 2010  (SBARINFO update)
+- Reorganized the SBarInfo code.
+- Added interpolate(<speed>) flag to drawnumber, drawbar, and drawgem.  The old
+  way of interpolating the health and armor is depreciated.
+- Added: armortype to drawswitchableimage loosely based on Gez's submission.
+- As an extension to the previous you can now use comparison operators on
+  inventory items and armortype in drawswitchableimage.
+  
 January 1, 2010  (Changes by Graf Zahl)
 - Fixed: Heretic's Weredragon (Beast) should not have a melee state.
 

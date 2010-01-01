@@ -45,6 +45,7 @@
 #include <time.h>
 #include <math.h>
 #include <assert.h>
+#include <sys/stat.h>
 
 #include "doomerrors.h"
 
@@ -102,6 +103,8 @@
 #include "m_cheat.h"
 #include "compatibility.h"
 #include "m_joy.h"
+#include "sc_man.h"
+#include "resourcefiles/resourcefile.h"
 
 EXTERN_CVAR(Bool, hud_althud)
 void DrawHUD();
@@ -118,7 +121,7 @@ extern void R_ExecuteSetViewSize ();
 extern void G_NewInit ();
 extern void SetupPlayerClasses ();
 extern bool CheckCheatmode ();
-const IWADInfo *D_FindIWAD(TArray<FString> &wadfiles, const char *basewad);
+const IWADInfo *D_FindIWAD(TArray<FString> &wadfiles, const char *iwad, const char *basewad);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -1241,11 +1244,11 @@ CCMD (endgame)
 //
 //==========================================================================
 
-void D_AddFile (TArray<FString> &wadfiles, const char *file, bool check)
+bool D_AddFile (TArray<FString> &wadfiles, const char *file, bool check, int position)
 {
 	if (file == NULL)
 	{
-		return;
+		return false;
 	}
 
 	if (check && !DirEntryExists (file))
@@ -1254,14 +1257,16 @@ void D_AddFile (TArray<FString> &wadfiles, const char *file, bool check)
 		if (f == NULL)
 		{
 			Printf ("Can't find '%s'\n", file);
-			return;
+			return false;
 		}
 		file = f;
 	}
 
 	FString f = file;
 	FixPathSeperator(f);
-	wadfiles.Push(f);
+	if (position == -1) wadfiles.Push(f);
+	else wadfiles.Insert(position, f);
+	return true;
 }
 
 //==========================================================================
@@ -1628,6 +1633,114 @@ static void CopyFiles(TArray<FString> &to, TArray<FString> &from)
 	}
 }
 
+static FString ParseGameInfo(TArray<FString> &pwads, const char *fn, const char *data, int size)
+{
+	FScanner sc;
+	FString iwad;
+	int pos = 0;
+
+	const char *lastSlash = strrchr (fn, '/');
+
+	sc.OpenMem("GAMEINFO", data, size);
+	while(sc.GetToken())
+	{
+		sc.TokenMustBe(TK_Identifier);
+		FString nextKey = sc.String;
+		sc.MustGetToken('=');
+		if (!nextKey.CompareNoCase("IWAD"))
+		{
+			sc.MustGetString();
+			iwad = sc.String;
+		}
+		else if (!nextKey.CompareNoCase("LOAD"))
+		{
+			do
+			{
+				sc.MustGetToken(TK_StringConst);
+
+				// Try looking for the wad in the same directory as the .wad
+				// before looking for it in the current directory.
+
+				if (lastSlash != NULL)
+				{
+					FString checkpath(fn, (lastSlash - fn) + 1);
+					checkpath += sc.String;
+
+					if (!FileExists (checkpath))
+					{
+						pos += D_AddFile(pwads, sc.String, true, pos);
+					}
+					else
+					{
+						pos += D_AddFile(pwads, checkpath, true, pos);
+					}
+				}
+			}
+			while (sc.CheckToken(','));
+		}
+	}
+	return iwad;
+}
+
+static FString CheckGameInfo(TArray<FString> & pwads)
+{
+	DWORD t = I_FPSTime();
+	// scan the list of WADs backwards to find the last one that contains a GAMEINFO lump
+	for(int i=pwads.Size()-1; i>=0; i--)
+	{
+		bool isdir = false;
+		FileReader *wadinfo;
+		FResourceFile *resfile;
+		const char *filename = pwads[i];
+
+		// Does this exist? If so, is it a directory?
+		struct stat info;
+		if (stat(pwads[i], &info) != 0)
+		{
+			Printf(TEXTCOLOR_RED "Could not stat %s\n", filename);
+			continue;
+		}
+		isdir = (info.st_mode & S_IFDIR) != 0;
+
+		if (!isdir)
+		{
+			try
+			{
+				wadinfo = new FileReader(filename);
+			}
+			catch (CRecoverableError &)
+			{ 
+				// Didn't find file
+				continue;
+			}
+			resfile = FResourceFile::OpenResourceFile(filename, wadinfo, true);
+		}
+		else
+			resfile = FResourceFile::OpenDirectory(filename, true);
+
+		if (resfile != NULL)
+		{
+			DWORD cnt = resfile->LumpCount();
+			for(int i=cnt-1; i>=0; i--)
+			{
+				FResourceLump *lmp = resfile->GetLump(i);
+
+				if (lmp->Namespace == ns_global && !stricmp(lmp->Name, "GAMEINFO"))
+				{
+					// Found one!
+					FString iwad = ParseGameInfo(pwads, resfile->Filename, (const char*)lmp->CacheLump(), lmp->LumpSize);
+					delete resfile;
+					return iwad;
+				}
+			}
+			delete resfile;
+		}
+	}
+	t = I_FPSTime() - t;
+	Printf("Gameinfo scan took %d ms\n", t);
+	return "";
+}
+
 //==========================================================================
 //
 // D_DoomMain
@@ -1681,11 +1794,15 @@ void D_DoomMain (void)
 	{
 		I_FatalError ("Cannot find " BASEWAD);
 	}
+	FString basewad = wad;
 
 	// Load zdoom.pk3 alone so that we can get access to the internal gameinfos before 
 	// the IWAD is known.
 
-	const IWADInfo *iwad_info = D_FindIWAD(allwads, wad);
+	GetCmdLineFiles(pwads);
+	FString iwad = CheckGameInfo(pwads);
+
+	const IWADInfo *iwad_info = D_FindIWAD(allwads, iwad, basewad);
 	gameinfo.gametype = iwad_info->gametype;
 	gameinfo.flags = iwad_info->flags;
 
@@ -1747,8 +1864,6 @@ void D_DoomMain (void)
 	execFiles->Destroy();
 
 	C_ExecCmdLineParams ();		// [RH] do all +set commands on the command line
-
-	GetCmdLineFiles(pwads);
 
 	CopyFiles(allwads, pwads);
 

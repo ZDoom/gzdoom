@@ -1,4 +1,11 @@
 January 1, 2010  (Changes by Graf Zahl)
+- added initial support for a GAMEINFO lump in PWADs. When the game is started
+  all files loaded with '-file' are scanned for this lump. This lump is read
+  before any WAD initialization takes place, in particular the IWAD is not yet
+  loaded at this time. This allows PWADs the option to specify an IWAD they 
+  want to run with and optionally autoload external resource WADs.
+- Fixed a few places where FixPathSeperator was called with a locked FString buffer.
+  It's better to use the FString version of this function instead.
 - replaced wadlist_t with an array of FStrings and added a list parameter to
   everything that eventually calls D_AddFile. Also create the list of files
   loaded on the command line separately to allow further checks on them.

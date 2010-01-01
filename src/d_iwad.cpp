@@ -446,8 +446,7 @@ static int CheckIWAD (const char *doomwaddir, WadStuff *wads)
 			FString iwad;
 			
 			iwad.Format ("%s%s%s", doomwaddir, slash, IWADNames[i]);
-			FixPathSeperator (iwad.LockBuffer());
-			iwad.UnlockBuffer();
+			FixPathSeperator (iwad);
 			if (FileExists (iwad))
 			{
 				wads[i].Type = ScanIWAD (iwad);
@@ -484,7 +483,7 @@ static int CheckIWAD (const char *doomwaddir, WadStuff *wads)
 //
 //==========================================================================
 
-static EIWADType IdentifyVersion (TArray<FString> &wadfiles, const char *zdoom_wad)
+static EIWADType IdentifyVersion (TArray<FString> &wadfiles, const char *iwad, const char *zdoom_wad)
 {
 	WadStuff wads[countof(IWADNames)];
 	size_t foundwads[NUM_IWAD_TYPES] = { 0 };
@@ -495,10 +494,15 @@ static EIWADType IdentifyVersion (TArray<FString> &wadfiles, const char *zdoom_w
 	bool iwadparmfound = false;
 	FString custwad;
 
+	if (iwadparm == NULL && iwad != NULL && *iwad != 0)
+	{
+		iwadparm = iwad;
+	}
+
 	if (iwadparm)
 	{
 		custwad = iwadparm;
-		FixPathSeperator (custwad.LockBuffer());
+		FixPathSeperator (custwad);
 		if (CheckIWAD (custwad, wads))
 		{ // -iwad parameter was a directory
 			iwadparm = NULL;
@@ -524,8 +528,7 @@ static EIWADType IdentifyVersion (TArray<FString> &wadfiles, const char *zdoom_w
 				if (stricmp (key, "Path") == 0)
 				{
 					FString nice = NicePath(value);
-					FixPathSeperator(nice.LockBuffer());
-					nice.UnlockBuffer();
+					FixPathSeperator(nice);
 					CheckIWAD(nice, wads);
 				}
 			}
@@ -660,9 +663,9 @@ static EIWADType IdentifyVersion (TArray<FString> &wadfiles, const char *zdoom_w
 }
 
 
-const IWADInfo *D_FindIWAD(TArray<FString> &wadfiles, const char *basewad)
+const IWADInfo *D_FindIWAD(TArray<FString> &wadfiles, const char *iwad, const char *basewad)
 {
-	EIWADType iwadType = IdentifyVersion(wadfiles, basewad);
+	EIWADType iwadType = IdentifyVersion(wadfiles, iwad, basewad);
 	gameiwad = iwadType;
 	const IWADInfo *iwad_info = &IWADInfos[iwadType];
 	I_SetIWADInfo(iwad_info);

@@ -28,7 +28,6 @@ ACTOR Beast 70
 	See:
 		BEAS ABCDEF 3 A_Chase
 		Loop
-	Melee:
 	Missile:
 		BEAS H 10 A_FaceTarget
 		BEAS I 10 A_CustomComboAttack("BeastBall", 32, random[BeastAttack](1,8)*3, "beast/attack")

@@ -774,6 +774,11 @@ add_executable( zdoom WIN32
 set_source_files_properties( xlat/parse_xlat.cpp PROPERTIES OBJECT_DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.c" )
 set_source_files_properties( sc_man.cpp PROPERTIES OBJECT_DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/sc_man_scanner.h" )
 
+if(${CMAKE_SYSTEM_NAME} STREQUAL "SunOS")
+	# [BL] Solaris requires these to be explicitly linked.
+	set( ZDOOM_LIBS ${ZDOOM_LIBS} nsl socket)
+endif(${CMAKE_SYSTEM_NAME} STREQUAL "SunOS")
+
 target_link_libraries( zdoom ${ZDOOM_LIBS} gme gdtoa dumb lzma )
 include_directories( .
 	g_doom

@@ -41,7 +41,9 @@
 #define stat _stat
 #else
 #include <dirent.h>
+#ifndef __sun
 #include <fts.h>
+#endif
 #endif
 #include <stdio.h>
 #include <string.h>
@@ -197,6 +199,46 @@ int FDirectory::AddDirectory(const char *dirpath)
 	return count;
 }
 
+#elif defined(__sun)
+
+int FDirectory::AddDirectory(const char *dirpath)
+{
+	int count = 0;
+	TArray<FString> scanDirectories;
+	scanDirectories.Push(dirpath);
+	for(unsigned int i = 0;i < scanDirectories.Size();i++)
+	{
+		DIR* directory = opendir(scanDirectories[i].GetChars());
+		if (directory == NULL)
+		{
+			Printf("Could not ready directory: %s\n", strerror(errno));
+			return NULL;
+		}
+
+		struct dirent *file;
+		while((file = readdir(directory)) != NULL)
+		{
+			if(file->d_name[0] == '.') //File is hidden or ./.. directory so ignore it.
+				continue;
+
+			FString fullFileName = scanDirectories[i] + file->d_name;
+
+			struct stat fileStat;
+			stat(fullFileName.GetChars(), &fileStat);
+
+			if(S_ISDIR(fileStat.st_mode))
+			{
+				scanDirectories.Push(scanDirectories[i] + file->d_name + "/");
+				continue;
+			}
+			AddEntry(scanDirectories[i] + file->d_name, fileStat.st_size);
+			count++;
+		}
+		closedir(directory);
+	}
+	return count;
+}
+
 #else
 
 //==========================================================================
@@ -294,6 +336,7 @@ FileReader *FDirectoryLump::NewReader()
 	{
 		FString fullpath = Owner->Filename;
 		fullpath += FullName;
+		printf("%s\n", fullpath.GetChars());
 		return new FileReader(fullpath);
 	}
 	catch (CRecoverableError &)

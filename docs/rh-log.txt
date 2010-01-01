@@ -7,6 +7,7 @@ January 1, 2010  (SBARINFO update)
   inventory items and armortype in drawswitchableimage.
   
 January 1, 2010  (Changes by Graf Zahl)
+- Added Blzut3's Solaris patch.
 - Fixed: Heretic's Weredragon (Beast) should not have a melee state.
 
 December 31, 2009  (Changes by Graf Zahl)

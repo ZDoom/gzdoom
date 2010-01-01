@@ -40,21 +40,21 @@
 
 /** Lots of different version numbers **/
 
-#define DOTVERSIONSTR_NOREV "2.3.1"
+#define DOTVERSIONSTR_NOREV "2.4.0"
 
 // The version string the user actually sees.
 #define DOTVERSIONSTR DOTVERSIONSTR_NOREV " (r" SVN_REVISION_STRING ")"
 
 // The version as seen in the Windows resource
-#define RC_FILEVERSION 2,3,1,SVN_REVISION_NUMBER
-#define RC_PRODUCTVERSION 2,3,1,0
+#define RC_FILEVERSION 2,4,0,SVN_REVISION_NUMBER
+#define RC_PRODUCTVERSION 2,4,0,0
 #define RC_FILEVERSION2 DOTVERSIONSTR
-#define RC_PRODUCTVERSION2 "2.3"
+#define RC_PRODUCTVERSION2 "2.4"
 
 // Version identifier for network games.
 // Bump it every time you do a release unless you're certain you
 // didn't change anything that will affect sync.
-#define NETGAMEVERSION 223
+#define NETGAMEVERSION 224
 
 // Version stored in the ini's [LastRun] section.
 // Bump it if you made some configuration change that you want to

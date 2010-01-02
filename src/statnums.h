@@ -60,8 +60,9 @@ enum
 	STAT_MAPMARKER,							// Map marker actors
 
 	STAT_DEFAULT = 100,
-	STAT_SECTOREFFECT,
-	STAT_ACTORMOVER,
+	STAT_SECTOREFFECT,						// All sector effects that cause floor and ceiling movement
+	STAT_ACTORMOVER,						// actor movers
+	STAT_SCRIPTS,							// The ACS thinker. This is to ensure that it can't tick before all actors calles PostBeginPlay
 };
 
 #endif

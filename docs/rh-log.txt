@@ -1,4 +1,6 @@
-January 2, 2010  (Changes by Graf Zahl)
+﻿January 2, 2010  (Changes by Graf Zahl)
+- fixed: Trying to show a popup crashed in the SBARINFO code because of a 
+  missing NULL pointer check.
 - fixed: The ACS thinker needs its own statnum above all actors. Otherwise
   order of execution is not guaranteed.
 - fixed: Only ActorMovers should go into STAT_ACTORMOVER, not all PathFollowers.

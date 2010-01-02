@@ -967,7 +967,7 @@ public:
 					script->popups[currentPopup-1].open();
 			}
 
-			lastPopup->Tick(NULL, this, false);
+			if (lastPopup != NULL) lastPopup->Tick(NULL, this, false);
 		}
 
 		script->huds[lastHud]->Tick(NULL, this, false);

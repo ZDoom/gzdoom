@@ -1,4 +1,5 @@
 January 2, 2010  (Changes by Graf Zahl)
+- fixed: Only ActorMovers should go into STAT_ACTORMOVER, not all PathFollowers.
 - fixed: SBARINFO's DrawGem command accepted a size value of 0 and divided
   by it. Reinstated the old '+1' this command had in the old code.
 - fixed: The floor waggle code used FloatBobOffsets as sine table but this

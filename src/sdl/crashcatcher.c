@@ -8,6 +8,12 @@
 #include <errno.h>
 #include <sys/ucontext.h>
 
+// Solaris doesn't have SA_ONESHOT
+// According to the Linux header this is the same.
+#ifndef SA_ONESHOT
+#define SA_ONESHOT SA_RESETHAND
+#endif
+
 static const char *cc_logfile = NULL;
 
 static char respfile[256];

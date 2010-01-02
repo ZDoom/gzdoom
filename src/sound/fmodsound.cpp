@@ -46,6 +46,8 @@ extern HWND Window;
 #endif
 #ifdef __APPLE__
 #include <stdlib.h>
+#elif __sun
+#include <alloca.h>
 #else
 #include <malloc.h>
 #endif

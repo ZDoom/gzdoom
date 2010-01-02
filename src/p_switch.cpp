@@ -274,11 +274,11 @@ void P_ProcessSwitchDef (FScanner &sc)
 	{
 		if (def2 != NULL)
 		{
-			free (def2);
+			M_Free (def2);
 		}
 		if (def1 != NULL)
 		{
-			free (def1);
+			M_Free (def1);
 		}
 		return;
 	}

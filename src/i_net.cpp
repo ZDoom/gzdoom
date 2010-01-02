@@ -46,6 +46,9 @@
 #	include <unistd.h>
 #	include <netdb.h>
 #	include <sys/ioctl.h>
+#	ifdef __sun
+#		include <fcntl.h>
+#	endif
 #endif
 
 #include "doomtype.h"
@@ -422,7 +425,11 @@ void StartNetwork (bool autoPort)
 	// create communication socket
 	mysocket = UDPsocket ();
 	BindToLocalPort (mysocket, autoPort ? 0 : DOOMPORT);
+#ifndef __sun
 	ioctlsocket (mysocket, FIONBIO, &trueval);
+#else
+	fcntl(mysocket, F_SETFL, trueval | O_NONBLOCK);
+#endif
 }
 
 void SendAbort (void)

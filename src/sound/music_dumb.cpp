@@ -73,7 +73,7 @@ protected:
 	static bool read(SoundStream *stream, void *buff, int len, void *userdata);
 };
 
-#pragma pack(push, 1)
+#pragma pack(1)
 
 typedef struct tagITFILEHEADER
 {
@@ -108,7 +108,7 @@ typedef struct MODMIDICFG
 	char szMidiZXXExt[128*32]; // changed from CHAR
 } MODMIDICFG, *LPMODMIDICFG;
 
-#pragma pack(pop)
+#pragma pack()
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 

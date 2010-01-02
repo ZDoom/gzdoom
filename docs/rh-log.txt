@@ -1,3 +1,17 @@
+January 2, 2010  (Changes by Graf Zahl)
+- fixed: The floor waggle code used FloatBobOffsets as sine table but this
+  only has 64 entries and is not precise enough. It now uses finesine instead.
+- fixed: When compositing a multipatch texture any patch that is a multpatch
+  texture itself and contains rotations may not be composited directly into
+  the destination buffer. This must be done with an intermediate buffer.
+- Fixed: Drawing a slider in the options menu did not scale the x-coordinate.
+- Fixed: If the alt HUD had to draw negative numbers the minus sign was misplaced
+  due to incorrect texture coordinate calculations.
+- changed option menu scaling for widescreen modes so that it doesn't scale down
+  so quickly. 
+- made some error messages in DECORATE that don't affect the parsing non-fatal
+  so that the parser can continue to find more problems.
+  
 January 1, 2010  (Changes by Graf Zahl)
 - added initial support for a GAMEINFO lump in PWADs. When the game is started
   all files loaded with '-file' are scanned for this lump. This lump is read

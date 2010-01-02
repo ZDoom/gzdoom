@@ -1268,9 +1268,17 @@ void DWaggleBase::DoWaggle (bool ceiling)
 		break;
 	}
 	m_Accumulator += m_AccDelta;
+
+
+#if 1
+	fixed_t mag = finesine[(m_Accumulator>>9)&8191]*8;
+#else
+	// Hexen used a 64 entry(!) sine table here which is not nearly precise enough for smooth movement
+	fixed_t mag = FloatBobOffsets[(m_Accumulator>>FRACBITS)&63];
+#endif
+
 	dist = plane->d;
-	plane->d = m_OriginalDist + plane->PointToDist (0, 0,
-		FixedMul (FloatBobOffsets[(m_Accumulator>>FRACBITS)&63], m_Scale));
+	plane->d = m_OriginalDist + plane->PointToDist (0, 0, FixedMul (mag, m_Scale));
 	m_Sector->ChangePlaneTexZ(pos, plane->HeightDiff (dist));
 	dist = plane->HeightDiff (dist);
 

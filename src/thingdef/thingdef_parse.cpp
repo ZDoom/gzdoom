@@ -149,7 +149,8 @@ FxExpression *ParseParameter(FScanner &sc, PClass *cls, char type, bool constant
 		x = ParseExpression (sc, cls);
 		if (constant && !x->isConstant())
 		{
-			sc.ScriptError("Default parameter must be constant.");
+			sc.ScriptMessage("Default parameter must be constant.");
+			FScriptPosition::ErrorCounter++;
 		}
 		break;
 
@@ -196,13 +197,15 @@ static void ParseConstant (FScanner &sc, PSymbolTable * symt, PClass *cls)
 		if (symt->AddSymbol (sym) == NULL)
 		{
 			delete sym;
-			sc.ScriptError ("'%s' is already defined in '%s'.",
+			sc.ScriptMessage ("'%s' is already defined in '%s'.",
 				symname.GetChars(), cls? cls->TypeName.GetChars() : "Global");
+			FScriptPosition::ErrorCounter++;
 		}
 	}
 	else
 	{
-		sc.ScriptError("Numeric type required for constant");
+		sc.ScriptMessage("Numeric type required for constant");
+		FScriptPosition::ErrorCounter++;
 	}
 }
 
@@ -235,8 +238,9 @@ static void ParseEnum (FScanner &sc, PSymbolTable *symt, PClass *cls)
 		if (symt->AddSymbol (sym) == NULL)
 		{
 			delete sym;
-			sc.ScriptError ("'%s' is already defined in '%s'.",
+			sc.ScriptMessage ("'%s' is already defined in '%s'.",
 				symname.GetChars(), cls? cls->TypeName.GetChars() : "Global");
+			FScriptPosition::ErrorCounter++;
 		}
 		// This allows a comma after the last value but doesn't enforce it.
 		if (sc.CheckToken('}')) break;
@@ -260,7 +264,8 @@ static void ParseNativeVariable (FScanner &sc, PSymbolTable * symt, PClass *cls)
 
 	if (sc.LumpNum == -1 || Wads.GetLumpFile(sc.LumpNum) > 0)
 	{
-		sc.ScriptError ("variables can only be imported by internal class and actor definitions!");
+		sc.ScriptMessage ("variables can only be imported by internal class and actor definitions!");
+		FScriptPosition::ErrorCounter++;
 	}
 
 	// Read the type and make sure it's int or float.
@@ -324,8 +329,9 @@ static void ParseNativeVariable (FScanner &sc, PSymbolTable * symt, PClass *cls)
 	if (symt->AddSymbol (sym) == NULL)
 	{
 		delete sym;
-		sc.ScriptError ("'%s' is already defined in '%s'.",
+		sc.ScriptMessage ("'%s' is already defined in '%s'.",
 			symname.GetChars(), cls? cls->TypeName.GetChars() : "Global");
+		FScriptPosition::ErrorCounter++;
 	}
 }
 
@@ -349,21 +355,20 @@ static void ParseUserVariable (FScanner &sc, PSymbolTable *symt, PClass *cls)
 
 	// Read the type and make sure it's int.
 	sc.MustGetAnyToken();
-	if (sc.TokenType == TK_Int)
+	if (sc.TokenType != TK_Int)
 	{
-		valuetype = VAL_Int;
+		sc.ScriptMessage("User variables must be of type int");
+		FScriptPosition::ErrorCounter++;
 	}
-	else
-	{
-		sc.ScriptError("User variables must be of type int");
-	}
+	valuetype = VAL_Int;
 
 	sc.MustGetToken(TK_Identifier);
 	// For now, restrict user variables to those that begin with "user_" to guarantee
 	// no clashes with internal member variable names.
 	if (sc.StringLen < 6 || strnicmp("user_", sc.String, 5) != 0)
 	{
-		sc.ScriptError("User variable names must begin with \"user_\"");
+		sc.ScriptMessage("User variable names must begin with \"user_\"");
+		FScriptPosition::ErrorCounter++;
 	}
 
 	FName symname = sc.String;
@@ -375,7 +380,9 @@ static void ParseUserVariable (FScanner &sc, PSymbolTable *symt, PClass *cls)
 		sc.MustGetToken(']');
 		if (maxelems <= 0)
 		{
-			sc.ScriptError("Array size must be positive");
+			sc.ScriptMessage("Array size must be positive");
+			FScriptPosition::ErrorCounter++;
+			maxelems = 1;
 		}
 		valuetype.MakeArray(maxelems);
 	}
@@ -388,8 +395,9 @@ static void ParseUserVariable (FScanner &sc, PSymbolTable *symt, PClass *cls)
 	if (symt->AddSymbol(sym) == NULL)
 	{
 		delete sym;
-		sc.ScriptError ("'%s' is already defined in '%s'.",
+		sc.ScriptMessage ("'%s' is already defined in '%s'.",
 			symname.GetChars(), cls ? cls->TypeName.GetChars() : "Global");
+		FScriptPosition::ErrorCounter++;
 	}
 }
 
@@ -445,12 +453,13 @@ void HandleActorFlag(FScanner &sc, Baggage &bag, const char *part1, const char *
 	{
 		if (part2 == NULL)
 		{
-			sc.ScriptError("\"%s\" is an unknown flag\n", part1);
+			sc.ScriptMessage("\"%s\" is an unknown flag\n", part1);
 		}
 		else
 		{
-			sc.ScriptError("\"%s.%s\" is an unknown flag\n", part1, part2);
+			sc.ScriptMessage("\"%s.%s\" is an unknown flag\n", part1, part2);
 		}
+		FScriptPosition::ErrorCounter++;
 	}
 }
 
@@ -583,13 +592,18 @@ static FState *CheckState(FScanner &sc, PClass *type)
 
 			if (v!=0 && state==NULL)
 			{
-				sc.ScriptError("Attempt to get invalid state from actor %s\n", type->ParentClass->TypeName.GetChars());
+				sc.ScriptMessage("Attempt to get invalid state from actor %s\n", type->ParentClass->TypeName.GetChars());
+				FScriptPosition::ErrorCounter++;
 				return NULL;
 			}
 			state+=v;
 			return state;
 		}
-		else sc.ScriptError("Invalid state assignment");
+		else 
+		{
+			sc.ScriptMessage("Invalid state assignment");
+			FScriptPosition::ErrorCounter++;
+		}
 	}
 	return NULL;
 }

@@ -1545,6 +1545,7 @@ static void TranslateToStartSpot (int tag, int originX, int originY)
 	validcount++;
 	for (i = 0; i < po->numsegs; i++, tempSeg++, tempPt++)
 	{
+		(*tempSeg)->bPolySeg = true;	// this is not set for all segs
 		(*tempSeg)->sidedef->Flags |= WALLF_POLYOBJ;
 		if ((*tempSeg)->linedef->validcount != validcount)
 		{

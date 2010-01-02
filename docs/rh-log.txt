@@ -1,3 +1,6 @@
+January 1, 2010  (Changes by Graf Zahl)
+- Fixed: Heretic's Weredragon (Beast) should not have a melee state.
+
 December 31, 2009  (Changes by Graf Zahl)
 - fixed: FastProjectile was missing all sky checks when the projectile's move
   was blocked.

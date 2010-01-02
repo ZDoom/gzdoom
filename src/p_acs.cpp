@@ -1798,6 +1798,7 @@ END_POINTERS
 TObjPtr<DACSThinker> DACSThinker::ActiveThinker;
 
 DACSThinker::DACSThinker ()
+: DThinker(STAT_SCRIPTS)
 {
 	if (ActiveThinker)
 	{

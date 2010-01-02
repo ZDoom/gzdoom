@@ -1,4 +1,6 @@
 January 2, 2010  (Changes by Graf Zahl)
+- fixed: SBARINFO's DrawGem command accepted a size value of 0 and divided
+  by it. Reinstated the old '+1' this command had in the old code.
 - fixed: The floor waggle code used FloatBobOffsets as sine table but this
   only has 64 entries and is not precise enough. It now uses finesine instead.
 - fixed: When compositing a multipatch texture any patch that is a multpatch

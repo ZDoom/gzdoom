@@ -2281,7 +2281,7 @@ class CommandDrawGem : public SBarInfoCommand
 			sc.MustGetToken(TK_IntConst);
 			if(sc.Number < 0)
 				sc.ScriptError("Chain size must be a positive number.");
-			chainSize = sc.Number;
+			chainSize = sc.Number+1;
 			sc.MustGetToken(',');
 			GetCoordinates(sc, fullScreenOffsets, x, y);
 			sc.MustGetToken(';');

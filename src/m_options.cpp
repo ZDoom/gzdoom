@@ -1565,7 +1565,7 @@ static void M_DrawSlider (int x, int y, double min, double max, double cur,int f
 	cur = clamp(cur, min, max) - min;
 
 	M_DrawConText(CR_WHITE, x, y, "\x10\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x12");
-	M_DrawConText(CR_ORANGE, x + 5 + (int)((cur * 78) / range), y, "\x13");
+	M_DrawConText(CR_ORANGE, x + int((5 + ((cur * 78) / range)) * CleanXfac_1), y, "\x13");
 
 	if (fracdigits >= 0)
 	{

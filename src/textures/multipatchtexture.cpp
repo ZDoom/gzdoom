@@ -218,6 +218,7 @@ FMultiPatchTexture::FMultiPatchTexture (const void *texdef, FPatchLookup *patchl
 	int i;
 
 	mtexture.d = (const maptexture_t *)texdef;
+	bMultiPatch = true;
 
 	if (strife)
 	{
@@ -561,7 +562,10 @@ int FMultiPatchTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rota
 	{
 		int ret = -1;
 
-		if (!Parts[i].Texture->bComplex || inf == NULL)
+		// rotated multipatch parts cannot be composited directly
+		bool rotatedmulti = Parts[i].Rotate != 0 && Parts[i].Texture->bMultiPatch;
+
+		if ((!Parts[i].Texture->bComplex || inf == NULL) && !rotatedmulti)
 		{
 			memset (&info, 0, sizeof (info));
 			info.alpha = Parts[i].Alpha;
@@ -612,7 +616,7 @@ int FMultiPatchTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rota
 			{
 				Parts[i].Texture->CopyTrueColorPixels(&bmp1, 0, 0);
 				bmp->CopyPixelDataRGB(x+Parts[i].OriginX, y+Parts[i].OriginY, bmp1.GetPixels(), 
-					bmp1.GetWidth(), bmp1.GetHeight(), 4, bmp1.GetPitch()*4, Parts[i].Rotate, CF_BGRA, inf);
+					bmp1.GetWidth(), bmp1.GetHeight(), 4, bmp1.GetPitch(), Parts[i].Rotate, CF_BGRA, inf);
 			}
 		}
 
@@ -1179,6 +1183,7 @@ FMultiPatchTexture::FMultiPatchTexture (FScanner &sc, int usetype)
 {
 	TArray<TexPart> parts;
 
+	bMultiPatch = true;
 	sc.SetCMode(true);
 	sc.MustGetString();
 	uppercopy(Name, sc.String);

@@ -1336,6 +1336,10 @@ CCMD(clean)
 bool V_DoModeSetup (int width, int height, int bits)
 {
 	DFrameBuffer *buff = I_SetMode (width, height, screen);
+	int ratio;
+	int cwidth;
+	int cheight;
+	int cx1, cy1, cx2, cy2;
 
 	if (buff == NULL)
 	{
@@ -1350,39 +1354,32 @@ bool V_DoModeSetup (int width, int height, int bits)
 	// if D3DFB is being used for the display.
 	FFont::StaticPreloadFonts();
 
+	ratio = CheckRatio (width, height);
+	if (ratio & 4)
 	{
-		int ratio;
-		int cwidth;
-		int cheight;
-		int cx1, cy1, cx2, cy2;
-
-		ratio = CheckRatio (width, height);
-		if (ratio & 4)
-		{
-			cwidth = width;
-			cheight = height * BaseRatioSizes[ratio][3] / 48;
-		}
-		else
-		{
-			cwidth = width * BaseRatioSizes[ratio][3] / 48;
-			cheight = height;
-		}
-		// Use whichever pair of cwidth/cheight or width/height that produces less difference
-		// between CleanXfac and CleanYfac.
-		cx1 = MAX(cwidth / 320, 1);
-		cy1 = MAX(cheight / 200, 1);
-		cx2 = MAX(width / 320, 1);
-		cy2 = MAX(height / 200, 1);
-		if (abs(cx1 - cy1) <= abs(cx2 - cy2))
-		{ // e.g. 640x360 looks better with this.
-			CleanXfac = cx1;
-			CleanYfac = cy1;
-		}
-		else
-		{ // e.g. 720x480 looks better with this.
-			CleanXfac = cx2;
-			CleanYfac = cy2;
-		}
+		cwidth = width;
+		cheight = height * BaseRatioSizes[ratio][3] / 48;
+	}
+	else
+	{
+		cwidth = width * BaseRatioSizes[ratio][3] / 48;
+		cheight = height;
+	}
+	// Use whichever pair of cwidth/cheight or width/height that produces less difference
+	// between CleanXfac and CleanYfac.
+	cx1 = MAX(cwidth / 320, 1);
+	cy1 = MAX(cheight / 200, 1);
+	cx2 = MAX(width / 320, 1);
+	cy2 = MAX(height / 200, 1);
+	if (abs(cx1 - cy1) <= abs(cx2 - cy2))
+	{ // e.g. 640x360 looks better with this.
+		CleanXfac = cx1;
+		CleanYfac = cy1;
+	}
+	else
+	{ // e.g. 720x480 looks better with this.
+		CleanXfac = cx2;
+		CleanYfac = cy2;
 	}
 
 	if (CleanXfac > 1 && CleanYfac > 1 && CleanXfac != CleanYfac)
@@ -1400,8 +1397,17 @@ bool V_DoModeSetup (int width, int height, int bits)
 
 	if (width < 800 || width >= 960)
 	{
-		CleanXfac_1 = MAX(CleanXfac - 1, 1);
-		CleanYfac_1 = MAX(CleanYfac - 1, 1);
+		if (cx1 < cx2)
+		{
+			// Special case in which we don't need to scale down.
+			CleanXfac_1 = 
+			CleanYfac_1 = cx1;
+		}
+		else
+		{
+			CleanXfac_1 = MAX(CleanXfac - 1, 1);
+			CleanYfac_1 = MAX(CleanYfac - 1, 1);
+		}
 		CleanWidth_1 = width / CleanXfac_1;
 		CleanHeight_1 = height / CleanYfac_1;
 	}

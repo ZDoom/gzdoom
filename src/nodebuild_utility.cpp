@@ -53,10 +53,6 @@
 static const int PO_LINE_START = 1;
 static const int PO_LINE_EXPLICIT = 5;
 
-// Vertices within this distance of each other vertically and horizontally
-// will be considered as the same vertex.
-const fixed_t VERTEX_EPSILON = 6;
-
 #if 0
 #define D(x) x
 #else
@@ -555,8 +551,12 @@ int FNodeBuilder::FVertexMap::SelectVertexClose (FNodeBuilder::FPrivVert &vert)
 
 	for (i = 0; i < block.Size(); ++i)
 	{
+#if VERTEX_EPSILON <= 1
+		if (vertices[block[i]].x == vert.x && vertices[block[i]].y == vert.y)
+#else
 		if (abs(vertices[block[i]].x - vert.x) < VERTEX_EPSILON &&
 			abs(vertices[block[i]].y - vert.y) < VERTEX_EPSILON)
+#endif
 		{
 			return block[i];
 		}

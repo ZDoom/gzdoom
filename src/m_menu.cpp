@@ -2142,6 +2142,7 @@ static void M_DrawPlayerSlider (int x, int y, int cur)
 
 static void M_PlayerSetupDrawer ()
 {
+	const int LINEHEIGHT = 16;
 	int x, xo, yo;
 	EColorRange label, value;
 	DWORD color;

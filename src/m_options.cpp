@@ -107,8 +107,6 @@ CVAR (Bool, show_obituaries, true, CVAR_ARCHIVE)
 EXTERN_CVAR (Bool, longsavemessages)
 EXTERN_CVAR (Bool, screenshot_quiet)
 
-extern int	skullAnimCounter;
-
 EXTERN_CVAR (Bool, cl_run)
 EXTERN_CVAR (Int, crosshair)
 EXTERN_CVAR (Bool, freelook)
@@ -1651,7 +1649,7 @@ void M_OptDrawer ()
 
 	if (CurrentMenu->PreDraw !=  NULL)
 	{
-		CurrentMenu->PreDraw ();
+		if (CurrentMenu->PreDraw ()) return;
 	}
 
 	if (CurrentMenu->y != 0)
@@ -3002,7 +3000,7 @@ static void DefaultCustomColors ()
 	}
 }
 
-static void ColorPickerDrawer ()
+static bool ColorPickerDrawer ()
 {
 	DWORD newColor = MAKEARGB(255,
 		int(ColorPickerItems[2].a.fval),
@@ -3021,6 +3019,7 @@ static void ColorPickerDrawer ()
 		"Old", DTA_CleanNoMove_1, true, TAG_DONE);
 	screen->DrawText (SmallFont, CR_WHITE, x+(48+24-SmallFont->StringWidth("New")/2)*CleanXfac_1, y,
 		"New", DTA_CleanNoMove_1, true, TAG_DONE);
+	return false;
 }
 
 static void SetColorPickerSliders ()
@@ -3117,7 +3116,7 @@ CCMD (menu_mouse)
 	MouseOptions ();
 }
 
-static void DrawJoystickConfigMenuHeader()
+static bool DrawJoystickConfigMenuHeader()
 {
 	FString joyname = SELECTED_JOYSTICK->GetName();
 	screen->DrawText(BigFont, gameinfo.gametype & GAME_DoomChex ? CR_RED : CR_UNTRANSLATED,
@@ -3127,6 +3126,7 @@ static void DrawJoystickConfigMenuHeader()
 	screen->DrawText(SmallFont, gameinfo.gametype & GAME_DoomChex ? CR_RED : CR_UNTRANSLATED,
 		(screen->GetWidth() - SmallFont->StringWidth(joyname) * CleanXfac_1) / 2, (8 + BigFont->GetHeight()) * CleanYfac_1,
 		joyname, DTA_CleanNoMove_1, true, TAG_DONE);
+	return false;
 }
 
 static void UpdateJoystickConfigMenu(IJoystickConfig *joy)

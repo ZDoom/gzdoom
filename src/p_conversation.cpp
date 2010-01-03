@@ -117,7 +117,7 @@ static void LoadScriptFile(FileReader *lump, int numnodes);
 static FStrifeDialogueNode *ReadRetailNode (FileReader *lump, DWORD &prevSpeakerType);
 static FStrifeDialogueNode *ReadTeaserNode (FileReader *lump, DWORD &prevSpeakerType);
 static void ParseReplies (FStrifeDialogueReply **replyptr, Response *responses);
-static void DrawConversationMenu ();
+static bool DrawConversationMenu ();
 static void PickConversationReply ();
 static void CleanupConversationMenu ();
 static void ConversationMenuEscaped ();
@@ -804,6 +804,7 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 		OptionsActive = true;
 		menuactive = MENU_OnNoPause;
 		ConversationPauseTic = gametic + 20;
+
 		M_SwitchMenu (&ConversationMenu);
 	}
 }
@@ -838,10 +839,13 @@ void P_ResumeConversation ()
 //
 //============================================================================
 
-static void DrawConversationMenu ()
+static bool DrawConversationMenu ()
 {
 	const char *speakerName;
 	int i, x, y, linesize;
+	int width, fontheight;
+	menuitem_t *item;
+	int labelofs;
 
 	player_t *cp = &players[consoleplayer];
 
@@ -851,7 +855,7 @@ static void DrawConversationMenu ()
 	if (CurNode == NULL)
 	{
 		M_ClearMenus ();
-		return;
+		return true;
 	}
 
 	// [CW] Freeze the game depending on MAPINFO options.
@@ -925,7 +929,52 @@ static void DrawConversationMenu ()
 		screen->DrawTexture (TexMan(((AInventory *)GetDefaultByType (RUNTIME_CLASS(ACoin)))->Icon),
 			2, 189, DTA_320x200, true, TAG_DONE);
 	}
+
+	y = CurrentMenu->y;
+
+	if (gameinfo.gametype & GAME_Raven)
+	{
+		labelofs = 2;
+		y -= 2;
+		fontheight = 9;
+	}
+	else
+	{
+		labelofs = 0;
+		fontheight = 8;
+	}
+	for (i = 0; i < CurrentMenu->numitems; i++, y += fontheight)
+	{
+		item = CurrentMenu->items + i;
+
+		width = SmallFont->StringWidth(item->label);
+		x = CurrentMenu->indent + 14;
+
+		screen->DrawText (SmallFont, CR_GREEN, x, y, item->label, DTA_Clean, true, TAG_DONE);
+
+		if (item->b.position != 0)
+		{
+			char tbuf[16];
+
+			mysnprintf (tbuf, countof(tbuf), "%d.", item->b.position);
+			x = CurrentMenu->indent - SmallFont->StringWidth (tbuf);
+			screen->DrawText (SmallFont, CR_GREY, x, y, tbuf, DTA_Clean, true, TAG_DONE);
+		}
+
+		if (i == CurrentItem &&
+			(skullAnimCounter < 6 || menuactive == MENU_WaitKey))
+		{
+			int x = (CurrentMenu->indent + 3 - 160) * CleanXfac + screen->GetWidth() / 2;
+			int yy = (y-1+labelofs - 100) * CleanYfac + screen->GetHeight() / 2;
+			screen->DrawText (ConFont, CR_RED, x, yy, "\xd",
+				DTA_CellX, 8 * CleanXfac,
+				DTA_CellY, 8 * CleanYfac,
+				TAG_DONE);
+		}
+	}
+	return true;
 }
+
 
 //============================================================================
 //

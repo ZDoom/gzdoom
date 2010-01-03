@@ -1,4 +1,12 @@
-﻿January 2, 2010  (Changes by Graf Zahl)
+﻿January 3, 2010  (Changes by Graf Zahl)
+- fixed: The player setup menu used the main menu's line spacing which
+  for all non-Doom games was too wide.
+- fixed: Strife's dialogues cannot use the new options menu code to draw
+  themselves so now they use a stripped down version of the old code.
+- Replaced I_MSTime with I_FPSTime in node builder timing because basetime
+  will not be initialized yet if a map is started directly from the commandline.
+
+January 2, 2010  (Changes by Graf Zahl)
 - fixed: Polyobjects could contain segs that weren't flagged as such.
 - fixed: Trying to show a popup crashed in the SBARINFO code because of a 
   missing NULL pointer check.

@@ -1642,7 +1642,6 @@ static FString ParseGameInfo(TArray<FString> &pwads, const char *fn, const char 
 	const char *lastSlash = strrchr (fn, '/');
 
 	sc.OpenMem("GAMEINFO", data, size);
-	sc.SetCMode(true);
 	while(sc.GetToken())
 	{
 		sc.TokenMustBe(TK_Identifier);

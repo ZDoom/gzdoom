@@ -1,5 +1,4 @@
 ﻿January 2, 2010  (Changes by Graf Zahl)
-- fixed: The GAMEINFO parser needs to use C mode.
 - fixed: Polyobjects could contain segs that weren't flagged as such.
 - fixed: Trying to show a popup crashed in the SBARINFO code because of a 
   missing NULL pointer check.

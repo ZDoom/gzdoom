@@ -235,6 +235,7 @@ static int 		saveSlot;		// which slot to save in
 static size_t	saveCharIndex;	// which char we're editing
 
 static int		LINEHEIGHT;
+static const int PLAYERSETUP_LINEHEIGHT = 16;
 
 static char		savegamestring[SAVESTRINGSIZE];
 static FString	EndString;
@@ -2142,7 +2143,7 @@ static void M_DrawPlayerSlider (int x, int y, int cur)
 
 static void M_PlayerSetupDrawer ()
 {
-	const int LINEHEIGHT = 16;
+	const int LINEHEIGHT = PLAYERSETUP_LINEHEIGHT;
 	int x, xo, yo;
 	EColorRange label, value;
 	DWORD color;
@@ -3543,7 +3544,7 @@ void M_Drawer ()
 					if (skullAnimCounter < 6)
 					{
 						screen->DrawText (ConFont, CR_RED, x - 16,
-							currentMenu->y + itemOn*LINEHEIGHT +
+							currentMenu->y + itemOn*PLAYERSETUP_LINEHEIGHT +
 							(!(gameinfo.gametype & (GAME_DoomStrifeChex)) ? 6 : -1), "\xd",
 							DTA_Clean, true, TAG_DONE);
 					}

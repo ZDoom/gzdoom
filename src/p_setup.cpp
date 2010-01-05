@@ -3574,7 +3574,7 @@ void P_SetupLevel (char *lumpname, int position)
 	{
 		unsigned int startTime, endTime;
 
-		startTime = I_MSTime ();
+		startTime = I_FPSTime ();
 		TArray<FNodeBuilder::FPolyStart> polyspots, anchors;
 		P_GetPolySpots (map, polyspots, anchors);
 		FNodeBuilder::FLevel leveldata =
@@ -3591,7 +3591,7 @@ void P_SetupLevel (char *lumpname, int position)
 			segs, numsegs,
 			subsectors, numsubsectors,
 			vertexes, numvertexes);
-		endTime = I_MSTime ();
+		endTime = I_FPSTime ();
 		DPrintf ("BSP generation took %.3f sec (%d segs)\n", (endTime - startTime) * 0.001, numsegs);
 	}
 

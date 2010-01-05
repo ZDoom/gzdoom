@@ -490,7 +490,8 @@ int FNodeBuilder::SelectSplitter (DWORD set, node_t &node, DWORD &splitseg, int 
 
 int FNodeBuilder::Heuristic (node_t &node, DWORD set, bool honorNoSplit)
 {
-	int score = 0;
+	// Set the initial score above 0 so that near vertex anti-weighting is less likely to produce a negative score.
+	int score = 1000000;
 	int segsInSet = 0;
 	int counts[2] = { 0, 0 };
 	int realSegs[2] = { 0, 0 };
@@ -596,7 +597,28 @@ int FNodeBuilder::Heuristic (node_t &node, DWORD set, bool honorNoSplit)
 			frac = InterceptVector (node, *test);
 			if (frac < 0.001 || frac > 0.999)
 			{
-				score -= int(1 / frac);
+				FPrivVert *v1 = &Vertices[test->v1];
+				FPrivVert *v2 = &Vertices[test->v2];
+				double x = v1->x, y = v1->y;
+				x += frac * (v2->x - x);
+				y += frac * (v2->y - y);
+				if (fabs(x - v1->x) < VERTEX_EPSILON+1 && fabs(y - v1->y) < VERTEX_EPSILON+1)
+				{
+					D(Printf("Splitter will produce same start vertex as seg %d\n", i));
+					return -1;
+				}
+				if (fabs(x - v2->x) < VERTEX_EPSILON+1 && fabs(y - v2->y) < VERTEX_EPSILON+1)
+				{
+					D(Printf("Splitter will produce same end vertex as seg %d\n", i));
+					return -1;
+				}
+				if (frac > 0.999)
+				{
+					frac = 1 - frac;
+				}
+				int penalty = int(1 / frac);
+				score = MAX(score - penalty, 1);
+				D(Printf ("Penalized splitter by %d for being near endpt of seg %d (%f).\n", penalty, i, frac));
 			}
 
 			counts[0]++;
@@ -766,6 +788,11 @@ void FNodeBuilder::SplitSegs (DWORD set, node_t &node, DWORD splitseg, DWORD &ou
 			newvert.x += fixed_t(frac * double(Vertices[seg->v2].x - newvert.x));
 			newvert.y += fixed_t(frac * double(Vertices[seg->v2].y - newvert.y));
 			vertnum = VertexMap->SelectVertexClose (newvert);
+
+			if (vertnum == seg->v1 || vertnum == seg->v2)
+			{
+				Printf("SelectVertexClose selected endpoint of seg %u\n", set);
+			}
 
 			seg2 = SplitSeg (set, vertnum, sidev1);
 

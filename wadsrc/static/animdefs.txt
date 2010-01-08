@@ -150,9 +150,9 @@ switch strife COMP12 on sound world/glassbreak pic COMP04B tics 0
 switch strife COMP13 on sound world/glassbreak pic COMP12B tics 0
 switch strife COMP17 on sound world/glassbreak pic COMP20B tics 0
 switch strife COMP21 on sound world/glassbreak pic COMP28B tics 0
-switch strife WALTEK09 on pic WALTEKB1 tics 0
-switch strife WALTEK10 on pic WALTEKB1 tics 0
-switch strife WALTEK15 on pic WALTEKB1 tics 0
+switch strife WALTEK09 on sound world/glassbreak pic WALTEKB1 tics 0
+switch strife WALTEK10 on sound world/glassbreak pic WALTEKB1 tics 0
+switch strife WALTEK15 on sound world/glassbreak pic WALTEKB1 tics 0
 switch strife SWFORC01 on pic SWFORC02 tics 0
 switch strife SWEXIT01 on pic SWEXIT02 tics 0
 switch strife DORSBK01 on sound switches/stone pic DORSBK02 tics 0
@@ -169,7 +169,7 @@ switch strife SWTRMG01 on pic SWTRMG04 tics 0
 switch strife SWMETL01 on pic SWMETL02 tics 0
 switch strife SWWOOD01 on pic SWWOOD02 tics 0
 switch strife SWTKBL01 on pic SWTKBL02 tics 0
-switch strife AZWAL21 on pic AZWAL22 tics 0
+switch strife AZWAL21 on sound world/glassbreak pic AZWAL22 tics 0
 switch strife SWINDT01 on pic SWINDT02 tics 0
 switch strife SWRUST01 on pic SWRUST02 tics 0
 switch strife SWCHAP01 on pic SWCHAP02 tics 0

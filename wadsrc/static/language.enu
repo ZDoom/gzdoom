@@ -1099,7 +1099,7 @@ TXT_FTHROWERPARTS = "You picked up the flame thrower parts.";
 TXT_REPORT = "You picked up the report.";
 TXT_INFO = "You picked up the info.";
 TXT_TARGETER = "You picked up the Targeter.";
-TXT_COMMUNICATOR = "You picked up the Communicator";
+TXT_COMMUNICATOR = "You picked up the Communicator.";
 TXT_COIN = "You picked up the coin.";
 TXT_XGOLD = "You picked up %d gold.";
 TXT_BEACON = "You picked up the Teleporter Beacon.";
@@ -1147,7 +1147,7 @@ TXT_NEWKEY5 = "You picked up the New Key5.";
 TXT_ORACLEPASS = "You picked up the Oracle Pass.";
 
 TXT_HEGRENADES = "You picked up the HE-Grenade Rounds.";
-TXT_PHGRENADES = "You picked up the Phoshorus-Grenade Rounds.";
+TXT_PHGRENADES = "You picked up the Phosphorus-Grenade Rounds.";
 TXT_CLIPOFBULLETS = "You picked up the clip of bullets.";
 TXT_BOXOFBULLETS = "You picked up the box of bullets.";
 TXT_MINIMISSILES = "You picked up the mini missiles.";

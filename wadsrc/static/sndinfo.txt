@@ -1086,6 +1086,7 @@ switches/knob		dsswknob
 switches/keycard	dskeycrd
 switches/stone		dsswston
 switches/bolt		dsswbolt
+switches/boltback	dsempty
 switches/scanner	dsswscan
 switches/fool		dsdifool
 switches/valve		dsvalve

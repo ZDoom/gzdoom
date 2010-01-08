@@ -157,7 +157,7 @@ switch strife SWFORC01 on pic SWFORC02 tics 0
 switch strife SWEXIT01 on pic SWEXIT02 tics 0
 switch strife DORSBK01 on sound switches/stone pic DORSBK02 tics 0
 switch strife SWSLD01 on pic SWSLD02 tics 0
-switch strife DORWS04 on sound switches/bolt pic DORWS05 tics 0
+switch strife DORWS04 on sound switches/bolt pic DORWS05 tics 0 off sound switches/boltback pic DORWS04 tics 0
 switch strife SWIRON01 on pic SWIRON02 tics 0
 switch strife GLASS09 on sound world/glassbreak pic GLASS10 tics 0
 switch strife GLASS11 on sound world/glassbreak pic GLASS12 tics 0

@@ -95,7 +95,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Beacon)
 	}
 	if (owner != NULL)
 	{
-		// Rebels are the same color as their owner (but only in nomultiplayer)
+		// Rebels are the same color as their owner (but only in multiplayer)
 		if (multiplayer)
 		{
 			rebel->Translation = owner->Translation;

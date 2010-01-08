@@ -21,6 +21,7 @@
 
 // Include all the other Strife stuff here to reduce compile time
 #include "a_acolyte.cpp"
+#include "a_spectral.cpp"
 #include "a_alienspectres.cpp"
 #include "a_coin.cpp"
 #include "a_crusader.cpp"
@@ -33,7 +34,6 @@
 #include "a_reaver.cpp"
 #include "a_rebels.cpp"
 #include "a_sentinel.cpp"
-#include "a_spectral.cpp"
 #include "a_stalker.cpp"
 #include "a_strifeitems.cpp"
 #include "a_strifeweapons.cpp"

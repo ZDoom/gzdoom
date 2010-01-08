@@ -3674,10 +3674,20 @@ AActor *AActor::StaticSpawn (const PClass *type, fixed_t ix, fixed_t iy, fixed_t
 
 AActor *Spawn (const char *type, fixed_t x, fixed_t y, fixed_t z, replace_t allowreplacement)
 {
-	const PClass *cls = PClass::FindClass(type);
-	if (cls == NULL) 
+	FName classname(type, true);
+	if (classname == NAME_None)
 	{
 		I_Error("Attempt to spawn actor of unknown type '%s'\n", type);
+	}
+	return Spawn(classname, x, y, z, allowreplacement);
+}
+
+AActor *Spawn (FName classname, fixed_t x, fixed_t y, fixed_t z, replace_t allowreplacement)
+{
+	const PClass *cls = PClass::FindClass(classname);
+	if (cls == NULL) 
+	{
+		I_Error("Attempt to spawn actor of unknown type '%s'\n", classname.GetChars());
 	}
 	return AActor::StaticSpawn (cls, x, y, z, allowreplacement);
 }

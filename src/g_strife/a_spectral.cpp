@@ -64,14 +64,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpectralLightning)
 	x = self->x + pr_zap5.Random2(3) * FRACUNIT * 50;
 	y = self->y + pr_zap5.Random2(3) * FRACUNIT * 50;
 
-	flash = Spawn (self->threshold > 25 ? PClass::FindClass("SpectralLightningV2") :
-		PClass::FindClass("SpectralLightningV1"), x, y, ONCEILINGZ, ALLOW_REPLACE);
+	flash = Spawn (self->threshold > 25 ? PClass::FindClass(NAME_SpectralLightningV2) :
+		PClass::FindClass(NAME_SpectralLightningV1), x, y, ONCEILINGZ, ALLOW_REPLACE);
 
 	flash->target = self->target;
 	flash->velz = -18*FRACUNIT;
 	flash->health = self->health;
 
-	flash = Spawn("SpectralLightningV2", self->x, self->y, ONCEILINGZ, ALLOW_REPLACE);
+	flash = Spawn(NAME_SpectralLightningV2, self->x, self->y, ONCEILINGZ, ALLOW_REPLACE);
 
 	flash->target = self->target;
 	flash->velz = -18*FRACUNIT;

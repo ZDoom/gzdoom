@@ -94,7 +94,7 @@ end
 end
 
 :DoorCloseSmallWood
-	play		doors/large_wood_open
+	play		doors/small_wood_close
 	nostopcutoff
 end
 

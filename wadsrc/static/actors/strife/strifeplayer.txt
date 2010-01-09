@@ -12,7 +12,7 @@ ACTOR StrifePlayer : PlayerPawn
 	Player.ColorRange 128, 143
 	Player.DisplayName "Rebel"
 	Player.StartItem "PunchDagger"
-	Player.RunHealth 16
+	Player.RunHealth 15
 	Player.WeaponSlot 1, PunchDagger
 	Player.WeaponSlot 2, StrifeCrossbow2, StrifeCrossbow
 	Player.WeaponSlot 3, AssaultGun

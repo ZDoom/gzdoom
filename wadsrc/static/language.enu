@@ -1086,7 +1086,7 @@ TXT_LEATHERARMOR = "You picked up the Leather Armor.";
 TXT_MEDPATCH = "You picked up the Med patch.";
 TXT_MEDICALKIT = "You picked up the Medical kit.";
 TXT_SURGERYKIT = "You picked up the Surgery Kit.";
-TXT_STRIFEMAP = "You picked up the map";
+TXT_STRIFEMAP = "You picked up the map.";
 TXT_BELDINSRING = "You picked up the ring.";
 TXT_OFFERINGCHALICE = "You picked up the Offering Chalice.";
 TXT_EAR = "You picked up the ear.";
@@ -1108,12 +1108,12 @@ TXT_SCANNER = "You picked up the scanner.";
 TXT_NEEDMAP = "The scanner won't work without a map!\n";
 TXT_PRISONPASS = "You picked up the Prison pass.";
 
-TXT_STRIFECROSSBOW = "You picked up the crossbow";
-TXT_ASSAULTGUN = "You picked up the assault gun";
-TXT_MMLAUNCHER = "You picked up the mini missile launcher";
-TXT_FLAMER = "You picked up the flame thrower";
-TXT_MAULER = "You picked up the mauler";
-TXT_GLAUNCHER = "You picked up the Grenade launcher";
+TXT_STRIFECROSSBOW = "You picked up the crossbow.";
+TXT_ASSAULTGUN = "You picked up the assault gun.";
+TXT_MMLAUNCHER = "You picked up the mini missile launcher.";
+TXT_FLAMER = "You picked up the flame thrower.";
+TXT_MAULER = "You picked up the mauler.";
+TXT_GLAUNCHER = "You picked up the Grenade launcher.";
 TXT_SIGIL = "You picked up the SIGIL.";
 
 
@@ -1156,7 +1156,7 @@ TXT_ENERGYPOD = "You picked up the energy pod.";
 TXT_ENERGYPACK = "You picked up the energy pack.";
 TXT_POISONBOLTS = "You picked up the poison bolts.";
 TXT_ELECTRICBOLTS = "You picked up the electric bolts.";
-TXT_AMMOSATCHEL = "You picked up the ammo satchel";
+TXT_AMMOSATCHEL = "You picked up the ammo satchel.";
 
 // Random dialogs
 

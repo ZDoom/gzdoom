@@ -161,6 +161,8 @@ FGameConfigFile::FGameConfigFile ()
 	// Create auto-load sections, so users know what's available.
 	// Note that this totem pole is the reverse of the order that
 	// they will appear in the file.
+	CreateSectionAtStart("Harmony.Autoload");
+	CreateSectionAtStart("UrbanBrawl.Autoload");
 	CreateSectionAtStart("Chex3.Autoload");
 	CreateSectionAtStart("Chex.Autoload");
 	CreateSectionAtStart("Strife.Autoload");

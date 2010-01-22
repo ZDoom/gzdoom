@@ -1046,7 +1046,10 @@ void D_DoStrifeAdvanceDemo ()
 		pagetic = 7 * TICRATE;
 		pagename = "PANEL1";
 		S_Sound (CHAN_VOICE | CHAN_UI, voices[0], 1, ATTN_NORM);
-		S_StartMusic ("d_intro");
+		// The new Strife teaser has D_FMINTR.
+		// The full retail Strife has D_INTRO.
+		// And the old Strife teaser has both. (I do not know which one it actually uses, nor do I care.)
+		S_StartMusic (gameinfo.flags & GI_TEASER2 ? "d_fmintr" : "d_intro");
 		break;
 
 	case 4:

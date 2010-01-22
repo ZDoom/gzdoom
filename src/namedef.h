@@ -153,6 +153,7 @@ xx(Mauler)
 
 xx(AcolyteBlue)
 xx(SpectralLightningV1)
+xx(SpectralLightningV2)
 xx(TeleportDest)
 xx(TeleportDest2)
 

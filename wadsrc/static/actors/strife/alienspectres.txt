@@ -1,7 +1,7 @@
 
 // Alien Spectre 1 -----------------------------------------------------------
 
-ACTOR AlienSpectre1 : SpectralMonster 129
+ACTOR AlienSpectre1 : SpectralMonster 129 native
 {
 	Game Strife
 	ConversationID 67,-1,-1
@@ -100,7 +100,7 @@ ACTOR AlienSpectre2 : AlienSpectre1 75
 // Alien Spectre 3 ----------------------------------------------------------
 // This is the Oracle's personal spectre, so it's a little different.
 
-ACTOR AlienSpectre3 : AlienSpectre1 76
+ACTOR AlienSpectre3 : AlienSpectre1 76 native
 {
 	Game Strife
 	ConversationID 71,-1,-1

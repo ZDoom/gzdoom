@@ -570,18 +570,24 @@ void G_ChangeLevel(const char *levelname, int position, bool keepFacing, int nex
 		return;
 	}
 
-	nextlevel = levelname;
-
-	if (strncmp(levelname, "enDSeQ", 6))
+	if (strncmp(levelname, "enDSeQ", 6) != 0)
 	{
-		nextinfo = FindLevelInfo (nextlevel)->CheckLevelRedirect ();
-		if (nextinfo)
+		nextinfo = FindLevelInfo (nextlevel);
+		if (nextinfo != NULL)
 		{
-			nextlevel = nextinfo->mapname;
+			level_info_t *nextredir = nextinfo->CheckLevelRedirect();
+			if (nextredir != NULL)
+			{
+				nextinfo = nextredir;
+				levelname = nextinfo->mapname;
+			}
 		}
 	}
 
-	if (nextSkill != -1) NextSkill = nextSkill;
+	nextlevel = levelname;
+
+	if (nextSkill != -1)
+		NextSkill = nextSkill;
 
 	g_nomonsters = nomonsters;
 

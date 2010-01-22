@@ -2966,39 +2966,46 @@ bool M_Responder (event_t *ev)
 			{
 				mkey = MKEY_Clear;
 			}
-			else if (!keyup && !OptionsActive)
+			else if (!keyup)
 			{
-				ch = tolower (ch);
-				if (messageToPrint)
+				if (OptionsActive)
 				{
-					// Take care of any messages that need input
-					ch = tolower (ch);
-					assert(messageRoutine != NULL);
-					if (ch != ' ' && ch != 'n' && ch != 'y')
-					{
-						return false;
-					}
-					D_RemoveNextCharEvent();
-					M_EndMessage(ch);
-					return true;
+					M_OptResponder(ev);
 				}
 				else
 				{
-					// Search for a menu item associated with the pressed key.
-					for (i = (itemOn + 1) % currentMenu->numitems;
-						 i != itemOn;
-						 i = (i + 1) % currentMenu->numitems)
+					ch = tolower (ch);
+					if (messageToPrint)
 					{
+						// Take care of any messages that need input
+						ch = tolower (ch);
+						assert(messageRoutine != NULL);
+						if (ch != ' ' && ch != 'n' && ch != 'y')
+						{
+							return false;
+						}
+						D_RemoveNextCharEvent();
+						M_EndMessage(ch);
+						return true;
+					}
+					else
+					{
+						// Search for a menu item associated with the pressed key.
+						for (i = (itemOn + 1) % currentMenu->numitems;
+							 i != itemOn;
+							 i = (i + 1) % currentMenu->numitems)
+						{
+							if (currentMenu->menuitems[i].alphaKey == ch)
+							{
+								break;
+							}
+						}
 						if (currentMenu->menuitems[i].alphaKey == ch)
 						{
-							break;
+							itemOn = i;
+							S_Sound(CHAN_VOICE | CHAN_UI, "menu/cursor", 1, ATTN_NONE);
+							return true;
 						}
-					}
-					if (currentMenu->menuitems[i].alphaKey == ch)
-					{
-						itemOn = i;
-						S_Sound(CHAN_VOICE | CHAN_UI, "menu/cursor", 1, ATTN_NONE);
-						return true;
 					}
 				}
 			}

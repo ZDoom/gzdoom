@@ -2141,11 +2141,10 @@ void M_OptResponder(event_t *ev)
 		CurrentMenu->items[0].label = OldMessage;
 		CurrentMenu->items[0].type = OldType;
 	}
-	else if (ev->type == EV_GUI_Event && ev->subtype == EV_GUI_KeyDown && tolower(ev->data1) == 't')
+	else if (ev->type == EV_GUI_Event && ev->subtype == EV_GUI_KeyDown)
 	{
-		// Test selected resolution
-		if (CurrentMenu == &ModesMenu)
-		{
+		if (CurrentMenu == &ModesMenu && (ev->data1 == 't' || ev->data1 == 'T'))
+		{ // Test selected resolution
 			if (!(item->type == screenres &&
 				GetSelectedSize (CurrentItem, &NewWidth, &NewHeight)))
 			{
@@ -2160,6 +2159,23 @@ void M_OptResponder(event_t *ev)
 			testingmode = I_GetTime(false) + 5 * TICRATE;
 			S_Sound (CHAN_VOICE | CHAN_UI, "menu/choose", 1, ATTN_NONE);
 			SetModesMenu (NewWidth, NewHeight, NewBits);
+		}
+		else if (ev->data1 >= '0' && ev->data1 <= '9')
+		{ // Activate an item of type numberedmore
+			int i;
+			int num = ev->data1 == '0' ? 10 : ev->data1 - '0';
+
+			for (i = 0; i < CurrentMenu->numitems; ++i)
+			{
+				menuitem_t *item = CurrentMenu->items + i;
+
+				if (item->type == numberedmore && item->b.position == num)
+				{
+					CurrentItem = i;
+					M_OptButtonHandler(MKEY_Enter, false);
+					break;
+				}
+			}
 		}
 	}
 }
@@ -2769,35 +2785,7 @@ void M_OptButtonHandler(EMenuKey key, bool repeat)
 			item->b.key1 = item->c.key2 = 0;
 		}
 		break;
-/*
-	case '0':
-	case '1':
-	case '2':
-	case '3':
-	case '4':
-	case '5':
-	case '6':
-	case '7':
-	case '8':
-	case '9':
-		{
-			int lookfor = ch == '0' ? 10 : ch - '0', i;
-			for (i = 0; i < CurrentMenu->numitems; ++i)
-			{
-				if (CurrentMenu->items[i].b.position == lookfor)
-				{
-					CurrentItem = i;
-					item = &CurrentMenu->items[i];
-					break;
-				}
-			}
-			if (i == CurrentMenu->numitems)
-			{
-				break;
-			}
-			// Otherwise, fall through to '\r' below
-		}
-*/
+
 	case MKEY_Enter:
 		if (CurrentMenu == &ModesMenu && item->type == screenres)
 		{

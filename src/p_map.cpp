@@ -3907,6 +3907,52 @@ void P_AimCamera (AActor *t1, fixed_t &CameraX, fixed_t &CameraY, fixed_t &Camer
 
 //==========================================================================
 //
+// P_TalkFacing
+//
+// Looks for something within 5.625 degrees left or right of the player
+// to talk to.
+//
+//==========================================================================
+
+bool P_TalkFacing(AActor *player)
+{
+	AActor *linetarget;
+
+	P_AimLineAttack(player, player->angle, TALKRANGE, &linetarget, ANGLE_1*35, true);
+	if (linetarget == NULL)
+	{
+		P_AimLineAttack(player, player->angle + (ANGLE_90 >> 4), TALKRANGE, &linetarget, ANGLE_1*35, true);
+		if (linetarget == NULL)
+		{
+			P_AimLineAttack(player, player->angle - (ANGLE_90 >> 4), TALKRANGE, &linetarget, ANGLE_1*35, true);
+			if (linetarget == NULL)
+			{
+				return false;
+			}
+		}
+	}
+	// Dead things can't talk.
+	if (linetarget->health <= 0)
+	{
+		return false;
+	}
+	// Fighting things don't talk either.
+	if (linetarget->flags4 & MF4_INCOMBAT)
+	{
+		return false;
+	}
+	if (linetarget->Conversation != NULL)
+	{
+		// Give the NPC a chance to play a brief animation
+		linetarget->ConversationAnimation (0);
+		P_StartConversation (linetarget, player, true, true);
+		return true;
+	}
+	return false;
+}
+
+//==========================================================================
+//
 // USE LINES
 //
 //==========================================================================
@@ -3921,7 +3967,8 @@ bool P_UseTraverse(AActor *usething, fixed_t endx, fixed_t endy, bool &foundline
 		// [RH] Check for things to talk with or use a puzzle item on
 		if (!in->isaline)
 		{
-			if (usething==in->d.thing) continue;
+			if (usething == in->d.thing)
+				continue;
 			// Check thing
 
 			// Check for puzzle item use or USESPECIAL flag
@@ -3931,38 +3978,10 @@ bool P_UseTraverse(AActor *usething, fixed_t endx, fixed_t endy, bool &foundline
 				if (P_ActivateThingSpecial(in->d.thing, usething))
 					return true;
 			}
-			// Dead things can't talk.
-			if (in->d.thing->health <= 0)
-			{
-				continue;
-			}
-			// Fighting things don't talk either.
-			if (in->d.thing->flags4 & MF4_INCOMBAT)
-			{
-				continue;
-			}
-			if (in->d.thing->Conversation != NULL)
-			{
-				// Give the NPC a chance to play a brief animation
-				in->d.thing->ConversationAnimation (0);
-				P_StartConversation (in->d.thing, usething, true, true);
-				return true;
-			}
 			continue;
 		}
 
 		FLineOpening open;
-		// [RH] The range passed to P_PathTraverse was doubled so that it could
-		// find things up to 128 units away (for Strife), but it should still reject
-		// lines further than 64 units away.
-		if (in->frac > FRACUNIT/2)
-		{
-			// don't pass usething here. It will not do what might be expected!
-			P_LineOpening (open, NULL, in->d.line, it.Trace().x + FixedMul (it.Trace().dx, in->frac),
-				it.Trace().y + FixedMul (it.Trace().dy, in->frac));
-			if (open.range <= 0) return false;
-			else continue;
-		}
 		if (in->d.line->special == 0 || !(in->d.line->activation & (SPAC_Use|SPAC_UseThrough)))
 		{
 	blocked:
@@ -4082,7 +4101,6 @@ void P_UseLines (player_t *player)
 {
 	angle_t angle;
 	fixed_t x1, y1;
-	fixed_t x2, y2;
 	bool foundline;
 
 	foundline = false;
@@ -4091,16 +4109,13 @@ void P_UseLines (player_t *player)
 	x1 = player->mo->x + (USERANGE>>FRACBITS)*finecosine[angle];
 	y1 = player->mo->y + (USERANGE>>FRACBITS)*finesine[angle];
 
-	x2 = player->mo->x + (USERANGE>>FRACBITS)*finecosine[angle]*2;
-	y2 = player->mo->y + (USERANGE>>FRACBITS)*finesine[angle]*2;
-
 	// old code:
 	//
 	// P_PathTraverse ( x1, y1, x2, y2, PT_ADDLINES, PTR_UseTraverse );
 	//
 	// This added test makes the "oof" sound work on 2s lines -- killough:
 
-	if (!P_UseTraverse (player->mo, x2, y2, foundline))
+	if (!P_UseTraverse (player->mo, x1, y1, foundline))
 	{ // [RH] Give sector a chance to eat the use
 		sector_t *sec = player->mo->Sector;
 		int spac = SECSPAC_Use;

@@ -156,8 +156,8 @@ switch strife WALTEK15 on sound world/glassbreak pic WALTEKB1 tics 0
 switch strife SWFORC01 on pic SWFORC02 tics 0
 switch strife SWEXIT01 on pic SWEXIT02 tics 0
 switch strife DORSBK01 on sound switches/stone pic DORSBK02 tics 0
-switch strife SWSLD01 on sound switches/keycard pic SWSLD02 tics 0
-switch strife DORWS04 on sound switches/bolt pic DORWS05 tics 0
+switch strife SWSLD01 on pic SWSLD02 tics 0
+switch strife DORWS04 on sound switches/bolt pic DORWS05 tics 0 off sound switches/boltback pic DORWS04 tics 0
 switch strife SWIRON01 on pic SWIRON02 tics 0
 switch strife GLASS09 on sound world/glassbreak pic GLASS10 tics 0
 switch strife GLASS11 on sound world/glassbreak pic GLASS12 tics 0
@@ -169,7 +169,7 @@ switch strife SWTRMG01 on pic SWTRMG04 tics 0
 switch strife SWMETL01 on pic SWMETL02 tics 0
 switch strife SWWOOD01 on pic SWWOOD02 tics 0
 switch strife SWTKBL01 on pic SWTKBL02 tics 0
-switch strife AZWAL21 on pic AZWAL22 tics 0
+switch strife AZWAL21 on sound world/glassbreak pic AZWAL22 tics 0
 switch strife SWINDT01 on pic SWINDT02 tics 0
 switch strife SWRUST01 on pic SWRUST02 tics 0
 switch strife SWCHAP01 on pic SWCHAP02 tics 0
@@ -183,15 +183,15 @@ switch strife SWBRIK01 on pic SWBRIK02 tics 0
 switch strife SWIRON03 on pic SWIRON04 tics 0
 switch strife SWIRON05 on pic SWIRON06 tics 0
 switch strife SWIRON07 on pic SWIRON08 tics 0
-switch strife SWCARD01 on pic SWCARD02 tics 0
+switch strife SWCARD01 on sound switches/keycard pic SWCARD02 tics 0
 switch strife SWSIGN01 on pic SWSIGN02 tics 0
 switch strife SWLEV01 on pic SWLEV02 tics 0
 switch strife SWLEV03 on pic SWLEV04 tics 0
 switch strife SWLEV05 on pic SWLEV06 tics 0
-switch strife SWBRN01 on pic SWBRN02 tics 0
+switch strife SWBRN01 on sound switches/keycard pic SWBRN02 tics 0
 switch strife SWPIP01 on sound switches/valve pic SWPIP02 tics 0
 switch strife SWPALM01 on sound switches/scanner pic SWPALM02 tics 0
-switch strife SWKNOB03 on pic SWKNOB04 tics 0
+switch strife SWKNOB03 on sound switches/knob pic SWKNOB04 tics 0
 switch strife ALTSW01 on pic ALTSW02 tics 0
 switch strife COMP25 on sound world/glassbreak pic COMP28B tics 0
 switch strife COMP29 on sound world/glassbreak pic COMP20B tics 0

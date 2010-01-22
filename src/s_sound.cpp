@@ -187,7 +187,7 @@ void S_NoiseDebug (void)
 		color = (chan->ChanFlags & CHAN_LOOP) ? CR_BROWN : CR_GREY;
 
 		// Name
-		Wads.GetLumpName (temp, chan->SfxInfo->lumpnum);
+		Wads.GetLumpName (temp, S_sfx[chan->SoundID].lumpnum);
 		temp[8] = 0;
 		screen->DrawText (SmallFont, color, 0, y, temp, TAG_DONE);
 
@@ -1068,7 +1068,6 @@ static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyO
 	{
 		chan->SoundID = sound_id;
 		chan->OrgID = FSoundID(org_id);
-		chan->SfxInfo = sfx;
 		chan->EntChannel = channel;
 		chan->Volume = volume;
 		chan->ChanFlags |= chanflags;
@@ -1101,10 +1100,9 @@ static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyO
 void S_RestartSound(FSoundChan *chan)
 {
 	assert(chan->ChanFlags & CHAN_EVICTED);
-	assert(chan->SfxInfo != NULL);
 
 	FSoundChan *ochan;
-	sfxinfo_t *sfx = chan->SfxInfo;
+	sfxinfo_t *sfx = &S_sfx[chan->SoundID];
 
 	// If this is a singular sound, don't play it if it's already playing.
 	if (sfx->bSingular && S_CheckSingular(chan->SoundID))
@@ -1352,7 +1350,7 @@ bool S_CheckSoundLimit(sfxinfo_t *sfx, const FVector3 &pos, int near_limit, floa
 	
 	for (chan = Channels, count = 0; chan != NULL && count < near_limit; chan = chan->NextChan)
 	{
-		if (!(chan->ChanFlags & CHAN_EVICTED) && chan->SfxInfo == sfx)
+		if (!(chan->ChanFlags & CHAN_EVICTED) && &S_sfx[chan->SoundID] == sfx)
 		{
 			FVector3 chanorigin;
 
@@ -1982,10 +1980,10 @@ void S_ChannelEnded(FISoundChannel *ichan)
 		{
 			evicted = true;
 		}
-		else if (schan->SfxInfo != NULL)
+		else
 		{ 
 			unsigned int pos = GSnd->GetPosition(schan);
-			unsigned int len = GSnd->GetSampleLength(schan->SfxInfo->data);
+			unsigned int len = GSnd->GetSampleLength(S_sfx[schan->SoundID].data);
 			if (pos == 0)
 			{
 				evicted = !!(schan->ChanFlags & CHAN_JUSTSTARTED);
@@ -1995,10 +1993,12 @@ void S_ChannelEnded(FISoundChannel *ichan)
 				evicted = (pos < len);
 			}
 		}
+		/*
 		else
 		{
 			evicted = false;
 		}
+		*/
 		if (!evicted)
 		{
 			S_ReturnChannel(schan);
@@ -2114,10 +2114,6 @@ static FArchive &operator<<(FArchive &arc, FSoundChan &chan)
 		<< chan.Rolloff.MaxDistance
 		<< chan.LimitRange;
 
-	if (arc.IsLoading())
-	{
-		chan.SfxInfo = &S_sfx[chan.SoundID];
-	}
 	return arc;
 }
 

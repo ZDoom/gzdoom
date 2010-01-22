@@ -2966,262 +2966,262 @@ FUNC(LS_StartConversation)
 
 lnSpecFunc LineSpecials[256] =
 {
-	LS_NOP,
-	LS_NOP,		// Polyobj_StartLine,
-	LS_Polyobj_RotateLeft,
-	LS_Polyobj_RotateRight,
-	LS_Polyobj_Move,
-	LS_NOP,		// Polyobj_ExplicitLine
-	LS_Polyobj_MoveTimes8,
-	LS_Polyobj_DoorSwing,
-	LS_Polyobj_DoorSlide,
-	LS_NOP,		// Line_Horizon
-	LS_Door_Close,
-	LS_Door_Open,
-	LS_Door_Raise,
-	LS_Door_LockedRaise,
-	LS_Door_Animated,
-	LS_Autosave,
-	LS_NOP,		// Transfer_WallLight
-	LS_Thing_Raise,
-	LS_StartConversation,
-	LS_Thing_Stop,
-	LS_Floor_LowerByValue,
-	LS_Floor_LowerToLowest,
-	LS_Floor_LowerToNearest,
-	LS_Floor_RaiseByValue,
-	LS_Floor_RaiseToHighest,
-	LS_Floor_RaiseToNearest,
-	LS_Stairs_BuildDown,
-	LS_Stairs_BuildUp,
-	LS_Floor_RaiseAndCrush,
-	LS_Pillar_Build,
-	LS_Pillar_Open,
-	LS_Stairs_BuildDownSync,
-	LS_Stairs_BuildUpSync,
-	LS_ForceField,
-	LS_ClearForceField,
-	LS_Floor_RaiseByValueTimes8,
-	LS_Floor_LowerByValueTimes8,
-	LS_Floor_MoveToValue,
-	LS_Ceiling_Waggle,
-	LS_Teleport_ZombieChanger,
-	LS_Ceiling_LowerByValue,
-	LS_Ceiling_RaiseByValue,
-	LS_Ceiling_CrushAndRaise,
-	LS_Ceiling_LowerAndCrush,
-	LS_Ceiling_CrushStop,
-	LS_Ceiling_CrushRaiseAndStay,
-	LS_Floor_CrushStop,
-	LS_Ceiling_MoveToValue,
-	LS_NOP,		// Sector_Attach3dMidtex
-	LS_GlassBreak,
-	LS_NOP,		// 50: ExtraFloor_LightOnly
-	LS_Sector_SetLink,
-	LS_Scroll_Wall,
-	LS_Line_SetTextureOffset,
-	LS_Sector_ChangeFlags,
-	LS_Line_SetBlocking,
-	LS_Line_SetTextureScale,
-	LS_NOP,		// 57
-	LS_NOP,		// 58
-	LS_NOP,		// 59
-	LS_Plat_PerpetualRaise,
-	LS_Plat_Stop,
-	LS_Plat_DownWaitUpStay,
-	LS_Plat_DownByValue,
-	LS_Plat_UpWaitDownStay,
-	LS_Plat_UpByValue,
-	LS_Floor_LowerInstant,
-	LS_Floor_RaiseInstant,
-	LS_Floor_MoveToValueTimes8,
-	LS_Ceiling_MoveToValueTimes8,
-	LS_Teleport,
-	LS_Teleport_NoFog,
-	LS_ThrustThing,
-	LS_DamageThing,
-	LS_Teleport_NewMap,
-	LS_Teleport_EndGame,
-	LS_TeleportOther,
-	LS_TeleportGroup,
-	LS_TeleportInSector,
-	LS_NOP,		// 79
-	LS_ACS_Execute,
-	LS_ACS_Suspend,
-	LS_ACS_Terminate,
-	LS_ACS_LockedExecute,
-	LS_ACS_ExecuteWithResult,
-	LS_ACS_LockedExecuteDoor,
-	LS_NOP,		// 86
-	LS_NOP,		// 87
-	LS_NOP,		// 88
-	LS_NOP,		// 89
-	LS_Polyobj_OR_RotateLeft,
-	LS_Polyobj_OR_RotateRight,
-	LS_Polyobj_OR_Move,
-	LS_Polyobj_OR_MoveTimes8,
-	LS_Pillar_BuildAndCrush,
-	LS_FloorAndCeiling_LowerByValue,
-	LS_FloorAndCeiling_RaiseByValue,
-	LS_NOP,		// 97
-	LS_NOP,		// 98
-	LS_NOP,		// 99
-	LS_NOP,		// Scroll_Texture_Left
-	LS_NOP,		// Scroll_Texture_Right
-	LS_NOP,		// Scroll_Texture_Up
-	LS_NOP,		// Scroll_Texture_Down
-	LS_NOP,		// 104
-	LS_NOP,		// 105
-	LS_NOP,		// 106
-	LS_NOP,		// 107
-	LS_NOP,		// 108
-	LS_Light_ForceLightning,
-	LS_Light_RaiseByValue,
-	LS_Light_LowerByValue,
-	LS_Light_ChangeToValue,
-	LS_Light_Fade,
-	LS_Light_Glow,
-	LS_Light_Flicker,
-	LS_Light_Strobe,
-	LS_Light_Stop,
-	LS_NOP,		// 118
-	LS_Thing_Damage,
-	LS_Radius_Quake,
-	LS_NOP,		// Line_SetIdentification
-	LS_NOP,		// Thing_SetGravity			// [BC] Start
-	LS_NOP,		// Thing_ReverseGravity
-	LS_NOP,		// Thing_RevertGravity
-	LS_Thing_Move,
-	LS_NOP,		// Thing_SetSprite
-	LS_Thing_SetSpecial,
-	LS_ThrustThingZ,						// [BC] End
-	LS_UsePuzzleItem,
-	LS_Thing_Activate,
-	LS_Thing_Deactivate,
-	LS_Thing_Remove,
-	LS_Thing_Destroy,
-	LS_Thing_Projectile,
-	LS_Thing_Spawn,
-	LS_Thing_ProjectileGravity,
-	LS_Thing_SpawnNoFog,
-	LS_Floor_Waggle,
-	LS_Thing_SpawnFacing,
-	LS_Sector_ChangeSound,
-	LS_NOP,		// 141 Music_Pause			// [BC] Start
-	LS_NOP,		// 142 Music_Change
-	LS_NOP,		// 143 Player_RemoveItem
-	LS_NOP,		// 144 Player_GiveItem
-	LS_NOP,		// 145 Player_SetTeam
-	LS_NOP,		// 146 Player_SetLeader
-	LS_NOP,		// 147 Team_InitFP
-	LS_NOP,		// 148 TeleportAll
-	LS_NOP,		// 149 TeleportAll_NoFog
-	LS_NOP,		// 150 Team_GiveFP
-	LS_NOP,		// 151 Team_UseFP
-	LS_NOP,		// 152 Team_Score
-	LS_NOP,		// 153 Team_Init
-	LS_Teleport_NoStop,
-	LS_NOP,		// 155 Team_RemoveItem
-	LS_NOP,		// 156 Team_GiveItem		// [BC] End
-	LS_NOP,		// 157
-	LS_NOP,		// 158 (FS_Execute in GZDoom)
-	LS_NOP,		// 159 (Sector_SetPlaneReflection in GZDoom)
-	LS_NOP,		// 160 (Sector_Set3DFloor in GZDoom and Vavoom)
-	LS_NOP,		// 161 (Sector_SetContents in GZDoom and Vavoom)
-	LS_NOP,		// 162
-	LS_NOP,		// 163
-	LS_NOP,		// 164
-	LS_NOP,		// 165
-	LS_NOP,		// 166
-	LS_NOP,		// 167
-	LS_NOP,		// 168
-	LS_Generic_Crusher2,
-	LS_Sector_SetCeilingScale2,
-	LS_Sector_SetFloorScale2,
-	LS_Plat_UpNearestWaitDownStay,
-	LS_NoiseAlert,
-	LS_SendToCommunicator,
-	LS_Thing_ProjectileIntercept,
-	LS_Thing_ChangeTID,
-	LS_Thing_Hate,
-	LS_Thing_ProjectileAimed,
-	LS_ChangeSkill,
-	LS_Thing_SetTranslation,
-	LS_NOP,		// Plane_Align
-	LS_NOP,		// Line_Mirror
-	LS_Line_AlignCeiling,
-	LS_Line_AlignFloor,
-	LS_Sector_SetRotation,
-	LS_Sector_SetCeilingPanning,
-	LS_Sector_SetFloorPanning,
-	LS_Sector_SetCeilingScale,
-	LS_Sector_SetFloorScale,
-	LS_NOP,		// Static_Init
-	LS_SetPlayerProperty,
-	LS_Ceiling_LowerToHighestFloor,
-	LS_Ceiling_LowerInstant,
-	LS_Ceiling_RaiseInstant,
-	LS_Ceiling_CrushRaiseAndStayA,
-	LS_Ceiling_CrushAndRaiseA,
-	LS_Ceiling_CrushAndRaiseSilentA,
-	LS_Ceiling_RaiseByValueTimes8,
-	LS_Ceiling_LowerByValueTimes8,
-	LS_Generic_Floor,
-	LS_Generic_Ceiling,
-	LS_Generic_Door,
-	LS_Generic_Lift,
-	LS_Generic_Stairs,
-	LS_Generic_Crusher,
-	LS_Plat_DownWaitUpStayLip,
-	LS_Plat_PerpetualRaiseLip,
-	LS_TranslucentLine,
-	LS_NOP,		// Transfer_Heights
-	LS_NOP,		// Transfer_FloorLight
-	LS_NOP,		// Transfer_CeilingLight
-	LS_Sector_SetColor,
-	LS_Sector_SetFade,
-	LS_Sector_SetDamage,
-	LS_Teleport_Line,
-	LS_Sector_SetGravity,
-	LS_Stairs_BuildUpDoom,
-	LS_Sector_SetWind,
-	LS_Sector_SetFriction,
-	LS_Sector_SetCurrent,
-	LS_Scroll_Texture_Both,
-	LS_NOP,		// Scroll_Texture_Model
-	LS_Scroll_Floor,
-	LS_Scroll_Ceiling,
-	LS_NOP,		// Scroll_Texture_Offsets
-	LS_ACS_ExecuteAlways,
-	LS_PointPush_SetForce,
-	LS_Plat_RaiseAndStayTx0,
-	LS_Thing_SetGoal,
-	LS_Plat_UpByValueStayTx,
-	LS_Plat_ToggleCeiling,
-	LS_Light_StrobeDoom,
-	LS_Light_MinNeighbor,
-	LS_Light_MaxNeighbor,
-	LS_Floor_TransferTrigger,
-	LS_Floor_TransferNumeric,
-	LS_ChangeCamera,
-	LS_Floor_RaiseToLowestCeiling,
-	LS_Floor_RaiseByValueTxTy,
-	LS_Floor_RaiseByTexture,
-	LS_Floor_LowerToLowestTxTy,
-	LS_Floor_LowerToHighest,
-	LS_Exit_Normal,
-	LS_Exit_Secret,
-	LS_Elevator_RaiseToNearest,
-	LS_Elevator_MoveToFloor,
-	LS_Elevator_LowerToNearest,
-	LS_HealThing,
-	LS_Door_CloseWaitOpen,
-	LS_Floor_Donut,
-	LS_FloorAndCeiling_LowerRaise,
-	LS_Ceiling_RaiseToNearest,
-	LS_Ceiling_LowerToLowest,
-	LS_Ceiling_LowerToFloor,
-	LS_Ceiling_CrushRaiseAndStaySilA
+	/*   0 */ LS_NOP,
+	/*   1 */ LS_NOP,		// Polyobj_StartLine,
+	/*   2 */ LS_Polyobj_RotateLeft,
+	/*   3 */ LS_Polyobj_RotateRight,
+	/*   4 */ LS_Polyobj_Move,
+	/*   5 */ LS_NOP,		// Polyobj_ExplicitLine
+	/*   6 */ LS_Polyobj_MoveTimes8,
+	/*   7 */ LS_Polyobj_DoorSwing,
+	/*   8 */ LS_Polyobj_DoorSlide,
+	/*   9 */ LS_NOP,		// Line_Horizon
+	/*  10 */ LS_Door_Close,
+	/*  11 */ LS_Door_Open,
+	/*  12 */ LS_Door_Raise,
+	/*  13 */ LS_Door_LockedRaise,
+	/*  14 */ LS_Door_Animated,
+	/*  15 */ LS_Autosave,
+	/*  16 */ LS_NOP,		// Transfer_WallLight
+	/*  17 */ LS_Thing_Raise,
+	/*  18 */ LS_StartConversation,
+	/*  19 */ LS_Thing_Stop,
+	/*  20 */ LS_Floor_LowerByValue,
+	/*  21 */ LS_Floor_LowerToLowest,
+	/*  22 */ LS_Floor_LowerToNearest,
+	/*  23 */ LS_Floor_RaiseByValue,
+	/*  24 */ LS_Floor_RaiseToHighest,
+	/*  25 */ LS_Floor_RaiseToNearest,
+	/*  26 */ LS_Stairs_BuildDown,
+	/*  27 */ LS_Stairs_BuildUp,
+	/*  28 */ LS_Floor_RaiseAndCrush,
+	/*  29 */ LS_Pillar_Build,
+	/*  30 */ LS_Pillar_Open,
+	/*  31 */ LS_Stairs_BuildDownSync,
+	/*  32 */ LS_Stairs_BuildUpSync,
+	/*  33 */ LS_ForceField,
+	/*  34 */ LS_ClearForceField,
+	/*  35 */ LS_Floor_RaiseByValueTimes8,
+	/*  36 */ LS_Floor_LowerByValueTimes8,
+	/*  37 */ LS_Floor_MoveToValue,
+	/*  38 */ LS_Ceiling_Waggle,
+	/*  39 */ LS_Teleport_ZombieChanger,
+	/*  40 */ LS_Ceiling_LowerByValue,
+	/*  41 */ LS_Ceiling_RaiseByValue,
+	/*  42 */ LS_Ceiling_CrushAndRaise,
+	/*  43 */ LS_Ceiling_LowerAndCrush,
+	/*  44 */ LS_Ceiling_CrushStop,
+	/*  45 */ LS_Ceiling_CrushRaiseAndStay,
+	/*  46 */ LS_Floor_CrushStop,
+	/*  47 */ LS_Ceiling_MoveToValue,
+	/*  48 */ LS_NOP,		// Sector_Attach3dMidtex
+	/*  49 */ LS_GlassBreak,
+	/*  50 */ LS_NOP,		// ExtraFloor_LightOnly
+	/*  51 */ LS_Sector_SetLink,
+	/*  52 */ LS_Scroll_Wall,
+	/*  53 */ LS_Line_SetTextureOffset,
+	/*  54 */ LS_Sector_ChangeFlags,
+	/*  55 */ LS_Line_SetBlocking,
+	/*  56 */ LS_Line_SetTextureScale,
+	/*  57 */ LS_NOP,		// Sector_SetPortal
+	/*  58 */ LS_NOP,
+	/*  59 */ LS_NOP,
+	/*  60 */ LS_Plat_PerpetualRaise,
+	/*  61 */ LS_Plat_Stop,
+	/*  62 */ LS_Plat_DownWaitUpStay,
+	/*  63 */ LS_Plat_DownByValue,
+	/*  64 */ LS_Plat_UpWaitDownStay,
+	/*  65 */ LS_Plat_UpByValue,
+	/*  66 */ LS_Floor_LowerInstant,
+	/*  67 */ LS_Floor_RaiseInstant,
+	/*  68 */ LS_Floor_MoveToValueTimes8,
+	/*  69 */ LS_Ceiling_MoveToValueTimes8,
+	/*  70 */ LS_Teleport,
+	/*  71 */ LS_Teleport_NoFog,
+	/*  72 */ LS_ThrustThing,
+	/*  73 */ LS_DamageThing,
+	/*  74 */ LS_Teleport_NewMap,
+	/*  75 */ LS_Teleport_EndGame,
+	/*  76 */ LS_TeleportOther,
+	/*  77 */ LS_TeleportGroup,
+	/*  78 */ LS_TeleportInSector,
+	/*  79 */ LS_NOP,
+	/*  80 */ LS_ACS_Execute,
+	/*  81 */ LS_ACS_Suspend,
+	/*  82 */ LS_ACS_Terminate,
+	/*  83 */ LS_ACS_LockedExecute,
+	/*  84 */ LS_ACS_ExecuteWithResult,
+	/*  85 */ LS_ACS_LockedExecuteDoor,
+	/*  86 */ LS_NOP,
+	/*  87 */ LS_NOP,
+	/*  88 */ LS_NOP,
+	/*  89 */ LS_NOP,
+	/*  90 */ LS_Polyobj_OR_RotateLeft,
+	/*  91 */ LS_Polyobj_OR_RotateRight,
+	/*  92 */ LS_Polyobj_OR_Move,
+	/*  93 */ LS_Polyobj_OR_MoveTimes8,
+	/*  94 */ LS_Pillar_BuildAndCrush,
+	/*  95 */ LS_FloorAndCeiling_LowerByValue,
+	/*  96 */ LS_FloorAndCeiling_RaiseByValue,
+	/*  97 */ LS_NOP,
+	/*  98 */ LS_NOP,
+	/*  99 */ LS_NOP,
+	/* 100 */ LS_NOP,		// Scroll_Texture_Left
+	/* 101 */ LS_NOP,		// Scroll_Texture_Right
+	/* 102 */ LS_NOP,		// Scroll_Texture_Up
+	/* 103 */ LS_NOP,		// Scroll_Texture_Down
+	/* 104 */ LS_NOP,
+	/* 105 */ LS_NOP,
+	/* 106 */ LS_NOP,
+	/* 107 */ LS_NOP,
+	/* 108 */ LS_NOP,
+	/* 109 */ LS_Light_ForceLightning,
+	/* 110 */ LS_Light_RaiseByValue,
+	/* 111 */ LS_Light_LowerByValue,
+	/* 112 */ LS_Light_ChangeToValue,
+	/* 113 */ LS_Light_Fade,
+	/* 114 */ LS_Light_Glow,
+	/* 115 */ LS_Light_Flicker,
+	/* 116 */ LS_Light_Strobe,
+	/* 117 */ LS_Light_Stop,
+	/* 118 */ LS_NOP,
+	/* 119 */ LS_Thing_Damage,
+	/* 120 */ LS_Radius_Quake,
+	/* 121 */ LS_NOP,		// Line_SetIdentification
+	/* 122 */ LS_NOP,
+	/* 123 */ LS_NOP,
+	/* 124 */ LS_NOP,
+	/* 125 */ LS_Thing_Move,
+	/* 126 */ LS_NOP,
+	/* 127 */ LS_Thing_SetSpecial,
+	/* 128 */ LS_ThrustThingZ,
+	/* 129 */ LS_UsePuzzleItem,
+	/* 130 */ LS_Thing_Activate,
+	/* 131 */ LS_Thing_Deactivate,
+	/* 132 */ LS_Thing_Remove,
+	/* 133 */ LS_Thing_Destroy,
+	/* 134 */ LS_Thing_Projectile,
+	/* 135 */ LS_Thing_Spawn,
+	/* 136 */ LS_Thing_ProjectileGravity,
+	/* 137 */ LS_Thing_SpawnNoFog,
+	/* 138 */ LS_Floor_Waggle,
+	/* 139 */ LS_Thing_SpawnFacing,
+	/* 140 */ LS_Sector_ChangeSound,
+	/* 141 */ LS_NOP,		// 141 Music_Pause			// [BC] Start
+	/* 142 */ LS_NOP,		// 142 Music_Change
+	/* 143 */ LS_NOP,		// 143 Player_RemoveItem
+	/* 144 */ LS_NOP,		// 144 Player_GiveItem
+	/* 145 */ LS_NOP,		// 145 Player_SetTeam
+	/* 146 */ LS_NOP,		// 146 Player_SetLeader
+	/* 147 */ LS_NOP,		// 147 Team_InitFP
+	/* 148 */ LS_NOP,		// 148 TeleportAll
+	/* 149 */ LS_NOP,		// 149 TeleportAll_NoFog
+	/* 150 */ LS_NOP,		// 150 Team_GiveFP
+	/* 151 */ LS_NOP,		// 151 Team_UseFP
+	/* 152 */ LS_NOP,		// 152 Team_Score
+	/* 153 */ LS_NOP,		// 153 Team_Init
+	/* 154 */ LS_Teleport_NoStop,
+	/* 155 */ LS_NOP,		// 155 Team_RemoveItem
+	/* 156 */ LS_NOP,		// 156 Team_GiveItem		// [BC] End
+	/* 157 */ LS_NOP,		// SetGlobalFogParameter // in GZDoom
+	/* 158 */ LS_NOP,		// FS_Execute in GZDoom
+	/* 159 */ LS_NOP,		// Sector_SetPlaneReflection in GZDoom
+	/* 160 */ LS_NOP,		// Sector_Set3DFloor in GZDoom and Vavoom
+	/* 161 */ LS_NOP,		// Sector_SetContents in GZDoom and Vavoom
+	/* 162 */ LS_NOP,
+	/* 163 */ LS_NOP,
+	/* 164 */ LS_NOP,
+	/* 165 */ LS_NOP,
+	/* 166 */ LS_NOP,
+	/* 167 */ LS_NOP,
+	/* 168 */ LS_NOP,
+	/* 169 */ LS_Generic_Crusher2,
+	/* 170 */ LS_Sector_SetCeilingScale2,
+	/* 171 */ LS_Sector_SetFloorScale2,
+	/* 172 */ LS_Plat_UpNearestWaitDownStay,
+	/* 173 */ LS_NoiseAlert,
+	/* 174 */ LS_SendToCommunicator,
+	/* 175 */ LS_Thing_ProjectileIntercept,
+	/* 176 */ LS_Thing_ChangeTID,
+	/* 177 */ LS_Thing_Hate,
+	/* 178 */ LS_Thing_ProjectileAimed,
+	/* 179 */ LS_ChangeSkill,
+	/* 180 */ LS_Thing_SetTranslation,
+	/* 181 */ LS_NOP,		// Plane_Align
+	/* 182 */ LS_NOP,		// Line_Mirror
+	/* 183 */ LS_Line_AlignCeiling,
+	/* 184 */ LS_Line_AlignFloor,
+	/* 185 */ LS_Sector_SetRotation,
+	/* 186 */ LS_Sector_SetCeilingPanning,
+	/* 187 */ LS_Sector_SetFloorPanning,
+	/* 188 */ LS_Sector_SetCeilingScale,
+	/* 189 */ LS_Sector_SetFloorScale,
+	/* 190 */ LS_NOP,		// Static_Init
+	/* 191 */ LS_SetPlayerProperty,
+	/* 192 */ LS_Ceiling_LowerToHighestFloor,
+	/* 193 */ LS_Ceiling_LowerInstant,
+	/* 194 */ LS_Ceiling_RaiseInstant,
+	/* 195 */ LS_Ceiling_CrushRaiseAndStayA,
+	/* 196 */ LS_Ceiling_CrushAndRaiseA,
+	/* 197 */ LS_Ceiling_CrushAndRaiseSilentA,
+	/* 198 */ LS_Ceiling_RaiseByValueTimes8,
+	/* 199 */ LS_Ceiling_LowerByValueTimes8,
+	/* 200 */ LS_Generic_Floor,
+	/* 201 */ LS_Generic_Ceiling,
+	/* 202 */ LS_Generic_Door,
+	/* 203 */ LS_Generic_Lift,
+	/* 204 */ LS_Generic_Stairs,
+	/* 205 */ LS_Generic_Crusher,
+	/* 206 */ LS_Plat_DownWaitUpStayLip,
+	/* 207 */ LS_Plat_PerpetualRaiseLip,
+	/* 208 */ LS_TranslucentLine,
+	/* 209 */ LS_NOP,		// Transfer_Heights
+	/* 210 */ LS_NOP,		// Transfer_FloorLight
+	/* 211 */ LS_NOP,		// Transfer_CeilingLight
+	/* 212 */ LS_Sector_SetColor,
+	/* 213 */ LS_Sector_SetFade,
+	/* 214 */ LS_Sector_SetDamage,
+	/* 215 */ LS_Teleport_Line,
+	/* 216 */ LS_Sector_SetGravity,
+	/* 217 */ LS_Stairs_BuildUpDoom,
+	/* 218 */ LS_Sector_SetWind,
+	/* 219 */ LS_Sector_SetFriction,
+	/* 220 */ LS_Sector_SetCurrent,
+	/* 221 */ LS_Scroll_Texture_Both,
+	/* 222 */ LS_NOP,		// Scroll_Texture_Model
+	/* 223 */ LS_Scroll_Floor,
+	/* 224 */ LS_Scroll_Ceiling,
+	/* 225 */ LS_NOP,		// Scroll_Texture_Offsets
+	/* 226 */ LS_ACS_ExecuteAlways,
+	/* 227 */ LS_PointPush_SetForce,
+	/* 228 */ LS_Plat_RaiseAndStayTx0,
+	/* 229 */ LS_Thing_SetGoal,
+	/* 230 */ LS_Plat_UpByValueStayTx,
+	/* 231 */ LS_Plat_ToggleCeiling,
+	/* 232 */ LS_Light_StrobeDoom,
+	/* 233 */ LS_Light_MinNeighbor,
+	/* 234 */ LS_Light_MaxNeighbor,
+	/* 235 */ LS_Floor_TransferTrigger,
+	/* 236 */ LS_Floor_TransferNumeric,
+	/* 237 */ LS_ChangeCamera,
+	/* 238 */ LS_Floor_RaiseToLowestCeiling,
+	/* 239 */ LS_Floor_RaiseByValueTxTy,
+	/* 240 */ LS_Floor_RaiseByTexture,
+	/* 241 */ LS_Floor_LowerToLowestTxTy,
+	/* 242 */ LS_Floor_LowerToHighest,
+	/* 243 */ LS_Exit_Normal,
+	/* 244 */ LS_Exit_Secret,
+	/* 245 */ LS_Elevator_RaiseToNearest,
+	/* 246 */ LS_Elevator_MoveToFloor,
+	/* 247 */ LS_Elevator_LowerToNearest,
+	/* 248 */ LS_HealThing,
+	/* 249 */ LS_Door_CloseWaitOpen,
+	/* 250 */ LS_Floor_Donut,
+	/* 251 */ LS_FloorAndCeiling_LowerRaise,
+	/* 252 */ LS_Ceiling_RaiseToNearest,
+	/* 253 */ LS_Ceiling_LowerToLowest,
+	/* 254 */ LS_Ceiling_LowerToFloor,
+	/* 255 */ LS_Ceiling_CrushRaiseAndStaySilA
 };
 
 #define DEFINE_SPECIAL(name, num, min, max, mmax) {#name, num, min, max, mmax},

@@ -101,6 +101,7 @@
 #include "cmdlib.h"
 #include "d_event.h"
 #include "v_text.h"
+#include "version.h"
 
 // Prototypes and declarations.
 #include "rawinput.h"
@@ -158,6 +159,11 @@ BOOL AppActive = TRUE;
 int SessionState = 0;
 
 CVAR (Bool, k_allowfullscreentoggle, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+
+CUSTOM_CVAR(Bool, norawinput, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOINITCALL)
+{
+	Printf("This won't take effect until "GAMENAME" is restarted.\n");
+}
 
 extern int chatmodeon;
 
@@ -592,7 +598,7 @@ bool I_InitInput (void *hwnd)
 	g_pdi = NULL;
 	g_pdi3 = NULL;
 
-	FindRawInputFunctions();
+	if (!norawinput) FindRawInputFunctions();
 
 	// Try for DirectInput 8 first, then DirectInput 3 for NT 4's benefit.
 	DInputDLL = LoadLibrary("dinput8.dll");

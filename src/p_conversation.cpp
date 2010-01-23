@@ -57,6 +57,8 @@
 #include "g_level.h"
 #include "d_event.h"
 #include "doomstat.h"
+#include "c_console.h"
+#include "sbar.h"
 
 // The conversations as they exist inside a SCRIPTxx lump.
 struct Response
@@ -121,6 +123,7 @@ static bool DrawConversationMenu ();
 static void PickConversationReply ();
 static void CleanupConversationMenu ();
 static void ConversationMenuEscaped ();
+static void TerminalResponse (const char *str);
 
 static FStrifeDialogueNode *CurNode, *PrevNode;
 static FBrokenLines *DialogueLines;
@@ -1067,7 +1070,7 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 			// No, you don't. Say so and let the NPC animate negatively.
 			if (reply->QuickNo && isconsole)
 			{
-				Printf("%s\n", reply->QuickNo);
+				TerminalResponse(reply->QuickNo);
 			}
 			npc->ConversationAnimation(2);
 			npc->angle = player->ConversationNPCAngle;
@@ -1151,7 +1154,7 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 
 	if (replyText != NULL && isconsole)
 	{
-		Printf("%s\n", replyText);
+		TerminalResponse(replyText);
 	}
 
 	// Does this reply alter the speaker's conversation node? If NextNode is positive,
@@ -1278,6 +1281,38 @@ void P_ConversationCommand (int netcode, int pnum, BYTE **stream)
 			player->ConversationNPC = NULL;
 			player->ConversationPC = NULL;
 			player->ConversationNPCAngle = 0;
+		}
+	}
+}
+
+//============================================================================
+//
+// TerminalResponse
+//
+// Similar to C_MidPrint, but lower and colored and sized to match the
+// rest of the dialogue text.
+//
+//============================================================================
+
+static void TerminalResponse (const char *str)
+{
+	if (str != NULL)
+	{
+		if (StatusBar != NULL)
+		{
+			AddToConsole(-1, str);
+			AddToConsole(-1, "\n");
+			// The message is positioned a bit above the menu choices, because
+			// merchants can tell you something like this but continue to show
+			// their dialogue screen. I think most other conversations use this
+			// only as a response for terminating the dialogue.
+			StatusBar->AttachMessage(new DHUDMessageFadeOut(SmallFont, str,
+				float(CleanWidth/2) + 0.4f, float(ConversationMenu.y - 110 + CleanHeight/2), CleanWidth, -CleanHeight,
+				CR_UNTRANSLATED, 3, 1), MAKE_ID('T','A','L','K'));
+		}
+		else
+		{
+			Printf("%s\n", str);
 		}
 	}
 }

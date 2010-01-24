@@ -198,6 +198,7 @@ ACTOR SpectralLightningV1 : SpectralLightningDeathShort
 	Height 24
 	Damage 100
 	Projectile
+	DamageType "SpectralLow"
 	+SPECTRAL
 	States
 	{

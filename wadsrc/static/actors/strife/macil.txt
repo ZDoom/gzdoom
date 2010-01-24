@@ -1,7 +1,7 @@
 
 // Macil (version 1) ---------------------------------------------------------
 
-ACTOR Macil1 64 native
+ACTOR Macil1 64
 {
 	Game Strife
 	ConversationID 49, 48, 49
@@ -56,7 +56,7 @@ ACTOR Macil1 64 native
 
 // Macil (version 2) ---------------------------------------------------------
 
-ACTOR Macil2 : Macil1 200 native
+ACTOR Macil2 : Macil1 200
 {
 	Game Strife
 	ConversationID 50, 49, 50
@@ -66,6 +66,7 @@ ACTOR Macil2 : Macil1 200 native
 	-NODAMAGE
 	DeathSound "macil/slop"
 	DropItem "None"
+	DamageFactor "SpectralLow", 0
 	States
 	{
 	Missile:

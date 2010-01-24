@@ -13,20 +13,6 @@
 #include "doomstat.h"
 */
 
-class AAlienSpectre1 : public ASpectralMonster
-{
-	DECLARE_CLASS (AAlienSpectre1, ASpectralMonster)
-};
-IMPLEMENT_CLASS(AAlienSpectre1);
-
-class AAlienSpectre3 : public AAlienSpectre1
-{
-	DECLARE_CLASS (AAlienSpectre3, AAlienSpectre1)
-public:
-	int TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, FName damagetype);
-};
-IMPLEMENT_CLASS(AAlienSpectre3);
-
 static FRandom pr_spectrespawn ("AlienSpectreSpawn");
 static FRandom pr_spectrechunk ("212e4");
 
@@ -203,24 +189,4 @@ DEFINE_ACTION_FUNCTION(AActor, A_AlienSpectreDeath)
 	mysnprintf (voc, countof(voc), "svox/voc%d", log);
 	S_Sound (CHAN_VOICE, voc, 1, ATTN_NORM);
 	player->player->SetLogNumber (log);
-}
-
-//============================================================================
-//
-// AAlienSpetre3 :: TakeSpecialDamage
-//
-// The third spectre type (the Oracle's) is invulnerable to the first stage
-// Sigil, just like the Oracle.
-//
-//============================================================================
-
-int AAlienSpectre3::TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, FName damagetype)
-{
-	if (inflictor != NULL)
-	{
-		FName name = inflictor->GetClass()->TypeName;
-		if (name == NAME_SpectralLightningV1 || name == NAME_SpectralLightningV2)
-			return -1;
-	}
-	return Super::TakeSpecialDamage(inflictor, source, damage, damagetype);
 }

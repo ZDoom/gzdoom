@@ -160,7 +160,7 @@ void FWadCollection::DeleteAll ()
 //
 //==========================================================================
 
-void FWadCollection::InitMultipleFiles (wadlist_t **filenames)
+void FWadCollection::InitMultipleFiles (TArray<FString> &filenames)
 {
 	int numfiles;
 
@@ -168,13 +168,10 @@ void FWadCollection::InitMultipleFiles (wadlist_t **filenames)
 	DeleteAll();
 	numfiles = 0;
 
-	while (*filenames)
+	for(unsigned i=0;i<filenames.Size(); i++)
 	{
-		wadlist_t *next = (*filenames)->next;
 		int baselump = NumLumps;
-		AddFile ((*filenames)->name);
-		M_Free (*filenames);
-		*filenames = next;
+		AddFile (filenames[i]);
 	}
 
 	NumLumps = LumpInfo.Size();
@@ -222,7 +219,7 @@ int FWadCollection::AddExternalFile(const char *filename)
 // [RH] Removed reload hack
 //==========================================================================
 
-void FWadCollection::AddFile (char *filename, FileReader *wadinfo)
+void FWadCollection::AddFile (const char *filename, FileReader *wadinfo)
 {
 	int startlump;
 	bool isdir = false;
@@ -252,7 +249,6 @@ void FWadCollection::AddFile (char *filename, FileReader *wadinfo)
 				return;
 			}
 		}
-		FixPathSeperator(filename);
 	}
 
 	Printf (" adding %s", filename);

@@ -446,8 +446,7 @@ static int CheckIWAD (const char *doomwaddir, WadStuff *wads)
 			FString iwad;
 			
 			iwad.Format ("%s%s%s", doomwaddir, slash, IWADNames[i]);
-			FixPathSeperator (iwad.LockBuffer());
-			iwad.UnlockBuffer();
+			FixPathSeperator (iwad);
 			if (FileExists (iwad))
 			{
 				wads[i].Type = ScanIWAD (iwad);
@@ -484,7 +483,7 @@ static int CheckIWAD (const char *doomwaddir, WadStuff *wads)
 //
 //==========================================================================
 
-static EIWADType IdentifyVersion (const char *zdoom_wad)
+static EIWADType IdentifyVersion (TArray<FString> &wadfiles, const char *iwad, const char *zdoom_wad)
 {
 	WadStuff wads[countof(IWADNames)];
 	size_t foundwads[NUM_IWAD_TYPES] = { 0 };
@@ -495,10 +494,15 @@ static EIWADType IdentifyVersion (const char *zdoom_wad)
 	bool iwadparmfound = false;
 	FString custwad;
 
+	if (iwadparm == NULL && iwad != NULL && *iwad != 0)
+	{
+		iwadparm = iwad;
+	}
+
 	if (iwadparm)
 	{
 		custwad = iwadparm;
-		FixPathSeperator (custwad.LockBuffer());
+		FixPathSeperator (custwad);
 		if (CheckIWAD (custwad, wads))
 		{ // -iwad parameter was a directory
 			iwadparm = NULL;
@@ -524,8 +528,7 @@ static EIWADType IdentifyVersion (const char *zdoom_wad)
 				if (stricmp (key, "Path") == 0)
 				{
 					FString nice = NicePath(value);
-					FixPathSeperator(nice.LockBuffer());
-					nice.UnlockBuffer();
+					FixPathSeperator(nice);
 					CheckIWAD(nice, wads);
 				}
 			}
@@ -630,14 +633,14 @@ static EIWADType IdentifyVersion (const char *zdoom_wad)
 		exit (0);
 
 	// zdoom.pk3 must always be the first file loaded and the IWAD second.
-	D_AddFile (zdoom_wad);
+	D_AddFile (wadfiles, zdoom_wad);
 
 	if (wads[pickwad].Type == IWAD_HexenDK)
 	{ // load hexen.wad before loading hexdd.wad
-		D_AddFile (wads[foundwads[IWAD_Hexen]-1].Path);
+		D_AddFile (wadfiles, wads[foundwads[IWAD_Hexen]-1].Path);
 	}
 
-	D_AddFile (wads[pickwad].Path);
+	D_AddFile (wadfiles, wads[pickwad].Path);
 
 	if (wads[pickwad].Type == IWAD_Strife)
 	{ // Try to load voices.wad along with strife1.wad
@@ -653,16 +656,16 @@ static EIWADType IdentifyVersion (const char *zdoom_wad)
 			path = FString (wads[pickwad].Path.GetChars(), lastslash + 1);
 		}
 		path += "voices.wad";
-		D_AddFile (path);
+		D_AddFile (wadfiles, path);
 	}
 
 	return wads[pickwad].Type;
 }
 
 
-const IWADInfo *D_FindIWAD(const char *basewad)
+const IWADInfo *D_FindIWAD(TArray<FString> &wadfiles, const char *iwad, const char *basewad)
 {
-	EIWADType iwadType = IdentifyVersion(basewad);
+	EIWADType iwadType = IdentifyVersion(wadfiles, iwad, basewad);
 	gameiwad = iwadType;
 	const IWADInfo *iwad_info = &IWADInfos[iwadType];
 	I_SetIWADInfo(iwad_info);

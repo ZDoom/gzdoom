@@ -1,30 +1,17 @@
-﻿January 3, 2010  (Changes by Graf Zahl)
-- fixed: The player setup menu used the main menu's line spacing which
-  for all non-Doom games was too wide.
-- fixed: Strife's dialogues cannot use the new options menu code to draw
-  themselves so now they use a stripped down version of the old code.
-- Replaced I_MSTime with I_FPSTime in node builder timing because basetime
-  will not be initialized yet if a map is started directly from the commandline.
-
-January 2, 2010  (Changes by Graf Zahl)
-- fixed: Polyobjects could contain segs that weren't flagged as such.
-- fixed: The ACS thinker needs its own statnum above all actors. Otherwise
-  order of execution is not guaranteed.
-- fixed: Only ActorMovers should go into STAT_ACTORMOVER, not all PathFollowers.
-- fixed: The floor waggle code used FloatBobOffsets as sine table but this
-  only has 64 entries and is not precise enough. It now uses finesine instead.
-- fixed: When compositing a multipatch texture any patch that is a multpatch
-  texture itself and contains rotations may not be composited directly into
-  the destination buffer. This must be done with an intermediate buffer.
-- Fixed: Drawing a slider in the options menu did not scale the x-coordinate.
-- Fixed: If the alt HUD had to draw negative numbers the minus sign was misplaced
-  due to incorrect texture coordinate calculations.
-- changed option menu scaling for widescreen modes so that it doesn't scale down
-  so quickly. 
-- made some error messages in DECORATE that don't affect the parsing non-fatal
-  so that the parser can continue to find more problems.
-  
 January 1, 2010  (Changes by Graf Zahl)
+- added initial support for a GAMEINFO lump in PWADs. When the game is started
+  all files loaded with '-file' are scanned for this lump. This lump is read
+  before any WAD initialization takes place, in particular the IWAD is not yet
+  loaded at this time. This allows PWADs the option to specify an IWAD they 
+  want to run with and optionally autoload external resource WADs.
+- Fixed a few places where FixPathSeperator was called with a locked FString buffer.
+  It's better to use the FString version of this function instead.
+- replaced wadlist_t with an array of FStrings and added a list parameter to
+  everything that eventually calls D_AddFile. Also create the list of files
+  loaded on the command line separately to allow further checks on them.
+- fixed: The node builder did not check if all segs could be split properly.
+  Also removed some fudging that tried to work around this case but produced
+  a broken BSP tree on other maps.
 - Added Blzut3's Solaris patch.
 - Fixed: Heretic's Weredragon (Beast) should not have a melee state.
 

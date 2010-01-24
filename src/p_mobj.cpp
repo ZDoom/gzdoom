@@ -4446,6 +4446,11 @@ AActor *P_SpawnPuff (AActor *source, const PClass *pufftype, fixed_t x, fixed_t 
 
 	puff = Spawn (pufftype, x, y, z, ALLOW_REPLACE);
 	if (puff == NULL) return NULL;
+
+	// [BB] If the puff came from a player, set the target of the puff to this player.
+	if ( puff && (puff->flags5 & MF5_PUFFGETSOWNER))
+		puff->target = source;
+
 	if (source != NULL) puff->angle = R_PointToAngle2(x, y, source->x, source->y);
 
 	// If a puff has a crash state and an actor was not hit,
@@ -4480,10 +4485,6 @@ AActor *P_SpawnPuff (AActor *source, const PClass *pufftype, fixed_t x, fixed_t 
 			S_Sound (puff, CHAN_BODY, puff->AttackSound, 1, ATTN_NORM);
 		}
 	}
-
-	// [BB] If the puff came from a player, set the target of the puff to this player.
-	if ( puff && (puff->flags5 & MF5_PUFFGETSOWNER))
-		puff->target = source;
 
 	return puff;
 }

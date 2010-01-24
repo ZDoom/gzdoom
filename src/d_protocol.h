@@ -147,14 +147,17 @@ enum EDemoCommand
 	DEM_ADDCONTROLLER,	// 48 Player to add to the controller list.
 	DEM_DELCONTROLLER,	// 49 Player to remove from the controller list.
 	DEM_KILLCLASSCHEAT,	// 50 String: Class to kill.
-	DEM_CONVERSATION,	// 51 Make conversations work.
+	DEM_UNDONE11,		// 51
 	DEM_SUMMON2,		// 52 String: Thing to fabricate, WORD: angle offset
 	DEM_SUMMONFRIEND2,	// 53
 	DEM_SUMMONFOE2,		// 54
 	DEM_ADDSLOTDEFAULT,	// 55
 	DEM_ADDSLOT,		// 56
 	DEM_SETSLOT,		// 57
-	DEM_SUMMONMBF,
+	DEM_SUMMONMBF,		// 58
+	DEM_CONVREPLY,		// 59 Word: Dialogue node, Byte: Reply number
+	DEM_CONVCLOSE,		// 60
+	DEM_CONVNULL,		// 61
 };
 
 // The following are implemented by cht_DoCheat in m_cheat.cpp

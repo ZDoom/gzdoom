@@ -57,6 +57,8 @@
 #include "g_level.h"
 #include "d_event.h"
 #include "doomstat.h"
+#include "c_console.h"
+#include "sbar.h"
 
 // The conversations as they exist inside a SCRIPTxx lump.
 struct Response
@@ -121,11 +123,10 @@ static bool DrawConversationMenu ();
 static void PickConversationReply ();
 static void CleanupConversationMenu ();
 static void ConversationMenuEscaped ();
+static void TerminalResponse (const char *str);
 
 static FStrifeDialogueNode *CurNode, *PrevNode;
 static FBrokenLines *DialogueLines;
-
-static bool Conversation_TakeStuff;
 
 #define NUM_RANDOM_LINES 10
 #define NUM_RANDOM_GOODBYES 3
@@ -282,7 +283,7 @@ static void LoadScriptFile(FileReader *lump, int numnodes)
 		{
 			node = ReadTeaserNode (lump, prevSpeakerType);
 		}
-		StrifeDialogues.Push (node);
+		node->ThisNodeNum = StrifeDialogues.Push(node);
 	}
 }
 
@@ -623,18 +624,23 @@ static void TakeStrifeItem (player_t *player, const PClass *itemtype, int amount
 	if (itemtype->IsDescendantOf (PClass::FindClass(NAME_QuestItem)))
 		return;
 
-	// Don't take keys
+	// Don't take keys.
 	if (itemtype->IsDescendantOf (RUNTIME_CLASS(AKey)))
 		return;
 
-	// Don't take the sigil
+	// Don't take the sigil.
 	if (itemtype == RUNTIME_CLASS(ASigil))
 		return;
 
-	Net_WriteByte (DEM_CONVERSATION);
-	Net_WriteByte (CONV_TAKEINVENTORY);
-	Net_WriteString (itemtype->TypeName.GetChars ());
-	Net_WriteWord (amount);
+	AInventory *item = player->mo->FindInventory (itemtype);
+	if (item != NULL)
+	{
+		item->Amount -= amount;
+		if (item->Amount <= 0)
+		{
+			item->Destroy ();
+		}
+	}
 }
 
 CUSTOM_CVAR(Float, dlg_musicvolume, 1.0f, CVAR_ARCHIVE)
@@ -732,7 +738,7 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 		}
 
 		// Set up the menu
-		::CurNode = CurNode;	// only set the global variaböle for the consoleplayer
+		::CurNode = CurNode;	// only set the global variable for the consoleplayer
 		ConversationMenu.PreDraw = DrawConversationMenu;
 		ConversationMenu.EscapeHandler = ConversationMenuEscaped;
 
@@ -743,10 +749,13 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 			FString dlgtext;
 
 			dlgtext.Format("TXT_%s_%02d", toSay, 1+(pr_randomspeech() % NUM_RANDOM_LINES));
-			toSay = GStrings[dlgtext.GetChars()];
-			if (toSay==NULL) toSay = "Go away!";	// Ok, it's lame - but it doesn't look like an error to the player. ;)
+			toSay = GStrings[dlgtext];
+			if (toSay == NULL)
+			{
+				toSay = "Go away!";	// Ok, it's lame - but it doesn't look like an error to the player. ;)
+			}
 		}
-		DialogueLines = V_BreakLines (SmallFont, screen->GetWidth()/CleanXfac-24*2, toSay);
+		DialogueLines = V_BreakLines (SmallFont, screen->GetWidth()/CleanXfac - 24*2, toSay);
 
 		// Fill out the possible choices
 		ShowGold = false;
@@ -980,93 +989,155 @@ static bool DrawConversationMenu ()
 //
 // PickConversationReply
 //
+// Run only on the local machine with the conversation menu up.
+//
 //============================================================================
 
 static void PickConversationReply ()
 {
-	const char *replyText = NULL;
 	FStrifeDialogueReply *reply = (FStrifeDialogueReply *)ConversationItems[ConversationMenu.lastOn].c.extra;
-	int i;
-	player_t *cp = &players[consoleplayer];
+	FStrifeDialogueReply *replyscan;
+	int replynum = 0;
 
-	Conversation_TakeStuff = false;
+	assert(CurNode->ThisNodeNum >= 0 && CurNode->ThisNodeNum < 65536);
+	assert(StrifeDialogues[CurNode->ThisNodeNum] == CurNode);
 
-	M_ClearMenus ();
-	CleanupConversationMenu ();
+	// Determine reply number for netcode.
 	if (reply == NULL)
 	{
-		Net_WriteByte (DEM_CONVERSATION);
-		Net_WriteByte (CONV_NPCANGLE);
-		Net_WriteByte (DEM_CONVERSATION);
-		Net_WriteByte (CONV_CLOSE);
+		replyscan = NULL;
+	}
+	else
+	{
+		for (replyscan = CurNode->Children; replyscan != NULL && replyscan != reply; ++replynum, replyscan = replyscan->Next)
+		{ }
+	}
+
+	M_ClearMenus ();
+	if (replyscan == NULL)
+	{
+		Net_WriteByte(DEM_CONVCLOSE);
+	}
+	else
+	{
+		// Send dialogue and reply numbers across the wire.
+		assert(replynum < 256);
+		Net_WriteByte(DEM_CONVREPLY);
+		Net_WriteWord(CurNode->ThisNodeNum);
+		Net_WriteByte(replynum);
+	}
+	CleanupConversationMenu ();
+}
+
+//============================================================================
+//
+// HandleReply
+//
+// Run by the netcode on all machines.
+//
+//============================================================================
+
+static void HandleReply(player_t *player, bool isconsole, int nodenum, int replynum)
+{
+	const char *replyText = NULL;
+	FStrifeDialogueReply *reply;
+	FStrifeDialogueNode *node;
+	AActor *npc;
+	bool takestuff;
+	int i;
+
+	if (player->ConversationNPC == NULL || (unsigned)nodenum >= StrifeDialogues.Size())
+	{
 		return;
 	}
+
+	// Find the reply.
+	node = StrifeDialogues[nodenum];
+	for (i = 0, reply = node->Children; reply != NULL && i != replynum; ++i, reply = reply->Next)
+	{ }
+	if (reply == NULL)
+	{
+		return;
+	}
+
+	npc = player->ConversationNPC;
 
 	// Check if you have the requisite items for this choice
 	for (i = 0; i < 3; ++i)
 	{
-		if (!CheckStrifeItem (cp, reply->ItemCheck[i], reply->ItemCheckAmount[i]))
+		if (!CheckStrifeItem(player, reply->ItemCheck[i], reply->ItemCheckAmount[i]))
 		{
 			// No, you don't. Say so and let the NPC animate negatively.
-			if (reply->QuickNo)
+			if (reply->QuickNo && isconsole)
 			{
-				Printf ("%s\n", reply->QuickNo);
+				TerminalResponse(reply->QuickNo);
 			}
-			Net_WriteByte (DEM_CONVERSATION);
-			Net_WriteByte (CONV_ANIMATE);
-			Net_WriteByte (2);
-
-			Net_WriteByte (DEM_CONVERSATION);
-			Net_WriteByte (CONV_NPCANGLE);
-			Net_WriteByte (DEM_CONVERSATION);
-			Net_WriteByte (CONV_CLOSE);
+			npc->ConversationAnimation(2);
+			npc->angle = player->ConversationNPCAngle;
+			npc->flags5 &= ~MF5_INCONVERSATION;
 			return;
 		}
 	}
 
 	// Yay, you do! Let the NPC animate affirmatively.
-	Net_WriteByte (DEM_CONVERSATION);
-	Net_WriteByte (CONV_ANIMATE);
-	Net_WriteByte (1);
+	npc->ConversationAnimation(1);
 
 	// If this reply gives you something, then try to receive it.
-	Conversation_TakeStuff = true;
+	takestuff = true;
 	if (reply->GiveType != NULL)
 	{
 		if (reply->GiveType->IsDescendantOf(RUNTIME_CLASS(AInventory)))
 		{
 			if (reply->GiveType->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
 			{
-				if (cp->mo->FindInventory(reply->GiveType) != NULL)
+				if (player->mo->FindInventory(reply->GiveType) != NULL)
 				{
-					Conversation_TakeStuff = false;
+					takestuff = false;
 				}
 			}
 	
-			if (Conversation_TakeStuff)
+			if (takestuff)
 			{
-				Net_WriteByte (DEM_CONVERSATION);
-				Net_WriteByte (CONV_GIVEINVENTORY);
-				Net_WriteString (reply->GiveType->TypeName.GetChars ());
+				AInventory *item = static_cast<AInventory *>(Spawn(reply->GiveType, 0, 0, 0, NO_REPLACE));
+				// Items given here should not count as items!
+				if (item->flags & MF_COUNTITEM)
+				{
+					level.total_items--;
+					item->flags &= ~MF_COUNTITEM;
+				}
+				if (item->GetClass()->TypeName == NAME_FlameThrower)
+				{
+					// The flame thrower gives less ammo when given in a dialog
+					static_cast<AWeapon*>(item)->AmmoGive1 = 40;
+				}
+				item->flags |= MF_DROPPED;
+				if (!item->CallTryPickup(player->mo))
+				{
+					item->Destroy();
+					takestuff = false;
+				}
 			}
 		
-			if (reply->GiveType->IsDescendantOf (RUNTIME_CLASS (ASlideshowStarter)))
+			if (reply->GiveType->IsDescendantOf(RUNTIME_CLASS(ASlideshowStarter)))
 				gameaction = ga_slideshow;
 		}
 		else
 		{
 			// Trying to give a non-inventory item.
-			Conversation_TakeStuff = false;
-			Printf("Attempting to give non-inventory item %s\n", reply->GiveType->TypeName.GetChars());
+			takestuff = false;
+			if (isconsole)
+			{
+				Printf("Attempting to give non-inventory item %s\n", reply->GiveType->TypeName.GetChars());
+			}
 		}
 	}
 
 	// Take away required items if the give was successful or none was needed.
-	if (Conversation_TakeStuff)
+	if (takestuff)
 	{
 		for (i = 0; i < 3; ++i)
 		{
-			TakeStrifeItem (&players[consoleplayer], reply->ItemCheck[i], reply->ItemCheckAmount[i]);
+			TakeStrifeItem (player, reply->ItemCheck[i], reply->ItemCheckAmount[i]);
 		}
 		replyText = reply->QuickYes;
 	}
@@ -1078,12 +1149,12 @@ static void PickConversationReply ()
 	// Update the quest log, if needed.
 	if (reply->LogNumber != 0) 
 	{
-		cp->SetLogNumber (reply->LogNumber);
+		player->SetLogNumber(reply->LogNumber);
 	}
 
-	if (replyText != NULL)
+	if (replyText != NULL && isconsole)
 	{
-		Printf ("%s\n", replyText);
+		TerminalResponse(replyText);
 	}
 
 	// Does this reply alter the speaker's conversation node? If NextNode is positive,
@@ -1091,39 +1162,44 @@ static void PickConversationReply ()
 	// will show the new node right away without terminating the dialogue.
 	if (reply->NextNode != 0)
 	{
-		int rootnode = FindNode (cp->ConversationNPC->GetDefault()->Conversation);
+		int rootnode = FindNode (npc->GetDefault()->Conversation);
 		if (reply->NextNode < 0)
 		{
-			cp->ConversationNPC->Conversation = StrifeDialogues[rootnode - reply->NextNode - 1];
+			npc->Conversation = StrifeDialogues[rootnode - reply->NextNode - 1];
 			if (gameaction != ga_slideshow)
 			{
-				P_StartConversation (cp->ConversationNPC, cp->mo, cp->ConversationFaceTalker, false);
+				P_StartConversation (npc, player->mo, player->ConversationFaceTalker, false);
 				return;
 			}
 			else
 			{
-				S_StopSound (cp->ConversationNPC, CHAN_VOICE);
+				S_StopSound (npc, CHAN_VOICE);
 			}
 		}
 		else
 		{
-			cp->ConversationNPC->Conversation = StrifeDialogues[rootnode + reply->NextNode - 1];
+			npc->Conversation = StrifeDialogues[rootnode + reply->NextNode - 1];
 		}
 	}
 
-	Net_WriteByte (DEM_CONVERSATION);
-	Net_WriteByte (CONV_NPCANGLE);
+	npc->angle = player->ConversationNPCAngle;
 
 	// [CW] Set these to NULL because we're not using to them
 	// anymore. However, this can interfere with slideshows
 	// so we don't set them to NULL in that case.
 	if (gameaction != ga_slideshow)
 	{
-		Net_WriteByte (DEM_CONVERSATION);
-		Net_WriteByte (CONV_SETNULL);
+		npc->flags5 &= ~MF5_INCONVERSATION;
+		player->ConversationFaceTalker = false;
+		player->ConversationNPC = NULL;
+		player->ConversationPC = NULL;
+		player->ConversationNPCAngle = 0;
 	}
 
-	I_SetMusicVolume (1.f);
+	if (isconsole)
+	{
+		I_SetMusicVolume (1.f);
+	}
 }
 
 //============================================================================
@@ -1170,12 +1246,7 @@ void CleanupConversationMenu ()
 void ConversationMenuEscaped ()
 {
 	CleanupConversationMenu ();
-
-	Net_WriteByte (DEM_CONVERSATION);
-	Net_WriteByte (CONV_NPCANGLE);
-
-	Net_WriteByte (DEM_CONVERSATION);
-	Net_WriteByte (CONV_SETNULL);
+	Net_WriteByte (DEM_CONVNULL);
 }
 
 //============================================================================
@@ -1186,77 +1257,62 @@ void ConversationMenuEscaped ()
 //
 //============================================================================
 
-void P_ConversationCommand (int player, BYTE **stream)
+void P_ConversationCommand (int netcode, int pnum, BYTE **stream)
 {
-	int type = ReadByte (stream);
+	player_t *player = &players[pnum];
 
-	switch (type)
+	if (netcode == DEM_CONVREPLY)
 	{
-	case CONV_NPCANGLE:
-		players[player].ConversationNPC->angle = players[player].ConversationNPCAngle;
-		break;
-
-	case CONV_ANIMATE:
-		players[player].ConversationNPC->ConversationAnimation (ReadByte (stream));
-		break;
-
-	case CONV_GIVEINVENTORY:
+		int nodenum = ReadWord(stream);
+		int replynum = ReadByte(stream);
+		HandleReply(player, pnum == consoleplayer, nodenum, replynum);
+	}
+	else
+	{
+		assert(netcode == DEM_CONVNULL || netcode == DEM_CONVCLOSE);
+		if (player->ConversationNPC != NULL)
 		{
-			AInventory *item = static_cast<AInventory *> (Spawn (ReadString (stream), 0, 0, 0, NO_REPLACE));
-			// Items given here should not count as items!
-			if (item->flags & MF_COUNTITEM)
-			{
-				level.total_items--;
-				item->flags &= ~MF_COUNTITEM;
-			}
-			if (item->GetClass()->TypeName == NAME_FlameThrower)
-			{
-				// The flame thrower gives less ammo when given in a dialog
-				static_cast<AWeapon*>(item)->AmmoGive1 = 40;
-			}
-			item->flags |= MF_DROPPED;
-			if (!item->CallTryPickup (players[player].mo))
-			{
-				item->Destroy ();
-				Conversation_TakeStuff = false;
-			}
+			player->ConversationNPC->angle = player->ConversationNPCAngle;
+			player->ConversationNPC->flags5 &= ~MF5_INCONVERSATION;
 		}
-		break;
-
-	case CONV_TAKEINVENTORY:
+		if (netcode == DEM_CONVNULL)
 		{
-			AInventory *item = players[player].ConversationPC->FindInventory (PClass::FindClass (ReadString (stream)));
-
-			if (item != NULL)
-			{
-				item->Amount -= ReadWord (stream);
-				if (item->Amount <= 0)
-				{
-					item->Destroy ();
-				}
-			}
+			player->ConversationFaceTalker = false;
+			player->ConversationNPC = NULL;
+			player->ConversationPC = NULL;
+			player->ConversationNPCAngle = 0;
 		}
-		break;
+	}
+}
 
-	case CONV_SETNULL:
-		if (players[player].ConversationNPC != NULL)
+//============================================================================
+//
+// TerminalResponse
+//
+// Similar to C_MidPrint, but lower and colored and sized to match the
+// rest of the dialogue text.
+//
+//============================================================================
+
+static void TerminalResponse (const char *str)
+{
+	if (str != NULL)
+	{
+		if (StatusBar != NULL)
 		{
-			players[player].ConversationNPC->flags5 &= ~MF5_INCONVERSATION;
+			AddToConsole(-1, str);
+			AddToConsole(-1, "\n");
+			// The message is positioned a bit above the menu choices, because
+			// merchants can tell you something like this but continue to show
+			// their dialogue screen. I think most other conversations use this
+			// only as a response for terminating the dialogue.
+			StatusBar->AttachMessage(new DHUDMessageFadeOut(SmallFont, str,
+				float(CleanWidth/2) + 0.4f, float(ConversationMenu.y - 110 + CleanHeight/2), CleanWidth, -CleanHeight,
+				CR_UNTRANSLATED, 3, 1), MAKE_ID('T','A','L','K'));
 		}
-		players[player].ConversationFaceTalker = false;
-		players[player].ConversationNPC = NULL;
-		players[player].ConversationPC = NULL;
-		players[player].ConversationNPCAngle = 0;
-		break;
-		
-	case CONV_CLOSE:
-		if (players[player].ConversationNPC != NULL)
+		else
 		{
-			players[player].ConversationNPC->flags5 &= ~MF5_INCONVERSATION;
+			Printf("%s\n", str);
 		}
-		break;
-
-	default:
-		break;
 	}
 }

@@ -283,11 +283,11 @@ static EIWADType ScanIWAD (const char *iwad)
 		}
 		else if (lumpsfound[Check_invcurs])
 		{
-			return IWAD_StrifeTeaser2;
+			return IWAD_StrifeTeaser2;	// Strife0.wad from 14 Mar 1996
 		}
 		else
 		{
-			return IWAD_StrifeTeaser;
+			return IWAD_StrifeTeaser;	// Strife0.wad from 22 Feb 1996
 		}
 	}
 	else if (lumpsfound[Check_map01])

@@ -598,7 +598,7 @@ bool I_InitInput (void *hwnd)
 	g_pdi = NULL;
 	g_pdi3 = NULL;
 
-	if (!norawinput) FindRawInputFunctions();
+	FindRawInputFunctions();
 
 	// Try for DirectInput 8 first, then DirectInput 3 for NT 4's benefit.
 	DInputDLL = LoadLibrary("dinput8.dll");
@@ -938,13 +938,16 @@ bool FInputDevice::WndProcHook(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
 
 static void FindRawInputFunctions()
 {
-	HMODULE user32 = GetModuleHandle("user32.dll");
-
-	if (user32 == NULL)
+	if (!norawinput)
 	{
-		return;		// WTF kind of broken system are we running on?
-	}
+		HMODULE user32 = GetModuleHandle("user32.dll");
+
+		if (user32 == NULL)
+		{
+			return;		// WTF kind of broken system are we running on?
+		}
 #define RIF(name,ret,args) \
-	My##name = (name##Proto)GetProcAddress(user32, #name);
+		My##name = (name##Proto)GetProcAddress(user32, #name);
 #include "rawinput.h"
+	}
 }

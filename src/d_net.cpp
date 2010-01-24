@@ -2367,8 +2367,10 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 		}
 		break;
 
-	case DEM_CONVERSATION:
-		P_ConversationCommand (player, stream);
+	case DEM_CONVREPLY:
+	case DEM_CONVCLOSE:
+	case DEM_CONVNULL:
+		P_ConversationCommand (type, player, stream);
 		break;
 
 	case DEM_SETSLOT:
@@ -2500,29 +2502,8 @@ void Net_SkipCommand (int type, BYTE **stream)
 			skip = 3 + *(*stream + 2) * 4;
 			break;
 
-		case DEM_CONVERSATION:
-			{
-				t = **stream;
-				skip = 1;
-
-				switch (t)
-				{
-				case CONV_ANIMATE:
-					skip += 1;
-					break;
-
-				case CONV_GIVEINVENTORY:
-					skip += strlen ((char *)(*stream + skip)) + 1;
-					break;
-
-				case CONV_TAKEINVENTORY:
-					skip += strlen ((char *)(*stream + skip)) + 3;
-					break;
-
-				default:
-					break;
-				}
-			}
+		case DEM_CONVREPLY:
+			skip = 3;
 			break;
 
 		case DEM_SETSLOT:

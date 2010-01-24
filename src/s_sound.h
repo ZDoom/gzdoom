@@ -169,7 +169,6 @@ struct FSoundChan : public FISoundChannel
 {
 	FSoundChan	*NextChan;	// Next channel in this list.
 	FSoundChan **PrevChan;	// Previous channel in this list.
-	sfxinfo_t	*SfxInfo;	// Sound information.
 	FSoundID	SoundID;	// Sound ID of playing sound.
 	FSoundID	OrgID;		// Sound ID of sound used to start this channel.
 	float		Volume;

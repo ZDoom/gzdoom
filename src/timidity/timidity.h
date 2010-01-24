@@ -161,7 +161,7 @@ extern __inline__ double pow_x87_inline(double x,double y)
 		"fmulp\n\t"
 		: "=t" (result)
 		: "0" (x), "u" (y)
-		: "st(1)", "st(7)", "%3", "%4" );
+		: "st(1)", "st(7)" );
 	return result;
 }
 #define pow pow_x87_inline

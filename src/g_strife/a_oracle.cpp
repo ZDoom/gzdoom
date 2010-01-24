@@ -42,7 +42,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_WakeOracleSpectre)
 
 int AOracle::TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, FName damagetype)
 {
-	if (inflictor != NULL && inflictor->GetClass()->TypeName == NAME_SpectralLightningV1)
-		return -1;
+	if (inflictor != NULL)
+	{
+		FName name = inflictor->GetClass()->TypeName;
+		if (name == NAME_SpectralLightningV1 || name == NAME_SpectralLightningV2)
+			return -1;
+	}
 	return Super::TakeSpecialDamage(inflictor, source, damage, damagetype);
 }

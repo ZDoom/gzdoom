@@ -56,7 +56,7 @@ ACTOR Macil1 64 native
 
 // Macil (version 2) ---------------------------------------------------------
 
-ACTOR Macil2 : Macil1 200
+ACTOR Macil2 : Macil1 200 native
 {
 	Game Strife
 	ConversationID 50, 49, 50

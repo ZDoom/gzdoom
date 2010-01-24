@@ -110,15 +110,7 @@ DEFINE_SPECIAL(Light_Stop, 117, 1, 1, 1)
 DEFINE_SPECIAL(Thing_Damage, 119, 2, 3, 3)
 DEFINE_SPECIAL(Radius_Quake, 120, 5, 5, 5)  // Earthquake
 DEFINE_SPECIAL(Line_SetIdentification, 121, -1, -1, 5)
-#if 0 // Skull Tag specials that might be added later
-Thing_SetGravity, 122, -1, -1)
-Thing_ReverseGravity, 123, -1, -1)
-Thing_RevertGravity, 124, -1, -1)
-#endif
 DEFINE_SPECIAL(Thing_Move, 125, 2, 3, 3)
-#if 0 // Skull Tag special I doubt I will add
-Thing_SetSprite, 126, -1, -1)
-#endif
 DEFINE_SPECIAL(Thing_SetSpecial, 127, 5, 5, 5)
 DEFINE_SPECIAL(ThrustThingZ, 128, 4, 4, 4)
 DEFINE_SPECIAL(UsePuzzleItem, 129, 2, 5, 5)

@@ -158,15 +158,20 @@ static void DrawImageToBox(FTexture * tex, int x, int y, int w, int h, int trans
 
 static void DrawHudText(FFont *font, int color, char * text, int x, int y, int trans=0xc000)
 {
-	int zerowidth = font->GetCharWidth('0');
+	int zerowidth;
+	FTexture *tex_zero = font->GetChar('0', &zerowidth);
 
 	x+=zerowidth/2;
 	for(int i=0;text[i];i++)
 	{
+		int width;
+		FTexture *texc = font->GetChar(text[i], &width);
+		int offset = texc->TopOffset - tex_zero->TopOffset + tex_zero->GetHeight();
 		screen->DrawChar(font, color, x, y, text[i],
 			DTA_KeepRatio, true,
 			DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, trans, 
-			DTA_CenterBottomOffset, 1, TAG_DONE);
+			DTA_LeftOffset, width/2, DTA_TopOffset, offset,
+			/*DTA_CenterBottomOffset, 1,*/ TAG_DONE);
 		x+=zerowidth;
 	}
 }

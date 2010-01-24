@@ -104,7 +104,7 @@ void AScriptedMarine::Tick ()
 	Super::Tick ();
 
 	// Override the standard sprite, if desired
-	if (SpriteOverride != 0 && sprite == GetClass()->ActorInfo->OwnedStates[0].sprite)
+	if (SpriteOverride != 0 && sprite == SpawnState->sprite)
 	{
 		sprite = SpriteOverride;
 	}

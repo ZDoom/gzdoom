@@ -1027,9 +1027,13 @@ int append_to_zip(FILE *zip_file, file_sorted_t *filep, FILE *ozip, BYTE *odir)
 		}
 		fprintf(stderr, "Unable to write %s to zip\n", file->path);
 		free(readbuf);
-		if (compbuf != NULL)
+		if (compbuf[0] != NULL)
 		{
-			free(compbuf);
+			free(compbuf[0]);
+		}
+		if (compbuf[1] != NULL)
+		{
+			free(compbuf[1]);
 		}
 		return 1;
 	}

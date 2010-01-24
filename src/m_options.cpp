@@ -107,8 +107,6 @@ CVAR (Bool, show_obituaries, true, CVAR_ARCHIVE)
 EXTERN_CVAR (Bool, longsavemessages)
 EXTERN_CVAR (Bool, screenshot_quiet)
 
-extern int	skullAnimCounter;
-
 EXTERN_CVAR (Bool, cl_run)
 EXTERN_CVAR (Int, crosshair)
 EXTERN_CVAR (Bool, freelook)
@@ -1565,7 +1563,7 @@ static void M_DrawSlider (int x, int y, double min, double max, double cur,int f
 	cur = clamp(cur, min, max) - min;
 
 	M_DrawConText(CR_WHITE, x, y, "\x10\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x12");
-	M_DrawConText(CR_ORANGE, x + 5 + (int)((cur * 78) / range), y, "\x13");
+	M_DrawConText(CR_ORANGE, x + int((5 + ((cur * 78) / range)) * CleanXfac_1), y, "\x13");
 
 	if (fracdigits >= 0)
 	{
@@ -1651,7 +1649,7 @@ void M_OptDrawer ()
 
 	if (CurrentMenu->PreDraw !=  NULL)
 	{
-		CurrentMenu->PreDraw ();
+		if (CurrentMenu->PreDraw ()) return;
 	}
 
 	if (CurrentMenu->y != 0)
@@ -2143,11 +2141,10 @@ void M_OptResponder(event_t *ev)
 		CurrentMenu->items[0].label = OldMessage;
 		CurrentMenu->items[0].type = OldType;
 	}
-	else if (ev->type == EV_GUI_Event && ev->subtype == EV_GUI_KeyDown && tolower(ev->data1) == 't')
+	else if (ev->type == EV_GUI_Event && ev->subtype == EV_GUI_KeyDown)
 	{
-		// Test selected resolution
-		if (CurrentMenu == &ModesMenu)
-		{
+		if (CurrentMenu == &ModesMenu && (ev->data1 == 't' || ev->data1 == 'T'))
+		{ // Test selected resolution
 			if (!(item->type == screenres &&
 				GetSelectedSize (CurrentItem, &NewWidth, &NewHeight)))
 			{
@@ -2162,6 +2159,23 @@ void M_OptResponder(event_t *ev)
 			testingmode = I_GetTime(false) + 5 * TICRATE;
 			S_Sound (CHAN_VOICE | CHAN_UI, "menu/choose", 1, ATTN_NONE);
 			SetModesMenu (NewWidth, NewHeight, NewBits);
+		}
+		else if (ev->data1 >= '0' && ev->data1 <= '9')
+		{ // Activate an item of type numberedmore
+			int i;
+			int num = ev->data1 == '0' ? 10 : ev->data1 - '0';
+
+			for (i = 0; i < CurrentMenu->numitems; ++i)
+			{
+				menuitem_t *item = CurrentMenu->items + i;
+
+				if (item->type == numberedmore && item->b.position == num)
+				{
+					CurrentItem = i;
+					M_OptButtonHandler(MKEY_Enter, false);
+					break;
+				}
+			}
 		}
 	}
 }
@@ -2771,35 +2785,7 @@ void M_OptButtonHandler(EMenuKey key, bool repeat)
 			item->b.key1 = item->c.key2 = 0;
 		}
 		break;
-/*
-	case '0':
-	case '1':
-	case '2':
-	case '3':
-	case '4':
-	case '5':
-	case '6':
-	case '7':
-	case '8':
-	case '9':
-		{
-			int lookfor = ch == '0' ? 10 : ch - '0', i;
-			for (i = 0; i < CurrentMenu->numitems; ++i)
-			{
-				if (CurrentMenu->items[i].b.position == lookfor)
-				{
-					CurrentItem = i;
-					item = &CurrentMenu->items[i];
-					break;
-				}
-			}
-			if (i == CurrentMenu->numitems)
-			{
-				break;
-			}
-			// Otherwise, fall through to '\r' below
-		}
-*/
+
 	case MKEY_Enter:
 		if (CurrentMenu == &ModesMenu && item->type == screenres)
 		{
@@ -3002,7 +2988,7 @@ static void DefaultCustomColors ()
 	}
 }
 
-static void ColorPickerDrawer ()
+static bool ColorPickerDrawer ()
 {
 	DWORD newColor = MAKEARGB(255,
 		int(ColorPickerItems[2].a.fval),
@@ -3021,6 +3007,7 @@ static void ColorPickerDrawer ()
 		"Old", DTA_CleanNoMove_1, true, TAG_DONE);
 	screen->DrawText (SmallFont, CR_WHITE, x+(48+24-SmallFont->StringWidth("New")/2)*CleanXfac_1, y,
 		"New", DTA_CleanNoMove_1, true, TAG_DONE);
+	return false;
 }
 
 static void SetColorPickerSliders ()
@@ -3117,7 +3104,7 @@ CCMD (menu_mouse)
 	MouseOptions ();
 }
 
-static void DrawJoystickConfigMenuHeader()
+static bool DrawJoystickConfigMenuHeader()
 {
 	FString joyname = SELECTED_JOYSTICK->GetName();
 	screen->DrawText(BigFont, gameinfo.gametype & GAME_DoomChex ? CR_RED : CR_UNTRANSLATED,
@@ -3127,6 +3114,7 @@ static void DrawJoystickConfigMenuHeader()
 	screen->DrawText(SmallFont, gameinfo.gametype & GAME_DoomChex ? CR_RED : CR_UNTRANSLATED,
 		(screen->GetWidth() - SmallFont->StringWidth(joyname) * CleanXfac_1) / 2, (8 + BigFont->GetHeight()) * CleanYfac_1,
 		joyname, DTA_CleanNoMove_1, true, TAG_DONE);
+	return false;
 }
 
 static void UpdateJoystickConfigMenu(IJoystickConfig *joy)

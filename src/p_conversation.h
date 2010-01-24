@@ -17,6 +17,7 @@ struct FStrifeDialogueNode
 	~FStrifeDialogueNode ();
 	const PClass *DropType;
 	const PClass *ItemCheck[3];
+	int ThisNodeNum;	// location of this node in StrifeDialogues
 	int ItemCheckNode;	// index into StrifeDialogues
 
 	const PClass *SpeakerType;
@@ -47,17 +48,6 @@ struct FStrifeDialogueReply
 	FBrokenLines *ReplyLines;
 };
 
-// [CW] These are used to make conversations work.
-enum
-{
-	CONV_NPCANGLE,
-	CONV_ANIMATE,
-	CONV_GIVEINVENTORY,
-	CONV_TAKEINVENTORY,
-	CONV_SETNULL,
-	CONV_CLOSE,
-};
-
 extern TArray<FStrifeDialogueNode *> StrifeDialogues;
 
 // There were 344 types in Strife, and Strife conversations refer
@@ -74,6 +64,6 @@ void P_FreeStrifeConversations ();
 void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveangle);
 void P_ResumeConversation ();
 
-void P_ConversationCommand (int player, BYTE **stream);
+void P_ConversationCommand (int netcode, int player, BYTE **stream);
 
 #endif

@@ -82,6 +82,9 @@
 #define KEY_REPEAT_DELAY	(TICRATE*5/12)
 #define KEY_REPEAT_RATE		(3)
 
+#define INPUTGRID_WIDTH		13
+#define INPUTGRID_HEIGHT	5
+
 // TYPES -------------------------------------------------------------------
 
 struct FSaveGameNode : public Node
@@ -171,6 +174,8 @@ static void M_DrawFiles ();
 void M_DrawFrame (int x, int y, int width, int height);
 static void M_DrawSaveLoadBorder (int x,int y, int len);
 static void M_DrawSaveLoadCommon ();
+static void M_DrawInputGrid();
+
 static void M_SetupNextMenu (oldmenu_t *menudef);
 static void M_StartMessage (const char *string, void(*routine)(int));
 static void M_EndMessage (int key);
@@ -235,6 +240,7 @@ static int 		saveSlot;		// which slot to save in
 static size_t	saveCharIndex;	// which char we're editing
 
 static int		LINEHEIGHT;
+static const int PLAYERSETUP_LINEHEIGHT = 16;
 
 static char		savegamestring[SAVESTRINGSIZE];
 static FString	EndString;
@@ -274,6 +280,18 @@ static FSaveGameNode	NewSaveNode;
 static int 	epi;				// Selected episode
 
 static const char *saved_playerclass = NULL;
+
+// Heretic and Hexen do not, by default, come with glyphs for all of these
+// characters. Oh well. Doom and Strife do.
+static const char InputGridChars[INPUTGRID_WIDTH * INPUTGRID_HEIGHT] =
+	"ABCDEFGHIJKLM"
+	"NOPQRSTUVWXYZ"
+	"0123456789+-="
+	".,!?@'\":;[]()"
+	"<>^#$%&*/_ \b";
+static int InputGridX = INPUTGRID_WIDTH - 1;
+static int InputGridY = INPUTGRID_HEIGHT - 1;
+static bool InputGridOkay;		// Last input was with a controller.
 
 // PRIVATE MENU DEFINITIONS ------------------------------------------------
 
@@ -2142,6 +2160,7 @@ static void M_DrawPlayerSlider (int x, int y, int cur)
 
 static void M_PlayerSetupDrawer ()
 {
+	const int LINEHEIGHT = PLAYERSETUP_LINEHEIGHT;
 	int x, xo, yo;
 	EColorRange label, value;
 	DWORD color;
@@ -2871,14 +2890,6 @@ bool M_Responder (event_t *ev)
 	// This code previously listened for EV_GUI_KeyRepeat to handle repeating
 	// in the menus, but that doesn't work with gamepads, so now we combine
 	// the multiple inputs into buttons and handle the repetition manually.
-	//
-	// FIXME: genStringEnter and messageToPrint do not play well with game
-	// controllers. In fact, you can still interact with the rest of
-	// the menu using a controller while the menu waits for input. Especially
-	// bad if you, say, select quit from the main menu. (Ideally,
-	// genStringEnter will pop up a keypad if it detects a controller is
-	// being used to navigate the menu. At the very least, it should
-	// disable the controller.)
 	if (ev->type == EV_GUI_Event)
 	{
 		// Save game and player name string input
@@ -2886,8 +2897,9 @@ bool M_Responder (event_t *ev)
 		{
 			if (ev->subtype == EV_GUI_Char)
 			{
+				InputGridOkay = false;
 				if (saveCharIndex < genStringLen &&
-					(genStringEnter == 2 || (size_t)SmallFont->StringWidth(savegamestring) < (genStringLen-1)*8))
+					(genStringEnter == 2/*entering player name*/ || (size_t)SmallFont->StringWidth(savegamestring) < (genStringLen-1)*8))
 				{
 					savegamestring[saveCharIndex] = (char)ev->data1;
 					savegamestring[++saveCharIndex] = 0;
@@ -2895,8 +2907,7 @@ bool M_Responder (event_t *ev)
 				return true;
 			}
 			ch = ev->data1;
-			if ((ev->subtype == EV_GUI_KeyDown || ev->subtype == EV_GUI_KeyRepeat) &&
-				ch == '\b')
+			if ((ev->subtype == EV_GUI_KeyDown || ev->subtype == EV_GUI_KeyRepeat) && ch == '\b')
 			{
 				if (saveCharIndex > 0)
 				{
@@ -2964,48 +2975,68 @@ bool M_Responder (event_t *ev)
 			{
 				mkey = MKEY_Clear;
 			}
-			else if (!keyup && !OptionsActive)
+			else if (!keyup)
 			{
-				ch = tolower (ch);
-				if (messageToPrint)
+				if (OptionsActive)
 				{
-					// Take care of any messages that need input
-					ch = tolower (ch);
-					assert(messageRoutine != NULL);
-					if (ch != ' ' && ch != 'n' && ch != 'y')
-					{
-						return false;
-					}
-					D_RemoveNextCharEvent();
-					M_EndMessage(ch);
-					return true;
+					M_OptResponder(ev);
 				}
 				else
 				{
-					// Search for a menu item associated with the pressed key.
-					for (i = (itemOn + 1) % currentMenu->numitems;
-						 i != itemOn;
-						 i = (i + 1) % currentMenu->numitems)
+					ch = tolower (ch);
+					if (messageToPrint)
 					{
+						// Take care of any messages that need input
+						ch = tolower (ch);
+						assert(messageRoutine != NULL);
+						if (ch != ' ' && ch != 'n' && ch != 'y')
+						{
+							return false;
+						}
+						D_RemoveNextCharEvent();
+						M_EndMessage(ch);
+						return true;
+					}
+					else
+					{
+						// Search for a menu item associated with the pressed key.
+						for (i = (itemOn + 1) % currentMenu->numitems;
+							 i != itemOn;
+							 i = (i + 1) % currentMenu->numitems)
+						{
+							if (currentMenu->menuitems[i].alphaKey == ch)
+							{
+								break;
+							}
+						}
 						if (currentMenu->menuitems[i].alphaKey == ch)
 						{
-							break;
+							itemOn = i;
+							S_Sound(CHAN_VOICE | CHAN_UI, "menu/cursor", 1, ATTN_NONE);
+							return true;
 						}
-					}
-					if (currentMenu->menuitems[i].alphaKey == ch)
-					{
-						itemOn = i;
-						S_Sound(CHAN_VOICE | CHAN_UI, "menu/cursor", 1, ATTN_NONE);
-						return true;
 					}
 				}
 			}
 			break;
 		}
+		if (!keyup)
+		{
+			InputGridOkay = false;
+		}
 	}
 	else if (ev->type == EV_KeyDown || ev->type == EV_KeyUp)
 	{
 		keyup = ev->type == EV_KeyUp;
+		// If this is a button down, it's okay to show the input grid if the
+		// next action causes us to enter genStringEnter mode. If we are
+		// already in that mode, then we let M_ButtonHandler() turn it on so
+		// that it will know if a button press happened while the input grid
+		// was turned off.
+		if (!keyup && !genStringEnter)
+		{
+			InputGridOkay = true;
+		}
 		ch = ev->data1;
 		switch (ch)
 		{
@@ -3134,6 +3165,74 @@ void M_ButtonHandler(EMenuKey key, bool repeat)
 		{
 			M_EndMessage(messageSelection == 0 ? 'y' : 'n');
 		}
+		return;
+	}
+	if (genStringEnter)
+	{
+		int ch;
+
+		switch (key)
+		{
+		case MKEY_Down:
+			InputGridY = (InputGridY + 1) % INPUTGRID_HEIGHT;
+			break;
+
+		case MKEY_Up:
+			InputGridY = (InputGridY + INPUTGRID_HEIGHT - 1) % INPUTGRID_HEIGHT;
+			break;
+
+		case MKEY_Right:
+			InputGridX = (InputGridX + 1) % INPUTGRID_WIDTH;
+			break;
+
+		case MKEY_Left:
+			InputGridX = (InputGridX + INPUTGRID_WIDTH - 1) % INPUTGRID_WIDTH;
+			break;
+
+		case MKEY_Clear:
+			if (saveCharIndex > 0)
+			{
+				savegamestring[--saveCharIndex] = 0;
+			}
+			break;
+
+		case MKEY_Enter:
+			assert(unsigned(InputGridX) < INPUTGRID_WIDTH && unsigned(InputGridY) < INPUTGRID_HEIGHT);
+			if (InputGridOkay)
+			{
+				ch = InputGridChars[InputGridX + InputGridY * INPUTGRID_WIDTH];
+				if (ch == 0)			// end
+				{
+					if (savegamestring[0] != '\0')
+					{
+						genStringEnter = 0;
+						if (messageToPrint)
+						{
+							M_ClearMenus();
+						}
+						genStringEnd(SelSaveGame);
+					}
+				}
+				else if (ch == '\b')	// bs
+				{
+					if (saveCharIndex > 0)
+					{
+						savegamestring[--saveCharIndex] = 0;
+					}
+				}
+				else if (saveCharIndex < genStringLen &&
+					(genStringEnter == 2/*entering player name*/ || (size_t)SmallFont->StringWidth(savegamestring) < (genStringLen-1)*8))
+				{
+					savegamestring[saveCharIndex] = ch;
+					savegamestring[++saveCharIndex] = 0;
+				}
+			}
+			break;
+
+		default:
+			break;	// Keep GCC quiet
+		}
+		InputGridOkay = true;
 		return;
 	}
 	if (currentMenu == &SaveDef || currentMenu == &LoadDef)
@@ -3350,6 +3449,12 @@ static void M_SaveSelect (const FSaveGameNode *file)
 	}
 	else
 	{
+		// If we are naming a new save, don't start the cursor on "end".
+		if (InputGridX == INPUTGRID_WIDTH - 1 && InputGridY == INPUTGRID_HEIGHT - 1)
+		{
+			InputGridX = 0;
+			InputGridY = 0;
+		}
 		savegamestring[0] = 0;
 	}
 	saveCharIndex = strlen (savegamestring);
@@ -3542,7 +3647,7 @@ void M_Drawer ()
 					if (skullAnimCounter < 6)
 					{
 						screen->DrawText (ConFont, CR_RED, x - 16,
-							currentMenu->y + itemOn*LINEHEIGHT +
+							currentMenu->y + itemOn*PLAYERSETUP_LINEHEIGHT +
 							(!(gameinfo.gametype & (GAME_DoomStrifeChex)) ? 6 : -1), "\xd",
 							DTA_Clean, true, TAG_DONE);
 					}
@@ -3568,6 +3673,10 @@ void M_Drawer ()
 				}
 			}
 		}
+		if (genStringEnter && InputGridOkay)
+		{
+			M_DrawInputGrid();
+		}
 	}
 }
 
@@ -3590,6 +3699,77 @@ static void M_ClearSaveStuff ()
 	if (quickSaveSlot == (FSaveGameNode *)1)
 	{
 		quickSaveSlot = NULL;
+	}
+}
+
+static void M_DrawInputGrid()
+{
+	const int cell_width = 18 * CleanXfac;
+	const int cell_height = 12 * CleanYfac;
+	const int top_padding = cell_height / 2 - SmallFont->GetHeight() * CleanYfac / 2;
+
+	// Darken the background behind the character grid.
+	// Unless we frame it with a border, I think it looks better to extend the
+	// background across the full width of the screen.
+	screen->Dim(0, 0.8f,
+		0 /*screen->GetWidth()/2 - 13 * cell_width / 2*/,
+		screen->GetHeight() - 5 * cell_height,
+		screen->GetWidth() /*13 * cell_width*/,
+		5 * cell_height);
+
+	// Highlight the background behind the selected character.
+	screen->Dim(MAKERGB(255,248,220), 0.6f,
+		InputGridX * cell_width - INPUTGRID_WIDTH * cell_width / 2 + screen->GetWidth() / 2,
+		InputGridY * cell_height - INPUTGRID_HEIGHT * cell_height + screen->GetHeight(),
+		cell_width, cell_height);
+
+	for (int y = 0; y < INPUTGRID_HEIGHT; ++y)
+	{
+		const int yy = y * cell_height - INPUTGRID_HEIGHT * cell_height + screen->GetHeight();
+		for (int x = 0; x < INPUTGRID_WIDTH; ++x)
+		{
+			int width;
+			const int xx = x * cell_width - INPUTGRID_WIDTH * cell_width / 2 + screen->GetWidth() / 2;
+			const int ch = InputGridChars[y * INPUTGRID_WIDTH + x];
+			FTexture *pic = SmallFont->GetChar(ch, &width);
+			EColorRange color;
+			FRemapTable *remap;
+
+			// The highlighted character is yellow; the rest are dark gray.
+			color = (x == InputGridX && y == InputGridY) ? CR_YELLOW : CR_DARKGRAY;
+			remap = SmallFont->GetColorTranslation(color);
+
+			if (pic != NULL)
+			{
+				// Draw a normal character.
+				screen->DrawTexture(pic, xx + cell_width/2 - width*CleanXfac/2, yy + top_padding,
+					DTA_Translation, remap,
+					DTA_CleanNoMove, true,
+					TAG_DONE);
+			}
+			else if (ch == ' ')
+			{
+				// Draw the space as a box outline. We also draw it 50% wider than it really is.
+				const int x1 = xx + cell_width/2 - width * CleanXfac * 3 / 4;
+				const int x2 = x1 + width * 3 * CleanXfac / 2;
+				const int y1 = yy + top_padding;
+				const int y2 = y1 + SmallFont->GetHeight() * CleanYfac;
+				const int palentry = remap->Remap[remap->NumEntries*2/3];
+				const uint32 palcolor = remap->Palette[remap->NumEntries*2/3];
+				screen->Clear(x1, y1, x2, y1+CleanYfac, palentry, palcolor);	// top
+				screen->Clear(x1, y2, x2, y2+CleanYfac, palentry, palcolor);	// bottom
+				screen->Clear(x1, y1+CleanYfac, x1+CleanXfac, y2, palentry, palcolor);	// left
+				screen->Clear(x2-CleanXfac, y1+CleanYfac, x2, y2, palentry, palcolor);	// right
+			}
+			else if (ch == '\b' || ch == 0)
+			{
+				// Draw the backspace and end "characters".
+				const char *const str = ch == '\b' ? "BS" : "ED";
+				screen->DrawText(SmallFont, color,
+					xx + cell_width/2 - SmallFont->StringWidth(str)*CleanXfac/2,
+					yy + top_padding, str, DTA_CleanNoMove, true, TAG_DONE);
+			}
+		}
 	}
 }
 

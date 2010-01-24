@@ -95,8 +95,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_Beacon)
 	}
 	if (owner != NULL)
 	{
-		// Rebels are the same color as their owner
-		rebel->Translation = owner->Translation;
+		// Rebels are the same color as their owner (but only in multiplayer)
+		if (multiplayer)
+		{
+			rebel->Translation = owner->Translation;
+		}
 		rebel->FriendPlayer = owner->player != NULL ? BYTE(owner->player - players + 1) : 0;
 		// Set the rebel's target to whatever last hurt the player, so long as it's not
 		// one of the player's other rebels.

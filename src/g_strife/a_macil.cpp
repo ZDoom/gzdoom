@@ -7,29 +7,41 @@
 #include "a_strifeglobal.h"
 */
 
-// Macil (version 2) ---------------------------------------------------------
+// Macil (version 1) ---------------------------------------------------------
 
 class AMacil1 : public AActor
 {
 	DECLARE_CLASS (AMacil1, AActor)
+};
+
+IMPLEMENT_CLASS (AMacil1)
+
+// Macil (version 2) ---------------------------------------------------------
+
+class AMacil2 : public AMacil1
+{
+	DECLARE_CLASS (AMacil2, AMacil1)
 public:
 	int TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, FName damagetype);
 };
 
-IMPLEMENT_CLASS (AMacil1)
+IMPLEMENT_CLASS (AMacil2)
 
 //============================================================================
 //
 // AMacil2 :: TakeSpecialDamage
 //
-// Macil is invulnerable to the first stage Sigil.
+// Macil2 is invulnerable to the first stage Sigil.
 //
 //============================================================================
 
-int AMacil1::TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, FName damagetype)
+int AMacil2::TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, FName damagetype)
 {
-	if (inflictor != NULL && inflictor->GetClass()->TypeName == NAME_SpectralLightningV1)
-		return -1;
-
+	if (inflictor != NULL)
+	{
+		FName name = inflictor->GetClass()->TypeName;
+		if (name == NAME_SpectralLightningV1 || name == NAME_SpectralLightningV2)
+			return -1;
+	}
 	return Super::TakeSpecialDamage(inflictor, source, damage, damagetype);
 }

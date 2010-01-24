@@ -1086,7 +1086,7 @@ TXT_LEATHERARMOR = "You picked up the Leather Armor.";
 TXT_MEDPATCH = "You picked up the Med patch.";
 TXT_MEDICALKIT = "You picked up the Medical kit.";
 TXT_SURGERYKIT = "You picked up the Surgery Kit.";
-TXT_STRIFEMAP = "You picked up the map";
+TXT_STRIFEMAP = "You picked up the map.";
 TXT_BELDINSRING = "You picked up the ring.";
 TXT_OFFERINGCHALICE = "You picked up the Offering Chalice.";
 TXT_EAR = "You picked up the ear.";
@@ -1099,7 +1099,7 @@ TXT_FTHROWERPARTS = "You picked up the flame thrower parts.";
 TXT_REPORT = "You picked up the report.";
 TXT_INFO = "You picked up the info.";
 TXT_TARGETER = "You picked up the Targeter.";
-TXT_COMMUNICATOR = "You picked up the Communicator";
+TXT_COMMUNICATOR = "You picked up the Communicator.";
 TXT_COIN = "You picked up the coin.";
 TXT_XGOLD = "You picked up %d gold.";
 TXT_BEACON = "You picked up the Teleporter Beacon.";
@@ -1108,12 +1108,12 @@ TXT_SCANNER = "You picked up the scanner.";
 TXT_NEEDMAP = "The scanner won't work without a map!\n";
 TXT_PRISONPASS = "You picked up the Prison pass.";
 
-TXT_STRIFECROSSBOW = "You picked up the crossbow";
-TXT_ASSAULTGUN = "You picked up the assault gun";
-TXT_MMLAUNCHER = "You picked up the mini missile launcher";
-TXT_FLAMER = "You picked up the flame thrower";
-TXT_MAULER = "You picked up the mauler";
-TXT_GLAUNCHER = "You picked up the Grenade launcher";
+TXT_STRIFECROSSBOW = "You picked up the crossbow.";
+TXT_ASSAULTGUN = "You picked up the assault gun.";
+TXT_MMLAUNCHER = "You picked up the mini missile launcher.";
+TXT_FLAMER = "You picked up the flame thrower.";
+TXT_MAULER = "You picked up the mauler.";
+TXT_GLAUNCHER = "You picked up the Grenade launcher.";
 TXT_SIGIL = "You picked up the SIGIL.";
 
 
@@ -1147,7 +1147,7 @@ TXT_NEWKEY5 = "You picked up the New Key5.";
 TXT_ORACLEPASS = "You picked up the Oracle Pass.";
 
 TXT_HEGRENADES = "You picked up the HE-Grenade Rounds.";
-TXT_PHGRENADES = "You picked up the Phoshorus-Grenade Rounds.";
+TXT_PHGRENADES = "You picked up the Phosphorus-Grenade Rounds.";
 TXT_CLIPOFBULLETS = "You picked up the clip of bullets.";
 TXT_BOXOFBULLETS = "You picked up the box of bullets.";
 TXT_MINIMISSILES = "You picked up the mini missiles.";
@@ -1156,7 +1156,7 @@ TXT_ENERGYPOD = "You picked up the energy pod.";
 TXT_ENERGYPACK = "You picked up the energy pack.";
 TXT_POISONBOLTS = "You picked up the poison bolts.";
 TXT_ELECTRICBOLTS = "You picked up the electric bolts.";
-TXT_AMMOSATCHEL = "You picked up the ammo satchel";
+TXT_AMMOSATCHEL = "You picked up the ammo satchel.";
 
 // Random dialogs
 

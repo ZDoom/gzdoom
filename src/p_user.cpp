@@ -2293,7 +2293,10 @@ void P_PlayerThink (player_t *player)
 			if (!player->usedown)
 			{
 				player->usedown = true;
-				P_UseLines (player);
+				if (!P_TalkFacing(player->mo))
+				{
+					P_UseLines(player);
+				}
 			}
 		}
 		else

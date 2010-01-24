@@ -85,7 +85,9 @@ level_info_t *FindLevelInfo (const char *mapname)
 	int i;
 
 	if ((i = FindWadLevelInfo (mapname)) > -1)
+	{
 		return &wadlevelinfos[i];
+	}
 	else
 	{
 		if (TheDefaultLevelInfo.LevelName.IsEmpty())

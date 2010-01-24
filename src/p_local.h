@@ -52,6 +52,7 @@
 //#define GRAVITY 		FRACUNIT
 #define MAXMOVE 		(30*FRACUNIT)
 
+#define TALKRANGE		(128*FRACUNIT)
 #define USERANGE		(64*FRACUNIT)
 #define MELEERANGE		(64*FRACUNIT)
 #define MISSILERANGE	(32*64*FRACUNIT)
@@ -390,6 +391,7 @@ bool	P_BounceWall (AActor *mo);
 bool	P_BounceActor (AActor *mo, AActor * BlockingMobj);
 bool	P_CheckSight (const AActor* t1, const AActor* t2, int flags=0);
 void	P_ResetSightCounters (bool full);
+bool	P_TalkFacing (AActor *player);
 void	P_UseLines (player_t* player);
 bool	P_UsePuzzleItem (AActor *actor, int itemType);
 void	P_FindFloorCeiling (AActor *actor, bool onlymidtex = false);

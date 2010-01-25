@@ -1560,10 +1560,10 @@ static void M_DrawSlider (int x, int y, double min, double max, double cur,int f
 	double range;
 
 	range = max - min;
-	cur = clamp(cur, min, max) - min;
+	double ccur = clamp(cur, min, max) - min;
 
 	M_DrawConText(CR_WHITE, x, y, "\x10\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x12");
-	M_DrawConText(CR_ORANGE, x + int((5 + ((cur * 78) / range)) * CleanXfac_1), y, "\x13");
+	M_DrawConText(CR_ORANGE, x + int((5 + ((ccur * 78) / range)) * CleanXfac_1), y, "\x13");
 
 	if (fracdigits >= 0)
 	{

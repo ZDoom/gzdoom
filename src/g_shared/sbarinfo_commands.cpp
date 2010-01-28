@@ -169,7 +169,7 @@ class CommandDrawImage : public SBarInfoCommand
 				if (item != NULL)
 					texture = TexMan[item->Icon];
 			}
-			else if(type == HEXENARMOR_ARMOR || type == HEXENARMOR_SHIELD || type == HEXENARMOR_AMULET || type == HEXENARMOR_ARMOR)
+			else if(type == HEXENARMOR_ARMOR || type == HEXENARMOR_SHIELD || type == HEXENARMOR_HELM || type == HEXENARMOR_AMULET)
 			{
 				int armorType = type - HEXENARMOR_ARMOR;
 			

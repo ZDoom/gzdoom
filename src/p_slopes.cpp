@@ -548,7 +548,6 @@ void P_SetSlopes ()
 		if (lines[i].special == Plane_Align)
 		{
 			lines[i].special = 0;
-			lines[i].id = lines[i].args[2];
 			if (lines[i].backsector != NULL)
 			{
 				// args[0] is for floor, args[1] is for ceiling

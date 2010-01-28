@@ -192,6 +192,7 @@ Note: All <bool> fields default to false unless mentioned otherwise.
    208: TranslucentLine, arg0 (arg0 must be preserved)
      1: Polyobj_StartLine, arg3
      5: Polyobj_ExplicitLine, arg4
+   181: Plane_Align, arg2
    215: Teleport_Line, arg0
    222: Scroll_Texture_Model, arg0 (arg0 must be preserved)
    

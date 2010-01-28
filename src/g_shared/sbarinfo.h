@@ -97,6 +97,7 @@ struct SBarInfo
 	int GetGameType() { return gameType; }
 	void ParseSBarInfo(int lump);
 	void ParseMugShotBlock(FScanner &sc, FMugShotState &state);
+	void ResetHuds();
 	int newImage(const char* patchname);
 	void Init();
 	SBarInfo();

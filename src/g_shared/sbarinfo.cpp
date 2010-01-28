@@ -156,6 +156,7 @@ class SBarInfoCommand
 
 		virtual void	Draw(const SBarInfoMainBlock *block, const DSBarInfo *statusBar)=0;
 		virtual void	Parse(FScanner &sc, bool fullScreenOffsets)=0;
+		virtual void	Reset() {}
 		virtual void	Tick(const SBarInfoMainBlock *block, const DSBarInfo *statusBar, bool hudChanged) {}
 
 	protected:
@@ -234,6 +235,11 @@ class SBarInfoCommandFlowControl : public SBarInfoCommand
 				cmd->Parse(sc, fullScreenOffsets);
 				commands.Push(cmd);
 			}
+		}
+		void	Reset()
+		{
+			for(unsigned int i = 0;i < commands.Size();i++)
+				commands[i]->Reset();
 		}
 		void	Tick(const SBarInfoMainBlock *block, const DSBarInfo *statusBar, bool hudChanged)
 		{
@@ -653,6 +659,12 @@ void SBarInfo::ParseMugShotBlock(FScanner &sc, FMugShotState &state)
 	}
 }
 
+void SBarInfo::ResetHuds()
+{
+	for(int i = 0;i < NUMHUDS;i++)
+		huds[i]->Reset();
+}
+
 int SBarInfo::newImage(const char *patchname)
 {
 	if(patchname[0] == '\0' || stricmp(patchname, "nullimage") == 0)
@@ -823,7 +835,7 @@ class DSBarInfo : public DBaseStatusBar
 public:
 	DSBarInfo (SBarInfo *script=NULL) : DBaseStatusBar(script->height),
 		ammo1(NULL), ammo2(NULL), ammocount1(0), ammocount2(0), armor(NULL),
-		pendingPopup(POP_None), currentPopup(POP_None), lastHud(0),
+		pendingPopup(POP_None), currentPopup(POP_None), lastHud(-1),
 		lastInventoryBar(NULL), lastPopup(NULL)
 	{
 		this->script = script;
@@ -944,6 +956,10 @@ public:
 		if (CPlayer != NULL)
 		{
 			AttachToPlayer (CPlayer);
+
+			// Reset the huds
+			script->ResetHuds();
+			lastHud = -1; // Reset
 		}
 	}
 
@@ -970,7 +986,8 @@ public:
 			if (lastPopup != NULL) lastPopup->Tick(NULL, this, false);
 		}
 
-		script->huds[lastHud]->Tick(NULL, this, false);
+		if(lastHud != -1)
+			script->huds[lastHud]->Tick(NULL, this, false);
 		if(lastInventoryBar != NULL && CPlayer->inventorytics > 0)
 			lastInventoryBar->Tick(NULL, this, false);
 	}

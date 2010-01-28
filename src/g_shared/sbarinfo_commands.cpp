@@ -725,6 +725,10 @@ class CommandDrawNumber : public CommandDrawString
 			else if(value == ARMOR)
 				interpolationSpeed = script->interpolateArmor ? script->armorInterpolationSpeed : interpolationSpeed;
 		}
+		void	Reset()
+		{
+			drawValue = 0;
+		}
 		void	Tick(const SBarInfoMainBlock *block, const DSBarInfo *statusBar, bool hudChanged)
 		{
 			int num = valueArgument;
@@ -1887,6 +1891,10 @@ class CommandDrawBar : public SBarInfoCommand
 			{
 				sc.MustGetToken(TK_IntConst);
 				border = sc.Number;
+
+				// Flip the direction since it represents the area to clip
+				if(border != 0)
+					reverse = !reverse;
 			}
 			sc.MustGetToken(';');
 		
@@ -1894,6 +1902,10 @@ class CommandDrawBar : public SBarInfoCommand
 				interpolationSpeed = script->interpolateHealth ? script->interpolationSpeed : interpolationSpeed;
 			else if(type == ARMOR)
 				interpolationSpeed = script->interpolateArmor ? script->armorInterpolationSpeed : interpolationSpeed;
+		}
+		void	Reset()
+		{
+			drawValue = 0;
 		}
 		void	Tick(const SBarInfoMainBlock *block, const DSBarInfo *statusBar, bool hudChanged)
 		{
@@ -2299,6 +2311,10 @@ class CommandDrawGem : public SBarInfoCommand
 				interpolationSpeed = script->interpolateHealth ? script->interpolationSpeed : interpolationSpeed;
 			else
 				interpolationSpeed = script->interpolateArmor ? script->armorInterpolationSpeed : interpolationSpeed;
+		}
+		void	Reset()
+		{
+			drawValue = 0;
 		}
 		void	Tick(const SBarInfoMainBlock *block, const DSBarInfo *statusBar, bool hudChanged)
 		{

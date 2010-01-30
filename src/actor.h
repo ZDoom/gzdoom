@@ -909,7 +909,6 @@ public:
 		return GetClass()->ActorInfo->FindState(2, names, exact);
 	}
 
-
 	bool HasSpecialDeathStates () const;
 };
 

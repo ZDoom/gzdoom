@@ -167,6 +167,7 @@ CVAR (Color, am_ovtelecolor,		0xffff00,	CVAR_ARCHIVE);
 CVAR (Color, am_intralevelcolor,	0x0000ff,	CVAR_ARCHIVE);
 CVAR (Color, am_interlevelcolor,	0xff0000,	CVAR_ARCHIVE);
 CVAR (Color, am_secretsectorcolor,	0xff00ff,	CVAR_ARCHIVE);
+CVAR (Color, am_ovsecretsectorcolor,0x00ffff,	CVAR_ARCHIVE);
 CVAR (Int,   am_map_secrets,		1,			CVAR_ARCHIVE);
 CVAR (Bool,  am_drawmapback,		true,		CVAR_ARCHIVE);
 CVAR (Color, am_thingcolor_friend,		0xfcfcfc,	CVAR_ARCHIVE);
@@ -770,7 +771,8 @@ static void AM_initColors (bool overlayed)
 	{
 		YourColor.FromCVar (am_ovyourcolor);
 		WallColor.FromCVar (am_ovwallcolor);
-		SecretSectorColor = SecretWallColor = WallColor;
+		SecretWallColor = WallColor;
+		SecretSectorColor.FromCVar (am_ovsecretsectorcolor);
 		ThingColor_Item.FromCVar (am_ovthingcolor_item);
 		ThingColor_Friend.FromCVar (am_ovthingcolor_friend);
 		ThingColor_Monster.FromCVar (am_ovthingcolor_monster);

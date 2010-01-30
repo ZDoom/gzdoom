@@ -67,6 +67,7 @@ CVAR (Bool,  hud_showsecrets,	true,CVAR_ARCHIVE);		// Show secrets on HUD
 CVAR (Bool,  hud_showmonsters,	true,CVAR_ARCHIVE);		// Show monster stats on HUD
 CVAR (Bool,  hud_showitems,		false,CVAR_ARCHIVE);	// Show item stats on HUD
 CVAR (Bool,  hud_showstats,		false,	CVAR_ARCHIVE);	// for stamina and accuracy. 
+CVAR (Bool,  hud_showscore,		false,	CVAR_ARCHIVE);	// for user maintained score
 
 CVAR (Int, hud_ammo_red, 25, CVAR_ARCHIVE)					// ammo percent less than which status is red    
 CVAR (Int, hud_ammo_yellow, 50, CVAR_ARCHIVE)				// ammo percent less is yellow more green        
@@ -98,6 +99,7 @@ static FTexture * fragpic;					// Frags icon
 static FTexture * invgems[4];				// Inventory arrows
 
 static int hudwidth, hudheight;				// current width/height for HUD display
+static int statspace;
 
 void AM_GetPosition(fixed_t & x, fixed_t & y);
 
@@ -198,37 +200,35 @@ static void DrawHudNumber(FFont *font, int color, int num, int x, int y, int tra
 //
 //===========================================================================
 
+static void DrawStatLine(int x, int &y, const char *prefix, const char *string)
+{
+	y -= SmallFont->GetHeight()-1;
+	screen->DrawText(SmallFont, hudcolor_statnames, x, y, prefix, 
+		DTA_KeepRatio, true,
+		DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, 0xc000, TAG_DONE);
+
+	screen->DrawText(SmallFont, hudcolor_stats, x+statspace, y, string,
+		DTA_KeepRatio, true,
+		DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, 0xc000, TAG_DONE);
+}
+
 static void DrawStatus(player_t * CPlayer, int x, int y)
 {
 	char tempstr[50];
-	int space;
+	
+	if (hud_showscore)
+	{
+		mysnprintf(tempstr, countof(tempstr), "%i ", CPlayer->mo->Score);
+		DrawStatLine(x, y, "Sc:", tempstr);
+	}
 	
 	if (hud_showstats)
 	{
-		space = SmallFont->StringWidth("Ac: ");
-
-		y -= SmallFont->GetHeight()-1;
-		screen->DrawText(SmallFont, hudcolor_statnames, x, y, "Ac:", 
-			DTA_KeepRatio, true,
-			DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, 0xc000, TAG_DONE);
-
 		mysnprintf(tempstr, countof(tempstr), "%i ", CPlayer->accuracy);
-		screen->DrawText(SmallFont, hudcolor_stats, x+space, y, tempstr,
-			DTA_KeepRatio, true,
-			DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, 0xc000, TAG_DONE);
-
-		y-=SmallFont->GetHeight()-1;
-		screen->DrawText(SmallFont, hudcolor_statnames, x, y, "St:", 
-			DTA_KeepRatio, true,
-			DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, 0xc000, TAG_DONE);
-
+		DrawStatLine(x, y, "Ac:", tempstr);
 		mysnprintf(tempstr, countof(tempstr), "%i ", CPlayer->stamina);
-		screen->DrawText(SmallFont, hudcolor_stats, x+space, y, tempstr,
-			DTA_KeepRatio, true,
-			DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, 0xc000, TAG_DONE);
+		DrawStatLine(x, y, "St:", tempstr);
 	}
-	else
-		space=SmallFont->StringWidth("K: ");
 	
 	if (!deathmatch)
 	{
@@ -236,41 +236,20 @@ static void DrawStatus(player_t * CPlayer, int x, int y)
 		// work in cooperative hub games
 		if (hud_showsecrets)
 		{
-			y -= SmallFont->GetHeight()-1;
-			screen->DrawText(SmallFont, hudcolor_statnames, x, y, "S:", 
-				DTA_KeepRatio, true,
-				DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, 0xc000, TAG_DONE);
-
 			mysnprintf(tempstr, countof(tempstr), "%i/%i ", multiplayer? CPlayer->secretcount : level.found_secrets, level.total_secrets);
-			screen->DrawText(SmallFont, hudcolor_stats, x+space, y, tempstr,
-				DTA_KeepRatio, true,
-				DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, 0xc000, TAG_DONE);
+			DrawStatLine(x, y, "S:", tempstr);
 		}
 		
 		if (hud_showitems)
 		{
-			y -= SmallFont->GetHeight()-1;
-			screen->DrawText(SmallFont, hudcolor_statnames, x, y, "I:", 
-				DTA_KeepRatio, true,
-				DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, 0xc000, TAG_DONE);
-
 			mysnprintf(tempstr, countof(tempstr), "%i/%i ", multiplayer? CPlayer->itemcount : level.found_items, level.total_items);
-			screen->DrawText(SmallFont, hudcolor_stats, x+space, y, tempstr,
-				DTA_KeepRatio, true,
-				DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, 0xc000, TAG_DONE);
+			DrawStatLine(x, y, "I:", tempstr);
 		}
 		
 		if (hud_showmonsters)
 		{
-			y -= SmallFont->GetHeight()-1;
-			screen->DrawText(SmallFont, hudcolor_statnames, x, y, "K:", 
-				DTA_KeepRatio, true,
-				DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, 0xc000, TAG_DONE);
-
 			mysnprintf(tempstr, countof(tempstr), "%i/%i ", multiplayer? CPlayer->killcount : level.killed_monsters, level.total_monsters);
-			screen->DrawText(SmallFont, hudcolor_stats, x+space, y, tempstr,
-				DTA_KeepRatio, true,
-				DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, 0xc000, TAG_DONE);
+			DrawStatLine(x, y, "K:", tempstr);
 		}
 	}
 }
@@ -930,6 +909,10 @@ void HUD_InitHud()
 
 	KeyTypes.Clear();
 	UnassignedKeyTypes.Clear();
+
+	statspace = SmallFont->StringWidth("Ac:");
+
+
 
 	// Now read custom icon overrides
 	int lump, lastlump = 0;

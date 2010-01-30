@@ -599,6 +599,8 @@ class CommandDrawNumber : public CommandDrawString
 					value = AMMO1;
 				else if(sc.Compare("ammo2"))
 					value = AMMO2;
+				else if(sc.Compare("score"))
+					value = SCORE;
 				else if(sc.Compare("ammo")) //request the next string to be an ammo type
 				{
 					value = AMMO;
@@ -798,6 +800,9 @@ class CommandDrawNumber : public CommandDrawString
 				case SECRETS:
 					num = level.found_secrets;
 					break;
+				case SCORE:
+					num = statusBar->CPlayer->mo->Score;
+					break;
 				case TOTALSECRETS:
 					num = level.total_secrets;
 					break;
@@ -925,6 +930,7 @@ class CommandDrawNumber : public CommandDrawString
 			POWERUPTIME,
 			AIRTIME,
 			SELECTEDINVENTORY,
+			SCORE,
 
 			CONSTANT
 		};

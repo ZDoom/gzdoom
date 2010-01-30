@@ -609,6 +609,7 @@ EXTERN_CVAR (Color, am_ovtelecolor)
 EXTERN_CVAR (Color, am_intralevelcolor)
 EXTERN_CVAR (Color, am_interlevelcolor)
 EXTERN_CVAR (Color, am_secretsectorcolor)
+EXTERN_CVAR (Color, am_ovsecretsectorcolor)
 EXTERN_CVAR (Color, am_thingcolor_friend)
 EXTERN_CVAR (Color, am_thingcolor_monster)
 EXTERN_CVAR (Color, am_thingcolor_item)
@@ -644,6 +645,7 @@ static menuitem_t MapColorsItems[] = {
 	{ colorpicker, "2-sided walls (overlay)",					{&am_ovotherwallscolor},{0}, {0}, {0}, {0} },
 	{ colorpicker, "Not-yet-seen walls (overlay)",				{&am_ovunseencolor},	{0}, {0}, {0}, {0} },
 	{ colorpicker, "Teleporter (overlay)",						{&am_ovtelecolor},		{0}, {0}, {0}, {0} },
+	{ colorpicker, "Secret sector (overlay)",					{&am_ovsecretsectorcolor},	{0}, {0}, {0}, {0} },
 	{ colorpicker, "Actors (overlay) (for cheat)",				{&am_ovthingcolor},		{0}, {0}, {0}, {0} },
 	{ colorpicker, "Monsters (overlay) (for cheat)",			{&am_ovthingcolor_monster},		{0}, {0}, {0}, {0} },
 	{ colorpicker, "Friends (overlay) (for cheat)",				{&am_ovthingcolor_friend},		{0}, {0}, {0}, {0} },

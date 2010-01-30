@@ -106,7 +106,7 @@ DEFINE_SPECIAL(Light_Glow, 114, 4, 4, 4)
 DEFINE_SPECIAL(Light_Flicker, 115, 3, 3, 3)
 DEFINE_SPECIAL(Light_Strobe, 116, 5, 5, 5)
 DEFINE_SPECIAL(Light_Stop, 117, 1, 1, 1)
-
+DEFINE_SPECIAL(Plane_Copy, 118, -1, -1, 5)
 DEFINE_SPECIAL(Thing_Damage, 119, 2, 3, 3)
 DEFINE_SPECIAL(Radius_Quake, 120, 5, 5, 5)  // Earthquake
 DEFINE_SPECIAL(Line_SetIdentification, 121, -1, -1, 5)

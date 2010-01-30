@@ -68,6 +68,7 @@
 
 void P_SpawnSlopeMakers (FMapThing *firstmt, FMapThing *lastmt);
 void P_SetSlopes ();
+void P_CopySlopes();
 void BloodCrypt (void *data, int key, int len);
 void P_ClearUDMFKeys();
 
@@ -3628,6 +3629,7 @@ void P_SetupLevel (char *lumpname, int position)
 	{
 		// [RH] Spawn slope creating things first.
 		P_SpawnSlopeMakers (&MapThingsConverted[0], &MapThingsConverted[MapThingsConverted.Size()]);
+		P_CopySlopes();
 
 		// Spawn 3d floors - must be done before spawning things so it can't be done in P_SpawnSpecials
 		P_Spawn3DFloors();

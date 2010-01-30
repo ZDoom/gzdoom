@@ -3088,7 +3088,7 @@ lnSpecFunc LineSpecials[256] =
 	/* 115 */ LS_Light_Flicker,
 	/* 116 */ LS_Light_Strobe,
 	/* 117 */ LS_Light_Stop,
-	/* 118 */ LS_NOP,
+	/* 118 */ LS_NOP,		// Plane_Copy
 	/* 119 */ LS_Thing_Damage,
 	/* 120 */ LS_Radius_Quake,
 	/* 121 */ LS_NOP,		// Line_SetIdentification
@@ -3111,22 +3111,22 @@ lnSpecFunc LineSpecials[256] =
 	/* 138 */ LS_Floor_Waggle,
 	/* 139 */ LS_Thing_SpawnFacing,
 	/* 140 */ LS_Sector_ChangeSound,
-	/* 141 */ LS_NOP,		// 141 Music_Pause			// [BC] Start
-	/* 142 */ LS_NOP,		// 142 Music_Change
-	/* 143 */ LS_NOP,		// 143 Player_RemoveItem
-	/* 144 */ LS_NOP,		// 144 Player_GiveItem
+	/* 141 */ LS_NOP,
+	/* 142 */ LS_NOP,
+	/* 143 */ LS_NOP,
+	/* 144 */ LS_NOP,
 	/* 145 */ LS_NOP,		// 145 Player_SetTeam
-	/* 146 */ LS_NOP,		// 146 Player_SetLeader
-	/* 147 */ LS_NOP,		// 147 Team_InitFP
-	/* 148 */ LS_NOP,		// 148 TeleportAll
-	/* 149 */ LS_NOP,		// 149 TeleportAll_NoFog
-	/* 150 */ LS_NOP,		// 150 Team_GiveFP
-	/* 151 */ LS_NOP,		// 151 Team_UseFP
+	/* 146 */ LS_NOP,
+	/* 147 */ LS_NOP,
+	/* 148 */ LS_NOP,
+	/* 149 */ LS_NOP,
+	/* 150 */ LS_NOP,
+	/* 151 */ LS_NOP,
 	/* 152 */ LS_NOP,		// 152 Team_Score
-	/* 153 */ LS_NOP,		// 153 Team_Init
+	/* 153 */ LS_NOP,		// 153 Team_GivePoints
 	/* 154 */ LS_Teleport_NoStop,
-	/* 155 */ LS_NOP,		// 155 Team_RemoveItem
-	/* 156 */ LS_NOP,		// 156 Team_GiveItem		// [BC] End
+	/* 155 */ LS_NOP,
+	/* 156 */ LS_NOP,
 	/* 157 */ LS_NOP,		// SetGlobalFogParameter // in GZDoom
 	/* 158 */ LS_NOP,		// FS_Execute in GZDoom
 	/* 159 */ LS_NOP,		// Sector_SetPlaneReflection in GZDoom

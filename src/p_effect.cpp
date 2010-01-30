@@ -235,7 +235,18 @@ static void MakeFountain (AActor *actor, int color1, int color2)
 
 void P_RunEffect (AActor *actor, int effects)
 {
-	angle_t moveangle = R_PointToAngle2(0,0,actor->velx,actor->vely);
+	angle_t moveangle;
+	
+	// 512 is the limit below which R_PointToAngle2 does no longer returns usable values.
+	if (abs(actor->velx) > 512 || abs(actor->vely) > 512)
+	{
+		moveangle = R_PointToAngle2(0,0,actor->velx,actor->vely);
+	}
+	else
+	{
+		moveangle = actor->angle;
+	}
+
 	particle_t *particle;
 	int i;
 

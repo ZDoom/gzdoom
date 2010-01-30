@@ -10,6 +10,7 @@ ACTOR Oracle 199
 	Height 56
 	Monster
 	+NOTDMATCH
+	+NOBLOOD
 	DamageFactor "Fire", 0.5
 	DamageFactor "SpectralLow", 0
 	MaxDropoffHeight 32

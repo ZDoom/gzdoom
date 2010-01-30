@@ -2059,11 +2059,13 @@ static void P_SpawnPushers ()
 		case Sector_SetWind: // wind
 			for (s = -1; (s = P_FindSectorFromTag (l->args[0],s)) >= 0 ; )
 				new DPusher (DPusher::p_wind, l->args[3] ? l : NULL, l->args[1], l->args[2], NULL, s);
+			l->special = 0;
 			break;
 
 		case Sector_SetCurrent: // current
 			for (s = -1; (s = P_FindSectorFromTag (l->args[0],s)) >= 0 ; )
 				new DPusher (DPusher::p_current, l->args[3] ? l : NULL, l->args[1], l->args[2], NULL, s);
+			l->special = 0;
 			break;
 
 		case PointPush_SetForce: // push/pull
@@ -2092,6 +2094,7 @@ static void P_SpawnPushers ()
 					}
 				}
 			}
+			l->special = 0;
 			break;
 		}
 	}

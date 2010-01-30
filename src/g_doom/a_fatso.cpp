@@ -118,7 +118,14 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FatAttack3)
 // Original idea: Linguica
 //
 
-AActor * P_OldSpawnMissile(AActor * source, AActor * dest, const PClass *type);
+AActor * P_OldSpawnMissile(AActor * source, AActor * owner, AActor * dest, const PClass *type);
+
+enum
+{
+	MSF_Standard = 0,
+	MSF_Classic = 1,
+	MSF_DontHurt = 2,
+};
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Mushroom)
 {
@@ -134,11 +141,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Mushroom)
 	if (n == 0) n = self->Damage; // GetMissileDamage (0, 1);
 	if (spawntype == NULL) spawntype = PClass::FindClass("FatShot");
 
-	P_RadiusAttack (self, self->target, 128, 128, self->DamageType, true);
+	P_RadiusAttack (self, self->target, 128, 128, self->DamageType, !(flags & MSF_DontHurt));
 	P_CheckSplash(self, 128<<FRACBITS);
 
 	// Now launch mushroom cloud
 	AActor *target = Spawn("Mapspot", 0, 0, 0, NO_REPLACE);	// We need something to aim at.
+	AActor *master = (flags & MSF_DontHurt) ? self->target : self;
 	target->height = self->height;
  	for (i = -n; i <= n; i += 8)
 	{
@@ -148,13 +156,14 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Mushroom)
 			target->x = self->x + (i << FRACBITS);    // Aim in many directions from source
 			target->y = self->y + (j << FRACBITS);
 			target->z = self->z + (P_AproxDistance(i,j) * vrange); // Aim up fairly high
-			if (flags == 0 && (!(self->state->DefineFlags & SDF_DEHACKED) || !(i_compatflags & COMPATF_MUSHROOM)))
-			{
-				mo = P_SpawnMissile (self, target, spawntype); // Launch fireball
+			if ((flags & MSF_Classic) || // Flag explicitely set, or no flags and compat options
+				(flags == 0 && (self->state->DefineFlags & SDF_DEHACKED) && (i_compatflags & COMPATF_MUSHROOM)))
+			{	// Use old function for MBF compatibility
+				mo = P_OldSpawnMissile (self, master, target, spawntype);
 			}
-			else
+			else // Use normal function
 			{
-				mo = P_OldSpawnMissile (self, target, spawntype); // Launch fireball
+				mo = P_SpawnMissile(self, target, spawntype, master);
 			}
 			if (mo != NULL)
 			{	// Slow it down a bit

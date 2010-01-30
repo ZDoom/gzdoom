@@ -5042,10 +5042,10 @@ static fixed_t GetDefaultSpeed(const PClass *type)
 //
 //---------------------------------------------------------------------------
 
-AActor *P_SpawnMissile (AActor *source, AActor *dest, const PClass *type)
+AActor *P_SpawnMissile (AActor *source, AActor *dest, const PClass *type, AActor *owner)
 {
 	return P_SpawnMissileXYZ (source->x, source->y, source->z + 32*FRACUNIT,
-		source, dest, type);
+		source, dest, type, true, owner);
 }
 
 AActor *P_SpawnMissileZ (AActor *source, fixed_t z, AActor *dest, const PClass *type)
@@ -5054,7 +5054,7 @@ AActor *P_SpawnMissileZ (AActor *source, fixed_t z, AActor *dest, const PClass *
 }
 
 AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z,
-	AActor *source, AActor *dest, const PClass *type, bool checkspawn)
+	AActor *source, AActor *dest, const PClass *type, bool checkspawn, AActor *owner)
 {
 	if (dest == NULL)
 	{
@@ -5071,7 +5071,10 @@ AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z,
 	AActor *th = Spawn (type, x, y, z, ALLOW_REPLACE);
 	
 	P_PlaySpawnSound(th, source);
-	th->target = source;		// record missile's originator
+
+	// record missile's originator
+	if (owner)	th->target = owner;
+	else		th->target = source;
 
 	float speed = (float)(th->Speed);
 
@@ -5114,14 +5117,14 @@ AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z,
 	return (!checkspawn || P_CheckMissileSpawn (th)) ? th : NULL;
 }
 
-AActor * P_OldSpawnMissile(AActor * source, AActor * dest, const PClass *type)
+AActor * P_OldSpawnMissile(AActor * source, AActor * owner, AActor * dest, const PClass *type)
 {
 	angle_t an;
 	fixed_t dist;
 	AActor *th = Spawn (type, source->x, source->y, source->z + 4*8*FRACUNIT, ALLOW_REPLACE);
 
 	P_PlaySpawnSound(th, source);
-	th->target = source;		// record missile's originator
+	th->target = owner;		// record missile's originator
 
 	th->angle = an = R_PointToAngle2 (source->x, source->y, dest->x, dest->y);
 	an >>= ANGLETOFINESHIFT;
@@ -5250,8 +5253,6 @@ AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z,
 	AActor *linetarget;
 	int vrange = nofreeaim? ANGLE_1*35 : 0;
 
-	// Note: NOAUTOAIM is implemented only here, and not in the hitscan or rail attack functions.
-	// That is because it is only justified for projectiles affected by gravity, not for other attacks.
 	if (source && source->player && source->player->ReadyWeapon && (source->player->ReadyWeapon->WeaponFlags & WIF_NOAUTOAIM))
 	{
 		// Keep exactly the same angle and pitch as the player's own aim

@@ -1853,7 +1853,7 @@ void AdjustPusher (int tag, int magnitude, int angle, DPusher::EPusher type)
 FUNC(LS_Sector_SetWind)
 // Sector_SetWind (tag, amount, angle)
 {
-	if (ln || arg3)
+	if (arg3)
 		return false;
 
 	AdjustPusher (arg0, arg1, arg2, DPusher::p_wind);
@@ -1863,7 +1863,7 @@ FUNC(LS_Sector_SetWind)
 FUNC(LS_Sector_SetCurrent)
 // Sector_SetCurrent (tag, amount, angle)
 {
-	if (ln || arg3)
+	if (arg3)
 		return false;
 
 	AdjustPusher (arg0, arg1, arg2, DPusher::p_current);

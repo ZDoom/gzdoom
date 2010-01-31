@@ -107,7 +107,7 @@ statusbar normal // Standard Doom Status bar
 	}
 	gamemode cooperative, deathmatch, teamgame
 	{
-		drawimage translatable "STFBANY", 144, 169;
+		drawimage translatable "STFBANY", 143, 169;
 	}
 	drawselectedinventory alternateonempty, INDEXFONT, 143, 168
 	{

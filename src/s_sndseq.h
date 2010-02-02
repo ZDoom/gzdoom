@@ -85,6 +85,7 @@ DSeqNode *SN_StartSequence (sector_t *sector, int chan, const char *name, int mo
 DSeqNode *SN_StartSequence (sector_t *sec, int chan, FName seqname, int modenum);
 DSeqNode *SN_StartSequence (FPolyObj *poly, int sequence, seqtype_t type, int modenum, bool nostop=false);
 DSeqNode *SN_StartSequence (FPolyObj *poly, const char *name, int modenum);
+DSeqNode *SN_CheckSequence (sector_t *sector, int chan);
 void SN_StopSequence (AActor *mobj);
 void SN_StopSequence (sector_t *sector, int chan);
 void SN_StopSequence (FPolyObj *poly);

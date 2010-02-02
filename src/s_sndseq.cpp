@@ -954,6 +954,33 @@ static int FindSequence (FName seqname)
 
 //==========================================================================
 //
+// SN_CheckSequence
+//
+// Returns the sound sequence playing in the sector on the given channel,
+// if any.
+//
+//==========================================================================
+
+DSeqNode *SN_CheckSequence(sector_t *sector, int chan)
+{
+	for (DSeqNode *node = DSeqNode::FirstSequence(); node; )
+	{
+		DSeqNode *next = node->NextSequence();
+		if (node->Source() == sector)
+		{
+			assert(node->IsKindOf(RUNTIME_CLASS(DSeqSectorNode)));
+			if ((static_cast<DSeqSectorNode *>(node)->Channel & 7) == chan)
+			{
+				return node;
+			}
+		}
+		node = next;
+	}
+	return NULL;
+}
+
+//==========================================================================
+//
 //  SN_StopSequence
 //
 //==========================================================================
@@ -965,20 +992,10 @@ void SN_StopSequence (AActor *actor)
 
 void SN_StopSequence (sector_t *sector, int chan)
 {
-	DSeqNode *node;
-
-	for (node = DSeqNode::FirstSequence(); node; )
+	DSeqNode *node = SN_CheckSequence(sector, chan);
+	if (node != NULL)
 	{
-		DSeqNode *next = node->NextSequence();
-		if (node->Source() == sector)
-		{
-			assert(node->IsKindOf(RUNTIME_CLASS(DSeqSectorNode)));
-			if ((static_cast<DSeqSectorNode *>(node)->Channel & 7) == chan)
-			{
-				node->StopAndDestroy ();
-			}
-		}
-		node = next;
+		node->StopAndDestroy();
 	}
 }
 

@@ -14,6 +14,9 @@ ACTOR SkyPicker 9081 native
 	+DONTSPLASH
 }
 
+Actor SkyCamCompat : SkyViewpoint 9083 native
+{
+}
 
 ACTOR StackPoint : SkyViewpoint native 
 {

@@ -535,7 +535,7 @@ bool P_CheckSwitchRange(AActor *user, line_t *line, int sideno)
 		// to keep compatibility with Eternity's implementation.
 		if (!P_GetMidTexturePosition(line, sideno, &checktop, &checkbot))
 			return false;
-		return user->z < checktop || user->z + user->height > checkbot;
+		return user->z < checktop && user->z + user->height > checkbot;
 	}
 	else
 	{

@@ -35,6 +35,7 @@
 #include "actor.h"
 #include "a_sharedglobal.h"
 #include "p_local.h"
+#include "p_lnspec.h"
 
 // arg0 = Visibility*4 for this skybox
 
@@ -86,6 +87,64 @@ void ASkyViewpoint::Destroy ()
 		}
 	}
 	Super::Destroy();
+}
+
+// For an RR compatible linedef based definition. This searches the viewpoint's sector
+// for a skybox line special, gets its tag and transfers the skybox to all tagged sectors.
+class ASkyCamCompat : public ASkyViewpoint
+{
+	DECLARE_CLASS (ASkyCamCompat, ASkyViewpoint)
+public:
+	void BeginPlay ();
+};
+
+IMPLEMENT_CLASS (ASkyCamCompat)
+
+extern FTextureID skyflatnum;
+
+void ASkyCamCompat::BeginPlay ()
+{
+	if (Sector == NULL)
+	{
+		Printf("Sector not initialized for SkyCamCompat\n");
+		Sector = P_PointInSector(x, y);
+	}
+	if (Sector)
+	{
+		line_t * refline = NULL;
+		for (short i = 0; i < Sector->linecount; i++)
+		{
+			refline = Sector->lines[i];
+			if (refline->special == Sector_SetPortal && refline->args[1] == 2)
+			{
+				// We found the setup linedef for this skybox, so let's use it for our init.
+				int skybox_id = refline->args[0];
+
+				// Then, change the alpha
+				alpha = refline->args[4];
+
+				// Finally, skyboxify all tagged sectors
+				// This involves changing their texture to the sky flat, because while
+				// EE works with any texture for its skybox portals, ZDoom doesn't.
+				for (int secnum =-1; (secnum = P_FindSectorFromTag (skybox_id, secnum)) != -1; )
+				{
+					// plane: 0=floor, 1=ceiling, 2=both
+					if (refline->args[2] == 1 || refline->args[2] == 2)
+					{
+						sectors[secnum].CeilingSkyBox = this;
+						sectors[secnum].SetTexture(sector_t::ceiling, skyflatnum, false);
+					}
+					if (refline->args[2] == 0 || refline->args[2] == 2)
+					{
+						sectors[secnum].FloorSkyBox = this;
+						sectors[secnum].SetTexture(sector_t::floor, skyflatnum, false);
+					}
+				}
+			}
+		}
+	}
+	// Do not call the SkyViewpoint's super method because it would trash our setup
+	AActor::BeginPlay();
 }
 
 //---------------------------------------------------------------------------

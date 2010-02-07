@@ -146,7 +146,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Mushroom)
 
 	// Now launch mushroom cloud
 	AActor *target = Spawn("Mapspot", 0, 0, 0, NO_REPLACE);	// We need something to aim at.
-	AActor *master = (flags & MSF_DontHurt) ? self->target : self;
+	AActor *master = (flags & MSF_DontHurt) ? (AActor*)(self->target) : self;
 	target->height = self->height;
  	for (i = -n; i <= n; i += 8)
 	{

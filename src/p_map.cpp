@@ -2346,7 +2346,7 @@ void FSlide::SlideMove (AActor *mo, fixed_t tryx, fixed_t tryy, int numsteps)
 	hitcount = 3;
 	slidemo = mo;
 
-	if (mo->player && mo->reactiontime > 0)
+	if (mo->player && mo->player->mo == mo && mo->reactiontime > 0)
 		return;	// player coming right out of a teleporter.
 	
   retry:

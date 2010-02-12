@@ -21,6 +21,8 @@ static FRandom pr_knightatk ("KnightAttack");
 
 DEFINE_ACTION_FUNCTION(AActor, A_DripBlood)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	AActor *mo;
 	fixed_t x, y;
 
@@ -30,6 +32,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_DripBlood)
 	mo->velx = pr_dripblood.Random2 () << 10;
 	mo->vely = pr_dripblood.Random2 () << 10;
 	mo->gravity = FRACUNIT/8;
+	return 0;
 }
 
 //----------------------------------------------------------------------------
@@ -40,9 +43,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_DripBlood)
 
 DEFINE_ACTION_FUNCTION(AActor, A_KnightAttack)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	if (!self->target)
 	{
-		return;
+		return 0;
 	}
 	if (self->CheckMeleeRange ())
 	{
@@ -50,16 +55,17 @@ DEFINE_ACTION_FUNCTION(AActor, A_KnightAttack)
 		P_DamageMobj (self->target, self, self, damage, NAME_Melee);
 		P_TraceBleed (damage, self->target, self);
 		S_Sound (self, CHAN_BODY, "hknight/melee", 1, ATTN_NORM);
-		return;
+		return 0;
 	}
 	// Throw axe
 	S_Sound (self, CHAN_BODY, self->AttackSound, 1, ATTN_NORM);
 	if (self->flags & MF_SHADOW || pr_knightatk () < 40)
 	{ // Red axe
 		P_SpawnMissileZ (self, self->z + 36*FRACUNIT, self->target, PClass::FindClass("RedAxe"));
-		return;
+		return 0;
 	}
 	// Green axe
 	P_SpawnMissileZ (self, self->z + 36*FRACUNIT, self->target, PClass::FindClass("KnightAxe"));
+	return 0;
 }
 

@@ -138,7 +138,7 @@ void VMSelectEngine(EVMEngine engine)
 //
 // VMFillParams
 //
-// Takes parameters from the paramater stack and stores them in the callee's
+// Takes parameters from the parameter stack and stores them in the callee's
 // registers.
 //
 //===========================================================================

@@ -41,8 +41,11 @@ int ALoreShot::DoSpecialDamage (AActor *target, int damage)
 
 DEFINE_ACTION_FUNCTION(AActor, A_LoremasterChain)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	S_Sound (self, CHAN_BODY, "loremaster/active", 1, ATTN_NORM);
 	Spawn("LoreShot2", self->x, self->y, self->z, ALLOW_REPLACE);
 	Spawn("LoreShot2", self->x - (self->velx >> 1), self->y - (self->vely >> 1), self->z - (self->velz >> 1), ALLOW_REPLACE);
 	Spawn("LoreShot2", self->x - self->velx, self->y - self->vely, self->z - self->velz, ALLOW_REPLACE);
+	return 0;
 }

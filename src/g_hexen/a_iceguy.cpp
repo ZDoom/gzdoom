@@ -26,6 +26,8 @@ static const char *WispTypes[2] =
 
 DEFINE_ACTION_FUNCTION(AActor, A_IceGuyLook)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	fixed_t dist;
 	fixed_t an;
 
@@ -40,6 +42,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_IceGuyLook)
 			self->y+FixedMul(dist, finesine[an]),
 			self->z+60*FRACUNIT, ALLOW_REPLACE);
 	}
+	return 0;
 }
 
 //============================================================================
@@ -50,11 +53,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_IceGuyLook)
 
 DEFINE_ACTION_FUNCTION(AActor, A_IceGuyChase)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	fixed_t dist;
 	fixed_t an;
 	AActor *mo;
 
-	A_Chase (self);
+	A_Chase (stack, self);
 	if (pr_iceguychase() < 128)
 	{
 		dist = ((pr_iceguychase()-128)*self->radius)>>7;
@@ -72,6 +77,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_IceGuyChase)
 			mo->target = self;
 		}
 	}
+	return 0;
 }
 
 //============================================================================
@@ -82,11 +88,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_IceGuyChase)
 
 DEFINE_ACTION_FUNCTION(AActor, A_IceGuyAttack)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	fixed_t an;
 
 	if(!self->target) 
 	{
-		return;
+		return 0;
 	}
 	an = (self->angle+ANG90)>>ANGLETOFINESHIFT;
 	P_SpawnMissileXYZ(self->x+FixedMul(self->radius>>1,
@@ -99,6 +107,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_IceGuyAttack)
 		finesine[an]), self->z+40*FRACUNIT, self, self->target,
 		PClass::FindClass ("IceGuyFX"));
 	S_Sound (self, CHAN_WEAPON, self->AttackSound, 1, ATTN_NORM);
+	return 0;
 }
 
 //============================================================================
@@ -109,11 +118,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_IceGuyAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_IceGuyDie)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	self->velx = 0;
 	self->vely = 0;
 	self->velz = 0;
 	self->height = self->GetDefault()->height;
 	CALL_ACTION(A_FreezeDeathChunks, self);
+	return 0;
 }
 
 //============================================================================
@@ -124,6 +136,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_IceGuyDie)
 
 DEFINE_ACTION_FUNCTION(AActor, A_IceGuyMissileExplode)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	AActor *mo;
 	int i;
 
@@ -136,5 +150,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_IceGuyMissileExplode)
 			mo->target = self->target;
 		}
 	}
+	return 0;
 }
 

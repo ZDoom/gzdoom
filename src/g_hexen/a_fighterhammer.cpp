@@ -27,6 +27,8 @@ extern void AdjustPlayerAngle (AActor *pmo, AActor *linetarget);
 
 DEFINE_ACTION_FUNCTION(AActor, A_FHammerAttack)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	angle_t angle;
 	int damage;
 	fixed_t power;
@@ -37,7 +39,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FHammerAttack)
 
 	if (NULL == (player = self->player))
 	{
-		return;
+		return 0;
 	}
 	AActor *pmo=player->mo;
 
@@ -91,7 +93,7 @@ hammerdone:
 	{ 
 		pmo->special1 = false;
 	}
-	return;		
+	return 0;		
 }
 
 //============================================================================
@@ -102,27 +104,30 @@ hammerdone:
 
 DEFINE_ACTION_FUNCTION(AActor, A_FHammerThrow)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	AActor *mo;
 	player_t *player;
 
 	if (NULL == (player = self->player))
 	{
-		return;
+		return 0;
 	}
 
 	if (!player->mo->special1)
 	{
-		return;
+		return 0;
 	}
 	AWeapon *weapon = player->ReadyWeapon;
 	if (weapon != NULL)
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire, false))
-			return;
+			return 0;
 	}
 	mo = P_SpawnPlayerMissile (player->mo, PClass::FindClass ("HammerMissile")); 
 	if (mo)
 	{
 		mo->special1 = 0;
-	}	
+	}
+	return 0;
 }

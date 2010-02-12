@@ -49,6 +49,8 @@ bool AArtiDarkServant::Use (bool pickup)
 
 DEFINE_ACTION_FUNCTION(AActor, A_Summon)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	AMinotaurFriend *mo;
 
 	mo = Spawn<AMinotaurFriend> (self->x, self->y, self->z, ALLOW_REPLACE);
@@ -59,7 +61,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Summon)
 			mo->Destroy ();
 			AActor *arti = Spawn<AArtiDarkServant> (self->x, self->y, self->z, ALLOW_REPLACE);
 			if (arti) arti->flags |= MF_DROPPED;
-			return;
+			return 0;
 		}
 
 		mo->StartTime = level.maptime;
@@ -82,4 +84,5 @@ DEFINE_ACTION_FUNCTION(AActor, A_Summon)
 		Spawn ("MinotaurSmoke", self->x, self->y, self->z, ALLOW_REPLACE);
 		S_Sound (self, CHAN_VOICE, mo->ActiveSound, 1, ATTN_NORM);
 	}
+	return 0;
 }

@@ -23,6 +23,8 @@ IMPLEMENT_CLASS(ADegninOre)
 
 DEFINE_ACTION_FUNCTION(AActor, A_RemoveForceField)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	self->flags &= ~MF_SPECIAL;
 
 	for (int i = 0; i < self->Sector->linecount; ++i)
@@ -36,6 +38,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_RemoveForceField)
 			line->sidedef[1]->SetTexture(side_t::mid, FNullTextureID());
 		}
 	}
+	return 0;
 }
 
 bool ADegninOre::Use (bool pickup)

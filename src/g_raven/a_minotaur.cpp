@@ -174,18 +174,23 @@ bool AMinotaurFriend::OkayToSwitchTarget (AActor *other)
 
 DEFINE_ACTION_FUNCTION(AActor, A_MinotaurDeath)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	if (Wads.CheckNumForName ("MNTRF1", ns_sprites) < 0 &&
 		Wads.CheckNumForName ("MNTRF0", ns_sprites) < 0)
 		self->SetState(self->FindState ("FadeOut"));
+	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_MinotaurAtk1)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	player_t *player;
 
 	if (!self->target)
 	{
-		return;
+		return 0;
 	}
 	S_Sound (self, CHAN_WEAPON, "minotaur/melee", 1, ATTN_NORM);
 	if (self->CheckMeleeRange())
@@ -199,6 +204,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurAtk1)
 			player->deltaviewheight = -16*FRACUNIT;
 		}
 	}
+	return 0;
 }
 
 //----------------------------------------------------------------------------
@@ -213,6 +219,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurAtk1)
 
 DEFINE_ACTION_FUNCTION(AActor, A_MinotaurDecide)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	bool friendly = !!(self->flags5 & MF5_SUMMONEDMONSTER);
 	angle_t angle;
 	AActor *target;
@@ -221,7 +229,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurDecide)
 	target = self->target;
 	if (!target)
 	{
-		return;
+		return 0;
 	}
 	if (!friendly)
 	{
@@ -260,6 +268,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurDecide)
 		// Don't need to call P_SetMobjState because the current state
 		// falls through to the swing attack
 	}
+	return 0;
 }
 
 //----------------------------------------------------------------------------
@@ -270,10 +279,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurDecide)
 
 DEFINE_ACTION_FUNCTION(AActor, A_MinotaurCharge)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	AActor *puff;
 
-	if (!self->target) return;
-
+	if (self->target == NULL)
+	{
+		return 0;
+	}
 	if (self->special1 > 0)
 	{
 		const PClass *type;
@@ -296,6 +309,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurCharge)
 		self->flags2 &= ~MF2_INVULNERABLE;
 		self->SetState (self->SeeState);
 	}
+	return 0;
 }
 
 //----------------------------------------------------------------------------
@@ -308,15 +322,17 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurCharge)
 
 DEFINE_ACTION_FUNCTION(AActor, A_MinotaurAtk2)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	AActor *mo;
 	angle_t angle;
 	fixed_t velz;
 	fixed_t z;
 	bool friendly = !!(self->flags5 & MF5_SUMMONEDMONSTER);
 
-	if (!self->target)
+	if (self->target == NULL)
 	{
-		return;
+		return 0;
 	}
 	S_Sound (self, CHAN_WEAPON, "minotaur/attack2", 1, ATTN_NORM);
 	if (self->CheckMeleeRange())
@@ -325,7 +341,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurAtk2)
 		damage = pr_atk.HitDice (friendly ? 3 : 5);
 		P_DamageMobj (self->target, self, self, damage, NAME_Melee);
 		P_TraceBleed (damage, self->target, self);
-		return;
+		return 0;
 	}
 	z = self->z + 40*FRACUNIT;
 	const PClass *fx = PClass::FindClass("MinotaurFX1");
@@ -343,6 +359,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurAtk2)
 			P_SpawnMissileAngleZ (self, z, fx, angle+(ANG45/16), velz);
 		}
 	}
+	return 0;
 }
 
 //----------------------------------------------------------------------------
@@ -355,13 +372,15 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurAtk2)
 
 DEFINE_ACTION_FUNCTION(AActor, A_MinotaurAtk3)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	AActor *mo;
 	player_t *player;
 	bool friendly = !!(self->flags5 & MF5_SUMMONEDMONSTER);
 
 	if (!self->target)
 	{
-		return;
+		return 0;
 	}
 	S_Sound (self, CHAN_VOICE, "minotaur/attack3", 1, ATTN_NORM);
 	if (self->CheckMeleeRange())
@@ -398,6 +417,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurAtk3)
 		self->SetState (self->FindState ("HammerLoop"));
 		self->special2 = 1;
 	}
+	return 0;
 }
 
 //----------------------------------------------------------------------------
@@ -408,6 +428,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurAtk3)
 
 DEFINE_ACTION_FUNCTION(AActor, A_MntrFloorFire)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	AActor *mo;
 	fixed_t x, y;
 
@@ -418,6 +440,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MntrFloorFire)
 	mo->target = self->target;
 	mo->velx = 1; // Force block checking
 	P_CheckMissileSpawn (mo);
+	return 0;
 }
 
 //---------------------------------------------------------------------------
@@ -464,6 +487,8 @@ void P_MinotaurSlam (AActor *source, AActor *target)
 
 DEFINE_ACTION_FUNCTION(AActor, A_MinotaurRoam)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	// In case pain caused him to skip his fade in.
 	self->RenderStyle = STYLE_Normal;
 
@@ -474,7 +499,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurRoam)
 		if (self1->StartTime >= 0 && (level.maptime - self1->StartTime) >= MAULATORTICS)
 		{
 			P_DamageMobj (self1, NULL, NULL, TELEFRAG_DAMAGE, NAME_None);
-			return;
+			return 0;
 		}
 	}
 
@@ -496,6 +521,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurRoam)
 			self->movedir = (self->movedir+7)%8;
 		FaceMovementDirection (self);
 	}
+	return 0;
 }
 
 
@@ -509,10 +535,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurRoam)
 
 DEFINE_ACTION_FUNCTION(AActor, A_MinotaurLook)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	if (!self->IsKindOf(RUNTIME_CLASS(AMinotaurFriend)))
 	{
 		CALL_ACTION(A_Look, self);
-		return;
+		return 0;
 	}
 
 	AActor *mo = NULL;
@@ -573,14 +601,17 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurLook)
 	{
 		self->SetStateNF (self->FindState ("Roam"));
 	}
+	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_MinotaurChase)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	if (!self->IsKindOf(RUNTIME_CLASS(AMinotaurFriend)))
 	{
-		A_Chase (self);
-		return;
+		A_Chase (stack, self);
+		return 0;
 	}
 
 	AMinotaurFriend *self1 = static_cast<AMinotaurFriend *> (self);
@@ -591,7 +622,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurChase)
 	if (self1->StartTime >= 0 && (level.maptime - self1->StartTime) >= MAULATORTICS)
 	{
 		P_DamageMobj (self1, NULL, NULL, TELEFRAG_DAMAGE, NAME_None);
-		return;
+		return 0;
 	}
 
 	if (pr_minotaurchase() < 30)
@@ -601,7 +632,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurChase)
 		!(self1->target->flags&MF_SHOOTABLE))
 	{ // look for a new target
 		self1->SetState (self1->FindState ("Spawn"));
-		return;
+		return 0;
 	}
 
 	FaceMovementDirection (self1);
@@ -615,14 +646,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurChase)
 			S_Sound (self1, CHAN_WEAPON, self1->AttackSound, 1, ATTN_NORM);
 		}
 		self1->SetState (self1->MeleeState);
-		return;
+		return 0;
 	}
 
 	// Missile attack
 	if (self1->MissileState && P_CheckMissileRange(self1))
 	{
 		self1->SetState (self1->MissileState);
-		return;
+		return 0;
 	}
 
 	// chase towards target
@@ -637,5 +668,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurChase)
 	{
 		self1->PlayActiveSound ();
 	}
+	return 0;
 }
 

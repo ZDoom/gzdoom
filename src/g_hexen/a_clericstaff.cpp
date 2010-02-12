@@ -46,6 +46,8 @@ int ACStaffMissile::DoSpecialDamage (AActor *target, int damage)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CStaffCheck)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	AActor *pmo;
 	int damage;
 	int newLife;
@@ -57,7 +59,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CStaffCheck)
 
 	if (NULL == (player = self->player))
 	{
-		return;
+		return 0;
 	}
 	AWeapon *weapon = self->player->ReadyWeapon;
 
@@ -107,6 +109,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CStaffCheck)
 			break;
 		}
 	}
+	return 0;
 }
 
 //============================================================================
@@ -117,19 +120,21 @@ DEFINE_ACTION_FUNCTION(AActor, A_CStaffCheck)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CStaffAttack)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	AActor *mo;
 	player_t *player;
 
 	if (NULL == (player = self->player))
 	{
-		return;
+		return 0;
 	}
 
 	AWeapon *weapon = self->player->ReadyWeapon;
 	if (weapon != NULL)
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
-			return;
+			return 0;
 	}
 	mo = P_SpawnPlayerMissile (self, RUNTIME_CLASS(ACStaffMissile), self->angle-(ANG45/15));
 	if (mo)
@@ -142,6 +147,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CStaffAttack)
 		mo->special2 = 0;
 	}
 	S_Sound (self, CHAN_WEAPON, "ClericCStaffFire", 1, ATTN_NORM);
+	return 0;
 }
 
 //============================================================================
@@ -152,6 +158,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_CStaffAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CStaffMissileSlither)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	fixed_t newX, newY;
 	int weaveXY;
 	int angle;
@@ -165,6 +173,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CStaffMissileSlither)
 	newY += FixedMul(finesine[angle], FloatBobOffsets[weaveXY]);
 	P_TryMove (self, newX, newY, true);
 	self->special2 = weaveXY;
+	return 0;
 }
 
 //============================================================================
@@ -175,7 +184,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_CStaffMissileSlither)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CStaffInitBlink)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	self->special1 = (pr_blink()>>1)+20;
+	return 0;
 }
 
 //============================================================================
@@ -186,6 +198,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_CStaffInitBlink)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CStaffCheckBlink)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	if (self->player && self->player->ReadyWeapon)
 	{
 		if (!--self->special1)
@@ -198,4 +212,5 @@ DEFINE_ACTION_FUNCTION(AActor, A_CStaffCheckBlink)
 			DoReadyWeapon(self);
 		}
 	}
+	return 0;
 }

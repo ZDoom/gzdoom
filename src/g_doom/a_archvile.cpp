@@ -21,7 +21,9 @@ void A_Fire(AActor *self, int height);
 //
 DEFINE_ACTION_FUNCTION(AActor, A_VileStart)
 {
+	PARAM_ACTION_PROLOGUE;
 	S_Sound (self, CHAN_VOICE, "vile/start", 1, ATTN_NORM);
+	return 0;
 }
 
 
@@ -31,22 +33,27 @@ DEFINE_ACTION_FUNCTION(AActor, A_VileStart)
 //
 DEFINE_ACTION_FUNCTION(AActor, A_StartFire)
 {
+	PARAM_ACTION_PROLOGUE;
 	S_Sound (self, CHAN_BODY, "vile/firestrt", 1, ATTN_NORM);
 	A_Fire (self, 0);
+	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireCrackle)
 {
+	PARAM_ACTION_PROLOGUE;
 	S_Sound (self, CHAN_BODY, "vile/firecrkl", 1, ATTN_NORM);
 	A_Fire (self, 0);
+	return 0;
 }
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Fire)
 {
-	ACTION_PARAM_START(1);
-	ACTION_PARAM_FIXED(height,0);
+	PARAM_ACTION_PROLOGUE;
+	PARAM_FIXED_OPT(height)		{ height = 0; }
 	
 	A_Fire(self, height);
+	return 0;
 }
 
 void A_Fire(AActor *self, int height)
@@ -77,12 +84,13 @@ void A_Fire(AActor *self, int height)
 //
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_VileTarget)
 {
-	ACTION_PARAM_START(1);
-	ACTION_PARAM_CLASS(fire,0);
+	PARAM_ACTION_PROLOGUE;
+	PARAM_CLASS_OPT(fire, AActor)	{ fire = PClass::FindClass("ArchvileFire"); }
+
 	AActor *fog;
 		
 	if (!self->target)
-		return;
+		return 0;
 
 	A_FaceTarget (self);
 
@@ -93,6 +101,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_VileTarget)
 	fog->target = self;
 	fog->tracer = self->target;
 	A_Fire(fog, 0);
+	return 0;
 }
 
 
@@ -102,25 +111,25 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_VileTarget)
 // A_VileAttack
 //
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_VileAttack)
-{		
-	ACTION_PARAM_START(6);
-	ACTION_PARAM_SOUND(snd,0);
-	ACTION_PARAM_INT(dmg,1);
-	ACTION_PARAM_INT(blastdmg,2);
-	ACTION_PARAM_INT(blastrad,3);
-	ACTION_PARAM_FIXED(thrust,4);
-	ACTION_PARAM_NAME(dmgtype,5);
+{
+	PARAM_ACTION_PROLOGUE;
+	PARAM_SOUND_OPT	(snd)		{ snd = "vile/stop"; }
+	PARAM_INT_OPT	(dmg)		{ dmg = 20; }
+	PARAM_INT_OPT	(blastdmg)	{ blastdmg = 70; }
+	PARAM_INT_OPT	(blastrad)	{ blastrad = 70; }
+	PARAM_FIXED_OPT	(thrust)	{ thrust = FRACUNIT; }
+	PARAM_NAME_OPT	(dmgtype)	{ dmgtype = NAME_Fire; }
 
 	AActor *fire, *target;
 	angle_t an;
 		
 	if (NULL == (target = self->target))
-		return;
+		return 0;
 	
 	A_FaceTarget (self);
 
 	if (!P_CheckSight (self, target, 0) )
-		return;
+		return 0;
 
 	S_Sound (self, CHAN_WEAPON, snd, 1, ATTN_NORM);
 	P_TraceBleed (dmg, target);
@@ -139,4 +148,5 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_VileAttack)
 		P_RadiusAttack (fire, self, blastdmg, blastrad, dmgtype, false);
 	}
 	target->velz = Scale(thrust, 1000, target->Mass);
+	return 0;
 }

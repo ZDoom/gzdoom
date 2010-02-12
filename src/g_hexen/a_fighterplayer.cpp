@@ -134,6 +134,8 @@ void AdjustPlayerAngle (AActor *pmo, AActor *linetarget)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FPunchAttack)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	angle_t angle;
 	int damage;
 	int slope;
@@ -145,7 +147,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FPunchAttack)
 
 	if (NULL == (player = self->player))
 	{
-		return;
+		return 0;
 	}
 	APlayerPawn *pmo = player->mo;
 
@@ -207,6 +209,6 @@ punchdone:
 		P_SetPsprite (player, ps_weapon, player->ReadyWeapon->FindState ("Fire2"));
 		S_Sound (pmo, CHAN_VOICE, "*fistgrunt", 1, ATTN_NORM);
 	}
-	return;		
+	return 0;		
 }
 

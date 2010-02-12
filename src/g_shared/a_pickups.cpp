@@ -266,11 +266,14 @@ bool P_GiveBody (AActor *actor, int num)
 
 DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialThing1)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	self->renderflags &= ~RF_INVISIBLE;
 	if (static_cast<AInventory *>(self)->DoRespawn ())
 	{
 		S_Sound (self, CHAN_VOICE, "misc/spawn", 1, ATTN_IDLE);
 	}
+	return 0;
 }
 
 //---------------------------------------------------------------------------
@@ -281,12 +284,15 @@ DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialThing1)
 
 DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialThing2)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	self->flags |= MF_SPECIAL;
 	if (!(self->GetDefault()->flags & MF_NOGRAVITY))
 	{
 		self->flags &= ~MF_NOGRAVITY;
 	}
 	self->SetState (self->SpawnState);
+	return 0;
 }
 
 
@@ -298,6 +304,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialThing2)
 
 DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialDoomThing)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	self->renderflags &= ~RF_INVISIBLE;
 	self->flags |= MF_SPECIAL;
 	if (!(self->GetDefault()->flags & MF_NOGRAVITY))
@@ -310,6 +318,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialDoomThing)
 		S_Sound (self, CHAN_VOICE, "misc/spawn", 1, ATTN_IDLE);
 		Spawn ("ItemFog", self->x, self->y, self->z, ALLOW_REPLACE);
 	}
+	return 0;
 }
 
 //---------------------------------------------------------------------------
@@ -320,6 +329,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialDoomThing)
 
 DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialPosition)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	// Move item back to its original location
 	fixed_t _x, _y;
 	sector_t *sec;
@@ -356,6 +367,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialPosition)
 			self->z += FloatBobOffsets[(self->FloatBobPhase + level.maptime) & 63];
 		}
 	}
+	return 0;
 }
 
 int AInventory::StaticLastMessageTic;

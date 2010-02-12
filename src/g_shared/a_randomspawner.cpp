@@ -164,7 +164,7 @@ class ARandomSpawner : public AActor
 		Super::Tick();
 		if (tracer == NULL || tracer->health <= 0)
 		{
-			CALL_ACTION(A_BossDeath, this);
+			A_BossDeath(this);
 			Destroy();
 		}
 	}
@@ -172,4 +172,3 @@ class ARandomSpawner : public AActor
 };
 
 IMPLEMENT_CLASS (ARandomSpawner)
-

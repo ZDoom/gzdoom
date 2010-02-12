@@ -590,7 +590,10 @@ void InitThingdef()
 
 		while (*++probe != NULL)
 		{
-			AFTable.Push(*(AFuncDesc *)*probe);
+			AFuncDesc *afunc = (AFuncDesc *)*probe;
+			assert(afunc->VMPointer != NULL);
+			*(afunc->VMPointer) = new VMNativeFunction(afunc->Function);
+			AFTable.Push(*afunc);
 		}
 		AFTable.ShrinkToFit();
 		qsort(&AFTable[0], AFTable.Size(), sizeof(AFTable[0]), funccmp);

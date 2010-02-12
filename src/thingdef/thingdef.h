@@ -187,6 +187,7 @@ struct AFuncDesc
 {
 	const char *Name;
 	actionf_p Function;
+	VMNativeFunction **VMPointer;
 };
 
 AFuncDesc *FindFunction(const char * string);
@@ -367,26 +368,27 @@ struct StateCallData
 
 // Macros to handle action functions. These are here so that I don't have to
 // change every single use in case the parameters change.
-#define DECLARE_ACTION(name) void AF_##name(AActor *self, AActor *stateowner, FState *, int, StateCallData *);
+#define DECLARE_ACTION(name)	extern VMNativeFunction *name##_VMPtr;
 
 // This distinction is here so that CALL_ACTION produces errors when trying to
 // access a function that requires parameters.
 #define DEFINE_ACTION_FUNCTION(cls, name) \
-	void AF_##name (AActor *self, AActor *stateowner, FState *, int, StateCallData *); \
-	static AFuncDesc info_##cls##_##name = { #name, AF_##name }; \
-	MSVC_ASEG AFuncDesc *infoptr_##cls##_##name GCC_ASEG = &info_##cls##_##name; \
-	void AF_##name (AActor *self, AActor *stateowner, FState *, int, StateCallData *statecall)
+	static int AF_##name(VM_ARGS); \
+	VMNativeFunction *name##_VMPtr; \
+	static const AFuncDesc cls##_##name##_Hook = { #name, AF_##name, &name##_VMPtr }; \
+	extern AFuncDesc const *const cls##_##name##_HookPtr; \
+	MSVC_ASEG AFuncDesc const *const cls##_##name##_HookPtr GCC_ASEG = &cls##_##name##_Hook; \
+	static int AF_##name(VM_ARGS)
 
-#define DEFINE_ACTION_FUNCTION_PARAMS(cls, name) \
-	void AFP_##name (AActor *self, AActor *stateowner, FState *CallingState, int ParameterIndex, StateCallData *statecall); \
-	static AFuncDesc info_##cls##_##name = { #name, AFP_##name }; \
-	MSVC_ASEG AFuncDesc *infoptr_##cls##_##name GCC_ASEG = &info_##cls##_##name; \
-	void AFP_##name (AActor *self, AActor *stateowner, FState *CallingState, int ParameterIndex, StateCallData *statecall)
+#define DEFINE_ACTION_FUNCTION_PARAMS(cls, name) DEFINE_ACTION_FUNCTION(cls, name)
 
-#define DECLARE_PARAMINFO AActor *self, AActor *stateowner, FState *CallingState, int ParameterIndex, StateCallData *statecall
-#define PUSH_PARAMINFO self, stateowner, CallingState, ParameterIndex, statecall
+//#define DECLARE_PARAMINFO AActor *self, AActor *stateowner, FState *CallingState, int ParameterIndex, StateCallData *statecall
+//#define PUSH_PARAMINFO self, stateowner, CallingState, ParameterIndex, statecall
 
-#define CALL_ACTION(name,self) AF_##name(self, self, NULL, 0, NULL)
+#define CALL_ACTION(name,self) { /*AF_##name(self, self, NULL, 0, NULL)*/ \
+		VMValue params[5] = { self, self, NULL, VMValue(NULL, ATAG_STATE) }; \
+		stack->Call(name##_VMPtr, params, countof(params), NULL, 0, NULL); \
+	}
 
 
 int EvalExpressionI (DWORD x, AActor *self);
@@ -398,6 +400,7 @@ FState *EvalExpressionState (DWORD x, AActor *self);
 const PClass *EvalExpressionClass (DWORD x, AActor *self);
 FName EvalExpressionName (DWORD x, AActor *self);
 
+#if 0
 #define ACTION_PARAM_START(count)
 
 #define ACTION_PARAM_INT(var, i) \
@@ -422,11 +425,12 @@ FName EvalExpressionName (DWORD x, AActor *self);
 	FName var = EvalExpressionName(ParameterIndex+i, self);
 #define ACTION_PARAM_ANGLE(var,i) \
 	angle_t var = angle_t(EvalExpressionF(ParameterIndex+i, self)*ANGLE_90/90.f);
+#endif
 
 #define ACTION_SET_RESULT(v) if (statecall != NULL) statecall->Result = v;
 
 // Checks to see what called the current action function
-#define ACTION_CALL_FROM_ACTOR() (CallingState == self->state)
-#define ACTION_CALL_FROM_WEAPON() (self->player && CallingState != self->state && statecall == NULL)
+#define ACTION_CALL_FROM_ACTOR() (callingstate == self->state)
+#define ACTION_CALL_FROM_WEAPON() (self->player && callingstate != self->state && statecall == NULL)
 #define ACTION_CALL_FROM_INVENTORY() (statecall != NULL)
 #endif

@@ -1249,6 +1249,8 @@ void APlayerPawn::TweakSpeeds (int &forward, int &side)
 
 DEFINE_ACTION_FUNCTION(AActor, A_PlayerScream)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	int sound = 0;
 	int chan = CHAN_VOICE;
 
@@ -1262,7 +1264,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_PlayerScream)
 		{
 			S_Sound (self, CHAN_VOICE, "*death", 1, ATTN_NORM);
 		}
-		return;
+		return 0;
 	}
 
 	// Handle the different player death screams
@@ -1311,6 +1313,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_PlayerScream)
 		}
 	}
 	S_Sound (self, chan, sound, 1, ATTN_NORM);
+	return 0;
 }
 
 
@@ -1322,17 +1325,17 @@ DEFINE_ACTION_FUNCTION(AActor, A_PlayerScream)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SkullPop)
 {
-	ACTION_PARAM_START(1);
-	ACTION_PARAM_CLASS(spawntype, 0);
+	PARAM_ACTION_PROLOGUE;
+	PARAM_CLASS_OPT(spawntype, APlayerChunk)	{ spawntype = NULL; }
 
 	APlayerPawn *mo;
 	player_t *player;
 
 	// [GRB] Parameterized version
-	if (!spawntype || !spawntype->IsDescendantOf (RUNTIME_CLASS (APlayerChunk)))
+	if (spawntype == NULL || !spawntype->IsDescendantOf(RUNTIME_CLASS(APlayerChunk)))
 	{
 		spawntype = PClass::FindClass("BloodySkull");
-		if (spawntype == NULL) return;
+		if (spawntype == NULL) return 0;
 	}
 
 	self->flags &= ~MF_SOLID;
@@ -1357,6 +1360,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SkullPop)
 		}
 		player->damagecount = 32;
 	}
+	return 0;
 }
 
 //----------------------------------------------------------------------------
@@ -1367,10 +1371,13 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SkullPop)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CheckPlayerDone)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	if (self->player == NULL)
 	{
-		self->Destroy ();
+		self->Destroy();
 	}
+	return 0;
 }
 
 //===========================================================================
@@ -1384,7 +1391,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CheckPlayerDone)
 
 void P_CheckPlayerSprites()
 {
-	for(int i=0; i<MAXPLAYERS; i++)
+	for (int i = 0; i < MAXPLAYERS; i++)
 	{
 		player_t * player = &players[i];
 		APlayerPawn * mo = player->mo;

@@ -71,6 +71,7 @@
 #include "r_interpolate.h"
 #include "doomstat.h"
 #include "m_argv.h"
+#include "autosegs.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -328,6 +329,17 @@ static void MarkRoot()
 		SectorMarker->SecNum = 0;
 	}
 	Mark(SectorMarker);
+	// Mark action functions
+	if (!FinalGC)
+	{
+		FAutoSegIterator probe(ARegHead, ARegTail);
+
+		while (*++probe != NULL)
+		{
+			AFuncDesc *afunc = (AFuncDesc *)*probe;
+			Mark(*(afunc->VMPointer));
+		}
+	}
 	// Mark classes
 	for (unsigned j = 0; j < PClass::m_Types.Size(); ++j)
 	{
@@ -362,7 +374,7 @@ static void MarkRoot()
 //
 // Atomic
 //
-// If their were any propagations that needed to be done atomicly, they
+// If there were any propagations that needed to be done atomicly, they
 // would go here. It also sets things up for the sweep state.
 //
 //==========================================================================

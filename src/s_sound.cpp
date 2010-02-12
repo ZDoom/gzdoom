@@ -802,7 +802,7 @@ static void CalcPolyobjSoundOrg(const FPolyObj *poly, fixed_t *x, fixed_t *y, fi
 //==========================================================================
 
 static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyObj *poly,
-	const FVector3 *pt, int channel, FSoundID sound_id, float volume, float attenuation)
+	const FVector3 *pt, int channel, FSoundID sound_id, double volume, double attenuation)
 {
 	sfxinfo_t *sfx;
 	int chanflags;
@@ -860,7 +860,7 @@ static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyO
 	sfx = &S_sfx[sound_id];
 
 	// Scale volume according to SNDINFO data.
-	volume = MIN(volume * sfx->Volume, 1.f);
+	volume = MIN(volume * sfx->Volume, 1.0);
 	if (volume <= 0)
 		return NULL;
 
@@ -1037,11 +1037,11 @@ static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyO
 		{
 			SoundListener listener;
 			S_SetListener(listener, players[consoleplayer].camera);
-			chan = (FSoundChan*)GSnd->StartSound3D (sfx->data, &listener, volume, rolloff, attenuation, pitch, basepriority, pos, vel, channel, startflags, NULL);
+			chan = (FSoundChan*)GSnd->StartSound3D (sfx->data, &listener, float(volume), rolloff, float(attenuation), pitch, basepriority, pos, vel, channel, startflags, NULL);
 		}
 		else
 		{
-			chan = (FSoundChan*)GSnd->StartSound (sfx->data, volume, pitch, startflags, NULL);
+			chan = (FSoundChan*)GSnd->StartSound (sfx->data, float(volume), pitch, startflags, NULL);
 		}
 	}
 	if (chan == NULL && (chanflags & CHAN_LOOP))
@@ -1063,13 +1063,13 @@ static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyO
 		chan->OrgID = FSoundID(org_id);
 		chan->SfxInfo = sfx;
 		chan->EntChannel = channel;
-		chan->Volume = volume;
+		chan->Volume = float(volume);
 		chan->ChanFlags |= chanflags;
 		chan->NearLimit = near_limit;
 		chan->LimitRange = limit_range;
 		chan->Pitch = pitch;
 		chan->Priority = basepriority;
-		chan->DistanceScale = attenuation;
+		chan->DistanceScale = float(attenuation);
 		chan->SourceType = type;
 		switch (type)
 		{
@@ -1156,7 +1156,7 @@ void S_RestartSound(FSoundChan *chan)
 //
 //==========================================================================
 
-void S_Sound (int channel, FSoundID sound_id, float volume, float attenuation)
+void S_Sound (int channel, FSoundID sound_id, double volume, double attenuation)
 {
 	S_StartSound (NULL, NULL, NULL, NULL, channel, sound_id, volume, attenuation);
 }
@@ -1167,7 +1167,7 @@ void S_Sound (int channel, FSoundID sound_id, float volume, float attenuation)
 //
 //==========================================================================
 
-void S_Sound (AActor *ent, int channel, FSoundID sound_id, float volume, float attenuation)
+void S_Sound (AActor *ent, int channel, FSoundID sound_id, double volume, double attenuation)
 {
 	if (ent == NULL || ent->Sector->Flags & SECF_SILENT)
 		return;
@@ -1180,7 +1180,7 @@ void S_Sound (AActor *ent, int channel, FSoundID sound_id, float volume, float a
 //
 //==========================================================================
 
-void S_Sound (const FPolyObj *poly, int channel, FSoundID sound_id, float volume, float attenuation)
+void S_Sound (const FPolyObj *poly, int channel, FSoundID sound_id, double volume, double attenuation)
 {
 	S_StartSound (NULL, NULL, poly, NULL, channel, sound_id, volume, attenuation);
 }
@@ -1191,7 +1191,7 @@ void S_Sound (const FPolyObj *poly, int channel, FSoundID sound_id, float volume
 //
 //==========================================================================
 
-void S_Sound (fixed_t x, fixed_t y, fixed_t z, int channel, FSoundID sound_id, float volume, float attenuation)
+void S_Sound (fixed_t x, fixed_t y, fixed_t z, int channel, FSoundID sound_id, double volume, double attenuation)
 {
 	FVector3 pt(FIXED2FLOAT(x), FIXED2FLOAT(z), FIXED2FLOAT(y));
 	S_StartSound (NULL, NULL, NULL, &pt, channel, sound_id, volume, attenuation);
@@ -1203,7 +1203,7 @@ void S_Sound (fixed_t x, fixed_t y, fixed_t z, int channel, FSoundID sound_id, f
 //
 //==========================================================================
 
-void S_Sound (const sector_t *sec, int channel, FSoundID sfxid, float volume, float attenuation)
+void S_Sound (const sector_t *sec, int channel, FSoundID sfxid, double volume, double attenuation)
 {
 	S_StartSound (NULL, sec, NULL, NULL, channel, sfxid, volume, attenuation);
 }

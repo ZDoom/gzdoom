@@ -1009,7 +1009,7 @@ bool AActor::Grind(bool items)
 		{
 			if (this->flags4 & MF4_BOSSDEATH) 
 			{
-				CALL_ACTION(A_BossDeath, this);
+				A_BossDeath(this);
 			}
 			flags &= ~MF_SOLID;
 			flags3 |= MF3_DONTGIB;
@@ -1027,7 +1027,7 @@ bool AActor::Grind(bool items)
 		{
 			if (this->flags4 & MF4_BOSSDEATH) 
 			{
-				CALL_ACTION(A_BossDeath, this);
+				A_BossDeath(this);
 			}
 
 			const PClass *i = PClass::FindClass("RealGibs");

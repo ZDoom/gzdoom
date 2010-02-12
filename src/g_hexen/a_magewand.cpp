@@ -51,8 +51,11 @@ void AMageWandMissile::Effect ()
 
 DEFINE_ACTION_FUNCTION(AActor, A_MWandAttack)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	AActor *mo;
 
 	mo = P_SpawnPlayerMissile (self, RUNTIME_CLASS(AMageWandMissile));
 	S_Sound (self, CHAN_WEAPON, "MageWandFire", 1, ATTN_NORM);
+	return 0;
 }

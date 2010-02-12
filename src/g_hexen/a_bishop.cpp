@@ -24,9 +24,11 @@ static FRandom pr_pain ("BishopPainBlur");
 
 DEFINE_ACTION_FUNCTION(AActor, A_BishopAttack)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	if (!self->target)
 	{
-		return;
+		return 0;
 	}
 	S_Sound (self, CHAN_BODY, self->AttackSound, 1, ATTN_NORM);
 	if (self->CheckMeleeRange())
@@ -34,9 +36,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_BishopAttack)
 		int damage = pr_atk.HitDice (4);
 		P_DamageMobj (self->target, self, self, damage, NAME_Melee);
 		P_TraceBleed (damage, self->target, self);
-		return;
+		return 0;
 	}
 	self->special1 = (pr_atk() & 3) + 5;
+	return 0;
 }
 
 //============================================================================
@@ -48,13 +51,15 @@ DEFINE_ACTION_FUNCTION(AActor, A_BishopAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_BishopAttack2)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	AActor *mo;
 
 	if (!self->target || !self->special1)
 	{
 		self->special1 = 0;
 		self->SetState (self->SeeState);
-		return;
+		return 0;
 	}
 	mo = P_SpawnMissile (self, self->target, PClass::FindClass("BishopFX"));
 	if (mo != NULL)
@@ -63,6 +68,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BishopAttack2)
 		mo->special2 = 16; // High word == x/y, Low word == z
 	}
 	self->special1--;
+	return 0;
 }
 
 //============================================================================
@@ -73,6 +79,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_BishopAttack2)
 
 DEFINE_ACTION_FUNCTION(AActor, A_BishopMissileWeave)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	fixed_t newX, newY;
 	int weaveXY, weaveZ;
 	int angle;
@@ -92,6 +100,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BishopMissileWeave)
 	weaveZ = (weaveZ + 2) & 63;
 	self->z += FloatBobOffsets[weaveZ];	
 	self->special2 = weaveZ + (weaveXY<<16);
+	return 0;
 }
 
 //============================================================================
@@ -102,14 +111,17 @@ DEFINE_ACTION_FUNCTION(AActor, A_BishopMissileWeave)
 
 DEFINE_ACTION_FUNCTION(AActor, A_BishopDecide)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	if (pr_decide() < 220)
 	{
-		return;
+		return 0;
 	}
 	else
 	{
 		self->SetState (self->FindState ("Blur"));
-	}		
+	}
+	return 0;
 }
 
 //============================================================================
@@ -120,6 +132,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_BishopDecide)
 
 DEFINE_ACTION_FUNCTION(AActor, A_BishopDoBlur)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	self->special1 = (pr_doblur() & 3) + 3; // Random number of blurs
 	if (pr_doblur() < 120)
 	{
@@ -134,6 +148,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BishopDoBlur)
 		P_ThrustMobj (self, self->angle, 11*FRACUNIT);
 	}
 	S_Sound (self, CHAN_BODY, "BishopBlur", 1, ATTN_NORM);
+	return 0;
 }
 
 //============================================================================
@@ -144,6 +159,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_BishopDoBlur)
 
 DEFINE_ACTION_FUNCTION(AActor, A_BishopSpawnBlur)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	AActor *mo;
 
 	if (!--self->special1)
@@ -164,6 +181,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BishopSpawnBlur)
 	{
 		mo->angle = self->angle;
 	}
+	return 0;
 }
 
 //============================================================================
@@ -174,9 +192,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_BishopSpawnBlur)
 
 DEFINE_ACTION_FUNCTION(AActor, A_BishopChase)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	self->z -= FloatBobOffsets[self->special2] >> 1;
 	self->special2 = (self->special2 + 4) & 63;
 	self->z += FloatBobOffsets[self->special2] >> 1;
+	return 0;
 }
 
 //============================================================================
@@ -187,6 +208,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_BishopChase)
 
 DEFINE_ACTION_FUNCTION(AActor, A_BishopPuff)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	AActor *mo;
 
 	mo = Spawn ("BishopPuff", self->x, self->y, self->z + 40*FRACUNIT, ALLOW_REPLACE);
@@ -194,6 +217,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BishopPuff)
 	{
 		mo->velz = FRACUNIT/2;
 	}
+	return 0;
 }
 
 //============================================================================
@@ -204,12 +228,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_BishopPuff)
 
 DEFINE_ACTION_FUNCTION(AActor, A_BishopPainBlur)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	AActor *mo;
 
 	if (pr_pain() < 64)
 	{
 		self->SetState (self->FindState ("Blur"));
-		return;
+		return 0;
 	}
 	fixed_t x = self->x + (pr_pain.Random2()<<12);
 	fixed_t y = self->y + (pr_pain.Random2()<<12);
@@ -219,4 +245,5 @@ DEFINE_ACTION_FUNCTION(AActor, A_BishopPainBlur)
 	{
 		mo->angle = self->angle;
 	}
+	return 0;
 }

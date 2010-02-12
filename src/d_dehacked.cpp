@@ -1603,7 +1603,7 @@ static void SetPointer(FState *state, PSymbol *sym, int frame = 0)
 	else
 	{
 		FString symname = sym->SymbolName.GetChars();
-		state->SetAction(static_cast<PSymbolActionFunction*>(sym));
+		state->SetAction(static_cast<PSymbolActionFunction*>(sym)->Function);
 
 		// Note: CompareNoCase() calls stricmp() and therefore returns 0 when they're the same.
 		for (unsigned int i = 0; i < MBFCodePointers.Size(); i++)

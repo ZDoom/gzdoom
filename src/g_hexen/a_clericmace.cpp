@@ -17,6 +17,8 @@ static FRandom pr_maceatk ("CMaceAttack");
 
 DEFINE_ACTION_FUNCTION(AActor, A_CMaceAttack)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	angle_t angle;
 	int damage;
 	int slope;
@@ -26,7 +28,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CMaceAttack)
 
 	if (NULL == (player = self->player))
 	{
-		return;
+		return 0;
 	}
 
 	damage = 25+(pr_maceatk()&15);
@@ -60,5 +62,5 @@ DEFINE_ACTION_FUNCTION(AActor, A_CMaceAttack)
 	slope = P_AimLineAttack (player->mo, angle, MELEERANGE, &linetarget);
 	P_LineAttack (player->mo, angle, MELEERANGE, slope, damage, NAME_Melee, PClass::FindClass ("HammerPuff"));
 macedone:
-	return;		
+	return 0;		
 }

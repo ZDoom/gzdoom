@@ -37,6 +37,8 @@
 
 DEFINE_ACTION_FUNCTION(AActor, A_BarrelDestroy)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	if ((dmflags2 & DF2_BARRELS_RESPAWN) &&
 		(deathmatch || alwaysapplydmflags))
 	{
@@ -48,5 +50,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_BarrelDestroy)
 	{
 		self->Destroy ();
 	}
+	return 0;
 }
 

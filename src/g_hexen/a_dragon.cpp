@@ -164,6 +164,8 @@ static void DragonSeek (AActor *actor, angle_t thresh, angle_t turnMax)
 
 DEFINE_ACTION_FUNCTION(AActor, A_DragonInitFlight)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	FActorIterator iterator (self->tid);
 
 	do
@@ -172,10 +174,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_DragonInitFlight)
 		if (self->tracer == NULL)
 		{
 			self->SetState (self->SpawnState);
-			return;
+			return 0;
 		}
 	} while (self->tracer == self);
 	self->RemoveFromHash ();
+	return 0;
 }
 
 //============================================================================
@@ -186,6 +189,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_DragonInitFlight)
 
 DEFINE_ACTION_FUNCTION(AActor, A_DragonFlight)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	angle_t angle;
 
 	DragonSeek (self, 4*ANGLE_1, 8*ANGLE_1);
@@ -194,7 +199,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_DragonFlight)
 		if(!(self->target->flags&MF_SHOOTABLE))
 		{ // target died
 			self->target = NULL;
-			return;
+			return 0;
 		}
 		angle = R_PointToAngle2(self->x, self->y, self->target->x,
 			self->target->y);
@@ -215,6 +220,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_DragonFlight)
 	{
 		P_LookForPlayers (self, true, NULL);
 	}
+	return 0;
 }
 
 //============================================================================
@@ -225,6 +231,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_DragonFlight)
 
 DEFINE_ACTION_FUNCTION(AActor, A_DragonFlap)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	CALL_ACTION(A_DragonFlight, self);
 	if (pr_dragonflap() < 240)
 	{
@@ -234,6 +242,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_DragonFlap)
 	{
 		self->PlayActiveSound ();
 	}
+	return 0;
 }
 
 //============================================================================
@@ -244,7 +253,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_DragonFlap)
 
 DEFINE_ACTION_FUNCTION(AActor, A_DragonAttack)
 {
-	P_SpawnMissile (self, self->target, PClass::FindClass ("DragonFireball"));						
+	PARAM_ACTION_PROLOGUE;
+
+	P_SpawnMissile (self, self->target, PClass::FindClass ("DragonFireball"));
+	return 0;
 }
 
 //============================================================================
@@ -255,6 +267,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_DragonAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_DragonFX2)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	AActor *mo;
 	int i;
 	int delay;
@@ -272,7 +286,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_DragonFX2)
 			mo->tics = delay+(pr_dragonfx2()&3)*i*2;
 			mo->target = self->target;
 		}
-	} 
+	}
+	return 0;
 }
 
 //============================================================================
@@ -283,11 +298,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_DragonFX2)
 
 DEFINE_ACTION_FUNCTION(AActor, A_DragonPain)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	CALL_ACTION(A_Pain, self);
 	if (!self->tracer)
 	{ // no destination spot yet
 		self->SetState (self->SeeState);
 	}
+	return 0;
 }
 
 //============================================================================
@@ -298,8 +316,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_DragonPain)
 
 DEFINE_ACTION_FUNCTION(AActor, A_DragonCheckCrash)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	if (self->z <= self->floorz)
 	{
 		self->SetState (self->FindState ("Crash"));
 	}
+	return 0;
 }

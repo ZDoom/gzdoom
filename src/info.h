@@ -62,7 +62,6 @@ struct FState
 	BYTE		DefineFlags;	// Unused byte so let's use it during state creation.
 	FState		*NextState;
 	VMFunction	*ActionFunc;
-	int			ParameterIndex;
 
 	inline int GetFrame() const
 	{
@@ -92,7 +91,7 @@ struct FState
 	{
 		Frame = (Frame & SF_FULLBRIGHT) | (frame-'A');
 	}
-	void SetAction(PSymbolActionFunction *func, bool setdefaultparams = true);
+	void SetAction(VMFunction *func) { ActionFunc = func; }
 	bool CallAction(AActor *self, AActor *stateowner, StateCallData *statecall = NULL);
 	static const PClass *StaticFindStateOwner (const FState *state);
 	static const PClass *StaticFindStateOwner (const FState *state, const FActorInfo *info);
@@ -189,5 +188,22 @@ extern FDoomEdMap DoomEdMap;
 
 int GetSpriteIndex(const char * spritename);
 TArray<FName> &MakeStateNameList(const char * fname);
+
+// Standard parameters for all action functons
+//   self         - Actor this action is to operate on (player if a weapon)
+//   stateowner   - Actor this action really belongs to (may be a weapon)
+//   callingstate - State this action was called from
+//   statecall    - CustomInventory stuff
+#define PARAM_ACTION_PROLOGUE_TYPE(type) \
+	PARAM_PROLOGUE; \
+	PARAM_OBJECT	 (self, type); \
+	PARAM_OBJECT_OPT (stateowner, AActor) { stateowner = self; } \
+	PARAM_STATE_OPT  (callingstate) { callingstate = NULL; } \
+	PARAM_POINTER_OPT(statecall, StateCallData) { statecall = NULL; }
+
+#define PARAM_ACTION_PROLOGUE	PARAM_ACTION_PROLOGUE_TYPE(AActor)
+
+// Number of action paramaters
+#define NAP 4
 
 #endif	// __INFO_H__

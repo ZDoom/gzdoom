@@ -98,7 +98,8 @@ bool DoActionSpecials(FScanner &sc, FState & state, Baggage &bag, FStateTempCall
 			sc.ScriptError ("Too many arguments to %s", specname.GetChars());
 		}
 
-		state.SetAction(FindGlobalActionFunction("A_CallSpecial"), false);
+		//FIXME
+		//state.SetAction(FindGlobalActionFunction("A_CallSpecial"), false);
 		return true;
 	}
 	return false;
@@ -219,7 +220,6 @@ do_stop:
 
 			state.sprite = GetSpriteIndex(statestring);
 			state.Misc1 = state.Misc2 = 0;
-			state.ParameterIndex = 0;
 			sc.MustGetString();
 			statestring = sc.String;
 
@@ -262,7 +262,6 @@ do_stop:
 				if (sym != NULL && sym->SymbolType == SYM_ActionFunction)
 				{
 					PSymbolActionFunction *afd = static_cast<PSymbolActionFunction *>(sym);
-					state.SetAction(afd, false);
 					if (!afd->Arguments.IsEmpty())
 					{
 						const char *params = afd->Arguments.GetChars();
@@ -278,7 +277,7 @@ do_stop:
 						{
 							if (!sc.CheckString("(")) 
 							{
-								state.ParameterIndex = afd->defaultparameterindex+1;
+//								state.ParameterIndex = afd->defaultparameterindex+1;
 								goto endofstate;
 							}
 						}

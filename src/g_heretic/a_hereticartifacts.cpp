@@ -47,6 +47,8 @@ bool AArtiTomeOfPower::Use (bool pickup)
 
 DEFINE_ACTION_FUNCTION(AActor, A_TimeBomb)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	self->z += 32*FRACUNIT;
 	self->RenderStyle = STYLE_Add;
 	self->alpha = FRACUNIT;
@@ -55,6 +57,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_TimeBomb)
 	{
 		P_HitFloor (self);
 	}
+	return 0;
 }
 
 class AArtiTimeBomb : public AInventory

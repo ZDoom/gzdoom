@@ -224,7 +224,7 @@ void PClass::InsertIntoHash ()
 }
 
 // Find a type, passed the name as a name
-const PClass *PClass::FindClass (FName zaname)
+PClass *PClass::FindClass (FName zaname)
 {
 	if (zaname == NAME_None)
 	{
@@ -518,7 +518,9 @@ size_t PClass::PropagateMark()
 IMPLEMENT_ABSTRACT_CLASS(PSymbol);
 IMPLEMENT_CLASS(PSymbolConst);
 IMPLEMENT_CLASS(PSymbolVariable);
-IMPLEMENT_CLASS(PSymbolActionFunction);
+IMPLEMENT_POINTY_CLASS(PSymbolActionFunction)
+ DECLARE_POINTER(Function)
+END_POINTERS
 IMPLEMENT_POINTY_CLASS(PSymbolVMFunction)
  DECLARE_POINTER(Function)
 END_POINTERS

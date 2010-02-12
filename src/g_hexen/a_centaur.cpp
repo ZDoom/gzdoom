@@ -16,6 +16,8 @@ static FRandom pr_centaurdefend ("CentaurDefend");
 
 DEFINE_ACTION_FUNCTION(AActor, A_CentaurDefend)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	A_FaceTarget (self);
 	if (self->CheckMeleeRange() && pr_centaurdefend() < 32)
 	{
@@ -24,4 +26,5 @@ DEFINE_ACTION_FUNCTION(AActor, A_CentaurDefend)
 		self->flags2&=~(MF2_REFLECTIVE|MF2_INVULNERABLE);
 		self->SetState (self->MeleeState);
 	}
+	return 0;
 }

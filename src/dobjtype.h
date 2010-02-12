@@ -6,6 +6,7 @@
 #endif
 
 #include "thingdef/thingdef_type.h"
+#include "vm.h"
 
 // Symbol information -------------------------------------------------------
 
@@ -81,23 +82,27 @@ public:
 // parameters passed.
 struct FState;
 struct StateCallData;
-typedef void (*actionf_p)(AActor *self, AActor *stateowner, FState *state, int parameters, StateCallData *statecall);
+class VMFrameStack;
+struct VMValue;
+struct VMReturn;
+typedef int (*actionf_p)(VMFrameStack *stack, VMValue *param, int numparam, VMReturn *ret, int numret);/*(VM_ARGS)*/
+class VMFunction;
 
 class PSymbolActionFunction : public PSymbol
 {
 	DECLARE_CLASS(PSymbolActionFunction, PSymbol);
+	HAS_OBJECT_POINTERS;
 public:
 	FString Arguments;
-	actionf_p Function;
+	VMFunction *Function;
 	int defaultparameterindex;
 
 	PSymbolActionFunction(FName name) : PSymbol(name, SYM_ActionFunction) {}
 	PSymbolActionFunction() : PSymbol(NAME_None, SYM_ActionFunction) {}
 };
 
-// A symbol table -----------------------------------------------------------
+// A VM function ------------------------------------------------------------
 
-class VMFunction;
 class PSymbolVMFunction : public PSymbol
 {
 	DECLARE_CLASS(PSymbolVMFunction, PSymbol);
@@ -195,10 +200,10 @@ public:
 	}
 
 	// Find a type, given its name.
-	static const PClass *FindClass (const char *name) { return FindClass (FName (name, true)); }
-	static const PClass *FindClass (const FString &name) { return FindClass (FName (name, true)); }
-	static const PClass *FindClass (ENamedName name) { return FindClass (FName (name)); }
-	static const PClass *FindClass (FName name);
+	static PClass *FindClass (const char *name) { return FindClass (FName (name, true)); }
+	static PClass *FindClass (const FString &name) { return FindClass (FName (name, true)); }
+	static PClass *FindClass (ENamedName name) { return FindClass (FName (name)); }
+	static PClass *FindClass (FName name);
 	const PClass *FindClassTentative (FName name);	// not static!
 
 	static TArray<PClass *> m_Types;

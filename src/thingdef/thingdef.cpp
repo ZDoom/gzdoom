@@ -302,9 +302,13 @@ static void FinishThingdef()
 			p->Emit(&buildit);
 			delete p;
 		}
-		// FIXME: Call a real function
 		buildit.Emit(OP_CALL_K, buildit.GetConstantAddress(NULL, ATAG_OBJECT), j, 0);
 		VMScriptFunction *func = buildit.MakeFunction();
+		func->NumArgs = tcall->Parameters.Size();
+		for (int k = 0; k < tcall->NumStates; ++k)
+		{
+			tcall->ActorInfo->OwnedStates[tcall->FirstState + k].SetAction(func);
+		}
 #if 1
 		const char *marks = "=======================================================";
 		char label[64];
@@ -318,10 +322,8 @@ static void FinishThingdef()
 		fprintf(dump, "\nDisassembly:\n");
 		VMDisasm(dump, func->Code, func->CodeSize, func);
 #endif
-		//if(i==6) I_Error("Poop");
 	}
 	fclose(dump);
-	I_Error("Poop");
 
 	for (i = 0; i < PClass::m_Types.Size(); i++)
 	{

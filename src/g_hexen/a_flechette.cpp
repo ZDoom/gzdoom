@@ -297,6 +297,8 @@ int APoisonCloud::DoSpecialDamage (AActor *victim, int damage)
 
 DEFINE_ACTION_FUNCTION(AActor, A_PoisonBagInit)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	AActor *mo;
 	
 	mo = Spawn<APoisonCloud> (self->x, self->y, self->z+28*FRACUNIT, ALLOW_REPLACE);
@@ -304,6 +306,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_PoisonBagInit)
 	{
 		mo->target = self->target;
 	}
+	return 0;
 }
 
 //===========================================================================
@@ -314,14 +317,17 @@ DEFINE_ACTION_FUNCTION(AActor, A_PoisonBagInit)
 
 DEFINE_ACTION_FUNCTION(AActor, A_PoisonBagCheck)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	if (--self->special1 <= 0)
 	{
 		self->SetState (self->FindState ("Death"));
 	}
 	else
 	{
-		return;
+		return 0;
 	}
+	return 0;
 }
 
 //===========================================================================
@@ -332,12 +338,15 @@ DEFINE_ACTION_FUNCTION(AActor, A_PoisonBagCheck)
 
 DEFINE_ACTION_FUNCTION(AActor, A_PoisonBagDamage)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	int bobIndex;
 	
 	P_RadiusAttack (self, self->target, 4, 40, self->DamageType, true);
 	bobIndex = self->special2;
 	self->z += FloatBobOffsets[bobIndex]>>4;
 	self->special2 = (bobIndex+1)&63;
+	return 0;
 }
 
 //===========================================================================
@@ -348,10 +357,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_PoisonBagDamage)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CheckThrowBomb)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	if (--self->health <= 0)
 	{
 		self->SetState (self->FindState(NAME_Death));
 	}
+	return 0;
 }
 
 //===========================================================================
@@ -362,6 +374,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_CheckThrowBomb)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CheckThrowBomb2)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	// [RH] Check using actual velocity, although the velz < 2 check still stands
 	//if (abs(self->velx) < FRACUNIT*3/2 && abs(self->vely) < FRACUNIT*3/2
 	//	&& self->velz < 2*FRACUNIT)
@@ -376,4 +390,5 @@ DEFINE_ACTION_FUNCTION(AActor, A_CheckThrowBomb2)
 		self->flags &= ~MF_MISSILE;
 	}
 	CALL_ACTION(A_CheckThrowBomb, self);
+	return 0;
 }

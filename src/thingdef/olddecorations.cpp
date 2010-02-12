@@ -234,24 +234,24 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def)
 			{
 				if (extra.bExplosive)
 				{
-					info->OwnedStates[extra.DeathStart].SetAction(FindGlobalActionFunction("A_Explode"));
+					info->OwnedStates[extra.DeathStart].SetAction(FindGlobalActionFunction("A_Explode")->Function);
 				}
 			}
 			else
 			{
 				// The first frame plays the death sound and
 				// the second frame makes it nonsolid.
-				info->OwnedStates[extra.DeathStart].SetAction(FindGlobalActionFunction("A_Scream"));
+				info->OwnedStates[extra.DeathStart].SetAction(FindGlobalActionFunction("A_Scream")->Function);
 				if (extra.bSolidOnDeath)
 				{
 				}
 				else if (extra.DeathStart + 1 < extra.DeathEnd)
 				{
-					info->OwnedStates[extra.DeathStart+1].SetAction(FindGlobalActionFunction("A_NoBlocking"));
+					info->OwnedStates[extra.DeathStart+1].SetAction(FindGlobalActionFunction("A_NoBlocking")->Function);
 				}
 				else
 				{
-					info->OwnedStates[extra.DeathStart].SetAction(FindGlobalActionFunction("A_ScreamAndUnblock"));
+					info->OwnedStates[extra.DeathStart].SetAction(FindGlobalActionFunction("A_ScreamAndUnblock")->Function);
 				}
 
 				if (extra.DeathHeight == 0) extra.DeathHeight = ((AActor*)(type->Defaults))->height;
@@ -279,17 +279,17 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def)
 
 			// The first frame plays the burn sound and
 			// the second frame makes it nonsolid.
-			info->OwnedStates[extra.FireDeathStart].SetAction(FindGlobalActionFunction("A_ActiveSound"));
+			info->OwnedStates[extra.FireDeathStart].SetAction(FindGlobalActionFunction("A_ActiveSound")->Function);
 			if (extra.bSolidOnBurn)
 			{
 			}
 			else if (extra.FireDeathStart + 1 < extra.FireDeathEnd)
 			{
-				info->OwnedStates[extra.FireDeathStart+1].SetAction(FindGlobalActionFunction("A_NoBlocking"));
+				info->OwnedStates[extra.FireDeathStart+1].SetAction(FindGlobalActionFunction("A_NoBlocking")->Function);
 			}
 			else
 			{
-				info->OwnedStates[extra.FireDeathStart].SetAction(FindGlobalActionFunction("A_ActiveAndUnblock"));
+				info->OwnedStates[extra.FireDeathStart].SetAction(FindGlobalActionFunction("A_ActiveAndUnblock")->Function);
 			}
 
 			if (extra.BurnHeight == 0) extra.BurnHeight = ((AActor*)(type->Defaults))->height;
@@ -309,13 +309,13 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def)
 			info->OwnedStates[i].NextState = &info->OwnedStates[info->NumOwnedStates-1];
 			info->OwnedStates[i].Tics = 5;
 			info->OwnedStates[i].Misc1 = 0;
-			info->OwnedStates[i].SetAction(FindGlobalActionFunction("A_FreezeDeath"));
+			info->OwnedStates[i].SetAction(FindGlobalActionFunction("A_FreezeDeath")->Function);
 
 			i = info->NumOwnedStates - 1;
 			info->OwnedStates[i].NextState = &info->OwnedStates[i];
 			info->OwnedStates[i].Tics = 1;
 			info->OwnedStates[i].Misc1 = 0;
-			info->OwnedStates[i].SetAction(FindGlobalActionFunction("A_FreezeDeathChunks"));
+			info->OwnedStates[i].SetAction(FindGlobalActionFunction("A_FreezeDeathChunks")->Function);
 			bag.statedef.SetStateLabel("Ice", &info->OwnedStates[extra.IceDeathStart]);
 		}
 		else if (extra.bGenericIceDeath)

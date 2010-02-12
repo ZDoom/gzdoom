@@ -184,6 +184,8 @@ bool AHolySpirit::IsOkayToAttack (AActor *link)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CHolyAttack2)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	int j;
 	int i;
 	AActor *mo;
@@ -229,6 +231,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CHolyAttack2)
 		}
 		SpawnSpiritTail (mo);
 	}
+	return 0;
 }
 
 //============================================================================
@@ -261,24 +264,27 @@ void SpawnSpiritTail (AActor *spirit)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CHolyAttack)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	player_t *player;
 	AActor *linetarget;
 
 	if (NULL == (player = self->player))
 	{
-		return;
+		return 0;
 	}
 	ACWeapWraithverge *weapon = static_cast<ACWeapWraithverge *> (self->player->ReadyWeapon);
 	if (weapon != NULL)
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
-			return;
+			return 0;
 	}
 	AActor * missile = P_SpawnPlayerMissile (self, 0,0,0, PClass::FindClass ("HolyMissile"), self->angle, &linetarget);
 	if (missile != NULL) missile->tracer = linetarget;
 
 	weapon->CHolyCount = 3;
 	S_Sound (self, CHAN_WEAPON, "HolySymbolFire", 1, ATTN_NORM);
+	return 0;
 }
 
 //============================================================================
@@ -289,6 +295,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_CHolyAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CHolyPalette)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	if (self->player != NULL)
 	{
 		ACWeapWraithverge *weapon = static_cast<ACWeapWraithverge *> (self->player->ReadyWeapon);
@@ -297,6 +305,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CHolyPalette)
 			weapon->CHolyCount--;
 		}
 	}
+	return 0;
 }
 
 //============================================================================
@@ -372,6 +381,8 @@ static void CHolyTailRemove (AActor *actor)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CHolyTail)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	AActor *parent;
 
 	parent = self->target;
@@ -379,7 +390,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CHolyTail)
 	if (parent == NULL || parent->health <= 0)	// better check for health than current state - it's safer!
 	{ // Ghost removed, so remove all tail parts
 		CHolyTailRemove (self);
-		return;
+		return 0;
 	}
 	else
 	{
@@ -391,6 +402,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CHolyTail)
 		}
 		CHolyTailFollow (self, 10*FRACUNIT);
 	}
+	return 0;
 }
 
 //============================================================================
@@ -529,6 +541,8 @@ static void CHolyWeave (AActor *actor)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CHolySeek)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	self->health--;
 	if (self->health <= 0)
 	{
@@ -537,7 +551,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CHolySeek)
 		self->velz = 0;
 		self->SetState (self->FindState(NAME_Death));
 		self->tics -= pr_holyseek()&3;
-		return;
+		return 0;
 	}
 	if (self->tracer)
 	{
@@ -549,6 +563,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CHolySeek)
 		}
 	}
 	CHolyWeave (self);
+	return 0;
 }
 
 //============================================================================
@@ -559,6 +574,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_CHolySeek)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CHolyCheckScream)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	CALL_ACTION(A_CHolySeek, self);
 	if (pr_checkscream() < 20)
 	{
@@ -568,6 +585,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CHolyCheckScream)
 	{
 		CHolyFindTarget(self);
 	}
+	return 0;
 }
 
 //============================================================================
@@ -579,10 +597,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_CHolyCheckScream)
 
 DEFINE_ACTION_FUNCTION(AActor, A_ClericAttack)
 {
-	if (!self->target) return;
+	PARAM_ACTION_PROLOGUE;
+
+	if (!self->target) return 0;
 
 	AActor * missile = P_SpawnMissileZ (self, self->z + 40*FRACUNIT, self->target, PClass::FindClass ("HolyMissile"));
 	if (missile != NULL) missile->tracer = NULL;	// No initial target
 	S_Sound (self, CHAN_WEAPON, "HolySymbolFire", 1, ATTN_NORM);
+	return 0;
 }
 

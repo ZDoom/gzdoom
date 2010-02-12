@@ -28,14 +28,19 @@ void ASpectralMonster::Touch (AActor *toucher)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SpectralLightningTail)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	AActor *foo = Spawn("SpectralLightningHTail", self->x - self->velx, self->y - self->vely, self->z, ALLOW_REPLACE);
 
 	foo->angle = self->angle;
 	foo->health = self->health;
+	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_SpectralBigBallLightning)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	const PClass *cls = PClass::FindClass("SpectralLightningH3");
 	if (cls)
 	{
@@ -46,12 +51,15 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpectralBigBallLightning)
 		self->angle += ANGLE_90;
 		P_SpawnSubMissile (self, cls, self->target);
 	}
+	return 0;
 }
 
 static FRandom pr_zap5 ("Zap5");
 
 DEFINE_ACTION_FUNCTION(AActor, A_SpectralLightning)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	AActor *flash;
 	fixed_t x, y;
 
@@ -76,6 +84,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpectralLightning)
 	flash->target = self->target;
 	flash->velz = -18*FRACUNIT;
 	flash->health = self->health;
+	return 0;
 }
 
 // In Strife, this number is stored in the data segment, but it doesn't seem to be
@@ -84,6 +93,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpectralLightning)
 
 DEFINE_ACTION_FUNCTION(AActor, A_Tracer2)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	AActor *dest;
 	angle_t exact;
 	fixed_t dist;
@@ -92,7 +103,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Tracer2)
 	dest = self->tracer;
 
 	if (!dest || dest->health <= 0 || self->Speed == 0 || !self->CanSeek(dest))
-		return;
+		return 0;
 
 	// change angle
 	exact = R_PointToAngle2 (self->x, self->y, dest->x, dest->y);
@@ -144,4 +155,5 @@ DEFINE_ACTION_FUNCTION(AActor, A_Tracer2)
 			self->velz += FRACUNIT/8;
 		}
 	}
+	return 0;
 }

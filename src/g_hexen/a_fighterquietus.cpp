@@ -63,10 +63,10 @@ bool AFighterWeaponPiece::TryPickup (AActor *&toucher)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DropWeaponPieces)
 {
-	ACTION_PARAM_START(3);
-	ACTION_PARAM_CLASS(p1, 0);
-	ACTION_PARAM_CLASS(p2, 1);
-	ACTION_PARAM_CLASS(p3, 2);
+	PARAM_ACTION_PROLOGUE;
+	PARAM_CLASS(p1, AActor);
+	PARAM_CLASS(p2, AActor);
+	PARAM_CLASS(p3, AActor);
 
 	for (int i = 0, j = 0, fineang = 0; i < 3; ++i)
 	{
@@ -85,6 +85,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DropWeaponPieces)
 			}
 		}
 	}
+	return 0;
 }
 
 
@@ -117,17 +118,19 @@ int AFSwordMissile::DoSpecialDamage(AActor *victim, AActor *source, int damage)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FSwordAttack)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	player_t *player;
 
 	if (NULL == (player = self->player))
 	{
-		return;
+		return 0;
 	}
 	AWeapon *weapon = self->player->ReadyWeapon;
 	if (weapon != NULL)
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
-			return;
+			return 0;
 	}
 	P_SpawnPlayerMissile (self, 0, 0, -10*FRACUNIT, RUNTIME_CLASS(AFSwordMissile), self->angle+ANGLE_45/4);
 	P_SpawnPlayerMissile (self, 0, 0,  -5*FRACUNIT, RUNTIME_CLASS(AFSwordMissile), self->angle+ANGLE_45/8);
@@ -135,6 +138,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FSwordAttack)
 	P_SpawnPlayerMissile (self, 0, 0,   5*FRACUNIT, RUNTIME_CLASS(AFSwordMissile), self->angle-ANGLE_45/8);
 	P_SpawnPlayerMissile (self, 0, 0,  10*FRACUNIT, RUNTIME_CLASS(AFSwordMissile), self->angle-ANGLE_45/4);
 	S_Sound (self, CHAN_WEAPON, "FighterSwordFire", 1, ATTN_NORM);
+	return 0;
 }
 
 //============================================================================
@@ -145,6 +149,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_FSwordAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FSwordFlames)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	int i;
 
 	for (i = 1+(pr_fswordflame()&3); i; i--)
@@ -154,6 +160,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FSwordFlames)
 		fixed_t z = self->z+((pr_fswordflame()-128)<<11);
 		Spawn ("FSwordFlame", x, y, z, ALLOW_REPLACE);
 	}
+	return 0;
 }
 
 //============================================================================
@@ -164,7 +171,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_FSwordFlames)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FighterAttack)
 {
-	if (!self->target) return;
+	PARAM_ACTION_PROLOGUE;
+
+	if (!self->target) return 0;
 
 	angle_t angle = self->angle;
 
@@ -174,5 +183,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_FighterAttack)
 	P_SpawnMissileAngle (self, RUNTIME_CLASS(AFSwordMissile), angle-ANG45/8, 0);
 	P_SpawnMissileAngle (self, RUNTIME_CLASS(AFSwordMissile), angle-ANG45/4, 0);
 	S_Sound (self, CHAN_WEAPON, "FighterSwordFire", 1, ATTN_NORM);
+	return 0;
 }
 

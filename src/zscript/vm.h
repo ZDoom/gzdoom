@@ -313,7 +313,7 @@ struct VMValue
 		int i;
 		struct { void *a; int atag; };
 		double f;
-		struct { int pad[3]; int Type; };
+		struct { int pad[3]; VM_UBYTE Type; };
 		struct { int foo[4]; } biggest;
 	};
 
@@ -784,7 +784,6 @@ public:
 	NativeCallType NativeCall;
 };
 
-
 class VMParamFiller
 {
 public:
@@ -844,5 +843,76 @@ void VMFillParams(VMValue *params, VMFrame *callee, int numparam);
 
 void VMDumpConstants(FILE *out, const VMScriptFunction *func);
 void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction *func);
+
+// Use this in the prototype for a native function.
+#define VM_ARGS			VMFrameStack *stack, VMValue *param, int numparam, VMReturn *ret, int numret
+#define VM_ARGS_NAMES	stack, param, numparam, ret, numret
+
+// Use these to collect the parameters in a native function.
+// variable name <x> at position <p>
+
+// For required parameters.
+#define PARAM_INT_AT(p,x)			assert((p) < numparam); assert(param[p].Type == REGT_INT); int x = param[p].i;
+#define PARAM_BOOL_AT(p,x)			assert((p) < numparam); assert(param[p].Type == REGT_INT); bool x = !!param[p].i;
+#define PARAM_NAME_AT(p,x)			assert((p) < numparam); assert(param[p].Type == REGT_INT); FName x = ENamedName(param[p].i);
+#define PARAM_SOUND_AT(p,x)			assert((p) < numparam); assert(param[p].Type == REGT_INT); FSoundID x = param[p].i;
+#define PARAM_COLOR_AT(p,x)			assert((p) < numparam); assert(param[p].Type == REGT_INT); PalEntry x; x.d = param[p].i;
+#define PARAM_FLOAT_AT(p,x)			assert((p) < numparam); assert(param[p].Type == REGT_FLOAT); double x = param[p].f;
+#define PARAM_FIXED_AT(p,x)			assert((p) < numparam); assert(param[p].Type == REGT_FLOAT); fixed_t x = fixed_t(param[p].f * 65536.0);
+#define PARAM_ANGLE_AT(p,x)			assert((p) < numparam); assert(param[p].Type == REGT_FLOAT); angle_t x = angle_t(param[p].f * (ANGLE_90 / 90.0));
+#define PARAM_STRING_AT(p,x)		assert((p) < numparam); assert(param[p].Type == REGT_STRING); FString x = param[p].s();
+#define PARAM_STATE_AT(p,x)			assert((p) < numparam); assert(param[p].Type == REGT_POINTER && (param[p].atag == ATAG_STATE || param[p].a == NULL)); FState *x = (FState *)param[p].a;
+#define PARAM_POINTER_AT(p,x,type)	assert((p) < numparam); assert(param[p].Type == REGT_POINTER); type *x = (type *)param[p].a;
+#define PARAM_OBJECT_AT(p,x,type)	assert((p) < numparam); assert(param[p].Type == REGT_POINTER && (param[p].atag == ATAG_OBJECT || param[p].a == NULL)); type *x = (type *)param[p].a;
+#define PARAM_CLASS_AT(p,x,base)	assert((p) < numparam); assert(param[p].Type == REGT_POINTER && (param[p].atag == ATAG_OBJECT || param[p].a == NULL)); PClass *x = (PClass *)param[p].a; assert(x->IsDescendantOf(RUNTIME_CLASS(base)));
+
+// For optional paramaters. These have dangling elses for you to fill in the default assignment. e.g.:
+//		PARAM_INT_OPT(0,myint) { myint = 55; }
+// Just make sure to fill it in when using these macros, because the compiler isn't likely
+// to give useful error messages if you don't.
+#define PARAM_INT_OPT_AT(p,x)			int x; if ((p) < numparam && param[p].Type != REGT_NIL) { assert(param[p].Type == REGT_INT); x = param[p].i; } else
+#define PARAM_BOOL_OPT_AT(p,x)			bool x; if ((p) < numparam && param[p].Type != REGT_NIL) { assert(param[p].Type == REGT_INT); x = !!param[p].i; } else
+#define PARAM_NAME_OPT_AT(p,x)			FName x; if ((p) < numparam && param[p].Type != REGT_NIL) { assert(param[p].Type == REGT_INT); x = ENamedName(param[p].i); } else
+#define PARAM_SOUND_OPT_AT(p,x)			FSoundID x; if ((p) < numparam && param[p].Type != REGT_NIL) { assert(param[p].Type == REGT_INT); x = FSoundID(param[p].i); } else
+#define PARAM_COLOR_OPT_AT(p,x)			PalEntry x; if ((p) < numparam && param[p].Type != REGT_NIL) { assert(param[p].Type == REGT_INT); x.d = param[p].i; } else
+#define PARAM_FLOAT_OPT_AT(p,x)			double x; if ((p) < numparam && param[p].Type != REGT_NIL) { assert(param[p].Type == REGT_FLOAT); x = param[p].f; } else
+#define PARAM_FIXED_OPT_AT(p,x)			fixed_t x; if ((p) < numparam && param[p].Type != REGT_NIL) { assert(param[p].Type == REGT_FLOAT); x = fixed_t(param[p].f * 65536.0); } else
+#define PARAM_ANGLE_OPT_AT(p,x)			angle_t x; if ((p) < numparam && param[p].Type != REGT_NIL) { assert(param[p].Type == REGT_FLOAT); x = angle_t(param[p].f * (ANGLE_90 / 90.0)); } else
+#define PARAM_STRING_OPT_AT(p,x)		FString x; if ((p) < numparam && param[p].Type != REGT_NIL) { assert(param[p].Type == REGT_STRING); x = param[p].s(); } else
+#define PARAM_STATE_OPT_AT(p,x)			FState *x; if ((p) < numparam && param[p].Type != REGT_NIL) { assert(param[p].Type == REGT_POINTER && (param[p].atag == ATAG_STATE || param[p].a == NULL)); x = (FState *)param[p].a; } else
+#define PARAM_POINTER_OPT_AT(p,x,type)	type *x; if ((p) < numparam && param[p].Type != REGT_NIL) { assert(param[p].Type == REGT_POINTER); x = (type *)param[p].a; } else
+#define PARAM_OBJECT_OPT_AT(p,x,type)	type *x; if ((p) < numparam && param[p].Type != REGT_NIL) { assert(param[p].Type == REGT_POINTER && (param[p].atag == ATAG_OBJECT || param[p].a == NULL)); x = (type *)param[p].a; } else
+#define PARAM_CLASS_OPT_AT(p,x,base)	PClass *x; if ((p) < numparam && param[p].Type != REGT_NIL) { assert(param[p].Type == REGT_POINTER && (param[p].atag == ATAG_OBJECT || param[p].a == NULL)); x = (PClass *)param[p].a; assert(x->IsKindOf(RUNTIME_CLASS(base))); } else
+
+// The above, but with an automatically increasing position index.
+#define PARAM_PROLOGUE				int pnum = -1;
+
+#define PARAM_INT(x)				++pnum; PARAM_INT_AT(pnum,x)
+#define PARAM_BOOL(x)				++pnum; PARAM_BOOL_AT(pnum,x)
+#define PARAM_NAME(x)				++pnum; PARAM_NAME_AT(pnum,x)
+#define PARAM_SOUND(x)				++pnum; PARAM_SOUND_AT(pnum,x)
+#define PARAM_COLOR(x)				++pnum; PARAM_COLOR_AT(pnum,x)
+#define PARAM_FLOAT(x)				++pnum; PARAM_FLOAT_AT(pnum,x)
+#define PARAM_FIXED(x)				++pnum; PARAM_FIXED_AT(pnum,x)
+#define PARAM_ANGLE(x)				++pnum; PARAM_ANGLE_AT(pnum,x)
+#define PARAM_STRING(x)				++pnum; PARAM_STRING_AT(pnum,x)
+#define PARAM_STATE(x)				++pnum; PARAM_STATE_AT(pnum,x)
+#define PARAM_POINTER(x,type)		++pnum; PARAM_POINTER_AT(pnum,x,type)
+#define PARAM_OBJECT(x,type)		++pnum; PARAM_OBJECT_AT(pnum,x,type)
+#define PARAM_CLASS(x,base)			++pnum; PARAM_CLASS_AT(pnum,x,base)
+
+#define PARAM_INT_OPT(x)			++pnum; PARAM_INT_OPT_AT(pnum,x)
+#define PARAM_BOOL_OPT(x)			++pnum; PARAM_BOOL_OPT_AT(pnum,x)
+#define PARAM_NAME_OPT(x)			++pnum; PARAM_NAME_OPT_AT(pnum,x)
+#define PARAM_SOUND_OPT(x)			++pnum; PARAM_SOUND_OPT_AT(pnum,x)
+#define PARAM_COLOR_OPT(x)			++pnum; PARAM_COLOR_OPT_AT(pnum,x)
+#define PARAM_FLOAT_OPT(x)			++pnum; PARAM_FLOAT_OPT_AT(pnum,x)
+#define PARAM_FIXED_OPT(x)			++pnum; PARAM_FIXED_OPT_AT(pnum,x)
+#define PARAM_ANGLE_OPT(x)			++pnum; PARAM_ANGLE_OPT_AT(pnum,x)
+#define PARAM_STRING_OPT(x)			++pnum; PARAM_STRING_OPT_AT(pnum,x)
+#define PARAM_STATE_OPT(x)			++pnum; PARAM_STATE_OPT_AT(pnum,x)
+#define PARAM_POINTER_OPT(x,type)	++pnum; PARAM_POINTER_OPT_AT(pnum,x,type)
+#define PARAM_OBJECT_OPT(x,type)	++pnum; PARAM_OBJECT_OPT_AT(pnum,x,type)
+#define PARAM_CLASS_OPT(x,base)		++pnum; PARAM_CLASS_OPT_AT(pnum,x,base)
 
 #endif

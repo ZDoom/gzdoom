@@ -924,7 +924,7 @@ static void ParseActionDef (FScanner &sc, PClass *cls)
 	{
 		PSymbolActionFunction *sym = new PSymbolActionFunction(funcname);
 		sym->Arguments = args;
-		sym->Function = afd->Function;
+		sym->Function = *(afd->VMPointer);
 		if (hasdefaults)
 		{
 			sym->defaultparameterindex = StateParams.Size();

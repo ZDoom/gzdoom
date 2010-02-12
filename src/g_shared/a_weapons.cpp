@@ -1702,23 +1702,24 @@ const PClass *Net_ReadWeapon(BYTE **stream)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AWeapon, A_ZoomFactor)
 {
-	ACTION_PARAM_START(2);
-	ACTION_PARAM_FLOAT(zoom, 0);
-	ACTION_PARAM_INT(flags, 1);
+	PARAM_ACTION_PROLOGUE;
+	PARAM_FLOAT_OPT	(zoom)	{ zoom = 1; }
+	PARAM_INT_OPT	(flags)	{ flags = 0; }
 
 	if (self->player != NULL && self->player->ReadyWeapon != NULL)
 	{
-		zoom = 1 / clamp(zoom, 0.1f, 50.f);
+		zoom = 1 / clamp(zoom, 0.1, 50.0);
 		if (flags & 1)
 		{ // Make the zoom instant.
-			self->player->FOV = self->player->DesiredFOV * zoom;
+			self->player->FOV = float(self->player->DesiredFOV * zoom);
 		}
 		if (flags & 2)
 		{ // Disable pitch/yaw scaling.
 			zoom = -zoom;
 		}
-		self->player->ReadyWeapon->FOVScale = zoom;
+		self->player->ReadyWeapon->FOVScale = float(zoom);
 	}
+	return 0;
 }
 
 //===========================================================================
@@ -1729,11 +1730,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AWeapon, A_ZoomFactor)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AWeapon, A_SetCrosshair)
 {
-	ACTION_PARAM_START(1);
-	ACTION_PARAM_INT(xhair, 0);
+	PARAM_ACTION_PROLOGUE;
+	PARAM_INT(xhair);
 
 	if (self->player != NULL && self->player->ReadyWeapon != NULL)
 	{
 		self->player->ReadyWeapon->Crosshair = xhair;
 	}
+	return 0;
 }

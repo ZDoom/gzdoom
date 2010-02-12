@@ -11,7 +11,7 @@ ACTOR Rock1
 	States
 	{
 	Spawn:
-		ROKK A 20
+		ROKK A 20		A_Log("Test")
 		Loop
 	Death:
 		ROKK A 10

@@ -64,9 +64,9 @@ DECLARE_ACTION(A_NoBlocking)
 DECLARE_ACTION(A_Scream)
 DECLARE_ACTION(A_FreezeDeath)
 DECLARE_ACTION(A_FreezeDeathChunks)
-DECLARE_ACTION(A_BossDeath)
+void A_BossDeath(AActor *self);
 
-void A_Chase(AActor *self);
+void A_Chase(VMFrameStack *stack, AActor *self);
 void A_FaceTarget (AActor *actor);
 
 bool A_RaiseMobj (AActor *, fixed_t speed);

@@ -19,20 +19,23 @@
 
 DEFINE_ACTION_FUNCTION(AActor, A_FatRaise)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	A_FaceTarget (self);
 	S_Sound (self, CHAN_WEAPON, "fatso/raiseguns", 1, ATTN_NORM);
+	return 0;
 }
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FatAttack1)
 {
+	PARAM_ACTION_PROLOGUE;
+	PARAM_CLASS_OPT(spawntype, AActor)	{ spawntype = NULL; }
+
 	AActor *missile;
 	angle_t an;
 
 	if (!self->target)
-		return;
-
-	ACTION_PARAM_START(1);
-	ACTION_PARAM_CLASS(spawntype, 0);
+		return 0;
 
 	if (spawntype == NULL) spawntype = PClass::FindClass("FatShot");
 
@@ -49,18 +52,19 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FatAttack1)
 		missile->velx = FixedMul (missile->Speed, finecosine[an]);
 		missile->vely = FixedMul (missile->Speed, finesine[an]);
 	}
+	return 0;
 }
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FatAttack2)
 {
+	PARAM_ACTION_PROLOGUE;
+	PARAM_CLASS_OPT(spawntype, AActor)	{ spawntype = NULL; }
+
 	AActor *missile;
 	angle_t an;
 
 	if (!self->target)
-		return;
-
-	ACTION_PARAM_START(1);
-	ACTION_PARAM_CLASS(spawntype, 0);
+		return 0;
 
 	if (spawntype == NULL) spawntype = PClass::FindClass("FatShot");
 
@@ -77,18 +81,19 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FatAttack2)
 		missile->velx = FixedMul (missile->Speed, finecosine[an]);
 		missile->vely = FixedMul (missile->Speed, finesine[an]);
 	}
+	return 0;
 }
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FatAttack3)
 {
+	PARAM_ACTION_PROLOGUE;
+	PARAM_CLASS_OPT(spawntype, AActor)	{ spawntype = NULL; }
+
 	AActor *missile;
 	angle_t an;
 
 	if (!self->target)
-		return;
-
-	ACTION_PARAM_START(1);
-	ACTION_PARAM_CLASS(spawntype, 0);
+		return 0;
 
 	if (spawntype == NULL) spawntype = PClass::FindClass("FatShot");
 
@@ -111,6 +116,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FatAttack3)
 		missile->velx = FixedMul (missile->Speed, finecosine[an]);
 		missile->vely = FixedMul (missile->Speed, finesine[an]);
 	}
+	return 0;
 }
 
 //
@@ -122,14 +128,14 @@ AActor * P_OldSpawnMissile(AActor * source, AActor * dest, const PClass *type);
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Mushroom)
 {
-	int i, j;
+	PARAM_ACTION_PROLOGUE;
+	PARAM_CLASS_OPT	(spawntype, AActor)		{ spawntype = NULL; }
+	PARAM_INT_OPT	(n)						{ n = 0; }
+	PARAM_INT_OPT	(flags)					{ flags = 0; }
+	PARAM_FIXED_OPT	(vrange)				{ vrange = 4*FRACUNIT; }
+	PARAM_FIXED_OPT	(hrange)				{ hrange = FRACUNIT/2; }
 
-	ACTION_PARAM_START(5);
-	ACTION_PARAM_CLASS(spawntype, 0);
-	ACTION_PARAM_INT(n, 1);
-	ACTION_PARAM_INT(flags, 2);
-	ACTION_PARAM_FIXED(vrange, 3);
-	ACTION_PARAM_FIXED(hrange, 4);
+	int i, j;
 
 	if (n == 0) n = self->Damage; // GetMissileDamage (0, 1);
 	if (spawntype == NULL) spawntype = PClass::FindClass("FatShot");
@@ -169,4 +175,5 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Mushroom)
 		}
 	}
 	target->Destroy();
+	return 0;
 }

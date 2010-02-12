@@ -271,8 +271,8 @@ void FGameConfigFile::DoGlobalSetup ()
 					SetValueForKey ("9", "use ArtiBlastRadius");
 					SetValueForKey ("8", "use ArtiTeleport");
 					SetValueForKey ("7", "use ArtiTeleportOther");
-					SetValueForKey ("6", "use ArtiEgg");
-					SetValueForKey ("5", "use ArtiInvulnerability");
+					SetValueForKey ("6", "use ArtiPork");
+					SetValueForKey ("5", "use ArtiInvulnerability2");
 				}
 			}
 			if (last < 204)
@@ -328,6 +328,15 @@ void FGameConfigFile::DoGlobalSetup ()
 				if (dim != NULL)
 				{
 					dim->ResetToDefault ();
+				}
+			}
+			if (last < 210)
+			{
+				if (SetSection ("Hexen.Bindings"))
+				{
+					// These 2 were misnamed in earlier versions
+					SetValueForKey ("6", "use ArtiPork");
+					SetValueForKey ("5", "use ArtiInvulnerability2");
 				}
 			}
 		}

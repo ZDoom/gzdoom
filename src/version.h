@@ -59,7 +59,7 @@
 // Version stored in the ini's [LastRun] section.
 // Bump it if you made some configuration change that you want to
 // be able to migrate in FGameConfigFile::DoGlobalSetup().
-#define LASTRUNVERSION "209"
+#define LASTRUNVERSION "210"
 
 // Protocol version used in demos.
 // Bump it if you change existing DEM_ commands or add new ones.

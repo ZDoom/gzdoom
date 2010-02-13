@@ -1072,6 +1072,12 @@ static FActorInfo *ParseActorHeader(FScanner &sc, Baggage *bag)
 		// Get actor name
 		sc.MustGetString ();
 		replaceName = sc.String;
+
+		if (replaceName == typeName)
+		{
+			sc.ScriptMessage ("Cannot replace class %s with itself", typeName.GetChars());
+			FScriptPosition::ErrorCounter++;
+		}
 	}
 
 	// Now, after the actor names have been parsed, it is time to switch to C-mode 

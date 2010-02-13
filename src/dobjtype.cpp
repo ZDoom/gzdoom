@@ -37,6 +37,7 @@
 #include "actor.h"
 #include "templates.h"
 #include "autosegs.h"
+#include "v_text.h"
 
 TArray<PClass *> PClass::m_RuntimeActors;
 TArray<PClass *> PClass::m_Types;
@@ -185,7 +186,7 @@ void PClass::InsertIntoHash ()
 		else if (lexx == 0)
 		{ // This type has already been inserted
 		  // ... but there is no need whatsoever to make it a fatal error!
-			Printf ("Tried to register class '%s' more than once.\n", TypeName.GetChars());
+			Printf (TEXTCOLOR_RED"Tried to register class '%s' more than once.\n", TypeName.GetChars());
 			break;
 		}
 		else

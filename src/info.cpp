@@ -39,6 +39,7 @@
 #include "m_fixed.h"
 #include "c_dispatch.h"
 #include "d_net.h"
+#include "v_text.h"
 
 #include "gi.h"
 
@@ -142,15 +143,26 @@ void FActorInfo::StaticSetActorNums ()
 
 void FActorInfo::RegisterIDs ()
 {
+	const PClass *cls = PClass::FindClass(Class->TypeName);
+	bool set = false;
+
 	if (GameFilter == GAME_Any || (GameFilter & gameinfo.gametype))
 	{
 		if (SpawnID != 0)
 		{
-			SpawnableThings[SpawnID] = Class;
+			SpawnableThings[SpawnID] = cls;
+			if (cls != Class) 
+			{
+				Printf(TEXTCOLOR_RED"Spawn ID %d refers to hidden class type '%s'\n", SpawnID, cls->TypeName.GetChars());
+			}
 		}
 		if (DoomEdNum != -1)
 		{
-			DoomEdMap.AddType (DoomEdNum, Class);
+			DoomEdMap.AddType (DoomEdNum, cls);
+			if (cls != Class) 
+			{
+				Printf(TEXTCOLOR_RED"Editor number %d refers to hidden class type '%s'\n", DoomEdNum, cls->TypeName.GetChars());
+			}
 		}
 	}
 	// Fill out the list for Chex Quest with Doom's actors
@@ -158,6 +170,10 @@ void FActorInfo::RegisterIDs ()
 		(GameFilter & GAME_Doom))
 	{
 		DoomEdMap.AddType (DoomEdNum, Class, true);
+		if (cls != Class) 
+		{
+			Printf(TEXTCOLOR_RED"Editor number %d refers to hidden class type '%s'\n", DoomEdNum, cls->TypeName.GetChars());
+		}
 	}
 }
 

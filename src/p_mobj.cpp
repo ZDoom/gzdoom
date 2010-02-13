@@ -2829,9 +2829,11 @@ void AActor::Tick ()
 	AActor *onmo;
 	int i;
 
-	assert (state != NULL);
+	//assert (state != NULL);
 	if (state == NULL)
 	{
+		Printf("Actor of type %s at (%f,%f) left without a state\n", GetClass()->TypeName.GetChars(),
+			x/65536., y/65536.);
 		Destroy();
 		return;
 	}

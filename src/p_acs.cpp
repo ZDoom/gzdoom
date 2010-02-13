@@ -1396,7 +1396,7 @@ void FBehavior::LoadScriptsDirectory ()
 	switch (Format)
 	{
 	case ACS_Old:
-		scripts.dw = (DWORD *)(Data + ((DWORD *)Data)[1]);
+		scripts.dw = (DWORD *)(Data + ((DWORD *)Data)[1]);	// FIXME: Has this been byte-swapped before-hand?
 		NumScripts = scripts.dw[0];
 		if (NumScripts != 0)
 		{
@@ -1473,6 +1473,25 @@ void FBehavior::LoadScriptsDirectory ()
 	if (NumScripts > 1)
 	{
 		qsort (Scripts, NumScripts, sizeof(ScriptPtr), SortScripts);
+		// Check for duplicates because ACC originally did not enforce
+		// script number uniqueness across different script types. We
+		// only need to do this for old format lumps, because the ACCs
+		// that produce new format lumps won't let you do this.
+		if (Format == ACS_Old)
+		{
+			for (i = 0; i < NumScripts - 1; ++i)
+			{
+				if (Scripts[i].Number == Scripts[i+1].Number)
+				{
+					Printf("Script %d appears more than once.\n", Scripts[i].Number);
+					// Make the closed version the first one.
+					if (Scripts[i+1].Type == SCRIPT_Closed)
+					{
+						swap(Scripts[i], Scripts[i+1]);
+					}
+				}
+			}
+		}
 	}
 
 	if (Format == ACS_Old)
@@ -1589,6 +1608,15 @@ const ScriptPtr *FBehavior::FindScript (int script) const
 	const ScriptPtr *ptr = BinarySearch<ScriptPtr, WORD>
 		((ScriptPtr *)Scripts, NumScripts, &ScriptPtr::Number, (WORD)script);
 
+	// If the preceding script has the same number, return it instead.
+	// See the note by the script sorting above for why.
+	if (ptr > Scripts)
+	{
+		if (ptr[-1].Number == script)
+		{
+			ptr--;
+		}
+	}
 	return ptr;
 }
 

@@ -2232,7 +2232,9 @@ void P_ZMovement (AActor *mo, fixed_t oldfloorz)
 			// old code for boss cube disabled
 			//if ((mo->flags & MF_MISSILE) && (!(gameinfo.gametype & GAME_DoomChex) || !(mo->flags & MF_NOCLIP)))
 
-			if (mo->flags & MF_MISSILE)
+			// We can't remove this completely because it was abused by some DECORATE definitions
+			// (e.g. the monster pack's Afrit)
+			if ((mo->flags & MF_MISSILE) && ((mo->flags & MF_NOGRAVITY) || !(mo->flags & MF_NOCLIP)))
 			{
 				mo->z = mo->floorz;
 				if (mo->BounceFlags & BOUNCE_Floors)

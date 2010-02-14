@@ -114,6 +114,15 @@ VMExec_Checked::Exec
 #endif
 ;
 
+//===========================================================================
+//
+// VMSelectEngine
+//
+// Selects the VM engine, either checked or unchecked. Default will decide
+// based on the NDEBUG preprocessor definition.
+//
+//===========================================================================
+
 void VMSelectEngine(EVMEngine engine)
 {
 	switch (engine)

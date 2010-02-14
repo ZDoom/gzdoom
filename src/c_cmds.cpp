@@ -923,3 +923,31 @@ CCMD(nextsecret)
 		Printf("no next secret map!\n");
 	}
 }
+
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
+CCMD(vmengine)
+{
+	if (argv.argc() == 2)
+	{
+		if (stricmp(argv[1], "default") == 0)
+		{
+			VMSelectEngine(VMEngine_Default);
+			return;
+		}
+		else if (stricmp(argv[1], "checked") == 0)
+		{
+			VMSelectEngine(VMEngine_Checked);
+			return;
+		}
+		else if (stricmp(argv[1], "unchecked") == 0)
+		{
+			VMSelectEngine(VMEngine_Unchecked);
+			return;
+		}
+	}
+	Printf("Usage: vmengine <default|checked|unchecked>\n");
+}

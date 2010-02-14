@@ -111,10 +111,13 @@ public:
 
 struct FStateTempCall
 {
+	FStateTempCall() : ActorInfo(NULL), Function(NULL), FirstState(0), NumStates(0) {}
+
 	FActorInfo *ActorInfo;
+	VMFunction *Function;
+	TArray<FxExpression *> Parameters;
 	int FirstState;
 	int NumStates;
-	TArray<FxExpression *> Parameters;
 };
 extern TDeletingArray<FStateTempCall *> StateTempCalls;
 
@@ -386,7 +389,7 @@ struct StateCallData
 //#define PUSH_PARAMINFO self, stateowner, CallingState, ParameterIndex, statecall
 
 #define CALL_ACTION(name,self) { /*AF_##name(self, self, NULL, 0, NULL)*/ \
-		VMValue params[5] = { self, self, NULL, VMValue(NULL, ATAG_STATE) }; \
+		VMValue params[5] = { self, self, VMValue(NULL, ATAG_STATE), VMValue(NULL, ATAG_GENERIC) }; \
 		stack->Call(name##_VMPtr, params, countof(params), NULL, 0, NULL); \
 	}
 

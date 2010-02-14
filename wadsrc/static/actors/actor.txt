@@ -26,7 +26,6 @@ ACTOR Actor native //: Thinker
 	native fixed_t alpha;
 	native angle_t angle;
 	native int args[5];
-	native int uservar[10];
 	native fixed_t ceilingz;
 	native fixed_t floorz;
 	native int health;

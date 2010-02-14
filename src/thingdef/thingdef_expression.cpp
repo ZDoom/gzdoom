@@ -3735,7 +3735,7 @@ int DecoNameToClass(VMFrameStack *stack, VMValue *param, int numparam, VMReturn 
 		Printf("class '%s' is not compatible with '%s'", clsname.GetChars(), desttype->TypeName.GetChars());
 		cls = NULL;
 	}
-	ret->SetPointer(const_cast<PClass *>(cls));
+	ret->SetPointer(const_cast<PClass *>(cls), ATAG_OBJECT);
 	return 1;
 }
 
@@ -3923,15 +3923,15 @@ int DecoFindMultiNameState(VMFrameStack *stack, VMValue *param, int numparam, VM
 {
 	assert(numparam > 1);
 	assert(numret == 1);
-	assert(param[0].Type == REGT_POINTER);
 	assert(ret->RegType == REGT_POINTER);
 
 	FName *names = (FName *)alloca((numparam - 1) * sizeof(FName));
 	for (int i = 1; i < numparam; ++i)
 	{
-		names[i - 1] = ENamedName(param[i].i);
+		PARAM_NAME_AT(i, zaname);
+		names[i - 1] = zaname;
 	}
-	AActor *self = reinterpret_cast<AActor *>(param[0].a);
+	PARAM_OBJECT_AT(0, self, AActor);
 	FState *state = self->GetClass()->ActorInfo->FindState(numparam - 1, names);
 	if (state == NULL)
 	{
@@ -3944,14 +3944,14 @@ int DecoFindMultiNameState(VMFrameStack *stack, VMValue *param, int numparam, VM
 		}
 		Printf("' not found in %s\n", self->GetClass()->TypeName.GetChars());
 	}
-	ret->SetPointer(state);
+	ret->SetPointer(state, ATAG_STATE);
 	return 1;
 }
 
 ExpEmit FxMultiNameState::Emit(VMFunctionBuilder *build)
 {
 	ExpEmit dest(build, REGT_POINTER);
-	build->Emit(OP_PARAM, 0, REGT_POINTER, 0);		// pass self
+	build->Emit(OP_PARAM, 0, REGT_POINTER, 1);		// pass stateowner
 	for (unsigned i = 0; i < names.Size(); ++i)
 	{
 		EmitConstantInt(build, names[i]);

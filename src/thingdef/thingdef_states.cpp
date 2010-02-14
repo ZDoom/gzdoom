@@ -81,7 +81,7 @@ bool DoActionSpecials(FScanner &sc, FState & state, Baggage &bag, FStateTempCall
 		{
 			for (i = 0; i < 5;)
 			{
-				tcall->Parameters.Push(new FxParameter(ParseExpression(sc, bag.Info->Class)));
+				tcall->Parameters.Push(new FxParameter(new FxIntCast(ParseExpression(sc, bag.Info->Class))));
 				i++;
 				if (!sc.CheckToken (',')) break;
 			}
@@ -98,8 +98,7 @@ bool DoActionSpecials(FScanner &sc, FState & state, Baggage &bag, FStateTempCall
 			sc.ScriptError ("Too many arguments to %s", specname.GetChars());
 		}
 
-		//FIXME
-		//state.SetAction(FindGlobalActionFunction("A_CallSpecial"), false);
+		tcall->Function = FindGlobalActionFunction("A_CallSpecial")->Function;
 		return true;
 	}
 	return false;
@@ -262,6 +261,7 @@ do_stop:
 				if (sym != NULL && sym->SymbolType == SYM_ActionFunction)
 				{
 					PSymbolActionFunction *afd = static_cast<PSymbolActionFunction *>(sym);
+					tcall->Function = afd->Function;
 					if (!afd->Arguments.IsEmpty())
 					{
 						const char *params = afd->Arguments.GetChars();
@@ -374,7 +374,7 @@ endofstate:
 				sc.ScriptError ("Invalid frame character string '%s'", statestring.GetChars());
 				count = -count;
 			}
-			if (tcall->Parameters.Size() != 0)
+			if (tcall->Function != NULL)
 			{
 				tcall->ActorInfo = actor;
 				tcall->FirstState = bag.statedef.GetStateCount() - count;

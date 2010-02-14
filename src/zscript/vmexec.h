@@ -1384,7 +1384,7 @@ static void DoCast(const VMRegisters &reg, const VMFrame *f, int a, int b, int c
 
 static void FillReturns(const VMRegisters &reg, VMFrame *frame, VMReturn *returns, const VMOP *retval, int numret)
 {
-	int i, type, num;
+	int i, type, regnum;
 	VMReturn *ret;
 
 	assert(REGT_INT == 0 && REGT_FLOAT == 1 && REGT_STRING == 2 && REGT_POINTER == 3);
@@ -1392,33 +1392,35 @@ static void FillReturns(const VMRegisters &reg, VMFrame *frame, VMReturn *return
 	for (i = 0, ret = returns; i < numret; ++i, ++ret, ++retval)
 	{
 		assert(retval->op == OP_RESULT);				// opcode
+		ret->TagOfs = 0;
 		ret->RegType = type = retval->b;
-		ret->RegNum = num = retval->c;
+		regnum = retval->c;
 		assert(!(type & REGT_KONST));
 		type &= REGT_TYPE;
 		if (type < REGT_STRING)
 		{
 			if (type == REGT_INT)
 			{
-				assert(num < frame->NumRegD);
-				ret->Location = &reg.d[num];
+				assert(regnum < frame->NumRegD);
+				ret->Location = &reg.d[regnum];
 			}
 			else // type == REGT_FLOAT
 			{
-				assert(num < frame->NumRegF);
-				ret->Location = &reg.f[num];
+				assert(regnum < frame->NumRegF);
+				ret->Location = &reg.f[regnum];
 			}
 		}
 		else if (type == REGT_STRING)
 		{
-			assert(num < frame->NumRegS);
-			ret->Location = &reg.s[num];
+			assert(regnum < frame->NumRegS);
+			ret->Location = &reg.s[regnum];
 		}
 		else
 		{
 			assert(type == REGT_POINTER);
-			assert(num < frame->NumRegA);
-			ret->Location = &reg.a[num];
+			assert(regnum < frame->NumRegA);
+			ret->Location = &reg.a[regnum];
+			ret->TagOfs = (VM_SHALF)(&frame->GetRegATag()[regnum] - (VM_ATAG *)ret->Location);
 		}
 	}
 }
@@ -1434,7 +1436,6 @@ static void FillReturns(const VMRegisters &reg, VMFrame *frame, VMReturn *return
 static void SetReturn(const VMRegisters &reg, VMFrame *frame, VMReturn *ret, VM_UBYTE regtype, int regnum)
 {
 	const void *src;
-	VM_ATAG atag;
 	VMScriptFunction *func = static_cast<VMScriptFunction *>(frame->Func);
 
 	assert(func != NULL && !func->Native);
@@ -1498,20 +1499,12 @@ static void SetReturn(const VMRegisters &reg, VMFrame *frame, VMReturn *ret, VM_
 		if (regtype & REGT_KONST)
 		{
 			assert(regnum < func->NumKonstA);
-			ret->SetPointer(func->KonstA[regnum].v);
-			atag = func->KonstATags()[regnum];
+			ret->SetPointer(func->KonstA[regnum].v, func->KonstATags()[regnum]);
 		}
 		else
 		{
 			assert(regnum < frame->NumRegA);
-			ret->SetPointer(reg.a[regnum]);
-			atag = reg.atag[regnum];
-		}
-		if (ret->RegNum >= 0)
-		{
-			VMFrame *parent = frame->ParentFrame;
-			assert(parent != NULL);
-			parent->GetRegATag()[ret->RegNum] = atag;
+			ret->SetPointer(reg.a[regnum], reg.atag[regnum]);
 		}
 		break;
 	}

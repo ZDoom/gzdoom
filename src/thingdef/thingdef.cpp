@@ -286,42 +286,59 @@ static void FinishThingdef()
 	for (i = 0; i < StateTempCalls.Size(); ++i)
 	{
 		FStateTempCall *tcall = StateTempCalls[i];
-		FCompileContext ctx(tcall->ActorInfo->Class, true);
-		for (j = 0; j < tcall->Parameters.Size(); ++j)
+		VMFunction *func;
+
+		assert(tcall->Function != NULL);
+		if (tcall->Parameters.Size() == 0)
 		{
-			tcall->Parameters[j]->Resolve(ctx);
+			func = tcall->Function;
 		}
-		VMFunctionBuilder buildit;
-		// Allocate registers used to pass parameters in.
-		// self, stateowner, state, statecalldata (all are pointers)
-		buildit.Registers[REGT_POINTER].Get(4);
-		// Emit code for action parameters.
-		for (j = 0; j < tcall->Parameters.Size(); ++j)
+		else
 		{
-			FxExpression *p = /*new FxParameter*/(tcall->Parameters[j]);
-			p->Emit(&buildit);
-			delete p;
+			FCompileContext ctx(tcall->ActorInfo->Class, true);
+			for (j = 0; j < tcall->Parameters.Size(); ++j)
+			{
+				tcall->Parameters[j]->Resolve(ctx);
+			}
+			VMFunctionBuilder buildit;
+			// Allocate registers used to pass parameters in.
+			// self, stateowner, state, statecalldata (all are pointers)
+			buildit.Registers[REGT_POINTER].Get(4);
+			// Emit code to pass the standard action function parameters.
+			buildit.Emit(OP_PARAM, 0, REGT_POINTER, 0);
+			buildit.Emit(OP_PARAM, 0, REGT_POINTER, 1);
+			buildit.Emit(OP_PARAM, 0, REGT_POINTER, 2);
+			buildit.Emit(OP_PARAM, 0, REGT_POINTER, 3);
+			// Emit code for action parameters.
+			for (j = 0; j < tcall->Parameters.Size(); ++j)
+			{
+				FxExpression *p = /*new FxParameter*/(tcall->Parameters[j]);
+				p->Emit(&buildit);
+				delete p;
+			}
+			buildit.Emit(OP_CALL_K, buildit.GetConstantAddress(tcall->Function, ATAG_OBJECT), NAP + j, 0);
+			buildit.Emit(OP_RET, 0, REGT_NIL, 0);
+			VMScriptFunction *sfunc = buildit.MakeFunction();
+			sfunc->NumArgs = NAP;
+			func = sfunc;
+#if 1
+			const char *marks = "=======================================================";
+			char label[64];
+			int labellen = mysnprintf(label, countof(label), "Function %s.States[%d] (*%d)",
+				tcall->ActorInfo->Class->TypeName.GetChars(),
+				tcall->FirstState, tcall->NumStates);
+			fprintf(dump, "\n%.*s %s %.*s", MAX(3, 38 - labellen / 2), marks, label, MAX(3, 38 - labellen / 2), marks);
+			fprintf(dump, "\nInteger regs: %-3d  Float regs: %-3d  Address regs: %-3d  String regs: %-3d\nStack size: %d\n",
+				sfunc->NumRegD, sfunc->NumRegF, sfunc->NumRegA, sfunc->NumRegS, sfunc->MaxParam);
+			VMDumpConstants(dump, sfunc);
+			fprintf(dump, "\nDisassembly @ %p:\n", sfunc->Code);
+			VMDisasm(dump, sfunc->Code, sfunc->CodeSize, sfunc);
+#endif
 		}
-		buildit.Emit(OP_CALL_K, buildit.GetConstantAddress(NULL, ATAG_OBJECT), j, 0);
-		VMScriptFunction *func = buildit.MakeFunction();
-		func->NumArgs = tcall->Parameters.Size();
 		for (int k = 0; k < tcall->NumStates; ++k)
 		{
 			tcall->ActorInfo->OwnedStates[tcall->FirstState + k].SetAction(func);
 		}
-#if 1
-		const char *marks = "=======================================================";
-		char label[64];
-		int labellen = mysnprintf(label, countof(label), "Function %s.States[%d] (*%d)",
-			tcall->ActorInfo->Class->TypeName.GetChars(),
-			tcall->FirstState, tcall->NumStates);
-		fprintf(dump, "\n%.*s %s %.*s", MAX(3, 38 - labellen / 2), marks, label, MAX(3, 38 - labellen / 2), marks);
-		fprintf(dump, "\nInteger regs: %-3d  Float regs: %-3d  Address regs: %-3d  String regs: %-3d\nStack size: %d\n",
-			func->NumRegD, func->NumRegF, func->NumRegA, func->NumRegS, func->MaxParam);
-		VMDumpConstants(dump, func);
-		fprintf(dump, "\nDisassembly:\n");
-		VMDisasm(dump, func->Code, func->CodeSize, func);
-#endif
 	}
 	fclose(dump);
 

@@ -251,54 +251,63 @@ extern const VMOpInfo OpInfo[NUM_OPS];
 struct VMReturn
 {
 	void *Location;
-	VM_SHALF RegNum;	// Used to find ObjFlag index for pointers; set negative if the caller is native code and doesn't care
+	VM_SHALF TagOfs;	// for pointers: Offset from Location to ATag; set to 0 if the caller is native code and doesn't care
 	VM_UBYTE RegType;	// Same as VMParam RegType, except REGT_KONST is invalid; only used by asserts
 
 	void SetInt(int val)
 	{
+		assert(RegType == REGT_INT);
 		*(int *)Location = val;
 	}
 	void SetFloat(double val)
 	{
+		assert(RegType == REGT_FLOAT);
 		*(double *)Location = val;
 	}
 	void SetVector(const double val[3])
-	{
+	{	
+		//assert(RegType == REGT_FLOAT);
 		((double *)Location)[0] = val[0];
 		((double *)Location)[1] = val[1];
 		((double *)Location)[2] = val[2];
 	}
 	void SetString(const FString &val)
 	{
+		assert(RegType == REGT_STRING);
 		*(FString *)Location = val;
 	}
-	void SetPointer(void *val)
+	void SetPointer(void *val, int tag)
 	{
+		assert(RegType == REGT_POINTER);
 		*(void **)Location = val;
+		if (TagOfs != 0)
+		{
+			*((VM_ATAG *)Location + TagOfs) = tag;
+		}
 	}
 
 	void IntAt(int *loc)
 	{
 		Location = loc;
-		RegNum = -1;
+		TagOfs = 0;
 		RegType = REGT_INT;
 	}
 	void FloatAt(double *loc)
 	{
 		Location = loc;
-		RegNum = -1;
+		TagOfs = 0;
 		RegType = REGT_FLOAT;
 	}
 	void StringAt(FString *loc)
 	{
 		Location = loc;
-		RegNum = -1;
+		TagOfs = 0;
 		RegType = REGT_STRING;
 	}
 	void PointerAt(void **loc)
 	{
 		Location = loc;
-		RegNum = -1;
+		TagOfs = 0;
 		RegType = REGT_POINTER;
 	}
 };
@@ -863,8 +872,8 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 #define PARAM_STRING_AT(p,x)		assert((p) < numparam); assert(param[p].Type == REGT_STRING); FString x = param[p].s();
 #define PARAM_STATE_AT(p,x)			assert((p) < numparam); assert(param[p].Type == REGT_POINTER && (param[p].atag == ATAG_STATE || param[p].a == NULL)); FState *x = (FState *)param[p].a;
 #define PARAM_POINTER_AT(p,x,type)	assert((p) < numparam); assert(param[p].Type == REGT_POINTER); type *x = (type *)param[p].a;
-#define PARAM_OBJECT_AT(p,x,type)	assert((p) < numparam); assert(param[p].Type == REGT_POINTER && (param[p].atag == ATAG_OBJECT || param[p].a == NULL)); type *x = (type *)param[p].a;
-#define PARAM_CLASS_AT(p,x,base)	assert((p) < numparam); assert(param[p].Type == REGT_POINTER && (param[p].atag == ATAG_OBJECT || param[p].a == NULL)); PClass *x = (PClass *)param[p].a; assert(x->IsDescendantOf(RUNTIME_CLASS(base)));
+#define PARAM_OBJECT_AT(p,x,type)	assert((p) < numparam); assert(param[p].Type == REGT_POINTER && (param[p].atag == ATAG_OBJECT || param[p].a == NULL)); type *x = (type *)param[p].a; assert(x == NULL || x->IsKindOf(RUNTIME_CLASS(type)));
+#define PARAM_CLASS_AT(p,x,base)	assert((p) < numparam); assert(param[p].Type == REGT_POINTER && (param[p].atag == ATAG_OBJECT || param[p].a == NULL)); PClass *x = (PClass *)param[p].a; assert(x != NULL && x->IsDescendantOf(RUNTIME_CLASS(base)));
 
 // For optional paramaters. These have dangling elses for you to fill in the default assignment. e.g.:
 //		PARAM_INT_OPT(0,myint) { myint = 55; }
@@ -881,38 +890,38 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 #define PARAM_STRING_OPT_AT(p,x)		FString x; if ((p) < numparam && param[p].Type != REGT_NIL) { assert(param[p].Type == REGT_STRING); x = param[p].s(); } else
 #define PARAM_STATE_OPT_AT(p,x)			FState *x; if ((p) < numparam && param[p].Type != REGT_NIL) { assert(param[p].Type == REGT_POINTER && (param[p].atag == ATAG_STATE || param[p].a == NULL)); x = (FState *)param[p].a; } else
 #define PARAM_POINTER_OPT_AT(p,x,type)	type *x; if ((p) < numparam && param[p].Type != REGT_NIL) { assert(param[p].Type == REGT_POINTER); x = (type *)param[p].a; } else
-#define PARAM_OBJECT_OPT_AT(p,x,type)	type *x; if ((p) < numparam && param[p].Type != REGT_NIL) { assert(param[p].Type == REGT_POINTER && (param[p].atag == ATAG_OBJECT || param[p].a == NULL)); x = (type *)param[p].a; } else
-#define PARAM_CLASS_OPT_AT(p,x,base)	PClass *x; if ((p) < numparam && param[p].Type != REGT_NIL) { assert(param[p].Type == REGT_POINTER && (param[p].atag == ATAG_OBJECT || param[p].a == NULL)); x = (PClass *)param[p].a; assert(x->IsKindOf(RUNTIME_CLASS(base))); } else
+#define PARAM_OBJECT_OPT_AT(p,x,type)	type *x; if ((p) < numparam && param[p].Type != REGT_NIL) { assert(param[p].Type == REGT_POINTER && (param[p].atag == ATAG_OBJECT || param[p].a == NULL)); x = (type *)param[p].a; assert(x == NULL || x->IsKindOf(RUNTIME_CLASS(type))); } else
+#define PARAM_CLASS_OPT_AT(p,x,base)	PClass *x; if ((p) < numparam && param[p].Type != REGT_NIL) { assert(param[p].Type == REGT_POINTER && (param[p].atag == ATAG_OBJECT || param[p].a == NULL)); x = (PClass *)param[p].a; assert(x != NULL && x->IsDescendantOf(RUNTIME_CLASS(base))); } else
 
 // The above, but with an automatically increasing position index.
-#define PARAM_PROLOGUE				int pnum = -1;
+#define PARAM_PROLOGUE				int paramnum = -1;
 
-#define PARAM_INT(x)				++pnum; PARAM_INT_AT(pnum,x)
-#define PARAM_BOOL(x)				++pnum; PARAM_BOOL_AT(pnum,x)
-#define PARAM_NAME(x)				++pnum; PARAM_NAME_AT(pnum,x)
-#define PARAM_SOUND(x)				++pnum; PARAM_SOUND_AT(pnum,x)
-#define PARAM_COLOR(x)				++pnum; PARAM_COLOR_AT(pnum,x)
-#define PARAM_FLOAT(x)				++pnum; PARAM_FLOAT_AT(pnum,x)
-#define PARAM_FIXED(x)				++pnum; PARAM_FIXED_AT(pnum,x)
-#define PARAM_ANGLE(x)				++pnum; PARAM_ANGLE_AT(pnum,x)
-#define PARAM_STRING(x)				++pnum; PARAM_STRING_AT(pnum,x)
-#define PARAM_STATE(x)				++pnum; PARAM_STATE_AT(pnum,x)
-#define PARAM_POINTER(x,type)		++pnum; PARAM_POINTER_AT(pnum,x,type)
-#define PARAM_OBJECT(x,type)		++pnum; PARAM_OBJECT_AT(pnum,x,type)
-#define PARAM_CLASS(x,base)			++pnum; PARAM_CLASS_AT(pnum,x,base)
+#define PARAM_INT(x)				++paramnum; PARAM_INT_AT(paramnum,x)
+#define PARAM_BOOL(x)				++paramnum; PARAM_BOOL_AT(paramnum,x)
+#define PARAM_NAME(x)				++paramnum; PARAM_NAME_AT(paramnum,x)
+#define PARAM_SOUND(x)				++paramnum; PARAM_SOUND_AT(paramnum,x)
+#define PARAM_COLOR(x)				++paramnum; PARAM_COLOR_AT(paramnum,x)
+#define PARAM_FLOAT(x)				++paramnum; PARAM_FLOAT_AT(paramnum,x)
+#define PARAM_FIXED(x)				++paramnum; PARAM_FIXED_AT(paramnum,x)
+#define PARAM_ANGLE(x)				++paramnum; PARAM_ANGLE_AT(paramnum,x)
+#define PARAM_STRING(x)				++paramnum; PARAM_STRING_AT(paramnum,x)
+#define PARAM_STATE(x)				++paramnum; PARAM_STATE_AT(paramnum,x)
+#define PARAM_POINTER(x,type)		++paramnum; PARAM_POINTER_AT(paramnum,x,type)
+#define PARAM_OBJECT(x,type)		++paramnum; PARAM_OBJECT_AT(paramnum,x,type)
+#define PARAM_CLASS(x,base)			++paramnum; PARAM_CLASS_AT(paramnum,x,base)
 
-#define PARAM_INT_OPT(x)			++pnum; PARAM_INT_OPT_AT(pnum,x)
-#define PARAM_BOOL_OPT(x)			++pnum; PARAM_BOOL_OPT_AT(pnum,x)
-#define PARAM_NAME_OPT(x)			++pnum; PARAM_NAME_OPT_AT(pnum,x)
-#define PARAM_SOUND_OPT(x)			++pnum; PARAM_SOUND_OPT_AT(pnum,x)
-#define PARAM_COLOR_OPT(x)			++pnum; PARAM_COLOR_OPT_AT(pnum,x)
-#define PARAM_FLOAT_OPT(x)			++pnum; PARAM_FLOAT_OPT_AT(pnum,x)
-#define PARAM_FIXED_OPT(x)			++pnum; PARAM_FIXED_OPT_AT(pnum,x)
-#define PARAM_ANGLE_OPT(x)			++pnum; PARAM_ANGLE_OPT_AT(pnum,x)
-#define PARAM_STRING_OPT(x)			++pnum; PARAM_STRING_OPT_AT(pnum,x)
-#define PARAM_STATE_OPT(x)			++pnum; PARAM_STATE_OPT_AT(pnum,x)
-#define PARAM_POINTER_OPT(x,type)	++pnum; PARAM_POINTER_OPT_AT(pnum,x,type)
-#define PARAM_OBJECT_OPT(x,type)	++pnum; PARAM_OBJECT_OPT_AT(pnum,x,type)
-#define PARAM_CLASS_OPT(x,base)		++pnum; PARAM_CLASS_OPT_AT(pnum,x,base)
+#define PARAM_INT_OPT(x)			++paramnum; PARAM_INT_OPT_AT(paramnum,x)
+#define PARAM_BOOL_OPT(x)			++paramnum; PARAM_BOOL_OPT_AT(paramnum,x)
+#define PARAM_NAME_OPT(x)			++paramnum; PARAM_NAME_OPT_AT(paramnum,x)
+#define PARAM_SOUND_OPT(x)			++paramnum; PARAM_SOUND_OPT_AT(paramnum,x)
+#define PARAM_COLOR_OPT(x)			++paramnum; PARAM_COLOR_OPT_AT(paramnum,x)
+#define PARAM_FLOAT_OPT(x)			++paramnum; PARAM_FLOAT_OPT_AT(paramnum,x)
+#define PARAM_FIXED_OPT(x)			++paramnum; PARAM_FIXED_OPT_AT(paramnum,x)
+#define PARAM_ANGLE_OPT(x)			++paramnum; PARAM_ANGLE_OPT_AT(paramnum,x)
+#define PARAM_STRING_OPT(x)			++paramnum; PARAM_STRING_OPT_AT(paramnum,x)
+#define PARAM_STATE_OPT(x)			++paramnum; PARAM_STATE_OPT_AT(paramnum,x)
+#define PARAM_POINTER_OPT(x,type)	++paramnum; PARAM_POINTER_OPT_AT(paramnum,x,type)
+#define PARAM_OBJECT_OPT(x,type)	++paramnum; PARAM_OBJECT_OPT_AT(paramnum,x,type)
+#define PARAM_CLASS_OPT(x,base)		++paramnum; PARAM_CLASS_OPT_AT(paramnum,x,base)
 
 #endif

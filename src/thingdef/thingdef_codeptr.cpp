@@ -452,11 +452,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Jump)
 	PARAM_ACTION_PROLOGUE;
 	PARAM_INT_OPT(maxchance) { maxchance = 256; }
 
-	int count = numparam - pnum;
+	paramnum++;		// Increment paramnum to point at the first jump target
+	int count = numparam - paramnum;
 	if (count > 0 && (maxchance >= 256 || pr_cajump() < maxchance))
 	{
 		int jumpnum = (count == 1 ? 0 : (pr_cajump() % count));
-		PARAM_STATE_AT(pnum + jumpnum, jumpto);
+		PARAM_STATE_AT(paramnum + jumpnum, jumpto);
 		ACTION_JUMP(jumpto);
 	}
 	ACTION_SET_RESULT(false);	// Jumps should never set the result for inventory state chains!
@@ -529,7 +530,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfCloser)
 //==========================================================================
 void DoJumpIfInventory(AActor *owner, AActor *self, StateCallData *statecall, FState *callingstate, VMValue *param, int numparam)
 {
-	int pnum = NAP;
+	int paramnum = NAP-1;
 	PARAM_CLASS	(itemtype, AInventory);
 	PARAM_INT	(itemamount);
 	PARAM_STATE	(label);
@@ -1314,7 +1315,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomRailgun)
 
 static void DoGiveInventory(AActor *receiver, StateCallData *statecall, VM_ARGS)
 {
-	int pnum = NAP;
+	int paramnum = NAP-1;
 	PARAM_CLASS		(mi, AInventory);
 	PARAM_INT_OPT	(amount)			{ amount = 1; }
 
@@ -1381,7 +1382,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GiveToTarget)
 
 void DoTakeInventory(AActor *receiver, StateCallData *statecall, VM_ARGS)
 {
-	int pnum = NAP;
+	int paramnum = NAP-1;
 	PARAM_CLASS		(itemtype, AInventory);
 	PARAM_INT_OPT	(amount)		{ amount = 0; }
 	

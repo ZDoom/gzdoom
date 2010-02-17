@@ -189,8 +189,11 @@ FUNC(LS_Door_CloseWaitOpen)
 }
 
 FUNC(LS_Door_Animated)
-// Door_Animated (tag, speed, delay)
+// Door_Animated (tag, speed, delay, lock)
 {
+	if (arg3 != 0 && !P_CheckKeys (it, arg3, arg0 != 0))
+		return false;
+
 	return EV_SlidingDoor (ln, it, arg0, arg1, arg2);
 }
 

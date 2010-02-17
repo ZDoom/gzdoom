@@ -171,7 +171,7 @@ static BYTE CheatDigitalCafe[] =	{ 'd','i','g','i','t','a','l','c','a','f','e',2
 static BYTE CheatJoshuaStorms[] =	{ 'j','o','s','h','u','a','s','t','o','r','m','s',255 };
 static BYTE CheatLeeSnyder[] =		{ 'l','e','e','s','n','y','d','e','r',0,0,255 };
 static BYTE CheatKimHyers[] =		{ 'k','i','m','h','y','e','r','s',255 };
-static BYTE CheatShrrill[] =		{ 's','h','r','r','i','l','l',255 };
+static BYTE CheatShrrill[] =		{ 's','h','e','r','r','i','l','l',255 };
 
 static BYTE CheatTNTem[] =		{ 't','n','t','e','m',255 };
 
@@ -274,8 +274,8 @@ static cheatseq_t ChexCheats[] =
 	{ CheatKimHyers,		0, 1, 0, {0,0},				Cht_MyPos },
 	{ CheatShrrill,			0, 0, 0, {0,0},				Cht_AutoMap },
 	{ CheatDavidBrus,		0, 0, 0, {CHT_IDDQD,0},		Cht_Generic },
-	{ CheatMikeKoenigs,		0, 0, 0, {CHT_IDKFA,0},		Cht_Generic },
-	{ CheatScottHolman,		0, 0, 0, {CHT_IDFA,0},		Cht_Generic },
+	{ CheatScottHolman,		0, 0, 0, {CHT_IDKFA,0},		Cht_Generic },
+	{ CheatMikeKoenigs,		0, 0, 0, {CHT_IDFA,0},		Cht_Generic },
 	{ CheatCharlesJacobi,	0, 0, 0, {CHT_NOCLIP,0},	Cht_Generic },
 	{ CheatAndrewBenson,	0, 0, 0, {CHT_BEHOLDV,0},	Cht_Generic },
 	{ CheatDeanHyers,		0, 0, 0, {CHT_BEHOLDS,0},	Cht_Generic },

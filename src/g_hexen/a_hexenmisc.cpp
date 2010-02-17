@@ -44,7 +44,6 @@
 #include "a_magecone.cpp"
 #include "a_magelightning.cpp"
 #include "a_magestaff.cpp"
-#include "a_magewand.cpp"
 #include "a_pig.cpp"
 #include "a_serpent.cpp"
 #include "a_spike.cpp"

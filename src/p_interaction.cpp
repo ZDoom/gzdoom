@@ -396,6 +396,8 @@ void AActor::Die (AActor *source, AActor *inflictor)
 		// be revived by an Arch-Vile. Batman Doom needs this.
 		flags |= MF_CORPSE;
 	}
+	flags6 |= MF6_KILLED;
+
 	// [RH] Allow the death height to be overridden using metadata.
 	fixed_t metaheight = 0;
 	if (DamageType == NAME_Fire)
@@ -420,11 +422,11 @@ void AActor::Die (AActor *source, AActor *inflictor)
 	//		the activator of the script.
 	// New: In Hexen, the thing that died is the activator,
 	//		so now a level flag selects who the activator gets to be.
-	if (special && (!(flags & MF_SPECIAL) || (flags3 & MF3_ISMONSTER)))
+	// Everything is now moved to P_ActivateThingSpecial().
+	if (special && (!(flags & MF_SPECIAL) || (flags3 & MF3_ISMONSTER))
+		&& !(activationtype & THINGSPEC_NoDeathSpecial))
 	{
-		LineSpecials[special] (NULL, level.flags & LEVEL_ACTOWNSPECIAL
-			? this : source, false, args[0], args[1], args[2], args[3], args[4]);
-		special = 0;
+		P_ActivateThingSpecial(this, source, true); 
 	}
 
 	if (CountsAsKill())
@@ -906,6 +908,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 		else if (target->flags & MF_ICECORPSE) // frozen
 		{
 			target->tics = 1;
+			target->flags6 |= MF6_SHATTERING;
 			target->velx = target->vely = target->velz = 0;
 		}
 		return;
@@ -931,7 +934,8 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 	}
 	if (inflictor != NULL)
 	{
-		if (inflictor->flags5 & MF5_PIERCEARMOR) flags |= DMG_NO_ARMOR;
+		if (inflictor->flags5 & MF5_PIERCEARMOR)
+			flags |= DMG_NO_ARMOR;
 	}
 	
 	MeansOfDeath = mod;
@@ -981,33 +985,41 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 			{
 				return;
 			}
-
 		}
 		// Handle active damage modifiers (e.g. PowerDamage)
 		if (source != NULL && source->Inventory != NULL)
 		{
 			int olddam = damage;
 			source->Inventory->ModifyDamage(olddam, mod, damage, false);
-			if (olddam != damage && damage <= 0) return;
+			if (olddam != damage && damage <= 0)
+				return;
 		}
 		// Handle passive damage modifiers (e.g. PowerProtection)
 		if (target->Inventory != NULL)
 		{
 			int olddam = damage;
 			target->Inventory->ModifyDamage(olddam, mod, damage, true);
-			if (olddam != damage && damage <= 0) return;
+			if (olddam != damage && damage <= 0)
+				return;
 		}
 
-		DmgFactors * df = target->GetClass()->ActorInfo->DamageFactors;
-		if (df != NULL)
+		if (!(flags & DMG_NO_FACTOR))
 		{
-			fixed_t * pdf = df->CheckKey(mod);
-			if (pdf== NULL && mod != NAME_None) pdf = df->CheckKey(NAME_None);
-			if (pdf != NULL)
+			DmgFactors *df = target->GetClass()->ActorInfo->DamageFactors;
+			if (df != NULL)
 			{
-				damage = FixedMul(damage, *pdf);
-				if (damage <= 0) return;
+				fixed_t *pdf = df->CheckKey(mod);
+				if (pdf== NULL && mod != NAME_None) pdf = df->CheckKey(NAME_None);
+				if (pdf != NULL)
+				{
+					damage = FixedMul(damage, *pdf);
+					if (damage <= 0)
+						return;
+				}
 			}
+			damage = FixedMul(damage, target->DamageFactor);
+			if (damage < 0)
+				return;
 		}
 
 		damage = target->TakeSpecialDamage (inflictor, source, damage, mod);
@@ -1038,7 +1050,6 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 			ang = R_PointToAngle2 (origin->x, origin->y,
 				target->x, target->y);
 
-
 			// Calculate this as float to avoid overflows so that the
 			// clamping that had to be done here can be removed.
             double fltthrust;
@@ -1050,6 +1061,9 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
             }
 
 			thrust = FLOAT2FIXED(fltthrust);
+
+			// Don't apply ultra-small damage thrust
+			if (thrust < FRACUNIT/100) thrust = 0;
 
 			// make fall forwards sometimes
 			if ((damage < 40) && (damage > target->health)
@@ -1088,6 +1102,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 	//
 	if (player)
 	{
+		
         //Added by MC: Lets bots look allround for enemies if they survive an ambush.
         if (player->isbot)
 		{
@@ -1103,8 +1118,9 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 
 		if (!(flags & DMG_FORCED))
 		{
-			if (damage < TELEFRAG_DAMAGE && ((target->flags2 & MF2_INVULNERABLE) ||
-				(target->player->cheats & CF_GODMODE)))
+			// check the real player, not a voodoo doll here for invulnerability effects
+			if (damage < TELEFRAG_DAMAGE && ((player->mo->flags2 & MF2_INVULNERABLE) ||
+				(player->cheats & CF_GODMODE)))
 			{ // player is invulnerable, so don't hurt him
 				return;
 			}
@@ -1127,8 +1143,9 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 				damage = newdam;
 				if (damage <= 0)
 				{
-					// If MF&_FORCEPAIN is set make the player enter the pain state.
-					if (inflictor != NULL && (inflictor->flags6 & MF6_FORCEPAIN)) goto dopain;
+					// If MF6_FORCEPAIN is set, make the player enter the pain state.
+					if (inflictor != NULL && (inflictor->flags6 & MF6_FORCEPAIN))
+						goto dopain;
 					return;
 				}
 			}
@@ -1260,49 +1277,55 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 		}
 	}
 
-	pc = target->GetClass()->ActorInfo->PainChances;
-	painchance = target->PainChance;
-	if (pc != NULL)
-	{
-		BYTE * ppc = pc->CheckKey(mod);
-		if (ppc != NULL)
-		{
-			painchance = *ppc;
-		}
-	}
 	
-dopain:	
 	if (!(target->flags5 & MF5_NOPAIN) && (inflictor == NULL || !(inflictor->flags5 & MF5_PAINLESS)) &&
-		!G_SkillProperty(SKILLP_NoPain) && (pr_damagemobj() < painchance ||
-		(inflictor != NULL && (inflictor->flags6 & MF6_FORCEPAIN))) && !(target->flags & MF_SKULLFLY))
+		!G_SkillProperty(SKILLP_NoPain) && !(target->flags & MF_SKULLFLY))
 	{
-		if (mod == NAME_Electric)
+		pc = target->GetClass()->ActorInfo->PainChances;
+		painchance = target->PainChance;
+		if (pc != NULL)
 		{
-			if (pr_lightning() < 96)
+			BYTE * ppc = pc->CheckKey(mod);
+			if (ppc != NULL)
 			{
-				justhit = true;
-				FState * painstate = target->FindState(NAME_Pain, mod);
-				if (painstate != NULL) target->SetState (painstate);
+				painchance = *ppc;
 			}
-			else
-			{ // "electrocute" the target
-				target->renderflags |= RF_FULLBRIGHT;
-				if ((target->flags3 & MF3_ISMONSTER) && pr_lightning() < 128)
+		}
+
+		if ((damage >= target->PainThreshold && pr_damagemobj() < painchance) ||
+			(inflictor != NULL && (inflictor->flags6 & MF6_FORCEPAIN)))
+		{
+dopain:	
+			if (mod == NAME_Electric)
+			{
+				if (pr_lightning() < 96)
 				{
-					target->Howl ();
+					justhit = true;
+					FState *painstate = target->FindState(NAME_Pain, mod);
+					if (painstate != NULL)
+						target->SetState(painstate);
+				}
+				else
+				{ // "electrocute" the target
+					target->renderflags |= RF_FULLBRIGHT;
+					if ((target->flags3 & MF3_ISMONSTER) && pr_lightning() < 128)
+					{
+						target->Howl ();
+					}
 				}
 			}
-		}
-		else
-		{
-			justhit = true;
-			FState * painstate = target->FindState(NAME_Pain, mod);
-			if (painstate != NULL) target->SetState (painstate);
-			if (mod == NAME_PoisonCloud)
+			else
 			{
-				if ((target->flags3 & MF3_ISMONSTER) && pr_poison() < 128)
+				justhit = true;
+				FState *painstate = target->FindState(NAME_Pain, mod);
+				if (painstate != NULL)
+					target->SetState(painstate);
+				if (mod == NAME_PoisonCloud)
 				{
-					target->Howl ();
+					if ((target->flags3 & MF3_ISMONSTER) && pr_poison() < 128)
+					{
+						target->Howl ();
+					}
 				}
 			}
 		}
@@ -1344,7 +1367,6 @@ dopain:
 	// killough 11/98: Don't attack a friend, unless hit by that friend.
 	if (justhit && (target->target == source || !target->target || !target->IsFriend(target->target)))
 		target->flags |= MF_JUSTHIT;    // fight back!
-
 }
 
 bool AActor::OkayToSwitchTarget (AActor *other)

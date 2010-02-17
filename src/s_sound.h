@@ -169,7 +169,6 @@ struct FSoundChan : public FISoundChannel
 {
 	FSoundChan	*NextChan;	// Next channel in this list.
 	FSoundChan **PrevChan;	// Previous channel in this list.
-	sfxinfo_t	*SfxInfo;	// Sound information.
 	FSoundID	SoundID;	// Sound ID of playing sound.
 	FSoundID	OrgID;		// Sound ID of sound used to start this channel.
 	float		Volume;
@@ -262,6 +261,7 @@ void S_Sound (fixed_t x, fixed_t y, fixed_t z, int channel, FSoundID sfxid, doub
 #define CHAN_FORGETTABLE		4	// internal: Forget channel data when sound stops.
 #define CHAN_JUSTSTARTED		512	// internal: Sound has not been updated yet.
 #define CHAN_ABSTIME			1024// internal: Start time is absolute and does not depend on current time.
+#define CHAN_VIRTUAL			2048// internal: Channel is currently virtual
 
 // sound attenuation values
 #define ATTN_NONE				0.f	// full volume the entire level

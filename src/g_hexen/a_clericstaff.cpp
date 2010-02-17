@@ -48,9 +48,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_CStaffCheck)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	AActor *pmo;
+	APlayerPawn *pmo;
 	int damage;
-	int newLife;
+	int newLife, max;
 	angle_t angle;
 	int slope;
 	int i;
@@ -65,6 +65,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CStaffCheck)
 
 	pmo = player->mo;
 	damage = 20+(pr_staffcheck()&15);
+	max = pmo->GetMaxHealth();
 	for (i = 0; i < 3; i++)
 	{
 		angle = pmo->angle+i*(ANG45/16);
@@ -78,7 +79,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CStaffCheck)
 				&& (!(linetarget->flags2&(MF2_DORMANT+MF2_INVULNERABLE))))
 			{
 				newLife = player->health+(damage>>3);
-				newLife = newLife > 100 ? 100 : newLife;
+				newLife = newLife > max ? max : newLife;
 				if (newLife > player->health)
 				{
 					pmo->health = player->health = newLife;
@@ -101,7 +102,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CStaffCheck)
 			if ((linetarget->player && (!linetarget->IsTeammate (pmo) || level.teamdamage != 0)) || linetarget->flags3&MF3_ISMONSTER)
 			{
 				newLife = player->health+(damage>>4);
-				newLife = newLife > 100 ? 100 : newLife;
+				newLife = newLife > max ? max : newLife;
 				pmo->health = player->health = newLife;
 				P_SetPsprite (player, ps_weapon, weapon->FindState ("Drain"));
 			}
@@ -139,12 +140,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_CStaffAttack)
 	mo = P_SpawnPlayerMissile (self, RUNTIME_CLASS(ACStaffMissile), self->angle-(ANG45/15));
 	if (mo)
 	{
-		mo->special2 = 32;
+		mo->WeaveIndexXY = 32;
 	}
 	mo = P_SpawnPlayerMissile (self, RUNTIME_CLASS(ACStaffMissile), self->angle+(ANG45/15));
 	if (mo)
 	{
-		mo->special2 = 0;
+		mo->WeaveIndexXY = 0;
 	}
 	S_Sound (self, CHAN_WEAPON, "ClericCStaffFire", 1, ATTN_NORM);
 	return 0;
@@ -160,19 +161,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CStaffMissileSlither)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	fixed_t newX, newY;
-	int weaveXY;
-	int angle;
-
-	weaveXY = self->special2;
-	angle = (self->angle+ANG90)>>ANGLETOFINESHIFT;
-	newX = self->x-FixedMul(finecosine[angle], FloatBobOffsets[weaveXY]);
-	newY = self->y-FixedMul(finesine[angle], FloatBobOffsets[weaveXY]);
-	weaveXY = (weaveXY+3)&63;
-	newX += FixedMul(finecosine[angle], FloatBobOffsets[weaveXY]);
-	newY += FixedMul(finesine[angle], FloatBobOffsets[weaveXY]);
-	P_TryMove (self, newX, newY, true);
-	self->special2 = weaveXY;
+	A_Weave(self, 3, 0, FRACUNIT, 0);
 	return 0;
 }
 

@@ -186,7 +186,7 @@ int MatchString (const char *in, const char **strings)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_INFO_PROPERTY(game, T, Actor)
+DEFINE_INFO_PROPERTY(game, S, Actor)
 {
 	PROP_STRING_PARM(str, 0);
 	if (!stricmp(str, "Doom"))
@@ -361,6 +361,16 @@ DEFINE_PROPERTY(painchance, ZI, Actor)
 		if (info->PainChances == NULL) info->PainChances=new PainChanceList;
 		(*info->PainChances)[painType] = (BYTE)id;
 	}
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_PROPERTY(painthreshold, I, Actor)
+{
+	PROP_INT_PARM(id, 0);
+
+	defaults->PainThreshold = id;
 }
 
 //==========================================================================
@@ -895,6 +905,24 @@ DEFINE_PROPERTY(bouncecount, I, Actor)
 //==========================================================================
 //
 //==========================================================================
+DEFINE_PROPERTY(weaveindexXY, I, Actor)
+{
+	PROP_INT_PARM(id, 0);
+	defaults->WeaveIndexXY = id;
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_PROPERTY(weaveindexZ, I, Actor)
+{
+	PROP_INT_PARM(id, 0);
+	defaults->WeaveIndexZ = id;
+}
+
+//==========================================================================
+//
+//==========================================================================
 DEFINE_PROPERTY(minmissilechance, I, Actor)
 {
 	PROP_INT_PARM(id, 0);
@@ -914,18 +942,25 @@ DEFINE_PROPERTY(damagetype, S, Actor)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_PROPERTY(damagefactor, SF, Actor)
+DEFINE_PROPERTY(damagefactor, ZF, Actor)
 {
 	PROP_STRING_PARM(str, 0);
 	PROP_FIXED_PARM(id, 1);
 
-	if (info->DamageFactors == NULL) info->DamageFactors=new DmgFactors;
+	if (str == NULL)
+	{
+		defaults->DamageFactor = id;
+	}
+	else
+	{
+		if (info->DamageFactors == NULL) info->DamageFactors=new DmgFactors;
 
-	FName dmgType;
-	if (!stricmp(str, "Normal")) dmgType = NAME_None;
-	else dmgType=str;
+		FName dmgType;
+		if (!stricmp(str, "Normal")) dmgType = NAME_None;
+		else dmgType=str;
 
-	(*info->DamageFactors)[dmgType]=id;
+		(*info->DamageFactors)[dmgType]=id;
+	}
 }
 
 //==========================================================================
@@ -1009,7 +1044,6 @@ DEFINE_PROPERTY(gravity, F, Actor)
 
 	if (i < 0) I_Error ("Gravity must not be negative.");
 	defaults->gravity = i;
-	if (i == 0) defaults->flags |= MF_NOGRAVITY;
 }
 
 //==========================================================================
@@ -1062,7 +1096,7 @@ DEFINE_PROPERTY(projectile, 0, Actor)
 //==========================================================================
 DEFINE_PROPERTY(activation, N, Actor)
 {
-	// How the thing behaves when activated with MF5_USESPECIAL or MF6_BUMPSPECIAL
+	// How the thing behaves when activated by death, USESPECIAL or BUMPSPECIAL
 	PROP_INT_PARM(val, 0);
 	defaults->activationtype = val;
 }
@@ -1285,7 +1319,7 @@ DEFINE_CLASS_PROPERTY(pickupflash, S, Inventory)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_CLASS_PROPERTY(pickupmessage, S, Inventory)
+DEFINE_CLASS_PROPERTY(pickupmessage, T, Inventory)
 {
 	PROP_STRING_PARM(str, 0);
 	info->Class->Meta.SetMetaString(AIMETA_PickupMessage, str);
@@ -1337,7 +1371,7 @@ DEFINE_CLASS_PROPERTY(givequest, I, Inventory)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_CLASS_PROPERTY(lowmessage, IS, Health)
+DEFINE_CLASS_PROPERTY(lowmessage, IT, Health)
 {
 	PROP_INT_PARM(i, 0);
 	PROP_STRING_PARM(str, 1);
@@ -1366,7 +1400,7 @@ DEFINE_CLASS_PROPERTY(number, I, PuzzleItem)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_CLASS_PROPERTY(failmessage, S, PuzzleItem)
+DEFINE_CLASS_PROPERTY(failmessage, T, PuzzleItem)
 {
 	PROP_STRING_PARM(str, 0);
 	info->Class->Meta.SetMetaString(AIMETA_PuzzFailMessage, str);
@@ -1405,7 +1439,8 @@ DEFINE_CLASS_PROPERTY(ammogive2, I, Weapon)
 DEFINE_CLASS_PROPERTY(ammotype, S, Weapon)
 {
 	PROP_STRING_PARM(str, 0);
-	defaults->AmmoType1 = FindClassTentative(str, "Ammo");
+	if (!stricmp(str, "none") || *str == 0) defaults->AmmoType1 = NULL;
+	else defaults->AmmoType1 = FindClassTentative(str, "Ammo");
 }
 
 //==========================================================================
@@ -1414,7 +1449,8 @@ DEFINE_CLASS_PROPERTY(ammotype, S, Weapon)
 DEFINE_CLASS_PROPERTY(ammotype1, S, Weapon)
 {
 	PROP_STRING_PARM(str, 0);
-	defaults->AmmoType1 = FindClassTentative(str, "Ammo");
+	if (!stricmp(str, "none") || *str == 0) defaults->AmmoType1 = NULL;
+	else defaults->AmmoType1 = FindClassTentative(str, "Ammo");
 }
 
 //==========================================================================
@@ -1423,7 +1459,8 @@ DEFINE_CLASS_PROPERTY(ammotype1, S, Weapon)
 DEFINE_CLASS_PROPERTY(ammotype2, S, Weapon)
 {
 	PROP_STRING_PARM(str, 0);
-	defaults->AmmoType2 = FindClassTentative(str, "Ammo");
+	if (!stricmp(str, "none") || *str == 0) defaults->AmmoType1 = NULL;
+	else defaults->AmmoType2 = FindClassTentative(str, "Ammo");
 }
 
 //==========================================================================

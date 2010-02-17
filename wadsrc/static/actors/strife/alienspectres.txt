@@ -109,6 +109,7 @@ ACTOR AlienSpectre3 : AlienSpectre1 76
 	Radius 24
 	+SPAWNCEILING
 	DropItem "Sigil3"
+	DamageFactor "SpectralLow", 0
 	states
 	{
 	Spawn:

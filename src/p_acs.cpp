@@ -67,7 +67,6 @@
 #include "c_bind.h"
 #include "info.h"
 #include "r_translate.h"
-#include "sbarinfo.h"
 #include "cmdlib.h"
 #include "m_png.h"
 #include "p_setup.h"
@@ -1397,7 +1396,7 @@ void FBehavior::LoadScriptsDirectory ()
 	switch (Format)
 	{
 	case ACS_Old:
-		scripts.dw = (DWORD *)(Data + ((DWORD *)Data)[1]);
+		scripts.dw = (DWORD *)(Data + ((DWORD *)Data)[1]);	// FIXME: Has this been byte-swapped before-hand?
 		NumScripts = scripts.dw[0];
 		if (NumScripts != 0)
 		{
@@ -1474,6 +1473,25 @@ void FBehavior::LoadScriptsDirectory ()
 	if (NumScripts > 1)
 	{
 		qsort (Scripts, NumScripts, sizeof(ScriptPtr), SortScripts);
+		// Check for duplicates because ACC originally did not enforce
+		// script number uniqueness across different script types. We
+		// only need to do this for old format lumps, because the ACCs
+		// that produce new format lumps won't let you do this.
+		if (Format == ACS_Old)
+		{
+			for (i = 0; i < NumScripts - 1; ++i)
+			{
+				if (Scripts[i].Number == Scripts[i+1].Number)
+				{
+					Printf("Script %d appears more than once.\n", Scripts[i].Number);
+					// Make the closed version the first one.
+					if (Scripts[i+1].Type == SCRIPT_Closed)
+					{
+						swap(Scripts[i], Scripts[i+1]);
+					}
+				}
+			}
+		}
 	}
 
 	if (Format == ACS_Old)
@@ -1590,6 +1608,15 @@ const ScriptPtr *FBehavior::FindScript (int script) const
 	const ScriptPtr *ptr = BinarySearch<ScriptPtr, WORD>
 		((ScriptPtr *)Scripts, NumScripts, &ScriptPtr::Number, (WORD)script);
 
+	// If the preceding script has the same number, return it instead.
+	// See the note by the script sorting above for why.
+	if (ptr > Scripts)
+	{
+		if (ptr[-1].Number == script)
+		{
+			ptr--;
+		}
+	}
 	return ptr;
 }
 
@@ -1799,6 +1826,7 @@ END_POINTERS
 TObjPtr<DACSThinker> DACSThinker::ActiveThinker;
 
 DACSThinker::DACSThinker ()
+: DThinker(STAT_SCRIPTS)
 {
 	if (ActiveThinker)
 	{
@@ -2428,6 +2456,8 @@ enum
 	APROP_Species		= 20,
 	APROP_NameTag		= 21,
 	APROP_Score			= 22,
+	APROP_Notrigger		= 23,
+	APROP_DamageFactor	= 24,
 };	
 
 // These are needed for ACS's APROP_RenderStyle
@@ -2519,6 +2549,10 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 		if (value) actor->flags3 |= MF3_NOTARGET; else actor->flags3 &= ~MF3_NOTARGET;
 		break;
 
+	case APROP_Notrigger:
+		if (value) actor->flags6 |= MF6_NOTRIGGER; else actor->flags6 &= ~MF6_NOTRIGGER;
+		break;
+
 	case APROP_JumpZ:
 		if (actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))
 			static_cast<APlayerPawn *>(actor)->JumpZ = value;
@@ -2588,6 +2622,10 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 		actor->Tag = FBehavior::StaticLookupString(value);
 		break;
 
+	case APROP_DamageFactor:
+		actor->DamageFactor = value;
+		break;
+
 	default:
 		// do nothing.
 		break;
@@ -2620,6 +2658,7 @@ int DLevelScript::GetActorProperty (int tid, int property)
 	case APROP_Health:		return actor->health;
 	case APROP_Speed:		return actor->Speed;
 	case APROP_Damage:		return actor->Damage;	// Should this call GetMissileDamage() instead?
+	case APROP_DamageFactor:return actor->DamageFactor;
 	case APROP_Alpha:		return actor->alpha;
 	case APROP_RenderStyle:	for (int style = STYLE_None; style < STYLE_Count; ++style)
 							{ // Check for a legacy render style that matches.
@@ -2638,6 +2677,7 @@ int DLevelScript::GetActorProperty (int tid, int property)
 	case APROP_Frightened:	return !!(actor->flags4 & MF4_FRIGHTENED);
 	case APROP_Friendly:	return !!(actor->flags & MF_FRIENDLY);
 	case APROP_Notarget:	return !!(actor->flags3 & MF3_NOTARGET);
+	case APROP_Notrigger:	return !!(actor->flags6 & MF6_NOTRIGGER);
 	case APROP_SpawnHealth: if (actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))
 							{
 								return static_cast<APlayerPawn *>(actor)->MaxHealth;
@@ -2679,6 +2719,7 @@ int DLevelScript::CheckActorProperty (int tid, int property, int value)
 		case APROP_Health:
 		case APROP_Speed:
 		case APROP_Damage:
+		case APROP_DamageFactor:
 		case APROP_Alpha:
 		case APROP_RenderStyle:
 		case APROP_Gravity:
@@ -2694,6 +2735,7 @@ int DLevelScript::CheckActorProperty (int tid, int property, int value)
 		case APROP_Frightened:
 		case APROP_Friendly:
 		case APROP_Notarget:
+		case APROP_Notrigger:
 			return (GetActorProperty(tid, property) == (!!value));
 
 		// Strings are not covered by GetActorProperty, so make the check here
@@ -2892,6 +2934,13 @@ enum EACSFunctions
     ACSF_SetActorVelocity,
 	ACSF_SetUserVariable,
 	ACSF_GetUserVariable,
+	ACSF_Radius_Quake2,
+	ACSF_CheckActorClass,
+	ACSF_SetUserArray,
+	ACSF_GetUserArray,
+	ACSF_SoundSequenceOnActor,
+	ACSF_SoundSequenceOnSector,
+	ACSF_SoundSequenceOnPolyobj,
 };
 
 int DLevelScript::SideFromID(int id, int side)
@@ -2924,6 +2973,67 @@ int DLevelScript::LineFromID(int id)
 	{
 		return P_FindLineFromID(id, -1);
 	}
+}
+
+static void SetUserVariable(AActor *self, FName varname, int index, int value)
+{
+	PSymbol *sym = self->GetClass()->Symbols.FindSymbol(varname, true);
+	int max;
+	PSymbolVariable *var;
+
+	if (sym == NULL || sym->SymbolType != SYM_Variable ||
+		!(var = static_cast<PSymbolVariable *>(sym))->bUserVar)
+	{
+		return;
+	}
+	if (var->ValueType.Type == VAL_Int)
+	{
+		max = 1;
+	}
+	else if (var->ValueType.Type == VAL_Array && var->ValueType.BaseType == VAL_Int)
+	{
+		max = var->ValueType.size;
+	}
+	else
+	{
+		return;
+	}
+	// Set the value of the specified user variable.
+	if (index >= 0 && index < max)
+	{
+		((int *)(reinterpret_cast<BYTE *>(self) + var->offset))[index] = value;
+	}
+}
+
+static int GetUserVariable(AActor *self, FName varname, int index)
+{
+	PSymbol *sym = self->GetClass()->Symbols.FindSymbol(varname, true);
+	int max;
+	PSymbolVariable *var;
+
+	if (sym == NULL || sym->SymbolType != SYM_Variable ||
+		!(var = static_cast<PSymbolVariable *>(sym))->bUserVar)
+	{
+		return 0;
+	}
+	if (var->ValueType.Type == VAL_Int)
+	{
+		max = 1;
+	}
+	else if (var->ValueType.Type == VAL_Array && var->ValueType.BaseType == VAL_Int)
+	{
+		max = var->ValueType.size;
+	}
+	else
+	{
+		return 0;
+	}
+	// Get the value of the specified user variable.
+	if (index >= 0 && index < max)
+	{
+		return ((int *)(reinterpret_cast<BYTE *>(self) + var->offset))[index];
+	}
+	return 0;
 }
 
 int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
@@ -3093,23 +3203,24 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 		case ACSF_SetUserVariable:
 		{
 			int cnt = 0;
-			if (args[1] >= 0 && args[1] < 10)
+			FName varname(FBehavior::StaticLookupString(args[1]), true);
+			if (varname != NAME_None)
 			{
 				if (args[0] == 0)
 				{
 					if (activator != NULL)
 					{
-						activator->uservar[args[1]] = args[2];
+						SetUserVariable(activator, varname, 0, args[2]);
 					}
 					cnt++;
 				}
 				else
 				{
-					TActorIterator<AActor> iterator (args[0]);
+					TActorIterator<AActor> iterator(args[0]);
 	                
-					while ( (actor = iterator.Next ()) )
+					while ( (actor = iterator.Next()) )
 					{
-						actor->uservar[args[1]] = args[2];
+						SetUserVariable(actor, varname, 0, args[2]);
 						cnt++;
 					}
 				}
@@ -3118,13 +3229,120 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 		}
 		
 		case ACSF_GetUserVariable:
-			if (args[1] >= 0 && args[1] < 10)
+		{
+			FName varname(FBehavior::StaticLookupString(args[1]), true);
+			if (varname != NAME_None)
 			{
-				activator = SingleActorFromTID(args[0], NULL);
-				return activator != NULL? activator->uservar[args[1]] : 0;
+				AActor *a = args[0] == 0 ? (AActor *)activator : SingleActorFromTID(args[0], NULL); 
+				return a != NULL ? GetUserVariable(a, varname, 0) : 0;
 			}
-			else return 0;
+			return 0;
+		}
+
+		case ACSF_SetUserArray:
+		{
+			int cnt = 0;
+			FName varname(FBehavior::StaticLookupString(args[1]), true);
+			if (varname != NAME_None)
+			{
+				if (args[0] == 0)
+				{
+					if (activator != NULL)
+					{
+						SetUserVariable(activator, varname, args[2], args[3]);
+					}
+					cnt++;
+				}
+				else
+				{
+					TActorIterator<AActor> iterator(args[0]);
+	                
+					while ( (actor = iterator.Next()) )
+					{
+						SetUserVariable(actor, varname, args[2], args[3]);
+						cnt++;
+					}
+				}
+			}
+			return cnt;
+		}
 		
+		case ACSF_GetUserArray:
+		{
+			FName varname(FBehavior::StaticLookupString(args[1]), true);
+			if (varname != NAME_None)
+			{
+				AActor *a = args[0] == 0 ? (AActor *)activator : SingleActorFromTID(args[0], NULL); 
+				return a != NULL ? GetUserVariable(a, varname, args[2]) : 0;
+			}
+			return 0;
+		}
+
+		case ACSF_Radius_Quake2:
+			P_StartQuake(activator, args[0], args[1], args[2], args[3], args[4], FBehavior::StaticLookupString(args[5]));
+			break;
+
+		case ACSF_CheckActorClass:
+		{
+			AActor *a = args[0] == 0 ? (AActor *)activator : SingleActorFromTID(args[0], NULL); 
+			return a->GetClass()->TypeName == FName(FBehavior::StaticLookupString(args[1]));
+		}
+
+		case ACSF_SoundSequenceOnActor:
+			{
+				const char *seqname = FBehavior::StaticLookupString(args[1]);
+				if (seqname != NULL)
+				{
+					if (args[0] == 0)
+					{
+						if (activator != NULL)
+						{
+							SN_StartSequence(activator, seqname, 0);
+						}
+					}
+					else
+					{
+						FActorIterator it(args[0]);
+						AActor *actor;
+
+						while ( (actor = it.Next()) )
+						{
+							SN_StartSequence(actor, seqname, 0);
+						}
+					}
+				}
+			}
+			break;
+
+		case ACSF_SoundSequenceOnSector:
+			{
+				const char *seqname = FBehavior::StaticLookupString(args[1]);
+				int space = args[2] < CHAN_FLOOR || args[2] > CHAN_INTERIOR ? CHAN_FULLHEIGHT : args[2];
+				if (seqname != NULL)
+				{
+					int secnum = -1;
+
+					while ((secnum = P_FindSectorFromTag(args[0], secnum)) >= 0)
+					{
+						SN_StartSequence(&sectors[secnum], args[2], seqname, 0);
+					}
+				}
+			}
+			break;
+
+		case ACSF_SoundSequenceOnPolyobj:
+			{
+				const char *seqname = FBehavior::StaticLookupString(args[1]);
+				if (seqname != NULL)
+				{
+					FPolyObj *poly = PO_GetPolyobj(args[0]);
+					if (poly != NULL)
+					{
+						SN_StartSequence(poly, seqname, 0);
+					}
+				}
+			}
+			break;
 
 		default:
 			break;
@@ -4951,7 +5169,7 @@ int DLevelScript::RunScript ()
 			lookup = FBehavior::StaticLookupString (STACK(1));
 			if (lookup != NULL)
 			{
-				if (activationline)
+				if (activationline != NULL)
 				{
 					SN_StartSequence (activationline->frontsector, CHAN_FULLHEIGHT, lookup, 0);
 				}

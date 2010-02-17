@@ -164,6 +164,7 @@ void S_NoiseDebug (void)
 	screen->DrawText (SmallFont, CR_GOLD, 300, y, "chan", TAG_DONE);
 	screen->DrawText (SmallFont, CR_GOLD, 340, y, "pri", TAG_DONE);
 	screen->DrawText (SmallFont, CR_GOLD, 380, y, "flags", TAG_DONE);
+	screen->DrawText (SmallFont, CR_GOLD, 460, y, "aud", TAG_DONE);
 	y += 8;
 
 	if (Channels == NULL)
@@ -186,7 +187,7 @@ void S_NoiseDebug (void)
 		color = (chan->ChanFlags & CHAN_LOOP) ? CR_BROWN : CR_GREY;
 
 		// Name
-		Wads.GetLumpName (temp, chan->SfxInfo->lumpnum);
+		Wads.GetLumpName (temp, S_sfx[chan->SoundID].lumpnum);
 		temp[8] = 0;
 		screen->DrawText (SmallFont, color, 0, y, temp, TAG_DONE);
 
@@ -236,7 +237,7 @@ void S_NoiseDebug (void)
 		screen->DrawText(SmallFont, color, 340, y, temp, TAG_DONE);
 
 		// Flags
-		mysnprintf(temp, countof(temp), "%s3%sZ%sU%sM%sN%sA%sL%sE",
+		mysnprintf(temp, countof(temp), "%s3%sZ%sU%sM%sN%sA%sL%sE%sV",
 			(chan->ChanFlags & CHAN_IS3D)			? TEXTCOLOR_GREEN : TEXTCOLOR_BLACK,
 			(chan->ChanFlags & CHAN_LISTENERZ)		? TEXTCOLOR_GREEN : TEXTCOLOR_BLACK,
 			(chan->ChanFlags & CHAN_UI)				? TEXTCOLOR_GREEN : TEXTCOLOR_BLACK,
@@ -244,8 +245,13 @@ void S_NoiseDebug (void)
 			(chan->ChanFlags & CHAN_NOPAUSE)		? TEXTCOLOR_GREEN : TEXTCOLOR_BLACK,
 			(chan->ChanFlags & CHAN_AREA)			? TEXTCOLOR_GREEN : TEXTCOLOR_BLACK,
 			(chan->ChanFlags & CHAN_LOOP)			? TEXTCOLOR_GREEN : TEXTCOLOR_BLACK,
-			(chan->ChanFlags & CHAN_EVICTED)		? TEXTCOLOR_GREEN : TEXTCOLOR_BLACK);
+			(chan->ChanFlags & CHAN_EVICTED)		? TEXTCOLOR_GREEN : TEXTCOLOR_BLACK,
+			(chan->ChanFlags & CHAN_VIRTUAL)		? TEXTCOLOR_GREEN : TEXTCOLOR_BLACK);
 		screen->DrawText(SmallFont, color, 380, y, temp, TAG_DONE);
+
+		// Audibility
+		mysnprintf(temp, countof(temp), "%.4f", GSnd->GetAudibility(chan));
+		screen->DrawText(SmallFont, color, 460, y, temp, TAG_DONE);
 
 		y += 8;
 		if (chan->PrevChan == &Channels)
@@ -1047,6 +1053,7 @@ static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyO
 	if (chan == NULL && (chanflags & CHAN_LOOP))
 	{
 		chan = (FSoundChan*)S_GetChannel(NULL);
+		GSnd->MarkStartTime(chan);
 		chanflags |= CHAN_EVICTED;
 	}
 	if (attenuation > 0)
@@ -1061,7 +1068,6 @@ static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyO
 	{
 		chan->SoundID = sound_id;
 		chan->OrgID = FSoundID(org_id);
-		chan->SfxInfo = sfx;
 		chan->EntChannel = channel;
 		chan->Volume = float(volume);
 		chan->ChanFlags |= chanflags;
@@ -1094,10 +1100,9 @@ static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyO
 void S_RestartSound(FSoundChan *chan)
 {
 	assert(chan->ChanFlags & CHAN_EVICTED);
-	assert(chan->SfxInfo != NULL);
 
 	FSoundChan *ochan;
-	sfxinfo_t *sfx = chan->SfxInfo;
+	sfxinfo_t *sfx = &S_sfx[chan->SoundID];
 
 	// If this is a singular sound, don't play it if it's already playing.
 	if (sfx->bSingular && S_CheckSingular(chan->SoundID))
@@ -1119,7 +1124,6 @@ void S_RestartSound(FSoundChan *chan)
 	if (chan->ChanFlags & (CHAN_UI|CHAN_NOPAUSE)) startflags |= SNDF_NOPAUSE;
 	if (chan->ChanFlags & CHAN_ABSTIME) startflags |= SNDF_ABSTIME;
 
-	chan->ChanFlags &= ~(CHAN_EVICTED|CHAN_ABSTIME);
 	if (chan->ChanFlags & CHAN_IS3D)
 	{
 		FVector3 pos, vel;
@@ -1136,11 +1140,13 @@ void S_RestartSound(FSoundChan *chan)
 		SoundListener listener;
 		S_SetListener(listener, players[consoleplayer].camera);
 
+		chan->ChanFlags &= ~(CHAN_EVICTED|CHAN_ABSTIME);
 		ochan = (FSoundChan*)GSnd->StartSound3D(sfx->data, &listener, chan->Volume, &chan->Rolloff, chan->DistanceScale, chan->Pitch,
 			chan->Priority, pos, vel, chan->EntChannel, startflags, chan);
 	}
 	else
 	{
+		chan->ChanFlags &= ~(CHAN_EVICTED|CHAN_ABSTIME);
 		ochan = (FSoundChan*)GSnd->StartSound(sfx->data, chan->Volume, chan->Pitch, startflags, chan);
 	}
 	assert(ochan == NULL || ochan == chan);
@@ -1344,7 +1350,7 @@ bool S_CheckSoundLimit(sfxinfo_t *sfx, const FVector3 &pos, int near_limit, floa
 	
 	for (chan = Channels, count = 0; chan != NULL && count < near_limit; chan = chan->NextChan)
 	{
-		if (!(chan->ChanFlags & CHAN_EVICTED) && chan->SfxInfo == sfx)
+		if (!(chan->ChanFlags & CHAN_EVICTED) && &S_sfx[chan->SoundID] == sfx)
 		{
 			FVector3 chanorigin;
 
@@ -1741,6 +1747,11 @@ void S_EvictAllChannels()
 			chan->ChanFlags |= CHAN_EVICTED;
 			if (chan->SysChannel != NULL)
 			{
+				if (!(chan->ChanFlags & CHAN_ABSTIME))
+				{
+					chan->StartTime.AsOne = GSnd ? GSnd->GetPosition(chan) : 0;
+					chan->ChanFlags |= CHAN_ABSTIME;
+				}
 				S_StopChannel(chan);
 			}
 //			assert(chan->NextChan == next);
@@ -1969,10 +1980,10 @@ void S_ChannelEnded(FISoundChannel *ichan)
 		{
 			evicted = true;
 		}
-		else if (schan->SfxInfo != NULL)
+		else
 		{ 
 			unsigned int pos = GSnd->GetPosition(schan);
-			unsigned int len = GSnd->GetSampleLength(schan->SfxInfo->data);
+			unsigned int len = GSnd->GetSampleLength(S_sfx[schan->SoundID].data);
 			if (pos == 0)
 			{
 				evicted = !!(schan->ChanFlags & CHAN_JUSTSTARTED);
@@ -1982,10 +1993,12 @@ void S_ChannelEnded(FISoundChannel *ichan)
 				evicted = (pos < len);
 			}
 		}
+		/*
 		else
 		{
 			evicted = false;
 		}
+		*/
 		if (!evicted)
 		{
 			S_ReturnChannel(schan);
@@ -1995,6 +2008,25 @@ void S_ChannelEnded(FISoundChannel *ichan)
 			schan->ChanFlags |= CHAN_EVICTED;
 			schan->SysChannel = NULL;
 		}
+	}
+}
+
+//==========================================================================
+//
+// S_ChannelVirtualChanged (callback for sound interface code)
+//
+//==========================================================================
+
+void S_ChannelVirtualChanged(FISoundChannel *ichan, bool is_virtual)
+{
+	FSoundChan *schan = static_cast<FSoundChan*>(ichan);
+	if (is_virtual)
+	{
+		schan->ChanFlags |= CHAN_VIRTUAL;
+	}
+	else
+	{
+		schan->ChanFlags &= ~CHAN_VIRTUAL;
 	}
 }
 
@@ -2016,13 +2048,11 @@ void S_StopChannel(FSoundChan *chan)
 		if (!(chan->ChanFlags & CHAN_EVICTED))
 		{
 			chan->ChanFlags |= CHAN_FORGETTABLE;
+			if (chan->SourceType == SOURCE_Actor)
+			{
+				chan->Actor = NULL;
+			}
 		}
-
-		if (chan->SourceType == SOURCE_Actor)
-		{
-			chan->Actor = NULL;
-		}
-
 		GSnd->StopChannel(chan);
 	}
 	else
@@ -2084,10 +2114,6 @@ static FArchive &operator<<(FArchive &arc, FSoundChan &chan)
 		<< chan.Rolloff.MaxDistance
 		<< chan.LimitRange;
 
-	if (arc.IsLoading())
-	{
-		chan.SfxInfo = &S_sfx[chan.SoundID];
-	}
 	return arc;
 }
 
@@ -2276,7 +2302,10 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 		}
 	}
 
-	if (!mus_playing.name.IsEmpty() && stricmp (mus_playing.name, musicname) == 0)
+	if (!mus_playing.name.IsEmpty() &&
+		mus_playing.handle != NULL &&
+		stricmp (mus_playing.name, musicname) == 0 &&
+		mus_playing.handle->m_Looping == looping)
 	{
 		if (order != mus_playing.baseorder)
 		{

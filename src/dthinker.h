@@ -36,6 +36,7 @@
 
 #include <stdlib.h>
 #include "dobject.h"
+#include "statnums.h"
 
 class AActor;
 class player_t;
@@ -62,7 +63,7 @@ class DThinker : public DObject
 {
 	DECLARE_CLASS (DThinker, DObject)
 public:
-	DThinker (int statnum = MAX_STATNUM) throw();
+	DThinker (int statnum = STAT_DEFAULT) throw();
 	void Destroy ();
 	virtual ~DThinker ();
 	virtual void Tick ();

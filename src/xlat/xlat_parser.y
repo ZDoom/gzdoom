@@ -17,6 +17,7 @@ external_declaration ::= enum_statement.
 external_declaration ::= linetype_declaration.
 external_declaration ::= boom_declaration.
 external_declaration ::= sector_declaration.
+external_declaration ::= lineflag_declaration.
 external_declaration ::= sector_bitmask.
 external_declaration ::= maxlinespecial_def.
 external_declaration ::= NOP.
@@ -512,3 +513,22 @@ sector_bitmask ::= SECTOR BITMASK exp(mask) CLEAR SEMICOLON.
 sector_op(A) ::= LSHASSIGN.		{ A = 1; }
 sector_op(A) ::= RSHASSIGN.		{ A = -1; }
 
+%type lineflag_op {int}
+
+lineflag_declaration ::= LINEFLAG exp(from) EQUALS exp(to) SEMICOLON.
+{
+	if (from >= 0 && from < 16)
+	{
+		LineFlagTranslations[from].newvalue = to;
+		LineFlagTranslations[from].ismask = false;
+	}
+}
+
+lineflag_declaration ::= LINEFLAG exp(from) AND exp(mask) SEMICOLON.
+{
+	if (from >= 0 && from < 16)
+	{
+		LineFlagTranslations[from].newvalue = mask;
+		LineFlagTranslations[from].ismask = true;
+	}
+}

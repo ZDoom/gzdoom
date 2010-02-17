@@ -1316,7 +1316,7 @@ void G_PlayerReborn (int player)
 
     p->skill = b_skill;	//Added by MC:
 
-	p->oldbuttons = ~0, p->attackdown = true;	// don't do anything immediately
+	p->oldbuttons = ~0, p->attackdown = true; p->usedown = true;	// don't do anything immediately
 	p->original_oldbuttons = ~0;
 	p->playerstate = PST_LIVE;
 
@@ -1475,10 +1475,8 @@ void G_DeathMatchSpawnPlayer (int playernum)
 	{
 		if (playernum < 4)
 			spot->type = playernum+1;
-		else if (gameinfo.gametype != GAME_Hexen)
-			spot->type = playernum+4001-4;	// [RH] > 4 players
-		else
-			spot->type = playernum+9100-4;
+		else 
+			spot->type = playernum + gameinfo.player5start - 4;
 	}
 
 	AActor *mo = P_SpawnPlayer (spot);
@@ -1506,6 +1504,7 @@ static void G_QueueBody (AActor *body)
 	{
 		*translationtables[TRANSLATION_PlayerCorpses][modslot] = *TranslationToTable(body->Translation);
 		body->Translation = TRANSLATION(TRANSLATION_PlayerCorpses,modslot);
+		translationtables[TRANSLATION_PlayerCorpses][modslot]->UpdateNative();
 	}
 
 	bodyqueslot++;
@@ -1568,17 +1567,13 @@ void G_DoReborn (int playernum, bool freshbot)
 					// fake as other player
 					// [RH] These numbers should be common across all games. Or better yet, not
 					// used at all outside P_SpawnMapThing().
-					if (playernum < 4 || gameinfo.gametype == GAME_Strife)
+					if (playernum < 4)
 					{
 						playerstarts[i].type = playernum + 1;
 					}
-					else if (gameinfo.gametype == GAME_Hexen)
-					{
-						playerstarts[i].type = playernum + 9100 - 4;
-					}
 					else
 					{
-						playerstarts[i].type = playernum + 4001 - 4;
+						playerstarts[i].type = playernum + gameinfo.player5start - 4;
 					}
 					AActor *mo = P_SpawnPlayer (&playerstarts[i]);
 					if (mo != NULL) P_PlayerStartStomp(mo);
@@ -1850,14 +1845,11 @@ FString G_BuildSaveName (const char *prefix, int slot)
 		{
 			leader = save_dir;
 		}
+		if (leader.IsEmpty())
+		{
 #ifdef unix
-		if (leader.IsEmpty())
-		{
 			leader = "~/" GAME_DIR;
-		}
 #elif defined(__APPLE__)
-		if (leader.IsEmpty())
-		{
 			char cpath[PATH_MAX];
 			FSRef folder;
 
@@ -1866,8 +1858,10 @@ FString G_BuildSaveName (const char *prefix, int slot)
 			{
 				leader << cpath << "/" GAME_DIR "/Savegames/";
 			}
-		}
+#else
+			leader = progdir;
 #endif
+		}
 	}
 	size_t len = leader.Len();
 	if (leader[0] != '\0' && leader[len-1] != '\\' && leader[len-1] != '/')

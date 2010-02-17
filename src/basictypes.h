@@ -23,6 +23,10 @@ typedef int64_t					SQWORD;
 typedef uint64_t				QWORD;
 #endif
 
+typedef SDWORD					int32;
+typedef float					real32;
+typedef double					real64;
+
 // windef.h, included by windows.h, has its own incompatible definition
 // of DWORD as a long. In files that mix Doom and Windows code, you
 // must define USE_WINDOWS_DWORD before including doomtype.h so that

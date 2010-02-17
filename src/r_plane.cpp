@@ -336,7 +336,7 @@ void R_MapTiltedPlane (int y, int x1)
 	{
 		uz = (iz + plane_sz[0]*width) * planelightfloat;
 		vz = iz * planelightfloat;
-		R_CalcTiltedLighting (toint (vz), toint (uz), width);
+		R_CalcTiltedLighting (xs_RoundToInt(vz), xs_RoundToInt(uz), width);
 	}
 
 	uz = plane_su[2] + plane_su[1]*(centery-y) + plane_su[0]*(x1-centerx);
@@ -745,8 +745,10 @@ inline void R_MakeSpans (int x, int t1, int b1, int t2, int b2, void (*mapfunc)(
 static FTexture *frontskytex, *backskytex;
 static angle_t skyflip;
 static int frontpos, backpos;
-static fixed_t frontxScale, backxScale;
 static fixed_t frontyScale;
+static fixed_t frontcyl, backcyl;
+static fixed_t skymid;
+static angle_t skyangle;
 int frontiScale;
 
 extern fixed_t swall[MAXWIDTH];
@@ -764,17 +766,16 @@ static int skycolplace;
 // Get a column of sky when there is only one sky texture.
 static const BYTE *R_GetOneSkyColumn (FTexture *fronttex, int x)
 {
-	angle_t column = MulScale16 (frontxScale, viewangle + xtoviewangle[x]);
-
-	return fronttex->GetColumn ((((column^skyflip) >> sky1shift) + frontpos) >> FRACBITS, NULL);
+	angle_t column = (skyangle + xtoviewangle[x]) ^ skyflip;
+	return fronttex->GetColumn((UMulScale16(column, frontcyl) + frontpos) >> FRACBITS, NULL);
 }
 
 // Get a column of sky when there are two overlapping sky textures
 static const BYTE *R_GetTwoSkyColumns (FTexture *fronttex, int x)
 {
-	DWORD ang = (viewangle + xtoviewangle[x])^skyflip;
-	DWORD angle1 = (((DWORD)MulScale16 (frontxScale, ang) >> sky1shift) + frontpos) >> FRACBITS;
-	DWORD angle2 = (((DWORD)MulScale16 (backxScale, ang) >> sky2shift) + backpos) >> FRACBITS;
+	DWORD ang = (skyangle + xtoviewangle[x]) ^ skyflip;
+	DWORD angle1 = (DWORD)((UMulScale16(ang, frontcyl) + frontpos) >> FRACBITS);
+	DWORD angle2 = (DWORD)((UMulScale16(ang, backcyl) + backpos) >> FRACBITS);
 
 	// Check if this column has already been built. If so, there's
 	// no reason to waste time building it again.
@@ -822,10 +823,9 @@ static void R_DrawSky (visplane_t *pl)
  	if (pl->minx > pl->maxx)
 		return;
 
-	dc_iscale = skyiscale >> skystretch;
+	dc_iscale = skyiscale;
 
 	clearbuf (swall+pl->minx, pl->maxx-pl->minx+1, dc_iscale<<2);
-	rw_offset = frontpos;
 
 	if (MirrorFlags & RF_XFLIP)
 	{
@@ -850,14 +850,8 @@ static void R_DrawSky (visplane_t *pl)
 	rw_pic = frontskytex;
 	rw_offset = 0;
 
-	frontxScale = rw_pic->xScale;
-	if (backskytex != NULL)
-	{
-		backxScale = backskytex->xScale;
-	}
-
 	frontyScale = rw_pic->yScale;
-	dc_texturemid = MulScale16 (skytexturemid/*-viewz*/, frontyScale);
+	dc_texturemid = MulScale16 (skymid, frontyScale);
 
 	if (1 << frontskytex->HeightBits == frontskytex->GetHeight())
 	{ // The texture tiles nicely
@@ -870,8 +864,16 @@ static void R_DrawSky (visplane_t *pl)
 	}
 	else
 	{ // The texture does not tile nicely
-		frontyScale = DivScale16 (skyscale << skystretch, frontyScale);
+		frontyScale = DivScale16 (skyscale, frontyScale);
 		frontiScale = DivScale32 (1, frontyScale);
+		// Sodding crap. Fixed point sucks when you want precision.
+		// TODO (if I'm feeling adventurous): Rewrite the renderer to use floating point
+		// coordinates to keep as much precision as possible until the final
+		// rasterization stage so fudges like this aren't needed.
+		if (viewheight <= 600)
+		{
+			skymid -= FRACUNIT;
+		}
 		R_DrawSkyStriped (pl);
 	}
 }
@@ -889,7 +891,7 @@ static void R_DrawSkyStriped (visplane_t *pl)
 	// So that I don't have to worry about fractional precision, chop off the
 	// fractional part of centeryfrac.
 	centeryfrac = centery << FRACBITS;
-	topfrac = (skytexturemid + iscale * (1-centery)) % (frontskytex->GetHeight() << FRACBITS);
+	topfrac = (skymid + iscale * (1-centery)) % (frontskytex->GetHeight() << FRACBITS);
 	if (topfrac < 0) topfrac += frontskytex->GetHeight() << FRACBITS;
 	yl = 0;
 	yh = (short)MulScale32 ((frontskytex->GetHeight() << FRACBITS) - topfrac, frontyScale);
@@ -1103,10 +1105,12 @@ void R_DrawSkyBoxes ()
 			// Don't let gun flashes brighten the sky box
 			extralight = 0;
 			R_SetVisibility (sky->args[0] * 0.25f);
-			viewx = sky->x;
-			viewy = sky->y;
-			viewz = sky->z;
-			viewangle = savedangle + sky->angle;
+
+			viewx = sky->PrevX + FixedMul(r_TicFrac, sky->x - sky->PrevX);
+			viewy = sky->PrevY + FixedMul(r_TicFrac, sky->y - sky->PrevY);
+			viewz = sky->PrevZ + FixedMul(r_TicFrac, sky->z - sky->PrevZ);
+			viewangle = savedangle + sky->PrevAngle + FixedMul(r_TicFrac, sky->angle - sky->PrevAngle);
+
 			R_CopyStackedViewParameters();
 		}
 		else
@@ -1252,6 +1256,7 @@ ADD_STAT(skyboxes)
 void R_DrawSkyPlane (visplane_t *pl)
 {
 	FTextureID sky1tex, sky2tex;
+	double frontdpos = 0, backdpos = 0;
 
 	if ((level.flags & LEVEL_SWAPSKIES) && !(level.flags & LEVEL_DOUBLESKY))
 	{
@@ -1262,6 +1267,8 @@ void R_DrawSkyPlane (visplane_t *pl)
 		sky1tex = sky1texture;
 	}
 	sky2tex = sky2texture;
+	skymid = skytexturemid;
+	skyangle = viewangle;
 
 	if (pl->picnum == skyflatnum)
 	{
@@ -1274,15 +1281,18 @@ void R_DrawSkyPlane (visplane_t *pl)
 			else
 				backskytex = NULL;
 			skyflip = 0;
-			frontpos = sky1pos;
-			backpos = sky2pos;
+			frontdpos = sky1pos;
+			backdpos = sky2pos;
+			frontcyl = sky1cyl;
+			backcyl = sky2cyl;
 		}
 		else if (pl->sky == PL_SKYFLAT)
 		{	// use sky2
 			frontskytex = TexMan(sky2tex);
 			backskytex = NULL;
+			frontcyl = sky2cyl;
 			skyflip = 0;
-			frontpos = sky2pos;
+			frontdpos = sky2pos;
 		}
 		else
 		{	// MBF's linedef-controlled skies
@@ -1305,7 +1315,7 @@ void R_DrawSkyPlane (visplane_t *pl)
 			}
 
 			frontskytex = TexMan(s->GetTexture(pos));
-			if (frontskytex->UseType == FTexture::TEX_Null)
+			if (frontskytex == NULL || frontskytex->UseType == FTexture::TEX_Null)
 			{ // [RH] The blank texture: Use normal sky instead.
 				goto sky1;
 			}
@@ -1315,10 +1325,10 @@ void R_DrawSkyPlane (visplane_t *pl)
 			// to allow sky rotation as well as careful positioning.
 			// However, the offset is scaled very small, so that it
 			// allows a long-period of sky rotation.
-			frontpos = (-s->GetTextureXOffset(pos)) >> 6;
+			skyangle += s->GetTextureXOffset(pos);
 
 			// Vertical offset allows careful sky positioning.
-			dc_texturemid = s->GetTextureYOffset(pos) - 28*FRACUNIT;
+			skymid = s->GetTextureYOffset(pos) - 28*FRACUNIT;
 
 			// We sometimes flip the picture horizontally.
 			//
@@ -1326,7 +1336,18 @@ void R_DrawSkyPlane (visplane_t *pl)
 			// to make it easier to use the new feature, while to still
 			// allow old sky textures to be used.
 			skyflip = l->args[2] ? 0u : ~0u;
+
+			frontcyl = MAX(frontskytex->GetWidth(), frontskytex->xScale >> (16 - 10));
+			if (skystretch)
+			{
+				skymid = Scale(skymid, frontskytex->GetScaledHeight(), SKYSTRETCH_HEIGHT);
+			}
 		}
+	}
+	frontpos = int(fmod(frontdpos, sky1cyl * 65536.0));
+	if (backskytex != NULL)
+	{
+		backpos = int(fmod(backdpos, sky2cyl * 65536.0));
 	}
 
 	bool fakefixed = false;

@@ -17,7 +17,10 @@ ACTOR Actor native //: Thinker
 	BounceCount -1
 	FloatSpeed 4
 	Gravity 1
+	DamageFactor 1.0
 	PushFactor 0.25
+	WeaveIndexXY 0
+	WeaveIndexZ 16
 
 	// Variables for the expression evaluator
 	// NOTE: fixed_t and angle_t are only used here to ensure proper conversion
@@ -45,6 +48,7 @@ ACTOR Actor native //: Thinker
 	native fixed_t momy;	// alias for vely
 	native fixed_t momz;	// alias for velz
 	native int score;
+
 	// Meh, MBF redundant functions. Only for DeHackEd support.
 	action native A_Turn(float angle = 0);
 	action native A_LineEffect(int boomspecial = 0, int tag = 0);
@@ -177,7 +181,7 @@ ACTOR Actor native //: Thinker
 	action native A_StopSound(int slot = CHAN_VOICE);	// Bad default but that's what is originally was...
 	action native A_PlaySoundEx(sound whattoplay, coerce name slot, bool looping = false, int attenuation = 0);
 	action native A_StopSoundEx(coerce name slot);
-	action native A_SeekerMissile(int threshold, int turnmax);
+	action native A_SeekerMissile(int threshold, int turnmax, int flags = 0, int chance = 50, int distance = 10);
 	action native A_Jump(int chance = 256, state label, ...);
 	action native A_CustomMissile(class<Actor> missiletype, float spawnheight = 32, int spawnofs_xy = 0, float angle = 0, int flags = 0, float pitch = 0);
 	action native A_CustomBulletAttack(float spread_xy, float spread_z, int	numbullets, int damageperbullet, class<Actor> pufftype = "BulletPuff", float range = 0, bool aimfacing = false);
@@ -193,6 +197,7 @@ ACTOR Actor native //: Thinker
 	action native A_Print(string whattoprint, float time = 0, name fontname = "");
 	action native A_PrintBold(string whattoprint, float time = 0, name fontname = "");
 	action native A_Log(string whattoprint);
+	action native A_LogInt(int whattoprint);
 	action native A_SetTranslucent(float alpha, int style = 0);
 	action native A_FadeIn(float reduce = 0.1);
 	action native A_FadeOut(float reduce = 0.1, bool remove = true);
@@ -206,9 +211,9 @@ ACTOR Actor native //: Thinker
 	action native A_RemoveMaster();
 	action native A_RemoveChildren(bool removeall = false);
 	action native A_RemoveSiblings(bool removeall = false);
-	action native A_KillMaster();
-	action native A_KillChildren();
-	action native A_KillSiblings();
+	action native A_KillMaster(name damagetype = "none");
+	action native A_KillChildren(name damagetype = "none");
+	action native A_KillSiblings(name damagetype = "none");
 	action native A_RaiseMaster();
 	action native A_RaiseChildren();
 	action native A_RaiseSiblings();
@@ -217,15 +222,17 @@ ACTOR Actor native //: Thinker
 	action native A_PlayerSkinCheck(state label);
 	action native A_BasicAttack(int meleedamage, sound meleesound, class<actor> missiletype, float missileheight);
 	action native A_ThrowGrenade(class<Actor> itemtype, float zheight = 0, float xyvel = 0, float zvel = 0, bool useammo = true);
+	action native A_Weave(int xspeed, int yspeed, float xdist, float ydist);
 
 	action native A_Recoil(float xyvel);
 	action native A_JumpIfInTargetInventory(class<Inventory> itemtype, int amount, state label);
 	action native A_GiveToTarget(class<Inventory> itemtype, int amount = 0);
 	action native A_TakeFromTarget(class<Inventory> itemtype, int amount = 0);
-	action native A_CountdownArg(int argnum);
+	action native A_CountdownArg(int argnum, state targstate = "");
 	action native A_CustomMeleeAttack(int damage = 0, sound meleesound = "", sound misssound = "", name damagetype = "none", bool bleed = true);
 	action native A_CustomComboAttack(class<Actor> missiletype, float spawnheight, int damage, sound meleesound = "", name damagetype = "none", bool bleed = true);
 	action native A_Burst(class<Actor> chunktype);
+	action native A_Blast(int flags = 0, float strength = 255, float radius = 255, float speed = 20, class<Actor> blasteffect = "BlastEffect", sound blastsound = "BlastRadius");
 	action native A_RadiusThrust(int force = 128, int distance = -1, bool affectsource = true);
 	action native A_Explode(int damage = -1, int distance = -1, bool hurtsource = true, bool alert = false, int fulldamagedistance = 0, int nails = 0, int naildamage = 10);
 	action native A_Stop();
@@ -258,8 +265,10 @@ ACTOR Actor native //: Thinker
 	action native A_ScaleVelocity(float scale);
 	action native A_ChangeVelocity(float x = 0, float y = 0, float z = 0, int flags = 0);
 	action native A_SetArg(int pos, int value);
-	action native A_SetUserVar(int pos, int value);
+	action native A_SetUserVar(name varname, int value);
+	action native A_SetUserArray(name varname, int index, int value);
 	action native A_SetSpecial(int spec, int arg0 = 0, int arg1 = 0, int arg2 = 0, int arg3 = 0, int arg4 = 0);
+	action native A_Quake(int intensity, int duration, int damrad, int tremrad, sound sfx = "world/quake");
 
 	States
 	{

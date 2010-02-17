@@ -50,6 +50,7 @@
 #include "p_lnspec.h"
 #include "doomstat.h"
 #include "thingdef_exp.h"
+#include "m_fixed.h"
 #include "vmbuilder.h"
 
 // Accessible actor member variables
@@ -77,7 +78,6 @@ DEFINE_MEMBER_VARIABLE_ALIAS(momy, vely, AActor)
 DEFINE_MEMBER_VARIABLE_ALIAS(momz, velz, AActor)
 DEFINE_MEMBER_VARIABLE(Damage, AActor)
 DEFINE_MEMBER_VARIABLE(Score, AActor)
-DEFINE_MEMBER_VARIABLE(uservar, AActor)
 
 ExpEmit::ExpEmit(VMFunctionBuilder *build, int type)
 : RegNum(build->Registers[type].Get(1)), RegType(type), Konst(false), Fixed(false)

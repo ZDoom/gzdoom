@@ -177,7 +177,7 @@ bool P_UndoPlayerMorph (player_t *activator, player_t *player, int unmorphflag, 
 {
 	AWeapon *beastweap;
 	APlayerPawn *mo;
-	AActor *pmo;
+	APlayerPawn *pmo;
 	angle_t angle;
 
 	pmo = player->mo;
@@ -192,7 +192,7 @@ bool P_UndoPlayerMorph (player_t *activator, player_t *player, int unmorphflag, 
 		return false;
 	}
 
-	bool DeliberateUnmorphIsOkay = !!(player->MorphStyle & unmorphflag);
+	bool DeliberateUnmorphIsOkay = !!(MORPH_STANDARDUNDOING & unmorphflag);
 
     if ((pmo->flags2 & MF2_INVULNERABLE) // If the player is invulnerable
         && ((player != activator)       // and either did not decide to unmorph,
@@ -314,7 +314,10 @@ bool P_UndoPlayerMorph (player_t *activator, player_t *player, int unmorphflag, 
 	}
 
 	angle = mo->angle >> ANGLETOFINESHIFT;
-	Spawn(exit_flash, pmo->x + 20*finecosine[angle], pmo->y + 20*finesine[angle], pmo->z + TELEFOGHEIGHT, ALLOW_REPLACE);
+	if (exit_flash != NULL)
+	{
+		Spawn(exit_flash, pmo->x + 20*finecosine[angle], pmo->y + 20*finesine[angle], pmo->z + TELEFOGHEIGHT, ALLOW_REPLACE);
+	}
 	mo->SetupWeaponSlots();		// Use original class's weapon slots.
 	beastweap = player->ReadyWeapon;
 	if (player->PremorphWeapon != NULL)
@@ -327,7 +330,7 @@ bool P_UndoPlayerMorph (player_t *activator, player_t *player, int unmorphflag, 
 	}
 	if (correctweapon)
 	{ // Better "lose morphed weapon" semantics
-		const PClass *morphweapon = PClass::FindClass (mo->MorphWeapon);
+		const PClass *morphweapon = PClass::FindClass (pmo->MorphWeapon);
 		if (morphweapon != NULL && morphweapon->IsDescendantOf (RUNTIME_CLASS(AWeapon)))
 		{
 			AWeapon *OriginalMorphWeapon = static_cast<AWeapon *>(mo->FindInventory (morphweapon));

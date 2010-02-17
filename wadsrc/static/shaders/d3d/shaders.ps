@@ -1,5 +1,10 @@
 sampler2D Image : register(s0);
 sampler1D Palette : register(s1);
+#if PS14
+sampler1D Gamma1 : register(s2);
+sampler1D Gamma2 : register(s3);
+sampler1D Gamma3 : register(s4);
+#endif
 
 float4 PaletteMod : register(c2);
 float4 Weights : register(c6);		// RGB->Gray weighting { 77/256.0, 143/256.0, 37/256.0, 1 }
@@ -100,7 +105,19 @@ float4 InGameColormap(float2 tex_coord : TEXCOORD0, float4 color : COLOR0, float
 float4 GammaCorrection(float2 tex_coord : TEXCOORD0) : COLOR
 {
 	float4 color = tex2D(Image, tex_coord);
+#if !PS14
 	color.rgb = pow(color.rgb, Gamma.rgb);
+#else
+	// On PS14 targets, we can only sample once from each sampler
+	// per stage. Fortunately, we have 16 samplers to play with,
+	// so we can just set three of them to the gamma texture and
+	// use one for each component. Unfortunately, all these
+	// texture lookups are probably not as efficient as the pow()
+	// solution that later targets make possible.
+	color.r = tex1D(Gamma1, color.r * Gamma.w).r;
+	color.g = tex1D(Gamma2, color.g * Gamma.w).g;
+	color.b = tex1D(Gamma3, color.b * Gamma.w).b;
+#endif
 	return color;
 }
 

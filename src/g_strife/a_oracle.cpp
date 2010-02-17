@@ -7,16 +7,6 @@
 #include "thingdef/thingdef.h"
 */
 
-class AOracle : public AActor
-{
-	DECLARE_CLASS (AOracle, AActor)
-public:
-	int TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, FName damagetype);
-};
-
-
-IMPLEMENT_CLASS (AOracle)
-
 
 DEFINE_ACTION_FUNCTION(AActor, A_WakeOracleSpectre)
 {
@@ -34,18 +24,3 @@ DEFINE_ACTION_FUNCTION(AActor, A_WakeOracleSpectre)
 	return 0;
 }
 
-
-//============================================================================
-//
-// AOracle :: TakeSpecialDamage
-//
-// The Oracle is invulnerable to the first stage Sigil.
-//
-//============================================================================
-
-int AOracle::TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, FName damagetype)
-{
-	if (inflictor != NULL && inflictor->GetClass()->TypeName == NAME_SpectralLightningV1)
-		return -1;
-	return Super::TakeSpecialDamage(inflictor, source, damage, damagetype);
-}

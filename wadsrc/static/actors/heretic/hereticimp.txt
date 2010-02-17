@@ -25,6 +25,7 @@ ACTOR HereticImp 66
 	Obituary "$OB_HERETICIMP"
 	HitObituary "$OB_HERETICIMPHIT"
 	
+	action native A_ImpMsAttack();
 	action native A_ImpDeath();
 	action native A_ImpXDeath1();
 	action native A_ImpExplode();
@@ -44,7 +45,7 @@ ACTOR HereticImp 66
 		Goto See
 	Missile:
 		IMPX A 10 A_FaceTarget
-		IMPX B 6 A_SkullAttack(12)
+		IMPX B 6 A_ImpMsAttack
 		IMPX CBAB 6
 		Goto Missile+2
 	Pain:

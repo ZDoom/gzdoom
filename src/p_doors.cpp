@@ -133,7 +133,7 @@ void DDoor::Tick ()
 
 		if (res == pastdest)
 		{
-			SN_StopSequence (m_Sector);
+			SN_StopSequence (m_Sector, CHAN_CEILING);
 			switch (m_Type)
 			{
 			case doorRaise:
@@ -179,7 +179,7 @@ void DDoor::Tick ()
 
 		if (res == pastdest)
 		{
-			SN_StopSequence (m_Sector);
+			SN_StopSequence (m_Sector, CHAN_CEILING);
 			switch (m_Type)
 			{
 			case doorRaise:
@@ -422,7 +422,9 @@ bool EV_DoDoor (DDoor::EVlDoor type, line_t *line, AActor *thing,
 						// [RH] If this sector doesn't have a specific sound
 						// attached to it, start the door close sequence.
 						// Otherwise, just let the current one continue.
-						if (sec->seqType == -1)
+						// FIXME: This should be check if the sound sequence has separate up/down
+						// paths, not if it was manually set.
+						if (sec->seqType == -1 || SN_CheckSequence(sec, CHAN_CEILING) == NULL)
 						{
 							door->DoorSound (false);
 						}

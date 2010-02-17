@@ -118,9 +118,8 @@ static void P_SlopeLineToPoint (int lineid, fixed_t x, fixed_t y, fixed_t z, boo
 //
 //===========================================================================
 
-static void P_CopyPlane (int tag, fixed_t x, fixed_t y, bool copyCeil)
+static void P_CopyPlane (int tag, sector_t *dest, bool copyCeil)
 {
-	sector_t *dest = P_PointInSector (x, y);
 	sector_t *source;
 	int secnum;
 	size_t planeofs;
@@ -142,6 +141,12 @@ static void P_CopyPlane (int tag, fixed_t x, fixed_t y, bool copyCeil)
 		planeofs = myoffsetof(sector_t, floorplane);
 	}
 	*(secplane_t *)((BYTE *)dest + planeofs) = *(secplane_t *)((BYTE *)source + planeofs);
+}
+
+static void P_CopyPlane (int tag, fixed_t x, fixed_t y, bool copyCeil)
+{
+	sector_t *dest = P_PointInSector (x, y);
+	P_CopyPlane(tag, dest, copyCeil);
 }
 
 //===========================================================================
@@ -548,7 +553,6 @@ void P_SetSlopes ()
 		if (lines[i].special == Plane_Align)
 		{
 			lines[i].special = 0;
-			lines[i].id = lines[i].args[2];
 			if (lines[i].backsector != NULL)
 			{
 				// args[0] is for floor, args[1] is for ceiling
@@ -566,6 +570,55 @@ void P_SetSlopes ()
 						P_AlignPlane (lines[i].frontsector, lines + i, s);
 					else if (bits == 2)		// align back side to front
 						P_AlignPlane (lines[i].backsector, lines + i, s);
+				}
+			}
+		}
+	}
+}
+
+//===========================================================================
+//
+// P_CopySlopes
+//
+//===========================================================================
+
+void P_CopySlopes()
+{
+	for (int i = 0; i < numlines; i++)
+	{
+		if (lines[i].special == Plane_Copy)
+		{
+			// The args are used for the tags of sectors to copy:
+			// args[0]: front floor
+			// args[1]: front ceiling
+			// args[2]: back floor
+			// args[3]: back ceiling
+			// args[4]: copy slopes from one side of the line to the other.
+			lines[i].special = 0;
+			for (int s = 0; s < (lines[i].backsector ? 4 : 2); s++)
+			{
+				if (lines[i].args[s])
+					P_CopyPlane(lines[i].args[s], 
+					(s & 2 ? lines[i].backsector : lines[i].frontsector), s & 1);
+			}
+
+			if (lines[i].backsector != NULL)
+			{
+				if ((lines[i].args[4] & 3) == 1)
+				{
+					lines[i].backsector->floorplane = lines[i].frontsector->floorplane;
+				}
+				else if ((lines[i].args[4] & 3) == 2)
+				{
+					lines[i].frontsector->floorplane = lines[i].backsector->floorplane;
+				}
+				if ((lines[i].args[4] & 12) == 4)
+				{
+					lines[i].backsector->ceilingplane = lines[i].frontsector->ceilingplane;
+				}
+				else if ((lines[i].args[4] & 12) == 8)
+				{
+					lines[i].frontsector->ceilingplane = lines[i].backsector->ceilingplane;
 				}
 			}
 		}

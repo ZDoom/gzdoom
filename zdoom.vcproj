@@ -1594,6 +1594,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\xs_Float.h"
+				>
+			</File>
+			<File
 				RelativePath=".\src\zstring.h"
 				>
 			</File>
@@ -2257,16 +2261,32 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\g_shared\sbarinfo.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\src\g_shared\sbarinfo.h"
 				>
 			</File>
 			<File
-				RelativePath=".\src\g_shared\sbarinfo_display.cpp"
+				RelativePath=".\src\g_shared\sbarinfo_commands.cpp"
 				>
-			</File>
-			<File
-				RelativePath=".\src\g_shared\sbarinfo_parser.cpp"
-				>
+				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\src\g_shared\shared_hud.cpp"
@@ -4094,42 +4114,6 @@
 			</File>
 			<File
 				RelativePath=".\src\g_hexen\a_magestaff.cpp"
-				>
-				<FileConfiguration
-					Name="Release|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|x64"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|x64"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\src\g_hexen\a_magewand.cpp"
 				>
 				<FileConfiguration
 					Name="Release|Win32"

@@ -70,6 +70,15 @@ const int RGF_NOPIERCING = 2;
 // Flags for A_Mushroom
 const int MSF_Standard = 0;
 const int MSF_Classic = 1;
+const int MSF_DontHurt = 2;
+
+// Flags for A_Blast
+const int BF_USEAMMO = 1;
+const int BF_DONTWARN = 2;
+const int BF_AFFECTBOSSES = 4;
+
+// Flags for A_SeekerMissile
+const int SMF_LOOK = 1;
 
 // Activation flags
 enum
@@ -81,7 +90,19 @@ enum
 	THINGSPEC_MonsterTrigger = 8,
 	THINGSPEC_MissileTrigger = 16,
 	THINGSPEC_ClearSpecial = 32,
+	THINGSPEC_NoDeathSpecial = 64,
+	THINGSPEC_TriggerActs = 128,
 };
+// Shorter aliases for same
+const int AF_Default = 0;
+const int AF_ThingActs = 1;
+const int AF_ThingTargets = 2;
+const int AF_TriggerTargets = 4;
+const int AF_MonsterTrigger = 8;
+const int AF_MissileTrigger = 16;
+const int AF_ClearSpecial = 32;
+const int AF_NoDeathSpecial = 64;
+const int AF_TriggerActs = 128;
 
 // constants for A_PlaySound
 enum

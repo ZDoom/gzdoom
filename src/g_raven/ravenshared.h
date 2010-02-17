@@ -20,7 +20,6 @@ class AMinotaurFriend : public AMinotaur
 public:
 	int StartTime;
 
-	bool IsOkayToAttack (AActor *target);
 	void Die (AActor *source, AActor *inflictor);
 	bool OkayToSwitchTarget (AActor *other);
 	void BeginPlay ();

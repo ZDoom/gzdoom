@@ -45,6 +45,7 @@
 #include <time.h>
 #include <math.h>
 #include <assert.h>
+#include <sys/stat.h>
 
 #include "doomerrors.h"
 
@@ -102,6 +103,8 @@
 #include "m_cheat.h"
 #include "compatibility.h"
 #include "m_joy.h"
+#include "sc_man.h"
+#include "resourcefiles/resourcefile.h"
 
 EXTERN_CVAR(Bool, hud_althud)
 void DrawHUD();
@@ -118,7 +121,7 @@ extern void R_ExecuteSetViewSize ();
 extern void G_NewInit ();
 extern void SetupPlayerClasses ();
 extern bool CheckCheatmode ();
-extern const IWADInfo *D_FindIWAD(const char *basewad);
+const IWADInfo *D_FindIWAD(TArray<FString> &wadfiles, const char *iwad, const char *basewad);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -182,7 +185,7 @@ CVAR (Int, wipetype, 1, CVAR_ARCHIVE);
 CVAR (Int, snd_drawoutput, 0, 0);
 
 bool DrawFSHUD;				// [RH] Draw fullscreen HUD?
-wadlist_t *wadfiles;		// [RH] remove limit on # of loaded wads
+TArray<FString> allwads;
 bool devparm;				// started game with -devparm
 const char *D_DrawIcon;	// [RH] Patch name of icon to draw on next refresh
 int NoWipe;				// [RH] Allow wipe? (Needs to be set each time)
@@ -204,7 +207,6 @@ cycle_t FrameCycles;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static wadlist_t **wadtail = &wadfiles;
 static int demosequence;
 static int pagetic;
 
@@ -492,12 +494,12 @@ CUSTOM_CVAR(Int, compatmode, 0, CVAR_ARCHIVE|CVAR_NOINITCALL)
 		break;
 
 	case 1:	// Doom2.exe compatible with a few relaxed settings
-		v = COMPATF_SHORTTEX|COMPATF_STAIRINDEX|COMPATF_USEBLOCKING|COMPATF_NODOORLIGHT|
+		v = COMPATF_SHORTTEX|COMPATF_STAIRINDEX|COMPATF_USEBLOCKING|COMPATF_NODOORLIGHT|COMPATF_SPRITESORT|
 			COMPATF_TRACE|COMPATF_MISSILECLIP|COMPATF_SOUNDTARGET|COMPATF_DEHHEALTH|COMPATF_CROSSDROPOFF;
 		break;
 
 	case 2:	// same as 1 but stricter (NO_PASSMOBJ and INVISIBILITY are also set)
-		v = COMPATF_SHORTTEX|COMPATF_STAIRINDEX|COMPATF_USEBLOCKING|COMPATF_NODOORLIGHT|
+		v = COMPATF_SHORTTEX|COMPATF_STAIRINDEX|COMPATF_USEBLOCKING|COMPATF_NODOORLIGHT|COMPATF_SPRITESORT|
 			COMPATF_TRACE|COMPATF_MISSILECLIP|COMPATF_SOUNDTARGET|COMPATF_NO_PASSMOBJ|COMPATF_LIMITPAIN|
 			COMPATF_DEHHEALTH|COMPATF_INVISIBILITY|COMPATF_CROSSDROPOFF|COMPATF_CORPSEGIBS;
 		break;
@@ -546,6 +548,7 @@ CVAR (Flag, compat_mushroom,	compatflags, COMPATF_MUSHROOM);
 CVAR (Flag, compat_mbfmonstermove,compatflags, COMPATF_MBFMONSTERMOVE);
 CVAR (Flag, compat_corpsegibs,	compatflags, COMPATF_CORPSEGIBS);
 CVAR (Flag, compat_noblockfriends,compatflags,COMPATF_NOBLOCKFRIENDS);
+CVAR (Flag, compat_spritesort,	compatflags,COMPATF_SPRITESORT);
 
 //==========================================================================
 //
@@ -560,7 +563,7 @@ void D_Display ()
 	bool wipe;
 	bool hw2d;
 
-	if (nodrawers)
+	if (nodrawers || screen == NULL)
 		return; 				// for comparative timing / profiling
 	
 	cycle_t cycles;
@@ -860,6 +863,9 @@ void D_DoomLoop ()
 {
 	int lasttic = 0;
 
+	// Clamp the timer to TICRATE until the playloop has been entered.
+	r_NoInterpolate = true;
+
 	for (;;)
 	{
 		try
@@ -950,8 +956,7 @@ void D_PageDrawer (void)
 	if (Page != NULL)
 	{
 		screen->DrawTexture (Page, 0, 0,
-			DTA_VirtualWidth, Page->GetWidth(),
-			DTA_VirtualHeight, Page->GetHeight(),
+			DTA_Fullscreen, true,
 			DTA_Masked, false,
 			DTA_BilinearFilter, true,
 			TAG_DONE);
@@ -1041,7 +1046,10 @@ void D_DoStrifeAdvanceDemo ()
 		pagetic = 7 * TICRATE;
 		pagename = "PANEL1";
 		S_Sound (CHAN_VOICE | CHAN_UI, voices[0], 1, ATTN_NORM);
-		S_StartMusic ("d_intro");
+		// The new Strife teaser has D_FMINTR.
+		// The full retail Strife has D_INTRO.
+		// And the old Strife teaser has both. (I do not know which one it actually uses, nor do I care.)
+		S_StartMusic (gameinfo.flags & GI_TEASER2 ? "d_fmintr" : "d_intro");
 		break;
 
 	case 4:
@@ -1239,11 +1247,11 @@ CCMD (endgame)
 //
 //==========================================================================
 
-void D_AddFile (const char *file, bool check)
+bool D_AddFile (TArray<FString> &wadfiles, const char *file, bool check, int position)
 {
 	if (file == NULL)
 	{
-		return;
+		return false;
 	}
 
 	if (check && !DirEntryExists (file))
@@ -1252,16 +1260,16 @@ void D_AddFile (const char *file, bool check)
 		if (f == NULL)
 		{
 			Printf ("Can't find '%s'\n", file);
-			return;
+			return false;
 		}
 		file = f;
 	}
-	wadlist_t *wad = (wadlist_t *)M_Malloc (sizeof(*wad) + strlen(file));
 
-	*wadtail = wad;
-	wad->next = NULL;
-	strcpy (wad->name, file);
-	wadtail = &wad->next;
+	FString f = file;
+	FixPathSeperator(f);
+	if (position == -1) wadfiles.Push(f);
+	else wadfiles.Insert(position, f);
+	return true;
 }
 
 //==========================================================================
@@ -1270,13 +1278,13 @@ void D_AddFile (const char *file, bool check)
 //
 //==========================================================================
 
-void D_AddWildFile (const char *value)
+void D_AddWildFile (TArray<FString> &wadfiles, const char *value)
 {
 	const char *wadfile = BaseFileSearch (value, ".wad");
 
 	if (wadfile != NULL)
 	{
-		D_AddFile (wadfile);
+		D_AddFile (wadfiles, wadfile);
 	}
 	else
 	{ // Try pattern matching
@@ -1306,12 +1314,12 @@ void D_AddWildFile (const char *value)
 				{
 					if (sep == NULL)
 					{
-						D_AddFile (I_FindName (&findstate));
+						D_AddFile (wadfiles, I_FindName (&findstate));
 					}
 					else
 					{
 						strcpy (sep+1, I_FindName (&findstate));
-						D_AddFile (path);
+						D_AddFile (wadfiles, path);
 					}
 				}
 			} while (I_FindNext (handle, &findstate) == 0);
@@ -1328,7 +1336,7 @@ void D_AddWildFile (const char *value)
 //
 //==========================================================================
 
-void D_AddConfigWads (const char *section)
+void D_AddConfigWads (TArray<FString> &wadfiles, const char *section)
 {
 	if (GameConfig->SetSection (section))
 	{
@@ -1342,7 +1350,7 @@ void D_AddConfigWads (const char *section)
 			{
 				// D_AddWildFile resets GameConfig's position, so remember it
 				GameConfig->GetPosition (pos);
-				D_AddWildFile (value);
+				D_AddWildFile (wadfiles, value);
 				// Reset GameConfig's position to get next wad
 				GameConfig->SetPosition (pos);
 			}
@@ -1358,7 +1366,7 @@ void D_AddConfigWads (const char *section)
 //
 //==========================================================================
 
-static void D_AddDirectory (const char *dir)
+static void D_AddDirectory (TArray<FString> &wadfiles, const char *dir)
 {
 	char curdir[PATH_MAX];
 
@@ -1388,7 +1396,7 @@ static void D_AddDirectory (const char *dir)
 					if (!(I_FindAttr (&findstate) & FA_DIREC))
 					{
 						strcpy (skindir + stuffstart, I_FindName (&findstate));
-						D_AddFile (skindir);
+						D_AddFile (wadfiles, skindir);
 					}
 				} while (I_FindNext (handle, &findstate) == 0);
 				I_FindClose (handle);
@@ -1483,9 +1491,9 @@ bool ConsiderPatches (const char *arg, const char *ext)
 		for (i = 0; i < files->NumArgs(); ++i)
 		{
 			if ( (f = BaseFileSearch (files->GetArg (i), ".deh")) )
-				DoDehPatch (f, false);
+				D_LoadDehFile(f);
 			else if ( (f = BaseFileSearch (files->GetArg (i), ".bex")) )
-				DoDehPatch (f, false);
+				D_LoadDehFile(f);
 		}
 		noDef = true;
 	}
@@ -1581,6 +1589,161 @@ void D_MultiExec (DArgs *list, bool usePullin)
 	}
 }
 
+static void GetCmdLineFiles(TArray<FString> &wadfiles)
+{
+	DArgs *files = Args->GatherFiles ("-file", ".wad", true);
+	DArgs *files1 = Args->GatherFiles (NULL, ".zip", false);
+	DArgs *files2 = Args->GatherFiles (NULL, ".pk3", false);
+	DArgs *files3 = Args->GatherFiles (NULL, ".txt", false);
+	if (files->NumArgs() > 0 || files1->NumArgs() > 0 || files2->NumArgs() > 0 || files3->NumArgs() > 0)
+	{
+		// Check for -file in shareware
+		if (gameinfo.flags & GI_SHAREWARE)
+		{
+			I_FatalError ("You cannot -file with the shareware version. Register!");
+		}
+
+		// the files gathered are wadfile/lump names
+		for (int i = 0; i < files->NumArgs(); i++)
+		{
+			D_AddWildFile (wadfiles, files->GetArg (i));
+		}
+		for (int i = 0; i < files1->NumArgs(); i++)
+		{
+			D_AddWildFile (wadfiles, files1->GetArg (i));
+		}
+		for (int i = 0; i < files2->NumArgs(); i++)
+		{
+			D_AddWildFile (wadfiles, files2->GetArg (i));
+		}
+		for (int i = 0; i < files3->NumArgs(); i++)
+		{
+			D_AddWildFile (wadfiles, files3->GetArg (i));
+		}
+	}
+	files->Destroy();
+	files1->Destroy();
+	files2->Destroy();
+	files3->Destroy();
+}
+
+static void CopyFiles(TArray<FString> &to, TArray<FString> &from)
+{
+	unsigned int ndx = to.Reserve(from.Size());
+	for(unsigned i=0;i<from.Size(); i++)
+	{
+		to[ndx+i] = from[i];
+	}
+}
+
+static FString ParseGameInfo(TArray<FString> &pwads, const char *fn, const char *data, int size)
+{
+	FScanner sc;
+	FString iwad;
+	int pos = 0;
+
+	const char *lastSlash = strrchr (fn, '/');
+
+	sc.OpenMem("GAMEINFO", data, size);
+	while(sc.GetToken())
+	{
+		sc.TokenMustBe(TK_Identifier);
+		FString nextKey = sc.String;
+		sc.MustGetToken('=');
+		if (!nextKey.CompareNoCase("IWAD"))
+		{
+			sc.MustGetString();
+			iwad = sc.String;
+		}
+		else if (!nextKey.CompareNoCase("LOAD"))
+		{
+			do
+			{
+				sc.MustGetString();
+
+				// Try looking for the wad in the same directory as the .wad
+				// before looking for it in the current directory.
+
+				if (lastSlash != NULL)
+				{
+					FString checkpath(fn, (lastSlash - fn) + 1);
+					checkpath += sc.String;
+
+					if (!FileExists (checkpath))
+					{
+						pos += D_AddFile(pwads, sc.String, true, pos);
+					}
+					else
+					{
+						pos += D_AddFile(pwads, checkpath, true, pos);
+					}
+				}
+			}
+			while (sc.CheckToken(','));
+		}
+	}
+	return iwad;
+}
+
+static FString CheckGameInfo(TArray<FString> & pwads)
+{
+	DWORD t = I_FPSTime();
+	// scan the list of WADs backwards to find the last one that contains a GAMEINFO lump
+	for(int i=pwads.Size()-1; i>=0; i--)
+	{
+		bool isdir = false;
+		FileReader *wadinfo;
+		FResourceFile *resfile;
+		const char *filename = pwads[i];
+
+		// Does this exist? If so, is it a directory?
+		struct stat info;
+		if (stat(pwads[i], &info) != 0)
+		{
+			Printf(TEXTCOLOR_RED "Could not stat %s\n", filename);
+			continue;
+		}
+		isdir = (info.st_mode & S_IFDIR) != 0;
+
+		if (!isdir)
+		{
+			try
+			{
+				wadinfo = new FileReader(filename);
+			}
+			catch (CRecoverableError &)
+			{ 
+				// Didn't find file
+				continue;
+			}
+			resfile = FResourceFile::OpenResourceFile(filename, wadinfo, true);
+		}
+		else
+			resfile = FResourceFile::OpenDirectory(filename, true);
+
+		if (resfile != NULL)
+		{
+			DWORD cnt = resfile->LumpCount();
+			for(int i=cnt-1; i>=0; i--)
+			{
+				FResourceLump *lmp = resfile->GetLump(i);
+
+				if (lmp->Namespace == ns_global && !stricmp(lmp->Name, "GAMEINFO"))
+				{
+					// Found one!
+					FString iwad = ParseGameInfo(pwads, resfile->Filename, (const char*)lmp->CacheLump(), lmp->LumpSize);
+					delete resfile;
+					return iwad;
+				}
+			}
+			delete resfile;
+		}
+	}
+	t = I_FPSTime() - t;
+	Printf("Gameinfo scan took %d ms\n", t);
+	return "";
+}
+
 //==========================================================================
 //
 // D_DoomMain
@@ -1593,8 +1756,7 @@ void D_DoomMain (void)
 	char *v;
 	const char *wad;
 	DArgs *execFiles;
-
-	srand(I_MSTime());
+	TArray<FString> pwads;
 
 	// Set the FPU precision to 53 significant bits. This is the default
 	// for Visual C++, but not for GCC, so some slight math variances
@@ -1635,11 +1797,15 @@ void D_DoomMain (void)
 	{
 		I_FatalError ("Cannot find " BASEWAD);
 	}
+	FString basewad = wad;
 
 	// Load zdoom.pk3 alone so that we can get access to the internal gameinfos before 
 	// the IWAD is known.
 
-	const IWADInfo *iwad_info = D_FindIWAD(wad);
+	GetCmdLineFiles(pwads);
+	FString iwad = CheckGameInfo(pwads);
+
+	const IWADInfo *iwad_info = D_FindIWAD(allwads, iwad, basewad);
 	gameinfo.gametype = iwad_info->gametype;
 	gameinfo.flags = iwad_info->flags;
 
@@ -1656,7 +1822,7 @@ void D_DoomMain (void)
 		// it for something else, so this gets to stay here.
 		wad = BaseFileSearch ("zvox.wad", NULL);
 		if (wad)
-			D_AddFile (wad);
+			D_AddFile (allwads, wad);
 	
 		// [RH] Add any .wad files in the skins directory
 #ifdef unix
@@ -1665,27 +1831,27 @@ void D_DoomMain (void)
 		file = progdir;
 #endif
 		file += "skins";
-		D_AddDirectory (file);
+		D_AddDirectory (allwads, file);
 
 #ifdef unix
 		file = NicePath("~/" GAME_DIR "/skins");
-		D_AddDirectory (file);
+		D_AddDirectory (allwads, file);
 #endif	
 
 		// Add common (global) wads
-		D_AddConfigWads ("Global.Autoload");
+		D_AddConfigWads (allwads, "Global.Autoload");
 
 		// Add game-specific wads
 		file = GameNames[gameinfo.gametype];
 		file += ".Autoload";
-		D_AddConfigWads (file);
+		D_AddConfigWads (allwads, file);
 
 		// Add IWAD-specific wads
 		if (iwad_info->Autoname != NULL)
 		{
 			file = iwad_info->Autoname;
 			file += ".Autoload";
-			D_AddConfigWads(file);
+			D_AddConfigWads(allwads, file);
 		}
 	}
 
@@ -1700,39 +1866,11 @@ void D_DoomMain (void)
 
 	C_ExecCmdLineParams ();		// [RH] do all +set commands on the command line
 
-	DArgs *files = Args->GatherFiles ("-file", ".wad", true);
-	DArgs *files1 = Args->GatherFiles (NULL, ".zip", false);
-	DArgs *files2 = Args->GatherFiles (NULL, ".pk3", false);
-	DArgs *files3 = Args->GatherFiles (NULL, ".txt", false);
-	if (files->NumArgs() > 0 || files1->NumArgs() > 0 || files2->NumArgs() > 0 || files3->NumArgs() > 0)
-	{
-		// Check for -file in shareware
-		if (gameinfo.flags & GI_SHAREWARE)
-		{
-			I_FatalError ("You cannot -file with the shareware version. Register!");
-		}
-
-		// the files gathered are wadfile/lump names
-		for (int i = 0; i < files->NumArgs(); i++)
-		{
-			D_AddWildFile (files->GetArg (i));
-		}
-		for (int i = 0; i < files1->NumArgs(); i++)
-		{
-			D_AddWildFile (files1->GetArg (i));
-		}
-		for (int i = 0; i < files2->NumArgs(); i++)
-		{
-			D_AddWildFile (files2->GetArg (i));
-		}
-		for (int i = 0; i < files3->NumArgs(); i++)
-		{
-			D_AddWildFile (files3->GetArg (i));
-		}
-	}
+	CopyFiles(allwads, pwads);
 
 	Printf ("W_Init: Init WADfiles.\n");
-	Wads.InitMultipleFiles (&wadfiles);
+	Wads.InitMultipleFiles (allwads);
+	allwads.Clear();
 
 	// [RH] Initialize localizable strings.
 	GStrings.LoadStrings (false);
@@ -1941,13 +2079,12 @@ void D_DoomMain (void)
 	DecalLibrary.Clear ();
 	DecalLibrary.ReadAllDecals ();
 
-	// [RH] Try adding .deh and .bex files on the command line.
+	// [RH] Add any .deh and .bex files on the command line.
 	// If there are none, try adding any in the config file.
+	// Note that the command line overrides defaults from the config.
 
-	if (!ConsiderPatches ("-deh", ".deh") &&
-		!ConsiderPatches ("-bex", ".bex") &&
-		(gameinfo.gametype == GAME_Doom) &&
-		GameConfig->SetSection ("Doom.DefaultDehacked"))
+	if ((ConsiderPatches("-deh", ".deh") | ConsiderPatches("-bex", ".bex")) == 0 &&
+		gameinfo.gametype == GAME_Doom && GameConfig->SetSection ("Doom.DefaultDehacked"))
 	{
 		const char *key;
 		const char *value;
@@ -1957,16 +2094,18 @@ void D_DoomMain (void)
 			if (stricmp (key, "Path") == 0 && FileExists (value))
 			{
 				Printf ("Applying patch %s\n", value);
-				DoDehPatch (value, true);
+				D_LoadDehFile(value);
 			}
 		}
 	}
 
-	DoDehPatch (NULL, true);	// See if there's a patch in a PWAD
-	FinishDehPatch ();			// Create replacements for dehacked pickups
+	// Load embedded Dehacked patches
+	D_LoadDehLumps();
+
+	// Create replacements for dehacked pickups
+	FinishDehPatch();
 
 	FActorInfo::StaticSetActorNums ();
-
 
 	// [RH] User-configurable startup strings. Because BOOM does.
 	static const char *startupString[5] = {
@@ -2035,7 +2174,7 @@ void D_DoomMain (void)
 
 	V_Init2();
 
-	files = Args->GatherFiles ("-playdemo", ".lmp", false);
+	DArgs *files = Args->GatherFiles ("-playdemo", ".lmp", false);
 	if (files->NumArgs() > 0)
 	{
 		singledemo = true;				// quit after one demo
@@ -2065,7 +2204,10 @@ void D_DoomMain (void)
 		if (autostart || netgame)
 		{
 			// Do not do any screenwipes when autostarting a game.
-			NoWipe = 35;
+			if (!Args->CheckParm("-warpwipe"))
+			{
+				NoWipe = TICRATE;
+			}
 			CheckWarpTransMap (startmap, true);
 			if (demorecording)
 				G_BeginRecording (startmap);

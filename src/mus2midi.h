@@ -46,6 +46,7 @@
 #define MIDI_META		((BYTE)0xFF)		 // Meta event begin
 #define MIDI_META_TEMPO ((BYTE)0x51)
 #define MIDI_META_EOT	((BYTE)0x2F)		 // End-of-track
+#define MIDI_META_SSPEC	((BYTE)0x7F)		 // System-specific event
 
 #define MIDI_NOTEOFF	((BYTE)0x80)		 // + note + velocity
 #define MIDI_NOTEON 	((BYTE)0x90)		 // + note + velocity

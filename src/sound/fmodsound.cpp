@@ -46,6 +46,8 @@ extern HWND Window;
 #endif
 #ifdef __APPLE__
 #include <stdlib.h>
+#elif __sun
+#include <alloca.h>
 #else
 #include <malloc.h>
 #endif
@@ -1541,7 +1543,7 @@ FISoundChannel *FMODSoundRenderer::StartSound(SoundHandle sfx, float vol, int pi
 			chan->setFrequency(freq);
 		}
 		chan->setVolume(vol);
-		if (!HandleChannelDelay(chan, reuse_chan, !!(flags & SNDF_ABSTIME), freq))
+		if (!HandleChannelDelay(chan, reuse_chan, flags & (SNDF_ABSTIME | SNDF_LOOP), freq))
 		{
 			chan->stop();
 			return NULL;
@@ -1648,8 +1650,12 @@ FISoundChannel *FMODSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener *
 			chan->set3DAttributes((FMOD_VECTOR *)&pos[0], (FMOD_VECTOR *)&vel[0]);
 			chan->set3DSpread(snd_3dspread);
 		}
-		if (!HandleChannelDelay(chan, reuse_chan, !!(flags & SNDF_ABSTIME), freq))
+		if (!HandleChannelDelay(chan, reuse_chan, flags & (SNDF_ABSTIME | SNDF_LOOP), freq))
 		{
+			// FMOD seems to get confused if you stop a channel right after
+			// starting it, so hopefully this function will never fail.
+			// (Presumably you need an update between them, but I haven't
+			// tested this hypothesis.)
 			chan->stop();
 			return NULL;
 		}
@@ -1676,6 +1682,19 @@ FISoundChannel *FMODSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener *
 
 //==========================================================================
 //
+// FMODSoundRenderer :: MarkStartTime
+//
+// Marks a channel's start time without actually playing it.
+//
+//==========================================================================
+
+void FMODSoundRenderer::MarkStartTime(FISoundChannel *chan)
+{
+	Sys->getDSPClock(&chan->StartTime.Hi, &chan->StartTime.Lo);
+}
+
+//==========================================================================
+//
 // FMODSoundRenderer :: HandleChannelDelay
 //
 // If the sound is restarting, seek it to its proper place. Returns false
@@ -1685,7 +1704,7 @@ FISoundChannel *FMODSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener *
 //
 //==========================================================================
 
-bool FMODSoundRenderer::HandleChannelDelay(FMOD::Channel *chan, FISoundChannel *reuse_chan, bool abstime, float freq) const
+bool FMODSoundRenderer::HandleChannelDelay(FMOD::Channel *chan, FISoundChannel *reuse_chan, int flags, float freq) const
 {
 	if (reuse_chan != NULL)
 	{ // Sound is being restarted, so seek it to the position
@@ -1695,7 +1714,7 @@ bool FMODSoundRenderer::HandleChannelDelay(FMOD::Channel *chan, FISoundChannel *
 
 		// If abstime is set, the sound is being restored, and
 		// the channel's start time is actually its seek position.
-		if (abstime)
+		if (flags & SNDF_ABSTIME)
 		{
 			unsigned int seekpos = reuse_chan->StartTime.Lo;
 			if (seekpos > 0)
@@ -1704,11 +1723,26 @@ bool FMODSoundRenderer::HandleChannelDelay(FMOD::Channel *chan, FISoundChannel *
 			}
 			reuse_chan->StartTime.AsOne = QWORD(nowtime.AsOne - seekpos * OutputRate / freq);
 		}
-		else
+		else if (reuse_chan->StartTime.AsOne != 0)
 		{
 			QWORD difftime = nowtime.AsOne - reuse_chan->StartTime.AsOne;
 			if (difftime > 0)
 			{
+				// Clamp the position of looping sounds to be within the sound.
+				// If we try to start it several minutes past its normal end,
+				// FMOD doesn't like that.
+				if (flags & SNDF_LOOP)
+				{
+					FMOD::Sound *sound;
+					if (FMOD_OK == chan->getCurrentSound(&sound))
+					{
+						unsigned int len;
+						if (FMOD_OK == sound->getLength(&len, FMOD_TIMEUNIT_MS))
+						{
+							difftime %= len;
+						}
+					}
+				}
 				return chan->setPosition((unsigned int)(difftime / OutputRate), FMOD_TIMEUNIT_MS) == FMOD_OK;
 			}
 		}
@@ -1844,6 +1878,27 @@ unsigned int FMODSoundRenderer::GetPosition(FISoundChannel *chan)
 	}
 	((FMOD::Channel *)chan->SysChannel)->getPosition(&pos, FMOD_TIMEUNIT_PCM);
 	return pos;
+}
+
+//==========================================================================
+//
+// FMODSoundRenderer :: GetAudibility
+//
+// Returns the audible volume of the channel, after rollof and any other
+// factors are applied.
+//
+//==========================================================================
+
+float FMODSoundRenderer::GetAudibility(FISoundChannel *chan)
+{
+	float aud;
+
+	if (chan == NULL || chan->SysChannel == NULL)
+	{
+		return 0;
+	}
+	((FMOD::Channel *)chan->SysChannel)->getAudibility(&aud);
+	return aud;
 }
 
 //==========================================================================
@@ -2284,16 +2339,19 @@ unsigned int FMODSoundRenderer::GetSampleLength(SoundHandle sfx)
 FMOD_RESULT F_CALLBACK FMODSoundRenderer::ChannelCallback
 	(FMOD_CHANNEL *channel, FMOD_CHANNEL_CALLBACKTYPE type, void *data1, void *data2)
 {
-	if (type != FMOD_CHANNEL_CALLBACKTYPE_END)
-	{
-		return FMOD_OK;
-	}
 	FMOD::Channel *chan = (FMOD::Channel *)channel;
 	FISoundChannel *schan;
 
 	if (chan->getUserData((void **)&schan) == FMOD_OK && schan != NULL)
 	{
-		S_ChannelEnded(schan);
+		if (type == FMOD_CHANNEL_CALLBACKTYPE_END)
+		{
+			S_ChannelEnded(schan);
+		}
+		else if (type == FMOD_CHANNEL_CALLBACKTYPE_VIRTUALVOICE)
+		{
+			S_ChannelVirtualChanged(schan, data1 != 0);
+		}
 	}
 	return FMOD_OK;
 }

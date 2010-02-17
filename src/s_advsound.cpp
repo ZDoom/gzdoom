@@ -1917,11 +1917,34 @@ void AAmbientSound::Serialize (FArchive &arc)
 	Super::Serialize (arc);
 	arc << bActive;
 	
-	int checktime = NextCheck - gametic;
-	arc << checktime;
-	if (arc.IsLoading ())
+	if (SaveVersion < 1902)
 	{
-		NextCheck = checktime + gametic;
+		arc << NextCheck;
+		NextCheck += gametic;
+		if (NextCheck < 0) NextCheck = INT_MAX;
+	}
+	else
+	{
+		if (arc.IsStoring())
+		{
+			if (NextCheck != INT_MAX)
+			{
+				int checktime = NextCheck - gametic;
+				arc << checktime;
+			}
+			else
+			{
+				arc << NextCheck;
+			}
+		}
+		else
+		{
+			arc << NextCheck;
+			if (NextCheck != INT_MAX)
+			{
+				NextCheck += gametic;
+			}
+		}
 	}
 }
 

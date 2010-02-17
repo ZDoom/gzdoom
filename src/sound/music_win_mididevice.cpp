@@ -41,6 +41,10 @@
 #include "doomdef.h"
 #include "m_swap.h"
 
+#ifndef __GNUC__
+#include <mmdeviceapi.h>
+#endif
+
 // MACROS ------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -48,6 +52,8 @@
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+
+static bool IgnoreMIDIVolume(UINT id);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -100,11 +106,18 @@ int WinMIDIDevice::Open(void (*callback)(UINT, void *, DWORD, DWORD), void *user
 
 		if (err == MMSYSERR_NOERROR)
 		{
-			// Set master volume to full, if the device allows it on this interface.
-			VolumeWorks = (MMSYSERR_NOERROR == midiOutGetVolume((HMIDIOUT)MidiOut, &SavedVolume));
-			if (VolumeWorks)
+			if (IgnoreMIDIVolume(DeviceID))
 			{
-				VolumeWorks &= (MMSYSERR_NOERROR == midiOutSetVolume((HMIDIOUT)MidiOut, 0xffffffff));
+				VolumeWorks = false;
+			}
+			else
+			{
+				// Set master volume to full, if the device allows it on this interface.
+				VolumeWorks = (MMSYSERR_NOERROR == midiOutGetVolume((HMIDIOUT)MidiOut, &SavedVolume));
+				if (VolumeWorks)
+				{
+					VolumeWorks &= (MMSYSERR_NOERROR == midiOutSetVolume((HMIDIOUT)MidiOut, 0xffffffff));
+				}
 			}
 		}
 	}
@@ -389,6 +402,63 @@ void CALLBACK WinMIDIDevice::CallbackFunc(HMIDIOUT hOut, UINT uMsg, DWORD_PTR dw
 	{
 		self->Callback(uMsg, self->CallbackData, dwParam1, dwParam2);
 	}
+}
+
+//==========================================================================
+//
+// IgnoreMIDIVolume
+//
+// Should we ignore this MIDI device's volume control even if it works?
+//
+// Under Windows Vista and up, when using the standard "Microsoft GS
+// Wavetable Synth", midiOutSetVolume() will affect the application's audio
+// session volume rather than the volume for just the MIDI stream. At first,
+// I thought I could get around this by enumerating the streams in the
+// audio session to find the MIDI device's stream to set its volume
+// manually, but there doesn't appear to be any way to enumerate the
+// individual streams in a session. Consequently, we'll just assume the MIDI
+// device gets created at full volume like we want. (Actual volume changes
+// are done by sending MIDI channel volume messages to the stream, not
+// through midiOutSetVolume().)
+//
+// This is using VC++'s __uuidof extension instead of the the CLSID_ and
+// IID_ definitions because I couldn't figure out why it wasn't finding them
+// when linking, and __uuidof circumvents that problem. I'd also be
+// surprised if w32api includes any WASAPI stuff any time soon, so it's no
+// big loss making this VC++-specific for the time being
+//
+//==========================================================================
+
+static bool IgnoreMIDIVolume(UINT id)
+{
+#ifndef __GNUC__
+	MIDIOUTCAPS caps;
+
+	if (MMSYSERR_NOERROR == midiOutGetDevCaps(id, &caps, sizeof(caps)))
+	{
+		// The Microsoft GS Wavetable Synth advertises itself as MOD_SWSYNTH with a VOLUME control.
+		// If the one we're using doesn't match that, we don't need to bother checking the name.
+		if (caps.wTechnology == MOD_SWSYNTH && (caps.dwSupport & MIDICAPS_VOLUME))
+		{
+			if (strncmp(caps.szPname, "Microsoft GS", 12) == 0)
+			{
+				IMMDeviceEnumerator *enumerator;
+
+				// Now try to create an IMMDeviceEnumerator interface. If it succeeds,
+				// we know we're using the new audio stack introduced with Vista and
+				// should ignore this MIDI device's volume control.
+				if (SUCCEEDED(CoCreateInstance(__uuidof(MMDeviceEnumerator), NULL, CLSCTX_ALL,
+											   __uuidof(IMMDeviceEnumerator), (void**)&enumerator))
+					&& enumerator != NULL)
+				{
+					enumerator->Release();
+					return true;
+				}
+			}
+		}
+	}
+#endif
+	return false;
 }
 
 #endif

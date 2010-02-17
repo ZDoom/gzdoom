@@ -41,6 +41,7 @@ gameinfo
 	defaultrespawntime = 16
 	defaultdropstyle = 2
 	endoom = "ENDSTRF"
+	player5start = 5
 }
 
 skill baby

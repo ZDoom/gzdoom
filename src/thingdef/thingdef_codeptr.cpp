@@ -364,12 +364,24 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_StopSoundEx)
 // Generic seeker missile function
 //
 //==========================================================================
+static FRandom pr_seekermissile ("SeekerMissile");
+enum
+{
+	SMF_LOOK = 1,
+};
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SeekerMissile)
 {
 	PARAM_ACTION_PROLOGUE;
 	PARAM_INT(ang1);
 	PARAM_INT(ang2);
+	PARAM_INT_OPT(flags)	{ flags = 0; }
+	PARAM_INT_OPT(chance)	{ chance = 50; }
+	PARAM_INT_OPT(distance)	{ distance = 10; }
 
+	if ((flags & SMF_LOOK) && (self->tracer == 0) && (pr_seekermissile()<chance))
+	{
+		self->tracer = P_RoughMonsterSearch (self, distance);
+	}
 	P_SeekerMissile(self, clamp<int>(ang1, 0, 90) * ANGLE_1, clamp<int>(ang2, 0, 90) * ANGLE_1);
 	return 0;
 }
@@ -636,10 +648,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Explode)
 	}
 
 	P_RadiusAttack (self, self->target, damage, distance, self->DamageType, hurtSource, true, fulldmgdistance);
-	if (self->z <= self->floorz + (distance<<FRACBITS))
-	{
-		P_HitFloor (self);
-	}
+	P_CheckSplash(self, distance<<FRACBITS);
 	if (alert && self->target != NULL && self->target->player != NULL)
 	{
 		validcount++;
@@ -665,10 +674,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusThrust)
 	if (distance <= 0) distance = force;
 
 	P_RadiusAttack (self, self->target, force, distance, self->DamageType, affectSource, false);
-	if (self->z <= self->floorz + (distance << FRACBITS))
-	{
-		P_HitFloor (self);
-	}
+	P_CheckSplash(self, distance<<FRACBITS);
 	return 0;
 }
 
@@ -872,7 +878,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomBulletAttack)
 			int angle = bangle + pr_cabullet.Random2() * (spread_xy / 255);
 			int slope = bslope + pr_cabullet.Random2() * (spread_z / 255);
 			int damage = ((pr_cabullet()%3)+1) * damageperbullet;
-			P_LineAttack(self, angle, range, slope, damage, GetDefaultByType(pufftype)->DamageType, pufftype);
+			P_LineAttack(self, angle, range, slope, damage, NAME_None, pufftype);
 		}
     }
 	return 0;
@@ -1038,7 +1044,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireBullets)
 	if ((numbullets == 1 && !player->refire) || numbullets == 0)
 	{
 		int damage = ((pr_cwbullet()%3)+1) * damageperbullet;
-		P_LineAttack(self, bangle, range, bslope, damage, GetDefaultByType(pufftype)->DamageType, pufftype);
+		P_LineAttack(self, bangle, range, bslope, damage, NAME_None, pufftype);
 	}
 	else 
 	{
@@ -1049,7 +1055,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireBullets)
 			int angle = bangle + pr_cwbullet.Random2() * (spread_xy / 255);
 			int slope = bslope + pr_cwbullet.Random2() * (spread_z / 255);
 			int damage = ((pr_cwbullet()%3)+1) * damageperbullet;
-			P_LineAttack(self, angle, range, slope, damage, GetDefaultByType(pufftype)->DamageType, pufftype);
+			P_LineAttack(self, angle, range, slope, damage, NAME_None, pufftype);
 		}
 	}
 	return 0;
@@ -1167,7 +1173,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomPunch)
 	if (pufftype == NULL)
 		pufftype = PClass::FindClass(NAME_BulletPuff);
 
-	P_LineAttack (self, angle, range, pitch, damage, GetDefaultByType(pufftype)->DamageType, pufftype, true);
+	P_LineAttack (self, angle, range, pitch, damage, NAME_None, pufftype, true);
 
 	// turn to face target
 	if (linetarget)
@@ -1243,9 +1249,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomRailgun)
 	PARAM_FLOAT_OPT	(maxdiff)			{ maxdiff = 0; }
 	PARAM_CLASS_OPT	(pufftype, AActor)	{ pufftype = PClass::FindClass(NAME_BulletPuff); }
 
+	AActor *linetarget;
+
 	fixed_t saved_x = self->x;
 	fixed_t saved_y = self->y;
 	angle_t saved_angle = self->angle;
+	fixed_t saved_pitch = self->pitch;
 
 	if (aim && self->target == NULL)
 	{
@@ -1267,9 +1276,15 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomRailgun)
 										self->target->x,
 										self->target->y);
 	}
-
-	self->pitch = P_AimLineAttack (self, self->angle, MISSILERANGE);
-
+	self->pitch = P_AimLineAttack (self, self->angle, MISSILERANGE, &linetarget, ANGLE_1*60, false, false, false, aim ? self->target : NULL);
+	if (linetarget == NULL && aim)
+	{
+		// We probably won't hit the target, but aim at it anyway so we don't look stupid.
+		FVector2 xydiff(self->target->x - self->x, self->target->y - self->y);
+		double zdiff = (self->target->z + (self->target->height>>1)) -
+						(self->z + (self->height>>1) - self->floorclip);
+		self->pitch = int(atan2(zdiff, xydiff.Length()) * ANGLE_180 / -M_PI);
+	}
 	// Let the aim trail behind the player
 	if (aim)
 	{
@@ -1304,6 +1319,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomRailgun)
 	self->x = saved_x;
 	self->y = saved_y;
 	self->angle = saved_angle;
+	self->pitch = saved_pitch;
 	return 0;
 }
 
@@ -1692,17 +1708,33 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ThrowGrenade)
 			ALLOW_REPLACE);
 	if (bo)
 	{
-		int pitch = self->pitch;
-
 		P_PlaySpawnSound(bo, self);
-		if (xyvel)
+		if (xyvel != 0)
 			bo->Speed = xyvel;
 		bo->angle = self->angle + (((pr_grenade()&7) - 4) << 24);
-		bo->velz = zvel + 2*finesine[pitch>>ANGLETOFINESHIFT];
-		bo->z += 2 * finesine[pitch>>ANGLETOFINESHIFT];
-		P_ThrustMobj(bo, bo->angle, bo->Speed);
-		bo->velx += self->velx >> 1;
-		bo->vely += self->vely >> 1;
+
+		angle_t pitch = angle_t(-self->pitch) >> ANGLETOFINESHIFT;
+		angle_t angle = bo->angle >> ANGLETOFINESHIFT;
+
+		// There are two vectors we are concerned about here: xy and z. We rotate
+		// them separately according to the shooter's pitch and then sum them to
+		// get the final velocity vector to shoot with.
+
+		fixed_t xy_xyscale = FixedMul(bo->Speed, finecosine[pitch]);
+		fixed_t xy_velz = FixedMul(bo->Speed, finesine[pitch]);
+		fixed_t xy_velx = FixedMul(xy_xyscale, finecosine[angle]);
+		fixed_t xy_vely = FixedMul(xy_xyscale, finesine[angle]);
+
+		pitch = angle_t(self->pitch) >> ANGLETOFINESHIFT;
+		fixed_t z_xyscale = FixedMul(zvel, finesine[pitch]);
+		fixed_t z_velz = FixedMul(zvel, finecosine[pitch]);
+		fixed_t z_velx = FixedMul(z_xyscale, finecosine[angle]);
+		fixed_t z_vely = FixedMul(z_xyscale, finesine[angle]);
+
+		bo->velx = xy_velx + z_velx + (self->velx >> 1);
+		bo->vely = xy_vely + z_vely + (self->vely >> 1);
+		bo->velz = xy_velz + z_velz;
+
 		bo->target= self;
 		P_CheckMissileSpawn (bo);
 	} 
@@ -1793,7 +1825,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Print)
 		{
 			con_midtime = float(time);
 		}
-		C_MidPrint(font != NULL ? font : SmallFont, text);
+		FString formatted = strbin1(text);
+		C_MidPrint(font != NULL ? font : SmallFont, formatted.GetChars());
 		con_midtime = saved;
 	}
 	return 0;
@@ -1823,7 +1856,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_PrintBold)
 	{
 		con_midtime = float(time);
 	}
-	C_MidPrintBold(font != NULL ? font : SmallFont, text);
+	FString formatted = strbin1(text);
+	C_MidPrintBold(font != NULL ? font : SmallFont, formatted.GetChars());
 	con_midtime = saved;
 	return 0;
 }
@@ -1839,6 +1873,20 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Log)
 	PARAM_ACTION_PROLOGUE;
 	PARAM_STRING(text);
 	Printf("%s\n", text);
+	return 0;
+}
+
+//===========================================================================
+//
+// A_LogInt
+//
+//===========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_LogInt)
+{
+	PARAM_ACTION_PROLOGUE;
+	PARAM_INT(num);
+	Printf("%d\n", num);
 	return 0;
 }
 
@@ -2044,12 +2092,14 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIf)
 // A_KillMaster
 //
 //===========================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_KillMaster)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_KillMaster)
 {
 	PARAM_ACTION_PROLOGUE;
+	PARAM_NAME_OPT(damagetype)	{ damagetype = NAME_None; }
+
 	if (self->master != NULL)
 	{
-		P_DamageMobj(self->master, self, self, self->master->health, NAME_None, DMG_NO_ARMOR);
+		P_DamageMobj(self->master, self, self, self->master->health, damagetype, DMG_NO_ARMOR | DMG_NO_FACTOR);
 	}
 	return 0;
 }
@@ -2059,9 +2109,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_KillMaster)
 // A_KillChildren
 //
 //===========================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_KillChildren)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_KillChildren)
 {
 	PARAM_ACTION_PROLOGUE;
+	PARAM_NAME_OPT(damagetype)	{ damagetype = NAME_None; }
+
 	TThinkerIterator<AActor> it;
 	AActor *mo;
 
@@ -2069,7 +2121,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_KillChildren)
 	{
 		if (mo->master == self)
 		{
-			P_DamageMobj(mo, self, self, mo->health, NAME_None, DMG_NO_ARMOR);
+			P_DamageMobj(mo, self, self, mo->health, damagetype, DMG_NO_ARMOR | DMG_NO_FACTOR);
 		}
 	}
 	return 0;
@@ -2080,9 +2132,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_KillChildren)
 // A_KillSiblings
 //
 //===========================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_KillSiblings)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_KillSiblings)
 {
 	PARAM_ACTION_PROLOGUE;
+	PARAM_NAME_OPT(damagetype)	{ damagetype = NAME_None; }
+
 	TThinkerIterator<AActor> it;
 	AActor *mo;
 
@@ -2090,7 +2144,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_KillSiblings)
 	{
 		if (mo->master == self->master && mo != self)
 		{
-			P_DamageMobj(mo, self, self, mo->health, NAME_None, DMG_NO_ARMOR);
+			P_DamageMobj(mo, self, self, mo->health, damagetype, DMG_NO_ARMOR | DMG_NO_FACTOR);
 		}
 	}
 	return 0;
@@ -2105,6 +2159,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CountdownArg)
 {
 	PARAM_ACTION_PROLOGUE;
 	PARAM_INT(argnum);
+	PARAM_STATE_OPT(state)	{ state = self->FindState(NAME_Death); }
 
 	if (argnum > 0 && argnum < countof(self->args))
 	{
@@ -2122,6 +2177,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CountdownArg)
 			{
 				self->SetState(self->FindState(NAME_Death));
 			}
+		}
+		else
+		{
+			self->SetState(state);
 		}
 	}
 	return 0;
@@ -3059,21 +3118,64 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetSpecial)
 
 //===========================================================================
 //
-// A_SetVar
+// A_SetUserVar
 //
 //===========================================================================
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetUserVar)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_INT(pos);
-	PARAM_INT(value);
+	PARAM_NAME	(varname);
+	PARAM_INT	(value);
 
-	if (pos < 0 || pos >= countof(self->uservar))
+	PSymbol *sym = self->GetClass()->Symbols.FindSymbol(varname, true);
+	PSymbolVariable *var;
+
+	if (sym == NULL || sym->SymbolType != SYM_Variable ||
+		!(var = static_cast<PSymbolVariable *>(sym))->bUserVar ||
+		var->ValueType.Type != VAL_Int)
+	{
+		Printf("%s is not a user variable in class %s\n", varname.GetChars(),
+			self->GetClass()->TypeName.GetChars());
 		return 0;
-	
-	// Set the value of the specified arg
-	self->uservar[pos] = value;
+	}
+	// Set the value of the specified user variable.
+	*(int *)(reinterpret_cast<BYTE *>(self) + var->offset) = value;
+	return 0;
+}
+
+//===========================================================================
+//
+// A_SetUserArray
+//
+//===========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetUserArray)
+{
+	PARAM_ACTION_PROLOGUE;
+	PARAM_NAME	(varname);
+	PARAM_INT	(pos);
+	PARAM_INT	(value);
+
+	PSymbol *sym = self->GetClass()->Symbols.FindSymbol(varname, true);
+	PSymbolVariable *var;
+
+	if (sym == NULL || sym->SymbolType != SYM_Variable ||
+		!(var = static_cast<PSymbolVariable *>(sym))->bUserVar ||
+		var->ValueType.Type != VAL_Array || var->ValueType.BaseType != VAL_Int)
+	{
+		Printf("%s is not a user array in class %s\n", varname.GetChars(),
+			self->GetClass()->TypeName.GetChars());
+		return 0;
+	}
+	if (pos < 0 || pos >= var->ValueType.size)
+	{
+		Printf("%d is out of bounds in array %s in class %s\n", pos, varname.GetChars(),
+			self->GetClass()->TypeName.GetChars());
+		return 0;
+	}
+	// Set the value of the specified user array at index pos.
+	((int *)(reinterpret_cast<BYTE *>(self) + var->offset))[pos] = value;
 	return 0;
 }
 
@@ -3090,6 +3192,78 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Turn)
 	self->angle += angle;
 	return 0;
 }
+
+//===========================================================================
+//
+// A_Quake
+//
+//===========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Quake)
+{
+	PARAM_ACTION_PROLOGUE;
+	PARAM_INT		(intensity);
+	PARAM_INT		(duration);
+	PARAM_INT		(damrad);
+	PARAM_INT		(tremrad);
+	PARAM_SOUND_OPT	(sound)	{ sound = "world/quake"; }
+
+	P_StartQuake(self, 0, intensity, duration, damrad, tremrad, sound);
+	return 0;
+}
+
+//===========================================================================
+//
+// A_Weave
+//
+//===========================================================================
+
+void A_Weave(AActor *self, int xyspeed, int zspeed, fixed_t xydist, fixed_t zdist)
+{
+	fixed_t newX, newY;
+	int weaveXY, weaveZ;
+	int angle;
+	fixed_t dist;
+
+	weaveXY = self->WeaveIndexXY & 63;
+	weaveZ = self->WeaveIndexZ & 63;
+	angle = (self->angle + ANG90) >> ANGLETOFINESHIFT;
+
+	if (xydist != 0 && xyspeed != 0)
+	{
+		dist = FixedMul(FloatBobOffsets[weaveXY], xydist);
+		newX = self->x - FixedMul (finecosine[angle], dist);
+		newY = self->y - FixedMul (finesine[angle], dist);
+		weaveXY = (weaveXY + xyspeed) & 63;
+		dist = FixedMul(FloatBobOffsets[weaveXY], xydist);
+		newX += FixedMul (finecosine[angle], dist);
+		newY += FixedMul (finesine[angle], dist);
+		P_TryMove (self, newX, newY, true);
+		self->WeaveIndexXY = weaveXY;
+	}
+
+	if (zdist != 0 && zspeed != 0)
+	{
+		self->z -= FixedMul(FloatBobOffsets[weaveZ], zdist);
+		weaveZ = (weaveZ + zspeed) & 63;
+		self->z += FixedMul(FloatBobOffsets[weaveZ], zdist);
+		self->WeaveIndexZ = weaveZ;
+	}
+}
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Weave)
+{
+	PARAM_ACTION_PROLOGUE;
+	PARAM_INT	(xspeed);
+	PARAM_INT	(yspeed);
+	PARAM_FIXED	(xdist);
+	PARAM_FIXED	(ydist);
+	A_Weave(self, xspeed, yspeed, xdist, ydist);
+	return 0;
+}
+
+
+
 
 //===========================================================================
 //

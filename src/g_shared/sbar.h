@@ -32,6 +32,9 @@
 **
 */
 
+#ifndef __SBAR_H__
+#define __SBAR_H__
+
 #include "dobject.h"
 #include "v_collection.h"
 #include "v_text.h"
@@ -195,22 +198,37 @@ private:
 };
 
 class player_t;
-struct FMugShot
+class FMugShot
 {
-	FMugShot();
-	void Tick(player_t *player);
-	bool SetState(const char *state_name, bool wait_till_done=false, bool reset=false);
-	int UpdateState(player_t *player, int stateflags=0);
-	FTexture *GetFace(player_t *player, const char *default_face, int accuracy, int stateflags=0);
+	public:
+		enum StateFlags
+		{
+			STANDARD = 0x0,
 
-	FMugShotState *CurrentState;
-	int RampageTimer;
-	int LastDamageAngle;
-	int FaceHealth;
-	bool bEvilGrin;
-	bool bDamageFaceActive;
-	bool bNormal;
-	bool bOuchActive;
+			XDEATHFACE = 0x1,
+			ANIMATEDGODMODE = 0x2,
+			DISABLEGRIN = 0x4,
+			DISABLEOUCH = 0x8,
+			DISABLEPAIN = 0x10,
+			DISABLERAMPAGE = 0x20,
+		};
+
+		FMugShot();
+		void Grin(bool grin=true) { bEvilGrin = grin; }
+		void Tick(player_t *player);
+		bool SetState(const char *state_name, bool wait_till_done=false, bool reset=false);
+		int UpdateState(player_t *player, StateFlags stateflags=STANDARD);
+		FTexture *GetFace(player_t *player, const char *default_face, int accuracy, StateFlags stateflags=STANDARD);
+
+	private:
+		FMugShotState *CurrentState;
+		int RampageTimer;
+		int LastDamageAngle;
+		int FaceHealth;
+		bool bEvilGrin;
+		bool bDamageFaceActive;
+		bool bNormal;
+		bool bOuchActive;
 };
 
 extern TArray<FMugShotState> MugShotStates;
@@ -369,3 +387,5 @@ DBaseStatusBar *CreateCustomStatusBar(int script=0);
 
 void ST_LoadCrosshair(bool alwaysload=false);
 extern FTexture *CrosshairImage;
+
+#endif /* __SBAR_H__ */

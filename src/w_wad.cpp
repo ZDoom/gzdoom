@@ -160,7 +160,7 @@ void FWadCollection::DeleteAll ()
 //
 //==========================================================================
 
-void FWadCollection::InitMultipleFiles (wadlist_t **filenames)
+void FWadCollection::InitMultipleFiles (TArray<FString> &filenames)
 {
 	int numfiles;
 
@@ -168,13 +168,10 @@ void FWadCollection::InitMultipleFiles (wadlist_t **filenames)
 	DeleteAll();
 	numfiles = 0;
 
-	while (*filenames)
+	for(unsigned i=0;i<filenames.Size(); i++)
 	{
-		wadlist_t *next = (*filenames)->next;
 		int baselump = NumLumps;
-		AddFile ((*filenames)->name);
-		M_Free (*filenames);
-		*filenames = next;
+		AddFile (filenames[i]);
 	}
 
 	NumLumps = LumpInfo.Size();
@@ -832,6 +829,7 @@ int FWadCollection::FindLump (const char *name, int *lastlump, bool anyns)
 
 	uppercopy (name8, name);
 
+	assert(lastlump != NULL && *lastlump >= 0);
 	lump_p = &LumpInfo[*lastlump];
 	while (lump_p < &LumpInfo[NumLumps])
 	{

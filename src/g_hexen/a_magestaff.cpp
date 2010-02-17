@@ -88,7 +88,6 @@ class AMageStaffFX2 : public AActor
 	DECLARE_CLASS(AMageStaffFX2, AActor)
 public:
 	int SpecialMissileHit (AActor *victim);
-	bool IsOkayToAttack (AActor *link);
 	bool SpecialBlastHandling (AActor *source, fixed_t strength);
 };
 
@@ -104,41 +103,6 @@ int AMageStaffFX2::SpecialMissileHit (AActor *victim)
 		return 1;	// Keep going
 	}
 	return -1;
-}
-
-bool AMageStaffFX2::IsOkayToAttack (AActor *link)
-{
-	if (((link->flags3 & MF3_ISMONSTER) || link->player) && !(link->flags2 & MF2_DORMANT))
-	{
-		if (!(link->flags & MF_SHOOTABLE))
-		{
-			return false;
-		}
-		if (multiplayer && !deathmatch && link->player && target->player)
-		{
-			return false;
-		}
-		if (link == target)
-		{
-			return false;
-		}
-		if (target != NULL && target->IsFriend(link))
-		{
-			return false;
-		}
-		if (P_CheckSight (this, link))
-		{
-			AActor *master = target;
-			angle_t angle = R_PointToAngle2 (master->x, master->y,
-							link->x, link->y) - master->angle;
-			angle >>= 24;
-			if (angle>226 || angle<30)
-			{
-				return true;
-			}
-		}
-	}
-	return false;
 }
 
 bool AMageStaffFX2::SpecialBlastHandling (AActor *source, fixed_t strength)

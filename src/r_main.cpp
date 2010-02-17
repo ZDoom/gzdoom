@@ -264,58 +264,69 @@ angle_t R_PointToAngle2 (fixed_t x1, fixed_t y1, fixed_t x, fixed_t y)
 		return 0;
 	}
 
-	if (x >= 0)
+	// We need to be aware of overflows here. If the values get larger than INT_MAX/4
+	// this code won't work anymore.
+
+	if (x < INT_MAX/4 && x > -INT_MAX/4 && y < INT_MAX/4 && y > -INT_MAX/4)
 	{
-		if (y >= 0)
+		if (x >= 0)
 		{
-			if (x > y)
-			{ // octant 0
-				return SlopeDiv(y, x);
+			if (y >= 0)
+			{
+				if (x > y)
+				{ // octant 0
+					return SlopeDiv(y, x);
+				}
+				else
+				{ // octant 1
+					return ANG90 - 1 - SlopeDiv(x, y);
+				}
 			}
-			else
-			{ // octant 1
-				return ANG90 - 1 - SlopeDiv(x, y);
+			else // y < 0
+			{
+				y = -y;
+				if (x > y)
+				{ // octant 8
+					return 0 - SlopeDiv(y, x);
+				}
+				else
+				{ // octant 7
+					return ANG270 + SlopeDiv(x, y);
+				}
 			}
 		}
-		else // y < 0
+		else // x < 0
 		{
-			y = -y;
-			if (x > y)
-			{ // octant 8
-				return 0 - SlopeDiv(y, x);
+			x = -x;
+			if (y >= 0)
+			{
+				if (x > y)
+				{ // octant 3
+					return ANG180 - 1 - SlopeDiv(y, x);
+				}
+				else
+				{ // octant 2
+					return ANG90 + SlopeDiv(x, y);
+				}
 			}
-			else
-			{ // octant 7
-				return ANG270 + SlopeDiv(x, y);
+			else // y < 0
+			{
+				y = -y;
+				if (x > y)
+				{ // octant 4
+					return ANG180 + SlopeDiv(y, x);
+				}
+				else
+				{ // octant 5
+					return ANG270 - 1 - SlopeDiv(x, y);
+				}
 			}
 		}
 	}
-	else // x < 0
+	else
 	{
-		x = -x;
-		if (y >= 0)
-		{
-			if (x > y)
-			{ // octant 3
-				return ANG180 - 1 - SlopeDiv(y, x);
-			}
-			else
-			{ // octant 2
-				return ANG90 + SlopeDiv(x, y);
-			}
-		}
-		else // y < 0
-		{
-			y = -y;
-			if (x > y)
-			{ // octant 4
-				return ANG180 + SlopeDiv(y, x);
-			}
-			else
-			{ // octant 5
-				return ANG270 - 1 - SlopeDiv(x, y);
-			}
-		}
+		// we have to use the slower but more precise floating point atan2 function here.
+		return xs_RoundToUInt(atan2(double(y), double(x)) * (ANGLE_180/M_PI));
 	}
 }
 
@@ -521,7 +532,7 @@ void R_SetVisibility (float vis)
 		return;
 	}
 
-	r_BaseVisibility = toint (vis * 65536.f);
+	r_BaseVisibility = xs_RoundToInt(vis * 65536.f);
 
 	// Prevent overflow on walls
 	if (r_BaseVisibility < 0 && r_BaseVisibility < -MaxVisForWall)
@@ -852,11 +863,11 @@ void R_InterpolateView (player_t *player, fixed_t frac, InterpolationViewer *ivi
 			// Avoid overflowing viewpitch (can happen when a netgame is stalled)
 			if (viewpitch + delta <= viewpitch)
 			{
-				viewpitch = +ANGLE_1*MAX_DN_ANGLE;
+				viewpitch = screen->GetMaxViewPitch(true);
 			}
 			else
 			{
-				viewpitch = MIN(viewpitch + delta, +ANGLE_1*MAX_DN_ANGLE);
+				viewpitch = MIN(viewpitch + delta, screen->GetMaxViewPitch(true));
 			}
 		}
 		else if (delta < 0)
@@ -864,11 +875,11 @@ void R_InterpolateView (player_t *player, fixed_t frac, InterpolationViewer *ivi
 			// Avoid overflowing viewpitch (can happen when a netgame is stalled)
 			if (viewpitch + delta >= viewpitch)
 			{
-				viewpitch = -ANGLE_1*MAX_UP_ANGLE;
+				viewpitch = screen->GetMaxViewPitch(false);
 			}
 			else
 			{
-				viewpitch = MAX(viewpitch + delta, -ANGLE_1*MAX_UP_ANGLE);
+				viewpitch = MAX(viewpitch + delta, screen->GetMaxViewPitch(false));
 			}
 		}
 	}

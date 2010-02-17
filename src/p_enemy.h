@@ -54,6 +54,7 @@ void P_NewChaseDir (AActor *actor);
 AInventory *P_DropItem (AActor *source, const PClass *type, int special, int chance);
 void P_TossItem (AActor *item);
 bool P_LookForPlayers (AActor *actor, INTBOOL allaround, FLookExParams *params);
+void A_Weave(AActor *self, int xyspeed, int zspeed, fixed_t xydist, fixed_t zdist);
 
 DECLARE_ACTION(A_Look)
 DECLARE_ACTION(A_Wander)
@@ -75,5 +76,8 @@ bool A_SinkMobj (AActor *, fixed_t speed);
 bool CheckBossDeath (AActor *);
 int P_Massacre ();
 bool P_CheckMissileRange (AActor *actor);
+
+#define SKULLSPEED (20*FRACUNIT)
+void A_SkullAttack(AActor *self, fixed_t speed);
 
 #endif //__P_ENEMY_H__

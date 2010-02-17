@@ -161,6 +161,12 @@ static bool PIT_FindFloorCeiling (line_t *ld, const FBoundingBox &box, FCheckPos
 }
 
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 void P_GetFloorCeilingZ(FCheckPosition &tmf, bool get)
 {
 	sector_t *sec;
@@ -278,6 +284,7 @@ void P_FindFloorCeiling (AActor *actor, bool onlyspawnpos)
 	}
 }
 
+//==========================================================================
 //
 // TELEPORT MOVE
 // 
@@ -291,6 +298,9 @@ void P_FindFloorCeiling (AActor *actor, bool onlyspawnpos)
 //		move was made, so the height checking I added for 1.13 could
 //		potentially erroneously indicate the move was okay if the thing
 //		was being teleported between two non-overlapping height ranges.
+//
+//==========================================================================
+
 bool P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefrag)
 {
 	FCheckPosition tmf;
@@ -389,12 +399,15 @@ bool P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefr
 	return true;
 }
 
+//==========================================================================
 //
 // [RH] P_PlayerStartStomp
 //
 // Like P_TeleportMove, but it doesn't move anything, and only monsters and other
 // players get telefragged.
 //
+//==========================================================================
+
 void P_PlayerStartStomp (AActor *actor)
 {
 	AActor *th;
@@ -425,6 +438,12 @@ void P_PlayerStartStomp (AActor *actor)
 	}
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 inline fixed_t secfriction (const sector_t *sec)
 {
 	fixed_t friction = Terrains[TerrainTypes[sec->GetTexture(sector_t::floor)]].Friction;
@@ -437,12 +456,15 @@ inline fixed_t secmovefac (const sector_t *sec)
 	return movefactor != 0 ? movefactor : sec->movefactor;
 }
 
+//==========================================================================
 //
 // killough 8/28/98:
 //
 // P_GetFriction()
 //
 // Returns the friction associated with a particular mobj.
+//
+//==========================================================================
 
 int P_GetFriction (const AActor *mo, int *frictionfactor)
 {
@@ -511,11 +533,15 @@ int P_GetFriction (const AActor *mo, int *frictionfactor)
 	return friction;
 }
 
+//==========================================================================
+//
 // phares 3/19/98
 // P_GetMoveFactor() returns the value by which the x,y
 // movements are multiplied to add to player movement.
 //
 // killough 8/28/98: rewritten
+//
+//==========================================================================
 
 int P_GetMoveFactor (const AActor *mo, int *frictionp)
 {
@@ -550,10 +576,14 @@ int P_GetMoveFactor (const AActor *mo, int *frictionp)
 // MOVEMENT ITERATOR FUNCTIONS
 //
 
+//==========================================================================
+//
 //
 // PIT_CheckLine
 // Adjusts tmfloorz and tmceilingz as lines are contacted
 //
+//
+//==========================================================================
 
 static // killough 3/26/98: make static
 bool PIT_CheckLine (line_t *ld, const FBoundingBox &box, FCheckPosition &tm)
@@ -801,13 +831,32 @@ bool PIT_CheckThing (AActor *thing, FCheckPosition &tm)
 			}
 		}
 	}
+
+	// Both things overlap in x or y direction
+	bool unblocking = false;
+
+	if (tm.FromPMove)
+	{
+		fixed_t newdist = P_AproxDistance(thing->x - tm.x, thing->y - tm.y);
+		fixed_t olddist = P_AproxDistance(thing->x - tm.thing->x, thing->y - tm.thing->y);
+
+		// Both actors already overlap. To prevent them from remaining stuck allow the move if it
+		// takes them further apart.
+		if (newdist > olddist)
+		{
+			// ... but not if they did not overlap in z-direction before but would after the move.
+			unblocking = !((tm.thing->x >= thing->x + thing->height && tm.x < thing->x + thing->height) ||
+							(tm.thing->x + tm.thing->height <= thing->x && tm.x + tm.thing->height > thing->x));
+		}
+	}
+
 	// [RH] If the other thing is a bridge, then treat the moving thing as if it had MF2_PASSMOBJ, so
 	// you can use a scrolling floor to move scenery items underneath a bridge.
 	if ((tm.thing->flags2 & MF2_PASSMOBJ || thing->flags4 & MF4_ACTLIKEBRIDGE) && !(i_compatflags & COMPATF_NO_PASSMOBJ))
 	{ // check if a mobj passed over/under another object
 		if (tm.thing->flags3 & thing->flags3 & MF3_DONTOVERLAP)
 		{ // Some things prefer not to overlap each other, if possible
-			return false;
+			return unblocking;
 		}
 		if ((tm.thing->z >= topz) || (tm.thing->z + tm.thing->height <= thing->z))
 		{
@@ -837,24 +886,13 @@ bool PIT_CheckThing (AActor *thing, FCheckPosition &tm)
 
 	// Check for MF6_BUMPSPECIAL
 	// By default, only players can activate things by bumping into them
-	if ((thing->flags6 & MF6_BUMPSPECIAL))
+	if ((thing->flags6 & MF6_BUMPSPECIAL) && ((tm.thing->player != NULL)
+		|| ((thing->activationtype & THINGSPEC_MonsterTrigger) && (tm.thing->flags3 & MF3_ISMONSTER))
+		|| ((thing->activationtype & THINGSPEC_MissileTrigger) && (tm.thing->flags & MF_MISSILE))
+		) && (level.maptime > thing->lastbump)) // Leave the bumper enough time to go away
 	{
-		if (((tm.thing->player != NULL)
-		|| ((thing->activationtype & THINGSPEC_MonsterTrigger) && (thing->flags3 & MF3_ISMONSTER))
-		|| ((thing->activationtype & THINGSPEC_MissileTrigger) && (thing->flags & MF_MISSILE))
-		))
-		{	// Target switching mechanism
-			if (thing->activationtype & THINGSPEC_ThingTargets) thing->target = tm.thing;
-			if (thing->activationtype & THINGSPEC_TriggerTargets) tm.thing->target = thing;
-			// Run the special
-			
-			int res = LineSpecials[thing->special] (NULL, 
-				((thing->activationtype & THINGSPEC_ThingActs) ? thing : tm.thing), // Who triggers?
-				false, thing->args[0], thing->args[1], thing->args[2], thing->args[3], thing->args[4]);
-
-			if (thing->activationtype & THINGSPEC_ClearSpecial && res) thing->special = 0;
-
-		}
+		if (P_ActivateThingSpecial(thing, tm.thing))
+			thing->lastbump = level.maptime + TICRATE;
 	}
 
 	// Check for skulls slamming into things
@@ -867,8 +905,9 @@ bool PIT_CheckThing (AActor *thing, FCheckPosition &tm)
 	// Check for blasted thing running into another
 	if ((tm.thing->flags2 & MF2_BLASTED) && (thing->flags & MF_SHOOTABLE))
 	{
-		if (!(thing->flags2 & MF2_BOSS) && (thing->flags3 & MF3_ISMONSTER))
+		if (!(thing->flags2 & MF2_BOSS) && (thing->flags3 & MF3_ISMONSTER) && !(thing->flags3 & MF3_DONTBLAST))
 		{
+			// ideally this should take the mass factor into account
 			thing->velx += tm.thing->velx;
 			thing->vely += tm.thing->vely;
 			if ((thing->velx + thing->vely) > 3*FRACUNIT)
@@ -1071,7 +1110,6 @@ bool PIT_CheckThing (AActor *thing, FCheckPosition &tm)
 		}
 		// Do damage
 		damage = tm.thing->GetMissileDamage ((tm.thing->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1);
-		// [GZ] If MF6_FORCEPAIN is set, we need to call P_DamageMobj even if damage is 0!
 		if ((damage > 0) || (tm.thing->flags6 & MF6_FORCEPAIN)) 
 		{
 			P_DamageMobj (thing, tm.thing, tm.thing->target, damage, tm.thing->DamageType);
@@ -1092,7 +1130,7 @@ bool PIT_CheckThing (AActor *thing, FCheckPosition &tm)
 				}
 			}
 		}
-		else if (damage < 0)
+		else
 		{
 			P_GiveBody (thing, -damage);
 		}
@@ -1126,7 +1164,7 @@ bool PIT_CheckThing (AActor *thing, FCheckPosition &tm)
 	// despite another solid thing being in the way.
 	// killough 4/11/98: Treat no-clipping things as not blocking
 
-	return !solid;
+	return !solid || unblocking;
 
 	// return !(thing->flags & MF_SOLID);	// old code -- killough
 }
@@ -1141,40 +1179,7 @@ bool PIT_CheckThing (AActor *thing, FCheckPosition &tm)
 ===============================================================================
 */
 
-//----------------------------------------------------------------------------
-//
-// FUNC P_TestMobjLocation
-//
-// Returns true if the mobj is not blocked by anything at its current
-// location, otherwise returns false.
-//
-//----------------------------------------------------------------------------
-
-bool P_TestMobjLocation (AActor *mobj)
-{
-	int flags;
-
-	flags = mobj->flags;
-	mobj->flags &= ~MF_PICKUP;
-	if (P_CheckPosition(mobj, mobj->x, mobj->y))
-	{ // XY is ok, now check Z
-		mobj->flags = flags;
-		fixed_t z = mobj->z;
-		if (mobj->flags2 & MF2_FLOATBOB)
-		{
-			z -= FloatBobOffsets[(mobj->FloatBobPhase + level.maptime - 1) & 63];
-		}
-		if ((z < mobj->floorz) || (z + mobj->height > mobj->ceilingz))
-		{ // Bad Z
-			return false;
-		}
-		return true;
-	}
-	mobj->flags = flags;
-	return false;
-}
-
-
+//==========================================================================
 //
 // P_CheckPosition
 // This is purely informative, nothing is modified
@@ -1198,6 +1203,9 @@ bool P_TestMobjLocation (AActor *mobj)
 //	numspeciallines
 //  AActor *BlockingMobj = pointer to thing that blocked position (NULL if not
 //   blocked, or blocked by a line).
+//
+//==========================================================================
+
 bool P_CheckPosition (AActor *thing, fixed_t x, fixed_t y, FCheckPosition &tm)
 {
 	sector_t *newsec;
@@ -1384,6 +1392,40 @@ bool P_CheckPosition (AActor *thing, fixed_t x, fixed_t y)
 	return P_CheckPosition(thing, x, y, tm);
 }
 
+//----------------------------------------------------------------------------
+//
+// FUNC P_TestMobjLocation
+//
+// Returns true if the mobj is not blocked by anything at its current
+// location, otherwise returns false.
+//
+//----------------------------------------------------------------------------
+
+bool P_TestMobjLocation (AActor *mobj)
+{
+	int flags;
+
+	flags = mobj->flags;
+	mobj->flags &= ~MF_PICKUP;
+	if (P_CheckPosition(mobj, mobj->x, mobj->y))
+	{ // XY is ok, now check Z
+		mobj->flags = flags;
+		fixed_t z = mobj->z;
+		if (mobj->flags2 & MF2_FLOATBOB)
+		{
+			z -= FloatBobOffsets[(mobj->FloatBobPhase + level.maptime - 1) & 63];
+		}
+		if ((z < mobj->floorz) || (z + mobj->height > mobj->ceilingz))
+		{ // Bad Z
+			return false;
+		}
+		return true;
+	}
+	mobj->flags = flags;
+	return false;
+}
+
+
 //=============================================================================
 //
 // P_CheckOnmobj(AActor *thing)
@@ -1441,9 +1483,14 @@ bool P_TestMobjZ (AActor *actor, bool quick, AActor **pOnmobj)
 		{ // Can't hit thing
 			continue;
 		}
-		if (thing->flags & (MF_SPECIAL|MF_NOCLIP|MF_CORPSE))
-		{ // [RH] Corpses and specials and noclippers don't block moves
+		if (thing->flags & (MF_SPECIAL|MF_NOCLIP))
+		{ // [RH] Specials and noclippers don't block moves
 			continue;
+		}
+		if (thing->flags & (MF_CORPSE))
+		{ // Corpses need a few more checks
+			if (!(actor->flags & MF_ICECORPSE))
+				continue;
 		}
 		if (!(thing->flags4 & MF4_ACTLIKEBRIDGE) && (actor->flags & MF_SPECIAL))
 		{ // [RH] Only bridges block pickup items
@@ -1525,7 +1572,7 @@ void P_FakeZMovement (AActor *mo)
 
 static void CheckForPushSpecial (line_t *line, int side, AActor *mobj)
 {
-	if (line->special)
+	if (line->special && !(mobj->flags6 & MF6_NOTRIGGER))
 	{
 		if (mobj->flags2 & MF2_PUSHWALL)
 		{
@@ -1547,11 +1594,14 @@ static void CheckForPushSpecial (line_t *line, int side, AActor *mobj)
 	}
 }
 
+//==========================================================================
 //
 // P_TryMove
 // Attempt to move to a new position,
 // crossing special lines unless MF_TELEPORT is set.
 //
+//==========================================================================
+
 bool P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 				int dropoff, // killough 3/15/98: allow dropoff as option
 				const secplane_t *onfloor, // [RH] Let P_TryMove keep the thing on the floor
@@ -1801,7 +1851,7 @@ bool P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 			// see if the line was crossed
 			side = P_PointOnLineSide (thing->x, thing->y, ld);
 			oldside = P_PointOnLineSide (oldx, oldy, ld);
-			if (side != oldside && ld->special)
+			if (side != oldside && ld->special && !(thing->flags6 & MF6_NOTRIGGER))
 			{
 				if (thing->player)
 				{
@@ -1926,10 +1976,12 @@ bool P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 
 
 
+//==========================================================================
 //
 // P_CheckMove
 // Similar to P_TryMove but doesn't actually move the actor. Used for polyobject crushing
 //
+//==========================================================================
 
 bool P_CheckMove(AActor *thing, fixed_t x, fixed_t y)
 {
@@ -2005,10 +2057,13 @@ bool P_CheckMove(AActor *thing, fixed_t x, fixed_t y)
 
 
 
+//==========================================================================
 //
 // SLIDE MOVE
 // Allows the player to slide along any angled walls.
 //
+//==========================================================================
+
 struct FSlide
 {
 	fixed_t 		bestslidefrac;
@@ -2031,12 +2086,15 @@ struct FSlide
 	bool BounceWall (AActor *mo);
 };
 
+//==========================================================================
 //
 // P_HitSlideLine
 // Adjusts the xmove / ymove
 // so that the next move will slide along the wall.
 // If the floor is icy, then you can bounce off a wall.				// phares
 //
+//==========================================================================
+
 void FSlide::HitSlideLine (line_t* ld)
 {
 	int 	side;
@@ -2170,9 +2228,12 @@ void FSlide::HitSlideLine (line_t* ld)
 }
 
 
+//==========================================================================
 //
 // PTR_SlideTraverse
 //
+//==========================================================================
+
 void FSlide::SlideTraverse (fixed_t startx, fixed_t starty, fixed_t endx, fixed_t endy)
 {
 	FLineOpening open;
@@ -2261,6 +2322,7 @@ void FSlide::SlideTraverse (fixed_t startx, fixed_t starty, fixed_t endx, fixed_
 
 
 
+//==========================================================================
 //
 // P_SlideMove
 //
@@ -2270,6 +2332,8 @@ void FSlide::SlideTraverse (fixed_t startx, fixed_t starty, fixed_t endx, fixed_
 //
 // This is a kludgy mess.
 //
+//==========================================================================
+
 void FSlide::SlideMove (AActor *mo, fixed_t tryx, fixed_t tryy, int numsteps)
 {
 	fixed_t leadx, leady;
@@ -2282,7 +2346,7 @@ void FSlide::SlideMove (AActor *mo, fixed_t tryx, fixed_t tryy, int numsteps)
 	hitcount = 3;
 	slidemo = mo;
 
-	if (mo->player && mo->reactiontime > 0)
+	if (mo->player && mo->player->mo == mo && mo->reactiontime > 0)
 		return;	// player coming right out of a teleporter.
 	
   retry:
@@ -2697,12 +2761,18 @@ bool P_BounceWall (AActor *mo)
 	return slide.BounceWall(mo);
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 extern FRandom pr_bounce;
 bool P_BounceActor (AActor *mo, AActor * BlockingMobj)
 {
 	if (mo && BlockingMobj && ((mo->BounceFlags & BOUNCE_AllActors)
-		|| ((mo->flags & MF_MISSILE) && (BlockingMobj->flags2 & MF2_REFLECTIVE)
-		|| ((!BlockingMobj->player) && (!(BlockingMobj->flags3 & MF3_ISMONSTER))))
+		|| ((mo->flags & MF_MISSILE) && (BlockingMobj->flags2 & MF2_REFLECTIVE))
+		|| ((BlockingMobj->player == NULL) && (!(BlockingMobj->flags3 & MF3_ISMONSTER)))
 		))
 	{
 		fixed_t speed;
@@ -2749,7 +2819,7 @@ struct aim_t
 	bool AimTraverse3DFloors(const divline_t &trace, intercept_t * in);
 #endif
 
-	void AimTraverse (fixed_t startx, fixed_t starty, fixed_t endx, fixed_t endy, bool checknonshootable = false);
+	void AimTraverse (fixed_t startx, fixed_t starty, fixed_t endx, fixed_t endy, bool checknonshootable = false, AActor *target=NULL);
 
 };
 
@@ -2866,7 +2936,7 @@ bool aim_t::AimTraverse3DFloors(const divline_t &trace, intercept_t * in)
 //
 //============================================================================
 
-void aim_t::AimTraverse (fixed_t startx, fixed_t starty, fixed_t endx, fixed_t endy, bool checknonshootable)
+void aim_t::AimTraverse (fixed_t startx, fixed_t starty, fixed_t endx, fixed_t endy, bool checknonshootable, AActor *target)
 {
 	FPathTraverse it(startx, starty, endx, endy, PT_ADDLINES|PT_ADDTHINGS);
 	intercept_t *in;
@@ -2920,6 +2990,9 @@ void aim_t::AimTraverse (fixed_t startx, fixed_t starty, fixed_t endx, fixed_t e
 		th = in->d.thing;
 		if (th == shootthing)
 			continue;					// can't shoot self
+
+		if (target != NULL && th != target)
+			continue;					// only care about target, and you're not it
 
 		if (!checknonshootable)			// For info CCMD, ignore stuff about GHOST and SHOOTABLE flags
 		{
@@ -3032,8 +3105,8 @@ void aim_t::AimTraverse (fixed_t startx, fixed_t starty, fixed_t endx, fixed_t e
 				if (sv_smartaim < 2)
 				{
 					// friends don't aim at friends (except players), at least not first
-					thing_friend=th;
-					pitch_friend=thingpitch;
+					thing_friend = th;
+					pitch_friend = thingpitch;
 				}
 			}
 			else if (!(th->flags3&MF3_ISMONSTER) && th->player == NULL)
@@ -3041,27 +3114,27 @@ void aim_t::AimTraverse (fixed_t startx, fixed_t starty, fixed_t endx, fixed_t e
 				if (sv_smartaim < 3)
 				{
 					// don't autoaim at barrels and other shootable stuff unless no monsters have been found
-					thing_other=th;
-					pitch_other=thingpitch;
+					thing_other = th;
+					pitch_other = thingpitch;
 				}
 			}
 			else
 			{
-				linetarget=th;
-				aimpitch=thingpitch;
+				linetarget = th;
+				aimpitch = thingpitch;
 				return;
 			}
 		}
 		else
 		{
-			linetarget=th;
-			aimpitch=thingpitch;
+			linetarget = th;
+			aimpitch = thingpitch;
 			return;
 		}
 		if (checknonshootable)
 		{
-			linetarget=th;
-			aimpitch=thingpitch;
+			linetarget = th;
+			aimpitch = thingpitch;
 		}
 	}
 }
@@ -3071,7 +3144,8 @@ void aim_t::AimTraverse (fixed_t startx, fixed_t starty, fixed_t endx, fixed_t e
 // P_AimLineAttack
 //
 //============================================================================
-fixed_t P_AimLineAttack (AActor *t1, angle_t angle, fixed_t distance, AActor **pLineTarget, fixed_t vrange, bool forcenosmart, bool check3d, bool checknonshootable)
+
+fixed_t P_AimLineAttack (AActor *t1, angle_t angle, fixed_t distance, AActor **pLineTarget, fixed_t vrange, bool forcenosmart, bool check3d, bool checknonshootable, AActor *target)
 {
 	fixed_t x2;
 	fixed_t y2;
@@ -3102,11 +3176,20 @@ fixed_t P_AimLineAttack (AActor *t1, angle_t angle, fixed_t distance, AActor **p
 		}
 		else
 		{
-			// 35 degrees is approximately what Doom used. You cannot have a
-			// vrange of 0 degrees, because then toppitch and bottompitch will
-			// be equal, and PTR_AimTraverse will never find anything to shoot at
-			// if it crosses a line.
-			vrange = clamp (t1->player->userinfo.GetAimDist(), ANGLE_1/2, ANGLE_1*35);
+			// [BB] Disable autoaim on weapons with WIF_NOAUTOAIM.
+			AWeapon *weapon = t1->player->ReadyWeapon;
+			if ( weapon && (weapon->WeaponFlags & WIF_NOAUTOAIM) )
+			{
+				vrange = ANGLE_1/2;
+			}
+			else
+			{
+				// 35 degrees is approximately what Doom used. You cannot have a
+				// vrange of 0 degrees, because then toppitch and bottompitch will
+				// be equal, and PTR_AimTraverse will never find anything to shoot at
+				// if it crosses a line.
+				vrange = clamp (t1->player->userinfo.aimdist, ANGLE_1/2, ANGLE_1*35);
+			}
 		}
 	}
 	aim.toppitch = t1->pitch - vrange;
@@ -3140,35 +3223,32 @@ fixed_t P_AimLineAttack (AActor *t1, angle_t angle, fixed_t distance, AActor **p
 	}
 #endif
 
-	aim.AimTraverse (t1->x, t1->y, x2, y2, checknonshootable);
+	aim.AimTraverse (t1->x, t1->y, x2, y2, checknonshootable, target);
 
 	if (!aim.linetarget) 
 	{
 		if (aim.thing_other)
 		{
-			aim.linetarget=aim.thing_other;
-			aim.aimpitch=aim.pitch_other;
+			aim.linetarget = aim.thing_other;
+			aim.aimpitch = aim.pitch_other;
 		}
 		else if (aim.thing_friend)
 		{
-			aim.linetarget=aim.thing_friend;
-			aim.aimpitch=aim.pitch_friend;
+			aim.linetarget = aim.thing_friend;
+			aim.aimpitch = aim.pitch_friend;
 		}
 	}
-	if (pLineTarget) *pLineTarget = aim.linetarget;
+	if (pLineTarget)
+		*pLineTarget = aim.linetarget;
 	return aim.linetarget ? aim.aimpitch : t1->pitch;
 }
 
 
-/*
-=================
-=
-= P_LineAttack
-=
-= if damage == 0, it is just a test trace that will leave linetarget set
-=
-=================
-*/
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 static bool CheckForGhost (FTraceResults &res)
 {
@@ -3204,6 +3284,14 @@ static bool CheckForSpectral (FTraceResults &res)
 	return false;
 }
 
+//==========================================================================
+//
+// P_LineAttack
+//
+// if damage == 0, it is just a test trace that will leave linetarget set
+//
+//==========================================================================
+
 AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 				   int pitch, int damage, FName damageType, const PClass *pufftype, bool ismeleeattack)
 {
@@ -3237,12 +3325,28 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 		t1->player->ReadyWeapon != NULL &&
 		(t1->player->ReadyWeapon->flags2 & MF2_THRUGHOST));
 
+	// We need to check the defaults of the replacement here
+	AActor *puffDefaults = GetDefaultByType(pufftype->ActorInfo->GetReplacement()->Class);
+
+	// if the puff uses a non-standard damage type this will override default and melee damage type.
+	// All other explicitly passed damage types (currenty only MDK) will be preserved.
+	if ((damageType == NAME_None || damageType == NAME_Melee) && puffDefaults->DamageType != NAME_None)
+	{
+		damageType = puffDefaults->DamageType;
+	}
+
+	int tflags;
+	if (puffDefaults != NULL && puffDefaults->flags6 & MF6_NOTRIGGER) tflags = TRACE_NoSky;
+	else tflags = TRACE_NoSky|TRACE_Impact;
+
 	if (!Trace (t1->x, t1->y, shootz, t1->Sector, vx, vy, vz, distance,
 		MF_SHOOTABLE, ML_BLOCKEVERYTHING, t1, trace,
-		TRACE_NoSky|TRACE_Impact, hitGhosts ? CheckForGhost : CheckForSpectral))
+		tflags, hitGhosts ? CheckForGhost : CheckForSpectral))
 	{ // hit nothing
-		AActor *puffDefaults = GetDefaultByType (pufftype);
-		if (puffDefaults->ActiveSound)
+		if (puffDefaults == NULL)
+		{
+		}
+		else if (puffDefaults->ActiveSound)
 		{ // Play miss sound
 			S_Sound (t1, CHAN_WEAPON, puffDefaults->ActiveSound, 1, ATTN_NORM);
 		}
@@ -3320,14 +3424,14 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 			hitz = shootz + FixedMul (vz, trace.Distance);
 
 			// Spawn bullet puffs or blood spots, depending on target type.
-			AActor *puffDefaults = GetDefaultByType (pufftype);
 			if ((puffDefaults->flags3 & MF3_PUFFONACTORS) ||
 				(trace.Actor->flags & MF_NOBLOOD) ||
 				(trace.Actor->flags2 & (MF2_INVULNERABLE|MF2_DORMANT)))
 			{
+				// We must pass the unreplaced puff type here 
 				puff = P_SpawnPuff (t1, pufftype, hitx, hity, hitz, angle - ANG180, 2, flags|PF_HITTHING);
 			}
-			if (!(GetDefaultByType(pufftype)->flags3&MF3_BLOODLESSIMPACT))
+			if (!(puffDefaults->flags3&MF3_BLOODLESSIMPACT))
 			{
 				if (!bloodsplatter && !axeBlood &&
 					!(trace.Actor->flags & MF_NOBLOOD) &&
@@ -3413,6 +3517,12 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 	}
 	return NULL;
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 void P_TraceBleed (int damage, fixed_t x, fixed_t y, fixed_t z, AActor *actor, angle_t angle, int pitch)
 {
@@ -3503,6 +3613,12 @@ void P_TraceBleed (int damage, AActor *target, angle_t angle, int pitch)
 		target, angle, pitch);
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 void P_TraceBleed (int damage, AActor *target, AActor *missile)
 {
 	int pitch;
@@ -3528,6 +3644,12 @@ void P_TraceBleed (int damage, AActor *target, AActor *missile)
 		pitch);
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 void P_TraceBleed (int damage, AActor *target)
 {
 	if (target != NULL)
@@ -3540,9 +3662,12 @@ void P_TraceBleed (int damage, AActor *target)
 	}
 }
 
+//==========================================================================
 //
 // [RH] Rail gun stuffage
 //
+//==========================================================================
+
 struct SRailHit
 {
 	AActor *HitActor;
@@ -3572,6 +3697,12 @@ static bool ProcessRailHit (FTraceResults &res)
 	return true;
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 static bool ProcessNoPierceRailHit (FTraceResults &res)
 {
 	if (res.HitType != TRACE_HitActor)
@@ -3593,6 +3724,12 @@ static bool ProcessNoPierceRailHit (FTraceResults &res)
 
 	return false;
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 void P_RailAttack (AActor *source, int damage, int offset, int color1, int color2, float maxdiff, bool silent, const PClass *puffclass, bool pierce)
 {
@@ -3635,22 +3772,29 @@ void P_RailAttack (AActor *source, int damage, int offset, int color1, int color
 	start.Y = FIXED2FLOAT(y1);
 	start.Z = FIXED2FLOAT(shootz);
 
+	int flags;
+
+	AActor *puffDefaults = puffclass == NULL? 
+							NULL : GetDefaultByType (puffclass->ActorInfo->GetReplacement()->Class);
+
+	if (puffDefaults != NULL && puffDefaults->flags6 & MF6_NOTRIGGER) flags = 0;
+	else flags = TRACE_PCross|TRACE_Impact;
+
 	if (pierce)
 	{
 		Trace (x1, y1, shootz, source->Sector, vx, vy, vz,
 			8192*FRACUNIT, MF_SHOOTABLE, ML_BLOCKEVERYTHING, source, trace,
-			TRACE_PCross|TRACE_Impact, ProcessRailHit);
+			flags, ProcessRailHit);
 	}
 	else
 	{
 		Trace (x1, y1, shootz, source->Sector, vx, vy, vz,
 			8192*FRACUNIT, MF_SHOOTABLE, ML_BLOCKEVERYTHING, source, trace,
-			TRACE_PCross|TRACE_Impact, ProcessNoPierceRailHit);
+			flags, ProcessNoPierceRailHit);
 	}
 
 	// Hurt anything the trace hit
 	unsigned int i;
-	AActor *puffDefaults = puffclass == NULL? NULL : GetDefaultByType (puffclass);
 	FName damagetype = (puffDefaults == NULL || puffDefaults->DamageType == NAME_None) ? FName(NAME_Railgun) : puffDefaults->DamageType;
 
 	// used as damage inflictor
@@ -3661,6 +3805,7 @@ void P_RailAttack (AActor *source, int damage, int offset, int color1, int color
 	for (i = 0; i < RailHits.Size (); i++)
 	{
 		fixed_t x, y, z;
+		bool spawnpuff;
 
 		x = x1 + FixedMul (RailHits[i].Distance, vx);
 		y = y1 + FixedMul (RailHits[i].Distance, vy);
@@ -3669,13 +3814,15 @@ void P_RailAttack (AActor *source, int damage, int offset, int color1, int color
 		if ((RailHits[i].HitActor->flags & MF_NOBLOOD) ||
 			(RailHits[i].HitActor->flags2 & (MF2_DORMANT|MF2_INVULNERABLE)))
 		{
-			if (puffclass != NULL) P_SpawnPuff (source, puffclass, x, y, z, source->angle - ANG90, 1, PF_HITTHING);
+			spawnpuff = puffclass != NULL;
 		}
 		else
 		{
+			spawnpuff = (puffclass != NULL && puffDefaults->flags3 & MF3_ALWAYSPUFF);
 			P_SpawnBlood (x, y, z, source->angle - ANG180, damage, RailHits[i].HitActor);
 			P_TraceBleed (damage, x, y, z, RailHits[i].HitActor, source->angle, pitch);
 		}
+		if (spawnpuff) P_SpawnPuff (source, puffclass, x, y, z, source->angle - ANG90, 1, PF_HITTHING);
 		P_DamageMobj (RailHits[i].HitActor, thepuff? thepuff:source, source, damage, damagetype, DMG_INFLICTOR_IS_PUFF);
 	}
 
@@ -3683,6 +3830,11 @@ void P_RailAttack (AActor *source, int damage, int offset, int color1, int color
 	if (trace.HitType == TRACE_HitWall)
 	{
 		SpawnShootDecal (source, trace);
+		if (puffclass != NULL && puffDefaults->flags3 & MF3_ALWAYSPUFF) 
+		{
+			P_SpawnPuff (source, puffclass, trace.X, trace.Y, trace.Z, source->angle - ANG90, 1, 0);
+		}
+
 	}
 	if (trace.HitType == TRACE_HitFloor &&
 		trace.CrossedWater == NULL &&
@@ -3710,9 +3862,12 @@ void P_RailAttack (AActor *source, int damage, int offset, int color1, int color
 	P_DrawRailTrail (source, start, end, color1, color2, maxdiff, silent);
 }
 
+//==========================================================================
 //
 // [RH] P_AimCamera
 //
+//==========================================================================
+
 CVAR (Float, chase_height, -8.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Float, chase_dist, 90.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
@@ -3750,9 +3905,57 @@ void P_AimCamera (AActor *t1, fixed_t &CameraX, fixed_t &CameraY, fixed_t &Camer
 }
 
 
+//==========================================================================
+//
+// P_TalkFacing
+//
+// Looks for something within 5.625 degrees left or right of the player
+// to talk to.
+//
+//==========================================================================
+
+bool P_TalkFacing(AActor *player)
+{
+	AActor *linetarget;
+
+	P_AimLineAttack(player, player->angle, TALKRANGE, &linetarget, ANGLE_1*35, true);
+	if (linetarget == NULL)
+	{
+		P_AimLineAttack(player, player->angle + (ANGLE_90 >> 4), TALKRANGE, &linetarget, ANGLE_1*35, true);
+		if (linetarget == NULL)
+		{
+			P_AimLineAttack(player, player->angle - (ANGLE_90 >> 4), TALKRANGE, &linetarget, ANGLE_1*35, true);
+			if (linetarget == NULL)
+			{
+				return false;
+			}
+		}
+	}
+	// Dead things can't talk.
+	if (linetarget->health <= 0)
+	{
+		return false;
+	}
+	// Fighting things don't talk either.
+	if (linetarget->flags4 & MF4_INCOMBAT)
+	{
+		return false;
+	}
+	if (linetarget->Conversation != NULL)
+	{
+		// Give the NPC a chance to play a brief animation
+		linetarget->ConversationAnimation (0);
+		P_StartConversation (linetarget, player, true, true);
+		return true;
+	}
+	return false;
+}
+
+//==========================================================================
 //
 // USE LINES
 //
+//==========================================================================
 
 bool P_UseTraverse(AActor *usething, fixed_t endx, fixed_t endy, bool &foundline)
 {
@@ -3764,57 +3967,21 @@ bool P_UseTraverse(AActor *usething, fixed_t endx, fixed_t endy, bool &foundline
 		// [RH] Check for things to talk with or use a puzzle item on
 		if (!in->isaline)
 		{
-			if (usething==in->d.thing) continue;
+			if (usething == in->d.thing)
+				continue;
 			// Check thing
 
 			// Check for puzzle item use or USESPECIAL flag
 			// Extended to use the same activationtype mechanism as BUMPSPECIAL does
 			if (in->d.thing->flags5 & MF5_USESPECIAL || in->d.thing->special == UsePuzzleItem)
-			{	// Target switching mechanism
-				if (in->d.thing->activationtype & THINGSPEC_ThingTargets) in->d.thing->target = usething;
-				if (in->d.thing->activationtype & THINGSPEC_TriggerTargets) usething->target = in->d.thing;
-				// Run the special
-				if (LineSpecials[in->d.thing->special] (NULL, // Who triggers?
-					((in->d.thing->activationtype & THINGSPEC_ThingActs) ? in->d.thing : usething), false, 
-					in->d.thing->args[0], in->d.thing->args[1], in->d.thing->args[2],
-					in->d.thing->args[3], in->d.thing->args[4]))
-				{
-					if (in->d.thing->activationtype & THINGSPEC_ClearSpecial) in->d.thing->special = 0;
+			{
+				if (P_ActivateThingSpecial(in->d.thing, usething))
 					return true;
-				}
-			}
-			// Dead things can't talk.
-			if (in->d.thing->health <= 0)
-			{
-				continue;
-			}
-			// Fighting things don't talk either.
-			if (in->d.thing->flags4 & MF4_INCOMBAT)
-			{
-				continue;
-			}
-			if (in->d.thing->Conversation != NULL)
-			{
-				// Give the NPC a chance to play a brief animation
-				in->d.thing->ConversationAnimation (0);
-				P_StartConversation (in->d.thing, usething, true, true);
-				return true;
 			}
 			continue;
 		}
 
 		FLineOpening open;
-		// [RH] The range passed to P_PathTraverse was doubled so that it could
-		// find things up to 128 units away (for Strife), but it should still reject
-		// lines further than 64 units away.
-		if (in->frac > FRACUNIT/2)
-		{
-			// don't pass usething here. It will not do what might be expected!
-			P_LineOpening (open, NULL, in->d.line, it.Trace().x + FixedMul (it.Trace().dx, in->frac),
-				it.Trace().y + FixedMul (it.Trace().dy, in->frac));
-			if (open.range <= 0) return false;
-			else continue;
-		}
 		if (in->d.line->special == 0 || !(in->d.line->activation & (SPAC_Use|SPAC_UseThrough)))
 		{
 	blocked:
@@ -3886,6 +4053,8 @@ bool P_UseTraverse(AActor *usething, fixed_t endx, fixed_t endy, bool &foundline
 	return false;
 }
 
+//==========================================================================
+//
 // Returns false if a "oof" sound should be made because of a blocking
 // linedef. Makes 2s middles which are impassable, as well as 2s uppers
 // and lowers which block the player, cause the sound effect when the
@@ -3895,6 +4064,7 @@ bool P_UseTraverse(AActor *usething, fixed_t endx, fixed_t endy, bool &foundline
 //
 // by Lee Killough
 //
+//==========================================================================
 
 bool P_NoWayTraverse (AActor *usething, fixed_t endx, fixed_t endy)
 {
@@ -3906,7 +4076,7 @@ bool P_NoWayTraverse (AActor *usething, fixed_t endx, fixed_t endy)
 		line_t *ld = in->d.line;
 		FLineOpening open;
 
-		// [GrafZahl] de-obfuscated. Was I the only one who was unable to makes sense out of
+		// [GrafZahl] de-obfuscated. Was I the only one who was unable to make sense out of
 		// this convoluted mess?
 		if (ld->special) continue;
 		if (ld->flags&(ML_BLOCKING|ML_BLOCKEVERYTHING|ML_BLOCK_PLAYERS)) return true;
@@ -3919,26 +4089,25 @@ bool P_NoWayTraverse (AActor *usething, fixed_t endx, fixed_t endy)
 	return false;
 }
 
-/*
-================
-=
-= P_UseLines
-=
-= Looks for special lines in front of the player to activate
-================
-*/
+//==========================================================================
+//
+// P_UseLines
+//
+// Looks for special lines in front of the player to activate
+//
+//==========================================================================
 
 void P_UseLines (player_t *player)
 {
 	angle_t angle;
-	fixed_t x2, y2;
+	fixed_t x1, y1;
 	bool foundline;
 
 	foundline = false;
 
 	angle = player->mo->angle >> ANGLETOFINESHIFT;
-	x2 = player->mo->x + (USERANGE>>FRACBITS)*finecosine[angle]*2;
-	y2 = player->mo->y + (USERANGE>>FRACBITS)*finesine[angle]*2;
+	x1 = player->mo->x + (USERANGE>>FRACBITS)*finecosine[angle];
+	y1 = player->mo->y + (USERANGE>>FRACBITS)*finesine[angle];
 
 	// old code:
 	//
@@ -3946,13 +4115,13 @@ void P_UseLines (player_t *player)
 	//
 	// This added test makes the "oof" sound work on 2s lines -- killough:
 
-	if (!P_UseTraverse (player->mo, x2, y2, foundline))
+	if (!P_UseTraverse (player->mo, x1, y1, foundline))
 	{ // [RH] Give sector a chance to eat the use
 		sector_t *sec = player->mo->Sector;
 		int spac = SECSPAC_Use;
 		if (foundline) spac |= SECSPAC_UseWall;
 		if ((!sec->SecActTarget || !sec->SecActTarget->TriggerAction (player->mo, spac)) &&
-			P_NoWayTraverse (player->mo, x2, y2))
+			P_NoWayTraverse (player->mo, x1, y1))
 		{
 			S_Sound (player->mo, CHAN_VOICE, "*usefail", 1, ATTN_IDLE);
 		}
@@ -4029,9 +4198,13 @@ bool P_UsePuzzleItem (AActor *PuzzleItemUser, int PuzzleItemType)
 	return false;
 }
 
+//==========================================================================
 //
 // RADIUS ATTACK
 //
+//
+//==========================================================================
+
 
 // [RH] Damage scale to apply to thing that shot the missile.
 static float selfthrustscale;
@@ -4044,10 +4217,13 @@ CUSTOM_CVAR (Float, splashfactor, 1.f, CVAR_SERVERINFO)
 		selfthrustscale = 1.f / self;
 }
 
+//==========================================================================
 //
 // P_RadiusAttack
 // Source is the creature that caused the explosion at spot.
 //
+//==========================================================================
+
 void P_RadiusAttack (AActor *bombspot, AActor *bombsource, int bombdamage, int bombdistance, FName bombmod,
 	bool DamageSource, bool bombdodamage, int fulldamagedistance)
 {
@@ -4209,7 +4385,7 @@ void P_RadiusAttack (AActor *bombspot, AActor *bombsource, int bombdamage, int b
 			if (P_CheckSight (thing, bombspot, 1))
 			{ // OK to damage; target is in direct path
 				dist = clamp<int>(dist - fulldamagedistance, 0, dist);
-				int damage = Scale (bombdamage, bombdistance-dist, bombdistance-fulldamagedistance);
+				int damage = Scale (bombdamage, bombdistance-dist, bombdistance);
 				damage = (int)((float)damage * splashfactor);
 
 				damage = Scale(damage, thing->GetClass()->Meta.GetMetaFixed(AMETA_RDFactor, FRACUNIT), FRACUNIT);
@@ -4223,6 +4399,7 @@ void P_RadiusAttack (AActor *bombspot, AActor *bombsource, int bombdamage, int b
 	}
 }
 
+//==========================================================================
 //
 // SECTOR HEIGHT CHANGING
 // After modifying a sector's floor or ceiling height,
@@ -4241,6 +4418,8 @@ void P_RadiusAttack (AActor *bombspot, AActor *bombsource, int bombdamage, int b
 //		DOOM crushing behavior set crushchange to 10 or -1
 //		if no crushing is desired.
 //
+//==========================================================================
+
 
 struct FChangePosition
 {
@@ -4315,12 +4494,24 @@ void P_FindAboveIntersectors (AActor *actor)
 		{ // Can't hit thing
 			continue;
 		}
-		if (thing->flags & (MF_CORPSE|MF_SPECIAL))
+		if (thing->flags & (MF_SPECIAL))
 		{ // [RH] Corpses and specials don't block moves
 			continue;
 		}
+		if (thing->flags & (MF_CORPSE))
+		{ // Corpses need a few more checks
+			if (!(actor->flags & MF_ICECORPSE))
+				continue;
+		}
 		if (thing == actor)
 		{ // Don't clip against self
+			continue;
+		}
+		if (!((thing->flags2 | actor->flags2) & MF2_PASSMOBJ) && !((thing->flags3 | actor->flags3) & MF3_ISMONSTER))
+		{
+			// Don't bother if both things don't have MF2_PASSMOBJ set and aren't monsters.
+			// These things would always block each other which in nearly every situation is 
+			// not what is wanted here.
 			continue;
 		}
 		if (thing->z >= actor->z &&
@@ -4357,12 +4548,24 @@ void P_FindBelowIntersectors (AActor *actor)
 		{ // Can't hit thing
 			continue;
 		}
-		if (thing->flags & (MF_CORPSE|MF_SPECIAL))
+		if (thing->flags & (MF_SPECIAL))
 		{ // [RH] Corpses and specials don't block moves
 			continue;
 		}
+		if (thing->flags & (MF_CORPSE))
+		{ // Corpses need a few more checks
+			if (!(actor->flags & MF_ICECORPSE))
+				continue;
+		}
 		if (thing == actor)
 		{ // Don't clip against self
+			continue;
+		}
+		if (!((thing->flags2 | actor->flags2) & MF2_PASSMOBJ) && !((thing->flags3 | actor->flags3) & MF3_ISMONSTER))
+		{
+			// Don't bother if both things don't have MF2_PASSMOBJ set and aren't monsters.
+			// These things would always block each other which in nearly every situation is 
+			// not what is wanted here.
 			continue;
 		}
 		if (thing->z + thing->height <= actor->z + actor->height &&
@@ -5108,6 +5311,12 @@ void P_CreateSecNodeList (AActor *thing, fixed_t x, fixed_t y)
 	}
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 void SpawnShootDecal (AActor *t1, const FTraceResults &trace)
 {
 	FDecalBase *decalbase = NULL;
@@ -5126,6 +5335,12 @@ void SpawnShootDecal (AActor *t1, const FTraceResults &trace)
 			trace.X, trace.Y, trace.Z, trace.Line->sidedef[trace.Side], trace.ffloor);
 	}
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 static void SpawnDeepSplash (AActor *t1, const FTraceResults &trace, AActor *puff,
 	fixed_t vx, fixed_t vy, fixed_t vz, fixed_t shootz)
@@ -5150,4 +5365,68 @@ static void SpawnDeepSplash (AActor *t1, const FTraceResults &trace, AActor *puf
 			P_HitWater (puff != NULL? puff:t1, P_PointInSector(hitx, hity), hitx, hity, hitz);
 		}
 	}
+}
+
+//=============================================================================
+//
+// P_ActivateThingSpecial
+//
+// Handles the code for things activated by death, USESPECIAL or BUMPSPECIAL
+//
+//=============================================================================
+
+bool P_ActivateThingSpecial(AActor * thing, AActor * trigger, bool death)
+{
+	bool res = false;
+
+	// Target switching mechanism
+	if (thing->activationtype & THINGSPEC_ThingTargets)		thing->target = trigger;
+	if (thing->activationtype & THINGSPEC_TriggerTargets)	trigger->target = thing;
+
+	// State change mechanism. The thing needs to be not dead and to have at least one of the relevant flags
+	if (!death && (thing->activationtype & (THINGSPEC_Activate|THINGSPEC_Deactivate|THINGSPEC_Switch)))
+	{
+		// If a switchable thing does not know whether it should be activated
+		// or deactivated, the default is to activate it.
+		if ((thing->activationtype & THINGSPEC_Switch) 
+			&& !(thing->activationtype & (THINGSPEC_Activate|THINGSPEC_Deactivate)))
+		{
+			thing->activationtype |= THINGSPEC_Activate;
+		}
+		// Can it be activated?
+		if (thing->activationtype & THINGSPEC_Activate)
+		{
+			thing->activationtype &= ~THINGSPEC_Activate; // Clear flag
+			if (thing->activationtype & THINGSPEC_Switch) // Set other flag if switching
+				thing->activationtype |= THINGSPEC_Deactivate;
+			thing->Activate(trigger);
+			res = true;
+		}
+		// If not, can it be deactivated?
+		else if (thing->activationtype & THINGSPEC_Deactivate)
+		{
+			thing->activationtype &= ~THINGSPEC_Deactivate; // Clear flag
+			if (thing->activationtype & THINGSPEC_Switch)	// Set other flag if switching
+				thing->activationtype |= THINGSPEC_Activate;
+			thing->Deactivate(trigger);
+			res = true;
+		}
+	}
+
+	// Run the special, if any
+	if (thing->special)
+	{
+		res = !! LineSpecials[thing->special] (NULL,
+			// TriggerActs overrides the level flag, which only concerns thing activated by death
+			(((death && level.flags & LEVEL_ACTOWNSPECIAL && !(thing->activationtype & THINGSPEC_TriggerActs))
+			|| (thing->activationtype & THINGSPEC_ThingActs)) // Who triggers?
+			? thing : trigger), 
+			false, thing->args[0], thing->args[1], thing->args[2], thing->args[3], thing->args[4]);
+
+		// Clears the special if it was run on thing's death or if flag is set.
+		if (death || (thing->activationtype & THINGSPEC_ClearSpecial && res)) thing->special = 0;
+	}
+
+	// Returns the result
+	return res;
 }

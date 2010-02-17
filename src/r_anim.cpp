@@ -179,7 +179,7 @@ void R_InitPicAnims (void)
 			if (pic1 == pic2)
 			{
 				// This animation only has one frame. Skip it. (Doom aborted instead.)
-				Printf ("Animation %s in ANIMATED has only one frame", anim_p + 10);
+				Printf ("Animation %s in ANIMATED has only one frame\n", anim_p + 10);
 				continue;
 			}
 
@@ -404,6 +404,17 @@ static void R_InitAnimDefs ()
 			else if (sc.Compare ("animatedDoor"))
 			{
 				P_ParseAnimatedDoor (sc);
+			}
+			else if (sc.Compare("skyoffset"))
+			{
+				sc.MustGetString ();
+				FTextureID picnum = TexMan.CheckForTexture (sc.String, FTexture::TEX_Wall, texflags);
+				sc.MustGetNumber();
+				if (picnum.Exists())
+				{
+					FTexture *tex = TexMan[picnum];
+					tex->SkyOffset = sc.Number;
+				}
 			}
 			else
 			{
@@ -834,6 +845,6 @@ void R_UpdateAnimations (DWORD mstime)
 
 	// Scroll the sky
 	double ms = (double)mstime * FRACUNIT;
-	sky1pos = fixed_t(fmod (ms * level.skyspeed1, double(TexMan[sky1texture]->GetWidth() << FRACBITS)));
-	sky2pos = fixed_t(fmod (ms * level.skyspeed2, double(TexMan[sky2texture]->GetWidth() << FRACBITS)));
+	sky1pos = ms * level.skyspeed1;
+	sky2pos = ms * level.skyspeed2;
 }

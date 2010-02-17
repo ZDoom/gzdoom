@@ -100,6 +100,7 @@ public:
 	fixed_t		yScale;
 
 	int SourceLump;
+	FTextureID id;
 
 	union
 	{
@@ -118,8 +119,10 @@ public:
 	BYTE bComplex:1;		// Will be used to mark extended MultipatchTextures that have to be
 							// fully composited before subjected to any kinf of postprocessing instead of
 							// doing it per patch.
+	BYTE bMultiPatch:1;		// This is a multipatch texture (we really could use real type info for textures...)
 
 	WORD Rotations;
+	SWORD SkyOffset;
 
 	enum // UseTypes
 	{
@@ -151,11 +154,12 @@ public:
 	// Returns the whole texture, stored in column-major order
 	virtual const BYTE *GetPixels () = 0;
 	
-	virtual int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int w=-1, int h=-1, int rotate=0, FCopyInfo *inf = NULL);
-	int CopyTrueColorTranslated(FBitmap *bmp, int x, int y,int w, int h, int rotate, FRemapTable *remap, FCopyInfo *inf = NULL);
+	virtual int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate=0, FCopyInfo *inf = NULL);
+	int CopyTrueColorTranslated(FBitmap *bmp, int x, int y, int rotate, FRemapTable *remap, FCopyInfo *inf = NULL);
 	virtual bool UseBasePalette();
 	virtual int GetSourceLump() { return SourceLump; }
 	virtual FTexture *GetRedirect(bool wantwarped);
+	FTextureID GetID() const { return id; }
 
 	virtual void Unload () = 0;
 
@@ -176,9 +180,13 @@ public:
 
 	int GetScaledWidth () { int foo = (Width << 17) / xScale; return (foo >> 1) + (foo & 1); }
 	int GetScaledHeight () { int foo = (Height << 17) / yScale; return (foo >> 1) + (foo & 1); }
+	double GetScaledWidthDouble () { return (Width * 65536.f) / xScale; }
+	double GetScaledHeightDouble () { return (Height * 65536.f) / yScale; }
 
 	int GetScaledLeftOffset () { int foo = (LeftOffset << 17) / xScale; return (foo >> 1) + (foo & 1); }
 	int GetScaledTopOffset () { int foo = (TopOffset << 17) / yScale; return (foo >> 1) + (foo & 1); }
+	double GetScaledLeftOffsetDouble() { return (LeftOffset * 65536.f) / xScale; }
+	double GetScaledTopOffsetDouble() { return (TopOffset * 65536.f) / yScale; }
 
 	virtual void SetFrontSkyLayer();
 
@@ -276,6 +284,12 @@ public:
 		FTextureID texnum = GetTexture (texname, FTexture::TEX_MiscPatch);
 		if (texnum.texnum==-1) return NULL;
 		return Textures[Translation[texnum.texnum]].Texture;
+	}
+
+	FTexture *ByIndexTranslated(int i)
+	{
+		if (unsigned(i) >= Textures.Size()) return NULL;
+		return Textures[Translation[i]].Texture;
 	}
 
 	void SetTranslation (FTextureID fromtexnum, FTextureID totexnum)

@@ -9,7 +9,6 @@ class AHolySpirit : public AActor
 public:
 	bool Slam (AActor *thing);
 	bool SpecialBlastHandling (AActor *source, fixed_t strength);
-	bool IsOkayToAttack (AActor *link);
 };
 
 class AFighterWeapon : public AWeapon

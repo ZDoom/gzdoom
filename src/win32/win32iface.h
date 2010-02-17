@@ -248,7 +248,7 @@ public:
 	void DrawBlendingRect ();
 	FNativeTexture *CreateTexture (FTexture *gametex, bool wrapping);
 	FNativePalette *CreatePalette (FRemapTable *remap);
-	void STACK_ARGS DrawTextureV (FTexture *img, int x, int y, uint32 tag, va_list tags);
+	void STACK_ARGS DrawTextureV (FTexture *img, double x, double y, uint32 tag, va_list tags);
 	void Clear (int left, int top, int right, int bottom, int palcolor, uint32 color);
 	void Dim (PalEntry color, float amount, int x1, int y1, int w, int h);
 	void FlatFill (int left, int top, int right, int bottom, FTexture *src, bool local_origin);
@@ -289,7 +289,7 @@ private:
 			DWORD Group1;
 		};
 		D3DPal *Palette;
-		PackingTexture *Texture;
+		IDirect3DTexture9 *Texture;
 	};
 
 	enum
@@ -336,13 +336,15 @@ private:
 	void CreateBlockSurfaces();
 	bool CreateFBTexture();
 	bool CreatePaletteTexture();
-	bool CreateGrayPaletteTexture();
+	bool CreateGammaTexture();
 	bool CreateVertexes();
+	void DoOffByOneCheck();
 	void UploadPalette();
+	void UpdateGammaTexture(float igamma);
 	void FillPresentParameters (D3DPRESENT_PARAMETERS *pp, bool fullscreen, bool vsync);
 	void CalcFullscreenCoords (FBVERTEX verts[4], bool viewarea_only, bool can_double, D3DCOLOR color0, D3DCOLOR color1) const;
 	bool Reset();
-	IDirect3DTexture9 *GetCurrentScreen();
+	IDirect3DTexture9 *GetCurrentScreen(D3DPOOL pool=D3DPOOL_SYSTEMMEM);
 	void ReleaseDefaultPoolItems();
 	void KillNativePals();
 	void KillNativeTexs();
@@ -361,6 +363,7 @@ private:
 	void BeginLineBatch();
 	void EndLineBatch();
 	void EndBatch();
+	void CopyNextFrontBuffer();
 
 	D3DCAPS9 DeviceCaps;
 
@@ -381,7 +384,7 @@ private:
 	float Constant[3][4];
 	D3DCOLOR CurBorderColor;
 	IDirect3DPixelShader9 *CurPixelShader;
-	IDirect3DTexture9 *Texture[2];
+	IDirect3DTexture9 *Texture[5];
 
 	PalEntry SourcePalette[256];
 	D3DCOLOR BorderColor;
@@ -390,14 +393,15 @@ private:
 	int FlashAmount;
 	int TrueHeight;
 	int PixelDoubling;
+	int SkipAt;
 	int LBOffsetI;
+	int RenderTextureToggle;
+	int CurrRenderTexture;
 	float LBOffset;
 	float Gamma;
 	bool UpdatePending;
 	bool NeedPalUpdate;
 	bool NeedGammaUpdate;
-	D3DFORMAT FBFormat;
-	D3DFORMAT PalFormat;
 	int FBWidth, FBHeight;
 	bool VSync;
 	RECT BlendingRect;
@@ -413,10 +417,12 @@ private:
 
 	IDirect3DDevice9 *D3DDevice;
 	IDirect3DTexture9 *FBTexture;
-	IDirect3DTexture9 *TempRenderTexture;
+	IDirect3DTexture9 *TempRenderTexture, *RenderTexture[2];
 	IDirect3DTexture9 *PaletteTexture;
+	IDirect3DTexture9 *GammaTexture;
 	IDirect3DTexture9 *ScreenshotTexture;
 	IDirect3DSurface9 *ScreenshotSurface;
+	IDirect3DSurface9 *FrontCopySurface;
 
 	IDirect3DVertexBuffer9 *VertexBuffer;
 	FBVERTEX *VertexData;
@@ -429,6 +435,7 @@ private:
 	enum { BATCH_None, BATCH_Quads, BATCH_Lines } BatchType;
 
 	IDirect3DPixelShader9 *Shaders[NUM_SHADERS];
+	IDirect3DPixelShader9 *GammaShader;
 
 	IDirect3DSurface9 *BlockSurface[2];
 	IDirect3DSurface9 *OldRenderTarget;
@@ -441,6 +448,9 @@ private:
 	public:
 		virtual ~Wiper();
 		virtual bool Run(int ticks, D3DFB *fb) = 0;
+
+		void DrawScreen(D3DFB *fb, IDirect3DTexture9 *tex,
+			D3DBLENDOP blendop=D3DBLENDOP(0), D3DCOLOR color0=0, D3DCOLOR color1=0xFFFFFFF);
 	};
 
 	class Wiper_Melt;			friend class Wiper_Melt;
@@ -448,6 +458,30 @@ private:
 	class Wiper_Crossfade;		friend class Wiper_Crossfade;
 
 	Wiper *ScreenWipe;
+};
+
+// Flags for a buffered quad
+enum
+{
+	BQF_GamePalette		= 1,
+	BQF_CustomPalette	= 7,
+		BQF_Paletted	= 7,
+	BQF_Bilinear		= 8,
+	BQF_WrapUV			= 16,
+	BQF_InvertSource	= 32,
+	BQF_DisableAlphaTest= 64,
+	BQF_Desaturated		= 128,
+};
+
+// Shaders for a buffered quad
+enum
+{
+	BQS_PalTex,
+	BQS_Plain,
+	BQS_RedToAlpha,
+	BQS_ColorOnly,
+	BQS_SpecialColormap,
+	BQS_InGameColormap,
 };
 
 #if 0

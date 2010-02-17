@@ -59,6 +59,7 @@
 #include "statnums.h"
 #include "g_level.h"
 #include "v_font.h"
+#include "a_sharedglobal.h"
 
 // State.
 #include "r_state.h"
@@ -68,6 +69,8 @@
 #include "r_interpolate.h"
 
 static FRandom pr_playerinspecialsector ("PlayerInSpecialSector");
+void P_SetupPortals();
+
 
 // [GrafZahl] Make this message changable by the user! ;)
 CVAR(String, secretmessage, "A Secret is revealed!", CVAR_ARCHIVE)
@@ -293,7 +296,10 @@ bool P_TestActivateLine (line_t *line, AActor *mo, int side, int activationType)
 	}
 	if (activationType == SPAC_Use)
 	{
-		if (!P_CheckSwitchRange(mo, line, side)) return false;
+		if (!P_CheckSwitchRange(mo, line, side))
+		{
+			return false;
+		}
 	}
 
 	if ((lineActivation & activationType) == 0)
@@ -311,7 +317,10 @@ bool P_TestActivateLine (line_t *line, AActor *mo, int side, int activationType)
 			return false;
 		}
 	}
-
+	if (activationType == SPAC_AnyCross && (lineActivation & activationType))
+	{
+		return true;
+	}
 	if (mo && !mo->player &&
 		!(mo->flags & MF_MISSILE) &&
 		!(line->flags & ML_MONSTERSCANACTIVATE) &&
@@ -389,7 +398,6 @@ bool P_TestActivateLine (line_t *line, AActor *mo, int side, int activationType)
 //
 void P_PlayerInSpecialSector (player_t *player, sector_t * sector)
 {
-
 	if (sector == NULL)
 	{
 		// Falling, not all the way down yet?
@@ -822,6 +830,162 @@ void DWallLightTransfer::DoTransfer (BYTE lightlevel, int target, BYTE flags)
 	}
 }
 
+//-----------------------------------------------------------------------------
+//
+// Portals
+//
+//-----------------------------------------------------------------------------
+
+//---------------------------------------------------------------------------
+// Upper stacks go in the top sector. Lower stacks go in the bottom sector.
+
+static void SetupFloorPortal (AStackPoint *point)
+{
+	NActorIterator it (NAME_LowerStackLookOnly, point->tid);
+	sector_t *Sector = point->Sector;
+	Sector->FloorSkyBox = static_cast<ASkyViewpoint*>(it.Next());
+	if (Sector->FloorSkyBox != NULL)
+	{
+		Sector->FloorSkyBox->Mate = point;
+		Sector->FloorSkyBox->PlaneAlpha = Scale (point->args[0], OPAQUE, 255);
+	}
+}
+
+static void SetupCeilingPortal (AStackPoint *point)
+{
+	NActorIterator it (NAME_UpperStackLookOnly, point->tid);
+	sector_t *Sector = point->Sector;
+	Sector->CeilingSkyBox = static_cast<ASkyViewpoint*>(it.Next());
+	if (Sector->CeilingSkyBox != NULL)
+	{
+		Sector->CeilingSkyBox->Mate = point;
+		Sector->CeilingSkyBox->PlaneAlpha = Scale (point->args[0], OPAQUE, 255);
+	}
+}
+
+void P_SetupPortals()
+{
+	TThinkerIterator<AStackPoint> it;
+	AStackPoint *pt;
+	TArray<AStackPoint *> points;
+
+	while ((pt = it.Next()))
+	{
+		FName nm = pt->GetClass()->TypeName;
+		if (nm == NAME_UpperStackLookOnly)
+		{
+			SetupFloorPortal(pt);
+		}
+		else if (nm == NAME_LowerStackLookOnly)
+		{
+			SetupCeilingPortal(pt);
+		}
+		pt->special1 = 0;
+		points.Push(pt);
+	}
+
+	for(unsigned i=0;i<points.Size(); i++)
+	{
+		if (points[i]->special1 == 0 && points[i]->Mate != NULL)
+		{
+			for(unsigned j=1;j<points.Size(); j++)
+			{
+				if (points[j]->special1 == 0 && points[j]->Mate != NULL && points[i]->GetClass() == points[j]->GetClass())
+				{
+					fixed_t deltax1 = points[i]->Mate->x - points[i]->x;
+					fixed_t deltay1 = points[i]->Mate->y - points[i]->y;
+					fixed_t deltax2 = points[j]->Mate->x - points[j]->x;
+					fixed_t deltay2 = points[j]->Mate->y - points[j]->y;
+					if (deltax1 == deltax2 && deltay1 == deltay2)
+					{
+						if (points[j]->Sector->FloorSkyBox == points[j]->Mate)
+							points[j]->Sector->FloorSkyBox = points[i]->Mate;
+
+						if (points[j]->Sector->CeilingSkyBox == points[j]->Mate)
+							points[j]->Sector->CeilingSkyBox = points[i]->Mate;
+
+						points[j]->special1 = 1;
+					}
+				}
+			}
+		}
+	}
+}
+
+inline void SetPortal(sector_t *sector, int plane, AStackPoint *portal)
+{
+	// plane: 0=floor, 1=ceiling, 2=both
+	if (plane > 0)
+	{
+		if (sector->CeilingSkyBox == NULL) sector->CeilingSkyBox = portal;
+	}
+	if (plane == 2 || plane == 0)
+	{
+		if (sector->FloorSkyBox == NULL) sector->FloorSkyBox = portal;
+	}
+}
+
+void P_SpawnPortal(line_t *line, int sectortag, int plane, int alpha)
+{
+	for (int i=0;i<numlines;i++)
+	{
+		// We must look for the reference line with a linear search unless we want to waste the line ID for it
+		// which is not a good idea.
+		if (lines[i].special == Sector_SetPortal &&
+			lines[i].args[0] == sectortag &&
+			lines[i].args[1] == 0 &&
+			lines[i].args[2] == plane &&
+			lines[i].args[3] == 1)
+		{
+			fixed_t x1 = (line->v1->x + line->v2->x) >> 1;
+			fixed_t y1 = (line->v1->y + line->v2->y) >> 1;
+			fixed_t x2 = (lines[i].v1->x + lines[i].v2->x) >> 1;
+			fixed_t y2 = (lines[i].v1->y + lines[i].v2->y) >> 1;
+
+			AStackPoint *anchor = Spawn<AStackPoint>(x1, y1, 0, NO_REPLACE);
+			AStackPoint *reference = Spawn<AStackPoint>(x2, y2, 0, NO_REPLACE);
+
+			reference->Mate = anchor;
+			anchor->Mate = reference;
+
+			// This is so that the renderer can distinguish these portals from
+			// the ones spawned with the '*StackLookOnly' things.
+			reference->flags |= MF_JUSTATTACKED;
+			anchor->flags |= MF_JUSTATTACKED;
+
+		    for (int s=-1; (s = P_FindSectorFromTag(sectortag,s)) >= 0;)
+			{
+				SetPortal(&sectors[s], plane, reference);
+			}
+
+			for (int j=0;j<numlines;j++)
+			{
+				// Check if this portal needs to be copied to other sectors
+				// This must be done here to ensure that it gets done only after the portal is set up
+				if (lines[i].special == Sector_SetPortal &&
+					lines[i].args[1] == 1 &&
+					lines[i].args[2] == plane &&
+					lines[i].args[3] == sectortag)
+				{
+					if (lines[i].args[0] == 0)
+					{
+						SetPortal(lines[i].frontsector, plane, reference);
+					}
+					else
+					{
+						for (int s=-1; (s = P_FindSectorFromTag(lines[i].args[0],s)) >= 0;)
+						{
+							SetPortal(&sectors[s], plane, reference);
+						}
+					}
+				}
+			}
+
+			return;
+		}
+	}
+}
+
 
 //
 // P_SpawnSpecials
@@ -833,6 +997,8 @@ void P_SpawnSpecials (void)
 {
 	sector_t *sector;
 	int i;
+
+	P_SetupPortals();
 
 	//	Init special SECTORs.
 	sector = sectors;
@@ -1041,6 +1207,22 @@ void P_SpawnSpecials (void)
 			if (lines[i].args[0] == 0)
 			{
 				P_AddSectorLinks(lines[i].frontsector, lines[i].args[1], lines[i].args[2], lines[i].args[3]);
+			}
+			break;
+
+		case Sector_SetPortal:
+			// arg 0 = sector tag
+			// arg 1 = type
+			//	- 0: normal (handled here)
+			//	- 1: copy (handled by the portal they copy)
+			//	- 2: EE-style skybox (handled by the camera object)
+			//	other values reserved for later use
+			// arg 2 = 0:floor, 1:ceiling, 2:both
+			// arg 3 = 0: anchor, 1: reference line
+			// arg 4 = for the anchor only: alpha
+			if (lines[i].args[1] == 0 && lines[i].args[3] == 0)
+			{
+				P_SpawnPortal(&lines[i], lines[i].args[0], lines[i].args[2], lines[i].args[4]);
 			}
 			break;
 
@@ -1332,11 +1514,11 @@ static void P_SpawnScrollers(void)
 		if (special != 0)
 		{
 			int max = LineSpecialsInfo[special] != NULL ? LineSpecialsInfo[special]->map_args : countof(l->args);
-			for (int arg = max; arg < (int)countof(l->args); ++arg)
+			for (unsigned arg = max; arg < countof(l->args); ++arg)
 			{
 				if (l->args[arg] != 0)
 				{
-					Printf("Line %d (type %d:%s), arg %d is %d (should be 0)\n",
+					Printf("Line %d (type %d:%s), arg %u is %d (should be 0)\n",
 						i, special, LineSpecialsInfo[special]->name, arg+1, l->args[arg]);
 				}
 			}
@@ -1882,11 +2064,13 @@ static void P_SpawnPushers ()
 		case Sector_SetWind: // wind
 			for (s = -1; (s = P_FindSectorFromTag (l->args[0],s)) >= 0 ; )
 				new DPusher (DPusher::p_wind, l->args[3] ? l : NULL, l->args[1], l->args[2], NULL, s);
+			l->special = 0;
 			break;
 
 		case Sector_SetCurrent: // current
 			for (s = -1; (s = P_FindSectorFromTag (l->args[0],s)) >= 0 ; )
 				new DPusher (DPusher::p_current, l->args[3] ? l : NULL, l->args[1], l->args[2], NULL, s);
+			l->special = 0;
 			break;
 
 		case PointPush_SetForce: // push/pull
@@ -1915,6 +2099,7 @@ static void P_SpawnPushers ()
 					}
 				}
 			}
+			l->special = 0;
 			break;
 		}
 	}

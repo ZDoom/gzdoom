@@ -196,5 +196,6 @@ typedef int (*lnSpecFunc)(struct line_t	*line,
 extern lnSpecFunc LineSpecials[256];
 
 int P_FindLineSpecial (const char *string, int *min_args=NULL, int *max_args=NULL);
+bool P_ActivateThingSpecial(AActor * thing, AActor * trigger, bool death=false);
 
 #endif //__P_LNSPEC_H__

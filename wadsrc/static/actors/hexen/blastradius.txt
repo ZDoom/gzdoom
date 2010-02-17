@@ -1,5 +1,5 @@
 
-ACTOR ArtiBlastRadius : Inventory 10110 native
+ACTOR ArtiBlastRadius : CustomInventory 10110
 {
 	Game Hexen
 	SpawnID 74
@@ -15,6 +15,8 @@ ACTOR ArtiBlastRadius : Inventory 10110 native
 	Spawn:
 		BLST ABCDEFGH 4 Bright
 		Loop
+	Use:
+		TNT1 A 0 A_Blast
 	}
 }
 

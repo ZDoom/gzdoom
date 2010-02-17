@@ -1,0 +1,192 @@
+#include "xlat/doom.txt"
+
+// xlat file for Eternity levels.
+// Many specials are unsupported, especially portal stuff.
+// Some unsupported linedefs wouldn't be hard to add to ZDoom,
+// or are already there but implemented differently. Others are
+// practically impossible, or aren't worth the effort.
+
+define Unsupported (0)
+
+// The tag for such a line is actually a key to find, in an ExtraData lump 
+// indicated for the current level by the EMAPINFO lump, what line special
+// to actually use. This is how parameterized linedefs are used by Eternity
+// in the Doom format. "xlating" this would thus be quite complicated...
+270 = 0,	Unsupported() // "ExtraDataSpecial"
+
+// These two are standard MBF specials, no need to redefine them, they're in xlat/doom.txt
+// 271 = 0,		Static_Init (tag, Init_TransferSky, 0)
+// 272 = 0,		Static_Init (tag, Init_TransferSky, 1)
+
+// Small script starters. Small is considered deprecated now anyway.
+273 = 0,	Unsupported() // "WR_StartScript_1S"
+274 = 0,	Unsupported() // "W1_StartScript"
+275 = 0,	Unsupported() // "W1_StartScript_1S"
+276 = 0,	Unsupported() // "SR_StartScript"
+277 = 0,	Unsupported() // "S1_StartScript"
+278 = 0,	Unsupported() // "GR_StartScript"
+279 = 0,	Unsupported() // "G1_StartScript"
+280 = 0,	Unsupported() // "WR_StartScript"
+
+// 3D mid-textures
+281 = 0,	Sector_Attach3DMidtex(tag, 0, 0) // "3DMidTex_MoveWithFloor"
+282 = 0,	Sector_Attach3DMidtex(tag, 0, 1) // "3DMidTex_MoveWithCeiling"
+
+// Plane portals are not supported in ZDoom, though they probably wouldn't be too hard to implement.
+283 = 0,	Unsupported() // "Portal_PlaneCeiling"
+284 = 0,	Unsupported() // "Portal_PlaneFloor"
+285 = 0,	Unsupported() // "Portal_PlaneFloorCeiling"
+286 = 0,	Unsupported() // "Portal_HorizonCeiling"
+287 = 0,	Unsupported() // "Portal_HorizonFloor"
+288 = 0,	Unsupported() // "Portal_HorizonFloorCeiling"
+289 = 0,	Unsupported() // "Portal_LineTransfer"
+
+// Skybox portals
+290 = 0,	Sector_SetPortal(tag, 2, 1, 1, 0) // "Portal_SkyboxCeiling"
+291 = 0,	Sector_SetPortal(tag, 2, 0, 1, 0) // "Portal_SkyboxFloor"
+292 = 0,	Sector_SetPortal(tag, 2, 2, 1, 0) // "Portal_SkyboxFloorCeiling"
+
+// Sector specials
+293 = 0, 	Sector_SetWind(tag, 0, 0, 1) 		// "TransferHereticWind"
+294 = 0, 	Sector_SetCurrent(tag, 0, 0, 1) 	// "TransferHereticCurrent"
+
+// Anchored portals -- Sector_SetPortal needs to allow to set both floor and ceiling, though.
+295 = 0,	Sector_SetPortal(tag, 0, 1, 1, 0) // "Portal_AnchoredCeiling"
+296 = 0,	Sector_SetPortal(tag, 0, 0, 1, 0) // "Portal_AnchoredFloor"
+297 = 0,	Sector_SetPortal(tag, 0, 2, 1, 0) // "Portal_AnchoredFloorCeiling"
+298 = 0,	Sector_SetPortal(tag, 0, 1, 0, 0) // "Portal_AnchorLine"
+299 = 0,	Sector_SetPortal(tag, 0, 0, 0, 0) // "Portal_AnchorLineFloor"
+
+// Parameterized linedefs
+// They are never used directly in Doom-format maps. Instead, it passes through ExtraData and 270.
+// Hexen format is incomplete; and Quasar wants to use ZDoom-compatible special values for UDMF.
+// So there is no need to bother with them and they are listed only for completeness' sake.
+/*
+   300: "Door_Raise"
+   301: "Door_Open"
+   302: "Door_Close"
+   303: "Door_CloseWaitOpen"
+   304: "Door_WaitRaise"
+   305: "Door_WaitClose"
+   306: "Floor_RaiseToHighest"
+   307: "Floor_LowerToHighest"
+   308: "Floor_RaiseToLowest"
+   309: "Floor_LowerToLowest"
+   310: "Floor_RaiseToNearest"
+   311: "Floor_LowerToNearest"
+   312: "Floor_RaiseToLowestCeiling"
+   313: "Floor_LowerToLowestCeiling"
+   314: "Floor_RaiseToCeiling"
+   315: "Floor_RaiseByTexture"
+   316: "Floor_LowerByTexture"
+   317: "Floor_RaiseByValue"
+   318: "Floor_LowerByValue"
+   319: "Floor_MoveToValue"
+   320: "Floor_RaiseInstant"
+   321: "Floor_LowerInstant"
+   322: "Floor_ToCeilingInstant"
+   323: "Ceiling_RaiseToHighest"
+   324: "Ceiling_ToHighestInstant"
+   325: "Ceiling_RaiseToNearest"
+   326: "Ceiling_LowerToNearest"
+   327: "Ceiling_RaiseToLowest"
+   328: "Ceiling_LowerToLowest"
+   329: "Ceiling_RaiseToHighestFloor"
+   330: "Ceiling_LowerToHighestFloor"
+   331: "Ceiling_ToFloorInstant"
+   332: "Ceiling_LowerToFloor"
+   333: "Ceiling_RaiseByTexture"
+   334: "Ceiling_LowerByTexture"
+   335: "Ceiling_RaiseByValue"
+   336: "Ceiling_LowerByValue"
+   337: "Ceiling_MoveToValue"
+   338: "Ceiling_RaiseInstant"
+   339: "Ceiling_LowerInstant"
+   340: "Stairs_BuildUpDoom"
+   341: "Stairs_BuildDownDoom"
+   342: "Stairs_BuildUpDoomSync"
+   343: "Stairs_BuildDownDoomSync"
+*/
+
+// Two-way portals are not supported yet either
+344 = 0,	Unsupported() // "Portal_TwowayCeiling"
+345 = 0,	Unsupported() // "Portal_TwowayFloor"
+346 = 0,	Unsupported() // "Portal_TwowayAnchorLine"
+347 = 0,	Unsupported() // "Portal_TwowayAnchorLineFloor"
+
+// More parameterized linedefs
+/*
+   348: "Polyobj_StartLine"
+   349: "Polyobj_ExplicitLine"
+   350: "Polyobj_DoorSlide"
+   351: "Polyobj_DoorSwing"
+   352: "Polyobj_Move"
+   353: "Polyobj_OR_Move"
+   354: "Polyobj_RotateRight"
+   355: "Polyobj_OR_RotateRight"
+   356: "Polyobj_RotateLeft"
+   357: "Polyobj_OR_RotateLeft"
+*/
+
+// Eternity's linked portals, vertical link version (floor-to-ceiling)
+358 = 0,	Unsupported() // "Portal_LinkedCeiling"
+359 = 0,	Unsupported() // "Portal_LinkedFloor"
+360 = 0,	Unsupported() // "Portal_LinkedAnchorLine"
+361 = 0,	Unsupported() // "Portal_LinkedAnchorLineFloor"
+
+// Even more parameterized linedefs
+/*
+   362: "Pillar_Build"
+   363: "Pillar_BuildAndCrush"
+   364: "Pillar_Open"
+   365: "ACS_Execute"
+   366: "ACS_Suspend"
+   367: "ACS_Terminate"
+   368: "Light_RaiseByValue"
+   369: "Light_LowerByValue"
+   370: "Light_ChangeToValue"
+   371: "Light_Fade"
+   372: "Light_Glow"
+   373: "Light_Flicker"
+   374: "Light_Strobe"
+   375: "Radius_Quake"
+*/
+
+// Eternity's linked portals, horizontal link version (wall-to-wall)
+376 = 0,	Unsupported() // "Portal_LinkedLineToLine"
+377 = 0,	Unsupported() // "Portal_LinkedLineToLineAnchor"
+
+// The famous Hexen linedef
+// 378 = Line_SetIdentification
+
+// Attached sectors == linked sectors; However, the implementation in Eternity
+// is based on front sectors of tagged lines, not on sector tags. So instead
+// of Sector_SetLink, we pass through Static_Init to translate those.
+379 = 0,	Static_Init(tag, 3, 1) // "Attach_SetCeilingControl"
+380 = 0,	Static_Init(tag, 3, 0) // "Attach_SetFloorControl"
+381 = 0,	Static_Init(0, 3, 0, 1) // "Attach_FloorToControl"
+382 = 0,	Static_Init(0, 3, 1, 2) // "Attach_CeilingToControl"
+383 = 0,	Static_Init(0, 3, 0, 5) // "Attach_MirrorFloorToControl"
+384 = 0,	Static_Init(0, 3, 0, 10) // "Attach_MirrorCeilingToControl"
+
+// Attach tagged portal to front sector
+385 = 0, 	Sector_SetPortal(0, 1, 2, tag) // "Apply_PortalToFrontsector"
+
+// Slopes!
+386 = 0,	Plane_Align (1, 0)	// "Slope_FrontsectorFloor"
+387 = 0,	Plane_Align (0, 1)	// "Slope_FrontsectorCeiling"
+388 = 0,	Plane_Align (1, 1)	// "Slope_FrontsectorFloorAndCeiling"
+389 = 0,	Plane_Align (2, 0)	// "Slope_BacksectorFloor"
+390 = 0,	Plane_Align (0, 2)	// "Slope_BacksectorCeiling"
+391 = 0,	Plane_Align (2, 2)	// "Slope_BacksectorFloorAndCeiling"
+392 = 0,	Plane_Align (2, 1)	// "Slope_BackFloorAndFrontCeiling"
+393 = 0,	Plane_Align (1, 2)	// "Slope_BackCeilingAndFrontFloor"
+394 = 0,	Plane_Copy (tag, 0)	// "Slope_FrontFloorToTaggedSlope"
+395 = 0,	Plane_Copy (0, tag)	// "Slope_FrontCeilingToTaggedSlope"
+396 = 0,	Plane_Copy(tag, tag)// "Slope_FrontFloorAndCeilingToTaggedSlope"
+
+// Last parameterized linedefs
+// 397 = Floor_Waggle
+// 398 = Thing_Spawn
+// 399 = Thing_SpawnNoFog
+// 400 = Teleport_EndGame

@@ -9,7 +9,28 @@
 #include "thingdef/thingdef.h"
 */
 
+static FRandom pr_impmsatk ("ImpMsAttack");
 static FRandom pr_imp ("ImpExplode");
+
+
+//----------------------------------------------------------------------------
+//
+// PROC A_ImpMsAttack
+//
+//----------------------------------------------------------------------------
+
+DEFINE_ACTION_FUNCTION(AActor, A_ImpMsAttack)
+{
+	PARAM_ACTION_PROLOGUE;
+
+    if (!self->target || pr_impmsatk() > 64)
+    {
+        self->SetState (self->SeeState);
+        return 0;
+    }
+	A_SkullAttack(self, 12 * FRACUNIT);
+	return 0;
+}
 
 //----------------------------------------------------------------------------
 //

@@ -222,6 +222,7 @@ player_t::player_t()
   centering(0),
   turnticks(0),
   attackdown(0),
+  usedown(0),
   oldbuttons(0),
   health(0),
   inventorytics(0),
@@ -614,6 +615,12 @@ bool APlayerPawn::UseInventory (AInventory *item)
 	{ // You can't use items if you're totally frozen
 		return false;
 	}
+	if (( level.flags2 & LEVEL2_FROZEN ) && ( player == NULL || !( player->cheats & CF_TIMEFREEZE )))
+	{
+		// Time frozen
+		return false;
+	}
+
 	if (!Super::UseInventory (item))
 	{
 		// Heretic and Hexen advance the inventory cursor if the use failed.
@@ -1400,10 +1407,12 @@ void P_CheckPlayerSprites()
 		{
 			int crouchspriteno;
 			fixed_t defscaleY = mo->GetDefault()->scaleY;
+			fixed_t defscaleX = mo->GetDefault()->scaleX;
 			
-			if (player->userinfo.skin != 0)
+			if (player->userinfo.skin != 0 && !(player->mo->flags4 & MF4_NOSKIN))
 			{
 				defscaleY = skins[player->userinfo.skin].ScaleY;
+				defscaleX = skins[player->userinfo.skin].ScaleX;
 			}
 			
 			// Set the crouch sprite
@@ -1414,8 +1423,9 @@ void P_CheckPlayerSprites()
 				{
 					crouchspriteno = mo->crouchsprite;
 				}
-				else if (mo->sprite == skins[player->userinfo.skin].sprite ||
-						 mo->sprite == skins[player->userinfo.skin].crouchsprite)
+				else if (!(player->mo->flags4 & MF4_NOSKIN) &&
+						(mo->sprite == skins[player->userinfo.skin].sprite ||
+						 mo->sprite == skins[player->userinfo.skin].crouchsprite))
 				{
 					crouchspriteno = skins[player->userinfo.skin].crouchsprite;
 				}
@@ -1447,6 +1457,7 @@ void P_CheckPlayerSprites()
 				}
 				mo->scaleY = defscaleY;
 			}
+			mo->scaleX = defscaleX;
 		}
 	}
 }
@@ -2060,8 +2071,12 @@ void P_PlayerThink (player_t *player)
 		player->mo->flags &= ~MF_JUSTATTACKED;
 	}
 
+	bool totallyfrozen = (player->cheats & CF_TOTALLYFROZEN || gamestate == GS_TITLELEVEL ||
+		(( level.flags2 & LEVEL2_FROZEN ) && ( player == NULL || !( player->cheats & CF_TIMEFREEZE )))
+		);
+
 	// [RH] Being totally frozen zeros out most input parameters.
-	if (player->cheats & CF_TOTALLYFROZEN || gamestate == GS_TITLELEVEL)
+	if (totallyfrozen)
 	{
 		if (gamestate == GS_TITLELEVEL)
 		{
@@ -2093,7 +2108,7 @@ void P_PlayerThink (player_t *player)
 	}
 	if (player->morphTics == 0 && player->health > 0 && level.IsCrouchingAllowed())
 	{
-		if (!(player->cheats & CF_TOTALLYFROZEN))
+		if (!totallyfrozen)
 		{
 			int crouchdir = player->crouching;
 		
@@ -2163,13 +2178,11 @@ void P_PlayerThink (player_t *player)
 				player->mo->pitch -= look;
 				if (look > 0)
 				{ // look up
-					if (player->mo->pitch < -ANGLE_1*MAX_UP_ANGLE)
-						player->mo->pitch = -ANGLE_1*MAX_UP_ANGLE;
+					player->mo->pitch = MAX(player->mo->pitch, screen->GetMaxViewPitch(false));
 				}
 				else
 				{ // look down
-					if (player->mo->pitch > ANGLE_1*MAX_DN_ANGLE)
-						player->mo->pitch = ANGLE_1*MAX_DN_ANGLE;
+					player->mo->pitch = MIN(player->mo->pitch, screen->GetMaxViewPitch(true));
 				}
 			}
 		}
@@ -2282,9 +2295,20 @@ void P_PlayerThink (player_t *player)
 			}
 		}
 		// check for use
-		if ((cmd->ucmd.buttons & BT_USE) && !(player->oldbuttons & BT_USE))
+		if (cmd->ucmd.buttons & BT_USE)
 		{
-			P_UseLines (player);
+			if (!player->usedown)
+			{
+				player->usedown = true;
+				if (!P_TalkFacing(player->mo))
+				{
+					P_UseLines(player);
+				}
+			}
+		}
+		else
+		{
+			player->usedown = false;
 		}
 		// Morph counter
 		if (player->morphTics)
@@ -2295,7 +2319,7 @@ void P_PlayerThink (player_t *player)
 			}
 			if (!--player->morphTics)
 			{ // Attempt to undo the chicken/pig
-				P_UndoPlayerMorph (player, player);
+				P_UndoPlayerMorph (player, player, MORPH_UNDOBYTIMEOUT);
 			}
 		}
 		// Cycle psprites
@@ -2521,19 +2545,25 @@ void player_t::Serialize (FArchive &arc)
 		int fixedmap;
 		arc << fixedmap;
 		fixedcolormap = NOFIXEDCOLORMAP;
-		fixedlightlev = -1;
+		fixedlightlevel = -1;
 		if (fixedmap >= NUMCOLORMAPS)
 		{
 			fixedcolormap = fixedmap - NUMCOLORMAPS;
 		}
 		else if (fixedmap > 0)
 		{
-			fixedlightlev = fixedmap;
+			fixedlightlevel = fixedmap;
 		}
+	}
+	else if (SaveVersion < 1893)
+	{
+		int ll;
+		arc	<< fixedcolormap << ll;
+		fixedlightlevel = ll;
 	}
 	else
 	{
-		arc	<< fixedcolormap << fixedlightlev;
+		arc	<< fixedcolormap << fixedlightlevel;
 	}
 	arc << morphTics
 		<< MorphedPlayerClass

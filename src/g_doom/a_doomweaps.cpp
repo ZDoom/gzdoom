@@ -141,7 +141,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Saw)
 	// use meleerange + 1 so the puff doesn't skip the flash (i.e. plays all states)
 	P_LineAttack (self, angle, MELEERANGE+1,
 				  P_AimLineAttack (self, angle, MELEERANGE+1, &linetarget), damage,
-				  GetDefaultByType(pufftype)->DamageType, pufftype);
+				  NAME_None, pufftype);
 
 	if (!linetarget)
 	{
@@ -272,7 +272,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CloseShotgun2)
 {
 	PARAM_ACTION_PROLOGUE;
 	S_Sound (self, CHAN_WEAPON, "weapons/sshotc", 1, ATTN_NORM);
-	CALL_ACTION(A_ReFire, self);
+	A_ReFire (self);
 	return 0;
 }
 

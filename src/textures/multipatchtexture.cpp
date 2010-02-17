@@ -158,7 +158,7 @@ public:
 	void Unload ();
 	virtual void SetFrontSkyLayer ();
 
-	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int w, int h, int rotate, FCopyInfo *inf = NULL);
+	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf = NULL);
 	int GetSourceLump() { return DefinitionLump; }
 
 protected:
@@ -218,6 +218,7 @@ FMultiPatchTexture::FMultiPatchTexture (const void *texdef, FPatchLookup *patchl
 	int i;
 
 	mtexture.d = (const maptexture_t *)texdef;
+	bMultiPatch = true;
 
 	if (strife)
 	{
@@ -429,7 +430,7 @@ BYTE *GetBlendMap(PalEntry blend, BYTE *blendwork)
 		return TranslationToTable(TRANSLATION(TRANSLATION_Standard, 7))->Remap;
 
 	default:
-		if (blend >= BLEND_SPECIALCOLORMAP1)
+		if (blend >= BLEND_SPECIALCOLORMAP1 && blend < BLEND_SPECIALCOLORMAP1 + SpecialColormaps.Size())
 		{
 			return SpecialColormaps[blend - BLEND_SPECIALCOLORMAP1].Colormap;
 		}
@@ -542,19 +543,29 @@ void FMultiPatchTexture::MakeTexture ()
 //
 //===========================================================================
 
-int FMultiPatchTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int w, int h, int rotate, FCopyInfo *inf)
+int FMultiPatchTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)
 {
 	int retv = -1;
 	FCopyInfo info;
 
-	if (w < 0 || w > Width) w = Width;
-	if (h < 0 || h > Height) h = Height;
+	// When compositing a multipatch texture with multipatch parts
+	// drawing must be restricted to the actual area which is covered by this texture.
+	FClipRect saved_cr = bmp->GetClipRect();
+	bmp->IntersectClipRect(x, y, Width, Height);
 
-	for(int i=0;i<NumParts;i++)
+	if (inf != NULL && inf->op == OP_OVERWRITE)
+	{
+		bmp->Zero();
+	}
+
+	for(int i = 0; i < NumParts; i++)
 	{
 		int ret = -1;
 
-		if (!Parts[i].Texture->bComplex || inf == NULL)
+		// rotated multipatch parts cannot be composited directly
+		bool rotatedmulti = Parts[i].Rotate != 0 && Parts[i].Texture->bMultiPatch;
+
+		if ((!Parts[i].Texture->bComplex || inf == NULL) && !rotatedmulti)
 		{
 			memset (&info, 0, sizeof (info));
 			info.alpha = Parts[i].Alpha;
@@ -563,17 +574,14 @@ int FMultiPatchTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int w, i
 			if (Parts[i].Translation != NULL)
 			{
 				// Using a translation forces downconversion to the base palette
-				ret = Parts[i].Texture->CopyTrueColorTranslated(bmp, 
-					x+Parts[i].OriginX, y+Parts[i].OriginY, 
-					w-Parts[i].OriginX, h-Parts[i].OriginY, 
-					Parts[i].Rotate, Parts[i].Translation, &info);
+				ret = Parts[i].Texture->CopyTrueColorTranslated(bmp, x+Parts[i].OriginX, y+Parts[i].OriginY, Parts[i].Rotate, Parts[i].Translation, &info);
 			}
 			else
 			{
 				PalEntry b = Parts[i].Blend;
-				if (b.a == 0 && b.r != BLEND_NONE)
+				if (b.a == 0 && b != BLEND_NONE)
 				{
-					info.blend = EBlend(b.r);
+					info.blend = EBlend(b.d);
 				}
 				else if (b.a != 0)
 				{
@@ -594,10 +602,7 @@ int FMultiPatchTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int w, i
 						info.blend = BLEND_OVERLAY;
 					}
 				}
-				ret = Parts[i].Texture->CopyTrueColorPixels(bmp, 
-						x+Parts[i].OriginX, y+Parts[i].OriginY, 
-						w-Parts[i].OriginX, h-Parts[i].OriginY, 
-						Parts[i].Rotate, &info);
+				ret = Parts[i].Texture->CopyTrueColorPixels(bmp, x+Parts[i].OriginX, y+Parts[i].OriginY, Parts[i].Rotate, &info);
 			}
 		}
 		else
@@ -610,16 +615,15 @@ int FMultiPatchTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int w, i
 			if (bmp1.Create(Parts[i].Texture->GetWidth(), Parts[i].Texture->GetHeight()))
 			{
 				Parts[i].Texture->CopyTrueColorPixels(&bmp1, 0, 0);
-				bmp->CopyPixelDataRGB(
-					x+Parts[i].OriginX, y+Parts[i].OriginY, bmp1.GetPixels(),
-					MIN<int>(w-Parts[i].OriginX, bmp1.GetWidth()), 
-					MIN<int>(h-Parts[i].OriginY, bmp1.GetHeight()), 
-					4, bmp1.GetPitch()*4, Parts[i].Rotate, CF_BGRA, inf);
+				bmp->CopyPixelDataRGB(x+Parts[i].OriginX, y+Parts[i].OriginY, bmp1.GetPixels(), 
+					bmp1.GetWidth(), bmp1.GetHeight(), 4, bmp1.GetPitch(), Parts[i].Rotate, CF_BGRA, inf);
 			}
 		}
 
 		if (ret > retv) retv = ret;
 	}
+	// Restore previous clipping rectangle.
+	bmp->SetClipRect(saved_cr);
 	return retv;
 }
 
@@ -1179,6 +1183,7 @@ FMultiPatchTexture::FMultiPatchTexture (FScanner &sc, int usetype)
 {
 	TArray<TexPart> parts;
 
+	bMultiPatch = true;
 	sc.SetCMode(true);
 	sc.MustGetString();
 	uppercopy(Name, sc.String);

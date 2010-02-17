@@ -588,7 +588,7 @@ struct sector_t
 
 	sector_t *GetHeightSec() const 
 	{
-		return (MoreFlags & SECF_IGNOREHEIGHTSEC)? NULL : heightsec;
+		return (heightsec && !(heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC))? heightsec : NULL;
 	}
 
 	void ChangeLightLevel(int newval)
@@ -604,6 +604,11 @@ struct sector_t
 	int GetLightLevel() const
 	{
 		return lightlevel;
+	}
+
+	secplane_t &GetSecPlane(int pos)
+	{
+		return pos == floor? floorplane:ceilingplane;
 	}
 
 	bool PlaneMoving(int pos);
@@ -725,6 +730,7 @@ enum
 	WALLF_SMOOTHLIGHTING = 8,   // Similar to autocontrast but applies to all angles.
 	WALLF_CLIP_MIDTEX	 = 16,	// Like the line counterpart, but only for this side.
 	WALLF_WRAP_MIDTEX	 = 32,	// Like the line counterpart, but only for this side.
+	WALLF_POLYOBJ		 = 64,	// This wall belongs to a polyobject.
 };
 
 struct side_t
@@ -871,7 +877,7 @@ struct line_t
 	DWORD		flags;
 	DWORD		activation;	// activation type
 	int			special;
-	fixed_t		Alpha;		// <--- translucency (0-255/255=opaque)
+	fixed_t		Alpha;		// <--- translucency (0=invisibile, FRACUNIT=opaque)
 	int			id;			// <--- same as tag or set with Line_SetIdentification
 	int			args[5];	// <--- hexen-style arguments (expanded to ZDoom's full width)
 	int			firstid, nextid;

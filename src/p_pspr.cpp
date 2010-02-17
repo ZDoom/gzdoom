@@ -206,7 +206,7 @@ void P_BringUpWeapon (player_t *player)
 //
 //---------------------------------------------------------------------------
 
-void P_FireWeapon (player_t *player)
+void P_FireWeapon (player_t *player, FState *state)
 {
 	AWeapon *weapon;
 
@@ -225,7 +225,11 @@ void P_FireWeapon (player_t *player)
 
 	player->mo->PlayAttacking ();
 	weapon->bAltFire = false;
-	P_SetPsprite (player, ps_weapon, weapon->GetAtkState(!!player->refire));
+	if (state == NULL)
+	{
+		state = weapon->GetAtkState(!!player->refire);
+	}
+	P_SetPsprite (player, ps_weapon, state);
 	if (!(weapon->WeaponFlags & WIF_NOALERT))
 	{
 		P_NoiseAlert (player->mo, player->mo, false);
@@ -238,7 +242,7 @@ void P_FireWeapon (player_t *player)
 //
 //---------------------------------------------------------------------------
 
-void P_FireWeaponAlt (player_t *player)
+void P_FireWeaponAlt (player_t *player, FState *state)
 {
 	AWeapon *weapon;
 
@@ -258,8 +262,12 @@ void P_FireWeaponAlt (player_t *player)
 	player->mo->PlayAttacking ();
 	weapon->bAltFire = true;
 
+	if (state == NULL)
+	{
+		state = weapon->GetAltAtkState(!!player->refire);
+	}
 
-	P_SetPsprite (player, ps_weapon, weapon->GetAltAtkState(!!player->refire));
+	P_SetPsprite (player, ps_weapon, state);
 	if (!(weapon->WeaponFlags & WIF_NOALERT))
 	{
 		P_NoiseAlert (player->mo, player->mo, false);
@@ -459,7 +467,7 @@ void P_CheckWeaponFire (player_t *player)
 		if (!player->attackdown || !(weapon->WeaponFlags & WIF_NOAUTOFIRE))
 		{
 			player->attackdown = true;
-			P_FireWeapon (player);
+			P_FireWeapon (player, NULL);
 			return;
 		}
 	}
@@ -468,7 +476,7 @@ void P_CheckWeaponFire (player_t *player)
 		if (!player->attackdown || !(weapon->WeaponFlags & WIF_NOAUTOFIRE))
 		{
 			player->attackdown = true;
-			P_FireWeaponAlt (player);
+			P_FireWeaponAlt (player, NULL);
 			return;
 		}
 	}
@@ -500,6 +508,11 @@ void P_CheckWeaponSwitch (player_t *player)
 		P_SetPsprite (player, ps_weapon, weapon->GetDownState());
 		return;
 	}
+	else if (player->morphTics != 0)
+	{
+		// morphed classes cannot change weapons so don't even try again.
+		player->PendingWeapon = WP_NOCHANGE;
+	}
 }
 
 //---------------------------------------------------------------------------
@@ -510,29 +523,35 @@ void P_CheckWeaponSwitch (player_t *player)
 //
 //---------------------------------------------------------------------------
 
-DEFINE_ACTION_FUNCTION(AInventory, A_ReFire)
+DEFINE_ACTION_FUNCTION_PARAMS(AInventory, A_ReFire)
 {
 	PARAM_ACTION_PROLOGUE;
+	PARAM_STATE_OPT(state)	{ state = NULL; }
+	A_ReFire(self, state);
+	return 0;
+}
 
+void A_ReFire(AActor *self, FState *state)
+{
 	player_t *player = self->player;
 
 	if (NULL == player)
 	{
-		return 0;
+		return;
 	}
 	if ((player->cmd.ucmd.buttons&BT_ATTACK)
 		&& !player->ReadyWeapon->bAltFire
 		&& player->PendingWeapon == WP_NOCHANGE && player->health)
 	{
 		player->refire++;
-		P_FireWeapon (player);
+		P_FireWeapon (player, state);
 	}
 	else if ((player->cmd.ucmd.buttons&BT_ALTATTACK)
 		&& player->ReadyWeapon->bAltFire
 		&& player->PendingWeapon == WP_NOCHANGE && player->health)
 	{
 		player->refire++;
-		P_FireWeaponAlt (player);
+		P_FireWeaponAlt (player, state);
 	}
 	else
 	{
@@ -540,7 +559,6 @@ DEFINE_ACTION_FUNCTION(AInventory, A_ReFire)
 		player->ReadyWeapon->CheckAmmo (player->ReadyWeapon->bAltFire
 			? AWeapon::AltFire : AWeapon::PrimaryFire, true);
 	}
-	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(AInventory, A_ClearReFire)
@@ -678,9 +696,11 @@ DEFINE_ACTION_FUNCTION(AInventory, A_Raise)
 //
 // A_GunFlash
 //
-DEFINE_ACTION_FUNCTION(AInventory, A_GunFlash)
+DEFINE_ACTION_FUNCTION_PARAMS(AInventory, A_GunFlash)
 {
 	PARAM_ACTION_PROLOGUE;
+	PARAM_STATE_OPT(flash)	{ flash = NULL; }
+
 	player_t *player = self->player;
 
 	if (NULL == player)
@@ -689,9 +709,17 @@ DEFINE_ACTION_FUNCTION(AInventory, A_GunFlash)
 	}
 	player->mo->PlayAttacking2 ();
 
-	FState * flash=NULL;
-	if (player->ReadyWeapon->bAltFire) flash = player->ReadyWeapon->FindState(NAME_AltFlash);
-	if (flash == NULL) flash = player->ReadyWeapon->FindState(NAME_Flash);
+	if (flash == NULL)
+	{
+		if (player->ReadyWeapon->bAltFire)
+		{
+			flash = player->ReadyWeapon->FindState(NAME_AltFlash);
+		}
+		if (flash == NULL)
+		{
+			flash = player->ReadyWeapon->FindState(NAME_Flash);
+		}
+	}
 	P_SetPsprite (player, ps_flash, flash);
 	return 0;
 }

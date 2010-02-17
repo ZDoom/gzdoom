@@ -19,7 +19,6 @@
 // SkullAttack
 // Fly at the player like a missile.
 //
-#define SKULLSPEED (20*FRACUNIT)
 
 void A_SkullAttack(AActor *self, fixed_t speed)
 {
@@ -56,8 +55,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SkullAttack)
 	A_SkullAttack(self, speed);
 	return 0;
 }
-
-
 
 DEFINE_ACTION_FUNCTION(AActor, A_BetaSkullAttack)
 {

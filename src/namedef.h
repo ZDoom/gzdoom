@@ -64,6 +64,9 @@ xx(Wind)
 xx(PointPusher)
 xx(PointPuller)
 
+xx(UpperStackLookOnly)
+xx(LowerStackLookOnly)
+
 xx(BulletPuff)
 xx(StrifePuff)
 xx(MaulerPuff)
@@ -129,6 +132,9 @@ xx(FWeapQuietus)
 xx(CWeapWraithverge)
 xx(MWeapBloodscourge)
 
+// Misc Hexen classes
+xx(LightningZap)
+
 // Ammo and weapon names for the Strife status bar
 xx(ClipOfBullets)
 xx(PoisonBolts)
@@ -147,6 +153,7 @@ xx(Mauler)
 
 xx(AcolyteBlue)
 xx(SpectralLightningV1)
+xx(SpectralLightningV2)
 xx(TeleportDest)
 xx(TeleportDest2)
 
@@ -367,7 +374,7 @@ xx(Blockplayers)
 xx(Blockeverything)
 xx(Zoneboundary)
 xx(Jumpover)
-xx(Blockfloating)
+xx(Blockfloaters)
 xx(Clipmidtex)
 xx(Wrapmidtex)
 xx(Midtex3d)

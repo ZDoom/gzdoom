@@ -235,7 +235,18 @@ static void MakeFountain (AActor *actor, int color1, int color2)
 
 void P_RunEffect (AActor *actor, int effects)
 {
-	angle_t moveangle = R_PointToAngle2(0,0,actor->velx,actor->vely);
+	angle_t moveangle;
+	
+	// 512 is the limit below which R_PointToAngle2 does no longer returns usable values.
+	if (abs(actor->velx) > 512 || abs(actor->vely) > 512)
+	{
+		moveangle = R_PointToAngle2(0,0,actor->velx,actor->vely);
+	}
+	else
+	{
+		moveangle = actor->angle;
+	}
+
 	particle_t *particle;
 	int i;
 
@@ -472,17 +483,19 @@ void P_DrawRailTrail (AActor *source, const FVector3 &start, const FVector3 &end
 			}
 			else
 			{
+
 				// Only consider sound in 2D (for now, anyway)
 				// [BB] You have to devide by lengthsquared here, not multiply with it.
-				r = ((start.Y - FIXED2FLOAT(mo->y)) * (-dir.Y) -
-					(start.X - FIXED2FLOAT(mo->x)) * (dir.X)) / lengthsquared;
+
+				r = ((start.Y - FIXED2FLOAT(mo->y)) * (-dir.Y) - (start.X - FIXED2FLOAT(mo->x)) * (dir.X)) / lengthsquared;
+				r = clamp<double>(r, 0., 1.);
 
 				dirz = dir.Z;
 				dir.Z = 0;
 				point = start + r * dir;
 				dir.Z = dirz;
 
-				S_Sound (FLOAT2FIXED(point.X), FLOAT2FIXED(point.Y), mo->z,
+				S_Sound (FLOAT2FIXED(point.X), FLOAT2FIXED(point.Y), viewz,
 					CHAN_WEAPON, sound, 1, ATTN_NORM);
 			}
 		}

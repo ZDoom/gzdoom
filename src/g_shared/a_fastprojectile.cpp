@@ -2,6 +2,8 @@
 #include "a_sharedglobal.h"
 #include "p_local.h"
 #include "g_level.h"
+#include "r_sky.h"
+#include "p_lnspec.h"
 
 
 IMPLEMENT_CLASS(AFastProjectile)
@@ -26,6 +28,7 @@ void AFastProjectile::Tick ()
 	PrevX = x;
 	PrevY = y;
 	PrevZ = z;
+	PrevAngle = angle;
 
 	if (!(flags5 & MF5_NOTIMEFREEZE))
 	{
@@ -71,6 +74,26 @@ void AFastProjectile::Tick ()
 				
 				if (!P_TryMove (this, x + xfrac,y + yfrac, true, false, tm))
 				{ // Blocked move
+					if (!(flags3 & MF3_SKYEXPLODE))
+					{
+						if (tm.ceilingline &&
+							tm.ceilingline->backsector &&
+							tm.ceilingline->backsector->GetTexture(sector_t::ceiling) == skyflatnum &&
+							z >= tm.ceilingline->backsector->ceilingplane.ZatPoint (x, y))
+						{
+							// Hack to prevent missiles exploding against the sky.
+							// Does not handle sky floors.
+							Destroy ();
+							return;
+						}
+						// [RH] Don't explode on horizon lines.
+						if (BlockingLine != NULL && BlockingLine->special == Line_Horizon)
+						{
+							Destroy ();
+							return;
+						}
+					}
+
 					P_ExplodeMissile (this, BlockingLine, BlockingMobj);
 					return;
 				}
@@ -78,6 +101,15 @@ void AFastProjectile::Tick ()
 			z += zfrac;
 			if (z <= floorz)
 			{ // Hit the floor
+
+				if (floorpic == skyflatnum && !(flags3 & MF3_SKYEXPLODE))
+				{
+					// [RH] Just remove the missile without exploding it
+					//		if this is a sky floor.
+					Destroy ();
+					return;
+				}
+
 				z = floorz;
 				P_HitFloor (this);
 				P_ExplodeMissile (this, NULL, NULL);
@@ -85,6 +117,13 @@ void AFastProjectile::Tick ()
 			}
 			if (z + height > ceilingz)
 			{ // Hit the ceiling
+
+				if (ceilingpic == skyflatnum &&  !(flags3 & MF3_SKYEXPLODE))
+				{
+					Destroy ();
+					return;
+				}
+
 				z = ceilingz - height;
 				P_ExplodeMissile (this, NULL, NULL);
 				return;
@@ -99,7 +138,7 @@ void AFastProjectile::Tick ()
 	// Advance the state
 	if (tics != -1)
 	{
-		tics--;
+		if (tics > 0) tics--;
 		while (!tics)
 		{
 			if (!SetState (state->GetNextState ()))
@@ -113,5 +152,27 @@ void AFastProjectile::Tick ()
 
 void AFastProjectile::Effect()
 {
+	//if (pr_smoke() < 128)	// [RH] I think it looks better if it's consistent
+	{
+		FName name = (ENamedName) this->GetClass()->Meta.GetMetaInt (ACMETA_MissileName, NAME_None);
+		if (name != NAME_None)
+		{
+			fixed_t hitz = z-8*FRACUNIT;
+			if (hitz < floorz)
+			{
+				hitz = floorz;
+			}
+		
+			const PClass *trail = PClass::FindClass(name);
+			if (trail != NULL)
+			{
+				AActor *act = Spawn (trail, x, y, hitz, ALLOW_REPLACE);
+				if (act != NULL)
+				{
+					act->angle = this->angle;
+				}
+			}
+		}
+	}
 }
 

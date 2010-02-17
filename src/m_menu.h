@@ -84,9 +84,6 @@ void M_DeactivateMenuInput ();
 
 void M_NotifyNewSave (const char *file, const char *title, bool okForQuicksave);
 
-// Draw a slider. Set fracdigits negative to not display the current value numerically.
-void M_DrawSlider (int x, int y, double min, double max, double cur, int fracdigits=1);
-
 //
 // MENU TYPEDEFS
 //
@@ -181,7 +178,7 @@ struct menu_t {
 	int				scrolltop;
 	int				scrollpos;
 	int				y;
-	void		  (*PreDraw)(void);
+	bool		  (*PreDraw)(void);
 	bool			DontDim;
 	void		  (*EscapeHandler)(void);
 };
@@ -267,6 +264,7 @@ extern menustack_t MenuStack[16];
 extern int MenuStackDepth;
 
 extern bool	OptionsActive;
+extern int	skullAnimCounter;
 
 extern menu_t  *CurrentMenu;
 extern int		CurrentItem;

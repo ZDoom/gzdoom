@@ -708,6 +708,7 @@ ACTOR PhosphorousFire native
 	+FLOORCLIP
 	+NOTELEPORT
 	+NODAMAGETHRUST
+	+DONTSPLASH
 	RenderStyle Add
 
 	action native A_Burnarea ();

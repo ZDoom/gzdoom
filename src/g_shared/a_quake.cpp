@@ -33,14 +33,14 @@ DEarthquake::DEarthquake()
 //==========================================================================
 
 DEarthquake::DEarthquake (AActor *center, int intensity, int duration,
-						  int damrad, int tremrad)
+						  int damrad, int tremrad, FSoundID quakesound)
 						  : DThinker(STAT_EARTHQUAKE)
 {
-	m_QuakeSFX = "world/quake";
+	m_QuakeSFX = quakesound;
 	m_Spot = center;
 	// Radii are specified in tile units (64 pixels)
-	m_DamageRadius = damrad << (FRACBITS+6);
-	m_TremorRadius = tremrad << (FRACBITS+6);
+	m_DamageRadius = damrad << (FRACBITS);
+	m_TremorRadius = tremrad << (FRACBITS);
 	m_Intensity = intensity;
 	m_Countdown = duration;
 }
@@ -56,7 +56,15 @@ void DEarthquake::Serialize (FArchive &arc)
 	Super::Serialize (arc);
 	arc << m_Spot << m_Intensity << m_Countdown
 		<< m_TremorRadius << m_DamageRadius;
-	m_QuakeSFX = "world/quake";
+
+	if (SaveVersion >= 1912)
+	{
+		arc << m_QuakeSFX;
+	}
+	else
+	{
+		m_QuakeSFX = "world/quake";
+	}
 }
 
 //==========================================================================
@@ -158,7 +166,7 @@ int DEarthquake::StaticGetQuakeIntensity (AActor *victim)
 //
 //==========================================================================
 
-bool P_StartQuake (AActor *activator, int tid, int intensity, int duration, int damrad, int tremrad)
+bool P_StartQuake (AActor *activator, int tid, int intensity, int duration, int damrad, int tremrad, FSoundID quakesfx)
 {
 	AActor *center;
 	bool res = false;
@@ -169,7 +177,7 @@ bool P_StartQuake (AActor *activator, int tid, int intensity, int duration, int 
 	{
 		if (activator != NULL)
 		{
-			new DEarthquake(activator, intensity, duration, damrad, tremrad);
+			new DEarthquake(activator, intensity, duration, damrad, tremrad, quakesfx);
 			return true;
 		}
 	}
@@ -179,7 +187,7 @@ bool P_StartQuake (AActor *activator, int tid, int intensity, int duration, int 
 		while ( (center = iterator.Next ()) )
 		{
 			res = true;
-			new DEarthquake (center, intensity, duration, damrad, tremrad);
+			new DEarthquake (center, intensity, duration, damrad, tremrad, quakesfx);
 		}
 	}
 	

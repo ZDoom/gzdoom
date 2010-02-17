@@ -68,6 +68,7 @@
 
 void P_SpawnSlopeMakers (FMapThing *firstmt, FMapThing *lastmt);
 void P_SetSlopes ();
+void P_CopySlopes();
 void BloodCrypt (void *data, int key, int len);
 void P_ClearUDMFKeys();
 
@@ -1601,9 +1602,6 @@ void P_SpawnThings (int position)
 {
 	int numthings = MapThingsConverted.Size();
 
-	// [RH] Spawn slope creating things first.
-	P_SpawnSlopeMakers (&MapThingsConverted[0], &MapThingsConverted[numthings]);
-
 	for (int i=0; i < numthings; i++)
 	{
 		SpawnMapThing (i, &MapThingsConverted[i], position);
@@ -1705,7 +1703,11 @@ void P_SetLineID (line_t *ld)
 		case Polyobj_ExplicitLine:
 			ld->id = ld->args[4];
 			break;
-
+			
+		case Plane_Align:
+			ld->id = ld->args[2];
+			break;
+			
 		case Static_Init:
 			if (ld->args[1] == Init_SectorLink) ld->id = ld->args[0];
 			break;
@@ -3416,8 +3418,24 @@ void P_SetupLevel (char *lumpname, int position)
 		else
 		{
 			// We need translators only for Doom format maps.
-			// If none has been defined in a map use the game's default.
-			P_LoadTranslator(!level.info->Translator.IsEmpty()? level.info->Translator.GetChars() : gameinfo.translator.GetChars());
+			const char *translator;
+
+			if (!level.info->Translator.IsEmpty())
+			{
+				// The map defines its own translator.
+				translator = level.info->Translator.GetChars();
+			}
+			else
+			{
+				// Has the user overridden the game's default translator with a commandline parameter?
+				translator = Args->CheckValue("-xlat");
+				if (translator == NULL) 
+				{
+					// Use the game's default.
+					translator = gameinfo.translator.GetChars();
+				}
+			}
+			P_LoadTranslator(translator);
 		}
 		CheckCompatibility(map);
 
@@ -3559,17 +3577,23 @@ void P_SetupLevel (char *lumpname, int position)
 		}
 		else if (!map->isText)	// regular nodes are not supported for text maps
 		{
-			times[7].Clock();
-			P_LoadSubsectors (map);
-			times[7].Unclock();
+			// If all 3 node related lumps are empty there's no need to output a message.
+			// This just means that the map has no nodes and the engine is supposed to build them.
+			if (map->Size(ML_SEGS) != 0 || map->Size(ML_SSECTORS) != 0 || map->Size(ML_NODES) != 0)
+			{
+				times[7].Clock();
+				P_LoadSubsectors (map);
+				times[7].Unclock();
 
-			times[8].Clock();
-			if (!ForceNodeBuild) P_LoadNodes (map);
-			times[8].Unclock();
+				times[8].Clock();
+				if (!ForceNodeBuild) P_LoadNodes (map);
+				times[8].Unclock();
 
-			times[9].Clock();
-			if (!ForceNodeBuild) P_LoadSegs (map);
-			times[9].Unclock();
+				times[9].Clock();
+				if (!ForceNodeBuild) P_LoadSegs (map);
+				times[9].Unclock();
+			}
+			else ForceNodeBuild = true;
 		}
 		else ForceNodeBuild = true;
 	}
@@ -3577,7 +3601,7 @@ void P_SetupLevel (char *lumpname, int position)
 	{
 		unsigned int startTime, endTime;
 
-		startTime = I_MSTime ();
+		startTime = I_FPSTime ();
 		TArray<FNodeBuilder::FPolyStart> polyspots, anchors;
 		P_GetPolySpots (map, polyspots, anchors);
 		FNodeBuilder::FLevel leveldata =
@@ -3594,7 +3618,7 @@ void P_SetupLevel (char *lumpname, int position)
 			segs, numsegs,
 			subsectors, numsubsectors,
 			vertexes, numvertexes);
-		endTime = I_MSTime ();
+		endTime = I_FPSTime ();
 		DPrintf ("BSP generation took %.3f sec (%d segs)\n", (endTime - startTime) * 0.001, numsegs);
 	}
 
@@ -3623,11 +3647,15 @@ void P_SetupLevel (char *lumpname, int position)
 
 	deathmatchstarts.Clear ();
 
-	// Spawn 3d floors - must be done before spawning things so it can't be done in P_SpawnSpecials
-	P_Spawn3DFloors();
-
 	if (!buildmap)
 	{
+		// [RH] Spawn slope creating things first.
+		P_SpawnSlopeMakers (&MapThingsConverted[0], &MapThingsConverted[MapThingsConverted.Size()]);
+		P_CopySlopes();
+
+		// Spawn 3d floors - must be done before spawning things so it can't be done in P_SpawnSpecials
+		P_Spawn3DFloors();
+
 		times[14].Clock();
 		P_SpawnThings(position);
 

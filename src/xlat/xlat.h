@@ -80,10 +80,18 @@ struct FSectorMask
 	int shift;
 };
 
+struct FLineFlagTrans
+{
+	int newvalue;
+	bool ismask;
+};
+
+
 extern TAutoGrowArray<FLineTrans> SimpleLineTranslations;
 extern FBoomTranslator Boomish[MAX_BOOMISH];
 extern int NumBoomish;
 extern TAutoGrowArray<FSectorTrans> SectorTranslations;
 extern TArray<FSectorMask> SectorMasks;
+extern FLineFlagTrans LineFlagTranslations[16];
 
 #endif

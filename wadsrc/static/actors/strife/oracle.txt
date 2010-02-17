@@ -1,7 +1,7 @@
 
 // Oracle -------------------------------------------------------------------
 
-ACTOR Oracle 199 native
+ACTOR Oracle 199
 {
 	Game Strife
 	ConversationID 65, 62, 63
@@ -10,7 +10,9 @@ ACTOR Oracle 199 native
 	Height 56
 	Monster
 	+NOTDMATCH
+	+NOBLOOD
 	DamageFactor "Fire", 0.5
+	DamageFactor "SpectralLow", 0
 	MaxDropoffHeight 32
 	Tag "Oracle"
 	DropItem "Meat"

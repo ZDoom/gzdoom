@@ -105,6 +105,7 @@ static FCompatOption Options[] =
 	{ "mbfmonstermove",			COMPATF_MBFMONSTERMOVE, 0 },
 	{ "corpsegibs",				COMPATF_CORPSEGIBS, 0 },
 	{ "noblockfriends",			COMPATF_NOBLOCKFRIENDS, 0 },
+	{ "spritesort",				COMPATF_SPRITESORT, 0 },
 	{ NULL, 0, 0 }
 };
 
@@ -196,7 +197,7 @@ void CheckCompatibility(MapData *map)
 	FCompatValues *flags;
 
 	// When playing Doom IWAD levels force COMPAT_SHORTTEX.
-	if (Wads.GetLumpFile(map->lumpnum) == 1 && gameinfo.gametype == GAME_Doom && !(level.flags & LEVEL_HEXENFORMAT))
+	if (Wads.GetLumpFile(map->lumpnum) == 1 && (gameinfo.flags & GI_COMPATSHORTTEX) && !(level.flags & LEVEL_HEXENFORMAT))
 	{
 		ii_compatflags = COMPATF_SHORTTEX;
 		ib_compatflags = 0;

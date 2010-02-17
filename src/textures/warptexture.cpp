@@ -229,7 +229,7 @@ void FWarp2Texture::MakeTexture (DWORD time)
 
 FTexture *FWarpTexture::GetRedirect(bool wantwarped)
 {
-	if (!wantwarped) return SourcePic;
+	if (!wantwarped) return SourcePic->GetRedirect(false);
 	else return this;
 }
 
@@ -242,8 +242,8 @@ FTexture *FWarpTexture::GetRedirect(bool wantwarped)
 //
 //==========================================================================
 
-int FWarpTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int w, int h, int rotate, FCopyInfo *inf)
+int FWarpTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)
 {
-	return SourcePic->CopyTrueColorPixels(bmp, x, y, w, h, rotate, inf);
+	return SourcePic->CopyTrueColorPixels(bmp, x, y, rotate, inf);
 }
 

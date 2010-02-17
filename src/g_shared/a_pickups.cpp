@@ -1202,7 +1202,7 @@ bool AInventory::TryPickup (AActor *&toucher)
 		ItemFlags &= ~IF_PICKUPGOOD;
 		GoAwayAndDie ();
 	}
-	else if (MaxAmount == 0)
+	else if (MaxAmount == 0 && !IsKindOf(RUNTIME_CLASS(AAmmo)))
 	{
 		// Special case: If an item's MaxAmount is 0, you can still pick it
 		// up if it is autoactivate-able.
@@ -1581,7 +1581,7 @@ void ABackpackItem::Serialize (FArchive &arc)
 AInventory *ABackpackItem::CreateCopy (AActor *other)
 {
 	// Find every unique type of ammo. Give it to the player if
-	// he doesn't have it already, and double it's maximum capacity.
+	// he doesn't have it already, and double its maximum capacity.
 	for (unsigned int i = 0; i < PClass::m_Types.Size(); ++i)
 	{
 		const PClass *type = PClass::m_Types[i];
@@ -1600,7 +1600,14 @@ AInventory *ABackpackItem::CreateCopy (AActor *other)
 			{ // The player did not have the ammo. Add it.
 				ammo = static_cast<AAmmo *>(Spawn (type, 0, 0, 0, NO_REPLACE));
 				ammo->Amount = bDepleted ? 0 : amount;
-				if (ammo->BackpackMaxAmount > ammo->MaxAmount) ammo->MaxAmount = ammo->BackpackMaxAmount;
+				if (ammo->BackpackMaxAmount > ammo->MaxAmount)
+				{
+					ammo->MaxAmount = ammo->BackpackMaxAmount;
+				}
+				if (ammo->Amount > ammo->MaxAmount)
+				{
+					ammo->Amount = ammo->MaxAmount;
+				}
 				ammo->AttachToOwner (other);
 			}
 			else
@@ -1643,7 +1650,7 @@ bool ABackpackItem::HandlePickup (AInventory *item)
 		{
 			if (probe->GetClass()->ParentClass == RUNTIME_CLASS(AAmmo))
 			{
-				if (probe->Amount < probe->MaxAmount)
+				if (probe->Amount < probe->MaxAmount || sv_unlimited_pickup)
 				{
 					int amount = static_cast<AAmmo*>(probe->GetDefault())->BackpackAmount;
 					// extra ammo in baby mode and nightmare mode
@@ -1652,7 +1659,7 @@ bool ABackpackItem::HandlePickup (AInventory *item)
 						amount = FixedMul(amount, G_SkillProperty(SKILLP_AmmoFactor));
 					}
 					probe->Amount += amount;
-					if (probe->Amount > probe->MaxAmount)
+					if (probe->Amount > probe->MaxAmount && !sv_unlimited_pickup)
 					{
 						probe->Amount = probe->MaxAmount;
 					}

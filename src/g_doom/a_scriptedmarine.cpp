@@ -97,14 +97,6 @@ void AScriptedMarine::BeginPlay ()
 			}
 		}
 	}
-
-	// Copy the standard player's scaling
-	AActor * playerdef = GetDefaultByName("DoomPlayer");
-	if (playerdef != NULL)
-	{
-		scaleX = playerdef->scaleX;
-		scaleY = playerdef->scaleY;
-	}
 }
 
 void AScriptedMarine::Tick ()
@@ -112,7 +104,7 @@ void AScriptedMarine::Tick ()
 	Super::Tick ();
 
 	// Override the standard sprite, if desired
-	if (SpriteOverride != 0 && sprite == GetClass()->ActorInfo->OwnedStates[0].sprite)
+	if (SpriteOverride != 0 && sprite == SpawnState->sprite)
 	{
 		sprite = SpriteOverride;
 	}
@@ -474,7 +466,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_M_FireShotgun2)
 
 		P_LineAttack (self, angle, MISSILERANGE,
 					  pitch + (pr_m_fireshotgun2.Random2() * 332063), damage,
-					  NAME_None, PClass::FindClass(NAME_BulletPuff));
+					  NAME_None, NAME_BulletPuff);
 	}
 	self->special1 = level.maptime;
 	return 0;
@@ -648,14 +640,12 @@ void AScriptedMarine::SetSprite (const PClass *source)
 	if (source == NULL || source->ActorInfo == NULL)
 	{ // A valid actor class wasn't passed, so use the standard sprite
 		SpriteOverride = sprite = GetClass()->ActorInfo->OwnedStates[0].sprite;
-		// Copy the standard player's scaling
-		AActor * playerdef = GetDefaultByName("DoomPlayer");
-		if (playerdef == NULL) playerdef = GetDefaultByType(RUNTIME_CLASS(AScriptedMarine));
-		scaleX = playerdef->scaleX;
-		scaleY = playerdef->scaleY;
+		// Copy the standard scaling
+		scaleX = GetDefault()->scaleX;
+		scaleY = GetDefault()->scaleY;
 	}
 	else
-	{ // Use the same sprite the passed class spawns with
+	{ // Use the same sprite and scaling the passed class spawns with
 		SpriteOverride = sprite = GetDefaultByType (source)->SpawnState->sprite;
 		scaleX = GetDefaultByType(source)->scaleX;
 		scaleY = GetDefaultByType(source)->scaleY;

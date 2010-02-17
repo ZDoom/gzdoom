@@ -298,6 +298,13 @@ FTextureID DBaseDecal::StickToWall (side_t *wall, fixed_t x, fixed_t y, F3DFloor
 	else return FNullTextureID();
 	CalcFracPos (wall, x, y);
 
+	FTexture *texture = TexMan[tex];
+
+	if (texture == NULL || texture->bNoDecals)
+	{
+		return FNullTextureID();
+	}
+
 	return tex;
 }
 
@@ -412,7 +419,7 @@ static fixed_t Length (fixed_t dx, fixed_t dy)
 
 static side_t *NextWall (const side_t *wall)
 {
-	line_t *line = wall->linedef;;
+	line_t *line = wall->linedef;
 
 	if (line->sidedef[0] == wall)
 	{
@@ -546,11 +553,18 @@ DBaseDecal *DBaseDecal::CloneSelf (const FDecalTemplate *tpl, fixed_t ix, fixed_
 	DBaseDecal *decal = new DBaseDecal(iz);
 	if (decal != NULL)
 	{
-		decal->StickToWall (wall, ix, iy, ffloor);
-		tpl->ApplyToDecal (decal, wall);
-		decal->AlphaColor = AlphaColor;
-		decal->RenderFlags = (decal->RenderFlags & RF_DECALMASK) |
-							 (this->RenderFlags & ~RF_DECALMASK);
+		if (decal->StickToWall (wall, ix, iy, ffloor).isValid())
+		{
+			tpl->ApplyToDecal (decal, wall);
+			decal->AlphaColor = AlphaColor;
+			decal->RenderFlags = (decal->RenderFlags & RF_DECALMASK) |
+								 (this->RenderFlags & ~RF_DECALMASK);
+		}
+		else
+		{
+			decal->Destroy();
+			return NULL;
+		}
 	}
 	return decal;
 }
@@ -641,26 +655,23 @@ DImpactDecal *DImpactDecal::StaticCreate (const FDecalTemplate *tpl, fixed_t x, 
 	{
 		if (tpl->LowerDecal)
 		{
-			int lowercolor = color;
+			int lowercolor;
 			const FDecalTemplate * tpl_low = tpl->LowerDecal->GetDecal();
 
 			// If the default color of the lower decal is the same as the main decal's
 			// apply the custom color as well.
-			if (tpl->ShadeColor == tpl_low->ShadeColor) lowercolor=0;
+			if (tpl->ShadeColor != tpl_low->ShadeColor) lowercolor=0;
+			else lowercolor = color;
 			StaticCreate (tpl_low, x, y, z, wall, ffloor, lowercolor);
 		}
 		DImpactDecal::CheckMax();
 		decal = new DImpactDecal (z);
-
-		FTextureID stickypic = decal->StickToWall (wall, x, y, ffloor);
-		FTexture *tex = TexMan[stickypic];
-
-		if (tex != NULL && tex->bNoDecals)
+		if (decal == NULL)
 		{
 			return NULL;
 		}
 
-		if (decal == NULL)
+		if (!decal->StickToWall (wall, x, y, ffloor).isValid())
 		{
 			return NULL;
 		}
@@ -684,15 +695,27 @@ DImpactDecal *DImpactDecal::StaticCreate (const FDecalTemplate *tpl, fixed_t x, 
 
 DBaseDecal *DImpactDecal::CloneSelf (const FDecalTemplate *tpl, fixed_t ix, fixed_t iy, fixed_t iz, side_t *wall, F3DFloor * ffloor) const
 {
+	if (wall->Flags & WALLF_NOAUTODECALS)
+	{
+		return NULL;
+	}
+
 	DImpactDecal::CheckMax();
 	DImpactDecal *decal = new DImpactDecal(iz);
 	if (decal != NULL)
 	{
-		decal->StickToWall (wall, ix, iy, ffloor);
-		tpl->ApplyToDecal (decal, wall);
-		decal->AlphaColor = AlphaColor;
-		decal->RenderFlags = (decal->RenderFlags & RF_DECALMASK) |
-							 (this->RenderFlags & ~RF_DECALMASK);
+		if (decal->StickToWall (wall, ix, iy, ffloor).isValid())
+		{
+			tpl->ApplyToDecal (decal, wall);
+			decal->AlphaColor = AlphaColor;
+			decal->RenderFlags = (decal->RenderFlags & RF_DECALMASK) |
+								 (this->RenderFlags & ~RF_DECALMASK);
+		}
+		else
+		{
+			decal->Destroy();
+			return NULL;
+		}
 	}
 	return decal;
 }

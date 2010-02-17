@@ -469,7 +469,7 @@ void InitPalette ()
 	// build default special maps (e.g. invulnerability)
 	SpecialColormaps.Clear();
 
-	for (int i = 0; i < countof(SpecialColormapParms); ++i)
+	for (unsigned i = 0; i < countof(SpecialColormapParms); ++i)
 	{
 		AddSpecialColormap(SpecialColormapParms[i].Start[0], SpecialColormapParms[i].Start[1],
 			SpecialColormapParms[i].Start[2], SpecialColormapParms[i].End[0],

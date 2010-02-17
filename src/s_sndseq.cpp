@@ -849,7 +849,7 @@ DSeqNode *SN_StartSequence (sector_t *sector, int chan, int sequence, seqtype_t 
 {
 	if (!nostop)
 	{
-		SN_StopSequence (sector);
+		SN_StopSequence (sector, chan);
 	}
 	if (TwiddleSeqNum (sequence, type))
 	{
@@ -954,6 +954,33 @@ static int FindSequence (FName seqname)
 
 //==========================================================================
 //
+// SN_CheckSequence
+//
+// Returns the sound sequence playing in the sector on the given channel,
+// if any.
+//
+//==========================================================================
+
+DSeqNode *SN_CheckSequence(sector_t *sector, int chan)
+{
+	for (DSeqNode *node = DSeqNode::FirstSequence(); node; )
+	{
+		DSeqNode *next = node->NextSequence();
+		if (node->Source() == sector)
+		{
+			assert(node->IsKindOf(RUNTIME_CLASS(DSeqSectorNode)));
+			if ((static_cast<DSeqSectorNode *>(node)->Channel & 7) == chan)
+			{
+				return node;
+			}
+		}
+		node = next;
+	}
+	return NULL;
+}
+
+//==========================================================================
+//
 //  SN_StopSequence
 //
 //==========================================================================
@@ -963,9 +990,13 @@ void SN_StopSequence (AActor *actor)
 	SN_DoStop (actor);
 }
 
-void SN_StopSequence (sector_t *sector)
+void SN_StopSequence (sector_t *sector, int chan)
 {
-	SN_DoStop (sector);
+	DSeqNode *node = SN_CheckSequence(sector, chan);
+	if (node != NULL)
+	{
+		node->StopAndDestroy();
+	}
 }
 
 void SN_StopSequence (FPolyObj *poly)

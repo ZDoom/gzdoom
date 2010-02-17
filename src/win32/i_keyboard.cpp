@@ -121,7 +121,8 @@ FKeyboard::~FKeyboard()
 //
 // FKeyboard :: CheckAndSetKey
 //
-// Returns true if the key was already in the desired, false if it wasn't.
+// Returns true if the key was already in the desired state, false if it
+// wasn't.
 //
 //==========================================================================
 
@@ -437,7 +438,7 @@ bool FRawKeyboard::GetDevice()
 // Convert scan codes to DirectInput key codes. For the most part, this is
 // straight forward: Scan codes without any prefix are passed unmodified.
 // Scan codes with an 0xE0 prefix byte are generally passed by ORing them
-// with 0x80. And scan codes with an 0xE1 prefix are the annowing Pause key
+// with 0x80. And scan codes with an 0xE1 prefix are the annoying Pause key
 // which will generate another scan code that looks like Num Lock.
 //
 // This is a bit complicated only because the state of PC key codes is a bit

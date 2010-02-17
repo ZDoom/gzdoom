@@ -60,6 +60,7 @@ struct FState
 	long		Misc2;			// Was changed to BYTE, reverted to long for MBF compat
 	BYTE		Frame;
 	BYTE		DefineFlags;	// Unused byte so let's use it during state creation.
+	short		Light;
 	FState		*NextState;
 	VMFunction	*ActionFunc;
 
@@ -188,6 +189,7 @@ extern FDoomEdMap DoomEdMap;
 
 int GetSpriteIndex(const char * spritename);
 TArray<FName> &MakeStateNameList(const char * fname);
+void AddStateLight(FState *state, const char *lname);
 
 // Standard parameters for all action functons
 //   self         - Actor this action is to operate on (player if a weapon)

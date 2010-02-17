@@ -2006,29 +2006,29 @@ void PrepWall (fixed_t *swall, fixed_t *lwall, fixed_t walxrepeat)
 	x = WallSX1;
 
 	l = top / bot;
-	swall[x] = quickertoint (l * WallDepthScale + WallDepthOrg);
-	lwall[x] = quickertoint (l * xrepeat);
+	swall[x] = xs_RoundToInt(l * WallDepthScale + WallDepthOrg);
+	lwall[x] = xs_RoundToInt(l * xrepeat);
 	// As long as l is invalid, step one column at a time so that
 	// we can get as many correct texture columns as possible.
 	while (l > 1.0 && x+1 < WallSX2)
 	{
 		l = (top += WallUoverZstep) / (bot += WallInvZstep);
 		x++;
-		swall[x] = quickertoint (l * WallDepthScale + WallDepthOrg);
-		lwall[x] = quickertoint (l * xrepeat);
+		swall[x] = xs_RoundToInt(l * WallDepthScale + WallDepthOrg);
+		lwall[x] = xs_RoundToInt(l * xrepeat);
 	}
 	l *= xrepeat;
 	while (x+4 < WallSX2)
 	{
 		top += topinc; bot += botinc;
 		ol = l; l = top / bot;
-		swall[x+4] = quickertoint (l * WallDepthScale + WallDepthOrg);
-		lwall[x+4] = quickertoint (l *= xrepeat);
+		swall[x+4] = xs_RoundToInt(l * WallDepthScale + WallDepthOrg);
+		lwall[x+4] = xs_RoundToInt(l *= xrepeat);
 
 		i = (ol+l) * 0.5f;
-		lwall[x+2] = quickertoint (i);
-		lwall[x+1] = quickertoint ((ol+i) * 0.5f);
-		lwall[x+3] = quickertoint ((l+i) * 0.5f);
+		lwall[x+2] = xs_RoundToInt(i);
+		lwall[x+1] = xs_RoundToInt((ol+i) * 0.5f);
+		lwall[x+3] = xs_RoundToInt((l+i) * 0.5f);
 		swall[x+2] = ((swall[x]+swall[x+4])>>1);
 		swall[x+1] = ((swall[x]+swall[x+2])>>1);
 		swall[x+3] = ((swall[x+4]+swall[x+2])>>1);
@@ -2038,25 +2038,25 @@ void PrepWall (fixed_t *swall, fixed_t *lwall, fixed_t walxrepeat)
 	{
 		top += topinc * 0.5f; bot += botinc * 0.5f;
 		ol = l; l = top / bot;
-		swall[x+2] = quickertoint (l * WallDepthScale + WallDepthOrg);
-		lwall[x+2] = quickertoint (l *= xrepeat);
+		swall[x+2] = xs_RoundToInt(l * WallDepthScale + WallDepthOrg);
+		lwall[x+2] = xs_RoundToInt(l *= xrepeat);
 
-		lwall[x+1] = quickertoint ((l+ol)*0.5f);
+		lwall[x+1] = xs_RoundToInt((l+ol)*0.5f);
 		swall[x+1] = (swall[x]+swall[x+2])>>1;
 		x += 2;
 	}
 	if (x+1 < WallSX2)
 	{
 		l = (top + WallUoverZstep) / (bot + WallInvZstep);
-		swall[x+1] = quickertoint (l * WallDepthScale + WallDepthOrg);
-		lwall[x+1] = quickertoint (l * xrepeat);
+		swall[x+1] = xs_RoundToInt(l * WallDepthScale + WallDepthOrg);
+		lwall[x+1] = xs_RoundToInt(l * xrepeat);
 	}
 	/*
 	for (x = WallSX1; x < WallSX2; x++)
 	{
 		frac = top / bot;
-		lwall[x] = quickertoint (frac * xrepeat);
-		swall[x] = quickertoint (frac * WallDepthScale + WallDepthOrg);
+		lwall[x] = xs_RoundToInt(frac * xrepeat);
+		swall[x] = xs_RoundToInt(frac * WallDepthScale + WallDepthOrg);
 		top += WallUoverZstep;
 		bot += WallInvZstep;
 	}
@@ -2108,39 +2108,39 @@ void PrepLWall (fixed_t *lwall, fixed_t walxrepeat)
 	x = WallSX1;
 
 	l = top / bot;
-	lwall[x] = quickertoint (l * xrepeat);
+	lwall[x] = xs_RoundToInt(l * xrepeat);
 	// As long as l is invalid, step one column at a time so that
 	// we can get as many correct texture columns as possible.
 	while (l > 1.0 && x+1 < WallSX2)
 	{
 		l = (top += WallUoverZstep) / (bot += WallInvZstep);
-		lwall[++x] = quickertoint (l * xrepeat);
+		lwall[++x] = xs_RoundToInt(l * xrepeat);
 	}
 	l *= xrepeat;
 	while (x+4 < WallSX2)
 	{
 		top += topinc; bot += botinc;
 		ol = l; l = top / bot;
-		lwall[x+4] = quickertoint (l *= xrepeat);
+		lwall[x+4] = xs_RoundToInt(l *= xrepeat);
 
 		i = (ol+l) * 0.5f;
-		lwall[x+2] = quickertoint (i);
-		lwall[x+1] = quickertoint ((ol+i) * 0.5f);
-		lwall[x+3] = quickertoint ((l+i) * 0.5f);
+		lwall[x+2] = xs_RoundToInt(i);
+		lwall[x+1] = xs_RoundToInt((ol+i) * 0.5f);
+		lwall[x+3] = xs_RoundToInt((l+i) * 0.5f);
 		x += 4;
 	}
 	if (x+2 < WallSX2)
 	{
 		top += topinc * 0.5f; bot += botinc * 0.5f;
 		ol = l; l = top / bot;
-		lwall[x+2] = quickertoint (l *= xrepeat);
-		lwall[x+1] = quickertoint ((l+ol)*0.5f);
+		lwall[x+2] = xs_RoundToInt(l *= xrepeat);
+		lwall[x+1] = xs_RoundToInt((l+ol)*0.5f);
 		x += 2;
 	}
 	if (x+1 < WallSX2)
 	{
 		l = (top + WallUoverZstep) / (bot + WallInvZstep);
-		lwall[x+1] = quickertoint (l * xrepeat);
+		lwall[x+1] = xs_RoundToInt(l * xrepeat);
 	}
 
 	// fix for rounding errors
@@ -2187,6 +2187,9 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 	fixed_t zpos;
 	int needrepeat = 0;
 	sector_t *front, *back;
+	bool calclighting;
+	bool rereadcolormap;
+	FDynamicColormap *usecolormap;
 
 	if (decal->RenderFlags & RF_INVISIBLE || !viewactive || !decal->PicNum.isValid())
 		return;
@@ -2246,6 +2249,15 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 	// to a wall, we use the wall's angle instead of the decal's. This is
 	// pretty much the same as what R_AddLine() does.
 
+	fixed_t savetx1, savetx2, savety1, savety2, savesz1, savesz2;
+
+	savetx1 = WallTX1;
+	savetx2 = WallTX2;
+	savety1 = WallTY1;
+	savety2 = WallTY2;
+	savesz1 = WallSZ1;
+	savesz2 = WallSZ2;
+
 	x2 = WallSpriteTile->GetWidth();
 	x1 = WallSpriteTile->LeftOffset;
 	x2 = x2 - x1;
@@ -2277,43 +2289,43 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 
 	if (WallTX1 >= -WallTY1)
 	{
-		if (WallTX1 > WallTY1) return;	// left edge is off the right side
-		if (WallTY1 == 0) return;
+		if (WallTX1 > WallTY1) goto done;	// left edge is off the right side
+		if (WallTY1 == 0) goto done;
 		x1 = (centerxfrac + Scale (WallTX1, centerxfrac, WallTY1)) >> FRACBITS;
 		if (WallTX1 >= 0) x1 = MIN (viewwidth, x1+1); // fix for signed divide
 		WallSZ1 = WallTY1;
 	}
 	else
 	{
-		if (WallTX2 < -WallTY2) return;	// wall is off the left side
+		if (WallTX2 < -WallTY2) goto done;	// wall is off the left side
 		fixed_t den = WallTX1 - WallTX2 - WallTY2 + WallTY1;	
-		if (den == 0) return;
+		if (den == 0) goto done;
 		x1 = 0;
 		WallSZ1 = WallTY1 + Scale (WallTY2 - WallTY1, WallTX1 + WallTY1, den);
 	}
 
 	if (WallSZ1 < TOO_CLOSE_Z)
-		return;
+		goto done;
 
 	if (WallTX2 <= WallTY2)
 	{
-		if (WallTX2 < -WallTY2) return;	// right edge is off the left side
-		if (WallTY2 == 0) return;
+		if (WallTX2 < -WallTY2) goto done;	// right edge is off the left side
+		if (WallTY2 == 0) goto done;
 		x2 = (centerxfrac + Scale (WallTX2, centerxfrac, WallTY2)) >> FRACBITS;
 		if (WallTX2 >= 0) x2 = MIN (viewwidth, x2+1);	// fix for signed divide
 		WallSZ2 = WallTY2;
 	}
 	else
 	{
-		if (WallTX1 > WallTY1) return;	// wall is off the right side
+		if (WallTX1 > WallTY1) goto done;	// wall is off the right side
 		fixed_t den = WallTY2 - WallTY1 - WallTX2 + WallTX1;
-		if (den == 0) return;
+		if (den == 0) goto done;
 		x2 = viewwidth;
 		WallSZ2 = WallTY1 + Scale (WallTY2 - WallTY1, WallTX1 - WallTY1, den);
 	}
 
 	if (x1 >= x2 || x1 > clipper->x2 || x2 <= clipper->x1 || WallSZ2 < TOO_CLOSE_Z)
-		return;
+		goto done;
 
 	if (MirrorFlags & RF_XFLIP)
 	{
@@ -2340,7 +2352,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 		{
 			if (pass != 0)
 			{
-				return;
+				goto done;
 			}
 			mceilingclip = walltop;
 			mfloorclip = wallbottom;
@@ -2361,7 +2373,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 	case RF_CLIPUPPER:
 		if (pass != 0)
 		{
-			return;
+			goto done;
 		}
 		mceilingclip = walltop;
 		mfloorclip = ceilingclip;
@@ -2370,7 +2382,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 	case RF_CLIPMID:
 		if (curline->backsector != NULL && pass != 2)
 		{
-			return;
+			goto done;
 		}
 		mceilingclip = openings + clipper->sprtopclip - clipper->x1;
 		mfloorclip = openings + clipper->sprbottomclip - clipper->x1;
@@ -2379,7 +2391,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 	case RF_CLIPLOWER:
 		if (pass != 0)
 		{
-			return;
+			goto done;
 		}
 		mceilingclip = floorclip;
 		mfloorclip = wallbottom;
@@ -2400,7 +2412,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 	}
 	if (x1 >= x2)
 	{
-		return;
+		goto done;
 	}
 
 	swap (x1, WallSX1);
@@ -2421,15 +2433,24 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 	}
 
 	// Prepare lighting
-	bool calclighting = false;
+	calclighting = false;
+	usecolormap = basecolormap;
+	rereadcolormap = true;
+
+	// Decals that are added to the scene must fade to black.
+	if (decal->RenderStyle == LegacyRenderStyles[STYLE_Add] && usecolormap->Fade != 0)
+	{
+		usecolormap = GetSpecialLights(usecolormap->Color, 0, usecolormap->Desaturate);
+		rereadcolormap = false;
+	}
 
 	rw_light = rw_lightleft + (x1 - WallSX1) * rw_lightstep;
 	if (fixedlightlev >= 0)
-		dc_colormap = basecolormap->Maps + fixedlightlev;
+		dc_colormap = usecolormap->Maps + fixedlightlev;
 	else if (fixedcolormap != NULL)
 		dc_colormap = fixedcolormap;
 	else if (!foggy && (decal->RenderFlags & RF_FULLBRIGHT))
-		dc_colormap = basecolormap->Maps;
+		dc_colormap = usecolormap->Maps;
 	else
 		calclighting = true;
 
@@ -2455,6 +2476,12 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 
 		mode = R_SetPatchStyle (decal->RenderStyle, decal->Alpha, decal->Translation, decal->AlphaColor);
 
+		// R_SetPatchStyle can modify basecolormap.
+		if (rereadcolormap)
+		{
+			usecolormap = basecolormap;
+		}
+
 		if (mode == DontDraw)
 		{
 			needrepeat = 0;
@@ -2476,7 +2503,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 			{
 				if (calclighting)
 				{ // calculate lighting
-					dc_colormap = basecolormap->Maps + (GETPALOOKUP (rw_light, wallshade) << COLORMAPSHIFT);
+					dc_colormap = usecolormap->Maps + (GETPALOOKUP (rw_light, wallshade) << COLORMAPSHIFT);
 				}
 
 				WallSpriteColumn (R_DrawMaskedColumn);
@@ -2487,7 +2514,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 			{
 				if (calclighting)
 				{ // calculate lighting
-					dc_colormap = basecolormap->Maps + (GETPALOOKUP (rw_light, wallshade) << COLORMAPSHIFT);
+					dc_colormap = usecolormap->Maps + (GETPALOOKUP (rw_light, wallshade) << COLORMAPSHIFT);
 				}
 				rt_initcols();
 				for (int zz = 4; zz; --zz)
@@ -2502,7 +2529,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 			{
 				if (calclighting)
 				{ // calculate lighting
-					dc_colormap = basecolormap->Maps + (GETPALOOKUP (rw_light, wallshade) << COLORMAPSHIFT);
+					dc_colormap = usecolormap->Maps + (GETPALOOKUP (rw_light, wallshade) << COLORMAPSHIFT);
 				}
 
 				WallSpriteColumn (R_DrawMaskedColumn);
@@ -2523,6 +2550,13 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 	hcolfunc_post4 = rt_map4cols;
 
 	R_FinishSetPatchStyle ();
+done:
+	WallTX1 = savetx1;
+	WallTX2 = savetx2;
+	WallTY1 = savety1;
+	WallTY2 = savety2;
+	WallSZ1 = savesz1;
+	WallSZ2 = savesz2;
 }
 
 static void WallSpriteColumn (void (*drawfunc)(const BYTE *column, const FTexture::Span *spans))

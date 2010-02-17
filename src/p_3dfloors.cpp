@@ -130,6 +130,7 @@ static void P_Add3DFloor(sector_t* sec, sector_t* sec2, line_t* master, int flag
 	if (ffloor->top.plane->a || ffloor->top.plane->b || ffloor->bottom.plane->a || ffloor->bottom.plane->b)
 	{
 		ffloor->alpha = FRACUNIT;
+		ffloor->flags &= ~FF_ADDITIVETRANS;
 	}
 
 	sec->e->XFloor.ffloors.Push(ffloor);

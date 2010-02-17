@@ -156,13 +156,23 @@ void STACK_ARGS DCanvas::DrawText (FFont *font, int normalcolor, int x, int y, c
 			ptrval = va_arg (tags, void*);
 			break;
 
+		case DTA_CleanNoMove_1:
+			boolval = va_arg (tags, INTBOOL);
+			if (boolval)
+			{
+				scalex = CleanXfac_1;
+				scaley = CleanYfac_1;
+				maxwidth = Width - (Width % scalex);
+			}
+			break;
+
 		case DTA_CleanNoMove:
 			boolval = va_arg (tags, INTBOOL);
 			if (boolval)
 			{
 				scalex = CleanXfac;
 				scaley = CleanYfac;
-				maxwidth = Width - (Width % CleanYfac);
+				maxwidth = Width - (Width % scalex);
 			}
 			break;
 

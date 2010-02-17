@@ -838,7 +838,7 @@ void DFrameBuffer::DrawRateStuff ()
 	// Draws frame time and cumulative fps
 	if (vid_fps)
 	{
-		DWORD ms = I_MSTime ();
+		DWORD ms = I_FPSTime();
 		DWORD howlong = ms - LastMS;
 		if (howlong >= 0)
 		{
@@ -876,7 +876,7 @@ void DFrameBuffer::DrawRateStuff ()
 		// Buffer can be NULL if we're doing hardware accelerated 2D
 		if (buffer != NULL)
 		{
-			buffer += (GetHeight()-1)*GetPitch();
+			buffer += (GetHeight()-1) * GetPitch();
 			
 			for (i = 0; i < tics*2; i += 2)		buffer[i] = 0xff;
 			for ( ; i < 20*2; i += 2)			buffer[i] = 0x00;
@@ -1269,7 +1269,48 @@ void DFrameBuffer::DrawRemainingPlayerSprites()
 	R_DrawRemainingPlayerSprites();
 }
 
+//===========================================================================
+//
+// notify the renderer that an actor has changed state
+//
+//===========================================================================
 
+void DFrameBuffer::StateChanged(AActor *actor)
+{
+}
+
+//===========================================================================
+//
+// notify the renderer that serialization of the curent level is about to start/end
+//
+//===========================================================================
+
+void DFrameBuffer::StartSerialize(FArchive &arc)
+{
+}
+
+void DFrameBuffer::EndSerialize(FArchive &arc)
+{
+}
+
+//===========================================================================
+//
+// Get max. view angle (renderer specific information so it goes here now)
+//
+//===========================================================================
+#define MAX_DN_ANGLE	56		// Max looking down angle
+#define MAX_UP_ANGLE	32		// Max looking up angle
+
+int DFrameBuffer::GetMaxViewPitch(bool down)
+{
+	return down? MAX_DN_ANGLE*ANGLE_1 : -MAX_UP_ANGLE*ANGLE_1;
+}
+
+//===========================================================================
+//
+// 
+//
+//===========================================================================
 
 FNativePalette::~FNativePalette()
 {
@@ -1295,6 +1336,10 @@ CCMD(clean)
 bool V_DoModeSetup (int width, int height, int bits)
 {
 	DFrameBuffer *buff = I_SetMode (width, height, screen);
+	int ratio;
+	int cwidth;
+	int cheight;
+	int cx1, cy1, cx2, cy2;
 
 	if (buff == NULL)
 	{
@@ -1309,39 +1354,32 @@ bool V_DoModeSetup (int width, int height, int bits)
 	// if D3DFB is being used for the display.
 	FFont::StaticPreloadFonts();
 
+	ratio = CheckRatio (width, height);
+	if (ratio & 4)
 	{
-		int ratio;
-		int cwidth;
-		int cheight;
-		int cx1, cy1, cx2, cy2;
-
-		ratio = CheckRatio (width, height);
-		if (ratio & 4)
-		{
-			cwidth = width;
-			cheight = height * BaseRatioSizes[ratio][3] / 48;
-		}
-		else
-		{
-			cwidth = width * BaseRatioSizes[ratio][3] / 48;
-			cheight = height;
-		}
-		// Use whichever pair of cwidth/cheight or width/height that produces less difference
-		// between CleanXfac and CleanYfac.
-		cx1 = MAX(cwidth / 320, 1);
-		cy1 = MAX(cheight / 200, 1);
-		cx2 = MAX(width / 320, 1);
-		cy2 = MAX(height / 200, 1);
-		if (abs(cx1 - cy1) <= abs(cx2 - cy2))
-		{ // e.g. 640x360 looks better with this.
-			CleanXfac = cx1;
-			CleanYfac = cy1;
-		}
-		else
-		{ // e.g. 720x480 looks better with this.
-			CleanXfac = cx2;
-			CleanYfac = cy2;
-		}
+		cwidth = width;
+		cheight = height * BaseRatioSizes[ratio][3] / 48;
+	}
+	else
+	{
+		cwidth = width * BaseRatioSizes[ratio][3] / 48;
+		cheight = height;
+	}
+	// Use whichever pair of cwidth/cheight or width/height that produces less difference
+	// between CleanXfac and CleanYfac.
+	cx1 = MAX(cwidth / 320, 1);
+	cy1 = MAX(cheight / 200, 1);
+	cx2 = MAX(width / 320, 1);
+	cy2 = MAX(height / 200, 1);
+	if (abs(cx1 - cy1) <= abs(cx2 - cy2))
+	{ // e.g. 640x360 looks better with this.
+		CleanXfac = cx1;
+		CleanYfac = cy1;
+	}
+	else
+	{ // e.g. 720x480 looks better with this.
+		CleanXfac = cx2;
+		CleanYfac = cy2;
 	}
 
 	if (CleanXfac > 1 && CleanYfac > 1 && CleanXfac != CleanYfac)
@@ -1356,6 +1394,31 @@ bool V_DoModeSetup (int width, int height, int bits)
 	CleanHeight = height / CleanYfac;
 	assert(CleanWidth >= 320);
 	assert(CleanHeight >= 200);
+
+	if (width < 800 || width >= 960)
+	{
+		if (cx1 < cx2)
+		{
+			// Special case in which we don't need to scale down.
+			CleanXfac_1 = 
+			CleanYfac_1 = cx1;
+		}
+		else
+		{
+			CleanXfac_1 = MAX(CleanXfac - 1, 1);
+			CleanYfac_1 = MAX(CleanYfac - 1, 1);
+		}
+		CleanWidth_1 = width / CleanXfac_1;
+		CleanHeight_1 = height / CleanYfac_1;
+	}
+	else // if the width is between 800 and 960 the ratio between the screensize and CleanXFac-1 becomes too large.
+	{
+		CleanXfac_1 = CleanXfac;
+		CleanYfac_1 = CleanYfac;
+		CleanWidth_1 = CleanWidth;
+		CleanHeight_1 = CleanHeight;
+	}
+
 
 	DisplayWidth = width;
 	DisplayHeight = height;

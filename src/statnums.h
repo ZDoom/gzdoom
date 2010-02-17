@@ -1,3 +1,5 @@
+#ifndef __STATNUMS_H
+#define __STATNUMS_H
 /*
 ** statnums.h
 **
@@ -56,4 +58,11 @@ enum
 	STAT_LIGHTTRANSFER,						// A sector light transfer. These must be ticked after the light effects!!!
 	STAT_EARTHQUAKE,						// Earthquake actors
 	STAT_MAPMARKER,							// Map marker actors
+
+	STAT_DEFAULT = 100,
+	STAT_SECTOREFFECT,						// All sector effects that cause floor and ceiling movement
+	STAT_ACTORMOVER,						// actor movers
+	STAT_SCRIPTS,							// The ACS thinker. This is to ensure that it can't tick before all actors calles PostBeginPlay
 };
+
+#endif

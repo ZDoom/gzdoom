@@ -89,14 +89,22 @@ public:
 class ASkyViewpoint : public AActor
 {
 	DECLARE_CLASS (ASkyViewpoint, AActor)
+	HAS_OBJECT_POINTERS
 public:
 	void Serialize (FArchive &arc);
 	void BeginPlay ();
 	void Destroy ();
 	bool bInSkybox;
 	bool bAlways;
-	ASkyViewpoint *Mate;
+	TObjPtr<ASkyViewpoint> Mate;
 	fixed_t PlaneAlpha;
+};
+
+class AStackPoint : public ASkyViewpoint
+{
+	DECLARE_CLASS (AStackPoint, ASkyViewpoint)
+public:
+	void BeginPlay ();
 };
 
 class DFlashFader : public DThinker
@@ -128,7 +136,7 @@ class DEarthquake : public DThinker
 	DECLARE_CLASS (DEarthquake, DThinker)
 	HAS_OBJECT_POINTERS
 public:
-	DEarthquake (AActor *center, int intensity, int duration, int damrad, int tremrad);
+	DEarthquake (AActor *center, int intensity, int duration, int damrad, int tremrad, FSoundID quakesfx);
 
 	void Serialize (FArchive &arc);
 	void Tick ();

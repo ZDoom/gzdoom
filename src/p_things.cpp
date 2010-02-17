@@ -142,9 +142,9 @@ bool P_MoveThing(AActor *source, fixed_t x, fixed_t y, fixed_t z, bool fog)
 			Spawn<ATeleportFog> (x, y, z + TELEFOGHEIGHT, ALLOW_REPLACE);
 			Spawn<ATeleportFog> (oldx, oldy, oldz + TELEFOGHEIGHT, ALLOW_REPLACE);
 		}
-		source->PrevX=x;
-		source->PrevY=y;
-		source->PrevZ=z;
+		source->PrevX = x;
+		source->PrevY = y;
+		source->PrevZ = z;
 		return true;
 	}
 	else
@@ -466,6 +466,8 @@ bool P_Thing_Raise(AActor *thing)
 	thing->flags2 = info->flags2;
 	thing->flags3 = info->flags3;
 	thing->flags4 = info->flags4;
+	thing->flags5 = info->flags5;
+	thing->flags6 = info->flags6;
 	thing->health = info->health;
 	thing->target = NULL;
 	thing->lastenemy = NULL;

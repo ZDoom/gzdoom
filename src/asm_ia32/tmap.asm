@@ -623,10 +623,6 @@ rdcp1:	sub	edi,SPACEFILLER4
 	cmp	BYTE [CPU+66],byte 5
 	jg	rdcploop2
 
-; need 12 bytes of filler to make it aligned
-	db	0x8D,0x80,0,0,0,0	; lea eax,[eax+00000000]
-	db	0x8D,0xBF,0,0,0,0	; lea edi,[edi+00000000]
-
 	align 16
 
 ; The registers should now look like this:

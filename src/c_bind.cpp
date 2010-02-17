@@ -159,8 +159,8 @@ static const FBinding DefHexenBindings[] =
 	{ "9", "use ArtiBlastRadius" },
 	{ "8", "use ArtiTeleport" },
 	{ "7", "use ArtiTeleportOther" },
-	{ "6", "use ArtiEgg" },
-	{ "5", "use ArtiInvulnerability" },
+	{ "6", "use ArtiPork" },
+	{ "5", "use ArtiInvulnerability2" },
 	{ "scroll", "+showscores" },
 	{ NULL }
 };

@@ -507,6 +507,8 @@ bool P_Move (AActor *actor)
 	}
 	FCheckPosition tm;
 
+	tm.FromPMove = true;
+
 	try_ok = true;
 	for(int i=1; i < steps; i++)
 	{
@@ -518,7 +520,7 @@ bool P_Move (AActor *actor)
 	if (try_ok) try_ok = P_TryMove (actor, tryx, tryy, dropoff, false, tm);
 
 	// [GrafZahl] Interpolating monster movement as it is done here just looks bad
-	// so make it switchable!
+	// so make it switchable
 	if (nomonsterinterpolation)
 	{
 		actor->PrevX = actor->x;
@@ -583,15 +585,19 @@ bool P_Move (AActor *actor)
 		line_t *ld;
 		int good = 0;
 		
-		while (spechit.Pop (ld))
+		if (!(actor->flags6 & MF6_NOTRIGGER))
 		{
-			// [RH] let monsters push lines, as well as use them
-			if (((actor->flags4 & MF4_CANUSEWALLS) && P_ActivateLine (ld, actor, 0, SPAC_Use)) ||
-				((actor->flags2 & MF2_PUSHWALL) && P_ActivateLine (ld, actor, 0, SPAC_Push)))
+			while (spechit.Pop (ld))
 			{
-				good |= ld == actor->BlockingLine ? 1 : 2;
+				// [RH] let monsters push lines, as well as use them
+				if (((actor->flags4 & MF4_CANUSEWALLS) && P_ActivateLine (ld, actor, 0, SPAC_Use)) ||
+					((actor->flags2 & MF2_PUSHWALL) && P_ActivateLine (ld, actor, 0, SPAC_Push)))
+				{
+					good |= ld == actor->BlockingLine ? 1 : 2;
+				}
 			}
 		}
+		else spechit.Clear();
 		return good && ((pr_opendoor() >= 203) ^ (good & 1));
 	}
 	else
@@ -2551,6 +2557,10 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 			S_Sound (corpsehit, CHAN_BODY, "vile/raise", 1, ATTN_IDLE);
 			info = corpsehit->GetDefault ();
 			
+			if (corpsehit->state == corpsehit->FindState(NAME_GenericCrush))
+			{			
+				corpsehit->Translation = info->Translation; // Clean up bloodcolor translation from crushed corpses
+			}
 			if (ib_compatflags & BCOMPATF_VILEGHOSTS)
 			{
 				corpsehit->height <<= 2;
@@ -2569,7 +2579,6 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 						corpsehit->RenderStyle = STYLE_Translucent;
 					}
 				}
-				corpsehit->Translation = info->Translation; // Clean up bloodcolor translation from crushed corpses
 			}
 			else
 			{
@@ -2580,6 +2589,8 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 			corpsehit->flags2 = info->flags2;
 			corpsehit->flags3 = info->flags3;
 			corpsehit->flags4 = info->flags4;
+			corpsehit->flags5 = info->flags5;
+			corpsehit->flags6 = info->flags6;
 			corpsehit->health = info->health;
 			corpsehit->target = NULL;
 			corpsehit->lastenemy = NULL;
@@ -2719,6 +2730,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_MonsterRail)
 	if (!self->target)
 		return 0;
 
+	fixed_t saved_pitch = self->pitch;
+	AActor *linetarget;
+
 	// [RH] Andy Baker's stealth monsters
 	if (self->flags & MF_STEALTH)
 	{
@@ -2732,7 +2746,15 @@ DEFINE_ACTION_FUNCTION(AActor, A_MonsterRail)
 									self->target->x,
 									self->target->y);
 
-	self->pitch = P_AimLineAttack (self, self->angle, MISSILERANGE);
+	self->pitch = P_AimLineAttack (self, self->angle, MISSILERANGE, &linetarget, ANGLE_1*60, false, false, false, self->target);
+	if (linetarget == NULL)
+	{
+		// We probably won't hit the target, but aim at it anyway so we don't look stupid.
+		FVector2 xydiff(self->target->x - self->x, self->target->y - self->y);
+		double zdiff = (self->target->z + (self->target->height>>1)) -
+						(self->z + (self->height>>1) - self->floorclip);
+		self->pitch = int(atan2(zdiff, xydiff.Length()) * ANGLE_180 / -M_PI);
+	}
 
 	// Let the aim trail behind the player
 	self->angle = R_PointToAngle2 (self->x,
@@ -2746,6 +2768,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MonsterRail)
     }
 
 	P_RailAttack (self, self->GetMissileDamage (0, 1), 0);
+	self->pitch = saved_pitch;
 	return 0;
 }
 
@@ -3018,10 +3041,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Detonate)
 	PARAM_ACTION_PROLOGUE;
 	int damage = self->GetMissileDamage(0, 1);
 	P_RadiusAttack (self, self->target, damage, damage, self->DamageType, true);
-	if (self->z <= self->floorz + (damage << FRACBITS))
-	{
-		P_HitFloor (self);
-	}
+	P_CheckSplash(self, damage<<FRACBITS);
 	return 0;
 }
 

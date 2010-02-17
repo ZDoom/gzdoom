@@ -736,19 +736,19 @@ FTexture *FFont::GetChar (int code, int *const width) const
 				code > LastChar ||
 				Chars[code - FirstChar].Pic == NULL)
 			{
-				*width = SpaceWidth;
+				if (width != NULL) *width = SpaceWidth;
 				return NULL;
 			}
 		}
 		else
 		{
-			*width = SpaceWidth;
+			if (width != NULL) *width = SpaceWidth;
 			return NULL;
 		}
 	}
 
 	code -= FirstChar;
-	*width = Chars[code].Pic->GetScaledWidth();
+	if (width != NULL) *width = Chars[code].Pic->GetScaledWidth();
 	return Chars[code].Pic;
 }
 

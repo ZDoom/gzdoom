@@ -320,7 +320,7 @@ FTextureID FTextureManager::AddTexture (FTexture *texture)
 	int trans = Textures.Push (hasher);
 	Translation.Push (trans);
 	if (bucket >= 0) HashFirst[bucket] = trans;
-	return FTextureID(trans);
+	return (texture->id = FTextureID(trans));
 }
 
 //==========================================================================
@@ -365,9 +365,14 @@ void FTextureManager::ReplaceTexture (FTextureID picnum, FTexture *newtexture, b
 	newtexture->UseType = oldtexture->UseType;
 	Textures[index].Texture = newtexture;
 
+	newtexture->id = oldtexture->id;
 	if (free)
 	{
 		delete oldtexture;
+	}
+	else
+	{
+		oldtexture->id.SetInvalid();
 	}
 }
 

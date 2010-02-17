@@ -56,8 +56,9 @@ public:
 	bool droppedbymonster;
 };
 
-
-void DoDehPatch (const char *patchfile, bool autoloading, int lumpnum=-1);
+int D_LoadDehLumps();
+bool D_LoadDehLump(int lumpnum);
+bool D_LoadDehFile(const char *filename);
 void FinishDehPatch ();
 
 #endif //__D_DEHACK_H__

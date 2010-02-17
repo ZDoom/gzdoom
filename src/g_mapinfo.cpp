@@ -85,7 +85,9 @@ level_info_t *FindLevelInfo (const char *mapname)
 	int i;
 
 	if ((i = FindWadLevelInfo (mapname)) > -1)
+	{
 		return &wadlevelinfos[i];
+	}
 	else
 	{
 		if (TheDefaultLevelInfo.LevelName.IsEmpty())
@@ -1359,6 +1361,7 @@ MapFlagHandlers[] =
 	{ "compat_mbfmonstermove",			MITYPE_COMPATFLAG, COMPATF_MBFMONSTERMOVE},
 	{ "compat_corpsegibs",				MITYPE_COMPATFLAG, COMPATF_CORPSEGIBS},
 	{ "compat_noblockfriends",			MITYPE_COMPATFLAG, COMPATF_NOBLOCKFRIENDS},
+	{ "compat_spritesort",				MITYPE_COMPATFLAG, COMPATF_SPRITESORT},
 	{ "cd_start_track",					MITYPE_EATNEXT,	0, 0 },
 	{ "cd_end1_track",					MITYPE_EATNEXT,	0, 0 },
 	{ "cd_end2_track",					MITYPE_EATNEXT,	0, 0 },
@@ -1461,6 +1464,10 @@ void FMapInfoParser::ParseMapDefinition(level_info_t &info)
 			{
 				if (sc.Compare(((FMapOptInfo *)(*probe))->name))
 				{
+					if (!((FMapOptInfo *)(*probe))->old && format_type != FMT_New)
+					{
+						sc.ScriptError("MAPINFO option '%s' requires the new MAPINFO format", sc.String);
+					}
 					((FMapOptInfo *)(*probe))->handler(*this, &info);
 					success = true;
 					break;

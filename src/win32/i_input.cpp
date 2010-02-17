@@ -101,6 +101,7 @@
 #include "cmdlib.h"
 #include "d_event.h"
 #include "v_text.h"
+#include "version.h"
 
 // Prototypes and declarations.
 #include "rawinput.h"
@@ -158,6 +159,11 @@ BOOL AppActive = TRUE;
 int SessionState = 0;
 
 CVAR (Bool, k_allowfullscreentoggle, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+
+CUSTOM_CVAR(Bool, norawinput, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOINITCALL)
+{
+	Printf("This won't take effect until "GAMENAME" is restarted.\n");
+}
 
 extern int chatmodeon;
 
@@ -430,6 +436,11 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		if (wParam == VK_RETURN && k_allowfullscreentoggle && !(lParam & 0x40000000))
 		{
 			ToggleFullscreen = !ToggleFullscreen;
+		}
+		// Pressing Alt+F4 quits the program.
+		if (wParam == VK_F4 && !(lParam & 0x40000000))
+		{
+			PostQuitMessage(0);
 		}
 		break;
 
@@ -927,13 +938,16 @@ bool FInputDevice::WndProcHook(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
 
 static void FindRawInputFunctions()
 {
-	HMODULE user32 = GetModuleHandle("user32.dll");
-
-	if (user32 == NULL)
+	if (!norawinput)
 	{
-		return;		// WTF kind of broken system are we running on?
-	}
+		HMODULE user32 = GetModuleHandle("user32.dll");
+
+		if (user32 == NULL)
+		{
+			return;		// WTF kind of broken system are we running on?
+		}
 #define RIF(name,ret,args) \
-	My##name = (name##Proto)GetProcAddress(user32, #name);
+		My##name = (name##Proto)GetProcAddress(user32, #name);
 #include "rawinput.h"
+	}
 }

@@ -274,11 +274,11 @@ void P_ProcessSwitchDef (FScanner &sc)
 	{
 		if (def2 != NULL)
 		{
-			free (def2);
+			M_Free (def2);
 		}
 		if (def1 != NULL)
 		{
-			free (def1);
+			M_Free (def1);
 		}
 		return;
 	}
@@ -466,7 +466,8 @@ bool P_CheckSwitchRange(AActor *user, line_t *line, int sideno)
 {
 	// Activated from an empty side -> always succeed
 	side_t *side = line->sidedef[sideno];
-	if (side == NULL) return true;
+	if (side == NULL)
+		return true;
 
 	fixed_t checktop;
 	fixed_t checkbot;
@@ -474,7 +475,8 @@ bool P_CheckSwitchRange(AActor *user, line_t *line, int sideno)
 	FLineOpening open;
 
 	// 3DMIDTEX forces CHECKSWITCHRANGE because otherwise it might cause problems.
-	if (!(line->flags & (ML_3DMIDTEX|ML_CHECKSWITCHRANGE))) return true;
+	if (!(line->flags & (ML_3DMIDTEX|ML_CHECKSWITCHRANGE)))
+		return true;
 
 	// calculate the point where the user would touch the wall.
 	divline_t dll, dlu;
@@ -488,11 +490,25 @@ bool P_CheckSwitchRange(AActor *user, line_t *line, int sideno)
 	dlu.dy = finesine[user->angle >> ANGLETOFINESHIFT];
 	inter = P_InterceptVector(&dll, &dlu);
 
-	checkx = dll.x + FixedMul(dll.dx, inter);
-	checky = dll.y + FixedMul(dll.dy, inter);
 
-	// one sided line
-	if (line->sidedef[1] == NULL) 
+	// Polyobjects must test the containing sector, not the one they originate from.
+	if (line->sidedef[0]->Flags & WALLF_POLYOBJ)
+	{
+		// Get a check point slightly inside the polyobject so that this still works
+		// if the polyobject lies directly on a sector boundary
+		checkx = dll.x + FixedMul(dll.dx, inter + (FRACUNIT/100));
+		checky = dll.y + FixedMul(dll.dy, inter + (FRACUNIT/100));
+		front = P_PointInSector(checkx, checky);
+	}
+	else
+	{
+		checkx = dll.x + FixedMul(dll.dx, inter);
+		checky = dll.y + FixedMul(dll.dy, inter);
+	}
+
+
+	// one sided line or polyobject
+	if (line->sidedef[1] == NULL || (line->sidedef[0]->Flags & WALLF_POLYOBJ))
 	{
 	onesided:
 		fixed_t sectorc = front->ceilingplane.ZatPoint(checkx, checky);
@@ -502,7 +518,8 @@ bool P_CheckSwitchRange(AActor *user, line_t *line, int sideno)
 
 	// Now get the information from the line.
 	P_LineOpening(open, NULL, line, checkx, checky, user->x, user->y);
-	if (open.range <= 0) goto onesided;
+	if (open.range <= 0)
+		goto onesided;
 
 	if ((TryFindSwitch (side, side_t::top)) != -1)
 	{
@@ -516,8 +533,9 @@ bool P_CheckSwitchRange(AActor *user, line_t *line, int sideno)
 	{
 		// 3DMIDTEX lines will force a mid texture check if no switch is found on this line
 		// to keep compatibility with Eternity's implementation.
-		if (!P_GetMidTexturePosition(line, sideno, &checktop, &checkbot)) return false;
-		return user->z < checktop || user->z + user->height > checkbot;
+		if (!P_GetMidTexturePosition(line, sideno, &checktop, &checkbot))
+			return false;
+		return user->z < checktop && user->z + user->height > checkbot;
 	}
 	else
 	{

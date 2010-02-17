@@ -37,6 +37,7 @@
 #include "actor.h"
 #include "templates.h"
 #include "autosegs.h"
+#include "v_text.h"
 
 IMPLEMENT_POINTY_CLASS(PClass)
  DECLARE_POINTER(ParentClass)
@@ -134,7 +135,7 @@ void PClass::StaticFreeData (PClass *type)
 {
 	if (type->Defaults != NULL)
 	{
-		delete[] type->Defaults;
+		M_Free(type->Defaults);
 		type->Defaults = NULL;
 	}
 	type->FreeStateList ();
@@ -211,7 +212,7 @@ void PClass::InsertIntoHash ()
 		else if (lexx == 0)
 		{ // This type has already been inserted
 		  // ... but there is no need whatsoever to make it a fatal error!
-			Printf ("Tried to register class '%s' more than once.\n", TypeName.GetChars());
+			Printf (TEXTCOLOR_RED"Tried to register class '%s' more than once.\n", TypeName.GetChars());
 			break;
 		}
 		else
@@ -307,7 +308,7 @@ PClass *PClass::CreateDerivedClass (FName name, unsigned int size)
 	type->Meta = Meta;
 
 	// Set up default instance of the new class.
-	type->Defaults = new BYTE[size];
+	type->Defaults = (BYTE *)M_Malloc(size);
 	memcpy (type->Defaults, Defaults, Size);
 	if (size > Size)
 	{
@@ -339,6 +340,19 @@ PClass *PClass::CreateDerivedClass (FName name, unsigned int size)
 		m_RuntimeActors.Push (type);
 	}
 	return type;
+}
+
+// Add <extension> bytes to the end of this class. Returns the
+// previous size of the class.
+unsigned int PClass::Extend(unsigned int extension)
+{
+	assert(this->bRuntimeClass);
+
+	unsigned int oldsize = Size;
+	Size += extension;
+	Defaults = (BYTE *)M_Realloc(Defaults, Size);
+	memset(Defaults + oldsize, 0, extension);
+	return oldsize;
 }
 
 // Like FindClass but creates a placeholder if no class

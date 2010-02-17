@@ -31,7 +31,7 @@
 
 #include <stdlib.h>
 
-#define STEEPSLOPE		46341	// [RH] Minimum floorplane.c value for walking
+#define STEEPSLOPE		46342	// [RH] Minimum floorplane.c value for walking
 
 #define BONUSADD		6
 
@@ -52,6 +52,7 @@
 //#define GRAVITY 		FRACUNIT
 #define MAXMOVE 		(30*FRACUNIT)
 
+#define TALKRANGE		(128*FRACUNIT)
 #define USERANGE		(64*FRACUNIT)
 #define MELEERANGE		(64*FRACUNIT)
 #define MISSILERANGE	(32*64*FRACUNIT)
@@ -110,9 +111,9 @@ void	P_RipperBlood (AActor *mo, AActor *bleeder);
 int		P_GetThingFloorType (AActor *thing);
 void	P_ExplodeMissile (AActor *missile, line_t *explodeline, AActor *target);
 
-AActor *P_SpawnMissile (AActor* source, AActor* dest, const PClass *type);
+AActor *P_SpawnMissile (AActor* source, AActor* dest, const PClass *type, AActor* owner = NULL);
 AActor *P_SpawnMissileZ (AActor* source, fixed_t z, AActor* dest, const PClass *type);
-AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z, AActor *source, AActor *dest, const PClass *type, bool checkspawn = true);
+AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z, AActor *source, AActor *dest, const PClass *type, bool checkspawn = true, AActor *owner = NULL);
 AActor *P_SpawnMissileAngle (AActor *source, const PClass *type, angle_t angle, fixed_t velz);
 AActor *P_SpawnMissileAngleSpeed (AActor *source, const PClass *type, angle_t angle, fixed_t velz, fixed_t speed);
 AActor *P_SpawnMissileAngleZ (AActor *source, fixed_t z, const PClass *type, angle_t angle, fixed_t velz);
@@ -346,6 +347,7 @@ struct FCheckPosition
 	sector_t		*ceilingsector;
 	bool			touchmidtex;
 	bool			floatok;
+	bool			FromPMove;
 	line_t			*ceilingline;
 	AActor			*stepthing;
 	// [RH] These are used by PIT_CheckThing and P_XYMovement to apply
@@ -359,6 +361,7 @@ struct FCheckPosition
 		DoRipping = rip;
 		LastRipped = NULL;
 		PushTime = 0;
+		FromPMove = false;
 	}
 };
 
@@ -388,13 +391,14 @@ bool	P_BounceWall (AActor *mo);
 bool	P_BounceActor (AActor *mo, AActor * BlockingMobj);
 bool	P_CheckSight (const AActor* t1, const AActor* t2, int flags=0);
 void	P_ResetSightCounters (bool full);
+bool	P_TalkFacing (AActor *player);
 void	P_UseLines (player_t* player);
 bool	P_UsePuzzleItem (AActor *actor, int itemType);
 void	P_FindFloorCeiling (AActor *actor, bool onlymidtex = false);
 
 bool	P_ChangeSector (sector_t* sector, int crunch, int amt, int floorOrCeil, bool isreset);
 
-fixed_t P_AimLineAttack (AActor *t1, angle_t angle, fixed_t distance, AActor **pLineTarget = NULL, fixed_t vrange=0, bool forcenosmart=false, bool check3d = false, bool checknonshootable = false);
+fixed_t P_AimLineAttack (AActor *t1, angle_t angle, fixed_t distance, AActor **pLineTarget = NULL, fixed_t vrange=0, bool forcenosmart=false, bool check3d = false, bool checknonshootable = false, AActor *target=NULL);
 AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance, int pitch, int damage, FName damageType, const PClass *pufftype, bool ismelee = false);
 AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance, int pitch, int damage, FName damageType, FName pufftype, bool ismelee = false);
 void	P_TraceBleed (int damage, fixed_t x, fixed_t y, fixed_t z, AActor *target, angle_t angle, int pitch);
@@ -403,7 +407,8 @@ void	P_TraceBleed (int damage, AActor *target, AActor *missile);		// missile ver
 void	P_TraceBleed (int damage, AActor *target);		// random direction version
 void	P_RailAttack (AActor *source, int damage, int offset, int color1 = 0, int color2 = 0, float maxdiff = 0, bool silent = false, const PClass *puff = NULL, bool pierce = true);	// [RH] Shoot a railgun
 bool	P_HitFloor (AActor *thing);
-bool	P_HitWater (AActor *thing, sector_t *sec, fixed_t splashx = FIXED_MIN, fixed_t splashy = FIXED_MIN, fixed_t splashz=FIXED_MIN, bool checkabove = false);
+bool	P_HitWater (AActor *thing, sector_t *sec, fixed_t splashx = FIXED_MIN, fixed_t splashy = FIXED_MIN, fixed_t splashz=FIXED_MIN, bool checkabove = false, bool alert = true);
+void	P_CheckSplash(AActor *self, fixed_t distance);
 bool	P_CheckMissileSpawn (AActor *missile);
 void	P_PlaySpawnSound(AActor *missile, AActor *spawner);
 
@@ -465,6 +470,7 @@ enum EDmgFlags
 	DMG_INFLICTOR_IS_PUFF = 2,
 	DMG_THRUSTLESS = 4,
 	DMG_FORCED = 8,
+	DMG_NO_FACTOR = 16,
 };
 
 
@@ -516,6 +522,7 @@ bool PO_RotatePolyobj (int num, angle_t angle);
 void PO_Init ();
 bool PO_Busy (int polyobj);
 void PO_ClosestPoint(const FPolyObj *poly, fixed_t ox, fixed_t oy, fixed_t &x, fixed_t &y, seg_t **seg);
+struct FPolyObj *PO_GetPolyobj(int polyNum);
 
 //
 // P_SPEC

@@ -281,6 +281,7 @@ void FMapInfoParser::ParseGameInfo()
 		GAMEINFOKEY_INT(defaultrespawntime, "defaultrespawntime")
 		GAMEINFOKEY_INT(defaultdropstyle, "defaultdropstyle")
 		GAMEINFOKEY_CSTRING(Endoom, "endoom", 8)
+		GAMEINFOKEY_INT(player5start, "player5start")
 		else
 		{
 			// ignore unkown keys.

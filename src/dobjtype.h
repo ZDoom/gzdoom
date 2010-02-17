@@ -55,8 +55,9 @@ class PSymbolVariable : public PSymbol
 	DECLARE_CLASS(PSymbolVariable, PSymbol);
 public:
 	FExpressionType ValueType;
-	int size;
+	//int size;
 	intptr_t offset;
+	bool bUserVar;
 
 	PSymbolVariable(FName name) : PSymbol(name, SYM_Variable) {}
 	PSymbolVariable() : PSymbol(NAME_None, SYM_Variable) {}
@@ -142,6 +143,8 @@ struct PSymbolTable
 private:
 	PSymbolTable *ParentSymbolTable;
 	TArray<PSymbol *> Symbols;
+
+	friend class DObject;
 };
 
 // Meta-info for every class derived from DObject ---------------------------
@@ -177,6 +180,7 @@ public:
 	void InsertIntoHash ();
 	DObject *CreateNew () const;
 	PClass *CreateDerivedClass (FName name, unsigned int size);
+	unsigned int Extend(unsigned int extension);
 	void InitializeActorInfo ();
 	void BuildFlatPointers ();
 	void FreeStateList();

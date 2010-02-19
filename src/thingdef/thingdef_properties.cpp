@@ -1573,6 +1573,15 @@ DEFINE_CLASS_PROPERTY(slotpriority, F, Weapon)
 //==========================================================================
 //
 //==========================================================================
+DEFINE_CLASS_PROPERTY(preferredskin, S, Weapon)
+{
+	PROP_STRING_PARM(str, 0);
+	// NoOp - only for Skulltag compatibility
+}
+
+//==========================================================================
+//
+//==========================================================================
 DEFINE_CLASS_PROPERTY(number, I, WeaponPiece)
 {
 	PROP_INT_PARM(i, 0);

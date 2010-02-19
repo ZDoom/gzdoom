@@ -310,6 +310,7 @@ static FFlagDef WeaponFlags[] =
 	DEFINE_FLAG(WIF, NOAUTOAIM, AWeapon, WeaponFlags),
 	
 	DEFINE_DUMMY_FLAG(NOLMS),
+	DEFINE_DUMMY_FLAG(ALLOW_WITH_RESPAWN_INVUL),
 };
 
 static FFlagDef PlayerPawnFlags[] =
@@ -613,3 +614,4 @@ void InitThingdef()
 		qsort(&variables[0], variables.Size(), sizeof(variables[0]), varcmp);
 	}
 }
+

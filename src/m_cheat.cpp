@@ -46,6 +46,8 @@
 #include "d_dehacked.h"
 #include "gi.h"
 
+EXTERN_CVAR(Bool, r_forceplayertranslation)
+
 // [RH] Actually handle the cheat. The cheat code in st_stuff.c now just
 // writes some bytes to the network data stream, and the network code
 // later calls us.
@@ -319,7 +321,8 @@ void cht_DoCheat (player_t *player, int cheat)
 				player->mo->special1 = 0;	// required for the Hexen fighter's fist attack. 
 											// This gets set by AActor::Die as flag for the wimpy death and must be reset here.
 				player->mo->SetState (player->mo->SpawnState);
-				player->mo->Translation = TRANSLATION(TRANSLATION_Players, BYTE(player-players));
+				if (multiplayer || r_forceplayertranslation)
+					player->mo->Translation = TRANSLATION(TRANSLATION_Players, BYTE(player-players));
 				player->mo->DamageType = NAME_None;
 //				player->mo->GiveDefaultInventory();
 				if (player->ReadyWeapon != NULL)

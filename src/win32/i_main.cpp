@@ -471,10 +471,11 @@ LRESULT CALLBACK LConProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		// Setup default font for the log.
 		//SendMessage (view, WM_SETFONT, (WPARAM)GetStockObject (DEFAULT_GUI_FONT), FALSE);
 		format.cbSize = sizeof(format);
-		format.dwMask = CFM_BOLD | CFM_COLOR | CFM_FACE | CFM_SIZE;
+		format.dwMask = CFM_BOLD | CFM_COLOR | CFM_FACE | CFM_SIZE | CFM_CHARSET;
 		format.dwEffects = 0;
 		format.yHeight = 200;
 		format.crTextColor = RGB(223,223,223);
+		format.bCharSet = ANSI_CHARSET;
 		format.bPitchAndFamily = FF_SWISS | VARIABLE_PITCH;
 		wcscpy(format.szFaceName, L"DejaVu Sans");	// At least I have it. :p
 		SendMessageW(view, EM_SETCHARFORMAT, SCF_ALL, (LPARAM)&format);

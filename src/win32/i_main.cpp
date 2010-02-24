@@ -422,7 +422,7 @@ LRESULT CALLBACK LConProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	TEXTMETRIC tm;
 	HINSTANCE inst = (HINSTANCE)(LONG_PTR)GetWindowLongPtr(hWnd, GWLP_HINSTANCE);
 	DRAWITEMSTRUCT *drawitem;
-	CHARFORMAT2 format;
+	CHARFORMAT2W format;
 
 	switch (msg)
 	{
@@ -453,7 +453,7 @@ LRESULT CALLBACK LConProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		SelectObject (hdc, oldfont);
 
 		// Create log read-only edit control
-		view = CreateWindowEx (WS_EX_NOPARENTNOTIFY, RICHEDIT_CLASS, NULL,
+		view = CreateWindowEx (WS_EX_NOPARENTNOTIFY, "RichEdit20W", NULL,
 			WS_CHILD | WS_VISIBLE | WS_VSCROLL |
 			ES_LEFT | ES_MULTILINE | WS_CLIPSIBLINGS,
 			0, 0, 0, 0,
@@ -476,8 +476,8 @@ LRESULT CALLBACK LConProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		format.yHeight = 200;
 		format.crTextColor = RGB(223,223,223);
 		format.bPitchAndFamily = FF_SWISS | VARIABLE_PITCH;
-		strcpy(format.szFaceName, "DejaVu Sans");	// At least I have it. :p
-		SendMessage (view, EM_SETCHARFORMAT, SCF_ALL, (LPARAM)&format);
+		wcscpy(format.szFaceName, L"DejaVu Sans");	// At least I have it. :p
+		SendMessageW(view, EM_SETCHARFORMAT, SCF_ALL, (LPARAM)&format);
 
 		ConWindow = view;
 		ReleaseDC (hWnd, hdc);

@@ -944,7 +944,10 @@ void I_PrintStr(const char *cp)
 		buf[bpos] = 0;
 		if (edit != NULL)
 		{
-			SendMessage(edit, EM_REPLACESEL, FALSE, (LPARAM)buf); 
+			wchar_t wbuf[countof(buf)];
+			MultiByteToWideChar(1252 /* Latin 1 */, 0, buf, bpos, wbuf, countof(wbuf));
+			wbuf[bpos] = 0;
+			SendMessageW(edit, EM_REPLACESEL, FALSE, (LPARAM)wbuf); 
 		}
 		if (StdOut != NULL)
 		{

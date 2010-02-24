@@ -476,7 +476,7 @@ LRESULT CALLBACK LConProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		format.yHeight = 200;
 		format.crTextColor = RGB(223,223,223);
 		format.bPitchAndFamily = FF_SWISS | VARIABLE_PITCH;
-		strcpy (format.szFaceName, "Bitstream Vera Sans");	// At least I have it. :p
+		strcpy(format.szFaceName, "DejaVu Sans");	// At least I have it. :p
 		SendMessage (view, EM_SETCHARFORMAT, SCF_ALL, (LPARAM)&format);
 
 		ConWindow = view;

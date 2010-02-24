@@ -51,6 +51,7 @@
 #include "gi.h"
 #include "w_wad.h"
 #include "s_sound.h"
+#include "m_argv.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -317,22 +318,25 @@ FStartupScreen *FStartupScreen::CreateInstance(int max_progress)
 	FStartupScreen *scr = NULL;
 	HRESULT hr;
 
-	if (gameinfo.gametype == GAME_Hexen)
+	if (!Args->CheckParm("-nostartup"))
 	{
-		scr = new FHexenStartupScreen(max_progress, hr);
-	}
-	else if (gameinfo.gametype == GAME_Heretic)
-	{
-		scr = new FHereticStartupScreen(max_progress, hr);
-	}
-	else if (gameinfo.gametype == GAME_Strife)
-	{
-		scr = new FStrifeStartupScreen(max_progress, hr);
-	}
-	if (scr != NULL && FAILED(hr))
-	{
-		delete scr;
-		scr = NULL;
+		if (gameinfo.gametype == GAME_Hexen)
+		{
+			scr = new FHexenStartupScreen(max_progress, hr);
+		}
+		else if (gameinfo.gametype == GAME_Heretic)
+		{
+			scr = new FHereticStartupScreen(max_progress, hr);
+		}
+		else if (gameinfo.gametype == GAME_Strife)
+		{
+			scr = new FStrifeStartupScreen(max_progress, hr);
+		}
+		if (scr != NULL && FAILED(hr))
+		{
+			delete scr;
+			scr = NULL;
+		}
 	}
 	if (scr == NULL)
 	{

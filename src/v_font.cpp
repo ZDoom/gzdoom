@@ -264,12 +264,13 @@ FFont *V_GetFont(const char *name)
 		
 		if (lump != -1)
 		{
-			char head[3];
+			uint32 head;
 			{
 				FWadLump lumpy = Wads.OpenLumpNum (lump);
-				lumpy.Read (head, 3);
+				lumpy.Read (&head, 4);
 			}
-			if (head[0] == 'F' && head[1] == 'O' && head[2] == 'N')
+			if ((head & MAKE_ID(255,255,255,0)) == MAKE_ID('F','O','N',0) ||
+				head == MAKE_ID(0xE1,0xE6,0xD5,0x1A))
 			{
 				font = new FSingleLumpFont (name, lump);
 			}

@@ -1897,7 +1897,60 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckSight)
 	}
 
 	ACTION_JUMP(jump);
+}
 
+//===========================================================================
+//
+// A_CheckSightOrRange
+// Jumps if this actor is out of range of all players *and* out of sight.
+// Useful for maps with many multi-actor special effects.
+//
+//===========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckSightOrRange)
+{
+	ACTION_PARAM_START(2);
+	double range = EvalExpressionF(ParameterIndex+0, self);
+	ACTION_PARAM_STATE(jump, 1);
+
+	ACTION_SET_RESULT(false);	// Jumps should never set the result for inventory state chains!
+
+	range = range * range * (double(FRACUNIT) * FRACUNIT);		// no need for square roots
+	for (int i = 0; i < MAXPLAYERS; ++i)
+	{
+		if (playeringame[i])
+		{
+			AActor *camera = players[i].camera;
+
+			// Check distance first, since it's cheaper than checking sight.
+			double dx = self->x - camera->x;
+			double dy = self->y - camera->y;
+			double dz;
+			fixed_t eyez = (camera->z + camera->height - (camera->height>>2));	// same eye height as P_CheckSight
+			if (eyez > self->z + self->height)
+			{
+				dz = self->z + self->height - eyez;
+			}
+			else if (eyez < self->z)
+			{
+				dz = self->z - eyez;
+			}
+			else
+			{
+				dz = 0;
+			}
+			if ((dx*dx) + (dy*dy) + (dz*dz) <= range)
+			{ // Within range
+				return;
+			}
+
+			// Now check LOS.
+			if (P_CheckSight(camera, self, true))
+			{ // Visible
+				return;
+			}
+		}
+	}
+	ACTION_JUMP(jump);
 }
 
 

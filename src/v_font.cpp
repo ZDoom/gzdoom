@@ -130,7 +130,10 @@ protected:
 		bool rescale, PalEntry *out_palette);
 	void LoadFON1 (int lump, const BYTE *data);
 	void LoadFON2 (int lump, const BYTE *data);
+	void LoadBMF (int lump, const BYTE *data);
 	void CreateFontFromPic (FTextureID picnum);
+
+	static int STACK_ARGS BMFCompare(const void *a, const void *b);
 };
 
 class FSinglePicFont : public FFont
@@ -175,7 +178,7 @@ protected:
 class FFontChar2 : public FTexture
 {
 public:
-	FFontChar2 (int sourcelump, const BYTE *sourceremap, int sourcepos, int width, int height);
+	FFontChar2 (int sourcelump, const BYTE *sourceremap, int sourcepos, int width, int height, int leftofs=0, int topofs=0);
 	~FFontChar2 ();
 
 	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
@@ -399,21 +402,26 @@ FFont::FFont (const char *name, const char *nametemplate, int first, int count, 
 		if (charlumps[i] != NULL)
 		{
 			Chars[i].Pic = new FFontChar1 (charlumps[i], PatchRemap);
+			Chars[i].XMove = Chars[i].Pic->GetScaledWidth();
 		}
 		else
 		{
 			Chars[i].Pic = NULL;
+			Chars[i].XMove = INT_MIN;
 		}
 	}
 
-	if ('N'-first>=0 && 'N'-first<count && Chars['N' - first].Pic)
+	if ('N'-first >= 0 && 'N'-first < count && Chars['N' - first].Pic != NULL)
 	{
-		SpaceWidth = (Chars['N' - first].Pic->GetScaledWidth() + 1) / 2;
+		SpaceWidth = (Chars['N' - first].XMove + 1) / 2;
 	}
 	else
 	{
 		SpaceWidth = 4;
 	}
+
+	FixXMoves();
+
 	BuildTranslations (luminosity, identity, &TranslationParms[0][0], ActiveColors, NULL);
 
 	delete[] luminosity;
@@ -719,37 +727,61 @@ FRemapTable *FFont::GetColorTranslation (EColorRange range) const
 
 //==========================================================================
 //
+// FFont :: GetCharCode
+//
+// If the character code is in the font, returns it. If it is not, but it
+// is lowercase and has an uppercase variant present, return that. Otherwise
+// return -1.
+//
+//==========================================================================
+
+int FFont::GetCharCode(int code, bool needpic) const
+{
+	if (code >= FirstChar && code <= LastChar && (!needpic || Chars[code - FirstChar].Pic != NULL))
+	{
+		return code;
+	}
+	if (myislower[code])
+	{
+		code -= 32;
+		if (code >= FirstChar && code <= LastChar && (!needpic || Chars[code - FirstChar].Pic != NULL))
+		{
+			return code;
+		}
+	}
+	return -1;
+}
+
+//==========================================================================
+//
 // FFont :: GetChar
 //
 //==========================================================================
 
 FTexture *FFont::GetChar (int code, int *const width) const
 {
-	if (code < FirstChar ||
-		code > LastChar ||
-		Chars[code - FirstChar].Pic == NULL)
+	code = GetCharCode(code, false);
+	int xmove = SpaceWidth;
+
+	if (code >= 0)
 	{
-		if (myislower[code])
+		code -= FirstChar;
+		xmove = Chars[code].XMove;
+		if (Chars[code].Pic == NULL)
 		{
-			code -= 32;
-			if (code < FirstChar ||
-				code > LastChar ||
-				Chars[code - FirstChar].Pic == NULL)
+			code = GetCharCode(code + FirstChar, true);
+			if (code >= 0)
 			{
-				if (width != NULL) *width = SpaceWidth;
-				return NULL;
+				code -= FirstChar;
+				xmove = Chars[code].XMove;
 			}
 		}
-		else
-		{
-			if (width != NULL) *width = SpaceWidth;
-			return NULL;
-		}
 	}
-
-	code -= FirstChar;
-	if (width != NULL) *width = Chars[code].Pic->GetScaledWidth();
-	return Chars[code].Pic;
+	if (width != NULL)
+	{
+		*width = xmove;
+	}
+	return (code < 0) ? NULL : Chars[code].Pic;
 }
 
 //==========================================================================
@@ -760,27 +792,8 @@ FTexture *FFont::GetChar (int code, int *const width) const
 
 int FFont::GetCharWidth (int code) const
 {
-	if (code < FirstChar ||
-		code > LastChar ||
-		Chars[code - FirstChar].Pic == NULL)
-	{
-		if (myislower[code])
-		{
-			code -= 32;
-			if (code < FirstChar ||
-				code > LastChar ||
-				Chars[code - FirstChar].Pic == NULL)
-			{
-				return SpaceWidth;
-			}
-		}
-		else
-		{
-			return SpaceWidth;
-		}
-	}
-
-	return Chars[code - FirstChar].Pic->GetScaledWidth();
+	code = GetCharCode(code, false);
+	return (code < 0) ? SpaceWidth : Chars[code - FirstChar].XMove;
 }
 
 //==========================================================================
@@ -858,7 +871,11 @@ FSingleLumpFont::FSingleLumpFont (const char *name, int lump)
 	FMemLump data1 = Wads.ReadLump (lump);
 	const BYTE *data = (const BYTE *)data1.GetMem();
 
-	if (data[0] != 'F' || data[1] != 'O' || data[2] != 'N' ||
+	if (data[0] == 0xE1 && data[1] == 0xE6 && data[2] == 0xD5 && data[3] == 0x1A)
+	{
+		LoadBMF(lump, data);
+	}
+	else if (data[0] != 'F' || data[1] != 'O' || data[2] != 'N' ||
 		(data[3] != '1' && data[3] != '2'))
 	{
 		I_FatalError ("%s is not a recognizable font", name);
@@ -1012,6 +1029,7 @@ void FSingleLumpFont::LoadFON2 (int lump, const BYTE *data)
 	for (i = 0; i < count; ++i)
 	{
 		int destSize = widths2[i] * FontHeight;
+		Chars[i].XMove = widths2[i];
 		if (destSize <= 0)
 		{
 			Chars[i].Pic = NULL;
@@ -1047,6 +1065,157 @@ void FSingleLumpFont::LoadFON2 (int lump, const BYTE *data)
 
 //==========================================================================
 //
+// FSingleLumpFont :: LoadBMF
+//
+// Loads a BMF font. The file format is described at
+// <http://bmf.wz.cz/bmf-format.htm>
+//
+//==========================================================================
+
+void FSingleLumpFont::LoadBMF(int lump, const BYTE *data)
+{
+	const BYTE *chardata;
+	int numchars, count, totalwidth, nwidth;
+	int infolen;
+	int i, chari;
+	BYTE raw_palette[256*3];
+	PalEntry sort_palette[256];
+	PalEntry local_palette[256];
+	double luminosity[256];
+	BYTE identity[256];
+
+	FontHeight = data[5];
+	GlobalKerning = (SBYTE)data[8];
+	ActiveColors = data[16];
+	SpaceWidth = -1;
+	nwidth = -1;
+
+	infolen = data[17 + ActiveColors*3];
+	chardata = data + 18 + ActiveColors*3 + infolen;
+	numchars = chardata[0] + 256*chardata[1];
+	chardata += 2;
+
+	// Scan for lowest and highest characters defined and total font width.
+	FirstChar = 256;
+	LastChar = 0;
+	totalwidth = 0;
+	for (i = chari = 0; i < numchars; ++i, chari += 6 + chardata[chari+1] * chardata[chari+2])
+	{
+		if ((chardata[chari+1] == 0 || chardata[chari+2] == 0) && chardata[chari+5] == 0)
+		{ // Don't count empty characters.
+			continue;
+		}
+		if (chardata[chari] < FirstChar)
+		{
+			FirstChar = chardata[chari];
+		}
+		if (chardata[chari] > LastChar)
+		{
+			LastChar = chardata[chari];
+		}
+		totalwidth += chardata[chari+1];
+	}
+	if (LastChar < FirstChar)
+	{
+		I_FatalError("BMF font defines no characters");
+	}
+	count = LastChar - FirstChar + 1;
+	Chars = new CharData[count];
+	for (i = 0; i < count; ++i)
+	{
+		Chars[i].Pic = NULL;
+		Chars[i].XMove = INT_MIN;
+	}
+
+	// BMF palettes are only six bits per component. Fix that.
+	for (i = 0; i < ActiveColors*3; ++i)
+	{
+		raw_palette[i] = (data[17 + i] << 2) | (data[17 + i] >> 4);
+	}
+
+	// Sort the palette by increasing brightness
+	for (i = 0; i < ActiveColors; ++i)
+	{
+		PalEntry *pal = &sort_palette[i];
+		pal->a = i;		// Use alpha part to point back to original entry
+		pal->r = raw_palette[i*3 + 0];
+		pal->g = raw_palette[i*3 + 1];
+		pal->b = raw_palette[i*3 + 2];
+	}
+	qsort(sort_palette + 1, ActiveColors - 1, sizeof(PalEntry), BMFCompare);
+
+	// Create the PatchRemap table from the sorted "alpha" values.
+	PatchRemap = new BYTE[ActiveColors];
+	PatchRemap[0] = 0;
+	for (i = 1; i < ActiveColors; ++i)
+	{
+		PatchRemap[sort_palette[i].a] = i;
+	}
+
+	FixupPalette(identity, luminosity, raw_palette, true, local_palette);
+
+	// Now scan through the characters again, creating glyphs for each one.
+	for (i = chari = 0; i < numchars; ++i, chari += 6 + chardata[chari+1] * chardata[chari+2])
+	{
+		assert(chardata[chari] - FirstChar >= 0);
+		assert(chardata[chari] - FirstChar < count);
+		if (chardata[chari] == ' ')
+		{
+			SpaceWidth = chardata[chari+5];
+		}
+		else if (chardata[chari] == 'N')
+		{
+			nwidth = chardata[chari+5];
+		}
+		Chars[chardata[chari] - FirstChar].XMove = chardata[chari+5];
+		if (chardata[chari+1] == 0 || chardata[chari+2] == 0)
+		{ // Empty character: skip it.
+			continue;
+		}
+		Chars[chardata[chari] - FirstChar].Pic = new FFontChar2(lump, PatchRemap, int(chardata + chari + 6 - data),
+			chardata[chari+1],	// width
+			chardata[chari+2],	// height
+			-(SBYTE)chardata[chari+3],	// x offset
+			-(SBYTE)chardata[chari+4]	// y offset
+		);
+	}
+
+	// If the font did not define a space character, determine a suitable space width now.
+	if (SpaceWidth < 0)
+	{
+		if (nwidth >= 0)
+		{
+			SpaceWidth = nwidth;
+		}
+		else
+		{
+			SpaceWidth = totalwidth * 2 / (3 * count);
+		}
+	}
+
+	FixXMoves();
+	BuildTranslations(luminosity, identity, &TranslationParms[0][0], ActiveColors, local_palette);
+}
+
+//==========================================================================
+//
+// FSingleLumpFont :: BMFCompare									STATIC
+//
+// Helper to sort BMF palettes.
+//
+//==========================================================================
+
+int STACK_ARGS FSingleLumpFont::BMFCompare(const void *a, const void *b)
+{
+	const PalEntry *pa = (const PalEntry *)a;
+	const PalEntry *pb = (const PalEntry *)b;
+
+	return (pa->r * 299 + pa->g * 587 + pa->b * 114) -
+		   (pb->r * 299 + pb->g * 587 + pb->b * 114);
+}
+
+//==========================================================================
+//
 // FSingleLumpFont :: CheckFON1Chars
 //
 // Scans a FON1 resource for all the color values it uses and sets up
@@ -1069,6 +1238,7 @@ void FSingleLumpFont::CheckFON1Chars (int lump, const BYTE *data, double *lumino
 		int destSize = SpaceWidth * FontHeight;
 
 		Chars[i].Pic = new FFontChar2 (lump, PatchRemap, int(data_p - data), SpaceWidth, FontHeight);
+		Chars[i].XMove = SpaceWidth;
 
 		// Advance to next char's data and count the used colors.
 		do
@@ -1332,14 +1502,14 @@ FFontChar1::~FFontChar1 ()
 //
 //==========================================================================
 
-FFontChar2::FFontChar2 (int sourcelump, const BYTE *sourceremap, int sourcepos, int width, int height)
+FFontChar2::FFontChar2 (int sourcelump, const BYTE *sourceremap, int sourcepos, int width, int height, int leftofs, int topofs)
 : SourceLump (sourcelump), SourcePos (sourcepos), Pixels (0), Spans (0), SourceRemap(sourceremap)
 {
 	UseType = TEX_FontChar;
 	Width = width;
 	Height = height;
-	TopOffset = 0;
-	LeftOffset = 0;
+	LeftOffset = leftofs;
+	TopOffset = topofs;
 	CalcBitSize ();
 }
 
@@ -1427,16 +1597,24 @@ void FFontChar2::MakeTexture ()
 	FWadLump lump = Wads.OpenLumpNum (SourceLump);
 	int destSize = Width * Height;
 	BYTE max = 255;
+	bool rle = true;
 
 	// This is to "fix" bad fonts
 	{
-		BYTE buff[8];
+		BYTE buff[16];
 		lump.Read (buff, 4);
 		if (buff[3] == '2')
 		{
 			lump.Read (buff, 7);
 			max = buff[6];
 			lump.Seek (SourcePos - 11, SEEK_CUR);
+		}
+		else if (buff[3] == 0x1A)
+		{
+			lump.Read(buff, 13);
+			max = buff[12] - 1;
+			lump.Seek (SourcePos - 17, SEEK_CUR);
+			rle = false;
 		}
 		else
 		{
@@ -1452,55 +1630,81 @@ void FFontChar2::MakeTexture ()
 	int dest_adv = Height;
 	int dest_rew = destSize - 1;
 
-	for (int y = Height; y != 0; --y)
+	if (rle)
 	{
-		for (int x = Width; x != 0; )
+		for (int y = Height; y != 0; --y)
 		{
-			if (runlen != 0)
+			for (int x = Width; x != 0; )
 			{
-				BYTE color;
-
-				lump >> color;
-				*dest_p = MIN (color, max);
-				if (SourceRemap != NULL)
-				{
-					*dest_p = SourceRemap[*dest_p];
-				}
-				dest_p += dest_adv;
-				x--;
-				runlen--;
-			}
-			else if (setlen != 0)
-			{
-				*dest_p = setval;
-				dest_p += dest_adv;
-				x--;
-				setlen--;
-			}
-			else
-			{
-				SBYTE code;
-
-				lump >> code;
-				if (code >= 0)
-				{
-					runlen = code + 1;
-				}
-				else if (code != -128)
+				if (runlen != 0)
 				{
 					BYTE color;
 
 					lump >> color;
-					setlen = (-code) + 1;
-					setval = MIN (color, max);
+					color = MIN (color, max);
 					if (SourceRemap != NULL)
 					{
-						setval = SourceRemap[setval];
+						color = SourceRemap[color];
+					}
+					*dest_p = color;
+					dest_p += dest_adv;
+					x--;
+					runlen--;
+				}
+				else if (setlen != 0)
+				{
+					*dest_p = setval;
+					dest_p += dest_adv;
+					x--;
+					setlen--;
+				}
+				else
+				{
+					SBYTE code;
+
+					lump >> code;
+					if (code >= 0)
+					{
+						runlen = code + 1;
+					}
+					else if (code != -128)
+					{
+						BYTE color;
+
+						lump >> color;
+						setlen = (-code) + 1;
+						setval = MIN (color, max);
+						if (SourceRemap != NULL)
+						{
+							setval = SourceRemap[setval];
+						}
 					}
 				}
 			}
+			dest_p -= dest_rew;
 		}
-		dest_p -= dest_rew;
+	}
+	else
+	{
+		for (int y = Height; y != 0; --y)
+		{
+			for (int x = Width; x != 0; --x)
+			{
+				BYTE color;
+				lump >> color;
+				if (color > max)
+				{
+					color = max;
+				}
+				if (SourceRemap != NULL)
+				{
+					color = SourceRemap[color];
+				}
+				*dest_p = color;
+				dest_p += dest_adv;
+			}
+			dest_p -= dest_rew;
+		}
 	}
 
 	if (destSize < 0)
@@ -1593,22 +1797,26 @@ FSpecialFont::FSpecialFont (const char *name, int first, int count, FTexture **l
 		if (charlumps[i] != NULL)
 		{
 			Chars[i].Pic = new FFontChar1 (charlumps[i], PatchRemap);
+			Chars[i].XMove = Chars[i].Pic->GetScaledWidth();
 		}
 		else
 		{
 			Chars[i].Pic = NULL;
+			Chars[i].XMove = INT_MIN;
 		}
 	}
 
 	// Special fonts normally don't have all characters so be careful here!
-	if ('N'-first>=0 && 'N'-first<count && Chars['N' - first].Pic) 
+	if ('N'-first >= 0 && 'N'-first < count && Chars['N' - first].Pic != NULL)
 	{
-		SpaceWidth = (Chars['N' - first].Pic->GetScaledWidth() + 1) / 2;
+		SpaceWidth = (Chars['N' - first].XMove + 1) / 2;
 	}
 	else
 	{
 		SpaceWidth = 4;
 	}
+
+	FixXMoves();
 
 	BuildTranslations (luminosity, identity, &TranslationParms[0][0], TotalColors, NULL);
 
@@ -1630,6 +1838,36 @@ FSpecialFont::FSpecialFont (const char *name, int first, int count, FTexture **l
 
 	delete[] luminosity;
 	delete[] charlumps;
+}
+
+//==========================================================================
+//
+// FFont :: FixXMoves
+//
+// If a font has gaps in its characters, set the missing characters'
+// XMoves to either SpaceWidth or the uppercase variant's XMove. Missing
+// XMoves must be initialized with INT_MIN beforehand.
+//
+//==========================================================================
+
+void FFont::FixXMoves()
+{
+	for (int i = 0; i <= LastChar - FirstChar; ++i)
+	{
+		if (Chars[i].XMove == INT_MIN)
+		{
+			if (myislower[i + FirstChar])
+			{
+				int upper = i - 32;
+				if (upper >= 0)
+				{
+					Chars[i].XMove = Chars[upper].XMove;
+					continue;
+				}
+			}
+			Chars[i].XMove = SpaceWidth;
+		}
+	}
 }
 
 

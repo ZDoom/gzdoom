@@ -168,20 +168,23 @@ static void DrawHudText(FFont *font, int color, char * text, int x, int y, int t
 	{
 		int width;
 		FTexture *texc = font->GetChar(text[i], &width);
-		int offset = texc->TopOffset - tex_zero->TopOffset + tex_zero->GetHeight();
-		screen->DrawChar(font, color, x, y, text[i],
-			DTA_KeepRatio, true,
-			DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, trans, 
-			DTA_LeftOffset, width/2, DTA_TopOffset, offset,
-			/*DTA_CenterBottomOffset, 1,*/ TAG_DONE);
-		x+=zerowidth;
+		if (texc != NULL)
+		{
+			int offset = texc->TopOffset - tex_zero->TopOffset + tex_zero->GetHeight();
+			screen->DrawChar(font, color, x, y, text[i],
+				DTA_KeepRatio, true,
+				DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, trans, 
+				DTA_LeftOffset, width/2, DTA_TopOffset, offset,
+				/*DTA_CenterBottomOffset, 1,*/ TAG_DONE);
+		}
+		x += zerowidth;
 	}
 }
 
 
 //---------------------------------------------------------------------------
 //
-// Draws a numberses a fixed widh for all characters
+// Draws a number with a fixed width for all digits
 //
 //---------------------------------------------------------------------------
 

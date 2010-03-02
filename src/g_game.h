@@ -32,7 +32,7 @@ struct PNGHandle;
 //
 void G_DeathMatchSpawnPlayer (int playernum);
 
-void G_DeferedPlayDemo (char* demo);
+void G_DeferedPlayDemo (const char* demo);
 
 // Can be called by the startup code or M_Responder,
 // calls P_SetupLevel or W_EnterWorld.
@@ -44,12 +44,12 @@ void G_DoLoadGame (void);
 void G_SaveGame (const char *filename, const char *description);
 
 // Only called by startup code.
-void G_RecordDemo (char* name);
+void G_RecordDemo (const char* name);
 
 void G_BeginRecording (const char *startmap);
 
 void G_PlayDemo (char* name);
-void G_TimeDemo (char* name);
+void G_TimeDemo (const char* name);
 bool G_CheckDemoStatus (void);
 
 void G_WorldDone (void);

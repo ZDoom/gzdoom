@@ -38,138 +38,226 @@
 
 IMPLEMENT_CLASS (DArgs)
 
-DArgs::DArgs ()
+//===========================================================================
+//
+// DArgs Default Constructor
+//
+//===========================================================================
+
+DArgs::DArgs()
 {
-	m_ArgC = 0;
-	m_ArgV = NULL;
 }
 
-DArgs::DArgs (int argc, char **argv)
+//===========================================================================
+//
+// DArgs Copy Constructor
+//
+//===========================================================================
+
+DArgs::DArgs(const DArgs &other)
 {
-	CopyArgs (argc, argv);
+	Argv = other.Argv;
 }
 
-DArgs::DArgs (const DArgs &other)
+//===========================================================================
+//
+// DArgs Argv Constructor
+//
+//===========================================================================
+
+DArgs::DArgs(int argc, char **argv)
 {
-	CopyArgs (other.m_ArgC, other.m_ArgV);
+	SetArgs(argc, argv);
 }
 
+//===========================================================================
+//
+// DArgs Copy Operator
+//
+//===========================================================================
 
-DArgs::~DArgs ()
+DArgs &DArgs::operator=(const DArgs &other)
 {
-	FlushArgs ();
-}
-
-DArgs &DArgs::operator= (const DArgs &other)
-{
-	FlushArgs ();
-	CopyArgs (other.m_ArgC, other.m_ArgV);
+	Argv = other.Argv;
 	return *this;
 }
 
-void DArgs::SetArgs (int argc, char **argv)
-{
-	FlushArgs ();
-	CopyArgs (argc, argv);
-}
-
-void DArgs::CopyArgs (int argc, char **argv)
-{
-	int i;
-
-	m_ArgC = argc;
-	m_ArgV = new char *[argc];
-	for (i = 0; i < argc; i++)
-		m_ArgV[i] = copystring (argv[i]);
-}
-
-void DArgs::FlushArgs ()
-{
-	int i;
-
-	for (i = 0; i < m_ArgC; i++)
-		delete[] m_ArgV[i];
-	delete[] m_ArgV;
-	m_ArgC = 0;
-	m_ArgV = NULL;
-}
-
+//===========================================================================
 //
-// CheckParm
+// DArgs :: SetArgs
+//
+//===========================================================================
+
+void DArgs::SetArgs(int argc, char **argv)
+{
+	Argv.Resize(argc);
+	for (int i = 0; i < argc; ++i)
+	{
+		Argv[i] = argv[i];
+	}
+}
+
+//===========================================================================
+//
+// DArgs :: FlushArgs
+//
+//===========================================================================
+
+void DArgs::FlushArgs()
+{
+	Argv.Clear();
+}
+
+//===========================================================================
+//
+// DArgs :: CheckParm
+//
 // Checks for the given parameter in the program's command line arguments.
 // Returns the argument number (1 to argc-1) or 0 if not present
 //
-int DArgs::CheckParm (const char *check, int start) const
-{
-	for (int i = start; i < m_ArgC; ++i)
-		if (!stricmp (check, m_ArgV[i]))
-			return i;
+//===========================================================================
 
+int DArgs::CheckParm(const char *check, int start) const
+{
+	for (unsigned i = start; i < Argv.Size(); ++i)
+	{
+		if (0 == stricmp(check, Argv[i]))
+		{
+			return i;
+		}
+	}
 	return 0;
 }
 
-char *DArgs::CheckValue (const char *check) const
-{
-	int i = CheckParm (check);
+//===========================================================================
+//
+// DArgs :: CheckValue
+//
+// Like CheckParm, but it also checks that the parameter has a value after
+// it and returns that or NULL if not present.
+//
+//===========================================================================
 
-	if (i > 0 && i < m_ArgC - 1)
-		return m_ArgV[i+1][0] != '+' && m_ArgV[i+1][0] != '-' ? m_ArgV[i+1] : NULL;
-	else
-		return NULL;
-}
-
-char *DArgs::GetArg (int arg) const
+const char *DArgs::CheckValue(const char *check) const
 {
-	if (arg >= 0 && arg < m_ArgC)
-		return m_ArgV[arg];
-	else
-		return NULL;
-}
+	int i = CheckParm(check);
 
-char **DArgs::GetArgList (int arg) const
-{
-	if (arg >= 0 && arg < m_ArgC)
-		return &m_ArgV[arg];
-	else
-		return NULL;
-}
-
-int DArgs::NumArgs () const
-{
-	return m_ArgC;
-}
-
-void DArgs::AppendArg (const char *arg)
-{
-	char **temp = new char *[m_ArgC + 1];
-	if (m_ArgV)
+	if (i > 0 && i < (int)Argv.Size() - 1)
 	{
-		memcpy (temp, m_ArgV, sizeof(*m_ArgV) * m_ArgC);
-		delete[] m_ArgV;
+		i++;
+		return Argv[i][0] != '+' && Argv[i][0] != '-' ? Argv[i].GetChars() : NULL;
 	}
-	temp[m_ArgC] = copystring (arg);
-	m_ArgV = temp;
-	m_ArgC++;
+	else
+	{
+		return NULL;
+	}
 }
+
+//===========================================================================
+//
+// DArgs :: TakeValue
+//
+// Like CheckValue, except it also removes the parameter and its argument
+// (if present) from argv.
+//
+//===========================================================================
+
+FString DArgs::TakeValue(const char *check)
+{
+	int i = CheckParm(check);
+	FString out;
+
+	if (i > 0 && i < (int)Argv.Size() - 1 &&
+		Argv[i+1][0] != '+' && Argv[i+1][0] != '-')
+	{
+		out = Argv[i+1];
+		Argv.Delete(i, 2);	// Delete the parm and its value.
+	}
+	else
+	{
+		Argv.Delete(i);		// Just delete the parm, since it has no value.
+	}
+	return out;
+}
+
+//===========================================================================
+//
+// DArgs :: GetArg
+//
+// Gets the argument at a particular position.
+//
+//===========================================================================
+
+const char *DArgs::GetArg(int arg) const
+{
+	return ((unsigned)arg < Argv.Size()) ? Argv[arg].GetChars() : NULL;
+		return Argv[arg];
+}
+
+//===========================================================================
+//
+// DArgs :: GetArgList
+//
+// Returns a pointer to the FString at a particular position.
+//
+//===========================================================================
+
+FString *DArgs::GetArgList(int arg) const
+{
+	return ((unsigned)arg < Argv.Size()) ? &Argv[arg] : NULL;
+}
+
+//===========================================================================
+//
+// DArgs :: NumArgs
+//
+//===========================================================================
+
+int DArgs::NumArgs() const
+{
+	return (int)Argv.Size();
+}
+
+//===========================================================================
+//
+// DArgs :: AppendArg
+//
+// Adds another argument to argv. Invalidates any previous results from
+// GetArgList().
+//
+//===========================================================================
+
+void DArgs::AppendArg(FString arg)
+{
+	Argv.Push(arg);
+}
+
+//===========================================================================
+//
+// DArgs :: GatherFiles
+//
+//===========================================================================
 
 DArgs *DArgs::GatherFiles (const char *param, const char *extension, bool acceptNoExt) const
 {
 	DArgs *out = new DArgs;
-	int i;
+	unsigned int i;
 	size_t extlen = strlen (extension);
 
 	if (extlen > 0)
 	{
-		for (i = 1; i < m_ArgC && *m_ArgV[i] != '-' && *m_ArgV[i] != '+'; i++)
+		for (i = 1; i < Argv.Size() && Argv[i][0] != '-' && Argv[i][0] != '+'; i++)
 		{
-			size_t len = strlen (m_ArgV[i]);
-			if (len >= extlen && stricmp (m_ArgV[i] + len - extlen, extension) == 0)
-				out->AppendArg (m_ArgV[i]);
+			size_t len = Argv[i].Len();
+			if (len >= extlen && stricmp(&Argv[i][0] + len - extlen, extension) == 0)
+			{
+				out->AppendArg(Argv[i]);
+			}
 			else if (acceptNoExt)
 			{
-				const char *src = m_ArgV[i] + len - 1;
+				const char *src = &Argv[i][0] + len - 1;
 
-				while (src != m_ArgV[i] && *src != '/'
+				while (src != Argv[i] && *src != '/'
 			#ifdef _WIN32
 					&& *src != '\\'
 			#endif
@@ -179,7 +267,7 @@ DArgs *DArgs::GatherFiles (const char *param, const char *extension, bool accept
 						goto morefor;					// it has an extension
 					src--;
 				}
-				out->AppendArg (m_ArgV[i]);
+				out->AppendArg(Argv[i]);
 morefor:
 				;
 			}
@@ -190,8 +278,8 @@ morefor:
 		i = 1;
 		while (0 != (i = CheckParm (param, i)))
 		{
-			for (++i; i < m_ArgC && *m_ArgV[i] != '-' && *m_ArgV[i] != '+'; ++i)
-				out->AppendArg (m_ArgV[i]);
+			for (++i; i < Argv.Size() && Argv[i][0] != '-' && Argv[i][0] != '+'; ++i)
+				out->Argv.Push(Argv[i]);
 		}
 	}
 	return out;

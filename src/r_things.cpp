@@ -2345,7 +2345,7 @@ CUSTOM_CVAR( Int, r_maxparticles, 4000, CVAR_ARCHIVE )
 
 void R_InitParticles ()
 {
-	char *i;
+	const char *i;
 
 	if ((i = Args->CheckValue ("-numparticles")))
 		NumParticles = atoi (i);

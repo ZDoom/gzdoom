@@ -2189,18 +2189,14 @@ void G_WriteDemoTiccmd (ticcmd_t *cmd, int player, int buf)
 //
 // G_RecordDemo
 //
-void G_RecordDemo (char* name)
+void G_RecordDemo (const char* name)
 {
-	char *v;
-
 	usergame = false;
 	strcpy (demoname, name);
 	FixPathSeperator (demoname);
 	DefaultExtension (demoname, ".lmp");
-	v = Args->CheckValue ("-maxdemo");
 	maxdemosize = 0x20000;
 	demobuffer = (BYTE *)M_Malloc (maxdemosize);
-
 	demorecording = true; 
 }
 
@@ -2285,7 +2281,7 @@ void G_BeginRecording (const char *startmap)
 
 FString defdemoname;
 
-void G_DeferedPlayDemo (char *name)
+void G_DeferedPlayDemo (const char *name)
 {
 	defdemoname = name;
 	gameaction = ga_playdemo;
@@ -2513,7 +2509,7 @@ void G_DoPlayDemo (void)
 //
 // G_TimeDemo
 //
-void G_TimeDemo (char* name)
+void G_TimeDemo (const char* name)
 {
 	nodrawers = !!Args->CheckParm ("-nodraw");
 	noblit = !!Args->CheckParm ("-noblit");

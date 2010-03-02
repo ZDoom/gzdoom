@@ -1035,6 +1035,32 @@ FString BuildString (int argc, char **argv)
 	}
 }
 
+FString BuildString (int argc, FString *argv)
+{
+	if (argc == 1)
+	{
+		return *argv;
+	}
+	else
+	{
+		FString buf;
+		int arg;
+
+		for (arg = 0; arg < argc; arg++)
+		{
+			if (strchr (argv[arg], ' '))
+			{
+				buf << '"' << argv[arg] << "\" ";
+			}
+			else
+			{
+				buf << argv[arg] << ' ';
+			}
+		}
+		return buf;
+	}
+}
+
 //===========================================================================
 //
 // SubstituteAliasParams

@@ -233,7 +233,7 @@ static void I_SelectTimer()
 	if (NewTicArrived)
 	{
 		UINT delay;
-		char *cmdDelay;
+		const char *cmdDelay;
 
 		cmdDelay = Args->CheckValue("-timerdelay");
 		delay = 0;

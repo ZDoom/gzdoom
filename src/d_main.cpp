@@ -1753,7 +1753,7 @@ static FString CheckGameInfo(TArray<FString> & pwads)
 void D_DoomMain (void)
 {
 	int p, flags;
-	char *v;
+	const char *v;
 	const char *wad;
 	DArgs *execFiles;
 	TArray<FString> pwads;
@@ -1965,21 +1965,23 @@ void D_DoomMain (void)
 		autostart = true;
 	}
 
-	// [RH] Hack to handle +map
-	p = Args->CheckParm ("+map");
-	if (p && p < Args->NumArgs()-1)
+	// [RH] Hack to handle +map. The standard console command line handler
+	// won't be able to handle it, so we take it out of the command line and set
+	// it up like -warp.
+	FString mapvalue = Args->TakeValue("+map");
+	if (mapvalue.IsNotEmpty())
 	{
-		if (!P_CheckMapData(Args->GetArg (p+1)))
+		if (!P_CheckMapData(mapvalue))
 		{
-			Printf ("Can't find map %s\n", Args->GetArg (p+1));
+			Printf ("Can't find map %s\n", mapvalue.GetChars());
 		}
 		else
 		{
-			startmap = Args->GetArg (p + 1);
-			Args->GetArg (p)[0] = '-';
+			startmap = mapvalue;
 			autostart = true;
 		}
 	}
+
 	if (devparm)
 	{
 		Printf ("%s", GStrings("D_DEVSTR"));
@@ -1998,16 +2000,11 @@ void D_DoomMain (void)
 
 	// turbo option  // [RH] (now a cvar)
 	{
-		UCVarValue value;
-		static char one_hundred[] = "100";
-
-		value.String = Args->CheckValue ("-turbo");
-		if (value.String == NULL)
-			value.String = one_hundred;
-		else
-			Printf ("turbo scale: %s%%\n", value.String);
-
-		turbo.SetGenericRepDefault (value, CVAR_String);
+		double amt;
+		const char *value = Args->CheckValue("-turbo");
+		amt = value != NULL ? atof(value) : 100;
+		Printf ("turbo scale: %.0f%%\n", amt);
+		turbo = (float)amt;
 	}
 
 	v = Args->CheckValue ("-timer");

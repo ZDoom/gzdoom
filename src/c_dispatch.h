@@ -59,6 +59,7 @@ void C_SetAlias (const char *name, const char *cmd);
 
 // build a single string out of multiple strings
 FString BuildString (int argc, char **argv);
+FString BuildString (int argc, FString *argv);
 
 // Class that can parse command lines
 class FCommandLine

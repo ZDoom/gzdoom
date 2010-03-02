@@ -338,20 +338,21 @@ void PreSend (const void *buffer, int bufferlen, const sockaddr_in *to)
 	sendto (mysocket, (const char *)buffer, bufferlen, 0, (const sockaddr *)to, sizeof(*to));
 }
 
-void BuildAddress (sockaddr_in *address, char *name)
+void BuildAddress (sockaddr_in *address, const char *name)
 {
 	hostent *hostentry;		// host information entry
 	u_short port;
-	char *portpart;
+	const char *portpart;
 	bool isnamed = false;
 	int curchar;
 	char c;
+	FString target;
 
 	address->sin_family = AF_INET;
 
 	if ( (portpart = strchr (name, ':')) )
 	{
-		*portpart = 0;
+		target = FString(name, portpart - name);
 		port = atoi (portpart + 1);
 		if (!port)
 		{
@@ -361,11 +362,12 @@ void BuildAddress (sockaddr_in *address, char *name)
 	}
 	else
 	{
+		target = name;
 		port = DOOMPORT;
 	}
 	address->sin_port = htons(port);
 
-	for (curchar = 0; (c = name[curchar]) ; curchar++)
+	for (curchar = 0; (c = target[curchar]) ; curchar++)
 	{
 		if ((c < '0' || c > '9') && c != '.')
 		{
@@ -376,21 +378,18 @@ void BuildAddress (sockaddr_in *address, char *name)
 
 	if (!isnamed)
 	{
-		address->sin_addr.s_addr = inet_addr (name);
-		Printf ("Node number %d, address %s\n", doomcom.numnodes, name);
+		address->sin_addr.s_addr = inet_addr (target);
+		Printf ("Node number %d, address %s\n", doomcom.numnodes, target.GetChars());
 	}
 	else
 	{
-		hostentry = gethostbyname (name);
+		hostentry = gethostbyname (target);
 		if (!hostentry)
-			I_FatalError ("gethostbyname: couldn't find %s\n%s", name, neterror());
+			I_FatalError ("gethostbyname: couldn't find %s\n%s", target.GetChars(), neterror());
 		address->sin_addr.s_addr = *(int *)hostentry->h_addr_list[0];
 		Printf ("Node number %d, hostname %s\n",
 			doomcom.numnodes, hostentry->h_name);
 	}
-
-	if (portpart)
-		*portpart = ':';
 }
 
 void CloseNetwork (void)
@@ -910,7 +909,7 @@ static bool NodesOnSameNetwork()
 bool I_InitNetwork (void)
 {
 	int i;
-	char *v;
+	const char *v;
 
 	memset (&doomcom, 0, sizeof(doomcom));
 

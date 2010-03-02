@@ -159,7 +159,6 @@ void M_FindResponseFile (void)
 			char	**argv;
 			char	*file;
 			int		argc;
-			int		argcinresp;
 			FILE	*handle;
 			int 	size;
 			long	argsize;
@@ -183,23 +182,32 @@ void M_FindResponseFile (void)
 			file[size] = 0;
 			fclose (handle);
 
-			argsize = ParseCommandLine (file, &argcinresp, NULL);
-			argc = argcinresp + Args->NumArgs() - 1;
+			argsize = ParseCommandLine (file, &argc, NULL);
+			argc = Args->NumArgs() - 1;
 
 			if (argc != 0)
 			{
 				argv = (char **)M_Malloc (argc*sizeof(char *) + argsize);
-				argv[i] = (char *)argv + argc*sizeof(char *);
-				ParseCommandLine (file, NULL, argv+i);
+				argv[0] = (char *)argv + argc*sizeof(char *);
+				ParseCommandLine (file, NULL, argv);
 
+				// Create a new argument vector
+				DArgs *newargs = new DArgs;
+
+				// Copy parameters before response file.
 				for (index = 0; index < i; ++index)
-					argv[index] = Args->GetArg (index);
+					newargs->AppendArg(Args->GetArg(index));
 
-				for (index = i + 1, i += argcinresp; index < Args->NumArgs (); ++index)
-					argv[i++] = Args->GetArg (index);
+				// Copy parameters from response file.
+				for (index = 0; index < argc; ++i)
+					newargs->AppendArg(argv[index]);
 
-				Args->Destroy();
-				Args = new DArgs(i, argv);
+				// Copy parameters after response file.
+				for (index = i + 1, i = newargs->NumArgs(); index < Args->NumArgs(); ++index)
+					newargs->AppendArg(Args->GetArg(index));
+
+				// Use the new argument vector as the global Args object.
+				Args = newargs;
 			}
 
 			delete[] file;

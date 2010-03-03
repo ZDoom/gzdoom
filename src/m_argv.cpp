@@ -72,6 +72,19 @@ DArgs::DArgs(int argc, char **argv)
 
 //===========================================================================
 //
+// DArgs String Argv Constructor
+//
+//===========================================================================
+
+DArgs::DArgs(int argc, FString *argv)
+{
+	AppendArgs(argc, argv);
+}
+
+
+
+//===========================================================================
+//
 // DArgs Copy Operator
 //
 //===========================================================================
@@ -131,6 +144,41 @@ int DArgs::CheckParm(const char *check, int start) const
 
 //===========================================================================
 //
+// DArgs :: CheckParmList
+//
+// Returns the number of arguments after the parameter (if found) and also
+// returns a pointer to the first argument.
+//
+//===========================================================================
+
+int DArgs::CheckParmList(const char *check, FString **strings, int start) const
+{
+	unsigned int i, parmat = CheckParm(check, start);
+
+	if (parmat == 0)
+	{
+		if (strings != NULL)
+		{
+			*strings = NULL;
+		}
+		return 0;
+	}
+	for (i = ++parmat; i < Argv.Size(); ++i)
+	{
+		if (Argv[i][0] == '-' || Argv[i][1] == '+')
+		{
+			break;
+		}
+	}
+	if (strings != NULL)
+	{
+		*strings = &Argv[parmat];
+	}
+	return i - parmat;
+}
+
+//===========================================================================
+//
 // DArgs :: CheckValue
 //
 // Like CheckParm, but it also checks that the parameter has a value after
@@ -167,15 +215,17 @@ FString DArgs::TakeValue(const char *check)
 	int i = CheckParm(check);
 	FString out;
 
-	if (i > 0 && i < (int)Argv.Size() - 1 &&
-		Argv[i+1][0] != '+' && Argv[i+1][0] != '-')
+	if (i > 0 && i < (int)Argv.Size())
 	{
-		out = Argv[i+1];
-		Argv.Delete(i, 2);	// Delete the parm and its value.
-	}
-	else
-	{
-		Argv.Delete(i);		// Just delete the parm, since it has no value.
+		if (i < (int)Argv.Size() - 1 && Argv[i+1][0] != '+' && Argv[i+1][0] != '-')
+		{
+			out = Argv[i+1];
+			Argv.Delete(i, 2);	// Delete the parm and its value.
+		}
+		else
+		{
+			Argv.Delete(i);		// Just delete the parm, since it has no value.
+		}
 	}
 	return out;
 }
@@ -234,53 +284,102 @@ void DArgs::AppendArg(FString arg)
 
 //===========================================================================
 //
-// DArgs :: GatherFiles
+// DArgs :: AppendArgs
+//
+// Adds an array of FStrings to argv.
 //
 //===========================================================================
 
-DArgs *DArgs::GatherFiles (const char *param, const char *extension, bool acceptNoExt) const
+void DArgs::AppendArgs(int argc, const FString *argv)
 {
+	if (argv != NULL && argc > 0)
+	{
+		Argv.Grow(argc);
+		for (int i = 0; i < argc; ++i)
+		{
+			Argv.Push(argv[i]);
+		}
+	}
+}
+
+//===========================================================================
+//
+// DArgs :: CollectFiles
+//
+// Takes all arguments after any instance of -param and any arguments before
+// all switches that end in .extension and combines them into a single
+// -switch block at the end of the arguments. If extension is NULL, then
+// every parameter before the first switch is added after this -param.
+//
+//===========================================================================
+
+void DArgs::CollectFiles(const char *param, const char *extension)
+{
+	TArray<FString> work;
 	DArgs *out = new DArgs;
 	unsigned int i;
-	size_t extlen = strlen (extension);
+	size_t extlen = extension == NULL ? 0 : strlen(extension);
 
-	if (extlen > 0)
+	// Step 1: Find suitable arguments before the first switch.
+	i = 1;
+	while (i < Argv.Size() && Argv[i][0] != '-' && Argv[i][0] != '+')
 	{
-		for (i = 1; i < Argv.Size() && Argv[i][0] != '-' && Argv[i][0] != '+'; i++)
-		{
+		bool useit;
+
+		if (extlen > 0)
+		{ // Argument's extension must match.
 			size_t len = Argv[i].Len();
-			if (len >= extlen && stricmp(&Argv[i][0] + len - extlen, extension) == 0)
-			{
-				out->AppendArg(Argv[i]);
-			}
-			else if (acceptNoExt)
-			{
-				const char *src = &Argv[i][0] + len - 1;
-
-				while (src != Argv[i] && *src != '/'
-			#ifdef _WIN32
-					&& *src != '\\'
-			#endif
-					)
-				{
-					if (*src == '.')
-						goto morefor;					// it has an extension
-					src--;
-				}
-				out->AppendArg(Argv[i]);
-morefor:
-				;
-			}
+			useit = (len >= extlen && stricmp(&Argv[i][len - extlen], extension) == 0);
 		}
-	}
-	if (param != NULL)
-	{
-		i = 1;
-		while (0 != (i = CheckParm (param, i)))
+		else
+		{ // Anything will do so long as it's before the first switch.
+			useit = true;
+		}
+		if (useit)
 		{
-			for (++i; i < Argv.Size() && Argv[i][0] != '-' && Argv[i][0] != '+'; ++i)
-				out->Argv.Push(Argv[i]);
+			work.Push(Argv[i]);
+			Argv.Delete(i);
+		}
+		else
+		{
+			i++;
 		}
 	}
-	return out;
+
+	// Step 2: Find each occurence of -param and add its arguments to work.
+	while ((i = CheckParm(param, i)) > 0)
+	{
+		Argv.Delete(i);
+		while (i < Argv.Size() && Argv[i][0] != '-' && Argv[i][0] != '+')
+		{
+			work.Push(Argv[i]);
+			Argv.Delete(i);
+		}
+	}
+
+	// Step 3: Add work back to Argv, as long as it's non-empty.
+	if (work.Size() > 0)
+	{
+		Argv.Push(param);
+		AppendArgs(work.Size(), &work[0]);
+	}
+}
+
+//===========================================================================
+//
+// DArgs :: GatherFiles
+//
+// Returns all the arguments after the first instance of -param. If you want
+// to combine more than one or get switchless stuff included, you need to
+// call CollectFiles first.
+//
+//===========================================================================
+
+DArgs *DArgs::GatherFiles(const char *param) const
+{
+	FString *files;
+	int filecount;
+
+	filecount = CheckParmList(param, &files);
+	return new DArgs(filecount, files);
 }

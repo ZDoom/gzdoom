@@ -47,17 +47,19 @@ public:
 	DArgs();
 	DArgs(const DArgs &args);
 	DArgs(int argc, char **argv);
+	DArgs(int argc, FString *argv);
 
 	DArgs &operator=(const DArgs &other);
 
 	void AppendArg(FString arg);
+	void AppendArgs(int argc, const FString *argv);
 	void SetArgs(int argc, char **argv);
-	DArgs *GatherFiles(const char *param, const char *extension, bool acceptNoExt) const;
+	void CollectFiles(const char *param, const char *extension);
+	DArgs *GatherFiles(const char *param) const;
 	void SetArg(int argnum, const char *arg);
 
-	// Returns the position of the given parameter
-	// in the arg list (0 if not found).
-	int CheckParm(const char *check, int start=1) const;
+	int CheckParm(const char *check, int start=1) const;	// Returns the position of the given parameter in the arg list (0 if not found).
+	int CheckParmList(const char *check, FString **strings, int start=1) const;
 	const char *CheckValue(const char *check) const;
 	const char *GetArg(int arg) const;
 	FString *GetArgList(int arg) const;

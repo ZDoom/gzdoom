@@ -105,7 +105,7 @@
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 LRESULT CALLBACK WndProc (HWND, UINT, WPARAM, LPARAM);
-void CreateCrashLog (char *custominfo, DWORD customsize);
+void CreateCrashLog (char *custominfo, DWORD customsize, HWND richedit);
 void DisplayCrashLog ();
 extern BYTE *ST_Util_BitsForBitmap (BITMAPINFO *bitmap_info);
 
@@ -1176,7 +1176,7 @@ LONG WINAPI CatchAllExceptions (LPEXCEPTION_POINTERS info)
 
 	CrashPointers = *info;
 	DoomSpecificInfo (custominfo, 16384);
-	CreateCrashLog (custominfo, (DWORD)strlen(custominfo));
+	CreateCrashLog (custominfo, (DWORD)strlen(custominfo), ConWindow);
 
 	// If the main thread crashed, then make it clean up after itself.
 	// Otherwise, put the crashing thread to sleep and signal the main thread to clean up.
@@ -1248,7 +1248,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int n
 			*(int *)0 = 0;
 		}
 		__except(CrashPointers = *GetExceptionInformation(),
-			CreateCrashLog (__argv[1], 9), EXCEPTION_EXECUTE_HANDLER)
+			CreateCrashLog (__argv[1], 9, NULL), EXCEPTION_EXECUTE_HANDLER)
 		{
 		}
 		DisplayCrashLog ();
@@ -1261,7 +1261,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int n
 			infiniterecursion(1);
 		}
 		__except(CrashPointers = *GetExceptionInformation(),
-			CreateCrashLog (__argv[1], 14), EXCEPTION_EXECUTE_HANDLER)
+			CreateCrashLog (__argv[1], 14, NULL), EXCEPTION_EXECUTE_HANDLER)
 		{
 		}
 		DisplayCrashLog ();

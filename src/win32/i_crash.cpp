@@ -505,13 +505,78 @@ void __cdecl Writef (HANDLE file, const char *format, ...)
 
 //==========================================================================
 //
+// WriteLogFileStreamer
+//
+// The callback function to stream a Rich Edit's contents to a file.
+//
+//==========================================================================
+
+static DWORD CALLBACK WriteLogFileStreamer(DWORD_PTR cookie, LPBYTE buffer, LONG cb, LONG *pcb)
+{
+	DWORD didwrite;
+	LONG p, pp;
+
+	// Replace gray foreground color with black.
+	static const char *badfg = "\\red223\\green223\\blue223;";
+	//                           4321098 765432109 876543210
+	//                               2          1          0
+	for (p = pp = 0; p < cb; ++p)
+	{
+		if (buffer[p] == badfg[pp])
+		{
+			++pp;
+			if (pp == 25)
+			{
+				buffer[p - 1] = buffer[p - 2] = buffer[p - 3] =
+				buffer[p - 9] = buffer[p -10] = buffer[p -11] =
+				buffer[p -18] = buffer[p -19] = buffer[p -20] = '0';
+				break;
+			}
+		}
+		else
+		{
+			pp = 0;
+		}
+	}
+
+	if (!WriteFile((HANDLE)cookie, buffer, cb, &didwrite, NULL))
+	{
+		return 1;
+	}
+	*pcb = didwrite;
+	return 0;
+}
+
+//==========================================================================
+//
+// WriteLogFile
+//
+// Writes the contents of a Rich Edit control to a file.
+//
+//==========================================================================
+
+HANDLE WriteLogFile(HWND edit)
+{
+	HANDLE file;
+
+	file = CreateTempFile();
+	if (file != INVALID_HANDLE_VALUE)
+	{
+		EDITSTREAM streamer = { (DWORD_PTR)file, 0, WriteLogFileStreamer };
+		SendMessage(edit, EM_STREAMOUT, SF_RTF, (LPARAM)&streamer);
+	}
+	return file;
+}
+
+//==========================================================================
+//
 // CreateCrashLog
 //
 // Creates all the files needed for a crash report.
 //
 //==========================================================================
 
-void CreateCrashLog (char *custominfo, DWORD customsize)
+void CreateCrashLog (char *custominfo, DWORD customsize, HWND richlog)
 {
 	// Do not collect information more than once.
 	if (NumFiles != 0)
@@ -560,6 +625,10 @@ void CreateCrashLog (char *custominfo, DWORD customsize)
 			}
 			AddFile (file, "local.txt");
 		}
+	}
+	if (richlog != NULL)
+	{
+		AddFile (WriteLogFile(richlog), "log.rtf");
 	}
 	CloseHandle (DbgProcess);
 }
@@ -1984,7 +2053,6 @@ static INT_PTR CALLBACK CrashDlgProc (HWND hDlg, UINT message, WPARAM wParam, LP
 
 static INT_PTR CALLBACK DetailsDlgProc (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	HGDIOBJ font;
 	HWND ctrl;
 	int i, j;
 
@@ -1996,15 +2064,9 @@ static INT_PTR CALLBACK DetailsDlgProc (HWND hDlg, UINT message, WPARAM wParam, 
 			pEnableThemeDialogTexture (hDlg, ETDT_ENABLETAB);
 		}
 
-		// Set up the file contents display: Use a fixed width font,
-		// no undos. The control's userdata stores the index of the
-		// file currently displayed.
+		// Set up the file contents display: No undos. The control's
+		// userdata stores the index of the file currently displayed.
 		ctrl = GetDlgItem (hDlg, IDC_CRASHFILECONTENTS);
-		font = GetStockObject (ANSI_FIXED_FONT);
-		if (font != INVALID_HANDLE_VALUE)
-		{
-			SendMessage (ctrl, WM_SETFONT, (WPARAM)font, FALSE);
-		}
 		SendMessage (ctrl, EM_SETUNDOLIMIT, 0, 0);
 		SetWindowLongPtr (ctrl, GWLP_USERDATA, -1);
 		SetEditControl (ctrl, GetDlgItem(hDlg, IDC_CRASHFILESIZE), 0);
@@ -2178,6 +2240,8 @@ static void SetEditControl (HWND edit, HWND sizedisplay, int filenum)
 	EDITSTREAM stream;
 	DWORD size;
 	POINT pt = { 0, 0 };
+	const char *rtf = NULL;
+	HGDIOBJ font;
 
 	// Don't refresh the control if it's already showing the file we want.
 	if (GetWindowLongPtr (edit, GWLP_USERDATA) == filenum)
@@ -2201,10 +2265,19 @@ static void SetEditControl (HWND edit, HWND sizedisplay, int filenum)
 	SetFilePointer (TarFiles[filenum].File, 0, NULL, FILE_BEGIN);
 	SendMessage (edit, EM_SETSCROLLPOS, 0, (LPARAM)&pt);
 
+	// Set the font now, in case log.rtf was previously viewed, because
+	// that file changes it.
+	font = GetStockObject (ANSI_FIXED_FONT);
+	if (font != INVALID_HANDLE_VALUE)
+	{
+		SendMessage (edit, WM_SETFONT, (WPARAM)font, FALSE);
+	}
+
 	// Text files are streamed in as-is.
 	// Binary files are streamed in as color-coded hex dumps.
 	stream.dwError = 0;
-	if (strstr (TarFiles[filenum].Filename, ".txt") != NULL)
+	if (strstr (TarFiles[filenum].Filename, ".txt") != NULL ||
+		(rtf = strstr (TarFiles[filenum].Filename, ".rtf")) != NULL)
 	{
 		CHARFORMAT beBlack;
 
@@ -2215,7 +2288,7 @@ static void SetEditControl (HWND edit, HWND sizedisplay, int filenum)
 		SendMessage (edit, EM_SETCHARFORMAT, 0, (LPARAM)&beBlack);
 		stream.dwCookie = (DWORD_PTR)TarFiles[filenum].File;
 		stream.pfnCallback = StreamEditText;
-		SendMessage (edit, EM_STREAMIN, SF_TEXT, (LPARAM)&stream);
+		SendMessage (edit, EM_STREAMIN, rtf ? SF_RTF : SF_TEXT | SF_USECODEPAGE | (1252 << 16), (LPARAM)&stream);
 	}
 	else
 	{

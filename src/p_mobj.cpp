@@ -2237,12 +2237,7 @@ void P_ZMovement (AActor *mo, fixed_t oldfloorz)
 		// teleported the actor so it is no longer below the floor.
 		if (mo->z <= mo->floorz)
 		{
-			// old code for boss cube disabled
-			//if ((mo->flags & MF_MISSILE) && (!(gameinfo.gametype & GAME_DoomChex) || !(mo->flags & MF_NOCLIP)))
-
-			// We can't remove this completely because it was abused by some DECORATE definitions
-			// (e.g. the monster pack's Afrit)
-			if ((mo->flags & MF_MISSILE) && ((mo->flags & MF_NOGRAVITY) || !(mo->flags & MF_NOCLIP)))
+			if ((mo->flags & MF_MISSILE) && !(mo->flags & MF_NOCLIP))
 			{
 				mo->z = mo->floorz;
 				if (mo->BounceFlags & BOUNCE_Floors)
@@ -2353,8 +2348,7 @@ void P_ZMovement (AActor *mo, fixed_t oldfloorz)
 			}
 			if (mo->velz > 0)
 				mo->velz = 0;
-			if (mo->flags & MF_MISSILE)
-				//&& (!(gameinfo.gametype & GAME_DoomChex) || !(mo->flags & MF_NOCLIP)))
+			if ((mo->flags & MF_MISSILE) && !(mo->flags & MF_NOCLIP))
 			{
 				if (mo->flags3 & MF3_CEILINGHUGGER)
 				{

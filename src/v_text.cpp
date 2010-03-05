@@ -276,7 +276,7 @@ int FFont::StringWidth (const BYTE *string) const
 					++string;
 				}
 			}
-			else if (*string != '\0')
+			if (*string != '\0')
 			{
 				++string;
 			}

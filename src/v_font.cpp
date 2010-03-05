@@ -1352,8 +1352,8 @@ FSinglePicFont::FSinglePicFont(const char *picname)
 	FTexture *pic = TexMan[picnum];
 
 	Name = copystring(picname);
-	FontHeight = pic->GetHeight();
-	SpaceWidth = pic->GetWidth();
+	FontHeight = pic->GetScaledHeight();
+	SpaceWidth = pic->GetScaledWidth();
 	GlobalKerning = 0;
 	FirstChar = LastChar = 'A';
 	ActiveColors = 0;

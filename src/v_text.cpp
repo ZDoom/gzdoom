@@ -324,7 +324,7 @@ FBrokenLines *V_BreakLines (FFont *font, int maxwidth, const BYTE *string)
 
 	i = w = 0;
 
-	while ( (c = *string++) && i < 128 )
+	while ( (c = *string++) && i < countof(lines) )
 	{
 		if (c == TEXTCOLOR_ESCAPE)
 		{
@@ -400,7 +400,7 @@ FBrokenLines *V_BreakLines (FFont *font, int maxwidth, const BYTE *string)
 	}
 
 	// String here is pointing one character after the '\0'
-	if (i < 128 && --string - start >= 1)
+	if (i < countof(lines) && --string - start >= 1)
 	{
 		const BYTE *s = start;
 

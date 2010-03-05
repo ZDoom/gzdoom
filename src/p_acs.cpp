@@ -3284,8 +3284,8 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 
 		case ACSF_CheckActorClass:
 		{
-			AActor *a = args[0] == 0 ? (AActor *)activator : SingleActorFromTID(args[0], NULL); 
-			return a->GetClass()->TypeName == FName(FBehavior::StaticLookupString(args[1]));
+			AActor *a = args[0] == 0 ? (AActor *)activator : SingleActorFromTID(args[0], NULL);
+			return a == NULL ? false : a->GetClass()->TypeName == FName(FBehavior::StaticLookupString(args[1]));
 		}
 
 		case ACSF_SoundSequenceOnActor:

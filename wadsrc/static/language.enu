@@ -570,6 +570,19 @@ PD_ALL6 = "You need all six keys to open this door";
 PD_ALL6O = "You need all six keys to activate this object";
 PD_ALLKEYS = "You need all the keys";
 
+// MBF (BOOM?) narration backgrounds
+bgflatE1 = "FLOOR4_8";
+bgflatE2 = "SFLR6_1";
+bgflatE3 = "MFLR8_4";
+bgflatE4 = "MFLR8_3";
+bgflat06 = "SLIME16";
+bgflat11 = "RROCK14";
+bgflat20 = "RROCK07";
+bgflat30 = "RROCK17";
+bgflat15 = "RROCK13";
+bgflat31 = "RROCK19";
+bgcastcall = "BOSSBACK";
+
 // Gameflow messages
 TXT_FRAGLIMIT = "Fraglimit hit.";
 TXT_TIMELIMIT = "Timelimit hit.";

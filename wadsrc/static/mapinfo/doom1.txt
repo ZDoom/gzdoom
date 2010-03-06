@@ -501,28 +501,28 @@ map E4M9 lookup "HUSTR_E4M9"
 
 cluster 1
 {
-	flat = "FLOOR4_8"
+	flat = "$bgflatE1"
 	music = "$MUSIC_VICTOR"
 	exittext = lookup, "E1TEXT"
 }
 
 cluster 2
 {
-	flat = "SFLR6_1"
+	flat = "$bgflatE2"
 	music = "$MUSIC_VICTOR"
 	exittext = lookup, "E2TEXT"
 }
 
 cluster 3
 {
-	flat = "MFLR8_4"
+	flat = "$bgflatE3"
 	music = "$MUSIC_VICTOR"
 	exittext = lookup, "E3TEXT"
 }
 
 cluster 4
 {
-	flat = "MFLR8_3"
+	flat = "$bgflatE4"
 	music = "$MUSIC_VICTOR"
 	exittext = lookup, "E4TEXT"
 }

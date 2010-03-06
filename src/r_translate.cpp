@@ -46,6 +46,7 @@
 #include "sc_man.h"
 #include "doomerrors.h"
 #include "i_system.h"
+#include "w_wad.h"
 
 #include "gi.h"
 #include "stats.h"
@@ -892,7 +893,8 @@ static void SetRemap(FRemapTable *table, int i, float r, float g, float b)
 //
 //----------------------------------------------------------------------------
 
-static void R_CreatePlayerTranslation (float h, float s, float v, FPlayerSkin *skin, FRemapTable *table, FRemapTable *alttable)
+static void R_CreatePlayerTranslation (float h, float s, float v, const FPlayerColorSet *colorset,
+	FPlayerSkin *skin, FRemapTable *table, FRemapTable *alttable)
 {
 	int i;
 	BYTE start = skin->range0start;
@@ -936,7 +938,46 @@ static void R_CreatePlayerTranslation (float h, float s, float v, FPlayerSkin *s
 	bases = s;
 	basev = v;
 
-	if (gameinfo.gametype & GAME_DoomStrifeChex)
+	if (colorset != NULL && colorset->Lump >= 0 && Wads.LumpLength(colorset->Lump) < 256)
+	{ // Bad table length. Ignore it.
+		colorset = NULL;
+	}
+
+	if (colorset != NULL)
+	{
+		// Use the pre-defined range instead of a custom one.
+		if (colorset->Lump < 0)
+		{
+			int first = colorset->FirstColor;
+			if (start == end)
+			{
+				table->Remap[i] = (first + colorset->LastColor) / 2;
+			}
+			else
+			{
+				int palrange = colorset->LastColor - first;
+				for (i = start; i <= end; ++i)
+				{
+					table->Remap[i] = GPalette.Remap[first + palrange * (i - start) / (end - start)];
+				}
+			}
+		}
+		else
+		{
+			FMemLump translump = Wads.ReadLump(colorset->Lump);
+			const BYTE *trans = (const BYTE *)translump.GetMem();
+			for (i = start; i <= end; ++i)
+			{
+				table->Remap[i] = GPalette.Remap[trans[i]];
+			}
+		}
+		for (i = start; i <= end; ++i)
+		{
+			table->Palette[i] = GPalette.BaseColors[table->Remap[i]];
+			table->Palette[i].a = 255;
+		}
+	}
+	else if (gameinfo.gametype & GAME_DoomStrifeChex)
 	{
 		// Build player sprite translation
 		s -= 0.23f;
@@ -1014,9 +1055,19 @@ static void R_CreatePlayerTranslation (float h, float s, float v, FPlayerSkin *s
 				SetRemap(table, i, r, g, b);
 			}
 		}
-
-		// Build lifegem translation
-		if (alttable)
+	}
+	if (gameinfo.gametype == GAME_Hexen && alttable != NULL)
+	{
+		// Build Hexen's lifegem translation.
+		
+		// Is the player's translation range the same as the gem's and we are using a
+		// predefined translation? If so, then use the same one for the gem. Otherwise,
+		// build one as per usual.
+		if (colorset != NULL && start == 164 && end == 185)
+		{
+			*alttable = *table;
+		}
+		else
 		{
 			for (i = 164; i <= 185; ++i)
 			{
@@ -1027,8 +1078,8 @@ static void R_CreatePlayerTranslation (float h, float s, float v, FPlayerSkin *s
 				HSVtoRGB (&r, &g, &b, h, s*bases, v*basev);
 				SetRemap(alttable, i, r, g, b);
 			}
-			alttable->UpdateNative();
 		}
+		alttable->UpdateNative();
 	}
 	table->UpdateNative();
 }
@@ -1042,10 +1093,11 @@ static void R_CreatePlayerTranslation (float h, float s, float v, FPlayerSkin *s
 void R_BuildPlayerTranslation (int player)
 {
 	float h, s, v;
+	FPlayerColorSet *colorset;
 
-	D_GetPlayerColor (player, &h, &s, &v);
+	D_GetPlayerColor (player, &h, &s, &v, &colorset);
 
-	R_CreatePlayerTranslation (h, s, v,
+	R_CreatePlayerTranslation (h, s, v, colorset,
 		&skins[players[player].userinfo.skin],
 		translationtables[TRANSLATION_Players][player],
 		translationtables[TRANSLATION_PlayersExtra][player]);
@@ -1057,13 +1109,17 @@ void R_BuildPlayerTranslation (int player)
 //
 //----------------------------------------------------------------------------
 
-void R_GetPlayerTranslation (int color, FPlayerSkin *skin, FRemapTable *table)
+void R_GetPlayerTranslation (int color, const FPlayerColorSet *colorset, FPlayerSkin *skin, FRemapTable *table)
 {
 	float h, s, v;
 
+	if (colorset != NULL)
+	{
+		color = colorset->RepresentativeColor;
+	}
 	RGBtoHSV (RPART(color)/255.f, GPART(color)/255.f, BPART(color)/255.f,
 		&h, &s, &v);
 
-	R_CreatePlayerTranslation (h, s, v, skin, table, NULL);
+	R_CreatePlayerTranslation (h, s, v, colorset, skin, table, NULL);
 }
 

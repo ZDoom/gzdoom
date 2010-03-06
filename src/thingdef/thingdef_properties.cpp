@@ -1863,6 +1863,57 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, colorrange, I_I, PlayerPawn)
 //==========================================================================
 //
 //==========================================================================
+DEFINE_CLASS_PROPERTY_PREFIX(player, colorset, ISIII, PlayerPawn)
+{
+	PROP_INT_PARM(setnum, 0);
+	PROP_STRING_PARM(setname, 1);
+	PROP_INT_PARM(rangestart, 2);
+	PROP_INT_PARM(rangeend, 3);
+	PROP_INT_PARM(representative_color, 4);
+
+	FPlayerColorSet color;
+	color.Name = setname;
+	color.Lump = -1;
+	color.FirstColor = rangestart;
+	color.LastColor = rangeend;
+	color.RepresentativeColor = representative_color;
+
+	if (setnum < 0)
+	{
+		bag.ScriptPosition.Message(MSG_WARNING, "Color set number must not be negative.\n");
+	}
+	else
+	{
+		P_AddPlayerColorSet(info->Class->TypeName, setnum, &color);
+	}
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_CLASS_PROPERTY_PREFIX(player, colorsetfile, ISSI, PlayerPawn)
+{
+	PROP_INT_PARM(setnum, 0);
+	PROP_STRING_PARM(setname, 1);
+	PROP_STRING_PARM(rangefile, 2);
+	PROP_INT_PARM(representative_color, 3);
+
+	FPlayerColorSet color;
+	color.Name = setname;
+	color.Lump = Wads.CheckNumForName(rangefile);
+	color.RepresentativeColor = representative_color;
+	if (setnum < 0)
+	{
+		bag.ScriptPosition.Message(MSG_WARNING, "Color set number must not be negative.\n");
+	}
+	else if (color.Lump >= 0)
+	{
+		P_AddPlayerColorSet(info->Class->TypeName, setnum, &color);
+	}
+}
+//==========================================================================
+//
+//==========================================================================
 DEFINE_CLASS_PROPERTY_PREFIX(player, attackzoffset, F, PlayerPawn)
 {
 	PROP_FIXED_PARM(z, 0);

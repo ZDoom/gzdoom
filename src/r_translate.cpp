@@ -918,7 +918,7 @@ static void R_CreatePlayerTranslation (float h, float s, float v, const FPlayerC
 	{
 		for (i = 0; i < table->NumEntries; ++i)
 		{
-			table->Remap[i] = i;
+			table->Remap[i] = GPalette.Remap[i];
 		}
 		memcpy(table->Palette, GPalette.BaseColors, sizeof(*table->Palette) * table->NumEntries);
 	}
@@ -935,6 +935,7 @@ static void R_CreatePlayerTranslation (float h, float s, float v, const FPlayerC
 		return;
 	}
 
+	table->Inactive = false;
 	range = (float)(end-start+1);
 
 	bases = s;
@@ -947,6 +948,7 @@ static void R_CreatePlayerTranslation (float h, float s, float v, const FPlayerC
 
 	if (colorset != NULL)
 	{
+		bool identity = true;
 		// Use the pre-defined range instead of a custom one.
 		if (colorset->Lump < 0)
 		{
@@ -960,7 +962,9 @@ static void R_CreatePlayerTranslation (float h, float s, float v, const FPlayerC
 				int palrange = colorset->LastColor - first;
 				for (i = start; i <= end; ++i)
 				{
-					table->Remap[i] = GPalette.Remap[first + palrange * (i - start) / (end - start)];
+					int pi = first + palrange * (i - start) / (end - start);
+					table->Remap[i] = GPalette.Remap[pi];
+					if (pi != i) identity = false;
 				}
 			}
 		}
@@ -971,6 +975,7 @@ static void R_CreatePlayerTranslation (float h, float s, float v, const FPlayerC
 			for (i = start; i <= end; ++i)
 			{
 				table->Remap[i] = GPalette.Remap[trans[i]];
+				if (trans[i] != i) identity = false;
 			}
 		}
 		for (i = start; i <= end; ++i)
@@ -978,6 +983,8 @@ static void R_CreatePlayerTranslation (float h, float s, float v, const FPlayerC
 			table->Palette[i] = GPalette.BaseColors[table->Remap[i]];
 			table->Palette[i].a = 255;
 		}
+		// If the colorset created an identity translation mark it as inactive
+		table->Inactive = identity;
 	}
 	else if (gameinfo.gametype & GAME_DoomStrifeChex)
 	{
@@ -1083,7 +1090,6 @@ static void R_CreatePlayerTranslation (float h, float s, float v, const FPlayerC
 		}
 		alttable->UpdateNative();
 	}
-	table->Inactive = false;
 	table->UpdateNative();
 }
 

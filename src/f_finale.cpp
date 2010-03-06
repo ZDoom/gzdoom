@@ -762,7 +762,7 @@ void F_CastDrawer (void)
 	FTexture*			pic;
 	
 	// erase the entire screen to a background
-	screen->DrawTexture (TexMan[GStrings("BOSSBACK")], 0, 0,
+	screen->DrawTexture (TexMan[GStrings("bgcastcall")], 0, 0,
 		DTA_DestWidth, screen->GetWidth(),
 		DTA_DestHeight, screen->GetHeight(),
 		TAG_DONE);

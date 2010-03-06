@@ -79,7 +79,7 @@ const BYTE IcePalette[16][3] =
 FRemapTable::FRemapTable(int count)
 {
 	assert(count <= 256);
-
+	Inactive = false;
 	Alloc(count);
 
 	// Note that the tables are left uninitialized. It is assumed that
@@ -164,6 +164,7 @@ FRemapTable &FRemapTable::operator=(const FRemapTable &o)
 	{
 		Alloc(o.NumEntries);
 	}
+	Inactive = o.Inactive;
 	memcpy(Remap, o.Remap, NumEntries*sizeof(*Remap) + NumEntries*sizeof(*Palette));
 	return *this;
 }
@@ -929,6 +930,7 @@ static void R_CreatePlayerTranslation (float h, float s, float v, const FPlayerC
 	// [GRB] Don't translate skins with color range 0-0 (APlayerPawn default)
 	if (start == 0 && end == 0)
 	{
+		table->Inactive = true;
 		table->UpdateNative();
 		return;
 	}
@@ -1081,6 +1083,7 @@ static void R_CreatePlayerTranslation (float h, float s, float v, const FPlayerC
 		}
 		alttable->UpdateNative();
 	}
+	table->Inactive = false;
 	table->UpdateNative();
 }
 

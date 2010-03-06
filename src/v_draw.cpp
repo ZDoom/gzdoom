@@ -527,6 +527,10 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, double x, double y, DWORD tag
 
 		case DTA_Translation:
 			parms->remap = va_arg(tags, FRemapTable *);
+			if (parms->remap != NULL && parms->remap->Inactive)
+			{ // If it's inactive, pretend we were passed NULL instead.
+				parms->remap = NULL;
+			}
 			break;
 
 		case DTA_ColorOverlay:

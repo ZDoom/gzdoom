@@ -319,7 +319,10 @@ void cht_DoCheat (player_t *player, int cheat)
 				player->mo->special1 = 0;	// required for the Hexen fighter's fist attack. 
 											// This gets set by AActor::Die as flag for the wimpy death and must be reset here.
 				player->mo->SetState (player->mo->SpawnState);
-				player->mo->Translation = TRANSLATION(TRANSLATION_Players, BYTE(player-players));
+				if (!(player->mo->flags2 & MF2_DONTTRANSLATE))
+				{
+					player->mo->Translation = TRANSLATION(TRANSLATION_Players, BYTE(player-players));
+				}
 				player->mo->DamageType = NAME_None;
 //				player->mo->GiveDefaultInventory();
 				if (player->ReadyWeapon != NULL)

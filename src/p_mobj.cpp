@@ -3980,11 +3980,15 @@ APlayerPawn *P_SpawnPlayer (FMapThing *mthing, bool tempplayer)
 	p->userinfo.skin = R_FindSkin (skins[p->userinfo.skin].name, p->CurrentPlayerClass);
 	StatusBar->SetFace (&skins[p->userinfo.skin]);
 
-	// [RH] Be sure the player has the right translation
-	R_BuildPlayerTranslation (playernum);
 
-	// [RH] set color translations for player sprites
-	mobj->Translation = TRANSLATION(TRANSLATION_Players,playernum);
+	if (!(mobj->flags2 & MF2_DONTTRANSLATE))
+	{
+		// [RH] Be sure the player has the right translation
+		R_BuildPlayerTranslation (playernum);
+
+		// [RH] set color translations for player sprites
+		mobj->Translation = TRANSLATION(TRANSLATION_Players,playernum);
+	}
 
 	mobj->angle = spawn_angle;
 	mobj->pitch = mobj->roll = 0;

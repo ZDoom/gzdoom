@@ -548,6 +548,14 @@ static oldmenuitem_t PlayerSetupMenu[] =
 	{ 2,0,'a',NULL,M_ChangeAutoAim, CR_UNTRANSLATED}
 };
 
+enum
+{
+	// These must be changed if the menu definition is altered
+	PSM_RED = 3,
+	PSM_GREEN = 4,
+	PSM_BLUE = 5,
+};
+
 static oldmenu_t PSetupDef =
 {
 	countof(PlayerSetupMenu),
@@ -2752,6 +2760,11 @@ static void M_ChangeColorSet (int choice)
 		curpos = -1;
 	}
 	mycolorset = (curpos >= 0) ? PlayerColorSets[curpos] : -1;
+
+	// disable the sliders if a valid colorset is selected
+	PlayerSetupMenu[PSM_RED].status =
+	PlayerSetupMenu[PSM_GREEN].status =
+	PlayerSetupMenu[PSM_BLUE].status = (mycolorset == -1? 2:-1);
 
 	char command[24];
 	mysnprintf(command, countof(command), "colorset %d", mycolorset);

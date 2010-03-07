@@ -55,10 +55,6 @@
 
 static FRandom pr_skullpop ("SkullPop");
 
-// Color set class name -> mapping table
-typedef TMap<int, FPlayerColorSet> FPlayerColorSetMap;
-TMap<FName, FPlayerColorSetMap *> PlayerToColorsMap;
-
 // [RH] # of ticks to complete a turn180
 #define TURN180_TICKS	((TICRATE / 4) + 1)
 
@@ -2635,39 +2631,25 @@ void player_t::Serialize (FArchive &arc)
 }
 
 
-static FPlayerColorSetMap *GetPlayerColors(FName classname, bool create)
+static FPlayerColorSetMap *GetPlayerColors(FName classname)
 {
-	FPlayerColorSetMap *map, **value;
+	const PClass *cls = PClass::FindClass(classname);
 
-	value = PlayerToColorsMap.CheckKey(classname);
-	if (value == NULL)
+	if (cls != NULL)
 	{
-		if (create)
+		FActorInfo *inf = cls->ActorInfo;
+
+		if (inf != NULL)
 		{
-			map = new FPlayerColorSetMap;
-			PlayerToColorsMap.Insert(classname, map);
-		}
-		else
-		{
-			map = NULL;
+			return inf->ColorSets;
 		}
 	}
-	else
-	{
-		map = *value;
-	}
-	return map;
-}
-
-void P_AddPlayerColorSet(FName classname, int setnum, const FPlayerColorSet *colorset)
-{
-	FPlayerColorSetMap *map = GetPlayerColors(classname, true);
-	(*map)[setnum] = *colorset;
+	return NULL;
 }
 
 FPlayerColorSet *P_GetPlayerColorSet(FName classname, int setnum)
 {
-	FPlayerColorSetMap *map = GetPlayerColors(classname, false);
+	FPlayerColorSetMap *map = GetPlayerColors(classname);
 	if (map == NULL)
 	{
 		return NULL;
@@ -2683,7 +2665,7 @@ static int STACK_ARGS intcmp(const void *a, const void *b)
 void P_EnumPlayerColorSets(FName classname, TArray<int> *out)
 {
 	out->Clear();
-	FPlayerColorSetMap *map = GetPlayerColors(classname, false);
+	FPlayerColorSetMap *map = GetPlayerColors(classname);
 	if (map != NULL)
 	{
 		FPlayerColorSetMap::Iterator it(*map);

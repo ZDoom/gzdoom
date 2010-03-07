@@ -141,6 +141,11 @@ void PClass::StaticFreeData (PClass *type)
 			delete type->ActorInfo->PainChances;
 			type->ActorInfo->PainChances = NULL;
 		}
+		if (type->ActorInfo->ColorSets != NULL)
+		{
+			delete type->ActorInfo->ColorSets;
+			type->ActorInfo->ColorSets = NULL;
+		}
 		delete type->ActorInfo;
 		type->ActorInfo = NULL;
 	}
@@ -311,6 +316,7 @@ PClass *PClass::CreateDerivedClass (FName name, unsigned int size)
 		info->StateList = NULL;
 		info->DamageFactors = NULL;
 		info->PainChances = NULL;
+		info->ColorSets = NULL;
 		m_RuntimeActors.Push (type);
 	}
 	return type;

@@ -71,18 +71,6 @@ enum
 	APMETA_Slot9,
 };
 
-// Standard pre-defined skin colors
-struct FPlayerColorSet
-{
-	FName Name;			// Name of this color
-
-	int Lump;			// Lump to read the translation from, otherwise use next 2 fields
-	BYTE FirstColor, LastColor;		// Describes the range of colors to use for the translation
-
-	BYTE RepresentativeColor;		// A palette entry representative of this translation,
-									// for map arrows and status bar backgrounds and such
-};
-void P_AddPlayerColorSet(FName classname, int setnum, const FPlayerColorSet *colorset);
 FPlayerColorSet *P_GetPlayerColorSet(FName classname, int setnum);
 void P_EnumPlayerColorSets(FName classname, TArray<int> *out);
 

@@ -159,6 +159,12 @@ FActorInfo *CreateNewActor(const FScriptPosition &sc, FName typeName, FName pare
 		info->PainChances = new PainChanceList;
 		*info->PainChances = *parent->ActorInfo->PainChances;
 	}
+	if (parent->ActorInfo->ColorSets != NULL)
+	{
+		// copy color sets from parent
+		info->ColorSets = new FPlayerColorSetMap;
+		*info->ColorSets = *parent->ActorInfo->ColorSets;
+	}
 	info->Replacee = info->Replacement = NULL;
 	info->DoomEdNum = -1;
 	return info;

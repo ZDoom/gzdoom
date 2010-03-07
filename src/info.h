@@ -145,8 +145,21 @@ FArchive &operator<< (FArchive &arc, FState *&state);
 
 #include "gametype.h"
 
+// Standard pre-defined skin colors
+struct FPlayerColorSet
+{
+	FName Name;			// Name of this color
+
+	int Lump;			// Lump to read the translation from, otherwise use next 2 fields
+	BYTE FirstColor, LastColor;		// Describes the range of colors to use for the translation
+
+	BYTE RepresentativeColor;		// A palette entry representative of this translation,
+									// for map arrows and status bar backgrounds and such
+};
+
 typedef TMap<FName, fixed_t> DmgFactors;
 typedef TMap<FName, BYTE> PainChanceList;
+typedef TMap<int, FPlayerColorSet> FPlayerColorSetMap;
 
 struct FActorInfo
 {
@@ -158,6 +171,7 @@ struct FActorInfo
 	void RegisterIDs ();
 	void SetDamageFactor(FName type, fixed_t factor);
 	void SetPainChance(FName type, int chance);
+	void SetColorSet(int index, const FPlayerColorSet *set);
 
 	FState *FindState (int numnames, FName *names, bool exact=false) const;
 	FState *FindStateByString(const char *name, bool exact=false);
@@ -177,9 +191,10 @@ struct FActorInfo
 	BYTE GameFilter;
 	BYTE SpawnID;
 	SWORD DoomEdNum;
-	FStateLabels * StateList;
+	FStateLabels *StateList;
 	DmgFactors *DamageFactors;
-	PainChanceList * PainChances;
+	PainChanceList *PainChances;
+	FPlayerColorSetMap *ColorSets;
 };
 
 class FDoomEdMap

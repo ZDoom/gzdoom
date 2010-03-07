@@ -358,8 +358,7 @@ DEFINE_PROPERTY(painchance, ZI, Actor)
 		if (!stricmp(str, "Normal")) painType = NAME_None;
 		else painType=str;
 
-		if (info->PainChances == NULL) info->PainChances=new PainChanceList;
-		(*info->PainChances)[painType] = (BYTE)id;
+		info->SetPainChance(painType, id);
 	}
 }
 
@@ -953,13 +952,11 @@ DEFINE_PROPERTY(damagefactor, ZF, Actor)
 	}
 	else
 	{
-		if (info->DamageFactors == NULL) info->DamageFactors=new DmgFactors;
-
 		FName dmgType;
 		if (!stricmp(str, "Normal")) dmgType = NAME_None;
 		else dmgType=str;
 
-		(*info->DamageFactors)[dmgType]=id;
+		info->SetDamageFactor(dmgType, id);
 	}
 }
 
@@ -1884,7 +1881,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, colorset, ISIII, PlayerPawn)
 	}
 	else
 	{
-		P_AddPlayerColorSet(info->Class->TypeName, setnum, &color);
+		info->SetColorSet(setnum, &color);
 	}
 }
 
@@ -1908,9 +1905,27 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, colorsetfile, ISSI, PlayerPawn)
 	}
 	else if (color.Lump >= 0)
 	{
-		P_AddPlayerColorSet(info->Class->TypeName, setnum, &color);
+		info->SetColorSet(setnum, &color);
 	}
 }
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_CLASS_PROPERTY_PREFIX(player, clearcolorset, I, PlayerPawn)
+{
+	PROP_INT_PARM(setnum, 0);
+
+	if (setnum < 0)
+	{
+		bag.ScriptPosition.Message(MSG_WARNING, "Color set number must not be negative.\n");
+	}
+	else
+	{
+		info->SetColorSet(setnum, NULL);
+	}
+}
+
 //==========================================================================
 //
 //==========================================================================

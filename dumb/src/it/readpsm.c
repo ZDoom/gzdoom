@@ -1271,7 +1271,7 @@ DUH *DUMBEXPORT dumb_read_psm_quick(DUMBFILE *f, int subsong)
 		if ( ver )
 		{
 			tag[2][0] = "FORMATVERSION";
-			sprintf(version, "%d", ver);
+			itoa(ver, version, 10);
 			tag[2][1] = (const char *) &version;
 			++n_tags;
 		}

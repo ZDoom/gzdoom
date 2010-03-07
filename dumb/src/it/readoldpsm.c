@@ -291,7 +291,7 @@ static int it_old_psm_read_patterns(IT_PATTERN * pattern, DUMBFILE * f, int num,
 				if (channel >= chans)
 				{
 					//channel = 0;
-					goto error_fb;
+					//goto error_fb;
 				}
 				if (flags & 0x80) {
 					if ((*ptr < 60) && (channel < pchans)) {

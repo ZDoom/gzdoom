@@ -64,7 +64,7 @@ ACTOR FighterPlayer : PlayerPawn
 		Stop		
 	XDeath:
 		PLAY O 5 A_PlayerScream
-		PLAY P 5 A_SkullPop
+		PLAY P 5 A_SkullPop("BloodyFighterSkull")
 		PLAY R 5 A_NoBlocking
 		PLAY STUV 5
 		PLAY W -1
@@ -99,3 +99,28 @@ ACTOR FighterPlayer : PlayerPawn
 	}
 }
 
+// The fighter's bloody skull --------------------------------------------------------------
+
+Actor BloodyFighterSkull : PlayerChunk
+{
+	Game Hexen
+	Radius 4
+	Height 4
+	+NOBLOCKMAP
+	+DROPOFF
+	+LOWGRAVITY
+	+CANNOTPUSH
+	+SKYEXPLODE
+	+NOBLOCKMONST
+	+NOSKIN
+	States
+	{
+	Spawn:
+		BSKL A 0
+		BSKL ABCDFGH 5 A_CheckFloor("Hit")
+		Goto Spawn+1
+	Hit:
+		BSKL I 16 A_CheckPlayerDone
+		Wait
+	}
+}

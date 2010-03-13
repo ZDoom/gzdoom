@@ -1929,10 +1929,23 @@ void G_ParseMapInfo (const char *basemapinfo)
 		parse.ParseMapInfo(Wads.GetNumForFullName(basemapinfo), gamedefaults, defaultinfo);
 	}
 
+	static const char *mapinfonames[] = { "MAPINFO", "ZMAPINFO", NULL };
+	int nindex;
+
 	// Parse any extra MAPINFOs.
-	while ((lump = Wads.FindLump ("MAPINFO", &lastlump)) != -1)
+	while ((lump = Wads.FindLumpMulti (mapinfonames, &lastlump, false, &nindex)) != -1)
 	{
-		FMapInfoParser parse;
+		if (nindex == 0)
+		{
+			// If this lump is named MAPINFO we need to check if the same WAD contains a ZMAPINFO lump.
+			// If that exists we need to skip this one.
+
+			int wad = Wads.GetLumpFile(lump);
+			int altlump = Wads.CheckNumForName("ZMAPINFO", ns_global, wad, true);
+
+			if (altlump >= 0) continue;
+		}
+		FMapInfoParser parse(nindex == 1? FMapInfoParser::FMT_New : FMapInfoParser::FMT_Unknown);
 		level_info_t defaultinfo;
 		parse.ParseMapInfo(lump, gamedefaults, defaultinfo);
 	}

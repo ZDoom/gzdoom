@@ -68,9 +68,9 @@ struct FMapInfoParser
 	int format_type;
 	bool HexenHack;
 
-	FMapInfoParser()
+	FMapInfoParser(int format = FMT_Unknown)
 	{
-		format_type = FMT_Unknown;
+		format_type = format;
 		HexenHack = false;
 	}
 

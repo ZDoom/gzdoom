@@ -148,17 +148,13 @@ int Q_filelength (FILE *f)
 
 bool FileExists (const char *filename)
 {
-	FILE *f;
+	struct stat buff;
 
 	// [RH] Empty filenames are never there
 	if (filename == NULL || *filename == 0)
 		return false;
 
-	f = fopen (filename, "r");
-	if (!f)
-		return false;
-	fclose (f);
-	return true;
+	return stat(filename, &buff) == 0 && !(buff.st_mode & S_IFDIR);
 }
 
 //==========================================================================

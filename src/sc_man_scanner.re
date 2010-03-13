@@ -96,6 +96,12 @@ std2:
 		'sound'						{ RET(TK_Sound); }
 		'state'						{ RET(TK_State); }
 		'color'						{ RET(TK_Color); }
+		'vector'					{ RET(TK_Vector); }
+		'map'						{ RET(TK_Map); }
+		'array'						{ RET(TK_Array); }
+		'in'						{ RET(TK_In); }
+		'sizeof'					{ RET(TK_SizeOf); }
+		'alignof'					{ RET(TK_AlignOf); }
 
 		/* Other keywords from UnrealScript */
 		'abstract'					{ RET(TK_Abstract); }
@@ -138,6 +144,9 @@ std2:
 		'self'						{ RET(TK_Self); }
 		'stop'						{ RET(TK_Stop); }
 
+		'is'						{ RET(TK_Is); }
+		'replaces'					{ RET(TK_Replaces); }
+
 		/* Needed for decorate action functions */
 		'action'					{ RET(TK_Action); }
 
@@ -164,6 +173,7 @@ std2:
 		(['] (any\[\n'])* ['])
 									{ RET(TK_NameConst); }
 
+		".."						{ RET(TK_DotDot); }
 		"..."						{ RET(TK_Ellipsis); }
 		">>>="						{ RET(TK_URShiftEq); }
 		">>="						{ RET(TK_RShiftEq); }
@@ -187,6 +197,9 @@ std2:
 		">="						{ RET(TK_Geq); }
 		"=="						{ RET(TK_Eq); }
 		"!="						{ RET(TK_Neq); }
+		"~=="						{ RET(TK_ApproxEq); }
+		"<>="						{ RET(TK_LtGtEq); }
+		"**"						{ RET(TK_MulMul); }
 		";"							{ RET(';'); }
 		"{"							{ RET('{'); }
 		"}"							{ RET('}'); }

@@ -1502,6 +1502,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\sc_man_tokens.h"
+				>
+			</File>
+			<File
 				RelativePath=".\src\skins.h"
 				>
 			</File>

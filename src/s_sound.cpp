@@ -1922,8 +1922,8 @@ static void S_SetListener(SoundListener &listener, AActor *listenactor)
 		*/
 		listener.velocity.Zero();
 		listener.position.X = FIXED2FLOAT(listenactor->x);
-		listener.position.Y = FIXED2FLOAT(listenactor->y);
-		listener.position.Z = FIXED2FLOAT(listenactor->z);
+		listener.position.Y = FIXED2FLOAT(listenactor->z);
+		listener.position.Z = FIXED2FLOAT(listenactor->y);
 		listener.underwater = listenactor->waterlevel == 3;
 		assert(zones != NULL);
 		listener.Environment = zones[listenactor->Sector->ZoneNumber].Environment;

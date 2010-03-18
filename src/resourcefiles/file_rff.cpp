@@ -163,17 +163,19 @@ bool FRFFFile::Open(bool quiet)
 		{
 			Lumps[i].Namespace = ns_global;
 		}
-
 		Lumps[i].Position = LittleLong(lumps[i].FilePos);
 		Lumps[i].LumpSize = LittleLong(lumps[i].Size);
 		Lumps[i].Owner = this;
-		if (lumps[i].Flags & 0x10) Lumps[i].Flags |= LUMPF_BLOODCRYPT;
-
+		if (lumps[i].Flags & 0x10)
+		{
+			Lumps[i].Flags |= LUMPF_BLOODCRYPT;
+		}
 		// Rearrange the name and extension in a part of the lump record
-		// that I don't have any use for in order to cnstruct the fullname.
+		// that I don't have any use for in order to construct the fullname.
 		lumps[i].Name[8] = '\0';
 		strcpy ((char *)lumps[i].IDontKnow, lumps[i].Name);
 		strcat ((char *)lumps[i].IDontKnow, ".");
+		lumps[i].Name[0] = '\0';
 		strcat ((char *)lumps[i].IDontKnow, lumps[i].Extension);
 		Lumps[i].LumpNameSetup((char *)lumps[i].IDontKnow);
 	}
@@ -183,7 +185,10 @@ bool FRFFFile::Open(bool quiet)
 
 FRFFFile::~FRFFFile()
 {
-	if (Lumps != NULL) delete [] Lumps;
+	if (Lumps != NULL)
+	{
+		delete[] Lumps;
+	}
 }
 
 

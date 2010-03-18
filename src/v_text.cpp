@@ -317,7 +317,8 @@ FBrokenLines *V_BreakLines (FFont *font, int maxwidth, const BYTE *string)
 	FBrokenLines lines[128];	// Support up to 128 lines (should be plenty)
 
 	const BYTE *space = NULL, *start = string;
-	int i, c, w, nw;
+	size_t i, ii;
+	int c, w, nw;
 	FString lastcolor, linecolor;
 	bool lastWasSpace = false;
 	int kerning = font->GetDefaultKerning ();
@@ -418,11 +419,11 @@ FBrokenLines *V_BreakLines (FFont *font, int maxwidth, const BYTE *string)
 	// Make a copy of the broken lines and return them
 	FBrokenLines *broken = new FBrokenLines[i+1];
 
-	for (c = 0; c < i; ++c)
+	for (ii = 0; ii < i; ++ii)
 	{
-		broken[c] = lines[c];
+		broken[ii] = lines[ii];
 	}
-	broken[c].Width = -1;
+	broken[ii].Width = -1;
 
 	return broken;
 }

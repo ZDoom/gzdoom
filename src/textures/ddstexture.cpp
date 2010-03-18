@@ -769,7 +769,7 @@ void FDDSTexture::DecompressDXT5 (FWadLump &lump, bool premultiplied, BYTE *tcbu
 	BYTE *block;
 	PalEntry color[4];
 	BYTE palcol[4];
-	DWORD yalphaslice;
+	DWORD yalphaslice = 0;
 	int ox, oy, x, y, i;
 
 	for (oy = 0; oy < Height; oy += 4)

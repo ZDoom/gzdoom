@@ -404,7 +404,8 @@ MapData *P_OpenMapData(const char * mapname)
 		}
 	}
 	DWORD id;
-	(*map->file) >> id;
+
+	map->file->Read(&id, sizeof(id));
 	
 	if (id == IWAD_ID || id == PWAD_ID)
 	{

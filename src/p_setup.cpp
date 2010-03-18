@@ -294,8 +294,10 @@ MapData *P_OpenMapData(const char * mapname)
 			{
 				// The following lump is from a different file so whatever this is,
 				// it is not a multi-lump Doom level so let's assume it is a Build map.
-				map->MapLumps[0].FilePos = Wads.GetLumpOffset(lump_name);
+				map->MapLumps[0].FilePos = 0;
 				map->MapLumps[0].Size = Wads.LumpLength(lump_name);
+				map->file = Wads.ReopenLumpNum(lump_name);
+				map->CloseOnDestruct = true;
 				if (!P_IsBuildMap(map))
 				{
 					delete map;
@@ -312,6 +314,9 @@ MapData *P_OpenMapData(const char * mapname)
 
 			if (map->Encrypted)
 			{ // If it's encrypted, then it's a Blood file, presumably a map.
+				map->file = Wads.ReopenLumpNum(lump_name);
+				map->CloseOnDestruct = true;
+				map->MapLumps[0].FilePos = 0;
 				if (!P_IsBuildMap(map))
 				{
 					delete map;
@@ -322,7 +327,7 @@ MapData *P_OpenMapData(const char * mapname)
 
 			int index = 0;
 
-			if (stricmp(Wads.GetLumpFullName(lump_name + 1), "TEXTMAP"))
+			if (stricmp(Wads.GetLumpFullName(lump_name + 1), "TEXTMAP") != 0)
 			{
 				for(int i = 1;; i++)
 				{
@@ -3380,7 +3385,7 @@ void P_SetupLevel (char *lumpname, int position)
 	P_FreeLevelData ();
 	interpolator.ClearInterpolations();	// [RH] Nothing to interpolate on a fresh level.
 
-	MapData * map = P_OpenMapData(lumpname);
+	MapData *map = P_OpenMapData(lumpname);
 	if (map == NULL)
 	{
 		I_Error("Unable to open map '%s'\n", lumpname);
@@ -3396,11 +3401,9 @@ void P_SetupLevel (char *lumpname, int position)
 		BYTE *mapdata = new BYTE[map->MapLumps[0].Size];
 		map->Seek(0);
 		map->file->Read(mapdata, map->MapLumps[0].Size);
-		if (map->Encrypted)
-		{
-			BloodCrypt (mapdata, 0, MIN<int> (map->MapLumps[0].Size, 256));
-		}
+		times[0].Clock();
 		buildmap = P_LoadBuildMap (mapdata, map->MapLumps[0].Size, &buildthings, &numbuildthings);
+		times[0].Unclock();
 		delete[] mapdata;
 	}
 

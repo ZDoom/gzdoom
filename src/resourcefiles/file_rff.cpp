@@ -197,8 +197,14 @@ FileReader *FRFFLump::GetReader()
 {
 	// Don't return the reader if this lump is encrypted
 	// In that case always force caching of the lump
-	if (!(Flags & LUMPF_BLOODCRYPT)) return FUncompressedLump::GetReader();
-	else return NULL;	
+	if (!(Flags & LUMPF_BLOODCRYPT))
+	{
+		return FUncompressedLump::GetReader();
+	}
+	else
+	{
+		return NULL;
+	}
 }
 
 //==========================================================================

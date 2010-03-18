@@ -145,8 +145,10 @@ static void Decrypt (void *to, const void *from, int len, int key);
 bool P_IsBuildMap(MapData *map)
 {
 	DWORD len = map->Size(ML_LABEL);
-	if (len < 4) return false;
-
+	if (len < 4)
+	{
+		return false;
+	}
 	BYTE *data = new BYTE[len];
 
 	map->Seek(ML_LABEL);

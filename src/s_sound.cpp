@@ -1217,7 +1217,7 @@ void S_SoundMinMaxDist(AActor *ent, int channel, FSoundID sound_id, float volume
 
 	FRolloffInfo rolloff;
 
-	rolloff.RolloffType = ROLLOFF_Doom;
+	rolloff.RolloffType = ROLLOFF_Linear;
 	rolloff.MinDistance = mindist;
 	rolloff.MaxDistance = maxdist;
 	S_StartSound(ent, NULL, NULL, NULL, channel, sound_id, volume, 1, &rolloff);

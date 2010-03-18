@@ -831,7 +831,7 @@ void FDDSTexture::DecompressDXT5 (FWadLump &lump, bool premultiplied, BYTE *tcbu
 					break;
 				}
 				// Alpha values are stored in 3 bytes for 2 rows
-				if ((y & 0) == 0)
+				if ((y & 1) == 0)
 				{
 					yalphaslice = block[y*3] | (block[y*3+1] << 8) | (block[y*3+2] << 16);
 				}

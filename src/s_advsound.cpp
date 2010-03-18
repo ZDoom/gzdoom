@@ -1990,7 +1990,7 @@ void AAmbientSound::Tick ()
 		{
 			float min = float(args[2]), max = float(args[3]);
 			// The fifth argument acts as a scalar for the preceding two, if it's non-zero.
-			if (args[4] != 0)
+			if (args[4] > 0)
 			{
 				min *= args[4];
 				max *= args[4];

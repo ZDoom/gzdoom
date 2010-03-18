@@ -1973,7 +1973,7 @@ void AAmbientSound::Tick ()
 	if (ambient->sound.IsNotEmpty())
 	{
 		// The second argument scales the ambient sound's volume.
-		// 0 and 128 are normal volume. The maximum volume level
+		// 0 and 100 are normal volume. The maximum volume level
 		// possible is always 1.
 		float volscale = args[1] == 0 ? 1 : args[1] / 100.f;
 		float usevol = clamp(ambient->volume * volscale, 0.f, 1.f);

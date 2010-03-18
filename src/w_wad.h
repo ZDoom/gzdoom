@@ -195,6 +195,7 @@ public:
 	FString GetLumpFullPath (int lump) const;		// [RH] Returns wad's name + lump's full name
 	int GetLumpFile (int lump) const;				// [RH] Returns wadnum for a specified lump
 	int GetLumpNamespace (int lump) const;			// [RH] Returns the namespace a lump belongs to
+	int GetLumpIndexNum (int lump) const;			// Returns the RFF index number for this lump
 	bool CheckLumpName (int lump, const char *name) const;	// [RH] Returns true if the names match
 
 	bool IsUncompressedFile(int lump) const;

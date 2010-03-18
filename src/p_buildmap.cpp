@@ -109,6 +109,21 @@ struct spritetype
 	SWORD lotag, hitag, extra;
 };
 
+// I used to have all the Xobjects mapped out. Not anymore.
+// (Thanks for the great firmware, Seagate!)
+struct Xsprite
+{
+	BYTE NotReallyPadding[16];
+	WORD Data1;
+	WORD Data2;
+	WORD Data3;
+	WORD ThisIsntPaddingEither;
+	DWORD NorThis:2;
+	DWORD Data4:16;
+	DWORD WhatIsThisIDontEven:14;
+	BYTE ThisNeedsToBe56Bytes[28];
+};
+
 struct SlopeWork
 {
 	walltype *wal;
@@ -128,7 +143,7 @@ void P_AdjustLine (line_t *line);
 static bool P_LoadBloodMap (BYTE *data, size_t len, FMapThing **sprites, int *numsprites);
 static void LoadSectors (sectortype *bsectors);
 static void LoadWalls (walltype *walls, int numwalls, sectortype *bsectors);
-static int LoadSprites (spritetype *sprites, int numsprites, sectortype *bsectors, FMapThing *mapthings);
+static int LoadSprites (spritetype *sprites, Xsprite *xsprites, int numsprites, sectortype *bsectors, FMapThing *mapthings);
 static vertex_t *FindVertex (fixed_t x, fixed_t y);
 static void CreateStartSpot (fixed_t *pos, FMapThing *start);
 static void CalcPlane (SlopeWork &slope, secplane_t &plane);
@@ -217,7 +232,7 @@ bool P_LoadBuildMap (BYTE *data, size_t len, FMapThing **sprites, int *numspr)
 	*sprites = new FMapThing[numsprites + 1];
 	CreateStartSpot ((fixed_t *)(data + 4), *sprites);
 	*numspr = 1 + LoadSprites ((spritetype *)(data + 26 + numsectors*sizeof(sectortype) + numwalls*sizeof(walltype)),
-		numsprites, (sectortype *)(data + 22), *sprites + 1);
+		NULL, numsprites, (sectortype *)(data + 22), *sprites + 1);
 
 	return true;
 }
@@ -277,6 +292,7 @@ static bool P_LoadBloodMap (BYTE *data, size_t len, FMapThing **mapthings, int *
 	sectortype *bsec = new sectortype[numsectors];
 	walltype *bwal = new walltype[numWalls];
 	spritetype *bspr = new spritetype[numsprites];
+	Xsprite *xspr = new Xsprite[numsprites];
 
 	// Read sectors
 	k = numRevisions * sizeof(sectortype);
@@ -329,9 +345,15 @@ static bool P_LoadBloodMap (BYTE *data, size_t len, FMapThing **mapthings, int *
 			memcpy (&bspr[i], data, sizeof(spritetype));
 		}
 		data += sizeof(spritetype);
-		if (bspr[i].extra > 0)	// skip Xsprite
+		if (bspr[i].extra > 0)	// copy Xsprite
 		{
-			data += 56;
+			assert(sizeof Xsprite == 56);
+			memcpy(&xspr[i], data, sizeof(Xsprite));
+			data += sizeof(Xsprite);
+		}
+		else
+		{
+			memset(&xspr[i], 0, sizeof(Xsprite));
 		}
 	}
 
@@ -341,11 +363,12 @@ static bool P_LoadBloodMap (BYTE *data, size_t len, FMapThing **mapthings, int *
 	LoadWalls (bwal, numWalls, bsec);
 	*mapthings = new FMapThing[numsprites + 1];
 	CreateStartSpot ((fixed_t *)infoBlock, *mapthings);
-	*numspr = 1 + LoadSprites (bspr, numsprites, bsec, *mapthings + 1);
+	*numspr = 1 + LoadSprites (bspr, xspr, numsprites, bsec, *mapthings + 1);
 
 	delete[] bsec;
 	delete[] bwal;
 	delete[] bspr;
+	delete[] xspr;
 
 	return true;
 }
@@ -658,32 +681,45 @@ static void LoadWalls (walltype *walls, int numwalls, sectortype *bsec)
 //
 //==========================================================================
 
-static int LoadSprites (spritetype *sprites, int numsprites, sectortype *bsectors,
-						 FMapThing *mapthings)
+static int LoadSprites (spritetype *sprites, Xsprite *xsprites, int numsprites,
+	sectortype *bsectors, FMapThing *mapthings)
 {
 	int count = 0;
 
 	for (int i = 0; i < numsprites; ++i)
 	{
-		if (sprites[i].cstat & (16|32|32768)) continue;
-		if (sprites[i].xrepeat == 0 || sprites[i].yrepeat == 0) continue;
-
 		mapthings[count].thingid = 0;
 		mapthings[count].x = (sprites[i].x << 12);
 		mapthings[count].y = -(sprites[i].y << 12);
 		mapthings[count].z = (bsectors[sprites[i].sectnum].floorz - sprites[i].z) << 8;
 		mapthings[count].angle = (((2048-sprites[i].ang) & 2047) * 360) >> 11;
-		mapthings[count].type = 9988;
 		mapthings[count].ClassFilter = 0xffff;
 		mapthings[count].SkillFilter = 0xffff;
 		mapthings[count].flags = MTF_SINGLE|MTF_COOPERATIVE|MTF_DEATHMATCH;
 		mapthings[count].special = 0;
 
-		mapthings[count].args[0] = sprites[i].picnum & 255;
-		mapthings[count].args[1] = sprites[i].picnum >> 8;
-		mapthings[count].args[2] = sprites[i].xrepeat;
-		mapthings[count].args[3] = sprites[i].yrepeat;
-		mapthings[count].args[4] = (sprites[i].cstat & 14) | ((sprites[i].cstat >> 9) & 1);
+		if (xsprites != NULL && sprites[i].lotag == 710)
+		{ // Blood ambient sound
+			mapthings[count].args[0] = xsprites[i].Data3;
+			// I am totally guessing abount the volume level. 50 seems to be a pretty
+			// typical value for Blood's standard maps, so I assume it's 100-based.
+			mapthings[count].args[1] = xsprites[i].Data4 * 128 / 100;
+			mapthings[count].args[2] = xsprites[i].Data1;
+			mapthings[count].args[3] = xsprites[i].Data2;
+			mapthings[count].type = 14065;
+		}
+		else
+		{
+			if (sprites[i].cstat & (16|32|32768)) continue;
+			if (sprites[i].xrepeat == 0 || sprites[i].yrepeat == 0) continue;
+
+			mapthings[count].type = 9988;
+			mapthings[count].args[0] = sprites[i].picnum & 255;
+			mapthings[count].args[1] = sprites[i].picnum >> 8;
+			mapthings[count].args[2] = sprites[i].xrepeat;
+			mapthings[count].args[3] = sprites[i].yrepeat;
+			mapthings[count].args[4] = (sprites[i].cstat & 14) | ((sprites[i].cstat >> 9) & 1);
+		}
 		count++;
 	}
 	return count;

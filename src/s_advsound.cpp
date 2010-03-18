@@ -1365,7 +1365,16 @@ static void S_AddBloodSFX (int lumpnum)
 			S_sfx[sfxnum].bForce11025 = true;
 		}
 		S_sfx[sfxnum].bLoadRAW = true;
-		S_sfx[sfxnum].LoopStart = LittleLong(sfx->LoopStart);
+		// Make an ambient sound out of it, whether it has a loop point
+		// defined or not. (Because none of the standard Blood ambient
+		// sounds are explicitly defined as looping.)
+		FAmbientSound *ambient = &Ambients[Wads.GetLumpIndexNum(lumpnum)];
+		ambient->type = CONTINUOUS;
+		ambient->periodmin = 0;
+		ambient->periodmax = 0;
+		ambient->volume = 1;
+		ambient->attenuation = 1;
+		ambient->sound = name;
 	}
 }
 

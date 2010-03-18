@@ -79,6 +79,8 @@ struct FRFFLump : public FUncompressedLump
 	virtual int FillCache();
 
 	DWORD		IndexNum;
+
+	int GetIndexNum() const { return IndexNum; }
 };
 
 //==========================================================================

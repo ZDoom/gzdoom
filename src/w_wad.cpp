@@ -969,6 +969,24 @@ int FWadCollection::GetLumpNamespace (int lump) const
 
 //==========================================================================
 //
+// FWadCollection :: GetLumpIndexNum
+//
+// Returns the index number for this lump. This is *not* the lump's position
+// in the lump directory, but rather a special value that RFF can associate
+// with files. Other archive types will return 0, since they don't have it.
+//
+//==========================================================================
+
+int FWadCollection::GetLumpIndexNum(int lump) const
+{
+	if ((size_t)lump >= NumLumps)
+		return 0;
+	else
+		return LumpInfo[lump].lump->GetIndexNum();
+}
+
+//==========================================================================
+//
 // W_GetLumpFile
 //
 //==========================================================================

@@ -108,7 +108,7 @@ static void CalcPosVel(int type, const AActor *actor, const sector_t *sector, co
 static void CalcSectorSoundOrg(const sector_t *sec, int channum, fixed_t *x, fixed_t *y, fixed_t *z);
 static void CalcPolyobjSoundOrg(const FPolyObj *poly, fixed_t *x, fixed_t *y, fixed_t *z);
 static FSoundChan *S_StartSound(AActor *mover, const sector_t *sec, const FPolyObj *poly,
-	const FVector3 *pt, int channel, FSoundID sound_id, float volume, float attenuation);
+	const FVector3 *pt, int channel, FSoundID sound_id, float volume, float attenuation, FRolloffInfo *rolloff);
 static void S_SetListener(SoundListener &listener, AActor *listenactor);
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -808,7 +808,8 @@ static void CalcPolyobjSoundOrg(const FPolyObj *poly, fixed_t *x, fixed_t *y, fi
 //==========================================================================
 
 static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyObj *poly,
-	const FVector3 *pt, int channel, FSoundID sound_id, float volume, float attenuation)
+	const FVector3 *pt, int channel, FSoundID sound_id, float volume, float attenuation,
+	FRolloffInfo *forcedrolloff=NULL)
 {
 	sfxinfo_t *sfx;
 	int chanflags;
@@ -894,7 +895,10 @@ static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyO
 				near_limit = S_sfx[sound_id].NearLimit;
 				limit_range = S_sfx[sound_id].LimitRange;
 			}
-			if (rolloff->MinDistance == 0) rolloff = &S_sfx[sound_id].Rolloff;
+			if (rolloff->MinDistance == 0)
+			{
+				rolloff = &S_sfx[sound_id].Rolloff;
+			}
 		}
 		else
 		{
@@ -904,13 +908,25 @@ static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyO
 				near_limit = S_sfx[sound_id].NearLimit;
 				limit_range = S_sfx[sound_id].LimitRange;
 			}
-			if (rolloff->MinDistance == 0) rolloff = &S_sfx[sound_id].Rolloff;
+			if (rolloff->MinDistance == 0)
+			{
+				rolloff = &S_sfx[sound_id].Rolloff;
+			}
 		}
 		sfx = &S_sfx[sound_id];
 	}
 
-	// If no valid rolloff was set use the global default
-	if (rolloff->MinDistance == 0) rolloff = &S_Rolloff;
+	// The passed rolloff overrides any sound-specific rolloff.
+	if (forcedrolloff != NULL && forcedrolloff->MinDistance != 0)
+	{
+		rolloff = forcedrolloff;
+	}
+
+	// If no valid rolloff was set, use the global default.
+	if (rolloff->MinDistance == 0)
+	{
+		rolloff = &S_Rolloff;
+	}
 
 	// If this is a singular sound, don't play it if it's already playing.
 	if (sfx->bSingular && S_CheckSingular(sound_id))
@@ -1178,6 +1194,27 @@ void S_Sound (AActor *ent, int channel, FSoundID sound_id, float volume, float a
 	if (ent == NULL || ent->Sector->Flags & SECF_SILENT)
 		return;
 	S_StartSound (ent, NULL, NULL, NULL, channel, sound_id, volume, attenuation);
+}
+
+//==========================================================================
+//
+// S_SoundMinMaxDist - An actor is source
+//
+// Attenuation is specified as min and max distances, rather than a scalar.
+//
+//==========================================================================
+
+void S_SoundMinMaxDist(AActor *ent, int channel, FSoundID sound_id, float volume, float mindist, float maxdist)
+{
+	if (ent == NULL || ent->Sector->Flags & SECF_SILENT)
+		return;
+
+	FRolloffInfo rolloff;
+
+	rolloff.RolloffType = ROLLOFF_Doom;
+	rolloff.MinDistance = mindist;
+	rolloff.MaxDistance = maxdist;
+	S_StartSound(ent, NULL, NULL, NULL, channel, sound_id, volume, 1, &rolloff);
 }
 
 //==========================================================================

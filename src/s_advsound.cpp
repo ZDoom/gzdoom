@@ -1912,6 +1912,12 @@ private:
 
 IMPLEMENT_CLASS (AAmbientSound)
 
+//==========================================================================
+//
+// AmbientSound :: Serialize
+//
+//==========================================================================
+
 void AAmbientSound::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
@@ -1948,6 +1954,11 @@ void AAmbientSound::Serialize (FArchive &arc)
 	}
 }
 
+//==========================================================================
+//
+// AmbientSound :: Tick
+//
+//==========================================================================
 
 void AAmbientSound::Tick ()
 {
@@ -1966,7 +1977,24 @@ void AAmbientSound::Tick ()
 
 	if (ambient->sound[0])
 	{
-		S_Sound(this, CHAN_BODY | loop, ambient->sound, ambient->volume, ambient->attenuation);
+		// The second argumens scales the ambient sound's volume.
+		// 0 and 128 are normal volume. The maximum volume level
+		// possible is always 1.
+		float volscale = args[1] == 0 ? 1 : args[1] / 128.f;
+		float usevol = clamp(ambient->volume * volscale, 0.f, 1.f);
+
+		// The third argument is the minimum distance for audible fading, and
+		// the fourth argument is the maximum distance for audibility. Setting
+		// either of these to 0 or setting  min distance > max distance will
+		// use the standard rolloff.
+		if ((args[2] | args[3]) == 0 || args[2] > args[3])
+		{
+			S_Sound(this, CHAN_BODY | loop, ambient->sound, usevol, ambient->attenuation);
+		}
+		else
+		{
+			S_SoundMinMaxDist(this, CHAN_BODY | loop, ambient->sound, usevol, float(args[2]), float(args[3]));
+		}
 		if (!loop)
 		{
 			SetTicker (ambient);
@@ -1982,6 +2010,11 @@ void AAmbientSound::Tick ()
 	}
 }
 
+//==========================================================================
+//
+// AmbientSound :: SetTicker
+//
+//==========================================================================
 
 void AAmbientSound::SetTicker (struct AmbientSound *ambient)
 {
@@ -2001,11 +2034,25 @@ void AAmbientSound::SetTicker (struct AmbientSound *ambient)
 	}
 }
 
+//==========================================================================
+//
+// AmbientSound :: BeginPlay
+//
+//==========================================================================
+
 void AAmbientSound::BeginPlay ()
 {
 	Super::BeginPlay ();
 	Activate (NULL);
 }
+
+//==========================================================================
+//
+// AmbientSound :: Activate
+//
+// Starts playing a sound (or does nothing of the sound is already playing).
+//
+//==========================================================================
 
 void AAmbientSound::Activate (AActor *activator)
 {
@@ -2039,6 +2086,15 @@ void AAmbientSound::Activate (AActor *activator)
 		bActive = true;
 	}
 }
+
+//==========================================================================
+//
+// AmbientSound :: Deactivate
+//
+// Stops playing CONTINUOUS sounds immediately. Also prevents further
+// occurrences of repeated sounds.
+//
+//==========================================================================
 
 void AAmbientSound::Deactivate (AActor *activator)
 {

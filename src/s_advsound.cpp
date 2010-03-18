@@ -1977,7 +1977,7 @@ void AAmbientSound::Tick ()
 
 	if (ambient->sound[0])
 	{
-		// The second argumens scales the ambient sound's volume.
+		// The second argument scales the ambient sound's volume.
 		// 0 and 128 are normal volume. The maximum volume level
 		// possible is always 1.
 		float volscale = args[1] == 0 ? 1 : args[1] / 128.f;

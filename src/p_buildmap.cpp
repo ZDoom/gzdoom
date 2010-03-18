@@ -517,6 +517,8 @@ static void LoadWalls (walltype *walls, int numwalls, sectortype *bsec)
 		}
 
 		sides[i].TexelLength = walls[i].xrepeat * 8;
+		sides[i].SetTextureYScale(walls[i].yrepeat << (FRACBITS - 3));
+		sides[i].SetTextureXScale(FRACUNIT);
 		sides[i].SetLight(SHADE2LIGHT(walls[i].shade));
 		sides[i].Flags = WALLF_ABSLIGHTING;
 		sides[i].RightSide = walls[i].point2;

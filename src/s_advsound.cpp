@@ -114,7 +114,7 @@ protected:
 	void Free ();
 };
 
-static struct AmbientSound
+struct FAmbientSound
 {
 	unsigned	type;		// type of ambient sound
 	int			periodmin;	// # of tics between repeats
@@ -122,7 +122,8 @@ static struct AmbientSound
 	float		volume;		// relative volume of sound
 	float		attenuation;
 	FString		sound;		// Logical name of sound to play
-} *Ambients[256];
+};
+TMap<int, FAmbientSound> Ambients;
 
 enum SICommands
 {
@@ -837,15 +838,7 @@ static void S_ClearSoundData()
 		S_UnloadSound(&S_sfx[i]);
 	}
 	S_sfx.Clear();
-
-	for(i = 0; i < countof(Ambients); i++)
-	{
-		if (Ambients[i] != NULL)
-		{
-			delete Ambients[i];
-			Ambients[i] = NULL;
-		}
-	}
+	Ambients.Clear();
 	while (MusicVolumes != NULL)
 	{
 		FMusicVolume *me = MusicVolumes;
@@ -968,23 +961,10 @@ static void S_AddSNDINFO (int lump)
 				// $ambient <num> <logical name> [point [atten] | surround | [world]]
 				//			<continuous | random <minsecs> <maxsecs> | periodic <secs>>
 				//			<volume>
-				AmbientSound *ambient, dummy;
+				FAmbientSound *ambient;
 
 				sc.MustGetNumber ();
-				if (sc.Number < 0 || sc.Number > 255)
-				{
-					Printf ("Bad ambient index (%d)\n", sc.Number);
-					ambient = &dummy;
-				}
-				else if (Ambients[sc.Number] == NULL)
-				{
-					ambient = new AmbientSound;
-					Ambients[sc.Number] = ambient;
-				}
-				else
-				{
-					ambient = Ambients[sc.Number];
-				}
+				ambient = &Ambients[sc.Number];
 				ambient->type = 0;
 				ambient->periodmin = 0;
 				ambient->periodmax = 0;
@@ -1905,7 +1885,7 @@ public:
 protected:
 	bool bActive;
 private:
-	void SetTicker (struct AmbientSound *ambient);
+	void SetTicker (struct FAmbientSound *ambient);
 	int NextCheck;
 };
 
@@ -1966,15 +1946,21 @@ void AAmbientSound::Tick ()
 	if (!bActive || gametic < NextCheck)
 		return;
 
-	AmbientSound *ambient = Ambients[args[0]];
+	FAmbientSound *ambient;
 	int loop = 0;
+
+	ambient = Ambients.CheckKey(args[0]);
+	if (ambient == NULL)
+	{
+		return;
+	}
 
 	if ((ambient->type & CONTINUOUS) == CONTINUOUS)
 	{
 		loop = CHAN_LOOP;
 	}
 
-	if (ambient->sound[0])
+	if (ambient->sound.IsNotEmpty())
 	{
 		// The second argument scales the ambient sound's volume.
 		// 0 and 128 are normal volume. The maximum volume level
@@ -2015,7 +2001,7 @@ void AAmbientSound::Tick ()
 //
 //==========================================================================
 
-void AAmbientSound::SetTicker (struct AmbientSound *ambient)
+void AAmbientSound::SetTicker (struct FAmbientSound *ambient)
 {
 	if ((ambient->type & CONTINUOUS) == CONTINUOUS)
 	{
@@ -2057,7 +2043,7 @@ void AAmbientSound::Activate (AActor *activator)
 {
 	Super::Activate (activator);
 
-	AmbientSound *amb = Ambients[args[0]];
+	FAmbientSound *amb = Ambients.CheckKey(args[0]);
 
 	if (amb == NULL)
 	{
@@ -2101,7 +2087,8 @@ void AAmbientSound::Deactivate (AActor *activator)
 	if (bActive)
 	{
 		bActive = false;
-		if ((Ambients[args[0]]->type & CONTINUOUS) == CONTINUOUS)
+		FAmbientSound *ambient = Ambients.CheckKey(args[0]);
+		if (ambient != NULL && (ambient->type & CONTINUOUS) == CONTINUOUS)
 		{
 			S_StopSound (this, CHAN_BODY);
 		}

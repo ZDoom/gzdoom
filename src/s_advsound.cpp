@@ -509,6 +509,7 @@ int S_AddSoundLump (const char *logicalname, int lump)
 	newsfx.Rolloff.RolloffType = ROLLOFF_Doom;
 	newsfx.Rolloff.MinDistance = 0;
 	newsfx.Rolloff.MaxDistance = 0;
+	newsfx.LoopStart = -1;
 
 	return (int)S_sfx.Push (newsfx);
 }
@@ -1366,18 +1367,15 @@ static void S_AddSNDINFO (int lump)
 
 static void S_AddBloodSFX (int lumpnum)
 {
-	char name[13];
-	FMemLump sfxlump = Wads.ReadLump (lumpnum);
+	FMemLump sfxlump = Wads.ReadLump(lumpnum);
 	const FBloodSFX *sfx = (FBloodSFX *)sfxlump.GetMem();
-	int rawlump = Wads.CheckNumForName (sfx->RawName, ns_bloodraw);
+	int rawlump = Wads.CheckNumForName(sfx->RawName, ns_bloodraw);
 	int sfxnum;
 
 	if (rawlump != -1)
 	{
-		Wads.GetLumpName (name, lumpnum);
-		name[8] = 0;
-		strcat (name, ".SFX");
-		sfxnum = S_AddSound (name, rawlump);
+		const char *name = Wads.GetLumpFullName(lumpnum);
+		sfxnum = S_AddSound(name, rawlump);
 		if (sfx->Format == 5)
 		{
 			S_sfx[sfxnum].bForce22050 = true;
@@ -1387,6 +1385,7 @@ static void S_AddBloodSFX (int lumpnum)
 			S_sfx[sfxnum].bForce11025 = true;
 		}
 		S_sfx[sfxnum].bLoadRAW = true;
+		S_sfx[sfxnum].LoopStart = LittleLong(sfx->LoopStart);
 	}
 }
 

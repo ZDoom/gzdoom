@@ -2190,12 +2190,16 @@ void FMODSoundRenderer::UpdateSounds()
 //
 //==========================================================================
 
-SoundHandle FMODSoundRenderer::LoadSoundRaw(BYTE *sfxdata, int length, int frequency, int channels, int bits)
+SoundHandle FMODSoundRenderer::LoadSoundRaw(BYTE *sfxdata, int length, int frequency, int channels, int bits, int loopstart)
 {
 	FMOD_CREATESOUNDEXINFO exinfo;
 	SoundHandle retval = { NULL };
+	int numsamples;
 
-	if (length == 0) return retval;
+	if (length <= 0)
+	{
+		return retval;
+	}
 
 	InitCreateSoundExInfo(&exinfo);
 	exinfo.length = length;
@@ -2212,14 +2216,17 @@ SoundHandle FMODSoundRenderer::LoadSoundRaw(BYTE *sfxdata, int length, int frequ
 
 	case -8:
 		exinfo.format = FMOD_SOUND_FORMAT_PCM8;
+		numsamples = length;
 		break;
 
 	case 16:
 		exinfo.format = FMOD_SOUND_FORMAT_PCM16;
+		numsamples = length >> 1;
 		break;
 
 	case 32:
 		exinfo.format = FMOD_SOUND_FORMAT_PCM32;
+		numsamples = length >> 2;
 		break;
 
 	default:
@@ -2236,6 +2243,12 @@ SoundHandle FMODSoundRenderer::LoadSoundRaw(BYTE *sfxdata, int length, int frequ
 		DPrintf("Failed to allocate sample: Error %d\n", result);
 		return retval;
 	}
+
+	if (loopstart >= 0)
+	{
+		sample->setLoopPoints(loopstart, FMOD_TIMEUNIT_PCM, numsamples - 1, FMOD_TIMEUNIT_PCM);
+	}
+
 	retval.data = sample;
 	return retval;
 }

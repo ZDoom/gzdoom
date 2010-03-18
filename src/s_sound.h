@@ -59,6 +59,8 @@ struct sfxinfo_t
 	WORD		bSingular:1;
 	WORD		bTentative:1;
 
+	int			LoopStart;				// -1 means no specific loop defined
+
 	unsigned int link;
 	enum { NO_LINK = 0xffffffff };
 

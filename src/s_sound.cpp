@@ -165,6 +165,7 @@ void S_NoiseDebug (void)
 	screen->DrawText (SmallFont, CR_GOLD, 340, y, "pri", TAG_DONE);
 	screen->DrawText (SmallFont, CR_GOLD, 380, y, "flags", TAG_DONE);
 	screen->DrawText (SmallFont, CR_GOLD, 460, y, "aud", TAG_DONE);
+	screen->DrawText (SmallFont, CR_GOLD, 520, y, "pos", TAG_DONE);
 	y += 8;
 
 	if (Channels == NULL)
@@ -252,6 +253,11 @@ void S_NoiseDebug (void)
 		// Audibility
 		mysnprintf(temp, countof(temp), "%.4f", GSnd->GetAudibility(chan));
 		screen->DrawText(SmallFont, color, 460, y, temp, TAG_DONE);
+
+		// Position
+		mysnprintf(temp, countof(temp), "%u", GSnd->GetPosition(chan));
+		screen->DrawText(SmallFont, color, 520, y, temp, TAG_DONE);
+
 
 		y += 8;
 		if (chan->PrevChan == &Channels)
@@ -1322,7 +1328,7 @@ sfxinfo_t *S_LoadSound(sfxinfo_t *sfx)
 					}
 					sfxstart = sfxdata + 8;
 				}
-				sfx->data = GSnd->LoadSoundRaw(sfxstart, len, frequency, 1, 8);
+				sfx->data = GSnd->LoadSoundRaw(sfxstart, len, frequency, 1, 8, sfx->LoopStart);
 			}
 			else
 			{

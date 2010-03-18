@@ -703,9 +703,10 @@ static int LoadSprites (spritetype *sprites, Xsprite *xsprites, int numsprites,
 			mapthings[count].args[0] = xsprites[i].Data3;
 			// I am totally guessing abount the volume level. 50 seems to be a pretty
 			// typical value for Blood's standard maps, so I assume it's 100-based.
-			mapthings[count].args[1] = xsprites[i].Data4 * 128 / 100;
+			mapthings[count].args[1] = xsprites[i].Data4;
 			mapthings[count].args[2] = xsprites[i].Data1;
 			mapthings[count].args[3] = xsprites[i].Data2;
+			mapthings[count].args[4] = 0;
 			mapthings[count].type = 14065;
 		}
 		else

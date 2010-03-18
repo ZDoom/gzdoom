@@ -158,7 +158,7 @@ const BYTE *FBuildTexture::GetColumn (unsigned int column, const Span **spans_ou
 //
 //===========================================================================
 
-static void AddTiles (void *tiles)
+void AddTiles (void *tiles)
 {
 //	int numtiles = LittleLong(((DWORD *)tiles)[1]);	// This value is not reliable
 	int tilestart = LittleLong(((DWORD *)tiles)[2]);
@@ -224,29 +224,29 @@ static void AddTiles (void *tiles)
 		if (rotType == 1)
 		{
 			spriteframe_t rot;
-			rot.Texture[0] = texnum;
+			rot.Texture[0] =
 			rot.Texture[1] = texnum;
 			for (int j = 1; j < 4; ++j)
 			{
-				rot.Texture[j*2] = texnum + j;
-				rot.Texture[j*2+1] = texnum + j;
-				rot.Texture[16-j*2] = texnum + j;
-				rot.Texture[17-j*2] = texnum + j;
+				rot.Texture[j*2] =
+				rot.Texture[j*2+1] =
+				rot.Texture[16-j*2] =
+				rot.Texture[17-j*2] = texnum.GetIndex() + j;
 			}
-			rot.Texture[8] = texnum + 4;
-			rot.Texture[9] = texnum + 4;
+			rot.Texture[8] =
+			rot.Texture[9] = texnum.GetIndex() + 4;
 			rot.Flip = 0x00FC;
 			tex->Rotations = SpriteFrames.Push (rot);
 		}
 		else if (rotType == 2)
 		{
 			spriteframe_t rot;
-			rot.Texture[0] = texnum;
+			rot.Texture[0] =
 			rot.Texture[1] = texnum;
 			for (int j = 1; j < 8; ++j)
 			{
-				rot.Texture[16-j*2] = texnum + j;
-				rot.Texture[17-j*2] = texnum + j;
+				rot.Texture[16-j*2] =
+				rot.Texture[17-j*2] = texnum.GetIndex() + j;
 			}
 			rot.Flip = 0;
 			tex->Rotations = SpriteFrames.Push (rot);

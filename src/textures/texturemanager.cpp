@@ -1005,7 +1005,7 @@ FArchive &operator<< (FArchive &arc, FTextureID &tex)
 //==========================================================================
 //
 // FTextureID::operator+
-// Does not return incvalid texture IDs
+// Does not return invalid texture IDs
 //
 //==========================================================================
 

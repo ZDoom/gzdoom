@@ -711,9 +711,15 @@ void P_FloodZone (sector_t *sec, int zonenum)
 			continue;
 
 		if (check->frontsector == sec)
+		{
+			assert(check->backsector != NULL);
 			other = check->backsector;
+		}
 		else
+		{
+			assert(check->frontsector != NULL);
 			other = check->frontsector;
+		}
 
 		if (other->ZoneNumber != zonenum)
 			P_FloodZone (other, zonenum);

@@ -253,11 +253,11 @@ static bool P_LoadBloodMap (BYTE *data, size_t len, FMapThing **mapthings, int *
 	{
 		memcpy (infoBlock, data + 6, 37);
 	}
-	numRevisions = *(DWORD *)(infoBlock + 27);
-	numsectors = *(WORD *)(infoBlock + 31);
-	numWalls = *(WORD *)(infoBlock + 33);
-	numsprites = *(WORD *)(infoBlock + 35);
-	skyLen = 2 << *(WORD *)(infoBlock + 16);
+	numRevisions = LittleLong(*(DWORD *)(infoBlock + 27));
+	numsectors = LittleShort(*(WORD *)(infoBlock + 31));
+	numWalls = LittleShort(*(WORD *)(infoBlock + 33));
+	numsprites = LittleShort(*(WORD *)(infoBlock + 35));
+	skyLen = 2 << LittleShort(*(WORD *)(infoBlock + 16));
 
 	if (mapver == 7)
 	{
@@ -365,6 +365,8 @@ static void LoadSectors (sectortype *bsec)
 	sec = sectors = new sector_t[numsectors];
 	memset (sectors, 0, sizeof(sector_t)*numsectors);
 
+	sectors[0].e = new extsector_t[numsectors];
+
 	for (int i = 0; i < numsectors; ++i, ++bsec, ++sec)
 	{
 		bsec->wallptr = WORD(bsec->wallptr);
@@ -372,6 +374,7 @@ static void LoadSectors (sectortype *bsec)
 		bsec->ceilingstat = WORD(bsec->ceilingstat);
 		bsec->floorstat = WORD(bsec->floorstat);
 
+		sec->e = &sectors[0].e[i];
 		sec->SetPlaneTexZ(sector_t::floor, -(LittleLong(bsec->floorz) << 8));
 		sec->floorplane.d = -sec->GetPlaneTexZ(sector_t::floor);
 		sec->floorplane.c = FRACUNIT;
@@ -633,14 +636,17 @@ static void LoadWalls (walltype *walls, int numwalls, sectortype *bsec)
 			R_AlignFlat (linenum, sidenum == bsec->wallptr, 0);
 		}
 	}
-	for(i = 0; i < numsides; i++)
+	for (i = 0; i < numlines; i++)
 	{
-		sides[i].linedef = &lines[intptr_t(sides[i].linedef)];
+		intptr_t front = intptr_t(lines[i].sidedef[0]);
+		intptr_t back = intptr_t(lines[i].sidedef[1]);
+		lines[i].sidedef[0] = front >= 0 ? &sides[front] : NULL;
+		lines[i].sidedef[1] = back >= 0 ? &sides[back] : NULL;
 	}
-	for(i = 0; i < numlines; i++)
+	for (i = 0; i < numsides; i++)
 	{
-		lines[i].sidedef[0] = &sides[intptr_t(lines[i].sidedef[0])];
-		lines[i].sidedef[1] = &sides[intptr_t(lines[i].sidedef[1])];
+		assert(sides[i].sector != NULL);
+		sides[i].linedef = &lines[intptr_t(sides[i].linedef)];
 	}
 }
 

@@ -26,6 +26,7 @@ public:
 
 	void SetCMode(bool cmode);
 	void SetEscape(bool esc);
+	void SetStateMode(bool stately);
 	const SavedPos SavePos();
 	void RestorePos(const SavedPos &pos);
 
@@ -94,6 +95,7 @@ protected:
 	const char *LastGotPtr;
 	int LastGotLine;
 	bool CMode;
+	BYTE StateMode;
 	bool Escape;
 };
 

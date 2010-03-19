@@ -859,16 +859,6 @@ static void ParseActorProperty(FScanner &sc, Baggage &bag)
 			FScriptPosition::ErrorCounter++;
 		}
 	}
-	else if (!propname.CompareNoCase("States"))
-	{
-		if (bag.StateSet) 
-		{
-			sc.ScriptMessage("'%s' contains multiple state declarations", bag.Info->Class->TypeName.GetChars());
-			FScriptPosition::ErrorCounter++;
-		}
-		ParseStates(sc, bag.Info, (AActor *)bag.Info->Class->Defaults, bag);
-		bag.StateSet=true;
-	}
 	else if (MatchString(propname, statenames) != -1)
 	{
 		bag.statedef.SetStateLabel(propname, CheckState (sc, bag.Info->Class));
@@ -1182,6 +1172,16 @@ static void ParseActor(FScanner &sc)
 
 		case TK_Identifier:
 			ParseActorProperty(sc, bag);
+			break;
+
+		case TK_States:
+			if (bag.StateSet) 
+			{
+				sc.ScriptMessage("'%s' contains multiple state declarations", bag.Info->Class->TypeName.GetChars());
+				FScriptPosition::ErrorCounter++;
+			}
+			ParseStates(sc, bag.Info, (AActor *)bag.Info->Class->Defaults, bag);
+			bag.StateSet = true;
 			break;
 
 		case '+':

@@ -49,9 +49,34 @@ std2:
 	TOK2 = (NWS\STOP1);
 	TOKC2 = (NWS\STOPC);
 */
-	if (tokens)	// A well-defined scanner, based on the c.re example.
-	{
 #define RET(x)	TokenType = x; goto normal_token;
+	if (tokens && StateMode != 0)
+	{
+	/*!re2c
+		"/*"						{ goto comment; }	/* C comment */
+		"//" (any\"\n")* "\n"		{ goto newline; }	/* C++ comment */
+
+		(["](([\\]["])|[^"])*["])	{ RET(TK_StringConst); }
+		'stop'						{ RET(TK_Stop); }
+		'wait'						{ RET(TK_Wait); }
+		'fail'						{ RET(TK_Fail); }
+		'loop'						{ RET(TK_Loop); }
+		'goto'						{ StateMode = 0; RET(TK_Goto); }
+		":"							{ RET(':'); }
+		";"							{ RET(';'); }
+		"}"							{ StateMode = 0; RET('}'); }
+		
+		WSP+						{ goto std1; }
+		"\n"						{ goto newline; }
+		
+		TOKS = (NWS\[/":;}]);
+		TOKS* ([/] (TOKS\[*]) TOKS*)*
+									{ RET(TK_NonWhitespace); }
+		
+	*/
+	}
+	else if (tokens)	// A well-defined scanner, based on the c.re example.
+	{
 	/*!re2c
 		"/*"						{ goto comment; }	/* C comment */
 		"//" (any\"\n")* "\n"		{ goto newline; }	/* C++ comment */
@@ -146,8 +171,9 @@ std2:
 
 		'is'						{ RET(TK_Is); }
 		'replaces'					{ RET(TK_Replaces); }
-
-		/* Needed for decorate action functions */
+		'states'					{ RET(TK_States); }
+		'meta'						{ RET(TK_Meta); }
+		'deprecated'				{ RET(TK_Deprecated); }
 		'action'					{ RET(TK_Action); }
 
 		/* other DECORATE top level keywords */
@@ -200,6 +226,7 @@ std2:
 		"~=="						{ RET(TK_ApproxEq); }
 		"<>="						{ RET(TK_LtGtEq); }
 		"**"						{ RET(TK_MulMul); }
+		"::"						{ RET(TK_ColonColon); }
 		";"							{ RET(';'); }
 		"{"							{ RET('{'); }
 		"}"							{ RET('}'); }
@@ -352,6 +379,10 @@ normal_token:
 		{
 			memcpy (StringBuffer, tok+1, StringLen);
 		}
+		if (StateMode && TokenType == TK_StringConst)
+		{
+			TokenType = TK_NonWhitespace;
+		}
 	}
 	else
 	{
@@ -362,6 +393,17 @@ normal_token:
 		else
 		{
 			memcpy (StringBuffer, tok, StringLen);
+		}
+	}
+	if (tokens && StateMode)
+	{ // State mode is exited after two consecutive TK_NonWhitespace tokens
+		if (TokenType == TK_NonWhitespace)
+		{
+			StateMode--;
+		}
+		else
+		{
+			StateMode = 2;
 		}
 	}
 	if (StringLen < MAX_STRING_SIZE)

@@ -1502,6 +1502,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\sc_man_tokens.h"
+				>
+			</File>
+			<File
 				RelativePath=".\src\skins.h"
 				>
 			</File>
@@ -6459,6 +6463,94 @@
 			</File>
 			<File
 				RelativePath=".\src\zscript\vmops.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\zscript\zcc-parse.c"
+				>
+				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|x64"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|x64"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\src\zscript\zcc-parse.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\zscript\zcc-parse.lemon"
+				>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Generating zcc-parse.c and zcc-parse.h..."
+						CommandLine="tools\lemon\lemon.exe &quot;$(InputPath)&quot;&#x0D;&#x0A;"
+						Outputs="$(InputDir)\zcc-parse.c;$(InputDir)\zcc-parse.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|x64"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Generating zcc-parse.c and zcc-parse.h..."
+						CommandLine="tools\lemon\lemon.exe &quot;$(InputPath)&quot;&#x0D;&#x0A;"
+						Outputs="$(InputDir)\zcc-parse.c;$(InputDir)\zcc-parse.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Generating zcc-parse.c and zcc-parse.h..."
+						CommandLine="tools\lemon\lemon.exe &quot;$(InputPath)&quot;&#x0D;&#x0A;"
+						Outputs="$(InputDir)\zcc-parse.c;$(InputDir)\zcc-parse.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|x64"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Generating zcc-parse.c and zcc-parse.h..."
+						CommandLine="tools\lemon\lemon.exe &quot;$(InputPath)&quot;&#x0D;&#x0A;"
+						Outputs="$(InputDir)\zcc-parse.c;$(InputDir)\zcc-parse.h"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\src\zscript\zcc_parser.cpp"
 				>
 			</File>
 		</Filter>

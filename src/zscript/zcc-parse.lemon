@@ -1,0 +1,443 @@
+%token_prefix ZCC_
+%token_type { ZCCToken }
+%token_destructor {}	// just to avoid a compiler warning
+%name ZCCParse
+%extra_argument { FScanner *sc }
+%syntax_error
+{
+	FString unexpected, expecting;
+
+	int i;
+	int stateno = yypParser->yystack[yypParser->yyidx].stateno;
+
+	unexpected << "Unexpected " << ZCCTokenName(yymajor);
+
+	// Determine all the terminals that the parser would have accepted at this point
+	// (see yy_find_shift_action). This list can get quite long. Is it worthwhile to
+	// print it when not debugging the grammar, or would that be too confusing to
+	// the average user?
+	if (stateno < YY_SHIFT_MAX && (i = yy_shift_ofst[stateno])!=YY_SHIFT_USE_DFLT)
+	{
+		for (int j = 1; j < YYERRORSYMBOL; ++j)
+		{
+			int k = i + j;
+			if (k >= 0 && k < YY_SZ_ACTTAB && yy_lookahead[k] == j)
+			{
+				expecting << (expecting.IsEmpty() ? "Expecting " : " or ") << ZCCTokenName(j);
+			}
+		}
+	}
+	sc->ScriptMessage("%s\n%s\n", unexpected.GetChars(), expecting.GetChars());
+}
+%parse_accept { sc->ScriptMessage("input accepted\n"); }
+%parse_failure { /**failed = true;*/ }
+
+%nonassoc EQ MULEQ DIVEQ MODEQ ADDEQ SUBEQ LSHEQ RSHEQ ANDEQ OREQ XOREQ.
+%right QUESTION COLON.
+%left OROR.
+%left ANDAND.
+%left EQEQ NEQ APPROXEQ.
+%left LT GT LTEQ GTEQ LTGTEQ IS.
+%left DOTDOT.
+%left OR.		/* Note that this is like the Ruby precedence for these */
+%left XOR.		/* three operators and not the C precedence, since */
+%left AND.		/* they are higher priority than the comparisons. */
+%left LSH RSH.
+%left SUB ADD.
+%left MUL DIV MOD CROSSPROD DOTPROD.
+%left POW.
+%right UNARY ADDADD SUBSUB.
+%left DOT LPAREN LBRACKET.
+%left SCOPE.
+
+
+main ::= translation_unit. { sc->ScriptMessage("Parse complete\n"); }
+
+translation_unit ::= .
+translation_unit ::= translation_unit external_declaration.
+translation_unit ::= translation_unit EOF.
+translation_unit ::= error.
+
+external_declaration ::= class_definition.
+
+/* Optional bits. */
+opt_semicolon ::= .
+opt_semicolon ::= SEMICOLON.
+
+opt_comma ::= .
+opt_comma ::= COMMA.
+
+opt_expr ::= .
+opt_expr ::= expr.
+
+
+/* A class definition. Can only occur at global scope. */
+class_definition ::= CLASS id_or_string class_ancestry class_flags class_body.
+
+id_or_string ::= IDENTIFIER.
+id_or_string ::= string_constant.
+
+class_ancestry ::= .
+class_ancestry ::= COLON id_or_string.
+
+class_flags ::= .
+class_flags ::= class_flags ABSTRACT.
+class_flags ::= class_flags NATIVE.
+class_flags ::= class_flags REPLACES id_or_string.
+
+
+class_body ::= SEMICOLON class_innards EOF.
+class_body ::= LBRACE class_innards RBRACE.
+
+class_innards ::= .
+class_innards ::= class_innards class_member.
+
+/* Classes can define variables, functions, enums, structs, states, constants, and defaults. */
+class_member ::= declarator.
+class_member ::= enum_def.
+class_member ::= struct_def.
+class_member ::= states_def.
+class_member ::= default_def.
+class_member ::= const_def.
+
+/* Structs can define variables, enums, and structs. */
+struct_def ::= STRUCT IDENTIFIER LBRACE struct_body RBRACE opt_semicolon.
+struct_member ::= declarator_no_fun.
+struct_member ::= enum_def.
+
+/* Enumerators are lists of named integers. */
+enum_def ::= ENUM IDENTIFIER enum_type LBRACE enum_list opt_comma RBRACE opt_semicolon.
+
+enum_type ::= .
+enum_type ::= COLON int_type.
+
+enum_list ::= enumerator.
+enum_list ::= enum_list COMMA enumerator.
+
+enumerator ::= IDENTIFIER.
+enumerator ::= IDENTIFIER EQ expr.	/* Expression must be constant. */
+
+/* States */
+states_def ::= STATES scanner_mode LBRACE states_body RBRACE.
+
+/* We use a special scanner mode to allow for sprite names and frame characters
+ * to not be quoted even if they contain special characters. The scanner_mode
+ * nonterminal is used to enter this mode. The scanner automatically leaves it
+ * upon pre-defined conditions. See the comments by FScanner::SetStateMode().
+ *
+ * Note that rules are reduced *after* one token of lookahead has been
+ * consumed, so this nonterminal must be placed one token before we want it to
+ * take effect. For example, in states_def above, the scanner mode will be
+ * set immediately after LBRACE is consumed, rather than immediately after
+ * STATES is consumed.
+ */
+scanner_mode ::= . { sc->SetStateMode(true); }
+
+states_body ::= .
+states_body ::= error.
+states_body ::= states_body LABELID.
+states_body ::= states_body state_line.
+states_body ::= states_body state_label.
+states_body ::= states_body state_flow.
+
+state_label ::= NWS COLON.
+
+state_flow ::= state_flow_type scanner_mode SEMICOLON.
+state_flow_type ::= STOP.
+state_flow_type ::= WAIT.
+state_flow_type ::= FAIL.
+state_flow_type ::= LOOP.
+state_flow_type ::= GOTO dotted_identifier state_goto_offset.
+
+state_goto_offset ::= .
+state_goto_offset ::= PLUS expr.		/* Must evaluate to an integer constant. */
+
+state_line ::= NWS NWS expr state_opts state_action.
+
+state_opts ::= .
+state_opts ::= state_opts BRIGHT.
+state_opts ::= state_opts OFFSET LPAREN expr COMMA expr RPAREN.
+state_opts ::= state_opts LIGHT LPAREN light_list RPAREN.
+
+light_list ::= STRCONST.
+light_list ::= light_list COMMA STRCONST.
+
+/* A state action can be either a compound statement or a single action function call. */
+state_action ::= LBRACE statement_list scanner_mode RBRACE.
+state_action ::= LBRACE error scanner_mode RBRACE.
+state_action ::= state_call scanner_mode SEMICOLON.
+
+state_call ::= .
+state_call ::= IDENTIFIER state_call_parms.
+state_call_parms ::= .
+state_call_parms ::= LPAREN opt_expr_list RPAREN.
+state_call_parms ::= LPAREN error RPAREN.
+
+dotted_identifier ::= IDENTIFIER.
+dotted_identifier ::= dotted_identifier DOT IDENTIFIER.
+
+/* Definition of a default class instance. */
+default_def ::= DEFAULT compound_statement.
+
+/* Type names */
+int_type ::= SBYTE.
+int_type ::= BYTE.
+int_type ::= SHORT.
+int_type ::= USHORT.
+int_type ::= INT.
+int_type ::= UINT.
+
+type_name ::= BOOL.
+type_name ::= int_type.
+type_name ::= FLOAT.
+type_name ::= DOUBLE.
+type_name ::= STRING.
+type_name ::= VECTOR vector_size.
+type_name ::= NAME.
+type_name ::= IDENTIFIER.	/* User-defined type (struct, enum, or class) */
+
+vector_size ::= .
+vector_size ::= LT INTCONST GT.
+
+/* Type names can also be used as identifiers in contexts where type names
+ * are not normally allowed. */
+%fallback IDENTIFIER
+	SBYTE BYTE SHORT USHORT INT UINT BOOL FLOAT DOUBLE STRING VECTOR NAME.
+
+/* Aggregate types */
+aggregate_type ::= MAP LT type array_size COMMA type array_size GT.	/* Hash table */
+aggregate_type ::= ARRAY LT type array_size GT.						/* TArray<type> */
+aggregate_type ::= CLASS class_restrictor.							/* class<type> */
+class_restrictor ::= .
+class_restrictor ::= LT IDENTIFIER GT.
+
+type ::= type_name.
+type ::= aggregate_type.
+
+type_list ::= type array_size.		/* A comma-separated list of types */
+type_list ::= type_list COMMA type array_size.
+
+type_list_or_void ::= VOID.
+type_list_or_void ::= type_list.
+
+array_size ::= .
+array_size ::= array_size LBRACKET opt_expr RBRACKET.
+
+declarator ::= decl_flags type_list_or_void variables_or_function.	/* Multiple type names are only valid for functions. */
+declarator_no_fun ::= decl_flags type variable_list.
+
+variables_or_function ::= IDENTIFIER LPAREN func_params RPAREN func_const opt_func_body.	/* Function */
+variables_or_function ::= variable_list SEMICOLON.
+variables_or_function ::= error SEMICOLON.
+
+variable_list ::= IDENTIFIER array_size.
+variable_list ::= variable_list COMMA IDENTIFIER array_size.
+
+decl_flags ::= .
+decl_flags ::= decl_flags NATIVE.
+decl_flags ::= decl_flags STATIC.
+decl_flags ::= decl_flags PRIVATE.
+decl_flags ::= decl_flags PROTECTED.
+decl_flags ::= decl_flags LATENT.
+decl_flags ::= decl_flags FINAL.
+decl_flags ::= decl_flags META.
+decl_flags ::= decl_flags ACTION.
+decl_flags ::= decl_flags DEPRECATED LPAREN string_constant RPAREN.
+
+func_const ::= .
+func_const ::= CONST.
+
+opt_func_body ::= SEMICOLON.
+opt_func_body ::= function_body.
+
+func_params ::= .	/* empty */
+func_params ::= VOID.
+func_params ::= func_param_list.
+
+func_param_list ::= func_param.
+func_param_list ::= func_param COMMA func_param_list.
+
+func_param ::= func_param_flags type IDENTIFIER array_size.
+
+func_param_flags ::= .
+func_param_flags ::= func_param_flags IN.
+func_param_flags ::= func_param_flags OUT.
+func_param_flags ::= func_param_flags OPTIONAL.
+
+struct_body ::= struct_member.
+struct_body ::= struct_member struct_body.
+
+/* Like UnrealScript, a constant's type is implied by its value's type. */
+const_def ::= CONST IDENTIFIER EQ expr SEMICOLON.
+
+/* Expressions */
+
+/* We use default to access a class's default instance. */
+%fallback IDENTIFIER
+	DEFAULT.
+
+primary ::= IDENTIFIER.
+primary ::= SUPER.
+primary ::= constant.
+primary ::= SELF.
+primary ::= LPAREN expr RPAREN.
+primary ::= LPAREN error RPAREN.
+primary ::= primary LPAREN func_expr_list RPAREN. [DOT]		// Function call
+primary ::= primary LBRACKET expr RBRACKET. [DOT]			// Array access
+primary ::= primary DOT IDENTIFIER.							// Member access
+primary ::= primary ADDADD.		/* postfix++ */
+primary ::= primary SUBSUB.		/* postfix-- */
+primary ::= SCOPE primary.
+
+unary_expr ::= primary.
+unary_expr ::= SUB unary_expr. [UNARY]
+unary_expr ::= ADD unary_expr. [UNARY]
+unary_expr ::= SUBSUB unary_expr. [UNARY]
+unary_expr ::= ADDADD unary_expr. [UNARY]
+unary_expr ::= TILDE unary_expr. [UNARY]
+unary_expr ::= BANG unary_expr. [UNARY]
+unary_expr ::= SIZEOF unary_expr. [UNARY]
+unary_expr ::= ALIGNOF unary_expr. [UNARY]
+
+/* Due to parsing conflicts, C-style casting is not supported. You
+ * must use C++ function call-style casting instead.
+ */
+
+expr ::= unary_expr.
+expr ::= expr ADD expr.			/* a + b */
+expr ::= expr SUB expr.			/* a - b */
+expr ::= expr MUL expr.			/* a * b */
+expr ::= expr DIV expr.			/* a / b */
+expr ::= expr MOD expr.			/* a % b */
+expr ::= expr POW expr.			/* a ** b */
+expr ::= expr CROSSPROD expr.	/* a cross b */
+expr ::= expr DOTPROD expr.		/* a dot b */
+expr ::= expr LSH expr.			/* a << b */
+expr ::= expr RSH expr.			/* a >> b */
+expr ::= expr DOTDOT expr.		/* a .. b */
+
+expr ::= expr LT expr.			/* a < b */
+expr ::= expr GT expr.			/* a > b */
+expr ::= expr LTEQ expr.		/* a <= b */
+expr ::= expr GTEQ expr.		/* a >= b */
+expr ::= expr LTGTEQ expr.		/* a <>= b */
+expr ::= expr IS expr.			/* a is b */
+
+expr ::= expr EQEQ expr.		/* a == b */
+expr ::= expr NEQ expr.			/* a != b */
+expr ::= expr APPROXEQ expr.	/* a ~== b */
+
+expr ::= expr AND expr.			/* a & b */
+expr ::= expr XOR expr.			/* a ^ b */
+expr ::= expr OR expr.			/* a | b */
+expr ::= expr ANDAND expr.		/* a && b */
+expr ::= expr OROR expr.		/* a || b */
+
+expr ::= expr SCOPE expr.
+
+expr ::= expr QUESTION expr COLON expr.
+
+opt_expr_list ::= .
+opt_expr_list ::= expr_list.
+
+expr_list ::= expr.
+expr_list ::= expr_list COMMA expr.
+
+/* A function expression list can also specify a parameter's name,
+ * but once you do that, all remaining parameters must also be named. */
+func_expr_list ::= .
+func_expr_list ::= expr_list.
+func_expr_list ::= expr_list COMMA named_expr_list.
+func_expr_list ::= named_expr_list.
+
+named_expr_list ::= named_expr.
+named_expr_list ::= named_expr_list COMMA named_expr.
+
+named_expr ::= IDENTIFIER COLON expr.
+
+/* Allow C-like concatenation of adjacent string constants. */
+string_constant ::= STRCONST.
+string_constant ::= string_constant STRCONST.
+
+constant ::= string_constant.
+constant ::= INTCONST.
+constant ::= FLOATCONST.
+
+function_body ::= compound_statement.
+
+statement ::= labeled_statement.
+statement ::= compound_statement.
+statement ::= expression_statement.
+statement ::= selection_statement.
+statement ::= iteration_statement.
+statement ::= jump_statement.
+statement ::= assign_statement.
+statement ::= local_var.
+statement ::= error SEMICOLON.
+
+jump_statement ::= CONTINUE SEMICOLON.
+jump_statement ::= BREAK SEMICOLON.
+jump_statement ::= RETURN SEMICOLON.
+jump_statement ::= RETURN expr_list SEMICOLON.
+
+compound_statement ::= LBRACE RBRACE.
+compound_statement ::= LBRACE statement_list RBRACE.
+compound_statement ::= LBRACE error RBRACE.
+
+statement_list ::= statement.
+statement_list ::= statement_list statement.
+
+expression_statement ::= SEMICOLON.
+expression_statement ::= expr SEMICOLON.
+
+iteration_statement ::= while_or_until LPAREN expr RPAREN statement.
+iteration_statement ::= DO statement while_or_until LPAREN expr RPAREN.
+iteration_statement ::= FOR LPAREN for_init_expr SEMICOLON opt_expr SEMICOLON for_bump_expr RPAREN statement.
+
+while_or_until ::= WHILE.
+while_or_until ::= UNTIL.
+
+for_init_expr ::= .
+for_init_expr ::= expr.
+for_init_expr ::= type variable_list EQ expr_list.
+for_init_expr ::= assign_expr.
+
+for_bump_expr ::= .
+for_bump_expr ::= expr.
+for_bump_expr ::= assign_expr.
+
+/* Resolve the shift-reduce conflict here in favor of the shift.
+ * This is the default behavior, but using precedence symbols
+ * lets us do it without warnings.
+ */
+%left IF.
+%left ELSE.
+selection_statement ::= if_front. [IF]
+selection_statement ::= if_front ELSE statement. [ELSE]
+
+selection_statement ::= SWITCH LPAREN expr RPAREN statement.
+
+if_front ::= IF LPAREN expr RPAREN statement.
+
+labeled_statement ::= CASE expr COLON.
+labeled_statement ::= DEFAULT COLON.
+
+assign_statement ::= assign_expr SEMICOLON. [EQ]
+
+assign_expr ::= expr_list assign_op expr_list.
+assign_op ::= EQ.
+assign_op ::= MULEQ.
+assign_op ::= DIVEQ.
+assign_op ::= MODEQ.
+assign_op ::= ADDEQ.
+assign_op ::= SUBEQ.
+assign_op ::= LSHEQ.
+assign_op ::= RSHEQ.
+assign_op ::= ANDEQ.
+assign_op ::= OREQ.
+assign_op ::= XOREQ.
+
+local_var ::= type variable_list var_init SEMICOLON.
+
+var_init ::= .
+var_init ::= EQ expr_list.

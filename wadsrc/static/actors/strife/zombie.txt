@@ -20,6 +20,7 @@ ACTOR Zombie : StrifeHumanoid 169
 	Translation 0
 	ConversationID 28, -1, -1
 	DeathSound "zombie/death"
+	CrushPainSound "misc/pcrush"
 	States
 	{
 	Spawn:
@@ -34,7 +35,7 @@ ACTOR Zombie : StrifeHumanoid 169
 		GIBS O 5 A_NoBlocking
 		GIBS PQRST 4 A_TossGib
 		GIBS U 5
-		GIBS V 1400
+		GIBS V -1
 		Stop
 	}
 }

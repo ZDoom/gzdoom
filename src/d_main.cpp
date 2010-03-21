@@ -1850,9 +1850,14 @@ void D_DoomMain (void)
 
 	CopyFiles(allwads, pwads);
 
+	// Since this function will never leave we must delete this array here manually.
+	pwads.Clear();
+	pwads.ShrinkToFit();
+
 	Printf ("W_Init: Init WADfiles.\n");
 	Wads.InitMultipleFiles (allwads);
 	allwads.Clear();
+	allwads.ShrinkToFit();
 
 	// [RH] Initialize localizable strings.
 	GStrings.LoadStrings (false);

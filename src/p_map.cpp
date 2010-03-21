@@ -3588,7 +3588,7 @@ void P_TraceBleed (int damage, fixed_t x, fixed_t y, fixed_t z, AActor *actor, a
 		{
 			if (bleedtrace.HitType == TRACE_HitWall)
 			{
-				PalEntry bloodcolor = (PalEntry)actor->GetClass()->Meta.GetMetaInt(AMETA_BloodColor);
+				PalEntry bloodcolor = actor->GetBloodColor();
 				if (bloodcolor != 0)
 				{
 					bloodcolor.r>>=1;	// the full color is too bright for blood decals
@@ -4592,34 +4592,40 @@ void P_DoCrunch (AActor *thing, FChangePosition *cpos)
 		P_DamageMobj (thing, NULL, NULL, cpos->crushchange, NAME_Crush);
 
 		// spray blood in a random direction
-		if ((!(thing->flags&MF_NOBLOOD)) &&
-			(!(thing->flags2&(MF2_INVULNERABLE|MF2_DORMANT))))
+		if (!(thing->flags2&(MF2_INVULNERABLE|MF2_DORMANT)))
 		{
-			PalEntry bloodcolor = (PalEntry)thing->GetClass()->Meta.GetMetaInt(AMETA_BloodColor);
-			const PClass *bloodcls = PClass::FindClass((ENamedName)thing->GetClass()->Meta.GetMetaInt(AMETA_BloodType, NAME_Blood));
-
-			P_TraceBleed (cpos->crushchange, thing);
-			if (cl_bloodtype <= 1 && bloodcls != NULL)
+			if (!(thing->flags&MF_NOBLOOD))
 			{
-				AActor *mo;
-
-				mo = Spawn (bloodcls, thing->x, thing->y,
-					thing->z + thing->height/2, ALLOW_REPLACE);
-
-				mo->velx = pr_crunch.Random2 () << 12;
-				mo->vely = pr_crunch.Random2 () << 12;
-				if (bloodcolor != 0 && !(mo->flags2 & MF2_DONTTRANSLATE))
+				PalEntry bloodcolor = thing->GetBloodColor();
+				const PClass *bloodcls = thing->GetBloodType();
+				
+				P_TraceBleed (cpos->crushchange, thing);
+				if (cl_bloodtype <= 1 && bloodcls != NULL)
 				{
-					mo->Translation = TRANSLATION(TRANSLATION_Blood, bloodcolor.a);
+					AActor *mo;
+
+					mo = Spawn (bloodcls, thing->x, thing->y,
+						thing->z + thing->height/2, ALLOW_REPLACE);
+
+					mo->velx = pr_crunch.Random2 () << 12;
+					mo->vely = pr_crunch.Random2 () << 12;
+					if (bloodcolor != 0 && !(mo->flags2 & MF2_DONTTRANSLATE))
+					{
+						mo->Translation = TRANSLATION(TRANSLATION_Blood, bloodcolor.a);
+					}
+				}
+				if (cl_bloodtype >= 1)
+				{
+					angle_t an;
+
+					an = (M_Random () - 128) << 24;
+					P_DrawSplash2 (32, thing->x, thing->y,
+								   thing->z + thing->height/2, an, 2, bloodcolor);
 				}
 			}
-			if (cl_bloodtype >= 1)
+			if (thing->CrushPainSound != 0 && !S_GetSoundPlayingInfo(thing, thing->CrushPainSound))
 			{
-				angle_t an;
-
-				an = (M_Random () - 128) << 24;
-				P_DrawSplash2 (32, thing->x, thing->y,
-							   thing->z + thing->height/2, an, 2, bloodcolor);
+				S_Sound(thing, CHAN_VOICE, thing->CrushPainSound, 1.f, ATTN_NORM);
 			}
 		}
 	}

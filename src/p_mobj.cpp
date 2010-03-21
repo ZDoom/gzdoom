@@ -270,8 +270,12 @@ void AActor::Serialize (FArchive &arc)
 		<< ActiveSound
 		<< UseSound
 		<< BounceSound
-		<< WallBounceSound
-		<< Speed
+		<< WallBounceSound;
+	if (SaveVersion >= 2234)
+	{
+		arc << CrushPainSound;
+	}
+	arc	<< Speed
 		<< FloatSpeed
 		<< Mass
 		<< PainChance
@@ -1068,7 +1072,7 @@ bool AActor::Grind(bool items)
 			if (isgeneric)	// Not a custom crush state, so colorize it appropriately.
 			{
 				S_Sound (this, CHAN_BODY, "misc/fallingsplat", 1, ATTN_IDLE);
-				PalEntry bloodcolor = PalEntry(GetClass()->Meta.GetMetaInt(AMETA_BloodColor));
+				PalEntry bloodcolor = GetBloodColor();
 				if (bloodcolor!=0) Translation = TRANSLATION(TRANSLATION_Blood, bloodcolor.a);
 			}
 			return false;
@@ -1112,7 +1116,7 @@ bool AActor::Grind(bool items)
 			}
 			S_Sound (this, CHAN_BODY, "misc/fallingsplat", 1, ATTN_IDLE);
 
-			PalEntry bloodcolor = (PalEntry)this->GetClass()->Meta.GetMetaInt(AMETA_BloodColor);
+			PalEntry bloodcolor = GetBloodColor();
 			if (bloodcolor!=0) gib->Translation = TRANSLATION(TRANSLATION_Blood, bloodcolor.a);
 		}
 		if (flags & MF_ICECORPSE)
@@ -4502,8 +4506,8 @@ AActor *P_SpawnPuff (AActor *source, const PClass *pufftype, fixed_t x, fixed_t 
 void P_SpawnBlood (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int damage, AActor *originator)
 {
 	AActor *th;
-	PalEntry bloodcolor = (PalEntry)originator->GetClass()->Meta.GetMetaInt(AMETA_BloodColor);
-	const PClass *bloodcls = PClass::FindClass((ENamedName)originator->GetClass()->Meta.GetMetaInt(AMETA_BloodType, NAME_Blood));
+	PalEntry bloodcolor = originator->GetBloodColor();
+	const PClass *bloodcls = originator->GetBloodType();
 	
 	int bloodtype = cl_bloodtype;
 	
@@ -4564,8 +4568,8 @@ void P_SpawnBlood (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int damage, AAc
 
 void P_BloodSplatter (fixed_t x, fixed_t y, fixed_t z, AActor *originator)
 {
-	PalEntry bloodcolor = (PalEntry)originator->GetClass()->Meta.GetMetaInt(AMETA_BloodColor);
-	const PClass *bloodcls = PClass::FindClass((ENamedName)originator->GetClass()->Meta.GetMetaInt(AMETA_BloodType2, NAME_BloodSplatter));
+	PalEntry bloodcolor = originator->GetBloodColor();
+	const PClass *bloodcls = originator->GetBloodType(1); 
 
 	int bloodtype = cl_bloodtype;
 	
@@ -4602,8 +4606,8 @@ void P_BloodSplatter (fixed_t x, fixed_t y, fixed_t z, AActor *originator)
 
 void P_BloodSplatter2 (fixed_t x, fixed_t y, fixed_t z, AActor *originator)
 {
-	PalEntry bloodcolor = (PalEntry)originator->GetClass()->Meta.GetMetaInt(AMETA_BloodColor);
-	const PClass *bloodcls = PClass::FindClass((ENamedName)originator->GetClass()->Meta.GetMetaInt(AMETA_BloodType3, NAME_AxeBlood));
+	PalEntry bloodcolor = originator->GetBloodColor();
+	const PClass *bloodcls = originator->GetBloodType(2);
 
 	int bloodtype = cl_bloodtype;
 	
@@ -4641,8 +4645,8 @@ void P_BloodSplatter2 (fixed_t x, fixed_t y, fixed_t z, AActor *originator)
 void P_RipperBlood (AActor *mo, AActor *bleeder)
 {
 	fixed_t x, y, z;
-	PalEntry bloodcolor = (PalEntry)bleeder->GetClass()->Meta.GetMetaInt(AMETA_BloodColor);
-	const PClass *bloodcls = PClass::FindClass((ENamedName)bleeder->GetClass()->Meta.GetMetaInt(AMETA_BloodType, NAME_Blood));
+	PalEntry bloodcolor = bleeder->GetBloodColor();
+	const PClass *bloodcls = bleeder->GetBloodType();
 
 	x = mo->x + (pr_ripperblood.Random2 () << 12);
 	y = mo->y + (pr_ripperblood.Random2 () << 12);

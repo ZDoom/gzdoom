@@ -1124,6 +1124,7 @@ misc/teleport		dstelept
 misc/swish		dsswish
 misc/meathit		dsmeatht
 misc/metalhit		dsmtalht
+misc/pcrush			dspcrush
 misc/gibbed			dsslop
 misc/explosion			dsexplod
 misc/reactor			dsreactr

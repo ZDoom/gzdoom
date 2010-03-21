@@ -9,6 +9,7 @@ ACTOR StrifePlayer : PlayerPawn
 	PainChance 255
 	Speed 1
 	MaxStepHeight 16
+	CrushPainSound "misc/pcrush"
 	Player.DisplayName "Rebel"
 	Player.StartItem "PunchDagger"
 	Player.RunHealth 15

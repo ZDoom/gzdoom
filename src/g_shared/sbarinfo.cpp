@@ -542,6 +542,10 @@ void SBarInfo::ParseSBarInfo(int lump)
 					sc.MustGetToken(TK_Identifier);
 					barNum = sc.MustMatchString(StatusBars);
 				}
+				if (this->huds[barNum] != NULL)
+				{
+					delete this->huds[barNum];
+				}
 				this->huds[barNum] = new SBarInfoMainBlock(this);
 				if(barNum == STBAR_AUTOMAP)
 				{

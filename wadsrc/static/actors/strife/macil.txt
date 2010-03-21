@@ -21,6 +21,7 @@ ACTOR Macil1 64
 	SeeSound "macil/sight"
 	PainSound "macil/pain"
 	ActiveSound "macil/active"
+	CrushPainSound "misc/pcrush"
 	Tag "MACIL"
 	Obituary "$OB_MACIL"
 	DropItem "BoxOfBullets"

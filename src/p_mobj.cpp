@@ -2132,8 +2132,9 @@ void P_ZMovement (AActor *mo, fixed_t oldfloorz)
 {
 	fixed_t dist;
 	fixed_t delta;
-	fixed_t oldz = mo->z;	
-	
+	fixed_t oldz = mo->z;
+	fixed_t grav = mo->GetGravity();
+
 //	
 // check for smooth step up
 //
@@ -2158,8 +2159,6 @@ void P_ZMovement (AActor *mo, fixed_t oldfloorz)
 		if (!mo->waterlevel || mo->flags & MF_CORPSE || (mo->player &&
 			!(mo->player->cmd.ucmd.forwardmove | mo->player->cmd.ucmd.sidemove)))
 		{
-			fixed_t grav = mo->GetGravity();
-
 			// [RH] Double gravity only if running off a ledge. Coming down from
 			// an upward thrust (e.g. a jump) should not double it.
 			if (mo->velz == 0 && oldfloorz > mo->floorz && mo->z == oldfloorz)
@@ -2295,7 +2294,10 @@ void P_ZMovement (AActor *mo, fixed_t oldfloorz)
 				mo->HitFloor ();
 				if (mo->player)
 				{
-					mo->player->jumpTics = 7;	// delay any jumping for a short while
+					if (mo->player->jumpTics != 0 && mo->velz < -grav*4)
+					{ // delay any jumping for a short while
+						mo->player->jumpTics = 7;
+					}
 					if (mo->velz < minvel && !(mo->flags & MF_NOGRAVITY))
 					{
 						// Squat down.

@@ -730,7 +730,11 @@ protected:
 		Node *mp = MainPosition(key), **mpp;
 		HashTraits Traits;
 
-		if (!mp->IsNil() && !Traits.Compare(mp->Pair.Key, key)) /* the key is in its main position */
+		if (mp->IsNil())
+		{
+			/* the key is definitely not present, because there is nothing at its main position */
+		}
+		else if (!Traits.Compare(mp->Pair.Key, key)) /* the key is in its main position */
 		{
 			if (mp->Next != NULL)		/* move next node to its main position */
 			{

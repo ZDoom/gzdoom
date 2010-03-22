@@ -5365,13 +5365,13 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_CLEARACTORINVENTORY:
-			if (STACK(3) == 0)
+			if (STACK(1) == 0)
 			{
 				ClearInventory(NULL);
 			}
 			else
 			{
-				FActorIterator it(STACK(3));
+				FActorIterator it(STACK(1));
 				AActor *actor;
 				for (actor = it.Next(); actor != NULL; actor = it.Next())
 				{

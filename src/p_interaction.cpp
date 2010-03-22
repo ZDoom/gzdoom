@@ -1285,7 +1285,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 		painchance = target->PainChance;
 		if (pc != NULL)
 		{
-			BYTE * ppc = pc->CheckKey(mod);
+			int *ppc = pc->CheckKey(mod);
 			if (ppc != NULL)
 			{
 				painchance = *ppc;

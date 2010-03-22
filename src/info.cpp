@@ -273,16 +273,11 @@ FActorInfo *FActorInfo::GetReplacee (bool lookskill)
 
 void FActorInfo::SetDamageFactor(FName type, fixed_t factor)
 {
-	if (factor != FRACUNIT) 
+	if (DamageFactors == NULL)
 	{
-		if (DamageFactors == NULL) DamageFactors=new DmgFactors;
-		DamageFactors->Insert(type, factor);
+		DamageFactors = new DmgFactors;
 	}
-	else 
-	{
-		if (DamageFactors != NULL) 
-			DamageFactors->Remove(type);
-	}
+	DamageFactors->Insert(type, factor);
 }
 
 //==========================================================================
@@ -295,7 +290,7 @@ void FActorInfo::SetPainChance(FName type, int chance)
 	if (chance >= 0) 
 	{
 		if (PainChances == NULL) PainChances=new PainChanceList;
-		PainChances->Insert(type, MIN(chance, 255));
+		PainChances->Insert(type, MIN(chance, 256));
 	}
 	else 
 	{

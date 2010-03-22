@@ -158,7 +158,7 @@ struct FPlayerColorSet
 };
 
 typedef TMap<FName, fixed_t> DmgFactors;
-typedef TMap<FName, BYTE> PainChanceList;
+typedef TMap<FName, int> PainChanceList;
 typedef TMap<int, FPlayerColorSet> FPlayerColorSetMap;
 
 struct FActorInfo

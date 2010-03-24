@@ -25,7 +25,7 @@ struct FFlagDef
 };
 
 FFlagDef *FindFlag (const PClass *type, const char *part1, const char *part2);
-void HandleDeprecatedFlags(AActor *defaults, FActorInfo *info, bool set, int index);
+void HandleDeprecatedFlags(AActor *defaults, PClassActor *info, bool set, int index);
 const char *GetFlagName(int flagnum, int flagoffset);
 
 #define FLAG_NAME(flagnum, flagvar) GetFlagName(flagnum, myoffsetof(AActor, flagvar))
@@ -70,13 +70,13 @@ class FStateDefinitions
 	static FStateDefine *FindStateLabelInList(TArray<FStateDefine> &list, FName name, bool create);
 	static FStateLabels *CreateStateLabelList(TArray<FStateDefine> &statelist);
 	static void MakeStateList(const FStateLabels *list, TArray<FStateDefine> &dest);
-	static void RetargetStatePointers (intptr_t count, const char *target, TArray<FStateDefine> & statelist);
+	static void RetargetStatePointers(intptr_t count, const char *target, TArray<FStateDefine> & statelist);
 	FStateDefine *FindStateAddress(const char *name);
 	FState *FindState(const char *name);
 
-	FState *ResolveGotoLabel (AActor *actor, const PClass *mytype, char *name);
-	static void FixStatePointers (FActorInfo *actor, TArray<FStateDefine> & list);
-	void ResolveGotoLabels (FActorInfo *actor, AActor *defaults, TArray<FStateDefine> & list);
+	FState *ResolveGotoLabel(AActor *actor, PClassActor *mytype, char *name);
+	static void FixStatePointers(PClassActor *actor, TArray<FStateDefine> & list);
+	void ResolveGotoLabels(PClassActor *actor, AActor *defaults, TArray<FStateDefine> & list);
 
 public:
 
@@ -86,12 +86,12 @@ public:
 		lastlabel = -1;
 	}
 
-	void SetStateLabel (const char * statename, FState * state, BYTE defflags = SDF_STATE);
-	void AddStateLabel (const char * statename);
-	void InstallStates(FActorInfo *info, AActor *defaults);
-	int FinishStates (FActorInfo *actor, AActor *defaults);
+	void SetStateLabel(const char *statename, FState *state, BYTE defflags = SDF_STATE);
+	void AddStateLabel(const char *statename);
+	void InstallStates(PClassActor *info, AActor *defaults);
+	int FinishStates(PClassActor *actor, AActor *defaults);
 
-	void MakeStateDefines(const PClass *cls);
+	void MakeStateDefines(const PClassActor *cls);
 	void AddStateDefines(const FStateLabels *list);
 	void RetargetStates (intptr_t count, const char *target);
 
@@ -111,9 +111,9 @@ public:
 
 struct FStateTempCall
 {
-	FStateTempCall() : ActorInfo(NULL), Function(NULL), FirstState(0), NumStates(0) {}
+	FStateTempCall() : ActorClass(NULL), Function(NULL), FirstState(0), NumStates(0) {}
 
-	FActorInfo *ActorInfo;
+	PClassActor *ActorClass;
 	VMFunction *Function;
 	TArray<FxExpression *> Parameters;
 	int FirstState;
@@ -124,7 +124,7 @@ extern TDeletingArray<FStateTempCall *> StateTempCalls;
 struct FStateExpression
 {
 	FxExpression *expr;
-	const PClass *owner;
+	PClassActor *owner;
 	bool constant;
 	bool cloned;
 };
@@ -135,8 +135,8 @@ class FStateExpressions
 
 public:
 	~FStateExpressions();
-	int Add(FxExpression *x, const PClass *o, bool c);
-	int Reserve(int num, const PClass *cls);
+	int Add(FxExpression *x, PClassActor *o, bool c);
+	int Reserve(int num, PClassActor *cls);
 	void Set(int num, FxExpression *x, bool cloned = false);
 	void Copy(int dest, int src, int cnt);
 	int ResolveAll();
@@ -159,7 +159,7 @@ struct Baggage
 #ifdef _DEBUG
 	FString ClassName;	// This is here so that during debugging the class name can be seen
 #endif
-	FActorInfo *Info;
+	PClassActor *Info;
 	bool DropItemSet;
 	bool StateSet;
 	int CurrentState;
@@ -171,7 +171,7 @@ struct Baggage
 	FScriptPosition ScriptPosition;
 };
 
-inline void ResetBaggage (Baggage *bag, const PClass *stateclass)
+inline void ResetBaggage (Baggage *bag, PClassActor *stateclass)
 {
 	bag->DropItemList = NULL;
 	bag->DropItemSet = false;
@@ -196,7 +196,7 @@ struct AFuncDesc
 AFuncDesc *FindFunction(const char * string);
 
 
-void ParseStates(FScanner &sc, FActorInfo *actor, AActor *defaults, Baggage &bag);
+void ParseStates(FScanner &sc, PClassActor *actor, AActor *defaults, Baggage &bag);
 
 PSymbolActionFunction *FindGlobalActionFunction(const char *name);
 
@@ -206,12 +206,12 @@ PSymbolActionFunction *FindGlobalActionFunction(const char *name);
 //
 //==========================================================================
 
-FActorInfo *CreateNewActor(const FScriptPosition &sc, FName typeName, FName parentName, bool native);
-void SetReplacement(FActorInfo *info, FName replaceName);
+PClassActor *CreateNewActor(const FScriptPosition &sc, FName typeName, FName parentName, bool native);
+void SetReplacement(PClassActor *info, FName replaceName);
 
 void HandleActorFlag(FScanner &sc, Baggage &bag, const char *part1, const char *part2, int mod);
-void FinishActor(const FScriptPosition &sc, FActorInfo *info, Baggage &bag);
-FxExpression *ParseParameter(FScanner &sc, PClass *cls, char type, bool constant);
+void FinishActor(const FScriptPosition &sc, PClassActor *info, Baggage &bag);
+FxExpression *ParseParameter(FScanner &sc, PClassActor *cls, char type, bool constant);
 
 
 enum 
@@ -282,7 +282,7 @@ union FPropParam
 	const char *s;
 };
 
-typedef void (*PropHandler)(AActor *defaults, FActorInfo *info, Baggage &bag, FPropParam *params);
+typedef void (*PropHandler)(AActor *defaults, PClassActor *info, Baggage &bag, FPropParam *params);
 
 enum ECategory
 {
@@ -313,18 +313,18 @@ int MatchString (const char *in, const char **strings);
 
 
 #define DEFINE_PROPERTY_BASE(name, paramlist, clas, cat) \
-	static void Handler_##name##_##paramlist##_##clas(A##clas *defaults, FActorInfo *info, Baggage &bag, FPropParam *params); \
+	static void Handler_##name##_##paramlist##_##clas(A##clas *defaults, PClassActor *info, Baggage &bag, FPropParam *params); \
 	static FPropertyInfo Prop_##name##_##paramlist##_##clas = \
-		{ #name, #paramlist, &RUNTIME_CLASS(A##clas), (PropHandler)Handler_##name##_##paramlist##_##clas, cat }; \
+		{ #name, #paramlist, &RUNTIME_CLASS_CASTLESS(A##clas), (PropHandler)Handler_##name##_##paramlist##_##clas, cat }; \
 	MSVC_PSEG FPropertyInfo *infoptr_##name##_##paramlist##_##clas GCC_PSEG = &Prop_##name##_##paramlist##_##clas; \
-	static void Handler_##name##_##paramlist##_##clas(A##clas *defaults, FActorInfo *info, Baggage &bag, FPropParam *params)
+	static void Handler_##name##_##paramlist##_##clas(A##clas *defaults, PClassActor *info, Baggage &bag, FPropParam *params)
 
 #define DEFINE_PREFIXED_PROPERTY_BASE(prefix, name, paramlist, clas, cat) \
-	static void Handler_##name##_##paramlist##_##clas(A##clas *defaults, FActorInfo *info, Baggage &bag, FPropParam *params); \
+	static void Handler_##name##_##paramlist##_##clas(A##clas *defaults, PClassActor *info, Baggage &bag, FPropParam *params); \
 	static FPropertyInfo Prop_##name##_##paramlist##_##clas = \
-{ #prefix"."#name, #paramlist, &RUNTIME_CLASS(A##clas), (PropHandler)Handler_##name##_##paramlist##_##clas, cat }; \
+{ #prefix"."#name, #paramlist, &RUNTIME_CLASS_CASTLESS(A##clas), (PropHandler)Handler_##name##_##paramlist##_##clas, cat }; \
 	MSVC_PSEG FPropertyInfo *infoptr_##name##_##paramlist##_##clas GCC_PSEG = &Prop_##name##_##paramlist##_##clas; \
-	static void Handler_##name##_##paramlist##_##clas(A##clas *defaults, FActorInfo *info, Baggage &bag, FPropParam *params)
+	static void Handler_##name##_##paramlist##_##clas(A##clas *defaults, PClassActor *info, Baggage &bag, FPropParam *params)
 
 
 #define DEFINE_PROPERTY(name, paramlist, clas) DEFINE_PROPERTY_BASE(name, paramlist, clas, CAT_PROPERTY)
@@ -352,11 +352,11 @@ int MatchString (const char *in, const char **strings);
 
 
 #define DEFINE_MEMBER_VARIABLE(name, cls) \
-	static FVariableInfo GlobalDef__##name = { #name, myoffsetof(cls, name), &RUNTIME_CLASS(cls) }; \
+	static FVariableInfo GlobalDef__##name = { #name, myoffsetof(cls, name), &RUNTIME_CLASS_CASTLESS(cls) }; \
 	MSVC_MSEG FVariableInfo *infoptr_GlobalDef__##name GCC_MSEG = &GlobalDef__##name;
 
 #define DEFINE_MEMBER_VARIABLE_ALIAS(name, alias, cls) \
-	static FVariableInfo GlobalDef__##name = { #name, myoffsetof(cls, alias), &RUNTIME_CLASS(cls) }; \
+	static FVariableInfo GlobalDef__##name = { #name, myoffsetof(cls, alias), &RUNTIME_CLASS_CASTLESS(cls) }; \
 	MSVC_MSEG FVariableInfo *infoptr_GlobalDef__##name GCC_MSEG = &GlobalDef__##name;
 
 	

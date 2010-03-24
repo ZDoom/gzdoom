@@ -14,10 +14,10 @@
 
 struct OneKey
 {
-	const PClass *key;
+	PClassActor *key;
 	int count;
 
-	bool check(AActor * owner)
+	bool check(AActor *owner)
 	{
 		return !!owner->FindInventory(key);
 	}
@@ -99,7 +99,7 @@ static const char * keywords_lock[]={
 //
 //===========================================================================
 
-static void AddOneKey(Keygroup *keygroup, const PClass *mi, FScanner &sc)
+static void AddOneKey(Keygroup *keygroup, PClassActor *mi, FScanner &sc)
 {
 	if (mi)
 	{
@@ -136,17 +136,17 @@ static void AddOneKey(Keygroup *keygroup, const PClass *mi, FScanner &sc)
 //
 //===========================================================================
 
-static Keygroup * ParseKeygroup(FScanner &sc)
+static Keygroup *ParseKeygroup(FScanner &sc)
 {
-	Keygroup * keygroup;
-	const PClass * mi;
+	Keygroup *keygroup;
+	PClassActor *mi;
 
 	sc.MustGetStringName("{");
 	keygroup = new Keygroup;
 	while (!sc.CheckString("}"))
 	{
 		sc.MustGetString();
-		mi = PClass::FindClass(sc.String);
+		mi = PClass::FindActor(sc.String);
 		AddOneKey(keygroup, mi, sc);
 	}
 	if (keygroup->anykeylist.Size() == 0)
@@ -185,9 +185,9 @@ static void ParseLock(FScanner &sc)
 	int i,r,g,b;
 	int keynum;
 	Lock sink;
-	Lock * lock=&sink;
-	Keygroup * keygroup;
-	const PClass * mi;
+	Lock *lock = &sink;
+	Keygroup *keygroup;
+	PClassActor *mi;
 
 	sc.MustGetNumber();
 	keynum = sc.Number;
@@ -272,7 +272,7 @@ static void ParseLock(FScanner &sc)
 			break;
 
 		default:
-			mi = PClass::FindClass(sc.String);
+			mi = PClass::FindActor(sc.String);
 			if (mi) 
 			{
 				keygroup = new Keygroup;

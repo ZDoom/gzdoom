@@ -39,13 +39,12 @@ static void BrainishExplosion (fixed_t x, fixed_t y, fixed_t z)
 		boom->DeathSound = "misc/brainexplode";
 		boom->velz = pr_brainscream() << 9;
 
-		const PClass *cls = PClass::FindClass("BossBrain");
+		PClassActor *cls = PClass::FindActor("BossBrain");
 		if (cls != NULL)
 		{
-			FState *state = cls->ActorInfo->FindState(NAME_Brainexplode);
+			FState *state = cls->FindState(NAME_Brainexplode);
 			if (state != NULL)
 				boom->SetState (state);
-
 		}
 		boom->effects = 0;
 		boom->Damage = 0;	// disables collision detection which is not wanted here
@@ -107,7 +106,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BrainSpit)
 	{
 		if (spawntype == NULL) 
 		{
-			spawntype = PClass::FindClass("SpawnShot");
+			spawntype = PClass::FindActor("SpawnShot");
 			isdefault = true;
 		}
 
@@ -282,7 +281,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnFly)
 	}
 	else
 	{
-		spawntype = PClass::FindClass("SpawnFire");
+		spawntype = PClass::FindActor("SpawnFire");
 		sound = "brain/spawn";
 	}
 	SpawnFly(self, spawntype, sound);

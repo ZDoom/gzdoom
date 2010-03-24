@@ -156,7 +156,6 @@ class PClass : public DObject
 public:
 	static void StaticInit ();
 	static void StaticShutdown ();
-	static void StaticFreeData (PClass *type);
 
 	// Per-class information -------------------------------------
 	FName				 TypeName;		// this class's name
@@ -164,7 +163,6 @@ public:
 	PClass				*ParentClass;	// the class this class derives from
 	const size_t		*Pointers;		// object pointers defined by this class *only*
 	const size_t		*FlatPointers;	// object pointers defined by this class and all its superclasses; not initialized by default
-	FActorInfo			*ActorInfo;
 	PClass				*HashNext;
 	FMetaTable			 Meta;
 	BYTE				*Defaults;
@@ -183,7 +181,6 @@ public:
 	unsigned int Extend(unsigned int extension);
 	void InitializeActorInfo ();
 	void BuildFlatPointers ();
-	void FreeStateList();
 	const PClass *NativeClass() const;
 	size_t PropagateMark();
 
@@ -208,10 +205,14 @@ public:
 	static PClass *FindClass (const FString &name) { return FindClass (FName (name, true)); }
 	static PClass *FindClass (ENamedName name) { return FindClass (FName (name)); }
 	static PClass *FindClass (FName name);
-	const PClass *FindClassTentative (FName name);	// not static!
+	static PClassActor *FindActor (const char *name) { return FindActor (FName (name, true)); }
+	static PClassActor *FindActor (const FString &name) { return FindActor (FName (name, true)); }
+	static PClassActor *FindActor (ENamedName name) { return FindActor (FName (name)); }
+	static PClassActor *FindActor (FName name);
+	PClass *FindClassTentative (FName name);	// not static!
 
 	static TArray<PClass *> m_Types;
-	static TArray<PClass *> m_RuntimeActors;
+	static TArray<PClassActor *> m_RuntimeActors;
 
 	enum { HASH_SIZE = 256 };
 	static PClass *TypeHash[HASH_SIZE];

@@ -14,8 +14,6 @@
 static FRandom pr_bang4cloud ("Bang4Cloud");
 static FRandom pr_lightout ("LightOut");
 
-extern const PClass *QuestItemClasses[31];
-
 DEFINE_ACTION_FUNCTION(AActor, A_Bang4Cloud)
 {
 	PARAM_ACTION_PROLOGUE;

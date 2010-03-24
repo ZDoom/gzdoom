@@ -37,7 +37,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FatAttack1)
 	if (!self->target)
 		return 0;
 
-	if (spawntype == NULL) spawntype = PClass::FindClass("FatShot");
+	if (spawntype == NULL) spawntype = PClass::FindActor("FatShot");
 
 	A_FaceTarget (self);
 	// Change direction  to ...
@@ -66,7 +66,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FatAttack2)
 	if (!self->target)
 		return 0;
 
-	if (spawntype == NULL) spawntype = PClass::FindClass("FatShot");
+	if (spawntype == NULL) spawntype = PClass::FindActor("FatShot");
 
 	A_FaceTarget (self);
 	// Now here choose opposite deviation.
@@ -95,7 +95,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FatAttack3)
 	if (!self->target)
 		return 0;
 
-	if (spawntype == NULL) spawntype = PClass::FindClass("FatShot");
+	if (spawntype == NULL) spawntype = PClass::FindActor("FatShot");
 
 	A_FaceTarget (self);
 	
@@ -144,8 +144,14 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Mushroom)
 
 	int i, j;
 
-	if (n == 0) n = self->Damage; // GetMissileDamage (0, 1);
-	if (spawntype == NULL) spawntype = PClass::FindClass("FatShot");
+	if (n == 0)
+	{
+		n = self->Damage; // GetMissileDamage (0, 1);
+	}
+	if (spawntype == NULL)
+	{
+		spawntype = PClass::FindActor("FatShot");
+	}
 
 	P_RadiusAttack (self, self->target, 128, 128, self->DamageType, !(flags & MSF_DontHurt));
 	P_CheckSplash(self, 128<<FRACBITS);

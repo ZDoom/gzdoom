@@ -263,8 +263,14 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_M_Saw)
 	if (self->target == NULL)
 		return 0;
 
-	if (pufftype == NULL) pufftype = PClass::FindClass(NAME_BulletPuff);
-	if (damage == 0) damage = 2;
+	if (pufftype == NULL)
+	{
+		pufftype = PClass::FindActor(NAME_BulletPuff);
+	}
+	if (damage == 0)
+	{
+		damage = 2;
+	}
 
 	A_FaceTarget (self);
 	if (self->CheckMeleeRange ())
@@ -357,7 +363,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_M_Punch)
 //
 //============================================================================
 
-void P_GunShot2 (AActor *mo, bool accurate, int pitch, const PClass *pufftype)
+void P_GunShot2 (AActor *mo, bool accurate, int pitch, PClassActor *pufftype)
 {
 	angle_t 	angle;
 	int 		damage;
@@ -390,7 +396,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_M_FirePistol)
 	S_Sound (self, CHAN_WEAPON, "weapons/pistol", 1, ATTN_NORM);
 	A_FaceTarget (self);
 	P_GunShot2 (self, accurate, P_AimLineAttack (self, self->angle, MISSILERANGE),
-		PClass::FindClass(NAME_BulletPuff));
+		PClass::FindActor(NAME_BulletPuff));
 	return 0;
 }
 
@@ -414,7 +420,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_M_FireShotgun)
 	pitch = P_AimLineAttack (self, self->angle, MISSILERANGE);
 	for (int i = 0; i < 7; ++i)
 	{
-		P_GunShot2 (self, false, pitch, PClass::FindClass(NAME_BulletPuff));
+		P_GunShot2 (self, false, pitch, PClass::FindActor(NAME_BulletPuff));
 	}
 	self->special1 = level.maptime + 27;
 	return 0;
@@ -489,7 +495,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_M_FireCGun)
 	S_Sound (self, CHAN_WEAPON, "weapons/chngun", 1, ATTN_NORM);
 	A_FaceTarget (self);
 	P_GunShot2 (self, accurate, P_AimLineAttack (self, self->angle, MISSILERANGE),
-		PClass::FindClass(NAME_BulletPuff));
+		PClass::FindActor(NAME_BulletPuff));
 	return 0;
 }
 
@@ -637,9 +643,9 @@ void AScriptedMarine::SetWeapon (EMarineWeapon type)
 
 void AScriptedMarine::SetSprite (const PClass *source)
 {
-	if (source == NULL || source->ActorInfo == NULL)
+	if (source == NULL)
 	{ // A valid actor class wasn't passed, so use the standard sprite
-		SpriteOverride = sprite = GetClass()->ActorInfo->OwnedStates[0].sprite;
+		SpriteOverride = sprite = GetClass()->OwnedStates[0].sprite;
 		// Copy the standard scaling
 		scaleX = GetDefault()->scaleX;
 		scaleY = GetDefault()->scaleY;

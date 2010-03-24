@@ -2115,7 +2115,7 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 			}
 
 			typeinfo = PClass::FindClass (s);
-			if (typeinfo != NULL && typeinfo->ActorInfo != NULL)
+			if (typeinfo != NULL && typeinfo->IsKindOf(RUNTIME_CLASS(PClassActor)))
 			{
 				AActor *source = players[player].mo;
 				if (source != NULL)
@@ -2383,7 +2383,7 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 			}
 			for(int i = 0; i < count; ++i)
 			{
-				const PClass *wpn = Net_ReadWeapon(stream);
+				PClassActor *wpn = Net_ReadWeapon(stream);
 				players[player].weapons.AddSlot(slot, wpn, player == consoleplayer);
 			}
 		}
@@ -2392,7 +2392,7 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 	case DEM_ADDSLOT:
 		{
 			int slot = ReadByte(stream);
-			const PClass *wpn = Net_ReadWeapon(stream);
+			PClassActor *wpn = Net_ReadWeapon(stream);
 			players[player].weapons.AddSlot(slot, wpn, player == consoleplayer);
 		}
 		break;
@@ -2400,7 +2400,7 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 	case DEM_ADDSLOTDEFAULT:
 		{
 			int slot = ReadByte(stream);
-			const PClass *wpn = Net_ReadWeapon(stream);
+			PClassActor *wpn = Net_ReadWeapon(stream);
 			players[player].weapons.AddSlotDefault(slot, wpn, player == consoleplayer);
 		}
 		break;

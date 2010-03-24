@@ -60,11 +60,11 @@ extern PSymbolTable		 GlobalSymbols;
 
 struct FCompileContext
 {
-	const PClass *cls;
+	PClassActor *cls;
 	bool lax;
 	bool isconst;
 
-	FCompileContext(const PClass *_cls = NULL, bool _lax = false, bool _isconst = false)
+	FCompileContext(PClassActor *_cls = NULL, bool _lax = false, bool _isconst = false)
 	{
 		cls = _cls;
 		lax = _lax;
@@ -73,7 +73,7 @@ struct FCompileContext
 
 	PSymbol *FindInClass(FName identifier)
 	{
-		return cls? cls->Symbols.FindSymbol(identifier, true) : NULL;
+		return cls ? cls->Symbols.FindSymbol(identifier, true) : NULL;
 	}
 	PSymbol *FindGlobal(FName identifier)
 	{
@@ -894,7 +894,7 @@ public:
 
 class FxMultiNameState : public FxExpression
 {
-	const PClass *scope;
+	PClassActor *scope;
 	TArray<FName> names;
 public:
 
@@ -906,7 +906,7 @@ public:
 
 
 
-FxExpression *ParseExpression (FScanner &sc, PClass *cls);
+FxExpression *ParseExpression (FScanner &sc, PClassActor *cls);
 
 
 #endif

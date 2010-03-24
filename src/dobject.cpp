@@ -53,9 +53,10 @@ ClassReg DObject::RegistrationInfo =
 	NULL,							// MyClass
 	"DObject",						// Name
 	NULL,							// ParentType
-	sizeof(DObject),				// SizeOf
 	NULL,							// Pointers
-	&DObject::InPlaceConstructor	// ConstructNative
+	&DObject::InPlaceConstructor,	// ConstructNative
+	sizeof(DObject),				// SizeOf
+	CLASSREG_PClass,				// MetaClassNum
 };
 _DECLARE_TI(DObject)
 
@@ -294,7 +295,6 @@ CCMD (dumpclasses)
 	int shown, omitted;
 	DumpInfo *tree = NULL;
 	const PClass *root = NULL;
-	bool showall = true;
 
 	if (argv.argc() > 1)
 	{
@@ -304,13 +304,6 @@ CCMD (dumpclasses)
 			Printf ("Class '%s' not found\n", argv[1]);
 			return;
 		}
-		if (stricmp (argv[1], "Actor") == 0)
-		{
-			if (argv.argc() < 3 || stricmp (argv[2], "all") != 0)
-			{
-				showall = false;
-			}
-		}
 	}
 
 	shown = omitted = 0;
@@ -318,10 +311,7 @@ CCMD (dumpclasses)
 	for (i = 0; i < PClass::m_Types.Size(); i++)
 	{
 		PClass *cls = PClass::m_Types[i];
-		if (root == NULL ||
-			(cls->IsDescendantOf (root) &&
-			(showall || cls == root ||
-			cls->ActorInfo != root->ActorInfo)))
+		if (root == NULL || cls == root || cls->IsDescendantOf(root))
 		{
 			DumpInfo::AddType (&tree, cls);
 //			Printf (" %s\n", PClass::m_Types[i]->Name + 1);

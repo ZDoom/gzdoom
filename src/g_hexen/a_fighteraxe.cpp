@@ -211,7 +211,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeAttack)
 	int useMana;
 	player_t *player;
 	AWeapon *weapon;
-	const PClass *pufftype;
+	PClassActor *pufftype;
 	AActor *linetarget;
 
 	if (NULL == (player = self->player))
@@ -228,12 +228,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeAttack)
 	{
 		damage <<= 1;
 		power = 6*FRACUNIT;
-		pufftype = PClass::FindClass ("AxePuffGlow");
+		pufftype = PClass::FindActor ("AxePuffGlow");
 		useMana = 1;
 	}
 	else
 	{
-		pufftype = PClass::FindClass ("AxePuff");
+		pufftype = PClass::FindActor ("AxePuff");
 		useMana = 0;
 	}
 	for (i = 0; i < 16; i++)

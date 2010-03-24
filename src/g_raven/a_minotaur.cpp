@@ -104,7 +104,7 @@ void AMinotaurFriend::Die (AActor *source, AActor *inflictor)
 
 		if (mo == NULL)
 		{
-			AInventory *power = tracer->FindInventory (PClass::FindClass("PowerMinotaur"));
+			AInventory *power = tracer->FindInventory(PClass::FindActor("PowerMinotaur"));
 			if (power != NULL)
 			{
 				power->Destroy ();

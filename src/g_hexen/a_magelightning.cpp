@@ -269,8 +269,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightningZap)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_MLightningAttack)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_CLASS_OPT(floor, AActor)		{ floor = PClass::FindClass("LightningFloor"); }
-	PARAM_CLASS_OPT(ceiling, AActor)	{ ceiling = PClass::FindClass("LightningCeiling"); }
+	PARAM_CLASS_OPT(floor, AActor)		{ floor = PClass::FindActor("LightningFloor"); }
+	PARAM_CLASS_OPT(ceiling, AActor)	{ ceiling = PClass::FindActor("LightningCeiling"); }
 
 	AActor *fmo, *cmo;
 

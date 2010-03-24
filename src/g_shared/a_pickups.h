@@ -19,13 +19,13 @@ public:
 	FWeaponSlot &operator= (const FWeaponSlot &other) { Weapons = other.Weapons; return *this; }
 	void Clear() { Weapons.Clear(); }
 	bool AddWeapon (const char *type);
-	bool AddWeapon (const PClass *type);
+	bool AddWeapon (PClassActor *type);
 	void AddWeaponList (const char *list, bool clear);
 	AWeapon *PickWeapon (player_t *player);
 	int Size () const { return (int)Weapons.Size(); }
-	int LocateWeapon (const PClass *type);
+	int LocateWeapon (PClassActor *type);
 
-	inline const PClass *GetWeapon (int index) const
+	inline PClassActor *GetWeapon (int index) const
 	{
 		if ((unsigned)index < Weapons.Size())
 		{
@@ -42,7 +42,7 @@ public:
 private:
 	struct WeaponInfo
 	{
-		const PClass *Type;
+		PClassActor *Type;
 		fixed_t Position;
 	};
 	void SetInitialPositions();
@@ -68,25 +68,25 @@ struct FWeaponSlots
 	AWeapon *PickPrevWeapon (player_t *player);
 
 	void Clear ();
-	bool LocateWeapon (const PClass *type, int *const slot, int *const index);
-	ESlotDef AddDefaultWeapon (int slot, const PClass *type);
+	bool LocateWeapon (PClassActor *type, int *const slot, int *const index);
+	ESlotDef AddDefaultWeapon (int slot, PClassActor *type);
 	void AddExtraWeapons();
 	void SetFromGameInfo();
-	void SetFromPlayer(const PClass *type);
-	void StandardSetup(const PClass *type);
-	void LocalSetup(const PClass *type);
+	void SetFromPlayer(PClassActor *type);
+	void StandardSetup(PClassActor *type);
+	void LocalSetup(PClassActor *type);
 	void SendDifferences(const FWeaponSlots &other);
 	int RestoreSlots (FConfigFile *config, const char *section);
 	void PrintSettings();
 
-	void AddSlot(int slot, const PClass *type, bool feedback);
-	void AddSlotDefault(int slot, const PClass *type, bool feedback);
+	void AddSlot(int slot, PClassActor *type, bool feedback);
+	void AddSlotDefault(int slot, PClassActor *type, bool feedback);
 
 };
 
 void P_PlaybackKeyConfWeapons(FWeaponSlots *slots);
-void Net_WriteWeapon(const PClass *type);
-const PClass *Net_ReadWeapon(BYTE **stream);
+void Net_WriteWeapon(PClassActor *type);
+PClassActor *Net_ReadWeapon(BYTE **stream);
 
 void P_SetupWeapons_ntohton();
 void P_WriteDemoWeaponsChunk(BYTE **demo);
@@ -227,7 +227,7 @@ public:
 	void Serialize (FArchive &arc);
 	AInventory *CreateCopy (AActor *other);
 	bool HandlePickup (AInventory *item);
-	const PClass *GetParentAmmo () const;
+	PClassActor *GetParentAmmo () const;
 	AInventory *CreateTossable ();
 
 	int BackpackAmount, BackpackMaxAmount;
@@ -247,16 +247,16 @@ class AWeapon : public AInventory
 	HAS_OBJECT_POINTERS
 public:
 	DWORD WeaponFlags;
-	const PClass *AmmoType1, *AmmoType2;	// Types of ammo used by this weapon
+	PClassActor *AmmoType1, *AmmoType2;		// Types of ammo used by this weapon
 	int AmmoGive1, AmmoGive2;				// Amount of each ammo to get when picking up weapon
 	int MinAmmo1, MinAmmo2;					// Minimum ammo needed to switch to this weapon
 	int AmmoUse1, AmmoUse2;					// How much ammo to use with each shot
 	int Kickback;
 	fixed_t YAdjust;						// For viewing the weapon fullscreen
 	FSoundIDNoInit UpSound, ReadySound;		// Sounds when coming up and idle
-	const PClass *SisterWeaponType;			// Another weapon to pick up with this one
-	const PClass *ProjectileType;			// Projectile used by primary attack
-	const PClass *AltProjectileType;		// Projectile used by alternate attack
+	PClassActor *SisterWeaponType;			// Another weapon to pick up with this one
+	PClassActor *ProjectileType;			// Projectile used by primary attack
+	PClassActor *AltProjectileType;			// Projectile used by alternate attack
 	int SelectionOrder;						// Lower-numbered weapons get picked first
 	fixed_t MoveCombatDist;					// Used by bots, but do they *really* need it?
 	int ReloadCounter;						// For A_CheckForReload
@@ -300,9 +300,9 @@ public:
 	bool DepleteAmmo (bool altFire, bool checkEnough=true);
 
 protected:
-	AAmmo *AddAmmo (AActor *other, const PClass *ammotype, int amount);
+	AAmmo *AddAmmo (AActor *other, PClassActor *ammotype, int amount);
 	bool AddExistingAmmo (AAmmo *ammo, int amount);
-	AWeapon *AddWeapon (const PClass *weapon);
+	AWeapon *AddWeapon (PClassActor *weapon);
 };
 
 enum

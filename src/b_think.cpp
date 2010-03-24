@@ -354,7 +354,7 @@ void FCajunMaster::WhatToGet (AActor *actor, AActor *item)
 	else if (item->IsKindOf (RUNTIME_CLASS(AAmmo)))
 	{
 		AAmmo *ammo = static_cast<AAmmo *> (item);
-		const PClass *parent = ammo->GetParentAmmo ();
+		PClassActor *parent = ammo->GetParentAmmo ();
 		AInventory *holdingammo = b->mo->FindInventory (parent);
 
 		if (holdingammo != NULL && holdingammo->Amount >= holdingammo->MaxAmount)

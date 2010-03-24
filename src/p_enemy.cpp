@@ -2548,10 +2548,10 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 			{
 				// For Dehacked compatibility this has to use the Arch Vile's
 				// heal state as a default if the actor doesn't define one itself.
-				const PClass *archvile = PClass::FindClass("Archvile");
+				const PClassActor *archvile = PClass::FindActor("Archvile");
 				if (archvile != NULL)
 				{
-					self->SetState (archvile->ActorInfo->FindState(NAME_Heal));
+					self->SetState (archvile->FindState(NAME_Heal));
 				}
 			}
 			S_Sound (corpsehit, CHAN_BODY, "vile/raise", 1, ATTN_IDLE);
@@ -3084,11 +3084,11 @@ void A_BossDeath(AActor *self)
 	FName mytype = self->GetClass()->TypeName;
 
 	// Ugh...
-	FName type = self->GetClass()->ActorInfo->GetReplacee()->Class->TypeName;
+	FName type = self->GetClass()->GetReplacee()->TypeName;
 	
 	// Do generic special death actions first
 	bool checked = false;
-	for(unsigned i=0; i<level.info->specialactions.Size(); i++)
+	for (unsigned i = 0; i < level.info->specialactions.Size(); i++)
 	{
 		FSpecialAction *sa = &level.info->specialactions[i];
 

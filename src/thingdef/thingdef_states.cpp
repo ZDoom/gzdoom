@@ -82,7 +82,7 @@ bool DoActionSpecials(FScanner &sc, FState & state, Baggage &bag, FStateTempCall
 		{
 			for (i = 0; i < 5;)
 			{
-				tcall->Parameters.Push(new FxParameter(new FxIntCast(ParseExpression(sc, bag.Info->Class))));
+				tcall->Parameters.Push(new FxParameter(new FxIntCast(ParseExpression(sc, bag.Info))));
 				i++;
 				if (!sc.CheckToken (',')) break;
 			}
@@ -136,7 +136,7 @@ static FString ParseStateString(FScanner &sc)
 // parses a state block
 //
 //==========================================================================
-void ParseStates(FScanner &sc, FActorInfo * actor, AActor * defaults, Baggage &bag)
+void ParseStates(FScanner &sc, PClassActor * actor, AActor * defaults, Baggage &bag)
 {
 	FString statestring;
 	FState state;
@@ -272,7 +272,7 @@ do_stop:
 					goto endofstate;
 				}
 
-				PSymbol *sym = bag.Info->Class->Symbols.FindSymbol (FName(sc.String, true), true);
+				PSymbol *sym = bag.Info->Symbols.FindSymbol (FName(sc.String, true), true);
 				if (sym != NULL && sym->SymbolType == SYM_ActionFunction)
 				{
 					PSymbolActionFunction *afd = static_cast<PSymbolActionFunction *>(sym);
@@ -341,7 +341,7 @@ do_stop:
 							else
 							{
 								// Use the generic parameter parser for everything else
-								x = ParseParameter(sc, bag.Info->Class, *params, false);
+								x = ParseParameter(sc, bag.Info, *params, false);
 							}
 //							StateParams.Set(paramindex++, x);
 							tcall->Parameters.Push(new FxParameter(x));
@@ -357,7 +357,7 @@ do_stop:
 										goto endofstate;
 									}
 									params--;
-									StateParams.Reserve(1, bag.Info->Class);
+									StateParams.Reserve(1, bag.Info);
 								}
 								else if ((islower(*params) || *params=='!') && sc.CheckString(")"))
 								{
@@ -391,7 +391,7 @@ endofstate:
 			}
 			if (tcall->Function != NULL)
 			{
-				tcall->ActorInfo = actor;
+				tcall->ActorClass = actor;
 				tcall->FirstState = bag.statedef.GetStateCount() - count;
 				tcall->NumStates = count;
 				StateTempCalls.Push(tcall);

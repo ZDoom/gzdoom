@@ -38,7 +38,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CMaceAttack)
 		slope = P_AimLineAttack (player->mo, angle, 2*MELEERANGE, &linetarget);
 		if (linetarget)
 		{
-			P_LineAttack (player->mo, angle, 2*MELEERANGE, slope, damage, NAME_Melee, PClass::FindClass ("HammerPuff"), true);
+			P_LineAttack (player->mo, angle, 2*MELEERANGE, slope, damage, NAME_Melee, PClass::FindActor("HammerPuff"), true);
 			AdjustPlayerAngle (player->mo, linetarget);
 //			player->mo->angle = R_PointToAngle2(player->mo->x,
 //				player->mo->y, linetarget->x, linetarget->y);
@@ -48,7 +48,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CMaceAttack)
 		slope = P_AimLineAttack (player->mo, angle, 2*MELEERANGE, &linetarget);
 		if (linetarget)
 		{
-			P_LineAttack (player->mo, angle, 2*MELEERANGE, slope, damage, NAME_Melee, PClass::FindClass ("HammerPuff"), true);
+			P_LineAttack (player->mo, angle, 2*MELEERANGE, slope, damage, NAME_Melee, PClass::FindActor("HammerPuff"), true);
 			AdjustPlayerAngle (player->mo, linetarget);
 //			player->mo->angle = R_PointToAngle2(player->mo->x,
 //				player->mo->y, linetarget->x, linetarget->y);
@@ -60,7 +60,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CMaceAttack)
 
 	angle = player->mo->angle;
 	slope = P_AimLineAttack (player->mo, angle, MELEERANGE, &linetarget);
-	P_LineAttack (player->mo, angle, MELEERANGE, slope, damage, NAME_Melee, PClass::FindClass ("HammerPuff"));
+	P_LineAttack (player->mo, angle, MELEERANGE, slope, damage, NAME_Melee, PClass::FindActor("HammerPuff"));
 macedone:
 	return 0;		
 }

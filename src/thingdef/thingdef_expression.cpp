@@ -3782,19 +3782,19 @@ ExpEmit FxClassTypeCast::Emit(VMFunctionBuilder *build)
 FxExpression *FxStateByIndex::Resolve(FCompileContext &ctx)
 {
 	CHECKRESOLVED();
-	if (ctx.cls->ActorInfo == NULL || ctx.cls->ActorInfo->NumOwnedStates == 0)
+	if (ctx.cls->NumOwnedStates == 0)
 	{
 		// This can't really happen
 		assert(false);
 	}
-	if (ctx.cls->ActorInfo->NumOwnedStates <= index)
+	if (ctx.cls->NumOwnedStates <= index)
 	{
 		ScriptPosition.Message(MSG_ERROR, "%s: Attempt to jump to non existing state index %d", 
 			ctx.cls->TypeName.GetChars(), index);
 		delete this;
 		return NULL;
 	}
-	FxExpression *x = new FxConstant(ctx.cls->ActorInfo->OwnedStates + index, ScriptPosition);
+	FxExpression *x = new FxConstant(ctx.cls->OwnedStates + index, ScriptPosition);
 	delete this;
 	return x;
 }
@@ -3842,11 +3842,11 @@ FxExpression *FxMultiNameState::Resolve(FCompileContext &ctx)
 	}
 	else if (names[0] == NAME_Super)
 	{
-		scope = ctx.cls->ParentClass;
+		scope = dyn_cast<PClassActor>(ctx.cls->ParentClass);
 	}
 	else
 	{
-		scope = PClass::FindClass(names[0]);
+		scope = PClass::FindActor(names[0]);
 		if (scope == NULL)
 		{
 			ScriptPosition.Message(MSG_ERROR, "Unknown class '%s' in state label", names[0].GetChars());
@@ -3866,13 +3866,7 @@ FxExpression *FxMultiNameState::Resolve(FCompileContext &ctx)
 		// If the label is class specific we can resolve it right here
 		if (names[1] != NAME_None)
 		{
-			if (scope->ActorInfo == NULL)
-			{
-				ScriptPosition.Message(MSG_ERROR, "'%s' has no actorinfo", names[0].GetChars());
-				delete this;
-				return NULL;
-			}
-			destination = scope->ActorInfo->FindState(names.Size()-1, &names[1], false);
+			destination = scope->FindState(names.Size()-1, &names[1], false);
 			if (destination == NULL)
 			{
 				ScriptPosition.Message(ctx.lax? MSG_WARNING:MSG_ERROR, "Unknown state jump destination");
@@ -3904,7 +3898,7 @@ ExpVal FxMultiNameState::EvalExpression (AActor *self)
 {
 	ExpVal ret;
 	ret.Type = VAL_State;
-	ret.pointer = self->GetClass()->ActorInfo->FindState(names.Size(), &names[0]);
+	ret.pointer = self->GetClass()->FindState(names.Size(), &names[0]);
 	if (ret.pointer == NULL)
 	{
 		const char *dot="";
@@ -3932,7 +3926,7 @@ int DecoFindMultiNameState(VMFrameStack *stack, VMValue *param, int numparam, VM
 		names[i - 1] = zaname;
 	}
 	PARAM_OBJECT_AT(0, self, AActor);
-	FState *state = self->GetClass()->ActorInfo->FindState(numparam - 1, names);
+	FState *state = self->GetClass()->FindState(numparam - 1, names);
 	if (state == NULL)
 	{
 		const char *dot = "";
@@ -4011,7 +4005,7 @@ FStateExpressions::~FStateExpressions()
 //
 //==========================================================================
 
-int FStateExpressions::Add(FxExpression *x, const PClass *o, bool c)
+int FStateExpressions::Add(FxExpression *x, PClassActor *o, bool c)
 {
 	int idx = expressions.Reserve(1);
 	FStateExpression &exp = expressions[idx];
@@ -4028,11 +4022,11 @@ int FStateExpressions::Add(FxExpression *x, const PClass *o, bool c)
 //
 //==========================================================================
 
-int FStateExpressions::Reserve(int num, const PClass *cls)
+int FStateExpressions::Reserve(int num, PClassActor *cls)
 {
 	int idx = expressions.Reserve(num);
 	FStateExpression *exp = &expressions[idx];
-	for(int i=0; i<num; i++)
+	for(int i = 0; i < num; i++)
 	{
 		exp[i].expr = NULL;
 		exp[i].owner = cls;

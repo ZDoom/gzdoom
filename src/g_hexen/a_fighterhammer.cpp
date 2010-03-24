@@ -36,6 +36,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FHammerAttack)
 	int i;
 	player_t *player;
 	AActor *linetarget;
+	PClassActor *hammertime;
 
 	if (NULL == (player = self->player))
 	{
@@ -45,13 +46,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_FHammerAttack)
 
 	damage = 60+(pr_hammeratk()&63);
 	power = 10*FRACUNIT;
+	hammertime = PClass::FindActor("HammerPuff");
 	for (i = 0; i < 16; i++)
 	{
 		angle = pmo->angle + i*(ANG45/32);
 		slope = P_AimLineAttack (pmo, angle, HAMMER_RANGE, &linetarget, 0, false, true);
 		if (linetarget)
 		{
-			P_LineAttack (pmo, angle, HAMMER_RANGE, slope, damage, NAME_Melee, PClass::FindClass ("HammerPuff"), true);
+			P_LineAttack (pmo, angle, HAMMER_RANGE, slope, damage, NAME_Melee, hammertime, true);
 			AdjustPlayerAngle(pmo, linetarget);
 			if (linetarget->flags3&MF3_ISMONSTER || linetarget->player)
 			{
@@ -64,7 +66,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FHammerAttack)
 		slope = P_AimLineAttack(pmo, angle, HAMMER_RANGE, &linetarget, 0, false, true);
 		if(linetarget)
 		{
-			P_LineAttack(pmo, angle, HAMMER_RANGE, slope, damage, NAME_Melee, PClass::FindClass ("HammerPuff"), true);
+			P_LineAttack(pmo, angle, HAMMER_RANGE, slope, damage, NAME_Melee, hammertime, true);
 			AdjustPlayerAngle(pmo, linetarget);
 			if (linetarget->flags3&MF3_ISMONSTER || linetarget->player)
 			{
@@ -77,7 +79,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FHammerAttack)
 	// didn't find any targets in meleerange, so set to throw out a hammer
 	angle = pmo->angle;
 	slope = P_AimLineAttack (pmo, angle, HAMMER_RANGE, &linetarget, 0, false, true);
-	if (P_LineAttack (pmo, angle, HAMMER_RANGE, slope, damage, NAME_Melee, PClass::FindClass ("HammerPuff"), true) != NULL)
+	if (P_LineAttack (pmo, angle, HAMMER_RANGE, slope, damage, NAME_Melee, hammertime, true) != NULL)
 	{
 		pmo->special1 = false;
 	}

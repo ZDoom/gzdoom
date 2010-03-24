@@ -142,7 +142,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FPunchAttack)
 	fixed_t power;
 	int i;
 	player_t *player;
-	const PClass *pufftype;
+	PClassActor *pufftype;
 	AActor *linetarget;
 
 	if (NULL == (player = self->player))
@@ -153,7 +153,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FPunchAttack)
 
 	damage = 40+(pr_fpatk()&15);
 	power = 2*FRACUNIT;
-	pufftype = PClass::FindClass ("PunchPuff");
+	pufftype = PClass::FindActor("PunchPuff");
 	for (i = 0; i < 16; i++)
 	{
 		angle = pmo->angle + i*(ANG45/16);
@@ -165,7 +165,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FPunchAttack)
 			{
 				damage <<= 1;
 				power = 6*FRACUNIT;
-				pufftype = PClass::FindClass ("HammerPuff");
+				pufftype = PClass::FindActor("HammerPuff");
 			}
 			P_LineAttack (pmo, angle, 2*MELEERANGE, slope, damage, NAME_Melee, pufftype, true);
 			if (linetarget->flags3&MF3_ISMONSTER || linetarget->player)
@@ -184,7 +184,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FPunchAttack)
 			{
 				damage <<= 1;
 				power = 6*FRACUNIT;
-				pufftype = PClass::FindClass ("HammerPuff");
+				pufftype = PClass::FindActor("HammerPuff");
 			}
 			P_LineAttack (pmo, angle, 2*MELEERANGE, slope, damage, NAME_Melee, pufftype, true);
 			if (linetarget->flags3&MF3_ISMONSTER || linetarget->player)

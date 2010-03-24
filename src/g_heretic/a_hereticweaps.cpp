@@ -82,7 +82,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_StaffAttack)
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return 0;
 	}
-	if (puff == NULL) puff = PClass::FindClass(NAME_BulletPuff);	// just to be sure
+	if (puff == NULL)
+	{
+		puff = PClass::FindActor(NAME_BulletPuff);	// just to be sure
+	}
 	angle = self->angle;
 	angle += pr_sap.Random2() << 18;
 	slope = P_AimLineAttack (self, angle, MELEERANGE, &linetarget);
@@ -254,7 +257,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GauntletAttack)
 	int randVal;
 	fixed_t dist;
 	player_t *player;
-	const PClass *pufftype;
+	PClassActor *pufftype;
 	AActor *linetarget;
 
 	if (NULL == (player = self->player))
@@ -278,14 +281,14 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GauntletAttack)
 		damage = pr_gatk.HitDice (2);
 		dist = 4*MELEERANGE;
 		angle += pr_gatk.Random2() << 17;
-		pufftype = PClass::FindClass("GauntletPuff2");
+		pufftype = PClass::FindActor("GauntletPuff2");
 	}
 	else
 	{
 		damage = pr_gatk.HitDice (2);
 		dist = MELEERANGE+1;
 		angle += pr_gatk.Random2() << 18;
-		pufftype = PClass::FindClass("GauntletPuff1");
+		pufftype = PClass::FindActor("GauntletPuff1");
 	}
 	slope = P_AimLineAttack (self, angle, dist, &linetarget);
 	P_LineAttack (self, angle, dist, slope, damage, NAME_Melee, pufftype);

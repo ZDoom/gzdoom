@@ -3293,7 +3293,7 @@ static bool CheckForSpectral (FTraceResults &res)
 //==========================================================================
 
 AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
-				   int pitch, int damage, FName damageType, const PClass *pufftype, bool ismeleeattack)
+				   int pitch, int damage, FName damageType, PClassActor *pufftype, bool ismeleeattack)
 {
 	fixed_t vx, vy, vz, shootz;
 	FTraceResults trace;
@@ -3326,7 +3326,7 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 		(t1->player->ReadyWeapon->flags2 & MF2_THRUGHOST));
 
 	// We need to check the defaults of the replacement here
-	AActor *puffDefaults = GetDefaultByType(pufftype->ActorInfo->GetReplacement()->Class);
+	AActor *puffDefaults = GetDefaultByType(pufftype->GetReplacement());
 
 	// if the puff uses a non-standard damage type this will override default and melee damage type.
 	// All other explicitly passed damage types (currenty only MDK) will be preserved.
@@ -3506,7 +3506,7 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 				   int pitch, int damage, FName damageType, FName pufftype, bool ismeleeattack)
 {
-	const PClass * type = PClass::FindClass(pufftype);
+	PClassActor *type = PClass::FindActor(pufftype);
 	if (type == NULL)
 	{
 		Printf("Attempt to spawn unknown actor type '%s'\n", pufftype.GetChars());
@@ -3731,7 +3731,7 @@ static bool ProcessNoPierceRailHit (FTraceResults &res)
 //
 //==========================================================================
 
-void P_RailAttack (AActor *source, int damage, int offset, int color1, int color2, float maxdiff, bool silent, const PClass *puffclass, bool pierce)
+void P_RailAttack (AActor *source, int damage, int offset, int color1, int color2, float maxdiff, bool silent, PClassActor *puffclass, bool pierce)
 {
 	fixed_t vx, vy, vz;
 	angle_t angle, pitch;
@@ -3740,7 +3740,10 @@ void P_RailAttack (AActor *source, int damage, int offset, int color1, int color
 	FTraceResults trace;
 	fixed_t shootz;
 
-	if (puffclass == NULL) puffclass = PClass::FindClass(NAME_BulletPuff);
+	if (puffclass == NULL)
+	{
+		puffclass = PClass::FindActor(NAME_BulletPuff);
+	}
 
 	pitch = (angle_t)(-source->pitch) >> ANGLETOFINESHIFT;
 	angle = source->angle >> ANGLETOFINESHIFT;
@@ -3774,8 +3777,8 @@ void P_RailAttack (AActor *source, int damage, int offset, int color1, int color
 
 	int flags;
 
-	AActor *puffDefaults = puffclass == NULL? 
-							NULL : GetDefaultByType (puffclass->ActorInfo->GetReplacement()->Class);
+	AActor *puffDefaults = puffclass == NULL ? 
+							NULL : GetDefaultByType (puffclass->GetReplacement());
 
 	if (puffDefaults != NULL && puffDefaults->flags6 & MF6_NOTRIGGER) flags = 0;
 	else flags = TRACE_PCross|TRACE_Impact;

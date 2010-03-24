@@ -30,8 +30,8 @@ FString WeaponSection;
 TArray<FString> KeyConfWeapons;
 FWeaponSlots *PlayingKeyConf;
 
-TArray<const PClass *> Weapons_ntoh;
-TMap<const PClass *, int> Weapons_hton;
+TArray<PClassActor *> Weapons_ntoh;
+TMap<PClassActor *, int> Weapons_hton;
 
 static int STACK_ARGS ntoh_cmp(const void *a, const void *b);
 
@@ -284,7 +284,7 @@ void AWeapon::AttachToOwner (AActor *other)
 //
 //===========================================================================
 
-AAmmo *AWeapon::AddAmmo (AActor *other, const PClass *ammotype, int amount)
+AAmmo *AWeapon::AddAmmo (AActor *other, PClassActor *ammotype, int amount)
 {
 	AAmmo *ammo;
 
@@ -357,7 +357,7 @@ bool AWeapon::AddExistingAmmo (AAmmo *ammo, int amount)
 //
 //===========================================================================
 
-AWeapon *AWeapon::AddWeapon (const PClass *weapontype)
+AWeapon *AWeapon::AddWeapon (PClassActor *weapontype)
 {
 	AWeapon *weap;
 
@@ -625,8 +625,8 @@ bool AWeaponGiver::TryPickup(AActor *&toucher)
 
 	if (di != NULL)
 	{
-		const PClass *ti = PClass::FindClass(di->Name);
-		if (ti->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
+		PClassActor *ti = PClass::FindActor(di->Name);
+		if (ti != NULL && ti->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
 		{
 			if (master == NULL)
 			{
@@ -662,10 +662,10 @@ bool AWeaponGiver::TryPickup(AActor *&toucher)
 
 bool FWeaponSlot::AddWeapon(const char *type)
 {
-	return AddWeapon (PClass::FindClass (type));
+	return AddWeapon (PClass::FindActor (type));
 }
 
-bool FWeaponSlot::AddWeapon(const PClass *type)
+bool FWeaponSlot::AddWeapon(PClassActor *type)
 {
 	unsigned int i;
 	
@@ -726,7 +726,7 @@ void FWeaponSlot :: AddWeaponList(const char *list, bool clear)
 //
 //===========================================================================
 
-int FWeaponSlot::LocateWeapon(const PClass *type)
+int FWeaponSlot::LocateWeapon(PClassActor *type)
 {
 	unsigned int i;
 
@@ -842,7 +842,7 @@ void FWeaponSlot::Sort()
 	for (i = 1; i < (int)Weapons.Size(); ++i)
 	{
 		fixed_t pos = Weapons[i].Position;
-		const PClass *type = Weapons[i].Type;
+		PClassActor *type = Weapons[i].Type;
 		for (j = i - 1; j >= 0 && Weapons[j].Position > pos; --j)
 		{
 			Weapons[j + 1] = Weapons[j];
@@ -891,7 +891,7 @@ void FWeaponSlots::Clear()
 //
 //===========================================================================
 
-ESlotDef FWeaponSlots::AddDefaultWeapon (int slot, const PClass *type)
+ESlotDef FWeaponSlots::AddDefaultWeapon (int slot, PClassActor *type)
 {
 	int currSlot, index;
 
@@ -916,7 +916,7 @@ ESlotDef FWeaponSlots::AddDefaultWeapon (int slot, const PClass *type)
 //
 //===========================================================================
 
-bool FWeaponSlots::LocateWeapon (const PClass *type, int *const slot, int *const index)
+bool FWeaponSlots::LocateWeapon (PClassActor *type, int *const slot, int *const index)
 {
 	int i, j;
 
@@ -1014,7 +1014,7 @@ AWeapon *FWeaponSlots::PickNextWeapon(player_t *player)
 					slot = 0;
 				}
 			}
-			const PClass *type = Slots[slot].GetWeapon(index);
+			PClassActor *type = Slots[slot].GetWeapon(index);
 			AWeapon *weap = static_cast<AWeapon *>(player->mo->FindInventory(type));
 			if (weap != NULL && weap->CheckAmmo(AWeapon::EitherFire, false))
 			{
@@ -1069,7 +1069,7 @@ AWeapon *FWeaponSlots::PickPrevWeapon (player_t *player)
 				}
 				index = Slots[slot].Size() - 1;
 			}
-			const PClass *type = Slots[slot].GetWeapon(index);
+			PClassActor *type = Slots[slot].GetWeapon(index);
 			AWeapon *weap = static_cast<AWeapon *>(player->mo->FindInventory(type));
 			if (weap != NULL && weap->CheckAmmo(AWeapon::EitherFire, false))
 			{
@@ -1105,18 +1105,21 @@ void FWeaponSlots::AddExtraWeapons()
 	{
 		PClass *cls = PClass::m_Types[i];
 
-		if (cls->ActorInfo != NULL &&
-			(cls->ActorInfo->GameFilter == GAME_Any || (cls->ActorInfo->GameFilter & gameinfo.gametype)) &&
-			cls->ActorInfo->Replacement == NULL &&	// Replaced weapons don't get slotted.
-			cls->IsDescendantOf(RUNTIME_CLASS(AWeapon)) &&
-			!LocateWeapon(cls, NULL, NULL)			// Don't duplicate it if it's already present.
+		if (!cls->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
+		{
+			continue;
+		}
+		PClassActor *acls = static_cast<PClassActor *>(cls);
+		if ((acls->GameFilter == GAME_Any || (acls->GameFilter & gameinfo.gametype)) &&
+			acls->Replacement == NULL &&		// Replaced weapons don't get slotted.
+			!LocateWeapon(acls, NULL, NULL)		// Don't duplicate it if it's already present.
 			)
 		{
-			int slot = cls->Meta.GetMetaInt(AWMETA_SlotNumber, -1);
+			int slot = acls->Meta.GetMetaInt(AWMETA_SlotNumber, -1);
 			if ((unsigned)slot < NUM_WEAPON_SLOTS)
 			{
-				fixed_t position = cls->Meta.GetMetaFixed(AWMETA_SlotPriority, INT_MAX);
-				FWeaponSlot::WeaponInfo info = { cls, position };
+				fixed_t position = acls->Meta.GetMetaFixed(AWMETA_SlotPriority, INT_MAX);
+				FWeaponSlot::WeaponInfo info = { acls, position };
 				Slots[slot].Weapons.Push(info);
 			}
 		}
@@ -1153,7 +1156,7 @@ void FWeaponSlots::SetFromGameInfo()
 	{
 		for (unsigned j = 0; j < gameinfo.DefaultWeaponSlots[i].Size(); i++)
 		{
-			const PClass *cls = PClass::FindClass(gameinfo.DefaultWeaponSlots[i][j]);
+			PClassActor *cls = PClass::FindActor(gameinfo.DefaultWeaponSlots[i][j]);
 			if (cls == NULL)
 			{
 				Printf("Unknown weapon class '%s' found in default weapon slot assignments\n",
@@ -1178,7 +1181,7 @@ void FWeaponSlots::SetFromGameInfo()
 //
 //===========================================================================
 
-void FWeaponSlots::StandardSetup(const PClass *type)
+void FWeaponSlots::StandardSetup(PClassActor *type)
 {
 	SetFromPlayer(type);
 	AddExtraWeapons();
@@ -1198,7 +1201,7 @@ void FWeaponSlots::StandardSetup(const PClass *type)
 //
 //===========================================================================
 
-void FWeaponSlots::LocalSetup(const PClass *type)
+void FWeaponSlots::LocalSetup(PClassActor *type)
 {
 	P_PlaybackKeyConfWeapons(this);
 	if (WeaponSection.IsNotEmpty())
@@ -1263,7 +1266,7 @@ void FWeaponSlots::SendDifferences(const FWeaponSlots &other)
 //
 //===========================================================================
 
-void FWeaponSlots::SetFromPlayer(const PClass *type)
+void FWeaponSlots::SetFromPlayer(PClassActor *type)
 {
 	Clear();
 	for (int i = 0; i < NUM_WEAPON_SLOTS; ++i)
@@ -1382,7 +1385,7 @@ CCMD (setslot)
 		Net_WriteByte(argv.argc()-2);
 		for (int i = 2; i < argv.argc(); i++)
 		{
-			Net_WriteWeapon(PClass::FindClass(argv[i]));
+			Net_WriteWeapon(PClass::FindActor(argv[i]));
 		}
 	}
 }
@@ -1393,7 +1396,7 @@ CCMD (setslot)
 //
 //===========================================================================
 
-void FWeaponSlots::AddSlot(int slot, const PClass *type, bool feedback)
+void FWeaponSlots::AddSlot(int slot, PClassActor *type, bool feedback)
 {
 	if (type != NULL && !Slots[slot].AddWeapon(type) && feedback)
 	{
@@ -1417,13 +1420,13 @@ CCMD (addslot)
 	}
 	else if (PlayingKeyConf != NULL)
 	{
-		PlayingKeyConf->AddSlot(int(slot), PClass::FindClass(argv[2]), false);
+		PlayingKeyConf->AddSlot(int(slot), PClass::FindActor(argv[2]), false);
 	}
 	else
 	{
 		Net_WriteByte(DEM_ADDSLOT);
 		Net_WriteByte(slot);
-		Net_WriteWeapon(PClass::FindClass(argv[2]));
+		Net_WriteWeapon(PClass::FindActor(argv[2]));
 	}
 }
 
@@ -1446,7 +1449,7 @@ CCMD (weaponsection)
 // CCMD addslotdefault
 //
 //===========================================================================
-void FWeaponSlots::AddSlotDefault(int slot, const PClass *type, bool feedback)
+void FWeaponSlots::AddSlotDefault(int slot, PClassActor *type, bool feedback)
 {
 	if (type != NULL && type->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
 	{
@@ -1471,7 +1474,7 @@ void FWeaponSlots::AddSlotDefault(int slot, const PClass *type, bool feedback)
 
 CCMD (addslotdefault)
 {
-	const PClass *type;
+	PClassActor *type;
 	unsigned int slot;
 
 	if (argv.argc() != 3 || (slot = atoi (argv[1])) >= NUM_WEAPON_SLOTS)
@@ -1480,7 +1483,7 @@ CCMD (addslotdefault)
 		return;
 	}
 
-	type = PClass::FindClass (argv[2]);
+	type = PClass::FindActor(argv[2]);
 	if (type == NULL || !type->IsDescendantOf (RUNTIME_CLASS(AWeapon)))
 	{
 		Printf ("%s is not a weapon\n", argv[2]);
@@ -1493,13 +1496,13 @@ CCMD (addslotdefault)
 	}
 	else if (PlayingKeyConf != NULL)
 	{
-		PlayingKeyConf->AddSlotDefault(int(slot), PClass::FindClass(argv[2]), false);
+		PlayingKeyConf->AddSlotDefault(int(slot), PClass::FindActor(argv[2]), false);
 	}
 	else
 	{
 		Net_WriteByte(DEM_ADDSLOTDEFAULT);
 		Net_WriteByte(slot);
-		Net_WriteWeapon(PClass::FindClass(argv[2]));
+		Net_WriteWeapon(PClass::FindActor(argv[2]));
 	}
 }
 
@@ -1536,7 +1539,7 @@ void P_PlaybackKeyConfWeapons(FWeaponSlots *slots)
 void P_SetupWeapons_ntohton()
 {
 	unsigned int i;
-	const PClass *cls;
+	PClassActor *cls;
 
 	Weapons_ntoh.Clear();
 	Weapons_hton.Clear();
@@ -1547,9 +1550,9 @@ void P_SetupWeapons_ntohton()
 	{
 		PClass *cls = PClass::m_Types[i];
 
-		if (cls->ActorInfo != NULL && cls->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
+		if (cls->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
 		{
-			Weapons_ntoh.Push(cls);
+			Weapons_ntoh.Push(static_cast<PClassActor *>(cls));
 		}
 	}
 	qsort(&Weapons_ntoh[1], Weapons_ntoh.Size() - 1, sizeof(Weapons_ntoh[0]), ntoh_cmp);
@@ -1575,10 +1578,10 @@ void P_SetupWeapons_ntohton()
 
 static int STACK_ARGS ntoh_cmp(const void *a, const void *b)
 {
-	const PClass *c1 = *(const PClass **)a;
-	const PClass *c2 = *(const PClass **)b;
-	int g1 = c1->ActorInfo->GameFilter == GAME_Any ? 1 : (c1->ActorInfo->GameFilter & gameinfo.gametype) ? 0 : 2;
-	int g2 = c2->ActorInfo->GameFilter == GAME_Any ? 1 : (c2->ActorInfo->GameFilter & gameinfo.gametype) ? 0 : 2;
+	PClassActor *c1 = *(PClassActor **)a;
+	PClassActor *c2 = *(PClassActor **)b;
+	int g1 = c1->GameFilter == GAME_Any ? 1 : (c1->GameFilter & gameinfo.gametype) ? 0 : 2;
+	int g2 = c2->GameFilter == GAME_Any ? 1 : (c2->GameFilter & gameinfo.gametype) ? 0 : 2;
 	if (g1 != g2)
 	{
 		return g1 - g2;
@@ -1616,7 +1619,7 @@ void P_WriteDemoWeaponsChunk(BYTE **demo)
 void P_ReadDemoWeaponsChunk(BYTE **demo)
 {
 	int count, i;
-	const PClass *type;
+	PClassActor *type;
 	const char *s;
 
 	count = ReadWord(demo);
@@ -1629,7 +1632,7 @@ void P_ReadDemoWeaponsChunk(BYTE **demo)
 	for (i = 1; i < count; ++i)
 	{
 		s = ReadStringConst(demo);
-		type = PClass::FindClass(s);
+		type = PClass::FindActor(s);
 		// If a demo was recorded with a weapon that is no longer present,
 		// should we report it?
 		Weapons_ntoh[i] = type;
@@ -1646,7 +1649,7 @@ void P_ReadDemoWeaponsChunk(BYTE **demo)
 //
 //===========================================================================
 
-void Net_WriteWeapon(const PClass *type)
+void Net_WriteWeapon(PClassActor *type)
 {
 	int index, *index_p;
 
@@ -1678,7 +1681,7 @@ void Net_WriteWeapon(const PClass *type)
 //
 //===========================================================================
 
-const PClass *Net_ReadWeapon(BYTE **stream)
+PClassActor *Net_ReadWeapon(BYTE **stream)
 {
 	int index;
 

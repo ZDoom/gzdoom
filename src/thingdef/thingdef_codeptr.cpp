@@ -854,7 +854,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomBulletAttack)
 	PARAM_ANGLE		(spread_z);
 	PARAM_INT		(numbullets);
 	PARAM_INT		(damageperbullet);
-	PARAM_CLASS_OPT	(pufftype, AActor) { pufftype = PClass::FindClass(NAME_BulletPuff); }
+	PARAM_CLASS_OPT	(pufftype, AActor) { pufftype = PClass::FindActor(NAME_BulletPuff); }
 	PARAM_FIXED_OPT	(range)			   { range = MISSILERANGE; }
 	PARAM_BOOL_OPT	(aimfacing)		   { aimfacing = false; }
 
@@ -1037,7 +1037,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireBullets)
 	bangle = self->angle;
 
 	if (pufftype == NULL)
-		pufftype = PClass::FindClass(NAME_BulletPuff);
+		pufftype = PClass::FindActor(NAME_BulletPuff);
 
 	S_Sound(self, CHAN_WEAPON, weapon->AttackSound, 1, ATTN_NORM);
 
@@ -1171,7 +1171,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomPunch)
 	}
 
 	if (pufftype == NULL)
-		pufftype = PClass::FindClass(NAME_BulletPuff);
+		pufftype = PClass::FindActor(NAME_BulletPuff);
 
 	P_LineAttack (self, angle, range, pitch, damage, NAME_None, pufftype, true);
 
@@ -1207,7 +1207,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RailAttack)
 	PARAM_COLOR_OPT	(color2)			{ color2 = 0; }
 	PARAM_INT_OPT	(flags)				{ flags = 0; }
 	PARAM_FLOAT_OPT	(maxdiff)			{ maxdiff = 0; }
-	PARAM_CLASS_OPT	(pufftype, AActor)	{ pufftype = PClass::FindClass(NAME_BulletPuff); }
+	PARAM_CLASS_OPT	(pufftype, AActor)	{ pufftype = PClass::FindActor(NAME_BulletPuff); }
 
 	if (!self->player)
 		return 0;
@@ -1247,7 +1247,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomRailgun)
 	PARAM_INT_OPT	(flags)				{ flags = 0; }
 	PARAM_INT_OPT	(aim)				{ aim = CRF_DONTAIM; }
 	PARAM_FLOAT_OPT	(maxdiff)			{ maxdiff = 0; }
-	PARAM_CLASS_OPT	(pufftype, AActor)	{ pufftype = PClass::FindClass(NAME_BulletPuff); }
+	PARAM_CLASS_OPT	(pufftype, AActor)	{ pufftype = PClass::FindActor(NAME_BulletPuff); }
 
 	AActor *linetarget;
 
@@ -1548,7 +1548,7 @@ static bool InitSpawnedItem(AActor *self, AActor *mo, int flags)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnItem)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_CLASS_OPT	(missile, AActor)		{ missile = PClass::FindClass("Unknown"); }
+	PARAM_CLASS_OPT	(missile, AActor)		{ missile = PClass::FindActor("Unknown"); }
 	PARAM_FIXED_OPT	(distance)				{ distance = 0; }
 	PARAM_FIXED_OPT	(zheight)				{ zheight = 0; }
 	PARAM_BOOL_OPT	(useammo)				{ useammo = true; }
@@ -1985,9 +1985,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnDebris)
 		{
 			mo->Translation = self->Translation;
 		}
-		if (mo && i < mo->GetClass()->ActorInfo->NumOwnedStates)
+		if (mo && i < mo->GetClass()->NumOwnedStates)
 		{
-			mo->SetState (mo->GetClass()->ActorInfo->OwnedStates + i);
+			mo->SetState (mo->GetClass()->OwnedStates + i);
 			mo->velz = FixedMul(mult_v, ((pr_spawndebris()&7)+5)*FRACUNIT);
 			mo->velx = FixedMul(mult_h, pr_spawndebris.Random2()<<(FRACBITS-6));
 			mo->vely = FixedMul(mult_h, pr_spawndebris.Random2()<<(FRACBITS-6));
@@ -2740,7 +2740,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ChangeFlag)
 
 	const char *dot = strchr(flagname, '.');
 	FFlagDef *fd;
-	const PClass *cls = self->GetClass();
+	PClassActor *cls = self->GetClass();
 
 	if (dot != NULL)
 	{
@@ -2762,7 +2762,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ChangeFlag)
 
 		if (fd->structoffset == -1)
 		{
-			HandleDeprecatedFlags(self, cls->ActorInfo, value, fd->flagbit);
+			HandleDeprecatedFlags(self, cls, value, fd->flagbit);
 		}
 		else
 		{

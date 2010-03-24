@@ -47,14 +47,14 @@
 #include "g_level.h"
 
 // List of spawnable things for the Thing_Spawn and Thing_Projectile specials.
-const PClass *SpawnableThings[MAX_SPAWNABLES];
+PClassActor *SpawnableThings[MAX_SPAWNABLES];
 
 static FRandom pr_leadtarget ("LeadTarget");
 
 bool P_Thing_Spawn (int tid, AActor *source, int type, angle_t angle, bool fog, int newtid)
 {
 	int rtn = 0;
-	const PClass *kind;
+	PClassActor *kind;
 	AActor *spot, *mobj;
 	FActorIterator iterator (tid);
 
@@ -65,9 +65,9 @@ bool P_Thing_Spawn (int tid, AActor *source, int type, angle_t angle, bool fog, 
 		return false;
 
 	// Handle decorate replacements.
-	kind = kind->ActorInfo->GetReplacement()->Class;
+	kind = kind->GetReplacement();
 
-	if ((GetDefaultByType (kind)->flags3 & MF3_ISMONSTER) && 
+	if ((GetDefaultByType(kind)->flags3 & MF3_ISMONSTER) && 
 		((dmflags & DF_NO_MONSTERS) || (level.flags2 & LEVEL2_NOMONSTERS)))
 		return false;
 
@@ -178,7 +178,7 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 	bool leadTarget)
 {
 	int rtn = 0;
-	const PClass *kind;
+	PClassActor *kind;
 	AActor *spot, *mobj, *targ = forcedest;
 	FActorIterator iterator (tid);
 	double fspeed = speed;
@@ -194,15 +194,15 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 	}
 	else
 	{
-		if ((kind = PClass::FindClass(type_name)) == NULL || kind->ActorInfo == NULL)
+		if ((kind = PClass::FindActor(type_name)) == NULL)
 			return false;
 	}
 
 
 	// Handle decorate replacements.
-	kind = kind->ActorInfo->GetReplacement()->Class;
+	kind = kind->GetReplacement();
 
-	defflags3 = GetDefaultByType (kind)->flags3;
+	defflags3 = GetDefaultByType(kind)->flags3;
 	if ((defflags3 & MF3_ISMONSTER) && 
 		((dmflags & DF_NO_MONSTERS) || (level.flags2 & LEVEL2_NOMONSTERS)))
 		return false;

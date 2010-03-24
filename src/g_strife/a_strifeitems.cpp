@@ -284,7 +284,7 @@ IMPLEMENT_CLASS (AAmmoFillup)
 
 bool AAmmoFillup::TryPickup (AActor *&toucher)
 {
-	const PClass * clip = PClass::FindClass(NAME_ClipOfBullets);
+	PClassActor *clip = PClass::FindActor(NAME_ClipOfBullets);
 	if (clip != NULL)
 	{
 		AInventory *item = toucher->FindInventory(clip);

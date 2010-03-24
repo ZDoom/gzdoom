@@ -169,6 +169,12 @@ virtual void Read (void *mem, unsigned int len);
 
 		void UserWriteClass (const PClass *info);
 		void UserReadClass (const PClass *&info);
+		template<typename T> void UserReadClass(const T *&info)
+		{
+			const PClass *myclass;
+			UserReadClass(myclass);
+			info = dyn_cast<T>(const_cast<PClass *>(myclass));
+		}
 
 		FArchive& operator<< (BYTE &c);
 		FArchive& operator<< (WORD &s);

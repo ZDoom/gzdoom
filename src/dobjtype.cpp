@@ -43,7 +43,7 @@ IMPLEMENT_POINTY_CLASS(PClass)
  DECLARE_POINTER(ParentClass)
 END_POINTERS
 
-TArray<PClass *> PClass::m_RuntimeActors;
+TArray<PClassActor *> PClass::m_RuntimeActors;
 TArray<PClass *> PClass::m_Types;
 PClass *PClass::TypeHash[PClass::HASH_SIZE];
 bool PClass::bShutdown;
@@ -103,8 +103,6 @@ void PClass::StaticShutdown ()
 				uniqueFPs.Push(const_cast<size_t *>(type->FlatPointers));
 			}
 		}
-		// For runtime classes, this call will also delete the PClass.
-		PClass::StaticFreeData (type);
 	}
 	for (i = 0; i < uniqueFPs.Size(); ++i)
 	{
@@ -119,7 +117,6 @@ PClass::PClass()
 	ParentClass = NULL;
 	Pointers = NULL;
 	FlatPointers = NULL;
-	ActorInfo = NULL;
 	HashNext = NULL;
 	Defaults = NULL;
 	bRuntimeClass = false;
@@ -129,45 +126,11 @@ PClass::PClass()
 PClass::~PClass()
 {
 	Symbols.ReleaseSymbols();
-}
-
-void PClass::StaticFreeData (PClass *type)
-{
-	if (type->Defaults != NULL)
+	if (Defaults != NULL)
 	{
-		M_Free(type->Defaults);
-		type->Defaults = NULL;
+		M_Free(Defaults);
+		Defaults = NULL;
 	}
-	type->FreeStateList ();
-
-	if (type->ActorInfo != NULL)
-	{
-		if (type->ActorInfo->OwnedStates != NULL)
-		{
-			delete[] type->ActorInfo->OwnedStates;
-			type->ActorInfo->OwnedStates = NULL;
-		}
-		if (type->ActorInfo->DamageFactors != NULL)
-		{
-			delete type->ActorInfo->DamageFactors;
-			type->ActorInfo->DamageFactors = NULL;
-		}
-		if (type->ActorInfo->PainChances != NULL)
-		{
-			delete type->ActorInfo->PainChances;
-			type->ActorInfo->PainChances = NULL;
-		}
-		delete type->ActorInfo;
-		type->ActorInfo = NULL;
-	}/*
-	if (type->bRuntimeClass)
-	{
-		delete type;
-	}
-	else
-	{
-		type->Symbols.ReleaseSymbols();
-	}*/
 }
 
 PClass *ClassReg::RegisterClass()
@@ -180,7 +143,21 @@ PClass *ClassReg::RegisterClass()
 	}
 
 	// Add type to list
-	PClass *cls = new PClass;
+	PClass *cls;
+
+	switch (MetaClassNum)
+	{
+	case CLASSREG_PClass:
+		cls = new PClass;
+		break;
+
+	case CLASSREG_PClassActor:
+		cls = new PClassActor;
+		break;
+
+	default:
+		assert(0 && "Class registry has an invalid meta class identifier");
+	}
 	MyClass = cls;
 	PClass::m_Types.Push(cls);
 	cls->TypeName = FName(Name+1);
@@ -292,7 +269,8 @@ PClass *PClass::CreateDerivedClass (FName name, unsigned int size)
 	}
 	else
 	{
-		type = new PClass;
+		// Create a new type object of the same type as us. (We may be a derived class of PClass.)
+		type = static_cast<PClass *>(GetClass()->CreateNew());
 		notnew = false;
 	}
 
@@ -317,27 +295,17 @@ PClass *PClass::CreateDerivedClass (FName name, unsigned int size)
 
 	type->FlatPointers = NULL;
 	type->bRuntimeClass = true;
-	type->ActorInfo = NULL;
 	type->Symbols.SetParentTable (&this->Symbols);
-	if (!notnew) type->InsertIntoHash();
+	if (!notnew)
+	{
+		type->InsertIntoHash();
+	}
 
 	// If this class has an actor info, then any classes derived from it
 	// also need an actor info.
-	if (this->ActorInfo != NULL)
+	if (type->IsKindOf(RUNTIME_CLASS(PClassActor)))
 	{
-		FActorInfo *info = type->ActorInfo = new FActorInfo;
-		info->Class = type;
-		info->GameFilter = GAME_Any;
-		info->SpawnID = 0;
-		info->DoomEdNum = -1;
-		info->OwnedStates = NULL;
-		info->NumOwnedStates = 0;
-		info->Replacement = NULL;
-		info->Replacee = NULL;
-		info->StateList = NULL;
-		info->DamageFactors = NULL;
-		info->PainChances = NULL;
-		m_RuntimeActors.Push (type);
+		m_RuntimeActors.Push(static_cast<PClassActor *>(type));
 	}
 	return type;
 }
@@ -358,7 +326,7 @@ unsigned int PClass::Extend(unsigned int extension)
 // Like FindClass but creates a placeholder if no class
 // is found. CreateDerivedClass will automatcally fill in
 // the placeholder when the actual class is defined.
-const PClass *PClass::FindClassTentative (FName name)
+PClass *PClass::FindClassTentative (FName name)
 {
 	if (name == NAME_None)
 	{
@@ -383,7 +351,7 @@ const PClass *PClass::FindClassTentative (FName name)
 			break;
 		}
 	}
-	PClass *type = new PClass;
+	PClass *type = new PClassActor;
 	DPrintf("Creating placeholder class %s : %s\n", name.GetChars(), TypeName.GetChars());
 
 	type->TypeName = name;
@@ -395,44 +363,9 @@ const PClass *PClass::FindClassTentative (FName name)
 	type->Defaults = NULL;
 	type->FlatPointers = NULL;
 	type->bRuntimeClass = true;
-	type->ActorInfo = NULL;
 	type->InsertIntoHash();
 	return type;
 }
-
-// This is used by DECORATE to assign ActorInfos to internal classes
-void PClass::InitializeActorInfo ()
-{
-	Symbols.SetParentTable (&ParentClass->Symbols);
-	Defaults = new BYTE[Size];
-	if (ParentClass->Defaults != NULL) 
-	{
-		memcpy (Defaults, ParentClass->Defaults, ParentClass->Size);
-		if (Size > ParentClass->Size)
-		{
-			memset (Defaults + ParentClass->Size, 0, Size - ParentClass->Size);
-		}
-	}
-	else
-	{
-		memset (Defaults, 0, Size);
-	}
-
-	FActorInfo *info = ActorInfo = new FActorInfo;
-	info->Class = this;
-	info->GameFilter = GAME_Any;
-	info->SpawnID = 0;
-	info->DoomEdNum = -1;
-	info->OwnedStates = NULL;
-	info->NumOwnedStates = 0;
-	info->Replacement = NULL;
-	info->Replacee = NULL;
-	info->StateList = NULL;
-	info->DamageFactors = NULL;
-	info->PainChances = NULL;
-	m_RuntimeActors.Push (this);
-}
-
 
 // Create the FlatPointers array, if it doesn't exist already.
 // It comprises all the Pointers from superclasses plus this class's own Pointers.
@@ -485,16 +418,6 @@ void PClass::BuildFlatPointers ()
 	}
 }
 
-void PClass::FreeStateList ()
-{
-	if (ActorInfo != NULL && ActorInfo->StateList != NULL)
-	{
-		ActorInfo->StateList->Destroy();
-		M_Free (ActorInfo->StateList);
-		ActorInfo->StateList = NULL;
-	}
-}
-
 const PClass *PClass::NativeClass() const
 {
 	const PClass *cls = this;
@@ -512,18 +435,6 @@ size_t PClass::PropagateMark()
 	// Mark symbols
 	marked = Symbols.MarkSymbols();
 
-	// Mark state functions
-	if (ActorInfo != NULL)
-	{
-		for (int i = 0; i < ActorInfo->NumOwnedStates; ++i)
-		{
-			if (ActorInfo->OwnedStates[i].ActionFunc != NULL)
-			{
-				GC::Mark(ActorInfo->OwnedStates[i].ActionFunc);
-			}
-		}
-//		marked += ActorInfo->NumOwnedStates * sizeof(FState);
-	}
 	return marked + Super::PropagateMark();
 }
 

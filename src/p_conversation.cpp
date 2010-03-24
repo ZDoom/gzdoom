@@ -107,7 +107,7 @@ TArray<FStrifeDialogueNode *> StrifeDialogues;
 // to their index in the mobjinfo table. This table indexes all
 // the Strife actor types in the order Strife had them and is
 // initialized as part of the actor's setup in infodefaults.cpp.
-const PClass *StrifeTypes[1001];
+PClass *StrifeTypes[1001];
 
 static menu_t ConversationMenu;
 static TArray<menuitem_t> ConversationItems;
@@ -139,7 +139,7 @@ static FBrokenLines *DialogueLines;
 //
 //============================================================================
 
-static const PClass *GetStrifeType (int typenum)
+static PClass *GetStrifeType (int typenum)
 {
 	if (typenum > 0 && typenum < 1001)
 	{
@@ -342,12 +342,12 @@ static FStrifeDialogueNode *ReadRetailNode (FileReader *lump, DWORD &prevSpeaker
 	node->SpeakerName = ncopystring (speech.Name);
 
 	// The item the speaker should drop when killed.
-	node->DropType = GetStrifeType (speech.DropType);
+	node->DropType = dyn_cast<PClassActor>(GetStrifeType (speech.DropType));
 
 	// Items you need to have to make the speaker use a different node.
 	for (j = 0; j < 3; ++j)
 	{
-		node->ItemCheck[j] = GetStrifeType (speech.ItemCheck[j]);
+		node->ItemCheck[j] = dyn_cast<PClassActor>(GetStrifeType (speech.ItemCheck[j]));
 	}
 	node->ItemCheckNode = speech.Link;
 	node->Children = NULL;
@@ -416,7 +416,7 @@ static FStrifeDialogueNode *ReadTeaserNode (FileReader *lump, DWORD &prevSpeaker
 	node->SpeakerName = ncopystring (speech.Name);
 
 	// The item the speaker should drop when killed.
-	node->DropType = GetStrifeType (speech.DropType);
+	node->DropType = dyn_cast<PClassActor>(GetStrifeType (speech.DropType));
 
 	// Items you need to have to make the speaker use a different node.
 	for (j = 0; j < 3; ++j)
@@ -478,12 +478,12 @@ static void ParseReplies (FStrifeDialogueReply **replyptr, Response *responses)
 		reply->LogNumber = rsp->Log;
 
 		// The item to receive when this reply is used.
-		reply->GiveType = GetStrifeType (rsp->GiveType);
+		reply->GiveType = dyn_cast<PClassActor>(GetStrifeType (rsp->GiveType));
 
 		// Do you need anything special for this reply to succeed?
 		for (k = 0; k < 3; ++k)
 		{
-			reply->ItemCheck[k] = GetStrifeType (rsp->Item[k]);
+			reply->ItemCheck[k] = dyn_cast<PClassActor>(GetStrifeType (rsp->Item[k]));
 			reply->ItemCheckAmount[k] = rsp->Count[k];
 		}
 
@@ -592,7 +592,7 @@ static int FindNode (const FStrifeDialogueNode *node)
 //
 //============================================================================
 
-static bool CheckStrifeItem (player_t *player, const PClass *itemtype, int amount=-1)
+static bool CheckStrifeItem (player_t *player, PClassActor *itemtype, int amount=-1)
 {
 	AInventory *item;
 
@@ -615,7 +615,7 @@ static bool CheckStrifeItem (player_t *player, const PClass *itemtype, int amoun
 //
 //============================================================================
 
-static void TakeStrifeItem (player_t *player, const PClass *itemtype, int amount)
+static void TakeStrifeItem (player_t *player, PClassActor *itemtype, int amount)
 {
 	if (itemtype == NULL || amount == 0)
 		return;

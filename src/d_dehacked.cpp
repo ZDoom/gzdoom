@@ -110,7 +110,7 @@ struct StateMapper
 {
 	FState *State;
 	int StateSpan;
-	const PClass *Owner;
+	PClassActor *Owner;
 	bool OwnerIsPickup;
 };
 
@@ -121,7 +121,7 @@ static TArray<StateMapper> StateMap;
 static TArray<FSoundID> SoundMap;
 
 // Names of different actor types, in original Doom 2 order
-static TArray<const PClass *> InfoNames;
+static TArray<PClassActor *> InfoNames;
 
 // bit flags for PatchThing (a .bex extension):
 struct BitName
@@ -142,8 +142,8 @@ struct StyleName
 
 static TArray<StyleName> StyleNames;
 
-static TArray<const PClass *> AmmoNames;
-static TArray<const PClass *> WeaponNames;
+static TArray<PClassActor *> AmmoNames;
+static TArray<PClassActor *> WeaponNames;
 
 // DeHackEd trickery to support MBF-style parameters
 // List of states that are hacked to use a codepointer
@@ -196,7 +196,7 @@ IMPLEMENT_POINTY_CLASS (ADehackedPickup)
  DECLARE_POINTER (RealPickup)
 END_POINTERS
 
-TArray<PClass *> TouchedActors;
+TArray<PClassActor *> TouchedActors;
 
 char *UnchangedSpriteNames;
 int NumUnchangedSprites;
@@ -318,11 +318,14 @@ static bool ReadChars (char **stuff, int size);
 static char *igets (void);
 static int GetLine (void);
 
-static void PushTouchedActor(PClass *cls)
+static void PushTouchedActor(PClassActor *cls)
 {
 	for(unsigned i = 0; i < TouchedActors.Size(); i++)
 	{
-		if (TouchedActors[i] == cls) return;
+		if (TouchedActors[i] == cls)
+		{
+			return;
+		}
 	}
 	TouchedActors.Push(cls);
 }
@@ -390,7 +393,7 @@ static FState *FindState (int statenum)
 			{
 				if (StateMap[i].OwnerIsPickup)
 				{
-					PushTouchedActor(const_cast<PClass *>(StateMap[i].Owner));
+					PushTouchedActor(StateMap[i].Owner);
 				}
 				return StateMap[i].State + statenum - stateacc;
 			}
@@ -746,7 +749,7 @@ static int PatchThing (int thingy)
 	FStateDefinitions statedef;
 	bool patchedStates = false;
 	int oldflags;
-	const PClass *type;
+	PClassActor *type;
 	SWORD *ednum, dummyed;
 
 	type = NULL;
@@ -772,7 +775,7 @@ static int PatchThing (int thingy)
 			else
 			{
 				info = GetDefaultByType (type);
-				ednum = &type->ActorInfo->DoomEdNum;
+				ednum = &type->DoomEdNum;
 			}
 		}
 	}
@@ -1179,7 +1182,7 @@ static int PatchThing (int thingy)
 
 		if (info->flags & MF_SPECIAL)
 		{
-			PushTouchedActor(const_cast<PClass *>(type));
+			PushTouchedActor(const_cast<PClassActor *>(type));
 		}
 
 		// Make MF3_ISMONSTER match MF_COUNTKILL
@@ -1193,7 +1196,7 @@ static int PatchThing (int thingy)
 		}
 		if (patchedStates)
 		{
-			statedef.InstallStates(type->ActorInfo, info);
+			statedef.InstallStates(type, info);
 		}
 	}
 
@@ -1486,7 +1489,7 @@ static int PatchAmmo (int ammoNum)
 static int PatchWeapon (int weapNum)
 {
 	int result;
-	const PClass *type = NULL;
+	PClassActor *type = NULL;
 	BYTE dummy[sizeof(AWeapon)];
 	AWeapon *info = (AWeapon *)&dummy;
 	bool patchedStates = false;
@@ -1589,7 +1592,7 @@ static int PatchWeapon (int weapNum)
 
 	if (patchedStates)
 	{
-		statedef.InstallStates(type->ActorInfo, info);
+		statedef.InstallStates(type, info);
 	}
 
 	return result;
@@ -1764,14 +1767,14 @@ static int PatchMisc (int dummy)
 				};
 				static const PClass * const *types[] =
 				{
-					&RUNTIME_CLASS(APowerInvulnerable),
-					&RUNTIME_CLASS(APowerStrength),
-					&RUNTIME_CLASS(APowerInvisibility),
-					&RUNTIME_CLASS(APowerIronFeet),
-					&RUNTIME_CLASS(APowerLightAmp),
-					&RUNTIME_CLASS(APowerWeaponLevel2),
-					&RUNTIME_CLASS(APowerSpeed),
-					&RUNTIME_CLASS(APowerMinotaur)
+					&RUNTIME_CLASS_CASTLESS(APowerInvulnerable),
+					&RUNTIME_CLASS_CASTLESS(APowerStrength),
+					&RUNTIME_CLASS_CASTLESS(APowerInvisibility),
+					&RUNTIME_CLASS_CASTLESS(APowerIronFeet),
+					&RUNTIME_CLASS_CASTLESS(APowerLightAmp),
+					&RUNTIME_CLASS_CASTLESS(APowerWeaponLevel2),
+					&RUNTIME_CLASS_CASTLESS(APowerSpeed),
+					&RUNTIME_CLASS_CASTLESS(APowerMinotaur)
 				};
 				int i;
 
@@ -2657,19 +2660,20 @@ static bool LoadDehSupp ()
 					StateMapper s;
 					sc.MustGetString();
 
-					const PClass *type = PClass::FindClass (sc.String);
+					PClass *type = PClass::FindClass (sc.String);
 					if (type == NULL)
 					{
 						sc.ScriptError ("Can't find type %s", sc.String);
 					}
-					else if (type->ActorInfo == NULL)
+					else if (!type->IsKindOf(RUNTIME_CLASS(PClassActor)))
 					{
-						sc.ScriptError ("%s has no ActorInfo", sc.String);
+						sc.ScriptError ("%s is not an actor", sc.String);
 					}
 
 					sc.MustGetStringName(",");
 					sc.MustGetString();
-					s.State = type->ActorInfo->FindState(sc.String);
+					PClassActor *actortype = static_cast<PClassActor *>(type);
+					s.State = actortype->FindState(sc.String);
 					if (s.State == NULL)
 					{
 						sc.ScriptError("Invalid state '%s' in '%s'", sc.String, type->TypeName.GetChars());
@@ -2677,14 +2681,14 @@ static bool LoadDehSupp ()
 
 					sc.MustGetStringName(",");
 					sc.MustGetNumber();
-					if (s.State == NULL || s.State + sc.Number > type->ActorInfo->OwnedStates + type->ActorInfo->NumOwnedStates)
+					if (s.State == NULL || s.State + sc.Number > actortype->OwnedStates + actortype->NumOwnedStates)
 					{
 						sc.ScriptError("Invalid state range in '%s'", type->TypeName.GetChars());
 					}
 					AActor *def = GetDefaultByType(type);
 					
 					s.StateSpan = sc.Number;
-					s.Owner = type;
+					s.Owner = actortype;
 					s.OwnerIsPickup = def != NULL && (def->flags & MF_SPECIAL) != 0;
 					if (addit) StateMap.Push(s);
 
@@ -2709,7 +2713,7 @@ static bool LoadDehSupp ()
 				while (!sc.CheckString("}"))
 				{
 					sc.MustGetString();
-					const PClass *cls = PClass::FindClass(sc.String);
+					PClassActor *cls = PClass::FindActor(sc.String);
 					if (cls == NULL)
 					{
 						sc.ScriptError("Unknown actor type '%s'", sc.String);
@@ -2776,12 +2780,12 @@ static bool LoadDehSupp ()
 					}
 					else
 					{
-						const PClass *cls = PClass::FindClass(sc.String);
+						PClass *cls = PClass::FindClass(sc.String);
 						if (cls == NULL || cls->ParentClass != RUNTIME_CLASS(AAmmo))
 						{
 							sc.ScriptError("Unknown ammo type '%s'", sc.String);
 						}
-						AmmoNames.Push(cls);
+						AmmoNames.Push(static_cast<PClassActor *>(cls));
 					}
 					if (sc.CheckString("}")) break;
 					sc.MustGetStringName(",");
@@ -2793,12 +2797,12 @@ static bool LoadDehSupp ()
 				while (!sc.CheckString("}"))
 				{
 					sc.MustGetString();
-					const PClass *cls = PClass::FindClass(sc.String);
+					PClass *cls = PClass::FindClass(sc.String);
 					if (cls == NULL || !cls->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
 					{
 						sc.ScriptError("Unknown weapon type '%s'", sc.String);
 					}
-					WeaponNames.Push(cls);
+					WeaponNames.Push(static_cast<PClassActor *>(cls));
 					if (sc.CheckString("}")) break;
 					sc.MustGetStringName(",");
 				}
@@ -2848,7 +2852,7 @@ void FinishDehPatch ()
 
 	for (touchedIndex = 0; touchedIndex < TouchedActors.Size(); ++touchedIndex)
 	{
-		PClass *type = TouchedActors[touchedIndex];
+		PClassActor *type = TouchedActors[touchedIndex];
 		AActor *defaults1 = GetDefaultByType (type);
 		if (!(defaults1->flags & MF_SPECIAL))
 		{ // We only need to do this for pickups
@@ -2858,8 +2862,8 @@ void FinishDehPatch ()
 		// Create a new class that will serve as the actual pickup
 		char typeNameBuilder[32];
 		mysnprintf (typeNameBuilder, countof(typeNameBuilder), "DehackedPickup%d", touchedIndex);
-		PClass *subclass = RUNTIME_CLASS(ADehackedPickup)->CreateDerivedClass
-			(typeNameBuilder, sizeof(ADehackedPickup));
+		PClassActor *subclass = static_cast<PClassActor *>(RUNTIME_CLASS(ADehackedPickup)->
+			CreateDerivedClass(typeNameBuilder, sizeof(ADehackedPickup)));
 		AActor *defaults2 = GetDefaultByType (subclass);
 		memcpy (defaults2, defaults1, sizeof(AActor));
 
@@ -2870,21 +2874,21 @@ void FinishDehPatch ()
 		if (!type->IsDescendantOf(RUNTIME_CLASS(AInventory)))
 		{
 			// If this is a hacked non-inventory item we must also copy AInventory's special states
-			statedef.AddStateDefines(RUNTIME_CLASS(AInventory)->ActorInfo->StateList);
+			statedef.AddStateDefines(RUNTIME_CLASS(AInventory)->StateList);
 		}
-		statedef.InstallStates(subclass->ActorInfo, defaults2);
+		statedef.InstallStates(subclass, defaults2);
 
 		// Use the DECORATE replacement feature to redirect all spawns
 		// of the original class to the new one.
-		FActorInfo *old_replacement = type->ActorInfo->Replacement;
+		PClassActor *old_replacement = type->Replacement;
 
-		type->ActorInfo->Replacement = subclass->ActorInfo;
-		subclass->ActorInfo->Replacee = type->ActorInfo;
+		type->Replacement = subclass;
+		subclass->Replacee = type;
 		// If this actor was already replaced by another actor, copy that
 		// replacement over to this item.
 		if (old_replacement != NULL)
 		{
-			subclass->ActorInfo->Replacement = old_replacement;
+			subclass->Replacement = old_replacement;
 		}
 
 		DPrintf ("%s replaces %s\n", subclass->TypeName.GetChars(), type->TypeName.GetChars());

@@ -43,7 +43,7 @@ static FRandom pr_volcimpact ("VolcBallImpact");
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_PodPain)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_CLASS_OPT	(gootype, AActor)	{ gootype = PClass::FindClass("PodGoo"); }
+	PARAM_CLASS_OPT	(gootype, AActor)	{ gootype = PClass::FindActor("PodGoo"); }
 
 	int count;
 	int chance;
@@ -98,7 +98,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_RemovePod)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_MakePod)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_CLASS_OPT(podtype, AActor)	{ podtype = PClass::FindClass("Pod"); }
+	PARAM_CLASS_OPT(podtype, AActor)	{ podtype = PClass::FindActor("Pod"); }
 
 	AActor *mo;
 	fixed_t x;

@@ -820,13 +820,14 @@ AInventory *AActor::DropInventory (AInventory *item)
 //
 //============================================================================
 
-AInventory *AActor::FindInventory (const PClass *type)
+AInventory *AActor::FindInventory (PClassActor *type)
 {
 	AInventory *item;
 
-	if (type == NULL) return NULL;
-
-	assert (type->ActorInfo != NULL);
+	if (type == NULL)
+	{
+		return NULL;
+	}
 	for (item = Inventory; item != NULL; item = item->Inventory)
 	{
 		if (item->GetClass() == type)
@@ -839,7 +840,7 @@ AInventory *AActor::FindInventory (const PClass *type)
 
 AInventory *AActor::FindInventory (FName type)
 {
-	return FindInventory(PClass::FindClass(type));
+	return FindInventory(PClass::FindActor(type));
 }
 
 //============================================================================
@@ -1080,11 +1081,11 @@ bool AActor::Grind(bool items)
 				A_BossDeath(this);
 			}
 
-			const PClass *i = PClass::FindClass("RealGibs");
+			PClassActor *i = PClass::FindActor("RealGibs");
 
 			if (i != NULL)
 			{
-				i = i->ActorInfo->GetReplacement()->Class;
+				i = i->GetReplacement();
 
 				const AActor *defaults = GetDefaultByType (i);
 				if (defaults->SpawnState == NULL ||
@@ -3505,25 +3506,21 @@ bool AActor::UpdateWaterLevel (fixed_t oldz, bool dosplash)
 //
 //==========================================================================
 
-AActor *AActor::StaticSpawn (const PClass *type, fixed_t ix, fixed_t iy, fixed_t iz, replace_t allowreplacement, bool SpawningMapThing)
+AActor *AActor::StaticSpawn (PClassActor *type, fixed_t ix, fixed_t iy, fixed_t iz, replace_t allowreplacement, bool SpawningMapThing)
 {
 	if (type == NULL)
 	{
 		I_Error ("Tried to spawn a class-less actor\n");
 	}
 
-	if (type->ActorInfo == NULL)
-	{
-		I_Error ("%s is not an actor\n", type->TypeName.GetChars());
-	}
-
 	if (allowreplacement)
-		type = type->ActorInfo->GetReplacement()->Class;
-
+	{
+		type = type->GetReplacement();
+	}
 
 	AActor *actor;
 	
-	actor = static_cast<AActor *>(const_cast<PClass *>(type)->CreateNew ());
+	actor = static_cast<AActor *>(const_cast<PClassActor *>(type)->CreateNew ());
 
 	actor->x = actor->PrevX = ix;
 	actor->y = actor->PrevY = iy;
@@ -3693,7 +3690,11 @@ AActor *Spawn (FName classname, fixed_t x, fixed_t y, fixed_t z, replace_t allow
 	{
 		I_Error("Attempt to spawn actor of unknown type '%s'\n", classname.GetChars());
 	}
-	return AActor::StaticSpawn (cls, x, y, z, allowreplacement);
+	if (!cls->IsKindOf(RUNTIME_CLASS(PClassActor)))
+	{
+		I_Error("Attempt to spawn non-actor of type '%s'\n", classname.GetChars());
+	}
+	return AActor::StaticSpawn (const_cast<PClassActor *>(static_cast<const PClassActor *>(cls)), x, y, z, allowreplacement);
 }
 
 void AActor::LevelSpawned ()
@@ -4134,7 +4135,7 @@ APlayerPawn *P_SpawnPlayer (FMapThing *mthing, bool tempplayer)
 // [RH] position is used to weed out unwanted start spots
 AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 {
-	const PClass *i;
+	PClassActor *i;
 	int mask;
 	AActor *mobj;
 	fixed_t x, y, z;
@@ -4318,7 +4319,8 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 		Printf ("Unknown type %i at (%i, %i)\n",
 				 mthing->type,
 				 mthing->x>>FRACBITS, mthing->y>>FRACBITS);
-		i = PClass::FindClass("Unknown");
+		i = PClass::FindActor("Unknown");
+		assert(i->IsKindOf(RUNTIME_CLASS(PClassActor)));
 	}
 	// [RH] If the thing's corresponding sprite has no frames, also map
 	//		it to the unknown thing.
@@ -4326,7 +4328,7 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	{
 		// Handle decorate replacements explicitly here
 		// to check for missing frames in the replacement object.
-		i = i->ActorInfo->GetReplacement()->Class;
+		i = i->GetReplacement();
 
 		const AActor *defaults = GetDefaultByType (i);
 		if (defaults->SpawnState == NULL ||
@@ -4334,7 +4336,8 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 		{
 			Printf ("%s at (%i, %i) has no frames\n",
 					i->TypeName.GetChars(), mthing->x>>FRACBITS, mthing->y>>FRACBITS);
-			i = PClass::FindClass("Unknown");
+			i = PClass::FindActor("Unknown");
+			assert(i->IsKindOf(RUNTIME_CLASS(PClassActor)));
 		}
 	}
 

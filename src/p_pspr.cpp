@@ -769,7 +769,7 @@ angle_t P_BulletSlope (AActor *mo, AActor **pLineTarget)
 //
 // P_GunShot
 //
-void P_GunShot (AActor *mo, bool accurate, const PClass *pufftype, angle_t pitch)
+void P_GunShot (AActor *mo, bool accurate, PClassActor *pufftype, angle_t pitch)
 {
 	angle_t 	angle;
 	int 		damage;

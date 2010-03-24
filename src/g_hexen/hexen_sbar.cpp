@@ -29,7 +29,7 @@ public:
 	void Unload ();
 	bool CheckModified ();
 
-	void SetVial (FTexture *pic, AActor *actor, const PClass *manaType);
+	void SetVial (FTexture *pic, AActor *actor, PClassActor *manaType);
 
 protected:
 	BYTE Pixels[5*24];
@@ -93,7 +93,7 @@ const BYTE *FManaBar::GetPixels ()
 	return Pixels;
 }
 
-void FManaBar::SetVial (FTexture *pic, AActor *actor, const PClass *manaType)
+void FManaBar::SetVial (FTexture *pic, AActor *actor, PClassActor *manaType)
 {
 	int level, max;
 	AInventory *ammo;
@@ -457,8 +457,8 @@ private:
 
 		// If the weapon uses some ammo that is not mana, do not draw
 		// the mana bars; draw the specific used ammo instead.
-		const PClass *mana1 = PClass::FindClass(NAME_Mana1);
-		const PClass *mana2 = PClass::FindClass(NAME_Mana2);
+		PClassActor *mana1 = PClass::FindActor(NAME_Mana1);
+		PClassActor *mana2 = PClass::FindActor(NAME_Mana2);
 
 		drawbar = !((ammo1 != NULL && ammo1->GetClass() != mana1 && ammo1->GetClass() != mana2) ||
 				    (ammo2 != NULL && ammo2->GetClass() != mana1 && ammo2->GetClass() != mana2));
@@ -564,7 +564,7 @@ private:
 //
 //---------------------------------------------------------------------------
 
-	void DrawManaBars (AAmmo *ammo1, AAmmo *ammo2, const PClass *manatype1, const PClass *manatype2)
+	void DrawManaBars (AAmmo *ammo1, AAmmo *ammo2, PClassActor *manatype1, PClassActor *manatype2)
 	{
 		AAmmo *mana1 = NULL, *mana2 = NULL;
 		int usemana1 = false, usemana2 = false;
@@ -1004,8 +1004,8 @@ private:
 
 		// If the weapon uses some ammo that is not mana, do not draw
 		// the mana blocks; draw the specific used ammo instead.
-		const PClass *mana1 = PClass::FindClass(NAME_Mana1);
-		const PClass *mana2 = PClass::FindClass(NAME_Mana2);
+		PClassActor *mana1 = PClass::FindActor(NAME_Mana1);
+		PClassActor *mana2 = PClass::FindActor(NAME_Mana2);
 
 		drawmana = !((ammo1 != NULL && ammo1->GetClass() != mana1 && ammo1->GetClass() != mana2) ||
 				     (ammo2 != NULL && ammo2->GetClass() != mana1 && ammo2->GetClass() != mana2));

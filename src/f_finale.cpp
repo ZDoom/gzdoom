@@ -464,10 +464,10 @@ void F_TextWrite (void)
 //
 struct castinfo_t
 {
-	const char		*name;
-	const char		*type;
-	const AActor	*info;
-	const PClass	*Class;
+	const char			*name;
+	const char			*type;
+	const AActor		*info;
+	const PClassActor	*Class;
 };
 
 castinfo_t castorder[] =
@@ -566,7 +566,7 @@ void F_StartCast (void)
 		else
 		{
 			castorder[i].info = GetDefaultByType (type);
-			castorder[i].Class= type;
+			castorder[i].Class= dyn_cast<PClassActor>(type);
 		}
 	}
 
@@ -729,7 +729,7 @@ bool F_CastResponder (event_t* ev)
 				
 	// go into death frame
 	castdeath = true;
-	caststate = castorder[castnum].Class->ActorInfo->FindState(NAME_Death);
+	caststate = castorder[castnum].Class->FindState(NAME_Death);
 	if (caststate != NULL)
 	{
 		casttics = caststate->GetTics();

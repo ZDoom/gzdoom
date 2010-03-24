@@ -78,7 +78,7 @@ class                                           DFloorWaggle;
 class                                           DPlat;
 class                                   DPillar;
 
-struct FActorInfo;
+class PClassActor;
 
 enum EMetaType
 {
@@ -130,18 +130,27 @@ private:
 	void CopyMeta (const FMetaTable *other);
 };
 
-#define RUNTIME_TYPE(object)	(object->GetClass())			// Passed an object, returns the type of that object
-#define RUNTIME_CLASS(cls)		(cls::RegistrationInfo.MyClass)	// Passed a native class name, returns a PClass representing that class
-#define NATIVE_TYPE(object)		(object->StaticType())			// Passed an object, returns the type of the C++ class representing the object
+#define RUNTIME_TYPE(object)		(object->GetClass())			// Passed an object, returns the type of that object
+#define RUNTIME_CLASS_CASTLESS(cls)	(cls::RegistrationInfo.MyClass)	// Passed a native class name, returns a PClass representing that class
+#define RUNTIME_CLASS(cls)			((cls::MetaClass *)RUNTIME_CLASS_CASTLESS(cls))	// Like above, but returns the true type of the meta object
+#define NATIVE_TYPE(object)			(object->StaticType())			// Passed an object, returns the type of the C++ class representing the object
+
+// Enumerations for the meta classes created by ClassReg::RegisterClass()
+enum
+{
+	CLASSREG_PClass,
+	CLASSREG_PClassActor,
+};
 
 struct ClassReg
 {
 	PClass *MyClass;
 	const char *Name;
 	ClassReg *ParentType;
-	unsigned int SizeOf;
 	const size_t *Pointers;
 	void (*ConstructNative)(void *);
+	unsigned int SizeOf:31;
+	unsigned int MetaClassNum:1;
 
 	PClass *RegisterClass();
 };
@@ -156,8 +165,20 @@ private: \
 	typedef parent Super; \
 	typedef cls ThisClass;
 
+#define DECLARE_ABSTRACT_CLASS_WITH_META(cls,parent,meta) \
+	DECLARE_ABSTRACT_CLASS(cls,parent) \
+public: \
+	typedef meta MetaClass; \
+	MetaClass *GetClass() const { return static_cast<MetaClass *>(DObject::GetClass()); } \
+protected: \
+	enum { MetaClassNum = CLASSREG_##meta }; private: \
+
 #define DECLARE_CLASS(cls,parent) \
 	DECLARE_ABSTRACT_CLASS(cls,parent) \
+		private: static void InPlaceConstructor (void *mem);
+
+#define DECLARE_CLASS_WITH_META(cls,parent,meta) \
+	DECLARE_ABSTRACT_CLASS_WITH_META(cls,parent,meta) \
 		private: static void InPlaceConstructor (void *mem);
 
 #define HAS_OBJECT_POINTERS \
@@ -180,9 +201,10 @@ private: \
 		NULL, \
 		#cls, \
 		&cls::Super::RegistrationInfo, \
-		sizeof(cls), \
 		ptrs, \
-		create }; \
+		create, \
+		sizeof(cls), \
+		cls::MetaClassNum }; \
 	_DECLARE_TI(cls)
 
 #define _IMP_CREATE_OBJ(cls) \
@@ -436,8 +458,11 @@ public:
 	virtual PClass *StaticType() const { return RegistrationInfo.MyClass; }
 	static ClassReg RegistrationInfo, * const RegistrationInfoPtr;
 	static void InPlaceConstructor (void *mem);
+	typedef PClass MetaClass;
 private:
 	typedef DObject ThisClass;
+protected:
+	enum { MetaClassNum = CLASSREG_PClass };
 
 	// Per-instance variables. There are four.
 private:
@@ -590,6 +615,20 @@ inline bool DObject::IsKindOf (const PClass *base) const
 inline bool DObject::IsA (const PClass *type) const
 {
 	return (type == GetClass());
+}
+
+template<class T> T *dyn_cast(DObject *p)
+{
+	if (p != NULL && p->IsKindOf(RUNTIME_CLASS_CASTLESS(T)))
+	{
+		return static_cast<T *>(p);
+	}
+	return NULL;
+}
+
+template<class T> const T *dyn_cast(const DObject *p)
+{
+	return dyn_cast<T>(const_cast<DObject *>(p));
 }
 
 #endif //__DOBJECT_H__

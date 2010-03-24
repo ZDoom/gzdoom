@@ -315,32 +315,33 @@ static void DrawArmor(AInventory * armor, int x, int y)
 // this doesn't have to be done each frame
 //
 //---------------------------------------------------------------------------
-static TArray<const PClass*> KeyTypes, UnassignedKeyTypes;
+static TArray<PClassActor *> KeyTypes, UnassignedKeyTypes;
 
 static int STACK_ARGS ktcmp(const void * a, const void * b)
 {
-	AKey * key1 = (AKey*)GetDefaultByType ( *(const PClass**)a );
-	AKey * key2 = (AKey*)GetDefaultByType ( *(const PClass**)b );
+	AKey *key1 = (AKey*)GetDefaultByType ( *(PClassActor **)a );
+	AKey *key2 = (AKey*)GetDefaultByType ( *(PClassActor **)b );
 	return key1->KeyNumber - key2->KeyNumber;
 }
 
 static void SetKeyTypes()
 {
-	for(unsigned int i=0;i<PClass::m_Types.Size();i++)
+	for(unsigned int i = 0; i < PClass::m_Types.Size(); i++)
 	{
-		const PClass * ti = PClass::m_Types[i];
+		PClass *ti = PClass::m_Types[i];
 
 		if (ti->IsDescendantOf(RUNTIME_CLASS(AKey)))
 		{
-			AKey * key = (AKey*)GetDefaultByType(ti);
+			PClassActor *tia = static_cast<PClassActor *>(ti);
+			AKey *key = (AKey*)GetDefaultByType(tia);
 
 			if (key->Icon.isValid() && key->KeyNumber>0)
 			{
-				KeyTypes.Push(ti);
+				KeyTypes.Push(tia);
 			}
 			else 
 			{
-				UnassignedKeyTypes.Push(ti);
+				UnassignedKeyTypes.Push(tia);
 			}
 		}
 	}
@@ -351,7 +352,7 @@ static void SetKeyTypes()
 	else
 	{
 		// Don't leave the list empty
-		const PClass * ti = RUNTIME_CLASS(AKey);
+		PClassActor *ti = RUNTIME_CLASS(AKey);
 		KeyTypes.Push(ti);
 	}
 }
@@ -416,30 +417,30 @@ static int DrawKeys(player_t * CPlayer, int x, int y)
 	int xo=x;
 	int i;
 	int c=0;
-	AInventory * inv;
+	AInventory *inv;
 
 	if (!deathmatch)
 	{
-		if (KeyTypes.Size()==0) SetKeyTypes();
+		if (KeyTypes.Size() == 0) SetKeyTypes();
 
 		// First all keys that are assigned to locks (in reverse order of definition)
-		for(i=KeyTypes.Size()-1;i>=0;i--)
+		for (i = KeyTypes.Size()-1; i >= 0; i--)
 		{
-			if ((inv=CPlayer->mo->FindInventory(KeyTypes[i])))
+			if ((inv = CPlayer->mo->FindInventory(KeyTypes[i])))
 			{
 				DrawOneKey(xo, x, y, c, inv);
 			}
 		}
 		// And now the rest
-		for(i=UnassignedKeyTypes.Size()-1;i>=0;i--)
+		for (i = UnassignedKeyTypes.Size()-1; i >= 0; i--)
 		{
-			if ((inv=CPlayer->mo->FindInventory(UnassignedKeyTypes[i])))
+			if ((inv = CPlayer->mo->FindInventory(UnassignedKeyTypes[i])))
 			{
 				DrawOneKey(xo, x, y, c, inv);
 			}
 		}
 	}
-	if (x==xo && y!=yo) y+=11;
+	if (x == xo && y != yo) y+=11;
 	return y-11;
 }
 
@@ -449,14 +450,14 @@ static int DrawKeys(player_t * CPlayer, int x, int y)
 // Drawing Ammo
 //
 //---------------------------------------------------------------------------
-static TArray<const PClass *> orderedammos;
+static TArray<PClassActor *> orderedammos;
 
 static void AddAmmoToList(AWeapon * weapdef)
 {
 
 	for(int i=0; i<2;i++)
 	{
-		const PClass * ti = i==0? weapdef->AmmoType1 : weapdef->AmmoType2;
+		PClassActor * ti = i==0? weapdef->AmmoType1 : weapdef->AmmoType2;
 		if (ti)
 		{
 			AAmmo * ammodef=(AAmmo*)GetDefaultByType(ti);
@@ -515,7 +516,7 @@ static int DrawAmmo(player_t *CPlayer, int x, int y)
 	for(i=orderedammos.Size()-1;i>=0;i--)
 	{
 
-		const PClass * type = orderedammos[i];
+		PClassActor * type = orderedammos[i];
 		AAmmo * ammoitem = (AAmmo*)CPlayer->mo->FindInventory(type);
 
 		AAmmo * inv = ammoitem? ammoitem : (AAmmo*)GetDefaultByType(orderedammos[i]);
@@ -622,7 +623,7 @@ static void DrawWeapons(player_t * CPlayer, int x, int y)
 	// And now everything in the weapon slots back to front
 	for (k = NUM_WEAPON_SLOTS - 1; k >= 0; k--) for(j = CPlayer->weapons.Slots[k].Size() - 1; j >= 0; j--)
 	{
-		const PClass *weap = CPlayer->weapons.Slots[k].GetWeapon(j);
+		PClassActor *weap = CPlayer->weapons.Slots[k].GetWeapon(j);
 		if (weap) 
 		{
 			inv=CPlayer->mo->FindInventory(weap);

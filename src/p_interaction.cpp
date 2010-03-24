@@ -1005,11 +1005,14 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 
 		if (!(flags & DMG_NO_FACTOR))
 		{
-			DmgFactors *df = target->GetClass()->ActorInfo->DamageFactors;
+			DmgFactors *df = target->GetClass()->DamageFactors;
 			if (df != NULL)
 			{
 				fixed_t *pdf = df->CheckKey(mod);
-				if (pdf== NULL && mod != NAME_None) pdf = df->CheckKey(NAME_None);
+				if (pdf== NULL && mod != NAME_None)
+				{
+					pdf = df->CheckKey(NAME_None);
+				}
 				if (pdf != NULL)
 				{
 					damage = FixedMul(damage, *pdf);
@@ -1281,7 +1284,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 	if (!(target->flags5 & MF5_NOPAIN) && (inflictor == NULL || !(inflictor->flags5 & MF5_PAINLESS)) &&
 		!G_SkillProperty(SKILLP_NoPain) && !(target->flags & MF_SKULLFLY))
 	{
-		pc = target->GetClass()->ActorInfo->PainChances;
+		pc = target->GetClass()->PainChances;
 		painchance = target->PainChance;
 		if (pc != NULL)
 		{

@@ -85,7 +85,7 @@ void A_Fire(AActor *self, int height)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_VileTarget)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_CLASS_OPT(fire, AActor)	{ fire = PClass::FindClass("ArchvileFire"); }
+	PARAM_CLASS_OPT(fire, AActor)	{ fire = PClass::FindActor("ArchvileFire"); }
 
 	AActor *fog;
 		

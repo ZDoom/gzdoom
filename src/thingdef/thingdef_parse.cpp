@@ -64,7 +64,7 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def);
 //
 //==========================================================================
 
-FxExpression *ParseParameter(FScanner &sc, PClass *cls, char type, bool constant)
+FxExpression *ParseParameter(FScanner &sc, PClassActor *cls, char type, bool constant)
 {
 	FxExpression *x = NULL;
 	int v;
@@ -193,7 +193,7 @@ FxExpression *ParseParameter(FScanner &sc, PClass *cls, char type, bool constant
 //
 //==========================================================================
 
-static void ParseConstant (FScanner &sc, PSymbolTable * symt, PClass *cls)
+static void ParseConstant (FScanner &sc, PSymbolTable * symt, PClassActor *cls)
 {
 	// Read the type and make sure it's int or float.
 	if (sc.CheckToken(TK_Int) || sc.CheckToken(TK_Float))
@@ -241,7 +241,7 @@ static void ParseConstant (FScanner &sc, PSymbolTable * symt, PClass *cls)
 //
 //==========================================================================
 
-static void ParseEnum (FScanner &sc, PSymbolTable *symt, PClass *cls)
+static void ParseEnum (FScanner &sc, PSymbolTable *symt, PClassActor *cls)
 {
 	int currvalue = 0;
 
@@ -282,7 +282,7 @@ static void ParseEnum (FScanner &sc, PSymbolTable *symt, PClass *cls)
 //
 //==========================================================================
 
-static void ParseNativeVariable (FScanner &sc, PSymbolTable * symt, PClass *cls)
+static void ParseNativeVariable (FScanner &sc, PSymbolTable *symt, PClassActor *cls)
 {
 	FExpressionType valuetype;
 
@@ -367,7 +367,7 @@ static void ParseNativeVariable (FScanner &sc, PSymbolTable * symt, PClass *cls)
 //
 //==========================================================================
 
-static void ParseUserVariable (FScanner &sc, PSymbolTable *symt, PClass *cls)
+static void ParseUserVariable (FScanner &sc, PSymbolTable *symt, PClassActor *cls)
 {
 	FExpressionType valuetype;
 
@@ -453,9 +453,9 @@ void HandleActorFlag(FScanner &sc, Baggage &bag, const char *part1, const char *
 {
 	FFlagDef *fd;
 
-	if ( (fd = FindFlag (bag.Info->Class, part1, part2)) )
+	if ( (fd = FindFlag (bag.Info, part1, part2)) )
 	{
-		AActor *defaults = (AActor*)bag.Info->Class->Defaults;
+		AActor *defaults = (AActor*)bag.Info->Defaults;
 		if (fd->structoffset == -1)	// this is a deprecated flag that has been changed into a real property
 		{
 			HandleDeprecatedFlags(defaults, bag.Info, mod=='+', fd->flagbit);
@@ -582,17 +582,17 @@ static int ParseThingActivation (FScanner &sc)
 
 static FState *CheckState(FScanner &sc, PClass *type)
 {
-	int v=0;
+	int v = 0;
 
 	if (sc.GetString() && !sc.Crossed)
 	{
 		if (sc.Compare("0")) return NULL;
 		else if (sc.Compare("PARENT"))
 		{
-			FState * state = NULL;
+			FState *state = NULL;
 			sc.MustGetString();
 
-			FActorInfo * info = type->ParentClass->ActorInfo;
+			PClassActor *info = dyn_cast<PClassActor>(type->ParentClass);
 
 			if (info != NULL)
 			{
@@ -612,15 +612,17 @@ static FState *CheckState(FScanner &sc, PClass *type)
 				}
 			}
 
-			if (state == NULL && v==0) return NULL;
-
-			if (v!=0 && state==NULL)
+			if (state == NULL && v==0)
+			{
+				return NULL;
+			}
+			if (v != 0 && state==NULL)
 			{
 				sc.ScriptMessage("Attempt to get invalid state from actor %s\n", type->ParentClass->TypeName.GetChars());
 				FScriptPosition::ErrorCounter++;
 				return NULL;
 			}
-			state+=v;
+			state += v;
 			return state;
 		}
 		else 
@@ -667,8 +669,8 @@ static bool ParsePropertyParams(FScanner &sc, FPropertyInfo *prop, AActor *defau
 				
 				if (sc.CheckString ("("))
 				{
-					FxExpression *x = ParseExpression(sc, bag.Info->Class);
-					conv.i = 0x40000000 | StateParams.Add(x, bag.Info->Class, false);
+					FxExpression *x = ParseExpression(sc, bag.Info);
+					conv.i = 0x40000000 | StateParams.Add(x, bag.Info, false);
 					params.Push(conv);
 					sc.MustGetStringName(")");
 					break;
@@ -849,9 +851,9 @@ static void ParseActorProperty(FScanner &sc, Baggage &bag)
 
 	if (prop != NULL)
 	{
-		if (bag.Info->Class->IsDescendantOf(*prop->cls))
+		if (bag.Info->IsDescendantOf(*prop->cls))
 		{
-			ParsePropertyParams(sc, prop, (AActor *)bag.Info->Class->Defaults, bag);
+			ParsePropertyParams(sc, prop, (AActor *)bag.Info->Defaults, bag);
 		}
 		else
 		{
@@ -861,7 +863,7 @@ static void ParseActorProperty(FScanner &sc, Baggage &bag)
 	}
 	else if (MatchString(propname, statenames) != -1)
 	{
-		bag.statedef.SetStateLabel(propname, CheckState (sc, bag.Info->Class));
+		bag.statedef.SetStateLabel(propname, CheckState (sc, bag.Info));
 	}
 	else
 	{
@@ -879,7 +881,7 @@ static void ParseActorProperty(FScanner &sc, Baggage &bag)
 //
 //==========================================================================
 
-static void ParseActionDef (FScanner &sc, PClass *cls)
+static void ParseActionDef (FScanner &sc, PClassActor *cls)
 {
 	enum
 	{
@@ -1034,7 +1036,7 @@ static void ParseActionDef (FScanner &sc, PClass *cls)
 // Starts a new actor definition
 //
 //==========================================================================
-static FActorInfo *ParseActorHeader(FScanner &sc, Baggage *bag)
+static PClassActor *ParseActorHeader(FScanner &sc, Baggage *bag)
 {
 	FName typeName;
 	FName parentName;
@@ -1115,11 +1117,11 @@ static FActorInfo *ParseActorHeader(FScanner &sc, Baggage *bag)
 
 	try
 	{
-		FActorInfo *info =  CreateNewActor(sc, typeName, parentName, native);
-		info->DoomEdNum = DoomEdNum > 0? DoomEdNum : -1;
+		PClassActor *info = CreateNewActor(sc, typeName, parentName, native);
+		info->DoomEdNum = DoomEdNum > 0 ? DoomEdNum : -1;
 		SetReplacement(info, replaceName);
 
-		ResetBaggage (bag, info->Class->ParentClass);
+		ResetBaggage (bag, info == RUNTIME_CLASS(AActor) ? NULL : static_cast<PClassActor *>(info->ParentClass));
 		bag->Info = info;
 		bag->Lumpnum = sc.LumpNum;
 #ifdef _DEBUG
@@ -1141,7 +1143,7 @@ static FActorInfo *ParseActorHeader(FScanner &sc, Baggage *bag)
 //==========================================================================
 static void ParseActor(FScanner &sc)
 {
-	FActorInfo * info=NULL;
+	PClassActor *info = NULL;
 	Baggage bag;
 
 	info = ParseActorHeader(sc, &bag);
@@ -1151,23 +1153,23 @@ static void ParseActor(FScanner &sc)
 		switch (sc.TokenType)
 		{
 		case TK_Action:
-			ParseActionDef (sc, info->Class);
+			ParseActionDef (sc, info);
 			break;
 
 		case TK_Const:
-			ParseConstant (sc, &info->Class->Symbols, info->Class);
+			ParseConstant (sc, &info->Symbols, info);
 			break;
 
 		case TK_Enum:
-			ParseEnum (sc, &info->Class->Symbols, info->Class);
+			ParseEnum (sc, &info->Symbols, info);
 			break;
 
 		case TK_Native:
-			ParseNativeVariable (sc, &info->Class->Symbols, info->Class);
+			ParseNativeVariable (sc, &info->Symbols, info);
 			break;
 
 		case TK_Var:
-			ParseUserVariable (sc, &info->Class->Symbols, info->Class);
+			ParseUserVariable (sc, &info->Symbols, info);
 			break;
 
 		case TK_Identifier:
@@ -1177,10 +1179,10 @@ static void ParseActor(FScanner &sc)
 		case TK_States:
 			if (bag.StateSet) 
 			{
-				sc.ScriptMessage("'%s' contains multiple state declarations", bag.Info->Class->TypeName.GetChars());
+				sc.ScriptMessage("'%s' contains multiple state declarations", bag.Info->TypeName.GetChars());
 				FScriptPosition::ErrorCounter++;
 			}
-			ParseStates(sc, bag.Info, (AActor *)bag.Info->Class->Defaults, bag);
+			ParseStates(sc, bag.Info, (AActor *)bag.Info->Defaults, bag);
 			bag.StateSet = true;
 			break;
 
@@ -1190,7 +1192,7 @@ static void ParseActor(FScanner &sc)
 			break;
 
 		default:
-			sc.ScriptError("Unexpected '%s' in definition of '%s'", sc.String, bag.Info->Class->TypeName.GetChars());
+			sc.ScriptError("Unexpected '%s' in definition of '%s'", sc.String, bag.Info->TypeName.GetChars());
 			break;
 		}
 	}

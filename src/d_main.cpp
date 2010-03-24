@@ -2055,7 +2055,7 @@ void D_DoomMain (void)
 	Printf ("ParseTeamInfo: Load team definitions.\n");
 	TeamLibrary.ParseTeamInfo ();
 
-	FActorInfo::StaticInit ();
+	PClassActor::StaticInit ();
 
 	// [GRB] Initialize player class list
 	SetupPlayerClasses ();
@@ -2105,7 +2105,7 @@ void D_DoomMain (void)
 	// Create replacements for dehacked pickups
 	FinishDehPatch();
 
-	FActorInfo::StaticSetActorNums ();
+	PClassActor::StaticSetActorNums ();
 
 	// [RH] User-configurable startup strings. Because BOOM does.
 	static const char *startupString[5] = {

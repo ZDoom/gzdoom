@@ -112,7 +112,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BridgeInit)
 	AActor *ball;
 	fixed_t cx, cy, cz;
 
-	if (balltype == NULL) balltype = PClass::FindClass("BridgeBall");
+	if (balltype == NULL)
+	{
+		balltype = PClass::FindActor("BridgeBall");
+	}
 
 	cx = self->x;
 	cy = self->y;

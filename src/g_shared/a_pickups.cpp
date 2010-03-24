@@ -51,15 +51,15 @@ void AAmmo::Serialize (FArchive &arc)
 //
 //===========================================================================
 
-const PClass *AAmmo::GetParentAmmo () const
+PClassActor *AAmmo::GetParentAmmo () const
 {
-	const PClass *type = GetClass ();
+	PClass *type = GetClass();
 
 	while (type->ParentClass != RUNTIME_CLASS(AAmmo) && type->ParentClass != NULL)
 	{
 		type = type->ParentClass;
 	}
-	return type;
+	return static_cast<PClassActor *>(type);
 }
 
 //===========================================================================
@@ -130,8 +130,7 @@ AInventory *AAmmo::CreateCopy (AActor *other)
 
 	if (GetClass()->ParentClass != RUNTIME_CLASS(AAmmo) && GetClass() != RUNTIME_CLASS(AAmmo))
 	{
-		const PClass *type = GetParentAmmo();
-		assert (type->ActorInfo != NULL);
+		PClassActor *type = GetParentAmmo();
 		if (!GoAway ())
 		{
 			Destroy ();
@@ -1584,11 +1583,12 @@ AInventory *ABackpackItem::CreateCopy (AActor *other)
 	// he doesn't have it already, and double its maximum capacity.
 	for (unsigned int i = 0; i < PClass::m_Types.Size(); ++i)
 	{
-		const PClass *type = PClass::m_Types[i];
+		PClass *type = PClass::m_Types[i];
 
 		if (type->ParentClass == RUNTIME_CLASS(AAmmo))
 		{
-			AAmmo *ammo = static_cast<AAmmo *>(other->FindInventory (type));
+			PClassActor *atype = static_cast<PClassActor *>(type);
+			AAmmo *ammo = static_cast<AAmmo *>(other->FindInventory(atype));
 			int amount = static_cast<AAmmo *>(GetDefaultByType(type))->BackpackAmount;
 			// extra ammo in baby mode and nightmare mode
 			if (!(ItemFlags&IF_IGNORESKILL))

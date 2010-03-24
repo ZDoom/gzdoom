@@ -67,11 +67,11 @@ class ARandomSpawner : public AActor
 			else if (pr_randomspawn() <= di->probability)	// prob 255 = always spawn, prob 0 = never spawn.
 			{
 				// Handle replacement here so as to get the proper speed and flags for missiles
-				const PClass *cls;
-				cls = PClass::FindClass(di->Name);
+				PClassActor *cls;
+				cls = PClass::FindActor(di->Name);
 				if (cls != NULL)
 				{
-					const PClass *rep = cls->ActorInfo->GetReplacement()->Class;
+					PClassActor *rep = cls->GetReplacement();
 					if (rep != NULL)
 					{
 						cls = rep;
@@ -160,7 +160,7 @@ class ARandomSpawner : public AActor
 			if ((newmobj->flags4 & MF4_BOSSDEATH) || (newmobj->flags2 & MF2_BOSS))
 				boss = true;
 			// If a replaced actor has either of those same flags, it's also a boss.
-			AActor * rep = GetDefaultByType(GetClass()->ActorInfo->GetReplacee()->Class);
+			AActor *rep = GetDefaultByType(GetClass()->GetReplacee());
 			if (rep && ((rep->flags4 & MF4_BOSSDEATH) || (rep->flags2 & MF2_BOSS)))
 				boss = true;
 		}

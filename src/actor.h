@@ -538,7 +538,7 @@ int StoreDropItemChain(FDropItem *chain);
 // Map Object definition.
 class AActor : public DThinker
 {
-	DECLARE_CLASS (AActor, DThinker)
+	DECLARE_CLASS_WITH_META (AActor, DThinker, PClassActor)
 	HAS_OBJECT_POINTERS
 public:
 	AActor () throw();
@@ -549,7 +549,7 @@ public:
 
 	void Serialize (FArchive &arc);
 
-	static AActor *StaticSpawn (const PClass *type, fixed_t x, fixed_t y, fixed_t z, replace_t allowreplacement, bool SpawningMapThing = false);
+	static AActor *StaticSpawn (PClassActor *type, fixed_t x, fixed_t y, fixed_t z, replace_t allowreplacement, bool SpawningMapThing = false);
 
 	inline AActor *GetDefault () const
 	{
@@ -648,7 +648,7 @@ public:
 	bool CheckLocalView (int playernum) const;
 
 	// Finds the first item of a particular type.
-	AInventory *FindInventory (const PClass *type);
+	AInventory *FindInventory (PClassActor *type);
 	AInventory *FindInventory (FName type);
 	template<class T> T *FindInventory ()
 	{
@@ -900,13 +900,13 @@ public:
 
 	FState *FindState (FName label) const
 	{
-		return GetClass()->ActorInfo->FindState(1, &label);
+		return GetClass()->FindState(1, &label);
 	}
 
 	FState *FindState (FName label, FName sublabel, bool exact = false) const
 	{
 		FName names[] = { label, sublabel };
-		return GetClass()->ActorInfo->FindState(2, names, exact);
+		return GetClass()->FindState(2, names, exact);
 	}
 
 	bool HasSpecialDeathStates () const;
@@ -975,9 +975,16 @@ public:
 	}
 };
 
+inline AActor *Spawn (PClass *type, fixed_t x, fixed_t y, fixed_t z, replace_t allowreplacement)
+{
+	return AActor::StaticSpawn (dyn_cast<PClassActor>(type), x, y, z, allowreplacement);
+}
+
 inline AActor *Spawn (const PClass *type, fixed_t x, fixed_t y, fixed_t z, replace_t allowreplacement)
 {
-	return AActor::StaticSpawn (type, x, y, z, allowreplacement);
+	// Thanks to some fiddling while determining replacements, type is modified, but only
+	// temporarily.
+	return AActor::StaticSpawn (const_cast<PClassActor *>(dyn_cast<PClassActor>(type)), x, y, z, allowreplacement);
 }
 
 AActor *Spawn (const char *type, fixed_t x, fixed_t y, fixed_t z, replace_t allowreplacement);

@@ -1053,7 +1053,7 @@ void APlayerPawn::GiveDefaultInventory ()
 
 	while (di)
 	{
-		const PClass *ti = PClass::FindClass (di->Name);
+		PClassActor *ti = PClass::FindActor (di->Name);
 		if (ti)
 		{
 			AInventory *item = FindInventory (ti);
@@ -1104,7 +1104,7 @@ void APlayerPawn::MorphPlayerThink ()
 
 void APlayerPawn::ActivateMorphWeapon ()
 {
-	const PClass *morphweapon = PClass::FindClass (MorphWeapon);
+	PClassActor *morphweapon = PClass::FindActor (MorphWeapon);
 	player->PendingWeapon = WP_NOCHANGE;
 	player->psprites[ps_weapon].sy = WEAPONTOP;
 
@@ -1341,8 +1341,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SkullPop)
 	// [GRB] Parameterized version
 	if (spawntype == NULL || !spawntype->IsDescendantOf(RUNTIME_CLASS(APlayerChunk)))
 	{
-		spawntype = PClass::FindClass("BloodySkull");
-		if (spawntype == NULL) return 0;
+		spawntype = PClass::FindActor("BloodySkull");
+		if (spawntype == NULL)
+			return 0;
 	}
 
 	self->flags &= ~MF_SOLID;

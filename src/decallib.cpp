@@ -598,7 +598,7 @@ void FDecalLib::ParseGenerator (FScanner &sc)
 	// Get name of generator (actor)
 	sc.MustGetString ();
 	type = PClass::FindClass (sc.String);
-	if (type == NULL || type->ActorInfo == NULL)
+	if (type == NULL || !type->IsKindOf(RUNTIME_CLASS(PClassActor)))
 	{
 		sc.ScriptError ("%s is not an actor.", sc.String);
 	}

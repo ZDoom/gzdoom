@@ -98,7 +98,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FirePistol)
 
 	S_Sound (self, CHAN_WEAPON, "weapons/pistol", 1, ATTN_NORM);
 
-	P_GunShot (self, accurate, PClass::FindClass(NAME_BulletPuff), P_BulletSlope (self));
+	P_GunShot (self, accurate, PClass::FindActor(NAME_BulletPuff), P_BulletSlope (self));
 	return 0;
 }
 
@@ -130,9 +130,13 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Saw)
 	}
 
 	if (pufftype == NULL)
-		pufftype = PClass::FindClass(NAME_BulletPuff);
+	{
+		pufftype = PClass::FindActor(NAME_BulletPuff);
+	}
 	if (damage == 0)
+	{
 		damage = 2;
+	}
 	
 	damage *= (pr_saw()%10 + 1);
 	angle = self->angle;
@@ -198,8 +202,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireShotgun)
 
 	angle_t pitch = P_BulletSlope (self);
 
-	for (i=0 ; i<7 ; i++)
-		P_GunShot (self, false, PClass::FindClass(NAME_BulletPuff), pitch);
+	for (i = 0; i < 7; i++)
+	{
+		P_GunShot (self, false, PClass::FindActor(NAME_BulletPuff), pitch);
+	}
 	return 0;
 }
 
@@ -286,18 +292,17 @@ DEFINE_ACTION_FUNCTION(AActor, A_CloseShotgun2)
 //
 //------------------------------------------------------------------------------------
 
-void P_SetSafeFlash(AWeapon * weapon, player_t * player, FState * flashstate, int index)
+void P_SetSafeFlash(AWeapon *weapon, player_t *player, FState *flashstate, int index)
 {
 
-	const PClass * cls = weapon->GetClass();
+	PClassActor *cls = weapon->GetClass();
 	while (cls != RUNTIME_CLASS(AWeapon))
 	{
-		FActorInfo * info = cls->ActorInfo;
-		if (flashstate >= info->OwnedStates && flashstate < info->OwnedStates + info->NumOwnedStates)
+		if (flashstate >= cls->OwnedStates && flashstate < cls->OwnedStates + cls->NumOwnedStates)
 		{
 			// The flash state belongs to this class.
 			// Now let's check if the actually wanted state does also
-			if (flashstate+index < info->OwnedStates + info->NumOwnedStates)
+			if (flashstate + index < cls->OwnedStates + cls->NumOwnedStates)
 			{
 				// we're ok so set the state
 				P_SetPsprite (player, ps_flash, flashstate + index);
@@ -311,7 +316,7 @@ void P_SetSafeFlash(AWeapon * weapon, player_t * player, FState * flashstate, in
 			}
 		}
 		// try again with parent class
-		cls = cls->ParentClass;
+		cls = static_cast<PClassActor *>(cls->ParentClass);
 	}
 	// if we get here the state doesn't seem to belong to any class in the inheritance chain
 	// This can happen with Dehacked if the flash states are remapped. 
@@ -362,7 +367,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireCGun)
 	}
 	player->mo->PlayAttacking2 ();
 
-	P_GunShot (self, !player->refire, PClass::FindClass(NAME_BulletPuff), P_BulletSlope (self));
+	P_GunShot (self, !player->refire, PClass::FindActor(NAME_BulletPuff), P_BulletSlope (self));
 	return 0;
 }
 
@@ -395,7 +400,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireMissile)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireSTGrenade)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_CLASS_OPT(grenade, AActor)	{ grenade = PClass::FindClass("Grenade"); }
+	PARAM_CLASS_OPT(grenade, AActor)	{ grenade = PClass::FindActor("Grenade"); }
 
 	player_t *player;
 
@@ -555,7 +560,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BFGSpray)
 	AActor				*linetarget;
 
 
-	if (spraytype == NULL) spraytype = PClass::FindClass("BFGExtra");
+	if (spraytype == NULL) spraytype = PClass::FindActor("BFGExtra");
 	if (numrays <= 0) numrays = 40;
 	if (damagecnt <= 0) damagecnt = 15;
 

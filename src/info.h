@@ -94,8 +94,8 @@ struct FState
 	}
 	void SetAction(VMFunction *func) { ActionFunc = func; }
 	bool CallAction(AActor *self, AActor *stateowner, StateCallData *statecall = NULL);
-	static const PClass *StaticFindStateOwner (const FState *state);
-	static const PClass *StaticFindStateOwner (const FState *state, const FActorInfo *info);
+	static const PClassActor *StaticFindStateOwner (const FState *state);
+	static const PClassActor *StaticFindStateOwner (const FState *state, const PClassActor *info);
 };
 
 struct FStateLabels;
@@ -125,47 +125,58 @@ FArchive &operator<< (FArchive &arc, FState *&state);
 typedef TMap<FName, fixed_t> DmgFactors;
 typedef TMap<FName, BYTE> PainChanceList;
 
-struct FActorInfo
+class PClassActor : public PClass
 {
+	DECLARE_CLASS(PClassActor, PClass);
+public:
 	static void StaticInit ();
 	static void StaticSetActorNums ();
 
-	void BuildDefaults ();
-	void ApplyDefaults (BYTE *defaults);
-	void RegisterIDs ();
+	PClassActor();
+	~PClassActor();
+
+	void BuildDefaults();
+	void ApplyDefaults(BYTE *defaults);
+	void RegisterIDs();
 	void SetDamageFactor(FName type, fixed_t factor);
 	void SetPainChance(FName type, int chance);
+	size_t PropagateMark();
+	void InitializeNativeDefaults();
 
-	FState *FindState (int numnames, FName *names, bool exact=false) const;
+	FState *FindState(int numnames, FName *names, bool exact=false) const;
 	FState *FindStateByString(const char *name, bool exact=false);
-	FState *FindState (FName name) const
+	FState *FindState(FName name) const
 	{
 		return FindState(1, &name);
 	}
 
-	FActorInfo *GetReplacement (bool lookskill=true);
-	FActorInfo *GetReplacee (bool lookskill=true);
+	PClassActor *GetReplacement(bool lookskill=true);
+	PClassActor *GetReplacee(bool lookskill=true);
 
-	PClass *Class;
 	FState *OwnedStates;
-	FActorInfo *Replacement;
-	FActorInfo *Replacee;
+	PClassActor *Replacement;
+	PClassActor *Replacee;
 	int NumOwnedStates;
 	BYTE GameFilter;
 	BYTE SpawnID;
 	SWORD DoomEdNum;
-	FStateLabels * StateList;
+	FStateLabels *StateList;
 	DmgFactors *DamageFactors;
-	PainChanceList * PainChances;
+	PainChanceList *PainChances;
 };
+
+inline PClassActor *PClass::FindActor(FName name)
+{
+	 return dyn_cast<PClassActor>(FindClass(name));
+}
 
 class FDoomEdMap
 {
 public:
 	~FDoomEdMap();
 
-	const PClass *FindType (int doomednum) const;
-	void AddType (int doomednum, const PClass *type, bool temporary = false);
+	PClassActor *FindType (int doomednum) const;
+	void AddType (int doomednum, PClassActor *type, bool temporary = false);
 	void DelType (int doomednum);
 	void Empty ();
 
@@ -177,7 +188,7 @@ private:
 	struct FDoomEdEntry
 	{
 		FDoomEdEntry *HashNext;
-		const PClass *Type;
+		PClassActor *Type;
 		int DoomEdNum;
 		bool temp;
 	};

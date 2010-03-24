@@ -15,8 +15,8 @@ struct FBrokenLines;
 struct FStrifeDialogueNode
 {
 	~FStrifeDialogueNode ();
-	const PClass *DropType;
-	const PClass *ItemCheck[3];
+	PClassActor *DropType;
+	PClassActor *ItemCheck[3];
 	int ThisNodeNum;	// location of this node in StrifeDialogues
 	int ItemCheckNode;	// index into StrifeDialogues
 
@@ -35,8 +35,8 @@ struct FStrifeDialogueReply
 	~FStrifeDialogueReply ();
 
 	FStrifeDialogueReply *Next;
-	const PClass *GiveType;
-	const PClass *ItemCheck[3];
+	PClassActor *GiveType;
+	PClassActor *ItemCheck[3];
 	int ItemCheckAmount[3];
 	char *Reply;
 	char *QuickYes;
@@ -54,7 +54,7 @@ extern TArray<FStrifeDialogueNode *> StrifeDialogues;
 // to their index in the mobjinfo table. This table indexes all
 // the Strife actor types in the order Strife had them and is
 // initialized as part of the actor's setup in infodefaults.cpp.
-extern const PClass *StrifeTypes[1001];
+extern PClass *StrifeTypes[1001];
 
 struct MapData;
 

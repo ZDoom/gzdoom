@@ -520,7 +520,7 @@ static void GiveInventory (AActor *activator, const char *type, int amount)
 //
 //============================================================================
 
-static void DoTakeInv (AActor *actor, const PClass *info, int amount)
+static void DoTakeInv (AActor *actor, PClassActor *info, int amount)
 {
 	AInventory *item = actor->FindInventory (info);
 	if (item != NULL)
@@ -556,7 +556,7 @@ static void DoTakeInv (AActor *actor, const PClass *info, int amount)
 
 static void TakeInventory (AActor *activator, const char *type, int amount)
 {
-	const PClass *info;
+	PClassActor *info;
 
 	if (type == NULL)
 	{
@@ -570,7 +570,7 @@ static void TakeInventory (AActor *activator, const char *type, int amount)
 	{
 		return;
 	}
-	info = PClass::FindClass (type);
+	info = PClass::FindActor (type);
 	if (info == NULL)
 	{
 		return;
@@ -597,7 +597,7 @@ static void TakeInventory (AActor *activator, const char *type, int amount)
 //
 //============================================================================
 
-static bool DoUseInv (AActor *actor, const PClass *info)
+static bool DoUseInv (AActor *actor, PClassActor *info)
 {
 	AInventory *item = actor->FindInventory (info);
 	if (item != NULL)
@@ -617,14 +617,14 @@ static bool DoUseInv (AActor *actor, const PClass *info)
 
 static int UseInventory (AActor *activator, const char *type)
 {
-	const PClass *info;
+	PClassActor *info;
 	int ret = 0;
 
 	if (type == NULL)
 	{
 		return 0;
 	}
-	info = PClass::FindClass (type);
+	info = PClass::FindActor (type);
 	if (info == NULL)
 	{
 		return 0;
@@ -666,7 +666,7 @@ static int CheckInventory (AActor *activator, const char *type)
 		return activator->health;
 	}
 
-	const PClass *info = PClass::FindClass (type);
+	PClassActor *info = PClass::FindActor (type);
 	AInventory *item = activator->FindInventory (info);
 	return item ? item->Amount : 0;
 }
@@ -2060,7 +2060,7 @@ int DLevelScript::Random (int min, int max)
 int DLevelScript::ThingCount (int type, int stringid, int tid, int tag)
 {
 	AActor *actor;
-	const PClass *kind;
+	PClassActor *kind;
 	int count = 0;
 	bool replacemented = false;
 
@@ -2080,10 +2080,9 @@ int DLevelScript::ThingCount (int type, int stringid, int tid, int tag)
 		if (type_name == NULL)
 			return 0;
 
-		kind = PClass::FindClass (type_name);
-		if (kind == NULL || kind->ActorInfo == NULL)
+		kind = PClass::FindActor(type_name);
+		if (kind == NULL)
 			return 0;
-
 	}
 	else
 	{
@@ -2135,7 +2134,7 @@ do_count:
 	{
 		// Again, with decorate replacements
 		replacemented = true;
-		PClass *newkind = kind->ActorInfo->GetReplacement()->Class;
+		PClassActor *newkind = kind->GetReplacement();
 		if (newkind != kind)
 		{
 			kind = newkind;
@@ -5500,12 +5499,12 @@ int DLevelScript::RunScript ()
 		case PCD_GETAMMOCAPACITY:
 			if (activator != NULL)
 			{
-				const PClass *type = PClass::FindClass (FBehavior::StaticLookupString (STACK(1)));
+				PClass *type = PClass::FindClass (FBehavior::StaticLookupString (STACK(1)));
 				AInventory *item;
 
 				if (type != NULL && type->ParentClass == RUNTIME_CLASS(AAmmo))
 				{
-					item = activator->FindInventory (type);
+					item = activator->FindInventory (static_cast<PClassActor *>(type));
 					if (item != NULL)
 					{
 						STACK(1) = item->MaxAmount;
@@ -5529,12 +5528,12 @@ int DLevelScript::RunScript ()
 		case PCD_SETAMMOCAPACITY:
 			if (activator != NULL)
 			{
-				const PClass *type = PClass::FindClass (FBehavior::StaticLookupString (STACK(2)));
+				PClass *type = PClass::FindClass (FBehavior::StaticLookupString (STACK(2)));
 				AInventory *item;
 
 				if (type != NULL && type->ParentClass == RUNTIME_CLASS(AAmmo))
 				{
-					item = activator->FindInventory (type);
+					item = activator->FindInventory (static_cast<PClassActor *>(type));
 					if (item != NULL)
 					{
 						item->MaxAmount = STACK(1);
@@ -5835,8 +5834,8 @@ int DLevelScript::RunScript ()
 			}
 			else
 			{
-				AInventory *item = activator->FindInventory (PClass::FindClass (
-					FBehavior::StaticLookupString (STACK(1))));
+				AInventory *item = activator->FindInventory (dyn_cast<PClassActor>(
+					PClass::FindClass (FBehavior::StaticLookupString (STACK(1)))));
 
 				if (item == NULL || !item->IsKindOf (RUNTIME_CLASS(AWeapon)))
 				{
@@ -6149,7 +6148,7 @@ int DLevelScript::RunScript ()
 				{
 					if (activator != NULL)
 					{
-						state = activator->GetClass()->ActorInfo->FindStateByString (statename, !!STACK(1));
+						state = activator->GetClass()->FindStateByString (statename, !!STACK(1));
 						if (state != NULL)
 						{
 							activator->SetState (state);
@@ -6169,7 +6168,7 @@ int DLevelScript::RunScript ()
 
 					while ( (actor = iterator.Next ()) )
 					{
-						state = actor->GetClass()->ActorInfo->FindStateByString (statename, !!STACK(1));
+						state = actor->GetClass()->FindStateByString (statename, !!STACK(1));
 						if (state != NULL)
 						{
 							actor->SetState (state);
@@ -6235,7 +6234,7 @@ int DLevelScript::RunScript ()
 				int amount = STACK(4);
 				FName type = FBehavior::StaticLookupString(STACK(3));
 				FName protection = FName (FBehavior::StaticLookupString(STACK(2)), true);
-				const PClass *protectClass = PClass::FindClass (protection);
+				PClassActor *protectClass = PClass::FindActor (protection);
 				int flags = STACK(1);
 				sp -= 5;
 

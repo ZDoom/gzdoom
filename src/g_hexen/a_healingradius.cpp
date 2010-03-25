@@ -30,7 +30,12 @@ IMPLEMENT_CLASS (AArtiHealingRadius)
 bool AArtiHealingRadius::Use (bool pickup)
 {
 	bool effective = false;
-	int mode = Owner->GetClass()->Meta.GetMetaInt(APMETA_HealingRadius);
+	FName mode;
+	
+	if (Owner->IsKindOf(RUNTIME_CLASS(APlayerPawn)))
+	{
+		mode = static_cast<PClassPlayerPawn *>(Owner->GetClass())->HealingRadiusType;
+	}
 
 	for (int i = 0; i < MAXPLAYERS; ++i)
 	{

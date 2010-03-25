@@ -83,7 +83,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Srcr1Attack)
 		return 0;
 	}
 
-	const PClass *fx = PClass::FindClass("SorcererFX1");
+	PClassActor *fx = PClass::FindActor("SorcererFX1");
 	if (self->health > (self->SpawnHealth()/3)*2)
 	{ // Spit one fireball
 		P_SpawnMissileZ (self, self->z + 48*FRACUNIT, self->target, fx );
@@ -225,7 +225,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Srcr2Attack)
 	if (pr_s2a() < chance)
 	{ // Wizard spawners
 
-		const PClass *fx = PClass::FindClass("Sorcerer2FX2");
+		PClassActor *fx = PClass::FindActor("Sorcerer2FX2");
 		if (fx)
 		{
 			P_SpawnMissileAngle (self, fx, self->angle-ANG45, FRACUNIT/2);
@@ -234,7 +234,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Srcr2Attack)
 	}
 	else
 	{ // Blue bolt
-		P_SpawnMissile (self, self->target, PClass::FindClass("Sorcerer2FX1"));
+		P_SpawnMissile (self, self->target, PClass::FindActor("Sorcerer2FX1"));
 	}
 	return 0;
 }

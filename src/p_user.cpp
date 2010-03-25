@@ -104,32 +104,32 @@ void SetupPlayerClasses ()
 
 	if (gameinfo.gametype == GAME_Doom)
 	{
-		newclass.Type = PClass::FindClass (NAME_DoomPlayer);
-		PlayerClasses.Push (newclass);
+		newclass.Type = static_cast<PClassPlayerPawn *>(PClass::FindClass(NAME_DoomPlayer));
+		PlayerClasses.Push(newclass);
 	}
 	else if (gameinfo.gametype == GAME_Heretic)
 	{
-		newclass.Type = PClass::FindClass (NAME_HereticPlayer);
-		PlayerClasses.Push (newclass);
+		newclass.Type = static_cast<PClassPlayerPawn *>(PClass::FindClass(NAME_HereticPlayer));
+		PlayerClasses.Push(newclass);
 	}
 	else if (gameinfo.gametype == GAME_Hexen)
 	{
-		newclass.Type = PClass::FindClass (NAME_FighterPlayer);
-		PlayerClasses.Push (newclass);
-		newclass.Type = PClass::FindClass (NAME_ClericPlayer);
-		PlayerClasses.Push (newclass);
-		newclass.Type = PClass::FindClass (NAME_MagePlayer);
-		PlayerClasses.Push (newclass);
+		newclass.Type = static_cast<PClassPlayerPawn *>(PClass::FindClass(NAME_FighterPlayer));
+		PlayerClasses.Push(newclass);
+		newclass.Type = static_cast<PClassPlayerPawn *>(PClass::FindClass(NAME_ClericPlayer));
+		PlayerClasses.Push(newclass);
+		newclass.Type = static_cast<PClassPlayerPawn *>(PClass::FindClass(NAME_MagePlayer));
+		PlayerClasses.Push(newclass);
 	}
 	else if (gameinfo.gametype == GAME_Strife)
 	{
-		newclass.Type = PClass::FindClass (NAME_StrifePlayer);
-		PlayerClasses.Push (newclass);
+		newclass.Type = static_cast<PClassPlayerPawn *>(PClass::FindClass(NAME_StrifePlayer));
+		PlayerClasses.Push(newclass);
 	}
 	else if (gameinfo.gametype == GAME_Chex)
 	{
-		newclass.Type = PClass::FindClass (NAME_ChexPlayer);
-		PlayerClasses.Push (newclass);
+		newclass.Type = static_cast<PClassPlayerPawn *>(PClass::FindClass(NAME_ChexPlayer));
+		PlayerClasses.Push(newclass);
 	}
 }
 
@@ -145,17 +145,13 @@ CCMD (addplayerclass)
 {
 	if (ParsingKeyConf && argv.argc () > 1)
 	{
-		const PClass *ti = PClass::FindClass (argv[1]);
+		PClassPlayerPawn *ti = dyn_cast<PClassPlayerPawn>(PClass::FindClass(argv[1]));
 
-		if (!ti)
+		if (ti == NULL)
 		{
 			Printf ("Unknown player class '%s'\n", argv[1]);
 		}
-		else if (!ti->IsDescendantOf (RUNTIME_CLASS (APlayerPawn)))
-		{
-			Printf ("Invalid player class '%s'\n", argv[1]);
-		}
-		else if (ti->Meta.GetMetaString (APMETA_DisplayName) == NULL)
+		else if (ti->DisplayName.IsEmpty())
 		{
 			Printf ("Missing displayname for player class '%s'\n", argv[1]);
 		}
@@ -180,7 +176,6 @@ CCMD (addplayerclass)
 
 				arg++;
 			}
-
 			PlayerClasses.Push (newclass);
 		}
 	}
@@ -190,8 +185,7 @@ CCMD (playerclasses)
 {
 	for (unsigned int i = 0; i < PlayerClasses.Size (); i++)
 	{
-		Printf ("% 3d %s\n", i,
-			PlayerClasses[i].Type->Meta.GetMetaString (APMETA_DisplayName));
+		Printf("% 3d %s\n", i, PlayerClasses[i].Type->DisplayName.GetChars());
 	}
 }
 
@@ -394,6 +388,48 @@ int player_t::GetSpawnClass()
 {
 	const PClass * type = PlayerClasses[CurrentPlayerClass].Type;
 	return static_cast<APlayerPawn*>(GetDefaultByType(type))->SpawnMask;
+}
+
+//===========================================================================
+//
+// PClassPlayerPawn
+//
+//===========================================================================
+
+IMPLEMENT_CLASS(PClassPlayerPawn)
+
+PClassPlayerPawn::PClassPlayerPawn()
+{
+	for (int i = 0; i < countof(HexenArmor); ++i)
+	{
+		HexenArmor[i] = 0;
+	}
+	ColorRangeStart = 0;
+	ColorRangeEnd = 0;
+}
+
+void PClassPlayerPawn::Derive(PClass *newclass)
+{
+	assert(newclass->IsKindOf(RUNTIME_CLASS(PClassPlayerPawn)));
+	Super::Derive(newclass);
+	PClassPlayerPawn *newp = static_cast<PClassPlayerPawn *>(newclass);
+	int i;
+
+	newp->DisplayName = DisplayName;
+	newp->SoundClass = SoundClass;
+	newp->Face = Face;
+	newp->InvulMode = InvulMode;
+	newp->HealingRadiusType = HealingRadiusType;
+	newp->ColorRangeStart = ColorRangeStart;
+	newp->ColorRangeEnd = ColorRangeEnd;
+	for (i = 0; i < countof(HexenArmor); ++i)
+	{
+		newp->HexenArmor[i] = HexenArmor[i];
+	}
+	for (i = 0; i < countof(Slot); ++i)
+	{
+		newp->Slot[i] = Slot[i];
+	}
 }
 
 //===========================================================================
@@ -908,8 +944,8 @@ const char *APlayerPawn::GetSoundClass ()
 	}
 
 	// [GRB]
-	const char *sclass = GetClass ()->Meta.GetMetaString (APMETA_SoundClass);
-	return sclass != NULL ? sclass : "player";
+	PClassPlayerPawn *pclass = GetClass();
+	return pclass->SoundClass.IsNotEmpty() ? pclass->SoundClass : "player";
 }
 
 //===========================================================================
@@ -1026,18 +1062,14 @@ void APlayerPawn::GiveDefaultInventory ()
 	// HexenArmor must always be the first item in the inventory because
 	// it provides player class based protection that should not affect
 	// any other protection item.
-	fixed_t hx[5];
-	for(int i=0;i<5;i++)
-	{
-		hx[i] = GetClass()->Meta.GetMetaFixed(APMETA_Hexenarmor0+i);
-	}
-	GiveInventoryType (RUNTIME_CLASS(AHexenArmor));
+	PClassPlayerPawn *myclass = GetClass();
+	GiveInventoryType(RUNTIME_CLASS(AHexenArmor));
 	AHexenArmor *harmor = FindInventory<AHexenArmor>();
-	harmor->Slots[4] = hx[0];
-	harmor->SlotsIncrement[0] = hx[1];
-	harmor->SlotsIncrement[1] = hx[2];
-	harmor->SlotsIncrement[2] = hx[3];
-	harmor->SlotsIncrement[3] = hx[4];
+	harmor->Slots[4] = myclass->HexenArmor[0];
+	for (int i = 0; i < 4; ++i)
+	{
+		harmor->SlotsIncrement[i] = myclass->HexenArmor[i + 1];
+	}
 
 	// BasicArmor must come right after that. It should not affect any
 	// other protection item as well but needs to process the damage
@@ -1049,7 +1081,7 @@ void APlayerPawn::GiveDefaultInventory ()
 	AddInventory (barmor);
 
 	// Now add the items from the DECORATE definition
-	FDropItem *di = GetDropItems();
+	DDropItem *di = GetDropItems();
 
 	while (di)
 	{
@@ -1060,14 +1092,14 @@ void APlayerPawn::GiveDefaultInventory ()
 			if (item != NULL)
 			{
 				item->Amount = clamp<int>(
-					item->Amount + (di->amount ? di->amount : ((AInventory *)item->GetDefault ())->Amount),
+					item->Amount + (di->Amount ? di->Amount : ((AInventory *)item->GetDefault ())->Amount),
 					0, item->MaxAmount);
 			}
 			else
 			{
 				item = static_cast<AInventory *>(Spawn (ti, 0,0,0, NO_REPLACE));
-				item->ItemFlags|=IF_IGNORESKILL;	// no skill multiplicators here
-				item->Amount = di->amount;
+				item->ItemFlags |= IF_IGNORESKILL;	// no skill multiplicators here
+				item->Amount = di->Amount;
 				if (item->IsKindOf (RUNTIME_CLASS (AWeapon)))
 				{
 					// To allow better control any weapon is emptied of
@@ -1341,7 +1373,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SkullPop)
 	// [GRB] Parameterized version
 	if (spawntype == NULL || !spawntype->IsDescendantOf(RUNTIME_CLASS(APlayerChunk)))
 	{
-		spawntype = PClass::FindActor("BloodySkull");
+		spawntype = dyn_cast<PClassPlayerPawn>(PClass::FindClass("BloodySkull"));
 		if (spawntype == NULL)
 			return 0;
 	}

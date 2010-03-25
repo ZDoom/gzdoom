@@ -38,6 +38,8 @@
 #include "templates.h"
 #include "autosegs.h"
 #include "v_text.h"
+#include "a_pickups.h"
+#include "d_player.h"
 
 IMPLEMENT_POINTY_CLASS(PClass)
  DECLARE_POINTER(ParentClass)
@@ -121,6 +123,7 @@ PClass::PClass()
 	Defaults = NULL;
 	bRuntimeClass = false;
 	ClassIndex = ~0;
+	ConstructNative = NULL;
 }
 
 PClass::~PClass()
@@ -135,6 +138,18 @@ PClass::~PClass()
 
 PClass *ClassReg::RegisterClass()
 {
+	static ClassReg *const metaclasses[] =
+	{
+		&PClass::RegistrationInfo,
+		&PClassActor::RegistrationInfo,
+		&PClassInventory::RegistrationInfo,
+		&PClassAmmo::RegistrationInfo,
+		&PClassHealth::RegistrationInfo,
+		&PClassPuzzleItem::RegistrationInfo,
+		&PClassWeapon::RegistrationInfo,
+		&PClassPlayerPawn::RegistrationInfo,
+	};
+
 	// MyClass may have already been created by a previous recursive call.
 	// Or this may be a recursive call for a previously created class.
 	if (MyClass != NULL)
@@ -145,30 +160,35 @@ PClass *ClassReg::RegisterClass()
 	// Add type to list
 	PClass *cls;
 
-	switch (MetaClassNum)
+	if (MetaClassNum >= countof(metaclasses))
 	{
-	case CLASSREG_PClass:
-		cls = new PClass;
-		break;
-
-	case CLASSREG_PClassActor:
-		cls = new PClassActor;
-		break;
-
-	default:
 		assert(0 && "Class registry has an invalid meta class identifier");
 	}
+
+	if (this == &PClass::RegistrationInfo)
+	{
+		cls = new PClass;
+	}
+	else
+	{
+		if (metaclasses[MetaClassNum]->MyClass == NULL)
+		{ // Make sure the meta class is already registered before registering this one
+			metaclasses[MetaClassNum]->RegisterClass();
+		}
+		cls = static_cast<PClass *>(metaclasses[MetaClassNum]->MyClass->CreateNew());
+	}
+
 	MyClass = cls;
 	PClass::m_Types.Push(cls);
 	cls->TypeName = FName(Name+1);
-	if (ParentType != NULL)
-	{
-		cls->ParentClass = ParentType->RegisterClass();
-	}
 	cls->Size = SizeOf;
 	cls->Pointers = Pointers;
 	cls->ConstructNative = ConstructNative;
 	cls->InsertIntoHash();
+	if (ParentType != NULL)
+	{
+		cls->ParentClass = ParentType->RegisterClass();
+	}
 	return cls;
 }
 
@@ -231,7 +251,7 @@ PClass *PClass::FindClass (FName zaname)
 }
 
 // Create a new object that this class represents
-DObject *PClass::CreateNew () const
+DObject *PClass::CreateNew() const
 {
 	BYTE *mem = (BYTE *)M_Malloc (Size);
 	assert (mem != NULL);
@@ -245,6 +265,23 @@ DObject *PClass::CreateNew () const
 	ConstructNative (mem);
 	((DObject *)mem)->SetClass (const_cast<PClass *>(this));
 	return (DObject *)mem;
+}
+
+// Copies inheritable values into the derived class and other miscellaneous setup.
+void PClass::Derive(PClass *newclass)
+{
+	newclass->ParentClass = this;
+	newclass->ConstructNative = ConstructNative;
+
+	// Set up default instance of the new class.
+	newclass->Defaults = (BYTE *)M_Malloc(newclass->Size);
+	memcpy(newclass->Defaults, Defaults, Size);
+	if (newclass->Size > Size)
+	{
+		memset(newclass->Defaults + Size, 0, newclass->Size - Size);
+	}
+
+	newclass->Symbols.SetParentTable(&this->Symbols);
 }
 
 // Create a new class based on an existing class
@@ -275,34 +312,16 @@ PClass *PClass::CreateDerivedClass (FName name, unsigned int size)
 	}
 
 	type->TypeName = name;
-	type->ParentClass = this;
 	type->Size = size;
-	type->Pointers = NULL;
-	type->ConstructNative = ConstructNative;
+	type->bRuntimeClass = true;
+	Derive(type);
 	if (!notnew)
 	{
 		type->ClassIndex = m_Types.Push (type);
-	}
-	type->Meta = Meta;
-
-	// Set up default instance of the new class.
-	type->Defaults = (BYTE *)M_Malloc(size);
-	memcpy (type->Defaults, Defaults, Size);
-	if (size > Size)
-	{
-		memset (type->Defaults + Size, 0, size - Size);
-	}
-
-	type->FlatPointers = NULL;
-	type->bRuntimeClass = true;
-	type->Symbols.SetParentTable (&this->Symbols);
-	if (!notnew)
-	{
 		type->InsertIntoHash();
 	}
 
-	// If this class has an actor info, then any classes derived from it
-	// also need an actor info.
+	// If this class is for an actor, push it onto the RuntimeActors stack.
 	if (type->IsKindOf(RUNTIME_CLASS(PClassActor)))
 	{
 		m_RuntimeActors.Push(static_cast<PClassActor *>(type));
@@ -351,17 +370,13 @@ PClass *PClass::FindClassTentative (FName name)
 			break;
 		}
 	}
-	PClass *type = new PClassActor;
+	PClass *type = static_cast<PClass *>(GetClass()->CreateNew());
 	DPrintf("Creating placeholder class %s : %s\n", name.GetChars(), TypeName.GetChars());
 
 	type->TypeName = name;
 	type->ParentClass = this;
 	type->Size = -1;
-	type->Pointers = NULL;
-	type->ConstructNative = NULL;
 	type->ClassIndex = m_Types.Push (type);
-	type->Defaults = NULL;
-	type->FlatPointers = NULL;
 	type->bRuntimeClass = true;
 	type->InsertIntoHash();
 	return type;

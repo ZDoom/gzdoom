@@ -28,9 +28,9 @@ class ARandomSpawner : public AActor
 	// random spawner's velocity (0...) instead of their own.
 	void BeginPlay()
 	{
-		FDropItem *di;   // di will be our drop item list iterator
-		FDropItem *drop; // while drop stays as the reference point.
-		int n=0;
+		DDropItem *di;   // di will be our drop item list iterator
+		DDropItem *drop; // while drop stays as the reference point.
+		int n = 0;
 
 		Super::BeginPlay();
 		drop = di = GetDropItems();
@@ -40,8 +40,8 @@ class ARandomSpawner : public AActor
 			{
 				if (di->Name != NAME_None)
 				{
-					if (di->amount < 0) di->amount = 1; // default value is -1, we need a positive value.
-					n += di->amount; // this is how we can weight the list.
+					if (di->Amount < 0) di->Amount = 1; // default value is -1, we need a positive value.
+					n += di->Amount; // this is how we can weight the list.
 					di = di->Next;
 				}
 			}
@@ -54,7 +54,7 @@ class ARandomSpawner : public AActor
 			{
 				if (di->Name != NAME_None)
 				{
-					n -= di->amount;
+					n -= di->Amount;
 					if ((di->Next != NULL) && (n > -1)) di = di->Next; else n = -1;
 				}
 			}
@@ -64,7 +64,7 @@ class ARandomSpawner : public AActor
 				Spawn("Unknown", x, y, z, NO_REPLACE);		// Show that there's a problem.
 				Destroy(); return;
 			}
-			else if (pr_randomspawn() <= di->probability)	// prob 255 = always spawn, prob 0 = never spawn.
+			else if (pr_randomspawn() <= di->Probability)	// prob 255 = always spawn, prob 0 = almost never spawn.
 			{
 				// Handle replacement here so as to get the proper speed and flags for missiles
 				PClassActor *cls;

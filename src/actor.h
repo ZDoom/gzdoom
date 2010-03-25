@@ -492,47 +492,16 @@ struct line_t;
 struct secplane_t;
 struct FStrifeDialogueNode;
 
-enum
+class DDropItem : public DObject
 {
-	AMETA_BASE = 0x12000,
-
-	AMETA_Obituary,			// string (player was killed by this actor)
-	AMETA_HitObituary,		// string (player was killed by this actor in melee)
-	AMETA_DeathHeight,		// fixed (height on normal death)
-	AMETA_BurnHeight,		// fixed (height on burning death)
-	AMETA_StrifeName,		// string (for named Strife objects)
-	AMETA_BloodColor,		// colorized blood
-	AMETA_GibHealth,		// negative health below which this monster dies an extreme death
-	AMETA_WoundHealth,		// health needed to enter wound state
-	AMETA_PoisonDamage,		// Amount of poison damage
-	AMETA_FastSpeed,		// Speed in fast mode
-	AMETA_RDFactor,			// Radius damage factor
-	AMETA_CameraHeight,		// Height of camera when used as such
-	AMETA_HowlSound,		// Sound being played when electrocuted or poisoned
-	AMETA_BloodType,		// Blood replacement type
-	AMETA_BloodType2,		// Bloodsplatter replacement type
-	AMETA_BloodType3,		// AxeBlood replacement type
-};
-
-struct FDropItem 
-{
-	FName Name;
-	int probability;
-	int amount;
-	FDropItem * Next;
-};
-
-class FDropItemPtrArray : public TArray<FDropItem *>
-{
+	DECLARE_CLASS(DDropItem, DObject)
+	HAS_OBJECT_POINTERS
 public:
-	~FDropItemPtrArray();
+	DDropItem *Next;
+	FName Name;
+	int Probability;
+	int Amount;
 };
-
-extern FDropItemPtrArray DropItemList;
-
-void FreeDropItemChain(FDropItem *chain);
-int StoreDropItemChain(FDropItem *chain);
-
 
 
 // Map Object definition.
@@ -556,7 +525,7 @@ public:
 		return (AActor *)(RUNTIME_TYPE(this)->Defaults);
 	}
 
-	FDropItem *GetDropItems();
+	DDropItem *GetDropItems() const;
 
 	// Return true if the monster should use a missile attack, false for melee
 	bool SuggestMissileAttack (fixed_t dist);
@@ -702,7 +671,11 @@ public:
 	void Crash();
 
 	// Return starting health adjusted by skill level
-	int SpawnHealth();
+	int SpawnHealth() const;
+
+	int GetGibHealth() const;
+
+	fixed_t GetCameraHeight() const;
 
 	// Check for monsters that count as kill but excludes all friendlies.
 	bool CountsAsKill() const

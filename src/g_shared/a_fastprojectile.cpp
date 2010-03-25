@@ -154,7 +154,7 @@ void AFastProjectile::Effect()
 {
 	//if (pr_smoke() < 128)	// [RH] I think it looks better if it's consistent
 	{
-		FName name = (ENamedName) this->GetClass()->Meta.GetMetaInt (ACMETA_MissileName, NAME_None);
+		FName name = GetClass()->MissileName;
 		if (name != NAME_None)
 		{
 			fixed_t hitz = z-8*FRACUNIT;

@@ -84,7 +84,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_WizAtk3)
 		P_TraceBleed (damage, self->target, self);
 		return 0;
 	}
-	const PClass *fx = PClass::FindClass("WizardFX1");
+	PClassActor *fx = PClass::FindActor("WizardFX1");
 	mo = P_SpawnMissile (self, self->target, fx);
 	if (mo != NULL)
 	{

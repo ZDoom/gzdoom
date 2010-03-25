@@ -44,6 +44,7 @@
 #include "dobject.h"
 #include "doomdef.h"
 #include "vm.h"
+#include "s_sound.h"
 
 const BYTE SF_FULLBRIGHT = 0x40;
 
@@ -124,10 +125,14 @@ FArchive &operator<< (FArchive &arc, FState *&state);
 
 typedef TMap<FName, fixed_t> DmgFactors;
 typedef TMap<FName, BYTE> PainChanceList;
+class DDropItem;
 
 class PClassActor : public PClass
 {
 	DECLARE_CLASS(PClassActor, PClass);
+	HAS_OBJECT_POINTERS;
+protected:
+	virtual void Derive(PClass *newclass);
 public:
 	static void StaticInit ();
 	static void StaticSetActorNums ();
@@ -163,6 +168,32 @@ public:
 	FStateLabels *StateList;
 	DmgFactors *DamageFactors;
 	PainChanceList *PainChances;
+	FString Obituary;		// Player was killed by this actor
+	FString HitObituary;	// Player was killed by this actor in melee
+	fixed_t DeathHeight;	// Height on normal death
+	fixed_t BurnHeight;		// Height on burning death
+	PalEntry BloodColor;	// Colorized blood
+	int GibHealth;			// Negative health below which this monster dies an extreme death
+	int WoundHealth;		// Health needed to enter wound state
+	int PoisonDamage;		// Amount of poison damage
+	fixed_t FastSpeed;		// Speed in fast mode
+	fixed_t RDFactor;		// Radius damage factor
+	fixed_t CameraHeight;	// Height of camera when used as such
+	FSoundID HowlSound;		// Sound being played when electrocuted or poisoned
+	FName BloodType;		// Blood replacement type
+	FName BloodType2;		// Bloopsplatter replacement type
+	FName BloodType3;		// AxeBlood replacement type
+
+	DDropItem *DropItems;
+
+	// Old Decorate compatibility stuff
+	bool DontHurtShooter;
+	int ExplosionRadius;
+	int ExplosionDamage;
+	int MeleeDamage;
+	FSoundID MeleeSound;
+	FName MissileName;
+	fixed_t MissileHeight;
 };
 
 inline PClassActor *PClass::FindActor(FName name)

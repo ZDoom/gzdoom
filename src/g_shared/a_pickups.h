@@ -10,6 +10,8 @@
 class player_t;
 class FConfigFile;
 class AWeapon;
+class PClassWeapon;
+class PClassPlayerPawn;
 
 class FWeaponSlot
 {
@@ -19,13 +21,13 @@ public:
 	FWeaponSlot &operator= (const FWeaponSlot &other) { Weapons = other.Weapons; return *this; }
 	void Clear() { Weapons.Clear(); }
 	bool AddWeapon (const char *type);
-	bool AddWeapon (PClassActor *type);
+	bool AddWeapon (PClassWeapon *type);
 	void AddWeaponList (const char *list, bool clear);
 	AWeapon *PickWeapon (player_t *player);
 	int Size () const { return (int)Weapons.Size(); }
-	int LocateWeapon (PClassActor *type);
+	int LocateWeapon (PClassWeapon *type);
 
-	inline PClassActor *GetWeapon (int index) const
+	inline PClassWeapon *GetWeapon (int index) const
 	{
 		if ((unsigned)index < Weapons.Size())
 		{
@@ -42,7 +44,7 @@ public:
 private:
 	struct WeaponInfo
 	{
-		PClassActor *Type;
+		PClassWeapon *Type;
 		fixed_t Position;
 	};
 	void SetInitialPositions();
@@ -68,25 +70,25 @@ struct FWeaponSlots
 	AWeapon *PickPrevWeapon (player_t *player);
 
 	void Clear ();
-	bool LocateWeapon (PClassActor *type, int *const slot, int *const index);
-	ESlotDef AddDefaultWeapon (int slot, PClassActor *type);
+	bool LocateWeapon (PClassWeapon *type, int *const slot, int *const index);
+	ESlotDef AddDefaultWeapon (int slot, PClassWeapon *type);
 	void AddExtraWeapons();
 	void SetFromGameInfo();
-	void SetFromPlayer(PClassActor *type);
-	void StandardSetup(PClassActor *type);
+	void SetFromPlayer(PClassPlayerPawn *type);
+	void StandardSetup(PClassPlayerPawn *type);
 	void LocalSetup(PClassActor *type);
 	void SendDifferences(const FWeaponSlots &other);
 	int RestoreSlots (FConfigFile *config, const char *section);
 	void PrintSettings();
 
-	void AddSlot(int slot, PClassActor *type, bool feedback);
-	void AddSlotDefault(int slot, PClassActor *type, bool feedback);
+	void AddSlot(int slot, PClassWeapon *type, bool feedback);
+	void AddSlotDefault(int slot, PClassWeapon *type, bool feedback);
 
 };
 
 void P_PlaybackKeyConfWeapons(FWeaponSlots *slots);
-void Net_WriteWeapon(PClassActor *type);
-PClassActor *Net_ReadWeapon(BYTE **stream);
+void Net_WriteWeapon(PClassWeapon *type);
+PClassWeapon *Net_ReadWeapon(BYTE **stream);
 
 void P_SetupWeapons_ntohton();
 void P_WriteDemoWeaponsChunk(BYTE **demo);
@@ -97,17 +99,6 @@ void P_ReadDemoWeaponsChunk(BYTE **demo);
 /************************************************************************/
 
 // A pickup is anything the player can pickup (i.e. weapons, ammo, powerups, etc)
-
-enum
-{
-	AIMETA_BASE = 0x71000,
-	AIMETA_PickupMessage,		// string
-	AIMETA_GiveQuest,			// optionally give one of the quest items.
-	AIMETA_DropAmount,			// specifies the amount for a dropped ammo item
-	AIMETA_LowHealth,
-	AIMETA_LowHealthMessage,
-	AIMETA_PuzzFailMessage,
-};
 
 enum
 {
@@ -134,9 +125,22 @@ enum
 
 struct vissprite_t;
 
+class PClassInventory : public PClassActor
+{
+	DECLARE_CLASS(PClassInventory, PClassActor)
+protected:
+	virtual void Derive(PClass *newclass);
+public:
+	PClassInventory();
+
+	FString PickupMessage;
+	int GiveQuest;			// Optionally give one of the quest items.
+	FTextureID AltHUDIcon;
+};
+
 class AInventory : public AActor
 {
-	DECLARE_CLASS (AInventory, AActor)
+	DECLARE_CLASS_WITH_META(AInventory, AActor, PClassInventory)
 	HAS_OBJECT_POINTERS
 public:
 	virtual void Touch (AActor *toucher);
@@ -172,7 +176,7 @@ public:
 	const PClass *SpawnPointClass;	// For respawning like Heretic's mace
 
 	DWORD ItemFlags;
-	const PClass *PickupFlash;	// actor to spawn as pickup flash
+	PClassActor *PickupFlash;	// actor to spawn as pickup flash
 
 	FSoundIDNoInit PickupSound;
 
@@ -220,9 +224,20 @@ public:
 };
 
 // Ammo: Something a weapon needs to operate
+class PClassAmmo : public PClassInventory
+{
+	DECLARE_CLASS(PClassAmmo, PClassInventory)
+protected:
+	virtual void Derive(PClass *newclass);
+public:
+	PClassAmmo();
+
+	int DropAmount;			// Specifies the amount for a dropped ammo item.
+};
+
 class AAmmo : public AInventory
 {
-	DECLARE_CLASS (AAmmo, AInventory)
+	DECLARE_CLASS_WITH_META(AAmmo, AInventory, PClassAmmo)
 public:
 	void Serialize (FArchive &arc);
 	AInventory *CreateCopy (AActor *other);
@@ -234,27 +249,32 @@ public:
 };
 
 // A weapon is just that.
-enum
+class PClassWeapon : public PClassInventory
 {
-	AWMETA_BASE = 0x72000,
-	AWMETA_SlotNumber,
-	AWMETA_SlotPriority,
+	DECLARE_CLASS(PClassWeapon, PClassInventory);
+protected:
+	virtual void Derive(PClass *newclass);
+public:
+	PClassWeapon();
+
+	int SlotNumber;
+	fixed_t SlotPriority;
 };
 
 class AWeapon : public AInventory
 {
-	DECLARE_CLASS (AWeapon, AInventory)
+	DECLARE_CLASS_WITH_META(AWeapon, AInventory, PClassWeapon)
 	HAS_OBJECT_POINTERS
 public:
 	DWORD WeaponFlags;
-	PClassActor *AmmoType1, *AmmoType2;		// Types of ammo used by this weapon
+	PClassAmmo *AmmoType1, *AmmoType2;		// Types of ammo used by this weapon
 	int AmmoGive1, AmmoGive2;				// Amount of each ammo to get when picking up weapon
 	int MinAmmo1, MinAmmo2;					// Minimum ammo needed to switch to this weapon
 	int AmmoUse1, AmmoUse2;					// How much ammo to use with each shot
 	int Kickback;
 	fixed_t YAdjust;						// For viewing the weapon fullscreen
 	FSoundIDNoInit UpSound, ReadySound;		// Sounds when coming up and idle
-	PClassActor *SisterWeaponType;			// Another weapon to pick up with this one
+	PClassWeapon *SisterWeaponType;			// Another weapon to pick up with this one
 	PClassActor *ProjectileType;			// Projectile used by primary attack
 	PClassActor *AltProjectileType;			// Projectile used by alternate attack
 	int SelectionOrder;						// Lower-numbered weapons get picked first
@@ -302,7 +322,7 @@ public:
 protected:
 	AAmmo *AddAmmo (AActor *other, PClassActor *ammotype, int amount);
 	bool AddExistingAmmo (AAmmo *ammo, int amount);
-	AWeapon *AddWeapon (PClassActor *weapon);
+	AWeapon *AddWeapon (PClassWeapon *weapon);
 };
 
 enum
@@ -336,9 +356,21 @@ enum
 #define S_LIGHTDONE 0
 
 // Health is some item that gives the player health when picked up.
+class PClassHealth : public PClassInventory
+{
+	DECLARE_CLASS(PClassHealth, PClassInventory)
+protected:
+	virtual void Derive(PClass *newclass);
+public:
+	PClassHealth();
+
+	FString LowHealthMessage;
+	int LowHealth;
+};
+
 class AHealth : public AInventory
 {
-	DECLARE_CLASS (AHealth, AInventory)
+	DECLARE_CLASS_WITH_META(AHealth, AInventory, PClassHealth)
 
 	int PrevHealth;
 public:
@@ -440,9 +472,18 @@ protected:
 };
 
 // PuzzleItems work in conjunction with the UsePuzzleItem special
+class PClassPuzzleItem : public PClassInventory
+{
+	DECLARE_CLASS(PClassPuzzleItem, PClassInventory);
+protected:
+	virtual void Derive(PClass *newclass);
+public:
+	FString PuzzFailMessage;
+};
+
 class APuzzleItem : public AInventory
 {
-	DECLARE_CLASS (APuzzleItem, AInventory)
+	DECLARE_CLASS_WITH_META(APuzzleItem, AInventory, PClassPuzzleItem)
 public:
 	void Serialize (FArchive &arc);
 	bool ShouldStay ();

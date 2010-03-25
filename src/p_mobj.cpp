@@ -1069,7 +1069,7 @@ bool AActor::Grind(bool items)
 			if (isgeneric)	// Not a custom crush state, so colorize it appropriately.
 			{
 				S_Sound (this, CHAN_BODY, "misc/fallingsplat", 1, ATTN_IDLE);
-				PalEntry bloodcolor = PalEntry(GetClass()->Meta.GetMetaInt(AMETA_BloodColor));
+				PalEntry bloodcolor = GetClass()->BloodColor;
 				if (bloodcolor!=0) Translation = TRANSLATION(TRANSLATION_Blood, bloodcolor.a);
 			}
 			return false;
@@ -1113,7 +1113,7 @@ bool AActor::Grind(bool items)
 			}
 			S_Sound (this, CHAN_BODY, "misc/fallingsplat", 1, ATTN_IDLE);
 
-			PalEntry bloodcolor = (PalEntry)this->GetClass()->Meta.GetMetaInt(AMETA_BloodColor);
+			PalEntry bloodcolor = GetClass()->BloodColor;
 			if (bloodcolor!=0) gib->Translation = TRANSLATION(TRANSLATION_Blood, bloodcolor.a);
 		}
 		if (flags & MF_ICECORPSE)
@@ -2651,7 +2651,7 @@ int AActor::GetMissileDamage (int mask, int add)
 
 void AActor::Howl ()
 {
-	int howl = GetClass()->Meta.GetMetaInt(AMETA_HowlSound);
+	FSoundID howl = GetClass()->HowlSound;
 	if (!S_IsActorPlayingSomething(this, CHAN_BODY, howl))
 	{
 		S_Sound (this, CHAN_BODY, howl, 1, ATTN_NORM);
@@ -3553,9 +3553,8 @@ AActor *AActor::StaticSpawn (PClassActor *type, fixed_t ix, fixed_t iy, fixed_t 
 	actor->frame = st->GetFrame();
 	actor->renderflags = (actor->renderflags & ~RF_FULLBRIGHT) | st->GetFullbright();
 	actor->touching_sectorlist = NULL;	// NULL head of sector list // phares 3/13/98
-	if (G_SkillProperty(SKILLP_FastMonsters))
-		actor->Speed = actor->GetClass()->Meta.GetMetaFixed(AMETA_FastSpeed, actor->Speed);
-
+	if (G_SkillProperty(SKILLP_FastMonsters) && actor->GetClass()->FastSpeed >= 0)
+		actor->Speed = actor->GetClass()->FastSpeed;
 
 	// set subsector and/or block links
 	actor->LinkToWorld (SpawningMapThing);
@@ -4445,7 +4444,7 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 // P_SpawnPuff
 //
 
-AActor *P_SpawnPuff (AActor *source, const PClass *pufftype, fixed_t x, fixed_t y, fixed_t z, angle_t dir, int updown, int flags)
+AActor *P_SpawnPuff (AActor *source, PClassActor *pufftype, fixed_t x, fixed_t y, fixed_t z, angle_t dir, int updown, int flags)
 {
 	AActor *puff;
 
@@ -4507,8 +4506,8 @@ AActor *P_SpawnPuff (AActor *source, const PClass *pufftype, fixed_t x, fixed_t 
 void P_SpawnBlood (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int damage, AActor *originator)
 {
 	AActor *th;
-	PalEntry bloodcolor = (PalEntry)originator->GetClass()->Meta.GetMetaInt(AMETA_BloodColor);
-	const PClass *bloodcls = PClass::FindClass((ENamedName)originator->GetClass()->Meta.GetMetaInt(AMETA_BloodType, NAME_Blood));
+	PalEntry bloodcolor = originator->GetClass()->BloodColor;
+	PClassActor *bloodcls = PClass::FindActor(originator->GetClass()->BloodType);
 	
 	int bloodtype = cl_bloodtype;
 	
@@ -4569,15 +4568,15 @@ void P_SpawnBlood (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int damage, AAc
 
 void P_BloodSplatter (fixed_t x, fixed_t y, fixed_t z, AActor *originator)
 {
-	PalEntry bloodcolor = (PalEntry)originator->GetClass()->Meta.GetMetaInt(AMETA_BloodColor);
-	const PClass *bloodcls = PClass::FindClass((ENamedName)originator->GetClass()->Meta.GetMetaInt(AMETA_BloodType2, NAME_BloodSplatter));
+	PalEntry bloodcolor = originator->GetClass()->BloodColor;
+	PClassActor *bloodcls = PClass::FindActor(originator->GetClass()->BloodType2);
 
 	int bloodtype = cl_bloodtype;
 	
 	if (bloodcls != NULL && !(GetDefaultByType(bloodcls)->flags4 & MF4_ALLOWPARTICLES))
 		bloodtype = 0;
 
-	if (bloodcls!=NULL && bloodtype <= 1)
+	if (bloodcls != NULL && bloodtype <= 1)
 	{
 		AActor *mo;
 
@@ -4607,8 +4606,8 @@ void P_BloodSplatter (fixed_t x, fixed_t y, fixed_t z, AActor *originator)
 
 void P_BloodSplatter2 (fixed_t x, fixed_t y, fixed_t z, AActor *originator)
 {
-	PalEntry bloodcolor = (PalEntry)originator->GetClass()->Meta.GetMetaInt(AMETA_BloodColor);
-	const PClass *bloodcls = PClass::FindClass((ENamedName)originator->GetClass()->Meta.GetMetaInt(AMETA_BloodType3, NAME_AxeBlood));
+	PalEntry bloodcolor = originator->GetClass()->BloodColor;
+	PClassActor *bloodcls = PClass::FindActor(originator->GetClass()->BloodType3);
 
 	int bloodtype = cl_bloodtype;
 	
@@ -4646,8 +4645,8 @@ void P_BloodSplatter2 (fixed_t x, fixed_t y, fixed_t z, AActor *originator)
 void P_RipperBlood (AActor *mo, AActor *bleeder)
 {
 	fixed_t x, y, z;
-	PalEntry bloodcolor = (PalEntry)bleeder->GetClass()->Meta.GetMetaInt(AMETA_BloodColor);
-	const PClass *bloodcls = PClass::FindClass((ENamedName)bleeder->GetClass()->Meta.GetMetaInt(AMETA_BloodType, NAME_Blood));
+	PalEntry bloodcolor = bleeder->GetClass()->BloodColor;
+	PClassActor *bloodcls = PClass::FindActor(bleeder->GetClass()->BloodType);
 
 	x = mo->x + (pr_ripperblood.Random2 () << 12);
 	y = mo->y + (pr_ripperblood.Random2 () << 12);
@@ -5031,11 +5030,12 @@ void P_PlaySpawnSound(AActor *missile, AActor *spawner)
 	}
 }
 
-static fixed_t GetDefaultSpeed(const PClass *type)
+static fixed_t GetDefaultSpeed(PClassActor *type)
 {
-	if (type == NULL) return 0;
-	else if (G_SkillProperty(SKILLP_FastMonsters))
-		return type->Meta.GetMetaFixed(AMETA_FastSpeed, GetDefaultByType(type)->Speed);
+	if (type == NULL)
+		return 0;
+	else if (G_SkillProperty(SKILLP_FastMonsters) && type->FastSpeed >= 0)
+		return type->FastSpeed;
 	else
 		return GetDefaultByType(type)->Speed;
 }
@@ -5158,7 +5158,7 @@ AActor * P_OldSpawnMissile(AActor * source, AActor * owner, AActor * dest, const
 //
 //---------------------------------------------------------------------------
 
-AActor *P_SpawnMissileAngle (AActor *source, const PClass *type,
+AActor *P_SpawnMissileAngle (AActor *source, PClassActor *type,
 	angle_t angle, fixed_t velz)
 {
 	return P_SpawnMissileAngleZSpeed (source, source->z + 32*FRACUNIT,
@@ -5166,13 +5166,13 @@ AActor *P_SpawnMissileAngle (AActor *source, const PClass *type,
 }
 
 AActor *P_SpawnMissileAngleZ (AActor *source, fixed_t z,
-	const PClass *type, angle_t angle, fixed_t velz)
+	PClassActor *type, angle_t angle, fixed_t velz)
 {
 	return P_SpawnMissileAngleZSpeed (source, z, type, angle, velz,
 		GetDefaultSpeed (type));
 }
 
-AActor *P_SpawnMissileZAimed (AActor *source, fixed_t z, AActor *dest, const PClass *type)
+AActor *P_SpawnMissileZAimed (AActor *source, fixed_t z, AActor *dest, PClassActor *type)
 {
 	angle_t an;
 	fixed_t dist;
@@ -5201,7 +5201,7 @@ AActor *P_SpawnMissileZAimed (AActor *source, fixed_t z, AActor *dest, const PCl
 //
 //---------------------------------------------------------------------------
 
-AActor *P_SpawnMissileAngleSpeed (AActor *source, const PClass *type,
+AActor *P_SpawnMissileAngleSpeed (AActor *source, PClassActor *type,
 	angle_t angle, fixed_t velz, fixed_t speed)
 {
 	return P_SpawnMissileAngleZSpeed (source, source->z + 32*FRACUNIT,
@@ -5209,7 +5209,7 @@ AActor *P_SpawnMissileAngleSpeed (AActor *source, const PClass *type,
 }
 
 AActor *P_SpawnMissileAngleZSpeed (AActor *source, fixed_t z,
-	const PClass *type, angle_t angle, fixed_t velz, fixed_t speed, AActor *owner, bool checkspawn)
+	PClassActor *type, angle_t angle, fixed_t velz, fixed_t speed, AActor *owner, bool checkspawn)
 {
 	AActor *mo;
 
@@ -5239,18 +5239,18 @@ AActor *P_SpawnMissileAngleZSpeed (AActor *source, fixed_t z,
 ================
 */
 
-AActor *P_SpawnPlayerMissile (AActor *source, const PClass *type)
+AActor *P_SpawnPlayerMissile (AActor *source, PClassActor *type)
 {
 	return P_SpawnPlayerMissile (source, 0, 0, 0, type, source->angle);
 }
 
-AActor *P_SpawnPlayerMissile (AActor *source, const PClass *type, angle_t angle)
+AActor *P_SpawnPlayerMissile (AActor *source, PClassActor *type, angle_t angle)
 {
 	return P_SpawnPlayerMissile (source, 0, 0, 0, type, angle);
 }
 
 AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z,
-							  const PClass *type, angle_t angle, AActor **pLineTarget, AActor **pMissileActor,
+							  PClassActor *type, angle_t angle, AActor **pLineTarget, AActor **pMissileActor,
 							  bool nofreeaim)
 {
 	static const int angdiff[3] = { -1<<26, 1<<26, 0 };
@@ -5451,7 +5451,7 @@ int AActor::DoSpecialDamage (AActor *target, int damage)
 	{
 		if (target->player)
 		{
-			int poisondamage = GetClass()->Meta.GetMetaInt(AMETA_PoisonDamage);
+			int poisondamage = GetClass()->PoisonDamage;
 			if (poisondamage > 0)
 			{
 				P_PoisonPlayer (target->player, this, this->target, poisondamage);
@@ -5512,8 +5512,7 @@ void AActor::Crash()
 		}
 		if (crashstate == NULL)
 		{
-			int gibhealth = -abs(GetClass()->Meta.GetMetaInt (AMETA_GibHealth,
-				gameinfo.gametype & GAME_DoomChex ? -SpawnHealth() : -SpawnHealth()/2));
+			int gibhealth = GetGibHealth();
 
 			if (health < gibhealth)
 			{ // Extreme death
@@ -5538,7 +5537,7 @@ void AActor::SetIdle()
 	SetState(idle);
 }
 
-int AActor::SpawnHealth()
+int AActor::SpawnHealth() const
 {
 	if (!(flags3 & MF3_ISMONSTER) || GetDefault()->health == 0)
 	{
@@ -5556,15 +5555,32 @@ int AActor::SpawnHealth()
 	}
 }
 
-FDropItem *AActor::GetDropItems()
+int AActor::GetGibHealth() const
 {
-	unsigned int index = GetClass()->Meta.GetMetaInt (ACMETA_DropItems) - 1;
+	int gibhealth = GetClass()->GibHealth;
 
-	if (index >= 0 && index < DropItemList.Size())
+	if (gibhealth != INT_MIN)
 	{
-		return DropItemList[index];
+		return gibhealth;
 	}
-	return NULL;
+	else if (gameinfo.gametype & GAME_DoomChex)
+	{
+		return -SpawnHealth();
+	}
+	else
+	{
+		return -SpawnHealth()/2;
+	}
+}
+
+fixed_t AActor::GetCameraHeight() const
+{
+	return GetClass()->CameraHeight == FIXED_MIN ? height / 2 : GetClass()->CameraHeight;
+}
+
+DDropItem *AActor::GetDropItems() const
+{
+	return GetClass()->DropItems;
 }
 
 fixed_t AActor::GetGravity() const
@@ -5595,30 +5611,9 @@ const char *AActor::GetTag(const char *def) const
 // DropItem handling
 //
 //----------------------------------------------------------------------------
-FDropItemPtrArray DropItemList;
-
-void FreeDropItemChain(FDropItem *chain)
-{
-	while (chain != NULL)
-	{
-		FDropItem *next = chain->Next;
-		delete chain;
-		chain = next;
-	}
-}
-
-FDropItemPtrArray::~FDropItemPtrArray()
-{
-	for (unsigned int i = 0; i < Size(); ++i)
-	{
-		FreeDropItemChain ((*this)[i]);
-	}
-}
-
-int StoreDropItemChain(FDropItem *chain)
-{
-	return DropItemList.Push (chain) + 1;
-}
+IMPLEMENT_POINTY_CLASS(DDropItem)
+ DECLARE_POINTER(Next)
+END_POINTERS
 
 void PrintMiscActorInfo(AActor * query)
 {

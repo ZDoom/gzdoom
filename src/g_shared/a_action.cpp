@@ -83,7 +83,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_NoBlocking)
 	// If the self has attached metadata for items to drop, drop those.
 	if (!self->IsKindOf (RUNTIME_CLASS (APlayerPawn)))	// [GRB]
 	{
-		FDropItem *di = self->GetDropItems();
+		DDropItem *di = self->GetDropItems();
 
 		if (di != NULL)
 		{
@@ -92,7 +92,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_NoBlocking)
 				if (di->Name != NAME_None)
 				{
 					const PClass *ti = PClass::FindClass(di->Name);
-					if (ti) P_DropItem (self, ti, di->amount, di->probability);
+					if (ti) P_DropItem (self, ti, di->Amount, di->Probability);
 				}
 				di = di->Next;
 			}

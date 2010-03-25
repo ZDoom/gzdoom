@@ -349,9 +349,9 @@ void APowerInvulnerable::InitEffect ()
 {
 	Owner->effects &= ~FX_RESPAWNINVUL;
 	Owner->flags2 |= MF2_INVULNERABLE;
-	if (Mode == NAME_None)
+	if (Mode == NAME_None && Owner->IsKindOf(RUNTIME_CLASS(APlayerPawn)))
 	{
-		Mode = (ENamedName)RUNTIME_TYPE(Owner)->Meta.GetMetaInt(APMETA_InvulMode);
+		Mode = static_cast<PClassPlayerPawn *>(Owner->GetClass())->InvulMode;
 	}
 	if (Mode == NAME_Reflective)
 	{
@@ -1729,7 +1729,7 @@ void APowerMorph::InitEffect( )
 		player_t *realplayer = Owner->player;	// Remember the identity of the player
 		const PClass *morph_flash = PClass::FindClass (MorphFlash);
 		const PClass *unmorph_flash = PClass::FindClass (UnMorphFlash);
-		const PClass *player_class = PClass::FindClass (PlayerClass);
+		PClassPlayerPawn *player_class = dyn_cast<PClassPlayerPawn>(PClass::FindClass (PlayerClass));
 		if (P_MorphPlayer(realplayer, realplayer, player_class, -1/*INDEFINITELY*/, MorphStyle, morph_flash, unmorph_flash))
 		{
 			Owner = realplayer->mo;				// Replace the new owner in our owner; safe because we are not attached to anything yet

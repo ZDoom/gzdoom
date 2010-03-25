@@ -126,7 +126,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FHammerThrow)
 		if (!weapon->DepleteAmmo (weapon->bAltFire, false))
 			return 0;
 	}
-	mo = P_SpawnPlayerMissile (player->mo, PClass::FindClass ("HammerMissile")); 
+	mo = P_SpawnPlayerMissile (player->mo, PClass::FindActor("HammerMissile")); 
 	if (mo)
 	{
 		mo->special1 = 0;

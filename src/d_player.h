@@ -44,38 +44,30 @@
 //Added by MC:
 #include "b_bot.h"
 
-enum
-{
-	APMETA_BASE = 0x95000,
-
-	APMETA_DisplayName,		// display name (used in menus etc.)
-	APMETA_SoundClass,		// sound class
-	APMETA_Face,			// doom status bar face (when used)
-	APMETA_ColorRange,		// skin color range
-	APMETA_InvulMode,
-	APMETA_HealingRadius,
-	APMETA_Hexenarmor0,
-	APMETA_Hexenarmor1,
-	APMETA_Hexenarmor2,
-	APMETA_Hexenarmor3,
-	APMETA_Hexenarmor4,
-	APMETA_Slot0,
-	APMETA_Slot1,
-	APMETA_Slot2,
-	APMETA_Slot3,
-	APMETA_Slot4,
-	APMETA_Slot5,
-	APMETA_Slot6,
-	APMETA_Slot7,
-	APMETA_Slot8,
-	APMETA_Slot9,
-};
-
 class player_t;
+
+class PClassPlayerPawn : public PClassActor
+{
+	DECLARE_CLASS(PClassPlayerPawn, PClassActor);
+protected:
+	virtual void Derive(PClass *newclass);
+public:
+	PClassPlayerPawn();
+
+	FString DisplayName;	// Display name (used in menus, etc.)
+	FString SoundClass;		// Sound class
+	FString Face;			// Doom status bar face (when used)
+	FString Slot[10];
+	FName InvulMode;
+	FName HealingRadiusType;
+	fixed_t HexenArmor[5];
+	BYTE ColorRangeStart;	// Skin color range
+	BYTE ColorRangeEnd;
+};
 
 class APlayerPawn : public AActor
 {
-	DECLARE_CLASS (APlayerPawn, AActor)
+	DECLARE_CLASS_WITH_META(APlayerPawn, AActor, PClassPlayerPawn)
 	HAS_OBJECT_POINTERS
 public:
 	virtual void Serialize (FArchive &arc);
@@ -431,7 +423,7 @@ public:
 
 	bool CheckSkin (int skin);
 
-	const PClass *Type;
+	PClassPlayerPawn *Type;
 	DWORD Flags;
 	TArray<int> Skins;
 };

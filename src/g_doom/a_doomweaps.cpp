@@ -390,7 +390,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireMissile)
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return 0;
 	}
-	P_SpawnPlayerMissile (self, PClass::FindClass("Rocket"));
+	P_SpawnPlayerMissile (self, PClass::FindActor("Rocket"));
 	return 0;
 }
 
@@ -452,7 +452,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FirePlasma)
 		}
 	}
 
-	P_SpawnPlayerMissile (self, PClass::FindClass("PlasmaBall"));
+	P_SpawnPlayerMissile (self, PClass::FindActor("PlasmaBall"));
 	return 0;
 }
 
@@ -537,7 +537,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireBFG)
 			return 0;
 	}
 
-	P_SpawnPlayerMissile (self,  0, 0, 0, PClass::FindClass("BFGBall"), self->angle, NULL, NULL, !!(dmflags2 & DF2_NO_FREEAIMBFG));
+	P_SpawnPlayerMissile (self,  0, 0, 0, PClass::FindActor("BFGBall"), self->angle, NULL, NULL, !!(dmflags2 & DF2_NO_FREEAIMBFG));
 	return 0;
 }
 
@@ -619,7 +619,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BFGsound)
 DEFINE_ACTION_FUNCTION(AActor, A_FireOldBFG)
 {
 	PARAM_ACTION_PROLOGUE;
-	const PClass * plasma[] = {PClass::FindClass("PlasmaBall1"), PClass::FindClass("PlasmaBall2")};
+	PClassActor *plasma[] = { PClass::FindActor("PlasmaBall1"), PClass::FindActor("PlasmaBall2") };
 	AActor * mo = NULL;
 
 	player_t *player;

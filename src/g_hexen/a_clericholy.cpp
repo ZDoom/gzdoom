@@ -249,8 +249,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_CHolyAttack)
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return 0;
 	}
-	AActor * missile = P_SpawnPlayerMissile (self, 0,0,0, PClass::FindClass ("HolyMissile"), self->angle, &linetarget);
-	if (missile != NULL) missile->tracer = linetarget;
+	AActor *missile = P_SpawnPlayerMissile (self, 0,0,0, PClass::FindActor("HolyMissile"), self->angle, &linetarget);
+	if (missile != NULL)
+	{
+		missile->tracer = linetarget;
+	}
 
 	weapon->CHolyCount = 3;
 	S_Sound (self, CHAN_WEAPON, "HolySymbolFire", 1, ATTN_NORM);

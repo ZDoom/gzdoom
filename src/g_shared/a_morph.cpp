@@ -25,7 +25,7 @@ static FRandom pr_morphmonst ("MorphMonster");
 //
 //---------------------------------------------------------------------------
 
-bool P_MorphPlayer (player_t *activator, player_t *p, const PClass *spawntype, int duration, int style, const PClass *enter_flash, const PClass *exit_flash)
+bool P_MorphPlayer (player_t *activator, player_t *p, PClassPlayerPawn *spawntype, int duration, int style, const PClass *enter_flash, const PClass *exit_flash)
 {
 	AInventory *item;
 	APlayerPawn *morphed;
@@ -129,7 +129,7 @@ bool P_MorphPlayer (player_t *activator, player_t *p, const PClass *spawntype, i
 				hxarmor->Slots[1] = 0;
 				hxarmor->Slots[2] = 0;
 				hxarmor->Slots[3] = 0;
-				hxarmor->Slots[4] = spawntype->Meta.GetMetaFixed (APMETA_Hexenarmor0);
+				hxarmor->Slots[4] = spawntype->HexenArmor[0];
 			}
 			else if (item->ItemFlags & IF_KEEPDEPLETED)
 			{
@@ -157,9 +157,7 @@ bool P_MorphPlayer (player_t *activator, player_t *p, const PClass *spawntype, i
 	// and for the original DOOM status bar.
 	if (p == &players[consoleplayer])
 	{
-		const char *face = spawntype->Meta.GetMetaString (APMETA_Face);
-
-		if (face != NULL && strcmp(face, "None") != 0)
+		if (spawntype->Face.IsNotEmpty() && strcmp(spawntype->Face, "None") != 0)
 		{
 			StatusBar->SetFace(&skins[p->MorphedPlayerClass]);
 		}
@@ -285,8 +283,8 @@ bool P_UndoPlayerMorph (player_t *activator, player_t *player, int unmorphflag, 
 	// and for the original DOOM status bar.
 	if ((player == &players[consoleplayer]))
 	{
-		const char *face = pmo->GetClass()->Meta.GetMetaString (APMETA_Face);
-		if (face != NULL && strcmp(face, "None") != 0)
+		FString face = pmo->GetClass()->Face;
+		if (face.IsNotEmpty() && strcmp(face, "None") != 0)
 		{
 			// Assume root-level base skin to begin with
 			size_t skinindex = 0;
@@ -361,7 +359,7 @@ bool P_UndoPlayerMorph (player_t *activator, player_t *player, int unmorphflag, 
 	AHexenArmor *hxarmor = mo->FindInventory<AHexenArmor>();
 	if (hxarmor != NULL)
 	{
-		hxarmor->Slots[4] = mo->GetClass()->Meta.GetMetaFixed (APMETA_Hexenarmor0);
+		hxarmor->Slots[4] = mo->GetClass()->HexenArmor[0];
 	}
 	return true;
 }
@@ -558,7 +556,7 @@ int AMorphProjectile::DoSpecialDamage (AActor *target, int damage)
 	const PClass *unmorph_flash = PClass::FindClass (UnMorphFlash);
 	if (target->player)
 	{
-		const PClass *player_class = PClass::FindClass (PlayerClass);
+		PClassPlayerPawn *player_class = dyn_cast<PClassPlayerPawn>(PClass::FindClass(PlayerClass));
 		P_MorphPlayer (NULL, target->player, player_class, Duration, MorphStyle, morph_flash, unmorph_flash);
 	}
 	else

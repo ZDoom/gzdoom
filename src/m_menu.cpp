@@ -1883,7 +1883,7 @@ static void SCClass (int option)
 	if (option == 3)
 		playerclass = "Random";
 	else
-		playerclass = PlayerClasses[option].Type->Meta.GetMetaString (APMETA_DisplayName);
+		playerclass = PlayerClasses[option].Type->DisplayName;
 
 	if (EpiDef.numitems > 1)
 	{
@@ -2299,7 +2299,7 @@ static void M_PlayerSetupDrawer ()
 	x = SmallFont->StringWidth ("Class") + 8 + PSetupDef.x;
 	screen->DrawText (SmallFont, label, PSetupDef.x, PSetupDef.y + LINEHEIGHT*5+yo, "Class", DTA_Clean, true, TAG_DONE);
 	screen->DrawText (SmallFont, value, x, PSetupDef.y + LINEHEIGHT*5+yo,
-		pclass == -1 ? "Random" : PlayerClasses[pclass].Type->Meta.GetMetaString (APMETA_DisplayName),
+		pclass == -1 ? "Random" : PlayerClasses[pclass].Type->DisplayName,
 		DTA_Clean, true, TAG_DONE);
 
 	// Draw skin setting
@@ -2567,8 +2567,7 @@ static void M_ChangeClass (int choice)
 	else
 		type = (type < (int)PlayerClasses.Size () - 1) ? type + 1 : -1;
 
-	cvar_set ("playerclass", type < 0 ? "Random" :
-		PlayerClasses[type].Type->Meta.GetMetaString (APMETA_DisplayName));
+	cvar_set ("playerclass", type < 0 ? "Random" : PlayerClasses[type].Type->DisplayName);
 }
 
 static void M_ChangeSkin (int choice)
@@ -3964,8 +3963,7 @@ void M_Init (void)
 		{
 			if (!(PlayerClasses[i].Flags & PCF_NOMENU))
 			{
-				ClassMenuItems[n].name =
-					PlayerClasses[i].Type->Meta.GetMetaString (APMETA_DisplayName);
+				ClassMenuItems[n].name = PlayerClasses[i].Type->DisplayName;
 				n++;
 			}
 		}
@@ -3979,8 +3977,7 @@ void M_Init (void)
 		{
 			if (n == 0)
 			{
-				ClassMenuItems[0].name =
-					PlayerClasses[0].Type->Meta.GetMetaString (APMETA_DisplayName);
+				ClassMenuItems[0].name = PlayerClasses[0].Type->DisplayName;
 			}
 			ClassMenuDef.numitems = 1;
 		}

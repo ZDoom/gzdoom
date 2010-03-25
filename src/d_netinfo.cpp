@@ -169,9 +169,9 @@ int D_PlayerClassToInt (const char *classname)
 	{
 		for (unsigned int i = 0; i < PlayerClasses.Size (); ++i)
 		{
-			const PClass *type = PlayerClasses[i].Type;
+			PClassPlayerPawn *type = PlayerClasses[i].Type;
 
-			if (stricmp (type->Meta.GetMetaString (APMETA_DisplayName), classname) == 0)
+			if (type->DisplayName.IsNotEmpty() && stricmp(type->DisplayName, classname) == 0)
 			{
 				return i;
 			}
@@ -556,7 +556,7 @@ void D_WriteUserInfoStrings (int i, BYTE **stream, bool compact)
 	{
 		userinfo_t *info = &players[i].userinfo;
 
-		const PClass *type = PlayerClasses[info->PlayerClass].Type;
+		PClassPlayerPawn *type = PlayerClasses[info->PlayerClass].Type;
 
 		if (!compact)
 		{
@@ -582,8 +582,7 @@ void D_WriteUserInfoStrings (int i, BYTE **stream, bool compact)
 					 info->neverswitch,
 					 (float)(info->MoveBob) / 65536.f,
 					 (float)(info->StillBob) / 65536.f,
-					 info->PlayerClass == -1 ? "Random" :
-						D_EscapeUserInfo(type->Meta.GetMetaString (APMETA_DisplayName)).GetChars()
+					 info->PlayerClass == -1 ? "Random" : D_EscapeUserInfo(type->DisplayName).GetChars()
 					);
 		}
 		else
@@ -611,8 +610,7 @@ void D_WriteUserInfoStrings (int i, BYTE **stream, bool compact)
 				info->neverswitch,
 				(float)(info->MoveBob) / 65536.f,
 				(float)(info->StillBob) / 65536.f,
-				info->PlayerClass == -1 ? "Random" :
-					D_EscapeUserInfo(type->Meta.GetMetaString (APMETA_DisplayName)).GetChars()
+				info->PlayerClass == -1 ? "Random" : D_EscapeUserInfo(type->DisplayName).GetChars()
 			);
 		}
 	}
@@ -837,7 +835,7 @@ CCMD (playerinfo)
 		Printf ("MoveBob:     %g\n",		ui->MoveBob/65536.f);
 		Printf ("StillBob:    %g\n",		ui->StillBob/65536.f);
 		Printf ("PlayerClass: %s (%d)\n",
-			ui->PlayerClass == -1 ? "Random" : PlayerClasses[ui->PlayerClass].Type->Meta.GetMetaString (APMETA_DisplayName),
+			ui->PlayerClass == -1 ? "Random" : PlayerClasses[ui->PlayerClass].Type->DisplayName.GetChars(),
 			ui->PlayerClass);
 		if (argv.argc() > 2) PrintMiscActorInfo(players[i].mo);
 	}

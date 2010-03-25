@@ -301,7 +301,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurAtk2)
 		return 0;
 	}
 	z = self->z + 40*FRACUNIT;
-	const PClass *fx = PClass::FindClass("MinotaurFX1");
+	PClassActor *fx = PClass::FindActor("MinotaurFX1");
 	if (fx)
 	{
 		mo = P_SpawnMissileZ (self, z, self->target, fx);

@@ -153,6 +153,8 @@ class PClass : public DObject
 {
 	DECLARE_CLASS(PClass, DObject);
 	HAS_OBJECT_POINTERS;
+protected:
+	virtual void Derive(PClass *newclass);
 public:
 	static void StaticInit ();
 	static void StaticShutdown ();
@@ -164,7 +166,6 @@ public:
 	const size_t		*Pointers;		// object pointers defined by this class *only*
 	const size_t		*FlatPointers;	// object pointers defined by this class and all its superclasses; not initialized by default
 	PClass				*HashNext;
-	FMetaTable			 Meta;
 	BYTE				*Defaults;
 	bool				 bRuntimeClass;	// class was defined at run-time, not compile-time
 	unsigned short		 ClassIndex;

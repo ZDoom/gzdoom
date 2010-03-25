@@ -215,9 +215,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightningZap)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	const PClass *lightning=PClass::FindClass((ENamedName) self->GetClass()->Meta.GetMetaInt (ACMETA_MissileName, NAME_LightningZap));
+	PClassActor *lightning = PClass::FindActor(self->GetClass()->MissileName);
 	AActor *mo;
 	fixed_t deltaZ;
+
+	if (lightning == NULL)
+	{
+		lightning = PClass::FindActor(NAME_LightningZap);
+	}
 
 	CALL_ACTION(A_LightningClip, self);
 
@@ -338,10 +343,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_ZapMimic)
 DEFINE_ACTION_FUNCTION(AActor, A_LastZap)
 {
 	PARAM_ACTION_PROLOGUE;
-	const PClass *lightning=PClass::FindClass((ENamedName) self->GetClass()->Meta.GetMetaInt (ACMETA_MissileName, NAME_LightningZap));
+	PClassActor *lightning = PClass::FindActor(self->GetClass()->MissileName);
 
 	AActor *mo;
 
+	if (lightning == NULL)
+	{
+		lightning = PClass::FindActor(NAME_LightningZap);
+	}
 	mo = Spawn(lightning, self->x, self->y, self->z, ALLOW_REPLACE);
 	if (mo)
 	{

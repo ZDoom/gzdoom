@@ -107,7 +107,9 @@ int GetSpriteIndex(const char * spritename)
 	return (lastindex = (int)sprites.Push (temp));
 }
 
-IMPLEMENT_CLASS(PClassActor)
+IMPLEMENT_POINTY_CLASS(PClassActor)
+ DECLARE_POINTER(DropItems)
+END_POINTERS
 
 //==========================================================================
 //
@@ -173,6 +175,28 @@ PClassActor::PClassActor()
 	StateList = NULL;
 	DamageFactors = NULL;
 	PainChances = NULL;
+
+	Obituary = Obituary;
+	HitObituary = HitObituary;
+	DeathHeight = -1;
+	BurnHeight = -1;
+	GibHealth = INT_MIN;
+	WoundHealth = 6;
+	PoisonDamage = 0;
+	FastSpeed = FIXED_MIN;
+	RDFactor = FRACUNIT;
+	CameraHeight = FIXED_MIN;
+	BloodType = NAME_Blood;
+	BloodType2 = NAME_BloodSplatter;
+	BloodType3 = NAME_AxeBlood;
+
+	DropItems = NULL;
+
+	DontHurtShooter = false;
+	ExplosionDamage = 128;
+	ExplosionRadius = -1;
+	MissileHeight = 32*FRACUNIT;
+	MeleeDamage = 0;
 }
 
 //==========================================================================
@@ -200,6 +224,45 @@ PClassActor::~PClassActor()
 		StateList->Destroy();
 		M_Free(StateList);
 	}
+}
+
+//==========================================================================
+//
+// PClassActor :: Derive
+//
+//==========================================================================
+
+void PClassActor::Derive(PClass *newclass)
+{
+	assert(newclass->IsKindOf(RUNTIME_CLASS(PClassActor)));
+	Super::Derive(newclass);
+	PClassActor *newa = static_cast<PClassActor *>(newclass);
+
+	newa->Obituary = Obituary;
+	newa->HitObituary = HitObituary;
+	newa->DeathHeight = DeathHeight;
+	newa->BurnHeight = BurnHeight;
+	newa->BloodColor = BloodColor;
+	newa->GibHealth = GibHealth;
+	newa->WoundHealth = WoundHealth;
+	newa->PoisonDamage = PoisonDamage;
+	newa->FastSpeed = FastSpeed;
+	newa->RDFactor = RDFactor;
+	newa->CameraHeight = CameraHeight;
+	newa->HowlSound = HowlSound;
+	newa->BloodType = BloodType;
+	newa->BloodType2 = BloodType2;
+	newa->BloodType3 = BloodType3;
+
+	newa->DropItems = DropItems;
+
+	newa->DontHurtShooter = DontHurtShooter;
+	newa->ExplosionRadius = ExplosionRadius;
+	newa->ExplosionDamage = ExplosionDamage;
+	newa->MeleeDamage = MeleeDamage;
+	newa->MeleeSound = MeleeSound;
+	newa->MissileName = MissileName;
+	newa->MissileHeight = MissileHeight;
 }
 
 //==========================================================================

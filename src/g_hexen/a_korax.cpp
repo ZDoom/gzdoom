@@ -164,8 +164,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_KoraxBonePop)
 	// Spawn 6 spirits equalangularly
 	for (i = 0; i < 6; ++i)
 	{
-		mo = P_SpawnMissileAngle (self, PClass::FindClass("KoraxSpirit"), ANGLE_60*i, 5*FRACUNIT);
-		if (mo) KSpiritInit (mo, self);
+		mo = P_SpawnMissileAngle (self, PClass::FindActor("KoraxSpirit"), ANGLE_60*i, 5*FRACUNIT);
+		if (mo)
+		{
+			KSpiritInit (mo, self);
+		}
 	}
 
 	P_StartScript (self, NULL, 255, NULL, 0, 0, 0, 0, false, false);		// Death script

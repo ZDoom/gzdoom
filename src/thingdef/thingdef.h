@@ -152,7 +152,7 @@ extern FStateExpressions StateParams;
 // Extra info maintained while defining an actor.
 //
 //==========================================================================
-struct FDropItem;
+class DDropItem;
 
 struct Baggage
 {
@@ -166,7 +166,7 @@ struct Baggage
 	int Lumpnum;
 	FStateDefinitions statedef;
 
-	FDropItem *DropItemList;
+	DDropItem *DropItemList;
 
 	FScriptPosition ScriptPosition;
 };
@@ -235,13 +235,6 @@ enum
 {
 	ACMETA_BASE				= 0x83000,
 	ACMETA_DropItems,		// Int (index into DropItemList)
-	ACMETA_ExplosionDamage,
-	ACMETA_ExplosionRadius,
-	ACMETA_DontHurtShooter,
-	ACMETA_MeleeSound,
-	ACMETA_MeleeDamage,
-	ACMETA_MissileName,
-	ACMETA_MissileHeight,
 };
 
 

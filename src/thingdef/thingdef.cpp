@@ -208,17 +208,7 @@ void FinishActor(const FScriptPosition &sc, PClassActor *info, Baggage &bag)
 	bag.statedef.MakeStateDefines(NULL);
 	if (bag.DropItemSet)
 	{
-		if (bag.DropItemList == NULL)
-		{
-			if (info->Meta.GetMetaInt (ACMETA_DropItems) != 0)
-			{
-				info->Meta.SetMetaInt (ACMETA_DropItems, 0);
-			}
-		}
-		else
-		{
-			info->Meta.SetMetaInt (ACMETA_DropItems, StoreDropItemChain(bag.DropItemList));
-		}
+		info->DropItems = bag.DropItemList;
 	}
 	if (info->IsDescendantOf (RUNTIME_CLASS(AInventory)))
 	{

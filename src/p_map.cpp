@@ -3588,7 +3588,7 @@ void P_TraceBleed (int damage, fixed_t x, fixed_t y, fixed_t z, AActor *actor, a
 		{
 			if (bleedtrace.HitType == TRACE_HitWall)
 			{
-				PalEntry bloodcolor = (PalEntry)actor->GetClass()->Meta.GetMetaInt(AMETA_BloodColor);
+				PalEntry bloodcolor = actor->GetClass()->BloodColor;
 				if (bloodcolor != 0)
 				{
 					bloodcolor.r>>=1;	// the full color is too bright for blood decals
@@ -4325,7 +4325,7 @@ void P_RadiusAttack (AActor *bombspot, AActor *bombsource, int bombdamage, int b
 			{
 				points = points * splashfactor;
 			}
-			points *= thing->GetClass()->Meta.GetMetaFixed(AMETA_RDFactor, FRACUNIT)/(float)FRACUNIT;
+			points *= thing->GetClass()->RDFactor/(float)FRACUNIT;
 
 			if (points > 0.f && P_CheckSight (thing, bombspot, 1))
 			{ // OK to damage; target is in direct path
@@ -4391,7 +4391,7 @@ void P_RadiusAttack (AActor *bombspot, AActor *bombsource, int bombdamage, int b
 				int damage = Scale (bombdamage, bombdistance-dist, bombdistance);
 				damage = (int)((float)damage * splashfactor);
 
-				damage = Scale(damage, thing->GetClass()->Meta.GetMetaFixed(AMETA_RDFactor, FRACUNIT), FRACUNIT);
+				damage = Scale(damage, thing->GetClass()->RDFactor, FRACUNIT);
 				if (damage > 0)
 				{
 					P_DamageMobj (thing, bombspot, bombsource, damage, bombmod);
@@ -4598,8 +4598,8 @@ void P_DoCrunch (AActor *thing, FChangePosition *cpos)
 		if ((!(thing->flags&MF_NOBLOOD)) &&
 			(!(thing->flags2&(MF2_INVULNERABLE|MF2_DORMANT))))
 		{
-			PalEntry bloodcolor = (PalEntry)thing->GetClass()->Meta.GetMetaInt(AMETA_BloodColor);
-			const PClass *bloodcls = PClass::FindClass((ENamedName)thing->GetClass()->Meta.GetMetaInt(AMETA_BloodType, NAME_Blood));
+			PalEntry bloodcolor = thing->GetClass()->BloodColor;
+			PClassActor *bloodcls = PClass::FindActor(thing->GetClass()->BloodType);
 
 			P_TraceBleed (cpos->crushchange, thing);
 			if (cl_bloodtype <= 1 && bloodcls != NULL)

@@ -2877,8 +2877,13 @@ void ModifyDropAmount(AInventory *inv, int dropamount)
 	else if (inv->IsKindOf (RUNTIME_CLASS(AAmmo)))
 	{
 		// Half ammo when dropped by bad guys.
-		inv->Amount = inv->GetClass()->Meta.GetMetaInt (AIMETA_DropAmount, MAX(1, FixedMul(inv->Amount, dropammofactor)));
-		inv->ItemFlags|=flagmask;
+		int amount = static_cast<PClassAmmo *>(inv->GetClass())->DropAmount;
+		if (amount <= 0)
+		{
+			amount = FixedMul(inv->Amount, dropammofactor);
+		}
+		inv->Amount = amount;
+		inv->ItemFlags |= flagmask;
 	}
 	else if (inv->IsKindOf (RUNTIME_CLASS(AWeapon)))
 	{

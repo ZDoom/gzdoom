@@ -213,8 +213,8 @@ static void DoAttack (AActor *self, bool domelee, bool domissile,
 DEFINE_ACTION_FUNCTION(AActor, A_MeleeAttack)
 {
 	PARAM_ACTION_PROLOGUE;
-	int MeleeDamage = self->GetClass()->Meta.GetMetaInt(ACMETA_MeleeDamage, 0);
-	FSoundID MeleeSound = self->GetClass()->Meta.GetMetaInt(ACMETA_MeleeSound, 0);
+	int MeleeDamage = self->GetClass()->MeleeDamage;
+	FSoundID MeleeSound = self->GetClass()->MeleeSound;
 	DoAttack(self, true, false, MeleeDamage, MeleeSound, NULL, 0);
 	return 0;
 }
@@ -222,8 +222,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_MeleeAttack)
 DEFINE_ACTION_FUNCTION(AActor, A_MissileAttack)
 {
 	PARAM_ACTION_PROLOGUE;
-	const PClass *MissileType = PClass::FindClass(ENamedName(self->GetClass()->Meta.GetMetaInt(ACMETA_MissileName, NAME_None)));
-	fixed_t MissileHeight = self->GetClass()->Meta.GetMetaFixed(ACMETA_MissileHeight, 32*FRACUNIT);
+	PClassActor *MissileType = PClass::FindActor(self->GetClass()->MissileName);
+	fixed_t MissileHeight = self->GetClass()->MissileHeight;
 	DoAttack(self, false, true, 0, 0, MissileType, MissileHeight);
 	return 0;
 }
@@ -231,10 +231,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_MissileAttack)
 DEFINE_ACTION_FUNCTION(AActor, A_ComboAttack)
 {
 	PARAM_ACTION_PROLOGUE;
-	int MeleeDamage = self->GetClass()->Meta.GetMetaInt(ACMETA_MeleeDamage, 0);
-	FSoundID MeleeSound =  self->GetClass()->Meta.GetMetaInt(ACMETA_MeleeSound, 0);
-	const PClass *MissileType = PClass::FindClass(ENamedName(self->GetClass()->Meta.GetMetaInt(ACMETA_MissileName, NAME_None)));
-	fixed_t MissileHeight = self->GetClass()->Meta.GetMetaFixed(ACMETA_MissileHeight, 32*FRACUNIT);
+	int MeleeDamage = self->GetClass()->MeleeDamage;
+	FSoundID MeleeSound = self->GetClass()->MeleeSound;
+	PClassActor *MissileType = PClass::FindActor(self->GetClass()->MissileName);
+	fixed_t MissileHeight = self->GetClass()->MissileHeight;
 	DoAttack(self, true, true, MeleeDamage, MeleeSound, MissileType, MissileHeight);
 	return 0;
 }
@@ -622,9 +622,13 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Explode)
 
 	if (damage < 0)	// get parameters from metadata
 	{
-		damage = self->GetClass()->Meta.GetMetaInt (ACMETA_ExplosionDamage, 128);
-		distance = self->GetClass()->Meta.GetMetaInt (ACMETA_ExplosionRadius, damage);
-		hurtSource = !self->GetClass()->Meta.GetMetaInt (ACMETA_DontHurtShooter);
+		damage = self->GetClass()->ExplosionDamage;
+		distance = self->GetClass()->ExplosionRadius;
+		if (distance < 0)
+		{
+			distance = damage;
+		}
+		hurtSource = !self->GetClass()->DontHurtShooter;
 		alert = false;
 	}
 	else

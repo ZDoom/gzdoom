@@ -256,7 +256,7 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def)
 				{
 					extra.DeathHeight = ((AActor*)(type->Defaults))->height;
 				}
-				type->Meta.SetMetaFixed (AMETA_DeathHeight, extra.DeathHeight);
+				type->DeathHeight = extra.DeathHeight;
 			}
 			bag.statedef.SetStateLabel("Death", &type->OwnedStates[extra.DeathStart]);
 		}
@@ -294,7 +294,7 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def)
 			}
 
 			if (extra.BurnHeight == 0) extra.BurnHeight = ((AActor*)(type->Defaults))->height;
-			type->Meta.SetMetaFixed (AMETA_BurnHeight, extra.BurnHeight);
+			type->BurnHeight = extra.BurnHeight;
 
 			bag.statedef.SetStateLabel("Burn", &type->OwnedStates[extra.FireDeathStart]);
 		}
@@ -475,18 +475,18 @@ static void ParseInsideDecoration (Baggage &bag, AActor *defaults,
 		else if (def == DEF_Projectile && sc.Compare ("ExplosionRadius"))
 		{
 			sc.MustGetNumber ();
-			bag.Info->Meta.SetMetaInt(ACMETA_ExplosionRadius, sc.Number);
+			bag.Info->ExplosionRadius = sc.Number;
 			extra.bExplosive = true;
 		}
 		else if (def == DEF_Projectile && sc.Compare ("ExplosionDamage"))
 		{
 			sc.MustGetNumber ();
-			bag.Info->Meta.SetMetaInt(ACMETA_ExplosionDamage, sc.Number);
+			bag.Info->ExplosionDamage = sc.Number;
 			extra.bExplosive = true;
 		}
 		else if (def == DEF_Projectile && sc.Compare ("DoNotHurtShooter"))
 		{
-			bag.Info->Meta.SetMetaInt(ACMETA_DontHurtShooter, true);
+			bag.Info->DontHurtShooter = true;
 		}
 		else if (def == DEF_Projectile && sc.Compare ("Damage"))
 		{
@@ -571,7 +571,7 @@ static void ParseInsideDecoration (Baggage &bag, AActor *defaults,
 		else if (def == DEF_Pickup && sc.Compare ("PickupMessage"))
 		{
 			sc.MustGetString ();
-			bag.Info->Meta.SetMetaString(AIMETA_PickupMessage, sc.String);
+			static_cast<PClassInventory *>(bag.Info)->PickupMessage = sc.String;
 		}
 		else if (def == DEF_Pickup && sc.Compare ("Respawns"))
 		{

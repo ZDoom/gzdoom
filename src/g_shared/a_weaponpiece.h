@@ -13,7 +13,7 @@ public:
 	virtual void PlayPickupSound (AActor *toucher);
 
 	int PieceValue;
-	PClassActor *WeaponClass;
+	PClassWeapon *WeaponClass;
 	TObjPtr<AWeapon> FullWeapon;
 };
 

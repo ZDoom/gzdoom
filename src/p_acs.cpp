@@ -3109,7 +3109,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 				}
 				else
 				{
-					return actor->GetClass()->Meta.GetMetaFixed(AMETA_CameraHeight, actor->height/2);
+					return actor->GetCameraHeight();
 				}
 			}
 			else return 0;
@@ -6358,7 +6358,7 @@ int DLevelScript::RunScript ()
 			{
 				int tag = STACK(7);
 				FName playerclass_name = FBehavior::StaticLookupString(STACK(6));
-				const PClass *playerclass = PClass::FindClass (playerclass_name);
+				PClassPlayerPawn *playerclass = dyn_cast<PClassPlayerPawn>(PClass::FindClass (playerclass_name));
 				FName monsterclass_name = FBehavior::StaticLookupString(STACK(5));
 				const PClass *monsterclass = PClass::FindClass (monsterclass_name);
 				int duration = STACK(4);

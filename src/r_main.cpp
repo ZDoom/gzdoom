@@ -1064,7 +1064,7 @@ void R_SetupFrame (AActor *actor)
 	{
 		iview->nviewx = camera->x;
 		iview->nviewy = camera->y;
-		iview->nviewz = camera->player ? camera->player->viewz : camera->z + camera->GetClass()->Meta.GetMetaFixed(AMETA_CameraHeight);
+		iview->nviewz = camera->player ? camera->player->viewz : camera->z + camera->GetCameraHeight();
 		viewsector = camera->Sector;
 		r_showviewer = false;
 	}

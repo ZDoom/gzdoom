@@ -80,56 +80,6 @@ class                                   DPillar;
 
 class PClassActor;
 
-enum EMetaType
-{
-	META_Int,		// An int
-	META_Fixed,		// A fixed point number
-	META_String,	// A string
-};
-
-class FMetaData
-{
-private:
-	FMetaData (EMetaType type, uint32 id) : Type(type), ID(id) {}
-
-	FMetaData *Next;
-	EMetaType Type;
-	uint32 ID;
-	union
-	{
-		int Int;
-		char *String;
-		fixed_t Fixed;
-	} Value;
-
-	friend class FMetaTable;
-};
-
-class FMetaTable
-{
-public:
-	FMetaTable() : Meta(NULL) {}
-	FMetaTable(const FMetaTable &other);
-	~FMetaTable();
-	FMetaTable &operator = (const FMetaTable &other);
-
-	void SetMetaInt (uint32 id, int parm);
-	void SetMetaFixed (uint32 id, fixed_t parm);
-	void SetMetaString (uint32 id, const char *parm);	// The string is copied
-
-	int GetMetaInt (uint32 id, int def=0) const;
-	fixed_t GetMetaFixed (uint32 id, fixed_t def=0) const;
-	const char *GetMetaString (uint32 id) const;
-
-	FMetaData *FindMeta (EMetaType type, uint32 id) const;
-
-private:
-	FMetaData *Meta;
-	FMetaData *FindMetaDef (EMetaType type, uint32 id);
-	void FreeMeta ();
-	void CopyMeta (const FMetaTable *other);
-};
-
 #define RUNTIME_TYPE(object)		(object->GetClass())			// Passed an object, returns the type of that object
 #define RUNTIME_CLASS_CASTLESS(cls)	(cls::RegistrationInfo.MyClass)	// Passed a native class name, returns a PClass representing that class
 #define RUNTIME_CLASS(cls)			((cls::MetaClass *)RUNTIME_CLASS_CASTLESS(cls))	// Like above, but returns the true type of the meta object
@@ -140,6 +90,12 @@ enum
 {
 	CLASSREG_PClass,
 	CLASSREG_PClassActor,
+	CLASSREG_PClassInventory,
+	CLASSREG_PClassAmmo,
+	CLASSREG_PClassHealth,
+	CLASSREG_PClassPuzzleItem,
+	CLASSREG_PClassWeapon,
+	CLASSREG_PClassPlayerPawn
 };
 
 struct ClassReg
@@ -149,8 +105,8 @@ struct ClassReg
 	ClassReg *ParentType;
 	const size_t *Pointers;
 	void (*ConstructNative)(void *);
-	unsigned int SizeOf:31;
-	unsigned int MetaClassNum:1;
+	unsigned int SizeOf:29;
+	unsigned int MetaClassNum:3;
 
 	PClass *RegisterClass();
 };
@@ -159,7 +115,7 @@ enum EInPlace { EC_InPlace };
 
 #define DECLARE_ABSTRACT_CLASS(cls,parent) \
 public: \
-	virtual PClass *StaticType() const { return RegistrationInfo.MyClass; } \
+	virtual PClass *StaticType() const; \
 	static ClassReg RegistrationInfo, * const RegistrationInfoPtr; \
 private: \
 	typedef parent Super; \
@@ -205,7 +161,8 @@ protected: \
 		create, \
 		sizeof(cls), \
 		cls::MetaClassNum }; \
-	_DECLARE_TI(cls)
+	_DECLARE_TI(cls) \
+	PClass *cls::StaticType() const { return RegistrationInfo.MyClass; }
 
 #define _IMP_CREATE_OBJ(cls) \
 	void cls::InPlaceConstructor(void *mem) { new((EInPlace *)mem) cls; }

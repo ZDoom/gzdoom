@@ -104,16 +104,14 @@ static int statspace;
 void AM_GetPosition(fixed_t & x, fixed_t & y);
 
 
-FTextureID GetHUDIcon(const PClass *cls)
+FTextureID GetHUDIcon(PClassInventory *cls)
 {
-	FTextureID tex;
-	tex.texnum = cls->Meta.GetMetaInt(HUMETA_AltIcon, 0);
-	return tex;
+	return cls->AltHUDIcon;
 }
 
-void SetHUDIcon(PClass *cls, FTextureID tex)
+void SetHUDIcon(PClassInventory *cls, FTextureID tex)
 {
-	cls->Meta.SetMetaInt(HUMETA_AltIcon, tex.GetIndex());
+	cls->AltHUDIcon = tex;
 }
 
 //---------------------------------------------------------------------------
@@ -450,14 +448,14 @@ static int DrawKeys(player_t * CPlayer, int x, int y)
 // Drawing Ammo
 //
 //---------------------------------------------------------------------------
-static TArray<PClassActor *> orderedammos;
+static TArray<PClassAmmo *> orderedammos;
 
 static void AddAmmoToList(AWeapon * weapdef)
 {
 
 	for(int i=0; i<2;i++)
 	{
-		PClassActor * ti = i==0? weapdef->AmmoType1 : weapdef->AmmoType2;
+		PClassAmmo * ti = i==0? weapdef->AmmoType1 : weapdef->AmmoType2;
 		if (ti)
 		{
 			AAmmo * ammodef=(AAmmo*)GetDefaultByType(ti);
@@ -516,7 +514,7 @@ static int DrawAmmo(player_t *CPlayer, int x, int y)
 	for(i=orderedammos.Size()-1;i>=0;i--)
 	{
 
-		PClassActor * type = orderedammos[i];
+		PClassAmmo * type = orderedammos[i];
 		AAmmo * ammoitem = (AAmmo*)CPlayer->mo->FindInventory(type);
 
 		AAmmo * inv = ammoitem? ammoitem : (AAmmo*)GetDefaultByType(orderedammos[i]);
@@ -605,16 +603,16 @@ static void DrawOneWeapon(player_t * CPlayer, int x, int & y, AWeapon * weapon)
 }
 
 
-static void DrawWeapons(player_t * CPlayer, int x, int y)
+static void DrawWeapons(player_t *CPlayer, int x, int y)
 {
 	int k,j;
-	AInventory * inv;
+	AInventory *inv;
 
 	// First draw all weapons in the inventory that are not assigned to a weapon slot
-	for(inv=CPlayer->mo->Inventory;inv;inv=inv->Inventory)
+	for(inv = CPlayer->mo->Inventory; inv; inv = inv->Inventory)
 	{
 		if (inv->IsKindOf(RUNTIME_CLASS(AWeapon)) && 
-			!CPlayer->weapons.LocateWeapon(RUNTIME_TYPE(inv), NULL, NULL))
+			!CPlayer->weapons.LocateWeapon(static_cast<AWeapon*>(inv)->GetClass(), NULL, NULL))
 		{
 			DrawOneWeapon(CPlayer, x, y, static_cast<AWeapon*>(inv));
 		}
@@ -931,7 +929,7 @@ void HUD_InitHud()
 			}
 			else
 			{
-				const PClass * ti = PClass::FindClass(sc.String);
+				PClass *ti = PClass::FindClass(sc.String);
 				if (!ti)
 				{
 					Printf("Unknown item class '%s' in ALTHUDCF\n", sc.String);
@@ -950,9 +948,8 @@ void HUD_InitHud()
 				}
 				else tex.SetInvalid();
 
-				if (ti) SetHUDIcon(const_cast<PClass*>(ti), tex);
+				if (ti) SetHUDIcon(static_cast<PClassInventory*>(ti), tex);
 			}
 		}
 	}
 }
-

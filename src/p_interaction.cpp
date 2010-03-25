@@ -243,17 +243,13 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker)
 			{
 				message = GStrings("OB_MONTELEFRAG");
 			}
-			else if (mod == NAME_Melee)
+			else if (mod == NAME_Melee && attacker->GetClass()->HitObituary.IsNotEmpty())
 			{
-				message = attacker->GetClass()->Meta.GetMetaString (AMETA_HitObituary);
-				if (message == NULL)
-				{
-					message = attacker->GetClass()->Meta.GetMetaString (AMETA_Obituary);
-				}
+				message = attacker->GetClass()->HitObituary;
 			}
-			else
+			else if (attacker->GetClass()->Obituary.IsNotEmpty())
 			{
-				message = attacker->GetClass()->Meta.GetMetaString (AMETA_Obituary);
+				message = attacker->GetClass()->Obituary;
 			}
 		}
 	}
@@ -274,13 +270,13 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker)
 			if (mod == NAME_Telefrag) message = GStrings("OB_MPTELEFRAG");
 			if (message == NULL)
 			{
-				if (inflictor != NULL)
+				if (inflictor != NULL && inflictor->GetClass()->Obituary.IsNotEmpty())
 				{
-					message = inflictor->GetClass()->Meta.GetMetaString (AMETA_Obituary);
+					message = inflictor->GetClass()->Obituary;
 				}
-				if (message == NULL && attacker->player->ReadyWeapon != NULL)
+				if (message == NULL && attacker->player->ReadyWeapon != NULL && attacker->player->ReadyWeapon->GetClass()->Obituary.IsNotEmpty())
 				{
-					message = attacker->player->ReadyWeapon->GetClass()->Meta.GetMetaString (AMETA_Obituary);
+					message = attacker->player->ReadyWeapon->GetClass()->Obituary;
 				}
 				if (message == NULL)
 				{
@@ -320,12 +316,7 @@ EXTERN_CVAR (Int, fraglimit)
 
 static int GibHealth(AActor *actor)
 {	
-	return -abs(
-		actor->GetClass()->Meta.GetMetaInt (
-			AMETA_GibHealth,
-			gameinfo.gametype & GAME_DoomChex ?
-				-actor->SpawnHealth() :
-				-actor->SpawnHealth()/2));		
+	return -abs(actor->GetGibHealth());
 }
 
 void AActor::Die (AActor *source, AActor *inflictor)
@@ -399,22 +390,22 @@ void AActor::Die (AActor *source, AActor *inflictor)
 	flags6 |= MF6_KILLED;
 
 	// [RH] Allow the death height to be overridden using metadata.
-	fixed_t metaheight = 0;
+	fixed_t metaheight = -1;
 	if (DamageType == NAME_Fire)
 	{
-		metaheight = GetClass()->Meta.GetMetaFixed (AMETA_BurnHeight);
+		metaheight = GetClass()->BurnHeight;
 	}
-	if (metaheight == 0)
+	if (metaheight < 0)
 	{
-		metaheight = GetClass()->Meta.GetMetaFixed (AMETA_DeathHeight);
+		metaheight = GetClass()->DeathHeight;
 	}
-	if (metaheight != 0)
+	if (metaheight < 0)
 	{
-		height = MAX<fixed_t> (metaheight, 0);
+		height >>= 2;
 	}
 	else
 	{
-		height >>= 2;
+		height = MAX<fixed_t> (metaheight, 0);
 	}
 
 	// [RH] If the thing has a special, execute and remove it
@@ -1271,7 +1262,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 	woundstate = target->FindState(NAME_Wound, mod);
 	if (woundstate != NULL)
 	{
-		int woundhealth = RUNTIME_TYPE(target)->Meta.GetMetaInt (AMETA_WoundHealth, 6);
+		int woundhealth = target->GetClass()->WoundHealth;
 
 		if (target->health <= woundhealth)
 		{

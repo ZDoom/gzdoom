@@ -168,8 +168,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireGoldWandPL2)
 	angle_t pitch = P_BulletSlope(self);
 	velz = FixedMul (GetDefaultByName("GoldWandFX2")->Speed,
 		finetangent[FINEANGLES/4-((signed)pitch>>ANGLETOFINESHIFT)]);
-	P_SpawnMissileAngle (self, PClass::FindClass("GoldWandFX2"), self->angle-(ANG45/8), velz);
-	P_SpawnMissileAngle (self, PClass::FindClass("GoldWandFX2"), self->angle+(ANG45/8), velz);
+	P_SpawnMissileAngle (self, PClass::FindActor("GoldWandFX2"), self->angle-(ANG45/8), velz);
+	P_SpawnMissileAngle (self, PClass::FindActor("GoldWandFX2"), self->angle+(ANG45/8), velz);
 	angle = self->angle-(ANG45/8);
 	for(i = 0; i < 5; i++)
 	{
@@ -204,9 +204,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireCrossbowPL1)
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return 0;
 	}
-	P_SpawnPlayerMissile (self, PClass::FindClass("CrossbowFX1"));
-	P_SpawnPlayerMissile (self, PClass::FindClass("CrossbowFX3"), self->angle-(ANG45/10));
-	P_SpawnPlayerMissile (self, PClass::FindClass("CrossbowFX3"), self->angle+(ANG45/10));
+	P_SpawnPlayerMissile (self, PClass::FindActor("CrossbowFX1"));
+	P_SpawnPlayerMissile (self, PClass::FindActor("CrossbowFX3"), self->angle-(ANG45/10));
+	P_SpawnPlayerMissile (self, PClass::FindActor("CrossbowFX3"), self->angle+(ANG45/10));
 	return 0;
 }
 
@@ -233,11 +233,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireCrossbowPL2)
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return 0;
 	}
-	P_SpawnPlayerMissile (self, PClass::FindClass("CrossbowFX2"));
-	P_SpawnPlayerMissile (self, PClass::FindClass("CrossbowFX2"), self->angle-(ANG45/10));
-	P_SpawnPlayerMissile (self, PClass::FindClass("CrossbowFX2"), self->angle+(ANG45/10));
-	P_SpawnPlayerMissile (self, PClass::FindClass("CrossbowFX3"), self->angle-(ANG45/5));
-	P_SpawnPlayerMissile (self, PClass::FindClass("CrossbowFX3"), self->angle+(ANG45/5));
+	P_SpawnPlayerMissile (self, PClass::FindActor("CrossbowFX2"));
+	P_SpawnPlayerMissile (self, PClass::FindActor("CrossbowFX2"), self->angle-(ANG45/10));
+	P_SpawnPlayerMissile (self, PClass::FindActor("CrossbowFX2"), self->angle+(ANG45/10));
+	P_SpawnPlayerMissile (self, PClass::FindActor("CrossbowFX3"), self->angle-(ANG45/5));
+	P_SpawnPlayerMissile (self, PClass::FindActor("CrossbowFX3"), self->angle+(ANG45/5));
 	return 0;
 }
 
@@ -448,7 +448,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireMacePL1)
 	}
 	player->psprites[ps_weapon].sx = ((pr_maceatk()&3)-2)*FRACUNIT;
 	player->psprites[ps_weapon].sy = WEAPONTOP+(pr_maceatk()&3)*FRACUNIT;
-	ball = P_SpawnPlayerMissile (self, PClass::FindClass("MaceFX1"),
+	ball = P_SpawnPlayerMissile (self, PClass::FindActor("MaceFX1"),
 		self->angle+(((pr_maceatk()&7)-4)<<24));
 	if (ball)
 	{
@@ -942,7 +942,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSkullRodPL1)
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return 0;
 	}
-	mo = P_SpawnPlayerMissile (self, PClass::FindClass("HornRodFX1"));
+	mo = P_SpawnPlayerMissile (self, PClass::FindActor("HornRodFX1"));
 	// Randomize the first frame
 	if (mo && pr_fsr1() > 128)
 	{

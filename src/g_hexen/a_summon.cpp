@@ -31,7 +31,7 @@ IMPLEMENT_CLASS (AArtiDarkServant)
 
 bool AArtiDarkServant::Use (bool pickup)
 {
-	AActor *mo = P_SpawnPlayerMissile (Owner, PClass::FindClass ("SummoningDoll"));
+	AActor *mo = P_SpawnPlayerMissile (Owner, PClass::FindActor("SummoningDoll"));
 	if (mo)
 	{
 		mo->target = Owner;

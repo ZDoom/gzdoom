@@ -142,7 +142,7 @@ struct StyleName
 
 static TArray<StyleName> StyleNames;
 
-static TArray<PClassActor *> AmmoNames;
+static TArray<PClassAmmo *> AmmoNames;
 static TArray<PClassActor *> WeaponNames;
 
 // DeHackEd trickery to support MBF-style parameters
@@ -1869,18 +1869,14 @@ static int PatchMisc (int dummy)
 		player->health = deh.StartHealth;
 
 		// Hm... I'm not sure that this is the right way to change this info...
-		unsigned int index = PClass::FindClass(NAME_DoomPlayer)->Meta.GetMetaInt (ACMETA_DropItems) - 1;
-		if (index >= 0 && index < DropItemList.Size())
+		DDropItem *di = PClass::FindActor(NAME_DoomPlayer)->DropItems;
+		while (di != NULL)
 		{
-			FDropItem * di = DropItemList[index];
-			while (di != NULL)
+			if (di->Name == NAME_Clip)
 			{
-				if (di->Name == NAME_Clip)
-				{
-					di->amount = deh.StartBullets;
-				}
-				di = di->Next;
+				di->Amount = deh.StartBullets;
 			}
+			di = di->Next;
 		}
 	}
 
@@ -2780,12 +2776,12 @@ static bool LoadDehSupp ()
 					}
 					else
 					{
-						PClass *cls = PClass::FindClass(sc.String);
-						if (cls == NULL || cls->ParentClass != RUNTIME_CLASS(AAmmo))
+						PClassAmmo *cls = dyn_cast<PClassAmmo>(PClass::FindClass(sc.String));
+						if (cls == NULL)
 						{
 							sc.ScriptError("Unknown ammo type '%s'", sc.String);
 						}
-						AmmoNames.Push(static_cast<PClassActor *>(cls));
+						AmmoNames.Push(cls);
 					}
 					if (sc.CheckString("}")) break;
 					sc.MustGetStringName(",");

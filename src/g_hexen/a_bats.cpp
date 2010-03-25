@@ -48,7 +48,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BatSpawn)
 	delta = self->args[1];
 	if (delta==0) delta=1;
 	angle = self->angle + (((pr_batspawn()%delta)-(delta>>1))<<24);
-	mo = P_SpawnMissileAngle (self, PClass::FindClass ("Bat"), angle, 0);
+	mo = P_SpawnMissileAngle (self, PClass::FindActor("Bat"), angle, 0);
 	if (mo)
 	{
 		mo->args[0] = pr_batspawn()&63;			// floatbob index

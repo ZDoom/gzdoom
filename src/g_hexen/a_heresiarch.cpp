@@ -574,7 +574,7 @@ void ASorcBall3::CastSorcererSpell ()
 
 	ang1 = angle - ANGLE_45;
 	ang2 = angle + ANGLE_45;
-	const PClass *cls = PClass::FindClass("SorcFX3");
+	PClassActor *cls = PClass::FindActor("SorcFX3");
 	if (health < (SpawnHealth()/3))
 	{	// Spawn 2 at a time
 		mo = P_SpawnMissileAngle(parent, cls, ang1, 4*FRACUNIT);
@@ -623,7 +623,7 @@ void ASorcBall1::CastSorcererSpell ()
 
 	ang1 = angle + ANGLE_1*70;
 	ang2 = angle - ANGLE_1*70;
-	const PClass *cls = PClass::FindClass("SorcFX1");
+	PClassActor *cls = PClass::FindActor("SorcFX1");
 	mo = P_SpawnMissileAngle (parent, cls, ang1, 0);
 	if (mo)
 	{
@@ -670,7 +670,7 @@ void A_SorcOffense2(AActor *actor)
 	delta = (finesine[index])*SORCFX4_SPREAD_ANGLE;
 	delta = (delta>>FRACBITS)*ANGLE_1;
 	ang1 = actor->angle + delta;
-	mo = P_SpawnMissileAngle(parent, PClass::FindClass("SorcFX4"), ang1, 0);
+	mo = P_SpawnMissileAngle(parent, PClass::FindActor("SorcFX4"), ang1, 0);
 	if (mo)
 	{
 		mo->special2 = 35*5/2;		// 5 seconds

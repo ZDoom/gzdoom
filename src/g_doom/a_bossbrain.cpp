@@ -180,8 +180,8 @@ static void SpawnFly(AActor *self, const PClass *spawntype, FSoundID sound)
 
 	FName SpawnName;
 
-	FDropItem *di;   // di will be our drop item list iterator
-	FDropItem *drop; // while drop stays as the reference point.
+	DDropItem *di;   // di will be our drop item list iterator
+	DDropItem *drop; // while drop stays as the reference point.
 	int n = 0;
 
 	// First see if this cube has its own actor list
@@ -197,11 +197,11 @@ static void SpawnFly(AActor *self, const PClass *spawntype, FSoundID sound)
 		{
 			if (di->Name != NAME_None)
 			{
-				if (di->amount < 0)
+				if (di->Amount < 0)
 				{
-					di->amount = 1; // default value is -1, we need a positive value.
+					di->Amount = 1; // default value is -1, we need a positive value.
 				}
-				n += di->amount; // this is how we can weight the list.
+				n += di->Amount; // this is how we can weight the list.
 			}
 		}
 		di = drop;
@@ -210,7 +210,7 @@ static void SpawnFly(AActor *self, const PClass *spawntype, FSoundID sound)
 		{
 			if (di->Name != NAME_None)
 			{
-				n -= di->amount; // logically, none of the -1 values have survived by now.
+				n -= di->Amount; // logically, none of the -1 values have survived by now.
 			}
 			if ((di->Next != NULL) && (n >= 0))
 			{

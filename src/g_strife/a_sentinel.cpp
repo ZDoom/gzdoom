@@ -53,7 +53,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SentinelAttack)
 		return 0;
 	}
 
-	missile = P_SpawnMissileZAimed (self, self->z + 32*FRACUNIT, self->target, PClass::FindClass("SentinelFX2"));
+	missile = P_SpawnMissileZAimed (self, self->z + 32*FRACUNIT, self->target, PClass::FindActor("SentinelFX2"));
 
 	if (missile != NULL && (missile->velx | missile->vely) != 0)
 	{

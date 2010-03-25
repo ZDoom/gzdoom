@@ -20,6 +20,41 @@
 
 static FRandom pr_restore ("RestorePos");
 
+IMPLEMENT_CLASS(PClassInventory)
+
+PClassInventory::PClassInventory()
+{
+	GiveQuest = 0;
+	AltHUDIcon.SetInvalid();
+}
+
+void PClassInventory::Derive(PClass *newclass)
+{
+	assert(newclass->IsKindOf(RUNTIME_CLASS(PClassInventory)));
+	Super::Derive(newclass);
+	PClassInventory *newc = static_cast<PClassInventory *>(newclass);
+
+	newc->PickupMessage = PickupMessage;
+	newc->GiveQuest = GiveQuest;
+	newc->AltHUDIcon = AltHUDIcon;
+}
+
+IMPLEMENT_CLASS(PClassAmmo)
+
+PClassAmmo::PClassAmmo()
+{
+	DropAmount = 0;
+}
+
+void PClassAmmo::Derive(PClass *newclass)
+{
+	assert(newclass->IsKindOf(RUNTIME_CLASS(PClassAmmo)));
+	Super::Derive(newclass);
+	PClassAmmo *newc = static_cast<PClassAmmo *>(newclass);
+
+	newc->DropAmount = DropAmount;
+}
+
 IMPLEMENT_CLASS (AAmmo)
 
 //===========================================================================
@@ -970,9 +1005,9 @@ void AInventory::DoPickupSpecial (AActor *toucher)
 
 const char *AInventory::PickupMessage ()
 {
-	const char *message = GetClass()->Meta.GetMetaString (AIMETA_PickupMessage);
+	FString message = GetClass()->PickupMessage;
 
-	return message != NULL? message : "You got a pickup";
+	return message.IsNotEmpty() ? message : "You got a pickup";
 }
 
 //===========================================================================
@@ -1169,8 +1204,8 @@ bool AInventory::DoRespawn ()
 
 void AInventory::GiveQuest (AActor *toucher)
 {
-	int quest = GetClass()->Meta.GetMetaInt(AIMETA_GiveQuest);
-	if (quest>0 && quest<31)
+	int quest = GetClass()->GiveQuest;
+	if (quest > 0 && quest <= countof(QuestItemClasses))
 	{
 		toucher->GiveInventoryType (QuestItemClasses[quest-1]);
 	}
@@ -1394,6 +1429,35 @@ bool ACustomInventory::TryPickup (AActor *&toucher)
 	return useok;
 }
 
+IMPLEMENT_CLASS(PClassHealth)
+
+//===========================================================================
+//
+// PClassHealth Constructor
+//
+//===========================================================================
+
+PClassHealth::PClassHealth()
+{
+	LowHealth = 0;
+}
+
+//===========================================================================
+//
+// PClassHealth :: Derive
+//
+//===========================================================================
+
+void PClassHealth::Derive(PClass *newclass)
+{
+	assert(newclass->IsKindOf(RUNTIME_CLASS(PClassHealth)));
+	Super::Derive(newclass);
+	PClassHealth *newc = static_cast<PClassHealth *>(newclass);
+	
+	newc->LowHealth = LowHealth;
+	newc->LowHealthMessage = LowHealthMessage;
+}
+
 IMPLEMENT_CLASS (AHealth)
 
 //===========================================================================
@@ -1403,13 +1467,13 @@ IMPLEMENT_CLASS (AHealth)
 //===========================================================================
 const char *AHealth::PickupMessage ()
 {
-	int threshold = GetClass()->Meta.GetMetaInt(AIMETA_LowHealth, 0);
+	int threshold = GetClass()->LowHealth;
 
 	if (PrevHealth < threshold)
 	{
-		const char *message = GetClass()->Meta.GetMetaString (AIMETA_LowHealthMessage);
+		FString message = GetClass()->LowHealthMessage;
 
-		if (message != NULL)
+		if (message.IsNotEmpty())
 		{
 			return message;
 		}

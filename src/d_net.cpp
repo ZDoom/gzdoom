@@ -2099,7 +2099,7 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 	case DEM_SUMMONFRIEND2:
 	case DEM_SUMMONFOE2:
 		{
-			const PClass *typeinfo;
+			PClassActor *typeinfo;
 			int angle = 0;
 			SWORD tid = 0;
 			BYTE special = 0;
@@ -2114,8 +2114,8 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 				for(i = 0; i < 5; i++) args[i] = ReadLong(stream);
 			}
 
-			typeinfo = PClass::FindClass (s);
-			if (typeinfo != NULL && typeinfo->IsKindOf(RUNTIME_CLASS(PClassActor)))
+			typeinfo = PClass::FindActor(s);
+			if (typeinfo != NULL)
 			{
 				AActor *source = players[player].mo;
 				if (source != NULL)
@@ -2318,7 +2318,7 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 	case DEM_MORPHEX:
 		{
 			s = ReadString (stream);
-			const char *msg = cht_Morph (players + player, PClass::FindClass (s), false);
+			const char *msg = cht_Morph (players + player, dyn_cast<PClassPlayerPawn>(PClass::FindClass (s)), false);
 			if (player == consoleplayer)
 			{
 				Printf ("%s\n", *msg != '\0' ? msg : "Morph failed.");
@@ -2383,7 +2383,7 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 			}
 			for(int i = 0; i < count; ++i)
 			{
-				PClassActor *wpn = Net_ReadWeapon(stream);
+				PClassWeapon *wpn = Net_ReadWeapon(stream);
 				players[player].weapons.AddSlot(slot, wpn, player == consoleplayer);
 			}
 		}
@@ -2392,7 +2392,7 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 	case DEM_ADDSLOT:
 		{
 			int slot = ReadByte(stream);
-			PClassActor *wpn = Net_ReadWeapon(stream);
+			PClassWeapon *wpn = Net_ReadWeapon(stream);
 			players[player].weapons.AddSlot(slot, wpn, player == consoleplayer);
 		}
 		break;
@@ -2400,7 +2400,7 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 	case DEM_ADDSLOTDEFAULT:
 		{
 			int slot = ReadByte(stream);
-			PClassActor *wpn = Net_ReadWeapon(stream);
+			PClassWeapon *wpn = Net_ReadWeapon(stream);
 			players[player].weapons.AddSlotDefault(slot, wpn, player == consoleplayer);
 		}
 		break;

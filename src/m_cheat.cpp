@@ -144,7 +144,7 @@ void cht_DoCheat (player_t *player, int cheat)
 		break;
 
 	case CHT_MORPH:
-		msg = cht_Morph (player, PClass::FindClass (gameinfo.gametype == GAME_Heretic ? NAME_ChickenPlayer : NAME_PigPlayer), true);
+		msg = cht_Morph (player, static_cast<PClassPlayerPawn *>(PClass::FindClass (gameinfo.gametype == GAME_Heretic ? NAME_ChickenPlayer : NAME_PigPlayer)), true);
 		break;
 
 	case CHT_NOTARGET:
@@ -521,13 +521,13 @@ void cht_DoCheat (player_t *player, int cheat)
 		Printf ("%s is a cheater: %s\n", player->userinfo.netname, msg);
 }
 
-const char *cht_Morph (player_t *player, const PClass *morphclass, bool quickundo)
+const char *cht_Morph (player_t *player, PClassPlayerPawn *morphclass, bool quickundo)
 {
 	if (player->mo == NULL)
 	{
 		return "";
 	}
-	PClass *oldclass = player->mo->GetClass();
+	PClassPlayerPawn *oldclass = player->mo->GetClass();
 
 	// Set the standard morph style for the current game
 	int style = MORPH_UNDOBYTOMEOFPOWER;
@@ -750,7 +750,7 @@ void cht_Give (player_t *player, const char *name, int amount)
 				// is in a weapon slot. 
 				if (static_cast<PClassActor *>(type)->GameFilter == GAME_Any || 
 					(static_cast<PClassActor *>(type)->GameFilter & gameinfo.gametype) ||	
-					player->weapons.LocateWeapon(static_cast<PClassActor *>(type), NULL, NULL))
+					player->weapons.LocateWeapon(static_cast<PClassWeapon *>(type), NULL, NULL))
 				{
 					AWeapon *def = (AWeapon*)GetDefaultByType (type);
 					if (!(def->WeaponFlags & WIF_CHEATNOTWEAPON))

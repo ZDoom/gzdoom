@@ -341,7 +341,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireMiniMissile)
 	savedangle = self->angle;
 	self->angle += pr_minimissile.Random2() << (19 - player->accuracy * 5 / 100);
 	player->mo->PlayAttacking2 ();
-	P_SpawnPlayerMissile (self, PClass::FindClass("MiniMissile"));
+	P_SpawnPlayerMissile (self, PClass::FindActor("MiniMissile"));
 	self->angle = savedangle;
 	return 0;
 }
@@ -359,7 +359,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_RocketInFlight)
 	AActor *trail;
 
 	S_Sound (self, CHAN_VOICE, "misc/missileinflight", 1, ATTN_NORM);
-	P_SpawnPuff (self, PClass::FindClass("MiniMissilePuff"), self->x, self->y, self->z, self->angle - ANGLE_180, 2, PF_HITTHING);
+	P_SpawnPuff (self, PClass::FindActor("MiniMissilePuff"), self->x, self->y, self->z, self->angle - ANGLE_180, 2, PF_HITTHING);
 	trail = Spawn("RocketTrail", self->x - self->velx, self->y - self->vely, self->z, ALLOW_REPLACE);
 	if (trail != NULL)
 	{
@@ -409,7 +409,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireFlamer)
 	}
 
 	self->angle += pr_flamethrower.Random2() << 18;
-	self = P_SpawnPlayerMissile (self, PClass::FindClass("FlameMissile"));
+	self = P_SpawnPlayerMissile (self, PClass::FindActor("FlameMissile"));
 	if (self != NULL)
 	{
 		self->velz += 5*FRACUNIT;
@@ -508,7 +508,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireMauler2)
 		}
 		self->player->mo->PlayAttacking2 ();
 	}
-	P_SpawnPlayerMissile (self, PClass::FindClass("MaulerTorpedo"));
+	P_SpawnPlayerMissile (self, PClass::FindActor("MaulerTorpedo"));
 	P_DamageMobj (self, self, NULL, 20, self->DamageType);
 	P_ThrustMobj (self, self->angle + ANGLE_180, 0x7D000);
 	return 0;
@@ -1012,7 +1012,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSigil2)
 	P_DamageMobj (self, self, NULL, 2*4, 0, DMG_NO_ARMOR);
 	S_Sound (self, CHAN_WEAPON, "weapons/sigilcharge", 1, ATTN_NORM);
 
-	P_SpawnPlayerMissile (self, PClass::FindClass("SpectralLightningH1"));
+	P_SpawnPlayerMissile (self, PClass::FindActor("SpectralLightningH1"));
 	return 0;
 }
 
@@ -1073,7 +1073,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSigil4)
 	P_BulletSlope (self, &linetarget);
 	if (linetarget != NULL)
 	{
-		spot = P_SpawnPlayerMissile (self, 0,0,0, PClass::FindClass("SpectralLightningBigV1"), self->angle, &linetarget);
+		spot = P_SpawnPlayerMissile (self, 0,0,0, PClass::FindActor("SpectralLightningBigV1"), self->angle, &linetarget);
 		if (spot != NULL)
 		{
 			spot->tracer = linetarget;
@@ -1081,7 +1081,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSigil4)
 	}
 	else
 	{
-		spot = P_SpawnPlayerMissile (self, PClass::FindClass("SpectralLightningBigV1"));
+		spot = P_SpawnPlayerMissile (self, PClass::FindActor("SpectralLightningBigV1"));
 		if (spot != NULL)
 		{
 			spot->velx += FixedMul (spot->Speed, finecosine[self->angle >> ANGLETOFINESHIFT]);
@@ -1109,7 +1109,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSigil5)
 	P_DamageMobj (self, self, NULL, 5*4, 0, DMG_NO_ARMOR);
 	S_Sound (self, CHAN_WEAPON, "weapons/sigilcharge", 1, ATTN_NORM);
 
-	P_SpawnPlayerMissile (self, PClass::FindClass("SpectralLightningBigBall1"));
+	P_SpawnPlayerMissile (self, PClass::FindActor("SpectralLightningBigBall1"));
 	return 0;
 }
 

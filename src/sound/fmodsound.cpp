@@ -1737,7 +1737,7 @@ bool FMODSoundRenderer::HandleChannelDelay(FMOD::Channel *chan, FISoundChannel *
 					if (FMOD_OK == chan->getCurrentSound(&sound))
 					{
 						unsigned int len;
-						if (FMOD_OK == sound->getLength(&len, FMOD_TIMEUNIT_MS))
+						if (FMOD_OK == sound->getLength(&len, FMOD_TIMEUNIT_MS) && len)
 						{
 							difftime %= len;
 						}

@@ -1005,9 +1005,7 @@ void AInventory::DoPickupSpecial (AActor *toucher)
 
 const char *AInventory::PickupMessage ()
 {
-	FString message = GetClass()->PickupMessage;
-
-	return message.IsNotEmpty() ? message : "You got a pickup";
+	return GetClass()->PickupMessage;
 }
 
 //===========================================================================

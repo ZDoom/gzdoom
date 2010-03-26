@@ -52,17 +52,17 @@
 
 void cht_DoCheat (player_t *player, int cheat)
 {
-	static const PClass * const BeholdPowers[9] =
+	static const char * BeholdPowers[9] =
 	{
-		RUNTIME_CLASS(APowerInvulnerable),
-		RUNTIME_CLASS(APowerStrength),
-		RUNTIME_CLASS(APowerInvisibility),
-		RUNTIME_CLASS(APowerIronFeet),
-		NULL, // MapRevealer
-		RUNTIME_CLASS(APowerLightAmp),
-		RUNTIME_CLASS(APowerShadow),
-		RUNTIME_CLASS(APowerMask),
-		RUNTIME_CLASS(APowerTargeter)
+		{ "PowerInvulnerable" },
+		{ "PowerStrength" },
+		{ "PowerInvisibility" },
+		{ "PowerIronFeet" },
+		{ "MapRevealer" },
+		{ "PowerLightAmp" },
+		{ "PowerShadow" },
+		{ "PowerMask" },
+		{ "PowerTargeter" },
 	};
 	const PClass *type;
 	AInventory *item;
@@ -253,7 +253,7 @@ void cht_DoCheat (player_t *player, int cheat)
 			{
 				if (i != 0)
 				{
-					player->mo->GiveInventoryType (BeholdPowers[i]);
+					cht_Give(player, BeholdPowers[i]);
 					if (cheat == CHT_BEHOLDS)
 					{
 						P_GiveBody (player->mo, -100);
@@ -262,7 +262,7 @@ void cht_DoCheat (player_t *player, int cheat)
 				else
 				{
 					// Let's give the item here so that the power doesn't need colormap information.
-					player->mo->GiveInventoryType(PClass::FindClass("InvulnerabilitySphere"));
+					cht_Give(player, "InvulnerabilitySphere");
 				}
 			}
 			else

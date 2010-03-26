@@ -537,7 +537,6 @@ PalEntry APowerStrength::GetBlend ()
 // Invisibility Powerup ------------------------------------------------------
 
 IMPLEMENT_CLASS (APowerInvisibility)
-IMPLEMENT_CLASS (APowerShadow)
 
 // Invisibility flag combos
 #define INVISIBILITY_FLAGS1	(MF_SHADOW)

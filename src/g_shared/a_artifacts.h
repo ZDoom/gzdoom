@@ -81,12 +81,6 @@ protected:
 //	fixed_t OwnersNormalAlpha;
 };
 
-// Needed only for m_cheat.cpp now
-class APowerShadow : public APowerInvisibility
-{
-	DECLARE_CLASS (APowerShadow, APowerInvisibility)
-};
-
 class APowerIronFeet : public APowerup
 {
 	DECLARE_CLASS (APowerIronFeet, APowerup)

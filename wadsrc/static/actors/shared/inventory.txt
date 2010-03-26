@@ -184,7 +184,7 @@ ACTOR PowerGhost : PowerInvisibility
 	Powerup.Mode "None"
 }
 
-ACTOR PowerShadow : PowerInvisibility native
+ACTOR PowerShadow : PowerInvisibility
 {
 	+INVENTORY.HUBPOWER
 	Powerup.Duration -55

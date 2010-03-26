@@ -5561,7 +5561,7 @@ int AActor::GetGibHealth() const
 
 	if (gibhealth != INT_MIN)
 	{
-		return gibhealth;
+		return -abs(gibhealth);
 	}
 	else if (gameinfo.gametype & GAME_DoomChex)
 	{

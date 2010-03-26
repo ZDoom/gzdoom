@@ -314,15 +314,10 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker)
 //
 EXTERN_CVAR (Int, fraglimit)
 
-static int GibHealth(AActor *actor)
-{	
-	return -abs(actor->GetGibHealth());
-}
-
 void AActor::Die (AActor *source, AActor *inflictor)
 {
 	// Handle possible unmorph on death
-	bool wasgibbed = (health < GibHealth(this));
+	bool wasgibbed = (health < GetGibHealth());
 
 	AActor *realthis = NULL;
 	int realstyle = 0;
@@ -333,7 +328,7 @@ void AActor::Die (AActor *source, AActor *inflictor)
 		{
 			if (wasgibbed)
 			{
-				int realgibhealth = GibHealth(realthis);
+				int realgibhealth = realthis->GetGibHealth();
 				if (realthis->health >= realgibhealth)
 				{
 					realthis->health = realgibhealth -1; // if morphed was gibbed, so must original be (where allowed)
@@ -661,7 +656,7 @@ void AActor::Die (AActor *source, AActor *inflictor)
 	{
 		int flags4 = inflictor == NULL ? 0 : inflictor->flags4;
 
-		int gibhealth = GibHealth(this);
+		int gibhealth = GetGibHealth();
 		
 		// Don't pass on a damage type this actor cannot handle.
 		// (most importantly, prevent barrels from passing on ice damage.)

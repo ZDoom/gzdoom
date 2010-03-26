@@ -176,8 +176,6 @@ PClassActor::PClassActor()
 	DamageFactors = NULL;
 	PainChances = NULL;
 
-	Obituary = Obituary;
-	HitObituary = HitObituary;
 	DeathHeight = -1;
 	BurnHeight = -1;
 	GibHealth = INT_MIN;

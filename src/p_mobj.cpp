@@ -2614,11 +2614,6 @@ void AActor::RemoveFromHash ()
 	tid = 0;
 }
 
-angle_t AActor::AngleIncrements ()
-{
-	return ANGLE_45;
-}
-
 //==========================================================================
 //
 // AActor :: GetMissileDamage
@@ -3700,8 +3695,6 @@ void AActor::LevelSpawned ()
 {
 	if (tics > 0 && !(flags4 & MF4_SYNCHRONIZED))
 		tics = 1 + (pr_spawnmapthing() % tics);
-	angle_t incs = AngleIncrements ();
-	angle -= angle % incs;
 	flags &= ~MF_DROPPED;		// [RH] clear MF_DROPPED flag
 	HandleSpawnFlags ();
 }
@@ -3960,7 +3953,15 @@ APlayerPawn *P_SpawnPlayer (FMapThing *mthing, bool tempplayer)
 	{
 		spawn_x = mthing->x;
 		spawn_y = mthing->y;
-		spawn_angle = ANG45 * (mthing->angle/45);
+		// Allow full angular precision but avoid roundoff errors for multiples of 45 degrees.
+		if (mthing->angle % 45 != 0)
+		{
+			spawn_angle = mthing->angle * (ANG45 / 45);
+		}
+		else
+		{
+			spawn_angle = ANG45 * (mthing->angle / 45);
+		}
 	}
 
 	mobj = static_cast<APlayerPawn *>

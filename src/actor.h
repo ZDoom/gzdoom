@@ -581,9 +581,6 @@ public:
 
 	virtual void Tick ();
 
-	// Smallest yaw interval for a mapthing to be spawned with
-	virtual angle_t AngleIncrements ();
-
 	// Called when actor dies
 	virtual void Die (AActor *source, AActor *inflictor);
 

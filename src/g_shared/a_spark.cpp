@@ -42,16 +42,10 @@ class ASpark : public AActor
 {
 	DECLARE_CLASS (ASpark, AActor)
 public:
-	angle_t AngleIncrements ();
 	void Activate (AActor *activator);
 };
 
 IMPLEMENT_CLASS (ASpark)
-
-angle_t ASpark::AngleIncrements ()
-{
-	return ANGLE_1;
-}
 
 void ASpark::Activate (AActor *activator)
 {

@@ -53,7 +53,6 @@ class ASecurityCamera : public AActor
 public:
 	void PostBeginPlay ();
 	void Tick ();
-	angle_t AngleIncrements ();
 
 	void Serialize (FArchive &arc);
 protected:
@@ -69,11 +68,6 @@ void ASecurityCamera::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << Center << Acc << Delta << Range;
-}
-
-angle_t ASecurityCamera::AngleIncrements ()
-{
-	return ANGLE_1;
 }
 
 void ASecurityCamera::PostBeginPlay ()

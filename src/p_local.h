@@ -390,6 +390,15 @@ void	P_SlideMove (AActor* mo, fixed_t tryx, fixed_t tryy, int numsteps);
 bool	P_BounceWall (AActor *mo);
 bool	P_BounceActor (AActor *mo, AActor * BlockingMobj);
 bool	P_CheckSight (const AActor* t1, const AActor* t2, int flags=0);
+
+enum ESightFlags
+{
+	SF_IGNOREVISIBILITY=1,
+	SF_SEEPASTSHOOTABLELINES=2,
+	SF_SEEPASTBLOCKEVERYTHING=4,
+	SF_IGNOREWATERBOUNDARY=8
+};
+
 void	P_ResetSightCounters (bool full);
 bool	P_TalkFacing (AActor *player);
 void	P_UseLines (player_t* player);

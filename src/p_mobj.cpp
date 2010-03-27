@@ -3016,7 +3016,7 @@ void AActor::Tick ()
 						&& !players[i].enemy
 						&& player ? !IsTeammate (players[i].mo) : true
 						&& P_AproxDistance (players[i].mo->x-x, players[i].mo->y-y) < MAX_MONSTER_TARGET_DIST
-						&& P_CheckSight (players[i].mo, this, 2))
+						&& P_CheckSight (players[i].mo, this, SF_SEEPASTBLOCKEVERYTHING))
 					{ //Probably a monster, so go kill it.
 						players[i].enemy = this;
 					}

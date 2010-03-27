@@ -3053,7 +3053,7 @@ void aim_t::AimTraverse (fixed_t startx, fixed_t starty, fixed_t endx, fixed_t e
 		if (crossedffloors)
 		{
 			// if 3D floors were in the way do an extra visibility check for safety
-			if (!P_CheckSight(shootthing, th, 1)) 
+			if (!P_CheckSight(shootthing, th, SF_IGNOREVISIBILITY|SF_IGNOREWATERBOUNDARY)) 
 			{
 				// the thing can't be seen so we can safely exclude its range from our aiming field
 				if (thingtoppitch<toppitch) 
@@ -4324,7 +4324,7 @@ void P_RadiusAttack (AActor *bombspot, AActor *bombsource, int bombdamage, int b
 			}
 			points *= thing->GetClass()->Meta.GetMetaFixed(AMETA_RDFactor, FRACUNIT)/(float)FRACUNIT;
 
-			if (points > 0.f && P_CheckSight (thing, bombspot, 1))
+			if (points > 0.f && P_CheckSight (thing, bombspot, SF_IGNOREVISIBILITY|SF_IGNOREWATERBOUNDARY))
 			{ // OK to damage; target is in direct path
 				float velz;
 				float thrust;
@@ -4382,7 +4382,7 @@ void P_RadiusAttack (AActor *bombspot, AActor *bombsource, int bombdamage, int b
 			if (dist >= bombdistance)
 				continue;  // out of range
 
-			if (P_CheckSight (thing, bombspot, 1))
+			if (P_CheckSight (thing, bombspot, SF_IGNOREVISIBILITY|SF_IGNOREWATERBOUNDARY))
 			{ // OK to damage; target is in direct path
 				dist = clamp<int>(dist - fulldamagedistance, 0, dist);
 				int damage = Scale (bombdamage, bombdistance-dist, bombdistance);

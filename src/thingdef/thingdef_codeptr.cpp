@@ -1891,9 +1891,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckSight)
 
 	ACTION_SET_RESULT(false);	// Jumps should never set the result for inventory state chains!
 
-	for (int i=0;i<MAXPLAYERS;i++) 
+	for (int i = 0; i < MAXPLAYERS; i++) 
 	{
-		if (playeringame[i] && P_CheckSight(players[i].camera,self,true)) return;
+		if (playeringame[i] && P_CheckSight(players[i].camera, self, SF_IGNOREVISIBILITY)) return;
 	}
 
 	ACTION_JUMP(jump);
@@ -1944,7 +1944,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckSightOrRange)
 			}
 
 			// Now check LOS.
-			if (P_CheckSight(camera, self, true))
+			if (P_CheckSight(camera, self, SF_IGNOREVISIBILITY))
 			{ // Visible
 				return;
 			}
@@ -2395,7 +2395,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInLOS)
 
 		if (!target) return; // [KS] Let's not call P_CheckSight unnecessarily in this case.
 
-		if (!P_CheckSight (self, target, 1))
+		if (!P_CheckSight (self, target, SF_IGNOREVISIBILITY))
 			return;
 
 		if (fov && (fov < ANGLE_MAX))
@@ -2458,7 +2458,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfInTargetLOS)
 
 	if (!target) return; // [KS] Let's not call P_CheckSight unnecessarily in this case.
 
-	if (!P_CheckSight (target, self, 1))
+	if (!P_CheckSight (target, self, SF_IGNOREVISIBILITY))
 		return;
 
 	if (fov && (fov < ANGLE_MAX))

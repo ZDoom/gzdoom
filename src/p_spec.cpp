@@ -1939,7 +1939,7 @@ void DPusher::Tick ()
 				// If speed <= 0, you're outside the effective radius. You also have
 				// to be able to see the push/pull source point.
 
-				if ((speed > 0) && (P_CheckSight (thing, m_Source, 1)))
+				if ((speed > 0) && (P_CheckSight (thing, m_Source, SF_IGNOREVISIBILITY)))
 				{
 					angle_t pushangle = R_PointToAngle2 (thing->x, thing->y, sx, sy);
 					if (m_Source->GetClass()->TypeName == NAME_PointPusher)

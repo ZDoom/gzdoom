@@ -247,16 +247,9 @@ static char		savegamestring[SAVESTRINGSIZE];
 static FString	EndString;
 
 static short	itemOn; 			// menu item skull is on
-static short	whichSkull; 		// which skull to draw
 static int		MenuTime;
 static int		InfoType;
 static int		InfoTic;
-
-static const char skullName[2][9] = {"M_SKULL1", "M_SKULL2"};	// graphic name of skulls
-static const char cursName[8][8] =	// graphic names of Strife menu selector
-{
-	"M_CURS1", "M_CURS2", "M_CURS3", "M_CURS4", "M_CURS5", "M_CURS6", "M_CURS7", "M_CURS8"
-};
 
 static oldmenu_t *currentMenu;		// current menudef
 static oldmenu_t *TopLevelMenu;		// The main menu everything hangs off of
@@ -3745,19 +3738,19 @@ void M_Drawer ()
 				}
 				else if (gameinfo.gametype & GAME_DoomChex)
 				{
-					screen->DrawTexture (TexMan[skullName[whichSkull]],
+					screen->DrawTexture (TexMan("M_SKULL1"),
 						x + SKULLXOFF, currentMenu->y - 5 + itemOn*LINEHEIGHT,
 						DTA_Clean, true, TAG_DONE);
 				}
 				else if (gameinfo.gametype == GAME_Strife)
 				{
-					screen->DrawTexture (TexMan[cursName[(MenuTime >> 2) & 7]],
+					screen->DrawTexture (TexMan("M_CURS1"),
 						x - 28, currentMenu->y - 5 + itemOn*LINEHEIGHT,
 						DTA_Clean, true, TAG_DONE);
 				}
 				else
 				{
-					screen->DrawTexture (TexMan[MenuTime & 16 ? "M_SLCTR1" : "M_SLCTR2"],
+					screen->DrawTexture (TexMan("M_SLCTR1"),
 						x + SELECTOR_XOFFSET,
 						currentMenu->y + itemOn*LINEHEIGHT + SELECTOR_YOFFSET,
 						DTA_Clean, true, TAG_DONE);
@@ -3951,7 +3944,6 @@ void M_Ticker (void)
 	MenuTime++;
 	if (--skullAnimCounter <= 0)
 	{
-		whichSkull ^= 1;
 		skullAnimCounter = 8;
 	}
 	if (currentMenu == &PSetupDef || currentMenu == &ClassMenuDef)
@@ -4005,7 +3997,6 @@ void M_Init (void)
 	menuactive = MENU_Off;
 	InfoType = 0;
 	itemOn = currentMenu->lastOn;
-	whichSkull = 0;
 	skullAnimCounter = 10;
 	drawSkull = true;
 	messageToPrint = 0;

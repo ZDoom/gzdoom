@@ -1,3 +1,24 @@
+// Doom menu cursor
+texture optional M_SKULL1
+pic M_SKULL1 tics 8
+pic M_SKULL2 tics 8
+
+// Heretic/Hexen menu cursor
+texture optional M_SLCTR1
+pic M_SLCTR1 tics 16
+pic M_SLCTR2 tics 16
+
+// Strife menu cursor
+texture optional M_CURS1
+pic M_CURS1 tics 4
+pic M_CURS2 tics 4
+pic M_CURS3 tics 4
+pic M_CURS4 tics 4
+pic M_CURS5 tics 4
+pic M_CURS6 tics 4
+pic M_CURS7 tics 4
+pic M_CURS8 tics 4
+
 // Tome of Power
 texture optional SPINBK0
 pic SPINBK0 tics 3

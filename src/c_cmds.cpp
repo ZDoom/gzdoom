@@ -788,8 +788,8 @@ CCMD(info)
 	AActor *linetarget;
 
 	if (CheckCheatmode () || players[consoleplayer].mo == NULL) return;
-	P_AimLineAttack(players[consoleplayer].mo,players[consoleplayer].mo->angle,MISSILERANGE, &linetarget, 0,
-		false, false, true);
+	P_AimLineAttack(players[consoleplayer].mo,players[consoleplayer].mo->angle,MISSILERANGE, 
+		&linetarget, 0,	ALF_CHECKNONSHOOTABLE|ALF_FORCENOSMART);
 	if (linetarget)
 	{
 		Printf("Target=%s, Health=%d, Spawnhealth=%d\n",
@@ -923,3 +923,16 @@ CCMD(nextsecret)
 		Printf("no next secret map!\n");
 	}
 }
+
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
+CCMD(currentpos)
+{
+	AActor *mo = players[consoleplayer].mo;
+	Printf("Current player position: (%1.3f,%1.3f,%1.3f), angle: %1.3f, floorheight: %1.3f, sector:%d, lightlevel: %d\n",
+		FIXED2FLOAT(mo->x), FIXED2FLOAT(mo->y), FIXED2FLOAT(mo->z), mo->angle/float(ANGLE_1), FIXED2FLOAT(mo->floorz), mo->Sector->sectornum, mo->Sector->lightlevel);
+}
+

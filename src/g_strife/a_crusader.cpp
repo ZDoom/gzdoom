@@ -9,7 +9,7 @@
 #include "thingdef/thingdef.h"
 */
 
-bool Sys_1ed64 (AActor *self)
+static bool CrusaderCheckRange (AActor *self)
 {
 	if (P_CheckSight (self, self->target) && self->reactiontime == 0)
 	{
@@ -23,7 +23,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CrusaderChoose)
 	if (self->target == NULL)
 		return;
 
-	if (Sys_1ed64 (self))
+	if (CrusaderCheckRange (self))
 	{
 		A_FaceTarget (self);
 		self->angle -= ANGLE_180/16;

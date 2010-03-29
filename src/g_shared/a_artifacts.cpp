@@ -195,7 +195,7 @@ void APowerup::EndEffect ()
 {
 	int colormap = GetSpecialColormap(BlendColor);
 
-	if (colormap != NOFIXEDCOLORMAP && Owner->player->fixedcolormap == colormap)
+	if (colormap != NOFIXEDCOLORMAP && Owner && Owner->player && Owner->player->fixedcolormap == colormap)
 	{ // only unset if the fixed colormap comes from this item
 		Owner->player->fixedcolormap = NOFIXEDCOLORMAP;
 	}

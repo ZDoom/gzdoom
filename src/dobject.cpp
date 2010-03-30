@@ -389,9 +389,12 @@ void DObject::SerializeUserVars(FArchive &arc)
 		// Write all user variables.
 		for (; symt != NULL; symt = symt->ParentSymbolTable)
 		{
-			for (unsigned i = 0; i < symt->Symbols.Size(); ++i)
+			PSymbolTable::MapType::Iterator it(symt->Symbols);
+			PSymbolTable::MapType::Pair *pair;
+
+			while (it.NextPair(pair))
 			{
-				PSymbol *sym = symt->Symbols[i];
+				PSymbol *sym = pair->Value;
 				if (sym->SymbolType == SYM_Variable)
 				{
 					PSymbolVariable *var = static_cast<PSymbolVariable *>(sym);

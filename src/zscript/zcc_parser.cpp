@@ -241,8 +241,10 @@ static void DoParse(const char *filename)
 	
 	parser = ZCCParseAlloc(malloc);
 	failed = false;
+#ifdef _DEBUG
 	FILE *f = fopen("trace.txt", "w");
 	ZCCParseTrace(f, "");
+#endif
 	while (sc.GetToken())
 	{
 		if (sc.TokenType == TK_StringConst)
@@ -294,10 +296,12 @@ static void DoParse(const char *filename)
 	ZCCParse(parser, ZCC_EOF, value, &sc);
 	ZCCParse(parser, 0, value, &sc);
 	ZCCParseFree(parser, free);
+#ifdef _DEBUG
 	if (f != NULL)
 	{
 		fclose(f);
 	}
+#endif
 }
 
 CCMD(parse)

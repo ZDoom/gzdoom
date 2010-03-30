@@ -141,8 +141,10 @@ struct PSymbolTable
 	void ReleaseSymbols();
 
 private:
+	typedef TMap<FName, PSymbol *> MapType;
+
 	PSymbolTable *ParentSymbolTable;
-	TArray<PSymbol *> Symbols;
+	MapType Symbols;
 
 	friend class DObject;
 };

@@ -481,11 +481,16 @@ PSymbolTable::~PSymbolTable ()
 
 size_t PSymbolTable::MarkSymbols()
 {
-	for (unsigned int i = 0; i < Symbols.Size(); ++i)
+	size_t count = 0;
+	MapType::Iterator it(Symbols);
+	MapType::Pair *pair;
+
+	while (it.NextPair(pair))
 	{
-		GC::Mark(Symbols[i]);
+		GC::Mark(pair->Value);
+		count++;
 	}
-	return Symbols.Size() * sizeof(Symbols[0]);
+	return count * sizeof(Symbols[0]);
 }
 
 void PSymbolTable::ReleaseSymbols()
@@ -502,64 +507,21 @@ void PSymbolTable::SetParentTable (PSymbolTable *parent)
 
 PSymbol *PSymbolTable::FindSymbol (FName symname, bool searchparents) const
 {
-	int min, max;
-
-	min = 0;
-	max = (int)Symbols.Size() - 1;
-
-	while (min <= max)
+	PSymbol * const *value = Symbols.CheckKey(symname);
+	if (value == NULL && searchparents && ParentSymbolTable != NULL)
 	{
-		unsigned int mid = (min + max) / 2;
-		PSymbol *sym = Symbols[mid];
-
-		if (sym->SymbolName == symname)
-		{
-			return sym;
-		}
-		else if (sym->SymbolName < symname)
-		{
-			min = mid + 1;
-		}
-		else
-		{
-			max = mid - 1;
-		}
+		return ParentSymbolTable->FindSymbol(symname, searchparents);
 	}
-	if (searchparents && ParentSymbolTable != NULL)
-	{
-		return ParentSymbolTable->FindSymbol (symname, true);
-	}
-	return NULL;
+	return value != NULL ? *value : NULL;
 }
 
 PSymbol *PSymbolTable::AddSymbol (PSymbol *sym)
 {
-	// Insert it in sorted order.
-	int min, max, mid;
-
-	min = 0;
-	max = (int)Symbols.Size() - 1;
-
-	while (min <= max)
+	// Symbols that already exist are not inserted.
+	if (Symbols.CheckKey(sym->SymbolName) != NULL)
 	{
-		mid = (min + max) / 2;
-		PSymbol *tsym = Symbols[mid];
-
-		if (tsym->SymbolName == sym->SymbolName)
-		{ // A symbol with this name already exists in the table
-			return NULL;
-		}
-		else if (tsym->SymbolName < sym->SymbolName)
-		{
-			min = mid + 1;
-		}
-		else
-		{
-			max = mid - 1;
-		}
+		return NULL;
 	}
-
-	// Good. The symbol is not in the table yet.
-	Symbols.Insert (MAX(min, max), sym);
+	Symbols.Insert(sym->SymbolName, sym);
 	return sym;
 }

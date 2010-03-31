@@ -265,6 +265,7 @@ void level_info_t::Reset()
 	bordertexture[0] = 0;
 	teamdamage = 0.f;
 	specialactions.Clear();
+	DefaultEnvironment = 0;
 }
 
 
@@ -1248,6 +1249,20 @@ DEFINE_MAP_OPTION(mapbackground, true)
 {
 	parse.ParseAssign();
 	parse.ParseLumpOrTextureName(info->mapbg);
+}
+
+DEFINE_MAP_OPTION(defaultenvironment, false)
+{
+	int id;
+
+	parse.ParseAssign();
+	parse.sc.MustGetNumber();
+	id = parse.sc.Number << 8;
+	if (parse.CheckNumber())
+	{
+		id |= parse.sc.Number;
+	}
+	info->DefaultEnvironment = id;
 }
 
 

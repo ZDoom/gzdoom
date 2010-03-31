@@ -729,6 +729,7 @@ void P_FloodZone (sector_t *sec, int zonenum)
 void P_FloodZones ()
 {
 	int z = 0, i;
+	ReverbContainer *reverb;
 
 	for (i = 0; i < numsectors; ++i)
 	{
@@ -739,9 +740,15 @@ void P_FloodZones ()
 	}
 	numzones = z;
 	zones = new zone_t[z];
+	reverb = S_FindEnvironment(level.DefaultEnvironment);
+	if (reverb == NULL)
+	{
+		Printf("Sound environment %d, %d not found\n", level.DefaultEnvironment >> 8, level.DefaultEnvironment & 255);
+		reverb = DefaultEnvironments[0];
+	}
 	for (i = 0; i < z; ++i)
 	{
-		zones[i].Environment = DefaultEnvironments[0];
+		zones[i].Environment = reverb;
 	}
 }
 

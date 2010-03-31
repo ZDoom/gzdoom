@@ -323,7 +323,6 @@ void S_InitData ()
 	LastLocalSndInfo = LastLocalSndSeq = "";
 	S_ParseSndInfo ();
 	S_ParseSndSeq (-1);
-	S_ParseReverbDef ();
 }
 
 //==========================================================================

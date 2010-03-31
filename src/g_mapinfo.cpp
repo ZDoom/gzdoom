@@ -1256,11 +1256,27 @@ DEFINE_MAP_OPTION(defaultenvironment, false)
 	int id;
 
 	parse.ParseAssign();
-	parse.sc.MustGetNumber();
-	id = parse.sc.Number << 8;
-	if (parse.CheckNumber())
-	{
-		id |= parse.sc.Number;
+	if (parse.sc.CheckNumber())
+	{ // Numeric ID XXX [, YYY]
+		id = parse.sc.Number << 8;
+		if (parse.CheckNumber())
+		{
+			id |= parse.sc.Number;
+		}
+	}
+	else
+	{ // Named environment
+		parse.sc.MustGetString();
+		ReverbContainer *reverb = S_FindEnvironment(parse.sc.String);
+		if (reverb == NULL)
+		{
+			parse.sc.ScriptMessage("Unknown sound environment '%s'\n", parse.sc.String);
+			id = 0;
+		}
+		else
+		{
+			id = reverb->ID;
+		}
 	}
 	info->DefaultEnvironment = id;
 }

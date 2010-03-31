@@ -490,7 +490,7 @@ size_t PSymbolTable::MarkSymbols()
 		GC::Mark(pair->Value);
 		count++;
 	}
-	return count * sizeof(Symbols[0]);
+	return count * sizeof(PSymbol*);
 }
 
 void PSymbolTable::ReleaseSymbols()

@@ -227,10 +227,10 @@ struct mapseg_t
 {
 	WORD	v1;
 	WORD	v2;
-	short	angle;
+	SWORD	angle;
 	WORD	linedef;
-	short	side;
-	short	offset;
+	SWORD	side;
+	SWORD	offset;
 };
 
 
@@ -242,11 +242,11 @@ struct mapseg_t
 
 struct mapnode_t
 {
-	short 	x,y,dx,dy;	// partition line
-	short 	bbox[2][4];	// bounding box for each child
+	SWORD 	x,y,dx,dy;	// partition line
+	SWORD 	bbox[2][4];	// bounding box for each child
 	// If NF_SUBSECTOR is or'ed in, it's a subsector,
 	// else it's a node of another subtree.
-	unsigned short children[2];
+	WORD 	children[2];
 };
 
 
@@ -256,23 +256,23 @@ struct mapnode_t
 // plus skill/visibility flags and attributes.
 struct mapthing_t
 {
-	short		x;
-	short		y;
-	short		angle;
-	short		type;
-	short		options;
+	SWORD		x;
+	SWORD		y;
+	SWORD		angle;
+	SWORD		type;
+	SWORD		options;
 };
 
 // [RH] Hexen-compatible MapThing.
 struct mapthinghexen_t
 {
-	unsigned short thingid;
-	short		x;
-	short		y;
-	short		z;
-	short		angle;
-	short		type;
-	short		flags;
+	SWORD 		thingid;
+	SWORD		x;
+	SWORD		y;
+	SWORD		z;
+	SWORD		angle;
+	SWORD		type;
+	SWORD		flags;
 	BYTE		special;
 	BYTE		args[5];
 };

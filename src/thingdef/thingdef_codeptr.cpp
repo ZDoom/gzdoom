@@ -2847,7 +2847,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_MonsterRefire)
 	if (!self->target
 		|| P_HitFriend (self)
 		|| self->target->health <= 0
-		|| !P_CheckSight (self, self->target, 0) )
+		|| !P_CheckSight (self, self->target, SF_SEEPASTBLOCKEVERYTHING|SF_SEEPASTSHOOTABLELINES) )
 	{
 		ACTION_JUMP(jump);
 	}

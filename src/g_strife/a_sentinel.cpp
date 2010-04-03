@@ -79,7 +79,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SentinelRefire)
 	{
 		if (self->target == NULL ||
 			self->target->health <= 0 ||
-			!P_CheckSight (self, self->target) ||
+			!P_CheckSight (self, self->target, SF_SEEPASTBLOCKEVERYTHING|SF_SEEPASTSHOOTABLELINES) ||
 			P_HitFriend(self) ||
 			pr_sentinelrefire() < 40)
 		{

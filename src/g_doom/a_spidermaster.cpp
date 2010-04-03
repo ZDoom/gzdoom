@@ -22,7 +22,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpidRefire)
 	if (!self->target
 		|| P_HitFriend (self)
 		|| self->target->health <= 0
-		|| !P_CheckSight (self, self->target, 0) )
+		|| !P_CheckSight (self, self->target, SF_SEEPASTBLOCKEVERYTHING|SF_SEEPASTSHOOTABLELINES))
 	{
 		self->SetState (self->SeeState);
 	}

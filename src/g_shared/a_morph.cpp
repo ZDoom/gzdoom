@@ -25,7 +25,7 @@ static FRandom pr_morphmonst ("MorphMonster");
 //
 //---------------------------------------------------------------------------
 
-bool P_MorphPlayer (player_t *activator, player_t *p, PClassPlayerPawn *spawntype, int duration, int style, const PClass *enter_flash, const PClass *exit_flash)
+bool P_MorphPlayer (player_t *activator, player_t *p, PClassPlayerPawn *spawntype, int duration, int style, PClassActor *enter_flash, PClassActor *exit_flash)
 {
 	AInventory *item;
 	APlayerPawn *morphed;
@@ -246,7 +246,7 @@ bool P_UndoPlayerMorph (player_t *activator, player_t *player, int unmorphflag, 
 	mo->flags2 = (mo->flags2 & ~MF2_FLY) | (pmo->flags2 & MF2_FLY);
 	mo->flags3 = (mo->flags3 & ~MF3_GHOST) | (pmo->flags3 & MF3_GHOST);
 
-	const PClass *exit_flash = player->MorphExitFlash;
+	PClassActor *exit_flash = player->MorphExitFlash;
 	bool correctweapon = !!(player->MorphStyle & MORPH_LOSEACTUALWEAPON);
 	bool undobydeathsaves = !!(player->MorphStyle & MORPH_UNDOBYDEATHSAVES);
 
@@ -372,7 +372,7 @@ bool P_UndoPlayerMorph (player_t *activator, player_t *player, int unmorphflag, 
 //
 //---------------------------------------------------------------------------
 
-bool P_MorphMonster (AActor *actor, const PClass *spawntype, int duration, int style, const PClass *enter_flash, const PClass *exit_flash)
+bool P_MorphMonster (AActor *actor, PClassActor *spawntype, int duration, int style, PClassActor *enter_flash, PClassActor *exit_flash)
 {
 	AMorphedMonster *morphed;
 
@@ -464,7 +464,7 @@ bool P_UndoMonsterMorph (AMorphedMonster *beast, bool force)
 	actor->AddToHash ();
 	beast->UnmorphedMe = NULL;
 	DObject::StaticPointerSubstitution (beast, actor);
-	const PClass *exit_flash = beast->MorphExitFlash;
+	PClassActor *exit_flash = beast->MorphExitFlash;
 	beast->Destroy ();
 	Spawn(exit_flash, beast->x, beast->y, beast->z + TELEFOGHEIGHT, ALLOW_REPLACE);
 	return true;
@@ -552,8 +552,8 @@ IMPLEMENT_CLASS(AMorphProjectile)
 
 int AMorphProjectile::DoSpecialDamage (AActor *target, int damage)
 {
-	const PClass *morph_flash = PClass::FindClass (MorphFlash);
-	const PClass *unmorph_flash = PClass::FindClass (UnMorphFlash);
+	PClassActor *morph_flash = PClass::FindActor(MorphFlash);
+	PClassActor *unmorph_flash = PClass::FindActor(UnMorphFlash);
 	if (target->player)
 	{
 		PClassPlayerPawn *player_class = dyn_cast<PClassPlayerPawn>(PClass::FindClass(PlayerClass));
@@ -561,7 +561,7 @@ int AMorphProjectile::DoSpecialDamage (AActor *target, int damage)
 	}
 	else
 	{
-		const PClass *monster_class = PClass::FindClass (MonsterClass);
+		PClassActor *monster_class = PClass::FindActor(MonsterClass);
 		P_MorphMonster (target, monster_class, Duration, MorphStyle, morph_flash, unmorph_flash);
 	}
 	return -1;

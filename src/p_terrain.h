@@ -81,9 +81,9 @@ struct FSplashDef
 	FName Name;
 	FSoundID SmallSplashSound;
 	FSoundID NormalSplashSound;
-	const PClass *SmallSplash;
-	const PClass *SplashBase;
-	const PClass *SplashChunk;
+	PClassActor *SmallSplash;
+	PClassActor *SplashBase;
+	PClassActor *SplashChunk;
 	BYTE ChunkXVelShift;
 	BYTE ChunkYVelShift;
 	BYTE ChunkZVelShift;

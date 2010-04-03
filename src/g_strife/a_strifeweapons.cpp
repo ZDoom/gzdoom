@@ -522,8 +522,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireMauler2)
 //
 //============================================================================
 
-AActor *P_SpawnSubMissile (AActor *source, const PClass *type, AActor *target);
-
 DEFINE_ACTION_FUNCTION(AActor, A_MaulerTorpedoWave)
 {
 	PARAM_ACTION_PROLOGUE;
@@ -542,13 +540,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_MaulerTorpedoWave)
 	for (int i = 0; i < 80; ++i)
 	{
 		self->angle += ANGLE_45/10;
-		P_SpawnSubMissile (self, PClass::FindClass("MaulerTorpedoWave"), self->target);
+		P_SpawnSubMissile (self, PClass::FindActor("MaulerTorpedoWave"), self->target);
 	}
 	self->z = savedz;
 	return 0;
 }
 
-AActor *P_SpawnSubMissile (AActor *source, const PClass *type, AActor *target)
+AActor *P_SpawnSubMissile (AActor *source, PClassActor *type, AActor *target)
 {
 	AActor *other = Spawn (type, source->x, source->y, source->z, ALLOW_REPLACE);
 
@@ -1040,7 +1038,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSigil3)
 	for (i = 0; i < 20; ++i)
 	{
 		self->angle += ANGLE_180/20;
-		spot = P_SpawnSubMissile (self, PClass::FindClass("SpectralLightningBall1"), self);
+		spot = P_SpawnSubMissile (self, PClass::FindActor("SpectralLightningBall1"), self);
 		if (spot != NULL)
 		{
 			spot->z = self->z + 32*FRACUNIT;

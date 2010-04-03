@@ -51,7 +51,7 @@ bool P_CheckMeleeRange2 (AActor *actor);
 bool P_Move (AActor *actor);
 bool P_TryWalk (AActor *actor);
 void P_NewChaseDir (AActor *actor);
-AInventory *P_DropItem (AActor *source, const PClass *type, int special, int chance);
+AInventory *P_DropItem (AActor *source, PClassActor *type, int special, int chance);
 void P_TossItem (AActor *item);
 bool P_LookForPlayers (AActor *actor, INTBOOL allaround, FLookExParams *params);
 void A_Weave(AActor *self, int xyspeed, int zspeed, fixed_t xydist, fixed_t zdist);

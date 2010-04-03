@@ -70,8 +70,8 @@ bool AArtiHealingRadius::Use (bool pickup)
 			{
 				int amount = 50 + (pr_healradius() % 50);
 
-				if (players[i].mo->GiveAmmo (PClass::FindClass(NAME_Mana1), amount) ||
-					players[i].mo->GiveAmmo (PClass::FindClass(NAME_Mana2), amount))
+				if (players[i].mo->GiveAmmo (dyn_cast<PClassAmmo>(PClass::FindClass(NAME_Mana1)), amount) ||
+					players[i].mo->GiveAmmo (dyn_cast<PClassAmmo>(PClass::FindClass(NAME_Mana2)), amount))
 				{
 					gotsome = true;
 				}

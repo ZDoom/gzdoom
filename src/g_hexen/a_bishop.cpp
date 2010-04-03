@@ -61,7 +61,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BishopAttack2)
 		self->SetState (self->SeeState);
 		return 0;
 	}
-	mo = P_SpawnMissile (self, self->target, PClass::FindClass("BishopFX"));
+	mo = P_SpawnMissile (self, self->target, PClass::FindActor("BishopFX"));
 	if (mo != NULL)
 	{
 		mo->tracer = self->target;

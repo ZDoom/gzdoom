@@ -246,15 +246,15 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurCharge)
 	}
 	if (self->special1 > 0)
 	{
-		const PClass *type;
+		PClassActor *type;
 
 		if (gameinfo.gametype == GAME_Heretic)
 		{
-			type = PClass::FindClass ("PhoenixPuff");
+			type = PClass::FindActor("PhoenixPuff");
 		}
 		else
 		{
-			type = PClass::FindClass ("PunchPuff");
+			type = PClass::FindActor("PunchPuff");
 		}
 		puff = Spawn (type, self->x, self->y, self->z, ALLOW_REPLACE);
 		puff->velz = 2*FRACUNIT;
@@ -362,7 +362,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurAtk3)
 		}
 		else
 		{
-			mo = P_SpawnMissile (self, self->target, PClass::FindClass("MinotaurFX2"));
+			mo = P_SpawnMissile (self, self->target, PClass::FindActor("MinotaurFX2"));
 			if (mo != NULL)
 			{
 				S_Sound (mo, CHAN_WEAPON, "minotaur/attack1", 1, ATTN_NORM);

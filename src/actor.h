@@ -40,6 +40,8 @@
 #include "r_blend.h"
 #include "s_sound.h"
 
+class PClassAmmo;
+
 //
 // NOTES: AActor
 //
@@ -625,13 +627,13 @@ public:
 	}
 
 	// Adds one item of a particular type. Returns NULL if it could not be added.
-	AInventory *GiveInventoryType (const PClass *type);
+	AInventory *GiveInventoryType (PClassActor *type);
 
 	// Returns the first item held with IF_INVBAR set.
 	AInventory *FirstInv ();
 
 	// Tries to give the actor some ammo.
-	bool GiveAmmo (const PClass *type, int amount);
+	bool GiveAmmo (PClassAmmo *type, int amount);
 
 	// Destroys all the inventory the actor is holding.
 	void DestroyAllInventory ();
@@ -948,18 +950,10 @@ public:
 	}
 };
 
-inline AActor *Spawn (PClass *type, fixed_t x, fixed_t y, fixed_t z, replace_t allowreplacement)
+inline AActor *Spawn (PClassActor *type, fixed_t x, fixed_t y, fixed_t z, replace_t allowreplacement)
 {
-	return AActor::StaticSpawn (dyn_cast<PClassActor>(type), x, y, z, allowreplacement);
+	return AActor::StaticSpawn (type, x, y, z, allowreplacement);
 }
-
-inline AActor *Spawn (const PClass *type, fixed_t x, fixed_t y, fixed_t z, replace_t allowreplacement)
-{
-	// Thanks to some fiddling while determining replacements, type is modified, but only
-	// temporarily.
-	return AActor::StaticSpawn (const_cast<PClassActor *>(dyn_cast<PClassActor>(type)), x, y, z, allowreplacement);
-}
-
 AActor *Spawn (const char *type, fixed_t x, fixed_t y, fixed_t z, replace_t allowreplacement);
 AActor *Spawn (FName classname, fixed_t x, fixed_t y, fixed_t z, replace_t allowreplacement);
 

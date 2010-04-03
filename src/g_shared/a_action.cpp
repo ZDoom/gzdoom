@@ -91,8 +91,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_NoBlocking)
 			{
 				if (di->Name != NAME_None)
 				{
-					const PClass *ti = PClass::FindClass(di->Name);
-					if (ti) P_DropItem (self, ti, di->Amount, di->Probability);
+					PClassActor *ti = PClass::FindActor(di->Name);
+					if (ti != NULL)
+					{
+						P_DropItem (self, ti, di->Amount, di->Probability);
+					}
 				}
 				di = di->Next;
 			}

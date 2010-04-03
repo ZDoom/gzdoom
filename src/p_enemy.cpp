@@ -2907,7 +2907,7 @@ void ModifyDropAmount(AInventory *inv, int dropamount)
 
 CVAR(Int, sv_dropstyle, 0, CVAR_SERVERINFO | CVAR_ARCHIVE);
 
-AInventory *P_DropItem (AActor *source, const PClass *type, int dropamount, int chance)
+AInventory *P_DropItem (AActor *source, PClassActor *type, int dropamount, int chance)
 {
 	if (type != NULL && pr_dropitem() <= chance)
 	{
@@ -2918,9 +2918,11 @@ AInventory *P_DropItem (AActor *source, const PClass *type, int dropamount, int 
 		if (!(i_compatflags & COMPATF_NOTOSSDROPS))
 		{
 			int style = sv_dropstyle;
-			if (style==0) style= (gameinfo.gametype == GAME_Strife)? 2:1;
-			
-			if (style==2)
+			if (style == 0)
+			{
+				style = (gameinfo.gametype == GAME_Strife) ? 2 : 1;
+			}
+			if (style == 2)
 			{
 				spawnz += 24*FRACUNIT;
 			}
@@ -2929,7 +2931,7 @@ AInventory *P_DropItem (AActor *source, const PClass *type, int dropamount, int 
 				spawnz += source->height / 2;
 			}
 		}
-		mo = Spawn (type, source->x, source->y, spawnz, ALLOW_REPLACE);
+		mo = Spawn(type, source->x, source->y, spawnz, ALLOW_REPLACE);
 		if (mo != NULL)
 		{
 			mo->flags |= MF_DROPPED;
@@ -2940,7 +2942,7 @@ AInventory *P_DropItem (AActor *source, const PClass *type, int dropamount, int 
 			}
 			if (mo->IsKindOf (RUNTIME_CLASS(AInventory)))
 			{
-				AInventory * inv = static_cast<AInventory *>(mo);
+				AInventory *inv = static_cast<AInventory *>(mo);
 				ModifyDropAmount(inv, dropamount);
 				if (inv->SpecialDropAction (source))
 				{

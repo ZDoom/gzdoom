@@ -523,7 +523,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_M_FireMissile)
 	else
 	{
 		A_FaceTarget (self);
-		P_SpawnMissile (self, self->target, PClass::FindClass("Rocket"));
+		P_SpawnMissile (self, self->target, PClass::FindActor("Rocket"));
 	}
 	return 0;
 }
@@ -560,7 +560,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_M_FirePlasma)
 		return 0;
 
 	A_FaceTarget (self);
-	P_SpawnMissile (self, self->target, PClass::FindClass("PlasmaBall"));
+	P_SpawnMissile (self, self->target, PClass::FindActor("PlasmaBall"));
 	self->special1 = level.maptime + 20;
 	return 0;
 }
@@ -606,7 +606,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_M_FireBFG)
 		return 0;
 
 	A_FaceTarget (self);
-	P_SpawnMissile (self, self->target, PClass::FindClass("BFGBall"));
+	P_SpawnMissile (self, self->target, PClass::FindActor("BFGBall"));
 	self->special1 = level.maptime + 30;
 	self->PainChance = MARINE_PAIN_CHANCE;
 	return 0;

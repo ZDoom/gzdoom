@@ -12,9 +12,9 @@
 
 DECLARE_ACTION(A_SkullAttack)
 
-static const PClass *GetSpawnType(VMValue *param)
+static PClassActor *GetSpawnType(VMValue *param)
 {
-	const PClass *spawntype;
+	PClassActor *spawntype;
 
 	if (param == NULL || param->Type == REGT_NIL)
 	{
@@ -24,10 +24,10 @@ static const PClass *GetSpawnType(VMValue *param)
 	{
 		assert(param->Type == REGT_POINTER);
 		assert(param->atag == ATAG_OBJECT || param->a == NULL);
-		spawntype = (const PClass *)param->a;
+		spawntype = (PClassActor *)param->a;
 	}
 
-	return (spawntype != NULL) ? spawntype : PClass::FindClass("LostSoul");
+	return (spawntype != NULL) ? spawntype : PClass::FindActor("LostSoul");
 }
 
 
@@ -35,7 +35,7 @@ static const PClass *GetSpawnType(VMValue *param)
 // A_PainShootSkull
 // Spawn a lost soul and launch it at the target
 //
-void A_PainShootSkull (AActor *self, angle_t angle, const PClass *spawntype)
+void A_PainShootSkull (AActor *self, angle_t angle, PClassActor *spawntype)
 {
 	fixed_t x, y, z;
 	
@@ -150,7 +150,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_PainAttack)
 	if (!self->target)
 		return 0;
 
-	const PClass *spawntype = GetSpawnType(numparam > NAP ? &param[NAP] : NULL);
+	PClassActor *spawntype = GetSpawnType(numparam > NAP ? &param[NAP] : NULL);
 	A_FaceTarget (self);
 	A_PainShootSkull (self, self->angle, spawntype);
 	return 0;
@@ -163,7 +163,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DualPainAttack)
 	if (!self->target)
 		return 0;
 
-	const PClass *spawntype = GetSpawnType(numparam > NAP ? &param[NAP] : NULL);
+	PClassActor *spawntype = GetSpawnType(numparam > NAP ? &param[NAP] : NULL);
 	A_FaceTarget (self);
 	A_PainShootSkull (self, self->angle + ANG45, spawntype);
 	A_PainShootSkull (self, self->angle - ANG45, spawntype);
@@ -178,7 +178,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_PainDie)
 	{ // And I thought you were my friend!
 		self->flags &= ~MF_FRIENDLY;
 	}
-	const PClass *spawntype = GetSpawnType(numparam > NAP ? &param[NAP] : NULL);
+	PClassActor *spawntype = GetSpawnType(numparam > NAP ? &param[NAP] : NULL);
 	CALL_ACTION(A_NoBlocking, self);
 	A_PainShootSkull (self, self->angle + ANG90, spawntype);
 	A_PainShootSkull (self, self->angle + ANG180, spawntype);

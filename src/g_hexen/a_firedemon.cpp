@@ -33,25 +33,25 @@ void A_FiredSpawnRock (AActor *actor)
 {
 	AActor *mo;
 	int x,y,z;
-	const PClass *rtype;
+	PClassActor *rtype;
 
 	switch (pr_firedemonrock() % 5)
 	{
 		case 0:
-			rtype = PClass::FindClass ("FireDemonRock1");
+			rtype = PClass::FindActor("FireDemonRock1");
 			break;
 		case 1:
-			rtype = PClass::FindClass ("FireDemonRock2");
+			rtype = PClass::FindActor("FireDemonRock2");
 			break;
 		case 2:
-			rtype = PClass::FindClass ("FireDemonRock3");
+			rtype = PClass::FindActor("FireDemonRock3");
 			break;
 		case 3:
-			rtype = PClass::FindClass ("FireDemonRock4");
+			rtype = PClass::FindActor("FireDemonRock4");
 			break;
 		case 4:
 		default:
-			rtype = PClass::FindClass ("FireDemonRock5");
+			rtype = PClass::FindActor("FireDemonRock5");
 			break;
 	}
 
@@ -121,7 +121,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FiredAttack)
 
 	if (self->target == NULL)
 		return 0;
-	AActor *mo = P_SpawnMissile (self, self->target, PClass::FindClass ("FireDemonMissile"));
+	AActor *mo = P_SpawnMissile (self, self->target, PClass::FindActor("FireDemonMissile"));
 	if (mo) S_Sound (self, CHAN_BODY, "FireDemonAttack", 1, ATTN_NORM);
 	return 0;
 }

@@ -15,7 +15,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CyberAttack)
 		return 0;
 				
 	A_FaceTarget (self);
-	P_SpawnMissile (self, self->target, PClass::FindClass("Rocket"));
+	P_SpawnMissile (self, self->target, PClass::FindActor("Rocket"));
 	return 0;
 }
 

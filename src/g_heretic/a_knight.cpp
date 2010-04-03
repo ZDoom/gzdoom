@@ -61,11 +61,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_KnightAttack)
 	S_Sound (self, CHAN_BODY, self->AttackSound, 1, ATTN_NORM);
 	if (self->flags & MF_SHADOW || pr_knightatk () < 40)
 	{ // Red axe
-		P_SpawnMissileZ (self, self->z + 36*FRACUNIT, self->target, PClass::FindClass("RedAxe"));
+		P_SpawnMissileZ (self, self->z + 36*FRACUNIT, self->target, PClass::FindActor("RedAxe"));
 		return 0;
 	}
 	// Green axe
-	P_SpawnMissileZ (self, self->z + 36*FRACUNIT, self->target, PClass::FindClass("KnightAxe"));
+	P_SpawnMissileZ (self, self->z + 36*FRACUNIT, self->target, PClass::FindActor("KnightAxe"));
 	return 0;
 }
 

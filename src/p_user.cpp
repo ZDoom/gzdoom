@@ -798,7 +798,7 @@ void APlayerPawn::GiveDeathmatchInventory()
 			AKey *key = (AKey *)GetDefaultByType (PClass::m_Types[i]);
 			if (key->KeyNumber != 0)
 			{
-				key = static_cast<AKey *>(Spawn (PClass::m_Types[i], 0,0,0, NO_REPLACE));
+				key = static_cast<AKey *>(Spawn(static_cast<PClassActor *>(PClass::m_Types[i]), 0,0,0, NO_REPLACE));
 				if (!key->CallTryPickup (this))
 				{
 					key->Destroy ();

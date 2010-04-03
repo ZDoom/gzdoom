@@ -124,8 +124,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FatAttack3)
 // Original idea: Linguica
 //
 
-AActor * P_OldSpawnMissile(AActor * source, AActor * owner, AActor * dest, const PClass *type);
-
 enum
 {
 	MSF_Standard = 0,

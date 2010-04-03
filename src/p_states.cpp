@@ -60,7 +60,7 @@
 
 FArchive &operator<< (FArchive &arc, FState *&state)
 {
-	const PClassActor *info;
+	PClassActor *info;
 
 	if (arc.IsStoring ())
 	{
@@ -94,7 +94,7 @@ FArchive &operator<< (FArchive &arc, FState *&state)
 	}
 	else
 	{
-		const PClassActor *info;
+		PClassActor *info;
 		DWORD ofs;
 
 		arc.UserReadClass<PClassActor>(info);
@@ -117,7 +117,7 @@ FArchive &operator<< (FArchive &arc, FState *&state)
 //
 //==========================================================================
 
-const PClassActor *FState::StaticFindStateOwner (const FState *state)
+PClassActor *FState::StaticFindStateOwner (const FState *state)
 {
 	for (unsigned int i = 0; i < PClass::m_RuntimeActors.Size(); ++i)
 	{
@@ -139,7 +139,7 @@ const PClassActor *FState::StaticFindStateOwner (const FState *state)
 //
 //==========================================================================
 
-const PClassActor *FState::StaticFindStateOwner (const FState *state, const PClassActor *info)
+PClassActor *FState::StaticFindStateOwner (const FState *state, PClassActor *info)
 {
 	while (info != NULL)
 	{

@@ -22,7 +22,7 @@
 //
 //==========================================================================
 
-void BlastActor (AActor *victim, fixed_t strength, fixed_t speed, AActor * Owner, const PClass * blasteffect)
+void BlastActor (AActor *victim, fixed_t strength, fixed_t speed, AActor *Owner, PClassActor *blasteffect)
 {
 	angle_t angle,ang;
 	AActor *mo;

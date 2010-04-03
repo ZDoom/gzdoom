@@ -566,7 +566,7 @@ void APowerCoupling::Die (AActor *source, AActor *inflictor)
 	players[i].mo->GiveInventoryType (QuestItemClasses[5]);
 	S_Sound (CHAN_VOICE, "svox/voc13", 1, ATTN_NORM);
 	players[i].SetLogNumber (13);
-	P_DropItem (this, PClass::FindClass("BrokenPowerCoupling"), -1, 256);
+	P_DropItem (this, PClass::FindActor("BrokenPowerCoupling"), -1, 256);
 	Destroy ();
 }
 

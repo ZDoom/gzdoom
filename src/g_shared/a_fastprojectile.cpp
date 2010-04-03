@@ -163,7 +163,7 @@ void AFastProjectile::Effect()
 				hitz = floorz;
 			}
 		
-			const PClass *trail = PClass::FindClass(name);
+			PClassActor *trail = PClass::FindActor(name);
 			if (trail != NULL)
 			{
 				AActor *act = Spawn (trail, x, y, hitz, ALLOW_REPLACE);

@@ -1043,7 +1043,7 @@ FArchive &FArchive::WriteObject (DObject *obj)
 	}
 	else
 	{
-		const PClass *type = RUNTIME_TYPE(obj);
+		PClass *type = RUNTIME_TYPE(obj);
 
 		if (type == RUNTIME_CLASS(DObject))
 		{
@@ -1361,7 +1361,7 @@ DWORD FArchive::FindName (const char *name, unsigned int bucket) const
 	return (DWORD)map;
 }
 
-DWORD FArchive::WriteClass (const PClass *info)
+DWORD FArchive::WriteClass (PClass *info)
 {
 	if (m_ClassCount >= PClass::m_Types.Size())
 	{
@@ -1378,7 +1378,7 @@ DWORD FArchive::WriteClass (const PClass *info)
 	return m_ClassCount++;
 }
 
-const PClass *FArchive::ReadClass ()
+PClass *FArchive::ReadClass ()
 {
 	struct String {
 		String() { val = NULL; }
@@ -1410,9 +1410,9 @@ const PClass *FArchive::ReadClass ()
 	return NULL;
 }
 
-const PClass *FArchive::ReadClass (const PClass *wanttype)
+PClass *FArchive::ReadClass (const PClass *wanttype)
 {
-	const PClass *type = ReadClass ();
+	PClass *type = ReadClass ();
 	if (!type->IsDescendantOf (wanttype))
 	{
 		I_Error ("Expected to extract an object of type '%s'.\n"
@@ -1422,14 +1422,14 @@ const PClass *FArchive::ReadClass (const PClass *wanttype)
 	return type;
 }
 
-const PClass *FArchive::ReadStoredClass (const PClass *wanttype)
+PClass *FArchive::ReadStoredClass (const PClass *wanttype)
 {
 	DWORD index = ReadCount ();
 	if (index >= m_ClassCount)
 	{
 		I_Error ("Class reference too high (%u; max is %u)\n", index, m_ClassCount);
 	}
-	const PClass *type = m_TypeMap[index].toCurrent;
+	PClass *type = m_TypeMap[index].toCurrent;
 	if (!type->IsDescendantOf (wanttype))
 	{
 		I_Error ("Expected to extract an object of type '%s'.\n"
@@ -1479,7 +1479,7 @@ DWORD FArchive::FindObjectIndex (const DObject *obj) const
 	return index;
 }
 
-void FArchive::UserWriteClass (const PClass *type)
+void FArchive::UserWriteClass (PClass *type)
 {
 	BYTE id;
 
@@ -1505,7 +1505,7 @@ void FArchive::UserWriteClass (const PClass *type)
 	}
 }
 
-void FArchive::UserReadClass (const PClass *&type)
+void FArchive::UserReadClass (PClass *&type)
 {
 	BYTE newclass;
 
@@ -1527,7 +1527,7 @@ void FArchive::UserReadClass (const PClass *&type)
 	}
 }
 
-FArchive &operator<< (FArchive &arc, const PClass * &info)
+FArchive &operator<< (FArchive &arc, PClass *&info)
 {
 	if (arc.IsStoring ())
 	{

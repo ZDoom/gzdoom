@@ -95,8 +95,8 @@ struct FState
 	}
 	void SetAction(VMFunction *func) { ActionFunc = func; }
 	bool CallAction(AActor *self, AActor *stateowner, StateCallData *statecall = NULL);
-	static const PClassActor *StaticFindStateOwner (const FState *state);
-	static const PClassActor *StaticFindStateOwner (const FState *state, const PClassActor *info);
+	static PClassActor *StaticFindStateOwner (const FState *state);
+	static PClassActor *StaticFindStateOwner (const FState *state, PClassActor *info);
 };
 
 struct FStateLabels;

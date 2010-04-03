@@ -250,7 +250,7 @@ void cht_DoCheat (player_t *player, int cheat)
 			{
 				if (i != 0)
 				{
-					player->mo->GiveInventoryType (*BeholdPowers[i]);
+					player->mo->GiveInventoryType(static_cast<PClassActor *>(*BeholdPowers[i]));
 					if (cheat == CHT_BEHOLDS)
 					{
 						P_GiveBody (player->mo, -100);
@@ -551,7 +551,7 @@ const char *cht_Morph (player_t *player, PClassPlayerPawn *morphclass, bool quic
 	return "";
 }
 
-void GiveSpawner (player_t *player, const PClass *type, int amount)
+void GiveSpawner (player_t *player, PClassInventory *type, int amount)
 {
 	if (player->mo == NULL || player->health <= 0)
 	{
@@ -648,7 +648,7 @@ void cht_Give (player_t *player, const char *name, int amount)
 		type = PClass::FindClass(gameinfo.backpacktype);
 		if (type != NULL)
 		{
-			GiveSpawner (player, type, 1);
+			GiveSpawner (player, static_cast<PClassInventory *>(type), 1);
 		}
 
 		if (!giveall)
@@ -665,10 +665,11 @@ void cht_Give (player_t *player, const char *name, int amount)
 
 			if (type->ParentClass == RUNTIME_CLASS(AAmmo))
 			{
-				AInventory *ammo = player->mo->FindInventory(static_cast<PClassActor *>(type));
+				PClassAmmo *atype = static_cast<PClassAmmo *>(type);
+				AInventory *ammo = player->mo->FindInventory(atype);
 				if (ammo == NULL)
 				{
-					ammo = static_cast<AInventory *>(Spawn (type, 0, 0, 0, NO_REPLACE));
+					ammo = static_cast<AInventory *>(Spawn (atype, 0, 0, 0, NO_REPLACE));
 					ammo->AttachToOwner (player->mo);
 					ammo->Amount = ammo->MaxAmount;
 				}
@@ -722,7 +723,7 @@ void cht_Give (player_t *player, const char *name, int amount)
 				AKey *key = (AKey *)GetDefaultByType (PClass::m_Types[i]);
 				if (key->KeyNumber != 0)
 				{
-					key = static_cast<AKey *>(Spawn (PClass::m_Types[i], 0,0,0, NO_REPLACE));
+					key = static_cast<AKey *>(Spawn(static_cast<PClassActor *>(PClass::m_Types[i]), 0,0,0, NO_REPLACE));
 					if (!key->CallTryPickup (player->mo))
 					{
 						key->Destroy ();
@@ -755,7 +756,7 @@ void cht_Give (player_t *player, const char *name, int amount)
 					AWeapon *def = (AWeapon*)GetDefaultByType (type);
 					if (!(def->WeaponFlags & WIF_CHEATNOTWEAPON))
 					{
-						GiveSpawner (player, type, 1);
+						GiveSpawner (player, static_cast<PClassInventory *>(type), 1);
 					}
 				}
 			}
@@ -779,7 +780,7 @@ void cht_Give (player_t *player, const char *name, int amount)
 					!type->IsDescendantOf (RUNTIME_CLASS(APowerup)) &&
 					!type->IsDescendantOf (RUNTIME_CLASS(AArmor)))
 				{
-					GiveSpawner (player, type, 1);
+					GiveSpawner (player, static_cast<PClassInventory *>(type), 1);
 				}
 			}
 		}
@@ -797,7 +798,7 @@ void cht_Give (player_t *player, const char *name, int amount)
 				AInventory *def = (AInventory*)GetDefaultByType (type);
 				if (def->Icon.isValid())
 				{
-					GiveSpawner (player, type, 1);
+					GiveSpawner (player, static_cast<PClassInventory *>(type), 1);
 				}
 			}
 		}
@@ -816,7 +817,7 @@ void cht_Give (player_t *player, const char *name, int amount)
 	}
 	else
 	{
-		GiveSpawner (player, type, amount);
+		GiveSpawner (player, static_cast<PClassInventory *>(type), amount);
 	}
 	return;
 }

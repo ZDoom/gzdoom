@@ -93,7 +93,7 @@ static void DragonSeek (AActor *actor, angle_t thresh, angle_t turnMax)
 			}
 			else if (pr_dragonseek() < 128 && P_CheckMissileRange(actor))
 			{
-				P_SpawnMissile(actor, target, PClass::FindClass ("DragonFireball"));						
+				P_SpawnMissile(actor, target, PClass::FindActor("DragonFireball"));						
 				S_Sound (actor, CHAN_WEAPON, actor->AttackSound, 1, ATTN_NORM);
 			}
 			actor->target = oldTarget;
@@ -255,7 +255,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_DragonAttack)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	P_SpawnMissile (self, self->target, PClass::FindClass ("DragonFireball"));
+	P_SpawnMissile (self, self->target, PClass::FindActor("DragonFireball"));
 	return 0;
 }
 

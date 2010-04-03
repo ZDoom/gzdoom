@@ -1660,7 +1660,7 @@ AInventory *ABackpackItem::CreateCopy (AActor *other)
 			if (amount < 0) amount = 0;
 			if (ammo == NULL)
 			{ // The player did not have the ammo. Add it.
-				ammo = static_cast<AAmmo *>(Spawn (type, 0, 0, 0, NO_REPLACE));
+				ammo = static_cast<AAmmo *>(Spawn(atype, 0, 0, 0, NO_REPLACE));
 				ammo->Amount = bDepleted ? 0 : amount;
 				if (ammo->BackpackMaxAmount > ammo->MaxAmount)
 				{

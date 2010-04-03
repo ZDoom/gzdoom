@@ -50,7 +50,7 @@ public:
 	void DoPickupSpecial (AActor *toucher);
 	void Serialize(FArchive &arc);
 private:
-	const PClass *DetermineType ();
+	PClassActor *DetermineType ();
 	AInventory *RealPickup;
 public:
 	bool droppedbymonster;

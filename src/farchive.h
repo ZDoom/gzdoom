@@ -167,13 +167,13 @@ virtual void Read (void *mem, unsigned int len);
 		void WriteCount (DWORD count);
 		DWORD ReadCount ();
 
-		void UserWriteClass (const PClass *info);
-		void UserReadClass (const PClass *&info);
-		template<typename T> void UserReadClass(const T *&info)
+		void UserWriteClass (PClass *info);
+		void UserReadClass (PClass *&info);
+		template<typename T> void UserReadClass(T *&info)
 		{
-			const PClass *myclass;
+			PClass *myclass;
 			UserReadClass(myclass);
-			info = dyn_cast<T>(const_cast<PClass *>(myclass));
+			info = dyn_cast<T>(myclass);
 		}
 
 		FArchive& operator<< (BYTE &c);
@@ -211,10 +211,10 @@ protected:
 
 		DWORD FindObjectIndex (const DObject *obj) const;
 		DWORD MapObject (const DObject *obj);
-		DWORD WriteClass (const PClass *info);
-		const PClass *ReadClass ();
-		const PClass *ReadClass (const PClass *wanttype);
-		const PClass *ReadStoredClass (const PClass *wanttype);
+		DWORD WriteClass (PClass *info);
+		PClass *ReadClass ();
+		PClass *ReadClass (const PClass *wanttype);
+		PClass *ReadStoredClass (const PClass *wanttype);
 		DWORD HashObject (const DObject *obj) const;
 		DWORD AddName (const char *name);
 		DWORD AddName (unsigned int start);	// Name has already been added to storage
@@ -232,8 +232,8 @@ protected:
 
 		struct TypeMap
 		{
-			const PClass *toCurrent;	// maps archive type index to execution type index
-			DWORD toArchive;		// maps execution type index to archive type index
+			PClass *toCurrent;	// maps archive type index to execution type index
+			DWORD toArchive;	// maps execution type index to archive type index
 
 			enum { NO_INDEX = 0xffffffff };
 		} *m_TypeMap;
@@ -287,7 +287,7 @@ inline FArchive &operator<< (FArchive &arc, T* &object)
 	return arc.SerializeObject ((DObject*&)object, RUNTIME_CLASS(T));
 }
 
-FArchive &operator<< (FArchive &arc, const PClass * &info);
+FArchive &operator<< (FArchive &arc, PClass * &info);
 
 class FFont;
 FArchive &SerializeFFontPtr (FArchive &arc, FFont* &font);

@@ -204,7 +204,7 @@ AInventory *AArtiPoisonBag::CreateCopy (AActor *other)
 	}
 
 	AInventory *copy;
-	const PClass *spawntype;
+	PClassActor *spawntype;
 
 	if (other->IsKindOf (PClass::FindClass(NAME_ClericPlayer)))
 	{

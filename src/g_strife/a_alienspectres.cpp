@@ -16,8 +16,6 @@
 static FRandom pr_spectrespawn ("AlienSpectreSpawn");
 static FRandom pr_spectrechunk ("212e4");
 
-AActor *P_SpawnSubMissile (AActor *source, const PClass *type, AActor *target);
-
 //============================================================================
 
 DEFINE_ACTION_FUNCTION(AActor, A_SpectreChunkSmall)
@@ -80,7 +78,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Spectre3Attack)
 	for (int i = 0; i < 20; ++i)
 	{
 		self->angle += ANGLE_180 / 20;
-		P_SpawnSubMissile (self, PClass::FindClass("SpectralLightningBall2"), self);
+		P_SpawnSubMissile (self, PClass::FindActor("SpectralLightningBall2"), self);
 	}
 	self->angle -= ANGLE_180 / 20 * 10;
 	return 0;

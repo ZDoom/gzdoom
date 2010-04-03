@@ -152,7 +152,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BrainSpit)
 	return 0;
 }
 
-static void SpawnFly(AActor *self, const PClass *spawntype, FSoundID sound)
+static void SpawnFly(AActor *self, PClassActor *spawntype, FSoundID sound)
 {
 	AActor *newmobj;
 	AActor *fog;
@@ -242,7 +242,7 @@ static void SpawnFly(AActor *self, const PClass *spawntype, FSoundID sound)
 		else if (r < 246) SpawnName = "HellKnight";
 		else			  SpawnName = "BaronOfHell";
 	}
-	spawntype = PClass::FindClass(SpawnName);
+	spawntype = PClass::FindActor(SpawnName);
 	if (spawntype != NULL)
 	{
 		newmobj = Spawn (spawntype, targ->x, targ->y, targ->z, ALLOW_REPLACE);
@@ -293,6 +293,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnSound)
 {
 	PARAM_ACTION_PROLOGUE;
 	S_Sound (self, CHAN_BODY, "brain/cube", 1, ATTN_IDLE);
-	SpawnFly(self, PClass::FindClass("SpawnFire"), "brain/spawn");
+	SpawnFly(self, PClass::FindActor("SpawnFire"), "brain/spawn");
 	return 0;
 }

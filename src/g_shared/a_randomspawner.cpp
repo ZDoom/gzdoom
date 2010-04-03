@@ -100,16 +100,26 @@ class ARandomSpawner : public AActor
 	// necessary to them -- such as their source and destination.
 	void PostBeginPlay()
 	{
-		AActor * newmobj = NULL;
+		AActor *newmobj = NULL;
 		bool boss = false;
-		if (Species == NAME_None) { Destroy(); return; }
-		const PClass * cls = PClass::FindClass(Species);
+		if (Species == NAME_None)
+		{
+			Destroy();
+			return;
+		}
+		PClassActor *cls = PClass::FindActor(Species);
 		if (this->flags & MF_MISSILE && target && target->target) // Attempting to spawn a missile.
 		{
-			if ((tracer == NULL) && (flags2 & MF2_SEEKERMISSILE)) tracer = target->target;
+			if ((tracer == NULL) && (flags2 & MF2_SEEKERMISSILE))
+			{
+				tracer = target->target;
+			}
 			newmobj = P_SpawnMissileXYZ(x, y, z, target, target->target, cls, false);
 		}
-		else newmobj = Spawn(cls, x, y, z, NO_REPLACE);
+		else
+		{
+			newmobj = Spawn(cls, x, y, z, NO_REPLACE);
+		}
 		if (newmobj != NULL)
 		{
 			// copy everything relevant

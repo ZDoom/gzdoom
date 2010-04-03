@@ -1727,8 +1727,8 @@ void APowerMorph::InitEffect( )
 	if (Owner != NULL && Owner->player != NULL && PlayerClass != NAME_None)
 	{
 		player_t *realplayer = Owner->player;	// Remember the identity of the player
-		const PClass *morph_flash = PClass::FindClass (MorphFlash);
-		const PClass *unmorph_flash = PClass::FindClass (UnMorphFlash);
+		PClassActor *morph_flash = PClass::FindActor(MorphFlash);
+		PClassActor *unmorph_flash = PClass::FindActor(UnMorphFlash);
 		PClassPlayerPawn *player_class = dyn_cast<PClassPlayerPawn>(PClass::FindClass (PlayerClass));
 		if (P_MorphPlayer(realplayer, realplayer, player_class, -1/*INDEFINITELY*/, MorphStyle, morph_flash, unmorph_flash))
 		{

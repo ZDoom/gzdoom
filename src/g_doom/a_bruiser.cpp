@@ -18,6 +18,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_BruisAttack)
 	}
 	
 	// launch a missile
-	P_SpawnMissile (self, self->target, PClass::FindClass("BaronBall"));
+	P_SpawnMissile (self, self->target, PClass::FindActor("BaronBall"));
 	return 0;
 }

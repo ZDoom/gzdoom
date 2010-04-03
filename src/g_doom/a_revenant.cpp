@@ -29,7 +29,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SkelMissile)
 				
 	A_FaceTarget (self);
 	missile = P_SpawnMissileZ (self, self->z + 48*FRACUNIT,
-		self->target, PClass::FindClass("RevenantTracer"));
+		self->target, PClass::FindActor("RevenantTracer"));
 
 	if (missile != NULL)
 	{

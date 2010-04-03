@@ -214,7 +214,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LeafSpawn)
 
 	for (i = (pr_leaf()&3)+1; i; i--)
 	{
-		mo = Spawn (pr_leaf()&1 ? PClass::FindClass ("Leaf1") : PClass::FindClass ("Leaf2"),
+		mo = Spawn (pr_leaf()&1 ? PClass::FindActor("Leaf1") : PClass::FindActor("Leaf2"),
 			self->x + (pr_leaf.Random2()<<14),
 			self->y + (pr_leaf.Random2()<<14),
 			self->z + (pr_leaf()<<14), ALLOW_REPLACE);

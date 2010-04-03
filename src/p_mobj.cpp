@@ -849,7 +849,7 @@ AInventory *AActor::FindInventory (FName type)
 //
 //============================================================================
 
-AInventory *AActor::GiveInventoryType (const PClass *type)
+AInventory *AActor::GiveInventoryType (PClassActor *type)
 {
 	AInventory *item = NULL;
 
@@ -873,7 +873,7 @@ AInventory *AActor::GiveInventoryType (const PClass *type)
 //
 //============================================================================
 
-bool AActor::GiveAmmo (const PClass *type, int amount)
+bool AActor::GiveAmmo (PClassAmmo *type, int amount)
 {
 	if (type != NULL)
 	{
@@ -5049,19 +5049,19 @@ static fixed_t GetDefaultSpeed(PClassActor *type)
 //
 //---------------------------------------------------------------------------
 
-AActor *P_SpawnMissile (AActor *source, AActor *dest, const PClass *type, AActor *owner)
+AActor *P_SpawnMissile (AActor *source, AActor *dest, PClassActor *type, AActor *owner)
 {
 	return P_SpawnMissileXYZ (source->x, source->y, source->z + 32*FRACUNIT,
 		source, dest, type, true, owner);
 }
 
-AActor *P_SpawnMissileZ (AActor *source, fixed_t z, AActor *dest, const PClass *type)
+AActor *P_SpawnMissileZ (AActor *source, fixed_t z, AActor *dest, PClassActor *type)
 {
 	return P_SpawnMissileXYZ (source->x, source->y, z, source, dest, type);
 }
 
 AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z,
-	AActor *source, AActor *dest, const PClass *type, bool checkspawn, AActor *owner)
+	AActor *source, AActor *dest, PClassActor *type, bool checkspawn, AActor *owner)
 {
 	if (dest == NULL)
 	{
@@ -5124,7 +5124,7 @@ AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z,
 	return (!checkspawn || P_CheckMissileSpawn (th)) ? th : NULL;
 }
 
-AActor * P_OldSpawnMissile(AActor * source, AActor * owner, AActor * dest, const PClass *type)
+AActor *P_OldSpawnMissile(AActor *source, AActor *owner, AActor *dest, PClassActor *type)
 {
 	angle_t an;
 	fixed_t dist;

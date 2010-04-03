@@ -17,7 +17,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BspiAttack)
 	A_FaceTarget (self);
 
 	// launch a missile
-	P_SpawnMissile (self, self->target, PClass::FindClass("ArachnotronPlasma"));
+	P_SpawnMissile (self, self->target, PClass::FindActor("ArachnotronPlasma"));
 	return 0;
 }
 

@@ -574,7 +574,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ClericAttack)
 
 	if (!self->target) return 0;
 
-	AActor * missile = P_SpawnMissileZ (self, self->z + 40*FRACUNIT, self->target, PClass::FindClass ("HolyMissile"));
+	AActor * missile = P_SpawnMissileZ (self, self->z + 40*FRACUNIT, self->target, PClass::FindActor("HolyMissile"));
 	if (missile != NULL) missile->tracer = NULL;	// No initial target
 	S_Sound (self, CHAN_WEAPON, "HolySymbolFire", 1, ATTN_NORM);
 	return 0;

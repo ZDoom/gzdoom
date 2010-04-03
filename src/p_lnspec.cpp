@@ -2556,7 +2556,7 @@ FUNC(LS_SetPlayerProperty)
 			{ // Give power to activator
 				if (power != 4)
 				{
-					APowerup *item = static_cast<APowerup*>(it->GiveInventoryType (*powers[power]));
+					APowerup *item = static_cast<APowerup*>(it->GiveInventoryType(static_cast<PClassActor *>(*powers[power])));
 					if (item != NULL && power == 0 && arg1 == 1) 
 					{
 						item->BlendColor = MakeSpecialColormap(INVERSECOLORMAP);

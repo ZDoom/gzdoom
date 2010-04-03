@@ -94,12 +94,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_LichAttack)
 	randAttack = pr_atk ();
 	if (randAttack < atkResolve1[dist])
 	{ // Ice ball
-		P_SpawnMissile (self, target, PClass::FindClass("HeadFX1"));
+		P_SpawnMissile (self, target, PClass::FindActor("HeadFX1"));
 		S_Sound (self, CHAN_BODY, "ironlich/attack2", 1, ATTN_NORM);
 	}
 	else if (randAttack < atkResolve2[dist])
 	{ // Fire column
-		baseFire = P_SpawnMissile (self, target, PClass::FindClass("HeadFX3"));
+		baseFire = P_SpawnMissile (self, target, PClass::FindActor("HeadFX3"));
 		if (baseFire != NULL)
 		{
 			baseFire->SetState (baseFire->FindState("NoGrow"));

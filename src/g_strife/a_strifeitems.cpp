@@ -81,7 +81,7 @@ bool AHealthTraining::TryPickup (AActor *&toucher)
 {
 	if (Super::TryPickup (toucher))
 	{
-		toucher->GiveInventoryType (PClass::FindClass("GunTraining"));
+		toucher->GiveInventoryType (PClass::FindActor("GunTraining"));
 		AInventory *coin = Spawn<ACoin> (0,0,0, NO_REPLACE);
 		if (coin != NULL)
 		{

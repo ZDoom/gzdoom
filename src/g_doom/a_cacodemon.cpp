@@ -30,6 +30,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_HeadAttack)
 	}
 	
 	// launch a missile
-	P_SpawnMissile (self, self->target, PClass::FindClass("CacodemonBall"));
+	P_SpawnMissile (self, self->target, PClass::FindActor("CacodemonBall"));
 	return 0;
 }

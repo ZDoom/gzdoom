@@ -70,7 +70,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DropWeaponPieces)
 
 	for (int i = 0, j = 0, fineang = 0; i < 3; ++i)
 	{
-		const PClass *cls = j==0? p1 : j==1? p2 : p3;
+		PClassActor *cls = j == 0 ?  p1 : j == 1 ? p2 : p3;
 		if (cls)
 		{
 			AActor *piece = Spawn (cls, self->x, self->y, self->z, ALLOW_REPLACE);

@@ -174,7 +174,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_UnsetFloat)
 //
 //==========================================================================
 static void DoAttack (AActor *self, bool domelee, bool domissile,
-					  int MeleeDamage, FSoundID MeleeSound, const PClass *MissileType,fixed_t MissileHeight)
+					  int MeleeDamage, FSoundID MeleeSound, PClassActor *MissileType,fixed_t MissileHeight)
 {
 	if (self->target == NULL) return;
 
@@ -189,9 +189,9 @@ static void DoAttack (AActor *self, bool domelee, bool domissile,
 	else if (domissile && MissileType != NULL)
 	{
 		// This seemingly senseless code is needed for proper aiming.
-		self->z+=MissileHeight-32*FRACUNIT;
-		AActor * missile = P_SpawnMissileXYZ (self->x, self->y, self->z + 32*FRACUNIT, self, self->target, MissileType, false);
-		self->z-=MissileHeight-32*FRACUNIT;
+		self->z += MissileHeight - 32*FRACUNIT;
+		AActor *missile = P_SpawnMissileXYZ (self->x, self->y, self->z + 32*FRACUNIT, self, self->target, MissileType, false);
+		self->z -= MissileHeight - 32*FRACUNIT;
 
 		if (missile)
 		{

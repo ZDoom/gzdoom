@@ -9,8 +9,6 @@
 #include "thingdef/thingdef.h"
 */
 
-AActor *P_SpawnSubMissile (AActor *source, const PClass *type, AActor *target);
-
 class ASpectralMonster : public AActor
 {
 	DECLARE_CLASS (ASpectralMonster, AActor)
@@ -41,7 +39,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpectralBigBallLightning)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	const PClass *cls = PClass::FindClass("SpectralLightningH3");
+	PClassActor *cls = PClass::FindActor("SpectralLightningH3");
 	if (cls)
 	{
 		self->angle += ANGLE_90;
@@ -72,8 +70,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpectralLightning)
 	x = self->x + pr_zap5.Random2(3) * FRACUNIT * 50;
 	y = self->y + pr_zap5.Random2(3) * FRACUNIT * 50;
 
-	flash = Spawn (self->threshold > 25 ? PClass::FindClass(NAME_SpectralLightningV2) :
-		PClass::FindClass(NAME_SpectralLightningV1), x, y, ONCEILINGZ, ALLOW_REPLACE);
+	flash = Spawn (self->threshold > 25 ? PClass::FindActor(NAME_SpectralLightningV2) :
+		PClass::FindActor(NAME_SpectralLightningV1), x, y, ONCEILINGZ, ALLOW_REPLACE);
 
 	flash->target = self->target;
 	flash->velz = -18*FRACUNIT;

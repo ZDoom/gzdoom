@@ -100,12 +100,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_IceGuyAttack)
 	P_SpawnMissileXYZ(self->x+FixedMul(self->radius>>1,
 		finecosine[an]), self->y+FixedMul(self->radius>>1,
 		finesine[an]), self->z+40*FRACUNIT, self, self->target,
-		PClass::FindClass ("IceGuyFX"));
+		PClass::FindActor("IceGuyFX"));
 	an = (self->angle-ANG90)>>ANGLETOFINESHIFT;
 	P_SpawnMissileXYZ(self->x+FixedMul(self->radius>>1,
 		finecosine[an]), self->y+FixedMul(self->radius>>1,
 		finesine[an]), self->z+40*FRACUNIT, self, self->target,
-		PClass::FindClass ("IceGuyFX"));
+		PClass::FindActor("IceGuyFX"));
 	S_Sound (self, CHAN_WEAPON, self->AttackSound, 1, ATTN_NORM);
 	return 0;
 }

@@ -424,7 +424,7 @@ static void ClearInventory (AActor *activator)
 //
 //============================================================================
 
-static void DoGiveInv (AActor *actor, const PClass *info, int amount)
+static void DoGiveInv (AActor *actor, PClassActor *info, int amount)
 {
 	AWeapon *savedPendingWeap = actor->player != NULL
 		? actor->player->PendingWeapon : NULL;
@@ -479,7 +479,7 @@ static void DoGiveInv (AActor *actor, const PClass *info, int amount)
 
 static void GiveInventory (AActor *activator, const char *type, int amount)
 {
-	const PClass *info;
+	PClassActor *info;
 
 	if (amount <= 0 || type == NULL)
 	{
@@ -489,7 +489,7 @@ static void GiveInventory (AActor *activator, const char *type, int amount)
 	{
 		type = "BasicArmorPickup";
 	}
-	info = PClass::FindClass (type);
+	info = PClass::FindActor(type);
 	if (info == NULL)
 	{
 		Printf ("ACS: I don't know what %s is.\n", type);
@@ -2259,7 +2259,7 @@ void DLevelScript::ReplaceTextures (int fromnamei, int tonamei, int flags)
 
 int DLevelScript::DoSpawn (int type, fixed_t x, fixed_t y, fixed_t z, int tid, int angle, bool force)
 {
-	const PClass *info = PClass::FindClass (FBehavior::StaticLookupString (type));
+	PClassActor *info = PClass::FindActor(FBehavior::StaticLookupString (type));
 	AActor *actor = NULL;
 	int spawncount = 0;
 
@@ -5536,7 +5536,7 @@ int DLevelScript::RunScript ()
 					}
 					else
 					{
-						item = activator->GiveInventoryType (type);
+						item = activator->GiveInventoryType (static_cast<PClassAmmo *>(type));
 						item->MaxAmount = STACK(1);
 						item->Amount = 0;
 					}
@@ -6356,13 +6356,13 @@ int DLevelScript::RunScript ()
 				FName playerclass_name = FBehavior::StaticLookupString(STACK(6));
 				PClassPlayerPawn *playerclass = dyn_cast<PClassPlayerPawn>(PClass::FindClass (playerclass_name));
 				FName monsterclass_name = FBehavior::StaticLookupString(STACK(5));
-				const PClass *monsterclass = PClass::FindClass (monsterclass_name);
+				PClassActor *monsterclass = PClass::FindActor(monsterclass_name);
 				int duration = STACK(4);
 				int style = STACK(3);
 				FName morphflash_name = FBehavior::StaticLookupString(STACK(2));
-				const PClass *morphflash = PClass::FindClass (morphflash_name);
+				PClassActor *morphflash = PClass::FindActor(morphflash_name);
 				FName unmorphflash_name = FBehavior::StaticLookupString(STACK(1));
-				const PClass *unmorphflash = PClass::FindClass (unmorphflash_name);
+				PClassActor *unmorphflash = PClass::FindActor(unmorphflash_name);
 				int changes = 0;
 
 				if (tag == 0)

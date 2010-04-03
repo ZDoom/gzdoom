@@ -2896,7 +2896,7 @@ void ModifyDropAmount(AInventory *inv, int dropamount);
 
 bool ADehackedPickup::TryPickup (AActor *&toucher)
 {
-	const PClass *type = DetermineType ();
+	PClassActor *type = DetermineType ();
 	if (type == NULL)
 	{
 		return false;
@@ -2968,7 +2968,7 @@ void ADehackedPickup::Destroy ()
 	Super::Destroy ();
 }
 
-const PClass *ADehackedPickup::DetermineType ()
+PClassActor *ADehackedPickup::DetermineType ()
 {
 	// Look at the actor's current sprite to determine what kind of
 	// item to pretend to me.
@@ -2981,7 +2981,7 @@ const PClass *ADehackedPickup::DetermineType ()
 		int lex = memcmp (DehSpriteMappings[mid].Sprite, sprites[sprite].name, 4);
 		if (lex == 0)
 		{
-			return PClass::FindClass (DehSpriteMappings[mid].ClassName);
+			return PClass::FindActor(DehSpriteMappings[mid].ClassName);
 		}
 		else if (lex < 0)
 		{

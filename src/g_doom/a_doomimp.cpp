@@ -33,6 +33,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_TroopAttack)
 	}
 	
 	// launch a missile
-	P_SpawnMissile (self, self->target, PClass::FindClass("DoomImpBall"));
+	P_SpawnMissile (self, self->target, PClass::FindActor("DoomImpBall"));
 	return 0;
 }

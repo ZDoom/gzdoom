@@ -1283,7 +1283,7 @@ void G_PlayerReborn (int player)
 	userinfo_t  userinfo;	// [RH] Save userinfo
 	botskill_t  b_skill;//Added by MC:
 	APlayerPawn *actor;
-	const PClass *cls;
+	PClassPlayerPawn *cls;
 	FString		log;
 
 	p = &players[player];

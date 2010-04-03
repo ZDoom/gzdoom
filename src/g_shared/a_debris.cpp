@@ -32,7 +32,7 @@ IMPLEMENT_CLASS(AGlassShard)
 void P_SpawnDirt (AActor *actor, fixed_t radius)
 {
 	fixed_t x,y,z;
-	const PClass *dtype = NULL;
+	PClassActor *dtype = NULL;
 	AActor *mo;
 	angle_t angle;
 
@@ -43,7 +43,7 @@ void P_SpawnDirt (AActor *actor, fixed_t radius)
 
 	char fmt[8];
 	mysnprintf(fmt, countof(fmt), "Dirt%d", 1 + pr_dirt()%6);
-	dtype = PClass::FindClass(fmt);
+	dtype = PClass::FindActor(fmt);
 	if (dtype)
 	{
 		mo = Spawn (dtype, x, y, z, ALLOW_REPLACE);

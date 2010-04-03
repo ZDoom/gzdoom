@@ -74,7 +74,7 @@ void ATeleportFog::PostBeginPlay ()
 
 void P_SpawnTeleportFog(fixed_t x, fixed_t y, fixed_t z, int spawnid)
 {
-	const PClass *fog=NULL;
+	PClassActor *fog = NULL;
 
 	if (spawnid > 0 && spawnid < MAX_SPAWNABLES && SpawnableThings[spawnid] != NULL)
 	{

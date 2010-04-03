@@ -3132,12 +3132,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetUserVar)
 	PARAM_NAME	(varname);
 	PARAM_INT	(value);
 
-	PSymbol *sym = self->GetClass()->Symbols.FindSymbol(varname, true);
-	PSymbolVariable *var;
+	PSymbolVariable *var = dyn_cast<PSymbolVariable>(self->GetClass()->Symbols.FindSymbol(varname, true));
 
-	if (sym == NULL || sym->SymbolType != SYM_Variable ||
-		!(var = static_cast<PSymbolVariable *>(sym))->bUserVar ||
-		var->ValueType.Type != VAL_Int)
+	if (var == NULL || !var->bUserVar || var->ValueType.Type != VAL_Int)
 	{
 		Printf("%s is not a user variable in class %s\n", varname.GetChars(),
 			self->GetClass()->TypeName.GetChars());
@@ -3161,12 +3158,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetUserArray)
 	PARAM_INT	(pos);
 	PARAM_INT	(value);
 
-	PSymbol *sym = self->GetClass()->Symbols.FindSymbol(varname, true);
-	PSymbolVariable *var;
+	PSymbolVariable *var = dyn_cast<PSymbolVariable>(self->GetClass()->Symbols.FindSymbol(varname, true));
 
-	if (sym == NULL || sym->SymbolType != SYM_Variable ||
-		!(var = static_cast<PSymbolVariable *>(sym))->bUserVar ||
-		var->ValueType.Type != VAL_Array || var->ValueType.BaseType != VAL_Int)
+	if (var == NULL || !var->bUserVar || var->ValueType.Type != VAL_Array || var->ValueType.BaseType != VAL_Int)
 	{
 		Printf("%s is not a user array in class %s\n", varname.GetChars(),
 			self->GetClass()->TypeName.GetChars());

@@ -394,21 +394,17 @@ void DObject::SerializeUserVars(FArchive &arc)
 
 			while (it.NextPair(pair))
 			{
-				PSymbol *sym = pair->Value;
-				if (sym->SymbolType == SYM_Variable)
+				PSymbolVariable *var = dyn_cast<PSymbolVariable>(pair->Value);
+				if (var != NULL && var->bUserVar)
 				{
-					PSymbolVariable *var = static_cast<PSymbolVariable *>(sym);
-					if (var->bUserVar)
-					{
-						count = var->ValueType.Type == VAL_Array ? var->ValueType.size : 1;
-						varloc = (int *)(reinterpret_cast<BYTE *>(this) + var->offset);
+					count = var->ValueType.Type == VAL_Array ? var->ValueType.size : 1;
+					varloc = (int *)(reinterpret_cast<BYTE *>(this) + var->offset);
 
-						arc << var->SymbolName;
-						arc.WriteCount(count);
-						for (j = 0; j < count; ++j)
-						{
-							arc << varloc[j];
-						}
+					arc << var->SymbolName;
+					arc.WriteCount(count);
+					for (j = 0; j < count; ++j)
+					{
+						arc << varloc[j];
 					}
 				}
 			}
@@ -423,18 +419,13 @@ void DObject::SerializeUserVars(FArchive &arc)
 		arc << varname;
 		while (varname != NAME_None)
 		{
-			PSymbol *sym = symt->FindSymbol(varname, true);
+			PSymbolVariable *var = dyn_cast<PSymbolVariable>(symt->FindSymbol(varname, true));
 			DWORD wanted = 0;
 
-			if (sym != NULL && sym->SymbolType == SYM_Variable)
+			if (var != NULL && var->bUserVar)
 			{
-				PSymbolVariable *var = static_cast<PSymbolVariable *>(sym);
-
-				if (var->bUserVar)
-				{
-					wanted = var->ValueType.Type == VAL_Array ? var->ValueType.size : 1;
-					varloc = (int *)(reinterpret_cast<BYTE *>(this) + var->offset);
-				}
+				wanted = var->ValueType.Type == VAL_Array ? var->ValueType.size : 1;
+				varloc = (int *)(reinterpret_cast<BYTE *>(this) + var->offset);
 			}
 			count = arc.ReadCount();
 			for (j = 0; j < MIN(wanted, count); ++j)

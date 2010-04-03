@@ -82,7 +82,7 @@ static void UnloadDehSupp ();
 
 
 // This is a list of all the action functions used by each of Doom's states.
-static TArray<PSymbol *> Actions;
+static TArray<PSymbolActionFunction *> Actions;
 
 // These are the original heights of every Doom 2 thing. They are used if a patch
 // specifies that a thing should be hanging from the ceiling but doesn't specify
@@ -156,7 +156,7 @@ static TArray<MBFParamState> MBFParamStates;
 // Data on how to correctly modify the codepointers
 struct CodePointerAlias
 {
-	char name[20];
+	FName name;
 	char alias[20];
 	BYTE params;
 };
@@ -630,11 +630,9 @@ void SetDehParams(FState * state, int codepointer)
 	FScriptPosition * pos = new FScriptPosition(FString("DEHACKED"), 0);
 	
 	// Let's identify the codepointer we're dealing with.
-	PSymbolActionFunction * sym; PSymbol * s;	
-	s = RUNTIME_CLASS(AInventory)->Symbols.FindSymbol(FName(MBFCodePointers[codepointer].name), true);
-	if (!s || s->SymbolType != SYM_ActionFunction) return;
-	sym = static_cast<PSymbolActionFunction*>(s);
-
+	PSymbolActionFunction *sym;
+	sym = dyn_cast<PSymbolActionFunction>(RUNTIME_CLASS(AInventory)->Symbols.FindSymbol(FName(MBFCodePointers[codepointer].name), true));
+	if (sym == NULL) return;
 
 	// Bleargh! This will all have to be redone once scripting works
 
@@ -1598,22 +1596,20 @@ static int PatchWeapon (int weapNum)
 	return result;
 }
 
-static void SetPointer(FState *state, PSymbol *sym, int frame = 0)
+static void SetPointer(FState *state, PSymbolActionFunction *sym, int frame = 0)
 {
-	if (sym==NULL || sym->SymbolType != SYM_ActionFunction)
+	if (sym == NULL)
 	{
 		state->SetAction(NULL);
 		return;
 	}
 	else
 	{
-		FString symname = sym->SymbolName.GetChars();
-		state->SetAction(static_cast<PSymbolActionFunction*>(sym)->Function);
+		state->SetAction(sym->Function);
 
-		// Note: CompareNoCase() calls stricmp() and therefore returns 0 when they're the same.
 		for (unsigned int i = 0; i < MBFCodePointers.Size(); i++)
 		{
-			if (!symname.CompareNoCase(MBFCodePointers[i].name))
+			if (sym->SymbolName == MBFCodePointers[i].name)
 			{
 				MBFParamState newstate;
 				newstate.state = state;
@@ -1667,7 +1663,9 @@ static int PatchPointer (int ptrNum)
 			{
 				int index = atoi(Line2);
 				if ((unsigned)(index) >= Actions.Size())
+				{
 					SetPointer(state, NULL);
+				}
 				else
 				{
 					SetPointer(state, Actions[index], CodePConv[ptrNum]);
@@ -1990,15 +1988,15 @@ static int PatchCodePtrs (int dummy)
 
 				// This skips the action table and goes directly to the internal symbol table
 				// DEH compatible functions are easy to recognize.
-				PSymbol *sym = RUNTIME_CLASS(AInventory)->Symbols.FindSymbol(symname, true);
-				if (sym == NULL || sym->SymbolType != SYM_ActionFunction)
+				PSymbolActionFunction *sym = dyn_cast<PSymbolActionFunction>(RUNTIME_CLASS(AInventory)->Symbols.FindSymbol(symname, true));
+				if (sym == NULL)
 				{
 					Printf("Frame %d: Unknown code pointer '%s'\n", frame, Line2);
 				}
 				else
 				{
-					FString &args = static_cast<PSymbolActionFunction*>(sym)->Arguments;
-					if (args.Len()!=0 && (args[0]<'a' || args[0]>'z'))
+					FString &args = sym->Arguments;
+					if (args.Len() != 0 && (args[0] < 'a' || args[0] > 'z'))
 					{
 						Printf("Frame %d: Incompatible code pointer '%s'\n", frame, Line2);
 						sym = NULL;
@@ -2579,15 +2577,15 @@ static bool LoadDehSupp ()
 						// or AActor so this will find all of them.
 						FString name = "A_";
 						name << sc.String;
-						PSymbol *sym = RUNTIME_CLASS(AInventory)->Symbols.FindSymbol(name, true);
-						if (sym == NULL || sym->SymbolType != SYM_ActionFunction)
+						PSymbolActionFunction *sym = dyn_cast<PSymbolActionFunction>(RUNTIME_CLASS(AInventory)->Symbols.FindSymbol(name, true));
+						if (sym == NULL)
 						{
 							sc.ScriptError("Unknown code pointer '%s'", sc.String);
 						}
 						else
 						{
-							FString &args = static_cast<PSymbolActionFunction*>(sym)->Arguments;
-							if (args.Len()!=0 && (args[0]<'a' || args[0]>'z'))
+							FString &args = sym->Arguments;
+							if (args.Len() != 0 && (args[0] < 'a' || args[0] > 'z'))
 							{
 								sc.ScriptError("Incompatible code pointer '%s'", sc.String);
 							}
@@ -2814,8 +2812,7 @@ static bool LoadDehSupp ()
 					temp.alias[19]=0;
 					sc.MustGetStringName(",");
 					sc.MustGetString();
-					strncpy(temp.name, sc.String, 19);
-					temp.name[19]=0;
+					temp.name = sc.String;
 					sc.MustGetStringName(",");
 					sc.MustGetNumber();
 					temp.params = sc.Number;

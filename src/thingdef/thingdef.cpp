@@ -65,6 +65,7 @@
 #include "thingdef_exp.h"
 #include "a_sharedglobal.h"
 #include "vmbuilder.h"
+#include "stats.h"
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 void InitThingdef();
@@ -368,7 +369,9 @@ static void FinishThingdef()
 void LoadActors ()
 {
 	int lastlump, lump;
+	cycle_t timer;
 
+	timer.Reset(); timer.Clock();
 	FScriptPosition::ResetErrorCounter();
 	InitThingdef();
 	lastlump = 0;
@@ -382,5 +385,8 @@ void LoadActors ()
 		I_Error("%d errors while parsing DECORATE scripts", FScriptPosition::ErrorCounter);
 	}
 	FinishThingdef();
+	timer.Unclock();
+	Printf("DECORATE parsing took %.2f ms\n", timer.TimeMS());
+	// Base time: ~52 ms
 }
 

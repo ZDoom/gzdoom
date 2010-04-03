@@ -272,10 +272,9 @@ do_stop:
 					goto endofstate;
 				}
 
-				PSymbol *sym = bag.Info->Symbols.FindSymbol (FName(sc.String, true), true);
-				if (sym != NULL && sym->SymbolType == SYM_ActionFunction)
+				PSymbolActionFunction *afd = dyn_cast<PSymbolActionFunction>(bag.Info->Symbols.FindSymbol (FName(sc.String, true), true));
+				if (afd != NULL)
 				{
-					PSymbolActionFunction *afd = static_cast<PSymbolActionFunction *>(sym);
 					tcall->Function = afd->Function;
 					if (!afd->Arguments.IsEmpty())
 					{

@@ -2976,12 +2976,10 @@ int DLevelScript::LineFromID(int id)
 
 static void SetUserVariable(AActor *self, FName varname, int index, int value)
 {
-	PSymbol *sym = self->GetClass()->Symbols.FindSymbol(varname, true);
 	int max;
-	PSymbolVariable *var;
+	PSymbolVariable *var = dyn_cast<PSymbolVariable>(self->GetClass()->Symbols.FindSymbol(varname, true));
 
-	if (sym == NULL || sym->SymbolType != SYM_Variable ||
-		!(var = static_cast<PSymbolVariable *>(sym))->bUserVar)
+	if (var == NULL || !var->bUserVar)
 	{
 		return;
 	}
@@ -3006,12 +3004,10 @@ static void SetUserVariable(AActor *self, FName varname, int index, int value)
 
 static int GetUserVariable(AActor *self, FName varname, int index)
 {
-	PSymbol *sym = self->GetClass()->Symbols.FindSymbol(varname, true);
 	int max;
-	PSymbolVariable *var;
+	PSymbolVariable *var = dyn_cast<PSymbolVariable>(self->GetClass()->Symbols.FindSymbol(varname, true));
 
-	if (sym == NULL || sym->SymbolType != SYM_Variable ||
-		!(var = static_cast<PSymbolVariable *>(sym))->bUserVar)
+	if (var == NULL || !var->bUserVar)
 	{
 		return 0;
 	}

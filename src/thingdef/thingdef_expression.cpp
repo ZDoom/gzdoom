@@ -453,9 +453,9 @@ ExpVal FxConstant::EvalExpression (AActor *self)
 FxExpression *FxConstant::MakeConstant(PSymbol *sym, const FScriptPosition &pos)
 {
 	FxExpression *x;
-	if (sym->SymbolType == SYM_Const)
+	PSymbolConst *csym = dyn_cast<PSymbolConst>(sym);
+	if (csym != NULL)
 	{
-		PSymbolConst *csym = static_cast<PSymbolConst*>(sym);
 		switch(csym->ValueType)
 		{
 		case VAL_Int:
@@ -2728,12 +2728,12 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 	// see if the current class (if valid) defines something with this name.
 	if ((sym = ctx.FindInClass(Identifier)) != NULL)
 	{
-		if (sym->SymbolType == SYM_Const)
+		if (sym->IsKindOf(RUNTIME_CLASS(PSymbolConst)))
 		{
 			ScriptPosition.Message(MSG_DEBUGLOG, "Resolving name '%s' as class constant\n", Identifier.GetChars());
 			newex = FxConstant::MakeConstant(sym, ScriptPosition);
 		}
-		else if (sym->SymbolType == SYM_Variable)
+		else if (sym->IsKindOf(RUNTIME_CLASS(PSymbolVariable)))
 		{
 			PSymbolVariable *vsym = static_cast<PSymbolVariable*>(sym);
 			ScriptPosition.Message(MSG_DEBUGLOG, "Resolving name '%s' as member variable, index %d\n", Identifier.GetChars(), vsym->offset);
@@ -2747,12 +2747,12 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 	// now check the global identifiers.
 	else if ((sym = ctx.FindGlobal(Identifier)) != NULL)
 	{
-		if (sym->SymbolType == SYM_Const)
+		if (sym->IsKindOf(RUNTIME_CLASS(PSymbolConst)))
 		{
 			ScriptPosition.Message(MSG_DEBUGLOG, "Resolving name '%s' as global constant\n", Identifier.GetChars());
 			newex = FxConstant::MakeConstant(sym, ScriptPosition);
 		}
-		else if (sym->SymbolType == SYM_Variable)	// global variables will always be native
+		else if (sym->IsKindOf(RUNTIME_CLASS(PSymbolVariable)))	// global variables will always be native
 		{
 			PSymbolVariable *vsym = static_cast<PSymbolVariable*>(sym);
 			ScriptPosition.Message(MSG_DEBUGLOG, "Resolving name '%s' as global variable, address %d\n", Identifier.GetChars(), vsym->offset);

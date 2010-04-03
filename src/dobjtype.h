@@ -10,25 +10,16 @@
 
 // Symbol information -------------------------------------------------------
 
-enum ESymbolType
-{
-	SYM_Const,
-	SYM_Variable,
-	SYM_ActionFunction,
-	SYM_VMFunction
-};
-
 class PSymbol : public DObject
 {
 	DECLARE_ABSTRACT_CLASS(PSymbol, DObject);
 public:
 	virtual ~PSymbol();
 
-	ESymbolType SymbolType;
 	FName SymbolName;
 
 protected:
-	PSymbol(FName name, ESymbolType type) { SymbolType = type; SymbolName = name; }
+	PSymbol(FName name) { SymbolName = name; }
 };
 
 // A constant value ---------------------------------------------------------
@@ -44,8 +35,8 @@ public:
 		double Float;
 	};
 
-	PSymbolConst(FName name) : PSymbol(name, SYM_Const) {}
-	PSymbolConst() : PSymbol(NAME_None, SYM_Const) {}
+	PSymbolConst(FName name) : PSymbol(name) {}
+	PSymbolConst() : PSymbol(NAME_None) {}
 };
 
 // A variable ---------------------------------------------------------
@@ -59,8 +50,8 @@ public:
 	intptr_t offset;
 	bool bUserVar;
 
-	PSymbolVariable(FName name) : PSymbol(name, SYM_Variable) {}
-	PSymbolVariable() : PSymbol(NAME_None, SYM_Variable) {}
+	PSymbolVariable(FName name) : PSymbol(name) {}
+	PSymbolVariable() : PSymbol(NAME_None) {}
 };
 
 // An action function -------------------------------------------------------
@@ -98,8 +89,8 @@ public:
 	VMFunction *Function;
 	int defaultparameterindex;
 
-	PSymbolActionFunction(FName name) : PSymbol(name, SYM_ActionFunction) {}
-	PSymbolActionFunction() : PSymbol(NAME_None, SYM_ActionFunction) {}
+	PSymbolActionFunction(FName name) : PSymbol(name) {}
+	PSymbolActionFunction() : PSymbol(NAME_None) {}
 };
 
 // A VM function ------------------------------------------------------------
@@ -111,8 +102,8 @@ class PSymbolVMFunction : public PSymbol
 public:
 	VMFunction *Function;
 
-	PSymbolVMFunction(FName name) : PSymbol(name, SYM_VMFunction) {}
-	PSymbolVMFunction() : PSymbol(NAME_None, SYM_VMFunction) {}
+	PSymbolVMFunction(FName name) : PSymbol(name) {}
+	PSymbolVMFunction() : PSymbol(NAME_None) {}
 };
 
 // A symbol table -----------------------------------------------------------

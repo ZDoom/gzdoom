@@ -421,6 +421,7 @@ void PClassPlayerPawn::Derive(PClass *newclass)
 	newp->HealingRadiusType = HealingRadiusType;
 	newp->ColorRangeStart = ColorRangeStart;
 	newp->ColorRangeEnd = ColorRangeEnd;
+	newp->ColorSets = ColorSets;
 	for (i = 0; i < countof(HexenArmor); ++i)
 	{
 		newp->HexenArmor[i] = HexenArmor[i];
@@ -430,6 +431,25 @@ void PClassPlayerPawn::Derive(PClass *newclass)
 		newp->Slot[i] = Slot[i];
 	}
 }
+
+static int STACK_ARGS intcmp(const void *a, const void *b)
+{
+	return *(const int *)a - *(const int *)b;
+}
+
+void PClassPlayerPawn::EnumColorSets(TArray<int> *out)
+{
+	out->Clear();
+	FPlayerColorSetMap::Iterator it(ColorSets);
+	FPlayerColorSetMap::Pair *pair;
+
+	while (it.NextPair(pair))
+	{
+		out->Push(pair->Key);
+	}
+	qsort(&(*out)[0], out->Size(), sizeof(int), intcmp);
+}
+
 
 //===========================================================================
 //
@@ -2669,48 +2689,3 @@ void player_t::Serialize (FArchive &arc)
 		original_oldbuttons = ~0;
 	}
 }
-
-
-static FPlayerColorSetMap *GetPlayerColors(FName classname)
-{
-	PClassPlayerPawn *cls = dyn_cast<PClassPlayerPawn>(PClass::FindClass(classname));
-
-	if (cls != NULL)
-	{
-		return cls->ColorSets;
-	}
-	return NULL;
-}
-
-FPlayerColorSet *P_GetPlayerColorSet(FName classname, int setnum)
-{
-	FPlayerColorSetMap *map = GetPlayerColors(classname);
-	if (map == NULL)
-	{
-		return NULL;
-	}
-	return map->CheckKey(setnum);
-}
-
-static int STACK_ARGS intcmp(const void *a, const void *b)
-{
-	return *(const int *)a - *(const int *)b;
-}
-
-void P_EnumPlayerColorSets(FName classname, TArray<int> *out)
-{
-	out->Clear();
-	FPlayerColorSetMap *map = GetPlayerColors(classname);
-	if (map != NULL)
-	{
-		FPlayerColorSetMap::Iterator it(*map);
-		FPlayerColorSetMap::Pair *pair;
-
-		while (it.NextPair(pair))
-		{
-			out->Push(pair->Key);
-		}
-		qsort(&(*out)[0], out->Size(), sizeof(int), intcmp);
-	}
-}
-

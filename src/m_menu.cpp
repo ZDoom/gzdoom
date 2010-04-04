@@ -2093,7 +2093,7 @@ void M_PlayerSetup (void)
 	}
 	PlayerSkin = players[consoleplayer].userinfo.skin;
 	R_GetPlayerTranslation (players[consoleplayer].userinfo.color,
-		P_GetPlayerColorSet(PlayerClass->Type->TypeName, players[consoleplayer].userinfo.colorset),
+		PlayerClass->Type->GetColorSet(players[consoleplayer].userinfo.colorset),
 		&skins[PlayerSkin], translationtables[TRANSLATION_Players][MAXPLAYERS]);
 	PlayerState = GetDefaultByType (PlayerClass->Type)->SeeState;
 	PlayerTics = PlayerState->GetTics();
@@ -2101,7 +2101,7 @@ void M_PlayerSetup (void)
 	{
 		FireTexture = new FBackdropTexture;
 	}
-	P_EnumPlayerColorSets(PlayerClass->Type->TypeName, &PlayerColorSets);
+	PlayerClass->Type->EnumColorSets(&PlayerColorSets);
 }
 
 static void M_PlayerSetupTicker (void)
@@ -2119,7 +2119,7 @@ static void M_PlayerSetupTicker (void)
 			item = (MenuTime>>2) % (ClassMenuDef.numitems-1);
 
 		PlayerClass = &PlayerClasses[D_PlayerClassToInt (ClassMenuItems[item].name)];
-		P_EnumPlayerColorSets(PlayerClass->Type->TypeName, &PlayerColorSets);
+		PlayerClass->Type->EnumColorSets(&PlayerColorSets);
 	}
 	else
 	{
@@ -2133,7 +2133,7 @@ static void M_PlayerSetupTicker (void)
 
 		PlayerSkin = R_FindSkin (skins[PlayerSkin].name, int(PlayerClass - &PlayerClasses[0]));
 		R_GetPlayerTranslation (players[consoleplayer].userinfo.color,
-			P_GetPlayerColorSet(PlayerClass->Type->TypeName, players[consoleplayer].userinfo.colorset),
+			PlayerClass->Type->GetColorSet(players[consoleplayer].userinfo.colorset),
 			&skins[PlayerSkin], translationtables[TRANSLATION_Players][MAXPLAYERS]);
 	}
 
@@ -2290,7 +2290,7 @@ static void M_PlayerSetupDrawer ()
 	}
 
 	// Draw player color selection and sliders
-	FPlayerColorSet *colorset = P_GetPlayerColorSet(PlayerClass->Type->TypeName, players[consoleplayer].userinfo.colorset);
+	FPlayerColorSet *colorset = PlayerClass->Type->GetColorSet(players[consoleplayer].userinfo.colorset);
 	x = SmallFont->StringWidth("Color") + 8 + PSetupDef.x;
 	screen->DrawText(SmallFont, label, PSetupDef.x, PSetupDef.y + LINEHEIGHT*2+yo, "Color", DTA_Clean, true, TAG_DONE);
 	screen->DrawText(SmallFont, value, x, PSetupDef.y + LINEHEIGHT*2+yo,
@@ -2604,7 +2604,7 @@ static void M_ChangeSkin (int choice)
 	} while (!PlayerClass->CheckSkin (PlayerSkin));
 
 	R_GetPlayerTranslation (players[consoleplayer].userinfo.color,
-		P_GetPlayerColorSet(PlayerClass->Type->TypeName, players[consoleplayer].userinfo.colorset),
+		PlayerClass->Type->GetColorSet(players[consoleplayer].userinfo.colorset),
 		&skins[PlayerSkin], translationtables[TRANSLATION_Players][MAXPLAYERS]);
 
 	cvar_set ("skin", skins[PlayerSkin].name);
@@ -2762,7 +2762,7 @@ static void M_ChangeColorSet (int choice)
 	mysnprintf(command, countof(command), "colorset %d", mycolorset);
 	C_DoCommand(command);
 	R_GetPlayerTranslation(players[consoleplayer].userinfo.color,
-		P_GetPlayerColorSet(PlayerClass->Type->TypeName, mycolorset),
+		PlayerClass->Type->GetColorSet(mycolorset),
 		&skins[PlayerSkin], translationtables[TRANSLATION_Players][MAXPLAYERS]);
 }
 
@@ -2773,7 +2773,7 @@ static void SendNewColor (int red, int green, int blue)
 	mysnprintf (command, countof(command), "color \"%02x %02x %02x\"", red, green, blue);
 	C_DoCommand (command);
 	R_GetPlayerTranslation(MAKERGB (red, green, blue),
-		P_GetPlayerColorSet(PlayerClass->Type->TypeName, players[consoleplayer].userinfo.colorset),
+		PlayerClass->Type->GetColorSet(players[consoleplayer].userinfo.colorset),
 		&skins[PlayerSkin], translationtables[TRANSLATION_Players][MAXPLAYERS]);
 }
 
@@ -4116,5 +4116,5 @@ static void PickPlayerClass ()
 	}
 
 	PlayerClass = &PlayerClasses[pclass];
-	P_EnumPlayerColorSets(PlayerClass->Type->TypeName, &PlayerColorSets);
+	PlayerClass->Type->EnumColorSets(&PlayerColorSets);
 }

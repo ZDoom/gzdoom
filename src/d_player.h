@@ -46,6 +46,20 @@
 
 class player_t;
 
+// Standard pre-defined skin colors
+struct FPlayerColorSet
+{
+	FName Name;			// Name of this color
+
+	int Lump;			// Lump to read the translation from, otherwise use next 2 fields
+	BYTE FirstColor, LastColor;		// Describes the range of colors to use for the translation
+
+	BYTE RepresentativeColor;		// A palette entry representative of this translation,
+									// for map arrows and status bar backgrounds and such
+};
+typedef TMap<int, FPlayerColorSet> FPlayerColorSetMap;
+
+
 class PClassPlayerPawn : public PClassActor
 {
 	DECLARE_CLASS(PClassPlayerPawn, PClassActor);
@@ -53,6 +67,8 @@ protected:
 	virtual void Derive(PClass *newclass);
 public:
 	PClassPlayerPawn();
+	void EnumColorSets(TArray<int> *out);
+	FPlayerColorSet *GetColorSet(int setnum) { return ColorSets.CheckKey(setnum); }
 
 	FString DisplayName;	// Display name (used in menus, etc.)
 	FString SoundClass;		// Sound class
@@ -63,10 +79,8 @@ public:
 	fixed_t HexenArmor[5];
 	BYTE ColorRangeStart;	// Skin color range
 	BYTE ColorRangeEnd;
+	FPlayerColorSetMap ColorSets;
 };
-
-FPlayerColorSet *P_GetPlayerColorSet(FName classname, int setnum);
-void P_EnumPlayerColorSets(FName classname, TArray<int> *out);
 
 class player_t;
 

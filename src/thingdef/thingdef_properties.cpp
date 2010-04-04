@@ -1931,7 +1931,8 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, colorset, ISIII, PlayerPawn)
 	}
 	else
 	{
-		info->SetColorSet(setnum, &color);
+		assert(info->IsKindOf(RUNTIME_CLASS(PClassPlayerPawn)));
+		static_cast<PClassPlayerPawn *>(info)->ColorSets.Insert(setnum, color);
 	}
 }
 
@@ -1955,7 +1956,8 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, colorsetfile, ISSI, PlayerPawn)
 	}
 	else if (color.Lump >= 0)
 	{
-		info->SetColorSet(setnum, &color);
+		assert(info->IsKindOf(RUNTIME_CLASS(PClassPlayerPawn)));
+		static_cast<PClassPlayerPawn *>(info)->ColorSets.Insert(setnum, color);
 	}
 }
 
@@ -1972,7 +1974,8 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, clearcolorset, I, PlayerPawn)
 	}
 	else
 	{
-		info->SetColorSet(setnum, NULL);
+		assert(info->IsKindOf(RUNTIME_CLASS(PClassPlayerPawn)));
+		static_cast<PClassPlayerPawn *>(info)->ColorSets.Remove(setnum);
 	}
 }
 

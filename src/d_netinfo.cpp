@@ -195,7 +195,7 @@ void D_GetPlayerColor (int player, float *h, float *s, float *v, FPlayerColorSet
 
 	if (players[player].mo != NULL)
 	{
-		colorset = P_GetPlayerColorSet(players[player].mo->GetClass()->TypeName, info->colorset);
+		colorset = players[player].mo->GetClass()->GetColorSet(info->colorset);
 	}
 	if (colorset != NULL)
 	{

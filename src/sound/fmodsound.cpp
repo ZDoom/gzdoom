@@ -167,7 +167,10 @@ static const FEnumList OutputNames[] =
 	{ "SDL",					666 },
 
 	// Mac
+#if FMOD_VERSION < 0x43000
+	// Sound Manager support was removed sometime in the 4.29 line.
 	{ "Sound Manager",			FMOD_OUTPUTTYPE_SOUNDMANAGER },
+#endif
 	{ "Core Audio",				FMOD_OUTPUTTYPE_COREAUDIO },
 
 	{ NULL, 0 }

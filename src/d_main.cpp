@@ -129,7 +129,7 @@ void D_CheckNetGame ();
 void D_ProcessEvents ();
 void G_BuildTiccmd (ticcmd_t* cmd);
 void D_DoAdvanceDemo ();
-void D_AddWildFile (const char *pattern);
+void D_AddWildFile (TArray<FString> &wadfiles, const char *pattern);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -657,6 +657,7 @@ void D_Display ()
 		switch (gamestate)
 		{
 		case GS_FULLCONSOLE:
+			R_UpdateAnimations(I_FPSTime());
 			screen->SetBlendingRect(0,0,0,0);
 			hw2d = screen->Begin2D(false);
 			C_DrawConsole (false);
@@ -721,6 +722,7 @@ void D_Display ()
 			break;
 
 		case GS_INTERMISSION:
+			R_UpdateAnimations(I_FPSTime());
 			screen->SetBlendingRect(0,0,0,0);
 			hw2d = screen->Begin2D(false);
 			WI_Drawer ();
@@ -728,6 +730,7 @@ void D_Display ()
 			break;
 
 		case GS_FINALE:
+			R_UpdateAnimations(I_FPSTime());
 			screen->SetBlendingRect(0,0,0,0);
 			hw2d = screen->Begin2D(false);
 			F_Drawer ();
@@ -735,6 +738,7 @@ void D_Display ()
 			break;
 
 		case GS_DEMOSCREEN:
+			R_UpdateAnimations(I_FPSTime());
 			screen->SetBlendingRect(0,0,0,0);
 			hw2d = screen->Begin2D(false);
 			D_PageDrawer ();
@@ -1478,27 +1482,22 @@ static const char *BaseFileSearch (const char *file, const char *ext, bool lookf
 //
 //==========================================================================
 
-bool ConsiderPatches (const char *arg, const char *ext)
+bool ConsiderPatches (const char *arg)
 {
-	bool noDef = false;
-	DArgs *files = Args->GatherFiles (arg, ext, false);
+	int i, argc;
+	FString *args;
+	const char *f;
 
-	if (files->NumArgs() > 0)
+	argc = Args->CheckParmList(arg, &args);
+	for (i = 0; i < argc; ++i)
 	{
-		int i;
-		const char *f;
-
-		for (i = 0; i < files->NumArgs(); ++i)
+		if ( (f = BaseFileSearch(args[i], ".deh")) ||
+			 (f = BaseFileSearch(args[i], ".bex")) )
 		{
-			if ( (f = BaseFileSearch (files->GetArg (i), ".deh")) )
-				D_LoadDehFile(f);
-			else if ( (f = BaseFileSearch (files->GetArg (i), ".bex")) )
-				D_LoadDehFile(f);
+			D_LoadDehFile(f);
 		}
-		noDef = true;
 	}
-	files->Destroy();
-	return noDef;
+	return argc > 0;
 }
 
 //==========================================================================
@@ -1591,40 +1590,18 @@ void D_MultiExec (DArgs *list, bool usePullin)
 
 static void GetCmdLineFiles(TArray<FString> &wadfiles)
 {
-	DArgs *files = Args->GatherFiles ("-file", ".wad", true);
-	DArgs *files1 = Args->GatherFiles (NULL, ".zip", false);
-	DArgs *files2 = Args->GatherFiles (NULL, ".pk3", false);
-	DArgs *files3 = Args->GatherFiles (NULL, ".txt", false);
-	if (files->NumArgs() > 0 || files1->NumArgs() > 0 || files2->NumArgs() > 0 || files3->NumArgs() > 0)
-	{
-		// Check for -file in shareware
-		if (gameinfo.flags & GI_SHAREWARE)
-		{
-			I_FatalError ("You cannot -file with the shareware version. Register!");
-		}
+	FString *args;
+	int i, argc;
 
-		// the files gathered are wadfile/lump names
-		for (int i = 0; i < files->NumArgs(); i++)
-		{
-			D_AddWildFile (wadfiles, files->GetArg (i));
-		}
-		for (int i = 0; i < files1->NumArgs(); i++)
-		{
-			D_AddWildFile (wadfiles, files1->GetArg (i));
-		}
-		for (int i = 0; i < files2->NumArgs(); i++)
-		{
-			D_AddWildFile (wadfiles, files2->GetArg (i));
-		}
-		for (int i = 0; i < files3->NumArgs(); i++)
-		{
-			D_AddWildFile (wadfiles, files3->GetArg (i));
-		}
+	argc = Args->CheckParmList("-file", &args);
+	if ((gameinfo.flags & GI_SHAREWARE) && argc > 0)
+	{
+		I_FatalError ("You cannot -file with the shareware version. Register!");
 	}
-	files->Destroy();
-	files1->Destroy();
-	files2->Destroy();
-	files3->Destroy();
+	for (i = 0; i < argc; ++i)
+	{
+		D_AddWildFile(wadfiles, args[i]);
+	}
 }
 
 static void CopyFiles(TArray<FString> &to, TArray<FString> &from)
@@ -1753,10 +1730,12 @@ static FString CheckGameInfo(TArray<FString> & pwads)
 void D_DoomMain (void)
 {
 	int p, flags;
-	char *v;
+	const char *v;
 	const char *wad;
 	DArgs *execFiles;
 	TArray<FString> pwads;
+	FString *args;
+	int argcount;
 
 	// Set the FPU precision to 53 significant bits. This is the default
 	// for Visual C++, but not for GCC, so some slight math variances
@@ -1774,6 +1753,13 @@ void D_DoomMain (void)
 	int cfp = _control87(_PC_53, _MCW_PC);
 #endif
 #endif
+
+	// Combine different file parameters with their pre-switch bits.
+	Args->CollectFiles("-deh", ".deh");
+	Args->CollectFiles("-bex", ".bex");
+	Args->CollectFiles("-exec", ".cfg");
+	Args->CollectFiles("-playdemo", ".lmp");
+	Args->CollectFiles("-file", NULL);	// anythnig left goes after -file
 
 	PClass::StaticInit ();
 	atterm (C_DeinitConsole);
@@ -1861,16 +1847,21 @@ void D_DoomMain (void)
 	D_MultiExec (execFiles, true);
 
 	// Run .cfg files at the start of the command line.
-	execFiles = Args->GatherFiles (NULL, ".cfg", false);
+	execFiles = Args->GatherFiles ("-exec");
 	D_MultiExec (execFiles, true);
 
 	C_ExecCmdLineParams ();		// [RH] do all +set commands on the command line
 
 	CopyFiles(allwads, pwads);
 
+	// Since this function will never leave we must delete this array here manually.
+	pwads.Clear();
+	pwads.ShrinkToFit();
+
 	Printf ("W_Init: Init WADfiles.\n");
 	Wads.InitMultipleFiles (allwads);
 	allwads.Clear();
+	allwads.ShrinkToFit();
 
 	// [RH] Initialize localizable strings.
 	GStrings.LoadStrings (false);
@@ -1963,21 +1954,23 @@ void D_DoomMain (void)
 		autostart = true;
 	}
 
-	// [RH] Hack to handle +map
-	p = Args->CheckParm ("+map");
-	if (p && p < Args->NumArgs()-1)
+	// [RH] Hack to handle +map. The standard console command line handler
+	// won't be able to handle it, so we take it out of the command line and set
+	// it up like -warp.
+	FString mapvalue = Args->TakeValue("+map");
+	if (mapvalue.IsNotEmpty())
 	{
-		if (!P_CheckMapData(Args->GetArg (p+1)))
+		if (!P_CheckMapData(mapvalue))
 		{
-			Printf ("Can't find map %s\n", Args->GetArg (p+1));
+			Printf ("Can't find map %s\n", mapvalue.GetChars());
 		}
 		else
 		{
-			startmap = Args->GetArg (p + 1);
-			Args->GetArg (p)[0] = '-';
+			startmap = mapvalue;
 			autostart = true;
 		}
 	}
+
 	if (devparm)
 	{
 		Printf ("%s", GStrings("D_DEVSTR"));
@@ -1995,17 +1988,12 @@ void D_DoomMain (void)
 #endif
 
 	// turbo option  // [RH] (now a cvar)
+	v = Args->CheckValue("-turbo");
+	if (v != NULL)
 	{
-		UCVarValue value;
-		static char one_hundred[] = "100";
-
-		value.String = Args->CheckValue ("-turbo");
-		if (value.String == NULL)
-			value.String = one_hundred;
-		else
-			Printf ("turbo scale: %s%%\n", value.String);
-
-		turbo.SetGenericRepDefault (value, CVAR_String);
+		double amt = atof(v);
+		Printf ("turbo scale: %.0f%%\n", amt);
+		turbo = (float)amt;
 	}
 
 	v = Args->CheckValue ("-timer");
@@ -2039,6 +2027,9 @@ void D_DoomMain (void)
 		StartScreen->AppendStatusLine(temp);
 	}
 
+	// [RH] Load sound environments
+	S_ParseReverbDef ();
+
 	// [RH] Parse through all loaded mapinfo lumps
 	Printf ("G_ParseMapInfo: Load map definitions.\n");
 	G_ParseMapInfo (iwad_info->MapInfo);
@@ -2046,7 +2037,6 @@ void D_DoomMain (void)
 	// [RH] Parse any SNDINFO lumps
 	Printf ("S_InitData: Load sound definitions.\n");
 	S_InitData ();
-
 
 	Printf ("Texman.Init: Init texture manager.\n");
 	TexMan.Init();
@@ -2083,7 +2073,7 @@ void D_DoomMain (void)
 	// If there are none, try adding any in the config file.
 	// Note that the command line overrides defaults from the config.
 
-	if ((ConsiderPatches("-deh", ".deh") | ConsiderPatches("-bex", ".bex")) == 0 &&
+	if ((ConsiderPatches("-deh") | ConsiderPatches("-bex")) == 0 &&
 		gameinfo.gametype == GAME_Doom && GameConfig->SetSection ("Doom.DefaultDehacked"))
 	{
 		const char *key;
@@ -2121,10 +2111,10 @@ void D_DoomMain (void)
 	}
 
 	//Added by MC:
-	DArgs *bots = Args->GatherFiles("-bots", "", false);
-	for (p = 0; p < bots->NumArgs(); ++p)
+	argcount = Args->CheckParmList("-bots", &args);
+	for (p = 0; p < argcount; ++p)
 	{
-		bglobal.getspawned.Push(bots->GetArg(p));
+		bglobal.getspawned.Push(args[p]);
 	}
 	bglobal.spawn_tries = 0;
 	bglobal.wanted_botnum = bglobal.getspawned.Size();
@@ -2174,14 +2164,13 @@ void D_DoomMain (void)
 
 	V_Init2();
 
-	DArgs *files = Args->GatherFiles ("-playdemo", ".lmp", false);
-	if (files->NumArgs() > 0)
+	v = Args->CheckValue("-playdemo");
+	if (v != NULL)
 	{
 		singledemo = true;				// quit after one demo
-		G_DeferedPlayDemo (files->GetArg (0));
+		G_DeferedPlayDemo (v);
 		D_DoomLoop ();	// never returns
 	}
-	files->Destroy();
 
 	v = Args->CheckValue ("-timedemo");
 	if (v)

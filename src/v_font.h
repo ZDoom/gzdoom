@@ -94,11 +94,14 @@ public:
 	int StringWidth (const BYTE *str) const;
 	inline int StringWidth (const char *str) const { return StringWidth ((const BYTE *)str); }
 
+	int GetCharCode(int code, bool needpic) const;
+
 protected:
 	FFont ();
 
 	void BuildTranslations (const double *luminosity, const BYTE *identity,
 		const void *ranges, int total_colors, const PalEntry *palette);
+	void FixXMoves();
 
 	static int SimpleTranslation (BYTE *colorsused, BYTE *translation,
 		BYTE *identity, double **luminosity);
@@ -110,6 +113,7 @@ protected:
 	struct CharData
 	{
 		FTexture *Pic;
+		int XMove;
 	} *Chars;
 	int ActiveColors;
 	TArray<FRemapTable> Ranges;

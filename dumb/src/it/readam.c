@@ -24,9 +24,6 @@
 #include "internal/it.h"
 #include "internal/riff.h"
 
-DUH *dumb_read_riff_amff( struct riff * stream );
-DUH *dumb_read_riff_am( struct riff * stream );
-
 static int it_riff_am_process_sample( IT_SAMPLE * sample, const unsigned char * data, int len, int ver )
 {
 	int header_length;

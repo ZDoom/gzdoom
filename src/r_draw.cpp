@@ -2181,7 +2181,7 @@ ESPSResult R_SetPatchStyle (FRenderStyle style, fixed_t alpha, int translation, 
 	if (translation != 0)
 	{
 		FRemapTable *table = TranslationToTable(translation);
-		if (table != NULL)
+		if (table != NULL && !table->Inactive)
 		{
 			dc_translation = table->Remap;
 		}

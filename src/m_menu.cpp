@@ -118,7 +118,7 @@ protected:
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-void R_GetPlayerTranslation (int color, FPlayerSkin *skin, FRemapTable *table);
+void R_GetPlayerTranslation (int color, const FPlayerColorSet *colorset, FPlayerSkin *skin, FRemapTable *table);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -188,6 +188,7 @@ static void M_EditPlayerName (int choice);
 static void M_ChangePlayerTeam (int choice);
 static void M_PlayerNameChanged (FSaveGameNode *dummy);
 static void M_PlayerNameNotChanged ();
+static void M_ChangeColorSet (int choice);
 static void M_SlidePlayerRed (int choice);
 static void M_SlidePlayerGreen (int choice);
 static void M_SlidePlayerBlue (int choice);
@@ -246,16 +247,9 @@ static char		savegamestring[SAVESTRINGSIZE];
 static FString	EndString;
 
 static short	itemOn; 			// menu item skull is on
-static short	whichSkull; 		// which skull to draw
 static int		MenuTime;
 static int		InfoType;
 static int		InfoTic;
-
-static const char skullName[2][9] = {"M_SKULL1", "M_SKULL2"};	// graphic name of skulls
-static const char cursName[8][8] =	// graphic names of Strife menu selector
-{
-	"M_CURS1", "M_CURS2", "M_CURS3", "M_CURS4", "M_CURS5", "M_CURS6", "M_CURS7", "M_CURS8"
-};
 
 static oldmenu_t *currentMenu;		// current menudef
 static oldmenu_t *TopLevelMenu;		// The main menu everything hangs off of
@@ -269,6 +263,7 @@ static int			PlayerSkin;
 static FState		*PlayerState;
 static int			PlayerTics;
 static int			PlayerRotation;
+static TArray<int>	PlayerColorSets;
 
 static FTexture			*SavePic;
 static FBrokenLines		*SaveComment;
@@ -536,13 +531,22 @@ static oldmenuitem_t PlayerSetupMenu[] =
 {
 	{ 1,0,'n',NULL,M_EditPlayerName, CR_UNTRANSLATED},
 	{ 2,0,'t',NULL,M_ChangePlayerTeam, CR_UNTRANSLATED},
+	{ 2,0,'c',NULL,M_ChangeColorSet, CR_UNTRANSLATED},
 	{ 2,0,'r',NULL,M_SlidePlayerRed, CR_UNTRANSLATED},
 	{ 2,0,'g',NULL,M_SlidePlayerGreen, CR_UNTRANSLATED},
 	{ 2,0,'b',NULL,M_SlidePlayerBlue, CR_UNTRANSLATED},
-	{ 2,0,'c',NULL,M_ChangeClass, CR_UNTRANSLATED},
+	{ 2,0,'t',NULL,M_ChangeClass, CR_UNTRANSLATED},
 	{ 2,0,'s',NULL,M_ChangeSkin, CR_UNTRANSLATED},
 	{ 2,0,'e',NULL,M_ChangeGender, CR_UNTRANSLATED},
 	{ 2,0,'a',NULL,M_ChangeAutoAim, CR_UNTRANSLATED}
+};
+
+enum
+{
+	// These must be changed if the menu definition is altered
+	PSM_RED = 3,
+	PSM_GREEN = 4,
+	PSM_BLUE = 5,
 };
 
 static oldmenu_t PSetupDef =
@@ -2088,13 +2092,16 @@ void M_PlayerSetup (void)
 		PlayerClass = &PlayerClasses[players[consoleplayer].CurrentPlayerClass];
 	}
 	PlayerSkin = players[consoleplayer].userinfo.skin;
-	R_GetPlayerTranslation (players[consoleplayer].userinfo.color, &skins[PlayerSkin], translationtables[TRANSLATION_Players][MAXPLAYERS]);
+	R_GetPlayerTranslation (players[consoleplayer].userinfo.color,
+		P_GetPlayerColorSet(PlayerClass->Type->TypeName, players[consoleplayer].userinfo.colorset),
+		&skins[PlayerSkin], translationtables[TRANSLATION_Players][MAXPLAYERS]);
 	PlayerState = GetDefaultByType (PlayerClass->Type)->SeeState;
 	PlayerTics = PlayerState->GetTics();
 	if (FireTexture == NULL)
 	{
 		FireTexture = new FBackdropTexture;
 	}
+	P_EnumPlayerColorSets(PlayerClass->Type->TypeName, &PlayerColorSets);
 }
 
 static void M_PlayerSetupTicker (void)
@@ -2112,6 +2119,7 @@ static void M_PlayerSetupTicker (void)
 			item = (MenuTime>>2) % (ClassMenuDef.numitems-1);
 
 		PlayerClass = &PlayerClasses[D_PlayerClassToInt (ClassMenuItems[item].name)];
+		P_EnumPlayerColorSets(PlayerClass->Type->TypeName, &PlayerColorSets);
 	}
 	else
 	{
@@ -2125,6 +2133,7 @@ static void M_PlayerSetupTicker (void)
 
 		PlayerSkin = R_FindSkin (skins[PlayerSkin].name, int(PlayerClass - &PlayerClasses[0]));
 		R_GetPlayerTranslation (players[consoleplayer].userinfo.color,
+			P_GetPlayerColorSet(PlayerClass->Type->TypeName, players[consoleplayer].userinfo.colorset),
 			&skins[PlayerSkin], translationtables[TRANSLATION_Players][MAXPLAYERS]);
 	}
 
@@ -2280,19 +2289,27 @@ static void M_PlayerSetupDrawer ()
 			DTA_Clean, true, TAG_DONE);
 	}
 
-	// Draw player color sliders
-	//V_DrawTextCleanMove (CR_GREY, PSetupDef.x, PSetupDef.y + LINEHEIGHT, "Color");
+	// Draw player color selection and sliders
+	FPlayerColorSet *colorset = P_GetPlayerColorSet(PlayerClass->Type->TypeName, players[consoleplayer].userinfo.colorset);
+	x = SmallFont->StringWidth("Color") + 8 + PSetupDef.x;
+	screen->DrawText(SmallFont, label, PSetupDef.x, PSetupDef.y + LINEHEIGHT*2+yo, "Color", DTA_Clean, true, TAG_DONE);
+	screen->DrawText(SmallFont, value, x, PSetupDef.y + LINEHEIGHT*2+yo,
+		colorset != NULL ? colorset->Name.GetChars() : "Custom", DTA_Clean, true, TAG_DONE);
 
-	screen->DrawText (SmallFont, label, PSetupDef.x, PSetupDef.y + LINEHEIGHT*2+yo, "Red", DTA_Clean, true, TAG_DONE);
-	screen->DrawText (SmallFont, label, PSetupDef.x, PSetupDef.y + LINEHEIGHT*3+yo, "Green", DTA_Clean, true, TAG_DONE);
-	screen->DrawText (SmallFont, label, PSetupDef.x, PSetupDef.y + LINEHEIGHT*4+yo, "Blue", DTA_Clean, true, TAG_DONE);
+	// Only show the sliders for a custom color set.
+	if (colorset == NULL)
+	{
+		screen->DrawText (SmallFont, label, PSetupDef.x, PSetupDef.y + int(LINEHEIGHT*2.875)+yo, "Red", DTA_Clean, true, TAG_DONE);
+		screen->DrawText (SmallFont, label, PSetupDef.x, PSetupDef.y + int(LINEHEIGHT*3.5)+yo, "Green", DTA_Clean, true, TAG_DONE);
+		screen->DrawText (SmallFont, label, PSetupDef.x, PSetupDef.y + int(LINEHEIGHT*4.125)+yo, "Blue", DTA_Clean, true, TAG_DONE);
 
-	x = SmallFont->StringWidth ("Green") + 8 + PSetupDef.x;
-	color = players[consoleplayer].userinfo.color;
+		x = SmallFont->StringWidth ("Green") + 8 + PSetupDef.x;
+		color = players[consoleplayer].userinfo.color;
 
-	M_DrawPlayerSlider (x, PSetupDef.y + LINEHEIGHT*2+yo, RPART(color));
-	M_DrawPlayerSlider (x, PSetupDef.y + LINEHEIGHT*3+yo, GPART(color));
-	M_DrawPlayerSlider (x, PSetupDef.y + LINEHEIGHT*4+yo, BPART(color));
+		M_DrawPlayerSlider (x, PSetupDef.y + int(LINEHEIGHT*2.875)+yo, RPART(color));
+		M_DrawPlayerSlider (x, PSetupDef.y + int(LINEHEIGHT*3.5)+yo, GPART(color));
+		M_DrawPlayerSlider (x, PSetupDef.y + int(LINEHEIGHT*4.125)+yo, BPART(color));
+	}
 
 	// [GRB] Draw class setting
 	int pclass = players[consoleplayer].userinfo.PlayerClass;
@@ -2586,7 +2603,9 @@ static void M_ChangeSkin (int choice)
 			PlayerSkin = (PlayerSkin < (int)numskins - 1) ? PlayerSkin + 1 : 0;
 	} while (!PlayerClass->CheckSkin (PlayerSkin));
 
-	R_GetPlayerTranslation (players[consoleplayer].userinfo.color, &skins[PlayerSkin], translationtables[TRANSLATION_Players][MAXPLAYERS]);
+	R_GetPlayerTranslation (players[consoleplayer].userinfo.color,
+		P_GetPlayerColorSet(PlayerClass->Type->TypeName, players[consoleplayer].userinfo.colorset),
+		&skins[PlayerSkin], translationtables[TRANSLATION_Players][MAXPLAYERS]);
 
 	cvar_set ("skin", skins[PlayerSkin].name);
 }
@@ -2707,13 +2726,55 @@ static void M_ChangePlayerTeam (int choice)
 	}
 }
 
+static void M_ChangeColorSet (int choice)
+{
+	int curpos = (int)PlayerColorSets.Size();
+	int mycolorset = players[consoleplayer].userinfo.colorset;
+	while (--curpos >= 0)
+	{
+		if (PlayerColorSets[curpos] == mycolorset)
+			break;
+	}
+	if (choice == 0)
+	{
+		curpos--;
+	}
+	else
+	{
+		curpos++;
+	}
+	if (curpos < -1)
+	{
+		curpos = (int)PlayerColorSets.Size() - 1;
+	}
+	else if (curpos >= (int)PlayerColorSets.Size())
+	{
+		curpos = -1;
+	}
+	mycolorset = (curpos >= 0) ? PlayerColorSets[curpos] : -1;
+
+	// disable the sliders if a valid colorset is selected
+	PlayerSetupMenu[PSM_RED].status =
+	PlayerSetupMenu[PSM_GREEN].status =
+	PlayerSetupMenu[PSM_BLUE].status = (mycolorset == -1? 2:-1);
+
+	char command[24];
+	mysnprintf(command, countof(command), "colorset %d", mycolorset);
+	C_DoCommand(command);
+	R_GetPlayerTranslation(players[consoleplayer].userinfo.color,
+		P_GetPlayerColorSet(PlayerClass->Type->TypeName, mycolorset),
+		&skins[PlayerSkin], translationtables[TRANSLATION_Players][MAXPLAYERS]);
+}
+
 static void SendNewColor (int red, int green, int blue)
 {
 	char command[24];
 
 	mysnprintf (command, countof(command), "color \"%02x %02x %02x\"", red, green, blue);
 	C_DoCommand (command);
-	R_GetPlayerTranslation (MAKERGB (red, green, blue), &skins[PlayerSkin], translationtables[TRANSLATION_Players][MAXPLAYERS]);
+	R_GetPlayerTranslation(MAKERGB (red, green, blue),
+		P_GetPlayerColorSet(PlayerClass->Type->TypeName, players[consoleplayer].userinfo.colorset),
+		&skins[PlayerSkin], translationtables[TRANSLATION_Players][MAXPLAYERS]);
 }
 
 static void M_SlidePlayerRed (int choice)
@@ -3645,27 +3706,50 @@ void M_Drawer ()
 					// [RH] Use options menu cursor for the player setup menu.
 					if (skullAnimCounter < 6)
 					{
+						double item;
+						// The green slider is halfway between lines, and the red and
+						// blue ones are offset slightly to make room for it.
+						if (itemOn < 3)
+						{
+							item = itemOn;
+						}
+						else if (itemOn > 5)
+						{
+							item = itemOn - 1;
+						}
+						else if (itemOn == 3)
+						{
+							item = 2.875;
+						}
+						else if (itemOn == 4)
+						{
+							item = 3.5;
+						}
+						else
+						{
+							item = 4.125;
+						}
 						screen->DrawText (ConFont, CR_RED, x - 16,
-							currentMenu->y + itemOn*PLAYERSETUP_LINEHEIGHT +
+							currentMenu->y + int(item*PLAYERSETUP_LINEHEIGHT) +
 							(!(gameinfo.gametype & (GAME_DoomStrifeChex)) ? 6 : -1), "\xd",
 							DTA_Clean, true, TAG_DONE);
 					}
 				}
 				else if (gameinfo.gametype & GAME_DoomChex)
 				{
-					screen->DrawTexture (TexMan[skullName[whichSkull]],
+					screen->DrawTexture (TexMan("M_SKULL1"),
 						x + SKULLXOFF, currentMenu->y - 5 + itemOn*LINEHEIGHT,
 						DTA_Clean, true, TAG_DONE);
 				}
 				else if (gameinfo.gametype == GAME_Strife)
 				{
-					screen->DrawTexture (TexMan[cursName[(MenuTime >> 2) & 7]],
+					screen->DrawTexture (TexMan("M_CURS1"),
 						x - 28, currentMenu->y - 5 + itemOn*LINEHEIGHT,
 						DTA_Clean, true, TAG_DONE);
 				}
 				else
 				{
-					screen->DrawTexture (TexMan[MenuTime & 16 ? "M_SLCTR1" : "M_SLCTR2"],
+					screen->DrawTexture (TexMan("M_SLCTR1"),
 						x + SELECTOR_XOFFSET,
 						currentMenu->y + itemOn*LINEHEIGHT + SELECTOR_YOFFSET,
 						DTA_Clean, true, TAG_DONE);
@@ -3859,7 +3943,6 @@ void M_Ticker (void)
 	MenuTime++;
 	if (--skullAnimCounter <= 0)
 	{
-		whichSkull ^= 1;
 		skullAnimCounter = 8;
 	}
 	if (currentMenu == &PSetupDef || currentMenu == &ClassMenuDef)
@@ -3913,7 +3996,6 @@ void M_Init (void)
 	menuactive = MENU_Off;
 	InfoType = 0;
 	itemOn = currentMenu->lastOn;
-	whichSkull = 0;
 	skullAnimCounter = 10;
 	drawSkull = true;
 	messageToPrint = 0;
@@ -4034,4 +4116,5 @@ static void PickPlayerClass ()
 	}
 
 	PlayerClass = &PlayerClasses[pclass];
+	P_EnumPlayerColorSets(PlayerClass->Type->TypeName, &PlayerColorSets);
 }

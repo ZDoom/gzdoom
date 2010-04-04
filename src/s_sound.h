@@ -59,6 +59,8 @@ struct sfxinfo_t
 	WORD		bSingular:1;
 	WORD		bTentative:1;
 
+	int			LoopStart;				// -1 means no specific loop defined
+
 	unsigned int link;
 	enum { NO_LINK = 0xffffffff };
 
@@ -216,11 +218,12 @@ void S_PrecacheLevel ();
 void S_CacheSound (sfxinfo_t *sfx);
 
 // Start sound for thing at <ent>
-void S_Sound (int channel, FSoundID sfxid, double volume, double attenuation);
-void S_Sound (AActor *ent, int channel, FSoundID sfxid, double volume, double attenuation);
-void S_Sound (const FPolyObj *poly, int channel, FSoundID sfxid, double volume, double attenuation);
-void S_Sound (const sector_t *sec, int channel, FSoundID sfxid, double volume, double attenuation);
-void S_Sound (fixed_t x, fixed_t y, fixed_t z, int channel, FSoundID sfxid, double volume, double attenuation);
+void S_Sound (int channel, FSoundID sfxid, float volume, float attenuation);
+void S_Sound (AActor *ent, int channel, FSoundID sfxid, float volume, float attenuation);
+void S_SoundMinMaxDist (AActor *ent, int channel, FSoundID sfxid, float volume, float mindist, float maxdist);
+void S_Sound (const FPolyObj *poly, int channel, FSoundID sfxid, float volume, float attenuation);
+void S_Sound (const sector_t *sec, int channel, FSoundID sfxid, float volume, float attenuation);
+void S_Sound (fixed_t x, fixed_t y, fixed_t z, int channel, FSoundID sfxid, float volume, float attenuation);
 
 // sound channels
 // channel 0 never willingly overrides

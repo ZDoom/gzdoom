@@ -634,7 +634,7 @@ void FDDSTexture::DecompressDXT1 (FWadLump &lump, BYTE *tcbuf)
 				bMasked = true;
 			}
 			// Pick colors from the palette for each of the four colors.
-			if (!tcbuf) for (i = 3; i >= 0; --i)
+			/*if (!tcbuf)*/ for (i = 3; i >= 0; --i)
 			{
 				palcol[i] = color[i].a ? RGB32k[color[i].r >> 3][color[i].g >> 3][color[i].b >> 3] : 0;
 			}
@@ -652,18 +652,18 @@ void FDDSTexture::DecompressDXT1 (FWadLump &lump, BYTE *tcbuf)
 					{
 						break;
 					}
+					int ci = (yslice >> (x + x)) & 3;
 					if (!tcbuf) 
 					{
-						Pixels[oy + y + (ox + x) * Height] = palcol[(yslice >> (x + x)) & 3];
+						Pixels[oy + y + (ox + x) * Height] = palcol[ci];
 					}
 					else
 					{
-						BYTE * tcp = &tcbuf[ox + x + (oy + y) * Width*4];
-						int c = (yslice >> (x + x)) & 3;
-						tcp[0] = color[c].r;
-						tcp[1] = color[c].g;
-						tcp[2] = color[c].b;
-						tcp[3] = color[c].a;
+						BYTE * tcp = &tcbuf[(ox + x)*4 + (oy + y) * Width*4];
+						tcp[0] = color[ci].r;
+						tcp[1] = color[ci].g;
+						tcp[2] = color[ci].b;
+						tcp[3] = color[ci].a;
 					}
 				}
 			}
@@ -740,7 +740,7 @@ void FDDSTexture::DecompressDXT3 (FWadLump &lump, bool premultiplied, BYTE *tcbu
 					}
 					else
 					{
-						BYTE * tcp = &tcbuf[ox + x + (oy + y) * Width*4];
+						BYTE * tcp = &tcbuf[(ox + x)*4 + (oy + y) * Width*4];
 						int c = (yslice >> (x + x)) & 3;
 						tcp[0] = color[c].r;
 						tcp[1] = color[c].g;
@@ -769,7 +769,7 @@ void FDDSTexture::DecompressDXT5 (FWadLump &lump, bool premultiplied, BYTE *tcbu
 	BYTE *block;
 	PalEntry color[4];
 	BYTE palcol[4];
-	DWORD yalphaslice;
+	DWORD yalphaslice = 0;
 	int ox, oy, x, y, i;
 
 	for (oy = 0; oy < Height; oy += 4)
@@ -831,7 +831,7 @@ void FDDSTexture::DecompressDXT5 (FWadLump &lump, bool premultiplied, BYTE *tcbu
 					break;
 				}
 				// Alpha values are stored in 3 bytes for 2 rows
-				if ((y & 0) == 0)
+				if ((y & 1) == 0)
 				{
 					yalphaslice = block[y*3] | (block[y*3+1] << 8) | (block[y*3+2] << 16);
 				}
@@ -853,7 +853,7 @@ void FDDSTexture::DecompressDXT5 (FWadLump &lump, bool premultiplied, BYTE *tcbu
 					}
 					else
 					{
-						BYTE * tcp = &tcbuf[ox + x + (oy + y) * Width*4];
+						BYTE * tcp = &tcbuf[(ox + x)*4 + (oy + y) * Width*4];
 						int c = (yslice >> (x + x)) & 3;
 						tcp[0] = color[c].r;
 						tcp[1] = color[c].g;

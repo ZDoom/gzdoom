@@ -198,7 +198,7 @@ int FPlayList::Advance ()
 
 int FPlayList::Backup ()
 {
-	if (--Position < 0)
+	if (Position-- == 0)
 	{
 		Position = Songs.Size() - 1;
 	}

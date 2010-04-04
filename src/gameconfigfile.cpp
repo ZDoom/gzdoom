@@ -536,13 +536,14 @@ void FGameConfigFile::ArchiveGlobalData ()
 
 FString FGameConfigFile::GetConfigPath (bool tryProg)
 {
-	char *pathval;
+	const char *pathval;
 	FString path;
 
 	pathval = Args->CheckValue ("-config");
 	if (pathval != NULL)
+	{
 		return FString(pathval);
-
+	}
 #ifdef _WIN32
 	path = NULL;
 	HRESULT hr;

@@ -65,6 +65,11 @@ public:
 	BYTE ColorRangeEnd;
 };
 
+FPlayerColorSet *P_GetPlayerColorSet(FName classname, int setnum);
+void P_EnumPlayerColorSets(FName classname, TArray<int> *out);
+
+class player_t;
+
 class APlayerPawn : public AActor
 {
 	DECLARE_CLASS_WITH_META(APlayerPawn, AActor, PClassPlayerPawn)
@@ -215,6 +220,7 @@ struct userinfo_t
 	BYTE		team;
 	int			aimdist;
 	int			color;
+	int			colorset;
 	int			skin;
 	int			gender;
 	bool		neverswitch;

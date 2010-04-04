@@ -1280,7 +1280,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomRailgun)
 										self->target->x,
 										self->target->y);
 	}
-	self->pitch = P_AimLineAttack (self, self->angle, MISSILERANGE, &linetarget, ANGLE_1*60, false, false, false, aim ? self->target : NULL);
+	self->pitch = P_AimLineAttack (self, self->angle, MISSILERANGE, &linetarget, ANGLE_1*60, 0, aim ? self->target : NULL);
 	if (linetarget == NULL && aim)
 	{
 		// We probably won't hit the target, but aim at it anyway so we don't look stupid.
@@ -2016,10 +2016,65 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckSight)
 
 	for (int i = 0; i < MAXPLAYERS; i++) 
 	{
-		if (playeringame[i] && P_CheckSight(players[i].camera, self, true))
+		if (playeringame[i] && P_CheckSight(players[i].camera, self, SF_IGNOREVISIBILITY))
 			return 0;
 	}
 
+	ACTION_JUMP(jump);
+	return 0;
+}
+
+//===========================================================================
+//
+// A_CheckSightOrRange
+// Jumps if this actor is out of range of all players *and* out of sight.
+// Useful for maps with many multi-actor special effects.
+//
+//===========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckSightOrRange)
+{
+	PARAM_ACTION_PROLOGUE;
+	PARAM_FLOAT(range);
+	PARAM_STATE(jump);
+
+	ACTION_SET_RESULT(false);	// Jumps should never set the result for inventory state chains!
+
+	range = range * range * (double(FRACUNIT) * FRACUNIT);		// no need for square roots
+	for (int i = 0; i < MAXPLAYERS; ++i)
+	{
+		if (playeringame[i])
+		{
+			AActor *camera = players[i].camera;
+
+			// Check distance first, since it's cheaper than checking sight.
+			double dx = self->x - camera->x;
+			double dy = self->y - camera->y;
+			double dz;
+			fixed_t eyez = (camera->z + camera->height - (camera->height>>2));	// same eye height as P_CheckSight
+			if (eyez > self->z + self->height)
+			{
+				dz = self->z + self->height - eyez;
+			}
+			else if (eyez < self->z)
+			{
+				dz = self->z - eyez;
+			}
+			else
+			{
+				dz = 0;
+			}
+			if ((dx*dx) + (dy*dy) + (dz*dz) <= range)
+			{ // Within range
+				return 0;
+			}
+
+			// Now check LOS.
+			if (P_CheckSight(camera, self, SF_IGNOREVISIBILITY))
+			{ // Visible
+				return 0;
+			}
+		}
+	}
 	ACTION_JUMP(jump);
 	return 0;
 }
@@ -2493,7 +2548,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInLOS)
 		if (target == NULL)
 			return 0; // [KS] Let's not call P_CheckSight unnecessarily in this case.
 
-		if (!P_CheckSight (self, target, 1))
+		if (!P_CheckSight (self, target, SF_IGNOREVISIBILITY))
 			return 0;
 
 		if (fov && (fov < ANGLE_MAX))
@@ -2555,7 +2610,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfInTargetLOS)
 	if (target == NULL)
 		return 0; // [KS] Let's not call P_CheckSight unnecessarily in this case.
 
-	if (!P_CheckSight (target, self, 1))
+	if (!P_CheckSight (target, self, SF_IGNOREVISIBILITY))
 		return 0;
 
 	if (fov && (fov < ANGLE_MAX))
@@ -2963,7 +3018,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_MonsterRefire)
 	if (self->target == NULL
 		|| P_HitFriend (self)
 		|| self->target->health <= 0
-		|| !P_CheckSight(self, self->target, 0) )
+		|| !P_CheckSight (self, self->target, SF_SEEPASTBLOCKEVERYTHING|SF_SEEPASTSHOOTABLELINES) )
 	{
 		ACTION_JUMP(jump);
 	}
@@ -3132,16 +3187,16 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetUserVar)
 	PARAM_NAME	(varname);
 	PARAM_INT	(value);
 
-	PSymbolVariable *var = dyn_cast<PSymbolVariable>(self->GetClass()->Symbols.FindSymbol(varname, true));
+	PSymbolVariable *var = dyn_cast<PSymbolVariable>(stateowner->GetClass()->Symbols.FindSymbol(varname, true));
 
 	if (var == NULL || !var->bUserVar || var->ValueType.Type != VAL_Int)
 	{
 		Printf("%s is not a user variable in class %s\n", varname.GetChars(),
-			self->GetClass()->TypeName.GetChars());
+			stateowner->GetClass()->TypeName.GetChars());
 		return 0;
 	}
 	// Set the value of the specified user variable.
-	*(int *)(reinterpret_cast<BYTE *>(self) + var->offset) = value;
+	*(int *)(reinterpret_cast<BYTE *>(stateowner) + var->offset) = value;
 	return 0;
 }
 
@@ -3158,22 +3213,22 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetUserArray)
 	PARAM_INT	(pos);
 	PARAM_INT	(value);
 
-	PSymbolVariable *var = dyn_cast<PSymbolVariable>(self->GetClass()->Symbols.FindSymbol(varname, true));
+	PSymbolVariable *var = dyn_cast<PSymbolVariable>(stateowner->GetClass()->Symbols.FindSymbol(varname, true));
 
 	if (var == NULL || !var->bUserVar || var->ValueType.Type != VAL_Array || var->ValueType.BaseType != VAL_Int)
 	{
 		Printf("%s is not a user array in class %s\n", varname.GetChars(),
-			self->GetClass()->TypeName.GetChars());
+			stateowner->GetClass()->TypeName.GetChars());
 		return 0;
 	}
 	if (pos < 0 || pos >= var->ValueType.size)
 	{
 		Printf("%d is out of bounds in array %s in class %s\n", pos, varname.GetChars(),
-			self->GetClass()->TypeName.GetChars());
+			stateowner->GetClass()->TypeName.GetChars());
 		return 0;
 	}
 	// Set the value of the specified user array at index pos.
-	((int *)(reinterpret_cast<BYTE *>(self) + var->offset))[pos] = value;
+	((int *)(reinterpret_cast<BYTE *>(stateowner) + var->offset))[pos] = value;
 	return 0;
 }
 

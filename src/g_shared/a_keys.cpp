@@ -68,6 +68,7 @@ struct Lock
 					return true;
 				}
 			}
+			return false;
 		}
 		else for(unsigned int i=0;i<keylist.Size();i++)
 		{

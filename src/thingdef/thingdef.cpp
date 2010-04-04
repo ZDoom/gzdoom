@@ -153,6 +153,12 @@ PClassActor *CreateNewActor(const FScriptPosition &sc, FName typeName, FName par
 		ti->PainChances = new PainChanceList;
 		*ti->PainChances = *parent->PainChances;
 	}
+	if (parent->ColorSets != NULL)
+	{
+		// copy color sets from parent
+		ti->ColorSets = new FPlayerColorSetMap;
+		*ti->ColorSets = *parent->ColorSets;
+	}
 	ti->Replacee = ti->Replacement = NULL;
 	ti->DoomEdNum = -1;
 	return ti;

@@ -1,5 +1,7 @@
 cmake_minimum_required( VERSION 2.4 )
 
+include( CheckFunctionExists )
+
 # DUMB is much slower in a Debug build than a Release build, so we force a Release
 # build here, since we're not maintaining DUMB, only using it.
 # Comment out the below line to allow Debug builds.
@@ -12,6 +14,11 @@ set( CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -D_DEBUG -DDEBUGMODE=1" )
 if( CMAKE_COMPILER_IS_GNUC )
 	set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wno-pointer-sign -Wno-uninitialized" )
 endif( CMAKE_COMPILER_IS_GNUC )
+
+CHECK_FUNCTION_EXISTS( itoa ITOA_EXISTS )
+if( NOT ITOA_EXISTS )
+	add_definitions( -DNEED_ITOA=1 )
+endif( NOT ITOA_EXISTS )
 
 include_directories( include )
 

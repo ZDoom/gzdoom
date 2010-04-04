@@ -66,15 +66,16 @@ struct FMapInfoParser
 	int format_type;
 	bool HexenHack;
 
-	FMapInfoParser()
+	FMapInfoParser(int format = FMT_Unknown)
 	{
-		format_type = FMT_Unknown;
+		format_type = format;
 		HexenHack = false;
 	}
 
 	bool ParseLookupName(FString &dest);
 	void ParseMusic(FString &name, int &order);
 	void ParseLumpOrTextureName(char *name);
+	void ParseLumpOrTextureName(FString &name);
 
 	void ParseCluster();
 	void ParseNextMap(char *mapname);
@@ -276,6 +277,7 @@ struct level_info_t
 	DWORD		compatflags;
 	DWORD		compatmask;
 	FString		Translator;	// for converting Doom-format linedef and sector types.
+	int			DefaultEnvironment;	// Default sound environment for the map.
 
 	// Redirection: If any player is carrying the specified item, then
 	// you go to the RedirectMap instead of this one.
@@ -388,6 +390,7 @@ struct FLevelLocals
 	fixed_t		aircontrol;
 	fixed_t		airfriction;
 	int			airsupply;
+	int			DefaultEnvironment;		// Default sound environment.
 
 	FSectorScrollValues	*Scrolls;		// NULL if no DScrollers in this level
 
@@ -437,7 +440,7 @@ extern TArray<EndSequence> EndSequences;
 struct cluster_info_t
 {
 	int			cluster;
-	char		finaleflat[9];
+	FString		FinaleFlat;
 	FString		ExitText;
 	FString		EnterText;
 	FString		MessageMusic;

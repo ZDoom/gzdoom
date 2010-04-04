@@ -1935,15 +1935,13 @@ void WI_loadData(void)
 		}
 		else
 		{
-			int dummywidth;
-			star = BigFont->GetChar('*', &dummywidth);	// just a dummy to avoid an error if it is being used
+			star = BigFont->GetChar('*', NULL);
 			bstar = star;
 		}
 	}
 	else // Strife needs some handling, too!
 	{
-		int dummywidth;
-		star = BigFont->GetChar('*', &dummywidth);	// just a dummy to avoid an error if it is being used
+		star = BigFont->GetChar('*', NULL);
 		bstar = star;
 	}
 

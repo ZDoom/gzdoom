@@ -43,7 +43,6 @@ class AHateTarget : public AActor
 	DECLARE_CLASS (AHateTarget, AActor)
 public:
 	void BeginPlay ();
-	angle_t AngleIncrements (void);
 	int TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, FName damagetype);
 };
 
@@ -77,7 +76,3 @@ int AHateTarget::TakeSpecialDamage (AActor *inflictor, AActor *source, int damag
 	}
 }
 
-angle_t AHateTarget::AngleIncrements (void)
-{
-	return ANGLE_1;
-}

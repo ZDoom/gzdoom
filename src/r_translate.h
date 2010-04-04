@@ -46,6 +46,7 @@ struct FRemapTable
 	PalEntry *Palette;			// The ideal palette this maps to
 	FNativePalette *Native;		// The Palette stored in a HW texture
 	int NumEntries;				// # of elements in this table (usually 256)
+	bool Inactive;				// This table is inactive and should be treated as if it was passed as NULL
 
 private:
 	void Free();

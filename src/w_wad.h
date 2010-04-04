@@ -182,6 +182,7 @@ public:
 	FileReader * GetFileReader(int wadnum);	// Gets a FileReader object to the entire WAD
 
 	int FindLump (const char *name, int *lastlump, bool anyns=false);		// [RH] Find lumps with duplication
+	int FindLumpMulti (const char **names, int *lastlump, bool anyns = false, int *nameindex = NULL); // same with multiple possible names
 	bool CheckLumpName (int lump, const char *name);	// [RH] True if lump's name == name
 
 	static DWORD LumpNameHash (const char *name);		// [RH] Create hash key from an 8-char name
@@ -194,6 +195,7 @@ public:
 	FString GetLumpFullPath (int lump) const;		// [RH] Returns wad's name + lump's full name
 	int GetLumpFile (int lump) const;				// [RH] Returns wadnum for a specified lump
 	int GetLumpNamespace (int lump) const;			// [RH] Returns the namespace a lump belongs to
+	int GetLumpIndexNum (int lump) const;			// Returns the RFF index number for this lump
 	bool CheckLumpName (int lump, const char *name) const;	// [RH] Returns true if the names match
 
 	bool IsUncompressedFile(int lump) const;

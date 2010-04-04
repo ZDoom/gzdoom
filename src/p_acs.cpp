@@ -3279,8 +3279,8 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 
 		case ACSF_CheckActorClass:
 		{
-			AActor *a = args[0] == 0 ? (AActor *)activator : SingleActorFromTID(args[0], NULL); 
-			return a->GetClass()->TypeName == FName(FBehavior::StaticLookupString(args[1]));
+			AActor *a = args[0] == 0 ? (AActor *)activator : SingleActorFromTID(args[0], NULL);
+			return a == NULL ? false : a->GetClass()->TypeName == FName(FBehavior::StaticLookupString(args[1]));
 		}
 
 		case ACSF_SoundSequenceOnActor:
@@ -5360,13 +5360,13 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_CLEARACTORINVENTORY:
-			if (STACK(3) == 0)
+			if (STACK(1) == 0)
 			{
 				ClearInventory(NULL);
 			}
 			else
 			{
-				FActorIterator it(STACK(3));
+				FActorIterator it(STACK(1));
 				AActor *actor;
 				for (actor = it.Next(); actor != NULL; actor = it.Next())
 				{

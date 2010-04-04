@@ -233,7 +233,7 @@ static void I_SelectTimer()
 	if (NewTicArrived)
 	{
 		UINT delay;
-		char *cmdDelay;
+		const char *cmdDelay;
 
 		cmdDelay = Args->CheckValue("-timerdelay");
 		delay = 0;
@@ -834,6 +834,74 @@ void I_SetIWADInfo(const IWADInfo *info)
 
 //==========================================================================
 //
+// ToEditControl
+//
+// Converts string to Unicode and inserts it into the control.
+//
+//==========================================================================
+
+void ToEditControl(HWND edit, const char *buf, wchar_t *wbuf, int bpos)
+{
+	// Let's just do this ourself. It's not hard, and we can compensate for
+	// special console characters at the same time.
+#if 0
+	MultiByteToWideChar(1252 /* Western */, 0, buf, bpos, wbuf, countof(wbuf));
+	wbuf[bpos] = 0;
+#else
+	static wchar_t notlatin1[32] =		// code points 0x80-0x9F
+	{
+		0x20AC,		// Euro sign
+		0x0081,		// Undefined
+		0x201A,		// Single low-9 quotation mark
+		0x0192,		// Latin small letter f with hook
+		0x201E,		// Double low-9 quotation mark
+		0x2026,		// Horizontal ellipsis
+		0x2020,		// Dagger
+		0x2021,		// Double dagger
+		0x02C6,		// Modifier letter circumflex accent
+		0x2030,		// Per mille sign
+		0x0160,		// Latin capital letter S with caron
+		0x2039,		// Single left-pointing angle quotation mark
+		0x0152,		// Latin capital ligature OE
+		0x008D,		// Undefined
+		0x017D,		// Latin capital letter Z with caron
+		0x008F,		// Undefined
+		0x0090,		// Undefined
+		0x2018,		// Left single quotation mark
+		0x2019,		// Right single quotation mark
+		0x201C,		// Left double quotation mark
+		0x201D,		// Right double quotation mark
+		0x2022,		// Bullet
+		0x2013,		// En dash
+		0x2014,		// Em dash
+		0x02DC,		// Small tilde
+		0x2122,		// Trade mark sign
+		0x0161,		// Latin small letter s with caron
+		0x203A,		// Single right-pointing angle quotation mark
+		0x0153,		// Latin small ligature oe
+		0x009D,		// Undefined
+		0x017E,		// Latin small letter z with caron
+		0x0178		// Latin capital letter Y with diaeresis
+	};
+	for (int i = 0; i <= bpos; ++i)
+	{
+		wchar_t code = (BYTE)buf[i];
+		if (code >= 0x1D && code <= 0x1F)
+		{ // The bar characters, most commonly used to indicate map changes
+			code = 0x2550;	// Box Drawings Double Horizontal
+		}
+		else if (code >= 0x80 && code <= 0x9F)
+		{
+			code = notlatin1[code - 0x80];
+		}
+		wbuf[i] = code;
+	}
+#endif
+	SendMessageW(edit, EM_REPLACESEL, FALSE, (LPARAM)wbuf); 
+}
+
+//==========================================================================
+//
 // I_PrintStr
 //
 // Send output to the list box shown during startup (and hidden during
@@ -848,6 +916,7 @@ void I_PrintStr(const char *cp)
 
 	HWND edit = ConWindow;
 	char buf[256];
+	wchar_t wbuf[countof(buf)];
 	int bpos = 0;
 	CHARRANGE selection;
 	CHARRANGE endselection;
@@ -877,7 +946,7 @@ void I_PrintStr(const char *cp)
 			buf[bpos] = 0;
 			if (edit != NULL)
 			{
-				SendMessage(edit, EM_REPLACESEL, FALSE, (LPARAM)buf);
+				ToEditControl(edit, buf, wbuf, bpos);
 			}
 			if (StdOut != NULL)
 			{
@@ -944,7 +1013,7 @@ void I_PrintStr(const char *cp)
 		buf[bpos] = 0;
 		if (edit != NULL)
 		{
-			SendMessage(edit, EM_REPLACESEL, FALSE, (LPARAM)buf); 
+			ToEditControl(edit, buf, wbuf, bpos);
 		}
 		if (StdOut != NULL)
 		{

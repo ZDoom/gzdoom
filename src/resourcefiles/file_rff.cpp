@@ -56,13 +56,15 @@ struct RFFInfo
 
 struct RFFLump
 {
-	BYTE		IDontKnow[16];
+	DWORD		DontKnow1[4];
 	DWORD		FilePos;
 	DWORD		Size;
-	BYTE		IStillDontKnow[8];
+	DWORD		DontKnow2;
+	DWORD		Time;
 	BYTE		Flags;
 	char		Extension[3];
-	char		Name[8+4];		// 4 bytes that I don't know what they are for
+	char		Name[8];
+	DWORD		IndexNum;	// Used by .sfx, possibly others
 };
 
 //==========================================================================
@@ -75,6 +77,10 @@ struct FRFFLump : public FUncompressedLump
 {
 	virtual FileReader *GetReader();
 	virtual int FillCache();
+
+	DWORD		IndexNum;
+
+	int GetIndexNum() const { return IndexNum; }
 };
 
 //==========================================================================
@@ -149,33 +155,34 @@ bool FRFFFile::Open(bool quiet)
 	if (!quiet) Printf(", %d lumps\n", NumLumps);
 	for (DWORD i = 0; i < NumLumps; ++i)
 	{
-		if (lumps[i].Extension[0] == 'S' && lumps[i].Extension[1] == 'F' &&
-			lumps[i].Extension[2] == 'X')
-		{
-			Lumps[i].Namespace = ns_bloodsfx;
-		}
-		else if (lumps[i].Extension[0] == 'R' && lumps[i].Extension[1] == 'A' &&
-			lumps[i].Extension[2] == 'W')
-		{
-			Lumps[i].Namespace = ns_bloodraw;
-		}
-		else
-		{
-			Lumps[i].Namespace = ns_global;
-		}
-
 		Lumps[i].Position = LittleLong(lumps[i].FilePos);
 		Lumps[i].LumpSize = LittleLong(lumps[i].Size);
 		Lumps[i].Owner = this;
-		if (lumps[i].Flags & 0x10) Lumps[i].Flags |= LUMPF_BLOODCRYPT;
-
-		// Rearrange the name and extension in a part of the lump record
-		// that I don't have any use for in order to cnstruct the fullname.
-		lumps[i].Name[8] = '\0';
-		strcpy ((char *)lumps[i].IDontKnow, lumps[i].Name);
-		strcat ((char *)lumps[i].IDontKnow, ".");
-		strcat ((char *)lumps[i].IDontKnow, lumps[i].Extension);
-		Lumps[i].LumpNameSetup((char *)lumps[i].IDontKnow);
+		if (lumps[i].Flags & 0x10)
+		{
+			Lumps[i].Flags |= LUMPF_BLOODCRYPT;
+		}
+		Lumps[i].IndexNum = LittleLong(lumps[i].IndexNum);
+		// Rearrange the name and extension to construct the fullname.
+		char name[13];
+		strncpy(name, lumps[i].Name, 8);
+		name[8] = 0;
+		size_t len = strlen(name);
+		assert(len + 4 <= 12);
+		name[len+0] = '.';
+		name[len+1] = lumps[i].Extension[0];
+		name[len+2] = lumps[i].Extension[1];
+		name[len+3] = lumps[i].Extension[2];
+		name[len+4] = 0;
+		Lumps[i].LumpNameSetup(name);
+		if (name[len+1] == 'S' && name[len+2] == 'F' && name[len+3] == 'X')
+		{
+			Lumps[i].Namespace = ns_bloodsfx;
+		}
+		else if (name[len+1] == 'R' && name[len+2] == 'A' && name[len+3] == 'W')
+		{
+			Lumps[i].Namespace = ns_bloodraw;
+		}
 	}
 	delete[] lumps;
 	return true;
@@ -183,7 +190,10 @@ bool FRFFFile::Open(bool quiet)
 
 FRFFFile::~FRFFFile()
 {
-	if (Lumps != NULL) delete [] Lumps;
+	if (Lumps != NULL)
+	{
+		delete[] Lumps;
+	}
 }
 
 
@@ -197,8 +207,14 @@ FileReader *FRFFLump::GetReader()
 {
 	// Don't return the reader if this lump is encrypted
 	// In that case always force caching of the lump
-	if (!(Flags & LUMPF_BLOODCRYPT)) return FUncompressedLump::GetReader();
-	else return NULL;	
+	if (!(Flags & LUMPF_BLOODCRYPT))
+	{
+		return FUncompressedLump::GetReader();
+	}
+	else
+	{
+		return NULL;
+	}
 }
 
 //==========================================================================

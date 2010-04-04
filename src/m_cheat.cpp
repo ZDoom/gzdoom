@@ -52,17 +52,17 @@
 
 void cht_DoCheat (player_t *player, int cheat)
 {
-	static PClass *const *BeholdPowers[9] =
+	static const char * const BeholdPowers[9] =
 	{
-		&RUNTIME_CLASS_CASTLESS(APowerInvulnerable),
-		&RUNTIME_CLASS_CASTLESS(APowerStrength),
-		&RUNTIME_CLASS_CASTLESS(APowerInvisibility),
-		&RUNTIME_CLASS_CASTLESS(APowerIronFeet),
-		NULL, // MapRevealer
-		&RUNTIME_CLASS_CASTLESS(APowerLightAmp),
-		&RUNTIME_CLASS_CASTLESS(APowerShadow),
-		&RUNTIME_CLASS_CASTLESS(APowerMask),
-		&RUNTIME_CLASS_CASTLESS(APowerTargeter)
+		"PowerInvulnerable",
+		"PowerStrength",
+		"PowerInvisibility",
+		"PowerIronFeet",
+		"MapRevealer",
+		"PowerLightAmp",
+		"PowerShadow",
+		"PowerMask",
+		"PowerTargeter",
 	};
 	PClassActor *type;
 	AInventory *item;
@@ -245,12 +245,12 @@ void cht_DoCheat (player_t *player, int cheat)
 		}
 		else if (player->mo != NULL && player->health >= 0)
 		{
-			item = player->mo->FindInventory(static_cast<PClassActor *>(*BeholdPowers[i]));
+			item = player->mo->FindInventory(PClass::FindActor(BeholdPowers[i]));
 			if (item == NULL)
 			{
 				if (i != 0)
 				{
-					player->mo->GiveInventoryType(static_cast<PClassActor *>(*BeholdPowers[i]));
+					cht_Give(player, BeholdPowers[i]);
 					if (cheat == CHT_BEHOLDS)
 					{
 						P_GiveBody (player->mo, -100);
@@ -259,7 +259,7 @@ void cht_DoCheat (player_t *player, int cheat)
 				else
 				{
 					// Let's give the item here so that the power doesn't need colormap information.
-					player->mo->GiveInventoryType(PClass::FindActor("InvulnerabilitySphere"));
+					cht_Give(player, "InvulnerabilitySphere");
 				}
 			}
 			else
@@ -316,7 +316,10 @@ void cht_DoCheat (player_t *player, int cheat)
 				player->mo->special1 = 0;	// required for the Hexen fighter's fist attack. 
 											// This gets set by AActor::Die as flag for the wimpy death and must be reset here.
 				player->mo->SetState (player->mo->SpawnState);
-				player->mo->Translation = TRANSLATION(TRANSLATION_Players, BYTE(player-players));
+				if (!(player->mo->flags2 & MF2_DONTTRANSLATE))
+				{
+					player->mo->Translation = TRANSLATION(TRANSLATION_Players, BYTE(player-players));
+				}
 				player->mo->DamageType = NAME_None;
 //				player->mo->GiveDefaultInventory();
 				if (player->ReadyWeapon != NULL)

@@ -370,8 +370,7 @@ DEFINE_PROPERTY(painchance, ZI, Actor)
 		if (!stricmp(str, "Normal")) painType = NAME_None;
 		else painType=str;
 
-		if (info->PainChances == NULL) info->PainChances=new PainChanceList;
-		(*info->PainChances)[painType] = (BYTE)id;
+		info->SetPainChance(painType, id);
 	}
 }
 
@@ -566,6 +565,15 @@ DEFINE_PROPERTY(howlsound, S, Actor)
 	PROP_STRING_PARM(str, 0);
 	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
 	static_cast<PClassActor *>(info)->HowlSound = str;
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_PROPERTY(crushpainsound, S, Actor)
+{
+	PROP_STRING_PARM(str, 0);
+	defaults->CrushPainSound = str;
 }
 
 //==========================================================================
@@ -978,13 +986,11 @@ DEFINE_PROPERTY(damagefactor, ZF, Actor)
 	}
 	else
 	{
-		if (info->DamageFactors == NULL) info->DamageFactors=new DmgFactors;
-
 		FName dmgType;
 		if (!stricmp(str, "Normal")) dmgType = NAME_None;
 		else dmgType=str;
 
-		(*info->DamageFactors)[dmgType]=id;
+		info->SetDamageFactor(dmgType, id);
 	}
 }
 
@@ -1609,6 +1615,15 @@ DEFINE_CLASS_PROPERTY(slotpriority, F, Weapon)
 //==========================================================================
 //
 //==========================================================================
+DEFINE_CLASS_PROPERTY(preferredskin, S, Weapon)
+{
+	PROP_STRING_PARM(str, 0);
+	// NoOp - only for Skulltag compatibility
+}
+
+//==========================================================================
+//
+//==========================================================================
 DEFINE_CLASS_PROPERTY(number, I, WeaponPiece)
 {
 	PROP_INT_PARM(i, 0);
@@ -1890,6 +1905,75 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, colorrange, I_I, PlayerPawn)
 	assert(info->IsKindOf(RUNTIME_CLASS(PClassPlayerPawn)));
 	static_cast<PClassPlayerPawn *>(info)->ColorRangeStart = start;
 	static_cast<PClassPlayerPawn *>(info)->ColorRangeEnd = end;
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_CLASS_PROPERTY_PREFIX(player, colorset, ISIII, PlayerPawn)
+{
+	PROP_INT_PARM(setnum, 0);
+	PROP_STRING_PARM(setname, 1);
+	PROP_INT_PARM(rangestart, 2);
+	PROP_INT_PARM(rangeend, 3);
+	PROP_INT_PARM(representative_color, 4);
+
+	FPlayerColorSet color;
+	color.Name = setname;
+	color.Lump = -1;
+	color.FirstColor = rangestart;
+	color.LastColor = rangeend;
+	color.RepresentativeColor = representative_color;
+
+	if (setnum < 0)
+	{
+		bag.ScriptPosition.Message(MSG_WARNING, "Color set number must not be negative.\n");
+	}
+	else
+	{
+		info->SetColorSet(setnum, &color);
+	}
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_CLASS_PROPERTY_PREFIX(player, colorsetfile, ISSI, PlayerPawn)
+{
+	PROP_INT_PARM(setnum, 0);
+	PROP_STRING_PARM(setname, 1);
+	PROP_STRING_PARM(rangefile, 2);
+	PROP_INT_PARM(representative_color, 3);
+
+	FPlayerColorSet color;
+	color.Name = setname;
+	color.Lump = Wads.CheckNumForName(rangefile);
+	color.RepresentativeColor = representative_color;
+	if (setnum < 0)
+	{
+		bag.ScriptPosition.Message(MSG_WARNING, "Color set number must not be negative.\n");
+	}
+	else if (color.Lump >= 0)
+	{
+		info->SetColorSet(setnum, &color);
+	}
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_CLASS_PROPERTY_PREFIX(player, clearcolorset, I, PlayerPawn)
+{
+	PROP_INT_PARM(setnum, 0);
+
+	if (setnum < 0)
+	{
+		bag.ScriptPosition.Message(MSG_WARNING, "Color set number must not be negative.\n");
+	}
+	else
+	{
+		info->SetColorSet(setnum, NULL);
+	}
 }
 
 //==========================================================================

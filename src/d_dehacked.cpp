@@ -2135,20 +2135,7 @@ static int PatchText (int oldSize)
 
 		if (!good)
 		{
-			// search cluster text background flats (only if no user-defined MAPINFO is used!)
-			if (strlen(newStr) <= 8 && Wads.CheckNumForName("MAPINFO") >= 0)
-			{
-				for (unsigned int i = 0; i < wadclusterinfos.Size(); i++)
-				{
-					if (!strcmp(wadclusterinfos[i].finaleflat, oldStr))
-					{
-						strcpy(wadclusterinfos[i].finaleflat, newStr);
-						good = true;
-					}
-				}
-			}
-
-			if (!good) DPrintf ("   (Unmatched)\n");
+			DPrintf ("   (Unmatched)\n");
 		}
 	}
 		
@@ -2904,6 +2891,12 @@ bool ADehackedPickup::TryPickup (AActor *&toucher)
 	RealPickup = static_cast<AInventory *>(Spawn (type, x, y, z, NO_REPLACE));
 	if (RealPickup != NULL)
 	{
+		// The internally spawned item should never count towards statistics.
+		if (RealPickup->flags & MF_COUNTITEM)
+		{
+			RealPickup->flags &= ~MF_COUNTITEM;
+			level.total_items--;
+		}
 		if (!(flags & MF_DROPPED))
 		{
 			RealPickup->flags &= ~MF_DROPPED;

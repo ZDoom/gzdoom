@@ -265,6 +265,7 @@ void level_info_t::Reset()
 	bordertexture[0] = 0;
 	teamdamage = 0.f;
 	specialactions.Clear();
+	DefaultEnvironment = 0;
 }
 
 
@@ -389,7 +390,7 @@ bool level_info_t::isValid()
 void cluster_info_t::Reset()
 {
 	cluster = 0;
-	finaleflat[0] = 0;
+	FinaleFlat = "";
 	ExitText = "";
 	EnterText = "";
 	MessageMusic = "";
@@ -615,6 +616,12 @@ void FMapInfoParser::ParseLumpOrTextureName(char *name)
 	name[8]=0;
 }
 
+void FMapInfoParser::ParseLumpOrTextureName(FString &name)
+{
+	sc.MustGetString();
+	name = sc.String;
+}
+
 
 //==========================================================================
 //
@@ -691,12 +698,12 @@ void FMapInfoParser::ParseCluster()
 		else if (sc.Compare("flat"))
 		{
 			ParseAssign();
-			ParseLumpOrTextureName(clusterinfo->finaleflat);
+			ParseLumpOrTextureName(clusterinfo->FinaleFlat);
 		}
 		else if (sc.Compare("pic"))
 		{
 			ParseAssign();
-			ParseLumpOrTextureName(clusterinfo->finaleflat);
+			ParseLumpOrTextureName(clusterinfo->FinaleFlat);
 			clusterinfo->flags |= CLUSTER_FINALEPIC;
 		}
 		else if (sc.Compare("hub"))
@@ -1242,6 +1249,36 @@ DEFINE_MAP_OPTION(mapbackground, true)
 {
 	parse.ParseAssign();
 	parse.ParseLumpOrTextureName(info->mapbg);
+}
+
+DEFINE_MAP_OPTION(defaultenvironment, false)
+{
+	int id;
+
+	parse.ParseAssign();
+	if (parse.sc.CheckNumber())
+	{ // Numeric ID XXX [, YYY]
+		id = parse.sc.Number << 8;
+		if (parse.CheckNumber())
+		{
+			id |= parse.sc.Number;
+		}
+	}
+	else
+	{ // Named environment
+		parse.sc.MustGetString();
+		ReverbContainer *reverb = S_FindEnvironment(parse.sc.String);
+		if (reverb == NULL)
+		{
+			parse.sc.ScriptMessage("Unknown sound environment '%s'\n", parse.sc.String);
+			id = 0;
+		}
+		else
+		{
+			id = reverb->ID;
+		}
+	}
+	info->DefaultEnvironment = id;
 }
 
 
@@ -1923,10 +1960,23 @@ void G_ParseMapInfo (const char *basemapinfo)
 		parse.ParseMapInfo(Wads.GetNumForFullName(basemapinfo), gamedefaults, defaultinfo);
 	}
 
+	static const char *mapinfonames[] = { "MAPINFO", "ZMAPINFO", NULL };
+	int nindex;
+
 	// Parse any extra MAPINFOs.
-	while ((lump = Wads.FindLump ("MAPINFO", &lastlump)) != -1)
+	while ((lump = Wads.FindLumpMulti (mapinfonames, &lastlump, false, &nindex)) != -1)
 	{
-		FMapInfoParser parse;
+		if (nindex == 0)
+		{
+			// If this lump is named MAPINFO we need to check if the same WAD contains a ZMAPINFO lump.
+			// If that exists we need to skip this one.
+
+			int wad = Wads.GetLumpFile(lump);
+			int altlump = Wads.CheckNumForName("ZMAPINFO", ns_global, wad, true);
+
+			if (altlump >= 0) continue;
+		}
+		FMapInfoParser parse(nindex == 1? FMapInfoParser::FMT_New : FMapInfoParser::FMT_Unknown);
 		level_info_t defaultinfo;
 		parse.ParseMapInfo(lump, gamedefaults, defaultinfo);
 	}

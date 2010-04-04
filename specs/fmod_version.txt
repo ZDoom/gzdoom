@@ -1,0 +1,1 @@
+This version of ZDoom must be compiled with any version between 4.22 and 4.28 inclusive.

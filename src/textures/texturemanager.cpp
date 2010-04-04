@@ -140,7 +140,9 @@ FTextureID FTextureManager::CheckForTexture (const char *name, int usetype, BITF
 			else
 			{
 				if (firsttype == FTexture::TEX_Null ||
-					(firsttype == FTexture::TEX_MiscPatch && tex->UseType != FTexture::TEX_Null)
+					(firsttype == FTexture::TEX_MiscPatch &&
+					 tex->UseType != firsttype &&
+					 tex->UseType != FTexture::TEX_Null)
 				   )
 				{
 					firstfound = i;
@@ -1005,7 +1007,7 @@ FArchive &operator<< (FArchive &arc, FTextureID &tex)
 //==========================================================================
 //
 // FTextureID::operator+
-// Does not return incvalid texture IDs
+// Does not return invalid texture IDs
 //
 //==========================================================================
 

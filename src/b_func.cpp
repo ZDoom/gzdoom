@@ -118,7 +118,7 @@ bool FCajunMaster::Reachable (AActor *looker, AActor *rtarget)
 //in doom is 90 degrees infront.
 bool FCajunMaster::Check_LOS (AActor *from, AActor *to, angle_t vangle)
 {
-	if (!P_CheckSight (from, to, 2))
+	if (!P_CheckSight (from, to, SF_SEEPASTBLOCKEVERYTHING))
 		return false; // out of sight
 	if (vangle == ANGLE_MAX)
 		return true;
@@ -339,7 +339,7 @@ AActor *FCajunMaster::Choose_Mate (AActor *bot)
 			&& !p_leader[count]) //taken?
 		{
 
-			if (P_CheckSight (bot, client->mo, 1))
+			if (P_CheckSight (bot, client->mo, SF_IGNOREVISIBILITY))
 			{
 				test = P_AproxDistance (client->mo->x - bot->x,
 										client->mo->y - bot->y);
@@ -525,7 +525,7 @@ angle_t FCajunMaster::FireRox (AActor *bot, AActor *enemy, ticcmd_t *cmd)
 			   enemy->y + FixedMul(enemy->vely, (m+2*FRACUNIT)), ONFLOORZ, 1);
 	dist = P_AproxDistance(actor->x-bglobal.body1->x, actor->y-bglobal.body1->y);
 	//try the predicted location
-	if (P_CheckSight (actor, bglobal.body1, 1)) //See the predicted location, so give a test missile
+	if (P_CheckSight (actor, bglobal.body1, SF_IGNOREVISIBILITY)) //See the predicted location, so give a test missile
 	{
 		FCheckPosition tm;
 		if (SafeCheckPosition (bot, actor->x, actor->y, tm))

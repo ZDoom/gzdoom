@@ -117,6 +117,10 @@ void F_StartFinale (const char *music, int musicorder, int cdtrack, unsigned int
 	}
 
 	FinaleFlat = (flat != NULL && *flat != 0) ? flat : gameinfo.finaleFlat;
+	if (FinaleFlat != NULL && FinaleFlat[0] == '$')
+	{
+		FinaleFlat = GStrings(FinaleFlat + 1);
+	}
 
 	if (textInLump)
 	{
@@ -758,7 +762,7 @@ void F_CastDrawer (void)
 	FTexture*			pic;
 	
 	// erase the entire screen to a background
-	screen->DrawTexture (TexMan["BOSSBACK"], 0, 0,
+	screen->DrawTexture (TexMan[GStrings("bgcastcall")], 0, 0,
 		DTA_DestWidth, screen->GetWidth(),
 		DTA_DestHeight, screen->GetHeight(),
 		TAG_DONE);

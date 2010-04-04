@@ -294,8 +294,10 @@ MapData *P_OpenMapData(const char * mapname)
 			{
 				// The following lump is from a different file so whatever this is,
 				// it is not a multi-lump Doom level so let's assume it is a Build map.
-				map->MapLumps[0].FilePos = Wads.GetLumpOffset(lump_name);
+				map->MapLumps[0].FilePos = 0;
 				map->MapLumps[0].Size = Wads.LumpLength(lump_name);
+				map->file = Wads.ReopenLumpNum(lump_name);
+				map->CloseOnDestruct = true;
 				if (!P_IsBuildMap(map))
 				{
 					delete map;
@@ -312,6 +314,9 @@ MapData *P_OpenMapData(const char * mapname)
 
 			if (map->Encrypted)
 			{ // If it's encrypted, then it's a Blood file, presumably a map.
+				map->file = Wads.ReopenLumpNum(lump_name);
+				map->CloseOnDestruct = true;
+				map->MapLumps[0].FilePos = 0;
 				if (!P_IsBuildMap(map))
 				{
 					delete map;
@@ -322,7 +327,7 @@ MapData *P_OpenMapData(const char * mapname)
 
 			int index = 0;
 
-			if (stricmp(Wads.GetLumpFullName(lump_name + 1), "TEXTMAP"))
+			if (stricmp(Wads.GetLumpFullName(lump_name + 1), "TEXTMAP") != 0)
 			{
 				for(int i = 1;; i++)
 				{
@@ -404,7 +409,8 @@ MapData *P_OpenMapData(const char * mapname)
 		}
 	}
 	DWORD id;
-	(*map->file) >> id;
+
+	map->file->Read(&id, sizeof(id));
 	
 	if (id == IWAD_ID || id == PWAD_ID)
 	{
@@ -705,9 +711,15 @@ void P_FloodZone (sector_t *sec, int zonenum)
 			continue;
 
 		if (check->frontsector == sec)
+		{
+			assert(check->backsector != NULL);
 			other = check->backsector;
+		}
 		else
+		{
+			assert(check->frontsector != NULL);
 			other = check->frontsector;
+		}
 
 		if (other->ZoneNumber != zonenum)
 			P_FloodZone (other, zonenum);
@@ -717,6 +729,7 @@ void P_FloodZone (sector_t *sec, int zonenum)
 void P_FloodZones ()
 {
 	int z = 0, i;
+	ReverbContainer *reverb;
 
 	for (i = 0; i < numsectors; ++i)
 	{
@@ -727,9 +740,15 @@ void P_FloodZones ()
 	}
 	numzones = z;
 	zones = new zone_t[z];
+	reverb = S_FindEnvironment(level.DefaultEnvironment);
+	if (reverb == NULL)
+	{
+		Printf("Sound environment %d, %d not found\n", level.DefaultEnvironment >> 8, level.DefaultEnvironment & 255);
+		reverb = DefaultEnvironments[0];
+	}
 	for (i = 0; i < z; ++i)
 	{
-		zones[i].Environment = DefaultEnvironments[0];
+		zones[i].Environment = reverb;
 	}
 }
 
@@ -3379,7 +3398,7 @@ void P_SetupLevel (char *lumpname, int position)
 	P_FreeLevelData ();
 	interpolator.ClearInterpolations();	// [RH] Nothing to interpolate on a fresh level.
 
-	MapData * map = P_OpenMapData(lumpname);
+	MapData *map = P_OpenMapData(lumpname);
 	if (map == NULL)
 	{
 		I_Error("Unable to open map '%s'\n", lumpname);
@@ -3395,11 +3414,9 @@ void P_SetupLevel (char *lumpname, int position)
 		BYTE *mapdata = new BYTE[map->MapLumps[0].Size];
 		map->Seek(0);
 		map->file->Read(mapdata, map->MapLumps[0].Size);
-		if (map->Encrypted)
-		{
-			BloodCrypt (mapdata, 0, MIN<int> (map->MapLumps[0].Size, 256));
-		}
+		times[0].Clock();
 		buildmap = P_LoadBuildMap (mapdata, map->MapLumps[0].Size, &buildthings, &numbuildthings);
+		times[0].Unclock();
 		delete[] mapdata;
 	}
 

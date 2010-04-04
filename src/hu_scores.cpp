@@ -418,7 +418,7 @@ void HU_DrawColorBar(int x, int y, int height, int playernum)
 {
 	float h, s, v, r, g, b;
 
-	D_GetPlayerColor (playernum, &h, &s, &v);
+	D_GetPlayerColor (playernum, &h, &s, &v, NULL);
 	HSVtoRGB (&r, &g, &b, h, s, v);
 
 	screen->Clear (x, y, x + 24*CleanXfac, y + height, -1,

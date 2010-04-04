@@ -850,6 +850,46 @@ int FWadCollection::FindLump (const char *name, int *lastlump, bool anyns)
 
 //==========================================================================
 //
+// W_FindLumpMulti
+//
+// Find a named lump. Specifically allows duplicates for merging of e.g.
+// SNDINFO lumps. Returns everything having one of the passed names.
+//
+//==========================================================================
+
+int FWadCollection::FindLumpMulti (const char **names, int *lastlump, bool anyns, int *nameindex)
+{
+	LumpRecord *lump_p;
+
+	assert(lastlump != NULL && *lastlump >= 0);
+	lump_p = &LumpInfo[*lastlump];
+	while (lump_p < &LumpInfo[NumLumps])
+	{
+		FResourceLump *lump = lump_p->lump;
+
+		if (anyns || lump->Namespace == ns_global)
+		{
+			
+			for(const char **name = names; *name != NULL; name++)
+			{
+				if (!strnicmp(*name, lump->Name, 8))
+				{
+					int lump = int(lump_p - &LumpInfo[0]);
+					*lastlump = lump + 1;
+					if (nameindex != NULL) *nameindex = int(name - names);
+					return lump;
+				}
+			}
+		}
+		lump_p++;
+	}
+
+	*lastlump = NumLumps;
+	return -1;
+}
+
+//==========================================================================
+//
 // W_CheckLumpName
 //
 //==========================================================================
@@ -925,6 +965,24 @@ int FWadCollection::GetLumpNamespace (int lump) const
 		return ns_global;
 	else
 		return LumpInfo[lump].lump->Namespace;
+}
+
+//==========================================================================
+//
+// FWadCollection :: GetLumpIndexNum
+//
+// Returns the index number for this lump. This is *not* the lump's position
+// in the lump directory, but rather a special value that RFF can associate
+// with files. Other archive types will return 0, since they don't have it.
+//
+//==========================================================================
+
+int FWadCollection::GetLumpIndexNum(int lump) const
+{
+	if ((size_t)lump >= NumLumps)
+		return 0;
+	else
+		return LumpInfo[lump].lump->GetIndexNum();
 }
 
 //==========================================================================

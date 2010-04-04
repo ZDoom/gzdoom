@@ -789,7 +789,7 @@ void FNodeBuilder::SplitSegs (DWORD set, node_t &node, DWORD splitseg, DWORD &ou
 			newvert.y += fixed_t(frac * double(Vertices[seg->v2].y - newvert.y));
 			vertnum = VertexMap->SelectVertexClose (newvert);
 
-			if (vertnum == seg->v1 || vertnum == seg->v2)
+			if (vertnum == (unsigned int)seg->v1 || vertnum == (unsigned int)seg->v2)
 			{
 				Printf("SelectVertexClose selected endpoint of seg %u\n", set);
 			}

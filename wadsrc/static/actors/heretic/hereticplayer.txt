@@ -6,7 +6,6 @@ ACTOR HereticPlayer : PlayerPawn
 	Mass 100
 	Painchance 255
 	Speed 1
-	Player.ColorRange 225, 240
 	Player.DisplayName "Corvus"
 	Player.StartItem "GoldWand"
 	Player.StartItem "Staff"
@@ -18,7 +17,20 @@ ACTOR HereticPlayer : PlayerPawn
 	Player.WeaponSlot 5, SkullRod
 	Player.WeaponSlot 6, PhoenixRod
 	Player.WeaponSlot 7, Mace
-	
+
+	Player.ColorRange 225, 240
+	Player.Colorset 0, "Green",			225, 240,  238
+	Player.Colorset 1, "Yellow",		114, 129,  127
+	Player.Colorset 2, "Red",			145, 160,  158
+	Player.Colorset 3, "Blue",			190, 205,  203
+	// Doom Legacy additions
+	Player.Colorset 4, "Brown",			 67,  82,   80
+	Player.Colorset 5, "Light Gray",	  9,  24,   22
+	Player.Colorset 6, "Light Brown",	 74,  89,   87
+	Player.Colorset 7, "Light Red",		150, 165,  163
+	Player.Colorset 8, "Light Blue",	192, 207,  205
+	Player.Colorset 9, "Beige",			 95, 110,  108
+
 	States
 	{
 	Spawn:

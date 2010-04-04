@@ -795,25 +795,25 @@ static void UpdateSegBBox (seg_t *seg)
 
 	line = seg->linedef;
 
-	if (seg->v1->x < seg->v2->x)
+	if (line->v1->x < line->v2->x)
 	{
-		line->bbox[BOXLEFT] = seg->v1->x;
-		line->bbox[BOXRIGHT] = seg->v2->x;
+		line->bbox[BOXLEFT] = line->v1->x;
+		line->bbox[BOXRIGHT] = line->v2->x;
 	}
 	else
 	{
-		line->bbox[BOXLEFT] = seg->v2->x;
-		line->bbox[BOXRIGHT] = seg->v1->x;
+		line->bbox[BOXLEFT] = line->v2->x;
+		line->bbox[BOXRIGHT] = line->v1->x;
 	}
-	if (seg->v1->y < seg->v2->y)
+	if (line->v1->y < line->v2->y)
 	{
-		line->bbox[BOXBOTTOM] = seg->v1->y;
-		line->bbox[BOXTOP] = seg->v2->y;
+		line->bbox[BOXBOTTOM] = line->v1->y;
+		line->bbox[BOXTOP] = line->v2->y;
 	}
 	else
 	{
-		line->bbox[BOXBOTTOM] = seg->v2->y;
-		line->bbox[BOXTOP] = seg->v1->y;
+		line->bbox[BOXBOTTOM] = line->v2->y;
+		line->bbox[BOXTOP] = line->v1->y;
 	}
 
 	// Update the line's slopetype

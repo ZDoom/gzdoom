@@ -54,7 +54,8 @@ void D_DoServerInfoChange (BYTE **stream, bool singlebit);
 void D_WriteUserInfoStrings (int player, BYTE **stream, bool compact=false);
 void D_ReadUserInfoStrings (int player, BYTE **stream, bool update);
 
-void D_GetPlayerColor (int player, float *h, float *s, float *v);
+struct FPlayerColorSet;
+void D_GetPlayerColor (int player, float *h, float *s, float *v, FPlayerColorSet **colorset);
 void D_PickRandomTeam (int player);
 int D_PickRandomTeam ();
 class player_t;

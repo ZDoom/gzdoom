@@ -41,6 +41,7 @@ struct FResourceLump
 	virtual FileReader *GetReader();
 	virtual FileReader *NewReader();
 	virtual int GetFileOffset() { return -1; }
+	virtual int GetIndexNum() const { return 0; }
 	void LumpNameSetup(const char *iname);
 	void CheckEmbedded();
 

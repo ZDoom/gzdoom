@@ -14,7 +14,6 @@ ACTOR FighterPlayer : PlayerPawn
 	RadiusDamageFactor 0.25
 	Player.JumpZ 9
 	Player.Viewheight 48
-	Player.ColorRange 246, 254
 	Player.SpawnClass "Fighter"
 	Player.DisplayName "Fighter"
 	Player.SoundClass "fighter"
@@ -28,6 +27,16 @@ ACTOR FighterPlayer : PlayerPawn
 	Player.WeaponSlot 2, FWeapAxe
 	Player.WeaponSlot 3, FWeapHammer
 	Player.WeaponSlot 4, FWeapQuietus
+	
+	Player.ColorRange 246, 254
+	Player.Colorset		0, "Gold",			246, 254,    253
+	Player.ColorsetFile 1, "Red",			"TRANTBL0",  0xAC
+	Player.ColorsetFile 2, "Blue",			"TRANTBL1",  0x9D
+	Player.ColorsetFile 3, "Dull Green",	"TRANTBL2",  0x3E
+	Player.ColorsetFile 4, "Green",			"TRANTBL3",  0xC8
+	Player.ColorsetFile 5, "Gray",			"TRANTBL4",  0x2D
+	Player.ColorsetFile 6, "Brown",			"TRANTBL5",  0x6F
+	Player.ColorsetFile 7, "Purple",		"TRANTBL6",  0xEE
 	
 	States
 	{
@@ -55,7 +64,7 @@ ACTOR FighterPlayer : PlayerPawn
 		Stop		
 	XDeath:
 		PLAY O 5 A_PlayerScream
-		PLAY P 5 A_SkullPop
+		PLAY P 5 A_SkullPop("BloodyFighterSkull")
 		PLAY R 5 A_NoBlocking
 		PLAY STUV 5
 		PLAY W -1
@@ -90,3 +99,28 @@ ACTOR FighterPlayer : PlayerPawn
 	}
 }
 
+// The fighter's bloody skull --------------------------------------------------------------
+
+Actor BloodyFighterSkull : PlayerChunk
+{
+	Game Hexen
+	Radius 4
+	Height 4
+	+NOBLOCKMAP
+	+DROPOFF
+	+LOWGRAVITY
+	+CANNOTPUSH
+	+SKYEXPLODE
+	+NOBLOCKMONST
+	+NOSKIN
+	States
+	{
+	Spawn:
+		BSKL A 0
+		BSKL ABCDFGH 5 A_CheckFloor("Hit")
+		Goto Spawn+1
+	Hit:
+		BSKL I 16 A_CheckPlayerDone
+		Wait
+	}
+}

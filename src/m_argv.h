@@ -35,40 +35,40 @@
 #define __M_ARGV_H__
 
 #include "dobject.h"
+#include "zstring.h"
 
 //
 // MISC
 //
 class DArgs : public DObject
 {
-	DECLARE_CLASS (DArgs, DObject)
+	DECLARE_CLASS(DArgs, DObject)
 public:
-	DArgs ();
-	DArgs (const DArgs &args);
-	DArgs (int argc, char **argv);
-	~DArgs ();
+	DArgs();
+	DArgs(const DArgs &args);
+	DArgs(int argc, char **argv);
+	DArgs(int argc, FString *argv);
 
-	DArgs &operator= (const DArgs &other);
+	DArgs &operator=(const DArgs &other);
 
-	void AppendArg (const char *arg);
-	void SetArgs (int argc, char **argv);
-	DArgs *GatherFiles (const char *param, const char *extension, bool acceptNoExt) const;
-	void SetArg (int argnum, const char *arg);
+	void AppendArg(FString arg);
+	void AppendArgs(int argc, const FString *argv);
+	void SetArgs(int argc, char **argv);
+	void CollectFiles(const char *param, const char *extension);
+	DArgs *GatherFiles(const char *param) const;
+	void SetArg(int argnum, const char *arg);
 
-	// Returns the position of the given parameter
-	// in the arg list (0 if not found).
-	int CheckParm (const char *check, int start=1) const;
-	char *CheckValue (const char *check) const;
-	char *GetArg (int arg) const;
-	char **GetArgList (int arg) const;
-	int NumArgs () const;
-	void FlushArgs ();
+	int CheckParm(const char *check, int start=1) const;	// Returns the position of the given parameter in the arg list (0 if not found).
+	int CheckParmList(const char *check, FString **strings, int start=1) const;
+	const char *CheckValue(const char *check) const;
+	const char *GetArg(int arg) const;
+	FString *GetArgList(int arg) const;
+	FString TakeValue(const char *check);
+	int NumArgs() const;
+	void FlushArgs();
 
 private:
-	int m_ArgC;
-	char **m_ArgV;
-
-	void CopyArgs (int argc, char **argv);
+	TArray<FString> Argv;
 };
 
 extern DArgs *Args;

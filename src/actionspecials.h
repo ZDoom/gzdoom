@@ -12,7 +12,7 @@ DEFINE_SPECIAL(Door_Close, 10, 2, 3, 3)
 DEFINE_SPECIAL(Door_Open, 11, 2, 3, 3)
 DEFINE_SPECIAL(Door_Raise, 12, 3, 4, 4)
 DEFINE_SPECIAL(Door_LockedRaise, 13, 4, 5, 5)
-DEFINE_SPECIAL(Door_Animated, 14, 3, 3, 3)
+DEFINE_SPECIAL(Door_Animated, 14, 4, 4, 4)
 DEFINE_SPECIAL(Autosave, 15, 0, 0, 0)   // [RH] Save the game *now*
 DEFINE_SPECIAL(Transfer_WallLight, 16, -1, -1, 2)
 DEFINE_SPECIAL(Thing_Raise, 17, 1, 1, 1)

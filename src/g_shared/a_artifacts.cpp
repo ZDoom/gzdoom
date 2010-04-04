@@ -193,6 +193,12 @@ void APowerup::DoEffect ()
 
 void APowerup::EndEffect ()
 {
+	int colormap = GetSpecialColormap(BlendColor);
+
+	if (colormap != NOFIXEDCOLORMAP && Owner && Owner->player && Owner->player->fixedcolormap == colormap)
+	{ // only unset if the fixed colormap comes from this item
+		Owner->player->fixedcolormap = NOFIXEDCOLORMAP;
+	}
 }
 
 //===========================================================================
@@ -347,6 +353,7 @@ IMPLEMENT_CLASS (APowerInvulnerable)
 
 void APowerInvulnerable::InitEffect ()
 {
+	Super::InitEffect();
 	Owner->effects &= ~FX_RESPAWNINVUL;
 	Owner->flags2 |= MF2_INVULNERABLE;
 	if (Mode == NAME_None && Owner->IsKindOf(RUNTIME_CLASS(APlayerPawn)))
@@ -421,6 +428,8 @@ void APowerInvulnerable::DoEffect ()
 
 void APowerInvulnerable::EndEffect ()
 {
+	Super::EndEffect();
+
 	if (Owner == NULL)
 	{
 		return;
@@ -498,6 +507,7 @@ bool APowerStrength::HandlePickup (AInventory *item)
 
 void APowerStrength::InitEffect ()
 {
+	Super::InitEffect();
 }
 
 //===========================================================================
@@ -537,7 +547,6 @@ PalEntry APowerStrength::GetBlend ()
 // Invisibility Powerup ------------------------------------------------------
 
 IMPLEMENT_CLASS (APowerInvisibility)
-IMPLEMENT_CLASS (APowerShadow)
 
 // Invisibility flag combos
 #define INVISIBILITY_FLAGS1	(MF_SHADOW)
@@ -552,6 +561,7 @@ IMPLEMENT_CLASS (APowerShadow)
 
 void APowerInvisibility::InitEffect ()
 {
+	Super::InitEffect();
 	// This used to call CommonInit(), which used to contain all the code that's repeated every
 	// tic, plus the following code that needs to happen once and only once.
 	// The CommonInit() code has been moved to DoEffect(), so this now ends with a call to DoEffect(),
@@ -615,6 +625,7 @@ void APowerInvisibility::DoEffect ()
 
 void APowerInvisibility::EndEffect ()
 {
+	Super::EndEffect();
 	if (Owner != NULL)
 	{
 		Owner->flags  &= ~(flags  & INVISIBILITY_FLAGS1);
@@ -822,6 +833,7 @@ void APowerLightAmp::DoEffect ()
 
 void APowerLightAmp::EndEffect ()
 {
+	Super::EndEffect();
 	if (Owner != NULL && Owner->player != NULL && Owner->player->fixedcolormap < NUMCOLORMAPS)
 	{
 		Owner->player->fixedlightlevel = -1;
@@ -914,6 +926,7 @@ void APowerFlight::Serialize (FArchive &arc)
 
 void APowerFlight::InitEffect ()
 {
+	Super::InitEffect();
 	Owner->flags2 |= MF2_FLY;
 	Owner->flags |= MF_NOGRAVITY;
 	if (Owner->z <= Owner->floorz)
@@ -955,6 +968,7 @@ void APowerFlight::Tick ()
 
 void APowerFlight::EndEffect ()
 {
+	Super::EndEffect();
 	if (Owner == NULL || Owner->player == NULL)
 	{
 		return;
@@ -1035,6 +1049,8 @@ void APowerWeaponLevel2::InitEffect ()
 {
 	AWeapon *weapon, *sister;
 
+	Super::InitEffect();
+
 	if (Owner->player == NULL)
 		return;
 
@@ -1071,6 +1087,7 @@ void APowerWeaponLevel2::EndEffect ()
 {
 	player_t *player = Owner != NULL ? Owner->player : NULL;
 
+	Super::EndEffect();
 	if (player != NULL)
 	{
 
@@ -1199,6 +1216,8 @@ void APowerTargeter::InitEffect ()
 {
 	player_t *player;
 
+	Super::InitEffect();
+
 	if ((player = Owner->player) == NULL)
 		return;
 
@@ -1250,6 +1269,7 @@ void APowerTargeter::DoEffect ()
 
 void APowerTargeter::EndEffect ()
 {
+	Super::EndEffect();
 	if (Owner != NULL && Owner->player != NULL)
 	{
 		P_SetPsprite (Owner->player, ps_targetcenter, NULL);
@@ -1281,6 +1301,8 @@ IMPLEMENT_CLASS (APowerFrightener)
 
 void APowerFrightener::InitEffect ()
 {
+	Super::InitEffect();
+
 	if (Owner== NULL || Owner->player == NULL)
 		return;
 
@@ -1295,6 +1317,8 @@ void APowerFrightener::InitEffect ()
 
 void APowerFrightener::EndEffect ()
 {
+	Super::EndEffect();
+
 	if (Owner== NULL || Owner->player == NULL)
 		return;
 
@@ -1318,6 +1342,8 @@ IMPLEMENT_CLASS( APowerTimeFreezer)
 void APowerTimeFreezer::InitEffect( )
 {
 	int	ulIdx;
+
+	Super::InitEffect();
 
 	if (Owner== NULL || Owner->player == NULL)
 		return;
@@ -1394,6 +1420,8 @@ void APowerTimeFreezer::EndEffect( )
 {
 	int	ulIdx;
 
+	Super::EndEffect();
+
 	// Allow other actors to move about freely once again.
 	level.flags2 &= ~LEVEL2_FROZEN;
 
@@ -1432,6 +1460,8 @@ IMPLEMENT_CLASS( APowerDamage)
 
 void APowerDamage::InitEffect( )
 {
+	Super::InitEffect();
+
 	// Use sound channel 5 to avoid interference with other actions.
 	if (Owner != NULL) S_Sound(Owner, 5, SeeSound, 1.0f, ATTN_NONE);
 }
@@ -1444,6 +1474,7 @@ void APowerDamage::InitEffect( )
 
 void APowerDamage::EndEffect( )
 {
+	Super::EndEffect();
 	// Use sound channel 5 to avoid interference with other actions.
 	if (Owner != NULL) S_Sound(Owner, 5, DeathSound, 1.0f, ATTN_NONE);
 }
@@ -1495,6 +1526,8 @@ IMPLEMENT_CLASS(APowerProtection)
 
 void APowerProtection::InitEffect( )
 {
+	Super::InitEffect();
+
 	if (Owner != NULL)
 	{
 		S_Sound(Owner, CHAN_AUTO, SeeSound, 1.0f, ATTN_NONE);
@@ -1518,6 +1551,7 @@ void APowerProtection::InitEffect( )
 
 void APowerProtection::EndEffect( )
 {
+	Super::EndEffect();
 	if (Owner != NULL)
 	{
 		S_Sound(Owner, CHAN_AUTO, DeathSound, 1.0f, ATTN_NONE);
@@ -1570,6 +1604,8 @@ IMPLEMENT_CLASS(APowerDrain)
 
 void APowerDrain::InitEffect( )
 {
+	Super::InitEffect();
+
 	if (Owner== NULL || Owner->player == NULL)
 		return;
 
@@ -1585,6 +1621,8 @@ void APowerDrain::InitEffect( )
 
 void APowerDrain::EndEffect( )
 {
+	Super::EndEffect();
+
 	// Nothing to do if there's no owner.
 	if (Owner != NULL && Owner->player != NULL)
 	{
@@ -1606,6 +1644,8 @@ IMPLEMENT_CLASS(APowerRegeneration)
 
 void APowerRegeneration::InitEffect( )
 {
+	Super::InitEffect();
+
 	if (Owner== NULL || Owner->player == NULL)
 		return;
 
@@ -1621,6 +1661,7 @@ void APowerRegeneration::InitEffect( )
 
 void APowerRegeneration::EndEffect( )
 {
+	Super::EndEffect();
 	// Nothing to do if there's no owner.
 	if (Owner != NULL && Owner->player != NULL)
 	{
@@ -1641,6 +1682,8 @@ IMPLEMENT_CLASS(APowerHighJump)
 
 void APowerHighJump::InitEffect( )
 {
+	Super::InitEffect();
+
 	if (Owner== NULL || Owner->player == NULL)
 		return;
 
@@ -1656,6 +1699,7 @@ void APowerHighJump::InitEffect( )
 
 void APowerHighJump::EndEffect( )
 {
+	Super::EndEffect();
 	// Nothing to do if there's no owner.
 	if (Owner != NULL && Owner->player != NULL)
 	{
@@ -1676,6 +1720,8 @@ IMPLEMENT_CLASS(APowerDoubleFiringSpeed)
 
 void APowerDoubleFiringSpeed::InitEffect( )
 {
+	Super::InitEffect();
+
 	if (Owner== NULL || Owner->player == NULL)
 		return;
 
@@ -1691,6 +1737,7 @@ void APowerDoubleFiringSpeed::InitEffect( )
 
 void APowerDoubleFiringSpeed::EndEffect( )
 {
+	Super::EndEffect();
 	// Nothing to do if there's no owner.
 	if (Owner != NULL && Owner->player != NULL)
 	{
@@ -1724,6 +1771,8 @@ void APowerMorph::Serialize (FArchive &arc)
 
 void APowerMorph::InitEffect( )
 {
+	Super::InitEffect();
+
 	if (Owner != NULL && Owner->player != NULL && PlayerClass != NAME_None)
 	{
 		player_t *realplayer = Owner->player;	// Remember the identity of the player
@@ -1751,6 +1800,8 @@ void APowerMorph::InitEffect( )
 
 void APowerMorph::EndEffect( )
 {
+	Super::EndEffect();
+
 	// Abort if owner already destroyed
 	if (Owner == NULL)
 	{
@@ -1806,6 +1857,8 @@ IMPLEMENT_CLASS(APowerInfiniteAmmo)
 
 void APowerInfiniteAmmo::InitEffect( )
 {
+	Super::InitEffect();
+
 	if (Owner== NULL || Owner->player == NULL)
 		return;
 
@@ -1821,6 +1874,8 @@ void APowerInfiniteAmmo::InitEffect( )
 
 void APowerInfiniteAmmo::EndEffect( )
 {
+	Super::EndEffect();
+
 	// Nothing to do if there's no owner.
 	if (Owner != NULL && Owner->player != NULL)
 	{

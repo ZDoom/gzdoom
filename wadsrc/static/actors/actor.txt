@@ -270,6 +270,8 @@ ACTOR Actor native //: Thinker
 	action native A_SetSpecial(int spec, int arg0 = 0, int arg1 = 0, int arg2 = 0, int arg3 = 0, int arg4 = 0);
 	action native A_Quake(int intensity, int duration, int damrad, int tremrad, sound sfx = "world/quake");
 
+	action native A_CheckSightOrRange(float distance, state label);
+
 	States
 	{
 	Spawn:

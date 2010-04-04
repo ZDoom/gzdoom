@@ -460,18 +460,11 @@ PClassActor *PClassActor::GetReplacee(bool lookskill)
 
 void PClassActor::SetDamageFactor(FName type, fixed_t factor)
 {
-	if (factor != FRACUNIT) 
+	if (DamageFactors == NULL)
 	{
-		if (DamageFactors == NULL)
-		{
-			DamageFactors = new DmgFactors;
-		}
-		DamageFactors->Insert(type, factor);
+		DamageFactors = new DmgFactors;
 	}
-	else if (DamageFactors != NULL)
-	{
-		DamageFactors->Remove(type);
-	}
+	DamageFactors->Insert(type, factor);
 }
 
 //==========================================================================
@@ -488,11 +481,30 @@ void PClassActor::SetPainChance(FName type, int chance)
 		{
 			PainChances = new PainChanceList;
 		}
-		PainChances->Insert(type, MIN(chance, 255));
+		PainChances->Insert(type, MIN(chance, 256));
 	}
 	else if (PainChances != NULL)
 	{
 		PainChances->Remove(type);
+	}
+}
+
+//==========================================================================
+//
+//
+//==========================================================================
+
+void PClassActor::SetColorSet(int index, const FPlayerColorSet *set)
+{
+	if (set != NULL) 
+	{
+		if (ColorSets == NULL) ColorSets = new FPlayerColorSetMap;
+		ColorSets->Insert(index, *set);
+	}
+	else 
+	{
+		if (ColorSets != NULL) 
+			ColorSets->Remove(index);
 	}
 }
 

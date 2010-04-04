@@ -108,7 +108,7 @@ static void CalcPosVel(int type, const AActor *actor, const sector_t *sector, co
 static void CalcSectorSoundOrg(const sector_t *sec, int channum, fixed_t *x, fixed_t *y, fixed_t *z);
 static void CalcPolyobjSoundOrg(const FPolyObj *poly, fixed_t *x, fixed_t *y, fixed_t *z);
 static FSoundChan *S_StartSound(AActor *mover, const sector_t *sec, const FPolyObj *poly,
-	const FVector3 *pt, int channel, FSoundID sound_id, float volume, float attenuation);
+	const FVector3 *pt, int channel, FSoundID sound_id, float volume, float attenuation, FRolloffInfo *rolloff);
 static void S_SetListener(SoundListener &listener, AActor *listenactor);
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -165,6 +165,7 @@ void S_NoiseDebug (void)
 	screen->DrawText (SmallFont, CR_GOLD, 340, y, "pri", TAG_DONE);
 	screen->DrawText (SmallFont, CR_GOLD, 380, y, "flags", TAG_DONE);
 	screen->DrawText (SmallFont, CR_GOLD, 460, y, "aud", TAG_DONE);
+	screen->DrawText (SmallFont, CR_GOLD, 520, y, "pos", TAG_DONE);
 	y += 8;
 
 	if (Channels == NULL)
@@ -253,6 +254,11 @@ void S_NoiseDebug (void)
 		mysnprintf(temp, countof(temp), "%.4f", GSnd->GetAudibility(chan));
 		screen->DrawText(SmallFont, color, 460, y, temp, TAG_DONE);
 
+		// Position
+		mysnprintf(temp, countof(temp), "%u", GSnd->GetPosition(chan));
+		screen->DrawText(SmallFont, color, 520, y, temp, TAG_DONE);
+
+
 		y += 8;
 		if (chan->PrevChan == &Channels)
 		{
@@ -317,7 +323,6 @@ void S_InitData ()
 	LastLocalSndInfo = LastLocalSndSeq = "";
 	S_ParseSndInfo ();
 	S_ParseSndSeq (-1);
-	S_ParseReverbDef ();
 }
 
 //==========================================================================
@@ -808,7 +813,8 @@ static void CalcPolyobjSoundOrg(const FPolyObj *poly, fixed_t *x, fixed_t *y, fi
 //==========================================================================
 
 static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyObj *poly,
-	const FVector3 *pt, int channel, FSoundID sound_id, double volume, double attenuation)
+	const FVector3 *pt, int channel, FSoundID sound_id, float volume, float attenuation,
+	FRolloffInfo *forcedrolloff=NULL)
 {
 	sfxinfo_t *sfx;
 	int chanflags;
@@ -866,7 +872,7 @@ static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyO
 	sfx = &S_sfx[sound_id];
 
 	// Scale volume according to SNDINFO data.
-	volume = MIN(volume * sfx->Volume, 1.0);
+	volume = MIN(volume * sfx->Volume, 1.f);
 	if (volume <= 0)
 		return NULL;
 
@@ -894,7 +900,10 @@ static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyO
 				near_limit = S_sfx[sound_id].NearLimit;
 				limit_range = S_sfx[sound_id].LimitRange;
 			}
-			if (rolloff->MinDistance == 0) rolloff = &S_sfx[sound_id].Rolloff;
+			if (rolloff->MinDistance == 0)
+			{
+				rolloff = &S_sfx[sound_id].Rolloff;
+			}
 		}
 		else
 		{
@@ -904,13 +913,25 @@ static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyO
 				near_limit = S_sfx[sound_id].NearLimit;
 				limit_range = S_sfx[sound_id].LimitRange;
 			}
-			if (rolloff->MinDistance == 0) rolloff = &S_sfx[sound_id].Rolloff;
+			if (rolloff->MinDistance == 0)
+			{
+				rolloff = &S_sfx[sound_id].Rolloff;
+			}
 		}
 		sfx = &S_sfx[sound_id];
 	}
 
-	// If no valid rolloff was set use the global default
-	if (rolloff->MinDistance == 0) rolloff = &S_Rolloff;
+	// The passed rolloff overrides any sound-specific rolloff.
+	if (forcedrolloff != NULL && forcedrolloff->MinDistance != 0)
+	{
+		rolloff = forcedrolloff;
+	}
+
+	// If no valid rolloff was set, use the global default.
+	if (rolloff->MinDistance == 0)
+	{
+		rolloff = &S_Rolloff;
+	}
 
 	// If this is a singular sound, don't play it if it's already playing.
 	if (sfx->bSingular && S_CheckSingular(sound_id))
@@ -1162,7 +1183,7 @@ void S_RestartSound(FSoundChan *chan)
 //
 //==========================================================================
 
-void S_Sound (int channel, FSoundID sound_id, double volume, double attenuation)
+void S_Sound (int channel, FSoundID sound_id, float volume, float attenuation)
 {
 	S_StartSound (NULL, NULL, NULL, NULL, channel, sound_id, volume, attenuation);
 }
@@ -1173,7 +1194,7 @@ void S_Sound (int channel, FSoundID sound_id, double volume, double attenuation)
 //
 //==========================================================================
 
-void S_Sound (AActor *ent, int channel, FSoundID sound_id, double volume, double attenuation)
+void S_Sound (AActor *ent, int channel, FSoundID sound_id, float volume, float attenuation)
 {
 	if (ent == NULL || ent->Sector->Flags & SECF_SILENT)
 		return;
@@ -1182,11 +1203,32 @@ void S_Sound (AActor *ent, int channel, FSoundID sound_id, double volume, double
 
 //==========================================================================
 //
+// S_SoundMinMaxDist - An actor is source
+//
+// Attenuation is specified as min and max distances, rather than a scalar.
+//
+//==========================================================================
+
+void S_SoundMinMaxDist(AActor *ent, int channel, FSoundID sound_id, float volume, float mindist, float maxdist)
+{
+	if (ent == NULL || ent->Sector->Flags & SECF_SILENT)
+		return;
+
+	FRolloffInfo rolloff;
+
+	rolloff.RolloffType = ROLLOFF_Linear;
+	rolloff.MinDistance = mindist;
+	rolloff.MaxDistance = maxdist;
+	S_StartSound(ent, NULL, NULL, NULL, channel, sound_id, volume, 1, &rolloff);
+}
+
+//==========================================================================
+//
 // S_Sound - A polyobject is source
 //
 //==========================================================================
 
-void S_Sound (const FPolyObj *poly, int channel, FSoundID sound_id, double volume, double attenuation)
+void S_Sound (const FPolyObj *poly, int channel, FSoundID sound_id, float volume, float attenuation)
 {
 	S_StartSound (NULL, NULL, poly, NULL, channel, sound_id, volume, attenuation);
 }
@@ -1197,7 +1239,7 @@ void S_Sound (const FPolyObj *poly, int channel, FSoundID sound_id, double volum
 //
 //==========================================================================
 
-void S_Sound (fixed_t x, fixed_t y, fixed_t z, int channel, FSoundID sound_id, double volume, double attenuation)
+void S_Sound (fixed_t x, fixed_t y, fixed_t z, int channel, FSoundID sound_id, float volume, float attenuation)
 {
 	FVector3 pt(FIXED2FLOAT(x), FIXED2FLOAT(z), FIXED2FLOAT(y));
 	S_StartSound (NULL, NULL, NULL, &pt, channel, sound_id, volume, attenuation);
@@ -1209,7 +1251,7 @@ void S_Sound (fixed_t x, fixed_t y, fixed_t z, int channel, FSoundID sound_id, d
 //
 //==========================================================================
 
-void S_Sound (const sector_t *sec, int channel, FSoundID sfxid, double volume, double attenuation)
+void S_Sound (const sector_t *sec, int channel, FSoundID sfxid, float volume, float attenuation)
 {
 	S_StartSound (NULL, sec, NULL, NULL, channel, sfxid, volume, attenuation);
 }
@@ -1285,7 +1327,7 @@ sfxinfo_t *S_LoadSound(sfxinfo_t *sfx)
 					}
 					sfxstart = sfxdata + 8;
 				}
-				sfx->data = GSnd->LoadSoundRaw(sfxstart, len, frequency, 1, 8);
+				sfx->data = GSnd->LoadSoundRaw(sfxstart, len, frequency, 1, 8, sfx->LoopStart);
 			}
 			else
 			{
@@ -1879,8 +1921,8 @@ static void S_SetListener(SoundListener &listener, AActor *listenactor)
 		*/
 		listener.velocity.Zero();
 		listener.position.X = FIXED2FLOAT(listenactor->x);
-		listener.position.Y = FIXED2FLOAT(listenactor->y);
-		listener.position.Z = FIXED2FLOAT(listenactor->z);
+		listener.position.Y = FIXED2FLOAT(listenactor->z);
+		listener.position.Z = FIXED2FLOAT(listenactor->y);
 		listener.underwater = listenactor->waterlevel == 3;
 		assert(zones != NULL);
 		listener.Environment = zones[listenactor->Sector->ZoneNumber].Environment;

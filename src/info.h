@@ -123,8 +123,21 @@ FArchive &operator<< (FArchive &arc, FState *&state);
 
 #include "gametype.h"
 
+// Standard pre-defined skin colors
+struct FPlayerColorSet
+{
+	FName Name;			// Name of this color
+
+	int Lump;			// Lump to read the translation from, otherwise use next 2 fields
+	BYTE FirstColor, LastColor;		// Describes the range of colors to use for the translation
+
+	BYTE RepresentativeColor;		// A palette entry representative of this translation,
+									// for map arrows and status bar backgrounds and such
+};
+
 typedef TMap<FName, fixed_t> DmgFactors;
-typedef TMap<FName, BYTE> PainChanceList;
+typedef TMap<FName, int> PainChanceList;
+typedef TMap<int, FPlayerColorSet> FPlayerColorSetMap;
 class DDropItem;
 
 class PClassActor : public PClass
@@ -145,6 +158,7 @@ public:
 	void RegisterIDs();
 	void SetDamageFactor(FName type, fixed_t factor);
 	void SetPainChance(FName type, int chance);
+	void SetColorSet(int index, const FPlayerColorSet *set);
 	size_t PropagateMark();
 	void InitializeNativeDefaults();
 
@@ -168,6 +182,7 @@ public:
 	FStateLabels *StateList;
 	DmgFactors *DamageFactors;
 	PainChanceList *PainChances;
+	FPlayerColorSetMap *ColorSets;
 	FString Obituary;		// Player was killed by this actor
 	FString HitObituary;	// Player was killed by this actor in melee
 	fixed_t DeathHeight;	// Height on normal death

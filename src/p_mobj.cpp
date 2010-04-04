@@ -2499,7 +2499,7 @@ void P_NightmareRespawn (AActor *mobj)
 	// spawn it
 	x = mobj->SpawnPoint[0];
 	y = mobj->SpawnPoint[1];
-	mo = Spawn (RUNTIME_TYPE(mobj), x, y, z, NO_REPLACE);
+	mo = Spawn (mobj->GetClass(), x, y, z, NO_REPLACE);
 
 	if (z == ONFLOORZ)
 		mo->z += mo->SpawnPoint[2];

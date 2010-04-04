@@ -1043,7 +1043,7 @@ FArchive &FArchive::WriteObject (DObject *obj)
 	}
 	else
 	{
-		PClass *type = RUNTIME_TYPE(obj);
+		PClass *type = obj->GetClass();
 
 		if (type == RUNTIME_CLASS(DObject))
 		{

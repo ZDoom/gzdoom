@@ -263,7 +263,7 @@ FSpotList *DSpotState::FindSpotList(const PClass *type)
 
 bool DSpotState::AddSpot(ASpecialSpot *spot)
 {
-	FSpotList *list = FindSpotList(RUNTIME_TYPE(spot));
+	FSpotList *list = FindSpotList(spot->GetClass());
 	if (list != NULL) return list->Add(spot);
 	return false;
 }
@@ -276,7 +276,7 @@ bool DSpotState::AddSpot(ASpecialSpot *spot)
 
 bool DSpotState::RemoveSpot(ASpecialSpot *spot)
 {
-	FSpotList *list = FindSpotList(RUNTIME_TYPE(spot));
+	FSpotList *list = FindSpotList(spot->GetClass());
 	if (list != NULL) return list->Remove(spot);
 	return false;
 }
@@ -393,7 +393,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnSingleItem)
 	AActor *spot = NULL;
 	DSpotState *state = DSpotState::GetSpotState();
 
-	if (state != NULL) spot = state->GetRandomSpot(RUNTIME_TYPE(self), true);
+	if (state != NULL) spot = state->GetRandomSpot(self->GetClass(), true);
 	if (spot == NULL) return 0;
 
 	if (!multiplayer && pr_spawnmace() < fail_sp)
@@ -429,7 +429,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnSingleItem)
 		}
 		if (spawned->IsKindOf(RUNTIME_CLASS(AInventory)))
 		{
-			static_cast<AInventory*>(spawned)->SpawnPointClass = RUNTIME_TYPE(self);
+			static_cast<AInventory*>(spawned)->SpawnPointClass = self->GetClass();
 		}
 	}
 	return 0;

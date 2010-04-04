@@ -285,7 +285,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcBallOrbit)
 
 	if (!self->IsKindOf (RUNTIME_CLASS(ASorcBall)))
 	{
-		I_Error ("Corrupted sorcerer:\nTried to use a %s", RUNTIME_TYPE(self)->TypeName.GetChars());
+		I_Error ("Corrupted sorcerer:\nTried to use a %s", self->GetClass()->TypeName.GetChars());
 	}
 	actor = static_cast<ASorcBall *> (self);
 
@@ -317,7 +317,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcBallOrbit)
 		break;
 
 	case SORC_STOPPING:			// Balls stopping
-		if ((parent->StopBall == RUNTIME_TYPE(actor)) &&
+		if ((parent->StopBall == actor->GetClass()) &&
 			 (parent->args[1] > SORCBALL_SPEED_ROTATIONS) &&
 			 (abs(angle - (parent->angle>>ANGLETOFINESHIFT)) < (30<<5)))
 		{
@@ -334,7 +334,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcBallOrbit)
 		break;
 
 	case SORC_FIRESPELL:			// Casting spell
-		if (parent->StopBall == RUNTIME_TYPE(actor))
+		if (parent->StopBall == actor->GetClass())
 		{
 			// Put sorcerer into special throw spell anim
 			if (parent->health > 0)
@@ -345,7 +345,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcBallOrbit)
 		break;
 
 	case SORC_FIRING_SPELL:
-		if (parent->StopBall == RUNTIME_TYPE(actor))
+		if (parent->StopBall == actor->GetClass())
 		{
 			if (actor->special2-- <= 0)
 			{

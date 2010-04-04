@@ -556,7 +556,7 @@ static void DrawOneWeapon(player_t * CPlayer, int x, int & y, AWeapon * weapon)
 
 	// Powered up weapons and inherited sister weapons are not displayed.
 	if (weapon->WeaponFlags & WIF_POWERED_UP) return;
-	if (weapon->SisterWeapon && weapon->IsKindOf(RUNTIME_TYPE(weapon->SisterWeapon))) return;
+	if (weapon->SisterWeapon && weapon->IsKindOf(weapon->SisterWeapon->GetClass())) return;
 
 	trans=0x6666;
 	if (CPlayer->ReadyWeapon)

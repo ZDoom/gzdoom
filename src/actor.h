@@ -524,7 +524,7 @@ public:
 
 	inline AActor *GetDefault () const
 	{
-		return (AActor *)(RUNTIME_TYPE(this)->Defaults);
+		return (AActor *)(this->GetClass()->Defaults);
 	}
 
 	DDropItem *GetDropItems() const;

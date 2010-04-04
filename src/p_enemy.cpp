@@ -1178,8 +1178,7 @@ bool P_LookForMonsters (AActor *actor)
 		{ // Stop searching
 			return false;
 		}
-		if (mo->IsKindOf (RUNTIME_TYPE(actor)) ||
-			actor->IsKindOf (RUNTIME_TYPE(mo)))
+		if (mo->GetSpecies() == actor->GetSpecies())
 		{ // [RH] Don't go after same species
 			continue;
 		}

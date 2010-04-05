@@ -122,7 +122,12 @@ bool FPlayList::ChangeList (const char *path)
 			// Path is relative; append it to the playlist directory.
 			song = playlistdir + song;
 		}
-		Songs.Push(song);
+
+		// Just to make sure
+		if (song.IsNotEmpty())
+		{
+			Songs.Push(song);
+		}
 	}
 	fclose (file);
 

@@ -318,7 +318,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="gdi32.lib user32.lib comctl32.lib shell32.lib advapi32.lib comdlg32.lib ole32.lib dxguid.lib dsound.lib dinput8.lib strmiids.lib wsock32.lib winmm.lib fmodex_vc.lib setupapi.lib ws2_32.lib oleaut32.lib"
+				AdditionalDependencies="gdi32.lib user32.lib comctl32.lib shell32.lib advapi32.lib comdlg32.lib ole32.lib dxguid.lib dsound.lib dinput8.lib strmiids.lib wsock32.lib winmm.lib setupapi.lib ws2_32.lib oleaut32.lib fmodex_vc.lib"
 				OutputFile="../zdoomd.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"

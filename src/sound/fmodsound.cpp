@@ -1671,10 +1671,10 @@ FISoundChannel *FMODSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener *
 				chan->setReverbProperties(&reverb);
 			}
 		}
-		chan->setPaused(false);
 		chan->getPriority(&def_priority);
 		FISoundChannel *schan = CommonChannelSetup(chan, reuse_chan);
 		schan->Rolloff = *rolloff;
+		chan->setPaused(false);
 		return schan;
 	}
 

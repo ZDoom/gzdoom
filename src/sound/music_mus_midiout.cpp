@@ -106,9 +106,9 @@ MUSSong2::MUSSong2 (FILE *file, BYTE *musiccache, int len, EMIDIDevice type)
 
 	if (file == NULL)
 	{
-		memcpy(front, musiccache, len);
+		memcpy(front, musiccache, sizeof(front));
 	}
-	else if (fread(front, 1, 32, file) != 32)
+	else if (fread(front, 1, sizeof(front), file) != sizeof(front))
 	{
 		return;
 	}
@@ -136,8 +136,8 @@ MUSSong2::MUSSong2 (FILE *file, BYTE *musiccache, int len, EMIDIDevice type)
 	}
 	else
 	{
-		memcpy(MusHeader, front + start, 32 - start);
-		if (fread((BYTE *)MusHeader + 32 - start, 1, len - (32 - start), file) != (size_t)(len - (32 - start)))
+		memcpy(MusHeader, front + start, sizeof(front) - start);
+		if (fread((BYTE *)MusHeader + sizeof(front) - start, 1, len - (sizeof(front) - start), file) != (size_t)(len - (32 - start)))
 		{
 			return;
 		}
@@ -148,6 +148,7 @@ MUSSong2::MUSSong2 (FILE *file, BYTE *musiccache, int len, EMIDIDevice type)
 	{
 		return;
 	}
+
 	MusBuffer = (BYTE *)MusHeader + LittleShort(MusHeader->SongStart);
 	MaxMusP = MIN<int>(LittleShort(MusHeader->SongLen), len - LittleShort(MusHeader->SongStart));
 	Division = 140;

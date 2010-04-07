@@ -227,7 +227,7 @@ TimiditySong::TimiditySong (FILE *file, BYTE *musiccache, int len)
 	}
 	else
 	{
-		success = ProduceMIDI (buf, f);
+		success = ProduceMIDI (buf, len, f);
 	}
 	fclose (f);
 	if (file != NULL) 

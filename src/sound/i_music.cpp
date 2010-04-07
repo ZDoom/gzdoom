@@ -441,7 +441,7 @@ MusInfo *I_RegisterSong (const char *filename, BYTE *musiccache, int offset, int
 
 			if (file == NULL)
 			{
-				midi_made = ProduceMIDI((BYTE *)musiccache, midi);
+				midi_made = ProduceMIDI((BYTE *)musiccache, len, midi);
 			}
 			else
 			{
@@ -449,7 +449,7 @@ MusInfo *I_RegisterSong (const char *filename, BYTE *musiccache, int offset, int
 				size_t did_read = fread(mus, 1, len, file);
 				if (did_read == (size_t)len)
 				{
-					midi_made = ProduceMIDI(mus, midi);
+					midi_made = ProduceMIDI(mus, len, midi);
 				}
 				fseek(file, -(long)did_read, SEEK_CUR);
 				delete[] mus;

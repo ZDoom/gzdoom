@@ -1546,9 +1546,8 @@ bool AActor::CanSeek(AActor *target) const
 bool P_SeekerMissile (AActor *actor, angle_t thresh, angle_t turnMax)
 {
 	int dir;
-	int dist;
 	angle_t delta;
-	angle_t angle;
+	angle_t angle, pitch;
 	AActor *target;
 
 	target = actor->tracer;
@@ -1578,25 +1577,26 @@ bool P_SeekerMissile (AActor *actor, angle_t thresh, angle_t turnMax)
 	{ // Turn counter clockwise
 		actor->angle -= delta;
 	}
-	angle = actor->angle>>ANGLETOFINESHIFT;
-	actor->velx = FixedMul (actor->Speed, finecosine[angle]);
-	actor->vely = FixedMul (actor->Speed, finesine[angle]);
+	angle = actor->angle >> ANGLETOFINESHIFT;
+	pitch = 0;
 
 	if (!(actor->flags3 & (MF3_FLOORHUGGER|MF3_CEILINGHUGGER)))
-	{
-		if (actor->z + actor->height < target->z ||
-			target->z + target->height < actor->z)
-		{ // Need to seek vertically
-			dist = P_AproxDistance (target->x - actor->x, target->y - actor->y);
-			dist = dist / actor->Speed;
-			if (dist < 1)
-			{
-				dist = 1;
-			}
-			actor->velz = ((target->z+target->height/2) - (actor->z+actor->height/2)) / dist;
+	{ // Need to seek vertically
+		double dist = MAX(1.0, FVector2(target->x - actor->x, target->y - actor->y).Length());
+		// Aim at a player's eyes and at the middle of the actor for everything else.
+		fixed_t aimheight = target->height/2;
+		if (target->IsKindOf(RUNTIME_CLASS(APlayerPawn)))
+		{
+			aimheight = static_cast<APlayerPawn *>(target)->ViewHeight;
 		}
+		pitch = R_PointToAngle2(0, actor->z + actor->height/2, xs_CRoundToInt(dist), target->z + aimheight);
+		pitch >>= ANGLETOFINESHIFT;
 	}
 
+	fixed_t xyscale = FixedMul(actor->Speed, finecosine[pitch]);
+	actor->velz = FixedMul(actor->Speed, finesine[pitch]);
+	actor->velx = FixedMul(xyscale, finecosine[angle]);
+	actor->vely = FixedMul(xyscale, finesine[angle]);
 
 	return true;
 }

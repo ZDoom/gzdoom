@@ -614,6 +614,7 @@ int FMultiPatchTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rota
 			FBitmap bmp1;
 			if (bmp1.Create(Parts[i].Texture->GetWidth(), Parts[i].Texture->GetHeight()))
 			{
+				bmp1.Zero();
 				Parts[i].Texture->CopyTrueColorPixels(&bmp1, 0, 0);
 				bmp->CopyPixelDataRGB(x+Parts[i].OriginX, y+Parts[i].OriginY, bmp1.GetPixels(), 
 					bmp1.GetWidth(), bmp1.GetHeight(), 4, bmp1.GetPitch(), Parts[i].Rotate, CF_BGRA, inf);

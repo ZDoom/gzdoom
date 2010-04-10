@@ -79,6 +79,7 @@ const int BF_AFFECTBOSSES = 4;
 
 // Flags for A_SeekerMissile
 const int SMF_LOOK = 1;
+const int SMF_PRECISE = 2;
 
 // Activation flags
 enum

@@ -1501,6 +1501,20 @@ static void P_SpawnScrollers(void)
 {
 	int i;
 	line_t *l = lines;
+	TArray<int> copyscrollers;
+
+	for (i = 0; i < numlines; i++)
+	{
+		if (lines[i].special == Sector_CopyScroller)
+		{
+			// don't allow copying the scroller if the sector has the same tag as it would just duplicate it.
+			if (lines[i].args[0] != lines[i].frontsector->tag)
+			{
+				copyscrollers.Push(i);
+			}
+			lines[i].special = 0;
+		}
+	}
 
 	for (i = 0; i < numlines; i++, l++)
 	{
@@ -1571,20 +1585,53 @@ static void P_SpawnScrollers(void)
 
 		case Scroll_Ceiling:
 			for (s=-1; (s = P_FindSectorFromTag (l->args[0],s)) >= 0;)
+			{
 				new DScroller (DScroller::sc_ceiling, -dx, dy, control, s, accel);
+			}
+			for(unsigned j = 0;j < copyscrollers.Size(); j++)
+			{
+				line_t *line = &lines[copyscrollers[j]];
+
+				if (line->args[0] == l->args[0] && (line->args[1] & 1))
+				{
+					new DScroller (DScroller::sc_ceiling, -dx, dy, control, int(line->frontsector-sectors), accel);
+				}
+			}
 			break;
 
 		case Scroll_Floor:
 			if (l->args[2] != 1)
 			{ // scroll the floor texture
 				for (s=-1; (s = P_FindSectorFromTag (l->args[0],s)) >= 0;)
+				{
 					new DScroller (DScroller::sc_floor, -dx, dy, control, s, accel);
+				}
+				for(unsigned j = 0;j < copyscrollers.Size(); j++)
+				{
+					line_t *line = &lines[copyscrollers[j]];
+
+					if (line->args[0] == l->args[0] && (line->args[1] & 2))
+					{
+						new DScroller (DScroller::sc_floor, -dx, dy, control, int(line->frontsector-sectors), accel);
+					}
+				}
 			}
 
 			if (l->args[2] > 0)
 			{ // carry objects on the floor
 				for (s=-1; (s = P_FindSectorFromTag (l->args[0],s)) >= 0;)
+				{
 					new DScroller (DScroller::sc_carry, dx, dy, control, s, accel);
+				}
+				for(unsigned j = 0;j < copyscrollers.Size(); j++)
+				{
+					line_t *line = &lines[copyscrollers[j]];
+
+					if (line->args[0] == l->args[0] && (line->args[1] & 4))
+					{
+						new DScroller (DScroller::sc_carry, dx, dy, control, int(line->frontsector-sectors), accel);
+					}
+				}
 			}
 			break;
 

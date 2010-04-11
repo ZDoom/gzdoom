@@ -35,7 +35,7 @@
 ** lists for different types of thinkers is taken from Build. Every thinker
 ** is ticked by statnum, so a thinker with a low statnum will always tick
 ** before a thinker with a high statnum. If a thinker is not explicitly
-** created with a statnum, it will be given MAX_STATNUM.
+** created with a statnum, it will be given STAT_DEFAULT
 */
 
 enum
@@ -59,10 +59,10 @@ enum
 	STAT_EARTHQUAKE,						// Earthquake actors
 	STAT_MAPMARKER,							// Map marker actors
 
-	STAT_DEFAULT = 100,
+	STAT_DEFAULT = 100,						// Thinkers go here unless specified otherwise.
 	STAT_SECTOREFFECT,						// All sector effects that cause floor and ceiling movement
 	STAT_ACTORMOVER,						// actor movers
-	STAT_SCRIPTS,							// The ACS thinker. This is to ensure that it can't tick before all actors calles PostBeginPlay
+	STAT_SCRIPTS,							// The ACS thinker. This is to ensure that it can't tick before all actors called PostBeginPlay
 };
 
 #endif

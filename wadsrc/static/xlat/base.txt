@@ -321,6 +321,10 @@ include "xlat/defines.i"
 350 = 0,		Transfer_Heights (tag, 2)	// Just fake the floor
 351 = 0,		Transfer_Heights (tag, 6)	// Just fake the floor and clip it too
 
+352 = 0,		Sector_CopyScroller(tag, 1)	// copy ceiling scroller
+353 = 0,		Sector_CopyScroller(tag, 2)	// copy floor scroller
+354 = 0,		Sector_CopyScroller(tag, 6)	// copy carrying floor scroller
+
 /****** EDGE linetypes ******/
 
 400 = 0,		ExtraFloor_LightOnly (tag, 0)	// thick

@@ -43,10 +43,13 @@
 #include "sc_man.h"
 #include "cmdlib.h"
 #include "doomdef.h"
+#include "doomdata.h"
 #include "doomstat.h"
 #include "c_dispatch.h"
 #include "gi.h"
 #include "g_level.h"
+#include "p_lnspec.h"
+#include "r_state.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -57,6 +60,14 @@ struct FCompatOption
 	const char *Name;
 	int CompatFlags;
 	int BCompatFlags;
+};
+
+enum
+{
+	CP_END,
+	CP_CLEARFLAGS,
+	CP_SETFLAGS,
+	CP_SETSPECIAL
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -77,7 +88,6 @@ static FCompatOption Options[] =
 {
 	{ "setslopeoverflow",		0, BCOMPATF_SETSLOPEOVERFLOW },
 	{ "resetplayerspeed",		0, BCOMPATF_RESETPLAYERSPEED },
-	{ "spechitoverflow",		0, BCOMPATF_SPECHITOVERFLOW },
 	{ "vileghosts",				0, BCOMPATF_VILEGHOSTS },
 
 	// list copied from g_mapinfo.cpp
@@ -108,6 +118,9 @@ static FCompatOption Options[] =
 	{ "spritesort",				COMPATF_SPRITESORT, 0 },
 	{ NULL, 0, 0 }
 };
+
+static TArray<int> CompatParams;
+static int ii_compatparams;
 
 // CODE --------------------------------------------------------------------
 
@@ -170,12 +183,57 @@ void ParseCompatibility()
 		} while (!sc.Compare("{"));
 		flags.CompatFlags = 0;
 		flags.BCompatFlags = 0;
-		while (sc.MustGetString(), (i = sc.MatchString(&Options[0].Name, sizeof(*Options))) >= 0)
+		flags.ExtCommandIndex = -1;
+		while (sc.GetString())
 		{
-			flags.CompatFlags |= Options[i].CompatFlags;
-			flags.BCompatFlags |= Options[i].BCompatFlags;
+			if ((i = sc.MatchString(&Options[0].Name, sizeof(*Options))) >= 0)
+			{
+				flags.CompatFlags |= Options[i].CompatFlags;
+				flags.BCompatFlags |= Options[i].BCompatFlags;
+			}
+			else if (sc.Compare("clearlineflags"))
+			{
+				if (flags.ExtCommandIndex == -1) flags.ExtCommandIndex = CompatParams.Size();
+				CompatParams.Push(CP_CLEARFLAGS);
+				sc.MustGetNumber();
+				CompatParams.Push(sc.Number);
+				sc.MustGetNumber();
+				CompatParams.Push(sc.Number);
+			}
+			else if (sc.Compare("setlineflags"))
+			{
+				if (flags.ExtCommandIndex == -1) flags.ExtCommandIndex = CompatParams.Size();
+				CompatParams.Push(CP_SETFLAGS);
+				sc.MustGetNumber();
+				CompatParams.Push(sc.Number);
+				sc.MustGetNumber();
+				CompatParams.Push(sc.Number);
+			}
+			else if (sc.Compare("setlinespecial"))
+			{
+				if (flags.ExtCommandIndex == -1) flags.ExtCommandIndex = CompatParams.Size();
+				CompatParams.Push(CP_SETSPECIAL);
+				sc.MustGetNumber();
+				CompatParams.Push(sc.Number);
+
+				sc.MustGetString();
+				CompatParams.Push(P_FindLineSpecial(sc.String, NULL, NULL));
+				for(int i=0;i<5;i++)
+				{
+					sc.MustGetNumber();
+					CompatParams.Push(sc.Number);
+				}
+			}
+			else 
+			{
+				sc.UnGet();
+				break;
+			}
 		}
-		sc.UnGet();
+		if (flags.ExtCommandIndex != -1) 
+		{
+			CompatParams.Push(CP_END);
+		}
 		sc.MustGetStringName("}");
 		for (j = 0; j < md5array.Size(); ++j)
 		{
@@ -201,6 +259,7 @@ void CheckCompatibility(MapData *map)
 	{
 		ii_compatflags = COMPATF_SHORTTEX;
 		ib_compatflags = 0;
+		ii_compatparams = -1;
 	}
 	else
 	{
@@ -223,15 +282,72 @@ void CheckCompatibility(MapData *map)
 		{
 			ii_compatflags = flags->CompatFlags;
 			ib_compatflags = flags->BCompatFlags;
+			ii_compatparams = flags->ExtCommandIndex;
 		}
 		else
 		{
 			ii_compatflags = 0;
 			ib_compatflags = 0;
+			ii_compatparams = -1;
 		}
 	}
 	// Reset i_compatflags
 	compatflags.Callback();
+}
+
+//==========================================================================
+//
+// SetCompatibilityParams
+//
+//==========================================================================
+
+void SetCompatibilityParams()
+{
+	if (ii_compatparams != -1)
+	{
+		unsigned i = ii_compatparams;
+
+		while (CompatParams[i] != CP_END && i < CompatParams.Size())
+		{
+			switch (CompatParams[i])
+			{
+				case CP_CLEARFLAGS:
+				{
+					if (CompatParams[i+1] < numlines)
+					{
+						line_t *line = &lines[CompatParams[i+1]];
+						line->flags &= ~CompatParams[i+2];
+					}
+					i+=3;
+					break;
+				}
+				case CP_SETFLAGS:
+				{
+					if (CompatParams[i+1] < numlines)
+					{
+						line_t *line = &lines[CompatParams[i+1]];
+						line->flags |= CompatParams[i+2];
+					}
+					i+=3;
+					break;
+				}
+				case CP_SETSPECIAL:
+				{
+					if (CompatParams[i+1] < numlines)
+					{
+						line_t *line = &lines[CompatParams[i+1]];
+						line->special = CompatParams[i+2];
+						for(int ii=0;ii<5;ii++)
+						{
+							line->args[ii] = CompatParams[i+ii+3];
+						}
+					}
+					i+=8;
+					break;
+				}
+			}
+		}
+	}
 }
 
 //==========================================================================

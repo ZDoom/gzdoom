@@ -3516,15 +3516,7 @@ void P_SetupLevel (char *lumpname, int position)
 			else
 				P_LoadThings2 (map);	// [RH] Load Hexen-style things
 
-			if (ib_compatflags & BCOMPATF_SPECHITOVERFLOW)
-			{
-				// restoring the original behavior doesn't work so we have to patch the levels in other ways.
-				// Fortunately the only known level depending on this bug is Strain's MAP07 and that's easy to fix.
-				if (numlines == 1022)
-				{
-					lines[1021].flags &= ~ML_BLOCKING;
-				}
-			}
+			SetCompatibilityParams();
 		}
 		else
 		{

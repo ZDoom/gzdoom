@@ -58,7 +58,7 @@ F84AB4557464A383E93F37CD3A82AC48 // MM2 map03
 
 9D50EBE17CEC78938C7A668DB0768611 // Strain map07: Make the exit accessible
 {
-	spechitoverflow
+	clearlineflags 1021 1
 }
 
 71C2E6D9CFA3D8750C6A9599FB2453BD // Hacx map03: There are some switches behind 
@@ -128,3 +128,9 @@ CA267398C9B3A8F79349D3394F8B2106 // map20
 {
 	spritesort
 }
+
+DCE862393CAAA6FF1294FB7056B53057 // UAC Ultra map07: Contains a scroller depending on Boom side effects
+{
+	setlinespecial 391 Sector_CopyScroller 99 6 0 0 0
+}
+

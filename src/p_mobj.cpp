@@ -593,7 +593,10 @@ bool AActor::SetState (FState *newstate)
 		newstate = newstate->GetNextState();
 	} while (tics == 0);
 
-	screen->StateChanged(this);
+	if (screen != NULL)
+	{
+		screen->StateChanged(this);
+	}
 	return true;
 }
 
@@ -653,7 +656,10 @@ bool AActor::SetStateNF (FState *newstate)
 		newstate = newstate->GetNextState();
 	} while (tics == 0);
 
-	screen->StateChanged(this);
+	if (screen != NULL)
+	{
+		screen->StateChanged(this);
+	}
 	return true;
 }
 
@@ -3693,7 +3699,10 @@ AActor *AActor::StaticSpawn (const PClass *type, fixed_t ix, fixed_t iy, fixed_t
 	{
 		level.total_items++;
 	}
-	screen->StateChanged(actor);
+	if (screen != NULL)
+	{
+		screen->StateChanged(actor);
+	}
 	return actor;
 }
 

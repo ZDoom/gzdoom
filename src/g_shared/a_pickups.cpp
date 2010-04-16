@@ -1643,9 +1643,9 @@ AInventory *ABackpackItem::CreateCopy (AActor *other)
 {
 	// Find every unique type of ammo. Give it to the player if
 	// he doesn't have it already, and double its maximum capacity.
-	for (unsigned int i = 0; i < PClass::m_Types.Size(); ++i)
+	for (unsigned int i = 0; i < PClassActor::AllActorClasses.Size(); ++i)
 	{
-		PClass *type = PClass::m_Types[i];
+		PClass *type = PClassActor::AllActorClasses[i];
 
 		if (type->ParentClass == RUNTIME_CLASS(AAmmo))
 		{

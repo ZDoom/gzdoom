@@ -3,7 +3,7 @@
 ** Implements the type information class
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2008 Randy Heit
+** Copyright 1998-2010 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,8 @@
 **
 */
 
+// HEADER FILES ------------------------------------------------------------
+
 #include "dobject.h"
 #include "i_system.h"
 #include "actor.h"
@@ -41,17 +43,425 @@
 #include "a_pickups.h"
 #include "d_player.h"
 
+// MACROS ------------------------------------------------------------------
+
+// TYPES -------------------------------------------------------------------
+
+// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+
+// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+
+// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+
+// EXTERNAL DATA DECLARATIONS ----------------------------------------------
+
+// PUBLIC DATA DEFINITIONS -------------------------------------------------
+
+FTypeTable TypeTable;
+TArray<PClass *> PClass::AllClasses;
+bool PClass::bShutdown;
+
+// PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+// A harmless non-NULL FlatPointer for classes without pointers.
+static const size_t TheEnd = ~(size_t)0;
+
+// CODE --------------------------------------------------------------------
+
+void DumpTypeTable()
+{
+	int used = 0;
+	int min = INT_MAX;
+	int max = 0;
+	int all = 0;
+	int lens[10] = {0};
+	for (size_t i = 0; i < countof(TypeTable.TypeHash); ++i)
+	{
+		int len = 0;
+		Printf("%4d:", i);
+		for (PType *ty = TypeTable.TypeHash[i]; ty != NULL; ty = ty->HashNext)
+		{
+			Printf(" -> %s", ty->IsKindOf(RUNTIME_CLASS(PNamedType)) ? static_cast<PNamedType*>(ty)->TypeName.GetChars(): ty->GetClass()->TypeName.GetChars());
+			len++;
+			all++;
+		}
+		if (len != 0)
+		{
+			used++;
+			if (len < min)
+				min = len;
+			if (len > max)
+				max = len;
+		}
+		if (len < countof(lens))
+		{
+			lens[len]++;
+		}
+		Printf("\n");
+	}
+	Printf("Used buckets: %d/%u (%.2f%%) for %d entries\n", used, countof(TypeTable.TypeHash), double(used)/countof(TypeTable.TypeHash)*100, all);
+	Printf("Min bucket size: %d\n", min);
+	Printf("Max bucket size: %d\n", max);
+	Printf("Avg bucket size: %.2f\n", double(all) / used);
+	int j,k;
+	for (k = k = countof(lens)-1; k > 0; --k)
+		if (lens[k])
+			break;
+	for (j = 0; j <= k; ++j)
+		Printf("Buckets of len %d: %d (%.2f%%)\n", j, lens[j], j!=0?double(lens[j])/used*100:-1.0);
+}
+
+/* PClassType *************************************************************/
+
+IMPLEMENT_CLASS(PClassType)
+
+//==========================================================================
+//
+// PClassType Constructor
+//
+//==========================================================================
+
+PClassType::PClassType()
+: TypeTableType(NULL)
+{
+}
+
+//==========================================================================
+//
+// PClassType :: Derive
+//
+//==========================================================================
+
+void PClassType::Derive(PClass *newclass)
+{
+	assert(newclass->IsKindOf(RUNTIME_CLASS(PClassType)));
+	Super::Derive(newclass);
+	static_cast<PClassType *>(newclass)->TypeTableType = TypeTableType;
+}
+
+/* PClassClass ************************************************************/
+
+IMPLEMENT_CLASS(PClassClass)
+
+//==========================================================================
+//
+// PClassClass Constructor
+//
+// The only thing we want to do here is automatically set TypeTableType
+// to PClass.
+//
+//==========================================================================
+
+PClassClass::PClassClass()
+{
+	TypeTableType = RUNTIME_CLASS(PClass);
+}
+
+/* PType ******************************************************************/
+
+IMPLEMENT_ABSTRACT_CLASS(PType)
+
+//==========================================================================
+//
+// PType Constructor
+//
+//==========================================================================
+
+PType::PType()
+: Size(0), Align(1), HashNext(NULL)
+{
+}
+
+//==========================================================================
+//
+// PType Destructor
+//
+//==========================================================================
+
+PType::~PType()
+{
+}
+
+//==========================================================================
+//
+// PType :: IsMatch
+//
+//==========================================================================
+
+bool PType::IsMatch(const void *id1, const void *id2) const
+{
+	return false;
+}
+
+//==========================================================================
+//
+// PType :: StaticInit												STATIC
+//
+// Set up TypeTableType values for every PType child.
+//
+//==========================================================================
+
+void PType::StaticInit()
+{
+	RUNTIME_CLASS(PInt)->TypeTableType = RUNTIME_CLASS(PInt);
+	RUNTIME_CLASS(PFloat)->TypeTableType = RUNTIME_CLASS(PFloat);
+	RUNTIME_CLASS(PString)->TypeTableType = RUNTIME_CLASS(PString);
+	RUNTIME_CLASS(PName)->TypeTableType = RUNTIME_CLASS(PName);
+	RUNTIME_CLASS(PSound)->TypeTableType = RUNTIME_CLASS(PSound);
+	RUNTIME_CLASS(PColor)->TypeTableType = RUNTIME_CLASS(PColor);
+	RUNTIME_CLASS(PPointer)->TypeTableType = RUNTIME_CLASS(PPointer);
+	RUNTIME_CLASS(PClassPointer)->TypeTableType = RUNTIME_CLASS(PPointer);	// not sure about this yet
+	RUNTIME_CLASS(PEnum)->TypeTableType = RUNTIME_CLASS(PEnum);
+	RUNTIME_CLASS(PArray)->TypeTableType = RUNTIME_CLASS(PArray);
+	RUNTIME_CLASS(PDynArray)->TypeTableType = RUNTIME_CLASS(PDynArray);
+	RUNTIME_CLASS(PVector)->TypeTableType = RUNTIME_CLASS(PVector);
+	RUNTIME_CLASS(PMap)->TypeTableType = RUNTIME_CLASS(PMap);
+	RUNTIME_CLASS(PStruct)->TypeTableType = RUNTIME_CLASS(PStruct);
+	RUNTIME_CLASS(PPrototype)->TypeTableType = RUNTIME_CLASS(PPrototype);
+	RUNTIME_CLASS(PFunction)->TypeTableType = RUNTIME_CLASS(PFunction);
+	RUNTIME_CLASS(PClass)->TypeTableType = RUNTIME_CLASS(PClass);
+}
+
+
+/* PBasicType *************************************************************/
+
+IMPLEMENT_ABSTRACT_CLASS(PBasicType)
+
+/* PCompoundType **********************************************************/
+
+IMPLEMENT_ABSTRACT_CLASS(PCompoundType)
+
+/* PNamedType *************************************************************/
+
+IMPLEMENT_ABSTRACT_POINTY_CLASS(PNamedType)
+ DECLARE_POINTER(Outer)
+END_POINTERS
+
+//==========================================================================
+//
+// PNamedType :: IsMatch
+//
+//==========================================================================
+
+bool PNamedType::IsMatch(const void *id1, const void *id2) const
+{
+	const DObject *outer = (const DObject *)id1;
+	FName name = (ENamedName)(intptr_t)id2;
+	
+	return Outer == outer && TypeName == name;
+}
+
+/* PInt *******************************************************************/
+
+IMPLEMENT_CLASS(PInt)
+
+/* PFloat *****************************************************************/
+
+IMPLEMENT_CLASS(PFloat)
+
+/* PString ****************************************************************/
+
+IMPLEMENT_CLASS(PString)
+
+/* PName ******************************************************************/
+
+IMPLEMENT_CLASS(PName)
+
+/* PSound *****************************************************************/
+
+IMPLEMENT_CLASS(PSound)
+
+/* PColor *****************************************************************/
+
+IMPLEMENT_CLASS(PColor)
+
+/* PPointer ***************************************************************/
+
+IMPLEMENT_POINTY_CLASS(PPointer)
+ DECLARE_POINTER(PointedType)
+END_POINTERS
+
+//==========================================================================
+//
+// PPointer :: IsMatch
+//
+//==========================================================================
+
+bool PPointer::IsMatch(const void *id1, const void *id2) const
+{
+	assert(id2 == NULL);
+	PType *pointat = (PType *)id1;
+
+	return pointat == PointedType;
+}
+
+/* PClassPointer **********************************************************/
+
+IMPLEMENT_POINTY_CLASS(PClassPointer)
+ DECLARE_POINTER(ClassRestriction)
+END_POINTERS
+
+//==========================================================================
+//
+// PClassPointer :: IsMatch
+//
+//==========================================================================
+
+bool PClassPointer::IsMatch(const void *id1, const void *id2) const
+{
+	const PType *pointat = (const PType *)id1;
+	const PClass *classat = (const PClass *)id2;
+
+	assert(pointat->IsKindOf(RUNTIME_CLASS(PClass)));
+	return classat == ClassRestriction;
+}
+
+/* PEnum ******************************************************************/
+
+IMPLEMENT_POINTY_CLASS(PEnum)
+ DECLARE_POINTER(ValueType)
+END_POINTERS
+
+/* PArray *****************************************************************/
+
+IMPLEMENT_POINTY_CLASS(PArray)
+ DECLARE_POINTER(ElementType)
+END_POINTERS
+
+//==========================================================================
+//
+// PArray :: IsMatch
+//
+//==========================================================================
+
+bool PArray::IsMatch(const void *id1, const void *id2) const
+{
+	const PType *elemtype = (const PType *)id1;
+	unsigned int count = (unsigned int)(intptr_t)id2;
+
+	return elemtype == ElementType && count == ElementCount;
+}
+
+/* PVector ****************************************************************/
+
+IMPLEMENT_CLASS(PVector)
+
+/* PDynArray **************************************************************/
+
+IMPLEMENT_POINTY_CLASS(PDynArray)
+ DECLARE_POINTER(ElementType)
+END_POINTERS
+
+bool PDynArray::IsMatch(const void *id1, const void *id2) const
+{
+	assert(id2 == NULL);
+	const PType *elemtype = (const PType *)id1;
+
+	return elemtype == ElementType;
+}
+
+/* PMap *******************************************************************/
+
+IMPLEMENT_POINTY_CLASS(PMap)
+ DECLARE_POINTER(KeyType)
+ DECLARE_POINTER(ValueType)
+END_POINTERS
+
+//==========================================================================
+//
+// PMap :: IsMatch
+//
+//==========================================================================
+
+bool PMap::IsMatch(const void *id1, const void *id2) const
+{
+	const PType *keyty = (const PType *)id1;
+	const PType *valty = (const PType *)id2;
+
+	return keyty == KeyType && valty == ValueType;
+}
+
+/* PStruct ****************************************************************/
+
+IMPLEMENT_CLASS(PStruct)
+
+//==========================================================================
+//
+// PStruct :: PropagateMark
+//
+//==========================================================================
+
+size_t PStruct::PropagateMark()
+{
+	GC::MarkArray(Fields);
+	return Fields.Size() * sizeof(void*) + Super::PropagateMark();
+}
+
+/* PPrototype *************************************************************/
+
+IMPLEMENT_CLASS(PPrototype)
+
+//==========================================================================
+//
+// PPrototype :: IsMatch
+//
+//==========================================================================
+
+bool PPrototype::IsMatch(const void *id1, const void *id2) const
+{
+	const TArray<PType *> *args = (const TArray<PType *> *)id1;
+	const TArray<PType *> *rets = (const TArray<PType *> *)id2;
+
+	return *args == ArgumentTypes && *rets == ReturnTypes;
+}
+
+//==========================================================================
+//
+// PPrototype :: PropagateMark
+//
+//==========================================================================
+
+size_t PPrototype::PropagateMark()
+{
+	GC::MarkArray(ArgumentTypes);
+	GC::MarkArray(ReturnTypes);
+	return (ArgumentTypes.Size() + ReturnTypes.Size()) * sizeof(void*) +
+		Super::PropagateMark();
+}
+
+/* PFunction **************************************************************/
+
+IMPLEMENT_CLASS(PFunction)
+
+//==========================================================================
+//
+// PFunction :: PropagataMark
+//
+//==========================================================================
+
+size_t PFunction::PropagateMark()
+{
+	for (unsigned i = 0; i < Variants.Size(); ++i)
+	{
+		GC::Mark(Variants[i].Proto);
+		GC::Mark(Variants[i].Implementation);
+	}
+	return Variants.Size() * sizeof(Variants[0]) + Super::PropagateMark();
+}
+
+/* PClass *****************************************************************/
+
 IMPLEMENT_POINTY_CLASS(PClass)
  DECLARE_POINTER(ParentClass)
 END_POINTERS
 
-TArray<PClassActor *> PClass::m_RuntimeActors;
-TArray<PClass *> PClass::m_Types;
-PClass *PClass::TypeHash[PClass::HASH_SIZE];
-bool PClass::bShutdown;
-
-// A harmless non-NULL FlatPointer for classes without pointers.
-static const size_t TheEnd = ~(size_t)0;
+//==========================================================================
+//
+// cregcmp
+//
+// Sorter to keep built-in types in a deterministic order. (Needed?)
+//
+//==========================================================================
 
 static int STACK_ARGS cregcmp (const void *a, const void *b)
 {
@@ -60,9 +470,19 @@ static int STACK_ARGS cregcmp (const void *a, const void *b)
 	return strcmp(class1->TypeName, class2->TypeName);
 }
 
+//==========================================================================
+//
+// PClass :: StaticInit												STATIC
+//
+// Creates class metadata for all built-in types.
+//
+//==========================================================================
+
 void PClass::StaticInit ()
 {
 	atterm (StaticShutdown);
+
+	StaticBootstrap();
 
 	FAutoSegIterator probe(CRegHead, CRegTail);
 
@@ -71,24 +491,29 @@ void PClass::StaticInit ()
 		((ClassReg *)*probe)->RegisterClass ();
 	}
 
-	// Keep actors in consistant order. I did this before, though I'm not
-	// sure if this is really necessary to maintain any sort of sync.
-	qsort(&m_Types[0], m_Types.Size(), sizeof(m_Types[0]), cregcmp);
-	for (unsigned int i = 0; i < m_Types.Size(); ++i)
-	{
-		m_Types[i]->ClassIndex = i;
-	}
+	// Keep built-in classes in consistant order. I did this before, though
+	// I'm not sure if this is really necessary to maintain any sort of sync.
+	qsort(&AllClasses[0], AllClasses.Size(), sizeof(AllClasses[0]), cregcmp);
 }
+
+//==========================================================================
+//
+// PClass :: StaticShutdown											STATIC
+//
+// Frees FlatPointers belonging to all classes. Only really needed to avoid
+// memory leak warnings at exit.
+//
+//==========================================================================
 
 void PClass::StaticShutdown ()
 {
 	TArray<size_t *> uniqueFPs(64);
 	unsigned int i, j;
 
-	for (i = 0; i < PClass::m_Types.Size(); ++i)
+	for (i = 0; i < PClass::AllClasses.Size(); ++i)
 	{
-		PClass *type = PClass::m_Types[i];
-		PClass::m_Types[i] = NULL;
+		PClass *type = PClass::AllClasses[i];
+		PClass::AllClasses[i] = NULL;
 		if (type->FlatPointers != &TheEnd && type->FlatPointers != type->Pointers)
 		{
 			// FlatPointers are shared by many classes, so we must check for
@@ -113,6 +538,43 @@ void PClass::StaticShutdown ()
 	bShutdown = true;
 }
 
+//==========================================================================
+//
+// PClass :: StaticBootstrap										STATIC
+//
+// PClass and PClassClass have intermingling dependencies on their
+// definitions. To sort this out, we explicitly define them before
+// proceeding with the RegisterClass loop in StaticInit().
+//
+//==========================================================================
+
+void PClass::StaticBootstrap()
+{
+	PClassClass *clscls = new PClassClass;
+	PClassClass::RegistrationInfo.SetupClass(clscls);
+
+	PClassClass *cls = new PClassClass;
+	PClass::RegistrationInfo.SetupClass(cls);
+
+	// The PClassClass constructor initialized these to NULL, because the
+	// PClass metadata had not been created yet. Now it has, so we know what
+	// they should be and can insert them into the type table successfully.
+	clscls->TypeTableType = cls;
+	cls->TypeTableType = cls;
+	clscls->InsertIntoHash();
+	cls->InsertIntoHash();
+
+	// Create parent objects before we go so that these definitions are complete.
+	clscls->ParentClass = PClassType::RegistrationInfo.ParentType->RegisterClass();
+	cls->ParentClass = PClass::RegistrationInfo.ParentType->RegisterClass();
+}
+
+//==========================================================================
+//
+// PClass Constructor
+//
+//==========================================================================
+
 PClass::PClass()
 {
 	Size = sizeof(DObject);
@@ -122,9 +584,16 @@ PClass::PClass()
 	HashNext = NULL;
 	Defaults = NULL;
 	bRuntimeClass = false;
-	ClassIndex = ~0;
 	ConstructNative = NULL;
+
+	PClass::AllClasses.Push(this);
 }
+
+//==========================================================================
+//
+// PClass Destructor
+//
+//==========================================================================
 
 PClass::~PClass()
 {
@@ -135,6 +604,15 @@ PClass::~PClass()
 		Defaults = NULL;
 	}
 }
+
+//==========================================================================
+//
+// ClassReg :: RegisterClass
+//
+// Create metadata describing the built-in class this struct is intended
+// for.
+//
+//==========================================================================
 
 PClass *ClassReg::RegisterClass()
 {
@@ -148,10 +626,11 @@ PClass *ClassReg::RegisterClass()
 		&PClassPuzzleItem::RegistrationInfo,
 		&PClassWeapon::RegistrationInfo,
 		&PClassPlayerPawn::RegistrationInfo,
+		&PClassType::RegistrationInfo,
+		&PClassClass::RegistrationInfo,
 	};
 
-	// MyClass may have already been created by a previous recursive call.
-	// Or this may be a recursive call for a previously created class.
+	// Skip classes that have already been registered
 	if (MyClass != NULL)
 	{
 		return MyClass;
@@ -165,25 +644,13 @@ PClass *ClassReg::RegisterClass()
 		assert(0 && "Class registry has an invalid meta class identifier");
 	}
 
-	if (this == &PClass::RegistrationInfo)
-	{
-		cls = new PClass;
+	if (metaclasses[MetaClassNum]->MyClass == NULL)
+	{ // Make sure the meta class is already registered before registering this one
+		metaclasses[MetaClassNum]->RegisterClass();
 	}
-	else
-	{
-		if (metaclasses[MetaClassNum]->MyClass == NULL)
-		{ // Make sure the meta class is already registered before registering this one
-			metaclasses[MetaClassNum]->RegisterClass();
-		}
-		cls = static_cast<PClass *>(metaclasses[MetaClassNum]->MyClass->CreateNew());
-	}
+	cls = static_cast<PClass *>(metaclasses[MetaClassNum]->MyClass->CreateNew());
 
-	MyClass = cls;
-	PClass::m_Types.Push(cls);
-	cls->TypeName = FName(Name+1);
-	cls->Size = SizeOf;
-	cls->Pointers = Pointers;
-	cls->ConstructNative = ConstructNative;
+	SetupClass(cls);
 	cls->InsertIntoHash();
 	if (ParentType != NULL)
 	{
@@ -192,65 +659,76 @@ PClass *ClassReg::RegisterClass()
 	return cls;
 }
 
-void PClass::InsertIntoHash ()
-{
-	// Add class to hash table. Classes are inserted into each bucket
-	// in ascending order by name index.
-	unsigned int bucket = TypeName % HASH_SIZE;
-	PClass **hashpos = &TypeHash[bucket];
-	while (*hashpos != NULL)
-	{
-		int lexx = int(TypeName) - int((*hashpos)->TypeName);
+//==========================================================================
+//
+// ClassReg :: SetupClass
+//
+// Copies the class-defining parameters from a ClassReg to the Class object
+// created for it.
+//
+//==========================================================================
 
-		if (lexx > 0)
-		{ // This type should come later in the chain
-			hashpos = &((*hashpos)->HashNext);
-		}
-		else if (lexx == 0)
-		{ // This type has already been inserted
-		  // ... but there is no need whatsoever to make it a fatal error!
-			Printf (TEXTCOLOR_RED"Tried to register class '%s' more than once.\n", TypeName.GetChars());
-			break;
-		}
-		else
-		{ // Type comes right here
-			break;
-		}
-	}
-	HashNext = *hashpos;
-	*hashpos = this;
+void ClassReg::SetupClass(PClass *cls)
+{
+	assert(MyClass == NULL);
+	MyClass = cls;
+	cls->TypeName = FName(Name+1);
+	cls->Size = SizeOf;
+	cls->Pointers = Pointers;
+	cls->ConstructNative = ConstructNative;
 }
 
-// Find a type, passed the name as a name
+//==========================================================================
+//
+// PClass :: InsertIntoHash
+//
+// Add class to the type table.
+//
+//==========================================================================
+
+void PClass::InsertIntoHash ()
+{
+	size_t bucket;
+	PType *found;
+
+	found = TypeTable.FindType(RUNTIME_CLASS(PClass), Outer, (void*)(intptr_t)(int)TypeName, &bucket);
+	if (found != NULL)
+	{ // This type has already been inserted
+	  // ... but there is no need whatsoever to make it a fatal error!
+		Printf (TEXTCOLOR_RED"Tried to register class '%s' more than once.\n", TypeName.GetChars());
+	}
+	else
+	{
+		TypeTable.AddType(this, RUNTIME_CLASS(PClass), Outer, (void*)(intptr_t)(int)TypeName, bucket);
+	}
+}
+
+//==========================================================================
+//
+// PClass :: FindClass
+//
+// Find a type, passed the name as a name.
+//
+//==========================================================================
+
 PClass *PClass::FindClass (FName zaname)
 {
 	if (zaname == NAME_None)
 	{
 		return NULL;
 	}
-
-	PClass *cls = TypeHash[zaname % HASH_SIZE];
-
-	while (cls != 0)
-	{
-		int lexx = int(zaname) - int(cls->TypeName);
-		if (lexx > 0)
-		{
-			cls = cls->HashNext;
-		}
-		else if (lexx == 0)
-		{
-			return cls->Size<0? NULL : cls;
-		}
-		else
-		{
-			break;
-		}
-	}
-	return NULL;
+	return static_cast<PClass *>(TypeTable.FindType(RUNTIME_CLASS(PClass),
+		/*FIXME:Outer*/NULL, (void*)(intptr_t)(int)zaname, NULL));
 }
 
+//==========================================================================
+//
+// PClass :: CreateNew
+//
 // Create a new object that this class represents
+//
+//==========================================================================
+
 DObject *PClass::CreateNew() const
 {
 	BYTE *mem = (BYTE *)M_Malloc (Size);
@@ -267,7 +745,14 @@ DObject *PClass::CreateNew() const
 	return (DObject *)mem;
 }
 
+//==========================================================================
+//
+// PClass :: Derive
+//
 // Copies inheritable values into the derived class and other miscellaneous setup.
+//
+//==========================================================================
+
 void PClass::Derive(PClass *newclass)
 {
 	newclass->ParentClass = this;
@@ -275,7 +760,7 @@ void PClass::Derive(PClass *newclass)
 
 	// Set up default instance of the new class.
 	newclass->Defaults = (BYTE *)M_Malloc(newclass->Size);
-	memcpy(newclass->Defaults, Defaults, Size);
+	if (Defaults) memcpy(newclass->Defaults, Defaults, Size);
 	if (newclass->Size > Size)
 	{
 		memset(newclass->Defaults + Size, 0, newclass->Size - Size);
@@ -284,8 +769,15 @@ void PClass::Derive(PClass *newclass)
 	newclass->Symbols.SetParentTable(&this->Symbols);
 }
 
+//==========================================================================
+//
+// PClass :: CreateDerivedClass
+//
 // Create a new class based on an existing class
-PClass *PClass::CreateDerivedClass (FName name, unsigned int size)
+//
+//==========================================================================
+
+PClass *PClass::CreateDerivedClass(FName name, unsigned int size)
 {
 	assert (size >= Size);
 	PClass *type;
@@ -317,20 +809,20 @@ PClass *PClass::CreateDerivedClass (FName name, unsigned int size)
 	Derive(type);
 	if (!notnew)
 	{
-		type->ClassIndex = m_Types.Push (type);
 		type->InsertIntoHash();
-	}
-
-	// If this class is for an actor, push it onto the RuntimeActors stack.
-	if (type->IsKindOf(RUNTIME_CLASS(PClassActor)))
-	{
-		m_RuntimeActors.Push(static_cast<PClassActor *>(type));
 	}
 	return type;
 }
 
-// Add <extension> bytes to the end of this class. Returns the
-// previous size of the class.
+//==========================================================================
+//
+// PClass:: Extend
+//
+// Add <extension> bytes to the end of this class. Returns the previous
+// size of the class.
+//
+//==========================================================================
+
 unsigned int PClass::Extend(unsigned int extension)
 {
 	assert(this->bRuntimeClass);
@@ -342,33 +834,30 @@ unsigned int PClass::Extend(unsigned int extension)
 	return oldsize;
 }
 
-// Like FindClass but creates a placeholder if no class
-// is found. CreateDerivedClass will automatcally fill in
-// the placeholder when the actual class is defined.
-PClass *PClass::FindClassTentative (FName name)
+//==========================================================================
+//
+// PClass :: FindClassTentative
+//
+// Like FindClass but creates a placeholder if no class is found.
+// CreateDerivedClass will automatically fill in the placeholder when the
+// actual class is defined.
+//
+//==========================================================================
+
+PClass *PClass::FindClassTentative(FName name)
 {
 	if (name == NAME_None)
 	{
 		return NULL;
 	}
+	size_t bucket;
 
-	PClass *cls = TypeHash[name % HASH_SIZE];
+	PType *found = TypeTable.FindType(RUNTIME_CLASS(PClass),
+		/*FIXME:Outer*/NULL, (void*)(intptr_t)(int)name, &bucket);
 
-	while (cls != 0)
+	if (found != NULL)
 	{
-		int lexx = int(name) - int(cls->TypeName);
-		if (lexx > 0)
-		{
-			cls = cls->HashNext;
-		}
-		else if (lexx == 0)
-		{
-			return cls;
-		}
-		else
-		{
-			break;
-		}
+		return static_cast<PClass *>(found);
 	}
 	PClass *type = static_cast<PClass *>(GetClass()->CreateNew());
 	DPrintf("Creating placeholder class %s : %s\n", name.GetChars(), TypeName.GetChars());
@@ -376,16 +865,22 @@ PClass *PClass::FindClassTentative (FName name)
 	type->TypeName = name;
 	type->ParentClass = this;
 	type->Size = -1;
-	type->ClassIndex = m_Types.Push (type);
 	type->bRuntimeClass = true;
-	type->InsertIntoHash();
+	TypeTable.AddType(type, RUNTIME_CLASS(PClass), type->Outer, (void*)(intptr_t)(int)name, bucket);
 	return type;
 }
 
+//==========================================================================
+//
+// PClass :: BuildFlatPointers
+//
 // Create the FlatPointers array, if it doesn't exist already.
-// It comprises all the Pointers from superclasses plus this class's own Pointers.
-// If this class does not define any new Pointers, then FlatPointers will be set
-// to the same array as the super class's.
+// It comprises all the Pointers from superclasses plus this class's own
+// Pointers. If this class does not define any new Pointers, then
+// FlatPointers will be set to the same array as the super class.
+//
+//==========================================================================
+
 void PClass::BuildFlatPointers ()
 {
 	if (FlatPointers != NULL)
@@ -433,6 +928,14 @@ void PClass::BuildFlatPointers ()
 	}
 }
 
+//==========================================================================
+//
+// PClass :: NativeClass
+//
+// Finds the underlying native type underlying this class.
+//
+//==========================================================================
+
 const PClass *PClass::NativeClass() const
 {
 	const PClass *cls = this;
@@ -443,6 +946,12 @@ const PClass *PClass::NativeClass() const
 	return cls;
 }
 
+//==========================================================================
+//
+// PClass :: PropagateMark
+//
+//==========================================================================
+
 size_t PClass::PropagateMark()
 {
 	size_t marked;
@@ -451,6 +960,74 @@ size_t PClass::PropagateMark()
 	marked = Symbols.MarkSymbols();
 
 	return marked + Super::PropagateMark();
+}
+
+/* FTypeTable **************************************************************/
+
+//==========================================================================
+//
+// FTypeTable :: FindType
+//
+//==========================================================================
+
+PType *FTypeTable::FindType(PClass *metatype, void *parm1, void *parm2, size_t *bucketnum)
+{
+	size_t bucket = Hash(metatype, parm1, parm2) % HASH_SIZE;
+	if (bucketnum != NULL)
+	{
+		*bucketnum = bucket;
+	}
+	for (PType *type = TypeHash[bucket]; type != NULL; type = type->HashNext)
+	{
+		if (type->GetClass()->TypeTableType == metatype && type->IsMatch(parm1, parm2))
+		{
+			return type;
+		}
+	}
+	return NULL;
+}
+
+//==========================================================================
+//
+// FTypeTable :: AddType
+//
+//==========================================================================
+
+void FTypeTable::AddType(PType *type, PClass *metatype, void *parm1, void *parm2, size_t bucket)
+{
+#ifdef _DEBUG
+	size_t bucketcheck;
+	assert(metatype == type->GetClass()->TypeTableType && "Metatype does not match passed object");
+	assert(FindType(metatype, parm1, parm2, &bucketcheck) == NULL && "Type must not be inserted more than once");
+	assert(bucketcheck == bucket && "Passed bucket was wrong");
+#endif
+	type->HashNext = TypeHash[bucket];
+	TypeHash[bucket] = type;
+}
+
+//==========================================================================
+//
+// FTypeTable :: Hash												STATIC
+//
+//==========================================================================
+
+size_t FTypeTable::Hash(void *p1, void *p2, void *p3)
+{
+	size_t i1 = (size_t)p1;
+	size_t i2 = (size_t)p2;
+	size_t i3 = (size_t)p3;
+
+	// Swap the high and low halves of i1. The compiler should be smart enough
+	// to transform this into a ROR or ROL.
+	i1 = (i1 >> (sizeof(size_t)*4)) | (i1 << (sizeof(size_t)*4));
+
+	return (~i1 ^ i2) + i3 * 961748927;	// i3 is multiplied by a prime
+}
+
+#include "c_dispatch.h"
+CCMD(typetable)
+{
+	DumpTypeTable();
 }
 
 // Symbol tables ------------------------------------------------------------
@@ -464,6 +1041,12 @@ END_POINTERS
 IMPLEMENT_POINTY_CLASS(PSymbolVMFunction)
  DECLARE_POINTER(Function)
 END_POINTERS
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 PSymbol::~PSymbol()
 {

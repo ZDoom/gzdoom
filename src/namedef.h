@@ -5,6 +5,8 @@ xx(Null)
 xx(Super)
 xx(Object)
 xx(Actor)
+xx(Class)
+xx(ClassClass)
 
 xx(Untranslated)
 

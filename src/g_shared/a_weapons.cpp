@@ -1119,9 +1119,9 @@ void FWeaponSlots::AddExtraWeapons()
 	}
 
 	// Append extra weapons to the slots.
-	for (unsigned int i = 0; i < PClass::m_Types.Size(); ++i)
+	for (unsigned int i = 0; i < PClassActor::AllActorClasses.Size(); ++i)
 	{
-		PClass *cls = PClass::m_Types[i];
+		PClass *cls = PClassActor::AllActorClasses[i];
 
 		if (!cls->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
 		{
@@ -1569,9 +1569,9 @@ void P_SetupWeapons_ntohton()
 
 	cls = NULL;
 	Weapons_ntoh.Push(cls);		// Index 0 is always NULL.
-	for (i = 0; i < PClass::m_Types.Size(); ++i)
+	for (i = 0; i < PClassActor::AllActorClasses.Size(); ++i)
 	{
-		PClass *cls = PClass::m_Types[i];
+		PClassActor *cls = PClassActor::AllActorClasses[i];
 
 		if (cls->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
 		{

@@ -119,6 +119,8 @@ PClassActor *CreateNewActor(const FScriptPosition &sc, FName typeName, FName par
 		ti = PClass::FindActor(typeName);
 		if (ti == NULL)
 		{
+			extern void DumpTypeTable();
+			DumpTypeTable();
 			sc.Message(MSG_ERROR, "Unknown native actor '%s'", typeName.GetChars());
 			goto create;
 		}
@@ -319,12 +321,9 @@ static void FinishThingdef()
 	}
 	fclose(dump);
 
-	for (i = 0; i < PClass::m_Types.Size(); i++)
+	for (i = 0; i < PClassActor::AllActorClasses.Size(); i++)
 	{
-		PClass * ti = PClass::m_Types[i];
-
-		// Skip non-actors
-		if (!ti->IsDescendantOf(RUNTIME_CLASS(AActor))) continue;
+		PClassActor *ti = PClassActor::AllActorClasses[i];
 
 		if (ti->Size == (unsigned)-1)
 		{

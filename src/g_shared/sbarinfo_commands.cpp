@@ -2161,7 +2161,7 @@ class CommandPlayerClass : public SBarInfoCommandFlowControl
 			if(statusBar->CPlayer->cls == NULL)
 				return; //No class so we can not continue
 		
-			int spawnClass = statusBar->CPlayer->cls->ClassIndex;
+			PClass *spawnClass = statusBar->CPlayer->cls;
 			for(unsigned int i = 0;i < classes.Size();i++)
 			{
 				if(classes[i] == spawnClass)
@@ -2179,7 +2179,7 @@ class CommandPlayerClass : public SBarInfoCommandFlowControl
 					if(stricmp(sc.String, PlayerClasses[c].Type->DisplayName) == 0)
 					{
 						foundClass = true;
-						classes.Push(PlayerClasses[c].Type->ClassIndex);
+						classes.Push(PlayerClasses[c].Type);
 						break;
 					}
 				}
@@ -2192,7 +2192,7 @@ class CommandPlayerClass : public SBarInfoCommandFlowControl
 			SBarInfoCommandFlowControl::Parse(sc, fullScreenOffsets);
 		}
 	protected:
-		TArray<int>	classes;
+		TArray<PClass*>	classes;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

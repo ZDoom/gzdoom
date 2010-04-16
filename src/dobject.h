@@ -94,7 +94,9 @@ enum
 	CLASSREG_PClassHealth,
 	CLASSREG_PClassPuzzleItem,
 	CLASSREG_PClassWeapon,
-	CLASSREG_PClassPlayerPawn
+	CLASSREG_PClassPlayerPawn,
+	CLASSREG_PClassType,
+	CLASSREG_PClassClass,
 };
 
 struct ClassReg
@@ -104,10 +106,11 @@ struct ClassReg
 	ClassReg *ParentType;
 	const size_t *Pointers;
 	void (*ConstructNative)(void *);
-	unsigned int SizeOf:29;
-	unsigned int MetaClassNum:3;
+	unsigned int SizeOf:28;
+	unsigned int MetaClassNum:4;
 
 	PClass *RegisterClass();
+	void SetupClass(PClass *cls);
 };
 
 enum EInPlace { EC_InPlace };
@@ -177,6 +180,10 @@ protected: \
 
 #define IMPLEMENT_ABSTRACT_CLASS(cls) \
 	_IMP_PCLASS(cls,NULL,NULL)
+
+#define IMPLEMENT_ABSTRACT_POINTY_CLASS(cls) \
+	_IMP_PCLASS(cls,cls::PointerOffsets,NULL) \
+	const size_t cls::PointerOffsets[] = {
 
 enum EObjectFlags
 {
@@ -292,6 +299,9 @@ namespace GC
 	// is NULLed instead.
 	void Mark(DObject **obj);
 
+	// Marks an array of objects.
+	void MarkArray(DObject **objs, size_t count);
+
 	// Soft-roots an object.
 	void AddSoftRoot(DObject *obj);
 
@@ -310,6 +320,15 @@ namespace GC
 		obj = t;
 	}
 	template<class T> void Mark(TObjPtr<T> &obj);
+
+	template<class T> void MarkArray(T **obj, size_t count)
+	{
+		MarkArray((DObject **)(obj), count);
+	}
+	template<class T> void MarkArray(TArray<T> &arr)
+	{
+		MarkArray(&arr[0], arr.Size());
+	}
 }
 
 // A template class to help with handling read barriers. It does not

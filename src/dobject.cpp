@@ -180,9 +180,9 @@ CCMD (dumpclasses)
 
 	shown = omitted = 0;
 	DumpInfo::AddType (&tree, root != NULL ? root : RUNTIME_CLASS(DObject));
-	for (i = 0; i < PClass::m_Types.Size(); i++)
+	for (i = 0; i < PClass::AllClasses.Size(); i++)
 	{
-		PClass *cls = PClass::m_Types[i];
+		PClass *cls = PClass::AllClasses[i];
 		if (root == NULL || cls == root || cls->IsDescendantOf(root))
 		{
 			DumpInfo::AddType (&tree, cls);

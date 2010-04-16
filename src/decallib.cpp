@@ -353,9 +353,9 @@ void FDecalLib::ReadAllDecals ()
 		ReadDecals (sc);
 	}
 	// Supporting code to allow specifying decals directly in the DECORATE lump
-	for (i = 0; i < PClass::m_RuntimeActors.Size(); i++)
+	for (i = 0; i < PClassActor::AllActorClasses.Size(); i++)
 	{
-		AActor *def = (AActor*)GetDefaultByType (PClass::m_RuntimeActors[i]);
+		AActor *def = (AActor*)GetDefaultByType (PClassActor::AllActorClasses[i]);
 
 		FName v = ENamedName(intptr_t(def->DecalGenerator));
 		if (v.IsValidName())

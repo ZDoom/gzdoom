@@ -53,6 +53,8 @@
 
 extern void LoadActors ();
 
+TArray<PClassActor *> PClassActor::AllActorClasses;
+
 bool FState::CallAction(AActor *self, AActor *stateowner, StateCallData *statecall)
 {
 	if (ActionFunc != NULL)
@@ -151,9 +153,9 @@ void PClassActor::StaticSetActorNums()
 	memset(SpawnableThings, 0, sizeof(SpawnableThings));
 	DoomEdMap.Empty();
 
-	for (unsigned int i = 0; i < PClass::m_RuntimeActors.Size(); ++i)
+	for (unsigned int i = 0; i < PClassActor::AllActorClasses.Size(); ++i)
 	{
-		static_cast<PClassActor *>(PClass::m_RuntimeActors[i])->RegisterIDs();
+		static_cast<PClassActor *>(PClassActor::AllActorClasses[i])->RegisterIDs();
 	}
 }
 
@@ -195,6 +197,9 @@ PClassActor::PClassActor()
 	ExplosionRadius = -1;
 	MissileHeight = 32*FRACUNIT;
 	MeleeDamage = 0;
+
+	// Record this in the master list.
+	AllActorClasses.Push(this);
 }
 
 //==========================================================================
@@ -308,7 +313,6 @@ void PClassActor::InitializeNativeDefaults()
 	{
 		memset (Defaults, 0, Size);
 	}
-	m_RuntimeActors.Push(this);
 }
 
 //==========================================================================
@@ -585,7 +589,7 @@ static int STACK_ARGS sortnums (const void *a, const void *b)
 
 void FDoomEdMap::DumpMapThings ()
 {
-	TArray<EdSorting> infos (PClass::m_Types.Size());
+	TArray<EdSorting> infos (PClassActor::AllActorClasses.Size());
 	int i;
 
 	for (i = 0; i < DOOMED_HASHSIZE; ++i)

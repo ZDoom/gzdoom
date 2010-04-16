@@ -309,27 +309,27 @@ static void ParseLock(FScanner &sc)
 static void ClearLocks()
 {
 	unsigned int i;
-	for(i=0;i<PClass::m_Types.Size();i++)
+	for(i = 0; i < PClassActor::AllActorClasses.Size(); i++)
 	{
-		if (PClass::m_Types[i]->IsDescendantOf(RUNTIME_CLASS(AKey)))
+		if (PClassActor::AllActorClasses[i]->IsDescendantOf(RUNTIME_CLASS(AKey)))
 		{
-			AKey *key = static_cast<AKey*>(GetDefaultByType(PClass::m_Types[i]));
+			AKey *key = static_cast<AKey*>(GetDefaultByType(PClassActor::AllActorClasses[i]));
 			if (key != NULL)
 			{
 				key->KeyNumber = 0;
 			}
 		}
 	}
-	for(i=0;i<256;i++)
+	for(i = 0; i < 256; i++)
 	{
-		if (locks[i]!=NULL) 
+		if (locks[i] != NULL) 
 		{
 			delete locks[i];
-			locks[i]=NULL;
+			locks[i] = NULL;
 		}
 	}
-	currentnumber=0;
-	keysdone=false;
+	currentnumber = 0;
+	keysdone = false;
 }
 
 //===========================================================================

@@ -119,9 +119,9 @@ FArchive &operator<< (FArchive &arc, FState *&state)
 
 PClassActor *FState::StaticFindStateOwner (const FState *state)
 {
-	for (unsigned int i = 0; i < PClass::m_RuntimeActors.Size(); ++i)
+	for (unsigned int i = 0; i < PClassActor::AllActorClasses.Size(); ++i)
 	{
-		PClassActor *info = PClass::m_RuntimeActors[i];
+		PClassActor *info = PClassActor::AllActorClasses[i];
 		if (state >= info->OwnedStates &&
 			state <  info->OwnedStates + info->NumOwnedStates)
 		{
@@ -966,9 +966,9 @@ void DumpStateHelper(FStateLabels *StateList, const FString &prefix)
 
 CCMD(dumpstates)
 {
-	for (unsigned int i = 0; i < PClass::m_RuntimeActors.Size(); ++i)
+	for (unsigned int i = 0; i < PClassActor::AllActorClasses.Size(); ++i)
 	{
-		PClassActor *info = PClass::m_RuntimeActors[i];
+		PClassActor *info = PClassActor::AllActorClasses[i];
 		Printf(PRINT_LOG, "State labels for %s\n", info->TypeName.GetChars());
 		DumpStateHelper(info->StateList, "");
 		Printf(PRINT_LOG, "----------------------------\n");

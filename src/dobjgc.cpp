@@ -285,6 +285,22 @@ void Mark(DObject **obj)
 
 //==========================================================================
 //
+// MarkArray
+//
+// Mark an array of objects gray.
+//
+//==========================================================================
+
+void MarkArray(DObject **obj, size_t count)
+{
+	for (size_t i = 0; i < count; ++i)
+	{
+		Mark(obj[i]);
+	}
+}
+
+//==========================================================================
+//
 // MarkRoot
 //
 // Mark the root set of objects.
@@ -341,9 +357,9 @@ static void MarkRoot()
 		}
 	}
 	// Mark classes
-	for (unsigned j = 0; j < PClass::m_Types.Size(); ++j)
+	for (unsigned j = 0; j < PClass::AllClasses.Size(); ++j)
 	{
-		Mark(PClass::m_Types[j]);
+		Mark(PClass::AllClasses[j]);
 	}
 	// Mark bot stuff.
 	Mark(bglobal.firstthing);

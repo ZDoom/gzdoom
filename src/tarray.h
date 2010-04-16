@@ -119,6 +119,22 @@ public:
 			Most = 0;
 		}
 	}
+	// Check equality of two arrays
+	bool operator==(const TArray<T> &other) const
+	{
+		if (Count != other.Count)
+		{
+			return false;
+		}
+		for (unsigned int i = 0; i < Count; ++i)
+		{
+			if (Array[i] != other.Array[i])
+			{
+				return false;
+			}
+		}
+		return true;
+	}
 	// Return a reference to an element
 	T &operator[] (size_t index) const
 	{

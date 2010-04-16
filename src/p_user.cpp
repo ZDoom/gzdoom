@@ -810,14 +810,14 @@ void APlayerPawn::CheckWeaponSwitch(const PClass *ammotype)
 
 void APlayerPawn::GiveDeathmatchInventory()
 {
-	for (unsigned int i = 0; i < PClass::m_Types.Size(); ++i)
+	for (unsigned int i = 0; i < PClassActor::AllActorClasses.Size(); ++i)
 	{
-		if (PClass::m_Types[i]->IsDescendantOf (RUNTIME_CLASS(AKey)))
+		if (PClassActor::AllActorClasses[i]->IsDescendantOf (RUNTIME_CLASS(AKey)))
 		{
-			AKey *key = (AKey *)GetDefaultByType (PClass::m_Types[i]);
+			AKey *key = (AKey *)GetDefaultByType (PClassActor::AllActorClasses[i]);
 			if (key->KeyNumber != 0)
 			{
-				key = static_cast<AKey *>(Spawn(static_cast<PClassActor *>(PClass::m_Types[i]), 0,0,0, NO_REPLACE));
+				key = static_cast<AKey *>(Spawn(static_cast<PClassActor *>(PClassActor::AllActorClasses[i]), 0,0,0, NO_REPLACE));
 				if (!key->CallTryPickup (this))
 				{
 					key->Destroy ();

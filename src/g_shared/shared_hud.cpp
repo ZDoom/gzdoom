@@ -327,9 +327,9 @@ static int STACK_ARGS ktcmp(const void * a, const void * b)
 
 static void SetKeyTypes()
 {
-	for(unsigned int i = 0; i < PClass::m_Types.Size(); i++)
+	for(unsigned int i = 0; i < PClassActor::AllActorClasses.Size(); i++)
 	{
-		PClass *ti = PClass::m_Types[i];
+		PClass *ti = PClassActor::AllActorClasses[i];
 
 		if (ti->IsDescendantOf(RUNTIME_CLASS(AKey)))
 		{

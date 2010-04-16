@@ -2490,7 +2490,7 @@ ExpEmit FxRandom::Emit(VMFunctionBuilder *build)
 		sym = symfunc;
 		RUNTIME_CLASS(AActor)->Symbols.AddSymbol(sym);
 	}
-	assert(sym->SymbolType == SYM_VMFunction);
+	assert(sym->IsKindOf(RUNTIME_CLASS(PSymbolVMFunction)));
 	assert(((PSymbolVMFunction *)sym)->Function != NULL);
 	callfunc = ((PSymbolVMFunction *)sym)->Function;
 
@@ -2595,7 +2595,7 @@ ExpEmit FxFRandom::Emit(VMFunctionBuilder *build)
 		sym = symfunc;
 		RUNTIME_CLASS(AActor)->Symbols.AddSymbol(sym);
 	}
-	assert(sym->SymbolType == SYM_VMFunction);
+	assert(sym->IsKindOf(RUNTIME_CLASS(PSymbolVMFunction)));
 	assert(((PSymbolVMFunction *)sym)->Function != NULL);
 	callfunc = ((PSymbolVMFunction *)sym)->Function;
 
@@ -2685,7 +2685,7 @@ ExpEmit FxRandom2::Emit(VMFunctionBuilder *build)
 		sym = symfunc;
 		RUNTIME_CLASS(AActor)->Symbols.AddSymbol(sym);
 	}
-	assert(sym->SymbolType == SYM_VMFunction);
+	assert(sym->IsKindOf(RUNTIME_CLASS(PSymbolVMFunction)));
 	assert(((PSymbolVMFunction *)sym)->Function != NULL);
 	callfunc = ((PSymbolVMFunction *)sym)->Function;
 
@@ -3503,7 +3503,7 @@ ExpEmit FxActionSpecialCall::Emit(VMFunctionBuilder *build)
 		sym = symfunc;
 		RUNTIME_CLASS(AActor)->Symbols.AddSymbol(sym);
 	}
-	assert(sym->SymbolType == SYM_VMFunction);
+	assert(sym->IsKindOf(RUNTIME_CLASS(PSymbolVMFunction)));
 	assert(((PSymbolVMFunction *)sym)->Function != NULL);
 	callfunc = ((PSymbolVMFunction *)sym)->Function;
 
@@ -3763,7 +3763,7 @@ ExpEmit FxClassTypeCast::Emit(VMFunctionBuilder *build)
 		sym = symfunc;
 		RUNTIME_CLASS(AActor)->Symbols.AddSymbol(sym);
 	}
-	assert(sym->SymbolType == SYM_VMFunction);
+	assert(sym->IsKindOf(RUNTIME_CLASS(PSymbolVMFunction)));
 	assert(((PSymbolVMFunction *)sym)->Function != NULL);
 	callfunc = ((PSymbolVMFunction *)sym)->Function;
 
@@ -3963,7 +3963,7 @@ ExpEmit FxMultiNameState::Emit(VMFunctionBuilder *build)
 		sym = symfunc;
 		RUNTIME_CLASS(AActor)->Symbols.AddSymbol(sym);
 	}
-	assert(sym->SymbolType == SYM_VMFunction);
+	assert(sym->IsKindOf(RUNTIME_CLASS(PSymbolVMFunction)));
 	assert(((PSymbolVMFunction *)sym)->Function != NULL);
 	callfunc = ((PSymbolVMFunction *)sym)->Function;
 

@@ -194,6 +194,9 @@ public:
 	FSoundID MeleeSound;
 	FName MissileName;
 	fixed_t MissileHeight;
+
+	// For those times when being able to scan every kind of actor is convenient
+	static TArray<PClassActor *> AllActorClasses;
 };
 
 inline PClassActor *PClass::FindActor(FName name)

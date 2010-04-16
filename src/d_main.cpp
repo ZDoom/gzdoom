@@ -1754,14 +1754,16 @@ void D_DoomMain (void)
 #endif
 #endif
 
+	PClass::StaticInit();
+	PType::StaticInit();
+
 	// Combine different file parameters with their pre-switch bits.
 	Args->CollectFiles("-deh", ".deh");
 	Args->CollectFiles("-bex", ".bex");
 	Args->CollectFiles("-exec", ".cfg");
 	Args->CollectFiles("-playdemo", ".lmp");
-	Args->CollectFiles("-file", NULL);	// anythnig left goes after -file
+	Args->CollectFiles("-file", NULL);	// anything left goes after -file
 
-	PClass::StaticInit ();
 	atterm (C_DeinitConsole);
 
 	gamestate = GS_STARTUP;

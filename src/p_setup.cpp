@@ -793,7 +793,7 @@ void P_LoadVertexes (MapData * map)
 //
 //===========================================================================
 
-void P_LoadZSegs (FileReaderZ &data)
+void P_LoadZSegs (FileReaderBase &data)
 {
 	for (int i = 0; i < numsegs; ++i)
 	{
@@ -830,7 +830,7 @@ void P_LoadZSegs (FileReaderZ &data)
 //
 //===========================================================================
 
-void P_LoadGLZSegs (FileReaderZ &data, DWORD id)
+void P_LoadGLZSegs (FileReaderBase &data, int type)
 {
 	for (int i = 0; i < numsubsectors; ++i)
 	{
@@ -843,7 +843,7 @@ void P_LoadGLZSegs (FileReaderZ &data, DWORD id)
 			BYTE side;
 
 			data >> v1 >> partner;
-			if (id == MAKE_ID('Z','G','L','2'))
+			if (type == 2)
 			{
 				data >> line;
 			}
@@ -905,14 +905,12 @@ void P_LoadGLZSegs (FileReaderZ &data, DWORD id)
 //
 //===========================================================================
 
-static void P_LoadZNodes (FileReader &dalump, DWORD id)
+static void LoadZNodes(FileReaderBase &data, int glnodes)
 {
-	FileReaderZ data (dalump);
-	DWORD i;
-
 	// Read extra vertices added during node building
 	DWORD orgVerts, newVerts;
 	vertex_t *newvertarray;
+	unsigned int i;
 
 	data >> orgVerts >> newVerts;
 	if (orgVerts + newVerts == (DWORD)numvertexes)
@@ -977,13 +975,13 @@ static void P_LoadZNodes (FileReader &dalump, DWORD id)
 	segs = new seg_t[numsegs];
 	memset (segs, 0, numsegs*sizeof(seg_t));
 
-	if (id == MAKE_ID('Z','N','O','D'))
+	if (glnodes == 0)
 	{
 		P_LoadZSegs (data);
 	}
 	else
 	{
-		P_LoadGLZSegs (data, id);
+		P_LoadGLZSegs (data, glnodes);
 	}
 
 	// Read nodes
@@ -1027,6 +1025,60 @@ static void P_LoadZNodes (FileReader &dalump, DWORD id)
 		}
 	}
 }
+
+
+static void P_LoadZNodes (FileReader &dalump, DWORD id)
+{
+	int type;
+	bool compressed;
+
+	switch (id)
+	{
+	case MAKE_ID('Z','N','O','D'):
+		type = 0;
+		compressed = true;
+		break;
+
+	case MAKE_ID('Z','G','L','N'):
+		type = 1;
+		compressed = true;
+		break;
+
+	case MAKE_ID('Z','G','L','2'):
+		type = 2;
+		compressed = true;
+		break;
+
+	case MAKE_ID('X','N','O','D'):
+		type = 0;
+		compressed = false;
+		break;
+
+	case MAKE_ID('X','G','L','N'):
+		type = 1;
+		compressed = false;
+		break;
+
+	case MAKE_ID('X','G','L','2'):
+		type = 2;
+		compressed = false;
+		break;
+
+	default:
+		return;
+	}
+	
+	if (compressed)
+	{
+		FileReaderZ data (dalump);
+		LoadZNodes(data, type);
+	}
+	else
+	{
+		LoadZNodes(dalump, type);
+	}
+}
+
 
 
 //===========================================================================
@@ -3559,12 +3611,13 @@ void P_SetupLevel (char *lumpname, int position)
 	{
 		// Check for compressed nodes first, then uncompressed nodes
 		FWadLump test;
-		DWORD id = MAKE_ID('X','x','X','x'), idcheck = 0, idcheck2 = 0;
+		DWORD id = MAKE_ID('X','x','X','x'), idcheck = 0, idcheck2 = 0, idcheck3 = 0, idcheck4 = 0;
 
 		if (map->MapLumps[ML_ZNODES].Size != 0 && !UsingGLNodes)
 		{
 			map->Seek(ML_ZNODES);
 			idcheck = MAKE_ID('Z','N','O','D');
+			idcheck2 = MAKE_ID('X','N','O','D');
 		}
 		else if (map->MapLumps[ML_GLZNODES].Size != 0)
 		{
@@ -3572,10 +3625,12 @@ void P_SetupLevel (char *lumpname, int position)
 			map->Seek(ML_GLZNODES);
 			idcheck = MAKE_ID('Z','G','L','N');
 			idcheck2 = MAKE_ID('Z','G','L','2');
+			idcheck3 = MAKE_ID('X','G','L','N');
+			idcheck4 = MAKE_ID('X','G','L','2');
 		}
 
 		map->file->Read (&id, 4);
-		if (id == idcheck || id == idcheck2)
+		if (id == idcheck || id == idcheck2 || id == idcheck3 || id == idcheck4)
 		{
 			try
 			{

@@ -99,15 +99,7 @@ bool P_MorphPlayer (player_t *activator, player_t *p, const PClass *spawntype, i
 	p->morphTics = (duration) ? duration : MORPHTICS;
 
 	// [MH] Used by SBARINFO to speed up face drawing
-	p->MorphedPlayerClass = 0;
-	for (unsigned int i = 1; i < PlayerClasses.Size(); i++)
-	{
-		if (PlayerClasses[i].Type == spawntype)
-		{
-			p->MorphedPlayerClass = i;
-			break;
-		}
-	}
+	p->MorphedPlayerClass = spawntype;
 
 	p->MorphStyle = style;
 	p->MorphExitFlash = (exit_flash) ? exit_flash : RUNTIME_CLASS(ATeleportFog);
@@ -149,21 +141,6 @@ bool P_MorphPlayer (player_t *activator, player_t *p, const PClass *spawntype, i
 		p->camera = morphed;
 	}
 	morphed->ScoreIcon = actor->ScoreIcon;	// [GRB]
-
-	// [MH]
-	// If the player that was morphed is the one
-	// taking events, set up the face, if any;
-	// this is only needed for old-skool skins
-	// and for the original DOOM status bar.
-	if (p == &players[consoleplayer])
-	{
-		const char *face = spawntype->Meta.GetMetaString (APMETA_Face);
-
-		if (face != NULL && strcmp(face, "None") != 0)
-		{
-			StatusBar->SetFace(&skins[p->MorphedPlayerClass]);
-		}
-	}
 	return true;
 }
 
@@ -309,7 +286,6 @@ bool P_UndoPlayerMorph (player_t *activator, player_t *player, int unmorphflag, 
 					}
 				}
 			}
-			StatusBar->SetFace(&skins[skinindex]);
 		}
 	}
 

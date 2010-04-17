@@ -76,7 +76,7 @@ FMugShotFrame::~FMugShotFrame()
 //
 //===========================================================================
 
-FTexture *FMugShotFrame::GetTexture(const char *default_face, FPlayerSkin *skin, int random, int level,
+FTexture *FMugShotFrame::GetTexture(const char *default_face, const char *skin_face, int random, int level,
 	int direction, bool uses_levels, bool health2, bool healthspecial, bool directional)
 {
 	int index = !directional ? random % Graphic.Size() : direction;
@@ -84,7 +84,7 @@ FTexture *FMugShotFrame::GetTexture(const char *default_face, FPlayerSkin *skin,
 	{
 		index = Graphic.Size() - 1;
 	}
-	FString sprite(skin->face[0] != 0 ? skin->face : default_face, 3);
+	FString sprite(skin_face[0] != 0 ? skin_face : default_face, 3);
 	sprite += Graphic[index];
 	if (uses_levels) //change the last character to the level
 	{
@@ -492,8 +492,8 @@ FTexture *FMugShot::GetFace(player_t *player, const char *default_face, int accu
 	}
 	if (CurrentState != NULL)
 	{
-		FPlayerSkin *skin = &skins[player->morphTics ? player->MorphedPlayerClass : player->userinfo.skin];
-		return CurrentState->GetCurrentFrameTexture(default_face, skin, level, angle);
+		const char *skin_face = player->morphTics ? player->MorphedPlayerClass->Meta.GetMetaString(APMETA_Face) : skins[player->userinfo.skin].face;
+		return CurrentState->GetCurrentFrameTexture(default_face, skin_face, level, angle);
 	}
 	return NULL;
 }

@@ -165,7 +165,7 @@ struct FMugShotFrame
 
 	FMugShotFrame();
 	~FMugShotFrame();
-	FTexture *GetTexture(const char *default_face, FPlayerSkin *skin, int random, int level=0,
+	FTexture *GetTexture(const char *default_face, const char *skin_face, int random, int level=0,
 		int direction=0, bool usesLevels=false, bool health2=false, bool healthspecial=false,
 		bool directional=false);
 };
@@ -189,9 +189,9 @@ struct FMugShotState
 	void Tick();
 	void Reset();
 	FMugShotFrame &GetCurrentFrame() { return Frames[Position]; }
-	FTexture *GetCurrentFrameTexture(const char *default_face, FPlayerSkin *skin, int level=0, int direction=0)
+	FTexture *GetCurrentFrameTexture(const char *default_face, const char *skin_face, int level=0, int direction=0)
 	{
-		return GetCurrentFrame().GetTexture(default_face, skin, Random, level, direction, bUsesLevels, bHealth2, bHealthSpecial, bDirectional);
+		return GetCurrentFrame().GetTexture(default_face, skin_face, Random, level, direction, bUsesLevels, bHealth2, bHealthSpecial, bDirectional);
 	}
 private:
 	FMugShotState();
@@ -300,8 +300,6 @@ public:
 	virtual void AttachToPlayer (player_t *player);
 	virtual void FlashCrosshair ();
 	virtual void BlendView (float blend[4]);
-	virtual void SetFace (void *skn);												// Takes a FPlayerSkin as input
-	virtual void AddFaceToImageCollection (void *skn, FImageCollection *images);	// Takes a FPlayerSkin as input
 	virtual void NewGame ();
 	virtual void ScreenSizeChanged ();
 	virtual void MultiplayerChanged ();
@@ -333,8 +331,6 @@ protected:
 	void RefreshBackground () const;
 
 	void GetCurrentAmmo (AAmmo *&ammo1, AAmmo *&ammo2, int &ammocount1, int &ammocount2) const;
-
-	void AddFaceToImageCollectionActual (void *skn, FImageCollection *images, bool isDoom);
 
 public:
 	AInventory *ValidateInvFirst (int numVisible) const;

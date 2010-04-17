@@ -4020,7 +4020,6 @@ APlayerPawn *P_SpawnPlayer (FMapThing *mthing, bool tempplayer)
 
 	// [GRB] Reset skin
 	p->userinfo.skin = R_FindSkin (skins[p->userinfo.skin].name, p->CurrentPlayerClass);
-	StatusBar->SetFace (&skins[p->userinfo.skin]);
 
 
 	if (!(mobj->flags2 & MF2_DONTTRANSLATE))

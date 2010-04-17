@@ -1,5 +1,5 @@
 ===============================================================================
-Universal Doom Map Format ZDoom extensions v1.8 - 16.07.2009
+Universal Doom Map Format ZDoom extensions v1.9 - 17.04.2010
 
 
     Copyright (c) 2008 Christoph Oelckers.
@@ -38,7 +38,8 @@ between the TEXTMAP and ENDMAP lumps:
 
     BEHAVIOR = contains compiled ACS code
     DIALOGUE = contains compiled Strife conversation scripts.
-    ZNODES = Nodes (must be stored as compressed GL nodes)
+    ZNODES = Nodes (must be stored as extended GL nodes. Compression is allowed
+	                but deprecated for portability reasons.)
     BLOCKMAP = blockmap. It is recommended not to include this lump in UDMF maps.
     REJECT = reject table. Recommended use is for special effects only.
     
@@ -254,6 +255,9 @@ Added sidedef scaling properties and side specific clipmidtex and wrapmidtex.
 1.8 16.07.2009
 Added NoDecals sidedef option
 Fixed conversion specifications for TranslucentLine special.
+
+1.9 17.04.2010
+Changed node specifications to deprecate compression of node lump.
 
 ===============================================================================
 EOF

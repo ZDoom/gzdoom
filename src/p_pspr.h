@@ -79,8 +79,7 @@ class player_t;
 class AActor;
 struct FState;
 
-void P_SetPsprite (player_t *player, int position, FState *state);
-void P_SetPspriteNF (player_t *player, int position, FState *state);
+void P_SetPsprite (player_t *player, int position, FState *state, bool nofunction=false);
 void P_CalcSwing (player_t *player);
 void P_BringUpWeapon (player_t *player);
 void P_FireWeapon (player_t *player);

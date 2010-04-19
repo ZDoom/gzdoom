@@ -244,7 +244,7 @@ do_stop:
 			{
 				if (sc.Compare("BRIGHT")) 
 				{
-					state.Frame |= SF_FULLBRIGHT;
+					state.Fullbright = true;
 					continue;
 				}
 				if (sc.Compare("OFFSET"))

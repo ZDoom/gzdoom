@@ -107,9 +107,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_ThrustRaise)
 	{	// Reached it's target height
 		actor->args[0] = 1;
 		if (actor->args[1])
-			actor->SetStateNF (actor->FindState ("BloodThrustInit2"));
+			actor->SetState (actor->FindState ("BloodThrustInit2"), true);
 		else
-			actor->SetStateNF (actor->FindState ("ThrustInit2"));
+			actor->SetState (actor->FindState ("ThrustInit2"), true);
 	}
 
 	// Lose the dirt clump
@@ -131,9 +131,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_ThrustLower)
 	{
 		self->args[0] = 0;
 		if (self->args[1])
-			self->SetStateNF (self->FindState ("BloodThrustInit1"));
+			self->SetState (self->FindState ("BloodThrustInit1"), true);
 		else
-			self->SetStateNF (self->FindState ("ThrustInit1"));
+			self->SetState (self->FindState ("ThrustInit1"), true);
 	}
 }
 

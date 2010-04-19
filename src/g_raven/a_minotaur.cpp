@@ -192,7 +192,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurDecide)
 		&& pr_minotaurdecide() < 150)
 	{ // Charge attack
 		// Don't call the state function right away
-		self->SetStateNF (self->FindState ("Charge"));
+		self->SetState (self->FindState ("Charge"), true);
 		self->flags |= MF_SKULLFLY;
 		if (!friendly)
 		{ // Heretic's Minotaur is invulnerable during charge attack
@@ -524,11 +524,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurLook)
 
 	if (self->target)
 	{
-		self->SetStateNF (self->SeeState);
+		self->SetState (self->SeeState, true);
 	}
 	else
 	{
-		self->SetStateNF (self->FindState ("Roam"));
+		self->SetState (self->FindState ("Roam"), true);
 	}
 }
 

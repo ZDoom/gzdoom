@@ -113,6 +113,10 @@ void FActorInfo::StaticInit ()
 		// Sprite 1 is always ----
 		memcpy (temp.name, "----", 5);
 		sprites.Push (temp);
+
+		// Sprite 2 is always ####
+		memcpy (temp.name, "####", 5);
+		sprites.Push (temp);
 	}
 
 	Printf ("LoadActors: Load actor definitions.\n");

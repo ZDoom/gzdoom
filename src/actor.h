@@ -912,8 +912,7 @@ public:
 	void SetOrigin (fixed_t x, fixed_t y, fixed_t z);
 	bool InStateSequence(FState * newstate, FState * basestate);
 	int GetTics(FState * newstate);
-	bool SetState (FState *newstate);
-	bool SetStateNF (FState *newstate);
+	bool SetState (FState *newstate, bool nofunction=false);
 	virtual bool UpdateWaterLevel (fixed_t oldz, bool splash=true);
 	bool isFast();
 	void SetIdle();

@@ -73,7 +73,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FogMove)
 
 	if (self->args[3]-- <= 0)
 	{
-		self->SetStateNF (self->FindState(NAME_Death));
+		self->SetState (self->FindState(NAME_Death), true);
 		return;
 	}
 

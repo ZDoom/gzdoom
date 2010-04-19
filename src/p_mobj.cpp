@@ -528,7 +528,7 @@ int AActor::GetTics(FState * newstate)
 //
 //==========================================================================
 
-bool AActor::SetState (FState *newstate)
+bool AActor::SetState (FState *newstate, bool nofunction)
 {
 	if (debugfile && player && (player->cheats & CF_PREDICTING))
 		fprintf (debugfile, "for pl %td: SetState while predicting!\n", player-players);
@@ -554,104 +554,45 @@ bool AActor::SetState (FState *newstate)
 		tics = GetTics(newstate);
 		renderflags = (renderflags & ~RF_FULLBRIGHT) | newstate->GetFullbright();
 		newsprite = newstate->sprite;
-		if (newsprite != 1)
-		{
-			// Sprite 1 is ----, which means "do not change the sprite"
-			frame = newstate->GetFrame();
-
-			if (!(flags4 & MF4_NOSKIN) && newsprite == SpawnState->sprite)
-			{ // [RH] If the new sprite is the same as the original sprite, and
-			// this actor is attached to a player, use the player's skin's
-			// sprite. If a player is not attached, do not change the sprite
-			// unless it is different from the previous state's sprite; a
-			// player may have been attached, died, and respawned elsewhere,
-			// and we do not want to lose the skin on the body. If it wasn't
-			// for Dehacked, I would move sprite changing out of the states
-			// altogether, since actors rarely change their sprites after
-			// spawning.
-				if (player != NULL)
-				{
-					sprite = skins[player->userinfo.skin].sprite;
+		if (newsprite != SPR_FIXED)
+		{ // okay to change sprite and/or frame
+			if (!newstate->GetSameFrame())
+			{ // okay to change frame
+				frame = newstate->GetFrame();
+			}
+			if (newsprite != SPR_NOCHANGE)
+			{ // okay to change sprite
+				if (!(flags4 & MF4_NOSKIN) && newsprite == SpawnState->sprite)
+				{ // [RH] If the new sprite is the same as the original sprite, and
+				// this actor is attached to a player, use the player's skin's
+				// sprite. If a player is not attached, do not change the sprite
+				// unless it is different from the previous state's sprite; a
+				// player may have been attached, died, and respawned elsewhere,
+				// and we do not want to lose the skin on the body. If it wasn't
+				// for Dehacked, I would move sprite changing out of the states
+				// altogether, since actors rarely change their sprites after
+				// spawning.
+					if (player != NULL)
+					{
+						sprite = skins[player->userinfo.skin].sprite;
+					}
+					else if (newsprite != prevsprite)
+					{
+						sprite = newsprite;
+					}
 				}
-				else if (newsprite != prevsprite)
+				else
 				{
 					sprite = newsprite;
 				}
 			}
-			else
-			{
-				sprite = newsprite;
-			}
 		}
 
-		if (newstate->CallAction(this, this))
+		if (!nofunction && newstate->CallAction(this, this))
 		{
 			// Check whether the called action function resulted in destroying the actor
 			if (ObjectFlags & OF_EuthanizeMe)
 				return false;
-		}
-		newstate = newstate->GetNextState();
-	} while (tics == 0);
-
-	if (screen != NULL)
-	{
-		screen->StateChanged(this);
-	}
-	return true;
-}
-
-//----------------------------------------------------------------------------
-//
-// FUNC AActor::SetStateNF
-//
-// Same as SetState, but does not call the state function.
-//
-//----------------------------------------------------------------------------
-
-bool AActor::SetStateNF (FState *newstate)
-{
-	do
-	{
-		if (newstate == NULL)
-		{
-			state = NULL;
-			Destroy ();
-			return false;
-		}
-		int prevsprite, newsprite;
-
-		if (state != NULL)
-		{
-			prevsprite = state->sprite;
-		}
-		else
-		{
-			prevsprite = -1;
-		}
-		state = newstate;
-		tics = GetTics(newstate);
-		renderflags = (renderflags & ~RF_FULLBRIGHT) | newstate->GetFullbright();
-		newsprite = newstate->sprite;
-		if (newsprite != 1)
-		{
-			// Sprite 1 is ----, which means "do not change the sprite"
-
-			frame = newstate->GetFrame();
-			if (!(flags4 & MF4_NOSKIN) && newsprite == SpawnState->sprite)
-			{
-				if (player != NULL && gameinfo.gametype != GAME_Hexen)
-				{
-					sprite = skins[player->userinfo.skin].sprite;
-				}
-				else if (newsprite != prevsprite)
-				{
-					sprite = newsprite;
-				}
-			}
-			else
-			{
-				sprite = newsprite;
-			}
 		}
 		newstate = newstate->GetNextState();
 	} while (tics == 0);

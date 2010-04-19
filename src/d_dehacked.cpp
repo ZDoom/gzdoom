@@ -1354,8 +1354,8 @@ static int PatchFrame (int frameNum)
 		}
 		info->Tics = tics;
 		info->Misc1 = misc1;
-		info->Frame = (frame & 0x3f) |
-			(frame & 0x8000 ? SF_FULLBRIGHT : 0);
+		info->Frame = frame & 0x3f;
+		info->Fullbright = frame & 0x8000 ? true : false;
 	}
 
 	return result;

@@ -282,7 +282,7 @@ ACTOR Actor native //: Thinker
 		Stop
 	GenericFreezeDeath:
 		// Generic freeze death frames. Woo!
-		"----" A 5 A_GenericFreezeDeath
+		"####" "#" 5 A_GenericFreezeDeath
 		"----" A 1 A_FreezeDeathChunks
 		Wait
 	GenericCrush:

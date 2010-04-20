@@ -35,12 +35,14 @@
 
 #include <ctype.h>
 #include "doomstat.h"
+#include "d_player.h"
 #include "g_level.h"
 #include "g_game.h"
 #include "gi.h"
 #include "templates.h"
 #include "v_font.h"
 #include "m_fixed.h"
+#include "gstrings.h"
 
 TArray<FSkillInfo> AllSkills;
 int DefaultSkill = -1;
@@ -70,7 +72,6 @@ void FMapInfoParser::ParseSkill ()
 	skill.Aggressiveness = FRACUNIT;
 	skill.SpawnFilter = 0;
 	skill.ACSReturn = 0;
-	skill.MenuNameIsLump = false;
 	skill.MustConfirm = false;
 	skill.Shortcut = 0;
 	skill.TextColor = "";
@@ -185,7 +186,6 @@ void FMapInfoParser::ParseSkill ()
 			ParseAssign();
 			sc.MustGetString ();
 			skill.MenuName = sc.String;
-			skill.MenuNameIsLump = false;
 		}
 		else if (sc.Compare("PlayerClassName"))
 		{
@@ -200,8 +200,7 @@ void FMapInfoParser::ParseSkill ()
 		{
 			ParseAssign();
 			sc.MustGetString ();
-			skill.MenuName = sc.String;
-			skill.MenuNameIsLump = true;
+			skill.PicName = sc.String;
 		}
 		else if (sc.Compare("MustConfirm"))
 		{
@@ -364,6 +363,29 @@ int G_SkillProperty(ESkillProperty prop)
 	return 0;
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+const char * G_SkillName()
+{
+	const char *name = AllSkills[gameskill].MenuName;
+
+	player_t *player = &players[consoleplayer];
+	const char *playerclass = player->mo->GetClass()->Meta.GetMetaString(APMETA_DisplayName);
+
+	if (playerclass != NULL)
+	{
+		FString * pmnm = AllSkills[gameskill].MenuNamesForPlayerClass.CheckKey(playerclass);
+		if (pmnm != NULL) name = *pmnm;
+	}
+
+	if (*name == '$') name = GStrings(name+1);
+	return name;
+}
+
 
 //==========================================================================
 //
@@ -402,8 +424,8 @@ FSkillInfo &FSkillInfo::operator=(const FSkillInfo &other)
 	SpawnFilter = other.SpawnFilter;
 	ACSReturn = other.ACSReturn;
 	MenuName = other.MenuName;
+	PicName = other.PicName;
 	MenuNamesForPlayerClass = other.MenuNamesForPlayerClass;
-	MenuNameIsLump = other.MenuNameIsLump;
 	MustConfirm = other.MustConfirm;
 	MustConfirmText = other.MustConfirmText;
 	Shortcut = other.Shortcut;

@@ -51,6 +51,7 @@ skill baby
 	EasyBossBrain
 	SpawnFilter = Baby
 	PicName = "M_JKILL"
+	Name = "$CSKILL_BABY"
 	Key = "i"
 }
 
@@ -59,6 +60,7 @@ skill easy
 	EasyBossBrain
 	SpawnFilter = Easy
 	PicName = "M_ROUGH"
+	Name = "$CSKILL_EASY"
 	Key = "h"
 }
 
@@ -66,6 +68,7 @@ skill normal
 {
 	SpawnFilter = Normal
 	PicName = "M_HURT"
+	Name = "$CSKILL_NORMAL"
 	Key = "h"
 }
 
@@ -73,6 +76,7 @@ skill hard
 {
 	SpawnFilter = Hard
 	PicName = "M_ULTRA"
+	Name = "$CSKILL_HARD"
 	Key = "u"
 }
 
@@ -85,6 +89,7 @@ skill nightmare
 	SpawnFilter = Nightmare
 	PicName = "M_NMARE"
 	MustConfirm = "$CNIGHTMARE"
+	Name = "$CSKILL_NIGHTMARE"
 	Key = "n"
 
 }

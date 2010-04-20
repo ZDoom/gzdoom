@@ -538,6 +538,7 @@ enum ESkillProperty
 	SKILLP_NoPain
 };
 int G_SkillProperty(ESkillProperty prop);
+const char * G_SkillName();
 
 typedef TMap<FName, FString> SkillMenuNames;
 
@@ -558,8 +559,8 @@ struct FSkillInfo
 	int SpawnFilter;
 	int ACSReturn;
 	FString MenuName;
+	FString PicName;
 	SkillMenuNames MenuNamesForPlayerClass;
-	bool MenuNameIsLump;
 	bool MustConfirm;
 	FString MustConfirmText;
 	char Shortcut;

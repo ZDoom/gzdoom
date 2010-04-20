@@ -514,7 +514,8 @@ class CommandDrawString : public SBarInfoCommand
 {
 	public:
 		CommandDrawString(SBarInfo *script) : SBarInfoCommand(script),
-			shadow(false), spacing(0), font(NULL), translation(CR_UNTRANSLATED)
+			shadow(false), spacing(0), font(NULL), translation(CR_UNTRANSLATED),
+			value(CONSTANT), valueArg(0)
 		{
 		}
 
@@ -531,8 +532,22 @@ class CommandDrawString : public SBarInfoCommand
 			sc.MustGetToken(',');
 			translation = GetTranslation(sc);
 			sc.MustGetToken(',');
-			sc.MustGetToken(TK_StringConst);
-			str = sc.String;
+			if(sc.CheckToken(TK_Identifier))
+			{
+				if(sc.Compare("levelname"))
+				{
+					value = LEVELNAME;
+					valueArg = -1;
+				}
+				else
+					sc.ScriptError("Unknown string '%s'.", sc.String);
+			}
+			else
+			{
+				value = CONSTANT;
+				sc.MustGetToken(TK_StringConst);
+				str = sc.String;
+			}
 			sc.MustGetToken(',');
 			GetCoordinates(sc, fullScreenOffsets, x, y);
 			if(sc.CheckToken(',')) //spacing
@@ -547,13 +562,37 @@ class CommandDrawString : public SBarInfoCommand
 			else //monospaced, so just multiplay the character size
 				x -= static_cast<int> ((font->GetCharWidth((int) script->spacingCharacter) + spacing) * str.Len());
 		}
+		void	Tick(const SBarInfoMainBlock *block, const DSBarInfo *statusBar, bool hudChanged)
+		{
+			switch(value)
+			{
+				case LEVELNAME:
+					if(level.lumpnum != valueArg)
+					{
+						valueArg = level.lumpnum;
+						str = level.LevelName;
+					}
+					break;
+				default:
+					break;
+			}
+		}
 	protected:
+		enum ValueType
+		{
+			LEVELNAME,
+
+			CONSTANT
+		};
+
 		bool				shadow;
 		int					spacing;
 		FFont				*font;
 		EColorRange			translation;
 		SBarInfoCoordinate	x;
 		SBarInfoCoordinate	y;
+		ValueType			value;
+		int					valueArg;
 		FString				str;
 };
 

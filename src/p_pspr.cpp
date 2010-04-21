@@ -80,6 +80,19 @@ void P_SetPsprite (player_t *player, int position, FState *state, bool nofunctio
 		}
 		psp->state = state;
 
+		if (state->sprite != SPR_FIXED)
+		{ // okay to change sprite and/or frame
+			if (!state->GetSameFrame())
+			{ // okay to change frame
+				psp->frame = state->GetFrame();
+			}
+			if (state->sprite != SPR_NOCHANGE)
+			{ // okay to change sprite
+				psp->sprite = state->sprite;
+			}
+		}
+
+
 		if (sv_fastweapons >= 2 && position == ps_weapon)
 			psp->tics = state->ActionFunc == NULL? 0 : 1;
 		else if (sv_fastweapons)
@@ -848,5 +861,15 @@ void P_MovePsprites (player_t *player)
 
 FArchive &operator<< (FArchive &arc, pspdef_t &def)
 {
-	return arc << def.state << def.tics << def.sx << def.sy;
+	arc << def.state << def.tics << def.sx << def.sy;
+	if (SaveVersion >= 2295)
+	{
+		arc << def.sprite << def.frame;
+	}
+	else
+	{
+		def.sprite = def.state->sprite;
+		def.frame = def.state->Frame;
+	}
+	return arc;
 }

@@ -172,6 +172,7 @@ class PType : public DObject
 	// and we can't define it until we've defined PClass. But we can't define that
 	// without defining PType.
 	DECLARE_ABSTRACT_CLASS(PType, DObject)
+	HAS_OBJECT_POINTERS;
 protected:
 	enum { MetaClassNum = CLASSREG_PClassType };
 public:
@@ -183,6 +184,7 @@ public:
 	PType			*HashNext;		// next type in this type table
 
 	PType();
+	PType(unsigned int size, unsigned int align);
 	virtual ~PType();
 
 	// Returns true if this type matches the two identifiers. Referring to the
@@ -193,6 +195,9 @@ public:
 	// management.
 	virtual bool IsMatch(const void *id1, const void *id2) const;
 
+	// Get the type IDs used by IsMatch
+	virtual void GetTypeIDs(const void *&id1, const void *&id2) const;
+
 	static void StaticInit();
 };
 
@@ -201,6 +206,9 @@ public:
 class PBasicType : public PType
 {
 	DECLARE_ABSTRACT_CLASS(PBasicType, PType);
+public:
+	PBasicType();
+	PBasicType(unsigned int size, unsigned int align);
 };
 
 class PCompoundType : public PType
@@ -219,6 +227,7 @@ public:
 	PNamedType() : Outer(NULL) {}
 
 	virtual bool IsMatch(const void *id1, const void *id2) const;
+	virtual void GetTypeIDs(const void *&id1, const void *&id2) const;
 };
 
 // Basic types --------------------------------------------------------------
@@ -226,16 +235,28 @@ public:
 class PInt : public PBasicType
 {
 	DECLARE_CLASS(PInt, PBasicType);
+public:
+	PInt(unsigned int size, bool unsign);
+
+	bool Unsigned;
+protected:
+	PInt();
 };
 
 class PFloat : public PBasicType
 {
 	DECLARE_CLASS(PFloat, PBasicType);
+public:
+	PFloat(unsigned int size);
+protected:
+	PFloat();
 };
 
 class PString : public PBasicType
 {
 	DECLARE_CLASS(PString, PBasicType);
+public:
+	PString();
 };
 
 // Variations of integer types ----------------------------------------------
@@ -243,16 +264,22 @@ class PString : public PBasicType
 class PName : public PInt
 {
 	DECLARE_CLASS(PName, PInt);
+public:
+	PName();
 };
 
 class PSound : public PInt
 {
 	DECLARE_CLASS(PSound, PInt);
+public:
+	PSound();
 };
 
 class PColor : public PInt
 {
 	DECLARE_CLASS(PColor, PInt);
+public:
+	PColor();
 };
 
 // Pointers -----------------------------------------------------------------
@@ -265,6 +292,7 @@ public:
 	PType *PointedType;
 
 	virtual bool IsMatch(const void *id1, const void *id2) const;
+	virtual void GetTypeIDs(const void *&id1, const void *&id2) const;
 };
 
 class PClass;
@@ -278,6 +306,7 @@ public:
 	typedef PClass *Type2;
 
 	virtual bool IsMatch(const void *id1, const void *id2) const;
+	virtual void GetTypeIDs(const void *&id1, const void *&id2) const;
 };
 
 // Struct/class fields ------------------------------------------------------
@@ -318,6 +347,7 @@ public:
 	unsigned int ElementCount;
 
 	virtual bool IsMatch(const void *id1, const void *id2) const;
+	virtual void GetTypeIDs(const void *&id1, const void *&id2) const;
 };
 
 // A vector is an array with extra operations.
@@ -335,6 +365,7 @@ public:
 	PType *ElementType;
 
 	virtual bool IsMatch(const void *id1, const void *id2) const;
+	virtual void GetTypeIDs(const void *&id1, const void *&id2) const;
 };
 
 class PMap : public PCompoundType
@@ -346,6 +377,7 @@ public:
 	PType *ValueType;
 
 	virtual bool IsMatch(const void *id1, const void *id2) const;
+	virtual void GetTypeIDs(const void *&id1, const void *&id2) const;
 };
 
 class PStruct : public PNamedType
@@ -366,9 +398,10 @@ public:
 
 	size_t PropagateMark();
 	virtual bool IsMatch(const void *id1, const void *id2) const;
+	virtual void GetTypeIDs(const void *&id1, const void *&id2) const;
 };
 
-// TBD: Should we support overloading?
+// TBD: Should we really support overloading?
 class PFunction : public PNamedType
 {
 	DECLARE_CLASS(PFunction, PNamedType);
@@ -492,10 +525,12 @@ struct FTypeTable
 
 	PType *TypeHash[HASH_SIZE];
 
-	PType *FindType(PClass *metatype, void *parm1, void *parm2, size_t *bucketnum);
-	void AddType(PType *type, PClass *metatype, void *parm1, void *parm2, size_t bucket);
+	PType *FindType(PClass *metatype, const void *parm1, const void *parm2, size_t *bucketnum);
+	void AddType(PType *type, PClass *metatype, const void *parm1, const void *parm2, size_t bucket);
+	void AddType(PType *type);
+	void Mark();
 
-	static size_t Hash(void *p1, void *p2, void *p3);
+	static size_t Hash(const void *p1, const void *p2, const void *p3);
 };
 
 

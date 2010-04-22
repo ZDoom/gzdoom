@@ -61,6 +61,16 @@ FTypeTable TypeTable;
 TArray<PClass *> PClass::AllClasses;
 bool PClass::bShutdown;
 
+PInt *TypeSInt8,  *TypeUInt8;
+PInt *TypeSInt16, *TypeUInt16;
+PInt *TypeSInt32, *TypeUInt32;
+PFloat *TypeFloat32, *TypeFloat64;
+PString *TypeString;
+PName *TypeName;
+PSound *TypeSound;
+PColor *TypeColor;
+
+
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // A harmless non-NULL FlatPointer for classes without pointers.
@@ -159,16 +169,29 @@ PClassClass::PClassClass()
 
 /* PType ******************************************************************/
 
-IMPLEMENT_ABSTRACT_CLASS(PType)
+IMPLEMENT_ABSTRACT_POINTY_CLASS(PType)
+ DECLARE_POINTER(HashNext)
+END_POINTERS
 
 //==========================================================================
 //
-// PType Constructor
+// PType Default Constructor
 //
 //==========================================================================
 
 PType::PType()
 : Size(0), Align(1), HashNext(NULL)
+{
+}
+
+//==========================================================================
+//
+// PType Parameterized Constructor
+//
+//==========================================================================
+
+PType::PType(unsigned int size, unsigned int align)
+: Size(size), Align(align), HashNext(NULL)
 {
 }
 
@@ -195,9 +218,21 @@ bool PType::IsMatch(const void *id1, const void *id2) const
 
 //==========================================================================
 //
+// PType :: GetTypeIDs
+//
+//==========================================================================
+
+void PType::GetTypeIDs(const void *&id1, const void *&id2) const
+{
+	id1 = NULL;
+	id2 = NULL;
+}
+
+//==========================================================================
+//
 // PType :: StaticInit												STATIC
 //
-// Set up TypeTableType values for every PType child.
+// Set up TypeTableType values for every PType child and create basic types.
 //
 //==========================================================================
 
@@ -220,12 +255,47 @@ void PType::StaticInit()
 	RUNTIME_CLASS(PPrototype)->TypeTableType = RUNTIME_CLASS(PPrototype);
 	RUNTIME_CLASS(PFunction)->TypeTableType = RUNTIME_CLASS(PFunction);
 	RUNTIME_CLASS(PClass)->TypeTableType = RUNTIME_CLASS(PClass);
+
+	TypeTable.AddType(TypeSInt8 = new PInt(1, false));
+	TypeTable.AddType(TypeUInt8 = new PInt(1, true));
+	TypeTable.AddType(TypeSInt16 = new PInt(2, false));
+	TypeTable.AddType(TypeUInt16 = new PInt(2, true));
+	TypeTable.AddType(TypeSInt32 = new PInt(4, false));
+	TypeTable.AddType(TypeUInt32 = new PInt(4, true));
+	TypeTable.AddType(TypeFloat32 = new PFloat(4));
+	TypeTable.AddType(TypeFloat64 = new PFloat(8));
+	TypeTable.AddType(TypeString = new PString);
+	TypeTable.AddType(TypeName = new PName);
+	TypeTable.AddType(TypeSound = new PSound);
+	TypeTable.AddType(TypeColor = new PColor);
+
 }
 
 
 /* PBasicType *************************************************************/
 
 IMPLEMENT_ABSTRACT_CLASS(PBasicType)
+
+//==========================================================================
+//
+// PBasicType Default Constructor
+//
+//==========================================================================
+
+PBasicType::PBasicType()
+{
+}
+
+//==========================================================================
+//
+// PBasicType Parameterized Constructor
+//
+//==========================================================================
+
+PBasicType::PBasicType(unsigned int size, unsigned int align)
+: PType(size, align)
+{
+}
 
 /* PCompoundType **********************************************************/
 
@@ -251,29 +321,132 @@ bool PNamedType::IsMatch(const void *id1, const void *id2) const
 	return Outer == outer && TypeName == name;
 }
 
+//==========================================================================
+//
+// PNamedType :: GetTypeIDs
+//
+//==========================================================================
+
+void PNamedType::GetTypeIDs(const void *&id1, const void *&id2) const
+{
+	id1 = Outer;
+	id2 = (void *)(intptr_t)TypeName;
+}
+
 /* PInt *******************************************************************/
 
 IMPLEMENT_CLASS(PInt)
+
+//==========================================================================
+//
+// PInt Default Constructor
+//
+//==========================================================================
+
+PInt::PInt()
+: PBasicType(4, 4)
+{
+}
+
+//==========================================================================
+//
+// PInt Parameterized Constructor
+//
+//==========================================================================
+
+PInt::PInt(unsigned int size, bool unsign)
+: PBasicType(size, size), Unsigned(unsign)
+{
+}
 
 /* PFloat *****************************************************************/
 
 IMPLEMENT_CLASS(PFloat)
 
+//==========================================================================
+//
+// PFloat Default Constructor
+//
+//==========================================================================
+
+PFloat::PFloat()
+: PBasicType(4, 4)
+{
+}
+
+//==========================================================================
+//
+// PFloat Parameterized Constructor
+//
+//==========================================================================
+
+PFloat::PFloat(unsigned int size)
+: PBasicType(size, size)
+{
+}
+
 /* PString ****************************************************************/
 
 IMPLEMENT_CLASS(PString)
+
+//==========================================================================
+//
+// PString Default Constructor
+//
+//==========================================================================
+
+PString::PString()
+: PBasicType(sizeof(FString), __alignof(FString))
+{
+}
 
 /* PName ******************************************************************/
 
 IMPLEMENT_CLASS(PName)
 
+//==========================================================================
+//
+// PName Default Constructor
+//
+//==========================================================================
+
+PName::PName()
+: PInt(sizeof(FName), true)
+{
+	assert(sizeof(FName) == __alignof(FName));
+}
+
 /* PSound *****************************************************************/
 
 IMPLEMENT_CLASS(PSound)
 
+//==========================================================================
+//
+// PSound Default Constructor
+//
+//==========================================================================
+
+PSound::PSound()
+: PInt(sizeof(FSoundID), true)
+{
+	assert(sizeof(FSoundID) == __alignof(FSoundID));
+}
+
 /* PColor *****************************************************************/
 
 IMPLEMENT_CLASS(PColor)
+
+//==========================================================================
+//
+// PColor Default Constructor
+//
+//==========================================================================
+
+PColor::PColor()
+: PInt(sizeof(PalEntry), true)
+{
+	assert(sizeof(PalEntry) == __alignof(PalEntry));
+}
 
 /* PPointer ***************************************************************/
 
@@ -295,6 +468,19 @@ bool PPointer::IsMatch(const void *id1, const void *id2) const
 	return pointat == PointedType;
 }
 
+//==========================================================================
+//
+// PPointer :: GetTypeIDs
+//
+//==========================================================================
+
+void PPointer::GetTypeIDs(const void *&id1, const void *&id2) const
+{
+	id1 = PointedType;
+	id2 = NULL;
+}
+
+
 /* PClassPointer **********************************************************/
 
 IMPLEMENT_POINTY_CLASS(PClassPointer)
@@ -315,6 +501,20 @@ bool PClassPointer::IsMatch(const void *id1, const void *id2) const
 	assert(pointat->IsKindOf(RUNTIME_CLASS(PClass)));
 	return classat == ClassRestriction;
 }
+
+//==========================================================================
+//
+// PClassPointer :: GetTypeIDs
+//
+//==========================================================================
+
+void PClassPointer::GetTypeIDs(const void *&id1, const void *&id2) const
+{
+	assert(PointedType == RUNTIME_CLASS(PClass));
+	id1 = PointedType;
+	id2 = ClassRestriction;
+}
+
 
 /* PEnum ******************************************************************/
 
@@ -342,6 +542,18 @@ bool PArray::IsMatch(const void *id1, const void *id2) const
 	return elemtype == ElementType && count == ElementCount;
 }
 
+//==========================================================================
+//
+// PArray :: GetTypeIDs
+//
+//==========================================================================
+
+void PArray::GetTypeIDs(const void *&id1, const void *&id2) const
+{
+	id1 = ElementType;
+	id2 = (void *)(intptr_t)ElementCount;
+}
+
 /* PVector ****************************************************************/
 
 IMPLEMENT_CLASS(PVector)
@@ -352,6 +564,12 @@ IMPLEMENT_POINTY_CLASS(PDynArray)
  DECLARE_POINTER(ElementType)
 END_POINTERS
 
+//==========================================================================
+//
+// PDynArray :: IsMatch
+//
+//==========================================================================
+
 bool PDynArray::IsMatch(const void *id1, const void *id2) const
 {
 	assert(id2 == NULL);
@@ -359,6 +577,19 @@ bool PDynArray::IsMatch(const void *id1, const void *id2) const
 
 	return elemtype == ElementType;
 }
+
+//==========================================================================
+//
+// PDynArray :: GetTypeIDs
+//
+//==========================================================================
+
+void PDynArray::GetTypeIDs(const void *&id1, const void *&id2) const
+{
+	id1 = ElementType;
+	id2 = NULL;
+}
+
 
 /* PMap *******************************************************************/
 
@@ -379,6 +610,18 @@ bool PMap::IsMatch(const void *id1, const void *id2) const
 	const PType *valty = (const PType *)id2;
 
 	return keyty == KeyType && valty == ValueType;
+}
+
+//==========================================================================
+//
+// PMap :: GetTypeIDs
+//
+//==========================================================================
+
+void PMap::GetTypeIDs(const void *&id1, const void *&id2) const
+{
+	id1 = KeyType;
+	id2 = ValueType;
 }
 
 /* PStruct ****************************************************************/
@@ -413,6 +656,18 @@ bool PPrototype::IsMatch(const void *id1, const void *id2) const
 	const TArray<PType *> *rets = (const TArray<PType *> *)id2;
 
 	return *args == ArgumentTypes && *rets == ReturnTypes;
+}
+
+//==========================================================================
+//
+// PPrototype :: GetTypeIDs
+//
+//==========================================================================
+
+void PPrototype::GetTypeIDs(const void *&id1, const void *&id2) const
+{
+	id1 = &ArgumentTypes;
+	id2 = &ReturnTypes;
 }
 
 //==========================================================================
@@ -970,7 +1225,7 @@ size_t PClass::PropagateMark()
 //
 //==========================================================================
 
-PType *FTypeTable::FindType(PClass *metatype, void *parm1, void *parm2, size_t *bucketnum)
+PType *FTypeTable::FindType(PClass *metatype, const void *parm1, const void *parm2, size_t *bucketnum)
 {
 	size_t bucket = Hash(metatype, parm1, parm2) % HASH_SIZE;
 	if (bucketnum != NULL)
@@ -989,11 +1244,11 @@ PType *FTypeTable::FindType(PClass *metatype, void *parm1, void *parm2, size_t *
 
 //==========================================================================
 //
-// FTypeTable :: AddType
+// FTypeTable :: AddType - Fully Parameterized Version
 //
 //==========================================================================
 
-void FTypeTable::AddType(PType *type, PClass *metatype, void *parm1, void *parm2, size_t bucket)
+void FTypeTable::AddType(PType *type, PClass *metatype, const void *parm1, const void *parm2, size_t bucket)
 {
 #ifdef _DEBUG
 	size_t bucketcheck;
@@ -1003,6 +1258,29 @@ void FTypeTable::AddType(PType *type, PClass *metatype, void *parm1, void *parm2
 #endif
 	type->HashNext = TypeHash[bucket];
 	TypeHash[bucket] = type;
+	GC::WriteBarrier(type);
+}
+
+//==========================================================================
+//
+// FTypeTable :: AddType - Simple Version
+//
+//==========================================================================
+
+void FTypeTable::AddType(PType *type)
+{
+	PClass *metatype;
+	const void *parm1, *parm2;
+	size_t bucket;
+
+	metatype = type->GetClass()->TypeTableType;
+	type->GetTypeIDs(parm1, parm2);
+	bucket = Hash(metatype, parm1, parm2) % HASH_SIZE;
+	assert(FindType(metatype, parm1, parm2, NULL) == NULL && "Type must not be inserted more than once");
+
+	type->HashNext = TypeHash[bucket];
+	TypeHash[bucket] = type;
+	GC::WriteBarrier(type);
 }
 
 //==========================================================================
@@ -1011,7 +1289,7 @@ void FTypeTable::AddType(PType *type, PClass *metatype, void *parm1, void *parm2
 //
 //==========================================================================
 
-size_t FTypeTable::Hash(void *p1, void *p2, void *p3)
+size_t FTypeTable::Hash(const void *p1, const void *p2, const void *p3)
 {
 	size_t i1 = (size_t)p1;
 	size_t i2 = (size_t)p2;
@@ -1022,6 +1300,25 @@ size_t FTypeTable::Hash(void *p1, void *p2, void *p3)
 	i1 = (i1 >> (sizeof(size_t)*4)) | (i1 << (sizeof(size_t)*4));
 
 	return (~i1 ^ i2) + i3 * 961748927;	// i3 is multiplied by a prime
+}
+
+//==========================================================================
+//
+// FTypeTable :: Mark
+//
+// Mark all types in this table for the garbage collector.
+//
+//==========================================================================
+
+void FTypeTable::Mark()
+{
+	for (int i = HASH_SIZE - 1; i >= 0; --i)
+	{
+		if (TypeHash[i] != NULL)
+		{
+			GC::Mark(TypeHash[i]);
+		}
+	}
 }
 
 #include "c_dispatch.h"

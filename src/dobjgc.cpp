@@ -356,11 +356,8 @@ static void MarkRoot()
 			Mark(*(afunc->VMPointer));
 		}
 	}
-	// Mark classes
-	for (unsigned j = 0; j < PClass::AllClasses.Size(); ++j)
-	{
-		Mark(PClass::AllClasses[j]);
-	}
+	// Mark types
+	TypeTable.Mark();
 	// Mark bot stuff.
 	Mark(bglobal.firstthing);
 	Mark(bglobal.body1);

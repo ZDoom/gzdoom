@@ -52,6 +52,7 @@ struct Popup
 	{
 		TRANSITION_NONE,
 		TRANSITION_SLIDEINBOTTOM,
+		TRANSITION_PUSHUP,
 		TRANSITION_FADE,
 	};
 
@@ -65,6 +66,8 @@ struct Popup
 	int alpha;
 	int x;
 	int y;
+	int displacementX;
+	int displacementY;
 
 	Popup();
 	void init();
@@ -75,6 +78,8 @@ struct Popup
 	int getXOffset();
 	int getYOffset();
 	int getAlpha(int maxAlpha=FRACUNIT);
+	int getXDisplacement();
+	int getYDisplacement();
 };
 
 struct SBarInfo

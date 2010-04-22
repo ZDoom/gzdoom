@@ -57,6 +57,7 @@
 #include "g_level.h"
 #include "v_palette.h"
 #include "p_acs.h"
+#include "gstrings.h"
 
 #define ADJUST_RELCENTER(x, y, outX, outY) \
 	if(x.RelCenter()) \
@@ -615,6 +616,13 @@ void SBarInfo::ParseSBarInfo(int lump)
 						sc.MustGetToken(TK_IntConst);
 						popup.speed = sc.Number;
 					}
+					else if(sc.Compare("pushup"))
+					{
+						popup.transition = Popup::TRANSITION_PUSHUP;
+						sc.MustGetToken(',');
+						sc.MustGetToken(TK_IntConst);
+						popup.speed = sc.Number;
+					}
 					else if(sc.Compare("fade"))
 					{
 						popup.transition = Popup::TRANSITION_FADE;
@@ -722,78 +730,79 @@ SBarInfo::~SBarInfo()
 }
 
 //Popup
-Popup::Popup()
+Popup::Popup() : transition(TRANSITION_NONE), opened(false), moving(false),
+	height(320), width(200), speed(0), speed2(0), alpha(FRACUNIT), x(320),
+	y(200), displacementX(0), displacementY(0)
 {
-	transition = TRANSITION_NONE;
-	height = 320;
-	width = 200;
-	speed = 0;
-	x = 320;
-	y = 200;
-	alpha = FRACUNIT;
-	opened = false;
-	moving = false;
 }
 
 void Popup::init()
 {
 	x = width;
 	y = height;
-	if(transition == TRANSITION_SLIDEINBOTTOM)
+	switch(transition)
 	{
-		x = 0;
-	}
-	else if(transition == TRANSITION_FADE)
-	{
-		alpha = 0;
-		x = 0;
-		y = 0;
+		case TRANSITION_SLIDEINBOTTOM:
+		case TRANSITION_PUSHUP:
+			x = 0;
+			break;
+		case TRANSITION_FADE:
+			alpha = 0;
+			x = 0;
+			y = 0;
+			break;
+		default:
+			break;
 	}
 }
 
 void Popup::tick()
 {
-	if(transition == TRANSITION_SLIDEINBOTTOM)
+	switch(transition)
 	{
-		if(moving)
-		{
-			if(opened)
-				y -= clamp(height + (y - height), 1, speed);
+		case TRANSITION_SLIDEINBOTTOM:
+		case TRANSITION_PUSHUP:
+			if(moving)
+			{
+				int oldY = y;
+				if(opened)
+					y -= clamp(height + (y - height), 1, speed);
+				else
+					y += clamp(height - y, 1, speed);
+				if(transition == TRANSITION_PUSHUP)
+					displacementY += y - oldY;
+			}
+			if(y != 0 && y != height)
+				moving = true;
 			else
-				y += clamp(height - y, 1, speed);
-		}
-		if(y != 0 && y != height)
-			moving = true;
-		else
-			moving = false;
-	}
-	else if(transition == TRANSITION_FADE)
-	{
-		if(moving)
-		{
-			if(opened)
-				alpha = clamp(alpha + speed, 0, FRACUNIT);
+				moving = false;
+			break;
+		case TRANSITION_FADE:
+			if(moving)
+			{
+				if(opened)
+					alpha = clamp(alpha + speed, 0, FRACUNIT);
+				else
+					alpha = clamp(alpha - speed2, 0, FRACUNIT);
+			}
+			if(alpha == 0 || alpha == FRACUNIT)
+				moving = false;
 			else
-				alpha = clamp(alpha - speed2, 0, FRACUNIT);
-		}
-		if(alpha == 0 || alpha == FRACUNIT)
+				moving = true;
+			break;
+		default:
+			if(opened)
+			{
+				y = 0;
+				x = 0;
+			}
+			else
+			{
+				y = height;
+				x = width;
+			}
 			moving = false;
-		else
-			moving = true;
-	}
-	else
-	{
-		if(opened)
-		{
-			y = 0;
-			x = 0;
-		}
-		else
-		{
-			y = height;
-			x = width;
-		}
-		moving = false;
+			break;
 	}
 }
 
@@ -817,6 +826,16 @@ int Popup::getAlpha(int maxAlpha)
 	double a = (double) alpha / (double) FRACUNIT;
 	double b = (double) maxAlpha / (double) FRACUNIT;
 	return fixed_t((a * b) * FRACUNIT);
+}
+
+int Popup::getXDisplacement()
+{
+	return displacementX;
+}
+
+int Popup::getYDisplacement()
+{
+	return displacementY;
 }
 
 void Popup::open()
@@ -914,8 +933,13 @@ public:
 		armor = CPlayer->mo->FindInventory<ABasicArmor>();
 		if(hud != lastHud)
 			script->huds[hud]->Tick(NULL, this, true);
-		script->huds[hud]->Draw(NULL, this, 0, 0, FRACUNIT);
+
+		if(currentPopup != POP_None && !script->huds[hud]->FullScreenOffsets())
+			script->huds[hud]->Draw(NULL, this, script->popups[currentPopup-1].getXDisplacement(), script->popups[currentPopup-1].getYDisplacement(), FRACUNIT);
+		else
+			script->huds[hud]->Draw(NULL, this, 0, 0, FRACUNIT);
 		lastHud = hud;
+
 		if(CPlayer->inventorytics > 0 && !(level.flags & LEVEL_NOINVENTORYBAR) && (state == HUD_StatusBar || state == HUD_Fullscreen))
 		{
 			SBarInfoMainBlock *inventoryBar = state == HUD_StatusBar ? script->huds[STBAR_INVENTORY] : script->huds[STBAR_INVENTORYFULLSCREEN];

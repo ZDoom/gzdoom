@@ -515,7 +515,7 @@ class CommandDrawString : public SBarInfoCommand
 	public:
 		CommandDrawString(SBarInfo *script) : SBarInfoCommand(script),
 			shadow(false), spacing(0), font(NULL), translation(CR_UNTRANSLATED),
-			value(CONSTANT), valueArg(0)
+			cache(-1), strValue(CONSTANT), valueArgument(0)
 		{
 		}
 
@@ -535,18 +535,50 @@ class CommandDrawString : public SBarInfoCommand
 			if(sc.CheckToken(TK_Identifier))
 			{
 				if(sc.Compare("levelname"))
+					strValue = LEVELNAME;
+				else if(sc.Compare("levellump"))
+					strValue = LEVELLUMP;
+				else if(sc.Compare("skillname"))
+					strValue = SKILLNAME;
+				else if(sc.Compare("playerclass"))
+					strValue = PLAYERCLASS;
+				else if(sc.Compare("playername"))
+					strValue = PLAYERNAME;
+				else if(sc.Compare("ammo1tag"))
+					strValue = AMMO1TAG;
+				else if(sc.Compare("ammo2tag"))
+					strValue = AMMO2TAG;
+				else if(sc.Compare("weapontag"))
+					strValue = WEAPONTAG;
+				else if(sc.Compare("inventorytag"))
+					strValue = INVENTORYTAG;
+				else if(sc.Compare("globalvar"))
 				{
-					value = LEVELNAME;
-					valueArg = -1;
+					strValue = GLOBALVAR;
+					sc.MustGetToken(TK_IntConst);
+					if(sc.Number < 0 || sc.Number >= NUM_GLOBALVARS)
+						sc.ScriptError("Global variable number out of range: %d", sc.Number);
+					valueArgument = sc.Number;
+				}
+				else if(sc.Compare("globalarray"))
+				{
+					strValue = GLOBALARRAY;
+					sc.MustGetToken(TK_IntConst);
+					if(sc.Number < 0 || sc.Number >= NUM_GLOBALVARS)
+						sc.ScriptError("Global variable number out of range: %d", sc.Number);
+					valueArgument = sc.Number;
 				}
 				else
 					sc.ScriptError("Unknown string '%s'.", sc.String);
 			}
 			else
 			{
-				value = CONSTANT;
+				strValue = CONSTANT;
 				sc.MustGetToken(TK_StringConst);
-				str = sc.String;
+				if(sc.String[0] == '$')
+					str = GStrings[sc.String+1];
+				else
+					str = sc.String;
 			}
 			sc.MustGetToken(',');
 			GetCoordinates(sc, fullScreenOffsets, x, y);
@@ -562,15 +594,82 @@ class CommandDrawString : public SBarInfoCommand
 			else //monospaced, so just multiplay the character size
 				x -= static_cast<int> ((font->GetCharWidth((int) script->spacingCharacter) + spacing) * str.Len());
 		}
+		void	Reset()
+		{
+			switch(strValue)
+			{
+				case PLAYERCLASS:
+					// userinfo changes before the actual class change.
+				case SKILLNAME:
+					// Although it's not possible for the skill level to change
+					// midlevel, it is possible the level was restarted.
+					cache = -1;
+					break;
+				default:
+					break;
+			}
+		}
 		void	Tick(const SBarInfoMainBlock *block, const DSBarInfo *statusBar, bool hudChanged)
 		{
-			switch(value)
+			switch(strValue)
 			{
 				case LEVELNAME:
-					if(level.lumpnum != valueArg)
+					if(level.lumpnum != cache)
 					{
-						valueArg = level.lumpnum;
+						cache = level.lumpnum;
 						str = level.LevelName;
+					}
+					break;
+				case LEVELLUMP:
+					if(level.lumpnum != cache)
+					{
+						cache = level.lumpnum;
+						str = level.mapname;
+					}
+					break;
+				case SKILLNAME:
+					if(level.lumpnum != cache) // Can only change skill between level.
+					{
+						cache = level.lumpnum;
+						str = G_SkillName();
+					}
+					break;
+				case PLAYERCLASS:
+					if(statusBar->CPlayer->userinfo.PlayerClass != cache)
+					{
+						cache = statusBar->CPlayer->userinfo.PlayerClass;
+						str = statusBar->CPlayer->cls->Meta.GetMetaString(APMETA_DisplayName);
+					}
+					break;
+				case AMMO1TAG:
+					SetStringToTag(statusBar->ammo1);
+					break;
+				case AMMO2TAG:
+					SetStringToTag(statusBar->ammo2);
+					break;
+				case WEAPONTAG:
+					SetStringToTag(statusBar->CPlayer->ReadyWeapon);
+					break;
+				case INVENTORYTAG:
+					SetStringToTag(statusBar->CPlayer->mo->InvSel);
+					break;
+				case PLAYERNAME:
+					// Can't think of a good way to detect changes to this, so
+					// I guess copying it every tick will have to do.
+					str = statusBar->CPlayer->userinfo.netname;
+					break;
+				case GLOBALVAR:
+					if(ACS_GlobalVars[valueArgument] != cache)
+					{
+						cache = ACS_GlobalVars[valueArgument];
+						str = FBehavior::StaticLookupString(ACS_GlobalVars[valueArgument]);
+					}
+					break;
+				case GLOBALARRAY:
+					if(ACS_GlobalArrays[valueArgument][consoleplayer] != cache)
+					{
+						cache = ACS_GlobalArrays[valueArgument][consoleplayer];
+						str = FBehavior::StaticLookupString(ACS_GlobalArrays[valueArgument][consoleplayer]);
 					}
 					break;
 				default:
@@ -578,9 +677,19 @@ class CommandDrawString : public SBarInfoCommand
 			}
 		}
 	protected:
-		enum ValueType
+		enum StringValueType
 		{
 			LEVELNAME,
+			LEVELLUMP,
+			SKILLNAME,
+			PLAYERCLASS,
+			PLAYERNAME,
+			AMMO1TAG,
+			AMMO2TAG,
+			WEAPONTAG,
+			INVENTORYTAG,
+			GLOBALVAR,
+			GLOBALARRAY,
 
 			CONSTANT
 		};
@@ -591,9 +700,28 @@ class CommandDrawString : public SBarInfoCommand
 		EColorRange			translation;
 		SBarInfoCoordinate	x;
 		SBarInfoCoordinate	y;
-		ValueType			value;
-		int					valueArg;
+		int					cache; /// General purpose cache.
+		StringValueType		strValue;
+		int					valueArgument;
 		FString				str;
+
+	private:
+		void SetStringToTag(AActor *actor)
+		{
+			if(actor != NULL)
+			{
+				if(actor->GetClass()->ClassIndex != cache)
+				{
+					cache = actor->GetClass()->ClassIndex;
+					str = actor->GetTag();
+				}
+			}
+			else
+			{
+				cache = -1;
+				str = "";
+			}
+		}
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -604,7 +732,7 @@ class CommandDrawNumber : public CommandDrawString
 		CommandDrawNumber(SBarInfo *script) : CommandDrawString(script),
 			fillZeros(false), whenNotZero(false), interpolationSpeed(0), drawValue(0),
 			length(3), lowValue(-1), lowTranslation(CR_UNTRANSLATED), highValue(-1),
-			highTranslation(CR_UNTRANSLATED), value(CONSTANT), valueArgument(0),
+			highTranslation(CR_UNTRANSLATED), value(CONSTANT),
 			inventoryItem(NULL)
 		{
 		}
@@ -987,7 +1115,6 @@ class CommandDrawNumber : public CommandDrawString
 		EColorRange			highTranslation;
 		EColorRange			normalTranslation;
 		ValueType			value;
-		int					valueArgument;
 		const PClass		*inventoryItem;
 
 		SBarInfoCoordinate	startX;

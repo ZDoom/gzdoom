@@ -2119,47 +2119,47 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Burst)
 	ACTION_PARAM_START(1);
 	ACTION_PARAM_CLASS(chunk, 0);
 
-   int i, numChunks;
-   AActor * mo;
+	int i, numChunks;
+	AActor * mo;
 
-   if (chunk == NULL) return;
+	if (chunk == NULL) return;
 
-   self->velx = self->vely = self->velz = 0;
-   self->height = self->GetDefault()->height;
+	self->velx = self->vely = self->velz = 0;
+	self->height = self->GetDefault()->height;
 
-   // [RH] In Hexen, this creates a random number of shards (range [24,56])
-   // with no relation to the size of the self shattering. I think it should
-   // base the number of shards on the size of the dead thing, so bigger
-   // things break up into more shards than smaller things.
-   // An self with radius 20 and height 64 creates ~40 chunks.
-   numChunks = MAX<int> (4, (self->radius>>FRACBITS)*(self->height>>FRACBITS)/32);
-   i = (pr_burst.Random2()) % (numChunks/4);
-   for (i = MAX (24, numChunks + i); i >= 0; i--)
-   {
-      mo = Spawn(chunk,
-         self->x + (((pr_burst()-128)*self->radius)>>7),
-         self->y + (((pr_burst()-128)*self->radius)>>7),
-         self->z + (pr_burst()*self->height/255), ALLOW_REPLACE);
+	// [RH] In Hexen, this creates a random number of shards (range [24,56])
+	// with no relation to the size of the self shattering. I think it should
+	// base the number of shards on the size of the dead thing, so bigger
+	// things break up into more shards than smaller things.
+	// An self with radius 20 and height 64 creates ~40 chunks.
+	numChunks = MAX<int> (4, (self->radius>>FRACBITS)*(self->height>>FRACBITS)/32);
+	i = (pr_burst.Random2()) % (numChunks/4);
+	for (i = MAX (24, numChunks + i); i >= 0; i--)
+	{
+		mo = Spawn(chunk,
+			self->x + (((pr_burst()-128)*self->radius)>>7),
+			self->y + (((pr_burst()-128)*self->radius)>>7),
+			self->z + (pr_burst()*self->height/255), ALLOW_REPLACE);
 
-	  if (mo)
-      {
-         mo->velz = FixedDiv(mo->z - self->z, self->height)<<2;
-         mo->velx = pr_burst.Random2 () << (FRACBITS-7);
-         mo->vely = pr_burst.Random2 () << (FRACBITS-7);
-         mo->RenderStyle = self->RenderStyle;
-         mo->alpha = self->alpha;
-		 mo->CopyFriendliness(self, true);
-      }
-   }
+		if (mo)
+		{
+			mo->velz = FixedDiv(mo->z - self->z, self->height)<<2;
+			mo->velx = pr_burst.Random2 () << (FRACBITS-7);
+			mo->vely = pr_burst.Random2 () << (FRACBITS-7);
+			mo->RenderStyle = self->RenderStyle;
+			mo->alpha = self->alpha;
+			mo->CopyFriendliness(self, true);
+		}
+	}
 
-   // [RH] Do some stuff to make this more useful outside Hexen
-   if (self->flags4 & MF4_BOSSDEATH)
-   {
+	// [RH] Do some stuff to make this more useful outside Hexen
+	if (self->flags4 & MF4_BOSSDEATH)
+	{
 		CALL_ACTION(A_BossDeath, self);
-   }
-   CALL_ACTION(A_NoBlocking, self);
+	}
+	A_Unblock(self, true);
 
-   self->Destroy ();
+	self->Destroy ();
 }
 
 //===========================================================================

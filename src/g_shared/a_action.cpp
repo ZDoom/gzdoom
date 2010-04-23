@@ -57,7 +57,7 @@ IMPLEMENT_CLASS (ASwitchingDecoration)
 //
 //----------------------------------------------------------------------------
 
-DEFINE_ACTION_FUNCTION(AActor, A_NoBlocking)
+void A_Unblock(AActor *self, bool drop)
 {
 	// [RH] Andy Baker's stealth monsters
 	if (self->flags & MF_STEALTH)
@@ -78,8 +78,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_NoBlocking)
 
 	self->Conversation = NULL;
 
-	// If the self has attached metadata for items to drop, drop those.
-	if (!self->IsKindOf (RUNTIME_CLASS (APlayerPawn)))	// [GRB]
+	// If the actor has attached metadata for items to drop, drop those.
+	if (drop && !self->IsKindOf (RUNTIME_CLASS (APlayerPawn)))	// [GRB]
 	{
 		FDropItem *di = self->GetDropItems();
 
@@ -98,9 +98,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_NoBlocking)
 	}
 }
 
+DEFINE_ACTION_FUNCTION(AActor, A_NoBlocking)
+{
+	A_Unblock(self, true);
+}
+
 DEFINE_ACTION_FUNCTION(AActor, A_Fall)
 {
-	CALL_ACTION(A_NoBlocking, self);
+	A_Unblock(self, true);
 }
 
 //==========================================================================
@@ -301,7 +306,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FreezeDeathChunks)
 	{
 		CALL_ACTION(A_BossDeath, self);
 	}
-	CALL_ACTION(A_NoBlocking, self);
+	A_Unblock(self, true);
 
 	self->SetState(self->FindState(NAME_Null));
 }

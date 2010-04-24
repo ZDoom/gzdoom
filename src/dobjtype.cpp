@@ -790,6 +790,7 @@ void PClass::StaticShutdown ()
 	{
 		delete[] uniqueFPs[i];
 	}
+	TypeTable.Clear();
 	bShutdown = true;
 }
 
@@ -1319,6 +1320,20 @@ void FTypeTable::Mark()
 			GC::Mark(TypeHash[i]);
 		}
 	}
+}
+
+//==========================================================================
+//
+// FTypeTable :: Clear
+//
+// Removes everything from the table. We let the garbage collector worry
+// about deleting them.
+//
+//==========================================================================
+
+void FTypeTable::Clear()
+{
+	memset(TypeHash, 0, sizeof(TypeHash));
 }
 
 #include "c_dispatch.h"

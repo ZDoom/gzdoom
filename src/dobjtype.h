@@ -529,6 +529,7 @@ struct FTypeTable
 	void AddType(PType *type, PClass *metatype, const void *parm1, const void *parm2, size_t bucket);
 	void AddType(PType *type);
 	void Mark();
+	void Clear();
 
 	static size_t Hash(const void *p1, const void *p2, const void *p3);
 };

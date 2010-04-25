@@ -3983,7 +3983,7 @@ bool P_UseTraverse(AActor *usething, fixed_t endx, fixed_t endy, bool &foundline
 		}
 
 		FLineOpening open;
-		if (in->d.line->special == 0 || !(in->d.line->activation & (SPAC_Use|SPAC_UseThrough)))
+		if (in->d.line->special == 0 || !(in->d.line->activation & (SPAC_Use|SPAC_UseThrough|SPAC_UseBack)))
 		{
 	blocked:
 			if (in->d.line->flags & (ML_BLOCKEVERYTHING|ML_BLOCKUSE))
@@ -4029,27 +4029,46 @@ bool P_UseTraverse(AActor *usething, fixed_t endx, fixed_t endy, bool &foundline
 		}
 			
 		if (P_PointOnLineSide (usething->x, usething->y, in->d.line) == 1)
-			// [RH] continue traversal for two-sided lines
-			//return in->d.line->backsector != NULL;		// don't use back side
-			goto blocked;	// do a proper check for back sides of triggers
-			
-		P_ActivateLine (in->d.line, usething, 0, SPAC_Use);
+		{
+			if (!(in->d.line->activation & SPAC_UseBack))
+			{
+				// [RH] continue traversal for two-sided lines
+				//return in->d.line->backsector != NULL;		// don't use back side
+				goto blocked;	// do a proper check for back sides of triggers
+			}
+			else
+			{
+				P_ActivateLine (in->d.line, usething, 1, SPAC_UseBack);
+				return true;
+			}
+		}
+		else 
+		{
+			if ((in->d.line->activation & (SPAC_Use|SPAC_UseThrough|SPAC_UseBack)) == SPAC_UseBack)
+			{
+				goto blocked; // Line cannot be used from front side so treat it as a non-trigger line
+			}
 
-		//WAS can't use more than one special line in a row
-		//jff 3/21/98 NOW multiple use allowed with enabling line flag
-		//[RH] And now I've changed it again. If the line is of type
-		//	   SPAC_USE, then it eats the use. Everything else passes
-		//	   it through, including SPAC_USETHROUGH.
-		if (i_compatflags & COMPATF_USEBLOCKING)
-		{
-			if (in->d.line->activation & SPAC_UseThrough) continue;
-			else return true;
+			P_ActivateLine (in->d.line, usething, 0, SPAC_Use);
+
+			//WAS can't use more than one special line in a row
+			//jff 3/21/98 NOW multiple use allowed with enabling line flag
+			//[RH] And now I've changed it again. If the line is of type
+			//	   SPAC_USE, then it eats the use. Everything else passes
+			//	   it through, including SPAC_USETHROUGH.
+			if (i_compatflags & COMPATF_USEBLOCKING)
+			{
+				if (in->d.line->activation & SPAC_UseThrough) continue;
+				else return true;
+			}
+			else
+			{
+				if (!(in->d.line->activation & SPAC_Use)) continue;
+				else return true;
+			}
+
 		}
-		else
-		{
-			if (!(in->d.line->activation & SPAC_Use)) continue;
-			else return true;
-		}
+
 	}
 	return false;
 }

@@ -721,6 +721,10 @@ struct UDMFParser
 				Flag(ld->activation, SPAC_Use, key); 
 				continue;
 
+			case NAME_Playeruseback:
+				Flag(ld->activation, SPAC_UseBack, key); 
+				continue;
+
 			case NAME_Monstercross:
 				Flag(ld->activation, SPAC_MCross, key); 
 				continue;

@@ -1,5 +1,5 @@
 ===============================================================================
-Universal Doom Map Format ZDoom extensions v1.9 - 17.04.2010
+Universal Doom Map Format ZDoom extensions v1.10 - 25.04.2010
 
 
     Copyright (c) 2008 Christoph Oelckers.
@@ -89,6 +89,7 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       alpha = <float>;          // Translucency of this line, default is 1.0
       renderstyle = <string>;   // Render style, can be "translucent" or "add",
                                 // default is "translucent".
+      playeruseback = <bool>;   // New SPAC flag, true = player can use from back side.
       anycross = <bool>;        // New SPAC flag, true = any non-projectile 
                                 // crossing will trigger this line
       monsteractivate = <bool>; // Monsters can trigger this line.
@@ -258,6 +259,9 @@ Fixed conversion specifications for TranslucentLine special.
 
 1.9 17.04.2010
 Changed node specifications to deprecate compression of node lump.
+
+1.10 25.04.2010
+Added 'playeruseback' line trigger flag.
 
 ===============================================================================
 EOF

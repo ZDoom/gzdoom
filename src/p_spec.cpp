@@ -294,7 +294,7 @@ bool P_TestActivateLine (line_t *line, AActor *mo, int side, int activationType)
 	{
 		lineActivation |= SPAC_Cross|SPAC_MCross;
 	}
-	if (activationType == SPAC_Use)
+	if (activationType ==SPAC_Use || activationType == SPAC_UseBack)
 	{
 		if (!P_CheckSwitchRange(mo, line, side))
 		{

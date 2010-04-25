@@ -169,8 +169,9 @@ enum SPAC
 	SPAC_AnyCross = 1<<7,	// when anything without the MF2_TELEPORT flag crosses the line
 	SPAC_MUse = 1<<8,		// monsters can use
 	SPAC_MPush = 1<<9,		// monsters can push
+	SPAC_UseBack = 1<<10,	// Can be used from the backside
 
-	SPAC_PlayerActivate = (SPAC_Cross|SPAC_Use|SPAC_Impact|SPAC_Push|SPAC_AnyCross|SPAC_UseThrough),
+	SPAC_PlayerActivate = (SPAC_Cross|SPAC_Use|SPAC_Impact|SPAC_Push|SPAC_AnyCross|SPAC_UseThrough|SPAC_UseBack),
 };
 
 enum EMapLineFlags	// These are flags that use different values internally

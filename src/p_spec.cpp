@@ -452,6 +452,11 @@ void P_PlayerInSpecialSector (player_t *player, sector_t * sector)
 				P_DamageMobj (player->mo, NULL, NULL, 5, NAME_Slime);
 			break;
 
+		case hDamage_Sludge:
+			if (ironfeet == NULL && !(level.time&0x1f))
+				P_DamageMobj (player->mo, NULL, NULL, 4, NAME_Slime);
+			break;
+
 		case dDamage_SuperHellslime:
 			// SUPER HELLSLIME DAMAGE
 		case dLight_Strobe_Hurt:

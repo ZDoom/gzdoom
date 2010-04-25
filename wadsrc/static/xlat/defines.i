@@ -135,6 +135,7 @@ enum
 	dDamage_LavaWimpy = 82,
 	dDamage_LavaHefty = 83,
 	dScroll_EastLavaDamage = 84,
+	hDamage_Sludge = 85,
 	Sector_Outside = 87,
 
 	// And here are some for Strife

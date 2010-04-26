@@ -114,6 +114,7 @@ class ARandomSpawner : public AActor
 		{
 			// copy everything relevant
 			newmobj->SpawnAngle = newmobj->angle = angle;
+			newmobj->SpawnPoint[2] = SpawnPoint[2];
 			newmobj->special    = special;
 			newmobj->args[0]    = args[0];
 			newmobj->args[1]    = args[1];
@@ -137,10 +138,10 @@ class ARandomSpawner : public AActor
 			// a health set to -2 after spawning, for internal reasons.
 			if (health != SpawnHealth()) newmobj->health = health;
 			if (!(flags & MF_DROPPED)) newmobj->flags &= ~MF_DROPPED;
-				// Handle special altitude flags
+			// Handle special altitude flags
 			if (newmobj->flags & MF_SPAWNCEILING)
 			{
-				newmobj->z = newmobj->ceilingz - newmobj->height;
+				newmobj->z = newmobj->ceilingz - newmobj->height - SpawnPoint[2];
 			}
 			else if (newmobj->flags2 & MF2_SPAWNFLOAT) 
 			{
@@ -150,6 +151,7 @@ class ARandomSpawner : public AActor
 					space -= 40*FRACUNIT;
 					newmobj->z = MulScale8 (space, pr_randomspawn()) + newmobj->floorz + 40*FRACUNIT;
 				}
+				newmobj->z += SpawnPoint[2];
 			}
 			if (newmobj->flags & MF_MISSILE)
 				P_CheckMissileSpawn(newmobj);

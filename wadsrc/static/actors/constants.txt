@@ -105,6 +105,9 @@ const int AF_ClearSpecial = 32;
 const int AF_NoDeathSpecial = 64;
 const int AF_TriggerActs = 128;
 
+// Flags for A_TakeInventory and A_TakeFromTarget
+const int TIF_NOTAKEINFINITE = 1;
+
 // constants for A_PlaySound
 enum
 {

@@ -1314,11 +1314,17 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GiveToTarget)
 //
 //===========================================================================
 
+enum
+{
+	TIF_NOTAKEINFINITE = 1,
+};
+
 void DoTakeInventory(AActor * receiver, DECLARE_PARAMINFO)
 {
-	ACTION_PARAM_START(2);
+	ACTION_PARAM_START(3);
 	ACTION_PARAM_CLASS(item, 0);
 	ACTION_PARAM_INT(amount, 1);
+	ACTION_PARAM_INT(flags, 2);
 	
 	if (item == NULL || receiver == NULL) return;
 
@@ -1332,7 +1338,15 @@ void DoTakeInventory(AActor * receiver, DECLARE_PARAMINFO)
 		{
 			res = true;
 		}
-		if (!amount || amount>=inv->Amount) 
+		// Do not take ammo if the "no take infinite/take as ammo depletion" flag is set
+		// and infinite ammo is on
+		if (flags & TIF_NOTAKEINFINITE &&
+			((dmflags & DF_INFINITE_AMMO) || (receiver->player->cheats & CF_INFINITEAMMO)) &&
+			inv->IsKindOf(RUNTIME_CLASS(AAmmo)))
+		{
+			// Nothing to do here, except maybe res = false;? Would it make sense?
+		}
+		else if (!amount || amount>=inv->Amount) 
 		{
 			if (inv->ItemFlags&IF_KEEPDEPLETED) inv->Amount=0;
 			else inv->Destroy();

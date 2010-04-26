@@ -1810,11 +1810,13 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FadeIn)
 	ACTION_PARAM_START(1);
 	ACTION_PARAM_FIXED(reduce, 0);
 
-	if (reduce == 0) reduce = FRACUNIT/10;
-
+	if (reduce == 0)
+	{
+		reduce = FRACUNIT/10;
+	}
 	self->RenderStyle.Flags &= ~STYLEF_Alpha1;
 	self->alpha += reduce;
-	//if (self->alpha<=0) self->Destroy();
+	// Should this clamp alpha to 1.0?
 }
 
 //===========================================================================
@@ -1830,11 +1832,57 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FadeOut)
 	ACTION_PARAM_FIXED(reduce, 0);
 	ACTION_PARAM_BOOL(remove, 1);
 
-	if (reduce == 0) reduce = FRACUNIT/10;
-
+	if (reduce == 0)
+	{
+		reduce = FRACUNIT/10;
+	}
 	self->RenderStyle.Flags &= ~STYLEF_Alpha1;
 	self->alpha -= reduce;
-	if (self->alpha<=0 && remove) self->Destroy();
+	if (self->alpha <= 0 && remove)
+	{
+		self->Destroy();
+	}
+}
+
+//===========================================================================
+//
+// A_FadeTo
+//
+// fades the actor to a specified transparency by a specified amount and
+// destroys it if so desired
+//
+//===========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FadeTo)
+{
+	ACTION_PARAM_START(3);
+	ACTION_PARAM_FIXED(target, 0);
+	ACTION_PARAM_FIXED(amount, 1);
+	ACTION_PARAM_BOOL(remove, 2);
+
+	self->RenderStyle.Flags &= ~STYLEF_Alpha1;
+
+	if (self->alpha > target)
+	{
+		self->alpha -= amount;
+
+		if (self->alpha < target)
+		{
+			self->alpha = target;
+		}
+	}
+	else if (self->alpha < target)
+	{
+		self->alpha += amount;
+
+		if (self->alpha > target)
+		{
+			self->alpha = target;
+		}
+	}
+	if (self->alpha == target && remove)
+	{
+		self->Destroy();
+	}
 }
 
 //===========================================================================

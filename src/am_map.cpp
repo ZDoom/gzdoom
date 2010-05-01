@@ -185,7 +185,7 @@ CUSTOM_CVAR (Int, am_showalllines, -1, 0)	// This is a cheat so don't save it.
 {
 	int flagged = 0;
 	int total = 0;
-	if (self > 0)
+	if (self > 0 && numlines > 0)
 	{
 		for(int i=0;i<numlines;i++)
 		{

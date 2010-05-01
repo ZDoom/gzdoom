@@ -177,6 +177,45 @@ CVAR (Color, am_ovthingcolor_friend,	0xe88800,	CVAR_ARCHIVE);
 CVAR (Color, am_ovthingcolor_monster,	0xe88800,	CVAR_ARCHIVE);
 CVAR (Color, am_ovthingcolor_item,		0xe88800,	CVAR_ARCHIVE);
 
+// Disable the ML_DONTDRAW line flag if x% of all lines in a map are flagged with it
+// (To counter annoying mappers who think they are smart by making the automap unusable)
+bool am_showallenabled;
+
+CUSTOM_CVAR (Int, am_showalllines, -1, 0)	// This is a cheat so don't save it.
+{
+	int flagged = 0;
+	int total = 0;
+	if (self > 0)
+	{
+		for(int i=0;i<numlines;i++)
+		{
+			line_t *line = &lines[i];
+
+			// disregard intra-sector lines
+			if (line->frontsector == line->backsector) continue;	
+
+			// disregard control sectors for deep water
+			if (line->frontsector->e->FakeFloor.Sectors.Size() > 0) continue;	
+
+			// disregard control sectors for 3D-floors
+			if (line->frontsector->e->XFloor.attached.Size() > 0) continue;	
+
+			total++;
+			if (line->flags & ML_DONTDRAW) flagged++;
+		}
+		am_showallenabled =  (flagged * 100 / total >= self);
+	}
+	else if (self == 0)
+	{
+		am_showallenabled = true;
+	}
+	else
+	{
+		am_showallenabled = false;
+	}
+}
+
+
 // drawing stuff
 #define AM_PANDOWNKEY	KEY_DOWNARROW
 #define AM_PANUPKEY		KEY_UPARROW
@@ -946,6 +985,8 @@ void AM_LevelInit ()
 	if (scale_mtof > max_scale_mtof)
 		scale_mtof = min_scale_mtof;
 	scale_ftom = MapDiv(MAPUNIT, scale_mtof);
+
+	am_showalllines.Callback();
 }
 
 //=============================================================================
@@ -1601,7 +1642,12 @@ void AM_drawWalls (bool allmap)
 		if (am_cheat != 0 || (lines[i].flags & ML_MAPPED))
 		{
 			if ((lines[i].flags & ML_DONTDRAW) && am_cheat == 0)
-				continue;
+			{
+				if (!am_showallenabled || CheckCheatmode(false))
+				{
+					continue;
+				}
+			}
 
 			if (AM_CheckSecret(&lines[i]))
 			{
@@ -1680,8 +1726,14 @@ void AM_drawWalls (bool allmap)
 		}
 		else if (allmap)
 		{
-			if (!(lines[i].flags & ML_DONTDRAW))
-				AM_drawMline(&l, NotSeenColor);
+			if ((lines[i].flags & ML_DONTDRAW) && am_cheat == 0)
+			{
+				if (!am_showallenabled || CheckCheatmode(false))
+				{
+					continue;
+				}
+			}
+			AM_drawMline(&l, NotSeenColor);
 		}
     }
 }

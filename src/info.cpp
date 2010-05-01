@@ -454,7 +454,6 @@ CCMD (dumpmapthings)
 	FDoomEdMap::DumpMapThings ();
 }
 
-bool CheckCheatmode ();
 
 static void SummonActor (int command, int command2, FCommandLine argv)
 {

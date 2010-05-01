@@ -2558,7 +2558,7 @@ class CommandWeaponAmmo : public SBarInfoCommandFlowControl
 				const PClass *AmmoType2 = statusBar->CPlayer->ReadyWeapon->AmmoType2;
 				bool usesammo1 = (AmmoType1 != NULL);
 				bool usesammo2 = (AmmoType2 != NULL);
-				if(!negate && !usesammo1 && !usesammo2) //if the weapon doesn't use ammo don't go though the trouble.
+				if(negate && !usesammo1 && !usesammo2) //if the weapon doesn't use ammo don't go though the trouble.
 				{
 					SBarInfoCommandFlowControl::Draw(block, statusBar);
 					return;

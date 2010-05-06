@@ -32,6 +32,7 @@
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <signal.h>
 #ifndef NO_GTK
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
@@ -117,6 +118,16 @@ static DWORD TicNext;
 static DWORD BaseTime;
 static int TicFrozen;
 
+// Signal based timer.
+static struct timespec SignalTimeOut = { 0, 1000000/TICRATE };
+#ifdef HAVE_SIGTIMEDWAIT
+static sigset_t SignalWaitSet;
+#endif
+static int tics;
+static DWORD sig_start, sig_next;
+
+void I_SelectTimer();
+
 // [RH] Returns time in milliseconds
 unsigned int I_MSTime (void)
 {
@@ -134,6 +145,12 @@ unsigned int I_FPSTime()
 // I_GetTime
 // returns time in 1/35th second tics
 //
+int I_GetTimeSelect (bool saveMS)
+{
+	I_SelectTimer();
+	return I_GetTime (saveMS);
+}
+
 int I_GetTimePolled (bool saveMS)
 {
 	if (TicFrozen != 0)
@@ -151,6 +168,21 @@ int I_GetTimePolled (bool saveMS)
 	return Scale(tm - BaseTime, TICRATE, 1000);
 }
 
+int I_GetTimeSignaled (bool saveMS)
+{
+	if (TicFrozen != 0)
+	{
+		return TicFrozen;
+	}
+
+	if (saveMS)
+	{
+		TicStart = sig_start;
+		TicNext = sig_next;
+	}
+	return tics;
+}
+
 int I_WaitForTicPolled (int prevtic)
 {
     int time;
@@ -160,6 +192,27 @@ int I_WaitForTicPolled (int prevtic)
 		;
 
     return time;
+}
+
+int I_WaitForTicSignaled (int prevtic)
+{
+	assert (TicFrozen == 0);
+
+#ifdef HAVE_SIGTIMEDWAIT
+	while(sigtimedwait(&SignalWaitSet, NULL, &SignalTimeOut) == -1 && errno == EINTR)
+		;
+#else
+	while(nanosleep(&SignalTimeOut, NULL) == -1 && errno == EINTR)
+		;
+#endif
+
+	return I_GetTimePolled(false);
+}
+
+void I_FreezeTimeSelect (bool frozen)
+{
+	I_SelectTimer();
+	return I_FreezeTime (frozen);
 }
 
 void I_FreezeTimePolled (bool frozen)
@@ -176,6 +229,75 @@ void I_FreezeTimePolled (bool frozen)
 		TicFrozen = 0;
 		int now = I_GetTimePolled(false);
 		BaseTime += (now - froze) * 1000 / TICRATE;
+	}
+}
+
+void I_FreezeTimeSignaled (bool frozen)
+{
+	TicFrozen = frozen;
+}
+
+int I_WaitForTicSelect (int prevtic)
+{
+	I_SelectTimer();
+	return I_WaitForTic (prevtic);
+}
+
+//
+// I_HandleAlarm
+// Should be called every time there is an alarm.
+//
+void I_HandleAlarm (int sig)
+{
+	if(!TicFrozen)
+		tics++;
+	sig_start = SDL_GetTicks();
+	sig_next = Scale((Scale (sig_start, TICRATE, 1000) + 1), 1000, TICRATE);
+}
+
+//
+// I_SelectTimer
+// Sets up the timer function based on if we can use signals for efficent CPU
+// usage.
+//
+void I_SelectTimer()
+{
+	struct sigaction act;
+	struct itimerval itv;
+
+	sigfillset (&act.sa_mask);
+	act.sa_flags = 0;
+	// [BL] This doesn't seem to be executed consistantly, I'm guessing the
+	//      sleep functions are taking over the signal. So for now, lets just
+	//      attach WaitForTic to signals in order to reduce CPU usage.
+	//act.sa_handler = I_HandleAlarm;
+	act.sa_handler = SIG_IGN;
+
+	sigaction (SIGALRM, &act, NULL);
+
+	itv.it_interval.tv_sec = itv.it_value.tv_sec = 0;
+	itv.it_interval.tv_usec = itv.it_value.tv_usec = 1000000/TICRATE;
+
+	// [BL] See above.
+	I_GetTime = I_GetTimePolled;
+	I_FreezeTime = I_FreezeTimePolled;
+
+	if (setitimer(ITIMER_REAL, &itv, NULL) != 0)
+	{
+		//I_GetTime = I_GetTimePolled;
+		//I_FreezeTime = I_FreezeTimePolled;
+		I_WaitForTic = I_WaitForTicPolled;
+	}
+	else
+	{
+#ifdef HAVE_SIGTIMEDWAIT
+		sigemptyset(&SignalWaitSet);
+		sigaddset(&SignalWaitSet, SIGALRM);
+#endif
+
+		//I_GetTime = I_GetTimeSignaled;
+		//I_FreezeTime = I_FreezeTimeSignaled;
+		I_WaitForTic = I_WaitForTicSignaled;
 	}
 }
 
@@ -218,9 +340,9 @@ void I_Init (void)
 	CheckCPUID (&CPU);
 	DumpCPUInfo (&CPU);
 
-	I_GetTime = I_GetTimePolled;
-	I_WaitForTic = I_WaitForTicPolled;
-	I_FreezeTime = I_FreezeTimePolled;
+	I_GetTime = I_GetTimeSelect;
+	I_WaitForTic = I_WaitForTicSelect;
+	I_FreezeTime = I_FreezeTimeSelect;
 	atterm (I_ShutdownSound);
     I_InitSound ();
 }

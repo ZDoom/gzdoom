@@ -204,7 +204,7 @@ ACTOR VolcanoBlast
 	States
 	{
 	Spawn:
-		VFBL A 4 BRIGHT A_SpawnItemEx("Puffy", random2[BeastPuff]()*0.015625, random2[BeastPuff]()*0.015625, random2[BeastPuff]()*0.015625, 
+		VFBL AB 4 BRIGHT A_SpawnItemEx("Puffy", random2[BeastPuff]()*0.015625, random2[BeastPuff]()*0.015625, random2[BeastPuff]()*0.015625, 
 									0,0,0,0,SXF_ABSOLUTEPOSITION, 64)
 		Loop
 

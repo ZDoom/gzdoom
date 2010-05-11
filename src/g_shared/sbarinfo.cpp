@@ -214,44 +214,89 @@ class SBarInfoCommand
 class SBarInfoCommandFlowControl : public SBarInfoCommand
 {
 	public:
-		SBarInfoCommandFlowControl(SBarInfo *script) : SBarInfoCommand(script) {}
+		SBarInfoCommandFlowControl(SBarInfo *script) : SBarInfoCommand(script), truth(false) {}
 		~SBarInfoCommandFlowControl()
 		{
-			for(unsigned int i = 0;i < commands.Size();i++)
-				delete commands[i];
+			for(unsigned int i = 0;i < 2;i++)
+			{
+				for(unsigned int j = 0;j < commands[i].Size();j++)
+					delete commands[i][j];
+			}
 		}
 
 		void	Draw(const SBarInfoMainBlock *block, const DSBarInfo *statusBar)
 		{
-			for(unsigned int i = 0;i < commands.Size();i++)
-				commands[i]->Draw(block, statusBar);
+			for(unsigned int i = 0;i < commands[truth].Size();i++)
+				commands[truth][i]->Draw(block, statusBar);
 		}
-		int		NumCommands() const { return commands.Size(); }
+		int		NumCommands() const { return commands[truth].Size(); }
 		void	Parse(FScanner &sc, bool fullScreenOffsets)
 		{
-			sc.MustGetToken('{');
+			bool elseBlock = false;
 			SBarInfoCommand *cmd = NULL;
-			while((cmd = NextCommand(sc)) != NULL)
+			// Should loop no more than twice.
+			while(true)
 			{
-				cmd->Parse(sc, fullScreenOffsets);
-				commands.Push(cmd);
+				if(sc.CheckToken('{'))
+				{
+					while((cmd = NextCommand(sc)) != NULL)
+					{
+						cmd->Parse(sc, fullScreenOffsets);
+						commands[!elseBlock].Push(cmd);
+					}
+				}
+				else
+				{
+					if((cmd = NextCommand(sc)) != NULL)
+					{
+						cmd->Parse(sc, fullScreenOffsets);
+						commands[!elseBlock].Push(cmd);
+					}
+					else
+						sc.ScriptError("Missing command for flow control statement.");
+				}
+
+				if(!elseBlock && sc.CheckToken(TK_Else))
+				{
+					elseBlock = true;
+					continue;
+				}
+				break;
 			}
 		}
 		void	Reset()
 		{
-			for(unsigned int i = 0;i < commands.Size();i++)
-				commands[i]->Reset();
+			for(unsigned int i = 0;i < 2;i++)
+			{
+				for(unsigned int j = 0;j < commands[i].Size();j++)
+					commands[i][j]->Reset();
+			}
 		}
 		void	Tick(const SBarInfoMainBlock *block, const DSBarInfo *statusBar, bool hudChanged)
 		{
-			for(unsigned int i = 0;i < commands.Size();i++)
-				commands[i]->Tick(block, statusBar, hudChanged);
+			for(unsigned int i = 0;i < commands[truth].Size();i++)
+				commands[truth][i]->Tick(block, statusBar, hudChanged);
+		}
+
+	protected:
+		void	SetTruth(bool truth, const SBarInfoMainBlock *block, const DSBarInfo *statusBar)
+		{
+			// If there is no change we don't need to do anything.  Do note
+			// that this should not change more than once per tick.  If it does
+			// there may be cosmetic problems.
+			if(this->truth == truth)
+				return;
+
+			this->truth = truth;
+			if(block != NULL)
+				Tick(block, statusBar, true);
 		}
 
 	private:
 		SBarInfoCommand	*NextCommand(FScanner &sc);
 
-		TArray<SBarInfoCommand *>	commands;
+		bool						truth;
+		TArray<SBarInfoCommand *>	commands[2];
 };
 
 class SBarInfoMainBlock : public SBarInfoCommandFlowControl
@@ -260,6 +305,7 @@ class SBarInfoMainBlock : public SBarInfoCommandFlowControl
 		SBarInfoMainBlock(SBarInfo *script) : SBarInfoCommandFlowControl(script),
 			alpha(FRACUNIT), forceScaled(false), fullScreenOffsets(false)
 		{
+			SetTruth(true, NULL, NULL);
 		}
 
 		int		Alpha() const { return alpha; }

@@ -1210,7 +1210,8 @@ class CommandDrawSelectedInventory : public SBarInfoCommandFlowControl, private 
 				if(alwaysShowCounter || statusBar->CPlayer->mo->InvSel->Amount != 1)
 					CommandDrawNumber::Draw(block, statusBar);
 			}
-			else if(alternateOnEmpty)
+
+			if(alternateOnEmpty)
 				SBarInfoCommandFlowControl::Draw(block, statusBar);
 		}
 		void	Parse(FScanner &sc, bool fullScreenOffsets)
@@ -1267,9 +1268,13 @@ class CommandDrawSelectedInventory : public SBarInfoCommandFlowControl, private 
 		}
 		void	Tick(const SBarInfoMainBlock *block, const DSBarInfo *statusBar, bool hudChanged)
 		{
+			SBarInfoCommandFlowControl::Tick(block, statusBar, hudChanged);
+
 			if(artiflashTick > 0)
 				artiflashTick--;
-		
+
+			SetTruth(statusBar->CPlayer->mo->InvSel == NULL || (level.flags & LEVEL_NOINVENTORYBAR), block, statusBar);
+
 			CommandDrawImage::Tick(block, statusBar, hudChanged);
 			CommandDrawNumber::Tick(block, statusBar, hudChanged);
 		}
@@ -1299,16 +1304,6 @@ class CommandGameMode : public SBarInfoCommandFlowControl
 		{
 		}
 
-		void	Draw(const SBarInfoMainBlock *block, const DSBarInfo *statusBar)
-		{
-			if((!multiplayer && (modes & SINGLEPLAYER)) ||
-				(deathmatch && (modes & DEATHMATCH)) ||
-				(multiplayer && !deathmatch && (modes & COOPERATIVE)) ||
-				(teamplay && (modes & TEAMGAME)))
-			{
-				SBarInfoCommandFlowControl::Draw(block, statusBar);
-			}
-		}
 		void	Parse(FScanner &sc, bool fullScreenOffsets)
 		{
 			do
@@ -1318,6 +1313,15 @@ class CommandGameMode : public SBarInfoCommandFlowControl
 			}
 			while(sc.CheckToken(','));
 			SBarInfoCommandFlowControl::Parse(sc, fullScreenOffsets);
+		}
+		void	Tick(const SBarInfoMainBlock *block, const DSBarInfo *statusBar, bool hudChanged)
+		{
+			SBarInfoCommandFlowControl::Tick(block, statusBar, hudChanged);
+
+			SetTruth((!multiplayer && (modes & SINGLEPLAYER)) ||
+				(deathmatch && (modes & DEATHMATCH)) ||
+				(multiplayer && !deathmatch && (modes & COOPERATIVE)) ||
+				(teamplay && (modes & TEAMGAME)), block, statusBar);
 		}
 	protected:
 		static const char* const	modeNames[];
@@ -1351,11 +1355,6 @@ class CommandUsesAmmo : public SBarInfoCommandFlowControl
 		{
 		}
 
-		void	Draw(const SBarInfoMainBlock *block, const DSBarInfo *statusBar)
-		{
-			if((statusBar->CPlayer->ReadyWeapon != NULL && (statusBar->CPlayer->ReadyWeapon->AmmoType1 != NULL || statusBar->CPlayer->ReadyWeapon->AmmoType2 != NULL)) ^ negate)
-				SBarInfoCommandFlowControl::Draw(block, statusBar);
-		}
 		void	Parse(FScanner &sc, bool fullScreenOffsets)
 		{
 			if(sc.CheckToken(TK_Identifier))
@@ -1366,6 +1365,12 @@ class CommandUsesAmmo : public SBarInfoCommandFlowControl
 					sc.ScriptError("Expected 'not', but got '%s' instead.", sc.String);
 			}
 			SBarInfoCommandFlowControl::Parse(sc, fullScreenOffsets);
+		}
+		void	Tick(const SBarInfoMainBlock *block, const DSBarInfo *statusBar, bool hudChanged)
+		{
+			SBarInfoCommandFlowControl::Tick(block, statusBar, hudChanged);
+
+			SetTruth((statusBar->CPlayer->ReadyWeapon != NULL && (statusBar->CPlayer->ReadyWeapon->AmmoType1 != NULL || statusBar->CPlayer->ReadyWeapon->AmmoType2 != NULL)) ^ negate, block, statusBar);
 		}
 	protected:
 		bool	negate;
@@ -1380,10 +1385,11 @@ class CommandUsesSecondaryAmmo : public CommandUsesAmmo
 		{
 		}
 
-		void	Draw(const SBarInfoMainBlock *block, const DSBarInfo *statusBar)
+		void	Tick(const SBarInfoMainBlock *block, const DSBarInfo *statusBar, bool hudChanged)
 		{
-			if((statusBar->CPlayer->ReadyWeapon != NULL && statusBar->CPlayer->ReadyWeapon->AmmoType2 != NULL && statusBar->CPlayer->ReadyWeapon->AmmoType1 != statusBar->CPlayer->ReadyWeapon->AmmoType2) ^ negate)
-				SBarInfoCommandFlowControl::Draw(block, statusBar);
+			SBarInfoCommandFlowControl::Tick(block, statusBar, hudChanged);
+
+			SetTruth((statusBar->CPlayer->ReadyWeapon != NULL && statusBar->CPlayer->ReadyWeapon->AmmoType2 != NULL && statusBar->CPlayer->ReadyWeapon->AmmoType1 != statusBar->CPlayer->ReadyWeapon->AmmoType2) ^ negate, block, statusBar);
 		}
 };
 
@@ -1396,10 +1402,11 @@ class CommandInventoryBarNotVisible : public SBarInfoCommandFlowControl
 		{
 		}
 
-		void	Draw(const SBarInfoMainBlock *block, const DSBarInfo *statusBar)
+		void	Tick(const SBarInfoMainBlock *block, const DSBarInfo *statusBar, bool hudChanged)
 		{
-			if(statusBar->CPlayer->inventorytics <= 0 || (level.flags & LEVEL_NOINVENTORYBAR))
-				SBarInfoCommandFlowControl::Draw(block, statusBar);
+			SBarInfoCommandFlowControl::Tick(block, statusBar, hudChanged);
+
+			SetTruth(statusBar->CPlayer->inventorytics <= 0 || (level.flags & LEVEL_NOINVENTORYBAR), block, statusBar);
 		}
 };
 
@@ -1413,11 +1420,6 @@ class CommandAspectRatio : public SBarInfoCommandFlowControl
 		{
 		}
 
-		void	Draw(const SBarInfoMainBlock *block, const DSBarInfo *statusBar)
-		{
-			if(CheckRatio(screen->GetWidth(), screen->GetHeight()) == ratio)
-				SBarInfoCommandFlowControl::Draw(block, statusBar);
-		}
 		void	Parse(FScanner &sc, bool fullScreenOffsets)
 		{
 			sc.MustGetToken(TK_StringConst);
@@ -1432,6 +1434,10 @@ class CommandAspectRatio : public SBarInfoCommandFlowControl
 			else
 				sc.ScriptError("Unkown aspect ratio: %s", sc.String);
 			SBarInfoCommandFlowControl::Parse(sc, fullScreenOffsets);
+		}
+		void	Tick(const SBarInfoMainBlock *block, const DSBarInfo *statusBar, bool hudChanged)
+		{
+			SetTruth(CheckRatio(screen->GetWidth(), screen->GetHeight()) == ratio, block, statusBar);
 		}
 	protected:
 		enum Ratio
@@ -2263,21 +2269,6 @@ class CommandIsSelected : public SBarInfoCommandFlowControl
 			weapon[1] = NULL;
 		}
 
-		void	Draw(const SBarInfoMainBlock *block, const DSBarInfo *statusBar)
-		{
-			if(statusBar->CPlayer->ReadyWeapon != NULL)
-			{
-				const PClass *readyWeapon = statusBar->CPlayer->ReadyWeapon->GetClass();
-				if(((weapon[1] != NULL) &&
-						((negate && (weapon[0] != readyWeapon && weapon[1] != readyWeapon)) ||
-						(!negate && (weapon[0] == readyWeapon || weapon[1] == readyWeapon)))) ||
-					((weapon[1] == NULL) &&
-						((!negate && weapon[0] == readyWeapon) || (negate && weapon[0] != readyWeapon))))
-				{
-					SBarInfoCommandFlowControl::Draw(block, statusBar);
-				}
-			}
-		}
 		void	Parse(FScanner &sc, bool fullScreenOffsets)
 		{
 			//Using StringConst instead of Identifieres is deperecated!
@@ -2308,6 +2299,20 @@ class CommandIsSelected : public SBarInfoCommandFlowControl
 			}
 			SBarInfoCommandFlowControl::Parse(sc, fullScreenOffsets);
 		}
+		void	Tick(const SBarInfoMainBlock *block, const DSBarInfo *statusBar, bool hudChanged)
+		{
+			SBarInfoCommandFlowControl::Tick(block, statusBar, hudChanged);
+
+			if(statusBar->CPlayer->ReadyWeapon != NULL)
+			{
+				const PClass *readyWeapon = statusBar->CPlayer->ReadyWeapon->GetClass();
+				SetTruth(((weapon[1] != NULL) &&
+						((negate && (weapon[0] != readyWeapon && weapon[1] != readyWeapon)) ||
+						(!negate && (weapon[0] == readyWeapon || weapon[1] == readyWeapon)))) ||
+					((weapon[1] == NULL) &&
+						((!negate && weapon[0] == readyWeapon) || (negate && weapon[0] != readyWeapon))), block, statusBar);
+			}
+		}
 	protected:
 		bool			negate;
 		const PClass	*weapon[2];
@@ -2322,18 +2327,6 @@ class CommandPlayerClass : public SBarInfoCommandFlowControl
 		{
 		}
 
-		void	Draw(const SBarInfoMainBlock *block, const DSBarInfo *statusBar)
-		{
-			if(statusBar->CPlayer->cls == NULL)
-				return; //No class so we can not continue
-		
-			int spawnClass = statusBar->CPlayer->cls->ClassIndex;
-			for(unsigned int i = 0;i < classes.Size();i++)
-			{
-				if(classes[i] == spawnClass)
-					SBarInfoCommandFlowControl::Draw(block, statusBar);
-			}
-		}
 		void	Parse(FScanner &sc, bool fullScreenOffsets)
 		{
 			sc.MustGetToken(TK_Identifier);
@@ -2357,6 +2350,24 @@ class CommandPlayerClass : public SBarInfoCommandFlowControl
 			while(sc.CheckToken(TK_Identifier));
 			SBarInfoCommandFlowControl::Parse(sc, fullScreenOffsets);
 		}
+		void	Tick(const SBarInfoMainBlock *block, const DSBarInfo *statusBar, bool hudChanged)
+		{
+			SBarInfoCommandFlowControl::Tick(block, statusBar, hudChanged);
+
+			if(statusBar->CPlayer->cls == NULL)
+				return; //No class so we can not continue
+		
+			int spawnClass = statusBar->CPlayer->cls->ClassIndex;
+			for(unsigned int i = 0;i < classes.Size();i++)
+			{
+				if(classes[i] == spawnClass)
+				{
+					SetTruth(true, block, statusBar);
+					return;
+				}
+			}
+			SetTruth(false, block, statusBar);
+		}
 	protected:
 		TArray<int>	classes;
 };
@@ -2371,22 +2382,6 @@ class CommandHasWeaponPiece : public SBarInfoCommandFlowControl
 		{
 		}
 
-		void	Draw(const SBarInfoMainBlock *block, const DSBarInfo *statusBar)
-		{
-			for(AInventory *inv = statusBar->CPlayer->mo->Inventory;inv != NULL;inv=inv->Inventory)
-			{
-				if(inv->IsKindOf(RUNTIME_CLASS(AWeaponHolder)))
-				{
-					AWeaponHolder *hold = static_cast<AWeaponHolder*>(inv);
-					if(hold->PieceWeapon == weapon)
-					{
-						if(hold->PieceMask & (1 << (piece-1)))
-							SBarInfoCommandFlowControl::Draw(block, statusBar);
-						break;
-					}
-				}
-			}
-		}
 		void	Parse(FScanner &sc, bool fullScreenOffsets)
 		{
 			sc.MustGetToken(TK_Identifier);
@@ -2399,6 +2394,25 @@ class CommandHasWeaponPiece : public SBarInfoCommandFlowControl
 				sc.ScriptError("Weapon piece number can not be less than 1.");
 			piece = sc.Number;
 			SBarInfoCommandFlowControl::Parse(sc, fullScreenOffsets);
+		}
+		void	Tick(const SBarInfoMainBlock *block, const DSBarInfo *statusBar, bool hudChanged)
+		{
+			SBarInfoCommandFlowControl::Tick(block, statusBar, hudChanged);
+
+			for(AInventory *inv = statusBar->CPlayer->mo->Inventory;inv != NULL;inv=inv->Inventory)
+			{
+				if(inv->IsKindOf(RUNTIME_CLASS(AWeaponHolder)))
+				{
+					AWeaponHolder *hold = static_cast<AWeaponHolder*>(inv);
+					if(hold->PieceWeapon == weapon)
+					{
+						if(hold->PieceMask & (1 << (piece-1)))
+							SetTruth(true, block, statusBar);
+						return;
+					}
+				}
+			}
+			SetTruth(false, block, statusBar);
 		}
 	protected:
 		const PClass	*weapon;
@@ -2550,48 +2564,6 @@ class CommandWeaponAmmo : public SBarInfoCommandFlowControl
 			ammo[1] = NULL;
 		}
 
-		void	Draw(const SBarInfoMainBlock *block, const DSBarInfo *statusBar)
-		{
-			if(statusBar->CPlayer->ReadyWeapon != NULL)
-			{
-				const PClass *AmmoType1 = statusBar->CPlayer->ReadyWeapon->AmmoType1;
-				const PClass *AmmoType2 = statusBar->CPlayer->ReadyWeapon->AmmoType2;
-				bool usesammo1 = (AmmoType1 != NULL);
-				bool usesammo2 = (AmmoType2 != NULL);
-				if(negate && !usesammo1 && !usesammo2) //if the weapon doesn't use ammo don't go though the trouble.
-				{
-					SBarInfoCommandFlowControl::Draw(block, statusBar);
-					return;
-				}
-				//Or means only 1 ammo type needs to match and means both need to match.
-				if(ammo[1] != NULL)
-				{
-					bool match1 = ((usesammo1 && (AmmoType1 == ammo[0] || AmmoType1 == ammo[1])) || !usesammo1);
-					bool match2 = ((usesammo2 && (AmmoType2 == ammo[0] || AmmoType2 == ammo[1])) || !usesammo2);
-					if((!conditionAnd && (match1 || match2)) || (conditionAnd && (match1 && match2)))
-					{
-						if(!negate)
-							SBarInfoCommandFlowControl::Draw(block, statusBar);
-					}
-					else if(negate)
-					{
-						SBarInfoCommandFlowControl::Draw(block, statusBar);
-					}
-				}
-				else //Every thing here could probably be one long if statement but then it would be more confusing.
-				{
-					if((usesammo1 && (AmmoType1 == ammo[0])) || (usesammo2 && (AmmoType2 == ammo[0])))
-					{
-						if(!negate)
-							SBarInfoCommandFlowControl::Draw(block, statusBar);
-					}
-					else if(negate)
-					{
-						SBarInfoCommandFlowControl::Draw(block, statusBar);
-					}
-				}
-			}
-		}
 		void	Parse(FScanner &sc, bool fullScreenOffsets)
 		{
 			sc.MustGetToken(TK_Identifier);
@@ -2621,6 +2593,59 @@ class CommandWeaponAmmo : public SBarInfoCommandFlowControl
 			}
 			SBarInfoCommandFlowControl::Parse(sc, fullScreenOffsets);
 		}
+		void	Tick(const SBarInfoMainBlock *block, const DSBarInfo *statusBar, bool hudChanged)
+		{
+			SBarInfoCommandFlowControl::Tick(block, statusBar, hudChanged);
+
+			if(statusBar->CPlayer->ReadyWeapon != NULL)
+			{
+				const PClass *AmmoType1 = statusBar->CPlayer->ReadyWeapon->AmmoType1;
+				const PClass *AmmoType2 = statusBar->CPlayer->ReadyWeapon->AmmoType2;
+				bool usesammo1 = (AmmoType1 != NULL);
+				bool usesammo2 = (AmmoType2 != NULL);
+				if(negate && !usesammo1 && !usesammo2) //if the weapon doesn't use ammo don't go though the trouble.
+				{
+					SetTruth(true, block, statusBar);
+					return;
+				}
+				//Or means only 1 ammo type needs to match and means both need to match.
+				if(ammo[1] != NULL)
+				{
+					bool match1 = ((usesammo1 && (AmmoType1 == ammo[0] || AmmoType1 == ammo[1])) || !usesammo1);
+					bool match2 = ((usesammo2 && (AmmoType2 == ammo[0] || AmmoType2 == ammo[1])) || !usesammo2);
+					if((!conditionAnd && (match1 || match2)) || (conditionAnd && (match1 && match2)))
+					{
+						if(!negate)
+						{
+							SetTruth(true, block, statusBar);
+							return;
+						}
+					}
+					else if(negate)
+					{
+						SetTruth(true, block, statusBar);
+						return;
+					}
+				}
+				else //Every thing here could probably be one long if statement but then it would be more confusing.
+				{
+					if((usesammo1 && (AmmoType1 == ammo[0])) || (usesammo2 && (AmmoType2 == ammo[0])))
+					{
+						if(!negate)
+						{
+							SetTruth(true, block, statusBar);
+							return;
+						}
+					}
+					else if(negate)
+					{
+						SetTruth(true, block, statusBar);
+						return;
+					}
+				}
+			}
+			SetTruth(false, block, statusBar);
+		}
 	protected:
 		bool			conditionAnd;
 		bool			negate;
@@ -2639,30 +2664,6 @@ class CommandInInventory : public SBarInfoCommandFlowControl
 			amount[0] = amount[1] = 0;
 		}
 
-		void	Draw(const SBarInfoMainBlock *block, const DSBarInfo *statusBar)
-		{
-			AInventory *invItem[2] = { statusBar->CPlayer->mo->FindInventory(item[0]), statusBar->CPlayer->mo->FindInventory(item[1]) };
-			if (invItem[0] != NULL && amount[0] > 0 && invItem[0]->Amount < amount[0]) invItem[0] = NULL;
-			if (invItem[1] != NULL && amount[1] > 0 && invItem[1]->Amount < amount[1]) invItem[1] = NULL;
-			if(invItem[1] != NULL && conditionAnd)
-			{
-				if((invItem[0] != NULL && invItem[1] != NULL) && !negate)
-					SBarInfoCommandFlowControl::Draw(block, statusBar);
-				else if((invItem[0] == NULL || invItem[1] == NULL) && negate)
-					SBarInfoCommandFlowControl::Draw(block, statusBar);
-			}
-			else if(invItem[1] != NULL && !conditionAnd)
-			{
-				if((invItem[0] != NULL || invItem[1] != NULL) && !negate)
-					SBarInfoCommandFlowControl::Draw(block, statusBar);
-				else if((invItem[0] == NULL && invItem[1] == NULL) && negate)
-					SBarInfoCommandFlowControl::Draw(block, statusBar);
-			}
-			else if((invItem[0] != NULL) && !negate)
-				SBarInfoCommandFlowControl::Draw(block, statusBar);
-			else if((invItem[0] == NULL) && negate)
-				SBarInfoCommandFlowControl::Draw(block, statusBar);
-		}
 		void	Parse(FScanner &sc, bool fullScreenOffsets)
 		{
 			sc.MustGetToken(TK_Identifier);
@@ -2697,6 +2698,51 @@ class CommandInInventory : public SBarInfoCommandFlowControl
 					break;
 			}
 			SBarInfoCommandFlowControl::Parse(sc, fullScreenOffsets);
+		}
+		void	Tick(const SBarInfoMainBlock *block, const DSBarInfo *statusBar, bool hudChanged)
+		{
+			SBarInfoCommandFlowControl::Tick(block, statusBar, hudChanged);
+
+			AInventory *invItem[2] = { statusBar->CPlayer->mo->FindInventory(item[0]), statusBar->CPlayer->mo->FindInventory(item[1]) };
+			if (invItem[0] != NULL && amount[0] > 0 && invItem[0]->Amount < amount[0]) invItem[0] = NULL;
+			if (invItem[1] != NULL && amount[1] > 0 && invItem[1]->Amount < amount[1]) invItem[1] = NULL;
+			if(invItem[1] != NULL && conditionAnd)
+			{
+				if((invItem[0] != NULL && invItem[1] != NULL) && !negate)
+				{
+					SetTruth(true, block, statusBar);
+					return;
+				}
+				else if((invItem[0] == NULL || invItem[1] == NULL) && negate)
+				{
+					SetTruth(true, block, statusBar);
+					return;
+				}
+			}
+			else if(invItem[1] != NULL && !conditionAnd)
+			{
+				if((invItem[0] != NULL || invItem[1] != NULL) && !negate)
+				{
+					SetTruth(true, block, statusBar);
+					return;
+				}
+				else if((invItem[0] == NULL && invItem[1] == NULL) && negate)
+				{
+					SetTruth(true, block, statusBar);
+					return;
+				}
+			}
+			else if((invItem[0] != NULL) && !negate)
+			{
+				SetTruth(true, block, statusBar);
+				return;
+			}
+			else if((invItem[0] == NULL) && negate)
+			{
+				SetTruth(true, block, statusBar);
+				return;
+			}
+			SetTruth(false, block, statusBar);
 		}
 	protected:
 		bool			conditionAnd;

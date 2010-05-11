@@ -38,8 +38,7 @@ statusbar fullscreen, fullscreenoffsets // ZDoom HUD
 				drawselectedinventory centerbottom, drawshadow, alwaysshowcounter, HUDFONT_DOOM, -14, -39, -26, -56, untranslated;
 			}
 		}
-		//no secondary ammo
-		usessecondaryammo not
+		else //no secondary ammo
 		{
 			inventorybarnotvisible
 			{
@@ -47,9 +46,7 @@ statusbar fullscreen, fullscreenoffsets // ZDoom HUD
 			}
 		}
 	}
-	
-	// no ammo but inventory
-	usesammo not
+	else // no ammo but inventory
 	{
 		inventorybarnotvisible
 		{

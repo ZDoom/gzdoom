@@ -7,7 +7,7 @@ ACTOR Inventory native
 	Inventory.PickupSound "misc/i_pkup"
 	
 	action native A_JumpIfNoAmmo(state label);
-	action native A_CustomPunch(int damage, bool norandom = false, bool useammo = true, class<Actor> pufftype = "BulletPuff", float range = 0);
+	action native A_CustomPunch(int damage, bool norandom = false, bool useammo = true, class<Actor> pufftype = "BulletPuff", float range = 0, float lifesteal = 0);
 	action native A_FireBullets(float spread_xy, float spread_z, int numbullets, int damageperbullet, class<Actor> pufftype = "BulletPuff", bool useammo = true, float range = 0);
 	action native A_FireCustomMissile(class<Actor> missiletype, float angle = 0, bool useammo = true, int spawnofs_xy = 0, float spawnheight = 0, bool aimatangle = false, float pitch = 0);
 	action native A_RailAttack(int damage, int spawnofs_xy = 0, int useammo = true, color color1 = "", color color2 = "", int flags = 0, float maxdiff = 0, class<Actor> pufftype = "BulletPuff");
@@ -40,7 +40,7 @@ ACTOR Inventory native
 	action native A_ClearReFire();
 	action native A_CheckReload();
 	action native A_GunFlash(state flash = "");
-	action native A_Saw(sound fullsound = "weapons/sawfull", sound hitsound = "weapons/sawhit", int damage = 2, class<Actor> pufftype = "BulletPuff");
+	action native A_Saw(sound fullsound = "weapons/sawfull", sound hitsound = "weapons/sawhit", int damage = 2, class<Actor> pufftype = "BulletPuff", float range = 0, float lifesteal = 0);
 	action native A_CheckForReload(int counter, state label, bool dontincrement = false);
 	action native A_ResetReloadCounter();
 	action native A_RestoreSpecialPosition();

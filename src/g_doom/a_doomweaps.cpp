@@ -110,6 +110,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Saw)
 	ACTION_PARAM_SOUND(hitsound, 1);
 	ACTION_PARAM_INT(damage, 2);
 	ACTION_PARAM_CLASS(pufftype, 3);
+	ACTION_PARAM_FIXED(Range, 4)
+	ACTION_PARAM_FIXED(LifeSteal, 5);
 
 	if (NULL == (player = self->player))
 	{
@@ -131,8 +133,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Saw)
 	angle += pr_saw.Random2() << 18;
 	
 	// use meleerange + 1 so the puff doesn't skip the flash (i.e. plays all states)
-	P_LineAttack (self, angle, MELEERANGE+1,
-				  P_AimLineAttack (self, angle, MELEERANGE+1, &linetarget), damage,
+	if (Range == 0) Range = MELEERANGE+1;
+
+	P_LineAttack (self, angle, Range,
+				  P_AimLineAttack (self, angle, Range, &linetarget), damage,
 				  NAME_None, pufftype);
 
 	if (!linetarget)
@@ -140,6 +144,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Saw)
 		S_Sound (self, CHAN_WEAPON, fullsound, 1, ATTN_NORM);
 		return;
 	}
+
+	if (LifeSteal)
+		P_GiveBody (self, (damage * LifeSteal) >> FRACBITS);
+
 	S_Sound (self, CHAN_WEAPON, hitsound, 1, ATTN_NORM);
 		
 	// turn to face target

@@ -258,7 +258,7 @@ void CheckCompatibility(MapData *map)
 	if (Wads.GetLumpFile(map->lumpnum) == 1 && (gameinfo.flags & GI_COMPATSHORTTEX) && !(level.flags & LEVEL_HEXENFORMAT))
 	{
 		ii_compatflags = COMPATF_SHORTTEX;
-		if (gameinfo.flags & GI_COMPATSHORTTEX) ii_compatflags |= COMPATF_STAIRINDEX;
+		if (gameinfo.flags & GI_COMPATSTAIRS) ii_compatflags |= COMPATF_STAIRINDEX;
 		ib_compatflags = 0;
 		ii_compatparams = -1;
 	}

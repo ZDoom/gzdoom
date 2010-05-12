@@ -2721,6 +2721,79 @@ static void P_CreateBlockMap ()
 	}
 }
 
+
+
+//
+// P_VerifyBlockMap
+//
+// haleyjd 03/04/10: do verification on validity of blockmap.
+//
+static bool P_VerifyBlockMap(int count)
+{
+	int x, y;
+	int *maxoffs = blockmaplump + count;
+
+	int bmapwidth = blockmaplump[2];
+	int bmapheight = blockmaplump[3];
+
+	for(y = 0; y < bmapheight; y++)
+	{
+		for(x = 0; x < bmapwidth; x++)
+		{
+			int offset;
+			int *list, *tmplist;
+			int *blockoffset;
+
+			offset = y * bmapwidth + x;
+			blockoffset = blockmaplump + offset + 4;
+
+
+			// check that block offset is in bounds
+			if(blockoffset >= maxoffs)
+			{
+				Printf(PRINT_HIGH, "P_VerifyBlockMap: block offset overflow\n");
+				return false;
+			}
+
+			offset = *blockoffset;         
+
+			// check that list offset is in bounds
+			if(offset < 4 || offset >= count)
+			{
+				Printf(PRINT_HIGH, "P_VerifyBlockMap: list offset overflow\n");
+				return false;
+			}
+
+			list   = blockmaplump + offset;
+
+			// scan forward for a -1 terminator before maxoffs
+			for(tmplist = list; ; tmplist++)
+			{
+				// we have overflowed the lump?
+				if(tmplist >= maxoffs)
+				{
+					Printf(PRINT_HIGH, "P_VerifyBlockMap: open blocklist\n");
+					return false;
+				}
+				if(*tmplist == -1) // found -1
+					break;
+			}
+
+			// scan the list for out-of-range linedef indicies in list
+			for(tmplist = list; *tmplist != -1; tmplist++)
+			{
+				if(*tmplist < 0 || *tmplist >= numlines)
+				{
+					Printf(PRINT_HIGH, "P_VerifyBlockMap: index >= numlines\n");
+					return false;
+				}
+			}
+		}
+	}
+
+	return true;
+}
+
 //
 // P_LoadBlockMap
 //
@@ -2768,6 +2841,13 @@ void P_LoadBlockMap (MapData * map)
 			blockmaplump[i] = t == -1 ? (DWORD)0xffffffff : (DWORD) t & 0xffff;
 		}
 		delete[] data;
+
+		if (!P_VerifyBlockMap(count))
+		{
+			DPrintf ("Generating BLOCKMAP\n");
+			P_CreateBlockMap();
+		}
+
 	}
 
 	bmaporgx = blockmaplump[0]<<FRACBITS;

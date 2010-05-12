@@ -803,6 +803,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomMissile)
 // An even more customizable hitscan attack
 //
 //==========================================================================
+enum CBA_Flags
+{
+	CBAF_AIMFACING = 1,
+	CBAF_NORANDOM = 2,
+};
+
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomBulletAttack)
 {
 	ACTION_PARAM_START(7);
@@ -812,7 +818,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomBulletAttack)
 	ACTION_PARAM_INT(DamagePerBullet, 3);
 	ACTION_PARAM_CLASS(pufftype, 4);
 	ACTION_PARAM_FIXED(Range, 5);
-	ACTION_PARAM_BOOL(AimFacing, 6);
+	ACTION_PARAM_INT(Flags, 6);
 
 	if(Range==0) Range=MISSILERANGE;
 
@@ -820,9 +826,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomBulletAttack)
 	int bangle;
 	int bslope;
 
-	if (self->target || AimFacing)
+	if (self->target || (Flags & CBAF_AIMFACING))
 	{
-		if (!AimFacing) A_FaceTarget (self);
+		if (!(Flags & CBAF_AIMFACING)) A_FaceTarget (self);
 		bangle = self->angle;
 
 		if (!pufftype) pufftype = PClass::FindClass(NAME_BulletPuff);
@@ -834,7 +840,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomBulletAttack)
 		{
 			int angle = bangle + pr_cabullet.Random2() * (Spread_XY / 255);
 			int slope = bslope + pr_cabullet.Random2() * (Spread_Z / 255);
-			int damage = ((pr_cabullet()%3)+1) * DamagePerBullet;
+			int damage = DamagePerBullet;
+
+			if (!(Flags & CBAF_NORANDOM))
+				damage *= ((pr_cabullet()%3)+1);
+
 			P_LineAttack(self, angle, Range, slope, damage, NAME_None, pufftype);
 		}
     }
@@ -948,6 +958,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfNoAmmo)
 // An even more customizable hitscan attack
 //
 //==========================================================================
+enum FB_Flags
+{
+	FBF_USEAMMO = 1,
+	FBF_NORANDOM = 2,
+};
+
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireBullets)
 {
 	ACTION_PARAM_START(7);
@@ -956,7 +972,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireBullets)
 	ACTION_PARAM_INT(NumberOfBullets, 2);
 	ACTION_PARAM_INT(DamagePerBullet, 3);
 	ACTION_PARAM_CLASS(PuffType, 4);
-	ACTION_PARAM_BOOL(UseAmmo, 5);
+	ACTION_PARAM_INT(Flags, 5);
 	ACTION_PARAM_FIXED(Range, 6);
 
 	if (!self->player) return;
@@ -968,7 +984,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireBullets)
 	int bangle;
 	int bslope;
 
-	if (UseAmmo && weapon)
+	if ((Flags & FBF_USEAMMO) && weapon)
 	{
 		if (!weapon->DepleteAmmo(weapon->bAltFire, true)) return;	// out of ammo
 	}
@@ -986,7 +1002,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireBullets)
 
 	if ((NumberOfBullets==1 && !player->refire) || NumberOfBullets==0)
 	{
-		int damage = ((pr_cwbullet()%3)+1)*DamagePerBullet;
+		int damage = DamagePerBullet;
+
+		if (!(Flags & FBF_NORANDOM))
+			damage *= ((pr_cwbullet()%3)+1);
+
 		P_LineAttack(self, bangle, Range, bslope, damage, NAME_None, PuffType);
 	}
 	else 
@@ -996,7 +1016,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireBullets)
 		{
 			int angle = bangle + pr_cwbullet.Random2() * (Spread_XY / 255);
 			int slope = bslope + pr_cwbullet.Random2() * (Spread_Z / 255);
-			int damage = ((pr_cwbullet()%3)+1) * DamagePerBullet;
+			int damage = DamagePerBullet;
+
+			if (!(Flags & FBF_NORANDOM))
+				damage *= ((pr_cwbullet()%3)+1);
+
 			P_LineAttack(self, angle, Range, slope, damage, NAME_None, PuffType);
 		}
 	}

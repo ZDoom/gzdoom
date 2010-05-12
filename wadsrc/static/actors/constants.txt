@@ -5,6 +5,14 @@ const int CMF_AIMDIRECTION = 2;
 const int CMF_TRACKOWNER = 4;
 const int CMF_CHECKTARGETDEAD = 8;
 
+// Flags for A_CustomBulletAttack
+const int CBAF_AIMFACING = 1;
+const int CBAF_NORANDOM = 2;
+
+// Flags for A_FireBullets
+const int FBF_USEAMMO = 1;
+const int FBF_NORANDOM = 2;
+
 // Flags for A_SpawnItemEx
 const int SXF_TRANSFERTRANSLATION=1;
 const int SXF_ABSOLUTEPOSITION=2;

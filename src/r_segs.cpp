@@ -53,6 +53,7 @@
 
 #define WALLYREPEAT 8
 
+
 //CVAR (Int, ty, 8, 0)
 //CVAR (Int, tx, 8, 0)
 
@@ -1453,24 +1454,33 @@ void R_NewWall (bool needlights)
 	}
 }
 
-CVAR(Bool, r_smoothlighting, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Int, r_fakecontrast, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	if (self < 0) self = 1;
+	else if (self > 2) self = 2;
+}
 
-int side_t::GetLightLevel (bool foggy, int baselight) const
+int side_t::GetLightLevel (bool foggy, int baselight, int *pfakecontrast) const
 {
 	if (Flags & WALLF_ABSLIGHTING) 
 	{
 		baselight = (BYTE)Light;
 	}
 
+	if (pfakecontrast != NULL)
+	{
+		*pfakecontrast = 0;
+	}
 
 	if (!foggy) // Don't do relative lighting in foggy sectors
 	{
-		if (!(Flags & WALLF_NOFAKECONTRAST))
+		if (!(Flags & WALLF_NOFAKECONTRAST) && r_fakecontrast != 0)
 		{
-			if (((level.flags2 & LEVEL2_SMOOTHLIGHTING) || (Flags & WALLF_SMOOTHLIGHTING) || r_smoothlighting) &&
+			int rel;
+			if (((level.flags2 & LEVEL2_SMOOTHLIGHTING) || (Flags & WALLF_SMOOTHLIGHTING) || r_fakecontrast == 2) &&
 				linedef->dx != 0)
 			{
-				baselight += int // OMG LEE KILLOUGH LIVES! :/
+				rel = int // OMG LEE KILLOUGH LIVES! :/
 					(
 						(float(level.WallHorizLight)
 						+abs(atan(float(linedef->dy)/float(linedef->dx))/float(1.57079))
@@ -1479,8 +1489,16 @@ int side_t::GetLightLevel (bool foggy, int baselight) const
 			}
 			else
 			{
-				baselight += linedef->dx==0? level.WallVertLight : 
-							 linedef->dy==0? level.WallHorizLight : 0;
+				rel = linedef->dx==0? level.WallVertLight : 
+					  linedef->dy==0? level.WallHorizLight : 0;
+			}
+			if (pfakecontrast != NULL)
+			{
+				*pfakecontrast = rel;
+			}
+			else
+			{
+				baselight += rel;
 			}
 		}
 		if (!(Flags & WALLF_ABSLIGHTING))

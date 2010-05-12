@@ -69,7 +69,7 @@ DECLARE_ACTION(A_FreezeDeathChunks)
 DECLARE_ACTION(A_BossDeath)
 
 void A_Chase(AActor *self);
-void A_FaceTarget (AActor *actor);
+void A_FaceTarget (AActor *actor, angle_t max_turn = 0);
 
 bool A_RaiseMobj (AActor *, fixed_t speed);
 bool A_SinkMobj (AActor *, fixed_t speed);

@@ -61,7 +61,7 @@ ACTOR Actor native //: Thinker
 	action native A_XScream();
 	action native A_Look();
 	action native A_Chase(state melee = "*", state missile = "none", int flags = 0);
-	action native A_FaceTarget();
+	action native A_FaceTarget(float max_turn = 0);
 	action native A_PosAttack();
 	action native A_Scream();
 	action native A_SPosAttack();

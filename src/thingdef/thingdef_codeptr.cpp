@@ -470,30 +470,16 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfHealthLower)
 // State jump function
 //
 //==========================================================================
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfCloser)
+void DoJumpIfCloser(AActor *target, DECLARE_PARAMINFO)
 {
 	ACTION_PARAM_START(2);
 	ACTION_PARAM_FIXED(dist, 0);
 	ACTION_PARAM_STATE(jump, 1);
 
-	AActor *target;
-
-	if (!self->player)
-	{
-		target=self->target;
-	}
-	else
-	{
-		// Does the player aim at something that can be shot?
-		P_BulletSlope(self, &target);
-	}
-
 	ACTION_SET_RESULT(false);	// Jumps should never set the result for inventory state chains!
 
 	// No target - no jump
-	if (target==NULL) return;
-
-	if (P_AproxDistance(self->x-target->x, self->y-target->y) < dist &&
+	if (target != NULL && P_AproxDistance(self->x-target->x, self->y-target->y) < dist &&
 		( (self->z > target->z && self->z - (target->z + target->height) < dist) || 
 		  (self->z <=target->z && target->z - (self->z + self->height) < dist) 
 		)
@@ -501,6 +487,36 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfCloser)
 	{
 		ACTION_JUMP(jump);
 	}
+}
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfCloser)
+{
+	AActor *target;
+
+	if (!self->player)
+	{
+		target = self->target;
+	}
+	else
+	{
+		// Does the player aim at something that can be shot?
+		P_BulletSlope(self, &target);
+	}
+	DoJumpIfCloser(target, PUSH_PARAMINFO);
+}
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTracerCloser)
+{
+	// Is there really any reason to limit this to seeker missiles?
+	if (self->flags2 & MF2_SEEKERMISSILE)
+	{
+		DoJumpIfCloser(self->tracer, PUSH_PARAMINFO);
+	}
+}
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfMasterCloser)
+{
+	DoJumpIfCloser(self->master, PUSH_PARAMINFO);
 }
 
 //==========================================================================

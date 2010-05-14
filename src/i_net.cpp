@@ -269,8 +269,16 @@ void PacketGet (void)
 		if (err == WSAECONNRESET)
 		{ // The remote node aborted unexpectedly, so pretend it sent an exit packet
 
-			StartScreen->NetMessage ("The connection from %s was dropped.\n",
-				players[sendplayer[node]].userinfo.netname);
+			if (StartScreen != NULL)
+			{
+				StartScreen->NetMessage ("The connection from %s was dropped.\n",
+					players[sendplayer[node]].userinfo.netname);
+			}
+			else
+			{
+				Printf("The connection from %s was dropped.\n",
+					players[sendplayer[node]].userinfo.netname);
+			}
 
 			doomcom.data[0] = 0x80;	// NCMD_EXIT
 			c = 1;

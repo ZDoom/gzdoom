@@ -962,6 +962,7 @@ enum FB_Flags
 {
 	FBF_USEAMMO = 1,
 	FBF_NORANDOM = 2,
+	FBF_EXPLICITANGLE = 4,
 };
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireBullets)
@@ -1014,8 +1015,20 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireBullets)
 		if (NumberOfBullets == -1) NumberOfBullets = 1;
 		for (i=0 ; i<NumberOfBullets ; i++)
 		{
-			int angle = bangle + pr_cwbullet.Random2() * (Spread_XY / 255);
-			int slope = bslope + pr_cwbullet.Random2() * (Spread_Z / 255);
+			int angle = bangle;
+			int slope = bslope;
+
+			if (Flags & FBF_EXPLICITANGLE)
+			{
+				angle += Spread_XY;
+				slope += Spread_Z;
+			}
+			else
+			{
+				angle += pr_cwbullet.Random2() * (Spread_XY / 255);
+				slope += pr_cwbullet.Random2() * (Spread_Z / 255);
+			}
+
 			int damage = DamagePerBullet;
 
 			if (!(Flags & FBF_NORANDOM))

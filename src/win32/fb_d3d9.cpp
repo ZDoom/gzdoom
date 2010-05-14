@@ -242,6 +242,8 @@ D3DFB::D3DFB (int width, int height, bool fullscreen)
 {
 	D3DPRESENT_PARAMETERS d3dpp;
 
+	LastHR = 0;
+
 	D3DDevice = NULL;
 	VertexBuffer = NULL;
 	IndexBuffer = NULL;
@@ -323,18 +325,18 @@ D3DFB::D3DFB (int width, int height, bool fullscreen)
 
 	if (FAILED(hr = D3D->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, Window,
 		D3DCREATE_HARDWARE_VERTEXPROCESSING | D3DCREATE_FPU_PRESERVE, &d3dpp, &D3DDevice)) &&
-		hr != D3DERR_DEVICELOST)
+		(hr != D3DERR_DEVICELOST || D3DDevice == NULL))
 	{
 		if (FAILED(D3D->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, Window,
 			D3DCREATE_SOFTWARE_VERTEXPROCESSING | D3DCREATE_FPU_PRESERVE, &d3dpp, &D3DDevice)) &&
-			hr != D3DERR_DEVICELOST)
+			(hr != D3DERR_DEVICELOST || D3DDevice == NULL))
 		{
 			if (d3dpp.FullScreen_RefreshRateInHz != 0)
 			{
 				d3dpp.FullScreen_RefreshRateInHz = 0;
 				if (FAILED(hr = D3D->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, Window,
 					D3DCREATE_HARDWARE_VERTEXPROCESSING | D3DCREATE_FPU_PRESERVE, &d3dpp, &D3DDevice)) &&
-					hr != D3DERR_DEVICELOST)
+					(hr != D3DERR_DEVICELOST || D3DDevice == NULL))
 				{
 					if (FAILED(D3D->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, Window,
 						D3DCREATE_SOFTWARE_VERTEXPROCESSING | D3DCREATE_FPU_PRESERVE, &d3dpp, &D3DDevice)) &&
@@ -346,6 +348,7 @@ D3DFB::D3DFB (int width, int height, bool fullscreen)
 			}
 		}
 	}
+	LastHR = hr;
 	if (D3DDevice != NULL)
 	{
 		D3DADAPTER_IDENTIFIER9 adapter_id;
@@ -364,7 +367,7 @@ D3DFB::D3DFB (int width, int height, bool fullscreen)
 			{
 				DeviceCaps.LineCaps |= D3DLINECAPS_ANTIALIAS;
 			}
-			// ATI's drivers apparently also lie, so screw this cap.
+			// ATI's drivers apparently also lie, so screw this caps bit.
 		}
 		CreateResources();
 		SetInitialState();
@@ -1000,7 +1003,7 @@ bool D3DFB::IsValid ()
 
 HRESULT D3DFB::GetHR ()
 {
-	return 0;
+	return LastHR;
 }
 
 //==========================================================================

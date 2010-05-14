@@ -323,10 +323,12 @@ D3DFB::D3DFB (int width, int height, bool fullscreen)
 
 	HRESULT hr;
 
+	LOG("CreateDevice attempt 1 hwvp\n");
 	if (FAILED(hr = D3D->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, Window,
 		D3DCREATE_HARDWARE_VERTEXPROCESSING | D3DCREATE_FPU_PRESERVE, &d3dpp, &D3DDevice)) &&
 		(hr != D3DERR_DEVICELOST || D3DDevice == NULL))
 	{
+		LOG2("CreateDevice returned hr %08x dev %p; attempt 2 swvp\n", hr, D3DDevice);
 		if (FAILED(D3D->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, Window,
 			D3DCREATE_SOFTWARE_VERTEXPROCESSING | D3DCREATE_FPU_PRESERVE, &d3dpp, &D3DDevice)) &&
 			(hr != D3DERR_DEVICELOST || D3DDevice == NULL))
@@ -334,10 +336,12 @@ D3DFB::D3DFB (int width, int height, bool fullscreen)
 			if (d3dpp.FullScreen_RefreshRateInHz != 0)
 			{
 				d3dpp.FullScreen_RefreshRateInHz = 0;
+				LOG2("CreateDevice returned hr %08x dev %p; attempt 3 (hwvp, default Hz)\n", hr, D3DDevice);
 				if (FAILED(hr = D3D->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, Window,
 					D3DCREATE_HARDWARE_VERTEXPROCESSING | D3DCREATE_FPU_PRESERVE, &d3dpp, &D3DDevice)) &&
 					(hr != D3DERR_DEVICELOST || D3DDevice == NULL))
 				{
+					LOG2("CreateDevice returned hr %08x dev %p; attempt 4 (swvp, default Hz)\n", hr, D3DDevice);
 					if (FAILED(D3D->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, Window,
 						D3DCREATE_SOFTWARE_VERTEXPROCESSING | D3DCREATE_FPU_PRESERVE, &d3dpp, &D3DDevice)) &&
 						hr != D3DERR_DEVICELOST)
@@ -348,6 +352,7 @@ D3DFB::D3DFB (int width, int height, bool fullscreen)
 			}
 		}
 	}
+	LOG2("Final CreateDevice returned HR %08x and device %p\n", hr, D3DDevice);
 	LastHR = hr;
 	if (D3DDevice != NULL)
 	{

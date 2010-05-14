@@ -322,19 +322,23 @@ D3DFB::D3DFB (int width, int height, bool fullscreen)
 	HRESULT hr;
 
 	if (FAILED(hr = D3D->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, Window,
-		D3DCREATE_HARDWARE_VERTEXPROCESSING | D3DCREATE_FPU_PRESERVE, &d3dpp, &D3DDevice)))
+		D3DCREATE_HARDWARE_VERTEXPROCESSING | D3DCREATE_FPU_PRESERVE, &d3dpp, &D3DDevice)) &&
+		hr != D3DERR_DEVICELOST)
 	{
 		if (FAILED(D3D->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, Window,
-			D3DCREATE_SOFTWARE_VERTEXPROCESSING | D3DCREATE_FPU_PRESERVE, &d3dpp, &D3DDevice)))
+			D3DCREATE_SOFTWARE_VERTEXPROCESSING | D3DCREATE_FPU_PRESERVE, &d3dpp, &D3DDevice)) &&
+			hr != D3DERR_DEVICELOST)
 		{
 			if (d3dpp.FullScreen_RefreshRateInHz != 0)
 			{
 				d3dpp.FullScreen_RefreshRateInHz = 0;
 				if (FAILED(hr = D3D->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, Window,
-					D3DCREATE_HARDWARE_VERTEXPROCESSING | D3DCREATE_FPU_PRESERVE, &d3dpp, &D3DDevice)))
+					D3DCREATE_HARDWARE_VERTEXPROCESSING | D3DCREATE_FPU_PRESERVE, &d3dpp, &D3DDevice)) &&
+					hr != D3DERR_DEVICELOST)
 				{
 					if (FAILED(D3D->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, Window,
-						D3DCREATE_SOFTWARE_VERTEXPROCESSING | D3DCREATE_FPU_PRESERVE, &d3dpp, &D3DDevice)))
+						D3DCREATE_SOFTWARE_VERTEXPROCESSING | D3DCREATE_FPU_PRESERVE, &d3dpp, &D3DDevice)) &&
+						hr != D3DERR_DEVICELOST)
 					{
 						D3DDevice = NULL;
 					}
@@ -360,9 +364,7 @@ D3DFB::D3DFB (int width, int height, bool fullscreen)
 			{
 				DeviceCaps.LineCaps |= D3DLINECAPS_ANTIALIAS;
 			}
-			// I don't know about ATI's drivers. The only ATI device
-			// I have readily available to test with (a Mobility X300)
-			// really doesn't support them.
+			// ATI's drivers apparently also lie, so screw this cap.
 		}
 		CreateResources();
 		SetInitialState();

@@ -222,6 +222,17 @@ int FindMugShotStateIndex(FName state)
 
 FMugShot::FMugShot()
 {
+	Reset();
+}
+
+//===========================================================================
+//
+// FMugShot :: Reset
+//
+//===========================================================================
+
+void FMugShot::Reset()
+{
 	FaceHealth = -1;
 	bEvilGrin = false;
 	bNormal = true;

@@ -175,7 +175,7 @@ void ST_LoadCrosshair(bool alwaysload)
 //
 //---------------------------------------------------------------------------
 
-DBaseStatusBar::DBaseStatusBar (int reltop)
+DBaseStatusBar::DBaseStatusBar (int reltop, int hres, int vres)
 {
 	Centering = false;
 	FixedOrigin = false;
@@ -185,6 +185,8 @@ DBaseStatusBar::DBaseStatusBar (int reltop)
 	Displacement = 0;
 	CPlayer = NULL;
 	ShowLog = false;
+	HorizontalResolution = hres;
+	VirticalResolution = vres;
 
 	SetScaled (st_scale);
 }
@@ -216,18 +218,20 @@ void DBaseStatusBar::Destroy ()
 //---------------------------------------------------------------------------
 
 //[BL] Added force argument to have forcescaled mean forcescaled.
+// - Also, if the VirticalResolution is something other than the default (200)
+//   We should always obey the value of scale.
 void DBaseStatusBar::SetScaled (bool scale, bool force)
 {
-	Scaled = (RelTop != 0 || force) && (SCREENWIDTH != 320 && scale);
+	Scaled = (RelTop != 0 || force) && ((SCREENWIDTH != 320 || HorizontalResolution != 320) && scale);
 
 	if (!Scaled)
 	{
-		ST_X = (SCREENWIDTH - 320) / 2;
+		ST_X = (SCREENWIDTH - HorizontalResolution) / 2;
 		ST_Y = SCREENHEIGHT - RelTop;
 		::ST_Y = ST_Y;
 		if (RelTop > 0)
 		{
-			Displacement = ((ST_Y * 200 / SCREENHEIGHT) - (200 - RelTop))*FRACUNIT/RelTop;
+			Displacement = ((ST_Y * VirticalResolution / SCREENHEIGHT) - (VirticalResolution - RelTop))*FRACUNIT/RelTop;
 		}
 		else
 		{
@@ -237,14 +241,14 @@ void DBaseStatusBar::SetScaled (bool scale, bool force)
 	else
 	{
 		ST_X = 0;
-		ST_Y = 200 - RelTop;
+		ST_Y = VirticalResolution - RelTop;
 		if (CheckRatio(SCREENWIDTH, SCREENHEIGHT) != 4)
 		{ // Normal resolution
-			::ST_Y = Scale (ST_Y, SCREENHEIGHT, 200);
+			::ST_Y = Scale (ST_Y, SCREENHEIGHT, VirticalResolution);
 		}
 		else
 		{ // 5:4 resolution
-			::ST_Y = Scale(ST_Y - 100, SCREENHEIGHT*3, BaseRatioSizes[4][1]) + SCREENHEIGHT/2
+			::ST_Y = Scale(ST_Y - VirticalResolution/2, SCREENHEIGHT*3, Scale(VirticalResolution, BaseRatioSizes[4][1], 200)) + SCREENHEIGHT/2
 				+ (SCREENHEIGHT - SCREENHEIGHT * BaseRatioSizes[4][3] / 48) / 2;
 		}
 		Displacement = 0;
@@ -1000,7 +1004,7 @@ void DBaseStatusBar::RefreshBackground () const
 		if (x > 0)
 		{
 			y = x == ST_X ? ST_Y : ::ST_Y;
-			x2 = !(ratio & 3) || !Scaled ? ST_X+320 :
+			x2 = !(ratio & 3) || !Scaled ? ST_X+HorizontalResolution :
 				SCREENWIDTH - (SCREENWIDTH*(48-BaseRatioSizes[ratio][3])+48*2-1)/(48*2);
 			R_DrawBorder (0, y, x, SCREENHEIGHT);
 			R_DrawBorder (x2, y, SCREENWIDTH, SCREENHEIGHT);

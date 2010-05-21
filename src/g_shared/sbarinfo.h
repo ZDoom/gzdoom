@@ -98,6 +98,8 @@ struct SBarInfo
 	int height;
 	int gameType;
 	FMugShot MugShot;
+	int resW;
+	int resH;
 
 	int GetGameType() { return gameType; }
 	void ParseSBarInfo(int lump);

@@ -1175,6 +1175,10 @@ class CommandDrawMugShot : public SBarInfoCommand
 			GetCoordinates(sc, fullScreenOffsets, x, y);
 			sc.MustGetToken(';');
 		}
+		void Reset()
+		{
+			script->MugShot.Reset();
+		}
 
 	protected:
 		FString					defaultFace; //Deprecated

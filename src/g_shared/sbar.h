@@ -215,6 +215,7 @@ class FMugShot
 
 		FMugShot();
 		void Grin(bool grin=true) { bEvilGrin = grin; }
+		void Reset();
 		void Tick(player_t *player);
 		bool SetState(const char *state_name, bool wait_till_done=false, bool reset=false);
 		int UpdateState(player_t *player, StateFlags stateflags=STANDARD);
@@ -275,7 +276,7 @@ public:
 		ST_DEADFACE			= ST_GODFACE + 1
 	};
 
-	DBaseStatusBar (int reltop);
+	DBaseStatusBar (int reltop, int hres=320, int vres=200);
 	void Destroy ();
 
 	void SetScaled (bool scale, bool force=false);
@@ -338,6 +339,7 @@ public:
 
 	int ST_X, ST_Y;
 	int RelTop;
+	int HorizontalResolution, VirticalResolution;
 	bool Scaled;
 	bool Centering;
 	bool FixedOrigin;

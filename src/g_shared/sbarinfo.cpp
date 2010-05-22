@@ -1202,10 +1202,10 @@ public:
 				ry += 10;
 			if(hud_scale)
 			{
-				rx *= CleanXfac * 320.0/script->resW;
-				ry *= CleanYfac * 200.0/script->resH;
-				w *= CleanXfac * 320.0/script->resW;
-				h *= CleanYfac * 200.0/script->resH;
+				rx *= (int) (CleanXfac * 320.0/script->resW);
+				ry *= (int) (CleanYfac * 200.0/script->resH);
+				w *= (int) (CleanXfac * 320.0/script->resW);
+				h *= (int) (CleanYfac * 200.0/script->resH);
 			}
 			if(xright)
 				rx = SCREENWIDTH + rx;
@@ -1223,28 +1223,28 @@ public:
 				if(ry < 0)
 				{
 					if(rcy != 0)
-						rcy = hud_scale ? SCREENHEIGHT + (rcy*CleanYfac*200.0/script->resH) : SCREENHEIGHT + rcy;
+						rcy = hud_scale ? SCREENHEIGHT + (int) (rcy*CleanYfac*200.0/script->resH) : SCREENHEIGHT + rcy;
 					if(rcb != INT_MAX)
-						rcb = hud_scale ? SCREENHEIGHT + (rcb*CleanYfac*200.0/script->resH) : SCREENHEIGHT + rcb;
+						rcb = hud_scale ? SCREENHEIGHT + (int) (rcb*CleanYfac*200.0/script->resH) : SCREENHEIGHT + rcb;
 				}
 				else if(hud_scale)
 				{
-					rcy *= CleanYfac*200.0/script->resH;
+					rcy *= (int) (CleanYfac*200.0/script->resH);
 					if(rcb != INT_MAX)
-						rcb *= CleanYfac*200.0/script->resH;
+						rcb *= (int) (CleanYfac*200.0/script->resH);
 				}
 				if(rx < 0)
 				{
 					if(rcx != 0)
-						rcx = hud_scale ? SCREENWIDTH + (rcx*CleanXfac*320.0/script->resW) : SCREENWIDTH + rcx;
+						rcx = hud_scale ? SCREENWIDTH + (int) (rcx*CleanXfac*320.0/script->resW) : SCREENWIDTH + rcx;
 					if(rcr != INT_MAX)
-						rcr = hud_scale ? SCREENWIDTH + (rcr*CleanXfac*320.0/script->resW) : SCREENWIDTH + rcr;
+						rcr = hud_scale ? SCREENWIDTH + (int) (rcr*CleanXfac*320.0/script->resW) : SCREENWIDTH + rcr;
 				}
 				else if(hud_scale)
 				{
-					rcx *= CleanXfac*320.0/script->resW;
+					rcx *= (int) (CleanXfac*320.0/script->resW);
 					if(rcr != INT_MAX)
-						rcr *= CleanXfac*320.0/script->resW;
+						rcr *= (int) (CleanXfac*320.0/script->resW);
 				}
 			}
 
@@ -1381,10 +1381,10 @@ public:
 
 				if(hud_scale)
 				{
-					rx *= CleanXfac * 320.0/script->resW;
-					ry *= CleanYfac * 200.0/script->resH;
-					rw *= CleanXfac * 320.0/script->resW;
-					rh *= CleanYfac * 200.0/script->resH;
+					rx *= (int) (CleanXfac * 320.0/script->resW);
+					ry *= (int) (CleanYfac * 200.0/script->resH);
+					rw *= (int) (CleanXfac * 320.0/script->resW);
+					rh *= (int) (CleanYfac * 200.0/script->resH);
 				}
 				if(xright)
 					rx = SCREENWIDTH + rx;

@@ -1226,7 +1226,7 @@ void F_Drawer (void)
 			FTextureID picnum = TexMan.CheckForTexture (FinaleFlat, FTexture::TEX_Flat, FTextureManager::TEXMAN_Overridable);
 			if (picnum.isValid())
 			{
-				screen->FlatFill (0,0, SCREENWIDTH, SCREENHEIGHT, TexMan(picnum));
+				screen->FlatFill (0,0, SCREENWIDTH, SCREENHEIGHT, TexMan[picnum]);
 			}
 			else
 			{

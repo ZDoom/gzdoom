@@ -60,6 +60,7 @@
 #include "colormatcher.h"
 #include "v_palette.h"
 #include "p_enemy.h"
+#include "gstrings.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -5561,9 +5562,26 @@ bool AActor::IsSentient() const
 
 const char *AActor::GetTag(const char *def) const
 {
-	if (Tag != NAME_None) return Tag.GetChars();
-	else if (def) return def;
-	else return GetClass()->TypeName.GetChars();
+	if (Tag != NAME_None)
+	{
+		const char *tag = Tag.GetChars();
+		if (tag[0] == '$')
+		{
+			return GStrings(tag + 1);
+		}
+		else
+		{
+			return tag;
+		}
+	}
+	else if (def)
+	{
+		return def;
+	}
+	else
+	{
+		return GetClass()->TypeName.GetChars();
+	}
 }
 
 

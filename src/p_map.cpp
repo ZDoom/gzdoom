@@ -620,16 +620,17 @@ bool PIT_CheckLine (line_t *ld, const FBoundingBox &box, FCheckPosition &tm)
 		return false;
 	}
 
-		// MBF bouncers are treated as missiles here.
-		bool Projectile = (tm.thing->flags & MF_MISSILE || tm.thing->BounceFlags & BOUNCE_MBF);
-		// MBF considers that friendly monsters are not blocked by monster-blocking lines.
-		// This is added here as a compatibility option. Note that monsters that are dehacked
-		// into being friendly with the MBF flag automatically gain MF3_NOBLOCKMONST, so this
-		// just optionally generalizes the behavior to other friendly monsters.
-		bool NotBlocked = ((tm.thing->flags3 & MF3_NOBLOCKMONST)
-			|| ((i_compatflags & COMPATF_NOBLOCKFRIENDS) && (tm.thing->flags & MF_FRIENDLY)));
+	// MBF bouncers are treated as missiles here.
+	bool Projectile = (tm.thing->flags & MF_MISSILE || tm.thing->BounceFlags & BOUNCE_MBF);
+	// MBF considers that friendly monsters are not blocked by monster-blocking lines.
+	// This is added here as a compatibility option. Note that monsters that are dehacked
+	// into being friendly with the MBF flag automatically gain MF3_NOBLOCKMONST, so this
+	// just optionally generalizes the behavior to other friendly monsters.
+	bool NotBlocked = ((tm.thing->flags3 & MF3_NOBLOCKMONST)
+		|| ((i_compatflags & COMPATF_NOBLOCKFRIENDS) && (tm.thing->flags & MF_FRIENDLY)));
 
-		if (!(Projectile) || (ld->flags & (ML_BLOCKEVERYTHING|ML_BLOCKPROJECTILE)))	{
+	if (!(Projectile) || (ld->flags & (ML_BLOCKEVERYTHING|ML_BLOCKPROJECTILE)))
+	{
 		if (ld->flags & ML_RAILING)
 		{
 			rail = true;

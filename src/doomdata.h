@@ -139,7 +139,7 @@ enum ELineFlags
 	ML_ADDTRANS					= 0x00000400,	// additive translucency (can only be set internally)
 
 	// Extended flags
-	ML_MONSTERSCANACTIVATE		= 0x00002000,	// [RH] Monsters (as well as players) can active the line
+	ML_MONSTERSCANACTIVATE		= 0x00002000,	// [RH] Monsters (as well as players) can activate the line
 	ML_BLOCK_PLAYERS			= 0x00004000,
 	ML_BLOCKEVERYTHING			= 0x00008000,	// [RH] Line blocks everything
 	ML_ZONEBOUNDARY				= 0x00010000,

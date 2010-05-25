@@ -159,10 +159,13 @@ public:
 
 	void Delete (unsigned int index, int deletecount)
 	{
-		if (index + deletecount > Count) deletecount = Count - index;
+		if (index + deletecount > Count)
+		{
+			deletecount = Count - index;
+		}
 		if (deletecount > 0)
 		{
-			for(int i = 0; i < deletecount; i++)
+			for (int i = 0; i < deletecount; i++)
 			{
 				Array[index + i].~T();
 			}

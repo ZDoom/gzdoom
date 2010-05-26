@@ -59,16 +59,6 @@
 #include "p_acs.h"
 #include "gstrings.h"
 
-#define ADJUST_RELCENTER(x, y, outX, outY) \
-	if(x.RelCenter()) \
-		outX = *x + SCREENWIDTH/(hud_scale ? CleanXfac*2 : 2); \
-	else \
-		outX = *x; \
-	if(y.RelCenter()) \
-		outY = *y + SCREENHEIGHT/(hud_scale ? CleanYfac*2 : 2); \
-	else \
-		outY = *y;
-
 #define ARTIFLASH_OFFSET (statusBar->invBarOffset+6)
 enum
 {
@@ -910,6 +900,18 @@ void Popup::close()
 
 ////////////////////////////////////////////////////////////////////////////////
 
+inline void adjustRelCenter(const SBarInfoCoordinate &x, const SBarInfoCoordinate &y, int &outX, int &outY, const double &xScale, const double &yScale)
+{
+	if(x.RelCenter())
+		outX = *x + (int) (SCREENWIDTH/(hud_scale ? xScale*2 : 2));
+	else
+		outX = *x;
+	if(y.RelCenter())
+		outY = *y + (int) (SCREENHEIGHT/(hud_scale ? yScale*2 : 2));
+	else
+		outY = *y;
+}
+
 class DSBarInfo : public DBaseStatusBar
 {
 	DECLARE_CLASS(DSBarInfo, DBaseStatusBar)
@@ -1189,7 +1191,11 @@ public:
 		else
 		{
 			int rx, ry, rcx=0, rcy=0, rcr=INT_MAX, rcb=INT_MAX;
-			ADJUST_RELCENTER(x,y,rx,ry)
+
+			double xScale = !hud_scale ? 1.0 : (double) CleanXfac*320.0/(double) script->resW;//(double) SCREENWIDTH/(double) script->resW;
+			double yScale = !hud_scale ? 1.0 : (double) CleanYfac*200.0/(double) script->resH;//(double) SCREENHEIGHT/(double) script->resH;
+
+			adjustRelCenter(x, y, rx, ry, xScale, yScale);
 
 			// We can't use DTA_HUDRules since it forces a width and height.
 			// Translation: No high res.
@@ -1202,10 +1208,10 @@ public:
 				ry += 10;
 			if(hud_scale)
 			{
-				rx *= (int) (CleanXfac * 320.0/script->resW);
-				ry *= (int) (CleanYfac * 200.0/script->resH);
-				w *= (int) (CleanXfac * 320.0/script->resW);
-				h *= (int) (CleanYfac * 200.0/script->resH);
+				rx = (int) (rx*xScale);
+				ry = (int) (ry*yScale);
+				w = (int) (w*xScale);
+				h = (int) (h*yScale);
 			}
 			if(xright)
 				rx = SCREENWIDTH + rx;
@@ -1215,12 +1221,13 @@ public:
 			// Check for clipping
 			if(cx != 0 || cy != 0 || cr != 0 || cb != 0)
 			{
-				rcx = cx == 0 ? 0 : rx+(cx>>FRACBITS);
-				rcy = cy == 0 ? 0 : ry+(cy>>FRACBITS);
-				rcr = cr == 0 ? INT_MAX : rx+w-(cr>>FRACBITS);
-				rcb = cb == 0 ? INT_MAX : ry+h-(cb>>FRACBITS);
+				rcx = cx == 0 ? 0 : rx+(int) ((cx>>FRACBITS)*xScale);
+				rcy = cy == 0 ? 0 : ry+(int) ((cy>>FRACBITS)*yScale);
+				rcr = cr == 0 ? INT_MAX : rx+w-(int) ((cr>>FRACBITS)*xScale);
+				rcb = cb == 0 ? INT_MAX : ry+h-(int) ((cb>>FRACBITS)*yScale);
+
 				// Fix the clipping for fullscreenoffsets.
-				if(ry < 0)
+				/*if(ry < 0)
 				{
 					if(rcy != 0)
 						rcy = hud_scale ? SCREENHEIGHT + (int) (rcy*CleanYfac*200.0/script->resH) : SCREENHEIGHT + rcy;
@@ -1245,7 +1252,7 @@ public:
 					rcx *= (int) (CleanXfac*320.0/script->resW);
 					if(rcr != INT_MAX)
 						rcr *= (int) (CleanXfac*320.0/script->resW);
-				}
+				}*/
 			}
 
 			if(clearDontDraw)
@@ -1295,9 +1302,18 @@ public:
 		x += spacing;
 		int ax = *x;
 		int ay = *y;
+
+		double xScale = 1.0;
+		double yScale = 1.0;
+
 		if(fullScreenOffsets)
 		{
-			ADJUST_RELCENTER(x,y,ax,ay)
+			if(hud_scale)
+			{
+				xScale = (double) CleanXfac*320.0/(double) script->resW;//(double) SCREENWIDTH/(double) script->resW;
+				yScale = (double) CleanYfac*200.0/(double) script->resH;//(double) SCREENWIDTH/(double) script->resW;
+			}
+			adjustRelCenter(x, y, ax, ay, xScale, yScale);
 		}
 		while(*str != '\0')
 		{
@@ -1341,63 +1357,38 @@ public:
 			{
 				if(vid_fps && ax < 0 && ay >= 0)
 					ry += 10;
-			}
-			if(drawshadow)
-			{
-				int salpha = fixed_t(((double) alpha / (double) FRACUNIT) * ((double) HR_SHADOW / (double) FRACUNIT) * FRACUNIT);
-				if(!fullScreenOffsets)
-				{
-					screen->DrawTexture(character, rx+2, ry+2,
-						DTA_DestWidth, rw,
-						DTA_DestHeight, rh,
-						DTA_Alpha, salpha,
-						DTA_FillColor, 0,
-						TAG_DONE);
-				}
-				else
-				{
-					screen->DrawTexture(character, rx+2, ry+2,
-						DTA_DestWidth, rw,
-						DTA_DestHeight, rh,
-						DTA_Alpha, salpha,
-						DTA_HUDRules, HUD_Normal,
-						DTA_FillColor, 0,
-						TAG_DONE);
-				}
-			}
-			if(!fullScreenOffsets)
-			{
-				screen->DrawTexture(character, rx, ry,
-					DTA_DestWidth, rw,
-					DTA_DestHeight, rh,
-					DTA_Translation, font->GetColorTranslation(translation),
-					DTA_Alpha, alpha,
-					TAG_DONE);
-			}
-			else
-			{
+
 				bool xright = rx < 0;
 				bool ybot = ry < 0;
 
 				if(hud_scale)
 				{
-					rx *= (int) (CleanXfac * 320.0/script->resW);
-					ry *= (int) (CleanYfac * 200.0/script->resH);
-					rw *= (int) (CleanXfac * 320.0/script->resW);
-					rh *= (int) (CleanYfac * 200.0/script->resH);
+					rx = (int) (rx*xScale);
+					ry = (int) (ry*yScale);
+					rw = (int) (rw*xScale);
+					rh = (int) (rh*yScale);
 				}
 				if(xright)
 					rx = SCREENWIDTH + rx;
 				if(ybot)
 					ry = SCREENHEIGHT + ry;
-
-				screen->DrawTexture(character, rx, ry,
+			}
+			if(drawshadow)
+			{
+				int salpha = fixed_t(((double) alpha / (double) FRACUNIT) * ((double) HR_SHADOW / (double) FRACUNIT) * FRACUNIT);
+				screen->DrawTexture(character, rx+2, ry+2,
 					DTA_DestWidth, rw,
 					DTA_DestHeight, rh,
-					DTA_Translation, font->GetColorTranslation(translation),
-					DTA_Alpha, alpha,
+					DTA_Alpha, salpha,
+					DTA_FillColor, 0,
 					TAG_DONE);
 			}
+			screen->DrawTexture(character, rx, ry,
+				DTA_DestWidth, rw,
+				DTA_DestHeight, rh,
+				DTA_Translation, font->GetColorTranslation(translation),
+				DTA_Alpha, alpha,
+				TAG_DONE);
 			if(script->spacingCharacter == '\0')
 				ax += width + spacing - (character->LeftOffset+1);
 			else //width gets changed at the call to GetChar()

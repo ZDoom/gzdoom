@@ -3160,6 +3160,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_BossDeath)
 			EV_DoFloor (DFloor::floorLowerToLowest, NULL, 666, FRACUNIT, 0, 0, 0, false);
 			return;
 		
+		case LEVEL_SPECLOWERFLOORTOHIGHEST:
+			EV_DoFloor (DFloor::floorLowerToHighest, NULL, 666, FRACUNIT, 0, 0, 0, false);
+			return;
+		
 		case LEVEL_SPECOPENDOOR:
 			EV_DoDoor (DDoor::doorOpen, NULL, NULL, 666, 8*FRACUNIT, 0, 0, 0);
 			return;

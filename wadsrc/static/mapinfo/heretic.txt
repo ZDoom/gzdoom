@@ -193,7 +193,7 @@ map E1M8 lookup "HHUSTR_E1M8"
 	cluster = 1
 	nointermission
 	ironlichspecial
-	specialaction_lowerfloor
+	specialaction_lowerfloortohighest
 	music = "MUS_E1M8"
 }
 
@@ -279,7 +279,7 @@ map E2M8 lookup "HHUSTR_E2M8"
 	cluster = 2
 	nointermission
 	minotaurspecial
-	specialaction_lowerfloor
+	specialaction_lowerfloortohighest
 	specialaction_killmonsters
 	music = "MUS_E2M8"
 }
@@ -366,7 +366,7 @@ map E3M8 lookup "HHUSTR_E3M8"
 	cluster = 3
 	nointermission
 	dsparilspecial
-	specialaction_lowerfloor
+	specialaction_lowerfloortohighest
 	specialaction_killmonsters
 	music = "MUS_E1M9"
 }
@@ -453,7 +453,7 @@ map E4M8 lookup "HHUSTR_E4M8"
 	cluster = 4
 	nointermission
 	ironlichspecial
-	specialaction_lowerfloor
+	specialaction_lowerfloortohighest
 	specialaction_killmonsters
 	music = "MUS_E1M8"
 }
@@ -541,7 +541,7 @@ map E5M8 lookup "HHUSTR_E5M8"
 	nointermission
 	minotaurspecial
 	specialaction_killmonsters
-	specialaction_lowerfloor
+	specialaction_lowerfloortohighest
 	music = "MUS_E2M8"
 }
 

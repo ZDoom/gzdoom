@@ -1324,6 +1324,7 @@ MapFlagHandlers[] =
 	{ "specialaction_exitlevel",		MITYPE_SCFLAGS,	0, ~LEVEL_SPECACTIONSMASK },
 	{ "specialaction_opendoor",			MITYPE_SCFLAGS,	LEVEL_SPECOPENDOOR, ~LEVEL_SPECACTIONSMASK },
 	{ "specialaction_lowerfloor",		MITYPE_SCFLAGS,	LEVEL_SPECLOWERFLOOR, ~LEVEL_SPECACTIONSMASK },
+	{ "specialaction_lowerfloortohighest",MITYPE_SCFLAGS,LEVEL_SPECLOWERFLOORTOHIGHEST, ~LEVEL_SPECACTIONSMASK },
 	{ "specialaction_killmonsters",		MITYPE_SETFLAG,	LEVEL_SPECKILLMONSTERS, 0 },
 	{ "lightning",						MITYPE_SETFLAG,	LEVEL_STARTLIGHTNING, 0 },
 	{ "smoothlighting",					MITYPE_SETFLAG2,	LEVEL2_SMOOTHLIGHTING, 0 },

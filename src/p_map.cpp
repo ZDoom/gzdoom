@@ -1276,10 +1276,6 @@ bool P_CheckPosition (AActor *thing, fixed_t x, fixed_t y, FCheckPosition &tm)
 		return true;
 	
 	// Check things first, possibly picking things up.
-	// The bounding box is extended by MAXRADIUS
-	// because DActors are grouped into mapblocks
-	// based on their origin point, and can overlap
-	// into adjacent blocks by up to MAXRADIUS units.
 	thing->BlockingMobj = NULL;
 	thingblocker = NULL;
 	fakedblocker = NULL;
@@ -2943,7 +2939,7 @@ bool aim_t::AimTraverse3DFloors(const divline_t &trace, intercept_t * in)
 
 void aim_t::AimTraverse (fixed_t startx, fixed_t starty, fixed_t endx, fixed_t endy, AActor *target)
 {
-	FPathTraverse it(startx, starty, endx, endy, PT_ADDLINES|PT_ADDTHINGS);
+	FPathTraverse it(startx, starty, endx, endy, PT_ADDLINES|PT_ADDTHINGS|PT_COMPATIBLE);
 	intercept_t *in;
 
 	while ((in = it.Next()))
@@ -3426,9 +3422,12 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 				(t1->player->ReadyWeapon->WeaponFlags & WIF_AXEBLOOD));
 
 			// Hit a thing, so it could be either a puff or blood
-			hitx = t1->x + FixedMul (vx, trace.Distance);
-			hity = t1->y + FixedMul (vy, trace.Distance);
-			hitz = shootz + FixedMul (vz, trace.Distance);
+			fixed_t dist = trace.Distance;
+			// position a bit closer for puffs/blood if using compatibility mode.
+			if (i_compatflags & COMPATF_HITSCAN) dist -= 10*FRACUNIT;
+			hitx = t1->x + FixedMul (vx, dist);
+			hity = t1->y + FixedMul (vy, dist);
+			hitz = shootz + FixedMul (vz, dist);
 
 			// Spawn bullet puffs or blood spots, depending on target type.
 			if ((puffDefaults->flags3 & MF3_PUFFONACTORS) ||

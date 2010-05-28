@@ -3077,26 +3077,6 @@ static void P_GroupLines (bool buildmap)
 				}
 			}
 		}
-#if 0
-		int block;
-
-		// adjust bounding box to map blocks
-		block = (bbox.Top()-bmaporgy+MAXRADIUS)>>MAPBLOCKSHIFT;
-		block = block >= bmapheight ? bmapheight-1 : block;
-		//sector->blockbox.Top()=block;
-
-		block = (bbox.Bottom()-bmaporgy-MAXRADIUS)>>MAPBLOCKSHIFT;
-		block = block < 0 ? 0 : block;
-		//sector->blockbox.Bottom()=block;
-
-		block = (bbox.Right()-bmaporgx+MAXRADIUS)>>MAPBLOCKSHIFT;
-		block = block >= bmapwidth ? bmapwidth-1 : block;
-		//sector->blockbox.Right()=block;
-
-		block = (bbox.Left()-bmaporgx-MAXRADIUS)>>MAPBLOCKSHIFT;
-		block = block < 0 ? 0 : block;
-		//sector->blockbox.Left()=block;
-#endif
 	}
 	delete[] linesDoneInEachSector;
 	times[3].Unclock();

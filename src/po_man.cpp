@@ -1156,10 +1156,10 @@ static bool CheckMobjBlocking (seg_t *seg, FPolyObj *po)
 
 	ld = seg->linedef;
 
-	top = (ld->bbox[BOXTOP]-bmaporgy+MAXRADIUS)>>MAPBLOCKSHIFT;
-	bottom = (ld->bbox[BOXBOTTOM]-bmaporgy-MAXRADIUS)>>MAPBLOCKSHIFT;
-	left = (ld->bbox[BOXLEFT]-bmaporgx-MAXRADIUS)>>MAPBLOCKSHIFT;
-	right = (ld->bbox[BOXRIGHT]-bmaporgx+MAXRADIUS)>>MAPBLOCKSHIFT;
+	top = (ld->bbox[BOXTOP]-bmaporgy) >> MAPBLOCKSHIFT;
+	bottom = (ld->bbox[BOXBOTTOM]-bmaporgy) >> MAPBLOCKSHIFT;
+	left = (ld->bbox[BOXLEFT]-bmaporgx) >> MAPBLOCKSHIFT;
+	right = (ld->bbox[BOXRIGHT]-bmaporgx) >> MAPBLOCKSHIFT;
 
 	blocked = false;
 	checker.Clear();

@@ -825,7 +825,7 @@ void FBlockThingsIterator::SwitchBlock(int x, int y)
 //
 //===========================================================================
 
-AActor *FBlockThingsIterator::Next()
+AActor *FBlockThingsIterator::Next(bool centeronly)
 {
 	for (;;)
 	{
@@ -842,37 +842,55 @@ AActor *FBlockThingsIterator::Next()
 			{ // This actor doesn't span blocks, so we know it can only ever be checked once.
 				return me;
 			}
-			size_t hash = ((size_t)me >> 3) % countof(Buckets);
-			for (i = Buckets[hash]; i >= 0; )
+			if (centeronly)
 			{
-				entry = GetHashEntry(i);
-				if (entry->Actor == me)
-				{ // I've already been checked. Skip to the next actor.
-					break;
+				// Block boundaries for compatibility mode
+				fixed_t blockleft = (curx << MAPBLOCKSHIFT) + bmaporgx;
+				fixed_t blockright = blockleft + MAPBLOCKSIZE;
+				fixed_t blockbottom = (cury << MAPBLOCKSHIFT) + bmaporgy;
+				fixed_t blocktop = blockbottom + MAPBLOCKSIZE;
+
+				// only return actors with the center in this block
+				if (me->x >= blockleft && me->x < blockright &&
+					me->y >= blockbottom && me->y < blocktop)
+				{
+					return me;
 				}
-				i = entry->Next;
 			}
-			if (i < 0)
-			{ // Add me to the hash table and return me.
-				if (NumFixedHash < (int)countof(FixedHash))
+			else
+			{
+				size_t hash = ((size_t)me >> 3) % countof(Buckets);
+				for (i = Buckets[hash]; i >= 0; )
 				{
-					entry = &FixedHash[NumFixedHash];
-					entry->Next = Buckets[hash];
-					Buckets[hash] = NumFixedHash++;
-				}
-				else
-				{
-					if (DynHash.Size() == 0)
-					{
-						DynHash.Grow(50);
+					entry = GetHashEntry(i);
+					if (entry->Actor == me)
+					{ // I've already been checked. Skip to the next actor.
+						break;
 					}
-					i = DynHash.Reserve(1);
-					entry = &DynHash[i];
-					entry->Next = Buckets[hash];
-					Buckets[hash] = i + countof(FixedHash);
+					i = entry->Next;
 				}
-				entry->Actor = me;
-				return me;
+				if (i < 0)
+				{ // Add me to the hash table and return me.
+					if (NumFixedHash < (int)countof(FixedHash))
+					{
+						entry = &FixedHash[NumFixedHash];
+						entry->Next = Buckets[hash];
+						Buckets[hash] = NumFixedHash++;
+					}
+					else
+					{
+						if (DynHash.Size() == 0)
+						{
+							DynHash.Grow(50);
+						}
+						i = DynHash.Reserve(1);
+						entry = &DynHash[i];
+						entry->Next = Buckets[hash];
+						Buckets[hash] = i + countof(FixedHash);
+					}
+					entry->Actor = me;
+					return me;
+				}
 			}
 		}
 
@@ -959,19 +977,19 @@ void FPathTraverse::AddLineIntercepts(int bx, int by)
 //
 //===========================================================================
 
-void FPathTraverse::AddThingIntercepts (int bx, int by, FBlockThingsIterator &it)
+void FPathTraverse::AddThingIntercepts (int bx, int by, FBlockThingsIterator &it, bool compatible)
 {
 	AActor *thing;
 
 	it.SwitchBlock(bx, by);
-	while ((thing = it.Next()))
+	while ((thing = it.Next(compatible)))
 	{
 		int numfronts = 0;
 		divline_t line;
 		int i;
 
 
-		if (!(i_compatflags & COMPATF_HITSCAN))
+		if (!compatible)
 		{
 			// [RH] Don't check a corner to corner crossection for hit.
 			// Instead, check against the actual bounding box (but not if compatibility optioned.)
@@ -1251,6 +1269,8 @@ FPathTraverse::FPathTraverse (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, in
 	// from skipping the break statement.
 	mapx = xt1;
 	mapy = yt1;
+
+	bool compatible = (flags & PT_COMPATIBLE) && (i_compatflags & COMPATF_HITSCAN);
 		
 	// we want to use one list of checked actors for the entire operation
 	FBlockThingsIterator btit;
@@ -1263,7 +1283,7 @@ FPathTraverse::FPathTraverse (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, in
 		
 		if (flags & PT_ADDTHINGS)
 		{
-			AddThingIntercepts(mapx, mapy, btit);
+			AddThingIntercepts(mapx, mapy, btit, compatible);
 		}
 				
 		if (mapx == xt2 && mapy == yt2)
@@ -1293,21 +1313,28 @@ FPathTraverse::FPathTraverse (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, in
 			// being entered need to be checked (which will happen when this loop
 			// continues), but the other two blocks adjacent to the corner also need to
 			// be checked.
-			if (flags & PT_ADDLINES)
+			if (!compatible)
 			{
-				AddLineIntercepts(mapx + mapxstep, mapy);
-				AddLineIntercepts(mapx, mapy + mapystep);
+				if (flags & PT_ADDLINES)
+				{
+					AddLineIntercepts(mapx + mapxstep, mapy);
+					AddLineIntercepts(mapx, mapy + mapystep);
+				}
+				
+				if (flags & PT_ADDTHINGS)
+				{
+					AddThingIntercepts(mapx + mapxstep, mapy, btit, false);
+					AddThingIntercepts(mapx, mapy + mapystep, btit, false);
+				}
+				xintercept += xstep;
+				yintercept += ystep;
+				mapx += mapxstep;
+				mapy += mapystep;
 			}
-			
-			if (flags & PT_ADDTHINGS)
+			else
 			{
-				AddThingIntercepts(mapx + mapxstep, mapy, btit);
-				AddThingIntercepts(mapx, mapy + mapystep, btit);
+				count = 100; //	Doom originally did not handle this case so do the same in compatibility mode.
 			}
-			xintercept += xstep;
-			yintercept += ystep;
-			mapx += mapxstep;
-			mapy += mapystep;
 			break;
 		}
 	}

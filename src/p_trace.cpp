@@ -74,7 +74,7 @@ bool Trace (fixed_t x, fixed_t y, fixed_t z, sector_t *sector,
 	int ptflags;
 	FTraceInfo inf;
 
-	ptflags = actorMask ? PT_ADDLINES|PT_ADDTHINGS : PT_ADDLINES;
+	ptflags = actorMask ? PT_ADDLINES|PT_ADDTHINGS|PT_COMPATIBLE : PT_ADDLINES;
 
 	inf.StartX = x;
 	inf.StartY = y;

@@ -970,80 +970,135 @@ void FPathTraverse::AddThingIntercepts (int bx, int by, FBlockThingsIterator &it
 		divline_t line;
 		int i;
 
-		// [RH] Don't check a corner to corner crossection for hit.
-		// Instead, check against the actual bounding box.
 
-		// There's probably a smarter way to determine which two sides
-		// of the thing face the trace than by trying all four sides...
-		for (i = 0; i < 4; ++i)
+		if (!(i_compatflags & COMPATF_HITSCAN))
 		{
-			switch (i)
+			// [RH] Don't check a corner to corner crossection for hit.
+			// Instead, check against the actual bounding box (but not if compatibility optioned.)
+
+			// There's probably a smarter way to determine which two sides
+			// of the thing face the trace than by trying all four sides...
+			for (i = 0; i < 4; ++i)
 			{
-			case 0:		// Top edge
-				line.x = thing->x + thing->radius;
-				line.y = thing->y + thing->radius;
-				line.dx = -thing->radius * 2;
-				line.dy = 0;
-				break;
-
-			case 1:		// Right edge
-				line.x = thing->x + thing->radius;
-				line.y = thing->y - thing->radius;
-				line.dx = 0;
-				line.dy = thing->radius * 2;
-				break;
-
-			case 2:		// Bottom edge
-				line.x = thing->x - thing->radius;
-				line.y = thing->y - thing->radius;
-				line.dx = thing->radius * 2;
-				line.dy = 0;
-				break;
-
-			case 3:		// Left edge
-				line.x = thing->x - thing->radius;
-				line.y = thing->y + thing->radius;
-				line.dx = 0;
-				line.dy = thing->radius * -2;
-				break;
-			}
-			// Check if this side is facing the trace origin
-			if (P_PointOnDivlineSide (trace.x, trace.y, &line) == 0)
-			{
-				numfronts++;
-
-				// If it is, see if the trace crosses it
-				if (P_PointOnDivlineSide (line.x, line.y, &trace) !=
-					P_PointOnDivlineSide (line.x + line.dx, line.y + line.dy, &trace))
+				switch (i)
 				{
-					// It's a hit
-					fixed_t frac = P_InterceptVector (&trace, &line);
-					if (frac < 0)
-					{ // behind source
+				case 0:		// Top edge
+					line.x = thing->x + thing->radius;
+					line.y = thing->y + thing->radius;
+					line.dx = -thing->radius * 2;
+					line.dy = 0;
+					break;
+
+				case 1:		// Right edge
+					line.x = thing->x + thing->radius;
+					line.y = thing->y - thing->radius;
+					line.dx = 0;
+					line.dy = thing->radius * 2;
+					break;
+
+				case 2:		// Bottom edge
+					line.x = thing->x - thing->radius;
+					line.y = thing->y - thing->radius;
+					line.dx = thing->radius * 2;
+					line.dy = 0;
+					break;
+
+				case 3:		// Left edge
+					line.x = thing->x - thing->radius;
+					line.y = thing->y + thing->radius;
+					line.dx = 0;
+					line.dy = thing->radius * -2;
+					break;
+				}
+				// Check if this side is facing the trace origin
+				if (P_PointOnDivlineSide (trace.x, trace.y, &line) == 0)
+				{
+					numfronts++;
+
+					// If it is, see if the trace crosses it
+					if (P_PointOnDivlineSide (line.x, line.y, &trace) !=
+						P_PointOnDivlineSide (line.x + line.dx, line.y + line.dy, &trace))
+					{
+						// It's a hit
+						fixed_t frac = P_InterceptVector (&trace, &line);
+						if (frac < 0)
+						{ // behind source
+							continue;
+						}
+
+						intercept_t newintercept;
+						newintercept.frac = frac;
+						newintercept.isaline = false;
+						newintercept.done = false;
+						newintercept.d.thing = thing;
+						intercepts.Push (newintercept);
 						continue;
 					}
+				}
+			}
 
+			// If none of the sides was facing the trace, then the trace
+			// must have started inside the box, so add it as an intercept.
+			if (numfronts == 0)
+			{
+				intercept_t newintercept;
+				newintercept.frac = 0;
+				newintercept.isaline = false;
+				newintercept.done = false;
+				newintercept.d.thing = thing;
+				intercepts.Push (newintercept);
+			}
+		}
+		else
+		{
+			// Old code for compatibility purposes
+			fixed_t 		x1, y1, x2, y2;
+			int 			s1, s2;
+			divline_t		dl;
+			fixed_t 		frac;
+				
+			bool tracepositive = (trace.dx ^ trace.dy)>0;
+						
+			// check a corner to corner crossection for hit
+			if (tracepositive)
+			{
+				x1 = thing->x - thing->radius;
+				y1 = thing->y + thing->radius;
+						
+				x2 = thing->x + thing->radius;
+				y2 = thing->y - thing->radius;					
+			}
+			else
+			{
+				x1 = thing->x - thing->radius;
+				y1 = thing->y - thing->radius;
+						
+				x2 = thing->x + thing->radius;
+				y2 = thing->y + thing->radius;					
+			}
+			
+			s1 = P_PointOnDivlineSide (x1, y1, &trace);
+			s2 = P_PointOnDivlineSide (x2, y2, &trace);
+
+			if (s1 != s2)
+			{
+				dl.x = x1;
+				dl.y = y1;
+				dl.dx = x2-x1;
+				dl.dy = y2-y1;
+				
+				frac = P_InterceptVector (&trace, &dl);
+
+				if (frac >= 0)
+				{
 					intercept_t newintercept;
 					newintercept.frac = frac;
 					newintercept.isaline = false;
 					newintercept.done = false;
 					newintercept.d.thing = thing;
 					intercepts.Push (newintercept);
-					continue;
 				}
 			}
-		}
-
-		// If none of the sides was facing the trace, then the trace
-		// must have started inside the box, so add it as an intercept.
-		if (numfronts == 0)
-		{
-			intercept_t newintercept;
-			newintercept.frac = 0;
-			newintercept.isaline = false;
-			newintercept.done = false;
-			newintercept.d.thing = thing;
-			intercepts.Push (newintercept);
 		}
 	}
 }

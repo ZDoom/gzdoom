@@ -325,6 +325,7 @@ enum
 	COMPATF_CORPSEGIBS		= 1 << 25,	// Crushed monsters are turned into gibs, rather than replaced by gibs.
 	COMPATF_NOBLOCKFRIENDS	= 1 << 26,	// Friendly monsters aren't blocked by monster-blocking lines.
 	COMPATF_SPRITESORT		= 1 << 27,	// Invert sprite sorting order for sprites of equal distance
+	COMPATF_HITSCAN			= 1 << 28,	// Hitscans use original blockmap anf hit check code.
 };
 
 // Emulate old bugs for select maps. These are not exposed by a cvar

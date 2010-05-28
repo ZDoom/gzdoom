@@ -2183,48 +2183,53 @@ void FSlide::HitSlideLine (line_t* ld)
 	}																//   ^
 	else															//   |
 	{																// phares
-#if 0
-		fixed_t newlen;
-	
-		if (deltaangle > ANG180)
-			deltaangle += ANG180;
-		//	I_Error ("SlideLine: ang>ANG180");
-
-		lineangle >>= ANGLETOFINESHIFT;
-		deltaangle >>= ANGLETOFINESHIFT;
-
-		newlen = FixedMul (movelen, finecosine[deltaangle]);
-
-		tmxmove = FixedMul (newlen, finecosine[lineangle]);
-		tmymove = FixedMul (newlen, finesine[lineangle]);
-#else
-		divline_t dll, dlv;
-		fixed_t inter1, inter2, inter3;
-
-		P_MakeDivline (ld, &dll);
-
-		dlv.x = slidemo->x;
-		dlv.y = slidemo->y;
-		dlv.dx = dll.dy;
-		dlv.dy = -dll.dx;
-
-		inter1 = P_InterceptVector(&dll, &dlv);
-
-		dlv.dx = tmxmove;
-		dlv.dy = tmymove;
-		inter2 = P_InterceptVector (&dll, &dlv);
-		inter3 = P_InterceptVector (&dlv, &dll);
-
-		if (inter3 != 0)
+		// Doom's original algorithm here does not work well due to imprecisions of the sine table.
+		// However, keep it active if the wallrunning compatibility flag is on
+		if (i_compatflags & COMPATF_WALLRUN)
 		{
-			tmxmove = Scale (inter2-inter1, dll.dx, inter3);
-			tmymove = Scale (inter2-inter1, dll.dy, inter3);
+			fixed_t newlen;
+		
+			if (deltaangle > ANG180)
+				deltaangle += ANG180;
+			//	I_Error ("SlideLine: ang>ANG180");
+
+			lineangle >>= ANGLETOFINESHIFT;
+			deltaangle >>= ANGLETOFINESHIFT;
+
+			newlen = FixedMul (movelen, finecosine[deltaangle]);
+
+			tmxmove = FixedMul (newlen, finecosine[lineangle]);
+			tmymove = FixedMul (newlen, finesine[lineangle]);
 		}
 		else
 		{
-			tmxmove = tmymove = 0;
+			divline_t dll, dlv;
+			fixed_t inter1, inter2, inter3;
+
+			P_MakeDivline (ld, &dll);
+
+			dlv.x = slidemo->x;
+			dlv.y = slidemo->y;
+			dlv.dx = dll.dy;
+			dlv.dy = -dll.dx;
+
+			inter1 = P_InterceptVector(&dll, &dlv);
+
+			dlv.dx = tmxmove;
+			dlv.dy = tmymove;
+			inter2 = P_InterceptVector (&dll, &dlv);
+			inter3 = P_InterceptVector (&dlv, &dll);
+
+			if (inter3 != 0)
+			{
+				tmxmove = Scale (inter2-inter1, dll.dx, inter3);
+				tmymove = Scale (inter2-inter1, dll.dy, inter3);
+			}
+			else
+			{
+				tmxmove = tmymove = 0;
+			}
 		}
-#endif
 	}																// phares
 }
 

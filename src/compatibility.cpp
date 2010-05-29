@@ -117,6 +117,7 @@ static FCompatOption Options[] =
 	{ "noblockfriends",			COMPATF_NOBLOCKFRIENDS, 0 },
 	{ "spritesort",				COMPATF_SPRITESORT, 0 },
 	{ "hitscan",				COMPATF_HITSCAN, 0 },
+	{ "lightlevel",				COMPATF_LIGHT, 0 },
 	{ NULL, 0, 0 }
 };
 
@@ -255,10 +256,12 @@ void CheckCompatibility(MapData *map)
 	FMD5Holder md5;
 	FCompatValues *flags;
 
-	// When playing Doom IWAD levels force COMPAT_SHORTTEX.
+	// When playing Doom IWAD levels force COMPAT_SHORTTEX and COMPATF_LIGHT.
+	// I'm not sure if the IWAD maps actually need COMPATF_LIGHT but it certainly does not hurt.
+	// TNT's MAP31 also needs COMPATF_STAIRINDEX but that only gets activated for TNT.WAD.
 	if (Wads.GetLumpFile(map->lumpnum) == 1 && (gameinfo.flags & GI_COMPATSHORTTEX) && !(level.flags & LEVEL_HEXENFORMAT))
 	{
-		ii_compatflags = COMPATF_SHORTTEX;
+		ii_compatflags = COMPATF_SHORTTEX|COMPATF_LIGHT;
 		if (gameinfo.flags & GI_COMPATSTAIRS) ii_compatflags |= COMPATF_STAIRINDEX;
 		ib_compatflags = 0;
 		ii_compatparams = -1;

@@ -1400,6 +1400,7 @@ MapFlagHandlers[] =
 	{ "compat_corpsegibs",				MITYPE_COMPATFLAG, COMPATF_CORPSEGIBS},
 	{ "compat_noblockfriends",			MITYPE_COMPATFLAG, COMPATF_NOBLOCKFRIENDS},
 	{ "compat_spritesort",				MITYPE_COMPATFLAG, COMPATF_SPRITESORT},
+	{ "compat_light",					MITYPE_COMPATFLAG, COMPATF_LIGHT},
 	{ "cd_start_track",					MITYPE_EATNEXT,	0, 0 },
 	{ "cd_end1_track",					MITYPE_EATNEXT,	0, 0 },
 	{ "cd_end2_track",					MITYPE_EATNEXT,	0, 0 },

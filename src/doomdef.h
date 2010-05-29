@@ -326,6 +326,7 @@ enum
 	COMPATF_NOBLOCKFRIENDS	= 1 << 26,	// Friendly monsters aren't blocked by monster-blocking lines.
 	COMPATF_SPRITESORT		= 1 << 27,	// Invert sprite sorting order for sprites of equal distance
 	COMPATF_HITSCAN			= 1 << 28,	// Hitscans use original blockmap anf hit check code.
+	COMPATF_LIGHT			= 1 << 29,	// Find neighboring light level like Doom
 };
 
 // Emulate old bugs for select maps. These are not exposed by a cvar

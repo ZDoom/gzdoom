@@ -1097,10 +1097,10 @@ static menuitem_t CompatibilityItems[] = {
 	{ redtext,	" ",					{NULL},			{0.0}, {0.0}, {0.0}, {NULL} },
 	{ bitflag,	"Find shortest textures like Doom",			{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_SHORTTEX} },
 	{ bitflag,	"Use buggier stair building",				{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_STAIRINDEX} },
+	{ bitflag,	"Find neighboring light like Doom",			{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_LIGHT} },
 	{ bitflag,	"Limit Pain Elementals' Lost Souls",		{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_LIMITPAIN} },
 	{ bitflag,	"Don't let others hear your pickups",		{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_SILENTPICKUP} },
 	{ bitflag,	"Actors are infinitely tall",				{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_NO_PASSMOBJ} },
-	{ bitflag,	"Cripple sound for silent BFG trick",		{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_MAGICSILENCE} },
 	{ bitflag,	"Enable wall running",						{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_WALLRUN} },
 	{ bitflag,	"Spawn item drops on the floor",			{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_NOTOSSDROPS} },
 	{ bitflag,  "All special lines can block <use>",		{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_USEBLOCKING} },
@@ -1124,6 +1124,7 @@ static menuitem_t CompatibilityItems[] = {
 	{ bitflag,	"Friendly monsters aren't blocked",			{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_NOBLOCKFRIENDS} },
 	{ bitflag,	"Invert sprite sorting",					{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_SPRITESORT} },
 	{ bitflag,	"Use Doom code for hitscan checks",			{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_HITSCAN} },
+	{ bitflag,	"Cripple sound for silent BFG trick",		{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_MAGICSILENCE} },
 	
 	{ discrete, "Interpolate monster movement",	{&nomonsterinterpolation},		{2.0}, {0.0},	{0.0}, {NoYes} },
 };

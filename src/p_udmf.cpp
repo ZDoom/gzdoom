@@ -850,6 +850,11 @@ struct UDMFParser
 		{
 			ld->Alpha = FRACUNIT * 3/4;
 		}
+		if (ld->sidedef[0] == NULL)
+		{
+			ld->sidedef[0] = (side_t*)(intptr_t)(1);
+			Printf("Line %d has no first side.\n", index);
+		}
 	}
 
 	//===========================================================================

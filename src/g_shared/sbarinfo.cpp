@@ -1115,12 +1115,12 @@ public:
 
 		if((offsetflags & SBarInfoCommand::CENTER) == SBarInfoCommand::CENTER)
 		{
-			x -= (texture->GetScaledWidthDouble()/2.0)-texture->LeftOffset;
-			y -= (texture->GetScaledHeightDouble()/2.0)-texture->TopOffset;
+			dx -= (texture->GetScaledWidthDouble()/2.0)-texture->LeftOffset;
+			dy -= (texture->GetScaledHeightDouble()/2.0)-texture->TopOffset;
 		}
 
-		x += xOffset;
-		y += yOffset;
+		dx += xOffset;
+		dy += yOffset;
 		double w, h;
 		if(!fullScreenOffsets)
 		{

@@ -1202,6 +1202,9 @@ class CommandDrawSelectedInventory : public SBarInfoCommandFlowControl, private 
 
 		void	Draw(const SBarInfoMainBlock *block, const DSBarInfo *statusBar)
 		{
+			if(alternateOnEmpty)
+				SBarInfoCommandFlowControl::Draw(block, statusBar);
+
 			if(statusBar->CPlayer->mo->InvSel != NULL && !(level.flags & LEVEL_NOINVENTORYBAR))
 			{
 				if(artiflash && artiflashTick)
@@ -1214,9 +1217,6 @@ class CommandDrawSelectedInventory : public SBarInfoCommandFlowControl, private 
 				if(alwaysShowCounter || statusBar->CPlayer->mo->InvSel->Amount != 1)
 					CommandDrawNumber::Draw(block, statusBar);
 			}
-
-			if(alternateOnEmpty)
-				SBarInfoCommandFlowControl::Draw(block, statusBar);
 		}
 		void	Parse(FScanner &sc, bool fullScreenOffsets)
 		{

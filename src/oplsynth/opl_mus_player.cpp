@@ -66,7 +66,7 @@ OPLmusicFile::OPLmusicFile (FILE *file, BYTE *musiccache, int len)
 	{
 		if (fread (scoredata, 1, len, file) != (size_t)len)
 		{
-			delete[] scoredata;
+fail:		delete[] scoredata;
 			scoredata = NULL;
 			return;
 		}
@@ -78,9 +78,7 @@ OPLmusicFile::OPLmusicFile (FILE *file, BYTE *musiccache, int len)
 
 	if (io->OPLinit (TwoChips + 1))
 	{
-		delete[] scoredata;
-		scoredata = NULL;
-		return;
+		goto fail;
 	}
 
 	// Check for RDosPlay raw OPL format
@@ -96,12 +94,36 @@ OPLmusicFile::OPLmusicFile (FILE *file, BYTE *musiccache, int len)
 	}
 	// Check for DosBox OPL dump
 	else if (((DWORD *)scoredata)[0] == MAKE_ID('D','B','R','A') &&
-		((DWORD *)scoredata)[1] == MAKE_ID('W','O','P','L') &&
-		((DWORD *)scoredata)[2] == MAKE_ID(0,0,1,0))
+		((DWORD *)scoredata)[1] == MAKE_ID('W','O','P','L'))
 	{
-		RawPlayer = DosBox;
-		SamplesPerTick = OPL_SAMPLE_RATE / 1000;
-		ScoreLen = MIN<int>(len - 24, LittleLong(((DWORD *)scoredata)[4]));
+		if (((DWORD *)scoredata)[2] == MAKE_ID(0,0,1,0))
+		{
+			RawPlayer = DosBox1;
+			SamplesPerTick = OPL_SAMPLE_RATE / 1000;
+			ScoreLen = MIN<int>(len - 24, LittleLong(((DWORD *)scoredata)[4])) + 24;
+		}
+		else if (((DWORD *)scoredata)[2] == MAKE_ID(2,0,0,0))
+		{
+			if (scoredata[20] != 0)
+			{
+				Printf("Unsupported DOSBox Raw OPL format %d\n", scoredata[20]);
+				goto fail;
+			}
+			if (scoredata[21] != 0)
+			{
+				Printf("Unsupported DOSBox Raw OPL compression %d\n", scoredata[21]);
+				goto fail;
+			}
+			RawPlayer = DosBox2;
+			SamplesPerTick = OPL_SAMPLE_RATE / 1000;
+			int headersize = 0x1A + scoredata[0x19];
+			ScoreLen = MIN<int>(len - headersize, LittleLong(((DWORD *)scoredata)[3]) * 2) + headersize;
+		}
+		else
+		{
+			Printf("Unsupported DOSBox Raw OPL version %d.%d\n", LittleShort(((WORD *)scoredata)[4]), LittleShort(((WORD *)scoredata)[5]));
+			goto fail;
+		}
 	}
 	// Check for modified IMF format (includes a header)
 	else if (((DWORD *)scoredata)[0] == MAKE_ID('A','D','L','I') &&
@@ -131,6 +153,10 @@ OPLmusicFile::OPLmusicFile (FILE *file, BYTE *musiccache, int len)
 			ScoreLen = songlen + int(score - scoredata);
 		}
 	}
+	else
+	{
+		goto fail;
+	}
 
 	Restart ();
 }
@@ -159,18 +185,24 @@ void OPLmusicFile::Restart ()
 {
 	OPLmusicBlock::Restart();
 	WhichChip = 0;
-	if (RawPlayer == RDosPlay)
+	switch (RawPlayer)
 	{
+	case RDosPlay:
 		score = scoredata + 10;
 		SamplesPerTick = LittleShort(*(WORD *)(scoredata + 8)) / ADLIB_CLOCK_MUL;
-	}
-	else if (RawPlayer == DosBox)
-	{
+		break;
+
+	case DosBox1:
 		score = scoredata + 24;
 		SamplesPerTick = OPL_SAMPLE_RATE / 1000;
-	}
-	else if (RawPlayer == IMF)
-	{
+		break;
+
+	case DosBox2:
+		score = scoredata + 0x1A + scoredata[0x19];
+		SamplesPerTick = OPL_SAMPLE_RATE / 1000;
+		break;
+
+	case IMF:
 		score = scoredata + 6;
 
 		// Skip track and game name
@@ -183,6 +215,7 @@ void OPLmusicFile::Restart ()
 		{
 			score += 4;		// Skip song length
 		}
+		break;
 	}
 	io->SetClockRate(SamplesPerTick);
 }
@@ -331,9 +364,11 @@ void OPLmusicBlock::OffsetSamples(float *buff, int count)
 int OPLmusicFile::PlayTick ()
 {
 	BYTE reg, data;
+	WORD delay;
 
-	if (RawPlayer == RDosPlay)
+	switch (RawPlayer)
 	{
+	case RDosPlay:
 		while (score < scoredata + ScoreLen)
 		{
 			data = *score++;
@@ -379,9 +414,9 @@ int OPLmusicFile::PlayTick ()
 				break;
 			}
 		}
-	}
-	else if (RawPlayer == DosBox)
-	{
+		break;
+
+	case DosBox1:
 		while (score < scoredata + ScoreLen)
 		{
 			reg = *score++;
@@ -420,11 +455,42 @@ int OPLmusicFile::PlayTick ()
 				io->OPLwriteReg(WhichChip, reg, data);
 			}
 		}
-	}
-	else if (RawPlayer == IMF)
-	{
-		WORD delay = 0;
+		break;
 
+	case DosBox2:
+		{
+			BYTE *to_reg = scoredata + 0x1A;
+			BYTE to_reg_size = scoredata[0x19];
+			BYTE short_delay_code = scoredata[0x17];
+			BYTE long_delay_code = scoredata[0x18];
+
+			while (score < scoredata + ScoreLen)
+			{
+				BYTE code = *score++;
+				data = *score++;
+
+				// Which OPL chip to write to is encoded in the high bit of the code value.
+				int which = !!(code & 0x80);
+				code &= 0x7F;
+
+				if (code == short_delay_code)
+				{
+					return data + 1;
+				}
+				else if (code == long_delay_code)
+				{
+					return (data + 1) << 8;
+				}
+				else if (code < to_reg_size && (which = 0 || TwoChips))
+				{
+					io->OPLwriteReg(which, to_reg[code], data);
+				}
+			}
+		}
+		break;
+
+	case IMF:
+		delay = 0;
 		while (delay == 0 && score + 4 - scoredata <= ScoreLen)
 		{
 			if (*(DWORD *)score == 0xFFFFFFFF)

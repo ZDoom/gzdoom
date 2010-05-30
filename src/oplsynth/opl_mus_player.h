@@ -41,7 +41,7 @@ protected:
 	OPLmusicFile() {}
 	int PlayTick();
 
-	enum { RDosPlay, IMF, DosBox } RawPlayer;
+	enum { RDosPlay, IMF, DosBox1, DosBox2 } RawPlayer;
 	int ScoreLen;
 	int WhichChip;
 };

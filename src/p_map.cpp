@@ -1149,7 +1149,8 @@ bool PIT_CheckThing (AActor *thing, FCheckPosition &tm)
 	}
 	solid = (thing->flags & MF_SOLID) &&
 			!(thing->flags & MF_NOCLIP) &&
-			(tm.thing->flags & MF_SOLID);
+			((tm.thing->flags & MF_SOLID) || (tm.thing->flags6 & MF6_BLOCKEDBYSOLIDACTORS));
+
 	// Check for special pickup
 	if ((thing->flags & MF_SPECIAL) && (tm.thing->flags & MF_PICKUP)
 		// [RH] The next condition is to compensate for the extra height

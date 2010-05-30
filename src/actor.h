@@ -319,6 +319,7 @@ enum
 	MF6_NOTRIGGER		= 0x00010000,	// actor cannot trigger any line actions
 	MF6_SHATTERING		= 0x00020000,	// marks an ice corpse for forced shattering
 	MF6_KILLED			= 0x00040000,	// Something that was killed (but not necessarily a corpse)
+	MF6_BLOCKEDBYSOLIDACTORS = 0x00080000, // Blocked by solid actors, even if not solid itself
 
 // --- mobj.renderflags ---
 

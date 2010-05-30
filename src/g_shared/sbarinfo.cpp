@@ -900,14 +900,14 @@ void Popup::close()
 
 ////////////////////////////////////////////////////////////////////////////////
 
-inline void adjustRelCenter(const SBarInfoCoordinate &x, const SBarInfoCoordinate &y, int &outX, int &outY, const double &xScale, const double &yScale)
+inline void adjustRelCenter(const SBarInfoCoordinate &x, const SBarInfoCoordinate &y, double &outX, double &outY, const double &xScale, const double &yScale)
 {
 	if(x.RelCenter())
-		outX = *x + (int) (SCREENWIDTH/(hud_scale ? xScale*2 : 2));
+		outX = *x + (SCREENWIDTH/(hud_scale ? xScale*2 : 2));
 	else
 		outX = *x;
 	if(y.RelCenter())
-		outY = *y + (int) (SCREENHEIGHT/(hud_scale ? yScale*2 : 2));
+		outY = *y + (SCREENHEIGHT/(hud_scale ? yScale*2 : 2));
 	else
 		outY = *y;
 }
@@ -1110,59 +1110,57 @@ public:
 		if (texture == NULL)
 			return;
 
+		double dx = *x;
+		double dy = *y;
+
 		if((offsetflags & SBarInfoCommand::CENTER) == SBarInfoCommand::CENTER)
 		{
-			x -= (texture->GetScaledWidth()/2)-texture->LeftOffset;
-			y -= (texture->GetScaledHeight()/2)-texture->TopOffset;
+			x -= (texture->GetScaledWidthDouble()/2.0)-texture->LeftOffset;
+			y -= (texture->GetScaledHeightDouble()/2.0)-texture->TopOffset;
 		}
 
 		x += xOffset;
 		y += yOffset;
-		int w, h;
+		double w, h;
 		if(!fullScreenOffsets)
 		{
-			fixed_t tmp = 0;
-			// I'll handle the conversion from fixed to int myself for more control
-			fixed_t fx = (x + ST_X).Coordinate() << FRACBITS;
-			fixed_t fy = (y + ST_Y - (Scaled ? script->resH : 200) + script->height).Coordinate() << FRACBITS;
-			fixed_t fw = (forceWidth <= -1 ? texture->GetScaledWidth() : forceWidth) << FRACBITS;
-			fixed_t fh = (forceHeight <= -1 ? texture->GetScaledHeight() : forceHeight) << FRACBITS;
-			fixed_t fcx = cx == 0 ? 0 : fx + cx - (texture->GetScaledLeftOffset() << FRACBITS);
-			fixed_t fcy = cy == 0 ? 0 : fy + cy - (texture->GetScaledTopOffset() << FRACBITS);
-			fixed_t fcr = fx + fw - cr;
-			fixed_t fcb = fy + fh - cb;
+			double tmp = 0;
+			dx += ST_X;
+			dy += ST_Y - (Scaled ? script->resH : 200) + script->height;
+			w = forceWidth < 0 ? texture->GetScaledWidth() : forceWidth;
+			h = forceHeight < 0 ? texture->GetScaledHeight() : forceHeight;
+			double dcx = cx == 0 ? 0 : dx + ((double) cx / FRACUNIT) - texture->GetScaledLeftOffsetDouble();
+			double dcy = cy == 0 ? 0 : dy + ((double) cy / FRACUNIT) - texture->GetScaledTopOffsetDouble();
+			double dcr = cr == 0 ? INT_MAX : dx + w - ((double) cr / FRACUNIT);
+			double dcb = cb == 0 ? INT_MAX : dy + h - ((double) cb / FRACUNIT);
+
 			if(Scaled)
 			{
 				if(cx != 0 || cy != 0)
-					screen->VirtualToRealCoordsFixed(fcx, fcy, tmp, tmp, script->resW, script->resH, true);
+					screen->VirtualToRealCoords(dcx, dcy, tmp, tmp, script->resW, script->resH, true);
 				if(cr != 0 || cb != 0 || clearDontDraw)
-					screen->VirtualToRealCoordsFixed(fcr, fcb, tmp, tmp, script->resW, script->resH, true);
-				screen->VirtualToRealCoordsFixed(fx, fy, fw, fh, script->resW, script->resH, true);
+					screen->VirtualToRealCoords(dcr, dcb, tmp, tmp, script->resW, script->resH, true);
+				screen->VirtualToRealCoords(dx, dy, w, h, script->resW, script->resH, true);
 			}
 			else
 			{
-				fy += (200 - script->resH)<<FRACBITS;
-				fcy += (200 - script->resH)<<FRACBITS;
-				fcb += (200 - script->resH)<<FRACBITS;
+				dy += 200 - script->resH;
+				dcy += 200 - script->resH;
+				dcb += 200 - script->resH;
 			}
-			// Round to nearest
-			w = (fw + (FRACUNIT>>1)) >> FRACBITS;
-			h = (fh + (FRACUNIT>>1)) >> FRACBITS;
-			cr = cr != 0 ? fcr >> FRACBITS : INT_MAX;
-			cb = cb != 0 ? fcb >> FRACBITS : INT_MAX;
 			if(clearDontDraw)
-				screen->Clear(MAX<fixed_t>(fx, fcx)>>FRACBITS, MAX<fixed_t>(fy, fcy)>>FRACBITS, fcr>>FRACBITS, fcb>>FRACBITS, GPalette.BlackIndex, 0);
+				screen->Clear(static_cast<int>(MAX<double>(dx, dcx)), static_cast<int>(MAX<double>(dy, dcy)), static_cast<int>(dcr), static_cast<int>(dcb), GPalette.BlackIndex, 0);
 			else
 			{
 				if(alphaMap)
 				{
-					screen->DrawTexture(texture, (fx >> FRACBITS), (fy >> FRACBITS),
-						DTA_DestWidth, w,
-						DTA_DestHeight, h,
-						DTA_ClipLeft, fcx>>FRACBITS,
-						DTA_ClipTop, fcy>>FRACBITS,
-						DTA_ClipRight, cr,
-						DTA_ClipBottom, cb,
+					screen->DrawTexture(texture, dx, dy,
+						DTA_DestWidthF, w,
+						DTA_DestHeightF, h,
+						DTA_ClipLeft, static_cast<int>(dcx),
+						DTA_ClipTop, static_cast<int>(dcy),
+						DTA_ClipRight, static_cast<int>(dcr),
+						DTA_ClipBottom, static_cast<int>(dcb),
 						DTA_Translation, translate ? GetTranslation() : 0,
 						DTA_ColorOverlay, dim ? DIM_OVERLAY : 0,
 						DTA_CenterBottomOffset, (offsetflags & SBarInfoCommand::CENTER_BOTTOM) == SBarInfoCommand::CENTER_BOTTOM,
@@ -1173,13 +1171,13 @@ public:
 				}
 				else
 				{
-					screen->DrawTexture(texture, (fx >> FRACBITS), (fy >> FRACBITS),
-						DTA_DestWidth, w,
-						DTA_DestHeight, h,
-						DTA_ClipLeft, fcx>>FRACBITS,
-						DTA_ClipTop, fcy>>FRACBITS,
-						DTA_ClipRight, cr,
-						DTA_ClipBottom, cb,
+					screen->DrawTexture(texture, dx, dy,
+						DTA_DestWidthF, w,
+						DTA_DestHeightF, h,
+						DTA_ClipLeft, static_cast<int>(dcx),
+						DTA_ClipTop, static_cast<int>(dcy),
+						DTA_ClipRight, static_cast<int>(dcr),
+						DTA_ClipBottom, static_cast<int>(dcb),
 						DTA_Translation, translate ? GetTranslation() : 0,
 						DTA_ColorOverlay, dim ? DIM_OVERLAY : 0,
 						DTA_CenterBottomOffset, (offsetflags & SBarInfoCommand::CENTER_BOTTOM) == SBarInfoCommand::CENTER_BOTTOM,
@@ -1190,7 +1188,7 @@ public:
 		}
 		else
 		{
-			int rx, ry, rcx=0, rcy=0, rcr=INT_MAX, rcb=INT_MAX;
+			double rx, ry, rcx=0, rcy=0, rcr=INT_MAX, rcb=INT_MAX;
 
 			double xScale = !hud_scale ? 1.0 : (double) CleanXfac*320.0/(double) script->resW;//(double) SCREENWIDTH/(double) script->resW;
 			double yScale = !hud_scale ? 1.0 : (double) CleanYfac*200.0/(double) script->resH;//(double) SCREENHEIGHT/(double) script->resH;
@@ -1202,16 +1200,16 @@ public:
 			bool xright = rx < 0;
 			bool ybot = ry < 0;
 
-			w = (forceWidth <= -1 ? texture->GetScaledWidth() : forceWidth);
-			h = (forceHeight <= -1 ? texture->GetScaledHeight() : forceHeight);
+			w = (forceWidth < 0 ? texture->GetScaledWidthDouble() : forceWidth);
+			h = (forceHeight < 0 ? texture->GetScaledHeightDouble() : forceHeight);
 			if(vid_fps && rx < 0 && ry >= 0)
 				ry += 10;
 			if(hud_scale)
 			{
-				rx = (int) (rx*xScale);
-				ry = (int) (ry*yScale);
-				w = (int) (w*xScale);
-				h = (int) (h*yScale);
+				rx *= xScale;
+				ry *= yScale;
+				w *= xScale;
+				h *= yScale;
 			}
 			if(xright)
 				rx = SCREENWIDTH + rx;
@@ -1221,10 +1219,10 @@ public:
 			// Check for clipping
 			if(cx != 0 || cy != 0 || cr != 0 || cb != 0)
 			{
-				rcx = cx == 0 ? 0 : rx+(int) ((cx>>FRACBITS)*xScale);
-				rcy = cy == 0 ? 0 : ry+(int) ((cy>>FRACBITS)*yScale);
-				rcr = cr == 0 ? INT_MAX : rx+w-(int) ((cr>>FRACBITS)*xScale);
-				rcb = cb == 0 ? INT_MAX : ry+h-(int) ((cb>>FRACBITS)*yScale);
+				rcx = cx == 0 ? 0 : rx+(((double) cx/FRACUNIT)*xScale);
+				rcy = cy == 0 ? 0 : ry+(((double) cy/FRACUNIT)*yScale);
+				rcr = cr == 0 ? INT_MAX : rx+w-(((double) cr/FRACUNIT)*xScale);
+				rcb = cb == 0 ? INT_MAX : ry+h-(((double) cb/FRACUNIT)*yScale);
 
 				// Fix the clipping for fullscreenoffsets.
 				/*if(ry < 0)
@@ -1256,20 +1254,18 @@ public:
 			}
 
 			if(clearDontDraw)
-			{
-				screen->Clear(rcx, rcy, MIN<int>(rcr, w), MIN<int>(rcb, h), GPalette.BlackIndex, 0);
-			}
+				screen->Clear(static_cast<int>(rcx), static_cast<int>(rcy), static_cast<int>(MIN<double>(rcr, w)), static_cast<int>(MIN<double>(rcb, h)), GPalette.BlackIndex, 0);
 			else
 			{
 				if(alphaMap)
 				{
 					screen->DrawTexture(texture, rx, ry,
-						DTA_DestWidth, w,
-						DTA_DestHeight, h,
-						DTA_ClipLeft, rcx,
-						DTA_ClipTop, rcy,
-						DTA_ClipRight, rcr,
-						DTA_ClipBottom, rcb,
+						DTA_DestWidthF, w,
+						DTA_DestHeightF, h,
+						DTA_ClipLeft, static_cast<int>(rcx),
+						DTA_ClipTop, static_cast<int>(rcy),
+						DTA_ClipRight, static_cast<int>(rcr),
+						DTA_ClipBottom, static_cast<int>(rcb),
 						DTA_Translation, translate ? GetTranslation() : 0,
 						DTA_ColorOverlay, dim ? DIM_OVERLAY : 0,
 						DTA_CenterBottomOffset, (offsetflags & SBarInfoCommand::CENTER_BOTTOM) == SBarInfoCommand::CENTER_BOTTOM,
@@ -1281,12 +1277,12 @@ public:
 				else
 				{
 					screen->DrawTexture(texture, rx, ry,
-						DTA_DestWidth, w,
-						DTA_DestHeight, h,
-						DTA_ClipLeft, rcx,
-						DTA_ClipTop, rcy,
-						DTA_ClipRight, rcr,
-						DTA_ClipBottom, rcb,
+						DTA_DestWidthF, w,
+						DTA_DestHeightF, h,
+						DTA_ClipLeft, static_cast<int>(rcx),
+						DTA_ClipTop, static_cast<int>(rcy),
+						DTA_ClipRight, static_cast<int>(rcr),
+						DTA_ClipBottom, static_cast<int>(rcb),
 						DTA_Translation, translate ? GetTranslation() : 0,
 						DTA_ColorOverlay, dim ? DIM_OVERLAY : 0,
 						DTA_CenterBottomOffset, (offsetflags & SBarInfoCommand::CENTER_BOTTOM) == SBarInfoCommand::CENTER_BOTTOM,
@@ -1300,8 +1296,8 @@ public:
 	void DrawString(FFont *font, const char* str, SBarInfoCoordinate x, SBarInfoCoordinate y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets, EColorRange translation, int spacing=0, bool drawshadow=false) const
 	{
 		x += spacing;
-		int ax = *x;
-		int ay = *y;
+		double ax = *x;
+		double ay = *y;
 
 		double xScale = 1.0;
 		double yScale = 1.0;
@@ -1337,17 +1333,17 @@ public:
 			if(script->spacingCharacter == '\0') //If we are monospaced lets use the offset
 				ax += (character->LeftOffset+1); //ignore x offsets since we adapt to character size
 
-			int rx, ry, rw, rh;
+			double rx, ry, rw, rh;
 			rx = ax + xOffset;
 			ry = ay + yOffset;
-			rw = character->GetScaledWidth();
-			rh = character->GetScaledHeight();
+			rw = character->GetScaledWidthDouble();
+			rh = character->GetScaledHeightDouble();
 			if(!fullScreenOffsets)
 			{
 				rx += ST_X;
 				ry += ST_Y - (Scaled ? script->resH : 200) + script->height;
 				if(Scaled)
-					screen->VirtualToRealCoordsInt(rx, ry, rw, rh, script->resW, script->resH, true);
+					screen->VirtualToRealCoords(rx, ry, rw, rh, script->resW, script->resH, true);
 				else
 				{
 					ry += (200 - script->resH);
@@ -1363,10 +1359,10 @@ public:
 
 				if(hud_scale)
 				{
-					rx = (int) (rx*xScale);
-					ry = (int) (ry*yScale);
-					rw = (int) (rw*xScale);
-					rh = (int) (rh*yScale);
+					rx *= xScale;
+					ry *= yScale;
+					rw *= xScale;
+					rh *= yScale;
 				}
 				if(xright)
 					rx = SCREENWIDTH + rx;
@@ -1377,15 +1373,15 @@ public:
 			{
 				int salpha = fixed_t(((double) alpha / (double) FRACUNIT) * ((double) HR_SHADOW / (double) FRACUNIT) * FRACUNIT);
 				screen->DrawTexture(character, rx+2, ry+2,
-					DTA_DestWidth, rw,
-					DTA_DestHeight, rh,
+					DTA_DestWidthF, rw,
+					DTA_DestHeightF, rh,
 					DTA_Alpha, salpha,
 					DTA_FillColor, 0,
 					TAG_DONE);
 			}
 			screen->DrawTexture(character, rx, ry,
-				DTA_DestWidth, rw,
-				DTA_DestHeight, rh,
+				DTA_DestWidthF, rw,
+				DTA_DestHeightF, rh,
 				DTA_Translation, font->GetColorTranslation(translation),
 				DTA_Alpha, alpha,
 				TAG_DONE);

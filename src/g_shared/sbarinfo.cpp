@@ -293,17 +293,18 @@ class SBarInfoMainBlock : public SBarInfoCommandFlowControl
 {
 	public:
 		SBarInfoMainBlock(SBarInfo *script) : SBarInfoCommandFlowControl(script),
-			alpha(FRACUNIT), forceScaled(false), fullScreenOffsets(false)
+			alpha(FRACUNIT), currentAlpha(FRACUNIT), forceScaled(false),
+			fullScreenOffsets(false)
 		{
 			SetTruth(true, NULL, NULL);
 		}
 
-		int		Alpha() const { return alpha; }
+		int		Alpha() const { return currentAlpha; }
 		void	Draw(const SBarInfoMainBlock *block, const DSBarInfo *statusBar, int xOffset, int yOffset, int alpha)
 		{
 			this->xOffset = xOffset;
 			this->yOffset = yOffset;
-			this->alpha = alpha;
+			this->currentAlpha = fixed_t((((double) this->alpha / (double) FRACUNIT) * ((double) alpha / (double) FRACUNIT)) * FRACUNIT);
 			SBarInfoCommandFlowControl::Draw(this, statusBar);
 		}
 		bool	ForceScaled() const { return forceScaled; }
@@ -336,8 +337,9 @@ class SBarInfoMainBlock : public SBarInfoCommandFlowControl
 		int		XOffset() const { return xOffset; }
 		int		YOffset() const { return yOffset; }
 
-	private:
+	protected:
 		int		alpha;
+		int		currentAlpha;
 		bool	forceScaled;
 		bool	fullScreenOffsets;
 		int		xOffset;

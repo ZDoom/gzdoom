@@ -1795,8 +1795,8 @@ class CommandDrawKeyBar : public SBarInfoCommand
 {
 	public:
 		CommandDrawKeyBar(SBarInfo *script) : SBarInfoCommand(script),
-			number(3), vertical(false), reverseRows(false), iconSize(-1),
-			rowIconSize(-1), keyOffset(0), rowSize(0)
+			number(3), vertical(false), reverse(false), reverseRows(false),
+			iconSize(-1), rowIconSize(-1), keyOffset(0), rowSize(0)
 		{
 		}
 
@@ -1833,12 +1833,12 @@ class CommandDrawKeyBar : public SBarInfoCommand
 					if(iconSize == -1)
 					{
 						if(!vertical)
-							slotOffset += TexMan[item->Icon]->GetScaledWidth() + 2;
+							slotOffset += (reverse ? -1 : 1) * (TexMan[item->Icon]->GetScaledWidth() + 2);
 						else
-							slotOffset += TexMan[item->Icon]->GetScaledHeight() + 2;
+							slotOffset += (reverse ? -1 : 1) * (TexMan[item->Icon]->GetScaledHeight() + 2);
 					}
 					else
-						slotOffset += iconSize;
+						slotOffset += (reverse ? -iconSize : iconSize);
 		
 					if(rowSize > 0 && (i % rowSize == rowSize-1))
 					{
@@ -1871,6 +1871,8 @@ class CommandDrawKeyBar : public SBarInfoCommand
 			{
 				if(sc.Compare("reverserows"))
 					reverseRows = true;
+				else if(sc.Compare("reverse"))
+					reverse = true;
 				else
 					sc.ScriptError("Unknown flag '%s'.", sc.String);
 				if(!sc.CheckToken('|'))
@@ -1911,6 +1913,7 @@ class CommandDrawKeyBar : public SBarInfoCommand
 	protected:
 		unsigned int		number;
 		bool				vertical;
+		bool				reverse;
 		bool				reverseRows;
 		int					iconSize;
 		int					rowIconSize;
@@ -2757,6 +2760,34 @@ class CommandInInventory : public SBarInfoCommandFlowControl
 
 ////////////////////////////////////////////////////////////////////////////////
 
+class CommandAlpha : public SBarInfoMainBlock
+{
+	public:
+		CommandAlpha(SBarInfo *script) : SBarInfoMainBlock(script)
+		{
+		}
+
+		void	Draw(const SBarInfoMainBlock *block, const DSBarInfo *statusBar)
+		{
+			forceScaled = block->ForceScaled();
+			fullScreenOffsets = block->FullScreenOffsets();
+
+			SBarInfoMainBlock::Draw(block, statusBar, block->XOffset(), block->YOffset(), block->Alpha());
+		}
+
+		void	Parse(FScanner &sc, bool fullScreenOffsets)
+		{
+			sc.MustGetToken(TK_FloatConst);
+			alpha = fixed_t(FRACUNIT * sc.Float);
+
+			// We don't want to allow all the options of a regular main block
+			// so skip to the SBarInfoCommandFlowControl.
+			SBarInfoCommandFlowControl::Parse(sc, fullScreenOffsets);
+		}
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
 static const char *SBarInfoCommandNames[] =
 {
 	"drawimage", "drawnumber", "drawswitchableimage",
@@ -2766,7 +2797,7 @@ static const char *SBarInfoCommandNames[] =
 	"gamemode", "playerclass", "aspectratio",
 	"isselected", "usesammo", "usessecondaryammo",
 	"hasweaponpiece", "inventorybarnotvisible",
-	"weaponammo", "ininventory",
+	"weaponammo", "ininventory", "alpha",
 	NULL
 };
 
@@ -2779,7 +2810,7 @@ enum SBarInfoCommands
 	SBARINFO_GAMEMODE, SBARINFO_PLAYERCLASS, SBARINFO_ASPECTRATIO,
 	SBARINFO_ISSELECTED, SBARINFO_USESAMMO, SBARINFO_USESSECONDARYAMMO,
 	SBARINFO_HASWEAPONPIECE, SBARINFO_INVENTORYBARNOTVISIBLE,
-	SBARINFO_WEAPONAMMO, SBARINFO_ININVENTORY,
+	SBARINFO_WEAPONAMMO, SBARINFO_ININVENTORY, SBARINFO_ALPHA,
 };
 
 SBarInfoCommand *SBarInfoCommandFlowControl::NextCommand(FScanner &sc)
@@ -2810,6 +2841,7 @@ SBarInfoCommand *SBarInfoCommandFlowControl::NextCommand(FScanner &sc)
 			case SBARINFO_HASWEAPONPIECE: return new CommandHasWeaponPiece(script);
 			case SBARINFO_WEAPONAMMO: return new CommandWeaponAmmo(script);
 			case SBARINFO_ININVENTORY: return new CommandInInventory(script);
+			case SBARINFO_ALPHA: return new CommandAlpha(script);
 		}
 
 		sc.ScriptError("Unknown command '%s'.\n", sc.String);

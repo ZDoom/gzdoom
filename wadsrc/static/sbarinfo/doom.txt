@@ -58,7 +58,7 @@ statusbar fullscreen, fullscreenoffsets // ZDoom HUD
 	{
 		drawnumber 2147483647, HUDFONT_DOOM, untranslated, frags, drawshadow, -3, 1;
 	}
-	gamemode singleplayer, cooperative, teamgame
+	else
 	{
 		// let's hope no mod ever uses 100 keys...
 		drawkeybar 100, vertical, reverserows, auto, -10, 2, 0, 3, auto;

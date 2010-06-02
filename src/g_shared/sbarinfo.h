@@ -84,6 +84,13 @@ struct Popup
 
 struct SBarInfo
 {
+	enum MonospaceAlignment
+	{
+		ALIGN_LEFT,
+		ALIGN_CENTER,
+		ALIGN_RIGHT
+	};
+
 	TArray<FString> Images;
 	SBarInfoMainBlock *huds[NUMHUDS];
 	Popup popups[NUMPOPUPS];
@@ -93,6 +100,7 @@ struct SBarInfo
 	bool completeBorder;
 	bool lowerHealthCap;
 	char spacingCharacter;
+	MonospaceAlignment spacingAlignment;
 	int interpolationSpeed;
 	int armorInterpolationSpeed;
 	int height;

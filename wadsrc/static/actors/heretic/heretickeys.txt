@@ -13,6 +13,7 @@ ACTOR KeyGreen : HereticKey 73
 	Game Heretic
 	SpawnID 86
 	Inventory.PickupMessage "$TXT_GOTGREENKEY"
+	Inventory.Icon "GKEYICON"
 	States
 	{
 	Spawn:
@@ -28,6 +29,7 @@ ACTOR KeyBlue : HereticKey 79
 	Game Heretic
 	SpawnID 85
 	Inventory.PickupMessage "$TXT_GOTBLUEKEY"
+	Inventory.Icon "BKEYICON"
 	States
 	{
 	Spawn:
@@ -43,6 +45,7 @@ ACTOR KeyYellow : HereticKey 80
 	Game Heretic
 	SpawnID 87
 	Inventory.PickupMessage "$TXT_GOTYELLOWKEY"
+	Inventory.Icon "YKEYICON"
 	States
 	{
 	Spawn:

@@ -483,9 +483,19 @@ void SBarInfo::ParseSBarInfo(int lump)
 					ParseSBarInfo(lump);
 				}
 				else if(sc.Compare("Heretic"))
-					gameType = GAME_Heretic;
+				{
+					int lump = Wads.CheckNumForFullName("sbarinfo/heretic.txt", true);
+					if(lump == -1)
+						sc.ScriptError("Standard Heretic Status Bar not found.");
+					ParseSBarInfo(lump);
+				}
 				else if(sc.Compare("Hexen"))
-					gameType = GAME_Hexen;
+				{
+					int lump = Wads.CheckNumForFullName("sbarinfo/hexen.txt", true);
+					if(lump == -1)
+						sc.ScriptError("Standard Hexen Status Bar not found.");
+					ParseSBarInfo(lump);
+				}
 				else if(sc.Compare("Strife"))
 					gameType = GAME_Strife;
 				else if(sc.Compare("None"))
@@ -558,6 +568,19 @@ void SBarInfo::ParseSBarInfo(int lump)
 					spacingCharacter = '\0';
 					sc.MustGetToken(',');
 					sc.MustGetToken(TK_StringConst); //Don't tell anyone we're just ignoring this ;)
+				}
+				if(sc.CheckToken(','))
+				{
+					// Character alignment
+					sc.MustGetToken(TK_Identifier);
+					if(sc.Compare("left"))
+						spacingAlignment = ALIGN_LEFT;
+					else if(sc.Compare("center"))
+						spacingAlignment = ALIGN_CENTER;
+					else if(sc.Compare("right"))
+						spacingAlignment = ALIGN_RIGHT;
+					else
+						sc.ScriptError("Unknown alignment '%s'.", sc.String);
 				}
 				sc.MustGetToken(';');
 				break;
@@ -763,6 +786,7 @@ void SBarInfo::Init()
 	armorInterpolationSpeed = 8;
 	height = 0;
 	spacingCharacter = '\0';
+	spacingAlignment = ALIGN_CENTER;
 	resW = 320;
 	resH = 200;
 
@@ -1295,7 +1319,7 @@ public:
 		}
 	}
 
-	void DrawString(FFont *font, const char* str, SBarInfoCoordinate x, SBarInfoCoordinate y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets, EColorRange translation, int spacing=0, bool drawshadow=false) const
+	void DrawString(FFont *font, const char* str, SBarInfoCoordinate x, SBarInfoCoordinate y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets, EColorRange translation, int spacing=0, bool drawshadow=false, int shadowX=2, int shadowY=2) const
 	{
 		x += spacing;
 		double ax = *x;
@@ -1340,6 +1364,23 @@ public:
 			ry = ay + yOffset;
 			rw = character->GetScaledWidthDouble();
 			rh = character->GetScaledHeightDouble();
+
+			if(script->spacingCharacter != '\0')
+			{
+				double spacingSize = font->GetCharWidth((int) script->spacingCharacter);
+				switch(script->spacingAlignment)
+				{
+					default:
+						break;
+					case SBarInfo::ALIGN_CENTER:
+						rx += (spacingSize/2)-(rw/2);
+						break;
+					case SBarInfo::ALIGN_RIGHT:
+						rx += spacingSize-rw;
+						break;
+				}
+			}
+
 			if(!fullScreenOffsets)
 			{
 				rx += ST_X;
@@ -1374,7 +1415,9 @@ public:
 			if(drawshadow)
 			{
 				int salpha = fixed_t(((double) alpha / (double) FRACUNIT) * ((double) HR_SHADOW / (double) FRACUNIT) * FRACUNIT);
-				screen->DrawTexture(character, rx+2, ry+2,
+				double srx = rx + (shadowX*xScale);
+				double sry = ry + (shadowY*yScale);
+				screen->DrawTexture(character, srx, sry,
 					DTA_DestWidthF, rw,
 					DTA_DestHeightF, rh,
 					DTA_Alpha, salpha,

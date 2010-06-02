@@ -664,9 +664,7 @@ add_executable( zdoom WIN32
 	zstring.cpp
 	g_doom/a_doommisc.cpp
 	g_heretic/a_hereticmisc.cpp
-	g_heretic/heretic_sbar.cpp
 	g_hexen/a_hexenmisc.cpp
-	g_hexen/hexen_sbar.cpp
 	g_raven/a_artitele.cpp
 	g_raven/a_minotaur.cpp
 	g_strife/a_strifestuff.cpp

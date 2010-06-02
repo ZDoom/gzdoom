@@ -514,14 +514,15 @@ class CommandDrawString : public SBarInfoCommand
 {
 	public:
 		CommandDrawString(SBarInfo *script) : SBarInfoCommand(script),
-			shadow(false), spacing(0), font(NULL), translation(CR_UNTRANSLATED),
-			cache(-1), strValue(CONSTANT), valueArgument(0)
+			shadow(false), shadowX(2), shadowY(2), spacing(0), font(NULL),
+			translation(CR_UNTRANSLATED), cache(-1), strValue(CONSTANT),
+			valueArgument(0)
 		{
 		}
 
 		void	Draw(const SBarInfoMainBlock *block, const DSBarInfo *statusBar)
 		{
-			statusBar->DrawString(font, str.GetChars(), x, y, block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets(), translation, spacing, shadow);
+			statusBar->DrawString(font, str.GetChars(), x, y, block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets(), translation, spacing, shadow, shadowX, shadowY);
 		}
 		void	Parse(FScanner &sc, bool fullScreenOffsets)
 		{
@@ -695,6 +696,8 @@ class CommandDrawString : public SBarInfoCommand
 		};
 
 		bool				shadow;
+		int					shadowX;
+		int					shadowY;
 		int					spacing;
 		FFont				*font;
 		EColorRange			translation;
@@ -850,7 +853,18 @@ class CommandDrawNumber : public CommandDrawString
 				else if(sc.Compare("whennotzero"))
 					whenNotZero = true;
 				else if(sc.Compare("drawshadow"))
+				{
+					if(sc.CheckToken('('))
+					{
+						sc.MustGetToken(TK_IntConst);
+						shadowX = sc.Number;
+						sc.MustGetToken(',');
+						sc.MustGetToken(TK_IntConst);
+						shadowY = sc.Number;
+						sc.MustGetToken(')');
+					}
 					shadow = true;
+				}
 				else if(sc.Compare("interpolate"))
 				{
 					sc.MustGetToken('(');
@@ -1236,7 +1250,18 @@ class CommandDrawSelectedInventory : public SBarInfoCommandFlowControl, private 
 				else if(sc.Compare("centerbottom"))
 					offset = static_cast<Offset> (HMIDDLE|BOTTOM);
 				else if(sc.Compare("drawshadow"))
+				{
+					if(sc.CheckToken('('))
+					{
+						sc.MustGetToken(TK_IntConst);
+						shadowX = sc.Number;
+						sc.MustGetToken(',');
+						sc.MustGetToken(TK_IntConst);
+						shadowY = sc.Number;
+						sc.MustGetToken(')');
+					}
 					shadow = true;
+				}
 				else
 				{
 					font = V_GetFont(sc.String);

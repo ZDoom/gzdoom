@@ -95,6 +95,12 @@ pic SPMINO13 tics 3
 pic SPMINO14 tics 3
 pic SPMINO15 tics 3
 
+// Animate health vial for Heretic fullscreen HUD
+texture optional PTN1A0
+pic PTN1A0 tics 3
+pic PTN1B0 tics 3
+pic PTN1C0 tics 3
+
 // The Wings of Wrath are not included, because they stop spinning when
 // you stop flying, so they can't be a simple animation.
 

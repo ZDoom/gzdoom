@@ -290,7 +290,7 @@ enum
 	DF2_NO_AUTOMAP_ALLIES	= 1 << 19,	// Allies can been seen on the automap.
 	DF2_DISALLOW_SPYING		= 1 << 20,	// You can spy on your allies.
 	DF2_CHASECAM			= 1 << 21,	// Players can use the chasecam cheat.
-	DF2_NOSUICIDE			= 1 << 22,	// Players are allowed to suicide.
+	DF2_NOSUICIDE			= 1 << 22,	// Players are not allowed to suicide.
 	DF2_NOAUTOAIM			= 1 << 23,	// Players cannot use autoaim.
 	DF2_DONTCHECKAMMO		= 1 << 24,	// Don't Check ammo when switching weapons.
 };

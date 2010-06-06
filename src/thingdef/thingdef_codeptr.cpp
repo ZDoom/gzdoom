@@ -3129,7 +3129,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetUserVar)
 	ACTION_PARAM_NAME(varname, 0);
 	ACTION_PARAM_INT(value, 1);	
 
-	PSymbol *sym = stateowner->GetClass()->Symbols.FindSymbol(varname, true);
+	PSymbol *sym = self->GetClass()->Symbols.FindSymbol(varname, true);
 	PSymbolVariable *var;
 
 	if (sym == NULL || sym->SymbolType != SYM_Variable ||
@@ -3137,11 +3137,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetUserVar)
 		var->ValueType.Type != VAL_Int)
 	{
 		Printf("%s is not a user variable in class %s\n", varname.GetChars(),
-			stateowner->GetClass()->TypeName.GetChars());
+			self->GetClass()->TypeName.GetChars());
 		return;
 	}
 	// Set the value of the specified user variable.
-	*(int *)(reinterpret_cast<BYTE *>(stateowner) + var->offset) = value;
+	*(int *)(reinterpret_cast<BYTE *>(self) + var->offset) = value;
 }
 
 //===========================================================================
@@ -3157,7 +3157,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetUserArray)
 	ACTION_PARAM_INT(pos, 1);
 	ACTION_PARAM_INT(value, 2);
 
-	PSymbol *sym = stateowner->GetClass()->Symbols.FindSymbol(varname, true);
+	PSymbol *sym = self->GetClass()->Symbols.FindSymbol(varname, true);
 	PSymbolVariable *var;
 
 	if (sym == NULL || sym->SymbolType != SYM_Variable ||
@@ -3165,17 +3165,17 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetUserArray)
 		var->ValueType.Type != VAL_Array || var->ValueType.BaseType != VAL_Int)
 	{
 		Printf("%s is not a user array in class %s\n", varname.GetChars(),
-			stateowner->GetClass()->TypeName.GetChars());
+			self->GetClass()->TypeName.GetChars());
 		return;
 	}
 	if (pos < 0 || pos >= var->ValueType.size)
 	{
 		Printf("%d is out of bounds in array %s in class %s\n", pos, varname.GetChars(),
-			stateowner->GetClass()->TypeName.GetChars());
+			self->GetClass()->TypeName.GetChars());
 		return;
 	}
 	// Set the value of the specified user array at index pos.
-	((int *)(reinterpret_cast<BYTE *>(stateowner) + var->offset))[pos] = value;
+	((int *)(reinterpret_cast<BYTE *>(self) + var->offset))[pos] = value;
 }
 
 //===========================================================================

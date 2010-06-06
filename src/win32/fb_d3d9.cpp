@@ -1726,7 +1726,7 @@ void D3DFB::GetScreenshotBuffer(const BYTE *&buffer, int &pitch, ESSType &color_
 		}
 		else
 		{
-			buffer = (const BYTE *)lrect.pBits + lrect.Pitch * LBOffsetI;
+			buffer = (const BYTE *)lrect.pBits;
 			pitch = lrect.Pitch;
 			color_type = SS_BGRA;
 		}

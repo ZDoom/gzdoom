@@ -1,10 +1,15 @@
 %include
 {
+// Allocates a new AST node off the parse state's arena.
 #define NEW_AST_NODE(type,name) \
 	ZCC_##type *name = (ZCC_##type *)stat->SyntaxArena.Alloc(sizeof(ZCC_##type)); \
 	name->SiblingNext = name; \
 	name->SiblingPrev = name; \
 	name->NodeType = AST_##type
+
+// If a is non-null, appends b to a. Otherwise, sets a to b.
+#define SAFE_APPEND(a,b) \
+	if (a == NULL) a = b; else a->AppendSibling(b);
 }
 
 %token_prefix ZCC_
@@ -87,23 +92,76 @@ opt_expr(X) ::= expr(A).
 }
 
 
-/* A class definition. Can only occur at global scope. */
-class_definition ::= class_start class_body.
+/************ Class Definition ************/
+/* Can only occur at global scope. */
+
+%type class_definition{ZCC_Class *}
+%type class_head{ZCC_Class *}
+%type class_innards{ZCC_Class *}
+%type class_body{ZCC_TreeNode *}
+
+class_definition(X) ::= class_head(A) class_body(B).
 {
-/*	stat->CurrClass = NULL;*/
+	A->Body = B;
+	X = A;
 }
 
-class_start ::= CLASS IDENTIFIER class_ancestry class_flags.
+class_head(X) ::= CLASS dottable_id(A) class_ancestry(B) class_flags(C).
+{
+	NEW_AST_NODE(Class,head);
+	head->ClassName = A;
+	head->ParentName = B;
+	head->Flags = C.Flags;
+	head->Replaces = C.Replaces;
+	X = head;
+}
 
-%type class_ancestry {ENamedName}
-class_ancestry(X) ::= .						{ X = NAME_Object; }
-class_ancestry(X) ::= COLON IDENTIFIER(A).	{ X = ENamedName(A.Int); }
+%type class_ancestry{ZCC_Identifier *}
+class_ancestry(X) ::= .						{ X = NULL; }
+class_ancestry(X) ::= COLON dottable_id(A).	{ X = A; }
 
-class_flags ::= .
-class_flags ::= class_flags ABSTRACT.
-class_flags ::= class_flags NATIVE.
-class_flags ::= class_flags REPLACES IDENTIFIER.
+%type class_flags{ClassFlagsBlock}
+%include{
+	struct ClassFlagsBlock {
+		VM_UWORD Flags;
+		ZCC_Identifier *Replaces;
+	};
+}
+class_flags(X) ::= .										{ X.Flags = 0; X.Replaces = NULL; }
+class_flags(X) ::= class_flags(A) ABSTRACT.					{ X.Flags = A.Flags | 0/*FIXME*/; X.Replaces = A.Replaces; }
+class_flags(X) ::= class_flags(A) NATIVE.					{ X.Flags = A.Flags | 0/*FIXME*/; X.Replaces = A.Replaces; }
+class_flags(X) ::= class_flags(A) REPLACES dottable_id(B).	{ X.Flags = A.Flags; X.Replaces = B; }
 
+/*----- Dottable Identifier -----*/
+// This can be either a single identifier or two identifiers connected by a .
+
+%type dottable_id{ZCC_Identifier *}
+
+dottable_id(X) ::= IDENTIFIER(A).
+{
+	NEW_AST_NODE(Identifier,id);
+	id->Id = A.Name();
+	X = id;
+}
+dottable_id(X) ::= IDENTIFIER(A) DOT IDENTIFIER(B).
+{
+	NEW_AST_NODE(Identifier,id1);
+	NEW_AST_NODE(Identifier,id2);
+	id1->Id = A.Name();
+	id2->Id = B.Name();
+	id1->AppendSibling(id2);
+	X = id1;
+}
+
+/*------ Class Body ------*/
+// Body is a list of:
+//  * variable definitions
+//  * function definitions
+//  * enum definitions
+//  * struct definitions
+//  * state definitions
+//  * constants
+//  * defaults
 
 class_body ::= SEMICOLON class_innards EOF.
 class_body ::= LBRACE class_innards RBRACE.
@@ -111,7 +169,10 @@ class_body ::= LBRACE class_innards RBRACE.
 class_innards ::= .
 class_innards ::= class_innards class_member.
 
-/* Classes can define variables, functions, enums, structs, states, constants, and defaults. */
+%type struct_def{ZCC_Struct *}
+%type enum_def {ZCC_Enum *}
+%type states_def {ZCC_States *}
+
 class_member ::= declarator.
 class_member ::= enum_def.
 class_member ::= struct_def.
@@ -119,25 +180,79 @@ class_member ::= states_def.
 class_member ::= default_def.
 class_member ::= const_def.
 
-/* Structs can define variables, enums, and structs. */
-struct_def ::= STRUCT IDENTIFIER LBRACE struct_body RBRACE opt_semicolon.
-struct_member ::= declarator_no_fun.
-struct_member ::= enum_def.
+/*----- Struct Definition -----*/
+/* Structs can define variables, enums<s>, and structs</s>. */
 
+%type struct_body{ZCC_TreeNode *}
+%type struct_member{ZCC_TreeNode *}
+
+struct_def(X) ::= STRUCT IDENTIFIER(A) LBRACE struct_body(B) RBRACE opt_semicolon.
+{
+	NEW_AST_NODE(Struct,def);
+	def->StructName = A.Name();
+	def->Body = B;
+	X = def;
+}
+
+struct_body(X) ::= error.								{ X = NULL; }
+struct_body(X) ::= struct_member(A).					{ X = A; }
+struct_body(X) ::= struct_member(A) struct_body(B).		{ X = A; A->AppendSibling(B); }
+
+struct_member(X) ::= declarator_no_fun(A).				{ X = A; }
+struct_member(X) ::= enum_def(A).						{ X = A; }
+
+
+/*----- Enum Definition -----*/
 /* Enumerators are lists of named integers. */
-enum_def ::= ENUM IDENTIFIER enum_type LBRACE enum_list opt_comma RBRACE opt_semicolon.
 
-enum_type ::= .
-enum_type ::= COLON int_type.
+%type enum_type {EZCCIntType}
+%type enum_list {ZCC_EnumNode *}
+%type enumerator {ZCC_EnumNode *}
 
-enum_list ::= enumerator.
-enum_list ::= enum_list COMMA enumerator.
+enum_def(X) ::= ENUM IDENTIFIER(A) enum_type(B) LBRACE enum_list(C) opt_comma RBRACE opt_semicolon.
+{
+	NEW_AST_NODE(Enum,def);
+	def->EnumName = A.Name();
+	def->EnumType = B;
+	def->Elements = C;
+	X = def;
+}
 
-enumerator ::= IDENTIFIER.
-enumerator ::= IDENTIFIER EQ expr.	/* Expression must be constant. */
+enum_type(X) ::= .										{ X = ZCCINT_Auto; }
+enum_type(X) ::= COLON int_type(A).						{ X = A; }
 
-/* States */
-states_def ::= STATES scanner_mode LBRACE states_body RBRACE.
+enum_list(X) ::= error.									{ X = NULL; }
+enum_list(X) ::= enumerator(A).							{ X = A; }
+enum_list(X) ::= enum_list(A) COMMA enumerator(B).		{ X = A; A->AppendSibling(B); }
+
+enumerator(X) ::= IDENTIFIER(A).
+{
+	NEW_AST_NODE(EnumNode,node);
+	node->ElemName = A.Name();
+	node->ElemValue = NULL;
+	X = node;
+}
+enumerator(X) ::= IDENTIFIER(A) EQ expr(B).			/* Expression must be constant. */
+{
+	NEW_AST_NODE(EnumNode,node);
+	node->ElemName = A.Name();
+	node->ElemValue = B;
+	X = node;
+}
+
+/************ States ************/
+
+%type states_body {ZCC_StatePart *}
+%type state_line {ZCC_StatePart *}
+%type state_label {ZCC_StatePart *}
+%type state_flow {ZCC_StatePart *}
+
+states_def(X) ::= STATES scanner_mode LBRACE states_body(A) RBRACE.
+{
+	NEW_AST_NODE(States,def);
+	def->Body = A;
+	X = def;
+}
 
 /* We use a special scanner mode to allow for sprite names and frame characters
  * to not be quoted even if they contain special characters. The scanner_mode
@@ -152,12 +267,11 @@ states_def ::= STATES scanner_mode LBRACE states_body RBRACE.
  */
 scanner_mode ::= . { stat->sc.SetStateMode(true); }
 
-states_body ::= .
-states_body ::= error.
-/*states_body ::= states_body LABELID.*/
-states_body ::= states_body state_line.
-states_body ::= states_body state_label.
-states_body ::= states_body state_flow.
+states_body(X) ::= .								{ X = NULL; }
+states_body(X) ::= error.							{ X = NULL; }
+states_body(X) ::= states_body(A) state_line(B).	{ SAFE_APPEND(A,B); X = A; }
+states_body(X) ::= states_body(A) state_label(B).	{ SAFE_APPEND(A,B); X = A; }
+states_body(X) ::= states_body(A) state_flow(B).	{ SAFE_APPEND(A,B); X = A; }
 
 state_label ::= NWS(A) COLON.
 { Printf("Label %s\n", FName(ENamedName(A.Int)).GetChars()); }
@@ -201,15 +315,15 @@ dotted_identifier ::= dotted_identifier DOT IDENTIFIER.
 default_def ::= DEFAULT compound_statement.
 
 /* Type names */
-%type int_type {PType *}
+%type int_type {EZCCIntType}
 %type type_name {PType *}
 
-int_type(X) ::= SBYTE.						{ X = TypeSInt8; }
-int_type(X) ::= BYTE.						{ X = TypeUInt8; }
-int_type(X) ::= SHORT.						{ X = TypeSInt16; }
-int_type(X) ::= USHORT.						{ X = TypeUInt16; }
-int_type(X) ::= INT.						{ X = TypeSInt32; }
-int_type(X) ::= UINT.						{ X = TypeUInt32; }
+int_type(X) ::= SBYTE.						{ X = ZCCINT_SInt8; }
+int_type(X) ::= BYTE.						{ X = ZCCINT_UInt8; }
+int_type(X) ::= SHORT.						{ X = ZCCINT_SInt16; }
+int_type(X) ::= USHORT.						{ X = ZCCINT_UInt16; }
+int_type(X) ::= INT.						{ X = ZCCINT_SInt32; }
+int_type(X) ::= UINT.						{ X = ZCCINT_UInt32; }
 
 type_name(X) ::= BOOL.						{ /*FIXME*/ X = TypeBool; }
 type_name(X) ::= int_type(A).				{ X = A; }
@@ -357,9 +471,6 @@ func_param_flags ::= .
 func_param_flags ::= func_param_flags IN.
 func_param_flags ::= func_param_flags OUT.
 func_param_flags ::= func_param_flags OPTIONAL.
-
-struct_body ::= struct_member.
-struct_body ::= struct_member struct_body.
 
 /* Like UnrealScript, a constant's type is implied by its value's type. */
 const_def ::= CONST IDENTIFIER EQ expr SEMICOLON.

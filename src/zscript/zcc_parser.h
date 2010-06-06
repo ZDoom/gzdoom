@@ -14,16 +14,20 @@ union ZCCToken
 	int Int;
 	double Float;
 	FString *String;
+
+	ENamedName Name() { return ENamedName(Int); }
 };
 
 // Syntax tree structures.
 enum EZCCTreeNodeType
 {
+	AST_Identifier,
 	AST_Class,
 	AST_Struct,
 	AST_Enum,
 	AST_EnumNode,
 	AST_States,
+	AST_StatePart,
 	AST_StateLabel,
 	AST_StateGoto,
 	AST_StateLine,
@@ -58,6 +62,16 @@ enum EZCCTreeNodeType
 	AST_LocalVarStmt,
 };
 
+enum EZCCIntType
+{
+	ZCCINT_SInt8,
+	ZCCINT_UInt8,
+	ZCCINT_SInt16,
+	ZCCINT_UInt16,
+	ZCCINT_SInt32,
+	ZCCINT_UInt32,
+	ZCCINT_Auto,	// for enums, autoselect appropriately sized int
+};
 
 enum EZCCExprType
 {
@@ -151,49 +165,60 @@ struct ZCC_TreeNode
 	}
 };
 
+struct ZCC_Identifier : ZCC_TreeNode
+{
+	ENamedName Id;
+};
+
 struct ZCC_Class : ZCC_TreeNode
 {
-	FName ClassName;
-	FName ParentName;
+	ZCC_Identifier *ClassName;
+	ZCC_Identifier *ParentName;
+	ZCC_Identifier *Replaces;
 	VM_UWORD Flags;
 	ZCC_TreeNode *Body;
 };
 
 struct ZCC_Struct : ZCC_TreeNode
 {
-	FName StructName;
+	ENamedName StructName;
 	ZCC_TreeNode *Body;
 };
 
 struct ZCC_Enum : ZCC_TreeNode
 {
-	FName EnumName;
+	ENamedName EnumName;
+	EZCCIntType EnumType;
 	struct ZCC_EnumNode *Elements;
 };
 
 struct ZCC_EnumNode : ZCC_TreeNode
 {
-	FName ElemName;
+	ENamedName ElemName;
 	ZCC_TreeNode *ElemValue;
 };
 
 struct ZCC_States : ZCC_TreeNode
 {
-	ZCC_TreeNode *Body;
+	struct ZCC_StatePart *Body;
 };
 
-struct ZCC_StateLabel : ZCC_TreeNode
+struct ZCC_StatePart : ZCC_TreeNode
 {
-	FName Label;
 };
 
-struct ZCC_StateGoto : ZCC_TreeNode
+struct ZCC_StateLabel : ZCC_StatePart
+{
+	ENamedName Label;
+};
+
+struct ZCC_StateGoto : ZCC_StatePart
 {
 	ZCC_TreeNode *Label;
 	ZCC_TreeNode *Offset;
 };
 
-struct ZCC_StateLine : ZCC_TreeNode
+struct ZCC_StateLine : ZCC_StatePart
 {
 	char Sprite[4];
 	FString *Frames;
@@ -225,7 +250,7 @@ struct ZCC_Type : ZCC_TreeNode
 struct ZCC_BasicType : ZCC_Type
 {
 	PType *Type;
-	FName TypeName;
+	ENamedName TypeName;
 };
 
 struct ZCC_MapType : ZCC_Type
@@ -241,12 +266,12 @@ struct ZCC_DynArrayType : ZCC_Type
 
 struct ZCC_ClassType : ZCC_Type
 {
-	FName Restriction;
+	ENamedName Restriction;
 };
 
 struct ZCC_ExprID : ZCC_Expression
 {
-	FName Identifier;
+	ENamedName Identifier;
 };
 
 struct ZCC_ExprString : ZCC_Expression
@@ -267,7 +292,7 @@ struct ZCC_ExprFloat : ZCC_Expression
 struct ZCC_FuncParm : ZCC_TreeNode
 {
 	ZCC_Expression *Value;
-	FName Label;
+	ENamedName Label;
 };
 
 struct ZCC_ExprFuncCall : ZCC_Expression
@@ -279,7 +304,7 @@ struct ZCC_ExprFuncCall : ZCC_Expression
 struct ZCC_ExprMemberAccess : ZCC_Expression
 {
 	ZCC_Expression *Left;
-	FName Right;
+	ENamedName Right;
 };
 
 struct ZCC_ExprUnary : ZCC_Expression

@@ -193,10 +193,10 @@ public:
 	// It is up to the caller to make sure they are the correct types. There is
 	// only one prototype for this function in order to simplify type table
 	// management.
-	virtual bool IsMatch(const void *id1, const void *id2) const;
+	virtual bool IsMatch(intptr_t id1, intptr_t id2) const;
 
 	// Get the type IDs used by IsMatch
-	virtual void GetTypeIDs(const void *&id1, const void *&id2) const;
+	virtual void GetTypeIDs(intptr_t &id1, intptr_t &id2) const;
 
 	static void StaticInit();
 };
@@ -226,8 +226,8 @@ public:
 
 	PNamedType() : Outer(NULL) {}
 
-	virtual bool IsMatch(const void *id1, const void *id2) const;
-	virtual void GetTypeIDs(const void *&id1, const void *&id2) const;
+	virtual bool IsMatch(intptr_t id1, intptr_t id2) const;
+	virtual void GetTypeIDs(intptr_t &id1, intptr_t &id2) const;
 };
 
 // Basic types --------------------------------------------------------------
@@ -289,10 +289,14 @@ class PPointer : public PInt
 	DECLARE_CLASS(PPointer, PInt);
 	HAS_OBJECT_POINTERS;
 public:
+	PPointer(PType *pointsat);
+
 	PType *PointedType;
 
-	virtual bool IsMatch(const void *id1, const void *id2) const;
-	virtual void GetTypeIDs(const void *&id1, const void *&id2) const;
+	virtual bool IsMatch(intptr_t id1, intptr_t id2) const;
+	virtual void GetTypeIDs(intptr_t &id1, intptr_t &id2) const;
+protected:
+	PPointer();
 };
 
 class PClass;
@@ -301,12 +305,16 @@ class PClassPointer : public PPointer
 	DECLARE_CLASS(PClassPointer, PPointer);
 	HAS_OBJECT_POINTERS;
 public:
+	PClassPointer(PClass *restrict);
+
 	PClass *ClassRestriction;
 
 	typedef PClass *Type2;
 
-	virtual bool IsMatch(const void *id1, const void *id2) const;
-	virtual void GetTypeIDs(const void *&id1, const void *&id2) const;
+	virtual bool IsMatch(intptr_t id1, intptr_t id2) const;
+	virtual void GetTypeIDs(intptr_t &id1, intptr_t &id2) const;
+protected:
+	PClassPointer();
 };
 
 // Struct/class fields ------------------------------------------------------
@@ -343,11 +351,15 @@ class PArray : public PCompoundType
 	DECLARE_CLASS(PArray, PCompoundType);
 	HAS_OBJECT_POINTERS;
 public:
+	PArray(PType *etype, unsigned int ecount);
+
 	PType *ElementType;
 	unsigned int ElementCount;
 
-	virtual bool IsMatch(const void *id1, const void *id2) const;
-	virtual void GetTypeIDs(const void *&id1, const void *&id2) const;
+	virtual bool IsMatch(intptr_t id1, intptr_t id2) const;
+	virtual void GetTypeIDs(intptr_t &id1, intptr_t &id2) const;
+protected:
+	PArray();
 };
 
 // A vector is an array with extra operations.
@@ -355,6 +367,10 @@ class PVector : public PArray
 {
 	DECLARE_CLASS(PVector, PArray);
 	HAS_OBJECT_POINTERS;
+public:
+	PVector(unsigned int size);
+protected:
+	PVector();
 };
 
 class PDynArray : public PCompoundType
@@ -362,10 +378,14 @@ class PDynArray : public PCompoundType
 	DECLARE_CLASS(PDynArray, PCompoundType);
 	HAS_OBJECT_POINTERS;
 public:
+	PDynArray(PType *etype);
+
 	PType *ElementType;
 
-	virtual bool IsMatch(const void *id1, const void *id2) const;
-	virtual void GetTypeIDs(const void *&id1, const void *&id2) const;
+	virtual bool IsMatch(intptr_t id1, intptr_t id2) const;
+	virtual void GetTypeIDs(intptr_t &id1, intptr_t &id2) const;
+protected:
+	PDynArray();
 };
 
 class PMap : public PCompoundType
@@ -373,11 +393,15 @@ class PMap : public PCompoundType
 	DECLARE_CLASS(PMap, PCompoundType);
 	HAS_OBJECT_POINTERS;
 public:
+	PMap(PType *keytype, PType *valtype);
+
 	PType *KeyType;
 	PType *ValueType;
 
-	virtual bool IsMatch(const void *id1, const void *id2) const;
-	virtual void GetTypeIDs(const void *&id1, const void *&id2) const;
+	virtual bool IsMatch(intptr_t id1, intptr_t id2) const;
+	virtual void GetTypeIDs(intptr_t &id1, intptr_t &id2) const;
+protected:
+	PMap();
 };
 
 class PStruct : public PNamedType
@@ -397,8 +421,8 @@ public:
 	TArray<PType *> ReturnTypes;
 
 	size_t PropagateMark();
-	virtual bool IsMatch(const void *id1, const void *id2) const;
-	virtual void GetTypeIDs(const void *&id1, const void *&id2) const;
+	virtual bool IsMatch(intptr_t id1, intptr_t id2) const;
+	virtual void GetTypeIDs(intptr_t &id1, intptr_t &id2) const;
 };
 
 // TBD: Should we really support overloading?
@@ -517,6 +541,17 @@ inline PClass::MetaClass *PClass::GetClass() const
 	return static_cast<MetaClass *>(DObject::GetClass());
 }
 
+// A class that hasn't had its parent class defined yet ---------------------
+
+class PClassWaitingForParent : public PClass
+{
+	DECLARE_CLASS(PClassWaitingForParent, PClass);
+public:
+	PClassWaitingForParent(FName myname, FName parentname);
+
+	FName ParentName;
+};
+
 // Type tables --------------------------------------------------------------
 
 struct FTypeTable
@@ -525,16 +560,36 @@ struct FTypeTable
 
 	PType *TypeHash[HASH_SIZE];
 
-	PType *FindType(PClass *metatype, const void *parm1, const void *parm2, size_t *bucketnum);
-	void AddType(PType *type, PClass *metatype, const void *parm1, const void *parm2, size_t bucket);
+	PType *FindType(PClass *metatype, intptr_t parm1, intptr_t parm2, size_t *bucketnum);
+	void AddType(PType *type, PClass *metatype, intptr_t parm1, intptr_t parm2, size_t bucket);
 	void AddType(PType *type);
 	void Mark();
 	void Clear();
 
-	static size_t Hash(const void *p1, const void *p2, const void *p3);
+	static size_t Hash(const void *p1, intptr_t p2, intptr_t p3);
 };
 
 
 extern FTypeTable TypeTable;
+
+// Returns a type from the TypeTable. Will create one if it isn't present.
+PVector *NewVector(unsigned int size);
+PMap *NewMap(PType *keytype, PType *valuetype);
+PArray *NewArray(PType *type, unsigned int count);
+PDynArray *NewDynArray(PType *type);
+PPointer *NewPointer(PType *type);
+PClassPointer *NewClassPointer(PClass *restrict);
+PClassWaitingForParent *NewUnknownClass(FName myname, FName parentname);
+
+// Built-in types -----------------------------------------------------------
+
+extern PInt *TypeSInt8,  *TypeUInt8;
+extern PInt *TypeSInt16, *TypeUInt16;
+extern PInt *TypeSInt32, *TypeUInt32;
+extern PFloat *TypeFloat32, *TypeFloat64;
+extern PString *TypeString;
+extern PName *TypeName;
+extern PSound *TypeSound;
+extern PColor *TypeColor;
 
 #endif

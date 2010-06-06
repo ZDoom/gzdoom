@@ -5,83 +5,8 @@
 #include "w_wad.h"
 #include "cmdlib.h"
 #include "m_alloc.h"
-
-class ZCCParser
-{
-public:
-	void PrintError(const char *fmt, ...)
-	{
-		va_list argptr;
-		va_start(argptr, fmt);
-		VPrintf(PRINT_HIGH, fmt, argptr);
-		va_end(argptr);
-	}
-};
-
-union ZCCToken
-{
-	int Int;
-	double Float;
-	const char *String;
-};
-
-class StringTable
-{
-public:
-	StringTable()
-	{
-		memset(Buckets, 0, sizeof(Buckets));
-	}
-	~StringTable()
-	{
-		for (size_t i = 0; i < countof(Buckets); ++i)
-		{
-			Node *node, *next;
-			for (node = Buckets[i]; node != NULL; node = next)
-			{
-				if (node->String != NULL)
-				{
-					delete[] node->String;
-				}
-				next = node->Next;
-				delete node;
-			}
-		}
-	}
-	const char *Get(const char *str, int len)
-	{
-		unsigned int hash = SuperFastHash(str, len);
-		Node *node, **nodep;
-
-		nodep = &Buckets[hash % countof(Buckets)];
-		node = *nodep;
-		// Search for string in the hash table.
-		while (node != NULL)
-		{
-			if (node->Hash == hash && strcmp(str, node->String))
-			{
-				return node->String;
-			}
-			nodep = &node->Next;
-			node = *nodep;
-		}
-		// String is not in the hash table; add it.
-		node = new Node;
-		*nodep = node;
-		node->Hash = hash;
-		node->String = copystring(str);
-		node->Next = NULL;
-		return node->String;
-	}
-private:
-	struct Node
-	{
-		Node *Next;
-		const char *String;
-		unsigned int Hash;
-	};
-	Node *Buckets[256];
-};
+#include "memarena.h"
+#include "zcc_parser.h"
 
 static FString ZCCTokenName(int terminal);
 
@@ -217,7 +142,6 @@ static void DoParse(const char *filename)
 	}
 
 	FScanner sc;
-	StringTable strings;
 	void *parser;
 	int tokentype;
 	int lump;
@@ -245,11 +169,13 @@ static void DoParse(const char *filename)
 	FILE *f = fopen("trace.txt", "w");
 	ZCCParseTrace(f, "");
 #endif
+	ZCCParseState state(sc);
+
 	while (sc.GetToken())
 	{
 		if (sc.TokenType == TK_StringConst)
 		{
-			value.String = strings.Get(sc.String, sc.StringLen);
+			value.String = state.Strings.Alloc(sc.String, sc.StringLen);
 			tokentype = ZCC_STRCONST;
 		}
 		else if (sc.TokenType == TK_IntConst)
@@ -285,7 +211,7 @@ static void DoParse(const char *filename)
 				break;
 			}
 		}
-		ZCCParse(parser, tokentype, value, &sc);
+		ZCCParse(parser, tokentype, value, &state);
 		if (failed)
 		{
 			sc.ScriptMessage("Parse failed\n");
@@ -293,8 +219,8 @@ static void DoParse(const char *filename)
 		}
 	}
 	value.Int = -1;
-	ZCCParse(parser, ZCC_EOF, value, &sc);
-	ZCCParse(parser, 0, value, &sc);
+	ZCCParse(parser, ZCC_EOF, value, &state);
+	ZCCParse(parser, 0, value, &state);
 	ZCCParseFree(parser, free);
 #ifdef _DEBUG
 	if (f != NULL)

@@ -51,6 +51,14 @@ class FArchive;
 
 // TArray -------------------------------------------------------------------
 
+// Must match TArray's layout.
+struct FArray
+{
+	void *Array;
+	unsigned int Most;
+	unsigned int Count;
+};
+
 // T is the type stored in the array.
 // TT is the type returned by operator().
 template <class T, class TT=T>
@@ -442,6 +450,15 @@ template<class VT> struct TValueTraits
 	{
 		::new(&value) VT;
 	}
+};
+
+// Must match layout of TMap
+struct FMap
+{
+	void *Nodes;
+	void *LastFree;
+	hash_t Size;
+	hash_t NumUsed;
 };
 
 template<class KT, class VT, class MapType> class TMapIterator;

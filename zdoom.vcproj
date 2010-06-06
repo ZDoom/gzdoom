@@ -713,6 +713,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\memarena.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\src\mus2midi.cpp"
 				>
 			</File>
@@ -1399,6 +1403,10 @@
 			</File>
 			<File
 				RelativePath=".\src\md5.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\memarena.h"
 				>
 			</File>
 			<File
@@ -6551,6 +6559,10 @@
 			</File>
 			<File
 				RelativePath=".\src\zscript\zcc_parser.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\zscript\zcc_parser.h"
 				>
 			</File>
 		</Filter>

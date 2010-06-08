@@ -1153,8 +1153,8 @@ public:
 			double tmp = 0;
 			dx += ST_X;
 			dy += ST_Y - (Scaled ? script->resH : 200) + script->height;
-			w = forceWidth < 0 ? texture->GetScaledWidth() : forceWidth;
-			h = forceHeight < 0 ? texture->GetScaledHeight() : forceHeight;
+			w = forceWidth < 0 ? texture->GetScaledWidthDouble() : forceWidth;
+			h = forceHeight < 0 ? texture->GetScaledHeightDouble() : forceHeight;
 			double dcx = cx == 0 ? 0 : dx + ((double) cx / FRACUNIT) - texture->GetScaledLeftOffsetDouble();
 			double dcy = cy == 0 ? 0 : dy + ((double) cy / FRACUNIT) - texture->GetScaledTopOffsetDouble();
 			double dcr = cr == 0 ? INT_MAX : dx + w - ((double) cr / FRACUNIT);
@@ -1174,6 +1174,7 @@ public:
 				dcy += 200 - script->resH;
 				dcb += 200 - script->resH;
 			}
+
 			if(clearDontDraw)
 				screen->Clear(static_cast<int>(MAX<double>(dx, dcx)), static_cast<int>(MAX<double>(dy, dcy)), static_cast<int>(dcr), static_cast<int>(dcb), GPalette.BlackIndex, 0);
 			else
@@ -1185,8 +1186,8 @@ public:
 						DTA_DestHeightF, h,
 						DTA_ClipLeft, static_cast<int>(dcx),
 						DTA_ClipTop, static_cast<int>(dcy),
-						DTA_ClipRight, static_cast<int>(dcr),
-						DTA_ClipBottom, static_cast<int>(dcb),
+						DTA_ClipRight, static_cast<int>(MIN<double>(INT_MAX, dcr)),
+						DTA_ClipBottom, static_cast<int>(MIN<double>(INT_MAX, dcb)),
 						DTA_Translation, translate ? GetTranslation() : 0,
 						DTA_ColorOverlay, dim ? DIM_OVERLAY : 0,
 						DTA_CenterBottomOffset, (offsetflags & SBarInfoCommand::CENTER_BOTTOM) == SBarInfoCommand::CENTER_BOTTOM,
@@ -1202,8 +1203,8 @@ public:
 						DTA_DestHeightF, h,
 						DTA_ClipLeft, static_cast<int>(dcx),
 						DTA_ClipTop, static_cast<int>(dcy),
-						DTA_ClipRight, static_cast<int>(dcr),
-						DTA_ClipBottom, static_cast<int>(dcb),
+						DTA_ClipRight, static_cast<int>(MIN<double>(INT_MAX, dcr)),
+						DTA_ClipBottom, static_cast<int>(MIN<double>(INT_MAX, dcb)),
 						DTA_Translation, translate ? GetTranslation() : 0,
 						DTA_ColorOverlay, dim ? DIM_OVERLAY : 0,
 						DTA_CenterBottomOffset, (offsetflags & SBarInfoCommand::CENTER_BOTTOM) == SBarInfoCommand::CENTER_BOTTOM,

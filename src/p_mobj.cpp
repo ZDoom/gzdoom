@@ -4290,6 +4290,11 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 		mthing->args[0] = mthing->type - 14000;
 		mthing->type = 14065;
 	}
+	else if (mthing->type >= 14101 && mthing->type <= 14164)
+	{
+		mthing->args[0] = mthing->type - 14100;
+		mthing->type = 14165;
+	}
 	// find which type to spawn
 	i = DoomEdMap.FindType (mthing->type);
 

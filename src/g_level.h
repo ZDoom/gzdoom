@@ -239,6 +239,7 @@ struct FOptionalMapinfoDataPtr
 };
 
 typedef TMap<FName, FOptionalMapinfoDataPtr> FOptData;
+typedef TMap<int, FName> FMusicMap;
 
 struct level_info_t
 {
@@ -298,6 +299,7 @@ struct level_info_t
 	float		teamdamage;
 
 	FOptData	optdata;
+	FMusicMap	MusicMap;
 
 	TArray<FSpecialAction> specialactions;
 

@@ -646,7 +646,7 @@ public:
 	bool CheckLocalView (int playernum) const;
 
 	// Finds the first item of a particular type.
-	AInventory *FindInventory (const PClass *type);
+	AInventory *FindInventory (const PClass *type, bool subclass = false);
 	AInventory *FindInventory (FName type);
 	template<class T> T *FindInventory ()
 	{

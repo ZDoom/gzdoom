@@ -1167,7 +1167,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomPunch)
 
 	if (!PuffType) PuffType = PClass::FindClass(NAME_BulletPuff);
 
-	P_LineAttack (self, angle, Range, pitch, Damage, NAME_None, PuffType, true);
+	P_LineAttack (self, angle, Range, pitch, Damage, NAME_None, PuffType, true, &linetarget);
 
 	// turn to face target
 	if (linetarget)

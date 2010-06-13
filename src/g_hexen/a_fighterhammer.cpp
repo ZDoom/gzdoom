@@ -49,7 +49,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FHammerAttack)
 		slope = P_AimLineAttack (pmo, angle, HAMMER_RANGE, &linetarget, 0, ALF_CHECK3D);
 		if (linetarget)
 		{
-			P_LineAttack (pmo, angle, HAMMER_RANGE, slope, damage, NAME_Melee, PClass::FindClass ("HammerPuff"), true);
+			P_LineAttack (pmo, angle, HAMMER_RANGE, slope, damage, NAME_Melee, PClass::FindClass ("HammerPuff"), true, &linetarget);
 			AdjustPlayerAngle(pmo, linetarget);
 			if (linetarget->flags3&MF3_ISMONSTER || linetarget->player)
 			{
@@ -62,7 +62,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FHammerAttack)
 		slope = P_AimLineAttack(pmo, angle, HAMMER_RANGE, &linetarget, 0, ALF_CHECK3D);
 		if(linetarget)
 		{
-			P_LineAttack(pmo, angle, HAMMER_RANGE, slope, damage, NAME_Melee, PClass::FindClass ("HammerPuff"), true);
+			P_LineAttack(pmo, angle, HAMMER_RANGE, slope, damage, NAME_Melee, PClass::FindClass ("HammerPuff"), true, &linetarget);
 			AdjustPlayerAngle(pmo, linetarget);
 			if (linetarget->flags3&MF3_ISMONSTER || linetarget->player)
 			{

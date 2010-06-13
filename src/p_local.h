@@ -418,8 +418,8 @@ enum
 	ALF_CHECKCONVERSATION = 8,
 };
 
-AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance, int pitch, int damage, FName damageType, const PClass *pufftype, bool ismelee = false);
-AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance, int pitch, int damage, FName damageType, FName pufftype, bool ismelee = false);
+AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance, int pitch, int damage, FName damageType, const PClass *pufftype, bool ismelee = false, AActor **victim = NULL);
+AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance, int pitch, int damage, FName damageType, FName pufftype, bool ismelee = false, AActor **victim = NULL);
 void	P_TraceBleed (int damage, fixed_t x, fixed_t y, fixed_t z, AActor *target, angle_t angle, int pitch);
 void	P_TraceBleed (int damage, AActor *target, angle_t angle, int pitch);
 void	P_TraceBleed (int damage, AActor *target, AActor *missile);		// missile version

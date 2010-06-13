@@ -264,7 +264,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_M_Saw)
 		
 		P_LineAttack (self, angle, MELEERANGE+1,
 					P_AimLineAttack (self, angle, MELEERANGE+1, &linetarget), damage,
-					NAME_Melee, pufftype);
+					NAME_Melee, pufftype, false, &linetarget);
 
 		if (!linetarget)
 		{
@@ -318,7 +318,7 @@ static void MarinePunch(AActor *self, int damagemul)
 	A_FaceTarget (self);
 	angle = self->angle + (pr_m_punch.Random2() << 18);
 	pitch = P_AimLineAttack (self, angle, MELEERANGE, &linetarget);
-	P_LineAttack (self, angle, MELEERANGE, pitch, damage, NAME_Melee, NAME_BulletPuff, true);
+	P_LineAttack (self, angle, MELEERANGE, pitch, damage, NAME_Melee, NAME_BulletPuff, true, &linetarget);
 
 	// turn to face target
 	if (linetarget)

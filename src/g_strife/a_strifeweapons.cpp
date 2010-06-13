@@ -110,7 +110,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_JabDagger)
 
 	angle = self->angle + (pr_jabdagger.Random2() << 18);
 	pitch = P_AimLineAttack (self, angle, 80*FRACUNIT, &linetarget);
-	P_LineAttack (self, angle, 80*FRACUNIT, pitch, damage, NAME_Melee, "StrifeSpark", true);
+	P_LineAttack (self, angle, 80*FRACUNIT, pitch, damage, NAME_Melee, "StrifeSpark", true, &linetarget);
 
 	// turn to face target
 	if (linetarget)

@@ -3297,7 +3297,7 @@ static bool CheckForSpectral (FTraceResults &res)
 //==========================================================================
 
 AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
-				   int pitch, int damage, FName damageType, const PClass *pufftype, bool ismeleeattack)
+				   int pitch, int damage, FName damageType, const PClass *pufftype, bool ismeleeattack, AActor **victim)
 {
 	fixed_t vx, vy, vz, shootz;
 	FTraceResults trace;
@@ -3307,6 +3307,11 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 	bool killPuff = false;
 	AActor *puff = NULL;
 	int flags = ismeleeattack? PF_MELEERANGE : 0;
+
+	if (victim != NULL)
+	{
+		*victim = NULL;
+	}
 
 	angle >>= ANGLETOFINESHIFT;
 	pitch = (angle_t)(pitch) >> ANGLETOFINESHIFT;
@@ -3490,6 +3495,10 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 				}
 				P_DamageMobj (trace.Actor, puff ? puff : t1, t1, damage, damageType, flags);
 			}
+			if (victim != NULL)
+			{
+				*victim = trace.Actor;
+			}
 		}
 		if (trace.CrossedWater)
 		{
@@ -3511,16 +3520,20 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 }
 
 AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
-				   int pitch, int damage, FName damageType, FName pufftype, bool ismeleeattack)
+				   int pitch, int damage, FName damageType, FName pufftype, bool ismeleeattack, AActor **victim)
 {
 	const PClass * type = PClass::FindClass(pufftype);
+	if (victim != NULL)
+	{
+		*victim = NULL;
+	}
 	if (type == NULL)
 	{
 		Printf("Attempt to spawn unknown actor type '%s'\n", pufftype.GetChars());
 	}
 	else
 	{
-		return P_LineAttack(t1, angle, distance, pitch, damage, damageType, type, ismeleeattack);
+		return P_LineAttack(t1, angle, distance, pitch, damage, damageType, type, ismeleeattack, victim);
 	}
 	return NULL;
 }

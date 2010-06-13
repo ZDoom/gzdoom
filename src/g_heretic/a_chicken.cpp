@@ -175,7 +175,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BeakAttackPL1)
 	damage = 1 + (pr_beakatkpl1()&3);
 	angle = player->mo->angle;
 	slope = P_AimLineAttack (player->mo, angle, MELEERANGE, &linetarget);
-	P_LineAttack (player->mo, angle, MELEERANGE, slope, damage, NAME_Melee, "BeakPuff", true);
+	P_LineAttack (player->mo, angle, MELEERANGE, slope, damage, NAME_Melee, "BeakPuff", true, &linetarget);
 	if (linetarget)
 	{
 		player->mo->angle = R_PointToAngle2 (player->mo->x,
@@ -208,7 +208,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BeakAttackPL2)
 	damage = pr_beakatkpl2.HitDice (4);
 	angle = player->mo->angle;
 	slope = P_AimLineAttack (player->mo, angle, MELEERANGE, &linetarget);
-	P_LineAttack (player->mo, angle, MELEERANGE, slope, damage, NAME_Melee, "BeakPuff", true);
+	P_LineAttack (player->mo, angle, MELEERANGE, slope, damage, NAME_Melee, "BeakPuff", true, &linetarget);
 	if (linetarget)
 	{
 		player->mo->angle = R_PointToAngle2 (player->mo->x,

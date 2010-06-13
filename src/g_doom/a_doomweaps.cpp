@@ -52,7 +52,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_Punch)
 
 	angle += pr_punch.Random2() << 18;
 	pitch = P_AimLineAttack (self, angle, MELEERANGE, &linetarget);
-	P_LineAttack (self, angle, MELEERANGE, pitch, damage, NAME_Melee, NAME_BulletPuff, true);
+
+	P_LineAttack (self, angle, MELEERANGE, pitch, damage, NAME_Melee, NAME_BulletPuff, true, &linetarget);
 
 	// turn to face target
 	if (linetarget)

@@ -90,6 +90,11 @@ const int BF_AFFECTBOSSES = 4;
 const int SMF_LOOK = 1;
 const int SMF_PRECISE = 2;
 
+// Flags for A_CustomPunch
+const int CPF_USEAMMO = 1;
+const int CPF_DAGGER = 2;
+const int CPF_PULLIN = 4;
+
 // Activation flags
 enum
 {

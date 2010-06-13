@@ -44,6 +44,7 @@ struct FLookExParams
 	FState *seestate;
 };
 
+void P_DaggerAlert (AActor *target, AActor *emitter);
 void P_RecursiveSound (sector_t *sec, AActor *soundtarget, bool splash, int soundblocks);
 bool P_HitFriend (AActor *self);
 void P_NoiseAlert (AActor *target, AActor *emmiter, bool splash=false);

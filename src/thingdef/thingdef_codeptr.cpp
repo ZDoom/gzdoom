@@ -1805,6 +1805,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Print)
 		C_MidPrint(font != NULL ? font : SmallFont, formatted.GetChars());
 		con_midtime = saved;
 	}
+	ACTION_SET_RESULT(false);	// Prints should never set the result for inventory state chains!
 }
 
 //===========================================================================
@@ -1835,6 +1836,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_PrintBold)
 	FString formatted = strbin1(text);
 	C_MidPrintBold(font != NULL ? font : SmallFont, formatted.GetChars());
 	con_midtime = saved;
+	ACTION_SET_RESULT(false);	// Prints should never set the result for inventory state chains!
 }
 
 //===========================================================================
@@ -1848,6 +1850,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Log)
 	ACTION_PARAM_START(1);
 	ACTION_PARAM_STRING(text, 0);
 	Printf("%s\n", text);
+	ACTION_SET_RESULT(false);	// Prints should never set the result for inventory state chains!
 }
 
 //===========================================================================
@@ -1861,6 +1864,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_LogInt)
 	ACTION_PARAM_START(1);
 	ACTION_PARAM_INT(num, 0);
 	Printf("%d\n", num);
+	ACTION_SET_RESULT(false);	// Prints should never set the result for inventory state chains!
 }
 
 //===========================================================================

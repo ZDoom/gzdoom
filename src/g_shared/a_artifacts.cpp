@@ -750,16 +750,27 @@ void APowerIronFeet::AbsorbDamage (int damage, FName damageType, int &newdamage)
 	if (damageType == NAME_Drowning)
 	{
 		newdamage = 0;
-		if (Owner->player != NULL)
-		{
-			Owner->player->mo->ResetAirSupply ();
-		}
 	}
 	else if (Inventory != NULL)
 	{
 		Inventory->AbsorbDamage (damage, damageType, newdamage);
 	}
 }
+
+//===========================================================================
+//
+// APowerIronFeet :: DoEffect
+//
+//===========================================================================
+
+void APowerIronFeet::DoEffect ()
+{
+	if (Owner->player != NULL)
+	{
+		Owner->player->mo->ResetAirSupply ();
+	}
+}
+
 
 // Strife Environment Suit Powerup -------------------------------------------
 

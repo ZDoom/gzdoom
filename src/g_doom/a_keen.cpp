@@ -15,7 +15,7 @@
 //
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_KeenDie)
 {
-	CALL_ACTION(A_NoBlocking, self);
+	A_Unblock(self, false);
 	
 	// scan the remaining thinkers to see if all Keens are dead
 	AActor *other;

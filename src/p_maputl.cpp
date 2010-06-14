@@ -825,7 +825,7 @@ void FBlockThingsIterator::SwitchBlock(int x, int y)
 //
 //===========================================================================
 
-AActor *FBlockThingsIterator::Next()
+AActor *FBlockThingsIterator::Next(bool centeronly)
 {
 	for (;;)
 	{
@@ -842,37 +842,55 @@ AActor *FBlockThingsIterator::Next()
 			{ // This actor doesn't span blocks, so we know it can only ever be checked once.
 				return me;
 			}
-			size_t hash = ((size_t)me >> 3) % countof(Buckets);
-			for (i = Buckets[hash]; i >= 0; )
+			if (centeronly)
 			{
-				entry = GetHashEntry(i);
-				if (entry->Actor == me)
-				{ // I've already been checked. Skip to the next actor.
-					break;
+				// Block boundaries for compatibility mode
+				fixed_t blockleft = (curx << MAPBLOCKSHIFT) + bmaporgx;
+				fixed_t blockright = blockleft + MAPBLOCKSIZE;
+				fixed_t blockbottom = (cury << MAPBLOCKSHIFT) + bmaporgy;
+				fixed_t blocktop = blockbottom + MAPBLOCKSIZE;
+
+				// only return actors with the center in this block
+				if (me->x >= blockleft && me->x < blockright &&
+					me->y >= blockbottom && me->y < blocktop)
+				{
+					return me;
 				}
-				i = entry->Next;
 			}
-			if (i < 0)
-			{ // Add me to the hash table and return me.
-				if (NumFixedHash < (int)countof(FixedHash))
+			else
+			{
+				size_t hash = ((size_t)me >> 3) % countof(Buckets);
+				for (i = Buckets[hash]; i >= 0; )
 				{
-					entry = &FixedHash[NumFixedHash];
-					entry->Next = Buckets[hash];
-					Buckets[hash] = NumFixedHash++;
-				}
-				else
-				{
-					if (DynHash.Size() == 0)
-					{
-						DynHash.Grow(50);
+					entry = GetHashEntry(i);
+					if (entry->Actor == me)
+					{ // I've already been checked. Skip to the next actor.
+						break;
 					}
-					i = DynHash.Reserve(1);
-					entry = &DynHash[i];
-					entry->Next = Buckets[hash];
-					Buckets[hash] = i + countof(FixedHash);
+					i = entry->Next;
 				}
-				entry->Actor = me;
-				return me;
+				if (i < 0)
+				{ // Add me to the hash table and return me.
+					if (NumFixedHash < (int)countof(FixedHash))
+					{
+						entry = &FixedHash[NumFixedHash];
+						entry->Next = Buckets[hash];
+						Buckets[hash] = NumFixedHash++;
+					}
+					else
+					{
+						if (DynHash.Size() == 0)
+						{
+							DynHash.Grow(50);
+						}
+						i = DynHash.Reserve(1);
+						entry = &DynHash[i];
+						entry->Next = Buckets[hash];
+						Buckets[hash] = i + countof(FixedHash);
+					}
+					entry->Actor = me;
+					return me;
+				}
 			}
 		}
 
@@ -959,91 +977,146 @@ void FPathTraverse::AddLineIntercepts(int bx, int by)
 //
 //===========================================================================
 
-void FPathTraverse::AddThingIntercepts (int bx, int by, FBlockThingsIterator &it)
+void FPathTraverse::AddThingIntercepts (int bx, int by, FBlockThingsIterator &it, bool compatible)
 {
 	AActor *thing;
 
 	it.SwitchBlock(bx, by);
-	while ((thing = it.Next()))
+	while ((thing = it.Next(compatible)))
 	{
 		int numfronts = 0;
 		divline_t line;
 		int i;
 
-		// [RH] Don't check a corner to corner crossection for hit.
-		// Instead, check against the actual bounding box.
 
-		// There's probably a smarter way to determine which two sides
-		// of the thing face the trace than by trying all four sides...
-		for (i = 0; i < 4; ++i)
+		if (!compatible)
 		{
-			switch (i)
+			// [RH] Don't check a corner to corner crossection for hit.
+			// Instead, check against the actual bounding box (but not if compatibility optioned.)
+
+			// There's probably a smarter way to determine which two sides
+			// of the thing face the trace than by trying all four sides...
+			for (i = 0; i < 4; ++i)
 			{
-			case 0:		// Top edge
-				line.x = thing->x + thing->radius;
-				line.y = thing->y + thing->radius;
-				line.dx = -thing->radius * 2;
-				line.dy = 0;
-				break;
-
-			case 1:		// Right edge
-				line.x = thing->x + thing->radius;
-				line.y = thing->y - thing->radius;
-				line.dx = 0;
-				line.dy = thing->radius * 2;
-				break;
-
-			case 2:		// Bottom edge
-				line.x = thing->x - thing->radius;
-				line.y = thing->y - thing->radius;
-				line.dx = thing->radius * 2;
-				line.dy = 0;
-				break;
-
-			case 3:		// Left edge
-				line.x = thing->x - thing->radius;
-				line.y = thing->y + thing->radius;
-				line.dx = 0;
-				line.dy = thing->radius * -2;
-				break;
-			}
-			// Check if this side is facing the trace origin
-			if (P_PointOnDivlineSide (trace.x, trace.y, &line) == 0)
-			{
-				numfronts++;
-
-				// If it is, see if the trace crosses it
-				if (P_PointOnDivlineSide (line.x, line.y, &trace) !=
-					P_PointOnDivlineSide (line.x + line.dx, line.y + line.dy, &trace))
+				switch (i)
 				{
-					// It's a hit
-					fixed_t frac = P_InterceptVector (&trace, &line);
-					if (frac < 0)
-					{ // behind source
+				case 0:		// Top edge
+					line.x = thing->x + thing->radius;
+					line.y = thing->y + thing->radius;
+					line.dx = -thing->radius * 2;
+					line.dy = 0;
+					break;
+
+				case 1:		// Right edge
+					line.x = thing->x + thing->radius;
+					line.y = thing->y - thing->radius;
+					line.dx = 0;
+					line.dy = thing->radius * 2;
+					break;
+
+				case 2:		// Bottom edge
+					line.x = thing->x - thing->radius;
+					line.y = thing->y - thing->radius;
+					line.dx = thing->radius * 2;
+					line.dy = 0;
+					break;
+
+				case 3:		// Left edge
+					line.x = thing->x - thing->radius;
+					line.y = thing->y + thing->radius;
+					line.dx = 0;
+					line.dy = thing->radius * -2;
+					break;
+				}
+				// Check if this side is facing the trace origin
+				if (P_PointOnDivlineSide (trace.x, trace.y, &line) == 0)
+				{
+					numfronts++;
+
+					// If it is, see if the trace crosses it
+					if (P_PointOnDivlineSide (line.x, line.y, &trace) !=
+						P_PointOnDivlineSide (line.x + line.dx, line.y + line.dy, &trace))
+					{
+						// It's a hit
+						fixed_t frac = P_InterceptVector (&trace, &line);
+						if (frac < 0)
+						{ // behind source
+							continue;
+						}
+
+						intercept_t newintercept;
+						newintercept.frac = frac;
+						newintercept.isaline = false;
+						newintercept.done = false;
+						newintercept.d.thing = thing;
+						intercepts.Push (newintercept);
 						continue;
 					}
+				}
+			}
 
+			// If none of the sides was facing the trace, then the trace
+			// must have started inside the box, so add it as an intercept.
+			if (numfronts == 0)
+			{
+				intercept_t newintercept;
+				newintercept.frac = 0;
+				newintercept.isaline = false;
+				newintercept.done = false;
+				newintercept.d.thing = thing;
+				intercepts.Push (newintercept);
+			}
+		}
+		else
+		{
+			// Old code for compatibility purposes
+			fixed_t 		x1, y1, x2, y2;
+			int 			s1, s2;
+			divline_t		dl;
+			fixed_t 		frac;
+				
+			bool tracepositive = (trace.dx ^ trace.dy)>0;
+						
+			// check a corner to corner crossection for hit
+			if (tracepositive)
+			{
+				x1 = thing->x - thing->radius;
+				y1 = thing->y + thing->radius;
+						
+				x2 = thing->x + thing->radius;
+				y2 = thing->y - thing->radius;					
+			}
+			else
+			{
+				x1 = thing->x - thing->radius;
+				y1 = thing->y - thing->radius;
+						
+				x2 = thing->x + thing->radius;
+				y2 = thing->y + thing->radius;					
+			}
+			
+			s1 = P_PointOnDivlineSide (x1, y1, &trace);
+			s2 = P_PointOnDivlineSide (x2, y2, &trace);
+
+			if (s1 != s2)
+			{
+				dl.x = x1;
+				dl.y = y1;
+				dl.dx = x2-x1;
+				dl.dy = y2-y1;
+				
+				frac = P_InterceptVector (&trace, &dl);
+
+				if (frac >= 0)
+				{
 					intercept_t newintercept;
 					newintercept.frac = frac;
 					newintercept.isaline = false;
 					newintercept.done = false;
 					newintercept.d.thing = thing;
 					intercepts.Push (newintercept);
-					continue;
 				}
 			}
-		}
-
-		// If none of the sides was facing the trace, then the trace
-		// must have started inside the box, so add it as an intercept.
-		if (numfronts == 0)
-		{
-			intercept_t newintercept;
-			newintercept.frac = 0;
-			newintercept.isaline = false;
-			newintercept.done = false;
-			newintercept.d.thing = thing;
-			intercepts.Push (newintercept);
 		}
 	}
 }
@@ -1196,6 +1269,8 @@ FPathTraverse::FPathTraverse (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, in
 	// from skipping the break statement.
 	mapx = xt1;
 	mapy = yt1;
+
+	bool compatible = (flags & PT_COMPATIBLE) && (i_compatflags & COMPATF_HITSCAN);
 		
 	// we want to use one list of checked actors for the entire operation
 	FBlockThingsIterator btit;
@@ -1208,7 +1283,7 @@ FPathTraverse::FPathTraverse (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, in
 		
 		if (flags & PT_ADDTHINGS)
 		{
-			AddThingIntercepts(mapx, mapy, btit);
+			AddThingIntercepts(mapx, mapy, btit, compatible);
 		}
 				
 		if (mapx == xt2 && mapy == yt2)
@@ -1238,21 +1313,28 @@ FPathTraverse::FPathTraverse (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, in
 			// being entered need to be checked (which will happen when this loop
 			// continues), but the other two blocks adjacent to the corner also need to
 			// be checked.
-			if (flags & PT_ADDLINES)
+			if (!compatible)
 			{
-				AddLineIntercepts(mapx + mapxstep, mapy);
-				AddLineIntercepts(mapx, mapy + mapystep);
+				if (flags & PT_ADDLINES)
+				{
+					AddLineIntercepts(mapx + mapxstep, mapy);
+					AddLineIntercepts(mapx, mapy + mapystep);
+				}
+				
+				if (flags & PT_ADDTHINGS)
+				{
+					AddThingIntercepts(mapx + mapxstep, mapy, btit, false);
+					AddThingIntercepts(mapx, mapy + mapystep, btit, false);
+				}
+				xintercept += xstep;
+				yintercept += ystep;
+				mapx += mapxstep;
+				mapy += mapystep;
 			}
-			
-			if (flags & PT_ADDTHINGS)
+			else
 			{
-				AddThingIntercepts(mapx + mapxstep, mapy, btit);
-				AddThingIntercepts(mapx, mapy + mapystep, btit);
+				count = 100; //	Doom originally did not handle this case so do the same in compatibility mode.
 			}
-			xintercept += xstep;
-			yintercept += ystep;
-			mapx += mapxstep;
-			mapy += mapystep;
 			break;
 		}
 	}

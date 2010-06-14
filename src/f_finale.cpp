@@ -1226,7 +1226,7 @@ void F_Drawer (void)
 			FTextureID picnum = TexMan.CheckForTexture (FinaleFlat, FTexture::TEX_Flat, FTextureManager::TEXMAN_Overridable);
 			if (picnum.isValid())
 			{
-				screen->FlatFill (0,0, SCREENWIDTH, SCREENHEIGHT, TexMan(picnum));
+				screen->FlatFill (0,0, SCREENWIDTH, SCREENHEIGHT, TexMan[picnum]);
 			}
 			else
 			{
@@ -1322,15 +1322,15 @@ void F_Drawer (void)
 			if (multiplayer)
 			{
 				screen->DrawTexture (TexMan["CHESSALL"], 20, 0,
-					DTA_VirtualWidth, w,
-					DTA_VirtualHeight, h, TAG_DONE);
+					DTA_VirtualWidthF, w,
+					DTA_VirtualHeightF, h, TAG_DONE);
 			}
 			else if (players[consoleplayer].CurrentPlayerClass > 0)
 			{
 				picname = players[consoleplayer].CurrentPlayerClass == 1 ? "CHESSC" : "CHESSM";
 				screen->DrawTexture (TexMan[picname], 60, 0,
-					DTA_VirtualWidth, w,
-					DTA_VirtualHeight, h, TAG_DONE);
+					DTA_VirtualWidthF, w,
+					DTA_VirtualHeightF, h, TAG_DONE);
 			}
 		}
 	}

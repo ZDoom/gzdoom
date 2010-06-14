@@ -16,6 +16,7 @@ struct FCompatValues
 {
 	int CompatFlags;
 	int BCompatFlags;
+	unsigned int ExtCommandIndex;
 };
 
 struct FMD5HashTraits
@@ -37,5 +38,6 @@ extern TMap<FMD5Holder, FCompatValues, FMD5HashTraits> BCompatMap;
 
 void ParseCompatibility();
 void CheckCompatibility(MapData *map);
+void SetCompatibilityParams();
 
 #endif

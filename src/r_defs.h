@@ -763,7 +763,7 @@ struct side_t
 	BYTE		Flags;
 	int			Index;		// needed to access custom UDMF fields which are stored in loading order.
 
-	int GetLightLevel (bool foggy, int baselight) const;
+	int GetLightLevel (bool foggy, int baselight, int *fake = NULL) const;
 
 	void SetLight(SWORD l)
 	{

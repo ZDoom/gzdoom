@@ -2111,3 +2111,82 @@ void AAmbientSound::Deactivate (AActor *activator)
 		}
 	}
 }
+
+
+//==========================================================================
+//
+// S_ParseMusInfo
+// Parses MUSINFO lump.
+//
+//==========================================================================
+
+void S_ParseMusInfo()
+{
+	int lastlump = 0, lump;
+
+	while ((lump = Wads.FindLump ("MUSINFO", &lastlump)) != -1)
+	{
+		FScanner sc(lump);
+
+		while (sc.GetString())
+		{
+			level_info_t *map = FindLevelInfo(sc.String);
+
+			if (map == NULL)
+			{
+				// Don't abort for invalid maps
+				sc.ScriptMessage("Unknown map '%s'", sc.String);
+			}
+			while (sc.CheckNumber())
+			{
+				int index = sc.Number;
+				sc.MustGetString();
+				if (index > 0)
+				{
+					FName music = sc.String;
+					if (map != NULL)
+					{
+						map->MusicMap[index] = music;
+					}
+				}
+			}
+		}
+	}
+}
+
+
+//==========================================================================
+//
+// Music changer. Uses the sector action class to do its job
+//
+//==========================================================================
+
+class AMusicChanger : public ASectorAction
+{
+	DECLARE_CLASS (AMusicChanger, ASectorAction)
+public:
+	virtual bool TriggerAction (AActor *triggerer, int activationType);
+};
+
+IMPLEMENT_CLASS(AMusicChanger)
+
+bool AMusicChanger::TriggerAction (AActor *triggerer, int activationType)
+{
+	if (activationType & SECSPAC_Enter)
+	{
+		if (args[0] != 0)
+		{
+			FName *music = level.info->MusicMap.CheckKey(args[0]);
+
+			if (music != NULL)
+			{
+				S_ChangeMusic(music->GetChars(), args[1]);
+			}
+		}
+		else
+		{
+			S_ChangeMusic("*");
+		}
+	}
+	return Super::TriggerAction (triggerer, activationType);
+}

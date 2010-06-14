@@ -499,6 +499,8 @@ void FMultiPatchTexture::MakeTexture ()
 	{
 		for (int i = 0; i < NumParts; ++i)
 		{
+			if (Parts[i].Texture->bHasCanvas) continue;	// cannot use camera textures as patch.
+		
 			BYTE *trans = Parts[i].Translation ? Parts[i].Translation->Remap : NULL;
 			{
 				if (Parts[i].Blend != 0)
@@ -561,6 +563,8 @@ int FMultiPatchTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rota
 	for(int i = 0; i < NumParts; i++)
 	{
 		int ret = -1;
+		
+		if (Parts[i].Texture->bHasCanvas) continue;	// cannot use camera textures as patch.
 
 		// rotated multipatch parts cannot be composited directly
 		bool rotatedmulti = Parts[i].Rotate != 0 && Parts[i].Texture->bMultiPatch;
@@ -614,6 +618,7 @@ int FMultiPatchTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rota
 			FBitmap bmp1;
 			if (bmp1.Create(Parts[i].Texture->GetWidth(), Parts[i].Texture->GetHeight()))
 			{
+				bmp1.Zero();
 				Parts[i].Texture->CopyTrueColorPixels(&bmp1, 0, 0);
 				bmp->CopyPixelDataRGB(x+Parts[i].OriginX, y+Parts[i].OriginY, bmp1.GetPixels(), 
 					bmp1.GetWidth(), bmp1.GetHeight(), 4, bmp1.GetPitch(), Parts[i].Rotate, CF_BGRA, inf);

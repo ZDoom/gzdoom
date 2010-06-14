@@ -129,6 +129,7 @@ enum ELevelFlags
 
 	LEVEL_SPECLOWERFLOOR		= 0x00000100,
 	LEVEL_SPECOPENDOOR			= 0x00000200,
+	LEVEL_SPECLOWERFLOORTOHIGHEST= 0x00000300,
 	LEVEL_SPECACTIONSMASK		= 0x00000300,
 
 	LEVEL_MONSTERSTELEFRAG		= 0x00000400,
@@ -238,6 +239,7 @@ struct FOptionalMapinfoDataPtr
 };
 
 typedef TMap<FName, FOptionalMapinfoDataPtr> FOptData;
+typedef TMap<int, FName> FMusicMap;
 
 struct level_info_t
 {
@@ -279,6 +281,7 @@ struct level_info_t
 	DWORD		compatflags;
 	DWORD		compatmask;
 	FString		Translator;	// for converting Doom-format linedef and sector types.
+	int			DefaultEnvironment;	// Default sound environment for the map.
 
 	// Redirection: If any player is carrying the specified item, then
 	// you go to the RedirectMap instead of this one.
@@ -296,6 +299,7 @@ struct level_info_t
 	float		teamdamage;
 
 	FOptData	optdata;
+	FMusicMap	MusicMap;
 
 	TArray<FSpecialAction> specialactions;
 
@@ -391,6 +395,7 @@ struct FLevelLocals
 	fixed_t		aircontrol;
 	fixed_t		airfriction;
 	int			airsupply;
+	int			DefaultEnvironment;		// Default sound environment.
 
 	FSectorScrollValues	*Scrolls;		// NULL if no DScrollers in this level
 
@@ -536,6 +541,7 @@ enum ESkillProperty
 	SKILLP_NoPain
 };
 int G_SkillProperty(ESkillProperty prop);
+const char * G_SkillName();
 
 typedef TMap<FName, FString> SkillMenuNames;
 
@@ -556,8 +562,8 @@ struct FSkillInfo
 	int SpawnFilter;
 	int ACSReturn;
 	FString MenuName;
+	FString PicName;
 	SkillMenuNames MenuNamesForPlayerClass;
-	bool MenuNameIsLump;
 	bool MustConfirm;
 	FString MustConfirmText;
 	char Shortcut;

@@ -86,6 +86,7 @@ class APowerIronFeet : public APowerup
 	DECLARE_CLASS (APowerIronFeet, APowerup)
 public:
 	void AbsorbDamage (int damage, FName damageType, int &newdamage);
+	void DoEffect ();
 };
 
 class APowerMask : public APowerIronFeet

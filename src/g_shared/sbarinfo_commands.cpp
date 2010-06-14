@@ -514,13 +514,15 @@ class CommandDrawString : public SBarInfoCommand
 {
 	public:
 		CommandDrawString(SBarInfo *script) : SBarInfoCommand(script),
-			shadow(false), spacing(0), font(NULL), translation(CR_UNTRANSLATED)
+			shadow(false), shadowX(2), shadowY(2), spacing(0), font(NULL),
+			translation(CR_UNTRANSLATED), cache(-1), strValue(CONSTANT),
+			valueArgument(0)
 		{
 		}
 
 		void	Draw(const SBarInfoMainBlock *block, const DSBarInfo *statusBar)
 		{
-			statusBar->DrawString(font, str.GetChars(), x, y, block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets(), translation, spacing, shadow);
+			statusBar->DrawString(font, str.GetChars(), x, y, block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets(), translation, spacing, shadow, shadowX, shadowY);
 		}
 		void	Parse(FScanner &sc, bool fullScreenOffsets)
 		{
@@ -531,10 +533,56 @@ class CommandDrawString : public SBarInfoCommand
 			sc.MustGetToken(',');
 			translation = GetTranslation(sc);
 			sc.MustGetToken(',');
-			sc.MustGetToken(TK_StringConst);
-			str = sc.String;
+			if(sc.CheckToken(TK_Identifier))
+			{
+				if(sc.Compare("levelname"))
+					strValue = LEVELNAME;
+				else if(sc.Compare("levellump"))
+					strValue = LEVELLUMP;
+				else if(sc.Compare("skillname"))
+					strValue = SKILLNAME;
+				else if(sc.Compare("playerclass"))
+					strValue = PLAYERCLASS;
+				else if(sc.Compare("playername"))
+					strValue = PLAYERNAME;
+				else if(sc.Compare("ammo1tag"))
+					strValue = AMMO1TAG;
+				else if(sc.Compare("ammo2tag"))
+					strValue = AMMO2TAG;
+				else if(sc.Compare("weapontag"))
+					strValue = WEAPONTAG;
+				else if(sc.Compare("inventorytag"))
+					strValue = INVENTORYTAG;
+				else if(sc.Compare("globalvar"))
+				{
+					strValue = GLOBALVAR;
+					sc.MustGetToken(TK_IntConst);
+					if(sc.Number < 0 || sc.Number >= NUM_GLOBALVARS)
+						sc.ScriptError("Global variable number out of range: %d", sc.Number);
+					valueArgument = sc.Number;
+				}
+				else if(sc.Compare("globalarray"))
+				{
+					strValue = GLOBALARRAY;
+					sc.MustGetToken(TK_IntConst);
+					if(sc.Number < 0 || sc.Number >= NUM_GLOBALVARS)
+						sc.ScriptError("Global variable number out of range: %d", sc.Number);
+					valueArgument = sc.Number;
+				}
+				else
+					sc.ScriptError("Unknown string '%s'.", sc.String);
+			}
+			else
+			{
+				strValue = CONSTANT;
+				sc.MustGetToken(TK_StringConst);
+				if(sc.String[0] == '$')
+					str = GStrings[sc.String+1];
+				else
+					str = sc.String;
+			}
 			sc.MustGetToken(',');
-			GetCoordinates(sc, fullScreenOffsets, x, y);
+			GetCoordinates(sc, fullScreenOffsets, startX, y);
 			if(sc.CheckToken(',')) //spacing
 			{
 				sc.MustGetToken(TK_IntConst);
@@ -542,19 +590,156 @@ class CommandDrawString : public SBarInfoCommand
 			}
 			sc.MustGetToken(';');
 
+			RealignString();
+		}
+		void	Reset()
+		{
+			switch(strValue)
+			{
+				case PLAYERCLASS:
+					// userinfo changes before the actual class change.
+				case SKILLNAME:
+					// Although it's not possible for the skill level to change
+					// midlevel, it is possible the level was restarted.
+					cache = -1;
+					break;
+				default:
+					break;
+			}
+		}
+		void	Tick(const SBarInfoMainBlock *block, const DSBarInfo *statusBar, bool hudChanged)
+		{
+			switch(strValue)
+			{
+				case LEVELNAME:
+					if(level.lumpnum != cache)
+					{
+						cache = level.lumpnum;
+						str = level.LevelName;
+						RealignString();
+					}
+					break;
+				case LEVELLUMP:
+					if(level.lumpnum != cache)
+					{
+						cache = level.lumpnum;
+						str = level.mapname;
+						RealignString();
+					}
+					break;
+				case SKILLNAME:
+					if(level.lumpnum != cache) // Can only change skill between level.
+					{
+						cache = level.lumpnum;
+						str = G_SkillName();
+						RealignString();
+					}
+					break;
+				case PLAYERCLASS:
+					if(statusBar->CPlayer->userinfo.PlayerClass != cache)
+					{
+						cache = statusBar->CPlayer->userinfo.PlayerClass;
+						str = statusBar->CPlayer->cls->Meta.GetMetaString(APMETA_DisplayName);
+						RealignString();
+					}
+					break;
+				case AMMO1TAG:
+					SetStringToTag(statusBar->ammo1);
+					break;
+				case AMMO2TAG:
+					SetStringToTag(statusBar->ammo2);
+					break;
+				case WEAPONTAG:
+					SetStringToTag(statusBar->CPlayer->ReadyWeapon);
+					break;
+				case INVENTORYTAG:
+					SetStringToTag(statusBar->CPlayer->mo->InvSel);
+					break;
+				case PLAYERNAME:
+					// Can't think of a good way to detect changes to this, so
+					// I guess copying it every tick will have to do.
+					str = statusBar->CPlayer->userinfo.netname;
+					RealignString();
+					break;
+				case GLOBALVAR:
+					if(ACS_GlobalVars[valueArgument] != cache)
+					{
+						cache = ACS_GlobalVars[valueArgument];
+						str = FBehavior::StaticLookupString(ACS_GlobalVars[valueArgument]);
+						RealignString();
+					}
+					break;
+				case GLOBALARRAY:
+					if(ACS_GlobalArrays[valueArgument][consoleplayer] != cache)
+					{
+						cache = ACS_GlobalArrays[valueArgument][consoleplayer];
+						str = FBehavior::StaticLookupString(ACS_GlobalArrays[valueArgument][consoleplayer]);
+						RealignString();
+					}
+					break;
+				default:
+					break;
+			}
+		}
+	protected:
+		void RealignString()
+		{
+			x = startX;
 			if(script->spacingCharacter == '\0')
 				x -= static_cast<int> (font->StringWidth(str)+(spacing * str.Len()));
 			else //monospaced, so just multiplay the character size
 				x -= static_cast<int> ((font->GetCharWidth((int) script->spacingCharacter) + spacing) * str.Len());
 		}
-	protected:
+
+		enum StringValueType
+		{
+			LEVELNAME,
+			LEVELLUMP,
+			SKILLNAME,
+			PLAYERCLASS,
+			PLAYERNAME,
+			AMMO1TAG,
+			AMMO2TAG,
+			WEAPONTAG,
+			INVENTORYTAG,
+			GLOBALVAR,
+			GLOBALARRAY,
+
+			CONSTANT
+		};
+
 		bool				shadow;
+		int					shadowX;
+		int					shadowY;
 		int					spacing;
 		FFont				*font;
 		EColorRange			translation;
+		SBarInfoCoordinate	startX;
 		SBarInfoCoordinate	x;
 		SBarInfoCoordinate	y;
+		int					cache; /// General purpose cache.
+		StringValueType		strValue;
+		int					valueArgument;
 		FString				str;
+
+	private:
+		void SetStringToTag(AActor *actor)
+		{
+			if(actor != NULL)
+			{
+				if(actor->GetClass()->ClassIndex != cache)
+				{
+					cache = actor->GetClass()->ClassIndex;
+					str = actor->GetTag();
+					RealignString();
+				}
+			}
+			else
+			{
+				cache = -1;
+				str = "";
+			}
+		}
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -565,7 +750,7 @@ class CommandDrawNumber : public CommandDrawString
 		CommandDrawNumber(SBarInfo *script) : CommandDrawString(script),
 			fillZeros(false), whenNotZero(false), interpolationSpeed(0), drawValue(0),
 			length(3), lowValue(-1), lowTranslation(CR_UNTRANSLATED), highValue(-1),
-			highTranslation(CR_UNTRANSLATED), value(CONSTANT), valueArgument(0),
+			highTranslation(CR_UNTRANSLATED), value(CONSTANT),
 			inventoryItem(NULL)
 		{
 		}
@@ -683,7 +868,18 @@ class CommandDrawNumber : public CommandDrawString
 				else if(sc.Compare("whennotzero"))
 					whenNotZero = true;
 				else if(sc.Compare("drawshadow"))
+				{
+					if(sc.CheckToken('('))
+					{
+						sc.MustGetToken(TK_IntConst);
+						shadowX = sc.Number;
+						sc.MustGetToken(',');
+						sc.MustGetToken(TK_IntConst);
+						shadowY = sc.Number;
+						sc.MustGetToken(')');
+					}
 					shadow = true;
+				}
 				else if(sc.Compare("interpolate"))
 				{
 					sc.MustGetToken('(');
@@ -880,9 +1076,7 @@ class CommandDrawNumber : public CommandDrawString
 				translation = lowTranslation;
 			else if(highValue != -1 && drawValue >= highValue) //high
 				translation = highTranslation;
-		
-			x = startX;
-		
+
 			// 10^9 is a largest we can hold in a 32-bit int.  So if we go any larger we have to toss out the positions limit.
 			int maxval = length <= 9 ? (int) ceil(pow(10., length))-1 : INT_MAX;
 			if(!fillZeros || length == 1)
@@ -902,10 +1096,8 @@ class CommandDrawNumber : public CommandDrawString
 						str.Insert(0, "0");
 				}
 			}
-			if(script->spacingCharacter == '\0')
-				x -= static_cast<int> (font->StringWidth(str)+(spacing * str.Len()));
-			else //monospaced, so just multiplay the character size
-				x -= static_cast<int> ((font->GetCharWidth((int) script->spacingCharacter) + spacing) * str.Len());
+
+			RealignString();
 		}
 	protected:
 		enum ValueType
@@ -948,10 +1140,7 @@ class CommandDrawNumber : public CommandDrawString
 		EColorRange			highTranslation;
 		EColorRange			normalTranslation;
 		ValueType			value;
-		int					valueArgument;
 		const PClass		*inventoryItem;
-
-		SBarInfoCoordinate	startX;
 
 		friend class CommandDrawInventoryBar;
 };
@@ -1009,6 +1198,10 @@ class CommandDrawMugShot : public SBarInfoCommand
 			GetCoordinates(sc, fullScreenOffsets, x, y);
 			sc.MustGetToken(';');
 		}
+		void Reset()
+		{
+			script->MugShot.Reset();
+		}
 
 	protected:
 		FString					defaultFace; //Deprecated
@@ -1032,6 +1225,9 @@ class CommandDrawSelectedInventory : public SBarInfoCommandFlowControl, private 
 
 		void	Draw(const SBarInfoMainBlock *block, const DSBarInfo *statusBar)
 		{
+			if(alternateOnEmpty)
+				SBarInfoCommandFlowControl::Draw(block, statusBar);
+
 			if(statusBar->CPlayer->mo->InvSel != NULL && !(level.flags & LEVEL_NOINVENTORYBAR))
 			{
 				if(artiflash && artiflashTick)
@@ -1044,8 +1240,6 @@ class CommandDrawSelectedInventory : public SBarInfoCommandFlowControl, private 
 				if(alwaysShowCounter || statusBar->CPlayer->mo->InvSel->Amount != 1)
 					CommandDrawNumber::Draw(block, statusBar);
 			}
-			else if(alternateOnEmpty)
-				SBarInfoCommandFlowControl::Draw(block, statusBar);
 		}
 		void	Parse(FScanner &sc, bool fullScreenOffsets)
 		{
@@ -1065,7 +1259,18 @@ class CommandDrawSelectedInventory : public SBarInfoCommandFlowControl, private 
 				else if(sc.Compare("centerbottom"))
 					offset = static_cast<Offset> (HMIDDLE|BOTTOM);
 				else if(sc.Compare("drawshadow"))
+				{
+					if(sc.CheckToken('('))
+					{
+						sc.MustGetToken(TK_IntConst);
+						shadowX = sc.Number;
+						sc.MustGetToken(',');
+						sc.MustGetToken(TK_IntConst);
+						shadowY = sc.Number;
+						sc.MustGetToken(')');
+					}
 					shadow = true;
+				}
 				else
 				{
 					font = V_GetFont(sc.String);
@@ -1101,9 +1306,13 @@ class CommandDrawSelectedInventory : public SBarInfoCommandFlowControl, private 
 		}
 		void	Tick(const SBarInfoMainBlock *block, const DSBarInfo *statusBar, bool hudChanged)
 		{
+			SBarInfoCommandFlowControl::Tick(block, statusBar, hudChanged);
+
 			if(artiflashTick > 0)
 				artiflashTick--;
-		
+
+			SetTruth(statusBar->CPlayer->mo->InvSel == NULL || (level.flags & LEVEL_NOINVENTORYBAR), block, statusBar);
+
 			CommandDrawImage::Tick(block, statusBar, hudChanged);
 			CommandDrawNumber::Tick(block, statusBar, hudChanged);
 		}
@@ -1133,16 +1342,6 @@ class CommandGameMode : public SBarInfoCommandFlowControl
 		{
 		}
 
-		void	Draw(const SBarInfoMainBlock *block, const DSBarInfo *statusBar)
-		{
-			if((!multiplayer && (modes & SINGLEPLAYER)) ||
-				(deathmatch && (modes & DEATHMATCH)) ||
-				(multiplayer && !deathmatch && (modes & COOPERATIVE)) ||
-				(teamplay && (modes & TEAMGAME)))
-			{
-				SBarInfoCommandFlowControl::Draw(block, statusBar);
-			}
-		}
 		void	Parse(FScanner &sc, bool fullScreenOffsets)
 		{
 			do
@@ -1152,6 +1351,15 @@ class CommandGameMode : public SBarInfoCommandFlowControl
 			}
 			while(sc.CheckToken(','));
 			SBarInfoCommandFlowControl::Parse(sc, fullScreenOffsets);
+		}
+		void	Tick(const SBarInfoMainBlock *block, const DSBarInfo *statusBar, bool hudChanged)
+		{
+			SBarInfoCommandFlowControl::Tick(block, statusBar, hudChanged);
+
+			SetTruth((!multiplayer && (modes & SINGLEPLAYER)) ||
+				(deathmatch && (modes & DEATHMATCH)) ||
+				(multiplayer && !deathmatch && (modes & COOPERATIVE)) ||
+				(teamplay && (modes & TEAMGAME)), block, statusBar);
 		}
 	protected:
 		static const char* const	modeNames[];
@@ -1185,11 +1393,6 @@ class CommandUsesAmmo : public SBarInfoCommandFlowControl
 		{
 		}
 
-		void	Draw(const SBarInfoMainBlock *block, const DSBarInfo *statusBar)
-		{
-			if((statusBar->CPlayer->ReadyWeapon != NULL && (statusBar->CPlayer->ReadyWeapon->AmmoType1 != NULL || statusBar->CPlayer->ReadyWeapon->AmmoType2 != NULL)) ^ negate)
-				SBarInfoCommandFlowControl::Draw(block, statusBar);
-		}
 		void	Parse(FScanner &sc, bool fullScreenOffsets)
 		{
 			if(sc.CheckToken(TK_Identifier))
@@ -1200,6 +1403,12 @@ class CommandUsesAmmo : public SBarInfoCommandFlowControl
 					sc.ScriptError("Expected 'not', but got '%s' instead.", sc.String);
 			}
 			SBarInfoCommandFlowControl::Parse(sc, fullScreenOffsets);
+		}
+		void	Tick(const SBarInfoMainBlock *block, const DSBarInfo *statusBar, bool hudChanged)
+		{
+			SBarInfoCommandFlowControl::Tick(block, statusBar, hudChanged);
+
+			SetTruth((statusBar->CPlayer->ReadyWeapon != NULL && (statusBar->CPlayer->ReadyWeapon->AmmoType1 != NULL || statusBar->CPlayer->ReadyWeapon->AmmoType2 != NULL)) ^ negate, block, statusBar);
 		}
 	protected:
 		bool	negate;
@@ -1214,10 +1423,11 @@ class CommandUsesSecondaryAmmo : public CommandUsesAmmo
 		{
 		}
 
-		void	Draw(const SBarInfoMainBlock *block, const DSBarInfo *statusBar)
+		void	Tick(const SBarInfoMainBlock *block, const DSBarInfo *statusBar, bool hudChanged)
 		{
-			if((statusBar->CPlayer->ReadyWeapon != NULL && statusBar->CPlayer->ReadyWeapon->AmmoType2 != NULL && statusBar->CPlayer->ReadyWeapon->AmmoType1 != statusBar->CPlayer->ReadyWeapon->AmmoType2) ^ negate)
-				SBarInfoCommandFlowControl::Draw(block, statusBar);
+			SBarInfoCommandFlowControl::Tick(block, statusBar, hudChanged);
+
+			SetTruth((statusBar->CPlayer->ReadyWeapon != NULL && statusBar->CPlayer->ReadyWeapon->AmmoType2 != NULL && statusBar->CPlayer->ReadyWeapon->AmmoType1 != statusBar->CPlayer->ReadyWeapon->AmmoType2) ^ negate, block, statusBar);
 		}
 };
 
@@ -1230,10 +1440,11 @@ class CommandInventoryBarNotVisible : public SBarInfoCommandFlowControl
 		{
 		}
 
-		void	Draw(const SBarInfoMainBlock *block, const DSBarInfo *statusBar)
+		void	Tick(const SBarInfoMainBlock *block, const DSBarInfo *statusBar, bool hudChanged)
 		{
-			if(statusBar->CPlayer->inventorytics <= 0 || (level.flags & LEVEL_NOINVENTORYBAR))
-				SBarInfoCommandFlowControl::Draw(block, statusBar);
+			SBarInfoCommandFlowControl::Tick(block, statusBar, hudChanged);
+
+			SetTruth(statusBar->CPlayer->inventorytics <= 0 || (level.flags & LEVEL_NOINVENTORYBAR), block, statusBar);
 		}
 };
 
@@ -1247,11 +1458,6 @@ class CommandAspectRatio : public SBarInfoCommandFlowControl
 		{
 		}
 
-		void	Draw(const SBarInfoMainBlock *block, const DSBarInfo *statusBar)
-		{
-			if(CheckRatio(screen->GetWidth(), screen->GetHeight()) == ratio)
-				SBarInfoCommandFlowControl::Draw(block, statusBar);
-		}
 		void	Parse(FScanner &sc, bool fullScreenOffsets)
 		{
 			sc.MustGetToken(TK_StringConst);
@@ -1266,6 +1472,10 @@ class CommandAspectRatio : public SBarInfoCommandFlowControl
 			else
 				sc.ScriptError("Unkown aspect ratio: %s", sc.String);
 			SBarInfoCommandFlowControl::Parse(sc, fullScreenOffsets);
+		}
+		void	Tick(const SBarInfoMainBlock *block, const DSBarInfo *statusBar, bool hudChanged)
+		{
+			SetTruth(CheckRatio(screen->GetWidth(), screen->GetHeight()) == ratio, block, statusBar);
 		}
 	protected:
 		enum Ratio
@@ -1420,7 +1630,7 @@ class CommandDrawInventoryBar : public SBarInfoCommand
 {
 	public:
 		CommandDrawInventoryBar(SBarInfo *script) : SBarInfoCommand(script),
-			style(GAME_Doom), size(7), alwaysShow(false), noArtibox(false),
+			style(STYLE_Doom), size(7), alwaysShow(false), noArtibox(false),
 			noArrows(false), alwaysShowCounter(false), translucent(false),
 			vertical(false), counters(NULL), font(NULL), translation(CR_GOLD),
 			fontSpacing(0)
@@ -1440,9 +1650,9 @@ class CommandDrawInventoryBar : public SBarInfoCommand
 		{
 			int spacing = 0;
 			if(!vertical)
-				spacing = (style != GAME_Strife) ? statusBar->Images[statusBar->invBarOffset + imgARTIBOX]->GetScaledWidth() + 1 : statusBar->Images[statusBar->invBarOffset + imgCURSOR]->GetScaledWidth() - 1;
+				spacing = (style != STYLE_Strife) ? statusBar->Images[statusBar->invBarOffset + imgARTIBOX]->GetScaledWidth() + 1 : statusBar->Images[statusBar->invBarOffset + imgCURSOR]->GetScaledWidth() - 1;
 			else
-				spacing = (style != GAME_Strife) ? statusBar->Images[statusBar->invBarOffset + imgARTIBOX]->GetScaledHeight() + 1 : statusBar->Images[statusBar->invBarOffset + imgCURSOR]->GetScaledHeight() - 1;
+				spacing = (style != STYLE_Strife) ? statusBar->Images[statusBar->invBarOffset + imgARTIBOX]->GetScaledHeight() + 1 : statusBar->Images[statusBar->invBarOffset + imgCURSOR]->GetScaledHeight() - 1;
 		
 			int bgalpha = block->Alpha();
 			if(translucent)
@@ -1461,20 +1671,22 @@ class CommandDrawInventoryBar : public SBarInfoCommand
 					if(!noArtibox)
 						statusBar->DrawGraphic(statusBar->Images[statusBar->invBarOffset + imgARTIBOX], rx, ry, block->XOffset(), block->YOffset(), bgalpha, block->FullScreenOffsets());
 		
-					if(style != GAME_Strife) //Strife draws the cursor before the icons
-						statusBar->DrawGraphic(TexMan(item->Icon), rx, ry, block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets(), false, item->Amount <= 0);
+					if(style != STYLE_Strife) //Strife draws the cursor before the icons
+						statusBar->DrawGraphic(TexMan(item->Icon), rx - (style == STYLE_HexenStrict ? 2 : 0), ry - (style == STYLE_HexenStrict ? 1 : 0), block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets(), false, item->Amount <= 0);
 					if(item == statusBar->CPlayer->mo->InvSel)
 					{
-						if(style == GAME_Heretic)
+						if(style == STYLE_Heretic)
 							statusBar->DrawGraphic(statusBar->Images[statusBar->invBarOffset + imgSELECTBOX], rx, ry+29, block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets());
-						else if(style == GAME_Hexen)
+						else if(style == STYLE_Hexen)
 							statusBar->DrawGraphic(statusBar->Images[statusBar->invBarOffset + imgSELECTBOX], rx, ry-1, block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets());
-						else if(style == GAME_Strife)
+						else if(style == STYLE_HexenStrict)
+							statusBar->DrawGraphic(statusBar->Images[statusBar->invBarOffset + imgSELECTBOX], rx-1, ry-1, block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets());
+						else if(style == STYLE_Strife)
 							statusBar->DrawGraphic(statusBar->Images[statusBar->invBarOffset + imgCURSOR], rx-6, ry-2, block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets());
 						else
 							statusBar->DrawGraphic(statusBar->Images[statusBar->invBarOffset + imgSELECTBOX], rx, ry, block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets());
 					}
-					if(style == GAME_Strife)
+					if(style == STYLE_Strife)
 						statusBar->DrawGraphic(TexMan(item->Icon), rx, ry, block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets(), false, item->Amount <= 0);
 					if(counters != NULL && (alwaysShowCounter || item->Amount != 1))
 					{
@@ -1488,16 +1700,18 @@ class CommandDrawInventoryBar : public SBarInfoCommand
 				// Is there something to the left?
 				if (!noArrows && statusBar->CPlayer->mo->FirstInv() != statusBar->CPlayer->mo->InvFirst)
 				{
-					int offset = style != GAME_Strife ? -12 : 14;
+					int offset = (style != STYLE_Strife ? (style != STYLE_HexenStrict ? -12 : -10) : 14);
+					int yOffset = style != STYLE_HexenStrict ? 0 : -1;
 					statusBar->DrawGraphic(statusBar->Images[!(gametic & 4) ?
-						statusBar->invBarOffset + imgINVLFGEM1 : statusBar->invBarOffset + imgINVLFGEM2], x + (!vertical ? offset : 0), y + (vertical ? offset : 0), block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets());
+						statusBar->invBarOffset + imgINVLFGEM1 : statusBar->invBarOffset + imgINVLFGEM2], x + (!vertical ? offset : yOffset), y + (vertical ? offset : yOffset), block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets());
 				}
 				// Is there something to the right?
 				if (!noArrows && item != NULL)
 				{
-					int offset = style != GAME_Strife ? size*31+2 : size*35-4;
+					int offset = (style != STYLE_Strife ? (style != STYLE_HexenStrict ? size*31+2 : size*31) : size*35-4);
+					int yOffset = style != STYLE_HexenStrict ? 0 : -1;
 					statusBar->DrawGraphic(statusBar->Images[!(gametic & 4) ?
-						statusBar->invBarOffset + imgINVRTGEM1 : statusBar->invBarOffset + imgINVRTGEM2], x + (!vertical ? offset : 0), y + (vertical ? offset : 0), block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets());
+						statusBar->invBarOffset + imgINVRTGEM1 : statusBar->invBarOffset + imgINVRTGEM2], x + (!vertical ? offset : yOffset), y + (vertical ? offset : yOffset), block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets());
 				}
 			}
 		}
@@ -1505,13 +1719,15 @@ class CommandDrawInventoryBar : public SBarInfoCommand
 		{
 			sc.MustGetToken(TK_Identifier);
 			if(sc.Compare("Doom"))
-				style = GAME_Doom;
+				style = STYLE_Doom;
 			else if(sc.Compare("Heretic"))
-				style = GAME_Heretic;
+				style = STYLE_Heretic;
 			else if(sc.Compare("Hexen"))
-				style = GAME_Hexen;
+				style = STYLE_Hexen;
+			else if(sc.Compare("HexenStrict"))
+				style = STYLE_HexenStrict;
 			else if(sc.Compare("Strife"))
-				style = GAME_Strife;
+				style = STYLE_Strife;
 			else
 				sc.ScriptError("Unknown style '%s'.", sc.String);
 		
@@ -1569,9 +1785,9 @@ class CommandDrawInventoryBar : public SBarInfoCommand
 			{
 				int spacing = 0;
 				if(!vertical)
-					spacing = (style != GAME_Strife) ? statusBar->Images[statusBar->invBarOffset + imgARTIBOX]->GetScaledWidth() + 1 : statusBar->Images[statusBar->invBarOffset + imgCURSOR]->GetScaledWidth() - 1;
+					spacing = (style != STYLE_Strife) ? statusBar->Images[statusBar->invBarOffset + imgARTIBOX]->GetScaledWidth() + 1 : statusBar->Images[statusBar->invBarOffset + imgCURSOR]->GetScaledWidth() - 1;
 				else
-					spacing = (style != GAME_Strife) ? statusBar->Images[statusBar->invBarOffset + imgARTIBOX]->GetScaledHeight() + 1 : statusBar->Images[statusBar->invBarOffset + imgCURSOR]->GetScaledHeight() - 1;
+					spacing = (style != STYLE_Strife) ? statusBar->Images[statusBar->invBarOffset + imgARTIBOX]->GetScaledHeight() + 1 : statusBar->Images[statusBar->invBarOffset + imgCURSOR]->GetScaledHeight() - 1;
 				counters = new CommandDrawNumber*[size];
 		
 				for(unsigned int i = 0;i < size;i++)
@@ -1593,7 +1809,16 @@ class CommandDrawInventoryBar : public SBarInfoCommand
 				counters[i]->Tick(block, statusBar, hudChanged);
 		}
 	protected:
-		int					style;
+		enum Styles
+		{
+			STYLE_Doom,
+			STYLE_Heretic,
+			STYLE_Hexen,
+			STYLE_HexenStrict,
+			STYLE_Strife
+		};
+
+		Styles				style;
 		unsigned int		size;
 		bool				alwaysShow;
 		bool				noArtibox;
@@ -1619,8 +1844,8 @@ class CommandDrawKeyBar : public SBarInfoCommand
 {
 	public:
 		CommandDrawKeyBar(SBarInfo *script) : SBarInfoCommand(script),
-			number(3), vertical(false), reverseRows(false), iconSize(-1),
-			rowIconSize(-1), keyOffset(0), rowSize(0)
+			number(3), vertical(false), reverse(false), reverseRows(false),
+			iconSize(-1), rowIconSize(-1), keyOffset(0), rowSize(0)
 		{
 		}
 
@@ -1657,12 +1882,12 @@ class CommandDrawKeyBar : public SBarInfoCommand
 					if(iconSize == -1)
 					{
 						if(!vertical)
-							slotOffset += TexMan[item->Icon]->GetScaledWidth() + 2;
+							slotOffset += (reverse ? -1 : 1) * (TexMan[item->Icon]->GetScaledWidth() + 2);
 						else
-							slotOffset += TexMan[item->Icon]->GetScaledHeight() + 2;
+							slotOffset += (reverse ? -1 : 1) * (TexMan[item->Icon]->GetScaledHeight() + 2);
 					}
 					else
-						slotOffset += iconSize;
+						slotOffset += (reverse ? -iconSize : iconSize);
 		
 					if(rowSize > 0 && (i % rowSize == rowSize-1))
 					{
@@ -1695,6 +1920,8 @@ class CommandDrawKeyBar : public SBarInfoCommand
 			{
 				if(sc.Compare("reverserows"))
 					reverseRows = true;
+				else if(sc.Compare("reverse"))
+					reverse = true;
 				else
 					sc.ScriptError("Unknown flag '%s'.", sc.String);
 				if(!sc.CheckToken('|'))
@@ -1735,6 +1962,7 @@ class CommandDrawKeyBar : public SBarInfoCommand
 	protected:
 		unsigned int		number;
 		bool				vertical;
+		bool				reverse;
 		bool				reverseRows;
 		int					iconSize;
 		int					rowIconSize;
@@ -2097,21 +2325,6 @@ class CommandIsSelected : public SBarInfoCommandFlowControl
 			weapon[1] = NULL;
 		}
 
-		void	Draw(const SBarInfoMainBlock *block, const DSBarInfo *statusBar)
-		{
-			if(statusBar->CPlayer->ReadyWeapon != NULL)
-			{
-				const PClass *readyWeapon = statusBar->CPlayer->ReadyWeapon->GetClass();
-				if(((weapon[1] != NULL) &&
-						((negate && (weapon[0] != readyWeapon && weapon[1] != readyWeapon)) ||
-						(!negate && (weapon[0] == readyWeapon || weapon[1] == readyWeapon)))) ||
-					((weapon[1] == NULL) &&
-						((!negate && weapon[0] == readyWeapon) || (negate && weapon[0] != readyWeapon))))
-				{
-					SBarInfoCommandFlowControl::Draw(block, statusBar);
-				}
-			}
-		}
 		void	Parse(FScanner &sc, bool fullScreenOffsets)
 		{
 			//Using StringConst instead of Identifieres is deperecated!
@@ -2142,6 +2355,20 @@ class CommandIsSelected : public SBarInfoCommandFlowControl
 			}
 			SBarInfoCommandFlowControl::Parse(sc, fullScreenOffsets);
 		}
+		void	Tick(const SBarInfoMainBlock *block, const DSBarInfo *statusBar, bool hudChanged)
+		{
+			SBarInfoCommandFlowControl::Tick(block, statusBar, hudChanged);
+
+			if(statusBar->CPlayer->ReadyWeapon != NULL)
+			{
+				const PClass *readyWeapon = statusBar->CPlayer->ReadyWeapon->GetClass();
+				SetTruth(((weapon[1] != NULL) &&
+						((negate && (weapon[0] != readyWeapon && weapon[1] != readyWeapon)) ||
+						(!negate && (weapon[0] == readyWeapon || weapon[1] == readyWeapon)))) ||
+					((weapon[1] == NULL) &&
+						((!negate && weapon[0] == readyWeapon) || (negate && weapon[0] != readyWeapon))), block, statusBar);
+			}
+		}
 	protected:
 		bool			negate;
 		const PClass	*weapon[2];
@@ -2156,18 +2383,6 @@ class CommandPlayerClass : public SBarInfoCommandFlowControl
 		{
 		}
 
-		void	Draw(const SBarInfoMainBlock *block, const DSBarInfo *statusBar)
-		{
-			if(statusBar->CPlayer->cls == NULL)
-				return; //No class so we can not continue
-		
-			int spawnClass = statusBar->CPlayer->cls->ClassIndex;
-			for(unsigned int i = 0;i < classes.Size();i++)
-			{
-				if(classes[i] == spawnClass)
-					SBarInfoCommandFlowControl::Draw(block, statusBar);
-			}
-		}
 		void	Parse(FScanner &sc, bool fullScreenOffsets)
 		{
 			sc.MustGetToken(TK_Identifier);
@@ -2191,6 +2406,24 @@ class CommandPlayerClass : public SBarInfoCommandFlowControl
 			while(sc.CheckToken(TK_Identifier));
 			SBarInfoCommandFlowControl::Parse(sc, fullScreenOffsets);
 		}
+		void	Tick(const SBarInfoMainBlock *block, const DSBarInfo *statusBar, bool hudChanged)
+		{
+			SBarInfoCommandFlowControl::Tick(block, statusBar, hudChanged);
+
+			if(statusBar->CPlayer->cls == NULL)
+				return; //No class so we can not continue
+		
+			int spawnClass = statusBar->CPlayer->cls->ClassIndex;
+			for(unsigned int i = 0;i < classes.Size();i++)
+			{
+				if(classes[i] == spawnClass)
+				{
+					SetTruth(true, block, statusBar);
+					return;
+				}
+			}
+			SetTruth(false, block, statusBar);
+		}
 	protected:
 		TArray<int>	classes;
 };
@@ -2205,22 +2438,6 @@ class CommandHasWeaponPiece : public SBarInfoCommandFlowControl
 		{
 		}
 
-		void	Draw(const SBarInfoMainBlock *block, const DSBarInfo *statusBar)
-		{
-			for(AInventory *inv = statusBar->CPlayer->mo->Inventory;inv != NULL;inv=inv->Inventory)
-			{
-				if(inv->IsKindOf(RUNTIME_CLASS(AWeaponHolder)))
-				{
-					AWeaponHolder *hold = static_cast<AWeaponHolder*>(inv);
-					if(hold->PieceWeapon == weapon)
-					{
-						if(hold->PieceMask & (1 << (piece-1)))
-							SBarInfoCommandFlowControl::Draw(block, statusBar);
-						break;
-					}
-				}
-			}
-		}
 		void	Parse(FScanner &sc, bool fullScreenOffsets)
 		{
 			sc.MustGetToken(TK_Identifier);
@@ -2233,6 +2450,25 @@ class CommandHasWeaponPiece : public SBarInfoCommandFlowControl
 				sc.ScriptError("Weapon piece number can not be less than 1.");
 			piece = sc.Number;
 			SBarInfoCommandFlowControl::Parse(sc, fullScreenOffsets);
+		}
+		void	Tick(const SBarInfoMainBlock *block, const DSBarInfo *statusBar, bool hudChanged)
+		{
+			SBarInfoCommandFlowControl::Tick(block, statusBar, hudChanged);
+
+			for(AInventory *inv = statusBar->CPlayer->mo->Inventory;inv != NULL;inv=inv->Inventory)
+			{
+				if(inv->IsKindOf(RUNTIME_CLASS(AWeaponHolder)))
+				{
+					AWeaponHolder *hold = static_cast<AWeaponHolder*>(inv);
+					if(hold->PieceWeapon == weapon)
+					{
+						if(hold->PieceMask & (1 << (piece-1)))
+							SetTruth(true, block, statusBar);
+						return;
+					}
+				}
+			}
+			SetTruth(false, block, statusBar);
 		}
 	protected:
 		const PClass	*weapon;
@@ -2384,48 +2620,6 @@ class CommandWeaponAmmo : public SBarInfoCommandFlowControl
 			ammo[1] = NULL;
 		}
 
-		void	Draw(const SBarInfoMainBlock *block, const DSBarInfo *statusBar)
-		{
-			if(statusBar->CPlayer->ReadyWeapon != NULL)
-			{
-				const PClass *AmmoType1 = statusBar->CPlayer->ReadyWeapon->AmmoType1;
-				const PClass *AmmoType2 = statusBar->CPlayer->ReadyWeapon->AmmoType2;
-				bool usesammo1 = (AmmoType1 != NULL);
-				bool usesammo2 = (AmmoType2 != NULL);
-				if(!negate && !usesammo1 && !usesammo2) //if the weapon doesn't use ammo don't go though the trouble.
-				{
-					SBarInfoCommandFlowControl::Draw(block, statusBar);
-					return;
-				}
-				//Or means only 1 ammo type needs to match and means both need to match.
-				if(ammo[1] != NULL)
-				{
-					bool match1 = ((usesammo1 && (AmmoType1 == ammo[0] || AmmoType1 == ammo[1])) || !usesammo1);
-					bool match2 = ((usesammo2 && (AmmoType2 == ammo[0] || AmmoType2 == ammo[1])) || !usesammo2);
-					if((!conditionAnd && (match1 || match2)) || (conditionAnd && (match1 && match2)))
-					{
-						if(!negate)
-							SBarInfoCommandFlowControl::Draw(block, statusBar);
-					}
-					else if(negate)
-					{
-						SBarInfoCommandFlowControl::Draw(block, statusBar);
-					}
-				}
-				else //Every thing here could probably be one long if statement but then it would be more confusing.
-				{
-					if((usesammo1 && (AmmoType1 == ammo[0])) || (usesammo2 && (AmmoType2 == ammo[0])))
-					{
-						if(!negate)
-							SBarInfoCommandFlowControl::Draw(block, statusBar);
-					}
-					else if(negate)
-					{
-						SBarInfoCommandFlowControl::Draw(block, statusBar);
-					}
-				}
-			}
-		}
 		void	Parse(FScanner &sc, bool fullScreenOffsets)
 		{
 			sc.MustGetToken(TK_Identifier);
@@ -2455,6 +2649,59 @@ class CommandWeaponAmmo : public SBarInfoCommandFlowControl
 			}
 			SBarInfoCommandFlowControl::Parse(sc, fullScreenOffsets);
 		}
+		void	Tick(const SBarInfoMainBlock *block, const DSBarInfo *statusBar, bool hudChanged)
+		{
+			SBarInfoCommandFlowControl::Tick(block, statusBar, hudChanged);
+
+			if(statusBar->CPlayer->ReadyWeapon != NULL)
+			{
+				const PClass *AmmoType1 = statusBar->CPlayer->ReadyWeapon->AmmoType1;
+				const PClass *AmmoType2 = statusBar->CPlayer->ReadyWeapon->AmmoType2;
+				bool usesammo1 = (AmmoType1 != NULL);
+				bool usesammo2 = (AmmoType2 != NULL);
+				if(negate && !usesammo1 && !usesammo2) //if the weapon doesn't use ammo don't go though the trouble.
+				{
+					SetTruth(true, block, statusBar);
+					return;
+				}
+				//Or means only 1 ammo type needs to match and means both need to match.
+				if(ammo[1] != NULL)
+				{
+					bool match1 = ((usesammo1 && (AmmoType1 == ammo[0] || AmmoType1 == ammo[1])) || !usesammo1);
+					bool match2 = ((usesammo2 && (AmmoType2 == ammo[0] || AmmoType2 == ammo[1])) || !usesammo2);
+					if((!conditionAnd && (match1 || match2)) || (conditionAnd && (match1 && match2)))
+					{
+						if(!negate)
+						{
+							SetTruth(true, block, statusBar);
+							return;
+						}
+					}
+					else if(negate)
+					{
+						SetTruth(true, block, statusBar);
+						return;
+					}
+				}
+				else //Every thing here could probably be one long if statement but then it would be more confusing.
+				{
+					if((usesammo1 && (AmmoType1 == ammo[0])) || (usesammo2 && (AmmoType2 == ammo[0])))
+					{
+						if(!negate)
+						{
+							SetTruth(true, block, statusBar);
+							return;
+						}
+					}
+					else if(negate)
+					{
+						SetTruth(true, block, statusBar);
+						return;
+					}
+				}
+			}
+			SetTruth(false, block, statusBar);
+		}
 	protected:
 		bool			conditionAnd;
 		bool			negate;
@@ -2473,30 +2720,6 @@ class CommandInInventory : public SBarInfoCommandFlowControl
 			amount[0] = amount[1] = 0;
 		}
 
-		void	Draw(const SBarInfoMainBlock *block, const DSBarInfo *statusBar)
-		{
-			AInventory *invItem[2] = { statusBar->CPlayer->mo->FindInventory(item[0]), statusBar->CPlayer->mo->FindInventory(item[1]) };
-			if (invItem[0] != NULL && amount[0] > 0 && invItem[0]->Amount < amount[0]) invItem[0] = NULL;
-			if (invItem[1] != NULL && amount[1] > 0 && invItem[1]->Amount < amount[1]) invItem[1] = NULL;
-			if(invItem[1] != NULL && conditionAnd)
-			{
-				if((invItem[0] != NULL && invItem[1] != NULL) && !negate)
-					SBarInfoCommandFlowControl::Draw(block, statusBar);
-				else if((invItem[0] == NULL || invItem[1] == NULL) && negate)
-					SBarInfoCommandFlowControl::Draw(block, statusBar);
-			}
-			else if(invItem[1] != NULL && !conditionAnd)
-			{
-				if((invItem[0] != NULL || invItem[1] != NULL) && !negate)
-					SBarInfoCommandFlowControl::Draw(block, statusBar);
-				else if((invItem[0] == NULL && invItem[1] == NULL) && negate)
-					SBarInfoCommandFlowControl::Draw(block, statusBar);
-			}
-			else if((invItem[0] != NULL) && !negate)
-				SBarInfoCommandFlowControl::Draw(block, statusBar);
-			else if((invItem[0] == NULL) && negate)
-				SBarInfoCommandFlowControl::Draw(block, statusBar);
-		}
 		void	Parse(FScanner &sc, bool fullScreenOffsets)
 		{
 			sc.MustGetToken(TK_Identifier);
@@ -2532,11 +2755,84 @@ class CommandInInventory : public SBarInfoCommandFlowControl
 			}
 			SBarInfoCommandFlowControl::Parse(sc, fullScreenOffsets);
 		}
+		void	Tick(const SBarInfoMainBlock *block, const DSBarInfo *statusBar, bool hudChanged)
+		{
+			SBarInfoCommandFlowControl::Tick(block, statusBar, hudChanged);
+
+			AInventory *invItem[2] = { statusBar->CPlayer->mo->FindInventory(item[0]), statusBar->CPlayer->mo->FindInventory(item[1]) };
+			if (invItem[0] != NULL && amount[0] > 0 && invItem[0]->Amount < amount[0]) invItem[0] = NULL;
+			if (invItem[1] != NULL && amount[1] > 0 && invItem[1]->Amount < amount[1]) invItem[1] = NULL;
+			if(invItem[1] != NULL && conditionAnd)
+			{
+				if((invItem[0] != NULL && invItem[1] != NULL) && !negate)
+				{
+					SetTruth(true, block, statusBar);
+					return;
+				}
+				else if((invItem[0] == NULL || invItem[1] == NULL) && negate)
+				{
+					SetTruth(true, block, statusBar);
+					return;
+				}
+			}
+			else if(invItem[1] != NULL && !conditionAnd)
+			{
+				if((invItem[0] != NULL || invItem[1] != NULL) && !negate)
+				{
+					SetTruth(true, block, statusBar);
+					return;
+				}
+				else if((invItem[0] == NULL && invItem[1] == NULL) && negate)
+				{
+					SetTruth(true, block, statusBar);
+					return;
+				}
+			}
+			else if((invItem[0] != NULL) && !negate)
+			{
+				SetTruth(true, block, statusBar);
+				return;
+			}
+			else if((invItem[0] == NULL) && negate)
+			{
+				SetTruth(true, block, statusBar);
+				return;
+			}
+			SetTruth(false, block, statusBar);
+		}
 	protected:
 		bool			conditionAnd;
 		bool			negate;
 		const PClass	*item[2];
 		int				amount[2];
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
+class CommandAlpha : public SBarInfoMainBlock
+{
+	public:
+		CommandAlpha(SBarInfo *script) : SBarInfoMainBlock(script)
+		{
+		}
+
+		void	Draw(const SBarInfoMainBlock *block, const DSBarInfo *statusBar)
+		{
+			forceScaled = block->ForceScaled();
+			fullScreenOffsets = block->FullScreenOffsets();
+
+			SBarInfoMainBlock::Draw(block, statusBar, block->XOffset(), block->YOffset(), block->Alpha());
+		}
+
+		void	Parse(FScanner &sc, bool fullScreenOffsets)
+		{
+			sc.MustGetToken(TK_FloatConst);
+			alpha = fixed_t(FRACUNIT * sc.Float);
+
+			// We don't want to allow all the options of a regular main block
+			// so skip to the SBarInfoCommandFlowControl.
+			SBarInfoCommandFlowControl::Parse(sc, fullScreenOffsets);
+		}
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -2550,7 +2846,7 @@ static const char *SBarInfoCommandNames[] =
 	"gamemode", "playerclass", "aspectratio",
 	"isselected", "usesammo", "usessecondaryammo",
 	"hasweaponpiece", "inventorybarnotvisible",
-	"weaponammo", "ininventory",
+	"weaponammo", "ininventory", "alpha",
 	NULL
 };
 
@@ -2563,7 +2859,7 @@ enum SBarInfoCommands
 	SBARINFO_GAMEMODE, SBARINFO_PLAYERCLASS, SBARINFO_ASPECTRATIO,
 	SBARINFO_ISSELECTED, SBARINFO_USESAMMO, SBARINFO_USESSECONDARYAMMO,
 	SBARINFO_HASWEAPONPIECE, SBARINFO_INVENTORYBARNOTVISIBLE,
-	SBARINFO_WEAPONAMMO, SBARINFO_ININVENTORY,
+	SBARINFO_WEAPONAMMO, SBARINFO_ININVENTORY, SBARINFO_ALPHA,
 };
 
 SBarInfoCommand *SBarInfoCommandFlowControl::NextCommand(FScanner &sc)
@@ -2594,6 +2890,7 @@ SBarInfoCommand *SBarInfoCommandFlowControl::NextCommand(FScanner &sc)
 			case SBARINFO_HASWEAPONPIECE: return new CommandHasWeaponPiece(script);
 			case SBARINFO_WEAPONAMMO: return new CommandWeaponAmmo(script);
 			case SBARINFO_ININVENTORY: return new CommandInInventory(script);
+			case SBARINFO_ALPHA: return new CommandAlpha(script);
 		}
 
 		sc.ScriptError("Unknown command '%s'.\n", sc.String);

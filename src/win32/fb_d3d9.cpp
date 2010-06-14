@@ -242,6 +242,8 @@ D3DFB::D3DFB (int width, int height, bool fullscreen)
 {
 	D3DPRESENT_PARAMETERS d3dpp;
 
+	LastHR = 0;
+
 	D3DDevice = NULL;
 	VertexBuffer = NULL;
 	IndexBuffer = NULL;
@@ -321,20 +323,28 @@ D3DFB::D3DFB (int width, int height, bool fullscreen)
 
 	HRESULT hr;
 
+	LOG("CreateDevice attempt 1 hwvp\n");
 	if (FAILED(hr = D3D->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, Window,
-		D3DCREATE_HARDWARE_VERTEXPROCESSING | D3DCREATE_FPU_PRESERVE, &d3dpp, &D3DDevice)))
+		D3DCREATE_HARDWARE_VERTEXPROCESSING | D3DCREATE_FPU_PRESERVE, &d3dpp, &D3DDevice)) &&
+		(hr != D3DERR_DEVICELOST || D3DDevice == NULL))
 	{
+		LOG2("CreateDevice returned hr %08x dev %p; attempt 2 swvp\n", hr, D3DDevice);
 		if (FAILED(D3D->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, Window,
-			D3DCREATE_SOFTWARE_VERTEXPROCESSING | D3DCREATE_FPU_PRESERVE, &d3dpp, &D3DDevice)))
+			D3DCREATE_SOFTWARE_VERTEXPROCESSING | D3DCREATE_FPU_PRESERVE, &d3dpp, &D3DDevice)) &&
+			(hr != D3DERR_DEVICELOST || D3DDevice == NULL))
 		{
 			if (d3dpp.FullScreen_RefreshRateInHz != 0)
 			{
 				d3dpp.FullScreen_RefreshRateInHz = 0;
+				LOG2("CreateDevice returned hr %08x dev %p; attempt 3 (hwvp, default Hz)\n", hr, D3DDevice);
 				if (FAILED(hr = D3D->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, Window,
-					D3DCREATE_HARDWARE_VERTEXPROCESSING | D3DCREATE_FPU_PRESERVE, &d3dpp, &D3DDevice)))
+					D3DCREATE_HARDWARE_VERTEXPROCESSING | D3DCREATE_FPU_PRESERVE, &d3dpp, &D3DDevice)) &&
+					(hr != D3DERR_DEVICELOST || D3DDevice == NULL))
 				{
+					LOG2("CreateDevice returned hr %08x dev %p; attempt 4 (swvp, default Hz)\n", hr, D3DDevice);
 					if (FAILED(D3D->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, Window,
-						D3DCREATE_SOFTWARE_VERTEXPROCESSING | D3DCREATE_FPU_PRESERVE, &d3dpp, &D3DDevice)))
+						D3DCREATE_SOFTWARE_VERTEXPROCESSING | D3DCREATE_FPU_PRESERVE, &d3dpp, &D3DDevice)) &&
+						hr != D3DERR_DEVICELOST)
 					{
 						D3DDevice = NULL;
 					}
@@ -342,6 +352,8 @@ D3DFB::D3DFB (int width, int height, bool fullscreen)
 			}
 		}
 	}
+	LOG2("Final CreateDevice returned HR %08x and device %p\n", hr, D3DDevice);
+	LastHR = hr;
 	if (D3DDevice != NULL)
 	{
 		D3DADAPTER_IDENTIFIER9 adapter_id;
@@ -360,9 +372,7 @@ D3DFB::D3DFB (int width, int height, bool fullscreen)
 			{
 				DeviceCaps.LineCaps |= D3DLINECAPS_ANTIALIAS;
 			}
-			// I don't know about ATI's drivers. The only ATI device
-			// I have readily available to test with (a Mobility X300)
-			// really doesn't support them.
+			// ATI's drivers apparently also lie, so screw this caps bit.
 		}
 		CreateResources();
 		SetInitialState();
@@ -998,7 +1008,7 @@ bool D3DFB::IsValid ()
 
 HRESULT D3DFB::GetHR ()
 {
-	return 0;
+	return LastHR;
 }
 
 //==========================================================================
@@ -1716,7 +1726,7 @@ void D3DFB::GetScreenshotBuffer(const BYTE *&buffer, int &pitch, ESSType &color_
 		}
 		else
 		{
-			buffer = (const BYTE *)lrect.pBits + lrect.Pitch * LBOffsetI;
+			buffer = (const BYTE *)lrect.pBits;
 			pitch = lrect.Pitch;
 			color_type = SS_BGRA;
 		}

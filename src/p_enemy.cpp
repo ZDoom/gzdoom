@@ -1178,8 +1178,7 @@ bool P_LookForMonsters (AActor *actor)
 		{ // Stop searching
 			return false;
 		}
-		if (mo->IsKindOf (RUNTIME_TYPE(actor)) ||
-			actor->IsKindOf (RUNTIME_TYPE(mo)))
+		if (mo->GetSpecies() == actor->GetSpecies())
 		{ // [RH] Don't go after same species
 			continue;
 		}
@@ -2672,7 +2671,7 @@ void A_Chase(AActor *self)
 // A_FaceTarget
 //
 //=============================================================================
-void A_FaceTarget (AActor *self)
+void A_FaceTarget (AActor *self, angle_t max_turn)
 {
 	if (!self->target)
 		return;
@@ -2684,18 +2683,54 @@ void A_FaceTarget (AActor *self)
 	}
 
 	self->flags &= ~MF_AMBUSH;
-	self->angle = R_PointToAngle2 (self->x, self->y,
-									self->target->x, self->target->y);
-	
-	if (self->target->flags & MF_SHADOW)
+
+	angle_t target_angle = R_PointToAngle2 (self->x, self->y, self->target->x, self->target->y);
+
+	// 0 means no limit. Also, if we turn in a single step anyways, no need to go through the algorithms.
+	// It also means that there is no need to check for going past the target.
+	if (max_turn && (max_turn < abs(self->angle - target_angle)))
+	{
+		if (self->angle > target_angle)
+		{
+			if (self->angle - target_angle < ANGLE_180)
+			{
+				self->angle -= max_turn;
+			}
+			else
+			{
+				self->angle += max_turn;
+			}
+		}
+		else
+		{
+			if (target_angle - self->angle < ANGLE_180)
+			{
+				self->angle += max_turn;
+			}
+			else
+			{
+				self->angle -= max_turn;
+			}
+		}
+	}
+	else
+	{
+		self->angle = target_angle;
+	}
+
+	// This will never work well if the turn angle is limited.
+	if (max_turn == 0 && (self->angle == target_angle) && self->target->flags & MF_SHADOW)
     {
 		self->angle += pr_facetarget.Random2() << 21;
     }
 }
 
-DEFINE_ACTION_FUNCTION(AActor, A_FaceTarget)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceTarget)
 {
-	A_FaceTarget(self);
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_ANGLE(max_turn, 0);
+
+	A_FaceTarget(self, max_turn);
 }
 
 //===========================================================================
@@ -2785,7 +2820,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_XScream)
 DEFINE_ACTION_FUNCTION(AActor, A_ScreamAndUnblock)
 {
 	CALL_ACTION(A_Scream, self);
-	CALL_ACTION(A_NoBlocking, self);
+	A_Unblock(self, true);
 }
 
 //===========================================================================
@@ -2811,7 +2846,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ActiveSound)
 DEFINE_ACTION_FUNCTION(AActor, A_ActiveAndUnblock)
 {
 	CALL_ACTION(A_ActiveSound, self);
-	CALL_ACTION(A_NoBlocking, self);
+	A_Unblock(self, true);
 }
 
 //---------------------------------------------------------------------------
@@ -3123,6 +3158,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_BossDeath)
 		{
 		case LEVEL_SPECLOWERFLOOR:
 			EV_DoFloor (DFloor::floorLowerToLowest, NULL, 666, FRACUNIT, 0, 0, 0, false);
+			return;
+		
+		case LEVEL_SPECLOWERFLOORTOHIGHEST:
+			EV_DoFloor (DFloor::floorLowerToHighest, NULL, 666, FRACUNIT, 0, 0, 0, false);
 			return;
 		
 		case LEVEL_SPECOPENDOOR:

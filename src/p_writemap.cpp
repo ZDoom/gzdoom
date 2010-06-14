@@ -172,8 +172,10 @@ static int WriteVERTEXES (FILE *file)
 	return numvertexes * sizeof(mv);
 }
 
+
 static int WriteSEGS (FILE *file)
 {
+#if 0
 	mapseg_t ms;
 
 	ms.offset = 0;		// unused by ZDoom, so just leave it 0
@@ -190,10 +192,14 @@ static int WriteSEGS (FILE *file)
 		}
 	}
 	return numsegs * sizeof(ms);
+#else
+	return 0;
+#endif
 }
 
 static int WriteSSECTORS (FILE *file)
 {
+#if 0
 	mapsubsector_t mss;
 
 	for (int i = 0; i < numsubsectors; ++i)
@@ -203,10 +209,14 @@ static int WriteSSECTORS (FILE *file)
 		fwrite (&mss, sizeof(mss), 1, file);
 	}
 	return numsubsectors * sizeof(mss);
+#else
+	return 0;
+#endif
 }
 
 static int WriteNODES (FILE *file)
 {
+#if 0
 	mapnode_t mn;
 
 	for (int i = 0; i < numnodes; ++i)
@@ -224,7 +234,7 @@ static int WriteNODES (FILE *file)
 			WORD child;
 			if ((size_t)nodes[i].children[j] & 1)
 			{
-				child = NF_SUBSECTOR | WORD((subsector_t *)((BYTE *)nodes[i].children[j] - 1) - subsectors);
+				child = mapnode_t::NF_SUBSECTOR | WORD((subsector_t *)((BYTE *)nodes[i].children[j] - 1) - subsectors);
 			}
 			else
 			{
@@ -235,6 +245,9 @@ static int WriteNODES (FILE *file)
 		fwrite (&mn, sizeof(mn), 1, file);
 	}
 	return numnodes * sizeof(mn);
+#else
+	return 0;
+#endif
 }
 
 static int WriteSECTORS (FILE *file)

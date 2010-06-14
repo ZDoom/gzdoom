@@ -477,9 +477,16 @@ void M_StartupSkillMenu(const char *playerclass)
 	{
 		FSkillInfo &skill = AllSkills[i];
 
-		SkillSelectMenu[i].name = skill.MenuName;
-		SkillSelectMenu[i].fulltext = !skill.MenuNameIsLump;
-		SkillSelectMenu[i].alphaKey = skill.MenuNameIsLump? skill.Shortcut : tolower(SkillSelectMenu[i].name[0]);
+		if (skill.PicName.Len() != 0)
+		{
+			SkillSelectMenu[i].name = skill.PicName;
+			SkillSelectMenu[i].fulltext = false;
+		}
+		else
+		{
+			SkillSelectMenu[i].name = skill.MenuName;
+			SkillSelectMenu[i].fulltext = true;
+		}
 		SkillSelectMenu[i].textcolor = skill.GetTextColor();
 		SkillSelectMenu[i].alphaKey = skill.Shortcut;
 

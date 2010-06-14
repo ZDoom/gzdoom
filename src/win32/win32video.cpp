@@ -596,6 +596,7 @@ DFrameBuffer *Win32Video::CreateFrameBuffer (int width, int height, bool fullscr
 			{
 				hr = fb->GetHR ();
 			}
+			fb->ObjectFlags |= OF_YesReallyDelete;
 			delete fb;
 
 			LOG1 ("fb is bad: %08lx\n", hr);

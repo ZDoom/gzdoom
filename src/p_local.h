@@ -94,7 +94,7 @@ APlayerPawn *P_SpawnPlayer (FMapThing *mthing, bool tempplayer=false);
 
 void P_ThrustMobj (AActor *mo, angle_t angle, fixed_t move);
 int P_FaceMobj (AActor *source, AActor *target, angle_t *delta);
-bool P_SeekerMissile (AActor *actor, angle_t thresh, angle_t turnMax);
+bool P_SeekerMissile (AActor *actor, angle_t thresh, angle_t turnMax, bool precise = false);
 
 enum EPuffFlags
 {
@@ -292,7 +292,7 @@ class FBlockThingsIterator
 public:
 	FBlockThingsIterator(int minx, int miny, int maxx, int maxy);
 	FBlockThingsIterator(const FBoundingBox &box);
-	AActor *Next();
+	AActor *Next(bool centeronly = false);
 	void Reset() { StartBlock(minx, miny); }
 };
 
@@ -307,7 +307,7 @@ class FPathTraverse
 	unsigned int count;
 
 	void AddLineIntercepts(int bx, int by);
-	void AddThingIntercepts(int bx, int by, FBlockThingsIterator &it);
+	void AddThingIntercepts(int bx, int by, FBlockThingsIterator &it, bool compatible);
 public:
 
 	intercept_t *Next();
@@ -320,6 +320,7 @@ public:
 
 #define PT_ADDLINES 	1
 #define PT_ADDTHINGS	2
+#define PT_COMPATIBLE	4
 
 AActor *P_BlockmapSearch (AActor *mo, int distance, AActor *(*check)(AActor*, int, void *), void *params = NULL);
 AActor *P_RoughMonsterSearch (AActor *mo, int distance);
@@ -417,8 +418,8 @@ enum
 	ALF_CHECKCONVERSATION = 8,
 };
 
-AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance, int pitch, int damage, FName damageType, const PClass *pufftype, bool ismelee = false);
-AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance, int pitch, int damage, FName damageType, FName pufftype, bool ismelee = false);
+AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance, int pitch, int damage, FName damageType, const PClass *pufftype, bool ismelee = false, AActor **victim = NULL);
+AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance, int pitch, int damage, FName damageType, FName pufftype, bool ismelee = false, AActor **victim = NULL);
 void	P_TraceBleed (int damage, fixed_t x, fixed_t y, fixed_t z, AActor *target, angle_t angle, int pitch);
 void	P_TraceBleed (int damage, AActor *target, angle_t angle, int pitch);
 void	P_TraceBleed (int damage, AActor *target, AActor *missile);		// missile version

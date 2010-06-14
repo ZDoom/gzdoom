@@ -54,15 +54,15 @@ void cht_DoCheat (player_t *player, int cheat)
 {
 	static const char * BeholdPowers[9] =
 	{
-		{ "PowerInvulnerable" },
-		{ "PowerStrength" },
-		{ "PowerInvisibility" },
-		{ "PowerIronFeet" },
-		{ "MapRevealer" },
-		{ "PowerLightAmp" },
-		{ "PowerShadow" },
-		{ "PowerMask" },
-		{ "PowerTargeter" },
+		"PowerInvulnerable",
+		"PowerStrength",
+		"PowerInvisibility",
+		"PowerIronFeet",
+		"MapRevealer",
+		"PowerLightAmp",
+		"PowerShadow",
+		"PowerMask",
+		"PowerTargeter",
 	};
 	const PClass *type;
 	AInventory *item;
@@ -1062,7 +1062,6 @@ void cht_Suicide (player_t *plyr)
 	}
 }
 
-bool CheckCheatmode ();
 
 CCMD (mdk)
 {

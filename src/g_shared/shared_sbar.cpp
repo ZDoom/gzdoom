@@ -175,7 +175,7 @@ void ST_LoadCrosshair(bool alwaysload)
 //
 //---------------------------------------------------------------------------
 
-DBaseStatusBar::DBaseStatusBar (int reltop)
+DBaseStatusBar::DBaseStatusBar (int reltop, int hres, int vres)
 {
 	Centering = false;
 	FixedOrigin = false;
@@ -185,6 +185,8 @@ DBaseStatusBar::DBaseStatusBar (int reltop)
 	Displacement = 0;
 	CPlayer = NULL;
 	ShowLog = false;
+	HorizontalResolution = hres;
+	VirticalResolution = vres;
 
 	SetScaled (st_scale);
 }
@@ -216,18 +218,20 @@ void DBaseStatusBar::Destroy ()
 //---------------------------------------------------------------------------
 
 //[BL] Added force argument to have forcescaled mean forcescaled.
+// - Also, if the VirticalResolution is something other than the default (200)
+//   We should always obey the value of scale.
 void DBaseStatusBar::SetScaled (bool scale, bool force)
 {
-	Scaled = (RelTop != 0 || force) && (SCREENWIDTH != 320 && scale);
+	Scaled = (RelTop != 0 || force) && ((SCREENWIDTH != 320 || HorizontalResolution != 320) && scale);
 
 	if (!Scaled)
 	{
-		ST_X = (SCREENWIDTH - 320) / 2;
+		ST_X = (SCREENWIDTH - HorizontalResolution) / 2;
 		ST_Y = SCREENHEIGHT - RelTop;
 		::ST_Y = ST_Y;
 		if (RelTop > 0)
 		{
-			Displacement = ((ST_Y * 200 / SCREENHEIGHT) - (200 - RelTop))*FRACUNIT/RelTop;
+			Displacement = ((ST_Y * VirticalResolution / SCREENHEIGHT) - (VirticalResolution - RelTop))*FRACUNIT/RelTop;
 		}
 		else
 		{
@@ -237,14 +241,14 @@ void DBaseStatusBar::SetScaled (bool scale, bool force)
 	else
 	{
 		ST_X = 0;
-		ST_Y = 200 - RelTop;
+		ST_Y = VirticalResolution - RelTop;
 		if (CheckRatio(SCREENWIDTH, SCREENHEIGHT) != 4)
 		{ // Normal resolution
-			::ST_Y = Scale (ST_Y, SCREENHEIGHT, 200);
+			::ST_Y = Scale (ST_Y, SCREENHEIGHT, VirticalResolution);
 		}
 		else
 		{ // 5:4 resolution
-			::ST_Y = Scale(ST_Y - 100, SCREENHEIGHT*3, BaseRatioSizes[4][1]) + SCREENHEIGHT/2
+			::ST_Y = Scale(ST_Y - VirticalResolution/2, SCREENHEIGHT*3, Scale(VirticalResolution, BaseRatioSizes[4][1], 200)) + SCREENHEIGHT/2
 				+ (SCREENHEIGHT - SCREENHEIGHT * BaseRatioSizes[4][3] / 48) / 2;
 		}
 		Displacement = 0;
@@ -1000,7 +1004,7 @@ void DBaseStatusBar::RefreshBackground () const
 		if (x > 0)
 		{
 			y = x == ST_X ? ST_Y : ::ST_Y;
-			x2 = !(ratio & 3) || !Scaled ? ST_X+320 :
+			x2 = !(ratio & 3) || !Scaled ? ST_X+HorizontalResolution :
 				SCREENWIDTH - (SCREENWIDTH*(48-BaseRatioSizes[ratio][3])+48*2-1)/(48*2);
 			R_DrawBorder (0, y, x, SCREENHEIGHT);
 			R_DrawBorder (x2, y, SCREENWIDTH, SCREENHEIGHT);
@@ -1591,15 +1595,6 @@ void DBaseStatusBar::FlashItem (const PClass *itemtype)
 {
 }
 
-void DBaseStatusBar::SetFace (void *skn)
-{
-}
- 
-void DBaseStatusBar::AddFaceToImageCollection (void *skn, FImageCollection *images)
-{
-	AddFaceToImageCollectionActual (skn, images, false);
-}
-
 void DBaseStatusBar::NewGame ()
 {
 }
@@ -1633,72 +1628,6 @@ void DBaseStatusBar::ScreenSizeChanged ()
 		message->ScreenSizeChanged ();
 		message = message->Next;
 	}
-}
-
-//---------------------------------------------------------------------------
-//
-// AddFaceToImageCollectionActual
-//
-// Adds face graphics for specified skin to the specified image collection.
-// If not in DOOM statusbar and no face in current skin, do NOT default STF*
-//
-//---------------------------------------------------------------------------
-
-void DBaseStatusBar::AddFaceToImageCollectionActual (void *skn, FImageCollection *images, bool isDoom)
-{
-	const char *nameptrs[ST_NUMFACES];
-	char names[ST_NUMFACES][9];
-	char prefix[4];
-	int i, j;
-	int namespc;
-	int facenum;
-	FPlayerSkin *skin = (FPlayerSkin *)skn;
-
-	if ((skin->face[0] == 0) && !isDoom)
-	{
-		return;
-	}
-
-	for (i = 0; i < ST_NUMFACES; i++)
-	{
-		nameptrs[i] = names[i];
-	}
-
-	if (skin->face[0] != 0)
-	{
-		prefix[0] = skin->face[0];
-		prefix[1] = skin->face[1];
-		prefix[2] = skin->face[2];
-		prefix[3] = 0;
-		namespc = skin->namespc;
-	}
-	else
-	{
-		prefix[0] = 'S';
-		prefix[1] = 'T';
-		prefix[2] = 'F';
-		prefix[3] = 0;
-		namespc = ns_global;
-	}
-
-	facenum = 0;
-
-	for (i = 0; i < ST_NUMPAINFACES; i++)
-	{
-		for (j = 0; j < ST_NUMSTRAIGHTFACES; j++)
-		{
-			mysnprintf (names[facenum++], countof(names[0]), "%sST%d%d", prefix, i, j);
-		}
-		mysnprintf (names[facenum++], countof(names[0]), "%sTR%d0", prefix, i);  // turn right
-		mysnprintf (names[facenum++], countof(names[0]), "%sTL%d0", prefix, i);  // turn left
-		mysnprintf (names[facenum++], countof(names[0]), "%sOUCH%d", prefix, i); // ouch!
-		mysnprintf (names[facenum++], countof(names[0]), "%sEVL%d", prefix, i);  // evil grin ;)
-		mysnprintf (names[facenum++], countof(names[0]), "%sKILL%d", prefix, i); // pissed off
-	}
-	mysnprintf (names[facenum++], countof(names[0]), "%sGOD0", prefix);
-	mysnprintf (names[facenum++], countof(names[0]), "%sDEAD0", prefix);
-
-	images->Add (nameptrs, ST_NUMFACES, namespc);
 }
 
 //---------------------------------------------------------------------------

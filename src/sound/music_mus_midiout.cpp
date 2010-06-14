@@ -51,6 +51,8 @@
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
+int MUSHeaderSearch(const BYTE *head, int len);
+
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
@@ -99,32 +101,56 @@ MUSSong2::MUSSong2 (FILE *file, BYTE *musiccache, int len, EMIDIDevice type)
 	}
 #endif
 
-	MusHeader = (MUSHeader *)new BYTE[len];
-	if (file != NULL)
+	BYTE front[32];
+	int start;
+
+	if (file == NULL)
 	{
-		if (fread(MusHeader, 1, len, file) != (size_t)len)
+		memcpy(front, musiccache, sizeof(front));
+	}
+	else if (fread(front, 1, sizeof(front), file) != sizeof(front))
+	{
+		return;
+	}
+
+	// To tolerate sloppy wads (diescum.wad, I'm looking at you), we search
+	// the first 32 bytes of the file for a signature. My guess is that DMX
+	// does no validation whatsoever and just assumes it was passed a valid
+	// MUS file, since where the header is offset affects how it plays.
+	start = MUSHeaderSearch(front, sizeof(front));
+	if (start < 0)
+	{
+		return;
+	}
+
+	// Read the remainder of the song.
+	len = int(len - start);
+	if (len < sizeof(MusHeader))
+	{ // It's too short.
+		return;
+	}
+	MusHeader = (MUSHeader *)new BYTE[len];
+	if (file == NULL)
+	{
+		memcpy(MusHeader, musiccache + start, len);
+	}
+	else
+	{
+		memcpy(MusHeader, front + start, sizeof(front) - start);
+		if (fread((BYTE *)MusHeader + sizeof(front) - start, 1, len - (sizeof(front) - start), file) != (size_t)(len - (32 - start)))
 		{
 			return;
 		}
 	}
-	else
-	{
-		memcpy(MusHeader, musiccache, len);
-	}
 
-	// Do some validation of the MUS file
-	if (MusHeader->Magic != MAKE_ID('M','U','S','\x1a'))
-	{
-		return;
-	}
-	
+	// Do some validation of the MUS file.
 	if (LittleShort(MusHeader->NumChans) > 15)
 	{
 		return;
 	}
 
 	MusBuffer = (BYTE *)MusHeader + LittleShort(MusHeader->SongStart);
-	MaxMusP = MIN<int> (LittleShort(MusHeader->SongLen), len - LittleShort(MusHeader->SongStart));
+	MaxMusP = MIN<int>(LittleShort(MusHeader->SongLen), len - LittleShort(MusHeader->SongStart));
 	Division = 140;
 	InitialTempo = 1000000;
 }
@@ -375,4 +401,26 @@ MUSSong2::MUSSong2(const MUSSong2 *original, const char *filename, EMIDIDevice t
 	MusBuffer = (BYTE *)MusHeader + songstart;
 	Division = 140;
 	InitialTempo = 1000000;
+}
+
+//==========================================================================
+//
+// MUSHeaderSearch
+//
+// Searches for the MUS header within the given memory block, returning
+// the offset it was found at, or -1 if not present.
+//
+//==========================================================================
+
+int MUSHeaderSearch(const BYTE *head, int len)
+{
+	len -= 4;
+	for (int i = 0; i <= len; ++i)
+	{
+		if (head[i+0] == 'M' && head[i+1] == 'U' && head[i+2] == 'S' && head[i+3] == 0x1A)
+		{
+			return i;
+		}
+	}
+	return -1;
 }

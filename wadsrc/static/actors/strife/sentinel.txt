@@ -20,6 +20,7 @@ ACTOR Sentinel 3006
 	+INCOMBAT
 	+MISSILEMORE
 	+LOOKALLAROUND
+	+NEVERRESPAWN
 	MinMissileChance 150
 	SeeSound "sentinel/sight"
 	DeathSound "sentinel/death"

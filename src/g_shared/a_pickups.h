@@ -21,7 +21,7 @@ public:
 	bool AddWeapon (const char *type);
 	bool AddWeapon (const PClass *type);
 	void AddWeaponList (const char *list, bool clear);
-	AWeapon *PickWeapon (player_t *player);
+	AWeapon *PickWeapon (player_t *player, bool checkammo = false);
 	int Size () const { return (int)Weapons.Size(); }
 	int LocateWeapon (const PClass *type);
 

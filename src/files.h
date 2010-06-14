@@ -8,7 +8,56 @@
 #include "doomtype.h"
 #include "m_swap.h"
 
-class FileReader
+class FileReaderBase
+{
+public:
+	virtual ~FileReaderBase() {}
+	virtual long Read (void *buffer, long len) = 0;
+
+	FileReaderBase &operator>> (BYTE &v)
+	{
+		Read (&v, 1);
+		return *this;
+	}
+
+	FileReaderBase &operator>> (SBYTE &v)
+	{
+		Read (&v, 1);
+		return *this;
+	}
+
+	FileReaderBase &operator>> (WORD &v)
+	{
+		Read (&v, 2);
+		v = LittleShort(v);
+		return *this;
+	}
+
+	FileReaderBase &operator>> (SWORD &v)
+	{
+		Read (&v, 2);
+		v = LittleShort(v);
+		return *this;
+	}
+
+	FileReaderBase &operator>> (DWORD &v)
+	{
+		Read (&v, 4);
+		v = LittleLong(v);
+		return *this;
+	}
+
+	FileReaderBase &operator>> (fixed_t &v)
+	{
+		Read (&v, 4);
+		v = LittleLong(v);
+		return *this;
+	}
+
+};
+
+
+class FileReader : public FileReaderBase
 {
 public:
 	FileReader ();
@@ -82,13 +131,13 @@ protected:
 };
 
 // Wraps around a FileReader to decompress a zlib stream
-class FileReaderZ
+class FileReaderZ : public FileReaderBase
 {
 public:
 	FileReaderZ (FileReader &file, bool zip=false);
 	~FileReaderZ ();
 
-	long Read (void *buffer, long len);
+	virtual long Read (void *buffer, long len);
 
 	FileReaderZ &operator>> (BYTE &v)
 	{
@@ -144,7 +193,7 @@ private:
 };
 
 // Wraps around a FileReader to decompress a bzip2 stream
-class FileReaderBZ2
+class FileReaderBZ2 : public FileReaderBase
 {
 public:
 	FileReaderBZ2 (FileReader &file);
@@ -206,7 +255,7 @@ private:
 };
 
 // Wraps around a FileReader to decompress a lzma stream
-class FileReaderLZMA
+class FileReaderLZMA : public FileReaderBase
 {
 public:
 	FileReaderLZMA (FileReader &file, size_t uncompressed_size, bool zip);

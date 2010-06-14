@@ -67,8 +67,6 @@ CCMD (removebots)
 	Net_WriteByte (DEM_KILLBOTS);
 }
 
-extern bool CheckCheatmode ();
-
 CCMD (freeze)
 {
 	if (CheckCheatmode ())

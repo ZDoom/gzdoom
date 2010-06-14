@@ -2041,7 +2041,7 @@ void P_PlayerThink (player_t *player)
 		player->inventorytics--;
 	}
 	// No-clip cheat
-	if (player->cheats & CF_NOCLIP)
+	if (player->cheats & CF_NOCLIP || (player->mo->GetDefault()->flags & MF_NOCLIP))
 	{
 		player->mo->flags |= MF_NOCLIP;
 	}

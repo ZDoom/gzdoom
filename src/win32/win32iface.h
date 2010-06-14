@@ -414,6 +414,7 @@ private:
 	D3DPal *Palettes;
 	D3DTex *Textures;
 	PackingTexture *Packs;
+	HRESULT LastHR;
 
 	IDirect3DDevice9 *D3DDevice;
 	IDirect3DTexture9 *FBTexture;

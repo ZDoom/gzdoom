@@ -721,6 +721,10 @@ struct UDMFParser
 				Flag(ld->activation, SPAC_Use, key); 
 				continue;
 
+			case NAME_Playeruseback:
+				Flag(ld->activation, SPAC_UseBack, key); 
+				continue;
+
 			case NAME_Monstercross:
 				Flag(ld->activation, SPAC_MCross, key); 
 				continue;
@@ -845,6 +849,11 @@ struct UDMFParser
 		if (strifetrans && ld->Alpha == FRACUNIT)
 		{
 			ld->Alpha = FRACUNIT * 3/4;
+		}
+		if (ld->sidedef[0] == NULL)
+		{
+			ld->sidedef[0] = (side_t*)(intptr_t)(1);
+			Printf("Line %d has no first side.\n", index);
 		}
 	}
 

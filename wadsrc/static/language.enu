@@ -1232,6 +1232,25 @@ TXT_RANDOMGOODBYE_1 = "Bye!";
 TXT_RANDOMGOODBYE_2 = "Thanks, bye!";
 TXT_RANDOMGOODBYE_3 = "See you later!";
 
+// Skills:
+
+SKILL_BABY			= "I'm too young to die";
+SKILL_EASY			= "Hey, not too rough";
+SKILL_NORMAL		= "Hurt me plenty";
+SKILL_HARD			= "Ultra-Violence";
+SKILL_NIGHTMARE		= "NIGHTMARE!";
+
+CSKILL_BABY			= "Easy does it";
+CSKILL_EASY			= "Not so sticky";
+CSKILL_NORMAL		= "Gobs of goo";
+CSKILL_HARD			= "Extreme Ooze";
+CSKILL_NIGHTMARE	= "Super Slimey!";
+
+SSKILL_BABY			= "Training";
+SSKILL_EASY			= "Rookie";
+SSKILL_NORMAL		= "Veteran";
+SSKILL_HARD			= "Elite";
+SSKILL_NIGHTMARE	= "Bloodbath";
 
 // Menu
 MNU_NEWGAME			= "NEW GAME";

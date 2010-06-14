@@ -323,7 +323,7 @@ void S_InitData ()
 	LastLocalSndInfo = LastLocalSndSeq = "";
 	S_ParseSndInfo ();
 	S_ParseSndSeq (-1);
-	S_ParseReverbDef ();
+	S_ParseMusInfo();
 }
 
 //==========================================================================
@@ -2328,7 +2328,8 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 		// Don't choke if the map doesn't have a song attached
 		S_StopMusic (true);
 		mus_playing.name = "";
-		return false;
+		LastSong = "";
+		return true;
 	}
 
 	FString DEH_Music;

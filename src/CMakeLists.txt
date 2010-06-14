@@ -375,6 +375,13 @@ if( NOT STRNICMP_EXISTS )
 	add_definitions( -Dstrnicmp=strncasecmp )
 endif( NOT STRNICMP_EXISTS )
 
+if( NOT WIN32 )
+	CHECK_FUNCTION_EXISTS( sigtimedwait SIGTIMEDWAIT_EXISTS )
+	if( SIGTIMEDWAIT_EXISTS )
+		add_definitions( -DHAVE_SIGTIMEDWAIT )
+	endif( SIGTIMEDWAIT_EXISTS )
+endif( NOT WIN32)
+
 if( NOT MSVC )
 	add_definitions( -D__forceinline=inline )
 endif( NOT MSVC )
@@ -657,9 +664,7 @@ add_executable( zdoom WIN32
 	zstring.cpp
 	g_doom/a_doommisc.cpp
 	g_heretic/a_hereticmisc.cpp
-	g_heretic/heretic_sbar.cpp
 	g_hexen/a_hexenmisc.cpp
-	g_hexen/hexen_sbar.cpp
 	g_raven/a_artitele.cpp
 	g_raven/a_minotaur.cpp
 	g_strife/a_strifestuff.cpp

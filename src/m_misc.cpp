@@ -150,40 +150,54 @@ int M_ReadFile (char const *name, BYTE **buffer)
 
 void M_FindResponseFile (void)
 {
-	int i;
+	const int limit = 100;	// avoid infinite recursion
+	int added_stuff = 0;
+	int i = 1;
 
-	for (i = 1; i < Args->NumArgs(); i++)
+	while (i < Args->NumArgs())
 	{
-		if (Args->GetArg(i)[0] == '@')
+		if (Args->GetArg(i)[0] != '@')
+		{
+			i++;
+		}
+		else
 		{
 			char	**argv;
-			char	*file;
-			int		argc;
+			char	*file = NULL;
+			int		argc = 0;
 			FILE	*handle;
 			int 	size;
 			long	argsize;
-			int 	k;
 			int 	index;
 
-			// READ THE RESPONSE FILE INTO MEMORY
-			handle = fopen (Args->GetArg(i) + 1,"rb");
-			if (!handle)
-			{ // [RH] Make this a warning, not an error.
-				Printf ("No such response file (%s)!", Args->GetArg(i) + 1);
-				continue;
+			// Any more response files after the limit will be removed from the
+			// command line.
+			if (added_stuff < limit)
+			{
+				// READ THE RESPONSE FILE INTO MEMORY
+				handle = fopen (Args->GetArg(i) + 1,"rb");
+				if (!handle)
+				{ // [RH] Make this a warning, not an error.
+					Printf ("No such response file (%s)!\n", Args->GetArg(i) + 1);
+				}
+				else
+				{
+					Printf ("Found response file %s!\n", Args->GetArg(i) + 1);
+					fseek (handle, 0, SEEK_END);
+					size = ftell (handle);
+					fseek (handle, 0, SEEK_SET);
+					file = new char[size+1];
+					fread (file, size, 1, handle);
+					file[size] = 0;
+					fclose (handle);
+
+					argsize = ParseCommandLine (file, &argc, NULL);
+				}
 			}
-
-			Printf ("Found response file %s!\n", Args->GetArg(i) + 1);
-			fseek (handle, 0, SEEK_END);
-			size = ftell (handle);
-			fseek (handle, 0, SEEK_SET);
-			file = new char[size+1];
-			fread (file, size, 1, handle);
-			file[size] = 0;
-			fclose (handle);
-
-			argsize = ParseCommandLine (file, &argc, NULL);
-			argc = Args->NumArgs() - 1;
+			else
+			{
+				Printf ("Ignored response file %s.\n", Args->GetArg(i) + 1);
+			}
 
 			if (argc != 0)
 			{
@@ -199,26 +213,38 @@ void M_FindResponseFile (void)
 					newargs->AppendArg(Args->GetArg(index));
 
 				// Copy parameters from response file.
-				for (index = 0; index < argc; ++i)
+				for (index = 0; index < argc; ++index)
 					newargs->AppendArg(argv[index]);
 
 				// Copy parameters after response file.
-				for (index = i + 1, i = newargs->NumArgs(); index < Args->NumArgs(); ++index)
+				for (index = i + 1; index < Args->NumArgs(); ++index)
 					newargs->AppendArg(Args->GetArg(index));
 
 				// Use the new argument vector as the global Args object.
 				Args = newargs;
+				if (++added_stuff == limit)
+				{
+					Printf("Response file limit of %d hit.\n", limit);
+				}
 			}
-
-			delete[] file;
-		
-			// DISPLAY ARGS
-			Printf ("%d command-line args:\n", Args->NumArgs ());
-			for (k = 1; k < Args->NumArgs (); k++)
-				Printf ("%s\n", Args->GetArg (k));
-
-			break;
+			else
+			{
+				// Remove the response file from the Args object
+				Args->RemoveArg(i);
+			}
+			if (file != NULL)
+			{
+				delete[] file;
+			}
 		}
+	}
+	if (added_stuff > 0)
+	{
+		// DISPLAY ARGS
+		Printf ("Added %d response file%s, now have %d command-line args:\n",
+			added_stuff, added_stuff > 1 ? "s" : "", Args->NumArgs ());
+		for (int k = 1; k < Args->NumArgs (); k++)
+			Printf ("%s\n", Args->GetArg (k));
 	}
 }
 

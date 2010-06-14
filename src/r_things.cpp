@@ -1530,18 +1530,18 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, fixed_t sx, fixed_
 	assert(pspnum >= 0 && pspnum < NUMPSPRITES);
 
 	// decide which patch to use
-	if ( (unsigned)psp->state->sprite >= (unsigned)sprites.Size ())
+	if ( (unsigned)psp->sprite >= (unsigned)sprites.Size ())
 	{
-		DPrintf ("R_DrawPSprite: invalid sprite number %i\n", psp->state->sprite);
+		DPrintf ("R_DrawPSprite: invalid sprite number %i\n", psp->sprite);
 		return;
 	}
-	sprdef = &sprites[psp->state->sprite];
-	if (psp->state->GetFrame() >= sprdef->numframes)
+	sprdef = &sprites[psp->sprite];
+	if (psp->frame >= sprdef->numframes)
 	{
-		DPrintf ("R_DrawPSprite: invalid sprite frame %i : %i\n", psp->state->sprite, psp->state->GetFrame());
+		DPrintf ("R_DrawPSprite: invalid sprite frame %i : %i\n", psp->sprite, psp->frame);
 		return;
 	}
-	sprframe = &SpriteFrames[sprdef->spriteframes + psp->state->GetFrame()];
+	sprframe = &SpriteFrames[sprdef->spriteframes + psp->frame];
 
 	picnum = sprframe->Texture[0];
 	flip = sprframe->Flip & 1;

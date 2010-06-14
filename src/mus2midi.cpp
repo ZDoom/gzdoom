@@ -53,7 +53,7 @@ static const BYTE StaticMIDIhead[] =
 0, 255, 81, 3, 0x07, 0xa1, 0x20
 };
 
-static const DWORD MUSMagic = MAKE_ID('M','U','S',0x1a);
+extern int MUSHeaderSearch(const BYTE *head, int len);
 
 static const BYTE CtrlTranslate[15] =
 {
@@ -110,23 +110,30 @@ static size_t WriteVarLen (TArray<BYTE> &file, int time)
 	return ofs;
 }
 
-bool ProduceMIDI (const BYTE *musBuf, TArray<BYTE> &outFile)
+bool ProduceMIDI (const BYTE *musBuf, int len, TArray<BYTE> &outFile)
 {
 	BYTE midStatus, midArgs, mid1, mid2;
 	size_t mus_p, maxmus_p;
 	BYTE event;
 	int deltaTime;
-	const MUSHeader *musHead = (const MUSHeader *)musBuf;
+	const MUSHeader *musHead;
 	BYTE status;
 	BYTE chanUsed[16];
 	BYTE lastVel[16];
 	long trackLen;
 	bool no_op;
 
-	// Do some validation of the MUS file
-	if (MUSMagic != musHead->Magic)
+	// Find the header
+	int offset = MUSHeaderSearch(musBuf, len);
+
+	if (offset < 0 || offset + (int)sizeof(MUSHeader) >= len)
 		return false;
-	
+
+	musBuf += offset;
+	len -= offset;
+	musHead = (const MUSHeader *)musBuf;
+
+	// Do some validation of the MUS file
 	if (LittleShort(musHead->NumChans) > 15)
 		return false;
 	
@@ -136,8 +143,12 @@ bool ProduceMIDI (const BYTE *musBuf, TArray<BYTE> &outFile)
 	memcpy(&outFile[0], StaticMIDIhead, sizeof(StaticMIDIhead));
 
 	musBuf += LittleShort(musHead->SongStart);
-	maxmus_p = LittleShort(musHead->SongLen);
 	mus_p = 0;
+	maxmus_p = LittleShort(musHead->SongLen);
+	if ((size_t)len - LittleShort(musHead->SongStart) < maxmus_p)
+	{
+		maxmus_p = len - LittleShort(musHead->SongStart);
+	}
 	
 	memset (lastVel, 100, 16);
 	memset (chanUsed, 0, 16);
@@ -287,10 +298,10 @@ bool ProduceMIDI (const BYTE *musBuf, TArray<BYTE> &outFile)
 	return true;
 }
 
-bool ProduceMIDI(const BYTE *musBuf, FILE *outFile)
+bool ProduceMIDI(const BYTE *musBuf, int len, FILE *outFile)
 {
 	TArray<BYTE> work;
-	if (ProduceMIDI(musBuf, work))
+	if (ProduceMIDI(musBuf, len, work))
 	{
 		return fwrite(&work[0], 1, work.Size(), outFile) == work.Size();
 	}

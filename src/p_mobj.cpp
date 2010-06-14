@@ -60,6 +60,7 @@
 #include "colormatcher.h"
 #include "v_palette.h"
 #include "p_enemy.h"
+#include "gstrings.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -528,7 +529,7 @@ int AActor::GetTics(FState * newstate)
 //
 //==========================================================================
 
-bool AActor::SetState (FState *newstate)
+bool AActor::SetState (FState *newstate, bool nofunction)
 {
 	if (debugfile && player && (player->cheats & CF_PREDICTING))
 		fprintf (debugfile, "for pl %td: SetState while predicting!\n", player-players);
@@ -554,37 +555,41 @@ bool AActor::SetState (FState *newstate)
 		tics = GetTics(newstate);
 		renderflags = (renderflags & ~RF_FULLBRIGHT) | newstate->GetFullbright();
 		newsprite = newstate->sprite;
-		if (newsprite != 1)
-		{
-			// Sprite 1 is ----, which means "do not change the sprite"
-			frame = newstate->GetFrame();
-
-			if (!(flags4 & MF4_NOSKIN) && newsprite == SpawnState->sprite)
-			{ // [RH] If the new sprite is the same as the original sprite, and
-			// this actor is attached to a player, use the player's skin's
-			// sprite. If a player is not attached, do not change the sprite
-			// unless it is different from the previous state's sprite; a
-			// player may have been attached, died, and respawned elsewhere,
-			// and we do not want to lose the skin on the body. If it wasn't
-			// for Dehacked, I would move sprite changing out of the states
-			// altogether, since actors rarely change their sprites after
-			// spawning.
-				if (player != NULL)
-				{
-					sprite = skins[player->userinfo.skin].sprite;
+		if (newsprite != SPR_FIXED)
+		{ // okay to change sprite and/or frame
+			if (!newstate->GetSameFrame())
+			{ // okay to change frame
+				frame = newstate->GetFrame();
+			}
+			if (newsprite != SPR_NOCHANGE)
+			{ // okay to change sprite
+				if (!(flags4 & MF4_NOSKIN) && newsprite == SpawnState->sprite)
+				{ // [RH] If the new sprite is the same as the original sprite, and
+				// this actor is attached to a player, use the player's skin's
+				// sprite. If a player is not attached, do not change the sprite
+				// unless it is different from the previous state's sprite; a
+				// player may have been attached, died, and respawned elsewhere,
+				// and we do not want to lose the skin on the body. If it wasn't
+				// for Dehacked, I would move sprite changing out of the states
+				// altogether, since actors rarely change their sprites after
+				// spawning.
+					if (player != NULL)
+					{
+						sprite = skins[player->userinfo.skin].sprite;
+					}
+					else if (newsprite != prevsprite)
+					{
+						sprite = newsprite;
+					}
 				}
-				else if (newsprite != prevsprite)
+				else
 				{
 					sprite = newsprite;
 				}
 			}
-			else
-			{
-				sprite = newsprite;
-			}
 		}
 
-		if (newstate->CallAction(this, this))
+		if (!nofunction && newstate->CallAction(this, this))
 		{
 			// Check whether the called action function resulted in destroying the actor
 			if (ObjectFlags & OF_EuthanizeMe)
@@ -593,67 +598,10 @@ bool AActor::SetState (FState *newstate)
 		newstate = newstate->GetNextState();
 	} while (tics == 0);
 
-	screen->StateChanged(this);
-	return true;
-}
-
-//----------------------------------------------------------------------------
-//
-// FUNC AActor::SetStateNF
-//
-// Same as SetState, but does not call the state function.
-//
-//----------------------------------------------------------------------------
-
-bool AActor::SetStateNF (FState *newstate)
-{
-	do
+	if (screen != NULL)
 	{
-		if (newstate == NULL)
-		{
-			state = NULL;
-			Destroy ();
-			return false;
-		}
-		int prevsprite, newsprite;
-
-		if (state != NULL)
-		{
-			prevsprite = state->sprite;
-		}
-		else
-		{
-			prevsprite = -1;
-		}
-		state = newstate;
-		tics = GetTics(newstate);
-		renderflags = (renderflags & ~RF_FULLBRIGHT) | newstate->GetFullbright();
-		newsprite = newstate->sprite;
-		if (newsprite != 1)
-		{
-			// Sprite 1 is ----, which means "do not change the sprite"
-
-			frame = newstate->GetFrame();
-			if (!(flags4 & MF4_NOSKIN) && newsprite == SpawnState->sprite)
-			{
-				if (player != NULL && gameinfo.gametype != GAME_Hexen)
-				{
-					sprite = skins[player->userinfo.skin].sprite;
-				}
-				else if (newsprite != prevsprite)
-				{
-					sprite = newsprite;
-				}
-			}
-			else
-			{
-				sprite = newsprite;
-			}
-		}
-		newstate = newstate->GetNextState();
-	} while (tics == 0);
-
-	screen->StateChanged(this);
+		screen->StateChanged(this);
+	}
 	return true;
 }
 
@@ -824,7 +772,7 @@ AInventory *AActor::DropInventory (AInventory *item)
 //
 //============================================================================
 
-AInventory *AActor::FindInventory (const PClass *type)
+AInventory *AActor::FindInventory (const PClass *type, bool subclass)
 {
 	AInventory *item;
 
@@ -833,9 +781,19 @@ AInventory *AActor::FindInventory (const PClass *type)
 	assert (type->ActorInfo != NULL);
 	for (item = Inventory; item != NULL; item = item->Inventory)
 	{
-		if (item->GetClass() == type)
+		if (!subclass)
 		{
-			break;
+			if (item->GetClass() == type)
+			{
+				break;
+			}
+		}
+		else
+		{
+			if (item->IsKindOf(type))
+			{
+				break;
+			}
 		}
 	}
 	return item;
@@ -1543,7 +1501,7 @@ bool AActor::CanSeek(AActor *target) const
 //
 //----------------------------------------------------------------------------
 
-bool P_SeekerMissile (AActor *actor, angle_t thresh, angle_t turnMax)
+bool P_SeekerMissile (AActor *actor, angle_t thresh, angle_t turnMax, bool precise)
 {
 	int dir;
 	int dist;
@@ -1579,27 +1537,53 @@ bool P_SeekerMissile (AActor *actor, angle_t thresh, angle_t turnMax)
 		actor->angle -= delta;
 	}
 	angle = actor->angle>>ANGLETOFINESHIFT;
-	actor->velx = FixedMul (actor->Speed, finecosine[angle]);
-	actor->vely = FixedMul (actor->Speed, finesine[angle]);
-
-	if (!(actor->flags3 & (MF3_FLOORHUGGER|MF3_CEILINGHUGGER)))
+	
+	if (!precise)
 	{
-		if (actor->z + actor->height < target->z ||
-			target->z + target->height < actor->z)
-		{ // Need to seek vertically
-			dist = P_AproxDistance (target->x - actor->x, target->y - actor->y);
-			dist = dist / actor->Speed;
-			if (dist < 1)
-			{
-				dist = 1;
+		actor->velx = FixedMul (actor->Speed, finecosine[angle]);
+		actor->vely = FixedMul (actor->Speed, finesine[angle]);
+
+		if (!(actor->flags3 & (MF3_FLOORHUGGER|MF3_CEILINGHUGGER)))
+		{
+			if (actor->z + actor->height < target->z ||
+				target->z + target->height < actor->z)
+			{ // Need to seek vertically
+				dist = P_AproxDistance (target->x - actor->x, target->y - actor->y);
+				dist = dist / actor->Speed;
+				if (dist < 1)
+				{
+					dist = 1;
+				}
+				actor->velz = ((target->z+target->height/2) - (actor->z+actor->height/2)) / dist;
 			}
-			actor->velz = ((target->z+target->height/2) - (actor->z+actor->height/2)) / dist;
 		}
+	}
+	else
+	{
+		angle_t pitch;
+		if (!(actor->flags3 & (MF3_FLOORHUGGER|MF3_CEILINGHUGGER)))
+		{ // Need to seek vertically
+			double dist = MAX(1.0, FVector2(target->x - actor->x, target->y - actor->y).Length());
+			// Aim at a player's eyes and at the middle of the actor for everything else.
+			fixed_t aimheight = target->height/2;
+			if (target->IsKindOf(RUNTIME_CLASS(APlayerPawn)))
+			{
+				aimheight = static_cast<APlayerPawn *>(target)->ViewHeight;
+			}
+			pitch = R_PointToAngle2(0, actor->z + actor->height/2, xs_CRoundToInt(dist), target->z + aimheight);
+			pitch >>= ANGLETOFINESHIFT;
+		}
+
+		fixed_t xyscale = FixedMul(actor->Speed, finecosine[pitch]);
+		actor->velz = FixedMul(actor->Speed, finesine[pitch]);
+		actor->velx = FixedMul(xyscale, finecosine[angle]);
+		actor->vely = FixedMul(xyscale, finesine[angle]);
 	}
 
 
 	return true;
 }
+
 
 //
 // P_XYMovement
@@ -3667,7 +3651,10 @@ AActor *AActor::StaticSpawn (const PClass *type, fixed_t ix, fixed_t iy, fixed_t
 	{
 		level.total_items++;
 	}
-	screen->StateChanged(actor);
+	if (screen != NULL)
+	{
+		screen->StateChanged(actor);
+	}
 	return actor;
 }
 
@@ -3985,7 +3972,6 @@ APlayerPawn *P_SpawnPlayer (FMapThing *mthing, bool tempplayer)
 
 	// [GRB] Reset skin
 	p->userinfo.skin = R_FindSkin (skins[p->userinfo.skin].name, p->CurrentPlayerClass);
-	StatusBar->SetFace (&skins[p->userinfo.skin]);
 
 
 	if (!(mobj->flags2 & MF2_DONTTRANSLATE))
@@ -4313,6 +4299,11 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	{
 		mthing->args[0] = mthing->type - 14000;
 		mthing->type = 14065;
+	}
+	else if (mthing->type >= 14101 && mthing->type <= 14164)
+	{
+		mthing->args[0] = mthing->type - 14100;
+		mthing->type = 14165;
 	}
 	// find which type to spawn
 	i = DoomEdMap.FindType (mthing->type);
@@ -5586,9 +5577,26 @@ bool AActor::IsSentient() const
 
 const char *AActor::GetTag(const char *def) const
 {
-	if (Tag != NAME_None) return Tag.GetChars();
-	else if (def) return def;
-	else return GetClass()->TypeName.GetChars();
+	if (Tag != NAME_None)
+	{
+		const char *tag = Tag.GetChars();
+		if (tag[0] == '$')
+		{
+			return GStrings(tag + 1);
+		}
+		else
+		{
+			return tag;
+		}
+	}
+	else if (def)
+	{
+		return def;
+	}
+	else
+	{
+		return GetClass()->TypeName.GetChars();
+	}
 }
 
 

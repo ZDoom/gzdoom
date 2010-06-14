@@ -410,6 +410,7 @@ void PClass::InitializeActorInfo ()
 	info->StateList = NULL;
 	info->DamageFactors = NULL;
 	info->PainChances = NULL;
+	info->ColorSets = NULL;
 	m_RuntimeActors.Push (this);
 }
 

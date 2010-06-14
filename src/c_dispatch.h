@@ -39,6 +39,8 @@
 class FConfigFile;
 class APlayerPawn;
 
+extern bool CheckCheatmode (bool printmsg = true);
+
 void C_ExecCmdLineParams ();
 
 // Add commands to the console as if they were typed in. Can handle wait

@@ -684,7 +684,7 @@ static void ParseSpriteFrames (FActorInfo *info, TArray<FState> &states, FScanne
 				{
 					sc.ScriptError ("* must come after a frame");
 				}
-				state.Frame |= SF_FULLBRIGHT;
+				state.Fullbright = true;
 			}
 			else if (*token < 'A' || *token > ']')
 			{

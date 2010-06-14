@@ -620,16 +620,17 @@ bool PIT_CheckLine (line_t *ld, const FBoundingBox &box, FCheckPosition &tm)
 		return false;
 	}
 
-		// MBF bouncers are treated as missiles here.
-		bool Projectile = (tm.thing->flags & MF_MISSILE || tm.thing->BounceFlags & BOUNCE_MBF);
-		// MBF considers that friendly monsters are not blocked by monster-blocking lines.
-		// This is added here as a compatibility option. Note that monsters that are dehacked
-		// into being friendly with the MBF flag automatically gain MF3_NOBLOCKMONST, so this
-		// just optionally generalizes the behavior to other friendly monsters.
-		bool NotBlocked = ((tm.thing->flags3 & MF3_NOBLOCKMONST)
-			|| ((i_compatflags & COMPATF_NOBLOCKFRIENDS) && (tm.thing->flags & MF_FRIENDLY)));
+	// MBF bouncers are treated as missiles here.
+	bool Projectile = (tm.thing->flags & MF_MISSILE || tm.thing->BounceFlags & BOUNCE_MBF);
+	// MBF considers that friendly monsters are not blocked by monster-blocking lines.
+	// This is added here as a compatibility option. Note that monsters that are dehacked
+	// into being friendly with the MBF flag automatically gain MF3_NOBLOCKMONST, so this
+	// just optionally generalizes the behavior to other friendly monsters.
+	bool NotBlocked = ((tm.thing->flags3 & MF3_NOBLOCKMONST)
+		|| ((i_compatflags & COMPATF_NOBLOCKFRIENDS) && (tm.thing->flags & MF_FRIENDLY)));
 
-		if (!(Projectile) || (ld->flags & (ML_BLOCKEVERYTHING|ML_BLOCKPROJECTILE)))	{
+	if (!(Projectile) || (ld->flags & (ML_BLOCKEVERYTHING|ML_BLOCKPROJECTILE)))
+	{
 		if (ld->flags & ML_RAILING)
 		{
 			rail = true;
@@ -1148,7 +1149,8 @@ bool PIT_CheckThing (AActor *thing, FCheckPosition &tm)
 	}
 	solid = (thing->flags & MF_SOLID) &&
 			!(thing->flags & MF_NOCLIP) &&
-			(tm.thing->flags & MF_SOLID);
+			((tm.thing->flags & MF_SOLID) || (tm.thing->flags6 & MF6_BLOCKEDBYSOLIDACTORS));
+
 	// Check for special pickup
 	if ((thing->flags & MF_SPECIAL) && (tm.thing->flags & MF_PICKUP)
 		// [RH] The next condition is to compensate for the extra height
@@ -1275,10 +1277,6 @@ bool P_CheckPosition (AActor *thing, fixed_t x, fixed_t y, FCheckPosition &tm)
 		return true;
 	
 	// Check things first, possibly picking things up.
-	// The bounding box is extended by MAXRADIUS
-	// because DActors are grouped into mapblocks
-	// based on their origin point, and can overlap
-	// into adjacent blocks by up to MAXRADIUS units.
 	thing->BlockingMobj = NULL;
 	thingblocker = NULL;
 	fakedblocker = NULL;
@@ -2182,48 +2180,53 @@ void FSlide::HitSlideLine (line_t* ld)
 	}																//   ^
 	else															//   |
 	{																// phares
-#if 0
-		fixed_t newlen;
-	
-		if (deltaangle > ANG180)
-			deltaangle += ANG180;
-		//	I_Error ("SlideLine: ang>ANG180");
-
-		lineangle >>= ANGLETOFINESHIFT;
-		deltaangle >>= ANGLETOFINESHIFT;
-
-		newlen = FixedMul (movelen, finecosine[deltaangle]);
-
-		tmxmove = FixedMul (newlen, finecosine[lineangle]);
-		tmymove = FixedMul (newlen, finesine[lineangle]);
-#else
-		divline_t dll, dlv;
-		fixed_t inter1, inter2, inter3;
-
-		P_MakeDivline (ld, &dll);
-
-		dlv.x = slidemo->x;
-		dlv.y = slidemo->y;
-		dlv.dx = dll.dy;
-		dlv.dy = -dll.dx;
-
-		inter1 = P_InterceptVector(&dll, &dlv);
-
-		dlv.dx = tmxmove;
-		dlv.dy = tmymove;
-		inter2 = P_InterceptVector (&dll, &dlv);
-		inter3 = P_InterceptVector (&dlv, &dll);
-
-		if (inter3 != 0)
+		// Doom's original algorithm here does not work well due to imprecisions of the sine table.
+		// However, keep it active if the wallrunning compatibility flag is on
+		if (i_compatflags & COMPATF_WALLRUN)
 		{
-			tmxmove = Scale (inter2-inter1, dll.dx, inter3);
-			tmymove = Scale (inter2-inter1, dll.dy, inter3);
+			fixed_t newlen;
+		
+			if (deltaangle > ANG180)
+				deltaangle += ANG180;
+			//	I_Error ("SlideLine: ang>ANG180");
+
+			lineangle >>= ANGLETOFINESHIFT;
+			deltaangle >>= ANGLETOFINESHIFT;
+
+			newlen = FixedMul (movelen, finecosine[deltaangle]);
+
+			tmxmove = FixedMul (newlen, finecosine[lineangle]);
+			tmymove = FixedMul (newlen, finesine[lineangle]);
 		}
 		else
 		{
-			tmxmove = tmymove = 0;
+			divline_t dll, dlv;
+			fixed_t inter1, inter2, inter3;
+
+			P_MakeDivline (ld, &dll);
+
+			dlv.x = slidemo->x;
+			dlv.y = slidemo->y;
+			dlv.dx = dll.dy;
+			dlv.dy = -dll.dx;
+
+			inter1 = P_InterceptVector(&dll, &dlv);
+
+			dlv.dx = tmxmove;
+			dlv.dy = tmymove;
+			inter2 = P_InterceptVector (&dll, &dlv);
+			inter3 = P_InterceptVector (&dlv, &dll);
+
+			if (inter3 != 0)
+			{
+				tmxmove = Scale (inter2-inter1, dll.dx, inter3);
+				tmymove = Scale (inter2-inter1, dll.dy, inter3);
+			}
+			else
+			{
+				tmxmove = tmymove = 0;
+			}
 		}
-#endif
 	}																// phares
 }
 
@@ -2937,7 +2940,7 @@ bool aim_t::AimTraverse3DFloors(const divline_t &trace, intercept_t * in)
 
 void aim_t::AimTraverse (fixed_t startx, fixed_t starty, fixed_t endx, fixed_t endy, AActor *target)
 {
-	FPathTraverse it(startx, starty, endx, endy, PT_ADDLINES|PT_ADDTHINGS);
+	FPathTraverse it(startx, starty, endx, endy, PT_ADDLINES|PT_ADDTHINGS|PT_COMPATIBLE);
 	intercept_t *in;
 
 	while ((in = it.Next()))
@@ -3294,7 +3297,7 @@ static bool CheckForSpectral (FTraceResults &res)
 //==========================================================================
 
 AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
-				   int pitch, int damage, FName damageType, const PClass *pufftype, bool ismeleeattack)
+				   int pitch, int damage, FName damageType, const PClass *pufftype, bool ismeleeattack, AActor **victim)
 {
 	fixed_t vx, vy, vz, shootz;
 	FTraceResults trace;
@@ -3304,6 +3307,11 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 	bool killPuff = false;
 	AActor *puff = NULL;
 	int flags = ismeleeattack? PF_MELEERANGE : 0;
+
+	if (victim != NULL)
+	{
+		*victim = NULL;
+	}
 
 	angle >>= ANGLETOFINESHIFT;
 	pitch = (angle_t)(pitch) >> ANGLETOFINESHIFT;
@@ -3420,9 +3428,12 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 				(t1->player->ReadyWeapon->WeaponFlags & WIF_AXEBLOOD));
 
 			// Hit a thing, so it could be either a puff or blood
-			hitx = t1->x + FixedMul (vx, trace.Distance);
-			hity = t1->y + FixedMul (vy, trace.Distance);
-			hitz = shootz + FixedMul (vz, trace.Distance);
+			fixed_t dist = trace.Distance;
+			// position a bit closer for puffs/blood if using compatibility mode.
+			if (i_compatflags & COMPATF_HITSCAN) dist -= 10*FRACUNIT;
+			hitx = t1->x + FixedMul (vx, dist);
+			hity = t1->y + FixedMul (vy, dist);
+			hitz = shootz + FixedMul (vz, dist);
 
 			// Spawn bullet puffs or blood spots, depending on target type.
 			if ((puffDefaults->flags3 & MF3_PUFFONACTORS) ||
@@ -3484,6 +3495,10 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 				}
 				P_DamageMobj (trace.Actor, puff ? puff : t1, t1, damage, damageType, flags);
 			}
+			if (victim != NULL)
+			{
+				*victim = trace.Actor;
+			}
 		}
 		if (trace.CrossedWater)
 		{
@@ -3505,16 +3520,20 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 }
 
 AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
-				   int pitch, int damage, FName damageType, FName pufftype, bool ismeleeattack)
+				   int pitch, int damage, FName damageType, FName pufftype, bool ismeleeattack, AActor **victim)
 {
 	const PClass * type = PClass::FindClass(pufftype);
+	if (victim != NULL)
+	{
+		*victim = NULL;
+	}
 	if (type == NULL)
 	{
 		Printf("Attempt to spawn unknown actor type '%s'\n", pufftype.GetChars());
 	}
 	else
 	{
-		return P_LineAttack(t1, angle, distance, pitch, damage, damageType, type, ismeleeattack);
+		return P_LineAttack(t1, angle, distance, pitch, damage, damageType, type, ismeleeattack, victim);
 	}
 	return NULL;
 }
@@ -3983,7 +4002,7 @@ bool P_UseTraverse(AActor *usething, fixed_t endx, fixed_t endy, bool &foundline
 		}
 
 		FLineOpening open;
-		if (in->d.line->special == 0 || !(in->d.line->activation & (SPAC_Use|SPAC_UseThrough)))
+		if (in->d.line->special == 0 || !(in->d.line->activation & (SPAC_Use|SPAC_UseThrough|SPAC_UseBack)))
 		{
 	blocked:
 			if (in->d.line->flags & (ML_BLOCKEVERYTHING|ML_BLOCKUSE))
@@ -4029,27 +4048,46 @@ bool P_UseTraverse(AActor *usething, fixed_t endx, fixed_t endy, bool &foundline
 		}
 			
 		if (P_PointOnLineSide (usething->x, usething->y, in->d.line) == 1)
-			// [RH] continue traversal for two-sided lines
-			//return in->d.line->backsector != NULL;		// don't use back side
-			goto blocked;	// do a proper check for back sides of triggers
-			
-		P_ActivateLine (in->d.line, usething, 0, SPAC_Use);
+		{
+			if (!(in->d.line->activation & SPAC_UseBack))
+			{
+				// [RH] continue traversal for two-sided lines
+				//return in->d.line->backsector != NULL;		// don't use back side
+				goto blocked;	// do a proper check for back sides of triggers
+			}
+			else
+			{
+				P_ActivateLine (in->d.line, usething, 1, SPAC_UseBack);
+				return true;
+			}
+		}
+		else 
+		{
+			if ((in->d.line->activation & (SPAC_Use|SPAC_UseThrough|SPAC_UseBack)) == SPAC_UseBack)
+			{
+				goto blocked; // Line cannot be used from front side so treat it as a non-trigger line
+			}
 
-		//WAS can't use more than one special line in a row
-		//jff 3/21/98 NOW multiple use allowed with enabling line flag
-		//[RH] And now I've changed it again. If the line is of type
-		//	   SPAC_USE, then it eats the use. Everything else passes
-		//	   it through, including SPAC_USETHROUGH.
-		if (i_compatflags & COMPATF_USEBLOCKING)
-		{
-			if (in->d.line->activation & SPAC_UseThrough) continue;
-			else return true;
+			P_ActivateLine (in->d.line, usething, 0, SPAC_Use);
+
+			//WAS can't use more than one special line in a row
+			//jff 3/21/98 NOW multiple use allowed with enabling line flag
+			//[RH] And now I've changed it again. If the line is of type
+			//	   SPAC_USE, then it eats the use. Everything else passes
+			//	   it through, including SPAC_USETHROUGH.
+			if (i_compatflags & COMPATF_USEBLOCKING)
+			{
+				if (in->d.line->activation & SPAC_UseThrough) continue;
+				else return true;
+			}
+			else
+			{
+				if (!(in->d.line->activation & SPAC_Use)) continue;
+				else return true;
+			}
+
 		}
-		else
-		{
-			if (!(in->d.line->activation & SPAC_Use)) continue;
-			else return true;
-		}
+
 	}
 	return false;
 }

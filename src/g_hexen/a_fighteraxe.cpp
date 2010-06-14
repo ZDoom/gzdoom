@@ -225,7 +225,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeAttack)
 		slope = P_AimLineAttack (pmo, angle, AXERANGE, &linetarget);
 		if (linetarget)
 		{
-			P_LineAttack (pmo, angle, AXERANGE, slope, damage, NAME_Melee, pufftype, true);
+			P_LineAttack (pmo, angle, AXERANGE, slope, damage, NAME_Melee, pufftype, true, &linetarget);
 			if (linetarget->flags3&MF3_ISMONSTER || linetarget->player)
 			{
 				P_ThrustMobj (linetarget, angle, power);
@@ -238,7 +238,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeAttack)
 		slope = P_AimLineAttack (pmo, angle, AXERANGE, &linetarget);
 		if (linetarget)
 		{
-			P_LineAttack (pmo, angle, AXERANGE, slope, damage, NAME_Melee, pufftype, true);
+			P_LineAttack (pmo, angle, AXERANGE, slope, damage, NAME_Melee, pufftype, true, &linetarget);
 			if (linetarget->flags3&MF3_ISMONSTER)
 			{
 				P_ThrustMobj (linetarget, angle, power);

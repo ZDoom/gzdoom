@@ -265,6 +265,7 @@ void level_info_t::Reset()
 	bordertexture[0] = 0;
 	teamdamage = 0.f;
 	specialactions.Clear();
+	DefaultEnvironment = 0;
 }
 
 
@@ -1250,6 +1251,36 @@ DEFINE_MAP_OPTION(mapbackground, true)
 	parse.ParseLumpOrTextureName(info->mapbg);
 }
 
+DEFINE_MAP_OPTION(defaultenvironment, false)
+{
+	int id;
+
+	parse.ParseAssign();
+	if (parse.sc.CheckNumber())
+	{ // Numeric ID XXX [, YYY]
+		id = parse.sc.Number << 8;
+		if (parse.CheckNumber())
+		{
+			id |= parse.sc.Number;
+		}
+	}
+	else
+	{ // Named environment
+		parse.sc.MustGetString();
+		ReverbContainer *reverb = S_FindEnvironment(parse.sc.String);
+		if (reverb == NULL)
+		{
+			parse.sc.ScriptMessage("Unknown sound environment '%s'\n", parse.sc.String);
+			id = 0;
+		}
+		else
+		{
+			id = reverb->ID;
+		}
+	}
+	info->DefaultEnvironment = id;
+}
+
 
 //==========================================================================
 //
@@ -1293,6 +1324,7 @@ MapFlagHandlers[] =
 	{ "specialaction_exitlevel",		MITYPE_SCFLAGS,	0, ~LEVEL_SPECACTIONSMASK },
 	{ "specialaction_opendoor",			MITYPE_SCFLAGS,	LEVEL_SPECOPENDOOR, ~LEVEL_SPECACTIONSMASK },
 	{ "specialaction_lowerfloor",		MITYPE_SCFLAGS,	LEVEL_SPECLOWERFLOOR, ~LEVEL_SPECACTIONSMASK },
+	{ "specialaction_lowerfloortohighest",MITYPE_SCFLAGS,LEVEL_SPECLOWERFLOORTOHIGHEST, ~LEVEL_SPECACTIONSMASK },
 	{ "specialaction_killmonsters",		MITYPE_SETFLAG,	LEVEL_SPECKILLMONSTERS, 0 },
 	{ "lightning",						MITYPE_SETFLAG,	LEVEL_STARTLIGHTNING, 0 },
 	{ "smoothlighting",					MITYPE_SETFLAG2,	LEVEL2_SMOOTHLIGHTING, 0 },
@@ -1368,6 +1400,7 @@ MapFlagHandlers[] =
 	{ "compat_corpsegibs",				MITYPE_COMPATFLAG, COMPATF_CORPSEGIBS},
 	{ "compat_noblockfriends",			MITYPE_COMPATFLAG, COMPATF_NOBLOCKFRIENDS},
 	{ "compat_spritesort",				MITYPE_COMPATFLAG, COMPATF_SPRITESORT},
+	{ "compat_light",					MITYPE_COMPATFLAG, COMPATF_LIGHT},
 	{ "cd_start_track",					MITYPE_EATNEXT,	0, 0 },
 	{ "cd_end1_track",					MITYPE_EATNEXT,	0, 0 },
 	{ "cd_end2_track",					MITYPE_EATNEXT,	0, 0 },

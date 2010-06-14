@@ -822,10 +822,13 @@ void FTextureManager::AddTexturesForWad(int wadnum)
 		}
 	}
 
-	// Seventh step: Check for hires replacements.
-	AddHiresTextures(wadnum);
+	// Check for text based texture definitions
 	LoadTextureDefs(wadnum, "TEXTURES");
 	LoadTextureDefs(wadnum, "HIRESTEX");
+
+	// Seventh step: Check for hires replacements.
+	AddHiresTextures(wadnum);
+
 	SortTexturesByType(firsttexture, Textures.Size());
 }
 

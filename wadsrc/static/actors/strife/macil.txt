@@ -16,6 +16,7 @@ ACTOR Macil1 64
 	+NOICEDEATH
 	+NOSPLASHALERT
 	+NODAMAGE
+	+NEVERRESPAWN
 	DamageFactor "Fire", 0.5
 	MinMissileChance 150
 	SeeSound "macil/sight"

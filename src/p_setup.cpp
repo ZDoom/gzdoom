@@ -729,6 +729,7 @@ void P_FloodZone (sector_t *sec, int zonenum)
 void P_FloodZones ()
 {
 	int z = 0, i;
+	ReverbContainer *reverb;
 
 	for (i = 0; i < numsectors; ++i)
 	{
@@ -739,9 +740,15 @@ void P_FloodZones ()
 	}
 	numzones = z;
 	zones = new zone_t[z];
+	reverb = S_FindEnvironment(level.DefaultEnvironment);
+	if (reverb == NULL)
+	{
+		Printf("Sound environment %d, %d not found\n", level.DefaultEnvironment >> 8, level.DefaultEnvironment & 255);
+		reverb = DefaultEnvironments[0];
+	}
 	for (i = 0; i < z; ++i)
 	{
-		zones[i].Environment = DefaultEnvironments[0];
+		zones[i].Environment = reverb;
 	}
 }
 
@@ -786,7 +793,7 @@ void P_LoadVertexes (MapData * map)
 //
 //===========================================================================
 
-void P_LoadZSegs (FileReaderZ &data)
+void P_LoadZSegs (FileReaderBase &data)
 {
 	for (int i = 0; i < numsegs; ++i)
 	{
@@ -823,7 +830,7 @@ void P_LoadZSegs (FileReaderZ &data)
 //
 //===========================================================================
 
-void P_LoadGLZSegs (FileReaderZ &data, DWORD id)
+void P_LoadGLZSegs (FileReaderBase &data, int type)
 {
 	for (int i = 0; i < numsubsectors; ++i)
 	{
@@ -836,7 +843,7 @@ void P_LoadGLZSegs (FileReaderZ &data, DWORD id)
 			BYTE side;
 
 			data >> v1 >> partner;
-			if (id == MAKE_ID('Z','G','L','2'))
+			if (type == 2)
 			{
 				data >> line;
 			}
@@ -898,14 +905,12 @@ void P_LoadGLZSegs (FileReaderZ &data, DWORD id)
 //
 //===========================================================================
 
-static void P_LoadZNodes (FileReader &dalump, DWORD id)
+static void LoadZNodes(FileReaderBase &data, int glnodes)
 {
-	FileReaderZ data (dalump);
-	DWORD i;
-
 	// Read extra vertices added during node building
 	DWORD orgVerts, newVerts;
 	vertex_t *newvertarray;
+	unsigned int i;
 
 	data >> orgVerts >> newVerts;
 	if (orgVerts + newVerts == (DWORD)numvertexes)
@@ -970,13 +975,13 @@ static void P_LoadZNodes (FileReader &dalump, DWORD id)
 	segs = new seg_t[numsegs];
 	memset (segs, 0, numsegs*sizeof(seg_t));
 
-	if (id == MAKE_ID('Z','N','O','D'))
+	if (glnodes == 0)
 	{
 		P_LoadZSegs (data);
 	}
 	else
 	{
-		P_LoadGLZSegs (data, id);
+		P_LoadGLZSegs (data, glnodes);
 	}
 
 	// Read nodes
@@ -1022,6 +1027,76 @@ static void P_LoadZNodes (FileReader &dalump, DWORD id)
 }
 
 
+static void P_LoadZNodes (FileReader &dalump, DWORD id)
+{
+	int type;
+	bool compressed;
+
+	switch (id)
+	{
+	case MAKE_ID('Z','N','O','D'):
+		type = 0;
+		compressed = true;
+		break;
+
+	case MAKE_ID('Z','G','L','N'):
+		type = 1;
+		compressed = true;
+		break;
+
+	case MAKE_ID('Z','G','L','2'):
+		type = 2;
+		compressed = true;
+		break;
+
+	case MAKE_ID('X','N','O','D'):
+		type = 0;
+		compressed = false;
+		break;
+
+	case MAKE_ID('X','G','L','N'):
+		type = 1;
+		compressed = false;
+		break;
+
+	case MAKE_ID('X','G','L','2'):
+		type = 2;
+		compressed = false;
+		break;
+
+	default:
+		return;
+	}
+	
+	if (compressed)
+	{
+		FileReaderZ data (dalump);
+		LoadZNodes(data, type);
+	}
+	else
+	{
+		LoadZNodes(dalump, type);
+	}
+}
+
+
+
+//===========================================================================
+//
+// P_CheckV4Nodes
+// http://www.sbsoftware.com/files/DeePBSPV4specs.txt
+//
+//===========================================================================
+
+static bool P_CheckV4Nodes(MapData *map)
+{
+	char header[8];
+
+	map->Read(ML_NODES, header, 8);
+	return !memcmp(header, "xNd4\0\0\0\0", 8);
+}
+
+
 //===========================================================================
 //
 // P_LoadSegs
@@ -1030,6 +1105,7 @@ static void P_LoadZNodes (FileReader &dalump, DWORD id)
 //
 //===========================================================================
 
+template<class segtype>
 void P_LoadSegs (MapData * map)
 {
 	int  i;
@@ -1046,7 +1122,7 @@ void P_LoadSegs (MapData * map)
 
 	memset (vertchanged,0,numvertexes); // phares 10/4/98
 
-	numsegs = lumplen / sizeof(mapseg_t);
+	numsegs = lumplen / sizeof(segtype);
 
 	if (numsegs == 0)
 	{
@@ -1078,14 +1154,14 @@ void P_LoadSegs (MapData * map)
 	{
 		for (i = 0; i < numsegs; i++)
 		{
-			seg_t *li = segs+i;
-			mapseg_t *ml = (mapseg_t *) data + i;
+			seg_t *li = segs + i;
+			segtype *ml = ((segtype *) data) + i;
 
 			int side, linedef;
 			line_t *ldef;
 
-			vnum1 = LittleShort(ml->v1);
-			vnum2 = LittleShort(ml->v2);
+			vnum1 = ml->V1();
+			vnum2 = ml->V2();
 
 			if (vnum1 >= numvertexes || vnum2 >= numvertexes)
 			{
@@ -1215,12 +1291,13 @@ void P_LoadSegs (MapData * map)
 //
 //===========================================================================
 
+template<class subsectortype, class segtype>
 void P_LoadSubsectors (MapData * map)
 {
 	int i;
-	DWORD maxseg = map->Size(ML_SEGS) / sizeof(mapseg_t);
+	DWORD maxseg = map->Size(ML_SEGS) / sizeof(segtype);
 
-	numsubsectors = map->MapLumps[ML_SSECTORS].Size / sizeof(mapsubsector_t);
+	numsubsectors = map->MapLumps[ML_SSECTORS].Size / sizeof(subsectortype);
 
 	if (numsubsectors == 0 || maxseg == 0 )
 	{
@@ -1237,11 +1314,11 @@ void P_LoadSubsectors (MapData * map)
 	
 	for (i = 0; i < numsubsectors; i++)
 	{
-		WORD numsegs, firstseg;
+		subsectortype subd;
 
-		(*map->file) >> numsegs >> firstseg;
+		(*map->file) >> subd.numsegs >> subd.firstseg;
 
-		if (numsegs == 0)
+		if (subd.numsegs == 0)
 		{
 			Printf ("Subsector %i is empty.\n", i);
 			delete[] subsectors;
@@ -1250,8 +1327,8 @@ void P_LoadSubsectors (MapData * map)
 			return;
 		}
 
-		subsectors[i].numlines = numsegs;
-		subsectors[i].firstline = firstseg;
+		subsectors[i].numlines = subd.numsegs;
+		subsectors[i].firstline = subd.firstseg;
 
 		if (subsectors[i].firstline >= maxseg)
 		{
@@ -1383,6 +1460,7 @@ void P_LoadSectors (MapData * map)
 //
 //===========================================================================
 
+template<class nodetype, class subsectortype>
 void P_LoadNodes (MapData * map)
 {
 	FMemLump	data;
@@ -1390,13 +1468,13 @@ void P_LoadNodes (MapData * map)
 	int 		j;
 	int 		k;
 	char		*mnp;
-	mapnode_t	*mn;
+	nodetype	*mn;
 	node_t* 	no;
 	WORD*		used;
 	int			lumplen = map->Size(ML_NODES);
-	int			maxss = map->Size(ML_SSECTORS) / sizeof(mapsubsector_t);
+	int			maxss = map->Size(ML_SSECTORS) / sizeof(subsectortype);
 
-	numnodes = lumplen / sizeof(mapnode_t);
+	numnodes = (lumplen - nodetype::NF_LUMPOFFSET) / sizeof(nodetype);
 
 	if ((numnodes == 0 && maxss != 1) || maxss == 0)
 	{
@@ -1409,8 +1487,8 @@ void P_LoadNodes (MapData * map)
 	memset (used, 0, sizeof(WORD)*numnodes);
 
 	mnp = new char[lumplen];
-	mn = (mapnode_t*)mnp;
-	map->Read(ML_NODES, mn);
+	mn = (nodetype*)(mnp + nodetype::NF_LUMPOFFSET);
+	map->Read(ML_NODES, mnp);
 	no = nodes;
 	
 	for (i = 0; i < numnodes; i++, no++, mn++)
@@ -1421,10 +1499,10 @@ void P_LoadNodes (MapData * map)
 		no->dy = LittleShort(mn->dy)<<FRACBITS;
 		for (j = 0; j < 2; j++)
 		{
-			WORD child = LittleShort(mn->children[j]);
-			if (child & NF_SUBSECTOR)
+			int child = mn->Child(j);
+			if (child & nodetype::NF_SUBSECTOR)
 			{
-				child &= ~NF_SUBSECTOR;
+				child &= ~nodetype::NF_SUBSECTOR;
 				if (child >= maxss)
 				{
 					Printf ("BSP node %d references invalid subsector %d.\n"
@@ -1889,8 +1967,14 @@ void P_LoadLineDefs (MapData * map)
 		}
 		else
 		{
-			if (LittleShort(mld->sidenum[0]) != NO_INDEX)
-				sidecount++;
+			// patch missing first sides instead of crashing out.
+			// Visual glitches are better than not being able to play.
+			if (LittleShort(mld->sidenum[0]) == NO_INDEX)
+			{
+				Printf("Line %d has no first side.\n", i);
+				mld->sidenum[0] = 0;
+			}
+			sidecount++;
 			if (LittleShort(mld->sidenum[1]) != NO_INDEX)
 				sidecount++;
 			linemap[i] = i+skipped;
@@ -1959,8 +2043,14 @@ void P_LoadLineDefs2 (MapData * map)
 		}
 		else
 		{
-			if (LittleShort(mld->sidenum[0]) != NO_INDEX)
-				sidecount++;
+			// patch missing first sides instead of crashing out.
+			// Visual glitches are better than not being able to play.
+			if (LittleShort(mld->sidenum[0]) == NO_INDEX)
+			{
+				Printf("Line %d has no first side.\n", i);
+				mld->sidenum[0] = 0;
+			}
+			sidecount++;
 			if (LittleShort(mld->sidenum[1]) != NO_INDEX)
 				sidecount++;
 			linemap[i] = i+skipped;
@@ -2643,6 +2733,79 @@ static void P_CreateBlockMap ()
 	}
 }
 
+
+
+//
+// P_VerifyBlockMap
+//
+// haleyjd 03/04/10: do verification on validity of blockmap.
+//
+static bool P_VerifyBlockMap(int count)
+{
+	int x, y;
+	int *maxoffs = blockmaplump + count;
+
+	int bmapwidth = blockmaplump[2];
+	int bmapheight = blockmaplump[3];
+
+	for(y = 0; y < bmapheight; y++)
+	{
+		for(x = 0; x < bmapwidth; x++)
+		{
+			int offset;
+			int *list, *tmplist;
+			int *blockoffset;
+
+			offset = y * bmapwidth + x;
+			blockoffset = blockmaplump + offset + 4;
+
+
+			// check that block offset is in bounds
+			if(blockoffset >= maxoffs)
+			{
+				Printf(PRINT_HIGH, "P_VerifyBlockMap: block offset overflow\n");
+				return false;
+			}
+
+			offset = *blockoffset;         
+
+			// check that list offset is in bounds
+			if(offset < 4 || offset >= count)
+			{
+				Printf(PRINT_HIGH, "P_VerifyBlockMap: list offset overflow\n");
+				return false;
+			}
+
+			list   = blockmaplump + offset;
+
+			// scan forward for a -1 terminator before maxoffs
+			for(tmplist = list; ; tmplist++)
+			{
+				// we have overflowed the lump?
+				if(tmplist >= maxoffs)
+				{
+					Printf(PRINT_HIGH, "P_VerifyBlockMap: open blocklist\n");
+					return false;
+				}
+				if(*tmplist == -1) // found -1
+					break;
+			}
+
+			// scan the list for out-of-range linedef indicies in list
+			for(tmplist = list; *tmplist != -1; tmplist++)
+			{
+				if(*tmplist < 0 || *tmplist >= numlines)
+				{
+					Printf(PRINT_HIGH, "P_VerifyBlockMap: index >= numlines\n");
+					return false;
+				}
+			}
+		}
+	}
+
+	return true;
+}
+
 //
 // P_LoadBlockMap
 //
@@ -2690,6 +2853,13 @@ void P_LoadBlockMap (MapData * map)
 			blockmaplump[i] = t == -1 ? (DWORD)0xffffffff : (DWORD) t & 0xffff;
 		}
 		delete[] data;
+
+		if (!P_VerifyBlockMap(count))
+		{
+			DPrintf ("Generating BLOCKMAP\n");
+			P_CreateBlockMap();
+		}
+
 	}
 
 	bmaporgx = blockmaplump[0]<<FRACBITS;
@@ -2919,26 +3089,6 @@ static void P_GroupLines (bool buildmap)
 				}
 			}
 		}
-#if 0
-		int block;
-
-		// adjust bounding box to map blocks
-		block = (bbox.Top()-bmaporgy+MAXRADIUS)>>MAPBLOCKSHIFT;
-		block = block >= bmapheight ? bmapheight-1 : block;
-		//sector->blockbox.Top()=block;
-
-		block = (bbox.Bottom()-bmaporgy-MAXRADIUS)>>MAPBLOCKSHIFT;
-		block = block < 0 ? 0 : block;
-		//sector->blockbox.Bottom()=block;
-
-		block = (bbox.Right()-bmaporgx+MAXRADIUS)>>MAPBLOCKSHIFT;
-		block = block >= bmapwidth ? bmapwidth-1 : block;
-		//sector->blockbox.Right()=block;
-
-		block = (bbox.Left()-bmaporgx-MAXRADIUS)>>MAPBLOCKSHIFT;
-		block = block < 0 ? 0 : block;
-		//sector->blockbox.Left()=block;
-#endif
 	}
 	delete[] linesDoneInEachSector;
 	times[3].Unclock();
@@ -3521,15 +3671,7 @@ void P_SetupLevel (char *lumpname, int position)
 			else
 				P_LoadThings2 (map);	// [RH] Load Hexen-style things
 
-			if (ib_compatflags & BCOMPATF_SPECHITOVERFLOW)
-			{
-				// restoring the original behavior doesn't work so we have to patch the levels in other ways.
-				// Fortunately the only known level depending on this bug is Strain's MAP07 and that's easy to fix.
-				if (numlines == 1022)
-				{
-					lines[1021].flags &= ~ML_BLOCKING;
-				}
-			}
+			SetCompatibilityParams();
 		}
 		else
 		{
@@ -3553,12 +3695,13 @@ void P_SetupLevel (char *lumpname, int position)
 	{
 		// Check for compressed nodes first, then uncompressed nodes
 		FWadLump test;
-		DWORD id = MAKE_ID('X','x','X','x'), idcheck = 0, idcheck2 = 0;
+		DWORD id = MAKE_ID('X','x','X','x'), idcheck = 0, idcheck2 = 0, idcheck3 = 0, idcheck4 = 0;
 
 		if (map->MapLumps[ML_ZNODES].Size != 0 && !UsingGLNodes)
 		{
 			map->Seek(ML_ZNODES);
 			idcheck = MAKE_ID('Z','N','O','D');
+			idcheck2 = MAKE_ID('X','N','O','D');
 		}
 		else if (map->MapLumps[ML_GLZNODES].Size != 0)
 		{
@@ -3566,10 +3709,12 @@ void P_SetupLevel (char *lumpname, int position)
 			map->Seek(ML_GLZNODES);
 			idcheck = MAKE_ID('Z','G','L','N');
 			idcheck2 = MAKE_ID('Z','G','L','2');
+			idcheck3 = MAKE_ID('X','G','L','N');
+			idcheck4 = MAKE_ID('X','G','L','2');
 		}
 
 		map->file->Read (&id, 4);
-		if (id == idcheck || id == idcheck2)
+		if (id == idcheck || id == idcheck2 || id == idcheck3 || id == idcheck4)
 		{
 			try
 			{
@@ -3603,17 +3748,34 @@ void P_SetupLevel (char *lumpname, int position)
 			// This just means that the map has no nodes and the engine is supposed to build them.
 			if (map->Size(ML_SEGS) != 0 || map->Size(ML_SSECTORS) != 0 || map->Size(ML_NODES) != 0)
 			{
-				times[7].Clock();
-				P_LoadSubsectors (map);
-				times[7].Unclock();
+				if (!P_CheckV4Nodes(map))
+				{
+					times[7].Clock();
+					P_LoadSubsectors<mapsubsector_t, mapseg_t> (map);
+					times[7].Unclock();
 
-				times[8].Clock();
-				if (!ForceNodeBuild) P_LoadNodes (map);
-				times[8].Unclock();
+					times[8].Clock();
+					if (!ForceNodeBuild) P_LoadNodes<mapnode_t, mapsubsector_t> (map);
+					times[8].Unclock();
 
-				times[9].Clock();
-				if (!ForceNodeBuild) P_LoadSegs (map);
-				times[9].Unclock();
+					times[9].Clock();
+					if (!ForceNodeBuild) P_LoadSegs<mapseg_t> (map);
+					times[9].Unclock();
+				}
+				else
+				{
+					times[7].Clock();
+					P_LoadSubsectors<mapsubsector4_t, mapseg4_t> (map);
+					times[7].Unclock();
+
+					times[8].Clock();
+					if (!ForceNodeBuild) P_LoadNodes<mapnode4_t, mapsubsector4_t> (map);
+					times[8].Unclock();
+
+					times[9].Clock();
+					if (!ForceNodeBuild) P_LoadSegs<mapseg4_t> (map);
+					times[9].Unclock();
+				}
 			}
 			else ForceNodeBuild = true;
 		}

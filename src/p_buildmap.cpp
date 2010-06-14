@@ -347,7 +347,7 @@ static bool P_LoadBloodMap (BYTE *data, size_t len, FMapThing **mapthings, int *
 		data += sizeof(spritetype);
 		if (bspr[i].extra > 0)	// copy Xsprite
 		{
-			assert(sizeof Xsprite == 56);
+			assert(sizeof(Xsprite) == 56);
 			memcpy(&xspr[i], data, sizeof(Xsprite));
 			data += sizeof(Xsprite);
 		}

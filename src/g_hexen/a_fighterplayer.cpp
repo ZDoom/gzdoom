@@ -165,7 +165,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FPunchAttack)
 				power = 6*FRACUNIT;
 				pufftype = PClass::FindClass ("HammerPuff");
 			}
-			P_LineAttack (pmo, angle, 2*MELEERANGE, slope, damage, NAME_Melee, pufftype, true);
+			P_LineAttack (pmo, angle, 2*MELEERANGE, slope, damage, NAME_Melee, pufftype, true, &linetarget);
 			if (linetarget->flags3&MF3_ISMONSTER || linetarget->player)
 			{
 				P_ThrustMobj (linetarget, angle, power);
@@ -184,7 +184,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FPunchAttack)
 				power = 6*FRACUNIT;
 				pufftype = PClass::FindClass ("HammerPuff");
 			}
-			P_LineAttack (pmo, angle, 2*MELEERANGE, slope, damage, NAME_Melee, pufftype, true);
+			P_LineAttack (pmo, angle, 2*MELEERANGE, slope, damage, NAME_Melee, pufftype, true, &linetarget);
 			if (linetarget->flags3&MF3_ISMONSTER || linetarget->player)
 			{
 				P_ThrustMobj (linetarget, angle, power);

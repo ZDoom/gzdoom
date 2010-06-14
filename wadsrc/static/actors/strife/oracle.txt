@@ -11,6 +11,7 @@ ACTOR Oracle 199
 	Monster
 	+NOTDMATCH
 	+NOBLOOD
+	+NEVERRESPAWN
 	DamageFactor "Fire", 0.5
 	DamageFactor "SpectralLow", 0
 	MaxDropoffHeight 32

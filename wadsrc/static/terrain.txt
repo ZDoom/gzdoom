@@ -54,6 +54,58 @@ splash WaterSound
 	noalert
 }
 
+ifheretic
+
+splash Water
+{
+   smallclass      WaterSplashBase
+   smallclip      12
+   smallsound      world/drip
+
+   baseclass      WaterSplashBase
+   chunkclass      WaterSplash
+   chunkxvelshift   8
+   chunkyvelshift   8
+   chunkzvelshift   8
+   chunkbasezvel   2
+   sound         world/watersplash
+   noalert
+}
+
+splash Sludge
+{
+   smallclass      SludgeSplash
+   smallclip      12
+   smallsound      world/sludgegloop
+
+   baseclass      SludgeSplash
+   chunkclass      SludgeChunk
+   chunkxvelshift   8
+   chunkyvelshift   8
+   chunkzvelshift   8
+   chunkbasezvel   1
+   sound         world/sludgegloop
+   noalert
+}
+
+splash Lava
+{
+   smallclass      LavaSplash
+   smallclip      12
+   smallsound      world/lavasizzle
+
+   baseclass      LavaSplash
+   chunkclass      LavaSmoke
+   chunkxvelshift   -1
+   chunkyvelshift   -1
+   chunkzvelshift   7
+   chunkbasezvel   1
+   sound         world/lavasizzle
+   noalert
+}
+
+endif
+
 // Terrain types -----------------------------------------------------------
 
 terrain Water

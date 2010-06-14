@@ -3301,6 +3301,7 @@ void P_FreeLevelData ()
 }
 
 extern msecnode_t *headsecnode;
+extern FPolyNode *headpolynode;
 
 void P_FreeExtraLevelData()
 {
@@ -3326,6 +3327,17 @@ void P_FreeExtraLevelData()
 			node = next;
 		}
 		headsecnode = NULL;
+	}
+	{
+		FPolyNode *node = headpolynode;
+
+		while (node != NULL)
+		{
+			FPolyNode *next = node->pnext;
+			delete node;
+			node = next;
+		}
+		headpolynode = NULL;
 	}
 }
 

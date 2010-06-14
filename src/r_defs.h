@@ -854,6 +854,9 @@ struct side_t
 
 	DInterpolation *SetInterpolation(int position);
 	void StopInterpolation(int position);
+
+	vertex_t *V1() const;
+	vertex_t *V2() const;
 };
 
 FArchive &operator<< (FArchive &arc, side_t::part &p);
@@ -916,19 +919,20 @@ struct msecnode_t
 	bool visited;	// killough 4/4/98, 4/7/98: used in search algorithms
 };
 
+struct FPolyNode;
+
 //
 // A SubSector.
 // References a Sector.
 // Basically, this is a list of LineSegs indicating the visible walls that
 // define (all or some) sides of a convex BSP leaf.
 //
-struct FPolyObj;
 struct subsector_t
 {
 	sector_t	*sector;
 	DWORD		numlines;
 	DWORD		firstline;
-	FPolyObj	*poly;
+	FPolyNode	*polys;
 	int			validcount;
 	fixed_t		CenterX, CenterY;
 };
@@ -954,9 +958,52 @@ struct seg_t
 	BITFIELD		bPolySeg:1;
 };
 
+	
+//
+// Linked lists of polyobjects
+//
+struct FPolyObj;
+struct FPolyNode
+{
+	FPolyObj *poly;				// owning polyobject
+	FPolyNode *pnext;			// next polyobj in list
+	FPolyNode **pprev;			// previous polyobj
+
+	subsector_t *subsector;		// containimg subsector
+	FPolyNode *snext;			// next subsector
+	FPolyNode **sprev;			// previous subsector
+
+	TArray<seg_t> segs;			// segs for this node
+};
+
+struct FPolyVertex
+{
+	fixed_t x, y;
+};
+
 // ===== Polyobj data =====
 struct FPolyObj
 {
+	TArray<side_t *>		Sidedefs;
+	TArray<line_t *>		Linedefs;
+	TArray<vertex_t *>		Vertices;
+	TArray<FPolyVertex>		OriginalPts;
+	TArray<FPolyVertex>		PrevPts;
+	FPolyVertex				StartSpot;
+
+	angle_t		angle;
+	int			tag;			// reference tag assigned in HereticEd
+	int			bbox[4];
+	int			validcount;
+	int			crush; 			// should the polyobj attempt to crush mobjs?
+	bool		bHurtOnTouch;	// should the polyobj hurt anything it touches?
+	int			seqType;
+	fixed_t		size;			// polyobj size (area of POLY_AREAUNIT == size of FRACUNIT)
+	FPolyNode	*subsectorlinks;
+	DThinker	*specialdata;	// pointer to a thinker, if the poly is moving
+	TObjPtr<DInterpolation> interpolation;
+
+/*
 	int			numsegs;
 	seg_t		**segs;
 	int			numlines;
@@ -966,16 +1013,22 @@ struct FPolyObj
 	fixed_t		startSpot[2];
 	vertex_t	*originalPts;	// used as the base for the rotations
 	vertex_t	*prevPts; 		// use to restore the old point values
-	angle_t		angle;
-	int			tag;			// reference tag assigned in HereticEd
-	int			bbox[4];
-	int			validcount;
-	int			crush; 			// should the polyobj attempt to crush mobjs?
-	bool		bHurtOnTouch;	// should the polyobj hurt anything it touches?
-	int			seqType;
-	fixed_t		size;			// polyobj size (area of POLY_AREAUNIT == size of FRACUNIT)
-	DThinker	*specialdata;	// pointer to a thinker, if the poly is moving
-	TObjPtr<DInterpolation> interpolation;
+*/
+
+	FPolyObj()
+	{
+		StartSpot.x = StartSpot.y = 0;
+		angle = 0;
+		tag = 0;
+		memset(bbox, 0, sizeof(bbox));
+		validcount = 0;
+		crush = 0;
+		bHurtOnTouch = false;
+		seqType = 0;
+		size = 0;
+		subsectorlinks = NULL;
+		specialdata = NULL;
+	}
 
 	~FPolyObj();
 	DInterpolation *SetInterpolation();

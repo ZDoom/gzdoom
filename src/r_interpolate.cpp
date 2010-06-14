@@ -728,8 +728,8 @@ void DWallScrollInterpolation::Serialize(FArchive &arc)
 DPolyobjInterpolation::DPolyobjInterpolation(FPolyObj *po)
 {
 	poly = po;
-	oldverts.Resize(po->numvertices<<1);
-	bakverts.Resize(po->numvertices<<1);
+	oldverts.Resize(po->Vertices.Size() << 1);
+	bakverts.Resize(po->Vertices.Size() << 1);
 	UpdateInterpolation ();
 	interpolator.AddInterpolation(this);
 }
@@ -755,10 +755,10 @@ void DPolyobjInterpolation::Destroy()
 
 void DPolyobjInterpolation::UpdateInterpolation()
 {
-	for(int i = 0; i < poly->numvertices; i++)
+	for(unsigned int i = 0; i < poly->Vertices.Size(); i++)
 	{
-		oldverts[i*2  ] = poly->vertices[i]->x;
-		oldverts[i*2+1] = poly->vertices[i]->y;
+		oldverts[i*2  ] = poly->Vertices[i]->x;
+		oldverts[i*2+1] = poly->Vertices[i]->y;
 	}
 }
 
@@ -770,10 +770,10 @@ void DPolyobjInterpolation::UpdateInterpolation()
 
 void DPolyobjInterpolation::Restore()
 {
-	for(int i = 0; i < poly->numvertices; i++)
+	for(unsigned int i = 0; i < poly->Vertices.Size(); i++)
 	{
-		poly->vertices[i]->x = bakverts[i*2  ];
-		poly->vertices[i]->y = bakverts[i*2+1];
+		poly->Vertices[i]->x = bakverts[i*2  ];
+		poly->Vertices[i]->y = bakverts[i*2+1];
 	}
 	//poly->Moved();
 }
@@ -786,10 +786,10 @@ void DPolyobjInterpolation::Restore()
 
 void DPolyobjInterpolation::Interpolate(fixed_t smoothratio)
 {
-	for(int i = 0; i < poly->numvertices; i++)
+	for(unsigned int i = 0; i < poly->Vertices.Size(); i++)
 	{
-		fixed_t *px = &poly->vertices[i]->x;
-		fixed_t *py = &poly->vertices[i]->y;
+		fixed_t *px = &poly->Vertices[i]->x;
+		fixed_t *py = &poly->Vertices[i]->y;
 
 		bakverts[i*2  ] = *px;
 		bakverts[i*2+1] = *py;

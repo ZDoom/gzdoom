@@ -1098,6 +1098,7 @@ void R_Subsector (subsector_t *sub)
 		R_ProjectParticle (Particles + i, subsectors[sub-subsectors].sector, shade, FakeSide);
 	}
 
+#if 0
 	if (sub->poly)
 	{ // Render the polyobj in the subsector first
 		int polyCount = sub->poly->numsegs;
@@ -1107,6 +1108,9 @@ void R_Subsector (subsector_t *sub)
 			R_AddLine (*polySeg++);
 		}
 	}
+#else
+	#pragma warning("Deactivated polyobj code!")
+#endif
 
 	while (count--)
 	{

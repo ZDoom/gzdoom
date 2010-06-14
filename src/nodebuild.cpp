@@ -173,7 +173,6 @@ void FNodeBuilder::CreateSubsectorsForReal ()
 	subsector_t sub;
 	unsigned int i;
 
-	sub.poly = NULL;
 	sub.validcount = 0;
 	sub.CenterX = 0;	// Code in p_setup.cpp will set these for us later.
 	sub.CenterY = 0;

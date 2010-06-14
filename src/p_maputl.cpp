@@ -687,9 +687,9 @@ line_t *FBlockLinesIterator::Next()
 					polyLink->polyobj->validcount = validcount;
 				}
 
-				line_t *ld = polyLink->polyobj->lines[polyIndex];
+				line_t *ld = polyLink->polyobj->Linedefs[polyIndex];
 
-				if (++polyIndex >= polyLink->polyobj->numlines)
+				if (++polyIndex >= (int)polyLink->polyobj->Linedefs.Size())
 				{
 					polyLink = polyLink->next;
 					polyIndex = 0;

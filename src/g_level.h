@@ -201,6 +201,7 @@ enum ELevelFlags
 	LEVEL2_SMOOTHLIGHTING		= 0x01000000,	// Level uses the smooth lighting feature.
 	LEVEL2_POLYGRIND			= 0x02000000,	// Polyobjects grind corpses to gibs.
 	LEVEL2_RESETINVENTORY		= 0x04000000,	// Resets player inventory when starting this level (unless in a hub)
+	LEVEL2_RESETHEALTH			= 0x08000000,	// Resets player health when starting this level (unless in a hub)
 };
 
 
@@ -491,8 +492,17 @@ void G_SecretExitLevel (int position);
 const char *G_GetExitMap();
 const char *G_GetSecretExitMap();
 
-void G_ChangeLevel(const char * levelname, int position, bool keepFacing, int nextSkill=-1, 
-				   bool nointermission=false, bool resetinventory=false, bool nomonsters=false);
+enum 
+{
+	CHANGELEVEL_KEEPFACING = 1,
+	CHANGELEVEL_RESETINVENTORY = 2,
+	CHANGELEVEL_NOMONSTERS = 4,
+	CHANGELEVEL_CHANGESKILL = 8,
+	CHANGELEVEL_NOINTERMISSION = 16,
+	CHANGELEVEL_RESETHEALTH = 32,
+};
+
+void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill=-1);
 
 void G_SetForEndGame (char *nextmap);
 

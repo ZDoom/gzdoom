@@ -6250,12 +6250,7 @@ int DLevelScript::RunScript ()
 
 		case PCD_CHANGELEVEL:
 			{
-				int flags = STACK(2);
-				G_ChangeLevel(FBehavior::StaticLookupString(STACK(4)), STACK(3),
-					!!(flags & CHANGELEVEL_KEEPFACING), STACK(1),
-					!!(flags & CHANGELEVEL_NOINTERMISSION),
-					!!(flags & CHANGELEVEL_RESETINVENTORY),
-					!!(flags & CHANGELEVEL_NOMONSTERS));
+				G_ChangeLevel(FBehavior::StaticLookupString(STACK(4)), STACK(3), STACK(2), STACK(1));
 				sp -= 4;
 			}
 			break;

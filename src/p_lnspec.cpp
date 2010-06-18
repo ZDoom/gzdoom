@@ -792,7 +792,7 @@ FUNC(LS_Teleport_NewMap)
 
 		if (info && CheckIfExitIsGood (it, info))
 		{
-			G_ChangeLevel(info->mapname, arg1, !!arg2);
+			G_ChangeLevel(info->mapname, arg1, arg2 ? CHANGELEVEL_KEEPFACING : 0);
 			return true;
 		}
 	}

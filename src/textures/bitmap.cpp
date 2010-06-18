@@ -101,7 +101,7 @@ void iCopyColors(BYTE *pout, const BYTE *pin, int count, int step, FCopyInfo *in
 				a = TSrc::A(pin);
 				if (TBlend::ProcessAlpha0() || a)
 				{
-					gray = clamp<int>(255 - TSrc::Gray(pin),0,255);
+					gray = clamp<int>(TSrc::Gray(pin),0,255);
 
 					PalEntry pe = cm->GrayscaleToColor[gray];
 					TBlend::OpC(pout[TDest::RED], pe.r , a, inf);

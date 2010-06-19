@@ -46,11 +46,13 @@
 #include "a_sharedglobal.h"
 #include "r_interpolate.h"
 #include "g_level.h"
+#include "po_man.h"
 
 static void CopyPlayer (player_t *dst, player_t *src, const char *name);
 static void ReadOnePlayer (FArchive &arc, bool skipload);
 static void ReadMultiplePlayers (FArchive &arc, int numPlayers, int numPlayersNow, bool skipload);
 static void SpawnExtraPlayers ();
+
 
 //
 // P_ArchivePlayers

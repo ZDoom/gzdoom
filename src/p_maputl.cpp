@@ -39,6 +39,7 @@
 // State.
 #include "r_state.h"
 #include "templates.h"
+#include "po_man.h"
 
 static AActor *RoughBlockCheck (AActor *mo, int index, void *);
 

@@ -38,6 +38,7 @@
 #include "stats.h"
 #include "r_interpolate.h"
 #include "p_local.h"
+#include "po_man.h"
 
 //==========================================================================
 //

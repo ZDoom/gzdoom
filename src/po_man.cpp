@@ -26,6 +26,7 @@
 #include "p_lnspec.h"
 #include "r_interpolate.h"
 #include "g_level.h"
+#include "po_man.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -132,7 +133,6 @@ void PO_Init (void);
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static int GetPolyobjMirror (int poly);
-static void UpdateSegBBox (seg_t *seg);
 static void RotatePt (int an, fixed_t *x, fixed_t *y, fixed_t startSpotX,
 	fixed_t startSpotY);
 static void UnLinkPolyobj (FPolyObj *po);
@@ -1101,30 +1101,16 @@ static void LinkPolyobj (FPolyObj *po)
 	rightX = leftX = vt->x;
 	topY = bottomY = vt->y;
 
+	po->Bounds.ClearBox();
 	for(unsigned i = 1; i < po->Sidedefs.Size(); i++)
 	{
 		vt = po->Sidedefs[i]->V1();
-		if(vt->x > rightX)
-		{
-			rightX = vt->x;
-		}
-		if(vt->x < leftX)
-		{
-			leftX = vt->x;
-		}
-		if(vt->y > topY)
-		{
-			topY = vt->y;
-		}
-		if(vt->y < bottomY)
-		{
-			bottomY = vt->y;
-		}
+		po->Bounds.AddToBox(vt->x, vt->y);
 	}
-	po->bbox[BOXRIGHT] = (rightX-bmaporgx)>>MAPBLOCKSHIFT;
-	po->bbox[BOXLEFT] = (leftX-bmaporgx)>>MAPBLOCKSHIFT;
-	po->bbox[BOXTOP] = (topY-bmaporgy)>>MAPBLOCKSHIFT;
-	po->bbox[BOXBOTTOM] = (bottomY-bmaporgy)>>MAPBLOCKSHIFT;
+	po->bbox[BOXRIGHT] = (po->Bounds.Right() - bmaporgx) >> MAPBLOCKSHIFT;
+	po->bbox[BOXLEFT] = (po->Bounds.Left() - bmaporgx) >> MAPBLOCKSHIFT;
+	po->bbox[BOXTOP] = (po->Bounds.Top() - bmaporgy) >> MAPBLOCKSHIFT;
+	po->bbox[BOXBOTTOM] = (po->Bounds.Bottom() - bmaporgy) >> MAPBLOCKSHIFT;
 	// add the polyobj to each blockmap section
 	for(int j = po->bbox[BOXBOTTOM]*bmapwidth; j <= po->bbox[BOXTOP]*bmapwidth;
 		j += bmapwidth)

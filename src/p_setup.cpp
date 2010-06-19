@@ -65,6 +65,7 @@
 #include "g_level.h"
 #include "md5.h"
 #include "compatibility.h"
+#include "po_man.h"
 
 void P_SpawnSlopeMakers (FMapThing *firstmt, FMapThing *lastmt);
 void P_SetSlopes ();

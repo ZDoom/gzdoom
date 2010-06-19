@@ -237,6 +237,7 @@ struct FLineOpening
 void	P_LineOpening (FLineOpening &open, AActor *thing, const line_t *linedef, fixed_t x, fixed_t y, fixed_t refx=FIXED_MIN, fixed_t refy=0);
 
 class FBoundingBox;
+struct polyblock_t;
 
 class FBlockLinesIterator
 {

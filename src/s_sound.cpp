@@ -799,7 +799,7 @@ static void CalcPolyobjSoundOrg(const FPolyObj *poly, fixed_t *x, fixed_t *y, fi
 	side_t *side;
 	sector_t *sec;
 
-	PO_ClosestPoint(poly, *x, *y, *x, *y, &side);
+	poly->ClosestPoint(*x, *y, *x, *y, &side);
 	sec = side->sector;
 	*z = clamp(*z, sec->floorplane.ZatPoint(*x, *y), sec->ceilingplane.ZatPoint(*x, *y));
 }

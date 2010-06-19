@@ -80,6 +80,21 @@ struct FPolyObj
 	~FPolyObj();
 	DInterpolation *SetInterpolation();
 	void StopInterpolation();
+
+	int GetMirror();
+	bool MovePolyobj (int x, int y, bool force = false);
+	bool RotatePolyobj (angle_t angle);
+	void ClosestPoint(fixed_t fx, fixed_t fy, fixed_t &ox, fixed_t &oy, side_t **side) const;
+	void LinkPolyobj ();
+
+private:
+
+	void ThrustMobj (AActor *actor, side_t *side);
+	void UpdateBBox ();
+	void DoMovePolyobj (int x, int y);
+	void UnLinkPolyobj ();
+	bool CheckMobjBlocking (side_t *sd);
+
 };
 extern FPolyObj *polyobjs;		// list of all poly-objects on the level
 

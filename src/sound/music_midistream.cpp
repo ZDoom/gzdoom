@@ -518,9 +518,59 @@ void MIDIStreamer::Update()
 	if (PlayerThread != NULL &&
 		WaitForSingleObject(PlayerThread, 0) == WAIT_OBJECT_0)
 	{
+		static const char *const MMErrorCodes[] =
+		{
+			"No error",
+			"Unspecified error",
+			"Device ID out of range",
+			"Driver failed enable",
+			"Device already allocated",
+			"Device handle is invalid",
+			"No device driver present",
+			"Memory allocation error",
+			"Function isn't supported",
+			"Error value out of range",
+			"Invalid flag passed",
+			"Invalid parameter passed",
+			"Handle being used simultaneously on another thread",
+			"Specified alias not found",
+			"Bad registry database",
+			"Registry key not found",
+			"Registry read error",
+			"Registry write error",
+			"Registry delete error",
+			"Registry value not found",
+			"Driver does not call DriverCallback",
+			"More data to be returned",
+		};
+		static const char *const MidiErrorCodes[] =
+		{
+			"MIDI header not prepared",
+			"MIDI still playing something",
+			"MIDI no configured instruments",
+			"MIDI hardware is still busy",
+			"MIDI port no longer connected",
+			"MIDI invalid MIF",
+			"MIDI operation unsupported with open mode",
+			"MIDI through device 'eating' a message",
+		};
+		DWORD code = 0xABADCAFE;
+		GetExitCodeThread(PlayerThread, &code);
 		CloseHandle(PlayerThread);
 		PlayerThread = NULL;
-		Printf ("MIDI playback failure\n");
+		Printf ("MIDI playback failure: ");
+		if (code >= 0 && code < countof(MMErrorCodes))
+		{
+			Printf("%s\n", MMErrorCodes[code]);
+		}
+		else if (code >= MIDIERR_BASE && code < MIDIERR_BASE + countof(MidiErrorCodes))
+		{
+			Printf("%s\n", MidiErrorCodes[code - MIDIERR_BASE]);
+		}
+		else
+		{
+			Printf("%08x\n", code);
+		}
 		Stop();
 	}
 #endif
@@ -553,6 +603,7 @@ DWORD WINAPI MIDIStreamer::PlayerProc (LPVOID lpParameter)
 DWORD MIDIStreamer::PlayerLoop()
 {
 	HANDLE events[2] = { BufferDoneEvent, ExitEvent };
+	int res;
 
 	SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_TIME_CRITICAL);
 
@@ -561,9 +612,9 @@ DWORD MIDIStreamer::PlayerLoop()
 		switch (WaitForMultipleObjects(2, events, FALSE, INFINITE))
 		{
 		case WAIT_OBJECT_0:
-			if (ServiceEvent())
+			if (0 != (res = ServiceEvent()))
 			{
-				return 1;
+				return res;
 			}
 			break;
 
@@ -572,7 +623,7 @@ DWORD MIDIStreamer::PlayerLoop()
 
 		default:
 			// Should not happen.
-			return 1;
+			return MMSYSERR_ERROR;
 		}
 	}
 }
@@ -584,28 +635,31 @@ DWORD MIDIStreamer::PlayerLoop()
 //
 // Fills the buffer that just finished playing with new events and appends
 // it to the MIDI stream queue. Stops the song if playback is over. Returns
-// true if a problem occured and playback should stop.
+// non-zero if a problem occured and playback should stop.
 //
 //==========================================================================
 
-bool MIDIStreamer::ServiceEvent()
+int MIDIStreamer::ServiceEvent()
 {
+	int res;
+
 	if (EndQueued == 1)
 	{
-		return false;
+		return 0;
 	}
-	if (0 != MIDI->UnprepareHeader(&Buffer[BufferNum]))
+	if (0 != (res = MIDI->UnprepareHeader(&Buffer[BufferNum])))
 	{
-		return true;
+		return res;
 	}
 fill:
-	switch (FillBuffer(BufferNum, MAX_EVENTS, MAX_TIME))
+	res = FillBuffer(BufferNum, MAX_EVENTS, MAX_TIME);
+	switch (res & 3)
 	{
 	case SONG_MORE:
-		if ((MIDI->NeedThreadedCallback() && 0 != MIDI->StreamOutSync(&Buffer[BufferNum])) ||
-			(!MIDI->NeedThreadedCallback() && 0 != MIDI->StreamOut(&Buffer[BufferNum])))
+		if ((MIDI->NeedThreadedCallback() && 0 != (res = MIDI->StreamOutSync(&Buffer[BufferNum]))) ||
+			(!MIDI->NeedThreadedCallback() && 0 != (res = MIDI->StreamOut(&Buffer[BufferNum]))))
 		{
-			return true;
+			return res;
 		}
 		else
 		{
@@ -623,9 +677,9 @@ fill:
 		break;
 
 	default:
-		return true;
+		return res >> 2;
 	}
-	return false;
+	return 0;
 }
 
 //==========================================================================
@@ -720,9 +774,9 @@ int MIDIStreamer::FillBuffer(int buffer_num, int max_events, DWORD max_time)
 	Buffer[buffer_num].lpData = (LPSTR)Events[buffer_num];
 	Buffer[buffer_num].dwBufferLength = DWORD((LPSTR)events - Buffer[buffer_num].lpData);
 	Buffer[buffer_num].dwBytesRecorded = Buffer[buffer_num].dwBufferLength;
-	if (0 != MIDI->PrepareHeader(&Buffer[buffer_num]))
+	if (0 != (i = MIDI->PrepareHeader(&Buffer[buffer_num])))
 	{
-		return SONG_ERROR;
+		return SONG_ERROR | (i << 2);
 	}
 	return SONG_MORE;
 }

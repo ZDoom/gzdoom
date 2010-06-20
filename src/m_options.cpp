@@ -1048,6 +1048,7 @@ static menuitem_t DMFlagsItems[] = {
 	{ bitflag,	"Allow spying",			{&dmflags2},	{1}, {0}, {0}, {(value_t *)DF2_DISALLOW_SPYING} },
 	{ bitflag,	"Chasecam cheat",		{&dmflags2},	{0}, {0}, {0}, {(value_t *)DF2_CHASECAM} },
 	{ bitflag,	"Check ammo for weapon switch",	{&dmflags2},	{1}, {0}, {0}, {(value_t *)DF2_DONTCHECKAMMO} },
+	{ bitflag,	"Killing boss brain kills all its monsters",	{&dmflags2},	{0}, {0}, {0}, {(value_t *)DF2_KILLBOSSMONST} },
 
 	{ redtext,	" ",					{NULL},			{0}, {0}, {0}, {NULL} },
 	{ whitetext,"Deathmatch Settings",	{NULL},			{0}, {0}, {0}, {NULL} },

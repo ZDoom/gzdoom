@@ -293,6 +293,7 @@ enum
 	DF2_NOSUICIDE			= 1 << 22,	// Players are not allowed to suicide.
 	DF2_NOAUTOAIM			= 1 << 23,	// Players cannot use autoaim.
 	DF2_DONTCHECKAMMO		= 1 << 24,	// Don't Check ammo when switching weapons.
+	DF2_KILLBOSSMONST		= 1 << 25,	// Kills all monsters spawned by a boss cube when the boss dies
 };
 
 // [RH] Compatibility flags.

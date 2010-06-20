@@ -25,6 +25,7 @@
 #include "doomtype.h"
 
 struct line_t;
+struct node_t;
 
 class FBoundingBox
 {
@@ -64,6 +65,7 @@ public:
 	inline fixed_t Right () const { return m_Box[BOXRIGHT]; }
 
 	int BoxOnLineSide (const line_t *ld) const;
+	int BoxOnNodeSide (const node_t *nd) const;
 
 	void Set(int index, fixed_t value) {m_Box[index] = value;}
 

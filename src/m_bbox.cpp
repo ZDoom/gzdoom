@@ -101,8 +101,7 @@ int FBoundingBox::BoxOnLineSide (const line_t *ld) const
 //
 //==========================================================================
 
-/*
-int FBoundingBox::BoxOnNodeSide (const mode_t *nd) const
+int FBoundingBox::BoxOnNodeSide (const node_t *nd) const
 {
 	int p1;
 	int p2;
@@ -111,7 +110,7 @@ int FBoundingBox::BoxOnNodeSide (const mode_t *nd) const
 	{
 		p1 = m_Box[BOXRIGHT] < nd->x;
 		p2 = m_Box[BOXLEFT] < nd->x;
-		if (ld->dy < 0)
+		if (nd->dy < 0)
 		{
 			p1 ^= 1;
 			p2 ^= 1;
@@ -121,7 +120,7 @@ int FBoundingBox::BoxOnNodeSide (const mode_t *nd) const
 	{
 		p1 = m_Box[BOXTOP] > nd->y;
 		p2 = m_Box[BOXBOTTOM] > nd->y;
-		if (ld->dx < 0)
+		if (nd->dx < 0)
 		{
 			p1 ^= 1;
 			p2 ^= 1;
@@ -129,15 +128,14 @@ int FBoundingBox::BoxOnNodeSide (const mode_t *nd) const
 	}
 	else if ((nd->dy ^ nd->dx) >= 0)
 	{
-		p1 = P_PointOnSide (m_Box[BOXLEFT], m_Box[BOXTOP], nd);
-		p2 = P_PointOnSide (m_Box[BOXRIGHT], m_Box[BOXBOTTOM], nd);
+		p1 = R_PointOnSide (m_Box[BOXLEFT], m_Box[BOXTOP], nd);
+		p2 = R_PointOnSide (m_Box[BOXRIGHT], m_Box[BOXBOTTOM], nd);
 	}
 	else
 	{
-		p1 = P_PointOnSide (m_Box[BOXRIGHT], m_Box[BOXTOP], nd);
-		p2 = P_PointOnSide (m_Box[BOXLEFT], m_Box[BOXBOTTOM], nd);
+		p1 = R_PointOnSide (m_Box[BOXRIGHT], m_Box[BOXTOP], nd);
+		p2 = R_PointOnSide (m_Box[BOXLEFT], m_Box[BOXBOTTOM], nd);
 	}
 
 	return (p1 == p2) ? p1 : -1;
 }
-*/

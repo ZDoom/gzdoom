@@ -20,11 +20,29 @@ struct FPolyNode
 	FPolyNode **sprev;			// previous subsector
 
 	TArray<seg_t> segs;			// segs for this node
+	fixed_t dist;				// distance for sorting
 };
 
 struct FPolyVertex
 {
 	fixed_t x, y;
+};
+
+struct FPolyVertexBlock
+{
+	int used;
+	vertex_t *vertices[10];
+
+	FPolyVertexBlock()
+	{
+		clear();
+	}
+
+	void clear()
+	{
+		used = 0;
+		memset(vertices, 0, sizeof(vertices));
+	}
 };
 
 // ===== Polyobj data =====
@@ -36,7 +54,10 @@ struct FPolyObj
 	TArray<FPolyVertex>		OriginalPts;
 	TArray<FPolyVertex>		PrevPts;
 	FPolyVertex				StartSpot;
+	FPolyVertex				CenterSpot;
 	FBoundingBox			Bounds;	// Bounds in map coordinates 
+	TArray<FPolyVertexBlock *> SplitVertices;
+	unsigned int SVIndex;
 
 	angle_t		angle;
 	int			tag;			// reference tag assigned in HereticEd
@@ -86,6 +107,9 @@ struct FPolyObj
 	bool RotatePolyobj (angle_t angle);
 	void ClosestPoint(fixed_t fx, fixed_t fy, fixed_t &ox, fixed_t &oy, side_t **side) const;
 	void LinkPolyobj ();
+	void CreateSubsectorLinks();
+	void ClearSubsectorLinks();
+	vertex_t *GetNewVertex();
 
 private:
 
@@ -97,6 +121,7 @@ private:
 
 };
 extern FPolyObj *polyobjs;		// list of all poly-objects on the level
+extern nodecoefficients_t *nodecoeff;
 
 inline FArchive &operator<< (FArchive &arc, FPolyObj *&poly)
 {
@@ -115,6 +140,8 @@ struct polyblock_t
 	struct polyblock_t *next;
 };
 
+
+void PO_LinkToSubsectors();
 
 
 #endif

@@ -38,6 +38,7 @@
 #include "stats.h"
 #include "r_interpolate.h"
 #include "p_local.h"
+#include "i_system.h"
 #include "po_man.h"
 
 //==========================================================================
@@ -135,6 +136,8 @@ class DPolyobjInterpolation : public DInterpolation
 
 	FPolyObj *poly;
 	TArray<fixed_t> oldverts, bakverts;
+	fixed_t oldcx, oldcy;
+	fixed_t bakcx, bakcy;
 
 public:
 
@@ -761,6 +764,8 @@ void DPolyobjInterpolation::UpdateInterpolation()
 		oldverts[i*2  ] = poly->Vertices[i]->x;
 		oldverts[i*2+1] = poly->Vertices[i]->y;
 	}
+	oldcx = poly->CenterSpot.x;
+	oldcy = poly->CenterSpot.y;
 }
 
 //==========================================================================
@@ -776,7 +781,9 @@ void DPolyobjInterpolation::Restore()
 		poly->Vertices[i]->x = bakverts[i*2  ];
 		poly->Vertices[i]->y = bakverts[i*2+1];
 	}
-	//poly->Moved();
+	poly->CenterSpot.x = bakcx;
+	poly->CenterSpot.y = bakcy;
+	poly->ClearSubsectorLinks();
 }
 
 //==========================================================================
@@ -798,7 +805,12 @@ void DPolyobjInterpolation::Interpolate(fixed_t smoothratio)
 		*px = oldverts[i*2  ] + FixedMul(bakverts[i*2  ] - oldverts[i*2  ], smoothratio);
 		*py = oldverts[i*2+1] + FixedMul(bakverts[i*2+1] - oldverts[i*2+1], smoothratio);
 	}
-	//poly->Moved();
+	bakcx = poly->CenterSpot.x;
+	bakcy = poly->CenterSpot.y;
+	poly->CenterSpot.x = bakcx + FixedMul(bakcx - oldcx, smoothratio);
+	poly->CenterSpot.y = bakcy + FixedMul(bakcy - oldcy, smoothratio);
+
+	poly->ClearSubsectorLinks();
 }
 
 //==========================================================================
@@ -809,10 +821,16 @@ void DPolyobjInterpolation::Interpolate(fixed_t smoothratio)
 
 void DPolyobjInterpolation::Serialize(FArchive &arc)
 {
+#pragma message("Savegame revision")
+	if (SaveVersion < 3300)	// fixme: Must be set when branch is merged back
+	{
+		// The savegame format is no longer compatible with the old way of doing things
+		I_Error("Cannot use old savegames with polyobjects.");
+	}
 
 	Super::Serialize(arc);
 	int po = int(poly - polyobjs);
-	arc << po << oldverts;
+	arc << po << oldverts << oldcx << oldcy;
 	poly = polyobjs + po;
 	if (arc.IsLoading()) bakverts.Resize(oldverts.Size());
 }

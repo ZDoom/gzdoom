@@ -492,6 +492,13 @@ void P_SerializePolyobjs (FArchive &arc)
 	int i;
 	FPolyObj *po;
 
+#pragma message("Savegame revision")
+	if (SaveVersion < 3300)	// fixme: Must be set when branch is merged back
+	{
+		// The savegame format is no longer compatible with the old way of doing things
+		I_Error("Cannot use old savegames with polyobjects.");
+	}
+
 	if (arc.IsStoring ())
 	{
 		int seg = ASEG_POLYOBJS;

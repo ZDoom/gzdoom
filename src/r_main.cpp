@@ -50,6 +50,7 @@
 #include "r_bsp.h"
 #include "r_plane.h"
 #include "v_palette.h"
+#include "po_man.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -1488,6 +1489,8 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 	{
 		camera->renderflags |= RF_INVISIBLE;
 	}
+	// Link the polyobjects right before drawing the scene to reduce the amounts of calls to this function
+	PO_LinkToSubsectors();
 	if (r_polymost < 2)
 	{
 		R_RenderBSPNode (nodes + numnodes - 1);	// The head node is the last node output.

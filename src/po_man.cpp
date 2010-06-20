@@ -153,6 +153,7 @@ polyblock_t **PolyBlockMap;
 FPolyObj *polyobjs; // list of all poly-objects on the level
 int po_NumPolyobjs;
 polyspawns_t *polyspawns; // [RH] Let P_SpawnMapThings() find our thingies for us
+nodecoefficients_t *nodecoeff;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -820,6 +821,7 @@ void FPolyObj::ThrustMobj (AActor *actor, side_t *side)
 
 void FPolyObj::UpdateBBox ()
 {
+	QWORD cx = 0, cy = 0;
 	for(unsigned i=0;i<Linedefs.Size(); i++)
 	{
 		line_t *line = Linedefs[i];
@@ -861,6 +863,17 @@ void FPolyObj::UpdateBBox ()
 			line->slopetype = ((line->dy ^ line->dx) >= 0) ? ST_POSITIVE : ST_NEGATIVE;
 		}
 	}
+
+	for(unsigned i=0;i<Vertices.Size(); i++)
+	{
+		line_t *line = Linedefs[i];
+
+
+		cx += Vertices[i].x;
+		cy += Vertices[i].y;
+	}
+	CenterSpot.x = (fixed_t)(cx / Vertices.Size());
+	CenterSpot.y = (fixed_t)(cy / Vertices.Size());
 }
 
 //==========================================================================
@@ -894,7 +907,10 @@ bool FPolyObj::MovePolyobj (int x, int y, bool force)
 	}
 	StartSpot.x += x;
 	StartSpot.y += y;
+	CenterSpot.x += x;
+	CenterSpot.y += y;
 	LinkPolyobj ();
+	ClearSubsectorLinks();
 	return true;
 }
 
@@ -977,6 +993,7 @@ bool FPolyObj::RotatePolyobj (angle_t angle)
 	}
 	angle += angle;
 	LinkPolyobj();
+	ClearSubsectorLinks();
 	return true;
 }
 
@@ -1234,8 +1251,25 @@ void FPolyObj::ClosestPoint(fixed_t fx, fixed_t fy, fixed_t &ox, fixed_t &oy, si
 
 FPolyObj::~FPolyObj()
 {
+	for(unsigned i=0; i<SplitVertices.Size(); i++)
+	{
+		delete SplitVertices[i];
+	}
 }
 
+
+vertex_t *FPolyObj::GetNewVertex()
+{
+	if (SplitVertices[SVIndex]->used == 10)
+	{
+		SVIndex++;
+		if (SVIndex >= SplitVertices.Size())
+		{
+			SplitVertices.Reserve(1);
+		}
+	}
+	return SplitVertices[SVIndex]->vertices[SplitVertices[SVIndex]->used++];
+}
 
 //==========================================================================
 //
@@ -1618,6 +1652,23 @@ void PO_Init (void)
 	{
 		segs[i].bPolySeg = (segs[i].sidedef != NULL && segs[i].sidedef->Flags & WALLF_POLYOBJ);
 	}
+
+	// calculate the coefficients for the nodes' line equations
+	nodecoeff = new nodecoefficients_t[numnodes];
+	for(int i=0;i<numnodes;i++)
+	{
+		node_t *no = &nodes[i];
+		nodecoefficients_t *noc = &nodecoeff[i];
+		double fx  = (double)no->x;
+		double fy  = (double)no->y;
+		double fdx = (double)no->dx;
+		double fdy = (double)no->dy;
+
+		noc->a   = -fdy;
+		noc->b   =  fdx;
+		noc->c   =  fdy * fx - fdx * fy;
+		noc->len = sqrt(fdx * fdx + fdy * fdy);
+	}
 }
 
 //==========================================================================
@@ -1634,52 +1685,247 @@ bool PO_Busy (int polyobj)
 	return (poly != NULL && poly->specialdata != NULL);
 }
 
-//=============================================================================
-// phares 3/21/98
-//
-// Maintain a freelist of msecnode_t's to reduce memory allocs and frees.
-//=============================================================================
 
-FPolyNode *headpolynode = NULL;
 
-//=============================================================================
+//==========================================================================
 //
-// P_GetSecnode
 //
-// Retrieve a node from the freelist. The calling routine
-// should make sure it sets all fields properly.
 //
-//=============================================================================
+//==========================================================================
 
-FPolyNode *PO_GetPolynode()
+void FPolyObj::ClearSubsectorLinks()
 {
-	FPolyNode *node;
+	for(unsigned i=0; i<SplitVertices.Size(); i++)
+	{
+		SplitVertices[i]->clear();
+	}
+	SVIndex = 0;
+	while (subsectorlinks != NULL)
+	{
+		FPolyNode *next = subsectorlinks->snext;
 
-	if (headpolynode)
-	{
-		node = headpolynode;
-		headpolynode = headpolynode->pnext;
+		*subsectorlinks->pprev = subsectorlinks->pnext;
+		delete subsectorlinks;
+		subsectorlinks = next;
 	}
-	else
-	{
-		node = new FPolyNode;
-	}
-	return node;
 }
 
-//=============================================================================
+//==========================================================================
 //
-// P_PutSecnode
+// GetIntersection
 //
-// Returns a node to the freelist.
-//
-//=============================================================================
+//==========================================================================
 
-void PO_PutPolynode (FPolyNode *node)
+static bool GetIntersection(seg_t *seg, node_t *bsp, vertex_t *v)
 {
-	node->pnext = headpolynode;
-	headpolynode = node;
-	node->segs.Clear();
-	node->segs.ShrinkToFit();
+	double v1x = FIXED2FLOAT(seg->v1->x);
+	double v1y = FIXED2FLOAT(seg->v1->y);
+	double v2x = FIXED2FLOAT(seg->v2->x);
+	double v2y = FIXED2FLOAT(seg->v2->y);
+
+	double a_seg = v2y - v1y;
+	double b_seg = v1x - v2x;
+	double c_seg = v2x * v1y - v1x * v2y;
+
+	nodecoefficients_t *noc = &nodecoeff[bsp-nodes];
+	double a_node = -noc->a;
+	double b_node = -noc->b;
+	double c_node = -noc->c;
+
+	double d = a_seg * b_node - a_node * b_seg;
+
+	if(d == 0.0) return false;
+
+	v->x = FLOAT2FIXED((b_seg * c_node - b_node * c_seg) / d);
+	v->y = FLOAT2FIXED((a_node * c_seg - a_seg * c_node) / d);
+	return true;
 }
 
+//==========================================================================
+//
+// R_PartitionDistance
+//
+// This routine uses the general line equation, whose coefficients are now
+// precalculated in the BSP nodes, to determine the distance of the point
+// from the partition line. If the distance is too small, we may decide to
+// change our idea of sidedness.
+//
+//==========================================================================
+
+inline double R_PartitionDistance(double x, double y, node_t *node)
+{
+	nodecoefficients_t *noc = &nodecoeff[node-nodes];
+	return fabs((noc->a * x + noc->b * y + noc->c) / noc->len);
+}
+
+#define DS_EPSILON 0.3125
+
+//==========================================================================
+//
+// SplitPoly
+//
+//==========================================================================
+
+static void SplitPoly(FPolyNode *pnode, void *node)
+{
+	static TArray<seg_t> lists[2];
+
+	while (!((size_t)node & 1))  // Keep going until found a subsector
+	{
+		node_t *bsp = (node_t *)node;
+
+		int boxside = pnode->poly->Bounds.BoxOnNodeSide(bsp);
+
+		if (boxside != -1)
+		{
+			// The entire polyobject is on one side of the node so no need to do further checks
+			// with this node. Just pick the proper child and go on.
+			node = bsp->children[boxside];
+		}
+		else
+		{
+			int centerside = R_PointOnSide(pnode->poly->CenterSpot.x, pnode->poly->CenterSpot.y, bsp);
+
+			lists[0].Clear();
+			lists[1].Clear();
+			for(unsigned i=0;i<pnode->segs.Size(); i++)
+			{
+				seg_t *seg = &pnode->segs[i];
+
+				int side1 = R_PointOnSide(seg->v1->x, seg->v1->y, bsp);
+				int side2 = R_PointOnSide(seg->v2->x, seg->v2->y, bsp);
+
+				// get distance of vertices from partition line
+				double dist_v1 = R_PartitionDistance(seg->v1->x, seg->v1->y, bsp);
+				double dist_v2 = R_PartitionDistance(seg->v2->x, seg->v2->y, bsp);
+
+				// If the distances are less than epsilon, consider the points as being
+				// on the same side as the polyobj origin. Why? People like to build
+				// polyobject doors flush with their door tracks. This breaks using the
+				// usual assumptions.
+				if(dist_v1 <= DS_EPSILON && dist_v2 <= DS_EPSILON)
+				{
+					lists[centerside].Push(*seg);
+				}
+				else if(side1 != side2)
+				{
+					// if the partition line crosses this seg, we must split it.
+					vertex_t  *vert = pnode->poly->GetNewVertex();
+
+					if (GetIntersection(seg, bsp, vert))
+					{
+						lists[0].Push(*seg);
+						lists[1].Push(*seg);
+						lists[side1][lists[side1].Size()-1].v2 = vert;
+						lists[side2][lists[side2].Size()-1].v1 = vert;
+					}
+					else
+					{
+						// should never happen
+						lists[side1].Push(*seg);
+					}
+				}
+				else 
+				{
+					// we must move this seg from the front to the back
+					lists[side1].Push(*seg);
+				}
+			}
+			if (lists[1].Size() == 0)
+			{
+				node = bsp->children[0];
+			}
+			else if (lists[0].Size() == 0)
+			{
+				node = bsp->children[1];
+			}
+			else
+			{
+				// create the new node 
+				FPolyNode *newnode = new FPolyNode;
+				newnode->poly = pnode->poly;
+				newnode->pnext = NULL;
+				newnode->pprev = NULL;
+				newnode->subsector = NULL;
+				newnode->snext = NULL;
+				newnode->sprev = NULL;
+				newnode->segs = lists[1];
+
+				// set segs for original node
+				pnode->segs = lists[0];
+			
+				// recurse back side
+				SplitPoly(newnode, bsp->children[1]);
+				node = bsp->children[0];
+			}
+		}
+	}
+
+	// we reached a subsector so we can link the node with this subsector
+	subsector_t *sub = (subsector_t *)((BYTE *)node - 1);
+
+	// Link node to subsector
+	pnode->snext = sub->polys;
+	pnode->snext->sprev = &pnode->snext;
+	pnode->sprev = &sub->polys;
+	sub->polys = pnode;
+
+	// link node to polyobject
+	pnode->pnext = pnode->poly->subsectorlinks;
+	pnode->pnext->pprev = &pnode->pnext;
+	pnode->pprev = &pnode->poly->subsectorlinks;
+	pnode->poly->subsectorlinks = pnode;
+}
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
+void FPolyObj::CreateSubsectorLinks()
+{
+	FPolyNode *node = new FPolyNode;
+
+	node->poly = this;
+	node->pnext = NULL;
+	node->pprev = NULL;
+	node->snext = NULL;
+	node->sprev = NULL;
+	node->segs.Reserve(Sidedefs.Size());
+
+	for(unsigned i=0; i<Sidedefs.Size(); i++)
+	{
+		seg_t *seg = &node->segs[i];
+		side_t *side = Sidedefs[i];
+
+		seg->v1 = side->V1();
+		seg->v2 = side->V2();
+		seg->sidedef = side;
+		seg->linedef = side->linedef;
+		seg->frontsector = side->sector;
+		seg->backsector = side->linedef->frontsector == side->sector? 
+			side->linedef->backsector : side->linedef->frontsector;
+		seg->Subsector = NULL;
+		seg->PartnerSeg = NULL;
+		seg->bPolySeg = true;
+	}
+	SplitPoly(node, nodes + numnodes - 1);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void PO_LinkToSubsectors()
+{
+	for (int i = 0; i < po_NumPolyobjs; i++)
+	{
+		if (polyobjs[i].subsectorlinks == NULL)
+		{
+			polyobjs[i].CreateSubsectorLinks();
+		}
+	}
+}

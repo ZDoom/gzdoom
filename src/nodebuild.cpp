@@ -198,8 +198,15 @@ void FNodeBuilder::CreateSubsectorsForReal ()
 		qsort (&SegList[sub.firstline], sub.numlines, sizeof(USegPtr), SortSegs);
 
 		// Convert seg pointers into indices
+		D(Printf (PRINT_LOG, "Output subsector %d:\n", Subsectors.Size()));
 		for (unsigned int i = sub.firstline; i < SegList.Size(); ++i)
 		{
+			D(Printf (PRINT_LOG, "  Seg %5d%c(%5d,%5d)-(%5d,%5d)\n", SegList[i].SegPtr - &Segs[0],
+				SegList[i].SegPtr->linedef == -1 ? '+' : ' ',
+				Vertices[SegList[i].SegPtr->v1].x>>16,
+				Vertices[SegList[i].SegPtr->v1].y>>16,
+				Vertices[SegList[i].SegPtr->v2].x>>16,
+				Vertices[SegList[i].SegPtr->v2].y>>16));
 			SegList[i].SegNum = DWORD(SegList[i].SegPtr - &Segs[0]);
 		}
 		Subsectors.Push (sub);
@@ -296,7 +303,9 @@ bool FNodeBuilder::CheckSubsector (DWORD set, node_t &node, DWORD &splitseg, int
 		D(Printf (PRINT_LOG, " - seg %d(%d,%d)-(%d,%d) line %d front %d back %d\n", seg,
 			Vertices[Segs[seg].v1].x>>16, Vertices[Segs[seg].v1].y>>16,
 			Vertices[Segs[seg].v2].x>>16, Vertices[Segs[seg].v2].y>>16,
-			Segs[seg].linedef, Segs[seg].frontsector, Segs[seg].backsector));
+			Segs[seg].linedef,
+			Segs[seg].frontsector == NULL ? -1 : Segs[seg].frontsector - sectors,
+			Segs[seg].backsector == NULL ? -1 : Segs[seg].backsector - sectors));
 		if (Segs[seg].linedef != -1 &&
 			Segs[seg].frontsector != sec
 			// Segs with the same front and back sectors are allowed to reside
@@ -1020,7 +1029,8 @@ void FNodeBuilder::PrintSet (int l, DWORD set)
 	Printf (PRINT_LOG, "set %d:\n", l);
 	for (; set != DWORD_MAX; set = Segs[set].next)
 	{
-		Printf (PRINT_LOG, "\t%u(%td):%d(%d,%d)-%d(%d,%d) ", set, Segs[set].frontsector-sectors,
+		Printf (PRINT_LOG, "\t%u(%td)%c%d(%d,%d)-%d(%d,%d)\n", set, Segs[set].frontsector-sectors,
+			Segs[set].linedef == -1 ? '+' : ':',
 			Segs[set].v1,
 			Vertices[Segs[set].v1].x>>16, Vertices[Segs[set].v1].y>>16,
 			Segs[set].v2,

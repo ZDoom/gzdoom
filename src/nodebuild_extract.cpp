@@ -45,6 +45,14 @@
 #include "templates.h"
 #include "r_main.h"
 
+#if 0
+#define D(x) x
+#define DD 1
+#else
+#define D(x) do{}while(0)
+#undef DD
+#endif
+
 void FNodeBuilder::Extract (node_t *&outNodes, int &nodeCount,
 	seg_t *&outSegs, int &segCount,
 	subsector_t *&outSubs, int &subCount,
@@ -63,7 +71,7 @@ void FNodeBuilder::Extract (node_t *&outNodes, int &nodeCount,
 
 	subCount = Subsectors.Size();
 	outSubs = new subsector_t[subCount];
-	memset(outSubs,0,subCount * sizeof(subsector_t));
+	memset(outSubs, 0, subCount * sizeof(subsector_t));
 
 	nodeCount = Nodes.Size ();
 	outNodes = new node_t[nodeCount];
@@ -71,16 +79,19 @@ void FNodeBuilder::Extract (node_t *&outNodes, int &nodeCount,
 	memcpy (outNodes, &Nodes[0], nodeCount*sizeof(node_t));
 	for (i = 0; i < nodeCount; ++i)
 	{
+		D(Printf(PRINT_LOG, "Node %d:\n", i));
 		// Go backwards because on 64-bit systems, both of the intchildren are
 		// inside the first in-game child.
 		for (int j = 1; j >= 0; --j)
 		{
 			if (outNodes[i].intchildren[j] & 0x80000000)
 			{
+				D(Printf(PRINT_LOG, "  subsector %d\n", outNodes[i].intchildren[j] & 0x7FFFFFFF));
 				outNodes[i].children[j] = (BYTE *)(outSubs + (outNodes[i].intchildren[j] & 0x7fffffff)) + 1;
 			}
 			else
 			{
+				D(Printf(PRINT_LOG, "  node %d\n", outNodes[i].intchildren[j]));
 				outNodes[i].children[j] = outNodes + outNodes[i].intchildren[j];
 			}
 		}
@@ -120,6 +131,8 @@ void FNodeBuilder::Extract (node_t *&outNodes, int &nodeCount,
 			const FPrivSeg *org = &Segs[SegList[i].SegNum];
 			seg_t *out = &outSegs[i];
 
+			D(Printf(PRINT_LOG, "Seg %d: v1(%d) -> v2(%d)\n", i, org->v1, org->v2));
+
 			out->v1 = outVerts + org->v1;
 			out->v2 = outVerts + org->v2;
 			out->backsector = org->backsector;
@@ -131,7 +144,7 @@ void FNodeBuilder::Extract (node_t *&outNodes, int &nodeCount,
 		}
 	}
 
-	//Printf ("%i segs, %i nodes, %i subsectors\n", segCount, nodeCount, subCount);
+	D(Printf("%i segs, %i nodes, %i subsectors\n", segCount, nodeCount, subCount));
 
 	for (i = 0; i < Level.NumLines; ++i)
 	{
@@ -185,10 +198,26 @@ int FNodeBuilder::CloseSubsector (TArray<seg_t> &segs, int subsector, vertex_t *
 	prev = seg;
 	firstVert = seg->v1;
 
+#ifdef DD
+	Printf(PRINT_LOG, "--%d--\n", subsector);
+	for (j = first; j < max; ++j)
+	{
+		seg = &Segs[SegList[j].SegNum];
+		angle_t ang = PointToAngle (Vertices[seg->v1].x - midx, Vertices[seg->v1].y - midy);
+		Printf(PRINT_LOG, "%d%c %5d(%5d,%5d)->%5d(%5d,%5d) - %3.3f  %d,%d\n", j,
+			seg->linedef == -1 ? '+' : ':',
+			seg->v1, Vertices[seg->v1].x>>16, Vertices[seg->v1].y>>16,
+			seg->v2, Vertices[seg->v2].x>>16, Vertices[seg->v2].y>>16,
+			double(ang/2)*180/(1<<30),
+			seg->planenum, seg->planefront);
+	}
+#endif
+
 	if (diffplanes)
 	{ // A well-behaved subsector. Output the segs sorted by the angle formed by connecting
 	  // the subsector's center to their first vertex.
 
+		D(Printf(PRINT_LOG, "Well behaved subsector\n"));
 		for (i = first + 1; i < max; ++i)
 		{
 			angle_t bestdiff = ANGLE_MAX;
@@ -226,7 +255,9 @@ int FNodeBuilder::CloseSubsector (TArray<seg_t> &segs, int subsector, vertex_t *
 				PushConnectingGLSeg (subsector, segs, &outVerts[prev->v2], &outVerts[seg->v1]);
 				count++;
 			}
-
+#ifdef DD
+			Printf(PRINT_LOG, "+%d\n", bestj);
+#endif
 			prevAngle -= bestdiff;
 			seg->storedseg = PushGLSeg (segs, seg, outVerts);
 			count++;
@@ -237,6 +268,9 @@ int FNodeBuilder::CloseSubsector (TArray<seg_t> &segs, int subsector, vertex_t *
 				break;
 			}
 		}
+#ifdef DD
+		Printf(PRINT_LOG, "\n");
+#endif
 	}
 	else
 	{ // A degenerate subsector. These are handled in three stages:
@@ -247,6 +281,8 @@ int FNodeBuilder::CloseSubsector (TArray<seg_t> &segs, int subsector, vertex_t *
 	  // Stage 3. Reverse direction again and insert segs until we get
 	  //          to the start seg.
 	  // A dot product serves to determine distance from the start seg.
+
+		D(Printf(PRINT_LOG, "degenerate subsector\n"));
 
 		// Stage 1. Go forward.
 		count += OutputDegenerateSubsector (segs, subsector, true, 0, prev, outVerts);
@@ -263,6 +299,18 @@ int FNodeBuilder::CloseSubsector (TArray<seg_t> &segs, int subsector, vertex_t *
 		PushConnectingGLSeg (subsector, segs, &outVerts[prev->v2], &outVerts[firstVert]);
 		count++;
 	}
+#ifdef DD
+	Printf(PRINT_LOG, "Output GL subsector %d:\n", subsector);
+	for (i = segs.Size() - count; i < (int)segs.Size(); ++i)
+	{
+		Printf(PRINT_LOG, "  Seg %5d%c(%5d,%5d)-(%5d,%5d)\n", i,
+			segs[i].linedef == NULL ? '+' : ' ',
+			segs[i].v1->x>>16,
+			segs[i].v1->y>>16,
+			segs[i].v2->x>>16,
+			segs[i].v2->y>>16);
+	}
+#endif
 
 	return count;
 }

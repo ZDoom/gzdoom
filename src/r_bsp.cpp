@@ -1027,7 +1027,7 @@ static void R_AddPolyobjs(subsector_t *sub)
 	while (pn != NULL)
 	{
 		sortedpolys.Push(pn);
-		pn->dist = R_PointToDist2(pn->poly->StartSpot.x - viewx, pn->poly->StartSpot.y - viewy);
+		pn->dist = R_PointToDist2(pn->poly->CenterSpot.x - viewx, pn->poly->CenterSpot.y - viewy);
 		pn = pn->pnext;
 	}
 	if (sortedpolys.Size() > 1)

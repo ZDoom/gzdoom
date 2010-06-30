@@ -153,7 +153,6 @@ polyblock_t **PolyBlockMap;
 FPolyObj *polyobjs; // list of all poly-objects on the level
 int po_NumPolyobjs;
 polyspawns_t *polyspawns; // [RH] Let P_SpawnMapThings() find our thingies for us
-nodecoefficients_t *nodecoeff;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -1653,21 +1652,12 @@ void PO_Init (void)
 		segs[i].bPolySeg = (segs[i].sidedef != NULL && segs[i].sidedef->Flags & WALLF_POLYOBJ);
 	}
 
-	// calculate the coefficients for the nodes' line equations
-	nodecoeff = new nodecoefficients_t[numnodes];
 	for(int i=0;i<numnodes;i++)
 	{
 		node_t *no = &nodes[i];
-		nodecoefficients_t *noc = &nodecoeff[i];
-		double fx  = (double)no->x;
-		double fy  = (double)no->y;
 		double fdx = (double)no->dx;
 		double fdy = (double)no->dy;
-
-		noc->a   = -fdy;
-		noc->b   =  fdx;
-		noc->c   =  fdy * fx - fdx * fy;
-		noc->len = sqrt(fdx * fdx + fdy * fdy);
+		no->len = (float)sqrt(fdx * fdx + fdy * fdy);
 	}
 }
 
@@ -1714,48 +1704,51 @@ void FPolyObj::ClearSubsectorLinks()
 //
 // GetIntersection
 //
+// adapted from P_InterceptVector
+//
 //==========================================================================
 
 static bool GetIntersection(seg_t *seg, node_t *bsp, vertex_t *v)
 {
-	double v1x = FIXED2FLOAT(seg->v1->x);
-	double v1y = FIXED2FLOAT(seg->v1->y);
-	double v2x = FIXED2FLOAT(seg->v2->x);
-	double v2y = FIXED2FLOAT(seg->v2->y);
+	double frac;
+	double num;
+	double den;
 
-	double a_seg = v2y - v1y;
-	double b_seg = v1x - v2x;
-	double c_seg = v2x * v1y - v1x * v2y;
+	double v1x = (double)seg->v1->x;
+	double v1y = (double)seg->v1->y;
+	double v1dx = (double)(seg->v2->x) - v1x;
+	double v1dy = (double)(seg->v2->y) - v1y;
+	double v2x = (double)bsp->x;
+	double v2y = (double)bsp->y;
+	double v2dx = (double)bsp->dx;
+	double v2dy = (double)bsp->dy;
+		
+	den = v1dy*v2dx - v1dx*v2dy;
 
-	nodecoefficients_t *noc = &nodecoeff[bsp-nodes];
-	double a_node = -noc->a;
-	double b_node = -noc->b;
-	double c_node = -noc->c;
+	if (den == 0)
+		return false;		// parallel
+	
+	num = (v1x - v2x)*v1dy + (v2y - v1y)*v1dx;
+	frac = num / den;
 
-	double d = a_seg * b_node - a_node * b_seg;
+	if (frac < 0. || frac > 1.) return false;
 
-	if(d == 0.0) return false;
-
-	v->x = FLOAT2FIXED((b_seg * c_node - b_node * c_seg) / d);
-	v->y = FLOAT2FIXED((a_node * c_seg - a_seg * c_node) / d);
+	v->x = FLOAT2FIXED(v1x + frac * v1dx);
+	v->y = FLOAT2FIXED(v1y + frac * v1dy);
 	return true;
 }
 
 //==========================================================================
 //
-// R_PartitionDistance
+// PartitionDistance
 //
-// This routine uses the general line equation, whose coefficients are now
-// precalculated in the BSP nodes, to determine the distance of the point
-// from the partition line. If the distance is too small, we may decide to
-// change our idea of sidedness.
+// Determine the distance of a vertex to a node's partition line.
 //
 //==========================================================================
 
-inline double R_PartitionDistance(double x, double y, node_t *node)
-{
-	nodecoefficients_t *noc = &nodecoeff[node-nodes];
-	return fabs((noc->a * x + noc->b * y + noc->c) / noc->len);
+static double PartitionDistance(vertex_t *vt, node_t *node)
+{	
+	return fabs(double(-node->dy) * (vt->x - node->x) + double(node->dx) * (vt->y - node->y)) / node->len;
 }
 
 #define DS_EPSILON 0.3125
@@ -1792,12 +1785,12 @@ static void SplitPoly(FPolyNode *pnode, void *node)
 			{
 				seg_t *seg = &pnode->segs[i];
 
-				int side1 = R_PointOnSide(seg->v1->x, seg->v1->y, bsp);
-				int side2 = R_PointOnSide(seg->v2->x, seg->v2->y, bsp);
 
 				// get distance of vertices from partition line
-				double dist_v1 = R_PartitionDistance(seg->v1->x, seg->v1->y, bsp);
-				double dist_v2 = R_PartitionDistance(seg->v2->x, seg->v2->y, bsp);
+				// If the distance is too small, we may decide to
+				// change our idea of sidedness.
+				double dist_v1 = PartitionDistance(seg->v1, bsp);
+				double dist_v2 = PartitionDistance(seg->v2, bsp);
 
 				// If the distances are less than epsilon, consider the points as being
 				// on the same side as the polyobj origin. Why? People like to build
@@ -1807,28 +1800,34 @@ static void SplitPoly(FPolyNode *pnode, void *node)
 				{
 					lists[centerside].Push(*seg);
 				}
-				else if(side1 != side2)
-				{
-					// if the partition line crosses this seg, we must split it.
-					vertex_t  *vert = pnode->poly->GetNewVertex();
-
-					if (GetIntersection(seg, bsp, vert))
-					{
-						lists[0].Push(*seg);
-						lists[1].Push(*seg);
-						lists[side1][lists[side1].Size()-1].v2 = vert;
-						lists[side2][lists[side2].Size()-1].v1 = vert;
-					}
-					else
-					{
-						// should never happen
-						lists[side1].Push(*seg);
-					}
-				}
 				else 
 				{
-					// we must move this seg from the front to the back
-					lists[side1].Push(*seg);
+					int side1 = R_PointOnSide(seg->v1->x, seg->v1->y, bsp);
+					int side2 = R_PointOnSide(seg->v2->x, seg->v2->y, bsp);
+
+					if(side1 != side2)
+					{
+						// if the partition line crosses this seg, we must split it.
+						vertex_t  *vert = pnode->poly->GetNewVertex();
+
+						if (GetIntersection(seg, bsp, vert))
+						{
+							lists[0].Push(*seg);
+							lists[1].Push(*seg);
+							lists[side1][lists[side1].Size()-1].v2 = vert;
+							lists[side2][lists[side2].Size()-1].v1 = vert;
+						}
+						else
+						{
+							// should never happen
+							lists[side1].Push(*seg);
+						}
+					}
+					else 
+					{
+						// we must move this seg from the front to the back
+						lists[side1].Push(*seg);
+					}
 				}
 			}
 			if (lists[1].Size() == 0)

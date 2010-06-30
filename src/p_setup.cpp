@@ -3436,11 +3436,6 @@ void P_FreeLevelData ()
 		delete[] polyobjs;
 		polyobjs = NULL;
 	}
-	if (nodecoeff != NULL)
-	{
-		delete[] nodecoeff;
-		nodecoeff = NULL;
-	}
 	po_NumPolyobjs = 0;
 	if (zones != NULL)
 	{

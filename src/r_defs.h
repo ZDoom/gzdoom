@@ -976,23 +976,13 @@ struct node_t
 	fixed_t		dx;
 	fixed_t		dy;
 	fixed_t		bbox[2][4];		// Bounding box for each child.
+	float		len;
 	union
 	{
 		void	*children[2];	// If bit 0 is set, it's a subsector.
 		int		intchildren[2];	// Used by nodebuilder.
 	};
 };
-
-struct nodecoefficients_t
-{
-	// These are intentionally not part of the nodes to reduce impact on CPU cache behavior.
-	// They are only used for splitting polyobjects.
-	double a;
-	double b;
-	double c;
-	double len;
-};
-
 
 
 // posts are runs of non masked source pixels

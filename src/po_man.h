@@ -121,7 +121,6 @@ private:
 
 };
 extern FPolyObj *polyobjs;		// list of all poly-objects on the level
-extern nodecoefficients_t *nodecoeff;
 
 inline FArchive &operator<< (FArchive &arc, FPolyObj *&poly)
 {

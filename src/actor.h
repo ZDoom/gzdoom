@@ -260,7 +260,7 @@ enum
 	MF4_NOEXTREMEDEATH	= 0x10000000,	// this projectile or weapon never gibs its victim
 	MF4_EXTREMEDEATH	= 0x20000000,	// this projectile or weapon always gibs its victim
 	MF4_FRIGHTENED		= 0x40000000,	// Monster runs away from player
-	/*					= 0x80000000,	*/
+	MF4_BOSSSPAWNED		= 0x80000000,	// Spawned by a boss spawn cube
 	
 // --- mobj.flags5 ---
 

@@ -391,7 +391,7 @@ oldmenuitem_t EpisodeMenu[MAX_EPISODES] =
 	{1,0,0, NULL, M_Episode, CR_UNTRANSLATED},
 };
 
-char EpisodeMaps[MAX_EPISODES][8];
+char EpisodeMaps[MAX_EPISODES][9];
 bool EpisodeNoSkill[MAX_EPISODES];
 
 oldmenu_t EpiDef =

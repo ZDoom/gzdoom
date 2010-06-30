@@ -529,10 +529,8 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 static FString	nextlevel;
 static int		startpos;	// [RH] Support for multiple starts per level
 extern int		NoWipe;		// [RH] Don't wipe when travelling in hubs
-static bool		startkeepfacing;	// [RH] Support for keeping your facing angle
-static bool		resetinventory;	// Reset the inventory to the player's default for the next level
+static int		changeflags;
 static bool		unloading;
-static bool		g_nomonsters;
 
 //==========================================================================
 //
@@ -543,8 +541,7 @@ static bool		g_nomonsters;
 //==========================================================================
 
 
-void G_ChangeLevel(const char *levelname, int position, bool keepFacing, int nextSkill, 
-				   bool nointermission, bool resetinv, bool nomonsters)
+void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill)
 {
 	level_info_t *nextinfo = NULL;
 
@@ -573,25 +570,32 @@ void G_ChangeLevel(const char *levelname, int position, bool keepFacing, int nex
 	if (nextSkill != -1)
 		NextSkill = nextSkill;
 
-	g_nomonsters = nomonsters;
-
-	if (nointermission) level.flags |= LEVEL_NOINTERMISSION;
+	if (flags & CHANGELEVEL_NOINTERMISSION)
+	{
+		level.flags |= LEVEL_NOINTERMISSION;
+	}
 
 	cluster_info_t *thiscluster = FindClusterInfo (level.cluster);
 	cluster_info_t *nextcluster = nextinfo? FindClusterInfo (nextinfo->cluster) : NULL;
 
 	startpos = position;
-	startkeepfacing = keepFacing;
 	gameaction = ga_completed;
-	resetinventory = resetinv;
 		
 	if (nextinfo != NULL) 
 	{
 		if (thiscluster != nextcluster || (thiscluster && !(thiscluster->flags & CLUSTER_HUB)))
 		{
-			resetinventory |= !!(nextinfo->flags2 & LEVEL2_RESETINVENTORY);
+			if (nextinfo->flags2 & LEVEL2_RESETINVENTORY)
+			{
+				flags |= CHANGELEVEL_RESETINVENTORY;
+			}
+			if (nextinfo->flags2 & LEVEL2_RESETHEALTH)
+			{
+				flags |= CHANGELEVEL_RESETHEALTH;
+			}
 		}
 	}
+	changeflags = flags;
 
 	bglobal.End();	//Added by MC:
 
@@ -667,12 +671,12 @@ const char *G_GetSecretExitMap()
 
 void G_ExitLevel (int position, bool keepFacing)
 {
-	G_ChangeLevel(G_GetExitMap(), position, keepFacing);
+	G_ChangeLevel(G_GetExitMap(), position, keepFacing ? CHANGELEVEL_KEEPFACING : 0);
 }
 
 void G_SecretExitLevel (int position) 
 {
-	G_ChangeLevel(G_GetSecretExitMap(), position, false);
+	G_ChangeLevel(G_GetSecretExitMap(), position, 0);
 }
 
 //==========================================================================
@@ -786,7 +790,7 @@ void G_DoCompleted (void)
 	{
 		if (playeringame[i])
 		{ // take away appropriate inventory
-			G_PlayerFinishLevel (i, mode, resetinventory);
+			G_PlayerFinishLevel (i, mode, changeflags);
 		}
 	}
 
@@ -927,7 +931,7 @@ void G_DoLoadLevel (int position, bool autosave)
 			players[i].fragcount = 0;
 	}
 
-	if (g_nomonsters)
+	if (changeflags & CHANGELEVEL_NOMONSTERS)
 	{
 		level.flags2 |= LEVEL2_NOMONSTERS;
 	}
@@ -1164,7 +1168,7 @@ void G_FinishTravel ()
 			// The player being spawned here is a short lived dummy and
 			// must not start any ENTER script or big problems will happen.
 			pawndup = P_SpawnPlayer (&playerstarts[pawn->player - players], true);
-			if (!startkeepfacing)
+			if (!changeflags & CHANGELEVEL_KEEPFACING)
 			{
 				pawn->angle = pawndup->angle;
 				pawn->pitch = pawndup->pitch;

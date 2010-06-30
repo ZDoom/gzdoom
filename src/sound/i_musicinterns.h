@@ -288,7 +288,7 @@ protected:
 
 	void OutputVolume (DWORD volume);
 	int FillBuffer(int buffer_num, int max_events, DWORD max_time);
-	bool ServiceEvent();
+	int ServiceEvent();
 	int VolumeControllerChange(int channel, int volume);
 	
 	static void Callback(unsigned int uMsg, void *userdata, DWORD dwParam1, DWORD dwParam2);

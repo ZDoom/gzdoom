@@ -384,7 +384,7 @@ const PClass *PClass::FindClassTentative (FName name)
 void PClass::InitializeActorInfo ()
 {
 	Symbols.SetParentTable (&ParentClass->Symbols);
-	Defaults = new BYTE[Size];
+	Defaults = (BYTE *)M_Malloc(Size);
 	if (ParentClass->Defaults != NULL) 
 	{
 		memcpy (Defaults, ParentClass->Defaults, ParentClass->Size);

@@ -1163,7 +1163,9 @@ void G_Ticker ()
 // G_PlayerFinishLevel
 // Called when a player completes a level.
 //
-void G_PlayerFinishLevel (int player, EFinishLevelType mode, bool resetinventory)
+// flags is checked for RESETINVENTORY and RESETHEALTH only.
+
+void G_PlayerFinishLevel (int player, EFinishLevelType mode, int flags)
 {
 	AInventory *item, *next;
 	player_t *p;
@@ -1235,8 +1237,14 @@ void G_PlayerFinishLevel (int player, EFinishLevelType mode, bool resetinventory
 		P_UndoPlayerMorph (p, p, 0, true);
 	}
 
+	// Resets player health to default
+	if (flags & CHANGELEVEL_RESETHEALTH)
+	{
+		p->health = p->mo->health = p->mo->SpawnHealth();
+	}
+
 	// Clears the entire inventory and gives back the defaults for starting a game
-	if (resetinventory)
+	if (flags & CHANGELEVEL_RESETINVENTORY)
 	{
 		AInventory *inv = p->mo->Inventory;
 

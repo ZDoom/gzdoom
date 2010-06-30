@@ -869,8 +869,8 @@ void FPolyObj::UpdateBBox ()
 		line_t *line = Linedefs[i];
 
 
-		cx += Vertices[i].x;
-		cy += Vertices[i].y;
+		cx += Vertices[i]->x;
+		cy += Vertices[i]->y;
 	}
 	CenterSpot.x = (fixed_t)(cx / Vertices.Size());
 	CenterSpot.y = (fixed_t)(cy / Vertices.Size());

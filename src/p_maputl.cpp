@@ -63,21 +63,20 @@ fixed_t P_AproxDistance (fixed_t dx, fixed_t dy)
 // P_InterceptVector
 //
 // Returns the fractional intercept point along the first divline.
-// This is only called by the addthings and addlines traversers.
 //
 //==========================================================================
 
 fixed_t P_InterceptVector (const divline_t *v2, const divline_t *v1)
 {
-#if 1	// [RH] Use 64 bit ints, so long divlines don't overflow
+#if 0	// [RH] Use 64 bit ints, so long divlines don't overflow
 
-	SQWORD den = ((SQWORD)v1->dy*v2->dx - (SQWORD)v1->dx*v2->dy) >> FRACBITS;
+	SQWORD den = ( ((SQWORD)v1->dy*v2->dx - (SQWORD)v1->dx*v2->dy) >> FRACBITS );
 	if (den == 0)
 		return 0;		// parallel
 	SQWORD num = ((SQWORD)(v1->x - v2->x)*v1->dy + (SQWORD)(v2->y - v1->y)*v1->dx);
 	return (fixed_t)(num / den);
 
-#elif 1	// This is the original Doom version
+#elif 0	// This is the original Doom version
 
 	fixed_t 	frac;
 	fixed_t 	num;
@@ -97,19 +96,24 @@ fixed_t P_InterceptVector (const divline_t *v2, const divline_t *v1)
 
 	return frac;
 
-#else	// UNUSED, float debug.
+#else	// optimized version of the float debug version. A lot faster on modern systens.
 
-	float frac;
-	float num;
-	float den;
-	float v1x = (float)v1->x/FRACUNIT;
-	float v1y = (float)v1->y/FRACUNIT;
-	float v1dx = (float)v1->dx/FRACUNIT;
-	float v1dy = (float)v1->dy/FRACUNIT;
-	float v2x = (float)v2->x/FRACUNIT;
-	float v2y = (float)v2->y/FRACUNIT;
-	float v2dx = (float)v2->dx/FRACUNIT;
-	float v2dy = (float)v2->dy/FRACUNIT;
+
+	double frac;
+	double num;
+	double den;
+
+	// There's no need to divide by FRACUNIT here.
+	// At the end both num and den will contain a factor 
+	// 1/(FRACUNIT*FRACUNIT) so they'll cancel each other out.
+	double v1x = (double)v1->x;
+	double v1y = (double)v1->y;
+	double v1dx = (double)v1->dx;
+	double v1dy = (double)v1->dy;
+	double v2x = (double)v2->x;
+	double v2y = (double)v2->y;
+	double v2dx = (double)v2->dx;
+	double v2dy = (double)v2->dy;
 		
 	den = v1dy*v2dx - v1dx*v2dy;
 
@@ -119,9 +123,10 @@ fixed_t P_InterceptVector (const divline_t *v2, const divline_t *v1)
 	num = (v1x - v2x)*v1dy + (v2y - v1y)*v1dx;
 	frac = num / den;
 
-	return frac*FRACUNIT;
+	return FLOAT2FIXED(frac);
 #endif
 }
+
 
 //==========================================================================
 //

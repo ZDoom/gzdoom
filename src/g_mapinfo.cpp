@@ -1802,6 +1802,7 @@ void FMapInfoParser::ParseEpisodeInfo ()
 		EpisodeMenu[i].fulltext = !picisgfx;
 		EpisodeNoSkill[i] = noskill;
 		strncpy (EpisodeMaps[i], map, 8);
+		EpisodeMaps[i][8] = 0;
 	}
 }
 

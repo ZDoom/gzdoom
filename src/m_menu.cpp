@@ -1293,6 +1293,9 @@ void M_DrawFrame (int left, int top, int width, int height)
 {
 	FTexture *p;
 	const gameborder_t *border = gameinfo.border;
+	// Sanity check for incomplete gameinfo
+	if (border == NULL)
+		return;
 	int offset = border->offset;
 	int right = left + width;
 	int bottom = top + height;

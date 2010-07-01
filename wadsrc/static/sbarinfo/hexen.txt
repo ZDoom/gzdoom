@@ -114,38 +114,7 @@ statusbar Normal
 	drawimage "ARMCLS", 255, 178;
 	drawnumber 2, HUDFONT_RAVEN, untranslated, armorclass, 275, 176, 1;
 
-	playerclass Fighter
-	{
-		drawimage "WPSLOT0", 190, 162;
-		hasweaponpiece FWeapQuietus, 1
-		{
-			drawimage "WPIECEF1", 190, 162;
-		}
-		hasweaponpiece FWeapQuietus, 2
-		{
-			drawimage "WPIECEF2", 225, 162;
-		}
-		hasweaponpiece FWeapQuietus, 3
-		{
-			drawimage "WPIECEF3", 234, 162;
-		}
-		hasweaponpiece FWeapQuietus, 1
-		{
-			hasweaponpiece FWeapQuietus, 2
-			{
-				hasweaponpiece FWeapQuietus, 3
-				{
-					drawimage "WPFULL0", 190, 162;
-				}
-			}
-		}
-
-		gamemode singleplayer
-			drawgem interpolate(6), "CHAIN", "LIFEGMF2", -23, 49, 15, 30, 193;
-		else
-			drawgem translatable, interpolate(6), "CHAIN", "LIFEGMF2", -23, 49, 15, 30, 193;
-	}
-	else playerclass Cleric
+	playerclass Cleric
 	{
 		drawimage "WPSLOT1", 190, 162;
 		hasweaponpiece CWeapWraithverge, 1
@@ -206,6 +175,37 @@ statusbar Normal
 			drawgem interpolate(6), "CHAIN3", "LIFEGMM2", -23, 49, 15, 30, 193;
 		else
 			drawgem translatable, interpolate(6), "CHAIN3", "LIFEGMM2", -23, 49, 15, 30, 193;
+	}
+	else
+	{
+		drawimage "WPSLOT0", 190, 162;
+		hasweaponpiece FWeapQuietus, 1
+		{
+			drawimage "WPIECEF1", 190, 162;
+		}
+		hasweaponpiece FWeapQuietus, 2
+		{
+			drawimage "WPIECEF2", 225, 162;
+		}
+		hasweaponpiece FWeapQuietus, 3
+		{
+			drawimage "WPIECEF3", 234, 162;
+		}
+		hasweaponpiece FWeapQuietus, 1
+		{
+			hasweaponpiece FWeapQuietus, 2
+			{
+				hasweaponpiece FWeapQuietus, 3
+				{
+					drawimage "WPFULL0", 190, 162;
+				}
+			}
+		}
+
+		gamemode singleplayer
+			drawgem interpolate(6), "CHAIN", "LIFEGMF2", -23, 49, 15, 30, 193;
+		else
+			drawgem translatable, interpolate(6), "CHAIN", "LIFEGMF2", -23, 49, 15, 30, 193;
 	}
 	drawimage "LFEDGE", 0, 193;
 	drawimage "RTEDGE", 277, 193;

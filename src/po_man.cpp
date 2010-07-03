@@ -1751,8 +1751,6 @@ static double PartitionDistance(vertex_t *vt, node_t *node)
 	return fabs(double(-node->dy) * (vt->x - node->x) + double(node->dx) * (vt->y - node->y)) / node->len;
 }
 
-#define DS_EPSILON 0.3125
-
 //==========================================================================
 //
 // SplitPoly
@@ -1762,6 +1760,7 @@ static double PartitionDistance(vertex_t *vt, node_t *node)
 static void SplitPoly(FPolyNode *pnode, void *node)
 {
 	static TArray<seg_t> lists[2];
+	static const double POLY_EPSILON = 0.3125;
 
 	while (!((size_t)node & 1))  // Keep going until found a subsector
 	{
@@ -1785,6 +1784,8 @@ static void SplitPoly(FPolyNode *pnode, void *node)
 			{
 				seg_t *seg = &pnode->segs[i];
 
+				// Parts of the following code were taken from Eternity and are
+				// being used with permission.
 
 				// get distance of vertices from partition line
 				// If the distance is too small, we may decide to
@@ -1796,9 +1797,27 @@ static void SplitPoly(FPolyNode *pnode, void *node)
 				// on the same side as the polyobj origin. Why? People like to build
 				// polyobject doors flush with their door tracks. This breaks using the
 				// usual assumptions.
-				if(dist_v1 <= DS_EPSILON && dist_v2 <= DS_EPSILON)
+				
+				// Addition to Eternity code: We must also check and seg with only one
+				// vertex inside the epsilon threshold. If not, these lines will get split but
+				// adjoining ones with both vertices inside the threshold won't thus messing up
+				// the order in which they get drawn.
+				if(dist_v1 <= POLY_EPSILON)
 				{
-					lists[centerside].Push(*seg);
+					if (dist_v2 <= POLY_EPSILON)
+					{
+						lists[centerside].Push(*seg);
+					}
+					else
+					{
+						int side = R_PointOnSide(seg->v2->x, seg->v2->y, bsp);
+						lists[side].Push(*seg);
+					}
+				}
+				else if (dist_v2 <= POLY_EPSILON)
+				{
+					int side = R_PointOnSide(seg->v1->x, seg->v1->y, bsp);
+					lists[side].Push(*seg);
 				}
 				else 
 				{
@@ -1825,7 +1844,7 @@ static void SplitPoly(FPolyNode *pnode, void *node)
 					}
 					else 
 					{
-						// we must move this seg from the front to the back
+						// both points on the same side.
 						lists[side1].Push(*seg);
 					}
 				}

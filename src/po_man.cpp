@@ -1371,6 +1371,8 @@ static void IterFindPolySegs (FPolyObj *po, side_t *side)
 	int i;
 	vertex_t *v1 = side->V1();
 
+	po->Sidedefs.Push(side);
+
 	// This for loop exists solely to avoid infinitely looping on badly
 	// formed polyobjects.
 	for (i = 0; i < numsides; i++)
@@ -1388,11 +1390,7 @@ static void IterFindPolySegs (FPolyObj *po, side_t *side)
 		{
 			return;
 		}
-
-		if (side->linedef != NULL)
-		{
-			po->Sidedefs.Push(side);
-		}
+		po->Sidedefs.Push(side);
 	}
 	I_Error ("IterFindPolySegs: Non-closed Polyobj at linedef %d.\n",
 		side->linedef-lines);
@@ -1949,7 +1947,7 @@ void FPolyObj::CreateSubsectorLinks()
 	node->pprev = NULL;
 	node->snext = NULL;
 	node->sprev = NULL;
-	node->segs.Reserve(Sidedefs.Size());
+	node->segs.Resize(Sidedefs.Size());
 
 	for(unsigned i=0; i<Sidedefs.Size(); i++)
 	{

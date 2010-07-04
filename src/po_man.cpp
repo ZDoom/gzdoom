@@ -738,6 +738,29 @@ FPolyObj *PO_GetPolyobj (int polyNum)
 	return NULL;
 }
 
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
+FPolyObj::FPolyObj()
+{
+	StartSpot.x = StartSpot.y = 0;
+	angle = 0;
+	tag = 0;
+	memset(bbox, 0, sizeof(bbox));
+	validcount = 0;
+	crush = 0;
+	bHurtOnTouch = false;
+	seqType = 0;
+	size = 0;
+	subsectorlinks = NULL;
+	specialdata = NULL;
+	interpolation = NULL;
+}
+
 //==========================================================================
 //
 // GetPolyobjMirror
@@ -820,7 +843,6 @@ void FPolyObj::ThrustMobj (AActor *actor, side_t *side)
 
 void FPolyObj::UpdateBBox ()
 {
-	QWORD cx = 0, cy = 0;
 	for(unsigned i=0;i<Linedefs.Size(); i++)
 	{
 		line_t *line = Linedefs[i];
@@ -862,12 +884,14 @@ void FPolyObj::UpdateBBox ()
 			line->slopetype = ((line->dy ^ line->dx) >= 0) ? ST_POSITIVE : ST_NEGATIVE;
 		}
 	}
+	CalcCenter();
+}
 
+void FPolyObj::CalcCenter()
+{
+	SQWORD cx = 0, cy = 0;
 	for(unsigned i=0;i<Vertices.Size(); i++)
 	{
-		line_t *line = Linedefs[i];
-
-
 		cx += Vertices[i]->x;
 		cy += Vertices[i]->y;
 	}
@@ -1559,7 +1583,7 @@ static void TranslateToStartSpot (int tag, int originX, int originY)
 	{
 		po->Sidedefs[i]->Flags |= WALLF_POLYOBJ;
 	}
-	for (unsigned i = 0; i < po->Vertices.Size(); i++)
+	for (unsigned i = 0; i < po->Linedefs.Size(); i++)
 	{
 		po->Linedefs[i]->bbox[BOXTOP] -= deltaY;
 		po->Linedefs[i]->bbox[BOXBOTTOM] -= deltaY;
@@ -1570,7 +1594,10 @@ static void TranslateToStartSpot (int tag, int originX, int originY)
 	{
 		po->Vertices[i]->x -= deltaX;
 		po->Vertices[i]->y -= deltaY;
+		po->OriginalPts[i].x = po->Vertices[i]->x;
+		po->OriginalPts[i].y = po->Vertices[i]->y;
 	}
+	po->CalcCenter();
 	// subsector assignment no longer done here.
 	// Polyobjects will be sorted into the subsectors each frame before rendering them.
 }
@@ -1694,10 +1721,14 @@ void FPolyObj::ClearSubsectorLinks()
 	{
 		FPolyNode *next = subsectorlinks->snext;
 
+		Printf(PRINT_LOG, "Unlinking polyobj %d from subsector %d (sector %d)\n",
+			tag, subsectorlinks->subsector-subsectors, subsectorlinks->subsector->sector->sectornum);
+
 		*subsectorlinks->pprev = subsectorlinks->pnext;
 		delete subsectorlinks;
 		subsectorlinks = next;
 	}
+	subsectorlinks = NULL;
 }
 
 //==========================================================================
@@ -1798,7 +1829,7 @@ static void SplitPoly(FPolyNode *pnode, void *node)
 				// polyobject doors flush with their door tracks. This breaks using the
 				// usual assumptions.
 				
-				// Addition to Eternity code: We must also check and seg with only one
+				// Addition to Eternity code: We must also check any seg with only one
 				// vertex inside the epsilon threshold. If not, these lines will get split but
 				// adjoining ones with both vertices inside the threshold won't thus messing up
 				// the order in which they get drawn.
@@ -1884,15 +1915,19 @@ static void SplitPoly(FPolyNode *pnode, void *node)
 
 	// Link node to subsector
 	pnode->snext = sub->polys;
-	pnode->snext->sprev = &pnode->snext;
+	if (pnode->snext != NULL) pnode->snext->sprev = &pnode->snext;
 	pnode->sprev = &sub->polys;
 	sub->polys = pnode;
 
 	// link node to polyobject
 	pnode->pnext = pnode->poly->subsectorlinks;
-	pnode->pnext->pprev = &pnode->pnext;
+	if (pnode->pnext != NULL) pnode->pnext->pprev = &pnode->pnext;
 	pnode->pprev = &pnode->poly->subsectorlinks;
 	pnode->poly->subsectorlinks = pnode;
+	pnode->subsector = sub;
+
+	Printf(PRINT_LOG, "Adding %d segs of polyobj %d to subsector %d (sector %d)\n",
+		pnode->segs.Size(), pnode->poly->tag, sub-subsectors, sub->sector->sectornum);
 }
 
 //==========================================================================

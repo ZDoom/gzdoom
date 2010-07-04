@@ -71,33 +71,7 @@ struct FPolyObj
 	DThinker	*specialdata;	// pointer to a thinker, if the poly is moving
 	TObjPtr<DInterpolation> interpolation;
 
-/*
-	int			numsegs;
-	seg_t		**segs;
-	int			numlines;
-	line_t		**lines;
-	int			numvertices;
-	vertex_t	**vertices;
-	fixed_t		startSpot[2];
-	vertex_t	*originalPts;	// used as the base for the rotations
-	vertex_t	*prevPts; 		// use to restore the old point values
-*/
-
-	FPolyObj()
-	{
-		StartSpot.x = StartSpot.y = 0;
-		angle = 0;
-		tag = 0;
-		memset(bbox, 0, sizeof(bbox));
-		validcount = 0;
-		crush = 0;
-		bHurtOnTouch = false;
-		seqType = 0;
-		size = 0;
-		subsectorlinks = NULL;
-		specialdata = NULL;
-	}
-
+	FPolyObj();
 	~FPolyObj();
 	DInterpolation *SetInterpolation();
 	void StopInterpolation();
@@ -110,6 +84,7 @@ struct FPolyObj
 	void CreateSubsectorLinks();
 	void ClearSubsectorLinks();
 	vertex_t *GetNewVertex();
+	void CalcCenter();
 
 private:
 

@@ -984,6 +984,7 @@ bool FPolyObj::RotatePolyobj (angle_t angle)
 
 	UnLinkPolyobj();
 
+	Printf(PRINT_LOG, "Rotating poly %d\n", tag);
 	for(unsigned i=0;i < Vertices.Size(); i++)
 	{
 		PrevPts[i].x = Vertices[i]->x;
@@ -991,6 +992,11 @@ bool FPolyObj::RotatePolyobj (angle_t angle)
 		Vertices[i]->x = OriginalPts[i].x;
 		Vertices[i]->y = OriginalPts[i].y;
 		RotatePt(an, &Vertices[i]->x, &Vertices[i]->y, StartSpot.x,	StartSpot.y);
+
+		Printf(PRINT_LOG, "(%5.3f, %5.3f) -> (%5.3f, %5.3f) @ (%5.3f, %5.3f)\n",
+			FIXED2FLOAT(PrevPts[i].x),FIXED2FLOAT(PrevPts[i].y),
+			FIXED2FLOAT(Vertices[i]->x), FIXED2FLOAT(Vertices[i]->y),
+			FIXED2FLOAT(OriginalPts[i].x),FIXED2FLOAT(OriginalPts[i].y));
 	}
 	blocked = false;
 	validcount++;
@@ -1594,8 +1600,8 @@ static void TranslateToStartSpot (int tag, int originX, int originY)
 	{
 		po->Vertices[i]->x -= deltaX;
 		po->Vertices[i]->y -= deltaY;
-		po->OriginalPts[i].x = po->Vertices[i]->x;
-		po->OriginalPts[i].y = po->Vertices[i]->y;
+		po->OriginalPts[i].x = po->Vertices[i]->x - po->StartSpot.x;
+		po->OriginalPts[i].y = po->Vertices[i]->y - po->StartSpot.y;
 	}
 	po->CalcCenter();
 	// subsector assignment no longer done here.

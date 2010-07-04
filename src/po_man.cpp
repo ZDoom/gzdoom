@@ -1908,7 +1908,7 @@ static void SplitPoly(FPolyNode *pnode, void *node)
 				pnode->segs = lists[0];
 			
 				// recurse back side
-				//SplitPoly(newnode, bsp->children[1]);
+				SplitPoly(newnode, bsp->children[1]);
 				node = bsp->children[0];
 			}
 		}

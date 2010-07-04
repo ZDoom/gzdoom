@@ -1920,15 +1920,15 @@ static void SplitPoly(FPolyNode *pnode, void *node)
 	subsector_t *sub = (subsector_t *)((BYTE *)node - 1);
 
 	// Link node to subsector
-	pnode->snext = sub->polys;
-	if (pnode->snext != NULL) pnode->snext->sprev = &pnode->snext;
-	pnode->sprev = &sub->polys;
+	pnode->pnext = sub->polys;
+	if (pnode->pnext != NULL) pnode->pnext->pprev = &pnode->pnext;
+	pnode->pprev = &sub->polys;
 	sub->polys = pnode;
 
 	// link node to polyobject
-	pnode->pnext = pnode->poly->subsectorlinks;
-	if (pnode->pnext != NULL) pnode->pnext->pprev = &pnode->pnext;
-	pnode->pprev = &pnode->poly->subsectorlinks;
+	pnode->snext = pnode->poly->subsectorlinks;
+	if (pnode->snext != NULL) pnode->snext->pprev = &pnode->snext;
+	pnode->sprev = &pnode->poly->subsectorlinks;
 	pnode->poly->subsectorlinks = pnode;
 	pnode->subsector = sub;
 

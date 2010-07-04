@@ -31,17 +31,12 @@ struct FPolyVertex
 struct FPolyVertexBlock
 {
 	int used;
-	vertex_t *vertices[10];
-
-	FPolyVertexBlock()
-	{
-		clear();
-	}
+	vertex_t vertices[10];
 
 	void clear()
 	{
 		used = 0;
-		memset(vertices, 0, sizeof(vertices));
+		//memset(vertices, 0, sizeof(vertices));
 	}
 };
 

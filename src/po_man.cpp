@@ -759,6 +759,7 @@ FPolyObj::FPolyObj()
 	subsectorlinks = NULL;
 	specialdata = NULL;
 	interpolation = NULL;
+	SVIndex = -1;
 }
 
 //==========================================================================
@@ -980,11 +981,10 @@ bool FPolyObj::RotatePolyobj (angle_t angle)
 	int an;
 	bool blocked;
 
-	an = (angle+angle)>>ANGLETOFINESHIFT;
+	an = (this->angle+angle)>>ANGLETOFINESHIFT;
 
 	UnLinkPolyobj();
 
-	Printf(PRINT_LOG, "Rotating poly %d\n", tag);
 	for(unsigned i=0;i < Vertices.Size(); i++)
 	{
 		PrevPts[i].x = Vertices[i]->x;
@@ -992,11 +992,6 @@ bool FPolyObj::RotatePolyobj (angle_t angle)
 		Vertices[i]->x = OriginalPts[i].x;
 		Vertices[i]->y = OriginalPts[i].y;
 		RotatePt(an, &Vertices[i]->x, &Vertices[i]->y, StartSpot.x,	StartSpot.y);
-
-		Printf(PRINT_LOG, "(%5.3f, %5.3f) -> (%5.3f, %5.3f) @ (%5.3f, %5.3f)\n",
-			FIXED2FLOAT(PrevPts[i].x),FIXED2FLOAT(PrevPts[i].y),
-			FIXED2FLOAT(Vertices[i]->x), FIXED2FLOAT(Vertices[i]->y),
-			FIXED2FLOAT(OriginalPts[i].x),FIXED2FLOAT(OriginalPts[i].y));
 	}
 	blocked = false;
 	validcount++;
@@ -1020,7 +1015,7 @@ bool FPolyObj::RotatePolyobj (angle_t angle)
 		LinkPolyobj();
 		return false;
 	}
-	angle += angle;
+	this->angle += angle;
 	LinkPolyobj();
 	ClearSubsectorLinks();
 	return true;
@@ -1289,15 +1284,17 @@ FPolyObj::~FPolyObj()
 
 vertex_t *FPolyObj::GetNewVertex()
 {
-	if (SplitVertices[SVIndex]->used == 10)
+	if (SVIndex == -1 || SplitVertices[SVIndex]->used == 10)
 	{
 		SVIndex++;
 		if (SVIndex >= SplitVertices.Size())
 		{
-			SplitVertices.Reserve(1);
+			SplitVertices.Resize(SVIndex+1);
+			SplitVertices[SVIndex] = new FPolyVertexBlock;
 		}
+		SplitVertices[SVIndex]->clear();
 	}
-	return SplitVertices[SVIndex]->vertices[SplitVertices[SVIndex]->used++];
+	return &SplitVertices[SVIndex]->vertices[SplitVertices[SVIndex]->used++];
 }
 
 //==========================================================================
@@ -1722,7 +1719,7 @@ void FPolyObj::ClearSubsectorLinks()
 	{
 		SplitVertices[i]->clear();
 	}
-	SVIndex = 0;
+	SVIndex = -1;
 	while (subsectorlinks != NULL)
 	{
 		FPolyNode *next = subsectorlinks->snext;
@@ -1751,14 +1748,14 @@ static bool GetIntersection(seg_t *seg, node_t *bsp, vertex_t *v)
 	double num;
 	double den;
 
-	double v1x = (double)seg->v1->x;
-	double v1y = (double)seg->v1->y;
-	double v1dx = (double)(seg->v2->x) - v1x;
-	double v1dy = (double)(seg->v2->y) - v1y;
-	double v2x = (double)bsp->x;
-	double v2y = (double)bsp->y;
-	double v2dx = (double)bsp->dx;
-	double v2dy = (double)bsp->dy;
+	double v2x = (double)seg->v1->x;
+	double v2y = (double)seg->v1->y;
+	double v2dx = (double)(seg->v2->x - seg->v1->x);
+	double v2dy = (double)(seg->v2->y - seg->v1->y);
+	double v1x = (double)bsp->x;
+	double v1y = (double)bsp->y;
+	double v1dx = (double)bsp->dx;
+	double v1dy = (double)bsp->dy;
 		
 	den = v1dy*v2dx - v1dx*v2dy;
 
@@ -1770,8 +1767,8 @@ static bool GetIntersection(seg_t *seg, node_t *bsp, vertex_t *v)
 
 	if (frac < 0. || frac > 1.) return false;
 
-	v->x = FLOAT2FIXED(v1x + frac * v1dx);
-	v->y = FLOAT2FIXED(v1y + frac * v1dy);
+	v->x = xs_RoundToInt(v1x + frac * v1dx);
+	v->y = xs_RoundToInt(v1y + frac * v1dy);
 	return true;
 }
 
@@ -1864,6 +1861,7 @@ static void SplitPoly(FPolyNode *pnode, void *node)
 					if(side1 != side2)
 					{
 						// if the partition line crosses this seg, we must split it.
+
 						vertex_t  *vert = pnode->poly->GetNewVertex();
 
 						if (GetIntersection(seg, bsp, vert))
@@ -1910,7 +1908,7 @@ static void SplitPoly(FPolyNode *pnode, void *node)
 				pnode->segs = lists[0];
 			
 				// recurse back side
-				SplitPoly(newnode, bsp->children[1]);
+				//SplitPoly(newnode, bsp->children[1]);
 				node = bsp->children[0];
 			}
 		}

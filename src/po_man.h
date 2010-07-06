@@ -11,13 +11,13 @@
 struct FPolyObj;
 struct FPolyNode
 {
+	int state;
 	FPolyObj *poly;				// owning polyobject
 	FPolyNode *pnext;			// next polyobj in list
-	FPolyNode **pprev;			// previous polyobj
+	FPolyNode *pprev;			// previous polyobj
 
 	subsector_t *subsector;		// containimg subsector
 	FPolyNode *snext;			// next subsector
-	FPolyNode **sprev;			// previous subsector
 
 	TArray<seg_t> segs;			// segs for this node
 	fixed_t dist;				// distance for sorting
@@ -51,7 +51,7 @@ struct FPolyObj
 	FPolyVertex				StartSpot;
 	FPolyVertex				CenterSpot;
 	FBoundingBox			Bounds;	// Bounds in map coordinates 
-	TArray<FPolyVertexBlock *> SplitVertices;
+	TDeletingArray<FPolyVertexBlock *> SplitVertices;
 	unsigned int SVIndex;
 
 	angle_t		angle;
@@ -67,7 +67,7 @@ struct FPolyObj
 	TObjPtr<DInterpolation> interpolation;
 
 	FPolyObj();
-	~FPolyObj();
+	//~FPolyObj();
 	DInterpolation *SetInterpolation();
 	void StopInterpolation();
 

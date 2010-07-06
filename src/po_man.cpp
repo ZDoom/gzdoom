@@ -1273,15 +1273,6 @@ void FPolyObj::ClosestPoint(fixed_t fx, fixed_t fy, fixed_t &ox, fixed_t &oy, si
 	}
 }
 
-FPolyObj::~FPolyObj()
-{
-	for(unsigned i=0; i<SplitVertices.Size(); i++)
-	{
-		delete SplitVertices[i];
-	}
-}
-
-
 vertex_t *FPolyObj::GetNewVertex()
 {
 	if (SVIndex == -1 || SplitVertices[SVIndex]->used == 10)
@@ -1289,8 +1280,7 @@ vertex_t *FPolyObj::GetNewVertex()
 		SVIndex++;
 		if (SVIndex >= SplitVertices.Size())
 		{
-			SplitVertices.Resize(SVIndex+1);
-			SplitVertices[SVIndex] = new FPolyVertexBlock;
+			SplitVertices.Push(new FPolyVertexBlock);
 		}
 		SplitVertices[SVIndex]->clear();
 	}
@@ -1720,12 +1710,29 @@ void FPolyObj::ClearSubsectorLinks()
 	SVIndex = -1;
 	while (subsectorlinks != NULL)
 	{
+		assert(subsectorlinks->state == 1337);
+
 		FPolyNode *next = subsectorlinks->snext;
 
 		Printf(PRINT_LOG, "Unlinking polyobj %d from subsector %d (sector %d)\n",
 			tag, subsectorlinks->subsector-subsectors, subsectorlinks->subsector->sector->sectornum);
 
-		*subsectorlinks->pprev = subsectorlinks->pnext;
+		if (subsectorlinks->pnext != NULL)
+		{
+			assert(subsectorlinks->pnext->state == 1337);
+			subsectorlinks->pnext->pprev = subsectorlinks->pprev;
+		}
+
+		if (subsectorlinks->pprev != NULL)
+		{
+			assert(subsectorlinks->pprev->state == 1337);
+			subsectorlinks->pprev->pnext = subsectorlinks->pnext;
+		}
+		else
+		{
+			subsectorlinks->subsector->polys = subsectorlinks->pnext;
+		}
+		subsectorlinks->state = -1;
 		delete subsectorlinks;
 		subsectorlinks = next;
 	}
@@ -1894,12 +1901,12 @@ static void SplitPoly(FPolyNode *pnode, void *node)
 			{
 				// create the new node 
 				FPolyNode *newnode = new FPolyNode;
+				newnode->state = 1337;
 				newnode->poly = pnode->poly;
 				newnode->pnext = NULL;
 				newnode->pprev = NULL;
 				newnode->subsector = NULL;
 				newnode->snext = NULL;
-				newnode->sprev = NULL;
 				newnode->segs = lists[1];
 
 				// set segs for original node
@@ -1917,14 +1924,16 @@ static void SplitPoly(FPolyNode *pnode, void *node)
 
 	// Link node to subsector
 	pnode->pnext = sub->polys;
-	if (pnode->pnext != NULL) pnode->pnext->pprev = &pnode->pnext;
-	pnode->pprev = &sub->polys;
+	if (pnode->pnext != NULL) 
+	{
+		assert(pnode->pnext->state == 1337);
+		pnode->pnext->pprev = pnode;
+	}
+	pnode->pprev = NULL;
 	sub->polys = pnode;
 
 	// link node to polyobject
 	pnode->snext = pnode->poly->subsectorlinks;
-	if (pnode->snext != NULL) pnode->snext->pprev = &pnode->snext;
-	pnode->sprev = &pnode->poly->subsectorlinks;
 	pnode->poly->subsectorlinks = pnode;
 	pnode->subsector = sub;
 
@@ -1942,11 +1951,11 @@ void FPolyObj::CreateSubsectorLinks()
 {
 	FPolyNode *node = new FPolyNode;
 
+	node->state = 1337;
 	node->poly = this;
 	node->pnext = NULL;
 	node->pprev = NULL;
 	node->snext = NULL;
-	node->sprev = NULL;
 	node->segs.Resize(Sidedefs.Size());
 
 	for(unsigned i=0; i<Sidedefs.Size(); i++)

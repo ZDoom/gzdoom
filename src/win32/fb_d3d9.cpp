@@ -237,13 +237,14 @@ CVAR(Bool, vid_hwaalines, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 //
 //==========================================================================
 
-D3DFB::D3DFB (int width, int height, bool fullscreen)
+D3DFB::D3DFB (UINT adapter, int width, int height, bool fullscreen)
 	: BaseWinFB (width, height)
 {
 	D3DPRESENT_PARAMETERS d3dpp;
 
 	LastHR = 0;
 
+	Adapter = adapter;
 	D3DDevice = NULL;
 	VertexBuffer = NULL;
 	IndexBuffer = NULL;
@@ -324,12 +325,12 @@ D3DFB::D3DFB (int width, int height, bool fullscreen)
 	HRESULT hr;
 
 	LOG("CreateDevice attempt 1 hwvp\n");
-	if (FAILED(hr = D3D->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, Window,
+	if (FAILED(hr = D3D->CreateDevice(Adapter, D3DDEVTYPE_HAL, Window,
 		D3DCREATE_HARDWARE_VERTEXPROCESSING | D3DCREATE_FPU_PRESERVE, &d3dpp, &D3DDevice)) &&
 		(hr != D3DERR_DEVICELOST || D3DDevice == NULL))
 	{
 		LOG2("CreateDevice returned hr %08x dev %p; attempt 2 swvp\n", hr, D3DDevice);
-		if (FAILED(D3D->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, Window,
+		if (FAILED(D3D->CreateDevice(Adapter, D3DDEVTYPE_HAL, Window,
 			D3DCREATE_SOFTWARE_VERTEXPROCESSING | D3DCREATE_FPU_PRESERVE, &d3dpp, &D3DDevice)) &&
 			(hr != D3DERR_DEVICELOST || D3DDevice == NULL))
 		{
@@ -337,12 +338,12 @@ D3DFB::D3DFB (int width, int height, bool fullscreen)
 			{
 				d3dpp.FullScreen_RefreshRateInHz = 0;
 				LOG2("CreateDevice returned hr %08x dev %p; attempt 3 (hwvp, default Hz)\n", hr, D3DDevice);
-				if (FAILED(hr = D3D->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, Window,
+				if (FAILED(hr = D3D->CreateDevice(Adapter, D3DDEVTYPE_HAL, Window,
 					D3DCREATE_HARDWARE_VERTEXPROCESSING | D3DCREATE_FPU_PRESERVE, &d3dpp, &D3DDevice)) &&
 					(hr != D3DERR_DEVICELOST || D3DDevice == NULL))
 				{
 					LOG2("CreateDevice returned hr %08x dev %p; attempt 4 (swvp, default Hz)\n", hr, D3DDevice);
-					if (FAILED(D3D->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, Window,
+					if (FAILED(D3D->CreateDevice(Adapter, D3DDEVTYPE_HAL, Window,
 						D3DCREATE_SOFTWARE_VERTEXPROCESSING | D3DCREATE_FPU_PRESERVE, &d3dpp, &D3DDevice)) &&
 						hr != D3DERR_DEVICELOST)
 					{

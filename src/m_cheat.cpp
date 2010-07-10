@@ -623,7 +623,7 @@ void cht_Give (player_t *player, const char *name, int amount)
 	}
 	else if (stricmp (name, "everything") == 0)
 	{
-		giveall = ALL_YES;
+		giveall = ALL_YESYES;
 	}
 
 	if (stricmp (name, "health") == 0)

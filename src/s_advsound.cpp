@@ -1774,6 +1774,100 @@ int S_FindSkinnedSoundEx (AActor *actor, const char *name, const char *extendedn
 
 //==========================================================================
 //
+// S_ParseTimeTag
+//
+// Passed the value of a loop point tag, converts it to numbers.
+//
+// This may be of the form 00:00:00.00 (HH:MM:SS.ss) to specify by play
+// time. Various parts may be left off. The only requirement is that it
+// contain a colon. e.g. To start the loop at 20 seconds in, you can use
+// ":20", "0:20", "00:00:20", ":20.0", etc. Values after the decimal are
+// fractions of a second.
+//
+// If you don't include a colon but just have a raw number, then it's
+// the number of PCM samples at which to loop.
+//
+// Returns true if the tag made sense, false if not.
+//
+//==========================================================================
+
+bool S_ParseTimeTag(const char *tag, bool *as_samples, unsigned int *time)
+{
+	const char *bit = tag;
+	char ms[3] = { 0 };
+	unsigned int times[3] = { 0 };
+	int ms_pos = 0, time_pos = 0;
+	bool pcm = true, in_ms = false;
+
+	for (bit = tag; *bit != '\0'; ++bit)
+	{
+		if (*bit >= '0' && *bit <= '9')
+		{
+			if (in_ms)
+			{
+				// Ignore anything past three fractional digits.
+				if (ms_pos < 3)
+				{
+					ms[ms_pos++] = *bit - '0';
+				}
+			}
+			else
+			{
+				times[time_pos] = times[time_pos] * 10 + *bit - '0';
+			}
+		}
+		else if (*bit == ':')
+		{
+			if (in_ms)
+			{ // If we already specified milliseconds, we can't take any more parts.
+				return false;
+			}
+			pcm = false;
+			if (++time_pos == countof(times))
+			{ // Time too long. (Seriously, starting the loop days in?)
+				return false;
+			}
+		}
+		else if (*bit == '.')
+		{
+			if (pcm || in_ms)
+			{ // It doesn't make sense to have fractional PCM values.
+			  // It also doesn't make sense to have more than one dot.
+				return false;
+			}
+			in_ms = true;
+		}
+		else
+		{ // Anything else: We don't understand this.
+			return false;
+		}
+	}
+	if (pcm)
+	{
+		*as_samples = true;
+		*time = times[0];
+	}
+	else
+	{
+		unsigned int mytime = 0;
+
+		// Add in hours, minutes, and seconds
+		for (int i = 0; i <= time_pos; ++i)
+		{
+			mytime = mytime * 60 + times[i];
+		}
+
+		// Add in milliseconds
+		mytime = mytime * 1000 + ms[0] * 100 + ms[1] * 10 + ms[2];
+
+		*as_samples = false;
+		*time = mytime;
+	}
+	return true;
+}
+
+//==========================================================================
+//
 // CCMD soundlist
 //
 //==========================================================================

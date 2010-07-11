@@ -29,6 +29,10 @@ enum EZCCTreeNodeType
 	AST_States,
 	AST_StatePart,
 	AST_StateLabel,
+	AST_StateStop,
+	AST_StateWait,
+	AST_StateFail,
+	AST_StateLoop,
 	AST_StateGoto,
 	AST_StateLine,
 	AST_VarName,
@@ -212,26 +216,40 @@ struct ZCC_StateLabel : ZCC_StatePart
 	ENamedName Label;
 };
 
-struct ZCC_StateGoto : ZCC_StatePart
+struct ZCC_StateStop : ZCC_StatePart
 {
-	ZCC_TreeNode *Label;
-	ZCC_TreeNode *Offset;
 };
 
-struct ZCC_StateLine : ZCC_StatePart
+struct ZCC_StateWait : ZCC_StatePart
 {
-	char Sprite[4];
-	FString *Frames;
-	BITFIELD bBright:1;
-	BITFIELD bHasOffset:1;
-	int OffsetX;
-	int OffsetY;
-	ZCC_TreeNode *Action;
+};
+
+struct ZCC_StateFail : ZCC_StatePart
+{
+};
+
+struct ZCC_StateLoop : ZCC_StatePart
+{
 };
 
 struct ZCC_Expression : ZCC_TreeNode
 {
 	EZCCExprType Operation;
+};
+
+struct ZCC_StateGoto : ZCC_StatePart
+{
+	ZCC_Identifier *Label;
+	ZCC_Expression *Offset;
+};
+
+struct ZCC_StateLine : ZCC_StatePart
+{
+	char Sprite[4];
+	BITFIELD bBright:1;
+	FString *Frames;
+	ZCC_Expression *Offset;
+	ZCC_TreeNode *Action;
 };
 
 struct ZCC_VarName : ZCC_TreeNode

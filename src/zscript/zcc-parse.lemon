@@ -143,14 +143,12 @@ dottable_id(X) ::= IDENTIFIER(A).
 	id->Id = A.Name();
 	X = id;
 }
-dottable_id(X) ::= IDENTIFIER(A) DOT IDENTIFIER(B).
+dottable_id(X) ::= dottable_id(A) DOT IDENTIFIER(B).
 {
-	NEW_AST_NODE(Identifier,id1);
 	NEW_AST_NODE(Identifier,id2);
-	id1->Id = A.Name();
 	id2->Id = B.Name();
-	id1->AppendSibling(id2);
-	X = id1;
+	A->AppendSibling(id2);
+	X = A;
 }
 
 /*------ Class Body ------*/
@@ -246,6 +244,20 @@ enumerator(X) ::= IDENTIFIER(A) EQ expr(B).			/* Expression must be constant. */
 %type state_line {ZCC_StatePart *}
 %type state_label {ZCC_StatePart *}
 %type state_flow {ZCC_StatePart *}
+%type state_flow_type {ZCC_StatePart *}
+%type state_goto_offset {ZCC_Expression *}
+%type state_action {ZCC_TreeNode *}
+%type state_call {ZCC_ExprFuncCall *}
+
+%include
+{
+	struct StateOpts
+	{
+		ZCC_Expression *Offset;
+		bool Bright;
+	};
+}
+%type state_opts {StateOpts}
 
 states_def(X) ::= STATES scanner_mode LBRACE states_body(A) RBRACE.
 {
@@ -273,43 +285,76 @@ states_body(X) ::= states_body(A) state_line(B).	{ SAFE_APPEND(A,B); X = A; }
 states_body(X) ::= states_body(A) state_label(B).	{ SAFE_APPEND(A,B); X = A; }
 states_body(X) ::= states_body(A) state_flow(B).	{ SAFE_APPEND(A,B); X = A; }
 
-state_label ::= NWS(A) COLON.
-{ Printf("Label %s\n", FName(ENamedName(A.Int)).GetChars()); }
+state_label(X) ::= NWS(A) COLON.
+{
+	NEW_AST_NODE(StateLabel, label);
+	label->Label = A.Name();
+	X = label;
+}
 
-state_flow ::= state_flow_type scanner_mode SEMICOLON.
-state_flow_type ::= STOP.
-state_flow_type ::= WAIT.
-state_flow_type ::= FAIL.
-state_flow_type ::= LOOP.
-state_flow_type ::= GOTO dotted_identifier state_goto_offset.
+state_flow(X) ::= state_flow_type(A) scanner_mode SEMICOLON.	{ X = A; }
 
-state_goto_offset ::= .
-state_goto_offset ::= PLUS expr.		/* Must evaluate to an integer constant. */
+state_flow_type(X) ::= STOP.			{ NEW_AST_NODE(StateStop, flow); X = flow; }
+state_flow_type(X) ::= WAIT.			{ NEW_AST_NODE(StateWait, flow); X = flow; }
+state_flow_type(X) ::= FAIL.			{ NEW_AST_NODE(StateFail, flow); X = flow; }
+state_flow_type(X) ::= LOOP.			{ NEW_AST_NODE(StateLoop, flow); X = flow; }
+state_flow_type(X) ::= GOTO dottable_id(A) state_goto_offset(B).
+{
+	NEW_AST_NODE(StateGoto, flow);
+	flow->Label = A;
+	flow->Offset = B;
+	X = flow;
+}
 
-state_line ::= NWS(A) NWS(B) expr state_opts state_action.
-{ Printf("Sprite %s Frames %s\n", FName(ENamedName(A.Int)).GetChars(), FName(ENamedName(B.Int)).GetChars()); }
+state_goto_offset(X) ::= .				{ X = NULL; }
+state_goto_offset(X) ::= PLUS expr(A).	{ X = A; }	/* Must evaluate to a non-negative integer constant. */
 
-state_opts ::= .
-state_opts ::= state_opts BRIGHT.
-state_opts ::= state_opts OFFSET LPAREN expr COMMA expr RPAREN.
-state_opts ::= state_opts LIGHT LPAREN light_list RPAREN.
+state_line(X) ::= NWS(A) NWS(B) expr state_opts(C) state_action(D).
+{
+	NEW_AST_NODE(StateLine, line);
+	const char *sprite = FName(A.Name()).GetChars();
+	memset(line, 0, sizeof(*line));
+	if (strlen(sprite) != 4)
+	{
+		Printf("Sprite name '%s' must be four characters", sprite);
+	}
+	else
+	{
+		memcpy(line->Sprite, sprite, 4);
+	}
+	line->Frames = stat->Strings.Alloc(FName(B.Name()).GetChars());
+	line->bBright = C.Bright;
+	line->Offset = C.Offset;
+	line->Action = D;
+	X = line;
+}
+
+state_opts(X) ::= .													{ StateOpts opts; opts.Offset = NULL; opts.Bright = false; X = opts; }
+state_opts(X) ::= state_opts(A) BRIGHT.								{ A.Bright = true; X = A; }
+state_opts(X) ::= state_opts(A) OFFSET LPAREN expr(B) COMMA expr(C) RPAREN.	{ A.Offset = B; B->AppendSibling(C); X = A; }
+state_opts(X) ::= state_opts(A) LIGHT LPAREN light_list RPAREN.		{ X = A; }
 
 light_list ::= STRCONST.
 light_list ::= light_list COMMA STRCONST.
 
 /* A state action can be either a compound statement or a single action function call. */
-state_action ::= LBRACE statement_list scanner_mode RBRACE.
-state_action ::= LBRACE error scanner_mode RBRACE.
-state_action ::= state_call scanner_mode SEMICOLON.
+state_action(X) ::= LBRACE statement_list(A) scanner_mode RBRACE.	{ X = A; }
+state_action(X) ::= LBRACE error scanner_mode RBRACE.				{ X = NULL; }
+state_action(X) ::= state_call(A) scanner_mode SEMICOLON.			{ X = A; }
 
-state_call ::= .
-state_call ::= IDENTIFIER state_call_parms.
-state_call_parms ::= .
-state_call_parms ::= LPAREN opt_expr_list RPAREN.
-state_call_parms ::= LPAREN error RPAREN.
+state_call(X) ::= .											{ X = NULL; }
+state_call(X) ::= IDENTIFIER(A) func_params(B).
+{
+	NEW_AST_NODE(ExprFuncCall, expr);
+	NEW_AST_NODE(ExprID, func);
 
-dotted_identifier ::= IDENTIFIER.
-dotted_identifier ::= dotted_identifier DOT IDENTIFIER.
+	func->Operation = PEX_ID;
+	func->Identifier = A.Name();
+	expr->Operation = PEX_FuncCall;
+	expr->Function = func;
+	expr->Parameters = B;
+	X = expr;
+}
 
 /* Definition of a default class instance. */
 default_def ::= DEFAULT compound_statement.
@@ -497,7 +542,7 @@ primary(X) ::= IDENTIFIER(A).
 {
 	NEW_AST_NODE(ExprID, expr);
 	expr->Operation = PEX_ID;
-	expr->Identifier = ENamedName(A.Int);
+	expr->Identifier = A.Name();
 	X = expr;
 }
 primary(X) ::= SUPER.
@@ -769,17 +814,7 @@ expr(X) ::= expr(A) QUESTION expr(B) COLON expr(C).
 
 /************ Expression Lists ***********/ 
 
-%type opt_expr_list{ZCC_Expression *}
 %type expr_list{ZCC_Expression *}
-
-opt_expr_list(X) ::= .
-{
-	X = NULL;
-}
-opt_expr_list(X) ::= expr_list(A).
-{
-	X = A;
-}
 
 expr_list(X) ::= expr(A).
 {

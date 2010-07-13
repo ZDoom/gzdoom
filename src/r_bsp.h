@@ -46,6 +46,10 @@ struct drawseg_t
 	ptrdiff_t	sprbottomclip;		// type short
 	ptrdiff_t	maskedtexturecol;	// type short
 	ptrdiff_t	swall;				// type fixed_t
+
+	// kg3D
+	int fake;	// ident fake drawseg, don't clip sprites, bind visplane
+	BYTE		bFakeBoundary;
 };
 
 

@@ -100,6 +100,10 @@ float stacked_visibility;
 fixed_t stacked_viewx, stacked_viewy, stacked_viewz;
 angle_t stacked_angle;
 
+// kg3D
+extern int fake3D;
+extern fixed_t fakeAlpha;
+
 
 //
 // opening
@@ -559,7 +563,9 @@ visplane_t *R_FindPlane (const secplane_t &height, FTextureID picnum, int lightl
 	{
 		plane = height;
 		isskybox = false;
-		sky = 0;	// not skyflatnum so it can't be a sky
+		// kg3D - hack, store alpha in sky
+		if(fake3D & 3) sky = 0x80000000 | fakeAlpha;
+		else sky = 0;	// not skyflatnum so it can't be a sky
 	}
 		
 	// New visplane algorithm uses hash table -- killough
@@ -940,8 +946,30 @@ void R_DrawPlanes ()
 	{
 		for (pl = visplanes[i]; pl; pl = pl->next)
 		{
-			vpcount++;
-			R_DrawSinglePlane (pl, OPAQUE, false);
+			if(pl->sky >= 0) {
+				vpcount++;
+				R_DrawSinglePlane (pl, OPAQUE, false);
+			}
+		}
+	}
+}
+
+void R_DrawFakePlanes ()
+{
+	visplane_t *pl;
+	int i;
+	int vpcount;
+
+	ds_color = 3;
+
+	for (i = vpcount = 0; i < MAXVISPLANES; i++)
+	{
+		for (pl = visplanes[i]; pl; pl = pl->next)
+		{
+			if(pl->sky < 0) {
+				vpcount++;
+				R_DrawSinglePlane(pl, pl->sky & 0x7FFFFFFF, true);
+			}
 		}
 	}
 }

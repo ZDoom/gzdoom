@@ -108,6 +108,10 @@ extern fixed_t	rw_backfz1, rw_backfz2;
 extern fixed_t	rw_frontcz1, rw_frontcz2;
 extern fixed_t	rw_frontfz1, rw_frontfz2;
 
+// kg3D
+extern int fake3D;
+extern F3DFloor *fakeFloor;
+
 int				rw_ceilstat, rw_floorstat;
 bool			rw_mustmarkfloor, rw_mustmarkceiling;
 bool			rw_prepped;
@@ -212,9 +216,14 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 	int			i;
 	sector_t	tempsec;		// killough 4/13/98
 	fixed_t		texheight, textop, texheightscale;
+	sector_t *sec;
+
+	// kg3D
+	void R_RenderFakeWalls(drawseg_t *ds, int x1, int x2);
+	R_RenderFakeWalls(ds, x1, x2);
+	if(!ds->bFogBoundary && ds->bFakeBoundary != 2) goto clearfog2;
 
 	sprflipvert = false;
-
 	curline = ds->curline;
 
 	// killough 4/11/98: draw translucent 2s normal textures
@@ -237,7 +246,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 	tex = TexMan(curline->sidedef->GetTexture(side_t::mid));
 
 	// killough 4/13/98: get correct lightlevel for 2s normal textures
-	const sector_t *sec = R_FakeFlat (frontsector, &tempsec, NULL, NULL, false);
+	sec = R_FakeFlat (frontsector, &tempsec, NULL, NULL, false);
 
 	basecolormap = sec->ColorMap;	// [RH] Set basecolormap
 
@@ -401,9 +410,182 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 
 clearfog:
 	R_FinishSetPatchStyle ();
+clearfog2:
 	//if (ds->bFogBoundary)
 	{
 		clearbufshort (openings + ds->sprtopclip - ds->x1 + x1, x2-x1+1, viewheight);
+	}
+	return;
+}
+
+// kg3D
+void R_RenderFakeWalls (drawseg_t *ds, int x1, int x2)
+{
+	int i, j, k;
+	F3DFloor *rover;
+	fixed_t texheight, textop, texheightscale;
+	FTexture *tex;
+	short most1[MAXWIDTH], most2[MAXWIDTH];
+
+	sprflipvert = false;
+	curline = ds->curline;
+
+	frontsector = curline->frontsector;
+	backsector = curline->backsector;
+
+	if(!backsector) return;
+
+	basecolormap = frontsector->ColorMap;
+	wallshade = ds->shade;
+	rw_lightstep = ds->lightstep;
+	rw_light = ds->light + (x1 - ds->x1) * rw_lightstep;
+
+	if(backsector->e && backsector->e->XFloor.ffloors.Size()) {
+		for(int i = 0; i < backsector->e->XFloor.ffloors.Size(); i++) {
+			rover = backsector->e->XFloor.ffloors[i];
+			if(!(rover->flags & FF_EXISTS)) continue;
+			if(!(rover->flags & FF_RENDERSIDES)) continue;
+			if(!rover->model) continue;
+			if(!rover->master) continue;
+
+			mfloorclip = openings + ds->sprbottomclip - ds->x1;
+			mceilingclip = openings + ds->sprtopclip - ds->x1;
+
+			tex = TexMan(rover->master->sidedef[0]->GetTexture(side_t::mid));
+
+			MaskedScaleY = ds->yrepeat;
+			spryscale = ds->iscale + ds->iscalestep * (x1 - ds->x1);
+			rw_scalestep = ds->iscalestep;
+
+			// find positioning
+			texheight = tex->GetScaledHeight() << FRACBITS;
+			if (curline->linedef->flags & ML_DONTPEGBOTTOM)
+			{
+				dc_texturemid = MAX (frontsector->GetPlaneTexZ(sector_t::floor), rover->model->GetPlaneTexZ(sector_t::floor)) + texheight;
+			}
+			else
+			{
+				dc_texturemid = MIN (frontsector->GetPlaneTexZ(sector_t::ceiling), rover->model->GetPlaneTexZ(sector_t::ceiling));
+			}
+
+			{ // encapsulate the lifetime of rowoffset
+				fixed_t rowoffset = curline->sidedef->GetTextureYOffset(side_t::mid);
+				if (tex->bWorldPanning)
+				{
+					// rowoffset is added before the MulScale3 so that the masked texture will
+					// still be positioned in world units rather than texels.
+					dc_texturemid += rowoffset - viewz;
+					textop = dc_texturemid;
+					dc_texturemid = MulScale16 (dc_texturemid, MaskedScaleY);
+				}
+				else
+				{
+					// rowoffset is added outside the multiply so that it positions the texture
+					// by texels instead of world units.
+					textop = dc_texturemid - viewz + SafeDivScale16 (rowoffset, MaskedScaleY);
+					dc_texturemid = MulScale16 (dc_texturemid - viewz, MaskedScaleY) + rowoffset;
+				}
+			}
+
+			if (fixedlightlev >= 0)
+				dc_colormap = basecolormap->Maps + fixedlightlev;
+			else if (fixedcolormap != NULL)
+				dc_colormap = fixedcolormap;
+
+			rw_offset = 0;
+			rw_pic = tex;
+
+			WallSZ1 = ds->sz1;
+			WallSZ2 = ds->sz2;
+			WallSX1 = ds->sx1;
+			WallSX2 = ds->sx2;
+			k = 0;
+			if(WallMost(most1, rover->model->ceilingplane) == 3) k |= 1;
+			if(WallMost(most2, rover->model->floorplane) == 3) k |= 2;
+			if(k == 3) continue;
+			for (j = x1; j <= x2; ++j) {
+				if(k & 1) most1[j] = mceilingclip[j];
+				else most1[j] = clamp(most1[j], mceilingclip[j], mfloorclip[j]);
+				if(k & 2) most2[j] = mfloorclip[j];
+				else most2[j] = clamp(most2[j], mceilingclip[j], mfloorclip[j]);
+			}
+
+			// copy from r_bsp
+			fixed_t tx1, tx2, ty1, ty2;
+			vertex_t *v1, *v2;
+
+			tx1 = curline->v1->x - viewx;
+			tx2 = curline->v2->x - viewx;
+			ty1 = curline->v1->y - viewy;
+			ty2 = curline->v2->y - viewy;
+
+			WallTX1 = DMulScale20 (tx1, viewsin, -ty1, viewcos);
+			WallTX2 = DMulScale20 (tx2, viewsin, -ty2, viewcos);
+
+			WallTY1 = DMulScale20 (tx1, viewtancos, ty1, viewtansin);
+			WallTY2 = DMulScale20 (tx2, viewtancos, ty2, viewtansin);
+
+			if (MirrorFlags & RF_XFLIP)
+			{
+				int t = 256-WallTX1;
+				WallTX1 = 256-WallTX2;
+				WallTX2 = t;
+				swap (WallTY1, WallTY2);
+			}
+
+			v1 = curline->linedef->v1;
+			v2 = curline->linedef->v2;
+
+			if ((v1 == curline->v1 && v2 == curline->v2) || (v2 == curline->v1 && v1 == curline->v2))
+			{ // The seg is the entire wall.
+				if (MirrorFlags & RF_XFLIP)
+				{
+					WallUoverZorg = (float)WallTX2 * WallTMapScale;
+					WallUoverZstep = (float)(-WallTY2) * 32.f;
+					WallInvZorg = (float)(WallTX2 - WallTX1) * WallTMapScale;
+					WallInvZstep = (float)(WallTY1 - WallTY2) * 32.f;
+				}
+				else
+				{
+					WallUoverZorg = (float)WallTX1 * WallTMapScale;
+					WallUoverZstep = (float)(-WallTY1) * 32.f;
+					WallInvZorg = (float)(WallTX1 - WallTX2) * WallTMapScale;
+					WallInvZstep = (float)(WallTY2 - WallTY1) * 32.f;
+				}
+			}
+			else
+			{ // The seg is only part of the wall.
+				if (curline->linedef->sidedef[0] != curline->sidedef)
+				{
+					swap (v1, v2);
+				}
+				tx1 = v1->x - viewx;
+				tx2 = v2->x - viewx;
+				ty1 = v1->y - viewy;
+				ty2 = v2->y - viewy;
+
+				fixed_t fullx1 = DMulScale20 (tx1, viewsin, -ty1, viewcos);
+				fixed_t fullx2 = DMulScale20 (tx2, viewsin, -ty2, viewcos);
+				fixed_t fully1 = DMulScale20 (tx1, viewtancos, ty1, viewtansin);
+				fixed_t fully2 = DMulScale20 (tx2, viewtancos, ty2, viewtansin);
+
+				if (MirrorFlags & RF_XFLIP)
+				{
+					fullx1 = -fullx1;
+					fullx2 = -fullx2;
+				}
+
+				WallUoverZorg = (float)fullx1 * WallTMapScale;
+				WallUoverZstep = (float)(-fully1) * 32.f;
+				WallInvZorg = (float)(fullx1 - fullx2) * WallTMapScale;
+				WallInvZstep = (float)(fully2 - fully1) * 32.f;
+			}
+			WallDepthScale = WallInvZstep * WallTMapScale2;
+			WallDepthOrg = -WallUoverZstep * WallTMapScale2;
+
+			PrepWall(swall, lwall, curline->sidedef->TexelLength * rw_pic->xScale);
+			maskwallscan(x1, x2, most1, most2, swall, lwall, ds->yrepeat);
+		}
 	}
 	return;
 }
@@ -598,58 +780,32 @@ void wallscan_striped (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, 
 	short most1[MAXWIDTH], most2[MAXWIDTH], most3[MAXWIDTH];
 	short *up, *down;
 
-	FExtraLight *el = frontsector->ExtraLights;
-
 	up = uwal;
 	down = most1;
 
 	assert(WallSX1 <= x1);
 	assert(WallSX2 > x2);
 
-	for (int i = 0; i < el->NumUsedLights; ++i)
+	// kg3D
+	for (int i = 0; i < frontsector->e->XFloor.lightlist.Size(); i++)
 	{
-		if (flooding && !el->Lights[i].bFlooder)
+		int j = WallMost (most3, frontsector->e->XFloor.lightlist[i].plane);
+		if (j != 3)
 		{
-			continue;
-		}
-
-		if (!el->Lights[i].bOverlaps)
-		{
-			int j = WallMost (most3, el->Lights[i].Plane);
-
-			if (j != 3 /*&& (most3[x1] > up[x1] || most3[x2] > up[x2])*/)
+			for (int j = x1; j <= x2; ++j)
 			{
-				for (int j = x1; j <= x2; ++j)
-				{
-					down[j] = clamp (most3[j], up[j], dwal[j]);
-				}
-				wallscan (x1, x2, up, down, swal, lwal, yrepeat);
-
-				up = down;
-				down = (down == most1) ? most2 : most1;
+				down[j] = clamp (most3[j], up[j], dwal[j]);
 			}
-		}
+			wallscan (x1, x2, up, down, swal, lwal, yrepeat);
 
-		if (el->Lights[i].Master == NULL)
-		{
-			basecolormap = floodcolormap;
-			wallshade = floodshade;
-			fogginess = floodfoggy;
+			up = down;
+			down = (down == most1) ? most2 : most1;
 		}
-		else
-		{
-			basecolormap = el->Lights[i].Master->ColorMap;
-			fogginess = level.fadeto || basecolormap->Fade;
-			wallshade = LIGHT2SHADE(curline->sidedef->GetLightLevel(fogginess,
-				el->Lights[i].Master->lightlevel) + r_actualextralight);
-			if (el->Lights[i].bFlooder)
-			{
-				floodcolormap = basecolormap;
-				floodshade = wallshade;
-				flooding = true;
-			}
-		}
+		basecolormap = *frontsector->e->XFloor.lightlist[i].p_extra_colormap;
+		wallshade = LIGHT2SHADE(curline->sidedef->GetLightLevel(fogginess,
+			*frontsector->e->XFloor.lightlist[i].p_lightlevel) + r_actualextralight);
 	}
+
 	wallscan (x1, x2, up, dwal, swal, lwal, yrepeat);
 	basecolormap = startcolormap;
 	wallshade = startshade;
@@ -1043,7 +1199,7 @@ void R_RenderSegLoop ()
 	{
 		for (x = x1; x < x2; ++x)
 		{
-			short top = ceilingclip[x];
+			short top = (fakeFloor && fake3D & 2) ? fakeFloor->ceilingclip[x] : ceilingclip[x];
 			short bottom = MIN (walltop[x], floorclip[x]);
 			if (top < bottom)
 			{
@@ -1059,7 +1215,7 @@ void R_RenderSegLoop ()
 		for (x = x1; x < x2; ++x)
 		{
 			short top = MAX (wallbottom[x], ceilingclip[x]);
-			short bottom = floorclip[x];
+			short bottom = (fakeFloor && fake3D & 1) ? fakeFloor->floorclip[x] : floorclip[x];
 			if (top < bottom)
 			{
 				assert (bottom <= viewheight);
@@ -1068,6 +1224,29 @@ void R_RenderSegLoop ()
 			}
 		}
 	}
+
+	// kg3D
+	if(fake3D & 4) {
+		if(fake3D & 8) {
+			memcpy (fakeFloor->floorclip+x1, wallbottom+x1, (x2-x1)*sizeof(short));
+		} else {
+			for (x = x1; x < x2; ++x)
+			{
+				walllower[x] = MIN (MAX (walllower[x], ceilingclip[x]), wallbottom[x]);
+			}
+			memcpy (fakeFloor->floorclip+x1, walllower+x1, (x2-x1)*sizeof(short));
+		}
+		if(fake3D & 16) {
+			memcpy (fakeFloor->ceilingclip+x1, walltop+x1, (x2-x1)*sizeof(short));
+		} else {
+			for (x = x1; x < x2; ++x)
+			{
+				wallupper[x] = MAX (MIN (wallupper[x], floorclip[x]), walltop[x]);
+			}
+			memcpy (fakeFloor->ceilingclip+x1, wallupper+x1, (x2-x1)*sizeof(short));
+		}
+	}
+	if(fake3D & 7) return;
 
 	// draw the wall tiers
 	if (midtexture)
@@ -1091,7 +1270,7 @@ void R_RenderSegLoop ()
 			{
 				rw_offset = rw_offset_mid;
 			}
-			if (fixedcolormap != NULL || !frontsector->ExtraLights)
+			if (fixedcolormap != NULL || !(frontsector->e && frontsector->e->XFloor.lightlist.Size()))
 			{
 				wallscan (x1, x2-1, walltop, wallbottom, swall, lwall, yscale);
 			}
@@ -1130,7 +1309,7 @@ void R_RenderSegLoop ()
 				{
 					rw_offset = rw_offset_top;
 				}
-				if (fixedcolormap != NULL || !frontsector->ExtraLights)
+				if (fixedcolormap != NULL || !(frontsector->e && frontsector->e->XFloor.lightlist.Size()))
 				{
 					wallscan (x1, x2-1, walltop, wallupper, swall, lwall, yscale);
 				}
@@ -1172,7 +1351,7 @@ void R_RenderSegLoop ()
 				{
 					rw_offset = rw_offset_bottom;
 				}
-				if (fixedcolormap != NULL || !frontsector->ExtraLights)
+				if (fixedcolormap != NULL || !(frontsector->e && frontsector->e->XFloor.lightlist.Size()))
 				{
 					wallscan (x1, x2-1, walllower, wallbottom, swall, lwall, yscale);
 				}
@@ -1311,6 +1490,10 @@ void R_NewWall (bool needlights)
 
 				|| backsector->GetAngle(sector_t::floor) != frontsector->GetAngle(sector_t::floor)
 
+				// kg3D
+				|| (frontsector->e && frontsector->e->XFloor.lightlist.Size())
+				|| (backsector->e && backsector->e->XFloor.lightlist.Size())
+
 				|| (sidedef->GetTexture(side_t::mid).isValid() &&
 					((linedef->flags & (ML_CLIP_MIDTEX|ML_WRAP_MIDTEX)) ||
 					 (sidedef->Flags & (WALLF_CLIP_MIDTEX|WALLF_WRAP_MIDTEX))))
@@ -1342,10 +1525,15 @@ void R_NewWall (bool needlights)
 
 				|| backsector->GetAngle(sector_t::ceiling) != frontsector->GetAngle(sector_t::ceiling)
 
+				// kg3D
+				|| (frontsector->e && frontsector->e->XFloor.lightlist.Size())
+				|| (backsector->e && backsector->e->XFloor.lightlist.Size())
+
 				|| (sidedef->GetTexture(side_t::mid).isValid() &&
 					((linedef->flags & (ML_CLIP_MIDTEX|ML_WRAP_MIDTEX)) ||
 					(sidedef->Flags & (WALLF_CLIP_MIDTEX|WALLF_WRAP_MIDTEX))))
-				);
+				)
+				;
 		}
 
 		if (rw_havehigh)
@@ -1588,6 +1776,11 @@ void R_StoreWallRange (int start, int stop)
 	ds_p->curline = curline;
 	rw_stopx = stop;
 	ds_p->bFogBoundary = false;
+	ds_p->bFakeBoundary = false;
+
+	// kg3D
+	if(fake3D & 7) ds_p->fake = 1;
+	else ds_p->fake = 0;
 
 	// killough 1/6/98, 2/1/98: remove limit on openings
 	R_CheckOpenings ((stop - start)*6);
@@ -1649,9 +1842,13 @@ void R_StoreWallRange (int start, int stop)
 			}
 		}
 
+		ds_p->bFakeBoundary = 0;
+		if(backsector->e && backsector->e->XFloor.ffloors.Size()) ds_p->bFakeBoundary = 1;
+		if(!ds_p->fake)
+
 		// allocate space for masked texture tables, if needed
 		// [RH] Don't just allocate the space; fill it in too.
-		if ((TexMan(sidedef->GetTexture(side_t::mid))->UseType != FTexture::TEX_Null || IsFogBoundary (frontsector, backsector)) &&
+		if ((TexMan(sidedef->GetTexture(side_t::mid))->UseType != FTexture::TEX_Null || ds_p->bFakeBoundary || IsFogBoundary (frontsector, backsector)) &&
 			(rw_ceilstat != 12 || !sidedef->GetTexture(side_t::top).isValid()) &&
 			(rw_floorstat != 3 || !sidedef->GetTexture(side_t::bottom).isValid()) &&
 			(WallSZ1 >= TOO_CLOSE_Z && WallSZ2 >= TOO_CLOSE_Z))
@@ -1663,8 +1860,9 @@ void R_StoreWallRange (int start, int stop)
 			maskedtexture = true;
 
 			ds_p->bFogBoundary = IsFogBoundary (frontsector, backsector);
-			if (sidedef->GetTexture(side_t::mid).isValid())
+			if (sidedef->GetTexture(side_t::mid).isValid() || ds_p->bFakeBoundary)
 			{
+				if(sidedef->GetTexture(side_t::mid).isValid()) ds_p->bFakeBoundary = 2;
 				ds_p->maskedtexturecol = R_NewOpening ((stop - start) * 2);
 				ds_p->swall = R_NewOpening ((stop - start) * 2);
 
@@ -1709,7 +1907,7 @@ void R_StoreWallRange (int start, int stop)
 			ds_p->lightstep = rw_lightstep;
 			ds_p->shade = wallshade;
 
-			if (ds_p->bFogBoundary || ds_p->maskedtexturecol != -1)
+			if (ds_p->bFogBoundary || ds_p->maskedtexturecol != -1 || ds_p->bFakeBoundary)
 			{
 				size_t drawsegnum = ds_p - drawsegs;
 				InterestingDrawsegs.Push (drawsegnum);
@@ -1744,30 +1942,32 @@ void R_StoreWallRange (int start, int stop)
 
 	R_RenderSegLoop ();
 
-	// save sprite clipping info
-	if ( ((ds_p->silhouette & SIL_TOP) || maskedtexture) && ds_p->sprtopclip == -1)
-	{
-		ds_p->sprtopclip = R_NewOpening (stop - start);
-		memcpy (openings + ds_p->sprtopclip, &ceilingclip[start], sizeof(short)*(stop-start));
-	}
+	// kg3D
+	if(!(fake3D & 7)) {
+		// save sprite clipping info
+		if ( ((ds_p->silhouette & SIL_TOP) || maskedtexture) && ds_p->sprtopclip == -1)
+		{
+			ds_p->sprtopclip = R_NewOpening (stop - start);
+			memcpy (openings + ds_p->sprtopclip, &ceilingclip[start], sizeof(short)*(stop-start));
+		}
 
-	if ( ((ds_p->silhouette & SIL_BOTTOM) || maskedtexture) && ds_p->sprbottomclip == -1)
-	{
-		ds_p->sprbottomclip = R_NewOpening (stop - start);
-		memcpy (openings + ds_p->sprbottomclip, &floorclip[start], sizeof(short)*(stop-start));
-	}
+		if ( ((ds_p->silhouette & SIL_BOTTOM) || maskedtexture) && ds_p->sprbottomclip == -1)
+		{
+			ds_p->sprbottomclip = R_NewOpening (stop - start);
+			memcpy (openings + ds_p->sprbottomclip, &floorclip[start], sizeof(short)*(stop-start));
+		}
 
-	if (maskedtexture && curline->sidedef->GetTexture(side_t::mid).isValid())
-	{
-		ds_p->silhouette |= SIL_TOP | SIL_BOTTOM;
-	}
+		if (maskedtexture && curline->sidedef->GetTexture(side_t::mid).isValid())
+		{
+			ds_p->silhouette |= SIL_TOP | SIL_BOTTOM;
+		}
 
-	// [RH] Draw any decals bound to the seg
-	for (DBaseDecal *decal = curline->sidedef->AttachedDecals; decal != NULL; decal = decal->WallNext)
-	{
-		R_RenderDecal (curline->sidedef, decal, ds_p, 0);
+		// [RH] Draw any decals bound to the seg
+		for (DBaseDecal *decal = curline->sidedef->AttachedDecals; decal != NULL; decal = decal->WallNext)
+		{
+			R_RenderDecal (curline->sidedef, decal, ds_p, 0);
+		}
 	}
-
 	ds_p++;
 }
 

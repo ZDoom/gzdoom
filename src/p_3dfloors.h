@@ -4,7 +4,7 @@
 
 #define CenterSpot(sec) (vertex_t*)&(sec)->soundorg[0]
 
-//#define _3DFLOORS
+#define _3DFLOORS
 
 // 3D floor flags. Most are the same as in Legacy but I added some for EDGE's and Vavoom's features as well.
 typedef enum
@@ -36,6 +36,7 @@ typedef enum
   FF_FADEWALLS         = 0x8000000,	// Applies real fog to walls and doesn't blend the view		
   FF_ADDITIVETRANS	   = 0x10000000, // Render this floor with additive translucency
   FF_FLOOD			   = 0x20000000, // extends towards the next lowest flooding or solid 3D floor or the bottom of the sector
+  FF_THISINSIDE		= 0x20000000, // kg3D - hack for FF_BOTHPLANES
   
 } ffloortype_e;
 
@@ -92,7 +93,11 @@ struct F3DFloor
 	
 	int					lastlight;
 	int					alpha;
-	
+
+	// kg3D
+	short	floorclip[MAXWIDTH];
+	short	ceilingclip[MAXWIDTH];
+	int validcount;
 };
 
 

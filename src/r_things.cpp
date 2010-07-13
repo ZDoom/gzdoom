@@ -126,6 +126,8 @@ particle_t		*Particles;
 
 CVAR (Bool, r_particles, true, 0);
 
+//kg3D
+void R_DrawSinglePlane (visplane_t *, fixed_t alpha, bool masked);
 
 //
 // R_InstallSpriteLump
@@ -2068,7 +2070,6 @@ void R_SortVisSprites (bool (*compare)(vissprite_t *, vissprite_t *), size_t fir
 	std::stable_sort(&spritesorter[0], &spritesorter[vsprcount], compare);
 }
 
-
 //
 // R_DrawSprite
 //
@@ -2208,6 +2209,8 @@ void R_DrawSprite (vissprite_t *spr)
 
 	for (ds = ds_p; ds-- > firstdrawseg; )  // new -- killough
 	{
+		// kg3D
+		if(ds->fake) continue;
 		// determine if the drawseg obscures the sprite
 		if (ds->x1 > spr->x2 || ds->x2 < spr->x1 ||
 			(!(ds->silhouette & SIL_BOTH) && ds->maskedtexturecol == -1 &&
@@ -2281,6 +2284,9 @@ void R_DrawSprite (vissprite_t *spr)
 	R_DrawVisSprite (spr);
 }
 
+// kg3D
+void R_DrawFakePlanes ();
+
 //
 // R_DrawMasked
 //
@@ -2309,12 +2315,16 @@ void R_DrawMasked (void)
 
 	for (ds = ds_p; ds-- > firstdrawseg; )	// new -- killough
 	{
+		if(ds->fake) continue;
 		if (ds->maskedtexturecol != -1 || ds->bFogBoundary)
 		{
 			R_RenderMaskedSegRange (ds, ds->x1, ds->x2);
 		}
 	}
-	
+
+	// kg3D - now draw all fake planes, needs real visibility check with sprites and walls
+	R_DrawFakePlanes();
+
 	// draw the psprites on top of everything but does not draw on side views
 	if (!viewangleoffset)
 	{
@@ -2573,6 +2583,8 @@ static void R_DrawMaskedSegsBehindParticle (const vissprite_t *vis)
 	for (unsigned int p = InterestingDrawsegs.Size(); p-- > FirstInterestingDrawseg; )
 	{
 		drawseg_t *ds = &drawsegs[InterestingDrawsegs[p]];
+		// kg3D
+		if(ds->fake == 1) continue;
 		if (ds->x1 >= x2 || ds->x2 < x1)
 		{
 			continue;

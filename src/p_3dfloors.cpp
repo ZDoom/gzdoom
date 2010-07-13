@@ -61,7 +61,9 @@ static void P_Add3DFloor(sector_t* sec, sector_t* sec2, line_t* master, int flag
 	F3DFloor*      ffloor;
 	unsigned  i;
 		
-	for(i = 0; i < sec2->e->XFloor.attached.Size(); i++) if(sec2->e->XFloor.attached[i] == sec) return;
+
+	//kg3D
+	if(!(flags & FF_THISINSIDE)) for(i = 0; i < sec2->e->XFloor.attached.Size(); i++) if(sec2->e->XFloor.attached[i] == sec) return;
 	sec2->e->XFloor.attached.Push(sec);
 	
 	//Add the floor
@@ -229,6 +231,8 @@ static int P_Set3DFloor(line_t * line, int param,int param2, int alpha)
 										 
 		}
 		P_Add3DFloor(ss, sec, line, flags, alpha);
+		// kg3D - hack for FF_BOTHPLANES in SW renderer only
+		if(flags & FF_BOTHPLANES) P_Add3DFloor(ss, sec, line, (flags & ~(FF_SOLID|FF_FOG|FF_SWIMMABLE)) | FF_NOSHADE | FF_THISINSIDE, alpha);
 	}
 	// To be 100% safe this should be done even if the alpha by texture value isn't used.
 	if (!line->sidedef[0]->GetTexture(side_t::top).isValid()) 
@@ -676,6 +680,11 @@ void P_Spawn3DFloors (void)
 		}
 		line->special=0;
 		line->args[0] = line->args[1] = line->args[2] = line->args[3] = line->args[4] = 0;
+	}
+	// kg3D - for some reason it is not done, do it now
+	for (i = 0; i < numsectors; i++)
+	{
+		P_Recalculate3DFloors(&sectors[i]);
 	}
 }
 

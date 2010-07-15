@@ -953,6 +953,13 @@ void FPolyObj::DoMovePolyobj (int x, int y)
 		PrevPts[i].x += x;
 		PrevPts[i].y += y;
 	}
+	for (unsigned i = 0; i < Linedefs.Size(); i++)
+	{
+		Linedefs[i]->bbox[BOXTOP] += y;
+		Linedefs[i]->bbox[BOXBOTTOM] += y;
+		Linedefs[i]->bbox[BOXLEFT] += x;
+		Linedefs[i]->bbox[BOXRIGHT] += x;
+	}
 }
 
 //==========================================================================

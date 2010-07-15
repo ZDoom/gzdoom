@@ -821,13 +821,6 @@ void DPolyobjInterpolation::Interpolate(fixed_t smoothratio)
 
 void DPolyobjInterpolation::Serialize(FArchive &arc)
 {
-#pragma message("Savegame revision")
-	if (SaveVersion < 3300)	// fixme: Must be set when branch is merged back
-	{
-		// The savegame format is no longer compatible with the old way of doing things
-		I_Error("Cannot use old savegames with polyobjects.");
-	}
-
 	Super::Serialize(arc);
 	int po = int(poly - polyobjs);
 	arc << po << oldverts << oldcx << oldcy;

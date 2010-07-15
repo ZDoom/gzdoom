@@ -1883,16 +1883,8 @@ static void SplitPoly(FPolyNode *pnode, void *node)
 						{
 							lists[0].Push(*seg);
 							lists[1].Push(*seg);
-							if (side1 == 0)
-							{
-								lists[side1].Last().v2 = vert;
-								lists[side2].Last().v1 = vert;
-							}
-							else
-							{
-								lists[side2].Last().v2 = vert;
-								lists[side1].Last().v1 = vert;
-							}
+							lists[side1].Last().v2 = vert;
+							lists[side2].Last().v1 = vert;
 
 							Printf(PRINT_LOG, "Splitting seg into\n"
 								"\tFirst: (%4.3f,%4.3f) - (%4.3f,%4.3f)\n"

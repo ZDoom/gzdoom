@@ -61,6 +61,8 @@ public:
 	void ScriptError(const char *message, ...);
 	void ScriptMessage(const char *message, ...);
 
+	bool isText();
+
 	// Members ------------------------------------------------------
 	char *String;
 	int StringLen;

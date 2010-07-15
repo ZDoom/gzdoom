@@ -61,6 +61,7 @@ extern HWND Window;
 #include "v_video.h"
 #include "v_palette.h"
 #include "cmdlib.h"
+#include "s_sound.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -1437,6 +1438,26 @@ SoundStream *FMODSoundRenderer::CreateStream (SoundStreamCallback callback, int 
 
 //==========================================================================
 //
+// GetTagData
+//
+// Checks for a string-type tag, and returns its data.
+//
+//==========================================================================
+
+const char *GetTagData(FMOD::Sound *sound, const char *tag_name)
+{
+	FMOD_TAG tag;
+
+	if (FMOD_OK == sound->getTag(tag_name, 0, &tag) &&
+		(tag.datatype == FMOD_TAGDATATYPE_STRING || tag.datatype == FMOD_TAGDATATYPE_STRING_UTF8))
+	{
+		return (const char *)tag.data;
+	}
+	return NULL;
+}
+
+//==========================================================================
+//
 // FMODSoundRenderer :: OpenStream
 //
 // Creates a streaming sound from a file on disk.
@@ -1496,6 +1517,61 @@ SoundStream *FMODSoundRenderer::OpenStream(const char *filename_or_data, int fla
 	}
 	if (result == FMOD_OK)
 	{
+		// Handle custom loop starts by checking for a "loop_start" tag.
+#if 0
+		FMOD_TAG tag;
+		int numtags;
+		if (FMOD_OK == stream->getNumTags(&numtags, NULL))
+		{
+			for (int i = 0; i < numtags; ++i)
+			{
+				if (FMOD_OK == stream->getTag(NULL, i, &tag))
+				{
+					Printf("Tag %2d. %d %s = %s\n", i, tag.datatype, tag.name, tag.data);
+				}
+			}
+		}
+#endif
+		const char *tag_data;
+		unsigned int looppt[2];
+		bool looppt_as_samples[2], have_looppt[2] = { false };
+		static const char *const loop_tags[2] = { "LOOP_START", "LOOP_END" };
+
+		for (int i = 0; i < 2; ++i)
+		{
+			if (NULL != (tag_data = GetTagData(stream, loop_tags[i])))
+			{
+				if (S_ParseTimeTag(tag_data, &looppt_as_samples[i], &looppt[i]))
+				{
+					have_looppt[i] = true;
+				}
+				else
+				{
+					Printf("Invalid %s tag: '%s'\n", loop_tags[i], tag_data);
+				}
+			}
+		}
+		if (have_looppt[0] && !have_looppt[1])
+		{ // Have a start tag, but not an end tag: End at the end of the song.
+			have_looppt[1] = (FMOD_OK == stream->getLength(&looppt[1], FMOD_TIMEUNIT_PCM));
+			looppt_as_samples[1] = true;
+		}
+		else if (!have_looppt[0] && have_looppt[1])
+		{ // Have an end tag, but no start tag: Start at beginning of the song.
+			looppt[0] = 0;
+			looppt_as_samples[0] = true;
+			have_looppt[0] = true;
+		}
+		if (have_looppt[0] && have_looppt[1])
+		{ // Have both loop points: Try to set the loop.
+			FMOD_RESULT res = stream->setLoopPoints(
+				looppt[0], looppt_as_samples[0] ? FMOD_TIMEUNIT_PCM : FMOD_TIMEUNIT_MS,
+				looppt[1] - 1, looppt_as_samples[1] ? FMOD_TIMEUNIT_PCM : FMOD_TIMEUNIT_MS);
+			if (res != FMOD_OK)
+			{
+				Printf("Setting custom song loop points for song failed. Error %d\n", res);
+			}
+		}
 		return new FMODStreamCapsule(stream, this, url ? filename_or_data : NULL);
 	}
 	return NULL;

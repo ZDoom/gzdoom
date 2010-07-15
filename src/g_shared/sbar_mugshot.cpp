@@ -84,7 +84,7 @@ FTexture *FMugShotFrame::GetTexture(const char *default_face, const char *skin_f
 	{
 		index = Graphic.Size() - 1;
 	}
-	FString sprite(skin_face[0] != 0 ? skin_face : default_face, 3);
+	FString sprite(skin_face != NULL && skin_face[0] != 0 ? skin_face : default_face, 3);
 	sprite += Graphic[index];
 	if (uses_levels) //change the last character to the level
 	{

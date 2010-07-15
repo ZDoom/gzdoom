@@ -65,6 +65,7 @@
 #include "doomerrors.h"
 #include "m_argv.h"
 #include "r_defs.h"
+#include "v_text.h"
 
 #include "win32iface.h"
 
@@ -107,12 +108,14 @@ IDirect3D9 *D3D;
 IDirect3DDevice9 *D3Device;
 
 CVAR (Bool, vid_forceddraw, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR (Int, vid_adapter, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 // CODE --------------------------------------------------------------------
 
 Win32Video::Win32Video (int parm)
 : m_Modes (NULL),
-  m_IsFullscreen (false)
+  m_IsFullscreen (false),
+  m_Adapter (D3DADAPTER_DEFAULT)
 {
 	I_SetWndProc();
 	if (!InitD3D9())
@@ -168,9 +171,13 @@ bool Win32Video::InitD3D9 ()
 		goto closelib;
 	}
 
+	// Select adapter.
+	m_Adapter = (vid_adapter < 1 || (UINT)vid_adapter > D3D->GetAdapterCount())
+		? D3DADAPTER_DEFAULT : (UINT)vid_adapter - 1u;
+
 	// Check that we have at least PS 1.4 available.
 	D3DCAPS9 devcaps;
-	if (FAILED(D3D->GetDeviceCaps (D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, &devcaps)))
+	if (FAILED(D3D->GetDeviceCaps (m_Adapter, D3DDEVTYPE_HAL, &devcaps)))
 	{
 		goto d3drelease;
 	}
@@ -185,8 +192,8 @@ bool Win32Video::InitD3D9 ()
 
 	// Enumerate available display modes.
 	FreeModes ();
-	AddD3DModes (D3DFMT_X8R8G8B8);
-	AddD3DModes (D3DFMT_R5G6B5);
+	AddD3DModes (m_Adapter, D3DFMT_X8R8G8B8);
+	AddD3DModes (m_Adapter, D3DFMT_R5G6B5);
 	if (Args->CheckParm ("-2"))
 	{ // Force all modes to be pixel-doubled.
 		ScaleModes (1);
@@ -340,6 +347,70 @@ void Win32Video::BlankForGDI ()
 	static_cast<BaseWinFB *> (screen)->Blank ();
 }
 
+//==========================================================================
+//
+// Win32Video :: DumpAdapters
+//
+// Dumps the list of display adapters to the console. Only meaningful for
+// Direct3D.
+//
+//==========================================================================
+
+void Win32Video::DumpAdapters()
+{
+	if (D3D == NULL)
+	{
+		Printf("Multi-monitor support requires Direct3D.\n");
+		return;
+	}
+
+	UINT num_adapters = D3D->GetAdapterCount();
+
+	for (UINT i = 0; i < num_adapters; ++i)
+	{
+		D3DADAPTER_IDENTIFIER9 ai;
+		char moreinfo[64] = "";
+
+		if (FAILED(D3D->GetAdapterIdentifier(i, 0, &ai)))
+		{
+			continue;
+		}
+		// Strip trailing whitespace from adapter description.
+		for (char *p = ai.Description + strlen(ai.Description) - 1;
+			 p >= ai.Description && isspace(*p);
+			 --p)
+		{
+			*p = '\0';
+		}
+		// Get monitor info from GDI for more details. Windows 95 apparently does not have
+		// the GetMonitorInfo function. I will leave this like this for now instead of using
+		// GetProcAddress to see if it's still worth worrying about Windows 95 support.
+		// (e.g. Will anybody complain that they can't run ZDoom anymore?)
+		HMONITOR hm = D3D->GetAdapterMonitor(i);
+		MONITORINFOEX mi;
+		mi.cbSize = sizeof(mi);
+		if (GetMonitorInfo(hm, &mi))
+		{
+			mysnprintf(moreinfo, countof(moreinfo), " [%ldx%ld @ (%ld,%ld)]%s",
+				mi.rcMonitor.right - mi.rcMonitor.left,
+				mi.rcMonitor.bottom - mi.rcMonitor.top,
+				mi.rcMonitor.left, mi.rcMonitor.top,
+				mi.dwFlags & MONITORINFOF_PRIMARY ? " (Primary)" : "");
+		}
+		Printf("%s%u. %s%s\n",
+			i == m_Adapter ? TEXTCOLOR_BOLD : "",
+			i + 1, ai.Description, moreinfo);
+	}
+}
+
+CCMD(vid_listadapters)
+{
+	if (Video != NULL)
+	{
+		static_cast<Win32Video *>(Video)->DumpAdapters();
+	}
+}
+
 // Mode enumeration --------------------------------------------------------
 
 HRESULT WINAPI Win32Video::EnumDDModesCB (LPDDSURFACEDESC desc, void *data)
@@ -348,15 +419,15 @@ HRESULT WINAPI Win32Video::EnumDDModesCB (LPDDSURFACEDESC desc, void *data)
 	return DDENUMRET_OK;
 }
 
-void Win32Video::AddD3DModes (D3DFORMAT format)
+void Win32Video::AddD3DModes (UINT adapter, D3DFORMAT format)
 {
 	UINT modecount, i;
 	D3DDISPLAYMODE mode;
 
-	modecount = D3D->GetAdapterModeCount (D3DADAPTER_DEFAULT, format);
+	modecount = D3D->GetAdapterModeCount (adapter, format);
 	for (i = 0; i < modecount; ++i)
 	{
-		if (D3D_OK == D3D->EnumAdapterModes (D3DADAPTER_DEFAULT, format, i, &mode))
+		if (D3D_OK == D3D->EnumAdapterModes (adapter, format, i, &mode))
 		{
 			AddMode (mode.Width, mode.Height, 8, mode.Height, 0);
 		}
@@ -571,7 +642,7 @@ DFrameBuffer *Win32Video::CreateFrameBuffer (int width, int height, bool fullscr
 
 	if (D3D != NULL)
 	{
-		fb = new D3DFB (width, height, fullscreen);
+		fb = new D3DFB (m_Adapter, width, height, fullscreen);
 	}
 	else
 	{

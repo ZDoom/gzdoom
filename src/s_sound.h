@@ -354,6 +354,7 @@ void S_UnloadSound (sfxinfo_t *sfx);
 sfxinfo_t *S_LoadSound(sfxinfo_t *sfx);
 unsigned int S_GetMSLength(FSoundID sound);
 void S_ParseMusInfo();
+bool S_ParseTimeTag(const char *tag, bool *as_samples, unsigned int *time);
 
 // [RH] Prints sound debug info to the screen.
 //		Modelled after Hexen's noise cheat.

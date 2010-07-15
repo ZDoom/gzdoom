@@ -75,6 +75,8 @@ class Win32Video : public IVideo
 	bool GoFullscreen (bool yes);
 	void BlankForGDI ();
 
+	void DumpAdapters ();
+
  private:
 	struct ModeInfo
 	{
@@ -97,12 +99,13 @@ class Win32Video : public IVideo
 	int m_IteratorBits;
 	bool m_IteratorFS;
 	bool m_IsFullscreen;
+	UINT m_Adapter;
 
 	void AddMode (int x, int y, int bits, int baseHeight, int doubling);
 	void FreeModes ();
 
 	static HRESULT WINAPI EnumDDModesCB (LPDDSURFACEDESC desc, void *modes);
-	void AddD3DModes (D3DFORMAT format);
+	void AddD3DModes (UINT adapter, D3DFORMAT format);
 	void AddLowResModes ();
 	void AddLetterboxModes ();
 	void ScaleModes (int doubling);
@@ -218,7 +221,7 @@ class D3DFB : public BaseWinFB
 {
 	DECLARE_CLASS(D3DFB, BaseWinFB)
 public:
-	D3DFB (int width, int height, bool fullscreen);
+	D3DFB (UINT adapter, int width, int height, bool fullscreen);
 	~D3DFB ();
 
 	bool IsValid ();
@@ -416,6 +419,7 @@ private:
 	PackingTexture *Packs;
 	HRESULT LastHR;
 
+	UINT Adapter;
 	IDirect3DDevice9 *D3DDevice;
 	IDirect3DTexture9 *FBTexture;
 	IDirect3DTexture9 *TempRenderTexture, *RenderTexture[2];

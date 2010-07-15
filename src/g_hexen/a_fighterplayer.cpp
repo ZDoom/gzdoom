@@ -166,12 +166,15 @@ DEFINE_ACTION_FUNCTION(AActor, A_FPunchAttack)
 				pufftype = PClass::FindClass ("HammerPuff");
 			}
 			P_LineAttack (pmo, angle, 2*MELEERANGE, slope, damage, NAME_Melee, pufftype, true, &linetarget);
-			if (linetarget->flags3&MF3_ISMONSTER || linetarget->player)
+			if (linetarget != NULL)
 			{
-				P_ThrustMobj (linetarget, angle, power);
+				if (linetarget->flags3&MF3_ISMONSTER || linetarget->player)
+				{
+					P_ThrustMobj (linetarget, angle, power);
+				}
+				AdjustPlayerAngle (pmo, linetarget);
+				goto punchdone;
 			}
-			AdjustPlayerAngle (pmo, linetarget);
-			goto punchdone;
 		}
 		angle = pmo->angle-i * (ANG45/16);
 		slope = P_AimLineAttack (pmo, angle, 2*MELEERANGE, &linetarget);
@@ -185,12 +188,15 @@ DEFINE_ACTION_FUNCTION(AActor, A_FPunchAttack)
 				pufftype = PClass::FindClass ("HammerPuff");
 			}
 			P_LineAttack (pmo, angle, 2*MELEERANGE, slope, damage, NAME_Melee, pufftype, true, &linetarget);
-			if (linetarget->flags3&MF3_ISMONSTER || linetarget->player)
+			if (linetarget != NULL)
 			{
-				P_ThrustMobj (linetarget, angle, power);
+				if (linetarget->flags3&MF3_ISMONSTER || linetarget->player)
+				{
+					P_ThrustMobj (linetarget, angle, power);
+				}
+				AdjustPlayerAngle (pmo, linetarget);
+				goto punchdone;
 			}
-			AdjustPlayerAngle (pmo, linetarget);
-			goto punchdone;
 		}
 	}
 	// didn't find any creatures, so try to strike any walls

@@ -37,20 +37,22 @@ DEFINE_ACTION_FUNCTION(AActor, A_CMaceAttack)
 		if (linetarget)
 		{
 			P_LineAttack (player->mo, angle, 2*MELEERANGE, slope, damage, NAME_Melee, PClass::FindClass ("HammerPuff"), true, &linetarget);
-			AdjustPlayerAngle (player->mo, linetarget);
-//			player->mo->angle = R_PointToAngle2(player->mo->x,
-//				player->mo->y, linetarget->x, linetarget->y);
-			goto macedone;
+			if (linetarget != NULL)
+			{
+				AdjustPlayerAngle (player->mo, linetarget);
+				goto macedone;
+			}
 		}
 		angle = player->mo->angle-i*(ANG45/16);
 		slope = P_AimLineAttack (player->mo, angle, 2*MELEERANGE, &linetarget);
 		if (linetarget)
 		{
 			P_LineAttack (player->mo, angle, 2*MELEERANGE, slope, damage, NAME_Melee, PClass::FindClass ("HammerPuff"), true, &linetarget);
-			AdjustPlayerAngle (player->mo, linetarget);
-//			player->mo->angle = R_PointToAngle2(player->mo->x,
-//				player->mo->y, linetarget->x, linetarget->y);
-			goto macedone;
+			if (linetarget != NULL)
+			{
+				AdjustPlayerAngle (player->mo, linetarget);
+				goto macedone;
+			}
 		}
 	}
 	// didn't find any creatures, so try to strike any walls

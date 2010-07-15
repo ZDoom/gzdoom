@@ -58,6 +58,7 @@
 #include "v_palette.h"
 #include "p_acs.h"
 #include "gstrings.h"
+#include "version.h"
 
 #define ARTIFLASH_OFFSET (statusBar->invBarOffset+6)
 enum
@@ -469,6 +470,7 @@ void SBarInfo::ParseSBarInfo(int lump)
 			ParseSBarInfo(lump);
 			continue;
 		}
+		int baselump = -2;
 		switch(sc.MustMatchString(SBarInfoTopLevel))
 		{
 			case SBARINFO_BASE:
@@ -477,24 +479,15 @@ void SBarInfo::ParseSBarInfo(int lump)
 					sc.MustGetToken(TK_Identifier);
 				if(sc.Compare("Doom"))
 				{
-					int lump = Wads.CheckNumForFullName("sbarinfo/doom.txt", true);
-					if(lump == -1)
-						sc.ScriptError("Standard Doom Status Bar not found.");
-					ParseSBarInfo(lump);
+					baselump = Wads.CheckNumForFullName("sbarinfo/doom.txt", true);
 				}
 				else if(sc.Compare("Heretic"))
 				{
-					int lump = Wads.CheckNumForFullName("sbarinfo/heretic.txt", true);
-					if(lump == -1)
-						sc.ScriptError("Standard Heretic Status Bar not found.");
-					ParseSBarInfo(lump);
+					baselump = Wads.CheckNumForFullName("sbarinfo/heretic.txt", true);
 				}
 				else if(sc.Compare("Hexen"))
 				{
-					int lump = Wads.CheckNumForFullName("sbarinfo/hexen.txt", true);
-					if(lump == -1)
-						sc.ScriptError("Standard Hexen Status Bar not found.");
-					ParseSBarInfo(lump);
+					baselump = Wads.CheckNumForFullName("sbarinfo/hexen.txt", true);
 				}
 				else if(sc.Compare("Strife"))
 					gameType = GAME_Strife;
@@ -502,6 +495,20 @@ void SBarInfo::ParseSBarInfo(int lump)
 					gameType = GAME_Any;
 				else
 					sc.ScriptError("Bad game name: %s", sc.String);
+				// If one of the standard status bar should be loaded, baselump has been set to a different value.
+				if (baselump != -2)
+				{
+					if(baselump == -1)
+					{
+						sc.ScriptError("Standard %s status bar not found.", sc.String);
+					}
+					else if (Wads.GetLumpFile(baselump) > 0)
+					{
+						I_FatalError("File %s is overriding core lump sbarinfo/%s.txt.",
+							Wads.GetWadFullName(Wads.GetLumpFile(baselump)), sc.String);
+					}
+					ParseSBarInfo(baselump);
+				}
 				sc.MustGetToken(';');
 				break;
 			case SBARINFO_HEIGHT:

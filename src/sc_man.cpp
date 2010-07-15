@@ -333,6 +333,24 @@ void FScanner::RestorePos (const FScanner::SavedPos &pos)
 
 //==========================================================================
 //
+// FScanner :: isText
+//
+// Checks if this is a text file.
+//
+//==========================================================================
+
+bool FScanner::isText()
+{
+	for(unsigned int i=0;i<ScriptBuffer.Len();i++)
+	{
+		int c = ScriptBuffer[i];
+		if (c < ' ' && c != '\n' && c != '\r' && c != '\t') return false;
+	}
+	return true;
+}
+
+//==========================================================================
+//
 // FScanner :: SetCMode
 //
 // Enables/disables C mode. In C mode, more characters are considered to

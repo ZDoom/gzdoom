@@ -177,6 +177,7 @@ void FNodeBuilder::CreateSubsectorsForReal ()
 	sub.CenterX = 0;	// Code in p_setup.cpp will set these for us later.
 	sub.CenterY = 0;
 	sub.sector = NULL;
+	sub.polys = NULL;
 
 	for (i = 0; i < SubsectorSets.Size(); ++i)
 	{

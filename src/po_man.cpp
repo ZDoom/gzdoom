@@ -1772,8 +1772,8 @@ static bool GetIntersection(seg_t *seg, node_t *bsp, vertex_t *v)
 
 	if (frac < 0. || frac > 1.) return false;
 
-	v->x = xs_RoundToInt(v1x + frac * v1dx);
-	v->y = xs_RoundToInt(v1y + frac * v1dy);
+	v->x = xs_RoundToInt(v2x + frac * v2dx);
+	v->y = xs_RoundToInt(v2y + frac * v2dy);
 	return true;
 }
 
@@ -1837,25 +1837,35 @@ static void SplitPoly(FPolyNode *pnode, void *node)
 				// polyobject doors flush with their door tracks. This breaks using the
 				// usual assumptions.
 				
+
 				// Addition to Eternity code: We must also check any seg with only one
 				// vertex inside the epsilon threshold. If not, these lines will get split but
 				// adjoining ones with both vertices inside the threshold won't thus messing up
 				// the order in which they get drawn.
+
+				Printf(PRINT_LOG, "Checking seg (%4.3f,%4.3f) - (%4.3f,%4.3f)\n"
+					"\tagainst node: (%4.3f,%4.3f) - (%4.3f,%4.3f)\n",
+					seg->v1->x/65536.f, seg->v1->y/65536.f, seg->v2->x/65536.f, seg->v2->y/65536.f,
+					bsp->x/65536.f, bsp->y/65536.f, (bsp->x+bsp->dx)/65536.f, (bsp->y+bsp->dy)/65536.f);
+
 				if(dist_v1 <= POLY_EPSILON)
 				{
 					if (dist_v2 <= POLY_EPSILON)
 					{
+						Printf(PRINT_LOG, "Sorted to center side %d.\n", centerside);
 						lists[centerside].Push(*seg);
 					}
 					else
 					{
 						int side = R_PointOnSide(seg->v2->x, seg->v2->y, bsp);
+						Printf(PRINT_LOG, "Sorted to side %d (eps at v1).\n", side);
 						lists[side].Push(*seg);
 					}
 				}
 				else if (dist_v2 <= POLY_EPSILON)
 				{
 					int side = R_PointOnSide(seg->v1->x, seg->v1->y, bsp);
+					Printf(PRINT_LOG, "Sorted to side %d (eps at v2).\n", side);
 					lists[side].Push(*seg);
 				}
 				else 
@@ -1873,18 +1883,36 @@ static void SplitPoly(FPolyNode *pnode, void *node)
 						{
 							lists[0].Push(*seg);
 							lists[1].Push(*seg);
-							lists[side1][lists[side1].Size()-1].v2 = vert;
-							lists[side2][lists[side2].Size()-1].v1 = vert;
+							if (side1 == 0)
+							{
+								lists[side1].Last().v2 = vert;
+								lists[side2].Last().v1 = vert;
+							}
+							else
+							{
+								lists[side2].Last().v2 = vert;
+								lists[side1].Last().v1 = vert;
+							}
+
+							Printf(PRINT_LOG, "Splitting seg into\n"
+								"\tFirst: (%4.3f,%4.3f) - (%4.3f,%4.3f)\n"
+								"\tSecond: (%4.3f,%4.3f) - (%4.3f,%4.3f)\n",
+
+								lists[side1].Last().v1->x/65536.f, lists[side1].Last().v1->y/65536.f, lists[side1].Last().v2->x/65536.f, lists[side1].Last().v2->y/65536.f,
+								lists[side2].Last().v1->x/65536.f, lists[side2].Last().v1->y/65536.f, lists[side2].Last().v2->x/65536.f, lists[side2].Last().v2->y/65536.f);
 						}
 						else
 						{
 							// should never happen
 							lists[side1].Push(*seg);
+
+							Printf(PRINT_LOG, "Split error\n");
 						}
 					}
 					else 
 					{
 						// both points on the same side.
+						Printf(PRINT_LOG, "Sorted to side %d.\n", side1);
 						lists[side1].Push(*seg);
 					}
 				}
@@ -1989,6 +2017,9 @@ void PO_LinkToSubsectors()
 	{
 		if (polyobjs[i].subsectorlinks == NULL)
 		{
+			Printf(PRINT_LOG, "Processing polyobj %i (tag %d)\n",i, polyobjs[i].tag);
+			Printf(PRINT_LOG, "------------------------------\n");
+
 			polyobjs[i].CreateSubsectorLinks();
 		}
 	}

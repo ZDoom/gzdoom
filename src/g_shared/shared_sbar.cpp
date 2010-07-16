@@ -1507,15 +1507,18 @@ void DBaseStatusBar::BlendView (float blend[4])
 		AddBlend (0.8431f, 0.7333f, 0.2706f, cnt > 128 ? 0.5f : cnt / 255.f, blend);
 	}
 
-	cnt = DamageToAlpha[MIN (113, CPlayer->damagecount)];
-		
-	if (cnt)
+	if (CPlayer->mo->DamageFade.a != 0)
 	{
-		if (cnt > 228)
-			cnt = 228;
+		cnt = DamageToAlpha[MIN (113, CPlayer->damagecount * CPlayer->mo->DamageFade.a / 255)];
+			
+		if (cnt)
+		{
+			if (cnt > 228)
+				cnt = 228;
 
-		APlayerPawn *mo = players[consoleplayer].mo;
-		AddBlend (mo->DamageFade.r / 255.f, mo->DamageFade.g / 255.f, mo->DamageFade.b / 255.f, cnt / 255.f, blend);
+			APlayerPawn *mo = CPlayer->mo;
+			AddBlend (mo->DamageFade.r / 255.f, mo->DamageFade.g / 255.f, mo->DamageFade.b / 255.f, cnt / 255.f, blend);
+		}
 	}
 
 	// Unlike Doom, I did not have any utility source to look at to find the

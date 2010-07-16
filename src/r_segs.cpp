@@ -585,6 +585,13 @@ void R_RenderFakeWalls (drawseg_t *ds, int x1, int x2)
 
 			PrepWall(swall, lwall, curline->sidedef->TexelLength * rw_pic->xScale);
 			maskwallscan(x1, x2, most1, most2, swall, lwall, ds->yrepeat);
+
+			/*if(useZBuffer)
+			for(int x = x1;x < x2;x++)
+			{
+				for(int y = most1[x];y < most2[x];y++)
+					zbuffer[(x*SCREENHEIGHT)+y] = (ds->sz1 + (ds->sz2 - ds->sz1)/(x2-x1)*(x-x1));
+			}*/
 		}
 	}
 	return;

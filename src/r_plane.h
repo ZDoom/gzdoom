@@ -44,6 +44,8 @@ struct visplane_s
 	fixed_t		xscale, yscale;		// [RH] Support flat scaling
 	angle_t		angle;				// [RH] Support flat rotation
 	int			sky;
+	fixed_t		alpha;				// [BL] Extra 3D floor support
+	bool		fakePlane;			// [BL] ''
 	ASkyViewpoint *skybox;			// [RH] Support sky boxes
 
 	// [RH] This set of variables copies information from the time when the
@@ -81,7 +83,7 @@ void R_InitPlanes ();
 void R_DeinitPlanes ();
 void R_ClearPlanes (bool fullclear);
 
-void R_DrawPlanes ();
+void R_DrawPlanes (bool fake=false);
 void R_DrawSkyBoxes ();
 void R_DrawSkyPlane (visplane_t *pl);
 void R_DrawNormalPlane (visplane_t *pl, fixed_t alpha, bool masked);

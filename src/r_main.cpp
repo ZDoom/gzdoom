@@ -1725,5 +1725,10 @@ void R_MultiresInit ()
 {
 	R_PlaneInitData ();
 	R_OldBlend = ~0;
+
+	// [BL] Allocate our Z-Buffer
+	if(zbuffer != NULL)
+		delete[] zbuffer;
+	zbuffer = new DWORD[SCREENWIDTH*SCREENHEIGHT];
 }
 

@@ -233,7 +233,36 @@ void R_MapPlane (int y, int x1)
 	ds_x1 = x1;
 	ds_x2 = x2;
 
-	spanfunc ();
+	if(useZBuffer)
+	{
+		int x3 = x1;
+		for(int x = x1;x < x2;x++)
+		{
+			if(zbuffer[(x*SCREENHEIGHT)+y] < distance)
+			{
+				ds_x1 = x3;
+				ds_x2 = x-1;
+				if(ds_x1 < ds_x2)
+				{
+					ds_xfrac += ds_xstep*(x3-x1);
+					ds_yfrac += ds_ystep*(x3-x1);
+					spanfunc ();
+				}
+				x3 = x+1;
+			}
+			zbuffer[(x*SCREENHEIGHT)+y] = distance;
+		}
+		ds_x1 = x3;
+		ds_x2 = x2;
+		if(ds_x1 < ds_x2)
+		{
+			ds_xfrac += ds_xstep*(x3-x1);
+			ds_yfrac += ds_ystep*(x3-x1);
+			spanfunc ();
+		}
+	}
+	else
+		spanfunc ();
 }
 
 //==========================================================================
@@ -563,9 +592,7 @@ visplane_t *R_FindPlane (const secplane_t &height, FTextureID picnum, int lightl
 	{
 		plane = height;
 		isskybox = false;
-		// kg3D - hack, store alpha in sky
-		if(fake3D & 3) sky = 0x80000000 | fakeAlpha;
-		else sky = 0;	// not skyflatnum so it can't be a sky
+		sky = 0;	// not skyflatnum so it can't be a sky
 	}
 		
 	// New visplane algorithm uses hash table -- killough
@@ -615,6 +642,8 @@ visplane_t *R_FindPlane (const secplane_t &height, FTextureID picnum, int lightl
 
 	check = new_visplane (hash);		// killough
 
+	check->alpha = (fake3D & 3) ? fakeAlpha : OPAQUE;
+	check->fakePlane = (fake3D & 3) != 0;
 	check->height = plane;
 	check->picnum = picnum;
 	check->lightlevel = lightlevel;
@@ -701,6 +730,8 @@ visplane_t *R_CheckPlane (visplane_t *pl, int start, int stop)
 		}
 		visplane_t *new_pl = new_visplane (hash);
 
+		new_pl->alpha = pl->alpha;
+		new_pl->fakePlane = pl->fakePlane;
 		new_pl->height = pl->height;
 		new_pl->picnum = pl->picnum;
 		new_pl->lightlevel = pl->lightlevel;
@@ -934,7 +965,7 @@ static void R_DrawSkyStriped (visplane_t *pl)
 CVAR (Bool, tilt, false, 0);
 //CVAR (Int, pa, 0, 0)
 
-void R_DrawPlanes ()
+void R_DrawPlanes (bool fake)
 {
 	visplane_t *pl;
 	int i;
@@ -946,30 +977,13 @@ void R_DrawPlanes ()
 	{
 		for (pl = visplanes[i]; pl; pl = pl->next)
 		{
-			if(pl->sky >= 0) {
-				vpcount++;
+			if(!pl->fakePlane && !fake) 
 				R_DrawSinglePlane (pl, OPAQUE, false);
-			}
-		}
-	}
-}
-
-void R_DrawFakePlanes ()
-{
-	visplane_t *pl;
-	int i;
-	int vpcount;
-
-	ds_color = 3;
-
-	for (i = vpcount = 0; i < MAXVISPLANES; i++)
-	{
-		for (pl = visplanes[i]; pl; pl = pl->next)
-		{
-			if(pl->sky < 0) {
-				vpcount++;
-				R_DrawSinglePlane(pl, pl->sky & 0x7FFFFFFF, true);
-			}
+			else if(pl->fakePlane && fake)
+				R_DrawSinglePlane (pl, pl->alpha, true);
+			else
+				continue; // [BL] Do we need to keep vpcount accurate?
+			vpcount++;
 		}
 	}
 }

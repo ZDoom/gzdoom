@@ -84,6 +84,8 @@ int fake3D;
 F3DFloor *fakeFloor;
 fixed_t fakeHeight;
 fixed_t fakeAlpha;
+DWORD* zbuffer = NULL;
+bool useZBuffer;
 
 fixed_t			rw_backcz1, rw_backcz2;
 fixed_t			rw_backfz1, rw_backfz2;

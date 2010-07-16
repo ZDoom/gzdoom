@@ -2284,9 +2284,6 @@ void R_DrawSprite (vissprite_t *spr)
 	R_DrawVisSprite (spr);
 }
 
-// kg3D
-void R_DrawFakePlanes ();
-
 //
 // R_DrawMasked
 //
@@ -2298,6 +2295,8 @@ void R_DrawMasked (void)
 #if 0
 	R_SplitVisSprites ();
 #endif
+	memset(zbuffer, 0xFF, SCREENWIDTH*SCREENHEIGHT*sizeof(DWORD));
+	useZBuffer = true;
 	R_SortVisSprites (sv_compare, firstvissprite - vissprites);
 
 	for (i = vsprcount; i > 0; i--)
@@ -2323,7 +2322,8 @@ void R_DrawMasked (void)
 	}
 
 	// kg3D - now draw all fake planes, needs real visibility check with sprites and walls
-	R_DrawFakePlanes();
+	R_DrawPlanes(true);
+	useZBuffer = false;
 
 	// draw the psprites on top of everything but does not draw on side views
 	if (!viewangleoffset)

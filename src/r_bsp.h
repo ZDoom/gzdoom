@@ -70,6 +70,10 @@ extern int			WindowLeft, WindowRight;
 extern WORD			MirrorFlags;
 extern seg_t*		ActiveWallMirror;
 
+// 3D Floors Z-Buffer
+extern DWORD*		zbuffer;
+extern bool			useZBuffer;
+
 extern TArray<size_t>	WallMirrors;
 
 typedef void (*drawfunc_t) (int start, int stop);

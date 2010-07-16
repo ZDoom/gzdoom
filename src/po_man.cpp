@@ -1721,9 +1721,6 @@ void FPolyObj::ClearSubsectorLinks()
 
 		FPolyNode *next = subsectorlinks->snext;
 
-		Printf(PRINT_LOG, "Unlinking polyobj %d from subsector %d (sector %d)\n",
-			tag, subsectorlinks->subsector-subsectors, subsectorlinks->subsector->sector->sectornum);
-
 		if (subsectorlinks->pnext != NULL)
 		{
 			assert(subsectorlinks->pnext->state == 1337);
@@ -1744,6 +1741,14 @@ void FPolyObj::ClearSubsectorLinks()
 		subsectorlinks = next;
 	}
 	subsectorlinks = NULL;
+}
+
+void FPolyObj::ClearAllSubsectorLinks()
+{
+	for(int i=0;i<po_NumPolyobjs;i++)
+	{
+		polyobjs[i].ClearSubsectorLinks();
+	}
 }
 
 //==========================================================================

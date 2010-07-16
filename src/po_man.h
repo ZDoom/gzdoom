@@ -67,7 +67,6 @@ struct FPolyObj
 	TObjPtr<DInterpolation> interpolation;
 
 	FPolyObj();
-	//~FPolyObj();
 	DInterpolation *SetInterpolation();
 	void StopInterpolation();
 
@@ -80,6 +79,7 @@ struct FPolyObj
 	void ClearSubsectorLinks();
 	vertex_t *GetNewVertex();
 	void CalcCenter();
+	static void ClearAllSubsectorLinks();
 
 private:
 

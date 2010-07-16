@@ -1330,7 +1330,7 @@ static void InitSideLists ()
 
 	for (i = 0; i < numsides; ++i)
 	{
-		if (segs[i].linedef != NULL)
+		if (sides[i].linedef != NULL)
 		{
 			SideListHead[sides[i].V1() - vertexes] = i;
 			if ((sides[i].linedef->special == Polyobj_StartLine ||

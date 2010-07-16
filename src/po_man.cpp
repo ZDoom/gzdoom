@@ -1812,15 +1812,23 @@ static void SplitPoly(FPolyNode *pnode, void *node)
 	{
 		node_t *bsp = (node_t *)node;
 
-		int boxside = pnode->poly->Bounds.BoxOnNodeSide(bsp);
+		Printf(PRINT_LOG, "\nChecking against node: (%4.3f,%4.3f) - (%4.3f,%4.3f)\n",
+				bsp->x/65536.f, bsp->y/65536.f, (bsp->x+bsp->dx)/65536.f, (bsp->y+bsp->dy)/65536.f);
+		Printf(PRINT_LOG, "------------------------------\n");
 
+
+		/*
+		// Well, it looks like this optimization does not work... Too bad. :(
+		int boxside = pnode->poly->Bounds.BoxOnNodeSide(bsp);
 		if (boxside != -1)
 		{
+			Printf(PRINT_LOG, "Fully on side %d\n", boxside);
 			// The entire polyobject is on one side of the node so no need to do further checks
 			// with this node. Just pick the proper child and go on.
 			node = bsp->children[boxside];
 		}
 		else
+		*/
 		{
 			int centerside = R_PointOnSide(pnode->poly->CenterSpot.x, pnode->poly->CenterSpot.y, bsp);
 
@@ -1850,29 +1858,27 @@ static void SplitPoly(FPolyNode *pnode, void *node)
 				// adjoining ones with both vertices inside the threshold won't thus messing up
 				// the order in which they get drawn.
 
-				Printf(PRINT_LOG, "Checking seg (%4.3f,%4.3f) - (%4.3f,%4.3f)\n"
-					"\tagainst node: (%4.3f,%4.3f) - (%4.3f,%4.3f)\n",
-					seg->v1->x/65536.f, seg->v1->y/65536.f, seg->v2->x/65536.f, seg->v2->y/65536.f,
-					bsp->x/65536.f, bsp->y/65536.f, (bsp->x+bsp->dx)/65536.f, (bsp->y+bsp->dy)/65536.f);
+				Printf(PRINT_LOG, "Checking seg (%4.3f,%4.3f) - (%4.3f,%4.3f)\n",
+					seg->v1->x/65536.f, seg->v1->y/65536.f, seg->v2->x/65536.f, seg->v2->y/65536.f);
 
 				if(dist_v1 <= POLY_EPSILON)
 				{
 					if (dist_v2 <= POLY_EPSILON)
 					{
-						Printf(PRINT_LOG, "Sorted to center side %d.\n", centerside);
+						Printf(PRINT_LOG, "\tSorted to center side %d.\n", centerside);
 						lists[centerside].Push(*seg);
 					}
 					else
 					{
 						int side = R_PointOnSide(seg->v2->x, seg->v2->y, bsp);
-						Printf(PRINT_LOG, "Sorted to side %d (eps at v1).\n", side);
+						Printf(PRINT_LOG, "\tSorted to side %d (eps at v1).\n", side);
 						lists[side].Push(*seg);
 					}
 				}
 				else if (dist_v2 <= POLY_EPSILON)
 				{
 					int side = R_PointOnSide(seg->v1->x, seg->v1->y, bsp);
-					Printf(PRINT_LOG, "Sorted to side %d (eps at v2).\n", side);
+					Printf(PRINT_LOG, "\tSorted to side %d (eps at v2).\n", side);
 					lists[side].Push(*seg);
 				}
 				else 
@@ -1893,9 +1899,9 @@ static void SplitPoly(FPolyNode *pnode, void *node)
 							lists[side1].Last().v2 = vert;
 							lists[side2].Last().v1 = vert;
 
-							Printf(PRINT_LOG, "Splitting seg into\n"
-								"\tFirst: (%4.3f,%4.3f) - (%4.3f,%4.3f)\n"
-								"\tSecond: (%4.3f,%4.3f) - (%4.3f,%4.3f)\n",
+							Printf(PRINT_LOG, "\tSplitting seg into\n"
+								"\t\tFirst: (%4.3f,%4.3f) - (%4.3f,%4.3f)\n"
+								"\t\tSecond: (%4.3f,%4.3f) - (%4.3f,%4.3f)\n",
 
 								lists[side1].Last().v1->x/65536.f, lists[side1].Last().v1->y/65536.f, lists[side1].Last().v2->x/65536.f, lists[side1].Last().v2->y/65536.f,
 								lists[side2].Last().v1->x/65536.f, lists[side2].Last().v1->y/65536.f, lists[side2].Last().v2->x/65536.f, lists[side2].Last().v2->y/65536.f);
@@ -1905,13 +1911,13 @@ static void SplitPoly(FPolyNode *pnode, void *node)
 							// should never happen
 							lists[side1].Push(*seg);
 
-							Printf(PRINT_LOG, "Split error\n");
+							Printf(PRINT_LOG, "\tSplit error\n");
 						}
 					}
 					else 
 					{
 						// both points on the same side.
-						Printf(PRINT_LOG, "Sorted to side %d.\n", side1);
+						Printf(PRINT_LOG, "\tSorted to side %d.\n", side1);
 						lists[side1].Push(*seg);
 					}
 				}
@@ -2016,7 +2022,10 @@ void PO_LinkToSubsectors()
 	{
 		if (polyobjs[i].subsectorlinks == NULL)
 		{
-			Printf(PRINT_LOG, "Processing polyobj %i (tag %d)\n",i, polyobjs[i].tag);
+			Printf(PRINT_LOG, "==============================\n");
+			Printf(PRINT_LOG, "\n\nProcessing polyobj %i (tag %d)\n",i, polyobjs[i].tag);
+			Printf(PRINT_LOG, "BBox = (%4.3f, %4.3f - %4.3f, %4.3f)\n", 
+				polyobjs[i].Bounds.Left()/65536., polyobjs[i].Bounds.Bottom()/65536., polyobjs[i].Bounds.Right()/65536., polyobjs[i].Bounds.Top()/65536.);
 			Printf(PRINT_LOG, "------------------------------\n");
 
 			polyobjs[i].CreateSubsectorLinks();

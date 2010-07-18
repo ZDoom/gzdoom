@@ -53,6 +53,7 @@ static const char* const tableHeaders[NUM_COLUMNS] = { "IWAD", "Game" };
 	NSMutableArray *data;
 }
 
+- (void)dealloc;
 - (IWADTableData *)init:(WadStuff *) wads:(int) numwads;
 
 - (int)numberOfRowsInTableView:(NSTableView *)aTableView;
@@ -60,6 +61,13 @@ static const char* const tableHeaders[NUM_COLUMNS] = { "IWAD", "Game" };
 @end
 
 @implementation IWADTableData
+
+- (void)dealloc
+{
+	[data release];
+
+	[super dealloc];
+}
 
 - (IWADTableData *)init:(WadStuff *) wads:(int) numwads
 {
@@ -76,6 +84,7 @@ static const char* const tableHeaders[NUM_COLUMNS] = { "IWAD", "Game" };
 		[record setObject:[NSString stringWithCString:filename] forKey:[NSString stringWithCString:tableHeaders[COLUMN_IWAD]]];
 		[record setObject:[NSString stringWithCString:IWADInfos[wads[i].Type].Name] forKey:[NSString stringWithCString:tableHeaders[COLUMN_GAME]]];
 		[data addObject:record];
+		[record release];
 	}
 
 	return self;
@@ -96,7 +105,7 @@ static const char* const tableHeaders[NUM_COLUMNS] = { "IWAD", "Game" };
 @end
 
 // So we can listen for button actions and such we need to have an Obj-C class.
-@interface IWADPicker : NSResponder
+@interface IWADPicker : NSObject
 {
 	NSApplication *app;
 	NSWindow *window;
@@ -146,6 +155,7 @@ static const char* const tableHeaders[NUM_COLUMNS] = { "IWAD", "Game" };
 	NSTextField *description = [[NSTextField alloc] initWithFrame:NSMakeRect(22, 379, 372, 50)];
 	[self makeLabel:description:"ZDoom found more than one IWAD\nSelect from the list below to determine which one to use:"];
 	[[window contentView] addSubview:description];
+	[description release];
 
 	// Commented out version would account for an additional parameters box.
 	//NSScrollView *iwadScroller = [[NSScrollView alloc] initWithFrame:NSMakeRect(20, 103, 362, 288)];
@@ -161,14 +171,19 @@ static const char* const tableHeaders[NUM_COLUMNS] = { "IWAD", "Game" };
 		[column setEditable:NO];
 		[column setResizingMask:NSTableColumnAutoresizingMask];
 		[iwadTable addTableColumn:column];
+		[column release];
 	}
 	[iwadScroller setDocumentView:iwadTable];
 	[iwadScroller setHasVerticalScroller:YES];
 	[iwadTable setDataSource:tableData];
 	[iwadTable sizeToFit];
-	[iwadTable selectRowIndexes:[[NSIndexSet alloc] initWithIndex:defaultiwad] byExtendingSelection:NO];
+	NSIndexSet *selection = [[NSIndexSet alloc] initWithIndex:defaultiwad];
+	[iwadTable selectRowIndexes:selection byExtendingSelection:NO];
+	[selection release];
 	[iwadTable scrollRowToVisible:defaultiwad];
 	[[window contentView] addSubview:iwadScroller];
+	[iwadTable release];
+	[iwadScroller release];
 
 	/*NSTextField *additionalParametersLabel = [[NSTextField alloc] initWithFrame:NSMakeRect(17, 78, 144, 17)];
 	[self makeLabel:additionalParametersLabel:"Additional Parameters"];
@@ -200,6 +215,10 @@ static const char* const tableHeaders[NUM_COLUMNS] = { "IWAD", "Game" };
 	[window center];
 	[app runModalForWindow:window];
 
+	[window release];
+	[okButton release];
+	[cancelButton release];
+
 	return cancelled ? -1 : [iwadTable selectedRow];
 }
 
@@ -208,5 +227,8 @@ static const char* const tableHeaders[NUM_COLUMNS] = { "IWAD", "Game" };
 // Simple wrapper so we can call this from outside.
 int I_PickIWad_Cocoa (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 {
-	return [[IWADPicker alloc] pickIWad:wads:numwads:showwin:defaultiwad];
+	IWADPicker *picker = [IWADPicker alloc];
+	int ret = [picker pickIWad:wads:numwads:showwin:defaultiwad];
+	[picker release];
+	return ret;
 }

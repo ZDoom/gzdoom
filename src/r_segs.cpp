@@ -145,7 +145,7 @@ static fixed_t	*maskedtexturecol;
 static FTexture	*WallSpriteTile;
 
 static void R_RenderDecal (side_t *wall, DBaseDecal *first, drawseg_t *clipper, int pass);
-static void WallSpriteColumn (void (*drawfunc)(const BYTE *column, const FTexture::Span *spans));
+static void WallSpriteColumn (void (*drawfunc)(const BYTE *column, const FTexture::Span *spans, WORD depth));
 
 //=============================================================================
 //
@@ -179,7 +179,7 @@ CVAR(Bool, r_drawmirrors, true, 0)
 fixed_t *MaskedSWall;
 fixed_t MaskedScaleY;
 
-static void BlastMaskedColumn (void (*blastfunc)(const BYTE *pixels, const FTexture::Span *spans), FTexture *tex)
+static void BlastMaskedColumn (void (*blastfunc)(const BYTE *pixels, const FTexture::Span *spans, WORD depth), FTexture *tex)
 {
 	if (maskedtexturecol[dc_x] != FIXED_MAX)
 	{
@@ -203,7 +203,7 @@ static void BlastMaskedColumn (void (*blastfunc)(const BYTE *pixels, const FText
 		// draw the texture
 		const FTexture::Span *spans;
 		const BYTE *pixels = tex->GetColumn (maskedtexturecol[dc_x] >> FRACBITS, &spans);
-		blastfunc (pixels, spans);
+		blastfunc (pixels, spans, UINT_MAX);
 		maskedtexturecol[dc_x] = FIXED_MAX;
 	}
 	rw_light += rw_lightstep;
@@ -584,14 +584,7 @@ void R_RenderFakeWalls (drawseg_t *ds, int x1, int x2)
 			WallDepthOrg = -WallUoverZstep * WallTMapScale2;
 
 			PrepWall(swall, lwall, curline->sidedef->TexelLength * rw_pic->xScale);
-			maskwallscan(x1, x2, most1, most2, swall, lwall, ds->yrepeat);
-
-			/*if(useZBuffer)
-			for(int x = x1;x < x2;x++)
-			{
-				for(int y = most1[x];y < most2[x];y++)
-					zbuffer[(x*SCREENHEIGHT)+y] = (ds->sz1 + (ds->sz2 - ds->sz1)/(x2-x1)*(x-x1));
-			}*/
+			maskwallscan(x1, x2, most1, most2, swall, lwall, ds->yrepeat, ds->siz1, ds->siz2);
 		}
 	}
 	return;
@@ -610,7 +603,7 @@ inline fixed_t prevline1 (fixed_t vince, BYTE *colormap, int count, fixed_t vplc
 }
 
 void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal,
-			   fixed_t yrepeat, const BYTE *(*getcol)(FTexture *tex, int x))
+			   fixed_t yrepeat, WORD idepth1, WORD idepth2, const BYTE *(*getcol)(FTexture *tex, int x))
 {
 	int x, shiftval;
 	int y1ve[4], y2ve[4], u4, d4, z;
@@ -770,6 +763,16 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t 
 
 //unclock (WallScanCycles);
 
+	if(useZBuffer)
+	{
+		for(int x = x1;x < x2;x++)
+		{
+			WORD dist = idepth1 + Scale(idepth2 - idepth1, x - x1, x2 - x1);
+			for(int y = uwal[x];y < dwal[x];y++)
+				zbuffer[(x*SCREENHEIGHT)+y] = dist;
+		}
+	}
+
 	NetUpdate ();
 }
 
@@ -830,7 +833,7 @@ inline fixed_t mvline1 (fixed_t vince, BYTE *colormap, int count, fixed_t vplce,
 }
 
 void maskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal,
-	fixed_t yrepeat, const BYTE *(*getcol)(FTexture *tex, int x))
+	fixed_t yrepeat, WORD idepth1, WORD idepth2, const BYTE *(*getcol)(FTexture *tex, int x))
 {
 	int x, shiftval;
 	BYTE *p;
@@ -847,7 +850,7 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixe
 
 	if (!rw_pic->bMasked)
 	{ // Textures that aren't masked can use the faster wallscan.
-		wallscan (x1, x2, uwal, dwal, swal, lwal, yrepeat, getcol);
+		wallscan (x1, x2, uwal, dwal, swal, lwal, yrepeat, idepth1, idepth2, getcol);
 		return;
 	}
 
@@ -986,6 +989,16 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixe
 
 //unclock(WallScanCycles);
 
+	if(useZBuffer)
+	{
+		for(int x = x1;x < x2;x++)
+		{
+			fixed_t dist = idepth1 + Scale(idepth2 - idepth1, x - x1, x2 - x1);
+			for(int y = uwal[x];y < dwal[x];y++)
+				zbuffer[(x*SCREENHEIGHT)+y] = dist;
+		}
+	}
+
 	NetUpdate ();
 }
 
@@ -1000,7 +1013,7 @@ inline void preptmvline1 (fixed_t vince, BYTE *colormap, int count, fixed_t vplc
 }
 
 void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal,
-	fixed_t yrepeat, const BYTE *(*getcol)(FTexture *tex, int x))
+	fixed_t yrepeat, WORD idepth1, WORD idepth2, const BYTE *(*getcol)(FTexture *tex, int x))
 {
 	fixed_t (*tmvline1)();
 	void (*tmvline4)();
@@ -1020,7 +1033,7 @@ void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal,
 	if (!R_GetTransMaskDrawers (&tmvline1, &tmvline4))
 	{
 		// The current translucency is unsupported, so draw with regular maskwallscan instead.
-		maskwallscan (x1, x2, uwal, dwal, swal, lwal, yrepeat, getcol);
+		maskwallscan (x1, x2, uwal, dwal, swal, lwal, yrepeat, idepth1, idepth2, getcol);
 		return;
 	}
 
@@ -1161,6 +1174,16 @@ void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal,
 	}
 
 //unclock(WallScanCycles);
+
+	if(useZBuffer)
+	{
+		for(int x = x1;x < x2;x++)
+		{
+			fixed_t dist = idepth1 + Scale(idepth2 - idepth1, x - x1, x2 - x1);
+			for(int y = uwal[x];y < dwal[x];y++)
+				zbuffer[(x*SCREENHEIGHT)+y] = dist;
+		}
+	}
 
 	NetUpdate ();
 }
@@ -2784,7 +2807,7 @@ done:
 	WallSZ2 = savesz2;
 }
 
-static void WallSpriteColumn (void (*drawfunc)(const BYTE *column, const FTexture::Span *spans))
+static void WallSpriteColumn (void (*drawfunc)(const BYTE *column, const FTexture::Span *spans, WORD depth))
 {
 	unsigned int texturecolumn = lwall[dc_x] >> FRACBITS;
 	dc_iscale = MulScale16 (swall[dc_x], rw_offset);
@@ -2798,6 +2821,6 @@ static void WallSpriteColumn (void (*drawfunc)(const BYTE *column, const FTextur
 	const FTexture::Span *spans;
 	column = WallSpriteTile->GetColumn (texturecolumn, &spans);
 	dc_texturefrac = 0;
-	drawfunc (column, spans);
+	drawfunc (column, spans, 0);
 	rw_light += rw_lightstep;
 }

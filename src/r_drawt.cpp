@@ -45,6 +45,7 @@
 #include "r_draw.h"
 #include "r_main.h"
 #include "r_things.h"
+#include "r_bsp.h"
 #include "v_video.h"
 
 // I should have commented this stuff better.
@@ -1118,7 +1119,7 @@ void R_FillColumnHorizP (void)
 
 // Same as R_DrawMaskedColumn() except that it always uses R_DrawColumnHoriz().
 
-void R_DrawMaskedColumnHoriz (const BYTE *column, const FTexture::Span *span)
+void R_DrawMaskedColumnHoriz (const BYTE *column, const FTexture::Span *span, WORD depth)
 {
 	while (span->Length != 0)
 	{
@@ -1190,6 +1191,13 @@ void R_DrawMaskedColumnHoriz (const BYTE *column, const FTexture::Span *span)
 			dc_source = column + top;
 			dc_dest = ylookup[dc_yl] + dc_x + dc_destorg;
 			dc_count = dc_yh - dc_yl + 1;
+			if(useZBuffer)
+			{
+				for(int y = 0;y < dc_count;y++)
+				{
+					zbuffer[(dc_x*SCREENHEIGHT)+dc_yl+y] = depth;
+				}
+			}
 			hcolfunc_pre ();
 		}
 nextpost:

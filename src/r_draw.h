@@ -105,7 +105,7 @@ extern void (*R_DrawSpanMaskedTranslucent)(void);
 
 // [RH] Span blit into an interleaved intermediate buffer
 extern void (*R_DrawColumnHoriz)(void);
-void R_DrawMaskedColumnHoriz (const BYTE *column, const FTexture::Span *spans);
+void R_DrawMaskedColumnHoriz (const BYTE *column, const FTexture::Span *spans, WORD depth=0);
 
 // [RH] Initialize the above pointers
 void R_InitColumnDrawers ();
@@ -266,12 +266,12 @@ bool R_GetTransMaskDrawers (fixed_t (**tmvline1)(), void (**tmvline4)());
 // to just use the texture's GetColumn() method. It just exists
 // for double-layer skies.
 const BYTE *R_GetColumn (FTexture *tex, int col);
-void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal, fixed_t yrepeat, const BYTE *(*getcol)(FTexture *tex, int col)=R_GetColumn);
+void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal, fixed_t yrepeat, WORD idepth1=0, WORD idepth2=0, const BYTE *(*getcol)(FTexture *tex, int col)=R_GetColumn);
 
 // maskwallscan is exactly like wallscan but does not draw anything where the texture is color 0.
-void maskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal, fixed_t yrepeat, const BYTE *(*getcol)(FTexture *tex, int col)=R_GetColumn);
+void maskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal, fixed_t yrepeat, WORD idepth1=0, WORD idepth2=0, const BYTE *(*getcol)(FTexture *tex, int col)=R_GetColumn);
 
 // transmaskwallscan is like maskwallscan, but it can also blend to the background
-void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal, fixed_t yrepeat, const BYTE *(*getcol)(FTexture *tex, int col)=R_GetColumn);
+void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal, fixed_t yrepeat, WORD idepth1=0, WORD idepth2=0, const BYTE *(*getcol)(FTexture *tex, int col)=R_GetColumn);
 
 #endif

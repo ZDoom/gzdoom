@@ -71,7 +71,7 @@ extern WORD			MirrorFlags;
 extern seg_t*		ActiveWallMirror;
 
 // 3D Floors Z-Buffer
-extern DWORD*		zbuffer;
+extern WORD*		zbuffer;
 extern bool			useZBuffer;
 
 extern TArray<size_t>	WallMirrors;

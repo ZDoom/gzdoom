@@ -1729,6 +1729,6 @@ void R_MultiresInit ()
 	// [BL] Allocate our Z-Buffer
 	if(zbuffer != NULL)
 		delete[] zbuffer;
-	zbuffer = new DWORD[SCREENWIDTH*SCREENHEIGHT];
+	zbuffer = new WORD[SCREENWIDTH*SCREENHEIGHT];
 }
 

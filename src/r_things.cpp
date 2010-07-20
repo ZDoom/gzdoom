@@ -1009,7 +1009,7 @@ fixed_t 		sprtopscreen;
 
 bool			sprflipvert;
 
-void R_DrawMaskedColumn (const BYTE *column, const FTexture::Span *span)
+void R_DrawMaskedColumn (const BYTE *column, const FTexture::Span *span, WORD depth)
 {
 	while (span->Length != 0)
 	{
@@ -1081,6 +1081,13 @@ void R_DrawMaskedColumn (const BYTE *column, const FTexture::Span *span)
 			dc_source = column + top;
 			dc_dest = ylookup[dc_yl] + dc_x + dc_destorg;
 			dc_count = dc_yh - dc_yl + 1;
+			if(useZBuffer)
+			{
+				for(int y = 0;y < dc_count;y++)
+				{
+					zbuffer[(dc_x*SCREENHEIGHT)+dc_yl+y] = depth;
+				}
+			}
 			colfunc ();
 		}
 nextpost:
@@ -1105,6 +1112,7 @@ void R_DrawVisSprite (vissprite_t *vis)
 	dc_colormap = vis->colormap;
 
 	mode = R_SetPatchStyle (vis->RenderStyle, vis->alpha, vis->Translation, vis->FillColor);
+	fixed_t distance = vis->idepth;
 
 	if (mode != DontDraw)
 	{
@@ -1137,7 +1145,7 @@ void R_DrawVisSprite (vissprite_t *vis)
 			while ((dc_x < stop4) && (dc_x & 3))
 			{
 				pixels = tex->GetColumn (frac >> FRACBITS, &spans);
-				R_DrawMaskedColumn (pixels, spans);
+				R_DrawMaskedColumn (pixels, spans, distance);
 				dc_x++;
 				frac += xiscale;
 			}
@@ -1148,7 +1156,7 @@ void R_DrawVisSprite (vissprite_t *vis)
 				for (int zz = 4; zz; --zz)
 				{
 					pixels = tex->GetColumn (frac >> FRACBITS, &spans);
-					R_DrawMaskedColumnHoriz (pixels, spans);
+					R_DrawMaskedColumnHoriz (pixels, spans, distance);
 					dc_x++;
 					frac += xiscale;
 				}
@@ -1158,7 +1166,7 @@ void R_DrawVisSprite (vissprite_t *vis)
 			while (dc_x < x2)
 			{
 				pixels = tex->GetColumn (frac >> FRACBITS, &spans);
-				R_DrawMaskedColumn (pixels, spans);
+				R_DrawMaskedColumn (pixels, spans, distance);
 				dc_x++;
 				frac += xiscale;
 			}
@@ -2295,7 +2303,7 @@ void R_DrawMasked (void)
 #if 0
 	R_SplitVisSprites ();
 #endif
-	memset(zbuffer, 0xFF, SCREENWIDTH*SCREENHEIGHT*sizeof(DWORD));
+	memset(zbuffer, 0, SCREENWIDTH*SCREENHEIGHT*sizeof(WORD));
 	useZBuffer = true;
 	R_SortVisSprites (sv_compare, firstvissprite - vissprites);
 

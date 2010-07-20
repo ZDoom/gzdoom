@@ -90,7 +90,7 @@ extern fixed_t			pspriteyscale;
 extern fixed_t			pspritexiscale;
 
 
-void R_DrawMaskedColumn (const BYTE *column, const FTexture::Span *spans);
+void R_DrawMaskedColumn (const BYTE *column, const FTexture::Span *spans, WORD depth=0);
 
 
 void R_CacheSprite (spritedef_t *sprite);

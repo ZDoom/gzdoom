@@ -230,39 +230,44 @@ void R_MapPlane (int y, int x1)
 #endif
 
 	ds_y = y;
-	ds_x1 = x1;
-	ds_x2 = x2;
 
 	if(useZBuffer)
 	{
 		int x3 = x1;
+		int lastX = x1;
 		for(int x = x1;x < x2;x++)
 		{
-			if(zbuffer[(x*SCREENHEIGHT)+y] < distance)
+			fixed_t zdepth = FixedDiv(FRACUNIT, distance/6);
+			if(zbuffer[(x*SCREENHEIGHT)+y] > zdepth)
 			{
 				ds_x1 = x3;
 				ds_x2 = x-1;
 				if(ds_x1 < ds_x2)
 				{
-					ds_xfrac += ds_xstep*(x3-x1);
-					ds_yfrac += ds_ystep*(x3-x1);
+					ds_xfrac += ds_xstep*(x3-lastX);
+					ds_yfrac += ds_ystep*(x3-lastX);
 					spanfunc ();
+					lastX = x3;
 				}
 				x3 = x+1;
 			}
-			zbuffer[(x*SCREENHEIGHT)+y] = distance;
+			zbuffer[(x*SCREENHEIGHT)+y] = zdepth;
 		}
 		ds_x1 = x3;
 		ds_x2 = x2;
 		if(ds_x1 < ds_x2)
 		{
-			ds_xfrac += ds_xstep*(x3-x1);
-			ds_yfrac += ds_ystep*(x3-x1);
+			ds_xfrac += ds_xstep*(x3-lastX);
+			ds_yfrac += ds_ystep*(x3-lastX);
 			spanfunc ();
 		}
 	}
 	else
+	{
+		ds_x1 = x1;
+		ds_x2 = x2;
 		spanfunc ();
+	}
 }
 
 //==========================================================================
@@ -897,7 +902,7 @@ static void R_DrawSky (visplane_t *pl)
 			lastskycol[x] = 0xffffffff;
 		}
 		wallscan (pl->minx, pl->maxx, (short *)pl->top, (short *)pl->bottom, swall, lwall,
-			frontyScale, backskytex == NULL ? R_GetOneSkyColumn : R_GetTwoSkyColumns);
+			frontyScale, 0, 0, backskytex == NULL ? R_GetOneSkyColumn : R_GetTwoSkyColumns);
 	}
 	else
 	{ // The texture does not tile nicely
@@ -945,7 +950,7 @@ static void R_DrawSkyStriped (visplane_t *pl)
 		{
 			lastskycol[x] = 0xffffffff;
 		}
-		wallscan (pl->minx, pl->maxx, top, bot, swall, lwall, rw_pic->yScale,
+		wallscan (pl->minx, pl->maxx, top, bot, swall, lwall, rw_pic->yScale, 0, 0,
 			backskytex == NULL ? R_GetOneSkyColumn : R_GetTwoSkyColumns);
 		yl = yh;
 		yh += drawheight;
@@ -973,17 +978,32 @@ void R_DrawPlanes (bool fake)
 
 	ds_color = 3;
 
-	for (i = vpcount = 0; i < MAXVISPLANES; i++)
+	if(!fake)
 	{
-		for (pl = visplanes[i]; pl; pl = pl->next)
+		for (i = vpcount = 0; i < MAXVISPLANES; i++)
 		{
-			if(!pl->fakePlane && !fake) 
-				R_DrawSinglePlane (pl, OPAQUE, false);
-			else if(pl->fakePlane && fake)
-				R_DrawSinglePlane (pl, pl->alpha, true);
-			else
-				continue; // [BL] Do we need to keep vpcount accurate?
-			vpcount++;
+			for (pl = visplanes[i]; pl; pl = pl->next)
+			{
+				if(!pl->fakePlane && !fake)
+				{
+					R_DrawSinglePlane (pl, OPAQUE, false);
+					vpcount++;
+				}
+			}
+		}
+	}
+	else
+	{
+		for (i = MAXVISPLANES, vpcount = 0; i >= 0; i--)
+		{
+			for (pl = visplanes[i]; pl; pl = pl->next)
+			{
+				if(pl->fakePlane)
+				{
+					R_DrawSinglePlane (pl, pl->alpha, true);
+					vpcount++;
+				}
+			}
 		}
 	}
 }

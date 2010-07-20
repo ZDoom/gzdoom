@@ -583,8 +583,11 @@ void R_RenderFakeWalls (drawseg_t *ds, int x1, int x2)
 			WallDepthScale = WallInvZstep * WallTMapScale2;
 			WallDepthOrg = -WallUoverZstep * WallTMapScale2;
 
+			float idepthStep = (ds->x2 == ds->x1 ? 0 : (float) (ds->siz2 - ds->siz1)/(float) (ds->x2 - ds->x1));
+			WORD idepthStart = ds->siz1 + (x1-ds->x1)*idepthStep;
+
 			PrepWall(swall, lwall, curline->sidedef->TexelLength * rw_pic->xScale);
-			maskwallscan(x1, x2, most1, most2, swall, lwall, ds->yrepeat, ds->siz1, ds->siz2);
+			maskwallscan(x1, x2, most1, most2, swall, lwall, ds->yrepeat, idepthStart, idepthStep);
 		}
 	}
 	return;
@@ -603,7 +606,7 @@ inline fixed_t prevline1 (fixed_t vince, BYTE *colormap, int count, fixed_t vplc
 }
 
 void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal,
-			   fixed_t yrepeat, WORD idepth1, WORD idepth2, const BYTE *(*getcol)(FTexture *tex, int x))
+			   fixed_t yrepeat, WORD idepth, float idepthStep, const BYTE *(*getcol)(FTexture *tex, int x))
 {
 	int x, shiftval;
 	int y1ve[4], y2ve[4], u4, d4, z;
@@ -767,7 +770,7 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t 
 	{
 		for(int x = x1;x < x2;x++)
 		{
-			WORD dist = idepth1 + Scale(idepth2 - idepth1, x - x1, x2 - x1);
+			WORD dist = idepth + (x-x1)*idepthStep;
 			for(int y = uwal[x];y < dwal[x];y++)
 				zbuffer[(x*SCREENHEIGHT)+y] = dist;
 		}
@@ -833,7 +836,7 @@ inline fixed_t mvline1 (fixed_t vince, BYTE *colormap, int count, fixed_t vplce,
 }
 
 void maskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal,
-	fixed_t yrepeat, WORD idepth1, WORD idepth2, const BYTE *(*getcol)(FTexture *tex, int x))
+	fixed_t yrepeat, WORD idepth, float idepthStep, const BYTE *(*getcol)(FTexture *tex, int x))
 {
 	int x, shiftval;
 	BYTE *p;
@@ -850,7 +853,7 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixe
 
 	if (!rw_pic->bMasked)
 	{ // Textures that aren't masked can use the faster wallscan.
-		wallscan (x1, x2, uwal, dwal, swal, lwal, yrepeat, idepth1, idepth2, getcol);
+		wallscan (x1, x2, uwal, dwal, swal, lwal, yrepeat, idepth, idepthStep, getcol);
 		return;
 	}
 
@@ -993,7 +996,7 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixe
 	{
 		for(int x = x1;x < x2;x++)
 		{
-			fixed_t dist = idepth1 + Scale(idepth2 - idepth1, x - x1, x2 - x1);
+			WORD dist = idepth + (x-x1)*idepthStep;
 			for(int y = uwal[x];y < dwal[x];y++)
 				zbuffer[(x*SCREENHEIGHT)+y] = dist;
 		}
@@ -1013,7 +1016,7 @@ inline void preptmvline1 (fixed_t vince, BYTE *colormap, int count, fixed_t vplc
 }
 
 void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal,
-	fixed_t yrepeat, WORD idepth1, WORD idepth2, const BYTE *(*getcol)(FTexture *tex, int x))
+	fixed_t yrepeat, WORD idepth, float idepthStep, const BYTE *(*getcol)(FTexture *tex, int x))
 {
 	fixed_t (*tmvline1)();
 	void (*tmvline4)();
@@ -1033,7 +1036,7 @@ void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal,
 	if (!R_GetTransMaskDrawers (&tmvline1, &tmvline4))
 	{
 		// The current translucency is unsupported, so draw with regular maskwallscan instead.
-		maskwallscan (x1, x2, uwal, dwal, swal, lwal, yrepeat, idepth1, idepth2, getcol);
+		maskwallscan (x1, x2, uwal, dwal, swal, lwal, yrepeat, idepth, idepthStep, getcol);
 		return;
 	}
 
@@ -1179,7 +1182,7 @@ void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal,
 	{
 		for(int x = x1;x < x2;x++)
 		{
-			fixed_t dist = idepth1 + Scale(idepth2 - idepth1, x - x1, x2 - x1);
+			WORD dist = idepth + (x-x1)*idepthStep;
 			for(int y = uwal[x];y < dwal[x];y++)
 				zbuffer[(x*SCREENHEIGHT)+y] = dist;
 		}

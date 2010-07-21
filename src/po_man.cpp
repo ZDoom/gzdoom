@@ -136,7 +136,7 @@ static void UnLinkPolyobj (FPolyObj *po);
 static void LinkPolyobj (FPolyObj *po);
 static bool CheckMobjBlocking (side_t *seg, FPolyObj *po);
 static void InitBlockMap (void);
-static void IterFindPolySegs (vertex_t *v1, vertex_t *v2, seg_t **segList);
+static void IterFindPolySides (vertex_t *v1, vertex_t *v2, seg_t **segList);
 static void SpawnPolyobj (int index, int tag, int type);
 static void TranslateToStartSpot (int tag, int originX, int originY);
 static void DoMovePolyobj (FPolyObj *po, int x, int y);
@@ -1282,7 +1282,7 @@ void FPolyObj::ClosestPoint(fixed_t fx, fixed_t fy, fixed_t &ox, fixed_t &oy, si
 
 vertex_t *FPolyObj::GetNewVertex()
 {
-	if (SVIndex == -1 || SplitVertices[SVIndex]->used == 10)
+	if (SVIndex == ~0u || SplitVertices[SVIndex]->used == 10)
 	{
 		SVIndex++;
 		if (SVIndex >= SplitVertices.Size())
@@ -1315,9 +1315,9 @@ static void InitBlockMap (void)
 
 //==========================================================================
 //
-// InitSegLists [RH]
+// InitSideLists [RH]
 //
-// Group segs by vertex and collect segs that are known to belong to a
+// Group sides by vertex and collect side that are known to belong to a
 // polyobject so that they can be initialized fast.
 //==========================================================================
 
@@ -1344,7 +1344,7 @@ static void InitSideLists ()
 
 //==========================================================================
 //
-// KilSegLists [RH]
+// KillSideLists [RH]
 //
 //==========================================================================
 
@@ -1358,11 +1358,11 @@ static void KillSideLists ()
 
 //==========================================================================
 //
-// IterFindPolySegs
+// IterFindPolySides
 //
 //==========================================================================
 
-static void IterFindPolySegs (FPolyObj *po, side_t *side)
+static void IterFindPolySides (FPolyObj *po, side_t *side)
 {
 	SDWORD j;
 	int i;
@@ -1389,7 +1389,7 @@ static void IterFindPolySegs (FPolyObj *po, side_t *side)
 		}
 		po->Sidedefs.Push(side);
 	}
-	I_Error ("IterFindPolySegs: Non-closed Polyobj at linedef %d.\n",
+	I_Error ("IterFindPolySides: Non-closed Polyobj at linedef %d.\n",
 		side->linedef-lines);
 }
 
@@ -1426,7 +1426,7 @@ static void SpawnPolyobj (int index, int tag, int type)
 			}
 			sd->linedef->special = 0;
 			sd->linedef->args[0] = 0;
-			IterFindPolySegs(&polyobjs[index], sd);
+			IterFindPolySides(&polyobjs[index], sd);
 			po->crush = (type != PO_SPAWN_TYPE) ? 3 : 0;
 			po->bHurtOnTouch = (type == PO_SPAWNHURT_TYPE);
 			po->tag = tag;
@@ -1804,16 +1804,68 @@ static double PartitionDistance(vertex_t *vt, node_t *node)
 
 //==========================================================================
 //
+// AddToBBox
+//
+//==========================================================================
+
+static void AddToBBox(fixed_t child[4], fixed_t parent[4])
+{
+	if (child[BOXTOP] > parent[BOXTOP])
+	{
+		parent[BOXTOP] = child[BOXTOP];
+	}
+	if (child[BOXBOTTOM] < parent[BOXBOTTOM])
+	{
+		parent[BOXBOTTOM] = child[BOXBOTTOM];
+	}
+	if (child[BOXLEFT] < parent[BOXLEFT])
+	{
+		parent[BOXLEFT] = child[BOXLEFT];
+	}
+	if (child[BOXRIGHT] > parent[BOXRIGHT])
+	{
+		parent[BOXRIGHT] = child[BOXRIGHT];
+	}
+}
+
+//==========================================================================
+//
+// AddToBBox
+//
+//==========================================================================
+
+static void AddToBBox(vertex_t *v, fixed_t bbox[4])
+{
+	if (v->x < bbox[BOXLEFT])
+	{
+		bbox[BOXLEFT] = v->x;
+	}
+	if (v->x > bbox[BOXRIGHT])
+	{
+		bbox[BOXRIGHT] = v->x;
+	}
+	if (v->y < bbox[BOXBOTTOM])
+	{
+		bbox[BOXBOTTOM] = v->y;
+	}
+	if (v->y > bbox[BOXTOP])
+	{
+		bbox[BOXTOP] = v->y;
+	}
+}
+
+//==========================================================================
+//
 // SplitPoly
 //
 //==========================================================================
 
-static void SplitPoly(FPolyNode *pnode, void *node)
+static void SplitPoly(FPolyNode *pnode, void *node, fixed_t bbox[4])
 {
 	static TArray<seg_t> lists[2];
 	static const double POLY_EPSILON = 0.3125;
 
-	while (!((size_t)node & 1))  // Keep going until found a subsector
+	if (!((size_t)node & 1))  // Keep going until found a subsector
 	{
 		node_t *bsp = (node_t *)node;
 
@@ -1929,11 +1981,13 @@ static void SplitPoly(FPolyNode *pnode, void *node)
 			}
 			if (lists[1].Size() == 0)
 			{
-				node = bsp->children[0];
+				SplitPoly(pnode, bsp->children[0], bsp->bbox[0]);
+				AddToBBox(bsp->bbox[0], bbox);
 			}
 			else if (lists[0].Size() == 0)
 			{
-				node = bsp->children[1];
+				SplitPoly(pnode, bsp->children[1], bsp->bbox[1]);
+				AddToBBox(bsp->bbox[1], bbox);
 			}
 			else
 			{
@@ -1951,32 +2005,51 @@ static void SplitPoly(FPolyNode *pnode, void *node)
 				pnode->segs = lists[0];
 			
 				// recurse back side
-				SplitPoly(newnode, bsp->children[1]);
-				node = bsp->children[0];
+				SplitPoly(newnode, bsp->children[1], bsp->bbox[1]);
+				
+				// recurse front side
+				SplitPoly(pnode, bsp->children[0], bsp->bbox[0]);
+
+				AddToBBox(bsp->bbox[0], bbox);
+				AddToBBox(bsp->bbox[1], bbox);
 			}
 		}
 	}
-
-	// we reached a subsector so we can link the node with this subsector
-	subsector_t *sub = (subsector_t *)((BYTE *)node - 1);
-
-	// Link node to subsector
-	pnode->pnext = sub->polys;
-	if (pnode->pnext != NULL) 
+	else
 	{
-		assert(pnode->pnext->state == 1337);
-		pnode->pnext->pprev = pnode;
+		// we reached a subsector so we can link the node with this subsector
+		subsector_t *sub = (subsector_t *)((BYTE *)node - 1);
+
+		// Link node to subsector
+		pnode->pnext = sub->polys;
+		if (pnode->pnext != NULL) 
+		{
+			assert(pnode->pnext->state == 1337);
+			pnode->pnext->pprev = pnode;
+		}
+		pnode->pprev = NULL;
+		sub->polys = pnode;
+
+		// link node to polyobject
+		pnode->snext = pnode->poly->subsectorlinks;
+		pnode->poly->subsectorlinks = pnode;
+		pnode->subsector = sub;
+
+		// calculate bounding box for this polynode
+		assert(pnode->segs.Size() != 0);
+		fixed_t subbbox[4] = { FIXED_MIN, FIXED_MAX, FIXED_MAX, FIXED_MIN };
+
+		for (unsigned i = 0; i < pnode->segs.Size(); ++i)
+		{
+			AddToBBox(pnode->segs[i].v1, subbbox);
+			AddToBBox(pnode->segs[i].v2, subbbox);
+		}
+		// Potentially expand the parent node's bounding box to contain these bits of polyobject.
+		AddToBBox(subbbox, bbox);
+
+		Printf(PRINT_LOG, "Adding %d segs of polyobj %d to subsector %d (sector %d)\n",
+			pnode->segs.Size(), pnode->poly->tag, sub-subsectors, sub->sector->sectornum);
 	}
-	pnode->pprev = NULL;
-	sub->polys = pnode;
-
-	// link node to polyobject
-	pnode->snext = pnode->poly->subsectorlinks;
-	pnode->poly->subsectorlinks = pnode;
-	pnode->subsector = sub;
-
-	Printf(PRINT_LOG, "Adding %d segs of polyobj %d to subsector %d (sector %d)\n",
-		pnode->segs.Size(), pnode->poly->tag, sub-subsectors, sub->sector->sectornum);
 }
 
 //==========================================================================
@@ -1988,6 +2061,7 @@ static void SplitPoly(FPolyNode *pnode, void *node)
 void FPolyObj::CreateSubsectorLinks()
 {
 	FPolyNode *node = new FPolyNode;
+	fixed_t dummybbox[4];
 
 	node->state = 1337;
 	node->poly = this;
@@ -2012,7 +2086,7 @@ void FPolyObj::CreateSubsectorLinks()
 		seg->PartnerSeg = NULL;
 		seg->bPolySeg = true;
 	}
-	SplitPoly(node, nodes + numnodes - 1);
+	SplitPoly(node, nodes + numnodes - 1, dummybbox);
 }
 
 //==========================================================================

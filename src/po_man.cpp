@@ -1874,145 +1874,131 @@ static void SplitPoly(FPolyNode *pnode, void *node, fixed_t bbox[4])
 		Printf(PRINT_LOG, "------------------------------\n");
 
 
-		/*
-		// Well, it looks like this optimization does not work... Too bad. :(
-		int boxside = pnode->poly->Bounds.BoxOnNodeSide(bsp);
-		if (boxside != -1)
-		{
-			Printf(PRINT_LOG, "Fully on side %d\n", boxside);
-			// The entire polyobject is on one side of the node so no need to do further checks
-			// with this node. Just pick the proper child and go on.
-			node = bsp->children[boxside];
-		}
-		else
-		*/
-		{
-			int centerside = R_PointOnSide(pnode->poly->CenterSpot.x, pnode->poly->CenterSpot.y, bsp);
+		int centerside = R_PointOnSide(pnode->poly->CenterSpot.x, pnode->poly->CenterSpot.y, bsp);
 
-			lists[0].Clear();
-			lists[1].Clear();
-			for(unsigned i=0;i<pnode->segs.Size(); i++)
+		lists[0].Clear();
+		lists[1].Clear();
+		for(unsigned i=0;i<pnode->segs.Size(); i++)
+		{
+			seg_t *seg = &pnode->segs[i];
+
+			// Parts of the following code were taken from Eternity and are
+			// being used with permission.
+
+			// get distance of vertices from partition line
+			// If the distance is too small, we may decide to
+			// change our idea of sidedness.
+			double dist_v1 = PartitionDistance(seg->v1, bsp);
+			double dist_v2 = PartitionDistance(seg->v2, bsp);
+
+			// If the distances are less than epsilon, consider the points as being
+			// on the same side as the polyobj origin. Why? People like to build
+			// polyobject doors flush with their door tracks. This breaks using the
+			// usual assumptions.
+			
+
+			// Addition to Eternity code: We must also check any seg with only one
+			// vertex inside the epsilon threshold. If not, these lines will get split but
+			// adjoining ones with both vertices inside the threshold won't thus messing up
+			// the order in which they get drawn.
+
+			Printf(PRINT_LOG, "Checking seg (%4.3f,%4.3f) - (%4.3f,%4.3f)\n",
+				seg->v1->x/65536.f, seg->v1->y/65536.f, seg->v2->x/65536.f, seg->v2->y/65536.f);
+
+			if(dist_v1 <= POLY_EPSILON)
 			{
-				seg_t *seg = &pnode->segs[i];
-
-				// Parts of the following code were taken from Eternity and are
-				// being used with permission.
-
-				// get distance of vertices from partition line
-				// If the distance is too small, we may decide to
-				// change our idea of sidedness.
-				double dist_v1 = PartitionDistance(seg->v1, bsp);
-				double dist_v2 = PartitionDistance(seg->v2, bsp);
-
-				// If the distances are less than epsilon, consider the points as being
-				// on the same side as the polyobj origin. Why? People like to build
-				// polyobject doors flush with their door tracks. This breaks using the
-				// usual assumptions.
-				
-
-				// Addition to Eternity code: We must also check any seg with only one
-				// vertex inside the epsilon threshold. If not, these lines will get split but
-				// adjoining ones with both vertices inside the threshold won't thus messing up
-				// the order in which they get drawn.
-
-				Printf(PRINT_LOG, "Checking seg (%4.3f,%4.3f) - (%4.3f,%4.3f)\n",
-					seg->v1->x/65536.f, seg->v1->y/65536.f, seg->v2->x/65536.f, seg->v2->y/65536.f);
-
-				if(dist_v1 <= POLY_EPSILON)
+				if (dist_v2 <= POLY_EPSILON)
 				{
-					if (dist_v2 <= POLY_EPSILON)
+					Printf(PRINT_LOG, "\tSorted to center side %d.\n", centerside);
+					lists[centerside].Push(*seg);
+				}
+				else
+				{
+					int side = R_PointOnSide(seg->v2->x, seg->v2->y, bsp);
+					Printf(PRINT_LOG, "\tSorted to side %d (eps at v1).\n", side);
+					lists[side].Push(*seg);
+				}
+			}
+			else if (dist_v2 <= POLY_EPSILON)
+			{
+				int side = R_PointOnSide(seg->v1->x, seg->v1->y, bsp);
+				Printf(PRINT_LOG, "\tSorted to side %d (eps at v2).\n", side);
+				lists[side].Push(*seg);
+			}
+			else 
+			{
+				int side1 = R_PointOnSide(seg->v1->x, seg->v1->y, bsp);
+				int side2 = R_PointOnSide(seg->v2->x, seg->v2->y, bsp);
+
+				if(side1 != side2)
+				{
+					// if the partition line crosses this seg, we must split it.
+
+					vertex_t  *vert = pnode->poly->GetNewVertex();
+
+					if (GetIntersection(seg, bsp, vert))
 					{
-						Printf(PRINT_LOG, "\tSorted to center side %d.\n", centerside);
-						lists[centerside].Push(*seg);
+						lists[0].Push(*seg);
+						lists[1].Push(*seg);
+						lists[side1].Last().v2 = vert;
+						lists[side2].Last().v1 = vert;
+
+						Printf(PRINT_LOG, "\tSplitting seg into\n"
+							"\t\tFirst: (%4.3f,%4.3f) - (%4.3f,%4.3f)\n"
+							"\t\tSecond: (%4.3f,%4.3f) - (%4.3f,%4.3f)\n",
+
+							lists[side1].Last().v1->x/65536.f, lists[side1].Last().v1->y/65536.f, lists[side1].Last().v2->x/65536.f, lists[side1].Last().v2->y/65536.f,
+							lists[side2].Last().v1->x/65536.f, lists[side2].Last().v1->y/65536.f, lists[side2].Last().v2->x/65536.f, lists[side2].Last().v2->y/65536.f);
 					}
 					else
 					{
-						int side = R_PointOnSide(seg->v2->x, seg->v2->y, bsp);
-						Printf(PRINT_LOG, "\tSorted to side %d (eps at v1).\n", side);
-						lists[side].Push(*seg);
+						// should never happen
+						lists[side1].Push(*seg);
+
+						Printf(PRINT_LOG, "\tSplit error\n");
 					}
-				}
-				else if (dist_v2 <= POLY_EPSILON)
-				{
-					int side = R_PointOnSide(seg->v1->x, seg->v1->y, bsp);
-					Printf(PRINT_LOG, "\tSorted to side %d (eps at v2).\n", side);
-					lists[side].Push(*seg);
 				}
 				else 
 				{
-					int side1 = R_PointOnSide(seg->v1->x, seg->v1->y, bsp);
-					int side2 = R_PointOnSide(seg->v2->x, seg->v2->y, bsp);
-
-					if(side1 != side2)
-					{
-						// if the partition line crosses this seg, we must split it.
-
-						vertex_t  *vert = pnode->poly->GetNewVertex();
-
-						if (GetIntersection(seg, bsp, vert))
-						{
-							lists[0].Push(*seg);
-							lists[1].Push(*seg);
-							lists[side1].Last().v2 = vert;
-							lists[side2].Last().v1 = vert;
-
-							Printf(PRINT_LOG, "\tSplitting seg into\n"
-								"\t\tFirst: (%4.3f,%4.3f) - (%4.3f,%4.3f)\n"
-								"\t\tSecond: (%4.3f,%4.3f) - (%4.3f,%4.3f)\n",
-
-								lists[side1].Last().v1->x/65536.f, lists[side1].Last().v1->y/65536.f, lists[side1].Last().v2->x/65536.f, lists[side1].Last().v2->y/65536.f,
-								lists[side2].Last().v1->x/65536.f, lists[side2].Last().v1->y/65536.f, lists[side2].Last().v2->x/65536.f, lists[side2].Last().v2->y/65536.f);
-						}
-						else
-						{
-							// should never happen
-							lists[side1].Push(*seg);
-
-							Printf(PRINT_LOG, "\tSplit error\n");
-						}
-					}
-					else 
-					{
-						// both points on the same side.
-						Printf(PRINT_LOG, "\tSorted to side %d.\n", side1);
-						lists[side1].Push(*seg);
-					}
+					// both points on the same side.
+					Printf(PRINT_LOG, "\tSorted to side %d.\n", side1);
+					lists[side1].Push(*seg);
 				}
 			}
-			if (lists[1].Size() == 0)
-			{
-				SplitPoly(pnode, bsp->children[0], bsp->bbox[0]);
-				AddToBBox(bsp->bbox[0], bbox);
-			}
-			else if (lists[0].Size() == 0)
-			{
-				SplitPoly(pnode, bsp->children[1], bsp->bbox[1]);
-				AddToBBox(bsp->bbox[1], bbox);
-			}
-			else
-			{
-				// create the new node 
-				FPolyNode *newnode = new FPolyNode;
-				newnode->state = 1337;
-				newnode->poly = pnode->poly;
-				newnode->pnext = NULL;
-				newnode->pprev = NULL;
-				newnode->subsector = NULL;
-				newnode->snext = NULL;
-				newnode->segs = lists[1];
+		}
+		if (lists[1].Size() == 0)
+		{
+			SplitPoly(pnode, bsp->children[0], bsp->bbox[0]);
+			AddToBBox(bsp->bbox[0], bbox);
+		}
+		else if (lists[0].Size() == 0)
+		{
+			SplitPoly(pnode, bsp->children[1], bsp->bbox[1]);
+			AddToBBox(bsp->bbox[1], bbox);
+		}
+		else
+		{
+			// create the new node 
+			FPolyNode *newnode = new FPolyNode;
+			newnode->state = 1337;
+			newnode->poly = pnode->poly;
+			newnode->pnext = NULL;
+			newnode->pprev = NULL;
+			newnode->subsector = NULL;
+			newnode->snext = NULL;
+			newnode->segs = lists[1];
 
-				// set segs for original node
-				pnode->segs = lists[0];
+			// set segs for original node
+			pnode->segs = lists[0];
+		
+			// recurse back side
+			SplitPoly(newnode, bsp->children[1], bsp->bbox[1]);
 			
-				// recurse back side
-				SplitPoly(newnode, bsp->children[1], bsp->bbox[1]);
-				
-				// recurse front side
-				SplitPoly(pnode, bsp->children[0], bsp->bbox[0]);
+			// recurse front side
+			SplitPoly(pnode, bsp->children[0], bsp->bbox[0]);
 
-				AddToBBox(bsp->bbox[0], bbox);
-				AddToBBox(bsp->bbox[1], bbox);
-			}
+			AddToBBox(bsp->bbox[0], bbox);
+			AddToBBox(bsp->bbox[1], bbox);
 		}
 	}
 	else

@@ -354,7 +354,7 @@ FSwitchDef *ParseSwitchDef (FScanner &sc, bool ignoreBad)
 				max = sc.Number & 65535;
 				if (min > max)
 				{
-					swap (min, max);
+					swapvalues (min, max);
 				}
 				thisframe.Time = ((max - min + 1) << 16) | min;
 			}

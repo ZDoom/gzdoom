@@ -224,7 +224,7 @@ void FPalette::MakeGoodRemap ()
 				if (new0 > dup)
 				{
 					// Make the lower-numbered entry a copy of color 0. (Just because.)
-					swap (new0, dup);
+					swapvalues (new0, dup);
 				}
 				Remap[0] = new0;
 				Remap[new0] = dup;

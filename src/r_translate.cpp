@@ -312,8 +312,8 @@ void FRemapTable::AddIndexRange(int start, int end, int pal1, int pal2)
 
 	if (start > end)
 	{
-		swap (start, end);
-		swap (pal1, pal2);
+		swapvalues (start, end);
+		swapvalues (pal1, pal2);
 	}
 	else if (start == end)
 	{
@@ -354,7 +354,7 @@ void FRemapTable::AddColorRange(int start, int end, int _r1,int _g1, int _b1, in
 
 	if (start > end)
 	{
-		swap (start, end);
+		swapvalues (start, end);
 		r = r2;
 		g = g2;
 		b = b2;

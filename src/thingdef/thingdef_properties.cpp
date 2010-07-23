@@ -1861,7 +1861,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, colorrange, I_I, PlayerPawn)
 	PROP_INT_PARM(end, 1);
 
 	if (start > end)
-		swap (start, end);
+		swapvalues (start, end);
 
 	info->Class->Meta.SetMetaInt (APMETA_ColorRange, (start & 255) | ((end & 255) << 8));
 }

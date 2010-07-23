@@ -919,7 +919,7 @@ void DCanvas::DrawLine(int x0, int y0, int x1, int y1, int palColor, uint32 real
 	{ // horizontal line
 		if (x0 > x1)
 		{
-			swap (x0, x1);
+			swapvalues (x0, x1);
 		}
 		memset (GetBuffer() + y0*GetPitch() + x0, palColor, deltaX+1);
 	}

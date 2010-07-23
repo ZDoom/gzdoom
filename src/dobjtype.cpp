@@ -68,7 +68,7 @@ void PClass::StaticInit ()
 	// MinGW's linker is linking the object files backwards for me now...
 	if (head > tail)
 	{
-		swap (head, tail);
+		swapvalues (head, tail);
 	}
 	qsort (head + 1, tail - head - 1, sizeof(REGINFO), cregcmp);
 

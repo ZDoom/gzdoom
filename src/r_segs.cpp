@@ -2302,7 +2302,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 		int t = 256-WallTX1;
 		WallTX1 = 256-WallTX2;
 		WallTX2 = t;
-		swap (WallTY1, WallTY2);
+		swapvalues (WallTY1, WallTY2);
 	}
 
 	if (WallTX1 >= -WallTY1)
@@ -2433,11 +2433,11 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 		goto done;
 	}
 
-	swap (x1, WallSX1);
-	swap (x2, WallSX2);
+	swapvalues (x1, WallSX1);
+	swapvalues (x2, WallSX2);
 	PrepWall (swall, lwall, WallSpriteTile->GetWidth() << FRACBITS);
-	swap (x1, WallSX1);
-	swap (x2, WallSX2);
+	swapvalues (x1, WallSX1);
+	swapvalues (x2, WallSX2);
 
 	if (flipx)
 	{

@@ -371,7 +371,7 @@ bool FNodeBuilder::CheckSubsectorOverlappingSegs (DWORD set, node_t &node, DWORD
 			{
 				if (Segs[seg2].linedef == -1)
 				{ // Do not put minisegs into a new subsector.
-					swap (seg1, seg2);
+					swapvalues (seg1, seg2);
 				}
 				D(Printf(PRINT_LOG, "Need to synthesize a splitter for set %d on seg %d (ov)\n", set, seg2));
 				splitseg = DWORD_MAX;

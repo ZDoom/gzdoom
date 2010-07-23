@@ -377,7 +377,7 @@ fixed_t R_PointToDist2 (fixed_t dx, fixed_t dy)
 
 	if (dy > dx)
 	{
-		swap (dx, dy);
+		swapvalues (dx, dy);
 	}
 
 	return FixedDiv (dx, finecosine[tantoangle[FixedDiv (dy, dx) >> DBITS] >> ANGLETOFINESHIFT]);

@@ -1204,7 +1204,7 @@ void RP_AddLine (seg_t *line)
 	{ // The seg is only part of the wall.
 		if (line->linedef->sidedef[0] != line->sidedef)
 		{
-			swap (v1, v2);
+			swapvalues (v1, v2);
 		}
 		tx1 = v1->x - viewx;
 		tx2 = v2->x - viewx;

@@ -2967,7 +2967,7 @@ void STACK_ARGS D3DFB::DrawTextureV (FTexture *img, double x, double y, uint32 t
 
 	if (parms.flipX)
 	{
-		swap(u0, u1);
+		swapvalues(u0, u1);
 	}
 	if (parms.windowleft > 0 || parms.windowright < parms.texwidth)
 	{
@@ -3640,7 +3640,7 @@ bool D3DFB::SetStyle(D3DTex *tex, DrawParms &parms, D3DCOLOR &color0, D3DCOLOR &
 			if (quad.Flags & BQF_InvertSource)
 			{
 				quad.Flags &= ~BQF_InvertSource;
-				swap(start, end);
+				swapvalues(start, end);
 			}
 			quad.ShaderNum = BQS_SpecialColormap;
 			color0 = D3DCOLOR_RGBA(DWORD(start[0]/2*255), DWORD(start[1]/2*255), DWORD(start[2]/2*255), color0 >> 24);

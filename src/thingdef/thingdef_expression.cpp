@@ -1667,7 +1667,7 @@ ExpVal FxRandom::EvalExpression (AActor *self)
 
 		if (maxval < minval)
 		{
-			swap (maxval, minval);
+			swapvalues (maxval, minval);
 		}
 
 		val.Int = (*rng)(maxval - minval + 1) + minval;
@@ -1714,7 +1714,7 @@ ExpVal FxFRandom::EvalExpression (AActor *self)
 
 		if (maxval < minval)
 		{
-			swap (maxval, minval);
+			swapvalues (maxval, minval);
 		}
 
 		val.Float = frandom * (maxval - minval) + minval;

@@ -366,12 +366,12 @@ void FTexture::FlipSquareBlock (BYTE *block, int x, int y)
 		if (count & 1)
 		{
 			count--;
-			swap<BYTE> (corner[count], corner[count*x]);
+			swapvalues<BYTE> (corner[count], corner[count*x]);
 		}
 		for (j = 0; j < count; j += 2)
 		{
-			swap<BYTE> (corner[j], corner[j*x]);
-			swap<BYTE> (corner[j+1], corner[(j+1)*x]);
+			swapvalues<BYTE> (corner[j], corner[j*x]);
+			swapvalues<BYTE> (corner[j+1], corner[(j+1)*x]);
 		}
 	}
 }

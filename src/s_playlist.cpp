@@ -162,7 +162,7 @@ void FPlayList::Shuffle ()
 
 	for (i = 0; i < numsongs; ++i)
 	{
-		swap (Songs[i], Songs[(rand() % (numsongs - i)) + i]);
+		swapvalues (Songs[i], Songs[(rand() % (numsongs - i)) + i]);
 	}
 	Position = 0;
 }

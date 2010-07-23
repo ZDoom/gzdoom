@@ -2631,7 +2631,7 @@ static void P_CreateBlockMap ()
 		{
 			if (bx > bx2)
 			{
-				swap (block, endblock);
+				swapvalues (block, endblock);
 			}
 			do
 			{
@@ -2643,7 +2643,7 @@ static void P_CreateBlockMap ()
 		{
 			if (by > by2)
 			{
-				swap (block, endblock);
+				swapvalues (block, endblock);
 			}
 			do
 			{

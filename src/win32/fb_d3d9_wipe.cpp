@@ -231,7 +231,7 @@ void D3DFB::WipeEndScreen()
 	// waste time copying from TempRenderTexture to FinalWipeScreen.
 	if (FinalWipeScreen != TempRenderTexture)
 	{
-		swap(RenderTexture[CurrRenderTexture], FinalWipeScreen);
+		swapvalues(RenderTexture[CurrRenderTexture], FinalWipeScreen);
 		TempRenderTexture = RenderTexture[CurrRenderTexture];
 	}
 

@@ -574,7 +574,7 @@ void R_AddLine (seg_t *line)
 		int t = 256-WallTX1;
 		WallTX1 = 256-WallTX2;
 		WallTX2 = t;
-		swap (WallTY1, WallTY2);
+		swapvalues (WallTY1, WallTY2);
 	}
 
 	if (WallTX1 >= -WallTY1)
@@ -651,7 +651,7 @@ void R_AddLine (seg_t *line)
 	{ // The seg is only part of the wall.
 		if (line->linedef->sidedef[0] != line->sidedef)
 		{
-			swap (v1, v2);
+			swapvalues (v1, v2);
 		}
 		tx1 = v1->x - viewx;
 		tx2 = v2->x - viewx;
@@ -901,7 +901,7 @@ static bool R_CheckBBox (fixed_t *bspcoord)	// killough 1/28/98: static
 		int t = 256-rx1;
 		rx1 = 256-rx2;
 		rx2 = t;
-		swap (ry1, ry2);
+		swapvalues (ry1, ry2);
 	}
 
 	if (rx1 >= -ry1)

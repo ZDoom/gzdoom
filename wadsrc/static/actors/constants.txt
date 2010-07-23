@@ -95,6 +95,10 @@ const int CPF_USEAMMO = 1;
 const int CPF_DAGGER = 2;
 const int CPF_PULLIN = 4;
 
+// Flags for A_Teleport
+const int TF_TELEFRAG = 1;
+const int TF_RANDOMDECIDE = 2;
+
 // Activation flags
 enum
 {

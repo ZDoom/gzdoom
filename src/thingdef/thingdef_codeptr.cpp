@@ -66,6 +66,7 @@
 #include "v_font.h"
 #include "doomstat.h"
 #include "v_palette.h"
+#include "g_shared/a_specialspot.h"
 
 
 static FRandom pr_camissile ("CustomActorfire");
@@ -81,6 +82,7 @@ static FRandom pr_spawndebris ("SpawnDebris");
 static FRandom pr_spawnitemex ("SpawnItemEx");
 static FRandom pr_burst ("Burst");
 static FRandom pr_monsterrefire ("MonsterRefire");
+static FRandom pr_teleport("Teleport");
 
 
 //==========================================================================
@@ -3192,6 +3194,87 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetUserArray)
 	}
 	// Set the value of the specified user array at index pos.
 	((int *)(reinterpret_cast<BYTE *>(self) + var->offset))[pos] = value;
+}
+
+//===========================================================================
+//
+// A_Teleport(optional state teleportstate, optional class targettype,
+// optional class fogtype, optional int flags, optional fixed mindist,
+// optional fixed maxdist)
+//
+// Attempts to teleport to a targettype at least mindist away and at most
+// maxdist away (0 means unlimited). If successful, spawn a fogtype at old
+// location and place calling actor in teleportstate. 
+//
+//===========================================================================
+enum T_Flags
+{
+	TF_TELEFRAG = 1, // Allow telefrag in order to teleport.
+	TF_RANDOMDECIDE = 2, // Randomly fail based on health. (A_Srcr2Decide)
+};
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Teleport)
+{
+	ACTION_PARAM_START(6);
+	ACTION_PARAM_STATE(TeleportState, 0);
+	ACTION_PARAM_CLASS(TargetType, 1);
+	ACTION_PARAM_CLASS(FogType, 2);
+	ACTION_PARAM_INT(Flags, 3);
+	ACTION_PARAM_FIXED(MinDist, 4);
+	ACTION_PARAM_FIXED(MaxDist, 5);
+
+	// Randomly choose not to teleport like A_Srcr2Decide.
+	if (Flags & TF_RANDOMDECIDE)
+	{
+		static const int chance[] =
+		{
+			192, 120, 120, 120, 64, 64, 32, 16, 0
+		};
+
+		unsigned int chanceindex = self->health / ((self->SpawnHealth()/8 == 0) ? 1 : self->SpawnHealth()/8);
+
+		if (chanceindex >= countof(chance))
+		{
+			chanceindex = countof(chance) - 1;
+		}
+
+		if (pr_teleport() >= chance[chanceindex]) return;
+	}
+
+	if (TeleportState == NULL)
+	{
+		// Default to Teleport.
+		TeleportState = self->FindState("Teleport");
+		// If still nothing, then return.
+		if (!TeleportState) return;
+	}
+
+	DSpotState *state = DSpotState::GetSpotState();
+	if (state == NULL) return;
+
+	if (!TargetType) TargetType = PClass::FindClass("BossSpot");
+
+	AActor * spot = state->GetSpotWithMinMaxDistance(TargetType, self->x, self->y, MinDist, MaxDist);
+	if (spot == NULL) return;
+
+	fixed_t prevX = self->x;
+	fixed_t prevY = self->y;
+	fixed_t prevZ = self->z;
+	if (P_TeleportMove (self, spot->x, spot->y, spot->z, Flags & TF_TELEFRAG))
+	{
+		ACTION_SET_RESULT(false);	// Jumps should never set the result for inventory state chains!
+
+		if (FogType)
+		{
+			Spawn(FogType, prevX, prevY, prevZ, ALLOW_REPLACE);
+		}
+
+		ACTION_JUMP(TeleportState);
+
+		self->z = self->floorz;
+		self->angle = spot->angle;
+		self->velx = self->vely = self->velz = 0;
+	}
 }
 
 //===========================================================================

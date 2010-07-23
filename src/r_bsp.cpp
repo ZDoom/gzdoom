@@ -50,6 +50,7 @@
 #include "r_bsp.h"
 #include "v_palette.h"
 #include "r_sky.h"
+#include "po_man.h"
 
 int WallMost (short *mostbuf, const secplane_t &plane);
 
@@ -1006,6 +1007,46 @@ void R_GetExtraLight (int *light, const secplane_t &plane, FExtraLight *el)
 		}
 	}
 }
+
+
+static int STACK_ARGS polycmp(const void *a, const void *b)
+{
+   const FPolyNode *A = *(FPolyNode **)a;
+   const FPolyNode *B = *(FPolyNode **)b;
+
+   return A->dist - B->dist;
+}
+
+
+static void R_AddPolyobjs(subsector_t *sub)
+{
+	static TArray<FPolyNode *> sortedpolys;
+
+	FPolyNode *pn = sub->polys;
+	sortedpolys.Clear();
+	while (pn != NULL)
+	{
+		sortedpolys.Push(pn);
+		pn->dist = R_PointToDist2(pn->poly->CenterSpot.x - viewx, pn->poly->CenterSpot.y - viewy);
+		pn = pn->pnext;
+	}
+	if (sortedpolys.Size() > 1)
+	{
+		qsort(&sortedpolys[0], sortedpolys.Size(), sizeof (sortedpolys[0]), polycmp);
+	}
+
+	for(unsigned i=0; i<sortedpolys.Size(); i++)
+	{
+		pn = sortedpolys[i];
+		for(unsigned j=0; j<pn->segs.Size(); j++)
+		{
+			R_AddLine(&pn->segs[j]);
+		}
+	}
+}
+
+
+
 //
 // R_Subsector
 // Determine floor/ceiling planes.
@@ -1098,14 +1139,9 @@ void R_Subsector (subsector_t *sub)
 		R_ProjectParticle (Particles + i, subsectors[sub-subsectors].sector, shade, FakeSide);
 	}
 
-	if (sub->poly)
-	{ // Render the polyobj in the subsector first
-		int polyCount = sub->poly->numsegs;
-		seg_t **polySeg = sub->poly->segs;
-		while (polyCount--)
-		{
-			R_AddLine (*polySeg++);
-		}
+	if (sub->polys)
+	{ // Render the polyobjs in the subsector first
+		R_AddPolyobjs(sub);
 	}
 
 	while (count--)

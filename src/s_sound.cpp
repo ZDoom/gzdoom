@@ -49,6 +49,7 @@
 #include "templates.h"
 #include "timidity/timidity.h"
 #include "g_level.h"
+#include "po_man.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -795,11 +796,11 @@ static void CalcSectorSoundOrg(const sector_t *sec, int channum, fixed_t *x, fix
 
 static void CalcPolyobjSoundOrg(const FPolyObj *poly, fixed_t *x, fixed_t *y, fixed_t *z)
 {
-	seg_t *seg;
+	side_t *side;
 	sector_t *sec;
 
-	PO_ClosestPoint(poly, *x, *y, *x, *y, &seg);
-	sec = seg->frontsector;
+	poly->ClosestPoint(*x, *y, *x, *y, &side);
+	sec = side->sector;
 	*z = clamp(*z, sec->floorplane.ZatPoint(*x, *y), sec->ceilingplane.ZatPoint(*x, *y));
 }
 

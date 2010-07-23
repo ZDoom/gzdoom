@@ -106,7 +106,6 @@ void FNodeBuilder::Extract (node_t *&outNodes, int &nodeCount,
 			DWORD numsegs = CloseSubsector (segs, i, outVerts);
 			outSubs[i].numlines = numsegs;
 			outSubs[i].firstline = segs.Size() - numsegs;
-			outSubs[i].poly = NULL;
 		}
 
 		segCount = segs.Size ();

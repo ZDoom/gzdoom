@@ -46,11 +46,13 @@
 #include "a_sharedglobal.h"
 #include "r_interpolate.h"
 #include "g_level.h"
+#include "po_man.h"
 
 static void CopyPlayer (player_t *dst, player_t *src, const char *name);
 static void ReadOnePlayer (FArchive &arc, bool skipload);
 static void ReadMultiplePlayers (FArchive &arc, int numPlayers, int numPlayersNow, bool skipload);
 static void SpawnExtraPlayers ();
+
 
 //
 // P_ArchivePlayers
@@ -496,8 +498,8 @@ void P_SerializePolyobjs (FArchive &arc)
 		arc << seg << po_NumPolyobjs;
 		for(i = 0, po = polyobjs; i < po_NumPolyobjs; i++, po++)
 		{
-			arc << po->tag << po->angle << po->startSpot[0] <<
-				po->startSpot[1] << po->interpolation;
+			arc << po->tag << po->angle << po->StartSpot.x <<
+				po->StartSpot.y << po->interpolation;
   		}
 	}
 	else
@@ -523,11 +525,11 @@ void P_SerializePolyobjs (FArchive &arc)
 				I_Error ("UnarchivePolyobjs: Invalid polyobj tag");
 			}
 			arc << angle;
-			PO_RotatePolyobj (po->tag, angle);
+			po->RotatePolyobj (angle);
 			arc << deltaX << deltaY << po->interpolation;
-			deltaX -= po->startSpot[0];
-			deltaY -= po->startSpot[1];
-			PO_MovePolyobj (po->tag, deltaX, deltaY, true);
+			deltaX -= po->StartSpot.x;
+			deltaY -= po->StartSpot.y;
+			po->MovePolyobj (deltaX, deltaY, true);
 		}
 	}
 }

@@ -91,8 +91,3 @@ int FBoundingBox::BoxOnLineSide (const line_t *ld) const
 	return (p1 == p2) ? p1 : -1;
 }
 
-
-
-
-
-

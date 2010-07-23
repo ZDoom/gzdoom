@@ -18,6 +18,7 @@
 #include "m_bbox.h"
 #include "p_lnspec.h"
 #include "g_level.h"
+#include "po_man.h"
 
 // State.
 #include "r_state.h"
@@ -305,7 +306,7 @@ bool SightCheck::P_SightBlockLinesIterator (int x, int y)
 	int *list;
 
 	polyblock_t *polyLink;
-	int i;
+	unsigned int i;
 	extern polyblock_t **PolyBlockMap;
 
 	offset = y*bmapwidth+x;
@@ -318,9 +319,9 @@ bool SightCheck::P_SightBlockLinesIterator (int x, int y)
 			if (polyLink->polyobj->validcount != validcount)
 			{
 				polyLink->polyobj->validcount = validcount;
-				for (i = 0; i < polyLink->polyobj->numlines; i++)
+				for (i = 0; i < polyLink->polyobj->Linedefs.Size(); i++)
 				{
-					if (!P_SightCheckLine (polyLink->polyobj->lines[i]))
+					if (!P_SightCheckLine (polyLink->polyobj->Linedefs[i]))
 						return false;
 				}
 			}

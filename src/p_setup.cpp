@@ -65,6 +65,7 @@
 #include "g_level.h"
 #include "md5.h"
 #include "compatibility.h"
+#include "po_man.h"
 
 void P_SpawnSlopeMakers (FMapThing *firstmt, FMapThing *lastmt);
 void P_SetSlopes ();
@@ -3341,6 +3342,7 @@ extern polyblock_t **PolyBlockMap;
 
 void P_FreeLevelData ()
 {
+	FPolyObj::ClearAllSubsectorLinks(); // can't be done as part of the polyobj deletion process.
 	SN_StopAllSequences ();
 	DThinker::DestroyAllThinkers ();
 	level.total_monsters = level.total_items = level.total_secrets =

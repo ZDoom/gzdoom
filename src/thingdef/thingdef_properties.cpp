@@ -999,10 +999,26 @@ DEFINE_PROPERTY(maxdropoffheight, F, Actor)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_PROPERTY(poisondamage, I, Actor)
+DEFINE_PROPERTY(poisondamage, Iii, Actor)
 {
-	PROP_INT_PARM(i, 0);
-	info->Class->Meta.SetMetaInt (AMETA_PoisonDamage, i);
+	PROP_INT_PARM(poisondamage, 0);
+	PROP_INT_PARM(poisonduration, 1);
+	PROP_INT_PARM(poisonperiod, 2);
+
+	defaults->PoisonDamage = poisondamage;
+	if (PROP_PARM_COUNT == 1)
+	{
+		defaults->PoisonDuration = INT_MIN;
+	}
+	else
+	{
+		defaults->PoisonDuration = poisonduration;
+
+		if (PROP_PARM_COUNT > 2)
+			defaults->PoisonPeriod = poisonperiod;
+		else
+			defaults->PoisonPeriod = 0;
+	}
 }
 
 //==========================================================================

@@ -1088,6 +1088,13 @@ bool PIT_CheckThing (AActor *thing, FCheckPosition &tm)
 						P_RipperBlood (tm.thing, thing);
 					}
 					S_Sound (tm.thing, CHAN_BODY, "misc/ripslop", 1, ATTN_IDLE);
+
+					// Do poisoning (if using new style poison)
+					if (tm.thing->PoisonDuration != INT_MIN)
+					{
+						P_PoisonMobj(thing, tm.thing, tm.thing->target, tm.thing->PoisonDamage, tm.thing->PoisonDuration, tm.thing->PoisonPeriod);
+					}
+
 					damage = tm.thing->GetMissileDamage (3, 2);
 					P_DamageMobj (thing, tm.thing, tm.thing->target, damage, tm.thing->DamageType);
 					if (!(tm.thing->flags3 & MF3_BLOODLESSIMPACT))
@@ -1109,6 +1116,13 @@ bool PIT_CheckThing (AActor *thing, FCheckPosition &tm)
 				return true;
 			}
 		}
+
+		// Do poisoning (if using new style poison)
+		if (tm.thing->PoisonDuration != INT_MIN)
+		{
+			P_PoisonMobj(thing, tm.thing, tm.thing->target, tm.thing->PoisonDamage, tm.thing->PoisonDuration, tm.thing->PoisonPeriod);
+		}
+
 		// Do damage
 		damage = tm.thing->GetMissileDamage ((tm.thing->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1);
 		if ((damage > 0) || (tm.thing->flags6 & MF6_FORCEPAIN)) 
@@ -3471,6 +3485,13 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 						trace.Actor, srcangle, srcpitch);
 				}
 			}
+
+			// Allow puffs to inflict poison damage, so that hitscans can poison, too.
+			if (puffDefaults->PoisonDuration != INT_MIN)
+			{
+				P_PoisonMobj(trace.Actor, puff ? puff : t1, t1, puffDefaults->PoisonDamage, puffDefaults->PoisonDuration, puffDefaults->PoisonPeriod);
+			}
+
 			// [GZ] If MF6_FORCEPAIN is set, we need to call P_DamageMobj even if damage is 0!
 			// Note: The puff may not yet be spawned here so we must check the class defaults, not the actor.
 			if (damage || (puffDefaults->flags6 & MF6_FORCEPAIN))
@@ -3840,6 +3861,10 @@ void P_RailAttack (AActor *source, int damage, int offset, int color1, int color
 			P_TraceBleed (damage, x, y, z, RailHits[i].HitActor, source->angle, pitch);
 		}
 		if (spawnpuff) P_SpawnPuff (source, puffclass, x, y, z, source->angle - ANG90, 1, PF_HITTHING);
+
+		if (puffDefaults && puffDefaults->PoisonDuration != INT_MIN)
+			P_PoisonMobj(RailHits[i].HitActor, thepuff ? thepuff : source, source, puffDefaults->PoisonDamage, puffDefaults->PoisonDuration, puffDefaults->PoisonPeriod);
+
 		P_DamageMobj (RailHits[i].HitActor, thepuff? thepuff:source, source, damage, damagetype, DMG_INFLICTOR_IS_PUFF);
 	}
 

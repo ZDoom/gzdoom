@@ -346,6 +346,11 @@ void AActor::Serialize (FArchive &arc)
 			WeaveIndexZ = 0;
 		}
 	}
+	if (SaveVersion >= 2450)
+	{
+		arc << PoisonDamageReceived << PoisonDurationReceived << PoisonPeriodReceived << Poisoner;
+		arc << PoisonDamage << PoisonDuration << PoisonPeriod;
+	}
 
 	// Skip past uservar array in old savegames
 	if (SaveVersion < 1933)
@@ -3314,6 +3319,18 @@ void AActor::Tick ()
 		{
 			return;
 		}
+
+		// Check for poison damage, but only once per PoisonPeriod tics (or once per second if none).
+		if (PoisonDurationReceived && (level.time % (PoisonPeriodReceived ? PoisonPeriodReceived : TICRATE) == 0))
+		{
+			P_DamageMobj(this, NULL, Poisoner, PoisonDamageReceived, NAME_Poison, 0);
+
+			--PoisonDurationReceived;
+
+			// Must clear damage when duration is done, otherwise it
+			// could be added to with ADDITIVEPOISONDAMAGE.
+			if (!PoisonDurationReceived) PoisonDamageReceived = 0;
+		}
 	}
 
 	// cycle through states, calling action functions at transitions
@@ -5444,10 +5461,10 @@ int AActor::DoSpecialDamage (AActor *target, int damage)
 	{
 		if (target->player)
 		{
-			int poisondamage = GetClass()->Meta.GetMetaInt(AMETA_PoisonDamage);
-			if (poisondamage > 0)
+			// Only do this for old style poison damage.
+			if (PoisonDamage > 0 && PoisonDuration == INT_MIN)
 			{
-				P_PoisonPlayer (target->player, this, this->target, poisondamage);
+				P_PoisonPlayer (target->player, this, this->target, PoisonDamage);
 				damage >>= 1;
 			}
 		}

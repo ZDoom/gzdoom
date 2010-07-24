@@ -56,6 +56,15 @@ const int RSF_FOG = 1;
 const int RSF_KEEPTARGET = 2;
 const int RSF_TELEFRAG = 4;
 
+// Flags for A_JumpIfTargetInLOS and A_JumpIfInTargetLOS
+const int JLOSF_PROJECTILE = 1;
+const int JLOSF_NOSIGHT = 2;
+const int JLOSF_CLOSENOFOV = 4;
+const int JLOSF_CLOSENOSIGHT = 8;
+const int JLOSF_CLOSENOJUMP = 16;
+const int JLOSF_DEADNOJUMP = 32;
+const int JLOSF_CHECKMASTER = 64;
+
 // Flags for A_ChangeVelocity
 const int CVF_RELATIVE = 1;
 const int CVF_REPLACE = 2;

@@ -2541,23 +2541,38 @@ DEFINE_ACTION_FUNCTION(AActor, A_ClearTarget)
 
 //==========================================================================
 //
-// A_JumpIfTargetInLOS (state label, optional fixed fov, optional bool
-// projectiletarget)
+// A_JumpIfTargetInLOS (state label, optional fixed fov, optional int flags,
+// optional fixed dist_max, optional fixed dist_close)
 //
 // Jumps if the actor can see its target, or if the player has a linetarget.
 // ProjectileTarget affects how projectiles are treated. If set, it will use
 // the target of the projectile for seekers, and ignore the target for
 // normal projectiles. If not set, it will use the missile's owner instead
-// (the default).
+// (the default). ProjectileTarget is now flag JLOSF_PROJECTILE. dist_max
+// sets the maximum distance that actor can see, 0 means forever. dist_close
+// uses special behavior if certain flags are set, 0 means no checks.
 //
 //==========================================================================
 
+enum JLOS_flags
+{
+	JLOSF_PROJECTILE=1,
+	JLOSF_NOSIGHT=2,
+	JLOSF_CLOSENOFOV=4,
+	JLOSF_CLOSENOSIGHT=8,
+	JLOSF_CLOSENOJUMP=16,
+	JLOSF_DEADNOJUMP=32,
+	JLOSF_CHECKMASTER=64,
+};
+
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInLOS)
 {
-	ACTION_PARAM_START(3);
+	ACTION_PARAM_START(5);
 	ACTION_PARAM_STATE(jump, 0);
 	ACTION_PARAM_ANGLE(fov, 1);
-	ACTION_PARAM_BOOL(projtarg, 2);
+	ACTION_PARAM_INT(flags, 2);
+	ACTION_PARAM_FIXED(dist_max, 3);
+	ACTION_PARAM_FIXED(dist_close, 4);
 
 	angle_t an;
 	AActor *target;
@@ -2566,7 +2581,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInLOS)
 
 	if (!self->player)
 	{
-		if (self->flags & MF_MISSILE && projtarg)
+		if (flags & JLOSF_CHECKMASTER)
+		{
+			target = self->master;
+		}
+		else if (self->flags & MF_MISSILE && (flags & JLOSF_PROJECTILE))
 		{
 			if (self->flags2 & MF2_SEEKERMISSILE)
 				target = self->tracer;
@@ -2580,7 +2599,28 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInLOS)
 
 		if (!target) return; // [KS] Let's not call P_CheckSight unnecessarily in this case.
 
-		if (!P_CheckSight (self, target, SF_IGNOREVISIBILITY))
+		if ((flags & JLOSF_DEADNOJUMP) && (target->health <= 0)) return;
+
+		fixed_t distance = P_AproxDistance(target->x - self->x, target->y - self->y);
+		distance = P_AproxDistance(distance, target->z - self->z);
+
+		if (dist_max && (distance > dist_max)) return;
+
+		bool doCheckSight = !(flags & JLOSF_NOSIGHT);
+
+		if (dist_close && (distance < dist_close))
+		{
+			if (flags & JLOSF_CLOSENOJUMP)
+				return;
+
+			if (flags & JLOSF_CLOSENOFOV)
+				fov = 0;
+
+			if (flags & JLOSF_CLOSENOSIGHT)
+				doCheckSight = false;
+		}
+
+		if (doCheckSight && !P_CheckSight (self, target, SF_IGNOREVISIBILITY))
 			return;
 
 		if (fov && (fov < ANGLE_MAX))
@@ -2602,9 +2642,20 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInLOS)
 	{
 		// Does the player aim at something that can be shot?
 		P_BulletSlope(self, &target);
-	}
 
-	if (!target) return;
+		if (!target) return;
+
+		fixed_t distance = P_AproxDistance(target->x - self->x, target->y - self->y);
+		distance = P_AproxDistance(distance, target->z - self->z);
+
+		if (dist_max && (distance > dist_max)) return;
+
+		if (dist_close && (distance < dist_close))
+		{
+			if (flags & JLOSF_CLOSENOJUMP)
+				return;
+		}
+	}
 
 	ACTION_JUMP(jump);
 }
@@ -2612,24 +2663,30 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInLOS)
 
 //==========================================================================
 //
-// A_JumpIfInTargetLOS (state label, optional fixed fov, optional bool
-// projectiletarget)
+// A_JumpIfInTargetLOS (state label, optional fixed fov, optional int flags
+// optional fixed dist_max, optional fixed dist_close)
 //
 //==========================================================================
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfInTargetLOS)
 {
-	ACTION_PARAM_START(3);
+	ACTION_PARAM_START(5);
 	ACTION_PARAM_STATE(jump, 0);
 	ACTION_PARAM_ANGLE(fov, 1);
-	ACTION_PARAM_BOOL(projtarg, 2);
+	ACTION_PARAM_INT(flags, 2);
+	ACTION_PARAM_FIXED(dist_max, 3);
+	ACTION_PARAM_FIXED(dist_close, 4);
 
 	angle_t an;
 	AActor *target;
 
 	ACTION_SET_RESULT(false);	// Jumps should never set the result for inventory state chains!
 
-	if (self->flags & MF_MISSILE && projtarg)
+	if (flags & JLOSF_CHECKMASTER)
+	{
+		target = self->master;
+	}
+	else if (self->flags & MF_MISSILE && (flags & JLOSF_PROJECTILE))
 	{
 		if (self->flags2 & MF2_SEEKERMISSILE)
 			target = self->tracer;
@@ -2643,7 +2700,28 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfInTargetLOS)
 
 	if (!target) return; // [KS] Let's not call P_CheckSight unnecessarily in this case.
 
-	if (!P_CheckSight (target, self, SF_IGNOREVISIBILITY))
+	if ((flags & JLOSF_DEADNOJUMP) && (target->health <= 0)) return;
+
+	fixed_t distance = P_AproxDistance(target->x - self->x, target->y - self->y);
+	distance = P_AproxDistance(distance, target->z - self->z);
+
+	if (dist_max && (distance > dist_max)) return;
+
+	bool doCheckSight = !(flags & JLOSF_NOSIGHT);
+
+	if (dist_close && (distance < dist_close))
+	{
+		if (flags & JLOSF_CLOSENOJUMP)
+			return;
+
+		if (flags & JLOSF_CLOSENOFOV)
+			fov = 0;
+
+		if (flags & JLOSF_CLOSENOSIGHT)
+			doCheckSight = false;
+	}
+
+	if (doCheckSight && !P_CheckSight (target, self, SF_IGNOREVISIBILITY))
 		return;
 
 	if (fov && (fov < ANGLE_MAX))

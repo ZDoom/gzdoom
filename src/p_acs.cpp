@@ -2431,6 +2431,93 @@ void DLevelScript::DoSetFont (int fontnum)
 	}
 }
 
+int DoSetMaster (AActor *self, AActor *master)
+{
+    AActor *defs;
+    if (self->flags3&MF3_ISMONSTER)
+    {
+        if (master)
+        {
+            if (master->flags3&MF3_ISMONSTER)
+            {
+                self->FriendPlayer = 0;
+                self->master = master;
+                level.total_monsters -= self->CountsAsKill();
+                self->flags = (self->flags & ~MF_FRIENDLY) | (master->flags & MF_FRIENDLY);
+                level.total_monsters += self->CountsAsKill();
+                // Don't attack your new master
+                if (self->target == self->master) self->target = NULL;
+                if (self->lastenemy == self->master) self->lastenemy = NULL;
+                if (self->LastHeard == self->master) self->LastHeard = NULL;
+                return 1;
+            }
+            else if (master->player)
+            {
+                // [KS] Be friendly to this player
+                self->master = NULL;
+                level.total_monsters -= self->CountsAsKill();
+                self->flags|=MF_FRIENDLY;
+                self->FriendPlayer = int(master->player-players+1);
+
+                AActor * attacker=master->player->attacker;
+                if (attacker)
+                {
+                    if (!(attacker->flags&MF_FRIENDLY) || 
+                        (deathmatch && attacker->FriendPlayer!=0 && attacker->FriendPlayer!=self->FriendPlayer))
+                    {
+                        self->LastHeard = self->target = attacker;
+                    }
+                }
+                // And stop attacking him if necessary.
+                if (self->target == master) self->target = NULL;
+                if (self->lastenemy == master) self->lastenemy = NULL;
+                if (self->LastHeard == master) self->LastHeard = NULL;
+                return 1;
+            }
+        }
+        else
+        {
+            self->master = NULL;
+            self->FriendPlayer = 0;
+            // Go back to whatever friendliness we usually have...
+            defs = self->GetDefault();
+            level.total_monsters -= self->CountsAsKill();
+            self->flags = (self->flags & ~MF_FRIENDLY) | (defs->flags & MF_FRIENDLY);
+            level.total_monsters += self->CountsAsKill();
+            // ...And re-side with our friends.
+            if (self->target && !self->IsHostile (self->target)) self->target = NULL;
+            if (self->lastenemy && !self->IsHostile (self->lastenemy)) self->lastenemy = NULL;
+            if (self->LastHeard && !self->IsHostile (self->LastHeard)) self->LastHeard = NULL;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int DoGetMasterTID (AActor *self)
+{
+	if (self->master) return self->master->tid;
+	else if (self->FriendPlayer)
+	{
+		player_t *player = &players[(self->FriendPlayer)-1];
+		return player->mo->tid;
+	}
+	else return 0;
+}
+
+static AActor *SingleActorFromTID (int tid, AActor *defactor)
+{
+	if (tid == 0)
+	{
+		return defactor;
+	}
+	else
+	{
+		FActorIterator iterator (tid);
+		return iterator.Next();
+	}
+}
+
 enum
 {
 	APROP_Health		= 0,
@@ -2458,6 +2545,7 @@ enum
 	APROP_Score			= 22,
 	APROP_Notrigger		= 23,
 	APROP_DamageFactor	= 24,
+	APROP_MasterTID     = 25,
 };	
 
 // These are needed for ACS's APROP_RenderStyle
@@ -2626,22 +2714,15 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 		actor->DamageFactor = value;
 		break;
 
+	case APROP_MasterTID:
+		AActor *other;
+		other = SingleActorFromTID (value, NULL);
+		DoSetMaster (actor, other);
+		break;
+
 	default:
 		// do nothing.
 		break;
-	}
-}
-
-static AActor *SingleActorFromTID (int tid, AActor *defactor)
-{
-	if (tid == 0)
-	{
-		return defactor;
-	}
-	else
-	{
-		FActorIterator iterator (tid);
-		return iterator.Next();
 	}
 }
 
@@ -2696,6 +2777,7 @@ int DLevelScript::GetActorProperty (int tid, int property)
 								return 0;
 							}
 	case APROP_Score:		return actor->Score;
+	case APROP_MasterTID:	return DoGetMasterTID (actor);
 	default:				return 0;
 	}
 }
@@ -2726,6 +2808,7 @@ int DLevelScript::CheckActorProperty (int tid, int property, int value)
 		case APROP_SpawnHealth:
 		case APROP_JumpZ:
 		case APROP_Score:
+		case APROP_MasterTID:
 			return (GetActorProperty(tid, property) == value);
 
 		// Boolean values need to compare to a binary version of value

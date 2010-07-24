@@ -1207,7 +1207,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomPunch)
 enum
 {	
 	RAF_SILENT = 1,
-	RAF_NOPIERCE = 2
+	RAF_NOPIERCE = 2,
+	RAF_EXPLICITANGLE = 4,
 };
 
 //==========================================================================
@@ -1217,7 +1218,7 @@ enum
 //==========================================================================
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RailAttack)
 {
-	ACTION_PARAM_START(8);
+	ACTION_PARAM_START(10);
 	ACTION_PARAM_INT(Damage, 0);
 	ACTION_PARAM_INT(Spawnofs_XY, 1);
 	ACTION_PARAM_BOOL(UseAmmo, 2);
@@ -1225,7 +1226,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RailAttack)
 	ACTION_PARAM_COLOR(Color2, 4);
 	ACTION_PARAM_INT(Flags, 5);
 	ACTION_PARAM_FLOAT(MaxDiff, 6);
-	ACTION_PARAM_CLASS(PuffType, 7);	
+	ACTION_PARAM_CLASS(PuffType, 7);
+	ACTION_PARAM_ANGLE(Spread_XY, 8);
+	ACTION_PARAM_ANGLE(Spread_Z, 9);
 
 	if (!self->player) return;
 
@@ -1237,7 +1240,21 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RailAttack)
 		if (!weapon->DepleteAmmo(weapon->bAltFire, true)) return;	// out of ammo
 	}
 
-	P_RailAttack (self, Damage, Spawnofs_XY, Color1, Color2, MaxDiff, (Flags & RAF_SILENT), PuffType, (!(Flags & RAF_NOPIERCE)));
+	angle_t angle;
+	angle_t slope;
+
+	if (Flags & RAF_EXPLICITANGLE)
+	{
+		angle = Spread_XY;
+		slope = Spread_Z;
+	}
+	else
+	{
+		angle = pr_crailgun.Random2() * (Spread_XY / 255);
+		slope = pr_crailgun.Random2() * (Spread_Z / 255);
+	}
+
+	P_RailAttack (self, Damage, Spawnofs_XY, Color1, Color2, MaxDiff, (Flags & RAF_SILENT), PuffType, (!(Flags & RAF_NOPIERCE)), angle, slope);
 }
 
 //==========================================================================
@@ -1249,12 +1266,13 @@ enum
 {
 	CRF_DONTAIM = 0,
 	CRF_AIMPARALLEL = 1,
-	CRF_AIMDIRECT = 2
+	CRF_AIMDIRECT = 2,
+	CRF_EXPLICITANGLE = 4,
 };
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomRailgun)
 {
-	ACTION_PARAM_START(8);
+	ACTION_PARAM_START(10);
 	ACTION_PARAM_INT(Damage, 0);
 	ACTION_PARAM_INT(Spawnofs_XY, 1);
 	ACTION_PARAM_COLOR(Color1, 2);
@@ -1263,6 +1281,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomRailgun)
 	ACTION_PARAM_INT(aim, 5);
 	ACTION_PARAM_FLOAT(MaxDiff, 6);
 	ACTION_PARAM_CLASS(PuffType, 7);
+	ACTION_PARAM_ANGLE(Spread_XY, 8);
+	ACTION_PARAM_ANGLE(Spread_Z, 9);
 
 	AActor *linetarget;
 
@@ -1329,7 +1349,21 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomRailgun)
 
 	angle_t angle = (self->angle - ANG90) >> ANGLETOFINESHIFT;
 
-	P_RailAttack (self, Damage, Spawnofs_XY, Color1, Color2, MaxDiff, (Flags & RAF_SILENT), PuffType, (!(Flags & RAF_NOPIERCE)));
+	angle_t angleoffset;
+	angle_t slopeoffset;
+
+	if (Flags & CRF_EXPLICITANGLE)
+	{
+		angleoffset = Spread_XY;
+		slopeoffset = Spread_Z;
+	}
+	else
+	{
+		angleoffset = pr_crailgun.Random2() * (Spread_XY / 255);
+		slopeoffset = pr_crailgun.Random2() * (Spread_Z / 255);
+	}
+
+	P_RailAttack (self, Damage, Spawnofs_XY, Color1, Color2, MaxDiff, (Flags & RAF_SILENT), PuffType, (!(Flags & RAF_NOPIERCE)), angleoffset, slopeoffset);
 
 	self->x = saved_x;
 	self->y = saved_y;

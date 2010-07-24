@@ -3769,7 +3769,7 @@ static bool ProcessNoPierceRailHit (FTraceResults &res)
 //
 //==========================================================================
 
-void P_RailAttack (AActor *source, int damage, int offset, int color1, int color2, float maxdiff, bool silent, const PClass *puffclass, bool pierce)
+void P_RailAttack (AActor *source, int damage, int offset, int color1, int color2, float maxdiff, bool silent, const PClass *puffclass, bool pierce, angle_t angleoffset, angle_t pitchoffset)
 {
 	fixed_t vx, vy, vz;
 	angle_t angle, pitch;
@@ -3780,8 +3780,8 @@ void P_RailAttack (AActor *source, int damage, int offset, int color1, int color
 
 	if (puffclass == NULL) puffclass = PClass::FindClass(NAME_BulletPuff);
 
-	pitch = (angle_t)(-source->pitch) >> ANGLETOFINESHIFT;
-	angle = source->angle >> ANGLETOFINESHIFT;
+	pitch = ((angle_t)(-source->pitch) + pitchoffset) >> ANGLETOFINESHIFT;
+	angle = (source->angle + angleoffset) >> ANGLETOFINESHIFT;
 
 	vx = FixedMul (finecosine[pitch], finecosine[angle]);
 	vy = FixedMul (finecosine[pitch], finesine[angle]);
@@ -3801,7 +3801,7 @@ void P_RailAttack (AActor *source, int damage, int offset, int color1, int color
 		shootz += 8*FRACUNIT;
 	}
 
-	angle = (source->angle - ANG90) >> ANGLETOFINESHIFT;
+	angle = ((source->angle + angleoffset) - ANG90) >> ANGLETOFINESHIFT;
 	x1 += offset*finecosine[angle];
 	y1 += offset*finesine[angle];
 
@@ -3857,10 +3857,10 @@ void P_RailAttack (AActor *source, int damage, int offset, int color1, int color
 		else
 		{
 			spawnpuff = (puffclass != NULL && puffDefaults->flags3 & MF3_ALWAYSPUFF);
-			P_SpawnBlood (x, y, z, source->angle - ANG180, damage, RailHits[i].HitActor);
+			P_SpawnBlood (x, y, z, (source->angle + angleoffset) - ANG180, damage, RailHits[i].HitActor);
 			P_TraceBleed (damage, x, y, z, RailHits[i].HitActor, source->angle, pitch);
 		}
-		if (spawnpuff) P_SpawnPuff (source, puffclass, x, y, z, source->angle - ANG90, 1, PF_HITTHING);
+		if (spawnpuff) P_SpawnPuff (source, puffclass, x, y, z, (source->angle + angleoffset) - ANG90, 1, PF_HITTHING);
 
 		if (puffDefaults && puffDefaults->PoisonDuration != INT_MIN)
 			P_PoisonMobj(RailHits[i].HitActor, thepuff ? thepuff : source, source, puffDefaults->PoisonDamage, puffDefaults->PoisonDuration, puffDefaults->PoisonPeriod);
@@ -3874,7 +3874,7 @@ void P_RailAttack (AActor *source, int damage, int offset, int color1, int color
 		SpawnShootDecal (source, trace);
 		if (puffclass != NULL && puffDefaults->flags3 & MF3_ALWAYSPUFF) 
 		{
-			P_SpawnPuff (source, puffclass, trace.X, trace.Y, trace.Z, source->angle - ANG90, 1, 0);
+			P_SpawnPuff (source, puffclass, trace.X, trace.Y, trace.Z, (source->angle + angleoffset) - ANG90, 1, 0);
 		}
 
 	}

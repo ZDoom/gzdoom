@@ -84,6 +84,7 @@ const int MRF_UNDOBYDEATHSAVES = 2048;
 // Flags for A_RailAttack and A_CustomRailgun
 const int RGF_SILENT = 1;
 const int RGF_NOPIERCING = 2;
+const int RGF_EXPLICITANGLE = 4;
 
 // Flags for A_Mushroom
 const int MSF_Standard = 0;

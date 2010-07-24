@@ -8,6 +8,7 @@ const int CMF_CHECKTARGETDEAD = 8;
 // Flags for A_CustomBulletAttack
 const int CBAF_AIMFACING = 1;
 const int CBAF_NORANDOM = 2;
+const int CBAF_EXPLICITANGLE = 4;
 
 // Flags for A_FireBullets
 const int FBF_USEAMMO = 1;

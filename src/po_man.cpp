@@ -136,7 +136,7 @@ static void UnLinkPolyobj (FPolyObj *po);
 static void LinkPolyobj (FPolyObj *po);
 static bool CheckMobjBlocking (side_t *seg, FPolyObj *po);
 static void InitBlockMap (void);
-static void IterFindPolySides (vertex_t *v1, vertex_t *v2, seg_t **segList);
+static void IterFindPolySides (FPolyObj *po, side_t *side);
 static void SpawnPolyobj (int index, int tag, int type);
 static void TranslateToStartSpot (int tag, int originX, int originY);
 static void DoMovePolyobj (FPolyObj *po, int x, int y);
@@ -156,7 +156,6 @@ polyspawns_t *polyspawns; // [RH] Let P_SpawnMapThings() find our thingies for u
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static SDWORD *SideListHead;	// contains numvertexes elements
 static TArray<SDWORD> KnownPolySides;
 
 // CODE --------------------------------------------------------------------
@@ -1323,21 +1322,13 @@ static void InitBlockMap (void)
 
 static void InitSideLists ()
 {
-	SDWORD i;
-
-	SideListHead = new SDWORD[numvertexes];
-	clearbuf (SideListHead, numvertexes, -1);
-
-	for (i = 0; i < numsides; ++i)
+	for (int i = 0; i < numsides; ++i)
 	{
-		if (sides[i].linedef != NULL)
+		if (sides[i].linedef != NULL &&
+			(sides[i].linedef->special == Polyobj_StartLine ||
+			 sides[i].linedef->special == Polyobj_ExplicitLine))
 		{
-			SideListHead[sides[i].V1() - vertexes] = i;
-			if ((sides[i].linedef->special == Polyobj_StartLine ||
-				 sides[i].linedef->special == Polyobj_ExplicitLine))
-			{
-				KnownPolySides.Push (i);
-			}
+			KnownPolySides.Push (i);
 		}
 	}
 }
@@ -1350,8 +1341,6 @@ static void InitSideLists ()
 
 static void KillSideLists ()
 {
-	delete[] SideListHead;
-	SideListHead = NULL;
 	KnownPolySides.Clear ();
 	KnownPolySides.ShrinkToFit ();
 }
@@ -1375,9 +1364,9 @@ static void IterFindPolySides (FPolyObj *po, side_t *side)
 	for (i = 0; i < numsides; i++)
 	{
 		int v2 = int(side->V2() - vertexes);
-		j = SideListHead[v2];
+		j = side->RightSide;
 
-		if (j < 0)
+		if (j == NO_SIDE)
 		{
 			break;
 		}

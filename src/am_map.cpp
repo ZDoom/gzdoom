@@ -59,6 +59,7 @@
 #include "am_map.h"
 #include "a_artifacts.h"
 #include "po_man.h"
+#include "a_keys.h"
 
 struct AMColor
 {
@@ -80,7 +81,7 @@ struct AMColor
 
 static AMColor Background, YourColor, WallColor, TSWallColor,
 		   FDWallColor, CDWallColor, ThingColor,
-		   ThingColor_Item, ThingColor_Monster, ThingColor_Friend,
+		   ThingColor_Item, ThingColor_CountItem, ThingColor_Monster, ThingColor_Friend,
 		   SecretWallColor, GridColor, XHairColor,
 		   NotSeenColor,
 		   LockedColor,
@@ -171,12 +172,15 @@ CVAR (Color, am_secretsectorcolor,	0xff00ff,	CVAR_ARCHIVE);
 CVAR (Color, am_ovsecretsectorcolor,0x00ffff,	CVAR_ARCHIVE);
 CVAR (Int,   am_map_secrets,		1,			CVAR_ARCHIVE);
 CVAR (Bool,  am_drawmapback,		true,		CVAR_ARCHIVE);
+CVAR (Bool,  am_showkeys,			true,		CVAR_ARCHIVE);
 CVAR (Color, am_thingcolor_friend,		0xfcfcfc,	CVAR_ARCHIVE);
 CVAR (Color, am_thingcolor_monster,		0xfcfcfc,	CVAR_ARCHIVE);
 CVAR (Color, am_thingcolor_item,		0xfcfcfc,	CVAR_ARCHIVE);
+CVAR (Color, am_thingcolor_citem,		0xfcfcfc,	CVAR_ARCHIVE);
 CVAR (Color, am_ovthingcolor_friend,	0xe88800,	CVAR_ARCHIVE);
 CVAR (Color, am_ovthingcolor_monster,	0xe88800,	CVAR_ARCHIVE);
 CVAR (Color, am_ovthingcolor_item,		0xe88800,	CVAR_ARCHIVE);
+CVAR (Color, am_ovthingcolor_citem,		0xe88800,	CVAR_ARCHIVE);
 
 
 CVAR(Int, am_showsubsector, -1, 0);
@@ -297,25 +301,22 @@ mline_t player_arrow[] = {
 	{ { -R+3*R/8, 0 }, { -R+R/8, R/4 } }, // >>--->
 	{ { -R+3*R/8, 0 }, { -R+R/8, -R/4 } }
 };
+#define NUMPLYRLINES (sizeof(player_arrow)/sizeof(mline_t))
 
 mline_t player_arrow_raven[] = {
-  { { -R+R/4, 0 }, { 0, 0} }, // center line.
-  { { -R+R/4, R/8 }, { R, 0} }, // blade
-  { { -R+R/4, -R/8 }, { R, 0 } },
-  { { -R+R/4, -R/4 }, { -R+R/4, R/4 } }, // crosspiece
-  { { -R+R/8, -R/4 }, { -R+R/8, R/4 } },
-  { { -R+R/8, -R/4 }, { -R+R/4, -R/4} }, //crosspiece connectors
-  { { -R+R/8, R/4 }, { -R+R/4, R/4} },
-  { { -R-R/4, R/8 }, { -R-R/4, -R/8 } }, //pommel
-  { { -R-R/4, R/8 }, { -R+R/8, R/8 } },
-  { { -R-R/4, -R/8}, { -R+R/8, -R/8 } }
-  };
-
-#undef R
-#define NUMPLYRLINES (sizeof(player_arrow)/sizeof(mline_t))
+	{ { -R+R/4, 0 }, { 0, 0} }, // center line.
+	{ { -R+R/4, R/8 }, { R, 0} }, // blade
+	{ { -R+R/4, -R/8 }, { R, 0 } },
+	{ { -R+R/4, -R/4 }, { -R+R/4, R/4 } }, // crosspiece
+	{ { -R+R/8, -R/4 }, { -R+R/8, R/4 } },
+	{ { -R+R/8, -R/4 }, { -R+R/4, -R/4} }, //crosspiece connectors
+	{ { -R+R/8, R/4 }, { -R+R/4, R/4} },
+	{ { -R-R/4, R/8 }, { -R-R/4, -R/8 } }, //pommel
+	{ { -R-R/4, R/8 }, { -R+R/8, R/8 } },
+	{ { -R-R/4, -R/8}, { -R+R/8, -R/8 } }
+};
 #define NUMPLYRLINES_RAVEN (sizeof(player_arrow_raven)/sizeof(mline_t))
 
-#define R ((8*PLAYERRADIUS)/7)
 mline_t cheat_player_arrow[] = {
 	{ { -R+R/8, 0 }, { R, 0 } }, // -----
 	{ { R, 0 }, { R-R/2, R/6 } },  // ----->
@@ -334,9 +335,9 @@ mline_t cheat_player_arrow[] = {
 	{ { R/6, -R/7 }, { R/6+R/32, -R/7-R/32 } },
 	{ { R/6+R/32, -R/7-R/32 }, { R/6+R/10, -R/7 } }
 };
+#define NUMCHEATPLYRLINES (sizeof(cheat_player_arrow)/sizeof(mline_t))
 
 #undef R
-#define NUMCHEATPLYRLINES (sizeof(cheat_player_arrow)/sizeof(mline_t))
 
 #define R (MAPUNIT)
 // [RH] Avoid lots of warnings without compiler-specific #pragmas
@@ -353,9 +354,37 @@ mline_t thintriangle_guy[] = {
 	L (1,0, -.5,.7),
 	L (-.5,.7, -.5,-.7)
 };
+#define NUMTHINTRIANGLEGUYLINES (sizeof(thintriangle_guy)/sizeof(mline_t))
+
+mline_t square_guy[] = {
+	L (0,1,1,0),
+	L (1,0,0,-1),
+	L (0,-1,-1,0),
+	L (-1,0,0,1)
+};
+#define NUMSQUAREGUYLINES (sizeof(square_guy)/sizeof(mline_t))
+
+#undef R
+#define R (MAPUNIT)
+
+mline_t key_guy[] = {
+	L (-2, 0, -1.7, -0.5),
+	L (-1.7, -0.5, -1.5, -0.7),
+	L (-1.5, -0.7, -0.8, -0.5),
+	L (-0.8, -0.5, -0.6, 0),
+	L (-0.6, 0, -0.8, 0.5),
+	L (-1.5, 0.7, -0.8, 0.5),
+	L (-1.7, 0.5, -1.5, 0.7),
+	L (-2, 0, -1.7, 0.5),
+	L (-0.6, 0, 2, 0),
+	L (1.7, 0, 1.7, -1),
+	L (1.5, 0, 1.5, -1),
+	L (1.3, 0, 1.3, -1)
+};
+#define NUMKEYGUYLINES (sizeof(key_guy)/sizeof(mline_t))
+
 #undef L
 #undef R
-#define NUMTHINTRIANGLEGUYLINES (sizeof(thintriangle_guy)/sizeof(mline_t))
 
 
 
@@ -818,6 +847,7 @@ static void AM_initColors (bool overlayed)
 		SecretWallColor = WallColor;
 		SecretSectorColor.FromCVar (am_ovsecretsectorcolor);
 		ThingColor_Item.FromCVar (am_ovthingcolor_item);
+		ThingColor_CountItem.FromCVar (am_ovthingcolor_citem);
 		ThingColor_Friend.FromCVar (am_ovthingcolor_friend);
 		ThingColor_Monster.FromCVar (am_ovthingcolor_monster);
 		ThingColor.FromCVar (am_ovthingcolor);
@@ -841,6 +871,7 @@ static void AM_initColors (bool overlayed)
 			FDWallColor.FromCVar (am_fdwallcolor);
 			CDWallColor.FromCVar (am_cdwallcolor);
 			ThingColor_Item.FromCVar (am_thingcolor_item);
+			ThingColor_CountItem.FromCVar (am_thingcolor_citem);
 			ThingColor_Friend.FromCVar (am_thingcolor_friend);
 			ThingColor_Monster.FromCVar (am_thingcolor_monster);
 			ThingColor.FromCVar (am_thingcolor);
@@ -2027,11 +2058,40 @@ void AM_drawThings ()
 				if (t->flags & MF_FRIENDLY || !(t->flags & MF_COUNTKILL)) color = ThingColor_Friend;
 				else color = ThingColor_Monster;
 			}
-			else if (t->flags&MF_SPECIAL) color = ThingColor_Item;
+			else if (t->flags&MF_SPECIAL)
+			{
+				// Find the key's own color.
+				// Only works correctly if single-key locks have lower numbers than any-key locks.
+				// That is the case for all default keys, however.
+				if (t->IsKindOf(RUNTIME_CLASS(AKey)))
+				{
+					if (am_showkeys)
+					{
+						int P_GetMapColorForKey (AInventory * key);
+						int c = P_GetMapColorForKey(static_cast<AKey *>(t));
 
-			AM_drawLineCharacter
-			(thintriangle_guy, NUMTHINTRIANGLEGUYLINES,
-			 16<<MAPBITS, angle, color, p.x, p.y);
+						if (c >= 0)	color.FromRGB(RPART(c), GPART(c), BPART(c));
+						else color = ThingColor_CountItem;
+						AM_drawLineCharacter(key_guy, NUMKEYGUYLINES, 16<<MAPBITS, 0, color, p.x, p.y);
+						color.Index = -1;
+					}
+					else
+					{
+						color = ThingColor_Item;
+					}
+				}
+				else if (t->flags&MF_COUNTITEM)
+					color = ThingColor_CountItem;
+				else
+					color = ThingColor_Item;
+			}
+
+			if (color.Index != -1)
+			{
+				AM_drawLineCharacter
+				(thintriangle_guy, NUMTHINTRIANGLEGUYLINES,
+				 16<<MAPBITS, angle, color, p.x, p.y);
+			}
 
 			if (am_cheat >= 3)
 			{

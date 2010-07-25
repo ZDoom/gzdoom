@@ -112,6 +112,7 @@ EXTERN_CVAR (Int, crosshair)
 EXTERN_CVAR (Bool, freelook)
 EXTERN_CVAR (Int, sv_smartaim)
 EXTERN_CVAR (Int, am_colorset)
+EXTERN_CVAR (Bool, am_showkeys)
 EXTERN_CVAR (Int, vid_aspect)
 
 static void CalcIndent (menu_t *menu);
@@ -579,6 +580,7 @@ static menuitem_t AutomapItems[] = {
 	{ discrete, "Show total time elapsed",	{&am_showtotaltime},	{2.0}, {0.0},	{0.0}, {OnOff} },
 	{ discrete, "Show secrets on map",		{&am_map_secrets},		{3.0}, {0.0},	{0.0}, {SecretTypes} },
 	{ discrete, "Draw map background",	{&am_drawmapback},		{2.0}, {0.0},	{0.0}, {OnOff} },
+	{ discrete, "Show keys (cheat)",	{&am_showkeys},			{2.0}, {0.0},	{0.0}, {OnOff} },
 };
 
 menu_t AutomapMenu =
@@ -622,9 +624,11 @@ EXTERN_CVAR (Color, am_ovsecretsectorcolor)
 EXTERN_CVAR (Color, am_thingcolor_friend)
 EXTERN_CVAR (Color, am_thingcolor_monster)
 EXTERN_CVAR (Color, am_thingcolor_item)
+EXTERN_CVAR (Color, am_thingcolor_citem)
 EXTERN_CVAR (Color, am_ovthingcolor_friend)
 EXTERN_CVAR (Color, am_ovthingcolor_monster)
 EXTERN_CVAR (Color, am_ovthingcolor_item)
+EXTERN_CVAR (Color, am_ovthingcolor_citem)
 
 static menuitem_t MapColorsItems[] = {
 	{ rsafemore,   "Restore default custom colors",				{NULL},					{0}, {0}, {0}, {(value_t*)DefaultCustomColors} },
@@ -648,6 +652,7 @@ static menuitem_t MapColorsItems[] = {
 	{ colorpicker, "Monsters (for cheat)",						{&am_thingcolor_monster},		{0}, {0}, {0}, {0} },
 	{ colorpicker, "Friends (for cheat)",						{&am_thingcolor_friend},		{0}, {0}, {0}, {0} },
 	{ colorpicker, "Items (for cheat)",							{&am_thingcolor_item},			{0}, {0}, {0}, {0} },
+	{ colorpicker, "Count Items (for cheat)",					{&am_thingcolor_citem},			{0}, {0}, {0}, {0} },
 	{ redtext,		" ",										{NULL},					{0}, {0}, {0}, {0} },
 	{ colorpicker, "You (overlay)",								{&am_ovyourcolor},		{0}, {0}, {0}, {0} },
 	{ colorpicker, "1-sided walls (overlay)",					{&am_ovwallcolor},		{0}, {0}, {0}, {0} },
@@ -659,6 +664,7 @@ static menuitem_t MapColorsItems[] = {
 	{ colorpicker, "Monsters (overlay) (for cheat)",			{&am_ovthingcolor_monster},		{0}, {0}, {0}, {0} },
 	{ colorpicker, "Friends (overlay) (for cheat)",				{&am_ovthingcolor_friend},		{0}, {0}, {0}, {0} },
 	{ colorpicker, "Items (overlay) (for cheat)",				{&am_ovthingcolor_item},		{0}, {0}, {0}, {0} },
+	{ colorpicker, "Count Items (overlay) (for cheat)",			{&am_ovthingcolor_citem},		{0}, {0}, {0}, {0} },
 };
 
 menu_t MapColorsMenu =

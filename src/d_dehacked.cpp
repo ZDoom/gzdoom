@@ -952,7 +952,7 @@ static int PatchThing (int thingy)
 				// compatibility, the upper bits are freed, but we have conflicts between the ZDoom bits
 				// and the MBF bits. The only such flag exposed to DEHSUPP, though, is STEALTH -- the others
 				// are not available through mnemonics, and aren't available either through their bit value.
-				// So if we find the STEALTH keyword, it's a ZDoom mod, otherwise assume assume FRIEND.
+				// So if we find the STEALTH keyword, it's a ZDoom mod, otherwise assume FRIEND.
 				bool zdoomflags = false;
 				char *strval;
 

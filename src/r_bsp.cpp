@@ -43,6 +43,8 @@
 #include "r_things.h"
 #include "a_sharedglobal.h"
 #include "g_level.h"
+#include "nodebuild.h"
+#include "x86.h"
 
 // State.
 #include "doomstat.h"
@@ -107,6 +109,9 @@ int WindowLeft, WindowRight;
 WORD MirrorFlags;
 seg_t *ActiveWallMirror;
 TArray<size_t> WallMirrors;
+
+static FNodeBuilder::FLevel PolyNodeLevel;
+static FNodeBuilder PolyNodeBuilder(PolyNodeLevel);
 
 CVAR (Bool, r_drawflat, false, 0)		// [RH] Don't texture segs?
 
@@ -1009,6 +1014,94 @@ void R_GetExtraLight (int *light, const secplane_t &plane, FExtraLight *el)
 }
 
 
+
+
+//==========================================================================
+//
+// FMiniBSP Constructor
+//
+//==========================================================================
+
+FMiniBSP::FMiniBSP()
+{
+	memset(this, 0, sizeof(*this));
+}
+
+//==========================================================================
+//
+// FMiniBSP Destructor
+//
+//==========================================================================
+
+FMiniBSP::~FMiniBSP()
+{
+	if (Nodes != NULL)
+	{
+		delete[] Nodes;
+	}
+	if (Segs != NULL)
+	{
+		delete[] Segs;
+	}
+	if (Subsectors != NULL)
+	{
+		delete[] Subsectors;
+	}
+	if (Verts != NULL)
+	{
+		delete[] Verts;
+	}
+}
+
+//==========================================================================
+//
+// P_BuildPolyBSP
+//
+//==========================================================================
+
+static void R_BuildPolyBSP(subsector_t *sub)
+{
+	assert(sub->BSP == NULL && "BSP computed more than once");
+
+	// Set up level information for the node builder.
+	PolyNodeLevel.ResetMapBounds();
+	PolyNodeLevel.Sides = sides;
+	PolyNodeLevel.NumSides = numsides;
+	PolyNodeLevel.Lines = lines;
+	PolyNodeLevel.NumLines = numlines;
+	for (FPolyNode *pn = sub->polys; pn != NULL; pn = pn->pnext)
+	{
+		for (unsigned int i = 0; i < pn->segs.Size(); ++i)
+		{
+			vertex_t *v1 = pn->segs[i].v1, *v2 = pn->segs[i].v2;
+			if (v1->x < PolyNodeLevel.MinX)		PolyNodeLevel.MinX = v1->x;
+			if (v1->x > PolyNodeLevel.MaxX)		PolyNodeLevel.MaxX = v1->x;
+			if (v1->y < PolyNodeLevel.MinY)		PolyNodeLevel.MinY = v1->y;
+			if (v1->y > PolyNodeLevel.MaxY)		PolyNodeLevel.MaxY = v1->y;
+			if (v2->x < PolyNodeLevel.MinX)		PolyNodeLevel.MinX = v2->x;
+			if (v2->x > PolyNodeLevel.MaxX)		PolyNodeLevel.MaxX = v2->x;
+			if (v2->y < PolyNodeLevel.MinY)		PolyNodeLevel.MinY = v2->y;
+			if (v2->y > PolyNodeLevel.MaxY)		PolyNodeLevel.MaxY = v2->y;
+		}
+	}
+
+	// Feed segs to the nodebuilder and build the nodes.
+	PolyNodeBuilder.Clear();
+	for (FPolyNode *pn = sub->polys; pn != NULL; pn = pn->pnext)
+	{
+		PolyNodeBuilder.AddSegs(&pn->segs[0], (int)pn->segs.Size());
+	}
+	PolyNodeBuilder.BuildMini(false, CPU.bSSE2);
+	sub->BSP = new FMiniBSP;
+	PolyNodeBuilder.ExtractMini(sub->BSP->Nodes, sub->BSP->NumNodes, sub->BSP->Segs, sub->BSP->NumSegs,
+		sub->BSP->Subsectors, sub->BSP->NumSubsectors, sub->BSP->Verts, sub->BSP->NumVerts);
+	for (int i = 0; i < sub->BSP->NumSubsectors; ++i)
+	{
+		sub->BSP->Subsectors[i].sector = sub->sector;
+	}
+}
+
+
 static int STACK_ARGS polycmp(const void *a, const void *b)
 {
    const FPolyNode *A = *(FPolyNode **)a;
@@ -1018,8 +1111,22 @@ static int STACK_ARGS polycmp(const void *a, const void *b)
 }
 
 
+void R_Subsector (subsector_t *sub);
 static void R_AddPolyobjs(subsector_t *sub)
 {
+	if (sub->BSP == NULL)
+	{
+		R_BuildPolyBSP(sub);
+	}
+	if (sub->BSP->NumNodes == 0)
+	{
+		R_Subsector(sub->BSP->Subsectors);
+	}
+	else
+	{
+		R_RenderBSPNode(sub->BSP->Nodes + sub->BSP->NumNodes - 1);
+	}
+#if 0
 	static TArray<FPolyNode *> sortedpolys;
 
 	FPolyNode *pn = sub->polys;
@@ -1043,8 +1150,8 @@ static void R_AddPolyobjs(subsector_t *sub)
 			R_AddLine(&pn->segs[j]);
 		}
 	}
+#endif
 }
-
 
 
 //
@@ -1061,15 +1168,18 @@ void R_Subsector (subsector_t *sub)
 	int          floorlightlevel;		// killough 3/16/98: set floor lightlevel
 	int          ceilinglightlevel;		// killough 4/11/98
 
+#if 0
 #ifdef RANGECHECK
 	if (sub - subsectors >= (ptrdiff_t)numsubsectors)
 		I_Error ("R_Subsector: ss %ti with numss = %i", sub - subsectors, numsubsectors);
 #endif
+#endif
 
+	assert(sub->sector != NULL);
 	frontsector = sub->sector;
 	frontsector->MoreFlags |= SECF_DRAWN;
 	count = sub->numlines;
-	line = &segs[sub->firstline];
+	line = sub->firstline;
 
 	// killough 3/8/98, 4/4/98: Deep water / fake ceiling effect
 	frontsector = R_FakeFlat(frontsector, &tempsec, &floorlightlevel,
@@ -1133,10 +1243,13 @@ void R_Subsector (subsector_t *sub)
 		ceilinglightlevel : floorlightlevel, FakeSide);
 
 	// [RH] Add particles
-	int shade = LIGHT2SHADE((floorlightlevel + ceilinglightlevel)/2 + r_actualextralight);
-	for (WORD i = ParticlesInSubsec[(unsigned int)(sub-subsectors)]; i != NO_PARTICLE; i = Particles[i].snext)
-	{
-		R_ProjectParticle (Particles + i, subsectors[sub-subsectors].sector, shade, FakeSide);
+	if ((unsigned int)(sub - subsectors) < (unsigned int)numsubsectors)
+	{ // Only do it for the main BSP.
+		int shade = LIGHT2SHADE((floorlightlevel + ceilinglightlevel)/2 + r_actualextralight);
+		for (WORD i = ParticlesInSubsec[(unsigned int)(sub-subsectors)]; i != NO_PARTICLE; i = Particles[i].snext)
+		{
+			R_ProjectParticle (Particles + i, subsectors[sub-subsectors].sector, shade, FakeSide);
+		}
 	}
 
 	if (sub->polys)

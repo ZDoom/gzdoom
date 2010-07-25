@@ -925,22 +925,7 @@ struct msecnode_t
 };
 
 struct FPolyNode;
-
-//
-// A SubSector.
-// References a Sector.
-// Basically, this is a list of LineSegs indicating the visible walls that
-// define (all or some) sides of a convex BSP leaf.
-//
-struct subsector_t
-{
-	sector_t	*sector;
-	DWORD		numlines;
-	DWORD		firstline;
-	FPolyNode	*polys;
-	int			validcount;
-	fixed_t		CenterX, CenterY;
-};
+struct FMiniBSP;
 
 //
 // The LineSeg.
@@ -957,11 +942,26 @@ struct seg_t
 	sector_t*		frontsector;
 	sector_t*		backsector;		// NULL for one-sided lines
 
-	subsector_t*	Subsector;
 	seg_t*			PartnerSeg;
 
 	BITFIELD		bPolySeg:1;
 };
+
+//
+// A SubSector.
+// References a Sector.
+// Basically, this is a list of LineSegs indicating the visible walls that
+// define (all or some) sides of a convex BSP leaf.
+//
+struct subsector_t
+{
+	sector_t	*sector;
+	FPolyNode	*polys;
+	FMiniBSP	*BSP;
+	seg_t		*firstline;
+	DWORD		numlines;
+};
+
 
 	
 
@@ -983,6 +983,26 @@ struct node_t
 		int		intchildren[2];	// Used by nodebuilder.
 	};
 };
+
+
+// An entire BSP tree.
+
+struct FMiniBSP
+{
+	FMiniBSP();
+	~FMiniBSP();
+
+	node_t *Nodes;
+	seg_t *Segs;
+	subsector_t *Subsectors;
+	vertex_t *Verts;
+
+	int NumNodes;
+	int NumSegs;
+	int NumSubsectors;
+	int NumVerts;
+};
+
 
 
 // posts are runs of non masked source pixels

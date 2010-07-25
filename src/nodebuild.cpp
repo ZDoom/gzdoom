@@ -62,6 +62,13 @@ const int AAPreference = 16;
 #define D(x) do{}while(0)
 #endif
 
+FNodeBuilder::FNodeBuilder(FLevel &level)
+: Level(level), GLNodes(false), EnableSSE2(true), SegsStuffed(0)
+{
+
+	VertexMap = NULL;
+}
+
 FNodeBuilder::FNodeBuilder (FLevel &level,
 							TArray<FPolyStart> &polyspots, TArray<FPolyStart> &anchors,
 							bool makeGLNodes, bool enableSSE2)
@@ -81,6 +88,35 @@ FNodeBuilder::~FNodeBuilder()
 	{
 		delete VertexMap;
 	}
+}
+
+void FNodeBuilder::BuildMini(bool makeGLNodes, bool enableSSE2)
+{
+	GLNodes = makeGLNodes;
+	EnableSSE2 = enableSSE2;
+	GroupSegPlanes();
+	BuildTree();
+}
+
+void FNodeBuilder::Clear()
+{
+	SegsStuffed = 0;
+	Nodes.Clear();
+	Subsectors.Clear();
+	SubsectorSets.Clear();
+	Segs.Clear();
+	Vertices.Clear();
+	SegList.Clear();
+	PlaneChecked.Clear();
+	Planes.Clear();
+	Touched.Clear();
+	Colinear.Clear();
+	SplitSharers.Clear();
+	if (VertexMap != NULL)
+	{
+		delete VertexMap;
+	}
+	VertexMap = new FVertexMap(*this, Level.MinX, Level.MinY, Level.MaxX, Level.MaxY);
 }
 
 void FNodeBuilder::BuildTree ()
@@ -173,17 +209,15 @@ void FNodeBuilder::CreateSubsectorsForReal ()
 	subsector_t sub;
 	unsigned int i;
 
-	sub.validcount = 0;
-	sub.CenterX = 0;	// Code in p_setup.cpp will set these for us later.
-	sub.CenterY = 0;
 	sub.sector = NULL;
 	sub.polys = NULL;
+	sub.BSP = NULL;
 
 	for (i = 0; i < SubsectorSets.Size(); ++i)
 	{
 		DWORD set = SubsectorSets[i];
+		DWORD firstline = (DWORD)SegList.Size();
 
-		sub.firstline = (DWORD)SegList.Size();
 		while (set != DWORD_MAX)
 		{
 			USegPtr ptr;
@@ -192,14 +226,15 @@ void FNodeBuilder::CreateSubsectorsForReal ()
 			SegList.Push (ptr);
 			set = ptr.SegPtr->next;
 		}
-		sub.numlines = (DWORD)(SegList.Size() - sub.firstline);
+		sub.numlines = (DWORD)(SegList.Size() - firstline);
+		sub.firstline = (seg_t *)firstline;
 
 		// Sort segs by linedef for special effects
-		qsort (&SegList[sub.firstline], sub.numlines, sizeof(USegPtr), SortSegs);
+		qsort (&SegList[firstline], sub.numlines, sizeof(USegPtr), SortSegs);
 
 		// Convert seg pointers into indices
 		D(Printf (PRINT_LOG, "Output subsector %d:\n", Subsectors.Size()));
-		for (unsigned int i = sub.firstline; i < SegList.Size(); ++i)
+		for (unsigned int i = firstline; i < SegList.Size(); ++i)
 		{
 			D(Printf (PRINT_LOG, "  Seg %5d%c(%5d,%5d)-(%5d,%5d)\n", SegList[i].SegPtr - &Segs[0],
 				SegList[i].SegPtr->linedef == -1 ? '+' : ' ',

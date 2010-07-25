@@ -177,6 +177,46 @@ int FNodeBuilder::CreateSeg (int linenum, int sidenum)
 	return segnum;
 }
 
+// For every seg, create FPrivSegs and FPrivVerts.
+
+void FNodeBuilder::AddSegs(seg_t *segs, int numsegs)
+{
+	assert(numsegs > 0);
+
+	for (int i = 0; i < numsegs; ++i)
+	{
+		FPrivSeg seg;
+		FPrivVert vert;
+		int segnum;
+
+		seg.next = DWORD_MAX;
+		seg.loopnum = 0;
+		seg.partner = DWORD_MAX;
+		seg.hashnext = NULL;
+		seg.planefront = false;
+		seg.planenum = DWORD_MAX;
+		seg.storedseg = DWORD_MAX;
+
+		seg.frontsector = segs[i].frontsector;
+		seg.backsector = segs[i].backsector;
+		vert.x = segs[i].v1->x;
+		vert.y = segs[i].v1->y;
+		seg.v1 = VertexMap->SelectVertexExact(vert);
+		vert.x = segs[i].v2->x;
+		vert.y = segs[i].v2->y;
+		seg.v2 = VertexMap->SelectVertexExact(vert);
+		seg.linedef = int(segs[i].linedef - Level.Lines);
+		seg.sidedef = segs[i].sidedef != NULL ? int(segs[i].sidedef - Level.Sides) : int(NO_SIDE);
+		seg.nextforvert = Vertices[seg.v1].segs;
+		seg.nextforvert2 = Vertices[seg.v2].segs2;
+
+		segnum = (int)Segs.Push(seg);
+		Vertices[seg.v1].segs = segnum;
+		Vertices[seg.v2].segs2 = segnum;
+	}
+}
+
+
 // Group colinear segs together so that only one seg per line needs to be checked
 // by SelectSplitter().
 

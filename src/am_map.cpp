@@ -1651,13 +1651,13 @@ void AM_showSS()
 		red.FromRGB(255,0,0);
 
 		subsector_t *sub = &subsectors[am_showsubsector];
-		for(unsigned int i=0;i<sub->numlines;i++)
+		for (unsigned int i = 0; i < sub->numlines; i++)
 		{
-			AM_drawSeg(&segs[sub->firstline+i], yellow);
+			AM_drawSeg(sub->firstline + i, yellow);
 		}
 		PO_LinkToSubsectors();
 
-		for(int i=0;i<po_NumPolyobjs;i++)
+		for (int i = 0; i <po_NumPolyobjs; i++)
 		{
 			FPolyObj *po = &polyobjs[i];
 			FPolyNode *pnode = po->subsectorlinks;
@@ -1666,7 +1666,7 @@ void AM_showSS()
 			{
 				if (pnode->subsector == sub)
 				{
-					for(unsigned j=0;j<pnode->segs.Size();j++)
+					for (unsigned j = 0; j < pnode->segs.Size(); j++)
 					{
 						AM_drawSeg(&pnode->segs[j], red);
 					}

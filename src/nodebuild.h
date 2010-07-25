@@ -132,7 +132,14 @@ public:
 
 		fixed_t MinX, MinY, MaxX, MaxY;
 
-		void FindMapBounds ();
+		void FindMapBounds();
+		void ResetMapBounds()
+		{
+			MinX = FIXED_MAX;
+			MinY = FIXED_MAX;
+			MaxX = FIXED_MIN;
+			MaxY = FIXED_MIN;
+		}
 	};
 
 	struct FPolyStart
@@ -141,12 +148,22 @@ public:
 		fixed_t x, y;
 	};
 
+	FNodeBuilder (FLevel &level);
 	FNodeBuilder (FLevel &level,
 		TArray<FPolyStart> &polyspots, TArray<FPolyStart> &anchors,
 		bool makeGLNodes, bool enableSSE2);
 	~FNodeBuilder ();
 
 	void Extract (node_t *&nodes, int &nodeCount,
+		seg_t *&segs, int &segCount,
+		subsector_t *&ssecs, int &subCount,
+		vertex_t *&verts, int &vertCount);
+
+	// These are used for building sub-BSP trees for polyobjects.
+	void Clear();
+	void AddSegs(seg_t *segs, int numsegs);
+	void BuildMini(bool makeGLNodes, bool enableSSE2);
+	void ExtractMini (node_t *&nodes, int &nodeCount,
 		seg_t *&segs, int &segCount,
 		subsector_t *&ssecs, int &subCount,
 		vertex_t *&verts, int &vertCount);

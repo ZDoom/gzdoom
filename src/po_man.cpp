@@ -1736,6 +1736,13 @@ void FPolyObj::ClearSubsectorLinks()
 		{
 			subsectorlinks->subsector->polys = subsectorlinks->pnext;
 		}
+
+		if (subsectorlinks->subsector->BSP != NULL)
+		{
+			delete subsectorlinks->subsector->BSP;
+			subsectorlinks->subsector->BSP = NULL;
+		}
+
 		subsectorlinks->state = -1;
 		delete subsectorlinks;
 		subsectorlinks = next;
@@ -2042,9 +2049,8 @@ void FPolyObj::CreateSubsectorLinks()
 		seg->sidedef = side;
 		seg->linedef = side->linedef;
 		seg->frontsector = side->sector;
-		seg->backsector = side->linedef->frontsector == side->sector? 
+		seg->backsector = side->linedef->frontsector == side->sector ? 
 			side->linedef->backsector : side->linedef->frontsector;
-		seg->Subsector = NULL;
 		seg->PartnerSeg = NULL;
 		seg->bPolySeg = true;
 	}

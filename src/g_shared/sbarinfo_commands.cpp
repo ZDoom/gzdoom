@@ -516,7 +516,7 @@ class CommandDrawString : public SBarInfoCommand
 		CommandDrawString(SBarInfo *script) : SBarInfoCommand(script),
 			shadow(false), shadowX(2), shadowY(2), spacing(0), font(NULL),
 			translation(CR_UNTRANSLATED), cache(-1), strValue(CONSTANT),
-			valueArgument(0)
+			valueArgument(0), alignment (ALIGN_RIGHT)
 		{
 		}
 
@@ -587,6 +587,29 @@ class CommandDrawString : public SBarInfoCommand
 			{
 				sc.MustGetToken(TK_IntConst);
 				spacing = sc.Number;
+				if(sc.CheckToken(',')) //[KS] flags? flags! SIX FLAGS!
+				{
+					while(sc.CheckToken(TK_Identifier))
+					{
+						if(sc.Compare("alignment"))
+						{
+							sc.MustGetToken('(');
+							sc.MustGetToken(TK_Identifier);
+							if(sc.Compare("right"))
+								alignment = ALIGN_RIGHT;
+							else if(sc.Compare("left"))
+								alignment = ALIGN_LEFT;
+							else if(sc.Compare("center"))
+								alignment = ALIGN_CENTER;
+							else
+								sc.ScriptError("Unknown alignment '%s'.", sc.String);
+							sc.MustGetToken(')');
+						}
+						else
+							sc.ScriptError("Unknown flag '%s'.", sc.String);
+						if(!sc.CheckToken('|') && !sc.CheckToken(',')) break;
+					}
+				}
 			}
 			sc.MustGetToken(';');
 
@@ -682,13 +705,33 @@ class CommandDrawString : public SBarInfoCommand
 			}
 		}
 	protected:
+		enum StringAlignment
+		{
+			ALIGN_RIGHT,
+			ALIGN_LEFT,
+			ALIGN_CENTER,
+		};
+
 		void RealignString()
 		{
 			x = startX;
-			if(script->spacingCharacter == '\0')
-				x -= static_cast<int> (font->StringWidth(str)+(spacing * str.Len()));
-			else //monospaced, so just multiplay the character size
-				x -= static_cast<int> ((font->GetCharWidth((int) script->spacingCharacter) + spacing) * str.Len());
+			switch (alignment)
+			{
+			case ALIGN_LEFT:
+				break;
+			case ALIGN_RIGHT:
+				if(script->spacingCharacter == '\0')
+					x -= static_cast<int> (font->StringWidth(str)+(spacing * str.Len()));
+				else //monospaced, so just multiplay the character size
+					x -= static_cast<int> ((font->GetCharWidth((int) script->spacingCharacter) + spacing) * str.Len());
+				break;
+			case ALIGN_CENTER:
+				if(script->spacingCharacter == '\0')
+					x -= static_cast<int> (font->StringWidth(str)+(spacing * str.Len()) / 2);
+				else
+					x -= static_cast<int> ((font->GetCharWidth((int) script->spacingCharacter) + spacing) * str.Len() / 2);
+				break;
+			}
 		}
 
 		enum StringValueType
@@ -721,6 +764,7 @@ class CommandDrawString : public SBarInfoCommand
 		StringValueType		strValue;
 		int					valueArgument;
 		FString				str;
+		StringAlignment		alignment;
 
 	private:
 		void SetStringToTag(AActor *actor)
@@ -885,6 +929,20 @@ class CommandDrawNumber : public CommandDrawString
 					sc.MustGetToken('(');
 					sc.MustGetToken(TK_IntConst);
 					interpolationSpeed = sc.Number;
+					sc.MustGetToken(')');
+				}
+				else if(sc.Compare("alignment"))
+				{
+					sc.MustGetToken('(');
+					sc.MustGetToken(TK_Identifier);
+					if(sc.Compare("right"))
+						alignment = ALIGN_RIGHT;
+					else if(sc.Compare("left"))
+						alignment = ALIGN_LEFT;
+					else if(sc.Compare("center"))
+						alignment = ALIGN_CENTER;
+					else
+						sc.ScriptError("Unknown alignment '%s'.", sc.String);
 					sc.MustGetToken(')');
 				}
 				else

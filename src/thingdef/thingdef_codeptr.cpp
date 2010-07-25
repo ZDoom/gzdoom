@@ -82,7 +82,7 @@ static FRandom pr_spawndebris ("SpawnDebris");
 static FRandom pr_spawnitemex ("SpawnItemEx");
 static FRandom pr_burst ("Burst");
 static FRandom pr_monsterrefire ("MonsterRefire");
-static FRandom pr_teleport("Teleport");
+static FRandom pr_teleport("A_Teleport");
 
 
 //==========================================================================

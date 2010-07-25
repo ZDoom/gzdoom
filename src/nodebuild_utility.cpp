@@ -49,6 +49,7 @@
 #include "m_bbox.h"
 #include "r_main.h"
 #include "i_system.h"
+#include "po_man.h"
 
 static const int PO_LINE_START = 1;
 static const int PO_LINE_EXPLICIT = 5;
@@ -207,6 +208,46 @@ void FNodeBuilder::AddSegs(seg_t *segs, int numsegs)
 		seg.v2 = VertexMap->SelectVertexExact(vert);
 		seg.linedef = int(segs[i].linedef - Level.Lines);
 		seg.sidedef = segs[i].sidedef != NULL ? int(segs[i].sidedef - Level.Sides) : int(NO_SIDE);
+		seg.nextforvert = Vertices[seg.v1].segs;
+		seg.nextforvert2 = Vertices[seg.v2].segs2;
+
+		segnum = (int)Segs.Push(seg);
+		Vertices[seg.v1].segs = segnum;
+		Vertices[seg.v2].segs2 = segnum;
+	}
+}
+
+void FNodeBuilder::AddPolySegs(FPolySeg *segs, int numsegs)
+{
+	assert(numsegs > 0);
+
+	for (int i = 0; i < numsegs; ++i)
+	{
+		FPrivSeg seg;
+		FPrivVert vert;
+		int segnum;
+
+		seg.next = DWORD_MAX;
+		seg.loopnum = 0;
+		seg.partner = DWORD_MAX;
+		seg.hashnext = NULL;
+		seg.planefront = false;
+		seg.planenum = DWORD_MAX;
+		seg.storedseg = DWORD_MAX;
+
+		side_t *side = segs[i].wall;
+		assert(side != NULL);
+
+		seg.frontsector = side->sector;
+		seg.backsector = side->linedef->frontsector == side->sector ? side->linedef->backsector : side->linedef->frontsector;
+		vert.x = segs[i].v1.x;
+		vert.y = segs[i].v1.y;
+		seg.v1 = VertexMap->SelectVertexExact(vert);
+		vert.x = segs[i].v2.x;
+		vert.y = segs[i].v2.y;
+		seg.v2 = VertexMap->SelectVertexExact(vert);
+		seg.linedef = int(side->linedef - Level.Lines);
+		seg.sidedef = int(side - Level.Sides);
 		seg.nextforvert = Vertices[seg.v1].segs;
 		seg.nextforvert2 = Vertices[seg.v2].segs2;
 

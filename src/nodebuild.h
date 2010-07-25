@@ -2,6 +2,8 @@
 #include "tarray.h"
 #include "r_defs.h"
 
+struct FPolySeg;
+
 struct FEventInfo
 {
 	int Vertex;
@@ -161,6 +163,7 @@ public:
 
 	// These are used for building sub-BSP trees for polyobjects.
 	void Clear();
+	void AddPolySegs(FPolySeg *segs, int numsegs);
 	void AddSegs(seg_t *segs, int numsegs);
 	void BuildMini(bool makeGLNodes, bool enableSSE2);
 	void ExtractMini (node_t *&nodes, int &nodeCount,

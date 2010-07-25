@@ -759,7 +759,6 @@ FPolyObj::FPolyObj()
 	subsectorlinks = NULL;
 	specialdata = NULL;
 	interpolation = NULL;
-	SVIndex = -1;
 }
 
 //==========================================================================
@@ -1280,20 +1279,6 @@ void FPolyObj::ClosestPoint(fixed_t fx, fixed_t fy, fixed_t &ox, fixed_t &oy, si
 	}
 }
 
-vertex_t *FPolyObj::GetNewVertex()
-{
-	if (SVIndex == ~0u || SplitVertices[SVIndex]->used == 10)
-	{
-		SVIndex++;
-		if (SVIndex >= SplitVertices.Size())
-		{
-			SplitVertices.Push(new FPolyVertexBlock);
-		}
-		SplitVertices[SVIndex]->clear();
-	}
-	return &SplitVertices[SVIndex]->vertices[SplitVertices[SVIndex]->used++];
-}
-
 //==========================================================================
 //
 // InitBlockMap
@@ -1710,11 +1695,6 @@ bool PO_Busy (int polyobj)
 
 void FPolyObj::ClearSubsectorLinks()
 {
-	for(unsigned i=0; i<SplitVertices.Size(); i++)
-	{
-		SplitVertices[i]->clear();
-	}
-	SVIndex = -1;
 	while (subsectorlinks != NULL)
 	{
 		assert(subsectorlinks->state == 1337);
@@ -1766,16 +1746,16 @@ void FPolyObj::ClearAllSubsectorLinks()
 //
 //==========================================================================
 
-static bool GetIntersection(seg_t *seg, node_t *bsp, vertex_t *v)
+static bool GetIntersection(FPolySeg *seg, node_t *bsp, FPolyVertex *v)
 {
 	double frac;
 	double num;
 	double den;
 
-	double v2x = (double)seg->v1->x;
-	double v2y = (double)seg->v1->y;
-	double v2dx = (double)(seg->v2->x - seg->v1->x);
-	double v2dy = (double)(seg->v2->y - seg->v1->y);
+	double v2x = (double)seg->v1.x;
+	double v2y = (double)seg->v1.y;
+	double v2dx = (double)(seg->v2.x - seg->v1.x);
+	double v2dy = (double)(seg->v2.y - seg->v1.y);
 	double v1x = (double)bsp->x;
 	double v1y = (double)bsp->y;
 	double v1dx = (double)bsp->dx;
@@ -1804,7 +1784,7 @@ static bool GetIntersection(seg_t *seg, node_t *bsp, vertex_t *v)
 //
 //==========================================================================
 
-static double PartitionDistance(vertex_t *vt, node_t *node)
+static double PartitionDistance(FPolyVertex *vt, node_t *node)
 {	
 	return fabs(double(-node->dy) * (vt->x - node->x) + double(node->dx) * (vt->y - node->y)) / node->len;
 }
@@ -1841,7 +1821,7 @@ static void AddToBBox(fixed_t child[4], fixed_t parent[4])
 //
 //==========================================================================
 
-static void AddToBBox(vertex_t *v, fixed_t bbox[4])
+static void AddToBBox(FPolyVertex *v, fixed_t bbox[4])
 {
 	if (v->x < bbox[BOXLEFT])
 	{
@@ -1869,7 +1849,7 @@ static void AddToBBox(vertex_t *v, fixed_t bbox[4])
 
 static void SplitPoly(FPolyNode *pnode, void *node, fixed_t bbox[4])
 {
-	static TArray<seg_t> lists[2];
+	static TArray<FPolySeg> lists[2];
 	static const double POLY_EPSILON = 0.3125;
 
 	if (!((size_t)node & 1))  // Keep going until found a subsector
@@ -1882,7 +1862,7 @@ static void SplitPoly(FPolyNode *pnode, void *node, fixed_t bbox[4])
 		lists[1].Clear();
 		for(unsigned i=0;i<pnode->segs.Size(); i++)
 		{
-			seg_t *seg = &pnode->segs[i];
+			FPolySeg *seg = &pnode->segs[i];
 
 			// Parts of the following code were taken from Eternity and are
 			// being used with permission.
@@ -1890,8 +1870,8 @@ static void SplitPoly(FPolyNode *pnode, void *node, fixed_t bbox[4])
 			// get distance of vertices from partition line
 			// If the distance is too small, we may decide to
 			// change our idea of sidedness.
-			double dist_v1 = PartitionDistance(seg->v1, bsp);
-			double dist_v2 = PartitionDistance(seg->v2, bsp);
+			double dist_v1 = PartitionDistance(&seg->v1, bsp);
+			double dist_v2 = PartitionDistance(&seg->v2, bsp);
 
 			// If the distances are less than epsilon, consider the points as being
 			// on the same side as the polyobj origin. Why? People like to build
@@ -1912,27 +1892,27 @@ static void SplitPoly(FPolyNode *pnode, void *node, fixed_t bbox[4])
 				}
 				else
 				{
-					int side = R_PointOnSide(seg->v2->x, seg->v2->y, bsp);
+					int side = R_PointOnSide(seg->v2.x, seg->v2.y, bsp);
 					lists[side].Push(*seg);
 				}
 			}
 			else if (dist_v2 <= POLY_EPSILON)
 			{
-				int side = R_PointOnSide(seg->v1->x, seg->v1->y, bsp);
+				int side = R_PointOnSide(seg->v1.x, seg->v1.y, bsp);
 				lists[side].Push(*seg);
 			}
 			else 
 			{
-				int side1 = R_PointOnSide(seg->v1->x, seg->v1->y, bsp);
-				int side2 = R_PointOnSide(seg->v2->x, seg->v2->y, bsp);
+				int side1 = R_PointOnSide(seg->v1.x, seg->v1.y, bsp);
+				int side2 = R_PointOnSide(seg->v2.x, seg->v2.y, bsp);
 
 				if(side1 != side2)
 				{
 					// if the partition line crosses this seg, we must split it.
 
-					vertex_t  *vert = pnode->poly->GetNewVertex();
+					FPolyVertex vert;
 
-					if (GetIntersection(seg, bsp, vert))
+					if (GetIntersection(seg, bsp, &vert))
 					{
 						lists[0].Push(*seg);
 						lists[1].Push(*seg);
@@ -2013,8 +1993,8 @@ static void SplitPoly(FPolyNode *pnode, void *node, fixed_t bbox[4])
 
 		for (unsigned i = 0; i < pnode->segs.Size(); ++i)
 		{
-			AddToBBox(pnode->segs[i].v1, subbbox);
-			AddToBBox(pnode->segs[i].v2, subbbox);
+			AddToBBox(&pnode->segs[i].v1, subbbox);
+			AddToBBox(&pnode->segs[i].v2, subbbox);
 		}
 		// Potentially expand the parent node's bounding box to contain these bits of polyobject.
 		AddToBBox(subbbox, bbox);
@@ -2041,18 +2021,12 @@ void FPolyObj::CreateSubsectorLinks()
 
 	for(unsigned i=0; i<Sidedefs.Size(); i++)
 	{
-		seg_t *seg = &node->segs[i];
+		FPolySeg *seg = &node->segs[i];
 		side_t *side = Sidedefs[i];
 
 		seg->v1 = side->V1();
 		seg->v2 = side->V2();
-		seg->sidedef = side;
-		seg->linedef = side->linedef;
-		seg->frontsector = side->sector;
-		seg->backsector = side->linedef->frontsector == side->sector ? 
-			side->linedef->backsector : side->linedef->frontsector;
-		seg->PartnerSeg = NULL;
-		seg->bPolySeg = true;
+		seg->wall = side;
 	}
 	SplitPoly(node, nodes + numnodes - 1, dummybbox);
 }

@@ -1055,6 +1055,30 @@ FMiniBSP::~FMiniBSP()
 
 //==========================================================================
 //
+// AddToMiniBBox
+//
+//==========================================================================
+
+static void AddToMiniBBox(fixed_t v[2])
+{
+	if (v[0] < PolyNodeLevel.MinX)		PolyNodeLevel.MinX = v[0];
+	if (v[0] > PolyNodeLevel.MaxX)		PolyNodeLevel.MaxX = v[0];
+	if (v[1] < PolyNodeLevel.MinY)		PolyNodeLevel.MinY = v[1];
+	if (v[1] > PolyNodeLevel.MaxY)		PolyNodeLevel.MaxY = v[1];
+}
+
+static void AddToMiniBBox(vertex_t *v)
+{
+	AddToMiniBBox(&v->x);
+}
+
+static void AddToMiniBBox(FPolyVertex *v)
+{
+	AddToMiniBBox(&v->x);
+}
+
+//==========================================================================
+//
 // P_BuildPolyBSP
 //
 //==========================================================================
@@ -1069,27 +1093,26 @@ static void R_BuildPolyBSP(subsector_t *sub)
 	PolyNodeLevel.NumSides = numsides;
 	PolyNodeLevel.Lines = lines;
 	PolyNodeLevel.NumLines = numlines;
+	for (unsigned int i = 0; i < sub->numlines; ++i)
+	{
+		AddToMiniBBox(sub->firstline[i].v1);
+		AddToMiniBBox(sub->firstline[i].v2);
+	}
 	for (FPolyNode *pn = sub->polys; pn != NULL; pn = pn->pnext)
 	{
 		for (unsigned int i = 0; i < pn->segs.Size(); ++i)
 		{
-			vertex_t *v1 = pn->segs[i].v1, *v2 = pn->segs[i].v2;
-			if (v1->x < PolyNodeLevel.MinX)		PolyNodeLevel.MinX = v1->x;
-			if (v1->x > PolyNodeLevel.MaxX)		PolyNodeLevel.MaxX = v1->x;
-			if (v1->y < PolyNodeLevel.MinY)		PolyNodeLevel.MinY = v1->y;
-			if (v1->y > PolyNodeLevel.MaxY)		PolyNodeLevel.MaxY = v1->y;
-			if (v2->x < PolyNodeLevel.MinX)		PolyNodeLevel.MinX = v2->x;
-			if (v2->x > PolyNodeLevel.MaxX)		PolyNodeLevel.MaxX = v2->x;
-			if (v2->y < PolyNodeLevel.MinY)		PolyNodeLevel.MinY = v2->y;
-			if (v2->y > PolyNodeLevel.MaxY)		PolyNodeLevel.MaxY = v2->y;
+			AddToMiniBBox(&pn->segs[i].v1);
+			AddToMiniBBox(&pn->segs[i].v2);
 		}
 	}
 
 	// Feed segs to the nodebuilder and build the nodes.
 	PolyNodeBuilder.Clear();
+	PolyNodeBuilder.AddSegs(sub->firstline, sub->numlines);
 	for (FPolyNode *pn = sub->polys; pn != NULL; pn = pn->pnext)
 	{
-		PolyNodeBuilder.AddSegs(&pn->segs[0], (int)pn->segs.Size());
+		PolyNodeBuilder.AddPolySegs(&pn->segs[0], (int)pn->segs.Size());
 	}
 	PolyNodeBuilder.BuildMini(false, CPU.bSSE2);
 	sub->BSP = new FMiniBSP;
@@ -1176,6 +1199,13 @@ void R_Subsector (subsector_t *sub)
 #endif
 
 	assert(sub->sector != NULL);
+
+	if (sub->polys)
+	{ // Render the polyobjs in the subsector first
+		R_AddPolyobjs(sub);
+		return;
+	}
+
 	frontsector = sub->sector;
 	frontsector->MoreFlags |= SECF_DRAWN;
 	count = sub->numlines;
@@ -1250,11 +1280,6 @@ void R_Subsector (subsector_t *sub)
 		{
 			R_ProjectParticle (Particles + i, subsectors[sub-subsectors].sector, shade, FakeSide);
 		}
-	}
-
-	if (sub->polys)
-	{ // Render the polyobjs in the subsector first
-		R_AddPolyobjs(sub);
 	}
 
 	while (count--)

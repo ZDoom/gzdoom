@@ -3,6 +3,7 @@
 #include "r_defs.h"
 
 struct FPolySeg;
+struct FMiniBSP;
 
 struct FEventInfo
 {
@@ -166,10 +167,7 @@ public:
 	void AddPolySegs(FPolySeg *segs, int numsegs);
 	void AddSegs(seg_t *segs, int numsegs);
 	void BuildMini(bool makeGLNodes, bool enableSSE2);
-	void ExtractMini (node_t *&nodes, int &nodeCount,
-		seg_t *&segs, int &segCount,
-		subsector_t *&ssecs, int &subCount,
-		vertex_t *&verts, int &vertCount);
+	void ExtractMini(FMiniBSP *bsp);
 
 	static angle_t PointToAngle (fixed_t dx, fixed_t dy);
 

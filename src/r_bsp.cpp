@@ -1024,33 +1024,7 @@ void R_GetExtraLight (int *light, const secplane_t &plane, FExtraLight *el)
 
 FMiniBSP::FMiniBSP()
 {
-	memset(this, 0, sizeof(*this));
-}
-
-//==========================================================================
-//
-// FMiniBSP Destructor
-//
-//==========================================================================
-
-FMiniBSP::~FMiniBSP()
-{
-	if (Nodes != NULL)
-	{
-		delete[] Nodes;
-	}
-	if (Segs != NULL)
-	{
-		delete[] Segs;
-	}
-	if (Subsectors != NULL)
-	{
-		delete[] Subsectors;
-	}
-	if (Verts != NULL)
-	{
-		delete[] Verts;
-	}
+	bDirty = false;
 }
 
 //==========================================================================
@@ -1085,7 +1059,7 @@ static void AddToMiniBBox(FPolyVertex *v)
 
 static void R_BuildPolyBSP(subsector_t *sub)
 {
-	assert(sub->BSP == NULL && "BSP computed more than once");
+	assert((sub->BSP == NULL || sub->BSP->bDirty) && "BSP computed more than once");
 
 	// Set up level information for the node builder.
 	PolyNodeLevel.ResetMapBounds();
@@ -1115,10 +1089,16 @@ static void R_BuildPolyBSP(subsector_t *sub)
 		PolyNodeBuilder.AddPolySegs(&pn->segs[0], (int)pn->segs.Size());
 	}
 	PolyNodeBuilder.BuildMini(false, CPU.bSSE2);
-	sub->BSP = new FMiniBSP;
-	PolyNodeBuilder.ExtractMini(sub->BSP->Nodes, sub->BSP->NumNodes, sub->BSP->Segs, sub->BSP->NumSegs,
-		sub->BSP->Subsectors, sub->BSP->NumSubsectors, sub->BSP->Verts, sub->BSP->NumVerts);
-	for (int i = 0; i < sub->BSP->NumSubsectors; ++i)
+	if (sub->BSP == NULL)
+	{
+		sub->BSP = new FMiniBSP;
+	}
+	else
+	{
+		sub->BSP->bDirty = false;
+	}
+	PolyNodeBuilder.ExtractMini(sub->BSP);
+	for (unsigned int i = 0; i < sub->BSP->Subsectors.Size(); ++i)
 	{
 		sub->BSP->Subsectors[i].sector = sub->sector;
 	}
@@ -1137,17 +1117,17 @@ static int STACK_ARGS polycmp(const void *a, const void *b)
 void R_Subsector (subsector_t *sub);
 static void R_AddPolyobjs(subsector_t *sub)
 {
-	if (sub->BSP == NULL)
+	if (sub->BSP == NULL || sub->BSP->bDirty)
 	{
 		R_BuildPolyBSP(sub);
 	}
-	if (sub->BSP->NumNodes == 0)
+	if (sub->BSP->Nodes.Size() == 0)
 	{
-		R_Subsector(sub->BSP->Subsectors);
+		R_Subsector(&sub->BSP->Subsectors[0]);
 	}
 	else
 	{
-		R_RenderBSPNode(sub->BSP->Nodes + sub->BSP->NumNodes - 1);
+		R_RenderBSPNode(&sub->BSP->Nodes.Last());
 	}
 #if 0
 	static TArray<FPolyNode *> sortedpolys;

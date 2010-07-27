@@ -990,17 +990,13 @@ struct node_t
 struct FMiniBSP
 {
 	FMiniBSP();
-	~FMiniBSP();
 
-	node_t *Nodes;
-	seg_t *Segs;
-	subsector_t *Subsectors;
-	vertex_t *Verts;
+	bool bDirty;
 
-	int NumNodes;
-	int NumSegs;
-	int NumSubsectors;
-	int NumVerts;
+	TArray<node_t> Nodes;
+	TArray<seg_t> Segs;
+	TArray<subsector_t> Subsectors;
+	TArray<vertex_t> Verts;
 };
 
 

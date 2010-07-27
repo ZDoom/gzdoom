@@ -3366,6 +3366,13 @@ void P_FreeLevelData ()
 	}
 	if (subsectors != NULL)
 	{
+		for (int i = 0; i < numsubsectors; ++i)
+		{
+			if (subsectors[i].BSP != NULL)
+			{
+				delete subsectors[i].BSP;
+			}
+		}
 		delete[] subsectors;
 		subsectors = NULL;
 	}

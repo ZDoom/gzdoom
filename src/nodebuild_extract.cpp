@@ -156,87 +156,72 @@ void FNodeBuilder::Extract (node_t *&outNodes, int &nodeCount,
 	}
 }
 
-void FNodeBuilder::ExtractMini (node_t *&outNodes, int &nodeCount,
-	seg_t *&outSegs, int &segCount,
-	subsector_t *&outSubs, int &subCount,
-	vertex_t *&outVerts, int &vertCount)
+void FNodeBuilder::ExtractMini (FMiniBSP *bsp)
 {
-	int i;
+	unsigned int i;
 
-	vertCount = Vertices.Size ();
-	outVerts = new vertex_t[vertCount];
-
-	for (i = 0; i < vertCount; ++i)
+	bsp->Verts.Resize(Vertices.Size());
+	for (i = 0; i < Vertices.Size(); ++i)
 	{
-		outVerts[i].x = Vertices[i].x;
-		outVerts[i].y = Vertices[i].y;
+		bsp->Verts[i].x = Vertices[i].x;
+		bsp->Verts[i].y = Vertices[i].y;
 	}
 
-	subCount = Subsectors.Size();
-	outSubs = new subsector_t[subCount];
-	memset(outSubs, 0, subCount * sizeof(subsector_t));
+	bsp->Subsectors.Resize(Subsectors.Size());
+	memset(&bsp->Subsectors[0], 0, Subsectors.Size() * sizeof(subsector_t));
 
-	nodeCount = Nodes.Size ();
-	outNodes = new node_t[nodeCount];
-
-	memcpy (outNodes, &Nodes[0], nodeCount*sizeof(node_t));
-	for (i = 0; i < nodeCount; ++i)
+	bsp->Nodes.Resize(Nodes.Size());
+	memcpy(&bsp->Nodes[0], &Nodes[0], Nodes.Size()*sizeof(node_t));
+	for (i = 0; i < Nodes.Size(); ++i)
 	{
 		D(Printf(PRINT_LOG, "Node %d:\n", i));
 		// Go backwards because on 64-bit systems, both of the intchildren are
 		// inside the first in-game child.
 		for (int j = 1; j >= 0; --j)
 		{
-			if (outNodes[i].intchildren[j] & 0x80000000)
+			if (bsp->Nodes[i].intchildren[j] & 0x80000000)
 			{
-				D(Printf(PRINT_LOG, "  subsector %d\n", outNodes[i].intchildren[j] & 0x7FFFFFFF));
-				outNodes[i].children[j] = (BYTE *)(outSubs + (outNodes[i].intchildren[j] & 0x7fffffff)) + 1;
+				D(Printf(PRINT_LOG, "  subsector %d\n", bsp->Nodes[i].intchildren[j] & 0x7FFFFFFF));
+				bsp->Nodes[i].children[j] = (BYTE *)&bsp->Subsectors[bsp->Nodes[i].intchildren[j] & 0x7fffffff] + 1;
 			}
 			else
 			{
-				D(Printf(PRINT_LOG, "  node %d\n", outNodes[i].intchildren[j]));
-				outNodes[i].children[j] = outNodes + outNodes[i].intchildren[j];
+				D(Printf(PRINT_LOG, "  node %d\n", bsp->Nodes[i].intchildren[j]));
+				bsp->Nodes[i].children[j] = &bsp->Nodes[bsp->Nodes[i].intchildren[j]];
 			}
 		}
 	}
 
 	if (GLNodes)
 	{
-		TArray<seg_t> segs (Segs.Size()*5/4);
-
-		for (i = 0; i < subCount; ++i)
+		for (i = 0; i < Subsectors.Size(); ++i)
 		{
-			DWORD numsegs = CloseSubsector (segs, i, outVerts);
-			outSubs[i].numlines = numsegs;
-			outSubs[i].firstline = (seg_t *)(size_t)(segs.Size() - numsegs);
+			DWORD numsegs = CloseSubsector (bsp->Segs, i, &bsp->Verts[0]);
+			bsp->Subsectors[i].numlines = numsegs;
+			bsp->Subsectors[i].firstline = &bsp->Segs[bsp->Segs.Size() - numsegs];
 		}
 
-		segCount = segs.Size ();
-		outSegs = new seg_t[segCount];
-		memcpy (outSegs, &segs[0], segCount*sizeof(seg_t));
-
-		for (i = 0; i < segCount; ++i)
+		for (i = 0; i < Segs.Size(); ++i)
 		{
-			if (outSegs[i].PartnerSeg != NULL)
+			if (bsp->Segs[i].PartnerSeg != NULL)
 			{
-				outSegs[i].PartnerSeg = &outSegs[Segs[(unsigned int)(size_t)outSegs[i].PartnerSeg-1].storedseg];
+				bsp->Segs[i].PartnerSeg = &bsp->Segs[Segs[(unsigned int)(size_t)bsp->Segs[i].PartnerSeg-1].storedseg];
 			}
 		}
 	}
 	else
 	{
-		memcpy (outSubs, &Subsectors[0], subCount*sizeof(subsector_t));
-		segCount = Segs.Size ();
-		outSegs = new seg_t[segCount];
-		for (i = 0; i < segCount; ++i)
+		memcpy(&bsp->Subsectors[0], &Subsectors[0], Subsectors.Size()*sizeof(subsector_t));
+		bsp->Segs.Resize(Segs.Size());
+		for (i = 0; i < Segs.Size(); ++i)
 		{
 			const FPrivSeg *org = &Segs[SegList[i].SegNum];
-			seg_t *out = &outSegs[i];
+			seg_t *out = &bsp->Segs[i];
 
 			D(Printf(PRINT_LOG, "Seg %d: v1(%d) -> v2(%d)\n", i, org->v1, org->v2));
 
-			out->v1 = outVerts + org->v1;
-			out->v2 = outVerts + org->v2;
+			out->v1 = &bsp->Verts[org->v1];
+			out->v2 = &bsp->Verts[org->v2];
 			out->backsector = org->backsector;
 			out->frontsector = org->frontsector;
 			out->linedef = Level.Lines + org->linedef;
@@ -244,13 +229,11 @@ void FNodeBuilder::ExtractMini (node_t *&outNodes, int &nodeCount,
 			out->PartnerSeg = NULL;
 			out->bPolySeg = false;
 		}
+		for (i = 0; i < bsp->Subsectors.Size(); ++i)
+		{
+			bsp->Subsectors[i].firstline = &bsp->Segs[(size_t)bsp->Subsectors[i].firstline];
+		}
 	}
-	for (i = 0; i < subCount; ++i)
-	{
-		outSubs[i].firstline = &outSegs[(size_t)outSubs[i].firstline];
-	}
-
-	D(Printf("%i segs, %i nodes, %i subsectors\n", segCount, nodeCount, subCount));
 }
 
 int FNodeBuilder::CloseSubsector (TArray<seg_t> &segs, int subsector, vertex_t *outVerts)

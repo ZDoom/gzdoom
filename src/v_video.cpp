@@ -62,6 +62,7 @@
 #include "m_png.h"
 #include "colormatcher.h"
 #include "v_palette.h"
+#include "r_sky.h"
 
 
 IMPLEMENT_ABSTRACT_CLASS (DCanvas)
@@ -1194,6 +1195,83 @@ bool DFrameBuffer::WipeDo(int ticks)
 void DFrameBuffer::WipeCleanup()
 {
 	wipe_Cleanup();
+}
+
+//===========================================================================
+//
+// Create texture hitlist
+//
+//===========================================================================
+
+void DFrameBuffer::GetHitlist(BYTE *hitlist)
+{
+	BYTE *spritelist;
+	int i;
+
+	spritelist = new BYTE[sprites.Size()];
+	
+	// Precache textures (and sprites).
+	memset (spritelist, 0, sprites.Size());
+
+	{
+		AActor *actor;
+		TThinkerIterator<AActor> iterator;
+
+		while ( (actor = iterator.Next ()) )
+			spritelist[actor->sprite] = 1;
+	}
+
+	for (i = (int)(sprites.Size () - 1); i >= 0; i--)
+	{
+		if (spritelist[i])
+		{
+			int j, k;
+			for (j = 0; j < sprites[i].numframes; j++)
+			{
+				const spriteframe_t *frame = &SpriteFrames[sprites[i].spriteframes + j];
+
+				for (k = 0; k < 16; k++)
+				{
+					FTextureID pic = frame->Texture[k];
+					if (pic.isValid())
+					{
+						hitlist[pic.GetIndex()] = 1;
+					}
+				}
+			}
+		}
+	}
+
+	delete[] spritelist;
+
+	for (i = numsectors - 1; i >= 0; i--)
+	{
+		hitlist[sectors[i].GetTexture(sector_t::floor).GetIndex()] = 
+			hitlist[sectors[i].GetTexture(sector_t::ceiling).GetIndex()] |= 2;
+	}
+
+	for (i = numsides - 1; i >= 0; i--)
+	{
+		hitlist[sides[i].GetTexture(side_t::top).GetIndex()] =
+		hitlist[sides[i].GetTexture(side_t::mid).GetIndex()] =
+		hitlist[sides[i].GetTexture(side_t::bottom).GetIndex()] |= 1;
+	}
+
+	// Sky texture is always present.
+	// Note that F_SKY1 is the name used to
+	//	indicate a sky floor/ceiling as a flat,
+	//	while the sky texture is stored like
+	//	a wall texture, with an episode dependant
+	//	name.
+
+	if (sky1texture.isValid())
+	{
+		hitlist[sky1texture.GetIndex()] |= 1;
+	}
+	if (sky2texture.isValid())
+	{
+		hitlist[sky2texture.GetIndex()] |= 1;
+	}
 }
 
 //===========================================================================

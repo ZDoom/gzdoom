@@ -41,6 +41,7 @@ gameinfo
 	defaultdropstyle = 1
 	endoom = "ENDOOM"
 	player5start = 4001
+	drawreadthis = true
 }
 
 skill baby

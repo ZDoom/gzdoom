@@ -31,7 +31,6 @@ struct FPolySeg
 struct FPolyObj;
 struct FPolyNode
 {
-	int state;
 	FPolyObj *poly;				// owning polyobject
 	FPolyNode *pnext;			// next polyobj in list
 	FPolyNode *pprev;			// previous polyobj
@@ -41,6 +40,7 @@ struct FPolyNode
 
 	TArray<FPolySeg> segs;		// segs for this node
 	fixed_t dist;				// distance for sorting
+	int state;
 };
 
 // ===== Polyobj data =====

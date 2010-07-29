@@ -142,6 +142,9 @@ static void TranslateToStartSpot (int tag, int originX, int originY);
 static void DoMovePolyobj (FPolyObj *po, int x, int y);
 static void InitSegLists ();
 static void KillSegLists ();
+static FPolyNode *NewPolyNode();
+static void FreePolyNode();
+static void ReleaseAllPolyNodes();
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -157,6 +160,7 @@ polyspawns_t *polyspawns; // [RH] Let P_SpawnMapThings() find our thingies for u
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static TArray<SDWORD> KnownPolySides;
+static FPolyNode *FreePolyNodes;
 
 // CODE --------------------------------------------------------------------
 
@@ -1720,10 +1724,11 @@ void FPolyObj::ClearSubsectorLinks()
 
 void FPolyObj::ClearAllSubsectorLinks()
 {
-	for(int i=0;i<po_NumPolyobjs;i++)
+	for (int i = 0; i < po_NumPolyobjs; i++)
 	{
 		polyobjs[i].ClearSubsectorLinks();
 	}
+	ReleaseAllPolyNodes();
 }
 
 //==========================================================================
@@ -1933,13 +1938,8 @@ static void SplitPoly(FPolyNode *pnode, void *node, fixed_t bbox[4])
 		else
 		{
 			// create the new node 
-			FPolyNode *newnode = new FPolyNode;
-			newnode->state = 1337;
+			FPolyNode *newnode = NewPolyNode();
 			newnode->poly = pnode->poly;
-			newnode->pnext = NULL;
-			newnode->pprev = NULL;
-			newnode->subsector = NULL;
-			newnode->snext = NULL;
 			newnode->segs = lists[1];
 
 			// set segs for original node
@@ -1997,14 +1997,13 @@ static void SplitPoly(FPolyNode *pnode, void *node, fixed_t bbox[4])
 
 void FPolyObj::CreateSubsectorLinks()
 {
-	FPolyNode *node = new FPolyNode;
-	fixed_t dummybbox[4];
+	FPolyNode *node = NewPolyNode();
+	// Even though we don't care about it, we need to initialize this
+	// bounding box to something so that Valgrind won't complain about it
+	// when SplitPoly modifies it.
+	fixed_t dummybbox[4] = { 0 };
 
-	node->state = 1337;
 	node->poly = this;
-	node->pnext = NULL;
-	node->pprev = NULL;
-	node->snext = NULL;
 	node->segs.Resize(Sidedefs.Size());
 
 	for(unsigned i=0; i<Sidedefs.Size(); i++)
@@ -2033,5 +2032,63 @@ void PO_LinkToSubsectors()
 		{
 			polyobjs[i].CreateSubsectorLinks();
 		}
+	}
+}
+
+//==========================================================================
+//
+// NewPolyNode
+//
+//==========================================================================
+
+static FPolyNode *NewPolyNode()
+{
+	FPolyNode *node;
+
+	if (FreePolyNodes != NULL)
+	{
+		node = FreePolyNodes;
+		FreePolyNodes = node->pnext;
+	}
+	else
+	{
+		node = new FPolyNode;
+	}
+	node->state = 1337;
+	node->poly = NULL;
+	node->pnext = NULL;
+	node->pprev = NULL;
+	node->subsector = NULL;
+	node->snext = NULL;
+	return node;
+}
+
+//==========================================================================
+//
+// FreePolyNode
+//
+//==========================================================================
+
+void FreePolyNode(FPolyNode *node)
+{
+	node->segs.Clear();
+	node->pnext = FreePolyNodes;
+	FreePolyNodes = node;
+}
+
+//==========================================================================
+//
+// ReleaseAllPolyNodes
+//
+//==========================================================================
+
+void ReleaseAllPolyNodes()
+{
+	FPolyNode *node, *next;
+
+	for (node = FreePolyNodes; node != NULL; node = next)
+	{
+		next = node->pnext;
+		delete node;
 	}
 }

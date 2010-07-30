@@ -1480,11 +1480,11 @@ int side_t::GetLightLevel (bool foggy, int baselight, int *pfakecontrast) const
 			if (((level.flags2 & LEVEL2_SMOOTHLIGHTING) || (Flags & WALLF_SMOOTHLIGHTING) || r_fakecontrast == 2) &&
 				linedef->dx != 0)
 			{
-				rel = int // OMG LEE KILLOUGH LIVES! :/
+				rel = xs_RoundToInt // OMG LEE KILLOUGH LIVES! :/
 					(
-						(float(level.WallHorizLight)
-						+abs(atan(float(linedef->dy)/float(linedef->dx))/float(1.57079))
-						*float(level.WallVertLight - level.WallHorizLight))
+						level.WallHorizLight
+						+ fabs(atan(double(linedef->dy) / linedef->dx) / 1.57079)
+						* (level.WallVertLight - level.WallHorizLight)
 					);
 			}
 			else

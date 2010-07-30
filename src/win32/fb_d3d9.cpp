@@ -1772,7 +1772,7 @@ IDirect3DTexture9 *D3DFB::GetCurrentScreen(D3DPOOL pool)
 
 	assert(pool == D3DPOOL_SYSTEMMEM || pool == D3DPOOL_DEFAULT);
 
-	if (FAILED(FrontCopySurface->GetDesc(&desc)))
+	if (FrontCopySurface == NULL || FAILED(FrontCopySurface->GetDesc(&desc)))
 	{
 		return NULL;
 	}

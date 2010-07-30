@@ -39,7 +39,6 @@ struct FPolyNode
 	FPolyNode *snext;			// next subsector
 
 	TArray<FPolySeg> segs;		// segs for this node
-	fixed_t dist;				// distance for sorting
 	int state;
 };
 

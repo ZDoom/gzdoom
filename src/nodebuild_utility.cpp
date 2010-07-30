@@ -588,6 +588,10 @@ void FNodeBuilder::FLevel::FindMapBounds ()
 	MaxY = maxy;
 }
 
+FNodeBuilder::IVertexMap::~IVertexMap()
+{
+}
+
 FNodeBuilder::FVertexMap::FVertexMap (FNodeBuilder &builder,
 	fixed_t minx, fixed_t miny, fixed_t maxx, fixed_t maxy)
 	: MyBuilder(builder)
@@ -686,4 +690,53 @@ int FNodeBuilder::FVertexMap::InsertVertex (FNodeBuilder::FPrivVert &vert)
 	}
 
 	return vertnum;
+}
+
+FNodeBuilder::FVertexMapSimple::FVertexMapSimple(FNodeBuilder &builder)
+	: MyBuilder(builder)
+{
+}
+
+int FNodeBuilder::FVertexMapSimple::SelectVertexExact(FNodeBuilder::FPrivVert &vert)
+{
+	FPrivVert *verts = &MyBuilder.Vertices[0];
+	unsigned int stop = MyBuilder.Vertices.Size();
+
+	for (unsigned int i = 0; i < stop; ++i)
+	{
+		if (verts[i].x == vert.x && verts[i].y == vert.y)
+		{
+			return i;
+		}
+	}
+	// Not present: add it!
+	return InsertVertex(vert);
+}
+
+int FNodeBuilder::FVertexMapSimple::SelectVertexClose(FNodeBuilder::FPrivVert &vert)
+{
+	FPrivVert *verts = &MyBuilder.Vertices[0];
+	unsigned int stop = MyBuilder.Vertices.Size();
+
+	for (unsigned int i = 0; i < stop; ++i)
+	{
+#if VERTEX_EPSILON <= 1
+		if (verts[i].x == vert.x && verts[i].y == y)
+#else
+		if (abs(verts[i].x - vert.x) < VERTEX_EPSILON &&
+			abs(verts[i].y - vert.y) < VERTEX_EPSILON)
+#endif
+		{
+			return i;
+		}
+	}
+	// Not present: add it!
+	return InsertVertex (vert);
+}
+
+int FNodeBuilder::FVertexMapSimple::InsertVertex (FNodeBuilder::FPrivVert &vert)
+{
+	vert.segs = DWORD_MAX;
+	vert.segs2 = DWORD_MAX;
+	return (int)MyBuilder.Vertices.Push (vert);
 }

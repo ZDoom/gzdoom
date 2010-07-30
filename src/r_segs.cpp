@@ -1489,8 +1489,8 @@ int side_t::GetLightLevel (bool foggy, int baselight, int *pfakecontrast) const
 			}
 			else
 			{
-				rel = linedef->dx==0? level.WallVertLight : 
-					  linedef->dy==0? level.WallHorizLight : 0;
+				rel = linedef->dx == 0 ? level.WallVertLight : 
+					  linedef->dy == 0 ? level.WallHorizLight : 0;
 			}
 			if (pfakecontrast != NULL)
 			{

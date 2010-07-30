@@ -1029,30 +1029,6 @@ FMiniBSP::FMiniBSP()
 
 //==========================================================================
 //
-// AddToMiniBBox
-//
-//==========================================================================
-
-static void AddToMiniBBox(fixed_t v[2])
-{
-	if (v[0] < PolyNodeLevel.MinX)		PolyNodeLevel.MinX = v[0];
-	if (v[0] > PolyNodeLevel.MaxX)		PolyNodeLevel.MaxX = v[0];
-	if (v[1] < PolyNodeLevel.MinY)		PolyNodeLevel.MinY = v[1];
-	if (v[1] > PolyNodeLevel.MaxY)		PolyNodeLevel.MaxY = v[1];
-}
-
-static void AddToMiniBBox(vertex_t *v)
-{
-	AddToMiniBBox(&v->x);
-}
-
-static void AddToMiniBBox(FPolyVertex *v)
-{
-	AddToMiniBBox(&v->x);
-}
-
-//==========================================================================
-//
 // P_BuildPolyBSP
 //
 //==========================================================================
@@ -1062,24 +1038,10 @@ static void R_BuildPolyBSP(subsector_t *sub)
 	assert((sub->BSP == NULL || sub->BSP->bDirty) && "BSP computed more than once");
 
 	// Set up level information for the node builder.
-	PolyNodeLevel.ResetMapBounds();
 	PolyNodeLevel.Sides = sides;
 	PolyNodeLevel.NumSides = numsides;
 	PolyNodeLevel.Lines = lines;
 	PolyNodeLevel.NumLines = numlines;
-	for (unsigned int i = 0; i < sub->numlines; ++i)
-	{
-		AddToMiniBBox(sub->firstline[i].v1);
-		AddToMiniBBox(sub->firstline[i].v2);
-	}
-	for (FPolyNode *pn = sub->polys; pn != NULL; pn = pn->pnext)
-	{
-		for (unsigned int i = 0; i < pn->segs.Size(); ++i)
-		{
-			AddToMiniBBox(&pn->segs[i].v1);
-			AddToMiniBBox(&pn->segs[i].v2);
-		}
-	}
 
 	// Feed segs to the nodebuilder and build the nodes.
 	PolyNodeBuilder.Clear();
@@ -1104,16 +1066,6 @@ static void R_BuildPolyBSP(subsector_t *sub)
 	}
 }
 
-
-static int STACK_ARGS polycmp(const void *a, const void *b)
-{
-   const FPolyNode *A = *(FPolyNode **)a;
-   const FPolyNode *B = *(FPolyNode **)b;
-
-   return A->dist - B->dist;
-}
-
-
 void R_Subsector (subsector_t *sub);
 static void R_AddPolyobjs(subsector_t *sub)
 {
@@ -1129,31 +1081,6 @@ static void R_AddPolyobjs(subsector_t *sub)
 	{
 		R_RenderBSPNode(&sub->BSP->Nodes.Last());
 	}
-#if 0
-	static TArray<FPolyNode *> sortedpolys;
-
-	FPolyNode *pn = sub->polys;
-	sortedpolys.Clear();
-	while (pn != NULL)
-	{
-		sortedpolys.Push(pn);
-		pn->dist = R_PointToDist2(pn->poly->CenterSpot.x - viewx, pn->poly->CenterSpot.y - viewy);
-		pn = pn->pnext;
-	}
-	if (sortedpolys.Size() > 1)
-	{
-		qsort(&sortedpolys[0], sortedpolys.Size(), sizeof (sortedpolys[0]), polycmp);
-	}
-
-	for(unsigned i=0; i<sortedpolys.Size(); i++)
-	{
-		pn = sortedpolys[i];
-		for(unsigned j=0; j<pn->segs.Size(); j++)
-		{
-			R_AddLine(&pn->segs[j]);
-		}
-	}
-#endif
 }
 
 

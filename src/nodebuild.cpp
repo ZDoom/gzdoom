@@ -112,11 +112,10 @@ void FNodeBuilder::Clear()
 	Touched.Clear();
 	Colinear.Clear();
 	SplitSharers.Clear();
-	if (VertexMap != NULL)
+	if (VertexMap == NULL)
 	{
-		delete VertexMap;
+		VertexMap = new FVertexMapSimple(*this);
 	}
-	VertexMap = new FVertexMap(*this, Level.MinX, Level.MinY, Level.MaxX, Level.MaxY);
 }
 
 void FNodeBuilder::BuildTree ()

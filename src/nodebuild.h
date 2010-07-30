@@ -91,7 +91,17 @@ class FNodeBuilder
 	};
 
 	// Like a blockmap, but for vertices instead of lines
-	class FVertexMap
+	class IVertexMap
+	{
+	public:
+		virtual ~IVertexMap();
+		virtual int SelectVertexExact(FPrivVert &vert) = 0;
+		virtual int SelectVertexClose(FPrivVert &vert) = 0;
+	private:
+		IVertexMap &operator=(const IVertexMap &);
+	};
+
+	class FVertexMap : public IVertexMap
 	{
 	public:
 		FVertexMap (FNodeBuilder &builder, fixed_t minx, fixed_t miny, fixed_t maxx, fixed_t maxy);
@@ -119,12 +129,23 @@ class FNodeBuilder
 			assert (y <= MaxY);
 			return (unsigned(x - MinX) >> BLOCK_SHIFT) + (unsigned(y - MinY) >> BLOCK_SHIFT) * BlocksWide;
 		}
+	};
 
-		FVertexMap &operator= (const FVertexMap &) { return *this; }
+	class FVertexMapSimple : public IVertexMap
+	{
+	public:
+		FVertexMapSimple(FNodeBuilder &builder);
+
+		int SelectVertexExact(FPrivVert &vert);
+		int SelectVertexClose(FPrivVert &vert);
+	private:
+		int InsertVertex(FPrivVert &vert);
+
+		FNodeBuilder &MyBuilder;
 	};
 
 	friend class FVertexMap;
-
+	friend class FVertexMapSimple;
 
 public:
 	struct FLevel
@@ -178,7 +199,7 @@ public:
 	static inline int PointOnSide (int x, int y, int x1, int y1, int dx, int dy);
 
 private:
-	FVertexMap *VertexMap;
+	IVertexMap *VertexMap;
 
 	TArray<node_t> Nodes;
 	TArray<subsector_t> Subsectors;

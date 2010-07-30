@@ -350,6 +350,27 @@ void FNodeBuilder::GroupSegPlanes ()
 	PlaneChecked.Reserve ((planenum + 7) / 8);
 }
 
+// Just create one plane per seg. Should be good enough for mini BSPs.
+void FNodeBuilder::GroupSegPlanesSimple()
+{
+	Planes.Resize(Segs.Size());
+	for (int i = 0; i < (int)Segs.Size(); ++i)
+	{
+		FPrivSeg *seg = &Segs[i];
+		FSimpleLine *pline = &Planes[i];
+		seg->next = i+1;
+		seg->hashnext = NULL;
+		seg->planenum = i;
+		seg->planefront = true;
+		pline->x = Vertices[seg->v1].x;
+		pline->y = Vertices[seg->v1].y;
+		pline->dx = Vertices[seg->v2].x - Vertices[seg->v1].x;
+		pline->dy = Vertices[seg->v2].y - Vertices[seg->v1].y;
+	}
+	Segs.Last().next = DWORD_MAX;
+	PlaneChecked.Reserve((Segs.Size() + 7) / 8);
+}
+
 // Find "loops" of segs surrounding polyobject's origin. Note that a polyobject's origin
 // is not solely defined by the polyobject's anchor, but also by the polyobject itself.
 // For the split avoidance to work properly, you must have a convex, complete loop of

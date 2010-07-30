@@ -230,6 +230,7 @@ private:
 	void MakeSegsFromSides ();
 	int CreateSeg (int linenum, int sidenum);
 	void GroupSegPlanes ();
+	void GroupSegPlanesSimple ();
 	void FindPolyContainers (TArray<FPolyStart> &spots, TArray<FPolyStart> &anchors);
 	bool GetPolyExtents (int polynum, fixed_t bbox[4]);
 	int MarkLoop (DWORD firstseg, int loopnum);

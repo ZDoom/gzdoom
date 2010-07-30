@@ -94,7 +94,7 @@ void FNodeBuilder::BuildMini(bool makeGLNodes, bool enableSSE2)
 {
 	GLNodes = makeGLNodes;
 	EnableSSE2 = enableSSE2;
-	GroupSegPlanes();
+	GroupSegPlanesSimple();
 	BuildTree();
 }
 

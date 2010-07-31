@@ -255,16 +255,15 @@ private:
 	bool GetPolyExtents (int polynum, fixed_t bbox[4]);
 	int MarkLoop (DWORD firstseg, int loopnum);
 	void AddSegToBBox (fixed_t bbox[4], const FPrivSeg *seg);
-	int CreateNode (DWORD set, fixed_t bbox[4]);
+	int CreateNode (DWORD set, unsigned int count, fixed_t bbox[4]);
 	int CreateSubsector (DWORD set, fixed_t bbox[4]);
 	void CreateSubsectorsForReal ();
-	bool CheckSubsector (DWORD set, node_t &node, DWORD &splitseg, int setsize);
+	bool CheckSubsector (DWORD set, node_t &node, DWORD &splitseg);
 	bool CheckSubsectorOverlappingSegs (DWORD set, node_t &node, DWORD &splitseg);
 	bool ShoveSegBehind (DWORD set, node_t &node, DWORD seg, DWORD mate);	int SelectSplitter (DWORD set, node_t &node, DWORD &splitseg, int step, bool nosplit);
-	void SplitSegs (DWORD set, node_t &node, DWORD splitseg, DWORD &outset0, DWORD &outset1);
+	void SplitSegs (DWORD set, node_t &node, DWORD splitseg, DWORD &outset0, DWORD &outset1, unsigned int &count0, unsigned int &count1);
 	DWORD SplitSeg (DWORD segnum, int splitvert, int v1InFront);
 	int Heuristic (node_t &node, DWORD set, bool honorNoSplit);
-	int CountSegs (DWORD set) const;
 
 	// Returns:
 	//	0 = seg is in front

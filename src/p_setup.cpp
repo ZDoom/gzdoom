@@ -3790,7 +3790,7 @@ void P_SetupLevel (char *lumpname, int position)
 		};
 		leveldata.FindMapBounds ();
 		UsingGLNodes |= genglnodes;
-		FNodeBuilder builder (leveldata, polyspots, anchors, UsingGLNodes, CPU.bSSE2);
+		FNodeBuilder builder (leveldata, polyspots, anchors, UsingGLNodes);
 		delete[] vertexes;
 		builder.Extract (nodes, numnodes,
 			segs, numsegs,

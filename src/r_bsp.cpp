@@ -44,7 +44,6 @@
 #include "a_sharedglobal.h"
 #include "g_level.h"
 #include "nodebuild.h"
-#include "x86.h"
 
 // State.
 #include "doomstat.h"
@@ -1050,7 +1049,7 @@ static void R_BuildPolyBSP(subsector_t *sub)
 	{
 		PolyNodeBuilder.AddPolySegs(&pn->segs[0], (int)pn->segs.Size());
 	}
-	PolyNodeBuilder.BuildMini(false, CPU.bSSE2);
+	PolyNodeBuilder.BuildMini(false);
 	if (sub->BSP == NULL)
 	{
 		sub->BSP = new FMiniBSP;

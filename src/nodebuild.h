@@ -1,6 +1,7 @@
 #include "doomdata.h"
 #include "tarray.h"
 #include "r_defs.h"
+#include "x86.h"
 
 struct FPolySeg;
 struct FMiniBSP;
@@ -43,6 +44,27 @@ private:
 	FEvent *Predecessor (FEvent *event) const;
 };
 
+struct FSimpleVert
+{
+	fixed_t x, y;
+};
+
+extern "C"
+{
+	int ClassifyLine2 (node_t &node, const FSimpleVert *v1, const FSimpleVert *v2, int sidev[2]);
+#ifndef DISABLE_SSE
+	int ClassifyLineSSE1 (node_t &node, const FSimpleVert *v1, const FSimpleVert *v2, int sidev[2]);
+	int ClassifyLineSSE2 (node_t &node, const FSimpleVert *v1, const FSimpleVert *v2, int sidev[2]);
+#ifdef BACKPATCH
+#ifdef __GNUC__
+	int ClassifyLineBackpatch (node_t &node, const FSimpleVert *v1, const FSimpleVert *v2, int sidev[2]) __attribute__((noinline));
+#else
+	int __declspec(noinline) ClassifyLineBackpatch (node_t &node, const FSimpleVert *v1, const FSimpleVert *v2, int sidev[2]);
+#endif
+#endif
+#endif
+}
+
 class FNodeBuilder
 {
 	struct FPrivSeg
@@ -63,9 +85,8 @@ class FNodeBuilder
 		bool planefront;
 		FPrivSeg *hashnext;
 	};
-	struct FPrivVert
+	struct FPrivVert : FSimpleVert
 	{
-		fixed_t x, y;
 		DWORD segs;		// segs that use this vertex as v1
 		DWORD segs2;	// segs that use this vertex as v2
 
@@ -175,7 +196,7 @@ public:
 	FNodeBuilder (FLevel &level);
 	FNodeBuilder (FLevel &level,
 		TArray<FPolyStart> &polyspots, TArray<FPolyStart> &anchors,
-		bool makeGLNodes, bool enableSSE2);
+		bool makeGLNodes);
 	~FNodeBuilder ();
 
 	void Extract (node_t *&nodes, int &nodeCount,
@@ -187,7 +208,7 @@ public:
 	void Clear();
 	void AddPolySegs(FPolySeg *segs, int numsegs);
 	void AddSegs(seg_t *segs, int numsegs);
-	void BuildMini(bool makeGLNodes, bool enableSSE2);
+	void BuildMini(bool makeGLNodes);
 	void ExtractMini(FMiniBSP *bsp);
 
 	static angle_t PointToAngle (fixed_t dx, fixed_t dy);
@@ -220,7 +241,6 @@ private:
 	DWORD HackMate;			// Seg to use in front of hack seg
 	FLevel &Level;
 	bool GLNodes;			// Add minisegs to make GL nodes?
-	bool EnableSSE2;
 
 	// Progress meter stuff
 	int SegsStuffed;
@@ -251,9 +271,7 @@ private:
 	//  1 = seg is in back
 	// -1 = seg cuts the node
 
-	inline int ClassifyLine (node_t &node, const FPrivSeg *seg, int &sidev1, int &sidev2);
-	int ClassifyLine2 (node_t &node, const FPrivSeg *seg, int &sidev1, int &sidev2);
-	int ClassifyLineSSE2 (node_t &node, const FPrivSeg *seg, int &sidev1, int &sidev2);
+	inline int ClassifyLine (node_t &node, const FPrivVert *v1, const FPrivVert *v2, int sidev[2]);
 
 	void FixSplitSharers (const node_t &node);
 	double AddIntersection (const node_t &node, int vertex);
@@ -313,21 +331,27 @@ inline int FNodeBuilder::PointOnSide (int x, int y, int x1, int y1, int dx, int 
 	return s_num > 0.0 ? -1 : 1;
 }
 
-inline int FNodeBuilder::ClassifyLine (node_t &node, const FPrivSeg *seg, int &sidev1, int &sidev2)
+inline int FNodeBuilder::ClassifyLine (node_t &node, const FPrivVert *v1, const FPrivVert *v2, int sidev[2])
 {
-#if !defined(_M_IX86) && !defined(_M_X64) && !defined(__i386__) && !defined(__amd64__)
-	return ClassifyLine2 (node, seg, sidev1, sidev2);
-#elif defined(__SSE2__)
+#ifdef DISABLE_SSE
+	return ClassifyLine2 (node, v1, v2, sidev);
+#else
+#if defined(__SSE2__) || defined(_M_IX64)
 	// If compiling with SSE2 support everywhere, just use the SSE2 version.
-	return ClassifyLineSSE2 (node, seg, sidev1, sidev2);
+	return ClassifyLineSSE2 (node, v1, v2, sidev);
 #elif defined(_MSC_VER) && _MSC_VER < 1300
-	// VC 6 does not support SSE2 optimizations.
-	return ClassifyLine2 (node, seg, sidev1, sidev2);
+	// VC 6 does not support SSE optimizations.
+	return ClassifyLine2 (node, v1, v2, sidev);
 #else
 	// Select the routine based on our flag.
-	if (EnableSSE2)
-		return ClassifyLineSSE2 (node, seg, sidev1, sidev2);
+#ifdef BACKPATCH
+	return ClassifyLineBackpatch (node, v1, v2, sidev);
+#else
+	if (CPU.bSSE2)
+		return ClassifyLineSSE2 (node, v1, v2, sidev);
 	else
-		return ClassifyLine2 (node, seg, sidev1, sidev2);
+		return ClassifyLine2 (node, v1, v2, sidev);
+#endif
+#endif
 #endif
 }

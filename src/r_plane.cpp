@@ -740,6 +740,10 @@ inline void R_MakeSpans (int x, int t1, int b1, int t2, int b2, void (*mapfunc)(
 // in the normal convention for patches, but uses color 0 as a transparent
 // color instead.
 //
+// Note that since ZDoom now uses color 0 as transparent for other purposes,
+// you can use normal texture transparency, so the distinction isn't so
+// important anymore, but you should still be aware of it.
+//
 //==========================================================================
 
 static FTexture *frontskytex, *backskytex;

@@ -472,7 +472,7 @@ void R_InitTextureMapping ()
 	}
 	for (i = 0; i < centerx; i++)
 	{
-		xtoviewangle[i] = (angle_t)(-(signed)xtoviewangle[viewwidth-i-1]);
+		xtoviewangle[i] = (angle_t)(-(signed)xtoviewangle[viewwidth-i]);
 	}
 }
 

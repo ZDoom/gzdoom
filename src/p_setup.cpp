@@ -128,27 +128,8 @@ FLightStack*	LightStacks;
 TArray<FMapThing> MapThingsConverted;
 
 int sidecount;
-struct sidei_t	// [RH] Only keep BOOM sidedef init stuff around for init
-{
-	union
-	{
-		// Used when unpacking sidedefs and assigning
-		// properties based on linedefs.
-		struct
-		{
-			short tag, special;
-			short alpha;
-			DWORD map;
-		} a;
+sidei_t *sidetemp;
 
-		// Used when grouping sidedefs into loops.
-		struct
-		{
-			DWORD first, next;
-			char lineside;
-		} b;
-	};
-}				*sidetemp;
 TArray<int>		linemap;
 
 bool			UsingGLNodes;
@@ -2261,9 +2242,8 @@ static void P_LoopSidedefs ()
 		sides[right].LeftSide = i;
 	}
 
-	// Throw away sidedef init info now that we're done with it
-	delete[] sidetemp;
-	sidetemp = NULL;
+	// We keep the sidedef init info around until after polyobjects are initialized,
+	// so don't delete just yet.
 }
 
 int P_DetermineTranslucency (int lumpnum)
@@ -3865,6 +3845,10 @@ void P_SetupLevel (char *lumpname, int position)
 	times[16].Clock();
 	PO_Init ();	// Initialize the polyobjs
 	times[16].Unclock();
+
+	assert(sidetemp != NULL);
+	delete[] sidetemp;
+	sidetemp = NULL;
 
 	// if deathmatch, randomly spawn the active players
 	if (deathmatch)

@@ -27,6 +27,7 @@
 #include "r_interpolate.h"
 #include "g_level.h"
 #include "po_man.h"
+#include "p_setup.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -1336,39 +1337,56 @@ static void KillSideLists ()
 
 //==========================================================================
 //
+// AddPolyVert
+//
+// Helper function for IterFindPolySides()
+//
+//==========================================================================
+
+static void AddPolyVert(TArray<DWORD> &vnum, DWORD vert)
+{
+	for (unsigned int i = vnum.Size() - 1; i-- != 0; )
+	{
+		if (vnum[i] == vert)
+		{ // Already in the set. No need to add it.
+			return;
+		}
+	}
+	vnum.Push(vert);
+}
+
+//==========================================================================
+//
 // IterFindPolySides
+//
+// Beginning with the first vertex of the starting side, for each vertex
+// in vnum, add all the sides that use it as a first vertex to the polyobj,
+// and add all their second vertices to vnum. This continues until there
+// are no new vertices in vnum.
 //
 //==========================================================================
 
 static void IterFindPolySides (FPolyObj *po, side_t *side)
 {
-	SDWORD j;
-	int i;
-	vertex_t *v1 = side->V1();
+	static TArray<DWORD> vnum;
+	unsigned int vnumat;
 
-	po->Sidedefs.Push(side);
+	assert(sidetemp != NULL);
 
-	// This for loop exists solely to avoid infinitely looping on badly
-	// formed polyobjects.
-	for (i = 0; i < numsides; i++)
+	vnum.Clear();
+	vnum.Push(DWORD(side->V1() - vertexes));
+	vnumat = 0;
+
+	while (vnum.Size() != vnumat)
 	{
-		int v2 = int(side->V2() - vertexes);
-		j = side->RightSide;
-
-		if (j == NO_SIDE)
+		DWORD sidenum = sidetemp[vnum[vnumat++]].b.first;
+		while (sidenum != NO_SIDE)
 		{
-			break;
+			po->Sidedefs.Push(&sides[sidenum]);
+			AddPolyVert(vnum, DWORD(sides[sidenum].V2() - vertexes));
+			sidenum = sidetemp[sidenum].b.next;
 		}
-		side = &sides[j];
-
-		if (side->V1() == v1)
-		{
-			return;
-		}
-		po->Sidedefs.Push(side);
 	}
-	I_Error ("IterFindPolySides: Non-closed Polyobj at linedef %d.\n",
-		side->linedef-lines);
 }
 
 

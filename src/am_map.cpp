@@ -1672,6 +1672,22 @@ void AM_drawSeg(seg_t *seg, const AMColor &color)
 	AM_drawMline(&l, color);
 }
 
+void AM_drawPolySeg(FPolySeg *seg, const AMColor &color)
+{
+	mline_t l;
+	l.a.x = seg->v1.x >> FRACTOMAPBITS;
+	l.a.y = seg->v1.y >> FRACTOMAPBITS;
+	l.b.x = seg->v2.x >> FRACTOMAPBITS;
+	l.b.y = seg->v2.y >> FRACTOMAPBITS;
+
+	if (am_rotate == 1 || (am_rotate == 2 && viewactive))
+	{
+		AM_rotatePoint (&l.a.x, &l.a.y);
+		AM_rotatePoint (&l.b.x, &l.b.y);
+	}
+	AM_drawMline(&l, color);
+}
+
 void AM_showSS()
 {
 	if (am_showsubsector >= 0 && am_showsubsector < numsubsectors)
@@ -1682,13 +1698,13 @@ void AM_showSS()
 		red.FromRGB(255,0,0);
 
 		subsector_t *sub = &subsectors[am_showsubsector];
-		for(unsigned int i=0;i<sub->numlines;i++)
+		for (unsigned int i = 0; i < sub->numlines; i++)
 		{
-			AM_drawSeg(&segs[sub->firstline+i], yellow);
+			AM_drawSeg(sub->firstline + i, yellow);
 		}
 		PO_LinkToSubsectors();
 
-		for(int i=0;i<po_NumPolyobjs;i++)
+		for (int i = 0; i <po_NumPolyobjs; i++)
 		{
 			FPolyObj *po = &polyobjs[i];
 			FPolyNode *pnode = po->subsectorlinks;
@@ -1697,9 +1713,9 @@ void AM_showSS()
 			{
 				if (pnode->subsector == sub)
 				{
-					for(unsigned j=0;j<pnode->segs.Size();j++)
+					for (unsigned j = 0; j < pnode->segs.Size(); j++)
 					{
-						AM_drawSeg(&pnode->segs[j], red);
+						AM_drawPolySeg(&pnode->segs[j], red);
 					}
 				}
 				pnode = pnode->snext;

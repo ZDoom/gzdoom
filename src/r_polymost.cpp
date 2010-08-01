@@ -1401,7 +1401,7 @@ void RP_Subsector (subsector_t *sub)
 
 	frontsector = sub->sector;
 	count = sub->numlines;
-	line = &segs[sub->firstline];
+	line = sub->firstline;
 
 	// killough 3/8/98, 4/4/98: Deep water / fake ceiling effect
 	frontsector = R_FakeFlat(frontsector, &tempsec, &floorlightlevel,

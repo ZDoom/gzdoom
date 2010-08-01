@@ -5,13 +5,32 @@
 #include "r_defs.h"
 #include "m_bbox.h"
 
+
+struct FPolyVertex
+{
+	fixed_t x, y;
+
+	FPolyVertex &operator=(vertex_t *v)
+	{
+		x = v->x;
+		y = v->y;
+		return *this;
+	}
+};
+
+struct FPolySeg
+{
+	FPolyVertex v1;
+	FPolyVertex v2;
+	side_t *wall;
+};
+
 //
 // Linked lists of polyobjects
 //
 struct FPolyObj;
 struct FPolyNode
 {
-	int state;
 	FPolyObj *poly;				// owning polyobject
 	FPolyNode *pnext;			// next polyobj in list
 	FPolyNode *pprev;			// previous polyobj
@@ -19,25 +38,8 @@ struct FPolyNode
 	subsector_t *subsector;		// containimg subsector
 	FPolyNode *snext;			// next subsector
 
-	TArray<seg_t> segs;			// segs for this node
-	fixed_t dist;				// distance for sorting
-};
-
-struct FPolyVertex
-{
-	fixed_t x, y;
-};
-
-struct FPolyVertexBlock
-{
-	int used;
-	vertex_t vertices[10];
-
-	void clear()
-	{
-		used = 0;
-		//memset(vertices, 0, sizeof(vertices));
-	}
+	TArray<FPolySeg> segs;		// segs for this node
+	int state;
 };
 
 // ===== Polyobj data =====
@@ -51,8 +53,6 @@ struct FPolyObj
 	FPolyVertex				StartSpot;
 	FPolyVertex				CenterSpot;
 	FBoundingBox			Bounds;	// Bounds in map coordinates 
-	TDeletingArray<FPolyVertexBlock *> SplitVertices;
-	unsigned int SVIndex;
 
 	angle_t		angle;
 	int			tag;			// reference tag assigned in HereticEd
@@ -77,7 +77,6 @@ struct FPolyObj
 	void LinkPolyobj ();
 	void CreateSubsectorLinks();
 	void ClearSubsectorLinks();
-	vertex_t *GetNewVertex();
 	void CalcCenter();
 	static void ClearAllSubsectorLinks();
 

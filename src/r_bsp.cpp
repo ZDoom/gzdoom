@@ -43,6 +43,7 @@
 #include "r_things.h"
 #include "a_sharedglobal.h"
 #include "g_level.h"
+#include "nodebuild.h"
 
 // State.
 #include "doomstat.h"
@@ -107,6 +108,9 @@ int WindowLeft, WindowRight;
 WORD MirrorFlags;
 seg_t *ActiveWallMirror;
 TArray<size_t> WallMirrors;
+
+static FNodeBuilder::FLevel PolyNodeLevel;
+static FNodeBuilder PolyNodeBuilder(PolyNodeLevel);
 
 CVAR (Bool, r_drawflat, false, 0)		// [RH] Don't texture segs?
 
@@ -1009,42 +1013,74 @@ void R_GetExtraLight (int *light, const secplane_t &plane, FExtraLight *el)
 }
 
 
-static int STACK_ARGS polycmp(const void *a, const void *b)
-{
-   const FPolyNode *A = *(FPolyNode **)a;
-   const FPolyNode *B = *(FPolyNode **)b;
 
-   return A->dist - B->dist;
+
+//==========================================================================
+//
+// FMiniBSP Constructor
+//
+//==========================================================================
+
+FMiniBSP::FMiniBSP()
+{
+	bDirty = false;
 }
 
+//==========================================================================
+//
+// P_BuildPolyBSP
+//
+//==========================================================================
 
+static void R_BuildPolyBSP(subsector_t *sub)
+{
+	assert((sub->BSP == NULL || sub->BSP->bDirty) && "BSP computed more than once");
+
+	// Set up level information for the node builder.
+	PolyNodeLevel.Sides = sides;
+	PolyNodeLevel.NumSides = numsides;
+	PolyNodeLevel.Lines = lines;
+	PolyNodeLevel.NumLines = numlines;
+
+	// Feed segs to the nodebuilder and build the nodes.
+	PolyNodeBuilder.Clear();
+	PolyNodeBuilder.AddSegs(sub->firstline, sub->numlines);
+	for (FPolyNode *pn = sub->polys; pn != NULL; pn = pn->pnext)
+	{
+		PolyNodeBuilder.AddPolySegs(&pn->segs[0], (int)pn->segs.Size());
+	}
+	PolyNodeBuilder.BuildMini(false);
+	if (sub->BSP == NULL)
+	{
+		sub->BSP = new FMiniBSP;
+	}
+	else
+	{
+		sub->BSP->bDirty = false;
+	}
+	PolyNodeBuilder.ExtractMini(sub->BSP);
+	for (unsigned int i = 0; i < sub->BSP->Subsectors.Size(); ++i)
+	{
+		sub->BSP->Subsectors[i].sector = sub->sector;
+	}
+}
+
+void R_Subsector (subsector_t *sub);
 static void R_AddPolyobjs(subsector_t *sub)
 {
-	static TArray<FPolyNode *> sortedpolys;
-
-	FPolyNode *pn = sub->polys;
-	sortedpolys.Clear();
-	while (pn != NULL)
+	if (sub->BSP == NULL || sub->BSP->bDirty)
 	{
-		sortedpolys.Push(pn);
-		pn->dist = R_PointToDist2(pn->poly->CenterSpot.x - viewx, pn->poly->CenterSpot.y - viewy);
-		pn = pn->pnext;
+		R_BuildPolyBSP(sub);
 	}
-	if (sortedpolys.Size() > 1)
+	if (sub->BSP->Nodes.Size() == 0)
 	{
-		qsort(&sortedpolys[0], sortedpolys.Size(), sizeof (sortedpolys[0]), polycmp);
+		R_Subsector(&sub->BSP->Subsectors[0]);
 	}
-
-	for(unsigned i=0; i<sortedpolys.Size(); i++)
+	else
 	{
-		pn = sortedpolys[i];
-		for(unsigned j=0; j<pn->segs.Size(); j++)
-		{
-			R_AddLine(&pn->segs[j]);
-		}
+		R_RenderBSPNode(&sub->BSP->Nodes.Last());
 	}
 }
-
 
 
 //
@@ -1061,15 +1097,25 @@ void R_Subsector (subsector_t *sub)
 	int          floorlightlevel;		// killough 3/16/98: set floor lightlevel
 	int          ceilinglightlevel;		// killough 4/11/98
 
+#if 0
 #ifdef RANGECHECK
 	if (sub - subsectors >= (ptrdiff_t)numsubsectors)
 		I_Error ("R_Subsector: ss %ti with numss = %i", sub - subsectors, numsubsectors);
 #endif
+#endif
+
+	assert(sub->sector != NULL);
+
+	if (sub->polys)
+	{ // Render the polyobjs in the subsector first
+		R_AddPolyobjs(sub);
+		return;
+	}
 
 	frontsector = sub->sector;
 	frontsector->MoreFlags |= SECF_DRAWN;
 	count = sub->numlines;
-	line = &segs[sub->firstline];
+	line = sub->firstline;
 
 	// killough 3/8/98, 4/4/98: Deep water / fake ceiling effect
 	frontsector = R_FakeFlat(frontsector, &tempsec, &floorlightlevel,
@@ -1133,15 +1179,13 @@ void R_Subsector (subsector_t *sub)
 		ceilinglightlevel : floorlightlevel, FakeSide);
 
 	// [RH] Add particles
-	int shade = LIGHT2SHADE((floorlightlevel + ceilinglightlevel)/2 + r_actualextralight);
-	for (WORD i = ParticlesInSubsec[(unsigned int)(sub-subsectors)]; i != NO_PARTICLE; i = Particles[i].snext)
-	{
-		R_ProjectParticle (Particles + i, subsectors[sub-subsectors].sector, shade, FakeSide);
-	}
-
-	if (sub->polys)
-	{ // Render the polyobjs in the subsector first
-		R_AddPolyobjs(sub);
+	if ((unsigned int)(sub - subsectors) < (unsigned int)numsubsectors)
+	{ // Only do it for the main BSP.
+		int shade = LIGHT2SHADE((floorlightlevel + ceilinglightlevel)/2 + r_actualextralight);
+		for (WORD i = ParticlesInSubsec[(unsigned int)(sub-subsectors)]; i != NO_PARTICLE; i = Particles[i].snext)
+		{
+			R_ProjectParticle (Particles + i, subsectors[sub-subsectors].sector, shade, FakeSide);
+		}
 	}
 
 	while (count--)

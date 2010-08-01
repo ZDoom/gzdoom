@@ -1480,17 +1480,17 @@ int side_t::GetLightLevel (bool foggy, int baselight, int *pfakecontrast) const
 			if (((level.flags2 & LEVEL2_SMOOTHLIGHTING) || (Flags & WALLF_SMOOTHLIGHTING) || r_fakecontrast == 2) &&
 				linedef->dx != 0)
 			{
-				rel = int // OMG LEE KILLOUGH LIVES! :/
+				rel = xs_RoundToInt // OMG LEE KILLOUGH LIVES! :/
 					(
-						(float(level.WallHorizLight)
-						+abs(atan(float(linedef->dy)/float(linedef->dx))/float(1.57079))
-						*float(level.WallVertLight - level.WallHorizLight))
+						level.WallHorizLight
+						+ fabs(atan(double(linedef->dy) / linedef->dx) / 1.57079)
+						* (level.WallVertLight - level.WallHorizLight)
 					);
 			}
 			else
 			{
-				rel = linedef->dx==0? level.WallVertLight : 
-					  linedef->dy==0? level.WallHorizLight : 0;
+				rel = linedef->dx == 0 ? level.WallVertLight : 
+					  linedef->dy == 0 ? level.WallHorizLight : 0;
 			}
 			if (pfakecontrast != NULL)
 			{
@@ -2008,80 +2008,12 @@ int WallMost (short *mostbuf, const secplane_t &plane)
 	return bad;
 }
 
-void PrepWall (fixed_t *swall, fixed_t *lwall, fixed_t walxrepeat)
-{ // swall = scale, lwall = texturecolumn
-	int x;
-	float top, bot, i;
-	float xrepeat = (float)walxrepeat;
-	float ol, l, topinc, botinc;
-
-	i = (float)(WallSX1 - centerx);
-	top = WallUoverZorg + WallUoverZstep * i;
-	bot = WallInvZorg + WallInvZstep * i;
-	topinc = WallUoverZstep * 4.f;
-	botinc = WallInvZstep * 4.f;
-
-	x = WallSX1;
-
-	l = top / bot;
-	swall[x] = xs_RoundToInt(l * WallDepthScale + WallDepthOrg);
-	lwall[x] = xs_RoundToInt(l * xrepeat);
-	// As long as l is invalid, step one column at a time so that
-	// we can get as many correct texture columns as possible.
-	while (l > 1.0 && x+1 < WallSX2)
-	{
-		l = (top += WallUoverZstep) / (bot += WallInvZstep);
-		x++;
-		swall[x] = xs_RoundToInt(l * WallDepthScale + WallDepthOrg);
-		lwall[x] = xs_RoundToInt(l * xrepeat);
-	}
-	l *= xrepeat;
-	while (x+4 < WallSX2)
-	{
-		top += topinc; bot += botinc;
-		ol = l; l = top / bot;
-		swall[x+4] = xs_RoundToInt(l * WallDepthScale + WallDepthOrg);
-		lwall[x+4] = xs_RoundToInt(l *= xrepeat);
-
-		i = (ol+l) * 0.5f;
-		lwall[x+2] = xs_RoundToInt(i);
-		lwall[x+1] = xs_RoundToInt((ol+i) * 0.5f);
-		lwall[x+3] = xs_RoundToInt((l+i) * 0.5f);
-		swall[x+2] = ((swall[x]+swall[x+4])>>1);
-		swall[x+1] = ((swall[x]+swall[x+2])>>1);
-		swall[x+3] = ((swall[x+4]+swall[x+2])>>1);
-		x += 4;
-	}
-	if (x+2 < WallSX2)
-	{
-		top += topinc * 0.5f; bot += botinc * 0.5f;
-		ol = l; l = top / bot;
-		swall[x+2] = xs_RoundToInt(l * WallDepthScale + WallDepthOrg);
-		lwall[x+2] = xs_RoundToInt(l *= xrepeat);
-
-		lwall[x+1] = xs_RoundToInt((l+ol)*0.5f);
-		swall[x+1] = (swall[x]+swall[x+2])>>1;
-		x += 2;
-	}
-	if (x+1 < WallSX2)
-	{
-		l = (top + WallUoverZstep) / (bot + WallInvZstep);
-		swall[x+1] = xs_RoundToInt(l * WallDepthScale + WallDepthOrg);
-		lwall[x+1] = xs_RoundToInt(l * xrepeat);
-	}
-	/*
-	for (x = WallSX1; x < WallSX2; x++)
-	{
-		frac = top / bot;
-		lwall[x] = xs_RoundToInt(frac * xrepeat);
-		swall[x] = xs_RoundToInt(frac * WallDepthScale + WallDepthOrg);
-		top += WallUoverZstep;
-		bot += WallInvZstep;
-	}
-	*/
-
+static void PrepWallRoundFix(fixed_t *lwall, fixed_t walxrepeat)
+{
 	// fix for rounding errors
 	fixed_t fix = (MirrorFlags & RF_XFLIP) ? walxrepeat-1 : 0;
+	int x;
+
 	if (WallSX1 > 0)
 	{
 		for (x = WallSX1; x < WallSX2; x++)
@@ -2110,85 +2042,52 @@ void PrepWall (fixed_t *swall, fixed_t *lwall, fixed_t walxrepeat)
 	}
 }
 
-void PrepLWall (fixed_t *lwall, fixed_t walxrepeat)
-{ // lwall = texturecolumn
-	int x;
-	float top, bot, i;
-	float xrepeat = (float)walxrepeat;
-	float ol, l, topinc, botinc;
+void PrepWall (fixed_t *swall, fixed_t *lwall, fixed_t walxrepeat)
+{ // swall = scale, lwall = texturecolumn
+	double top, bot, i;
+	double xrepeat = walxrepeat;
+	double topinc, botinc;
 
-	i = (float)(WallSX1 - centerx);
+	i = WallSX1 - centerx;
 	top = WallUoverZorg + WallUoverZstep * i;
 	bot = WallInvZorg + WallInvZstep * i;
 	topinc = WallUoverZstep * 4.f;
 	botinc = WallInvZstep * 4.f;
 
-	x = WallSX1;
+	for (int x = WallSX1; x < WallSX2; x++)
+	{
+		double frac = top / bot;
+		lwall[x] = xs_RoundToInt(frac * xrepeat);
+		swall[x] = xs_RoundToInt(frac * WallDepthScale + WallDepthOrg);
+		top += WallUoverZstep;
+		bot += WallInvZstep;
+	}
+	PrepWallRoundFix(lwall, walxrepeat);
+}
 
-	l = top / bot;
-	lwall[x] = xs_RoundToInt(l * xrepeat);
-	// As long as l is invalid, step one column at a time so that
-	// we can get as many correct texture columns as possible.
-	while (l > 1.0 && x+1 < WallSX2)
-	{
-		l = (top += WallUoverZstep) / (bot += WallInvZstep);
-		lwall[++x] = xs_RoundToInt(l * xrepeat);
-	}
-	l *= xrepeat;
-	while (x+4 < WallSX2)
-	{
-		top += topinc; bot += botinc;
-		ol = l; l = top / bot;
-		lwall[x+4] = xs_RoundToInt(l *= xrepeat);
+void PrepLWall (fixed_t *lwall, fixed_t walxrepeat)
+{ // lwall = texturecolumn
+	double top, bot, i;
+	double xrepeat = walxrepeat;
+	double topinc, botinc;
+	double topstep;
 
-		i = (ol+l) * 0.5f;
-		lwall[x+2] = xs_RoundToInt(i);
-		lwall[x+1] = xs_RoundToInt((ol+i) * 0.5f);
-		lwall[x+3] = xs_RoundToInt((l+i) * 0.5f);
-		x += 4;
-	}
-	if (x+2 < WallSX2)
-	{
-		top += topinc * 0.5f; bot += botinc * 0.5f;
-		ol = l; l = top / bot;
-		lwall[x+2] = xs_RoundToInt(l *= xrepeat);
-		lwall[x+1] = xs_RoundToInt((l+ol)*0.5f);
-		x += 2;
-	}
-	if (x+1 < WallSX2)
-	{
-		l = (top + WallUoverZstep) / (bot + WallInvZstep);
-		lwall[x+1] = xs_RoundToInt(l * xrepeat);
-	}
+	i = WallSX1 - centerx;
+	top = WallUoverZorg + WallUoverZstep * i;
+	bot = WallInvZorg + WallInvZstep * i;
+	topinc = WallUoverZstep * 4.f;
+	botinc = WallInvZstep * 4.f;
 
-	// fix for rounding errors
-	fixed_t fix = (MirrorFlags & RF_XFLIP) ? walxrepeat-1 : 0;
-	if (WallSX1 > 0)
+	top *= xrepeat;
+	topstep = WallUoverZstep * xrepeat;
+
+	for (int x = WallSX1; x < WallSX2; x++)
 	{
-		for (x = WallSX1; x < WallSX2; x++)
-		{
-			if ((unsigned)lwall[x] >= (unsigned)walxrepeat)
-			{
-				lwall[x] = fix;
-			}
-			else
-			{
-				break;
-			}
-		}
+		lwall[x] = xs_RoundToInt(top / bot);
+		top += topstep;
+		bot += WallInvZstep;
 	}
-	fix = walxrepeat - 1 - fix;
-	for (x = WallSX2-1; x >= WallSX1; x--)
-	{
-		if ((unsigned)lwall[x] >= (unsigned)walxrepeat)
-		{
-			lwall[x] = fix;
-		}
-		else
-		{
-			break;
-		}
-	}
+	PrepWallRoundFix(lwall, walxrepeat);
 }
 
 // pass = 0: when seg is first drawn

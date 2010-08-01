@@ -3,11 +3,8 @@
 
 #define FAR_ENOUGH 17179869184.f		// 4<<32
 
-int FNodeBuilder::ClassifyLine2 (node_t &node, const FPrivSeg *seg, int &sidev1, int &sidev2)
+extern "C" int ClassifyLine2 (node_t &node, const FSimpleVert *v1, const FSimpleVert *v2, int sidev[2])
 {
-	const FPrivVert *v1 = &Vertices[seg->v1];
-	const FPrivVert *v2 = &Vertices[seg->v2];
-
 	double d_x1 = double(node.x);
 	double d_y1 = double(node.y);
 	double d_dx = double(node.dx);
@@ -26,13 +23,13 @@ int FNodeBuilder::ClassifyLine2 (node_t &node, const FPrivSeg *seg, int &sidev1,
 	{
 		if (s_num2 <= -FAR_ENOUGH)
 		{
-			sidev1 = sidev2 = 1;
+			sidev[0] = sidev[1] = 1;
 			return 1;
 		}
 		if (s_num2 >= FAR_ENOUGH)
 		{
-			sidev1 = 1;
-			sidev2 = -1;
+			sidev[0] = 1;
+			sidev[1] = -1;
 			return -1;
 		}
 		nears = 1;
@@ -41,13 +38,13 @@ int FNodeBuilder::ClassifyLine2 (node_t &node, const FPrivSeg *seg, int &sidev1,
 	{
 		if (s_num2 >= FAR_ENOUGH)
 		{
-			sidev1 = sidev2 = -1;
+			sidev[0] = sidev[1] = -1;
 			return 0;
 		}
 		if (s_num2 <= -FAR_ENOUGH)
 		{
-			sidev1 = -1;
-			sidev2 = 1;
+			sidev[0] = -1;
+			sidev[1] = 1;
 			return -1;
 		}
 		nears = 1;
@@ -65,41 +62,41 @@ int FNodeBuilder::ClassifyLine2 (node_t &node, const FPrivSeg *seg, int &sidev1,
 			double dist = s_num1 * s_num1 * l;
 			if (dist < SIDE_EPSILON*SIDE_EPSILON)
 			{
-				sidev1 = 0;
+				sidev[0] = 0;
 			}
 			else
 			{
-				sidev1 = s_num1 > 0.0 ? -1 : 1;
+				sidev[0] = s_num1 > 0.0 ? -1 : 1;
 			}
 		}
 		else
 		{
-			sidev1 = s_num1 > 0.0 ? -1 : 1;
+			sidev[0] = s_num1 > 0.0 ? -1 : 1;
 		}
 		if (nears & 1)
 		{
 			double dist = s_num2 * s_num2 * l;
 			if (dist < SIDE_EPSILON*SIDE_EPSILON)
 			{
-				sidev2 = 0;
+				sidev[1] = 0;
 			}
 			else
 			{
-				sidev2 = s_num2 > 0.0 ? -1 : 1;
+				sidev[1] = s_num2 > 0.0 ? -1 : 1;
 			}
 		}
 		else
 		{
-			sidev2 = s_num2 > 0.0 ? -1 : 1;
+			sidev[1] = s_num2 > 0.0 ? -1 : 1;
 		}
 	}
 	else
 	{
-		sidev1 = s_num1 > 0.0 ? -1 : 1;
-		sidev2 = s_num2 > 0.0 ? -1 : 1;
+		sidev[0] = s_num1 > 0.0 ? -1 : 1;
+		sidev[1] = s_num2 > 0.0 ? -1 : 1;
 	}
 
-	if ((sidev1 | sidev2) == 0)
+	if ((sidev[0] | sidev[1]) == 0)
 	{ // seg is coplanar with the splitter, so use its orientation to determine
 	  // which child it ends up in. If it faces the same direction as the splitter,
 	  // it goes in front. Otherwise, it goes in back.
@@ -127,11 +124,11 @@ int FNodeBuilder::ClassifyLine2 (node_t &node, const FPrivSeg *seg, int &sidev1,
 			}
 		}
 	}
-	else if (sidev1 <= 0 && sidev2 <= 0)
+	else if (sidev[0] <= 0 && sidev[1] <= 0)
 	{
 		return 0;
 	}
-	else if (sidev1 >= 0 && sidev2 >= 0)
+	else if (sidev[0] >= 0 && sidev[1] >= 0)
 	{
 		return 1;
 	}

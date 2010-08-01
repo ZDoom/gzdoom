@@ -62,10 +62,17 @@ const int AAPreference = 16;
 #define D(x) do{}while(0)
 #endif
 
+FNodeBuilder::FNodeBuilder(FLevel &level)
+: Level(level), GLNodes(false), SegsStuffed(0)
+{
+
+	VertexMap = NULL;
+}
+
 FNodeBuilder::FNodeBuilder (FLevel &level,
 							TArray<FPolyStart> &polyspots, TArray<FPolyStart> &anchors,
-							bool makeGLNodes, bool enableSSE2)
-	: Level(level), GLNodes(makeGLNodes), EnableSSE2(enableSSE2), SegsStuffed(0)
+							bool makeGLNodes)
+	: Level(level), GLNodes(makeGLNodes), SegsStuffed(0)
 {
 	VertexMap = new FVertexMap (*this, Level.MinX, Level.MinY, Level.MaxX, Level.MaxY);
 	FindUsedVertices (Level.Vertices, Level.NumVertices);
@@ -83,6 +90,33 @@ FNodeBuilder::~FNodeBuilder()
 	}
 }
 
+void FNodeBuilder::BuildMini(bool makeGLNodes)
+{
+	GLNodes = makeGLNodes;
+	GroupSegPlanesSimple();
+	BuildTree();
+}
+
+void FNodeBuilder::Clear()
+{
+	SegsStuffed = 0;
+	Nodes.Clear();
+	Subsectors.Clear();
+	SubsectorSets.Clear();
+	Segs.Clear();
+	Vertices.Clear();
+	SegList.Clear();
+	PlaneChecked.Clear();
+	Planes.Clear();
+	Touched.Clear();
+	Colinear.Clear();
+	SplitSharers.Clear();
+	if (VertexMap == NULL)
+	{
+		VertexMap = new FVertexMapSimple(*this);
+	}
+}
+
 void FNodeBuilder::BuildTree ()
 {
 	fixed_t bbox[4];
@@ -90,35 +124,38 @@ void FNodeBuilder::BuildTree ()
 	C_InitTicker ("Building BSP", FRACUNIT);
 	HackSeg = DWORD_MAX;
 	HackMate = DWORD_MAX;
-	CreateNode (0, bbox);
+	CreateNode (0, Segs.Size(), bbox);
 	CreateSubsectorsForReal ();
 	C_InitTicker (NULL, 0);
 }
 
-int FNodeBuilder::CreateNode (DWORD set, fixed_t bbox[4])
+int FNodeBuilder::CreateNode (DWORD set, unsigned int count, fixed_t bbox[4])
 {
 	node_t node;
-	int skip, count, selstat;
+	int skip, selstat;
 	DWORD splitseg;
 
-	count = CountSegs (set);
-	skip = count / MaxSegs;
+	skip = int(count / MaxSegs);
 
+	// When building GL nodes, count may not be an exact count of the number of segs
+	// in the set. That's okay, because we just use it to get a skip count, so an
+	// estimate is fine.
 	if ((selstat = SelectSplitter (set, node, splitseg, skip, true)) > 0 ||
 		(skip > 0 && (selstat = SelectSplitter (set, node, splitseg, 1, true)) > 0) ||
 		(selstat < 0 && (SelectSplitter (set, node, splitseg, skip, false) > 0 ||
 						(skip > 0 && SelectSplitter (set, node, splitseg, 1, false)))) ||
-		CheckSubsector (set, node, splitseg, count))
+		CheckSubsector (set, node, splitseg))
 	{
 		// Create a normal node
 		DWORD set1, set2;
+		unsigned int count1, count2;
 
-		SplitSegs (set, node, splitseg, set1, set2);
+		SplitSegs (set, node, splitseg, set1, set2, count1, count2);
 		D(PrintSet (1, set1));
 		D(Printf (PRINT_LOG, "(%d,%d) delta (%d,%d) from seg %d\n", node.x>>16, node.y>>16, node.dx>>16, node.dy>>16, splitseg));
 		D(PrintSet (2, set2));
-		node.intchildren[0] = CreateNode (set1, node.bbox[0]);
-		node.intchildren[1] = CreateNode (set2, node.bbox[1]);
+		node.intchildren[0] = CreateNode (set1, count1, node.bbox[0]);
+		node.intchildren[1] = CreateNode (set2, count2, node.bbox[1]);
 		bbox[BOXTOP] = MAX (node.bbox[0][BOXTOP], node.bbox[1][BOXTOP]);
 		bbox[BOXBOTTOM] = MIN (node.bbox[0][BOXBOTTOM], node.bbox[1][BOXBOTTOM]);
 		bbox[BOXLEFT] = MIN (node.bbox[0][BOXLEFT], node.bbox[1][BOXLEFT]);
@@ -173,17 +210,15 @@ void FNodeBuilder::CreateSubsectorsForReal ()
 	subsector_t sub;
 	unsigned int i;
 
-	sub.validcount = 0;
-	sub.CenterX = 0;	// Code in p_setup.cpp will set these for us later.
-	sub.CenterY = 0;
 	sub.sector = NULL;
 	sub.polys = NULL;
+	sub.BSP = NULL;
 
 	for (i = 0; i < SubsectorSets.Size(); ++i)
 	{
 		DWORD set = SubsectorSets[i];
+		DWORD firstline = (DWORD)SegList.Size();
 
-		sub.firstline = (DWORD)SegList.Size();
 		while (set != DWORD_MAX)
 		{
 			USegPtr ptr;
@@ -192,14 +227,15 @@ void FNodeBuilder::CreateSubsectorsForReal ()
 			SegList.Push (ptr);
 			set = ptr.SegPtr->next;
 		}
-		sub.numlines = (DWORD)(SegList.Size() - sub.firstline);
+		sub.numlines = (DWORD)(SegList.Size() - firstline);
+		sub.firstline = (seg_t *)firstline;
 
 		// Sort segs by linedef for special effects
-		qsort (&SegList[sub.firstline], sub.numlines, sizeof(USegPtr), SortSegs);
+		qsort (&SegList[firstline], sub.numlines, sizeof(USegPtr), SortSegs);
 
 		// Convert seg pointers into indices
 		D(Printf (PRINT_LOG, "Output subsector %d:\n", Subsectors.Size()));
-		for (unsigned int i = sub.firstline; i < SegList.Size(); ++i)
+		for (unsigned int i = firstline; i < SegList.Size(); ++i)
 		{
 			D(Printf (PRINT_LOG, "  Seg %5d%c(%5d,%5d)-(%5d,%5d)\n", SegList[i].SegPtr - &Segs[0],
 				SegList[i].SegPtr->linedef == -1 ? '+' : ' ',
@@ -273,24 +309,12 @@ int STACK_ARGS FNodeBuilder::SortSegs (const void *a, const void *b)
 	}
 }
 
-int FNodeBuilder::CountSegs (DWORD set) const
-{
-	int count = 0;
-
-	while (set != DWORD_MAX)
-	{
-		count++;
-		set = Segs[set].next;
-	}
-	return count;
-}
-
 // Given a set of segs, checks to make sure they all belong to a single
 // sector. If so, false is returned, and they become a subsector. If not,
 // a splitter is synthesized, and true is returned to continue processing
 // down this branch of the tree.
 
-bool FNodeBuilder::CheckSubsector (DWORD set, node_t &node, DWORD &splitseg, int setsize)
+bool FNodeBuilder::CheckSubsector (DWORD set, node_t &node, DWORD &splitseg)
 {
 	sector_t *sec;
 	DWORD seg;
@@ -506,7 +530,7 @@ int FNodeBuilder::Heuristic (node_t &node, DWORD set, bool honorNoSplit)
 	int realSegs[2] = { 0, 0 };
 	int specialSegs[2] = { 0, 0 };
 	DWORD i = set;
-	int sidev1, sidev2;
+	int sidev[2];
 	int side;
 	bool splitter = false;
 	unsigned int max, m2, p, q;
@@ -525,7 +549,7 @@ int FNodeBuilder::Heuristic (node_t &node, DWORD set, bool honorNoSplit)
 		}
 		else
 		{
-			side = ClassifyLine (node, test, sidev1, sidev2);
+			side = ClassifyLine (node, &Vertices[test->v1], &Vertices[test->v2], sidev);
 		}
 		switch (side)
 		{
@@ -535,9 +559,9 @@ int FNodeBuilder::Heuristic (node_t &node, DWORD set, bool honorNoSplit)
 			// The "right" thing to do in this case is to only reject it if there is
 			// another nosplit seg from the same sector at this vertex. Note that a line
 			// that lies exactly on top of the splitter is okay.
-			if (test->loopnum && honorNoSplit && (sidev1 == 0 || sidev2 == 0))
+			if (test->loopnum && honorNoSplit && (sidev[0] == 0 || sidev[1] == 0))
 			{
-				if ((sidev1 | sidev2) != 0)
+				if ((sidev[0] | sidev[1]) != 0)
 				{
 					max = Touched.Size();
 					for (p = 0; p < max; ++p)
@@ -735,8 +759,10 @@ int FNodeBuilder::Heuristic (node_t &node, DWORD set, bool honorNoSplit)
 	return score;
 }
 
-void FNodeBuilder::SplitSegs (DWORD set, node_t &node, DWORD splitseg, DWORD &outset0, DWORD &outset1)
+void FNodeBuilder::SplitSegs (DWORD set, node_t &node, DWORD splitseg, DWORD &outset0, DWORD &outset1, unsigned int &count0, unsigned int &count1)
 {
+	unsigned int _count0 = 0;
+	unsigned int _count1 = 0;
 	outset0 = DWORD_MAX;
 	outset1 = DWORD_MAX;
 
@@ -749,18 +775,18 @@ void FNodeBuilder::SplitSegs (DWORD set, node_t &node, DWORD splitseg, DWORD &ou
 		FPrivSeg *seg = &Segs[set];
 		int next = seg->next;
 
-		int sidev1, sidev2, side;
+		int sidev[2], side;
 
 		if (HackSeg == set)
 		{
 			HackSeg = DWORD_MAX;
 			side = 1;
-			sidev1 = sidev2 = 0;
+			sidev[0] = sidev[1] = 0;
 			hack = true;
 		}
 		else
 		{
-			side = ClassifyLine (node, seg, sidev1, sidev2);
+			side = ClassifyLine (node, &Vertices[seg->v1], &Vertices[seg->v2], sidev);
 			hack = false;
 		}
 
@@ -769,11 +795,13 @@ void FNodeBuilder::SplitSegs (DWORD set, node_t &node, DWORD splitseg, DWORD &ou
 		case 0: // seg is entirely in front
 			seg->next = outset0;
 			outset0 = set;
+			_count0++;
 			break;
 
 		case 1: // seg is entirely in back
 			seg->next = outset1;
 			outset1 = set;
+			_count1++;
 			break;
 
 		default: // seg needs to be split
@@ -803,18 +831,20 @@ void FNodeBuilder::SplitSegs (DWORD set, node_t &node, DWORD splitseg, DWORD &ou
 				Printf("SelectVertexClose selected endpoint of seg %u\n", set);
 			}
 
-			seg2 = SplitSeg (set, vertnum, sidev1);
+			seg2 = SplitSeg (set, vertnum, sidev[0]);
 
 			Segs[seg2].next = outset0;
 			outset0 = seg2;
 			Segs[set].next = outset1;
 			outset1 = set;
+			_count0++;
+			_count1++;
 
 			// Also split the seg on the back side
 			if (Segs[set].partner != DWORD_MAX)
 			{
 				int partner1 = Segs[set].partner;
-				int partner2 = SplitSeg (partner1, vertnum, sidev2);
+				int partner2 = SplitSeg (partner1, vertnum, sidev[1]);
 				// The newly created seg stays in the same set as the
 				// back seg because it has not been considered for splitting
 				// yet. If it had been, then the front seg would have already
@@ -835,17 +865,17 @@ void FNodeBuilder::SplitSegs (DWORD set, node_t &node, DWORD splitseg, DWORD &ou
 		}
 		if (side >= 0 && GLNodes)
 		{
-			if (sidev1 == 0)
+			if (sidev[0] == 0)
 			{
 				double dist1 = AddIntersection (node, seg->v1);
-				if (sidev2 == 0)
+				if (sidev[1] == 0)
 				{
 					double dist2 = AddIntersection (node, seg->v2);
 					FSplitSharer share = { dist1, set, dist2 > dist1 };
 					SplitSharers.Push (share);
 				}
 			}
-			else if (sidev2 == 0)
+			else if (sidev[1] == 0)
 			{
 				AddIntersection (node, seg->v2);
 			}
@@ -881,6 +911,8 @@ void FNodeBuilder::SplitSegs (DWORD set, node_t &node, DWORD splitseg, DWORD &ou
 	{
 		AddMinisegs (node, splitseg, outset0, outset1);
 	}
+	count0 = _count0;
+	count1 = _count1;
 }
 
 void FNodeBuilder::SetNodeFromSeg (node_t &node, const FPrivSeg *pseg) const
@@ -1038,3 +1070,92 @@ void FNodeBuilder::PrintSet (int l, DWORD set)
 	}
 	Printf (PRINT_LOG, "*\n");
 }
+
+
+
+#ifdef BACKPATCH
+#ifdef _WIN32
+extern "C" {
+__declspec(dllimport) int __stdcall VirtualProtect(void *, unsigned long, unsigned long, unsigned long *);
+}
+#define PAGE_EXECUTE_READWRITE 64
+#else
+#include <sys/mman.h>
+#include <limits.h>
+#endif
+
+#ifdef __GNUC__
+extern "C" int ClassifyLineBackpatch (node_t &node, const FSimpleVert *v1, const FSimpleVert *v2, int sidev[2])
+#else
+static int *CallerOffset;
+int ClassifyLineBackpatchC (node_t &node, const FSimpleVert *v1, const FSimpleVert *v2, int sidev[2])
+#endif
+{
+	// Select the routine based on SSE2 availability and patch the caller so that
+	// they call that routine directly next time instead of going through here.
+	int *calleroffset;
+	int diff;
+	int (*func)(node_t &, const FSimpleVert *, const FSimpleVert *, int[2]);
+
+#ifdef __GNUC__
+	calleroffset = (int *)__builtin_return_address(0);
+#else
+	calleroffset = CallerOffset;
+#endif
+//	printf ("Patching for SSE %d @ %p %d\n", SSELevel, calleroffset, *calleroffset);
+
+	if (CPU.bSSE2)
+	{
+		func = ClassifyLineSSE2;
+		diff = (char *)ClassifyLineSSE2 - (char *)calleroffset;
+	}
+	else
+	{
+		func = ClassifyLine2;
+		diff = (char *)ClassifyLine2 - (char *)calleroffset;
+	}
+
+	calleroffset--;
+	// Patch the caller.
+#ifdef _WIN32
+	unsigned long oldprotect;
+	if (VirtualProtect (calleroffset, 4, PAGE_EXECUTE_READWRITE, &oldprotect))
+#else
+	// must make this page-aligned for mprotect
+	long pagesize = sysconf(_SC_PAGESIZE);
+	char *callerpage = (char *)((intptr_t)calleroffset & ~(pagesize - 1));
+	size_t protectlen = (intptr_t)calleroffset + sizeof(void*) - (intptr_t)callerpage;
+	int ptect;
+	if (!(ptect = mprotect(callerpage, protectlen, PROT_READ|PROT_WRITE|PROT_EXEC)))
+#endif
+	{
+		*calleroffset = diff;
+#ifdef _WIN32
+		VirtualProtect (calleroffset, sizeof(void*), oldprotect, &oldprotect);
+#else
+		mprotect(callerpage, protectlen, PROT_READ|PROT_EXEC);
+#endif
+	}
+
+	// And return by calling the real function.
+	return func (node, v1, v2, sidev);
+}
+
+#ifndef __GNUC__
+// The ClassifyLineBackpatch() function here is a stub that uses inline assembly and nakedness
+// to retrieve the return address of the stack before sending control to the real
+// ClassifyLineBackpatchC() function. Since BACKPATCH shouldn't be defined on 64-bit builds,
+// we're okay that VC++ can't do inline assembly on that target.
+
+extern "C" __declspec(noinline) __declspec(naked) int ClassifyLineBackpatch (node_t &node, const FSimpleVert *v1, const FSimpleVert *v2, int sidev[2])
+{
+	// We store the return address in a global, so as not to need to mess with the parameter list.
+	__asm
+	{
+		mov eax, [esp]
+		mov CallerOffset, eax
+		jmp ClassifyLineBackpatchC
+	}
+}
+#endif
+#endif

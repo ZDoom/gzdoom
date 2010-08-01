@@ -855,7 +855,7 @@ void P_LoadGLZSegs (FileReaderBase &data, int type)
 			}
 			data >> side;
 
-			seg = &segs[subsectors[i].firstline + j];
+			seg = subsectors[i].firstline + j;
 			seg->v1 = &vertexes[v1];
 			if (j == 0)
 			{
@@ -894,7 +894,7 @@ void P_LoadGLZSegs (FileReaderBase &data, int type)
 			{
 				seg->linedef = NULL;
 				seg->sidedef = NULL;
-				seg->frontsector = seg->backsector = segs[subsectors[i].firstline].frontsector;
+				seg->frontsector = seg->backsector = subsectors[i].firstline->frontsector;
 			}
 		}
 	}
@@ -952,7 +952,7 @@ static void LoadZNodes(FileReaderBase &data, int glnodes)
 		DWORD numsegs;
 
 		data >> numsegs;
-		subsectors[i].firstline = currSeg;
+		subsectors[i].firstline = (seg_t *)(size_t)currSeg;		// Oh damn. I should have stored the seg count sooner.
 		subsectors[i].numlines = numsegs;
 		currSeg += numsegs;
 	}
@@ -975,6 +975,11 @@ static void LoadZNodes(FileReaderBase &data, int glnodes)
 	numsegs = numSegs;
 	segs = new seg_t[numsegs];
 	memset (segs, 0, numsegs*sizeof(seg_t));
+
+	for (i = 0; i < numSubs; ++i)
+	{
+		subsectors[i].firstline = &segs[(size_t)subsectors[i].firstline];
+	}
 
 	if (glnodes == 0)
 	{
@@ -1140,6 +1145,11 @@ void P_LoadSegs (MapData * map)
 
 	data = new BYTE[lumplen];
 	map->Read(ML_SEGS, data);
+
+	for (i = 0; i < numsubsectors; ++i)
+	{
+		subsectors[i].firstline = &segs[(size_t)subsectors[i].firstline];
+	}
 
 	// phares: 10/4/98: Vertchanged is an array that represents the vertices.
 	// Mark those used by linedefs. A marked vertex is one that is not a
@@ -1329,9 +1339,9 @@ void P_LoadSubsectors (MapData * map)
 		}
 
 		subsectors[i].numlines = subd.numsegs;
-		subsectors[i].firstline = subd.firstseg;
+		subsectors[i].firstline = (seg_t *)(size_t)subd.firstseg;
 
-		if (subsectors[i].firstline >= maxseg)
+		if ((size_t)subsectors[i].firstline >= maxseg)
 		{
 			Printf ("Subsector %d contains invalid segs %u-%u\n"
 				"The BSP will be rebuilt.\n", i, subsectors[i].firstline,
@@ -1341,7 +1351,7 @@ void P_LoadSubsectors (MapData * map)
 			delete[] subsectors;
 			break;
 		}
-		else if (subsectors[i].firstline + subsectors[i].numlines > maxseg)
+		else if ((size_t)subsectors[i].firstline + subsectors[i].numlines > maxseg)
 		{
 			Printf ("Subsector %d contains invalid segs %u-%u\n"
 				"The BSP will be rebuilt.\n", i, maxseg,
@@ -2910,20 +2920,7 @@ static void P_GroupLines (bool buildmap)
 	times[0].Clock();
 	for (i = 0; i < numsubsectors; i++)
 	{
-		subsectors[i].sector = segs[subsectors[i].firstline].sidedef->sector;
-		subsectors[i].validcount = validcount;
-
-		double accumx = 0.0, accumy = 0.0;
-
-		for (jj = 0; jj < subsectors[i].numlines; ++jj)
-		{
-			seg_t *seg = &segs[subsectors[i].firstline + jj];
-			seg->Subsector = &subsectors[i];
-			accumx += seg->v1->x + seg->v2->x;
-			accumy += seg->v1->y + seg->v2->y;
-		}
-		subsectors[i].CenterX = fixed_t(accumx * 0.5 / subsectors[i].numlines);
-		subsectors[i].CenterY = fixed_t(accumy * 0.5 / subsectors[i].numlines);
+		subsectors[i].sector = subsectors[i].firstline->sidedef->sector;
 	}
 	times[0].Unclock();
 
@@ -3369,6 +3366,13 @@ void P_FreeLevelData ()
 	}
 	if (subsectors != NULL)
 	{
+		for (int i = 0; i < numsubsectors; ++i)
+		{
+			if (subsectors[i].BSP != NULL)
+			{
+				delete subsectors[i].BSP;
+			}
+		}
 		delete[] subsectors;
 		subsectors = NULL;
 	}
@@ -3786,7 +3790,7 @@ void P_SetupLevel (char *lumpname, int position)
 		};
 		leveldata.FindMapBounds ();
 		UsingGLNodes |= genglnodes;
-		FNodeBuilder builder (leveldata, polyspots, anchors, UsingGLNodes, CPU.bSSE2);
+		FNodeBuilder builder (leveldata, polyspots, anchors, UsingGLNodes);
 		delete[] vertexes;
 		builder.Extract (nodes, numnodes,
 			segs, numsegs,

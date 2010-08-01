@@ -1,6 +1,10 @@
 #include "doomdata.h"
 #include "tarray.h"
 #include "r_defs.h"
+#include "x86.h"
+
+struct FPolySeg;
+struct FMiniBSP;
 
 struct FEventInfo
 {
@@ -40,6 +44,27 @@ private:
 	FEvent *Predecessor (FEvent *event) const;
 };
 
+struct FSimpleVert
+{
+	fixed_t x, y;
+};
+
+extern "C"
+{
+	int ClassifyLine2 (node_t &node, const FSimpleVert *v1, const FSimpleVert *v2, int sidev[2]);
+#ifndef DISABLE_SSE
+	int ClassifyLineSSE1 (node_t &node, const FSimpleVert *v1, const FSimpleVert *v2, int sidev[2]);
+	int ClassifyLineSSE2 (node_t &node, const FSimpleVert *v1, const FSimpleVert *v2, int sidev[2]);
+#ifdef BACKPATCH
+#ifdef __GNUC__
+	int ClassifyLineBackpatch (node_t &node, const FSimpleVert *v1, const FSimpleVert *v2, int sidev[2]) __attribute__((noinline));
+#else
+	int __declspec(noinline) ClassifyLineBackpatch (node_t &node, const FSimpleVert *v1, const FSimpleVert *v2, int sidev[2]);
+#endif
+#endif
+#endif
+}
+
 class FNodeBuilder
 {
 	struct FPrivSeg
@@ -60,9 +85,8 @@ class FNodeBuilder
 		bool planefront;
 		FPrivSeg *hashnext;
 	};
-	struct FPrivVert
+	struct FPrivVert : FSimpleVert
 	{
-		fixed_t x, y;
 		DWORD segs;		// segs that use this vertex as v1
 		DWORD segs2;	// segs that use this vertex as v2
 
@@ -88,7 +112,17 @@ class FNodeBuilder
 	};
 
 	// Like a blockmap, but for vertices instead of lines
-	class FVertexMap
+	class IVertexMap
+	{
+	public:
+		virtual ~IVertexMap();
+		virtual int SelectVertexExact(FPrivVert &vert) = 0;
+		virtual int SelectVertexClose(FPrivVert &vert) = 0;
+	private:
+		IVertexMap &operator=(const IVertexMap &);
+	};
+
+	class FVertexMap : public IVertexMap
 	{
 	public:
 		FVertexMap (FNodeBuilder &builder, fixed_t minx, fixed_t miny, fixed_t maxx, fixed_t maxy);
@@ -116,12 +150,23 @@ class FNodeBuilder
 			assert (y <= MaxY);
 			return (unsigned(x - MinX) >> BLOCK_SHIFT) + (unsigned(y - MinY) >> BLOCK_SHIFT) * BlocksWide;
 		}
+	};
 
-		FVertexMap &operator= (const FVertexMap &) { return *this; }
+	class FVertexMapSimple : public IVertexMap
+	{
+	public:
+		FVertexMapSimple(FNodeBuilder &builder);
+
+		int SelectVertexExact(FPrivVert &vert);
+		int SelectVertexClose(FPrivVert &vert);
+	private:
+		int InsertVertex(FPrivVert &vert);
+
+		FNodeBuilder &MyBuilder;
 	};
 
 	friend class FVertexMap;
-
+	friend class FVertexMapSimple;
 
 public:
 	struct FLevel
@@ -132,7 +177,14 @@ public:
 
 		fixed_t MinX, MinY, MaxX, MaxY;
 
-		void FindMapBounds ();
+		void FindMapBounds();
+		void ResetMapBounds()
+		{
+			MinX = FIXED_MAX;
+			MinY = FIXED_MAX;
+			MaxX = FIXED_MIN;
+			MaxY = FIXED_MIN;
+		}
 	};
 
 	struct FPolyStart
@@ -141,15 +193,23 @@ public:
 		fixed_t x, y;
 	};
 
+	FNodeBuilder (FLevel &level);
 	FNodeBuilder (FLevel &level,
 		TArray<FPolyStart> &polyspots, TArray<FPolyStart> &anchors,
-		bool makeGLNodes, bool enableSSE2);
+		bool makeGLNodes);
 	~FNodeBuilder ();
 
 	void Extract (node_t *&nodes, int &nodeCount,
 		seg_t *&segs, int &segCount,
 		subsector_t *&ssecs, int &subCount,
 		vertex_t *&verts, int &vertCount);
+
+	// These are used for building sub-BSP trees for polyobjects.
+	void Clear();
+	void AddPolySegs(FPolySeg *segs, int numsegs);
+	void AddSegs(seg_t *segs, int numsegs);
+	void BuildMini(bool makeGLNodes);
+	void ExtractMini(FMiniBSP *bsp);
 
 	static angle_t PointToAngle (fixed_t dx, fixed_t dy);
 
@@ -160,7 +220,7 @@ public:
 	static inline int PointOnSide (int x, int y, int x1, int y1, int dx, int dy);
 
 private:
-	FVertexMap *VertexMap;
+	IVertexMap *VertexMap;
 
 	TArray<node_t> Nodes;
 	TArray<subsector_t> Subsectors;
@@ -181,7 +241,6 @@ private:
 	DWORD HackMate;			// Seg to use in front of hack seg
 	FLevel &Level;
 	bool GLNodes;			// Add minisegs to make GL nodes?
-	bool EnableSSE2;
 
 	// Progress meter stuff
 	int SegsStuffed;
@@ -191,29 +250,27 @@ private:
 	void MakeSegsFromSides ();
 	int CreateSeg (int linenum, int sidenum);
 	void GroupSegPlanes ();
+	void GroupSegPlanesSimple ();
 	void FindPolyContainers (TArray<FPolyStart> &spots, TArray<FPolyStart> &anchors);
 	bool GetPolyExtents (int polynum, fixed_t bbox[4]);
 	int MarkLoop (DWORD firstseg, int loopnum);
 	void AddSegToBBox (fixed_t bbox[4], const FPrivSeg *seg);
-	int CreateNode (DWORD set, fixed_t bbox[4]);
+	int CreateNode (DWORD set, unsigned int count, fixed_t bbox[4]);
 	int CreateSubsector (DWORD set, fixed_t bbox[4]);
 	void CreateSubsectorsForReal ();
-	bool CheckSubsector (DWORD set, node_t &node, DWORD &splitseg, int setsize);
+	bool CheckSubsector (DWORD set, node_t &node, DWORD &splitseg);
 	bool CheckSubsectorOverlappingSegs (DWORD set, node_t &node, DWORD &splitseg);
 	bool ShoveSegBehind (DWORD set, node_t &node, DWORD seg, DWORD mate);	int SelectSplitter (DWORD set, node_t &node, DWORD &splitseg, int step, bool nosplit);
-	void SplitSegs (DWORD set, node_t &node, DWORD splitseg, DWORD &outset0, DWORD &outset1);
+	void SplitSegs (DWORD set, node_t &node, DWORD splitseg, DWORD &outset0, DWORD &outset1, unsigned int &count0, unsigned int &count1);
 	DWORD SplitSeg (DWORD segnum, int splitvert, int v1InFront);
 	int Heuristic (node_t &node, DWORD set, bool honorNoSplit);
-	int CountSegs (DWORD set) const;
 
 	// Returns:
 	//	0 = seg is in front
 	//  1 = seg is in back
 	// -1 = seg cuts the node
 
-	inline int ClassifyLine (node_t &node, const FPrivSeg *seg, int &sidev1, int &sidev2);
-	int ClassifyLine2 (node_t &node, const FPrivSeg *seg, int &sidev1, int &sidev2);
-	int ClassifyLineSSE2 (node_t &node, const FPrivSeg *seg, int &sidev1, int &sidev2);
+	inline int ClassifyLine (node_t &node, const FPrivVert *v1, const FPrivVert *v2, int sidev[2]);
 
 	void FixSplitSharers (const node_t &node);
 	double AddIntersection (const node_t &node, int vertex);
@@ -273,21 +330,27 @@ inline int FNodeBuilder::PointOnSide (int x, int y, int x1, int y1, int dx, int 
 	return s_num > 0.0 ? -1 : 1;
 }
 
-inline int FNodeBuilder::ClassifyLine (node_t &node, const FPrivSeg *seg, int &sidev1, int &sidev2)
+inline int FNodeBuilder::ClassifyLine (node_t &node, const FPrivVert *v1, const FPrivVert *v2, int sidev[2])
 {
-#if !defined(_M_IX86) && !defined(_M_X64) && !defined(__i386__) && !defined(__amd64__)
-	return ClassifyLine2 (node, seg, sidev1, sidev2);
-#elif defined(__SSE2__)
+#ifdef DISABLE_SSE
+	return ClassifyLine2 (node, v1, v2, sidev);
+#else
+#if defined(__SSE2__) || defined(_M_IX64)
 	// If compiling with SSE2 support everywhere, just use the SSE2 version.
-	return ClassifyLineSSE2 (node, seg, sidev1, sidev2);
+	return ClassifyLineSSE2 (node, v1, v2, sidev);
 #elif defined(_MSC_VER) && _MSC_VER < 1300
-	// VC 6 does not support SSE2 optimizations.
-	return ClassifyLine2 (node, seg, sidev1, sidev2);
+	// VC 6 does not support SSE optimizations.
+	return ClassifyLine2 (node, v1, v2, sidev);
 #else
 	// Select the routine based on our flag.
-	if (EnableSSE2)
-		return ClassifyLineSSE2 (node, seg, sidev1, sidev2);
+#ifdef BACKPATCH
+	return ClassifyLineBackpatch (node, v1, v2, sidev);
+#else
+	if (CPU.bSSE2)
+		return ClassifyLineSSE2 (node, v1, v2, sidev);
 	else
-		return ClassifyLine2 (node, seg, sidev1, sidev2);
+		return ClassifyLine2 (node, v1, v2, sidev);
+#endif
+#endif
 #endif
 }

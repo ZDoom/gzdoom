@@ -1,18 +1,16 @@
+#ifndef DISABLE_SSE
+
 #include "doomtype.h"
 #include "nodebuild.h"
 
 #define FAR_ENOUGH 17179869184.f		// 4<<32
 
-// This function is identical to the ClassifyLine2 version. So how does it use SSE2?
-// Easy! By explicitly enabling SSE2 in the configuration properties for this one
-// file, we can build it with SSE2 enabled without forcing SSE2 on the rest of the
-// project.
+// You may notice that this function is identical to ClassifyLine2.
+// The reason it is SSE2 is because this file is explicitly compiled
+// with SSE2 math enabled, but the other files are not.
 
-int FNodeBuilder::ClassifyLineSSE2 (node_t &node, const FPrivSeg *seg, int &sidev1, int &sidev2)
+extern "C" int ClassifyLineSSE2 (node_t &node, const FSimpleVert *v1, const FSimpleVert *v2, int sidev[2])
 {
-	const FPrivVert *v1 = &Vertices[seg->v1];
-	const FPrivVert *v2 = &Vertices[seg->v2];
-
 	double d_x1 = double(node.x);
 	double d_y1 = double(node.y);
 	double d_dx = double(node.dx);
@@ -31,13 +29,13 @@ int FNodeBuilder::ClassifyLineSSE2 (node_t &node, const FPrivSeg *seg, int &side
 	{
 		if (s_num2 <= -FAR_ENOUGH)
 		{
-			sidev1 = sidev2 = 1;
+			sidev[0] = sidev[1] = 1;
 			return 1;
 		}
 		if (s_num2 >= FAR_ENOUGH)
 		{
-			sidev1 = 1;
-			sidev2 = -1;
+			sidev[0] = 1;
+			sidev[1] = -1;
 			return -1;
 		}
 		nears = 1;
@@ -46,13 +44,13 @@ int FNodeBuilder::ClassifyLineSSE2 (node_t &node, const FPrivSeg *seg, int &side
 	{
 		if (s_num2 >= FAR_ENOUGH)
 		{
-			sidev1 = sidev2 = -1;
+			sidev[0] = sidev[1] = -1;
 			return 0;
 		}
 		if (s_num2 <= -FAR_ENOUGH)
 		{
-			sidev1 = -1;
-			sidev2 = 1;
+			sidev[0] = -1;
+			sidev[1] = 1;
 			return -1;
 		}
 		nears = 1;
@@ -70,41 +68,41 @@ int FNodeBuilder::ClassifyLineSSE2 (node_t &node, const FPrivSeg *seg, int &side
 			double dist = s_num1 * s_num1 * l;
 			if (dist < SIDE_EPSILON*SIDE_EPSILON)
 			{
-				sidev1 = 0;
+				sidev[0] = 0;
 			}
 			else
 			{
-				sidev1 = s_num1 > 0.0 ? -1 : 1;
+				sidev[0] = s_num1 > 0.0 ? -1 : 1;
 			}
 		}
 		else
 		{
-			sidev1 = s_num1 > 0.0 ? -1 : 1;
+			sidev[0] = s_num1 > 0.0 ? -1 : 1;
 		}
 		if (nears & 1)
 		{
 			double dist = s_num2 * s_num2 * l;
 			if (dist < SIDE_EPSILON*SIDE_EPSILON)
 			{
-				sidev2 = 0;
+				sidev[1] = 0;
 			}
 			else
 			{
-				sidev2 = s_num2 > 0.0 ? -1 : 1;
+				sidev[1] = s_num2 > 0.0 ? -1 : 1;
 			}
 		}
 		else
 		{
-			sidev2 = s_num2 > 0.0 ? -1 : 1;
+			sidev[1] = s_num2 > 0.0 ? -1 : 1;
 		}
 	}
 	else
 	{
-		sidev1 = s_num1 > 0.0 ? -1 : 1;
-		sidev2 = s_num2 > 0.0 ? -1 : 1;
+		sidev[0] = s_num1 > 0.0 ? -1 : 1;
+		sidev[1] = s_num2 > 0.0 ? -1 : 1;
 	}
 
-	if ((sidev1 | sidev2) == 0)
+	if ((sidev[0] | sidev[1]) == 0)
 	{ // seg is coplanar with the splitter, so use its orientation to determine
 	  // which child it ends up in. If it faces the same direction as the splitter,
 	  // it goes in front. Otherwise, it goes in back.
@@ -132,13 +130,15 @@ int FNodeBuilder::ClassifyLineSSE2 (node_t &node, const FPrivSeg *seg, int &side
 			}
 		}
 	}
-	else if (sidev1 <= 0 && sidev2 <= 0)
+	else if (sidev[0] <= 0 && sidev[1] <= 0)
 	{
 		return 0;
 	}
-	else if (sidev1 >= 0 && sidev2 >= 0)
+	else if (sidev[0] >= 0 && sidev[1] >= 0)
 	{
 		return 1;
 	}
 	return -1;
 }
+
+#endif

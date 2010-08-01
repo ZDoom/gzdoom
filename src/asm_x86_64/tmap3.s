@@ -92,23 +92,23 @@ pm:		imulq		$320, %rcx
 loopit:
 			movl	%r8d, %edx
 shifter1:	shrl	$24, %edx
-step1:		addl	$0x88888888, %r8d
+step1:		addl	$0x44444444, %r8d
 			movzbl	(%rax,%rdx), %edx
 			movl	%r9d, %ebx
 			movb	(%r12,%rdx), %dl
 shifter2:	shrl	$24, %ebx
-step2:		addl	$0x88888888, %r9d
-source2:	movzbl	0x88888888(%rax,%rbx), %ebx
+step2:		addl	$0x44444444, %r9d
+source2:	movzbl	0x44444444(%rax,%rbx), %ebx
 			movl	%r10d, %ebp
 			movb	(%r13,%rbx), %bl
 shifter3:	shr		$24, %ebp
-step3:		addl	$0x88888888, %r10d
-source3:	movzbl	0x88888888(%rax,%rbp), %ebp
+step3:		addl	$0x44444444, %r10d
+source3:	movzbl	0x44444444(%rax,%rbp), %ebp
 			movl	%r11d, %esi
 			movb	(%r14,%rbp), %bpl
 shifter4:	shr		$24, %esi
-step4:		add		$0x88888888, %r11d
-source4:	movzbl	0x88888888(%rax,%rsi), %esi
+step4:		add		$0x44444444, %r11d
+source4:	movzbl	0x44444444(%rax,%rsi), %esi
 			movb	%dl, (%rdi,%rcx)
 			movb	%bl, 1(%rdi,%rcx)
 			movb	(%r15,%rsi), %sil

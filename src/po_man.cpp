@@ -28,6 +28,7 @@
 #include "g_level.h"
 #include "po_man.h"
 #include "p_setup.h"
+#include "vectors.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -62,6 +63,7 @@ public:
 	DPolyAction (int polyNum);
 	void Serialize (FArchive &arc);
 	void Destroy();
+	void Stop();
 	int GetSpeed() const { return m_Speed; }
 
 	void StopInterpolation ();
@@ -102,6 +104,23 @@ protected:
 	fixed_t m_ySpeed;
 
 	friend bool EV_MovePoly (line_t *line, int polyNum, int speed, angle_t angle, fixed_t dist, bool overRide);
+};
+
+class DMovePolyTo : public DPolyAction
+{
+	DECLARE_CLASS(DMovePolyTo, DPolyAction)
+public:
+	DMovePolyTo(int polyNum);
+	void Serialize(FArchive &arc);
+	void Tick();
+protected:
+	DMovePolyTo();
+	fixed_t m_xSpeed;
+	fixed_t m_ySpeed;
+	fixed_t m_xTarget;
+	fixed_t m_yTarget;
+
+	friend bool EV_MovePolyTo(line_t *line, int polyNum, int speed, int x, int y, bool overRide);
 };
 
 
@@ -199,13 +218,20 @@ void DPolyAction::Destroy()
 {
 	FPolyObj *poly = PO_GetPolyobj (m_PolyObj);
 
-	if (poly->specialdata == NULL || poly->specialdata == this)
+	if (poly->specialdata == this)
 	{
 		poly->specialdata = NULL;
 	}
 
 	StopInterpolation();
 	Super::Destroy();
+}
+
+void DPolyAction::Stop()
+{
+	FPolyObj *poly = PO_GetPolyobj(m_PolyObj);
+	SN_StopSequence(poly);
+	Destroy();
 }
 
 void DPolyAction::SetInterpolation ()
@@ -270,6 +296,34 @@ DMovePoly::DMovePoly (int polyNum)
 //
 //
 //
+//
+//==========================================================================
+
+IMPLEMENT_CLASS(DMovePolyTo)
+
+DMovePolyTo::DMovePolyTo()
+{
+}
+
+void DMovePolyTo::Serialize(FArchive &arc)
+{
+	Super::Serialize(arc);
+	arc << m_xSpeed << m_ySpeed << m_xTarget << m_yTarget;
+}
+
+DMovePolyTo::DMovePolyTo(int polyNum)
+	: Super(polyNum)
+{
+	m_xSpeed = 0;
+	m_ySpeed = 0;
+	m_xTarget = 0;
+	m_yTarget = 0;
+}
+
+//==========================================================================
+//
+//
+//
 //==========================================================================
 
 IMPLEMENT_CLASS (DPolyDoor)
@@ -318,10 +372,6 @@ void DRotatePoly::Tick ()
 		m_Dist -= absSpeed;
 		if (m_Dist == 0)
 		{
-			if (poly->specialdata == this)
-			{
-				poly->specialdata = NULL;
-			}
 			SN_StopSequence (poly);
 			Destroy ();
 		}
@@ -433,10 +483,6 @@ void DMovePoly::Tick ()
 			m_Dist -= absSpeed;
 			if (m_Dist <= 0)
 			{
-				if (poly->specialdata == this)
-				{
-					poly->specialdata = NULL;
-				}
 				SN_StopSequence (poly);
 				Destroy ();
 			}
@@ -524,6 +570,111 @@ bool EV_MovePoly (line_t *line, int polyNum, int speed, angle_t angle,
 
 //==========================================================================
 //
+// DMovePolyTo :: Tick
+//
+//==========================================================================
+
+void DMovePolyTo::Tick ()
+{
+	FPolyObj *poly = PO_GetPolyobj (m_PolyObj);
+
+	if (poly != NULL)
+	{
+		if (poly->MovePolyobj (m_xSpeed, m_ySpeed))
+		{
+			int absSpeed = abs (m_Speed);
+			m_Dist -= absSpeed;
+			if (m_Dist <= 0)
+			{
+				SN_StopSequence (poly);
+				Destroy ();
+			}
+			else if (m_Dist < absSpeed)
+			{
+				m_Speed = m_Dist * (m_Speed < 0 ? -1 : 1);
+				m_xSpeed = m_xTarget - poly->StartSpot.x;
+				m_ySpeed = m_yTarget - poly->StartSpot.y;
+			}
+		}
+	}
+}
+
+//==========================================================================
+//
+// EV_MovePolyTo
+//
+//==========================================================================
+
+bool EV_MovePolyTo(line_t *line, int polyNum, int speed, int ix, int iy, bool overRide)
+{
+	fixed_t targx = ix << FRACBITS;
+	fixed_t targy = iy << FRACBITS;
+	int mirror;
+	DMovePolyTo *pe;
+	FPolyObj *poly;
+	TVector2<double> dist;
+	double distlen;
+	bool nointerp;
+
+	if ( (poly = PO_GetPolyobj(polyNum)) )
+	{
+		if (poly->specialdata && !overRide)
+		{ // poly is already moving
+			return false;
+		}
+	}
+	else
+	{
+		Printf("EV_MovePolyTo: Invalid polyobj num: %d\n", polyNum);
+		return false;
+	}
+	dist.X = targx - poly->StartSpot.x;
+	dist.Y = targy - poly->StartSpot.y;
+	pe = new DMovePolyTo(polyNum);
+	poly->specialdata = pe;
+	pe->m_Dist = xs_RoundToInt(distlen = dist.MakeUnit());
+	pe->m_Speed = speed;
+	pe->m_xSpeed = xs_RoundToInt(speed * dist.X);
+	pe->m_ySpeed = xs_RoundToInt(speed * dist.Y);
+	pe->m_xTarget = targx;
+	pe->m_yTarget = targy;
+
+	nointerp = (pe->m_Dist / pe->m_Speed) <= 2;
+	if (nointerp)
+	{
+		pe->StopInterpolation();
+	}
+
+	while ( (mirror = poly->GetMirror()) )
+	{
+		poly = PO_GetPolyobj(mirror);
+		if (poly && poly->specialdata && !overRide)
+		{ // mirroring poly is already in motion
+			break;
+		}
+		// reverse the direction
+		dist.X = -dist.X;
+		dist.Y = -dist.Y;
+		pe = new DMovePolyTo(mirror);
+		poly->specialdata = pe;
+		pe->m_Dist = xs_RoundToInt(distlen);
+		pe->m_Speed = speed;
+		pe->m_xSpeed = xs_RoundToInt(speed * dist.X);
+		pe->m_ySpeed = xs_RoundToInt(speed * dist.Y);
+		pe->m_xTarget = xs_RoundToInt(poly->StartSpot.x + distlen * dist.X);
+		pe->m_yTarget = xs_RoundToInt(poly->StartSpot.y + distlen * dist.Y);
+		polyNum = mirror;
+		SN_StartSequence(poly, poly->seqType, SEQ_DOOR, 0);
+		if (nointerp)
+		{
+			pe->StopInterpolation();
+		}
+	}
+	return true;
+}
+
+//==========================================================================
+//
 // T_PolyDoor
 //
 //==========================================================================
@@ -564,10 +715,6 @@ void DPolyDoor::Tick ()
 				}
 				else
 				{
-					if (poly->specialdata == this)
-					{
-						poly->specialdata = NULL;
-					}
 					Destroy ();
 				}
 			}
@@ -612,10 +759,6 @@ void DPolyDoor::Tick ()
 				}
 				else
 				{
-					if (poly->specialdata == this)
-					{
-						poly->specialdata = NULL;
-					}
 					Destroy ();
 				}
 			}
@@ -719,7 +862,28 @@ bool EV_OpenPolyDoor (line_t *line, int polyNum, int speed, angle_t angle,
 	}
 	return true;
 }
-	
+
+//==========================================================================
+//
+// EV_StopPoly
+//
+//==========================================================================
+
+bool EV_StopPoly(int polynum)
+{
+	FPolyObj *poly;
+
+	if (NULL != (poly = PO_GetPolyobj(polynum)))
+	{
+		if (poly->specialdata != NULL)
+		{
+			poly->specialdata->Stop();
+		}
+		return true;
+	}
+	return false;
+}
+
 // ===== Higher Level Poly Interface code =====
 
 //==========================================================================

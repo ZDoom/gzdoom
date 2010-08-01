@@ -63,7 +63,7 @@ struct FPolyObj
 	int			seqType;
 	fixed_t		size;			// polyobj size (area of POLY_AREAUNIT == size of FRACUNIT)
 	FPolyNode	*subsectorlinks;
-	DThinker	*specialdata;	// pointer to a thinker, if the poly is moving
+	DPolyAction	*specialdata;	// pointer to a thinker, if the poly is moving
 	TObjPtr<DInterpolation> interpolation;
 
 	FPolyObj();

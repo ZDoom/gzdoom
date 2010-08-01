@@ -121,6 +121,12 @@ FUNC(LS_Polyobj_MoveTimes8)
 	return EV_MovePoly (ln, arg0, SPEED(arg1), BYTEANGLE(arg2), arg3 * FRACUNIT * 8, false);
 }
 
+FUNC(LS_Polyobj_MoveTo)
+// Polyobj_MoveTo (po, speed, x, y)
+{
+	return EV_MovePolyTo (ln, arg0, SPEED(arg1), arg2, arg3, false);
+}
+
 FUNC(LS_Polyobj_DoorSwing)
 // Polyobj_DoorSwing (po, speed, angle, delay)
 {
@@ -155,6 +161,18 @@ FUNC(LS_Polyobj_OR_MoveTimes8)
 // Polyobj_OR_MoveTimes8 (po, speed, angle, distance)
 {
 	return EV_MovePoly (ln, arg0, SPEED(arg1), BYTEANGLE(arg2), arg3 * FRACUNIT * 8, true);
+}
+
+FUNC(LS_Polyobj_OR_MoveTo)
+// Polyobj_OR_MoveTo (po, speed, x, y)
+{
+	return EV_MovePolyTo (ln, arg0, SPEED(arg1), arg2, arg3, true);
+}
+
+FUNC(LS_Polyobj_Stop)
+// Polyobj_Stop (po)
+{
+	return EV_StopPoly (arg0);
 }
 
 FUNC(LS_Door_Close)
@@ -3060,9 +3078,9 @@ lnSpecFunc LineSpecials[256] =
 	/*  84 */ LS_ACS_ExecuteWithResult,
 	/*  85 */ LS_ACS_LockedExecuteDoor,
 	/*  86 */ LS_NOP,
-	/*  87 */ LS_NOP,
-	/*  88 */ LS_NOP,
-	/*  89 */ LS_NOP,
+	/*  87 */ LS_Polyobj_Stop,
+	/*  88 */ LS_Polyobj_MoveTo,
+	/*  89 */ LS_Polyobj_OR_MoveTo,
 	/*  90 */ LS_Polyobj_OR_RotateLeft,
 	/*  91 */ LS_Polyobj_OR_RotateRight,
 	/*  92 */ LS_Polyobj_OR_Move,

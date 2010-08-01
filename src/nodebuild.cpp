@@ -228,7 +228,7 @@ void FNodeBuilder::CreateSubsectorsForReal ()
 			set = ptr.SegPtr->next;
 		}
 		sub.numlines = (DWORD)(SegList.Size() - firstline);
-		sub.firstline = (seg_t *)firstline;
+		sub.firstline = (seg_t *)(size_t)firstline;
 
 		// Sort segs by linedef for special effects
 		qsort (&SegList[firstline], sub.numlines, sizeof(USegPtr), SortSegs);
@@ -1107,12 +1107,12 @@ int ClassifyLineBackpatchC (node_t &node, const FSimpleVert *v1, const FSimpleVe
 	if (CPU.bSSE2)
 	{
 		func = ClassifyLineSSE2;
-		diff = (char *)ClassifyLineSSE2 - (char *)calleroffset;
+		diff = int((char *)ClassifyLineSSE2 - (char *)calleroffset);
 	}
 	else
 	{
 		func = ClassifyLine2;
-		diff = (char *)ClassifyLine2 - (char *)calleroffset;
+		diff = int((char *)ClassifyLine2 - (char *)calleroffset);
 	}
 
 	calleroffset--;

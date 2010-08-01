@@ -1314,20 +1314,18 @@ bool FPolyObj::CheckMobjBlocking (side_t *sd)
 
 void FPolyObj::LinkPolyobj ()
 {
-	int leftX, rightX;
-	int topY, bottomY;
 	polyblock_t **link;
 	polyblock_t *tempLink;
 
 	// calculate the polyobj bbox
-	vertex_t *vt = Sidedefs[0]->V1();
-	rightX = leftX = vt->x;
-	topY = bottomY = vt->y;
-
 	Bounds.ClearBox();
-	for(unsigned i = 1; i < Sidedefs.Size(); i++)
+	for(unsigned i = 0; i < Sidedefs.Size(); i++)
 	{
-		vt = Sidedefs[i]->V1();
+		vertex_t *vt;
+		
+		vt = Sidedefs[i]->linedef->v1;
+		Bounds.AddToBox(vt->x, vt->y);
+		vt = Sidedefs[i]->linedef->v2;
 		Bounds.AddToBox(vt->x, vt->y);
 	}
 	bbox[BOXRIGHT] = (Bounds.Right() - bmaporgx) >> MAPBLOCKSHIFT;

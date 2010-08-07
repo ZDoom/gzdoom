@@ -640,6 +640,7 @@ struct sector_t
 
 	int			sky;
 	short		seqType;		// this sector's sound sequence
+	FNameNoInit	SeqName;		// Sound sequence name. Setting seqType non-negative will override this.
 
 	fixed_t		soundorg[2];	// origin for any sounds played by the sector
 	int 		validcount;		// if == validcount, already checked

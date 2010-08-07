@@ -190,9 +190,17 @@ DPillar::DPillar (sector_t *sector, EPillar type, fixed_t speed,
 	}
 
 	if (sector->seqType >= 0)
+	{
 		SN_StartSequence (sector, CHAN_FLOOR, sector->seqType, SEQ_PLATFORM, 0);
+	}
+	else if (sector->SeqName != NAME_None)
+	{
+		SN_StartSequence (sector, CHAN_FLOOR, sector->SeqName, 0);
+	}
 	else
+	{
 		SN_StartSequence (sector, CHAN_FLOOR, "Floor", 0);
+	}
 }
 
 bool EV_DoPillar (DPillar::EPillar type, int tag, fixed_t speed, fixed_t height,

@@ -44,6 +44,10 @@ static void StartFloorSound (sector_t *sec)
 	{
 		SN_StartSequence (sec, CHAN_FLOOR, sec->seqType, SEQ_PLATFORM, 0);
 	}
+	else if (sec->SeqName != NAME_None)
+	{
+		SN_StartSequence (sec, CHAN_FLOOR, sec->SeqName, 0);
+	}
 	else
 	{
 		SN_StartSequence (sec, CHAN_FLOOR, "Floor", 0);

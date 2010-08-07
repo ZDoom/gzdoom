@@ -1024,7 +1024,7 @@ struct UDMFParser
 		sec->SetYScale(sector_t::ceiling, FRACUNIT);
 		sec->thinglist = NULL;
 		sec->touching_thinglist = NULL;		// phares 3/14/98
-		sec->seqType = (level.flags & LEVEL_SNDSEQTOTALCTRL)? 0:-1;
+		sec->seqType = (level.flags & LEVEL_SNDSEQTOTALCTRL) ? 0 : -1;
 		sec->nextsec = -1;	//jff 2/26/98 add fields to support locking out
 		sec->prevsec = -1;	// stair retriggering until build completes
 		sec->heightsec = NULL;	// sector used to get floor and ceiling height
@@ -1173,6 +1173,11 @@ struct UDMFParser
 
 				case NAME_Dropactors:
 					Flag(sec->Flags, SECF_FLOORDROP, key);
+					continue;
+
+				case NAME_SoundSequence:
+					sec->SeqName = CheckString(key);
+					sec->seqType = -1;
 					continue;
 
 				default:

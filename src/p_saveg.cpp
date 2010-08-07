@@ -348,6 +348,15 @@ void P_SerializeWorld (FArchive &arc)
 			<< sec->interpolations[2]
 			<< sec->interpolations[3];
 
+		if (SaveVersion < 2492)
+		{
+			sec->SeqName = NAME_None;
+		}
+		else
+		{
+			arc << sec->SeqName;
+		}
+
 		sec->e->Serialize(arc);
 		if (arc.IsStoring ())
 		{

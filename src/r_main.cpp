@@ -100,6 +100,7 @@ static float CurrentVisibility = 8.f;
 static fixed_t MaxVisForWall;
 static fixed_t MaxVisForFloor;
 static FRandom pr_torchflicker ("TorchFlicker");
+static FRandom pr_hom ("HOM-Flasher");
 static TArray<InterpolationViewer> PastViewers;
 static int centerxwide;
 static bool polyclipped;
@@ -111,6 +112,7 @@ bool r_dontmaplines;
 CVAR (String, r_viewsize, "", CVAR_NOSET)
 CVAR (Int, r_polymost, 0, 0)
 CVAR (Bool, r_deathcamera, false, CVAR_ARCHIVE)
+CVAR (Int, r_clearbuffer, 0, 0)
 
 fixed_t			r_BaseVisibility;
 fixed_t			r_WallVisibility;
@@ -1269,6 +1271,34 @@ void R_SetupFrame (AActor *actor)
 	if (r_polymost)
 	{
 		polyclipped = RP_SetupFrame (false);
+	}
+
+	if (RenderTarget == screen && r_clearbuffer != 0)
+	{
+		int color;
+		int hom = r_clearbuffer;
+
+		if (hom == 3)
+		{
+			hom = ((I_FPSTime() / 128) & 1) + 1;
+		}
+		if (hom == 1)
+		{
+			color = GPalette.BlackIndex;
+		}
+		else if (hom == 2)
+		{
+			color = GPalette.WhiteIndex;
+		}
+		else if (hom == 4)
+		{
+			color = (I_FPSTime() / 32) & 255;
+		}
+		else
+		{
+			color = pr_hom();
+		}
+		memset(RenderTarget->GetBuffer(), color, RenderTarget->GetPitch() * RenderTarget->GetHeight());
 	}
 }
 

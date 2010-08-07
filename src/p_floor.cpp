@@ -358,7 +358,7 @@ manual_floor:
 			floor->m_Direction = 1;
 			newheight = sec->FindLowestCeilingSurrounding (&spot);
 			if (floortype == DFloor::floorRaiseAndCrush)
-				floor->m_FloorDestDist -= 8 * FRACUNIT;
+				newheight -= 8 * FRACUNIT;
 			ceilingheight = sec->FindLowestCeilingPoint (&spot2);
 			floor->m_FloorDestDist = sec->floorplane.PointToDist (spot, newheight);
 			if (sec->floorplane.ZatPointDist (spot2, floor->m_FloorDestDist) > ceilingheight)

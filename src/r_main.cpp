@@ -100,7 +100,7 @@ static float CurrentVisibility = 8.f;
 static fixed_t MaxVisForWall;
 static fixed_t MaxVisForFloor;
 static FRandom pr_torchflicker ("TorchFlicker");
-static FRandom pr_hom ("HOM-Flasher");
+static FRandom pr_hom;
 static TArray<InterpolationViewer> PastViewers;
 static int centerxwide;
 static bool polyclipped;

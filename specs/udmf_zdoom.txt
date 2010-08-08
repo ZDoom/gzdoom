@@ -161,6 +161,8 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       nofallingdamage = <bool>;		  // Falling damage is disabled in this sector
       dropactors = <bool>;            // Actors drop with instantly moving floors (*)
 	  norespawn = <bool>;             // Players can not respawn in this sector
+	  soundsequence = <string>;       // The sound sequence to play when this sector moves. Placing a
+	                                  // sound sequence thing in the sector will override this property.
       
       * Note about dropactors
 
@@ -262,6 +264,9 @@ Changed node specifications to deprecate compression of node lump.
 
 1.10 25.04.2010
 Added 'playeruseback' line trigger flag.
+
+1.11 07.08.2010
+Added 'soundsequnce' sector property.
 
 ===============================================================================
 EOF

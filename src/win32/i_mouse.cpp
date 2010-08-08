@@ -136,9 +136,10 @@ FMouse *Mouse;
 
 bool CursorState;
 
-CVAR (Bool,  use_mouse,				true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-CVAR (Bool,  m_noprescale,			false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-CVAR (Bool,	 m_filter,				false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR (Bool, use_mouse,				true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR (Bool, m_noprescale,			false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR (Bool,	m_filter,				false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR (Bool, m_hidepointer,			true, 0)
 
 CUSTOM_CVAR (Int, in_mouse, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOINITCALL)
 {
@@ -181,10 +182,10 @@ CUSTOM_CVAR(Int, mouse_capturemode, 1, CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
 
 static void SetCursorState(bool visible)
 {
-	CursorState = visible;
+	CursorState = visible || !m_hidepointer;
 	if (GetForegroundWindow() == Window)
 	{
-		if (visible)
+		if (CursorState)
 		{
 			SetCursor((HCURSOR)(intptr_t)GetClassLongPtr(Window, GCLP_HCURSOR));
 		}

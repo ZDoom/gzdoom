@@ -147,6 +147,7 @@ EXTERN_CVAR (Bool, lookstrafe)
 EXTERN_CVAR (Bool, use_joystick)
 
 static int WheelDelta;
+extern bool CursorState;
 
 extern BOOL paused;
 static bool noidle = false;
@@ -416,6 +417,14 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 	case WM_SETFOCUS:
 		I_CheckNativeMouse (false);
+		break;
+
+	case WM_SETCURSOR:
+		if (!CursorState)
+		{
+			SetCursor(NULL); // turn off window cursor
+			return TRUE;	// Prevent Windows from setting cursor to window class cursor
+		}
 		break;
 
 	case WM_SIZE:

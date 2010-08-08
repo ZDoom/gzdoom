@@ -134,7 +134,7 @@ static FMouse *(*MouseFactory[])() =
 
 FMouse *Mouse;
 
-HCURSOR TheArrowCursor;
+bool CursorState;
 
 CVAR (Bool,  use_mouse,				true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool,  m_noprescale,			false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
@@ -181,11 +181,17 @@ CUSTOM_CVAR(Int, mouse_capturemode, 1, CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
 
 static void SetCursorState(bool visible)
 {
-	HCURSOR usingCursor = visible ? TheArrowCursor : NULL;
-	SetClassLongPtr(Window, GCLP_HCURSOR, (LONG_PTR)usingCursor);
+	CursorState = visible;
 	if (GetForegroundWindow() == Window)
 	{
-		SetCursor(usingCursor);
+		if (visible)
+		{
+			SetCursor((HCURSOR)(intptr_t)GetClassLongPtr(Window, GCLP_HCURSOR));
+		}
+		else
+		{
+			SetCursor(NULL);
+		}
 	}
 }
 

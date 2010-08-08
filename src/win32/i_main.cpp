@@ -118,7 +118,7 @@ extern BYTE *ST_Util_BitsForBitmap (BITMAPINFO *bitmap_info);
 extern EXCEPTION_POINTERS CrashPointers;
 extern BITMAPINFO *StartupBitmap;
 extern UINT TimerPeriod;
-extern HCURSOR TheArrowCursor, TheInvisibleCursor;
+extern HCURSOR TheArrowCursor;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -931,7 +931,6 @@ void DoMain (HINSTANCE hInstance)
 			x = y = 0;
 		}
 
-		TheInvisibleCursor = LoadCursor (hInstance, MAKEINTRESOURCE(IDC_INVISIBLECURSOR));
 		TheArrowCursor = LoadCursor (NULL, IDC_ARROW);
 
 		WNDCLASS WndClass;

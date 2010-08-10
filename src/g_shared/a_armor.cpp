@@ -217,7 +217,7 @@ AInventory *ABasicArmorPickup::CreateCopy (AActor *other)
 	copy->MaxFullAbsorb = MaxFullAbsorb;
 
 	if (!(ItemFlags & IF_IGNORESKILL))
-	{ // extra ammo in baby mode and nightmare mode
+	{
 		SaveAmount = FixedMul(SaveAmount, G_SkillProperty(SKILLP_ArmorFactor));
 	}
 
@@ -300,7 +300,7 @@ AInventory *ABasicArmorBonus::CreateCopy (AActor *other)
 	copy->MaxFullAbsorb = MaxFullAbsorb;
 
 	if (!(ItemFlags & IF_IGNORESKILL))
-	{ // extra ammo in baby mode and nightmare mode
+	{
 		SaveAmount = FixedMul(SaveAmount, G_SkillProperty(SKILLP_ArmorFactor));
 	}
 	return copy;

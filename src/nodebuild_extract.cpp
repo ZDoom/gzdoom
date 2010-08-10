@@ -224,8 +224,16 @@ void FNodeBuilder::ExtractMini (FMiniBSP *bsp)
 			out->v2 = &bsp->Verts[org->v2];
 			out->backsector = org->backsector;
 			out->frontsector = org->frontsector;
-			out->linedef = Level.Lines + org->linedef;
-			out->sidedef = Level.Sides + org->sidedef;
+			if (org->sidedef != int(NO_SIDE))
+			{
+				out->linedef = Level.Lines + org->linedef;
+				out->sidedef = Level.Sides + org->sidedef;
+			}
+			else	// part of a miniseg
+			{
+				out->linedef = NULL;
+				out->sidedef = NULL;
+			}
 			out->PartnerSeg = NULL;
 			out->bPolySeg = false;
 		}

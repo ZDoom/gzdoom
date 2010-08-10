@@ -1032,7 +1032,7 @@ FMiniBSP::FMiniBSP()
 //
 //==========================================================================
 
-static void R_BuildPolyBSP(subsector_t *sub)
+void R_BuildPolyBSP(subsector_t *sub)
 {
 	assert((sub->BSP == NULL || sub->BSP->bDirty) && "BSP computed more than once");
 

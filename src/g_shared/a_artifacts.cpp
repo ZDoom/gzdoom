@@ -1004,6 +1004,12 @@ void APowerFlight::EndEffect ()
 
 bool APowerFlight::DrawPowerup (int x, int y)
 {
+	// If this item got a valid icon use that instead of the default spinning wings.
+	if (Icon.isValid())
+	{
+		return Super::DrawPowerup(x, y);
+	}
+
 	if (EffectTics > BLINKTHRESHOLD || !(EffectTics & 16))
 	{
 		FTextureID picnum = TexMan.CheckForTexture ("SPFLY0", FTexture::TEX_MiscPatch);

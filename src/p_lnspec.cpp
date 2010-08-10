@@ -124,7 +124,16 @@ FUNC(LS_Polyobj_MoveTimes8)
 FUNC(LS_Polyobj_MoveTo)
 // Polyobj_MoveTo (po, speed, x, y)
 {
-	return EV_MovePolyTo (ln, arg0, SPEED(arg1), arg2, arg3, false);
+	return EV_MovePolyTo (ln, arg0, SPEED(arg1), arg2 << FRACBITS, arg3 << FRACBITS, false);
+}
+
+FUNC(LS_Polyobj_MoveToSpot)
+// Polyobj_MoveToSpot (po, speed, tid)
+{
+	FActorIterator iterator (arg2);
+	AActor *spot = iterator.Next();
+	if (spot == NULL) return false;
+	return EV_MovePolyTo (ln, arg0, SPEED(arg1), spot->x, spot->y, false);
 }
 
 FUNC(LS_Polyobj_DoorSwing)
@@ -166,7 +175,16 @@ FUNC(LS_Polyobj_OR_MoveTimes8)
 FUNC(LS_Polyobj_OR_MoveTo)
 // Polyobj_OR_MoveTo (po, speed, x, y)
 {
-	return EV_MovePolyTo (ln, arg0, SPEED(arg1), arg2, arg3, true);
+	return EV_MovePolyTo (ln, arg0, SPEED(arg1), arg2 << FRACBITS, arg3 << FRACBITS, true);
+}
+
+FUNC(LS_Polyobj_OR_MoveToSpot)
+// Polyobj_OR_MoveToSpot (po, speed, tid)
+{
+	FActorIterator iterator (arg2);
+	AActor *spot = iterator.Next();
+	if (spot == NULL) return false;
+	return EV_MovePolyTo (ln, arg0, SPEED(arg1), spot->x, spot->y, true);
 }
 
 FUNC(LS_Polyobj_Stop)
@@ -3049,8 +3067,8 @@ lnSpecFunc LineSpecials[256] =
 	/*  55 */ LS_Line_SetBlocking,
 	/*  56 */ LS_Line_SetTextureScale,
 	/*  57 */ LS_NOP,		// Sector_SetPortal
-	/*  58 */ LS_NOP,
-	/*  59 */ LS_NOP,
+	/*  58 */ LS_NOP,		// Sector_CopyScroller
+	/*  59 */ LS_Polyobj_OR_MoveToSpot,
 	/*  60 */ LS_Plat_PerpetualRaise,
 	/*  61 */ LS_Plat_Stop,
 	/*  62 */ LS_Plat_DownWaitUpStay,
@@ -3077,7 +3095,7 @@ lnSpecFunc LineSpecials[256] =
 	/*  83 */ LS_ACS_LockedExecute,
 	/*  84 */ LS_ACS_ExecuteWithResult,
 	/*  85 */ LS_ACS_LockedExecuteDoor,
-	/*  86 */ LS_NOP,
+	/*  86 */ LS_Polyobj_MoveToSpot,
 	/*  87 */ LS_Polyobj_Stop,
 	/*  88 */ LS_Polyobj_MoveTo,
 	/*  89 */ LS_Polyobj_OR_MoveTo,

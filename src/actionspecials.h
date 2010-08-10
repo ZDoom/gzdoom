@@ -57,7 +57,7 @@ DEFINE_SPECIAL(Line_SetBlocking, 55, 3, 3, 3)
 DEFINE_SPECIAL(Line_SetTextureScale, 56, 5, 5, 5)
 DEFINE_SPECIAL(Sector_SetPortal, 57, -1, -1, 5)
 DEFINE_SPECIAL(Sector_CopyScroller, 58, -1, -1, 2)
-
+DEFINE_SPECIAL(Polyobj_OR_MoveToSpot, 59, 3, 3, 3)
 DEFINE_SPECIAL(Plat_PerpetualRaise, 60, 3, 3, 3)
 DEFINE_SPECIAL(Plat_Stop, 61, 1, 1, 1)
 DEFINE_SPECIAL(Plat_DownWaitUpStay, 62, 3, 3, 3)
@@ -84,7 +84,7 @@ DEFINE_SPECIAL(ACS_Terminate, 82, 2, 2, 2)
 DEFINE_SPECIAL(ACS_LockedExecute, 83, 5, 5, 5)
 DEFINE_SPECIAL(ACS_ExecuteWithResult, 84, 1, 4, 4)
 DEFINE_SPECIAL(ACS_LockedExecuteDoor, 85, 5, 5, 5)
-
+DEFINE_SPECIAL(Polyobj_MoveToSpot, 86, 3, 3, 3)
 DEFINE_SPECIAL(Polyobj_Stop, 87, 1, 1, 1)
 DEFINE_SPECIAL(Polyobj_MoveTo, 88, 4, 4, 4)
 DEFINE_SPECIAL(Polyobj_OR_MoveTo, 89, 4, 4, 4)
@@ -114,7 +114,9 @@ DEFINE_SPECIAL(Plane_Copy, 118, -1, -1, 5)
 DEFINE_SPECIAL(Thing_Damage, 119, 2, 3, 3)
 DEFINE_SPECIAL(Radius_Quake, 120, 5, 5, 5)  // Earthquake
 DEFINE_SPECIAL(Line_SetIdentification, 121, -1, -1, 5)
+
 DEFINE_SPECIAL(Thing_Move, 125, 2, 3, 3)
+
 DEFINE_SPECIAL(Thing_SetSpecial, 127, 5, 5, 5)
 DEFINE_SPECIAL(ThrustThingZ, 128, 4, 4, 4)
 DEFINE_SPECIAL(UsePuzzleItem, 129, 2, 5, 5)

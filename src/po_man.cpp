@@ -120,7 +120,7 @@ protected:
 	fixed_t m_xTarget;
 	fixed_t m_yTarget;
 
-	friend bool EV_MovePolyTo(line_t *line, int polyNum, int speed, int x, int y, bool overRide);
+	friend bool EV_MovePolyTo(line_t *line, int polyNum, int speed, fixed_t x, fixed_t y, bool overRide);
 };
 
 
@@ -605,10 +605,8 @@ void DMovePolyTo::Tick ()
 //
 //==========================================================================
 
-bool EV_MovePolyTo(line_t *line, int polyNum, int speed, int ix, int iy, bool overRide)
+bool EV_MovePolyTo(line_t *line, int polyNum, int speed, fixed_t targx, fixed_t targy, bool overRide)
 {
-	fixed_t targx = ix << FRACBITS;
-	fixed_t targy = iy << FRACBITS;
 	int mirror;
 	DMovePolyTo *pe;
 	FPolyObj *poly;

@@ -506,7 +506,7 @@ typedef enum
 
 bool EV_RotatePoly (line_t *line, int polyNum, int speed, int byteAngle, int direction, bool overRide);
 bool EV_MovePoly (line_t *line, int polyNum, int speed, angle_t angle, fixed_t dist, bool overRide);
-bool EV_MovePolyTo (line_t *line, int polyNum, int speed, int x, int y, bool overRide);
+bool EV_MovePolyTo (line_t *line, int polyNum, int speed, fixed_t x, fixed_t y, bool overRide);
 bool EV_OpenPolyDoor (line_t *line, int polyNum, int speed, angle_t angle, int delay, int distance, podoortype_t type);
 bool EV_StopPoly (int polyNum);
 

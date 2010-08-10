@@ -170,6 +170,7 @@ class_innards ::= class_innards class_member.
 %type struct_def{ZCC_Struct *}
 %type enum_def {ZCC_Enum *}
 %type states_def {ZCC_States *}
+%type const_def {ZCC_ConstantDef *}
 
 class_member ::= declarator.
 class_member ::= enum_def.
@@ -183,6 +184,7 @@ class_member ::= const_def.
 
 %type struct_body{ZCC_TreeNode *}
 %type struct_member{ZCC_TreeNode *}
+%type declarator_no_fun {ZCC_TreeNode *}
 
 struct_def(X) ::= STRUCT IDENTIFIER(A) LBRACE struct_body(B) RBRACE opt_semicolon.
 {
@@ -343,7 +345,7 @@ state_action(X) ::= LBRACE error scanner_mode RBRACE.				{ X = NULL; }
 state_action(X) ::= state_call(A) scanner_mode SEMICOLON.			{ X = A; }
 
 state_call(X) ::= .											{ X = NULL; }
-state_call(X) ::= IDENTIFIER(A) func_params(B).
+state_call(X) ::= IDENTIFIER(A) func_expr_list(B).
 {
 	NEW_AST_NODE(ExprFuncCall, expr);
 	NEW_AST_NODE(ExprID, func);
@@ -394,10 +396,13 @@ vector_size(X) ::= LT INTCONST(A) GT.	{ X = A.Int; }
 	SBYTE BYTE SHORT USHORT INT UINT BOOL FLOAT DOUBLE STRING VECTOR NAME.
 
 /* Aggregate types */
-%type aggregate_type {PType *}
-%type type {PType *}
-%type type_or_array {PType *}
+%type aggregate_type {ZCC_Type *}
+%type type {ZCC_Type *}
+%type type_list {ZCC_Type *}
+%type type_list_or_void {ZCC_Type *}
+%type type_or_array {ZCC_Type *}
 %type class_restrictor {PClass *}
+%type array_size{ZCC_Expression *}
 
 aggregate_type ::= MAP LT type_or_array COMMA type_or_array GT.		/* Hash table */
 aggregate_type ::= ARRAY LT type_or_array GT.					/* TArray<type> */
@@ -406,24 +411,24 @@ aggregate_type ::= CLASS class_restrictor.					/* class<type> */
 class_restrictor ::= .
 class_restrictor ::= LT IDENTIFIER GT.
 
-type(X) ::= type_name(A).					{ X = A; }
-type(X) ::= aggregate_type(A).				{ X = A; }
+type(X) ::= type_name(A).					{ X = A; A->ArraySize = NULL; }
+type(X) ::= aggregate_type(A).				{ X = A; A->ArraySize = NULL; }
 
-type_or_array ::= type.
-type_or_array ::= type array_size.
+type_or_array(X) ::= type(A).				{ X = A; }
+type_or_array(X) ::= type(A) array_size(B).	{ X = A; A->ArraySize = B; }
 
-type_list ::= type_or_array.		/* A comma-separated list of types */
-type_list ::= type_list COMMA type_or_array.
+type_list(X) ::= type_or_array(A).			{ X = A; }/* A comma-separated list of types */
+type_list(X) ::= type_list(A) COMMA type_or_array(B). { X = A; A->AppendSibling(B); }
 
-type_list_or_void ::= VOID.
-type_list_or_void ::= type_list.
+type_list_or_void(X) ::= VOID.				{ X = NULL; }
+type_list_or_void(X) ::= type_list(A).		{ X = A; }
 
-%type array_size{ZCC_Expression *}
 array_size(X) ::= LBRACKET opt_expr(A) RBRACKET.
 {
 	if (A == NULL)
 	{
 		NEW_AST_NODE(Expression,nil);
+		nil->Operation = PEX_Nil;
 		X = nil;
 	}
 	else
@@ -436,6 +441,7 @@ array_size(X) ::= array_size(A) LBRACKET opt_expr(B) RBRACKET.
 	if (B == NULL)
 	{
 		NEW_AST_NODE(Expression,nil);
+		nil->Operation = PEX_Nil;
 		A->AppendSibling(nil);
 	}
 	else
@@ -459,23 +465,15 @@ variables_or_function ::= error SEMICOLON.
 
 %type variable_name{ZCC_VarName *}
 %type variable_list{ZCC_VarName *}
+%type decl_flags{int}
 
 variable_name(X) ::= IDENTIFIER(A).
 {
 	NEW_AST_NODE(VarName,var);
 	var->Name = ENamedName(A.Int);
-	var->bIsArray = false;
-	var->ArraySize = 0;
 	X = var;
 }
-variable_name(X) ::= IDENTIFIER(A) array_size(B).
-{
-	NEW_AST_NODE(VarName,var);
-	var->Name = ENamedName(A.Int);
-	var->bIsArray = false;
-	var->ArraySize = B;
-	X = var;
-}
+
 variable_list(X) ::= variable_name(A).
 {
 	X = A;
@@ -486,16 +484,17 @@ variable_list(X) ::= variable_list(A) COMMA variable_name(B).
 	X = A;
 }
 
-decl_flags ::= .
-decl_flags ::= decl_flags NATIVE.
-decl_flags ::= decl_flags STATIC.
-decl_flags ::= decl_flags PRIVATE.
-decl_flags ::= decl_flags PROTECTED.
-decl_flags ::= decl_flags LATENT.
-decl_flags ::= decl_flags FINAL.
-decl_flags ::= decl_flags META.
-decl_flags ::= decl_flags ACTION.
-decl_flags ::= decl_flags DEPRECATED LPAREN string_constant RPAREN.
+decl_flags(X) ::= .							{ X = 0; }
+decl_flags(X) ::= decl_flags(A) NATIVE.		{ X = A | ZCC_Native; }
+decl_flags(X) ::= decl_flags(A) STATIC.		{ X = A | ZCC_Static; }
+decl_flags(X) ::= decl_flags(A) PRIVATE.	{ X = A | ZCC_Private; }
+decl_flags(X) ::= decl_flags(A) PROTECTED.	{ X = A | ZCC_Protected; }
+decl_flags(X) ::= decl_flags(A) LATENT.		{ X = A | ZCC_Latent; }
+decl_flags(X) ::= decl_flags(A) FINAL.		{ X = A | ZCC_Final; }
+decl_flags(X) ::= decl_flags(A) META.		{ X = A | ZCC_Meta; }
+decl_flags(X) ::= decl_flags(A) ACTION.		{ X = A | ZCC_Action; }
+decl_flags(X) ::= decl_flags(A) READONLY.	{ X = A | ZCC_ReadOnly; }
+decl_flags(X) ::= decl_flags(A) DEPRECATED.	{ X = A | ZCC_Deprecated; }
 
 func_const ::= .
 func_const ::= CONST.
@@ -503,22 +502,40 @@ func_const ::= CONST.
 opt_func_body ::= SEMICOLON.
 opt_func_body ::= function_body.
 
-func_params ::= .	/* empty */
-func_params ::= VOID.
-func_params ::= func_param_list.
+%type func_params {ZCC_FuncParamDecl *}
+%type func_param_list {ZCC_FuncParamDecl *}
+%type func_param {ZCC_FuncParamDecl *}
+%type func_param_flags {int}
 
-func_param_list ::= func_param.
-func_param_list ::= func_param COMMA func_param_list.
+func_params(X) ::= .	/* empty */			{ X = NULL; }
+func_params(X) ::= VOID.					{ X = NULL; }
+func_params(X) ::= func_param_list(A).		{ X = A; }
 
-func_param ::= func_param_flags type variable_name.
+func_param_list(X) ::= func_param(A).		{ X = A; }
+func_param_list(X) ::= func_param(A) COMMA func_param_list(B).	{ X = A; A->AppendSibling(B); }
 
-func_param_flags ::= .
-func_param_flags ::= func_param_flags IN.
-func_param_flags ::= func_param_flags OUT.
-func_param_flags ::= func_param_flags OPTIONAL.
+func_param(X) ::= func_param_flags(A) type(B) IDENTIFIER(C).
+{
+	NEW_AST_NODE(FuncParamDecl,parm);
+	parm->Type = B;
+	parm->Name = C.Name();
+	parm->Flags = A;
+	X = parm;
+}
+
+func_param_flags(X) ::= .								{ X = 0; }
+func_param_flags(X) ::= func_param_flags(A) IN.			{ X = A | ZCC_In; }
+func_param_flags(X) ::= func_param_flags(A) OUT.		{ X = A | ZCC_Out; }
+func_param_flags(X) ::= func_param_flags(A) OPTIONAL.	{ X = A | ZCC_Optional; }
 
 /* Like UnrealScript, a constant's type is implied by its value's type. */
-const_def ::= CONST IDENTIFIER EQ expr SEMICOLON.
+const_def(X) ::= CONST IDENTIFIER(A) EQ expr(B) SEMICOLON.
+{
+	NEW_AST_NODE(ConstantDef,def);
+	def->Name = A.Name();
+	def->Value = B;
+	X = def;
+}
 
 /************ Expressions ************/
 

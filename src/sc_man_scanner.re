@@ -175,6 +175,7 @@ std2:
 		'meta'						{ RET(TK_Meta); }
 		'deprecated'				{ RET(TK_Deprecated); }
 		'action'					{ RET(TK_Action); }
+		'readonly'					{ RET(TK_ReadOnly); }
 
 		/* other DECORATE top level keywords */
 		'#include'					{ RET(TK_Include); }

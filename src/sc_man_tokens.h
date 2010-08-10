@@ -130,4 +130,5 @@ xx(TK_Fail,					"'fail'")
 xx(TK_Wait,					"'wait'")
 xx(TK_Meta,					"'meta'")
 xx(TK_Deprecated,			"'deprecated'")
+xx(TK_ReadOnly,				"'readonly'")
 #undef xx

@@ -18,6 +18,31 @@ union ZCCToken
 	ENamedName Name() { return ENamedName(Int); }
 };
 
+// Variable / Function modifiers
+enum
+{
+	ZCC_Native			= 1 << 0,
+	ZCC_Static			= 1 << 1,
+	ZCC_Private			= 1 << 2,
+	ZCC_Protected		= 1 << 3,
+	ZCC_Latent			= 1 << 4,
+	ZCC_Final			= 1 << 5,
+	ZCC_Meta			= 1 << 6,
+	ZCC_Action			= 1 << 7,
+	ZCC_Deprecated		= 1 << 8,
+	ZCC_ReadOnly		= 1 << 9,
+};
+
+// Function parameter modifiers
+enum
+{
+	ZCC_In				= 1 << 0,
+	ZCC_Out				= 1 << 1,
+	ZCC_Optional		= 1 << 2,
+};
+
+
+
 // Syntax tree structures.
 enum EZCCTreeNodeType
 {
@@ -64,6 +89,8 @@ enum EZCCTreeNodeType
 	AST_CaseStmt,
 	AST_AssignStmt,
 	AST_LocalVarStmt,
+	AST_FuncParamDecl,
+	AST_ConstantDef,
 };
 
 enum EZCCIntType
@@ -79,6 +106,8 @@ enum EZCCIntType
 
 enum EZCCExprType
 {
+	PEX_Nil,
+
 	PEX_ID,
 	PEX_Super,
 	PEX_Self,
@@ -254,15 +283,12 @@ struct ZCC_StateLine : ZCC_StatePart
 
 struct ZCC_VarName : ZCC_TreeNode
 {
-	bool bIsArray;
-	ZCC_Expression *ArraySize;
 	ENamedName Name;
 };
 
 struct ZCC_Type : ZCC_TreeNode
 {
-	BITFIELD bIsArray:1;
-	ZCC_Expression *ArraySize;
+	ZCC_Expression *ArraySize;	// NULL if not an array
 };
 
 struct ZCC_BasicType : ZCC_Type
@@ -413,4 +439,17 @@ struct ZCC_LocalVarStmt : ZCC_Statement
 	ZCC_Type *Type;
 	ZCC_VarName *Vars;
 	ZCC_Expression *Inits;
+};
+
+struct ZCC_FuncParamDecl : ZCC_TreeNode
+{
+	ZCC_Type *Type;
+	ENamedName Name;
+	int Flags;
+};
+
+struct ZCC_ConstantDef : ZCC_TreeNode
+{
+	ENamedName Name;
+	ZCC_Expression *Value;
 };

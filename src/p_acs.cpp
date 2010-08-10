@@ -2662,9 +2662,15 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 
 	case APROP_Friendly:
 		if (value)
+		{
+			if (actor->CountsAsKill()) level.total_monsters--;
 			actor->flags |= MF_FRIENDLY;
+		}
 		else
+		{
 			actor->flags &= ~MF_FRIENDLY;
+			if (actor->CountsAsKill()) level.total_monsters++;
+		}
 		break;
 
 

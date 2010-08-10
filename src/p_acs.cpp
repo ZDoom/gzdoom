@@ -70,6 +70,7 @@
 #include "cmdlib.h"
 #include "m_png.h"
 #include "p_setup.h"
+#include "po_man.h"
 
 #include "g_shared/a_pickups.h"
 
@@ -3030,6 +3031,8 @@ enum EACSFunctions
 	ACSF_SoundSequenceOnActor,
 	ACSF_SoundSequenceOnSector,
 	ACSF_SoundSequenceOnPolyobj,
+	ACSF_GetPolyobjX,
+	ACSF_GetPolyobjY,
 };
 
 int DLevelScript::SideFromID(int id, int side)
@@ -3432,6 +3435,26 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 				}
 			}
 			break;
+
+		case ACSF_GetPolyobjX:
+			{
+				FPolyObj *poly = PO_GetPolyobj(args[0]);
+				if (poly != NULL)
+				{
+					return poly->StartSpot.x;
+				}
+			}
+			return FIXED_MAX;
+
+		case ACSF_GetPolyobjY:
+			{
+				FPolyObj *poly = PO_GetPolyobj(args[0]);
+				if (poly != NULL)
+				{
+					return poly->StartSpot.y;
+				}
+			}
+			return FIXED_MAX;
 
 		default:
 			break;

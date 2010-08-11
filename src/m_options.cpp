@@ -1090,7 +1090,7 @@ static menu_t DMFlagsMenu =
 	"GAMEPLAY OPTIONS",
 	0,
 	countof(DMFlagsItems),
-	0,
+	222,
 	DMFlagsItems,
 };
 

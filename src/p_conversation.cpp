@@ -116,8 +116,7 @@ static TArray<menuitem_t> ConversationItems;
 static int ConversationPauseTic;
 static bool ShowGold;
 
-static void LoadScriptFile (const char *name);
-static void LoadScriptFile(FileReader *lump, int numnodes);
+static void LoadScriptFile(int lumpnum, FileReader *lump, int numnodes, bool include);
 static FStrifeDialogueNode *ReadRetailNode (FileReader *lump, DWORD &prevSpeakerType);
 static FStrifeDialogueNode *ReadTeaserNode (FileReader *lump, DWORD &prevSpeakerType);
 static void ParseReplies (FStrifeDialogueReply **replyptr, Response *responses);
@@ -167,9 +166,8 @@ void P_LoadStrifeConversations (MapData *map, const char *mapname)
 
 	if (map->Size(ML_CONVERSATION) > 0)
 	{
-		LoadScriptFile ("SCRIPT00");
 		map->Seek(ML_CONVERSATION);
-		LoadScriptFile (map->file, map->Size(ML_CONVERSATION));
+		LoadScriptFile (map->lumpnum, map->file, map->Size(ML_CONVERSATION), false);
 	}
 	else
 	{
@@ -179,8 +177,7 @@ void P_LoadStrifeConversations (MapData *map, const char *mapname)
 		}
 		char scriptname[9] = { 'S','C','R','I','P','T',mapname[3],mapname[4],0 };
 
-		LoadScriptFile ("SCRIPT00");
-		LoadScriptFile (scriptname);
+		LoadScriptFile (scriptname, false);
 	}
 }
 
@@ -216,7 +213,7 @@ void P_FreeStrifeConversations ()
 //
 //============================================================================
 
-static void LoadScriptFile (const char *name)
+void LoadScriptFile (const char *name, bool include)
 {
 	int lumpnum = Wads.CheckNumForName (name);
 	FileReader *lump;
@@ -227,49 +224,66 @@ static void LoadScriptFile (const char *name)
 	}
 	lump = Wads.ReopenLumpNum (lumpnum);
 
-	LoadScriptFile(lump, Wads.LumpLength(lumpnum));
+	LoadScriptFile(lumpnum, lump, Wads.LumpLength(lumpnum), include);
 	delete lump;
 }
 
-static void LoadScriptFile(FileReader *lump, int numnodes)
+static void LoadScriptFile(int lumpnum, FileReader *lump, int numnodes, bool include)
 {
 	int i;
 	DWORD prevSpeakerType;
 	FStrifeDialogueNode *node;
+	char buffer[4];
 
-	if (!(gameinfo.flags & GI_SHAREWARE))
+	lump->Read(buffer, 4);
+	lump->Seek(0, SEEK_SET);
+
+	bool isbinary = (buffer[0] == 0 || buffer[1] == 0 || buffer[2] == 0 || buffer[3] == 0);
+
+	if (!isbinary)
 	{
-		// Strife scripts are always a multiple of 1516 bytes because each entry
-		// is exactly 1516 bytes long.
-		if (numnodes % 1516 != 0)
-		{
-			return;
-		}
-		numnodes /= 1516;
+		P_ParseUSDF(lumpnum, lump, numnodes);
 	}
-	else
+	else 
 	{
-		// And the teaser version has 1488-byte entries.
-		if (numnodes % 1488 != 0)
+		if (!include)
 		{
-			return;
+			LoadScriptFile("SCRIPT00", true);
 		}
-		numnodes /= 1488;
-	}
-
-	prevSpeakerType = 0;
-
-	for (i = 0; i < numnodes; ++i)
-	{
 		if (!(gameinfo.flags & GI_SHAREWARE))
 		{
-			node = ReadRetailNode (lump, prevSpeakerType);
+			// Strife scripts are always a multiple of 1516 bytes because each entry
+			// is exactly 1516 bytes long.
+			if (numnodes % 1516 != 0)
+			{
+				return;
+			}
+			numnodes /= 1516;
 		}
 		else
 		{
-			node = ReadTeaserNode (lump, prevSpeakerType);
+			// And the teaser version has 1488-byte entries.
+			if (numnodes % 1488 != 0)
+			{
+				return;
+			}
+			numnodes /= 1488;
 		}
-		node->ThisNodeNum = StrifeDialogues.Push(node);
+
+		prevSpeakerType = 0;
+
+		for (i = 0; i < numnodes; ++i)
+		{
+			if (!(gameinfo.flags & GI_SHAREWARE))
+			{
+				node = ReadRetailNode (lump, prevSpeakerType);
+			}
+			else
+			{
+				node = ReadTeaserNode (lump, prevSpeakerType);
+			}
+			node->ThisNodeNum = StrifeDialogues.Push(node);
+		}
 	}
 }
 

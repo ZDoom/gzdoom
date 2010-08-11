@@ -382,9 +382,12 @@ class USDFParser : public UDMFParserBase
 	//===========================================================================
 
 public:
-	bool Parse(int lumpnum)
+	bool Parse(int lumpnum, FileReader *lump, int lumplen)
 	{
-		sc.OpenLumpNum(lumpnum);
+		char *buffer = new char[lumplen];
+		lump->Read(buffer, lumplen);
+		sc.OpenMem(Wads.GetLumpFullName(lumpnum), buffer, lumplen);
+		delete [] buffer;
 		sc.SetCMode(true);
 		// Namespace must be the first field because everything else depends on it.
 		if (sc.CheckString("namespace"))
@@ -421,7 +424,7 @@ public:
 			else if (sc.Compare("include"))
 			{
 				sc.MustGetToken(TK_StringConst);
-				// This must also be able to handle a binary dialogue lump!
+				LoadScriptFile(sc.String, true);
 			}
 			else
 			{
@@ -434,11 +437,11 @@ public:
 
 
 
-bool P_ParseUSDF(int lumpnum)
+bool P_ParseUSDF(int lumpnum, FileReader *lump, int lumplen)
 {
 	USDFParser parse;
 
-	if (!parse.Parse(lumpnum))
+	if (!parse.Parse(lumpnum, lump, lumplen))
 	{
 		// clean up the incomplete dialogue structures here
 		return false;

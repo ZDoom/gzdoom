@@ -61,6 +61,7 @@ extern int DialogueRoots[1001];
 struct MapData;
 
 const PClass *GetStrifeType (int typenum);
+void LoadScriptFile (const char *name, bool include);
 
 void P_LoadStrifeConversations (MapData *map, const char *mapname);
 void P_FreeStrifeConversations ();
@@ -69,6 +70,9 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 void P_ResumeConversation ();
 
 void P_ConversationCommand (int netcode, int player, BYTE **stream);
+
+class FileReader;
+bool P_ParseUSDF(int lumpnum, FileReader *lump, int lumplen);
 
 
 #endif

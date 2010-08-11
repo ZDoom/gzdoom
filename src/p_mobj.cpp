@@ -368,7 +368,6 @@ void AActor::Serialize (FArchive &arc)
 	else	// old code which uses relative indexing.
 	{
 		int convnum;
-		unsigned int i;
 
 		convnum = arc.ReadCount();
 		if (convnum == 0)

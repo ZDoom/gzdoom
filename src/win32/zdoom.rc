@@ -72,7 +72,7 @@ BEGIN
     "            VALUE ""FileDescription"", ""ZDoom""\r\n"
     "            VALUE ""FileVersion"", RC_FILEVERSION2\r\n"
     "            VALUE ""InternalName"", ""ZDoom""\r\n"
-    "            VALUE ""LegalCopyright"", ""Copyright © 1993-1996 id Software, 1998-2007 Randy Heit""\r\n"
+    "            VALUE ""LegalCopyright"", ""Copyright \u00A9 1993-1996 id Software, 1998-2010 Randy Heit, 2002-2010 Christoph Oelckers, et al.""\r\n"
     "            VALUE ""LegalTrademarks"", ""Doom® is a Registered Trademark of id Software, Inc.""\r\n"
     "            VALUE ""OriginalFilename"", ""zdoom.exe""\r\n"
     "            VALUE ""ProductName"", ""ZDoom""\r\n"

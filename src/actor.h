@@ -703,6 +703,9 @@ public:
 	// Return starting health adjusted by skill level
 	int SpawnHealth();
 
+	// Sets a dialogue for this actor
+	bool SetConversation(int conversationid);
+
 	// Check for monsters that count as kill but excludes all friendlies.
 	bool CountsAsKill() const
 	{
@@ -892,8 +895,9 @@ public:
 	FState *MeleeState;
 	FState *MissileState;
 
-	// [RH] The dialogue to show when this actor is "used."
-	FStrifeDialogueNode *Conversation;
+	
+	int ConversationRoot;				// THe root of the current dialogue
+	FStrifeDialogueNode *Conversation;	// [RH] The dialogue to show when this actor is "used."
 
 	// [RH] Decal(s) this weapon/projectile generates on impact.
 	FDecalBase *DecalGenerator;

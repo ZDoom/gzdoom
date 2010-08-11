@@ -42,6 +42,7 @@ struct FStrifeDialogueReply
 	char *QuickYes;
 	int NextNode;	// index into StrifeDialogues
 	int LogNumber;
+	char *LogString;
 	char *QuickNo;
 	bool NeedsGold;
 
@@ -53,8 +54,9 @@ extern TArray<FStrifeDialogueNode *> StrifeDialogues;
 // There were 344 types in Strife, and Strife conversations refer
 // to their index in the mobjinfo table. This table indexes all
 // the Strife actor types in the order Strife had them and is
-// initialized as part of the actor's setup in infodefaults.cpp.
+// initialized as part of the actor's setup.
 extern const PClass *StrifeTypes[1001];
+extern int DialogueRoots[1001];
 
 struct MapData;
 
@@ -65,5 +67,6 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 void P_ResumeConversation ();
 
 void P_ConversationCommand (int netcode, int player, BYTE **stream);
+
 
 #endif

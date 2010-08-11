@@ -59,6 +59,7 @@
 #include "doomstat.h"
 #include "c_console.h"
 #include "sbar.h"
+#include "farchive.h"
 
 // The conversations as they exist inside a SCRIPTxx lump.
 struct Response
@@ -108,6 +109,7 @@ TArray<FStrifeDialogueNode *> StrifeDialogues;
 // the Strife actor types in the order Strife had them and is
 // initialized as part of the actor's setup in infodefaults.cpp.
 const PClass *StrifeTypes[1001];
+int DialogueRoots[1001];
 
 static menu_t ConversationMenu;
 static TArray<menuitem_t> ConversationItems;
@@ -158,6 +160,11 @@ static const PClass *GetStrifeType (int typenum)
 
 void P_LoadStrifeConversations (MapData *map, const char *mapname)
 {
+	for (int i = 0; i <= 1000; ++i)
+	{
+		DialogueRoots[i] = -1;
+	}
+
 	if (map->Size(ML_CONVERSATION) > 0)
 	{
 		LoadScriptFile ("SCRIPT00");
@@ -192,13 +199,9 @@ void P_FreeStrifeConversations ()
 		delete node;
 	}
 
-	for (int i = 0; i < 344; ++i)
+	for (int i = 0; i <= 1000; ++i)
 	{
-		if (StrifeTypes[i] != NULL)
-		{
-			AActor * ac = GetDefaultByType (StrifeTypes[i]);
-			if (ac != NULL) ac->Conversation = NULL;
-		}
+		DialogueRoots[i] = -1;
 	}
 
 	CurNode = NULL;
@@ -316,12 +319,10 @@ static FStrifeDialogueNode *ReadRetailNode (FileReader *lump, DWORD &prevSpeaker
 	// actor, so newly spawned actors will use this conversation by default.
 	type = GetStrifeType (speech.SpeakerType);
 	node->SpeakerType = type;
-	if (prevSpeakerType != speech.SpeakerType)
+
+	if (speech.SpeakerType >= 0 && speech.SpeakerType <= 1000 && prevSpeakerType != speech.SpeakerType)
 	{
-		if (type != NULL)
-		{
-			GetDefaultByType (type)->Conversation = node;
-		}
+		DialogueRoots[speech.SpeakerType] = StrifeDialogues.Size();
 		prevSpeakerType = speech.SpeakerType;
 	}
 
@@ -385,12 +386,10 @@ static FStrifeDialogueNode *ReadTeaserNode (FileReader *lump, DWORD &prevSpeaker
 	// actor, so newly spawned actors will use this conversation by default.
 	type = GetStrifeType (speech.SpeakerType);
 	node->SpeakerType = type;
-	if (prevSpeakerType != speech.SpeakerType)
+
+	if (speech.SpeakerType >= 0 && speech.SpeakerType <= 1000 && prevSpeakerType != speech.SpeakerType)
 	{
-		if (type != NULL)
-		{
-			GetDefaultByType (type)->Conversation = node;
-		}
+		DialogueRoots[speech.SpeakerType] = StrifeDialogues.Size();
 		prevSpeakerType = speech.SpeakerType;
 	}
 
@@ -476,6 +475,7 @@ static void ParseReplies (FStrifeDialogueReply **replyptr, Response *responses)
 
 		// The message to record in the log for this reply.
 		reply->LogNumber = rsp->Log;
+		reply->LogString = NULL;
 
 		// The item to receive when this reply is used.
 		reply->GiveType = GetStrifeType (rsp->GiveType);
@@ -719,7 +719,7 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 			CheckStrifeItem (pc->player, CurNode->ItemCheck[1]) &&
 			CheckStrifeItem (pc->player, CurNode->ItemCheck[2]))
 		{
-			int root = FindNode (pc->player->ConversationNPC->GetDefault()->Conversation);
+			int root = pc->player->ConversationNPC->ConversationRoot;
 			CurNode = StrifeDialogues[root + CurNode->ItemCheckNode - 1];
 		}
 		else
@@ -1162,7 +1162,7 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 	// will show the new node right away without terminating the dialogue.
 	if (reply->NextNode != 0)
 	{
-		int rootnode = FindNode (npc->GetDefault()->Conversation);
+		int rootnode = npc->ConversationRoot;
 		if (reply->NextNode < 0)
 		{
 			npc->Conversation = StrifeDialogues[rootnode - reply->NextNode - 1];
@@ -1315,4 +1315,27 @@ static void TerminalResponse (const char *str)
 			Printf("%s\n", str);
 		}
 	}
+}
+
+
+template<> FArchive &operator<< (FArchive &arc, FStrifeDialogueNode *&node)
+{
+	DWORD convnum;
+	if (arc.IsStoring())
+	{
+		arc.WriteCount (node == NULL? ~0u : node->ThisNodeNum);
+	}
+	else 
+	{
+		convnum = arc.ReadCount();
+		if (convnum >= StrifeDialogues.Size())
+		{
+			node = NULL;
+		}
+		else
+		{
+			node = StrifeDialogues[convnum];
+		}
+	}
+	return arc;
 }

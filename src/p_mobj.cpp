@@ -361,65 +361,25 @@ void AActor::Serialize (FArchive &arc)
 			arc << foo;
 	}
 
-	if (arc.IsStoring ())
+	if (SaveVersion > 2500)	// adjust after merging into trunk!
 	{
-		int convnum = 0;
-		unsigned int i;
-
-		if (Conversation != NULL)
-		{
-			for (i = 0; i < StrifeDialogues.Size(); ++i)
-			{
-				if (StrifeDialogues[i] == GetDefault()->Conversation)
-				{
-					break;
-				}
-			}
-			for (; i + convnum < StrifeDialogues.Size(); ++convnum)
-			{
-				if (StrifeDialogues[i + convnum] == Conversation)
-				{
-					break;
-				}
-			}
-			if (i + convnum < StrifeDialogues.Size())
-			{
-				convnum++;
-			}
-			else
-			{
-				convnum = 0;
-			}
-		}
-		arc.WriteCount (convnum);
+		arc << ConversationRoot << Conversation;
 	}
-	else
+	else	// old code which uses relative indexing.
 	{
 		int convnum;
 		unsigned int i;
 
 		convnum = arc.ReadCount();
-		if (convnum == 0 || GetDefault()->Conversation == NULL)
+		if (convnum == 0)
 		{
 			Conversation = NULL;
+			ConversationRoot = -1;
 		}
 		else
 		{
-			for (i = 0; i < StrifeDialogues.Size(); ++i)
-			{
-				if (StrifeDialogues[i] == GetDefault()->Conversation)
-				{
-					break;
-				}
-			}
-			if (i + convnum <= StrifeDialogues.Size())
-			{
-				Conversation = StrifeDialogues[i + convnum - 1];
-			}
-			else
-			{
-				Conversation = GetDefault()->Conversation;
-			}
+			// This cannot be restored anymore.
+			I_Error("Cannot load old savegames with active dialogues");
 		}
 	}
 
@@ -3498,6 +3458,32 @@ bool AActor::UpdateWaterLevel (fixed_t oldz, bool dosplash)
 
 //==========================================================================
 //
+// AActor::SetConversation
+//
+//==========================================================================
+
+bool AActor::SetConversation(int id)
+{
+	if (id >= 0 && id <= 1000)
+	{
+		ConversationRoot = DialogueRoots[id];
+		if (ConversationRoot != -1)
+		{
+			Conversation = StrifeDialogues[ConversationRoot];
+			return true;
+		}
+		else Conversation = NULL;
+	}
+	else
+	{
+		ConversationRoot = -1;
+		Conversation = NULL;
+	}
+	return false;
+}
+
+//==========================================================================
+//
 // P_SpawnMobj
 //
 //==========================================================================
@@ -3522,6 +3508,7 @@ AActor *AActor::StaticSpawn (const PClass *type, fixed_t ix, fixed_t iy, fixed_t
 	
 	actor = static_cast<AActor *>(const_cast<PClass *>(type)->CreateNew ());
 
+	actor->SetConversation(type->ActorInfo->ConversationID);
 	actor->x = actor->PrevX = ix;
 	actor->y = actor->PrevY = iy;
 	actor->z = actor->PrevZ = iz;

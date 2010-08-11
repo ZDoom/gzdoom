@@ -255,13 +255,19 @@ DEFINE_INFO_PROPERTY(conversationid, IiI, Actor)
 		if ((gameinfo.flags & (GI_SHAREWARE|GI_TEASER2)) == (GI_SHAREWARE|GI_TEASER2))
 			convid=id2;
 
-		if (convid==-1) return;
 	}
+
+	bag.Info->ConversationID = convid;
+	if (convid==-1) return;
+
 	if (convid<0 || convid>1000)
 	{
 		I_Error ("ConversationID must be in the range [0,1000]");
 	}
-	else StrifeTypes[convid] = info->Class;
+	else
+	{
+		StrifeTypes[convid] = info->Class;
+	}
 }
 
 //==========================================================================

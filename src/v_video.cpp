@@ -1768,3 +1768,14 @@ const int BaseRatioSizes[5][4] =
 	{  960, 600, 0,                   48 },
 	{  960, 640, (int)(6.5*FRACUNIT), 48*15/16 }	//  5:4   320,      213.3333, multiplied by three
 };
+
+void IVideo::DumpAdapters ()
+{
+	Printf("Multi-monitor support unavailable.\n");
+}
+
+CCMD(vid_listadapters)
+{
+	if (Video != NULL)
+		Video->DumpAdapters();
+}

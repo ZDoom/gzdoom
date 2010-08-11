@@ -405,14 +405,6 @@ void Win32Video::DumpAdapters()
 	}
 }
 
-CCMD(vid_listadapters)
-{
-	if (Video != NULL)
-	{
-		static_cast<Win32Video *>(Video)->DumpAdapters();
-	}
-}
-
 // Mode enumeration --------------------------------------------------------
 
 HRESULT WINAPI Win32Video::EnumDDModesCB (LPDDSURFACEDESC desc, void *data)

@@ -190,7 +190,7 @@ const char *FMetaTable::GetMetaString (DWORD id) const
 
 CCMD (dumpactors)
 {
-	char * filters[32] =
+	const char *const filters[32] =
 	{
 		"0:All", "1:Doom", "2:Heretic", "3:DoomHeretic", "4:Hexen", "5:DoomHexen", "6:Raven", "7:IdRaven",
 		"8:Strife", "9:DoomStrife", "10:HereticStrife", "11:DoomHereticStrife", "12:HexenStrife", 

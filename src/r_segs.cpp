@@ -1781,6 +1781,7 @@ int OWallMost (short *mostbuf, fixed_t z)
 	s3 = MulScale16 (globaldclip, WallSZ1); s4 = MulScale16 (globaldclip, WallSZ2);
 	bad = (z<s1)+((z<s2)<<1)+((z>s3)<<2)+((z>s4)<<3);
 
+#if 1
 	if ((bad&3) == 3)
 	{
 		memset (&mostbuf[WallSX1], 0, (WallSX2 - WallSX1)*sizeof(mostbuf[0]));
@@ -1792,10 +1793,10 @@ int OWallMost (short *mostbuf, fixed_t z)
 		clearbufshort (&mostbuf[WallSX1], WallSX2 - WallSX1, viewheight);
 		return bad;
 	}
-
+#endif
 	ix1 = WallSX1; iy1 = WallSZ1;
 	ix2 = WallSX2; iy2 = WallSZ2;
-
+#if 1
 	if (bad & 3)
 	{
 		int t = DivScale30 (z-s1, s2-s1);
@@ -1842,7 +1843,38 @@ int OWallMost (short *mostbuf, fixed_t z)
 		fixed_t yinc  = (Scale (z, InvZtoScale, iy2) - y) / (ix2 - ix1);
 		qinterpolatedown16short (&mostbuf[ix1], ix2-ix1, y + centeryfrac, yinc);
 	}
+#else
+	double max = viewheight;
+	double zz = z / 65536.0;
+#if 0
+	double z1 = zz * InvZtoScale / WallSZ1;
+	double z2 = zz * InvZtoScale / WallSZ2 - z1;
+	z2 /= (WallSX2 - WallSX1);
+	z1 += centeryfrac / 65536.0;
 
+	for (int x = WallSX1; x < WallSX2; ++x)
+	{
+		mostbuf[x] = xs_RoundToInt(clamp(z1, 0.0, max));
+		z1 += z2;
+	}
+#else
+	double top, bot, i;
+
+	i = WallSX1 - centerx;
+	top = WallUoverZorg + WallUoverZstep * i;
+	bot = WallInvZorg + WallInvZstep * i;
+	double cy = centeryfrac / 65536.0;
+
+	for (int x = WallSX1; x < WallSX2; x++)
+	{
+		double frac = top / bot;
+		double scale = frac * WallDepthScale + WallDepthOrg;
+		mostbuf[x] = xs_RoundToInt(clamp(zz / scale + cy, 0.0, max));
+		top += WallUoverZstep;
+		bot += WallInvZstep;
+	}
+#endif
+#endif
 	if (mostbuf[ix1] < 0) mostbuf[ix1] = 0;
 	else if (mostbuf[ix1] > viewheight) mostbuf[ix1] = (short)viewheight;
 	if (mostbuf[ix2] < 0) mostbuf[ix2] = 0;
@@ -2046,13 +2078,10 @@ void PrepWall (fixed_t *swall, fixed_t *lwall, fixed_t walxrepeat)
 { // swall = scale, lwall = texturecolumn
 	double top, bot, i;
 	double xrepeat = walxrepeat;
-	double topinc, botinc;
 
 	i = WallSX1 - centerx;
 	top = WallUoverZorg + WallUoverZstep * i;
 	bot = WallInvZorg + WallInvZstep * i;
-	topinc = WallUoverZstep * 4.f;
-	botinc = WallInvZstep * 4.f;
 
 	for (int x = WallSX1; x < WallSX2; x++)
 	{
@@ -2069,14 +2098,11 @@ void PrepLWall (fixed_t *lwall, fixed_t walxrepeat)
 { // lwall = texturecolumn
 	double top, bot, i;
 	double xrepeat = walxrepeat;
-	double topinc, botinc;
 	double topstep;
 
 	i = WallSX1 - centerx;
 	top = WallUoverZorg + WallUoverZstep * i;
 	bot = WallInvZorg + WallInvZstep * i;
-	topinc = WallUoverZstep * 4.f;
-	botinc = WallInvZstep * 4.f;
 
 	top *= xrepeat;
 	topstep = WallUoverZstep * xrepeat;

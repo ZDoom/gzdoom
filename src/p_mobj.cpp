@@ -1566,7 +1566,7 @@ bool P_SeekerMissile (AActor *actor, angle_t thresh, angle_t turnMax, bool preci
 	}
 	else
 	{
-		angle_t pitch;
+		angle_t pitch = 0;
 		if (!(actor->flags3 & (MF3_FLOORHUGGER|MF3_CEILINGHUGGER)))
 		{ // Need to seek vertically
 			double dist = MAX(1.0, FVector2(target->x - actor->x, target->y - actor->y).Length());

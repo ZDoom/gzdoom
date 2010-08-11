@@ -167,7 +167,7 @@ void M_FindResponseFile (void)
 			int		argc = 0;
 			FILE	*handle;
 			int 	size;
-			long	argsize;
+			long	argsize = 0;
 			int 	index;
 
 			// Any more response files after the limit will be removed from the

@@ -185,7 +185,7 @@ void ParseCompatibility()
 		} while (!sc.Compare("{"));
 		flags.CompatFlags = 0;
 		flags.BCompatFlags = 0;
-		flags.ExtCommandIndex = -1;
+		flags.ExtCommandIndex = ~0u;
 		while (sc.GetString())
 		{
 			if ((i = sc.MatchString(&Options[0].Name, sizeof(*Options))) >= 0)
@@ -195,7 +195,7 @@ void ParseCompatibility()
 			}
 			else if (sc.Compare("clearlineflags"))
 			{
-				if (flags.ExtCommandIndex == -1) flags.ExtCommandIndex = CompatParams.Size();
+				if (flags.ExtCommandIndex == ~0u) flags.ExtCommandIndex = CompatParams.Size();
 				CompatParams.Push(CP_CLEARFLAGS);
 				sc.MustGetNumber();
 				CompatParams.Push(sc.Number);
@@ -204,7 +204,7 @@ void ParseCompatibility()
 			}
 			else if (sc.Compare("setlineflags"))
 			{
-				if (flags.ExtCommandIndex == -1) flags.ExtCommandIndex = CompatParams.Size();
+				if (flags.ExtCommandIndex == ~0u) flags.ExtCommandIndex = CompatParams.Size();
 				CompatParams.Push(CP_SETFLAGS);
 				sc.MustGetNumber();
 				CompatParams.Push(sc.Number);
@@ -213,7 +213,7 @@ void ParseCompatibility()
 			}
 			else if (sc.Compare("setlinespecial"))
 			{
-				if (flags.ExtCommandIndex == -1) flags.ExtCommandIndex = CompatParams.Size();
+				if (flags.ExtCommandIndex == ~0u) flags.ExtCommandIndex = CompatParams.Size();
 				CompatParams.Push(CP_SETSPECIAL);
 				sc.MustGetNumber();
 				CompatParams.Push(sc.Number);
@@ -232,7 +232,7 @@ void ParseCompatibility()
 				break;
 			}
 		}
-		if (flags.ExtCommandIndex != -1) 
+		if (flags.ExtCommandIndex != ~0u) 
 		{
 			CompatParams.Push(CP_END);
 		}

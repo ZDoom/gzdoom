@@ -1533,7 +1533,7 @@ static void SetCustomLoopPts(FMOD::Sound *sound)
 		FMOD_MODE mode;
 		if (FMOD_OK == (sound->getMode(&mode)))
 		{
-			sound->setMode(mode & ~(FMOD_LOOP_OFF | FMOD_LOOP_NORMAL) | FMOD_LOOP_BIDI);
+			sound->setMode((mode & ~(FMOD_LOOP_OFF | FMOD_LOOP_NORMAL)) | FMOD_LOOP_BIDI);
 		}
 	}
 }

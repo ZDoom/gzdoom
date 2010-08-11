@@ -130,6 +130,45 @@ extern TArray<int>		linemap;
 //
 //===========================================================================
 
+//===========================================================================
+//
+// Skip a key or block
+//
+//===========================================================================
+
+void UDMFParserBase::Skip()
+{
+	if (developer) sc.ScriptMessage("Ignoring unknown key \"%s\".", sc.String);
+	if(sc.CheckToken('{'))
+	{
+		int level = 1;
+		while(sc.GetToken())
+		{
+			if (sc.TokenType == '}')
+			{
+				level--;
+				if(level == 0)
+				{
+					sc.UnGet();
+					break;
+				}
+			}
+			else if (sc.TokenType == '{')
+			{
+				level++;
+			}
+		}
+	}
+	else
+	{
+		sc.MustGetToken('=');
+		do
+		{
+			sc.MustGetAnyToken();
+		}
+		while(sc.TokenType != ';');
+	}
+}
 
 //===========================================================================
 //
@@ -137,10 +176,19 @@ extern TArray<int>		linemap;
 //
 //===========================================================================
 
-FName UDMFParserBase::ParseKey()
+FName UDMFParserBase::ParseKey(bool checkblock, bool *isblock)
 {
 	sc.MustGetString();
 	FName key = sc.String;
+	if (checkblock)
+	{
+		if (sc.CheckToken('{'))
+		{
+			if (isblock) *isblock = true;
+			return key;
+		}
+		else if (isblock) *isblock = false;
+	}
 	sc.MustGetToken('=');
 
 	sc.Number = 0;
@@ -1450,6 +1498,10 @@ public:
 				vertex_t vt;
 				ParseVertex(&vt);
 				ParsedVertices.Push(vt);
+			}
+			else
+			{
+				Skip();
 			}
 		}
 

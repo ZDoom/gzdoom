@@ -60,6 +60,8 @@ extern int DialogueRoots[1001];
 
 struct MapData;
 
+const PClass *GetStrifeType (int typenum);
+
 void P_LoadStrifeConversations (MapData *map, const char *mapname);
 void P_FreeStrifeConversations ();
 

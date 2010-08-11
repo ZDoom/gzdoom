@@ -13,7 +13,8 @@ protected:
 	int namespace_bits;
 	FString parsedString;
 
-	FName ParseKey();
+	void Skip();
+	FName ParseKey(bool checkblock = false, bool *isblock = NULL);
 	int CheckInt(const char *key);
 	double CheckFloat(const char *key);
 	fixed_t CheckFixed(const char *key);
@@ -31,5 +32,7 @@ protected:
 	}
 
 };
+
+#define BLOCK_ID (ENamedName)-1
 
 #endif

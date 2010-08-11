@@ -141,7 +141,7 @@ static FBrokenLines *DialogueLines;
 //
 //============================================================================
 
-static const PClass *GetStrifeType (int typenum)
+const PClass *GetStrifeType (int typenum)
 {
 	if (typenum > 0 && typenum < 1001)
 	{
@@ -206,23 +206,6 @@ void P_FreeStrifeConversations ()
 
 	CurNode = NULL;
 	PrevNode = NULL;
-}
-
-//============================================================================
-//
-// ncopystring
-//
-// If the string has no content, returns NULL. Otherwise, returns a copy.
-//
-//============================================================================
-
-static char *ncopystring (const char *string)
-{
-	if (string == NULL || string[0] == 0)
-	{
-		return NULL;
-	}
-	return copystring (string);
 }
 
 //============================================================================

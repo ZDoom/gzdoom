@@ -1427,7 +1427,7 @@ void FBehavior::LoadScriptsDirectory ()
 		}
 		else if (*(DWORD *)Data != MAKE_ID('A','C','S',0))
 		{
-			NumScripts = scripts.dw[1] / 12;
+			NumScripts = LittleLong(scripts.dw[1]) / 12;
 			Scripts = new ScriptPtr[NumScripts];
 			scripts.dw += 2;
 
@@ -1444,7 +1444,7 @@ void FBehavior::LoadScriptsDirectory ()
 		}
 		else
 		{
-			NumScripts = scripts.dw[1] / 8;
+			NumScripts = LittleLong(scripts.dw[1]) / 8;
 			Scripts = new ScriptPtr[NumScripts];
 			scripts.dw += 2;
 

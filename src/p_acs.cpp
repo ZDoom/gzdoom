@@ -3491,6 +3491,20 @@ inline int getshort (int *&pc)
 	return res;
 }
 
+// Read a possibly unaligned four-byte little endian integer.
+#if defined(_M_IX86) || defined(_M_X64) || defined(__i386__) 
+inline int uallong(int &foo)
+{
+	return *foo;
+}
+#else
+inline int uallong(int &foo)
+{
+	unsigned char *bar = (unsigned char *)&foo;
+	return bar[0] | (bar[1] << 8) | (bar[2] << 16) | (bar[3] << 24);
+}
+#endif
+
 int DLevelScript::RunScript ()
 {
 	DACSThinker *controller = DACSThinker::ActiveThinker;
@@ -3605,7 +3619,8 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_PUSHNUMBER:
-			PushToStack (NEXTWORD);
+			PushToStack (uallong(pc[0]));
+			pc++;
 			break;
 
 		case PCD_PUSHBYTE:
@@ -3707,35 +3722,35 @@ int DLevelScript::RunScript ()
 		case PCD_LSPEC1DIRECT:
 			temp = NEXTBYTE;
 			LineSpecials[temp] (activationline, activator, backSide,
-								pc[0], 0, 0, 0, 0);
+								uallong(pc[0]), 0, 0, 0, 0);
 			pc += 1;
 			break;
 
 		case PCD_LSPEC2DIRECT:
 			temp = NEXTBYTE;
 			LineSpecials[temp] (activationline, activator, backSide,
-								pc[0], pc[1], 0, 0, 0);
+								uallong(pc[0]), uallong(pc[1]), 0, 0, 0);
 			pc += 2;
 			break;
 
 		case PCD_LSPEC3DIRECT:
 			temp = NEXTBYTE;
 			LineSpecials[temp] (activationline, activator, backSide,
-								pc[0], pc[1], pc[2], 0, 0);
+								uallong(pc[0]), uallong(pc[1]), uallong(pc[2]), 0, 0);
 			pc += 3;
 			break;
 
 		case PCD_LSPEC4DIRECT:
 			temp = NEXTBYTE;
 			LineSpecials[temp] (activationline, activator, backSide,
-								pc[0], pc[1], pc[2], pc[3], 0);
+								uallong(pc[0]), uallong(pc[1]), uallong(pc[2]), uallong(pc[3]), 0);
 			pc += 4;
 			break;
 
 		case PCD_LSPEC5DIRECT:
 			temp = NEXTBYTE;
 			LineSpecials[temp] (activationline, activator, backSide,
-								pc[0], pc[1], pc[2], pc[3], pc[4]);
+								uallong(pc[0]), uallong(pc[1]), uallong(pc[2]), uallong(pc[3]), uallong(pc[4]));
 			pc += 5;
 			break;
 
@@ -4642,7 +4657,8 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_DELAYDIRECT:
-			statedata = NEXTWORD + (fmt == ACS_Old && gameinfo.gametype == GAME_Hexen);
+			statedata = uallong(pc[0]) + (fmt == ACS_Old && gameinfo.gametype == GAME_Hexen);
+			pc++;
 			if (statedata > 0)
 			{
 				state = SCRIPT_Delayed;
@@ -4664,7 +4680,7 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_RANDOMDIRECT:
-			PushToStack (Random (pc[0], pc[1]));
+			PushToStack (Random (uallong(pc[0]), uallong(pc[1])));
 			pc += 2;
 			break;
 
@@ -4679,7 +4695,7 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_THINGCOUNTDIRECT:
-			PushToStack (ThingCount (pc[0], -1, pc[1], -1));
+			PushToStack (ThingCount (uallong(pc[0]), -1, uallong(pc[1]), -1));
 			pc += 2;
 			break;
 
@@ -4706,7 +4722,8 @@ int DLevelScript::RunScript ()
 
 		case PCD_TAGWAITDIRECT:
 			state = SCRIPT_TagWait;
-			statedata = NEXTWORD;
+			statedata = uallong(pc[0]);
+			pc++;
 			break;
 
 		case PCD_POLYWAIT:
@@ -4717,7 +4734,8 @@ int DLevelScript::RunScript ()
 
 		case PCD_POLYWAITDIRECT:
 			state = SCRIPT_PolyWait;
-			statedata = NEXTWORD;
+			statedata = uallong(pc[0]);
+			pc++;
 			break;
 
 		case PCD_CHANGEFLOOR:
@@ -4726,7 +4744,7 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_CHANGEFLOORDIRECT:
-			ChangeFlat (pc[0], pc[1], 0);
+			ChangeFlat (uallong(pc[0]), uallong(pc[1]), 0);
 			pc += 2;
 			break;
 
@@ -4736,7 +4754,7 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_CHANGECEILINGDIRECT:
-			ChangeFlat (pc[0], pc[1], 1);
+			ChangeFlat (uallong(pc[0]), uallong(pc[1]), 1);
 			pc += 2;
 			break;
 
@@ -4820,7 +4838,8 @@ int DLevelScript::RunScript ()
 
 		case PCD_SCRIPTWAITDIRECT:
 			state = SCRIPT_ScriptWait;
-			statedata = NEXTWORD;
+			statedata = uallong(pc[0]);
+			pc++;
 			PutLast ();
 			break;
 
@@ -4830,14 +4849,14 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_CASEGOTO:
-			if (STACK(1) == NEXTWORD)
+			if (STACK(1) == uallong(pc[0]))
 			{
-				pc = activeBehavior->Ofs2PC (LittleLong(*pc));
+				pc = activeBehavior->Ofs2PC (uallong(pc[1]));
 				sp--;
 			}
 			else
 			{
-				pc++;
+				pc += 2;
 			}
 			break;
 
@@ -4845,7 +4864,7 @@ int DLevelScript::RunScript ()
 			// The count and jump table are 4-byte aligned
 			pc = (int *)(((size_t)pc + 3) & ~3);
 			{
-				int numcases = NEXTWORD;
+				int numcases = uallong(pc[0]); pc++;
 				int min = 0, max = numcases-1;
 				while (min <= max)
 				{
@@ -5173,7 +5192,7 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_SETFONTDIRECT:
-			DoSetFont (pc[0]);
+			DoSetFont (uallong(pc[0]));
 			pc++;
 			break;
 
@@ -5462,7 +5481,7 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_SETGRAVITYDIRECT:
-			level.gravity = (float)pc[0] / 65536.f;
+			level.gravity = (float)uallong(pc[0]) / 65536.f;
 			pc++;
 			break;
 
@@ -5473,7 +5492,7 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_SETAIRCONTROLDIRECT:
-			level.aircontrol = pc[0];
+			level.aircontrol = uallong(pc[0]);
 			pc++;
 			G_AirControlChanged ();
 			break;
@@ -5484,7 +5503,7 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_SPAWNDIRECT:
-			PushToStack (DoSpawn (pc[0], pc[1], pc[2], pc[3], pc[4], pc[5], false));
+			PushToStack (DoSpawn (uallong(pc[0]), uallong(pc[1]), uallong(pc[2]), uallong(pc[3]), uallong(pc[4]), uallong(pc[5]), false));
 			pc += 6;
 			break;
 
@@ -5494,7 +5513,7 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_SPAWNSPOTDIRECT:
-			PushToStack (DoSpawnSpot (pc[0], pc[1], pc[2], pc[3], false));
+			PushToStack (DoSpawnSpot (uallong(pc[0]), uallong(pc[1]), uallong(pc[2]), uallong(pc[3]), false));
 			pc += 4;
 			break;
 
@@ -5550,7 +5569,7 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_GIVEINVENTORYDIRECT:
-			GiveInventory (activator, FBehavior::StaticLookupString (pc[0]), pc[1]);
+			GiveInventory (activator, FBehavior::StaticLookupString (uallong(pc[0])), uallong(pc[1]));
 			pc += 2;
 			break;
 
@@ -5580,7 +5599,7 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_TAKEINVENTORYDIRECT:
-			TakeInventory (activator, FBehavior::StaticLookupString (pc[0]), pc[1]);
+			TakeInventory (activator, FBehavior::StaticLookupString (uallong(pc[0])), uallong(pc[1]));
 			pc += 2;
 			break;
 
@@ -5595,7 +5614,7 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_CHECKINVENTORYDIRECT:
-			PushToStack (CheckInventory (activator, FBehavior::StaticLookupString (pc[0])));
+			PushToStack (CheckInventory (activator, FBehavior::StaticLookupString (uallong(pc[0]))));
 			pc += 1;
 			break;
 
@@ -5699,7 +5718,7 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_SETMUSICDIRECT:
-			S_ChangeMusic (FBehavior::StaticLookupString (pc[0]), pc[1]);
+			S_ChangeMusic (FBehavior::StaticLookupString (uallong(pc[0])), uallong(pc[1]));
 			pc += 3;
 			break;
 
@@ -5714,7 +5733,7 @@ int DLevelScript::RunScript ()
 		case PCD_LOCALSETMUSICDIRECT:
 			if (activator == players[consoleplayer].mo)
 			{
-				S_ChangeMusic (FBehavior::StaticLookupString (pc[0]), pc[1]);
+				S_ChangeMusic (FBehavior::StaticLookupString (uallong(pc[0])), uallong(pc[1]));
 			}
 			pc += 3;
 			break;

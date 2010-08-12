@@ -1085,8 +1085,8 @@ FBehavior::FBehavior (int lumpnum, FileReader * fr, int len)
 
 	if (Format == ACS_Old)
 	{
-		StringTable = ((DWORD *)Data)[1];
-		StringTable += ((DWORD *)(Data + StringTable))[0] * 12 + 4;
+		StringTable = LittleLong(((DWORD *)Data)[1]);
+		StringTable += LittleLong(((DWORD *)(Data + StringTable))[0]) * 12 + 4;
 	}
 	else
 	{
@@ -1397,8 +1397,8 @@ void FBehavior::LoadScriptsDirectory ()
 	switch (Format)
 	{
 	case ACS_Old:
-		scripts.dw = (DWORD *)(Data + ((DWORD *)Data)[1]);	// FIXME: Has this been byte-swapped before-hand?
-		NumScripts = scripts.dw[0];
+		scripts.dw = (DWORD *)(Data + LittleLong(((DWORD *)Data)[1]));
+		NumScripts = LittleLong(scripts.dw[0]);
 		if (NumScripts != 0)
 		{
 			scripts.dw++;
@@ -1760,7 +1760,7 @@ const char *FBehavior::LookupString (DWORD index) const
 
 		if (index >= list[0])
 			return NULL;	// Out of range for this list;
-		return (const char *)(Data + list[1+index]);
+		return (const char *)(Data + LittleLong(list[1+index]));
 	}
 	else
 	{
@@ -4615,12 +4615,12 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_GOTO:
-			pc = activeBehavior->Ofs2PC (*pc);
+			pc = activeBehavior->Ofs2PC (LittleLong(*pc));
 			break;
 
 		case PCD_IFGOTO:
 			if (STACK(1))
-				pc = activeBehavior->Ofs2PC (*pc);
+				pc = activeBehavior->Ofs2PC (LittleLong(*pc));
 			else
 				pc++;
 			sp--;
@@ -4798,7 +4798,7 @@ int DLevelScript::RunScript ()
 
 		case PCD_IFNOTGOTO:
 			if (!STACK(1))
-				pc = activeBehavior->Ofs2PC (*pc);
+				pc = activeBehavior->Ofs2PC (LittleLong(*pc));
 			else
 				pc++;
 			sp--;
@@ -4832,7 +4832,7 @@ int DLevelScript::RunScript ()
 		case PCD_CASEGOTO:
 			if (STACK(1) == NEXTWORD)
 			{
-				pc = activeBehavior->Ofs2PC (*pc);
+				pc = activeBehavior->Ofs2PC (LittleLong(*pc));
 				sp--;
 			}
 			else
@@ -4853,7 +4853,7 @@ int DLevelScript::RunScript ()
 					SDWORD caseval = pc[mid*2];
 					if (caseval == STACK(1))
 					{
-						pc = activeBehavior->Ofs2PC (pc[mid*2+1]);
+						pc = activeBehavior->Ofs2PC (LittleLong(pc[mid*2+1]));
 						sp--;
 						break;
 					}

@@ -1325,8 +1325,8 @@ void P_LoadSubsectors (MapData * map)
 		if ((size_t)subsectors[i].firstline >= maxseg)
 		{
 			Printf ("Subsector %d contains invalid segs %u-%u\n"
-				"The BSP will be rebuilt.\n", i, subsectors[i].firstline,
-				subsectors[i].firstline + subsectors[i].numlines - 1);
+				"The BSP will be rebuilt.\n", i, (unsigned)subsectors[i].firstline,
+				(unsigned)subsectors[i].firstline + subsectors[i].numlines - 1);
 			ForceNodeBuild = true;
 			delete[] nodes;
 			delete[] subsectors;
@@ -1336,7 +1336,7 @@ void P_LoadSubsectors (MapData * map)
 		{
 			Printf ("Subsector %d contains invalid segs %u-%u\n"
 				"The BSP will be rebuilt.\n", i, maxseg,
-				subsectors[i].firstline + subsectors[i].numlines - 1);
+				(unsigned)subsectors[i].firstline + subsectors[i].numlines - 1);
 			ForceNodeBuild = true;
 			delete[] nodes;
 			delete[] subsectors;

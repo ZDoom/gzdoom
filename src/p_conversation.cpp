@@ -104,12 +104,13 @@ void GiveSpawner (player_t *player, const PClass *type);
 
 TArray<FStrifeDialogueNode *> StrifeDialogues;
 
-// There were 344 types in Strife, and Strife conversations refer
-// to their index in the mobjinfo table. This table indexes all
-// the Strife actor types in the order Strife had them and is
-// initialized as part of the actor's setup in infodefaults.cpp.
-const PClass *StrifeTypes[1001];
-int DialogueRoots[1001];
+typedef TMap<int, const PClass *> FStrifeTypeMap;	// maps conversation IDs to actor classes
+typedef TMap<int, int> FDialogueIDMap;				// maps dialogue IDs to dialogue array index (for ACS)
+typedef TMap<FName, int> FDialogueMap;				// maps actor class names to dialogue array index
+
+static FStrifeTypeMap StrifeTypes;
+static FDialogueIDMap DialogueRoots;
+static FDialogueMap ClassRoots;
 
 static menu_t ConversationMenu;
 static TArray<menuitem_t> ConversationItems;
@@ -140,13 +141,30 @@ static FBrokenLines *DialogueLines;
 //
 //============================================================================
 
+void SetStrifeType(int convid, const PClass *Class)
+{
+	StrifeTypes[convid] = Class;
+}
+
 const PClass *GetStrifeType (int typenum)
 {
-	if (typenum > 0 && typenum < 1001)
-	{
-		return StrifeTypes[typenum];
-	}
-	return NULL;
+	const PClass **ptype = StrifeTypes.CheckKey(typenum);
+	if (ptype == NULL) return NULL;
+	else return *ptype;
+}
+
+int GetConversation(int conv_id)
+{
+	int *pindex = DialogueRoots.CheckKey(conv_id);
+	if (pindex == NULL) return -1;
+	else return *pindex;
+}
+
+int GetConversation(FName classname)
+{
+	int *pindex = ClassRoots.CheckKey(classname);
+	if (pindex == NULL) return -1;
+	else return *pindex;
 }
 
 //============================================================================
@@ -159,10 +177,8 @@ const PClass *GetStrifeType (int typenum)
 
 void P_LoadStrifeConversations (MapData *map, const char *mapname)
 {
-	for (int i = 0; i <= 1000; ++i)
-	{
-		DialogueRoots[i] = -1;
-	}
+	DialogueRoots.Clear();
+	ClassRoots.Clear();
 
 	if (map->Size(ML_CONVERSATION) > 0)
 	{
@@ -196,10 +212,8 @@ void P_FreeStrifeConversations ()
 		delete node;
 	}
 
-	for (int i = 0; i <= 1000; ++i)
-	{
-		DialogueRoots[i] = -1;
-	}
+	DialogueRoots.Clear();
+	ClassRoots.Clear();
 
 	CurNode = NULL;
 	PrevNode = NULL;
@@ -317,8 +331,12 @@ static FStrifeDialogueNode *ReadRetailNode (FileReader *lump, DWORD &prevSpeaker
 	type = GetStrifeType (speech.SpeakerType);
 	node->SpeakerType = type;
 
-	if (speech.SpeakerType >= 0 && speech.SpeakerType <= 1000 && prevSpeakerType != speech.SpeakerType)
+	if (speech.SpeakerType >= 0 && prevSpeakerType != speech.SpeakerType)
 	{
+		if (type != NULL)
+		{
+			ClassRoots[type->TypeName] = StrifeDialogues.Size();
+		}
 		DialogueRoots[speech.SpeakerType] = StrifeDialogues.Size();
 		prevSpeakerType = speech.SpeakerType;
 	}
@@ -384,8 +402,12 @@ static FStrifeDialogueNode *ReadTeaserNode (FileReader *lump, DWORD &prevSpeaker
 	type = GetStrifeType (speech.SpeakerType);
 	node->SpeakerType = type;
 
-	if (speech.SpeakerType >= 0 && speech.SpeakerType <= 1000 && prevSpeakerType != speech.SpeakerType)
+	if (speech.SpeakerType >= 0 && prevSpeakerType != speech.SpeakerType)
 	{
+		if (type != NULL)
+		{
+			ClassRoots[type->TypeName] = StrifeDialogues.Size();
+		}
 		DialogueRoots[speech.SpeakerType] = StrifeDialogues.Size();
 		prevSpeakerType = speech.SpeakerType;
 	}

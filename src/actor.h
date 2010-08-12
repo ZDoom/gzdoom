@@ -703,9 +703,6 @@ public:
 	// Return starting health adjusted by skill level
 	int SpawnHealth();
 
-	// Sets a dialogue for this actor
-	bool SetConversation(int conversationid);
-
 	// Check for monsters that count as kill but excludes all friendlies.
 	bool CountsAsKill() const
 	{

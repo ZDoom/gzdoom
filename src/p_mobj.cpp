@@ -3455,31 +3455,6 @@ bool AActor::UpdateWaterLevel (fixed_t oldz, bool dosplash)
 	return false;	// we did the splash ourselves
 }
 
-//==========================================================================
-//
-// AActor::SetConversation
-//
-//==========================================================================
-
-bool AActor::SetConversation(int id)
-{
-	if (id >= 0 && id <= 1000)
-	{
-		ConversationRoot = DialogueRoots[id];
-		if (ConversationRoot != -1)
-		{
-			Conversation = StrifeDialogues[ConversationRoot];
-			return true;
-		}
-		else Conversation = NULL;
-	}
-	else
-	{
-		ConversationRoot = -1;
-		Conversation = NULL;
-	}
-	return false;
-}
 
 //==========================================================================
 //
@@ -3507,7 +3482,17 @@ AActor *AActor::StaticSpawn (const PClass *type, fixed_t ix, fixed_t iy, fixed_t
 	
 	actor = static_cast<AActor *>(const_cast<PClass *>(type)->CreateNew ());
 
-	actor->SetConversation(type->ActorInfo->ConversationID);
+	// Set default dialogue
+	actor->ConversationRoot = GetConversation(actor->GetClass()->TypeName);
+	if (actor->ConversationRoot != -1)
+	{
+		actor->Conversation = StrifeDialogues[actor->ConversationRoot];
+	}
+	else
+	{
+		actor->Conversation = NULL;
+	}
+
 	actor->x = actor->PrevX = ix;
 	actor->y = actor->PrevY = iy;
 	actor->z = actor->PrevZ = iz;

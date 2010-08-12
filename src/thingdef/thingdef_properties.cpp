@@ -258,16 +258,8 @@ DEFINE_INFO_PROPERTY(conversationid, IiI, Actor)
 	}
 
 	bag.Info->ConversationID = convid;
-	if (convid==-1) return;
-
-	if (convid<0 || convid>1000)
-	{
-		I_Error ("ConversationID must be in the range [0,1000]");
-	}
-	else
-	{
-		StrifeTypes[convid] = info->Class;
-	}
+	if (convid < 0) return;
+	SetStrifeType(convid, info->Class);
 }
 
 //==========================================================================

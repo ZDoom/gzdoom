@@ -1,11 +1,7 @@
 #ifndef P_CONVERSATION_H
 #define P_CONVERSATION_H 1
 
-// TODO: Generalize the conversation system to something NWN-like that
-// users can edit as simple text files. Particularly useful would be
-// the ability to call ACS functions to implement AppearsWhen properties
-// and ACS scripts to implement ActionTaken properties.
-// TODO: Make this work in demos.
+#include <tarray.h>
 
 struct FStrifeDialogueReply;
 class FTexture;
@@ -51,16 +47,13 @@ struct FStrifeDialogueReply
 
 extern TArray<FStrifeDialogueNode *> StrifeDialogues;
 
-// There were 344 types in Strife, and Strife conversations refer
-// to their index in the mobjinfo table. This table indexes all
-// the Strife actor types in the order Strife had them and is
-// initialized as part of the actor's setup.
-extern const PClass *StrifeTypes[1001];
-extern int DialogueRoots[1001];
-
 struct MapData;
 
+void SetStrifeType(int convid, const PClass *Class);
 const PClass *GetStrifeType (int typenum);
+int GetConversation(int conv_id);
+int GetConversation(FName classname);
+
 void LoadScriptFile (const char *name, bool include);
 
 void P_LoadStrifeConversations (MapData *map, const char *mapname);

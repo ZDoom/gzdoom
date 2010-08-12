@@ -3844,6 +3844,9 @@ void P_SetupLevel (char *lumpname, int position)
 	P_SpawnSpecials ();
 
 	times[16].Clock();
+	// The old sidedef looping data is no longer valid if the nodes were rebuilt
+	// and vertexes merged so it has to be redone before setting up the polyobjects.
+	if (ForceNodeBuild) P_LoopSidedefs ();
 	PO_Init ();	// Initialize the polyobjs
 	times[16].Unclock();
 

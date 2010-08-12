@@ -50,6 +50,7 @@ extern TArray<FStrifeDialogueNode *> StrifeDialogues;
 struct MapData;
 
 void SetStrifeType(int convid, const PClass *Class);
+void SetConversation(int convid, const PClass *Class, int dlgindex);
 const PClass *GetStrifeType (int typenum);
 int GetConversation(int conv_id);
 int GetConversation(FName classname);

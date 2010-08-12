@@ -146,6 +146,18 @@ void SetStrifeType(int convid, const PClass *Class)
 	StrifeTypes[convid] = Class;
 }
 
+void SetConversation(int convid, const PClass *Class, int dlgindex)
+{
+	if (convid != -1)
+	{
+		DialogueRoots[convid] = dlgindex;
+	}
+	if (Class != NULL)
+	{
+		ClassRoots[Class->TypeName] = dlgindex;
+	}
+}
+
 const PClass *GetStrifeType (int typenum)
 {
 	const PClass **ptype = StrifeTypes.CheckKey(typenum);

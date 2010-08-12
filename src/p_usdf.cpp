@@ -334,6 +334,7 @@ class USDFParser : public UDMFParserBase
 	bool ParseConversation()
 	{
 		const PClass *type = NULL;
+		int dlgid = -1;
 		unsigned int startpos = StrifeDialogues.Size();
 
 		while (!sc.CheckToken('}'))
@@ -346,6 +347,17 @@ class USDFParser : public UDMFParserBase
 				{
 				case NAME_Actor:
 					type = CheckActorType(key);
+					if (namespace_bits == St)
+					{
+						dlgid = CheckInt(key);
+					}
+					break;
+
+				case NAME_Id:
+					if (namespace_bits == Zd)
+					{
+						dlgid = CheckInt(key);
+					}
 					break;
 				}
 			}
@@ -372,6 +384,7 @@ class USDFParser : public UDMFParserBase
 		{
 			StrifeDialogues[startpos]->SpeakerType = type;
 		}
+		SetConversation(dlgid, type, startpos);
 		return true;
 	}
 

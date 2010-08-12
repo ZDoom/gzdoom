@@ -232,12 +232,12 @@ endif( FMOD_LIBRARY )
 
 # Search for NASM
 
-if( CMAKE_SYSTEM_PROCESSOR MATCHES powerpc )
+if( CMAKE_SYSTEM_PROCESSOR MATCHES powerpc OR CMAKE_OSX_ARCHITECTURES MATCHES ppc)
 	if( NOT NO_ASM )
 		message( STATUS "Disabling assembly code for PowerPC." )
 		set( NO_ASM ON )
 	endif( NOT NO_ASM )
-endif( CMAKE_SYSTEM_PROCESSOR MATCHES powerpc )
+endif( CMAKE_SYSTEM_PROCESSOR MATCHES powerpc OR CMAKE_OSX_ARCHITECTURES MATCHES ppc )
 
 if( NOT NO_ASM )
 	if( UNIX AND X64 )
@@ -432,7 +432,7 @@ add_custom_target( revision_check ALL
 # Libraries ZDoom needs
 
 set( ZDOOM_LIBS ${ZDOOM_LIBS} "${ZLIB_LIBRARIES}" "${JPEG_LIBRARIES}" "${BZIP2_LIBRARIES}" "${FMOD_LIBRARY}" )
-include_directories( "${ZLIB_INCLUDE_DIR}" "${JPEG_INCLUDE_DIR}" "${FMOD_INCLUDE_DIR}" "${BZIP2_INCLUDE_DIR}" "${LZMA_INCLUDE_DIR}" )
+include_directories( "${ZLIB_INCLUDE_DIR}" "${FMOD_INCLUDE_DIR}" "${BZIP2_INCLUDE_DIR}" "${LZMA_INCLUDE_DIR}" "${JPEG_INCLUDE_DIR}" )
 
 # Start defining source files for ZDoom
 
@@ -515,12 +515,12 @@ add_custom_command( OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/sc_man_scanner.h
 
 include_directories( ${CMAKE_CURRENT_BINARY_DIR} )
 
-if( CMAKE_SYSTEM_PROCESSOR MATCHES powerpc )
+if( CMAKE_SYSTEM_PROCESSOR MATCHES powerpc OR CMAKE_OSX_ARCHITECTURES MATCHES ppc )
 	set( X86_SOURCES )
 	set( NOT_X86 ON )
-else( CMAKE_SYSTEM_PROCESSOR MATCHES powerpc )
+else( CMAKE_SYSTEM_PROCESSOR MATCHES powerpc OR CMAKE_OSX_ARCHITECTURES MATCHES ppc )
 	set( X86_SOURCES nodebuild_classify_sse2.cpp )
-endif( CMAKE_SYSTEM_PROCESSOR MATCHES powerpc )
+endif( CMAKE_SYSTEM_PROCESSOR MATCHES powerpc OR CMAKE_OSX_ARCHITECTURES MATCHES ppc )
 
 add_executable( zdoom WIN32
 	autostart.cpp

@@ -376,17 +376,17 @@ void player_t::SetLogNumber (int num)
 		data[length]=0;
 		SetLogText (data);
 		delete[] data;
-
-		// Print log text to console
-		AddToConsole(-1, TEXTCOLOR_GOLD);
-		AddToConsole(-1, LogText);
-		AddToConsole(-1, "\n");
 	}
 }
 
 void player_t::SetLogText (const char *text)
 {
 	LogText = text;
+
+	// Print log text to console
+	AddToConsole(-1, TEXTCOLOR_GOLD);
+	AddToConsole(-1, LogText);
+	AddToConsole(-1, "\n");
 }
 
 int player_t::GetSpawnClass()

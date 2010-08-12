@@ -39,6 +39,7 @@
 #include "i_system.h"
 #include "p_conversation.h"
 #include "p_udmf.h"
+#include "doomerrors.h"
 
 #define Zd 1
 #define St 2
@@ -132,6 +133,7 @@ class USDFParser : public UDMFParserBase
 
 				case NAME_Yesmessage:
 					QuickYes = CheckString(key);
+					if (QuickYes.Compare("_")) QuickYes = "";
 					break;
 
 				case NAME_Nomessage:
@@ -193,11 +195,12 @@ class USDFParser : public UDMFParserBase
 			}
 		}
 		// Todo: Finalize
+		if (reply->ItemCheckAmount[0] <= 0) reply->NeedsGold = false;
 		if (reply->NeedsGold) ReplyString.AppendFormat(" for %u", reply->ItemCheckAmount[0]);
 
 		reply->Reply = ncopystring(ReplyString);
 		reply->QuickYes = ncopystring(QuickYes);
-		if (reply->ItemCheck[0] != 0)
+		if (reply->ItemCheck[0] != NULL)
 		{
 			reply->QuickNo = ncopystring(QuickNo);
 		}
@@ -281,7 +284,7 @@ class USDFParser : public UDMFParserBase
 						if (name[0] != 0)
 						{
 							soundname += name;
-							node->SpeakerVoice = FSoundID(S_FindSound(name));
+							node->SpeakerVoice = FSoundID(S_FindSound(soundname));
 						}
 					}
 					break;
@@ -380,11 +383,11 @@ class USDFParser : public UDMFParserBase
 			sc.ScriptMessage("No valid actor type defined in conversation.");
 			return false;
 		}
+		SetConversation(dlgid, type, startpos);
 		for(;startpos < StrifeDialogues.Size(); startpos++)
 		{
 			StrifeDialogues[startpos]->SpeakerType = type;
 		}
-		SetConversation(dlgid, type, startpos);
 		return true;
 	}
 
@@ -405,8 +408,8 @@ public:
 		// Namespace must be the first field because everything else depends on it.
 		if (sc.CheckString("namespace"))
 		{
-			sc.MustGetStringName("=");
-			sc.MustGetString();
+			sc.MustGetToken('=');
+			sc.MustGetToken(TK_StringConst);
 			namespc = sc.String;
 			switch(namespc)
 			{
@@ -420,7 +423,7 @@ public:
 				sc.ScriptMessage("Unknown namespace %s. Ignoring dialogue lump.\n", sc.String);
 				return false;
 			}
-			sc.MustGetStringName(";");
+			sc.MustGetToken(';');
 		}
 		else
 		{
@@ -432,12 +435,15 @@ public:
 		{
 			if (sc.Compare("conversation"))
 			{
+				sc.MustGetToken('{');
 				if (!ParseConversation()) return false;
 			}
 			else if (sc.Compare("include"))
 			{
+				sc.MustGetToken('=');
 				sc.MustGetToken(TK_StringConst);
 				LoadScriptFile(sc.String, true);
+				sc.MustGetToken(';');
 			}
 			else
 			{
@@ -454,10 +460,18 @@ bool P_ParseUSDF(int lumpnum, FileReader *lump, int lumplen)
 {
 	USDFParser parse;
 
-	if (!parse.Parse(lumpnum, lump, lumplen))
+	try
 	{
-		// clean up the incomplete dialogue structures here
+		if (!parse.Parse(lumpnum, lump, lumplen))
+		{
+			// clean up the incomplete dialogue structures here
+			return false;
+		}
+		return true;
+	}
+	catch(CRecoverableError &err)
+	{
+		Printf("%s", err.GetMessage());
 		return false;
 	}
-	return true;
 }

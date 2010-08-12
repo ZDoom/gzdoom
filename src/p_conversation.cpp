@@ -189,9 +189,7 @@ int GetConversation(FName classname)
 
 void P_LoadStrifeConversations (MapData *map, const char *mapname)
 {
-	DialogueRoots.Clear();
-	ClassRoots.Clear();
-
+	P_FreeStrifeConversations ();
 	if (map->Size(ML_CONVERSATION) > 0)
 	{
 		map->Seek(ML_CONVERSATION);
@@ -1178,7 +1176,11 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 	}
 
 	// Update the quest log, if needed.
-	if (reply->LogNumber != 0) 
+	if (reply->LogString != NULL)
+	{
+		player->SetLogText(reply->LogString);
+	}
+	else if (reply->LogNumber != 0) 
 	{
 		player->SetLogNumber(reply->LogNumber);
 	}

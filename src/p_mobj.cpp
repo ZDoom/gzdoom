@@ -3178,41 +3178,27 @@ void AActor::Tick ()
 			velz <= 0 &&
 			floorz == z)
 		{
-			const secplane_t * floorplane = &floorsector->floorplane;
-			static secplane_t copyplane;
+			secplane_t floorplane = floorsector->floorplane;
 
 #ifdef _3DFLOORS
 			// Check 3D floors as well
-			if (floorsector->e)	// apparently this can be called when the data is already gone-
-			for(unsigned int i=0;i<floorsector->e->XFloor.ffloors.Size();i++)
-			{
-				F3DFloor * rover= floorsector->e->XFloor.ffloors[i];
-				if(!(rover->flags & FF_SOLID) || !(rover->flags & FF_EXISTS)) continue;
-
-				if (rover->top.plane->ZatPoint(x, y) == floorz)
-				{
-					copyplane = *rover->top.plane;
-					if (copyplane.c<0) copyplane.FlipVert();
-					floorplane = &copyplane;
-					break;
-				}
-			}
+			floorplane = P_FindFloorPlane(floorsector, x, y, floorz);
 #endif
 
-			if (floorplane->c < STEEPSLOPE &&
-				floorplane->ZatPoint (x, y) <= floorz)
+			if (floorplane.c < STEEPSLOPE &&
+				floorplane.ZatPoint (x, y) <= floorz)
 			{
 				const msecnode_t *node;
 				bool dopush = true;
 
-				if (floorplane->c > STEEPSLOPE*2/3)
+				if (floorplane.c > STEEPSLOPE*2/3)
 				{
 					for (node = touching_sectorlist; node; node = node->m_tnext)
 					{
 						const sector_t *sec = node->m_sector;
 						if (sec->floorplane.c >= STEEPSLOPE)
 						{
-							if (floorplane->ZatPoint (x, y) >= z - MaxStepHeight)
+							if (floorplane.ZatPoint (x, y) >= z - MaxStepHeight)
 							{
 								dopush = false;
 								break;
@@ -3222,8 +3208,8 @@ void AActor::Tick ()
 				}
 				if (dopush)
 				{
-					velx += floorplane->a;
-					vely += floorplane->b;
+					velx += floorplane.a;
+					vely += floorplane.b;
 				}
 			}
 		}

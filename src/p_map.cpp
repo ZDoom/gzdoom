@@ -655,8 +655,14 @@ bool PIT_CheckLine (line_t *ld, const FBoundingBox &box, FCheckPosition &tm)
 	if (!(tm.thing->flags & MF_DROPOFF) &&
 		!(tm.thing->flags & (MF_NOGRAVITY|MF_NOCLIP)))
 	{
-		if (ld->frontsector->floorplane.c < STEEPSLOPE ||
-			ld->backsector->floorplane.c < STEEPSLOPE)
+		secplane_t frontplane = ld->frontsector->floorplane;
+		secplane_t backplane  = ld->backsector->floorplane;
+#ifdef _3DFLOORS
+		// Check 3D floors as well
+		frontplane = P_FindFloorPlane(ld->frontsector, tm.thing->x, tm.thing->y, tm.thing->floorz);
+		backplane = P_FindFloorPlane(ld->backsector, tm.thing->x, tm.thing->y, tm.thing->floorz);
+#endif
+		if (frontplane.c < STEEPSLOPE || backplane.c < STEEPSLOPE)
 		{
 			const msecnode_t *node = tm.thing->touching_sectorlist;
 			bool allow = false;

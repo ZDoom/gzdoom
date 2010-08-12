@@ -680,5 +680,32 @@ void P_Spawn3DFloors (void)
 }
 
 
+//==========================================================================
+//
+// Returns a 3D floorplane appropriate for the given coordinates
+//
+//==========================================================================
+
+secplane_t P_FindFloorPlane(sector_t * sector, fixed_t x, fixed_t y, fixed_t z)
+{
+	secplane_t retplane = sector->floorplane;
+	if (sector->e)	// apparently this can be called when the data is already gone
+	{
+		for(unsigned int i=0;i<sector->e->XFloor.ffloors.Size();i++)
+		{
+			F3DFloor * rover= sector->e->XFloor.ffloors[i];
+			if(!(rover->flags & FF_SOLID) || !(rover->flags & FF_EXISTS)) continue;
+
+			if (rover->top.plane->ZatPoint(x, y) == z)
+			{
+				retplane = *rover->top.plane;
+				if (retplane.c<0) retplane.FlipVert();
+				break;
+			}
+		}
+	}
+	return retplane;
+}
+
 
 #endif

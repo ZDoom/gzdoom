@@ -60,7 +60,17 @@ class USDFParser : public UDMFParserBase
 		}
 		else if (namespace_bits == Zd)
 		{
-			return PClass::FindClass(CheckString(key));
+			const PClass *cls = PClass::FindClass(CheckString(key));
+			if (cls == NULL)
+			{
+				sc.ScriptMessage("Unknown actor class '%s'", key);
+				return NULL;
+			}
+			if (!cls->IsDescendantOf(RUNTIME_CLASS(AActor)))
+			{
+				sc.ScriptMessage("'%s' is not an actor type", key);
+				return NULL;
+			}
 		}
 		return NULL;
 	}
@@ -133,7 +143,7 @@ class USDFParser : public UDMFParserBase
 
 				case NAME_Yesmessage:
 					QuickYes = CheckString(key);
-					if (QuickYes.Compare("_")) QuickYes = "";
+					if (!QuickYes.Compare("_")) QuickYes = "";
 					break;
 
 				case NAME_Nomessage:

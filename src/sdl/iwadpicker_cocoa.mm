@@ -115,6 +115,7 @@ static const char* const tableHeaders[NUM_COLUMNS] = { "IWAD", "Game" };
 }
 
 - (void)buttonPressed:(id) sender;
+- (void)doubleClicked:(id) sender;
 - (void)makeLabel:(NSTextField *)label:(const char*) str;
 - (int)pickIWad:(WadStuff *)wads:(int) numwads:(bool) showwin:(int) defaultiwad;
 @end
@@ -128,6 +129,15 @@ static const char* const tableHeaders[NUM_COLUMNS] = { "IWAD", "Game" };
 
 	[window orderOut:self];
 	[app stopModal];
+}
+
+- (void)doubleClicked:(id) sender;
+{
+	if ([sender clickedRow] >= 0)
+	{
+		[window orderOut:self];
+		[app stopModal];
+	}
 }
 
 // Apparently labels in Cocoa are uneditable text fields, so lets make this a
@@ -148,18 +158,18 @@ static const char* const tableHeaders[NUM_COLUMNS] = { "IWAD", "Game" };
 	app = [NSApplication sharedApplication];
 	id windowTitle = [NSString stringWithCString:GAMESIG " " DOTVERSIONSTR ": Select an IWAD to use"];
 
-	NSRect frame = NSMakeRect(0, 0, 400, 450);
+	NSRect frame = NSMakeRect(0, 0, 440, 450);
 	window = [[NSWindow alloc] initWithContentRect:frame styleMask:NSTitledWindowMask backing:NSBackingStoreBuffered defer:NO];
 	[window setTitle:windowTitle];
 
-	NSTextField *description = [[NSTextField alloc] initWithFrame:NSMakeRect(22, 379, 372, 50)];
+	NSTextField *description = [[NSTextField alloc] initWithFrame:NSMakeRect(22, 379, 412, 50)];
 	[self makeLabel:description:"ZDoom found more than one IWAD\nSelect from the list below to determine which one to use:"];
 	[[window contentView] addSubview:description];
 	[description release];
 
 	// Commented out version would account for an additional parameters box.
-	//NSScrollView *iwadScroller = [[NSScrollView alloc] initWithFrame:NSMakeRect(20, 103, 362, 288)];
-	NSScrollView *iwadScroller = [[NSScrollView alloc] initWithFrame:NSMakeRect(20, 50, 362, 341)];
+	//NSScrollView *iwadScroller = [[NSScrollView alloc] initWithFrame:NSMakeRect(20, 103, 412, 288)];
+	NSScrollView *iwadScroller = [[NSScrollView alloc] initWithFrame:NSMakeRect(20, 50, 412, 341)];
 	NSTableView *iwadTable = [[NSTableView alloc] initWithFrame:[iwadScroller bounds]];
 	IWADTableData *tableData = [[IWADTableData alloc] init:wads:numwads];
 	for(int i = 0;i < NUM_COLUMNS;i++)
@@ -177,6 +187,8 @@ static const char* const tableHeaders[NUM_COLUMNS] = { "IWAD", "Game" };
 	[iwadScroller setHasVerticalScroller:YES];
 	[iwadTable setDataSource:tableData];
 	[iwadTable sizeToFit];
+	[iwadTable setDoubleAction:@selector(doubleClicked:)];
+	[iwadTable setTarget:self];
 	NSIndexSet *selection = [[NSIndexSet alloc] initWithIndex:defaultiwad];
 	[iwadTable selectRowIndexes:selection byExtendingSelection:NO];
 	[selection release];
@@ -198,18 +210,20 @@ static const char* const tableHeaders[NUM_COLUMNS] = { "IWAD", "Game" };
 	[dontAsk setState:(showwin ? NSOffState : NSOnState)];
 	[[window contentView] addSubview:dontAsk];*/
 
-	okButton = [[NSButton alloc] initWithFrame:NSMakeRect(196, 12, 96, 32)];
+	okButton = [[NSButton alloc] initWithFrame:NSMakeRect(236, 12, 96, 32)];
 	[okButton setTitle:[NSString stringWithCString:"OK"]];
 	[okButton setBezelStyle:NSRoundedBezelStyle];
 	[okButton setAction:@selector(buttonPressed:)];
 	[okButton setTarget:self];
+	[okButton setKeyEquivalent:@"\r"];
 	[[window contentView] addSubview:okButton];
 
-	cancelButton = [[NSButton alloc] initWithFrame:NSMakeRect(292, 12, 96, 32)];
+	cancelButton = [[NSButton alloc] initWithFrame:NSMakeRect(332, 12, 96, 32)];
 	[cancelButton setTitle:[NSString stringWithCString:"Cancel"]];
 	[cancelButton setBezelStyle:NSRoundedBezelStyle];
 	[cancelButton setAction:@selector(buttonPressed:)];
 	[cancelButton setTarget:self];
+	[cancelButton setKeyEquivalent:@"\033"];
 	[[window contentView] addSubview:cancelButton];
 
 	[window center];

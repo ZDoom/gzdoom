@@ -85,7 +85,7 @@ void I_BuildMIDIMenuList (struct value_t **outValues, float *numValues)
 		values[0].value = -3.0;
 		values[1].name = "TiMidity++";
 		values[1].value = -2.0;
-		values[2].name = "FMOD";
+		values[2].name = "Sound System";
 		values[2].value = -1.0;
 		for (id = 0, p = 3; id < nummididevices; ++id)
 		{
@@ -153,7 +153,7 @@ CCMD (snd_listmididevices)
 
 	PrintMidiDevice (-3, "Emulated OPL FM Synth", MOD_FMSYNTH, 0);
 	PrintMidiDevice (-2, "TiMidity++", 0, MOD_SWSYNTH);
-	PrintMidiDevice (-1, "FMOD", 0, MOD_SWSYNTH);
+	PrintMidiDevice (-1, "Sound System", 0, MOD_SWSYNTH);
 	if (nummididevices != 0)
 	{
 		for (id = 0; id < nummididevices; ++id)
@@ -195,7 +195,7 @@ void I_BuildMIDIMenuList (struct value_t **outValues, float *numValues)
 		values[0].value = -3.0;
 		values[1].name = "TiMidity++";
 		values[1].value = -2.0;
-		values[2].name = "FMOD";
+		values[2].name = "Sound System";
 		values[2].value = -1.0;
 		*numValues = 3.f;
 	}
@@ -205,6 +205,6 @@ CCMD (snd_listmididevices)
 {
 	Printf("%s-3. Emulated OPL FM Synth\n", -3 == snd_mididevice ? TEXTCOLOR_BOLD : "");
 	Printf("%s-2. TiMidity++\n", -2 == snd_mididevice ? TEXTCOLOR_BOLD : "");
-	Printf("%s-1. FMOD\n", -1 == snd_mididevice ? TEXTCOLOR_BOLD : "");
+	Printf("%s-1. Sound System\n", -1 == snd_mididevice ? TEXTCOLOR_BOLD : "");
 }
 #endif

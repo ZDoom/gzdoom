@@ -96,6 +96,8 @@ struct FISoundChannel
 	// callback that can't be passed a sound channel pointer
 	FRolloffInfo Rolloff;
 	float		DistanceScale;
+	float		DistanceSqr;
+	bool		ManualGain;
 };
 
 

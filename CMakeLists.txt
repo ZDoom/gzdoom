@@ -13,6 +13,9 @@ if( CMAKE_COMPILER_IS_GNUCXX )
 	set( PROFILE 0 CACHE BOOL "Enable profiling with gprof for Debug and RelWithDebInfo build types." )
 endif( CMAKE_COMPILER_IS_GNUCXX )
 
+option( NO_FMOD "Disable FMODEx sound support" )
+option( NO_OPENAL "Disable OpenAL sound support" )
+
 find_package( BZip2 )
 find_package( JPEG )
 find_package( ZLIB )

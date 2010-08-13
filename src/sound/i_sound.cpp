@@ -53,6 +53,7 @@ extern HINSTANCE g_hInst;
 #include <math.h>
 
 #include "fmodsound.h"
+#include "oalsound.h"
 
 #include "m_swap.h"
 #include "stats.h"
@@ -76,6 +77,14 @@ EXTERN_CVAR (Float, snd_sfxvolume)
 CVAR (Int, snd_samplerate, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Int, snd_buffersize, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (String, snd_output, "default", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+
+#ifndef NO_FMOD
+CVAR (String, snd_backend, "fmod", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+#elif !defined(NO_OPENAL)
+CVAR (String, snd_backend, "openal", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+#else
+CVAR (String, snd_backend, "null", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+#endif
 
 // killough 2/21/98: optionally use varying pitched sounds
 CVAR (Bool, snd_pitched, false, CVAR_ARCHIVE)
@@ -243,9 +252,17 @@ void I_InitSound ()
 		return;
 	}
 
-	GSnd = new FMODSoundRenderer;
-
-	if (!GSnd->IsValid ())
+	if(stricmp(snd_backend, "null") == 0)
+		GSnd = new NullSoundRenderer;
+#ifndef NO_FMOD
+	else if(stricmp(snd_backend, "fmod") == 0)
+		GSnd = new FMODSoundRenderer;
+#endif
+#ifndef NO_OPENAL
+	else if(stricmp(snd_backend, "openal") == 0)
+		GSnd = new OpenALSoundRenderer;
+#endif
+	if (!GSnd || !GSnd->IsValid ())
 	{
 		I_CloseSound();
 		GSnd = new NullSoundRenderer;

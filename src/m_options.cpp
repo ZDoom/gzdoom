@@ -122,6 +122,8 @@ void M_SizeDisplay (int diff);
 
 int  M_StringHeight (char *string);
 
+int BuildALDeviceList(valueenum_t **menulist);
+
 EColorRange LabelColor;
 EColorRange ValueColor;
 EColorRange MoreColor;
@@ -1167,9 +1169,15 @@ EXTERN_CVAR (Int, snd_samplerate)
 EXTERN_CVAR (Bool, snd_hrtf)
 EXTERN_CVAR (Bool, snd_waterreverb)
 EXTERN_CVAR (Float, snd_waterlp)
+EXTERN_CVAR (Float, snd_waterabsorption)
 EXTERN_CVAR (Int, snd_mididevice)
+EXTERN_CVAR (String, snd_backend)
+EXTERN_CVAR (String, snd_aldevice)
+EXTERN_CVAR (Bool, snd_efx)
 
 static void MakeSoundChanges ();
+static void FMODSoundOptions ();
+static void OpenALSoundOptions ();
 static void AdvSoundOptions ();
 static void ModReplayerOptions ();
 
@@ -1213,7 +1221,7 @@ static value_t BufferCounts[] =
 	{   12.f, "12" }
 };
 
-static valueenum_t Outputs[] =
+static valueenum_t FMODOutputs[] =
 {
 	{ "Default",		"Default" },
 #if defined(_WIN32)
@@ -1232,6 +1240,17 @@ static valueenum_t Outputs[] =
 	{ "Core Audio",		"Core Audio" },
 #endif
 	{ "No sound",		"No sound" }
+};
+
+static valueenum_t Backends[] =
+{
+#ifndef NO_FMOD
+	{ "fmod",	"FMOD" },
+#endif
+#ifndef NO_OPENAL
+	{ "openal",	"OpenAL" },
+#endif
+	{ "null",	"No sound" }
 };
 
 static valueenum_t OutputFormats[] =
@@ -1263,6 +1282,49 @@ static valueenum_t Resamplers[] =
 	{ "Spline",		"Spline" }
 };
 
+static menuitem_t FMODSoundItems[] =
+{
+	{ slider,	"Underwater cutoff",	{&snd_waterlp},			{0.0}, {2000.0},{50.0}, {NULL} },
+	{ ediscrete,"Output system",		{&snd_output},			{countof(FMODOutputs)}, {0.0}, {0.0}, {(value_t *)FMODOutputs} },
+	{ ediscrete,"Output format",		{&snd_output_format},	{5.0}, {0.0},	{0.0}, {(value_t *)OutputFormats} },
+	{ ediscrete,"Speaker mode",			{&snd_speakermode},		{8.0}, {0.0},	{0.0}, {(value_t *)SpeakerModes} },
+	{ ediscrete,"Resampler",			{&snd_resampler},		{4.0}, {0.0},	{0.0}, {(value_t *)Resamplers} },
+	{ discrete, "HRTF filter",			{&snd_hrtf},			{2.0}, {0.0},	{0.0}, {(value_t *)OnOff} },
+	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
+	{ discrete, "Buffer size",			{&snd_buffersize},		{8.0}, {0.0},	{0.0}, {BufferSizes} },
+	{ discrete, "Buffer count",			{&snd_buffercount},		{12.0},{0.0},	{0.0}, {BufferCounts} },
+};
+
+static menu_t FMODSoundMenu =
+{
+	"FMOD SOUND OPTIONS",
+	0,
+	countof(FMODSoundItems),
+	0,
+	FMODSoundItems,
+};
+
+
+static valueenum_t *ALOutputs = NULL;
+
+static menuitem_t OpenALSoundItems[] =
+{
+	{ ediscrete,	"Playback device",		{&snd_aldevice},		{0.0}, {0.0},{0.0}, {(value_t *)ALOutputs} },
+	{ discrete,		"Enable EFX",			{&snd_efx},				{2.0}, {0.0},{0.0},	{(value_t *)YesNo} },
+	{ redtext,		" ",					{NULL},					{0.0}, {0.0},{0.0},	{NULL} },
+	{ whitetext,	"Requires EFX",			{NULL},					{0.0}, {0.0},{0.0},	{NULL} },
+	{ slider,		"Underwater absorption",{&snd_waterabsorption},	{0.0}, {10.0},{0.5},{NULL} },
+};
+
+static menu_t OpenALSoundMenu =
+{
+	"OPENAL SOUND OPTIONS",
+	0,
+	countof(OpenALSoundItems),
+	0,
+	OpenALSoundItems,
+};
+
 static menuitem_t SoundItems[] =
 {
 	{ slider,	"Sounds volume",		{&snd_sfxvolume},		{0.0}, {1.0},	{0.05f}, {NULL} },
@@ -1270,17 +1332,18 @@ static menuitem_t SoundItems[] =
 	{ discrete, "MIDI device",			{&snd_mididevice},		{0.0}, {0.0},	{0.0}, {NULL} },
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
 	{ discrete, "Underwater reverb",	{&snd_waterreverb},		{2.0}, {0.0},	{0.0}, {OnOff} },
-	{ slider,	"Underwater cutoff",	{&snd_waterlp},			{0.0}, {2000.0},{50.0}, {NULL} },
 	{ discrete, "Randomize pitches",	{&snd_pitched},			{2.0}, {0.0},	{0.0}, {OnOff} },
 	{ slider,	"Sound channels",		{&snd_channels},		{8.0}, {256.0},	{8.0}, {NULL} },
+	{ ediscrete,"Sound backend",		{&snd_backend},			{countof(Backends)}, {0.0}, {0.0}, {(value_t *)Backends} },
+	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
+#ifndef NO_FMOD
+	{ more,		"FMOD sound options",	{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)FMODSoundOptions} },
+#endif
+#ifndef NO_OPENAL
+	{ more,		"OpenAL sound options",	{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)OpenALSoundOptions} },
+#endif
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
 	{ more,		"Restart sound",		{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)MakeSoundChanges} },
-	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
-	{ ediscrete,"Output system",		{&snd_output},			{countof(Outputs)}, {0.0}, {0.0}, {(value_t *)Outputs} },
-	{ ediscrete,"Output format",		{&snd_output_format},	{5.0}, {0.0},	{0.0}, {(value_t *)OutputFormats} },
-	{ ediscrete,"Speaker mode",			{&snd_speakermode},		{8.0}, {0.0},	{0.0}, {(value_t *)SpeakerModes} },
-	{ ediscrete,"Resampler",			{&snd_resampler},		{4.0}, {0.0},	{0.0}, {(value_t *)Resamplers} },
-	{ discrete, "HRTF filter",			{&snd_hrtf},			{2.0}, {0.0},	{0.0}, {(value_t *)OnOff} },
 
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
 	{ more,		"Advanced options",		{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)AdvSoundOptions} },
@@ -1309,8 +1372,6 @@ EXTERN_CVAR (Bool, opl_onechip)
 static menuitem_t AdvSoundItems[] =
 {
 	{ discrete, "Sample rate",			{&snd_samplerate},		{8.0}, {0.0},	{0.0}, {SampleRates} },
-	{ discrete, "Buffer size",			{&snd_buffersize},		{8.0}, {0.0},	{0.0}, {BufferSizes} },
-	{ discrete, "Buffer count",			{&snd_buffercount},		{12.0}, {0.0},	{0.0}, {BufferCounts} },
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
 	{ whitetext,"OPL Synthesis",		{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
 	{ discrete, "Only emulate one OPL chip", {&opl_onechip},	{2.0}, {0.0},	{0.0}, {OnOff} },
@@ -1342,7 +1403,7 @@ EXTERN_CVAR(Int, mod_autochip_scan_threshold)
 
 static value_t ModReplayers[] =
 {
-	{ 0.0, "FMOD" },
+	{ 0.0, "Sound System" },
 	{ 1.0, "foo_dumb" }
 };
 
@@ -3380,6 +3441,36 @@ CCMD (menu_sound)
 	SoundOptions ();
 }
 
+static void FMODSoundOptions ()
+{
+	M_SwitchMenu (&FMODSoundMenu);
+}
+
+CCMD (menu_fmodsound)
+{
+#ifndef NO_FMOD
+	M_StartControlPanel (true);
+	OptionsActive = true;
+	FMODSoundOptions ();
+#endif
+}
+
+static void OpenALSoundOptions ()
+{
+	OpenALSoundItems[0].b.numvalues = BuildALDeviceList (&ALOutputs);
+	OpenALSoundItems[0].e.enumvalues = ALOutputs;
+	M_SwitchMenu (&OpenALSoundMenu);
+}
+
+CCMD (menu_openalsound)
+{
+#ifndef NO_OPENAL
+	M_StartControlPanel (true);
+	OptionsActive = true;
+	OpenALSoundOptions ();
+#endif
+}
+
 static void AdvSoundOptions ()
 {
 	M_SwitchMenu (&AdvSoundMenu);
@@ -3825,6 +3916,14 @@ CCMD (addmenukey)
 
 void M_Deinit ()
 {
+	if (ALOutputs)
+	{
+		for (size_t i = 0;ALOutputs[i].value;i++)
+			delete[] const_cast<char*>(ALOutputs[i].value);
+		delete[] ALOutputs;
+		ALOutputs = NULL;
+	}
+
 	// Free bitdepth names for the modes menu.
 	for (size_t i = 0; i < countof(Depths); ++i)
 	{

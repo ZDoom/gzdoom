@@ -5414,6 +5414,18 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\sound\oalsound.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\sound\oalsound.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\sound\efx.h"
+				>
+			</File>
+			<File
 				RelativePath="src\sound\i_music.cpp"
 				>
 			</File>

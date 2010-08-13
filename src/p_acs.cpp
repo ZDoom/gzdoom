@@ -3495,7 +3495,7 @@ inline int getshort (int *&pc)
 #if defined(_M_IX86) || defined(_M_X64) || defined(__i386__) 
 inline int uallong(int &foo)
 {
-	return *foo;
+	return foo;
 }
 #else
 inline int uallong(int &foo)

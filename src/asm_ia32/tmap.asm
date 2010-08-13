@@ -285,7 +285,16 @@ R_SetSpanSize_ASM:
 	
 aret:	ret
 
+%ifdef M_TARGET_MACHO
+	SECTION .text align=64
+%else
 	SECTION .rtext	progbits alloc exec write align=64
+%endif
+
+%ifdef M_TARGET_MACHO
+GLOBAL rtext_tmap_start
+rtext_tmap_start:
+%endif
 
 rtext_start:
 
@@ -1738,6 +1747,10 @@ ac4nil:	pop		edi
 		ret
 
 rtext_end:
+%ifdef M_TARGET_MACHO
+GLOBAL rtext_tmap_end
+rtext_tmap_end:
+%endif
 		align	16
 
 ;************************

@@ -44,12 +44,6 @@
 
 // Since this file is included by everything, it seems an appropriate place
 // to check the NOASM/USEASM macros.
-#if defined(__APPLE__)
-// The assembly code needs to be tweaked for Mach-O before enabled on Macs.
-#ifndef NOASM
-#define NOASM
-#endif
-#endif
 
 // There are three assembly-related macros:
 //

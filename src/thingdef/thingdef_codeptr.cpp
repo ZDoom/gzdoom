@@ -826,6 +826,7 @@ enum CBA_Flags
 	CBAF_AIMFACING = 1,
 	CBAF_NORANDOM = 2,
 	CBAF_EXPLICITANGLE = 4,
+	CBAF_NOPITCH = 8,
 };
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomBulletAttack)
@@ -852,7 +853,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomBulletAttack)
 
 		if (!pufftype) pufftype = PClass::FindClass(NAME_BulletPuff);
 
-		bslope = P_AimLineAttack (self, bangle, MISSILERANGE);
+		if (!(Flags & CBAF_NOPITCH)) bslope = P_AimLineAttack (self, bangle, MISSILERANGE);
 
 		S_Sound (self, CHAN_WEAPON, self->AttackSound, 1, ATTN_NORM);
 		for (i=0 ; i<NumBullets ; i++)
@@ -994,6 +995,7 @@ enum FB_Flags
 	FBF_USEAMMO = 1,
 	FBF_NORANDOM = 2,
 	FBF_EXPLICITANGLE = 4,
+	FBF_NOPITCH = 8,
 };
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireBullets)
@@ -1025,7 +1027,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireBullets)
 
 	static_cast<APlayerPawn *>(self)->PlayAttacking2 ();
 
-	bslope = P_BulletSlope(self);
+	if (!(Flags & FBF_NOPITCH)) bslope = P_BulletSlope(self);
 	bangle = self->angle;
 
 	if (!PuffType) PuffType = PClass::FindClass(NAME_BulletPuff);

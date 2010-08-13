@@ -3033,6 +3033,7 @@ enum EACSFunctions
 	ACSF_SoundSequenceOnPolyobj,
 	ACSF_GetPolyobjX,
 	ACSF_GetPolyobjY,
+    ACSF_CheckSight,
 };
 
 int DLevelScript::SideFromID(int id, int side)
@@ -3455,6 +3456,54 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 				}
 			}
 			return FIXED_MAX;
+        
+        case ACSF_CheckSight:
+        {
+			AActor *source;
+			AActor *dest;
+
+			int flags = SF_IGNOREVISIBILITY;
+
+			if (args[2] & 1) flags |= SF_IGNOREWATERBOUNDARY;
+			if (args[2] & 2) flags |= SF_SEEPASTBLOCKEVERYTHING | SF_SEEPASTSHOOTABLELINES;
+
+			if (args[0] == 0) 
+			{
+				source = (AActor *) activator;
+
+				if (args[1] == 0) return 1; // [KS] I'm sure the activator can see itself.
+
+				TActorIterator<AActor> dstiter (args[1]);
+
+				while ( (dest = dstiter.Next ()) )
+				{
+					if (P_CheckSight(source, dest, flags)) return 1;
+				}
+			}
+			else
+			{
+				TActorIterator<AActor> srciter (args[0]);
+
+				if (args[1] == 0) dest = (AActor *) activator;
+	                
+				while ( (source = srciter.Next ()) )
+				{
+					if (args[1] != 0)
+					{
+						TActorIterator<AActor> dstiter (args[1]);
+						while ( (dest = dstiter.Next ()) )
+						{
+							if (P_CheckSight(source, dest, flags)) return 1;
+						}
+					}
+					else
+					{
+						if (P_CheckSight(source, dest, flags)) return 1;
+					}
+				}
+			}
+            return 0;
+        }
 
 		default:
 			break;

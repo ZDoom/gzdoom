@@ -1082,6 +1082,7 @@ __declspec(dllimport) int __stdcall VirtualProtect(void *, unsigned long, unsign
 #else
 #include <sys/mman.h>
 #include <limits.h>
+#include <unistd.h>
 #endif
 
 #ifdef __GNUC__

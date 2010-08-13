@@ -6,6 +6,7 @@ endif( COMMAND cmake_policy )
 
 include( CheckCXXSourceCompiles )
 include( CheckFunctionExists )
+include( CheckCXXCompilerFlag )
 include( FindPkgConfig )
 
 option( NO_ASM "Disable assembly code" )
@@ -37,7 +38,7 @@ set( MINOR_VERSIONS "50" "49" "48" "47" "46" "45" "44" "43" "42" "41"
 	"27" "26" "25" "24" "23" "22" "21" "20" "21" "19" "18" "17" "16"
 	"15" "14" "13" "12" "11" "10" "09" "08" "07" "06" "05" "04" "03"
 	"02" "01" "00" )
-set( MAJOR_VERSIONS "26" "24" "22" "20" )
+set( MAJOR_VERSIONS "30" "28" "26" "24" "22" "20" )
 set( FMOD_DIR_VERSIONS ${FMOD_DIR_VERSIONS} "../fmod" )
 foreach( majver ${MAJOR_VERSIONS} )
 	foreach( minver ${MINOR_VERSIONS} )

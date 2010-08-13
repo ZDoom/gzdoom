@@ -32,6 +32,8 @@ struct FStrifeDialogueReply
 
 	FStrifeDialogueReply *Next;
 	const PClass *GiveType;
+	int ActionSpecial;
+	int Args[5];
 	const PClass *ItemCheck[3];
 	int ItemCheckAmount[3];
 	char *Reply;

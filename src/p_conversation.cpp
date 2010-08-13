@@ -60,6 +60,7 @@
 #include "c_console.h"
 #include "sbar.h"
 #include "farchive.h"
+#include "p_lnspec.h"
 
 // The conversations as they exist inside a SCRIPTxx lump.
 struct Response
@@ -508,6 +509,7 @@ static void ParseReplies (FStrifeDialogueReply **replyptr, Response *responses)
 
 		// The item to receive when this reply is used.
 		reply->GiveType = GetStrifeType (rsp->GiveType);
+		reply->ActionSpecial = 0;
 
 		// Do you need anything special for this reply to succeed?
 		for (k = 0; k < 3; ++k)
@@ -1159,6 +1161,12 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 				Printf("Attempting to give non-inventory item %s\n", reply->GiveType->TypeName.GetChars());
 			}
 		}
+	}
+
+	if (reply->ActionSpecial != 0)
+	{
+		takestuff |= !!LineSpecials[reply->ActionSpecial](NULL, player->mo, false,
+			reply->Args[0], reply->Args[1], reply->Args[2], reply->Args[3], reply->Args[4]);
 	}
 
 	// Take away required items if the give was successful or none was needed.

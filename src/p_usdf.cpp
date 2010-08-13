@@ -168,6 +168,22 @@ class USDFParser : public UDMFParserBase
 				case NAME_Closedialog:
 					closeDialog = CheckBool(key);
 					break;
+
+				case NAME_Special:
+					reply->ActionSpecial = CheckInt(key);
+					if (reply->ActionSpecial < 0 || reply->ActionSpecial > 255)
+						reply->ActionSpecial = 0;
+					break;
+
+				case NAME_Arg0:
+				case NAME_Arg1:
+				case NAME_Arg2:
+				case NAME_Arg3:
+				case NAME_Arg4:
+					reply->Args[int(key)-int(NAME_Arg0)] = CheckInt(key);
+					break;
+
+
 				}
 			}
 			else

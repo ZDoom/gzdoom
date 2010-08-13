@@ -220,8 +220,8 @@ SetTiltedSpanSize:
 	SECTION .rtext	progbits alloc exec write align=64
 %else
 	SECTION .text align=64
-GLOBAL rtext_tmap2_start
-rtext_tmap2_start:
+GLOBAL _rtext_tmap2_start
+_rtext_tmap2_start:
 %endif
 
 rtext_start:
@@ -635,6 +635,6 @@ fetch10	mov	al,[ebp+esi+SPACEFILLER4]
 
 rtext_end:
 %ifdef M_TARGET_MACHO
-GLOBAL rtext_tmap2_end
-rtext_tmap2_end:
+GLOBAL _rtext_tmap2_end
+_rtext_tmap2_end:
 %endif

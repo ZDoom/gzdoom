@@ -292,8 +292,8 @@ aret:	ret
 %endif
 
 %ifdef M_TARGET_MACHO
-GLOBAL rtext_tmap_start
-rtext_tmap_start:
+GLOBAL _rtext_tmap_start
+_rtext_tmap_start:
 %endif
 
 rtext_start:
@@ -1748,8 +1748,8 @@ ac4nil:	pop		edi
 
 rtext_end:
 %ifdef M_TARGET_MACHO
-GLOBAL rtext_tmap_end
-rtext_tmap_end:
+GLOBAL _rtext_tmap_end
+_rtext_tmap_end:
 %endif
 		align	16
 

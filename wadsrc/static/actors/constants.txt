@@ -17,11 +17,13 @@ const int CMF_CHECKTARGETDEAD = 8;
 const int CBAF_AIMFACING = 1;
 const int CBAF_NORANDOM = 2;
 const int CBAF_EXPLICITANGLE = 4;
+const int CBAF_NOPITCH = 8;
 
 // Flags for A_FireBullets
 const int FBF_USEAMMO = 1;
 const int FBF_NORANDOM = 2;
 const int FBF_EXPLICITANGLE = 4;
+const int FBF_NOPITCH = 8;
 
 // Flags for A_SpawnItemEx
 const int SXF_TRANSFERTRANSLATION=1;

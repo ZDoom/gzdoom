@@ -2132,10 +2132,11 @@ static void P_LoopSidedefs ()
 {
 	int i;
 
-	if (sidetemp == NULL)
+	if (sidetemp != NULL)
 	{
-		sidetemp = new sidei_t[MAX(numvertexes, numsides)];
+		delete[] sidetemp;
 	}
+	sidetemp = new sidei_t[MAX(numvertexes, numsides)];
 
 	for (i = 0; i < numvertexes; ++i)
 	{

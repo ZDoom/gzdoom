@@ -123,7 +123,7 @@ class USDFParser : public UDMFParserBase
 		bool closeDialog = false;
 
 
-		reply->NeedsGold = true;
+		reply->NeedsGold = false;
 		while (!sc.CheckToken('}'))
 		{
 			bool block = false;
@@ -143,7 +143,7 @@ class USDFParser : public UDMFParserBase
 
 				case NAME_Yesmessage:
 					QuickYes = CheckString(key);
-					if (!QuickYes.Compare("_")) QuickYes = "";
+					//if (!QuickYes.Compare("_")) QuickYes = "";
 					break;
 
 				case NAME_Nomessage:
@@ -155,7 +155,9 @@ class USDFParser : public UDMFParserBase
 					{
 						const char *s = CheckString(key);
 						if(strlen(s) < 4 || strnicmp(s, "LOG", 3) != 0)
+						{
 							sc.ScriptMessage("Log must be in the format of LOG# to compile, ignoring.");
+						}
 						else
 						{
 							reply->LogNumber = atoi(s + 3);

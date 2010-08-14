@@ -106,6 +106,7 @@ struct gameinfo_t
 	int defaultrespawntime;
 	int defaultdropstyle;
 	int player5start;
+	DWORD pickupcolor;
 
 	const char *GetFinalePage(unsigned int num) const;
 };

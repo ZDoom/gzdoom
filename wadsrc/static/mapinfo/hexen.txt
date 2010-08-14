@@ -39,6 +39,7 @@ gameinfo
 	defaultrespawntime = 12
 	defaultdropstyle = 1
 	player5start = 9100
+	pickupcolor = "d6 ba 45"
 }
 
 skill baby

@@ -40,6 +40,7 @@ gameinfo
 	defaultdropstyle = 1
 	endoom = "ENDOOM"
 	player5start = 4001
+	pickupcolor = "d6 ba 45"
 }
 
 skill baby

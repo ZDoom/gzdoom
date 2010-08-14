@@ -933,16 +933,16 @@ void Popup::close()
 
 ////////////////////////////////////////////////////////////////////////////////
 
-inline void adjustRelCenter(const SBarInfoCoordinate &x, const SBarInfoCoordinate &y, double &outX, double &outY, const double &xScale, const double &yScale)
+inline void adjustRelCenter(bool relX, bool relY, const double &x, const double &y, double &outX, double &outY, const double &xScale, const double &yScale)
 {
-	if(x.RelCenter())
-		outX = *x + (SCREENWIDTH/(hud_scale ? xScale*2 : 2));
+	if(relX)
+		outX = x + (SCREENWIDTH/(hud_scale ? xScale*2 : 2));
 	else
-		outX = *x;
-	if(y.RelCenter())
-		outY = *y + (SCREENHEIGHT/(hud_scale ? yScale*2 : 2));
+		outX = x;
+	if(relY)
+		outY = y + (SCREENHEIGHT/(hud_scale ? yScale*2 : 2));
 	else
-		outY = *y;
+		outY = y;
 }
 
 class DSBarInfo : public DBaseStatusBar
@@ -1227,7 +1227,7 @@ public:
 			double xScale = !hud_scale ? 1.0 : (double) CleanXfac*320.0/(double) script->resW;//(double) SCREENWIDTH/(double) script->resW;
 			double yScale = !hud_scale ? 1.0 : (double) CleanYfac*200.0/(double) script->resH;//(double) SCREENHEIGHT/(double) script->resH;
 
-			adjustRelCenter(x, y, rx, ry, xScale, yScale);
+			adjustRelCenter(x.RelCenter(), y.RelCenter(), dx, dy, rx, ry, xScale, yScale);
 
 			// We can't use DTA_HUDRules since it forces a width and height.
 			// Translation: No high res.
@@ -1343,7 +1343,7 @@ public:
 				xScale = (double) CleanXfac*320.0/(double) script->resW;//(double) SCREENWIDTH/(double) script->resW;
 				yScale = (double) CleanYfac*200.0/(double) script->resH;//(double) SCREENWIDTH/(double) script->resW;
 			}
-			adjustRelCenter(x, y, ax, ay, xScale, yScale);
+			adjustRelCenter(x.RelCenter(), y.RelCenter(), *x, *y, ax, ay, xScale, yScale);
 		}
 		while(*str != '\0')
 		{

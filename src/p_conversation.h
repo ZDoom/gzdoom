@@ -13,6 +13,7 @@ struct FStrifeDialogueNode
 	~FStrifeDialogueNode ();
 	const PClass *DropType;
 	const PClass *ItemCheck[3];
+	int ItemCheckCount[3];
 	int ThisNodeNum;	// location of this node in StrifeDialogues
 	int ItemCheckNode;	// index into StrifeDialogues
 

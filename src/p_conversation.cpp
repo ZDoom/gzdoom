@@ -375,6 +375,7 @@ static FStrifeDialogueNode *ReadRetailNode (FileReader *lump, DWORD &prevSpeaker
 	for (j = 0; j < 3; ++j)
 	{
 		node->ItemCheck[j] = GetStrifeType (speech.ItemCheck[j]);
+		node->ItemCheckCount[j] = -1;
 	}
 	node->ItemCheckNode = speech.Link;
 	node->Children = NULL;
@@ -746,9 +747,9 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 	// Check if we should jump to another node
 	while (CurNode->ItemCheck[0] != NULL)
 	{
-		if (CheckStrifeItem (pc->player, CurNode->ItemCheck[0]) &&
-			CheckStrifeItem (pc->player, CurNode->ItemCheck[1]) &&
-			CheckStrifeItem (pc->player, CurNode->ItemCheck[2]))
+		if (CheckStrifeItem (pc->player, CurNode->ItemCheck[0], CurNode->ItemCheckCount[0]) &&
+			CheckStrifeItem (pc->player, CurNode->ItemCheck[1], CurNode->ItemCheckCount[1]) &&
+			CheckStrifeItem (pc->player, CurNode->ItemCheck[2], CurNode->ItemCheckCount[2]))
 		{
 			int root = pc->player->ConversationNPC->ConversationRoot;
 			CurNode = StrifeDialogues[root + CurNode->ItemCheckNode - 1];

@@ -265,7 +265,7 @@ class USDFParser : public UDMFParserBase
 
 			case NAME_Count:
 				// Not yet implemented in the engine. Todo later
-				CheckInt(key);
+				node->ItemCheckCount[index] = CheckInt(key);
 				break;
 			}
 		}
@@ -284,6 +284,8 @@ class USDFParser : public UDMFParserBase
 		FStrifeDialogueNode *node = new FStrifeDialogueNode;
 		FStrifeDialogueReply **replyptr = &node->Children;
 		memset(node, 0, sizeof(*node));
+		node->ItemCheckCount[0] = node->ItemCheckCount[1] = node->ItemCheckCount[2] = -1;
+
 		node->ThisNodeNum = StrifeDialogues.Push(node);
 
 		FString SpeakerName;

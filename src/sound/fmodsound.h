@@ -104,7 +104,6 @@ private:
 	FMOD::DSPConnection *SfxConnection;
 	FMOD::DSP *ChannelGroupTargetUnit;
 	FMOD::DSP *SfxReverbPlaceholder;
-	FMOD::DSP *SfxHeadMixer;
 	bool SfxReverbHooked;
 	float LastWaterLP;
 	unsigned int OutputPlugin;

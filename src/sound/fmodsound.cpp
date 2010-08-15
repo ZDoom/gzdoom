@@ -644,7 +644,6 @@ bool FMODSoundRenderer::Init()
 	ChannelGroupTargetUnit = NULL;
 	SfxReverbHooked = false;
 	SfxReverbPlaceholder = NULL;
-	SfxHeadMixer = NULL;
 	OutputPlugin = 0;
 
 	Printf("I_InitSound: Initializing FMOD\n");
@@ -1016,12 +1015,6 @@ bool FMODSoundRenderer::Init()
 				result = Sys->createDSPByType(FMOD_DSP_TYPE_MIXER, &SfxReverbPlaceholder);
 				if (result == FMOD_OK)
 				{
-					result = Sys->createDSPByType(FMOD_DSP_TYPE_MIXER, &SfxHeadMixer);
-					result = sfx_head->addInput(SfxHeadMixer, &SfxConnection);
-					result = sfx_head->disconnectFrom(pausable_head);
-					sfx_head = SfxHeadMixer;
-					SfxHeadMixer->setActive(true);
-					SfxHeadMixer->setBypass(false);
 					// Replace the PausableSFX->SFX connection with
 					// PausableSFX->ReverbPlaceholder->SFX.
 					result = SfxReverbPlaceholder->addInput(pausable_head, NULL);
@@ -1031,13 +1024,13 @@ bool FMODSoundRenderer::Init()
 						result = sfx_head->addInput(SfxReverbPlaceholder, &connection);
 						if (result == FMOD_OK)
 						{
-//							sfx_head->disconnectFrom(pausable_head);
+							sfx_head->disconnectFrom(pausable_head);
 							SfxReverbPlaceholder->setActive(true);
 							SfxReverbPlaceholder->setBypass(true);
 							// The placeholder now takes the place of the pausable_head
 							// for the following connections.
 							pausable_head = SfxReverbPlaceholder;
-						//	SfxConnection = connection;
+							SfxConnection = connection;
 						}
 					}
 					else
@@ -1046,7 +1039,6 @@ bool FMODSoundRenderer::Init()
 						SfxReverbPlaceholder = NULL;
 					}
 				}
-#if 1
 				result = WaterLP->addInput(pausable_head, NULL);
 				WaterLP->setActive(false);
 				WaterLP->setParameter(FMOD_DSP_LOWPASS_CUTOFF, snd_waterlp);
@@ -1078,7 +1070,6 @@ bool FMODSoundRenderer::Init()
 				{
 					result = sfx_head->addInput(WaterLP, NULL);
 				}
-#endif
 			}
 		}
 	}
@@ -1156,11 +1147,6 @@ void FMODSoundRenderer::Shutdown()
 		{
 			SfxReverbPlaceholder->release();
 			SfxReverbPlaceholder = NULL;
-		}
-		if (SfxHeadMixer != NULL)
-		{
-			SfxHeadMixer->release();
-			SfxHeadMixer = NULL;
 		}
 
 		Sys->close();

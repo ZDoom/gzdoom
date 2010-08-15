@@ -104,6 +104,7 @@
 #include "compatibility.h"
 #include "m_joy.h"
 #include "sc_man.h"
+#include "po_man.h"
 #include "resourcefiles/resourcefile.h"
 
 EXTERN_CVAR(Bool, hud_althud)
@@ -480,7 +481,12 @@ static int GetCompatibility(int mask)
 
 CUSTOM_CVAR (Int, compatflags, 0, CVAR_ARCHIVE|CVAR_SERVERINFO)
 {
+	int old = i_compatflags;
 	i_compatflags = GetCompatibility(self) | ii_compatflags;
+	if ((old ^i_compatflags) & COMPATF_POLYOBJ)
+	{
+		FPolyObj::ClearAllSubsectorLinks();
+	}
 }
 
 CUSTOM_CVAR(Int, compatmode, 0, CVAR_ARCHIVE|CVAR_NOINITCALL)
@@ -559,6 +565,7 @@ CVAR (Flag, compat_noblockfriends,compatflags,COMPATF_NOBLOCKFRIENDS);
 CVAR (Flag, compat_spritesort,	compatflags,COMPATF_SPRITESORT);
 CVAR (Flag, compat_hitscan,		compatflags,COMPATF_HITSCAN);
 CVAR (Flag, compat_light,		compatflags,COMPATF_LIGHT);
+CVAR (Flag, compat_polyobj,		compatflags,COMPATF_POLYOBJ);
 
 //==========================================================================
 //

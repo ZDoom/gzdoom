@@ -1404,6 +1404,7 @@ MapFlagHandlers[] =
 	{ "compat_noblockfriends",			MITYPE_COMPATFLAG, COMPATF_NOBLOCKFRIENDS},
 	{ "compat_spritesort",				MITYPE_COMPATFLAG, COMPATF_SPRITESORT},
 	{ "compat_light",					MITYPE_COMPATFLAG, COMPATF_LIGHT},
+	{ "compat_polyobj",					MITYPE_COMPATFLAG, COMPATF_POLYOBJ},
 	{ "cd_start_track",					MITYPE_EATNEXT,	0, 0 },
 	{ "cd_end1_track",					MITYPE_EATNEXT,	0, 0 },
 	{ "cd_end2_track",					MITYPE_EATNEXT,	0, 0 },

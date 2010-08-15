@@ -95,6 +95,9 @@ public:
 	virtual bool NeedThreadedCallback() = 0;
 	virtual void PrecacheInstruments(const WORD *instruments, int count);
 	virtual void TimidityVolumeChanged();
+	virtual void FluidSettingInt(const char *setting, int value);
+	virtual void FluidSettingNum(const char *setting, double value);
+	virtual void FluidSettingStr(const char *setting, const char *value);
 	virtual FString GetStats();
 };
 
@@ -255,6 +258,64 @@ protected:
 	FILE *File;
 };
 
+// FluidSynth implementation of a MIDI device -------------------------------
+
+#ifdef HAVE_FLUIDSYNTH
+#include <fluidsynth.h>
+
+class FluidSynthMIDIDevice : public MIDIDevice
+{
+public:
+	FluidSynthMIDIDevice();
+	~FluidSynthMIDIDevice();
+
+	int Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata);
+	void Close();
+	bool IsOpen() const;
+	int GetTechnology() const;
+	int SetTempo(int tempo);
+	int SetTimeDiv(int timediv);
+	int StreamOut(MIDIHDR *data);
+	int StreamOutSync(MIDIHDR *data);
+	int Resume();
+	void Stop();
+	int PrepareHeader(MIDIHDR *data);
+	int UnprepareHeader(MIDIHDR *data);
+	bool FakeVolume();
+	bool Pause(bool paused);
+	bool NeedThreadedCallback();
+	void PrecacheInstruments(const WORD *instruments, int count);
+	FString GetStats();
+	void FluidSettingInt(const char *setting, int value);
+	void FluidSettingNum(const char *setting, double value);
+	void FluidSettingStr(const char *setting, const char *value);
+
+protected:
+	static bool FillStream(SoundStream *stream, void *buff, int len, void *userdata);
+	bool ServiceStream(void *buff, int numbytes);
+	void HandleEvent(int status, int parm1, int parm2);
+	int LoadPatchSets(const char *patches);
+
+	void (*Callback)(unsigned int, void *, DWORD, DWORD);
+	void *CallbackData;
+
+	void CalcTickRate();
+	int PlayTick();
+
+	FCriticalSection CritSec;
+	SoundStream *Stream;
+	fluid_settings_t *FluidSettings;
+	fluid_synth_t *FluidSynth;
+	double Tempo;
+	double Division;
+	double SamplesPerTick;
+	double NextTickIn;
+	MIDIHDR *Events;
+	bool Started;
+	DWORD Position;
+};
+#endif
+
 // Base class for streaming MUS and MIDI files ------------------------------
 
 // MIDI device selection.
@@ -262,7 +323,8 @@ enum EMIDIDevice
 {
 	MIDI_Win,
 	MIDI_OPL,
-	MIDI_Timidity
+	MIDI_Timidity,
+	MIDI_Fluid
 };
 
 class MIDIStreamer : public MusInfo
@@ -282,6 +344,9 @@ public:
 	bool IsValid() const;
 	void Update();
 	FString GetStats();
+	void FluidSettingInt(const char *setting, int value);
+	void FluidSettingNum(const char *setting, double value);
+	void FluidSettingStr(const char *setting, const char *value);
 
 protected:
 	MIDIStreamer(const char *dumpname, EMIDIDevice type);

@@ -101,6 +101,7 @@ EXTERN_CVAR (Int, snd_buffersize)
 EXTERN_CVAR (Int, snd_samplerate)
 EXTERN_CVAR (Bool, snd_pitched)
 EXTERN_CVAR (Int, snd_channels)
+EXTERN_CVAR (String, snd_midipatchset)
 
 extern int sfx_empty;
 
@@ -115,7 +116,6 @@ CVAR (Bool, snd_waterreverb, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (String, snd_resampler, "Linear", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (String, snd_speakermode, "Auto", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (String, snd_output_format, "PCM-16", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-CVAR (String, snd_midipatchset, "", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool, snd_profile, false, 0)
 
 // Underwater low-pass filter cutoff frequency. Set to 0 to disable the filter.
@@ -644,6 +644,7 @@ bool FMODSoundRenderer::Init()
 	ChannelGroupTargetUnit = NULL;
 	SfxReverbHooked = false;
 	SfxReverbPlaceholder = NULL;
+	SfxHeadMixer = NULL;
 	OutputPlugin = 0;
 
 	Printf("I_InitSound: Initializing FMOD\n");
@@ -706,7 +707,8 @@ bool FMODSoundRenderer::Init()
 
 	if (!ShowedBanner)
 	{
-		Printf("FMOD Sound System, copyright © Firelight Technologies Pty, Ltd., 1994-2009.\n");
+		// '\xa9' is the copyright symbol in the Windows-1252 code page.
+		Printf("FMOD Sound System, copyright \xa9 Firelight Technologies Pty, Ltd., 1994-2009.\n");
 		Printf("Loaded FMOD version %x.%02x.%02x\n", version >> 16, (version >> 8) & 255, version & 255);
 		ShowedBanner = true;
 	}
@@ -1014,6 +1016,12 @@ bool FMODSoundRenderer::Init()
 				result = Sys->createDSPByType(FMOD_DSP_TYPE_MIXER, &SfxReverbPlaceholder);
 				if (result == FMOD_OK)
 				{
+					result = Sys->createDSPByType(FMOD_DSP_TYPE_MIXER, &SfxHeadMixer);
+					result = sfx_head->addInput(SfxHeadMixer, &SfxConnection);
+					result = sfx_head->disconnectFrom(pausable_head);
+					sfx_head = SfxHeadMixer;
+					SfxHeadMixer->setActive(true);
+					SfxHeadMixer->setBypass(false);
 					// Replace the PausableSFX->SFX connection with
 					// PausableSFX->ReverbPlaceholder->SFX.
 					result = SfxReverbPlaceholder->addInput(pausable_head, NULL);
@@ -1023,13 +1031,13 @@ bool FMODSoundRenderer::Init()
 						result = sfx_head->addInput(SfxReverbPlaceholder, &connection);
 						if (result == FMOD_OK)
 						{
-							sfx_head->disconnectFrom(pausable_head);
+//							sfx_head->disconnectFrom(pausable_head);
 							SfxReverbPlaceholder->setActive(true);
 							SfxReverbPlaceholder->setBypass(true);
 							// The placeholder now takes the place of the pausable_head
 							// for the following connections.
 							pausable_head = SfxReverbPlaceholder;
-							SfxConnection = connection;
+						//	SfxConnection = connection;
 						}
 					}
 					else
@@ -1038,6 +1046,7 @@ bool FMODSoundRenderer::Init()
 						SfxReverbPlaceholder = NULL;
 					}
 				}
+#if 1
 				result = WaterLP->addInput(pausable_head, NULL);
 				WaterLP->setActive(false);
 				WaterLP->setParameter(FMOD_DSP_LOWPASS_CUTOFF, snd_waterlp);
@@ -1069,6 +1078,7 @@ bool FMODSoundRenderer::Init()
 				{
 					result = sfx_head->addInput(WaterLP, NULL);
 				}
+#endif
 			}
 		}
 	}
@@ -1146,6 +1156,11 @@ void FMODSoundRenderer::Shutdown()
 		{
 			SfxReverbPlaceholder->release();
 			SfxReverbPlaceholder = NULL;
+		}
+		if (SfxHeadMixer != NULL)
+		{
+			SfxHeadMixer->release();
+			SfxHeadMixer = NULL;
 		}
 
 		Sys->close();
@@ -1330,10 +1345,10 @@ FString FMODSoundRenderer::GatherStats()
 #endif
 
 	out.Format ("%d channels,"TEXTCOLOR_YELLOW"%5.2f"TEXTCOLOR_NORMAL"%% CPU "
-		"(DSP:"TEXTCOLOR_YELLOW"%2.2f"TEXTCOLOR_NORMAL"%%  "
-		"Stream:"TEXTCOLOR_YELLOW"%2.2f"TEXTCOLOR_NORMAL"%%  "
-		"Geometry:"TEXTCOLOR_YELLOW"%2.2f"TEXTCOLOR_NORMAL"%%  "
-		"Update:"TEXTCOLOR_YELLOW"%2.2f"TEXTCOLOR_NORMAL"%%)",
+		"(DSP:"TEXTCOLOR_YELLOW"%5.2f"TEXTCOLOR_NORMAL"%% "
+		"Stream:"TEXTCOLOR_YELLOW"%5.2f"TEXTCOLOR_NORMAL"%% "
+		"Geometry:"TEXTCOLOR_YELLOW"%5.2f"TEXTCOLOR_NORMAL"%% "
+		"Update:"TEXTCOLOR_YELLOW"%5.2f"TEXTCOLOR_NORMAL"%%)",
 		channels, total, dsp, stream, geometry, update);
 	return out;
 }

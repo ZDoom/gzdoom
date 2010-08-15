@@ -9,6 +9,9 @@
 
 static DWORD	nummididevices;
 static bool		nummididevicesset;
+
+CVAR (String, snd_midipatchset, "", CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
+
 #ifdef _WIN32
 	   UINT		mididevice;
 
@@ -19,7 +22,7 @@ CUSTOM_CVAR (Int, snd_mididevice, -1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 	if (!nummididevicesset)
 		return;
 
-	if ((self >= (signed)nummididevices) || (self < -4))
+	if ((self >= (signed)nummididevices) || (self < -5))
 	{
 		Printf ("ID out of range. Using default device.\n");
 		self = 0;
@@ -177,8 +180,8 @@ CCMD (snd_listmididevices)
 
 CUSTOM_CVAR(Int, snd_mididevice, -1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
-	if (self < -3)
-		self = -3;
+	if (self < -5)
+		self = -5;
 	else if (self > -1)
 		self = -1;
 }

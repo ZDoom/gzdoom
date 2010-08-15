@@ -162,6 +162,18 @@ void MusInfo::TimidityVolumeChanged()
 {
 }
 
+void MusInfo::FluidSettingInt(const char *, int)
+{
+}
+
+void MusInfo::FluidSettingNum(const char *, double)
+{
+}
+
+void MusInfo::FluidSettingStr(const char *, const char *)
+{
+}
+
 FString MusInfo::GetStats()
 {
 	return "No stats available for this song";
@@ -428,6 +440,12 @@ MusInfo *I_RegisterSong (const char *filename, BYTE *musiccache, int offset, int
 		{
 			info = new MUSSong2(file, musiccache, len, MIDI_Timidity);
 		}
+#ifdef HAVE_FLUIDSYNTH
+		else if (snd_mididevice == -5 && device == MDEV_DEFAULT)
+		{
+			info = new MUSSong2(file, musiccache, len, MIDI_Fluid);
+		}
+#endif
 		if (info != NULL && !info->IsValid())
 		{
 			delete info;

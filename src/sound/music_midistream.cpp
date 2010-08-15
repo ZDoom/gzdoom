@@ -215,6 +215,12 @@ void MIDIStreamer::Play(bool looping, int subsong)
 		assert(0);
 		// Intentional fall-through for non-Windows systems.
 
+#ifdef HAVE_FLUIDSYNTH
+	case MIDI_Fluid:
+		MIDI = new FluidSynthMIDIDevice;
+		break;
+#endif
+
 	case MIDI_Timidity:
 		MIDI = new TimidityMIDIDevice;
 		break;
@@ -225,10 +231,10 @@ void MIDIStreamer::Play(bool looping, int subsong)
 	}
 	
 #ifndef _WIN32
-	assert(MIDI->NeedThreadedCallback() == false);
+	assert(MIDI == NULL || MIDI->NeedThreadedCallback() == false);
 #endif
 
-	if (0 != MIDI->Open(Callback, this))
+	if (MIDI == NULL || 0 != MIDI->Open(Callback, this))
 	{
 		Printf(PRINT_BOLD, "Could not open MIDI out device\n");
 		return;
@@ -432,6 +438,48 @@ void MIDIStreamer::TimidityVolumeChanged()
 	if (MIDI != NULL)
 	{
 		MIDI->TimidityVolumeChanged();
+	}
+}
+
+//==========================================================================
+//
+// MIDIStreamer :: FluidSettingInt
+//
+//==========================================================================
+
+void MIDIStreamer::FluidSettingInt(const char *setting, int value)
+{
+	if (MIDI != NULL)
+	{
+		MIDI->FluidSettingInt(setting, value);
+	}
+}
+
+//==========================================================================
+//
+// MIDIStreamer :: FluidSettingNum
+//
+//==========================================================================
+
+void MIDIStreamer::FluidSettingNum(const char *setting, double value)
+{
+	if (MIDI != NULL)
+	{
+		MIDI->FluidSettingNum(setting, value);
+	}
+}
+
+//==========================================================================
+//
+// MIDIDeviceStreamer :: FluidSettingStr
+//
+//==========================================================================
+
+void MIDIStreamer::FluidSettingStr(const char *setting, const char *value)
+{
+	if (MIDI != NULL)
+	{
+		MIDI->FluidSettingStr(setting, value);
 	}
 }
 
@@ -837,6 +885,36 @@ void MIDIDevice::PrecacheInstruments(const WORD *instruments, int count)
 //==========================================================================
 
 void MIDIDevice::TimidityVolumeChanged()
+{
+}
+
+//==========================================================================
+//
+// MIDIDevice :: FluidSettingInt
+//
+//==========================================================================
+
+void MIDIDevice::FluidSettingInt(const char *setting, int value)
+{
+}
+
+//==========================================================================
+//
+// MIDIDevice :: FluidSettingNum
+//
+//==========================================================================
+
+void MIDIDevice::FluidSettingNum(const char *setting, double value)
+{
+}
+
+//==========================================================================
+//
+// MIDIDevice :: FluidSettingStr
+//
+//==========================================================================
+
+void MIDIDevice::FluidSettingStr(const char *setting, const char *value)
 {
 }
 

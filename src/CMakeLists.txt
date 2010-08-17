@@ -485,10 +485,14 @@ add_custom_target( revision_check ALL
 
 # Libraries ZDoom needs
 
-
 message( STATUS "Fluid synth libs: ${FLUIDSYNTH_LIBRARIES}" )
-set( ZDOOM_LIBS ${ZDOOM_LIBS} "${ZLIB_LIBRARIES}" "${JPEG_LIBRARIES}" "${BZIP2_LIBRARIES}" "${FMOD_LIBRARY}" "${FLUIDSYNTH_LIBRARIES}" )
-include_directories( "${ZLIB_INCLUDE_DIR}" "${FMOD_INCLUDE_DIR}" "${BZIP2_INCLUDE_DIR}" "${LZMA_INCLUDE_DIR}" "${JPEG_INCLUDE_DIR}" "${FLUIDSYNTH_INCLUDE_DIR}" )
+set( ZDOOM_LIBS ${ZDOOM_LIBS} "${ZLIB_LIBRARIES}" "${JPEG_LIBRARIES}" "${BZIP2_LIBRARIES}" "${FMOD_LIBRARY}" )
+include_directories( "${ZLIB_INCLUDE_DIR}" "${FMOD_INCLUDE_DIR}" "${BZIP2_INCLUDE_DIR}" "${LZMA_INCLUDE_DIR}" "${JPEG_INCLUDE_DIR}" )
+
+if( FLUIDSYNTH_FOUND )
+	set( ZDOOM_LIBS "${FLUIDSYNTH_LIBRARIES}" )
+	include_directories( "${FLUIDSYNTH_INCLUDE_DIR}" )
+endif( FLUIDSYNTH_FOUND )
 
 # Start defining source files for ZDoom
 

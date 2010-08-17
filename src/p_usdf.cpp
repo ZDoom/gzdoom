@@ -258,11 +258,6 @@ class USDFParser : public UDMFParserBase
 				node->ItemCheck[index] = CheckActorType(key);
 				break;
 
-			case NAME_Page:
-				// Yes, I know, thats badly implemented - but the spec requires this here.
-				if (index == 0)	node->ItemCheckNode = CheckInt(key);
-				break;
-
 			case NAME_Count:
 				// Not yet implemented in the engine. Todo later
 				node->ItemCheckCount[index] = CheckInt(key);
@@ -284,7 +279,7 @@ class USDFParser : public UDMFParserBase
 		FStrifeDialogueNode *node = new FStrifeDialogueNode;
 		FStrifeDialogueReply **replyptr = &node->Children;
 		memset(node, 0, sizeof(*node));
-		node->ItemCheckCount[0] = node->ItemCheckCount[1] = node->ItemCheckCount[2] = -1;
+		//node->ItemCheckCount[0] = node->ItemCheckCount[1] = node->ItemCheckCount[2] = -1;
 
 		node->ThisNodeNum = StrifeDialogues.Push(node);
 
@@ -326,6 +321,12 @@ class USDFParser : public UDMFParserBase
 				case NAME_Drop:
 					node->DropType = CheckActorType(key);
 					break;
+
+				case NAME_Link:
+					node->ItemCheckNode = CheckInt(key);
+					break;
+
+
 				}
 			}
 			else

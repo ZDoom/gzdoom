@@ -4,6 +4,7 @@ actor Bootspoon : Fist
 {
 	game Chex
 	obituary "$OB_MPSPOON"
+	Tag "$TAG_SPOON"
 }
 
 actor SuperBootspork : Chainsaw 2005
@@ -11,6 +12,7 @@ actor SuperBootspork : Chainsaw 2005
 	game Chex
 	obituary "$OB_MPBOOTSPORK"
 	Inventory.PickupMessage "$GOTSUPERBOOTSPORK"
+	Tag "$TAG_SPORK"
 }
 
 actor MiniZorcher : Pistol
@@ -18,6 +20,7 @@ actor MiniZorcher : Pistol
 	game Chex
 	obituary "$OP_MPZORCH"
 	inventory.pickupmessage "$GOTMINIZORCHER"
+	Tag "$TAG_MINIZORCHER"
 	states
 	{
 		Spawn:
@@ -30,6 +33,7 @@ actor LargeZorcher : Shotgun 2001
 	game Chex
 	obituary "$OP_MPZORCH"
 	inventory.pickupmessage "$GOTLARGEZORCHER"
+	Tag "$TAG_LARGEZORCHER"
 }
 
 actor SuperLargeZorcher : SuperShotgun 82
@@ -37,6 +41,7 @@ actor SuperLargeZorcher : SuperShotgun 82
 	game Chex
 	obituary "$OB_MPMEGAZORCH"
 	inventory.pickupmessage "$GOTSUPERLARGEZORCHER"
+	Tag "$TAG_SUPERLARGEZORCHER"
 }
 
 actor RapidZorcher : Chaingun 2002
@@ -44,6 +49,7 @@ actor RapidZorcher : Chaingun 2002
 	game Chex
 	obituary "$OB_MPRAPIDZORCH"
 	inventory.pickupmessage "$GOTRAPIDZORCHER"
+	Tag "$TAG_RAPIDZORCHER"
 }
 
 actor ZorchPropulsor : RocketLauncher 2003
@@ -51,6 +57,7 @@ actor ZorchPropulsor : RocketLauncher 2003
 	game Chex
 	obituary ""
 	inventory.pickupmessage "$GOTZORCHPROPULSOR"
+	Tag "$TAG_ZORCHPROPULSOR"
 	States
 	{
 	Fire:
@@ -75,6 +82,7 @@ actor PhasingZorcher : PlasmaRifle 2004
 	game Chex
 	obituary ""
 	inventory.pickupmessage "$GOTPHASINGZORCHER"
+	Tag "$TAG_PHASINGZORCHER"
 	states
 	{
 	Fire:
@@ -104,6 +112,7 @@ actor LAZDevice : BFG9000 2006
 	game Chex
 	obituary ""
 	inventory.pickupmessage "$GOTLAZDEVICE"
+	Tag "$TAG_LAZDEVICE"
 	states
 	{
 	Fire:

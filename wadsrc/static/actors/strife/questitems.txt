@@ -64,19 +64,19 @@ ACTOR QuestItem3 : QuestItem
 ACTOR QuestItem4 : QuestItem
 {
 	ConversationID 315, 296, 313
-	Tag "quest4"
+	Tag "$TAG_QUEST4"
 }
 
 ACTOR QuestItem5 : QuestItem
 {
 	ConversationID 316, 297, 314
-	Tag "quest5"
+	Tag "$TAG_QUEST5"
 }
 
 ACTOR QuestItem6 : QuestItem
 {
 	ConversationID 317, 298, 315
-	Tag "quest4"
+	Tag "TAG_QUEST6"
 }
 
 ACTOR QuestItem7 : QuestItem

@@ -15,7 +15,7 @@ ACTOR Acolyte : StrifeHumanoid
 	+FLOORCLIP
 	+NEVERRESPAWN
 	MinMissileChance 150
-	Tag "ACOLYTE"
+	Tag "$TAG_ACOLYTE"
 	SeeSound "acolyte/sight"
 	PainSound "acolyte/pain"
 	AttackSound "acolyte/rifle"

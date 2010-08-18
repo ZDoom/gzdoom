@@ -8,6 +8,8 @@ ACTOR FWeapFist : FighterWeapon
 	Weapon.SelectionOrder 3400
 	+WEAPON.MELEEWEAPON
 	Weapon.KickBack 150
+	Obituary "$OB_MPFWEAPFIST"
+	Tag "$TAG_FWEAPFIST"
 
 	action native A_FPunchAttack();
 

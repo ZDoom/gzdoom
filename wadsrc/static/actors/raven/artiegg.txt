@@ -38,6 +38,7 @@ ACTOR ArtiEgg : CustomInventory 30
 	Inventory.PickupSound "misc/p_pkup"
 	Inventory.PickupMessage "$TXT_ARTIEGG"
 	Inventory.DefMaxAmount
+	Tag "$TAG_ARTIEGG"
 	States
 	{
 	Spawn:
@@ -91,6 +92,7 @@ ACTOR ArtiPork : CustomInventory 30
 	Inventory.PickupSound "misc/p_pkup"
 	Inventory.PickupMessage "$TXT_ARTIEGG2"
 	Inventory.DefMaxAmount
+	Tag "$TAG_ARTIPORK"
 	States
 	{
 	Spawn:

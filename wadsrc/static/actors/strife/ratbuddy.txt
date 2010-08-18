@@ -12,7 +12,7 @@ ACTOR RatBuddy 85
 	MinMissileChance 150
 	MaxStepHeight 16
 	MaxDropoffHeight 32
-	Tag "rat buddy"
+	Tag "$TAG_RATBUDDY"
 	SeeSound "rat/sight"
 	DeathSound "rat/death"
 	ActiveSound "rat/active"

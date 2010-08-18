@@ -13,7 +13,7 @@ ACTOR Beggar : StrifeHumanoid
 	-COUNTKILL
 	+NOSPLASHALERT
 	MinMissileChance 150
-	Tag "Beggar"
+	Tag "$TAG_BEGGAR"
 	MaxStepHeight 16
 	MaxDropoffHeight 32
 	HitObituary "$OB_BEGGAR"

@@ -116,13 +116,13 @@ EXTERN_CVAR (Float, con_midtime);
 //
 // CVAR displaynametags
 //
-// Selects whether to display name tags or not when changing weapons
+// Selects whether to display name tags or not when changing weapons/items
 //
 //==========================================================================
 
-CUSTOM_CVAR (Bool, displaynametags, 0, CVAR_ARCHIVE)
+CUSTOM_CVAR (Int, displaynametags, 0, CVAR_ARCHIVE)
 {
-	if (self != 0 && self != 1)
+	if (self < 0 || self > 3)
 	{
 		self = 0;
 	}
@@ -322,11 +322,23 @@ CCMD (turn180)
 CCMD (weapnext)
 {
 	SendItemUse = players[consoleplayer].weapons.PickNextWeapon (&players[consoleplayer]);
+	// [BC] Option to display the name of the weapon being cycled to.
+	if ((displaynametags & 2) && StatusBar && SmallFont && SendItemUse)
+	{
+		StatusBar->AttachMessage(new DHUDMessageFadeOut(SmallFont, SendItemUse->GetTag(),
+			1.5f, 0.90f, 0, 0, CR_GOLD, 2.f, 0.35f), MAKE_ID( 'W', 'E', 'P', 'N' ));
+	}
 }
 
 CCMD (weapprev)
 {
 	SendItemUse = players[consoleplayer].weapons.PickPrevWeapon (&players[consoleplayer]);
+	// [BC] Option to display the name of the weapon being cycled to.
+	if ((displaynametags & 2) && StatusBar && SmallFont && SendItemUse)
+	{
+		StatusBar->AttachMessage(new DHUDMessageFadeOut(SmallFont, SendItemUse->GetTag(),
+			1.5f, 0.90f, 0, 0, CR_GOLD, 2.f, 0.35f), MAKE_ID( 'W', 'E', 'P', 'N' ));
+	}
 }
 
 CCMD (invnext)
@@ -354,10 +366,9 @@ CCMD (invnext)
 				who->InvSel = who->Inventory;
 			}
 		}
-		if (displaynametags && StatusBar && SmallFont 
-			&& gamestate == GS_LEVEL && level.time > con_midtime && who->InvSel)
-			StatusBar->AttachMessage (new DHUDMessage (SmallFont, who->InvSel->GetTag(), 
-			2.5f, 0.375f, 0, 0, CR_YELLOW, con_midtime), MAKE_ID('S','I','N','V'));
+		if ((displaynametags & 1) && StatusBar && SmallFont && who->InvSel)
+			StatusBar->AttachMessage (new DHUDMessageFadeOut (SmallFont, who->InvSel->GetTag(), 
+			1.5f, 0.80f, 0, 0, CR_GOLD, 2.f, 0.35f), MAKE_ID('S','I','N','V'));
 	}
 	who->player->inventorytics = 5*TICRATE;
 }
@@ -385,10 +396,9 @@ CCMD (invprev)
 			}
 			who->InvSel = item;
 		}
-		if (displaynametags && StatusBar && SmallFont 
-			&& gamestate == GS_LEVEL && level.time > con_midtime && who->InvSel)
-			StatusBar->AttachMessage (new DHUDMessage (SmallFont, who->InvSel->GetTag(), 
-			2.5f, 0.375f, 0, 0, CR_YELLOW, con_midtime), MAKE_ID('S','I','N','V'));
+		if ((displaynametags & 1) && StatusBar && SmallFont && who->InvSel)
+			StatusBar->AttachMessage (new DHUDMessageFadeOut (SmallFont, who->InvSel->GetTag(), 
+			1.5f, 0.80f, 0, 0, CR_GOLD, 2.f, 0.35f), MAKE_ID('S','I','N','V'));
 	}
 	who->player->inventorytics = 5*TICRATE;
 }

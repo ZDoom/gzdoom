@@ -727,6 +727,50 @@ OB_MPTELEFRAG = "%o was telefragged by %k.";
 OB_RAILGUN = "%o was railed by %k.";
 OB_MPBFG_MBF = "%o was burned by %k's BFG.";
 
+OB_MPSTAFF = "%o got staffed by %k.";
+OB_MPGAUNTLETS = "%o got a shock from %k's gauntlets.";
+OB_MPGOLDWAND = "%o waved goodbye to %k's elven wand.";
+OB_MPCROSSBOW = "%o was pegged by %k's ethereal crossbow.";
+OB_MPBLASTER = "%o was blasted a new one by %k's dragon claw.";
+OB_MPSKULLROD = "%o got sent down under by %k's hellstaff.";
+OB_MPPHOENIXROD = "%o was scorched to cinders by %k's phoenix rod.";
+OB_MPMACE = "%o was bounced by $k's firemace.";
+
+OB_MPPSTAFF = "%o got clapped by %k's charged staff.";
+OB_MPPGAUNTLETS = "%o was bled dry by %k's gauntlets.";
+OB_MPPGOLDWAND = "%o was assaulted by %k's elven wand.";
+OB_MPPCROSSBOW = "%o was shafted by %k's ethereal crossbow.";
+OB_MPPBLASTER = "%o was ripped apart by %k's dragon claw.";
+OB_MPPSKULLROD = "%k poured his hellstaff on %o.";
+OB_MPPPHOENIXROD = "%o was burned down by %k's phoenix staff.";
+OB_MPPMACE = "%o was squished by %k's giant mace sphere.";
+
+OB_MPFWEAPFIST = "%o was beaten to a pulp by %k's bare fists."; 
+OB_MPFWEAPAXE = "%o got the axe from %k."; 
+OB_MPFWEAPHAMMERM = "%o had %p head caved in by %k's hammer."; 
+OB_MPFWEAPHAMMERR = "%o's soul was forged anew by %k's hammer."; 
+OB_MPFWEAPQUIETUS = "%o was silenced by %k's mighty Quietus."; 
+OB_MPCWEAPMACE = "%o got a mace to the face from %k."; 
+OB_MPCWEAPSTAFFM = "%o was bitten by %k's serpent staff."; 
+OB_MPCWEAPSTAFFR = "%o choked on %k's serpent staff."; 
+OB_MPCWEAPFLAME = "%o was lit up by %k's flames."; 
+OB_MPCWEAPWRAITHVERGE = "%o was cleansed by %k's Wraithverge."; 
+OB_MPMWEAPWAND = "%o took one too many sapphire beams from %k."; 
+OB_MPMWEAPFROST = "%o was turned into a frosty fellow by %k."; 
+OB_MPMWEAPLIGHTNING = "%o recieved a shocking revelation from %k."; 
+OB_MPMWEAPBLOODSCOURGE = "%o was wiped off the face of the universe by %k's Bloodscourge.";
+
+OB_MPPUNCHDAGGER = "%o was unwittingly backstabbed by %k."; 
+OB_MPELECTRICBOLT = "%o got bolted to the wall by %k."; 
+OB_MPPOISONBOLT = "%o recieved a lethal dose of %k's wrath."; 
+OB_MPASSAULTGUN = "%o was drilled full of holes by %k's assault gun."; 
+OB_MPMINIMISSILELAUNCHER = "%o gulped down %k's missile."; 
+OB_MPSTRIFEGRENADE = "%o was inverted by %k's H-E grenade."; 
+OB_MPPHOSPHOROUSGRENADE = "%o took a flame bath in %k's phosphorous pyre."; 
+OB_MPFLAMETHROWER = "%o was barbecued by %k."; 
+OB_MPMAULER = "%o was viciously vaporized by %k."; 
+OB_MPSIGIL = "%o bowed down to the sheer power of %k's Sigil.";
+
 // Same as OB_MPTELEFRAG, but shown when a monster telefrags you
 OB_MONTELEFRAG = "%o was telefragged.";
 
@@ -742,6 +786,207 @@ STARTUP2 = "";
 STARTUP3 = "";
 STARTUP4 = "";
 STARTUP5 = "";
+
+
+// Item tags: Doom weapons
+TAG_FIST = "Brass Knuckles";
+TAG_CHAINSAW = "Chainsaw";
+TAG_PISTOL = "Pistol";
+TAG_SHOTGUN = "Shotgun";
+TAG_SUPERSHOTGUN = "Super Shotgun";
+TAG_CHAINGUN = "Chaingun";
+TAG_ROCKETLAUNCHER = "Rocket Launcher";
+TAG_PLASMARIFLE = "Plama Rifle";
+TAG_BFG9000 = "BFG 9000";
+
+// Item tags: Heretic weapons
+TAG_STAFF = "Staff";
+TAG_GAUNTLETS = "Gauntlets of the Necromancer";
+TAG_GOLDWAND = "Elven Wand";
+TAG_CROSSBOW = "Ethereal Crossbow";
+TAG_BLASTER = "Dragon Claw";
+TAG_SKULLROD = "Hellstaff";
+TAG_PHOENIXROD = "Phoenix Rod";
+TAG_MACE = "Firemace";
+
+// Item tags: Heretic artifacts
+TAG_ARTIEGG = "Morph Ovum";
+TAG_ARTIFIREBOMB = "Timebomb of the Ancients";
+TAG_ARTIFLY = "Wings of Wrath";
+TAG_ARTIHEALTH = "Quartz Flask";
+TAG_ARTIINVISIBILITY = "Shadowsphere";
+TAG_ARTIINVULNERABILITY = "Ring of Invincibility";
+TAG_ARTISUPERHEALTH = "Mystic Urn";
+TAG_ARTITELEPORT = "Chaos Device";
+TAG_ARTITOMEOFPOWER = "Tome of Power";
+TAG_ARTITORCH = "Torch";
+
+// Item tags: Hexen weapons
+TAG_CWEAPMACE = "Mace of Contrition";
+TAG_CWEAPSTAFF = "Serpent Staff";
+TAG_CWEAPFLAME = "Firestorm";
+TAG_CWEAPWRAITHVERGE = "Wraithverge";
+TAG_FWEAPFIST = "Spiked Gauntlets";
+TAG_FWEAPAXE = "Timon's Axe";
+TAG_FWEAPHAMMER = "Hammer of Retribution";
+TAG_FWEAPQUIETUS = "Quietus";
+TAG_MWEAPWAND = "Sapphire Wand";
+TAG_MWEAPFROST = "Frost Shards";
+TAG_MWEAPLIGHTNING = "Arcs of Death";
+TAG_MWEAPBLOODSCOURGE = "Bloodscourge";
+
+// Item tags: Hexen artifacts
+TAG_ARTIBLASTRADIUS = "Disc of Repulsion";
+TAG_ARTIBOOSTARMOR = "Dragonskin Bracers";
+TAG_ARTIBOOSTMANA = "Krater of Might";
+TAG_ARTIPOISONBAG = "Flechette";
+TAG_ARTIPOISONBAG1 = "Poison Cloud Flechette";
+TAG_ARTIPOISONBAG2 = "Timebomb Flechette";
+TAG_ARTIPOISONBAG3 = "Grenade Flechette";
+TAG_ARTIHEALINGRADIUS = "Mystic Ambit Incant";
+TAG_ARTIDEFENDER = "Icon of the Defender";
+TAG_ARTIPORK = "Porkelator";
+TAG_ARTISPEED = "Boots of Speed";
+TAG_ARTISUMMON = "Dark Servant";
+TAG_ARTITELEPORTOTHER = "Banishment Device";
+
+// Item tags: Hexen puzzle items
+TAG_ARTIPUZZSKULL = "Yorick's Skull";
+TAG_ARTIPUZZGEMBIG = "Heart of D'Sparil";
+TAG_ARTIPUZZGEMRED = "Ruby Planet";
+TAG_ARTIPUZZGEMGREEN1 = "Emerald Planet (1)";
+TAG_ARTIPUZZGEMGREEN2 = "Emerald Planet (2)";
+TAG_ARTIPUZZGEMBLUE1 = "Sapphire Planet (1)";
+TAG_ARTIPUZZGEMBLUE2 = "Sapphire Planet (2)";
+TAG_ARTIPUZZBOOK1 = "Daemon Codex";
+TAG_ARTIPUZZBOOK2 = "Liber Obscura";
+TAG_ARTIPUZZSKULL2 = "Flame Mask";
+TAG_ARTIPUZZFWEAPON = "Glaive Seal";
+TAG_ARTIPUZZCWEAPON = "Holy Relic";
+TAG_ARTIPUZZMWEAPON = "Sigil of the Magus";
+TAG_ARTIPUZZGEAR1 = "Iron gear";
+TAG_ARTIPUZZGEAR2 = "Brass gear";
+TAG_ARTIPUZZGEAR3 = "Brass and iron gear";
+TAG_ARTIPUZZGEAR4 = "Silver and brass gear";
+
+// Item tags: Strife weapons
+TAG_PUNCHDAGGER = "Dagger";
+TAG_STRIFECROSSBOW1 = "Crossbow";
+TAG_STRIFECROSSBOW2 = "Crossbow";
+TAG_ASSAULTGUN = "Assault Gun";
+TAG_MMLAUNCHER = "Mini Missile Launcher";
+TAG_FLAMER = "Flame Thrower";
+TAG_MAULER1 = "Mauler";
+TAG_MAULER2 = "Mauler";
+TAG_GLAUNCHER1 = "Grenade Launcher";
+TAG_GLAUNCHER2 = "Grenade Launcher";
+TAG_SIGIL = "SIGIL";
+
+// Item tags: Strife artifacts
+TAG_COIN = "coin";
+TAG_MEDPATCH = "Med patch";
+TAG_MEDICALKIT = "Medical kit";
+TAG_SURGERYKIT = "Surgery Kit";	// "full_health" in the Teaser
+TAG_BELDINSRING = "Ring";
+TAG_OFFERINGCHALICE = "Offering Chalice";
+TAG_EAR = "Ear";
+TAG_BROKENCOUPLING = "Broken Power Coupling";
+TAG_SHADOWARMOR = "Shadow Armor";
+TAG_ENVSUIT = "Environmental Suit";
+TAG_GUARDUNIFORM = "Guard Uniform";
+TAG_OFFICERSUNIFORM = "Officer's Uniform";
+TAG_FTHROWERPARTS = "Flame Thrower Parts";
+TAG_REPORT = "Report";
+TAG_INFO = "Info";
+TAG_TARGETER = "Targeter";
+TAG_COMMUNICATOR = "Communicator";
+TAG_DEGNINORE = "Degnin Ore";
+TAG_GUNTRAINING = "Accuracy";
+TAG_HEALTHTRAINING = "Toughness";
+TAG_SCANNER = "Scanner";
+TAG_PRISONPASS = "Prison Pass";
+TAG_ALARM = "Alarm";
+TAG_AMMOFILLUP = "Ammo";
+TAG_HEALTHFILLUP = "Health";
+TAG_TELEPORTERBEACON = "Teleporter Beacon";
+TAG_METALARMOR = "Metal Armor";
+TAG_LEATHER = "Leather Armor";
+TAG_HEGRENADES = "HE-Grenade Rounds";
+TAG_PHGRENADES = "Phoshorus-Grenade Rounds";	// "Fire-Grenade_Rounds" in the Teaser
+TAG_CLIPOFBULLETS = "Clip of Bullets";	// "bullets" in the Teaser
+TAG_BOXOFBULLETS = "Ammo";
+TAG_MINIMISSILES = "Mini Missiles";	//"rocket" in the Teaser
+TAG_CRATEOFMISSILES = "Crate of Missiles";	//"box_of_rockets" in the Teaser
+TAG_ENERGYPOD = "Energy Pod";
+TAG_ENERGYPACK = "Energy Pack";
+TAG_POISONBOLTS = "Poison Bolts";	// "poison_arrows" in the Teaser
+TAG_ELECTRICBOLTS = "Electric Bolts";	// "electric_arrows" in the Teaser
+TAG_AMMOSATCHEL = "Ammo Satchel";	// "Back_pack" in the Teaser
+
+// Item tags: Strife keys
+TAG_BASEKEY = "Base Key";
+TAG_GOVSKEY = "Govs Key";	// "Rebel_Key" in the Teaser
+TAG_PASSCARD = "Passcard";
+TAG_IDBADGE = "ID Badge";
+TAG_PRISONKEY = "Prison Key";
+TAG_SEVEREDHAND = "Severed Hand";
+TAG_POWER1KEY = "Power1 Key";
+TAG_POWER2KEY = "Power2 Key";
+TAG_POWER3KEY = "Power3 Key";
+TAG_GOLDKEY = "Gold Key";
+TAG_IDCARD = "ID Card";
+TAG_SILVERKEY = "Silver Key";
+TAG_ORACLEKEY = "Oracle Key";
+TAG_MILITARYID = "Military ID";
+TAG_ORDERKEY = "Order Key";
+TAG_WAREHOUSEKEY = "Warehouse Key";
+TAG_BRASSKEY = "Brass Key";
+TAG_REDCRYSTALKEY = "Red Crystal Key";
+TAG_BLUECRYSTALKEY = "Blue Crystal Key";
+TAG_CHAPELKEY = "Chapel Key";
+TAG_CATACOMBKEY = "Catacomb Key";	// "Tunnel_Key" in the Teaser
+TAG_SECURITYKEY = "Security Key";
+TAG_COREKEY = "Core Key";	// "New_Key1" in the Teaser
+TAG_MAULERKEY = "Mauler Key";	// "New_Key2" in the Teaser
+TAG_FACTORYKEY = "Factory Key";	// "New_Key3" in the Teaser
+TAG_MINEKEY = "Mine_Key";	// "New_Key4" in the Teaser
+TAG_NEWKEY5 = "New Key5";
+TAG_ORACLEPASS = "Oracle Pass";
+
+// Item tags: misc Strife stuff
+TAG_10GOLD = "10 gold";
+TAG_25GOLD = "25 gold";
+TAG_50GOLD = "50 gold";
+TAG_300GOLD = "300 gold";
+TAG_QUEST4 = "quest4";
+TAG_QUEST5 = "quest5";
+TAG_QUEST6 = "quest4";
+
+// Item tags: Strife NPCs
+TAG_ACOLYTE = "ACOLYTE";
+TAG_ARMORER = "Armorer";
+TAG_BARKEEP = "Bar Keep";
+TAG_BEGGAR = "Beggar";
+TAG_MACIL1 = "MACIL";
+TAG_MACIL2 = "MACIL";
+TAG_MEDIC = "Medic";
+TAG_ORACLE = "Oracle";
+TAG_PRIEST = "PRIEST";
+TAG_RATBUDDY = "rat buddy";
+TAG_REBEL = "Rebel";
+TAG_TEMPLAR = "TEMPLAR";
+TAG_WEAPONSMITH = "Weapon Smith";
+
+// Item tags: Chex weapons
+TAG_SPOON = "Spoon";
+TAG_SPORK = "Super Bootspork";
+TAG_MINIZORCHER = "Mini Zorcher";
+TAG_LARGEZORCHER = "Large Zorcher";
+TAG_SUPERLARGEZORCHER = "Super-Large Zorcher";
+TAG_RAPIDZORCHER = "Rapid Zorcher";
+TAG_ZORCHPROPULSOR = "Zorch Propulsor";
+TAG_PHASINGZORCHER = "Phasing Zorcher";
+TAG_LAZDEVICE = "LAZ Device";
 
 // Heretic strings
 HE1TEXT =

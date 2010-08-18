@@ -86,6 +86,7 @@ ACTOR MWeapBloodscourge : MageWeapon native
 	+Inventory.NoAttenPickupSound
 	Inventory.PickupMessage "$TXT_WEAPON_M4"
 	Inventory.PickupSound "WeaponBuild"
+	Tag "$TAG_MWEAPBLOODSCOURGE"
 
 	action native A_MStaffAttack();
 	action native A_MStaffPalette();
@@ -128,6 +129,7 @@ ACTOR MageStaffFX2 native
 	+SCREENSEEKER
 	+EXTREMEDEATH
 	DeathSound "MageStaffExplode"
+	Obituary "$OB_MPMWEAPBLOODSCOURGE"
 
 	action native A_MStaffTrack();
 

@@ -13,6 +13,7 @@ ACTOR ArtiBoostArmor : Inventory 8041 native
 	Inventory.Icon "ARTIBRAC"
 	Inventory.PickupSound "misc/p_pkup"
 	Inventory.PickupMessage "$TXT_ARTIBOOSTARMOR"
+	Tag "$TAG_ARTIBOOSTARMOR"
 	States
 	{
 	Spawn:

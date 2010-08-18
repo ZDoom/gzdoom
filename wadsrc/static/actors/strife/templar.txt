@@ -20,7 +20,7 @@ ACTOR Templar 3003
 	DeathSound "templar/death"
 	ActiveSound "templar/active"
 	CrushPainSound "misc/pcrush"
-	Tag "TEMPLAR"
+	Tag "$TAG_TEMPLAR"
 	HitObituary "$OB_TEMPLARHIT"
 	Obituary "$OB_TEMPLAR"
 	DropItem "EnergyPod"

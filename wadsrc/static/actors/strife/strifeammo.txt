@@ -10,7 +10,7 @@ ACTOR HEGrenadeRounds : Ammo 152
 	Ammo.BackpackAmount 6
 	Ammo.BackpackMaxAmount 60
 	Inventory.Icon "I_GRN1"
-	Tag "HE-Grenade Rounds"
+	Tag "$TAG_HEGRENADES"
 	Inventory.PickupMessage "$TXT_HEGRENADES"
 	States
 	{
@@ -32,7 +32,7 @@ ACTOR PhosphorusGrenadeRounds : Ammo 153
 	Ammo.BackpackAmount 4
 	Ammo.BackpackMaxAmount 32
 	Inventory.Icon "I_GRN2"
-	Tag "Phoshorus-Grenade Rounds"	// "Fire-Grenade_Rounds" in the Teaser
+	Tag "$TAG_PHGRENADES"
 	Inventory.PickupMessage "$TXT_PHGRENADES"
 	States
 	{
@@ -55,7 +55,7 @@ ACTOR ClipOfBullets : Ammo 2007
 	Ammo.BackpackAmount 10
 	Ammo.BackpackMaxAmount 500
 	Inventory.Icon "I_BLIT"
-	Tag "Clip of Bullets"	// "bullets" in the Teaser
+	Tag "$TAG_CLIPOFBULLETS"
 	Inventory.PickupMessage "$TXT_CLIPOFBULLETS"
 	States
 	{
@@ -73,7 +73,7 @@ ACTOR BoxOfBullets : ClipOfBullets 2048
 	SpawnID 139
 	ConversationID 180, 174, 178
 	Inventory.Amount 50
-	Tag "Ammo"
+	Tag "$TAG_BOXOFBULLETS"
 	Inventory.PickupMessage "$TXT_BOXOFBULLETS"
 	States
 	{
@@ -96,7 +96,7 @@ ACTOR MiniMissiles : Ammo 2010
 	Ammo.BackpackAmount 4
 	Ammo.BackpackMaxAmount 200
 	Inventory.Icon "I_ROKT"
-	Tag "Mini Missiles"	//"rocket" in the Teaser
+	Tag "$TAG_MINIMISSILES"
 	Inventory.PickupMessage "$TXT_MINIMISSILES"
 	States
 	{
@@ -114,7 +114,7 @@ ACTOR CrateOfMissiles : MiniMissiles 2046
 	SpawnID 141
 	ConversationID 182, 176, 180
 	Inventory.Amount 20
-	Tag "Crate of Missiles"	//"box_of_rockets" in the Teaser
+	Tag "$TAG_CRATEOFMISSILES"
 	Inventory.PickupMessage "$TXT_CRATEOFMISSILES"
 	States
 	{
@@ -138,7 +138,7 @@ ACTOR EnergyPod : Ammo 2047
 	Ammo.BackpackMaxAmount 800
 	Ammo.DropAmount 20
 	Inventory.Icon "I_BRY1"
-	Tag "Energy Pod"
+	Tag "$TAG_ENERGYPOD"
 	Inventory.PickupMessage "$TXT_ENERGYPOD"
 	States
 	{
@@ -156,7 +156,7 @@ ACTOR EnergyPack : EnergyPod 17
 	SpawnID 142
 	ConversationID 184, 178, 182
 	Inventory.Amount 100
-	Tag "Energy Pack"
+	Tag "$TAG_ENERGYPACK"
 	Inventory.PickupMessage "$TXT_ENERGYPACK"
 	States
 	{
@@ -178,7 +178,7 @@ ACTOR PoisonBolts : Ammo 115
 	Ammo.BackpackAmount 2
 	Ammo.BackpackMaxAmount 50
 	Inventory.Icon "I_PQRL"
-	Tag "Poison Bolts"	// "poison_arrows" in the Teaser
+	Tag "$TAG_POISONBOLTS"
 	Inventory.PickupMessage "$TXT_POISONBOLTS"
 	States
 	{
@@ -200,7 +200,7 @@ ACTOR ElectricBolts : Ammo 114
 	Ammo.BackpackAmount 4
 	Ammo.BackpackMaxAmount 100
 	Inventory.Icon "I_XQRL"
-	Tag "Electric Bolts"	// "electric_arrows" in the Teaser
+	Tag "$TAG_ELECTRICBOLTS"
 	Inventory.PickupMessage "$TXT_ELECTRICBOLTS"
 	States
 	{
@@ -219,7 +219,7 @@ ACTOR AmmoSatchel : BackpackItem 183
 	ConversationID 187, 181, 184
 	+FLOORCLIP
 	Inventory.Icon "I_BKPK"
-	Tag "Ammo Satchel"	// "Back_pack" in the Teaser
+	Tag "$TAG_AMMOSATCHEL"
 	Inventory.PickupMessage "$TXT_AMMOSATCHEL"
 	States
 	{

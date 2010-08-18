@@ -9,6 +9,7 @@ ACTOR ArtiSpeedBoots : PowerupGiver 8002
 	+INVENTORY.PICKUPFLASH
 	Inventory.Icon ARTISPED
 	Inventory.PickupMessage "$TXT_ARTISPEED"
+	Tag "$TAG_ARTISPEED"
 	Powerup.Type Speed
 	States
 	{

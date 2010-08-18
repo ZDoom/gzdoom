@@ -12,6 +12,8 @@ ACTOR CWeapStaff : ClericWeapon 10
 	Weapon.YAdjust 10
 	Weapon.AmmoType1 "Mana1"
 	Inventory.PickupMessage "$TXT_WEAPON_C2"
+	Obituary "$OB_MPCWEAPSTAFFM"
+	Tag "$TAG_CWEAPSTAFF"
 
 	action native A_CStaffInitBlink();
 	action native A_CStaffCheckBlink();
@@ -65,6 +67,7 @@ ACTOR CStaffMissile native
 	RenderStyle Add
 	Projectile
 	DeathSound "ClericCStaffExplode"
+	Obituary "$OB_MPCWEAPSTAFFR"
 	States
 	{
 	Spawn:

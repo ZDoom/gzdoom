@@ -356,6 +356,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialPosition)
 			self->z += FloatBobOffsets[(self->FloatBobPhase + level.maptime) & 63];
 		}
 	}
+	self->SetOrigin (self->x, self->y, self->z);
 }
 
 int AInventory::StaticLastMessageTic;

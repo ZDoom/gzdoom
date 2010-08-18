@@ -58,7 +58,7 @@ const PClass *GetStrifeType (int typenum);
 int GetConversation(int conv_id);
 int GetConversation(FName classname);
 
-void LoadScriptFile (const char *name, bool include);
+bool LoadScriptFile (const char *name, bool include, int type = 0);
 
 void P_LoadStrifeConversations (MapData *map, const char *mapname);
 void P_FreeStrifeConversations ();

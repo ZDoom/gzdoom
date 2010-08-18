@@ -118,7 +118,7 @@ static TArray<menuitem_t> ConversationItems;
 static int ConversationPauseTic;
 static bool ShowGold;
 
-static void LoadScriptFile(int lumpnum, FileReader *lump, int numnodes, bool include);
+static bool LoadScriptFile(int lumpnum, FileReader *lump, int numnodes, bool include, int type);
 static FStrifeDialogueNode *ReadRetailNode (FileReader *lump, DWORD &prevSpeakerType);
 static FStrifeDialogueNode *ReadTeaserNode (FileReader *lump, DWORD &prevSpeakerType);
 static void ParseReplies (FStrifeDialogueReply **replyptr, Response *responses);
@@ -194,7 +194,7 @@ void P_LoadStrifeConversations (MapData *map, const char *mapname)
 	if (map->Size(ML_CONVERSATION) > 0)
 	{
 		map->Seek(ML_CONVERSATION);
-		LoadScriptFile (map->lumpnum, map->file, map->Size(ML_CONVERSATION), false);
+		LoadScriptFile (map->lumpnum, map->file, map->Size(ML_CONVERSATION), false, 0);
 	}
 	else
 	{
@@ -202,9 +202,13 @@ void P_LoadStrifeConversations (MapData *map, const char *mapname)
 		{
 			return;
 		}
-		char scriptname[9] = { 'S','C','R','I','P','T',mapname[3],mapname[4],0 };
+		char scriptname_b[9] = { 'S','C','R','I','P','T',mapname[3],mapname[4],0 };
+		char scriptname_t[9] = { 'D','I','A','L','O','G',mapname[3],mapname[4],0 };
 
-		LoadScriptFile (scriptname, false);
+		if (!LoadScriptFile(scriptname_t, false, 2))
+		{
+			LoadScriptFile (scriptname_b, false, 1);
+		}
 	}
 }
 
@@ -238,22 +242,23 @@ void P_FreeStrifeConversations ()
 //
 //============================================================================
 
-void LoadScriptFile (const char *name, bool include)
+bool LoadScriptFile (const char *name, bool include, int type)
 {
 	int lumpnum = Wads.CheckNumForName (name);
 	FileReader *lump;
 
 	if (lumpnum < 0)
 	{
-		return;
+		return false;
 	}
 	lump = Wads.ReopenLumpNum (lumpnum);
 
-	LoadScriptFile(lumpnum, lump, Wads.LumpLength(lumpnum), include);
+	bool res = LoadScriptFile(lumpnum, lump, Wads.LumpLength(lumpnum), include, type);
 	delete lump;
+	return res;
 }
 
-static void LoadScriptFile(int lumpnum, FileReader *lump, int numnodes, bool include)
+static bool LoadScriptFile(int lumpnum, FileReader *lump, int numnodes, bool include, int type)
 {
 	int i;
 	DWORD prevSpeakerType;
@@ -263,7 +268,14 @@ static void LoadScriptFile(int lumpnum, FileReader *lump, int numnodes, bool inc
 	lump->Read(buffer, 4);
 	lump->Seek(0, SEEK_SET);
 
+	// The binary format is so primitive that this check is enough to detect it.
 	bool isbinary = (buffer[0] == 0 || buffer[1] == 0 || buffer[2] == 0 || buffer[3] == 0);
+
+	if ((type == 1 && !isbinary) || (type == 2 && isbinary))
+	{
+		DPrintf("Incorrect data format for %s.", Wads.GetLumpFullName(lumpnum));
+		return false;
+	}
 
 	if (!isbinary)
 	{
@@ -273,7 +285,7 @@ static void LoadScriptFile(int lumpnum, FileReader *lump, int numnodes, bool inc
 	{
 		if (!include)
 		{
-			LoadScriptFile("SCRIPT00", true);
+			LoadScriptFile("SCRIPT00", true, 1);
 		}
 		if (!(gameinfo.flags & GI_SHAREWARE))
 		{
@@ -281,7 +293,8 @@ static void LoadScriptFile(int lumpnum, FileReader *lump, int numnodes, bool inc
 			// is exactly 1516 bytes long.
 			if (numnodes % 1516 != 0)
 			{
-				return;
+				DPrintf("Incorrect data format for %s.", Wads.GetLumpFullName(lumpnum));
+				return false;
 			}
 			numnodes /= 1516;
 		}
@@ -290,7 +303,8 @@ static void LoadScriptFile(int lumpnum, FileReader *lump, int numnodes, bool inc
 			// And the teaser version has 1488-byte entries.
 			if (numnodes % 1488 != 0)
 			{
-				return;
+				DPrintf("Incorrect data format for %s.", Wads.GetLumpFullName(lumpnum));
+				return false;
 			}
 			numnodes /= 1488;
 		}
@@ -310,6 +324,7 @@ static void LoadScriptFile(int lumpnum, FileReader *lump, int numnodes, bool inc
 			node->ThisNodeNum = StrifeDialogues.Push(node);
 		}
 	}
+	return true;
 }
 
 //============================================================================

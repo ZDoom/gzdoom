@@ -7,13 +7,18 @@ struct FStrifeDialogueReply;
 class FTexture;
 struct FBrokenLines;
 
+struct FStrifeDialogueItemCheck
+{
+	const PClass *Item;
+	int Amount;
+};
+
 // FStrifeDialogueNode holds text an NPC says to the player
 struct FStrifeDialogueNode
 {
 	~FStrifeDialogueNode ();
 	const PClass *DropType;
-	const PClass *ItemCheck[3];
-	int ItemCheckCount[3];
+	TArray<FStrifeDialogueItemCheck> ItemCheck;
 	int ThisNodeNum;	// location of this node in StrifeDialogues
 	int ItemCheckNode;	// index into StrifeDialogues
 
@@ -35,8 +40,7 @@ struct FStrifeDialogueReply
 	const PClass *GiveType;
 	int ActionSpecial;
 	int Args[5];
-	const PClass *ItemCheck[3];
-	int ItemCheckAmount[3];
+	TArray<FStrifeDialogueItemCheck> ItemCheck;
 	char *Reply;
 	char *QuickYes;
 	int NextNode;	// index into StrifeDialogues

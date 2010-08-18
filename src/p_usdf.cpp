@@ -81,22 +81,28 @@ class USDFParser : public UDMFParserBase
 	//
 	//===========================================================================
 
-	bool ParseCost(FStrifeDialogueReply *response, int index)
+	bool ParseCost(FStrifeDialogueReply *response)
 	{
+		FStrifeDialogueItemCheck check;
+		check.Item = NULL;
+		check.Amount = -1;
+
 		while (!sc.CheckToken('}'))
 		{
 			FName key = ParseKey();
 			switch(key)
 			{
 			case NAME_Item:
-				response->ItemCheck[index] = CheckActorType(key);
+				check.Item = CheckActorType(key);
 				break;
 
 			case NAME_Amount:
-				response->ItemCheckAmount[index] = CheckInt(key);
+				check.Amount = CheckInt(key);
 				break;
 			}
 		}
+
+		response->ItemCheck.Push(check);
 		return true;
 	}
 
@@ -119,7 +125,6 @@ class USDFParser : public UDMFParserBase
 		FString QuickYes;
 		FString QuickNo;
 		FString LogString;
-		unsigned int costs = 0;
 		bool closeDialog = false;
 
 
@@ -203,17 +208,7 @@ class USDFParser : public UDMFParserBase
 				switch(key)
 				{
 				case NAME_Cost:
-					if(costs > 2)
-					{
-						sc.ScriptMessage ("Too many cost blocks, ignoring.");
-						sc.UnGet();
-						Skip();
-					}
-					else
-					{
-						ParseCost(reply, costs);
-						costs++;
-					}
+					ParseCost(reply);
 					break;
 
 				default:
@@ -223,12 +218,15 @@ class USDFParser : public UDMFParserBase
 			}
 		}
 		// Todo: Finalize
-		if (reply->ItemCheckAmount[0] <= 0) reply->NeedsGold = false;
-		if (reply->NeedsGold) ReplyString.AppendFormat(" for %u", reply->ItemCheckAmount[0]);
+		if (reply->ItemCheck.Size() > 0)
+		{
+			if (reply->ItemCheck[0].Amount <= 0) reply->NeedsGold = false;
+			if (reply->NeedsGold) ReplyString.AppendFormat(" for %u", reply->ItemCheck[0].Amount);
+		}
 
 		reply->Reply = ncopystring(ReplyString);
 		reply->QuickYes = ncopystring(QuickYes);
-		if (reply->ItemCheck[0] != NULL)
+		if (reply->ItemCheck.Size() > 0 && reply->ItemCheck[0].Item != NULL)
 		{
 			reply->QuickNo = ncopystring(QuickNo);
 		}
@@ -247,23 +245,29 @@ class USDFParser : public UDMFParserBase
 	//
 	//===========================================================================
 
-	bool ParseIfItem(FStrifeDialogueNode *node, int index)
+	bool ParseIfItem(FStrifeDialogueNode *node)
 	{
+		FStrifeDialogueItemCheck check;
+		check.Item = NULL;
+		check.Amount = -1;
+
 		while (!sc.CheckToken('}'))
 		{
 			FName key = ParseKey();
 			switch(key)
 			{
 			case NAME_Item:
-				node->ItemCheck[index] = CheckActorType(key);
+				check.Item = CheckActorType(key);
 				break;
 
 			case NAME_Count:
 				// Not yet implemented in the engine. Todo later
-				node->ItemCheckCount[index] = CheckInt(key);
+				check.Amount = CheckInt(key);
 				break;
 			}
 		}
+
+		node->ItemCheck.Push(check);
 		return true;
 	}
 
@@ -275,7 +279,6 @@ class USDFParser : public UDMFParserBase
 
 	bool ParsePage()
 	{
-		int ifitemcount = 0;
 		FStrifeDialogueNode *node = new FStrifeDialogueNode;
 		FStrifeDialogueReply **replyptr = &node->Children;
 		memset(node, 0, sizeof(*node));
@@ -334,13 +337,7 @@ class USDFParser : public UDMFParserBase
 				switch(key)
 				{
 				case NAME_Ifitem:
-					if (ifitemcount > 2)
-					{
-						sc.ScriptMessage("Too many ifitem blocks, ignoring.");
-						sc.UnGet();
-						Skip();
-					}
-					else if (!ParseIfItem(node, ifitemcount++)) return false;
+					if (!ParseIfItem(node)) return false;
 					break;
 
 				case NAME_Choice:

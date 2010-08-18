@@ -387,10 +387,11 @@ static FStrifeDialogueNode *ReadRetailNode (FileReader *lump, DWORD &prevSpeaker
 	node->DropType = GetStrifeType (speech.DropType);
 
 	// Items you need to have to make the speaker use a different node.
+	node->ItemCheck.Resize(3);
 	for (j = 0; j < 3; ++j)
 	{
-		node->ItemCheck[j] = GetStrifeType (speech.ItemCheck[j]);
-		node->ItemCheckCount[j] = -1;
+		node->ItemCheck[j].Item = GetStrifeType (speech.ItemCheck[j]);
+		node->ItemCheck[j].Amount = -1;
 	}
 	node->ItemCheckNode = speech.Link;
 	node->Children = NULL;
@@ -464,9 +465,11 @@ static FStrifeDialogueNode *ReadTeaserNode (FileReader *lump, DWORD &prevSpeaker
 	node->DropType = GetStrifeType (speech.DropType);
 
 	// Items you need to have to make the speaker use a different node.
+	node->ItemCheck.Resize(3);
 	for (j = 0; j < 3; ++j)
 	{
-		node->ItemCheck[j] = NULL;
+		node->ItemCheck[j].Item = NULL;
+		node->ItemCheck[j].Amount = -1;
 	}
 	node->ItemCheckNode = 0;
 	node->Children = NULL;
@@ -528,10 +531,11 @@ static void ParseReplies (FStrifeDialogueReply **replyptr, Response *responses)
 		reply->ActionSpecial = 0;
 
 		// Do you need anything special for this reply to succeed?
+		reply->ItemCheck.Resize(3);
 		for (k = 0; k < 3; ++k)
 		{
-			reply->ItemCheck[k] = GetStrifeType (rsp->Item[k]);
-			reply->ItemCheckAmount[k] = rsp->Count[k];
+			reply->ItemCheck[k].Item = GetStrifeType (rsp->Item[k]);
+			reply->ItemCheck[k].Amount = rsp->Count[k];
 		}
 
 		// ReplyLines is calculated when the menu is shown. It is just Reply
@@ -564,7 +568,7 @@ static void ParseReplies (FStrifeDialogueReply **replyptr, Response *responses)
 		{
 			reply->QuickYes = ncopystring (rsp->Yes);
 		}
-		if (reply->ItemCheck[0] != 0)
+		if (reply->ItemCheck[0].Item != 0)
 		{
 			reply->QuickNo = ncopystring (rsp->No);
 		}
@@ -760,11 +764,18 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 	}
 
 	// Check if we should jump to another node
-	while (CurNode->ItemCheck[0] != NULL)
+	while (CurNode->ItemCheck.Size() > 0 && CurNode->ItemCheck[0].Item != NULL)
 	{
-		if (CheckStrifeItem (pc->player, CurNode->ItemCheck[0], CurNode->ItemCheckCount[0]) &&
-			CheckStrifeItem (pc->player, CurNode->ItemCheck[1], CurNode->ItemCheckCount[1]) &&
-			CheckStrifeItem (pc->player, CurNode->ItemCheck[2], CurNode->ItemCheckCount[2]))
+		bool jump = true;
+		for (i = 0; i < (int)CurNode->ItemCheck.Size(); ++i)
+		{
+			if(!CheckStrifeItem (pc->player, CurNode->ItemCheck[i].Item, CurNode->ItemCheck[i].Amount))
+			{
+				jump = false;
+				break;
+			}
+		}
+		if (jump)
 		{
 			int root = pc->player->ConversationNPC->ConversationRoot;
 			CurNode = StrifeDialogues[root + CurNode->ItemCheckNode - 1];
@@ -1110,9 +1121,9 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 	npc = player->ConversationNPC;
 
 	// Check if you have the requisite items for this choice
-	for (i = 0; i < 3; ++i)
+	for (i = 0; i < (int)reply->ItemCheck.Size(); ++i)
 	{
-		if (!CheckStrifeItem(player, reply->ItemCheck[i], reply->ItemCheckAmount[i]))
+		if (!CheckStrifeItem(player, reply->ItemCheck[i].Item, reply->ItemCheck[i].Amount))
 		{
 			// No, you don't. Say so and let the NPC animate negatively.
 			if (reply->QuickNo && isconsole)
@@ -1188,9 +1199,9 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 	// Take away required items if the give was successful or none was needed.
 	if (takestuff)
 	{
-		for (i = 0; i < 3; ++i)
+		for (i = 0; i < (int)reply->ItemCheck.Size(); ++i)
 		{
-			TakeStrifeItem (player, reply->ItemCheck[i], reply->ItemCheckAmount[i]);
+			TakeStrifeItem (player, reply->ItemCheck[i].Item, reply->ItemCheck[i].Amount);
 		}
 		replyText = reply->QuickYes;
 	}

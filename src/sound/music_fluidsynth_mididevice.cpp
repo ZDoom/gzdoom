@@ -83,7 +83,7 @@ CUSTOM_CVAR(Bool, fluid_chorus, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 		currSong->FluidSettingStr("synth.chorus.active", self ? "yes" : "no");
 }
 
-CUSTOM_CVAR(Int, fluid_voices, 32, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Int, fluid_voices, 128, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
 	if (self < 16)
 		self = 16;

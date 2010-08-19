@@ -153,16 +153,22 @@ FluidSynthMIDIDevice::FluidSynthMIDIDevice()
 #ifdef _WIN32
 		// On Windows, look for the 4 megabyte patch set installed by Creative's drivers as a default.
 		char sysdir[MAX_PATH+sizeof("\\CT4MGM.SF2")];
-		if (0 != GetSystemDirectoryA(sysdir, MAX_PATH))
+		UINT filepart;
+		if (0 != (filepart = GetSystemDirectoryA(sysdir, MAX_PATH)))
 		{
 			strcat(sysdir, "\\CT4MGM.SF2");
 			if (0 == LoadPatchSets(sysdir))
 			{
+				// Try again with CT2MGM.SF2
+				sysdir[filepart + 3] = '2';
+				if (0 == LoadPatchSets(sysdir))
+				{
 #endif
-				Printf("Failed to load any MIDI patches.\n");
-				delete_fluid_synth(FluidSynth);
-				FluidSynth = NULL;
+					Printf("Failed to load any MIDI patches.\n");
+					delete_fluid_synth(FluidSynth);
+					FluidSynth = NULL;
 #ifdef _WIN32
+				}
 			}
 		}
 #endif

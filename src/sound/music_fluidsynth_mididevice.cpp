@@ -59,6 +59,20 @@
 #define FLUIDSYNTHLIB	"libfluidsynth.so.1"
 #endif
 
+#define FLUID_REVERB_DEFAULT_ROOMSIZE 0.2f
+#define FLUID_REVERB_DEFAULT_DAMP 0.0f
+#define FLUID_REVERB_DEFAULT_WIDTH 0.5f
+#define FLUID_REVERB_DEFAULT_LEVEL 0.9f
+
+#define FLUID_CHORUS_MOD_SINE		0
+#define FLUID_CHORUS_MOD_TRIANGLE	1
+
+#define FLUID_CHORUS_DEFAULT_N 3
+#define FLUID_CHORUS_DEFAULT_LEVEL 2.0f
+#define FLUID_CHORUS_DEFAULT_SPEED 0.3f
+#define FLUID_CHORUS_DEFAULT_DEPTH 8.0f
+#define FLUID_CHORUS_DEFAULT_TYPE FLUID_CHORUS_MOD_SINE
+
 #endif
 
 // TYPES -------------------------------------------------------------------
@@ -129,6 +143,107 @@ CUSTOM_CVAR(Int, fluid_interp, 1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 		currSong->FluidSettingInt("synth.interpolation", self);
 }
 
+CVAR(Int, fluid_samplerate, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+
+// I don't know if this setting even matters for us, since we aren't letting
+// FluidSynth drives its own output.
+CUSTOM_CVAR(Int, fluid_threads, 1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	if (self < 1)
+		self = 1;
+	else if (self > 256)
+		self = 256;
+}
+
+CUSTOM_CVAR(Float, fluid_reverb_roomsize, FLUID_REVERB_DEFAULT_ROOMSIZE, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	if (self < 0)
+		self = 0;
+	else if (self > 1.2f)
+		self = 1.2f;
+	else if (currSong != NULL)
+		currSong->FluidSettingInt("z.reverb-changed", 0);
+}
+
+CUSTOM_CVAR(Float, fluid_reverb_damping, FLUID_REVERB_DEFAULT_DAMP, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	if (self < 0)
+		self = 0;
+	else if (self > 1)
+		self = 1;
+	else if (currSong != NULL)
+		currSong->FluidSettingInt("z.reverb-changed", 0);
+}
+
+CUSTOM_CVAR(Float, fluid_reverb_width, FLUID_REVERB_DEFAULT_WIDTH, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	if (self < 0)
+		self = 0;
+	else if (self > 100)
+		self = 100;
+	else if (currSong != NULL)
+		currSong->FluidSettingInt("z.reverb-changed", 0);
+}
+
+CUSTOM_CVAR(Float, fluid_reverb_level, FLUID_REVERB_DEFAULT_LEVEL, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	if (self < 0)
+		self = 0;
+	else if (self > 1)
+		self = 1;
+	else if (currSong != NULL)
+		currSong->FluidSettingInt("z.reverb-changed", 0);
+}
+
+CUSTOM_CVAR(Int, fluid_chorus_voices, FLUID_CHORUS_DEFAULT_N, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	if (self < 0)
+		self = 0;
+	else if (self > 99)
+		self = 99;
+	else if (currSong != NULL)
+		currSong->FluidSettingInt("z.chorus-changed", 0);
+}
+
+CUSTOM_CVAR(Float, fluid_chorus_level, FLUID_CHORUS_DEFAULT_LEVEL, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	if (self < 0)
+		self = 0;
+	else if (self > 1)
+		self = 1;
+	else if (currSong != NULL)
+		currSong->FluidSettingInt("z.chorus-changed", 0);
+}
+
+CUSTOM_CVAR(Float, fluid_chorus_speed, FLUID_CHORUS_DEFAULT_SPEED, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	if (self < 0.29f)
+		self = 0.29f;
+	else if (self > 5)
+		self = 5;
+	else if (currSong != NULL)
+		currSong->FluidSettingInt("z.chorus-changed", 0);
+}
+
+// depth is in ms and actual maximum depends on the sample rate
+CUSTOM_CVAR(Float, fluid_chorus_depth, FLUID_CHORUS_DEFAULT_DEPTH, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	if (self < 0)
+		self = 0;
+	else if (self > 21)
+		self = 21;
+	else if (currSong != NULL)
+		currSong->FluidSettingInt("z.chorus-changed", 0);
+}
+
+CUSTOM_CVAR(Int, fluid_chorus_type, FLUID_CHORUS_DEFAULT_TYPE, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	if (self != FLUID_CHORUS_MOD_SINE && self != FLUID_CHORUS_MOD_TRIANGLE)
+		self = FLUID_CHORUS_DEFAULT_TYPE;
+	else if (currSong != NULL)
+		currSong->FluidSettingInt("z.chorus-changed", 0);
+}
+
 // CODE --------------------------------------------------------------------
 
 //==========================================================================
@@ -158,20 +273,28 @@ FluidSynthMIDIDevice::FluidSynthMIDIDevice()
 		printf("Failed to create FluidSettings.\n");
 		return;
 	}
+	SampleRate = fluid_samplerate;
+	if (SampleRate < 22050 || SampleRate > 96000)
+	{ // Match sample rate to SFX rate
+		SampleRate = clamp((int)GSnd->GetOutputRate(), 22050, 96000);
+	}
+	fluid_settings_setnum(FluidSettings, "synth.sample-rate", SampleRate);
 	fluid_settings_setnum(FluidSettings, "synth.gain", fluid_gain);
 	fluid_settings_setstr(FluidSettings, "synth.reverb.active", fluid_reverb ? "yes" : "no");
 	fluid_settings_setstr(FluidSettings, "synth.chorus.active", fluid_chorus ? "yes" : "no");
 	fluid_settings_setint(FluidSettings, "synth.polyphony", fluid_voices);
+	fluid_settings_setint(FluidSettings, "synth.cpu-cores", fluid_threads);
 	FluidSynth = new_fluid_synth(FluidSettings);
 	if (FluidSynth == NULL)
 	{
 		Printf("Failed to create FluidSynth.\n");
 		return;
 	}
-	if (FLUID_FAILED == fluid_synth_set_interp_method(FluidSynth, -1, fluid_interp))
-	{
-		Printf("Failed to set interpolation method %d.\n", *fluid_interp);
-	}
+	fluid_synth_set_interp_method(FluidSynth, -1, fluid_interp);
+	fluid_synth_set_reverb(FluidSynth, fluid_reverb_roomsize, fluid_reverb_damping,
+		fluid_reverb_width, fluid_reverb_level);
+	fluid_synth_set_chorus(FluidSynth, fluid_chorus_voices, fluid_chorus_level,
+		fluid_chorus_speed, fluid_chorus_depth, fluid_chorus_type);
 	if (0 == LoadPatchSets(fluid_patchset))
 	{
 #ifdef unix
@@ -243,8 +366,8 @@ int FluidSynthMIDIDevice::Open(void (*callback)(unsigned int, void *, DWORD, DWO
 	{
 		return 2;
 	}
-	Stream = GSnd->CreateStream(FillStream, int(44100 / 4) * 4,
-		SoundStream::Float, 44100, this);
+	Stream = GSnd->CreateStream(FillStream, (SampleRate / 4) * 4,
+		SoundStream::Float, SampleRate, this);
 	if (Stream == NULL)
 	{
 		return 2;
@@ -334,7 +457,7 @@ int FluidSynthMIDIDevice::SetTimeDiv(int timediv)
 
 void FluidSynthMIDIDevice::CalcTickRate()
 {
-	SamplesPerTick = 44100 / (1000000.0 / Tempo) / Division;
+	SamplesPerTick = SampleRate / (1000000.0 / Tempo) / Division;
 }
 
 //==========================================================================
@@ -737,29 +860,38 @@ int FluidSynthMIDIDevice::LoadPatchSets(const char *patches)
 
 void FluidSynthMIDIDevice::FluidSettingInt(const char *setting, int value)
 {
+	if (FluidSynth == NULL || FluidSettings == NULL)
+	{
+		return;
+	}
+
 	if (strcmp(setting, "synth.interpolation") == 0)
 	{
-		if (FluidSynth != NULL)
+		if (FLUID_OK != fluid_synth_set_interp_method(FluidSynth, -1, value))
 		{
-			if (FLUID_OK != fluid_synth_set_interp_method(FluidSynth, -1, value))
-			{
-				Printf("Setting interpolation method %d failed.\n", value);
-			}
+			Printf("Setting interpolation method %d failed.\n", value);
 		}
 	}
-	else if (FluidSynth != NULL && strcmp(setting, "synth.polyphony") == 0)
+	else if (strcmp(setting, "synth.polyphony") == 0)
 	{
 		if (FLUID_OK != fluid_synth_set_polyphony(FluidSynth, value))
 		{
 			Printf("Setting polyphony to %d failed.\n", value);
 		}
 	}
-	else if (FluidSettings != NULL)
+	else if (strcmp(setting, "z.reverb-changed") == 0)
 	{
-		if (!fluid_settings_setint(FluidSettings, setting, value))
-		{
-			Printf("Faild to set %s to %d.\n", setting, value);
-		}
+		fluid_synth_set_reverb(FluidSynth, fluid_reverb_roomsize, fluid_reverb_damping,
+			fluid_reverb_width, fluid_reverb_level);
+	}
+	else if (strcmp(setting, "z.chorus-changed") == 0)
+	{
+		fluid_synth_set_chorus(FluidSynth, fluid_chorus_voices, fluid_chorus_level,
+			fluid_chorus_speed, fluid_chorus_depth, fluid_chorus_type);
+	}
+	else if (FLUID_OK != fluid_settings_setint(FluidSettings, setting, value))
+	{
+		Printf("Faild to set %s to %d.\n", setting, value);
 	}
 }
 
@@ -888,7 +1020,9 @@ bool FluidSynthMIDIDevice::LoadFluidSynth()
 		{ (void **)&fluid_synth_channel_pressure,		"fluid_synth_channel_pressure" },
 		{ (void **)&fluid_synth_pitch_bend,				"fluid_synth_pitch_bend" },
 		{ (void **)&fluid_synth_write_float,			"fluid_synth_write_float" },
-		{ (void **)&fluid_synth_sfload,					"fluid_synth_sfload" }
+		{ (void **)&fluid_synth_sfload,					"fluid_synth_sfload" },
+		{ (void **)&fluid_synth_set_reverb,				"fluid_synth_set_reverb" },
+		{ (void **)&fluid_synth_set_chorus,				"fluid_synth_set_chorus" },
 	};
 	int fail = 0;
 

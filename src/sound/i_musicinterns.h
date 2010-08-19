@@ -318,6 +318,7 @@ protected:
 	MIDIHDR *Events;
 	bool Started;
 	DWORD Position;
+	int SampleRate;
 
 #ifdef DYN_FLUIDSYNTH
 	enum { FLUID_FAILED = 1, FLUID_OK = 0 };
@@ -344,6 +345,8 @@ protected:
 	int (STACK_ARGS *fluid_synth_pitch_bend)(fluid_synth_t *, int, int);
 	int (STACK_ARGS *fluid_synth_write_float)(fluid_synth_t *, int, void *, int, int, void *, int, int);
 	int (STACK_ARGS *fluid_synth_sfload)(fluid_synth_t *, const char *, int);
+	void (STACK_ARGS *fluid_synth_set_reverb)(fluid_synth_t *, double, double, double, double);
+	void (STACK_ARGS *fluid_synth_set_chorus)(fluid_synth_t *, int, double, double, double, int);
 
 #ifdef _WIN32
 	HMODULE FluidSynthDLL;

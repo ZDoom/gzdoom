@@ -101,7 +101,6 @@ EXTERN_CVAR (Int, snd_buffersize)
 EXTERN_CVAR (Int, snd_samplerate)
 EXTERN_CVAR (Bool, snd_pitched)
 EXTERN_CVAR (Int, snd_channels)
-EXTERN_CVAR (String, snd_midipatchset)
 
 extern int sfx_empty;
 
@@ -117,6 +116,7 @@ CVAR (String, snd_resampler, "Linear", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (String, snd_speakermode, "Auto", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (String, snd_output_format, "PCM-16", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool, snd_profile, false, 0)
+CVAR (String, snd_midipatchset, "", CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 
 // Underwater low-pass filter cutoff frequency. Set to 0 to disable the filter.
 CUSTOM_CVAR (Float, snd_waterlp, 250, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)

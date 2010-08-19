@@ -10,8 +10,6 @@
 static DWORD	nummididevices;
 static bool		nummididevicesset;
 
-CVAR (String, snd_midipatchset, "", CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
-
 #ifdef _WIN32
 	   UINT		mididevice;
 

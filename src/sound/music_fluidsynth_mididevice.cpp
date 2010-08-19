@@ -55,11 +55,11 @@
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-EXTERN_CVAR(String, snd_midipatchset)
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
+
+CVAR(String, fluid_patchset, "", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 CUSTOM_CVAR(Float, fluid_gain, 0.5, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
@@ -143,16 +143,29 @@ FluidSynthMIDIDevice::FluidSynthMIDIDevice()
 	{
 		Printf("Failed to set interpolation method %d.\n", *fluid_interp);
 	}
-	if (0 == LoadPatchSets(snd_midipatchset))
+	if (0 == LoadPatchSets(fluid_patchset))
 	{
 #ifdef unix
 		// This is the standard location on Ubuntu.
 		if (0 == LoadPatchSets("/usr/share/sounds/sf2/FluidR3_GS.sf2:/usr/share/sounds/sf2/FluidR3_GM.sf2"))
 		{
 #endif
-			Printf("Failed to load any MIDI patches.\n");
-			delete_fluid_synth(FluidSynth);
-			FluidSynth = NULL;
+#ifdef _WIN32
+		// On Windows, look for the 4 megabyte patch set installed by Creative's drivers as a default.
+		char sysdir[MAX_PATH+sizeof("\\CT4MGM.SF2")];
+		if (0 != GetSystemDirectoryA(sysdir, MAX_PATH))
+		{
+			strcat(sysdir, "\\CT4MGM.SF2");
+			if (0 == LoadPatchSets(sysdir))
+			{
+#endif
+				Printf("Failed to load any MIDI patches.\n");
+				delete_fluid_synth(FluidSynth);
+				FluidSynth = NULL;
+#ifdef _WIN32
+			}
+		}
+#endif
 #ifdef unix
 		}
 #endif

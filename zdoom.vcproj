@@ -56,8 +56,8 @@
 				FavorSizeOrSpeed="1"
 				OmitFramePointers="true"
 				WholeProgramOptimization="false"
-				AdditionalIncludeDirectories="src\win32;src\sound;src;zlib;src\g_shared;src\g_doom;src\g_raven;src\g_heretic;src\g_hexen;src\g_strife;&quot;jpeg-6b&quot;;game-music-emu\gme;gdtoa;bzip2;lzma\C"
-				PreprocessorDefinitions="NDEBUG,WIN32,_WIN32,_WINDOWS,HAVE_STRUPR,HAVE_FILELENGTH;NO_VA_COPY,BACKPATCH"
+				AdditionalIncludeDirectories="src\win32;src\sound;src;zlib;src\g_shared;src\g_doom;src\g_raven;src\g_heretic;src\g_hexen;src\g_strife;&quot;jpeg-6b&quot;;&quot;game-music-emu\gme&quot;;gdtoa;bzip2;lzma\C"
+				PreprocessorDefinitions="NDEBUG,WIN32,_WIN32,_WINDOWS,HAVE_STRUPR,HAVE_FILELENGTH;NO_VA_COPY,BACKPATCH,HAVE_FLUIDSYNTH,DYN_FLUIDSYNTH"
 				StringPooling="true"
 				ExceptionHandling="1"
 				RuntimeLibrary="0"
@@ -286,8 +286,8 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="src\win32;src\sound;src;zlib;src\g_shared;src\g_doom;src\g_raven;src\g_heretic;src\g_hexen;src\g_strife;&quot;jpeg-6b&quot;;game-music-emu\gme;gdtoa;bzip2;lzma\C"
-				PreprocessorDefinitions="WIN32,_DEBUG,_WIN32,_WINDOWS,_CRTDBG_MAP_ALLOC,HAVE_STRUPR,HAVE_FILELENGTH;NO_VA_COPY,BACKPATCH"
+				AdditionalIncludeDirectories="src\win32;src\sound;src;zlib;src\g_shared;src\g_doom;src\g_raven;src\g_heretic;src\g_hexen;src\g_strife;&quot;jpeg-6b&quot;;&quot;game-music-emu\gme&quot;;gdtoa;bzip2;lzma\C"
+				PreprocessorDefinitions="WIN32,_DEBUG,_WIN32,_WINDOWS,_CRTDBG_MAP_ALLOC,HAVE_STRUPR,HAVE_FILELENGTH;NO_VA_COPY,BACKPATCH,HAVE_FLUIDSYNTH,DYN_FLUIDSYNTH"
 				MinimalRebuild="true"
 				RuntimeLibrary="1"
 				EnableFunctionLevelLinking="true"
@@ -5443,6 +5443,10 @@
 			</File>
 			<File
 				RelativePath=".\src\sound\music_dumb.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\sound\music_fluidsynth_mididevice.cpp"
 				>
 			</File>
 			<File

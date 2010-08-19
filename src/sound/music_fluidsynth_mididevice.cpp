@@ -45,6 +45,20 @@
 
 // MACROS ------------------------------------------------------------------
 
+#ifdef DYN_FLUIDSYNTH
+
+#ifdef _WIN32
+#ifndef _M_X64
+#define FLUIDSYNTHLIB	"fluidsynth.dll"
+#else
+#define FLUIDSYNTHLIB	"fluidsynth64.dll"
+#endif
+#else
+#error "TODO: Write a dlopen() version of this code."
+#endif
+
+#endif
+
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -93,16 +107,22 @@ CUSTOM_CVAR(Int, fluid_voices, 128, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 		currSong->FluidSettingInt("synth.polyphony", self);
 }
 
-CUSTOM_CVAR(Int, fluid_interp, FLUID_INTERP_LINEAR, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Int, fluid_interp, 1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
 	// Values are: 0 = FLUID_INTERP_NONE
 	//             1 = FLUID_INTERP_LINEAR
-	//             2 = FLUID_INTERP_4THORDER (the FluidSynth default)
-	//             3 = FLUID_INTERP_7THORDER
-	if (self < FLUID_INTERP_NONE)
-		self = FLUID_INTERP_NONE;
-	else if (self > FLUID_INTERP_HIGHEST)
-		self = FLUID_INTERP_HIGHEST;
+	//             4 = FLUID_INTERP_4THORDER (the FluidSynth default)
+	//             7 = FLUID_INTERP_7THORDER
+	// (And here I thought it was just a linear list.)
+	// Round undefined values to the nearest valid one.
+	if (self < 0)
+		self = 0;
+	else if (self == 2)
+		self = 1;
+	else if (self == 3 || self == 5)
+		self = 4;
+	else if (self == 6 || self > 7)
+		self = 7;
 	else if (currSong != NULL)
 		currSong->FluidSettingInt("synth.interpolation", self);
 }
@@ -123,6 +143,13 @@ FluidSynthMIDIDevice::FluidSynthMIDIDevice()
 	Events = NULL;
 	Started = false;
 	FluidSynth = NULL;
+	FluidSettings = NULL;
+#ifdef DYN_FLUIDSYNTH
+	if (!LoadFluidSynth())
+	{
+		return;
+	}
+#endif
 	FluidSettings = new_fluid_settings();
 	if (FluidSettings == NULL)
 	{
@@ -195,6 +222,9 @@ FluidSynthMIDIDevice::~FluidSynthMIDIDevice()
 	{
 		delete_fluid_settings(FluidSettings);
 	}
+#ifdef DYN_FLUIDSYNTH
+	UnloadFluidSynth();
+#endif
 }
 
 //==========================================================================
@@ -813,6 +843,107 @@ FString FluidSynthMIDIDevice::GetStats()
 		voices, polyphony, maxpoly, load, reverb, chorus);
 	return out;
 }
+
+#ifdef DYN_FLUIDSYNTH
+
+struct LibFunc
+{
+	void **FuncPointer;
+	const char *FuncName;
+};
+
+//==========================================================================
+//
+// FluidSynthMIDIDevice :: LoadFluidSynth
+//
+// Returns true if the FluidSynth library was successfully loaded.
+//
+//==========================================================================
+
+bool FluidSynthMIDIDevice::LoadFluidSynth()
+{
+	LibFunc imports[] =
+	{
+		{ (void **)&new_fluid_settings,					"new_fluid_settings" },
+		{ (void **)&new_fluid_synth,					"new_fluid_synth" },
+		{ (void **)&delete_fluid_synth,					"delete_fluid_synth" },
+		{ (void **)&delete_fluid_settings,				"delete_fluid_settings" },
+		{ (void **)&fluid_settings_setnum,				"fluid_settings_setnum" },
+		{ (void **)&fluid_settings_setstr,				"fluid_settings_setstr" },
+		{ (void **)&fluid_settings_setint,				"fluid_settings_setint" },
+		{ (void **)&fluid_settings_getstr,				"fluid_settings_getstr" },
+		{ (void **)&fluid_settings_getint,				"fluid_settings_getint" },
+		{ (void **)&fluid_synth_set_interp_method,		"fluid_synth_set_interp_method" },
+		{ (void **)&fluid_synth_set_polyphony,			"fluid_synth_set_polyphony" },
+		{ (void **)&fluid_synth_get_polyphony,			"fluid_synth_get_polyphony" },
+		{ (void **)&fluid_synth_get_active_voice_count,	"fluid_synth_get_active_voice_count" },
+		{ (void **)&fluid_synth_get_cpu_load,			"fluid_synth_get_cpu_load" },
+		{ (void **)&fluid_synth_system_reset,			"fluid_synth_system_reset" },
+		{ (void **)&fluid_synth_noteon,					"fluid_synth_noteon" },
+		{ (void **)&fluid_synth_noteoff,				"fluid_synth_noteoff" },
+		{ (void **)&fluid_synth_cc,						"fluid_synth_cc" },
+		{ (void **)&fluid_synth_program_change,			"fluid_synth_program_change" },
+		{ (void **)&fluid_synth_channel_pressure,		"fluid_synth_channel_pressure" },
+		{ (void **)&fluid_synth_pitch_bend,				"fluid_synth_pitch_bend" },
+		{ (void **)&fluid_synth_write_float,			"fluid_synth_write_float" },
+		{ (void **)&fluid_synth_sfload,					"fluid_synth_sfload" }
+	};
+	int fail = 0;
+
+#ifdef _WIN32
+	FluidSynthDLL = LoadLibrary(FLUIDSYNTHLIB);
+#endif
+	if (FluidSynthDLL == NULL)
+	{
+		Printf(TEXTCOLOR_RED"Could not load " FLUIDSYNTHLIB "\n");
+		return false;
+	}
+
+	for (int i = 0; i < countof(imports); ++i)
+	{
+#ifdef _WIN32
+		FARPROC proc = GetProcAddress(FluidSynthDLL, imports[i].FuncName);
+		if (proc == NULL)
+		{
+			Printf(TEXTCOLOR_RED"Failed to find %s in %s\n", imports[i].FuncName, FLUIDSYNTHLIB);
+			fail++;
+		}
+		*imports[i].FuncPointer = proc;
+#endif
+	}
+	if (fail == 0)
+	{
+		return true;
+	}
+	else
+	{
+#ifdef _WIN32
+		FreeLibrary(FluidSynthDLL);
+		FluidSynthDLL = NULL;
+#endif
+		return false;
+	}
+
+}
+
+//==========================================================================
+//
+// FluidSynthMIDIDevice :: UnloadFluidSynth
+//
+//==========================================================================
+
+void FluidSynthMIDIDevice::UnloadFluidSynth()
+{
+#ifdef _WIN32
+	if (FluidSynthDLL != NULL)
+	{
+		FreeLibrary(FluidSynthDLL);
+		FluidSynthDLL = NULL;
+	}
+#endif
+}
+
+#endif
 
 #endif
 

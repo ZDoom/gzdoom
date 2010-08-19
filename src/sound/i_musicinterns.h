@@ -261,7 +261,12 @@ protected:
 // FluidSynth implementation of a MIDI device -------------------------------
 
 #ifdef HAVE_FLUIDSYNTH
+#ifndef DYN_FLUIDSYNTH
 #include <fluidsynth.h>
+#else
+struct fluid_settings_t;
+struct fluid_synth_t;
+#endif
 
 class FluidSynthMIDIDevice : public MIDIDevice
 {
@@ -313,6 +318,39 @@ protected:
 	MIDIHDR *Events;
 	bool Started;
 	DWORD Position;
+
+#ifdef DYN_FLUIDSYNTH
+	enum { FLUID_FAILED = 1, FLUID_OK = 0 };
+	fluid_settings_t *(STACK_ARGS *new_fluid_settings)();
+	fluid_synth_t *(STACK_ARGS *new_fluid_synth)(fluid_settings_t *);
+	int (STACK_ARGS *delete_fluid_synth)(fluid_synth_t *);
+	void (STACK_ARGS *delete_fluid_settings)(fluid_settings_t *);
+	int (STACK_ARGS *fluid_settings_setnum)(fluid_settings_t *, const char *, double);
+	int (STACK_ARGS *fluid_settings_setstr)(fluid_settings_t *, const char *, const char *);
+	int (STACK_ARGS *fluid_settings_setint)(fluid_settings_t *, const char *, int);
+	int (STACK_ARGS *fluid_settings_getstr)(fluid_settings_t *, const char *, char **);
+	int (STACK_ARGS *fluid_settings_getint)(fluid_settings_t *, const char *, int *);
+	int (STACK_ARGS *fluid_synth_set_interp_method)(fluid_synth_t *, int, int);
+	int (STACK_ARGS *fluid_synth_set_polyphony)(fluid_synth_t *, int);
+	int (STACK_ARGS *fluid_synth_get_polyphony)(fluid_synth_t *);
+	int (STACK_ARGS *fluid_synth_get_active_voice_count)(fluid_synth_t *);
+	double (STACK_ARGS *fluid_synth_get_cpu_load)(fluid_synth_t *);
+	int (STACK_ARGS *fluid_synth_system_reset)(fluid_synth_t *);
+	int (STACK_ARGS *fluid_synth_noteon)(fluid_synth_t *, int, int, int);
+	int (STACK_ARGS *fluid_synth_noteoff)(fluid_synth_t *, int, int);
+	int (STACK_ARGS *fluid_synth_cc)(fluid_synth_t *, int, int, int);
+	int (STACK_ARGS *fluid_synth_program_change)(fluid_synth_t *, int, int);
+	int (STACK_ARGS *fluid_synth_channel_pressure)(fluid_synth_t *, int, int);
+	int (STACK_ARGS *fluid_synth_pitch_bend)(fluid_synth_t *, int, int);
+	int (STACK_ARGS *fluid_synth_write_float)(fluid_synth_t *, int, void *, int, int, void *, int, int);
+	int (STACK_ARGS *fluid_synth_sfload)(fluid_synth_t *, const char *, int);
+
+#ifdef _WIN32
+	HMODULE FluidSynthDLL;
+#endif
+	bool LoadFluidSynth();
+	void UnloadFluidSynth();
+#endif
 };
 #endif
 

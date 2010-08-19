@@ -347,6 +347,8 @@ protected:
 
 #ifdef _WIN32
 	HMODULE FluidSynthDLL;
+#else
+	void *FluidSynthSO;
 #endif
 	bool LoadFluidSynth();
 	void UnloadFluidSynth();

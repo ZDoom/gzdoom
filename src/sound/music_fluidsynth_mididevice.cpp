@@ -54,7 +54,9 @@
 #define FLUIDSYNTHLIB	"fluidsynth64.dll"
 #endif
 #else
-#error "TODO: Write a dlopen() version of this code."
+#include <dlfcn.h>
+
+#define FLUIDSYNTHLIB	"libfluidsynth.so.1"
 #endif
 
 #endif
@@ -892,24 +894,33 @@ bool FluidSynthMIDIDevice::LoadFluidSynth()
 
 #ifdef _WIN32
 	FluidSynthDLL = LoadLibrary(FLUIDSYNTHLIB);
-#endif
 	if (FluidSynthDLL == NULL)
 	{
 		Printf(TEXTCOLOR_RED"Could not load " FLUIDSYNTHLIB "\n");
 		return false;
 	}
+#else
+	FluidSynthSO = dlopen(FLUIDSYNTHLIB, RTLD_LAZY);
+	if (FluidSynthSO == NULL)
+	{
+		Printf(TEXTCOLOR_RED"Could not load " FLUIDSYNTHLIB ": %s\n", dlerror());
+		return false;
+	}
+#endif
 
 	for (int i = 0; i < countof(imports); ++i)
 	{
 #ifdef _WIN32
 		FARPROC proc = GetProcAddress(FluidSynthDLL, imports[i].FuncName);
+#else
+		void *proc = dlsym(FluidSynthSO, imports[i].FuncName);
+#endif
 		if (proc == NULL)
 		{
 			Printf(TEXTCOLOR_RED"Failed to find %s in %s\n", imports[i].FuncName, FLUIDSYNTHLIB);
 			fail++;
 		}
 		*imports[i].FuncPointer = proc;
-#endif
 	}
 	if (fail == 0)
 	{
@@ -920,6 +931,9 @@ bool FluidSynthMIDIDevice::LoadFluidSynth()
 #ifdef _WIN32
 		FreeLibrary(FluidSynthDLL);
 		FluidSynthDLL = NULL;
+#else
+		dlclose(FluidSynthSO);
+		FluidSynthSO = NULL;
 #endif
 		return false;
 	}
@@ -939,6 +953,12 @@ void FluidSynthMIDIDevice::UnloadFluidSynth()
 	{
 		FreeLibrary(FluidSynthDLL);
 		FluidSynthDLL = NULL;
+	}
+#else
+	if (FluidSynthSO != NULL)
+	{
+		dlclose(FluidSynthSO);
+		FluidSynthSO = NULL;
 	}
 #endif
 }

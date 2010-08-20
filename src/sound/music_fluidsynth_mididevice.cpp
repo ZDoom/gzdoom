@@ -254,11 +254,6 @@ CUSTOM_CVAR(Int, fluid_chorus_type, FLUID_CHORUS_DEFAULT_TYPE, CVAR_ARCHIVE|CVAR
 
 FluidSynthMIDIDevice::FluidSynthMIDIDevice()
 {
-	Stream = NULL;
-	Tempo = 0;
-	Division = 0;
-	Events = NULL;
-	Started = false;
 	FluidSynth = NULL;
 	FluidSettings = NULL;
 #ifdef DYN_FLUIDSYNTH
@@ -366,266 +361,12 @@ int FluidSynthMIDIDevice::Open(void (*callback)(unsigned int, void *, DWORD, DWO
 	{
 		return 2;
 	}
-	Stream = GSnd->CreateStream(FillStream, (SampleRate / 4) * 4,
-		SoundStream::Float, SampleRate, this);
-	if (Stream == NULL)
+	int ret = OpenStream(4, 0, callback, userdata);
+	if (ret == 0)
 	{
-		return 2;
+		fluid_synth_system_reset(FluidSynth);
 	}
-
-	fluid_synth_system_reset(FluidSynth);
-	Callback = callback;
-	CallbackData = userdata;
-	Tempo = 500000;
-	Division = 100;
-	CalcTickRate();
-	return 0;
-}
-
-//==========================================================================
-//
-// FluidSynthMIDIDevice :: Close
-//
-//==========================================================================
-
-void FluidSynthMIDIDevice::Close()
-{
-	if (Stream != NULL)
-	{
-		delete Stream;
-		Stream = NULL;
-	}
-	Started = false;
-}
-
-//==========================================================================
-//
-// FluidSynthMIDIDevice :: IsOpen
-//
-//==========================================================================
-
-bool FluidSynthMIDIDevice::IsOpen() const
-{
-	return Stream != NULL;
-}
-
-//==========================================================================
-//
-// FluidSynthMIDIDevice :: GetTechnology
-//
-//==========================================================================
-
-int FluidSynthMIDIDevice::GetTechnology() const
-{
-	return MOD_SWSYNTH;
-}
-
-//==========================================================================
-//
-// FluidSynthMIDIDevice :: SetTempo
-//
-//==========================================================================
-
-int FluidSynthMIDIDevice::SetTempo(int tempo)
-{
-	Tempo = tempo;
-	CalcTickRate();
-	return 0;
-}
-
-//==========================================================================
-//
-// FluidSynthMIDIDevice :: SetTimeDiv
-//
-//==========================================================================
-
-int FluidSynthMIDIDevice::SetTimeDiv(int timediv)
-{
-	Division = timediv;
-	CalcTickRate();
-	return 0;
-}
-
-//==========================================================================
-//
-// FluidSynthMIDIDevice :: CalcTickRate
-//
-// Tempo is the number of microseconds per quarter note.
-// Division is the number of ticks per quarter note.
-//
-//==========================================================================
-
-void FluidSynthMIDIDevice::CalcTickRate()
-{
-	SamplesPerTick = SampleRate / (1000000.0 / Tempo) / Division;
-}
-
-//==========================================================================
-//
-// FluidSynthMIDIDevice :: Resume
-//
-//==========================================================================
-
-int FluidSynthMIDIDevice::Resume()
-{
-	if (!Started)
-	{
-		if (Stream->Play(true, 1))
-		{
-			Started = true;
-			return 0;
-		}
-		return 1;
-	}
-	return 0;
-}
-
-//==========================================================================
-//
-// FluidSynthMIDIDevice :: Stop
-//
-//==========================================================================
-
-void FluidSynthMIDIDevice::Stop()
-{
-	if (Started)
-	{
-		Stream->Stop();
-		Started = false;
-	}
-}
-
-//==========================================================================
-//
-// FluidSynthMIDIDevice :: StreamOutSync
-//
-// This version is called from the main game thread and needs to
-// synchronize with the player thread.
-//
-//==========================================================================
-
-int FluidSynthMIDIDevice::StreamOutSync(MIDIHDR *header)
-{
-	CritSec.Enter();
-	StreamOut(header);
-	CritSec.Leave();
-	return 0;
-}
-
-//==========================================================================
-//
-// FluidSynthMIDIDevice :: StreamOut
-//
-// This version is called from the player thread so does not need to
-// arbitrate for access to the Events pointer.
-//
-//==========================================================================
-
-int FluidSynthMIDIDevice::StreamOut(MIDIHDR *header)
-{
-	header->lpNext = NULL;
-	if (Events == NULL)
-	{
-		Events = header;
-		NextTickIn = SamplesPerTick * *(DWORD *)header->lpData;
-		Position = 0;
-	}
-	else
-	{
-		MIDIHDR **p;
-
-		for (p = &Events; *p != NULL; p = &(*p)->lpNext)
-		{ }
-		*p = header;
-	}
-	return 0;
-}
-
-//==========================================================================
-//
-// FluidSynthMIDIDevice :: PrepareHeader
-//
-//==========================================================================
-
-int FluidSynthMIDIDevice::PrepareHeader(MIDIHDR *header)
-{
-	return 0;
-}
-
-//==========================================================================
-//
-// FluidSynthMIDIDevice :: UnprepareHeader
-//
-//==========================================================================
-
-int FluidSynthMIDIDevice::UnprepareHeader(MIDIHDR *header)
-{
-	return 0;
-}
-
-//==========================================================================
-//
-// FluidSynthMIDIDevice :: FakeVolume
-//
-// Since the FluidSynth output is rendered as a normal stream, its volume is
-// controlled through the GSnd interface, not here.
-//
-//==========================================================================
-
-bool FluidSynthMIDIDevice::FakeVolume()
-{
-	return false;
-}
-
-//==========================================================================
-//
-// FluidSynthMIDIDevice :: NeedThreadedCallabck
-//
-// FluidSynth can service the callback directly rather than using a separate
-// thread.
-//
-//==========================================================================
-
-bool FluidSynthMIDIDevice::NeedThreadedCallback()
-{
-	return false;
-}
-
-//==========================================================================
-//
-// FluidSynthMIDIDevice :: Pause
-//
-//==========================================================================
-
-bool FluidSynthMIDIDevice::Pause(bool paused)
-{
-	if (Stream != NULL)
-	{
-		return Stream->SetPaused(paused);
-	}
-	return true;
-}
-
-//==========================================================================
-//
-// FluidSynthMIDIDevice :: PrecacheInstruments
-//
-// Each entry is packed as follows:
-//   Bits 0- 6: Instrument number
-//   Bits 7-13: Bank number
-//   Bit    14: Select drum set if 1, tone bank if 0
-//
-//==========================================================================
-
-void FluidSynthMIDIDevice::PrecacheInstruments(const WORD *instruments, int count)
-{
-#if 0
-	for (int i = 0; i < count; ++i)
-	{
-		Renderer->MarkInstrument((instruments[i] >> 7) & 127, instruments[i] >> 14, instruments[i] & 127);
-	}
-	Renderer->load_missing_instruments();
-#endif
+	return ret;
 }
 
 //==========================================================================
@@ -674,136 +415,31 @@ void FluidSynthMIDIDevice::HandleEvent(int status, int parm1, int parm2)
 
 //==========================================================================
 //
-// FluidSynthMIDIDevice :: PlayTick
+// FluidSynthMIDIDevice :: HandleLongEvent
 //
-// event[0] = delta time
-// event[1] = unused
-// event[2] = event
+// Handle SysEx messages.
 //
 //==========================================================================
 
-int FluidSynthMIDIDevice::PlayTick()
+void FluidSynthMIDIDevice::HandleLongEvent(const BYTE *data, int len)
 {
-	DWORD delay = 0;
-
-	while (delay == 0 && Events != NULL)
+	if (len > 1 && (data[0] == 0xF0 || data[0] == 0xF7))
 	{
-		DWORD *event = (DWORD *)(Events->lpData + Position);
-		if (MEVT_EVENTTYPE(event[2]) == MEVT_TEMPO)
-		{
-			SetTempo(MEVT_EVENTPARM(event[2]));
-		}
-		else if (MEVT_EVENTTYPE(event[2]) == MEVT_LONGMSG)
-		{
-#if 0
-			Renderer->HandleLongMessage((BYTE *)&event[3], MEVT_EVENTPARM(event[2]));
-#endif
-		}
-		else if (MEVT_EVENTTYPE(event[2]) == 0)
-		{ // Short MIDI event
-			int status = event[2] & 0xff;
-			int parm1 = (event[2] >> 8) & 0x7f;
-			int parm2 = (event[2] >> 16) & 0x7f;
-			HandleEvent(status, parm1, parm2);
-		}
-
-		// Advance to next event.
-		if (event[2] < 0x80000000)
-		{ // Short message
-			Position += 12;
-		}
-		else
-		{ // Long message
-			Position += 12 + ((MEVT_EVENTPARM(event[2]) + 3) & ~3);
-		}
-
-		// Did we use up this buffer?
-		if (Position >= Events->dwBytesRecorded)
-		{
-			Events = Events->lpNext;
-			Position = 0;
-
-			if (Callback != NULL)
-			{
-				Callback(MOM_DONE, CallbackData, 0, 0);
-			}
-		}
-
-		if (Events == NULL)
-		{ // No more events. Just return something to keep the song playing
-		  // while we wait for more to be submitted.
-			return int(Division);
-		}
-
-		delay = *(DWORD *)(Events->lpData + Position);
+		fluid_synth_sysex(FluidSynth, (const char *)data + 1, len - 1, NULL, NULL, NULL, 0);
 	}
-	return delay;
 }
 
 //==========================================================================
 //
-// FluidSynthtMIDIDevice :: ServiceStream
+// FluidSynthMIDIDevice :: ComputeOutput
 //
 //==========================================================================
 
-bool FluidSynthMIDIDevice::ServiceStream (void *buff, int numbytes)
+void FluidSynthMIDIDevice::ComputeOutput(float *buffer, int len)
 {
-	float *samples = (float *)buff;
-	float *samples1;
-	int numsamples = numbytes / sizeof(float) / 2;
-	bool prev_ended = false;
-	bool res = true;
-
-	samples1 = samples;
-	memset(buff, 0, numbytes);
-
-	CritSec.Enter();
-	while (Events != NULL && numsamples > 0)
-	{
-		double ticky = NextTickIn;
-		int tick_in = int(NextTickIn);
-		int samplesleft = MIN(numsamples, tick_in);
-
-		if (samplesleft > 0)
-		{
-			fluid_synth_write_float(FluidSynth, samplesleft,
-				samples1, 0, 2,
-				samples1, 1, 2);
-			assert(NextTickIn == ticky);
-			NextTickIn -= samplesleft;
-			assert(NextTickIn >= 0);
-			numsamples -= samplesleft;
-			samples1 += samplesleft * 2;
-		}
-		
-		if (NextTickIn < 1)
-		{
-			int next = PlayTick();
-			assert(next >= 0);
-			if (next == 0)
-			{ // end of song
-				if (numsamples > 0)
-				{
-					fluid_synth_write_float(FluidSynth, numsamples,
-						samples1, 0, 2,
-						samples1, 1, 2);
-				}
-				res = false;
-				break;
-			}
-			else
-			{
-				NextTickIn += SamplesPerTick * next;
-				assert(NextTickIn >= 0);
-			}
-		}
-	}
-	if (Events == NULL)
-	{
-		res = false;
-	}
-	CritSec.Leave();
-	return res;
+	fluid_synth_write_float(FluidSynth, len,
+		buffer, 0, 2,
+		buffer, 1, 2);
 }
 
 //==========================================================================
@@ -935,18 +571,6 @@ void FluidSynthMIDIDevice::FluidSettingStr(const char *setting, const char *valu
 
 //==========================================================================
 //
-// FluidSynthMIDIDevice :: FillStream									static
-//
-//==========================================================================
-
-bool FluidSynthMIDIDevice::FillStream(SoundStream *stream, void *buff, int len, void *userdata)
-{
-	FluidSynthMIDIDevice *device = (FluidSynthMIDIDevice *)userdata;
-	return device->ServiceStream(buff, len);
-}
-
-//==========================================================================
-//
 // FluidSynthMIDIDevice :: GetStats
 //
 //==========================================================================
@@ -1023,6 +647,7 @@ bool FluidSynthMIDIDevice::LoadFluidSynth()
 		{ (void **)&fluid_synth_sfload,					"fluid_synth_sfload" },
 		{ (void **)&fluid_synth_set_reverb,				"fluid_synth_set_reverb" },
 		{ (void **)&fluid_synth_set_chorus,				"fluid_synth_set_chorus" },
+		{ (void **)&fluid_synth_sysex,					"fluid_synth_sysex" },
 	};
 	int fail = 0;
 

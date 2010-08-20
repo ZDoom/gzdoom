@@ -139,14 +139,14 @@ protected:
 };
 #endif
 
-// OPL implementation of a MIDI output device -------------------------------
+// Base class for software synthesizer MIDI output devices ------------------
 
-class OPLMIDIDevice : public MIDIDevice, protected OPLmusicBlock
+class SoftSynthMIDIDevice : public MIDIDevice
 {
 public:
-	OPLMIDIDevice();
-	~OPLMIDIDevice();
-	int Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata);
+	SoftSynthMIDIDevice();
+	~SoftSynthMIDIDevice();
+
 	void Close();
 	bool IsOpen() const;
 	int GetTechnology() const;
@@ -161,24 +161,51 @@ public:
 	bool FakeVolume();
 	bool NeedThreadedCallback();
 	bool Pause(bool paused);
-	FString GetStats();
 
 protected:
-	static bool FillStream(SoundStream *stream, void *buff, int len, void *userdata);
+	FCriticalSection CritSec;
+	SoundStream *Stream;
+	double Tempo;
+	double Division;
+	double SamplesPerTick;
+	double NextTickIn;
+	MIDIHDR *Events;
+	bool Started;
+	DWORD Position;
+	int SampleRate;
 
 	void (*Callback)(unsigned int, void *, DWORD, DWORD);
 	void *CallbackData;
 
-	void CalcTickRate();
-	void HandleEvent(int status, int parm1, int parm2);
+	virtual void CalcTickRate();
 	int PlayTick();
+	int OpenStream(int chunks, int flags, void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata);
+	static bool FillStream(SoundStream *stream, void *buff, int len, void *userdata);
+	virtual bool ServiceStream (void *buff, int numbytes);
 
-	SoundStream *Stream;
-	double Tempo;
-	double Division;
-	MIDIHDR *Events;
-	bool Started;
-	DWORD Position;
+	virtual void HandleEvent(int status, int parm1, int parm2) = 0;
+	virtual void HandleLongEvent(const BYTE *data, int len) = 0;
+	virtual void ComputeOutput(float *buffer, int len) = 0;
+};
+
+// OPL implementation of a MIDI output device -------------------------------
+
+class OPLMIDIDevice : public SoftSynthMIDIDevice, protected OPLmusicBlock
+{
+public:
+	OPLMIDIDevice();
+	int Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata);
+	void Close();
+	int GetTechnology() const;
+	FString GetStats();
+
+protected:
+	void CalcTickRate();
+	int PlayTick();
+	void HandleEvent(int status, int parm1, int parm2);
+	void HandleLongEvent(const BYTE *data, int len);
+	void ComputeOutput(float *buffer, int len);
+	bool ServiceStream(void *buff, int numbytes);
 };
 
 // OPL dumper implementation of a MIDI output device ------------------------
@@ -196,52 +223,22 @@ public:
 
 namespace Timidity { struct Renderer; }
 
-class TimidityMIDIDevice : public MIDIDevice
+class TimidityMIDIDevice : public SoftSynthMIDIDevice
 {
 public:
 	TimidityMIDIDevice();
-	TimidityMIDIDevice(int rate);
 	~TimidityMIDIDevice();
 
 	int Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata);
-	void Close();
-	bool IsOpen() const;
-	int GetTechnology() const;
-	int SetTempo(int tempo);
-	int SetTimeDiv(int timediv);
-	int StreamOut(MIDIHDR *data);
-	int StreamOutSync(MIDIHDR *data);
-	int Resume();
-	void Stop();
-	int PrepareHeader(MIDIHDR *data);
-	int UnprepareHeader(MIDIHDR *data);
-	bool FakeVolume();
-	bool Pause(bool paused);
-	bool NeedThreadedCallback();
 	void PrecacheInstruments(const WORD *instruments, int count);
-	void TimidityVolumeChanged();
 	FString GetStats();
 
 protected:
-	static bool FillStream(SoundStream *stream, void *buff, int len, void *userdata);
-	bool ServiceStream (void *buff, int numbytes);
-
-	void (*Callback)(unsigned int, void *, DWORD, DWORD);
-	void *CallbackData;
-
-	void CalcTickRate();
-	int PlayTick();
-
-	FCriticalSection CritSec;
-	SoundStream *Stream;
 	Timidity::Renderer *Renderer;
-	double Tempo;
-	double Division;
-	double SamplesPerTick;
-	double NextTickIn;
-	MIDIHDR *Events;
-	bool Started;
-	DWORD Position;
+
+	void HandleEvent(int status, int parm1, int parm2);
+	void HandleLongEvent(const BYTE *data, int len);
+	void ComputeOutput(float *buffer, int len);
 };
 
 // Internal TiMidity disk writing version of a MIDI device ------------------
@@ -268,57 +265,26 @@ struct fluid_settings_t;
 struct fluid_synth_t;
 #endif
 
-class FluidSynthMIDIDevice : public MIDIDevice
+class FluidSynthMIDIDevice : public SoftSynthMIDIDevice
 {
 public:
 	FluidSynthMIDIDevice();
 	~FluidSynthMIDIDevice();
 
 	int Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata);
-	void Close();
-	bool IsOpen() const;
-	int GetTechnology() const;
-	int SetTempo(int tempo);
-	int SetTimeDiv(int timediv);
-	int StreamOut(MIDIHDR *data);
-	int StreamOutSync(MIDIHDR *data);
-	int Resume();
-	void Stop();
-	int PrepareHeader(MIDIHDR *data);
-	int UnprepareHeader(MIDIHDR *data);
-	bool FakeVolume();
-	bool Pause(bool paused);
-	bool NeedThreadedCallback();
-	void PrecacheInstruments(const WORD *instruments, int count);
 	FString GetStats();
 	void FluidSettingInt(const char *setting, int value);
 	void FluidSettingNum(const char *setting, double value);
 	void FluidSettingStr(const char *setting, const char *value);
 
 protected:
-	static bool FillStream(SoundStream *stream, void *buff, int len, void *userdata);
-	bool ServiceStream(void *buff, int numbytes);
 	void HandleEvent(int status, int parm1, int parm2);
+	void HandleLongEvent(const BYTE *data, int len);
+	void ComputeOutput(float *buffer, int len);
 	int LoadPatchSets(const char *patches);
 
-	void (*Callback)(unsigned int, void *, DWORD, DWORD);
-	void *CallbackData;
-
-	void CalcTickRate();
-	int PlayTick();
-
-	FCriticalSection CritSec;
-	SoundStream *Stream;
 	fluid_settings_t *FluidSettings;
 	fluid_synth_t *FluidSynth;
-	double Tempo;
-	double Division;
-	double SamplesPerTick;
-	double NextTickIn;
-	MIDIHDR *Events;
-	bool Started;
-	DWORD Position;
-	int SampleRate;
 
 #ifdef DYN_FLUIDSYNTH
 	enum { FLUID_FAILED = 1, FLUID_OK = 0 };
@@ -347,6 +313,7 @@ protected:
 	int (STACK_ARGS *fluid_synth_sfload)(fluid_synth_t *, const char *, int);
 	void (STACK_ARGS *fluid_synth_set_reverb)(fluid_synth_t *, double, double, double, double);
 	void (STACK_ARGS *fluid_synth_set_chorus)(fluid_synth_t *, int, double, double, double, int);
+	int (STACK_ARGS *fluid_synth_sysex)(fluid_synth_t *, const char *, int, char *, int *, int *, int);
 
 #ifdef _WIN32
 	HMODULE FluidSynthDLL;

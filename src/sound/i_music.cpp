@@ -810,7 +810,7 @@ CCMD (writeopl)
 	}
 	else
 	{
-		Printf ("Usage: writeopl <filename>");
+		Printf ("Usage: writeopl <filename>\n");
 	}
 }
 

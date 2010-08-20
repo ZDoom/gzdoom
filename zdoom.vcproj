@@ -5486,6 +5486,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\sound\music_softsynth_mididevice.cpp"
+				>
+			</File>
+			<File
 				RelativePath="src\sound\music_stream.cpp"
 				>
 			</File>

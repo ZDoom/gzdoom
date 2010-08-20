@@ -370,7 +370,7 @@ void AActor::Serialize (FArchive &arc)
 		int convnum;
 
 		convnum = arc.ReadCount();
-		if (convnum == 0)
+		if (GetConversation(GetClass()->TypeName) == -1)
 		{
 			Conversation = NULL;
 			ConversationRoot = -1;

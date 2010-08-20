@@ -203,6 +203,7 @@ struct FActorInfo
 	BYTE GameFilter;
 	BYTE SpawnID;
 	SWORD DoomEdNum;
+	int ConversationID;
 	FStateLabels *StateList;
 	DmgFactors *DamageFactors;
 	PainChanceList *PainChances;

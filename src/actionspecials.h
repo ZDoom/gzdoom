@@ -77,7 +77,7 @@ DEFINE_SPECIAL(Teleport_EndGame, 75, 0, 0, 0)
 DEFINE_SPECIAL(TeleportOther, 76, 3, 3, 3)
 DEFINE_SPECIAL(TeleportGroup, 77, 5, 5, 5)
 DEFINE_SPECIAL(TeleportInSector, 78, 4, 5, 5)
-
+DEFINE_SPECIAL(Thing_SetConversation, 79, 2, 2, 2)
 DEFINE_SPECIAL(ACS_Execute, 80, 1, 5, 5)
 DEFINE_SPECIAL(ACS_Suspend, 81, 2, 2, 2)
 DEFINE_SPECIAL(ACS_Terminate, 82, 2, 2, 2)

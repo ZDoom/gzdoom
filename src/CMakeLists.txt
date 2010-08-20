@@ -703,6 +703,7 @@ add_executable( zdoom WIN32
 	p_tick.cpp
 	p_trace.cpp
 	p_udmf.cpp
+	p_usdf.cpp
 	p_user.cpp
 	p_writemap.cpp
 	p_xlat.cpp

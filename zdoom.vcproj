@@ -901,6 +901,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\p_usdf.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\src\p_user.cpp"
 				>
 			</File>

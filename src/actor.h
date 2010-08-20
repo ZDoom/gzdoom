@@ -892,8 +892,9 @@ public:
 	FState *MeleeState;
 	FState *MissileState;
 
-	// [RH] The dialogue to show when this actor is "used."
-	FStrifeDialogueNode *Conversation;
+	
+	int ConversationRoot;				// THe root of the current dialogue
+	FStrifeDialogueNode *Conversation;	// [RH] The dialogue to show when this actor is "used."
 
 	// [RH] Decal(s) this weapon/projectile generates on impact.
 	FDecalBase *DecalGenerator;

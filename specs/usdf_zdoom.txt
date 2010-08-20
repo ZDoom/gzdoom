@@ -1,0 +1,56 @@
+===============================================================================
+Universal Strife Dialog Format ZDoom extensions v1.0 - 14.08.2010
+
+    Copyright (c) 2010 Christoph Oelckers.
+    Permission is granted to copy, distribute and/or modify this document
+    under the terms of the GNU Free Documentation License, Version 1.2
+    or any later version published by the Free Software Foundation;
+    with no Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts. 
+
+===============================================================================
+
+=======================================
+I. Grammar / Syntax
+=======================================
+
+    No changes. 
+	
+=======================================
+II. Implementation Semantics
+=======================================
+
+No changes. 
+
+=======================================
+III. Standardized Fields
+=======================================
+
+ZDoom implements the base specification as described with one important change:
+To take advantage of named actor classes any field specifying an actor type
+by a conversationID takes a class name instead.
+This means that ZDoom dialogues are not forward-compatible with the 'Strife'
+namespace. Other ports should be aware of this.
+ZDoom-format dialogues need to start with the line:
+
+namespace = "ZDoom";
+
+
+---------------------
+III.A : Conversations
+---------------------
+
+This block only lists the newly added fields. Currently ZDoom only adds one
+field to the specification:
+
+conversation // Starts a dialog.
+{
+    id = <int>;	// assigns an ID to a dialogue. IDs are used to dynamically assign
+				// dialogues to actors. For 'Strife' namespace or binary dialogues
+				// the standard conversation ID ('actor' property) is used instead
+				// for this purpose but since 'ZDoom' namespace requires the actor
+				// to be a class name it needs a separate field for this.
+}
+
+===============================================================================
+EOF
+===============================================================================

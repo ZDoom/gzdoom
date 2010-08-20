@@ -59,6 +59,8 @@
 #include "doomstat.h"
 #include "c_console.h"
 #include "sbar.h"
+#include "farchive.h"
+#include "p_lnspec.h"
 
 // The conversations as they exist inside a SCRIPTxx lump.
 struct Response
@@ -103,19 +105,20 @@ void GiveSpawner (player_t *player, const PClass *type);
 
 TArray<FStrifeDialogueNode *> StrifeDialogues;
 
-// There were 344 types in Strife, and Strife conversations refer
-// to their index in the mobjinfo table. This table indexes all
-// the Strife actor types in the order Strife had them and is
-// initialized as part of the actor's setup in infodefaults.cpp.
-const PClass *StrifeTypes[1001];
+typedef TMap<int, const PClass *> FStrifeTypeMap;	// maps conversation IDs to actor classes
+typedef TMap<int, int> FDialogueIDMap;				// maps dialogue IDs to dialogue array index (for ACS)
+typedef TMap<FName, int> FDialogueMap;				// maps actor class names to dialogue array index
+
+static FStrifeTypeMap StrifeTypes;
+static FDialogueIDMap DialogueRoots;
+static FDialogueMap ClassRoots;
 
 static menu_t ConversationMenu;
 static TArray<menuitem_t> ConversationItems;
 static int ConversationPauseTic;
 static bool ShowGold;
 
-static void LoadScriptFile (const char *name);
-static void LoadScriptFile(FileReader *lump, int numnodes);
+static bool LoadScriptFile(int lumpnum, FileReader *lump, int numnodes, bool include, int type);
 static FStrifeDialogueNode *ReadRetailNode (FileReader *lump, DWORD &prevSpeakerType);
 static FStrifeDialogueNode *ReadTeaserNode (FileReader *lump, DWORD &prevSpeakerType);
 static void ParseReplies (FStrifeDialogueReply **replyptr, Response *responses);
@@ -139,13 +142,42 @@ static FBrokenLines *DialogueLines;
 //
 //============================================================================
 
-static const PClass *GetStrifeType (int typenum)
+void SetStrifeType(int convid, const PClass *Class)
 {
-	if (typenum > 0 && typenum < 1001)
+	StrifeTypes[convid] = Class;
+}
+
+void SetConversation(int convid, const PClass *Class, int dlgindex)
+{
+	if (convid != -1)
 	{
-		return StrifeTypes[typenum];
+		DialogueRoots[convid] = dlgindex;
 	}
-	return NULL;
+	if (Class != NULL)
+	{
+		ClassRoots[Class->TypeName] = dlgindex;
+	}
+}
+
+const PClass *GetStrifeType (int typenum)
+{
+	const PClass **ptype = StrifeTypes.CheckKey(typenum);
+	if (ptype == NULL) return NULL;
+	else return *ptype;
+}
+
+int GetConversation(int conv_id)
+{
+	int *pindex = DialogueRoots.CheckKey(conv_id);
+	if (pindex == NULL) return -1;
+	else return *pindex;
+}
+
+int GetConversation(FName classname)
+{
+	int *pindex = ClassRoots.CheckKey(classname);
+	if (pindex == NULL) return -1;
+	else return *pindex;
 }
 
 //============================================================================
@@ -158,11 +190,11 @@ static const PClass *GetStrifeType (int typenum)
 
 void P_LoadStrifeConversations (MapData *map, const char *mapname)
 {
+	P_FreeStrifeConversations ();
 	if (map->Size(ML_CONVERSATION) > 0)
 	{
-		LoadScriptFile ("SCRIPT00");
 		map->Seek(ML_CONVERSATION);
-		LoadScriptFile (map->file, map->Size(ML_CONVERSATION));
+		LoadScriptFile (map->lumpnum, map->file, map->Size(ML_CONVERSATION), false, 0);
 	}
 	else
 	{
@@ -170,10 +202,13 @@ void P_LoadStrifeConversations (MapData *map, const char *mapname)
 		{
 			return;
 		}
-		char scriptname[9] = { 'S','C','R','I','P','T',mapname[3],mapname[4],0 };
+		char scriptname_b[9] = { 'S','C','R','I','P','T',mapname[3],mapname[4],0 };
+		char scriptname_t[9] = { 'D','I','A','L','O','G',mapname[3],mapname[4],0 };
 
-		LoadScriptFile ("SCRIPT00");
-		LoadScriptFile (scriptname);
+		if (!LoadScriptFile(scriptname_t, false, 2))
+		{
+			LoadScriptFile (scriptname_b, false, 1);
+		}
 	}
 }
 
@@ -192,34 +227,11 @@ void P_FreeStrifeConversations ()
 		delete node;
 	}
 
-	for (int i = 0; i < 344; ++i)
-	{
-		if (StrifeTypes[i] != NULL)
-		{
-			AActor * ac = GetDefaultByType (StrifeTypes[i]);
-			if (ac != NULL) ac->Conversation = NULL;
-		}
-	}
+	DialogueRoots.Clear();
+	ClassRoots.Clear();
 
 	CurNode = NULL;
 	PrevNode = NULL;
-}
-
-//============================================================================
-//
-// ncopystring
-//
-// If the string has no content, returns NULL. Otherwise, returns a copy.
-//
-//============================================================================
-
-static char *ncopystring (const char *string)
-{
-	if (string == NULL || string[0] == 0)
-	{
-		return NULL;
-	}
-	return copystring (string);
 }
 
 //============================================================================
@@ -230,61 +242,89 @@ static char *ncopystring (const char *string)
 //
 //============================================================================
 
-static void LoadScriptFile (const char *name)
+bool LoadScriptFile (const char *name, bool include, int type)
 {
 	int lumpnum = Wads.CheckNumForName (name);
 	FileReader *lump;
 
 	if (lumpnum < 0)
 	{
-		return;
+		return false;
 	}
 	lump = Wads.ReopenLumpNum (lumpnum);
 
-	LoadScriptFile(lump, Wads.LumpLength(lumpnum));
+	bool res = LoadScriptFile(lumpnum, lump, Wads.LumpLength(lumpnum), include, type);
 	delete lump;
+	return res;
 }
 
-static void LoadScriptFile(FileReader *lump, int numnodes)
+static bool LoadScriptFile(int lumpnum, FileReader *lump, int numnodes, bool include, int type)
 {
 	int i;
 	DWORD prevSpeakerType;
 	FStrifeDialogueNode *node;
+	char buffer[4];
 
-	if (!(gameinfo.flags & GI_SHAREWARE))
+	lump->Read(buffer, 4);
+	lump->Seek(0, SEEK_SET);
+
+	// The binary format is so primitive that this check is enough to detect it.
+	bool isbinary = (buffer[0] == 0 || buffer[1] == 0 || buffer[2] == 0 || buffer[3] == 0);
+
+	if ((type == 1 && !isbinary) || (type == 2 && isbinary))
 	{
-		// Strife scripts are always a multiple of 1516 bytes because each entry
-		// is exactly 1516 bytes long.
-		if (numnodes % 1516 != 0)
-		{
-			return;
-		}
-		numnodes /= 1516;
-	}
-	else
-	{
-		// And the teaser version has 1488-byte entries.
-		if (numnodes % 1488 != 0)
-		{
-			return;
-		}
-		numnodes /= 1488;
+		DPrintf("Incorrect data format for %s.", Wads.GetLumpFullName(lumpnum));
+		return false;
 	}
 
-	prevSpeakerType = 0;
-
-	for (i = 0; i < numnodes; ++i)
+	if (!isbinary)
 	{
+		P_ParseUSDF(lumpnum, lump, numnodes);
+	}
+	else 
+	{
+		if (!include)
+		{
+			LoadScriptFile("SCRIPT00", true, 1);
+		}
 		if (!(gameinfo.flags & GI_SHAREWARE))
 		{
-			node = ReadRetailNode (lump, prevSpeakerType);
+			// Strife scripts are always a multiple of 1516 bytes because each entry
+			// is exactly 1516 bytes long.
+			if (numnodes % 1516 != 0)
+			{
+				DPrintf("Incorrect data format for %s.", Wads.GetLumpFullName(lumpnum));
+				return false;
+			}
+			numnodes /= 1516;
 		}
 		else
 		{
-			node = ReadTeaserNode (lump, prevSpeakerType);
+			// And the teaser version has 1488-byte entries.
+			if (numnodes % 1488 != 0)
+			{
+				DPrintf("Incorrect data format for %s.", Wads.GetLumpFullName(lumpnum));
+				return false;
+			}
+			numnodes /= 1488;
 		}
-		node->ThisNodeNum = StrifeDialogues.Push(node);
+
+		prevSpeakerType = 0;
+
+		for (i = 0; i < numnodes; ++i)
+		{
+			if (!(gameinfo.flags & GI_SHAREWARE))
+			{
+				node = ReadRetailNode (lump, prevSpeakerType);
+			}
+			else
+			{
+				node = ReadTeaserNode (lump, prevSpeakerType);
+			}
+			node->ThisNodeNum = StrifeDialogues.Push(node);
+		}
 	}
+	return true;
 }
 
 //============================================================================
@@ -316,12 +356,14 @@ static FStrifeDialogueNode *ReadRetailNode (FileReader *lump, DWORD &prevSpeaker
 	// actor, so newly spawned actors will use this conversation by default.
 	type = GetStrifeType (speech.SpeakerType);
 	node->SpeakerType = type;
-	if (prevSpeakerType != speech.SpeakerType)
+
+	if (speech.SpeakerType >= 0 && prevSpeakerType != speech.SpeakerType)
 	{
 		if (type != NULL)
 		{
-			GetDefaultByType (type)->Conversation = node;
+			ClassRoots[type->TypeName] = StrifeDialogues.Size();
 		}
+		DialogueRoots[speech.SpeakerType] = StrifeDialogues.Size();
 		prevSpeakerType = speech.SpeakerType;
 	}
 
@@ -345,9 +387,11 @@ static FStrifeDialogueNode *ReadRetailNode (FileReader *lump, DWORD &prevSpeaker
 	node->DropType = GetStrifeType (speech.DropType);
 
 	// Items you need to have to make the speaker use a different node.
+	node->ItemCheck.Resize(3);
 	for (j = 0; j < 3; ++j)
 	{
-		node->ItemCheck[j] = GetStrifeType (speech.ItemCheck[j]);
+		node->ItemCheck[j].Item = GetStrifeType (speech.ItemCheck[j]);
+		node->ItemCheck[j].Amount = -1;
 	}
 	node->ItemCheckNode = speech.Link;
 	node->Children = NULL;
@@ -385,12 +429,14 @@ static FStrifeDialogueNode *ReadTeaserNode (FileReader *lump, DWORD &prevSpeaker
 	// actor, so newly spawned actors will use this conversation by default.
 	type = GetStrifeType (speech.SpeakerType);
 	node->SpeakerType = type;
-	if (prevSpeakerType != speech.SpeakerType)
+
+	if (speech.SpeakerType >= 0 && prevSpeakerType != speech.SpeakerType)
 	{
 		if (type != NULL)
 		{
-			GetDefaultByType (type)->Conversation = node;
+			ClassRoots[type->TypeName] = StrifeDialogues.Size();
 		}
+		DialogueRoots[speech.SpeakerType] = StrifeDialogues.Size();
 		prevSpeakerType = speech.SpeakerType;
 	}
 
@@ -419,9 +465,11 @@ static FStrifeDialogueNode *ReadTeaserNode (FileReader *lump, DWORD &prevSpeaker
 	node->DropType = GetStrifeType (speech.DropType);
 
 	// Items you need to have to make the speaker use a different node.
+	node->ItemCheck.Resize(3);
 	for (j = 0; j < 3; ++j)
 	{
-		node->ItemCheck[j] = NULL;
+		node->ItemCheck[j].Item = NULL;
+		node->ItemCheck[j].Amount = -1;
 	}
 	node->ItemCheckNode = 0;
 	node->Children = NULL;
@@ -476,15 +524,18 @@ static void ParseReplies (FStrifeDialogueReply **replyptr, Response *responses)
 
 		// The message to record in the log for this reply.
 		reply->LogNumber = rsp->Log;
+		reply->LogString = NULL;
 
 		// The item to receive when this reply is used.
 		reply->GiveType = GetStrifeType (rsp->GiveType);
+		reply->ActionSpecial = 0;
 
 		// Do you need anything special for this reply to succeed?
+		reply->ItemCheck.Resize(3);
 		for (k = 0; k < 3; ++k)
 		{
-			reply->ItemCheck[k] = GetStrifeType (rsp->Item[k]);
-			reply->ItemCheckAmount[k] = rsp->Count[k];
+			reply->ItemCheck[k].Item = GetStrifeType (rsp->Item[k]);
+			reply->ItemCheck[k].Amount = rsp->Count[k];
 		}
 
 		// ReplyLines is calculated when the menu is shown. It is just Reply
@@ -517,7 +568,7 @@ static void ParseReplies (FStrifeDialogueReply **replyptr, Response *responses)
 		{
 			reply->QuickYes = ncopystring (rsp->Yes);
 		}
-		if (reply->ItemCheck[0] != 0)
+		if (reply->ItemCheck[0].Item != 0)
 		{
 			reply->QuickNo = ncopystring (rsp->No);
 		}
@@ -713,13 +764,20 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 	}
 
 	// Check if we should jump to another node
-	while (CurNode->ItemCheck[0] != NULL)
+	while (CurNode->ItemCheck.Size() > 0 && CurNode->ItemCheck[0].Item != NULL)
 	{
-		if (CheckStrifeItem (pc->player, CurNode->ItemCheck[0]) &&
-			CheckStrifeItem (pc->player, CurNode->ItemCheck[1]) &&
-			CheckStrifeItem (pc->player, CurNode->ItemCheck[2]))
+		bool jump = true;
+		for (i = 0; i < (int)CurNode->ItemCheck.Size(); ++i)
 		{
-			int root = FindNode (pc->player->ConversationNPC->GetDefault()->Conversation);
+			if(!CheckStrifeItem (pc->player, CurNode->ItemCheck[i].Item, CurNode->ItemCheck[i].Amount))
+			{
+				jump = false;
+				break;
+			}
+		}
+		if (jump)
+		{
+			int root = pc->player->ConversationNPC->ConversationRoot;
 			CurNode = StrifeDialogues[root + CurNode->ItemCheckNode - 1];
 		}
 		else
@@ -1063,9 +1121,9 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 	npc = player->ConversationNPC;
 
 	// Check if you have the requisite items for this choice
-	for (i = 0; i < 3; ++i)
+	for (i = 0; i < (int)reply->ItemCheck.Size(); ++i)
 	{
-		if (!CheckStrifeItem(player, reply->ItemCheck[i], reply->ItemCheckAmount[i]))
+		if (!CheckStrifeItem(player, reply->ItemCheck[i].Item, reply->ItemCheck[i].Amount))
 		{
 			// No, you don't. Say so and let the NPC animate negatively.
 			if (reply->QuickNo && isconsole)
@@ -1132,12 +1190,18 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 		}
 	}
 
+	if (reply->ActionSpecial != 0)
+	{
+		takestuff |= !!LineSpecials[reply->ActionSpecial](NULL, player->mo, false,
+			reply->Args[0], reply->Args[1], reply->Args[2], reply->Args[3], reply->Args[4]);
+	}
+
 	// Take away required items if the give was successful or none was needed.
 	if (takestuff)
 	{
-		for (i = 0; i < 3; ++i)
+		for (i = 0; i < (int)reply->ItemCheck.Size(); ++i)
 		{
-			TakeStrifeItem (player, reply->ItemCheck[i], reply->ItemCheckAmount[i]);
+			TakeStrifeItem (player, reply->ItemCheck[i].Item, reply->ItemCheck[i].Amount);
 		}
 		replyText = reply->QuickYes;
 	}
@@ -1147,7 +1211,11 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 	}
 
 	// Update the quest log, if needed.
-	if (reply->LogNumber != 0) 
+	if (reply->LogString != NULL)
+	{
+		player->SetLogText(reply->LogString);
+	}
+	else if (reply->LogNumber != 0) 
 	{
 		player->SetLogNumber(reply->LogNumber);
 	}
@@ -1162,7 +1230,7 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 	// will show the new node right away without terminating the dialogue.
 	if (reply->NextNode != 0)
 	{
-		int rootnode = FindNode (npc->GetDefault()->Conversation);
+		int rootnode = npc->ConversationRoot;
 		if (reply->NextNode < 0)
 		{
 			npc->Conversation = StrifeDialogues[rootnode - reply->NextNode - 1];
@@ -1315,4 +1383,27 @@ static void TerminalResponse (const char *str)
 			Printf("%s\n", str);
 		}
 	}
+}
+
+
+template<> FArchive &operator<< (FArchive &arc, FStrifeDialogueNode *&node)
+{
+	DWORD convnum;
+	if (arc.IsStoring())
+	{
+		arc.WriteCount (node == NULL? ~0u : node->ThisNodeNum);
+	}
+	else 
+	{
+		convnum = arc.ReadCount();
+		if (convnum >= StrifeDialogues.Size())
+		{
+			node = NULL;
+		}
+		else
+		{
+			node = StrifeDialogues[convnum];
+		}
+	}
+	return arc;
 }

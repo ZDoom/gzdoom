@@ -35,7 +35,6 @@
 
 #include "r_data.h"
 #include "p_setup.h"
-#include "sc_man.h"
 #include "p_lnspec.h"
 #include "templates.h"
 #include "i_system.h"
@@ -43,6 +42,7 @@
 #include "r_sky.h"
 #include "g_level.h"
 #include "v_palette.h"
+#include "p_udmf.h"
 
 //===========================================================================
 //
@@ -123,6 +123,152 @@ extern TArray<int>		linemap;
 
 #define CHECK_N(f) if (!(namespace_bits&(f))) break;
 
+
+//===========================================================================
+//
+// Common parsing routines
+//
+//===========================================================================
+
+//===========================================================================
+//
+// Skip a key or block
+//
+//===========================================================================
+
+void UDMFParserBase::Skip()
+{
+	if (developer) sc.ScriptMessage("Ignoring unknown key \"%s\".", sc.String);
+	if(sc.CheckToken('{'))
+	{
+		int level = 1;
+		while(sc.GetToken())
+		{
+			if (sc.TokenType == '}')
+			{
+				level--;
+				if(level == 0)
+				{
+					sc.UnGet();
+					break;
+				}
+			}
+			else if (sc.TokenType == '{')
+			{
+				level++;
+			}
+		}
+	}
+	else
+	{
+		sc.MustGetToken('=');
+		do
+		{
+			sc.MustGetAnyToken();
+		}
+		while(sc.TokenType != ';');
+	}
+}
+
+//===========================================================================
+//
+// Parses a 'key = value' line of the map
+//
+//===========================================================================
+
+FName UDMFParserBase::ParseKey(bool checkblock, bool *isblock)
+{
+	sc.MustGetString();
+	FName key = sc.String;
+	if (checkblock)
+	{
+		if (sc.CheckToken('{'))
+		{
+			if (isblock) *isblock = true;
+			return key;
+		}
+		else if (isblock) *isblock = false;
+	}
+	sc.MustGetToken('=');
+
+	sc.Number = 0;
+	sc.Float = 0;
+	sc.MustGetAnyToken();
+
+	if (sc.TokenType == '+' || sc.TokenType == '-')
+	{
+		bool neg = (sc.TokenType == '-');
+		sc.MustGetAnyToken();
+		if (sc.TokenType != TK_IntConst && sc.TokenType != TK_FloatConst)
+		{
+			sc.ScriptMessage("Numeric constant expected");
+		}
+		if (neg)
+		{
+			sc.Number = -sc.Number;
+			sc.Float = -sc.Float;
+		}
+	}
+	if (sc.TokenType == TK_StringConst)
+	{
+		parsedString = sc.String;
+	}
+	int savedtoken = sc.TokenType;
+	sc.MustGetToken(';');
+	sc.TokenType = savedtoken;
+	return key;
+}
+
+//===========================================================================
+//
+// Syntax checks
+//
+//===========================================================================
+
+int UDMFParserBase::CheckInt(const char *key)
+{
+	if (sc.TokenType != TK_IntConst)
+	{
+		sc.ScriptMessage("Integer value expected for key '%s'", key);
+	}
+	return sc.Number;
+}
+
+double UDMFParserBase::CheckFloat(const char *key)
+{
+	if (sc.TokenType != TK_IntConst && sc.TokenType != TK_FloatConst)
+	{
+		sc.ScriptMessage("Floating point value expected for key '%s'", key);
+	}
+	return sc.Float;
+}
+
+fixed_t UDMFParserBase::CheckFixed(const char *key)
+{
+	return FLOAT2FIXED(CheckFloat(key));
+}
+
+angle_t UDMFParserBase::CheckAngle(const char *key)
+{
+	return angle_t(CheckFloat(key) * ANGLE_90 / 90.);
+}
+
+bool UDMFParserBase::CheckBool(const char *key)
+{
+	if (sc.TokenType == TK_True) return true;
+	if (sc.TokenType == TK_False) return false;
+	sc.ScriptMessage("Boolean value expected for key '%s'", key);
+	return false;
+}
+
+const char *UDMFParserBase::CheckString(const char *key)
+{
+	if (sc.TokenType != TK_StringConst)
+	{
+		sc.ScriptMessage("String value expected for key '%s'", key);
+	}
+	return parsedString;
+}
 
 //===========================================================================
 //
@@ -233,15 +379,11 @@ fixed_t GetUDMFFixed(int type, int index, const char *key)
 //
 //===========================================================================
 
-struct UDMFParser
+class UDMFParser : public UDMFParserBase
 {
-	FScanner sc;
-	FName namespc;
-	int namespace_bits;
 	bool isTranslated;
 	bool isExtended;
 	bool floordrop;
-	FString parsedString;
 
 	TArray<line_t> ParsedLines;
 	TArray<side_t> ParsedSides;
@@ -251,112 +393,12 @@ struct UDMFParser
 
 	FDynamicColormap	*fogMap, *normMap;
 
+public:
 	UDMFParser()
 	{
 		linemap.Clear();
 		fogMap = normMap = NULL;
 	}
-
-	//===========================================================================
-	//
-	// Parses a 'key = value' line of the map
-	//
-	//===========================================================================
-
-	FName ParseKey()
-	{
-		sc.MustGetString();
-		FName key = sc.String;
-		sc.MustGetToken('=');
-
-		sc.Number = 0;
-		sc.Float = 0;
-		sc.MustGetAnyToken();
-
-		if (sc.TokenType == '+' || sc.TokenType == '-')
-		{
-			bool neg = (sc.TokenType == '-');
-			sc.MustGetAnyToken();
-			if (sc.TokenType != TK_IntConst && sc.TokenType != TK_FloatConst)
-			{
-				sc.ScriptMessage("Numeric constant expected");
-			}
-			if (neg)
-			{
-				sc.Number = -sc.Number;
-				sc.Float = -sc.Float;
-			}
-		}
-		if (sc.TokenType == TK_StringConst)
-		{
-			parsedString = sc.String;
-		}
-		int savedtoken = sc.TokenType;
-		sc.MustGetToken(';');
-		sc.TokenType = savedtoken;
-		return key;
-	}
-
-	//===========================================================================
-	//
-	// Syntax checks
-	//
-	//===========================================================================
-
-	int CheckInt(const char *key)
-	{
-		if (sc.TokenType != TK_IntConst)
-		{
-			sc.ScriptMessage("Integer value expected for key '%s'", key);
-		}
-		return sc.Number;
-	}
-
-	double CheckFloat(const char *key)
-	{
-		if (sc.TokenType != TK_IntConst && sc.TokenType != TK_FloatConst)
-		{
-			sc.ScriptMessage("Floating point value expected for key '%s'", key);
-		}
-		return sc.Float;
-	}
-
-	fixed_t CheckFixed(const char *key)
-	{
-		return FLOAT2FIXED(CheckFloat(key));
-	}
-
-	angle_t CheckAngle(const char *key)
-	{
-		return angle_t(CheckFloat(key) * ANGLE_90 / 90.);
-	}
-
-	bool CheckBool(const char *key)
-	{
-		if (sc.TokenType == TK_True) return true;
-		if (sc.TokenType == TK_False) return false;
-		sc.ScriptMessage("Boolean value expected for key '%s'", key);
-		return false;
-	}
-
-	const char *CheckString(const char *key)
-	{
-		if (sc.TokenType != TK_StringConst)
-		{
-			sc.ScriptMessage("String value expected for key '%s'", key);
-		}
-		return parsedString;
-	}
-
-	template<typename T>
-	void Flag(T &value, int mask, const char *key)
-	{
-		if (CheckBool(key))
-			value |= mask;
-		else
-			value &= ~mask;
-	}
-
 
 	void AddUserKey(FName key, int kind, int index)
 	{
@@ -1456,6 +1498,10 @@ struct UDMFParser
 				vertex_t vt;
 				ParseVertex(&vt);
 				ParsedVertices.Push(vt);
+			}
+			else
+			{
+				Skip();
 			}
 		}
 

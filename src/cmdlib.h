@@ -36,6 +36,7 @@ int 	ParseNum (const char *str);
 bool	IsNum (const char *str);		// [RH] added
 
 char	*copystring(const char *s);
+char	*ncopystring(const char *s);
 void	ReplaceString (char **ptr, const char *str);
 
 bool CheckWildcards (const char *pattern, const char *text);

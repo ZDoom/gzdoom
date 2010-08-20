@@ -290,6 +290,10 @@ template<> inline FArchive &operator<< <FFont> (FArchive &arc, FFont* &font)
 	return SerializeFFontPtr (arc, font);
 }
 
+struct FStrifeDialogueNode;
+template<> FArchive &operator<< (FArchive &arc, FStrifeDialogueNode *&node);
+
+
 
 template<class T,class TT>
 inline FArchive &operator<< (FArchive &arc, TArray<T,TT> &self)

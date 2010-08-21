@@ -722,19 +722,26 @@ public:
 
 	const PClass *GetBloodType(int type = 0) const
 	{
+		const PClass *bloodcls;
 		if (type == 0)
 		{
-			return PClass::FindClass((ENamedName)GetClass()->Meta.GetMetaInt(AMETA_BloodType, NAME_Blood));
+			bloodcls = PClass::FindClass((ENamedName)GetClass()->Meta.GetMetaInt(AMETA_BloodType, NAME_Blood));
 		}
 		else if (type == 1)
 		{
-			return PClass::FindClass((ENamedName)GetClass()->Meta.GetMetaInt(AMETA_BloodType2, NAME_BloodSplatter));
+			bloodcls = PClass::FindClass((ENamedName)GetClass()->Meta.GetMetaInt(AMETA_BloodType2, NAME_BloodSplatter));
 		}
 		else if (type == 2)
 		{
-			return  PClass::FindClass((ENamedName)GetClass()->Meta.GetMetaInt(AMETA_BloodType3, NAME_AxeBlood));
+			bloodcls = PClass::FindClass((ENamedName)GetClass()->Meta.GetMetaInt(AMETA_BloodType3, NAME_AxeBlood));
 		}
 		else return NULL;
+
+		if (bloodcls != NULL)
+		{
+			bloodcls = bloodcls->ActorInfo->GetReplacement()->Class;
+		}
+		return bloodcls;
 	}
 
 	// Calculate amount of missile damage

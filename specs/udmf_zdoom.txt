@@ -180,6 +180,8 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       class# = <bool>			// Unlike the base spec, # can range from 1-8.
                                 // 8 is the maximum amount of classes the class
                                 // menu can display.
+	  conversation = <int>		// Assigns a conversation dialogue to this thing.
+								// Parameter is the conversation ID, 0 meaning none.
    }
 								
   
@@ -267,6 +269,9 @@ Added 'playeruseback' line trigger flag.
 
 1.11 07.08.2010
 Added 'soundsequnce' sector property.
+
+1.12 22.08.2010
+Added 'conversation' thing property.
 
 ===============================================================================
 EOF

@@ -383,6 +383,7 @@ xx(Firstsideonly)
 xx(Transparent)	
 xx(Passuse)
 xx(Repeatspecial)
+xx(Conversation)
 
 xx(Playercross)
 xx(Playeruse)

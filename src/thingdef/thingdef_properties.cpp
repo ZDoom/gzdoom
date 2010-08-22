@@ -257,7 +257,6 @@ DEFINE_INFO_PROPERTY(conversationid, IiI, Actor)
 
 	}
 
-	bag.Info->ConversationID = convid;
 	if (convid <= 0) return;	// 0 is not usable because the dialogue scripts use it as 'no object'.
 	SetStrifeType(convid, info->Class);
 }

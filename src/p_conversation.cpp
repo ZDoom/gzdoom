@@ -266,7 +266,7 @@ static bool LoadScriptFile(int lumpnum, FileReader *lump, int numnodes, bool inc
 	char buffer[4];
 
 	lump->Read(buffer, 4);
-	lump->Seek(0, SEEK_SET);
+	lump->Seek(-4, SEEK_CUR);
 
 	// The binary format is so primitive that this check is enough to detect it.
 	bool isbinary = (buffer[0] == 0 || buffer[1] == 0 || buffer[2] == 0 || buffer[3] == 0);

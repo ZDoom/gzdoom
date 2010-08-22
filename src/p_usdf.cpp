@@ -71,6 +71,7 @@ class USDFParser : public UDMFParserBase
 				sc.ScriptMessage("'%s' is not an actor type", key);
 				return NULL;
 			}
+			return cls;
 		}
 		return NULL;
 	}

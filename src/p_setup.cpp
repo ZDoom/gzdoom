@@ -131,6 +131,8 @@ int 			numgamenodes;
 subsector_t * 	gamesubsectors;
 int 			numgamesubsectors;
 
+bool			hasglnodes;
+
 FExtraLight*	ExtraLights;
 FLightStack*	LightStacks;
 
@@ -161,7 +163,6 @@ fixed_t 		bmaporgx;		// origin of block map
 fixed_t 		bmaporgy;
 
 FBlockNode**	blocklinks;		// for thing chains
-			
 
 
 // REJECT
@@ -3558,6 +3559,7 @@ void P_SetupLevel (char *lumpname, int position)
 
 	// find map num
 	level.lumpnum = map->lumpnum;
+	hasglnodes = false;
 
 	// [RH] Support loading Build maps (because I felt like it. :-)
 	buildmap = false;
@@ -3818,6 +3820,19 @@ void P_SetupLevel (char *lumpname, int position)
 		reloop = true;
 	}
 
+	// Copy pointers to the old nodes so that R_PointInSubsector can use them
+	if (nodes && subsectors)
+	{
+		gamenodes = nodes;
+		numgamenodes = numnodes;
+		gamesubsectors = subsectors;
+		numgamesubsectors = numsubsectors;
+	}
+	else
+	{
+		gamenodes=NULL;
+	}
+
 	if (am_textured || forceglnodes)
 	{
 		// Build GL nodes if we want a textured automap or GL nodes are forced to be built.
@@ -3825,6 +3840,11 @@ void P_SetupLevel (char *lumpname, int position)
 		// use in P_PointInSubsector to avoid problems with maps that depend on the specific
 		// nodes they were built with (P:AR E1M3 is a good example for a map where this is the case.)
 		reloop |= P_CheckNodes(map, ForceNodeBuild, endTime - startTime);
+		hasglnodes = true;
+	}
+	else
+	{
+		hasglnodes = P_CheckForGLNodes();
 	}
 
 	times[10].Clock();
@@ -3842,6 +3862,11 @@ void P_SetupLevel (char *lumpname, int position)
 	times[13].Clock();
 	P_FloodZones ();
 	times[13].Unclock();
+
+	if (hasglnodes)
+	{
+		P_SetRenderSector();
+	}
 
 	bodyqueslot = 0;
 // phares 8/10/98: Clear body queue so the corpses from previous games are

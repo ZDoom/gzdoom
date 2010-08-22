@@ -183,6 +183,7 @@ CVAR (Color, am_ovthingcolor_item,		0xe88800,	CVAR_ARCHIVE);
 CVAR (Color, am_ovthingcolor_citem,		0xe88800,	CVAR_ARCHIVE);
 
 
+CVAR(Bool, am_textured, false, CVAR_ARCHIVE)
 CVAR(Int, am_showsubsector, -1, 0);
 
 

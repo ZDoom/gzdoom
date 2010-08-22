@@ -40,6 +40,7 @@
 #include "r_blend.h"
 #include "s_sound.h"
 
+struct subsector_t;
 //
 // NOTES: AActor
 //
@@ -773,6 +774,7 @@ public:
 	fixed_t			pitch, roll;
 	FBlockNode		*BlockNode;			// links in blocks (if needed)
 	struct sector_t	*Sector;
+	subsector_t *		subsector;
 	fixed_t			floorz, ceilingz;	// closest together of contacted secs
 	fixed_t			dropoffz;		// killough 11/98: the lowest floor over all contacted Sectors.
 

@@ -83,10 +83,13 @@ void P_ParseTextMap(MapData *map);
 extern int numinterpolations;
 extern unsigned int R_OldBlend;
 
+EXTERN_CVAR(Bool, am_textured)
+
 CVAR (Bool, genblockmap, false, CVAR_SERVERINFO|CVAR_GLOBALCONFIG);
 CVAR (Bool, gennodes, false, CVAR_SERVERINFO|CVAR_GLOBALCONFIG);
 CVAR (Bool, genglnodes, false, CVAR_SERVERINFO);
 CVAR (Bool, showloadtimes, false, 0);
+CVAR (Bool, forceglnodes, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 
 static void P_InitTagLists ();
 static void P_Shutdown ();
@@ -121,6 +124,12 @@ side_t* 		sides;
 
 int				numzones;
 zone_t*			zones;
+
+node_t * 		gamenodes;
+int 			numgamenodes;
+
+subsector_t * 	gamesubsectors;
+int 			numgamesubsectors;
 
 FExtraLight*	ExtraLights;
 FLightStack*	LightStacks;
@@ -887,7 +896,7 @@ void P_LoadGLZSegs (FileReaderBase &data, int type)
 //
 //===========================================================================
 
-static void LoadZNodes(FileReaderBase &data, int glnodes)
+void LoadZNodes(FileReaderBase &data, int glnodes)
 {
 	// Read extra vertices added during node building
 	DWORD orgVerts, newVerts;
@@ -1014,7 +1023,7 @@ static void LoadZNodes(FileReaderBase &data, int glnodes)
 }
 
 
-static void P_LoadZNodes (FileReader &dalump, DWORD id)
+void P_LoadZNodes (FileReader &dalump, DWORD id)
 {
 	int type;
 	bool compressed;
@@ -3346,6 +3355,18 @@ void P_FreeLevelData ()
 		sectors = NULL;
 		numsectors = 0;	// needed for the pointer cleanup code
 	}
+	if (gamenodes && gamenodes!=nodes)
+	{
+		delete [] gamenodes;
+		gamenodes = NULL;
+		numgamenodes = 0;
+	}
+	if (gamesubsectors && gamesubsectors!=subsectors)
+	{
+		delete [] gamesubsectors;
+		gamesubsectors = NULL;
+		numgamesubsectors = 0;
+	}
 	if (subsectors != NULL)
 	{
 		for (int i = 0; i < numsubsectors; ++i)
@@ -3665,6 +3686,7 @@ void P_SetupLevel (char *lumpname, int position)
 	{
 		ForceNodeBuild = true;
 	}
+	bool reloop = false;
 
 	UsingGLNodes = false;
 	if (!ForceNodeBuild)
@@ -3673,13 +3695,7 @@ void P_SetupLevel (char *lumpname, int position)
 		FWadLump test;
 		DWORD id = MAKE_ID('X','x','X','x'), idcheck = 0, idcheck2 = 0, idcheck3 = 0, idcheck4 = 0;
 
-		if (map->MapLumps[ML_ZNODES].Size != 0 && !UsingGLNodes)
-		{
-			map->Seek(ML_ZNODES);
-			idcheck = MAKE_ID('Z','N','O','D');
-			idcheck2 = MAKE_ID('X','N','O','D');
-		}
-		else if (map->MapLumps[ML_GLZNODES].Size != 0)
+		if (map->MapLumps[ML_GLZNODES].Size != 0)
 		{
 			// If normal nodes are not present but GL nodes are, use them.
 			map->Seek(ML_GLZNODES);
@@ -3687,6 +3703,12 @@ void P_SetupLevel (char *lumpname, int position)
 			idcheck2 = MAKE_ID('Z','G','L','2');
 			idcheck3 = MAKE_ID('X','G','L','N');
 			idcheck4 = MAKE_ID('X','G','L','2');
+		}
+		else if (map->MapLumps[ML_ZNODES].Size != 0 && !UsingGLNodes)
+		{
+			map->Seek(ML_ZNODES);
+			idcheck = MAKE_ID('Z','N','O','D');
+			idcheck2 = MAKE_ID('X','N','O','D');
 		}
 
 		map->file->Read (&id, 4);
@@ -3756,10 +3778,23 @@ void P_SetupLevel (char *lumpname, int position)
 			else ForceNodeBuild = true;
 		}
 		else ForceNodeBuild = true;
+
+		// If loading the regular nodes failed try GL nodes before considering a rebuild
+		if (ForceNodeBuild)
+		{
+			if (P_LoadGLNodes(map)) 
+			{
+				ForceNodeBuild=false;
+				reloop = true;
+			}
+		}
 	}
+	else reloop = true;
+
+	unsigned int startTime=0, endTime=0;
+
 	if (ForceNodeBuild)
 	{
-		unsigned int startTime, endTime;
 
 		startTime = I_FPSTime ();
 		TArray<FNodeBuilder::FPolyStart> polyspots, anchors;
@@ -3780,6 +3815,16 @@ void P_SetupLevel (char *lumpname, int position)
 			vertexes, numvertexes);
 		endTime = I_FPSTime ();
 		DPrintf ("BSP generation took %.3f sec (%d segs)\n", (endTime - startTime) * 0.001, numsegs);
+		reloop = true;
+	}
+
+	if (am_textured || forceglnodes)
+	{
+		// Build GL nodes if we want a textured automap or GL nodes are forced to be built.
+		// If the original nodes being loaded are not GL nodes they will be kept around for
+		// use in P_PointInSubsector to avoid problems with maps that depend on the specific
+		// nodes they were built with (P:AR E1M3 is a good example for a map where this is the case.)
+		reloop |= P_CheckNodes(map, ForceNodeBuild, endTime - startTime);
 	}
 
 	times[10].Clock();
@@ -3845,7 +3890,7 @@ void P_SetupLevel (char *lumpname, int position)
 	P_SpawnSpecials ();
 
 	times[16].Clock();
-	if (ForceNodeBuild) P_LoopSidedefs (false);
+	if (reloop) P_LoopSidedefs (false);
 	PO_Init ();	// Initialize the polyobjs
 	times[16].Unclock();
 

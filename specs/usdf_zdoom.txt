@@ -1,5 +1,6 @@
 ===============================================================================
-Universal Strife Dialog Format ZDoom extensions v1.0 - 14.08.2010
+ZDoom Strife Dialog Format ZDoom v1.1 - 23.08.2010
+based on Universal Strife Dialog Format v2.0
 
     Copyright (c) 2010 Christoph Oelckers.
     Permission is granted to copy, distribute and/or modify this document
@@ -22,14 +23,46 @@ II. Implementation Semantics
 No changes. 
 
 =======================================
-III. Standardized Fields
+III. Changes to USDF spec
 =======================================
 
-ZDoom implements the base specification as described with one important change:
+ZDoom Strife Dialogue format implements the USDF base specification as described with one important change:
 To take advantage of named actor classes any field specifying an actor type
 by a conversationID takes a class name instead.
-This means that ZDoom dialogues are not forward-compatible with the 'Strife'
-namespace. Other ports should be aware of this.
+The following fields are affected by this change:
+
+conversation
+{
+    actor = <string>;
+
+    page
+    {
+        drop   = <string>;
+        ifitem
+        {
+            item   = <string>;
+        }
+
+        choice
+        {
+            cost
+            {
+                item   = <string>;
+            }
+
+            giveitem        = <string>;
+        }
+    }
+} 
+
+It should be noted that this change creates an incompatibility with USDF
+so technically speaking the ZDoom format is no longer 'real' USDF.
+To accomodate what is needed here this is unavoidable, unfortunately.
+Any proper USDF implementation not supporting named actor classes should
+either refuse loading dialogues with the 'ZDoom' namespace or if it does not
+outright abort on incompatible namespaces fail with a type mismatch error on
+one of the specified propeties.
+
 ZDoom-format dialogues need to start with the line:
 
 namespace = "ZDoom";

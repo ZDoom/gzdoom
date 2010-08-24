@@ -951,7 +951,7 @@ void ScanDirectory(TArray<FFileList> &list, const char *dirpath)
 	}
 }
 
-#elif defined(__sun)
+#elif defined(__sun) || defined(linux)
 
 //==========================================================================
 //
@@ -977,11 +977,9 @@ void ScanDirectory(TArray<FFileList> &list, const char *dirpath)
 		FFileList *fl = &list[list.Reserve(1)];
 		fl->Filename << dirpath << file->d_name;
 
-		struct stat *fileStat;
-		fileStat = malloc(sizeof(struct stat));
-		stat(fullFileName, fileStat);
-		fl->isDirectory = S_ISDIR(fileStat->st_mode);
-		free(stat);
+		struct stat fileStat;
+		stat(fl->Filename, &fileStat);
+		fl->isDirectory = S_ISDIR(fileStat.st_mode);
 
 		if(fl->isDirectory)
 		{

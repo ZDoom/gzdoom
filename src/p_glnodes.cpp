@@ -36,6 +36,12 @@
 #include <direct.h>
 #endif
 
+#ifndef _WIN32
+#include <unistd.h>
+#else
+#define rmdir _rmdir
+#endif
+
 #include "templates.h"
 #include "m_alloc.h"
 #include "m_argv.h"
@@ -65,8 +71,8 @@ CVAR(Bool, gl_cachenodes, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Float, gl_cachetime, 0.6f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 void P_LoadZNodes (FileReader &dalump, DWORD id);
-bool CheckCachedNodes(MapData *map);
-void CreateCachedNodes(MapData *map);
+static bool CheckCachedNodes(MapData *map);
+static void CreateCachedNodes(MapData *map);
 
 
 // fixed 32 bit gl_vert format v2.0+ (glBsp 1.91)
@@ -1006,9 +1012,8 @@ static FString GetCachePath()
 		if (path.Len() != 0) path += '/';
 		path += "zdoom/cache";
 	#else
-		// Fixme: This should optimally be the same directory for ZDoom, GZDoom and Skulltag
-		// so HOME_DIR is probably not the best choice here.
-		path = NicePath(HOME_DIR"/cache");
+		// Don't use GAME_DIR and such so that ZDoom and its child ports can share the node cache.
+		path = NicePath("~/zdoom/cache");
 	#endif
 		return path;
 }
@@ -1242,8 +1247,7 @@ CCMD(clearnodecache)
 	{
 		if (list[i].isDirectory)
 		{
-			// Is this ok for Linux?
-			_rmdir(list[i].Filename);
+			rmdir(list[i].Filename);
 		}
 		else
 		{

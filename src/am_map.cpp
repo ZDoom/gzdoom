@@ -37,6 +37,7 @@
 #include "d_event.h"
 #include "gi.h"
 #include "r_bsp.h"
+#include "p_setup.h"
 
 #include "m_cheat.h"
 #include "i_system.h"
@@ -2363,7 +2364,7 @@ void AM_Drawer ()
 	}
 	AM_activateNewScale();
 
-	if (am_textured /* && using_gl_nodes */)
+	if (am_textured && hasglnodes)
 		AM_drawSubsectors();
 
 	if (grid)	

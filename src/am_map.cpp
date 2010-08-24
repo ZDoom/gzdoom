@@ -36,6 +36,7 @@
 #include "r_translate.h"
 #include "d_event.h"
 #include "gi.h"
+#include "r_bsp.h"
 
 #include "m_cheat.h"
 #include "i_system.h"
@@ -1625,6 +1626,76 @@ void AM_drawGrid (const AMColor &color)
 
 //=============================================================================
 //
+// AM_drawSubsectors
+//
+//=============================================================================
+
+void AM_drawSubsectors()
+{
+	static TArray<FVector2> points;
+	float scale = float(scale_mtof);
+	angle_t rotation;
+	sector_t tempsec;
+	int floorlight, ceilinglight;
+	double originx, originy;
+
+	for (int i = 0; i < numsubsectors; ++i)
+	{
+		if (!(subsectors[i].sector->MoreFlags & SECF_DRAWN))
+		{
+			continue;
+		}
+		// Fill the points array from the subsector.
+		points.Resize(subsectors[i].numlines);
+		for (DWORD j = 0; j < subsectors[i].numlines; ++j)
+		{
+			mpoint_t pt = { subsectors[i].firstline[j].v1->x >> FRACTOMAPBITS,
+							subsectors[i].firstline[j].v1->y >> FRACTOMAPBITS };
+			if (am_rotate == 1 || (am_rotate == 2 && viewactive))
+			{
+				AM_rotatePoint(&pt.x, &pt.y);
+			}
+			points[j].X = f_x + ((pt.x - m_x) * scale / float(1 << 24));
+			points[j].Y = f_y + (f_h - (pt.y - m_y) * scale / float(1 << 24));
+		}
+		// For lighting and texture determination
+		sector_t *sec = R_FakeFlat (subsectors[i].sector, &tempsec, &floorlight,
+			&ceilinglight, false);
+		// Find texture origin.
+		mpoint_t originpt = { -sec->GetXOffset(sector_t::floor) >> FRACTOMAPBITS,
+							  sec->GetYOffset(sector_t::floor) >> FRACTOMAPBITS };
+		rotation = 0 - sec->GetAngle(sector_t::floor);
+		// Apply the floor's rotation to the texture origin.
+		if (rotation != 0)
+		{
+			AM_rotate(&originpt.x, &originpt.y, rotation);
+		}
+		// Apply the automap's rotation to the texture origin.
+		if (am_rotate == 1 || (am_rotate == 2 && viewactive))
+		{
+			rotation += ANG90 - players[consoleplayer].camera->angle;
+			AM_rotatePoint(&originpt.x, &originpt.y);
+		}
+		originx = f_x + ((originpt.x - m_x) * scale / float(1 << 24));
+		originy = f_y + (f_h - (originpt.y - m_y) * scale / float(1 << 24));
+
+		// Draw the polygon.
+		screen->FillSimplePoly(
+			TexMan(sec->GetTexture(sector_t::floor)),
+			&points[0], points.Size(),
+			originx, originy,
+			scale / (FIXED2FLOAT(sec->GetXScale(sector_t::floor)) * float(1 << MAPBITS)),
+			scale / (FIXED2FLOAT(sec->GetYScale(sector_t::floor)) * float(1 << MAPBITS)),
+			rotation,
+			sec->ColorMap,
+			// Use an equation similar to player sprites to determine shade
+			(LIGHT2SHADE((floorlight + ceilinglight) >> 1) - 12*FRACUNIT) >> FRACBITS
+			);
+	}
+}
+
+//=============================================================================
+//
 //
 //
 //=============================================================================
@@ -2291,6 +2362,9 @@ void AM_Drawer ()
 		f_p = screen->GetPitch ();
 	}
 	AM_activateNewScale();
+
+	if (am_textured /* && using_gl_nodes */)
+		AM_drawSubsectors();
 
 	if (grid)	
 		AM_drawGrid(GridColor);

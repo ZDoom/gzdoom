@@ -1660,7 +1660,7 @@ void AM_drawSubsectors()
 			points[j].Y = f_y + (f_h - (pt.y - m_y) * scale / float(1 << 24));
 		}
 		// For lighting and texture determination
-		sector_t *sec = R_FakeFlat (subsectors[i].sector, &tempsec, &floorlight,
+		sector_t *sec = R_FakeFlat (subsectors[i].render_sector, &tempsec, &floorlight,
 			&ceilinglight, false);
 		// Find texture origin.
 		mpoint_t originpt = { -sec->GetXOffset(sector_t::floor) >> FRACTOMAPBITS,

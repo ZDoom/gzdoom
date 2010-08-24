@@ -4692,6 +4692,8 @@ bool P_HitWater (AActor * thing, sector_t * sec, fixed_t x, fixed_t y, fixed_t z
 	// don't splash above the object
 	if (checkabove && z > thing->z + (thing->height >> 1)) return false;
 
+#if 0 // needs some rethinking before activation
+
 	// This avoids spawning splashes on invisible self referencing sectors.
 	// For network consistency do this only in single player though because
 	// it is not guaranteed that all players have GL nodes loaded.
@@ -4702,6 +4704,7 @@ bool P_HitWater (AActor * thing, sector_t * sec, fixed_t x, fixed_t y, fixed_t z
 
 		if (zs > zr && thing->z >= zs) return false;
 	}
+#endif
 
 #ifdef _3DFLOORS
 	for(unsigned int i=0;i<sec->e->XFloor.ffloors.Size();i++)

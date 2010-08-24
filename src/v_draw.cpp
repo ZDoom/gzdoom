@@ -1169,11 +1169,11 @@ void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 	// Travel down the right edge and create an outline of that edge.
 	pt1 = toppt;
 	pt2 = toppt + 1;	if (pt2 > npoints) pt2 = 0;
-	y1 = xs_RoundToInt(points[pt1].Y);
+	y1 = xs_RoundToInt(points[pt1].Y + 0.5f);
 	do
 	{
-		x = FLOAT2FIXED(points[pt1].X);
-		y2 = xs_RoundToInt(points[pt2].Y);
+		x = FLOAT2FIXED(points[pt1].X + 0.5f);
+		y2 = xs_RoundToInt(points[pt2].Y + 0.5f);
 		if (y1 >= y2 || (y1 < 0 && y2 < 0) || (y1 >= Height && y2 >= Height))
 		{
 		}
@@ -1200,11 +1200,11 @@ void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 	// Travel down the left edge and fill it in.
 	pt1 = toppt;
 	pt2 = toppt - 1;	if (pt2 < 0) pt2 = npoints;
-	y1 = xs_RoundToInt(points[pt1].Y);
+	y1 = xs_RoundToInt(points[pt1].Y + 0.5f);
 	do
 	{
-		x = FLOAT2FIXED(points[pt1].X);
-		y2 = xs_RoundToInt(points[pt2].Y);
+		x = FLOAT2FIXED(points[pt1].X + 0.5f);
+		y2 = xs_RoundToInt(points[pt2].Y + 0.5f);
 		if (y1 >= y2 || (y1 < 0 && y2 < 0) || (y1 >= Height && y2 >= Height))
 		{
 		}

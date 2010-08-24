@@ -407,7 +407,7 @@ class USDFParser : public UDMFParserBase
 				}
 			}
 		}
-		if (type == NULL)
+		if (type == NULL && dlgid == 0)
 		{
 			sc.ScriptMessage("No valid actor type defined in conversation.");
 			return false;

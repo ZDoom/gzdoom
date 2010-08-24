@@ -4398,9 +4398,11 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	// Check if this actor's mapthing has a conversation defined
 	if (mthing->Conversation > 0)
 	{
-		mobj->ConversationRoot = GetConversation(mthing->Conversation);
-		if (mobj->ConversationRoot != -1)
+		// Make sure that this does not partially overwrite the default dialogue settings.
+		int root = GetConversation(mthing->Conversation);
+		if (root != -1)
 		{
+			mobj->ConversationRoot = root;
 			mobj->Conversation = StrifeDialogues[mobj->ConversationRoot];
 		}
 	}

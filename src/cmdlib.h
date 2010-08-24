@@ -54,4 +54,12 @@ void CreatePath(const char * fn);
 FString ExpandEnvVars(const char *searchpathstring);
 FString NicePath(const char *path);
 
+struct FFileList
+{
+	FString Filename;
+	bool isDirectory;
+};
+
+void ScanDirectory(TArray<FFileList> &list, const char *dirpath);
+
 #endif

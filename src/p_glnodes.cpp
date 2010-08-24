@@ -33,11 +33,13 @@
 #include <math.h>
 #ifdef _MSC_VER
 #include <malloc.h>		// for alloca()
+#include <direct.h>
 #endif
 
 #include "templates.h"
 #include "m_alloc.h"
 #include "m_argv.h"
+#include "c_dispatch.h"
 #include "m_swap.h"
 #include "g_game.h"
 #include "i_system.h"
@@ -995,8 +997,7 @@ bool P_CheckNodes(MapData * map, bool rebuilt, int buildtime)
 
 typedef TArray<BYTE> MemFile;
 
-
-FString CreateCacheName(MapData *map, bool create)
+static FString GetCachePath()
 {
 	FString path;
 
@@ -1005,9 +1006,16 @@ FString CreateCacheName(MapData *map, bool create)
 		if (path.Len() != 0) path += '/';
 		path += "zdoom/cache";
 	#else
+		// Fixme: This should optimally be the same directory for ZDoom, GZDoom and Skulltag
+		// so HOME_DIR is probably not the best choice here.
 		path = NicePath(HOME_DIR"/cache");
 	#endif
-	
+		return path;
+}
+
+static FString CreateCacheName(MapData *map, bool create)
+{
+	FString path = GetCachePath();
 	FString lumpname = Wads.GetLumpFullPath(map->lumpnum);
 	int separator = lumpname.IndexOf(':');
 	path << '/' << lumpname.Left(separator);
@@ -1018,19 +1026,19 @@ FString CreateCacheName(MapData *map, bool create)
 	return path;
 }
 
-void WriteByte(MemFile &f, BYTE b)
+static void WriteByte(MemFile &f, BYTE b)
 {
 	f.Push(b);
 }
 
-void WriteWord(MemFile &f, WORD b)
+static void WriteWord(MemFile &f, WORD b)
 {
 	int v = f.Reserve(2);
 	f[v] = (BYTE)b;
 	f[v+1] = (BYTE)(b>>8);
 }
 
-void WriteLong(MemFile &f, DWORD b)
+static void WriteLong(MemFile &f, DWORD b)
 {
 	int v = f.Reserve(4);
 	f[v] = (BYTE)b;
@@ -1039,7 +1047,7 @@ void WriteLong(MemFile &f, DWORD b)
 	f[v+3] = (BYTE)(b>>24);
 }
 
-void CreateCachedNodes(MapData *map)
+static void CreateCachedNodes(MapData *map)
 {
 	MemFile ZNodes;
 
@@ -1138,7 +1146,7 @@ void CreateCachedNodes(MapData *map)
 }
 
 
-bool CheckCachedNodes(MapData *map)
+static bool CheckCachedNodes(MapData *map)
 {
 	char magic[4] = {0,0,0,0};
 	BYTE md5[16];
@@ -1210,6 +1218,40 @@ bool CheckCachedNodes(MapData *map)
 errorout:
 	fclose(f);
 	return false;
+}
+
+CCMD(clearnodecache)
+{
+	TArray<FFileList> list;
+	FString path = GetCachePath();
+	path += "/";
+
+	try
+	{
+		ScanDirectory(list, path);
+	}
+	catch (CRecoverableError &err)
+	{
+		Printf("%s", err.GetMessage());
+		return;
+	}
+
+	// Scan list backwards so that when we reach a directory
+	// all files within are already deleted.
+	for(int i = list.Size()-1; i >= 0; i--)
+	{
+		if (list[i].isDirectory)
+		{
+			// Is this ok for Linux?
+			_rmdir(list[i].Filename);
+		}
+		else
+		{
+			remove(list[i].Filename);
+		}
+	}
+
+		
 }
 
 //==========================================================================

@@ -942,6 +942,7 @@ struct seg_t
 	// Sector references. Could be retrieved from linedef, too.
 	sector_t*		frontsector;
 	sector_t*		backsector;		// NULL for one-sided lines
+	subsector_t *	Subsector;
 
 	seg_t*			PartnerSeg;
 
@@ -954,6 +955,13 @@ struct seg_t
 // Basically, this is a list of LineSegs indicating the visible walls that
 // define (all or some) sides of a convex BSP leaf.
 //
+
+enum
+{
+	SSECF_DEGENERATE = 1,
+	SSECF_DRAWN = 2,
+};
+
 struct subsector_t
 {
 	sector_t	*sector;
@@ -962,7 +970,7 @@ struct subsector_t
 	seg_t		*firstline;
 	DWORD		numlines;
 	sector_t	*render_sector;
-	bool		degenerate;
+	int			flags;
 };
 
 

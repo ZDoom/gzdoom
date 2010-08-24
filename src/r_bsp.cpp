@@ -167,10 +167,11 @@ static cliprange_t		solidsegs[MAXWIDTH/2+2];
 //
 //==========================================================================
 
-void R_ClipWallSegment (int first, int last, bool solid)
+bool R_ClipWallSegment (int first, int last, bool solid)
 {
 	cliprange_t *next, *start;
 	int i, j;
+	bool res = false;
 
 	// Find the first range that touches the range
 	// (adjacent pixels are touching).
@@ -180,6 +181,7 @@ void R_ClipWallSegment (int first, int last, bool solid)
 
 	if (first < start->first)
 	{
+		res = true;
 		if (last <= start->first)
 		{
 			// Post is entirely visible (above start).
@@ -205,7 +207,7 @@ void R_ClipWallSegment (int first, int last, bool solid)
 					next->last = last;
 				}
 			}
-			return;
+			return true;
 		}
 
 		// There is a fragment above *start.
@@ -220,7 +222,7 @@ void R_ClipWallSegment (int first, int last, bool solid)
 
 	// Bottom contained in start?
 	if (last <= start->last)
-		return;
+		return res;
 
 	next = start;
 	while (last >= (next+1)->first)
@@ -257,6 +259,31 @@ crunch:
 			newend = start+i;
 		}
 	}
+	return true;
+}
+
+bool R_CheckClipWallSegment (int first, int last)
+{
+	cliprange_t *start;
+
+	// Find the first range that touches the range
+	// (adjacent pixels are touching).
+	start = solidsegs;
+	while (start->last < first)
+		start++;
+
+	if (first < start->first)
+	{
+		return true;
+	}
+
+	// Bottom contained in start?
+	if (last > start->last)
+	{
+		return true;
+	}
+
+	return false;
 }
 
 
@@ -626,6 +653,10 @@ void R_AddLine (seg_t *line)
 
 	if (line->linedef == NULL)
 	{
+		if (R_CheckClipWallSegment (WallSX1, WallSX2))
+		{
+			line->Subsector->flags |= SSECF_DRAWN;
+		}
 		return;
 	}
 
@@ -827,7 +858,10 @@ void R_AddLine (seg_t *line)
 #endif
 	}
 
-	R_ClipWallSegment (WallSX1, WallSX2, solid);
+	if (R_ClipWallSegment (WallSX1, WallSX2, solid))
+	{
+		line->Subsector->flags |= SSECF_DRAWN;
+	}
 }
 
 
@@ -1063,6 +1097,11 @@ void R_BuildPolyBSP(subsector_t *sub)
 	{
 		sub->BSP->Subsectors[i].sector = sub->sector;
 	}
+
+	for(unsigned i=0; i < sub->BSP->Segs.Size(); i++)
+	{
+		sub->BSP->Segs[i].Subsector = sub;
+	}
 }
 
 void R_Subsector (subsector_t *sub);
@@ -1192,6 +1231,12 @@ void R_Subsector (subsector_t *sub)
 	{
 		if (!line->bPolySeg)
 		{
+			R_AddLine (line);
+		}
+		else if (!(sub->flags & SSECF_DRAWN))
+		{
+			// For the textured automap any bounding line of a subsector must be checked
+			// if the subsector hasn't been already marked as 'seen'.
 			R_AddLine (line);
 		}
 		line++;

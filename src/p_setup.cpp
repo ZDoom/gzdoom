@@ -2913,6 +2913,12 @@ static void P_GroupLines (bool buildmap)
 	for (i = 0; i < numsubsectors; i++)
 	{
 		subsectors[i].sector = subsectors[i].firstline->sidedef->sector;
+
+		for (jj = 0; jj < subsectors[i].numlines; ++jj)
+		{
+			seg_t *seg = subsectors[i].firstline + jj;
+			seg->Subsector = &subsectors[i];
+		}
 	}
 	times[0].Unclock();
 

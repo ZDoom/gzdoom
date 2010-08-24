@@ -1641,7 +1641,7 @@ void AM_drawSubsectors()
 
 	for (int i = 0; i < numsubsectors; ++i)
 	{
-		if (!(subsectors[i].sector->MoreFlags & SECF_DRAWN))
+		if (!(subsectors[i].flags & SSECF_DRAWN))
 		{
 			continue;
 		}

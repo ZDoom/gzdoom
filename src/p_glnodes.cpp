@@ -65,7 +65,6 @@
 void P_GetPolySpots (MapData * lump, TArray<FNodeBuilder::FPolyStart> &spots, TArray<FNodeBuilder::FPolyStart> &anchors);
 
 extern bool	UsingGLNodes;
-extern subsector_t **	SubsectorForSeg;	// Needed during GL node init.
 
 CVAR(Bool, gl_cachenodes, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Float, gl_cachetime, 0.6f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
@@ -1353,9 +1352,6 @@ void P_SetRenderSector()
 	DWORD 				j;
 	TArray<subsector_t *> undetermined;
 	subsector_t *		ss;
-	subsector_t **	SubsectorForSeg;	// Needed during GL node init.
-
-	SubsectorForSeg = new subsector_t *[numsegs];
 
 	// Check for incorrect partner seg info so that the following code does not crash.
 	for(i=0;i<numsegs;i++)
@@ -1392,22 +1388,15 @@ void P_SetRenderSector()
 
 		// Check for one-dimensional subsectors. These should be ignored when
 		// being processed for automap drawinng etc.
-		ss->degenerate=true;
+		ss->flags |= SSECF_DEGENERATE;
 		for(j=2; j<ss->numlines; j++)
 		{
 			if (!PointOnLine(seg[j].v1->x, seg[j].v1->y, seg->v1->x, seg->v1->y, seg->v2->x-seg->v1->x, seg->v2->y-seg->v1->y))
 			{
 				// Not on the same line
-				ss->degenerate=false;
+				ss->flags &= ~SSECF_DEGENERATE;
 				break;
 			}
-		}
-
-		seg = ss->firstline;
-		for(j=0; j<ss->numlines; j++)
-		{
-			SubsectorForSeg[seg - segs] = ss;
-			seg++;
 		}
 
 		seg = ss->firstline;
@@ -1437,9 +1426,9 @@ void P_SetRenderSector()
 			
 			for(j=0; j<ss->numlines; j++)
 			{
-				if (seg->PartnerSeg && SubsectorForSeg[seg->PartnerSeg - segs])
+				if (seg->PartnerSeg && seg->PartnerSeg->Subsector)
 				{
-					sector_t * backsec = SubsectorForSeg[seg->PartnerSeg - segs]->render_sector;
+					sector_t * backsec = seg->PartnerSeg->Subsector->render_sector;
 					if (backsec)
 					{
 						ss->render_sector=backsec;
@@ -1487,5 +1476,4 @@ void P_SetRenderSector()
 	}
 #endif
 
-	delete [] SubsectorForSeg;
 }

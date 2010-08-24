@@ -667,7 +667,7 @@ bool FluidSynthMIDIDevice::LoadFluidSynth()
 	}
 #endif
 
-	for (int i = 0; i < countof(imports); ++i)
+	for (size_t i = 0; i < countof(imports); ++i)
 	{
 #ifdef _WIN32
 		FARPROC proc = GetProcAddress(FluidSynthDLL, imports[i].FuncName);
@@ -679,7 +679,7 @@ bool FluidSynthMIDIDevice::LoadFluidSynth()
 			Printf(TEXTCOLOR_RED"Failed to find %s in %s\n", imports[i].FuncName, FLUIDSYNTHLIB);
 			fail++;
 		}
-		*imports[i].FuncPointer = proc;
+		*imports[i].FuncPointer = (void *)proc;
 	}
 	if (fail == 0)
 	{

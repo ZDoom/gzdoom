@@ -1121,6 +1121,7 @@ void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 	fixed_t x;
 	double rot = rotation * M_PI / double(1u << 31);
 	bool dorotate = rot != 0;
+	double cosrot, sinrot;
 
 	if (--npoints < 2 || Buffer == NULL)
 	{ // not a polygon or we're not locked
@@ -1157,14 +1158,17 @@ void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 		return;
 	}
 
+	cosrot = cos(rot);
+	sinrot = sin(rot);
+
 	// Setup constant texture mapping parameters.
 	R_SetupSpanBits(tex);
 	R_SetSpanColormap(colormap != NULL ? &colormap->Maps[clamp(shade, 0, NUMCOLORMAPS-1) * 256] : identitymap);
 	R_SetSpanSource(tex->GetPixels());
 	scalex = double(1u << (32 - ds_xbits)) / scalex;
 	scaley = double(1u << (32 - ds_ybits)) / scaley;
-	ds_xstep = xs_RoundToInt(cos(rot) * scalex);
-	ds_ystep = xs_RoundToInt(sin(rot) * scaley);
+	ds_xstep = xs_RoundToInt(cosrot * scalex);
+	ds_ystep = xs_RoundToInt(sinrot * scaley);
 
 	// Travel down the right edge and create an outline of that edge.
 	pt1 = toppt;
@@ -1235,7 +1239,9 @@ void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 					TVector2<double> tex(x1 - originx, y - originy);
 					if (dorotate)
 					{
-						tex = tex.Rotated(rot);
+						double t = tex.X;
+						tex.X = t * cosrot - tex.Y * sinrot;
+						tex.Y = tex.Y * cosrot + t * sinrot;
 					}
 					ds_xfrac = xs_RoundToInt(tex.X * scalex);
 					ds_yfrac = xs_RoundToInt(tex.Y * scaley);

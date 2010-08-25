@@ -1233,12 +1233,6 @@ void R_Subsector (subsector_t *sub)
 		{
 			R_AddLine (line);
 		}
-		else if (!(sub->flags & SSECF_DRAWN))
-		{
-			// For the textured automap any bounding line of a subsector must be checked
-			// if the subsector hasn't been already marked as 'seen'.
-			R_AddLine (line);
-		}
 		line++;
 	}
 }

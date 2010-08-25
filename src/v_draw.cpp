@@ -1112,7 +1112,7 @@ void DCanvas::Clear (int left, int top, int right, int bottom, int palcolor, uin
 
 void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 	double originx, double originy, double scalex, double scaley, angle_t rotation,
-	FDynamicColormap *colormap, int shade)
+	FDynamicColormap *colormap, fixed_t shade)
 {
 	float topy, boty, leftx, rightx;
 	int toppt, botpt, pt1, pt2;
@@ -1163,7 +1163,7 @@ void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 
 	// Setup constant texture mapping parameters.
 	R_SetupSpanBits(tex);
-	R_SetSpanColormap(colormap != NULL ? &colormap->Maps[clamp(shade, 0, NUMCOLORMAPS-1) * 256] : identitymap);
+	R_SetSpanColormap(colormap != NULL ? &colormap->Maps[clamp(shade >> FRACBITS, 0, NUMCOLORMAPS-1) * 256] : identitymap);
 	R_SetSpanSource(tex->GetPixels());
 	scalex = double(1u << (32 - ds_xbits)) / scalex;
 	scaley = double(1u << (32 - ds_ybits)) / scaley;

@@ -64,8 +64,6 @@
 
 void P_GetPolySpots (MapData * lump, TArray<FNodeBuilder::FPolyStart> &spots, TArray<FNodeBuilder::FPolyStart> &anchors);
 
-extern bool	UsingGLNodes;
-
 CVAR(Bool, gl_cachenodes, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Float, gl_cachetime, 0.6f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
@@ -957,7 +955,6 @@ bool P_CheckNodes(MapData * map, bool rebuilt, int buildtime)
 			};
 			leveldata.FindMapBounds ();
 			FNodeBuilder builder (leveldata, polyspots, anchors, true);
-			UsingGLNodes = true;
 			delete[] vertexes;
 			builder.Extract (nodes, numnodes,
 				segs, numsegs,

@@ -1642,7 +1642,7 @@ void AM_drawSubsectors()
 
 	for (int i = 0; i < numsubsectors; ++i)
 	{
-		if (!(subsectors[i].flags & SSECF_DRAWN))
+		if (!(subsectors[i].flags & SSECF_DRAWN) && am_cheat == 0)
 		{
 			continue;
 		}

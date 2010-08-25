@@ -87,7 +87,6 @@ EXTERN_CVAR(Bool, am_textured)
 
 CVAR (Bool, genblockmap, false, CVAR_SERVERINFO|CVAR_GLOBALCONFIG);
 CVAR (Bool, gennodes, false, CVAR_SERVERINFO|CVAR_GLOBALCONFIG);
-CVAR (Bool, genglnodes, false, CVAR_SERVERINFO);
 CVAR (Bool, showloadtimes, false, 0);
 CVAR (Bool, forceglnodes, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 
@@ -142,8 +141,6 @@ int sidecount;
 sidei_t *sidetemp;
 
 TArray<int>		linemap;
-
-bool			UsingGLNodes;
 
 // BLOCKMAP
 // Created from axis aligned bounding box
@@ -3696,7 +3693,6 @@ void P_SetupLevel (char *lumpname, int position)
 	}
 	bool reloop = false;
 
-	UsingGLNodes = false;
 	if (!ForceNodeBuild)
 	{
 		// Check for compressed nodes first, then uncompressed nodes
@@ -3705,15 +3701,15 @@ void P_SetupLevel (char *lumpname, int position)
 
 		if (map->MapLumps[ML_GLZNODES].Size != 0)
 		{
-			// If normal nodes are not present but GL nodes are, use them.
 			map->Seek(ML_GLZNODES);
 			idcheck = MAKE_ID('Z','G','L','N');
 			idcheck2 = MAKE_ID('Z','G','L','2');
 			idcheck3 = MAKE_ID('X','G','L','N');
 			idcheck4 = MAKE_ID('X','G','L','2');
 		}
-		else if (map->MapLumps[ML_ZNODES].Size != 0 && !UsingGLNodes)
+		else if (map->MapLumps[ML_ZNODES].Size != 0)
 		{
+			// Use normal nodes only if no #GL nodes are present
 			map->Seek(ML_ZNODES);
 			idcheck = MAKE_ID('Z','N','O','D');
 			idcheck2 = MAKE_ID('X','N','O','D');
@@ -3814,8 +3810,7 @@ void P_SetupLevel (char *lumpname, int position)
 			lines, numlines
 		};
 		leveldata.FindMapBounds ();
-		UsingGLNodes |= genglnodes;
-		FNodeBuilder builder (leveldata, polyspots, anchors, UsingGLNodes);
+		FNodeBuilder builder (leveldata, polyspots, anchors, true);
 		delete[] vertexes;
 		builder.Extract (nodes, numnodes,
 			segs, numsegs,

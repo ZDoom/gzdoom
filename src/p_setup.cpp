@@ -87,8 +87,8 @@ EXTERN_CVAR(Bool, am_textured)
 
 CVAR (Bool, genblockmap, false, CVAR_SERVERINFO|CVAR_GLOBALCONFIG);
 CVAR (Bool, gennodes, false, CVAR_SERVERINFO|CVAR_GLOBALCONFIG);
+CVAR (Bool, genglnodes, false, CVAR_SERVERINFO);
 CVAR (Bool, showloadtimes, false, 0);
-CVAR (Bool, forceglnodes, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 
 static void P_InitTagLists ();
 static void P_Shutdown ();
@@ -3504,6 +3504,7 @@ void P_SetupLevel (char *lumpname, int position)
 	int numbuildthings;
 	int i;
 	bool buildmap;
+	bool UsingGLNodes = am_textured;
 
 	for (i = 0; i < (int)countof(times); ++i)
 	{
@@ -3699,6 +3700,13 @@ void P_SetupLevel (char *lumpname, int position)
 		FWadLump test;
 		DWORD id = MAKE_ID('X','x','X','x'), idcheck = 0, idcheck2 = 0, idcheck3 = 0, idcheck4 = 0;
 
+		if (map->MapLumps[ML_ZNODES].Size != 0 && !UsingGLNodes)
+		{
+			// Test normal nodes first if we don't need GL nodes
+			map->Seek(ML_ZNODES);
+			idcheck = MAKE_ID('Z','N','O','D');
+			idcheck2 = MAKE_ID('X','N','O','D');
+		}
 		if (map->MapLumps[ML_GLZNODES].Size != 0)
 		{
 			map->Seek(ML_GLZNODES);
@@ -3706,13 +3714,6 @@ void P_SetupLevel (char *lumpname, int position)
 			idcheck2 = MAKE_ID('Z','G','L','2');
 			idcheck3 = MAKE_ID('X','G','L','N');
 			idcheck4 = MAKE_ID('X','G','L','2');
-		}
-		else if (map->MapLumps[ML_ZNODES].Size != 0)
-		{
-			// Use normal nodes only if no #GL nodes are present
-			map->Seek(ML_ZNODES);
-			idcheck = MAKE_ID('Z','N','O','D');
-			idcheck2 = MAKE_ID('X','N','O','D');
 		}
 
 		map->file->Read (&id, 4);
@@ -3810,7 +3811,7 @@ void P_SetupLevel (char *lumpname, int position)
 			lines, numlines
 		};
 		leveldata.FindMapBounds ();
-		FNodeBuilder builder (leveldata, polyspots, anchors, true);
+		FNodeBuilder builder (leveldata, polyspots, anchors, genglnodes || UsingGLNodes);
 		delete[] vertexes;
 		builder.Extract (nodes, numnodes,
 			segs, numsegs,
@@ -3834,7 +3835,7 @@ void P_SetupLevel (char *lumpname, int position)
 		gamenodes=NULL;
 	}
 
-	if (am_textured || forceglnodes)
+	if (UsingGLNodes)
 	{
 		// Build GL nodes if we want a textured automap or GL nodes are forced to be built.
 		// If the original nodes being loaded are not GL nodes they will be kept around for

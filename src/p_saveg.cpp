@@ -621,7 +621,7 @@ void P_SerializeSubsectors(FArchive &arc)
 			num_nodes != numnodes)
 		{
 			// Nodes don't match - we can't use this info
-			for(int i=0;i<numsubsectors;i+=8)
+			for(int i=0;i<num_subs;i+=8)
 			{
 				// Skip the subsector info.
 				arc << by;

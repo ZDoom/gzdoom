@@ -259,7 +259,7 @@ public:
 	void DrawPixel(int x, int y, int palcolor, uint32 rgbcolor);
 	void FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 		double originx, double originy, double scalex, double scaley,
-		angle_t rotation, FDynamicColormap *colormap, fixed_t shade);
+		angle_t rotation, FDynamicColormap *colormap, int lightlevel);
 	bool WipeStartScreen(int type);
 	void WipeEndScreen();
 	bool WipeDo(int ticks);

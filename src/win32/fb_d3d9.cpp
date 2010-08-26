@@ -3235,8 +3235,10 @@ void D3DFB::FlatFill(int left, int top, int right, int bottom, FTexture *src, bo
 
 void D3DFB::FillSimplePoly(FTexture *texture, FVector2 *points, int npoints,
 	double originx, double originy, double scalex, double scaley,
-	angle_t rotation, FDynamicColormap *colormap, fixed_t shade)
+	angle_t rotation, FDynamicColormap *colormap, int lightlevel)
 {
+	// Use an equation similar to player sprites to determine shade
+	fixed_t shade = LIGHT2SHADE(floorlight) - 12*FRACUNIT;
 	BufferedTris *quad;
 	FBVERTEX *verts;
 	D3DTex *tex;
@@ -3254,7 +3256,7 @@ void D3DFB::FillSimplePoly(FTexture *texture, FVector2 *points, int npoints,
 	}
 	if (In2D < 2)
 	{
-		Super::FillSimplePoly(texture, points, npoints, originx, originy, scalex, scaley, rotation, colormap, shade);
+		Super::FillSimplePoly(texture, points, npoints, originx, originy, scalex, scaley, rotation, colormap, lightlevel);
 		return;
 	}
 	if (!InScene)

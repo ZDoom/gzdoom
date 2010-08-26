@@ -1671,8 +1671,7 @@ void AM_drawSubsectors()
 			scale / (FIXED2FLOAT(sec->GetYScale(sector_t::floor)) * float(1 << MAPBITS)),
 			rotation,
 			colormap,
-			// Use an equation similar to player sprites to determine shade
-			LIGHT2SHADE(floorlight) - 12*FRACUNIT
+			floorlight
 			);
 	}
 }

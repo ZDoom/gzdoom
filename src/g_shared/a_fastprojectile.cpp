@@ -158,10 +158,13 @@ void AFastProjectile::Effect()
 		if (name != NAME_None)
 		{
 			fixed_t hitz = z-8*FRACUNIT;
+
 			if (hitz < floorz)
 			{
 				hitz = floorz;
 			}
+			// Do not clip this offset to the floor.
+			hitz += GetClass()->Meta.GetMetaFixed (ACMETA_MissileHeight);
 		
 			const PClass *trail = PClass::FindClass(name);
 			if (trail != NULL)

@@ -302,7 +302,7 @@ void AActor::LinkToWorld (bool buggy)
 	// link into subsector
 	sector_t *sec;
 
-	if (!buggy || numnodes == 0)
+	if (!buggy || numgamenodes == 0)
 	{
 		sec = P_PointInSector (x, y);
 	}

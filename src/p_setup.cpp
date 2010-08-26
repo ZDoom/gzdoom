@@ -3504,7 +3504,10 @@ void P_SetupLevel (char *lumpname, int position)
 	int numbuildthings;
 	int i;
 	bool buildmap;
-	bool UsingGLNodes = am_textured;
+	// Multiplayer games and demo playback require a reliable behavior here 
+	// so always prefer GL nodes if there is a choice.
+	bool UsingGLNodes = am_textured || multiplayer || demoplayback;
+	bool RequireGLNodes = am_textured;
 
 	for (i = 0; i < (int)countof(times); ++i)
 	{
@@ -3835,7 +3838,7 @@ void P_SetupLevel (char *lumpname, int position)
 		gamenodes=NULL;
 	}
 
-	if (UsingGLNodes)
+	if (RequireGLNodes)
 	{
 		// Build GL nodes if we want a textured automap or GL nodes are forced to be built.
 		// If the original nodes being loaded are not GL nodes they will be kept around for

@@ -3238,7 +3238,7 @@ void D3DFB::FillSimplePoly(FTexture *texture, FVector2 *points, int npoints,
 	angle_t rotation, FDynamicColormap *colormap, int lightlevel)
 {
 	// Use an equation similar to player sprites to determine shade
-	fixed_t shade = LIGHT2SHADE(floorlight) - 12*FRACUNIT;
+	fixed_t shade = LIGHT2SHADE(lightlevel) - 12*FRACUNIT;
 	BufferedTris *quad;
 	FBVERTEX *verts;
 	D3DTex *tex;

@@ -1639,6 +1639,7 @@ void AM_drawSubsectors()
 	sector_t tempsec;
 	int floorlight, ceilinglight;
 	double originx, originy;
+	FDynamicColormap *colormap;
 
 	for (int i = 0; i < numsubsectors; ++i)
 	{
@@ -1679,6 +1680,21 @@ void AM_drawSubsectors()
 		}
 		originx = f_x + ((originpt.x - m_x) * scale / float(1 << 24));
 		originy = f_y + (f_h - (originpt.y - m_y) * scale / float(1 << 24));
+		// Coloring for the polygon
+		colormap = sec->ColorMap;
+		// If this subsector has not actually been seen yet (because you are cheating
+		// to see it on the map), tint and desaturate it.
+		if (!(subsectors[i].flags & SSECF_DRAWN))
+		{
+			colormap = GetSpecialLights(
+				MAKERGB(
+					(colormap->Color.r + 255) / 2,
+					(colormap->Color.g + 200) / 2,
+					(colormap->Color.b + 160) / 2),
+				colormap->Fade,
+				255 - (255 - colormap->Desaturate) / 4);
+			floorlight = (floorlight + 200*15) / 16;
+		}
 
 		// Draw the polygon.
 		screen->FillSimplePoly(
@@ -1688,7 +1704,7 @@ void AM_drawSubsectors()
 			scale / (FIXED2FLOAT(sec->GetXScale(sector_t::floor)) * float(1 << MAPBITS)),
 			scale / (FIXED2FLOAT(sec->GetYScale(sector_t::floor)) * float(1 << MAPBITS)),
 			rotation,
-			sec->ColorMap,
+			colormap,
 			// Use an equation similar to player sprites to determine shade
 			LIGHT2SHADE(floorlight) - 12*FRACUNIT
 			);

@@ -100,6 +100,7 @@ EXTERN_CVAR (Int, snd_channels)
 // defaulted values
 //
 CVAR (Float, mouse_sensitivity, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR (Float, snd_menuvolume, 0.6f, CVAR_ARCHIVE)
 
 // Show messages has default, 0 = off, 1 = on
 CVAR (Bool, show_messages, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
@@ -1274,6 +1275,7 @@ static valueenum_t Resamplers[] =
 static menuitem_t SoundItems[] =
 {
 	{ slider,	"Sounds volume",		{&snd_sfxvolume},		{0.0}, {1.0},	{0.05f}, {NULL} },
+	{ slider,	"Menu volume",			{&snd_menuvolume},		{0.0}, {1.0},	{0.05f}, {NULL} },
 	{ slider,	"Music volume",			{&snd_musicvolume},		{0.0}, {1.0},	{0.05f}, {NULL} },
 	{ discrete, "MIDI device",			{&snd_mididevice},		{0.0}, {0.0},	{0.0}, {NULL} },
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
@@ -1304,7 +1306,7 @@ static menu_t SoundMenu =
 	SoundItems,
 };
 
-#define MIDI_DEVICE_ITEM 2
+#define MIDI_DEVICE_ITEM 3
 
 /*=======================================
  *
@@ -1506,13 +1508,13 @@ void M_SizeDisplay (int diff)
 CCMD (sizedown)
 {
 	M_SizeDisplay (-1);
-	S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
+	S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 }
 
 CCMD (sizeup)
 {
 	M_SizeDisplay (1);
-	S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
+	S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 }
 
 // Draws a string in the console font, scaled to the 8x8 cells
@@ -2186,7 +2188,7 @@ void M_OptResponder(event_t *ev)
 			NewBits = BitTranslate[DummyDepthCvar];
 			setmodeneeded = true;
 			testingmode = I_GetTime(false) + 5 * TICRATE;
-			S_Sound (CHAN_VOICE | CHAN_UI, "menu/choose", 1, ATTN_NONE);
+			S_Sound (CHAN_VOICE | CHAN_UI, "menu/choose", snd_menuvolume, ATTN_NONE);
 			SetModesMenu (NewWidth, NewHeight, NewBits);
 		}
 		else if (ev->data1 >= '0' && ev->data1 <= '9')
@@ -2291,7 +2293,7 @@ void M_OptButtonHandler(EMenuKey key, bool repeat)
 				CurrentMenu->items[CurrentItem].a.selmode = modecol;
 			}
 
-			S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", 1, ATTN_NONE);
+			S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
 		}
 		break;
 
@@ -2361,7 +2363,7 @@ void M_OptButtonHandler(EMenuKey key, bool repeat)
 			if (CurrentMenu->items[CurrentItem].type == screenres)
 				CurrentMenu->items[CurrentItem].a.selmode = modecol;
 
-			S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", 1, ATTN_NONE);
+			S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
 		}
 		break;
 
@@ -2383,7 +2385,7 @@ void M_OptButtonHandler(EMenuKey key, bool repeat)
 			{
 				++CurrentItem;
 			}
-			S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", 1, ATTN_NONE);
+			S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
 		}
 		break;
 
@@ -2406,7 +2408,7 @@ void M_OptButtonHandler(EMenuKey key, bool repeat)
 			{
 				++CurrentItem;
 			}
-			S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", 1, ATTN_NONE);
+			S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
 		}
 		break;
 
@@ -2444,7 +2446,7 @@ void M_OptButtonHandler(EMenuKey key, bool repeat)
 					else
 						item->a.cvar->SetGenericRep (newval, CVAR_Float);
 				}
-				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
+				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 				break;
 
 			case joy_sens:
@@ -2452,7 +2454,7 @@ void M_OptButtonHandler(EMenuKey key, bool repeat)
 				if (value.Float < item->b.min)
 					value.Float = item->b.min;
 				SELECTED_JOYSTICK->SetSensitivity(value.Float);
-				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
+				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 				break;
 
 			case joy_slider:
@@ -2485,12 +2487,12 @@ void M_OptButtonHandler(EMenuKey key, bool repeat)
 				{
 					SELECTED_JOYSTICK->SetAxisDeadZone(item->a.joyselection, value.Float);
 				}
-				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
+				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 				break;
 
 			case palettegrid:
 				SelColorIndex = (SelColorIndex - 1) & 15;
-				S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", 1, ATTN_NONE);
+				S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
 				break;
 
 			case discretes:
@@ -2535,14 +2537,14 @@ void M_OptButtonHandler(EMenuKey key, bool repeat)
 					if (item->e.values == Depths)
 						BuildModesList (SCREENWIDTH, SCREENHEIGHT, DisplayBits);
 				}
-				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
+				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 				break;
 
 			case ediscrete:
 				value = item->a.cvar->GetGenericRep(CVAR_String);
 				value.String = const_cast<char *>(M_FindPrevVal(value.String, item->e.enumvalues, (int)item->b.numvalues));
 				item->a.cvar->SetGenericRep(value, CVAR_String);
-				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
+				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 				break;
 
 			case bitmask:
@@ -2561,21 +2563,21 @@ void M_OptButtonHandler(EMenuKey key, bool repeat)
 					value.Int = (value.Int & ~bmask) | int(item->e.values[cur].value);
 					item->a.cvar->SetGenericRep (value, CVAR_Int);
 				}
-				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
+				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 				break;
 
 			case inverter:
 				value = item->a.cvar->GetGenericRep (CVAR_Float);
 				value.Float = -value.Float;
 				item->a.cvar->SetGenericRep (value, CVAR_Float);
-				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
+				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 				break;
 
 			case joy_inverter:
 				assert(item->e.joyslidernum == 0);
 				value.Float = SELECTED_JOYSTICK->GetAxisScale(item->a.joyselection);
 				SELECTED_JOYSTICK->SetAxisScale(item->a.joyselection, -value.Float);
-				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
+				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 				break;
 
 			case screenres:
@@ -2599,7 +2601,7 @@ void M_OptButtonHandler(EMenuKey key, bool repeat)
 						item->a.selmode = col;
 					}
 				}
-				S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", 1, ATTN_NONE);
+				S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
 				break;
 
 			default:
@@ -2641,7 +2643,7 @@ void M_OptButtonHandler(EMenuKey key, bool repeat)
 					else
 						item->a.cvar->SetGenericRep (newval, CVAR_Float);
 				}
-				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
+				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 				break;
 
 			case joy_sens:
@@ -2649,7 +2651,7 @@ void M_OptButtonHandler(EMenuKey key, bool repeat)
 				if (value.Float > item->c.max)
 					value.Float = item->c.max;
 				SELECTED_JOYSTICK->SetSensitivity(value.Float);
-				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
+				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 				break;
 
 			case joy_slider:
@@ -2682,12 +2684,12 @@ void M_OptButtonHandler(EMenuKey key, bool repeat)
 				{
 					SELECTED_JOYSTICK->SetAxisDeadZone(item->a.joyselection, value.Float);
 				}
-				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
+				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 				break;
 
 			case palettegrid:
 				SelColorIndex = (SelColorIndex + 1) & 15;
-				S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", 1, ATTN_NONE);
+				S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
 				break;
 
 			case discretes:
@@ -2732,14 +2734,14 @@ void M_OptButtonHandler(EMenuKey key, bool repeat)
 					if (item->e.values == Depths)
 						BuildModesList (SCREENWIDTH, SCREENHEIGHT, DisplayBits);
 				}
-				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
+				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 				break;
 
 			case ediscrete:
 				value = item->a.cvar->GetGenericRep(CVAR_String);
 				value.String = const_cast<char *>(M_FindNextVal(value.String, item->e.enumvalues, (int)item->b.numvalues));
 				item->a.cvar->SetGenericRep(value, CVAR_String);
-				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
+				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 				break;
 
 			case bitmask:
@@ -2758,21 +2760,21 @@ void M_OptButtonHandler(EMenuKey key, bool repeat)
 					value.Int = (value.Int & ~bmask) | int(item->e.values[cur].value);
 					item->a.cvar->SetGenericRep (value, CVAR_Int);
 				}
-				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
+				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 				break;
 
 			case inverter:
 				value = item->a.cvar->GetGenericRep (CVAR_Float);
 				value.Float = -value.Float;
 				item->a.cvar->SetGenericRep (value, CVAR_Float);
-				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
+				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 				break;
 
 			case joy_inverter:
 				assert(item->e.joyslidernum == 0);
 				value.Float = SELECTED_JOYSTICK->GetAxisScale(item->a.joyselection);
 				SELECTED_JOYSTICK->SetAxisScale(item->a.joyselection, -value.Float);
-				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
+				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 				break;
 
 			case screenres:
@@ -2799,7 +2801,7 @@ void M_OptButtonHandler(EMenuKey key, bool repeat)
 						item->a.selmode = col;
 					}
 				}
-				S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", 1, ATTN_NONE);
+				S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
 				break;
 
 			default:
@@ -2829,7 +2831,7 @@ void M_OptButtonHandler(EMenuKey key, bool repeat)
 				setmodeneeded = true;
 				NewBits = BitTranslate[DummyDepthCvar];
 			}
-			S_Sound (CHAN_VOICE | CHAN_UI, "menu/choose", 1, ATTN_NONE);
+			S_Sound (CHAN_VOICE | CHAN_UI, "menu/choose", snd_menuvolume, ATTN_NONE);
 			SetModesMenu (NewWidth, NewHeight, NewBits);
 		}
 		else if ((item->type == more ||
@@ -2841,7 +2843,7 @@ void M_OptButtonHandler(EMenuKey key, bool repeat)
 				 && item->e.mfunc)
 		{
 			CurrentMenu->lastOn = CurrentItem;
-			S_Sound (CHAN_VOICE | CHAN_UI, "menu/choose", 1, ATTN_NONE);
+			S_Sound (CHAN_VOICE | CHAN_UI, "menu/choose", snd_menuvolume, ATTN_NONE);
 			if (item->type == safemore || item->type == rsafemore)
 			{
 				ActivateConfirm (item->label, item->e.mfunc);
@@ -2876,7 +2878,7 @@ void M_OptButtonHandler(EMenuKey key, bool repeat)
 			if (item->e.values == Depths)
 				BuildModesList (SCREENWIDTH, SCREENHEIGHT, DisplayBits);
 
-			S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
+			S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 		}
 		else if (item->type == control)
 		{
@@ -2889,7 +2891,7 @@ void M_OptButtonHandler(EMenuKey key, bool repeat)
 		else if (item->type == listelement)
 		{
 			CurrentMenu->lastOn = CurrentItem;
-			S_Sound (CHAN_VOICE | CHAN_UI, "menu/choose", 1, ATTN_NONE);
+			S_Sound (CHAN_VOICE | CHAN_UI, "menu/choose", snd_menuvolume, ATTN_NONE);
 			item->e.lfunc (CurrentItem);
 		}
 		else if (item->type == inverter)
@@ -2897,14 +2899,14 @@ void M_OptButtonHandler(EMenuKey key, bool repeat)
 			value = item->a.cvar->GetGenericRep (CVAR_Float);
 			value.Float = -value.Float;
 			item->a.cvar->SetGenericRep (value, CVAR_Float);
-			S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
+			S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 		}
 		else if (item->type == joy_inverter)
 		{
 			assert(item->e.joyslidernum == 0);
 			value.Float = SELECTED_JOYSTICK->GetAxisScale(item->a.joyselection);
 			SELECTED_JOYSTICK->SetAxisScale(item->a.joyselection, -value.Float);
-			S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
+			S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 		}
 		else if (item->type == screenres)
 		{
@@ -2912,7 +2914,7 @@ void M_OptButtonHandler(EMenuKey key, bool repeat)
 		else if (item->type == colorpicker)
 		{
 			CurrentMenu->lastOn = CurrentItem;
-			S_Sound (CHAN_VOICE | CHAN_UI, "menu/choose", 1, ATTN_NONE);
+			S_Sound (CHAN_VOICE | CHAN_UI, "menu/choose", snd_menuvolume, ATTN_NONE);
 			StartColorPickerMenu (item->label, item->a.colorcvar);
 		}
 		else if (item->type == palettegrid)

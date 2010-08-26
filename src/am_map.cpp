@@ -1690,7 +1690,7 @@ void AM_drawSubsectors()
 			rotation,
 			sec->ColorMap,
 			// Use an equation similar to player sprites to determine shade
-			LIGHT2SHADE((floorlight + ceilinglight) >> 1) - 12*FRACUNIT
+			LIGHT2SHADE(floorlight) - 12*FRACUNIT
 			);
 	}
 }

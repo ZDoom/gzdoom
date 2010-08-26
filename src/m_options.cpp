@@ -547,6 +547,7 @@ EXTERN_CVAR (Bool, am_showtime)
 EXTERN_CVAR (Int, am_map_secrets)
 EXTERN_CVAR (Bool, am_showtotaltime)
 EXTERN_CVAR (Bool, am_drawmapback)
+EXTERN_CVAR (Bool, am_textured)
 
 static value_t MapColorTypes[] = {
 	{ 0, "Custom" },
@@ -579,6 +580,7 @@ static menuitem_t AutomapItems[] = {
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
 	{ discrete, "Rotate automap",		{&am_rotate},		   	{3.0}, {0.0},	{0.0}, {RotateTypes} },
 	{ discrete, "Overlay automap",		{&am_overlay},			{3.0}, {0.0},	{0.0}, {OverlayTypes} },
+	{ discrete, "Enable textured display",		{&am_textured},			{3.0}, {0.0},	{0.0}, {OnOff} },
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
 	{ discrete, "Show item counts",		{&am_showitems},		{2.0}, {0.0},	{0.0}, {OnOff} },
 	{ discrete, "Show monster counts",	{&am_showmonsters},		{2.0}, {0.0},	{0.0}, {OnOff} },

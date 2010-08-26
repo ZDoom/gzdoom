@@ -185,7 +185,13 @@ CVAR (Color, am_ovthingcolor_item,		0xe88800,	CVAR_ARCHIVE);
 CVAR (Color, am_ovthingcolor_citem,		0xe88800,	CVAR_ARCHIVE);
 
 
-CVAR(Bool, am_textured, false, CVAR_ARCHIVE | CVAR_SERVERINFO)
+static bool textured = 1;	// internal toggle for texture mode
+
+CUSTOM_CVAR(Bool, am_textured, false, CVAR_ARCHIVE | CVAR_SERVERINFO)
+{
+	textured |= self;
+}
+
 CVAR(Int, am_showsubsector, -1, 0);
 
 
@@ -242,6 +248,7 @@ CUSTOM_CVAR (Int, am_showalllines, -1, 0)	// This is a cheat so don't save it.
 #define AM_GRIDKEY		'g'
 #define AM_MARKKEY		'm'
 #define AM_CLEARMARKKEY	'c'
+#define AM_TEXTUREKEY	't'
 
 #define AM_NUMMARKPOINTS 10
 
@@ -1228,6 +1235,14 @@ bool AM_Responder (event_t *ev)
 				grid = !grid;
 				Printf ("%s\n", GStrings(grid ? "AMSTR_GRIDON" : "AMSTR_GRIDOFF"));
 				break;
+			case AM_TEXTUREKEY:
+				if (am_textured && hasglnodes)
+				{
+					textured = !textured;
+					Printf ("%s\n", GStrings(textured ? "AMSTR_TEXON" : "AMSTR_TEXOFF"));
+				}
+				break;
+			
 			case AM_MARKKEY:
 				if (AM_addMark())
 				{
@@ -1640,6 +1655,7 @@ void AM_drawSubsectors()
 	int floorlight, ceilinglight;
 	double originx, originy;
 	FDynamicColormap *colormap;
+
 
 	for (int i = 0; i < numsubsectors; ++i)
 	{
@@ -2380,7 +2396,7 @@ void AM_Drawer ()
 	}
 	AM_activateNewScale();
 
-	if (am_textured && hasglnodes)
+	if (am_textured && hasglnodes && textured)
 		AM_drawSubsectors();
 
 	if (grid)	

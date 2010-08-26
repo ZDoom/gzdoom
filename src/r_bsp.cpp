@@ -36,6 +36,7 @@
 
 #include "i_system.h"
 #include "p_lnspec.h"
+#include "p_setup.h"
 
 #include "r_main.h"
 #include "r_plane.h"
@@ -823,6 +824,16 @@ void R_AddLine (seg_t *line)
 			// Reject empty lines used for triggers and special events.
 			// Identical floor and ceiling on both sides, identical light levels
 			// on both sides, and no middle texture.
+
+			// When using GL nodes, do a clipping test for these lines so we can
+			// mark their subsectors as visible for automap texturing.
+			if (hasglnodes && !(line->Subsector->flags & SSECF_DRAWN))
+			{
+				if (R_CheckClipWallSegment(WallSX1, WallSX2))
+				{
+					line->Subsector->flags |= SSECF_DRAWN;
+				}
+			}
 			return;
 		}
 	}

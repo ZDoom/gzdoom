@@ -1536,7 +1536,7 @@ void M_BuildKeyList (menuitem_t *item, int numitems)
 	for (i = 0; i < numitems; i++, item++)
 	{
 		if (item->type == control)
-			C_GetKeysForCommand (item->e.command, &item->b.key1, &item->c.key2);
+			Bindings.GetKeysForCommand (item->e.command, &item->b.key1, &item->c.key2);
 	}
 }
 
@@ -2165,7 +2165,7 @@ void M_OptResponder(event_t *ev)
 	{
 		if (ev->data1 != KEY_ESCAPE)
 		{
-			C_ChangeBinding(item->e.command, ev->data1);
+			Bindings.SetBind(ev->data1, item->e.command);
 			M_BuildKeyList(CurrentMenu->items, CurrentMenu->numitems);
 		}
 		menuactive = MENU_On;
@@ -2812,7 +2812,7 @@ void M_OptButtonHandler(EMenuKey key, bool repeat)
 	case MKEY_Clear:
 		if (item->type == control)
 		{
-			C_UnbindACommand (item->e.command);
+			Bindings.UnbindACommand (item->e.command);
 			item->b.key1 = item->c.key2 = 0;
 		}
 		break;
@@ -3644,12 +3644,14 @@ void M_LoadKeys (const char *modname, bool dbl)
 
 	mysnprintf (section, countof(section), "%s.%s%sBindings", GameNames[gameinfo.gametype], modname,
 		dbl ? ".Double" : ".");
+
+	FKeyBindings *bindings = dbl? &DoubleBindings : &Bindings;
 	if (GameConfig->SetSection (section))
 	{
 		const char *key, *value;
 		while (GameConfig->NextInSection (key, value))
 		{
-			C_DoBind (key, value, dbl);
+			bindings->DoBind (key, value);
 		}
 	}
 }
@@ -3660,12 +3662,13 @@ int M_DoSaveKeys (FConfigFile *config, char *section, int i, bool dbl)
 
 	config->SetSection (section, true);
 	config->ClearCurrentSection ();
+	FKeyBindings *bindings = dbl? &DoubleBindings : &Bindings;
 	for (++i; i < most; ++i)
 	{
 		menuitem_t *item = &CustomControlsItems[i];
 		if (item->type == control)
 		{
-			C_ArchiveBindings (config, dbl, item->e.command);
+			bindings->ArchiveBindings (config, item->e.command);
 			continue;
 		}
 		break;

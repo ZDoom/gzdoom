@@ -879,7 +879,7 @@ bool G_Responder (event_t *ev)
 	if (gameaction == ga_nothing && 
 		(demoplayback || gamestate == GS_DEMOSCREEN || gamestate == GS_TITLELEVEL))
 	{
-		const char *cmd = C_GetBinding (ev->data1);
+		const char *cmd = Bindings.GetBind (ev->data1);
 
 		if (ev->type == EV_KeyDown)
 		{
@@ -902,11 +902,11 @@ bool G_Responder (event_t *ev)
 			}
 			else
 			{
-				return C_DoKey (ev);
+				return C_DoKey (ev, &Bindings, &DoubleBindings);
 			}
 		}
 		if (cmd && cmd[0] == '+')
-			return C_DoKey (ev);
+			return C_DoKey (ev, &Bindings, &DoubleBindings);
 
 		return false;
 	}
@@ -930,12 +930,12 @@ bool G_Responder (event_t *ev)
 	switch (ev->type)
 	{
 	case EV_KeyDown:
-		if (C_DoKey (ev))
+		if (C_DoKey (ev, &Bindings, &DoubleBindings))
 			return true;
 		break;
 
 	case EV_KeyUp:
-		C_DoKey (ev);
+		C_DoKey (ev, &Bindings, &DoubleBindings);
 		break;
 
 	// [RH] mouse buttons are sent as key up/down events

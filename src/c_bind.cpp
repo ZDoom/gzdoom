@@ -47,12 +47,6 @@
 #include <math.h>
 #include <stdlib.h>
 
-struct FBinding
-{
-	const char *Key;
-	const char *Bind;
-};
-
 /* Default keybindings for Doom (and all other games)
  */
 static const FBinding DefBindings[] =
@@ -178,6 +172,27 @@ static const FBinding DefStrifeBindings[] =
 	// h - use health
 };
 
+static const FBinding DefAutomapBindings[] =
+{
+	{ "f", "am_togglefollow" },
+	{ "g", "am_togglegrid" },
+	{ "t", "am_toggletexture" },
+	{ "m", "am_setmark" },
+	{ "c", "am_clearmarks" },
+	{ "0", "am_gobig" },
+	{ "rightarrow", "+am_panright" },
+	{ "leftarrow", "+am_panleft" },
+	{ "uparrow", "+am_panup" },
+	{ "downarrow", "+am_pandown" },
+	{ "-", "+am_zoomout" },
+	{ "=", "+am_zoomin" },
+	{ "kp-", "+am_zoomout" },
+	{ "kp+", "+am_zoomin" },
+	{ NULL }
+};
+
+
+
 const char *KeyNames[NUM_KEYS] =
 {
 	// This array is dependant on the particular keyboard input
@@ -278,10 +293,18 @@ const char *KeyNames[NUM_KEYS] =
 	"pad_a", "pad_b", "pad_x", "pad_y"
 };
 
-static FString Bindings[NUM_KEYS];
-static FString DoubleBindings[NUM_KEYS];
+FKeyBindings Bindings;
+FKeyBindings DoubleBindings;
+FKeyBindings AutomapBindings;
+
 static unsigned int DClickTime[NUM_KEYS];
 static BYTE DClicked[(NUM_KEYS+7)/8];
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
 
 static int GetKeyFromName (const char *name)
 {
@@ -302,380 +325,15 @@ static int GetKeyFromName (const char *name)
 	return 0;
 }
 
-static const char *KeyName (int key)
-{
-	static char name[5];
-
-	if (KeyNames[key])
-		return KeyNames[key];
-
-	mysnprintf (name, countof(name), "#%d", key);
-	return name;
-}
-
-void C_UnbindAll ()
-{
-	for (int i = 0; i < NUM_KEYS; ++i)
-	{
-		Bindings[i] = "";
-		DoubleBindings[i] = "";
-	}
-}
-
-CCMD (unbindall)
-{
-	C_UnbindAll ();
-}
-
-CCMD (unbind)
-{
-	int i;
-
-	if (argv.argc() > 1)
-	{
-		if ( (i = GetKeyFromName (argv[1])) )
-		{
-			Bindings[i] = "";
-		}
-		else
-		{
-			Printf ("Unknown key \"%s\"\n", argv[1]);
-			return;
-		}
-
-	}
-}
-
-CCMD (bind)
-{
-	int i;
-
-	if (argv.argc() > 1)
-	{
-		i = GetKeyFromName (argv[1]);
-		if (!i)
-		{
-			Printf ("Unknown key \"%s\"\n", argv[1]);
-			return;
-		}
-		if (argv.argc() == 2)
-		{
-			Printf ("\"%s\" = \"%s\"\n", argv[1], Bindings[i].GetChars());
-		}
-		else
-		{
-			Bindings[i] = argv[2];
-		}
-	}
-	else
-	{
-		Printf ("Current key bindings:\n");
-		
-		for (i = 0; i < NUM_KEYS; i++)
-		{
-			if (!Bindings[i].IsEmpty())
-				Printf ("%s \"%s\"\n", KeyName (i), Bindings[i].GetChars());
-		}
-	}
-}
-
-//==========================================================================
+//=============================================================================
 //
-// CCMD defaultbind
 //
-// Binds a command to a key if that key is not already bound and if
-// that command is not already bound to another key.
 //
-//==========================================================================
+//=============================================================================
 
-CCMD (defaultbind)
+static int GetConfigKeyFromName (const char *key)
 {
-	if (argv.argc() < 3)
-	{
-		Printf ("Usage: defaultbind <key> <command>\n");
-	}
-	else
-	{
-		int key = GetKeyFromName (argv[1]);
-		if (key == 0)
-		{
-			Printf ("Unknown key \"%s\"\n", argv[1]);
-			return;
-		}
-		if (!Bindings[key].IsEmpty())
-		{ // This key is already bound.
-			return;
-		}
-		for (int i = 0; i < NUM_KEYS; ++i)
-		{
-			if (!Bindings[i].IsEmpty() && stricmp (Bindings[i], argv[2]) == 0)
-			{ // This command is already bound to a key.
-				return;
-			}
-		}
-		// It is safe to do the bind, so do it.
-		Bindings[key] = argv[2];
-	}
-}
-
-CCMD (undoublebind)
-{
-	int i;
-
-	if (argv.argc() > 1)
-	{
-		if ( (i = GetKeyFromName (argv[1])) )
-		{
-			DoubleBindings[i] = "";
-		}
-		else
-		{
-			Printf ("Unknown key \"%s\"\n", argv[1]);
-			return;
-		}
-
-	}
-}
-
-CCMD (doublebind)
-{
-	int i;
-
-	if (argv.argc() > 1)
-	{
-		i = GetKeyFromName (argv[1]);
-		if (!i)
-		{
-			Printf ("Unknown key \"%s\"\n", argv[1]);
-			return;
-		}
-		if (argv.argc() == 2)
-		{
-			Printf ("\"%s\" = \"%s\"\n", argv[1], DoubleBindings[i].GetChars());
-		}
-		else
-		{
-			DoubleBindings[i] = argv[2];
-		}
-	}
-	else
-	{
-		Printf ("Current key doublebindings:\n");
-		
-		for (i = 0; i < NUM_KEYS; i++)
-		{
-			if (!DoubleBindings[i].IsEmpty())
-				Printf ("%s \"%s\"\n", KeyName (i), DoubleBindings[i].GetChars());
-		}
-	}
-}
-
-CCMD (rebind)
-{
-	FString *bindings;
-
-	if (key == 0)
-	{
-		Printf ("Rebind cannot be used from the console\n");
-		return;
-	}
-
-	if (key & KEY_DBLCLICKED)
-	{
-		bindings = DoubleBindings;
-		key &= KEY_DBLCLICKED-1;
-	}
-	else
-	{
-		bindings = Bindings;
-	}
-
-	if (argv.argc() > 1)
-	{
-		bindings[key] = argv[1];
-	}
-}
-
-static void SetBinds (const FBinding *array)
-{
-	while (array->Key)
-	{
-		C_DoBind (array->Key, array->Bind, false);
-		array++;
-	}
-}
-
-void C_BindDefaults ()
-{
-	SetBinds (DefBindings);
-
-	if (gameinfo.gametype & (GAME_Raven|GAME_Strife))
-	{
-		SetBinds (DefRavenBindings);
-	}
-
-	if (gameinfo.gametype == GAME_Heretic)
-	{
-		SetBinds (DefHereticBindings);
-	}
-
-	if (gameinfo.gametype == GAME_Hexen)
-	{
-		SetBinds (DefHexenBindings);
-	}
-
-	if (gameinfo.gametype == GAME_Strife)
-	{
-		SetBinds (DefStrifeBindings);
-	}
-}
-
-CCMD(binddefaults)
-{
-	C_BindDefaults ();
-}
-
-void C_SetDefaultBindings ()
-{
-	C_UnbindAll ();
-	C_BindDefaults ();
-}
-
-bool C_DoKey (event_t *ev)
-{
-	FString binding;
-	bool dclick;
-	int dclickspot;
-	BYTE dclickmask;
-
-	if (ev->type != EV_KeyDown && ev->type != EV_KeyUp)
-		return false;
-
-	if ((unsigned int)ev->data1 >= NUM_KEYS)
-		return false;
-
-	dclickspot = ev->data1 >> 3;
-	dclickmask = 1 << (ev->data1 & 7);
-	dclick = false;
-
-	// This used level.time which didn't work outside a level.
-	if (DClickTime[ev->data1] > I_MSTime() && ev->type == EV_KeyDown)
-	{
-		// Key pressed for a double click
-		binding = DoubleBindings[ev->data1];
-		DClicked[dclickspot] |= dclickmask;
-		dclick = true;
-	}
-	else
-	{
-		if (ev->type == EV_KeyDown)
-		{ // Key pressed for a normal press
-			binding = Bindings[ev->data1];
-			DClickTime[ev->data1] = I_MSTime() + 571;
-		}
-		else if (DClicked[dclickspot] & dclickmask)
-		{ // Key released from a double click
-			binding = DoubleBindings[ev->data1];
-			DClicked[dclickspot] &= ~dclickmask;
-			DClickTime[ev->data1] = 0;
-			dclick = true;
-		}
-		else
-		{ // Key released from a normal press
-			binding = Bindings[ev->data1];
-		}
-	}
-
-
-	if (binding.IsEmpty())
-	{
-		binding = Bindings[ev->data1];
-		dclick = false;
-	}
-
-	if (!binding.IsEmpty() && (chatmodeon == 0 || ev->data1 < 256))
-	{
-		if (ev->type == EV_KeyUp && binding[0] != '+')
-		{
-			return false;
-		}
-
-		char *copy = binding.LockBuffer();
-
-		if (ev->type == EV_KeyUp)
-		{
-			copy[0] = '-';
-		}
-
-		AddCommandString (copy, dclick ? ev->data1 | KEY_DBLCLICKED : ev->data1);
-		return true;
-	}
-	return false;
-}
-
-const char *C_ConfigKeyName(int keynum)
-{
-	const char *name = KeyName(keynum);
-	if (name[1] == 0)	// Make sure given name is config-safe
-	{
-		if (name[0] == '[')
-			return "LeftBracket";
-		else if (name[0] == ']')
-			return "RightBracket";
-		else if (name[0] == '=')
-			return "Equals";
-		else if (strcmp (name, "kp=") == 0)
-			return "KP-Equals";
-	}
-	return name;
-}
-
-// This function is first called for functions in custom key sections.
-// In this case, matchcmd is non-NULL, and only keys bound to that command
-// are stored. If a match is found, its binding is set to "\1".
-// After all custom key sections are saved, it is called one more for the
-// normal Bindings and DoubleBindings sections for this game. In this case
-// matchcmd is NULL and all keys will be stored. The config section was not
-// previously cleared, so all old bindings are still in place. If the binding
-// for a key is empty, the corresponding key in the config is removed as well.
-// If a binding is "\1", then the binding itself is cleared, but nothing
-// happens to the entry in the config.
-void C_ArchiveBindings (FConfigFile *f, bool dodouble, const char *matchcmd)
-{
-	FString *bindings;
-	int i;
-
-	bindings = dodouble ? DoubleBindings : Bindings;
-
-	for (i = 0; i < NUM_KEYS; i++)
-	{
-		if (bindings[i].IsEmpty())
-		{
-			if (matchcmd == NULL)
-			{
-				f->ClearKey(C_ConfigKeyName(i));
-			}
-		}
-		else if (matchcmd == NULL || stricmp(bindings[i], matchcmd) == 0)
-		{
-			if (bindings[i][0] == '\1')
-			{
-				bindings[i] = "";
-				continue;
-			}
-			f->SetValueForKey(C_ConfigKeyName(i), bindings[i]);
-			if (matchcmd != NULL)
-			{ // If saving a specific command, set a marker so that
-			  // it does not get saved in the general binding list.
-				bindings[i] = "\1";
-			}
-		}
-	}
-}
-
-void C_DoBind (const char *key, const char *bind, bool dodouble)
-{
-	int keynum = GetKeyFromName (key);
+	int keynum = GetKeyFromName(key);
 	if (keynum == 0)
 	{
 		if (stricmp (key, "LeftBracket") == 0)
@@ -695,31 +353,54 @@ void C_DoBind (const char *key, const char *bind, bool dodouble)
 			keynum = GetKeyFromName ("kp=");
 		}
 	}
-	if (keynum != 0)
-	{
-		(dodouble ? DoubleBindings : Bindings)[keynum] = bind;
-	}
+	return keynum;
 }
 
-int C_GetKeysForCommand (char *cmd, int *first, int *second)
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+static const char *KeyName (int key)
 {
-	int c, i;
+	static char name[5];
 
-	*first = *second = c = i = 0;
+	if (KeyNames[key])
+		return KeyNames[key];
 
-	while (i < NUM_KEYS && c < 2)
-	{
-		if (stricmp (cmd, Bindings[i]) == 0)
-		{
-			if (c++ == 0)
-				*first = i;
-			else
-				*second = i;
-		}
-		i++;
-	}
-	return c;
+	mysnprintf (name, countof(name), "#%d", key);
+	return name;
 }
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+static const char *ConfigKeyName(int keynum)
+{
+	const char *name = KeyName(keynum);
+	if (name[1] == 0)	// Make sure given name is config-safe
+	{
+		if (name[0] == '[')
+			return "LeftBracket";
+		else if (name[0] == ']')
+			return "RightBracket";
+		else if (name[0] == '=')
+			return "Equals";
+		else if (strcmp (name, "kp=") == 0)
+			return "KP-Equals";
+	}
+	return name;
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
 
 void C_NameKeys (char *str, int first, int second)
 {
@@ -744,28 +425,471 @@ void C_NameKeys (char *str, int first, int second)
 		*str = '\0';
 }
 
-void C_UnbindACommand (char *str)
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+void FKeyBindings::DoBind (const char *key, const char *bind)
+{
+	int keynum = GetConfigKeyFromName (key);
+	if (keynum != 0)
+	{
+		Binds[keynum] = bind;
+	}
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+void FKeyBindings::SetBinds(const FBinding *binds)
+{
+	while (binds->Key)
+	{
+		DoBind (binds->Key, binds->Bind);
+		binds++;
+	}
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+void FKeyBindings::UnbindAll ()
+{
+	for (int i = 0; i < NUM_KEYS; ++i)
+	{
+		Binds[i] = "";
+	}
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+void FKeyBindings::UnbindKey(const char *key)
+{
+	int i;
+
+	if ( (i = GetKeyFromName (key)) )
+	{
+		Binds[i] = "";
+	}
+	else
+	{
+		Printf ("Unknown key \"%s\"\n", key);
+		return;
+	}
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+void FKeyBindings::PerformBind(FCommandLine &argv, const char *msg)
+{
+	int i;
+
+	if (argv.argc() > 1)
+	{
+		i = GetKeyFromName (argv[1]);
+		if (!i)
+		{
+			Printf ("Unknown key \"%s\"\n", argv[1]);
+			return;
+		}
+		if (argv.argc() == 2)
+		{
+			Printf ("\"%s\" = \"%s\"\n", argv[1], Binds[i].GetChars());
+		}
+		else
+		{
+			Binds[i] = argv[2];
+		}
+	}
+	else
+	{
+		Printf ("%s:\n", msg);
+		
+		for (i = 0; i < NUM_KEYS; i++)
+		{
+			if (!Binds[i].IsEmpty())
+				Printf ("%s \"%s\"\n", KeyName (i), Binds[i].GetChars());
+		}
+	}
+}
+
+
+//=============================================================================
+//
+// This function is first called for functions in custom key sections.
+// In this case, matchcmd is non-NULL, and only keys bound to that command
+// are stored. If a match is found, its binding is set to "\1".
+// After all custom key sections are saved, it is called one more for the
+// normal Bindings and DoubleBindings sections for this game. In this case
+// matchcmd is NULL and all keys will be stored. The config section was not
+// previously cleared, so all old bindings are still in place. If the binding
+// for a key is empty, the corresponding key in the config is removed as well.
+// If a binding is "\1", then the binding itself is cleared, but nothing
+// happens to the entry in the config.
+//
+//=============================================================================
+
+void FKeyBindings::ArchiveBindings(FConfigFile *f, const char *matchcmd)
 {
 	int i;
 
 	for (i = 0; i < NUM_KEYS; i++)
 	{
-		if (!stricmp (str, Bindings[i]))
+		if (Binds[i].IsEmpty())
 		{
-			Bindings[i] = "";
+			if (matchcmd == NULL)
+			{
+				f->ClearKey(ConfigKeyName(i));
+			}
+		}
+		else if (matchcmd == NULL || stricmp(Binds[i], matchcmd) == 0)
+		{
+			if (Binds[i][0] == '\1')
+			{
+				Binds[i] = "";
+				continue;
+			}
+			f->SetValueForKey(ConfigKeyName(i), Binds[i]);
+			if (matchcmd != NULL)
+			{ // If saving a specific command, set a marker so that
+			  // it does not get saved in the general binding list.
+				Binds[i] = "\1";
+			}
 		}
 	}
 }
 
-void C_ChangeBinding (const char *str, int newone)
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+int FKeyBindings::GetKeysForCommand (char *cmd, int *first, int *second)
 {
-	if ((unsigned int)newone < NUM_KEYS)
+	int c, i;
+
+	*first = *second = c = i = 0;
+
+	while (i < NUM_KEYS && c < 2)
 	{
-		Bindings[newone] = str;
+		if (stricmp (cmd, Binds[i]) == 0)
+		{
+			if (c++ == 0)
+				*first = i;
+			else
+				*second = i;
+		}
+		i++;
+	}
+	return c;
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+void FKeyBindings::UnbindACommand (char *str)
+{
+	int i;
+
+	for (i = 0; i < NUM_KEYS; i++)
+	{
+		if (!stricmp (str, Binds[i]))
+		{
+			Binds[i] = "";
+		}
 	}
 }
 
-const char *C_GetBinding (int key)
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+void FKeyBindings::DefaultBind(const char *keyname, const char *cmd)
 {
-	return (unsigned int)key < NUM_KEYS ? Bindings[key].GetChars() : NULL;
+	int key = GetKeyFromName (keyname);
+	if (key == 0)
+	{
+		Printf ("Unknown key \"%s\"\n", keyname);
+		return;
+	}
+	if (!Binds[key].IsEmpty())
+	{ // This key is already bound.
+		return;
+	}
+	for (int i = 0; i < NUM_KEYS; ++i)
+	{
+		if (!Binds[i].IsEmpty() && stricmp (Binds[i], cmd) == 0)
+		{ // This command is already bound to a key.
+			return;
+		}
+	}
+	// It is safe to do the bind, so do it.
+	Binds[key] = cmd;
 }
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+void C_UnbindAll ()
+{
+	Bindings.UnbindAll();
+	DoubleBindings.UnbindAll();
+	AutomapBindings.UnbindAll();
+}
+
+CCMD (unbindall)
+{
+	C_UnbindAll ();
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+CCMD (unbind)
+{
+	if (argv.argc() > 1)
+	{
+		Bindings.UnbindKey(argv[1]);
+	}
+}
+
+CCMD (undoublebind)
+{
+	if (argv.argc() > 1)
+	{
+		DoubleBindings.UnbindKey(argv[1]);
+	}
+}
+
+CCMD (unmapbind)
+{
+	if (argv.argc() > 1)
+	{
+		AutomapBindings.UnbindKey(argv[1]);
+	}
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+CCMD (bind)
+{
+	Bindings.PerformBind(argv, "Current key bindings");
+}
+
+CCMD (doublebind)
+{
+	DoubleBindings.PerformBind(argv, "Current key doublebindings");
+}
+
+CCMD (mapbind)
+{
+	AutomapBindings.PerformBind(argv, "Current automap key bindings");
+}
+
+//==========================================================================
+//
+// CCMD defaultbind
+//
+// Binds a command to a key if that key is not already bound and if
+// that command is not already bound to another key.
+//
+//==========================================================================
+
+CCMD (defaultbind)
+{
+	if (argv.argc() < 3)
+	{
+		Printf ("Usage: defaultbind <key> <command>\n");
+	}
+	else
+	{
+		Bindings.DefaultBind(argv[1], argv[2]);
+	}
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+CCMD (rebind)
+{
+	FKeyBindings *bindings;
+
+	if (key == 0)
+	{
+		Printf ("Rebind cannot be used from the console\n");
+		return;
+	}
+
+	if (key & KEY_DBLCLICKED)
+	{
+		bindings = &DoubleBindings;
+		key &= KEY_DBLCLICKED-1;
+	}
+	else
+	{
+		bindings = &Bindings;
+	}
+
+	if (argv.argc() > 1)
+	{
+		bindings->SetBind(key, argv[1]);
+	}
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+void C_BindDefaults ()
+{
+	Bindings.SetBinds (DefBindings);
+
+	if (gameinfo.gametype & (GAME_Raven|GAME_Strife))
+	{
+		Bindings.SetBinds (DefRavenBindings);
+	}
+
+	if (gameinfo.gametype == GAME_Heretic)
+	{
+		Bindings.SetBinds (DefHereticBindings);
+	}
+
+	if (gameinfo.gametype == GAME_Hexen)
+	{
+		Bindings.SetBinds (DefHexenBindings);
+	}
+
+	if (gameinfo.gametype == GAME_Strife)
+	{
+		Bindings.SetBinds (DefStrifeBindings);
+	}
+
+	AutomapBindings.SetBinds(DefAutomapBindings);
+}
+
+CCMD(binddefaults)
+{
+	C_BindDefaults ();
+}
+
+void C_SetDefaultBindings ()
+{
+	C_UnbindAll ();
+	C_BindDefaults ();
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+bool C_DoKey (event_t *ev, FKeyBindings *binds, FKeyBindings *doublebinds)
+{
+	FString binding;
+	bool dclick;
+	int dclickspot;
+	BYTE dclickmask;
+
+	if (ev->type != EV_KeyDown && ev->type != EV_KeyUp)
+		return false;
+
+	if ((unsigned int)ev->data1 >= NUM_KEYS)
+		return false;
+
+	dclickspot = ev->data1 >> 3;
+	dclickmask = 1 << (ev->data1 & 7);
+	dclick = false;
+
+	// This used level.time which didn't work outside a level.
+	if (DClickTime[ev->data1] > I_MSTime() && ev->type == EV_KeyDown)
+	{
+		// Key pressed for a double click
+		if (doublebinds != NULL) binding = doublebinds->GetBinding(ev->data1);
+		DClicked[dclickspot] |= dclickmask;
+		dclick = true;
+	}
+	else
+	{
+		if (ev->type == EV_KeyDown)
+		{ // Key pressed for a normal press
+			binding = binds->GetBinding(ev->data1);
+			DClickTime[ev->data1] = I_MSTime() + 571;
+		}
+		else if (DClicked[dclickspot] & dclickmask)
+		{ // Key released from a double click
+			if (doublebinds != NULL) binding = doublebinds->GetBinding(ev->data1);
+			DClicked[dclickspot] &= ~dclickmask;
+			DClickTime[ev->data1] = 0;
+			dclick = true;
+		}
+		else
+		{ // Key released from a normal press
+			binding = binds->GetBinding(ev->data1);
+		}
+	}
+
+
+	if (binding.IsEmpty())
+	{
+		binding = binds->GetBinding(ev->data1);
+		dclick = false;
+	}
+
+	if (!binding.IsEmpty() && (chatmodeon == 0 || ev->data1 < 256))
+	{
+		if (ev->type == EV_KeyUp && binding[0] != '+')
+		{
+			return false;
+		}
+
+		char *copy = binding.LockBuffer();
+
+		if (ev->type == EV_KeyUp)
+		{
+			copy[0] = '-';
+		}
+
+		AddCommandString (copy, dclick ? ev->data1 | KEY_DBLCLICKED : ev->data1);
+		return true;
+	}
+	return false;
+}
+

@@ -399,29 +399,38 @@ void FGameConfigFile::DoGameSetup (const char *gamename)
 		ReadCVars (0);
 	}
 
-	strncpy (subsection, "Bindings", sublen);
-	if (!SetSection (section))
-	{ // Config has no bindings for the given game
-		if (!bMigrating)
-		{
-			C_SetDefaultBindings ();
-		}
-	}
-	else
+	if (!bMigrating)
 	{
-		C_UnbindAll ();
+		C_SetDefaultBindings ();
+	}
+
+	strncpy (subsection, "Bindings", sublen);
+	if (SetSection (section))
+	{
+		Bindings.UnbindAll();
 		while (NextInSection (key, value))
 		{
-			C_DoBind (key, value, false);
+			Bindings.DoBind (key, value);
 		}
 	}
 
 	strncpy (subsection, "DoubleBindings", sublen);
 	if (SetSection (section))
 	{
+		DoubleBindings.UnbindAll();
 		while (NextInSection (key, value))
 		{
-			C_DoBind (key, value, true);
+			DoubleBindings.DoBind (key, value);
+		}
+	}
+
+	strncpy (subsection, "AutomapBindings", sublen);
+	if (SetSection (section))
+	{
+		AutomapBindings.UnbindAll();
+		while (NextInSection (key, value))
+		{
+			AutomapBindings.DoBind (key, value);
 		}
 	}
 
@@ -512,11 +521,15 @@ void FGameConfigFile::ArchiveGameData (const char *gamename)
 
 	strcpy (subsection, "Bindings");
 	SetSection (section, true);
-	C_ArchiveBindings (this, false);
+	Bindings.ArchiveBindings (this);
 
 	strncpy (subsection, "DoubleBindings", sublen);
 	SetSection (section, true);
-	C_ArchiveBindings (this, true);
+	DoubleBindings.ArchiveBindings (this);
+
+	strncpy (subsection, "AutomapBindings", sublen);
+	SetSection (section, true);
+	AutomapBindings.ArchiveBindings (this);
 }
 
 void FGameConfigFile::ArchiveGlobalData ()

@@ -34,24 +34,64 @@
 #ifndef __C_BINDINGS_H__
 #define __C_BINDINGS_H__
 
+#include "doomdef.h"
 
 struct event_t;
 class FConfigFile;
+class FCommandLine;
 
-bool C_DoKey (event_t *ev);
-void C_ArchiveBindings (FConfigFile *f, bool dodouble, const char *matchcmd=NULL);
+void C_NameKeys (char *str, int first, int second);
+
+struct FBinding
+{
+	const char *Key;
+	const char *Bind;
+};
+
+class FKeyBindings
+{
+	FString Binds[NUM_KEYS];
+
+public:
+	void PerformBind(FCommandLine &argv, const char *msg);
+	void SetBinds(const FBinding *binds);
+	bool DoKey(event_t *ev);
+	void ArchiveBindings(FConfigFile *F, const char *matchcmd = NULL);
+	int  GetKeysForCommand (char *cmd, int *first, int *second);
+	void UnbindACommand (char *str);
+	void UnbindAll ();
+	void UnbindKey(const char *key);
+	void DoBind (const char *key, const char *bind);
+	void DefaultBind(const char *keyname, const char *cmd);
+
+	void SetBind(unsigned int key, const char *bind)
+	{
+		if (key < NUM_KEYS) Binds[key] = bind;
+	}
+
+	const FString &GetBinding(unsigned int index) const
+	{
+		return Binds[index];
+	}
+
+	const char *GetBind(unsigned int index) const
+	{
+		if (index < NUM_KEYS) return Binds[index];
+		else return NULL;
+	}
+
+};
+
+extern FKeyBindings Bindings;
+extern FKeyBindings DoubleBindings;
+extern FKeyBindings AutomapBindings;
+
+
+bool C_DoKey (event_t *ev, FKeyBindings *binds, FKeyBindings *doublebinds);
 
 // Stuff used by the customize controls menu
-int  C_GetKeysForCommand (char *cmd, int *first, int *second);
-void C_NameKeys (char *str, int first, int second);
-void C_UnbindACommand (char *str);
-void C_ChangeBinding (const char *str, int newone);
-void C_DoBind (const char *key, const char *bind, bool doublebind);
 void C_SetDefaultBindings ();
 void C_UnbindAll ();
-
-// Returns string bound to given key (NULL if none)
-const char *C_GetBinding (int key);
 
 extern const char *KeyNames[];
 

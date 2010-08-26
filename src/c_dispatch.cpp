@@ -119,7 +119,9 @@ FButtonStatus Button_Mlook, Button_Klook, Button_Use, Button_AltAttack,
 	Button_Forward, Button_Right, Button_Left, Button_MoveDown,
 	Button_MoveUp, Button_Jump, Button_ShowScores, Button_Crouch,
 	Button_Zoom, Button_Reload,
-	Button_User1, Button_User2, Button_User3, Button_User4;
+	Button_User1, Button_User2, Button_User3, Button_User4,
+	Button_AM_PanLeft, Button_AM_PanRight, Button_AM_PanDown, Button_AM_PanUp,
+	Button_AM_ZoomIn, Button_AM_ZoomOut;
 
 bool ParsingKeyConf;
 
@@ -131,13 +133,16 @@ bool ParsingKeyConf;
 
 FActionMap ActionMaps[] =
 {
+	{ 0x0d52d67b, &Button_AM_PanLeft,	"am_panleft"},
 	{ 0x125f5226, &Button_User2,		"user2" },
 	{ 0x1eefa611, &Button_Jump,			"jump" },
 	{ 0x201f1c55, &Button_Right,		"right" },
 	{ 0x20ccc4d5, &Button_Zoom,			"zoom" },
 	{ 0x23a99cd7, &Button_Back,			"back" },
+	{ 0x41df90c2, &Button_AM_ZoomIn,	"am_zoomin"},
 	{ 0x426b69e7, &Button_Reload,		"reload" },
 	{ 0x4463f43a, &Button_LookDown,		"lookdown" },
+	{ 0x51f7a334, &Button_AM_ZoomOut,	"am_zoomout"},
 	{ 0x534c30ee, &Button_User4,		"user4" },
 	{ 0x5622bf42, &Button_Attack,		"attack" },
 	{ 0x577712d0, &Button_User1,		"user1" },
@@ -147,18 +152,22 @@ FActionMap ActionMaps[] =
 	{ 0x676885b8, &Button_AltAttack,	"altattack" },
 	{ 0x6fa41b84, &Button_MoveLeft,		"moveleft" },
 	{ 0x818f08e6, &Button_MoveRight,	"moveright" },
+	{ 0x8197097b, &Button_AM_PanRight,	"am_panright"},
+	{ 0x8d89955e, &Button_AM_PanUp,		"am_panup"} ,
 	{ 0xa2b62d8b, &Button_Mlook,		"mlook" },
 	{ 0xab2c3e71, &Button_Crouch,		"crouch" },
 	{ 0xb000b483, &Button_Left,			"left" },
 	{ 0xb62b1e49, &Button_LookUp,		"lookup" },
 	{ 0xb6f8fe92, &Button_User3,		"user3" },
 	{ 0xb7e6a54b, &Button_Strafe,		"strafe" },
+	{ 0xce301c81, &Button_AM_PanDown,	"am_pandown"},
 	{ 0xd5897c73, &Button_ShowScores,	"showscores" },
 	{ 0xe0ccb317, &Button_Speed,		"speed" },
 	{ 0xe0cfc260, &Button_Use,			"use" },
 	{ 0xfdd701c7, &Button_MoveUp,		"moveup" },
 };
 #define NUM_ACTIONS countof(ActionMaps)
+
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 

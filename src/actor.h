@@ -739,7 +739,7 @@ public:
 
 		if (bloodcls != NULL)
 		{
-			bloodcls = bloodcls->ActorInfo->GetReplacement()->Class;
+			bloodcls = bloodcls->GetReplacement();
 		}
 		return bloodcls;
 	}

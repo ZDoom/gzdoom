@@ -1917,6 +1917,22 @@ BYTE *FDynamicBuffer::GetData (int *len)
 }
 
 
+static int KillAll(const PClass *cls)
+{
+	AActor *actor;
+	int killcount = 0;
+	TThinkerIterator<AActor> iterator(cls);
+	while ( (actor = iterator.Next ()) )
+	{
+		if (actor->IsA(cls))
+		{
+			if (!(actor->flags2 & MF2_DORMANT) && (actor->flags3 & MF3_ISMONSTER))
+					killcount += actor->Massacre ();
+		}
+	}
+	return killcount;
+
+}
 // [RH] Execute a special "ticcmd". The type byte should
 //		have already been read, and the stream is positioned
 //		at the beginning of the command's actual data.
@@ -2348,18 +2364,17 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 
 	case DEM_KILLCLASSCHEAT:
 		{
-			AActor *actor;
-			TThinkerIterator<AActor> iterator;
-
 			char *classname = ReadString (stream);
 			int killcount = 0;
+			const PClass *cls = PClass::FindClass(classname);
 
-			while ( (actor = iterator.Next ()) )
+			if (classname != NULL)
 			{
-				if (!stricmp (actor->GetClass ()->TypeName.GetChars (), classname))
+				killcount = KillAll(cls);
+				const PClass *cls_rep = cls->GetReplacement();
+				if (cls != cls_rep)
 				{
-					if (!(actor->flags2 & MF2_DORMANT) && (actor->flags3 & MF3_ISMONSTER))
-							killcount += actor->Massacre ();
+					killcount += KillAll(cls_rep);
 				}
 			}
 

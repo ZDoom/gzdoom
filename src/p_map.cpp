@@ -3352,7 +3352,7 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 		(t1->player->ReadyWeapon->flags2 & MF2_THRUGHOST));
 
 	// We need to check the defaults of the replacement here
-	AActor *puffDefaults = GetDefaultByType(pufftype->ActorInfo->GetReplacement()->Class);
+	AActor *puffDefaults = GetDefaultByType(pufftype->GetReplacement());
 
 	// if the puff uses a non-standard damage type this will override default and melee damage type.
 	// All other explicitly passed damage types (currenty only MDK) will be preserved.
@@ -3819,7 +3819,7 @@ void P_RailAttack (AActor *source, int damage, int offset, int color1, int color
 	int flags;
 
 	AActor *puffDefaults = puffclass == NULL? 
-							NULL : GetDefaultByType (puffclass->ActorInfo->GetReplacement()->Class);
+							NULL : GetDefaultByType (puffclass->GetReplacement());
 
 	if (puffDefaults != NULL && puffDefaults->flags6 & MF6_NOTRIGGER) flags = 0;
 	else flags = TRACE_PCross|TRACE_Impact;

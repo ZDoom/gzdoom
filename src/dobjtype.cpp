@@ -486,6 +486,11 @@ const PClass *PClass::NativeClass() const
 	return cls;
 }
 
+PClass *PClass::GetReplacement() const
+{
+	return ActorInfo->GetReplacement()->Class;
+}
+
 // Symbol tables ------------------------------------------------------------
 
 PSymbol::~PSymbol()

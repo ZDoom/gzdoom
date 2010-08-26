@@ -174,6 +174,7 @@ struct PClass
 	static const PClass *FindClass (ENamedName name) { return FindClass (FName (name)); }
 	static const PClass *FindClass (FName name);
 	const PClass *FindClassTentative (FName name);	// not static!
+	PClass *GetReplacement() const;
 
 	static TArray<PClass *> m_Types;
 	static TArray<PClass *> m_RuntimeActors;

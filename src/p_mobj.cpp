@@ -1011,7 +1011,7 @@ bool AActor::Grind(bool items)
 
 			if (i != NULL)
 			{
-				i = i->ActorInfo->GetReplacement()->Class;
+				i = i->GetReplacement();
 
 				const AActor *defaults = GetDefaultByType (i);
 				if (defaults->SpawnState == NULL ||
@@ -3461,7 +3461,7 @@ AActor *AActor::StaticSpawn (const PClass *type, fixed_t ix, fixed_t iy, fixed_t
 	}
 
 	if (allowreplacement)
-		type = type->ActorInfo->GetReplacement()->Class;
+		type = type->GetReplacement();
 
 
 	AActor *actor;
@@ -4297,7 +4297,7 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	{
 		// Handle decorate replacements explicitly here
 		// to check for missing frames in the replacement object.
-		i = i->ActorInfo->GetReplacement()->Class;
+		i = i->GetReplacement();
 
 		const AActor *defaults = GetDefaultByType (i);
 		if (defaults->SpawnState == NULL ||

@@ -319,6 +319,7 @@ enum
 	SECF_FORCEDUNDERWATER= 64,	// sector is forced to be underwater
 	SECF_UNDERWATERMASK	= 32+64,
 	SECF_DRAWN			= 128,	// sector has been drawn at least once
+	SECF_HIDDEN			= 256,	// Do not draw on textured automap
 };
 
 enum

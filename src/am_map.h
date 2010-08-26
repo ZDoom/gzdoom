@@ -26,7 +26,7 @@ struct event_t;
 class FArchive;
 
 // Called by main loop.
-bool AM_Responder (event_t* ev);
+bool AM_Responder (event_t* ev, bool last);
 
 // Called by main loop.
 void AM_Ticker (void);

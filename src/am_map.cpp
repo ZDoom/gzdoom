@@ -1223,11 +1223,26 @@ void AM_ToggleMap ()
 //
 //=============================================================================
 
-bool AM_Responder (event_t *ev)
+bool AM_Responder (event_t *ev, bool last)
 {
 	if (automapactive && (ev->type == EV_KeyDown || ev->type == EV_KeyUp))
 	{
-		return C_DoKey(ev, &AutomapBindings, NULL);
+		if (followplayer)
+		{
+			// check for am_pan* and ignore in follow mode
+			const char *defbind = AutomapBindings.GetBind(ev->data1);
+			if (!strnicmp(defbind, "+am_pan", 7)) return false;
+		}
+
+		bool res = C_DoKey(ev, &AutomapBindings, NULL);
+		if (res && ev->type == EV_KeyUp && !last)
+		{
+			// If this is a release event we also need to check if it released a button in the main Bindings
+			// so that that button does not get stuck.
+			const char *defbind = Bindings.GetBind(ev->data1);
+			return (defbind[0] != '+'); // Let G_Responder handle button releases
+		}
+		return res;
 	}
 	return false;
 }
@@ -1301,16 +1316,20 @@ void AM_Ticker ()
 	if (!automapactive)
 		return;
 
-	m_paninc.x = m_paninc.y = 0;
-	if (Button_AM_PanLeft.bDown) m_paninc.x -= FTOM(F_PANINC);
-	if (Button_AM_PanRight.bDown) m_paninc.x += FTOM(F_PANINC);
-	if (Button_AM_PanUp.bDown) m_paninc.y += FTOM(F_PANINC);
-	if (Button_AM_PanDown.bDown) m_paninc.y -= FTOM(F_PANINC);
-
 	amclock++;
 
 	if (followplayer)
+	{
 		AM_doFollowPlayer();
+	}
+	else
+	{
+		m_paninc.x = m_paninc.y = 0;
+		if (Button_AM_PanLeft.bDown) m_paninc.x -= FTOM(F_PANINC);
+		if (Button_AM_PanRight.bDown) m_paninc.x += FTOM(F_PANINC);
+		if (Button_AM_PanUp.bDown) m_paninc.y += FTOM(F_PANINC);
+		if (Button_AM_PanDown.bDown) m_paninc.y -= FTOM(F_PANINC);
+	}
 
 	// Change the zoom if necessary
 	if (Button_AM_ZoomIn.bDown || Button_AM_ZoomOut.bDown)
@@ -1590,7 +1609,7 @@ void AM_drawSubsectors()
 
 	for (int i = 0; i < numsubsectors; ++i)
 	{
-		if (!(subsectors[i].flags & SSECF_DRAWN) && am_cheat == 0)
+		if ((!(subsectors[i].flags & SSECF_DRAWN) || (subsectors[i].render_sector->MoreFlags & SECF_HIDDEN)) && am_cheat == 0)
 		{
 			continue;
 		}
@@ -2268,11 +2287,19 @@ void AM_drawAuthorMarkers ()
 
 		while (marked != NULL)
 		{
-			if (mark->args[1] == 0 || (mark->args[1] == 1 && marked->Sector->MoreFlags & SECF_DRAWN))
+			if (mark->args[1] == 0 || (mark->args[1] == 1))
 			{
-				DrawMarker (tex, marked->x >> FRACTOMAPBITS, marked->y >> FRACTOMAPBITS, 0,
-					flip, mark->scaleX, mark->scaleY, mark->Translation,
-					mark->alpha, mark->fillcolor, mark->RenderStyle);
+				// Use more correct info if we have GL nodes available
+				INTBOOL drawn = hasglnodes?
+					marked->subsector->flags & SSECF_DRAWN :
+					marked->Sector->MoreFlags & SECF_DRAWN;
+
+				if (drawn)
+				{
+					DrawMarker (tex, marked->x >> FRACTOMAPBITS, marked->y >> FRACTOMAPBITS, 0,
+						flip, mark->scaleX, mark->scaleY, mark->Translation,
+						mark->alpha, mark->fillcolor, mark->RenderStyle);
+				}
 			}
 			marked = mark->args[0] != 0 ? it.Next() : NULL;
 		}

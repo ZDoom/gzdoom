@@ -1385,6 +1385,29 @@ void P_SetRenderSector()
 	TArray<subsector_t *> undetermined;
 	subsector_t *		ss;
 
+	// hide all sectors on textured automap that only have hidden lines.
+	bool *hidesec = new bool[numsectors];
+	for(i = 0; i < numsectors; i++)
+	{
+		hidesec[i] = true;
+	}
+	for(i = 0; i < numlines; i++)
+	{
+		if (!(lines[i].flags & ML_DONTDRAW))
+		{
+			hidesec[lines[i].frontsector - sectors] = false;
+			if (lines[i].backsector != NULL)
+			{
+				hidesec[lines[i].backsector - sectors] = false;
+			}
+		}
+	}
+	for(i = 0; i < numsectors; i++)
+	{
+		if (hidesec[i]) sectors[i].MoreFlags |= SECF_HIDDEN;
+	}
+	delete [] hidesec;
+
 	// Check for incorrect partner seg info so that the following code does not crash.
 	for(i=0;i<numsegs;i++)
 	{

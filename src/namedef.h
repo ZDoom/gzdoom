@@ -441,6 +441,7 @@ xx(nofakecontrast)
 xx(smoothlighting)
 xx(blockprojectiles)
 xx(blockuse)
+xx(hidden)
 
 xx(Renderstyle)
 

@@ -918,7 +918,7 @@ bool G_Responder (event_t *ev)
 	{
 		if (ST_Responder (ev))
 			return true;		// status window ate it
-		if (!viewactive && AM_Responder (ev))
+		if (!viewactive && AM_Responder (ev, false))
 			return true;		// automap ate it
 	}
 	else if (gamestate == GS_FINALE)
@@ -949,7 +949,7 @@ bool G_Responder (event_t *ev)
 	// the events *last* so that any bound keys get precedence.
 
 	if (gamestate == GS_LEVEL && viewactive)
-		return AM_Responder (ev);
+		return AM_Responder (ev, true);
 
 	return (ev->type == EV_KeyDown ||
 			ev->type == EV_Mouse);

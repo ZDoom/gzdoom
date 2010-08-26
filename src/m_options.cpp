@@ -203,6 +203,7 @@ static menu_t ConfirmMenu = {
  *
  *=======================================*/
 
+static void StartAutomapMenu (void);
 static void CustomizeControls (void);
 static void GameplayOptions (void);
 static void CompatibilityOptions (void);
@@ -227,6 +228,7 @@ static menuitem_t OptionItems[] =
 	{ more,		"Player Setup",			{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)M_PlayerSetup} },
 	{ more,		"Gameplay Options",		{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)GameplayOptions} },
 	{ more,		"Compatibility Options",{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)CompatibilityOptions} },
+	{ more,		"Automap Options",		{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)StartAutomapMenu} },
 	{ more,		"Sound Options",		{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)SoundOptions} },
 	{ more,		"Display Options",		{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)VideoOptions} },
 	{ more,		"Set video mode",		{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)SetVidMode} },
@@ -418,13 +420,13 @@ menu_t ControlsMenu =
 	2,
 };
 
+
 /*=======================================
  *
  * Display Options Menu
  *
  *=======================================*/
 static void StartMessagesMenu (void);
-static void StartAutomapMenu (void);
 static void StartScoreboardMenu (void);
 static void InitCrosshairsList();
 
@@ -494,7 +496,6 @@ static value_t DisplayTagsTypes[] = {
 
 static menuitem_t VideoItems[] = {
 	{ more,		"Message Options",		{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)StartMessagesMenu} },
-	{ more,		"Automap Options",		{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)StartAutomapMenu} },
 	{ more,		"Scoreboard Options",	{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)StartScoreboardMenu} },
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
 	{ slider,	"Screen size",			{&screenblocks},	   	{3.0}, {12.0},	{1.0}, {NULL} },
@@ -537,6 +538,7 @@ menu_t VideoMenu =
  *
  *=======================================*/
 static void StartMapColorsMenu (void);
+static void StartMapControlsMenu (void);
 
 EXTERN_CVAR (Int, am_rotate)
 EXTERN_CVAR (Int, am_overlay)
@@ -577,6 +579,7 @@ static value_t OverlayTypes[] = {
 static menuitem_t AutomapItems[] = {
 	{ discrete, "Map color set",		{&am_colorset},			{4.0}, {0.0},	{0.0}, {MapColorTypes} },
 	{ more,		"Set custom colors",	{NULL},					{0.0}, {0.0},	{0.0}, {(value_t*)StartMapColorsMenu} },
+	{ more,		"Customize map controls",	{NULL},					{0.0}, {0.0},	{0.0}, {(value_t*)StartMapControlsMenu} },
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
 	{ discrete, "Rotate automap",		{&am_rotate},		   	{3.0}, {0.0},	{0.0}, {RotateTypes} },
 	{ discrete, "Overlay automap",		{&am_overlay},			{3.0}, {0.0},	{0.0}, {OverlayTypes} },
@@ -600,6 +603,37 @@ menu_t AutomapMenu =
 	0,
 	AutomapItems,
 };
+
+menuitem_t MapControlsItems[] =
+{
+	{ redtext,"ENTER to change, BACKSPACE to clear", {NULL}, {0.0}, {0.0}, {0.0}, {NULL} },
+	{ redtext,	" ",					{NULL},	{0.0}, {0.0}, {0.0}, {NULL} },
+	{ whitetext,"Map Controls",				{NULL},	{0.0}, {0.0}, {0.0}, {NULL} },
+	{ mapcontrol,	"Pan left",					{NULL}, {0.0}, {0.0}, {0.0}, {(value_t *)"+am_panleft"} },
+	{ mapcontrol,	"Pan right",				{NULL}, {0.0}, {0.0}, {0.0}, {(value_t *)"+am_panright"} },
+	{ mapcontrol,	"Pan up",					{NULL}, {0.0}, {0.0}, {0.0}, {(value_t *)"+am_panup"} },
+	{ mapcontrol,	"Pan down",					{NULL}, {0.0}, {0.0}, {0.0}, {(value_t *)"+am_pandown"} },
+	{ mapcontrol,	"Zoom in",					{NULL}, {0.0}, {0.0}, {0.0}, {(value_t *)"+am_zoomin"} },
+	{ mapcontrol,	"Zoom out",					{NULL}, {0.0}, {0.0}, {0.0}, {(value_t *)"+am_zoomout"} },
+	{ mapcontrol,	"Toggle zoom",				{NULL}, {0.0}, {0.0}, {0.0}, {(value_t *)"am_gobig"} },
+	{ mapcontrol,	"Toggle follow",			{NULL}, {0.0}, {0.0}, {0.0}, {(value_t *)"am_togglefollow"} },
+	{ mapcontrol,	"Toggle grid",				{NULL}, {0.0}, {0.0}, {0.0}, {(value_t *)"am_togglegrid"} },
+	{ mapcontrol,	"Toggle texture",			{NULL}, {0.0}, {0.0}, {0.0}, {(value_t *)"am_toggletexture"} },
+	{ mapcontrol,	"Set mark",					{NULL}, {0.0}, {0.0}, {0.0}, {(value_t *)"am_setmark"} },
+	{ mapcontrol,	"Clear mark",				{NULL}, {0.0}, {0.0}, {0.0}, {(value_t *)"am_clearmarks"} },
+};
+
+menu_t MapControlsMenu =
+{
+	"CUSTOMIZE MAP CONTROLS",
+	3,
+	countof(MapControlsItems),
+	0,
+	MapControlsItems,
+	2,
+};
+
+
 
 /*=======================================
  *
@@ -1537,6 +1571,8 @@ void M_BuildKeyList (menuitem_t *item, int numitems)
 	{
 		if (item->type == control)
 			Bindings.GetKeysForCommand (item->e.command, &item->b.key1, &item->c.key2);
+		else if (item->type == mapcontrol)
+			AutomapBindings.GetKeysForCommand (item->e.command, &item->b.key1, &item->c.key2);
 	}
 }
 
@@ -1825,7 +1861,7 @@ void M_OptDrawer ()
 
 			default:
 				x = indent - width;
-				color = (item->type == control && menuactive == MENU_WaitKey && i == CurrentItem)
+				color = ((item->type == control || item->type == mapcontrol) && menuactive == MENU_WaitKey && i == CurrentItem)
 					? CR_YELLOW : LabelColor;
 				break;
 			}
@@ -1983,6 +2019,7 @@ void M_OptDrawer ()
 				break;
 
 			case control:
+			case mapcontrol:
 			{
 				char description[64];
 
@@ -2165,7 +2202,14 @@ void M_OptResponder(event_t *ev)
 	{
 		if (ev->data1 != KEY_ESCAPE)
 		{
-			Bindings.SetBind(ev->data1, item->e.command);
+			if (item->type == control)
+			{
+				Bindings.SetBind(ev->data1, item->e.command);
+			}
+			else if (item->type == mapcontrol)
+			{
+				AutomapBindings.SetBind(ev->data1, item->e.command);
+			}
 			M_BuildKeyList(CurrentMenu->items, CurrentMenu->numitems);
 		}
 		menuactive = MENU_On;
@@ -2815,6 +2859,11 @@ void M_OptButtonHandler(EMenuKey key, bool repeat)
 			Bindings.UnbindACommand (item->e.command);
 			item->b.key1 = item->c.key2 = 0;
 		}
+		else if (item->type == mapcontrol)
+		{
+			AutomapBindings.UnbindACommand (item->e.command);
+			item->b.key1 = item->c.key2 = 0;
+		}
 		break;
 
 	case MKEY_Enter:
@@ -2880,7 +2929,7 @@ void M_OptButtonHandler(EMenuKey key, bool repeat)
 
 			S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
 		}
-		else if (item->type == control)
+		else if (item->type == control || item->type == mapcontrol)
 		{
 			menuactive = MENU_WaitKey;
 			OldMessage = CurrentMenu->items[0].label;
@@ -2998,6 +3047,12 @@ CCMD (menu_scoreboard)
 static void StartMapColorsMenu (void)
 {
 	M_SwitchMenu (&MapColorsMenu);
+}
+
+static void StartMapControlsMenu (void)
+{
+	M_BuildKeyList (MapControlsMenu.items, MapControlsMenu.numitems);
+	M_SwitchMenu (&MapControlsMenu);
 }
 
 CCMD (menu_mapcolors)
@@ -3714,7 +3769,7 @@ void FreeKeySections()
 	for (i = numStdControls; i < CustomControlsItems.Size(); ++i)
 	{
 		menuitem_t *item = &CustomControlsItems[i];
-		if (item->type == whitetext || item->type == control)
+		if (item->type == whitetext || item->type == control || item->type == mapcontrol)
 		{
 			if (item->label != NULL)
 			{

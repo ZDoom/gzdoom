@@ -38,8 +38,22 @@
 
 #ifndef _WIN32
 #include <unistd.h>
+
 #else
+
 #define rmdir _rmdir
+
+// TODO, maybe: stop using DWORD so I don't need to worry about conflicting
+// with Windows' typedef. Then I could just include the header file instead
+// of declaring everything here.
+#define MAX_PATH				260
+#define CSIDL_LOCAL_APPDATA		0x001c
+extern "C" __declspec(dllimport) long __stdcall SHGetFolderPathA(void *hwnd, int csidl, void *hToken, unsigned long dwFlags, char *pszPath);
+
+#endif
+
+#ifdef __APPLE__
+#include <CoreServices/CoreServices.h>
 #endif
 
 #include "templates.h"
@@ -1003,15 +1017,36 @@ static FString GetCachePath()
 {
 	FString path;
 
-	#ifndef unix
-		path = ExpandEnvVars("$LOCALAPPDATA");
-		if (path.Len() != 0) path += '/';
-		path += "zdoom/cache";
-	#else
-		// Don't use GAME_DIR and such so that ZDoom and its child ports can share the node cache.
-		path = NicePath("~/.zdoom/cache");
-	#endif
-		return path;
+#ifdef _WIN32
+	char pathstr[MAX_PATH];
+	if (0 != SHGetFolderPathA(NULL, CSIDL_LOCAL_APPDATA, NULL, 0, pathstr))
+	{ // Failed (e.g. On Win9x): use program directory
+		path = progdir;
+	}
+	else
+	{
+		path = pathstr;
+	}
+	path += "/zdoom/cache";
+#elif defined(__APPLE__)
+	char pathstr[PATH_MAX];
+	FSRef folder;
+
+	if (noErr == FSFindFolder(kLocalDomain, kApplicationSupportFolderType, kCreateFolder, &folder) &&
+		noErr == FSRefMakePath(&folder, (UInt8*)cpath, PATH_MAX))
+	{
+		path = pathstr;
+	}
+	else
+	{
+		path = progdir;
+	}
+	path += "/zdoom/cache";
+#else
+	// Don't use GAME_DIR and such so that ZDoom and its child ports can share the node cache.
+	path = NicePath("~/.zdoom/cache");
+#endif
+	return path;
 }
 
 static FString CreateCacheName(MapData *map, bool create)

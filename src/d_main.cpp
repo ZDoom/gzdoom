@@ -2293,10 +2293,28 @@ void FStartupScreen::AppendStatusLine(const char *status)
 // Displays statistics about rendering times
 //
 //==========================================================================
-double f_acc, w_acc,p_acc,m_acc;
-int acc_c;
+
+//==========================================================================
+//
+// STAT fps
+//
+// Displays statistics about rendering times
+//
+//==========================================================================
 
 ADD_STAT (fps)
+{
+	FString out;
+	out.Format("frame=%04.1f ms  walls=%04.1f ms  planes=%04.1f ms  masked=%04.1f ms",
+		FrameCycles.TimeMS(), WallCycles.TimeMS(), PlaneCycles.TimeMS(), MaskedCycles.TimeMS());
+	return out;
+}
+
+
+static double f_acc, w_acc,p_acc,m_acc;
+static int acc_c;
+
+ADD_STAT (fps_accumulated)
 {
 	f_acc += FrameCycles.TimeMS();
 	w_acc += WallCycles.TimeMS();
@@ -2306,7 +2324,6 @@ ADD_STAT (fps)
 	FString out;
 	out.Format("frame=%04.1f ms  walls=%04.1f ms  planes=%04.1f ms  masked=%04.1f ms  %d counts",
 		f_acc/acc_c, w_acc/acc_c, p_acc/acc_c, m_acc/acc_c, acc_c);
-		//FrameCycles.TimeMS(), WallCycles.TimeMS(), PlaneCycles.TimeMS(), MaskedCycles.TimeMS());
 	Printf(PRINT_LOG, "%s\n", out.GetChars());
 	return out;
 }

@@ -1443,20 +1443,18 @@ void P_SetRenderSector()
 		ss = &subsectors[i];
 		seg_t *seg = ss->firstline;
 
-#if 0 // This information is never used.
 		// Check for one-dimensional subsectors. These should be ignored when
-		// being processed for automap drawing etc.
-		ss->bDegenerate = true;
+		// being processed for automap drawinng etc.
+		ss->flags |= SSECF_DEGENERATE;
 		for(j=2; j<ss->numlines; j++)
 		{
 			if (!PointOnLine(seg[j].v1->x, seg[j].v1->y, seg->v1->x, seg->v1->y, seg->v2->x-seg->v1->x, seg->v2->y-seg->v1->y))
 			{
 				// Not on the same line
-				ss->bDegenerate = false;
+				ss->flags &= ~SSECF_DEGENERATE;
 				break;
 			}
 		}
-#endif
 
 		seg = ss->firstline;
 		for(j=0; j<ss->numlines; j++)

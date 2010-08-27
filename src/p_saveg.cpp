@@ -563,7 +563,7 @@ void RecalculateDrawnSubsectors()
 			if (sub->firstline[j].linedef != NULL && 
 				(sub->firstline[j].linedef->flags & ML_MAPPED))
 			{
-				sub->bDrawn = true;
+				sub->flags |= SSECF_DRAWN;
 			}
 		}
 	}
@@ -590,7 +590,7 @@ void P_SerializeSubsectors(FArchive &arc)
 				by = 0;
 				for(int j=0;j<8;j++)
 				{
-					if ((subsectors[i+j].bDrawn) && i+j<numsubsectors)
+					if ((subsectors[i+j].flags & SSECF_DRAWN) && i+j<numsubsectors)
 					{
 						by |= (1<<j);
 					}
@@ -641,7 +641,7 @@ void P_SerializeSubsectors(FArchive &arc)
 				{
 					if ((by & (1<<j)) && i+j<numsubsectors)
 					{
-						subsectors[i+j].bDrawn = true;
+						subsectors[i+j].flags |= SSECF_DRAWN;
 					}
 				}
 			}

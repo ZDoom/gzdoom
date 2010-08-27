@@ -3830,6 +3830,28 @@ void P_SetupLevel (char *lumpname, int position)
 		DPrintf ("BSP generation took %.3f sec (%d segs)\n", (endTime - startTime) * 0.001, numsegs);
 		reloop = true;
 	}
+	else
+	{
+		// Older ZDBSPs had problems with compressed sidedefs and assigned wrong sides to the segs if both sides were the same sidedef.
+		for(i=0;i<numsegs;i++)
+		{
+			seg_t * seg=&segs[i];
+			if (seg->backsector == seg->frontsector && seg->linedef)
+			{
+				fixed_t d1=P_AproxDistance(seg->v1->x-seg->linedef->v1->x,seg->v1->y-seg->linedef->v1->y);
+				fixed_t d2=P_AproxDistance(seg->v2->x-seg->linedef->v1->x,seg->v2->y-seg->linedef->v1->y);
+
+				if (d2<d1)	// backside
+				{
+					seg->sidedef = seg->linedef->sidedef[1];
+				}
+				else	// front side
+				{
+					seg->sidedef = seg->linedef->sidedef[0];
+				}
+			}
+		}
+	}
 
 	// Copy pointers to the old nodes so that R_PointInSubsector can use them
 	if (nodes && subsectors)

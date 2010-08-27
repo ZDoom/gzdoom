@@ -189,7 +189,7 @@ CVAR (Color, am_ovthingcolor_citem,		0xe88800,	CVAR_ARCHIVE);
 static int bigstate = 0;
 static bool textured = 1;	// internal toggle for texture mode
 
-CUSTOM_CVAR(Bool, am_textured, false, CVAR_ARCHIVE | CVAR_SERVERINFO | CVAR_NOSAVE)
+CUSTOM_CVAR(Bool, am_textured, false, CVAR_ARCHIVE)
 {
 	textured |= self;
 }

@@ -3507,9 +3507,8 @@ void P_SetupLevel (char *lumpname, int position)
 	int numbuildthings;
 	int i;
 	bool buildmap;
-	// Multiplayer games and demo playback require a reliable behavior here 
-	// so always prefer GL nodes if there is a choice.
-	bool UsingGLNodes = am_textured || multiplayer || demoplayback;
+
+	// This is motivated as follows:
 	bool RequireGLNodes = am_textured;
 
 	for (i = 0; i < (int)countof(times); ++i)
@@ -3706,14 +3705,14 @@ void P_SetupLevel (char *lumpname, int position)
 		FWadLump test;
 		DWORD id = MAKE_ID('X','x','X','x'), idcheck = 0, idcheck2 = 0, idcheck3 = 0, idcheck4 = 0;
 
-		if (map->MapLumps[ML_ZNODES].Size != 0 && !UsingGLNodes)
+		if (map->MapLumps[ML_ZNODES].Size != 0)
 		{
-			// Test normal nodes first if we don't need GL nodes
+			// Test normal nodes first
 			map->Seek(ML_ZNODES);
 			idcheck = MAKE_ID('Z','N','O','D');
 			idcheck2 = MAKE_ID('X','N','O','D');
 		}
-		if (map->MapLumps[ML_GLZNODES].Size != 0)
+		else if (map->MapLumps[ML_GLZNODES].Size != 0)
 		{
 			map->Seek(ML_GLZNODES);
 			idcheck = MAKE_ID('Z','G','L','N');
@@ -3817,7 +3816,11 @@ void P_SetupLevel (char *lumpname, int position)
 			lines, numlines
 		};
 		leveldata.FindMapBounds ();
-		FNodeBuilder builder (leveldata, polyspots, anchors, genglnodes || UsingGLNodes);
+		// We need GL nodes if am_textured is on.
+		// In case a sync critical game mode is started, also build GL nodes to avoid problems
+		// if the different machines' am_textured setting differs.
+		bool BuildGLNodes = am_textured || multiplayer || demoplayback || demorecording || genglnodes;
+		FNodeBuilder builder (leveldata, polyspots, anchors, BuildGLNodes);
 		delete[] vertexes;
 		builder.Extract (nodes, numnodes,
 			segs, glsegextras, numsegs,

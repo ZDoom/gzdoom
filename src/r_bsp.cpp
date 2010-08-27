@@ -658,7 +658,7 @@ void R_AddLine (seg_t *line)
 	{
 		if (R_CheckClipWallSegment (WallSX1, WallSX2))
 		{
-			InSubsector->flags |= SSECF_DRAWN;
+			InSubsector->bDrawn = true;
 		}
 		return;
 	}
@@ -829,11 +829,11 @@ void R_AddLine (seg_t *line)
 
 			// When using GL nodes, do a clipping test for these lines so we can
 			// mark their subsectors as visible for automap texturing.
-			if (hasglnodes && !(InSubsector->flags & SSECF_DRAWN))
+			if (hasglnodes && !InSubsector->bDrawn)
 			{
 				if (R_CheckClipWallSegment(WallSX1, WallSX2))
 				{
-					InSubsector->flags |= SSECF_DRAWN;
+					InSubsector->bDrawn = true;
 				}
 			}
 			return;
@@ -873,7 +873,7 @@ void R_AddLine (seg_t *line)
 
 	if (R_ClipWallSegment (WallSX1, WallSX2, solid))
 	{
-		InSubsector->flags |= SSECF_DRAWN;
+		InSubsector->bDrawn = true;
 	}
 }
 

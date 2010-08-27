@@ -958,21 +958,16 @@ struct glsegextra_t
 // define (all or some) sides of a convex BSP leaf.
 //
 
-enum
-{
-	SSECF_DEGENERATE = 1,
-	SSECF_DRAWN = 2,
-};
-
 struct subsector_t
 {
 	sector_t	*sector;
 	FPolyNode	*polys;
 	FMiniBSP	*BSP;
 	seg_t		*firstline;
-	DWORD		numlines;
 	sector_t	*render_sector;
-	int			flags;
+	DWORD		numlines:31;
+	DWORD		bDrawn:1;
+//	DWORD		bDegenerate:1;
 };
 
 

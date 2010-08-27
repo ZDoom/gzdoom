@@ -1609,7 +1609,7 @@ void AM_drawSubsectors()
 
 	for (int i = 0; i < numsubsectors; ++i)
 	{
-		if ((!(subsectors[i].flags & SSECF_DRAWN) || (subsectors[i].render_sector->MoreFlags & SECF_HIDDEN)) && am_cheat == 0)
+		if ((!(subsectors[i].bDrawn) || (subsectors[i].render_sector->MoreFlags & SECF_HIDDEN)) && am_cheat == 0)
 		{
 			continue;
 		}
@@ -1650,7 +1650,7 @@ void AM_drawSubsectors()
 		colormap = sec->ColorMap;
 		// If this subsector has not actually been seen yet (because you are cheating
 		// to see it on the map), tint and desaturate it.
-		if (!(subsectors[i].flags & SSECF_DRAWN))
+		if (!(subsectors[i].bDrawn))
 		{
 			colormap = GetSpecialLights(
 				MAKERGB(
@@ -2289,9 +2289,9 @@ void AM_drawAuthorMarkers ()
 			if (mark->args[1] == 0 || (mark->args[1] == 1))
 			{
 				// Use more correct info if we have GL nodes available
-				INTBOOL drawn = hasglnodes?
-					marked->subsector->flags & SSECF_DRAWN :
-					marked->Sector->MoreFlags & SECF_DRAWN;
+				bool drawn = hasglnodes ?
+					marked->subsector->bDrawn :
+					!!(marked->Sector->MoreFlags & SECF_DRAWN);
 
 				if (drawn)
 				{

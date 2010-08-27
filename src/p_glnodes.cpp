@@ -1387,6 +1387,8 @@ void P_SetRenderSector()
 	TArray<subsector_t *> undetermined;
 	subsector_t *		ss;
 
+#if 0	// doesn't work as expected :(
+
 	// hide all sectors on textured automap that only have hidden lines.
 	bool *hidesec = new bool[numsectors];
 	for(i = 0; i < numsectors; i++)
@@ -1409,6 +1411,7 @@ void P_SetRenderSector()
 		if (hidesec[i]) sectors[i].MoreFlags |= SECF_HIDDEN;
 	}
 	delete [] hidesec;
+#endif
 
 	// Check for incorrect partner seg info so that the following code does not crash.
 	for(i=0;i<numsegs;i++)

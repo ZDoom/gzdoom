@@ -2353,7 +2353,7 @@ void AM_Drawer ()
 	}
 	AM_activateNewScale();
 
-	if (am_textured && hasglnodes && textured)
+	if (am_textured && hasglnodes && textured && !viewactive)
 		AM_drawSubsectors();
 
 	if (grid)	

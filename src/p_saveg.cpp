@@ -606,7 +606,7 @@ void P_SerializeSubsectors(FArchive &arc)
 	}
 	else
 	{
-		if (SaveVersion < 2500)
+		if (SaveVersion < 2609)
 		{
 			if (hasglnodes)
 			{

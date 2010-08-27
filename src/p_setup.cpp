@@ -105,6 +105,7 @@ vertex_t*		vertexes;
 
 int 			numsegs;
 seg_t*			segs;
+glsegextra_t*	glsegextras;
 
 int 			numsectors;
 sector_t*		sectors;
@@ -797,7 +798,6 @@ void P_LoadZSegs (FileReaderBase &data)
 		segs[i].v2 = &vertexes[v2];
 		segs[i].linedef = ldef = &lines[line];
 		segs[i].sidedef = ldef->sidedef[side];
-		segs[i].PartnerSeg = NULL;
 		segs[i].frontsector = ldef->sidedef[side]->sector;
 		if (ldef->flags & ML_TWOSIDED && ldef->sidedef[side^1] != NULL)
 		{
@@ -853,14 +853,7 @@ void P_LoadGLZSegs (FileReaderBase &data, int type)
 			{
 				seg[-1].v2 = seg->v1;
 			}
-			if (partner == 0xFFFFFFFF)
-			{
-				seg->PartnerSeg = NULL;
-			}
-			else
-			{
-				seg->PartnerSeg = &segs[partner];
-			}
+			glsegextras[seg - segs].PartnerSeg = partner;
 			if (line != 0xFFFFFFFF)
 			{
 				line_t *ldef;
@@ -963,6 +956,7 @@ void LoadZNodes(FileReaderBase &data, int glnodes)
 	numsegs = numSegs;
 	segs = new seg_t[numsegs];
 	memset (segs, 0, numsegs*sizeof(seg_t));
+	glsegextras = NULL;
 
 	for (i = 0; i < numSubs; ++i)
 	{
@@ -975,6 +969,7 @@ void LoadZNodes(FileReaderBase &data, int glnodes)
 	}
 	else
 	{
+		glsegextras = new glsegextra_t[numsegs];
 		P_LoadGLZSegs (data, glnodes);
 	}
 
@@ -1169,7 +1164,6 @@ void P_LoadSegs (MapData * map)
 
 			li->v1 = &vertexes[vnum1];
 			li->v2 = &vertexes[vnum2];
-			li->PartnerSeg = NULL;
 
 			segangle = (WORD)LittleShort(ml->angle);
 
@@ -2910,11 +2904,15 @@ static void P_GroupLines (bool buildmap)
 	for (i = 0; i < numsubsectors; i++)
 	{
 		subsectors[i].sector = subsectors[i].firstline->sidedef->sector;
-
-		for (jj = 0; jj < subsectors[i].numlines; ++jj)
+	}
+	if (glsegextras != NULL)
+	{
+		for (i = 0; i < numsubsectors; i++)
 		{
-			seg_t *seg = subsectors[i].firstline + jj;
-			seg->Subsector = &subsectors[i];
+			for (jj = 0; jj < subsectors[i].numlines; ++jj)
+			{
+				glsegextras[subsectors[i].firstline - segs + jj].Subsector = &subsectors[i];
+			}
 		}
 	}
 	times[0].Unclock();
@@ -3351,6 +3349,11 @@ void P_FreeLevelData ()
 	{
 		delete[] segs;
 		segs = NULL;
+	}
+	if (glsegextras != NULL)
+	{
+		delete[] glsegextras;
+		glsegextras = NULL;
 	}
 	if (sectors != NULL)
 	{
@@ -3817,7 +3820,7 @@ void P_SetupLevel (char *lumpname, int position)
 		FNodeBuilder builder (leveldata, polyspots, anchors, genglnodes || UsingGLNodes);
 		delete[] vertexes;
 		builder.Extract (nodes, numnodes,
-			segs, numsegs,
+			segs, glsegextras, numsegs,
 			subsectors, numsubsectors,
 			vertexes, numvertexes);
 		endTime = I_FPSTime ();
@@ -3997,6 +4000,12 @@ void P_SetupLevel (char *lumpname, int position)
 		}
 	}
 	MapThingsConverted.Clear();
+
+	if (glsegextras != NULL)
+	{
+		delete[] glsegextras;
+		glsegextras = NULL;
+	}
 }
 
 

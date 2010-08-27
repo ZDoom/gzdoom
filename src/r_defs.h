@@ -943,11 +943,12 @@ struct seg_t
 	// Sector references. Could be retrieved from linedef, too.
 	sector_t*		frontsector;
 	sector_t*		backsector;		// NULL for one-sided lines
-	subsector_t *	Subsector;
+};
 
-	seg_t*			PartnerSeg;
-
-	BITFIELD		bPolySeg:1;
+struct glsegextra_t
+{
+	DWORD		 PartnerSeg;
+	subsector_t *Subsector;
 };
 
 //

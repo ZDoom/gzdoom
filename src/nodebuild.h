@@ -111,6 +111,12 @@ class FNodeBuilder
 		bool Forward;
 	};
 
+	struct glseg_t : public seg_t
+	{
+		DWORD Partner;
+	};
+
+
 	// Like a blockmap, but for vertices instead of lines
 	class IVertexMap
 	{
@@ -200,7 +206,7 @@ public:
 	~FNodeBuilder ();
 
 	void Extract (node_t *&nodes, int &nodeCount,
-		seg_t *&segs, int &segCount,
+		seg_t *&segs, glsegextra_t *&glsegextras, int &segCount,
 		subsector_t *&ssecs, int &subCount,
 		vertex_t *&verts, int &vertCount);
 
@@ -282,10 +288,10 @@ private:
 	DWORD AddMiniseg (int v1, int v2, DWORD partner, DWORD seg1, DWORD splitseg);
 	void SetNodeFromSeg (node_t &node, const FPrivSeg *pseg) const;
 
-	int CloseSubsector (TArray<seg_t> &segs, int subsector, vertex_t *outVerts);
-	DWORD PushGLSeg (TArray<seg_t> &segs, const FPrivSeg *seg, vertex_t *outVerts);
-	void PushConnectingGLSeg (int subsector, TArray<seg_t> &segs, vertex_t *v1, vertex_t *v2);
-	int OutputDegenerateSubsector (TArray<seg_t> &segs, int subsector, bool bForward, double lastdot, FPrivSeg *&prev, vertex_t *outVerts);
+	int CloseSubsector (TArray<glseg_t> &segs, int subsector, vertex_t *outVerts);
+	DWORD PushGLSeg (TArray<glseg_t> &segs, const FPrivSeg *seg, vertex_t *outVerts);
+	void PushConnectingGLSeg (int subsector, TArray<glseg_t> &segs, vertex_t *v1, vertex_t *v2);
+	int OutputDegenerateSubsector (TArray<glseg_t> &segs, int subsector, bool bForward, double lastdot, FPrivSeg *&prev, vertex_t *outVerts);
 
 	static int STACK_ARGS SortSegs (const void *a, const void *b);
 

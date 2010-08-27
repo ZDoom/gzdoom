@@ -113,6 +113,8 @@ TArray<size_t> WallMirrors;
 static FNodeBuilder::FLevel PolyNodeLevel;
 static FNodeBuilder PolyNodeBuilder(PolyNodeLevel);
 
+static subsector_t *InSubsector;
+
 CVAR (Bool, r_drawflat, false, 0)		// [RH] Don't texture segs?
 
 
@@ -656,7 +658,7 @@ void R_AddLine (seg_t *line)
 	{
 		if (R_CheckClipWallSegment (WallSX1, WallSX2))
 		{
-			line->Subsector->flags |= SSECF_DRAWN;
+			InSubsector->flags |= SSECF_DRAWN;
 		}
 		return;
 	}
@@ -827,11 +829,11 @@ void R_AddLine (seg_t *line)
 
 			// When using GL nodes, do a clipping test for these lines so we can
 			// mark their subsectors as visible for automap texturing.
-			if (hasglnodes && !(line->Subsector->flags & SSECF_DRAWN))
+			if (hasglnodes && !(InSubsector->flags & SSECF_DRAWN))
 			{
 				if (R_CheckClipWallSegment(WallSX1, WallSX2))
 				{
-					line->Subsector->flags |= SSECF_DRAWN;
+					InSubsector->flags |= SSECF_DRAWN;
 				}
 			}
 			return;
@@ -871,7 +873,7 @@ void R_AddLine (seg_t *line)
 
 	if (R_ClipWallSegment (WallSX1, WallSX2, solid))
 	{
-		line->Subsector->flags |= SSECF_DRAWN;
+		InSubsector->flags |= SSECF_DRAWN;
 	}
 }
 
@@ -1108,11 +1110,6 @@ void R_BuildPolyBSP(subsector_t *sub)
 	{
 		sub->BSP->Subsectors[i].sector = sub->sector;
 	}
-
-	for(unsigned i=0; i < sub->BSP->Segs.Size(); i++)
-	{
-		sub->BSP->Segs[i].Subsector = sub;
-	}
 }
 
 void R_Subsector (subsector_t *sub);
@@ -1146,12 +1143,21 @@ void R_Subsector (subsector_t *sub)
 	sector_t     tempsec;				// killough 3/7/98: deep water hack
 	int          floorlightlevel;		// killough 3/16/98: set floor lightlevel
 	int          ceilinglightlevel;		// killough 4/11/98
+	bool		 outersubsector;
 
-#if 0
+	if (InSubsector != NULL)
+	{ // InSubsector is not NULL. This means we are rendering from a mini-BSP.
+		outersubsector = false;
+	}
+	else
+	{
+		outersubsector = true;
+		InSubsector = sub;
+	}
+
 #ifdef RANGECHECK
-	if (sub - subsectors >= (ptrdiff_t)numsubsectors)
+	if (outersubsector && sub - subsectors >= (ptrdiff_t)numsubsectors)
 		I_Error ("R_Subsector: ss %ti with numss = %i", sub - subsectors, numsubsectors);
-#endif
 #endif
 
 	assert(sub->sector != NULL);
@@ -1159,6 +1165,10 @@ void R_Subsector (subsector_t *sub)
 	if (sub->polys)
 	{ // Render the polyobjs in the subsector first
 		R_AddPolyobjs(sub);
+		if (outersubsector)
+		{
+			InSubsector = NULL;
+		}
 		return;
 	}
 
@@ -1240,11 +1250,15 @@ void R_Subsector (subsector_t *sub)
 
 	while (count--)
 	{
-		if (!line->bPolySeg)
+		if (!outersubsector || line->sidedef == NULL || !(line->sidedef->Flags & WALLF_POLYOBJ))
 		{
 			R_AddLine (line);
 		}
 		line++;
+	}
+	if (outersubsector)
+	{
+		InSubsector = NULL;
 	}
 }
 

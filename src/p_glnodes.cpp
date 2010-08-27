@@ -331,6 +331,7 @@ static bool LoadGLSegs(FileReader * f, wadlump_t * lump)
 			numsegs/=sizeof(glseg_t);
 			segs = new seg_t[numsegs];
 			memset(segs,0,sizeof(seg_t)*numsegs);
+			glsegextras = new glsegextra_t[numsegs];
 			
 			glseg_t * ml = (glseg_t*)data;
 			for(i = 0; i < numsegs; i++)
@@ -338,7 +339,7 @@ static bool LoadGLSegs(FileReader * f, wadlump_t * lump)
 				segs[i].v1 = &vertexes[checkGLVertex(LittleShort(ml->v1))];
 				segs[i].v2 = &vertexes[checkGLVertex(LittleShort(ml->v2))];
 				
-				segs[i].PartnerSeg=&segs[LittleShort(ml->partner)];
+				glsegextras[i].PartnerSeg = ml->partner == 0xFFFF ? DWORD_MAX : LittleShort(ml->partner);
 				if(ml->linedef != 0xffff)
 				{
 					ldef = &lines[LittleShort(ml->linedef)];
@@ -376,6 +377,7 @@ static bool LoadGLSegs(FileReader * f, wadlump_t * lump)
 			numsegs/=sizeof(glseg3_t);
 			segs = new seg_t[numsegs];
 			memset(segs,0,sizeof(seg_t)*numsegs);
+			glsegextras = new glsegextra_t[numsegs];
 			
 			glseg3_t * ml = (glseg3_t*)(data+ (format5? 0:4));
 			for(i = 0; i < numsegs; i++)
@@ -383,7 +385,7 @@ static bool LoadGLSegs(FileReader * f, wadlump_t * lump)
 				segs[i].v1 = &vertexes[checkGLVertex3(LittleLong(ml->v1))];
 				segs[i].v2 = &vertexes[checkGLVertex3(LittleLong(ml->v2))];
 				
-				segs[i].PartnerSeg=&segs[LittleLong(ml->partner)];
+				glsegextras[i].PartnerSeg = LittleLong(ml->partner);
 	
 				if(ml->linedef != 0xffff) // skip minisegs 
 				{
@@ -971,7 +973,7 @@ bool P_CheckNodes(MapData * map, bool rebuilt, int buildtime)
 			FNodeBuilder builder (leveldata, polyspots, anchors, true);
 			delete[] vertexes;
 			builder.Extract (nodes, numnodes,
-				segs, numsegs,
+				segs, glsegextras, numsegs,
 				subsectors, numsubsectors,
 				vertexes, numvertexes);
 			endTime = I_FPSTime ();
@@ -1105,7 +1107,7 @@ static void CreateCachedNodes(MapData *map)
 	for(int i=0;i<numsegs;i++)
 	{
 		WriteLong(ZNodes, DWORD(segs[i].v1 - vertexes));
-		WriteLong(ZNodes, DWORD(segs[i].PartnerSeg - segs));
+		WriteLong(ZNodes, DWORD(glsegextras[i].PartnerSeg));
 		if (segs[i].linedef)
 		{
 			WriteLong(ZNodes, DWORD(segs[i].linedef - lines));
@@ -1411,25 +1413,25 @@ void P_SetRenderSector()
 	// Check for incorrect partner seg info so that the following code does not crash.
 	for(i=0;i<numsegs;i++)
 	{
-		int partner= int(segs[i].PartnerSeg-segs);
+		int partner = (int)glsegextras[i].PartnerSeg;
 
-		if (partner<0 || partner>=numsegs || &segs[partner]!=segs[i].PartnerSeg)
+		if (partner<0 || partner>=numsegs/*eh? || &segs[partner]!=glsegextras[i].PartnerSeg*/)
 		{
-			segs[i].PartnerSeg=NULL;
+			glsegextras[i].PartnerSeg=DWORD_MAX;
 		}
 
 		// glbsp creates such incorrect references for Strife.
-		if (segs[i].linedef && segs[i].PartnerSeg && !segs[i].PartnerSeg->linedef)
+		if (segs[i].linedef && glsegextras[i].PartnerSeg != DWORD_MAX && !segs[glsegextras[i].PartnerSeg].linedef)
 		{
-			segs[i].PartnerSeg = segs[i].PartnerSeg->PartnerSeg = NULL;
+			glsegextras[i].PartnerSeg = glsegextras[glsegextras[i].PartnerSeg].PartnerSeg = DWORD_MAX;
 		}
 	}
 
 	for(i=0;i<numsegs;i++)
 	{
-		if (segs[i].PartnerSeg && segs[i].PartnerSeg->PartnerSeg!=&segs[i])
+		if (glsegextras[i].PartnerSeg != DWORD_MAX && glsegextras[glsegextras[i].PartnerSeg].PartnerSeg!=i)
 		{
-			segs[i].PartnerSeg=NULL;
+			glsegextras[i].PartnerSeg=DWORD_MAX;
 		}
 	}
 
@@ -1457,7 +1459,7 @@ void P_SetRenderSector()
 		seg = ss->firstline;
 		for(j=0; j<ss->numlines; j++)
 		{
-			if(seg->sidedef && (!seg->PartnerSeg || seg->sidedef->sector!=seg->PartnerSeg->sidedef->sector))
+			if(seg->sidedef && (glsegextras[seg - segs].PartnerSeg == DWORD_MAX || seg->sidedef->sector!=segs[glsegextras[seg - segs].PartnerSeg].sidedef->sector))
 			{
 				ss->render_sector = seg->sidedef->sector;
 				break;
@@ -1481,9 +1483,10 @@ void P_SetRenderSector()
 			
 			for(j=0; j<ss->numlines; j++)
 			{
-				if (seg->PartnerSeg && seg->PartnerSeg->Subsector)
+				DWORD partner = glsegextras[seg - segs].PartnerSeg;
+				if (partner != DWORD_MAX && glsegextras[partner].Subsector)
 				{
-					sector_t * backsec = seg->PartnerSeg->Subsector->render_sector;
+					sector_t * backsec = glsegextras[partner].Subsector->render_sector;
 					if (backsec)
 					{
 						ss->render_sector=backsec;

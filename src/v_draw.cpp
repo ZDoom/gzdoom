@@ -62,12 +62,16 @@ int CleanWidth, CleanHeight;
 // Above minus 1 (or 1, if they are already 1)
 int CleanXfac_1, CleanYfac_1, CleanWidth_1, CleanHeight_1;
 
+// FillSimplePoly uses this
+extern "C" short spanend[MAXHEIGHT];
+
 CVAR (Bool, hud_scale, false, CVAR_ARCHIVE);
 
 // For routines that take RGB colors, cache the previous lookup in case there
 // are several repetitions with the same color.
 static int LastPal = -1;
 static uint32 LastRGB;
+
 
 static int PalFromRGB(uint32 rgb)
 {
@@ -186,7 +190,7 @@ void STACK_ARGS DCanvas::DrawTextureV(FTexture *img, double x, double y, uint32 
 		double iyscale = 1 / yscale;
 
 		spryscale = FLOAT2FIXED(yscale);
-
+		assert(spryscale > 2);
 #if 0
 		// Fix precision errors that are noticeable at some resolutions
 		if ((y0 + parms.destheight) > (y0 + yscale * img->GetHeight()))
@@ -1090,6 +1094,172 @@ void DCanvas::Clear (int left, int top, int right, int bottom, int palcolor, uin
 		dest += Pitch;
 	}
 }
+
+//==========================================================================
+//
+// DCanvas :: FillSimplePoly
+//
+// Fills a simple polygon with a texture. Here, "simple" means that a
+// horizontal scanline at any vertical position within the polygon will
+// not cross it more than twice.
+//
+// The originx, originy, scale, and rotation parameters specify
+// transformation of the filling texture, not of the points.
+//
+// The points must be specified in clockwise order.
+//
+//==========================================================================
+
+void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
+	double originx, double originy, double scalex, double scaley, angle_t rotation,
+	FDynamicColormap *colormap, int lightlevel)
+{
+	// Use an equation similar to player sprites to determine shade
+	fixed_t shade = LIGHT2SHADE(lightlevel) - 12*FRACUNIT;
+	float topy, boty, leftx, rightx;
+	int toppt, botpt, pt1, pt2;
+	int i;
+	int y1, y2, y;
+	fixed_t x;
+	double rot = rotation * M_PI / double(1u << 31);
+	bool dorotate = rot != 0;
+	double cosrot, sinrot;
+
+	if (--npoints < 2 || Buffer == NULL)
+	{ // not a polygon or we're not locked
+		return;
+	}
+
+	// Find the extents of the polygon, in particular the highest and lowest points.
+	for (botpt = toppt = 0, boty = topy = points[0].Y, leftx = rightx = points[0].X, i = 1; i <= npoints; ++i)
+	{
+		if (points[i].Y < topy)
+		{
+			topy = points[i].Y;
+			toppt = i;
+		}
+		if (points[i].Y > boty)
+		{
+			boty = points[i].Y;
+			botpt = i;
+		}
+		if (points[i].X < leftx)
+		{
+			leftx = points[i].X;
+		}
+		if (points[i].X > rightx)
+		{
+			rightx = points[i].X;
+		}
+	}
+	if (topy >= Height ||		// off the bottom of the screen
+		boty <= 0 ||			// off the top of the screen
+		leftx >= Width ||		// off the right of the screen
+		rightx <= 0)			// off the left of the screen
+	{
+		return;
+	}
+
+	cosrot = cos(rot);
+	sinrot = sin(rot);
+
+	// Setup constant texture mapping parameters.
+	R_SetupSpanBits(tex);
+	R_SetSpanColormap(colormap != NULL ? &colormap->Maps[clamp(shade >> FRACBITS, 0, NUMCOLORMAPS-1) * 256] : identitymap);
+	R_SetSpanSource(tex->GetPixels());
+	scalex = double(1u << (32 - ds_xbits)) / scalex;
+	scaley = double(1u << (32 - ds_ybits)) / scaley;
+	ds_xstep = xs_RoundToInt(cosrot * scalex);
+	ds_ystep = xs_RoundToInt(sinrot * scaley);
+
+	// Travel down the right edge and create an outline of that edge.
+	pt1 = toppt;
+	pt2 = toppt + 1;	if (pt2 > npoints) pt2 = 0;
+	y1 = xs_RoundToInt(points[pt1].Y + 0.5f);
+	do
+	{
+		x = FLOAT2FIXED(points[pt1].X + 0.5f);
+		y2 = xs_RoundToInt(points[pt2].Y + 0.5f);
+		if (y1 >= y2 || (y1 < 0 && y2 < 0) || (y1 >= Height && y2 >= Height))
+		{
+		}
+		else
+		{
+			fixed_t xinc = FLOAT2FIXED((points[pt2].X - points[pt1].X) / (points[pt2].Y - points[pt1].Y));
+			int y3 = MIN(y2, Height);
+			if (y1 < 0)
+			{
+				x += xinc * -y1;
+				y1 = 0;
+			}
+			for (y = y1; y < y3; ++y)
+			{
+				spanend[y] = clamp<short>(x >> FRACBITS, -1, Width);
+				x += xinc;
+			}
+		}
+		y1 = y2;
+		pt1 = pt2;
+		pt2++;			if (pt2 > npoints) pt2 = 0;
+	} while (pt1 != botpt);
+
+	// Travel down the left edge and fill it in.
+	pt1 = toppt;
+	pt2 = toppt - 1;	if (pt2 < 0) pt2 = npoints;
+	y1 = xs_RoundToInt(points[pt1].Y + 0.5f);
+	do
+	{
+		x = FLOAT2FIXED(points[pt1].X + 0.5f);
+		y2 = xs_RoundToInt(points[pt2].Y + 0.5f);
+		if (y1 >= y2 || (y1 < 0 && y2 < 0) || (y1 >= Height && y2 >= Height))
+		{
+		}
+		else
+		{
+			fixed_t xinc = FLOAT2FIXED((points[pt2].X - points[pt1].X) / (points[pt2].Y - points[pt1].Y));
+			int y3 = MIN(y2, Height);
+			if (y1 < 0)
+			{
+				x += xinc * -y1;
+				y1 = 0;
+			}
+			for (y = y1; y < y3; ++y)
+			{
+				int x1 = x >> FRACBITS;
+				int x2 = spanend[y];
+				if (x2 > x1 && x2 > 0 && x1 < Width)
+				{
+					x1 = MAX(x1, 0);
+					x2 = MIN(x2, Width);
+#if 0
+					memset(this->Buffer + y * this->Pitch + x1, (int)tex, x2 - x1);
+#else
+					ds_y = y;
+					ds_x1 = x1;
+					ds_x2 = x2 - 1;
+
+					TVector2<double> tex(x1 - originx, y - originy);
+					if (dorotate)
+					{
+						double t = tex.X;
+						tex.X = t * cosrot - tex.Y * sinrot;
+						tex.Y = tex.Y * cosrot + t * sinrot;
+					}
+					ds_xfrac = xs_RoundToInt(tex.X * scalex);
+					ds_yfrac = xs_RoundToInt(tex.Y * scaley);
+
+					R_DrawSpan();
+#endif
+				}
+				x += xinc;
+			}
+		}
+		y1 = y2;
+		pt1 = pt2;
+		pt2--;			if (pt2 < 0) pt2 = npoints;
+	} while (pt1 != botpt);
+}
+
 
 /********************************/
 /*								*/

@@ -1464,8 +1464,8 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 	P_SerializeThinkers (arc, hubLoad);
 	P_SerializeWorld (arc);
 	P_SerializePolyobjs (arc);
+	P_SerializeSubsectors(arc);
 	StatusBar->Serialize (arc);
-	//SerializeInterpolations (arc);
 
 	arc << level.total_monsters << level.total_items << level.total_secrets;
 

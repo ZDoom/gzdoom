@@ -1227,6 +1227,10 @@ public:
 					sec->seqType = -1;
 					continue;
 
+				case NAME_hidden:
+					sec->MoreFlags |= SECF_HIDDEN;
+					break;
+
 				default:
 					break;
 			}

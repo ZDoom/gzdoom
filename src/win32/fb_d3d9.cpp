@@ -278,7 +278,7 @@ D3DFB::D3DFB (UINT adapter, int width, int height, bool fullscreen)
 	GatheringWipeScreen = false;
 	ScreenWipe = NULL;
 	InScene = false;
-	QuadExtra = new BufferedQuad[MAX_QUAD_BATCH];
+	QuadExtra = new BufferedTris[MAX_QUAD_BATCH];
 	Packs = NULL;
 	PixelDoubling = 0;
 	SkipAt = -1;
@@ -1865,7 +1865,7 @@ void D3DFB::DrawPackedTextures(int packnum)
 
 		CheckQuadBatch();
 
-		BufferedQuad *quad = &QuadExtra[QuadBatchPos];
+		BufferedTris *quad = &QuadExtra[QuadBatchPos];
 		FBVERTEX *vert = &VertexData[VertexPos];
 
 		quad->Group1 = 0;
@@ -1881,6 +1881,8 @@ void D3DFB::DrawPackedTextures(int packnum)
 		}
 		quad->Palette = NULL;
 		quad->Texture = pack->Tex;
+		quad->NumVerts = 4;
+		quad->NumTris = 2;
 
 		float x0 = float(x) - 0.5f;
 		float y0 = float(y) - 0.5f;
@@ -3021,16 +3023,20 @@ void STACK_ARGS D3DFB::DrawTextureV (FTexture *img, double x, double y, uint32 t
 	parms.bilinear = false;
 
 	D3DCOLOR color0, color1;
-	if (!SetStyle(tex, parms, color0, color1, QuadExtra[QuadBatchPos]))
+	BufferedTris *quad = &QuadExtra[QuadBatchPos];
+
+	if (!SetStyle(tex, parms, color0, color1, *quad))
 	{
 		return;
 	}
 
-	QuadExtra[QuadBatchPos].Texture = tex->Box->Owner->Tex;
+	quad->Texture = tex->Box->Owner->Tex;
 	if (parms.bilinear)
 	{
-		QuadExtra[QuadBatchPos].Flags |= BQF_Bilinear;
+		quad->Flags |= BQF_Bilinear;
 	}
+	quad->NumTris = 2;
+	quad->NumVerts = 4;
 
 	float yoffs = GatheringWipeScreen ? 0.5f : 0.5f - LBOffset;
 
@@ -3152,7 +3158,7 @@ void D3DFB::FlatFill(int left, int top, int right, int bottom, FTexture *src, bo
 
 	CheckQuadBatch();
 
-	BufferedQuad *quad = &QuadExtra[QuadBatchPos];
+	BufferedTris *quad = &QuadExtra[QuadBatchPos];
 	FBVERTEX *vert = &VertexData[VertexPos];
 
 	quad->Group1 = 0;
@@ -3168,6 +3174,8 @@ void D3DFB::FlatFill(int left, int top, int right, int bottom, FTexture *src, bo
 	}
 	quad->Palette = NULL;
 	quad->Texture = tex->Box->Owner->Tex;
+	quad->NumVerts = 4;
+	quad->NumTris = 2;
 
 	vert[0].x = x0;
 	vert[0].y = y0;
@@ -3219,6 +3227,128 @@ void D3DFB::FlatFill(int left, int top, int right, int bottom, FTexture *src, bo
 
 //==========================================================================
 //
+// D3DFB :: FillSimplePoly
+//
+// Here, "simple" means that a simple triangle fan can draw it.
+//
+//==========================================================================
+
+void D3DFB::FillSimplePoly(FTexture *texture, FVector2 *points, int npoints,
+	double originx, double originy, double scalex, double scaley,
+	angle_t rotation, FDynamicColormap *colormap, int lightlevel)
+{
+	// Use an equation similar to player sprites to determine shade
+	fixed_t shade = LIGHT2SHADE(lightlevel) - 12*FRACUNIT;
+	BufferedTris *quad;
+	FBVERTEX *verts;
+	D3DTex *tex;
+	float yoffs, uscale, vscale;
+	int i, ipos;
+	D3DCOLOR color0, color1;
+	float ox, oy;
+	float cosrot, sinrot;
+	float rot = float(rotation * M_PI / float(1u << 31));
+	bool dorotate = rot != 0;
+
+	if (npoints < 3)
+	{ // This is no polygon.
+		return;
+	}
+	if (In2D < 2)
+	{
+		Super::FillSimplePoly(texture, points, npoints, originx, originy, scalex, scaley, rotation, colormap, lightlevel);
+		return;
+	}
+	if (!InScene)
+	{
+		return;
+	}
+	tex = static_cast<D3DTex *>(texture->GetNative(true));
+	if (tex == NULL)
+	{
+		return;
+	}
+
+	cosrot = cos(rot);
+	sinrot = sin(rot);
+
+	CheckQuadBatch(npoints - 2, npoints);
+	quad = &QuadExtra[QuadBatchPos];
+	verts = &VertexData[VertexPos];
+
+	color0 = 0;
+	color1 = 0xFFFFFFFF;
+
+	quad->Group1 = 0;
+	if (tex->GetTexFormat() == D3DFMT_L8 && !tex->IsGray)
+	{
+		quad->Flags = BQF_WrapUV | BQF_GamePalette | BQF_DisableAlphaTest;
+		quad->ShaderNum = BQS_PalTex;
+		if (colormap != NULL)
+		{
+			if (colormap->Desaturate != 0)
+			{
+				quad->Flags |= BQF_Desaturated;
+			}
+			quad->ShaderNum = BQS_InGameColormap;
+			color0 = D3DCOLOR_ARGB(colormap->Desaturate,
+				colormap->Color.r, colormap->Color.g, colormap->Color.b);
+			double fadelevel = clamp(shade / (NUMCOLORMAPS * 65536.0), 0.0, 1.0);
+			color1 = D3DCOLOR_ARGB(DWORD((1 - fadelevel) * 255),
+				DWORD(colormap->Fade.r * fadelevel),
+				DWORD(colormap->Fade.g * fadelevel),
+				DWORD(colormap->Fade.b * fadelevel));
+		}
+	}
+	else
+	{
+		quad->Flags = BQF_WrapUV | BQF_DisableAlphaTest;
+		quad->ShaderNum = BQS_Plain;
+	}
+	quad->Palette = NULL;
+	quad->Texture = tex->Box->Owner->Tex;
+	quad->NumVerts = npoints;
+	quad->NumTris = npoints - 2;
+
+	yoffs = GatheringWipeScreen ? 0 : LBOffset;
+	uscale = float(1.f / (texture->GetWidth() * scalex));
+	vscale = float(1.f / (texture->GetHeight() * scaley));
+	ox = float(originx);
+	oy = float(originy);
+
+	for (i = 0; i < npoints; ++i)
+	{
+		verts[i].x = points[i].X;
+		verts[i].y = points[i].Y + yoffs;
+		verts[i].z = 0;
+		verts[i].rhw = 1;
+		verts[i].color0 = color0;
+		verts[i].color1 = color1;
+		float u = points[i].X - 0.5f - ox;
+		float v = points[i].Y - 0.5f - oy;
+		if (dorotate)
+		{
+			float t = u;
+			u = t * cosrot - v * sinrot;
+			v = v * cosrot + t * sinrot;
+		}
+		verts[i].tu = u * uscale;
+		verts[i].tv = v * vscale;
+	}
+	for (ipos = IndexPos, i = 2; i < npoints; ++i, ipos += 3)
+	{
+		IndexData[ipos    ] = VertexPos;
+		IndexData[ipos + 1] = VertexPos + i - 1;
+		IndexData[ipos + 2] = VertexPos + i;
+	}
+
+	QuadBatchPos++;
+	VertexPos += npoints;
+	IndexPos = ipos;
+}
+
+//==========================================================================
+//
 // D3DFB :: AddColorOnlyQuad
 //
 // Adds a single-color, untextured quad to the batch.
@@ -3227,7 +3357,7 @@ void D3DFB::FlatFill(int left, int top, int right, int bottom, FTexture *src, bo
 
 void D3DFB::AddColorOnlyQuad(int left, int top, int width, int height, D3DCOLOR color)
 {
-	BufferedQuad *quad;
+	BufferedTris *quad;
 	FBVERTEX *verts;
 
 	CheckQuadBatch();
@@ -3247,6 +3377,8 @@ void D3DFB::AddColorOnlyQuad(int left, int top, int width, int height, D3DCOLOR 
 	}
 	quad->Palette = NULL;
 	quad->Texture = NULL;
+	quad->NumVerts = 4;
+	quad->NumTris = 2;
 
 	verts[0].x = x;
 	verts[0].y = y;
@@ -3300,17 +3432,19 @@ void D3DFB::AddColorOnlyQuad(int left, int top, int width, int height, D3DCOLOR 
 //
 // D3DFB :: CheckQuadBatch
 //
-// Make sure there's enough room in the batch for one more quad.
+// Make sure there's enough room in the batch for one more set of triangles.
 //
 //==========================================================================
 
-void D3DFB::CheckQuadBatch()
+void D3DFB::CheckQuadBatch(int numtris, int numverts)
 {
 	if (BatchType == BATCH_Lines)
 	{
 		EndLineBatch();
 	}
-	else if (QuadBatchPos == MAX_QUAD_BATCH)
+	else if (QuadBatchPos == MAX_QUAD_BATCH ||
+		VertexPos + numverts > NUM_VERTS ||
+		IndexPos + numtris * 3 > NUM_INDEXES)
 	{
 		EndQuadBatch();
 	}
@@ -3371,23 +3505,33 @@ void D3DFB::EndQuadBatch()
 	D3DDevice->SetIndices(IndexBuffer);
 	bool uv_wrapped = false;
 	bool uv_should_wrap;
+	int indexpos, vertpos;
 
+	indexpos = vertpos = 0;
 	for (int i = 0; i < QuadBatchPos; )
 	{
-		const BufferedQuad *quad = &QuadExtra[i];
+		const BufferedTris *quad = &QuadExtra[i];
 		int j;
+
+		int startindex = indexpos;
+		int startvertex = vertpos;
+
+		indexpos += quad->NumTris * 3;
+		vertpos += quad->NumVerts;
 
 		// Quads with matching parameters should be done with a single
 		// DrawPrimitive call.
 		for (j = i + 1; j < QuadBatchPos; ++j)
 		{
-			const BufferedQuad *q2 = &QuadExtra[j];
+			const BufferedTris *q2 = &QuadExtra[j];
 			if (quad->Texture != q2->Texture ||
 				quad->Group1 != q2->Group1 ||
 				quad->Palette != q2->Palette)
 			{
 				break;
 			}
+			indexpos += q2->NumTris * 3;
+			vertpos += q2->NumVerts;
 		}
 
 		// Set the palette (if one)
@@ -3467,7 +3611,12 @@ void D3DFB::EndQuadBatch()
 		}
 
 		// Draw the quad
-		D3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 4 * i, 4 * (j - i), 6 * i, 2 * (j - i));
+		D3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0,
+			startvertex,					// MinIndex
+			vertpos - startvertex,			// NumVertices
+			startindex,						// StartIndex
+			(indexpos - startindex) / 3		// PrimitiveCount
+			/*4 * i, 4 * (j - i), 6 * i, 2 * (j - i)*/);
 		i = j;
 	}
 	if (uv_wrapped)
@@ -3508,7 +3657,7 @@ void D3DFB::EndBatch()
 //
 //==========================================================================
 
-bool D3DFB::SetStyle(D3DTex *tex, DrawParms &parms, D3DCOLOR &color0, D3DCOLOR &color1, BufferedQuad &quad)
+bool D3DFB::SetStyle(D3DTex *tex, DrawParms &parms, D3DCOLOR &color0, D3DCOLOR &color1, BufferedTris &quad)
 {
 	D3DFORMAT fmt = tex->GetTexFormat();
 	FRenderStyle style = parms.style;

@@ -116,6 +116,7 @@ typedef enum {
 	joy_slider,
 	joy_map,
 	joy_inverter,
+	mapcontrol,
 } itemtype;
 
 struct IJoystickConfig;

@@ -111,6 +111,12 @@ int P_TranslateSectorSpecial (int);
 int GetUDMFInt(int type, int index, const char *key);
 fixed_t GetUDMFFixed(int type, int index, const char *key);
 
+bool P_LoadGLNodes(MapData * map);
+bool P_CheckNodes(MapData * map, bool rebuilt, int buildtime);
+bool P_CheckForGLNodes();
+void P_SetRenderSector();
+
+
 struct sidei_t	// [RH] Only keep BOOM sidedef init stuff around for init
 {
 	union
@@ -133,5 +139,7 @@ struct sidei_t	// [RH] Only keep BOOM sidedef init stuff around for init
 	};
 };
 extern sidei_t *sidetemp;
+extern bool hasglnodes;
+extern struct glsegextra_t *glsegextras;
 
 #endif

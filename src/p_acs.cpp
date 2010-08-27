@@ -5097,7 +5097,7 @@ int DLevelScript::RunScript ()
 			{
 				int key1 = 0, key2 = 0;
 
-				C_GetKeysForCommand ((char *)lookup, &key1, &key2);
+				Bindings.GetKeysForCommand ((char *)lookup, &key1, &key2);
 
 				if (key2)
 					work << KeyNames[key1] << " or " << KeyNames[key2];

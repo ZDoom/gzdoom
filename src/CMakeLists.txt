@@ -679,6 +679,7 @@ add_executable( zdoom WIN32
 	p_effect.cpp
 	p_enemy.cpp
 	p_floor.cpp
+	p_glnodes.cpp
 	p_interaction.cpp
 	p_lights.cpp
 	p_linkedsectors.cpp

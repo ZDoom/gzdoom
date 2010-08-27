@@ -4705,6 +4705,20 @@ bool P_HitWater (AActor * thing, sector_t * sec, fixed_t x, fixed_t y, fixed_t z
 	// don't splash above the object
 	if (checkabove && z > thing->z + (thing->height >> 1)) return false;
 
+#if 0 // needs some rethinking before activation
+
+	// This avoids spawning splashes on invisible self referencing sectors.
+	// For network consistency do this only in single player though because
+	// it is not guaranteed that all players have GL nodes loaded.
+	if (!multiplayer && thing->subsector->sector != thing->subsector->render_sector)
+	{
+		fixed_t zs = thing->subsector->sector->floorplane.ZatPoint(x, y);
+		fixed_t zr = thing->subsector->render_sector->floorplane.ZatPoint(x, y);
+
+		if (zs > zr && thing->z >= zs) return false;
+	}
+#endif
+
 #ifdef _3DFLOORS
 	for(unsigned int i=0;i<sec->e->XFloor.ffloors.Size();i++)
 	{		
@@ -4823,7 +4837,7 @@ bool P_HitFloor (AActor *thing)
 	{
 		thing->flags6 &= ~MF6_ARMED; // Disarm
 		P_DamageMobj (thing, NULL, NULL, thing->health, NAME_Crush, DMG_FORCED);  // kill object
-		return true;
+		return false;
 	}
 
 	if (thing->flags2 & MF2_FLOATBOB || thing->flags3 & MF3_DONTSPLASH)

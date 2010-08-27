@@ -47,6 +47,7 @@
 #include "r_interpolate.h"
 #include "g_level.h"
 #include "po_man.h"
+#include "p_setup.h"
 
 static void CopyPlayer (player_t *dst, player_t *src, const char *name);
 static void ReadOnePlayer (FArchive &arc, bool skipload);
@@ -539,6 +540,111 @@ void P_SerializePolyobjs (FArchive &arc)
 			deltaX -= po->StartSpot.x;
 			deltaY -= po->StartSpot.y;
 			po->MovePolyobj (deltaX, deltaY, true);
+		}
+	}
+}
+
+//==========================================================================
+//
+// RecalculateDrawnSubsectors
+//
+// In case the subsector data is unusable this function tries to reconstruct
+// if from the linedefs' ML_MAPPED info.
+//
+//==========================================================================
+
+void RecalculateDrawnSubsectors()
+{
+	for(int i=0;i<numsubsectors;i++)
+	{
+		subsector_t *sub = &subsectors[i];
+		for(unsigned int j=0;j<sub->numlines;j++)
+		{
+			if (sub->firstline[j].linedef != NULL && 
+				(sub->firstline[j].linedef->flags & ML_MAPPED))
+			{
+				sub->flags |= SSECF_DRAWN;
+			}
+		}
+	}
+}
+
+//==========================================================================
+//
+// ArchiveSubsectors
+//
+//==========================================================================
+
+void P_SerializeSubsectors(FArchive &arc)
+{
+	int num_verts, num_subs, num_nodes;	
+	BYTE by;
+
+	if (arc.IsStoring())
+	{
+		if (hasglnodes)
+		{
+			arc << numvertexes << numsubsectors << numnodes;	// These are only for verification
+			for(int i=0;i<numsubsectors;i+=8)
+			{
+				by = 0;
+				for(int j=0;j<8;j++)
+				{
+					if ((subsectors[i+j].flags & SSECF_DRAWN) && i+j<numsubsectors)
+					{
+						by |= (1<<j);
+					}
+				}
+				arc << by;
+			}
+		}
+		else
+		{
+			int v = 0;
+			arc << v << v << v;
+		}
+	}
+	else
+	{
+		if (SaveVersion < 2500)
+		{
+			if (hasglnodes)
+			{
+				RecalculateDrawnSubsectors();
+			}
+			return;
+		}
+
+		arc << num_verts << num_subs << num_nodes;
+		if (num_verts != numvertexes ||
+			num_subs != numsubsectors ||
+			num_nodes != numnodes)
+		{
+			// Nodes don't match - we can't use this info
+			for(int i=0;i<num_subs;i+=8)
+			{
+				// Skip the subsector info.
+				arc << by;
+			}
+			if (hasglnodes)
+			{
+				RecalculateDrawnSubsectors();
+			}
+			return;
+		}
+		else
+		{
+			for(int i=0;i<numsubsectors;i+=8)
+			{
+				arc << by;
+				for(int j=0;j<8;j++)
+				{
+					if ((by & (1<<j)) && i+j<numsubsectors)
+					{
+						subsectors[i+j].flags |= SSECF_DRAWN;
+					}
+				}
+			}
 		}
 	}
 }

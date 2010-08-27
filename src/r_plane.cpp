@@ -991,22 +991,9 @@ void R_DrawSinglePlane (visplane_t *pl, fixed_t alpha, bool masked)
 		{ // Don't waste time on a masked texture if it isn't really masked.
 			masked = false;
 		}
-		tex->GetWidth ();
-		ds_xbits = tex->WidthBits;
-		ds_ybits = tex->HeightBits;
-		if ((1 << ds_xbits) > tex->GetWidth())
-		{
-			ds_xbits--;
-		}
-		if ((1 << ds_ybits) > tex->GetHeight())
-		{
-			ds_ybits--;
-		}
+		R_SetupSpanBits(tex);
 		pl->xscale = MulScale16 (pl->xscale, tex->xScale);
 		pl->yscale = MulScale16 (pl->yscale, tex->yScale);
-#ifdef X86_ASM
-		R_SetSpanSize_ASM (ds_xbits, ds_ybits);
-#endif
 		ds_source = tex->GetPixels ();
 
 		basecolormap = pl->colormap;

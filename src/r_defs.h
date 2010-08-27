@@ -319,6 +319,7 @@ enum
 	SECF_FORCEDUNDERWATER= 64,	// sector is forced to be underwater
 	SECF_UNDERWATERMASK	= 32+64,
 	SECF_DRAWN			= 128,	// sector has been drawn at least once
+	SECF_HIDDEN			= 256,	// Do not draw on textured automap
 };
 
 enum
@@ -942,10 +943,12 @@ struct seg_t
 	// Sector references. Could be retrieved from linedef, too.
 	sector_t*		frontsector;
 	sector_t*		backsector;		// NULL for one-sided lines
+};
 
-	seg_t*			PartnerSeg;
-
-	BITFIELD		bPolySeg:1;
+struct glsegextra_t
+{
+	DWORD		 PartnerSeg;
+	subsector_t *Subsector;
 };
 
 //
@@ -954,13 +957,22 @@ struct seg_t
 // Basically, this is a list of LineSegs indicating the visible walls that
 // define (all or some) sides of a convex BSP leaf.
 //
+
+enum
+{
+	SSECF_DEGENERATE = 1,
+	SSECF_DRAWN = 2,
+};
+
 struct subsector_t
 {
 	sector_t	*sector;
 	FPolyNode	*polys;
 	FMiniBSP	*BSP;
 	seg_t		*firstline;
+	sector_t	*render_sector;
 	DWORD		numlines;
+	int			flags;
 };
 
 

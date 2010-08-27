@@ -879,7 +879,7 @@ bool G_Responder (event_t *ev)
 	if (gameaction == ga_nothing && 
 		(demoplayback || gamestate == GS_DEMOSCREEN || gamestate == GS_TITLELEVEL))
 	{
-		const char *cmd = C_GetBinding (ev->data1);
+		const char *cmd = Bindings.GetBind (ev->data1);
 
 		if (ev->type == EV_KeyDown)
 		{
@@ -902,11 +902,11 @@ bool G_Responder (event_t *ev)
 			}
 			else
 			{
-				return C_DoKey (ev);
+				return C_DoKey (ev, &Bindings, &DoubleBindings);
 			}
 		}
 		if (cmd && cmd[0] == '+')
-			return C_DoKey (ev);
+			return C_DoKey (ev, &Bindings, &DoubleBindings);
 
 		return false;
 	}
@@ -918,7 +918,7 @@ bool G_Responder (event_t *ev)
 	{
 		if (ST_Responder (ev))
 			return true;		// status window ate it
-		if (!viewactive && AM_Responder (ev))
+		if (!viewactive && AM_Responder (ev, false))
 			return true;		// automap ate it
 	}
 	else if (gamestate == GS_FINALE)
@@ -930,12 +930,12 @@ bool G_Responder (event_t *ev)
 	switch (ev->type)
 	{
 	case EV_KeyDown:
-		if (C_DoKey (ev))
+		if (C_DoKey (ev, &Bindings, &DoubleBindings))
 			return true;
 		break;
 
 	case EV_KeyUp:
-		C_DoKey (ev);
+		C_DoKey (ev, &Bindings, &DoubleBindings);
 		break;
 
 	// [RH] mouse buttons are sent as key up/down events
@@ -949,7 +949,7 @@ bool G_Responder (event_t *ev)
 	// the events *last* so that any bound keys get precedence.
 
 	if (gamestate == GS_LEVEL && viewactive)
-		return AM_Responder (ev);
+		return AM_Responder (ev, true);
 
 	return (ev->type == EV_KeyDown ||
 			ev->type == EV_Mouse);

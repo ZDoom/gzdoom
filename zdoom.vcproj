@@ -805,6 +805,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\p_glnodes.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\src\p_interaction.cpp"
 				>
 			</File>

@@ -2,10 +2,14 @@
 
 #ifdef _WIN32
 #include <direct.h>
+#include <io.h>
 #else
 #include <unistd.h>
 #include <sys/types.h>
 #include <pwd.h>
+#if !defined(__sun)
+#include <fts.h>
+#endif
 #endif
 #include "doomtype.h"
 #include "cmdlib.h"
@@ -885,3 +889,153 @@ FString NicePath(const char *path)
 	return where;
 #endif
 }
+
+
+#ifdef _WIN32
+
+//==========================================================================
+//
+// ScanDirectory
+//
+//==========================================================================
+
+void ScanDirectory(TArray<FFileList> &list, const char *dirpath)
+{
+	struct _finddata_t fileinfo;
+	intptr_t handle;
+	FString dirmatch;
+
+	dirmatch << dirpath << "*";
+
+	if ((handle = _findfirst(dirmatch, &fileinfo)) == -1)
+	{
+		I_Error("Could not scan '%s': %s\n", dirpath, strerror(errno));
+	}
+	else
+	{
+		do
+		{
+			if (fileinfo.attrib & _A_HIDDEN)
+			{
+				// Skip hidden files and directories. (Prevents SVN bookkeeping
+				// info from being included.)
+				continue;
+			}
+
+			if (fileinfo.attrib & _A_SUBDIR)
+			{
+				if (fileinfo.name[0] == '.' &&
+					(fileinfo.name[1] == '\0' ||
+					 (fileinfo.name[1] == '.' && fileinfo.name[2] == '\0')))
+				{
+					// Do not record . and .. directories.
+					continue;
+				}
+
+				FFileList *fl = &list[list.Reserve(1)];
+				fl->Filename << dirpath << fileinfo.name;
+				fl->isDirectory = true;
+				FString newdir = fl->Filename;
+				newdir << "/";
+				ScanDirectory(list, newdir);
+			}
+			else
+			{
+				FFileList *fl = &list[list.Reserve(1)];
+				fl->Filename << dirpath << fileinfo.name;
+				fl->isDirectory = false;
+			}
+		} 
+		while (_findnext(handle, &fileinfo) == 0);
+		_findclose(handle);
+	}
+}
+
+#elif defined(__sun) || defined(linux)
+
+//==========================================================================
+//
+// ScanDirectory
+// Solaris version
+//
+// Given NULL-terminated array of directory paths, create trees for them.
+//
+//==========================================================================
+
+void ScanDirectory(TArray<FFileList> &list, const char *dirpath)
+{
+	DIR *directory = opendir(dirpath);
+	if(directory == NULL)
+		return;
+
+	struct dirent *file;
+	while((file = readdir(directory)) != NULL)
+	{
+		if(file->d_name[0] == '.') //File is hidden or ./.. directory so ignore it.
+			continue;
+
+		FFileList *fl = &list[list.Reserve(1)];
+		fl->Filename << dirpath << file->d_name;
+
+		struct stat fileStat;
+		stat(fl->Filename, &fileStat);
+		fl->isDirectory = S_ISDIR(fileStat.st_mode);
+
+		if(fl->isDirectory)
+		{
+			FString newdir = fl->Filename;
+			newdir += "/";
+			ScanDirectory(list, newdir);
+			continue;
+		}
+	}
+
+	closedir(directory);
+}
+
+#else
+
+//==========================================================================
+//
+// ScanDirectory
+// 4.4BSD version
+//
+//==========================================================================
+
+void ScanDirectory(TArray<FFileList> &list, const char *dirpath)
+{
+	const char **argv[] = {dirpath, NULL };
+	FTS *fts;
+	FTSENT *ent;
+
+	fts = fts_open(argv, FTS_LOGICAL, NULL);
+	if (fts == NULL)
+	{
+		I_Error("Failed to start directory traversal: %s\n", strerror(errno));
+		return;
+	}
+	while ((ent = fts_read(fts)) != NULL)
+	{
+		if (ent->fts_info == FTS_D && ent->fts_name[0] == '.')
+		{
+			// Skip hidden directories. (Prevents SVN bookkeeping
+			// info from being included.)
+			fts_set(fts, ent, FTS_SKIP);
+		}
+		if (ent->fts_info == FTS_D && ent->fts_level == 0)
+		{
+			FFileList *fl = &list[list.Reserve(1)];
+			fl->Filename = ent->fts_path;
+			fl->isDirectory = true;
+		}
+		if (ent->fts_info == FTS_F)
+		{
+			// We're only interested in remembering files.
+			FFileList *fl = &list[list.Reserve(1)];
+			fl->Filename = ent->fts_path;
+			fl->isDirectory = false;
+		}
+	}
+	fts_close(fts);
+}
+#endif

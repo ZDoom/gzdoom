@@ -36,6 +36,9 @@
 #include "r_translate.h"
 #include "d_event.h"
 #include "gi.h"
+#include "r_bsp.h"
+#include "p_setup.h"
+#include "c_bind.h"
 
 #include "m_cheat.h"
 #include "i_system.h"
@@ -183,6 +186,14 @@ CVAR (Color, am_ovthingcolor_item,		0xe88800,	CVAR_ARCHIVE);
 CVAR (Color, am_ovthingcolor_citem,		0xe88800,	CVAR_ARCHIVE);
 
 
+static int bigstate = 0;
+static bool textured = 1;	// internal toggle for texture mode
+
+CUSTOM_CVAR(Bool, am_textured, false, CVAR_ARCHIVE)
+{
+	textured |= self;
+}
+
 CVAR(Int, am_showsubsector, -1, 0);
 
 
@@ -224,21 +235,6 @@ CUSTOM_CVAR (Int, am_showalllines, -1, 0)	// This is a cheat so don't save it.
 	}
 }
 
-
-// drawing stuff
-#define AM_PANDOWNKEY	KEY_DOWNARROW
-#define AM_PANUPKEY		KEY_UPARROW
-#define AM_PANRIGHTKEY	KEY_RIGHTARROW
-#define AM_PANLEFTKEY	KEY_LEFTARROW
-#define AM_ZOOMINKEY	KEY_EQUALS
-#define AM_ZOOMINKEY2	0x4e	// DIK_ADD
-#define AM_ZOOMOUTKEY	KEY_MINUS
-#define AM_ZOOMOUTKEY2	0x4a	// DIK_SUBTRACT
-#define AM_GOBIGKEY		0x0b	// DIK_0
-#define AM_FOLLOWKEY	'f'
-#define AM_GRIDKEY		'g'
-#define AM_MARKKEY		'm'
-#define AM_CLEARMARKKEY	'c'
 
 #define AM_NUMMARKPOINTS 10
 
@@ -417,7 +413,6 @@ static int	amclock;
 
 static mpoint_t	m_paninc;		// how far the window pans each tic (map coords)
 static fixed_t	mtof_zoommul;	// how far the window zooms in each tic (map coords)
-static fixed_t	ftom_zoommul;	// how far the window zooms in each tic (fb coords)
 
 static fixed_t	m_x, m_y;		// LL x,y where the window is on the map (map coords)
 static fixed_t	m_x2, m_y2;		// UR x,y where the window is on the map (map coords)
@@ -466,7 +461,69 @@ static void AM_calcMinMaxMtoF();
 void AM_rotatePoint (fixed_t *x, fixed_t *y);
 void AM_rotate (fixed_t *x, fixed_t *y, angle_t an);
 void AM_doFollowPlayer ();
-static void AM_ToggleFollowPlayer();
+
+
+//=============================================================================
+//
+// map functions
+//
+//=============================================================================
+bool AM_addMark ();
+bool AM_clearMarks ();
+void AM_saveScaleAndLoc ();
+void AM_restoreScaleAndLoc ();
+void AM_minOutWindowScale ();
+
+
+CCMD(am_togglefollow)
+{
+	followplayer = !followplayer;
+	f_oldloc.x = FIXED_MAX;
+	Printf ("%s\n", GStrings(followplayer ? "AMSTR_FOLLOWON" : "AMSTR_FOLLOWOFF"));
+}
+
+CCMD(am_togglegrid)
+{
+	grid = !grid;
+	Printf ("%s\n", GStrings(grid ? "AMSTR_GRIDON" : "AMSTR_GRIDOFF"));
+}
+
+CCMD(am_toggletexture)
+{
+	if (am_textured && hasglnodes)
+	{
+		textured = !textured;
+		Printf ("%s\n", GStrings(textured ? "AMSTR_TEXON" : "AMSTR_TEXOFF"));
+	}
+}
+
+CCMD(am_setmark)
+{
+	if (AM_addMark())
+	{
+		Printf ("%s %d\n", GStrings("AMSTR_MARKEDSPOT"), markpointnum);
+	}
+}
+
+CCMD(am_clearmarks)
+{
+	if (AM_clearMarks())
+	{
+		Printf ("%s\n", GStrings("AMSTR_MARKSCLEARED"));
+	}
+}
+
+CCMD(am_gobig)
+{
+	bigstate = !bigstate;
+	if (bigstate)
+	{
+		AM_saveScaleAndLoc();
+		AM_minOutWindowScale();
+	}
+	else
+		AM_restoreScaleAndLoc();
+}
 
 // Calculates the slope and slope according to the x-axis of a line
 // segment in map coordinates (with the upright y-axis n' all) so
@@ -775,11 +832,19 @@ void AM_initVariables ()
 
 	automapactive = true;
 
+	// Reset AM buttons
+	Button_AM_PanLeft.Reset();
+	Button_AM_PanRight.Reset();
+	Button_AM_PanUp.Reset();
+	Button_AM_PanDown.Reset();
+	Button_AM_ZoomIn.Reset();
+	Button_AM_ZoomOut.Reset();
+
+
 	f_oldloc.x = FIXED_MAX;
 	amclock = 0;
 
 	m_paninc.x = m_paninc.y = 0;
-	ftom_zoommul = MAPUNIT;
 	mtof_zoommul = MAPUNIT;
 
 	m_w = FTOM(SCREENWIDTH);
@@ -1158,127 +1223,28 @@ void AM_ToggleMap ()
 //
 //=============================================================================
 
-bool AM_Responder (event_t *ev)
+bool AM_Responder (event_t *ev, bool last)
 {
-	bool rc;
-	static int cheatstate = 0;
-	static int bigstate = 0;
-
-	rc = false;
-
-	if (automapactive && ev->type == EV_KeyDown)
+	if (automapactive && (ev->type == EV_KeyDown || ev->type == EV_KeyUp))
 	{
-		rc = true;
-		switch (ev->data1)
+		if (followplayer)
 		{
-		case AM_PANRIGHTKEY: // pan right
-			if (!followplayer)
-				m_paninc.x = FTOM(F_PANINC);
-			else
-				rc = false;
-			break;
-		case AM_PANLEFTKEY: // pan left
-			if (!followplayer)
-				m_paninc.x = -FTOM(F_PANINC);
-			else
-				rc = false;
-			break;
-		case AM_PANUPKEY: // pan up
-			if (!followplayer)
-				m_paninc.y = FTOM(F_PANINC);
-			else
-				rc = false;
-			break;
-		case AM_PANDOWNKEY: // pan down
-			if (!followplayer)
-				m_paninc.y = -FTOM(F_PANINC);
-			else
-				rc = false;
-			break;
-		case AM_ZOOMOUTKEY: // zoom out
-		case AM_ZOOMOUTKEY2:
-			mtof_zoommul = M_ZOOMOUT;
-			ftom_zoommul = M_ZOOMIN;
-			break;
-		case AM_ZOOMINKEY: // zoom in
-		case AM_ZOOMINKEY2:
-			mtof_zoommul = M_ZOOMIN;
-			ftom_zoommul = M_ZOOMOUT;
-			break;
-		case AM_GOBIGKEY:
-			bigstate = !bigstate;
-			if (bigstate)
-			{
-				AM_saveScaleAndLoc();
-				AM_minOutWindowScale();
-			}
-			else
-				AM_restoreScaleAndLoc();
-			break;
-		default:
-			switch (ev->data2)
-			{
-			case AM_FOLLOWKEY:
-				AM_ToggleFollowPlayer();
-				break;
-			case AM_GRIDKEY:
-				grid = !grid;
-				Printf ("%s\n", GStrings(grid ? "AMSTR_GRIDON" : "AMSTR_GRIDOFF"));
-				break;
-			case AM_MARKKEY:
-				if (AM_addMark())
-				{
-					Printf ("%s %d\n", GStrings("AMSTR_MARKEDSPOT"), markpointnum);
-				}
-				else
-				{
-					rc = false;
-				}
-				break;
-			case AM_CLEARMARKKEY:
-				if (AM_clearMarks())
-				{
-					Printf ("%s\n", GStrings("AMSTR_MARKSCLEARED"));
-				}
-				else
-				{
-					rc = false;
-				}
-				break;
-			default:
-				cheatstate = 0;
-				rc = false;
-			}
+			// check for am_pan* and ignore in follow mode
+			const char *defbind = AutomapBindings.GetBind(ev->data1);
+			if (!strnicmp(defbind, "+am_pan", 7)) return false;
 		}
-	}
-	else if (ev->type == EV_KeyUp)
-	{
-		rc = false;
-		switch (ev->data1)
-		{
-		case AM_PANRIGHTKEY:
-			if (!followplayer) m_paninc.x = 0;
-			break;
-		case AM_PANLEFTKEY:
-			if (!followplayer) m_paninc.x = 0;
-			break;
-		case AM_PANUPKEY:
-			if (!followplayer) m_paninc.y = 0;
-			break;
-		case AM_PANDOWNKEY:
-			if (!followplayer) m_paninc.y = 0;
-			break;
-		case AM_ZOOMOUTKEY:
-		case AM_ZOOMOUTKEY2:
-		case AM_ZOOMINKEY:
-		case AM_ZOOMINKEY2:
-			mtof_zoommul = MAPUNIT;
-			ftom_zoommul = MAPUNIT;
-			break;
-		}
-	}
 
-	return rc;
+		bool res = C_DoKey(ev, &AutomapBindings, NULL);
+		if (res && ev->type == EV_KeyUp && !last)
+		{
+			// If this is a release event we also need to check if it released a button in the main Bindings
+			// so that that button does not get stuck.
+			const char *defbind = Bindings.GetBind(ev->data1);
+			return (defbind[0] != '+'); // Let G_Responder handle button releases
+		}
+		return res;
+	}
+	return false;
 }
 
 
@@ -1290,6 +1256,11 @@ bool AM_Responder (event_t *ev)
 
 void AM_changeWindowScale ()
 {
+	int mtof_zoommul;
+
+	if (Button_AM_ZoomIn.bDown) mtof_zoommul = M_ZOOMIN;
+	else if (Button_AM_ZoomOut.bDown) mtof_zoommul = M_ZOOMOUT;
+
 	// Change the scaling multipliers
 	scale_mtof = MapMul(scale_mtof, mtof_zoommul);
 	scale_ftom = MapDiv(MAPUNIT, scale_mtof);
@@ -1336,19 +1307,6 @@ void AM_doFollowPlayer ()
 
 //=============================================================================
 //
-//
-//
-//=============================================================================
-
-static void AM_ToggleFollowPlayer()
-{
-	followplayer = !followplayer;
-	f_oldloc.x = FIXED_MAX;
-	Printf ("%s\n", GStrings(followplayer ? "AMSTR_FOLLOWON" : "AMSTR_FOLLOWOFF"));
-}
-
-//=============================================================================
-//
 // Updates on Game Tick
 //
 //=============================================================================
@@ -1361,10 +1319,20 @@ void AM_Ticker ()
 	amclock++;
 
 	if (followplayer)
+	{
 		AM_doFollowPlayer();
+	}
+	else
+	{
+		m_paninc.x = m_paninc.y = 0;
+		if (Button_AM_PanLeft.bDown) m_paninc.x -= FTOM(F_PANINC);
+		if (Button_AM_PanRight.bDown) m_paninc.x += FTOM(F_PANINC);
+		if (Button_AM_PanUp.bDown) m_paninc.y += FTOM(F_PANINC);
+		if (Button_AM_PanDown.bDown) m_paninc.y -= FTOM(F_PANINC);
+	}
 
 	// Change the zoom if necessary
-	if (ftom_zoommul != MAPUNIT)
+	if (Button_AM_ZoomIn.bDown || Button_AM_ZoomOut.bDown)
 		AM_changeWindowScale();
 
 	// Change x,y location
@@ -1619,6 +1587,92 @@ void AM_drawGrid (const AMColor &color)
 			AM_rotatePoint (&ml.b.x, &ml.b.y);
 		}
 		AM_drawMline (&ml, color);
+	}
+}
+
+//=============================================================================
+//
+// AM_drawSubsectors
+//
+//=============================================================================
+
+void AM_drawSubsectors()
+{
+	static TArray<FVector2> points;
+	float scale = float(scale_mtof);
+	angle_t rotation;
+	sector_t tempsec;
+	int floorlight, ceilinglight;
+	double originx, originy;
+	FDynamicColormap *colormap;
+
+
+	for (int i = 0; i < numsubsectors; ++i)
+	{
+		if ((!(subsectors[i].flags & SSECF_DRAWN) || (subsectors[i].render_sector->MoreFlags & SECF_HIDDEN)) && am_cheat == 0)
+		{
+			continue;
+		}
+		// Fill the points array from the subsector.
+		points.Resize(subsectors[i].numlines);
+		for (DWORD j = 0; j < subsectors[i].numlines; ++j)
+		{
+			mpoint_t pt = { subsectors[i].firstline[j].v1->x >> FRACTOMAPBITS,
+							subsectors[i].firstline[j].v1->y >> FRACTOMAPBITS };
+			if (am_rotate == 1 || (am_rotate == 2 && viewactive))
+			{
+				AM_rotatePoint(&pt.x, &pt.y);
+			}
+			points[j].X = f_x + ((pt.x - m_x) * scale / float(1 << 24));
+			points[j].Y = f_y + (f_h - (pt.y - m_y) * scale / float(1 << 24));
+		}
+		// For lighting and texture determination
+		sector_t *sec = R_FakeFlat (subsectors[i].render_sector, &tempsec, &floorlight,
+			&ceilinglight, false);
+		// Find texture origin.
+		mpoint_t originpt = { -sec->GetXOffset(sector_t::floor) >> FRACTOMAPBITS,
+							  sec->GetYOffset(sector_t::floor) >> FRACTOMAPBITS };
+		rotation = 0 - sec->GetAngle(sector_t::floor);
+		// Apply the floor's rotation to the texture origin.
+		if (rotation != 0)
+		{
+			AM_rotate(&originpt.x, &originpt.y, rotation);
+		}
+		// Apply the automap's rotation to the texture origin.
+		if (am_rotate == 1 || (am_rotate == 2 && viewactive))
+		{
+			rotation += ANG90 - players[consoleplayer].camera->angle;
+			AM_rotatePoint(&originpt.x, &originpt.y);
+		}
+		originx = f_x + ((originpt.x - m_x) * scale / float(1 << 24));
+		originy = f_y + (f_h - (originpt.y - m_y) * scale / float(1 << 24));
+		// Coloring for the polygon
+		colormap = sec->ColorMap;
+		// If this subsector has not actually been seen yet (because you are cheating
+		// to see it on the map), tint and desaturate it.
+		if (!(subsectors[i].flags & SSECF_DRAWN))
+		{
+			colormap = GetSpecialLights(
+				MAKERGB(
+					(colormap->Color.r + 255) / 2,
+					(colormap->Color.g + 200) / 2,
+					(colormap->Color.b + 160) / 2),
+				colormap->Fade,
+				255 - (255 - colormap->Desaturate) / 4);
+			floorlight = (floorlight + 200*15) / 16;
+		}
+
+		// Draw the polygon.
+		screen->FillSimplePoly(
+			TexMan(sec->GetTexture(sector_t::floor)),
+			&points[0], points.Size(),
+			originx, originy,
+			scale / (FIXED2FLOAT(sec->GetXScale(sector_t::floor)) * float(1 << MAPBITS)),
+			scale / (FIXED2FLOAT(sec->GetYScale(sector_t::floor)) * float(1 << MAPBITS)),
+			rotation,
+			colormap,
+			floorlight
+			);
 	}
 }
 
@@ -2232,11 +2286,19 @@ void AM_drawAuthorMarkers ()
 
 		while (marked != NULL)
 		{
-			if (mark->args[1] == 0 || (mark->args[1] == 1 && marked->Sector->MoreFlags & SECF_DRAWN))
+			if (mark->args[1] == 0 || (mark->args[1] == 1))
 			{
-				DrawMarker (tex, marked->x >> FRACTOMAPBITS, marked->y >> FRACTOMAPBITS, 0,
-					flip, mark->scaleX, mark->scaleY, mark->Translation,
-					mark->alpha, mark->fillcolor, mark->RenderStyle);
+				// Use more correct info if we have GL nodes available
+				INTBOOL drawn = hasglnodes?
+					marked->subsector->flags & SSECF_DRAWN :
+					marked->Sector->MoreFlags & SECF_DRAWN;
+
+				if (drawn)
+				{
+					DrawMarker (tex, marked->x >> FRACTOMAPBITS, marked->y >> FRACTOMAPBITS, 0,
+						flip, mark->scaleX, mark->scaleY, mark->Translation,
+						mark->alpha, mark->fillcolor, mark->RenderStyle);
+				}
 			}
 			marked = mark->args[0] != 0 ? it.Next() : NULL;
 		}
@@ -2290,6 +2352,9 @@ void AM_Drawer ()
 		f_p = screen->GetPitch ();
 	}
 	AM_activateNewScale();
+
+	if (am_textured && hasglnodes && textured)
+		AM_drawSubsectors();
 
 	if (grid)	
 		AM_drawGrid(GridColor);

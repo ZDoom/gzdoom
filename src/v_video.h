@@ -133,6 +133,7 @@ enum
 class FFont;
 struct FRemapTable;
 class player_t;
+typedef uint32 angle_t;
 
 //
 // VIDEO
@@ -174,6 +175,11 @@ public:
 
 	// Fill an area with a texture
 	virtual void FlatFill (int left, int top, int right, int bottom, FTexture *src, bool local_origin=false);
+
+	// Fill a simple polygon with a texture
+	virtual void FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
+		double originx, double originy, double scalex, double scaley, angle_t rotation,
+		struct FDynamicColormap *colormap, int lightlevel);
 
 	// Set an area to a specified color
 	virtual void Clear (int left, int top, int right, int bottom, int palcolor, uint32 color);

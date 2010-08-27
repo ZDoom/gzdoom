@@ -3803,8 +3803,10 @@ void P_SetupLevel (char *lumpname, int position)
 
 	unsigned int startTime=0, endTime=0;
 
+	bool BuildGLNodes;
 	if (ForceNodeBuild)
 	{
+		BuildGLNodes = am_textured || multiplayer || demoplayback || demorecording || genglnodes;
 
 		startTime = I_FPSTime ();
 		TArray<FNodeBuilder::FPolyStart> polyspots, anchors;
@@ -3819,7 +3821,6 @@ void P_SetupLevel (char *lumpname, int position)
 		// We need GL nodes if am_textured is on.
 		// In case a sync critical game mode is started, also build GL nodes to avoid problems
 		// if the different machines' am_textured setting differs.
-		bool BuildGLNodes = am_textured || multiplayer || demoplayback || demorecording || genglnodes;
 		FNodeBuilder builder (leveldata, polyspots, anchors, BuildGLNodes);
 		delete[] vertexes;
 		builder.Extract (nodes, numnodes,
@@ -3832,6 +3833,7 @@ void P_SetupLevel (char *lumpname, int position)
 	}
 	else
 	{
+		BuildGLNodes = false;
 		// Older ZDBSPs had problems with compressed sidedefs and assigned wrong sides to the segs if both sides were the same sidedef.
 		for(i=0;i<numsegs;i++)
 		{
@@ -3872,7 +3874,7 @@ void P_SetupLevel (char *lumpname, int position)
 		// If the original nodes being loaded are not GL nodes they will be kept around for
 		// use in P_PointInSubsector to avoid problems with maps that depend on the specific
 		// nodes they were built with (P:AR E1M3 is a good example for a map where this is the case.)
-		reloop |= P_CheckNodes(map, ForceNodeBuild, endTime - startTime);
+		reloop |= P_CheckNodes(map, BuildGLNodes, endTime - startTime);
 		hasglnodes = true;
 	}
 	else

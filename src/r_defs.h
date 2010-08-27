@@ -970,8 +970,8 @@ struct subsector_t
 	FPolyNode	*polys;
 	FMiniBSP	*BSP;
 	seg_t		*firstline;
-	DWORD		numlines;
 	sector_t	*render_sector;
+	DWORD		numlines;
 	int			flags;
 };
 

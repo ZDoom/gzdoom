@@ -522,7 +522,7 @@ static menuitem_t VideoItems[] = {
 	{ discrete, "Display nametags",		{&displaynametags},		{4.0}, {0.0},	{0.0}, {DisplayTagsTypes} },
 };
 
-#define CROSSHAIR_INDEX 7
+#define CROSSHAIR_INDEX 6
 
 menu_t VideoMenu =
 {

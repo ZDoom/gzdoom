@@ -176,7 +176,7 @@ static const FBinding DefAutomapBindings[] =
 {
 	{ "f", "am_togglefollow" },
 	{ "g", "am_togglegrid" },
-	{ "t", "am_toggletexture" },
+	{ "p", "am_toggletexture" },
 	{ "m", "am_setmark" },
 	{ "c", "am_clearmarks" },
 	{ "0", "am_gobig" },

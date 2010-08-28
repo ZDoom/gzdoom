@@ -5,6 +5,7 @@ ACTOR Inventory native
 	Inventory.InterHubAmount 1
 	Inventory.UseSound "misc/invuse"
 	Inventory.PickupSound "misc/i_pkup"
+	Inventory.PickupMessage "$TXT_DEFAULTPICKUPMSG"
 	
 	action native A_JumpIfNoAmmo(state label);
 	action native A_CustomPunch(int damage, bool norandom = false, int flags = CPF_USEAMMO, class<Actor> pufftype = "BulletPuff", float range = 0, float lifesteal = 0);

@@ -286,6 +286,7 @@ STSTR_CHOPPERS = "... doesn't suck - GM";
 STSTR_CLEV = "Changing Level...\n";
 TXT_BUDDHAON = "Buddha mode ON";
 TXT_BUDDHAOFF = "Buddha mode OFF";
+TXT_DEFAULTPICKUPMSG = "You got a pickup";
 
 E1TEXT =
 	"Once you beat the big badasses and\n"

@@ -962,6 +962,7 @@ enum
 {
 	SSECF_DEGENERATE = 1,
 	SSECF_DRAWN = 2,
+	SSECF_POLYORG = 4,
 };
 
 struct subsector_t

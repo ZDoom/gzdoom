@@ -1846,6 +1846,23 @@ void PO_Init (void)
 		double fdy = (double)no->dy;
 		no->len = (float)sqrt(fdx * fdx + fdy * fdy);
 	}
+
+	// mark all subsectors which have a seg belonging to a polyobj
+	// These ones should not be rendered on the textured automap.
+	for (int i = 0; i < numsubsectors; i++)
+	{
+		subsector_t *ss = &subsectors[i];
+		for(DWORD j=0;j<ss->numlines; j++)
+		{
+			if (ss->firstline[j].sidedef != NULL &&
+				ss->firstline[j].sidedef->Flags & WALLF_POLYOBJ)
+			{
+				ss->flags |= SSECF_POLYORG;
+				break;
+			}
+		}
+	}
+
 }
 
 //==========================================================================

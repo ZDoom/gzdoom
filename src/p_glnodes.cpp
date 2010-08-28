@@ -1414,6 +1414,19 @@ void P_SetRenderSector()
 #endif
 
 	// Check for incorrect partner seg info so that the following code does not crash.
+	if (glsegextras == NULL)
+	{
+		// This can be normal nodes, mistakenly identified as GL nodes so we must fill
+		// in the missing pieces differently.
+
+		for (i = 0; i < numsubsectors; i++)
+		{
+			ss = &subsectors[i];
+			ss->render_sector = ss->sector;
+		}
+		return;
+	}
+
 	for(i=0;i<numsegs;i++)
 	{
 		int partner = (int)glsegextras[i].PartnerSeg;

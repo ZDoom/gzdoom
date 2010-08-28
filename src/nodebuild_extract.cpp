@@ -115,7 +115,15 @@ void FNodeBuilder::Extract (node_t *&outNodes, int &nodeCount,
 		for (i = 0; i < segCount; ++i)
 		{
 			outSegs[i] = *(seg_t *)&segs[i];
-			outSegExtras[i].PartnerSeg = segs[i].Partner;
+
+			if (segs[i].Partner != DWORD_MAX)
+			{
+				outSegExtras[i].PartnerSeg = Segs[segs[i].Partner].storedseg;
+			}
+			else
+			{
+				outSegExtras[i].PartnerSeg = DWORD_MAX;
+			}
 		}
 	}
 	else

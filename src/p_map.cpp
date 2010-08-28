@@ -3502,12 +3502,12 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 			// Note: The puff may not yet be spawned here so we must check the class defaults, not the actor.
 			if (damage || (puffDefaults->flags6 & MF6_FORCEPAIN))
 			{
-				int flags = DMG_INFLICTOR_IS_PUFF;
+				int dmgflags = DMG_INFLICTOR_IS_PUFF;
 				// Allow MF5_PIERCEARMOR on a weapon as well.
 				if (t1->player != NULL && t1->player->ReadyWeapon != NULL &&
 					t1->player->ReadyWeapon->flags5 & MF5_PIERCEARMOR)
 				{
-					flags |= DMG_NO_ARMOR;
+					dmgflags |= DMG_NO_ARMOR;
 				}
 			
 				if (puff == NULL)
@@ -3517,7 +3517,7 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 					puff = P_SpawnPuff (t1, pufftype, hitx, hity, hitz, angle - ANG180, 2, flags|PF_HITTHING|PF_TEMPORARY);
 					killPuff = true;
 				}
-				P_DamageMobj (trace.Actor, puff ? puff : t1, t1, damage, damageType, flags);
+				P_DamageMobj (trace.Actor, puff ? puff : t1, t1, damage, damageType, dmgflags);
 			}
 			if (victim != NULL)
 			{

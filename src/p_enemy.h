@@ -32,6 +32,7 @@ enum LO_Flags
 	LOF_DONTCHASEGOAL = 4,
 	LOF_NOSEESOUND = 8,
 	LOF_FULLVOLSEESOUND = 16,
+    LOF_NOJUMP = 32,
 };
 
 struct FLookExParams

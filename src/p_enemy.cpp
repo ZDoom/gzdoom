@@ -1975,14 +1975,17 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_LookEx)
 
 	if (self->target && !(self->flags & MF_INCHASE))
 	{
-		if (seestate)
-		{
-			self->SetState (seestate);
-		}
-		else
-		{
-			self->SetState (self->SeeState);
-		}
+        if (!(flags & LOF_NOJUMP))
+        {
+            if (seestate)
+            {
+                self->SetState (seestate);
+            }
+            else
+            {
+                self->SetState (self->SeeState);
+            }
+        }
 	}
 }
 

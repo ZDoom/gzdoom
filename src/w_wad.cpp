@@ -70,6 +70,7 @@ struct FWadCollection::LumpRecord
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+extern bool nospriterename;
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -759,7 +760,7 @@ void FWadCollection::RenameSprites ()
 		}
 	}
 
-	renameAll = !!Args->CheckParm ("-oldsprites");
+	renameAll = !!Args->CheckParm ("-oldsprites") || nospriterename;
 	
 	for (DWORD i = 0; i < LumpInfo.Size(); i++)
 	{

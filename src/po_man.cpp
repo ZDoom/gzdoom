@@ -1245,6 +1245,7 @@ bool FPolyObj::CheckMobjBlocking (side_t *sd)
 	bool blocked;
 
 	ld = sd->linedef;
+
 	top = (ld->bbox[BOXTOP]-bmaporgy) >> MAPBLOCKSHIFT;
 	bottom = (ld->bbox[BOXBOTTOM]-bmaporgy) >> MAPBLOCKSHIFT;
 	left = (ld->bbox[BOXLEFT]-bmaporgx) >> MAPBLOCKSHIFT;
@@ -1293,6 +1294,17 @@ bool FPolyObj::CheckMobjBlocking (side_t *sd)
 						if (box.BoxOnLineSide(ld) != -1)
 						{
 							continue;
+						}
+						// We have a two-sided linedef so we should only check one side
+						// so that the thrust from both sides doesn't cancel each other out.
+						// Best use the one facing the player and ignore the back side.
+						if (ld->sidedef[1] != NULL)
+						{
+							int side = P_PointOnLineSide(mobj->x, mobj->y, ld);
+							if (ld->sidedef[side] != sd)
+							{
+								continue;
+							}
 						}
 						ThrustMobj (mobj, sd);
 						blocked = true;

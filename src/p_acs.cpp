@@ -2759,6 +2759,7 @@ int DLevelScript::GetActorProperty (int tid, int property)
 							// so pretends it's normal.
 							return STYLE_Normal;
 	case APROP_Gravity:		return actor->gravity;
+	case APROP_Invulnerable:return !!(actor->flags2 & MF2_INVULNERABLE);
 	case APROP_Ambush:		return !!(actor->flags & MF_AMBUSH);
 	case APROP_Dropped:		return !!(actor->flags & MF_DROPPED);
 	case APROP_ChaseGoal:	return !!(actor->flags5 & MF5_CHASEGOAL);
@@ -2820,6 +2821,7 @@ int DLevelScript::CheckActorProperty (int tid, int property, int value)
 
 		// Boolean values need to compare to a binary version of value
 		case APROP_Ambush:
+		case APROP_Invulnerable:
 		case APROP_Dropped:
 		case APROP_ChaseGoal:
 		case APROP_Frightened:

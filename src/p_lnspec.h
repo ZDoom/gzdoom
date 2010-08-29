@@ -114,8 +114,9 @@ typedef enum {
 	sDamage_SuperHellslime = 116,
 	Scroll_StrifeCurrent = 118,
 
-	// Caverns of Darkness healing sector
-	Sector_Heal = 196,
+	
+	Sector_Hidden = 195,
+	Sector_Heal = 196, // Caverns of Darkness healing sector
 
 	Light_OutdoorLightning = 197,
 	Light_IndoorLightning1 = 198,

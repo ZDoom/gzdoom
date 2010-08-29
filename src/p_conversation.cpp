@@ -113,8 +113,10 @@ static FStrifeTypeMap StrifeTypes;
 static FDialogueIDMap DialogueRoots;
 static FDialogueMap ClassRoots;
 
+#if 0
 static menu_t ConversationMenu;
 static TArray<menuitem_t> ConversationItems;
+#endif
 static int ConversationPauseTic;
 static bool ShowGold;
 
@@ -713,6 +715,8 @@ CUSTOM_CVAR(Float, dlg_musicvolume, 1.0f, CVAR_ARCHIVE)
 
 void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveangle)
 {
+#pragma message("Disabled for new menus ")
+#if 0
 	AActor *oldtarget;
 	FStrifeDialogueReply *reply;
 	menuitem_t item;
@@ -895,6 +899,7 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 
 		M_SwitchMenu (&ConversationMenu);
 	}
+#endif
 }
 
 //============================================================================
@@ -929,6 +934,8 @@ void P_ResumeConversation ()
 
 static bool DrawConversationMenu ()
 {
+#pragma message("Disabled for new menus ")
+#if 0
 	const char *speakerName;
 	int i, x, y, linesize;
 	int width, fontheight;
@@ -1060,6 +1067,7 @@ static bool DrawConversationMenu ()
 				TAG_DONE);
 		}
 	}
+#endif
 	return true;
 }
 
@@ -1074,6 +1082,8 @@ static bool DrawConversationMenu ()
 
 static void PickConversationReply ()
 {
+#pragma message("Disabled for new menus ")
+#if 0
 	FStrifeDialogueReply *reply = (FStrifeDialogueReply *)ConversationItems[ConversationMenu.lastOn].c.extra;
 	FStrifeDialogueReply *replyscan;
 	int replynum = 0;
@@ -1106,6 +1116,7 @@ static void PickConversationReply ()
 		Net_WriteByte(replynum);
 	}
 	CleanupConversationMenu ();
+#endif
 }
 
 //============================================================================
@@ -1326,7 +1337,10 @@ void CleanupConversationMenu ()
 		V_FreeBrokenLines (DialogueLines);
 		DialogueLines = NULL;
 	}
+#pragma message("Disabled for new menus ")
+#if 0
 	ConversationItems.Clear ();
+#endif
 	I_SetMusicVolume (1.f);
 }
 
@@ -1407,9 +1421,12 @@ static void TerminalResponse (const char *str)
 			// merchants can tell you something like this but continue to show
 			// their dialogue screen. I think most other conversations use this
 			// only as a response for terminating the dialogue.
+#pragma message("Disabled for new menus ")
+#if 0
 			StatusBar->AttachMessage(new DHUDMessageFadeOut(SmallFont, str,
 				float(CleanWidth/2) + 0.4f, float(ConversationMenu.y - 110 + CleanHeight/2), CleanWidth, -CleanHeight,
 				CR_UNTRANSLATED, 3, 1), MAKE_ID('T','A','L','K'));
+#endif
 		}
 		else
 		{

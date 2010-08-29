@@ -236,7 +236,12 @@ protected:
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
+#pragma message("Disabled for new menus ")
+#if 0
 extern void UpdateJoystickMenu();
+#else
+void UpdateJoystickMenu() {}
+#endif
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -246,7 +251,6 @@ static void MapAxis(FIntCVar &var, int num);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern menu_t JoystickMenu;
 extern LPDIRECTINPUT8 g_pdi;
 extern HWND Window;
 

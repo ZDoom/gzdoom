@@ -24,8 +24,29 @@
 #define __M_MENU_H__
 
 #include "c_cvars.h"
+#include "dobject.h"
 
 struct event_t;
+
+class DMenu : public DObject
+{
+	DECLARE_CLASS (DMenu, DObject)
+	HAS_OBJECT_POINTERS
+
+protected:
+	TObjPtr<DMenu> mParentMenu;
+
+public:
+	static DMenu *CurrentMenu;
+
+	DMenu(DMenu *parent = NULL);
+	virtual ~DMenu();
+	virtual bool Responder (event_t *ev);
+	virtual void Ticker ();
+	virtual void Drawer ();
+};
+#if 0
+
 struct menu_t;
 //
 // MENUS
@@ -276,5 +297,21 @@ extern oldmenuitem_t EpisodeMenu[MAX_EPISODES];
 extern bool EpisodeNoSkill[MAX_EPISODES];
 extern char EpisodeMaps[MAX_EPISODES][9];
 extern oldmenu_t EpiDef;
+
+#else
+
+inline bool M_Responder (event_t *ev) { return false;}
+inline void M_Ticker (void) {}
+inline void M_Drawer (void) {}
+inline void M_Init (void) {}
+inline void M_Deinit () {}
+inline void M_StartControlPanel (bool makeSound, bool wantTop=false) {}
+struct IJoystickConfig;
+inline void UpdateJoystickMenu(IJoystickConfig *selected) {}
+inline void M_NotifyNewSave (const char *file, const char *title, bool okForQuicksave) {}
+inline void M_InitVideoModesMenu (void) {}
+inline void M_RefreshModesList () {}
+
+#endif
 
 #endif

@@ -1982,7 +1982,10 @@ void R_DrawViewBorder (void)
 	R_DrawBorder (viewwindowx + viewwidth, viewwindowy, SCREENWIDTH, viewheight + viewwindowy);
 	R_DrawBorder (0, viewwindowy + viewheight, SCREENWIDTH, ST_Y);
 
+#pragma message("Disabled for new menus ")
+#if 0
 	M_DrawFrame (viewwindowx, viewwindowy, viewwidth, viewheight);
+#endif
 	V_MarkRect (0, 0, SCREENWIDTH, ST_Y);
 }
 

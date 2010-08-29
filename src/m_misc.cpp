@@ -420,7 +420,10 @@ void M_LoadDefaults ()
 {
 	GameConfig = new FGameConfigFile;
 	GameConfig->DoGlobalSetup ();
+#pragma message("Disabled for new menus ")
+#if 0
 	atterm (FreeKeySections);
+#endif
 	atterm (M_SaveDefaultsFinal);
 }
 

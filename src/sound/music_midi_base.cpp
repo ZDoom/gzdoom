@@ -73,6 +73,8 @@ void I_ShutdownMusicWin32 ()
 
 void I_BuildMIDIMenuList (struct value_t **outValues, float *numValues)
 {
+#pragma message("Disabled for new menus ")
+#if 0
 	if (*outValues == NULL)
 	{
 		int count = 4 + nummididevices;
@@ -116,6 +118,7 @@ void I_BuildMIDIMenuList (struct value_t **outValues, float *numValues)
 		}
 		*numValues = float(p);
 	}
+#endif
 }
 
 static void PrintMidiDevice (int id, const char *name, WORD tech, DWORD support)

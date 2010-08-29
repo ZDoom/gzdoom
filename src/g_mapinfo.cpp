@@ -1751,6 +1751,8 @@ void FMapInfoParser::ParseEpisodeInfo ()
 	}
 
 
+#pragma message("Disabled for new menus ")
+#if 0
 	for (i = 0; i < EpiDef.numitems; ++i)
 	{
 		if (strncmp (EpisodeMaps[i], map, 8) == 0)
@@ -1807,6 +1809,7 @@ void FMapInfoParser::ParseEpisodeInfo ()
 		strncpy (EpisodeMaps[i], map, 8);
 		EpisodeMaps[i][8] = 0;
 	}
+#endif
 }
 
 
@@ -1818,12 +1821,15 @@ void FMapInfoParser::ParseEpisodeInfo ()
 
 void ClearEpisodes()
 {
+#pragma message("Disabled for new menus ")
+#if 0
 	for (int i = 0; i < EpiDef.numitems; ++i)
 	{
 		delete[] const_cast<char *>(EpisodeMenu[i].name);
 		EpisodeMenu[i].name = NULL;
 	}
 	EpiDef.numitems = 0;
+#endif
 }
 
 //==========================================================================
@@ -2004,10 +2010,13 @@ void G_ParseMapInfo (const char *basemapinfo)
 	}
 	EndSequences.ShrinkToFit ();
 
+#pragma message("Disabled for new menus ")
+#if 0
 	if (EpiDef.numitems == 0)
 	{
 		I_FatalError ("You cannot use clearepisodes in a MAPINFO if you do not define any new episodes after it.");
 	}
+#endif
 	if (AllSkills.Size() == 0)
 	{
 		I_FatalError ("You cannot use clearskills in a MAPINFO if you do not define any new skills after it.");

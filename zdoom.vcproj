@@ -6473,6 +6473,10 @@
 				RelativePath=".\src\menu\menu.h"
 				>
 			</File>
+			<File
+				RelativePath=".\src\menu\menudef.cpp"
+				>
+			</File>
 		</Filter>
 	</Files>
 	<Globals>

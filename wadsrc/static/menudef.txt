@@ -1,0 +1,76 @@
+
+LISTMENU "Doom1MainMenu"
+{
+	Selector "M_SKULL1", -32, -5
+	
+	StaticPatch 94, 2, "M_DOOM"
+	Linespacing 16
+	Position 97, 64
+	PatchItem "M_NGAME", "n", "StartGame"
+	PatchItem "M_LOADG", "l", "LoadGameMenu"
+	PatchItem "M_SAVEG", "s", "SaveGameMenu"
+	PatchItem "M_OPTION","o", "OptionsMenu"
+	PatchItem "M_RDTHIS","r", "ReadThisMenu"
+	PatchItem "M_QUITG", "q", "QuitMenu"
+}
+
+LISTMENU "Doom2MainMenu"
+{
+	Selector "M_SKULL1", -32, -5
+	
+	StaticPatch 94, 2, "M_DOOM"
+	Linespacing 16
+	Position 97, 64
+	PatchItem "M_NGAME", "n", "StartGame"
+	PatchItem "M_LOADG", "l", "LoadGameMenu"
+	PatchItem "M_SAVEG", "s", "SaveGameMenu"
+	PatchItem "M_OPTION","o", "OptionsMenu"
+	PatchItem "M_QUITG", "q", "QuitMenu"
+}
+
+LISTMENU "HereticMainMenu"
+{
+	Selector "M_SLCTR1", -28, -1
+	
+	StaticPatch 88, 0, "M_HTIC"
+	StaticAnimation 40, 10, "M_SKL%.2d", 3, 17, 0
+	StaticAnimation 232, 10, "M_SKL%.2d", 3, 0, 17
+	Linespacing 20
+	Position 110, 56
+	TextItem "$MNU_NEWGAME", "n", "StartGame"
+	TextItem "$MNU_OPTIONS", "o", "OptionsMenu"
+	TextItem "$MNU_GAMEFILES", "g", "GameFilesMenu"
+	TextItem "$MNU_INFO", "i", "ReadThisMenu"
+	TextItem "$MNU_QUITGAME", "q", "QuitMenu"
+}
+
+LISTMENU "HexenMainMenu"
+{
+	Selector "M_SLCTR1", -28, -1
+	
+	StaticPatch 88, 0, "M_HTIC"
+	StaticAnimation 37, 80, "FBUL%c0", 5, 67, 71, 65, 66
+	StaticAnimation 278, 80, "FBUL%c0", 5, 65, 71
+	Linespacing 20
+	Position 110, 56
+	TextItem "$MNU_NEWGAME", "n", "StartGame"
+	TextItem "$MNU_OPTIONS", "o", "OptionsMenu"
+	TextItem "$MNU_GAMEFILES", "g", "GameFilesMenu"
+	TextItem "$MNU_INFO", "i", "ReadThisMenu"
+	TextItem "$MNU_QUITGAME", "q", "QuitMenu"
+}
+
+LISTMENU "StrifeMainMenu"
+{
+	Selector "M_CURS1", -28, -5
+	
+	StaticPatch 84, 2, "M_STRIFE"
+	Linespacing 19
+	Position 97, 64
+	PatchItem "M_NGAME", "n", "StartGame"
+	PatchItem "M_LOADG", "l", "LoadGameMenu"
+	PatchItem "M_SAVEG", "s", "SaveGameMenu"
+	PatchItem "M_OPTION","o", "OptionsMenu"
+	PatchItem "M_QUITG", "q", "QuitMenu"
+}
+

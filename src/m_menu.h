@@ -285,7 +285,7 @@ struct event_t;
 bool M_Responder (event_t *ev);
 void M_Ticker (void);
 void M_Drawer (void);
-inline void M_Init (void) {}
+void M_Init (void);
 inline void M_Deinit () {}
 inline void M_StartControlPanel (bool makeSound, bool wantTop=false) {}
 struct IJoystickConfig;

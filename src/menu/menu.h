@@ -29,6 +29,49 @@ enum EMenuKey
 };
 
 
+//=============================================================================
+//
+// menu descriptor. This is created from the menu definition lump
+// Items must be inserted in the order they are cycled through with the cursor
+//
+//=============================================================================
+
+enum EMenuDescriptorType
+{
+	MDESC_ListMenu,
+	MDESC_OptionsMenu,
+};
+
+struct FMenuDescriptor
+{
+	FName mMenuName;
+	int mType;
+};
+
+class FListMenuItem;
+
+struct FListMenuDescriptor : public FMenuDescriptor
+{
+	TDeletingArray<FListMenuItem *> mItems;
+	int mSelectedItem;
+	int mSelectOfsX;
+	int mSelectOfsY;
+	FTextureID mSelector;
+	int mDisplayTop;
+};
+
+typedef TMap<FName, FMenuDescriptor *> MenuDescriptorList;
+
+extern MenuDescriptorList MenuDescriptors;
+
+void M_ParseMenuDefs();
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
 struct FMenuRect
 {
 	int x, y;
@@ -150,24 +193,6 @@ public:
 	void Drawer();
 };
 
-
-//=============================================================================
-//
-// menu descriptor. This is created from the menu definition lump
-// Items must be inserted in the order they are cycled through with the cursor
-//
-//=============================================================================
-
-struct FListMenuDescriptor
-{
-	FName mMenuName;
-	TDeletingArray<FListMenuItem *> mItems;
-	int mSelectedItem;
-	int mSelectOfsX;
-	int mSelectOfsY;
-	FTextureID mSelector;
-	int mDisplayTop;
-};
 
 //=============================================================================
 //

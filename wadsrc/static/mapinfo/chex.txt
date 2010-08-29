@@ -43,6 +43,7 @@ gameinfo
 	player5start = 4001
 	drawreadthis = true
 	pickupcolor = "d6 ba 45"
+	mainmenu = "Doom1MainMenu"
 }
 
 skill baby

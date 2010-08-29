@@ -43,6 +43,7 @@
 #include "d_event.h"
 #include "v_video.h"
 #include "hu_stuff.h"
+#include "gi.h"
 #include "menu/menu.h"
 #include "textures/textures.h"
 
@@ -134,44 +135,35 @@ void M_StartControlPanel (bool makeSound)
 	}
 }
 
-void M_SetMenu()
+void M_SetMenu(FName menu)
 {
-	DMenu::CurrentMenu = new DListMenu(NULL, MainMenu);
-	GC::WriteBarrier(DMenu::CurrentMenu);
+	FMenuDescriptor **desc = MenuDescriptors.CheckKey(menu);
+	if (desc != NULL)
+	{
+		if ((*desc)->mType == MDESC_ListMenu)
+		{
+			DMenu::CurrentMenu = new DListMenu(NULL, static_cast<FListMenuDescriptor*>(*desc));
+			GC::WriteBarrier(DMenu::CurrentMenu);
+		}
+		return;
+	}
+	else
+	{
+		const PClass *menuclass = PClass::FindClass(menu);
+		if (menuclass != NULL)
+		{
+			if (menuclass->IsDescendantOf(RUNTIME_CLASS(DMenu)))
+			{
+				// todo
+				return;
+			}
+		}
+	}
+	Printf("Attempting to open menu of unknown type '%s'\n", menu.GetChars());
 }
 
 bool M_Responder (event_t *ev) 
 { 
-if (MainMenu == NULL)
-{
-	FListMenuItem *it;
-
-	// we need to create ourselves a dummy main menu here until the definition system is ready.
-	MainMenu = new FListMenuDescriptor;
-	MainMenu->mMenuName = "Mainmenu";
-	MainMenu->mSelectedItem = 0;
-	MainMenu->mDisplayTop = 0;
-
-	it = new FListMenuItemStaticPatch(94, 2, TexMan.CheckForTexture("M_DOOM", FTexture::TEX_MiscPatch));
-	MainMenu->mItems.Push(it);
-	it = new FListMenuItemPatch(97, 64, 'n', TexMan.CheckForTexture("M_NGAME", FTexture::TEX_MiscPatch), NAME_Startgame);
-	MainMenu->mItems.Push(it);
-	it = new FListMenuItemPatch(97, 80, 'l', TexMan.CheckForTexture("M_LOADG", FTexture::TEX_MiscPatch), "LoadGameMenu");
-	MainMenu->mItems.Push(it);
-	it = new FListMenuItemPatch(97, 96, 's', TexMan.CheckForTexture("M_SAVEG", FTexture::TEX_MiscPatch), "SaveGameMenu");
-	MainMenu->mItems.Push(it);
-	it = new FListMenuItemPatch(97,112, 'o', TexMan.CheckForTexture("M_OPTION", FTexture::TEX_MiscPatch), "OptionsMenu");
-	MainMenu->mItems.Push(it);
-	it = new FListMenuItemPatch(97,128, 'r', TexMan.CheckForTexture("M_RDTHIS", FTexture::TEX_MiscPatch), "ReadThisMenu");
-	MainMenu->mItems.Push(it);
-	it = new FListMenuItemPatch(97,144, 'q', TexMan.CheckForTexture("M_QUITG", FTexture::TEX_MiscPatch), "QuitMenu");
-	MainMenu->mItems.Push(it);
-	MainMenu->mSelectedItem = 1;
-	MainMenu->mSelectOfsX = -32;
-	MainMenu->mSelectOfsY = -5;
-	MainMenu->mSelector = TexMan.CheckForTexture("M_SKULL1", FTexture::TEX_MiscPatch);
-
-}
 	if (chatmodeon)
 	{
 		return false;
@@ -211,7 +203,7 @@ if (MainMenu == NULL)
 			if (ev->data1 == KEY_ESCAPE)
 			{
 				M_StartControlPanel(true);
-				M_SetMenu();
+				M_SetMenu(gameinfo.mainmenu);
 				return true;
 			}
 			// If devparm is set, pressing F1 always takes a screenshot no matter
@@ -253,3 +245,9 @@ void M_ClearMenus ()
 	BorderNeedRefresh = screen->GetPageCount ();
 	menuactive = MENU_Off;
 }
+
+void M_Init (void) 
+{
+	M_ParseMenuDefs();
+}
+

@@ -35,6 +35,7 @@
 #include "v_video.h"
 #include "v_font.h"
 #include "cmdlib.h"
+#include "gstrings.h"
 #include "menu/menu.h"
 
 IMPLEMENT_CLASS(DListMenu)
@@ -136,7 +137,8 @@ void DListMenu::Drawer ()
 	{
 		mDesc->mItems[i]->Drawer();
 	}
-	mDesc->mItems[mDesc->mSelectedItem]->DrawSelector(mDesc->mSelectOfsX, mDesc->mSelectOfsY, mDesc->mSelector);
+	if (mDesc->mSelectedItem >= 0 && mDesc->mSelectedItem < (int)mDesc->mItems.Size())
+		mDesc->mItems[mDesc->mSelectedItem]->DrawSelector(mDesc->mSelectOfsX, mDesc->mSelectOfsY, mDesc->mSelector);
 }
 
 //=============================================================================
@@ -291,9 +293,11 @@ FListMenuItemText::~FListMenuItemText()
 
 void FListMenuItemText::Drawer()
 {
-	if (mText != NULL)
+	const char *text = mText;
+	if (text != NULL)
 	{
-		screen->DrawText(mFont, mColor, mXpos, mYpos, mText, DTA_Clean, true, TAG_DONE);
+		if (*text == '$') text = GStrings(text+1);
+		screen->DrawText(mFont, mColor, mXpos, mYpos, text, DTA_Clean, true, TAG_DONE);
 	}
 }
 

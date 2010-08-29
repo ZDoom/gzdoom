@@ -44,6 +44,7 @@ gameinfo
 	drawreadthis = true
 	pickupcolor = "d6 ba 45"
 	mainmenu = "Doom1MainMenu"
+	episodemenu = "ChexEpisodeMenu"
 }
 
 skill baby

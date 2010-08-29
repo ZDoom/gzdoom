@@ -36,9 +36,12 @@
 #include "v_font.h"
 #include "cmdlib.h"
 #include "gstrings.h"
+#include "g_level.h"
+#include "gi.h"
 #include "menu/menu.h"
 
 IMPLEMENT_CLASS(DListMenu)
+void M_SetMenu(FName menu);
 
 
 
@@ -241,9 +244,10 @@ void FListMenuItemStaticAnimation::Ticker()
 //
 //=============================================================================
 
-FListMenuItemSelectable::FListMenuItemSelectable(int x, int y, FName childmenu)
+FListMenuItemSelectable::FListMenuItemSelectable(int x, int y, FName childmenu, int param)
 : FListMenuItem(x, y), mChild(childmenu)
 {
+	mParam = param;
 }
 
 void FListMenuItemSelectable::SetHotspot(int x, int y, int w, int h)
@@ -263,6 +267,18 @@ bool FListMenuItemSelectable::Selectable()
 
 bool FListMenuItemSelectable::Activate()
 {
+	switch(mChild)
+	{
+	case NAME_Startgame:
+		if (AllEpisodes.Size() > 1)
+		{
+			M_SetMenu(gameinfo.episodemenu);
+			return true;
+		}
+		else
+		{
+		}
+	}
 	// todo
 	return true;
 }
@@ -274,8 +290,8 @@ bool FListMenuItemSelectable::Activate()
 //
 //=============================================================================
 
-FListMenuItemText::FListMenuItemText(int x, int y, int hotkey, const char *text, FFont *font, EColorRange color, FName child)
-: FListMenuItemSelectable(x, y, child)
+FListMenuItemText::FListMenuItemText(int x, int y, int hotkey, const char *text, FFont *font, EColorRange color, FName child, int param)
+: FListMenuItemSelectable(x, y, child, param)
 {
 	mText = ncopystring(text);
 	mFont = font;
@@ -307,8 +323,8 @@ void FListMenuItemText::Drawer()
 //
 //=============================================================================
 
-FListMenuItemPatch::FListMenuItemPatch(int x, int y, int hotkey, FTextureID patch, FName child)
-: FListMenuItemSelectable(x, y, child)
+FListMenuItemPatch::FListMenuItemPatch(int x, int y, int hotkey, FTextureID patch, FName child, int param)
+: FListMenuItemSelectable(x, y, child, param)
 {
 	mTexture = patch;
 }

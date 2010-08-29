@@ -284,6 +284,7 @@ void FMapInfoParser::ParseGameInfo()
 		GAMEINFOKEY_CSTRING(Endoom, "endoom", 8)
 		GAMEINFOKEY_INT(player5start, "player5start")
 		GAMEINFOKEY_STRING(mainmenu, "mainmenu")
+		GAMEINFOKEY_STRING(episodemenu, "episodemenu")
 		else
 		{
 			// ignore unkown keys.

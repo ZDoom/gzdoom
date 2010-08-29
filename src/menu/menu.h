@@ -58,6 +58,9 @@ struct FListMenuDescriptor : public FMenuDescriptor
 	int mSelectOfsY;
 	FTextureID mSelector;
 	int mDisplayTop;
+	int mXpos, mYpos;
+	int mLinespacing;	// needs to be stored for dynamically created menus
+	FString mNetgameMessage;
 };
 
 typedef TMap<FName, FMenuDescriptor *> MenuDescriptorList;
@@ -99,10 +102,10 @@ class DMenu : public DObject
 	HAS_OBJECT_POINTERS
 
 protected:
-	TObjPtr<DMenu> mParentMenu;
 
 public:
 	static DMenu *CurrentMenu;
+	TObjPtr<DMenu> mParentMenu;
 
 	DMenu(DMenu *parent = NULL);
 	virtual ~DMenu();
@@ -164,9 +167,10 @@ protected:
 	FName mChild;
 	FMenuRect mHotspot;
 	int mHotkey;
+	int mParam;
 
 public:
-	FListMenuItemSelectable(int x, int y, FName childmenu);
+	FListMenuItemSelectable(int x, int y, FName childmenu, int mParam = 0);
 	void SetHotspot(int x, int y, int w, int h);
 	bool CheckCoordinate(int x, int y);
 	bool Selectable();
@@ -180,7 +184,7 @@ class FListMenuItemText : public FListMenuItemSelectable
 	FFont *mFont;
 	EColorRange mColor;
 public:
-	FListMenuItemText(int x, int y, int hotkey, const char *text, FFont *font, EColorRange color, FName child);
+	FListMenuItemText(int x, int y, int hotkey, const char *text, FFont *font, EColorRange color, FName child, int param = 0);
 	~FListMenuItemText();
 	void Drawer();
 };
@@ -189,7 +193,7 @@ class FListMenuItemPatch : public FListMenuItemSelectable
 {
 	FTextureID mTexture;
 public:
-	FListMenuItemPatch(int x, int y, int hotkey, FTextureID patch, FName child);
+	FListMenuItemPatch(int x, int y, int hotkey, FTextureID patch, FName child, int param = 0);
 	void Drawer();
 };
 

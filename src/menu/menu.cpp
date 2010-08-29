@@ -142,8 +142,11 @@ void M_SetMenu(FName menu)
 	{
 		if ((*desc)->mType == MDESC_ListMenu)
 		{
-			DMenu::CurrentMenu = new DListMenu(NULL, static_cast<FListMenuDescriptor*>(*desc));
+			DMenu *newmenu = new DListMenu(NULL, static_cast<FListMenuDescriptor*>(*desc));
+			newmenu->mParentMenu = DMenu::CurrentMenu;
+			DMenu::CurrentMenu = newmenu;
 			GC::WriteBarrier(DMenu::CurrentMenu);
+			GC::WriteBarrier(DMenu::CurrentMenu, DMenu::CurrentMenu->mParentMenu);
 		}
 		return;
 	}
@@ -250,4 +253,5 @@ void M_Init (void)
 {
 	M_ParseMenuDefs();
 }
+
 

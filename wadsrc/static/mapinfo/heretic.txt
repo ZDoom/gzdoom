@@ -43,6 +43,7 @@ gameinfo
 	player5start = 4001
 	pickupcolor = "d6 ba 45"
 	mainmenu = "HereticMainMenu"
+	episodemenu = "RavenEpisodeMenu"
 }
 
 skill baby

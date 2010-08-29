@@ -603,6 +603,16 @@ struct FSkillInfo
 extern TArray<FSkillInfo> AllSkills;
 extern int DefaultSkill;
 
+struct FEpisode
+{
+	FString mEpisodeName;
+	FString mEpisodeMap;
+	FString mPicName;
+	char mShortcut;
+	bool mNoSkill;
+};
+
+extern TArray<FEpisode> AllEpisodes;
 
 
 #endif //__G_LEVEL_H__

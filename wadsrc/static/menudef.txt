@@ -1,3 +1,9 @@
+//-------------------------------------------------------------------------------------------
+//
+// Different main menus depending on game
+//
+//-------------------------------------------------------------------------------------------
+
 
 LISTMENU "Doom1MainMenu"
 {
@@ -74,3 +80,54 @@ LISTMENU "StrifeMainMenu"
 	PatchItem "M_QUITG", "q", "QuitMenu"
 }
 
+//-------------------------------------------------------------------------------------------
+//
+// The various episode menu templates
+//
+//-------------------------------------------------------------------------------------------
+
+ListMenu "DoomEpisodeMenu"
+{
+	NetgameMessage "$NETGAME"
+	Selector "M_SKULL1", -32, -5
+	Linespacing 16
+	Position 48, 63
+
+	StaticPatch 54, 38, "M_EPISOD"
+	
+	// will be filled in by MAPINFO
+}
+
+ListMenu "RavenEpisodeMenu"
+{
+	NetgameMessage "$NETGAME"
+	Selector "M_SLCTR1", -28, -1
+	Linespacing 20
+	Position 80, 50
+	
+	// will be filled in by MAPINFO
+}
+
+ListMenu "StrifeEpisodeMenu"
+{
+	NetgameMessage "$NETGAME"
+	Selector "M_CURS1", -32, -5
+	Linespacing 19
+	Position 48, 63
+
+	StaticPatch 54, 38, "M_EPISOD"
+	
+	// will be filled in by MAPINFO
+}
+
+ListMenu "ChexEpisodeMenu"
+{
+	NetgameMessage "$CNETGAME"
+	Selector "M_SKULL1", -32, -5
+	Linespacing 16
+	Position 48, 63
+
+	StaticPatch 54, 38, "M_EPISOD"
+	
+	// will be filled in by MAPINFO
+}

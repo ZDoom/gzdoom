@@ -80,6 +80,42 @@ bool DListMenu::Responder (event_t *ev)
 //
 //=============================================================================
 
+bool DListMenu::MenuEvent (int mkey)
+{
+	int startedAt = mDesc->mSelectedItem;
+
+	switch (mkey)
+	{
+	case MKEY_Up:
+		do
+		{
+			if (--mDesc->mSelectedItem < 0) mDesc->mSelectedItem = mDesc->mItems.Size()-1;
+		}
+		while (!mDesc->mItems[mDesc->mSelectedItem]->Selectable() && mDesc->mSelectedItem != startedAt);
+		return true;
+
+	case MKEY_Down:
+		do
+		{
+			if (++mDesc->mSelectedItem >= (int)mDesc->mItems.Size()) mDesc->mSelectedItem = 0;
+		}
+		while (!mDesc->mItems[mDesc->mSelectedItem]->Selectable() && mDesc->mSelectedItem != startedAt);
+		return true;
+
+	case MKEY_Enter:
+		return mDesc->mItems[mDesc->mSelectedItem]->Activate();
+
+	default:
+		return Super::MenuEvent(mkey);
+	}
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
 void DListMenu::Ticker ()
 {
 	for(unsigned i=0;i<mDesc->mItems.Size(); i++)
@@ -141,6 +177,12 @@ void FListMenuItem::DrawSelector(int xofs, int yofs, FTextureID tex)
 {
 	screen->DrawTexture (TexMan(tex), mXpos + xofs, mYpos + yofs, DTA_Clean, true, TAG_DONE);
 }
+
+bool FListMenuItem::Activate()
+{
+	return false;	// cannot be activated
+}
+
 
 //=============================================================================
 //
@@ -216,6 +258,13 @@ bool FListMenuItemSelectable::Selectable()
 {
 	return true;
 }
+
+bool FListMenuItemSelectable::Activate()
+{
+	// todo
+	return true;
+}
+
 
 //=============================================================================
 //

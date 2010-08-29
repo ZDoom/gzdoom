@@ -34,12 +34,14 @@
 
 #include "doomdef.h"
 #include "doomstat.h"
+#include "d_gui.h"
 #include "c_console.h"
 #include "s_sound.h"
 #include "p_tick.h"
 #include "g_game.h"
 #include "c_cvars.h"
 #include "d_event.h"
+#include "v_video.h"
 #include "hu_stuff.h"
 #include "menu/menu.h"
 #include "textures/textures.h"
@@ -50,6 +52,8 @@ CVAR (Float, snd_menuvolume, 0.6f, CVAR_ARCHIVE)
 DMenu *DMenu::CurrentMenu;
 
 FListMenuDescriptor *MainMenu;
+
+void M_ClearMenus ();
 
 
 //============================================================================
@@ -75,6 +79,32 @@ bool DMenu::Responder (event_t *ev)
 { 
 	return false; 
 }
+
+bool DMenu::MenuEvent (int mkey)
+{
+	switch (mkey)
+	{
+	case MKEY_Back:
+	{
+		DMenu *thismenu = DMenu::CurrentMenu;
+		DMenu::CurrentMenu = DMenu::CurrentMenu->mParentMenu;
+		if (DMenu::CurrentMenu != NULL)
+		{
+			GC::WriteBarrier(DMenu::CurrentMenu);
+			S_Sound (CHAN_VOICE | CHAN_UI, "menu/backup", snd_menuvolume, ATTN_NONE);
+		}
+		else
+		{
+			M_ClearMenus ();
+			S_Sound (CHAN_VOICE | CHAN_UI, "menu/clear", snd_menuvolume, ATTN_NONE);
+		}
+		thismenu->Destroy();
+		return true;
+	}
+	}
+	return false;
+}
+
 
 void DMenu::Ticker () 
 {
@@ -149,6 +179,28 @@ if (MainMenu == NULL)
 
 	if (DMenu::CurrentMenu != NULL && menuactive == MENU_On) 
 	{
+		if (ev->type == EV_KeyDown)
+		{
+			// improve this later. For now it just has to work
+			int mkey = -1;
+			switch (ev->data1)
+			{
+				case KEY_ESCAPE:			mkey = MKEY_Back;		break;
+				case KEY_ENTER:				mkey = MKEY_Enter;		break;
+				case KEY_UPARROW:			mkey = MKEY_Up;			break;
+				case KEY_DOWNARROW:			mkey = MKEY_Down;		break;
+				case KEY_LEFTARROW:			mkey = MKEY_Left;		break;
+				case KEY_RIGHTARROW:		mkey = MKEY_Right;		break;
+				case KEY_BACKSPACE:			mkey = MKEY_Clear;		break;
+				case KEY_PGUP:				mkey = MKEY_PageUp;		break;
+				case KEY_PGDN:				mkey = MKEY_PageDown;	break;
+			}
+			if (mkey != -1)
+			{
+				return DMenu::CurrentMenu->MenuEvent(mkey);
+			}
+		}
+
 		return DMenu::CurrentMenu->Responder(ev);
 	}
 	else
@@ -185,4 +237,19 @@ void M_Drawer (void)
 {
 	if (DMenu::CurrentMenu != NULL && menuactive == MENU_On) 
 		DMenu::CurrentMenu->Drawer();
+}
+
+void M_ClearMenus ()
+{
+	/*
+	M_ClearSaveStuff ();
+	M_DeactivateMenuInput ();
+	MenuStackDepth = 0;
+	OptionsActive = false;
+	InfoType = 0;
+	drawSkull = true;
+	M_DemoNoPlay = false;
+	*/
+	BorderNeedRefresh = screen->GetPageCount ();
+	menuactive = MENU_Off;
 }

@@ -178,7 +178,7 @@ static void I_CheckGUICapture ()
 	}
 	else
 	{
-		wantCapt = (menuactive == MENU_On || menuactive == MENU_OnNoPause);
+		wantCapt = false;// (menuactive == MENU_On || menuactive == MENU_OnNoPause);
 	}
 
 	if (wantCapt != GUICapture)

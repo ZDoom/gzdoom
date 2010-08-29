@@ -12,6 +12,23 @@ class FTexture;
 class FFont;
 enum EColorRange;
 
+enum EMenuKey
+{
+	MKEY_Up,
+	MKEY_Down,
+	MKEY_Left,
+	MKEY_Right,
+	MKEY_PageUp,
+	MKEY_PageDown,
+	//----------------- Keys past here do not repeat.
+	MKEY_Enter,
+	MKEY_Back,		// Back to previous menu
+	MKEY_Clear,		// Clear keybinding/flip player sprite preview
+
+	NUM_MKEYS
+};
+
+
 struct FMenuRect
 {
 	int x, y;
@@ -47,6 +64,7 @@ public:
 	DMenu(DMenu *parent = NULL);
 	virtual ~DMenu();
 	virtual bool Responder (event_t *ev);
+	virtual bool MenuEvent (int mkey);
 	virtual void Ticker ();
 	virtual void Drawer ();
 };
@@ -70,6 +88,7 @@ public:
 	virtual void Ticker();
 	virtual void Drawer();
 	virtual bool Selectable();
+	virtual bool Activate();
 	void DrawSelector(int xofs, int yofs, FTextureID tex);
 };	
 
@@ -109,6 +128,7 @@ public:
 	bool CheckCoordinate(int x, int y);
 	bool Selectable();
 	bool CheckHotkey(int c) { return c == mHotkey; }
+	bool Activate();
 };
 
 class FListMenuItemText : public FListMenuItemSelectable
@@ -165,6 +185,7 @@ public:
 	DListMenu(DMenu *parent = NULL, FListMenuDescriptor *desc = NULL);
 	~DListMenu();
 	bool Responder (event_t *ev);
+	bool MenuEvent (int mkey);
 	void Ticker ();
 	void Drawer ();
 };

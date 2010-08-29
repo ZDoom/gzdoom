@@ -465,3 +465,6 @@ xx(Dialog)
 xx(Ifitem)
 xx(Choice)
 xx(Link)
+
+// Special menus
+xx(Startgame)

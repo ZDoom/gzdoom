@@ -76,38 +76,3 @@
 EMenuState		menuactive;
 bool			M_DemoNoPlay;
 
-DMenu *DMenu::CurrentMenu;
-
-
-//============================================================================
-//
-// DMenu base class
-//
-//============================================================================
-
-IMPLEMENT_POINTY_CLASS (DMenu)
-	DECLARE_POINTER(mParentMenu)
-END_POINTERS
-
-DMenu::DMenu(DMenu *parent) 
-{
-	mParentMenu = parent;
-}
-	
-DMenu::~DMenu() 
-{
-}
-
-bool DMenu::Responder (event_t *ev) 
-{ 
-	return false; 
-}
-
-void DMenu::Ticker () 
-{
-}
-
-void DMenu::Drawer () 
-{
-}
-

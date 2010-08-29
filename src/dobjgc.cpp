@@ -72,7 +72,7 @@
 #include "doomstat.h"
 #include "m_argv.h"
 #include "po_man.h"
-#include "m_menu.h"
+#include "menu/menu.h"
 
 // MACROS ------------------------------------------------------------------
 

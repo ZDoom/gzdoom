@@ -2291,19 +2291,15 @@ void AM_drawAuthorMarkers ()
 
 		while (marked != NULL)
 		{
-			if (mark->args[1] == 0 || (mark->args[1] == 1))
+			// Use more correct info if we have GL nodes available
+			if (mark->args[1] == 0 ||
+				(mark->args[1] == 1 && (hasglnodes ?
+				 marked->subsector->flags & SSECF_DRAWN :
+				 marked->Sector->MoreFlags & SECF_DRAWN)))
 			{
-				// Use more correct info if we have GL nodes available
-				INTBOOL drawn = hasglnodes?
-					marked->subsector->flags & SSECF_DRAWN :
-					marked->Sector->MoreFlags & SECF_DRAWN;
-
-				if (drawn)
-				{
-					DrawMarker (tex, marked->x >> FRACTOMAPBITS, marked->y >> FRACTOMAPBITS, 0,
-						flip, mark->scaleX, mark->scaleY, mark->Translation,
-						mark->alpha, mark->fillcolor, mark->RenderStyle);
-				}
+				DrawMarker (tex, marked->x >> FRACTOMAPBITS, marked->y >> FRACTOMAPBITS, 0,
+					flip, mark->scaleX, mark->scaleY, mark->Translation,
+					mark->alpha, mark->fillcolor, mark->RenderStyle);
 			}
 			marked = mark->args[0] != 0 ? it.Next() : NULL;
 		}

@@ -1094,6 +1094,14 @@ static bool P_CheckV4Nodes(MapData *map)
 //
 //===========================================================================
 
+struct badseg
+{
+	badseg(int t, int s, int d) : badtype(t), badsegnum(s), baddata(d) {}
+	int badtype;
+	int badsegnum;
+	int baddata;
+};
+
 template<class segtype>
 void P_LoadSegs (MapData * map)
 {
@@ -1159,7 +1167,7 @@ void P_LoadSegs (MapData * map)
 
 			if (vnum1 >= numvertexes || vnum2 >= numvertexes)
 			{
-				throw i * 4;
+				throw badseg(0, i, MAX(vnum1, vnum2));
 			}
 
 			li->v1 = &vertexes[vnum1];
@@ -1226,14 +1234,14 @@ void P_LoadSegs (MapData * map)
 			linedef = LittleShort(ml->linedef);
 			if ((unsigned)linedef >= (unsigned)numlines)
 			{
-				throw i * 4 + 1;
+				throw badseg(1, i, linedef);
 			}
 			ldef = &lines[linedef];
 			li->linedef = ldef;
 			side = LittleShort(ml->side);
 			if ((unsigned)(ldef->sidedef[side] - sides) >= (unsigned)numsides)
 			{
-				throw i * 4 + 2;
+				throw badseg(2, i, int(ldef->sidedef[side] - sides));
 			}
 			li->sidedef = ldef->sidedef[side];
 			li->frontsector = ldef->sidedef[side]->sector;
@@ -1250,20 +1258,20 @@ void P_LoadSegs (MapData * map)
 			}
 		}
 	}
-	catch (int foo)
+	catch (badseg bad)
 	{
-		switch (foo & 3)
+		switch (bad.badtype)
 		{
 		case 0:
-			Printf ("Seg %d references a nonexistant vertex.\n", foo >> 2);
+			Printf ("Seg %d references a nonexistant vertex %d (max %d).\n", bad.badsegnum, bad.baddata, numvertexes);
 			break;
 
 		case 1:
-			Printf ("Seg %d references a nonexistant linedef.\n", foo >> 2);
+			Printf ("Seg %d references a nonexistant linedef %d (max %d).\n", bad.badsegnum, bad.baddata, numlines);
 			break;
 
 		case 2:
-			Printf ("The linedef for seg %d references a nonexistant sidedef.\n", foo >> 2);
+			Printf ("The linedef for seg %d references a nonexistant sidedef %d (max %d).\n", bad.badsegnum, bad.baddata, numsides);
 			break;
 		}
 		Printf ("The BSP will be rebuilt.\n");

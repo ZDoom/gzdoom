@@ -51,6 +51,7 @@
 CVAR (Float, snd_menuvolume, 0.6f, CVAR_ARCHIVE)
 
 DMenu *DMenu::CurrentMenu;
+int DMenu::MenuTime;
 
 FListMenuDescriptor *MainMenu;
 
@@ -224,6 +225,7 @@ bool M_Responder (event_t *ev)
 
 void M_Ticker (void) 
 {
+	DMenu::MenuTime++;
 	if (DMenu::CurrentMenu != NULL && menuactive == MENU_On) 
 		DMenu::CurrentMenu->Ticker();
 }

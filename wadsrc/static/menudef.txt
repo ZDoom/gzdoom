@@ -35,7 +35,7 @@ LISTMENU "MainMenu"
 	IfGame(Strife)
 	{
 		StaticPatch 84, 2, "M_STRIFE"
-		Position 97, 64
+		Position 97, 45
 	}
 	IfGame(Heretic)
 	{
@@ -54,7 +54,7 @@ LISTMENU "MainMenu"
 	
 	IfGame(Doom, Strife, Chex)
 	{
-		PatchItem "M_NGAME", "n", "EpisodeMenu"
+		PatchItem "M_NGAME", "n", "PlayerclassMenu"
 		PatchItem "M_LOADG", "l", "LoadGameMenu"
 		PatchItem "M_SAVEG", "s", "SaveGameMenu"
 		PatchItem "M_OPTION","o", "OptionsMenu"
@@ -67,13 +67,62 @@ LISTMENU "MainMenu"
 	
 	IfGame(Heretic, Hexen)
 	{
-		TextItem "$MNU_NEWGAME", "n", "EpisodeMenu"
+		TextItem "$MNU_NEWGAME", "n", "PlayerclassMenu"
 		TextItem "$MNU_OPTIONS", "o", "OptionsMenu"
 		TextItem "$MNU_GAMEFILES", "g", "GameFilesMenu"
 		TextItem "$MNU_INFO", "i", "ReadThisMenu"
 		TextItem "$MNU_QUITGAME", "q", "QuitMenu"
 	}
 }
+
+//-------------------------------------------------------------------------------------------
+//
+// The player class menu
+//
+//-------------------------------------------------------------------------------------------
+
+ListMenu "PlayerclassMenu"
+{
+	IfGame(Doom, Heretic, Hexen, Strife)
+	{
+		NetgameMessage "$NETGAME"
+	}
+	IfGame(Chex)
+	{
+		NetgameMessage "$CNETGAME"
+	}
+
+	StaticTextCentered 160, 15, "$MNU_CHOOSECLASS"
+	IfGame(Doom, Strife, Chex)
+	{
+		Position 48, 63
+		PlayerDisplay 220, 63, "20 00 00", "80 00 40"
+	}
+	IfGame(Heretic)
+	{
+		Position 80, 50
+		PlayerDisplay 220, 50, "20 00 00", "80 00 40"
+	}
+	IfGame(Hexen)
+	{
+		Position 80, 50
+		PlayerDisplay 220, 50, "00 07 00", "40 53 40"
+	}
+	// The rest of this menu will be set up based on the actual player definitions.
+}
+
+ListMenu "HexenDefaultPlayerclassMenu"
+{
+	// This menu is never used directly. Its contents are copied into PlayerclassMenu if appropriate.
+
+	StaticText 34, 24, "$MNU_CHOOSECLASS"
+	HexenPlayerDisplay 174, 8, "M_FBOX", "M_FWALK%d", "M_CBOX", "M_CWALK%d", "M_MBOX", "M_MWALK%d"
+	Position 66, 58
+	TextItem "$MNU_FIGHTER", "f", "EpisodeMenu", 0
+	TextItem "$MNU_CLERIC", "c", "EpisodeMenu", 1
+	TextItem "$MNU_MAGE", "m", "EpisodeMenu", 2
+	TextItem "$MNU_RANDOM", "r", "EpisodeMenu", -1
+}	
 
 //-------------------------------------------------------------------------------------------
 //
@@ -84,6 +133,7 @@ LISTMENU "MainMenu"
 ListMenu "EpisodeMenu"
 {
 	// The episode menu code will set the first item to 'autoselect' if it's the only one.
+	
 	IfGame(Doom, Heretic, Hexen, Strife)
 	{
 		NetgameMessage "$NETGAME"
@@ -92,7 +142,7 @@ ListMenu "EpisodeMenu"
 	{
 		NetgameMessage "$CNETGAME"
 	}
-	
+
 	IfGame(Doom, Strife, Chex)
 	{
 		Position 48, 63

@@ -188,6 +188,11 @@ bool FListMenuItem::Activate()
 	return false;	// cannot be activated
 }
 
+FName FListMenuItem::GetAction(int *pparam)
+{
+	return NAME_None;
+}
+
 
 //=============================================================================
 //
@@ -240,12 +245,82 @@ void FListMenuItemStaticAnimation::Ticker()
 
 //=============================================================================
 //
+// static text
+//
+//=============================================================================
+
+FListMenuItemStaticText::FListMenuItemStaticText(int x, int y, const char *text, FFont *font, EColorRange color, bool centered)
+: FListMenuItem(x, y)
+{
+	mText = ncopystring(text);
+	mFont = font;
+	mColor = color;
+	mCentered = centered;
+}
+	
+void FListMenuItemStaticText::Drawer()
+{
+	const char *text = mText;
+	if (text != NULL)
+	{
+		if (*text == '$') text = GStrings(text+1);
+		int x = mXpos;
+		if (mCentered) x -= mFont->StringWidth(text)/2;
+		screen->DrawText(mFont, mColor, x, mYpos, text, DTA_Clean, true, TAG_DONE);
+	}
+}
+
+//=============================================================================
+//
+// Hexen's player class display
+//
+//=============================================================================
+
+FListMenuItemHexenPlayer::FListMenuItemHexenPlayer(FListMenuDescriptor *menu, int x, int y)
+: FListMenuItem(x, y)
+{
+	mOwner = menu;	// we need this to get the currently selected player
+}
+
+void FListMenuItemHexenPlayer::AddFrame(const char *tex)
+{
+	FTextureID t = TexMan.CheckForTexture(tex, FTexture::TEX_MiscPatch);
+	mTextures.Push(t);
+}
+
+void FListMenuItemHexenPlayer::AddAnimation(const char *tex)
+{
+	FString tname;
+	for(int i=1;i<=4;i++)
+	{
+		tname.Format(tex, i);
+		AddFrame(tname);
+	}
+}
+
+void FListMenuItemHexenPlayer::Drawer()
+{
+	int sel = mOwner->mSelectedItem;
+	int classnum;
+	FName seltype = mOwner->mItems[sel]->GetAction(&classnum);
+
+	if (seltype != NAME_Episodemenu) return;
+	if (classnum < 0 || classnum >= (int)mTextures.Size()/4)
+	{
+		classnum = (DMenu::MenuTime>>2) % 3;
+	}
+	screen->DrawTexture (TexMan[mTextures[classnum*5]], mXpos, mYpos, DTA_Clean, true, TAG_DONE);
+	screen->DrawTexture (TexMan[mTextures[classnum*5 + ((DMenu::MenuTime >> 3) & 3) + 1]], mXpos + 24, mYpos + 12, DTA_Clean, true, TAG_DONE);
+}
+
+//=============================================================================
+//
 // base class for selectable items
 //
 //=============================================================================
 
 FListMenuItemSelectable::FListMenuItemSelectable(int x, int y, FName childmenu, int param)
-: FListMenuItem(x, y), mChild(childmenu)
+: FListMenuItem(x, y), mAction(childmenu)
 {
 	mParam = param;
 }
@@ -270,11 +345,18 @@ bool FListMenuItemSelectable::Activate()
 	if (mParam >= 0)
 	{
 		// Todo: handle parameters for start game submenus
-		//M_SetParam(mChild, mParam);
+		//M_SetParam(mAction, mParam);
 	}
-	M_SetMenu(mChild);
+	M_SetMenu(mAction);
 	return true;
 }
+
+FName FListMenuItemSelectable::GetAction(int *pparam)
+{
+	if (pparam != NULL) *pparam = mParam;
+	return mAction;
+}
+
 
 
 //=============================================================================

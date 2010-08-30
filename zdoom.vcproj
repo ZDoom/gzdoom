@@ -6477,6 +6477,10 @@
 				RelativePath=".\src\menu\menudef.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\src\menu\playerdisplay.cpp"
+				>
+			</File>
 		</Filter>
 	</Files>
 	<Globals>

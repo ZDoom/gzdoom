@@ -36,6 +36,8 @@
 #include "sc_man.h"
 #include "v_font.h"
 #include "g_level.h"
+#include "d_player.h"
+#include "v_video.h"
 #include "gi.h"
 
 MenuDescriptorList MenuDescriptors;
@@ -215,6 +217,19 @@ static void ParseListMenuBody(FScanner &sc, FListMenuDescriptor *desc)
 			}
 			while (sc.CheckString(","));
 		}
+		else if (sc.Compare("StaticText") || sc.Compare("StaticTextCentered"))
+		{
+			bool centered = sc.Compare("StaticTextCentered");
+			sc.MustGetNumber();
+			int x = sc.Number;
+			sc.MustGetStringName(",");
+			sc.MustGetNumber();
+			int y = sc.Number;
+			sc.MustGetStringName(",");
+			sc.MustGetString();
+			FListMenuItem *it = new FListMenuItemStaticText(x, y, sc.String, desc->mFont, desc->mFontColor, centered);
+			desc->mItems.Push(it);
+		}
 		else if (sc.Compare("PatchItem"))
 		{
 			sc.MustGetString();
@@ -225,8 +240,14 @@ static void ParseListMenuBody(FScanner &sc, FListMenuDescriptor *desc)
 			sc.MustGetStringName(",");
 			sc.MustGetString();
 			FName action = sc.String;
+			int param = 0;
+			if (sc.CheckString(","))
+			{
+				sc.MustGetNumber();
+				param = sc.Number;
+			}
 
-			FListMenuItem *it = new FListMenuItemPatch(desc->mXpos, desc->mYpos, hotkey, tex, action);
+			FListMenuItem *it = new FListMenuItemPatch(desc->mXpos, desc->mYpos, hotkey, tex, action, param);
 			desc->mItems.Push(it);
 			desc->mYpos += desc->mLinespacing;
 			if (desc->mSelectedItem == -1) desc->mSelectedItem = desc->mItems.Size()-1;
@@ -241,8 +262,14 @@ static void ParseListMenuBody(FScanner &sc, FListMenuDescriptor *desc)
 			sc.MustGetStringName(",");
 			sc.MustGetString();
 			FName action = sc.String;
+			int param = 0;
+			if (sc.CheckString(","))
+			{
+				sc.MustGetNumber();
+				param = sc.Number;
+			}
 
-			FListMenuItem *it = new FListMenuItemText(desc->mXpos, desc->mYpos, hotkey, text, desc->mFont, desc->mFontColor, action);
+			FListMenuItem *it = new FListMenuItemText(desc->mXpos, desc->mYpos, hotkey, text, desc->mFont, desc->mFontColor, action, param);
 			desc->mItems.Push(it);
 			desc->mYpos += desc->mLinespacing;
 			if (desc->mSelectedItem == -1) desc->mSelectedItem = desc->mItems.Size()-1;
@@ -267,6 +294,42 @@ static void ParseListMenuBody(FScanner &sc, FListMenuDescriptor *desc)
 		{
 			sc.MustGetString();
 			desc->mNetgameMessage = sc.String;
+		}
+		else if (sc.Compare("HexenPlayerDisplay"))
+		{
+			sc.MustGetNumber();
+			int x = sc.Number;
+			sc.MustGetStringName(",");
+			sc.MustGetNumber();
+			int y = sc.Number;
+			sc.MustGetStringName(",");
+			FListMenuItemHexenPlayer *hex = new FListMenuItemHexenPlayer(desc, x, y);
+			desc->mItems.Push(hex);
+			do
+			{
+				sc.MustGetString();
+				hex->AddFrame(sc.String);
+				sc.MustGetStringName(",");
+				sc.MustGetString();
+				hex->AddAnimation(sc.String);
+			}
+			while (sc.CheckString(","));
+		}
+		else if (sc.Compare("PlayerDisplay"))
+		{
+			sc.MustGetNumber();
+			int x = sc.Number;
+			sc.MustGetStringName(",");
+			sc.MustGetNumber();
+			int y = sc.Number;
+			sc.MustGetStringName(",");
+			sc.MustGetString();
+			PalEntry c1 = V_GetColor(NULL, sc.String);
+			sc.MustGetStringName(",");
+			sc.MustGetString();
+			PalEntry c2 = V_GetColor(NULL, sc.String);
+			FListMenuItemPlayerDisplay *it = new FListMenuItemPlayerDisplay(desc, x, y, c1, c2);
+			desc->mItems.Push(it);
 		}
 		else
 		{
@@ -334,7 +397,7 @@ void M_ParseMenuDefs()
 			}
 			else
 			{
-				sc.ScriptError("Unknown keyword '%s'");
+				sc.ScriptError("Unknown keyword '%s'", sc.String);
 			}
 		}
 	}
@@ -348,6 +411,10 @@ void M_ParseMenuDefs()
 			FListMenuDescriptor *ld = static_cast<FListMenuDescriptor*>(*desc);
 			int posy = ld->mYpos;
 			ld->mSelectedItem = ld->mItems.Size();
+			if (AllEpisodes.Size() >= 5)
+			{
+				// desc->mYpos -= desc->mLineHeight;
+			}
 			for(unsigned i = 0; i < AllEpisodes.Size(); i++)
 			{
 				FListMenuItem *it;
@@ -355,16 +422,91 @@ void M_ParseMenuDefs()
 				{
 					FTextureID tex = TexMan.CheckForTexture(AllEpisodes[i].mPicName, FTexture::TEX_MiscPatch);
 					it = new FListMenuItemPatch(ld->mXpos, posy, AllEpisodes[i].mShortcut, 
-						tex, NAME_Playerclassmenu, i);
+						tex, NAME_Skillmenu, i);
 				}
 				else
 				{
 					it = new FListMenuItemText(ld->mXpos, posy, AllEpisodes[i].mShortcut, 
-						AllEpisodes[i].mEpisodeName, ld->mFont, ld->mFontColor, NAME_Playerclassmenu, i);
+						AllEpisodes[i].mEpisodeName, ld->mFont, ld->mFontColor, NAME_Skillmenu, i);
 				}
 				ld->mItems.Push(it);
 				posy += ld->mLinespacing;
 			}
+		}
+	}
+	// Build player class menu
+	desc = MenuDescriptors.CheckKey(NAME_Playerclassmenu);
+	if (desc != NULL)
+	{
+		if ((*desc)->mType == MDESC_ListMenu)
+		{
+			if (gameinfo.gametype == GAME_Hexen && PlayerClasses.Size () == 3 &&
+				PlayerClasses[0].Type->IsDescendantOf (PClass::FindClass (NAME_FighterPlayer)) &&
+				PlayerClasses[1].Type->IsDescendantOf (PClass::FindClass (NAME_ClericPlayer)) &&
+				PlayerClasses[2].Type->IsDescendantOf (PClass::FindClass (NAME_MagePlayer)))
+			{
+				// Use Hexen's standard playerclass menu
+				FMenuDescriptor **desc2 = MenuDescriptors.CheckKey(NAME_HexenDefaultPlayerclassmenu);
+				if (desc2 != NULL)
+				{
+					// Replace the generic player class menu with the special Hexen version.
+					if ((*desc2)->mType == MDESC_ListMenu)
+					{
+						(*desc2)->mMenuName = (*desc)->mMenuName;
+						delete *desc;
+						*desc = *desc2;
+						*desc2 = NULL;
+
+					}
+				}
+			}
+			else
+			{
+				FListMenuDescriptor *ld = static_cast<FListMenuDescriptor*>(*desc);
+				// add player display
+				ld->mSelectedItem = ld->mItems.Size();
+				
+				int n = 0;
+				for (unsigned i = 0; i < PlayerClasses.Size (); i++, n++)
+				{
+					if (!(PlayerClasses[i].Flags & PCF_NOMENU))
+					{
+						const char *pname = PlayerClasses[i].Type->Meta.GetMetaString (APMETA_DisplayName);
+						if (pname != NULL)
+						{
+							FListMenuItemText *it = new FListMenuItemText(ld->mXpos, ld->mYpos, *pname,
+								pname, ld->mFont,ld->mFontColor, NAME_Episodemenu, i);
+							ld->mItems.Push(it);
+						}
+					}
+				}
+				if (n > 1)
+				{
+					FListMenuItemText *it = new FListMenuItemText(ld->mXpos, ld->mYpos, 'r',
+						"$MNU_RANDOM", ld->mFont,ld->mFontColor, NAME_Episodemenu, -1);
+					ld->mItems.Push(it);
+				}
+				if (n == 0)
+				{
+					const char *pname = PlayerClasses[0].Type->Meta.GetMetaString (APMETA_DisplayName);
+					if (pname != NULL)
+					{
+						FListMenuItemText *it = new FListMenuItemText(ld->mXpos, ld->mYpos, *pname,
+							pname, ld->mFont,ld->mFontColor, NAME_Episodemenu, 0);
+						ld->mItems.Push(it);
+					}
+				}
+				/*
+				if (ClassMenuDef.numitems > 4)
+				{
+					ClassMenuDef.y -= LINEHEIGHT;
+				}
+				*/
+			}
+			/* set default to an item with (NAME_Episodemenu, playerclassindex)
+			int playerclassindex = players[consoleplayer].userinfo.PlayerClass;
+			*/
+
 		}
 	}
 }

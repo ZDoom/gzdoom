@@ -5,12 +5,14 @@
 
 
 #include "dobject.h"
+#include "r_translate.h"
 #include "textures/textures.h"
 
 struct event_t;
 class FTexture;
 class FFont;
 enum EColorRange;
+class FPlayerClass;
 
 enum EMenuKey
 {
@@ -108,6 +110,8 @@ protected:
 
 public:
 	static DMenu *CurrentMenu;
+	static int MenuTime;
+
 	TObjPtr<DMenu> mParentMenu;
 
 	DMenu(DMenu *parent = NULL);
@@ -138,6 +142,7 @@ public:
 	virtual void Drawer();
 	virtual bool Selectable();
 	virtual bool Activate();
+	virtual FName GetAction(int *pparam);
 	void DrawSelector(int xofs, int yofs, FTextureID tex);
 };	
 
@@ -164,10 +169,56 @@ public:
 	void Ticker();
 };
 
+class FListMenuItemStaticText : public FListMenuItem
+{
+protected:
+	const char *mText;
+	FFont *mFont;
+	EColorRange mColor;
+	bool mCentered;
+
+public:
+	FListMenuItemStaticText(int x, int y, const char *text, FFont *font, EColorRange color, bool centered);
+	void Drawer();
+};
+
+class FListMenuItemHexenPlayer : public FListMenuItem
+{
+	FListMenuDescriptor *mOwner;
+	TArray<FTextureID> mTextures;
+public:
+
+	FListMenuItemHexenPlayer(FListMenuDescriptor *menu, int x, int y);
+	void AddFrame(const char *tex);
+	void AddAnimation(const char *tex);
+	virtual void Drawer();
+};
+
+
+class FListMenuItemPlayerDisplay : public FListMenuItem
+{
+	FListMenuDescriptor *mOwner;
+	FTexture *mBackdrop;
+	FRemapTable mRemap;
+	FPlayerClass *mPlayerClass;
+	FState *mPlayerState;
+	int mPlayerTics;
+
+	bool UpdatePlayerClass();
+
+public:
+
+	FListMenuItemPlayerDisplay(FListMenuDescriptor *menu, int x, int y, PalEntry c1, PalEntry c2);
+	~FListMenuItemPlayerDisplay();
+	virtual void Ticker();
+	virtual void Drawer();
+};
+
+
 class FListMenuItemSelectable : public FListMenuItem
 {
 protected:
-	FName mChild;
+	FName mAction;
 	FMenuRect mHotspot;
 	int mHotkey;
 	int mParam;
@@ -179,6 +230,7 @@ public:
 	bool Selectable();
 	bool CheckHotkey(int c) { return c == mHotkey; }
 	bool Activate();
+	FName GetAction(int *pparam);
 };
 
 class FListMenuItemText : public FListMenuItemSelectable

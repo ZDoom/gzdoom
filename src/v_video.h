@@ -489,6 +489,7 @@ FString V_GetColorStringByName (const char *name);
 
 // Tries to get color by name, then by string
 int V_GetColor (const DWORD *palette, const char *str);
+void V_DrawFrame (int left, int top, int width, int height);
 
 #if defined(X86_ASM) || defined(X64_ASM)
 extern "C" void ASM_PatchPitch (void);

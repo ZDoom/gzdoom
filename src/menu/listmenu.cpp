@@ -267,19 +267,12 @@ bool FListMenuItemSelectable::Selectable()
 
 bool FListMenuItemSelectable::Activate()
 {
-	switch(mChild)
+	if (mParam >= 0)
 	{
-	case NAME_Startgame:
-		if (AllEpisodes.Size() > 1)
-		{
-			M_SetMenu(gameinfo.episodemenu);
-			return true;
-		}
-		else
-		{
-		}
+		// Todo: handle parameters for start game submenus
+		//M_SetParam(mChild, mParam);
 	}
-	// todo
+	M_SetMenu(mChild);
 	return true;
 }
 

@@ -467,7 +467,6 @@ xx(Choice)
 xx(Link)
 
 // Special menus
-xx(Startgame)
-xx(Startepisode)
-xx(Startclass)
-xx(Startskill)
+xx(Mainmenu)
+xx(Episodemenu)
+xx(Playerclassmenu)

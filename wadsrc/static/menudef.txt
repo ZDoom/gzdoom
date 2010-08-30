@@ -1,133 +1,107 @@
-//-------------------------------------------------------------------------------------------
-//
-// Different main menus depending on game
-//
-//-------------------------------------------------------------------------------------------
-
-
-LISTMENU "Doom1MainMenu"
+DEFAULTLISTMENU
 {
-	Selector "M_SKULL1", -32, -5
-	
-	StaticPatch 94, 2, "M_DOOM"
-	Linespacing 16
-	Position 97, 64
-	PatchItem "M_NGAME", "n", "StartGame"
-	PatchItem "M_LOADG", "l", "LoadGameMenu"
-	PatchItem "M_SAVEG", "s", "SaveGameMenu"
-	PatchItem "M_OPTION","o", "OptionsMenu"
-	PatchItem "M_RDTHIS","r", "ReadThisMenu"
-	PatchItem "M_QUITG", "q", "QuitMenu"
-}
-
-LISTMENU "Doom2MainMenu"
-{
-	Selector "M_SKULL1", -32, -5
-	
-	StaticPatch 94, 2, "M_DOOM"
-	Linespacing 16
-	Position 97, 64
-	PatchItem "M_NGAME", "n", "StartGame"
-	PatchItem "M_LOADG", "l", "LoadGameMenu"
-	PatchItem "M_SAVEG", "s", "SaveGameMenu"
-	PatchItem "M_OPTION","o", "OptionsMenu"
-	PatchItem "M_QUITG", "q", "QuitMenu"
-}
-
-LISTMENU "HereticMainMenu"
-{
-	Selector "M_SLCTR1", -28, -1
-	
-	StaticPatch 88, 0, "M_HTIC"
-	StaticAnimation 40, 10, "M_SKL%.2d", 3, 17, 0
-	StaticAnimation 232, 10, "M_SKL%.2d", 3, 0, 17
-	Linespacing 20
-	Position 110, 56
-	TextItem "$MNU_NEWGAME", "n", "StartGame"
-	TextItem "$MNU_OPTIONS", "o", "OptionsMenu"
-	TextItem "$MNU_GAMEFILES", "g", "GameFilesMenu"
-	TextItem "$MNU_INFO", "i", "ReadThisMenu"
-	TextItem "$MNU_QUITGAME", "q", "QuitMenu"
-}
-
-LISTMENU "HexenMainMenu"
-{
-	Selector "M_SLCTR1", -28, -1
-	
-	StaticPatch 88, 0, "M_HTIC"
-	StaticAnimation 37, 80, "FBUL%c0", 5, 67, 71, 65, 66
-	StaticAnimation 278, 80, "FBUL%c0", 5, 65, 71
-	Linespacing 20
-	Position 110, 56
-	TextItem "$MNU_NEWGAME", "n", "StartGame"
-	TextItem "$MNU_OPTIONS", "o", "OptionsMenu"
-	TextItem "$MNU_GAMEFILES", "g", "GameFilesMenu"
-	TextItem "$MNU_INFO", "i", "ReadThisMenu"
-	TextItem "$MNU_QUITGAME", "q", "QuitMenu"
-}
-
-LISTMENU "StrifeMainMenu"
-{
-	Selector "M_CURS1", -28, -5
-	
-	StaticPatch 84, 2, "M_STRIFE"
-	Linespacing 19
-	Position 97, 64
-	PatchItem "M_NGAME", "n", "StartGame"
-	PatchItem "M_LOADG", "l", "LoadGameMenu"
-	PatchItem "M_SAVEG", "s", "SaveGameMenu"
-	PatchItem "M_OPTION","o", "OptionsMenu"
-	PatchItem "M_QUITG", "q", "QuitMenu"
+	Font "BigFont"
+	IfGame(Doom, Chex)
+	{
+		Selector "M_SKULL1", -32, -5
+		Linespacing 16
+		Font "BigFont", "Red"
+	}
+	IfGame(Strife)
+	{
+		Selector "M_CURS1", -28, -5
+		Linespacing 19
+	}
+	IfGame(Heretic, Hexen)
+	{
+		Selector "M_SLCTR1", -28, -1
+		Linespacing 20
+	}
 }
 
 //-------------------------------------------------------------------------------------------
 //
-// The various episode menu templates
+// The main menu. There's a lot of differences here between the games
 //
 //-------------------------------------------------------------------------------------------
 
-ListMenu "DoomEpisodeMenu"
+LISTMENU "MainMenu"
 {
-	NetgameMessage "$NETGAME"
-	Selector "M_SKULL1", -32, -5
-	Linespacing 16
-	Position 48, 63
-
-	StaticPatch 54, 38, "M_EPISOD"
+	IfGame(Doom, Chex)
+	{
+		StaticPatch 94, 2, "M_DOOM"
+		Position 97, 64
+	}
+	IfGame(Strife)
+	{
+		StaticPatch 84, 2, "M_STRIFE"
+		Position 97, 64
+	}
+	IfGame(Heretic)
+	{
+		StaticPatch 88, 0, "M_HTIC"
+		StaticAnimation 40, 10, "M_SKL%.2d", 3, 17, 0
+		StaticAnimation 232, 10, "M_SKL%.2d", 3, 0, 17
+		Position 110, 56
+	}
+	IfGame(Hexen)
+	{
+		StaticPatch 88, 0, "M_HTIC"
+		StaticAnimation 37, 80, "FBUL%c0", 5, 67, 71, 65, 66
+		StaticAnimation 278, 80, "FBUL%c0", 5, 65, 71
+		Position 110, 56
+	}
 	
-	// will be filled in by MAPINFO
+	IfGame(Doom, Strife, Chex)
+	{
+		PatchItem "M_NGAME", "n", "EpisodeMenu"
+		PatchItem "M_LOADG", "l", "LoadGameMenu"
+		PatchItem "M_SAVEG", "s", "SaveGameMenu"
+		PatchItem "M_OPTION","o", "OptionsMenu"
+		ifOption(ReadThis)
+		{
+			PatchItem "M_RDTHIS","r", "ReadThisMenu"
+		}
+		PatchItem "M_QUITG", "q", "QuitMenu"
+	}
+	
+	IfGame(Heretic, Hexen)
+	{
+		TextItem "$MNU_NEWGAME", "n", "EpisodeMenu"
+		TextItem "$MNU_OPTIONS", "o", "OptionsMenu"
+		TextItem "$MNU_GAMEFILES", "g", "GameFilesMenu"
+		TextItem "$MNU_INFO", "i", "ReadThisMenu"
+		TextItem "$MNU_QUITGAME", "q", "QuitMenu"
+	}
 }
 
-ListMenu "RavenEpisodeMenu"
+//-------------------------------------------------------------------------------------------
+//
+// The episode menu
+//
+//-------------------------------------------------------------------------------------------
+
+ListMenu "EpisodeMenu"
 {
-	NetgameMessage "$NETGAME"
-	Selector "M_SLCTR1", -28, -1
-	Linespacing 20
-	Position 80, 50
+	// The episode menu code will set the first item to 'autoselect' if it's the only one.
+	IfGame(Doom, Heretic, Hexen, Strife)
+	{
+		NetgameMessage "$NETGAME"
+	}
+	IfGame(Chex)
+	{
+		NetgameMessage "$CNETGAME"
+	}
 	
-	// will be filled in by MAPINFO
+	IfGame(Doom, Strife, Chex)
+	{
+		Position 48, 63
+		StaticPatch 54, 38, "M_EPISOD"
+	}
+	IfGame(Heretic, Hexen)
+	{
+		Position 80, 50
+	}
+	// items will be filled in by MAPINFO
 }
 
-ListMenu "StrifeEpisodeMenu"
-{
-	NetgameMessage "$NETGAME"
-	Selector "M_CURS1", -32, -5
-	Linespacing 19
-	Position 48, 63
-
-	StaticPatch 54, 38, "M_EPISOD"
-	
-	// will be filled in by MAPINFO
-}
-
-ListMenu "ChexEpisodeMenu"
-{
-	NetgameMessage "$CNETGAME"
-	Selector "M_SKULL1", -32, -5
-	Linespacing 16
-	Position 48, 63
-
-	StaticPatch 54, 38, "M_EPISOD"
-	
-	// will be filled in by MAPINFO
-}

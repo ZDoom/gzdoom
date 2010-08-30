@@ -43,8 +43,6 @@ gameinfo
 	endoom = "ENDSTRF"
 	player5start = 5
 	pickupcolor = "d6 ba 45"
-	mainmenu = "StrifeMainMenu"
-	episodemenu = "StrifeEpisodeMenu"
 }
 
 skill baby

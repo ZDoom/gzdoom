@@ -109,8 +109,6 @@ struct gameinfo_t
 	int defaultdropstyle;
 	int player5start;
 	DWORD pickupcolor;
-	FName mainmenu;
-	FName episodemenu;
 
 	const char *GetFinalePage(unsigned int num) const;
 };

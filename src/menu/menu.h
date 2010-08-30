@@ -61,6 +61,9 @@ struct FListMenuDescriptor : public FMenuDescriptor
 	int mXpos, mYpos;
 	int mLinespacing;	// needs to be stored for dynamically created menus
 	FString mNetgameMessage;
+	int mAutoselect;	// this can only be set by
+	FFont *mFont;
+	EColorRange mFontColor;
 };
 
 typedef TMap<FName, FMenuDescriptor *> MenuDescriptorList;
@@ -170,7 +173,7 @@ protected:
 	int mParam;
 
 public:
-	FListMenuItemSelectable(int x, int y, FName childmenu, int mParam = 0);
+	FListMenuItemSelectable(int x, int y, FName childmenu, int mParam = -1);
 	void SetHotspot(int x, int y, int w, int h);
 	bool CheckCoordinate(int x, int y);
 	bool Selectable();

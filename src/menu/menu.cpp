@@ -206,7 +206,7 @@ bool M_Responder (event_t *ev)
 			if (ev->data1 == KEY_ESCAPE)
 			{
 				M_StartControlPanel(true);
-				M_SetMenu(gameinfo.mainmenu);
+				M_SetMenu(NAME_Mainmenu);
 				return true;
 			}
 			// If devparm is set, pressing F1 always takes a screenshot no matter

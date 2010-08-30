@@ -14,7 +14,6 @@ gameinfo
 	borderflat = "FLOOR7_2"
 	drawreadthis = true
 	intermissionmusic = "$MUSIC_INTER"
-	mainmenu = "Doom1MainMenu"
 }
 
 clearepisodes

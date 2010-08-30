@@ -40,8 +40,6 @@ gameinfo
 	defaultdropstyle = 1
 	player5start = 9100
 	pickupcolor = "d6 ba 45"
-	mainmenu = "HexenMainMenu"
-	episodemenu = "RavenEpisodeMenu"
 }
 
 skill baby

@@ -63,16 +63,6 @@ DListMenu::DListMenu(DMenu *parent, FListMenuDescriptor *desc)
 //
 //=============================================================================
 
-DListMenu::~DListMenu()
-{
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
 void DListMenu::Init(DMenu *parent, FListMenuDescriptor *desc)
 {
 	mParentMenu = parent;

@@ -45,6 +45,7 @@
 #include "v_palette.h"
 #include "doomstat.h"
 #include "gi.h"
+#include "d_gui.h"
 
 
 
@@ -55,6 +56,9 @@ struct FSaveGameNode : public Node
 	FString Filename;
 	bool bOldVersion;
 	bool bMissingWads;
+	bool bNoDelete;
+
+	FSaveGameNode() { bNoDelete = false; }
 };
 
 class DLoadSaveMenu : public DListMenu
@@ -78,19 +82,20 @@ protected:
 	static void NotifyNewSave (const char *file, const char *title, bool okForQuicksave);
 
 
-	FSaveGameNode NewSaveNode;
 	FTexture *SavePic;
 	FBrokenLines *SaveComment;
 	bool genStringEnter;
 	FString savegamestring;
 
 	DLoadSaveMenu(DMenu *parent = NULL, FListMenuDescriptor *desc = NULL);
-	~DLoadSaveMenu();
+	void Destroy();
 
 	void UnloadSaveData ();
 	void ClearSaveStuff ();
 	void ExtractSaveData (const FSaveGameNode *node);
 	void Drawer ();
+	bool MenuEvent (int mkey);
+	bool Responder(event_t *ev);
 
 };
 
@@ -126,7 +131,7 @@ FSaveGameNode *DLoadSaveMenu::RemoveSaveSlot (FSaveGameNode *file)
 		lastSaveSlot = NULL;
 	}
 	file->Remove ();
-	delete file;
+	if (!file->bNoDelete) delete file;
 	return next;
 }
 
@@ -388,7 +393,7 @@ DLoadSaveMenu::DLoadSaveMenu(DMenu *parent, FListMenuDescriptor *desc)
 	ReadSaveStrings();
 }
 
-DLoadSaveMenu::~DLoadSaveMenu()
+void DLoadSaveMenu::Destroy()
 {
 	ClearSaveStuff ();
 }
@@ -423,18 +428,6 @@ void DLoadSaveMenu::UnloadSaveData ()
 void DLoadSaveMenu::ClearSaveStuff ()
 {
 	UnloadSaveData();
-	if (SaveGames.Head == &NewSaveNode)
-	{
-		SaveGames.RemHead ();
-		if (SelSaveGame == &NewSaveNode)
-		{
-			SelSaveGame = static_cast<FSaveGameNode *>(SaveGames.Head);
-		}
-		if (TopSaveGame == &NewSaveNode)
-		{
-			TopSaveGame = static_cast<FSaveGameNode *>(SaveGames.Head);
-		}
-	}
 	if (quickSaveSlot == (FSaveGameNode *)1)
 	{
 		quickSaveSlot = NULL;
@@ -700,6 +693,101 @@ void DLoadSaveMenu::Drawer ()
 	} while (!didSeeSelected);
 }
 
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+bool DLoadSaveMenu::MenuEvent (int mkey)
+{
+	if (SelSaveGame == NULL || SelSaveGame->Succ == NULL)
+	{
+		return false;
+	}
+	switch (mkey)
+	{
+	case MKEY_Up:
+		if (SelSaveGame != SaveGames.Head)
+		{
+			if (SelSaveGame == TopSaveGame)
+			{
+				TopSaveGame = static_cast<FSaveGameNode *>(TopSaveGame->Pred);
+			}
+			SelSaveGame = static_cast<FSaveGameNode *>(SelSaveGame->Pred);
+		}
+		else
+		{
+			SelSaveGame = static_cast<FSaveGameNode *>(SaveGames.TailPred);
+		}
+		UnloadSaveData ();
+		ExtractSaveData (SelSaveGame);
+		return true;
+
+	case MKEY_Down:
+		if (SelSaveGame != SaveGames.TailPred)
+		{
+			SelSaveGame = static_cast<FSaveGameNode *>(SelSaveGame->Succ);
+		}
+		else
+		{
+			SelSaveGame = TopSaveGame =
+				static_cast<FSaveGameNode *>(SaveGames.Head);
+		}
+		UnloadSaveData ();
+		ExtractSaveData (SelSaveGame);
+		return true;
+
+	case MKEY_Enter:
+		return false;
+
+	default:
+		return Super::MenuEvent(mkey);
+	}
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+bool DLoadSaveMenu::Responder (event_t *ev)
+{
+	if (ev->subtype == EV_GUI_KeyDown)
+	{
+		if (SelSaveGame != NULL && SelSaveGame->Succ != NULL)
+		{
+			switch (ev->data1)
+			{
+			case GK_F1:
+				if (!SelSaveGame->Filename.IsEmpty())
+				{
+					char workbuf[512];
+
+					mysnprintf (workbuf, countof(workbuf), "File on disk:\n%s", SelSaveGame->Filename.GetChars());
+					if (SaveComment != NULL)
+					{
+						V_FreeBrokenLines (SaveComment);
+					}
+					SaveComment = V_BreakLines (SmallFont, 216*screen->GetWidth()/640/CleanXfac, workbuf);
+				}
+				return true;
+
+			case GK_DEL:
+			case '\b':
+				/*
+				EndString.Format("%s" TEXTCOLOR_WHITE "%s" TEXTCOLOR_NORMAL "?\n\n%s",
+					GStrings("MNU_DELETESG"), SelSaveGame->Title, GStrings("PRESSYN"));
+				M_StartMessage (EndString, M_DeleteSaveResponse);
+				*/
+				return true;
+			}
+		}
+	}
+	return Super::Responder(ev);
+}
+
 
 //=============================================================================
 //
@@ -711,20 +799,32 @@ class DSaveMenu : public DLoadSaveMenu
 {
 	DECLARE_CLASS(DSaveMenu, DLoadSaveMenu)
 
+	FSaveGameNode NewSaveNode;
+
 public:
 
 	DSaveMenu(DMenu *parent = NULL, FListMenuDescriptor *desc = NULL);
-	~DSaveMenu();
+	void Destroy();
 	void DoSave (FSaveGameNode *node);
+	bool Responder (event_t *ev);
+	bool MenuEvent (int mkey);
 
 };
 
 IMPLEMENT_CLASS(DSaveMenu)
 
 
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
 DSaveMenu::DSaveMenu(DMenu *parent, FListMenuDescriptor *desc)
 : DLoadSaveMenu(parent, desc)
 {
+	strcpy (NewSaveNode.Title, "<New Save Game>");
+	NewSaveNode.bNoDelete = true;
 	SaveGames.AddHead (&NewSaveNode);
 	TopSaveGame = static_cast<FSaveGameNode *>(SaveGames.Head);
 	if (lastSaveSlot == NULL)
@@ -738,14 +838,31 @@ DSaveMenu::DSaveMenu(DMenu *parent, FListMenuDescriptor *desc)
 	ExtractSaveData (SelSaveGame);
 }
 
-DSaveMenu::~DSaveMenu()
-{
-}
+//=============================================================================
+//
+//
+//
+//=============================================================================
 
+void DSaveMenu::Destroy()
+{
+	if (SaveGames.Head == &NewSaveNode)
+	{
+		SaveGames.RemHead ();
+		if (SelSaveGame == &NewSaveNode)
+		{
+			SelSaveGame = static_cast<FSaveGameNode *>(SaveGames.Head);
+		}
+		if (TopSaveGame == &NewSaveNode)
+		{
+			TopSaveGame = static_cast<FSaveGameNode *>(SaveGames.Head);
+		}
+	}
+}
 
 //=============================================================================
 //
-// M_Responder calls this when the user is finished
+// 
 //
 //=============================================================================
 
@@ -774,10 +891,89 @@ void DSaveMenu::DoSave (FSaveGameNode *node)
 		}
 		G_SaveGame (filename, savegamestring);
 	}
-	Destroy();
+	M_ClearMenus();
 	BorderNeedRefresh = screen->GetPageCount ();
 }
 
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+bool DSaveMenu::MenuEvent (int mkey)
+{
+	if (SelSaveGame == NULL || SelSaveGame->Succ == NULL)
+	{
+		return false;
+	}
+	if (Super::MenuEvent(mkey)) 
+	{
+		return true;
+	}
+
+	if (mkey == MKEY_Enter)
+	{
+		/* todo: implement a proper input class
+		// we are going to be intercepting all chars
+		genStringEnter = 1;
+		genStringEnd = M_DoSave;
+		genStringCancel = M_CancelSaveName;
+		genStringLen = SAVESTRINGSIZE-1;
+
+		if (file != &NewSaveNode)
+		{
+			strcpy (savegamestring, file->Title);
+		}
+		else
+		{
+			// If we are naming a new save, don't start the cursor on "end".
+			if (InputGridX == INPUTGRID_WIDTH - 1 && InputGridY == INPUTGRID_HEIGHT - 1)
+			{
+				InputGridX = 0;
+				InputGridY = 0;
+			}
+			savegamestring[0] = 0;
+		}
+		saveCharIndex = strlen (savegamestring);
+		*/
+	}
+	else if (mkey == MKEY_Input)
+	{
+		DoSave(SelSaveGame);
+	}
+	return false;
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+bool DSaveMenu::Responder (event_t *ev)
+{
+	if (ev->subtype == EV_GUI_KeyDown)
+	{
+		if (SelSaveGame != NULL && SelSaveGame->Succ != NULL)
+		{
+			switch (ev->data1)
+			{
+			case GK_DEL:
+			case '\b':
+				// cannot delete 'new save game' item
+				if (SelSaveGame == &NewSaveNode) return true;
+				break;
+
+			case 'N':
+				SelSaveGame = TopSaveGame = &NewSaveNode;
+				UnloadSaveData ();
+				return true;
+			}
+		}
+	}
+	return Super::Responder(ev);
+}
 
 //=============================================================================
 //
@@ -792,127 +988,58 @@ class DLoadMenu : public DLoadSaveMenu
 public:
 
 	DLoadMenu(DMenu *parent = NULL, FListMenuDescriptor *desc = NULL);
-	~DLoadMenu();
 
+	bool MenuEvent (int mkey);
 };
 
 IMPLEMENT_CLASS(DLoadMenu)
 
 
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
 DLoadMenu::DLoadMenu(DMenu *parent, FListMenuDescriptor *desc)
 : DLoadSaveMenu(parent, desc)
 {
-	SaveGames.AddHead (&NewSaveNode);
 	TopSaveGame = static_cast<FSaveGameNode *>(SaveGames.Head);
-	if (lastSaveSlot == NULL)
-	{
-		SelSaveGame = &NewSaveNode;
-	}
-	else
-	{
-		SelSaveGame = lastSaveSlot;
-	}
 	ExtractSaveData (SelSaveGame);
 }
 
-DLoadMenu::~DLoadMenu()
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+bool DLoadMenu::MenuEvent (int mkey)
 {
-}
-
-
-/*
-
-static bool M_SaveLoadResponder (event_t *ev)
-{
-	if (ev->subtype != EV_GUI_KeyDown)
+	if (SelSaveGame == NULL || SelSaveGame->Succ == NULL)
 	{
 		return false;
 	}
-	if (SelSaveGame != NULL && SelSaveGame->Succ != NULL)
+	if (Super::MenuEvent(mkey)) 
 	{
-		switch (ev->data1)
+		return true;
+	}
+
+	if (mkey == MKEY_Enter)
+	{
+		G_LoadGame (SelSaveGame->Filename.GetChars());
+		if (gamestate == GS_FULLCONSOLE)
 		{
-		case GK_F1:
-			if (!SelSaveGame->Filename.IsEmpty())
-			{
-				char workbuf[512];
-
-				mysnprintf (workbuf, countof(workbuf), "File on disk:\n%s", SelSaveGame->Filename.GetChars());
-				if (SaveComment != NULL)
-				{
-					V_FreeBrokenLines (SaveComment);
-				}
-				SaveComment = V_BreakLines (SmallFont, 216*screen->GetWidth()/640/CleanXfac, workbuf);
-			}
-			break;
-
-		case GK_DEL:
-		case '\b':
-			if (SelSaveGame != &NewSaveNode)
-			{
-				EndString.Format("%s" TEXTCOLOR_WHITE "%s" TEXTCOLOR_NORMAL "?\n\n%s",
-					GStrings("MNU_DELETESG"), SelSaveGame->Title, GStrings("PRESSYN"));
-					
-				M_StartMessage (EndString, M_DeleteSaveResponse);
-			}
-			break;
-
-		case 'N':
-			if (currentMenu == &SaveDef)
-			{
-				SelSaveGame = TopSaveGame = &NewSaveNode;
-				M_UnloadSaveData ();
-			}
-			break;
+			gamestate = GS_HIDECONSOLE;
 		}
-	}
-	return true;
-}
-
-static void M_LoadSelect (const FSaveGameNode *file)
-{
-	G_LoadGame (file->Filename.GetChars());
-	if (gamestate == GS_FULLCONSOLE)
-	{
-		gamestate = GS_HIDECONSOLE;
-	}
-	if (quickSaveSlot == (FSaveGameNode *)1)
-	{
-		quickSaveSlot = SelSaveGame;
-	}
-	M_ClearMenus ();
-	BorderNeedRefresh = screen->GetPageCount ();
-}
-
-//
-// User wants to save. Start string input for M_Responder
-//
-static void M_CancelSaveName ()
-{
-}
-
-static void M_SaveSelect (const FSaveGameNode *file)
-{
-	// we are going to be intercepting all chars
-	genStringEnter = 1;
-	genStringEnd = M_DoSave;
-	genStringCancel = M_CancelSaveName;
-	genStringLen = SAVESTRINGSIZE-1;
-
-	if (file != &NewSaveNode)
-	{
-		strcpy (savegamestring, file->Title);
-	}
-	else
-	{
-		// If we are naming a new save, don't start the cursor on "end".
-		if (InputGridX == INPUTGRID_WIDTH - 1 && InputGridY == INPUTGRID_HEIGHT - 1)
+		if (quickSaveSlot == (FSaveGameNode *)1)
 		{
-			InputGridX = 0;
-			InputGridY = 0;
+			quickSaveSlot = SelSaveGame;
 		}
-		savegamestring[0] = 0;
+		M_ClearMenus();
+		BorderNeedRefresh = screen->GetPageCount ();
+		return true;
 	}
-	saveCharIndex = strlen (savegamestring);
+	return false;
 }
-*/
+

@@ -26,6 +26,7 @@ enum EMenuKey
 	MKEY_Enter,
 	MKEY_Back,		// Back to previous menu
 	MKEY_Clear,		// Clear keybinding/flip player sprite preview
+	MKEY_Input,		// Sent when input is confirmed
 
 	NUM_MKEYS
 };
@@ -39,6 +40,8 @@ struct FGameStartup
 };
 
 extern FGameStartup GameStartupInfo;
+
+void M_ClearMenus ();
 
 //=============================================================================
 //
@@ -126,7 +129,6 @@ public:
 	TObjPtr<DMenu> mParentMenu;
 
 	DMenu(DMenu *parent = NULL);
-	virtual ~DMenu();
 	virtual bool Responder (event_t *ev);
 	virtual bool MenuEvent (int mkey);
 	virtual void Ticker ();
@@ -280,7 +282,6 @@ class DListMenu : public DMenu
 
 public:
 	DListMenu(DMenu *parent = NULL, FListMenuDescriptor *desc = NULL);
-	~DListMenu();
 	void Init(DMenu *parent = NULL, FListMenuDescriptor *desc = NULL);
 	bool Responder (event_t *ev);
 	bool MenuEvent (int mkey);

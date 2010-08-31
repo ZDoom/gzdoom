@@ -59,9 +59,6 @@ int DMenu::MenuTime;
 FListMenuDescriptor *MainMenu;
 FGameStartup GameStartupInfo;
 
-void M_ClearMenus ();
-
-
 //============================================================================
 //
 // DMenu base class
@@ -78,10 +75,6 @@ DMenu::DMenu(DMenu *parent)
 	GC::WriteBarrier(this, parent);
 }
 	
-DMenu::~DMenu() 
-{
-}
-
 bool DMenu::Responder (event_t *ev) 
 { 
 	return false; 
@@ -93,8 +86,8 @@ bool DMenu::MenuEvent (int mkey)
 	{
 	case MKEY_Back:
 	{
-		DMenu *thismenu = DMenu::CurrentMenu;
-		DMenu::CurrentMenu = DMenu::CurrentMenu->mParentMenu;
+		assert(DMenu::CurrentMenu == this);
+		DMenu::CurrentMenu = mParentMenu;
 		if (DMenu::CurrentMenu != NULL)
 		{
 			GC::WriteBarrier(DMenu::CurrentMenu);
@@ -105,7 +98,8 @@ bool DMenu::MenuEvent (int mkey)
 			M_ClearMenus ();
 			S_Sound (CHAN_VOICE | CHAN_UI, "menu/clear", snd_menuvolume, ATTN_NONE);
 		}
-		thismenu->Destroy();
+		Destroy();
+		M_ClearMenus();
 		return true;
 	}
 	}
@@ -184,6 +178,15 @@ void M_SetMenu(FName menu, int param)
 		}
 		M_ClearMenus ();
 		return;
+
+	case NAME_Savemenu:
+		if (!usergame || (players[consoleplayer].health <= 0 && !multiplayer))
+		{
+			// cannot save outside the game.
+			//M_StartMessage (GStrings("SAVEDEAD"), NULL);
+			return;
+		}
+
 	}
 
 	FMenuDescriptor **desc = MenuDescriptors.CheckKey(menu);

@@ -34,6 +34,7 @@
 
 #include "doomdef.h"
 #include "doomstat.h"
+#include "c_dispatch.h"
 #include "d_gui.h"
 #include "d_player.h"
 #include "g_level.h"
@@ -176,7 +177,7 @@ void M_SetMenu(FName menu, int param)
 			gameaction = ga_newgame;
 		}
 		M_ClearMenus ();
-		break;
+		return;
 	}
 
 	FMenuDescriptor **desc = MenuDescriptors.CheckKey(menu);
@@ -184,11 +185,20 @@ void M_SetMenu(FName menu, int param)
 	{
 		if ((*desc)->mType == MDESC_ListMenu)
 		{
-			DMenu *newmenu = new DListMenu(NULL, static_cast<FListMenuDescriptor*>(*desc));
-			newmenu->mParentMenu = DMenu::CurrentMenu;
-			DMenu::CurrentMenu = newmenu;
-			GC::WriteBarrier(DMenu::CurrentMenu);
-			GC::WriteBarrier(DMenu::CurrentMenu, DMenu::CurrentMenu->mParentMenu);
+			FListMenuDescriptor *ld = static_cast<FListMenuDescriptor*>(*desc);
+			if (ld->mAutoselect >= 0 && ld->mAutoselect < (int)ld->mItems.Size())
+			{
+				// recursively activate the autoselected item without ever creating this menu.
+				ld->mItems[ld->mAutoselect]->Activate();
+			}
+			else
+			{
+				DMenu *newmenu = new DListMenu(NULL, ld);
+				newmenu->mParentMenu = DMenu::CurrentMenu;
+				DMenu::CurrentMenu = newmenu;
+				GC::WriteBarrier(DMenu::CurrentMenu);
+				GC::WriteBarrier(DMenu::CurrentMenu, DMenu::CurrentMenu->mParentMenu);
+			}
 		}
 		return;
 	}
@@ -288,6 +298,11 @@ void M_ClearMenus ()
 	drawSkull = true;
 	M_DemoNoPlay = false;
 	*/
+	if (DMenu::CurrentMenu != NULL)
+	{
+		DMenu::CurrentMenu->Destroy();
+		DMenu::CurrentMenu = NULL;
+	}
 	BorderNeedRefresh = screen->GetPageCount ();
 	menuactive = MENU_Off;
 }
@@ -295,6 +310,60 @@ void M_ClearMenus ()
 void M_Init (void) 
 {
 	M_ParseMenuDefs();
+}
+
+
+// CODE --------------------------------------------------------------------
+
+// [RH] Most menus can now be accessed directly
+// through console commands.
+CCMD (menu_main)
+{
+	M_StartControlPanel(true);
+	M_SetMenu(NAME_Mainmenu, -1);
+}
+
+CCMD (menu_load)
+{	// F3
+	M_StartControlPanel (true);
+	M_SetMenu(NAME_Loadgamemenu, -1);
+}
+
+CCMD (menu_save)
+{	// F2
+	M_StartControlPanel (true);
+	M_SetMenu(NAME_Savegamemenu, -1);
+}
+
+CCMD (menu_help)
+{	// F1
+	M_StartControlPanel (true);
+	M_SetMenu(NAME_Readthismenu, -1);
+}
+
+CCMD (menu_quit)
+{	// F10
+	//M_StartControlPanel (true);
+	S_Sound (CHAN_VOICE | CHAN_UI, "menu/activate", snd_menuvolume, ATTN_NONE);
+	M_SetMenu(NAME_Quitmenu, -1);
+}
+
+CCMD (menu_game)
+{
+	M_StartControlPanel (true);
+	M_SetMenu(NAME_Playerclassmenu, -1);	// The playerclass menu is the first in the 'start game' chain
+}
+								
+CCMD (menu_options)
+{
+	M_StartControlPanel (true);
+	M_SetMenu(NAME_Optionsmenu, -1);
+}
+
+CCMD (menu_player)
+{
+	//M_StartControlPanel (true);
+	//M_SetMenu(NAME_Playermenu, -1);
 }
 
 

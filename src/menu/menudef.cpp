@@ -1,6 +1,6 @@
 /*
 ** menudef.cpp
-** MENUDEF parser
+** MENUDEF parser amd menu generation code
 **
 **---------------------------------------------------------------------------
 ** Copyright 2010 Christoph Oelckers

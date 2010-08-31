@@ -1,3 +1,13 @@
+//-------------------------------------------------------------------------------------------
+//
+// Note:
+// Much of the menu structure defined here is accessed internally by CCMDs
+// and menu generation code. If you want to design your own menus make sure
+// that they are named identically and that links to all important submenus
+// are present.
+//
+//-------------------------------------------------------------------------------------------
+
 DEFAULTLISTMENU
 {
 	Font "BigFont"
@@ -202,4 +212,17 @@ ListMenu "SkillMenu"
 		StaticText 74, 16, "$MNU_CHOOSESKILL"
 		Position 38, 44
 	}
+}
+
+//-------------------------------------------------------------------------------------------
+//
+// Raven's game files menu
+//
+//-------------------------------------------------------------------------------------------
+
+ListMenu "GameFilesMenu"
+{
+	Position 110, 60
+	TextItem "$MNU_LOADGAME", "l", "LoadGameMenu"
+	TextItem "$MNU_SAVEGAME", "s", "SaveGameMenu"
 }

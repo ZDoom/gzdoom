@@ -292,7 +292,7 @@ inline void M_Deinit () {}
 inline void M_StartControlPanel (bool makeSound, bool wantTop=false) {}
 struct IJoystickConfig;
 inline void UpdateJoystickMenu(IJoystickConfig *selected) {}
-inline void M_NotifyNewSave (const char *file, const char *title, bool okForQuicksave) {}
+inline void M_NotifyNewSave (const char *file, const char *title, bool okForQuicksave);
 inline void M_InitVideoModesMenu (void) {}
 inline void M_RefreshModesList () {}
 

@@ -131,6 +131,7 @@ public:
 	virtual bool MenuEvent (int mkey);
 	virtual void Ticker ();
 	virtual void Drawer ();
+	virtual bool DimAllowed ();
 };
 
 //=============================================================================
@@ -280,6 +281,7 @@ class DListMenu : public DMenu
 public:
 	DListMenu(DMenu *parent = NULL, FListMenuDescriptor *desc = NULL);
 	~DListMenu();
+	void Init(DMenu *parent = NULL, FListMenuDescriptor *desc = NULL);
 	bool Responder (event_t *ev);
 	bool MenuEvent (int mkey);
 	void Ticker ();

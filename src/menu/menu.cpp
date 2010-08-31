@@ -75,6 +75,7 @@ END_POINTERS
 DMenu::DMenu(DMenu *parent) 
 {
 	mParentMenu = parent;
+	GC::WriteBarrier(this, parent);
 }
 	
 DMenu::~DMenu() 
@@ -118,6 +119,11 @@ void DMenu::Ticker ()
 
 void DMenu::Drawer () 
 {
+}
+
+bool DMenu::DimAllowed()
+{
+	return true;
 }
 
 
@@ -193,11 +199,12 @@ void M_SetMenu(FName menu, int param)
 			}
 			else
 			{
-				DMenu *newmenu = new DListMenu(NULL, ld);
-				newmenu->mParentMenu = DMenu::CurrentMenu;
+				const PClass *cls = ld->mClass == NULL? RUNTIME_CLASS(DListMenu) : ld->mClass;
+
+				DListMenu *newmenu = (DListMenu *)cls->CreateNew();
+				newmenu->Init(DMenu::CurrentMenu, ld);
 				DMenu::CurrentMenu = newmenu;
 				GC::WriteBarrier(DMenu::CurrentMenu);
-				GC::WriteBarrier(DMenu::CurrentMenu, DMenu::CurrentMenu->mParentMenu);
 			}
 		}
 		return;
@@ -283,8 +290,25 @@ void M_Ticker (void)
 
 void M_Drawer (void) 
 {
+	player_t *player = &players[consoleplayer];
+	AActor *camera = player->camera;
+	PalEntry fade = 0;
+
+	if (!screen->Accel2D && camera != NULL && (gamestate == GS_LEVEL || gamestate == GS_TITLELEVEL))
+	{
+		if (camera->player != NULL)
+		{
+			player = camera->player;
+		}
+		fade = PalEntry (BYTE(player->BlendA*255), BYTE(player->BlendR*255), BYTE(player->BlendG*255), BYTE(player->BlendB*255));
+	}
+
+
 	if (DMenu::CurrentMenu != NULL && menuactive == MENU_On) 
+	{
+		//if (DMenu::CurrentMenu::DimAllowed()) screen->Dim(fade);
 		DMenu::CurrentMenu->Drawer();
+	}
 }
 
 void M_ClearMenus ()

@@ -150,7 +150,7 @@ static void ParseListMenuBody(FScanner &sc, FListMenuDescriptor *desc)
 			const PClass *cls = PClass::FindClass(sc.String);
 			if (cls == NULL || !cls->IsDescendantOf(RUNTIME_CLASS(DListMenu)))
 			{
-				//sc.ScriptError("Unknown menu class '%s'", sc.String);
+				sc.ScriptError("Unknown menu class '%s'", sc.String);
 			}
 			desc->mClass = cls;
 		}
@@ -374,6 +374,7 @@ static void ParseListMenu(FScanner &sc)
 	desc->mNetgameMessage = DefaultListMenuSettings.mNetgameMessage;
 	desc->mFont = DefaultListMenuSettings.mFont;
 	desc->mFontColor = DefaultListMenuSettings.mFontColor;
+	desc->mClass = NULL;
 
 	FMenuDescriptor **pOld = MenuDescriptors.CheckKey(desc->mMenuName);
 	if (pOld != NULL && *pOld != NULL) delete *pOld;

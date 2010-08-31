@@ -73,6 +73,19 @@ DListMenu::~DListMenu()
 //
 //=============================================================================
 
+void DListMenu::Init(DMenu *parent, FListMenuDescriptor *desc)
+{
+	mParentMenu = parent;
+	GC::WriteBarrier(this, parent);
+	mDesc = desc;
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
 bool DListMenu::Responder (event_t *ev)
 {
 	return false;

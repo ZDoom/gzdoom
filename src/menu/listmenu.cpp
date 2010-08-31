@@ -87,7 +87,7 @@ bool DListMenu::Responder (event_t *ev)
 //
 //=============================================================================
 
-bool DListMenu::MenuEvent (int mkey)
+bool DListMenu::MenuEvent (int mkey, bool fromcontroller)
 {
 	int startedAt = mDesc->mSelectedItem;
 
@@ -113,7 +113,7 @@ bool DListMenu::MenuEvent (int mkey)
 		return mDesc->mItems[mDesc->mSelectedItem]->Activate();
 
 	default:
-		return Super::MenuEvent(mkey);
+		return Super::MenuEvent(mkey, fromcontroller);
 	}
 }
 
@@ -293,49 +293,6 @@ void FListMenuItemStaticText::Drawer()
 			screen->DrawText (mFont, mColor, x, -mYpos*CleanYfac, text, DTA_CleanNoMove, true, TAG_DONE);
 		}
 	}
-}
-
-//=============================================================================
-//
-// Hexen's player class display
-//
-//=============================================================================
-
-FListMenuItemHexenPlayer::FListMenuItemHexenPlayer(FListMenuDescriptor *menu, int x, int y)
-: FListMenuItem(x, y)
-{
-	mOwner = menu;	// we need this to get the currently selected player
-}
-
-void FListMenuItemHexenPlayer::AddFrame(const char *tex)
-{
-	FTextureID t = TexMan.CheckForTexture(tex, FTexture::TEX_MiscPatch);
-	mTextures.Push(t);
-}
-
-void FListMenuItemHexenPlayer::AddAnimation(const char *tex)
-{
-	FString tname;
-	for(int i=1;i<=4;i++)
-	{
-		tname.Format(tex, i);
-		AddFrame(tname);
-	}
-}
-
-void FListMenuItemHexenPlayer::Drawer()
-{
-	int sel = mOwner->mSelectedItem;
-	int classnum;
-	FName seltype = mOwner->mItems[sel]->GetAction(&classnum);
-
-	if (seltype != NAME_Episodemenu) return;
-	if (classnum < 0 || classnum >= (int)mTextures.Size()/4)
-	{
-		classnum = (DMenu::MenuTime>>2) % 3;
-	}
-	screen->DrawTexture (TexMan[mTextures[classnum*5]], mXpos, mYpos, DTA_Clean, true, TAG_DONE);
-	screen->DrawTexture (TexMan[mTextures[classnum*5 + ((DMenu::MenuTime >> 3) & 3) + 1]], mXpos + 24, mYpos + 12, DTA_Clean, true, TAG_DONE);
 }
 
 //=============================================================================

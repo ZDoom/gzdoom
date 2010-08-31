@@ -420,6 +420,21 @@ void FListMenuItemPlayerDisplay::Drawer()
 		return;
 	}
 
+	const char *portrait = mPlayerClass->Type->Meta.GetMetaString(APMETA_Portrait);
+
+	if (portrait != NULL)
+	{
+		FTextureID texid = TexMan.CheckForTexture(portrait, FTexture::TEX_MiscPatch);
+		if (texid.isValid())
+		{
+			FTexture *tex = TexMan(texid);
+			if (tex != NULL)
+			{
+				screen->DrawTexture (tex, mXpos, mYpos, DTA_Clean, true, TAG_DONE);
+				return;
+			}
+		}
+	}
 	int x = (mXpos - 160) * CleanXfac + (SCREENWIDTH>>1);
 	int y = (mYpos - 100) * CleanYfac + (SCREENHEIGHT>>1);
 
@@ -449,3 +464,4 @@ void FListMenuItemPlayerDisplay::Drawer()
 		}
 	}
 }
+

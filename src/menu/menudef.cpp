@@ -306,26 +306,6 @@ static void ParseListMenuBody(FScanner &sc, FListMenuDescriptor *desc)
 			sc.MustGetString();
 			desc->mNetgameMessage = sc.String;
 		}
-		else if (sc.Compare("HexenPlayerDisplay"))
-		{
-			sc.MustGetNumber();
-			int x = sc.Number;
-			sc.MustGetStringName(",");
-			sc.MustGetNumber();
-			int y = sc.Number;
-			sc.MustGetStringName(",");
-			FListMenuItemHexenPlayer *hex = new FListMenuItemHexenPlayer(desc, x, y);
-			desc->mItems.Push(hex);
-			do
-			{
-				sc.MustGetString();
-				hex->AddFrame(sc.String);
-				sc.MustGetStringName(",");
-				sc.MustGetString();
-				hex->AddAnimation(sc.String);
-			}
-			while (sc.CheckString(","));
-		}
 		else if (sc.Compare("PlayerDisplay"))
 		{
 			sc.MustGetNumber();
@@ -457,73 +437,51 @@ void M_ParseMenuDefs()
 	{
 		if ((*desc)->mType == MDESC_ListMenu)
 		{
-			if (gameinfo.gametype == GAME_Hexen && PlayerClasses.Size () == 3 &&
-				PlayerClasses[0].Type->IsDescendantOf (PClass::FindClass (NAME_FighterPlayer)) &&
-				PlayerClasses[1].Type->IsDescendantOf (PClass::FindClass (NAME_ClericPlayer)) &&
-				PlayerClasses[2].Type->IsDescendantOf (PClass::FindClass (NAME_MagePlayer)))
+			FListMenuDescriptor *ld = static_cast<FListMenuDescriptor*>(*desc);
+			// add player display
+			ld->mSelectedItem = ld->mItems.Size();
+			if (PlayerClasses.Size() == 1)
 			{
-				// Use Hexen's standard PlayerClass menu
-				FMenuDescriptor **desc2 = MenuDescriptors.CheckKey(NAME_HexenDefaultPlayerclassmenu);
-				if (desc2 != NULL)
-				{
-					// Replace the generic player class menu with the special Hexen version.
-					if ((*desc2)->mType == MDESC_ListMenu)
-					{
-						(*desc2)->mMenuName = (*desc)->mMenuName;
-						delete *desc;
-						*desc = *desc2;
-						*desc2 = NULL;
-
-					}
-				}
+				ld->mAutoselect = ld->mSelectedItem;
 			}
-			else
+			
+			int n = 0;
+			for (unsigned i = 0; i < PlayerClasses.Size (); i++, n++)
 			{
-				FListMenuDescriptor *ld = static_cast<FListMenuDescriptor*>(*desc);
-				// add player display
-				ld->mSelectedItem = ld->mItems.Size();
-				if (PlayerClasses.Size() == 1)
+				if (!(PlayerClasses[i].Flags & PCF_NOMENU))
 				{
-					ld->mAutoselect = ld->mSelectedItem;
-				}
-				
-				int n = 0;
-				for (unsigned i = 0; i < PlayerClasses.Size (); i++, n++)
-				{
-					if (!(PlayerClasses[i].Flags & PCF_NOMENU))
-					{
-						const char *pname = PlayerClasses[i].Type->Meta.GetMetaString (APMETA_DisplayName);
-						if (pname != NULL)
-						{
-							FListMenuItemText *it = new FListMenuItemText(ld->mXpos, ld->mYpos, *pname,
-								pname, ld->mFont,ld->mFontColor, NAME_Episodemenu, i);
-							ld->mItems.Push(it);
-						}
-					}
-				}
-				if (n > 1)
-				{
-					FListMenuItemText *it = new FListMenuItemText(ld->mXpos, ld->mYpos, 'r',
-						"$MNU_RANDOM", ld->mFont,ld->mFontColor, NAME_Episodemenu, -1);
-					ld->mItems.Push(it);
-				}
-				if (n == 0)
-				{
-					const char *pname = PlayerClasses[0].Type->Meta.GetMetaString (APMETA_DisplayName);
+					const char *pname = PlayerClasses[i].Type->Meta.GetMetaString (APMETA_DisplayName);
 					if (pname != NULL)
 					{
 						FListMenuItemText *it = new FListMenuItemText(ld->mXpos, ld->mYpos, *pname,
-							pname, ld->mFont,ld->mFontColor, NAME_Episodemenu, 0);
+							pname, ld->mFont,ld->mFontColor, NAME_Episodemenu, i);
 						ld->mItems.Push(it);
+						ld->mYpos += ld->mLinespacing;
 					}
 				}
-				/*
-				if (ClassMenuDef.numitems > 4)
-				{
-					ClassMenuDef.y -= LINEHEIGHT;
-				}
-				*/
 			}
+			if (n > 1)
+			{
+				FListMenuItemText *it = new FListMenuItemText(ld->mXpos, ld->mYpos, 'r',
+					"$MNU_RANDOM", ld->mFont,ld->mFontColor, NAME_Episodemenu, -1);
+				ld->mItems.Push(it);
+			}
+			if (n == 0)
+			{
+				const char *pname = PlayerClasses[0].Type->Meta.GetMetaString (APMETA_DisplayName);
+				if (pname != NULL)
+				{
+					FListMenuItemText *it = new FListMenuItemText(ld->mXpos, ld->mYpos, *pname,
+						pname, ld->mFont,ld->mFontColor, NAME_Episodemenu, 0);
+					ld->mItems.Push(it);
+				}
+			}
+			/*
+			if (ClassMenuDef.numitems > 4)
+			{
+				ClassMenuDef.y -= LINEHEIGHT;
+			}
+			*/
 			/* set default to an item with (NAME_Episodemenu, PlayerClassindex)
 			int PlayerClassindex = players[consoleplayer].userinfo.PlayerClass;
 			*/

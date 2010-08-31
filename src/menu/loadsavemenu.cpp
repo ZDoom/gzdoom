@@ -3,6 +3,7 @@
 ** The load game and save game menus
 **
 **---------------------------------------------------------------------------
+** Copyright 2001-2010 Randy Heit
 ** Copyright 2010 Christoph Oelckers
 ** All rights reserved.
 **
@@ -94,7 +95,7 @@ protected:
 	void ClearSaveStuff ();
 	void ExtractSaveData (const FSaveGameNode *node);
 	void Drawer ();
-	bool MenuEvent (int mkey);
+	bool MenuEvent (int mkey, bool fromcontroller);
 	bool Responder(event_t *ev);
 
 };
@@ -699,7 +700,7 @@ void DLoadSaveMenu::Drawer ()
 //
 //=============================================================================
 
-bool DLoadSaveMenu::MenuEvent (int mkey)
+bool DLoadSaveMenu::MenuEvent (int mkey, bool fromcontroller)
 {
 	if (SelSaveGame == NULL || SelSaveGame->Succ == NULL)
 	{
@@ -742,7 +743,7 @@ bool DLoadSaveMenu::MenuEvent (int mkey)
 		return false;
 
 	default:
-		return Super::MenuEvent(mkey);
+		return Super::MenuEvent(mkey, fromcontroller);
 	}
 }
 
@@ -807,7 +808,7 @@ public:
 	void Destroy();
 	void DoSave (FSaveGameNode *node);
 	bool Responder (event_t *ev);
-	bool MenuEvent (int mkey);
+	bool MenuEvent (int mkey, bool fromcontroller);
 
 };
 
@@ -901,13 +902,13 @@ void DSaveMenu::DoSave (FSaveGameNode *node)
 //
 //=============================================================================
 
-bool DSaveMenu::MenuEvent (int mkey)
+bool DSaveMenu::MenuEvent (int mkey, bool fromcontroller)
 {
 	if (SelSaveGame == NULL || SelSaveGame->Succ == NULL)
 	{
 		return false;
 	}
-	if (Super::MenuEvent(mkey)) 
+	if (Super::MenuEvent(mkey, fromcontroller)) 
 	{
 		return true;
 	}
@@ -989,7 +990,7 @@ public:
 
 	DLoadMenu(DMenu *parent = NULL, FListMenuDescriptor *desc = NULL);
 
-	bool MenuEvent (int mkey);
+	bool MenuEvent (int mkey, bool fromcontroller);
 };
 
 IMPLEMENT_CLASS(DLoadMenu)
@@ -1014,13 +1015,13 @@ DLoadMenu::DLoadMenu(DMenu *parent, FListMenuDescriptor *desc)
 //
 //=============================================================================
 
-bool DLoadMenu::MenuEvent (int mkey)
+bool DLoadMenu::MenuEvent (int mkey, bool fromcontroller)
 {
 	if (SelSaveGame == NULL || SelSaveGame->Succ == NULL)
 	{
 		return false;
 	}
-	if (Super::MenuEvent(mkey)) 
+	if (Super::MenuEvent(mkey, fromcontroller)) 
 	{
 		return true;
 	}

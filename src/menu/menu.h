@@ -130,7 +130,7 @@ public:
 
 	DMenu(DMenu *parent = NULL);
 	virtual bool Responder (event_t *ev);
-	virtual bool MenuEvent (int mkey);
+	virtual bool MenuEvent (int mkey, bool fromcontroller);
 	virtual void Ticker ();
 	virtual void Drawer ();
 	virtual bool DimAllowed ();
@@ -196,19 +196,6 @@ public:
 	FListMenuItemStaticText(int x, int y, const char *text, FFont *font, EColorRange color, bool centered);
 	void Drawer();
 };
-
-class FListMenuItemHexenPlayer : public FListMenuItem
-{
-	FListMenuDescriptor *mOwner;
-	TArray<FTextureID> mTextures;
-public:
-
-	FListMenuItemHexenPlayer(FListMenuDescriptor *menu, int x, int y);
-	void AddFrame(const char *tex);
-	void AddAnimation(const char *tex);
-	virtual void Drawer();
-};
-
 
 class FListMenuItemPlayerDisplay : public FListMenuItem
 {
@@ -284,7 +271,7 @@ public:
 	DListMenu(DMenu *parent = NULL, FListMenuDescriptor *desc = NULL);
 	void Init(DMenu *parent = NULL, FListMenuDescriptor *desc = NULL);
 	bool Responder (event_t *ev);
-	bool MenuEvent (int mkey);
+	bool MenuEvent (int mkey, bool fromcontroller);
 	void Ticker ();
 	void Drawer ();
 };

@@ -80,7 +80,7 @@ bool DMenu::Responder (event_t *ev)
 	return false; 
 }
 
-bool DMenu::MenuEvent (int mkey)
+bool DMenu::MenuEvent (int mkey, bool fromcontroller)
 {
 	switch (mkey)
 	{
@@ -240,6 +240,7 @@ bool M_Responder (event_t *ev)
 		{
 			// improve this later. For now it just has to work
 			int mkey = -1;
+			bool fromcontroller = false;
 			switch (ev->data1)
 			{
 				case KEY_ESCAPE:			mkey = MKEY_Back;		break;
@@ -251,10 +252,11 @@ bool M_Responder (event_t *ev)
 				case KEY_BACKSPACE:			mkey = MKEY_Clear;		break;
 				case KEY_PGUP:				mkey = MKEY_PageUp;		break;
 				case KEY_PGDN:				mkey = MKEY_PageDown;	break;
+				case KEY_HOME:				mkey = MKEY_Enter; fromcontroller = true;	break; // for testing the input grid
 			}
 			if (mkey != -1)
 			{
-				return DMenu::CurrentMenu->MenuEvent(mkey);
+				return DMenu::CurrentMenu->MenuEvent(mkey, fromcontroller);
 			}
 		}
 

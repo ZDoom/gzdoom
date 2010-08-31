@@ -111,43 +111,26 @@ ListMenu "PlayerclassMenu"
 		NetgameMessage "$CNETGAME"
 	}
 
-	StaticTextCentered 160, 15, "$MNU_CHOOSECLASS"
 	IfGame(Doom, Strife, Chex)
 	{
+		StaticTextCentered 160, 15, "$MNU_CHOOSECLASS"
 		Position 48, 63
 		PlayerDisplay 220, 63, "20 00 00", "80 00 40"
 	}
 	IfGame(Heretic)
 	{
+		StaticTextCentered 160, 15, "$MNU_CHOOSECLASS"
 		Position 80, 50
 		PlayerDisplay 220, 50, "20 00 00", "80 00 40"
 	}
 	IfGame(Hexen)
 	{
-		Position 80, 50
-		PlayerDisplay 220, 50, "00 07 00", "40 53 40"
+		StaticText 34, 24, "$MNU_CHOOSECLASS"
+		Position 66, 58
+		PlayerDisplay 174, 8, "00 07 00", "40 53 40"
 	}
 	// The rest of this menu will be set up based on the actual player definitions.
 }
-
-//-------------------------------------------------------------------------------------------
-//
-// Hexen's default player class menu
-// This menu is never used directly. Its contents are copied into PlayerclassMenu if appropriate.
-//
-//-------------------------------------------------------------------------------------------
-
-ListMenu "HexenDefaultPlayerclassMenu"
-{
-
-	StaticText 34, 24, "$MNU_CHOOSECLASS"
-	HexenPlayerDisplay 174, 8, "M_FBOX", "M_FWALK%d", "M_CBOX", "M_CWALK%d", "M_MBOX", "M_MWALK%d"
-	Position 66, 58
-	TextItem "$MNU_FIGHTER", "f", "EpisodeMenu", 0
-	TextItem "$MNU_CLERIC", "c", "EpisodeMenu", 1
-	TextItem "$MNU_MAGE", "m", "EpisodeMenu", 2
-	TextItem "$MNU_RANDOM", "r", "EpisodeMenu", -1
-}	
 
 //-------------------------------------------------------------------------------------------
 //

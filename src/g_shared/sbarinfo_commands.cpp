@@ -614,6 +614,19 @@ class CommandDrawString : public SBarInfoCommand
 								sc.ScriptError("Unknown alignment '%s'.", sc.String);
 							sc.MustGetToken(')');
 						}
+						else if(sc.Compare("drawshadow"))
+						{
+							if(sc.CheckToken('('))
+							{
+								sc.MustGetToken(TK_IntConst);
+								shadowX = sc.Number;
+								sc.MustGetToken(',');
+								sc.MustGetToken(TK_IntConst);
+								shadowY = sc.Number;
+								sc.MustGetToken(')');
+							}
+							shadow = true;
+						}
 						else
 							sc.ScriptError("Unknown flag '%s'.", sc.String);
 						if(!sc.CheckToken('|') && !sc.CheckToken(',')) break;

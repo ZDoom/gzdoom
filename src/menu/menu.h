@@ -27,6 +27,7 @@ enum EMenuKey
 	MKEY_Back,		// Back to previous menu
 	MKEY_Clear,		// Clear keybinding/flip player sprite preview
 	MKEY_Input,		// Sent when input is confirmed
+	MKEY_Abort,		// Input aborted
 
 	NUM_MKEYS
 };

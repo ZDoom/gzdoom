@@ -33,13 +33,13 @@
 #include <math.h>
 #ifdef _MSC_VER
 #include <malloc.h>		// for alloca()
-#include <direct.h>
 #endif
 
 #ifndef _WIN32
 #include <unistd.h>
 
 #else
+#include <direct.h>
 
 #define rmdir _rmdir
 
@@ -1201,7 +1201,7 @@ static bool CheckCachedNodes(MapData *map)
 
 	if (fread(&numlin, 4, 1, f) != 1) goto errorout; 
 	numlin = LittleLong(numlin);
-	if (numlin != numlines) goto errorout;
+	if ((int)numlin != numlines) goto errorout;
 
 	if (fread(md5, 1, 16, f) != 16) goto errorout;
 	map->GetChecksum(md5map);
@@ -1445,7 +1445,7 @@ void P_SetRenderSector()
 
 	for(i=0;i<numsegs;i++)
 	{
-		if (glsegextras[i].PartnerSeg != DWORD_MAX && glsegextras[glsegextras[i].PartnerSeg].PartnerSeg!=i)
+		if (glsegextras[i].PartnerSeg != DWORD_MAX && glsegextras[glsegextras[i].PartnerSeg].PartnerSeg!=(DWORD)i)
 		{
 			glsegextras[i].PartnerSeg=DWORD_MAX;
 		}

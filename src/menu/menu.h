@@ -1,5 +1,5 @@
-#ifndef __M_MENU_H__
-#define __M_MENU_H__
+#ifndef __M_MENU_MENU_H__
+#define __M_MENU_MENU_H__
 
 
 
@@ -30,6 +30,15 @@ enum EMenuKey
 	NUM_MKEYS
 };
 
+
+struct FGameStartup
+{
+	const char *PlayerClass;
+	int Episode;
+	int Skill;
+};
+
+extern FGameStartup GameStartupInfo;
 
 //=============================================================================
 //
@@ -63,7 +72,7 @@ struct FListMenuDescriptor : public FMenuDescriptor
 	int mXpos, mYpos;
 	int mLinespacing;	// needs to be stored for dynamically created menus
 	FString mNetgameMessage;
-	int mAutoselect;	// this can only be set by
+	int mAutoselect;	// this can only be set by internal menu creation functions
 	FFont *mFont;
 	EColorRange mFontColor;
 };
@@ -73,6 +82,7 @@ typedef TMap<FName, FMenuDescriptor *> MenuDescriptorList;
 extern MenuDescriptorList MenuDescriptors;
 
 void M_ParseMenuDefs();
+void M_StartupSkillMenu(FGameStartup *gs);
 
 //=============================================================================
 //

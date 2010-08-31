@@ -41,7 +41,7 @@
 #include "menu/menu.h"
 
 IMPLEMENT_CLASS(DListMenu)
-void M_SetMenu(FName menu);
+void M_SetMenu(FName menu, int param = -1);
 
 
 
@@ -342,12 +342,7 @@ bool FListMenuItemSelectable::Selectable()
 
 bool FListMenuItemSelectable::Activate()
 {
-	if (mParam >= 0)
-	{
-		// Todo: handle parameters for start game submenus
-		//M_SetParam(mAction, mParam);
-	}
-	M_SetMenu(mAction);
+	M_SetMenu(mAction, mParam);
 	return true;
 }
 

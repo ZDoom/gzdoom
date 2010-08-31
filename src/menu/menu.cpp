@@ -35,6 +35,8 @@
 #include "doomdef.h"
 #include "doomstat.h"
 #include "d_gui.h"
+#include "d_player.h"
+#include "g_level.h"
 #include "c_console.h"
 #include "s_sound.h"
 #include "p_tick.h"
@@ -54,6 +56,7 @@ DMenu *DMenu::CurrentMenu;
 int DMenu::MenuTime;
 
 FListMenuDescriptor *MainMenu;
+FGameStartup GameStartupInfo;
 
 void M_ClearMenus ();
 
@@ -136,8 +139,46 @@ void M_StartControlPanel (bool makeSound)
 	}
 }
 
-void M_SetMenu(FName menu)
+void M_SetMenu(FName menu, int param)
 {
+	// some menus need some special treatment
+	switch (menu)
+	{
+	case NAME_Episodemenu:
+		// sent from the player class menu
+		GameStartupInfo.Skill = -1;
+		GameStartupInfo.Episode = -1;
+		GameStartupInfo.PlayerClass = 
+			param == -1? "Random" : PlayerClasses[param].Type->Meta.GetMetaString (APMETA_DisplayName);
+		break;
+
+	case NAME_Skillmenu:
+		// sent from the episode menu
+		GameStartupInfo.Episode = param;
+		M_StartupSkillMenu(&GameStartupInfo);	// needs player class name from class menu (later)
+		break;
+
+	case NAME_StartgameConfirm:
+		// sent from the skill menu
+		GameStartupInfo.Skill = param;
+		// Todo: 
+		break;
+
+	case NAME_Startgame:
+		// sent either from skill menu or confirmation screen. Skill gets only set if sent from skill menu
+		// Now we can finally start the game. Ugh...
+		if (GameStartupInfo.Skill == -1) GameStartupInfo.Skill = param;
+
+		G_DeferedInitNew (&GameStartupInfo);
+		if (gamestate == GS_FULLCONSOLE)
+		{
+			gamestate = GS_HIDECONSOLE;
+			gameaction = ga_newgame;
+		}
+		M_ClearMenus ();
+		break;
+	}
+
 	FMenuDescriptor **desc = MenuDescriptors.CheckKey(menu);
 	if (desc != NULL)
 	{
@@ -207,7 +248,7 @@ bool M_Responder (event_t *ev)
 			if (ev->data1 == KEY_ESCAPE)
 			{
 				M_StartControlPanel(true);
-				M_SetMenu(NAME_Mainmenu);
+				M_SetMenu(NAME_Mainmenu, -1);
 				return true;
 			}
 			// If devparm is set, pressing F1 always takes a screenshot no matter

@@ -352,6 +352,7 @@ static void ParseListMenu(FScanner &sc)
 	desc->mType = MDESC_ListMenu;
 	desc->mMenuName = sc.String;
 	desc->mSelectedItem = -1;
+	desc->mAutoselect = -1;
 	desc->mSelectOfsX = DefaultListMenuSettings.mSelectOfsX;
 	desc->mSelectOfsY = DefaultListMenuSettings.mSelectOfsY;
 	desc->mSelector = DefaultListMenuSettings.mSelector;
@@ -432,6 +433,10 @@ void M_ParseMenuDefs()
 				ld->mItems.Push(it);
 				posy += ld->mLinespacing;
 			}
+			if (AllEpisodes.Size() == 1)
+			{
+				ld->mAutoselect = ld->mSelectedItem;
+			}
 		}
 	}
 	// Build player class menu
@@ -445,7 +450,7 @@ void M_ParseMenuDefs()
 				PlayerClasses[1].Type->IsDescendantOf (PClass::FindClass (NAME_ClericPlayer)) &&
 				PlayerClasses[2].Type->IsDescendantOf (PClass::FindClass (NAME_MagePlayer)))
 			{
-				// Use Hexen's standard playerclass menu
+				// Use Hexen's standard PlayerClass menu
 				FMenuDescriptor **desc2 = MenuDescriptors.CheckKey(NAME_HexenDefaultPlayerclassmenu);
 				if (desc2 != NULL)
 				{
@@ -465,6 +470,10 @@ void M_ParseMenuDefs()
 				FListMenuDescriptor *ld = static_cast<FListMenuDescriptor*>(*desc);
 				// add player display
 				ld->mSelectedItem = ld->mItems.Size();
+				if (PlayerClasses.Size() == 1)
+				{
+					ld->mAutoselect = ld->mSelectedItem;
+				}
 				
 				int n = 0;
 				for (unsigned i = 0; i < PlayerClasses.Size (); i++, n++)
@@ -503,9 +512,100 @@ void M_ParseMenuDefs()
 				}
 				*/
 			}
-			/* set default to an item with (NAME_Episodemenu, playerclassindex)
-			int playerclassindex = players[consoleplayer].userinfo.PlayerClass;
+			/* set default to an item with (NAME_Episodemenu, PlayerClassindex)
+			int PlayerClassindex = players[consoleplayer].userinfo.PlayerClass;
 			*/
+
+		}
+	}
+}
+
+//=============================================================================
+//
+// THe skill menu must be refeshed each time it starts up
+//
+//=============================================================================
+
+void M_StartupSkillMenu(FGameStartup *gs)
+{
+	static bool done = false;
+	FMenuDescriptor **desc = MenuDescriptors.CheckKey(NAME_Skillmenu);
+	if (desc != NULL)
+	{
+		if ((*desc)->mType == MDESC_ListMenu)
+		{
+			FListMenuDescriptor *ld = static_cast<FListMenuDescriptor*>(*desc);
+			int x = ld->mXpos;
+			int y = ld->mYpos;
+			if (gameinfo.gametype == GAME_Hexen)
+			{
+				// THere really needs to be a better way to do this... :(
+				if (gs->PlayerClass != NULL)
+				{
+					if (!stricmp(gs->PlayerClass, "fighter")) x = 120;
+					else if (!stricmp(gs->PlayerClass, "cleric")) x = 116;
+					else if (!stricmp(gs->PlayerClass, "mage")) x = 112;
+				}
+			}
+			// Delete previous contents
+			for(unsigned i=0; i<ld->mItems.Size(); i++)
+			{
+				FName n = ld->mItems[i]->GetAction(NULL);
+				if (n == NAME_Startgame || n == NAME_StartgameConfirm) 
+				{
+					for(unsigned j=i; j<ld->mItems.Size(); j++)
+					{
+						delete ld->mItems[j];
+					}
+					ld->mItems.Resize(i);
+					break;
+				}
+			}
+			if (!done)
+			{
+				done = true;
+				int defskill = DefaultSkill;
+				if ((unsigned int)defskill >= AllSkills.Size())
+				{
+					defskill = (AllSkills.Size() - 1) / 2;
+				}
+
+				ld->mSelectedItem = ld->mItems.Size() + defskill;
+			}
+
+			unsigned firstitem = ld->mItems.Size();
+			for(unsigned int i = 0; i < AllSkills.Size(); i++)
+			{
+				FSkillInfo &skill = AllSkills[i];
+				FListMenuItem *li;
+				// Using a different name for skills that must be confirmed makes handling this easier.
+				FName action = skill.MustConfirm? NAME_StartgameConfirm : NAME_Startgame;
+
+				FString *pItemText = NULL;
+				if (gs->PlayerClass != NULL)
+				{
+					pItemText = skill.MenuNamesForPlayerClass.CheckKey(gs->PlayerClass);
+				}
+
+				if (skill.PicName.Len() != 0 && pItemText == NULL)
+				{
+					FTextureID tex = TexMan.CheckForTexture(skill.PicName, FTexture::TEX_MiscPatch);
+					li = new FListMenuItemPatch(ld->mXpos, y, skill.Shortcut, tex, action, i);
+				}
+				else
+				{
+					EColorRange color = (EColorRange)skill.GetTextColor();
+					if (color == CR_UNTRANSLATED) color = ld->mFontColor;
+					li = new FListMenuItemText(x, y, skill.Shortcut, 
+									pItemText? *pItemText : skill.MenuName, ld->mFont, color, action, i);
+				}
+				ld->mItems.Push(li);
+				y += ld->mLinespacing;
+			}
+			if (AllEpisodes[gs->Episode].mNoSkill || AllSkills.Size() == 1)
+			{
+				ld->mAutoselect = MIN(2u, AllEpisodes.Size()-1);
+			}
 
 		}
 	}

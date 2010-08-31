@@ -77,7 +77,16 @@ LISTMENU "MainMenu"
 
 //-------------------------------------------------------------------------------------------
 //
+// Important note about the following template menus:
+// Don't even think about replacing them with something that's not an empty menu
+// with some static elements only. Proper function is not guaranteed then.
+//
+//-------------------------------------------------------------------------------------------
+
+//-------------------------------------------------------------------------------------------
+//
 // The player class menu
+// The init code will set the first item to 'autoselect' if it's the only one.
 //
 //-------------------------------------------------------------------------------------------
 
@@ -111,9 +120,15 @@ ListMenu "PlayerclassMenu"
 	// The rest of this menu will be set up based on the actual player definitions.
 }
 
+//-------------------------------------------------------------------------------------------
+//
+// Hexen's default player class menu
+// This menu is never used directly. Its contents are copied into PlayerclassMenu if appropriate.
+//
+//-------------------------------------------------------------------------------------------
+
 ListMenu "HexenDefaultPlayerclassMenu"
 {
-	// This menu is never used directly. Its contents are copied into PlayerclassMenu if appropriate.
 
 	StaticText 34, 24, "$MNU_CHOOSECLASS"
 	HexenPlayerDisplay 174, 8, "M_FBOX", "M_FWALK%d", "M_CBOX", "M_CWALK%d", "M_MBOX", "M_MWALK%d"
@@ -127,12 +142,12 @@ ListMenu "HexenDefaultPlayerclassMenu"
 //-------------------------------------------------------------------------------------------
 //
 // The episode menu
+// The init code will set the first item to 'autoselect' if it's the only one.
 //
 //-------------------------------------------------------------------------------------------
 
 ListMenu "EpisodeMenu"
 {
-	// The episode menu code will set the first item to 'autoselect' if it's the only one.
 	
 	IfGame(Doom, Heretic, Hexen, Strife)
 	{
@@ -155,3 +170,36 @@ ListMenu "EpisodeMenu"
 	// items will be filled in by MAPINFO
 }
 
+//-------------------------------------------------------------------------------------------
+//
+// The skill menu
+// Most of this will be filled in at runtime
+//
+//-------------------------------------------------------------------------------------------
+
+ListMenu "SkillMenu"
+{
+
+	IfGame(Doom, Chex)
+	{
+		StaticPatch 96, 14, "M_NEWG"
+	}
+	IfGame(Strife)
+	{
+		StaticPatch 96, 14, "M_NGAME"
+	}
+	IfGame(Doom, Strife, Chex)
+	{
+		StaticPatch 54, 38, "M_SKILL"
+		Position 48, 63
+	}
+	IfGame (Heretic)
+	{
+		Position 38, 30
+	}
+	IfGame (Hexen)
+	{
+		StaticText 74, 16, "$MNU_CHOOSESKILL"
+		Position 38, 44
+	}
+}

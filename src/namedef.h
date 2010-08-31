@@ -472,3 +472,6 @@ xx(Episodemenu)
 xx(Playerclassmenu)
 xx(HexenDefaultPlayerclassmenu)
 xx(Skillmenu)
+xx(Startgame)
+xx(StartgameConfirm)
+

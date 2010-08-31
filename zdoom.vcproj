@@ -6466,6 +6466,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\menu\loadsavemenu.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\src\menu\menu.cpp"
 				>
 			</File>

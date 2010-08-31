@@ -200,15 +200,28 @@ FName FListMenuItem::GetAction(int *pparam)
 //
 //=============================================================================
 
-FListMenuItemStaticPatch::FListMenuItemStaticPatch(int x, int y, FTextureID patch)
+FListMenuItemStaticPatch::FListMenuItemStaticPatch(int x, int y, FTextureID patch, bool centered)
 : FListMenuItem(x, y)
 {
 	mTexture = patch;
+	mCentered = centered;
 }
 	
 void FListMenuItemStaticPatch::Drawer()
 {
-	screen->DrawTexture (TexMan(mTexture), mXpos, mYpos, DTA_Clean, true, TAG_DONE);
+	int x = mXpos;
+	FTexture *tex = TexMan(mTexture);
+	if (mYpos >= 0)
+	{
+		if (mCentered) x -= tex->GetScaledWidth()/2;
+		screen->DrawTexture (tex, x, mYpos, DTA_Clean, true, TAG_DONE);
+	}
+	else
+	{
+		int x = (mXpos - 160) * CleanXfac + (SCREENWIDTH>>1);
+		if (mCentered) x -= (tex->GetScaledWidth()*CleanXfac)/2;
+		screen->DrawTexture (tex, x, -mYpos*CleanYfac, DTA_CleanNoMove, true, TAG_DONE);
+	}
 }
 
 //=============================================================================
@@ -218,7 +231,7 @@ void FListMenuItemStaticPatch::Drawer()
 //=============================================================================
 
 FListMenuItemStaticAnimation::FListMenuItemStaticAnimation(int x, int y, int frametime)
-: FListMenuItemStaticPatch(x, y, FNullTextureID())
+: FListMenuItemStaticPatch(x, y, FNullTextureID(), false)
 {
 	mFrameTime = frametime;
 	mFrameCount = 0;
@@ -264,9 +277,18 @@ void FListMenuItemStaticText::Drawer()
 	if (text != NULL)
 	{
 		if (*text == '$') text = GStrings(text+1);
-		int x = mXpos;
-		if (mCentered) x -= mFont->StringWidth(text)/2;
-		screen->DrawText(mFont, mColor, x, mYpos, text, DTA_Clean, true, TAG_DONE);
+		if (mYpos >= 0)
+		{
+			int x = mXpos;
+			if (mCentered) x -= mFont->StringWidth(text)/2;
+			screen->DrawText(mFont, mColor, x, mYpos, text, DTA_Clean, true, TAG_DONE);
+		}
+		else
+		{
+			int x = (mXpos - 160) * CleanXfac + (SCREENWIDTH>>1);
+			if (mCentered) x -= (mFont->StringWidth(text)*CleanXfac)/2;
+			screen->DrawText (mFont, mColor, x, -mYpos*CleanYfac, text, DTA_CleanNoMove, true, TAG_DONE);
+		}
 	}
 }
 

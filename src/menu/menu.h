@@ -75,6 +75,7 @@ struct FListMenuDescriptor : public FMenuDescriptor
 	int mAutoselect;	// this can only be set by internal menu creation functions
 	FFont *mFont;
 	EColorRange mFontColor;
+	const PClass *mClass;
 };
 
 typedef TMap<FName, FMenuDescriptor *> MenuDescriptorList;
@@ -160,9 +161,10 @@ class FListMenuItemStaticPatch : public FListMenuItem
 {
 protected:
 	FTextureID mTexture;
+	bool mCentered;
 
 public:
-	FListMenuItemStaticPatch(int x, int y, FTextureID patch);
+	FListMenuItemStaticPatch(int x, int y, FTextureID patch, bool centered);
 	void Drawer();
 };
 

@@ -144,6 +144,16 @@ static void ParseListMenuBody(FScanner &sc, FListMenuDescriptor *desc)
 				ParseListMenuBody(sc, desc);
 			}
 		}
+		else if (sc.Compare("Class"))
+		{
+			sc.MustGetString();
+			const PClass *cls = PClass::FindClass(sc.String);
+			if (cls == NULL || !cls->IsDescendantOf(RUNTIME_CLASS(DListMenu)))
+			{
+				//sc.ScriptError("Unknown menu class '%s'", sc.String);
+			}
+			desc->mClass = cls;
+		}
 		else if (sc.Compare("Selector"))
 		{
 			sc.MustGetString();
@@ -168,8 +178,9 @@ static void ParseListMenuBody(FScanner &sc, FListMenuDescriptor *desc)
 			sc.MustGetNumber();
 			desc->mYpos = sc.Number;
 		}
-		else if (sc.Compare("StaticPatch"))
+		else if (sc.Compare("StaticPatch") || sc.Compare("StaticPatchCentered"))
 		{
+			bool centered = sc.Compare("StaticPatchCentered");
 			sc.MustGetNumber();
 			int x = sc.Number;
 			sc.MustGetStringName(",");
@@ -179,7 +190,7 @@ static void ParseListMenuBody(FScanner &sc, FListMenuDescriptor *desc)
 			sc.MustGetString();
 			FTextureID tex = TexMan.CheckForTexture(sc.String, FTexture::TEX_MiscPatch);
 
-			FListMenuItem *it = new FListMenuItemStaticPatch(x, y, tex);
+			FListMenuItem *it = new FListMenuItemStaticPatch(x, y, tex, centered);
 			desc->mItems.Push(it);
 		}
 		else if (sc.Compare("StaticAnimation"))

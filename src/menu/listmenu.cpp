@@ -157,7 +157,7 @@ void DListMenu::Drawer ()
 {
 	for(unsigned i=0;i<mDesc->mItems.Size(); i++)
 	{
-		mDesc->mItems[i]->Drawer();
+		if (mDesc->mItems[i]->mEnabled) mDesc->mItems[i]->Drawer();
 	}
 	if (mDesc->mSelectedItem >= 0 && mDesc->mSelectedItem < (int)mDesc->mItems.Size())
 		mDesc->mItems[mDesc->mSelectedItem]->DrawSelector(mDesc->mSelectOfsX, mDesc->mSelectOfsY, mDesc->mSelector);
@@ -234,6 +234,7 @@ bool FListMenuItem::GetValue(int i, int *pvalue)
 
 void FListMenuItem::Enable(bool on)
 {
+	mEnabled = on;
 }
 
 bool FListMenuItem::MenuEvent(int mkey, bool fromcontroller)
@@ -364,7 +365,7 @@ bool FListMenuItemSelectable::CheckCoordinate(int x, int y)
 
 bool FListMenuItemSelectable::Selectable()
 {
-	return true;
+	return mEnabled;
 }
 
 bool FListMenuItemSelectable::Activate()

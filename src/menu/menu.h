@@ -79,6 +79,7 @@ struct FListMenuDescriptor : public FMenuDescriptor
 	int mAutoselect;	// this can only be set by internal menu creation functions
 	FFont *mFont;
 	EColorRange mFontColor;
+	EColorRange mFontColor2;
 	const PClass *mClass;
 };
 
@@ -146,9 +147,10 @@ class FListMenuItem
 {
 protected:
 	int mXpos, mYpos;
-	bool mEnabled;
 
 public:
+	bool mEnabled;
+
 	FListMenuItem(int xpos = 0, int ypos = 0);
 	virtual ~FListMenuItem();
 
@@ -212,12 +214,13 @@ class FListMenuItemPlayerDisplay : public FListMenuItem
 	FPlayerClass *mPlayerClass;
 	FState *mPlayerState;
 	int mPlayerTics;
+	bool mNoportrait;
 
 	bool UpdatePlayerClass();
 
 public:
 
-	FListMenuItemPlayerDisplay(FListMenuDescriptor *menu, int x, int y, PalEntry c1, PalEntry c2);
+	FListMenuItemPlayerDisplay(FListMenuDescriptor *menu, int x, int y, PalEntry c1, PalEntry c2, bool np);
 	~FListMenuItemPlayerDisplay();
 	virtual void Ticker();
 	virtual void Drawer();

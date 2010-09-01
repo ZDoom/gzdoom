@@ -38,9 +38,22 @@
 #include "v_font.h"
 #include "gi.h"
 #include "gstrings.h"
+#include "d_player.h"
 #include "d_event.h"
 #include "d_gui.h"
+#include "c_dispatch.h"
+#include "teaminfo.h"
+#include "v_palette.h"
+#include "r_state.h"
+#include "r_translate.h"
 
+EXTERN_CVAR (String, playerclass)
+EXTERN_CVAR (String, name)
+EXTERN_CVAR (Int, team)
+EXTERN_CVAR (Float, autoaim)
+EXTERN_CVAR(Bool, neverswitchonpickup)
+
+void R_GetPlayerTranslation (int color, const FPlayerColorSet *colorset, FPlayerSkin *skin, FRemapTable *table);
 
 //=============================================================================
 //
@@ -255,15 +268,18 @@ bool FValueTextItem::GetValue(int i, int *pvalue)
 
 bool FValueTextItem::MenuEvent (int mkey, bool fromcontroller)
 {
-	if (mkey == MKEY_Left)
+	if (mSelections.Size() > 1)
 	{
-		if (--mSelection < 0) mSelection = mSelections.Size() - 1;
-		return true;
-	}
-	else if (mkey == MKEY_Right)
-	{
-		if (++mSelection >= (int)mSelections.Size()) mSelection = 0;
-		return true;
+		if (mkey == MKEY_Left)
+		{
+			if (--mSelection < 0) mSelection = mSelections.Size() - 1;
+			return true;
+		}
+		else if (mkey == MKEY_Right)
+		{
+			if (++mSelection >= (int)mSelections.Size()) mSelection = 0;
+			return true;
+		}
 	}
 	return false;
 }
@@ -282,7 +298,7 @@ void FValueTextItem::Drawer()
 	screen->DrawText(mFont, mFontColor, mXpos, mYpos, text, DTA_Clean, true, TAG_DONE);
 
 	int x = mXpos + mFont->StringWidth(text) + 8;
-	if (mSelections.Size() > 0) screen->DrawText(mFont, mFontColor2, mXpos, mYpos, mSelections[mSelection], DTA_Clean, true, TAG_DONE);
+	if (mSelections.Size() > 0) screen->DrawText(mFont, mFontColor2, x, mYpos, mSelections[mSelection], DTA_Clean, true, TAG_DONE);
 }
 
 //=============================================================================
@@ -409,6 +425,23 @@ class DPlayerMenu : public DListMenu
 {
 	DECLARE_CLASS(DPlayerMenu, DListMenu)
 
+	FPlayerClass *PlayerClass;
+	TArray<int> PlayerColorSets;
+	TArray<int> PlayerSkins;
+
+	void PickPlayerClass (bool usepawn);
+	void UpdateColorsets();
+	void UpdateSkins();
+	void UpdateTranslation();
+	void SendNewColor (int red, int green, int blue);
+
+	void PlayerNameChanged(FListMenuItem *li);
+	void ColorSetChanged (FListMenuItem *li);
+	void ClassChanged (FListMenuItem *li);
+	void AutoaimChanged (FListMenuItem *li);
+	void SkinChanged (FListMenuItem *li);
+
+
 public:
 
 	DPlayerMenu() {}
@@ -432,56 +465,112 @@ void DPlayerMenu::Init(DMenu *parent, FListMenuDescriptor *desc)
 	FListMenuItem *li;
 
 	Super::Init(parent, desc);
+	PickPlayerClass(true);
 
 	li = GetItem(NAME_Playerbox);
 	if (li != NULL)
 	{
+		li->SetString(0, name);
 	}
 
 	li = GetItem(NAME_Team);
 	if (li != NULL)
 	{
+		li->SetString(0, "None");
+		for(unsigned i=0;i<Teams.Size(); i++)
+		{
+			li->SetString(i+1, Teams[i].GetName());
+		}
+		li->SetValue(0, team == TEAM_NONE? 0 : team + 1);
 	}
 
-	li = GetItem(NAME_Color);
-	if (li != NULL)
-	{
-	}
+	int mycolorset = players[consoleplayer].userinfo.colorset;
+	int color = players[consoleplayer].userinfo.color;
+
+	UpdateColorsets();
 
 	li = GetItem(NAME_Red);
 	if (li != NULL)
 	{
+		li->Enable(mycolorset == -1);
+		li->SetValue(0, RPART(color));
 	}
 
 	li = GetItem(NAME_Green);
 	if (li != NULL)
 	{
+		li->Enable(mycolorset == -1);
+		li->SetValue(0, GPART(color));
 	}
 
 	li = GetItem(NAME_Blue);
 	if (li != NULL)
 	{
+		li->Enable(mycolorset == -1);
+		li->SetValue(0, BPART(color));
 	}
 
 	li = GetItem(NAME_Class);
 	if (li != NULL)
 	{
+		if (PlayerClasses.Size() == 1)
+		{
+			li->SetString(0, PlayerClasses[0].Type->Meta.GetMetaString (APMETA_DisplayName));
+			li->SetValue(0, 0);
+		}
+		else
+		{
+			li->SetString(0, "Random");
+			for(unsigned i=0; i< PlayerClasses.Size(); i++)
+			{
+				li->SetString(i+1, PlayerClasses[i].Type->Meta.GetMetaString (APMETA_DisplayName));
+				li->SetValue(0, players[consoleplayer].userinfo.PlayerClass + 1);
+			}
+		}
 	}
 
-	li = GetItem(NAME_Skin);
-	if (li != NULL)
-	{
-	}
+	UpdateSkins();
 
 	li = GetItem(NAME_Gender);
 	if (li != NULL)
 	{
+		li->SetString(0, "male");
+		li->SetString(1, "female");
+		li->SetString(2, "other");
+		li->SetValue(0, players[consoleplayer].userinfo.gender);
 	}
 
 	li = GetItem(NAME_Autoaim);
 	if (li != NULL)
 	{
+		li->SetString(0, "Never");
+		li->SetString(1, "Very Low");
+		li->SetString(2, "Low");
+		li->SetString(3, "Medium");
+		li->SetString(4, "High");
+		li->SetString(5, "Very High");
+		li->SetString(6, "Always");
+
+		int sel = 
+			autoaim == 0 ? 0 :
+			autoaim <= 0.25 ? 1 :
+			autoaim <= 0.5 ? 2 :
+			autoaim <= 1 ? 3 :
+			autoaim <= 2 ? 4 :
+			autoaim <= 3 ? 5:6;
+		li->SetValue(0, sel);
 	}
+
+	li = GetItem(NAME_Switch);
+	if (li != NULL)
+	{
+		li->SetString(0, "Yes");
+		li->SetString(1, "No");
+		li->SetValue(0, neverswitchonpickup);
+	}
+
+	if (mDesc->mSelectedItem < 0) mDesc->mSelectedItem = 1;
+
 }
 
 //=============================================================================
@@ -506,8 +595,277 @@ bool DPlayerMenu::Responder (event_t *ev)
 //
 //=============================================================================
 
+void DPlayerMenu::UpdateTranslation()
+{
+	int PlayerColor = players[consoleplayer].userinfo.color;
+	int	PlayerSkin = players[consoleplayer].userinfo.skin;
+	int PlayerColorset = players[consoleplayer].userinfo.colorset;
+
+	R_GetPlayerTranslation(PlayerColor,
+		P_GetPlayerColorSet(PlayerClass->Type->TypeName, PlayerColorset),
+		&skins[PlayerSkin], translationtables[TRANSLATION_Players][MAXPLAYERS]);
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+void DPlayerMenu::PickPlayerClass(bool usepawn)
+{
+
+	if (players[consoleplayer].mo != NULL)
+	{
+		PlayerClass = &PlayerClasses[players[consoleplayer].CurrentPlayerClass];
+	}
+	else
+	{
+		int pclass = 0;
+		// [GRB] Pick a class from player class list
+		if (PlayerClasses.Size () > 1)
+		{
+			pclass = players[consoleplayer].userinfo.PlayerClass;
+
+			if (pclass < 0)
+			{
+				pclass = (MenuTime>>7) % PlayerClasses.Size ();
+			}
+		}
+		PlayerClass = &PlayerClasses[pclass];
+	}
+	UpdateTranslation();
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+void DPlayerMenu::SendNewColor (int red, int green, int blue)
+{
+	char command[24];
+
+	mysnprintf (command, countof(command), "color \"%02x %02x %02x\"", red, green, blue);
+	C_DoCommand (command);
+	UpdateTranslation();
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+void DPlayerMenu::UpdateColorsets()
+{
+	FListMenuItem *li = GetItem(NAME_Color);
+	if (li != NULL)
+	{
+		int sel = 0;
+		P_EnumPlayerColorSets(PlayerClass->Type->TypeName, &PlayerColorSets);
+		li->SetString(0, "Custom");
+		for(unsigned i=0;i<PlayerColorSets.Size(); i++)
+		{
+			FPlayerColorSet *colorset = P_GetPlayerColorSet(PlayerClass->Type->TypeName, PlayerColorSets[i]);
+			li->SetString(i+1, colorset->Name);
+		}
+		int mycolorset = players[consoleplayer].userinfo.colorset;
+		if (mycolorset != -1)
+		{
+			for(unsigned i=0;i<PlayerColorSets.Size(); i++)
+			{
+				if (PlayerColorSets[i] == mycolorset)
+				{
+					sel = i+1;
+				}
+			}
+		}
+		li->SetValue(0, sel);
+	}
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+void DPlayerMenu::UpdateSkins()
+{
+	FListMenuItem *li = GetItem(NAME_Skin);
+	if (li != NULL)
+	{
+		if (GetDefaultByType (PlayerClass->Type)->flags4 & MF4_NOSKIN ||
+			players[consoleplayer].userinfo.PlayerClass == -1)
+		{
+			li->SetString(0, "Base");
+			li->SetValue(0, 0);
+			return;
+		}
+		else
+		{
+			int sel = 0;
+			PlayerSkins.Clear();
+			for(unsigned i=0;i<(unsigned)numskins; i++)
+			{
+				if (PlayerClass->CheckSkin(i))
+				{
+					int j = PlayerSkins.Push(i);
+					li->SetString(j, skins[i].name);
+					if (players[consoleplayer].userinfo.skin == i)
+					{
+						sel = j;
+					}
+				}
+			}
+			li->SetValue(0, sel);
+		}
+	}
+	UpdateTranslation();
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+void DPlayerMenu::PlayerNameChanged(FListMenuItem *li)
+{
+	char pp[MAXPLAYERNAME+1];
+	const char *p;
+	if (li->GetString(0, pp, MAXPLAYERNAME+1))
+	{
+		FString command("name \"");
+
+		// Escape any backslashes or quotation marks before sending the name to the console.
+		for (p = pp; *p != '\0'; ++p)
+		{
+			if (*p == '"' || *p == '\\')
+			{
+				command << '\\';
+			}
+			command << *p;
+		}
+		command << '"';
+		C_DoCommand (command);
+	}
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+void DPlayerMenu::ColorSetChanged (FListMenuItem *li)
+{
+	int	sel;
+
+	if (li->GetValue(0, &sel))
+	{
+		int mycolorset = -1;
+
+		if (sel > 0) mycolorset = PlayerColorSets[sel-1];
+
+		FListMenuItem *red   = GetItem(NAME_Red);
+		FListMenuItem *green = GetItem(NAME_Green);
+		FListMenuItem *blue  = GetItem(NAME_Blue);
+
+		// disable the sliders if a valid colorset is selected
+		if (red != NULL) red->Enable(mycolorset == -1);
+		if (green != NULL) green->Enable(mycolorset == -1);
+		if (blue != NULL) blue->Enable(mycolorset == -1);
+
+		char command[24];
+		mysnprintf(command, countof(command), "colorset %d", mycolorset);
+		C_DoCommand(command);
+		UpdateTranslation();
+	}
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+void DPlayerMenu::ClassChanged (FListMenuItem *li)
+{
+	if (PlayerClasses.Size () == 1)
+	{
+		return;
+	}
+
+	int	sel;
+
+	if (li->GetValue(0, &sel))
+	{
+		players[consoleplayer].userinfo.PlayerClass = sel-1;
+		PickPlayerClass(false);
+
+		cvar_set ("playerclass", 
+			sel == 0 ? "Random" : PlayerClass->Type->Meta.GetMetaString (APMETA_DisplayName));
+	}
+	UpdateColorsets();
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+void DPlayerMenu::SkinChanged (FListMenuItem *li)
+{
+	if (GetDefaultByType (PlayerClass->Type)->flags4 & MF4_NOSKIN ||
+		players[consoleplayer].userinfo.PlayerClass == -1)
+	{
+		return;
+	}
+
+	int	sel;
+
+	if (li->GetValue(0, &sel))
+	{
+		sel = PlayerSkins[sel];
+		players[consoleplayer].userinfo.skin = sel;
+		UpdateTranslation();
+		char buffer[10];
+		mysnprintf(buffer, 10, "%d", sel);
+		cvar_set ("skin", buffer);
+	}
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+void DPlayerMenu::AutoaimChanged (FListMenuItem *li)
+{
+	static const float ranges[] = { 0, 0.25, 0.5, 1, 2, 3, 5000 };
+
+	int	sel;
+
+	if (li->GetValue(0, &sel))
+	{
+		autoaim = ranges[sel];
+	}
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
 bool DPlayerMenu::MenuEvent (int mkey, bool fromcontroller)
 {
+	int v;
 	if (mDesc->mSelectedItem >= 0)
 	{
 		FListMenuItem *li = mDesc->mItems[mDesc->mSelectedItem];
@@ -519,15 +877,69 @@ bool DPlayerMenu::MenuEvent (int mkey, bool fromcontroller)
 				// item specific handling comes here
 
 			case NAME_Playerbox:
+				PlayerNameChanged(li);
+				break;
+
 			case NAME_Team:
+				if (li->GetValue(0, &v))
+				{
+					team = v==0? TEAM_NONE : v-1;
+				}
+				break;
+
 			case NAME_Color:
+					ColorSetChanged(li);
+					break;
+
 			case NAME_Red:
+				if (li->GetValue(0, &v))
+				{
+					int color = players[consoleplayer].userinfo.color;
+					SendNewColor (v, GPART(color), BPART(color));
+				}
+				break;
+
 			case NAME_Green:
+				if (li->GetValue(0, &v))
+				{
+					int color = players[consoleplayer].userinfo.color;
+					SendNewColor (RPART(color), v, BPART(color));
+				}
+				break;
+
 			case NAME_Blue:
+				if (li->GetValue(0, &v))
+				{
+					int color = players[consoleplayer].userinfo.color;
+					SendNewColor (RPART(color), GPART(color), v);
+				}
+				break;
+
 			case NAME_Class:
+				ClassChanged(li);
+				break;
+
 			case NAME_Skin:
+				SkinChanged(li);
+				break;
+
 			case NAME_Gender:
+				if (li->GetValue(0, &v))
+				{
+					cvar_set ("gender", v==0? "male" : v==1? "female" : "other");
+				}
+				break;
+
 			case NAME_Autoaim:
+				AutoaimChanged(li);
+				break;
+
+			case NAME_Switch:
+				if (li->GetValue(0, &v))
+				{
+					neverswitchonpickup = !v;
+				}
+				break;
 
 			default:
 				break;
@@ -565,40 +977,7 @@ void DPlayerMenu::Drawer ()
 #if 0
 
 /*
-		const char *p;
-		FString command("name \"");
-
-		// Escape any backslashes or quotation marks before sending the name to the console.
-		for (p = mPlayerName; *p != '\0'; ++p)
-		{
-			if (*p == '"' || *p == '\\')
-			{
-				command << '\\';
-			}
-			command << *p;
-		}
-		command << '"';
-		C_DoCommand (command);
 */
-
-//
-// [RH] Player Setup Menu
-//
-static oldmenuitem_t PlayerSetupMenu[] =
-{
-	{ 1,0,'n',NULL,M_EditPlayerName, CR_UNTRANSLATED},
-	{ 2,0,'t',NULL,M_ChangePlayerTeam, CR_UNTRANSLATED},
-	{ 2,0,'c',NULL,M_ChangeColorSet, CR_UNTRANSLATED},
-	{ 2,0,'r',NULL,M_SlidePlayerRed, CR_UNTRANSLATED},
-	{ 2,0,'g',NULL,M_SlidePlayerGreen, CR_UNTRANSLATED},
-	{ 2,0,'b',NULL,M_SlidePlayerBlue, CR_UNTRANSLATED},
-	{ 2,0,'t',NULL,M_ChangeClass, CR_UNTRANSLATED},
-	{ 2,0,'s',NULL,M_ChangeSkin, CR_UNTRANSLATED},
-	{ 2,0,'e',NULL,M_ChangeGender, CR_UNTRANSLATED},
-	{ 2,0,'a',NULL,M_ChangeAutoAim, CR_UNTRANSLATED},
-	{ 2,0,'p',NULL,M_ChangeSwitchPickup, CR_UNTRANSLATED}
-};
-
 
 
 //
@@ -608,143 +987,16 @@ void M_PlayerSetup (void)
 {
 	OptionsActive = false;
 	drawSkull = true;
-	strcpy (savegamestring, name);
 	M_DemoNoPlay = true;
 	if (demoplayback)
 		G_CheckDemoStatus ();
-	M_SetupNextMenu (&PSetupDef);
-	if (players[consoleplayer].mo != NULL)
-	{
-		PlayerClass = &PlayerClasses[players[consoleplayer].CurrentPlayerClass];
-	}
-	PlayerSkin = players[consoleplayer].userinfo.skin;
-	R_GetPlayerTranslation (players[consoleplayer].userinfo.color,
-		P_GetPlayerColorSet(PlayerClass->Type->TypeName, players[consoleplayer].userinfo.colorset),
-		&skins[PlayerSkin], translationtables[TRANSLATION_Players][MAXPLAYERS]);
+
 	PlayerState = GetDefaultByType (PlayerClass->Type)->SeeState;
 	PlayerTics = PlayerState->GetTics();
-	if (FireTexture == NULL)
-	{
-		FireTexture = new FBackdropTexture;
-	}
-	P_EnumPlayerColorSets(PlayerClass->Type->TypeName, &PlayerColorSets);
+
 }
 
 
-
-
-
-
-/* playernamebox
-*/
-/* other menu items
-*/
-
-
-	// Draw player team setting
-	x = SmallFont->StringWidth ("Team") + 8 + PSetupDef.x;
-	screen->DrawText (SmallFont, label, PSetupDef.x, PSetupDef.y + LINEHEIGHT+yo, "Team",
-		DTA_Clean, true, TAG_DONE);
-	screen->DrawText (SmallFont, value, x, PSetupDef.y + LINEHEIGHT+yo,
-		!TeamLibrary.IsValidTeam (players[consoleplayer].userinfo.team) ? "None" :
-		Teams[players[consoleplayer].userinfo.team].GetName (),
-		DTA_Clean, true, TAG_DONE);
-
-	// Draw player color selection and sliders
-	FPlayerColorSet *colorset = P_GetPlayerColorSet(PlayerClass->Type->TypeName, players[consoleplayer].userinfo.colorset);
-	x = SmallFont->StringWidth("Color") + 8 + PSetupDef.x;
-	screen->DrawText(SmallFont, label, PSetupDef.x, PSetupDef.y + LINEHEIGHT*2+yo, "Color", DTA_Clean, true, TAG_DONE);
-	screen->DrawText(SmallFont, value, x, PSetupDef.y + LINEHEIGHT*2+yo,
-		colorset != NULL ? colorset->Name.GetChars() : "Custom", DTA_Clean, true, TAG_DONE);
-
-	// Only show the sliders for a custom color set.
-	if (colorset == NULL)
-	{
-		screen->DrawText (SmallFont, label, PSetupDef.x, PSetupDef.y + int(LINEHEIGHT*2.875)+yo, "Red", DTA_Clean, true, TAG_DONE);
-		screen->DrawText (SmallFont, label, PSetupDef.x, PSetupDef.y + int(LINEHEIGHT*3.5)+yo, "Green", DTA_Clean, true, TAG_DONE);
-		screen->DrawText (SmallFont, label, PSetupDef.x, PSetupDef.y + int(LINEHEIGHT*4.125)+yo, "Blue", DTA_Clean, true, TAG_DONE);
-
-		x = SmallFont->StringWidth ("Green") + 8 + PSetupDef.x;
-		color = players[consoleplayer].userinfo.color;
-
-		M_DrawPlayerSlider (x, PSetupDef.y + int(LINEHEIGHT*2.875)+yo, RPART(color));
-		M_DrawPlayerSlider (x, PSetupDef.y + int(LINEHEIGHT*3.5)+yo, GPART(color));
-		M_DrawPlayerSlider (x, PSetupDef.y + int(LINEHEIGHT*4.125)+yo, BPART(color));
-	}
-
-	// [GRB] Draw class setting
-	int pclass = players[consoleplayer].userinfo.PlayerClass;
-	x = SmallFont->StringWidth ("Class") + 8 + PSetupDef.x;
-	screen->DrawText (SmallFont, label, PSetupDef.x, PSetupDef.y + LINEHEIGHT*5+yo, "Class", DTA_Clean, true, TAG_DONE);
-	screen->DrawText (SmallFont, value, x, PSetupDef.y + LINEHEIGHT*5+yo,
-		pclass == -1 ? "Random" : PlayerClasses[pclass].Type->Meta.GetMetaString (APMETA_DisplayName),
-		DTA_Clean, true, TAG_DONE);
-
-	// Draw skin setting
-	x = SmallFont->StringWidth ("Skin") + 8 + PSetupDef.x;
-	screen->DrawText (SmallFont, label, PSetupDef.x, PSetupDef.y + LINEHEIGHT*6+yo, "Skin", DTA_Clean, true, TAG_DONE);
-	if (GetDefaultByType (PlayerClass->Type)->flags4 & MF4_NOSKIN ||
-		players[consoleplayer].userinfo.PlayerClass == -1)
-	{
-		screen->DrawText (SmallFont, value, x, PSetupDef.y + LINEHEIGHT*6+yo, "Base", DTA_Clean, true, TAG_DONE);
-	}
-	else
-	{
-		screen->DrawText (SmallFont, value, x, PSetupDef.y + LINEHEIGHT*6+yo,
-			skins[PlayerSkin].name, DTA_Clean, true, TAG_DONE);
-	}
-
-	// Draw gender setting
-	x = SmallFont->StringWidth ("Gender") + 8 + PSetupDef.x;
-	screen->DrawText (SmallFont, label, PSetupDef.x, PSetupDef.y + LINEHEIGHT*7+yo, "Gender", DTA_Clean, true, TAG_DONE);
-	screen->DrawText (SmallFont, value, x, PSetupDef.y + LINEHEIGHT*7+yo,
-		genders[players[consoleplayer].userinfo.gender], DTA_Clean, true, TAG_DONE);
-
-	// Draw autoaim setting
-	x = SmallFont->StringWidth ("Autoaim") + 8 + PSetupDef.x;
-	screen->DrawText (SmallFont, label, PSetupDef.x, PSetupDef.y + LINEHEIGHT*8+yo, "Autoaim", DTA_Clean, true, TAG_DONE);
-	screen->DrawText (SmallFont, value, x, PSetupDef.y + LINEHEIGHT*8+yo,
-		autoaim == 0 ? "Never" :
-		autoaim <= 0.25 ? "Very Low" :
-		autoaim <= 0.5 ? "Low" :
-		autoaim <= 1 ? "Medium" :
-		autoaim <= 2 ? "High" :
-		autoaim <= 3 ? "Very High" : "Always",
-		DTA_Clean, true, TAG_DONE);
-
-	// Draw Switch on Pickup setting
-	x = SmallFont->StringWidth ("Switch on Pickup") + 8 + PSetupDef.x;
-	screen->DrawText (SmallFont, label, PSetupDef.x, PSetupDef.y + LINEHEIGHT*9+yo, "Switch on Pickup", DTA_Clean, true, TAG_DONE);
-	screen->DrawText (SmallFont, value, x, PSetupDef.y + LINEHEIGHT*9+yo,
-		neverswitchonpickup == false ? "Yes" : "No",
-		DTA_Clean, true, TAG_DONE);
-		
-		
-
-
-/* player display*/
-	// Draw player character
-	{
-		int x = 320 - 88 - 32 + xo, y = PSetupDef.y + LINEHEIGHT*3 - 18 + yo;
-
-		x = (x-160)*CleanXfac+(SCREENWIDTH>>1);
-		y = (y-100)*CleanYfac+(SCREENHEIGHT>>1);
-		if (!FireTexture)
-		{
-			screen->Clear (x, y, x + 72 * CleanXfac, y + 80 * CleanYfac-1, 0, 0);
-		}
-		else
-		{
-			screen->DrawTexture (FireTexture, x, y - 1,
-				DTA_DestWidth, 72 * CleanXfac,
-				DTA_DestHeight, 80 * CleanYfac,
-				DTA_Translation, &FireRemap,
-				DTA_Masked, false,
-				TAG_DONE);
-		}
-
-		M_DrawFrame (x, y, 72*CleanXfac, 80*CleanYfac-1);
-	}
 	{
 		spriteframe_t *sprframe;
 		fixed_t ScaleX, ScaleY;
@@ -835,273 +1087,6 @@ static void M_PlayerSetupTicker (void)
 
 // item actions
 
-static void M_ChangeClass (int choice)
-{
-	if (PlayerClasses.Size () == 1)
-	{
-		return;
-	}
-
-	int type = players[consoleplayer].userinfo.PlayerClass;
-
-	if (!choice)
-		type = (type < 0) ? (int)PlayerClasses.Size () - 1 : type - 1;
-	else
-		type = (type < (int)PlayerClasses.Size () - 1) ? type + 1 : -1;
-
-	cvar_set ("playerclass", type < 0 ? "Random" :
-		PlayerClasses[type].Type->Meta.GetMetaString (APMETA_DisplayName));
-}
-
-static void M_ChangeSkin (int choice)
-{
-	if (GetDefaultByType (PlayerClass->Type)->flags4 & MF4_NOSKIN ||
-		players[consoleplayer].userinfo.PlayerClass == -1)
-	{
-		return;
-	}
-
-	do
-	{
-		if (!choice)
-			PlayerSkin = (PlayerSkin == 0) ? (int)numskins - 1 : PlayerSkin - 1;
-		else
-			PlayerSkin = (PlayerSkin < (int)numskins - 1) ? PlayerSkin + 1 : 0;
-	} while (!PlayerClass->CheckSkin (PlayerSkin));
-
-	R_GetPlayerTranslation (players[consoleplayer].userinfo.color,
-		P_GetPlayerColorSet(PlayerClass->Type->TypeName, players[consoleplayer].userinfo.colorset),
-		&skins[PlayerSkin], translationtables[TRANSLATION_Players][MAXPLAYERS]);
-
-	cvar_set ("skin", skins[PlayerSkin].name);
-}
-
-static void M_ChangeGender (int choice)
-{
-	int gender = players[consoleplayer].userinfo.gender;
-
-	if (!choice)
-		gender = (gender == 0) ? 2 : gender - 1;
-	else
-		gender = (gender == 2) ? 0 : gender + 1;
-
-	cvar_set ("gender", genders[gender]);
-}
-
-static void M_ChangeAutoAim (int choice)
-{
-	static const float ranges[] = { 0, 0.25, 0.5, 1, 2, 3, 5000 };
-	float aim = autoaim;
-	int i;
-
-	if (!choice) {
-		// Select a lower autoaim
-
-		for (i = 6; i >= 1; i--)
-		{
-			if (aim >= ranges[i])
-			{
-				aim = ranges[i - 1];
-				break;
-			}
-		}
-	}
-	else
-	{
-		// Select a higher autoaim
-
-		for (i = 5; i >= 0; i--)
-		{
-			if (aim >= ranges[i])
-			{
-				aim = ranges[i + 1];
-				break;
-			}
-		}
-	}
-
-	autoaim = aim;
-}
-
-static void M_ChangeSwitchPickup (int choice)
-{
-	if (!choice)
-		neverswitchonpickup = (neverswitchonpickup == 1) ? 0 : 1;
-	else
-		neverswitchonpickup = (neverswitchonpickup == 0) ? 1 : 0;
-}
-
-
-
-static void M_ChangePlayerTeam (int choice)
-{
-	if (!choice)
-	{
-		if (team == 0)
-		{
-			team = TEAM_NONE;
-		}
-		else if (team == TEAM_NONE)
-		{
-			team = Teams.Size () - 1;
-		}
-		else
-		{
-			team = team - 1;
-		}
-	}
-	else
-	{
-		if (team == int(Teams.Size () - 1))
-		{
-			team = TEAM_NONE;
-		}
-		else if (team == TEAM_NONE)
-		{
-			team = 0;
-		}
-		else
-		{
-			team = team + 1;
-		}	
-	}
-}
-
-static void M_ChangeColorSet (int choice)
-{
-	int curpos = (int)PlayerColorSets.Size();
-	int mycolorset = players[consoleplayer].userinfo.colorset;
-	while (--curpos >= 0)
-	{
-		if (PlayerColorSets[curpos] == mycolorset)
-			break;
-	}
-	if (choice == 0)
-	{
-		curpos--;
-	}
-	else
-	{
-		curpos++;
-	}
-	if (curpos < -1)
-	{
-		curpos = (int)PlayerColorSets.Size() - 1;
-	}
-	else if (curpos >= (int)PlayerColorSets.Size())
-	{
-		curpos = -1;
-	}
-	mycolorset = (curpos >= 0) ? PlayerColorSets[curpos] : -1;
-
-	// disable the sliders if a valid colorset is selected
-	PlayerSetupMenu[PSM_RED].status =
-	PlayerSetupMenu[PSM_GREEN].status =
-	PlayerSetupMenu[PSM_BLUE].status = (mycolorset == -1? 2:-1);
-
-	char command[24];
-	mysnprintf(command, countof(command), "colorset %d", mycolorset);
-	C_DoCommand(command);
-	R_GetPlayerTranslation(players[consoleplayer].userinfo.color,
-		P_GetPlayerColorSet(PlayerClass->Type->TypeName, mycolorset),
-		&skins[PlayerSkin], translationtables[TRANSLATION_Players][MAXPLAYERS]);
-}
-
-static void SendNewColor (int red, int green, int blue)
-{
-	char command[24];
-
-	mysnprintf (command, countof(command), "color \"%02x %02x %02x\"", red, green, blue);
-	C_DoCommand (command);
-	R_GetPlayerTranslation(MAKERGB (red, green, blue),
-		P_GetPlayerColorSet(PlayerClass->Type->TypeName, players[consoleplayer].userinfo.colorset),
-		&skins[PlayerSkin], translationtables[TRANSLATION_Players][MAXPLAYERS]);
-}
-
-static void M_SlidePlayerRed (int choice)
-{
-	int color = players[consoleplayer].userinfo.color;
-	int red = RPART(color);
-
-	if (choice == 0) {
-		red -= 16;
-		if (red < 0)
-			red = 0;
-	} else {
-		red += 16;
-		if (red > 255)
-			red = 255;
-	}
-
-	SendNewColor (red, GPART(color), BPART(color));
-}
-
-static void M_SlidePlayerGreen (int choice)
-{
-	int color = players[consoleplayer].userinfo.color;
-	int green = GPART(color);
-
-	if (choice == 0) {
-		green -= 16;
-		if (green < 0)
-			green = 0;
-	} else {
-		green += 16;
-		if (green > 255)
-			green = 255;
-	}
-
-	SendNewColor (RPART(color), green, BPART(color));
-}
-
-static void M_SlidePlayerBlue (int choice)
-{
-	int color = players[consoleplayer].userinfo.color;
-	int blue = BPART(color);
-
-	if (choice == 0) {
-		blue -= 16;
-		if (blue < 0)
-			blue = 0;
-	} else {
-		blue += 16;
-		if (blue > 255)
-			blue = 255;
-	}
-
-	SendNewColor (RPART(color), GPART(color), blue);
-}
-
-
-
-
-/* Change the player name*/
-
-
-
-
-
-
-
-static void M_EditPlayerName (int choice)
-{
-	// we are going to be intercepting all chars
-	genStringEnter = 2;
-	genStringEnd = M_PlayerNameChanged;
-	genStringCancel = M_PlayerNameNotChanged;
-	genStringLen = MAXPLAYERNAME;
-	
-	saveSlot = 0;
-	saveCharIndex = strlen (savegamestring);
-}
-
-static void M_PlayerNameNotChanged ()
-{
-	strcpy (savegamestring, name);
-}
-
-
-
 /* cursor stuff*/
 			
 			// DRAW CURSOR
@@ -1112,29 +1097,6 @@ static void M_PlayerNameNotChanged ()
 					// [RH] Use options menu cursor for the player setup menu.
 					if (skullAnimCounter < 6)
 					{
-						double item;
-						// The green slider is halfway between lines, and the red and
-						// blue ones are offset slightly to make room for it.
-						if (itemOn < 3)
-						{
-							item = itemOn;
-						}
-						else if (itemOn > 5)
-						{
-							item = itemOn - 1;
-						}
-						else if (itemOn == 3)
-						{
-							item = 2.875;
-						}
-						else if (itemOn == 4)
-						{
-							item = 3.5;
-						}
-						else
-						{
-							item = 4.125;
-						}
 						screen->DrawText (ConFont, CR_RED, x - 16,
 							currentMenu->y + int(item*PLAYERSETUP_LINEHEIGHT) +
 							(!(gameinfo.gametype & (GAME_DoomStrifeChex)) ? 6 : -1), "\xd",

@@ -333,7 +333,7 @@ void FBackdropTexture::Render()
 //
 //=============================================================================
 
-FListMenuItemPlayerDisplay::FListMenuItemPlayerDisplay(FListMenuDescriptor *menu, int x, int y, PalEntry c1, PalEntry c2)
+FListMenuItemPlayerDisplay::FListMenuItemPlayerDisplay(FListMenuDescriptor *menu, int x, int y, PalEntry c1, PalEntry c2, bool np)
 : FListMenuItem(x, y)
 {
 	mOwner = menu;
@@ -349,6 +349,7 @@ FListMenuItemPlayerDisplay::FListMenuItemPlayerDisplay(FListMenuDescriptor *menu
 	mBackdrop = new FBackdropTexture;
 	mPlayerClass = NULL;
 	mPlayerState = NULL;
+	mNoportrait = np;
 }
 
 //=============================================================================
@@ -422,7 +423,7 @@ void FListMenuItemPlayerDisplay::Drawer()
 
 	const char *portrait = mPlayerClass->Type->Meta.GetMetaString(APMETA_Portrait);
 
-	if (portrait != NULL)
+	if (portrait != NULL && !mNoportrait)
 	{
 		FTextureID texid = TexMan.CheckForTexture(portrait, FTexture::TEX_MiscPatch);
 		if (texid.isValid())

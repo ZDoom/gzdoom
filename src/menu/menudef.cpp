@@ -124,8 +124,6 @@ static bool CheckSkipOptionBlock(FScanner &sc)
 
 static void ParseListMenuBody(FScanner &sc, FListMenuDescriptor *desc)
 {
-	EColorRange vfontcolor = CR_UNTRANSLATED;
-
 	sc.MustGetStringName("{");
 	while (!sc.CheckString("}"))
 	{
@@ -296,17 +294,17 @@ static void ParseListMenuBody(FScanner &sc, FListMenuDescriptor *desc)
 			if (sc.CheckString(","))
 			{
 				sc.MustGetString();
-				vfontcolor = desc->mFontColor = V_FindFontColor((FName)sc.String);
+				desc->mFontColor2 = desc->mFontColor = V_FindFontColor((FName)sc.String);
 				if (sc.CheckString(","))
 				{
 					sc.MustGetString();
-					vfontcolor = V_FindFontColor((FName)sc.String);
+					desc->mFontColor2 = V_FindFontColor((FName)sc.String);
 				}
 			}
 			else
 			{
 				desc->mFontColor = CR_UNTRANSLATED;
-				vfontcolor = CR_UNTRANSLATED;
+				desc->mFontColor2 = CR_UNTRANSLATED;
 			}
 		}
 		else if (sc.Compare("NetgameMessage"))
@@ -316,6 +314,7 @@ static void ParseListMenuBody(FScanner &sc, FListMenuDescriptor *desc)
 		}
 		else if (sc.Compare("PlayerDisplay"))
 		{
+			bool noportrait = false;
 			sc.MustGetNumber();
 			int x = sc.Number;
 			sc.MustGetStringName(",");
@@ -327,7 +326,12 @@ static void ParseListMenuBody(FScanner &sc, FListMenuDescriptor *desc)
 			sc.MustGetStringName(",");
 			sc.MustGetString();
 			PalEntry c2 = V_GetColor(NULL, sc.String);
-			FListMenuItemPlayerDisplay *it = new FListMenuItemPlayerDisplay(desc, x, y, c1, c2);
+			if (sc.CheckString(","))
+			{
+				sc.MustGetNumber();
+				noportrait = !!sc.Number;
+			}
+			FListMenuItemPlayerDisplay *it = new FListMenuItemPlayerDisplay(desc, x, y, c1, c2, noportrait);
 			desc->mItems.Push(it);
 		}
 		else if (sc.Compare("PlayerNameBox"))
@@ -342,6 +346,7 @@ static void ParseListMenuBody(FScanner &sc, FListMenuDescriptor *desc)
 			FListMenuItem *it = new FPlayerNameBox(desc->mXpos, desc->mYpos, ofs, text, desc->mFont, desc->mFontColor, sc.String);
 			desc->mItems.Push(it);
 			desc->mYpos += desc->mLinespacing;
+			if (desc->mSelectedItem == -1) desc->mSelectedItem = desc->mItems.Size()-1;
 		}
 		else if (sc.Compare("ValueText"))
 		{
@@ -349,9 +354,10 @@ static void ParseListMenuBody(FScanner &sc, FListMenuDescriptor *desc)
 			FString text = sc.String;
 			sc.MustGetStringName(",");
 			sc.MustGetString();
-			FListMenuItem *it = new FValueTextItem(desc->mXpos, desc->mYpos, text, desc->mFont, desc->mFontColor, vfontcolor, sc.String);
+			FListMenuItem *it = new FValueTextItem(desc->mXpos, desc->mYpos, text, desc->mFont, desc->mFontColor, desc->mFontColor2, sc.String);
 			desc->mItems.Push(it);
 			desc->mYpos += desc->mLinespacing;
+			if (desc->mSelectedItem == -1) desc->mSelectedItem = desc->mItems.Size()-1;
 		}
 		else if (sc.Compare("Slider"))
 		{
@@ -369,9 +375,10 @@ static void ParseListMenuBody(FScanner &sc, FListMenuDescriptor *desc)
 			sc.MustGetStringName(",");
 			sc.MustGetNumber();
 			int step = sc.Number;
-			FListMenuItem *it = new FSliderItem(desc->mXpos, desc->mYpos, text, desc->mFont, desc->mFontColor, sc.String, min, max, step);
+			FListMenuItem *it = new FSliderItem(desc->mXpos, desc->mYpos, text, desc->mFont, desc->mFontColor, action, min, max, step);
 			desc->mItems.Push(it);
 			desc->mYpos += desc->mLinespacing;
+			if (desc->mSelectedItem == -1) desc->mSelectedItem = desc->mItems.Size()-1;
 		}
 		else
 		{
@@ -405,6 +412,7 @@ static void ParseListMenu(FScanner &sc)
 	desc->mNetgameMessage = DefaultListMenuSettings.mNetgameMessage;
 	desc->mFont = DefaultListMenuSettings.mFont;
 	desc->mFontColor = DefaultListMenuSettings.mFontColor;
+	desc->mFontColor2 = DefaultListMenuSettings.mFontColor2;
 	desc->mClass = NULL;
 
 	FMenuDescriptor **pOld = MenuDescriptors.CheckKey(desc->mMenuName);

@@ -7,7 +7,10 @@
 #include "dobject.h"
 #include "d_player.h"
 #include "r_translate.h"
+#include "c_cvars.h"
 #include "textures/textures.h"
+
+EXTERN_CVAR(Float, snd_menuvolume)
 
 struct event_t;
 class FTexture;
@@ -405,7 +408,6 @@ void M_ActivateMenu(DMenu *menu);
 void M_ClearMenus ();
 void M_ParseMenuDefs();
 void M_StartupSkillMenu(FGameStartup *gs);
-
 
 
 #endif

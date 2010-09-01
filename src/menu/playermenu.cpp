@@ -178,6 +178,7 @@ bool FPlayerNameBox::MenuEvent(int mkey, bool fromcontroller)
 {
 	if (mkey == MKEY_Enter)
 	{
+		S_Sound (CHAN_VOICE | CHAN_UI, "menu/choose", snd_menuvolume, ATTN_NONE);
 		strcpy(mEditName, mPlayerName);
 		mEntering = true;
 		DMenu *input = new DTextEnterMenu(DMenu::CurrentMenu, mEditName, MAXPLAYERNAME, 2, fromcontroller);
@@ -272,11 +273,13 @@ bool FValueTextItem::MenuEvent (int mkey, bool fromcontroller)
 	{
 		if (mkey == MKEY_Left)
 		{
+			S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 			if (--mSelection < 0) mSelection = mSelections.Size() - 1;
 			return true;
 		}
-		else if (mkey == MKEY_Right)
+		else if (mkey == MKEY_Right || mkey == MKEY_Enter)
 		{
+			S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 			if (++mSelection >= (int)mSelections.Size()) mSelection = 0;
 			return true;
 		}
@@ -360,11 +363,13 @@ bool FSliderItem::MenuEvent (int mkey, bool fromcontroller)
 {
 	if (mkey == MKEY_Left)
 	{
+		S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 		if ((mSelection -= mStep) < mMinrange) mSelection = mMinrange;
 		return true;
 	}
-	else if (mkey == MKEY_Right)
+	else if (mkey == MKEY_Right || mkey == MKEY_Enter)
 	{
+		S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 		if ((mSelection += mStep) > mMaxrange) mSelection = mMaxrange;
 		return true;
 	}

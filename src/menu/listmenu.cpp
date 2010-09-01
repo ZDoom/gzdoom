@@ -115,6 +115,7 @@ bool DListMenu::MenuEvent (int mkey, bool fromcontroller)
 			if (--mDesc->mSelectedItem < 0) mDesc->mSelectedItem = mDesc->mItems.Size()-1;
 		}
 		while (!mDesc->mItems[mDesc->mSelectedItem]->Selectable() && mDesc->mSelectedItem != startedAt);
+		S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
 		return true;
 
 	case MKEY_Down:
@@ -123,10 +124,14 @@ bool DListMenu::MenuEvent (int mkey, bool fromcontroller)
 			if (++mDesc->mSelectedItem >= (int)mDesc->mItems.Size()) mDesc->mSelectedItem = 0;
 		}
 		while (!mDesc->mItems[mDesc->mSelectedItem]->Selectable() && mDesc->mSelectedItem != startedAt);
+		S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
 		return true;
 
 	case MKEY_Enter:
-		return mDesc->mItems[mDesc->mSelectedItem]->Activate();
+		if (mDesc->mItems[mDesc->mSelectedItem]->Activate())
+		{
+			S_Sound (CHAN_VOICE | CHAN_UI, "menu/choose", snd_menuvolume, ATTN_NONE);
+		}
 
 	default:
 		return Super::MenuEvent(mkey, fromcontroller);

@@ -88,6 +88,7 @@ bool DMenu::MenuEvent (int mkey, bool fromcontroller)
 	{
 		assert(DMenu::CurrentMenu == this);
 		DMenu::CurrentMenu = mParentMenu;
+		Destroy();
 		if (DMenu::CurrentMenu != NULL)
 		{
 			GC::WriteBarrier(DMenu::CurrentMenu);
@@ -98,8 +99,6 @@ bool DMenu::MenuEvent (int mkey, bool fromcontroller)
 			M_ClearMenus ();
 			S_Sound (CHAN_VOICE | CHAN_UI, "menu/clear", snd_menuvolume, ATTN_NONE);
 		}
-		Destroy();
-		M_ClearMenus();
 		return true;
 	}
 	}
@@ -120,6 +119,12 @@ bool DMenu::DimAllowed()
 	return true;
 }
 
+bool DMenu::TranslateKeyboardEvents()
+{
+	return true;
+}
+
+
 
 
 void M_StartControlPanel (bool makeSound)
@@ -138,6 +143,12 @@ void M_StartControlPanel (bool makeSound)
 	{
 		S_Sound (CHAN_VOICE | CHAN_UI, "menu/activate", snd_menuvolume, ATTN_NONE);
 	}
+}
+
+void M_ActivateMenu(DMenu *menu)
+{
+	DMenu::CurrentMenu = menu;
+	GC::WriteBarrier(DMenu::CurrentMenu);
 }
 
 void M_SetMenu(FName menu, int param)
@@ -206,8 +217,7 @@ void M_SetMenu(FName menu, int param)
 
 				DListMenu *newmenu = (DListMenu *)cls->CreateNew();
 				newmenu->Init(DMenu::CurrentMenu, ld);
-				DMenu::CurrentMenu = newmenu;
-				GC::WriteBarrier(DMenu::CurrentMenu);
+				M_ActivateMenu(newmenu);
 			}
 		}
 		return;
@@ -236,23 +246,24 @@ bool M_Responder (event_t *ev)
 
 	if (DMenu::CurrentMenu != NULL && menuactive == MENU_On) 
 	{
-		if (ev->type == EV_KeyDown)
+		if (ev->type == EV_GUI_Event && ev->subtype == EV_GUI_KeyDown &&
+			DMenu::CurrentMenu->TranslateKeyboardEvents())
 		{
 			// improve this later. For now it just has to work
 			int mkey = -1;
 			bool fromcontroller = false;
 			switch (ev->data1)
 			{
-				case KEY_ESCAPE:			mkey = MKEY_Back;		break;
-				case KEY_ENTER:				mkey = MKEY_Enter;		break;
-				case KEY_UPARROW:			mkey = MKEY_Up;			break;
-				case KEY_DOWNARROW:			mkey = MKEY_Down;		break;
-				case KEY_LEFTARROW:			mkey = MKEY_Left;		break;
-				case KEY_RIGHTARROW:		mkey = MKEY_Right;		break;
-				case KEY_BACKSPACE:			mkey = MKEY_Clear;		break;
-				case KEY_PGUP:				mkey = MKEY_PageUp;		break;
-				case KEY_PGDN:				mkey = MKEY_PageDown;	break;
-				case KEY_HOME:				mkey = MKEY_Enter; fromcontroller = true;	break; // for testing the input grid
+				case GK_ESCAPE:			mkey = MKEY_Back;		break;
+				case GK_RETURN:			mkey = MKEY_Enter;		break;
+				case GK_UP:				mkey = MKEY_Up;			break;
+				case GK_DOWN:			mkey = MKEY_Down;		break;
+				case GK_LEFT:			mkey = MKEY_Left;		break;
+				case GK_RIGHT:			mkey = MKEY_Right;		break;
+				case GK_BACKSPACE:		mkey = MKEY_Clear;		break;
+				case GK_PGUP:			mkey = MKEY_PageUp;		break;
+				case GK_PGDN:			mkey = MKEY_PageDown;	break;
+				case GK_HOME:			mkey = MKEY_Enter; fromcontroller = true;	break; // for testing the input grid
 			}
 			if (mkey != -1)
 			{

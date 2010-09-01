@@ -40,29 +40,6 @@
 #include "v_font.h"
 #include "v_palette.h"
 
-class DTextEnterMenu : public DMenu
-{
-	DECLARE_ABSTRACT_CLASS(DTextEnterMenu, DMenu)
-
-	char *mEnterString;
-	unsigned int mEnterSize;
-	unsigned int mEnterPos;
-	int mSizeMode; // 1: size is length in chars. 2: also check string width
-	bool mInputGridOkay;
-
-	int InputGridX;
-	int InputGridY;
-
-public:
-
-	DTextEnterMenu(DMenu *parent, char *textbuffer, int maxlen, int sizemode, bool showgrid);
-
-	void Drawer ();
-	bool MenuEvent (int mkey, bool fromcontroller);
-	bool Responder(event_t *ev);
-
-};
-
 IMPLEMENT_ABSTRACT_CLASS(DTextEnterMenu)
 
 #define INPUTGRID_WIDTH		13
@@ -85,16 +62,36 @@ static const char InputGridChars[INPUTGRID_WIDTH * INPUTGRID_HEIGHT] =
 //=============================================================================
 
 DTextEnterMenu::DTextEnterMenu(DMenu *parent, char *textbuffer, int maxlen, int sizemode, bool showgrid)
+: DMenu(parent)
 {
 	mEnterString = textbuffer;
 	mEnterSize = maxlen;
 	mEnterPos = (unsigned)strlen(textbuffer);
 	mSizeMode = sizemode;
 	mInputGridOkay = showgrid;
-	InputGridX = INPUTGRID_WIDTH - 1;
-	InputGridY = INPUTGRID_HEIGHT - 1;
+	if (mEnterPos > 0)
+	{
+		InputGridX = INPUTGRID_WIDTH - 1;
+		InputGridY = INPUTGRID_HEIGHT - 1;
+	}
+	else
+	{
+		// If we are naming a new save, don't start the cursor on "end".
+		InputGridX = 0;
+		InputGridY = 0;
+	}
 }
 
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+bool DTextEnterMenu::TranslateKeyboardEvents()
+{
+	return !mInputGridOkay;
+}
 
 //=============================================================================
 //
@@ -164,8 +161,7 @@ bool DTextEnterMenu::MenuEvent (int key, bool fromcontroller)
 	if (key == MKEY_Back)
 	{
 		mParentMenu->MenuEvent(MKEY_Abort, false);
-		Destroy();
-		return true;
+		return Super::MenuEvent(key, fromcontroller);
 	}
 	if (fromcontroller)
 	{

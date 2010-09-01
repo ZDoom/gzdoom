@@ -85,8 +85,8 @@ protected:
 
 	FTexture *SavePic;
 	FBrokenLines *SaveComment;
-	bool genStringEnter;
-	FString savegamestring;
+	bool mEntering;
+	char savegamestring[SAVESTRINGSIZE];
 
 	DLoadSaveMenu(DMenu *parent = NULL, FListMenuDescriptor *desc = NULL);
 	void Destroy();
@@ -638,9 +638,9 @@ void DLoadSaveMenu::Drawer ()
 			{
 				screen->Clear (listboxLeft, listboxTop+rowHeight*i,
 					listboxRight, listboxTop+rowHeight*(i+1), -1,
-					genStringEnter ? MAKEARGB(255,255,0,0) : MAKEARGB(255,0,0,255));
+					mEntering ? MAKEARGB(255,255,0,0) : MAKEARGB(255,0,0,255));
 				didSeeSelected = true;
-				if (!genStringEnter)
+				if (!mEntering)
 				{
 					screen->DrawText (SmallFont, color,
 						listboxLeft+1, listboxTop+rowHeight*i+CleanYfac, node->Title,
@@ -915,33 +915,26 @@ bool DSaveMenu::MenuEvent (int mkey, bool fromcontroller)
 
 	if (mkey == MKEY_Enter)
 	{
-		/* todo: implement a proper input class
-		// we are going to be intercepting all chars
-		genStringEnter = 1;
-		genStringEnd = M_DoSave;
-		genStringCancel = M_CancelSaveName;
-		genStringLen = SAVESTRINGSIZE-1;
-
-		if (file != &NewSaveNode)
+		if (SelSaveGame != &NewSaveNode)
 		{
-			strcpy (savegamestring, file->Title);
+			strcpy (savegamestring, SelSaveGame->Title);
 		}
 		else
 		{
-			// If we are naming a new save, don't start the cursor on "end".
-			if (InputGridX == INPUTGRID_WIDTH - 1 && InputGridY == INPUTGRID_HEIGHT - 1)
-			{
-				InputGridX = 0;
-				InputGridY = 0;
-			}
 			savegamestring[0] = 0;
 		}
-		saveCharIndex = strlen (savegamestring);
-		*/
+		DMenu *input = new DTextEnterMenu(this, savegamestring, SAVESTRINGSIZE, 1, fromcontroller);
+		M_ActivateMenu(input);
+		mEntering = true;
 	}
 	else if (mkey == MKEY_Input)
 	{
+		mEntering = false;
 		DoSave(SelSaveGame);
+	}
+	else if (mkey == MKEY_Abort)
+	{
+		mEntering = false;
 	}
 	return false;
 }

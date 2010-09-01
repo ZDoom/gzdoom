@@ -42,7 +42,6 @@ struct FGameStartup
 
 extern FGameStartup GameStartupInfo;
 
-void M_ClearMenus ();
 
 //=============================================================================
 //
@@ -86,8 +85,6 @@ typedef TMap<FName, FMenuDescriptor *> MenuDescriptorList;
 
 extern MenuDescriptorList MenuDescriptors;
 
-void M_ParseMenuDefs();
-void M_StartupSkillMenu(FGameStartup *gs);
 
 //=============================================================================
 //
@@ -135,6 +132,7 @@ public:
 	virtual void Ticker ();
 	virtual void Drawer ();
 	virtual bool DimAllowed ();
+	virtual bool TranslateKeyboardEvents();
 };
 
 //=============================================================================
@@ -276,6 +274,44 @@ public:
 	void Ticker ();
 	void Drawer ();
 };
+
+
+//=============================================================================
+//
+// Input some text
+//
+//=============================================================================
+
+class DTextEnterMenu : public DMenu
+{
+	DECLARE_ABSTRACT_CLASS(DTextEnterMenu, DMenu)
+
+	char *mEnterString;
+	unsigned int mEnterSize;
+	unsigned int mEnterPos;
+	int mSizeMode; // 1: size is length in chars. 2: also check string width
+	bool mInputGridOkay;
+
+	int InputGridX;
+	int InputGridY;
+
+public:
+
+	DTextEnterMenu(DMenu *parent, char *textbuffer, int maxlen, int sizemode, bool showgrid);
+
+	void Drawer ();
+	bool MenuEvent (int mkey, bool fromcontroller);
+	bool Responder(event_t *ev);
+	bool TranslateKeyboardEvents();
+
+};
+
+
+
+void M_ActivateMenu(DMenu *menu);
+void M_ClearMenus ();
+void M_ParseMenuDefs();
+void M_StartupSkillMenu(FGameStartup *gs);
 
 
 

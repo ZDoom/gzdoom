@@ -124,6 +124,8 @@ static bool CheckSkipOptionBlock(FScanner &sc)
 
 static void ParseListMenuBody(FScanner &sc, FListMenuDescriptor *desc)
 {
+	EColorRange vfontcolor = CR_UNTRANSLATED;
+
 	sc.MustGetStringName("{");
 	while (!sc.CheckString("}"))
 	{
@@ -294,11 +296,17 @@ static void ParseListMenuBody(FScanner &sc, FListMenuDescriptor *desc)
 			if (sc.CheckString(","))
 			{
 				sc.MustGetString();
-				desc->mFontColor = V_FindFontColor((FName)sc.String);
+				vfontcolor = desc->mFontColor = V_FindFontColor((FName)sc.String);
+				if (sc.CheckString(","))
+				{
+					sc.MustGetString();
+					vfontcolor = V_FindFontColor((FName)sc.String);
+				}
 			}
 			else
 			{
 				desc->mFontColor = CR_UNTRANSLATED;
+				vfontcolor = CR_UNTRANSLATED;
 			}
 		}
 		else if (sc.Compare("NetgameMessage"))
@@ -321,6 +329,49 @@ static void ParseListMenuBody(FScanner &sc, FListMenuDescriptor *desc)
 			PalEntry c2 = V_GetColor(NULL, sc.String);
 			FListMenuItemPlayerDisplay *it = new FListMenuItemPlayerDisplay(desc, x, y, c1, c2);
 			desc->mItems.Push(it);
+		}
+		else if (sc.Compare("PlayerNameBox"))
+		{
+			sc.MustGetString();
+			FString text = sc.String;
+			sc.MustGetStringName(",");
+			sc.MustGetNumber();
+			int ofs = sc.Number;
+			sc.MustGetStringName(",");
+			sc.MustGetString();
+			FListMenuItem *it = new FPlayerNameBox(desc->mXpos, desc->mYpos, ofs, text, desc->mFont, desc->mFontColor, sc.String);
+			desc->mItems.Push(it);
+			desc->mYpos += desc->mLinespacing;
+		}
+		else if (sc.Compare("ValueText"))
+		{
+			sc.MustGetString();
+			FString text = sc.String;
+			sc.MustGetStringName(",");
+			sc.MustGetString();
+			FListMenuItem *it = new FValueTextItem(desc->mXpos, desc->mYpos, text, desc->mFont, desc->mFontColor, vfontcolor, sc.String);
+			desc->mItems.Push(it);
+			desc->mYpos += desc->mLinespacing;
+		}
+		else if (sc.Compare("Slider"))
+		{
+			sc.MustGetString();
+			FString text = sc.String;
+			sc.MustGetStringName(",");
+			sc.MustGetString();
+			FString action = sc.String;
+			sc.MustGetStringName(",");
+			sc.MustGetNumber();
+			int min = sc.Number;
+			sc.MustGetStringName(",");
+			sc.MustGetNumber();
+			int max = sc.Number;
+			sc.MustGetStringName(",");
+			sc.MustGetNumber();
+			int step = sc.Number;
+			FListMenuItem *it = new FSliderItem(desc->mXpos, desc->mYpos, text, desc->mFont, desc->mFontColor, sc.String, min, max, step);
+			desc->mItems.Push(it);
+			desc->mYpos += desc->mLinespacing;
 		}
 		else
 		{

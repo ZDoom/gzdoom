@@ -76,6 +76,22 @@ void DListMenu::Init(DMenu *parent, FListMenuDescriptor *desc)
 //
 //=============================================================================
 
+FListMenuItem *DListMenu::GetItem(FName name)
+{
+	for(unsigned i=0;i<mDesc->mItems.Size(); i++)
+	{
+		FName nm = mDesc->mItems[i]->GetAction(NULL);
+		if (nm == name) return mDesc->mItems[i];
+	}
+	return NULL;
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
 bool DListMenu::Responder (event_t *ev)
 {
 	return false;
@@ -194,6 +210,35 @@ bool FListMenuItem::Activate()
 FName FListMenuItem::GetAction(int *pparam)
 {
 	return NAME_None;
+}
+
+bool FListMenuItem::SetString(int i, const char *s)
+{
+	return false;
+}
+
+bool FListMenuItem::GetString(int i, char *s, int len)
+{
+	return false;
+}
+
+bool FListMenuItem::SetValue(int i, int value)
+{
+	return false;
+}
+
+bool FListMenuItem::GetValue(int i, int *pvalue)
+{
+	return false;
+}
+
+void FListMenuItem::Enable(bool on)
+{
+}
+
+bool FListMenuItem::MenuEvent(int mkey, bool fromcontroller)
+{
+	return false;
 }
 
 

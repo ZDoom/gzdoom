@@ -5,6 +5,7 @@
 
 
 #include "dobject.h"
+#include "d_player.h"
 #include "r_translate.h"
 #include "textures/textures.h"
 
@@ -145,6 +146,7 @@ class FListMenuItem
 {
 protected:
 	int mXpos, mYpos;
+	bool mEnabled;
 
 public:
 	FListMenuItem(int xpos = 0, int ypos = 0);
@@ -156,6 +158,12 @@ public:
 	virtual bool Selectable();
 	virtual bool Activate();
 	virtual FName GetAction(int *pparam);
+	virtual bool SetString(int i, const char *s);
+	virtual bool GetString(int i, char *s, int len);
+	virtual bool SetValue(int i, int value);
+	virtual bool GetValue(int i, int *pvalue);
+	virtual void Enable(bool on);
+	virtual bool MenuEvent (int mkey, bool fromcontroller);
 	void DrawSelector(int xofs, int yofs, FTextureID tex);
 };	
 
@@ -253,6 +261,86 @@ public:
 	void Drawer();
 };
 
+//=============================================================================
+//
+// items for the player menu
+//
+//=============================================================================
+
+class FPlayerNameBox : public FListMenuItemSelectable
+{
+	const char *mText;
+	FFont *mFont;
+	EColorRange mFontColor;
+	int mFrameSize;
+	char mPlayerName[MAXPLAYERNAME+1];
+	char mEditName[MAXPLAYERNAME+2];
+	bool mEntering;
+
+	void DrawBorder (int x, int y, int len);
+
+public:
+
+	FPlayerNameBox(int x, int y, int frameofs, const char *text, FFont *font, EColorRange color, FName action);
+	~FPlayerNameBox();
+	bool SetString(int i, const char *s);
+	bool GetString(int i, char *s, int len);
+	void Drawer();
+	bool MenuEvent (int mkey, bool fromcontroller);
+};
+
+//=============================================================================
+//
+// items for the player menu
+//
+//=============================================================================
+
+class FValueTextItem : public FListMenuItemSelectable
+{
+	TArray<FString> mSelections;
+	const char *mText;
+	int mSelection;
+	FFont *mFont;
+	EColorRange mFontColor;
+	EColorRange mFontColor2;
+
+public:
+
+	FValueTextItem(int x, int y, const char *text, FFont *font, EColorRange color, EColorRange valuecolor, FName action);
+	~FValueTextItem();
+	bool SetString(int i, const char *s);
+	bool SetValue(int i, int value);
+	bool GetValue(int i, int *pvalue);
+	bool MenuEvent (int mkey, bool fromcontroller);
+	void Drawer();
+};
+
+//=============================================================================
+//
+// items for the player menu
+//
+//=============================================================================
+
+class FSliderItem : public FListMenuItemSelectable
+{
+	const char *mText;
+	FFont *mFont;
+	EColorRange mFontColor;
+	int mMinrange, mMaxrange;
+	int mStep;
+	int mSelection;
+
+	void DrawSlider (int x, int y);
+
+public:
+
+	FSliderItem(int x, int y, const char *text, FFont *font, EColorRange color, FName action, int min, int max, int step);
+	~FSliderItem();
+	bool SetValue(int i, int value);
+	bool GetValue(int i, int *pvalue);
+	bool MenuEvent (int mkey, bool fromcontroller);
+	void Drawer();
+};
 
 //=============================================================================
 //
@@ -264,11 +352,13 @@ class DListMenu : public DMenu
 {
 	DECLARE_CLASS(DListMenu, DMenu)
 
+protected:
 	FListMenuDescriptor *mDesc;
 
 public:
 	DListMenu(DMenu *parent = NULL, FListMenuDescriptor *desc = NULL);
-	void Init(DMenu *parent = NULL, FListMenuDescriptor *desc = NULL);
+	virtual void Init(DMenu *parent = NULL, FListMenuDescriptor *desc = NULL);
+	FListMenuItem *GetItem(FName name);
 	bool Responder (event_t *ev);
 	bool MenuEvent (int mkey, bool fromcontroller);
 	void Ticker ();

@@ -258,3 +258,43 @@ ListMenu "SaveGameMenu"
 	Class "SaveMenu"	// uses its own implementation
 }
 
+//-------------------------------------------------------------------------------------------
+//
+// The player menu - remove the test name later!
+//
+//-------------------------------------------------------------------------------------------
+
+ListMenu "OptionsMenu"
+//ListMenu "PlayerMenu"
+{
+	StaticTextCentered 160, -15, "$MNU_PLAYERSETUP"
+	
+
+	IfGame (Doom, Strife, Chex)
+	{
+		Font "SmallFont", "Green", "Untranslated"
+		Position 48, 47
+		PlayerNameBox "Name", 0, "Playerbox"
+	}
+	IfGame(Heretic, Hexen)
+	{
+		Font "SmallFont", "Untranslated", "Grey"
+		Position 48, 52
+		PlayerNameBox "Name", 5, "Playerbox"
+	}
+	ValueText "Team", "Team"
+	Linespacing 14
+	ValueText "Color", "Color"
+	Linespacing 10
+	Slider "Red", "Red", 0, 255, 16
+	Slider "Green", "Green", 0, 255, 16
+	Linespacing 14
+	Slider "Blue", "Blue", 0, 255, 16
+	Linespacing 16
+	ValueText "Class", "Class"
+	ValueText "Skin", "Skin"
+	ValueText "Gender", "Gender"
+	ValueText "Autoaim", "Autoaim"
+	ValueText "Switch on pickup", "Switch"
+	Class "PlayerMenu"
+}

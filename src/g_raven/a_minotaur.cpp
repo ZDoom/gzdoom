@@ -448,9 +448,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurRoam)
 	{
 		// Turn
 		if (pr_minotaurroam() & 1)
-			self->movedir = (++self->movedir)%8;
+			self->movedir = (self->movedir + 1) % 8;
 		else
-			self->movedir = (self->movedir+7)%8;
+			self->movedir = (self->movedir + 7) % 8;
 		FaceMovementDirection (self);
 	}
 }

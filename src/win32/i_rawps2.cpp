@@ -388,8 +388,9 @@ FRawPS2Controller::~FRawPS2Controller()
 
 bool FRawPS2Controller::ProcessInput(RAWHID *raw, int code)
 {
-	// w32api has an incompatible definition of bRawData
-#if __GNUC__
+	// w32api has an incompatible definition of bRawData.
+	// (But the version that comes with MinGW64 is fine.)
+#if defined(__GNUC__) && !defined(_WIN64)
 	BYTE *rawdata = &raw->bRawData;
 #else
 	BYTE *rawdata = raw->bRawData;

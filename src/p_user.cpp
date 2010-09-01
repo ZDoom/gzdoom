@@ -1975,7 +1975,7 @@ void P_CrouchMove(player_t * player, int direction)
 
 	// check whether the move is ok
 	player->mo->height = FixedMul(defaultheight, player->crouchfactor);
-	if (!P_TryMove(player->mo, player->mo->x, player->mo->y, false, false))
+	if (!P_TryMove(player->mo, player->mo->x, player->mo->y, false, NULL))
 	{
 		player->mo->height = savedheight;
 		if (direction > 0)

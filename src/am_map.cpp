@@ -246,10 +246,10 @@ CUSTOM_CVAR (Int, am_showalllines, -1, 0)	// This is a cheat so don't save it.
 #define F_PANINC		(140/TICRATE)
 // how much zoom-in per tic
 // goes to 2x in 1 second
-#define M_ZOOMIN        ((int) (1.02*MAPUNIT))
+#define M_ZOOMIN        (1.02*MAPUNIT)
 // how much zoom-out per tic
 // pulls out to 0.5x in 1 second
-#define M_ZOOMOUT       ((int) (MAPUNIT/1.02))
+#define M_ZOOMOUT       (MAPUNIT/1.02)
 
 // translates between frame-buffer and map coordinates
 #define CXMTOF(x)  (MTOF((x)-m_x)/* - f_x*/)
@@ -413,6 +413,7 @@ static int	amclock;
 
 static mpoint_t	m_paninc;		// how far the window pans each tic (map coords)
 static fixed_t	mtof_zoommul;	// how far the window zooms in each tic (map coords)
+static float	am_zoomdir;
 
 static fixed_t	m_x, m_y;		// LL x,y where the window is on the map (map coords)
 static fixed_t	m_x2, m_y2;		// UR x,y where the window is on the map (map coords)
@@ -1258,8 +1259,23 @@ void AM_changeWindowScale ()
 {
 	int mtof_zoommul;
 
-	if (Button_AM_ZoomIn.bDown) mtof_zoommul = M_ZOOMIN;
-	else if (Button_AM_ZoomOut.bDown) mtof_zoommul = M_ZOOMOUT;
+	if (am_zoomdir > 0)
+	{
+		mtof_zoommul = int(M_ZOOMIN * am_zoomdir);
+	}
+	else if (am_zoomdir < 0)
+	{
+		mtof_zoommul = int(M_ZOOMOUT / -am_zoomdir);
+	}
+	else if (Button_AM_ZoomIn.bDown)
+	{
+		mtof_zoommul = int(M_ZOOMIN);
+	}
+	else if (Button_AM_ZoomOut.bDown)
+	{
+		mtof_zoommul = int(M_ZOOMOUT);
+	}
+	am_zoomdir = 0;
 
 	// Change the scaling multipliers
 	scale_mtof = MapMul(scale_mtof, mtof_zoommul);
@@ -1271,6 +1287,13 @@ void AM_changeWindowScale ()
 		AM_maxOutWindowScale();
 }
 
+CCMD(am_zoom)
+{
+	if (argv.argc() >= 2)
+	{
+		am_zoomdir = (float)atof(argv[1]);
+	}
+}
 
 //=============================================================================
 //
@@ -1332,7 +1355,7 @@ void AM_Ticker ()
 	}
 
 	// Change the zoom if necessary
-	if (Button_AM_ZoomIn.bDown || Button_AM_ZoomOut.bDown)
+	if (Button_AM_ZoomIn.bDown || Button_AM_ZoomOut.bDown || am_zoomdir != 0)
 		AM_changeWindowScale();
 
 	// Change x,y location

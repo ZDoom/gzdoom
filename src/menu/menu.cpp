@@ -60,6 +60,12 @@ FListMenuDescriptor *MainMenu;
 FGameStartup GameStartupInfo;
 EMenuState		menuactive;
 bool			M_DemoNoPlay;
+FButtonStatus	MenuButtons[NUM_MKEYS];
+int				MenuButtonTickers[NUM_MKEYS];
+bool			MenuButtonOrigin[NUM_MKEYS];
+
+#define KEY_REPEAT_DELAY	(TICRATE*5/12)
+#define KEY_REPEAT_RATE		(3)
 
 //============================================================================
 //
@@ -82,6 +88,12 @@ bool DMenu::Responder (event_t *ev)
 	return false; 
 }
 
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
 bool DMenu::MenuEvent (int mkey, bool fromcontroller)
 {
 	switch (mkey)
@@ -96,6 +108,12 @@ bool DMenu::MenuEvent (int mkey, bool fromcontroller)
 	}
 	return false;
 }
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
 
 void DMenu::Close ()
 {
@@ -112,6 +130,12 @@ void DMenu::Close ()
 	}
 }
 
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
 
 void DMenu::Ticker () 
 {
@@ -131,8 +155,11 @@ bool DMenu::TranslateKeyboardEvents()
 	return true;
 }
 
-
-
+//=============================================================================
+//
+//
+//
+//=============================================================================
 
 void M_StartControlPanel (bool makeSound)
 {
@@ -152,11 +179,23 @@ void M_StartControlPanel (bool makeSound)
 	}
 }
 
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
 void M_ActivateMenu(DMenu *menu)
 {
 	DMenu::CurrentMenu = menu;
 	GC::WriteBarrier(DMenu::CurrentMenu);
 }
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
 
 void M_SetMenu(FName menu, int param)
 {
@@ -246,8 +285,19 @@ void M_SetMenu(FName menu, int param)
 	Printf("Attempting to open menu of unknown type '%s'\n", menu.GetChars());
 }
 
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
 bool M_Responder (event_t *ev) 
 { 
+	int ch = 0;
+	bool keyup = false;
+	int mkey = NUM_MKEYS;
+	bool fromcontroller = true;
+
 	if (chatmodeon)
 	{
 		return false;
@@ -255,14 +305,35 @@ bool M_Responder (event_t *ev)
 
 	if (DMenu::CurrentMenu != NULL && menuactive == MENU_On) 
 	{
-		if (ev->type == EV_GUI_Event && ev->subtype == EV_GUI_KeyDown &&
-			DMenu::CurrentMenu->TranslateKeyboardEvents())
+		// There are a few input sources we are interested in:
+		//
+		// EV_KeyDown / EV_KeyUp : joysticks/gamepads/controllers
+		// EV_GUI_KeyDown / EV_GUI_KeyUp : the keyboard
+		// EV_GUI_Char : printable characters, which we want in string input mode
+		//
+		// This code previously listened for EV_GUI_KeyRepeat to handle repeating
+		// in the menus, but that doesn't work with gamepads, so now we combine
+		// the multiple inputs into buttons and handle the repetition manually.
+		if (ev->type == EV_GUI_Event)
 		{
-			// improve this later. For now it just has to work
-			int mkey = -1;
-			bool fromcontroller = false;
-			switch (ev->data1)
+			fromcontroller = false;
+			if (ev->subtype == EV_GUI_KeyRepeat)
 			{
+				// We do our own key repeat handling but still want to eat the
+				// OS's repeated keys.
+				return true;
+			}
+			else if (ev->subtype != EV_GUI_KeyDown && ev->subtype != EV_GUI_KeyUp)
+			{
+				// pass everything else on to the current menu
+				return DMenu::CurrentMenu->Responder(ev);
+			}
+			else if (DMenu::CurrentMenu->TranslateKeyboardEvents())
+			{
+				ch = ev->data1;
+				keyup = ev->subtype == EV_GUI_KeyUp;
+				switch (ch)
+				{
 				case GK_ESCAPE:			mkey = MKEY_Back;		break;
 				case GK_RETURN:			mkey = MKEY_Enter;		break;
 				case GK_UP:				mkey = MKEY_Up;			break;
@@ -272,14 +343,95 @@ bool M_Responder (event_t *ev)
 				case GK_BACKSPACE:		mkey = MKEY_Clear;		break;
 				case GK_PGUP:			mkey = MKEY_PageUp;		break;
 				case GK_PGDN:			mkey = MKEY_PageDown;	break;
-				case GK_HOME:			mkey = MKEY_Enter; fromcontroller = true;	break; // for testing the input grid
+				default:
+					if (!keyup)
+					{
+						return DMenu::CurrentMenu->Responder(ev);
+					}
+					break;
+				}
 			}
-			if (mkey != -1)
+		}
+		else if (ev->type == EV_KeyDown || ev->type == EV_KeyUp)
+		{
+			keyup = ev->type == EV_KeyUp;
+
+			ch = ev->data1;
+			switch (ch)
 			{
-				return DMenu::CurrentMenu->MenuEvent(mkey, fromcontroller);
+			case KEY_JOY1:
+			case KEY_PAD_A:
+				mkey = MKEY_Enter;
+				break;
+
+			case KEY_JOY2:
+			case KEY_PAD_B:
+				mkey = MKEY_Back;
+				break;
+
+			case KEY_JOY3:
+			case KEY_PAD_X:
+				mkey = MKEY_Clear;
+				break;
+
+			case KEY_JOY5:
+			case KEY_PAD_LSHOULDER:
+				mkey = MKEY_PageUp;
+				break;
+
+			case KEY_JOY6:
+			case KEY_PAD_RSHOULDER:
+				mkey = MKEY_PageDown;
+				break;
+
+			case KEY_PAD_DPAD_UP:
+			case KEY_PAD_LTHUMB_UP:
+			case KEY_JOYAXIS1MINUS:
+			case KEY_JOYPOV1_UP:
+				mkey = MKEY_Up;
+				break;
+
+			case KEY_PAD_DPAD_DOWN:
+			case KEY_PAD_LTHUMB_DOWN:
+			case KEY_JOYAXIS1PLUS:
+			case KEY_JOYPOV1_DOWN:
+				mkey = MKEY_Down;
+				break;
+
+			case KEY_PAD_DPAD_LEFT:
+			case KEY_PAD_LTHUMB_LEFT:
+			case KEY_JOYAXIS2MINUS:
+			case KEY_JOYPOV1_LEFT:
+				mkey = MKEY_Left;
+				break;
+
+			case KEY_PAD_DPAD_RIGHT:
+			case KEY_PAD_LTHUMB_RIGHT:
+			case KEY_JOYAXIS2PLUS:
+			case KEY_JOYPOV1_RIGHT:
+				mkey = MKEY_Right;
+				break;
 			}
 		}
 
+		if (mkey != NUM_MKEYS)
+		{
+			if (keyup)
+			{
+				MenuButtons[mkey].ReleaseKey(ch);
+				return true;
+			}
+			else
+			{
+				MenuButtons[mkey].PressKey(ch);
+				MenuButtonOrigin[mkey] = fromcontroller;
+				if (mkey <= MKEY_PageDown)
+				{
+					MenuButtonTickers[mkey] = KEY_REPEAT_DELAY;
+				}
+				return DMenu::CurrentMenu->MenuEvent(mkey, fromcontroller);
+			}
+		}
 		return DMenu::CurrentMenu->Responder(ev);
 	}
 	else
@@ -306,12 +458,37 @@ bool M_Responder (event_t *ev)
 	return false;
 }
 
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
 void M_Ticker (void) 
 {
 	DMenu::MenuTime++;
 	if (DMenu::CurrentMenu != NULL && menuactive == MENU_On) 
 		DMenu::CurrentMenu->Ticker();
+
+	for (int i = 0; i < NUM_MKEYS; ++i)
+	{
+		if (MenuButtons[i].bDown)
+		{
+			if (MenuButtonTickers[i] > 0 &&	--MenuButtonTickers[i] <= 0)
+			{
+				MenuButtonTickers[i] = KEY_REPEAT_RATE;
+				DMenu::CurrentMenu->MenuEvent(i, MenuButtonOrigin[i]);
+			}
+		}
+	}
+
 }
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
 
 void M_Drawer (void) 
 {
@@ -336,6 +513,12 @@ void M_Drawer (void)
 	}
 }
 
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
 void M_ClearMenus ()
 {
 	/*
@@ -352,16 +535,25 @@ void M_ClearMenus ()
 	menuactive = MENU_Off;
 }
 
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
 void M_Init (void) 
 {
 	M_ParseMenuDefs();
 }
 
 
-// CODE --------------------------------------------------------------------
-
+//=============================================================================
+//
 // [RH] Most menus can now be accessed directly
 // through console commands.
+//
+//=============================================================================
+
 CCMD (menu_main)
 {
 	M_StartControlPanel(true);

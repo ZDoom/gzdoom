@@ -38,6 +38,8 @@
 #include "gstrings.h"
 #include "g_level.h"
 #include "gi.h"
+#include "d_gui.h"
+#include "d_event.h"
 #include "menu/menu.h"
 
 IMPLEMENT_CLASS(DListMenu)
@@ -94,6 +96,29 @@ FListMenuItem *DListMenu::GetItem(FName name)
 
 bool DListMenu::Responder (event_t *ev)
 {
+	if (ev->type == EV_GUI_Event && ev->subtype == EV_GUI_KeyDown)
+	{
+		int ch = tolower (ev->data1);
+
+		for(unsigned i = mDesc->mSelectedItem + 1; i < mDesc->mItems.Size(); i++)
+		{
+			if (mDesc->mItems[i]->CheckHotkey(ch))
+			{
+				mDesc->mSelectedItem = i;
+				S_Sound(CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
+				return true;
+			}
+		}
+		for(int i = 0; i < mDesc->mSelectedItem; i++)
+		{
+			if (mDesc->mItems[i]->CheckHotkey(ch))
+			{
+				mDesc->mSelectedItem = i;
+				S_Sound(CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
+				return true;
+			}
+		}
+	}
 	return false;
 }
 
@@ -266,6 +291,11 @@ bool FListMenuItem::MenuEvent(int mkey, bool fromcontroller)
 	return false;
 }
 
+bool FListMenuItem::CheckHotkey(int c) 
+{ 
+	return false; 
+}
+
 
 //=============================================================================
 //
@@ -375,6 +405,7 @@ FListMenuItemSelectable::FListMenuItemSelectable(int x, int y, FName action, int
 : FListMenuItem(x, y, action)
 {
 	mParam = param;
+	mHotkey = 0;
 }
 
 void FListMenuItemSelectable::SetHotspot(int x, int y, int w, int h)
@@ -402,6 +433,11 @@ FName FListMenuItemSelectable::GetAction(int *pparam)
 {
 	if (pparam != NULL) *pparam = mParam;
 	return mAction;
+}
+
+bool FListMenuItemSelectable::CheckHotkey(int c) 
+{ 
+	return c == tolower(mHotkey); 
 }
 
 
@@ -448,6 +484,7 @@ void FListMenuItemText::Drawer()
 FListMenuItemPatch::FListMenuItemPatch(int x, int y, int hotkey, FTextureID patch, FName child, int param)
 : FListMenuItemSelectable(x, y, child, param)
 {
+	mHotkey = hotkey;
 	mTexture = patch;
 }
 

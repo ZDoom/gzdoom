@@ -171,6 +171,7 @@ public:
 	virtual bool GetValue(int i, int *pvalue);
 	virtual void Enable(bool on);
 	virtual bool MenuEvent (int mkey, bool fromcontroller);
+	virtual bool CheckHotkey(int c);
 	void DrawSelector(int xofs, int yofs, FTextureID tex);
 };	
 
@@ -259,7 +260,7 @@ public:
 	void SetHotspot(int x, int y, int w, int h);
 	bool CheckCoordinate(int x, int y);
 	bool Selectable();
-	bool CheckHotkey(int c) { return c == mHotkey; }
+	bool CheckHotkey(int c);
 	bool Activate();
 	FName GetAction(int *pparam);
 };

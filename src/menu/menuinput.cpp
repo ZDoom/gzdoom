@@ -90,7 +90,7 @@ DTextEnterMenu::DTextEnterMenu(DMenu *parent, char *textbuffer, int maxlen, int 
 
 bool DTextEnterMenu::TranslateKeyboardEvents()
 {
-	return !mInputGridOkay;
+	return false; 
 }
 
 //=============================================================================
@@ -128,16 +128,18 @@ bool DTextEnterMenu::Responder(event_t *ev)
 		{
 			if (ch == GK_ESCAPE)
 			{
-				mParentMenu->MenuEvent(MKEY_Abort, false);
-				Destroy();
+				DMenu *parent = mParentMenu;
+				Close();
+				parent->MenuEvent(MKEY_Abort, false);
 				return true;
 			}
 			else if (ch == '\r')
 			{
 				if (mEnterString[0])
 				{
-					mParentMenu->MenuEvent(MKEY_Input, false);
-					Destroy();
+					DMenu *parent = mParentMenu;
+					Close();
+					parent->MenuEvent(MKEY_Input, false);
 					return true;
 				}
 			}

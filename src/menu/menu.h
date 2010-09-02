@@ -5,9 +5,11 @@
 
 
 #include "dobject.h"
+#include "lists.h"
 #include "d_player.h"
 #include "r_translate.h"
 #include "c_cvars.h"
+#include "version.h"
 #include "textures/textures.h"
 
 EXTERN_CVAR(Float, snd_menuvolume)
@@ -49,6 +51,18 @@ struct FGameStartup
 };
 
 extern FGameStartup GameStartupInfo;
+
+struct FSaveGameNode : public Node
+{
+	char Title[SAVESTRINGSIZE];
+	FString Filename;
+	bool bOldVersion;
+	bool bMissingWads;
+	bool bNoDelete;
+
+	FSaveGameNode() { bNoDelete = false; }
+};
+
 
 
 //=============================================================================
@@ -438,6 +452,7 @@ void M_StartupSkillMenu(FGameStartup *gs);
 void M_StartControlPanel (bool makeSound);
 void M_SetMenu(FName menu, int param = -1);
 void M_NotifyNewSave (const char *file, const char *title, bool okForQuicksave);
+void M_StartMessage(const char *message, int messagemode, FName action = NAME_None);
 
 
 #endif

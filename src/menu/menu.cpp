@@ -47,6 +47,7 @@
 #include "v_video.h"
 #include "hu_stuff.h"
 #include "gi.h"
+#include "gstrings.h"
 #include "menu/menu.h"
 #include "textures/textures.h"
 
@@ -193,6 +194,7 @@ void M_StartControlPanel (bool makeSound)
 
 void M_ActivateMenu(DMenu *menu)
 {
+	menuactive = MENU_On;
 	DMenu::CurrentMenu = menu;
 	GC::WriteBarrier(DMenu::CurrentMenu);
 }
@@ -218,15 +220,36 @@ void M_SetMenu(FName menu, int param)
 
 	case NAME_Skillmenu:
 		// sent from the episode menu
+
+		if ((gameinfo.flags & GI_SHAREWARE) && param > 0)
+		{
+			// Only Doom and Heretic have multi-episode shareware versions.
+			if (gameinfo.gametype == GAME_Doom)
+			{
+				M_StartMessage(GStrings("SWSTRING"), 1);
+			}
+			else
+			{
+				M_StartMessage(GStrings("MNU_ONLYREGISTERED"), 1);
+			}
+			return;
+		}
+
 		GameStartupInfo.Episode = param;
 		M_StartupSkillMenu(&GameStartupInfo);	// needs player class name from class menu (later)
 		break;
 
 	case NAME_StartgameConfirm:
-		// sent from the skill menu
+	{
+		// sent from the skill menu for a skill that needs to be confirmed
 		GameStartupInfo.Skill = param;
-		// Todo: 
-		break;
+
+		const char *msg = AllSkills[param].MustConfirmText;
+		if (*msg==0) msg = GStrings("NIGHTMARE");
+		if (*msg=='$') msg = GStrings(msg+1);
+		M_StartMessage (msg, 0, NAME_Startgame);
+		return;
+	}
 
 	case NAME_Startgame:
 		// sent either from skill menu or confirmation screen. Skill gets only set if sent from skill menu
@@ -242,15 +265,16 @@ void M_SetMenu(FName menu, int param)
 		M_ClearMenus ();
 		return;
 
-	case NAME_Savemenu:
+	case NAME_Savegamemenu:
 		if (!usergame || (players[consoleplayer].health <= 0 && !multiplayer))
 		{
 			// cannot save outside the game.
-			//M_StartMessage (GStrings("SAVEDEAD"), NULL);
+			M_StartMessage (GStrings("SAVEDEAD"), 1);
 			return;
 		}
-
 	}
+
+	// End of special checks
 
 	FMenuDescriptor **desc = MenuDescriptors.CheckKey(menu);
 	if (desc != NULL)
@@ -258,6 +282,11 @@ void M_SetMenu(FName menu, int param)
 		if ((*desc)->mType == MDESC_ListMenu)
 		{
 			FListMenuDescriptor *ld = static_cast<FListMenuDescriptor*>(*desc);
+			if (ld->mNetgameMessage.IsNotEmpty() && netgame)
+			{
+				M_StartMessage(ld->mNetgameMessage, 1);
+				return;
+			}
 			if (ld->mAutoselect >= 0 && ld->mAutoselect < (int)ld->mItems.Size())
 			{
 				// recursively activate the autoselected item without ever creating this menu.
@@ -527,10 +556,6 @@ void M_Drawer (void)
 
 void M_ClearMenus ()
 {
-	/*
-	M_DeactivateMenuInput ();
-	InfoType = 0;
-	*/
 	M_DemoNoPlay = false;
 	if (DMenu::CurrentMenu != NULL)
 	{

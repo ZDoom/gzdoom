@@ -51,17 +51,6 @@
 
 
 
-struct FSaveGameNode : public Node
-{
-	char Title[SAVESTRINGSIZE];
-	FString Filename;
-	bool bOldVersion;
-	bool bMissingWads;
-	bool bNoDelete;
-
-	FSaveGameNode() { bNoDelete = false; }
-};
-
 class DLoadSaveMenu : public DListMenu
 {
 	DECLARE_CLASS(DLoadSaveMenu, DListMenu)
@@ -69,7 +58,6 @@ class DLoadSaveMenu : public DListMenu
 protected:
 	static List SaveGames;
 	static FSaveGameNode *TopSaveGame;
-	static FSaveGameNode *quickSaveSlot;
 	static FSaveGameNode *lastSaveSlot;
 	static FSaveGameNode *SelSaveGame;
 
@@ -104,10 +92,10 @@ IMPLEMENT_CLASS(DLoadSaveMenu)
 
 List DLoadSaveMenu::SaveGames;
 FSaveGameNode *DLoadSaveMenu::TopSaveGame;
-FSaveGameNode *DLoadSaveMenu::quickSaveSlot;
 FSaveGameNode *DLoadSaveMenu::lastSaveSlot;
 FSaveGameNode *DLoadSaveMenu::SelSaveGame;
 
+FSaveGameNode *quickSaveSlot;
 
 //=============================================================================
 //
@@ -740,7 +728,26 @@ bool DLoadSaveMenu::MenuEvent (int mkey, bool fromcontroller)
 		return true;
 
 	case MKEY_Enter:
-		return false;
+		return false;	// This event will be handled by the subclasses
+
+	case MKEY_MBYes:
+	{
+		FSaveGameNode *next = static_cast<FSaveGameNode *>(SelSaveGame->Succ);
+		if (next->Succ == NULL)
+		{
+			next = static_cast<FSaveGameNode *>(SelSaveGame->Pred);
+			if (next->Pred == NULL)
+			{
+				next = NULL;
+			}
+		}
+
+		remove (SelSaveGame->Filename.GetChars());
+		UnloadSaveData ();
+		SelSaveGame = RemoveSaveSlot (SelSaveGame);
+		ExtractSaveData (SelSaveGame);
+		return true;
+	}
 
 	default:
 		return Super::MenuEvent(mkey, fromcontroller);
@@ -777,11 +784,12 @@ bool DLoadSaveMenu::Responder (event_t *ev)
 
 			case GK_DEL:
 			case '\b':
-				/*
-				EndString.Format("%s" TEXTCOLOR_WHITE "%s" TEXTCOLOR_NORMAL "?\n\n%s",
-					GStrings("MNU_DELETESG"), SelSaveGame->Title, GStrings("PRESSYN"));
-				M_StartMessage (EndString, M_DeleteSaveResponse);
-				*/
+				{
+					FString EndString;
+					EndString.Format("%s" TEXTCOLOR_WHITE "%s" TEXTCOLOR_NORMAL "?\n\n%s",
+						GStrings("MNU_DELETESG"), SelSaveGame->Title, GStrings("PRESSYN"));
+					M_StartMessage (EndString, 0);
+				}
 				return true;
 			}
 		}

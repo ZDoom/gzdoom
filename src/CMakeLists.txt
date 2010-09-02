@@ -812,11 +812,12 @@ add_executable( zdoom WIN32
 	sound/music_cd.cpp
 	sound/music_dumb.cpp
 	sound/music_gme.cpp
+	sound/music_mus_midiout.cpp
+	sound/music_smf_midiout.cpp
+	sound/music_hmi_midiout.cpp
 	sound/music_midistream.cpp
 	sound/music_midi_base.cpp
-	sound/music_midi_midiout.cpp
 	sound/music_midi_timidity.cpp
-	sound/music_mus_midiout.cpp
 	sound/music_mus_opl.cpp
 	sound/music_stream.cpp
 	sound/music_fluidsynth_mididevice.cpp

@@ -373,7 +373,7 @@ protected:
 	virtual void DoInitialSetup() = 0;
 	virtual void DoRestart() = 0;
 	virtual bool CheckDone() = 0;
-	virtual void Precache() = 0;
+	virtual void Precache();
 	virtual DWORD *MakeEvents(DWORD *events, DWORD *max_event_p, DWORD max_time) = 0;
 
 	enum
@@ -413,6 +413,7 @@ protected:
 	DWORD Volume;
 	EMIDIDevice DeviceType;
 	bool CallbackIsThreaded;
+	bool IgnoreLoops;
 	FString DumpFilename;
 };
 
@@ -460,7 +461,6 @@ protected:
 	void DoInitialSetup();
 	void DoRestart();
 	bool CheckDone();
-	void Precache();
 	DWORD *MakeEvents(DWORD *events, DWORD *max_events_p, DWORD max_time);
 	void AdvanceTracks(DWORD time);
 
@@ -478,6 +478,64 @@ protected:
 	int NumTracks;
 	int Format;
 	WORD DesignationMask;
+};
+
+// HMI file played with a MIDI stream ---------------------------------------
+
+class HMISong : public MIDIStreamer
+{
+public:
+	HMISong(FILE *file, BYTE *musiccache, int length, EMIDIDevice type);
+	~HMISong();
+
+	MusInfo *GetOPLDumper(const char *filename);
+	MusInfo *GetWaveDumper(const char *filename, int rate);
+
+protected:
+	HMISong(const HMISong *original, const char *filename, EMIDIDevice type);	// file dump constructor
+
+	void CheckCaps();
+	void DoInitialSetup();
+	void DoRestart();
+	bool CheckDone();
+	DWORD *MakeEvents(DWORD *events, DWORD *max_events_p, DWORD max_time);
+	void AdvanceTracks(DWORD time);
+
+	struct TrackInfo;
+
+	void ProcessInitialMetaEvents ();
+	DWORD *SendCommand (DWORD *event, TrackInfo *track, DWORD delay);
+	TrackInfo *FindNextDue ();
+	void SetTempo(int new_tempo);
+
+	struct AutoNoteOff
+	{
+		DWORD Delay;
+		BYTE Channel, Key;
+	};
+	// Sorry, std::priority_queue, but I want to be able to modify the contents of the heap.
+	class NoteOffQueue : public TArray<AutoNoteOff>
+	{
+	public:
+		void AddNoteOff(DWORD delay, BYTE channel, BYTE key);
+		void AdvanceTime(DWORD time);
+		bool Pop(AutoNoteOff &item);
+
+	protected:
+		void Heapify();
+
+		unsigned int Parent(unsigned int i) { return (i + 1u) / 2u - 1u; }
+		unsigned int Left(unsigned int i) { return (i + 1u) * 2u - 1u; }
+		unsigned int Right(unsigned int i) { return (i + 1u) * 2u; }
+	};
+
+	BYTE *MusHeader;
+	int SongLen;
+	int NumTracks;
+	TrackInfo *Tracks;
+	TrackInfo *TrackDue;
+	TrackInfo *FakeTrack;
+	NoteOffQueue NoteOffs;
 };
 
 // Anything supported by FMOD out of the box --------------------------------

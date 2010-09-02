@@ -489,10 +489,36 @@ MusInfo *I_RegisterSong (const char *filename, BYTE *musiccache, int offset, int
 		}
 #endif // _WIN32
 	}
-	// Check for MIDI format
 	else 
 	{
-		if (id[0] == MAKE_ID('M','T','h','d'))
+		// Check for HMI format
+		if (id[0] == MAKE_ID('H','M','I','-') &&
+			id[1] == MAKE_ID('M','I','D','I') &&
+			id[2] == MAKE_ID('S','O','N','G'))
+		{
+			if ((snd_mididevice == -3 && device == MDEV_DEFAULT) || device == MDEV_OPL)
+			{
+				info = new HMISong(file, musiccache, len, MIDI_OPL);
+			}
+			else if (snd_mididevice == -4 && device == MDEV_DEFAULT)
+			{
+				info = new HMISong(file, musiccache, len, MIDI_Timidity);
+			}
+#ifdef HAVE_FLUIDSYNTH
+			else if (device == MDEV_FLUIDSYNTH || (snd_mididevice == -5 && device == MDEV_DEFAULT))
+			{
+				info = new HMISong(file, musiccache, len, MIDI_Fluid);
+			}
+#endif
+#ifdef _WIN32
+			else
+			{
+				info = new HMISong(file, musiccache, len, MIDI_Win);
+			}
+#endif
+		}
+		// Check for MIDI format
+		else if (id[0] == MAKE_ID('M','T','h','d'))
 		{
 			// This is a midi file
 

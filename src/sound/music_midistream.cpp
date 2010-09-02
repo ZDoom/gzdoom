@@ -242,6 +242,7 @@ void MIDIStreamer::Play(bool looping, int subsong)
 
 	CheckCaps();
 	Precache();
+	IgnoreLoops = true;
 
 	// Set time division and tempo.
 	if (0 != MIDI->SetTimeDiv(Division) ||
@@ -734,7 +735,7 @@ fill:
 //
 // MIDIStreamer :: FillBuffer
 //
-// Copies MIDI events from the SMF and puts them into a MIDI stream
+// Copies MIDI events from the MIDI file and puts them into a MIDI stream
 // buffer. Filling the buffer stops when the song end is encountered, the
 // buffer space is used up, or the maximum time for a buffer is hit.
 //
@@ -827,6 +828,109 @@ int MIDIStreamer::FillBuffer(int buffer_num, int max_events, DWORD max_time)
 		return SONG_ERROR | (i << 2);
 	}
 	return SONG_MORE;
+}
+
+//==========================================================================
+//
+// MIDIStreamer :: Precache
+//
+// Generates a list of instruments this song uses them and passes them to
+// the MIDI device for precaching. The default implementation here pretends
+// to play the song and watches for program change events on normal channels
+// and note on events on channel 10.
+//
+//==========================================================================
+
+void MIDIStreamer::Precache()
+{
+	BYTE found_instruments[256] = { 0, };
+	BYTE found_banks[256] = { 0, };
+	bool multiple_banks = false;
+
+	IgnoreLoops = true;
+	DoRestart();
+	found_banks[0] = true;		// Bank 0 is always used.
+	found_banks[128] = true;
+
+	// Simulate playback to pick out used instruments.
+	while (!CheckDone())
+	{
+		DWORD *event_end = MakeEvents(Events[0], &Events[0][MAX_EVENTS*3], 1000000*600);
+		for (DWORD *event = Events[0]; event < event_end; )
+		{
+			if (MEVT_EVENTTYPE(event[2]) == 0)
+			{
+				int command = (event[2] & 0x70);
+				int channel = (event[2] & 0x0f);
+				int data1 = (event[2] >> 8) & 0x7f;
+				int data2 = (event[2] >> 16) & 0x7f;
+
+				if (channel != 9 && command == (MIDI_PRGMCHANGE & 0x70))
+				{
+					found_instruments[data1] = true;
+				}
+				else if (channel == 9 && command == (MIDI_PRGMCHANGE & 0x70) && data1 != 0)
+				{ // On a percussion channel, program change also serves as bank select.
+					multiple_banks = true;
+					found_banks[data1 | 128] = true;
+				}
+				else if (channel == 9 && command == (MIDI_NOTEON & 0x70) && data2 != 0)
+				{
+					found_instruments[data1 | 128] = true;
+				}
+				else if (command == (MIDI_CTRLCHANGE & 0x70) && data1 == 0 && data2 != 0)
+				{
+					multiple_banks = true;
+					if (channel == 9)
+					{
+						found_banks[data2 | 128] = true;
+					}
+					else
+					{
+						found_banks[data2] = true;
+					}
+				}
+			}
+			// Advance to next event
+			if (event[2] < 0x80000000)
+			{ // short message
+				event += 3;
+			}
+			else
+			{ // long message
+				event += 3 + ((MEVT_EVENTPARM(event[2]) + 3) >> 2);
+			}
+		}
+	}
+	DoRestart();
+
+	// Now pack everything into a contiguous region for the PrecacheInstruments call().
+	TArray<WORD> packed;
+
+	for (int i = 0; i < 256; ++i)
+	{
+		if (found_instruments[i])
+		{
+			WORD packnum = (i & 127) | ((i & 128) << 7);
+			if (!multiple_banks)
+			{
+				packed.Push(packnum);
+			}
+			else
+			{ // In order to avoid having to multiplex tracks in a type 1 file,
+			  // precache every used instrument in every used bank, even if not
+			  // all combinations are actually used.
+				for (int j = 0; j < 128; ++j)
+				{
+					if (found_banks[j + (i & 128)])
+					{
+						packed.Push(packnum | (j << 7));
+					}
+				}
+			}
+		}
+	}
+	MIDI->PrecacheInstruments(&packed[0], packed.Size());
 }
 
 //==========================================================================

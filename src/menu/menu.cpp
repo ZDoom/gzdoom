@@ -58,6 +58,8 @@ int DMenu::MenuTime;
 
 FListMenuDescriptor *MainMenu;
 FGameStartup GameStartupInfo;
+EMenuState		menuactive;
+bool			M_DemoNoPlay;
 
 //============================================================================
 //
@@ -86,23 +88,28 @@ bool DMenu::MenuEvent (int mkey, bool fromcontroller)
 	{
 	case MKEY_Back:
 	{
-		assert(DMenu::CurrentMenu == this);
-		DMenu::CurrentMenu = mParentMenu;
-		Destroy();
-		if (DMenu::CurrentMenu != NULL)
-		{
-			GC::WriteBarrier(DMenu::CurrentMenu);
-			S_Sound (CHAN_VOICE | CHAN_UI, "menu/backup", snd_menuvolume, ATTN_NONE);
-		}
-		else
-		{
-			M_ClearMenus ();
-			S_Sound (CHAN_VOICE | CHAN_UI, "menu/clear", snd_menuvolume, ATTN_NONE);
-		}
+		Close();
+		S_Sound (CHAN_VOICE | CHAN_UI, 
+			DMenu::CurrentMenu != NULL? "menu/backup" : "menu/clear", snd_menuvolume, ATTN_NONE);
 		return true;
 	}
 	}
 	return false;
+}
+
+void DMenu::Close ()
+{
+	assert(DMenu::CurrentMenu == this);
+	DMenu::CurrentMenu = mParentMenu;
+	Destroy();
+	if (DMenu::CurrentMenu != NULL)
+	{
+		GC::WriteBarrier(DMenu::CurrentMenu);
+	}
+	else
+	{
+		M_ClearMenus ();
+	}
 }
 
 
@@ -229,7 +236,9 @@ void M_SetMenu(FName menu, int param)
 		{
 			if (menuclass->IsDescendantOf(RUNTIME_CLASS(DMenu)))
 			{
-				// todo
+				DMenu *newmenu = (DMenu*)menuclass->CreateNew();
+				newmenu->mParentMenu = DMenu::CurrentMenu;
+				M_ActivateMenu(newmenu);
 				return;
 			}
 		}
@@ -330,14 +339,10 @@ void M_Drawer (void)
 void M_ClearMenus ()
 {
 	/*
-	M_ClearSaveStuff ();
 	M_DeactivateMenuInput ();
-	MenuStackDepth = 0;
-	OptionsActive = false;
 	InfoType = 0;
-	drawSkull = true;
-	M_DemoNoPlay = false;
 	*/
+	M_DemoNoPlay = false;
 	if (DMenu::CurrentMenu != NULL)
 	{
 		DMenu::CurrentMenu->Destroy();
@@ -402,8 +407,8 @@ CCMD (menu_options)
 
 CCMD (menu_player)
 {
-	//M_StartControlPanel (true);
-	//M_SetMenu(NAME_Playermenu, -1);
+	M_StartControlPanel (true);
+	M_SetMenu(NAME_Playermenu, -1);
 }
 
 

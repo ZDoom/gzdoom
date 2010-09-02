@@ -138,6 +138,7 @@ public:
 	virtual void Drawer ();
 	virtual bool DimAllowed ();
 	virtual bool TranslateKeyboardEvents();
+	virtual void Close();
 };
 
 //=============================================================================

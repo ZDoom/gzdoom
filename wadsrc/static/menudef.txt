@@ -275,7 +275,6 @@ ListMenu "OptionsMenu"
 		Font "SmallFont", "Untranslated", "Grey"
 		Position 48, 47
 		PlayerNameBox "Name", 0, "Playerbox"
-		PlayerDisplay 200, 80, "20 00 00", "80 00 40", 1, "PlayerDisplay"
 		Selector "-", -16, -1
 	}
 	IfGame(Heretic, Hexen)
@@ -285,7 +284,7 @@ ListMenu "OptionsMenu"
 		PlayerNameBox "Name", 5, "Playerbox"
 		Selector "-", -16, 1
 	}
-	IfGame(Heretic)
+	IfGame(Doom, Heretic, Strife, Chex)
 	{
 		PlayerDisplay 220, 80, "20 00 00", "80 00 40", 1, "PlayerDisplay"
 	}

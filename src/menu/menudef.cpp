@@ -39,10 +39,23 @@
 #include "d_player.h"
 #include "v_video.h"
 #include "gi.h"
+#include "i_system.h"
 
 MenuDescriptorList MenuDescriptors;
 static FListMenuDescriptor DefaultListMenuSettings;	// contains common settings for all list menus
 
+static void DeinitMenus()
+{
+	MenuDescriptorList::Iterator it(MenuDescriptors);
+
+	MenuDescriptorList::Pair *pair;
+
+	while (it.NextPair(pair))
+	{
+		delete pair->Value;
+		pair->Value = NULL;
+	}
+}
 
 //=============================================================================
 //
@@ -438,6 +451,7 @@ void M_ParseMenuDefs()
 {
 	int lump, lastlump = 0;
 
+	atterm(	DeinitMenus);
 	while ((lump = Wads.FindLump ("MENUDEF", &lastlump)) != -1)
 	{
 		FScanner sc(lump);
@@ -496,6 +510,7 @@ void M_ParseMenuDefs()
 			}
 		}
 	}
+
 	// Build player class menu
 	desc = MenuDescriptors.CheckKey(NAME_Playerclassmenu);
 	if (desc != NULL)

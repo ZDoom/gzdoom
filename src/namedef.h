@@ -480,6 +480,7 @@ xx(Readthismenu)
 xx(Optionsmenu)
 xx(Quitmenu)
 xx(Savemenu)
+xx(Playermenu)
 
 xx(Playerbox)
 xx(Team)

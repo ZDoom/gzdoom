@@ -30,10 +30,14 @@ enum EMenuKey
 	MKEY_Enter,
 	MKEY_Back,		// Back to previous menu
 	MKEY_Clear,		// Clear keybinding/flip player sprite preview
+	NUM_MKEYS,
+
+	// These are not buttons but events sent from other menus 
+
 	MKEY_Input,		// Sent when input is confirmed
 	MKEY_Abort,		// Input aborted
-
-	NUM_MKEYS
+	MKEY_MBYes,
+	MKEY_MBNo,
 };
 
 
@@ -421,10 +425,19 @@ public:
 
 
 
+
+struct event_t;
+bool M_Responder (event_t *ev);
+void M_Ticker (void);
+void M_Drawer (void);
+void M_Init (void);
 void M_ActivateMenu(DMenu *menu);
 void M_ClearMenus ();
 void M_ParseMenuDefs();
 void M_StartupSkillMenu(FGameStartup *gs);
+void M_StartControlPanel (bool makeSound);
+void M_SetMenu(FName menu, int param = -1);
+void M_NotifyNewSave (const char *file, const char *title, bool okForQuicksave);
 
 
 #endif

@@ -40,7 +40,7 @@
 #include "f_finale.h"
 #include "m_argv.h"
 #include "m_misc.h"
-#include "m_menu.h"
+#include "menu/menu.h"
 #include "m_random.h"
 #include "m_crc32.h"
 #include "i_system.h"
@@ -897,7 +897,8 @@ bool G_Responder (event_t *ev)
 				stricmp (cmd, "bumpgamma") &&
 				stricmp (cmd, "screenshot")))
 			{
-				M_StartControlPanel (true, true);
+				M_StartControlPanel(true);
+				M_SetMenu(NAME_Mainmenu, -1);
 				return true;
 			}
 			else

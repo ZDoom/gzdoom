@@ -109,6 +109,7 @@ struct gameinfo_t
 	int defaultdropstyle;
 	int player5start;
 	DWORD pickupcolor;
+	TArray<FString> quitmessages;
 
 	const char *GetFinalePage(unsigned int num) const;
 };

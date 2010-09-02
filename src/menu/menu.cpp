@@ -167,6 +167,12 @@ void M_StartControlPanel (bool makeSound)
 	if (DMenu::CurrentMenu != NULL)
 		return;
 
+	ResetButtonStates ();
+	for (int i = 0; i < NUM_MKEYS; ++i)
+	{
+		MenuButtons[i].ReleaseKey(0);
+	}
+
 	C_HideConsole ();				// [RH] Make sure console goes bye bye.
 	menuactive = MENU_On;
 	// Pause sound effects before we play the menu switch sound.
@@ -508,7 +514,7 @@ void M_Drawer (void)
 
 	if (DMenu::CurrentMenu != NULL && menuactive == MENU_On) 
 	{
-		//if (DMenu::CurrentMenu::DimAllowed()) screen->Dim(fade);
+		if (DMenu::CurrentMenu->DimAllowed()) screen->Dim(fade);
 		DMenu::CurrentMenu->Drawer();
 	}
 }
@@ -576,13 +582,6 @@ CCMD (menu_help)
 {	// F1
 	M_StartControlPanel (true);
 	M_SetMenu(NAME_Readthismenu, -1);
-}
-
-CCMD (menu_quit)
-{	// F10
-	//M_StartControlPanel (true);
-	S_Sound (CHAN_VOICE | CHAN_UI, "menu/activate", snd_menuvolume, ATTN_NONE);
-	M_SetMenu(NAME_Quitmenu, -1);
 }
 
 CCMD (menu_game)

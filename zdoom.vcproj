@@ -6482,6 +6482,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\menu\messagebox.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\src\menu\playerdisplay.cpp"
 				>
 			</File>

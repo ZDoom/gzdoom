@@ -25,7 +25,7 @@
 #include <stddef.h>
 
 #include "version.h"
-#include "m_menu.h"
+#include "menu/menu.h"
 #include "m_random.h"
 #include "i_system.h"
 #include "i_video.h"

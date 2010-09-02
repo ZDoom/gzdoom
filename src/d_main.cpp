@@ -61,7 +61,7 @@
 #include "f_wipe.h"
 #include "m_argv.h"
 #include "m_misc.h"
-#include "m_menu.h"
+#include "menu/menu.h"
 #include "c_console.h"
 #include "c_dispatch.h"
 #include "i_system.h"
@@ -252,8 +252,11 @@ void D_ProcessEvents (void)
 		ev = &events[eventtail];
 		if (ev->type == EV_None)
 			continue;
+#pragma message("Disabled for new menus ")
+#if 0
 		if (ev->type == EV_DeviceChange)
 			UpdateJoystickMenu(I_UpdateDeviceList());
+#endif
 		if (C_Responder (ev))
 			continue;				// console ate the event
 		if (M_Responder (ev))

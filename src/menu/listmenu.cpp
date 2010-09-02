@@ -43,9 +43,6 @@
 #include "menu/menu.h"
 
 IMPLEMENT_CLASS(DListMenu)
-void M_SetMenu(FName menu, int param = -1);
-
-
 
 //=============================================================================
 //

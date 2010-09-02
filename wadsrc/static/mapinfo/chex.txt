@@ -43,6 +43,7 @@ gameinfo
 	player5start = 4001
 	drawreadthis = true
 	pickupcolor = "d6 ba 45"
+	quitmessages = "$QUITMSG", "$QUITMSG23", "$QUITMSG24", "$QUITMSG25", "$QUITMSG26", "$QUITMSG27", "$QUITMSG28", "$QUITMSG29"
 }
 
 skill baby

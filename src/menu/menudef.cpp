@@ -315,6 +315,7 @@ static void ParseListMenuBody(FScanner &sc, FListMenuDescriptor *desc)
 		else if (sc.Compare("PlayerDisplay"))
 		{
 			bool noportrait = false;
+			FName action = NAME_None;
 			sc.MustGetNumber();
 			int x = sc.Number;
 			sc.MustGetStringName(",");
@@ -330,8 +331,13 @@ static void ParseListMenuBody(FScanner &sc, FListMenuDescriptor *desc)
 			{
 				sc.MustGetNumber();
 				noportrait = !!sc.Number;
+				if (sc.CheckString(","))
+				{
+					sc.MustGetString();
+					action = sc.String;
+				}
 			}
-			FListMenuItemPlayerDisplay *it = new FListMenuItemPlayerDisplay(desc, x, y, c1, c2, noportrait);
+			FListMenuItemPlayerDisplay *it = new FListMenuItemPlayerDisplay(desc, x, y, c1, c2, noportrait, action);
 			desc->mItems.Push(it);
 		}
 		else if (sc.Compare("PlayerNameBox"))

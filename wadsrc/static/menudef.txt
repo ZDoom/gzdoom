@@ -275,21 +275,23 @@ ListMenu "OptionsMenu"
 		Font "SmallFont", "Untranslated", "Grey"
 		Position 48, 47
 		PlayerNameBox "Name", 0, "Playerbox"
-		PlayerDisplay 200, 77, "20 00 00", "80 00 40", 1
+		PlayerDisplay 200, 80, "20 00 00", "80 00 40", 1, "PlayerDisplay"
+		Selector "-", -16, -1
 	}
 	IfGame(Heretic, Hexen)
 	{
 		Font "SmallFont", "Green", "Untranslated"
 		Position 48, 52
 		PlayerNameBox "Name", 5, "Playerbox"
+		Selector "-", -16, 1
 	}
 	IfGame(Heretic)
 	{
-		PlayerDisplay 220, 82, "20 00 00", "80 00 40", 1
+		PlayerDisplay 220, 80, "20 00 00", "80 00 40", 1, "PlayerDisplay"
 	}
 	IfGame(Hexen)
 	{
-		PlayerDisplay 200, 82, "00 07 00", "40 53 40", 1
+		PlayerDisplay 200, 80, "00 07 00", "40 53 40", 1, "PlayerDisplay"
 	}
 	
 	ValueText "Team", "Team"

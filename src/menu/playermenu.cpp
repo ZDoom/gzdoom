@@ -46,6 +46,7 @@
 #include "v_palette.h"
 #include "r_state.h"
 #include "r_translate.h"
+#include "v_text.h"
 
 EXTERN_CVAR (String, playerclass)
 EXTERN_CVAR (String, name)
@@ -430,11 +431,13 @@ class DPlayerMenu : public DListMenu
 {
 	DECLARE_CLASS(DPlayerMenu, DListMenu)
 
+	int PlayerClassIndex;
 	FPlayerClass *PlayerClass;
 	TArray<int> PlayerColorSets;
 	TArray<int> PlayerSkins;
+	int mRotation;
 
-	void PickPlayerClass (bool usepawn);
+	void PickPlayerClass ();
 	void UpdateColorsets();
 	void UpdateSkins();
 	void UpdateTranslation();
@@ -470,7 +473,21 @@ void DPlayerMenu::Init(DMenu *parent, FListMenuDescriptor *desc)
 	FListMenuItem *li;
 
 	Super::Init(parent, desc);
-	PickPlayerClass(true);
+	PickPlayerClass();
+	mRotation = 0;
+
+	li = GetItem(NAME_Playerdisplay);
+	if (li != NULL)
+	{
+		li->SetValue(FListMenuItemPlayerDisplay::PDF_MODE, 1);
+		li->SetValue(FListMenuItemPlayerDisplay::PDF_TRANSLATE, 1);
+		li->SetValue(FListMenuItemPlayerDisplay::PDF_CLASS, PlayerClassIndex);
+		if (!(GetDefaultByType (PlayerClass->Type)->flags4 & MF4_NOSKIN) &&
+			players[consoleplayer].userinfo.PlayerClass != -1)
+		{
+			li->SetValue(FListMenuItemPlayerDisplay::PDF_SKIN, players[consoleplayer].userinfo.skin);
+		}
+	}
 
 	li = GetItem(NAME_Playerbox);
 	if (li != NULL)
@@ -528,9 +545,10 @@ void DPlayerMenu::Init(DMenu *parent, FListMenuDescriptor *desc)
 			li->SetString(0, "Random");
 			for(unsigned i=0; i< PlayerClasses.Size(); i++)
 			{
-				li->SetString(i+1, PlayerClasses[i].Type->Meta.GetMetaString (APMETA_DisplayName));
-				li->SetValue(0, players[consoleplayer].userinfo.PlayerClass + 1);
+				const char *cls = PlayerClasses[i].Type->Meta.GetMetaString (APMETA_DisplayName);
+				li->SetString(i+1, cls);
 			}
+			li->SetValue(0, players[consoleplayer].userinfo.PlayerClass + 1);
 		}
 	}
 
@@ -589,6 +607,12 @@ bool DPlayerMenu::Responder (event_t *ev)
 	if (ev->type == EV_GUI_Event && ev->subtype == EV_GUI_Char && ev->data1 == ' ')
 	{
 		// turn the player sprite around
+		mRotation = 8 - mRotation;
+		FListMenuItem *li = GetItem(NAME_Playerdisplay);
+		if (li != NULL)
+		{
+			li->SetValue(FListMenuItemPlayerDisplay::PDF_ROTATION, mRotation);
+		}
 		return true;
 	}
 	return false;
@@ -617,14 +641,18 @@ void DPlayerMenu::UpdateTranslation()
 //
 //=============================================================================
 
-void DPlayerMenu::PickPlayerClass(bool usepawn)
+void DPlayerMenu::PickPlayerClass()
 {
 
+	/*
+	// What's the point of this? Aren't we supposed to edit the
+	// userinfo?
 	if (players[consoleplayer].mo != NULL)
 	{
-		PlayerClass = &PlayerClasses[players[consoleplayer].CurrentPlayerClass];
+		PlayerClassIndex = players[consoleplayer].CurrentPlayerClass;
 	}
 	else
+	*/
 	{
 		int pclass = 0;
 		// [GRB] Pick a class from player class list
@@ -637,8 +665,9 @@ void DPlayerMenu::PickPlayerClass(bool usepawn)
 				pclass = (MenuTime>>7) % PlayerClasses.Size ();
 			}
 		}
-		PlayerClass = &PlayerClasses[pclass];
+		PlayerClassIndex = pclass;
 	}
+	PlayerClass = &PlayerClasses[PlayerClassIndex];
 	UpdateTranslation();
 }
 
@@ -699,6 +728,7 @@ void DPlayerMenu::UpdateColorsets()
 
 void DPlayerMenu::UpdateSkins()
 {
+	int sel = 0;
 	FListMenuItem *li = GetItem(NAME_Skin);
 	if (li != NULL)
 	{
@@ -707,11 +737,9 @@ void DPlayerMenu::UpdateSkins()
 		{
 			li->SetString(0, "Base");
 			li->SetValue(0, 0);
-			return;
 		}
 		else
 		{
-			int sel = 0;
 			PlayerSkins.Clear();
 			for(unsigned i=0;i<(unsigned)numskins; i++)
 			{
@@ -726,6 +754,11 @@ void DPlayerMenu::UpdateSkins()
 				}
 			}
 			li->SetValue(0, sel);
+		}
+		li = GetItem(NAME_Playerdisplay);
+		if (li != NULL)
+		{
+			li->SetValue(FListMenuItemPlayerDisplay::PDF_SKIN, PlayerSkins[sel]);
 		}
 	}
 	UpdateTranslation();
@@ -809,12 +842,19 @@ void DPlayerMenu::ClassChanged (FListMenuItem *li)
 	if (li->GetValue(0, &sel))
 	{
 		players[consoleplayer].userinfo.PlayerClass = sel-1;
-		PickPlayerClass(false);
 
 		cvar_set ("playerclass", 
 			sel == 0 ? "Random" : PlayerClass->Type->Meta.GetMetaString (APMETA_DisplayName));
+
+		PickPlayerClass();
+		UpdateColorsets();
+
+		li = GetItem(NAME_Playerdisplay);
+		if (li != NULL)
+		{
+			li->SetValue(FListMenuItemPlayerDisplay::PDF_CLASS, PlayerClassIndex);
+		}
 	}
-	UpdateColorsets();
 }
 
 //=============================================================================
@@ -838,9 +878,13 @@ void DPlayerMenu::SkinChanged (FListMenuItem *li)
 		sel = PlayerSkins[sel];
 		players[consoleplayer].userinfo.skin = sel;
 		UpdateTranslation();
-		char buffer[10];
-		mysnprintf(buffer, 10, "%d", sel);
-		cvar_set ("skin", buffer);
+		cvar_set ("skin", skins[sel].name);
+
+		li = GetItem(NAME_Playerdisplay);
+		if (li != NULL)
+		{
+			li->SetValue(FListMenuItemPlayerDisplay::PDF_SKIN, sel);
+		}
 	}
 }
 
@@ -977,138 +1021,16 @@ void DPlayerMenu::Drawer ()
 {
 
 	Super::Drawer();
-}
 
-#if 0
-
-/*
-*/
-
-
-//
-// [RH] Player Setup Menu code
-//
-void M_PlayerSetup (void)
-{
-	OptionsActive = false;
-	drawSkull = true;
-	M_DemoNoPlay = true;
-	if (demoplayback)
-		G_CheckDemoStatus ();
-
-	PlayerState = GetDefaultByType (PlayerClass->Type)->SeeState;
-	PlayerTics = PlayerState->GetTics();
+	const char *str = "PRESS " TEXTCOLOR_WHITE "SPACE";
+	screen->DrawText (SmallFont, CR_GOLD, 320 - 52 - 32 -
+		SmallFont->StringWidth (str)/2,
+		50 + 48 + 70, str,
+		DTA_Clean, true, TAG_DONE);
+	str = mRotation ? "TO SEE FRONT" : "TO SEE BACK";
+	screen->DrawText (SmallFont, CR_GOLD, 320 - 52 - 32 -
+		SmallFont->StringWidth (str)/2,
+		50 + 48 + 70 + SmallFont->GetHeight (), str,
+		DTA_Clean, true, TAG_DONE);
 
 }
-
-
-	{
-		spriteframe_t *sprframe;
-		fixed_t ScaleX, ScaleY;
-
-		if (GetDefaultByType (PlayerClass->Type)->flags4 & MF4_NOSKIN ||
-			players[consoleplayer].userinfo.PlayerClass == -1 ||
-			PlayerState->sprite != GetDefaultByType (PlayerClass->Type)->SpawnState->sprite)
-		{
-			sprframe = &SpriteFrames[sprites[PlayerState->sprite].spriteframes + PlayerState->GetFrame()];
-			ScaleX = GetDefaultByType(PlayerClass->Type)->scaleX;
-			ScaleY = GetDefaultByType(PlayerClass->Type)->scaleY;
-		}
-		else
-		{
-			sprframe = &SpriteFrames[sprites[skins[PlayerSkin].sprite].spriteframes + PlayerState->GetFrame()];
-			ScaleX = skins[PlayerSkin].ScaleX;
-			ScaleY = skins[PlayerSkin].ScaleY;
-		}
-
-		if (sprframe != NULL)
-		{
-			FTexture *tex = TexMan(sprframe->Texture[0]);
-			if (tex != NULL && tex->UseType != FTexture::TEX_Null)
-			{
-				if (tex->Rotations != 0xFFFF)
-				{
-					tex = TexMan(SpriteFrames[tex->Rotations].Texture[PlayerRotation]);
-				}
-				screen->DrawTexture (tex,
-					(320 - 52 - 32 + xo - 160)*CleanXfac + (SCREENWIDTH)/2,
-					(PSetupDef.y + LINEHEIGHT*3 + 57 - 104)*CleanYfac + (SCREENHEIGHT/2),
-					DTA_DestWidth, MulScale16 (tex->GetWidth() * CleanXfac, ScaleX),
-					DTA_DestHeight, MulScale16 (tex->GetHeight() * CleanYfac, ScaleY),
-					DTA_Translation, translationtables[TRANSLATION_Players](MAXPLAYERS),
-					TAG_DONE);
-			}
-		}
-
-		const char *str = "PRESS " TEXTCOLOR_WHITE "SPACE";
-		screen->DrawText (SmallFont, CR_GOLD, 320 - 52 - 32 -
-			SmallFont->StringWidth (str)/2,
-			PSetupDef.y + LINEHEIGHT*3 + 76, str,
-			DTA_Clean, true, TAG_DONE);
-		str = PlayerRotation ? "TO SEE FRONT" : "TO SEE BACK";
-		screen->DrawText (SmallFont, CR_GOLD, 320 - 52 - 32 -
-			SmallFont->StringWidth (str)/2,
-			PSetupDef.y + LINEHEIGHT*3 + 76 + SmallFont->GetHeight (), str,
-			DTA_Clean, true, TAG_DONE);
-	}
-
-
-
-
-static void M_PlayerSetupTicker (void)
-{
-	// Based on code in f_finale.c
-	FPlayerClass *oldclass = PlayerClass;
-
-	if (currentMenu == &ClassMenuDef)
-	{
-		int item;
-
-		if (itemOn < ClassMenuDef.numitems-1)
-			item = itemOn;
-		else
-			item = (MenuTime>>2) % (ClassMenuDef.numitems-1);
-
-		PlayerClass = &PlayerClasses[D_PlayerClassToInt (ClassMenuItems[item].name)];
-		P_EnumPlayerColorSets(PlayerClass->Type->TypeName, &PlayerColorSets);
-	}
-	else
-	{
-		PickPlayerClass ();
-	}
-
-	if (PlayerClass != oldclass)
-	{
-		PlayerState = GetDefaultByType (PlayerClass->Type)->SeeState;
-		PlayerTics = PlayerState->GetTics();
-
-		PlayerSkin = R_FindSkin (skins[PlayerSkin].name, int(PlayerClass - &PlayerClasses[0]));
-		R_GetPlayerTranslation (players[consoleplayer].userinfo.color,
-			P_GetPlayerColorSet(PlayerClass->Type->TypeName, players[consoleplayer].userinfo.colorset),
-			&skins[PlayerSkin], translationtables[TRANSLATION_Players][MAXPLAYERS]);
-	}
-}
-
-
-// item actions
-
-/* cursor stuff*/
-			
-			// DRAW CURSOR
-			if (drawSkull)
-			{
-				if (currentMenu == &PSetupDef)
-				{
-					// [RH] Use options menu cursor for the player setup menu.
-					if (skullAnimCounter < 6)
-					{
-						screen->DrawText (ConFont, CR_RED, x - 16,
-							currentMenu->y + int(item*PLAYERSETUP_LINEHEIGHT) +
-							(!(gameinfo.gametype & (GAME_DoomStrifeChex)) ? 6 : -1), "\xd",
-							DTA_Clean, true, TAG_DONE);
-					}
-				}
-
-			}
-
-#endif

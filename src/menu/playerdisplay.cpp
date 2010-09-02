@@ -333,8 +333,8 @@ void FBackdropTexture::Render()
 //
 //=============================================================================
 
-FListMenuItemPlayerDisplay::FListMenuItemPlayerDisplay(FListMenuDescriptor *menu, int x, int y, PalEntry c1, PalEntry c2, bool np)
-: FListMenuItem(x, y)
+FListMenuItemPlayerDisplay::FListMenuItemPlayerDisplay(FListMenuDescriptor *menu, int x, int y, PalEntry c1, PalEntry c2, bool np, FName action)
+: FListMenuItem(x, y, action)
 {
 	mOwner = menu;
 
@@ -350,6 +350,10 @@ FListMenuItemPlayerDisplay::FListMenuItemPlayerDisplay(FListMenuDescriptor *menu
 	mPlayerClass = NULL;
 	mPlayerState = NULL;
 	mNoportrait = np;
+	mMode = 0;
+	mRotation = 0;
+	mTranslate = false;
+	mSkin = 0;
 }
 
 //=============================================================================
@@ -361,6 +365,27 @@ FListMenuItemPlayerDisplay::FListMenuItemPlayerDisplay(FListMenuDescriptor *menu
 FListMenuItemPlayerDisplay::~FListMenuItemPlayerDisplay()
 {
 	delete mBackdrop;
+}
+
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+void FListMenuItemPlayerDisplay::SetPlayerClass(int classnum)
+{
+	if (classnum < 0 || classnum >= (int)PlayerClasses.Size ())
+	{
+		classnum = (DMenu::MenuTime>>7) % PlayerClasses.Size ();
+	}
+	if (mPlayerClass != &PlayerClasses[classnum])
+	{
+		mPlayerClass = &PlayerClasses[classnum];
+		mPlayerState = GetDefaultByType (mPlayerClass->Type)->SeeState;
+		mPlayerTics = mPlayerState->GetTics();
+	}
 }
 
 //=============================================================================
@@ -377,17 +402,34 @@ bool FListMenuItemPlayerDisplay::UpdatePlayerClass()
 	if (seltype != NAME_Episodemenu) return false;
 	if (PlayerClasses.Size() == 0) return false;
 
-	if (classnum < 0 || classnum >= (int)PlayerClasses.Size ())
-	{
-		classnum = (DMenu::MenuTime>>7) % PlayerClasses.Size ();
-	}
-	if (mPlayerClass != &PlayerClasses[classnum])
-	{
-		mPlayerClass = &PlayerClasses[classnum];
-		mPlayerState = GetDefaultByType (mPlayerClass->Type)->SeeState;
-		mPlayerTics = mPlayerState->GetTics();
-	}
+	SetPlayerClass(classnum);
 	return true;
+}
+
+bool FListMenuItemPlayerDisplay::SetValue(int i, int value)
+{
+	switch (i)
+	{
+	case PDF_MODE:
+		mMode = value;
+		return true;
+
+	case PDF_ROTATION:
+		mRotation = value;
+		return true;
+
+	case PDF_TRANSLATE:
+		mTranslate = value;
+
+	case PDF_CLASS:
+		SetPlayerClass(value);
+		break;
+
+	case PDF_SKIN:
+		mSkin = value;
+		break;
+	}
+	return false;
 }
 
 //=============================================================================
@@ -416,7 +458,7 @@ void FListMenuItemPlayerDisplay::Ticker()
 
 void FListMenuItemPlayerDisplay::Drawer()
 {
-	if (!UpdatePlayerClass())
+	if (mMode == 0 && !UpdatePlayerClass())
 	{
 		return;
 	}
@@ -448,19 +490,34 @@ void FListMenuItemPlayerDisplay::Drawer()
 
 	V_DrawFrame (x, y, 72*CleanXfac, 80*CleanYfac-1);
 
-	spriteframe_t *sprframe = &SpriteFrames[sprites[mPlayerState->sprite].spriteframes + mPlayerState->GetFrame()];
-	fixed_t scaleX = GetDefaultByType (mPlayerClass->Type)->scaleX;
-	fixed_t scaleY = GetDefaultByType (mPlayerClass->Type)->scaleY;
+	spriteframe_t *sprframe;
+	fixed_t scaleX, scaleY;
+
+	if (mSkin == 0)
+	{
+		sprframe = &SpriteFrames[sprites[mPlayerState->sprite].spriteframes + mPlayerState->GetFrame()];
+		scaleX = GetDefaultByType(mPlayerClass->Type)->scaleX;
+		scaleY = GetDefaultByType(mPlayerClass->Type)->scaleY;
+	}
+	else
+	{
+		sprframe = &SpriteFrames[sprites[skins[mSkin].sprite].spriteframes + mPlayerState->GetFrame()];
+		scaleX = skins[mSkin].ScaleX;
+		scaleY = skins[mSkin].ScaleY;
+	}
 
 	if (sprframe != NULL)
 	{
-		FTexture *tex = TexMan(sprframe->Texture[0]);
+		FTexture *tex = TexMan(sprframe->Texture[mRotation]);
 		if (tex != NULL && tex->UseType != FTexture::TEX_Null)
 		{
+			FRemapTable *trans = NULL;
+			if (mTranslate) trans = translationtables[TRANSLATION_Players](MAXPLAYERS);
 			screen->DrawTexture (tex,
 				x + 36*CleanXfac, y + 71*CleanYfac,
 				DTA_DestWidth, MulScale16 (tex->GetWidth() * CleanXfac, scaleX),
 				DTA_DestHeight, MulScale16 (tex->GetHeight() * CleanYfac, scaleY),
+				DTA_Translation, trans,
 				TAG_DONE);
 		}
 	}

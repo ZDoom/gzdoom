@@ -174,10 +174,11 @@ void DListMenu::Drawer ()
 //
 //=============================================================================
 
-FListMenuItem::FListMenuItem(int x, int y) 
+FListMenuItem::FListMenuItem(int x, int y, FName action) 
 {
 	mXpos = x;
 	mYpos = y;
+	mAction = action;
 }
 
 FListMenuItem::~FListMenuItem()
@@ -204,7 +205,25 @@ bool FListMenuItem::Selectable()
 
 void FListMenuItem::DrawSelector(int xofs, int yofs, FTextureID tex)
 {
-	screen->DrawTexture (TexMan(tex), mXpos + xofs, mYpos + yofs, DTA_Clean, true, TAG_DONE);
+	if (tex.isNull())
+	{
+#if 0
+		if ((DMenu::MenuTime%8) < 6)
+		{
+			//Use the confont arrow
+			screen->DrawText (ConFont, CR_RED, mXpos + xofs, mYpos + yofs, "\xd",
+				DTA_Clean, true, TAG_DONE);
+		}
+#else
+		int color = (DMenu::MenuTime%8) < 4? CR_RED:CR_GREY;
+		screen->DrawText (ConFont, color, mXpos + xofs, mYpos + yofs, "\xd",
+			DTA_Clean, true, TAG_DONE);
+#endif
+	}
+	else
+	{
+		screen->DrawTexture (TexMan(tex), mXpos + xofs, mYpos + yofs, DTA_Clean, true, TAG_DONE);
+	}
 }
 
 bool FListMenuItem::Activate()
@@ -214,7 +233,7 @@ bool FListMenuItem::Activate()
 
 FName FListMenuItem::GetAction(int *pparam)
 {
-	return NAME_None;
+	return mAction;
 }
 
 bool FListMenuItem::SetString(int i, const char *s)
@@ -352,8 +371,8 @@ void FListMenuItemStaticText::Drawer()
 //
 //=============================================================================
 
-FListMenuItemSelectable::FListMenuItemSelectable(int x, int y, FName childmenu, int param)
-: FListMenuItem(x, y), mAction(childmenu)
+FListMenuItemSelectable::FListMenuItemSelectable(int x, int y, FName action, int param)
+: FListMenuItem(x, y, action)
 {
 	mParam = param;
 }

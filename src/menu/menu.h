@@ -150,11 +150,12 @@ class FListMenuItem
 {
 protected:
 	int mXpos, mYpos;
+	FName mAction;
 
 public:
 	bool mEnabled;
 
-	FListMenuItem(int xpos = 0, int ypos = 0);
+	FListMenuItem(int xpos = 0, int ypos = 0, FName action = NAME_None);
 	virtual ~FListMenuItem();
 
 	virtual bool CheckCoordinate(int x, int y);
@@ -218,22 +219,36 @@ class FListMenuItemPlayerDisplay : public FListMenuItem
 	FState *mPlayerState;
 	int mPlayerTics;
 	bool mNoportrait;
+	BYTE mRotation;
+	BYTE mMode;	// 0: automatic (used by class selection), 1: manual (used by player setup)
+	BYTE mTranslate;
+	int mSkin;
 
+	void SetPlayerClass(int classnum);
 	bool UpdatePlayerClass();
 
 public:
 
-	FListMenuItemPlayerDisplay(FListMenuDescriptor *menu, int x, int y, PalEntry c1, PalEntry c2, bool np);
+	enum
+	{
+		PDF_ROTATION = 0x10001,
+		PDF_SKIN = 0x10002,
+		PDF_CLASS = 0x10003,
+		PDF_MODE = 0x10004,
+		PDF_TRANSLATE = 0x10005,
+	};
+
+	FListMenuItemPlayerDisplay(FListMenuDescriptor *menu, int x, int y, PalEntry c1, PalEntry c2, bool np, FName action);
 	~FListMenuItemPlayerDisplay();
 	virtual void Ticker();
 	virtual void Drawer();
+	bool SetValue(int i, int value);
 };
 
 
 class FListMenuItemSelectable : public FListMenuItem
 {
 protected:
-	FName mAction;
 	FMenuRect mHotspot;
 	int mHotkey;
 	int mParam;

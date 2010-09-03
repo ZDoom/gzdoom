@@ -689,13 +689,13 @@ static void ParseOptionMenuBody(FScanner &sc, FOptionMenuDescriptor *desc)
 			FString action = sc.String;
 			sc.MustGetStringName(",");
 			sc.MustGetFloat();
-			double min = sc.Number;
+			double min = sc.Float;
 			sc.MustGetStringName(",");
 			sc.MustGetFloat();
-			double max = sc.Number;
+			double max = sc.Float;
 			sc.MustGetStringName(",");
 			sc.MustGetFloat();
-			double step = sc.Number;
+			double step = sc.Float;
 			bool showvalue = true;
 			if (sc.CheckString(","))
 			{

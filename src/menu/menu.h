@@ -558,12 +558,16 @@ public:
 class FOptionMenuSliderItem : public FOptionMenuItem
 {
 	// action is a CVAR
-	double mMin, mMax, mStep;
-	double mValue;
+	float mMin, mMax, mStep;
+	float mValue;
 	bool mShowValue;
+	FBaseCVar *mCVar;
+	float *mPVal;
 public:
 	FOptionMenuSliderItem(const char *label, const char *menu, double min, double max, double step, bool showval);
+	FOptionMenuSliderItem(const char *label, float *pVal, double min, double max, double step, bool showval);
 	virtual void Draw(FOptionMenuDescriptor *desc, int y, int indent);
+	bool MenuEvent (int mkey, bool fromcontroller);
 	virtual bool Activate();
 };
 

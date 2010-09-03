@@ -361,19 +361,23 @@ OptionMenuSettings
 	}
 	IfGame(Doom, Chex)
 	{
-		FontColor "UNTRANSLATED", "GRAY", "GRAY", 1
+		FontColor "UNTRANSLATED", "GRAY", "GRAY", "GOLD"
 	}
 	IfGame(Heretic)
 	{
-		FontColor "GREEN", "UNTRANSLATED", "UNTRANSLATED", 1
+		FontColor "GREEN", "UNTRANSLATED", "UNTRANSLATED", "GOLD"
 	}
 	IfGame(Hexen)
 	{
-		FontColor "RED", "UNTRANSLATED", "UNTRANSLATED", 1
+		FontColor "RED", "UNTRANSLATED", "UNTRANSLATED", "GOLD"
 	}
-	IfGame(Hexen, Strife)
+	IfGame(Hexen)
 	{
-		FontColor "RED", "UNTRANSLATED", "UNTRANSLATED", "RED"
+		FontColor "RED", "UNTRANSLATED", "UNTRANSLATED", "GOLD"
+	}
+	IfGame(Strife)
+	{
+		FontColor "UNTRANSLATED", "GRAY", "GRAY", "RED"
 	}
 }
 
@@ -402,9 +406,9 @@ OptionMenu "OptionsMenu"
 	Submenu "Display Options",			"VideoOptions"
 	Submenu "Set video mode",			"SetVidMode"
 	StaticText " "
-	SafeCommand "Reset to defaults",	"Reset2Defaults"
-	SafeCommand	"Reset to last saved",	"Reset2Saved"
-	Command "Go to console",			"GoToConsole"
+	SafeCommand "Reset to defaults",	"reset2defaults"
+	SafeCommand	"Reset to last saved",	"reset2saved"
+	Command "Go to console",			"menuconsole"
 }
 
 //-------------------------------------------------------------------------------------------
@@ -416,6 +420,7 @@ OptionMenu "OptionsMenu"
 OptionMenu "CustomizeControls"
 {
 	Title "CUSTOMIZE CONTROLS"
+	ScrollTop 2
 	StaticText 	"ENTER to change, BACKSPACE to clear"
 	StaticText 	""
 	StaticText 	"Controls", 1

@@ -44,8 +44,32 @@
 #include "d_gui.h"
 #include "d_event.h"
 #include "c_dispatch.h"
+#include "c_console.h"
 #include "c_cvars.h"
+#include "c_bind.h"
+#include "gameconfigfile.h"
 #include "menu/menu.h"
+
+
+CCMD(menuconsole)
+{
+	M_ClearMenus();
+	C_ToggleConsole();
+}
+
+CCMD(reset2defaults)
+{
+	C_SetDefaultBindings ();
+	C_SetCVarsToDefaults ();
+	//UpdateStuff();
+}
+
+CCMD(reset2saved)
+{
+	GameConfig->DoGlobalSetup ();
+	GameConfig->DoGameSetup (GameNames[gameinfo.gametype]);
+	//UpdateStuff();
+}
 
 
 #define CURSORSPACE (14 * CleanXfac_1)
@@ -172,25 +196,106 @@ bool DOptionMenu::MenuEvent (int mkey, bool fromcontroller)
 	case MKEY_Up:
 		do
 		{
-			if (--mDesc->mSelectedItem < 0) mDesc->mSelectedItem = mDesc->mItems.Size()-1;
+			--mDesc->mSelectedItem;
+
+			if (mDesc->mScrollPos > 0 &&
+				mDesc->mSelectedItem == mDesc->mScrollTop + mDesc->mScrollPos)
+			{
+				mDesc->mScrollPos--;
+			}
+
+			if (mDesc->mSelectedItem < 0) 
+			{
+				// Figure out how many lines of text fit on the menu
+				int y = mDesc->mPosition;
+
+				if (y <= 0)
+				{
+					if (BigFont && mDesc->mTitle.IsNotEmpty())
+					{
+						y = -y + BigFont->GetHeight();
+					}
+					else
+					{
+						y = -y;
+					}
+				}
+				y *= CleanYfac_1;
+				int	rowheight = OptionSettings.mLinespacing * CleanYfac_1;
+				int maxitems = (screen->GetHeight() - rowheight - y) / rowheight + 1;
+
+				mDesc->mScrollPos = MAX (0, (int)mDesc->mItems.Size() - maxitems + mDesc->mScrollTop);
+				mDesc->mSelectedItem = mDesc->mItems.Size()-1;
+			}
 		}
 		while (!mDesc->mItems[mDesc->mSelectedItem]->Selectable() && mDesc->mSelectedItem != startedAt);
-		return true;
+		break;
 
 	case MKEY_Down:
 		do
 		{
-			if (++mDesc->mSelectedItem >= (int)mDesc->mItems.Size()) mDesc->mSelectedItem = 0;
+			++mDesc->mSelectedItem;
+			
+			if (CanScrollDown && mDesc->mSelectedItem == VisBottom)
+			{
+				mDesc->mScrollPos++;
+				VisBottom++;
+			}
+			if (mDesc->mSelectedItem >= (int)mDesc->mItems.Size()) 
+			{
+				mDesc->mSelectedItem = 0;
+				mDesc->mScrollPos = 0;
+			}
 		}
 		while (!mDesc->mItems[mDesc->mSelectedItem]->Selectable() && mDesc->mSelectedItem != startedAt);
-		return true;
+		break;
+
+	case MKEY_PageUp:
+		if (mDesc->mScrollPos > 0)
+		{
+			mDesc->mScrollPos -= VisBottom - mDesc->mScrollPos - mDesc->mScrollTop;
+			if (mDesc->mScrollPos < 0)
+			{
+				mDesc->mScrollPos = 0;
+			}
+			mDesc->mSelectedItem = mDesc->mScrollTop + mDesc->mScrollPos + 1;
+			while (!mDesc->mItems[mDesc->mSelectedItem]->Selectable())
+			{
+				++mDesc->mSelectedItem;
+			}
+		}
+		break;
+
+	case MKEY_PageDown:
+		if (CanScrollDown)
+		{
+			int pagesize = VisBottom - mDesc->mScrollPos - mDesc->mScrollTop;
+			mDesc->mScrollPos += pagesize;
+			if (mDesc->mScrollPos + mDesc->mScrollTop + pagesize > (int)mDesc->mItems.Size())
+			{
+				mDesc->mScrollPos = mDesc->mItems.Size() - mDesc->mScrollTop - pagesize;
+			}
+			mDesc->mSelectedItem = mDesc->mScrollTop + mDesc->mScrollPos;
+			while (!mDesc->mItems[mDesc->mSelectedItem]->Selectable())
+			{
+				++mDesc->mSelectedItem;
+			}
+		}
+		break;
 
 	case MKEY_Enter:
-		return mDesc->mItems[mDesc->mSelectedItem]->Activate();
-
+		if (mDesc->mItems[mDesc->mSelectedItem]->Activate()) return true;
+		// fall through to default
 	default:
+		if (mDesc->mItems[mDesc->mSelectedItem]->MenuEvent(mkey, fromcontroller)) return true;
 		return Super::MenuEvent(mkey, fromcontroller);
 	}
+
+	if (mDesc->mSelectedItem != startedAt)
+	{
+		S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
+	}
+	return true;
 }
 
 //=============================================================================
@@ -447,7 +552,7 @@ void FOptionMenuItemOption::Draw(FOptionMenuDescriptor *desc, int y, int indent)
 	bool grayed = mGrayCheck != NULL && !(**mGrayCheck);
 	drawLabel(indent, y, OptionSettings.mFontColor, grayed);
 
-	if (mValues != NULL)
+	if (mValues != NULL && mCVar != NULL)
 	{
 		int overlay = grayed? MAKEARGB(96,48,0,0) : 0;
 		const char *text;
@@ -466,22 +571,28 @@ void FOptionMenuItemOption::Draw(FOptionMenuDescriptor *desc, int y, int indent)
 
 bool FOptionMenuItemOption::MenuEvent (int mkey, bool fromcontroller)
 {
-	if (mValues != NULL)
+	UCVarValue value;
+	if (mValues != NULL && mCVar != NULL)
 	{
 		if (mkey == MKEY_Left)
 		{
 			if (mSelection == -1) mSelection = 0;
 			else if (--mSelection < 0) mSelection = mValues->mValues.Size()-1;
-			return true;
 		}
 		else if (mkey == MKEY_Right || mkey == MKEY_Enter)
 		{
 			if (++mSelection >= (int)mValues->mValues.Size()) mSelection = 0;
-			return true;
 		}
-
+		else
+		{
+			return FOptionMenuItem::MenuEvent(mkey, fromcontroller);
+		}
+		value.Float = (float)mValues->mValues[mSelection].Value;
+		mCVar->SetGenericRep (value, CVAR_Float);
+		S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
+		return true;
 	}
-	return FOptionMenuItem::MenuEvent(mkey, fromcontroller);
+	return false;
 }
 
 bool FOptionMenuItemOption::Selectable()
@@ -564,11 +675,78 @@ bool FOptionMenuItemStaticText::Selectable()
 FOptionMenuSliderItem::FOptionMenuSliderItem(const char *label, const char *menu, double min, double max, double step, bool showval)
 : FOptionMenuItem(label, NAME_None)
 {
+	mMin = (float)min;
+	mMax = (float)max;
+	mStep = (float)step;
+	mShowValue = showval;
+	mCVar = FindCVar(menu, NULL);
+	mPVal = NULL;
 }
+
+FOptionMenuSliderItem::FOptionMenuSliderItem(const char *label, float *pval, double min, double max, double step, bool showval)
+: FOptionMenuItem(label, NAME_None)
+{
+	mMin = (float)min;
+	mMax = (float)max;
+	mStep = (float)step;
+	mShowValue = showval;
+	mPVal = pval;
+	mCVar = NULL;
+}
+
 
 void FOptionMenuSliderItem::Draw(FOptionMenuDescriptor *desc, int y, int indent)
 {
 	drawLabel(indent, y, OptionSettings.mFontColor);
+
+	UCVarValue value;
+
+	if (mCVar != NULL)
+	{
+		value = mCVar->GetGenericRep(CVAR_Float);
+	}
+	else if (mPVal != NULL)
+	{
+		value.Float = *mPVal;		
+	}
+	else return;
+	M_DrawSlider (indent + CURSORSPACE, y + OptionSettings.mLabelOffset, mMin, mMax, value.Float, mShowValue? 1:0);
+}
+
+bool FOptionMenuSliderItem::MenuEvent (int mkey, bool fromcontroller)
+{
+	UCVarValue value;
+
+	if (mCVar != NULL || mPVal != NULL)
+	{
+		if (mCVar != NULL)
+		{
+			value = mCVar->GetGenericRep(CVAR_Float);
+		}
+		else if (mPVal != NULL)
+		{
+			value.Float = *mPVal;		
+		}
+
+		if (mkey == MKEY_Left)
+		{
+			value.Float -= mStep;
+		}
+		else if (mkey == MKEY_Right)
+		{
+			value.Float += mStep;
+		}
+		else
+		{
+			return FOptionMenuItem::MenuEvent(mkey, fromcontroller);
+		}
+		value.Float = clamp(value.Float, mMin, mMax);
+		if (mCVar != NULL) mCVar->SetGenericRep (value, CVAR_Float);
+		else if (mPVal != NULL) *mPVal = value.Float;
+		S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
+		return true;
+	}
+	return false;
 }
 
 bool FOptionMenuSliderItem::Activate()
@@ -581,3 +759,4 @@ bool FOptionMenuSliderItem::Activate()
 			item->type != joymore && (item->type != discrete || item->c.discretecenter != 1))
 */
 
+		

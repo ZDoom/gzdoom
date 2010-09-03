@@ -57,7 +57,7 @@ public:
 	void SetBinds(const FBinding *binds);
 	bool DoKey(event_t *ev);
 	void ArchiveBindings(FConfigFile *F, const char *matchcmd = NULL);
-	int  GetKeysForCommand (char *cmd, int *first, int *second);
+	int  GetKeysForCommand (const char *cmd, int *first, int *second);
 	void UnbindACommand (char *str);
 	void UnbindAll ();
 	void UnbindKey(const char *key);

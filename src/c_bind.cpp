@@ -581,7 +581,7 @@ void FKeyBindings::ArchiveBindings(FConfigFile *f, const char *matchcmd)
 //
 //=============================================================================
 
-int FKeyBindings::GetKeysForCommand (char *cmd, int *first, int *second)
+int FKeyBindings::GetKeysForCommand (const char *cmd, int *first, int *second)
 {
 	int c, i;
 

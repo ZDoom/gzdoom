@@ -284,7 +284,11 @@ bool DOptionMenu::MenuEvent (int mkey, bool fromcontroller)
 		break;
 
 	case MKEY_Enter:
-		if (mDesc->mItems[mDesc->mSelectedItem]->Activate()) return true;
+		if (mDesc->mItems[mDesc->mSelectedItem]->Activate()) 
+		{
+			S_Sound (CHAN_VOICE | CHAN_UI, "menu/choose", snd_menuvolume, ATTN_NONE);
+			return true;
+		}
 		// fall through to default
 	default:
 		if (mDesc->mItems[mDesc->mSelectedItem]->MenuEvent(mkey, fromcontroller)) return true;
@@ -627,11 +631,26 @@ bool FOptionMenuItemOption::Activate()
 FOptionMenuItemControl::FOptionMenuItemControl(const char *label, const char *menu, FKeyBindings *bindings)
 : FOptionMenuItem(label, menu)
 {
+	mBindings = bindings;
+	mBindings->GetKeysForCommand(mAction, &mKey1, &mKey2);
 }
 
 void FOptionMenuItemControl::Draw(FOptionMenuDescriptor *desc, int y, int indent)
 {
 	drawLabel(indent, y, OptionSettings.mFontColor);
+
+	char description[64];
+
+	C_NameKeys (description, mKey1, mKey2);
+	if (description[0])
+	{
+		M_DrawConText(CR_WHITE, indent + CURSORSPACE, y-1+OptionSettings.mLabelOffset, description);
+	}
+	else
+	{
+		screen->DrawText(SmallFont, CR_BLACK, indent + CURSORSPACE, y + OptionSettings.mLabelOffset, "---",
+			DTA_CleanNoMove_1, true, TAG_DONE);
+	}
 }
 
 bool FOptionMenuItemControl::Activate()

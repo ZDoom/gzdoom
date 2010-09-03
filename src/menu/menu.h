@@ -539,6 +539,7 @@ class FOptionMenuItemControl : public FOptionMenuItem
 {
 	// action is a CCMD
 	FKeyBindings *mBindings;
+	int mKey1, mKey2;
 public:
 	FOptionMenuItemControl(const char *label, const char *menu, FKeyBindings *bindings);
 	virtual void Draw(FOptionMenuDescriptor *desc, int y, int indent);

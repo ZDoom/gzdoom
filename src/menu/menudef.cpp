@@ -49,14 +49,28 @@ static FOptionMap OptionValues;
 
 static void DeinitMenus()
 {
-	MenuDescriptorList::Iterator it(MenuDescriptors);
-
-	MenuDescriptorList::Pair *pair;
-
-	while (it.NextPair(pair))
 	{
-		delete pair->Value;
-		pair->Value = NULL;
+		MenuDescriptorList::Iterator it(MenuDescriptors);
+
+		MenuDescriptorList::Pair *pair;
+
+		while (it.NextPair(pair))
+		{
+			delete pair->Value;
+			pair->Value = NULL;
+		}
+	}
+
+	{
+		FOptionMap::Iterator it(OptionValues);
+
+		FOptionMap::Pair *pair;
+
+		while (it.NextPair(pair))
+		{
+			delete pair->Value;
+			pair->Value = NULL;
+		}
 	}
 }
 
@@ -451,6 +465,34 @@ static void ParseListMenu(FScanner &sc)
 //
 //=============================================================================
 
+static void ParseOptionValue(FScanner &sc)
+{
+	FName optname;
+
+	FOptionValues *val = new FOptionValues;
+	sc.MustGetString();
+	optname = sc.String;
+	sc.MustGetStringName("{");
+	while (!sc.CheckString("}"))
+	{
+		FOptionValues::Pair &pair = val->mValues[val->mValues.Reserve(1)];
+		sc.MustGetFloat();
+		pair.Value = sc.Float;
+		sc.MustGetStringName(",");
+		sc.MustGetString();
+		pair.Text = sc.String;
+	}
+	FOptionValues **pOld = OptionValues.CheckKey(optname);
+	if (pOld != NULL && *pOld != NULL) delete *pOld;
+	OptionValues[optname] = val;
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
 static void ParseOptionMenuBody(FScanner &sc, FOptionMenuDescriptor *desc)
 {
 	sc.MustGetStringName("{");
@@ -569,13 +611,13 @@ static void ParseOptionMenuBody(FScanner &sc, FOptionMenuDescriptor *desc)
 			sc.MustGetString();
 			FString action = sc.String;
 			sc.MustGetStringName(",");
-			sc.MustGetNumber();
+			sc.MustGetFloat();
 			double min = sc.Number;
 			sc.MustGetStringName(",");
-			sc.MustGetNumber();
+			sc.MustGetFloat();
 			double max = sc.Number;
 			sc.MustGetStringName(",");
-			sc.MustGetNumber();
+			sc.MustGetFloat();
 			double step = sc.Number;
 			bool showvalue = true;
 			if (sc.CheckString(","))
@@ -650,7 +692,11 @@ void M_ParseMenuDefs()
 			{
 				ParseListMenuBody(sc, &DefaultListMenuSettings);
 			}
-			if (sc.Compare("OPTIONMENU"))
+			else if (sc.Compare("OPTIONVALUE"))
+			{
+				ParseOptionValue(sc);
+			}
+			else if (sc.Compare("OPTIONMENU"))
 			{
 				ParseOptionMenu(sc);
 			}

@@ -474,7 +474,7 @@ struct FOptionValues
 	TArray<Pair> mValues;
 };
 
-typedef TMap< FName, FOptionValues > FOptionMap;
+typedef TMap< FName, FOptionValues* > FOptionMap;
 
 class FOptionMenuItemSubmenu : public FOptionMenuItem
 {

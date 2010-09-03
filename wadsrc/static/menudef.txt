@@ -375,7 +375,7 @@ OptionMenu "OptionsMenu"
 	SafeCommand "Reset to defaults",	"Reset2Defaults"
 	SafeCommand	"Reset to last saved",	"Reset2Saved"
 	Command "Go to console",			"GoToConsole"
-};
+}
 
 //-------------------------------------------------------------------------------------------
 //
@@ -385,7 +385,7 @@ OptionMenu "OptionsMenu"
 
 OptionMenu "CustomizeControls"
 {
-	Title "CUSTOMIZE CONTROLS",
+	Title "CUSTOMIZE CONTROLS"
 	StaticText 	"ENTER to change, BACKSPACE to clear"
 	StaticText 	""
 	StaticText 	"Controls", "Gold"
@@ -435,7 +435,7 @@ OptionMenu "CustomizeControls"
 	Control 	"Chasecam",				"chase"
 	Control 	"Coop spy",				"spynext"
 	Control 	"Screenshot",			"screenshot"
-	Control,  	"Open console",			"toggleconsole"
+	Control  	"Open console",			"toggleconsole"
 	StaticText 	""
 	StaticText 	"Strife Popup Screens", "Gold"
 	Control 	"Mission objectives",	"showpop 1"
@@ -444,7 +444,7 @@ OptionMenu "CustomizeControls"
 		Control 	"Keys list",			"showpop 2"
 		Control 	"Weapons/ammo/stats",	"showpop 3"
 	}
-};
+}
 
 //-------------------------------------------------------------------------------------------
 //
@@ -454,7 +454,7 @@ OptionMenu "CustomizeControls"
 
 OptionMenu "MouseOptions"
 {
-	Title "MOUSE OPTIONS",
+	Title "MOUSE OPTIONS"
 	Option "Enable mouse",				"use_mouse", "YesNo"
 	StaticText 	""
 	Slider "Overall sensitivity",		"mouse_sensitivity", 0.5, 2.5, 0.1
@@ -470,7 +470,7 @@ OptionMenu "MouseOptions"
 	Option "Invert Mouse",				"invertmouse", "OnOff"
 	Option "Lookspring",				"lookspring", "OnOff"
 	Option "Lookstrafe",				"lookstrafe", "OnOff"
-};
+}
 
 
 //-------------------------------------------------------------------------------------------
@@ -481,7 +481,7 @@ OptionMenu "MouseOptions"
 
 OptionMenu "JoystickOptions"
 {
-	Title "CONTROLLER OPTIONS",
+	Title "CONTROLLER OPTIONS"
 	// Will be filled in by joystick code.
 }
 
@@ -503,14 +503,14 @@ OptionValue "Inversion"
 
 OptionMenu "JoystickConfig"
 {
-	Title "CONFIGURE CONTROLLER",
+	Title "CONFIGURE CONTROLLER"
 	// Will be filled in by joystick code.
 }
 
 
-menu_t "JoystickConfigMenu"
+OptionMenu "JoystickConfigMenu"
 {
-	"CONFIGURE CONTROLLER",
+	Title "CONFIGURE CONTROLLER"
 	// Will be filled in by joystick code.
 }
 

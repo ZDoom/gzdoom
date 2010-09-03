@@ -690,41 +690,43 @@ void DLoadSaveMenu::Drawer ()
 
 bool DLoadSaveMenu::MenuEvent (int mkey, bool fromcontroller)
 {
-	if (SelSaveGame == NULL || SelSaveGame->Succ == NULL)
-	{
-		return false;
-	}
 	switch (mkey)
 	{
 	case MKEY_Up:
-		if (SelSaveGame != SaveGames.Head)
+		if (SelSaveGame != NULL && SelSaveGame->Succ != NULL)
 		{
-			if (SelSaveGame == TopSaveGame)
+			if (SelSaveGame != SaveGames.Head)
 			{
-				TopSaveGame = static_cast<FSaveGameNode *>(TopSaveGame->Pred);
+				if (SelSaveGame == TopSaveGame)
+				{
+					TopSaveGame = static_cast<FSaveGameNode *>(TopSaveGame->Pred);
+				}
+				SelSaveGame = static_cast<FSaveGameNode *>(SelSaveGame->Pred);
 			}
-			SelSaveGame = static_cast<FSaveGameNode *>(SelSaveGame->Pred);
+			else
+			{
+				SelSaveGame = static_cast<FSaveGameNode *>(SaveGames.TailPred);
+			}
+			UnloadSaveData ();
+			ExtractSaveData (SelSaveGame);
 		}
-		else
-		{
-			SelSaveGame = static_cast<FSaveGameNode *>(SaveGames.TailPred);
-		}
-		UnloadSaveData ();
-		ExtractSaveData (SelSaveGame);
 		return true;
 
 	case MKEY_Down:
-		if (SelSaveGame != SaveGames.TailPred)
+		if (SelSaveGame != NULL && SelSaveGame->Succ != NULL)
 		{
-			SelSaveGame = static_cast<FSaveGameNode *>(SelSaveGame->Succ);
+			if (SelSaveGame != SaveGames.TailPred)
+			{
+				SelSaveGame = static_cast<FSaveGameNode *>(SelSaveGame->Succ);
+			}
+			else
+			{
+				SelSaveGame = TopSaveGame =
+					static_cast<FSaveGameNode *>(SaveGames.Head);
+			}
+			UnloadSaveData ();
+			ExtractSaveData (SelSaveGame);
 		}
-		else
-		{
-			SelSaveGame = TopSaveGame =
-				static_cast<FSaveGameNode *>(SaveGames.Head);
-		}
-		UnloadSaveData ();
-		ExtractSaveData (SelSaveGame);
 		return true;
 
 	case MKEY_Enter:
@@ -732,20 +734,23 @@ bool DLoadSaveMenu::MenuEvent (int mkey, bool fromcontroller)
 
 	case MKEY_MBYes:
 	{
-		FSaveGameNode *next = static_cast<FSaveGameNode *>(SelSaveGame->Succ);
-		if (next->Succ == NULL)
+		if (SelSaveGame != NULL && SelSaveGame->Succ != NULL)
 		{
-			next = static_cast<FSaveGameNode *>(SelSaveGame->Pred);
-			if (next->Pred == NULL)
+			FSaveGameNode *next = static_cast<FSaveGameNode *>(SelSaveGame->Succ);
+			if (next->Succ == NULL)
 			{
-				next = NULL;
+				next = static_cast<FSaveGameNode *>(SelSaveGame->Pred);
+				if (next->Pred == NULL)
+				{
+					next = NULL;
+				}
 			}
-		}
 
-		remove (SelSaveGame->Filename.GetChars());
-		UnloadSaveData ();
-		SelSaveGame = RemoveSaveSlot (SelSaveGame);
-		ExtractSaveData (SelSaveGame);
+			remove (SelSaveGame->Filename.GetChars());
+			UnloadSaveData ();
+			SelSaveGame = RemoveSaveSlot (SelSaveGame);
+			ExtractSaveData (SelSaveGame);
+		}
 		return true;
 	}
 
@@ -1018,13 +1023,13 @@ DLoadMenu::DLoadMenu(DMenu *parent, FListMenuDescriptor *desc)
 
 bool DLoadMenu::MenuEvent (int mkey, bool fromcontroller)
 {
-	if (SelSaveGame == NULL || SelSaveGame->Succ == NULL)
-	{
-		return false;
-	}
 	if (Super::MenuEvent(mkey, fromcontroller)) 
 	{
 		return true;
+	}
+	if (SelSaveGame == NULL || SelSaveGame->Succ == NULL)
+	{
+		return false;
 	}
 
 	if (mkey == MKEY_Enter)

@@ -40,9 +40,12 @@
 #include "v_video.h"
 #include "gi.h"
 #include "i_system.h"
+#include "c_bind.h"
 
 MenuDescriptorList MenuDescriptors;
 static FListMenuDescriptor DefaultListMenuSettings;	// contains common settings for all list menus
+static FOptionMenuDescriptor DefaultOptionMenuSettings;	// contains common settings for all Option menus
+static FOptionMap OptionValues;
 
 static void DeinitMenus()
 {
@@ -433,12 +436,192 @@ static void ParseListMenu(FScanner &sc)
 	desc->mFontColor = DefaultListMenuSettings.mFontColor;
 	desc->mFontColor2 = DefaultListMenuSettings.mFontColor2;
 	desc->mClass = NULL;
+	desc->mRedirect = NULL;
 
 	FMenuDescriptor **pOld = MenuDescriptors.CheckKey(desc->mMenuName);
 	if (pOld != NULL && *pOld != NULL) delete *pOld;
 	MenuDescriptors[desc->mMenuName] = desc;
 
 	ParseListMenuBody(sc, desc);
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+static void ParseOptionMenuBody(FScanner &sc, FOptionMenuDescriptor *desc)
+{
+	sc.MustGetStringName("{");
+	while (!sc.CheckString("}"))
+	{
+		sc.MustGetString();
+		if (sc.Compare("ifgame"))
+		{
+			if (!CheckSkipGameBlock(sc))
+			{
+				// recursively parse sub-block
+				ParseOptionMenuBody(sc, desc);
+			}
+		}
+		else if (sc.Compare("ifoption"))
+		{
+			if (!CheckSkipOptionBlock(sc))
+			{
+				// recursively parse sub-block
+				ParseOptionMenuBody(sc, desc);
+			}
+		}
+		else if (sc.Compare("Class"))
+		{
+			sc.MustGetString();
+			const PClass *cls = PClass::FindClass(sc.String);
+			if (cls == NULL || !cls->IsDescendantOf(RUNTIME_CLASS(DOptionMenu)))
+			{
+				sc.ScriptError("Unknown menu class '%s'", sc.String);
+			}
+			desc->mClass = cls;
+		}
+		else if (sc.Compare("Title"))
+		{
+			sc.MustGetString();
+			desc->mTitle = sc.String;
+		}
+		else if (sc.Compare("Submenu"))
+		{
+			sc.MustGetString();
+			FString label = sc.String;
+			sc.MustGetStringName(",");
+			sc.MustGetString();
+			FOptionMenuItem *it = new FOptionMenuItemSubmenu(label, sc.String);
+			desc->mItems.Push(it);
+		}
+		else if (sc.Compare("Option"))
+		{
+			sc.MustGetString();
+			FString label = sc.String;
+			sc.MustGetStringName(",");
+			sc.MustGetString();
+			FString cvar = sc.String;
+			sc.MustGetStringName(",");
+			sc.MustGetString();
+			FOptionMenuItem *it = new FOptionMenuItemOption(label, cvar, sc.String);
+			desc->mItems.Push(it);
+		}
+		else if (sc.Compare("Command"))
+		{
+			sc.MustGetString();
+			FString label = sc.String;
+			sc.MustGetStringName(",");
+			sc.MustGetString();
+			FOptionMenuItem *it = new FOptionMenuItemCommand(label, sc.String);
+			desc->mItems.Push(it);
+		}
+		else if (sc.Compare("SafeCommand"))
+		{
+			sc.MustGetString();
+			FString label = sc.String;
+			sc.MustGetStringName(",");
+			sc.MustGetString();
+			FOptionMenuItem *it = new FOptionMenuItemSafeCommand(label, sc.String);
+			desc->mItems.Push(it);
+		}
+		else if (sc.Compare("Control") || sc.Compare("MapControl"))
+		{
+			bool map = sc.Compare("MapControl");
+			sc.MustGetString();
+			FString label = sc.String;
+			sc.MustGetStringName(",");
+			sc.MustGetString();
+			FOptionMenuItem *it = new FOptionMenuItemControl(label, sc.String, map? &AutomapBindings : &Bindings);
+			desc->mItems.Push(it);
+		}
+		else if (sc.Compare("StaticText"))
+		{
+			sc.MustGetString();
+			FString label = sc.String;
+			EColorRange cr = CR_UNTRANSLATED;
+			if (sc.CheckString(","))
+			{
+				sc.MustGetString();
+				cr = V_FindFontColor((FName)sc.String);
+			}
+			FOptionMenuItem *it = new FOptionMenuItemStaticText(label, cr);
+			desc->mItems.Push(it);
+		}
+		else if (sc.Compare("FontColor"))
+		{
+			sc.MustGetString();
+			desc->mFontColor = V_FindFontColor((FName)sc.String);
+			sc.MustGetStringName(",");
+			sc.MustGetString();
+			desc->mFontColorValue = V_FindFontColor((FName)sc.String);
+			sc.MustGetStringName(",");
+			sc.MustGetString();
+			desc->mFontColorMore = V_FindFontColor((FName)sc.String);
+		}
+		else if (sc.Compare("Slider"))
+		{
+			sc.MustGetString();
+			FString text = sc.String;
+			sc.MustGetStringName(",");
+			sc.MustGetString();
+			FString action = sc.String;
+			sc.MustGetStringName(",");
+			sc.MustGetNumber();
+			double min = sc.Number;
+			sc.MustGetStringName(",");
+			sc.MustGetNumber();
+			double max = sc.Number;
+			sc.MustGetStringName(",");
+			sc.MustGetNumber();
+			double step = sc.Number;
+			bool showvalue = true;
+			if (sc.CheckString(","))
+			{
+				sc.MustGetNumber();
+				showvalue = !!sc.Number;
+			}
+			FOptionMenuItem *it = new FOptionMenuSliderItem(text, action, min, max, step, showvalue);
+			desc->mItems.Push(it);
+		}
+		else
+		{
+			sc.ScriptError("Unknown keyword '%s'", sc.String);
+		}
+	}
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+static void ParseOptionMenu(FScanner &sc)
+{
+	sc.MustGetString();
+
+	FOptionMenuDescriptor *desc = new FOptionMenuDescriptor;
+	desc->mType = MDESC_OptionsMenu;
+	desc->mMenuName = sc.String;
+	desc->mSelectedItem = -1;
+	desc->mDisplayTop = 0;
+	desc->mFontColor = DefaultOptionMenuSettings.mFontColor;
+	desc->mFontColorValue = DefaultOptionMenuSettings.mFontColorValue;
+	desc->mFontColorMore = DefaultOptionMenuSettings.mFontColorMore;
+	desc->mClass = NULL;
+	desc->mDisplayPos = DefaultOptionMenuSettings.mDisplayPos;
+	desc->mYpos =  DefaultOptionMenuSettings.mYpos;
+	desc->mIndent =  DefaultOptionMenuSettings.mIndent;
+	desc->mDontDim =  DefaultOptionMenuSettings.mDontDim;
+
+	FMenuDescriptor **pOld = MenuDescriptors.CheckKey(desc->mMenuName);
+	if (pOld != NULL && *pOld != NULL) delete *pOld;
+	MenuDescriptors[desc->mMenuName] = desc;
+
+	ParseOptionMenuBody(sc, desc);
 }
 
 //=============================================================================
@@ -466,6 +649,14 @@ void M_ParseMenuDefs()
 			else if (sc.Compare("DEFAULTLISTMENU"))
 			{
 				ParseListMenuBody(sc, &DefaultListMenuSettings);
+			}
+			if (sc.Compare("OPTIONMENU"))
+			{
+				ParseOptionMenu(sc);
+			}
+			else if (sc.Compare("DEFAULTOPTIONMENU"))
+			{
+				ParseOptionMenuBody(sc, &DefaultOptionMenuSettings);
 			}
 			else
 			{

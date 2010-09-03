@@ -309,3 +309,224 @@ ListMenu "OptionsMenu"
 	ValueText "Switch on pickup", "Switch"
 	Class "PlayerMenu"
 }
+
+//-------------------------------------------------------------------------------------------
+//
+// The option menu
+//
+//-------------------------------------------------------------------------------------------
+
+OptionValue "YesNo"
+{
+	0, "No"
+	1, "Yes"
+}
+
+OptionValue "NoYes"
+{
+	0, "Yes"
+	1, "No"
+}
+
+OptionValue "OnOff"
+{
+	0, "Off"
+	1, "On"
+}
+
+OptionValue "OffOn"
+{
+	0, "On"
+	1, "Off"
+}
+
+DefaultOptionMenu
+{
+	IfGame(Doom, Chex)
+	{
+		FontColor "UNTRANSLATED", "GRAY", "GRAY"
+	}
+	IfGame(Heretic)
+	{
+		FontColor "GREEN", "UNTRANSLATED", "UNTRANSLATED"
+	}
+	IfGame(Hexen, Strife)
+	{
+		FontColor "RED", "UNTRANSLATED", "UNTRANSLATED"
+	}
+}
+
+OptionMenu "OptionsMenu"
+{
+	Title "OPTIONS"
+	Submenu "Customize Controls",		"CustomizeControls"
+	Submenu "Mouse options",			"MouseOptions"
+	Submenu "Joystick options",			"JoystickOptions"
+	Option	"Always Run", 				"cl_run", "OnOff"
+	StaticText " "
+	Submenu "Player Setup",				"PlayerMenu"
+	Submenu "Gameplay Options",			"GameplayOptions"
+	Submenu "Compatibility Options",	"CompatibilityOptions"
+	Submenu "Automap Options",			"AutomapOptions"
+	Submenu "Sound Options",			"SoundOptions"
+	Submenu "Display Options",			"VideoOptions"
+	Submenu "Set video mode",			"SetVidMode"
+	StaticText " "
+	SafeCommand "Reset to defaults",	"Reset2Defaults"
+	SafeCommand	"Reset to last saved",	"Reset2Saved"
+	Command "Go to console",			"GoToConsole"
+};
+
+//-------------------------------------------------------------------------------------------
+//
+// Controls Menu
+//
+//-------------------------------------------------------------------------------------------
+
+OptionMenu "CustomizeControls"
+{
+	Title "CUSTOMIZE CONTROLS",
+	StaticText 	"ENTER to change, BACKSPACE to clear"
+	StaticText 	""
+	StaticText 	"Controls", "Gold"
+	Control 	"Fire",					"+attack"
+	Control 	"Secondary Fire",		"+altattack"
+	Control 	"Use / Open",			"+use"
+	Control 	"Move forward",			"+forward"
+	Control 	"Move backward",		"+back"
+	Control 	"Strafe left",			"+moveleft"
+	Control 	"Strafe right",			"+moveright"
+	Control 	"Turn left",			"+left"
+	Control 	"Turn right",			"+right"
+	Control 	"Jump",					"+jump"
+	Control 	"Crouch",				"+crouch"
+	Control 	"Crouch Toggle",		"crouch"
+	Control 	"Fly / Swim up",		"+moveup"
+	Control 	"Fly / Swim down",		"+movedown"
+	Control 	"Stop flying",			"land"
+	Control 	"Mouse look",			"+mlook"
+	Control 	"Keyboard look",		"+klook"
+	Control 	"Look up",				"+lookup"
+	Control 	"Look down",			"+lookdown"
+	Control 	"Center view",			"centerview"
+	Control 	"Run",					"+speed"
+	Control 	"Strafe",				"+strafe"
+	Control 	"Show Scoreboard",		"+showscores"
+	StaticText 	""
+	StaticText 	"Chat", "Gold"
+	Control 	"Say",					"messagemode"
+	Control 	"Team say",				"messagemode2"
+	StaticText 	""
+	StaticText 	"Weapons", "Gold"
+	Control 	"Next weapon",			"weapnext"
+	Control 	"Previous weapon",		"weapprev"
+	StaticText 	""
+	StaticText 	"Inventory", "Gold"
+	Control 	"Activate item",		"invuse"
+	Control 	"Activate all items",	"invuseall"
+	Control 	"Next item",			"invnext"
+	Control 	"Previous item",		"invprev"
+	Control 	"Drop item",			"invdrop"
+	Control		"Query item",			"invquery"
+	Control 	"Drop weapon",			"weapdrop"
+	StaticText 	""
+	StaticText 	"Other", "Gold"
+	Control 	"Toggle automap",		"togglemap"
+	Control 	"Chasecam",				"chase"
+	Control 	"Coop spy",				"spynext"
+	Control 	"Screenshot",			"screenshot"
+	Control,  	"Open console",			"toggleconsole"
+	StaticText 	""
+	StaticText 	"Strife Popup Screens", "Gold"
+	Control 	"Mission objectives",	"showpop 1"
+	IfGame(Strife)
+	{
+		Control 	"Keys list",			"showpop 2"
+		Control 	"Weapons/ammo/stats",	"showpop 3"
+	}
+};
+
+//-------------------------------------------------------------------------------------------
+//
+// Mouse Menu
+//
+//-------------------------------------------------------------------------------------------
+
+OptionMenu "MouseOptions"
+{
+	Title "MOUSE OPTIONS",
+	Option "Enable mouse",				"use_mouse", "YesNo"
+	StaticText 	""
+	Slider "Overall sensitivity",		"mouse_sensitivity", 0.5, 2.5, 0.1
+	Option "Prescale mouse movement",	"m_noprescale", "NoYes"
+	Option "Smooth mouse movement",		"smooth_mouse", "YesNo"
+	StaticText 	""
+	Slider "Turning speed",				"m_yaw", 0, 2.5, 0.1
+	Slider "Mouselook speed",			"m_pitch", 0, 2.5, 0.1
+	Slider "Forward/Backward speed",	"m_forward", 0, 2.5, 0.1
+	Slider "Strafing speed",			"m_side", 0, 2.5, 0.1
+	StaticText 	""
+	Option "Always Mouselook",			"freelook", "OnOff"
+	Option "Invert Mouse",				"invertmouse", "OnOff"
+	Option "Lookspring",				"lookspring", "OnOff"
+	Option "Lookstrafe",				"lookstrafe", "OnOff"
+};
+
+
+//-------------------------------------------------------------------------------------------
+//
+// Joystick Menu
+//
+//-------------------------------------------------------------------------------------------
+
+OptionMenu "JoystickOptions"
+{
+	Title "CONTROLLER OPTIONS",
+	// Will be filled in by joystick code.
+}
+
+OptionValue "JoyAxisMapNames"
+{
+	-1, "None"
+	0, "Turning"
+	1, "Looking Up/Down"
+	2, "Moving Forward"
+	3, "Strafing"
+	4, "Moving Up/Down"
+}
+
+OptionValue "Inversion"
+{
+	0, "Not Inverted"
+	1, "Inverted"
+}
+
+OptionMenu "JoystickConfig"
+{
+	Title "CONFIGURE CONTROLLER",
+	// Will be filled in by joystick code.
+}
+
+
+menu_t "JoystickConfigMenu"
+{
+	"CONFIGURE CONTROLLER",
+	// Will be filled in by joystick code.
+}
+
+
+
+
+
+
+OptionValue CompatModes
+{
+	0, "Default"
+	1, "Doom"
+	2, "Doom (strict)"
+	3, "Boom"
+	6, "Boom (strict)"
+	5, "MBF"
+	4, "ZDoom 2.63"
+}
+

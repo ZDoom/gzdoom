@@ -19,6 +19,7 @@ class FTexture;
 class FFont;
 enum EColorRange;
 class FPlayerClass;
+class FKeyBindings;
 
 enum EMenuKey
 {
@@ -85,6 +86,7 @@ struct FMenuDescriptor
 };
 
 class FListMenuItem;
+class FOptionMenuItem;
 
 struct FListMenuDescriptor : public FMenuDescriptor
 {
@@ -102,7 +104,25 @@ struct FListMenuDescriptor : public FMenuDescriptor
 	EColorRange mFontColor;
 	EColorRange mFontColor2;
 	const PClass *mClass;
+	FMenuDescriptor *mRedirect;	// used to redirect overlong skill and episode menus to option menu based alternatives
 };
+
+struct FOptionMenuDescriptor : public FMenuDescriptor
+{
+	TDeletingArray<FOptionMenuItem *> mItems;
+	FString mTitle;
+	int mSelectedItem;
+	int mDisplayTop;
+	int mDisplayPos;
+	int mYpos;
+	int mIndent;
+	bool mDontDim;
+	EColorRange mFontColor;
+	EColorRange mFontColorValue;
+	EColorRange mFontColorMore;
+	const PClass *mClass;
+};
+						
 
 typedef TMap<FName, FMenuDescriptor *> MenuDescriptorList;
 
@@ -230,6 +250,12 @@ public:
 	void Drawer();
 };
 
+//=============================================================================
+//
+// the player sprite window
+//
+//=============================================================================
+
 class FListMenuItemPlayerDisplay : public FListMenuItem
 {
 	FListMenuDescriptor *mOwner;
@@ -265,6 +291,12 @@ public:
 	bool SetValue(int i, int value);
 };
 
+
+//=============================================================================
+//
+// selectable items
+//
+//=============================================================================
 
 class FListMenuItemSelectable : public FListMenuItem
 {
@@ -385,7 +417,7 @@ public:
 
 //=============================================================================
 //
-// list menu class runs a menu described by a FListMrnuDescriptor
+// list menu class runs a menu described by a FListMenuDescriptor
 //
 //=============================================================================
 
@@ -400,6 +432,135 @@ public:
 	DListMenu(DMenu *parent = NULL, FListMenuDescriptor *desc = NULL);
 	virtual void Init(DMenu *parent = NULL, FListMenuDescriptor *desc = NULL);
 	FListMenuItem *GetItem(FName name);
+	bool Responder (event_t *ev);
+	bool MenuEvent (int mkey, bool fromcontroller);
+	void Ticker ();
+	void Drawer ();
+};
+
+
+//=============================================================================
+//
+// base class for menu items
+//
+//=============================================================================
+
+class FOptionMenuItem : public FListMenuItem
+{
+
+public:
+
+	FOptionMenuItem(int xpos = 0, int ypos = 0, FName action = NAME_None);
+
+	virtual bool CheckCoordinate(FOptionMenuDescriptor *desc, int x, int y);
+	virtual void Drawer(FOptionMenuDescriptor *desc);
+	void DrawSelector(int xofs, int yofs, FTextureID tex);
+	virtual bool Selectable();
+};	
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+struct FOptionValues
+{
+	struct Pair
+	{
+		double Value;
+		FString Text;
+	};
+
+	TArray<Pair> mValues;
+};
+
+typedef TMap< FName, FOptionValues > FOptionMap;
+
+class FOptionMenuItemSubmenu : public FOptionMenuItem
+{
+	// action is a submenu name
+public:
+	FOptionMenuItemSubmenu(const char *label, const char *menu);
+	virtual void Drawer(FOptionMenuDescriptor *desc);
+	virtual bool Activate();
+};
+
+class FOptionMenuItemCommand : public FOptionMenuItemSubmenu
+{
+	// action is a CCMD
+public:
+	FOptionMenuItemCommand(const char *label, const char *menu);
+	virtual bool Activate();
+};
+
+class FOptionMenuItemSafeCommand : public FOptionMenuItemCommand
+{
+	// action is a CCMD
+public:
+	FOptionMenuItemSafeCommand(const char *label, const char *menu);
+	virtual bool Activate();
+};
+
+class FOptionMenuItemOption : public FOptionMenuItem
+{
+	// action is a CVAR
+	FOptionValues *mValues;
+	int mSelection;
+public:
+	FOptionMenuItemOption(const char *label, const char *menu, const char *values);
+	virtual void Drawer(FOptionMenuDescriptor *desc);
+	virtual bool Activate();
+};
+
+class FOptionMenuItemControl : public FOptionMenuItem
+{
+	// action is a CCMD
+	FKeyBindings *mBindings;
+public:
+	FOptionMenuItemControl(const char *label, const char *menu, FKeyBindings *bindings);
+	virtual void Drawer(FOptionMenuDescriptor *desc);
+	virtual bool Activate();
+};
+
+class FOptionMenuItemStaticText : public FOptionMenuItem
+{
+	EColorRange mColor;
+public:
+	FOptionMenuItemStaticText(const char *label, EColorRange color);
+	virtual void Drawer(FOptionMenuDescriptor *desc);
+	virtual bool Activate();
+	virtual bool Selectable();
+};
+
+class FOptionMenuSliderItem : public FOptionMenuItem
+{
+	// action is a CVAR
+	double mMin, mMax, mStep;
+	double mValue;
+	bool mShowValue;
+public:
+	FOptionMenuSliderItem(const char *label, const char *menu, double min, double max, double step, bool showval);
+	virtual void Drawer(FOptionMenuDescriptor *desc);
+	virtual bool Activate();
+};
+
+//=============================================================================
+//
+// Option menu class runs a menu described by a FOptionMenuDescriptor
+//
+//=============================================================================
+
+class DOptionMenu : public DMenu
+{
+	DECLARE_CLASS(DOptionMenu, DMenu)
+
+protected:
+	FOptionMenuDescriptor *mDesc;
+
+public:
+	DOptionMenu(DMenu *parent = NULL, FOptionMenuDescriptor *desc = NULL);
+	virtual void Init(DMenu *parent = NULL, FOptionMenuDescriptor *desc = NULL);
+	//FListMenuItem *GetItem(FName name);
 	bool Responder (event_t *ev);
 	bool MenuEvent (int mkey, bool fromcontroller);
 	void Ticker ();

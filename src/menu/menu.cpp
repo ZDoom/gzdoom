@@ -301,6 +301,15 @@ void M_SetMenu(FName menu, int param)
 				M_ActivateMenu(newmenu);
 			}
 		}
+		else if ((*desc)->mType == MDESC_OptionsMenu)
+		{
+			FOptionMenuDescriptor *ld = static_cast<FOptionMenuDescriptor*>(*desc);
+			const PClass *cls = ld->mClass == NULL? RUNTIME_CLASS(DOptionMenu) : ld->mClass;
+
+			DOptionMenu *newmenu = (DOptionMenu *)cls->CreateNew();
+			newmenu->Init(DMenu::CurrentMenu, ld);
+			M_ActivateMenu(newmenu);
+		}
 		return;
 	}
 	else

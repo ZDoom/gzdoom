@@ -264,8 +264,7 @@ ListMenu "SaveGameMenu"
 //
 //-------------------------------------------------------------------------------------------
 
-ListMenu "OptionsMenu"
-//ListMenu "PlayerMenu"
+ListMenu "PlayerMenu"
 {
 	StaticTextCentered 160, 15, "$MNU_PLAYERSETUP"
 	
@@ -340,23 +339,54 @@ OptionValue "OffOn"
 	1, "Off"
 }
 
-DefaultOptionMenu
+OptionMenuSettings
 {
+	// these are global settings and can be overridden by user provided definitions to adjust to different fonts
+	// or game themes.
+	TitleColor "Untranslated"
+	Linespacing 8
+	LabelOffset 0
+	IfGame(Doom)
+	{
+		Titlecolor "Red"
+	}
+	IfGame(Chex)
+	{
+		Titlecolor "Green"
+	}
+	IfGame(Heretic, Hexen)
+	{
+		Linespacing 9
+		LabelOffset 2
+	}
 	IfGame(Doom, Chex)
 	{
-		FontColor "UNTRANSLATED", "GRAY", "GRAY"
+		FontColor "UNTRANSLATED", "GRAY", "GRAY", 1
 	}
 	IfGame(Heretic)
 	{
-		FontColor "GREEN", "UNTRANSLATED", "UNTRANSLATED"
+		FontColor "GREEN", "UNTRANSLATED", "UNTRANSLATED", 1
+	}
+	IfGame(Hexen)
+	{
+		FontColor "RED", "UNTRANSLATED", "UNTRANSLATED", 1
 	}
 	IfGame(Hexen, Strife)
 	{
-		FontColor "RED", "UNTRANSLATED", "UNTRANSLATED"
+		FontColor "RED", "UNTRANSLATED", "UNTRANSLATED", "RED"
 	}
 }
 
-OptionMenu "OptionsMenuX"	// rename later!
+DefaultOptionMenu
+{
+	Position -15
+	IfGame(Heretic, Hexen)
+	{
+		Position -13
+	}
+}
+
+OptionMenu "OptionsMenu"
 {
 	Title "OPTIONS"
 	Submenu "Customize Controls",		"CustomizeControls"
@@ -388,7 +418,7 @@ OptionMenu "CustomizeControls"
 	Title "CUSTOMIZE CONTROLS"
 	StaticText 	"ENTER to change, BACKSPACE to clear"
 	StaticText 	""
-	StaticText 	"Controls", "Gold"
+	StaticText 	"Controls", 1
 	Control 	"Fire",					"+attack"
 	Control 	"Secondary Fire",		"+altattack"
 	Control 	"Use / Open",			"+use"
@@ -413,15 +443,15 @@ OptionMenu "CustomizeControls"
 	Control 	"Strafe",				"+strafe"
 	Control 	"Show Scoreboard",		"+showscores"
 	StaticText 	""
-	StaticText 	"Chat", "Gold"
+	StaticText 	"Chat", 1
 	Control 	"Say",					"messagemode"
 	Control 	"Team say",				"messagemode2"
 	StaticText 	""
-	StaticText 	"Weapons", "Gold"
+	StaticText 	"Weapons", 1
 	Control 	"Next weapon",			"weapnext"
 	Control 	"Previous weapon",		"weapprev"
 	StaticText 	""
-	StaticText 	"Inventory", "Gold"
+	StaticText 	"Inventory", 1
 	Control 	"Activate item",		"invuse"
 	Control 	"Activate all items",	"invuseall"
 	Control 	"Next item",			"invnext"
@@ -430,14 +460,14 @@ OptionMenu "CustomizeControls"
 	Control		"Query item",			"invquery"
 	Control 	"Drop weapon",			"weapdrop"
 	StaticText 	""
-	StaticText 	"Other", "Gold"
+	StaticText 	"Other", 1
 	Control 	"Toggle automap",		"togglemap"
 	Control 	"Chasecam",				"chase"
 	Control 	"Coop spy",				"spynext"
 	Control 	"Screenshot",			"screenshot"
 	Control  	"Open console",			"toggleconsole"
 	StaticText 	""
-	StaticText 	"Strife Popup Screens", "Gold"
+	StaticText 	"Strife Popup Screens", 1
 	Control 	"Mission objectives",	"showpop 1"
 	IfGame(Strife)
 	{
@@ -483,6 +513,7 @@ OptionMenu "JoystickOptions"
 {
 	Title "CONTROLLER OPTIONS"
 	// Will be filled in by joystick code.
+	Submenu "Delete me",		"Nothing"	// only to prevent crashes when going to this menu until it's fully implemented.
 }
 
 OptionValue "JoyAxisMapNames"
@@ -505,6 +536,7 @@ OptionMenu "JoystickConfig"
 {
 	Title "CONFIGURE CONTROLLER"
 	// Will be filled in by joystick code.
+	Submenu "Delete me",		"Nothing"	// only to prevent crashes when going to this menu until it's fully implemented.
 }
 
 
@@ -512,6 +544,7 @@ OptionMenu "JoystickConfigMenu"
 {
 	Title "CONFIGURE CONTROLLER"
 	// Will be filled in by joystick code.
+	Submenu "Delete me",		"Nothing"	// only to prevent crashes when going to this menu until it's fully implemented.
 }
 
 

@@ -45,7 +45,8 @@
 MenuDescriptorList MenuDescriptors;
 static FListMenuDescriptor DefaultListMenuSettings;	// contains common settings for all list menus
 static FOptionMenuDescriptor DefaultOptionMenuSettings;	// contains common settings for all Option menus
-static FOptionMap OptionValues;
+FOptionMenuSettings OptionSettings;
+FOptionMap OptionValues;
 
 static void DeinitMenus()
 {
@@ -487,6 +488,71 @@ static void ParseOptionValue(FScanner &sc)
 	OptionValues[optname] = val;
 }
 
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+static void ParseOptionSettings(FScanner &sc)
+{
+	sc.MustGetStringName("{");
+	while (!sc.CheckString("}"))
+	{
+		sc.MustGetString();
+		if (sc.Compare("ifgame"))
+		{
+			if (!CheckSkipGameBlock(sc))
+			{
+				// recursively parse sub-block
+				ParseOptionSettings(sc);
+			}
+		}
+		else if (sc.Compare("ifoption"))
+		{
+			if (!CheckSkipOptionBlock(sc))
+			{
+				// recursively parse sub-block
+				ParseOptionSettings(sc);
+			}
+		}
+		else if (sc.Compare("FontColor"))
+		{
+			sc.MustGetString();
+			OptionSettings.mFontColor = V_FindFontColor((FName)sc.String);
+			sc.MustGetStringName(",");
+			sc.MustGetString();
+			OptionSettings.mFontColorValue = V_FindFontColor((FName)sc.String);
+			sc.MustGetStringName(",");
+			sc.MustGetString();
+			OptionSettings.mFontColorMore = V_FindFontColor((FName)sc.String);
+			sc.MustGetStringName(",");
+			sc.MustGetString();
+			OptionSettings.mFontColorHeader = V_FindFontColor((FName)sc.String);
+		}
+		else if (sc.Compare("Linespacing"))
+		{
+			sc.MustGetNumber();
+			OptionSettings.mLinespacing = sc.Number;
+		}
+		else if (sc.Compare("LabelOffset"))
+		{
+			sc.MustGetNumber();
+			OptionSettings.mLabelOffset = sc.Number;
+		}
+		else if (sc.Compare("TitleColor"))
+		{
+			sc.MustGetString();
+			OptionSettings.mTitleColor = V_FindFontColor((FName)sc.String);
+		}
+		else
+		{
+			sc.ScriptError("Unknown keyword '%s'", sc.String);
+		}
+	}
+}
+
 //=============================================================================
 //
 //
@@ -530,6 +596,21 @@ static void ParseOptionMenuBody(FScanner &sc, FOptionMenuDescriptor *desc)
 			sc.MustGetString();
 			desc->mTitle = sc.String;
 		}
+		else if (sc.Compare("Position"))
+		{
+			sc.MustGetNumber();
+			desc->mPosition = sc.Number;
+		}
+		else if (sc.Compare("ScrollTop"))
+		{
+			sc.MustGetNumber();
+			desc->mScrollTop = sc.Number;
+		}
+		else if (sc.Compare("Indent"))
+		{
+			sc.MustGetNumber();
+			desc->mIndent = sc.Number;
+		}
 		else if (sc.Compare("Submenu"))
 		{
 			sc.MustGetString();
@@ -548,7 +629,14 @@ static void ParseOptionMenuBody(FScanner &sc, FOptionMenuDescriptor *desc)
 			FString cvar = sc.String;
 			sc.MustGetStringName(",");
 			sc.MustGetString();
-			FOptionMenuItem *it = new FOptionMenuItemOption(label, cvar, sc.String);
+			FString values = sc.String;
+			const char *check = NULL;
+			if (sc.CheckString(","))
+			{
+				sc.MustGetString();
+				check = sc.String;
+			}
+			FOptionMenuItem *it = new FOptionMenuItemOption(label, cvar, values, check);
 			desc->mItems.Push(it);
 		}
 		else if (sc.Compare("Command"))
@@ -583,25 +671,14 @@ static void ParseOptionMenuBody(FScanner &sc, FOptionMenuDescriptor *desc)
 		{
 			sc.MustGetString();
 			FString label = sc.String;
-			EColorRange cr = CR_UNTRANSLATED;
+			bool cr = false;
 			if (sc.CheckString(","))
 			{
-				sc.MustGetString();
-				cr = V_FindFontColor((FName)sc.String);
+				sc.MustGetNumber();
+				cr = !!sc.Number;
 			}
 			FOptionMenuItem *it = new FOptionMenuItemStaticText(label, cr);
 			desc->mItems.Push(it);
-		}
-		else if (sc.Compare("FontColor"))
-		{
-			sc.MustGetString();
-			desc->mFontColor = V_FindFontColor((FName)sc.String);
-			sc.MustGetStringName(",");
-			sc.MustGetString();
-			desc->mFontColorValue = V_FindFontColor((FName)sc.String);
-			sc.MustGetStringName(",");
-			sc.MustGetString();
-			desc->mFontColorMore = V_FindFontColor((FName)sc.String);
 		}
 		else if (sc.Compare("Slider"))
 		{
@@ -649,13 +726,10 @@ static void ParseOptionMenu(FScanner &sc)
 	desc->mType = MDESC_OptionsMenu;
 	desc->mMenuName = sc.String;
 	desc->mSelectedItem = -1;
-	desc->mDisplayTop = 0;
-	desc->mFontColor = DefaultOptionMenuSettings.mFontColor;
-	desc->mFontColorValue = DefaultOptionMenuSettings.mFontColorValue;
-	desc->mFontColorMore = DefaultOptionMenuSettings.mFontColorMore;
+	desc->mScrollPos = 0;
 	desc->mClass = NULL;
-	desc->mDisplayPos = DefaultOptionMenuSettings.mDisplayPos;
-	desc->mYpos =  DefaultOptionMenuSettings.mYpos;
+	desc->mPosition = DefaultOptionMenuSettings.mPosition;
+	desc->mScrollTop = DefaultOptionMenuSettings.mScrollTop;
 	desc->mIndent =  DefaultOptionMenuSettings.mIndent;
 	desc->mDontDim =  DefaultOptionMenuSettings.mDontDim;
 
@@ -664,6 +738,16 @@ static void ParseOptionMenu(FScanner &sc)
 	MenuDescriptors[desc->mMenuName] = desc;
 
 	ParseOptionMenuBody(sc, desc);
+
+	// calculate the menu indent
+	int widest = 0, thiswidth;
+
+	for (unsigned i = 0; i < desc->mItems.Size(); i++)
+	{
+		thiswidth = desc->mItems[i]->GetIndent();
+		if (thiswidth > widest) widest = thiswidth;
+	}
+	desc->mIndent =  widest + 4;
 }
 
 //=============================================================================
@@ -695,6 +779,10 @@ void M_ParseMenuDefs()
 			else if (sc.Compare("OPTIONVALUE"))
 			{
 				ParseOptionValue(sc);
+			}
+			else if (sc.Compare("OPTIONMENUSETTINGS"))
+			{
+				ParseOptionSettings(sc);
 			}
 			else if (sc.Compare("OPTIONMENU"))
 			{
@@ -757,13 +845,9 @@ void M_ParseMenuDefs()
 			FListMenuDescriptor *ld = static_cast<FListMenuDescriptor*>(*desc);
 			// add player display
 			ld->mSelectedItem = ld->mItems.Size();
-			if (PlayerClasses.Size() == 1)
-			{
-				ld->mAutoselect = ld->mSelectedItem;
-			}
 			
 			int n = 0;
-			for (unsigned i = 0; i < PlayerClasses.Size (); i++, n++)
+			for (unsigned i = 0; i < PlayerClasses.Size (); i++)
 			{
 				if (!(PlayerClasses[i].Flags & PCF_NOMENU))
 				{
@@ -774,6 +858,7 @@ void M_ParseMenuDefs()
 							pname, ld->mFont,ld->mFontColor, NAME_Episodemenu, i);
 						ld->mItems.Push(it);
 						ld->mYpos += ld->mLinespacing;
+						n++;
 					}
 				}
 			}
@@ -792,6 +877,10 @@ void M_ParseMenuDefs()
 						pname, ld->mFont,ld->mFontColor, NAME_Episodemenu, 0);
 					ld->mItems.Push(it);
 				}
+			}
+			if (n < 2)
+			{
+				ld->mAutoselect = ld->mSelectedItem;
 			}
 			/*
 			if (ClassMenuDef.numitems > 4)

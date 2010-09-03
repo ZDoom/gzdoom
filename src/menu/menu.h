@@ -107,25 +107,35 @@ struct FListMenuDescriptor : public FMenuDescriptor
 	FMenuDescriptor *mRedirect;	// used to redirect overlong skill and episode menus to option menu based alternatives
 };
 
+struct FOptionMenuSettings
+{
+	EColorRange mTitleColor;
+
+	EColorRange mFontColor;
+	EColorRange mFontColorValue;
+	EColorRange mFontColorMore;
+	EColorRange mFontColorHeader;
+	int mLinespacing;
+	int mLabelOffset;
+};
+
 struct FOptionMenuDescriptor : public FMenuDescriptor
 {
 	TDeletingArray<FOptionMenuItem *> mItems;
 	FString mTitle;
 	int mSelectedItem;
-	int mDisplayTop;
-	int mDisplayPos;
-	int mYpos;
+	int mScrollTop;
+	int mScrollPos;
 	int mIndent;
+	int mPosition;
 	bool mDontDim;
-	EColorRange mFontColor;
-	EColorRange mFontColorValue;
-	EColorRange mFontColorMore;
 	const PClass *mClass;
 };
 						
 
 typedef TMap<FName, FMenuDescriptor *> MenuDescriptorList;
 
+extern FOptionMenuSettings OptionSettings;
 extern MenuDescriptorList MenuDescriptors;
 
 
@@ -447,15 +457,20 @@ public:
 
 class FOptionMenuItem : public FListMenuItem
 {
+protected:
+	char *mLabel;
+	bool mCentered;
 
+	void drawLabel(int indent, int y, EColorRange color, bool grayed = false);
 public:
 
-	FOptionMenuItem(int xpos = 0, int ypos = 0, FName action = NAME_None);
-
+	FOptionMenuItem(const char *text, FName action = NAME_None, bool center = false);
+	~FOptionMenuItem();
 	virtual bool CheckCoordinate(FOptionMenuDescriptor *desc, int x, int y);
-	virtual void Drawer(FOptionMenuDescriptor *desc);
+	virtual void Draw(FOptionMenuDescriptor *desc, int y, int indent);
 	void DrawSelector(int xofs, int yofs, FTextureID tex);
 	virtual bool Selectable();
+	virtual int GetIndent();
 };	
 
 //=============================================================================
@@ -476,12 +491,15 @@ struct FOptionValues
 
 typedef TMap< FName, FOptionValues* > FOptionMap;
 
+extern FOptionMap OptionValues;
+
+
 class FOptionMenuItemSubmenu : public FOptionMenuItem
 {
 	// action is a submenu name
 public:
 	FOptionMenuItemSubmenu(const char *label, const char *menu);
-	virtual void Drawer(FOptionMenuDescriptor *desc);
+	virtual void Draw(FOptionMenuDescriptor *desc, int y, int indent);
 	virtual bool Activate();
 };
 
@@ -498,6 +516,7 @@ class FOptionMenuItemSafeCommand : public FOptionMenuItemCommand
 	// action is a CCMD
 public:
 	FOptionMenuItemSafeCommand(const char *label, const char *menu);
+	bool MenuEvent (int mkey, bool fromcontroller);
 	virtual bool Activate();
 };
 
@@ -505,11 +524,15 @@ class FOptionMenuItemOption : public FOptionMenuItem
 {
 	// action is a CVAR
 	FOptionValues *mValues;
+	FBaseCVar *mCVar;
+	FBoolCVar *mGrayCheck;
 	int mSelection;
 public:
-	FOptionMenuItemOption(const char *label, const char *menu, const char *values);
-	virtual void Drawer(FOptionMenuDescriptor *desc);
+	FOptionMenuItemOption(const char *label, const char *menu, const char *values, const char *graycheck);
+	virtual void Draw(FOptionMenuDescriptor *desc, int y, int indent);
+	bool MenuEvent (int mkey, bool fromcontroller);
 	virtual bool Activate();
+	virtual bool Selectable();
 };
 
 class FOptionMenuItemControl : public FOptionMenuItem
@@ -518,7 +541,7 @@ class FOptionMenuItemControl : public FOptionMenuItem
 	FKeyBindings *mBindings;
 public:
 	FOptionMenuItemControl(const char *label, const char *menu, FKeyBindings *bindings);
-	virtual void Drawer(FOptionMenuDescriptor *desc);
+	virtual void Draw(FOptionMenuDescriptor *desc, int y, int indent);
 	virtual bool Activate();
 };
 
@@ -526,8 +549,8 @@ class FOptionMenuItemStaticText : public FOptionMenuItem
 {
 	EColorRange mColor;
 public:
-	FOptionMenuItemStaticText(const char *label, EColorRange color);
-	virtual void Drawer(FOptionMenuDescriptor *desc);
+	FOptionMenuItemStaticText(const char *label, bool header);
+	virtual void Draw(FOptionMenuDescriptor *desc, int y, int indent);
 	virtual bool Activate();
 	virtual bool Selectable();
 };
@@ -540,7 +563,7 @@ class FOptionMenuSliderItem : public FOptionMenuItem
 	bool mShowValue;
 public:
 	FOptionMenuSliderItem(const char *label, const char *menu, double min, double max, double step, bool showval);
-	virtual void Drawer(FOptionMenuDescriptor *desc);
+	virtual void Draw(FOptionMenuDescriptor *desc, int y, int indent);
 	virtual bool Activate();
 };
 
@@ -553,6 +576,10 @@ public:
 class DOptionMenu : public DMenu
 {
 	DECLARE_CLASS(DOptionMenu, DMenu)
+
+	bool CanScrollUp;
+	bool CanScrollDown;
+	int VisBottom;
 
 protected:
 	FOptionMenuDescriptor *mDesc;

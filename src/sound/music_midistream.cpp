@@ -49,6 +49,8 @@
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
+static void WriteVarLen (TArray<BYTE> &file, DWORD value);
+
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 EXTERN_CVAR(Float, snd_musicvolume)
@@ -57,7 +59,20 @@ EXTERN_CVAR(Float, snd_musicvolume)
 extern UINT mididevice;
 #endif
 
+extern char MIDI_EventLengths[7];
+
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+static const BYTE StaticMIDIhead[] =
+{
+	'M','T','h','d', 0, 0, 0, 6,
+	0, 0, // format 0: only one track
+	0, 1, // yes, there is really only one track
+	0, 0, // divisions (filled in)
+	'M','T','r','k', 0, 0, 0, 0,
+	// The first event sets the tempo (filled in)
+	0, 255, 81, 3, 0, 0, 0
+};
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -172,7 +187,7 @@ bool MIDIStreamer::IsValid() const
 //
 //==========================================================================
 
-void MIDIStreamer::CheckCaps()
+void MIDIStreamer::CheckCaps(int tech)
 {
 }
 
@@ -200,7 +215,7 @@ void MIDIStreamer::Play(bool looping, int subsong)
 		{
 			MIDI = new OPLDumperMIDIDevice(DumpFilename);
 		}
-		else if (DeviceType == MIDI_Timidity)
+		else if (DeviceType == MIDI_GUS)
 		{
 			MIDI = new TimidityWaveWriterMIDIDevice(DumpFilename, 0);
 		}
@@ -221,12 +236,16 @@ void MIDIStreamer::Play(bool looping, int subsong)
 		break;
 #endif
 
-	case MIDI_Timidity:
+	case MIDI_GUS:
 		MIDI = new TimidityMIDIDevice;
 		break;
 
 	case MIDI_OPL:
 		MIDI = new OPLMIDIDevice;
+		break;
+
+	default:
+		MIDI = NULL;
 		break;
 	}
 	
@@ -240,9 +259,9 @@ void MIDIStreamer::Play(bool looping, int subsong)
 		return;
 	}
 
-	CheckCaps();
+	CheckCaps(MIDI->GetTechnology());
 	Precache();
-	IgnoreLoops = true;
+	IgnoreLoops = false;
 
 	// Set time division and tempo.
 	if (0 != MIDI->SetTimeDiv(Division) ||
@@ -515,7 +534,7 @@ void MIDIStreamer::OutputVolume (DWORD volume)
 int MIDIStreamer::VolumeControllerChange(int channel, int volume)
 {
 	ChannelVolumes[channel] = volume;
-	return ((volume + 1) * Volume) >> 16;
+	return IgnoreLoops ? volume : ((volume + 1) * Volume) >> 16;
 }
 
 //==========================================================================
@@ -834,9 +853,9 @@ int MIDIStreamer::FillBuffer(int buffer_num, int max_events, DWORD max_time)
 //
 // MIDIStreamer :: Precache
 //
-// Generates a list of instruments this song uses them and passes them to
-// the MIDI device for precaching. The default implementation here pretends
-// to play the song and watches for program change events on normal channels
+// Generates a list of instruments this song uses and passes them to the
+// MIDI device for precaching. The default implementation here pretends to
+// play the song and watches for program change events on normal channels
 // and note on events on channel 10.
 //
 //==========================================================================
@@ -931,6 +950,138 @@ void MIDIStreamer::Precache()
 		}
 	}
 	MIDI->PrecacheInstruments(&packed[0], packed.Size());
+}
+
+//==========================================================================
+//
+// MIDIStreamer :: CreateSMF
+//
+// Simulates playback to create a Standard MIDI File.
+//
+//==========================================================================
+
+void MIDIStreamer::CreateSMF(TArray<BYTE> &file)
+{
+	DWORD delay = 0;
+	BYTE running_status = 0;
+
+	// Always create songs aimed at GM devices.
+	CheckCaps(MOD_MIDIPORT);
+	IgnoreLoops = true;
+	DoRestart();
+
+	file.Reserve(sizeof(StaticMIDIhead));
+	memcpy(&file[0], StaticMIDIhead, sizeof(StaticMIDIhead));
+	file[12] = Division >> 8;
+	file[13] = Division & 0xFF;
+	file[26] = InitialTempo >> 16;
+	file[27] = InitialTempo >> 8;
+	file[28] = InitialTempo;
+
+	while (!CheckDone())
+	{
+		DWORD *event_end = MakeEvents(Events[0], &Events[0][MAX_EVENTS*3], 1000000*600);
+		for (DWORD *event = Events[0]; event < event_end; )
+		{
+			delay += event[0];
+			if (MEVT_EVENTTYPE(event[2]) == MEVT_TEMPO)
+			{
+				WriteVarLen(file, delay);
+				delay = 0;
+				DWORD tempo = MEVT_EVENTPARM(event[2]);
+				file.Push(MIDI_META);
+				file.Push(MIDI_META_TEMPO);
+				file.Push(3);
+				file.Push(BYTE(tempo >> 16));
+				file.Push(BYTE(tempo >> 8));
+				file.Push(BYTE(tempo));
+			}
+			else if (MEVT_EVENTTYPE(event[2]) == MEVT_LONGMSG)
+			{
+				WriteVarLen(file, delay);
+				delay = 0;
+				DWORD len = MEVT_EVENTPARM(event[2]);
+				BYTE *bytes = (BYTE *)&event[3];
+				if (bytes[0] == MIDI_SYSEX)
+				{
+					len--;
+					file.Push(MIDI_SYSEX);
+					WriteVarLen(file, len);
+					memcpy(&file[file.Reserve(len - 1)], bytes, len);
+				}
+			}
+			else if (MEVT_EVENTTYPE(event[2]) == 0)
+			{
+				WriteVarLen(file, delay);
+				delay = 0;
+				BYTE status = BYTE(event[2]);
+				if (status != running_status)
+				{
+					running_status = status;
+					file.Push(status);
+				}
+				file.Push(BYTE((event[2] >> 8) & 0x7F));
+				if (MIDI_EventLengths[(status >> 4) & 7] == 2)
+				{
+					file.Push(BYTE((event[2] >> 16) & 0x7F));
+				}
+			}
+			// Advance to next event
+			if (event[2] < 0x80000000)
+			{ // short message
+				event += 3;
+			}
+			else
+			{ // long message
+				event += 3 + ((MEVT_EVENTPARM(event[2]) + 3) >> 2);
+			}
+		}
+	}
+
+	// End track
+	WriteVarLen(file, delay);
+	file.Push(MIDI_META);
+	file.Push(MIDI_META_EOT);
+	file.Push(0);
+
+	// Fill in track length
+	DWORD len = file.Size() - 22;
+	file[18] = BYTE(len >> 24);
+	file[19] = BYTE(len >> 16);
+	file[20] = BYTE(len >> 8);
+	file[21] = BYTE(len & 255);
+
+	IgnoreLoops = false;
+}
+
+//==========================================================================
+//
+// WriteVarLen
+//
+//==========================================================================
+
+static void WriteVarLen (TArray<BYTE> &file, DWORD value)
+{
+   DWORD buffer = value & 0x7F;
+
+   while ( (value >>= 7) )
+   {
+     buffer <<= 8;
+     buffer |= (value & 0x7F) | 0x80;
+   }
+
+   for (;;)
+   {
+	   file.Push(BYTE(buffer));
+	   if (buffer & 0x80)
+	   {
+		   buffer >>= 8;
+	   }
+	   else
+	   {
+		   break;
+	   }
+   }
 }
 
 //==========================================================================

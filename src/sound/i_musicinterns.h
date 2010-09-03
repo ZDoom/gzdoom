@@ -333,8 +333,13 @@ enum EMIDIDevice
 {
 	MIDI_Win,
 	MIDI_OPL,
-	MIDI_Timidity,
-	MIDI_Fluid
+	MIDI_GUS,
+	MIDI_Fluid,
+
+	// only used by I_RegisterSong 
+	MIDI_Null,
+	MIDI_FMOD,
+	MIDI_Timidity
 };
 
 class MIDIStreamer : public MusInfo
@@ -357,6 +362,7 @@ public:
 	void FluidSettingInt(const char *setting, int value);
 	void FluidSettingNum(const char *setting, double value);
 	void FluidSettingStr(const char *setting, const char *value);
+	void CreateSMF(TArray<BYTE> &file);
 
 protected:
 	MIDIStreamer(const char *dumpname, EMIDIDevice type);
@@ -369,7 +375,7 @@ protected:
 	static void Callback(unsigned int uMsg, void *userdata, DWORD dwParam1, DWORD dwParam2);
 
 	// Virtuals for subclasses to override
-	virtual void CheckCaps();
+	virtual void CheckCaps(int tech);
 	virtual void DoInitialSetup() = 0;
 	virtual void DoRestart() = 0;
 	virtual bool CheckDone() = 0;
@@ -457,7 +463,7 @@ public:
 protected:
 	MIDISong2(const MIDISong2 *original, const char *filename, EMIDIDevice type);	// file dump constructor
 
-	void CheckCaps();
+	void CheckCaps(int tech);
 	void DoInitialSetup();
 	void DoRestart();
 	bool CheckDone();
@@ -494,7 +500,7 @@ public:
 protected:
 	HMISong(const HMISong *original, const char *filename, EMIDIDevice type);	// file dump constructor
 
-	void CheckCaps();
+	void CheckCaps(int tech);
 	void DoInitialSetup();
 	void DoRestart();
 	bool CheckDone();

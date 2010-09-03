@@ -216,10 +216,8 @@ MIDISong2::~MIDISong2 ()
 //
 //==========================================================================
 
-void MIDISong2::CheckCaps()
+void MIDISong2::CheckCaps(int tech)
 {
-	int tech = MIDI->GetTechnology();
-
 	DesignationMask = 0xFF0F;
 	if (tech == MOD_FMSYNTH)
 	{
@@ -801,7 +799,7 @@ MusInfo *MIDISong2::GetOPLDumper(const char *filename)
 
 MusInfo *MIDISong2::GetWaveDumper(const char *filename, int rate)
 {
-	return new MIDISong2(this, filename, MIDI_Timidity);
+	return new MIDISong2(this, filename, MIDI_GUS);
 }
 
 //==========================================================================

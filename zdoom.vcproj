@@ -713,10 +713,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\mus2midi.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\src\name.cpp"
 				>
 			</File>

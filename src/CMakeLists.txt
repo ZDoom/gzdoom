@@ -661,7 +661,6 @@ add_executable( zdoom WIN32
 	m_png.cpp
 	m_random.cpp
 	md5.cpp
-	mus2midi.cpp
 	name.cpp
 	nodebuild.cpp
 	nodebuild_classify_nosse2.cpp

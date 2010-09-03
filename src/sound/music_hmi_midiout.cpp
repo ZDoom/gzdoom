@@ -273,10 +273,8 @@ HMISong::~HMISong ()
 //
 //==========================================================================
 
-void HMISong::CheckCaps()
+void HMISong::CheckCaps(int tech)
 {
-	int tech = MIDI->GetTechnology();
-
 	// What's the equivalent HMI device for our technology?
 	if (tech == MOD_FMSYNTH)
 	{
@@ -851,7 +849,7 @@ MusInfo *HMISong::GetOPLDumper(const char *filename)
 
 MusInfo *HMISong::GetWaveDumper(const char *filename, int rate)
 {
-	return new HMISong(this, filename, MIDI_Timidity);
+	return new HMISong(this, filename, MIDI_GUS);
 }
 
 //==========================================================================

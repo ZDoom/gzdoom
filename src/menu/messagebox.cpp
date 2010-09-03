@@ -254,6 +254,7 @@ bool DMessageBoxMenu::MenuEvent(int mkey, bool fromcontroller)
 	{
 		if (mkey == MKEY_Up || mkey == MKEY_Down)
 		{
+			S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
 			messageSelection = !messageSelection;
 			return true;
 		}

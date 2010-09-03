@@ -356,7 +356,7 @@ DefaultOptionMenu
 	}
 }
 
-OptionMenu "OptionsMenu"
+OptionMenu "OptionsMenuX"	// rename later!
 {
 	Title "OPTIONS"
 	Submenu "Customize Controls",		"CustomizeControls"

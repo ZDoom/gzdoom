@@ -402,6 +402,11 @@ CVAR (Flag, sv_noweaponspawn,	dmflags, DF_NO_COOP_WEAPON_SPAWN);
 CVAR (Flag, sv_nocrouch,		dmflags, DF_NO_CROUCH);
 CVAR (Flag, sv_allowcrouch,		dmflags, DF_YES_CROUCH);
 
+// Some (hopefully cleaner) interface to these settings.
+CVAR (Mask, sv_crouch,			dmflags, DF_NO_CROUCH|DF_YES_CROUCH);
+CVAR (Mask, sv_jump,			dmflags, DF_NO_JUMP|DF_YES_JUMP);
+CVAR (Mask, sv_fallingdamage,	dmflags, DF_FORCE_FALLINGHX|DF_FORCE_FALLINGZD);
+
 //==========================================================================
 //
 // CVAR dmflags2

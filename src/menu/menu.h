@@ -484,7 +484,7 @@ public:
 
 	~FOptionMenuItem();
 	virtual bool CheckCoordinate(FOptionMenuDescriptor *desc, int x, int y);
-	virtual void Draw(FOptionMenuDescriptor *desc, int y, int indent);
+	virtual int Draw(FOptionMenuDescriptor *desc, int y, int indent);
 	virtual bool Selectable();
 	virtual int GetIndent();
 };	

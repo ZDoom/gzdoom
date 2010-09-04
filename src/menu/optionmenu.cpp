@@ -370,11 +370,11 @@ void DOptionMenu::Drawer ()
 			i += mDesc->mScrollPos;
 			if (i >= mDesc->mItems.Size()) break;	// skipped beyond end of menu 
 		}
-		mDesc->mItems[i]->Draw(mDesc, y, indent);
-		if (mDesc->mSelectedItem == i && mDesc->mItems[i]->Selectable())
+		int cur_indent = mDesc->mItems[i]->Draw(mDesc, y, indent);
+		if (cur_indent >= 0 && mDesc->mSelectedItem == i && mDesc->mItems[i]->Selectable())
 		{
 			int color = ((DMenu::MenuTime%8) < 4) || DMenu::CurrentMenu != this ? CR_RED:CR_GREY;
-			M_DrawConText(color, indent + 3 * CleanXfac_1, y-CleanYfac_1+OptionSettings.mLabelOffset, "\xd");
+			M_DrawConText(color, cur_indent + 3 * CleanXfac_1, y-CleanYfac_1+OptionSettings.mLabelOffset, "\xd");
 		}
 	}
 
@@ -409,8 +409,9 @@ bool FOptionMenuItem::CheckCoordinate(FOptionMenuDescriptor *desc, int x, int y)
 	return false;
 }
 
-void FOptionMenuItem::Draw(FOptionMenuDescriptor *desc, int y, int indent)
+int FOptionMenuItem::Draw(FOptionMenuDescriptor *desc, int y, int indent)
 {
+	return indent;
 }
 
 bool FOptionMenuItem::Selectable()

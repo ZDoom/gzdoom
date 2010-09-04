@@ -52,9 +52,10 @@ public:
 	{
 	}
 
-	void Draw(FOptionMenuDescriptor *desc, int y, int indent)
+	int Draw(FOptionMenuDescriptor *desc, int y, int indent)
 	{
 		drawLabel(indent, y, OptionSettings.mFontColorMore);
+		return indent;
 	}
 
 	bool Activate()
@@ -133,9 +134,10 @@ class FOptionMenuItemOption : public FOptionMenuItem
 	FBaseCVar *mCVar;
 	FBoolCVar *mGrayCheck;
 	int mSelection;
+	int mCenter;
 public:
 
-	FOptionMenuItemOption(const char *label, const char *menu, const char *values, const char *graycheck)
+	FOptionMenuItemOption(const char *label, const char *menu, const char *values, const char *graycheck, int center)
 		: FOptionMenuItem(label, menu)
 	{
 		FOptionValues **opt = OptionValues.CheckKey(values);
@@ -151,6 +153,7 @@ public:
 		}
 		mGrayCheck = (FBoolCVar*)FindCVar(graycheck, NULL);
 		if (mGrayCheck != NULL && mGrayCheck->GetRealType() != CVAR_Bool) mGrayCheck = NULL;
+		mCenter = center;
 	}
 
 	void SetSelection()
@@ -175,15 +178,21 @@ public:
 	}
 
 	//=============================================================================
-	void Draw(FOptionMenuDescriptor *desc, int y, int indent)
+	int Draw(FOptionMenuDescriptor *desc, int y, int indent)
 	{
 		bool grayed = mGrayCheck != NULL && !(**mGrayCheck);
+
+		if (mCenter)
+		{
+			indent = (screen->GetWidth() / 2);
+		}
 		drawLabel(indent, y, OptionSettings.mFontColor, grayed);
 
 		if (mSelection == -2)
 		{
 			SetSelection();
 		}
+
 		if (mValues != NULL && mCVar != NULL)
 		{
 			int overlay = grayed? MAKEARGB(96,48,0,0) : 0;
@@ -199,6 +208,7 @@ public:
 			screen->DrawText (SmallFont, OptionSettings.mFontColorValue, indent + CURSORSPACE, y, 
 				text, DTA_CleanNoMove_1, true, DTA_ColorOverlay, overlay, TAG_DONE);
 		}
+		return indent;
 	}
 
 	//=============================================================================
@@ -321,7 +331,7 @@ public:
 	}
 
 	//=============================================================================
-	void Draw(FOptionMenuDescriptor *desc, int y, int indent)
+	int Draw(FOptionMenuDescriptor *desc, int y, int indent)
 	{
 		drawLabel(indent, y, mWaiting? OptionSettings.mFontColorHighlight: OptionSettings.mFontColor);
 
@@ -337,6 +347,7 @@ public:
 			screen->DrawText(SmallFont, CR_BLACK, indent + CURSORSPACE, y + OptionSettings.mLabelOffset, "---",
 				DTA_CleanNoMove_1, true, TAG_DONE);
 		}
+		return indent;
 	}
 
 	//=============================================================================
@@ -388,9 +399,10 @@ public:
 		mColor = header? OptionSettings.mFontColorHeader : OptionSettings.mFontColor;
 	}
 
-	void Draw(FOptionMenuDescriptor *desc, int y, int indent)
+	int Draw(FOptionMenuDescriptor *desc, int y, int indent)
 	{
 		drawLabel(indent, y, mColor);
+		return -1;
 	}
 
 	bool Selectable()
@@ -421,11 +433,12 @@ public:
 		mCurrent = 0;
 	}
 
-	void Draw(FOptionMenuDescriptor *desc, int y, int indent)
+	int Draw(FOptionMenuDescriptor *desc, int y, int indent)
 	{
 		int w = SmallFont->StringWidth(mLabel) * CleanXfac_1;
 		int x = (screen->GetWidth() - w) / 2;
 		screen->DrawText (SmallFont, mColor, x, y, mCurrent? mAltText : mLabel, DTA_CleanNoMove_1, true, TAG_DONE);
+		return -1;
 	}
 
 	bool SetValue(int i, int val)
@@ -482,7 +495,7 @@ public:
 	}
 
 	//=============================================================================
-	void Draw(FOptionMenuDescriptor *desc, int y, int indent)
+	int Draw(FOptionMenuDescriptor *desc, int y, int indent)
 	{
 		drawLabel(indent, y, OptionSettings.mFontColor);
 
@@ -496,8 +509,9 @@ public:
 		{
 			value.Float = *mPVal;		
 		}
-		else return;
+		else return indent;
 		M_DrawSlider (indent + CURSORSPACE, y + OptionSettings.mLabelOffset, mMin, mMax, value.Float, mShowValue);
+		return indent;
 	}
 
 	//=============================================================================
@@ -567,7 +581,7 @@ public:
 	}
 
 	//=============================================================================
-	void Draw(FOptionMenuDescriptor *desc, int y, int indent)
+	int Draw(FOptionMenuDescriptor *desc, int y, int indent)
 	{
 		drawLabel(indent, y, OptionSettings.mFontColor);
 
@@ -578,6 +592,7 @@ public:
 			screen->Clear (box_x, box_y, box_x + 32*CleanXfac_1, box_y + (SmallFont->GetHeight() - 1) * CleanYfac_1,
 				-1, (uint32)*mCVar | 0xff000000);
 		}
+		return indent;
 	}
 
 	bool SetValue(int i, int v)

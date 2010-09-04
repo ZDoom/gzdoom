@@ -873,6 +873,137 @@ OptionMenu MessageOptions
 	Option "Detailed save messages",	"longsavemessages",	"OnOff"
 }
 
+//-------------------------------------------------------------------------------------------
+//
+// Scoreboard
+//
+//-------------------------------------------------------------------------------------------
+
+OptionMenu ScoreboardOptions
+{
+	Title "SCOREBOARD OPTIONS"
+	StaticText "Cooperative Options", 1
+	StaticText " "
+	Option "Enable Scoreboard",		"sb_cooperative_enable", "YesNo"
+	Option "Header Color",			"sb_cooperative_headingcolor", "TextColors"
+	Option "Your Player Color",		"sb_cooperative_yourplayercolor", "TextColors"
+	Option "Other Players' Color",	"sb_cooperative_otherplayercolor", "TextColors"
+	StaticText " "
+	StaticText " "
+	StaticText "Deathmatch Options", 1
+	StaticText " "
+	Option "Enable Scoreboard",		"sb_deathmatch_enable",	"YesNo"
+	Option "Header Color",			"sb_deathmatch_headingcolor", "TextColors"
+	Option "Your Player Color",		"sb_deathmatch_yourplayercolor", "TextColors"
+	Option "Other Players' Color",	"sb_deathmatch_otherplayercolor", "TextColors"
+	StaticText " "
+	StaticText " "
+	StaticText "Team Deathmatch Options", 1
+	StaticText " "
+	Option "Enable Scoreboard",		"sb_teamdeathmatch_enable", "YesNo"
+	Option "Header Color",			"sb_teamdeathmatch_headingcolor", "TextColors"
+}
+
+/*=======================================
+ *
+ * Gameplay Options (dmflags) Menu
+ *
+ *=======================================*/
+ 
+OptionValue  SmartAim
+{
+	0.0, "Off"
+	1.0, "On"
+	2.0, "Never friends"
+	3.0, "Only monsters"
+}
+
+OptionValue  FallingDM
+{
+	0, "Off"
+	1, "Old"
+	2, "Hexen"
+	3, "Strife"
+}
+
+OptionValue  JumpCrouch
+{
+	0, "Default"
+	1, "Off"
+	2, "On"
+}
+
+
+OptionMenu GameplayOptions
+{
+	Title 	"GAMEPLAY OPTIONS"
+	Option "Teamplay",				"teamplay",	"OnOff"
+	Slider	"Team damage scalar",	"teamdamage", 0, 1, 0.05
+	StaticText " "
+	Option "Smart Autoaim",			"sv_smartaim", "SmartAim"
+	StaticText " "
+	Option "Falling damage",		"sv_fallingdamage", "FallingDM"
+	Option "Drop weapon",			"sv_weapondrop", "YesNo"
+	Option "Double ammo",			"sv_doubleammo", "YesNo"
+	Option "Infinite ammo",			"sv_infiniteammo", "YesNo"
+	Option "Infinite inventory",	"sv_infiniteinventory", "YesNo"
+	Option "No monsters",			"sv_nomonsters", "YesNo"
+	Option "No monsters to exit",	"sv_killallmonsters", "YesNo"
+	Option "Monsters respawn",		"sv_monsterrespawn", "YesNo"
+	Option "No respawn",			"sv_norespawn", "YesNo"
+	Option "Items respawn",			"sv_itemrespawn", "YesNo"
+	Option "Big powerups respawn",	"sv_respawnsuper", "YesNo"
+	Option "Fast monsters",			"sv_fastmonsters", "YesNo"
+	Option "Degeneration",			"sv_degeneration", "YesNo"
+	Option "Allow Autoaim",			"sv_noautoaim", "NoYes"
+	Option "Allow Suicide",			"sv_disallowsuicide", "NoYes"
+	Option "Allow jump",			"sv_jump", "JumpCrouch"
+	Option "Allow crouch",			"sv_crouch", "JumpCrouch"
+	Option "Allow freelook",		"sv_nofreelook", "NoYes"
+	Option "Allow FOV",				"sv_nofov", "NoYes"
+	Option "Allow BFG aiming",		"sv_nobfgaim", "NoYes"
+	Option "Allow automap",			"sv_noautomap", "NoYes"
+	Option "Automap allies",		"sv_noautomapallies", "NoYes"
+	Option "Allow spying",			"sv_disallowspying", "NoYes"
+	Option "Chasecam cheat",		"sv_chasecam", "YesNo"
+	Option "Check ammo for weapon switch",	"sv_dontcheckammo", "NoYes"
+	Option "Killing Romero kills all his spawns",	"sv_killbossmonst", "YesNo"
+
+	StaticText " "
+	StaticText "Deathmatch Settings",1
+	Option "Weapons stay",			"sv_weaponstay", "YesNo"
+	Option "Allow powerups",		"sv_noitems", "NoYes"
+	Option "Allow health",			"sv_nohealth", "YesNo"
+	Option "Allow armor",			"sv_noarmor", "YesNo"
+	Option "Spawn farthest",		"sv_spawnfarthest", "YesNo"
+	Option "Same map",				"sv_samelevel", "YesNo"
+	Option "Force respawn",			"sv_forcerespawn", "YesNo"
+	Option "Allow exit",			"sv_noexit", "YesNo"
+	Option "Barrels respawn",		"sv_barrelrespawn", "YesNo"
+	Option "Respawn protection",	"sv_respawnprotect", "YesNo"
+	Option "Lose frag if fragged",	"sv_losefrag", "YesNo"
+	Option "Keep frags gained",		"sv_keepfrags", "YesNo"
+	Option "No team switching",		"sv_noteamswitch", "YesNo"
+
+	StaticText " "
+	StaticText "Cooperative Settings",1
+	Option "Spawn multi. weapons", 	"sv_noweaponspawn", "NoYes"
+	Option "Lose entire inventory",	"sv_cooploseinventory", "YesNo"
+	Option "Keep keys",				"sv_cooplosekeys", "NoYes"
+	Option "Keep weapons",			"sv_cooploseweapons", "NoYes"
+	Option "Keep armor",			"sv_cooplosearmor", "NoYes"
+	Option "Keep powerups",			"sv_cooplosepowerups", "NoYes"
+	Option "Keep ammo",				"sv_cooploseammo", "NoYes"
+	Option "Lose half ammo",		"sv_coophalveammo", "YesNo"
+	Option "Spawn where died",		"sv_samespawnspot", "YesNo"
+}
+
+/*=======================================
+ *
+ * Compatibility Options Menu
+ *
+ *=======================================*/
+
 
 OptionValue CompatModes
 {
@@ -885,3 +1016,42 @@ OptionValue CompatModes
 	4, "ZDoom 2.0.63"
 }
 
+OptionMenu "CompatibilityOptions"
+{
+	Title "COMPATIBILITY OPTIONS"
+	Option "Compatibility mode",						"compatmode", "CompatModes", "", 1
+	StaticText " "
+	Option "Find shortest textures like Doom",			"compat_SHORTTEX", "YesNo"
+	Option "Use buggier stair building",				"compat_stairs", "YesNo"
+	Option "Find neighboring light like Doom",			"compat_LIGHT", "YesNo"
+	Option "Limit Pain Elementals' Lost Souls",			"compat_LIMITPAIN", "YesNo"
+	Option "Don't let others hear your pickups",		"compat_SILENTPICKUP", "YesNo"
+	Option "Actors are infinitely tall",				"compat_nopassover", "YesNo"
+	Option "Enable wall running",						"compat_WALLRUN", "YesNo"
+	Option "Spawn item drops on the floor",				"compat_NOTOSSDROPS", "YesNo"
+	Option "All special lines can block <use>",			"compat_USEBLOCKING", "YesNo"
+	Option "Disable BOOM door light effect",			"compat_NODOORLIGHT", "YesNo"
+	Option "Raven scrollers use original speed",		"compat_RAVENSCROLL", "YesNo"
+	Option "Use original sound target handling",		"compat_SOUNDTARGET", "YesNo"
+	Option "DEH health settings like Doom2.exe",		"compat_DEHHEALTH", "YesNo"
+	Option "Self ref. sectors don't block shots",		"compat_TRACE", "YesNo"
+	Option "Monsters get stuck over dropoffs",			"compat_DROPOFF", "YesNo"
+	Option "Monsters cannot cross dropoffs",			"compat_CROSSDROPOFF", "YesNo"
+	Option "Monsters see invisible players",			"compat_INVISIBILITY", "YesNo"
+	Option "Boom scrollers are additive",				"compat_BOOMSCROLL", "YesNo"
+	Option "Inst. moving floors are not silent",		"compat_silentinstantfloors", "YesNo"
+	Option "Sector sounds use center as source",		"compat_SECTORSOUNDS", "YesNo"
+	Option "Use Doom heights for missile clipping",		"compat_MISSILECLIP", "YesNo"
+	Option "Allow any bossdeath for level special",		"compat_ANYBOSSDEATH", "YesNo"
+	Option "No Minotaur floor flames in water",			"compat_MINOTAUR", "YesNo"
+	Option "Original A_Mushroom speed in DEH mods",		"compat_MUSHROOM", "YesNo"
+	Option "Monster movement is affected by effects",	"compat_MBFMONSTERMOVE", "YesNo"
+	Option "Crushed monsters can be resurrected",		"compat_CORPSEGIBS", "YesNo"
+	Option "Friendly monsters aren't blocked",			"compat_NOBLOCKFRIENDS", "YesNo"
+	Option "Invert sprite sorting",						"compat_SPRITESORT", "YesNo"
+	Option "Use Doom code for hitscan checks",			"compat_HITSCAN", "YesNo"
+	Option "Cripple sound for silent BFG trick",		"compat_soundslots", "YesNo"
+	Option "Draw polyobjects like Hexen",				"compat_POLYOBJ", "YesNo"
+	
+	Option "Interpolate monster movement",	"nomonsterinterpolation", "NoYes"
+}

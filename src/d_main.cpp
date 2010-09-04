@@ -401,6 +401,13 @@ CVAR (Flag, sv_nofov,			dmflags, DF_NO_FOV);
 CVAR (Flag, sv_noweaponspawn,	dmflags, DF_NO_COOP_WEAPON_SPAWN);
 CVAR (Flag, sv_nocrouch,		dmflags, DF_NO_CROUCH);
 CVAR (Flag, sv_allowcrouch,		dmflags, DF_YES_CROUCH);
+CVAR (Flag, sv_cooploseinventory,	dmflags, DF_COOP_LOSE_INVENTORY);
+CVAR (Flag, sv_cooplosekeys,	dmflags, DF_COOP_LOSE_KEYS);
+CVAR (Flag, sv_cooploseweapons,	dmflags, DF_COOP_LOSE_WEAPONS);
+CVAR (Flag, sv_cooplosearmor,	dmflags, DF_COOP_LOSE_ARMOR);
+CVAR (Flag, sv_cooplosepowerups,	dmflags, DF_COOP_LOSE_POWERUPS);
+CVAR (Flag, sv_cooploseammo,	dmflags, DF_COOP_LOSE_AMMO);
+CVAR (Flag, sv_coophalveammo,	dmflags, DF_COOP_HALVE_AMMO);
 
 // Some (hopefully cleaner) interface to these settings.
 CVAR (Mask, sv_crouch,			dmflags, DF_NO_CROUCH|DF_YES_CROUCH);
@@ -476,7 +483,6 @@ CVAR (Flag, sv_disallowsuicide,		dmflags2, DF2_NOSUICIDE);
 CVAR (Flag, sv_noautoaim,			dmflags2, DF2_NOAUTOAIM);
 CVAR (Flag, sv_dontcheckammo,		dmflags2, DF2_DONTCHECKAMMO);
 CVAR (Flag, sv_killbossmonst,		dmflags2, DF2_KILLBOSSMONST);
-
 //==========================================================================
 //
 // CVAR compatflags

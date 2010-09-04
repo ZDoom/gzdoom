@@ -650,12 +650,18 @@ static void ParseOptionMenuBody(FScanner &sc, FOptionMenuDescriptor *desc)
 			sc.MustGetString();
 			FString values = sc.String;
 			const char *check = NULL;
+			int center = 0;
 			if (sc.CheckString(","))
 			{
 				sc.MustGetString();
-				check = sc.String;
+				if (*sc.String != 0) check = sc.String;
+				if (sc.CheckString(","))
+				{
+					sc.MustGetNumber();
+					center = sc.Number;
+				}
 			}
-			FOptionMenuItem *it = new FOptionMenuItemOption(label, cvar, values, check);
+			FOptionMenuItem *it = new FOptionMenuItemOption(label, cvar, values, check, center);
 			desc->mItems.Push(it);
 		}
 		else if (sc.Compare("Command"))

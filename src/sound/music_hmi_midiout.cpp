@@ -717,7 +717,7 @@ void HMISong::NoteOffQueue::AddNoteOff(DWORD delay, BYTE channel, BYTE key)
 bool HMISong::NoteOffQueue::Pop(AutoNoteOff &item)
 {
 	item = (*this)[0];
-	if (TArray::Pop((*this)[0]))
+	if (TArray<AutoNoteOff>::Pop((*this)[0]))
 	{
 		Heapify();
 		return true;

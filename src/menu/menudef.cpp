@@ -686,6 +686,15 @@ static void ParseOptionMenuBody(FScanner &sc, FOptionMenuDescriptor *desc)
 			FOptionMenuItem *it = new FOptionMenuItemControl(label, sc.String, map? &AutomapBindings : &Bindings);
 			desc->mItems.Push(it);
 		}
+		else if (sc.Compare("ColorPicker"))
+		{
+			sc.MustGetString();
+			FString label = sc.String;
+			sc.MustGetStringName(",");
+			sc.MustGetString();
+			FOptionMenuItem *it = new FOptionMenuItemColorPicker(label, sc.String);
+			desc->mItems.Push(it);
+		}
 		else if (sc.Compare("StaticText"))
 		{
 			sc.MustGetString();

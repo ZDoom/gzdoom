@@ -106,11 +106,12 @@ public:
 		if (opt != NULL) 
 		{
 			mValues = *opt;
-			SetSelection();
+			mSelection = -2;
 		}
 		else
 		{
 			mValues = NULL;
+			mSelection = -1;
 		}
 		mGrayCheck = (FBoolCVar*)FindCVar(graycheck, NULL);
 		if (mGrayCheck != NULL && mGrayCheck->GetRealType() != CVAR_Bool) mGrayCheck = NULL;
@@ -121,12 +122,6 @@ public:
 		mSelection = -1;
 		if (mValues != NULL) 
 		{
-			if (mValues->mValues.Size() == 0)
-			{
-				// try again later
-				mSelection = -2;
-				return;
-			}
 			mCVar = FindCVar(mAction, NULL);
 			if (mCVar != NULL)
 			{
@@ -149,14 +144,14 @@ public:
 		bool grayed = mGrayCheck != NULL && !(**mGrayCheck);
 		drawLabel(indent, y, OptionSettings.mFontColor, grayed);
 
+		if (mSelection == -2)
+		{
+			SetSelection();
+		}
 		if (mValues != NULL && mCVar != NULL)
 		{
 			int overlay = grayed? MAKEARGB(96,48,0,0) : 0;
 			const char *text;
-			if (mSelection == -2)
-			{
-				SetSelection();
-			}
 			if (mSelection < 0)
 			{
 				text = "Unknown";
@@ -519,6 +514,50 @@ public:
 	}
 
 };
+
+//=============================================================================
+//
+// // Edit a key binding, Action is the CCMD to bind
+//
+//=============================================================================
+
+class FOptionMenuItemColorPicker : public FOptionMenuItem
+{
+	FColorCVar *mCVar;
+public:
+
+	FOptionMenuItemColorPicker(const char *label, const char *menu)
+		: FOptionMenuItem(label, menu)
+	{
+		FBaseCVar *cv = FindCVar(menu, NULL);
+		if (cv->GetRealType() == CVAR_Color)
+		{
+			mCVar = (FColorCVar*)cv;
+		}
+		else mCVar = NULL;
+	}
+
+	//=============================================================================
+	void Draw(FOptionMenuDescriptor *desc, int y, int indent)
+	{
+		drawLabel(indent, y, OptionSettings.mFontColor);
+
+		if (mCVar != NULL)
+		{
+			int box_x = indent + CURSORSPACE;
+			int box_y = y + OptionSettings.mLabelOffset * CleanYfac_1 / 2;
+			screen->Clear (box_x, box_y, box_x + 32*CleanXfac_1, box_y + (SmallFont->GetHeight() - 1) * CleanYfac_1,
+				-1, (uint32)*mCVar | 0xff000000);
+		}
+	}
+
+	bool Activate()
+	{
+		// open the color picker menu
+		return true;
+	}
+};
+
 
 
 /*

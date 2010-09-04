@@ -132,6 +132,8 @@ long FileReader::Seek (long offset, int origin)
 
 long FileReader::Read (void *buffer, long len)
 {
+	assert(len >= 0);
+	if (len <= 0) return 0;
 	if (FilePos + len > StartPos + Length)
 	{
 		len = Length - FilePos + StartPos;

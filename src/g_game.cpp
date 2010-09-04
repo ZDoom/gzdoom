@@ -2060,10 +2060,10 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 		M_AppendPNGChunk (stdfile, MAKE_ID('s','n','X','t'), &next, 1);
 	}
 
-	M_NotifyNewSave (filename.GetChars(), description, okForQuicksave);
-
 	M_FinishPNG (stdfile);
 	fclose (stdfile);
+
+	M_NotifyNewSave (filename.GetChars(), description, okForQuicksave);
 
 	// Check whether the file is ok.
 	bool success = false;

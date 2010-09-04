@@ -969,6 +969,7 @@ void MIDIStreamer::CreateSMF(TArray<BYTE> &file)
 	CheckCaps(MOD_MIDIPORT);
 	IgnoreLoops = true;
 	DoRestart();
+	Tempo = InitialTempo;
 
 	file.Reserve(sizeof(StaticMIDIhead));
 	memcpy(&file[0], StaticMIDIhead, sizeof(StaticMIDIhead));

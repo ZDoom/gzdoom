@@ -497,7 +497,7 @@ static void ParseOptionValue(FScanner &sc)
 		pair.Value = sc.Float;
 		sc.MustGetStringName(",");
 		sc.MustGetString();
-		pair.Text = sc.String;
+		pair.Text = strbin1(sc.String);
 	}
 	FOptionValues **pOld = OptionValues.CheckKey(optname);
 	if (pOld != NULL && *pOld != NULL) delete *pOld;

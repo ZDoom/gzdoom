@@ -234,20 +234,6 @@ public:
 	}
 };
 
-/* color option
-
-				}
-				else
-				{
-					screen->DrawText (SmallFont, item->type == cdiscrete ? v : ValueColor,
-						indent + cursorspace, y,
-						item->type != discretes ? item->e.values[v].name : item->e.valuestrings[v].name.GetChars(),
-						DTA_CleanNoMove_1, true, DTA_ColorOverlay, overlay, TAG_DONE);
-				}
-
-		// print value
-*/
-
 //=============================================================================
 //
 // This class is used to capture the key to be used as the new key binding

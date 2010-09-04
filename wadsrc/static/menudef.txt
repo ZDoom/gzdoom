@@ -629,8 +629,8 @@ OptionValue Crosshairs
 OptionMenu "VideoOptions"
 {
 	Title "DISPLAY OPTIONS"
-	Submenu "Message Options", 			"StartMessagesMenu"
-	Submenu "Scoreboard Options", 		"StartScoreboardMenu"
+	Submenu "Message Options", 			"MessageOptions"
+	Submenu "Scoreboard Options", 		"ScoreboardOptions"
 	StaticText " "
 	Slider "Screen size",				"screenblocks", 3.0, 12.0, 1.0
 	Slider "Brightness",				"Gamma", 1.0, 3.0, 0.1
@@ -803,6 +803,76 @@ OptionMenu ColorPickerMenu
 	Title "SELECT COLOR"
 	// This menu will be created by the calling code
 }
+
+//-------------------------------------------------------------------------------------------
+//
+// Messages
+//
+//-------------------------------------------------------------------------------------------
+
+
+OptionValue ScaleValues
+{
+	0, "Off"
+	1, "On"
+	2, "Double"
+}
+
+OptionValue TextColors
+{
+	0.0, "\cabrick"
+	1.0, "\cbtan"
+	2.0, "\ccgray"
+	3.0, "\cdgreen"
+	4.0, "\cebrown"
+	5.0, "\cfgold"
+	6.0, "\cgred"
+	7.0, "\chblue"
+	8.0, "\ciorange"
+	9.0, "\cjwhite"
+	10.0, "\ckyellow"
+	11.0, "\cldefault"
+	12.0, "\cmblack"
+	13.0, "\cnlight blue"
+	14.0, "\cocream"
+	15.0, "\cpolive"
+	16.0, "\cqdark green"
+	17.0, "\crdark red"
+	18.0, "\csdark brown"
+	19.0, "\ctpurple"
+	20.0, "\cudark gray"
+	21.0, "\cvcyan"
+}
+
+OptionValue MessageLevels
+{
+	0.0, "Item Pickup"
+	1.0, "Obituaries"
+	2.0, "Critical Messages"
+}
+
+OptionMenu MessageOptions
+{
+	Title 	"MESSAGES"
+	Option "Show messages",				"show_messages", "OnOff"
+	Option "Show obituaries",			"show_obituaries", "OnOff"
+	Option "Scale text in high res", 	"con_scaletext", "ScaleValues"
+	Option "Minimum message level", 	"msglevel", "MessageLevels"
+	Option "Center messages",			"con_centernotify", "OnOff"
+	StaticText " "
+	StaticText "Message Colors", 1
+	StaticText " "
+	Option "Item Pickup",				"msg0color", "TextColors"
+	Option "Obituaries",				"msg1color", "TextColors"
+	Option "Critical Messages",			"msg2color", "TextColors"
+	Option "Chat Messages",				"msg3color", "TextColors"
+	Option "Team Messages",				"msg4color", "TextColors"
+	Option "Centered Messages",			"msgmidcolor", "TextColors"
+	StaticText " "
+	Option "Screenshot messages",		"screenshot_quiet",	"OffOn"
+	Option "Detailed save messages",	"longsavemessages",	"OnOff"
+}
+
 
 OptionValue CompatModes
 {

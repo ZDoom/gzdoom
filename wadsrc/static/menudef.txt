@@ -361,23 +361,28 @@ OptionMenuSettings
 	}
 	IfGame(Doom, Chex)
 	{
-		FontColor "UNTRANSLATED", "GRAY", "GRAY", "GOLD"
+		FontColor 
+			"UNTRANSLATED", 	// normal menu items
+			"GRAY", 			// option values
+			"GRAY", 			// submenu links
+			"GOLD",				// static headers
+			"YELLOW"			// Highlights
 	}
 	IfGame(Heretic)
 	{
-		FontColor "GREEN", "UNTRANSLATED", "UNTRANSLATED", "GOLD"
+		FontColor "GREEN", "UNTRANSLATED", "UNTRANSLATED", "GOLD", "YELLOW"
 	}
 	IfGame(Hexen)
 	{
-		FontColor "RED", "UNTRANSLATED", "UNTRANSLATED", "GOLD"
+		FontColor "RED", "UNTRANSLATED", "UNTRANSLATED", "GOLD", "YELLOW"
 	}
 	IfGame(Hexen)
 	{
-		FontColor "RED", "UNTRANSLATED", "UNTRANSLATED", "GOLD"
+		FontColor "RED", "UNTRANSLATED", "UNTRANSLATED", "GOLD", "YELLOW"
 	}
 	IfGame(Strife)
 	{
-		FontColor "UNTRANSLATED", "GRAY", "GRAY", "RED"
+		FontColor "UNTRANSLATED", "GRAY", "GRAY", "RED", "GREEN"
 	}
 }
 
@@ -421,7 +426,7 @@ OptionMenu "CustomizeControls"
 {
 	Title "CUSTOMIZE CONTROLS"
 	ScrollTop 2
-	StaticText 	"ENTER to change, BACKSPACE to clear"
+	StaticTextSwitchable 	"ENTER to change, BACKSPACE to clear", "Press new key for control, ESC to cancel", "ControlMessage"
 	StaticText 	""
 	StaticText 	"Controls", 1
 	Control 	"Fire",					"+attack"
@@ -552,6 +557,108 @@ OptionMenu "JoystickConfigMenu"
 	Submenu "Delete me",		"Nothing"	// only to prevent crashes when going to this menu until it's fully implemented.
 }
 
+
+//-------------------------------------------------------------------------------------------
+//
+// Video Menu
+//
+//-------------------------------------------------------------------------------------------
+
+OptionValue ColumnMethods 
+{
+	0.0, "Original"
+	1.0, "Optimized"
+}
+
+OptionValue RocketTrailTypes 
+{
+	0.0, "Off"
+	1.0, "Particles"
+	2.0, "Sprites"
+	3.0, "Sprites & Particles"
+}
+
+OptionValue BloodTypes 
+{
+	0.0, "Sprites"
+	1.0, "Sprites & Particles"
+	2.0, "Particles"
+}
+
+OptionValue PuffTypes 
+{
+	0.0, "Sprites"
+	1.0, "Particles"
+}
+
+OptionValue Wipes 
+{
+	0.0, "None"
+	1.0, "Melt"
+	2.0, "Burn"
+	3.0, "Crossfade"
+}
+
+OptionValue Endoom 
+{
+	0.0, "Off"
+	1.0, "On"
+	2.0, "Only modified"
+}
+
+OptionValue Contrast 
+{
+	0.0, "Off"
+	1.0, "On"
+	2.0, "Smooth"
+}
+
+OptionValue DisplayTagsTypes 
+{
+	0.0, "None"
+	1.0, "Items"
+	2.0, "Weapons"
+	3.0, "Both"
+}
+
+OptionValue Crosshairs
+{
+	// will be filled in from the XHAIRS lump
+}
+
+OptionMenu "VideoOptions"
+{
+	Title "DISPLAY OPTIONS"
+	Submenu "Message Options", 			"StartMessagesMenu"
+	Submenu "Scoreboard Options", 		"StartScoreboardMenu"
+	StaticText " "
+	Slider "Screen size",				"screenblocks", 3.0, 12.0, 1.0
+	Slider "Brightness",				"Gamma", 1.0, 3.0, 0.1
+	Option "Vertical Sync",				"vid_vsync", "OnOff"
+	Option "Column render mode",		"r_columnmethod", "ColumnMethods"
+
+	StaticText " "
+	Option "Crosshair",					"crosshair", "Crosshairs"
+	Option "Display nametags",			"displaynametags", "DisplayTagsTypes"
+	Option "Stretch status bar",		"st_scale", "OnOff"
+	Option "Alternative HUD",			"hud_althud", "OnOff"
+	Option "Screen wipe style",			"wipetype", "OnOff"
+
+	IfOption(Windows)
+	{
+		Option	"Show ENDOOM screen",	"showendoom", "Endoom"
+		//Option "DirectDraw palette hack", "vid_palettehack", "OnOff"
+		//Option "Use attached surfaces", "vid_attachedsurfaces", "OnOff"
+	}
+	
+	StaticText " "
+	Option "Stretch short skies",		"r_stretchsky", "OnOff"
+	Option "Use fuzz effect",			"r_drawfuzz", "YesNo"
+	Option "Use fake contrast",			"r_fakecontrast", "Contrast"
+	Option "Rocket Trails",				"cl_rockettrails", "RocketTrailTypes"
+	Option "Blood Type",				"cl_bloodtype", "BloodTypes"
+	Option "Bullet Puff Type",			"cl_pufftype", "PuffTypes"
+}
 
 
 

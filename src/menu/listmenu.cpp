@@ -196,14 +196,6 @@ void DListMenu::Drawer ()
 //
 //=============================================================================
 
-FListMenuItem::FListMenuItem(int x, int y, FName action) 
-{
-	mXpos = x;
-	mYpos = y;
-	mAction = action;
-	mEnabled = true;
-}
-
 FListMenuItem::~FListMenuItem()
 {
 }

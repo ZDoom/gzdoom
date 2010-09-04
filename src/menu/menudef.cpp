@@ -31,7 +31,10 @@
 **---------------------------------------------------------------------------
 **
 */
+#include <float.h>
+
 #include "menu/menu.h"
+#include "c_dispatch.h"
 #include "w_wad.h"
 #include "sc_man.h"
 #include "v_font.h"
@@ -41,6 +44,11 @@
 #include "gi.h"
 #include "i_system.h"
 #include "c_bind.h"
+#include "v_palette.h"
+#include "d_event.h"
+#include "d_gui.h"
+
+#include "optionmenuitems.h"
 
 MenuDescriptorList MenuDescriptors;
 static FListMenuDescriptor DefaultListMenuSettings;	// contains common settings for all list menus
@@ -136,6 +144,12 @@ static bool CheckSkipOptionBlock(FScanner &sc)
 	{
 		sc.MustGetString();
 		if (sc.Compare("ReadThis")) filter |= gameinfo.drawreadthis;
+		if (sc.Compare("Windows"))
+		{
+			#ifdef _WIN32
+				filter = true;
+			#endif
+		}
 	}
 	while (sc.CheckString(","));
 	sc.MustGetStringName(")");
@@ -530,6 +544,9 @@ static void ParseOptionSettings(FScanner &sc)
 			sc.MustGetStringName(",");
 			sc.MustGetString();
 			OptionSettings.mFontColorHeader = V_FindFontColor((FName)sc.String);
+			sc.MustGetStringName(",");
+			sc.MustGetString();
+			OptionSettings.mFontColorHighlight = V_FindFontColor((FName)sc.String);
 		}
 		else if (sc.Compare("Linespacing"))
 		{
@@ -678,6 +695,25 @@ static void ParseOptionMenuBody(FScanner &sc, FOptionMenuDescriptor *desc)
 				cr = !!sc.Number;
 			}
 			FOptionMenuItem *it = new FOptionMenuItemStaticText(label, cr);
+			desc->mItems.Push(it);
+		}
+		else if (sc.Compare("StaticTextSwitchable"))
+		{
+			sc.MustGetString();
+			FString label = sc.String;
+			sc.MustGetStringName(",");
+			sc.MustGetString();
+			FString label2 = sc.String;
+			sc.MustGetStringName(",");
+			sc.MustGetString();
+			FName action = sc.String;
+			bool cr = false;
+			if (sc.CheckString(","))
+			{
+				sc.MustGetNumber();
+				cr = !!sc.Number;
+			}
+			FOptionMenuItem *it = new FOptionMenuItemStaticTextSwitchable(label, label2, action, cr);
 			desc->mItems.Push(it);
 		}
 		else if (sc.Compare("Slider"))

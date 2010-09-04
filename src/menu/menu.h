@@ -115,6 +115,7 @@ struct FOptionMenuSettings
 	EColorRange mFontColorValue;
 	EColorRange mFontColorMore;
 	EColorRange mFontColorHeader;
+	EColorRange mFontColorHighlight;
 	int mLinespacing;
 	int mLabelOffset;
 };
@@ -138,6 +139,7 @@ typedef TMap<FName, FMenuDescriptor *> MenuDescriptorList;
 extern FOptionMenuSettings OptionSettings;
 extern MenuDescriptorList MenuDescriptors;
 
+#define CURSORSPACE (14 * CleanXfac_1)
 
 //=============================================================================
 //
@@ -204,7 +206,14 @@ protected:
 public:
 	bool mEnabled;
 
-	FListMenuItem(int xpos = 0, int ypos = 0, FName action = NAME_None);
+	FListMenuItem(int xpos = 0, int ypos = 0, FName action = NAME_None)
+	{
+		mXpos = xpos;
+		mYpos = ypos;
+		mAction = action;
+		mEnabled = true;
+	}
+
 	virtual ~FListMenuItem();
 
 	virtual bool CheckCoordinate(int x, int y);
@@ -464,11 +473,16 @@ protected:
 	void drawLabel(int indent, int y, EColorRange color, bool grayed = false);
 public:
 
-	FOptionMenuItem(const char *text, FName action = NAME_None, bool center = false);
+	FOptionMenuItem(const char *text, FName action = NAME_None, bool center = false)
+		: FListMenuItem(0, 0, action)
+	{
+		mLabel = copystring(text);
+		mCentered = center;
+	}
+
 	~FOptionMenuItem();
 	virtual bool CheckCoordinate(FOptionMenuDescriptor *desc, int x, int y);
 	virtual void Draw(FOptionMenuDescriptor *desc, int y, int indent);
-	void DrawSelector(int xofs, int yofs, FTextureID tex);
 	virtual bool Selectable();
 	virtual int GetIndent();
 };	
@@ -493,84 +507,6 @@ typedef TMap< FName, FOptionValues* > FOptionMap;
 
 extern FOptionMap OptionValues;
 
-
-class FOptionMenuItemSubmenu : public FOptionMenuItem
-{
-	// action is a submenu name
-public:
-	FOptionMenuItemSubmenu(const char *label, const char *menu);
-	virtual void Draw(FOptionMenuDescriptor *desc, int y, int indent);
-	virtual bool Activate();
-};
-
-class FOptionMenuItemCommand : public FOptionMenuItemSubmenu
-{
-	// action is a CCMD
-public:
-	FOptionMenuItemCommand(const char *label, const char *menu);
-	virtual bool Activate();
-};
-
-class FOptionMenuItemSafeCommand : public FOptionMenuItemCommand
-{
-	// action is a CCMD
-public:
-	FOptionMenuItemSafeCommand(const char *label, const char *menu);
-	bool MenuEvent (int mkey, bool fromcontroller);
-	virtual bool Activate();
-};
-
-class FOptionMenuItemOption : public FOptionMenuItem
-{
-	// action is a CVAR
-	FOptionValues *mValues;
-	FBaseCVar *mCVar;
-	FBoolCVar *mGrayCheck;
-	int mSelection;
-public:
-	FOptionMenuItemOption(const char *label, const char *menu, const char *values, const char *graycheck);
-	virtual void Draw(FOptionMenuDescriptor *desc, int y, int indent);
-	bool MenuEvent (int mkey, bool fromcontroller);
-	virtual bool Activate();
-	virtual bool Selectable();
-};
-
-class FOptionMenuItemControl : public FOptionMenuItem
-{
-	// action is a CCMD
-	FKeyBindings *mBindings;
-	int mKey1, mKey2;
-public:
-	FOptionMenuItemControl(const char *label, const char *menu, FKeyBindings *bindings);
-	virtual void Draw(FOptionMenuDescriptor *desc, int y, int indent);
-	virtual bool Activate();
-};
-
-class FOptionMenuItemStaticText : public FOptionMenuItem
-{
-	EColorRange mColor;
-public:
-	FOptionMenuItemStaticText(const char *label, bool header);
-	virtual void Draw(FOptionMenuDescriptor *desc, int y, int indent);
-	virtual bool Activate();
-	virtual bool Selectable();
-};
-
-class FOptionMenuSliderItem : public FOptionMenuItem
-{
-	// action is a CVAR
-	float mMin, mMax, mStep;
-	float mValue;
-	bool mShowValue;
-	FBaseCVar *mCVar;
-	float *mPVal;
-public:
-	FOptionMenuSliderItem(const char *label, const char *menu, double min, double max, double step, bool showval);
-	FOptionMenuSliderItem(const char *label, float *pVal, double min, double max, double step, bool showval);
-	virtual void Draw(FOptionMenuDescriptor *desc, int y, int indent);
-	bool MenuEvent (int mkey, bool fromcontroller);
-	virtual bool Activate();
-};
 
 //=============================================================================
 //

@@ -6490,6 +6490,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\menu\optionmenuitems.h"
+				>
+			</File>
+			<File
 				RelativePath=".\src\menu\playerdisplay.cpp"
 				>
 			</File>

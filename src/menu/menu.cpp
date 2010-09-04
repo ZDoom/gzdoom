@@ -194,7 +194,7 @@ void M_StartControlPanel (bool makeSound)
 
 void M_ActivateMenu(DMenu *menu)
 {
-	menuactive = MENU_On;
+	if (menuactive == MENU_Off) menuactive = MENU_On;
 	DMenu::CurrentMenu = menu;
 	GC::WriteBarrier(DMenu::CurrentMenu);
 }
@@ -347,7 +347,7 @@ bool M_Responder (event_t *ev)
 		return false;
 	}
 
-	if (DMenu::CurrentMenu != NULL && menuactive == MENU_On) 
+	if (DMenu::CurrentMenu != NULL && menuactive != MENU_Off) 
 	{
 		// There are a few input sources we are interested in:
 		//
@@ -511,7 +511,7 @@ bool M_Responder (event_t *ev)
 void M_Ticker (void) 
 {
 	DMenu::MenuTime++;
-	if (DMenu::CurrentMenu != NULL && menuactive == MENU_On) 
+	if (DMenu::CurrentMenu != NULL && menuactive != MENU_Off) 
 		DMenu::CurrentMenu->Ticker();
 
 	for (int i = 0; i < NUM_MKEYS; ++i)
@@ -550,7 +550,7 @@ void M_Drawer (void)
 	}
 
 
-	if (DMenu::CurrentMenu != NULL && menuactive == MENU_On) 
+	if (DMenu::CurrentMenu != NULL && menuactive != MENU_Off) 
 	{
 		if (DMenu::CurrentMenu->DimAllowed()) screen->Dim(fade);
 		DMenu::CurrentMenu->Drawer();

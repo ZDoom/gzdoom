@@ -607,7 +607,7 @@ int FKeyBindings::GetKeysForCommand (const char *cmd, int *first, int *second)
 //
 //=============================================================================
 
-void FKeyBindings::UnbindACommand (char *str)
+void FKeyBindings::UnbindACommand (const char *str)
 {
 	int i;
 

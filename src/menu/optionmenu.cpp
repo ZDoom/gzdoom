@@ -32,8 +32,6 @@
 **
 */
 
-#include <float.h>
-
 #include "v_video.h"
 #include "v_font.h"
 #include "cmdlib.h"
@@ -71,9 +69,6 @@ CCMD(reset2saved)
 	//UpdateStuff();
 }
 
-
-#define CURSORSPACE (14 * CleanXfac_1)
-
 //=============================================================================
 //
 // Draws a string in the console font, scaled to the 8x8 cells
@@ -97,7 +92,7 @@ void M_DrawConText (int color, int x, int y, const char *str)
 //
 //=============================================================================
 
-static void M_DrawSlider (int x, int y, double min, double max, double cur,int fracdigits)
+void M_DrawSlider (int x, int y, double min, double max, double cur,int fracdigits)
 {
 	double range;
 
@@ -377,7 +372,7 @@ void DOptionMenu::Drawer ()
 		mDesc->mItems[i]->Draw(mDesc, y, indent);
 		if (mDesc->mSelectedItem == i)
 		{
-			int color = (DMenu::MenuTime%8) < 4? CR_RED:CR_GREY;
+			int color = ((DMenu::MenuTime%8) < 4) || DMenu::CurrentMenu != this ? CR_RED:CR_GREY;
 			M_DrawConText(color, indent + 3 * CleanXfac_1, y-CleanYfac_1+OptionSettings.mLabelOffset, "\xd");
 		}
 	}
@@ -403,13 +398,6 @@ void DOptionMenu::Drawer ()
 //
 //=============================================================================
 
-FOptionMenuItem::FOptionMenuItem(const char *label, FName action, bool center)
-: FListMenuItem(0, 0, action)
-{
-	mLabel = copystring(label);
-	mCentered = center;
-}
-
 FOptionMenuItem::~FOptionMenuItem()
 {
 	if (mLabel != NULL) delete [] mLabel;
@@ -421,10 +409,6 @@ bool FOptionMenuItem::CheckCoordinate(FOptionMenuDescriptor *desc, int x, int y)
 }
 
 void FOptionMenuItem::Draw(FOptionMenuDescriptor *desc, int y, int indent)
-{
-}
-
-void FOptionMenuItem::DrawSelector(int xofs, int yofs, FTextureID tex)
 {
 }
 
@@ -449,333 +433,3 @@ void FOptionMenuItem::drawLabel(int indent, int y, EColorRange color, bool graye
 	screen->DrawText (SmallFont, color, x, y, mLabel, DTA_CleanNoMove_1, true, DTA_ColorOverlay, overlay, TAG_DONE);
 }
 
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-FOptionMenuItemSubmenu::FOptionMenuItemSubmenu(const char *label, const char *menu)
-: FOptionMenuItem(label, menu)
-{
-}
-
-void FOptionMenuItemSubmenu::Draw(FOptionMenuDescriptor *desc, int y, int indent)
-{
-	drawLabel(indent, y, OptionSettings.mFontColorMore);
-}
-
-bool FOptionMenuItemSubmenu::Activate()
-{
-	M_SetMenu(mAction, 0);
-	return true;
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-FOptionMenuItemCommand::FOptionMenuItemCommand(const char *label, const char *menu)
-: FOptionMenuItemSubmenu(label, menu)
-{
-}
-
-bool FOptionMenuItemCommand::Activate()
-{
-	C_DoCommand(mAction);
-	return true;
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-FOptionMenuItemSafeCommand::FOptionMenuItemSafeCommand(const char *label, const char *menu)
-: FOptionMenuItemCommand(label, menu)
-{
-}
-
-bool FOptionMenuItemSafeCommand::MenuEvent (int mkey, bool fromcontroller)
-{
-	if (mkey == MKEY_MBYes)
-	{
-		C_DoCommand(mAction);
-		return true;
-	}
-	return FOptionMenuItemCommand::MenuEvent(mkey, fromcontroller);
-}
-
-bool FOptionMenuItemSafeCommand::Activate()
-{
-	M_StartMessage("Do you really want to do this?", 0);
-	return true;
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-FOptionMenuItemOption::FOptionMenuItemOption(const char *label, const char *menu, const char *values, const char *graycheck)
-: FOptionMenuItem(label, menu)
-{
-	FOptionValues **opt = OptionValues.CheckKey(values);
-	if (opt != NULL) 
-	{
-		mValues = *opt;
-		mSelection = -1;
-		mCVar = FindCVar(menu, NULL);
-		mGrayCheck = (FBoolCVar*)FindCVar(graycheck, NULL);
-		if (mGrayCheck != NULL && mGrayCheck->GetRealType() != CVAR_Bool) mGrayCheck = NULL;
-		if (mCVar != NULL)
-		{
-			UCVarValue cv = mCVar->GetGenericRep(CVAR_Float);
-			for(unsigned i=0;i<mValues->mValues.Size(); i++)
-			{
-				if (fabs(cv.Float - mValues->mValues[i].Value) < FLT_EPSILON)
-				{
-					mSelection = i;
-					break;
-				}
-			}
-		}
-	}
-	else
-	{
-		mValues = NULL;
-	}
-}
-
-void FOptionMenuItemOption::Draw(FOptionMenuDescriptor *desc, int y, int indent)
-{
-	bool grayed = mGrayCheck != NULL && !(**mGrayCheck);
-	drawLabel(indent, y, OptionSettings.mFontColor, grayed);
-
-	if (mValues != NULL && mCVar != NULL)
-	{
-		int overlay = grayed? MAKEARGB(96,48,0,0) : 0;
-		const char *text;
-		if (mSelection < 0)
-		{
-			text = "Unknown";
-		}
-		else
-		{
-			text = mValues->mValues[mSelection].Text;
-		}
-		screen->DrawText (SmallFont, OptionSettings.mFontColorValue, indent + CURSORSPACE, y, 
-			text, DTA_CleanNoMove_1, true, DTA_ColorOverlay, overlay, TAG_DONE);
-	}
-}
-
-bool FOptionMenuItemOption::MenuEvent (int mkey, bool fromcontroller)
-{
-	UCVarValue value;
-	if (mValues != NULL && mCVar != NULL)
-	{
-		if (mkey == MKEY_Left)
-		{
-			if (mSelection == -1) mSelection = 0;
-			else if (--mSelection < 0) mSelection = mValues->mValues.Size()-1;
-		}
-		else if (mkey == MKEY_Right || mkey == MKEY_Enter)
-		{
-			if (++mSelection >= (int)mValues->mValues.Size()) mSelection = 0;
-		}
-		else
-		{
-			return FOptionMenuItem::MenuEvent(mkey, fromcontroller);
-		}
-		value.Float = (float)mValues->mValues[mSelection].Value;
-		mCVar->SetGenericRep (value, CVAR_Float);
-		S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
-		return true;
-	}
-	return false;
-}
-
-bool FOptionMenuItemOption::Selectable()
-{
-	return !(mGrayCheck != NULL && !(**mGrayCheck));
-}
-
-bool FOptionMenuItemOption::Activate()
-{
-	return false;
-}
-
-/* color option
-
-				}
-				else
-				{
-					screen->DrawText (SmallFont, item->type == cdiscrete ? v : ValueColor,
-						indent + cursorspace, y,
-						item->type != discretes ? item->e.values[v].name : item->e.valuestrings[v].name.GetChars(),
-						DTA_CleanNoMove_1, true, DTA_ColorOverlay, overlay, TAG_DONE);
-				}
-
-		// print value
-*/
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-FOptionMenuItemControl::FOptionMenuItemControl(const char *label, const char *menu, FKeyBindings *bindings)
-: FOptionMenuItem(label, menu)
-{
-	mBindings = bindings;
-	mBindings->GetKeysForCommand(mAction, &mKey1, &mKey2);
-}
-
-void FOptionMenuItemControl::Draw(FOptionMenuDescriptor *desc, int y, int indent)
-{
-	drawLabel(indent, y, OptionSettings.mFontColor);
-
-	char description[64];
-
-	C_NameKeys (description, mKey1, mKey2);
-	if (description[0])
-	{
-		M_DrawConText(CR_WHITE, indent + CURSORSPACE, y-1+OptionSettings.mLabelOffset, description);
-	}
-	else
-	{
-		screen->DrawText(SmallFont, CR_BLACK, indent + CURSORSPACE, y + OptionSettings.mLabelOffset, "---",
-			DTA_CleanNoMove_1, true, TAG_DONE);
-	}
-}
-
-bool FOptionMenuItemControl::Activate()
-{
-	return false;
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-FOptionMenuItemStaticText::FOptionMenuItemStaticText(const char *label, bool header)
-: FOptionMenuItem(label, NAME_None, true)
-{
-	mColor = header? OptionSettings.mFontColorHeader : OptionSettings.mFontColor;
-}
-
-void FOptionMenuItemStaticText::Draw(FOptionMenuDescriptor *desc, int y, int indent)
-{
-	drawLabel(indent, y, mColor);
-}
-
-bool FOptionMenuItemStaticText::Activate()
-{
-	return false;
-}
-
-bool FOptionMenuItemStaticText::Selectable()
-{
-	return false;
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-FOptionMenuSliderItem::FOptionMenuSliderItem(const char *label, const char *menu, double min, double max, double step, bool showval)
-: FOptionMenuItem(label, NAME_None)
-{
-	mMin = (float)min;
-	mMax = (float)max;
-	mStep = (float)step;
-	mShowValue = showval;
-	mCVar = FindCVar(menu, NULL);
-	mPVal = NULL;
-}
-
-FOptionMenuSliderItem::FOptionMenuSliderItem(const char *label, float *pval, double min, double max, double step, bool showval)
-: FOptionMenuItem(label, NAME_None)
-{
-	mMin = (float)min;
-	mMax = (float)max;
-	mStep = (float)step;
-	mShowValue = showval;
-	mPVal = pval;
-	mCVar = NULL;
-}
-
-
-void FOptionMenuSliderItem::Draw(FOptionMenuDescriptor *desc, int y, int indent)
-{
-	drawLabel(indent, y, OptionSettings.mFontColor);
-
-	UCVarValue value;
-
-	if (mCVar != NULL)
-	{
-		value = mCVar->GetGenericRep(CVAR_Float);
-	}
-	else if (mPVal != NULL)
-	{
-		value.Float = *mPVal;		
-	}
-	else return;
-	M_DrawSlider (indent + CURSORSPACE, y + OptionSettings.mLabelOffset, mMin, mMax, value.Float, mShowValue? 1:0);
-}
-
-bool FOptionMenuSliderItem::MenuEvent (int mkey, bool fromcontroller)
-{
-	UCVarValue value;
-
-	if (mCVar != NULL || mPVal != NULL)
-	{
-		if (mCVar != NULL)
-		{
-			value = mCVar->GetGenericRep(CVAR_Float);
-		}
-		else if (mPVal != NULL)
-		{
-			value.Float = *mPVal;		
-		}
-
-		if (mkey == MKEY_Left)
-		{
-			value.Float -= mStep;
-		}
-		else if (mkey == MKEY_Right)
-		{
-			value.Float += mStep;
-		}
-		else
-		{
-			return FOptionMenuItem::MenuEvent(mkey, fromcontroller);
-		}
-		value.Float = clamp(value.Float, mMin, mMax);
-		if (mCVar != NULL) mCVar->SetGenericRep (value, CVAR_Float);
-		else if (mPVal != NULL) *mPVal = value.Float;
-		S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
-		return true;
-	}
-	return false;
-}
-
-bool FOptionMenuSliderItem::Activate()
-{
-	return false;
-}
-
-/*
-		if (item->type != screenres &&
-			item->type != joymore && (item->type != discrete || item->c.discretecenter != 1))
-*/
-
-		

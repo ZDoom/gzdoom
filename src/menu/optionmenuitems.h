@@ -106,10 +106,28 @@ public:
 		if (opt != NULL) 
 		{
 			mValues = *opt;
-			mSelection = -1;
-			mCVar = FindCVar(menu, NULL);
-			mGrayCheck = (FBoolCVar*)FindCVar(graycheck, NULL);
-			if (mGrayCheck != NULL && mGrayCheck->GetRealType() != CVAR_Bool) mGrayCheck = NULL;
+			SetSelection();
+		}
+		else
+		{
+			mValues = NULL;
+		}
+		mGrayCheck = (FBoolCVar*)FindCVar(graycheck, NULL);
+		if (mGrayCheck != NULL && mGrayCheck->GetRealType() != CVAR_Bool) mGrayCheck = NULL;
+	}
+
+	void SetSelection()
+	{
+		mSelection = -1;
+		if (mValues != NULL) 
+		{
+			if (mValues->mValues.Size() == 0)
+			{
+				// try again later
+				mSelection = -2;
+				return;
+			}
+			mCVar = FindCVar(mAction, NULL);
 			if (mCVar != NULL)
 			{
 				UCVarValue cv = mCVar->GetGenericRep(CVAR_Float);
@@ -123,10 +141,6 @@ public:
 				}
 			}
 		}
-		else
-		{
-			mValues = NULL;
-		}
 	}
 
 	//=============================================================================
@@ -139,6 +153,10 @@ public:
 		{
 			int overlay = grayed? MAKEARGB(96,48,0,0) : 0;
 			const char *text;
+			if (mSelection == -2)
+			{
+				SetSelection();
+			}
 			if (mSelection < 0)
 			{
 				text = "Unknown";

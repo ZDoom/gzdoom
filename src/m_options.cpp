@@ -86,9 +86,6 @@
 // Data.
 #include "m_menu.h"
 // just some basics so that the rest of the source still compiles.
-CVAR (Bool, show_messages, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-CVAR (Bool, show_obituaries, true, CVAR_ARCHIVE)
-CVAR (Float, mouse_sensitivity, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 int testingmode;		// Holds time to revert to old mode
 CUSTOM_CVAR (Bool, vid_tft, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {

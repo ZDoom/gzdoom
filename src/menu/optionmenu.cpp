@@ -69,6 +69,7 @@ CCMD(reset2saved)
 	//UpdateStuff();
 }
 
+
 //=============================================================================
 //
 // Draws a string in the console font, scaled to the 8x8 cells
@@ -370,7 +371,7 @@ void DOptionMenu::Drawer ()
 			if (i >= mDesc->mItems.Size()) break;	// skipped beyond end of menu 
 		}
 		mDesc->mItems[i]->Draw(mDesc, y, indent);
-		if (mDesc->mSelectedItem == i)
+		if (mDesc->mSelectedItem == i && mDesc->mItems[i]->Selectable())
 		{
 			int color = ((DMenu::MenuTime%8) < 4) || DMenu::CurrentMenu != this ? CR_RED:CR_GREY;
 			M_DrawConText(color, indent + 3 * CleanXfac_1, y-CleanYfac_1+OptionSettings.mLabelOffset, "\xd");
@@ -433,3 +434,17 @@ void FOptionMenuItem::drawLabel(int indent, int y, EColorRange color, bool graye
 	screen->DrawText (SmallFont, color, x, y, mLabel, DTA_CleanNoMove_1, true, DTA_ColorOverlay, overlay, TAG_DONE);
 }
 
+
+
+void FOptionMenuDescriptor::CalcIndent()
+{
+	// calculate the menu indent
+	int widest = 0, thiswidth;
+
+	for (unsigned i = 0; i < mItems.Size(); i++)
+	{
+		thiswidth = mItems[i]->GetIndent();
+		if (thiswidth > widest) widest = thiswidth;
+	}
+	mIndent =  widest + 4;
+}

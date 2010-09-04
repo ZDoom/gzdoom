@@ -131,6 +131,8 @@ struct FOptionMenuDescriptor : public FMenuDescriptor
 	int mPosition;
 	bool mDontDim;
 	const PClass *mClass;
+
+	void CalcIndent();
 };
 						
 
@@ -533,6 +535,7 @@ public:
 	bool MenuEvent (int mkey, bool fromcontroller);
 	void Ticker ();
 	void Drawer ();
+	const FOptionMenuDescriptor *GetDescriptor() const { return mDesc; }
 };
 
 
@@ -582,6 +585,7 @@ void M_StartControlPanel (bool makeSound);
 void M_SetMenu(FName menu, int param = -1);
 void M_NotifyNewSave (const char *file, const char *title, bool okForQuicksave);
 void M_StartMessage(const char *message, int messagemode, FName action = NAME_None);
+DMenu *StartPickerMenu(DMenu *parent, const char *name, FColorCVar *cvar);
 
 
 #endif

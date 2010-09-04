@@ -749,7 +749,6 @@ OptionMenu MapControlsMenu
 //
 //-------------------------------------------------------------------------------------------
 
-
 OptionMenu MapColorMenu
 {
 	Title "CUSTOMIZE MAP COLORS"
@@ -793,6 +792,17 @@ OptionMenu MapColorMenu
 	ColorPicker "Count Items",					"am_ovthingcolor_citem"		
 }
 
+//-------------------------------------------------------------------------------------------
+//
+// Color Picker
+//
+//-------------------------------------------------------------------------------------------
+
+OptionMenu ColorPickerMenu
+{
+	Title "SELECT COLOR"
+	// This menu will be created by the calling code
+}
 
 OptionValue CompatModes
 {

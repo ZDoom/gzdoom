@@ -1,3 +1,38 @@
+/*
+** optionmenuitems.h
+** Control items for option menus
+**
+**---------------------------------------------------------------------------
+** Copyright 2010 Christoph Oelckers
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
+
+
 void M_DrawConText (int color, int x, int y, const char *str);
 void M_DrawSlider (int x, int y, double min, double max, double cur,int fracdigits);
 
@@ -24,6 +59,7 @@ public:
 
 	bool Activate()
 	{
+		S_Sound (CHAN_VOICE | CHAN_UI, "menu/choose", snd_menuvolume, ATTN_NONE);
 		M_SetMenu(mAction, 0);
 		return true;
 	}
@@ -272,7 +308,9 @@ public:
 	}
 };
 
+#ifndef NO_IMP
 IMPLEMENT_ABSTRACT_CLASS(DEnterKey)
+#endif
 
 //=============================================================================
 //
@@ -431,11 +469,11 @@ class FOptionMenuSliderItem : public FOptionMenuItem
 	// action is a CVAR
 	float mMin, mMax, mStep;
 	float mValue;
-	bool mShowValue;
+	int mShowValue;
 	FBaseCVar *mCVar;
 	float *mPVal;
 public:
-	FOptionMenuSliderItem(const char *label, const char *menu, double min, double max, double step, bool showval)
+	FOptionMenuSliderItem(const char *label, const char *menu, double min, double max, double step, int showval)
 		: FOptionMenuItem(label, NAME_None)
 	{
 		mMin = (float)min;
@@ -446,7 +484,7 @@ public:
 		mPVal = NULL;
 	}
 
-	FOptionMenuSliderItem(const char *label, float *pVal, double min, double max, double step, bool showval)
+	FOptionMenuSliderItem(const char *label, float *pVal, double min, double max, double step, int showval)
 		: FOptionMenuItem(label, NAME_None)
 	{
 		mMin = (float)min;
@@ -473,7 +511,7 @@ public:
 			value.Float = *mPVal;		
 		}
 		else return;
-		M_DrawSlider (indent + CURSORSPACE, y + OptionSettings.mLabelOffset, mMin, mMax, value.Float, mShowValue? 1:0);
+		M_DrawSlider (indent + CURSORSPACE, y + OptionSettings.mLabelOffset, mMin, mMax, value.Float, mShowValue);
 	}
 
 	//=============================================================================
@@ -526,6 +564,11 @@ class FOptionMenuItemColorPicker : public FOptionMenuItem
 	FColorCVar *mCVar;
 public:
 
+	enum
+	{
+		CPF_RESET = 0x20001,
+	};
+
 	FOptionMenuItemColorPicker(const char *label, const char *menu)
 		: FOptionMenuItem(label, menu)
 	{
@@ -551,12 +594,47 @@ public:
 		}
 	}
 
+	bool SetValue(int i, int v)
+	{
+		if (i == CPF_RESET && mCVar != NULL)
+		{
+			mCVar->ResetToDefault();
+			return true;
+		}
+		return false;
+	}
+
 	bool Activate()
 	{
-		// open the color picker menu
-		return true;
+		if (mCVar != NULL)
+		{
+			S_Sound (CHAN_VOICE | CHAN_UI, "menu/choose", snd_menuvolume, ATTN_NONE);
+			DMenu *picker = StartPickerMenu(DMenu::CurrentMenu, mLabel, mCVar);
+			if (picker != NULL)
+			{
+				M_ActivateMenu(picker);
+				return true;
+			}
+		}
+		return false;
 	}
 };
+
+#ifndef NO_IMP
+CCMD(am_restorecolors)
+{
+	if (DMenu::CurrentMenu != NULL && DMenu::CurrentMenu->IsKindOf(RUNTIME_CLASS(DOptionMenu)))
+	{
+		DOptionMenu *m = (DOptionMenu*)DMenu::CurrentMenu;
+		const FOptionMenuDescriptor *desc = m->GetDescriptor();
+		// Find the color cvars by scanning the MapColors menu.
+		for (unsigned i = 0; i < desc->mItems.Size(); ++i)
+		{
+			desc->mItems[i]->SetValue(FOptionMenuItemColorPicker::CPF_RESET, 0);
+		}
+	}
+}
+#endif
 
 
 

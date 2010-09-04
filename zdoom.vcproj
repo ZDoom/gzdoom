@@ -6458,6 +6458,10 @@
 			Name="Menu"
 			>
 			<File
+				RelativePath=".\src\menu\colorpickermenu.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\src\menu\listmenu.cpp"
 				>
 			</File>

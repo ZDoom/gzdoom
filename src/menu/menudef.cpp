@@ -749,7 +749,7 @@ static void ParseOptionMenuBody(FScanner &sc, FOptionMenuDescriptor *desc)
 				sc.MustGetNumber();
 				showvalue = !!sc.Number;
 			}
-			FOptionMenuItem *it = new FOptionMenuSliderItem(text, action, min, max, step, showvalue);
+			FOptionMenuItem *it = new FOptionMenuSliderItem(text, action, min, max, step, showvalue? 1:-1);
 			desc->mItems.Push(it);
 		}
 		else
@@ -786,15 +786,7 @@ static void ParseOptionMenu(FScanner &sc)
 
 	ParseOptionMenuBody(sc, desc);
 
-	// calculate the menu indent
-	int widest = 0, thiswidth;
-
-	for (unsigned i = 0; i < desc->mItems.Size(); i++)
-	{
-		thiswidth = desc->mItems[i]->GetIndent();
-		if (thiswidth > widest) widest = thiswidth;
-	}
-	desc->mIndent =  widest + 4;
+	desc->CalcIndent();
 }
 
 //=============================================================================

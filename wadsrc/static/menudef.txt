@@ -996,6 +996,7 @@ OptionMenu GameplayOptions
 	Option "Keep ammo",				"sv_cooploseammo", "NoYes"
 	Option "Lose half ammo",		"sv_coophalveammo", "YesNo"
 	Option "Spawn where died",		"sv_samespawnspot", "YesNo"
+	Class "GameplayMenu"
 }
 
 /*=======================================
@@ -1054,6 +1055,7 @@ OptionMenu "CompatibilityOptions"
 	Option "Draw polyobjects like Hexen",				"compat_POLYOBJ", "YesNo"
 	
 	Option "Interpolate monster movement",	"nomonsterinterpolation", "NoYes"
+	Class "CompatibilityMenu"
 }
 
 /*=======================================

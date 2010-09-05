@@ -133,7 +133,6 @@ class FOptionMenuItemOption : public FOptionMenuItem
 	FOptionValues *mValues;
 	FBaseCVar *mCVar;
 	FBoolCVar *mGrayCheck;
-	int mSelection;
 	int mCenter;
 public:
 
@@ -144,37 +143,34 @@ public:
 		if (opt != NULL) 
 		{
 			mValues = *opt;
-			mSelection = -2;
 		}
 		else
 		{
 			mValues = NULL;
-			mSelection = -1;
 		}
 		mGrayCheck = (FBoolCVar*)FindCVar(graycheck, NULL);
 		if (mGrayCheck != NULL && mGrayCheck->GetRealType() != CVAR_Bool) mGrayCheck = NULL;
 		mCenter = center;
+		mCVar = FindCVar(mAction, NULL);
 	}
 
-	void SetSelection()
+	//=============================================================================
+	int GetSelection()
 	{
-		mSelection = -1;
-		if (mValues != NULL) 
+		int Selection = -1;
+		if (mValues != NULL && mCVar != NULL)
 		{
-			mCVar = FindCVar(mAction, NULL);
-			if (mCVar != NULL)
+			UCVarValue cv = mCVar->GetGenericRep(CVAR_Float);
+			for(unsigned i=0;i<mValues->mValues.Size(); i++)
 			{
-				UCVarValue cv = mCVar->GetGenericRep(CVAR_Float);
-				for(unsigned i=0;i<mValues->mValues.Size(); i++)
+				if (fabs(cv.Float - mValues->mValues[i].Value) < FLT_EPSILON)
 				{
-					if (fabs(cv.Float - mValues->mValues[i].Value) < FLT_EPSILON)
-					{
-						mSelection = i;
-						break;
-					}
+					Selection = i;
+					break;
 				}
 			}
 		}
+		return Selection;
 	}
 
 	//=============================================================================
@@ -188,22 +184,18 @@ public:
 		}
 		drawLabel(indent, y, OptionSettings.mFontColor, grayed);
 
-		if (mSelection == -2)
-		{
-			SetSelection();
-		}
-
 		if (mValues != NULL && mCVar != NULL)
 		{
 			int overlay = grayed? MAKEARGB(96,48,0,0) : 0;
 			const char *text;
-			if (mSelection < 0)
+			int Selection = GetSelection();
+			if (Selection < 0)
 			{
 				text = "Unknown";
 			}
 			else
 			{
-				text = mValues->mValues[mSelection].Text;
+				text = mValues->mValues[Selection].Text;
 			}
 			screen->DrawText (SmallFont, OptionSettings.mFontColorValue, indent + CURSORSPACE, y, 
 				text, DTA_CleanNoMove_1, true, DTA_ColorOverlay, overlay, TAG_DONE);
@@ -217,20 +209,21 @@ public:
 		UCVarValue value;
 		if (mValues != NULL && mCVar != NULL)
 		{
+			int Selection = GetSelection();
 			if (mkey == MKEY_Left)
 			{
-				if (mSelection == -1) mSelection = 0;
-				else if (--mSelection < 0) mSelection = mValues->mValues.Size()-1;
+				if (Selection == -1) Selection = 0;
+				else if (--Selection < 0) Selection = mValues->mValues.Size()-1;
 			}
 			else if (mkey == MKEY_Right || mkey == MKEY_Enter)
 			{
-				if (++mSelection >= (int)mValues->mValues.Size()) mSelection = 0;
+				if (++Selection >= (int)mValues->mValues.Size()) Selection = 0;
 			}
 			else
 			{
 				return FOptionMenuItem::MenuEvent(mkey, fromcontroller);
 			}
-			value.Float = (float)mValues->mValues[mSelection].Value;
+			value.Float = (float)mValues->mValues[Selection].Value;
 			mCVar->SetGenericRep (value, CVAR_Float);
 			S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 			return true;
@@ -317,7 +310,6 @@ IMPLEMENT_ABSTRACT_CLASS(DEnterKey)
 class FOptionMenuItemControl : public FOptionMenuItem
 {
 	FKeyBindings *mBindings;
-	int mKey1, mKey2;
 	int mInput;
 	bool mWaiting;
 public:
@@ -326,9 +318,9 @@ public:
 		: FOptionMenuItem(label, menu)
 	{
 		mBindings = bindings;
-		mBindings->GetKeysForCommand(mAction, &mKey1, &mKey2);
 		mWaiting = false;
 	}
+
 
 	//=============================================================================
 	int Draw(FOptionMenuDescriptor *desc, int y, int indent)
@@ -336,8 +328,10 @@ public:
 		drawLabel(indent, y, mWaiting? OptionSettings.mFontColorHighlight: OptionSettings.mFontColor);
 
 		char description[64];
+		int Key1, Key2;
 
-		C_NameKeys (description, mKey1, mKey2);
+		mBindings->GetKeysForCommand(mAction, &Key1, &Key2);
+		C_NameKeys (description, Key1, Key2);
 		if (description[0])
 		{
 			M_DrawConText(CR_WHITE, indent + CURSORSPACE, y-1+OptionSettings.mLabelOffset, description);
@@ -357,13 +351,11 @@ public:
 		{
 			mWaiting = false;
 			mBindings->SetBind(mInput, mAction);
-			mBindings->GetKeysForCommand(mAction, &mKey1, &mKey2);
 			return true;
 		}
 		else if (mkey == MKEY_Clear)
 		{
 			mBindings->UnbindACommand(mAction);
-			mBindings->GetKeysForCommand(mAction, &mKey1, &mKey2);
 			return true;
 		}
 		else if (mkey == MKEY_Abort)

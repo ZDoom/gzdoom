@@ -503,6 +503,15 @@ void APlayerPawn::Tick()
 void APlayerPawn::PostBeginPlay()
 {
 	SetupWeaponSlots();
+
+	// Voodoo dolls: restore original floorz/ceilingz logic
+	if (player == NULL || player->mo != this)
+	{
+		dropoffz = floorz = Sector->floorplane.ZatPoint(x, y);
+		ceilingz = Sector->ceilingplane.ZatPoint(x, y);
+		P_FindFloorCeiling(this, true);
+		z = floorz;
+	}
 }
 
 //===========================================================================
@@ -1966,7 +1975,7 @@ void P_CrouchMove(player_t * player, int direction)
 
 	// check whether the move is ok
 	player->mo->height = FixedMul(defaultheight, player->crouchfactor);
-	if (!P_TryMove(player->mo, player->mo->x, player->mo->y, false, false))
+	if (!P_TryMove(player->mo, player->mo->x, player->mo->y, false, NULL))
 	{
 		player->mo->height = savedheight;
 		if (direction > 0)

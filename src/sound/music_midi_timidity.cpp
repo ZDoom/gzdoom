@@ -207,7 +207,7 @@ TimiditySong::TimiditySong (FILE *file, BYTE *musiccache, int len)
 
 	BYTE *buf;
 	
-	if (file!=NULL) 
+	if (file != NULL) 
 	{
 		buf = new BYTE[len];
 		fread (buf, 1, len, file);
@@ -217,18 +217,8 @@ TimiditySong::TimiditySong (FILE *file, BYTE *musiccache, int len)
 		buf = musiccache;
 	}
 
-
-	// The file type has already been checked before this class instance was
-	// created, so we only need to check one character to determine if this
-	// is a MUS or MIDI file and write it to disk as appropriate.
-	if (buf[1] == 'T')
-	{
-		success = (fwrite (buf, 1, len, f) == (size_t)len);
-	}
-	else
-	{
-		success = ProduceMIDI (buf, len, f);
-	}
+	// Write to temporary file
+	success = (fwrite (buf, 1, len, f) == (size_t)len);
 	fclose (f);
 	if (file != NULL) 
 	{

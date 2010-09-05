@@ -188,6 +188,8 @@ static const FBinding DefAutomapBindings[] =
 	{ "=", "+am_zoomin" },
 	{ "kp-", "+am_zoomout" },
 	{ "kp+", "+am_zoomin" },
+	{ "mwheelup", "am_zoom 1.2" },
+	{ "mwheeldown", "am_zoom -1.2" },
 	{ NULL }
 };
 

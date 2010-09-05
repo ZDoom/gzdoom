@@ -504,7 +504,7 @@ enum
 #define LOG4(x,y,z,a,b)	do { if (dbg) { fprintf (dbg, x, y, z, a, b); fflush (dbg); } } while(0)
 #define LOG5(x,y,z,a,b,c) do { if (dbg) { fprintf (dbg, x, y, z, a, b, c); fflush (dbg); } } while(0)
 FILE *dbg;
-#elif _DEBUG
+#elif _DEBUG && 0
 #define STARTLOG
 #define STOPLOG
 #define LOG(x)			{ OutputDebugString(x); }

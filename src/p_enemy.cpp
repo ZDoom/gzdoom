@@ -512,12 +512,12 @@ bool P_Move (AActor *actor)
 	try_ok = true;
 	for(int i=1; i < steps; i++)
 	{
-		try_ok = P_TryMove(actor, origx + Scale(deltax, i, steps), origy + Scale(deltay, i, steps), dropoff, false, tm);
+		try_ok = P_TryMove(actor, origx + Scale(deltax, i, steps), origy + Scale(deltay, i, steps), dropoff, NULL, tm);
 		if (!try_ok) break;
 	}
 
 	// killough 3/15/98: don't jump over dropoffs:
-	if (try_ok) try_ok = P_TryMove (actor, tryx, tryy, dropoff, false, tm);
+	if (try_ok) try_ok = P_TryMove (actor, tryx, tryy, dropoff, NULL, tm);
 
 	// [GrafZahl] Interpolating monster movement as it is done here just looks bad
 	// so make it switchable

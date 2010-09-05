@@ -142,7 +142,7 @@ ACTOR Pig : MorphedMonster
 	Death:
 		PIGY E 4 A_Scream
 		PIGY F 3 A_NoBlocking
-		PIGY G 4
+		PIGY G 4 A_QueueCorpse
 		PIGY H 3
 		PIGY IJK 4
 		PIGY L -1

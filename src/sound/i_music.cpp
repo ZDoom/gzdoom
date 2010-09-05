@@ -3,7 +3,7 @@
 ** Plays music
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2006 Randy Heit
+** Copyright 1998-2010 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -83,6 +83,14 @@ extern void ChildSigHandler (int signum);
 #define GZIP_FEXTRA		4
 #define GZIP_FNAME		8
 #define GZIP_FCOMMENT	16
+
+enum EMIDIType
+{
+	MIDI_NOTMIDI,
+	MIDI_MIDI,
+	MIDI_HMI,
+	MIDI_MUS
+};
 
 extern int MUSHeaderSearch(const BYTE *head, int len);
 
@@ -305,6 +313,40 @@ MusInfo *I_RegisterURLSong (const char *url)
 	return NULL;
 }
 
+static MusInfo *CreateMIDISong(FILE *file, const char *filename, BYTE *musiccache, int offset, int len, EMIDIDevice devtype, EMIDIType miditype)
+{
+	if (devtype == MIDI_Timidity)
+	{
+		assert(miditype == MIDI_MIDI);
+		return new TimiditySong(file, musiccache, len);
+	}
+	else if (devtype >= MIDI_Null)
+	{
+		assert(miditype == MIDI_MIDI);
+		if (musiccache != NULL)
+		{
+			return new StreamSong((char *)musiccache, -1, len);
+		}
+		else
+		{
+			return new StreamSong(filename, offset, len);
+		}
+	}
+	else if (miditype == MIDI_MUS)
+	{
+		return new MUSSong2(file, musiccache, len, devtype);
+	}
+	else if (miditype == MIDI_MIDI)
+	{
+		return new MIDISong2(file, musiccache, len, devtype);
+	}
+	else if (miditype == MIDI_HMI)
+	{
+		return new HMISong(file, musiccache, len, devtype);
+	}
+	return NULL;
+}
+
 MusInfo *I_RegisterSong (const char *filename, BYTE *musiccache, int offset, int len, int device)
 {
 	FILE *file;
@@ -405,165 +447,147 @@ MusInfo *I_RegisterSong (const char *filename, BYTE *musiccache, int offset, int
 		}
 	}
 
+	EMIDIType miditype = MIDI_NOTMIDI;
+
 	// Check for MUS format
 	// Tolerate sloppy wads by searching up to 32 bytes for the header
 	if (MUSHeaderSearch(idstr, sizeof(idstr)) >= 0)
 	{
-		/*	MUS are played as:
-		- OPL: 
-			- if explicitly selected by $mididevice 
-			- when snd_mididevice  is -3 and no midi device is set for the song
+		miditype = MIDI_MUS;
+	}
+	// Check for HMI format
+	else 
+	if (id[0] == MAKE_ID('H','M','I','-') &&
+		id[1] == MAKE_ID('M','I','D','I') &&
+		id[2] == MAKE_ID('S','O','N','G'))
+	{
+		miditype = MIDI_HMI;
+	}
+	// Check for MIDI format
+	else if (id[0] == MAKE_ID('M','T','h','d'))
+	{
+		miditype = MIDI_MIDI;
+	}
 
-		  Timidity: 
-			- if explicitly selected by $mididevice 
-			- when snd_mididevice  is -2 and no midi device is set for the song
+	if (miditype != MIDI_NOTMIDI)
+	{
+		TArray<BYTE> midi;
+		/* MIDI are played as:
+			- OPL: 
+				- if explicitly selected by $mididevice 
+				- when snd_mididevice  is -3 and no midi device is set for the song
 
-		  FMod:
-			- if explicitly selected by $mididevice 
-			- when snd_mididevice  is -1 and no midi device is set for the song
-			- as fallback when both OPL and Timidity failed unless snd_mididevice is >= 0
+			- Timidity: 
+				- if explicitly selected by $mididevice 
+				- when snd_mididevice  is -2 and no midi device is set for the song
 
-		  MMAPI (Win32 only):
-			- if explicitly selected by $mididevice (non-Win32 redirects this to FMOD)
-			- when snd_mididevice  is >= 0 and no midi device is set for the song
-			- as fallback when both OPL and Timidity failed and snd_mididevice is >= 0
+			- FMod:
+				- if explicitly selected by $mididevice 
+				- when snd_mididevice  is -1 and no midi device is set for the song
+				- as fallback when both OPL and Timidity failed unless snd_mididevice is >= 0
+
+			- MMAPI (Win32 only):
+				- if explicitly selected by $mididevice (non-Win32 redirects this to FMOD)
+				- when snd_mididevice  is >= 0 and no midi device is set for the song
+				- as fallback when both OPL and Timidity failed and snd_mididevice is >= 0
 		*/
-		if ((snd_mididevice == -3 && device == MDEV_DEFAULT) || device == MDEV_OPL)
+		EMIDIDevice devtype = MIDI_Null;
+
+		// Choose the type of MIDI device we want.
+		if (device == MDEV_FMOD || (snd_mididevice == -1 && device == MDEV_DEFAULT))
 		{
-			info = new MUSSong2 (file, musiccache, len, MIDI_OPL);
+			devtype = MIDI_FMOD;
 		}
-		else if (device == MDEV_TIMIDITY || (device == MDEV_DEFAULT && snd_mididevice == -2))
+		else if (device == MDEV_TIMIDITY || (snd_mididevice == -2 && device == MDEV_DEFAULT))
 		{
-			info = new TimiditySong (file, musiccache, len);
+			devtype = MIDI_Timidity;
+		}
+		else if (device == MDEV_OPL || (snd_mididevice == -3 && device == MDEV_DEFAULT))
+		{
+			devtype = MIDI_OPL;
 		}
 		else if (snd_mididevice == -4 && device == MDEV_DEFAULT)
 		{
-			info = new MUSSong2(file, musiccache, len, MIDI_Timidity);
+			devtype = MIDI_GUS;
 		}
 #ifdef HAVE_FLUIDSYNTH
 		else if (device == MDEV_FLUIDSYNTH || (snd_mididevice == -5 && device == MDEV_DEFAULT))
 		{
-			info = new MUSSong2(file, musiccache, len, MIDI_Fluid);
+			devtype = MIDI_Fluid;
 		}
 #endif
+#ifdef _WIN32
+		else
+		{
+			devtype = MIDI_Win;
+		}
+#endif
+
+retry_as_fmod:
+		if (miditype != MIDI_MIDI && devtype >= MIDI_Null)
+		{
+			// Convert to standard MIDI for external sequencers.
+			MIDIStreamer *streamer;
+
+			if (miditype == MIDI_MUS)
+			{
+				streamer = new MUSSong2(file, musiccache, len, MIDI_Null);
+			}
+			else
+			{
+				assert(miditype == MIDI_HMI);
+				streamer = new HMISong(file, musiccache, len, MIDI_Null);
+			}
+			if (streamer->IsValid())
+			{
+				streamer->CreateSMF(midi);
+				miditype = MIDI_MIDI;
+				musiccache = &midi[0];
+				len = midi.Size();
+				if (file != NULL)
+				{
+					fclose(file);
+					file = NULL;
+				}
+			}
+			delete streamer;
+		}
+		info = CreateMIDISong(file, filename, musiccache, offset, len, devtype, miditype);
 		if (info != NULL && !info->IsValid())
 		{
 			delete info;
 			info = NULL;
-			device = MDEV_DEFAULT;
 		}
-		if (info == NULL && (snd_mididevice == -1 || device == MDEV_FMOD) && device != MDEV_MMAPI)
+		if (info == NULL && devtype != MIDI_FMOD && snd_mididevice < 0)
 		{
-			TArray<BYTE> midi;
-			bool midi_made = false;
-
-			if (file == NULL)
-			{
-				midi_made = ProduceMIDI((BYTE *)musiccache, len, midi);
-			}
-			else
-			{
-				BYTE *mus = new BYTE[len];
-				size_t did_read = fread(mus, 1, len, file);
-				if (did_read == (size_t)len)
-				{
-					midi_made = ProduceMIDI(mus, len, midi);
-				}
-				fseek(file, -(long)did_read, SEEK_CUR);
-				delete[] mus;
-			}
-			if (midi_made)
-			{
-				info = new StreamSong((char *)&midi[0], -1, midi.Size());
-				if (!info->IsValid())
-				{
-					delete info;
-					info = NULL;
-				}
-			}
+			devtype = MIDI_FMOD;
+			goto retry_as_fmod;
 		}
 #ifdef _WIN32
-		if (info == NULL)
+		if (info == NULL && devtype != MIDI_Win && snd_mididevice >= 0)
 		{
-			info = new MUSSong2 (file, musiccache, len, MIDI_Win);
+			info = CreateMIDISong(file, filename, musiccache, offset, len, MIDI_Win, miditype);
 		}
-#endif // _WIN32
-	}
-	// Check for MIDI format
-	else 
-	{
-		if (id[0] == MAKE_ID('M','T','h','d'))
-		{
-			// This is a midi file
-
-			/*	MIDI are played as:
-			  OPL: 
-				- if explicitly selected by $mididevice 
-				- when snd_mididevice  is -3 and no midi device is set for the song
-
-			  Timidity: 
-				- if explicitly selected by $mididevice 
-				- when snd_mididevice  is -2 and no midi device is set for the song
-
-			  FMOD:
-				- if explicitly selected by $mididevice 
-				- when snd_mididevice  is -1 and no midi device is set for the song
-				- as fallback when Timidity failed unless snd_mididevice is >= 0
-
-			  MMAPI (Win32 only):
-				- if explicitly selected by $mididevice (non-Win32 redirects this to FMOD)
-				- when snd_mididevice  is >= 0 and no midi device is set for the song
-				- as fallback when Timidity failed and snd_mididevice is >= 0
-			*/
-			if (device == MDEV_OPL || (snd_mididevice == -3 && device == MDEV_DEFAULT))
-			{
-				info = new MIDISong2 (file, musiccache, len, MIDI_OPL);
-			}
-			else if (device == MDEV_TIMIDITY || (snd_mididevice == -2 && device == MDEV_DEFAULT))
-			{
-				info = new TimiditySong (file, musiccache, len);
-			}
-			else if (snd_mididevice == -4 && device == MDEV_DEFAULT)
-			{
-				info = new MIDISong2(file, musiccache, len, MIDI_Timidity);
-			}
-#ifdef HAVE_FLUIDSYNTH
-			else if (device == MDEV_FLUIDSYNTH || (snd_mididevice == -5 && device == MDEV_DEFAULT))
-			{
-				info = new MIDISong2(file, musiccache, len, MIDI_Fluid);
-			}
 #endif
-			if (info != NULL && !info->IsValid())
-			{
-				delete info;
-				info = NULL;
-				device = MDEV_DEFAULT;
-			}
-#ifdef _WIN32
-			if (info == NULL && device != MDEV_FMOD && (snd_mididevice >= 0 || device == MDEV_MMAPI))
-			{
-				info = new MIDISong2 (file, musiccache, len, MIDI_Win);
-			}
-#endif // _WIN32
-		}
-		// Check for various raw OPL formats
-		else if (
-			(id[0] == MAKE_ID('R','A','W','A') && id[1] == MAKE_ID('D','A','T','A')) ||		// Rdos Raw OPL
-			(id[0] == MAKE_ID('D','B','R','A') && id[1] == MAKE_ID('W','O','P','L')) ||		// DosBox Raw OPL
-			(id[0] == MAKE_ID('A','D','L','I') && *((BYTE *)id + 4) == 'B'))		// Martin Fernandez's modified IMF
-		{
-			info = new OPLMUSSong (file, musiccache, len);
-		}
-		// Check for game music
-		else if ((fmt = GME_CheckFormat(id[0])) != NULL && fmt[0] != '\0')
-		{
-			info = GME_OpenSong(file, musiccache, len, fmt);
-		}
-		// Check for module formats
-		else
-		{
-			info = MOD_OpenSong(file, musiccache, len);
-		}
+	}
+
+	// Check for various raw OPL formats
+	else if (
+		(id[0] == MAKE_ID('R','A','W','A') && id[1] == MAKE_ID('D','A','T','A')) ||		// Rdos Raw OPL
+		(id[0] == MAKE_ID('D','B','R','A') && id[1] == MAKE_ID('W','O','P','L')) ||		// DosBox Raw OPL
+		(id[0] == MAKE_ID('A','D','L','I') && *((BYTE *)id + 4) == 'B'))		// Martin Fernandez's modified IMF
+	{
+		info = new OPLMUSSong (file, musiccache, len);
+	}
+	// Check for game music
+	else if ((fmt = GME_CheckFormat(id[0])) != NULL && fmt[0] != '\0')
+	{
+		info = GME_OpenSong(file, musiccache, len, fmt);
+	}
+	// Check for module formats
+	else
+	{
+		info = MOD_OpenSong(file, musiccache, len);
 	}
 
 	if (info == NULL)

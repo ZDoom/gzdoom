@@ -485,6 +485,7 @@ static FMouse *CreateRawMouse()
 FRawMouse::FRawMouse()
 {
 	Grabbed = false;
+	SetCursorState(true);
 }
 
 //==========================================================================
@@ -678,6 +679,7 @@ FDInputMouse::FDInputMouse()
 {
 	Device = NULL;
 	Grabbed = false;
+	SetCursorState(true);
 }
 
 //==========================================================================
@@ -903,6 +905,7 @@ FWin32Mouse::FWin32Mouse()
 {
 	GetCursorPos(&UngrabbedPointerPos);
 	Grabbed = false;
+	SetCursorState(true);
 }
 
 //==========================================================================

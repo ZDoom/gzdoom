@@ -2368,7 +2368,7 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 			int killcount = 0;
 			const PClass *cls = PClass::FindClass(classname);
 
-			if (classname != NULL)
+			if (cls != NULL && cls->ActorInfo != NULL)
 			{
 				killcount = KillAll(cls);
 				const PClass *cls_rep = cls->GetReplacement();
@@ -2376,9 +2376,13 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 				{
 					killcount += KillAll(cls_rep);
 				}
+				Printf ("Killed %d monsters of type %s.\n",killcount, classname);
+			}
+			else
+			{
+				Printf ("%s is not an actor class.\n", classname);
 			}
 
-			Printf ("Killed %d monsters of type %s.\n",killcount, classname);
 		}
 		break;
 

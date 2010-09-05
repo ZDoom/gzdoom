@@ -47,6 +47,7 @@
 #include "v_palette.h"
 #include "d_event.h"
 #include "d_gui.h"
+#include "i_music.h"
 
 #include "optionmenuitems.h"
 
@@ -986,6 +987,15 @@ void M_ParseMenuDefs()
 		}
 	}
 	InitCrosshairsList();
+
+	FOptionValues **opt = OptionValues.CheckKey(NAME_Mididevices);
+	if (opt != NULL) 
+	{
+		I_BuildMIDIMenuList(*opt);
+		return;	// no crosshair value list present. No need to go on.
+	}
+
+
 }
 
 

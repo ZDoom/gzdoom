@@ -37,13 +37,14 @@
 #include "doomdef.h"
 
 class FileReader;
+struct FOptionValues;
 
 //
 //	MUSIC I/O
 //
 void I_InitMusic ();
 void I_ShutdownMusic ();
-void I_BuildMIDIMenuList (struct value_t **values, float *numValues);
+void I_BuildMIDIMenuList (FOptionValues *);
 void I_UpdateMusic ();
 
 // Volume.

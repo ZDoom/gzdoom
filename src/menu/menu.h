@@ -499,6 +499,7 @@ struct FOptionValues
 	struct Pair
 	{
 		double Value;
+		FString TextValue;
 		FString Text;
 	};
 

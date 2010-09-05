@@ -146,9 +146,21 @@ static bool CheckSkipOptionBlock(FScanner &sc)
 	{
 		sc.MustGetString();
 		if (sc.Compare("ReadThis")) filter |= gameinfo.drawreadthis;
-		if (sc.Compare("Windows"))
+		else if (sc.Compare("Windows"))
 		{
 			#ifdef _WIN32
+				filter = true;
+			#endif
+		}
+		else if (sc.Compare("unix"))
+		{
+			#ifdef unix
+				filter = true;
+			#endif
+		}
+		else if (sc.Compare("Mac"))
+		{
+			#ifdef __APPLE__
 				filter = true;
 			#endif
 		}
@@ -511,6 +523,36 @@ static void ParseOptionValue(FScanner &sc)
 //
 //=============================================================================
 
+static void ParseOptionString(FScanner &sc)
+{
+	FName optname;
+
+	FOptionValues *val = new FOptionValues;
+	sc.MustGetString();
+	optname = sc.String;
+	sc.MustGetStringName("{");
+	while (!sc.CheckString("}"))
+	{
+		FOptionValues::Pair &pair = val->mValues[val->mValues.Reserve(1)];
+		sc.MustGetString();
+		pair.Value = DBL_MAX;
+		pair.TextValue = sc.String;
+		sc.MustGetStringName(",");
+		sc.MustGetString();
+		pair.Text = strbin1(sc.String);
+	}
+	FOptionValues **pOld = OptionValues.CheckKey(optname);
+	if (pOld != NULL && *pOld != NULL) delete *pOld;
+	OptionValues[optname] = val;
+}
+
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
 static void ParseOptionSettings(FScanner &sc)
 {
 	sc.MustGetStringName("{");
@@ -824,6 +866,10 @@ void M_ParseMenuDefs()
 			else if (sc.Compare("OPTIONVALUE"))
 			{
 				ParseOptionValue(sc);
+			}
+			else if (sc.Compare("OPTIONSTRING"))
+			{
+				ParseOptionString(sc);
 			}
 			else if (sc.Compare("OPTIONMENUSETTINGS"))
 			{

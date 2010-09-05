@@ -1055,3 +1055,218 @@ OptionMenu "CompatibilityOptions"
 	
 	Option "Interpolate monster movement",	"nomonsterinterpolation", "NoYes"
 }
+
+/*=======================================
+ *
+ * Sound Options Menu
+ *
+ *=======================================*/
+ 
+OptionValue SampleRates
+{
+	0,		"Default"
+	4000,	"4000 Hz"
+	8000,	"8000 Hz"
+	11025,	"11025 Hz"
+	22050,	"22050 Hz"
+	32000,	"32000 Hz"
+	44100,	"44100 Hz"
+	48000,	"48000 Hz"
+}
+
+
+OptionValue BufferSizes
+{
+	   0, "Default"
+	  64, "64 samples"
+	 128, "128 samples"
+	 256, "256 samples"
+	 512, "512 samples"
+	1024, "1024 samples"
+	2048, "2048 samples"
+	4096, "4096 samples"
+}
+
+
+OptionValue BufferCounts
+{
+	   0, "Default"
+	   2, "2"
+	   3, "3"
+	   4, "4"
+	   5, "5"
+	   6, "6"
+	   7, "7"
+	   8, "8"
+	   9, "9"
+	  10, "10"
+	  11, "11"
+	  12, "12"
+}
+
+
+OptionString SoundOutputsWindows
+{
+	"Default",		"Default"
+	"DirectSound",	"DirectSound"
+	"WASAPI",		"Vista WASAPI"
+	"ASIO",			"ASIO"
+	"WaveOut",		"WaveOut"
+	"OpenAL",		"OpenAL (very beta)"
+	"No sound",		"No sound"
+}
+
+
+OptionString SoundOutputsUnix
+{
+	"Default",		"Default"
+	"OSS",			"OSS"
+	"ALSA",			"ALSA"
+	"SDL",			"SDL"
+	"ESD",			"ESD"
+	"No sound",		"No sound"
+}
+
+OptionString SoundOutputsMac
+{
+	"Sound Manager",	"Sound Manager"
+	"Core Audio",		"Core Audio"
+	"No sound",			"No sound"
+}
+
+OptionString OutputFormats
+{
+	"PCM-8",		"8-bit"
+	"PCM-16",		"16-bit"
+	"PCM-24",		"24-bit"
+	"PCM-32",		"32-bit"
+	"PCM-Float",	"32-bit float"
+}
+
+
+OptionString SpeakerModes
+{
+	"Auto",		"Auto"
+	"Mono",		"Mono"
+	"Stereo",	"Stereo"
+	"Prologic",	"Dolby Prologic Decoder"
+	"Quad",		"Quad"
+	"Surround",	"5 speakers"
+	"5.1",		"5.1 speakers"
+	"7.1",		"7.1 speakers"
+}
+
+
+OptionString Resamplers
+{
+	"NoInterp",		"No interpolation"
+	"Linear",		"Linear"
+	"Cubic",		"Cubic"
+	"Spline",		"Spline"
+}
+
+OptionValue MidiDevices
+{
+	// filled in by the sound code
+}
+
+OptionMenu SoundOptions
+{
+	Title "SOUND OPTIONS"
+	Slider "Sounds volume",		"snd_sfxvolume", 0, 1, 0.05
+	Slider "Menu volume",		"snd_menuvolume", 0, 1, 0.05
+	Slider "Music volume",		"snd_musicvolume", 0, 1, 0.05
+	Option "MIDI device",		"snd_mididevice", "MidiDevices"
+	StaticText " "
+	Option "Underwater reverb",	"snd_waterreverb", "OnOff"
+	Slider "Underwater cutoff",	"snd_waterlp", 0, 2000, 50
+	Option "Randomize pitches",	"snd_pitched", "OnOff"
+	Slider "Sound channels",	"snd_channels", 8, 256, 8
+	StaticText " "
+	Command "Restart sound",	"snd_reset"
+	StaticText " "
+	IfOption(Windows)
+	{
+		Option "Output system",		"snd_output", "SoundOutputsWindows"
+	}
+	IfOption(Unix)
+	{
+		Option "Output system",		"snd_output", "SoundOutputsUnix"
+	}
+	IfOption(Mac)
+	{
+		Option "Output system",		"snd_output", "SoundOutputsMac"
+	}
+	Option "Output format",		"snd_output_format", "OutputFormats"
+	Option "Speaker mode",		"snd_speakermode", "SpeakerModes"
+	Option "Resampler",			"snd_resampler", "Resamplers"
+	Option "HRTF filter",		"snd_hrtf", "OnOff"
+
+	StaticText " "
+	Submenu "Advanced options",			"AdvSoundOptions"
+	Submenu "Module replayer options",	"ModReplayerOptions"
+}
+
+/*=======================================
+ *
+ * Advanced Sound Options Menu
+ *
+ *=======================================*/
+
+OptionMenu AdvSoundOptions
+{
+	Title "ADVANCED SOUND OPTIONS"
+	Option "Sample rate",			"snd_samplerate", "SampleRates"
+	Option "Buffer size",			"snd_buffersize", "BufferSizes"
+	Option "Buffer count",			"snd_buffercount", "BufferCounts"
+	StaticText " "
+	StaticText "OPL Synthesis",	1
+	Option "Only emulate one OPL chip", "opl_onechip", "OnOff"
+}
+
+/*=======================================
+ *
+ * Module Replayer Options Menu
+ *
+ *=======================================*/
+
+OptionValue ModReplayers
+{
+	0.0, "FMOD"
+	1.0, "foo_dumb"
+}
+
+
+OptionValue ModInterpolations
+{
+	0.0, "None"
+	1.0, "Linear"
+	2.0, "Cubic"
+}
+
+
+OptionValue ModVolumeRamps
+{
+	0.0, "None"
+	1.0, "Logarithmic"
+	2.0, "Linear"
+	3.0, "XM=lin, else none"
+	4.0, "XM=lin, else log"
+}
+
+
+OptionMenu ModReplayerOptions
+{
+	Title "MODULE REPLAYER OPTIONS"
+	Option "Replayer engine",		"mod_dumb", "ModReplayers"
+	StaticText " "
+	Option "Sample rate",			"mod_samplerate", "SampleRates"
+	Option "Interpolation",			"mod_interp", "ModInterpolations"
+	Option "Volume ramping",		"mod_volramp", "ModVolumeRamps"
+	StaticText " "
+	Option "Chip-o-matic",			"mod_autochip", "OnOff"
+	// TODO if the menu system is ever rewritten: Provide a decent
+	// mechanism to edit the chip-o-matic settings like you can with
+	// the foo_dumb preferences in foobar2000.
+}
+

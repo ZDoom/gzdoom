@@ -41,12 +41,8 @@ void M_ScreenShot (const char *filename);
 void M_LoadDefaults ();
 
 bool M_SaveDefaults (const char *filename);
-#pragma message("Disabled for new menus ")
-#if 0
 void M_SaveCustomKeys (FConfigFile *config, char *section, char *subsection, size_t sublen);
-#else
-inline void M_SaveCustomKeys (FConfigFile *config, char *section, char *subsection, size_t sublen) {}
-#endif
+
 
 // Prepends ~/.zdoom to path
 FString GetUserFile (const char *path);

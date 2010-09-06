@@ -51,8 +51,6 @@
 
 #include "optionmenuitems.h"
 
-static void InitCrosshairsList();
-
 MenuDescriptorList MenuDescriptors;
 static FListMenuDescriptor DefaultListMenuSettings;	// contains common settings for all list menus
 static FOptionMenuDescriptor DefaultOptionMenuSettings;	// contains common settings for all Option menus
@@ -838,6 +836,7 @@ static void ParseOptionMenu(FScanner &sc)
 	desc->CalcIndent();
 }
 
+
 //=============================================================================
 //
 //
@@ -890,7 +889,72 @@ void M_ParseMenuDefs()
 			}
 		}
 	}
+}
 
+//=============================================================================
+//
+// Reads any XHAIRS lumps for the names of crosshairs and
+// adds them to the display options menu.
+//
+//=============================================================================
+
+static void InitCrosshairsList()
+{
+	int lastlump, lump;
+
+	lastlump = 0;
+
+	FOptionValues **opt = OptionValues.CheckKey(NAME_Crosshairs);
+	if (opt == NULL) 
+	{
+		return;	// no crosshair value list present. No need to go on.
+	}
+
+	FOptionValues::Pair *pair = &(*opt)->mValues[(*opt)->mValues.Reserve(1)];
+	pair->Value = 0;
+	pair->Text = "None";
+
+	while ((lump = Wads.FindLump("XHAIRS", &lastlump)) != -1)
+	{
+		FScanner sc(lump);
+		while (sc.GetNumber())
+		{
+			FOptionValues::Pair value;
+			value.Value = sc.Number;
+			sc.MustGetString();
+			value.Text = sc.String;
+			if (value.Value != 0)
+			{ // Check if it already exists. If not, add it.
+				unsigned int i;
+
+				for (i = 1; i < (*opt)->mValues.Size(); ++i)
+				{
+					if ((*opt)->mValues[i].Value == value.Value)
+					{
+						break;
+					}
+				}
+				if (i < (*opt)->mValues.Size())
+				{
+					(*opt)->mValues[i].Text = value.Text;
+				}
+				else
+				{
+					(*opt)->mValues.Push(value);
+				}
+			}
+		}
+	}
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+static void InitStartMenus()
+{
 	// Build episode menu
 	FMenuDescriptor **desc = MenuDescriptors.CheckKey(NAME_Episodemenu);
 	if (desc != NULL)
@@ -986,67 +1050,56 @@ void M_ParseMenuDefs()
 
 		}
 	}
+}
+
+//=============================================================================
+//
+// With the current workings of the menu system this cannot be done any longer
+// from within the respective CCMDs.
+//
+//=============================================================================
+
+static void InitKeySections()
+{
+	FMenuDescriptor **desc = MenuDescriptors.CheckKey(NAME_CustomizeControls);
+	if (desc != NULL)
+	{
+		if ((*desc)->mType == MDESC_OptionsMenu)
+		{
+			FOptionMenuDescriptor *menu = static_cast<FOptionMenuDescriptor*>(*desc);
+
+			for (unsigned i = 0; i < KeySections.Size(); i++)
+			{
+				FKeySection *sect = &KeySections[i];
+				FOptionMenuItemStaticText *item = new FOptionMenuItemStaticText(sect->mTitle, true);
+				menu->mItems.Push(item);
+				for (unsigned j = 0; j < sect->mActions.Size(); j++)
+				{
+					FKeyAction *act = &sect->mActions[j];
+					FOptionMenuItemControl *item = new FOptionMenuItemControl(act->mTitle, act->mAction, &Bindings);
+					menu->mItems.Push(item);
+				}
+			}
+		}
+	}
+}
+
+//=============================================================================
+//
+// Special menus will be created once all engine data is loaded
+//
+//=============================================================================
+
+void M_CreateMenus()
+{
+	InitStartMenus();
 	InitCrosshairsList();
+	InitKeySections();
 
 	FOptionValues **opt = OptionValues.CheckKey(NAME_Mididevices);
 	if (opt != NULL) 
 	{
 		I_BuildMIDIMenuList(*opt);
-		return;	// no crosshair value list present. No need to go on.
-	}
-
-
-}
-
-
-// Reads any XHAIRS lumps for the names of crosshairs and
-// adds them to the display options menu.
-static void InitCrosshairsList()
-{
-	int lastlump, lump;
-
-	lastlump = 0;
-
-	FOptionValues **opt = OptionValues.CheckKey(NAME_Crosshairs);
-	if (opt == NULL) 
-	{
-		return;	// no crosshair value list present. No need to go on.
-	}
-
-	FOptionValues::Pair *pair = &(*opt)->mValues[(*opt)->mValues.Reserve(1)];
-	pair->Value = 0;
-	pair->Text = "None";
-
-	while ((lump = Wads.FindLump("XHAIRS", &lastlump)) != -1)
-	{
-		FScanner sc(lump);
-		while (sc.GetNumber())
-		{
-			FOptionValues::Pair value;
-			value.Value = sc.Number;
-			sc.MustGetString();
-			value.Text = sc.String;
-			if (value.Value != 0)
-			{ // Check if it already exists. If not, add it.
-				unsigned int i;
-
-				for (i = 1; i < (*opt)->mValues.Size(); ++i)
-				{
-					if ((*opt)->mValues[i].Value == value.Value)
-					{
-						break;
-					}
-				}
-				if (i < (*opt)->mValues.Size())
-				{
-					(*opt)->mValues[i].Text = value.Text;
-				}
-				else
-				{
-					(*opt)->mValues.Push(value);
-				}
-			}
-		}
 	}
 }
 

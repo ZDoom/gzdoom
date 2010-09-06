@@ -665,6 +665,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\keysections.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\src\lumpconfigfile.cpp"
 				>
 			</File>

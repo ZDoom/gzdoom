@@ -85,8 +85,6 @@ CVAR(String, screenshot_type, "png", CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 CVAR(String, screenshot_dir, "", CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 EXTERN_CVAR(Bool, longsavemessages);
 
-extern void FreeKeySections();
-
 static long ParseCommandLine (const char *args, int *argc, char **argv);
 
 //
@@ -420,10 +418,6 @@ void M_LoadDefaults ()
 {
 	GameConfig = new FGameConfigFile;
 	GameConfig->DoGlobalSetup ();
-#pragma message("Disabled for new menus ")
-#if 0
-	atterm (FreeKeySections);
-#endif
 	atterm (M_SaveDefaultsFinal);
 }
 

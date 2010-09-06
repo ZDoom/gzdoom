@@ -591,6 +591,7 @@ void M_ClearMenus ()
 void M_Init (void) 
 {
 	M_ParseMenuDefs();
+	M_CreateMenus();
 }
 
 

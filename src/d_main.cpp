@@ -2097,6 +2097,7 @@ void D_DoomMain (void)
 	// [GRB] Initialize player class list
 	SetupPlayerClasses ();
 
+
 	// [RH] Load custom key and weapon settings from WADs
 	D_LoadWadSettings ();
 
@@ -2166,7 +2167,7 @@ void D_DoomMain (void)
 	bglobal.spawn_tries = 0;
 	bglobal.wanted_botnum = bglobal.getspawned.Size();
 
-	Printf ("M_Init: Init miscellaneous info.\n");
+	Printf ("M_Init: Init menus.\n");
 	M_Init ();
 
 	Printf ("P_Init: Init Playloop state.\n");

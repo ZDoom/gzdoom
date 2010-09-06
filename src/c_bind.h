@@ -96,4 +96,18 @@ void C_UnbindAll ();
 
 extern const char *KeyNames[];
 
+struct FKeyAction
+{
+	FString mTitle;
+	FString mAction;
+};
+
+struct FKeySection
+{
+	FString mTitle;
+	FString mSection;
+	TArray<FKeyAction> mActions;
+};
+extern TArray<FKeySection> KeySections;
+
 #endif //__C_BINDINGS_H__

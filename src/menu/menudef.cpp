@@ -48,6 +48,7 @@
 #include "d_event.h"
 #include "d_gui.h"
 #include "i_music.h"
+#include "m_joy.h"
 
 #include "optionmenuitems.h"
 
@@ -1071,12 +1072,14 @@ static void InitKeySections()
 			for (unsigned i = 0; i < KeySections.Size(); i++)
 			{
 				FKeySection *sect = &KeySections[i];
-				FOptionMenuItemStaticText *item = new FOptionMenuItemStaticText(sect->mTitle, true);
+				FOptionMenuItem *item = new FOptionMenuItemStaticText(" ", false);
+				menu->mItems.Push(item);
+				item = new FOptionMenuItemStaticText(sect->mTitle, true);
 				menu->mItems.Push(item);
 				for (unsigned j = 0; j < sect->mActions.Size(); j++)
 				{
 					FKeyAction *act = &sect->mActions[j];
-					FOptionMenuItemControl *item = new FOptionMenuItemControl(act->mTitle, act->mAction, &Bindings);
+					item = new FOptionMenuItemControl(act->mTitle, act->mAction, &Bindings);
 					menu->mItems.Push(item);
 				}
 			}
@@ -1095,6 +1098,7 @@ void M_CreateMenus()
 	InitStartMenus();
 	InitCrosshairsList();
 	InitKeySections();
+	UpdateJoystickMenu(NULL);
 
 	FOptionValues **opt = OptionValues.CheckKey(NAME_Mididevices);
 	if (opt != NULL) 

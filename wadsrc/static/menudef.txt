@@ -523,7 +523,6 @@ OptionMenu "JoystickOptions"
 {
 	Title "CONTROLLER OPTIONS"
 	// Will be filled in by joystick code.
-	Submenu "Delete me",		"Nothing"	// only to prevent crashes when going to this menu until it's fully implemented.
 }
 
 OptionValue "JoyAxisMapNames"
@@ -542,19 +541,11 @@ OptionValue "Inversion"
 	1, "Inverted"
 }
 
-OptionMenu "JoystickConfig"
-{
-	Title "CONFIGURE CONTROLLER"
-	// Will be filled in by joystick code.
-	Submenu "Delete me",		"Nothing"	// only to prevent crashes when going to this menu until it's fully implemented.
-}
-
-
 OptionMenu "JoystickConfigMenu"
 {
 	Title "CONFIGURE CONTROLLER"
+	Class "JoystickConfigMenu"
 	// Will be filled in by joystick code.
-	Submenu "Delete me",		"Nothing"	// only to prevent crashes when going to this menu until it's fully implemented.
 }
 
 

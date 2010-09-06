@@ -236,13 +236,6 @@ protected:
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-#pragma message("Disabled for new menus ")
-#if 0
-extern void UpdateJoystickMenu();
-#else
-void UpdateJoystickMenu() {}
-#endif
-
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------

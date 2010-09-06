@@ -25,8 +25,6 @@
 
 #include "c_cvars.h"
 
-struct IJoystickConfig;
-inline void UpdateJoystickMenu(IJoystickConfig *selected) {}
 inline void M_InitVideoModesMenu (void) {}
 inline void M_RefreshModesList () {}
 

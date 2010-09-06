@@ -2084,9 +2084,12 @@ class CommandDrawBar : public SBarInfoCommand
 			
 			FTexture *fg = statusBar->Images[foreground];
 			FTexture *bg = (background != -1) ? statusBar->Images[background] : NULL;
-		
+
+			fixed_t value = drawValue;
 			if(border != 0)
 			{
+				value = FRACUNIT - value; //invert since the new drawing method requires drawing the bg on the fg.
+
 				//Draw the whole foreground
 				statusBar->DrawGraphic(fg, this->x, this->y, block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets());
 			}
@@ -2103,7 +2106,7 @@ class CommandDrawBar : public SBarInfoCommand
 			fixed_t clip[4] = {0, 0, 0, 0};
 		
 			fixed_t sizeOfImage = (horizontal ? fg->GetScaledWidth()-border*2 : fg->GetScaledHeight()-border*2)<<FRACBITS;
-			clip[(!horizontal)|((horizontal ? !reverse : reverse)<<1)] = sizeOfImage - FixedMul(sizeOfImage, drawValue);
+			clip[(!horizontal)|((horizontal ? !reverse : reverse)<<1)] = sizeOfImage - FixedMul(sizeOfImage, value);
 			// Draw background
 			if(border != 0)
 			{
@@ -2360,17 +2363,13 @@ class CommandDrawBar : public SBarInfoCommand
 				}
 				default: return;
 			}
-		
-			if(border != 0)
-				value = max - value; //invert since the new drawing method requires drawing the bg on the fg.
+
 			if(max != 0 && value > 0)
 			{
 				value = (value << FRACBITS) / max;
 				if(value > FRACUNIT)
 					value = FRACUNIT;
 			}
-			else if(border != 0 && max == 0 && value <= 0)
-				value = FRACUNIT;
 			else
 				value = 0;
 			if(interpolationSpeed != 0 && (!hudChanged || level.time == 1))

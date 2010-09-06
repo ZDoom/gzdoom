@@ -123,20 +123,20 @@ public:
 
 //=============================================================================
 //
-// Change a CVAR, action is the CVAR name
+// Base class for option lists
 //
 //=============================================================================
 
-class FOptionMenuItemOption : public FOptionMenuItem
+class FOptionMenuItemOptionBase : public FOptionMenuItem
 {
+protected:
 	// action is a CVAR
 	FOptionValues *mValues;
-	FBaseCVar *mCVar;
 	FBoolCVar *mGrayCheck;
 	int mCenter;
 public:
 
-	FOptionMenuItemOption(const char *label, const char *menu, const char *values, const char *graycheck, int center)
+	FOptionMenuItemOptionBase(const char *label, const char *menu, const char *values, const char *graycheck, int center)
 		: FOptionMenuItem(label, menu)
 	{
 		FOptionValues **opt = OptionValues.CheckKey(values);
@@ -151,6 +151,85 @@ public:
 		mGrayCheck = (FBoolCVar*)FindCVar(graycheck, NULL);
 		if (mGrayCheck != NULL && mGrayCheck->GetRealType() != CVAR_Bool) mGrayCheck = NULL;
 		mCenter = center;
+	}
+
+	//=============================================================================
+	virtual int GetSelection() = 0;
+	virtual void SetSelection(int Selection) = 0;
+
+	//=============================================================================
+	int Draw(FOptionMenuDescriptor *desc, int y, int indent)
+	{
+		bool grayed = mGrayCheck != NULL && !(**mGrayCheck);
+
+		if (mCenter)
+		{
+			indent = (screen->GetWidth() / 2);
+		}
+		drawLabel(indent, y, OptionSettings.mFontColor, grayed);
+
+		int overlay = grayed? MAKEARGB(96,48,0,0) : 0;
+		const char *text;
+		int Selection = GetSelection();
+		if (Selection < 0)
+		{
+			text = "Unknown";
+		}
+		else
+		{
+			text = mValues->mValues[Selection].Text;
+		}
+		screen->DrawText (SmallFont, OptionSettings.mFontColorValue, indent + CURSORSPACE, y, 
+			text, DTA_CleanNoMove_1, true, DTA_ColorOverlay, overlay, TAG_DONE);
+		return indent;
+	}
+
+	//=============================================================================
+	bool MenuEvent (int mkey, bool fromcontroller)
+	{
+		if (mValues->mValues.Size() > 0)
+		{
+			int Selection = GetSelection();
+			if (mkey == MKEY_Left)
+			{
+				if (Selection == -1) Selection = 0;
+				else if (--Selection < 0) Selection = mValues->mValues.Size()-1;
+			}
+			else if (mkey == MKEY_Right || mkey == MKEY_Enter)
+			{
+				if (++Selection >= (int)mValues->mValues.Size()) Selection = 0;
+			}
+			else
+			{
+				return FOptionMenuItem::MenuEvent(mkey, fromcontroller);
+			}
+			SetSelection(Selection);
+			S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
+		}
+		return true;
+	}
+
+	bool Selectable()
+	{
+		return !(mGrayCheck != NULL && !(**mGrayCheck));
+	}
+};
+
+//=============================================================================
+//
+// Change a CVAR, action is the CVAR name
+//
+//=============================================================================
+
+class FOptionMenuItemOption : public FOptionMenuItemOptionBase
+{
+	// action is a CVAR
+	FBaseCVar *mCVar;
+public:
+
+	FOptionMenuItemOption(const char *label, const char *menu, const char *values, const char *graycheck, int center)
+		: FOptionMenuItemOptionBase(label, menu, values, graycheck, center)
+	{
 		mCVar = FindCVar(mAction, NULL);
 	}
 
@@ -188,56 +267,11 @@ public:
 		return Selection;
 	}
 
-	//=============================================================================
-	int Draw(FOptionMenuDescriptor *desc, int y, int indent)
-	{
-		bool grayed = mGrayCheck != NULL && !(**mGrayCheck);
-
-		if (mCenter)
-		{
-			indent = (screen->GetWidth() / 2);
-		}
-		drawLabel(indent, y, OptionSettings.mFontColor, grayed);
-
-		if (mValues != NULL && mCVar != NULL)
-		{
-			int overlay = grayed? MAKEARGB(96,48,0,0) : 0;
-			const char *text;
-			int Selection = GetSelection();
-			if (Selection < 0)
-			{
-				text = "Unknown";
-			}
-			else
-			{
-				text = mValues->mValues[Selection].Text;
-			}
-			screen->DrawText (SmallFont, OptionSettings.mFontColorValue, indent + CURSORSPACE, y, 
-				text, DTA_CleanNoMove_1, true, DTA_ColorOverlay, overlay, TAG_DONE);
-		}
-		return indent;
-	}
-
-	//=============================================================================
-	bool MenuEvent (int mkey, bool fromcontroller)
+	void SetSelection(int Selection)
 	{
 		UCVarValue value;
-		if (mValues != NULL && mCVar != NULL)
+		if (mValues != NULL && mCVar != NULL && mValues->mValues.Size() > 0)
 		{
-			int Selection = GetSelection();
-			if (mkey == MKEY_Left)
-			{
-				if (Selection == -1) Selection = 0;
-				else if (--Selection < 0) Selection = mValues->mValues.Size()-1;
-			}
-			else if (mkey == MKEY_Right || mkey == MKEY_Enter)
-			{
-				if (++Selection >= (int)mValues->mValues.Size()) Selection = 0;
-			}
-			else
-			{
-				return FOptionMenuItem::MenuEvent(mkey, fromcontroller);
-			}
 			if (mValues->mValues[0].TextValue.IsEmpty())
 			{
 				value.Float = (float)mValues->mValues[Selection].Value;
@@ -249,15 +283,7 @@ public:
 				mCVar->SetGenericRep (value, CVAR_String);
 				mValues->mValues[Selection].TextValue.UnlockBuffer();
 			}
-			S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
-			return true;
 		}
-		return false;
-	}
-
-	bool Selectable()
-	{
-		return !(mGrayCheck != NULL && !(**mGrayCheck));
 	}
 };
 
@@ -479,94 +505,120 @@ public:
 //
 //=============================================================================
 
-class FOptionMenuSliderItem : public FOptionMenuItem
+class FOptionMenuSliderBase : public FOptionMenuItem
 {
 	// action is a CVAR
-	float mMin, mMax, mStep;
-	float mValue;
+	double mMin, mMax, mStep;
 	int mShowValue;
-	FBaseCVar *mCVar;
-	float *mPVal;
 public:
-	FOptionMenuSliderItem(const char *label, const char *menu, double min, double max, double step, int showval)
+	FOptionMenuSliderBase(const char *label, double min, double max, double step, int showval)
 		: FOptionMenuItem(label, NAME_None)
 	{
-		mMin = (float)min;
-		mMax = (float)max;
-		mStep = (float)step;
+		mMin = min;
+		mMax = max;
+		mStep = step;
 		mShowValue = showval;
-		mCVar = FindCVar(menu, NULL);
-		mPVal = NULL;
 	}
 
-	FOptionMenuSliderItem(const char *label, float *pVal, double min, double max, double step, int showval)
-		: FOptionMenuItem(label, NAME_None)
-	{
-		mMin = (float)min;
-		mMax = (float)max;
-		mStep = (float)step;
-		mShowValue = showval;
-		mPVal = pVal;
-		mCVar = NULL;
-	}
+	virtual double GetValue() = 0;
+	virtual void SetValue(double val) = 0;
 
 	//=============================================================================
 	int Draw(FOptionMenuDescriptor *desc, int y, int indent)
 	{
 		drawLabel(indent, y, OptionSettings.mFontColor);
-
-		UCVarValue value;
-
-		if (mCVar != NULL)
-		{
-			value = mCVar->GetGenericRep(CVAR_Float);
-		}
-		else if (mPVal != NULL)
-		{
-			value.Float = *mPVal;		
-		}
-		else return indent;
-		M_DrawSlider (indent + CURSORSPACE, y + OptionSettings.mLabelOffset, mMin, mMax, value.Float, mShowValue);
+		M_DrawSlider (indent + CURSORSPACE, y + OptionSettings.mLabelOffset, mMin, mMax, GetValue(), mShowValue);
 		return indent;
 	}
 
 	//=============================================================================
 	bool MenuEvent (int mkey, bool fromcontroller)
 	{
-		UCVarValue value;
+		double value = GetValue();
 
-		if (mCVar != NULL || mPVal != NULL)
+		if (mkey == MKEY_Left)
 		{
-			if (mCVar != NULL)
-			{
-				value = mCVar->GetGenericRep(CVAR_Float);
-			}
-			else if (mPVal != NULL)
-			{
-				value.Float = *mPVal;		
-			}
-
-			if (mkey == MKEY_Left)
-			{
-				value.Float -= mStep;
-			}
-			else if (mkey == MKEY_Right)
-			{
-				value.Float += mStep;
-			}
-			else
-			{
-				return FOptionMenuItem::MenuEvent(mkey, fromcontroller);
-			}
-			value.Float = clamp(value.Float, mMin, mMax);
-			if (mCVar != NULL) mCVar->SetGenericRep (value, CVAR_Float);
-			else if (mPVal != NULL) *mPVal = value.Float;
-			S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
-			return true;
+			value -= mStep;
 		}
-		return false;
+		else if (mkey == MKEY_Right)
+		{
+			value += mStep;
+		}
+		else
+		{
+			return FOptionMenuItem::MenuEvent(mkey, fromcontroller);
+		}
+		SetValue(clamp(value, mMin, mMax));
+		S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
+		return true;
+	}
+};
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+class FOptionMenuSliderCVar : public FOptionMenuSliderBase
+{
+	FBaseCVar *mCVar;
+public:
+	FOptionMenuSliderCVar(const char *label, const char *menu, double min, double max, double step, int showval)
+		: FOptionMenuSliderBase(label, min, max, step, showval)
+	{
+		mCVar = FindCVar(menu, NULL);
 	}
 
+	double GetValue()
+	{
+		if (mCVar != NULL)
+		{
+			return mCVar->GetGenericRep(CVAR_Float).Float;
+		}
+		else
+		{
+			return 0;
+		}
+	}
+
+	void SetValue(double val)
+	{
+		if (mCVar != NULL)
+		{
+			UCVarValue value;
+			value.Float = (float)val;
+			mCVar->SetGenericRep(value, CVAR_Float);
+		}
+	}
+};
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+class FOptionMenuSliderVar : public FOptionMenuSliderBase
+{
+	float *mPVal;
+public:
+
+	FOptionMenuSliderVar(const char *label, float *pVal, double min, double max, double step, int showval)
+		: FOptionMenuSliderBase(label, min, max, step, showval)
+	{
+		mPVal = pVal;
+	}
+
+	double GetValue()
+	{
+		return *mPVal;
+	}
+
+	void SetValue(double val)
+	{
+		*mPVal = (float)val;
+	}
 };
 
 //=============================================================================

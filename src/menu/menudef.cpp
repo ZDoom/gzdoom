@@ -796,7 +796,7 @@ static void ParseOptionMenuBody(FScanner &sc, FOptionMenuDescriptor *desc)
 				sc.MustGetNumber();
 				showvalue = !!sc.Number;
 			}
-			FOptionMenuItem *it = new FOptionMenuSliderItem(text, action, min, max, step, showvalue? 1:-1);
+			FOptionMenuItem *it = new FOptionMenuSliderCVar(text, action, min, max, step, showvalue? 1:-1);
 			desc->mItems.Push(it);
 		}
 		else

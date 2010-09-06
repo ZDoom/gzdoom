@@ -1203,7 +1203,7 @@ UCVarValue FMaskCVar::GetFavoriteRepDefault (ECVarType *type) const
 
 void FMaskCVar::SetGenericRepDefault (UCVarValue value, ECVarType type)
 {
-	int val = ToInt(value, type);
+	int val = ToInt(value, type) << BitNum;
 	ECVarType dummy;
 	UCVarValue def;
 	def = ValueVar.GetFavoriteRepDefault (&dummy);
@@ -1214,7 +1214,7 @@ void FMaskCVar::SetGenericRepDefault (UCVarValue value, ECVarType type)
 
 void FMaskCVar::DoSet (UCVarValue value, ECVarType type)
 {
-	int val = ToInt(value, type);
+	int val = ToInt(value, type) << BitNum;
 
 	// Server cvars that get changed by this need to use a special message, because
 	// changes are not processed until the next net update. This is a problem with

@@ -83,9 +83,9 @@ public:
 		desc->mItems.Resize(mStartItem+8);
 		desc->mItems[mStartItem+0] = new FOptionMenuItemStaticText(name, false);
 		desc->mItems[mStartItem+1] = new FOptionMenuItemStaticText(" ", false);
-		desc->mItems[mStartItem+2] = new FOptionMenuSliderItem("Red", &mRed, 0, 255, 15, 0);
-		desc->mItems[mStartItem+3] = new FOptionMenuSliderItem("Green", &mGreen, 0, 255, 15, 0);
-		desc->mItems[mStartItem+4] = new FOptionMenuSliderItem("Blue", &mBlue, 0, 255, 15, 0);
+		desc->mItems[mStartItem+2] = new FOptionMenuSliderVar("Red", &mRed, 0, 255, 15, 0);
+		desc->mItems[mStartItem+3] = new FOptionMenuSliderVar("Green", &mGreen, 0, 255, 15, 0);
+		desc->mItems[mStartItem+4] = new FOptionMenuSliderVar("Blue", &mBlue, 0, 255, 15, 0);
 		desc->mItems[mStartItem+5] = new FOptionMenuItemStaticText(" ", false);
 		desc->mItems[mStartItem+6] = new FOptionMenuItemCommand("Undo changes", "undocolorpic");
 		desc->mItems[mStartItem+7] = new FOptionMenuItemStaticText(" ", false);

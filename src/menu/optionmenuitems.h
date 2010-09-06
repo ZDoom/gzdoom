@@ -158,15 +158,30 @@ public:
 	int GetSelection()
 	{
 		int Selection = -1;
-		if (mValues != NULL && mCVar != NULL)
+		if (mValues != NULL && mCVar != NULL && mValues->mValues.Size() > 0)
 		{
-			UCVarValue cv = mCVar->GetGenericRep(CVAR_Float);
-			for(unsigned i=0;i<mValues->mValues.Size(); i++)
+			if (mValues->mValues[0].TextValue.IsEmpty())
 			{
-				if (fabs(cv.Float - mValues->mValues[i].Value) < FLT_EPSILON)
+				UCVarValue cv = mCVar->GetGenericRep(CVAR_Float);
+				for(unsigned i=0;i<mValues->mValues.Size(); i++)
 				{
-					Selection = i;
-					break;
+					if (fabs(cv.Float - mValues->mValues[i].Value) < FLT_EPSILON)
+					{
+						Selection = i;
+						break;
+					}
+				}
+			}
+			else
+			{
+				UCVarValue cv = mCVar->GetGenericRep(CVAR_String);
+				for(unsigned i=0;i<mValues->mValues.Size(); i++)
+				{
+					if (mValues->mValues[i].TextValue.CompareNoCase(cv.String) == 0)
+					{
+						Selection = i;
+						break;
+					}
 				}
 			}
 		}
@@ -223,8 +238,17 @@ public:
 			{
 				return FOptionMenuItem::MenuEvent(mkey, fromcontroller);
 			}
-			value.Float = (float)mValues->mValues[Selection].Value;
-			mCVar->SetGenericRep (value, CVAR_Float);
+			if (mValues->mValues[0].TextValue.IsEmpty())
+			{
+				value.Float = (float)mValues->mValues[Selection].Value;
+				mCVar->SetGenericRep (value, CVAR_Float);
+			}
+			else
+			{
+				value.String = mValues->mValues[Selection].TextValue.LockBuffer();
+				mCVar->SetGenericRep (value, CVAR_String);
+				mValues->mValues[Selection].TextValue.UnlockBuffer();
+			}
 			S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 			return true;
 		}

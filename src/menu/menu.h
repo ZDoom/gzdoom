@@ -83,6 +83,8 @@ struct FMenuDescriptor
 {
 	FName mMenuName;
 	int mType;
+
+	virtual ~FMenuDescriptor() {}
 };
 
 class FListMenuItem;

@@ -49,27 +49,6 @@
 #include "menu/menu.h"
 
 
-CCMD(menuconsole)
-{
-	M_ClearMenus();
-	C_ToggleConsole();
-}
-
-CCMD(reset2defaults)
-{
-	C_SetDefaultBindings ();
-	C_SetCVarsToDefaults ();
-	//UpdateStuff();
-}
-
-CCMD(reset2saved)
-{
-	GameConfig->DoGlobalSetup ();
-	GameConfig->DoGameSetup (GameNames[gameinfo.gametype]);
-	//UpdateStuff();
-}
-
-
 //=============================================================================
 //
 // Draws a string in the console font, scaled to the 8x8 cells

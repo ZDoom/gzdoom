@@ -39,6 +39,7 @@
 #include "d_player.h"
 #include "g_level.h"
 #include "c_console.h"
+#include "c_bind.h"
 #include "s_sound.h"
 #include "p_tick.h"
 #include "g_game.h"
@@ -47,7 +48,9 @@
 #include "v_video.h"
 #include "hu_stuff.h"
 #include "gi.h"
+#include "gameconfigfile.h"
 #include "gstrings.h"
+#include "r_main.h"
 #include "menu/menu.h"
 #include "textures/textures.h"
 
@@ -644,4 +647,143 @@ CCMD (menu_player)
 	M_SetMenu(NAME_Playermenu, -1);
 }
 
+CCMD (menu_messages)
+{
+	M_StartControlPanel (true);
+	M_SetMenu(NAME_MessageOptions, -1);
+}
 
+CCMD (menu_automap)
+{
+	M_StartControlPanel (true);
+	M_SetMenu(NAME_AutomapOptions, -1);
+}
+
+CCMD (menu_scoreboard)
+{
+	M_StartControlPanel (true);
+	M_SetMenu(NAME_ScoreboardOptions, -1);
+}
+
+CCMD (menu_mapcolors)
+{
+	M_StartControlPanel (true);
+	M_SetMenu(NAME_MapColorMenu, -1);
+}
+
+CCMD (menu_keys)
+{
+	M_StartControlPanel (true);
+	M_SetMenu(NAME_CustomizeControls, -1);
+}
+
+CCMD (menu_gameplay)
+{
+	M_StartControlPanel (true);
+	M_SetMenu(NAME_GameplayOptions, -1);
+}
+
+CCMD (menu_compatibility)
+{
+	M_StartControlPanel (true);
+	M_SetMenu(NAME_CompatibilityOptions, -1);
+}
+
+CCMD (menu_mouse)
+{
+	M_StartControlPanel (true);
+	M_SetMenu(NAME_MouseOptions, -1);
+}
+
+CCMD (menu_joystick)
+{
+	M_StartControlPanel (true);
+	M_SetMenu(NAME_JoystickOptions, -1);
+}
+
+CCMD (menu_sound)
+{
+	M_StartControlPanel (true);
+	M_SetMenu(NAME_SoundOptions, -1);
+}
+
+CCMD (menu_advsound)
+{
+	M_StartControlPanel (true);
+	M_SetMenu(NAME_AdvSoundOptions, -1);
+}
+
+CCMD (menu_modreplayer)
+{
+	M_StartControlPanel(true);
+	M_SetMenu(NAME_ModReplayerOptions, -1);
+}
+
+CCMD (menu_display)
+{
+	M_StartControlPanel (true);
+	M_SetMenu(NAME_VideoOptions, -1);
+}
+
+
+CCMD (openmenu)
+{
+	if (argv.argc() < 2)
+	{
+		Printf("Usage: openmenu \"menu_name\"");
+		return;
+	}
+	M_StartControlPanel (true);
+	M_SetMenu(argv[1], -1);
+}
+
+//
+//		Toggle messages on/off
+//
+CCMD (togglemessages)
+{
+	if (show_messages)
+	{
+		Printf (128, "%s\n", GStrings("MSGOFF"));
+		show_messages = false;
+	}
+	else
+	{
+		Printf (128, "%s\n", GStrings("MSGON"));
+		show_messages = true;
+	}
+}
+
+EXTERN_CVAR (Int, screenblocks)
+
+CCMD (sizedown)
+{
+	screenblocks = screenblocks - 1;
+	S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
+}
+
+CCMD (sizeup)
+{
+	screenblocks = screenblocks + 1;
+	S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
+}
+
+CCMD(menuconsole)
+{
+	M_ClearMenus();
+	C_ToggleConsole();
+}
+
+CCMD(reset2defaults)
+{
+	C_SetDefaultBindings ();
+	C_SetCVarsToDefaults ();
+	R_SetViewSize (screenblocks);
+}
+
+CCMD(reset2saved)
+{
+	GameConfig->DoGlobalSetup ();
+	GameConfig->DoGameSetup (GameNames[gameinfo.gametype]);
+	R_SetViewSize (screenblocks);
+}

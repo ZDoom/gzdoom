@@ -863,12 +863,3 @@ CCMD(am_restorecolors)
 	}
 }
 #endif
-
-
-
-/*
-		if (item->type != screenres &&
-			item->type != joymore && (item->type != discrete || item->c.discretecenter != 1))
-*/
-
-		

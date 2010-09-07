@@ -178,18 +178,6 @@ void DMessageBoxMenu::Drawer ()
 		screen->DrawText(SmallFont, CR_UNTRANSLATED, 160, y, GStrings["TXT_YES"], DTA_Clean, true, TAG_DONE);
 		screen->DrawText(SmallFont, CR_UNTRANSLATED, 160, y + fontheight + 1, GStrings["TXT_NO"], DTA_Clean, true, TAG_DONE);
 
-#if 0
-		if ((DMenu::MenuTime%8) < 6)
-		{
-			screen->DrawText(ConFont, CR_RED,
-				(150 - 160) * CleanXfac + screen->GetWidth() / 2,
-				(y + (fontheight + 1) * messageSelection - 100) * CleanYfac + screen->GetHeight() / 2,
-				"\xd",
-				DTA_CellX, 8 * CleanXfac,
-				DTA_CellY, 8 * CleanYfac,
-				TAG_DONE);
-		}
-#else
 		int color = (DMenu::MenuTime%8) < 4? CR_RED:CR_GREY;
 
 		screen->DrawText(ConFont, color,
@@ -199,7 +187,6 @@ void DMessageBoxMenu::Drawer ()
 			DTA_CellX, 8 * CleanXfac,
 			DTA_CellY, 8 * CleanYfac,
 			TAG_DONE);
-#endif
 	}
 }
 

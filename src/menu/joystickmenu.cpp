@@ -418,14 +418,3 @@ void UpdateJoystickMenu(IJoystickConfig *selected)
 	}
 }
 
-
-
-/*
-
-static void JoystickOptions ()
-{
-	UpdateJoystickMenu (NULL);	// class override!
-	M_SwitchMenu (&JoystickMenu);
-}
-
-*/

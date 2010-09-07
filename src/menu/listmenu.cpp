@@ -222,18 +222,9 @@ void FListMenuItem::DrawSelector(int xofs, int yofs, FTextureID tex)
 {
 	if (tex.isNull())
 	{
-#if 0
-		if ((DMenu::MenuTime%8) < 6)
-		{
-			//Use the confont arrow
-			screen->DrawText (ConFont, CR_RED, mXpos + xofs, mYpos + yofs, "\xd",
-				DTA_Clean, true, TAG_DONE);
-		}
-#else
 		int color = (DMenu::MenuTime%8) < 4? CR_RED:CR_GREY;
 		screen->DrawText (ConFont, color, mXpos + xofs, mYpos + yofs, "\xd",
 			DTA_Clean, true, TAG_DONE);
-#endif
 	}
 	else
 	{

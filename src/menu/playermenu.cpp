@@ -632,6 +632,7 @@ void DPlayerMenu::UpdateTranslation()
 
 	if (PlayerClass != NULL)
 	{
+		PlayerSkin = R_FindSkin (skins[PlayerSkin].name, int(PlayerClass - &PlayerClasses[0]));
 		R_GetPlayerTranslation(PlayerColor,
 			P_GetPlayerColorSet(PlayerClass->Type->TypeName, PlayerColorset),
 			&skins[PlayerSkin], translationtables[TRANSLATION_Players][MAXPLAYERS]);
@@ -684,6 +685,7 @@ void DPlayerMenu::SendNewColor (int red, int green, int blue)
 {
 	char command[24];
 
+	players[consoleplayer].userinfo.color = MAKERGB(red, green, blue);
 	mysnprintf (command, countof(command), "color \"%02x %02x %02x\"", red, green, blue);
 	C_DoCommand (command);
 	UpdateTranslation();
@@ -824,6 +826,7 @@ void DPlayerMenu::ColorSetChanged (FListMenuItem *li)
 		if (blue != NULL) blue->Enable(mycolorset == -1);
 
 		char command[24];
+		players[consoleplayer].userinfo.colorset = mycolorset;
 		mysnprintf(command, countof(command), "colorset %d", mycolorset);
 		C_DoCommand(command);
 		UpdateTranslation();
@@ -853,7 +856,9 @@ void DPlayerMenu::ClassChanged (FListMenuItem *li)
 			sel == 0 ? "Random" : PlayerClass->Type->Meta.GetMetaString (APMETA_DisplayName));
 
 		PickPlayerClass();
+		UpdateSkins();
 		UpdateColorsets();
+		UpdateTranslation();
 
 		li = GetItem(NAME_Playerdisplay);
 		if (li != NULL)

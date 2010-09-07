@@ -116,14 +116,8 @@ void DrawHUD();
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-#pragma message("Disabled for new menus ")
-#if 0
 extern void M_RestoreMode ();
 extern void M_SetDefaultMode ();
-#else
-inline void M_RestoreMode () {}
-inline void M_SetDefaultMode () {}
-#endif
 extern void R_ExecuteSetViewSize ();
 extern void G_NewInit ();
 extern void SetupPlayerClasses ();

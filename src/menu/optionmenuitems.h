@@ -35,6 +35,7 @@
 
 void M_DrawConText (int color, int x, int y, const char *str);
 void M_DrawSlider (int x, int y, double min, double max, double cur,int fracdigits);
+void M_SetVideoMode();
 
 
 
@@ -136,6 +137,11 @@ protected:
 	int mCenter;
 public:
 
+	enum
+	{
+		OP_VALUES = 0x11001
+	};
+
 	FOptionMenuItemOptionBase(const char *label, const char *menu, const char *values, const char *graycheck, int center)
 		: FOptionMenuItem(label, menu)
 	{
@@ -152,6 +158,25 @@ public:
 		if (mGrayCheck != NULL && mGrayCheck->GetRealType() != CVAR_Bool) mGrayCheck = NULL;
 		mCenter = center;
 	}
+
+	bool SetString(int i, const char *newtext)
+	{
+		if (i == OP_VALUES) 
+		{
+			FOptionValues **opt = OptionValues.CheckKey(newtext);
+			if (opt != NULL) 
+			{
+				mValues = *opt;
+				int s = GetSelection();
+				if (s >= (int)mValues->mValues.Size()) s = 0;
+				SetSelection(s);	// readjust the CVAR if its value is outside the range now
+				return true;
+			}
+		}
+		return false;
+	}
+
+
 
 	//=============================================================================
 	virtual int GetSelection() = 0;
@@ -477,9 +502,10 @@ public:
 
 	int Draw(FOptionMenuDescriptor *desc, int y, int indent)
 	{
-		int w = SmallFont->StringWidth(mLabel) * CleanXfac_1;
+		const char *txt = mCurrent? (const char*)mAltText : mLabel;
+		int w = SmallFont->StringWidth(txt) * CleanXfac_1;
 		int x = (screen->GetWidth() - w) / 2;
-		screen->DrawText (SmallFont, mColor, x, y, mCurrent? mAltText : mLabel, DTA_CleanNoMove_1, true, TAG_DONE);
+		screen->DrawText (SmallFont, mColor, x, y, txt, DTA_CleanNoMove_1, true, TAG_DONE);
 		return -1;
 	}
 
@@ -488,6 +514,16 @@ public:
 		if (i == 0) 
 		{
 			mCurrent = val;
+			return true;
+		}
+		return false;
+	}
+
+	bool SetString(int i, const char *newtext)
+	{
+		if (i == 0) 
+		{
+			mAltText = newtext;
 			return true;
 		}
 		return false;
@@ -686,6 +722,129 @@ public:
 			}
 		}
 		return false;
+	}
+};
+
+class FOptionMenuScreenResolutionLine : public FOptionMenuItem
+{
+	FString mResTexts[3];
+	int mSelection;
+	int mHighlight;
+	int mMaxValid;
+public:
+
+	enum
+	{
+		SRL_INDEX = 0x30000,
+		SRL_SELECTION = 0x30003,
+		SRL_HIGHLIGHT = 0x30004,
+	};
+
+	FOptionMenuScreenResolutionLine(const char *action)
+		: FOptionMenuItem("", action)
+	{
+		mSelection = 0;
+		mHighlight = -1;
+	}
+
+	bool SetValue(int i, int v)
+	{
+		if (i == SRL_SELECTION)
+		{
+			mSelection = v;
+			return true;
+		}
+		else if (i == SRL_HIGHLIGHT)
+		{
+			mHighlight = v;
+			return true;
+		}
+		return false;
+	}
+
+	bool GetValue(int i, int *v)
+	{
+		if (i == SRL_SELECTION)
+		{
+			*v = mSelection;
+			return true;
+		}
+		return false;
+	}
+
+	bool SetString(int i, const char *newtext)
+	{
+		if (i >= SRL_INDEX && i <= SRL_INDEX+2) 
+		{
+			mResTexts[i-SRL_INDEX] = newtext;
+			if (mResTexts[0].IsEmpty()) mMaxValid = -1;
+			else if (mResTexts[1].IsEmpty()) mMaxValid = 0;
+			else if (mResTexts[2].IsEmpty()) mMaxValid = 1;
+			else mMaxValid = 2;
+			return true;
+		}
+		return false;
+	}
+
+	bool GetString(int i, char *s, int len)
+	{
+		if (i >= SRL_INDEX && i <= SRL_INDEX+2) 
+		{
+			strncpy(s, mResTexts[i-SRL_INDEX], len-1);
+			s[len-1] = 0;
+			return true;
+		}
+		return false;
+	}
+
+	bool MenuEvent (int mkey, bool fromcontroller)
+	{
+		if (mkey == MKEY_Left)
+		{
+			if (--mSelection < 0) mSelection = mMaxValid;
+			S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
+			return true;
+		}
+		else if (mkey == MKEY_Right)
+		{
+			if (++mSelection > mMaxValid) mSelection = 0;
+			S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
+			return true;
+		}
+		else 
+		{
+			return FOptionMenuItem::MenuEvent(mkey, fromcontroller);
+		}
+		return false;
+	}
+
+	bool Activate()
+	{
+		S_Sound (CHAN_VOICE | CHAN_UI, "menu/choose", snd_menuvolume, ATTN_NONE);
+		M_SetVideoMode();
+		return true;
+	}
+
+	int Draw(FOptionMenuDescriptor *desc, int y, int indent)
+	{
+		int colwidth = screen->GetWidth() / 3;
+		EColorRange color;
+
+		for (int x = 0; x < 3; x++)
+		{
+			if (x == mHighlight)
+				color = CR_GOLD;	//ValueColor;
+			else
+				color = CR_BRICK;	//LabelColor;
+
+			screen->DrawText (SmallFont, color, colwidth * x + 20 * CleanXfac_1, y, mResTexts[x], DTA_CleanNoMove_1, true, TAG_DONE);
+		}
+		return colwidth * mSelection + 20 * CleanXfac_1 - CURSORSPACE;
+	}
+
+	bool Selectable()
+	{
+		return mMaxValid >= 0;
 	}
 };
 

@@ -41,7 +41,6 @@
 #include "w_wad.h"
 #include "cmdlib.h"
 #include "s_sound.h"
-#include "m_menu.h"
 #include "v_text.h"
 #include "v_video.h"
 #include "m_random.h"

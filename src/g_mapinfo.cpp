@@ -38,7 +38,6 @@
 #include "g_level.h"
 #include "sc_man.h"
 #include "w_wad.h"
-#include "m_menu.h"
 #include "cmdlib.h"
 #include "v_video.h"
 #include "p_lnspec.h"

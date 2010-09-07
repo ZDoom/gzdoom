@@ -68,7 +68,6 @@
 #include "m_png.h"
 #include "m_random.h"
 #include "version.h"
-#include "m_menu.h"
 #include "statnums.h"
 #include "sbarinfo.h"
 #include "r_translate.h"

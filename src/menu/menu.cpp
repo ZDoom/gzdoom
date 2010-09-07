@@ -725,6 +725,13 @@ CCMD (menu_display)
 	M_SetMenu(NAME_VideoOptions, -1);
 }
 
+CCMD (menu_video)
+{
+	M_StartControlPanel (true);
+	M_SetMenu(NAME_VideoModeMenu, -1);
+}
+
+
 
 CCMD (openmenu)
 {

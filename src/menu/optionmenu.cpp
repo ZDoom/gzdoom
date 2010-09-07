@@ -429,6 +429,23 @@ void FOptionMenuDescriptor::CalcIndent()
 	mIndent =  widest + 4;
 }
 
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+FOptionMenuItem *FOptionMenuDescriptor::GetItem(FName name)
+{
+	for(unsigned i=0;i<mItems.Size(); i++)
+	{
+		FName nm = mItems[i]->GetAction(NULL);
+		if (nm == name) return mItems[i];
+	}
+	return NULL;
+}
+
+
 
 
 class DGameplayMenu : public DOptionMenu

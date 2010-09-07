@@ -86,7 +86,6 @@
 #include "i_input.h"
 #include "v_video.h"
 #include "i_sound.h"
-#include "m_menu.h"
 #include "g_game.h"
 #include "d_main.h"
 #include "d_gui.h"

@@ -697,10 +697,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\m_options.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\src\m_png.cpp"
 				>
 			</File>
@@ -6515,6 +6511,10 @@
 			</File>
 			<File
 				RelativePath=".\src\menu\readthis.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\menu\videomenu.cpp"
 				>
 			</File>
 		</Filter>

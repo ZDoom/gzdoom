@@ -409,7 +409,7 @@ OptionMenu "OptionsMenu"
 	Submenu "Automap Options",			"AutomapOptions"
 	Submenu "Sound Options",			"SoundOptions"
 	Submenu "Display Options",			"VideoOptions"
-	Submenu "Set video mode",			"SetVidMode"
+	Submenu "Set video mode",			"VideoModeMenu"
 	StaticText " "
 	SafeCommand "Reset to defaults",	"reset2defaults"
 	SafeCommand	"Reset to last saved",	"reset2saved"
@@ -1261,5 +1261,60 @@ OptionMenu ModReplayerOptions
 	// TODO if the menu system is ever rewritten: Provide a decent
 	// mechanism to edit the chip-o-matic settings like you can with
 	// the foo_dumb preferences in foobar2000.
+}
+
+/*=======================================
+ *
+ * Video mode menu
+ *
+ *=======================================*/
+
+OptionValue ForceRatios
+{
+	0.0, "Off" 
+	3.0, "4:3" 
+	1.0, "16:9" 
+	2.0, "16:10" 
+	4.0, "5:4"
+}
+OptionValue Ratios
+{
+	0.0, "4:3" 
+	1.0, "16:9" 
+	2.0, "16:10" 
+	3.0, "All"
+}
+OptionValue RatiosTFT
+{
+	0.0, "4:3" 
+	4.0, "5:4" 
+	1.0, "16:9" 
+	2.0, "16:10" 
+	3.0, "All"
+}
+
+OptionMenu VideoModeMenu
+{
+	Title "VIDEO MODE"
+	
+	Option "Fullscreen",			"fullscreen", "YesNo"
+	Option "Aspect ratio",			"menu_screenratios", "Ratios"
+	Option "Force aspect ratio",	"vid_aspect", "ForceRatios"
+	Option "Enable 5:4 aspect ratio","vid_tft", "YesNo"
+	StaticText " "
+	ScreenResolution "res_0"
+	ScreenResolution "res_1"
+	ScreenResolution "res_2"
+	ScreenResolution "res_3"
+	ScreenResolution "res_4"
+	ScreenResolution "res_5"
+	ScreenResolution "res_6"
+	ScreenResolution "res_7"
+	ScreenResolution "res_8"
+	ScreenResolution "res_9"
+	StaticTextSwitchable "Press ENTER to set mode", "", "VMEnterText"
+	StaticText " "
+	StaticTextSwitchable "T to test mode for 5 seconds", "Please wait 5 seconds...", "VMTestText"
+	class VideoModeMenu
 }
 

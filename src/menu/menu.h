@@ -135,6 +135,8 @@ struct FOptionMenuDescriptor : public FMenuDescriptor
 	const PClass *mClass;
 
 	void CalcIndent();
+	FOptionMenuItem *GetItem(FName name);
+
 };
 						
 
@@ -590,6 +592,8 @@ void M_SetMenu(FName menu, int param = -1);
 void M_NotifyNewSave (const char *file, const char *title, bool okForQuicksave);
 void M_StartMessage(const char *message, int messagemode, FName action = NAME_None);
 DMenu *StartPickerMenu(DMenu *parent, const char *name, FColorCVar *cvar);
+void M_RefreshModesList ();
+void M_InitVideoModesMenu ();
 
 
 #endif

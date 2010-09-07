@@ -662,6 +662,11 @@ static void ParseOptionMenuBody(FScanner &sc, FOptionMenuDescriptor *desc)
 			sc.MustGetNumber();
 			desc->mPosition = sc.Number;
 		}
+		else if (sc.Compare("DefaultSelection"))
+		{
+			sc.MustGetNumber();
+			desc->mSelectedItem = sc.Number;
+		}
 		else if (sc.Compare("ScrollTop"))
 		{
 			sc.MustGetNumber();
@@ -798,6 +803,12 @@ static void ParseOptionMenuBody(FScanner &sc, FOptionMenuDescriptor *desc)
 				showvalue = !!sc.Number;
 			}
 			FOptionMenuItem *it = new FOptionMenuSliderCVar(text, action, min, max, step, showvalue? 1:-1);
+			desc->mItems.Push(it);
+		}
+		else if (sc.Compare("screenresolution"))
+		{
+			sc.MustGetString();
+			FOptionMenuItem *it = new FOptionMenuScreenResolutionLine(sc.String);
 			desc->mItems.Push(it);
 		}
 		else

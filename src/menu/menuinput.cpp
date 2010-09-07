@@ -35,6 +35,7 @@
 
 #include "menu/menu.h"
 #include "v_video.h"
+#include "c_cvars.h"
 #include "d_event.h"
 #include "d_gui.h"
 #include "v_font.h"
@@ -55,6 +56,8 @@ static const char InputGridChars[INPUTGRID_WIDTH * INPUTGRID_HEIGHT] =
 	"<>^#$%&*/_ \b";
 
 
+CVAR(Bool, m_showinputgrid, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+
 //=============================================================================
 //
 //
@@ -68,7 +71,7 @@ DTextEnterMenu::DTextEnterMenu(DMenu *parent, char *textbuffer, int maxlen, int 
 	mEnterSize = maxlen;
 	mEnterPos = (unsigned)strlen(textbuffer);
 	mSizeMode = sizemode;
-	mInputGridOkay = showgrid;
+	mInputGridOkay = showgrid || m_showinputgrid;
 	if (mEnterPos > 0)
 	{
 		InputGridX = INPUTGRID_WIDTH - 1;
@@ -90,7 +93,7 @@ DTextEnterMenu::DTextEnterMenu(DMenu *parent, char *textbuffer, int maxlen, int 
 
 bool DTextEnterMenu::TranslateKeyboardEvents()
 {
-	return false; 
+	return mInputGridOkay && m_showinputgrid; 
 }
 
 //=============================================================================
@@ -167,9 +170,13 @@ bool DTextEnterMenu::MenuEvent (int key, bool fromcontroller)
 	}
 	if (fromcontroller)
 	{
+		mInputGridOkay = true;
+	}
+
+	if (mInputGridOkay)
+	{
 		int ch;
 
-		mInputGridOkay = true;
 		switch (key)
 		{
 		case MKEY_Down:

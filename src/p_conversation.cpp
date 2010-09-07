@@ -864,7 +864,6 @@ public:
 
 	void Drawer()
 	{
-
 		const char *speakerName;
 		int i, x, y, linesize;
 		int width, fontheight;

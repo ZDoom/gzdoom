@@ -354,7 +354,11 @@ FListMenuItemPlayerDisplay::FListMenuItemPlayerDisplay(FListMenuDescriptor *menu
 	mRotation = 0;
 	mTranslate = false;
 	mSkin = 0;
+	mRandomClass = 0;
+	mRandomTimer = 0;
+	mClassNum = -1;
 }
+
 
 //=============================================================================
 //
@@ -365,6 +369,24 @@ FListMenuItemPlayerDisplay::FListMenuItemPlayerDisplay(FListMenuDescriptor *menu
 FListMenuItemPlayerDisplay::~FListMenuItemPlayerDisplay()
 {
 	delete mBackdrop;
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+void FListMenuItemPlayerDisplay::UpdateRandomClass()
+{
+	if (--mRandomTimer < 0)
+	{
+		if (++mRandomClass >= (int)PlayerClasses.Size ()) mRandomClass = 0;
+		mPlayerClass = &PlayerClasses[mRandomClass];
+		mPlayerState = GetDefaultByType (mPlayerClass->Type)->SeeState;
+		mPlayerTics = mPlayerState->GetTics();
+		mRandomTimer = 6;
+	}
 }
 
 
@@ -378,13 +400,19 @@ void FListMenuItemPlayerDisplay::SetPlayerClass(int classnum)
 {
 	if (classnum < 0 || classnum >= (int)PlayerClasses.Size ())
 	{
-		classnum = (DMenu::MenuTime>>7) % PlayerClasses.Size ();
+		if (mClassNum != -1)
+		{
+			mClassNum = -1;
+			mRandomTimer = 0;
+			UpdateRandomClass();
+		}
 	}
-	if (mPlayerClass != &PlayerClasses[classnum])
+	else if (mPlayerClass != &PlayerClasses[classnum])
 	{
 		mPlayerClass = &PlayerClasses[classnum];
 		mPlayerState = GetDefaultByType (mPlayerClass->Type)->SeeState;
 		mPlayerTics = mPlayerState->GetTics();
+		mClassNum = classnum;
 	}
 }
 
@@ -405,6 +433,12 @@ bool FListMenuItemPlayerDisplay::UpdatePlayerClass()
 	SetPlayerClass(classnum);
 	return true;
 }
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
 
 bool FListMenuItemPlayerDisplay::SetValue(int i, int value)
 {
@@ -440,6 +474,8 @@ bool FListMenuItemPlayerDisplay::SetValue(int i, int value)
 
 void FListMenuItemPlayerDisplay::Ticker()
 {
+	if (mClassNum < 0) UpdateRandomClass();
+
 	if (mPlayerState != NULL && mPlayerState->GetTics () != -1 && mPlayerState->GetNextState () != NULL)
 	{
 		if (--mPlayerTics <= 0)

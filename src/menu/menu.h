@@ -294,9 +294,13 @@ class FListMenuItemPlayerDisplay : public FListMenuItem
 	BYTE mMode;	// 0: automatic (used by class selection), 1: manual (used by player setup)
 	BYTE mTranslate;
 	int mSkin;
+	int mRandomClass;
+	int mRandomTimer;
+	int mClassNum;
 
 	void SetPlayerClass(int classnum);
 	bool UpdatePlayerClass();
+	void UpdateRandomClass();
 
 public:
 

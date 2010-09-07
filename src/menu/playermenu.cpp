@@ -481,8 +481,8 @@ void DPlayerMenu::Init(DMenu *parent, FListMenuDescriptor *desc)
 	{
 		li->SetValue(FListMenuItemPlayerDisplay::PDF_MODE, 1);
 		li->SetValue(FListMenuItemPlayerDisplay::PDF_TRANSLATE, 1);
-		li->SetValue(FListMenuItemPlayerDisplay::PDF_CLASS, PlayerClassIndex);
-		if (!(GetDefaultByType (PlayerClass->Type)->flags4 & MF4_NOSKIN) &&
+		li->SetValue(FListMenuItemPlayerDisplay::PDF_CLASS, players[consoleplayer].userinfo.PlayerClass);
+		if (PlayerClass != NULL && !(GetDefaultByType (PlayerClass->Type)->flags4 & MF4_NOSKIN) &&
 			players[consoleplayer].userinfo.PlayerClass != -1)
 		{
 			li->SetValue(FListMenuItemPlayerDisplay::PDF_SKIN, players[consoleplayer].userinfo.skin);
@@ -630,9 +630,12 @@ void DPlayerMenu::UpdateTranslation()
 	int	PlayerSkin = players[consoleplayer].userinfo.skin;
 	int PlayerColorset = players[consoleplayer].userinfo.colorset;
 
-	R_GetPlayerTranslation(PlayerColor,
-		P_GetPlayerColorSet(PlayerClass->Type->TypeName, PlayerColorset),
-		&skins[PlayerSkin], translationtables[TRANSLATION_Players][MAXPLAYERS]);
+	if (PlayerClass != NULL)
+	{
+		R_GetPlayerTranslation(PlayerColor,
+			P_GetPlayerColorSet(PlayerClass->Type->TypeName, PlayerColorset),
+			&skins[PlayerSkin], translationtables[TRANSLATION_Players][MAXPLAYERS]);
+	}
 }
 
 //=============================================================================
@@ -729,6 +732,7 @@ void DPlayerMenu::UpdateColorsets()
 void DPlayerMenu::UpdateSkins()
 {
 	int sel = 0;
+	int skin;
 	FListMenuItem *li = GetItem(NAME_Skin);
 	if (li != NULL)
 	{
@@ -737,6 +741,7 @@ void DPlayerMenu::UpdateSkins()
 		{
 			li->SetString(0, "Base");
 			li->SetValue(0, 0);
+			skin = 0;
 		}
 		else
 		{
@@ -754,11 +759,12 @@ void DPlayerMenu::UpdateSkins()
 				}
 			}
 			li->SetValue(0, sel);
+			skin = PlayerSkins[sel];
 		}
 		li = GetItem(NAME_Playerdisplay);
 		if (li != NULL)
 		{
-			li->SetValue(FListMenuItemPlayerDisplay::PDF_SKIN, PlayerSkins[sel]);
+			li->SetValue(FListMenuItemPlayerDisplay::PDF_SKIN, skin);
 		}
 	}
 	UpdateTranslation();
@@ -852,7 +858,7 @@ void DPlayerMenu::ClassChanged (FListMenuItem *li)
 		li = GetItem(NAME_Playerdisplay);
 		if (li != NULL)
 		{
-			li->SetValue(FListMenuItemPlayerDisplay::PDF_CLASS, PlayerClassIndex);
+			li->SetValue(FListMenuItemPlayerDisplay::PDF_CLASS, players[consoleplayer].userinfo.PlayerClass);
 		}
 	}
 }

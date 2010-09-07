@@ -1938,14 +1938,19 @@ void AM_drawWalls (bool allmap)
 //
 //=============================================================================
 
-void AM_rotate (fixed_t *x, fixed_t *y, angle_t a)
+void AM_rotate(fixed_t *xp, fixed_t *yp, angle_t a)
 {
-	fixed_t tmpx;
+	double x = FIXED2FLOAT(*xp);
+	double y = FIXED2FLOAT(*yp);
+	double rot = (double)a / (double)(1u << 31) * (double)M_PI;
+	double sinrot = sin(rot);
+	double cosrot = cos(rot);
 
-	a >>= ANGLETOFINESHIFT;
-	tmpx = DMulScale16 (*x,finecosine[a],*y,-finesine[a]);
-	*y = DMulScale16 (*x,finesine[a],*y,finecosine[a]);
-	*x = tmpx;
+	double tmpx = (x * cosrot) - (y * sinrot);
+	y = (x * sinrot) + (y * cosrot);
+	x = tmpx;
+	*xp = FLOAT2FIXED(x);
+	*yp = FLOAT2FIXED(y);
 }
 
 //=============================================================================

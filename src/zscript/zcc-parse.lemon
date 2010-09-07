@@ -64,6 +64,10 @@
 %left DOT LPAREN LBRACKET.
 %left SCOPE.
 
+%type declarator {ZCC_Declarator *}
+%type declarator_no_fun {ZCC_Declarator *}
+%type opt_func_body {ZCC_CompoundStmt *}
+%type function_body {ZCC_CompoundStmt *}
 
 main ::= translation_unit. { stat->sc.ScriptMessage("Parse complete\n"); }
 
@@ -180,7 +184,7 @@ class_member ::= default_def.
 class_member ::= const_def.
 
 /*----- Struct Definition -----*/
-/* Structs can define variables, enums<s>, and structs</s>. */
+/* Structs can define variables and enums. */
 
 %type struct_body{ZCC_TreeNode *}
 %type struct_member{ZCC_TreeNode *}
@@ -205,7 +209,7 @@ struct_member(X) ::= enum_def(A).						{ X = A; }
 /*----- Enum Definition -----*/
 /* Enumerators are lists of named integers. */
 
-%type enum_type {EZCCIntType}
+%type enum_type {EZCCBuiltinType}
 %type enum_list {ZCC_EnumNode *}
 %type enumerator {ZCC_EnumNode *}
 
@@ -362,33 +366,67 @@ state_call(X) ::= IDENTIFIER(A) func_expr_list(B).
 default_def ::= DEFAULT compound_statement.
 
 /* Type names */
-%type int_type {EZCCIntType}
-%type type_name {PType *}
+%type int_type {EZCCBuiltinType}
+%type type_name {ZCC_BasicType *}
+%type type_name1 {EZCCBuiltinType}
+%type vector_size {EZCCBuiltinType}
 
-int_type(X) ::= SBYTE.						{ X = ZCCINT_SInt8; }
-int_type(X) ::= BYTE.						{ X = ZCCINT_UInt8; }
-int_type(X) ::= SHORT.						{ X = ZCCINT_SInt16; }
-int_type(X) ::= USHORT.						{ X = ZCCINT_UInt16; }
-int_type(X) ::= INT.						{ X = ZCCINT_SInt32; }
-int_type(X) ::= UINT.						{ X = ZCCINT_UInt32; }
+int_type(X) ::= SBYTE.						{ X = ZCC_SInt8; }
+int_type(X) ::= BYTE.						{ X = ZCC_UInt8; }
+int_type(X) ::= SHORT.						{ X = ZCC_SInt16; }
+int_type(X) ::= USHORT.						{ X = ZCC_UInt16; }
+int_type(X) ::= INT.						{ X = ZCC_SInt32; }
+int_type(X) ::= UINT.						{ X = ZCC_UInt32; }
 
-type_name(X) ::= BOOL.						{ /*FIXME*/ X = TypeBool; }
-type_name(X) ::= int_type(A).				{ X = A; }
-type_name(X) ::= FLOAT.						{ X = TypeFloat32; }
-type_name(X) ::= DOUBLE.					{ X = TypeFloat64; }
-type_name(X) ::= STRING.					{ X = TypeString; }
-type_name(X) ::= VECTOR vector_size(A).		{ X = NewVector(A); }
-type_name(X) ::= NAME.						{ X = TypeName; }
-type_name(X) ::= IDENTIFIER.	/* User-defined type (struct, enum, or class) */
+type_name1(X) ::= BOOL.						{ X = ZCC_Bool; }
+type_name1(X) ::= int_type(A).				{ X = A; }
+type_name1(X) ::= FLOAT.					{ X = ZCC_FloatAuto; }
+type_name1(X) ::= DOUBLE.					{ X = ZCC_Float64; }
+type_name1(X) ::= STRING.					{ X = ZCC_String; }
+type_name1(X) ::= VECTOR vector_size(A).	{ X = A; }
+type_name1(X) ::= NAME.						{ X = ZCC_Name; }
+
+type_name(X) ::= type_name1(A).
 {
-	// FIXME
-	X = NULL;
+	NEW_AST_NODE(BasicType, type);
+	type->Type = A;
+	type->UserType = NULL;
+	X = type;
+}
+type_name(X) ::= IDENTIFIER(A).			/* User-defined type (struct, enum, or class) */
+{
+	NEW_AST_NODE(BasicType, type);
+	NEW_AST_NODE(ZCC_Identifier, id);
+	type->Type = ZCC_UserType;
+	type->UserType = id;
+	id->Id = A;
+	X = type;
+}
+type_name(X) ::= LBRACKET dottable_id(A) RBRACKET.
+{
+	NEW_AST_NODE(BasicType, type);
+	type->Type = ZCC_UserType;
+	type->UserType = A;
+	X = type;
 }
 
-%type vector_size {unsigned int}
-
-vector_size ::= .
-vector_size(X) ::= LT INTCONST(A) GT.	{ X = A.Int; }
+/* Vectors can be 2, 3, or 4 entries long. Default is a 3D vector.
+ * (Well, actually, I'm not sure if 4D ones are going to happen
+ * straight away.)
+ */
+vector_size(X) ::= .						{ X = ZCC_Vector3; }
+vector_size(X) ::= LT INTCONST(A) GT.
+{
+	if (A.Int >= 2 && A.Int <= 4)
+	{
+		X = ZCC_Vector2 + A.Int - 2;
+	}
+	else
+	{
+		X = ZCC_Vector3;
+		stat->sc.ScriptMessage("Invalid vector size %d\n", A.Int);
+	}
+}
 
 /* Type names can also be used as identifiers in contexts where type names
  * are not normally allowed. */
@@ -401,15 +439,32 @@ vector_size(X) ::= LT INTCONST(A) GT.	{ X = A.Int; }
 %type type_list {ZCC_Type *}
 %type type_list_or_void {ZCC_Type *}
 %type type_or_array {ZCC_Type *}
-%type class_restrictor {PClass *}
+%type class_restrictor {ZCC_Identifier *}
 %type array_size{ZCC_Expression *}
 
-aggregate_type ::= MAP LT type_or_array COMMA type_or_array GT.		/* Hash table */
-aggregate_type ::= ARRAY LT type_or_array GT.					/* TArray<type> */
-aggregate_type ::= CLASS class_restrictor.					/* class<type> */
+aggregate_type(X) ::= MAP LT type_or_array(A) COMMA type_or_array(B) GT.	/* Hash table */
+{
+	NEW_AST_NODE(ZCC_MapType,map);
+	map->KeyType = A;
+	map->ValueType = B;
+	X = map;
+}
 
-class_restrictor ::= .
-class_restrictor ::= LT IDENTIFIER GT.
+aggregate_type(X) ::= ARRAY LT type_or_array(A) GT.							/* TArray<type> */
+{
+	NEW_AST_NODE(ZCC_DynArrayType,arr);
+	map->ElementType = A;
+	X = map;
+}
+
+aggregate_type(X) ::= CLASS class_restrictor(A).							/* class<type> */
+{
+	NEW_AST_NODE(ZCC_ClassType,cls);
+	cls->Restriction = A;
+	X = cls;
+}
+class_restrictor(X) ::= .						{ X = NULL; }
+class_restrictor(X) ::= LT dottable_id(A) GT.	{ X = A; }
 
 type(X) ::= type_name(A).					{ X = A; A->ArraySize = NULL; }
 type(X) ::= aggregate_type(A).				{ X = A; A->ArraySize = NULL; }
@@ -451,17 +506,99 @@ array_size(X) ::= array_size(A) LBRACKET opt_expr(B) RBRACKET.
 	X = A;
 }
 
-declarator ::= decl_flags type_list_or_void variables_or_function.	/* Multiple type names are only valid for functions. */
-declarator_no_fun ::= decl_flags type variable_list.
+%include
+{
+	struct VarOrFun
+	{
+		ZCC_VarName *VarNames;
+		ZCC_FuncParamDecl *FuncParams;
+		ENamedName FuncName;
+		int FuncFlags;
+	};
+}
+%type variables_or_function {VarOrFun}
 
-variables_or_function ::= IDENTIFIER LPAREN func_params RPAREN func_const opt_func_body.	/* Function */
-variables_or_function ::= variable_list SEMICOLON.
+/* Multiple type names are only valid for functions. */
+declarator(X) ::= decl_flags(A) type_list_or_void(B) variables_or_function(C).
+{
+	if (C.FuncParams == NULL && C.VarNames == NULL)
+	{ // An error. A message was already printed.
+		X = NULL;
+	}
+	else if (C.FuncParams != NULL)
+	{ // A function
+		NEW_AST_NODE(FuncDeclarator, decl);
+		decl->Type = B;
+		decl->Params = C.FuncParams;
+		decl->Name = C.FuncName;
+		decl->Flags = A | C.FuncFlags;
+		X = decl;
+	}
+	else if (B != NULL && B->Sibling == NULL)
+	{ // A variable
+		NEW_AST_NODE(VarDeclarator, decl);
+		decl->Type = B;
+		decl->Names = C.VarNames;
+		decl->Flags = A;
+		X = decl;
+	}
+	else
+	{ // An invalid
+		if (B == NULL)
+		{
+			sc.ScriptMessage("Variables may not be of type void.\n");
+		}
+		else
+		{
+			sc.ScriptMessage("Variables may be of only one type.\n");
+		}
+		X = NULL;
+	}
+}
+declarator_no_fun(X) ::= decl_flags(A) type(B) variable_list(C).
+{
+	NEW_AST_NODE(VarDeclarator, decl);
+	decl->Type = B;
+	decl->Names = C;
+	decl->Flags = A;
+	X = decl;
+}
+
+// Need to split it up like this to avoid parsing conflicts.
+variables_or_function(X) ::= IDENTIFIER(A) LPAREN func_params(B) RPAREN func_const(C) opt_func_body(D).	/* Function */
+{
+	VarOrFun fun;
+
+	fun.VarNames = NULL;
+	fun.FuncParams = B;
+	fun.FuncFlags = C;
+	fun.FuncName = A.Name();
+	fun.FuncBody = D;
+	X = fun;
+}
+variables_or_function(X) ::= variable_list(A) SEMICOLON.
+{
+	VarOrFun var;
+
+	var.VarNames = A;
+	var.FuncParams = NULL;
+	var.FuncFlags = 0;
+	var.FuncName = NAME_None;
+	var.FuncBody = NULL;
+	X = var;
+}
 variables_or_function ::= error SEMICOLON.
+{
+	VarOrFun bad;
+	bad.VarNames = NULL;
+	bad.FuncParams = NULL;
+	bad.FuncFlags = 0;
+	bad.FuncName = NAME_None;
+	bad.Func_Body = NULL;
+	X = bad;
+}
 
 /*----- Variable Names -----*/
-// They get the array size, because that makes it look more like C.
-// I might still change my mind and stick array sizes with the rest
-// of the type like C#.
 
 %type variable_name{ZCC_VarName *}
 %type variable_list{ZCC_VarName *}
@@ -499,8 +636,8 @@ decl_flags(X) ::= decl_flags(A) DEPRECATED.	{ X = A | ZCC_Deprecated; }
 func_const ::= .
 func_const ::= CONST.
 
-opt_func_body ::= SEMICOLON.
-opt_func_body ::= function_body.
+opt_func_body(X) ::= SEMICOLON.				{ X = NULL; }
+opt_func_body(X) ::= function_body(A).		{ X = A; }
 
 %type func_params {ZCC_FuncParamDecl *}
 %type func_param_list {ZCC_FuncParamDecl *}

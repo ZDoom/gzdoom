@@ -93,15 +93,26 @@ enum EZCCTreeNodeType
 	AST_ConstantDef,
 };
 
-enum EZCCIntType
+enum EZCCBuiltinType
 {
-	ZCCINT_SInt8,
-	ZCCINT_UInt8,
-	ZCCINT_SInt16,
-	ZCCINT_UInt16,
-	ZCCINT_SInt32,
-	ZCCINT_UInt32,
-	ZCCINT_Auto,	// for enums, autoselect appropriately sized int
+	ZCC_SInt8,
+	ZCC_UInt8,
+	ZCC_SInt16,
+	ZCC_UInt16,
+	ZCC_SInt32,
+	ZCC_UInt32,
+	ZCC_IntAuto,	// for enums, autoselect appropriately sized int
+
+	ZCC_Bool,
+	ZCC_Float32,
+	ZCC_Float64,
+	ZCC_FloatAuto,	// 32-bit in structs/classes, 64-bit everywhere else
+	ZCC_String,
+	ZCC_Vector2,
+	ZCC_Vector3,
+	ZCC_Vector4,
+	ZCC_Name,
+	ZCC_UserType,
 };
 
 enum EZCCExprType
@@ -293,8 +304,8 @@ struct ZCC_Type : ZCC_TreeNode
 
 struct ZCC_BasicType : ZCC_Type
 {
-	PType *Type;
-	ENamedName TypeName;
+	EZCCBuiltinType	Type;
+	ZCC_Identifier *UserType;
 };
 
 struct ZCC_MapType : ZCC_Type
@@ -310,7 +321,24 @@ struct ZCC_DynArrayType : ZCC_Type
 
 struct ZCC_ClassType : ZCC_Type
 {
-	ENamedName Restriction;
+	ZCC_Identifier *Restriction;
+};
+
+// A variable in a class or struct.
+struct ZCC_VarDeclarator : ZCC_TreeNode
+{
+	ZCC_Type *Type;
+	ZCC_VarName *Names;
+	int Flags;
+};
+
+// A function in a class.
+struct ZCC_FuncDeclarator : ZCC_TreeNode
+{
+	ZCC_Type *Type;
+	ZCC_FuncParamDecl *Params;
+	ENamedName Name;
+	int Flags;
 };
 
 struct ZCC_ExprID : ZCC_Expression

@@ -1254,6 +1254,7 @@ void M_CreateMenus()
 void M_StartupSkillMenu(FGameStartup *gs)
 {
 	static bool done = false;
+	bool success = false;
 	FMenuDescriptor **desc = MenuDescriptors.CheckKey(NAME_Skillmenu);
 	if (desc != NULL)
 	{
@@ -1272,6 +1273,7 @@ void M_StartupSkillMenu(FGameStartup *gs)
 					else if (!stricmp(gs->PlayerClass, "mage")) x = 112;
 				}
 			}
+
 			// Delete previous contents
 			for(unsigned i=0; i<ld->mItems.Size(); i++)
 			{
@@ -1286,6 +1288,7 @@ void M_StartupSkillMenu(FGameStartup *gs)
 					break;
 				}
 			}
+
 			if (!done)
 			{
 				done = true;
@@ -1294,8 +1297,42 @@ void M_StartupSkillMenu(FGameStartup *gs)
 				{
 					defskill = (AllSkills.Size() - 1) / 2;
 				}
-
 				ld->mSelectedItem = ld->mItems.Size() + defskill;
+
+				int posy = y;
+				int topy = posy;
+
+				// Get lowest y coordinate of any static item in the menu
+				for(unsigned i = 0; i < ld->mItems.Size(); i++)
+				{
+					int y = ld->mItems[i]->GetY();
+					if (y < topy) topy = y;
+				}
+
+				// center the menu on the screen if the top space is larger than the bottom space
+				int totalheight = posy + AllSkills.Size() * ld->mLinespacing - topy;
+
+				if (totalheight < 190 || AllSkills.Size() == 1)
+				{
+					int newtop = (200 - totalheight + topy) / 2;
+					int topdelta = newtop - topy;
+					if (topdelta < 0)
+					{
+						for(unsigned i = 0; i < ld->mItems.Size(); i++)
+						{
+							ld->mItems[i]->OffsetPositionY(topdelta);
+						}
+						y = ld->mYpos = posy - topdelta;
+					}
+				}
+				else
+				{
+					// too large
+					delete ld;
+					desc = NULL;
+					done = false;
+					goto fail;
+				}
 			}
 
 			unsigned firstitem = ld->mItems.Size();
@@ -1331,7 +1368,61 @@ void M_StartupSkillMenu(FGameStartup *gs)
 			{
 				ld->mAutoselect = MIN(2u, AllEpisodes.Size()-1);
 			}
+			success = true;
+		}
+	}
+	if (success) return;
+fail:
+	// Option menu fallback for overlong skill lists
+	FOptionMenuDescriptor *od;
+	if (desc == NULL)
+	{
+		od = new FOptionMenuDescriptor;
+		if (desc != NULL) delete *desc;
+		MenuDescriptors[NAME_Skillmenu] = od;
+		od->mType = MDESC_OptionsMenu;
+		od->mMenuName = NAME_Skillmenu;
+		od->mTitle = "$MNU_CHOOSESKILL";
+		od->mSelectedItem = 0;
+		od->mScrollPos = 0;
+		od->mClass = NULL;
+		od->mPosition = -15;
+		od->mScrollTop = 0;
+		od->mIndent = 160;
+		od->mDontDim = false;
+	}
+	else
+	{
+		od = static_cast<FOptionMenuDescriptor*>(*desc);
+		for(unsigned i=0;i<od->mItems.Size(); i++)
+		{
+			delete od->mItems[i];
+		}
+		od->mItems.Clear();
+	}
+	for(unsigned int i = 0; i < AllSkills.Size(); i++)
+	{
+		FSkillInfo &skill = AllSkills[i];
+		FOptionMenuItem *li;
+		// Using a different name for skills that must be confirmed makes handling this easier.
+		const char *action = skill.MustConfirm? "StartgameConfirm" : "Startgame";
 
+		FString *pItemText = NULL;
+		if (gs->PlayerClass != NULL)
+		{
+			pItemText = skill.MenuNamesForPlayerClass.CheckKey(gs->PlayerClass);
+		}
+		li = new FOptionMenuItemSubmenu(pItemText? *pItemText : skill.MenuName, action, i);
+		od->mItems.Push(li);
+		if (!done)
+		{
+			done = true;
+			int defskill = DefaultSkill;
+			if ((unsigned int)defskill >= AllSkills.Size())
+			{
+				defskill = (AllSkills.Size() - 1) / 2;
+			}
+			od->mSelectedItem = defskill;
 		}
 	}
 }

@@ -406,13 +406,16 @@ int  FOptionMenuItem::GetIndent()
 
 void FOptionMenuItem::drawLabel(int indent, int y, EColorRange color, bool grayed)
 {
+	const char *label = mLabel;
+	if (*label == '$') label = GStrings(label+1);
+
 	int overlay = grayed? MAKEARGB(96,48,0,0) : 0;
 
 	int x;
-	int w = SmallFont->StringWidth(mLabel) * CleanXfac_1;
+	int w = SmallFont->StringWidth(label) * CleanXfac_1;
 	if (!mCentered) x = indent - w;
 	else x = (screen->GetWidth() - w) / 2;
-	screen->DrawText (SmallFont, color, x, y, mLabel, DTA_CleanNoMove_1, true, DTA_ColorOverlay, overlay, TAG_DONE);
+	screen->DrawText (SmallFont, color, x, y, label, DTA_CleanNoMove_1, true, DTA_ColorOverlay, overlay, TAG_DONE);
 }
 
 

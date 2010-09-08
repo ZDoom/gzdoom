@@ -31,6 +31,7 @@ enum
 	ZCC_Action			= 1 << 7,
 	ZCC_Deprecated		= 1 << 8,
 	ZCC_ReadOnly		= 1 << 9,
+	ZCC_FuncConst		= 1 << 10,
 };
 
 // Function parameter modifiers
@@ -91,6 +92,9 @@ enum EZCCTreeNodeType
 	AST_LocalVarStmt,
 	AST_FuncParamDecl,
 	AST_ConstantDef,
+	AST_Declarator,
+	AST_VarDeclarator,
+	AST_FuncDeclarator,
 };
 
 enum EZCCBuiltinType
@@ -232,7 +236,7 @@ struct ZCC_Struct : ZCC_TreeNode
 struct ZCC_Enum : ZCC_TreeNode
 {
 	ENamedName EnumName;
-	EZCCIntType EnumType;
+	EZCCBuiltinType EnumType;
 	struct ZCC_EnumNode *Elements;
 };
 
@@ -322,23 +326,6 @@ struct ZCC_DynArrayType : ZCC_Type
 struct ZCC_ClassType : ZCC_Type
 {
 	ZCC_Identifier *Restriction;
-};
-
-// A variable in a class or struct.
-struct ZCC_VarDeclarator : ZCC_TreeNode
-{
-	ZCC_Type *Type;
-	ZCC_VarName *Names;
-	int Flags;
-};
-
-// A function in a class.
-struct ZCC_FuncDeclarator : ZCC_TreeNode
-{
-	ZCC_Type *Type;
-	ZCC_FuncParamDecl *Params;
-	ENamedName Name;
-	int Flags;
 };
 
 struct ZCC_ExprID : ZCC_Expression
@@ -480,4 +467,23 @@ struct ZCC_ConstantDef : ZCC_TreeNode
 {
 	ENamedName Name;
 	ZCC_Expression *Value;
+};
+
+struct ZCC_Declarator : ZCC_TreeNode
+{
+	ZCC_Type *Type;
+	int Flags;
+};
+
+// A variable in a class or struct.
+struct ZCC_VarDeclarator : ZCC_Declarator
+{
+	ZCC_VarName *Names;
+};
+
+// A function in a class.
+struct ZCC_FuncDeclarator : ZCC_Declarator
+{
+	ZCC_FuncParamDecl *Params;
+	ENamedName Name;
 };

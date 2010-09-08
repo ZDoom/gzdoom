@@ -101,7 +101,8 @@ opt_expr(X) ::= expr(A).
 
 %type class_definition{ZCC_Class *}
 %type class_head{ZCC_Class *}
-%type class_innards{ZCC_Class *}
+%type class_innards{ZCC_TreeNode *}
+%type class_member{ZCC_TreeNode *}
 %type class_body{ZCC_TreeNode *}
 
 class_definition(X) ::= class_head(A) class_body(B).
@@ -125,7 +126,7 @@ class_ancestry(X) ::= .						{ X = NULL; }
 class_ancestry(X) ::= COLON dottable_id(A).	{ X = A; }
 
 %type class_flags{ClassFlagsBlock}
-%include{
+%include {
 	struct ClassFlagsBlock {
 		VM_UWORD Flags;
 		ZCC_Identifier *Replaces;
@@ -165,30 +166,29 @@ dottable_id(X) ::= dottable_id(A) DOT IDENTIFIER(B).
 //  * constants
 //  * defaults
 
-class_body ::= SEMICOLON class_innards EOF.
-class_body ::= LBRACE class_innards RBRACE.
+class_body(X) ::= SEMICOLON class_innards(A) EOF.		{ X = A; }
+class_body(X) ::= LBRACE class_innards(A) RBRACE.		{ X = A; }
 
-class_innards ::= .
-class_innards ::= class_innards class_member.
+class_innards(X) ::= .									{ X = NULL; }
+class_innards(X) ::= class_innards(A) class_member(B).	{ SAFE_APPEND(A,B); X = A; }
 
 %type struct_def{ZCC_Struct *}
 %type enum_def {ZCC_Enum *}
 %type states_def {ZCC_States *}
 %type const_def {ZCC_ConstantDef *}
 
-class_member ::= declarator.
-class_member ::= enum_def.
-class_member ::= struct_def.
-class_member ::= states_def.
-class_member ::= default_def.
-class_member ::= const_def.
+class_member(X) ::= declarator(A).						{ X = A; }
+class_member(X) ::= enum_def(A).						{ X = A; }
+class_member(X) ::= struct_def(A).						{ X = A; }
+class_member(X) ::= states_def(A).						{ X = A; }
+class_member(X) ::= default_def(A).						{ X = A; }
+class_member(X) ::= const_def(A).						{ X = A; }
 
 /*----- Struct Definition -----*/
 /* Structs can define variables and enums. */
 
 %type struct_body{ZCC_TreeNode *}
 %type struct_member{ZCC_TreeNode *}
-%type declarator_no_fun {ZCC_TreeNode *}
 
 struct_def(X) ::= STRUCT IDENTIFIER(A) LBRACE struct_body(B) RBRACE opt_semicolon.
 {
@@ -222,7 +222,7 @@ enum_def(X) ::= ENUM IDENTIFIER(A) enum_type(B) LBRACE enum_list(C) opt_comma RB
 	X = def;
 }
 
-enum_type(X) ::= .										{ X = ZCCINT_Auto; }
+enum_type(X) ::= .										{ X = ZCC_IntAuto; }
 enum_type(X) ::= COLON int_type(A).						{ X = A; }
 
 enum_list(X) ::= error.									{ X = NULL; }
@@ -255,10 +255,8 @@ enumerator(X) ::= IDENTIFIER(A) EQ expr(B).			/* Expression must be constant. */
 %type state_action {ZCC_TreeNode *}
 %type state_call {ZCC_ExprFuncCall *}
 
-%include
-{
-	struct StateOpts
-	{
+%include {
+	struct StateOpts {
 		ZCC_Expression *Offset;
 		bool Bright;
 	};
@@ -363,7 +361,8 @@ state_call(X) ::= IDENTIFIER(A) func_expr_list(B).
 }
 
 /* Definition of a default class instance. */
-default_def ::= DEFAULT compound_statement.
+%type default_def {ZCC_CompoundStmt *}
+default_def(X) ::= DEFAULT compound_statement(A).			{ X = A; }
 
 /* Type names */
 %type int_type {EZCCBuiltinType}
@@ -396,10 +395,10 @@ type_name(X) ::= type_name1(A).
 type_name(X) ::= IDENTIFIER(A).			/* User-defined type (struct, enum, or class) */
 {
 	NEW_AST_NODE(BasicType, type);
-	NEW_AST_NODE(ZCC_Identifier, id);
+	NEW_AST_NODE(Identifier, id);
 	type->Type = ZCC_UserType;
 	type->UserType = id;
-	id->Id = A;
+	id->Id = A.Name();
 	X = type;
 }
 type_name(X) ::= LBRACKET dottable_id(A) RBRACKET.
@@ -419,7 +418,7 @@ vector_size(X) ::= LT INTCONST(A) GT.
 {
 	if (A.Int >= 2 && A.Int <= 4)
 	{
-		X = ZCC_Vector2 + A.Int - 2;
+		X = EZCCBuiltinType(ZCC_Vector2 + A.Int - 2);
 	}
 	else
 	{
@@ -444,7 +443,7 @@ vector_size(X) ::= LT INTCONST(A) GT.
 
 aggregate_type(X) ::= MAP LT type_or_array(A) COMMA type_or_array(B) GT.	/* Hash table */
 {
-	NEW_AST_NODE(ZCC_MapType,map);
+	NEW_AST_NODE(MapType,map);
 	map->KeyType = A;
 	map->ValueType = B;
 	X = map;
@@ -452,14 +451,14 @@ aggregate_type(X) ::= MAP LT type_or_array(A) COMMA type_or_array(B) GT.	/* Hash
 
 aggregate_type(X) ::= ARRAY LT type_or_array(A) GT.							/* TArray<type> */
 {
-	NEW_AST_NODE(ZCC_DynArrayType,arr);
-	map->ElementType = A;
-	X = map;
+	NEW_AST_NODE(DynArrayType,arr);
+	arr->ElementType = A;
+	X = arr;
 }
 
 aggregate_type(X) ::= CLASS class_restrictor(A).							/* class<type> */
 {
-	NEW_AST_NODE(ZCC_ClassType,cls);
+	NEW_AST_NODE(ClassType,cls);
 	cls->Restriction = A;
 	X = cls;
 }
@@ -512,6 +511,7 @@ array_size(X) ::= array_size(A) LBRACKET opt_expr(B) RBRACKET.
 	{
 		ZCC_VarName *VarNames;
 		ZCC_FuncParamDecl *FuncParams;
+		ZCC_CompoundStmt *FuncBody;
 		ENamedName FuncName;
 		int FuncFlags;
 	};
@@ -534,7 +534,7 @@ declarator(X) ::= decl_flags(A) type_list_or_void(B) variables_or_function(C).
 		decl->Flags = A | C.FuncFlags;
 		X = decl;
 	}
-	else if (B != NULL && B->Sibling == NULL)
+	else if (B != NULL && B->SiblingNext == B)
 	{ // A variable
 		NEW_AST_NODE(VarDeclarator, decl);
 		decl->Type = B;
@@ -546,11 +546,11 @@ declarator(X) ::= decl_flags(A) type_list_or_void(B) variables_or_function(C).
 	{ // An invalid
 		if (B == NULL)
 		{
-			sc.ScriptMessage("Variables may not be of type void.\n");
+			stat->sc.ScriptMessage("Variables may not be of type void.\n");
 		}
 		else
 		{
-			sc.ScriptMessage("Variables may be of only one type.\n");
+			stat->sc.ScriptMessage("Variables may be of only one type.\n");
 		}
 		X = NULL;
 	}
@@ -587,14 +587,14 @@ variables_or_function(X) ::= variable_list(A) SEMICOLON.
 	var.FuncBody = NULL;
 	X = var;
 }
-variables_or_function ::= error SEMICOLON.
+variables_or_function(X) ::= error SEMICOLON.
 {
 	VarOrFun bad;
 	bad.VarNames = NULL;
 	bad.FuncParams = NULL;
 	bad.FuncFlags = 0;
 	bad.FuncName = NAME_None;
-	bad.Func_Body = NULL;
+	bad.FuncBody = NULL;
 	X = bad;
 }
 
@@ -603,6 +603,7 @@ variables_or_function ::= error SEMICOLON.
 %type variable_name{ZCC_VarName *}
 %type variable_list{ZCC_VarName *}
 %type decl_flags{int}
+%type func_const{int}
 
 variable_name(X) ::= IDENTIFIER(A).
 {
@@ -633,8 +634,8 @@ decl_flags(X) ::= decl_flags(A) ACTION.		{ X = A | ZCC_Action; }
 decl_flags(X) ::= decl_flags(A) READONLY.	{ X = A | ZCC_ReadOnly; }
 decl_flags(X) ::= decl_flags(A) DEPRECATED.	{ X = A | ZCC_Deprecated; }
 
-func_const ::= .
-func_const ::= CONST.
+func_const(X) ::= .							{ X = 0; }
+func_const(X) ::= CONST.					{ X = ZCC_FuncConst; }
 
 opt_func_body(X) ::= SEMICOLON.				{ X = NULL; }
 opt_func_body(X) ::= function_body(A).		{ X = A; }

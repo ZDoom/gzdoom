@@ -9,6 +9,7 @@
 #include "d_player.h"
 #include "r_translate.h"
 #include "c_cvars.h"
+#include "v_font.h"
 #include "version.h"
 #include "textures/textures.h"
 

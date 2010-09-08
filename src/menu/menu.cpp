@@ -190,20 +190,24 @@ bool DMenu::MouseEvent(int type, int x, int y)
 
 void DMenu::SetCapture()
 {
+#ifdef _WIN32
 	if (!mMouseCapture)
 	{
 		mMouseCapture = true;
 		I_SetMouseCapture();
 	}
+#endif
 }
 
 void DMenu::ReleaseCapture()
 {
+#ifdef _WIN32
 	if (mMouseCapture)
 	{
 		mMouseCapture = false;
 		I_ReleaseMouseCapture();
 	}
+#endif
 }
 
 //=============================================================================

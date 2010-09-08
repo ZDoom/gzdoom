@@ -82,6 +82,7 @@ enum EMenuDescriptorType
 struct FMenuDescriptor
 {
 	FName mMenuName;
+	FString mNetgameMessage;
 	int mType;
 
 	virtual ~FMenuDescriptor() {}
@@ -100,7 +101,6 @@ struct FListMenuDescriptor : public FMenuDescriptor
 	int mDisplayTop;
 	int mXpos, mYpos;
 	int mLinespacing;	// needs to be stored for dynamically created menus
-	FString mNetgameMessage;
 	int mAutoselect;	// this can only be set by internal menu creation functions
 	FFont *mFont;
 	EColorRange mFontColor;

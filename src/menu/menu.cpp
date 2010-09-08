@@ -321,7 +321,6 @@ void M_SetMenu(FName menu, int param)
 
 		const char *msg = AllSkills[param].MustConfirmText;
 		if (*msg==0) msg = GStrings("NIGHTMARE");
-		if (*msg=='$') msg = GStrings(msg+1);
 		M_StartMessage (msg, 0, NAME_Startgame);
 		return;
 	}
@@ -354,14 +353,15 @@ void M_SetMenu(FName menu, int param)
 	FMenuDescriptor **desc = MenuDescriptors.CheckKey(menu);
 	if (desc != NULL)
 	{
+		if ((*desc)->mNetgameMessage.IsNotEmpty() && netgame)
+		{
+			M_StartMessage((*desc)->mNetgameMessage, 1);
+			return;
+		}
+
 		if ((*desc)->mType == MDESC_ListMenu)
 		{
 			FListMenuDescriptor *ld = static_cast<FListMenuDescriptor*>(*desc);
-			if (ld->mNetgameMessage.IsNotEmpty() && netgame)
-			{
-				M_StartMessage(ld->mNetgameMessage, 1);
-				return;
-			}
 			if (ld->mAutoselect >= 0 && ld->mAutoselect < (int)ld->mItems.Size())
 			{
 				// recursively activate the autoselected item without ever creating this menu.

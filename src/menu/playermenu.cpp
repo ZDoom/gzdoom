@@ -62,8 +62,8 @@ void R_GetPlayerTranslation (int color, const FPlayerColorSet *colorset, FPlayer
 //
 //=============================================================================
 
-FPlayerNameBox::FPlayerNameBox(int x, int y, int frameofs, const char *text, FFont *font, EColorRange color, FName action)
-: FListMenuItemSelectable(x, y, action)
+FPlayerNameBox::FPlayerNameBox(int x, int y, int height, int frameofs, const char *text, FFont *font, EColorRange color, FName action)
+: FListMenuItemSelectable(x, y, height, action)
 {
 	mText = copystring(text);
 	mFont = font;
@@ -206,8 +206,8 @@ bool FPlayerNameBox::MenuEvent(int mkey, bool fromcontroller)
 //
 //=============================================================================
 
-FValueTextItem::FValueTextItem(int x, int y, const char *text, FFont *font, EColorRange color, EColorRange valuecolor, FName action)
-: FListMenuItemSelectable(x, y, action)
+FValueTextItem::FValueTextItem(int x, int y, int height, const char *text, FFont *font, EColorRange color, EColorRange valuecolor, FName action)
+: FListMenuItemSelectable(x, y, height, action)
 {
 	mText = copystring(text);
 	mFont = font;
@@ -311,8 +311,8 @@ void FValueTextItem::Drawer()
 //
 //=============================================================================
 
-FSliderItem::FSliderItem(int x, int y, const char *text, FFont *font, EColorRange color, FName action, int min, int max, int step)
-: FListMenuItemSelectable(x, y, action)
+FSliderItem::FSliderItem(int x, int y, int height, const char *text, FFont *font, EColorRange color, FName action, int min, int max, int step)
+: FListMenuItemSelectable(x, y, height, action)
 {
 	mText = copystring(text);
 	mFont = font;
@@ -615,7 +615,7 @@ bool DPlayerMenu::Responder (event_t *ev)
 		}
 		return true;
 	}
-	return false;
+	return Super::Responder(ev);
 }
 
 //=============================================================================

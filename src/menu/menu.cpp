@@ -48,6 +48,7 @@
 #include "v_video.h"
 #include "hu_stuff.h"
 #include "gi.h"
+#include "i_input.h"
 #include "gameconfigfile.h"
 #include "gstrings.h"
 #include "r_main.h"
@@ -91,11 +92,40 @@ END_POINTERS
 DMenu::DMenu(DMenu *parent) 
 {
 	mParentMenu = parent;
+	mMouseCapture = false;
 	GC::WriteBarrier(this, parent);
 }
 	
 bool DMenu::Responder (event_t *ev) 
 { 
+#ifdef _WIN32	// FIXME: Mouse events in SDL code are mostly useless so mouse is disabled until that code is fixed
+	if (ev->type == EV_GUI_Event)
+	{
+		if (ev->subtype == EV_GUI_LButtonDown)
+		{
+			if (MouseEvent(MOUSE_Click, ev->data1, ev->data2))
+			{
+				SetCapture();
+			}
+			
+		}
+		else if (ev->subtype == EV_GUI_MouseMove)
+		{
+			if (mMouseCapture)
+			{
+				return MouseEvent(MOUSE_Move, ev->data1, ev->data2);
+			}
+		}
+		else if (ev->subtype == EV_GUI_LButtonUp)
+		{
+			if (mMouseCapture)
+			{
+				ReleaseCapture();
+				return MouseEvent(MOUSE_Release, ev->data1, ev->data2);
+			}
+		}
+	}
+#endif
 	return false; 
 }
 
@@ -141,6 +171,40 @@ void DMenu::Close ()
 	}
 }
 
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+bool DMenu::MouseEvent(int type, int x, int y)
+{
+	return false;
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+void DMenu::SetCapture()
+{
+	if (!mMouseCapture)
+	{
+		mMouseCapture = true;
+		I_SetMouseCapture();
+	}
+}
+
+void DMenu::ReleaseCapture()
+{
+	if (mMouseCapture)
+	{
+		mMouseCapture = false;
+		I_ReleaseMouseCapture();
+	}
+}
 
 //=============================================================================
 //
@@ -205,6 +269,7 @@ void M_StartControlPanel (bool makeSound)
 void M_ActivateMenu(DMenu *menu)
 {
 	if (menuactive == MENU_Off) menuactive = MENU_On;
+	if (DMenu::CurrentMenu != NULL) DMenu::CurrentMenu->ReleaseCapture();
 	DMenu::CurrentMenu = menu;
 	GC::WriteBarrier(DMenu::CurrentMenu);
 }

@@ -153,7 +153,7 @@ FListMenuItem *DOptionMenu::GetItem(FName name)
 
 bool DOptionMenu::Responder (event_t *ev)
 {
-	return false;
+	return Super::Responder(ev);
 }
 
 //=============================================================================

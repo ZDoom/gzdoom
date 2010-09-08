@@ -317,7 +317,7 @@ static void ParseListMenuBody(FScanner &sc, FListMenuDescriptor *desc)
 				param = sc.Number;
 			}
 
-			FListMenuItem *it = new FListMenuItemPatch(desc->mXpos, desc->mYpos, hotkey, tex, action, param);
+			FListMenuItem *it = new FListMenuItemPatch(desc->mXpos, desc->mYpos, desc->mLinespacing, hotkey, tex, action, param);
 			desc->mItems.Push(it);
 			desc->mYpos += desc->mLinespacing;
 			if (desc->mSelectedItem == -1) desc->mSelectedItem = desc->mItems.Size()-1;
@@ -339,7 +339,7 @@ static void ParseListMenuBody(FScanner &sc, FListMenuDescriptor *desc)
 				param = sc.Number;
 			}
 
-			FListMenuItem *it = new FListMenuItemText(desc->mXpos, desc->mYpos, hotkey, text, desc->mFont, desc->mFontColor, action, param);
+			FListMenuItem *it = new FListMenuItemText(desc->mXpos, desc->mYpos, desc->mLinespacing, hotkey, text, desc->mFont, desc->mFontColor, action, param);
 			desc->mItems.Push(it);
 			desc->mYpos += desc->mLinespacing;
 			if (desc->mSelectedItem == -1) desc->mSelectedItem = desc->mItems.Size()-1;
@@ -408,7 +408,7 @@ static void ParseListMenuBody(FScanner &sc, FListMenuDescriptor *desc)
 			int ofs = sc.Number;
 			sc.MustGetStringName(",");
 			sc.MustGetString();
-			FListMenuItem *it = new FPlayerNameBox(desc->mXpos, desc->mYpos, ofs, text, desc->mFont, desc->mFontColor, sc.String);
+			FListMenuItem *it = new FPlayerNameBox(desc->mXpos, desc->mYpos, desc->mLinespacing, ofs, text, desc->mFont, desc->mFontColor, sc.String);
 			desc->mItems.Push(it);
 			desc->mYpos += desc->mLinespacing;
 			if (desc->mSelectedItem == -1) desc->mSelectedItem = desc->mItems.Size()-1;
@@ -419,7 +419,7 @@ static void ParseListMenuBody(FScanner &sc, FListMenuDescriptor *desc)
 			FString text = sc.String;
 			sc.MustGetStringName(",");
 			sc.MustGetString();
-			FListMenuItem *it = new FValueTextItem(desc->mXpos, desc->mYpos, text, desc->mFont, desc->mFontColor, desc->mFontColor2, sc.String);
+			FListMenuItem *it = new FValueTextItem(desc->mXpos, desc->mYpos, desc->mLinespacing, text, desc->mFont, desc->mFontColor, desc->mFontColor2, sc.String);
 			desc->mItems.Push(it);
 			desc->mYpos += desc->mLinespacing;
 			if (desc->mSelectedItem == -1) desc->mSelectedItem = desc->mItems.Size()-1;
@@ -440,7 +440,7 @@ static void ParseListMenuBody(FScanner &sc, FListMenuDescriptor *desc)
 			sc.MustGetStringName(",");
 			sc.MustGetNumber();
 			int step = sc.Number;
-			FListMenuItem *it = new FSliderItem(desc->mXpos, desc->mYpos, text, desc->mFont, desc->mFontColor, action, min, max, step);
+			FListMenuItem *it = new FSliderItem(desc->mXpos, desc->mYpos, desc->mLinespacing, text, desc->mFont, desc->mFontColor, action, min, max, step);
 			desc->mItems.Push(it);
 			desc->mYpos += desc->mLinespacing;
 			if (desc->mSelectedItem == -1) desc->mSelectedItem = desc->mItems.Size()-1;
@@ -986,12 +986,12 @@ static void InitStartMenus()
 				if (AllEpisodes[i].mPicName.IsNotEmpty())
 				{
 					FTextureID tex = TexMan.CheckForTexture(AllEpisodes[i].mPicName, FTexture::TEX_MiscPatch);
-					it = new FListMenuItemPatch(ld->mXpos, posy, AllEpisodes[i].mShortcut, 
+					it = new FListMenuItemPatch(ld->mXpos, posy, ld->mLinespacing, AllEpisodes[i].mShortcut, 
 						tex, NAME_Skillmenu, i);
 				}
 				else
 				{
-					it = new FListMenuItemText(ld->mXpos, posy, AllEpisodes[i].mShortcut, 
+					it = new FListMenuItemText(ld->mXpos, posy, ld->mLinespacing, AllEpisodes[i].mShortcut, 
 						AllEpisodes[i].mEpisodeName, ld->mFont, ld->mFontColor, NAME_Skillmenu, i);
 				}
 				ld->mItems.Push(it);
@@ -1022,7 +1022,7 @@ static void InitStartMenus()
 					const char *pname = PlayerClasses[i].Type->Meta.GetMetaString (APMETA_DisplayName);
 					if (pname != NULL)
 					{
-						FListMenuItemText *it = new FListMenuItemText(ld->mXpos, ld->mYpos, *pname,
+						FListMenuItemText *it = new FListMenuItemText(ld->mXpos, ld->mYpos, ld->mLinespacing, *pname,
 							pname, ld->mFont,ld->mFontColor, NAME_Episodemenu, i);
 						ld->mItems.Push(it);
 						ld->mYpos += ld->mLinespacing;
@@ -1032,7 +1032,7 @@ static void InitStartMenus()
 			}
 			if (n > 1)
 			{
-				FListMenuItemText *it = new FListMenuItemText(ld->mXpos, ld->mYpos, 'r',
+				FListMenuItemText *it = new FListMenuItemText(ld->mXpos, ld->mYpos, ld->mLinespacing, 'r',
 					"$MNU_RANDOM", ld->mFont,ld->mFontColor, NAME_Episodemenu, -1);
 				ld->mItems.Push(it);
 			}
@@ -1041,7 +1041,7 @@ static void InitStartMenus()
 				const char *pname = PlayerClasses[0].Type->Meta.GetMetaString (APMETA_DisplayName);
 				if (pname != NULL)
 				{
-					FListMenuItemText *it = new FListMenuItemText(ld->mXpos, ld->mYpos, *pname,
+					FListMenuItemText *it = new FListMenuItemText(ld->mXpos, ld->mYpos, ld->mLinespacing, *pname,
 						pname, ld->mFont,ld->mFontColor, NAME_Episodemenu, 0);
 					ld->mItems.Push(it);
 				}
@@ -1188,13 +1188,13 @@ void M_StartupSkillMenu(FGameStartup *gs)
 				if (skill.PicName.Len() != 0 && pItemText == NULL)
 				{
 					FTextureID tex = TexMan.CheckForTexture(skill.PicName, FTexture::TEX_MiscPatch);
-					li = new FListMenuItemPatch(ld->mXpos, y, skill.Shortcut, tex, action, i);
+					li = new FListMenuItemPatch(ld->mXpos, y, ld->mLinespacing, skill.Shortcut, tex, action, i);
 				}
 				else
 				{
 					EColorRange color = (EColorRange)skill.GetTextColor();
 					if (color == CR_UNTRANSLATED) color = ld->mFontColor;
-					li = new FListMenuItemText(x, y, skill.Shortcut, 
+					li = new FListMenuItemText(x, y, ld->mLinespacing, skill.Shortcut, 
 									pItemText? *pItemText : skill.MenuName, ld->mFont, color, action, i);
 				}
 				ld->mItems.Push(li);

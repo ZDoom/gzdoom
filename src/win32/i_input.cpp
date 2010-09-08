@@ -190,6 +190,16 @@ static void I_CheckGUICapture ()
 	}
 }
 
+void I_SetMouseCapture()
+{
+	SetCapture(Window);
+}
+
+void I_ReleaseMouseCapture()
+{
+	ReleaseCapture();
+}
+
 bool GUIWndProcHook(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT *result)
 {
 	event_t ev = { EV_GUI_Event };
@@ -277,6 +287,7 @@ bool GUIWndProcHook(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESU
 	case WM_RBUTTONUP:
 	case WM_MBUTTONDOWN:
 	case WM_MBUTTONUP:
+	case WM_MOUSEMOVE:
 		if (message >= WM_LBUTTONDOWN && message <= WM_LBUTTONDBLCLK)
 		{
 			ev.subtype = message - WM_LBUTTONDOWN + EV_GUI_LButtonDown;
@@ -289,6 +300,17 @@ bool GUIWndProcHook(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESU
 		{
 			ev.subtype = message - WM_MBUTTONDOWN + EV_GUI_MButtonDown;
 		}
+		else if (message == WM_MOUSEMOVE)
+		{
+			ev.subtype = EV_GUI_MouseMove;
+		}
+		ev.data1 = LOWORD(lParam); 
+		ev.data2 = HIWORD(lParam); 
+
+		if (wParam & MK_SHIFT)				ev.data3 |= GKM_SHIFT;
+		if (wParam & MK_CONTROL)			ev.data3 |= GKM_CTRL;
+		if (GetKeyState(VK_MENU) & 0x8000)	ev.data3 |= GKM_ALT;
+
 		D_PostEvent(&ev);
 		return true;
 

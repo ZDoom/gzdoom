@@ -180,6 +180,14 @@ class DMenu : public DObject
 	HAS_OBJECT_POINTERS
 
 protected:
+	bool mMouseCapture;
+
+	enum
+	{
+		MOUSE_Click,
+		MOUSE_Move,
+		MOUSE_Release
+	};
 
 public:
 	static DMenu *CurrentMenu;
@@ -195,6 +203,13 @@ public:
 	virtual bool DimAllowed ();
 	virtual bool TranslateKeyboardEvents();
 	virtual void Close();
+	virtual bool MouseEvent(int type, int x, int y);
+	void SetCapture();
+	void ReleaseCapture();
+	bool HasCapture()
+	{
+		return mMouseCapture;
+	}
 };
 
 //=============================================================================
@@ -330,13 +345,12 @@ public:
 class FListMenuItemSelectable : public FListMenuItem
 {
 protected:
-	FMenuRect mHotspot;
 	int mHotkey;
+	int mHeight;
 	int mParam;
 
 public:
-	FListMenuItemSelectable(int x, int y, FName childmenu, int mParam = -1);
-	void SetHotspot(int x, int y, int w, int h);
+	FListMenuItemSelectable(int x, int y, int height, FName childmenu, int mParam = -1);
 	bool CheckCoordinate(int x, int y);
 	bool Selectable();
 	bool CheckHotkey(int c);
@@ -350,7 +364,7 @@ class FListMenuItemText : public FListMenuItemSelectable
 	FFont *mFont;
 	EColorRange mColor;
 public:
-	FListMenuItemText(int x, int y, int hotkey, const char *text, FFont *font, EColorRange color, FName child, int param = 0);
+	FListMenuItemText(int x, int y, int height, int hotkey, const char *text, FFont *font, EColorRange color, FName child, int param = 0);
 	~FListMenuItemText();
 	void Drawer();
 };
@@ -359,7 +373,7 @@ class FListMenuItemPatch : public FListMenuItemSelectable
 {
 	FTextureID mTexture;
 public:
-	FListMenuItemPatch(int x, int y, int hotkey, FTextureID patch, FName child, int param = 0);
+	FListMenuItemPatch(int x, int y, int height, int hotkey, FTextureID patch, FName child, int param = 0);
 	void Drawer();
 };
 
@@ -383,7 +397,7 @@ class FPlayerNameBox : public FListMenuItemSelectable
 
 public:
 
-	FPlayerNameBox(int x, int y, int frameofs, const char *text, FFont *font, EColorRange color, FName action);
+	FPlayerNameBox(int x, int y, int height, int frameofs, const char *text, FFont *font, EColorRange color, FName action);
 	~FPlayerNameBox();
 	bool SetString(int i, const char *s);
 	bool GetString(int i, char *s, int len);
@@ -408,7 +422,7 @@ class FValueTextItem : public FListMenuItemSelectable
 
 public:
 
-	FValueTextItem(int x, int y, const char *text, FFont *font, EColorRange color, EColorRange valuecolor, FName action);
+	FValueTextItem(int x, int y, int height, const char *text, FFont *font, EColorRange color, EColorRange valuecolor, FName action);
 	~FValueTextItem();
 	bool SetString(int i, const char *s);
 	bool SetValue(int i, int value);
@@ -436,7 +450,7 @@ class FSliderItem : public FListMenuItemSelectable
 
 public:
 
-	FSliderItem(int x, int y, const char *text, FFont *font, EColorRange color, FName action, int min, int max, int step);
+	FSliderItem(int x, int y, int height, const char *text, FFont *font, EColorRange color, FName action, int min, int max, int step);
 	~FSliderItem();
 	bool SetValue(int i, int value);
 	bool GetValue(int i, int *pvalue);
@@ -463,6 +477,7 @@ public:
 	FListMenuItem *GetItem(FName name);
 	bool Responder (event_t *ev);
 	bool MenuEvent (int mkey, bool fromcontroller);
+	bool MouseEvent(int type, int x, int y);
 	void Ticker ();
 	void Drawer ();
 };

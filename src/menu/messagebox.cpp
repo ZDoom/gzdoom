@@ -226,7 +226,7 @@ bool DMessageBoxMenu::Responder(event_t *ev)
 		Close();
 		return true;
 	}
-	return false;
+	return Super::Responder(ev);
 }
 
 //=============================================================================

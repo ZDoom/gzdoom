@@ -93,30 +93,33 @@ FListMenuItem *DListMenu::GetItem(FName name)
 
 bool DListMenu::Responder (event_t *ev)
 {
-	if (ev->type == EV_GUI_Event && ev->subtype == EV_GUI_KeyDown)
+	if (ev->type == EV_GUI_Event)
 	{
-		int ch = tolower (ev->data1);
+		if (ev->subtype == EV_GUI_KeyDown)
+		{
+			int ch = tolower (ev->data1);
 
-		for(unsigned i = mDesc->mSelectedItem + 1; i < mDesc->mItems.Size(); i++)
-		{
-			if (mDesc->mItems[i]->CheckHotkey(ch))
+			for(unsigned i = mDesc->mSelectedItem + 1; i < mDesc->mItems.Size(); i++)
 			{
-				mDesc->mSelectedItem = i;
-				S_Sound(CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
-				return true;
+				if (mDesc->mItems[i]->CheckHotkey(ch))
+				{
+					mDesc->mSelectedItem = i;
+					S_Sound(CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
+					return true;
+				}
 			}
-		}
-		for(int i = 0; i < mDesc->mSelectedItem; i++)
-		{
-			if (mDesc->mItems[i]->CheckHotkey(ch))
+			for(int i = 0; i < mDesc->mSelectedItem; i++)
 			{
-				mDesc->mSelectedItem = i;
-				S_Sound(CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
-				return true;
+				if (mDesc->mItems[i]->CheckHotkey(ch))
+				{
+					mDesc->mSelectedItem = i;
+					S_Sound(CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
+					return true;
+				}
 			}
 		}
 	}
-	return false;
+	return Super::Responder(ev);
 }
 
 //=============================================================================
@@ -150,7 +153,7 @@ bool DListMenu::MenuEvent (int mkey, bool fromcontroller)
 		return true;
 
 	case MKEY_Enter:
-		if (mDesc->mItems[mDesc->mSelectedItem]->Activate())
+		if (mDesc->mSelectedItem >= 0 && mDesc->mItems[mDesc->mSelectedItem]->Activate())
 		{
 			S_Sound (CHAN_VOICE | CHAN_UI, "menu/choose", snd_menuvolume, ATTN_NONE);
 		}
@@ -158,6 +161,47 @@ bool DListMenu::MenuEvent (int mkey, bool fromcontroller)
 	default:
 		return Super::MenuEvent(mkey, fromcontroller);
 	}
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+bool DListMenu::MouseEvent(int type, int x, int y)
+{
+	int sel = -1;
+
+	// convert x/y from screen to virtual coordinates, according to CleanX/Yfac use in DrawTexture
+	x = ((x - (screen->GetWidth() / 2)) / CleanXfac) + 160;
+	y = ((y - (screen->GetHeight() / 2)) / CleanXfac) + 100;
+
+	for(unsigned i=0;i<mDesc->mItems.Size(); i++)
+	{
+		if (mDesc->mItems[i]->CheckCoordinate(x, y))
+		{
+			sel = i;
+			break;
+		}
+	}
+	if (sel != mDesc->mSelectedItem)
+	{
+		S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
+		mDesc->mSelectedItem = sel;
+	}
+
+	if (type == MOUSE_Release)
+	{
+		if (mDesc->mSelectedItem != -1)
+		{
+			if (MenuEvent(MKEY_Enter, true))
+			{
+				S_Sound (CHAN_VOICE | CHAN_UI, "menu/choose", snd_menuvolume, ATTN_NONE);
+			}
+		}
+	}
+	return true;
 }
 
 //=============================================================================
@@ -382,21 +426,17 @@ void FListMenuItemStaticText::Drawer()
 //
 //=============================================================================
 
-FListMenuItemSelectable::FListMenuItemSelectable(int x, int y, FName action, int param)
+FListMenuItemSelectable::FListMenuItemSelectable(int x, int y, int height, FName action, int param)
 : FListMenuItem(x, y, action)
 {
+	mHeight = height;
 	mParam = param;
 	mHotkey = 0;
 }
 
-void FListMenuItemSelectable::SetHotspot(int x, int y, int w, int h)
-{
-	mHotspot.set(x, y, w, h);
-}
-
 bool FListMenuItemSelectable::CheckCoordinate(int x, int y)
 {
-	return mHotspot.inside(x, y);
+	return y >= mYpos && y < mYpos + mHeight;	// no x check here
 }
 
 bool FListMenuItemSelectable::Selectable()
@@ -429,8 +469,8 @@ bool FListMenuItemSelectable::CheckHotkey(int c)
 //
 //=============================================================================
 
-FListMenuItemText::FListMenuItemText(int x, int y, int hotkey, const char *text, FFont *font, EColorRange color, FName child, int param)
-: FListMenuItemSelectable(x, y, child, param)
+FListMenuItemText::FListMenuItemText(int x, int y, int height, int hotkey, const char *text, FFont *font, EColorRange color, FName child, int param)
+: FListMenuItemSelectable(x, y, height, child, param)
 {
 	mText = ncopystring(text);
 	mFont = font;
@@ -462,8 +502,8 @@ void FListMenuItemText::Drawer()
 //
 //=============================================================================
 
-FListMenuItemPatch::FListMenuItemPatch(int x, int y, int hotkey, FTextureID patch, FName child, int param)
-: FListMenuItemSelectable(x, y, child, param)
+FListMenuItemPatch::FListMenuItemPatch(int x, int y, int height, int hotkey, FTextureID patch, FName child, int param)
+: FListMenuItemSelectable(x, y, height, child, param)
 {
 	mHotkey = hotkey;
 	mTexture = patch;

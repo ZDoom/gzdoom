@@ -37,6 +37,9 @@
 #include "doomtype.h"
 #include "doomdef.h"
 
+void I_SetMouseCapture();
+void I_ReleaseMouseCapture();
+
 bool I_InitInput (void *hwnd);
 void I_ShutdownInput ();
 void I_PutInClipboard (const char *str);

@@ -44,6 +44,13 @@ gameinfo
 	drawreadthis = true
 	pickupcolor = "d6 ba 45"
 	quitmessages = "$QUITMSG", "$QUITMSG23", "$QUITMSG24", "$QUITMSG25", "$QUITMSG26", "$QUITMSG27", "$QUITMSG28", "$QUITMSG29"
+	menufontcolors = 
+			"GREEN", 			// Menu title
+			"UNTRANSLATED", 	// normal menu items
+			"GRAY", 			// option values
+			"GRAY", 			// submenu links
+			"GOLD",				// static headers
+			"YELLOW"			// Highlights
 }
 
 skill baby

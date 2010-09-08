@@ -41,7 +41,6 @@
 #include "g_level.h"
 #include "d_player.h"
 #include "v_video.h"
-#include "gi.h"
 #include "i_system.h"
 #include "c_bind.h"
 #include "v_palette.h"
@@ -49,6 +48,7 @@
 #include "d_gui.h"
 #include "i_music.h"
 #include "m_joy.h"
+#include "gi.h"
 
 #include "optionmenuitems.h"
 
@@ -567,31 +567,6 @@ static void ParseOptionSettings(FScanner &sc)
 				ParseOptionSettings(sc);
 			}
 		}
-		else if (sc.Compare("ifoption"))
-		{
-			if (!CheckSkipOptionBlock(sc))
-			{
-				// recursively parse sub-block
-				ParseOptionSettings(sc);
-			}
-		}
-		else if (sc.Compare("FontColor"))
-		{
-			sc.MustGetString();
-			OptionSettings.mFontColor = V_FindFontColor((FName)sc.String);
-			sc.MustGetStringName(",");
-			sc.MustGetString();
-			OptionSettings.mFontColorValue = V_FindFontColor((FName)sc.String);
-			sc.MustGetStringName(",");
-			sc.MustGetString();
-			OptionSettings.mFontColorMore = V_FindFontColor((FName)sc.String);
-			sc.MustGetStringName(",");
-			sc.MustGetString();
-			OptionSettings.mFontColorHeader = V_FindFontColor((FName)sc.String);
-			sc.MustGetStringName(",");
-			sc.MustGetString();
-			OptionSettings.mFontColorHighlight = V_FindFontColor((FName)sc.String);
-		}
 		else if (sc.Compare("Linespacing"))
 		{
 			sc.MustGetNumber();
@@ -601,11 +576,6 @@ static void ParseOptionSettings(FScanner &sc)
 		{
 			sc.MustGetNumber();
 			OptionSettings.mLabelOffset = sc.Number;
-		}
-		else if (sc.Compare("TitleColor"))
-		{
-			sc.MustGetString();
-			OptionSettings.mTitleColor = V_FindFontColor((FName)sc.String);
 		}
 		else
 		{
@@ -858,6 +828,13 @@ static void ParseOptionMenu(FScanner &sc)
 void M_ParseMenuDefs()
 {
 	int lump, lastlump = 0;
+
+	OptionSettings.mTitleColor = V_FindFontColor(gameinfo.menufontcolors[0]);
+	OptionSettings.mFontColor = V_FindFontColor(gameinfo.menufontcolors[1]);
+	OptionSettings.mFontColorValue = V_FindFontColor(gameinfo.menufontcolors[2]);
+	OptionSettings.mFontColorMore = V_FindFontColor(gameinfo.menufontcolors[3]);
+	OptionSettings.mFontColorHeader = V_FindFontColor(gameinfo.menufontcolors[4]);
+	OptionSettings.mFontColorHighlight = V_FindFontColor(gameinfo.menufontcolors[5]);
 
 	atterm(	DeinitMenus);
 	while ((lump = Wads.FindLump ("MENUDEF", &lastlump)) != -1)

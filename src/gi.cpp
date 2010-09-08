@@ -283,6 +283,7 @@ void FMapInfoParser::ParseGameInfo()
 		GAMEINFOKEY_CSTRING(Endoom, "endoom", 8)
 		GAMEINFOKEY_INT(player5start, "player5start")
 		GAMEINFOKEY_STRINGARRAY(quitmessages, "quitmessages", 0)
+		GAMEINFOKEY_STRINGARRAY(menufontcolors, "menufontcolors", 0)
 		else
 		{
 			// ignore unkown keys.

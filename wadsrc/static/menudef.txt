@@ -345,48 +345,13 @@ OptionValue "OffOn"
 
 OptionMenuSettings
 {
-	// these are global settings and can be overridden by user provided definitions to adjust to different fonts
-	// or game themes.
-	TitleColor "Untranslated"
+	// These can be overridden if a different menu fonts requires it.
 	Linespacing 8
 	LabelOffset 0
-	IfGame(Doom)
-	{
-		Titlecolor "Red"
-	}
-	IfGame(Chex)
-	{
-		Titlecolor "Green"
-	}
 	IfGame(Heretic, Hexen)
 	{
 		Linespacing 9
 		LabelOffset 2
-	}
-	IfGame(Doom, Chex)
-	{
-		FontColor 
-			"UNTRANSLATED", 	// normal menu items
-			"GRAY", 			// option values
-			"GRAY", 			// submenu links
-			"GOLD",				// static headers
-			"YELLOW"			// Highlights
-	}
-	IfGame(Heretic)
-	{
-		FontColor "GREEN", "UNTRANSLATED", "UNTRANSLATED", "GOLD", "YELLOW"
-	}
-	IfGame(Hexen)
-	{
-		FontColor "RED", "UNTRANSLATED", "UNTRANSLATED", "GOLD", "YELLOW"
-	}
-	IfGame(Hexen)
-	{
-		FontColor "RED", "UNTRANSLATED", "UNTRANSLATED", "GOLD", "YELLOW"
-	}
-	IfGame(Strife)
-	{
-		FontColor "UNTRANSLATED", "GRAY", "GRAY", "RED", "GREEN"
 	}
 }
 

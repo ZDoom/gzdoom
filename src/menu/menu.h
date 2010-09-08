@@ -113,7 +113,6 @@ struct FListMenuDescriptor : public FMenuDescriptor
 struct FOptionMenuSettings
 {
 	EColorRange mTitleColor;
-
 	EColorRange mFontColor;
 	EColorRange mFontColorValue;
 	EColorRange mFontColorMore;

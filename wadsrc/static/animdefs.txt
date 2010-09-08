@@ -103,22 +103,22 @@ pic PTN1C0 tics 3
 
 // Hexen's player portraits
 texture optional P_FWALK1
-	pic P_FWALK1 tics 3
-	pic P_FWALK2 tics 3
-	pic P_FWALK3 tics 3
-	pic P_FWALK4 tics 3
+	pic P_FWALK1 tics 8
+	pic P_FWALK2 tics 8
+	pic P_FWALK3 tics 8
+	pic P_FWALK4 tics 8
 
 texture optional P_CWALK1
-	pic P_CWALK1 tics 3
-	pic P_CWALK2 tics 3
-	pic P_CWALK3 tics 3
-	pic P_CWALK4 tics 3
+	pic P_CWALK1 tics 8
+	pic P_CWALK2 tics 8
+	pic P_CWALK3 tics 8
+	pic P_CWALK4 tics 8
 
 texture optional P_MWALK1
-	pic P_MWALK1 tics 3
-	pic P_MWALK2 tics 3
-	pic P_MWALK3 tics 3
-	pic P_MWALK4 tics 3
+	pic P_MWALK1 tics 8
+	pic P_MWALK2 tics 8
+	pic P_MWALK3 tics 8
+	pic P_MWALK4 tics 8
 
 // The Wings of Wrath are not included, because they stop spinning when
 // you stop flying, so they can't be a simple animation.

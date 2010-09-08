@@ -43,6 +43,13 @@ gameinfo
 	player5start = 4001
 	pickupcolor = "d6 ba 45"
 	quitmessages = "$*RAVENQUITMSG"
+	menufontcolors = 
+			"UNTRANSLATED",		// Menu title
+			"GREEN", 			// normal menu items
+			"UNTRANSLATED",		// option values
+			"UNTRANSLATED", 	// submenu links
+			"GOLD",				// static headers
+			"YELLOW"			// Highlights
 }
 
 skill baby

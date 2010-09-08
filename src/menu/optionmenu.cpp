@@ -305,9 +305,11 @@ void DOptionMenu::Drawer ()
 	{
 		if (BigFont && mDesc->mTitle.IsNotEmpty())
 		{
+			const char *tt = mDesc->mTitle;
+			if (*tt == '$') tt = GStrings(tt+1);
 			screen->DrawText (BigFont, OptionSettings.mTitleColor,
-				(screen->GetWidth() - BigFont->StringWidth(mDesc->mTitle) * CleanXfac_1) / 2, 10*CleanYfac_1,
-				mDesc->mTitle, DTA_CleanNoMove_1, true, TAG_DONE);
+				(screen->GetWidth() - BigFont->StringWidth(tt) * CleanXfac_1) / 2, 10*CleanYfac_1,
+				tt, DTA_CleanNoMove_1, true, TAG_DONE);
 			y = -y + BigFont->GetHeight();
 		}
 		else

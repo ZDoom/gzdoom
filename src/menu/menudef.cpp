@@ -968,6 +968,7 @@ static void InitCrosshairsList()
 static void InitStartMenus()
 {
 	// Build episode menu
+	bool success = false;
 	FMenuDescriptor **desc = MenuDescriptors.CheckKey(NAME_Episodemenu);
 	if (desc != NULL)
 	{
@@ -975,34 +976,81 @@ static void InitStartMenus()
 		{
 			FListMenuDescriptor *ld = static_cast<FListMenuDescriptor*>(*desc);
 			int posy = ld->mYpos;
-			ld->mSelectedItem = ld->mItems.Size();
-			if (AllEpisodes.Size() >= 5)
+			int topy = posy;
+
+			// Get lowest y coordinate of any static item in the menu
+			for(unsigned i = 0; i < ld->mItems.Size(); i++)
 			{
-				// desc->mYpos -= desc->mLineHeight;
+				int y = ld->mItems[i]->GetY();
+				if (y < topy) topy = y;
 			}
-			for(unsigned i = 0; i < AllEpisodes.Size(); i++)
+
+			// center the menu on the screen if the top space is larger than the bottom space
+			int totalheight = posy + AllEpisodes.Size() * ld->mLinespacing - topy;
+
+			if (totalheight < 190 || AllEpisodes.Size() == 1)
 			{
-				FListMenuItem *it;
-				if (AllEpisodes[i].mPicName.IsNotEmpty())
+				int newtop = (200 - totalheight + topy) / 2;
+				int topdelta = newtop - topy;
+				if (topdelta < 0)
 				{
-					FTextureID tex = TexMan.CheckForTexture(AllEpisodes[i].mPicName, FTexture::TEX_MiscPatch);
-					it = new FListMenuItemPatch(ld->mXpos, posy, ld->mLinespacing, AllEpisodes[i].mShortcut, 
-						tex, NAME_Skillmenu, i);
+					for(unsigned i = 0; i < ld->mItems.Size(); i++)
+					{
+						ld->mItems[i]->OffsetPositionY(topdelta);
+					}
 				}
-				else
+
+				ld->mSelectedItem = ld->mItems.Size();
+				for(unsigned i = 0; i < AllEpisodes.Size(); i++)
 				{
-					it = new FListMenuItemText(ld->mXpos, posy, ld->mLinespacing, AllEpisodes[i].mShortcut, 
-						AllEpisodes[i].mEpisodeName, ld->mFont, ld->mFontColor, NAME_Skillmenu, i);
+					FListMenuItem *it;
+					if (AllEpisodes[i].mPicName.IsNotEmpty())
+					{
+						FTextureID tex = TexMan.CheckForTexture(AllEpisodes[i].mPicName, FTexture::TEX_MiscPatch);
+						it = new FListMenuItemPatch(ld->mXpos, posy, ld->mLinespacing, AllEpisodes[i].mShortcut, 
+							tex, NAME_Skillmenu, i);
+					}
+					else
+					{
+						it = new FListMenuItemText(ld->mXpos, posy, ld->mLinespacing, AllEpisodes[i].mShortcut, 
+							AllEpisodes[i].mEpisodeName, ld->mFont, ld->mFontColor, NAME_Skillmenu, i);
+					}
+					ld->mItems.Push(it);
+					posy += ld->mLinespacing;
 				}
-				ld->mItems.Push(it);
-				posy += ld->mLinespacing;
-			}
-			if (AllEpisodes.Size() == 1)
-			{
-				ld->mAutoselect = ld->mSelectedItem;
+				if (AllEpisodes.Size() == 1)
+				{
+					ld->mAutoselect = ld->mSelectedItem;
+				}
+				success = true;
 			}
 		}
 	}
+	if (!success)
+	{
+		// Couldn't create the episode menu, either because there's too many episodes or some error occured
+		// Create an option menu for episode selection instead.
+		FOptionMenuDescriptor *od = new FOptionMenuDescriptor;
+		if (desc != NULL) delete *desc;
+		MenuDescriptors[NAME_Episodemenu] = od;
+		od->mType = MDESC_OptionsMenu;
+		od->mMenuName = NAME_Episodemenu;
+		od->mTitle = "$MNU_EPISODE";
+		od->mSelectedItem = 0;
+		od->mScrollPos = 0;
+		od->mClass = NULL;
+		od->mPosition = -15;
+		od->mScrollTop = 0;
+		od->mIndent = 0;
+		od->mDontDim = false;
+		for(unsigned i = 0; i < AllEpisodes.Size(); i++)
+		{
+			FOptionMenuItemSubmenu *it = new FOptionMenuItemSubmenu(AllEpisodes[i].mEpisodeName, "Skillmenu", i);
+			od->mItems.Push(it);
+		}
+		od->CalcIndent();
+	}
+
 
 	// Build player class menu
 	desc = MenuDescriptors.CheckKey(NAME_Playerclassmenu);

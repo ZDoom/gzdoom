@@ -47,10 +47,12 @@ void M_SetVideoMode();
 
 class FOptionMenuItemSubmenu : public FOptionMenuItem
 {
+	int mParam;
 public:
-	FOptionMenuItemSubmenu(const char *label, const char *menu)
+	FOptionMenuItemSubmenu(const char *label, const char *menu, int param = 0)
 		: FOptionMenuItem(label, menu)
 	{
+		mParam = param;
 	}
 
 	int Draw(FOptionMenuDescriptor *desc, int y, int indent)
@@ -62,7 +64,7 @@ public:
 	bool Activate()
 	{
 		S_Sound (CHAN_VOICE | CHAN_UI, "menu/choose", snd_menuvolume, ATTN_NONE);
-		M_SetMenu(mAction, 0);
+		M_SetMenu(mAction, mParam);
 		return true;
 	}
 };

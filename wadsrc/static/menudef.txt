@@ -141,7 +141,6 @@ ListMenu "PlayerclassMenu"
 
 ListMenu "EpisodeMenu"
 {
-	
 	IfGame(Doom, Heretic, Hexen, Strife)
 	{
 		NetgameMessage "$NETGAME"
@@ -151,10 +150,15 @@ ListMenu "EpisodeMenu"
 		NetgameMessage "$CNETGAME"
 	}
 
-	IfGame(Doom, Strife, Chex)
+	IfGame(Doom, Chex)
 	{
 		Position 48, 63
 		StaticPatch 54, 38, "M_EPISOD"
+	}
+	IfGame(Strife)
+	{
+		Position 48, 63
+		StaticText 54, 38, "$MNU_EPISODE"
 	}
 	IfGame(Heretic, Hexen)
 	{

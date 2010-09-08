@@ -251,6 +251,8 @@ public:
 	virtual bool MenuEvent (int mkey, bool fromcontroller);
 	virtual bool CheckHotkey(int c);
 	void DrawSelector(int xofs, int yofs, FTextureID tex);
+	void OffsetPositionY(int ydelta) { mYpos += ydelta; }
+	int GetY() { return mYpos; }
 };	
 
 class FListMenuItemStaticPatch : public FListMenuItem

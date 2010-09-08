@@ -266,19 +266,6 @@ public:
 	void Drawer();
 };
 
-class FListMenuItemStaticAnimation : public FListMenuItemStaticPatch
-{
-	TArray<FTextureID> mFrames;
-	int mFrameTime;
-	int mFrameCount;
-	unsigned int mFrame;
-
-public:
-	FListMenuItemStaticAnimation(int x, int y, int frametime);
-	void AddTexture(FTextureID tex);
-	void Ticker();
-};
-
 class FListMenuItemStaticText : public FListMenuItem
 {
 protected:
@@ -289,6 +276,7 @@ protected:
 
 public:
 	FListMenuItemStaticText(int x, int y, const char *text, FFont *font, EColorRange color, bool centered);
+	~FListMenuItemStaticText();
 	void Drawer();
 };
 

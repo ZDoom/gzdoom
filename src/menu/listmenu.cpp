@@ -354,38 +354,6 @@ void FListMenuItemStaticPatch::Drawer()
 
 //=============================================================================
 //
-// static animation
-//
-//=============================================================================
-
-FListMenuItemStaticAnimation::FListMenuItemStaticAnimation(int x, int y, int frametime)
-: FListMenuItemStaticPatch(x, y, FNullTextureID(), false)
-{
-	mFrameTime = frametime;
-	mFrameCount = 0;
-}
-
-void FListMenuItemStaticAnimation::AddTexture(FTextureID tex)
-{
-	if (!mTexture.isValid()) mTexture = tex;
-	if (tex.isValid()) mFrames.Push(tex);
-}
-	
-void FListMenuItemStaticAnimation::Ticker()
-{
-	if (++mFrameCount > mFrameTime)
-	{
-		mFrameCount = 0;
-		if (++mFrame >= mFrames.Size())
-		{
-			mFrame = 0;
-		}
-		mTexture = mFrames[mFrame];
-	}
-}
-
-//=============================================================================
-//
 // static text
 //
 //=============================================================================
@@ -418,6 +386,11 @@ void FListMenuItemStaticText::Drawer()
 			screen->DrawText (mFont, mColor, x, -mYpos*CleanYfac, text, DTA_CleanNoMove, true, TAG_DONE);
 		}
 	}
+}
+
+FListMenuItemStaticText::~FListMenuItemStaticText()
+{
+	if (mText != NULL) delete [] mText;
 }
 
 //=============================================================================

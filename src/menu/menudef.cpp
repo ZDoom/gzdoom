@@ -252,41 +252,6 @@ static void ParseListMenuBody(FScanner &sc, FListMenuDescriptor *desc)
 			FListMenuItem *it = new FListMenuItemStaticPatch(x, y, tex, centered);
 			desc->mItems.Push(it);
 		}
-		else if (sc.Compare("StaticAnimation"))
-		{
-			sc.MustGetNumber();
-			int x = sc.Number;
-			sc.MustGetStringName(",");
-			sc.MustGetNumber();
-			int y = sc.Number;
-			sc.MustGetStringName(",");
-			sc.MustGetString();
-			FString templatestr = sc.String;
-			sc.MustGetStringName(",");
-			sc.MustGetNumber();
-			int delay = sc.Number;
-			FListMenuItemStaticAnimation *it = new FListMenuItemStaticAnimation(x, y, delay);
-			desc->mItems.Push(it);
-			sc.MustGetStringName(",");
-			do
-			{
-				sc.MustGetNumber();
-				int a = sc.Number;
-				sc.MustGetStringName(",");
-				sc.MustGetNumber();
-				int b = sc.Number;
-				int step = b >= a? 1:-1;
-				b+=step;
-				for(int c = a; c != b; c+=step)
-				{
-					FString texname;
-					texname.Format(templatestr.GetChars(), c);
-					FTextureID texid = TexMan.CheckForTexture(texname, FTexture::TEX_MiscPatch);
-					it->AddTexture(texid);
-				}
-			}
-			while (sc.CheckString(","));
-		}
 		else if (sc.Compare("StaticText") || sc.Compare("StaticTextCentered"))
 		{
 			bool centered = sc.Compare("StaticTextCentered");

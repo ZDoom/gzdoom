@@ -50,15 +50,15 @@ LISTMENU "MainMenu"
 	IfGame(Heretic)
 	{
 		StaticPatch 88, 0, "M_HTIC"
-		StaticAnimation 40, 10, "M_SKL%.2d", 3, 17, 0
-		StaticAnimation 232, 10, "M_SKL%.2d", 3, 0, 17
+		StaticPatch 40, 10, "M_SKL01"
+		StaticPatch 232, 10, "M_SKL00"
 		Position 110, 56
 	}
 	IfGame(Hexen)
 	{
 		StaticPatch 88, 0, "M_HTIC"
-		StaticAnimation 37, 80, "FBUL%c0", 5, 67, 71, 65, 66
-		StaticAnimation 278, 80, "FBUL%c0", 5, 65, 71
+		StaticPatch 37, 80, "FBULB0"
+		StaticPatch 278, 80, "FBULA0"
 		Position 110, 56
 	}
 	

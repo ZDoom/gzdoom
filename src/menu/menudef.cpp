@@ -944,8 +944,8 @@ static void BuildEpisodeMenu()
 					{
 						ld->mItems[i]->OffsetPositionY(topdelta);
 					}
+					posy -= topdelta;
 				}
-				posy -= topdelta;
 
 				ld->mSelectedItem = ld->mItems.Size();
 				for(unsigned i = 0; i < AllEpisodes.Size(); i++)
@@ -1055,8 +1055,8 @@ static void BuildPlayerclassMenu()
 					{
 						ld->mItems[i]->OffsetPositionY(topdelta);
 					}
+					posy -= topdelta;
 				}
-				posy -= topdelta;
 
 				int n = 0;
 				for (unsigned i = 0; i < PlayerClasses.Size (); i++)

@@ -86,6 +86,7 @@ public:
 
 	bool Activate()
 	{
+		S_Sound (CHAN_VOICE | CHAN_UI, "menu/choose", snd_menuvolume, ATTN_NONE);
 		C_DoCommand(mAction);
 		return true;
 	}
@@ -445,6 +446,7 @@ public:
 
 	bool Activate()
 	{
+		S_Sound (CHAN_VOICE | CHAN_UI, "menu/choose", snd_menuvolume, ATTN_NONE);
 		mWaiting = true;
 		DMenu *input = new DEnterKey(DMenu::CurrentMenu, &mInput);
 		M_ActivateMenu(input);

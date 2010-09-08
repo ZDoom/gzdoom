@@ -139,7 +139,7 @@ void DMessageBoxMenu::HandleResult(bool res)
 			else 
 			{
 				Close();
-				M_SetMenu(mAction, -1);
+				if (res) M_SetMenu(mAction, -1);
 			}
 			S_Sound(CHAN_VOICE | CHAN_UI, "menu/dismiss", snd_menuvolume, ATTN_NONE);
 		}
@@ -264,6 +264,7 @@ bool DMessageBoxMenu::MenuEvent(int mkey, bool fromcontroller)
 	}
 	else
 	{
+		S_Sound(CHAN_VOICE | CHAN_UI, "menu/dismiss", snd_menuvolume, ATTN_NONE);
 		Close();
 		return true;
 	}

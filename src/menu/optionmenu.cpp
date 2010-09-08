@@ -261,7 +261,6 @@ bool DOptionMenu::MenuEvent (int mkey, bool fromcontroller)
 	case MKEY_Enter:
 		if (mDesc->mItems[mDesc->mSelectedItem]->Activate()) 
 		{
-			S_Sound (CHAN_VOICE | CHAN_UI, "menu/choose", snd_menuvolume, ATTN_NONE);
 			return true;
 		}
 		// fall through to default

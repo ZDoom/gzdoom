@@ -716,6 +716,12 @@ class DConversationMenu : public DMenu
 public:
 	static int mSelection;
 
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
 	DConversationMenu(FStrifeDialogueNode *CurNode) 
 	{
 		menuactive = MENU_OnNoPause;
@@ -796,6 +802,12 @@ public:
 		//ConversationMenu.indent = 50;
 	}
 
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
 	void Destroy()
 	{
 		V_FreeBrokenLines(mDialogueLines);
@@ -807,6 +819,12 @@ public:
 	{
 		return false;
 	}
+
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
 
 	bool MenuEvent(int mkey, bool fromcontroller)
 	{
@@ -846,6 +864,52 @@ public:
 		return false;
 	}
 
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	bool MouseEvent(int type, int x, int y)
+	{
+		int sel = -1;
+		int fh = SmallFont->GetHeight();
+
+		// convert x/y from screen to virtual coordinates, according to CleanX/Yfac use in DrawTexture
+		x = ((x - (screen->GetWidth() / 2)) / CleanXfac) + 160;
+		y = ((y - (screen->GetHeight() / 2)) / CleanYfac) + 100;
+
+		if (x >= 24 && x <= 320-24 && y >= mYpos && y < mYpos + fh * (int)mResponseLines.Size())
+		{
+			sel = (y - mYpos) / fh;
+			for(unsigned i=0;i<mResponses.Size(); i++)
+			{
+				if ((int)mResponses[i] > sel)
+				{
+					sel = i-1;
+					break;
+				}
+			}
+		}
+		if (sel != -1 && sel != mSelection)
+		{
+			S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
+		}
+		mSelection = sel;
+		if (type == MOUSE_Release)
+		{
+			return MenuEvent(MKEY_Enter, true);
+		}
+		return true;
+	}
+
+
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
 	bool Responder(event_t *ev)
 	{
 		if (ev->type == EV_GUI_Event && ev->subtype == EV_GUI_Char && ev->data1 >= '0' && ev->data1 <= '9')
@@ -853,7 +917,7 @@ public:
 			mSelection = ev->data1 == '0' ? 10 : ev->data1 - '0';
 			return MenuEvent(MKEY_Enter, false);
 		}
-		return false;
+		return Super::Responder(ev);
 	}
 
 	//============================================================================

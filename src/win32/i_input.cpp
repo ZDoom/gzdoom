@@ -237,28 +237,29 @@ bool GUIWndProcHook(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESU
 		{
 			switch (wParam)
 			{
-			case VK_PRIOR:	ev.data1 = GK_PGUP;		break;
-			case VK_NEXT:	ev.data1 = GK_PGDN;		break;
-			case VK_END:	ev.data1 = GK_END;		break;
-			case VK_HOME:	ev.data1 = GK_HOME;		break;
-			case VK_LEFT:	ev.data1 = GK_LEFT;		break;
-			case VK_RIGHT:	ev.data1 = GK_RIGHT;	break;
-			case VK_UP:		ev.data1 = GK_UP;		break;
-			case VK_DOWN:	ev.data1 = GK_DOWN;		break;
-			case VK_DELETE:	ev.data1 = GK_DEL;		break;
-			case VK_ESCAPE:	ev.data1 = GK_ESCAPE;	break;
-			case VK_F1:		ev.data1 = GK_F1;		break;
-			case VK_F2:		ev.data1 = GK_F2;		break;
-			case VK_F3:		ev.data1 = GK_F3;		break;
-			case VK_F4:		ev.data1 = GK_F4;		break;
-			case VK_F5:		ev.data1 = GK_F5;		break;
-			case VK_F6:		ev.data1 = GK_F6;		break;
-			case VK_F7:		ev.data1 = GK_F7;		break;
-			case VK_F8:		ev.data1 = GK_F8;		break;
-			case VK_F9:		ev.data1 = GK_F9;		break;
-			case VK_F10:	ev.data1 = GK_F10;		break;
-			case VK_F11:	ev.data1 = GK_F11;		break;
-			case VK_F12:	ev.data1 = GK_F12;		break;
+			case VK_PRIOR:			ev.data1 = GK_PGUP;		break;
+			case VK_NEXT:			ev.data1 = GK_PGDN;		break;
+			case VK_END:			ev.data1 = GK_END;		break;
+			case VK_HOME:			ev.data1 = GK_HOME;		break;
+			case VK_LEFT:			ev.data1 = GK_LEFT;		break;
+			case VK_RIGHT:			ev.data1 = GK_RIGHT;	break;
+			case VK_UP:				ev.data1 = GK_UP;		break;
+			case VK_DOWN:			ev.data1 = GK_DOWN;		break;
+			case VK_DELETE:			ev.data1 = GK_DEL;		break;
+			case VK_ESCAPE:			ev.data1 = GK_ESCAPE;	break;
+			case VK_F1:				ev.data1 = GK_F1;		break;
+			case VK_F2:				ev.data1 = GK_F2;		break;
+			case VK_F3:				ev.data1 = GK_F3;		break;
+			case VK_F4:				ev.data1 = GK_F4;		break;
+			case VK_F5:				ev.data1 = GK_F5;		break;
+			case VK_F6:				ev.data1 = GK_F6;		break;
+			case VK_F7:				ev.data1 = GK_F7;		break;
+			case VK_F8:				ev.data1 = GK_F8;		break;
+			case VK_F9:				ev.data1 = GK_F9;		break;
+			case VK_F10:			ev.data1 = GK_F10;		break;
+			case VK_F11:			ev.data1 = GK_F11;		break;
+			case VK_F12:			ev.data1 = GK_F12;		break;
+			case VK_BROWSER_BACK:	ev.data1 = GK_BACK;		break;
 			}
 			if (ev.data1 != 0)
 			{
@@ -287,6 +288,8 @@ bool GUIWndProcHook(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESU
 	case WM_RBUTTONUP:
 	case WM_MBUTTONDOWN:
 	case WM_MBUTTONUP:
+	case WM_XBUTTONDOWN:
+	case WM_XBUTTONUP:
 	case WM_MOUSEMOVE:
 		if (message >= WM_LBUTTONDOWN && message <= WM_LBUTTONDBLCLK)
 		{
@@ -299,6 +302,18 @@ bool GUIWndProcHook(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESU
 		else if (message >= WM_MBUTTONDOWN && message <= WM_MBUTTONDBLCLK)
 		{
 			ev.subtype = message - WM_MBUTTONDOWN + EV_GUI_MButtonDown;
+		}
+		else if (message >= WM_XBUTTONDOWN && message <= WM_XBUTTONUP)
+		{
+			ev.subtype = message - WM_XBUTTONDOWN + EV_GUI_BackButtonDown;
+			if (GET_XBUTTON_WPARAM(wParam) == 2)
+			{
+				ev.subtype += EV_GUI_FwdButtonDown - EV_GUI_BackButtonDown;
+			}
+			else if (GET_XBUTTON_WPARAM(wParam) != 1)
+			{
+				break;
+			}
 		}
 		else if (message == WM_MOUSEMOVE)
 		{

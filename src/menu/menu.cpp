@@ -446,6 +446,11 @@ bool M_Responder (event_t *ev)
 				// OS's repeated keys.
 				return true;
 			}
+			else if (ev->subtype == EV_GUI_BackButtonDown || ev->subtype == EV_GUI_BackButtonUp)
+			{
+				mkey = MKEY_Back;
+				keyup = ev->subtype == EV_GUI_BackButtonUp;
+			}
 			else if (ev->subtype != EV_GUI_KeyDown && ev->subtype != EV_GUI_KeyUp)
 			{
 				// pass everything else on to the current menu
@@ -457,6 +462,7 @@ bool M_Responder (event_t *ev)
 				keyup = ev->subtype == EV_GUI_KeyUp;
 				switch (ch)
 				{
+				case GK_BACK:			mkey = MKEY_Back;		break;
 				case GK_ESCAPE:			mkey = MKEY_Back;		break;
 				case GK_RETURN:			mkey = MKEY_Enter;		break;
 				case GK_UP:				mkey = MKEY_Up;			break;

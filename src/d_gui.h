@@ -57,6 +57,10 @@ enum EGUIEvent
 	EV_GUI_WheelDown,		// "
 	EV_GUI_WheelRight,		// "
 	EV_GUI_WheelLeft,		// "
+	EV_GUI_BackButtonDown,
+	EV_GUI_BackButtonUp,
+	EV_GUI_FwdButtonDown,
+	EV_GUI_FwdButtonUp,
 };
 
 enum GUIKeyModifiers
@@ -101,7 +105,7 @@ enum ESpecialGUIKeys
 	GK_ESCAPE	= 27,		// ASCII
 	GK_FREE1	= 28,
 	GK_FREE2	= 29,
-	GK_FREE3	= 30,
+	GK_BACK		= 30,		// browser back key
 	GK_CESCAPE	= 31		// color escape
 };
 

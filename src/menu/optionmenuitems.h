@@ -550,6 +550,7 @@ class FOptionMenuSliderBase : public FOptionMenuItem
 	// action is a CVAR
 	double mMin, mMax, mStep;
 	int mShowValue;
+	int mDrawX;
 public:
 	FOptionMenuSliderBase(const char *label, double min, double max, double step, int showval)
 		: FOptionMenuItem(label, NAME_None)
@@ -558,6 +559,7 @@ public:
 		mMax = max;
 		mStep = step;
 		mShowValue = showval;
+		mDrawX = 0;
 	}
 
 	virtual double GetValue() = 0;
@@ -567,7 +569,8 @@ public:
 	int Draw(FOptionMenuDescriptor *desc, int y, int indent)
 	{
 		drawLabel(indent, y, OptionSettings.mFontColor);
-		M_DrawSlider (indent + CURSORSPACE, y + OptionSettings.mLabelOffset, mMin, mMax, GetValue(), mShowValue);
+		mDrawX = indent + CURSORSPACE;
+		M_DrawSlider (mDrawX, y + OptionSettings.mLabelOffset, mMin, mMax, GetValue(), mShowValue);
 		return indent;
 	}
 
@@ -592,6 +595,41 @@ public:
 		S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 		return true;
 	}
+
+	bool MouseEvent(int type, int x, int y)
+	{
+		DOptionMenu *lm = static_cast<DOptionMenu*>(DMenu::CurrentMenu);
+		if (type != DMenu::MOUSE_Click)
+		{
+			if (!lm->CheckFocus(this)) return false;
+		}
+		if (type == DMenu::MOUSE_Release)
+		{
+			lm->ReleaseFocus();
+		}
+
+		int slide_left = mDrawX+8*CleanXfac_1;
+		int slide_right = slide_left + 10*8*CleanXfac_1;	// 12 char cells with 8 pixels each.
+
+		if (type == DMenu::MOUSE_Click)
+		{
+			if (x < slide_left || x >= slide_right) return true;
+		}
+
+		x = clamp(x, slide_left, slide_right);
+		double v = mMin + ((x - slide_left) * (mMax - mMin)) / (slide_right - slide_left);
+		if (v != GetValue())
+		{
+			SetValue(v);
+			//S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
+		}
+		if (type == DMenu::MOUSE_Click)
+		{
+			lm->SetFocus(this);
+		}
+		return true;
+	}
+
 };
 
 //=============================================================================

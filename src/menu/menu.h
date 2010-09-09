@@ -517,6 +517,7 @@ public:
 	virtual int Draw(FOptionMenuDescriptor *desc, int y, int indent);
 	virtual bool Selectable();
 	virtual int GetIndent();
+	virtual bool MouseEvent(int type, int x, int y);
 };	
 
 //=============================================================================
@@ -554,6 +555,7 @@ class DOptionMenu : public DMenu
 	bool CanScrollUp;
 	bool CanScrollDown;
 	int VisBottom;
+	FOptionMenuItem *mFocusControl;
 
 protected:
 	FOptionMenuDescriptor *mDesc;
@@ -561,12 +563,24 @@ protected:
 public:
 	DOptionMenu(DMenu *parent = NULL, FOptionMenuDescriptor *desc = NULL);
 	virtual void Init(DMenu *parent = NULL, FOptionMenuDescriptor *desc = NULL);
-	//FListMenuItem *GetItem(FName name);
 	bool Responder (event_t *ev);
 	bool MenuEvent (int mkey, bool fromcontroller);
+	bool MouseEvent(int type, int x, int y);
 	void Ticker ();
 	void Drawer ();
 	const FOptionMenuDescriptor *GetDescriptor() const { return mDesc; }
+	void SetFocus(FOptionMenuItem *fc)
+	{
+		mFocusControl = fc;
+	}
+	bool CheckFocus(FOptionMenuItem *fc)
+	{
+		return mFocusControl == fc;
+	}
+	void ReleaseFocus()
+	{
+		mFocusControl = NULL;
+	}
 };
 
 

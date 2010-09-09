@@ -133,23 +133,6 @@ void DOptionMenu::Init(DMenu *parent, FOptionMenuDescriptor *desc)
 //
 //
 //=============================================================================
-/*
-FListMenuItem *DOptionMenu::GetItem(FName name)
-{
-	for(unsigned i=0;i<mDesc->mItems.Size(); i++)
-	{
-		FName nm = mDesc->mItems[i]->GetAction(NULL);
-		if (nm == name) return mDesc->mItems[i];
-	}
-	return NULL;
-}
-*/
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
 
 bool DOptionMenu::Responder (event_t *ev)
 {
@@ -259,13 +242,14 @@ bool DOptionMenu::MenuEvent (int mkey, bool fromcontroller)
 		break;
 
 	case MKEY_Enter:
-		if (mDesc->mItems[mDesc->mSelectedItem]->Activate()) 
+		if (mDesc->mSelectedItem >= 0 && mDesc->mItems[mDesc->mSelectedItem]->Activate()) 
 		{
 			return true;
 		}
 		// fall through to default
 	default:
-		if (mDesc->mItems[mDesc->mSelectedItem]->MenuEvent(mkey, fromcontroller)) return true;
+		if (mDesc->mSelectedItem >= 0 && 
+			mDesc->mItems[mDesc->mSelectedItem]->MenuEvent(mkey, fromcontroller)) return true;
 		return Super::MenuEvent(mkey, fromcontroller);
 	}
 
@@ -273,6 +257,43 @@ bool DOptionMenu::MenuEvent (int mkey, bool fromcontroller)
 	{
 		S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
 	}
+	return true;
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+bool DOptionMenu::MouseEvent(int type, int x, int y)
+{
+	y = (y / CleanYfac_1) - mDesc->mDrawTop;
+
+	if (mFocusControl)
+	{
+		mFocusControl->MouseEvent(type, x, y);
+		return true;
+	}
+	else
+	{
+		int yline = (y / OptionSettings.mLinespacing);
+		if (yline >= mDesc->mScrollTop)
+		{
+			yline += mDesc->mScrollPos;
+		}
+		if ((unsigned)yline < mDesc->mItems.Size() && mDesc->mItems[yline]->Selectable())
+		{
+			if (yline != mDesc->mSelectedItem)
+			{
+				mDesc->mSelectedItem = yline;
+				S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
+			}
+			mDesc->mItems[yline]->MouseEvent(type, x, y);
+			return true;
+		}
+	}
+	mDesc->mSelectedItem = -1;
 	return true;
 }
 
@@ -316,6 +337,7 @@ void DOptionMenu::Drawer ()
 			y = -y;
 		}
 	}
+	mDesc->mDrawTop = y;
 	//int labelofs = OptionSettings.mLabelOffset * CleanXfac_1;
 	//int cursorspace = 14 * CleanXfac_1;
 	int fontheight = OptionSettings.mLinespacing * CleanYfac_1;
@@ -397,6 +419,19 @@ int FOptionMenuItem::Draw(FOptionMenuDescriptor *desc, int y, int indent)
 bool FOptionMenuItem::Selectable()
 {
 	return true;
+}
+
+bool FOptionMenuItem::MouseEvent(int type, int x, int y)
+{
+	if (Selectable() && type == DMenu::MOUSE_Release)
+	{
+		if (DMenu::CurrentMenu->MenuEvent(MKEY_Enter, true))
+		{
+			S_Sound (CHAN_VOICE | CHAN_UI, "menu/choose", snd_menuvolume, ATTN_NONE);
+			return true;
+		}
+	}
+	return false;
 }
 
 int  FOptionMenuItem::GetIndent()

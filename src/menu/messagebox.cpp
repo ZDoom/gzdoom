@@ -55,6 +55,7 @@ class DMessageBoxMenu : public DMenu
 	FBrokenLines *mMessage;
 	int mMessageMode;
 	int messageSelection;
+	int mMouseLeft, mMouseRight, mMouseY;
 	FName mAction;
 
 public:
@@ -65,6 +66,7 @@ public:
 	void Drawer();
 	bool Responder(event_t *ev);
 	bool MenuEvent(int mkey, bool fromcontroller);
+	bool MouseEvent(int type, int x, int y);
 	virtual void HandleResult(bool res);
 };
 
@@ -81,6 +83,12 @@ DMessageBoxMenu::DMessageBoxMenu(DMenu *parent, const char *message, int message
 {
 	mAction = action;
 	messageSelection = 0;
+	mMouseLeft = 140;
+	mMouseY = INT_MIN;
+	int mr1 = 170 + SmallFont->StringWidth(GStrings["TXT_YES"]);
+	int mr2 = 170 + SmallFont->StringWidth(GStrings["TXT_NO"]);
+	mMouseRight = MAX(mr1, mr2);
+
 	Init(parent, message, messagemode, playsound);
 }
 
@@ -179,18 +187,22 @@ void DMessageBoxMenu::Drawer ()
 	if (mMessageMode == 0)
 	{
 		y += fontheight;
+		mMouseY = y;
 		screen->DrawText(SmallFont, CR_UNTRANSLATED, 160, y, GStrings["TXT_YES"], DTA_Clean, true, TAG_DONE);
 		screen->DrawText(SmallFont, CR_UNTRANSLATED, 160, y + fontheight + 1, GStrings["TXT_NO"], DTA_Clean, true, TAG_DONE);
 
-		int color = (DMenu::MenuTime%8) < 4? CR_RED:CR_GREY;
+		if (messageSelection >= 0)
+		{
+			int color = (DMenu::MenuTime%8) < 4? CR_RED:CR_GREY;
 
-		screen->DrawText(ConFont, color,
-			(150 - 160) * CleanXfac + screen->GetWidth() / 2,
-			(y + (fontheight + 1) * messageSelection - 100) * CleanYfac + screen->GetHeight() / 2,
-			"\xd",
-			DTA_CellX, 8 * CleanXfac,
-			DTA_CellY, 8 * CleanYfac,
-			TAG_DONE);
+			screen->DrawText(ConFont, color,
+				(150 - 160) * CleanXfac + screen->GetWidth() / 2,
+				(y + (fontheight + 1) * messageSelection - 100) * CleanYfac + screen->GetHeight() / 2,
+				"\xd",
+				DTA_CellX, 8 * CleanXfac,
+				DTA_CellY, 8 * CleanYfac,
+				TAG_DONE);
+		}
 	}
 }
 
@@ -266,6 +278,48 @@ bool DMessageBoxMenu::MenuEvent(int mkey, bool fromcontroller)
 	{
 		S_Sound(CHAN_VOICE | CHAN_UI, "menu/dismiss", snd_menuvolume, ATTN_NONE);
 		Close();
+		return true;
+	}
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+bool DMessageBoxMenu::MouseEvent(int type, int x, int y)
+{
+	if (mMessageMode == 1)
+	{
+		if (type == MOUSE_Click)
+		{
+			return MenuEvent(MKEY_Enter, true);
+		}
+		return false;
+	}
+	else
+	{
+		int sel = -1;
+		int fh = SmallFont->GetHeight() + 1;
+
+		// convert x/y from screen to virtual coordinates, according to CleanX/Yfac use in DrawTexture
+		x = ((x - (screen->GetWidth() / 2)) / CleanXfac) + 160;
+		y = ((y - (screen->GetHeight() / 2)) / CleanYfac) + 100;
+
+		if (x >= mMouseLeft && x <= mMouseRight && y >= mMouseY && y < mMouseY + 2 * fh)
+		{
+			sel = y >= mMouseY + fh;
+		}
+		if (sel != -1 && sel != messageSelection)
+		{
+			S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
+		}
+		messageSelection = sel;
+		if (type == MOUSE_Release)
+		{
+			return MenuEvent(MKEY_Enter, true);
+		}
 		return true;
 	}
 }

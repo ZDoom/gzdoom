@@ -51,7 +51,7 @@ public:
 	void Drawer();
 	bool MenuEvent(int mkey, bool fromcontroller);
 	bool DimAllowed () { return false; }
-
+	bool MouseEvent(int type, int x, int y);
 };
 
 IMPLEMENT_CLASS(DReadThisMenu)
@@ -135,5 +135,20 @@ bool DReadThisMenu::MenuEvent(int mkey, bool fromcontroller)
 		return true;
 	}
 	else return Super::MenuEvent(mkey, fromcontroller);
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+bool DReadThisMenu::MouseEvent(int type, int x, int y)
+{
+	if (type == MOUSE_Click)
+	{
+		return MenuEvent(MKEY_Enter, true);
+	}
+	return false;
 }
 

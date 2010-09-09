@@ -93,7 +93,7 @@ DTextEnterMenu::DTextEnterMenu(DMenu *parent, char *textbuffer, int maxlen, int 
 
 bool DTextEnterMenu::TranslateKeyboardEvents()
 {
-	return mInputGridOkay && m_showinputgrid; 
+	return mInputGridOkay; 
 }
 
 //=============================================================================
@@ -152,8 +152,44 @@ bool DTextEnterMenu::Responder(event_t *ev)
 			return true;
 		}
 	}
-	return false;
+	return Super::Responder(ev);
 }
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+bool DTextEnterMenu::MouseEvent(int type, int x, int y)
+{
+	const int cell_width = 18 * CleanXfac;
+	const int cell_height = 12 * CleanYfac;
+	const int screen_y = screen->GetHeight() - INPUTGRID_HEIGHT * cell_height;
+	const int screen_x = (screen->GetWidth() - INPUTGRID_WIDTH * cell_width) / 2;
+
+	if (x >= screen_x && x < screen_x + INPUTGRID_WIDTH * cell_width && y >= screen_y)
+	{
+		InputGridX = (x - screen_x) / cell_width;
+		InputGridY = (y - screen_y) / cell_height;
+		if (type == DMenu::MOUSE_Release)
+		{
+			if (MenuEvent(MKEY_Enter, true))
+			{
+				S_Sound (CHAN_VOICE | CHAN_UI, "menu/choose", snd_menuvolume, ATTN_NONE);
+				InputGridX = InputGridY = -1;
+				return true;
+			}
+		}
+	}
+	else
+	{
+		InputGridX = InputGridY = -1;
+	}
+	return true;
+}
+
+
 		
 //=============================================================================
 //
@@ -177,30 +213,34 @@ bool DTextEnterMenu::MenuEvent (int key, bool fromcontroller)
 	{
 		int ch;
 
+		if (InputGridX == -1 || InputGridY == -1)
+		{
+			InputGridX = InputGridY = 0;
+		}
 		switch (key)
 		{
 		case MKEY_Down:
 			InputGridY = (InputGridY + 1) % INPUTGRID_HEIGHT;
-			break;
+			return true;
 
 		case MKEY_Up:
 			InputGridY = (InputGridY + INPUTGRID_HEIGHT - 1) % INPUTGRID_HEIGHT;
-			break;
+			return true;
 
 		case MKEY_Right:
 			InputGridX = (InputGridX + 1) % INPUTGRID_WIDTH;
-			break;
+			return true;
 
 		case MKEY_Left:
 			InputGridX = (InputGridX + INPUTGRID_WIDTH - 1) % INPUTGRID_WIDTH;
-			break;
+			return true;
 
 		case MKEY_Clear:
 			if (mEnterPos > 0)
 			{
 				mEnterString[--mEnterPos] = 0;
 			}
-			break;
+			return true;
 
 		case MKEY_Enter:
 			assert(unsigned(InputGridX) < INPUTGRID_WIDTH && unsigned(InputGridY) < INPUTGRID_HEIGHT);
@@ -211,8 +251,9 @@ bool DTextEnterMenu::MenuEvent (int key, bool fromcontroller)
 				{
 					if (mEnterString[0] != '\0')
 					{
-						mParentMenu->MenuEvent(MKEY_Input, true);
-						Destroy();
+						DMenu *parent = mParentMenu;
+						Close();
+						parent->MenuEvent(MKEY_Input, false);
 						return true;
 					}
 				}
@@ -230,7 +271,7 @@ bool DTextEnterMenu::MenuEvent (int key, bool fromcontroller)
 					mEnterString[++mEnterPos] = 0;
 				}
 			}
-			break;
+			return true;
 
 		default:
 			break;	// Keep GCC quiet
@@ -259,15 +300,18 @@ void DTextEnterMenu::Drawer ()
 		// background across the full width of the screen.
 		screen->Dim(0, 0.8f,
 			0 /*screen->GetWidth()/2 - 13 * cell_width / 2*/,
-			screen->GetHeight() - 5 * cell_height,
+			screen->GetHeight() - INPUTGRID_HEIGHT * cell_height,
 			screen->GetWidth() /*13 * cell_width*/,
-			5 * cell_height);
+			INPUTGRID_HEIGHT * cell_height);
 
-		// Highlight the background behind the selected character.
-		screen->Dim(MAKERGB(255,248,220), 0.6f,
-			InputGridX * cell_width - INPUTGRID_WIDTH * cell_width / 2 + screen->GetWidth() / 2,
-			InputGridY * cell_height - INPUTGRID_HEIGHT * cell_height + screen->GetHeight(),
-			cell_width, cell_height);
+		if (InputGridX >= 0 && InputGridY >= 0)
+		{
+			// Highlight the background behind the selected character.
+			screen->Dim(MAKERGB(255,248,220), 0.6f,
+				InputGridX * cell_width - INPUTGRID_WIDTH * cell_width / 2 + screen->GetWidth() / 2,
+				InputGridY * cell_height - INPUTGRID_HEIGHT * cell_height + screen->GetHeight(),
+				cell_width, cell_height);
+		}
 
 		for (int y = 0; y < INPUTGRID_HEIGHT; ++y)
 		{

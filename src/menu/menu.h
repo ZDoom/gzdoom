@@ -597,6 +597,7 @@ public:
 	bool MenuEvent (int mkey, bool fromcontroller);
 	bool Responder(event_t *ev);
 	bool TranslateKeyboardEvents();
+	bool MouseEvent(int type, int x, int y);
 
 };
 

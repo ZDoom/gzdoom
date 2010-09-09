@@ -583,6 +583,12 @@ bool M_Responder (event_t *ev)
 			}
 			return false;
 		}
+		else if (ev->type == EV_GUI_Event && ev->subtype == EV_GUI_LButtonDown && ConsoleState != c_down)
+		{
+			M_StartControlPanel(true);
+			M_SetMenu(NAME_Mainmenu, -1);
+			return true;
+		}
 	}
 	return false;
 }

@@ -421,6 +421,15 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		return result;
 	}
 
+	if ((gamestate == GS_DEMOSCREEN || gamestate == GS_TITLELEVEL) && message == WM_LBUTTONDOWN)
+	{
+		if (GUIWndProcHook(hWnd, message, wParam, lParam, &result))
+		{
+			return result;
+		}
+	}
+
+
 	switch (message)
 	{
 	case WM_DESTROY:

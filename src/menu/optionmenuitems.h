@@ -344,9 +344,9 @@ public:
 
 	void SetMenuMessage(int which)
 	{
-		if (mParentMenu->IsKindOf(RUNTIME_CLASS(DListMenu)))
+		if (mParentMenu->IsKindOf(RUNTIME_CLASS(DOptionMenu)))
 		{
-			DListMenu *m = barrier_cast<DListMenu*>(mParentMenu);
+			DOptionMenu *m = barrier_cast<DOptionMenu*>(mParentMenu);
 			FListMenuItem *it = m->GetItem(NAME_Controlmessage);
 			if (it != NULL)
 			{

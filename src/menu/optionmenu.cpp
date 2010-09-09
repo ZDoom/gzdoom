@@ -134,8 +134,44 @@ void DOptionMenu::Init(DMenu *parent, FOptionMenuDescriptor *desc)
 //
 //=============================================================================
 
+FOptionMenuItem *DOptionMenu::GetItem(FName name)
+{
+	for(unsigned i=0;i<mDesc->mItems.Size(); i++)
+	{
+		FName nm = mDesc->mItems[i]->GetAction(NULL);
+		if (nm == name) return mDesc->mItems[i];
+	}
+	return NULL;
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
 bool DOptionMenu::Responder (event_t *ev)
 {
+	if (ev->type == EV_GUI_Event)
+	{
+		if (ev->subtype == EV_GUI_WheelUp)
+		{
+			if (mDesc->mScrollPos > 0)
+			{
+				mDesc->mScrollPos--;
+			}
+			return true;
+		}
+		else if (ev->subtype == EV_GUI_WheelDown)
+		{
+			if (CanScrollDown)
+			{
+				mDesc->mScrollPos++;
+				VisBottom++;
+			}
+			return true;
+		}
+	}
 	return Super::Responder(ev);
 }
 

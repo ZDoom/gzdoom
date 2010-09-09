@@ -561,6 +561,7 @@ protected:
 	FOptionMenuDescriptor *mDesc;
 
 public:
+	FOptionMenuItem *GetItem(FName name);
 	DOptionMenu(DMenu *parent = NULL, FOptionMenuDescriptor *desc = NULL);
 	virtual void Init(DMenu *parent = NULL, FOptionMenuDescriptor *desc = NULL);
 	bool Responder (event_t *ev);

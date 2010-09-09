@@ -127,6 +127,7 @@ struct FOptionMenuDescriptor : public FMenuDescriptor
 	TDeletingArray<FOptionMenuItem *> mItems;
 	FString mTitle;
 	int mSelectedItem;
+	int mDrawTop;
 	int mScrollTop;
 	int mScrollPos;
 	int mIndent;
@@ -182,6 +183,7 @@ class DMenu : public DObject
 protected:
 	bool mMouseCapture;
 
+public:
 	enum
 	{
 		MOUSE_Click,
@@ -189,7 +191,6 @@ protected:
 		MOUSE_Release
 	};
 
-public:
 	static DMenu *CurrentMenu;
 	static int MenuTime;
 
@@ -249,6 +250,7 @@ public:
 	virtual bool GetValue(int i, int *pvalue);
 	virtual void Enable(bool on);
 	virtual bool MenuEvent (int mkey, bool fromcontroller);
+	virtual bool MouseEvent(int type, int x, int y);
 	virtual bool CheckHotkey(int c);
 	void DrawSelector(int xofs, int yofs, FTextureID tex);
 	void OffsetPositionY(int ydelta) { mYpos += ydelta; }
@@ -345,6 +347,7 @@ public:
 	bool Selectable();
 	bool CheckHotkey(int c);
 	bool Activate();
+	bool MouseEvent(int type, int x, int y);
 	FName GetAction(int *pparam);
 };
 
@@ -446,6 +449,7 @@ public:
 	bool GetValue(int i, int *pvalue);
 	bool MenuEvent (int mkey, bool fromcontroller);
 	void Drawer();
+	bool MouseEvent(int type, int x, int y);
 };
 
 //=============================================================================
@@ -460,6 +464,7 @@ class DListMenu : public DMenu
 
 protected:
 	FListMenuDescriptor *mDesc;
+	FListMenuItem *mFocusControl;
 
 public:
 	DListMenu(DMenu *parent = NULL, FListMenuDescriptor *desc = NULL);
@@ -470,6 +475,18 @@ public:
 	bool MouseEvent(int type, int x, int y);
 	void Ticker ();
 	void Drawer ();
+	void SetFocus(FListMenuItem *fc)
+	{
+		mFocusControl = fc;
+	}
+	bool CheckFocus(FListMenuItem *fc)
+	{
+		return mFocusControl == fc;
+	}
+	void ReleaseFocus()
+	{
+		mFocusControl = NULL;
+	}
 };
 
 

@@ -383,6 +383,46 @@ bool FSliderItem::MenuEvent (int mkey, bool fromcontroller)
 //
 //=============================================================================
 
+bool FSliderItem::MouseEvent(int type, int x, int y)
+{
+	DListMenu *lm = static_cast<DListMenu*>(DMenu::CurrentMenu);
+	if (type != DMenu::MOUSE_Click)
+	{
+		if (!lm->CheckFocus(this)) return false;
+	}
+	if (type == DMenu::MOUSE_Release)
+	{
+		lm->ReleaseFocus();
+	}
+
+	int slide_left = SmallFont->StringWidth ("Green") + 8 + mXpos;
+	int slide_right = slide_left + 12*8;	// 12 char cells with 8 pixels each.
+
+	if (type == DMenu::MOUSE_Click)
+	{
+		if (x < slide_left || x >= slide_right) return true;
+	}
+
+	x = clamp(x, slide_left, slide_right);
+	int v = mMinrange + Scale(x - slide_left, mMaxrange - mMinrange, slide_right - slide_left);
+	if (v != mSelection)
+	{
+		mSelection = v;
+		S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
+	}
+	if (type == DMenu::MOUSE_Click)
+	{
+		lm->SetFocus(this);
+	}
+	return true;
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
 void FSliderItem::DrawSlider (int x, int y)
 {
 	int range = mMaxrange - mMinrange;
@@ -456,6 +496,7 @@ public:
 	void Init(DMenu *parent, FListMenuDescriptor *desc);
 	bool Responder (event_t *ev);
 	bool MenuEvent (int mkey, bool fromcontroller);
+	bool MouseEvent(int type, int x, int y);
 	void Ticker ();
 	void Drawer ();
 };
@@ -1010,6 +1051,47 @@ bool DPlayerMenu::MenuEvent (int mkey, bool fromcontroller)
 	return Super::MenuEvent(mkey, fromcontroller);
 }
 
+
+bool DPlayerMenu::MouseEvent(int type, int x, int y)
+{
+	int v;
+	FListMenuItem *li = mFocusControl;
+	bool res = Super::MouseEvent(type, x, y);
+	if (li == NULL) li = mFocusControl;
+	if (li != NULL)
+	{
+		// Check if the colors have changed
+		FName current = li->GetAction(NULL);
+		switch(current)
+		{
+		case NAME_Red:
+			if (li->GetValue(0, &v))
+			{
+				int color = players[consoleplayer].userinfo.color;
+				SendNewColor (v, GPART(color), BPART(color));
+			}
+			break;
+
+		case NAME_Green:
+			if (li->GetValue(0, &v))
+			{
+				int color = players[consoleplayer].userinfo.color;
+				SendNewColor (RPART(color), v, BPART(color));
+			}
+			break;
+
+		case NAME_Blue:
+			if (li->GetValue(0, &v))
+			{
+				int color = players[consoleplayer].userinfo.color;
+				SendNewColor (RPART(color), GPART(color), v);
+			}
+			break;
+		}
+	}
+	return res;
+}
+
 //=============================================================================
 //
 //
@@ -1034,12 +1116,12 @@ void DPlayerMenu::Drawer ()
 	Super::Drawer();
 
 	const char *str = "PRESS " TEXTCOLOR_WHITE "SPACE";
-	screen->DrawText (SmallFont, CR_GOLD, 320 - 52 - 32 -
+	screen->DrawText (SmallFont, CR_GOLD, 320 - 32 - 32 -
 		SmallFont->StringWidth (str)/2,
 		50 + 48 + 70, str,
 		DTA_Clean, true, TAG_DONE);
 	str = mRotation ? "TO SEE FRONT" : "TO SEE BACK";
-	screen->DrawText (SmallFont, CR_GOLD, 320 - 52 - 32 -
+	screen->DrawText (SmallFont, CR_GOLD, 320 - 32 - 32 -
 		SmallFont->StringWidth (str)/2,
 		50 + 48 + 70 + SmallFont->GetHeight (), str,
 		DTA_Clean, true, TAG_DONE);

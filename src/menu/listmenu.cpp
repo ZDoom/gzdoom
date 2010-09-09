@@ -54,6 +54,7 @@ DListMenu::DListMenu(DMenu *parent, FListMenuDescriptor *desc)
 : DMenu(parent)
 {
 	mDesc = desc;
+	mFocusControl = NULL;
 }
 
 //=============================================================================
@@ -175,32 +176,30 @@ bool DListMenu::MouseEvent(int type, int x, int y)
 
 	// convert x/y from screen to virtual coordinates, according to CleanX/Yfac use in DrawTexture
 	x = ((x - (screen->GetWidth() / 2)) / CleanXfac) + 160;
-	y = ((y - (screen->GetHeight() / 2)) / CleanXfac) + 100;
+	y = ((y - (screen->GetHeight() / 2)) / CleanYfac) + 100;
 
-	for(unsigned i=0;i<mDesc->mItems.Size(); i++)
+	if (mFocusControl != NULL)
 	{
-		if (mDesc->mItems[i]->CheckCoordinate(x, y))
-		{
-			sel = i;
-			break;
-		}
+		mFocusControl->MouseEvent(type, x, y);
+		return true;
 	}
-	if (sel != mDesc->mSelectedItem)
+	else
 	{
-		S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
-		mDesc->mSelectedItem = sel;
-	}
-
-	if (type == MOUSE_Release)
-	{
-		if (mDesc->mSelectedItem != -1)
+		for(unsigned i=0;i<mDesc->mItems.Size(); i++)
 		{
-			if (MenuEvent(MKEY_Enter, true))
+			if (mDesc->mItems[i]->CheckCoordinate(x, y))
 			{
-				S_Sound (CHAN_VOICE | CHAN_UI, "menu/choose", snd_menuvolume, ATTN_NONE);
+				if (i != mDesc->mSelectedItem)
+				{
+					S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
+				}
+				mDesc->mSelectedItem = i;
+				mDesc->mItems[i]->MouseEvent(type, x, y);
+				return true;
 			}
 		}
 	}
+	mDesc->mSelectedItem = -1;
 	return true;
 }
 
@@ -316,6 +315,11 @@ bool FListMenuItem::MenuEvent(int mkey, bool fromcontroller)
 	return false;
 }
 
+bool FListMenuItem::MouseEvent(int type, int x, int y)
+{
+	return false;
+}
+
 bool FListMenuItem::CheckHotkey(int c) 
 { 
 	return false; 
@@ -409,7 +413,7 @@ FListMenuItemSelectable::FListMenuItemSelectable(int x, int y, int height, FName
 
 bool FListMenuItemSelectable::CheckCoordinate(int x, int y)
 {
-	return y >= mYpos && y < mYpos + mHeight;	// no x check here
+	return mEnabled && y >= mYpos && y < mYpos + mHeight;	// no x check here
 }
 
 bool FListMenuItemSelectable::Selectable()
@@ -434,7 +438,18 @@ bool FListMenuItemSelectable::CheckHotkey(int c)
 	return c == tolower(mHotkey); 
 }
 
-
+bool FListMenuItemSelectable::MouseEvent(int type, int x, int y)
+{
+	if (type == DMenu::MOUSE_Release)
+	{
+		if (DMenu::CurrentMenu->MenuEvent(MKEY_Enter, true))
+		{
+			S_Sound (CHAN_VOICE | CHAN_UI, "menu/choose", snd_menuvolume, ATTN_NONE);
+			return true;
+		}
+	}
+	return false;
+}
 
 //=============================================================================
 //

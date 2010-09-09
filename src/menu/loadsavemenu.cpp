@@ -75,6 +75,7 @@ protected:
 	FBrokenLines *SaveComment;
 	bool mEntering;
 	char savegamestring[SAVESTRINGSIZE];
+	bool mWheelScrolled;
 
 	DLoadSaveMenu(DMenu *parent = NULL, FListMenuDescriptor *desc = NULL);
 	void Destroy();
@@ -381,6 +382,7 @@ DLoadSaveMenu::DLoadSaveMenu(DMenu *parent, FListMenuDescriptor *desc)
 : DListMenu(parent, desc)
 {
 	ReadSaveStrings();
+	mWheelScrolled = false;
 }
 
 void DLoadSaveMenu::Destroy()
@@ -664,6 +666,14 @@ void DLoadSaveMenu::Drawer ()
 
 		if (!didSeeSelected)
 		{
+			// no, this shouldn't be here - and that's why there's now another hack in here
+			// so that the mouse scrolling does not get screwed by this code...
+			if (mWheelScrolled)
+			{
+				didSeeSelected = true;
+				SelSaveGame = NULL;
+				mWheelScrolled = false;
+			}
 			for (i = 1; node->Succ != NULL && node != SelSaveGame; ++i)
 			{
 				node = static_cast<FSaveGameNode *>(node->Succ);
@@ -694,7 +704,11 @@ bool DLoadSaveMenu::MenuEvent (int mkey, bool fromcontroller)
 	switch (mkey)
 	{
 	case MKEY_Up:
-		if (SelSaveGame != NULL && SelSaveGame->Succ != NULL)
+		if (SelSaveGame == NULL) 
+		{
+			SelSaveGame = TopSaveGame;
+		}
+		else if (SelSaveGame->Succ != NULL)
 		{
 			if (SelSaveGame != SaveGames.Head)
 			{
@@ -714,7 +728,11 @@ bool DLoadSaveMenu::MenuEvent (int mkey, bool fromcontroller)
 		return true;
 
 	case MKEY_Down:
-		if (SelSaveGame != NULL && SelSaveGame->Succ != NULL)
+		if (SelSaveGame == NULL) 
+		{
+			SelSaveGame = TopSaveGame;
+		}
+		else if (SelSaveGame->Succ != NULL)
 		{
 			if (SelSaveGame != SaveGames.TailPred)
 			{
@@ -829,35 +847,71 @@ bool DLoadSaveMenu::MouseEvent(int type, int x, int y)
 
 bool DLoadSaveMenu::Responder (event_t *ev)
 {
-	if (ev->subtype == EV_GUI_KeyDown)
+	if (ev->type == EV_GUI_Event)
 	{
-		if (SelSaveGame != NULL && SelSaveGame->Succ != NULL)
+		if (ev->subtype == EV_GUI_KeyDown)
 		{
-			switch (ev->data1)
+			if (SelSaveGame != NULL && SelSaveGame->Succ != NULL)
 			{
-			case GK_F1:
-				if (!SelSaveGame->Filename.IsEmpty())
+				switch (ev->data1)
 				{
-					char workbuf[512];
-
-					mysnprintf (workbuf, countof(workbuf), "File on disk:\n%s", SelSaveGame->Filename.GetChars());
-					if (SaveComment != NULL)
+				case GK_F1:
+					if (!SelSaveGame->Filename.IsEmpty())
 					{
-						V_FreeBrokenLines (SaveComment);
-					}
-					SaveComment = V_BreakLines (SmallFont, 216*screen->GetWidth()/640/CleanXfac, workbuf);
-				}
-				return true;
+						char workbuf[512];
 
-			case GK_DEL:
-			case '\b':
-				{
-					FString EndString;
-					EndString.Format("%s" TEXTCOLOR_WHITE "%s" TEXTCOLOR_NORMAL "?\n\n%s",
-						GStrings("MNU_DELETESG"), SelSaveGame->Title, GStrings("PRESSYN"));
-					M_StartMessage (EndString, 0);
+						mysnprintf (workbuf, countof(workbuf), "File on disk:\n%s", SelSaveGame->Filename.GetChars());
+						if (SaveComment != NULL)
+						{
+							V_FreeBrokenLines (SaveComment);
+						}
+						SaveComment = V_BreakLines (SmallFont, 216*screen->GetWidth()/640/CleanXfac, workbuf);
+					}
+					return true;
+
+				case GK_DEL:
+				case '\b':
+					{
+						FString EndString;
+						EndString.Format("%s" TEXTCOLOR_WHITE "%s" TEXTCOLOR_NORMAL "?\n\n%s",
+							GStrings("MNU_DELETESG"), SelSaveGame->Title, GStrings("PRESSYN"));
+						M_StartMessage (EndString, 0);
+					}
+					return true;
 				}
-				return true;
+			}
+		}
+		else if (ev->subtype == EV_GUI_WheelUp)
+		{
+			if (TopSaveGame != SaveGames.Head && TopSaveGame != NULL)
+			{
+				TopSaveGame = static_cast<FSaveGameNode *>(TopSaveGame->Pred);
+				mWheelScrolled = true;
+			}
+			return true;
+		}
+		else if (ev->subtype == EV_GUI_WheelDown)
+		{
+			const int savepicTop = 54*CleanYfac;
+			const int listboxTop = savepicTop;
+			const int rowHeight = (SmallFont->GetHeight() + 1) * CleanYfac;
+			const int listboxHeight1 = screen->GetHeight() - listboxTop - 10;
+			const int listboxRows = (listboxHeight1 - 1) / rowHeight;
+
+			FSaveGameNode *node = TopSaveGame;
+			if (node != NULL)
+			{
+				int count = 1;
+				while (node != NULL && node != SaveGames.TailPred)
+				{
+					node = (FSaveGameNode*)node->Succ;
+					count++;
+				}
+				if (count > listboxRows)
+				{
+					TopSaveGame = (FSaveGameNode*)TopSaveGame->Succ;
+					mWheelScrolled = true;
+				}
 			}
 		}
 	}
@@ -979,13 +1033,13 @@ void DSaveMenu::DoSave (FSaveGameNode *node)
 
 bool DSaveMenu::MenuEvent (int mkey, bool fromcontroller)
 {
-	if (SelSaveGame == NULL || SelSaveGame->Succ == NULL)
-	{
-		return false;
-	}
 	if (Super::MenuEvent(mkey, fromcontroller)) 
 	{
 		return true;
+	}
+	if (SelSaveGame == NULL || SelSaveGame->Succ == NULL)
+	{
+		return false;
 	}
 
 	if (mkey == MKEY_Enter)

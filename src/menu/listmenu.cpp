@@ -158,6 +158,7 @@ bool DListMenu::MenuEvent (int mkey, bool fromcontroller)
 		{
 			S_Sound (CHAN_VOICE | CHAN_UI, "menu/choose", snd_menuvolume, ATTN_NONE);
 		}
+		return true;
 
 	default:
 		return Super::MenuEvent(mkey, fromcontroller);

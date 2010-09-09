@@ -84,6 +84,7 @@ protected:
 	void ExtractSaveData (const FSaveGameNode *node);
 	void Drawer ();
 	bool MenuEvent (int mkey, bool fromcontroller);
+	bool MouseEvent(int type, int x, int y);
 	bool Responder(event_t *ev);
 
 };
@@ -757,6 +758,67 @@ bool DLoadSaveMenu::MenuEvent (int mkey, bool fromcontroller)
 	default:
 		return Super::MenuEvent(mkey, fromcontroller);
 	}
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+bool DLoadSaveMenu::MouseEvent(int type, int x, int y)
+{
+	const int savepicLeft = 10;
+	const int savepicTop = 54*CleanYfac;
+	const int savepicWidth = 216*screen->GetWidth()/640;
+
+	const int rowHeight = (SmallFont->GetHeight() + 1) * CleanYfac;
+	const int listboxLeft = savepicLeft + savepicWidth + 14;
+	const int listboxTop = savepicTop;
+	const int listboxWidth = screen->GetWidth() - listboxLeft - 10;
+	const int listboxHeight1 = screen->GetHeight() - listboxTop - 10;
+	const int listboxRows = (listboxHeight1 - 1) / rowHeight;
+	const int listboxHeight = listboxRows * rowHeight + 1;
+	const int listboxRight = listboxLeft + listboxWidth;
+	const int listboxBottom = listboxTop + listboxHeight;
+
+	if (x >= listboxLeft && x < listboxLeft + listboxWidth && 
+		y >= listboxTop && y < listboxTop + listboxHeight)
+	{
+		int lineno = (y - listboxTop) / rowHeight;
+		FSaveGameNode *top = TopSaveGame;
+		while (lineno > 0 && top->Succ != NULL)
+		{
+			lineno--;
+			top = (FSaveGameNode *)top->Succ;
+		}
+		if (lineno == 0)
+		{
+			if (SelSaveGame != top)
+			{
+				SelSaveGame = top;
+				UnloadSaveData ();
+				ExtractSaveData (SelSaveGame);
+				// Sound?
+			}
+			if (type == MOUSE_Release)
+			{
+				if (MenuEvent(MKEY_Enter, true))
+				{
+					//S_Sound (CHAN_VOICE | CHAN_UI, "menu/choose", snd_menuvolume, ATTN_NONE);
+					return true;
+				}
+			}
+		}
+		else SelSaveGame = NULL;
+	}
+	else
+	{
+		SelSaveGame = NULL;
+	}
+	return true;
+
+	return false;
 }
 
 //=============================================================================

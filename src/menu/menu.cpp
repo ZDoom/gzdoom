@@ -65,7 +65,7 @@ CVAR (Bool, show_obituaries, true, CVAR_ARCHIVE)
 
 CVAR (Float, snd_menuvolume, 0.6f, CVAR_ARCHIVE)
 CVAR(Bool, m_use_mouse, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-CVAR(Int, m_show_backbutton, 1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR(Int, m_show_backbutton, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 DMenu *DMenu::CurrentMenu;
 int DMenu::MenuTime;
@@ -197,12 +197,13 @@ bool DMenu::MouseEvent(int type, int x, int y)
 
 bool DMenu::MouseEventBack(int type, int x, int y)
 {
-	if (m_show_backbutton)
+	if (m_show_backbutton >= 0)
 	{
 		FTexture *tex = TexMan["MENUBACK"];
 		if (tex != NULL)
 		{
-			if (m_show_backbutton==2) x -= screen->GetWidth() - tex->GetScaledWidth() * CleanXfac;
+			if (m_show_backbutton&1) x -= screen->GetWidth() - tex->GetScaledWidth() * CleanXfac;
+			if (m_show_backbutton&2) y -= screen->GetHeight() - tex->GetScaledHeight() * CleanYfac;
 			mBackbuttonSelected = (x >= 0 && x < tex->GetScaledWidth() * CleanXfac && y < tex->GetScaledHeight() * CleanYfac);
 			if (mBackbuttonSelected && type == MOUSE_Release)
 			{
@@ -261,11 +262,12 @@ void DMenu::Ticker ()
 
 void DMenu::Drawer () 
 {
-	if (this == DMenu::CurrentMenu && mBackbuttonAlpha > 0 && m_show_backbutton && m_use_mouse)
+	if (this == DMenu::CurrentMenu && mBackbuttonAlpha > 0 && m_show_backbutton >= 0 && m_use_mouse)
 	{
 		FTexture *tex = TexMan[mBackbuttonSelected && mMouseCapture? "MENUBAK1":"MENUBACK"];
-		int x = m_show_backbutton == 1? 0:screen->GetWidth() - tex->GetScaledWidth() * CleanXfac;
-		screen->DrawTexture(tex, x, 0, DTA_CleanNoMove, true, DTA_Alpha, mBackbuttonAlpha, TAG_DONE);
+		int x = (!(m_show_backbutton&1))? 0:screen->GetWidth() - tex->GetScaledWidth() * CleanXfac;
+		int y = (!(m_show_backbutton&2))? 0:screen->GetHeight() - tex->GetScaledHeight() * CleanYfac;
+		screen->DrawTexture(tex, x, y, DTA_CleanNoMove, true, DTA_Alpha, mBackbuttonAlpha, TAG_DONE);
 	}
 }
 

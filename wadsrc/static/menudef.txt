@@ -467,9 +467,11 @@ OptionMenu "CustomizeControls"
 
 OptionValue "Corners"
 {
-	0, "Off"
-	1, "Upper left"
-	2, "Upper right"
+	-1, "Off"
+	0, "Upper left"
+	1, "Upper right"
+	2, "Lower left"
+	3, "Lower right"
 }
 
 OptionMenu "MouseOptions"

@@ -548,7 +548,7 @@ bool M_Responder (event_t *ev)
 			if (keyup)
 			{
 				MenuButtons[mkey].ReleaseKey(ch);
-				return true;
+				return false;
 			}
 			else
 			{
@@ -558,10 +558,11 @@ bool M_Responder (event_t *ev)
 				{
 					MenuButtonTickers[mkey] = KEY_REPEAT_DELAY;
 				}
-				return DMenu::CurrentMenu->MenuEvent(mkey, fromcontroller);
+				DMenu::CurrentMenu->MenuEvent(mkey, fromcontroller);
+				return true;
 			}
 		}
-		return DMenu::CurrentMenu->Responder(ev);
+		return DMenu::CurrentMenu->Responder(ev) || !keyup;
 	}
 	else
 	{

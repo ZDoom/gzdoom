@@ -3311,8 +3311,8 @@ void D3DFB::FillSimplePoly(FTexture *texture, FVector2 *points, int npoints,
 	quad->NumTris = npoints - 2;
 
 	yoffs = GatheringWipeScreen ? 0 : LBOffset;
-	uscale = float(1.f / (texture->GetWidth() * scalex));
-	vscale = float(1.f / (texture->GetHeight() * scaley));
+	uscale = float(1.f / (texture->GetScaledWidth() * scalex));
+	vscale = float(1.f / (texture->GetScaledHeight() * scaley));
 	ox = float(originx);
 	oy = float(originy);
 

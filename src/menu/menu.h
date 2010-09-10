@@ -182,6 +182,9 @@ class DMenu : public DObject
 
 protected:
 	bool mMouseCapture;
+	bool mBackbuttonSelected;
+	int mBackbuttonTime;
+	fixed_t mBackbuttonAlpha;
 
 public:
 	enum
@@ -189,6 +192,11 @@ public:
 		MOUSE_Click,
 		MOUSE_Move,
 		MOUSE_Release
+	};
+
+	enum
+	{
+		BACKBUTTON_TIME = 4*TICRATE
 	};
 
 	static DMenu *CurrentMenu;

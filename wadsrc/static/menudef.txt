@@ -461,10 +461,22 @@ OptionMenu "CustomizeControls"
 //
 //-------------------------------------------------------------------------------------------
 
+OptionValue "Corners"
+{
+	0, "Off"
+	1, "Upper left"
+	2, "Upper right"
+}
+
 OptionMenu "MouseOptions"
 {
 	Title "MOUSE OPTIONS"
 	Option "Enable mouse",				"use_mouse", "YesNo"
+	IfOption(Windows)	// GUI mouse not operable in SDL interface right now.
+	{
+		Option "Enable mouse in menus",	"m_use_mouse", "YesNo"
+		Option "Show back button",		"m_show_backbutton", "Corners"
+	}
 	StaticText 	""
 	Slider "Overall sensitivity",		"mouse_sensitivity", 0.5, 2.5, 0.1
 	Option "Prescale mouse movement",	"m_noprescale", "NoYes"

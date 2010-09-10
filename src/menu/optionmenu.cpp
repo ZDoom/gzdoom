@@ -330,7 +330,7 @@ bool DOptionMenu::MouseEvent(int type, int x, int y)
 		}
 	}
 	mDesc->mSelectedItem = -1;
-	return true;
+	return Super::MouseEvent(type, x, y);
 }
 
 //=============================================================================
@@ -341,6 +341,7 @@ bool DOptionMenu::MouseEvent(int type, int x, int y)
 
 void DOptionMenu::Ticker ()
 {
+	Super::Ticker();
 	for(unsigned i=0;i<mDesc->mItems.Size(); i++)
 	{
 		mDesc->mItems[i]->Ticker();
@@ -428,6 +429,7 @@ void DOptionMenu::Drawer ()
 	{
 		M_DrawConText(CR_ORANGE, 3 * CleanXfac_1, y - 8*CleanYfac_1 + OptionSettings.mLabelOffset, "\x1b");
 	}
+	Super::Drawer();
 }
 
 

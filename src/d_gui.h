@@ -43,24 +43,26 @@ enum EGUIEvent
 	EV_GUI_KeyRepeat,		// same
 	EV_GUI_KeyUp,			// same
 	EV_GUI_Char,			// data1: translated character (for user text input), data2: alt down?
-	EV_GUI_MouseMove,
-	EV_GUI_LButtonDown,
-	EV_GUI_LButtonUp,
-	EV_GUI_LButtonDblClick,
-	EV_GUI_MButtonDown,
-	EV_GUI_MButtonUp,
-	EV_GUI_MButtonDblClick,
-	EV_GUI_RButtonDown,
-	EV_GUI_RButtonUp,
-	EV_GUI_RButtonDblClick,
-	EV_GUI_WheelUp,			// data3: shift/ctrl/alt
-	EV_GUI_WheelDown,		// "
-	EV_GUI_WheelRight,		// "
-	EV_GUI_WheelLeft,		// "
-	EV_GUI_BackButtonDown,
-	EV_GUI_BackButtonUp,
-	EV_GUI_FwdButtonDown,
-	EV_GUI_FwdButtonUp,
+	EV_GUI_FirstMouseEvent,
+		EV_GUI_MouseMove,
+		EV_GUI_LButtonDown,
+		EV_GUI_LButtonUp,
+		EV_GUI_LButtonDblClick,
+		EV_GUI_MButtonDown,
+		EV_GUI_MButtonUp,
+		EV_GUI_MButtonDblClick,
+		EV_GUI_RButtonDown,
+		EV_GUI_RButtonUp,
+		EV_GUI_RButtonDblClick,
+		EV_GUI_WheelUp,			// data3: shift/ctrl/alt
+		EV_GUI_WheelDown,		// "
+		EV_GUI_WheelRight,		// "
+		EV_GUI_WheelLeft,		// "
+		EV_GUI_BackButtonDown,
+		EV_GUI_BackButtonUp,
+		EV_GUI_FwdButtonDown,
+		EV_GUI_FwdButtonUp,
+	EV_GUI_LastMouseEvent,
 };
 
 enum GUIKeyModifiers

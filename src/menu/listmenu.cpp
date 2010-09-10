@@ -201,7 +201,7 @@ bool DListMenu::MouseEvent(int type, int x, int y)
 		}
 	}
 	mDesc->mSelectedItem = -1;
-	return true;
+	return Super::MouseEvent(type, x, y);
 }
 
 //=============================================================================
@@ -212,6 +212,7 @@ bool DListMenu::MouseEvent(int type, int x, int y)
 
 void DListMenu::Ticker ()
 {
+	Super::Ticker();
 	for(unsigned i=0;i<mDesc->mItems.Size(); i++)
 	{
 		mDesc->mItems[i]->Ticker();
@@ -232,6 +233,7 @@ void DListMenu::Drawer ()
 	}
 	if (mDesc->mSelectedItem >= 0 && mDesc->mSelectedItem < (int)mDesc->mItems.Size())
 		mDesc->mItems[mDesc->mSelectedItem]->DrawSelector(mDesc->mSelectOfsX, mDesc->mSelectOfsY, mDesc->mSelector);
+	Super::Drawer();
 }
 
 //=============================================================================

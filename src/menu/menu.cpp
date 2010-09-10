@@ -64,6 +64,8 @@ CVAR (Bool, show_obituaries, true, CVAR_ARCHIVE)
 
 
 CVAR (Float, snd_menuvolume, 0.6f, CVAR_ARCHIVE)
+CVAR(Bool, m_use_mouse, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR(Int, m_show_backbutton, 1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 DMenu *DMenu::CurrentMenu;
 int DMenu::MenuTime;
@@ -93,12 +95,14 @@ DMenu::DMenu(DMenu *parent)
 {
 	mParentMenu = parent;
 	mMouseCapture = false;
+	mBackbuttonSelected = false;
+	mBackbuttonTime = 0;
+	mBackbuttonAlpha = 0;
 	GC::WriteBarrier(this, parent);
 }
 	
 bool DMenu::Responder (event_t *ev) 
 { 
-#ifdef _WIN32	// FIXME: Mouse events in SDL code are mostly useless so mouse is disabled until that code is fixed
 	if (ev->type == EV_GUI_Event)
 	{
 		if (ev->subtype == EV_GUI_LButtonDown)
@@ -111,6 +115,7 @@ bool DMenu::Responder (event_t *ev)
 		}
 		else if (ev->subtype == EV_GUI_MouseMove)
 		{
+			mBackbuttonTime = BACKBUTTON_TIME;
 			if (mMouseCapture)
 			{
 				return MouseEvent(MOUSE_Move, ev->data1, ev->data2);
@@ -125,7 +130,6 @@ bool DMenu::Responder (event_t *ev)
 			}
 		}
 	}
-#endif
 	return false; 
 }
 
@@ -179,7 +183,21 @@ void DMenu::Close ()
 
 bool DMenu::MouseEvent(int type, int x, int y)
 {
-	return false;
+	if (m_show_backbutton)
+	{
+		FTexture *tex = TexMan["MENUBACK"];
+		if (tex != NULL)
+		{
+			if (m_show_backbutton) x -= screen->GetWidth() - tex->GetScaledWidth() * CleanXfac;
+			mBackbuttonSelected = (x < tex->GetScaledWidth() * CleanXfac && y < tex->GetScaledHeight() * CleanYfac);
+			if (mBackbuttonSelected && type == MOUSE_Release)
+			{
+				mBackbuttonSelected = false;
+				MenuEvent(MKEY_Back, true);
+			}
+		}
+	}
+	return true;
 }
 
 //=============================================================================
@@ -190,24 +208,20 @@ bool DMenu::MouseEvent(int type, int x, int y)
 
 void DMenu::SetCapture()
 {
-#ifdef _WIN32
 	if (!mMouseCapture)
 	{
 		mMouseCapture = true;
 		I_SetMouseCapture();
 	}
-#endif
 }
 
 void DMenu::ReleaseCapture()
 {
-#ifdef _WIN32
 	if (mMouseCapture)
 	{
 		mMouseCapture = false;
 		I_ReleaseMouseCapture();
 	}
-#endif
 }
 
 //=============================================================================
@@ -218,10 +232,26 @@ void DMenu::ReleaseCapture()
 
 void DMenu::Ticker () 
 {
+	if (mBackbuttonTime > 0)
+	{
+		if (mBackbuttonAlpha < FRACUNIT/2) mBackbuttonAlpha += FRACUNIT/10;
+		mBackbuttonTime--;
+	}
+	else
+	{
+		if (mBackbuttonAlpha > 0) mBackbuttonAlpha -= FRACUNIT/10;
+		if (mBackbuttonAlpha < 0) mBackbuttonAlpha = 0;
+	}
 }
 
 void DMenu::Drawer () 
 {
+	if (this == DMenu::CurrentMenu && mBackbuttonAlpha > 0 && m_show_backbutton && m_use_mouse)
+	{
+		FTexture *tex = TexMan[mBackbuttonSelected && mMouseCapture? "MENUBAK1":"MENUBACK"];
+		int x = m_show_backbutton == 1? 0:screen->GetWidth() - tex->GetScaledWidth() * CleanXfac;
+		screen->DrawTexture(tex, x, 0, DTA_CleanNoMove, true, DTA_Alpha, mBackbuttonAlpha, TAG_DONE);
+	}
 }
 
 bool DMenu::DimAllowed()
@@ -453,6 +483,17 @@ bool M_Responder (event_t *ev)
 			}
 			else if (ev->subtype != EV_GUI_KeyDown && ev->subtype != EV_GUI_KeyUp)
 			{
+				// do we want mouse input?
+				if (ev->subtype >= EV_GUI_FirstMouseEvent && ev->subtype <= EV_GUI_LastMouseEvent)
+				{
+					// FIXME: Mouse events in SDL code are mostly useless so mouse is 
+					// disabled until that code is fixed
+					#ifdef _WIN32
+						if (!m_use_mouse)
+					#endif
+							return true;
+				}
+
 				// pass everything else on to the current menu
 				return DMenu::CurrentMenu->Responder(ev);
 			}
@@ -584,7 +625,8 @@ bool M_Responder (event_t *ev)
 			}
 			return false;
 		}
-		else if (ev->type == EV_GUI_Event && ev->subtype == EV_GUI_LButtonDown && ConsoleState != c_down)
+		else if (ev->type == EV_GUI_Event && ev->subtype == EV_GUI_LButtonDown && 
+				 ConsoleState != c_down && m_use_mouse)
 		{
 			M_StartControlPanel(true);
 			M_SetMenu(NAME_Mainmenu, -1);

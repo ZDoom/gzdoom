@@ -834,9 +834,7 @@ bool DLoadSaveMenu::MouseEvent(int type, int x, int y)
 	{
 		SelSaveGame = NULL;
 	}
-	return true;
-
-	return false;
+	return Super::MouseEvent(type, x, y);
 }
 
 //=============================================================================

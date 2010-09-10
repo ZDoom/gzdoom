@@ -186,7 +186,7 @@ bool DTextEnterMenu::MouseEvent(int type, int x, int y)
 	{
 		InputGridX = InputGridY = -1;
 	}
-	return true;
+	return Super::MouseEvent(type, x, y);
 }
 
 
@@ -362,4 +362,5 @@ void DTextEnterMenu::Drawer ()
 			}
 		}
 	}
+	Super::Drawer();
 }

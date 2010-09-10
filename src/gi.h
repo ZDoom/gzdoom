@@ -110,7 +110,13 @@ struct gameinfo_t
 	int player5start;
 	DWORD pickupcolor;
 	TArray<FString> quitmessages;
-	TArray<FName> menufontcolors;
+	FName mTitleColor;
+	FName mFontColor;
+	FName mFontColorValue;
+	FName mFontColorMore;
+	FName mFontColorHeader;
+	FName mFontColorHighlight;
+	FName mFontColorSelection;
 
 	const char *GetFinalePage(unsigned int num) const;
 };

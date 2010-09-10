@@ -140,13 +140,13 @@ void FPlayerNameBox::DrawBorder (int x, int y, int len)
 //
 //=============================================================================
 
-void FPlayerNameBox::Drawer()
+void FPlayerNameBox::Drawer(bool selected)
 {
 	const char *text = mText;
 	if (text != NULL)
 	{
 		if (*text == '$') text = GStrings(text+1);
-		screen->DrawText(mFont, mFontColor, mXpos, mYpos, text, DTA_Clean, true, TAG_DONE);
+		screen->DrawText(mFont, selected? OptionSettings.mFontColorSelection : mFontColor, mXpos, mYpos, text, DTA_Clean, true, TAG_DONE);
 	}
 
 	// Draw player name box
@@ -294,12 +294,12 @@ bool FValueTextItem::MenuEvent (int mkey, bool fromcontroller)
 //
 //=============================================================================
 
-void FValueTextItem::Drawer()
+void FValueTextItem::Drawer(bool selected)
 {
 	const char *text = mText;
 
 	if (*text == '$') text = GStrings(text+1);
-	screen->DrawText(mFont, mFontColor, mXpos, mYpos, text, DTA_Clean, true, TAG_DONE);
+	screen->DrawText(mFont, selected? OptionSettings.mFontColorSelection : mFontColor, mXpos, mYpos, text, DTA_Clean, true, TAG_DONE);
 
 	int x = mXpos + mFont->StringWidth(text) + 8;
 	if (mSelections.Size() > 0) screen->DrawText(mFont, mFontColor2, x, mYpos, mSelections[mSelection], DTA_Clean, true, TAG_DONE);
@@ -449,12 +449,12 @@ void FSliderItem::DrawSlider (int x, int y)
 //
 //=============================================================================
 
-void FSliderItem::Drawer()
+void FSliderItem::Drawer(bool selected)
 {
 	const char *text = mText;
 
 	if (*text == '$') text = GStrings(text+1);
-	screen->DrawText(mFont, mFontColor, mXpos, mYpos, text, DTA_Clean, true, TAG_DONE);
+	screen->DrawText(mFont, selected? OptionSettings.mFontColorSelection : mFontColor, mXpos, mYpos, text, DTA_Clean, true, TAG_DONE);
 
 	int x = SmallFont->StringWidth ("Green") + 8 + mXpos;
 	DrawSlider (x, mYpos);

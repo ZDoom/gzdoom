@@ -44,13 +44,13 @@ gameinfo
 	player5start = 5
 	pickupcolor = "d6 ba 45"
 	quitmessages = "$QUITMSG", "$QUITMSG15", "$QUITMSG16", "$QUITMSG17", "$QUITMSG18", "$QUITMSG19", "$QUITMSG20", "$QUITMSG21", "$QUITMSG22"
-	menufontcolors = 
-			"UNTRANSLATED", 	// Menu title
-			"UNTRANSLATED", 	// normal menu items
-			"GRAY", 			// option values
-			"GRAY", 			// submenu links
-			"RED",				// static headers
-			"GREEN"				// Highlights
+	menufontcolor_title = "UNTRANSLATED"
+	menufontcolor_label = "UNTRANSLATED"
+	menufontcolor_value = "GRAY"
+	menufontcolor_action = "GRAY"
+	menufontcolor_header = "RED"
+	menufontcolor_highlight = "GREEN"
+	menufontcolor_selection = "GOLD"
 }
 
 skill baby

@@ -492,7 +492,7 @@ void FListMenuItemPlayerDisplay::Ticker()
 //
 //=============================================================================
 
-void FListMenuItemPlayerDisplay::Drawer()
+void FListMenuItemPlayerDisplay::Drawer(bool selected)
 {
 	if (mMode == 0 && !UpdatePlayerClass())
 	{

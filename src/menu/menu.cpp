@@ -107,6 +107,7 @@ bool DMenu::Responder (event_t *ev)
 	{
 		if (ev->subtype == EV_GUI_LButtonDown)
 		{
+			MouseEventBack(MOUSE_Click, ev->data1, ev->data2);
 			if (MouseEvent(MOUSE_Click, ev->data1, ev->data2))
 			{
 				SetCapture();
@@ -118,6 +119,7 @@ bool DMenu::Responder (event_t *ev)
 			mBackbuttonTime = BACKBUTTON_TIME;
 			if (mMouseCapture)
 			{
+				MouseEventBack(MOUSE_Move, ev->data1, ev->data2);
 				return MouseEvent(MOUSE_Move, ev->data1, ev->data2);
 			}
 		}
@@ -126,6 +128,7 @@ bool DMenu::Responder (event_t *ev)
 			if (mMouseCapture)
 			{
 				ReleaseCapture();
+				MouseEventBack(MOUSE_Release, ev->data1, ev->data2);
 				return MouseEvent(MOUSE_Release, ev->data1, ev->data2);
 			}
 		}
@@ -183,21 +186,33 @@ void DMenu::Close ()
 
 bool DMenu::MouseEvent(int type, int x, int y)
 {
+	return true;
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+bool DMenu::MouseEventBack(int type, int x, int y)
+{
 	if (m_show_backbutton)
 	{
 		FTexture *tex = TexMan["MENUBACK"];
 		if (tex != NULL)
 		{
-			if (m_show_backbutton) x -= screen->GetWidth() - tex->GetScaledWidth() * CleanXfac;
-			mBackbuttonSelected = (x < tex->GetScaledWidth() * CleanXfac && y < tex->GetScaledHeight() * CleanYfac);
+			if (m_show_backbutton==2) x -= screen->GetWidth() - tex->GetScaledWidth() * CleanXfac;
+			mBackbuttonSelected = (x >= 0 && x < tex->GetScaledWidth() * CleanXfac && y < tex->GetScaledHeight() * CleanYfac);
 			if (mBackbuttonSelected && type == MOUSE_Release)
 			{
 				mBackbuttonSelected = false;
 				MenuEvent(MKEY_Back, true);
 			}
+			return true;
 		}
 	}
-	return true;
+	return false;
 }
 
 //=============================================================================

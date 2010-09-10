@@ -186,17 +186,21 @@ bool DListMenu::MouseEvent(int type, int x, int y)
 	}
 	else
 	{
-		for(unsigned i=0;i<mDesc->mItems.Size(); i++)
+		if ((mDesc->mWLeft <= 0 || x > mDesc->mWLeft) &&
+			(mDesc->mWRight <= 0 || x < mDesc->mWRight))
 		{
-			if (mDesc->mItems[i]->CheckCoordinate(x, y))
+			for(unsigned i=0;i<mDesc->mItems.Size(); i++)
 			{
-				if (i != mDesc->mSelectedItem)
+				if (mDesc->mItems[i]->CheckCoordinate(x, y))
 				{
-					S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
+					if (i != mDesc->mSelectedItem)
+					{
+						S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
+					}
+					mDesc->mSelectedItem = i;
+					mDesc->mItems[i]->MouseEvent(type, x, y);
+					return true;
 				}
-				mDesc->mSelectedItem = i;
-				mDesc->mItems[i]->MouseEvent(type, x, y);
-				return true;
 			}
 		}
 	}
@@ -229,7 +233,7 @@ void DListMenu::Drawer ()
 {
 	for(unsigned i=0;i<mDesc->mItems.Size(); i++)
 	{
-		if (mDesc->mItems[i]->mEnabled) mDesc->mItems[i]->Drawer();
+		if (mDesc->mItems[i]->mEnabled) mDesc->mItems[i]->Drawer(mDesc->mSelectedItem == i);
 	}
 	if (mDesc->mSelectedItem >= 0 && mDesc->mSelectedItem < (int)mDesc->mItems.Size())
 		mDesc->mItems[mDesc->mSelectedItem]->DrawSelector(mDesc->mSelectOfsX, mDesc->mSelectOfsY, mDesc->mSelector);
@@ -255,7 +259,7 @@ void FListMenuItem::Ticker()
 {
 }
 
-void FListMenuItem::Drawer()
+void FListMenuItem::Drawer(bool selected)
 {
 }
 
@@ -268,9 +272,11 @@ void FListMenuItem::DrawSelector(int xofs, int yofs, FTextureID tex)
 {
 	if (tex.isNull())
 	{
-		int color = (DMenu::MenuTime%8) < 4? CR_RED:CR_GREY;
-		screen->DrawText (ConFont, color, mXpos + xofs, mYpos + yofs, "\xd",
-			DTA_Clean, true, TAG_DONE);
+		if ((DMenu::MenuTime%8) < 6)
+		{
+			screen->DrawText(ConFont, OptionSettings.mFontColorSelection,
+				mXpos + xofs, mYpos + yofs, "\xd", DTA_Clean, true, TAG_DONE);
+		}
 	}
 	else
 	{
@@ -342,7 +348,7 @@ FListMenuItemStaticPatch::FListMenuItemStaticPatch(int x, int y, FTextureID patc
 	mCentered = centered;
 }
 	
-void FListMenuItemStaticPatch::Drawer()
+void FListMenuItemStaticPatch::Drawer(bool selected)
 {
 	int x = mXpos;
 	FTexture *tex = TexMan(mTexture);
@@ -374,7 +380,7 @@ FListMenuItemStaticText::FListMenuItemStaticText(int x, int y, const char *text,
 	mCentered = centered;
 }
 	
-void FListMenuItemStaticText::Drawer()
+void FListMenuItemStaticText::Drawer(bool selected)
 {
 	const char *text = mText;
 	if (text != NULL)
@@ -477,7 +483,7 @@ FListMenuItemText::~FListMenuItemText()
 	}
 }
 
-void FListMenuItemText::Drawer()
+void FListMenuItemText::Drawer(bool selected)
 {
 	const char *text = mText;
 	if (text != NULL)
@@ -500,7 +506,7 @@ FListMenuItemPatch::FListMenuItemPatch(int x, int y, int height, int hotkey, FTe
 	mTexture = patch;
 }
 
-void FListMenuItemPatch::Drawer()
+void FListMenuItemPatch::Drawer(bool selected)
 {
 	screen->DrawTexture (TexMan(mTexture), mXpos, mYpos, DTA_Clean, true, TAG_DONE);
 }

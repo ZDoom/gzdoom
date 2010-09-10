@@ -106,6 +106,7 @@ DOptionMenu::DOptionMenu(DMenu *parent, FOptionMenuDescriptor *desc)
 	CanScrollUp = false;
 	CanScrollDown = false;
 	VisBottom = 0;
+	mFocusControl = NULL;
 	Init(parent, desc);
 }
 
@@ -409,11 +410,13 @@ void DOptionMenu::Drawer ()
 			i += mDesc->mScrollPos;
 			if (i >= mDesc->mItems.Size()) break;	// skipped beyond end of menu 
 		}
-		int cur_indent = mDesc->mItems[i]->Draw(mDesc, y, indent);
+		int cur_indent = mDesc->mItems[i]->Draw(mDesc, y, indent, mDesc->mSelectedItem == i);
 		if (cur_indent >= 0 && mDesc->mSelectedItem == i && mDesc->mItems[i]->Selectable())
 		{
-			int color = ((DMenu::MenuTime%8) < 4) || DMenu::CurrentMenu != this ? CR_RED:CR_GREY;
-			M_DrawConText(color, cur_indent + 3 * CleanXfac_1, y-CleanYfac_1+OptionSettings.mLabelOffset, "\xd");
+			if (((DMenu::MenuTime%8) < 6) || DMenu::CurrentMenu != this)
+			{
+				M_DrawConText(OptionSettings.mFontColorSelection, cur_indent + 3 * CleanXfac_1, y-CleanYfac_1+OptionSettings.mLabelOffset, "\xd");
+			}
 		}
 	}
 
@@ -449,7 +452,7 @@ bool FOptionMenuItem::CheckCoordinate(FOptionMenuDescriptor *desc, int x, int y)
 	return false;
 }
 
-int FOptionMenuItem::Draw(FOptionMenuDescriptor *desc, int y, int indent)
+int FOptionMenuItem::Draw(FOptionMenuDescriptor *desc, int y, int indent, bool selected)
 {
 	return indent;
 }

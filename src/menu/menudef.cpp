@@ -237,6 +237,14 @@ static void ParseListMenuBody(FScanner &sc, FListMenuDescriptor *desc)
 			sc.MustGetNumber();
 			desc->mYpos = sc.Number;
 		}
+		else if (sc.Compare("MouseWindow"))
+		{
+			sc.MustGetNumber();
+			desc->mWLeft = sc.Number;
+			sc.MustGetStringName(",");
+			sc.MustGetNumber();
+			desc->mWRight = sc.Number;
+		}
 		else if (sc.Compare("StaticPatch") || sc.Compare("StaticPatchCentered"))
 		{
 			bool centered = sc.Compare("StaticPatchCentered");
@@ -327,8 +335,8 @@ static void ParseListMenuBody(FScanner &sc, FListMenuDescriptor *desc)
 			}
 			else
 			{
-				desc->mFontColor = CR_UNTRANSLATED;
-				desc->mFontColor2 = CR_UNTRANSLATED;
+				desc->mFontColor = OptionSettings.mFontColor;
+				desc->mFontColor2 = OptionSettings.mFontColorValue;
 			}
 		}
 		else if (sc.Compare("NetgameMessage"))
@@ -445,6 +453,8 @@ static void ParseListMenu(FScanner &sc)
 	desc->mFontColor2 = DefaultListMenuSettings.mFontColor2;
 	desc->mClass = NULL;
 	desc->mRedirect = NULL;
+	desc->mWLeft = 0;
+	desc->mWRight = 0;
 
 	FMenuDescriptor **pOld = MenuDescriptors.CheckKey(desc->mMenuName);
 	if (pOld != NULL && *pOld != NULL) delete *pOld;
@@ -794,12 +804,13 @@ void M_ParseMenuDefs()
 {
 	int lump, lastlump = 0;
 
-	OptionSettings.mTitleColor = V_FindFontColor(gameinfo.menufontcolors[0]);
-	OptionSettings.mFontColor = V_FindFontColor(gameinfo.menufontcolors[1]);
-	OptionSettings.mFontColorValue = V_FindFontColor(gameinfo.menufontcolors[2]);
-	OptionSettings.mFontColorMore = V_FindFontColor(gameinfo.menufontcolors[3]);
-	OptionSettings.mFontColorHeader = V_FindFontColor(gameinfo.menufontcolors[4]);
-	OptionSettings.mFontColorHighlight = V_FindFontColor(gameinfo.menufontcolors[5]);
+	OptionSettings.mTitleColor = V_FindFontColor(gameinfo.mTitleColor);
+	OptionSettings.mFontColor = V_FindFontColor(gameinfo.mFontColor);
+	OptionSettings.mFontColorValue = V_FindFontColor(gameinfo.mFontColorValue);
+	OptionSettings.mFontColorMore = V_FindFontColor(gameinfo.mFontColorMore);
+	OptionSettings.mFontColorHeader = V_FindFontColor(gameinfo.mFontColorHeader);
+	OptionSettings.mFontColorHighlight = V_FindFontColor(gameinfo.mFontColorHighlight);
+	OptionSettings.mFontColorSelection = V_FindFontColor(gameinfo.mFontColorSelection);
 
 	atterm(	DeinitMenus);
 	while ((lump = Wads.FindLump ("MENUDEF", &lastlump)) != -1)

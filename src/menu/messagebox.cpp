@@ -188,20 +188,25 @@ void DMessageBoxMenu::Drawer ()
 	{
 		y += fontheight;
 		mMouseY = y;
-		screen->DrawText(SmallFont, CR_UNTRANSLATED, 160, y, GStrings["TXT_YES"], DTA_Clean, true, TAG_DONE);
-		screen->DrawText(SmallFont, CR_UNTRANSLATED, 160, y + fontheight + 1, GStrings["TXT_NO"], DTA_Clean, true, TAG_DONE);
+		screen->DrawText(SmallFont, 
+			messageSelection == 0? OptionSettings.mFontColorSelection : OptionSettings.mFontColor, 
+			160, y, GStrings["TXT_YES"], DTA_Clean, true, TAG_DONE);
+		screen->DrawText(SmallFont, 
+			messageSelection == 1? OptionSettings.mFontColorSelection : OptionSettings.mFontColor, 
+			160, y + fontheight + 1, GStrings["TXT_NO"], DTA_Clean, true, TAG_DONE);
 
 		if (messageSelection >= 0)
 		{
-			int color = (DMenu::MenuTime%8) < 4? CR_RED:CR_GREY;
-
-			screen->DrawText(ConFont, color,
-				(150 - 160) * CleanXfac + screen->GetWidth() / 2,
-				(y + (fontheight + 1) * messageSelection - 100) * CleanYfac + screen->GetHeight() / 2,
-				"\xd",
-				DTA_CellX, 8 * CleanXfac,
-				DTA_CellY, 8 * CleanYfac,
-				TAG_DONE);
+			if ((DMenu::MenuTime%8) < 6)
+			{
+				screen->DrawText(ConFont, OptionSettings.mFontColorSelection,
+					(150 - 160) * CleanXfac + screen->GetWidth() / 2,
+					(y + (fontheight + 1) * messageSelection - 100) * CleanYfac + screen->GetHeight() / 2,
+					"\xd",
+					DTA_CellX, 8 * CleanXfac,
+					DTA_CellY, 8 * CleanYfac,
+					TAG_DONE);
+			}
 		}
 	}
 }

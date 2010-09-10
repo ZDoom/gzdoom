@@ -101,6 +101,7 @@ struct FListMenuDescriptor : public FMenuDescriptor
 	FTextureID mSelector;
 	int mDisplayTop;
 	int mXpos, mYpos;
+	int mWLeft, mWRight;
 	int mLinespacing;	// needs to be stored for dynamically created menus
 	int mAutoselect;	// this can only be set by internal menu creation functions
 	FFont *mFont;
@@ -118,6 +119,7 @@ struct FOptionMenuSettings
 	EColorRange mFontColorMore;
 	EColorRange mFontColorHeader;
 	EColorRange mFontColorHighlight;
+	EColorRange mFontColorSelection;
 	int mLinespacing;
 	int mLabelOffset;
 };
@@ -213,6 +215,7 @@ public:
 	virtual bool TranslateKeyboardEvents();
 	virtual void Close();
 	virtual bool MouseEvent(int type, int x, int y);
+	bool MouseEventBack(int type, int x, int y);
 	void SetCapture();
 	void ReleaseCapture();
 	bool HasCapture()
@@ -248,7 +251,7 @@ public:
 
 	virtual bool CheckCoordinate(int x, int y);
 	virtual void Ticker();
-	virtual void Drawer();
+	virtual void Drawer(bool selected);
 	virtual bool Selectable();
 	virtual bool Activate();
 	virtual FName GetAction(int *pparam);
@@ -273,7 +276,7 @@ protected:
 
 public:
 	FListMenuItemStaticPatch(int x, int y, FTextureID patch, bool centered);
-	void Drawer();
+	void Drawer(bool selected);
 };
 
 class FListMenuItemStaticText : public FListMenuItem
@@ -287,7 +290,7 @@ protected:
 public:
 	FListMenuItemStaticText(int x, int y, const char *text, FFont *font, EColorRange color, bool centered);
 	~FListMenuItemStaticText();
-	void Drawer();
+	void Drawer(bool selected);
 };
 
 //=============================================================================
@@ -331,7 +334,7 @@ public:
 	FListMenuItemPlayerDisplay(FListMenuDescriptor *menu, int x, int y, PalEntry c1, PalEntry c2, bool np, FName action);
 	~FListMenuItemPlayerDisplay();
 	virtual void Ticker();
-	virtual void Drawer();
+	virtual void Drawer(bool selected);
 	bool SetValue(int i, int value);
 };
 
@@ -367,7 +370,7 @@ class FListMenuItemText : public FListMenuItemSelectable
 public:
 	FListMenuItemText(int x, int y, int height, int hotkey, const char *text, FFont *font, EColorRange color, FName child, int param = 0);
 	~FListMenuItemText();
-	void Drawer();
+	void Drawer(bool selected);
 };
 
 class FListMenuItemPatch : public FListMenuItemSelectable
@@ -375,7 +378,7 @@ class FListMenuItemPatch : public FListMenuItemSelectable
 	FTextureID mTexture;
 public:
 	FListMenuItemPatch(int x, int y, int height, int hotkey, FTextureID patch, FName child, int param = 0);
-	void Drawer();
+	void Drawer(bool selected);
 };
 
 //=============================================================================
@@ -402,7 +405,7 @@ public:
 	~FPlayerNameBox();
 	bool SetString(int i, const char *s);
 	bool GetString(int i, char *s, int len);
-	void Drawer();
+	void Drawer(bool selected);
 	bool MenuEvent (int mkey, bool fromcontroller);
 };
 
@@ -429,7 +432,7 @@ public:
 	bool SetValue(int i, int value);
 	bool GetValue(int i, int *pvalue);
 	bool MenuEvent (int mkey, bool fromcontroller);
-	void Drawer();
+	void Drawer(bool selected);
 };
 
 //=============================================================================
@@ -456,7 +459,7 @@ public:
 	bool SetValue(int i, int value);
 	bool GetValue(int i, int *pvalue);
 	bool MenuEvent (int mkey, bool fromcontroller);
-	void Drawer();
+	void Drawer(bool selected);
 	bool MouseEvent(int type, int x, int y);
 };
 
@@ -522,7 +525,7 @@ public:
 
 	~FOptionMenuItem();
 	virtual bool CheckCoordinate(FOptionMenuDescriptor *desc, int x, int y);
-	virtual int Draw(FOptionMenuDescriptor *desc, int y, int indent);
+	virtual int Draw(FOptionMenuDescriptor *desc, int y, int indent, bool selected);
 	virtual bool Selectable();
 	virtual int GetIndent();
 	virtual bool MouseEvent(int type, int x, int y);

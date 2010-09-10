@@ -10,7 +10,7 @@
 
 DEFAULTLISTMENU
 {
-	Font "BigFont"
+	Font "BigFont", "Untranslated"
 	IfGame(Doom, Chex)
 	{
 		Selector "M_SKULL1", -32, -5
@@ -116,18 +116,21 @@ ListMenu "PlayerclassMenu"
 		StaticTextCentered 160, 15, "$MNU_CHOOSECLASS"
 		Position 48, 63
 		PlayerDisplay 220, 63, "20 00 00", "80 00 40"
+		MouseWindow 0, 220
 	}
 	IfGame(Heretic)
 	{
 		StaticTextCentered 160, 15, "$MNU_CHOOSECLASS"
 		Position 80, 50
 		PlayerDisplay 220, 50, "20 00 00", "80 00 40"
+		MouseWindow 0, 220
 	}
 	IfGame(Hexen)
 	{
 		StaticText 34, 24, "$MNU_CHOOSECLASS"
 		Position 66, 58
 		PlayerDisplay 174, 8, "00 07 00", "40 53 40"
+		MouseWindow 0, 174
 	}
 	// The rest of this menu will be set up based on the actual player definitions.
 }
@@ -271,28 +274,29 @@ ListMenu "SaveGameMenu"
 ListMenu "PlayerMenu"
 {
 	StaticTextCentered 160, 15, "$MNU_PLAYERSETUP"
+	Font "SmallFont"
 	
 
 	IfGame (Doom, Strife, Chex)
 	{
-		Font "SmallFont", "Untranslated", "Grey"
 		Position 48, 47
 		PlayerNameBox "Name", 0, "Playerbox"
 		Selector "-", -16, -1
 	}
 	IfGame(Heretic, Hexen)
 	{
-		Font "SmallFont", "Green", "Untranslated"
 		Position 48, 52
 		PlayerNameBox "Name", 5, "Playerbox"
 		Selector "-", -16, 1
 	}
 	IfGame(Doom, Heretic, Strife, Chex)
 	{
+		MouseWindow 0, 220
 		PlayerDisplay 220, 80, "20 00 00", "80 00 40", 1, "PlayerDisplay"
 	}
 	IfGame(Hexen)
 	{
+		MouseWindow 0, 200
 		PlayerDisplay 200, 80, "00 07 00", "40 53 40", 1, "PlayerDisplay"
 	}
 	

@@ -198,7 +198,7 @@ public:
 			}
 			break;
 		}
-		if (mSelectedItem < mStartItem+7) 
+		if (mSelectedItem >= 0 && mSelectedItem < mStartItem+7) 
 		{
 			if (mDesc->mItems[mDesc->mSelectedItem]->MenuEvent(mkey, fromcontroller)) return true;
 		}

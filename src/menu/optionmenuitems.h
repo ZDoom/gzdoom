@@ -55,9 +55,9 @@ public:
 		mParam = param;
 	}
 
-	int Draw(FOptionMenuDescriptor *desc, int y, int indent)
+	int Draw(FOptionMenuDescriptor *desc, int y, int indent, bool selected)
 	{
-		drawLabel(indent, y, OptionSettings.mFontColorMore);
+		drawLabel(indent, y, selected? OptionSettings.mFontColorSelection : OptionSettings.mFontColorMore);
 		return indent;
 	}
 
@@ -186,7 +186,7 @@ public:
 	virtual void SetSelection(int Selection) = 0;
 
 	//=============================================================================
-	int Draw(FOptionMenuDescriptor *desc, int y, int indent)
+	int Draw(FOptionMenuDescriptor *desc, int y, int indent, bool selected)
 	{
 		bool grayed = mGrayCheck != NULL && !(**mGrayCheck);
 
@@ -194,7 +194,7 @@ public:
 		{
 			indent = (screen->GetWidth() / 2);
 		}
-		drawLabel(indent, y, OptionSettings.mFontColor, grayed);
+		drawLabel(indent, y, selected? OptionSettings.mFontColorSelection : OptionSettings.mFontColor, grayed);
 
 		int overlay = grayed? MAKEARGB(96,48,0,0) : 0;
 		const char *text;
@@ -401,9 +401,10 @@ public:
 
 
 	//=============================================================================
-	int Draw(FOptionMenuDescriptor *desc, int y, int indent)
+	int Draw(FOptionMenuDescriptor *desc, int y, int indent, bool selected)
 	{
-		drawLabel(indent, y, mWaiting? OptionSettings.mFontColorHighlight: OptionSettings.mFontColor);
+		drawLabel(indent, y, mWaiting? OptionSettings.mFontColorHighlight: 
+			(selected? OptionSettings.mFontColorSelection : OptionSettings.mFontColor));
 
 		char description[64];
 		int Key1, Key2;
@@ -470,7 +471,7 @@ public:
 		mColor = header? OptionSettings.mFontColorHeader : OptionSettings.mFontColor;
 	}
 
-	int Draw(FOptionMenuDescriptor *desc, int y, int indent)
+	int Draw(FOptionMenuDescriptor *desc, int y, int indent, bool selected)
 	{
 		drawLabel(indent, y, mColor);
 		return -1;
@@ -504,7 +505,7 @@ public:
 		mCurrent = 0;
 	}
 
-	int Draw(FOptionMenuDescriptor *desc, int y, int indent)
+	int Draw(FOptionMenuDescriptor *desc, int y, int indent, bool selected)
 	{
 		const char *txt = mCurrent? (const char*)mAltText : mLabel;
 		int w = SmallFont->StringWidth(txt) * CleanXfac_1;
@@ -566,9 +567,9 @@ public:
 	virtual void SetValue(double val) = 0;
 
 	//=============================================================================
-	int Draw(FOptionMenuDescriptor *desc, int y, int indent)
+	int Draw(FOptionMenuDescriptor *desc, int y, int indent, bool selected)
 	{
-		drawLabel(indent, y, OptionSettings.mFontColor);
+		drawLabel(indent, y, selected? OptionSettings.mFontColorSelection : OptionSettings.mFontColor);
 		mDrawX = indent + CURSORSPACE;
 		M_DrawSlider (mDrawX, y + OptionSettings.mLabelOffset, mMin, mMax, GetValue(), mShowValue);
 		return indent;
@@ -727,9 +728,9 @@ public:
 	}
 
 	//=============================================================================
-	int Draw(FOptionMenuDescriptor *desc, int y, int indent)
+	int Draw(FOptionMenuDescriptor *desc, int y, int indent, bool selected)
 	{
-		drawLabel(indent, y, OptionSettings.mFontColor);
+		drawLabel(indent, y, selected? OptionSettings.mFontColorSelection : OptionSettings.mFontColor);
 
 		if (mCVar != NULL)
 		{
@@ -867,7 +868,7 @@ public:
 		return true;
 	}
 
-	int Draw(FOptionMenuDescriptor *desc, int y, int indent)
+	int Draw(FOptionMenuDescriptor *desc, int y, int indent, bool selected)
 	{
 		int colwidth = screen->GetWidth() / 3;
 		EColorRange color;
@@ -875,9 +876,11 @@ public:
 		for (int x = 0; x < 3; x++)
 		{
 			if (x == mHighlight)
-				color = CR_GOLD;	//ValueColor;
+				color = OptionSettings.mFontColorHighlight;
+			else if (!selected || mSelection != x)
+				color = OptionSettings.mFontColorValue;
 			else
-				color = CR_BRICK;	//LabelColor;
+				color = OptionSettings.mFontColorSelection;
 
 			screen->DrawText (SmallFont, color, colwidth * x + 20 * CleanXfac_1, y, mResTexts[x], DTA_CleanNoMove_1, true, TAG_DONE);
 		}

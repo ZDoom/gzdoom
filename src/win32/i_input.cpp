@@ -470,6 +470,10 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			SetCursor(NULL); // turn off window cursor
 			return TRUE;	// Prevent Windows from setting cursor to window class cursor
 		}
+		else
+		{
+			return DefWindowProc(hWnd, message, wParam, lParam);
+		}
 		break;
 
 	case WM_SIZE:

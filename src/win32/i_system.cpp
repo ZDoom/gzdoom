@@ -1197,8 +1197,10 @@ int I_PickIWad(WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 
 bool I_SetCursor(FTexture *cursorpic)
 {
-	// Must be 32x32.
-	if (cursorpic->GetWidth() != 32 || cursorpic->GetHeight() != 32)
+	// Must be no larger than 32x32.
+	int picwidth = cursorpic->GetWidth();
+	int picheight = cursorpic->GetHeight();
+	if (picwidth > 32 || picwidth > 32)
 	{
 		return false;
 	}
@@ -1216,25 +1218,29 @@ bool I_SetCursor(FTexture *cursorpic)
 	FBitmap bmp;
 	const BYTE *pixels;
 
-	bmp.Create(32, 32);
-	cursorpic->CopyTrueColorPixels(&bmp, 0, 0);
-	pixels = bmp.GetPixels();
 	SelectObject(and_mask_dc, and_mask);
 	SelectObject(xor_mask_dc, xor_mask);
-	for (int x = 0; x < 32; ++x)
+	// Initialize with an invisible cursor.
+	SelectObject(and_mask_dc, GetStockObject(WHITE_PEN));
+	SelectObject(and_mask_dc, GetStockObject(WHITE_BRUSH));
+	Rectangle(and_mask_dc, 0, 0, 32, 32);
+	SelectObject(xor_mask_dc, GetStockObject(BLACK_PEN));
+	SelectObject(xor_mask_dc, GetStockObject(BLACK_BRUSH));
+	Rectangle(xor_mask_dc, 0, 0, 32, 32);
+	// Copy color data from the source texture to the cursor bitmaps.
+	bmp.Create(picwidth, picheight);
+	cursorpic->CopyTrueColorPixels(&bmp, 0, 0);
+	pixels = bmp.GetPixels();
+	// Windows XP and up can support cursors with full alpha channels, but I don't know how to create those.
+	for (int y = 0; y < picheight; ++y)
 	{
-		for (int y = 0; y < 32; ++y)
+		for (int x = 0; x < picwidth; ++x)
 		{
-			// Windows XP and up can support cursors with full alpha channels, but I don't know how to create those.
-			if (pixels[y*32*4+x*4+3])
+			const BYTE *bgra = &pixels[x*4 + y*bmp.GetPitch()];
+			if (bgra[3] != 0)
 			{
-				SetPixel(and_mask_dc, x, y, RGB(0,0,0));
-				SetPixel(xor_mask_dc, x, y, RGB(pixels[y*32*4+x*4+2], pixels[y*32*4+x*4+1], pixels[y*32*4+x*4+0]));
-			}
-			else
-			{
-				SetPixel(and_mask_dc, x, y, RGB(255,255,255));
-				SetPixel(xor_mask_dc, x, y, RGB(0,0,0));
+				SetPixelV(and_mask_dc, x, y, RGB(0,0,0));
+				SetPixelV(xor_mask_dc, x, y, RGB(bgra[2], bgra[1], bgra[0]));
 			}
 		}
 	}

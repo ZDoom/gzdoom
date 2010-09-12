@@ -116,6 +116,9 @@ static int I_WaitForTicEvent(int prevtic);
 static void I_FreezeTimeEventDriven(bool frozen);
 static void CALLBACK TimerTicked(UINT id, UINT msg, DWORD_PTR user, DWORD_PTR dw1, DWORD_PTR dw2);
 
+static HCURSOR CreateCompatibleCursor(FTexture *cursorpic);
+static HCURSOR CreateAlphaCursor(FTexture *cursorpic);
+static HCURSOR CreateBitmapCursor(int xhot, int yhot, HBITMAP and_mask, HBITMAP color_mask);
 static void DestroyCustomCursor();
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
@@ -1197,13 +1200,46 @@ int I_PickIWad(WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 
 bool I_SetCursor(FTexture *cursorpic)
 {
+	HCURSOR cursor;
+
 	// Must be no larger than 32x32.
-	int picwidth = cursorpic->GetWidth();
-	int picheight = cursorpic->GetHeight();
-	if (picwidth > 32 || picwidth > 32)
+	if (cursorpic->GetWidth() > 32 || cursorpic->GetHeight() > 32)
 	{
 		return false;
 	}
+
+	cursor = CreateAlphaCursor(cursorpic);
+	if (cursor == NULL)
+	{
+		cursor = CreateCompatibleCursor(cursorpic);
+	}
+	if (cursor == NULL)
+	{
+		return false;
+	}
+	// Replace the existing cursor with the new one.
+	if (CustomCursor != NULL)
+	{
+		DestroyCursor(CustomCursor);
+	}
+	CustomCursor = cursor;
+	atterm(DestroyCustomCursor);
+	SetClassLongPtr(Window, GCLP_HCURSOR, (LONG_PTR)cursor);
+	return true;
+}
+
+//==========================================================================
+//
+// CreateCompatibleCursor
+//
+// Creates a cursor with a 1-bit alpha channel.
+//
+//==========================================================================
+
+static HCURSOR CreateCompatibleCursor(FTexture *cursorpic)
+{
+	int picwidth = cursorpic->GetWidth();
+	int picheight = cursorpic->GetHeight();
 
 	// Create bitmap masks for the cursor from the texture.
 	HDC dc = GetDC(NULL);
@@ -1215,11 +1251,11 @@ bool I_SetCursor(FTexture *cursorpic)
 	HDC xor_mask_dc = CreateCompatibleDC(dc);
 	HBITMAP and_mask = CreateCompatibleBitmap(dc, 32, 32);
 	HBITMAP xor_mask = CreateCompatibleBitmap(dc, 32, 32);
-	FBitmap bmp;
-	const BYTE *pixels;
+	ReleaseDC(NULL, dc);
 
 	SelectObject(and_mask_dc, and_mask);
 	SelectObject(xor_mask_dc, xor_mask);
+
 	// Initialize with an invisible cursor.
 	SelectObject(and_mask_dc, GetStockObject(WHITE_PEN));
 	SelectObject(and_mask_dc, GetStockObject(WHITE_BRUSH));
@@ -1227,11 +1263,15 @@ bool I_SetCursor(FTexture *cursorpic)
 	SelectObject(xor_mask_dc, GetStockObject(BLACK_PEN));
 	SelectObject(xor_mask_dc, GetStockObject(BLACK_BRUSH));
 	Rectangle(xor_mask_dc, 0, 0, 32, 32);
-	// Copy color data from the source texture to the cursor bitmaps.
+
+	FBitmap bmp;
+	const BYTE *pixels;
+
 	bmp.Create(picwidth, picheight);
 	cursorpic->CopyTrueColorPixels(&bmp, 0, 0);
 	pixels = bmp.GetPixels();
-	// Windows XP and up can support cursors with full alpha channels, but I don't know how to create those.
+
+	// Copy color data from the source texture to the cursor bitmaps.
 	for (int y = 0; y < picheight; ++y)
 	{
 		for (int x = 0; x < picwidth; ++x)
@@ -1246,34 +1286,95 @@ bool I_SetCursor(FTexture *cursorpic)
 	}
 	DeleteDC(and_mask_dc);
 	DeleteDC(xor_mask_dc);
-	ReleaseDC(NULL, dc);
 
 	// Create the cursor from the bitmaps.
+	return CreateBitmapCursor(cursorpic->LeftOffset, cursorpic->TopOffset, and_mask, xor_mask);
+}
+
+//==========================================================================
+//
+// CreateAlphaCursor
+//
+// Creates a cursor with a full alpha channel.
+//
+//==========================================================================
+
+static HCURSOR CreateAlphaCursor(FTexture *cursorpic)
+{
+	HDC dc;
+	BITMAPV5HEADER bi;
+	HBITMAP color, mono;
+	void *bits;
+
+	memset(&bi, 0, sizeof(bi));
+	bi.bV5Size = sizeof(bi);
+	bi.bV5Width = 32;
+	bi.bV5Height = 32;
+	bi.bV5Planes = 1;
+	bi.bV5BitCount = 32;
+	bi.bV5Compression = BI_BITFIELDS;
+	bi.bV5RedMask   = 0x00FF0000;
+	bi.bV5GreenMask = 0x0000FF00;
+	bi.bV5BlueMask  = 0x000000FF;
+	bi.bV5AlphaMask = 0xFF000000;
+
+	dc = GetDC(NULL);
+	if (dc == NULL)
+	{
+		return NULL;
+	}
+
+	// Create the DIB section with an alpha channel.
+	color = CreateDIBSection(dc, (BITMAPINFO *)&bi, DIB_RGB_COLORS, &bits, NULL, 0);
+	ReleaseDC(NULL, dc);
+
+	if (color == NULL)
+	{
+		return NULL;
+	}
+
+	// Create an empty mask bitmap, since CreateIconIndirect requires this.
+	mono = CreateBitmap(32, 32, 1, 1, NULL);
+	if (mono == NULL)
+	{
+		DeleteObject(color);
+		return NULL;
+	}
+
+	// Copy cursor to the color bitmap. Note that GDI bitmaps are upside down compared
+	// to normal conventions, so we create the FBitmap pointing at the last row and use
+	// a negative pitch so that CopyTrueColorPixels will use GDI's orientation.
+	FBitmap bmp((BYTE *)bits + 31*32*4, -32*4, 32, 32);
+	cursorpic->CopyTrueColorPixels(&bmp, 0, 0);
+
+	return CreateBitmapCursor(cursorpic->LeftOffset, cursorpic->TopOffset, mono, color);
+}
+
+//==========================================================================
+//
+// CreateBitmapCursor
+//
+// Create the cursor from the bitmaps. Deletes the bitmaps before returning.
+//
+//==========================================================================
+
+static HCURSOR CreateBitmapCursor(int xhot, int yhot, HBITMAP and_mask, HBITMAP color_mask)
+{
 	ICONINFO iconinfo =
 	{
-		FALSE,						// fIcon
-		cursorpic->LeftOffset,		// xHotspot
-		cursorpic->TopOffset,		// yHotspot
-		and_mask,					// hbmMask
-		xor_mask					// hbmColor
+		FALSE,		// fIcon
+		xhot,		// xHotspot
+		yhot,		// yHotspot
+		and_mask,	// hbmMask
+		color_mask	// hbmColor
 	};
 	HCURSOR cursor = CreateIconIndirect(&iconinfo);
+
 	// Delete the bitmaps.
 	DeleteObject(and_mask);
-	DeleteObject(xor_mask);
-	if (cursor == NULL)
-	{
-		return false;
-	}
-	// Replace the existing cursor with the new one.
-	if (CustomCursor != NULL)
-	{
-		DestroyCursor(CustomCursor);
-	}
-	CustomCursor = cursor;
-	atterm(DestroyCustomCursor);
-	SetClassLongPtr(Window, GCLP_HCURSOR, (LONG_PTR)cursor);
-	return true;
+	DeleteObject(color_mask);
+	
+	return cursor;
 }
 
 //==========================================================================

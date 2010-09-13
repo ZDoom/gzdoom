@@ -588,7 +588,7 @@ void FRawMouse::Ungrab()
 
 bool FRawMouse::ProcessRawInput(RAWINPUT *raw, int code)
 {
-	if (!Grabbed || raw->header.dwType != RIM_TYPEMOUSE)
+	if (!Grabbed || raw->header.dwType != RIM_TYPEMOUSE || !use_mouse)
 	{
 		return false;
 	}
@@ -802,7 +802,7 @@ void FDInputMouse::ProcessInput()
 	dx = 0;
 	dy = 0;
 
-	if (!Grabbed)
+	if (!Grabbed || !use_mouse)
 		return;
 
 	event_t ev = { 0 };
@@ -944,7 +944,7 @@ void FWin32Mouse::ProcessInput()
 	POINT pt;
 	int x, y;
 
-	if (!Grabbed || !GetCursorPos(&pt))
+	if (!Grabbed || !use_mouse || !GetCursorPos(&pt))
 	{
 		return;
 	}
@@ -1001,6 +1001,11 @@ bool FWin32Mouse::WndProcHook(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 		{
 			return true;
 		}
+	}
+	else if (!use_mouse)
+	{
+		// all following messages should only be processed if the mouse is in use
+		return false;
 	}
 	else if (message == WM_MOUSEWHEEL)
 	{

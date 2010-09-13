@@ -916,6 +916,7 @@ OptionValue  JumpCrouch
 OptionMenu GameplayOptions
 {
 	Title 	"GAMEPLAY OPTIONS"
+	Indent 222
 	Option "Teamplay",				"teamplay",	"OnOff"
 	Slider	"Team damage scalar",	"teamdamage", 0, 1, 0.05
 	StaticText " "

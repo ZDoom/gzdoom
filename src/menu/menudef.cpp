@@ -790,7 +790,7 @@ static void ParseOptionMenu(FScanner &sc)
 
 	ParseOptionMenuBody(sc, desc);
 
-	desc->CalcIndent();
+	if (desc->mIndent == 0) desc->CalcIndent();
 }
 
 

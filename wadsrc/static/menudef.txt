@@ -40,7 +40,11 @@ LISTMENU "MainMenu"
 	IfGame(Doom, Chex)
 	{
 		StaticPatch 94, 2, "M_DOOM"
-		Position 97, 64
+		Position 97, 72
+		IfOption(ReadThis)
+		{
+			Position 97, 64
+		}
 	}
 	IfGame(Strife)
 	{
@@ -451,11 +455,8 @@ OptionMenu "CustomizeControls"
 	StaticText 	""
 	StaticText 	"Strife Popup Screens", 1
 	Control 	"Mission objectives",	"showpop 1"
-	IfGame(Strife)
-	{
-		Control 	"Keys list",			"showpop 2"
-		Control 	"Weapons/ammo/stats",	"showpop 3"
-	}
+	Control 	"Keys list",			"showpop 2"
+	Control 	"Weapons/ammo/stats",	"showpop 3"
 }
 
 //-------------------------------------------------------------------------------------------

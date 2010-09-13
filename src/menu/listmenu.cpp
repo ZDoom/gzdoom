@@ -195,7 +195,7 @@ bool DListMenu::MouseEvent(int type, int x, int y)
 				{
 					if (i != mDesc->mSelectedItem)
 					{
-						S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
+						//S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
 					}
 					mDesc->mSelectedItem = i;
 					mDesc->mItems[i]->MouseEvent(type, x, y);

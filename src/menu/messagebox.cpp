@@ -331,7 +331,7 @@ bool DMessageBoxMenu::MouseEvent(int type, int x, int y)
 		}
 		if (sel != -1 && sel != messageSelection)
 		{
-			S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
+			//S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
 		}
 		messageSelection = sel;
 		if (type == MOUSE_Release)

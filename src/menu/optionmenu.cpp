@@ -324,7 +324,7 @@ bool DOptionMenu::MouseEvent(int type, int x, int y)
 			if (yline != mDesc->mSelectedItem)
 			{
 				mDesc->mSelectedItem = yline;
-				S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
+				//S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
 			}
 			mDesc->mItems[yline]->MouseEvent(type, x, y);
 			return true;
@@ -466,11 +466,7 @@ bool FOptionMenuItem::MouseEvent(int type, int x, int y)
 {
 	if (Selectable() && type == DMenu::MOUSE_Release)
 	{
-		if (DMenu::CurrentMenu->MenuEvent(MKEY_Enter, true))
-		{
-			S_Sound (CHAN_VOICE | CHAN_UI, "menu/choose", snd_menuvolume, ATTN_NONE);
-			return true;
-		}
+		return DMenu::CurrentMenu->MenuEvent(MKEY_Enter, true);
 	}
 	return false;
 }

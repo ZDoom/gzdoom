@@ -893,7 +893,7 @@ public:
 		}
 		if (sel != -1 && sel != mSelection)
 		{
-			S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
+			//S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
 		}
 		mSelection = sel;
 		if (type == MOUSE_Release)

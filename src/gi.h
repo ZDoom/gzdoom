@@ -117,6 +117,7 @@ struct gameinfo_t
 	FName mFontColorHeader;
 	FName mFontColorHighlight;
 	FName mFontColorSelection;
+	char mBackButton[9];
 
 	const char *GetFinalePage(unsigned int num) const;
 };

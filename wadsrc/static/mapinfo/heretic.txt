@@ -50,6 +50,7 @@ gameinfo
 	menufontcolor_header = "GOLD"
 	menufontcolor_highlight = "YELLOW"
 	menufontcolor_selection = "DARKGREEN"
+	menubackbutton = "M_BACK_H"
 }
 
 skill baby

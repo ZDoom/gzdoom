@@ -290,6 +290,7 @@ void FMapInfoParser::ParseGameInfo()
 		GAMEINFOKEY_STRING(mFontColorHeader, "menufontcolor_header")
 		GAMEINFOKEY_STRING(mFontColorHighlight, "menufontcolor_highlight")
 		GAMEINFOKEY_STRING(mFontColorSelection, "menufontcolor_selection")
+		GAMEINFOKEY_CSTRING(mBackButton, "menubackbutton", 8)
 
 		else
 		{

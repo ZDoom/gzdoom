@@ -199,7 +199,7 @@ bool DMenu::MouseEventBack(int type, int x, int y)
 {
 	if (m_show_backbutton >= 0)
 	{
-		FTexture *tex = TexMan["MENUBACK"];
+		FTexture *tex = TexMan[gameinfo.mBackButton];
 		if (tex != NULL)
 		{
 			if (m_show_backbutton&1) x -= screen->GetWidth() - tex->GetScaledWidth() * CleanXfac;
@@ -250,7 +250,7 @@ void DMenu::Ticker ()
 {
 	if (mBackbuttonTime > 0)
 	{
-		if (mBackbuttonAlpha < FRACUNIT/2) mBackbuttonAlpha += FRACUNIT/10;
+		if (mBackbuttonAlpha < FRACUNIT) mBackbuttonAlpha += FRACUNIT/10;
 		mBackbuttonTime--;
 	}
 	else
@@ -264,10 +264,19 @@ void DMenu::Drawer ()
 {
 	if (this == DMenu::CurrentMenu && mBackbuttonAlpha > 0 && m_show_backbutton >= 0 && m_use_mouse)
 	{
-		FTexture *tex = TexMan[mBackbuttonSelected && mMouseCapture? "MENUBAK1":"MENUBACK"];
-		int x = (!(m_show_backbutton&1))? 0:screen->GetWidth() - tex->GetScaledWidth() * CleanXfac;
-		int y = (!(m_show_backbutton&2))? 0:screen->GetHeight() - tex->GetScaledHeight() * CleanYfac;
-		screen->DrawTexture(tex, x, y, DTA_CleanNoMove, true, DTA_Alpha, mBackbuttonAlpha, TAG_DONE);
+		FTexture *tex = TexMan[gameinfo.mBackButton];
+		int w = tex->GetScaledWidth() * CleanXfac;
+		int h = tex->GetScaledHeight() * CleanYfac;
+		int x = (!(m_show_backbutton&1))? 0:screen->GetWidth() - w;
+		int y = (!(m_show_backbutton&2))? 0:screen->GetHeight() - h;
+		if (mBackbuttonSelected && mMouseCapture)
+		{
+			screen->DrawTexture(tex, x, y, DTA_CleanNoMove, true, DTA_ColorOverlay, MAKEARGB(40, 255,255,255), TAG_DONE);
+		}
+		else
+		{
+			screen->DrawTexture(tex, x, y, DTA_CleanNoMove, true, DTA_Alpha, mBackbuttonAlpha, TAG_DONE);
+		}
 	}
 }
 

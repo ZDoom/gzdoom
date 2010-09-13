@@ -296,8 +296,8 @@ ListMenu "PlayerMenu"
 	}
 	IfGame(Hexen)
 	{
-		MouseWindow 0, 200
-		PlayerDisplay 200, 80, "00 07 00", "40 53 40", 1, "PlayerDisplay"
+		MouseWindow 0, 220
+		PlayerDisplay 220, 80, "00 07 00", "40 53 40", 1, "PlayerDisplay"
 	}
 	
 	ValueText "Team", "Team"
@@ -636,6 +636,7 @@ OptionMenu "VideoOptions"
 	Option "Rocket Trails",				"cl_rockettrails", "RocketTrailTypes"
 	Option "Blood Type",				"cl_bloodtype", "BloodTypes"
 	Option "Bullet Puff Type",			"cl_pufftype", "PuffTypes"
+	Option "Interpolate monster movement",	"nomonsterinterpolation", "NoYes"
 }
 
 //-------------------------------------------------------------------------------------------
@@ -1032,7 +1033,6 @@ OptionMenu "CompatibilityOptions"
 	Option "Cripple sound for silent BFG trick",		"compat_soundslots", "YesNo"
 	Option "Draw polyobjects like Hexen",				"compat_POLYOBJ", "YesNo"
 	
-	Option "Interpolate monster movement",	"nomonsterinterpolation", "NoYes"
 	Class "CompatibilityMenu"
 }
 

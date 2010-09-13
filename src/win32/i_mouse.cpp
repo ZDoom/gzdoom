@@ -114,6 +114,8 @@ extern LPDIRECTINPUT8 g_pdi;
 extern LPDIRECTINPUT g_pdi3;
 extern bool GUICapture;
 
+EXTERN_CVAR(Bool, m_use_mouse);
+
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static bool NativeMouse;
@@ -260,18 +262,17 @@ void I_CheckNativeMouse(bool preferNative)
 
 	if (!windowed)
 	{
-		want_native = false;
+		// ungrab mouse when in the menu with mouse control on.		
+		want_native = m_use_mouse && (menuactive == MENU_On || menuactive == MENU_OnNoPause);
 	}
 	else
 	{
 		want_native =
 			(GetForegroundWindow() != Window) ||
-			!CaptureMode_InGame() ||
-			GUICapture ||
-			paused ||
 			preferNative ||
 			!use_mouse ||
-			demoplayback;
+				((!m_use_mouse || menuactive != MENU_WaitKey) &&
+				(!CaptureMode_InGame() || GUICapture ||	paused || demoplayback));
 	}
 
 	//Printf ("%d %d %d\n", wantNative, preferNative, NativeMouse);

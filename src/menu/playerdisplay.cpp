@@ -396,7 +396,7 @@ void FListMenuItemPlayerDisplay::UpdateRandomClass()
 //
 //=============================================================================
 
-void FListMenuItemPlayerDisplay::SetPlayerClass(int classnum)
+void FListMenuItemPlayerDisplay::SetPlayerClass(int classnum, bool force)
 {
 	if (classnum < 0 || classnum >= (int)PlayerClasses.Size ())
 	{
@@ -407,7 +407,7 @@ void FListMenuItemPlayerDisplay::SetPlayerClass(int classnum)
 			UpdateRandomClass();
 		}
 	}
-	else if (mPlayerClass != &PlayerClasses[classnum])
+	else if (mPlayerClass != &PlayerClasses[classnum] || force)
 	{
 		mPlayerClass = &PlayerClasses[classnum];
 		mPlayerState = GetDefaultByType (mPlayerClass->Type)->SeeState;
@@ -456,7 +456,7 @@ bool FListMenuItemPlayerDisplay::SetValue(int i, int value)
 		mTranslate = value;
 
 	case PDF_CLASS:
-		SetPlayerClass(value);
+		SetPlayerClass(value, true);
 		break;
 
 	case PDF_SKIN:

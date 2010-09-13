@@ -823,7 +823,7 @@ void DPlayerMenu::PlayerNameChanged(FListMenuItem *li)
 {
 	char pp[MAXPLAYERNAME+1];
 	const char *p;
-	if (li->GetString(0, pp, MAXPLAYERNAME+1))
+	if (li->GetString(0, pp, MAXPLAYERNAME))
 	{
 		FString command("name \"");
 

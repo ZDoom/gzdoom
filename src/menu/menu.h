@@ -316,7 +316,7 @@ class FListMenuItemPlayerDisplay : public FListMenuItem
 	int mRandomTimer;
 	int mClassNum;
 
-	void SetPlayerClass(int classnum);
+	void SetPlayerClass(int classnum, bool force = false);
 	bool UpdatePlayerClass();
 	void UpdateRandomClass();
 

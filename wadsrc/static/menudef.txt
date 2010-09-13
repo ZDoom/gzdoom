@@ -620,7 +620,7 @@ OptionMenu "VideoOptions"
 	Option "Display nametags",			"displaynametags", "DisplayTagsTypes"
 	Option "Stretch status bar",		"st_scale", "OnOff"
 	Option "Alternative HUD",			"hud_althud", "OnOff"
-	Option "Screen wipe style",			"wipetype", "OnOff"
+	Option "Screen wipe style",			"wipetype", "Wipes"
 
 	IfOption(Windows)
 	{

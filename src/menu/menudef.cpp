@@ -83,6 +83,7 @@ static void DeinitMenus()
 			pair->Value = NULL;
 		}
 	}
+	DMenu::CurrentMenu = NULL;
 }
 
 //=============================================================================

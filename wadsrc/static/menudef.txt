@@ -273,19 +273,18 @@ ListMenu "SaveGameMenu"
 
 ListMenu "PlayerMenu"
 {
-	StaticTextCentered 160, 15, "$MNU_PLAYERSETUP"
+	StaticTextCentered 160, 10, "$MNU_PLAYERSETUP"
 	Font "SmallFont"
-	
+	Linespacing 16
+	Position 48, 42
 
 	IfGame (Doom, Strife, Chex)
 	{
-		Position 48, 47
 		PlayerNameBox "Name", 0, "Playerbox"
 		Selector "-", -16, -1
 	}
 	IfGame(Heretic, Hexen)
 	{
-		Position 48, 52
 		PlayerNameBox "Name", 5, "Playerbox"
 		Selector "-", -16, 1
 	}

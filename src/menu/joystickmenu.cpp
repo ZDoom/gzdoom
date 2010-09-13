@@ -265,7 +265,7 @@ FOptionMenuDescriptor *UpdateJoystickConfigMenu(IJoystickConfig *joy)
 			delete opt->mItems[i];
 			opt->mItems.Clear();
 		}
-		opt->mTitle.Format("Configure %s", joy->GetName());
+		opt->mTitle.Format("Configure %s", joy->GetName().GetChars());
 
 		if (joy == NULL)
 		{

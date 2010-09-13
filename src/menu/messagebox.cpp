@@ -67,6 +67,7 @@ public:
 	bool Responder(event_t *ev);
 	bool MenuEvent(int mkey, bool fromcontroller);
 	bool MouseEvent(int type, int x, int y);
+	void CloseSound();
 	virtual void HandleResult(bool res);
 };
 
@@ -133,6 +134,18 @@ void DMessageBoxMenu::Destroy()
 //
 //=============================================================================
 
+void DMessageBoxMenu::CloseSound()
+{
+	S_Sound (CHAN_VOICE | CHAN_UI, 
+		DMenu::CurrentMenu != NULL? "menu/backup" : "menu/dismiss", snd_menuvolume, ATTN_NONE);
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
 void DMessageBoxMenu::HandleResult(bool res)
 {
 	if (mParentMenu != NULL)
@@ -149,7 +162,7 @@ void DMessageBoxMenu::HandleResult(bool res)
 				Close();
 				if (res) M_SetMenu(mAction, -1);
 			}
-			S_Sound(CHAN_VOICE | CHAN_UI, "menu/dismiss", snd_menuvolume, ATTN_NONE);
+			CloseSound();
 		}
 	}
 }
@@ -281,8 +294,8 @@ bool DMessageBoxMenu::MenuEvent(int mkey, bool fromcontroller)
 	}
 	else
 	{
-		S_Sound(CHAN_VOICE | CHAN_UI, "menu/dismiss", snd_menuvolume, ATTN_NONE);
 		Close();
+		CloseSound();
 		return true;
 	}
 }
@@ -402,7 +415,7 @@ void DQuitMenu::HandleResult(bool res)
 	else
 	{
 		Close();
-		S_Sound(CHAN_VOICE | CHAN_UI, "menu/dismiss", snd_menuvolume, ATTN_NONE);
+		CloseSound();
 	}
 }
 
@@ -414,8 +427,7 @@ void DQuitMenu::HandleResult(bool res)
 
 CCMD (menu_quit)
 {	// F10
-	//M_StartControlPanel (true);
-	S_Sound (CHAN_VOICE | CHAN_UI, "menu/activate", snd_menuvolume, ATTN_NONE);
+	M_StartControlPanel (true);
 	DMenu *newmenu = new DQuitMenu(false);
 	newmenu->mParentMenu = DMenu::CurrentMenu;
 	M_ActivateMenu(newmenu);
@@ -491,7 +503,7 @@ void DEndGameMenu::HandleResult(bool res)
 	else
 	{
 		Close();
-		S_Sound(CHAN_VOICE | CHAN_UI, "menu/dismiss", snd_menuvolume, ATTN_NONE);
+		CloseSound();
 	}
 }
 
@@ -574,7 +586,7 @@ void DQuickSaveMenu::HandleResult(bool res)
 	else
 	{
 		Close();
-		S_Sound(CHAN_VOICE | CHAN_UI, "menu/dismiss", snd_menuvolume, ATTN_NONE);
+		CloseSound();
 	}
 }
 
@@ -665,7 +677,7 @@ void DQuickLoadMenu::HandleResult(bool res)
 	else
 	{
 		Close();
-		S_Sound(CHAN_VOICE | CHAN_UI, "menu/dismiss", snd_menuvolume, ATTN_NONE);
+		CloseSound();
 	}
 }
 
@@ -677,8 +689,7 @@ void DQuickLoadMenu::HandleResult(bool res)
 
 CCMD (quickload)
 {	// F9
-	//M_StartControlPanel (true);
-	S_Sound (CHAN_VOICE | CHAN_UI, "menu/activate", snd_menuvolume, ATTN_NONE);
+	M_StartControlPanel (true);
 
 	if (netgame)
 	{
@@ -712,7 +723,8 @@ void M_StartMessage(const char *message, int messagemode, FName action)
 {
 	if (DMenu::CurrentMenu == NULL) 
 	{
-		M_StartControlPanel(true);
+		// only play a sound if no menu was active before
+		M_StartControlPanel(menuactive == MENU_Off);
 	}
 	DMenu *newmenu = new DMessageBoxMenu(DMenu::CurrentMenu, message, messagemode, false, action);
 	newmenu->mParentMenu = DMenu::CurrentMenu;

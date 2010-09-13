@@ -836,7 +836,7 @@ OptionMenu MessageOptions
 	Option "Show messages",				"show_messages", "OnOff"
 	Option "Show obituaries",			"show_obituaries", "OnOff"
 	Option "Scale text in high res", 	"con_scaletext", "ScaleValues"
-	Option "Minimum message level", 	"msglevel", "MessageLevels"
+	Option "Minimum message level", 	"msg", "MessageLevels"
 	Option "Center messages",			"con_centernotify", "OnOff"
 	StaticText " "
 	StaticText "Message Colors", 1

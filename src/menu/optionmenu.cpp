@@ -79,7 +79,7 @@ void M_DrawSlider (int x, int y, double min, double max, double cur,int fracdigi
 	range = max - min;
 	double ccur = clamp(cur, min, max) - min;
 
-	if (CleanXfac > CleanXfac_1)
+	if (CleanXfac > CleanXfac_1 || CleanXfac_1 * 320 < screen->GetWidth())
 	{
 		M_DrawConText(CR_WHITE, x, y, "\x10\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x12");
 		M_DrawConText(CR_ORANGE, x + int((5 + ((ccur * 78) / range)) * CleanXfac_1), y, "\x13");

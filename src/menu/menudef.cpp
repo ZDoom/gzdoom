@@ -642,7 +642,7 @@ static void ParseOptionMenuBody(FScanner &sc, FOptionMenuDescriptor *desc)
 			sc.MustGetStringName(",");
 			sc.MustGetString();
 			FString values = sc.String;
-			const char *check = NULL;
+			FString check;
 			int center = 0;
 			if (sc.CheckString(","))
 			{

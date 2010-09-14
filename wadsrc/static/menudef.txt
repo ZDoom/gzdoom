@@ -487,8 +487,8 @@ OptionMenu "MouseOptions"
 	Option "Enable mouse",				"use_mouse", "YesNo"
 	IfOption(Windows)	// GUI mouse not operable in SDL interface right now.
 	{
-		Option "Enable mouse in menus",	"m_use_mouse", "MenuMouse"
-		Option "Show back button",		"m_show_backbutton", "Corners"
+		Option "Enable mouse in menus",	"m_use_mouse", "MenuMouse", "use_mouse"
+		Option "Show back button",		"m_show_backbutton", "Corners", "use_mouse"
 	}
 	StaticText 	""
 	Slider "Overall sensitivity",		"mouse_sensitivity", 0.5, 2.5, 0.1

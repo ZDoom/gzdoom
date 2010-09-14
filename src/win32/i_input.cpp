@@ -144,6 +144,7 @@ extern HWND EAXEditWindow;
 EXTERN_CVAR (String, language)
 EXTERN_CVAR (Bool, lookstrafe)
 EXTERN_CVAR (Bool, use_joystick)
+EXTERN_CVAR (Bool, use_mouse)
 
 static int WheelDelta;
 extern bool CursorState;
@@ -326,11 +327,12 @@ bool GUIWndProcHook(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESU
 		if (wParam & MK_CONTROL)			ev.data3 |= GKM_CTRL;
 		if (GetKeyState(VK_MENU) & 0x8000)	ev.data3 |= GKM_ALT;
 
-		D_PostEvent(&ev);
+		if (use_mouse) D_PostEvent(&ev);
 		return true;
 
 	// Note: If the mouse is grabbed, it sends the mouse wheel events itself.
 	case WM_MOUSEWHEEL:
+		if (!use_mouse)  return false;
 		if (wParam & MK_SHIFT)				ev.data3 |= GKM_SHIFT;
 		if (wParam & MK_CONTROL)			ev.data3 |= GKM_CTRL;
 		if (GetKeyState(VK_MENU) & 0x8000)	ev.data3 |= GKM_ALT;

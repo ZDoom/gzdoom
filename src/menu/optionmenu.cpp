@@ -79,14 +79,30 @@ void M_DrawSlider (int x, int y, double min, double max, double cur,int fracdigi
 	range = max - min;
 	double ccur = clamp(cur, min, max) - min;
 
-	M_DrawConText(CR_WHITE, x, y, "\x10\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x12");
-	M_DrawConText(CR_ORANGE, x + int((5 + ((ccur * 78) / range)) * CleanXfac_1), y, "\x13");
-
-	if (fracdigits >= 0)
+	if (CleanXfac > CleanXfac_1)
 	{
-		char textbuf[16];
-		mysnprintf(textbuf, countof(textbuf), "%.*f", fracdigits, cur);
-		screen->DrawText(SmallFont, CR_DARKGRAY, x + (12*8 + 4) * CleanXfac_1, y, textbuf, DTA_CleanNoMove_1, true, TAG_DONE);
+		M_DrawConText(CR_WHITE, x, y, "\x10\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x12");
+		M_DrawConText(CR_ORANGE, x + int((5 + ((ccur * 78) / range)) * CleanXfac_1), y, "\x13");
+
+		if (fracdigits >= 0)
+		{
+			char textbuf[16];
+			mysnprintf(textbuf, countof(textbuf), "%.*f", fracdigits, cur);
+			screen->DrawText(SmallFont, CR_DARKGRAY, x + (12*8 + 4) * CleanXfac_1, y, textbuf, DTA_CleanNoMove_1, true, TAG_DONE);
+		}
+	}
+	else
+	{
+		// On 320x200 we need a shorter slider
+		M_DrawConText(CR_WHITE, x, y, "\x10\x11\x11\x11\x11\x11\x12");
+		M_DrawConText(CR_ORANGE, x + int((5 + ((ccur * 38) / range)) * CleanXfac_1), y, "\x13");
+
+		if (fracdigits >= 0)
+		{
+			char textbuf[16];
+			mysnprintf(textbuf, countof(textbuf), "%.*f", fracdigits, cur);
+			screen->DrawText(SmallFont, CR_DARKGRAY, x + (7*8 + 4) * CleanXfac_1, y, textbuf, DTA_CleanNoMove_1, true, TAG_DONE);
+		}
 	}
 }
 

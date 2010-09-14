@@ -246,7 +246,7 @@ public:
 				if (type == MOUSE_Release)
 				{
 					MenuEvent(MKEY_Enter, true);
-					mDesc->mSelectedItem = -1;
+					if (m_use_mouse == 2) mDesc->mSelectedItem = -1;
 				}
 				res = true;
 			}

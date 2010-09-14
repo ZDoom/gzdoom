@@ -64,7 +64,7 @@ CVAR (Bool, show_obituaries, true, CVAR_ARCHIVE)
 
 
 CVAR (Float, snd_menuvolume, 0.6f, CVAR_ARCHIVE)
-CVAR(Bool, m_use_mouse, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR(Int, m_use_mouse, 1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Int, m_show_backbutton, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 DMenu *DMenu::CurrentMenu;
@@ -117,7 +117,7 @@ bool DMenu::Responder (event_t *ev)
 		else if (ev->subtype == EV_GUI_MouseMove)
 		{
 			mBackbuttonTime = BACKBUTTON_TIME;
-			if (mMouseCapture)
+			if (mMouseCapture || m_use_mouse == 1)
 			{
 				MouseEventBack(MOUSE_Move, ev->data1, ev->data2);
 				return MouseEvent(MOUSE_Move, ev->data1, ev->data2);
@@ -207,7 +207,7 @@ bool DMenu::MouseEventBack(int type, int x, int y)
 			mBackbuttonSelected = (x >= 0 && x < tex->GetScaledWidth() * CleanXfac && y < tex->GetScaledHeight() * CleanYfac);
 			if (mBackbuttonSelected && type == MOUSE_Release)
 			{
-				mBackbuttonSelected = false;
+				if (m_use_mouse == 2) mBackbuttonSelected = false;
 				MenuEvent(MKEY_Back, true);
 			}
 			return true;
@@ -269,7 +269,7 @@ void DMenu::Drawer ()
 		int h = tex->GetScaledHeight() * CleanYfac;
 		int x = (!(m_show_backbutton&1))? 0:screen->GetWidth() - w;
 		int y = (!(m_show_backbutton&2))? 0:screen->GetHeight() - h;
-		if (mBackbuttonSelected && mMouseCapture)
+		if (mBackbuttonSelected && (mMouseCapture || m_use_mouse == 1))
 		{
 			screen->DrawTexture(tex, x, y, DTA_CleanNoMove, true, DTA_ColorOverlay, MAKEARGB(40, 255,255,255), TAG_DONE);
 		}

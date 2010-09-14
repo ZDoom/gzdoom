@@ -276,7 +276,7 @@ FOptionMenuDescriptor *UpdateJoystickConfigMenu(IJoystickConfig *joy)
 		{
 			SELECTED_JOYSTICK = joy;
 
-			it = new FOptionMenuSliderJoySensitivity("Overall sensitivity", 0, 2, 0.1, 1);
+			it = new FOptionMenuSliderJoySensitivity("Overall sensitivity", 0, 2, 0.1, 3);
 			opt->mItems.Push(it);
 			it = new FOptionMenuItemStaticText(" ", false);
 			opt->mItems.Push(it);
@@ -293,11 +293,11 @@ FOptionMenuDescriptor *UpdateJoystickConfigMenu(IJoystickConfig *joy)
 
 					it = new FOptionMenuItemJoyMap(joy->GetAxisName(i), i, "JoyAxisMapNames", false);
 					opt->mItems.Push(it);
-					it = new FOptionMenuSliderJoyScale("Overall sensitivity", i, 0, 4, 0.1, 1);
+					it = new FOptionMenuSliderJoyScale("Overall sensitivity", i, 0, 4, 0.1, 3);
 					opt->mItems.Push(it);
 					it = new FOptionMenuItemInverter("Invert", i, false);
 					opt->mItems.Push(it);
-					it = new FOptionMenuSliderJoyDeadZone("Dead Zone", i, 0, 0.9, 0.05, 1);
+					it = new FOptionMenuSliderJoyDeadZone("Dead Zone", i, 0, 0.9, 0.05, 3);
 					opt->mItems.Push(it);
 				}
 			}

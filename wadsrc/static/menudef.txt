@@ -474,13 +474,20 @@ OptionValue "Corners"
 	3, "Lower right"
 }
 
+OptionValue "MenuMouse"
+{
+	0, "No"
+	1, "Yes"
+	2, "Touchscreen-like"
+}
+
 OptionMenu "MouseOptions"
 {
 	Title "MOUSE OPTIONS"
 	Option "Enable mouse",				"use_mouse", "YesNo"
 	IfOption(Windows)	// GUI mouse not operable in SDL interface right now.
 	{
-		Option "Enable mouse in menus",	"m_use_mouse", "YesNo"
+		Option "Enable mouse in menus",	"m_use_mouse", "MenuMouse"
 		Option "Show back button",		"m_show_backbutton", "Corners"
 	}
 	StaticText 	""

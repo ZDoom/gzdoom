@@ -14,6 +14,8 @@
 #include "textures/textures.h"
 
 EXTERN_CVAR(Float, snd_menuvolume)
+EXTERN_CVAR(Int, m_use_mouse);
+
 
 struct event_t;
 class FTexture;

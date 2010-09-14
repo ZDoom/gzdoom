@@ -177,7 +177,7 @@ bool DTextEnterMenu::MouseEvent(int type, int x, int y)
 			if (MenuEvent(MKEY_Enter, true))
 			{
 				S_Sound (CHAN_VOICE | CHAN_UI, "menu/choose", snd_menuvolume, ATTN_NONE);
-				InputGridX = InputGridY = -1;
+				if (m_use_mouse == 2) InputGridX = InputGridY = -1;
 				return true;
 			}
 		}

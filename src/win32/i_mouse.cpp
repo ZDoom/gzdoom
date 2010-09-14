@@ -17,6 +17,7 @@
 #include "doomstat.h"
 #include "win32iface.h"
 #include "rawinput.h"
+#include "menu/menu.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -113,8 +114,6 @@ extern HWND Window;
 extern LPDIRECTINPUT8 g_pdi;
 extern LPDIRECTINPUT g_pdi3;
 extern bool GUICapture;
-
-EXTERN_CVAR(Bool, m_use_mouse);
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 

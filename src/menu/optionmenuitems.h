@@ -861,6 +861,13 @@ public:
 		return false;
 	}
 
+	bool MouseEvent(int type, int x, int y)
+	{
+		int colwidth = screen->GetWidth() / 3;
+		mSelection = x / colwidth;
+		return FOptionMenuItem::MouseEvent(type, x, y);
+	}
+
 	bool Activate()
 	{
 		S_Sound (CHAN_VOICE | CHAN_UI, "menu/choose", snd_menuvolume, ATTN_NONE);
@@ -875,12 +882,12 @@ public:
 
 		for (int x = 0; x < 3; x++)
 		{
-			if (x == mHighlight)
-				color = OptionSettings.mFontColorHighlight;
-			else if (!selected || mSelection != x)
-				color = OptionSettings.mFontColorValue;
-			else
+			if (selected && mSelection == x)
 				color = OptionSettings.mFontColorSelection;
+			else if (x == mHighlight)
+				color = OptionSettings.mFontColorHighlight;
+			else
+				color = OptionSettings.mFontColorValue;
 
 			screen->DrawText (SmallFont, color, colwidth * x + 20 * CleanXfac_1, y, mResTexts[x], DTA_CleanNoMove_1, true, TAG_DONE);
 		}

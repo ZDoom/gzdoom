@@ -79,7 +79,7 @@ const IWADInfo IWADInfos[NUM_IWAD_TYPES] =
 	{ "FreeDM",									"FreeDM",	MAKERGB(50,84,67),		MAKERGB(198,220,209),	GAME_Doom,		"mapinfo/doom2.txt",	GI_MAPxx },
 	{ "Blasphemer",								"Blasphemer",MAKERGB(115,0,0),		MAKERGB(0,0,0),			GAME_Heretic,	"mapinfo/heretic.txt" },
 	{ "Chex(R) Quest",							"Chex1",	MAKERGB(255,255,0),		MAKERGB(0,192,0),		GAME_Chex,		"mapinfo/chex.txt" },
-	{ "Chex(R) Quest 3",						"Chex3",	MAKERGB(255,255,0),		MAKERGB(0,192,0),		GAME_Chex,		"mapinfo/chex3.txt" },
+	{ "Chex(R) Quest 3",						"Chex3",	MAKERGB(255,255,0),		MAKERGB(0,192,0),		GAME_Chex,		"mapinfo/chex3.txt",	GI_NOTEXTCOLOR },
 	{ "Action Doom 2: Urban Brawl",				"UrbanBrawl",MAKERGB(168,168,0),	MAKERGB(168,0,0),		GAME_Doom,		"mapinfo/doom2.txt",	GI_MAPxx  },
 	{ "Harmony",								"Harmony",	MAKERGB(110,180,230),	MAKERGB(69,79,126),		GAME_Doom,		"mapinfo/doom2.txt",	GI_MAPxx  },
 	//{ "ZDoom Engine",							NULL,		MAKERGB(168,0,0),		MAKERGB(168,168,168) },

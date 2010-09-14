@@ -46,6 +46,7 @@
 #define GI_COMPATSTAIRS			0x00000020	// same for stairbuilding
 #define GI_COMPATPOLY1			0x00000040	// Hexen's MAP36 needs old polyobject drawing
 #define GI_COMPATPOLY2			0x00000080	// so does HEXDD's MAP47
+#define GI_NOTEXTCOLOR			0x00000100
 
 #include "gametype.h"
 

@@ -320,8 +320,12 @@ bool GUIWndProcHook(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESU
 		{
 			ev.subtype = EV_GUI_MouseMove;
 		}
-		ev.data1 = LOWORD(lParam) >> screen->GetPixelDoubling(); 
-		ev.data2 = HIWORD(lParam) >> screen->GetPixelDoubling(); 
+
+		{
+			int shift = screen? screen->GetPixelDoubling() : 0;
+			ev.data1 = LOWORD(lParam) >> shift; 
+			ev.data2 = HIWORD(lParam) >> shift; 
+		}
 
 		if (wParam & MK_SHIFT)				ev.data3 |= GKM_SHIFT;
 		if (wParam & MK_CONTROL)			ev.data3 |= GKM_CTRL;

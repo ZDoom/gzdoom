@@ -412,7 +412,7 @@ public:
 	virtual void WipeEndScreen();
 	virtual bool WipeDo(int ticks);
 	virtual void WipeCleanup();
-	virtual int GetPixelDoubling() const { return 1; }
+	virtual int GetPixelDoubling() const { return 0; }
 
 	uint32 GetLastFPS() const { return LastCount; }
 

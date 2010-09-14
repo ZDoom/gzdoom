@@ -453,7 +453,6 @@ bool FListMenuItemSelectable::MouseEvent(int type, int x, int y)
 	{
 		if (DMenu::CurrentMenu->MenuEvent(MKEY_Enter, true))
 		{
-			S_Sound (CHAN_VOICE | CHAN_UI, "menu/choose", snd_menuvolume, ATTN_NONE);
 			return true;
 		}
 	}

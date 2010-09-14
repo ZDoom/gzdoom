@@ -77,6 +77,9 @@ bool			M_DemoNoPlay;
 FButtonStatus	MenuButtons[NUM_MKEYS];
 int				MenuButtonTickers[NUM_MKEYS];
 bool			MenuButtonOrigin[NUM_MKEYS];
+int				BackbuttonTime;
+fixed_t			BackbuttonAlpha;
+
 
 #define KEY_REPEAT_DELAY	(TICRATE*5/12)
 #define KEY_REPEAT_RATE		(3)
@@ -96,8 +99,6 @@ DMenu::DMenu(DMenu *parent)
 	mParentMenu = parent;
 	mMouseCapture = false;
 	mBackbuttonSelected = false;
-	mBackbuttonTime = 0;
-	mBackbuttonAlpha = 0;
 	GC::WriteBarrier(this, parent);
 }
 	
@@ -116,7 +117,7 @@ bool DMenu::Responder (event_t *ev)
 		}
 		else if (ev->subtype == EV_GUI_MouseMove)
 		{
-			mBackbuttonTime = BACKBUTTON_TIME;
+			BackbuttonTime = BACKBUTTON_TIME;
 			if (mMouseCapture || m_use_mouse == 1)
 			{
 				MouseEventBack(MOUSE_Move, ev->data1, ev->data2);
@@ -248,21 +249,11 @@ void DMenu::ReleaseCapture()
 
 void DMenu::Ticker () 
 {
-	if (mBackbuttonTime > 0)
-	{
-		if (mBackbuttonAlpha < FRACUNIT) mBackbuttonAlpha += FRACUNIT/10;
-		mBackbuttonTime--;
-	}
-	else
-	{
-		if (mBackbuttonAlpha > 0) mBackbuttonAlpha -= FRACUNIT/10;
-		if (mBackbuttonAlpha < 0) mBackbuttonAlpha = 0;
-	}
 }
 
 void DMenu::Drawer () 
 {
-	if (this == DMenu::CurrentMenu && mBackbuttonAlpha > 0 && m_show_backbutton >= 0 && m_use_mouse)
+	if (this == DMenu::CurrentMenu && BackbuttonAlpha > 0 && m_show_backbutton >= 0 && m_use_mouse)
 	{
 		FTexture *tex = TexMan[gameinfo.mBackButton];
 		int w = tex->GetScaledWidth() * CleanXfac;
@@ -275,7 +266,7 @@ void DMenu::Drawer ()
 		}
 		else
 		{
-			screen->DrawTexture(tex, x, y, DTA_CleanNoMove, true, DTA_Alpha, mBackbuttonAlpha, TAG_DONE);
+			screen->DrawTexture(tex, x, y, DTA_CleanNoMove, true, DTA_Alpha, BackbuttonAlpha, TAG_DONE);
 		}
 	}
 }
@@ -318,6 +309,8 @@ void M_StartControlPanel (bool makeSound)
 	{
 		S_Sound (CHAN_VOICE | CHAN_UI, "menu/activate", snd_menuvolume, ATTN_NONE);
 	}
+	BackbuttonTime = 0;
+	BackbuttonAlpha = 0;
 }
 
 //=============================================================================
@@ -686,6 +679,16 @@ void M_Ticker (void)
 		}
 	}
 
+	if (BackbuttonTime > 0)
+	{
+		if (BackbuttonAlpha < FRACUNIT) BackbuttonAlpha += FRACUNIT/10;
+		BackbuttonTime--;
+	}
+	else
+	{
+		if (BackbuttonAlpha > 0) BackbuttonAlpha -= FRACUNIT/10;
+		if (BackbuttonAlpha < 0) BackbuttonAlpha = 0;
+	}
 }
 
 //=============================================================================

@@ -140,8 +140,14 @@ void DOptionMenu::Init(DMenu *parent, FOptionMenuDescriptor *desc)
 	if (mDesc != NULL && mDesc->mSelectedItem < 0)
 	{
 		// Go down to the first selectable item
+		int i = -1;
 		mDesc->mSelectedItem = -1;
-		MenuEvent(MKEY_Down, false);
+		do
+		{
+			i++;
+		}
+		while (!mDesc->mItems[i]->Selectable() && i < (int)mDesc->mItems.Size());
+		if (i>=0) mDesc->mSelectedItem = i;
 	}
 }
 

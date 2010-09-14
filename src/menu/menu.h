@@ -187,8 +187,6 @@ class DMenu : public DObject
 protected:
 	bool mMouseCapture;
 	bool mBackbuttonSelected;
-	int mBackbuttonTime;
-	fixed_t mBackbuttonAlpha;
 
 public:
 	enum

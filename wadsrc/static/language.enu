@@ -1559,6 +1559,8 @@ MNU_DELETESG		= "Do you really want to delete the savegame\n";
 
 MNU_ONLYREGISTERED	= "ONLY AVAILABLE IN THE REGISTERED VERSION";
 
+MNU_EPISODE			= "Select Episode";
+
 // Bloodbath announcer
 
 BBA_BONED = "%k boned %o like a fish";

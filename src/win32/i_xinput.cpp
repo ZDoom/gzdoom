@@ -19,7 +19,6 @@
 #include "doomdef.h"
 #include "doomstat.h"
 #include "win32iface.h"
-#include "m_menu.h"
 #include "templates.h"
 #include "gameconfigfile.h"
 #include "cmdlib.h"

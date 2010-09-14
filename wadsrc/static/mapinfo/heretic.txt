@@ -42,6 +42,15 @@ gameinfo
 	endoom = "ENDTEXT"
 	player5start = 4001
 	pickupcolor = "d6 ba 45"
+	quitmessages = "$*RAVENQUITMSG"
+	menufontcolor_title = "UNTRANSLATED"
+	menufontcolor_label = "GREEN"
+	menufontcolor_value = "UNTRANSLATED"
+	menufontcolor_action = "UNTRANSLATED"
+	menufontcolor_header = "GOLD"
+	menufontcolor_highlight = "YELLOW"
+	menufontcolor_selection = "DARKGREEN"
+	menubackbutton = "M_BACK_H"
 }
 
 skill baby

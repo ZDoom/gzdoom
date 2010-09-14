@@ -1,0 +1,1333 @@
+//-------------------------------------------------------------------------------------------
+//
+// Note:
+// Much of the menu structure defined here is accessed internally by CCMDs
+// and menu generation code. If you want to design your own menus make sure
+// that they are named identically and that links to all important submenus
+// are present.
+//
+//-------------------------------------------------------------------------------------------
+
+DEFAULTLISTMENU
+{
+	Font "BigFont", "Untranslated"
+	IfGame(Doom, Chex)
+	{
+		Selector "M_SKULL1", -32, -5
+		Linespacing 16
+		Font "BigFont", "Red"
+	}
+	IfGame(Strife)
+	{
+		Selector "M_CURS1", -28, -5
+		Linespacing 19
+	}
+	IfGame(Heretic, Hexen)
+	{
+		Selector "M_SLCTR1", -28, -1
+		Linespacing 20
+	}
+}
+
+//-------------------------------------------------------------------------------------------
+//
+// The main menu. There's a lot of differences here between the games
+//
+//-------------------------------------------------------------------------------------------
+
+LISTMENU "MainMenu"
+{
+	IfGame(Doom, Chex)
+	{
+		StaticPatch 94, 2, "M_DOOM"
+		Position 97, 72
+		IfOption(ReadThis)
+		{
+			Position 97, 64
+		}
+	}
+	IfGame(Strife)
+	{
+		StaticPatch 84, 2, "M_STRIFE"
+		Position 97, 45
+	}
+	IfGame(Heretic)
+	{
+		StaticPatch 88, 0, "M_HTIC"
+		StaticPatch 40, 10, "M_SKL01"
+		StaticPatch 232, 10, "M_SKL00"
+		Position 110, 56
+	}
+	IfGame(Hexen)
+	{
+		StaticPatch 88, 0, "M_HTIC"
+		StaticPatch 37, 80, "FBULB0"
+		StaticPatch 278, 80, "FBULA0"
+		Position 110, 56
+	}
+	
+	IfGame(Doom, Strife, Chex)
+	{
+		PatchItem "M_NGAME", "n", "PlayerclassMenu"
+		PatchItem "M_LOADG", "l", "LoadGameMenu"
+		PatchItem "M_SAVEG", "s", "SaveGameMenu"
+		PatchItem "M_OPTION","o", "OptionsMenu"
+		ifOption(ReadThis)
+		{
+			PatchItem "M_RDTHIS","r", "ReadThisMenu"
+		}
+		PatchItem "M_QUITG", "q", "QuitMenu"
+	}
+	
+	IfGame(Heretic, Hexen)
+	{
+		TextItem "$MNU_NEWGAME", "n", "PlayerclassMenu"
+		TextItem "$MNU_OPTIONS", "o", "OptionsMenu"
+		TextItem "$MNU_GAMEFILES", "g", "GameFilesMenu"
+		TextItem "$MNU_INFO", "i", "ReadThisMenu"
+		TextItem "$MNU_QUITGAME", "q", "QuitMenu"
+	}
+}
+
+//-------------------------------------------------------------------------------------------
+//
+// Important note about the following template menus:
+// Don't even think about replacing them with something that's not an empty menu
+// with some static elements only. Proper function is not guaranteed then.
+//
+//-------------------------------------------------------------------------------------------
+
+//-------------------------------------------------------------------------------------------
+//
+// The player class menu
+// The init code will set the first item to 'autoselect' if it's the only one.
+//
+//-------------------------------------------------------------------------------------------
+
+ListMenu "PlayerclassMenu"
+{
+	IfGame(Doom, Heretic, Hexen, Strife)
+	{
+		NetgameMessage "$NETGAME"
+	}
+	IfGame(Chex)
+	{
+		NetgameMessage "$CNETGAME"
+	}
+
+	IfGame(Doom, Strife, Chex)
+	{
+		StaticTextCentered 160, 15, "$MNU_CHOOSECLASS"
+		Position 48, 63
+		PlayerDisplay 220, 63, "20 00 00", "80 00 40"
+		MouseWindow 0, 220
+	}
+	IfGame(Heretic)
+	{
+		StaticTextCentered 160, 15, "$MNU_CHOOSECLASS"
+		Position 80, 50
+		PlayerDisplay 220, 50, "20 00 00", "80 00 40"
+		MouseWindow 0, 220
+	}
+	IfGame(Hexen)
+	{
+		StaticText 34, 24, "$MNU_CHOOSECLASS"
+		Position 66, 58
+		PlayerDisplay 174, 8, "00 07 00", "40 53 40"
+		MouseWindow 0, 174
+	}
+	// The rest of this menu will be set up based on the actual player definitions.
+}
+
+//-------------------------------------------------------------------------------------------
+//
+// The episode menu
+// The init code will set the first item to 'autoselect' if it's the only one.
+//
+//-------------------------------------------------------------------------------------------
+
+ListMenu "EpisodeMenu"
+{
+	IfGame(Doom, Heretic, Hexen, Strife)
+	{
+		NetgameMessage "$NETGAME"
+	}
+	IfGame(Chex)
+	{
+		NetgameMessage "$CNETGAME"
+	}
+
+	IfGame(Doom, Chex)
+	{
+		Position 48, 63
+		StaticPatch 54, 38, "M_EPISOD"
+	}
+	IfGame(Strife)
+	{
+		Position 48, 63
+		StaticText 54, 38, "$MNU_EPISODE"
+	}
+	IfGame(Heretic, Hexen)
+	{
+		Position 80, 50
+	}
+	// items will be filled in by MAPINFO
+}
+
+//-------------------------------------------------------------------------------------------
+//
+// The skill menu
+// Most of this will be filled in at runtime
+//
+//-------------------------------------------------------------------------------------------
+
+ListMenu "SkillMenu"
+{
+
+	IfGame(Doom, Chex)
+	{
+		StaticPatch 96, 14, "M_NEWG"
+	}
+	IfGame(Strife)
+	{
+		StaticPatch 96, 14, "M_NGAME"
+	}
+	IfGame(Doom, Strife, Chex)
+	{
+		StaticPatch 54, 38, "M_SKILL"
+		Position 48, 63
+	}
+	IfGame (Heretic)
+	{
+		Position 38, 30
+	}
+	IfGame (Hexen)
+	{
+		StaticText 74, 16, "$MNU_CHOOSESKILL"
+		Position 38, 44
+	}
+}
+
+//-------------------------------------------------------------------------------------------
+//
+// Raven's game files menu
+//
+//-------------------------------------------------------------------------------------------
+
+ListMenu "GameFilesMenu"
+{
+	Position 110, 60
+	TextItem "$MNU_LOADGAME", "l", "LoadGameMenu"
+	TextItem "$MNU_SAVEGAME", "s", "SaveGameMenu"
+}
+
+//-------------------------------------------------------------------------------------------
+//
+// Base definition for load game menu. Only the configurable part is done here
+//
+//-------------------------------------------------------------------------------------------
+
+ListMenu "LoadGameMenu"
+{
+	IfGame(Doom, Heretic, Hexen, Strife)
+	{
+		NetgameMessage "$LOADNET"
+	}
+	IfGame(Chex)
+	{
+		NetgameMessage "$CLOADNET"
+	}
+	IfGame(Doom, Strife, Chex)
+	{
+		StaticPatchCentered 160, -20, "M_LOADG"
+	}
+	IfGame(Heretic, Hexen)
+	{
+		StaticTextCentered 160, -10, "$MNU_LOADGAME"
+	}
+	Position 80,54
+	Class "LoadMenu"	// uses its own implementation
+}
+
+//-------------------------------------------------------------------------------------------
+//
+// Base definition for save game menu. Only the configurable part is done here
+//
+//-------------------------------------------------------------------------------------------
+
+ListMenu "SaveGameMenu"
+{
+	IfGame(Doom, Strife, Chex)
+	{
+		StaticPatchCentered 160, -20, "M_SAVEG"
+	}
+	IfGame(Heretic, Hexen)
+	{
+		StaticTextCentered 160, -10, "$MNU_SAVEGAME"
+	}
+	Position 80,54
+	Class "SaveMenu"	// uses its own implementation
+}
+
+//-------------------------------------------------------------------------------------------
+//
+// The option menu
+//
+//-------------------------------------------------------------------------------------------
+
+OptionValue "YesNo"
+{
+	0, "No"
+	1, "Yes"
+}
+
+OptionValue "NoYes"
+{
+	0, "Yes"
+	1, "No"
+}
+
+OptionValue "OnOff"
+{
+	0, "Off"
+	1, "On"
+}
+
+OptionValue "OffOn"
+{
+	0, "On"
+	1, "Off"
+}
+
+OptionMenuSettings
+{
+	// These can be overridden if a different menu fonts requires it.
+	Linespacing 8
+	LabelOffset 0
+	IfGame(Heretic, Hexen)
+	{
+		Linespacing 9
+		LabelOffset 2
+	}
+}
+
+DefaultOptionMenu
+{
+	Position -15
+	IfGame(Heretic, Hexen)
+	{
+		Position -13
+	}
+}
+
+OptionMenu "OptionsMenu"
+{
+	Title "OPTIONS"
+	Submenu "Customize Controls",		"CustomizeControls"
+	Submenu "Mouse options",			"MouseOptions"
+	Submenu "Joystick options",			"JoystickOptions"
+	StaticText " "
+	Submenu "Player Setup",				"PlayerMenu"
+	Submenu "Gameplay Options",			"GameplayOptions"
+	Submenu "Compatibility Options",	"CompatibilityOptions"
+	Submenu "Automap Options",			"AutomapOptions"
+	Submenu "Sound Options",			"SoundOptions"
+	Submenu "Display Options",			"VideoOptions"
+	Submenu "Set video mode",			"VideoModeMenu"
+	StaticText " "
+	SafeCommand "Reset to defaults",	"reset2defaults"
+	SafeCommand	"Reset to last saved",	"reset2saved"
+	Command "Go to console",			"menuconsole"
+}
+
+//-------------------------------------------------------------------------------------------
+//
+// The player menu
+//
+//-------------------------------------------------------------------------------------------
+
+OptionValue "Gender"
+{
+	0, "Male"
+	1, "Female"
+	2, "Other"
+}
+
+OptionValue "Autoaim"
+{
+	0, "Never"
+	1, "Very low"
+	2, "Low"
+	3, "Medium"
+	4, "High"
+	5, "Very high"
+	6, "Always"
+}
+
+
+ListMenu "PlayerMenu"
+{
+	StaticTextCentered 160, 6, "$MNU_PLAYERSETUP"
+	Font "SmallFont"
+	Linespacing 14
+	Position 48, 36
+
+	IfGame (Doom, Strife, Chex)
+	{
+		PlayerNameBox "Name", 0, "Playerbox"
+		Selector "-", -16, -1
+	}
+	IfGame(Heretic, Hexen)
+	{
+		PlayerNameBox "Name", 5, "Playerbox"
+		Selector "-", -16, 1
+	}
+	IfGame(Doom, Heretic, Strife, Chex)
+	{
+		MouseWindow 0, 220
+		PlayerDisplay 220, 80, "20 00 00", "80 00 40", 1, "PlayerDisplay"
+	}
+	IfGame(Hexen)
+	{
+		MouseWindow 0, 220
+		PlayerDisplay 220, 80, "00 07 00", "40 53 40", 1, "PlayerDisplay"
+	}
+	
+	ValueText "Team", "Team"
+	ValueText "Color", "Color"
+	Linespacing 10
+	Slider "Red", "Red", 0, 255, 16
+	Slider "Green", "Green", 0, 255, 16
+	Linespacing 14
+	Slider "Blue", "Blue", 0, 255, 16
+	ValueText "Class", "Class"
+	ValueText "Skin", "Skin"
+	ValueText "Gender", "Gender", "Gender"
+	ValueText "Autoaim", "Autoaim", "Autoaim"
+	ValueText "Switch on pickup", "Switch", "OffOn"
+	ValueText "Always Run", "AlwaysRun", "OnOff"
+	Class "PlayerMenu"
+}
+
+//-------------------------------------------------------------------------------------------
+//
+// Controls Menu
+//
+//-------------------------------------------------------------------------------------------
+
+OptionMenu "CustomizeControls"
+{
+	Title "CUSTOMIZE CONTROLS"
+	ScrollTop 2
+	StaticTextSwitchable 	"ENTER to change, BACKSPACE to clear", "Press new key for control, ESC to cancel", "ControlMessage"
+	StaticText 	""
+	StaticText 	"Controls", 1
+	Control 	"Fire",					"+attack"
+	Control 	"Secondary Fire",		"+altattack"
+	Control 	"Use / Open",			"+use"
+	Control 	"Move forward",			"+forward"
+	Control 	"Move backward",		"+back"
+	Control 	"Strafe left",			"+moveleft"
+	Control 	"Strafe right",			"+moveright"
+	Control 	"Turn left",			"+left"
+	Control 	"Turn right",			"+right"
+	Control 	"Jump",					"+jump"
+	Control 	"Crouch",				"+crouch"
+	Control 	"Crouch Toggle",		"crouch"
+	Control 	"Fly / Swim up",		"+moveup"
+	Control 	"Fly / Swim down",		"+movedown"
+	Control 	"Stop flying",			"land"
+	Control 	"Mouse look",			"+mlook"
+	Control 	"Keyboard look",		"+klook"
+	Control 	"Look up",				"+lookup"
+	Control 	"Look down",			"+lookdown"
+	Control 	"Center view",			"centerview"
+	Control 	"Run",					"+speed"
+	Control 	"Strafe",				"+strafe"
+	Control 	"Show Scoreboard",		"+showscores"
+	StaticText 	""
+	StaticText 	"Chat", 1
+	Control 	"Say",					"messagemode"
+	Control 	"Team say",				"messagemode2"
+	StaticText 	""
+	StaticText 	"Weapons", 1
+	Control 	"Next weapon",			"weapnext"
+	Control 	"Previous weapon",		"weapprev"
+	StaticText 	""
+	StaticText 	"Inventory", 1
+	Control 	"Activate item",		"invuse"
+	Control 	"Activate all items",	"invuseall"
+	Control 	"Next item",			"invnext"
+	Control 	"Previous item",		"invprev"
+	Control 	"Drop item",			"invdrop"
+	Control		"Query item",			"invquery"
+	Control 	"Drop weapon",			"weapdrop"
+	StaticText 	""
+	StaticText 	"Other", 1
+	Control 	"Toggle automap",		"togglemap"
+	Control 	"Chasecam",				"chase"
+	Control 	"Coop spy",				"spynext"
+	Control 	"Screenshot",			"screenshot"
+	Control  	"Open console",			"toggleconsole"
+	StaticText 	""
+	StaticText 	"Strife Popup Screens", 1
+	Control 	"Mission objectives",	"showpop 1"
+	Control 	"Keys list",			"showpop 2"
+	Control 	"Weapons/ammo/stats",	"showpop 3"
+}
+
+//-------------------------------------------------------------------------------------------
+//
+// Mouse Menu
+//
+//-------------------------------------------------------------------------------------------
+
+OptionValue "Corners"
+{
+	-1, "Off"
+	0, "Upper left"
+	1, "Upper right"
+	2, "Lower left"
+	3, "Lower right"
+}
+
+OptionValue "MenuMouse"
+{
+	0, "No"
+	1, "Yes"
+	2, "Touchscreen-like"
+}
+
+OptionMenu "MouseOptions"
+{
+	Title "MOUSE OPTIONS"
+	Option "Enable mouse",				"use_mouse", "YesNo"
+	IfOption(Windows)	// GUI mouse not operable in SDL interface right now.
+	{
+		Option "Enable mouse in menus",	"m_use_mouse", "MenuMouse", "use_mouse"
+		Option "Show back button",		"m_show_backbutton", "Corners", "use_mouse"
+	}
+	StaticText 	""
+	Slider "Overall sensitivity",		"mouse_sensitivity", 0.5, 2.5, 0.1
+	Option "Prescale mouse movement",	"m_noprescale", "NoYes"
+	Option "Smooth mouse movement",		"smooth_mouse", "YesNo"
+	StaticText 	""
+	Slider "Turning speed",				"m_yaw", 0, 2.5, 0.1
+	Slider "Mouselook speed",			"m_pitch", 0, 2.5, 0.1
+	Slider "Forward/Backward speed",	"m_forward", 0, 2.5, 0.1
+	Slider "Strafing speed",			"m_side", 0, 2.5, 0.1
+	StaticText 	""
+	Option "Always Mouselook",			"freelook", "OnOff"
+	Option "Invert Mouse",				"invertmouse", "OnOff"
+	Option "Lookspring",				"lookspring", "OnOff"
+	Option "Lookstrafe",				"lookstrafe", "OnOff"
+}
+
+
+//-------------------------------------------------------------------------------------------
+//
+// Joystick Menu
+//
+//-------------------------------------------------------------------------------------------
+
+OptionMenu "JoystickOptions"
+{
+	Title "CONTROLLER OPTIONS"
+	// Will be filled in by joystick code.
+}
+
+OptionValue "JoyAxisMapNames"
+{
+	-1, "None"
+	0, "Turning"
+	1, "Looking Up/Down"
+	2, "Moving Forward"
+	3, "Strafing"
+	4, "Moving Up/Down"
+}
+
+OptionValue "Inversion"
+{
+	0, "Not Inverted"
+	1, "Inverted"
+}
+
+OptionMenu "JoystickConfigMenu"
+{
+	Title "CONFIGURE CONTROLLER"
+	Class "JoystickConfigMenu"
+	// Will be filled in by joystick code.
+}
+
+
+//-------------------------------------------------------------------------------------------
+//
+// Video Menu
+//
+//-------------------------------------------------------------------------------------------
+
+OptionValue ColumnMethods 
+{
+	0.0, "Original"
+	1.0, "Optimized"
+}
+
+OptionValue RocketTrailTypes 
+{
+	0.0, "Off"
+	1.0, "Particles"
+	2.0, "Sprites"
+	3.0, "Sprites & Particles"
+}
+
+OptionValue BloodTypes 
+{
+	0.0, "Sprites"
+	1.0, "Sprites & Particles"
+	2.0, "Particles"
+}
+
+OptionValue PuffTypes 
+{
+	0.0, "Sprites"
+	1.0, "Particles"
+}
+
+OptionValue Wipes 
+{
+	0.0, "None"
+	1.0, "Melt"
+	2.0, "Burn"
+	3.0, "Crossfade"
+}
+
+OptionValue Endoom 
+{
+	0.0, "Off"
+	1.0, "On"
+	2.0, "Only modified"
+}
+
+OptionValue Contrast 
+{
+	0.0, "Off"
+	1.0, "On"
+	2.0, "Smooth"
+}
+
+OptionValue DisplayTagsTypes 
+{
+	0.0, "None"
+	1.0, "Items"
+	2.0, "Weapons"
+	3.0, "Both"
+}
+
+OptionValue TextColors
+{
+	0.0, "\cabrick"
+	1.0, "\cbtan"
+	2.0, "\ccgray"
+	3.0, "\cdgreen"
+	4.0, "\cebrown"
+	5.0, "\cfgold"
+	6.0, "\cgred"
+	7.0, "\chblue"
+	8.0, "\ciorange"
+	9.0, "\cjwhite"
+	10.0, "\ckyellow"
+	11.0, "\cldefault"
+	12.0, "\cmblack"
+	13.0, "\cnlight blue"
+	14.0, "\cocream"
+	15.0, "\cpolive"
+	16.0, "\cqdark green"
+	17.0, "\crdark red"
+	18.0, "\csdark brown"
+	19.0, "\ctpurple"
+	20.0, "\cudark gray"
+	21.0, "\cvcyan"
+}
+
+OptionValue Crosshairs
+{
+	// will be filled in from the XHAIRS lump
+}
+
+OptionMenu "VideoOptions"
+{
+	Title "DISPLAY OPTIONS"
+	Submenu "Message Options", 			"MessageOptions"
+	Submenu "Scoreboard Options", 		"ScoreboardOptions"
+	StaticText " "
+	Slider "Screen size",				"screenblocks", 3.0, 12.0, 1.0
+	Slider "Brightness",				"Gamma", 1.0, 3.0, 0.1
+	Option "Vertical Sync",				"vid_vsync", "OnOff"
+	Option "Column render mode",		"r_columnmethod", "ColumnMethods"
+
+	StaticText " "
+	Option "Crosshair",					"crosshair", "Crosshairs"
+	Option "Display nametags",			"displaynametags", "DisplayTagsTypes"
+	Option "Nametag color",				"nametagcolor", "TextColors", "displaynametags"
+	Option "Stretch status bar",		"st_scale", "OnOff"
+	Option "Alternative HUD",			"hud_althud", "OnOff"
+	Option "Screen wipe style",			"wipetype", "Wipes"
+
+	IfOption(Windows)
+	{
+		Option	"Show ENDOOM screen",	"showendoom", "Endoom"
+		//Option "DirectDraw palette hack", "vid_palettehack", "OnOff"
+		//Option "Use attached surfaces", "vid_attachedsurfaces", "OnOff"
+	}
+	
+	StaticText " "
+	Option "Stretch short skies",		"r_stretchsky", "OnOff"
+	Option "Use fuzz effect",			"r_drawfuzz", "YesNo"
+	Option "Use fake contrast",			"r_fakecontrast", "Contrast"
+	Option "Rocket Trails",				"cl_rockettrails", "RocketTrailTypes"
+	Option "Blood Type",				"cl_bloodtype", "BloodTypes"
+	Option "Bullet Puff Type",			"cl_pufftype", "PuffTypes"
+	Option "Interpolate monster movement",	"nomonsterinterpolation", "NoYes"
+}
+
+//-------------------------------------------------------------------------------------------
+//
+// Automap Menu
+//
+//-------------------------------------------------------------------------------------------
+
+OptionValue MapColorTypes
+{
+	0, "Custom"
+	1, "Traditional Doom"
+	2, "Traditional Strife"
+	3, "Traditional Raven"
+}
+
+OptionValue SecretTypes
+{
+	0, "Never"
+	1, "Only when found"
+	2, "Always"
+}
+
+OptionValue RotateTypes
+{
+	0, "Off"
+	1, "On"
+	2, "On for overlay only"
+}
+
+OptionValue OverlayTypes
+{
+	0, "Off"
+	1, "Overlay+Normal"
+	2, "Overlay Only"
+}
+
+OptionMenu AutomapOptions
+{
+	Title "AUTOMAP OPTIONS"
+	Option "Map color set",				"am_colorset", "MapColorTypes"
+	Submenu "Set custom colors",		"MapColorMenu"
+	Submenu "Customize map controls",	"MapControlsMenu"
+	StaticText " "
+	Option "Rotate automap",			"am_rotate", "RotateTypes"
+	Option "Overlay automap",			"am_overlay", "OverlayTypes"
+	Option "Enable textured display",	"am_textured", "OnOff"
+	StaticText " "
+	Option "Show item counts",			"am_showitems", "OnOff"
+	Option "Show monster counts",		"am_showmonsters", "OnOff"
+	Option "Show secret counts",		"am_showsecrets", "OnOff"
+	Option "Show time elapsed",			"am_showtime", "OnOff"
+	Option "Show total time elapsed",	"am_showtotaltime", "OnOff"
+	Option "Show secrets on map",		"am_map_secrets", "SecretTypes"
+	Option "Draw map background",		"am_drawmapback", "OnOff"
+	Option "Show keys (cheat)",			"am_showkeys", "OnOff"
+}
+
+//-------------------------------------------------------------------------------------------
+//
+// Automap Controls
+//
+//-------------------------------------------------------------------------------------------
+
+OptionMenu MapControlsMenu
+{
+	Title "CUSTOMIZE MAP CONTROLS"
+	ScrollTop 2
+	StaticTextSwitchable 	"ENTER to change, BACKSPACE to clear", "Press new key for control, ESC to cancel", "ControlMessage"
+	StaticText 	""
+	StaticText "Map Controls", 1
+	MapControl "Pan left",		"+am_panleft"
+	MapControl "Pan right",		"+am_panright"
+	MapControl "Pan up",		"+am_panup"
+	MapControl "Pan down",		"+am_pandown"
+	MapControl "Zoom in",		"+am_zoomin"
+	MapControl "Zoom out",		"+am_zoomout"
+	MapControl "Toggle zoom",	"am_gobig"
+	MapControl "Toggle follow",	"am_togglefollow"
+	MapControl "Toggle grid",	"am_togglegrid"
+	MapControl "Toggle texture","am_toggletexture"
+	MapControl "Set mark",		"am_setmark"
+	MapControl "Clear mark",	"am_clearmarks"
+}
+
+//-------------------------------------------------------------------------------------------
+//
+// Automap Colors
+//
+//-------------------------------------------------------------------------------------------
+
+OptionMenu MapColorMenu
+{
+	Title "CUSTOMIZE MAP COLORS"
+	SafeCommand "Restore default custom colors", "am_restorecolors"
+	StaticText " "
+	ColorPicker "Background",								"am_backcolor"		
+	ColorPicker "You",										"am_yourcolor"		
+	ColorPicker "1-sided walls",							"am_wallcolor"		
+	ColorPicker "2-sided walls with different floors",		"am_fdwallcolor"		
+	ColorPicker "2-sided walls with different ceilings",	"am_cdwallcolor"		
+	ColorPicker "Map grid",									"am_gridcolor"		
+	ColorPicker "Center point",								"am_xhaircolor"		
+	ColorPicker "Not-yet-seen walls",						"am_notseencolor"		
+	ColorPicker "Locked doors",								"am_lockedcolor"		
+	ColorPicker "Teleporter to the same map",				"am_intralevelcolor"	
+	ColorPicker "Teleporter to a different map",			"am_interlevelcolor"	
+	ColorPicker "Secret sector",							"am_secretsectorcolor"	
+	StaticText " "
+	StaticText "Cheat Mode", 1
+	ColorPicker "Invisible 2-sided walls",		"am_tswallcolor"		
+	ColorPicker "Secret walls",					"am_secretwallcolor"	
+	ColorPicker "Actors",						"am_thingcolor"		
+	ColorPicker "Monsters",						"am_thingcolor_monster"		
+	ColorPicker "Friends",						"am_thingcolor_friend"		
+	ColorPicker "Items",						"am_thingcolor_item"			
+	ColorPicker "Count Items",					"am_thingcolor_citem"			
+	StaticText " "
+	StaticText "Overlay Mode", 1
+	ColorPicker "You",							"am_ovyourcolor"		
+	ColorPicker "1-sided walls",				"am_ovwallcolor"		
+	ColorPicker "2-sided walls",				"am_ovotherwallscolor"
+	ColorPicker "Not-yet-seen walls",			"am_ovunseencolor"	
+	ColorPicker "Teleporter",					"am_ovtelecolor"		
+	ColorPicker "Secret sector",				"am_ovsecretsectorcolor"	
+	StaticText " "
+	StaticText "Overlay Cheat Mode", 1
+	ColorPicker "Actors",						"am_ovthingcolor"		
+	ColorPicker "Monsters",						"am_ovthingcolor_monster"		
+	ColorPicker "Friends",						"am_ovthingcolor_friend"		
+	ColorPicker "Items",						"am_ovthingcolor_item"		
+	ColorPicker "Count Items",					"am_ovthingcolor_citem"		
+}
+
+//-------------------------------------------------------------------------------------------
+//
+// Color Picker
+//
+//-------------------------------------------------------------------------------------------
+
+OptionMenu ColorPickerMenu
+{
+	Title "SELECT COLOR"
+	// This menu will be created by the calling code
+}
+
+//-------------------------------------------------------------------------------------------
+//
+// Messages
+//
+//-------------------------------------------------------------------------------------------
+
+
+OptionValue ScaleValues
+{
+	0, "Off"
+	1, "On"
+	2, "Double"
+}
+
+OptionValue MessageLevels
+{
+	0.0, "Item Pickup"
+	1.0, "Obituaries"
+	2.0, "Critical Messages"
+}
+
+OptionMenu MessageOptions
+{
+	Title 	"MESSAGES"
+	Option "Show messages",				"show_messages", "OnOff"
+	Option "Show obituaries",			"show_obituaries", "OnOff"
+	Option "Scale text in high res", 	"con_scaletext", "ScaleValues"
+	Option "Minimum message level", 	"msg", "MessageLevels"
+	Option "Center messages",			"con_centernotify", "OnOff"
+	StaticText " "
+	StaticText "Message Colors", 1
+	StaticText " "
+	Option "Item Pickup",				"msg0color", "TextColors"
+	Option "Obituaries",				"msg1color", "TextColors"
+	Option "Critical Messages",			"msg2color", "TextColors"
+	Option "Chat Messages",				"msg3color", "TextColors"
+	Option "Team Messages",				"msg4color", "TextColors"
+	Option "Centered Messages",			"msgmidcolor", "TextColors"
+	StaticText " "
+	Option "Screenshot messages",		"screenshot_quiet",	"OffOn"
+	Option "Detailed save messages",	"longsavemessages",	"OnOff"
+}
+
+//-------------------------------------------------------------------------------------------
+//
+// Scoreboard
+//
+//-------------------------------------------------------------------------------------------
+
+OptionMenu ScoreboardOptions
+{
+	Title "SCOREBOARD OPTIONS"
+	StaticText "Cooperative Options", 1
+	StaticText " "
+	Option "Enable Scoreboard",		"sb_cooperative_enable", "YesNo"
+	Option "Header Color",			"sb_cooperative_headingcolor", "TextColors"
+	Option "Your Player Color",		"sb_cooperative_yourplayercolor", "TextColors"
+	Option "Other Players' Color",	"sb_cooperative_otherplayercolor", "TextColors"
+	StaticText " "
+	StaticText " "
+	StaticText "Deathmatch Options", 1
+	StaticText " "
+	Option "Enable Scoreboard",		"sb_deathmatch_enable",	"YesNo"
+	Option "Header Color",			"sb_deathmatch_headingcolor", "TextColors"
+	Option "Your Player Color",		"sb_deathmatch_yourplayercolor", "TextColors"
+	Option "Other Players' Color",	"sb_deathmatch_otherplayercolor", "TextColors"
+	StaticText " "
+	StaticText " "
+	StaticText "Team Deathmatch Options", 1
+	StaticText " "
+	Option "Enable Scoreboard",		"sb_teamdeathmatch_enable", "YesNo"
+	Option "Header Color",			"sb_teamdeathmatch_headingcolor", "TextColors"
+}
+
+/*=======================================
+ *
+ * Gameplay Options (dmflags) Menu
+ *
+ *=======================================*/
+ 
+OptionValue  SmartAim
+{
+	0.0, "Off"
+	1.0, "On"
+	2.0, "Never friends"
+	3.0, "Only monsters"
+}
+
+OptionValue  FallingDM
+{
+	0, "Off"
+	1, "Old"
+	2, "Hexen"
+	3, "Strife"
+}
+
+OptionValue  JumpCrouch
+{
+	0, "Default"
+	1, "Off"
+	2, "On"
+}
+
+
+OptionMenu GameplayOptions
+{
+	Title 	"GAMEPLAY OPTIONS"
+	Indent 222
+	Option "Teamplay",				"teamplay",	"OnOff"
+	Slider	"Team damage scalar",	"teamdamage", 0, 1, 0.05
+	StaticText " "
+	Option "Smart Autoaim",			"sv_smartaim", "SmartAim"
+	StaticText " "
+	Option "Falling damage",		"sv_fallingdamage", "FallingDM"
+	Option "Drop weapon",			"sv_weapondrop", "YesNo"
+	Option "Double ammo",			"sv_doubleammo", "YesNo"
+	Option "Infinite ammo",			"sv_infiniteammo", "YesNo"
+	Option "Infinite inventory",	"sv_infiniteinventory", "YesNo"
+	Option "No monsters",			"sv_nomonsters", "YesNo"
+	Option "No monsters to exit",	"sv_killallmonsters", "YesNo"
+	Option "Monsters respawn",		"sv_monsterrespawn", "YesNo"
+	Option "No respawn",			"sv_norespawn", "YesNo"
+	Option "Items respawn",			"sv_itemrespawn", "YesNo"
+	Option "Big powerups respawn",	"sv_respawnsuper", "YesNo"
+	Option "Fast monsters",			"sv_fastmonsters", "YesNo"
+	Option "Degeneration",			"sv_degeneration", "YesNo"
+	Option "Allow Autoaim",			"sv_noautoaim", "NoYes"
+	Option "Allow Suicide",			"sv_disallowsuicide", "NoYes"
+	Option "Allow jump",			"sv_jump", "JumpCrouch"
+	Option "Allow crouch",			"sv_crouch", "JumpCrouch"
+	Option "Allow freelook",		"sv_nofreelook", "NoYes"
+	Option "Allow FOV",				"sv_nofov", "NoYes"
+	Option "Allow BFG aiming",		"sv_nobfgaim", "NoYes"
+	Option "Allow automap",			"sv_noautomap", "NoYes"
+	Option "Automap allies",		"sv_noautomapallies", "NoYes"
+	Option "Allow spying",			"sv_disallowspying", "NoYes"
+	Option "Chasecam cheat",		"sv_chasecam", "YesNo"
+	Option "Check ammo for weapon switch",	"sv_dontcheckammo", "NoYes"
+	Option "Killing Romero kills all his spawns",	"sv_killbossmonst", "YesNo"
+
+	StaticText " "
+	StaticText "Deathmatch Settings",1
+	Option "Weapons stay",			"sv_weaponstay", "YesNo"
+	Option "Allow powerups",		"sv_noitems", "NoYes"
+	Option "Allow health",			"sv_nohealth", "YesNo"
+	Option "Allow armor",			"sv_noarmor", "YesNo"
+	Option "Spawn farthest",		"sv_spawnfarthest", "YesNo"
+	Option "Same map",				"sv_samelevel", "YesNo"
+	Option "Force respawn",			"sv_forcerespawn", "YesNo"
+	Option "Allow exit",			"sv_noexit", "YesNo"
+	Option "Barrels respawn",		"sv_barrelrespawn", "YesNo"
+	Option "Respawn protection",	"sv_respawnprotect", "YesNo"
+	Option "Lose frag if fragged",	"sv_losefrag", "YesNo"
+	Option "Keep frags gained",		"sv_keepfrags", "YesNo"
+	Option "No team switching",		"sv_noteamswitch", "YesNo"
+
+	StaticText " "
+	StaticText "Cooperative Settings",1
+	Option "Spawn multi. weapons", 	"sv_noweaponspawn", "NoYes"
+	Option "Lose entire inventory",	"sv_cooploseinventory", "YesNo"
+	Option "Keep keys",				"sv_cooplosekeys", "NoYes"
+	Option "Keep weapons",			"sv_cooploseweapons", "NoYes"
+	Option "Keep armor",			"sv_cooplosearmor", "NoYes"
+	Option "Keep powerups",			"sv_cooplosepowerups", "NoYes"
+	Option "Keep ammo",				"sv_cooploseammo", "NoYes"
+	Option "Lose half ammo",		"sv_coophalveammo", "YesNo"
+	Option "Spawn where died",		"sv_samespawnspot", "YesNo"
+	Class "GameplayMenu"
+}
+
+/*=======================================
+ *
+ * Compatibility Options Menu
+ *
+ *=======================================*/
+
+
+OptionValue CompatModes
+{
+	0, "Default"
+	1, "Doom"
+	2, "Doom (strict)"
+	3, "Boom"
+	6, "Boom (strict)"
+	5, "MBF"
+	4, "ZDoom 2.0.63"
+}
+
+OptionMenu "CompatibilityOptions"
+{
+	Title "COMPATIBILITY OPTIONS"
+	Option "Compatibility mode",						"compatmode", "CompatModes", "", 1
+	StaticText " "
+	Option "Find shortest textures like Doom",			"compat_SHORTTEX", "YesNo"
+	Option "Use buggier stair building",				"compat_stairs", "YesNo"
+	Option "Find neighboring light like Doom",			"compat_LIGHT", "YesNo"
+	Option "Limit Pain Elementals' Lost Souls",			"compat_LIMITPAIN", "YesNo"
+	Option "Don't let others hear your pickups",		"compat_SILENTPICKUP", "YesNo"
+	Option "Actors are infinitely tall",				"compat_nopassover", "YesNo"
+	Option "Enable wall running",						"compat_WALLRUN", "YesNo"
+	Option "Spawn item drops on the floor",				"compat_NOTOSSDROPS", "YesNo"
+	Option "All special lines can block <use>",			"compat_USEBLOCKING", "YesNo"
+	Option "Disable BOOM door light effect",			"compat_NODOORLIGHT", "YesNo"
+	Option "Raven scrollers use original speed",		"compat_RAVENSCROLL", "YesNo"
+	Option "Use original sound target handling",		"compat_SOUNDTARGET", "YesNo"
+	Option "DEH health settings like Doom2.exe",		"compat_DEHHEALTH", "YesNo"
+	Option "Self ref. sectors don't block shots",		"compat_TRACE", "YesNo"
+	Option "Monsters get stuck over dropoffs",			"compat_DROPOFF", "YesNo"
+	Option "Monsters cannot cross dropoffs",			"compat_CROSSDROPOFF", "YesNo"
+	Option "Monsters see invisible players",			"compat_INVISIBILITY", "YesNo"
+	Option "Boom scrollers are additive",				"compat_BOOMSCROLL", "YesNo"
+	Option "Inst. moving floors are not silent",		"compat_silentinstantfloors", "YesNo"
+	Option "Sector sounds use center as source",		"compat_SECTORSOUNDS", "YesNo"
+	Option "Use Doom heights for missile clipping",		"compat_MISSILECLIP", "YesNo"
+	Option "Allow any bossdeath for level special",		"compat_ANYBOSSDEATH", "YesNo"
+	Option "No Minotaur floor flames in water",			"compat_MINOTAUR", "YesNo"
+	Option "Original A_Mushroom speed in DEH mods",		"compat_MUSHROOM", "YesNo"
+	Option "Monster movement is affected by effects",	"compat_MBFMONSTERMOVE", "YesNo"
+	Option "Crushed monsters can be resurrected",		"compat_CORPSEGIBS", "YesNo"
+	Option "Friendly monsters aren't blocked",			"compat_NOBLOCKFRIENDS", "YesNo"
+	Option "Invert sprite sorting",						"compat_SPRITESORT", "YesNo"
+	Option "Use Doom code for hitscan checks",			"compat_HITSCAN", "YesNo"
+	Option "Cripple sound for silent BFG trick",		"compat_soundslots", "YesNo"
+	Option "Draw polyobjects like Hexen",				"compat_POLYOBJ", "YesNo"
+	
+	Class "CompatibilityMenu"
+}
+
+/*=======================================
+ *
+ * Sound Options Menu
+ *
+ *=======================================*/
+ 
+OptionValue SampleRates
+{
+	0,		"Default"
+	4000,	"4000 Hz"
+	8000,	"8000 Hz"
+	11025,	"11025 Hz"
+	22050,	"22050 Hz"
+	32000,	"32000 Hz"
+	44100,	"44100 Hz"
+	48000,	"48000 Hz"
+}
+
+
+OptionValue BufferSizes
+{
+	   0, "Default"
+	  64, "64 samples"
+	 128, "128 samples"
+	 256, "256 samples"
+	 512, "512 samples"
+	1024, "1024 samples"
+	2048, "2048 samples"
+	4096, "4096 samples"
+}
+
+
+OptionValue BufferCounts
+{
+	   0, "Default"
+	   2, "2"
+	   3, "3"
+	   4, "4"
+	   5, "5"
+	   6, "6"
+	   7, "7"
+	   8, "8"
+	   9, "9"
+	  10, "10"
+	  11, "11"
+	  12, "12"
+}
+
+
+OptionString SoundOutputsWindows
+{
+	"Default",		"Default"
+	"DirectSound",	"DirectSound"
+	"WASAPI",		"Vista WASAPI"
+	"ASIO",			"ASIO"
+	"WaveOut",		"WaveOut"
+	"OpenAL",		"OpenAL (very beta)"
+	"No sound",		"No sound"
+}
+
+
+OptionString SoundOutputsUnix
+{
+	"Default",		"Default"
+	"OSS",			"OSS"
+	"ALSA",			"ALSA"
+	"SDL",			"SDL"
+	"ESD",			"ESD"
+	"No sound",		"No sound"
+}
+
+OptionString SoundOutputsMac
+{
+	"Sound Manager",	"Sound Manager"
+	"Core Audio",		"Core Audio"
+	"No sound",			"No sound"
+}
+
+OptionString OutputFormats
+{
+	"PCM-8",		"8-bit"
+	"PCM-16",		"16-bit"
+	"PCM-24",		"24-bit"
+	"PCM-32",		"32-bit"
+	"PCM-Float",	"32-bit float"
+}
+
+
+OptionString SpeakerModes
+{
+	"Auto",		"Auto"
+	"Mono",		"Mono"
+	"Stereo",	"Stereo"
+	"Prologic",	"Dolby Prologic Decoder"
+	"Quad",		"Quad"
+	"Surround",	"5 speakers"
+	"5.1",		"5.1 speakers"
+	"7.1",		"7.1 speakers"
+}
+
+
+OptionString Resamplers
+{
+	"NoInterp",		"No interpolation"
+	"Linear",		"Linear"
+	"Cubic",		"Cubic"
+	"Spline",		"Spline"
+}
+
+OptionValue MidiDevices
+{
+	// filled in by the sound code
+}
+
+OptionMenu SoundOptions
+{
+	Title "SOUND OPTIONS"
+	Slider "Sounds volume",		"snd_sfxvolume", 0, 1, 0.05
+	Slider "Menu volume",		"snd_menuvolume", 0, 1, 0.05
+	Slider "Music volume",		"snd_musicvolume", 0, 1, 0.05
+	Option "MIDI device",		"snd_mididevice", "MidiDevices"
+	StaticText " "
+	Option "Underwater reverb",	"snd_waterreverb", "OnOff"
+	Slider "Underwater cutoff",	"snd_waterlp", 0, 2000, 50
+	Option "Randomize pitches",	"snd_pitched", "OnOff"
+	Slider "Sound channels",	"snd_channels", 8, 256, 8
+	StaticText " "
+	Command "Restart sound",	"snd_reset"
+	StaticText " "
+	IfOption(Windows)
+	{
+		Option "Output system",		"snd_output", "SoundOutputsWindows"
+	}
+	IfOption(Unix)
+	{
+		Option "Output system",		"snd_output", "SoundOutputsUnix"
+	}
+	IfOption(Mac)
+	{
+		Option "Output system",		"snd_output", "SoundOutputsMac"
+	}
+	Option "Output format",		"snd_output_format", "OutputFormats"
+	Option "Speaker mode",		"snd_speakermode", "SpeakerModes"
+	Option "Resampler",			"snd_resampler", "Resamplers"
+	Option "HRTF filter",		"snd_hrtf", "OnOff"
+
+	StaticText " "
+	Submenu "Advanced options",			"AdvSoundOptions"
+	Submenu "Module replayer options",	"ModReplayerOptions"
+}
+
+/*=======================================
+ *
+ * Advanced Sound Options Menu
+ *
+ *=======================================*/
+
+OptionMenu AdvSoundOptions
+{
+	Title "ADVANCED SOUND OPTIONS"
+	Option "Sample rate",			"snd_samplerate", "SampleRates"
+	Option "Buffer size",			"snd_buffersize", "BufferSizes"
+	Option "Buffer count",			"snd_buffercount", "BufferCounts"
+	StaticText " "
+	StaticText "OPL Synthesis",	1
+	Option "Only emulate one OPL chip", "opl_onechip", "OnOff"
+}
+
+/*=======================================
+ *
+ * Module Replayer Options Menu
+ *
+ *=======================================*/
+
+OptionValue ModReplayers
+{
+	0.0, "FMOD"
+	1.0, "foo_dumb"
+}
+
+
+OptionValue ModInterpolations
+{
+	0.0, "None"
+	1.0, "Linear"
+	2.0, "Cubic"
+}
+
+
+OptionValue ModVolumeRamps
+{
+	0.0, "None"
+	1.0, "Logarithmic"
+	2.0, "Linear"
+	3.0, "XM=lin, else none"
+	4.0, "XM=lin, else log"
+}
+
+
+OptionMenu ModReplayerOptions
+{
+	Title "MODULE REPLAYER OPTIONS"
+	Option "Replayer engine",		"mod_dumb", "ModReplayers"
+	StaticText " "
+	Option "Sample rate",			"mod_samplerate", "SampleRates"
+	Option "Interpolation",			"mod_interp", "ModInterpolations"
+	Option "Volume ramping",		"mod_volramp", "ModVolumeRamps"
+	StaticText " "
+	Option "Chip-o-matic",			"mod_autochip", "OnOff"
+	// TODO if the menu system is ever rewritten: Provide a decent
+	// mechanism to edit the chip-o-matic settings like you can with
+	// the foo_dumb preferences in foobar2000.
+}
+
+/*=======================================
+ *
+ * Video mode menu
+ *
+ *=======================================*/
+
+OptionValue ForceRatios
+{
+	0.0, "Off" 
+	3.0, "4:3" 
+	1.0, "16:9" 
+	2.0, "16:10" 
+	4.0, "5:4"
+}
+OptionValue Ratios
+{
+	0.0, "4:3" 
+	1.0, "16:9" 
+	2.0, "16:10" 
+	3.0, "All"
+}
+OptionValue RatiosTFT
+{
+	0.0, "4:3" 
+	4.0, "5:4" 
+	1.0, "16:9" 
+	2.0, "16:10" 
+	3.0, "All"
+}
+
+OptionMenu VideoModeMenu
+{
+	Title "VIDEO MODE"
+	
+	Option "Fullscreen",			"fullscreen", "YesNo"
+	Option "Aspect ratio",			"menu_screenratios", "Ratios"
+	Option "Force aspect ratio",	"vid_aspect", "ForceRatios"
+	Option "Enable 5:4 aspect ratio","vid_tft", "YesNo"
+	StaticText " "
+	ScreenResolution "res_0"
+	ScreenResolution "res_1"
+	ScreenResolution "res_2"
+	ScreenResolution "res_3"
+	ScreenResolution "res_4"
+	ScreenResolution "res_5"
+	ScreenResolution "res_6"
+	ScreenResolution "res_7"
+	ScreenResolution "res_8"
+	ScreenResolution "res_9"
+	StaticTextSwitchable "Press ENTER to set mode", "", "VMEnterText"
+	StaticText " "
+	StaticTextSwitchable "T to test mode for 5 seconds", "Please wait 5 seconds...", "VMTestText"
+	class VideoModeMenu
+}
+

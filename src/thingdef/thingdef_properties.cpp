@@ -2185,6 +2185,15 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, hexenarmor, FFFFF, PlayerPawn)
 //==========================================================================
 //
 //==========================================================================
+DEFINE_CLASS_PROPERTY_PREFIX(player, portrait, S, PlayerPawn)
+{
+	PROP_STRING_PARM(val, 0);
+	info->Class->Meta.SetMetaString (APMETA_Portrait, val);
+}
+
+//==========================================================================
+//
+//==========================================================================
 DEFINE_CLASS_PROPERTY_PREFIX(player, weaponslot, ISsssssssssssssssssssssssssssssssssssssssssss, PlayerPawn)
 {
 	PROP_INT_PARM(slot, 0);

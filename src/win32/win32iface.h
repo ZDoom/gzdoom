@@ -372,6 +372,7 @@ private:
 	void EndLineBatch();
 	void EndBatch();
 	void CopyNextFrontBuffer();
+	int GetPixelDoubling() const { return PixelDoubling; }
 
 	D3DCAPS9 DeviceCaps;
 

@@ -103,12 +103,11 @@ const char* GameInfoBoarders[] =
 		do \
 		{ \
 			sc.MustGetToken(TK_StringConst); \
-			if(strlen(sc.String) > length) \
+			if(length > 0 && strlen(sc.String) > length) \
 			{ \
 				sc.ScriptError("Value for '%s' can not be longer than %d characters.", #key, length); \
 			} \
-			FName val = sc.String; \
-			gameinfo.key.Push(val); \
+			gameinfo.key[gameinfo.key.Reserve(1)] = sc.String; \
 		} \
 		while (sc.CheckToken(',')); \
 	}
@@ -283,6 +282,16 @@ void FMapInfoParser::ParseGameInfo()
 		GAMEINFOKEY_INT(defaultdropstyle, "defaultdropstyle")
 		GAMEINFOKEY_CSTRING(Endoom, "endoom", 8)
 		GAMEINFOKEY_INT(player5start, "player5start")
+		GAMEINFOKEY_STRINGARRAY(quitmessages, "quitmessages", 0)
+		GAMEINFOKEY_STRING(mTitleColor, "menufontcolor_title")
+		GAMEINFOKEY_STRING(mFontColor, "menufontcolor_label")
+		GAMEINFOKEY_STRING(mFontColorValue, "menufontcolor_value")
+		GAMEINFOKEY_STRING(mFontColorMore, "menufontcolor_action")
+		GAMEINFOKEY_STRING(mFontColorHeader, "menufontcolor_header")
+		GAMEINFOKEY_STRING(mFontColorHighlight, "menufontcolor_highlight")
+		GAMEINFOKEY_STRING(mFontColorSelection, "menufontcolor_selection")
+		GAMEINFOKEY_CSTRING(mBackButton, "menubackbutton", 8)
+
 		else
 		{
 			// ignore unkown keys.

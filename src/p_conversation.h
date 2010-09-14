@@ -48,8 +48,6 @@ struct FStrifeDialogueReply
 	char *LogString;
 	char *QuickNo;
 	bool NeedsGold;
-
-	FBrokenLines *ReplyLines;
 };
 
 extern TArray<FStrifeDialogueNode *> StrifeDialogues;

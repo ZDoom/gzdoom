@@ -45,6 +45,7 @@
 #include "r_translate.h"
 #include "doomstat.h"
 #include "v_palette.h"
+#include "gi.h"
 
 #include "i_system.h"
 #include "i_video.h"
@@ -1350,4 +1351,36 @@ bool DCanvas::ClipBox (int &x, int &y, int &w, int &h, const BYTE *&src, const i
 		h = Height - y;
 	}
 	return false;
+}
+
+// Draw a frame around the specified area using the view border
+// frame graphics. The border is drawn outside the area, not in it.
+void V_DrawFrame (int left, int top, int width, int height)
+{
+	FTexture *p;
+	const gameborder_t *border = gameinfo.border;
+	// Sanity check for incomplete gameinfo
+	if (border == NULL)
+		return;
+	int offset = border->offset;
+	int right = left + width;
+	int bottom = top + height;
+
+	// Draw top and bottom sides.
+	p = TexMan[border->t];
+	screen->FlatFill(left, top - p->GetHeight(), right, top, p, true);
+	p = TexMan[border->b];
+	screen->FlatFill(left, bottom, right, bottom + p->GetHeight(), p, true);
+
+	// Draw left and right sides.
+	p = TexMan[border->l];
+	screen->FlatFill(left - p->GetWidth(), top, left, bottom, p, true);
+	p = TexMan[border->r];
+	screen->FlatFill(right, top, right + p->GetWidth(), bottom, p, true);
+
+	// Draw beveled corners.
+	screen->DrawTexture (TexMan[border->tl], left-offset, top-offset, TAG_DONE);
+	screen->DrawTexture (TexMan[border->tr], left+width, top-offset, TAG_DONE);
+	screen->DrawTexture (TexMan[border->bl], left-offset, top+height, TAG_DONE);
+	screen->DrawTexture (TexMan[border->br], left+width, top+height, TAG_DONE);
 }

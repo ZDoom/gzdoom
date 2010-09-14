@@ -1961,7 +1961,7 @@ void R_DrawBorder (int x1, int y1, int x2, int y2)
 int BorderNeedRefresh;
 
 void V_MarkRect (int x, int y, int width, int height);
-void M_DrawFrame (int x, int y, int width, int height);
+void V_DrawFrame (int x, int y, int width, int height);
 
 void R_DrawViewBorder (void)
 {
@@ -1982,7 +1982,7 @@ void R_DrawViewBorder (void)
 	R_DrawBorder (viewwindowx + viewwidth, viewwindowy, SCREENWIDTH, viewheight + viewwindowy);
 	R_DrawBorder (0, viewwindowy + viewheight, SCREENWIDTH, ST_Y);
 
-	M_DrawFrame (viewwindowx, viewwindowy, viewwidth, viewheight);
+	V_DrawFrame (viewwindowx, viewwindowy, viewwidth, viewheight);
 	V_MarkRect (0, 0, SCREENWIDTH, ST_Y);
 }
 

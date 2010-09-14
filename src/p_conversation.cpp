@@ -41,7 +41,6 @@
 #include "w_wad.h"
 #include "cmdlib.h"
 #include "s_sound.h"
-#include "m_menu.h"
 #include "v_text.h"
 #include "v_video.h"
 #include "m_random.h"
@@ -56,11 +55,13 @@
 #include "d_net.h"
 #include "g_level.h"
 #include "d_event.h"
+#include "d_gui.h"
 #include "doomstat.h"
 #include "c_console.h"
 #include "sbar.h"
 #include "farchive.h"
 #include "p_lnspec.h"
+#include "menu/menu.h"
 
 // The conversations as they exist inside a SCRIPTxx lump.
 struct Response
@@ -112,9 +113,8 @@ typedef TMap<FName, int> FDialogueMap;				// maps actor class names to dialogue 
 static FStrifeTypeMap StrifeTypes;
 static FDialogueIDMap DialogueRoots;
 static FDialogueMap ClassRoots;
+static int ConversationMenuY;
 
-static menu_t ConversationMenu;
-static TArray<menuitem_t> ConversationItems;
 static int ConversationPauseTic;
 static bool ShowGold;
 
@@ -123,13 +123,11 @@ static FStrifeDialogueNode *ReadRetailNode (FileReader *lump, DWORD &prevSpeaker
 static FStrifeDialogueNode *ReadTeaserNode (FileReader *lump, DWORD &prevSpeakerType);
 static void ParseReplies (FStrifeDialogueReply **replyptr, Response *responses);
 static bool DrawConversationMenu ();
-static void PickConversationReply ();
+static void PickConversationReply (int replyindex);
 static void CleanupConversationMenu ();
-static void ConversationMenuEscaped ();
 static void TerminalResponse (const char *str);
 
-static FStrifeDialogueNode *CurNode, *PrevNode;
-static FBrokenLines *DialogueLines;
+static FStrifeDialogueNode *PrevNode;
 
 #define NUM_RANDOM_LINES 10
 #define NUM_RANDOM_GOODBYES 3
@@ -233,7 +231,6 @@ void P_FreeStrifeConversations ()
 	DialogueRoots.Clear();
 	ClassRoots.Clear();
 
-	CurNode = NULL;
 	PrevNode = NULL;
 }
 
@@ -541,10 +538,6 @@ static void ParseReplies (FStrifeDialogueReply **replyptr, Response *responses)
 			reply->ItemCheck[k].Amount = rsp->Count[k];
 		}
 
-		// ReplyLines is calculated when the menu is shown. It is just Reply
-		// with word wrap turned on.
-		reply->ReplyLines = NULL;
-
 		// If the first item check has a positive amount required, then
 		// add that to the reply string. Otherwise, use the reply as-is.
 		if (rsp->Count[0] > 0)
@@ -615,7 +608,6 @@ FStrifeDialogueReply::~FStrifeDialogueReply ()
 	if (Reply != NULL) delete[] Reply;
 	if (QuickYes != NULL) delete[] QuickYes;
 	if (QuickNo != NULL) delete[] QuickNo;
-	if (ReplyLines != NULL) V_FreeBrokenLines (ReplyLines);
 }
 
 //============================================================================
@@ -705,6 +697,372 @@ CUSTOM_CVAR(Float, dlg_musicvolume, 1.0f, CVAR_ARCHIVE)
 
 //============================================================================
 //
+// The conversation menu
+//
+//============================================================================
+
+class DConversationMenu : public DMenu
+{
+	DECLARE_CLASS(DConversationMenu, DMenu)
+
+	FString mSpeaker;
+	FBrokenLines *mDialogueLines;
+	TArray<FString> mResponseLines;
+	TArray<unsigned int> mResponses;
+	bool mShowGold;
+	FStrifeDialogueNode *mCurNode;
+	int mYpos;
+
+public:
+	static int mSelection;
+
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	DConversationMenu(FStrifeDialogueNode *CurNode) 
+	{
+		menuactive = MENU_OnNoPause;
+		mCurNode = CurNode;
+		mDialogueLines = NULL;
+		mShowGold = false;
+
+		// Format the speaker's message.
+		const char * toSay = CurNode->Dialogue;
+		if (strncmp (toSay, "RANDOM_", 7) == 0)
+		{
+			FString dlgtext;
+
+			dlgtext.Format("TXT_%s_%02d", toSay, 1+(pr_randomspeech() % NUM_RANDOM_LINES));
+			toSay = GStrings[dlgtext];
+			if (toSay == NULL)
+			{
+				toSay = "Go away!";	// Ok, it's lame - but it doesn't look like an error to the player. ;)
+			}
+		}
+		else
+		{
+			// handle string table replacement
+			if (toSay[0] == '$')
+			{
+				toSay = GStrings(toSay + 1);
+			}
+		}
+		if (toSay == NULL)
+		{
+			toSay = ".";
+		}
+		mDialogueLines = V_BreakLines (SmallFont, screen->GetWidth()/CleanXfac - 24*2, toSay);
+
+		FStrifeDialogueReply *reply;
+		int i,j;
+		for (reply = CurNode->Children, i = 1; reply != NULL; reply = reply->Next)
+		{
+			if (reply->Reply == NULL)
+			{
+				continue;
+			}
+			mShowGold |= reply->NeedsGold;
+
+			const char *ReplyText = reply->Reply;
+			if (ReplyText[0] == '$')
+			{
+				ReplyText = GStrings(ReplyText + 1);
+			}
+			FBrokenLines *ReplyLines = V_BreakLines (SmallFont, 320-50-10, ReplyText);
+
+			mResponses.Push(mResponseLines.Size());
+			for (j = 0; ReplyLines[j].Width >= 0; ++j)
+			{
+				mResponseLines.Push(ReplyLines[j].Text);
+			}
+			++i;
+			V_FreeBrokenLines (ReplyLines);
+		}
+		char goodbye[25];
+		mysnprintf(goodbye, countof(goodbye), "TXT_RANDOMGOODBYE_%d", 1+(pr_randomspeech() % NUM_RANDOM_GOODBYES));
+		const char *goodbyestr = GStrings[goodbye];
+		if (goodbyestr == NULL) goodbyestr = "Bye.";
+		mResponses.Push(mResponseLines.Size());
+		mResponseLines.Push(FString(goodbyestr));
+
+		// Determine where the top of the reply list should be positioned.
+		i = OptionSettings.mLinespacing;
+		mYpos = MIN<int> (140, 192 - mResponseLines.Size() * i);
+		for (i = 0; mDialogueLines[i].Width >= 0; ++i)
+		{ }
+		i = 44 + i * 10;
+		if (mYpos - 100 < i - screen->GetHeight() / CleanYfac / 2)
+		{
+			mYpos = i - screen->GetHeight() / CleanYfac / 2 + 100;
+		}
+		ConversationMenuY = mYpos;
+		//ConversationMenu.indent = 50;
+	}
+
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	void Destroy()
+	{
+		V_FreeBrokenLines(mDialogueLines);
+		mDialogueLines = NULL;
+		I_SetMusicVolume (1.f);
+	}
+
+	bool DimAllowed()
+	{
+		return false;
+	}
+
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	bool MenuEvent(int mkey, bool fromcontroller)
+	{
+		if (mkey == MKEY_Up)
+		{
+			if (--mSelection < 0) mSelection = mResponses.Size() - 1;
+			return true;
+		}
+		else if (mkey == MKEY_Down)
+		{
+			if (++mSelection >= (int)mResponses.Size()) mSelection = 0;
+			return true;
+		}
+		else if (mkey == MKEY_Back)
+		{
+			Close();
+			return true;
+		}
+		else if (mkey == MKEY_Enter)
+		{
+			if ((unsigned)mSelection >= mResponses.Size())
+			{
+				Net_WriteByte(DEM_CONVCLOSE);
+			}
+			else
+			{
+				// Send dialogue and reply numbers across the wire.
+				assert((unsigned)mCurNode->ThisNodeNum < StrifeDialogues.Size());
+				assert(StrifeDialogues[mCurNode->ThisNodeNum] == mCurNode);
+				Net_WriteByte(DEM_CONVREPLY);
+				Net_WriteWord(mCurNode->ThisNodeNum);
+				Net_WriteByte(mSelection);
+			}
+			Close();
+			return true;
+		}
+		return false;
+	}
+
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	bool MouseEvent(int type, int x, int y)
+	{
+		int sel = -1;
+		int fh = SmallFont->GetHeight();
+
+		// convert x/y from screen to virtual coordinates, according to CleanX/Yfac use in DrawTexture
+		x = ((x - (screen->GetWidth() / 2)) / CleanXfac) + 160;
+		y = ((y - (screen->GetHeight() / 2)) / CleanYfac) + 100;
+
+		if (x >= 24 && x <= 320-24 && y >= mYpos && y < mYpos + fh * (int)mResponseLines.Size())
+		{
+			sel = (y - mYpos) / fh;
+			for(unsigned i=0;i<mResponses.Size(); i++)
+			{
+				if ((int)mResponses[i] > sel)
+				{
+					sel = i-1;
+					break;
+				}
+			}
+		}
+		if (sel != -1 && sel != mSelection)
+		{
+			//S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
+		}
+		mSelection = sel;
+		if (type == MOUSE_Release)
+		{
+			return MenuEvent(MKEY_Enter, true);
+		}
+		return true;
+	}
+
+
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	bool Responder(event_t *ev)
+	{
+		if (ev->type == EV_GUI_Event && ev->subtype == EV_GUI_Char && ev->data1 >= '0' && ev->data1 <= '9')
+		{ // Activate an item of type numberedmore (dialogue only)
+			mSelection = ev->data1 == '0' ? 10 : ev->data1 - '0';
+			return MenuEvent(MKEY_Enter, false);
+		}
+		return Super::Responder(ev);
+	}
+
+	//============================================================================
+	//
+	// DrawConversationMenu
+	//
+	//============================================================================
+
+	void Drawer()
+	{
+		const char *speakerName;
+		int i, x, y, linesize;
+		int width, fontheight;
+		int labelofs;
+
+		player_t *cp = &players[consoleplayer];
+
+		assert (mDialogueLines != NULL);
+		assert (mCurNode != NULL);
+
+		FStrifeDialogueNode *CurNode = mCurNode;
+
+		if (CurNode == NULL)
+		{
+			Close ();
+			return;
+		}
+
+		// [CW] Freeze the game depending on MAPINFO options.
+		if (ConversationPauseTic < gametic && !multiplayer && !(level.flags2 & LEVEL2_CONV_SINGLE_UNFREEZE))
+		{
+			menuactive = MENU_On;
+		}
+
+		if (CurNode->Backdrop.isValid())
+		{
+			screen->DrawTexture (TexMan(CurNode->Backdrop), 0, 0, DTA_320x200, true, TAG_DONE);
+		}
+		x = 16 * screen->GetWidth() / 320;
+		y = 16 * screen->GetHeight() / 200;
+		linesize = 10 * CleanYfac;
+
+		// Who is talking to you?
+		if (CurNode->SpeakerName != NULL)
+		{
+			speakerName = CurNode->SpeakerName;
+		}
+		else
+		{
+			speakerName = cp->ConversationNPC->GetTag("Person");
+		}
+
+		// Dim the screen behind the dialogue (but only if there is no backdrop).
+		if (!CurNode->Backdrop.isValid())
+		{
+			for (i = 0; mDialogueLines[i].Width >= 0; ++i)
+			{ }
+			screen->Dim (0, 0.45f, 14 * screen->GetWidth() / 320, 13 * screen->GetHeight() / 200,
+				308 * screen->GetWidth() / 320 - 14 * screen->GetWidth () / 320,
+				speakerName == NULL ? linesize * i + 6 * CleanYfac
+				: linesize * i + 6 * CleanYfac + linesize * 3/2);
+		}
+
+		// Dim the screen behind the PC's choices.
+
+		screen->Dim (0, 0.45f, (24-160) * CleanXfac + screen->GetWidth()/2,
+			(mYpos - 2 - 100) * CleanYfac + screen->GetHeight()/2,
+			272 * CleanXfac,
+			MIN<int>(mResponseLines.Size() * OptionSettings.mLinespacing + 4, 200 - mYpos) * CleanYfac);
+
+		if (speakerName != NULL)
+		{
+			screen->DrawText (SmallFont, CR_WHITE, x, y, speakerName,
+				DTA_CleanNoMove, true, TAG_DONE);
+			y += linesize * 3 / 2;
+		}
+		x = 24 * screen->GetWidth() / 320;
+		for (i = 0; mDialogueLines[i].Width >= 0; ++i)
+		{
+			screen->DrawText (SmallFont, CR_UNTRANSLATED, x, y, mDialogueLines[i].Text,
+				DTA_CleanNoMove, true, TAG_DONE);
+			y += linesize;
+		}
+
+		if (ShowGold)
+		{
+			AInventory *coin = cp->ConversationPC->FindInventory (RUNTIME_CLASS(ACoin));
+			char goldstr[32];
+
+			mysnprintf (goldstr, countof(goldstr), "%d", coin != NULL ? coin->Amount : 0);
+			screen->DrawText (SmallFont, CR_GRAY, 21, 191, goldstr, DTA_320x200, true,
+				DTA_FillColor, 0, DTA_Alpha, HR_SHADOW, TAG_DONE);
+			screen->DrawTexture (TexMan(((AInventory *)GetDefaultByType (RUNTIME_CLASS(ACoin)))->Icon),
+				3, 190, DTA_320x200, true,
+				DTA_FillColor, 0, DTA_Alpha, HR_SHADOW, TAG_DONE);
+			screen->DrawText (SmallFont, CR_GRAY, 20, 190, goldstr, DTA_320x200, true, TAG_DONE);
+			screen->DrawTexture (TexMan(((AInventory *)GetDefaultByType (RUNTIME_CLASS(ACoin)))->Icon),
+				2, 189, DTA_320x200, true, TAG_DONE);
+		}
+
+		y = mYpos;
+		labelofs = OptionSettings.mLabelOffset;
+		y -= labelofs;
+		fontheight = OptionSettings.mLinespacing;
+
+		int response = 0;
+		for (i = 0; i < (int)mResponseLines.Size(); i++, y += fontheight)
+		{
+			width = SmallFont->StringWidth(mResponseLines[i]);
+			x = 64;
+
+			screen->DrawText (SmallFont, CR_GREEN, x, y, mResponseLines[i], DTA_Clean, true, TAG_DONE);
+
+			if (i == mResponses[response])
+			{
+				char tbuf[16];
+
+				response++;
+				mysnprintf (tbuf, countof(tbuf), "%d.", response);
+				x = 50 - SmallFont->StringWidth (tbuf);
+				screen->DrawText (SmallFont, CR_GREY, x, y, tbuf, DTA_Clean, true, TAG_DONE);
+
+				if (response == mSelection+1)
+				{
+					int color = ((DMenu::MenuTime%8) < 4) || DMenu::CurrentMenu != this ? CR_RED:CR_GREY;
+
+					x = (50 + 3 - 160) * CleanXfac + screen->GetWidth() / 2;
+					int yy = (y-1+labelofs - 100) * CleanYfac + screen->GetHeight() / 2;
+					screen->DrawText (ConFont, color, x, yy, "\xd",
+						DTA_CellX, 8 * CleanXfac,
+						DTA_CellY, 8 * CleanYfac,
+						TAG_DONE);
+				}
+			}
+		}
+	}
+
+};
+
+IMPLEMENT_ABSTRACT_CLASS(DConversationMenu)
+int DConversationMenu::mSelection;	// needs to be preserved if the same dialogue is restarted
+
+
+//============================================================================
+//
 // P_StartConversation
 //
 // Begins a conversation between a PC and NPC.
@@ -714,10 +1072,7 @@ CUSTOM_CVAR(Float, dlg_musicvolume, 1.0f, CVAR_ARCHIVE)
 void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveangle)
 {
 	AActor *oldtarget;
-	FStrifeDialogueReply *reply;
-	menuitem_t item;
-	const char *toSay;
-	int i, j;
+	int i;
 
 	// Make sure this is actually a player.
 	if (pc->player == NULL) return;
@@ -798,102 +1153,19 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 			S_Sound (npc, CHAN_VOICE|CHAN_NOPAUSE, CurNode->SpeakerVoice, 1, ATTN_NORM);
 		}
 
-		// Set up the menu
-		::CurNode = CurNode;	// only set the global variable for the consoleplayer
-		ConversationMenu.PreDraw = DrawConversationMenu;
-		ConversationMenu.EscapeHandler = ConversationMenuEscaped;
+		DConversationMenu *cmenu = new DConversationMenu(CurNode);
 
-		// Format the speaker's message.
-		toSay = CurNode->Dialogue;
-		if (strncmp (toSay, "RANDOM_", 7) == 0)
-		{
-			FString dlgtext;
 
-			dlgtext.Format("TXT_%s_%02d", toSay, 1+(pr_randomspeech() % NUM_RANDOM_LINES));
-			toSay = GStrings[dlgtext];
-			if (toSay == NULL)
-			{
-				toSay = "Go away!";	// Ok, it's lame - but it doesn't look like an error to the player. ;)
-			}
-		}
-		else
-		{
-			// handle string table replacement
-			if (toSay[0] == '$')
-			{
-				toSay = GStrings(toSay + 1);
-			}
-		}
-		if (toSay == NULL)
-		{
-			toSay = ".";
-		}
-		DialogueLines = V_BreakLines (SmallFont, screen->GetWidth()/CleanXfac - 24*2, toSay);
-
-		// Fill out the possible choices
-		ShowGold = false;
-		item.type = numberedmore;
-		item.e.mfunc = PickConversationReply;
-		for (reply = CurNode->Children, i = 1; reply != NULL; reply = reply->Next)
-		{
-			if (reply->Reply == NULL)
-			{
-				continue;
-			}
-			ShowGold |= reply->NeedsGold;
-			reply->ReplyLines = V_BreakLines (SmallFont, 320-50-10, reply->Reply);
-			for (j = 0; reply->ReplyLines[j].Width >= 0; ++j)
-			{
-				item.label = reply->ReplyLines[j].Text.LockBuffer();
-				// handle string table replacement
-				if (item.label[0] == '$')
-				{
-					item.label = GStrings(item.label + 1);
-				}
-
-				item.b.position = j == 0 ? i : 0;
-				item.c.extra = reply;
-				ConversationItems.Push (item);
-			}
-			++i;
-		}
-		char goodbye[25];
-		mysnprintf(goodbye, countof(goodbye), "TXT_RANDOMGOODBYE_%d", 1+(pr_randomspeech() % NUM_RANDOM_GOODBYES));
-		item.label = (char*)GStrings[goodbye];
-		if (item.label == NULL) item.label = "Bye.";
-		item.b.position = i;
-		item.c.extra = NULL;
-		ConversationItems.Push (item);
-
-		// Determine where the top of the reply list should be positioned.
-		i = (gameinfo.gametype & GAME_Raven) ? 9 : 8;
-		ConversationMenu.y = MIN<int> (140, 192 - ConversationItems.Size() * i);
-		for (i = 0; DialogueLines[i].Width >= 0; ++i)
-		{ }
-		i = 44 + i * 10;
-		if (ConversationMenu.y - 100 < i - screen->GetHeight() / CleanYfac / 2)
-		{
-			ConversationMenu.y = i - screen->GetHeight() / CleanYfac / 2 + 100;
-		}
-		ConversationMenu.indent = 50;
-
-		// Finish setting up the menu
-		ConversationMenu.items = &ConversationItems[0];
-		ConversationMenu.numitems = ConversationItems.Size();
 		if (CurNode != PrevNode)
 		{ // Only reset the selection if showing a different menu.
-			ConversationMenu.lastOn = 0;
+			DConversationMenu::mSelection = 0;
 			PrevNode = CurNode;
 		}
-		ConversationMenu.DontDim = true;
 
 		// And open the menu
 		M_StartControlPanel (false);
-		OptionsActive = true;
-		menuactive = MENU_OnNoPause;
+		M_ActivateMenu(cmenu);
 		ConversationPauseTic = gametic + 20;
-
-		M_SwitchMenu (&ConversationMenu);
 	}
 }
 
@@ -919,193 +1191,6 @@ void P_ResumeConversation ()
 			P_StartConversation (p->ConversationNPC, p->ConversationPC, p->ConversationFaceTalker, false);
 		}
 	}
-}
-
-//============================================================================
-//
-// DrawConversationMenu
-//
-//============================================================================
-
-static bool DrawConversationMenu ()
-{
-	const char *speakerName;
-	int i, x, y, linesize;
-	int width, fontheight;
-	menuitem_t *item;
-	int labelofs;
-
-	player_t *cp = &players[consoleplayer];
-
-	assert (DialogueLines != NULL);
-	assert (CurNode != NULL);
-
-	if (CurNode == NULL)
-	{
-		M_ClearMenus ();
-		return true;
-	}
-
-	// [CW] Freeze the game depending on MAPINFO options.
-	if (ConversationPauseTic < gametic && !multiplayer && !(level.flags2 & LEVEL2_CONV_SINGLE_UNFREEZE))
-	{
-		menuactive = MENU_On;
-	}
-
-	if (CurNode->Backdrop.isValid())
-	{
-		screen->DrawTexture (TexMan(CurNode->Backdrop), 0, 0, DTA_320x200, true, TAG_DONE);
-	}
-	x = 16 * screen->GetWidth() / 320;
-	y = 16 * screen->GetHeight() / 200;
-	linesize = 10 * CleanYfac;
-
-	// Who is talking to you?
-	if (CurNode->SpeakerName != NULL)
-	{
-		speakerName = CurNode->SpeakerName;
-	}
-	else
-	{
-		speakerName = cp->ConversationNPC->GetTag("Person");
-	}
-
-	// Dim the screen behind the dialogue (but only if there is no backdrop).
-	if (!CurNode->Backdrop.isValid())
-	{
-		for (i = 0; DialogueLines[i].Width >= 0; ++i)
-		{ }
-		screen->Dim (0, 0.45f, 14 * screen->GetWidth() / 320, 13 * screen->GetHeight() / 200,
-			308 * screen->GetWidth() / 320 - 14 * screen->GetWidth () / 320,
-			speakerName == NULL ? linesize * i + 6 * CleanYfac
-			: linesize * i + 6 * CleanYfac + linesize * 3/2);
-	}
-
-	// Dim the screen behind the PC's choices.
-	screen->Dim (0, 0.45f, (24-160) * CleanXfac + screen->GetWidth()/2,
-		(ConversationMenu.y - 2 - 100) * CleanYfac + screen->GetHeight()/2,
-		272 * CleanXfac,
-		MIN(ConversationMenu.numitems * (gameinfo.gametype & GAME_Raven ? 9 : 8) + 4,
-		200 - ConversationMenu.y) * CleanYfac);
-
-	if (speakerName != NULL)
-	{
-		screen->DrawText (SmallFont, CR_WHITE, x, y, speakerName,
-			DTA_CleanNoMove, true, TAG_DONE);
-		y += linesize * 3 / 2;
-	}
-	x = 24 * screen->GetWidth() / 320;
-	for (i = 0; DialogueLines[i].Width >= 0; ++i)
-	{
-		screen->DrawText (SmallFont, CR_UNTRANSLATED, x, y, DialogueLines[i].Text,
-			DTA_CleanNoMove, true, TAG_DONE);
-		y += linesize;
-	}
-
-	if (ShowGold)
-	{
-		AInventory *coin = cp->ConversationPC->FindInventory (RUNTIME_CLASS(ACoin));
-		char goldstr[32];
-
-		mysnprintf (goldstr, countof(goldstr), "%d", coin != NULL ? coin->Amount : 0);
-		screen->DrawText (SmallFont, CR_GRAY, 21, 191, goldstr, DTA_320x200, true,
-			DTA_FillColor, 0, DTA_Alpha, HR_SHADOW, TAG_DONE);
-		screen->DrawTexture (TexMan(((AInventory *)GetDefaultByType (RUNTIME_CLASS(ACoin)))->Icon),
-			3, 190, DTA_320x200, true,
-			DTA_FillColor, 0, DTA_Alpha, HR_SHADOW, TAG_DONE);
-		screen->DrawText (SmallFont, CR_GRAY, 20, 190, goldstr, DTA_320x200, true, TAG_DONE);
-		screen->DrawTexture (TexMan(((AInventory *)GetDefaultByType (RUNTIME_CLASS(ACoin)))->Icon),
-			2, 189, DTA_320x200, true, TAG_DONE);
-	}
-
-	y = CurrentMenu->y;
-
-	if (gameinfo.gametype & GAME_Raven)
-	{
-		labelofs = 2;
-		y -= 2;
-		fontheight = 9;
-	}
-	else
-	{
-		labelofs = 0;
-		fontheight = 8;
-	}
-	for (i = 0; i < CurrentMenu->numitems; i++, y += fontheight)
-	{
-		item = CurrentMenu->items + i;
-
-		width = SmallFont->StringWidth(item->label);
-		x = CurrentMenu->indent + 14;
-
-		screen->DrawText (SmallFont, CR_GREEN, x, y, item->label, DTA_Clean, true, TAG_DONE);
-
-		if (item->b.position != 0)
-		{
-			char tbuf[16];
-
-			mysnprintf (tbuf, countof(tbuf), "%d.", item->b.position);
-			x = CurrentMenu->indent - SmallFont->StringWidth (tbuf);
-			screen->DrawText (SmallFont, CR_GREY, x, y, tbuf, DTA_Clean, true, TAG_DONE);
-		}
-
-		if (i == CurrentItem &&
-			(skullAnimCounter < 6 || menuactive == MENU_WaitKey))
-		{
-			int x = (CurrentMenu->indent + 3 - 160) * CleanXfac + screen->GetWidth() / 2;
-			int yy = (y-1+labelofs - 100) * CleanYfac + screen->GetHeight() / 2;
-			screen->DrawText (ConFont, CR_RED, x, yy, "\xd",
-				DTA_CellX, 8 * CleanXfac,
-				DTA_CellY, 8 * CleanYfac,
-				TAG_DONE);
-		}
-	}
-	return true;
-}
-
-
-//============================================================================
-//
-// PickConversationReply
-//
-// Run only on the local machine with the conversation menu up.
-//
-//============================================================================
-
-static void PickConversationReply ()
-{
-	FStrifeDialogueReply *reply = (FStrifeDialogueReply *)ConversationItems[ConversationMenu.lastOn].c.extra;
-	FStrifeDialogueReply *replyscan;
-	int replynum = 0;
-
-	assert(CurNode->ThisNodeNum >= 0 && CurNode->ThisNodeNum < 65536);
-	assert(StrifeDialogues[CurNode->ThisNodeNum] == CurNode);
-
-	// Determine reply number for netcode.
-	if (reply == NULL)
-	{
-		replyscan = NULL;
-	}
-	else
-	{
-		for (replyscan = CurNode->Children; replyscan != NULL && replyscan != reply; ++replynum, replyscan = replyscan->Next)
-		{ }
-	}
-
-	M_ClearMenus ();
-	if (replyscan == NULL)
-	{
-		Net_WriteByte(DEM_CONVCLOSE);
-	}
-	else
-	{
-		// Send dialogue and reply numbers across the wire.
-		assert(replynum < 256);
-		Net_WriteByte(DEM_CONVREPLY);
-		Net_WriteWord(CurNode->ThisNodeNum);
-		Net_WriteByte(replynum);
-	}
-	CleanupConversationMenu ();
 }
 
 //============================================================================
@@ -1307,27 +1392,6 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 
 void CleanupConversationMenu ()
 {
-	FStrifeDialogueReply *reply;
-
-	if (CurNode != NULL)
-	{
-		for (reply = CurNode->Children; reply != NULL; reply = reply->Next)
-		{
-			if (reply->ReplyLines != NULL)
-			{
-				V_FreeBrokenLines (reply->ReplyLines);
-				reply->ReplyLines = NULL;
-			}
-		}
-		CurNode = NULL;
-	}
-	if (DialogueLines != NULL)
-	{
-		V_FreeBrokenLines (DialogueLines);
-		DialogueLines = NULL;
-	}
-	ConversationItems.Clear ();
-	I_SetMusicVolume (1.f);
 }
 
 //============================================================================
@@ -1408,7 +1472,7 @@ static void TerminalResponse (const char *str)
 			// their dialogue screen. I think most other conversations use this
 			// only as a response for terminating the dialogue.
 			StatusBar->AttachMessage(new DHUDMessageFadeOut(SmallFont, str,
-				float(CleanWidth/2) + 0.4f, float(ConversationMenu.y - 110 + CleanHeight/2), CleanWidth, -CleanHeight,
+				float(CleanWidth/2) + 0.4f, float(ConversationMenuY - 110 + CleanHeight/2), CleanWidth, -CleanHeight,
 				CR_UNTRANSLATED, 3, 1), MAKE_ID('T','A','L','K'));
 		}
 		else

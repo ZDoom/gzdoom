@@ -486,6 +486,8 @@ void G_InitNew (const char *mapname, bool bTitleLevel);
 // A normal game starts at map 1,
 // but a warp test can start elsewhere
 void G_DeferedInitNew (const char *mapname, int skill = -1);
+struct FGameStartup;
+void G_DeferedInitNew (FGameStartup *gs);
 
 void G_ExitLevel (int position, bool keepFacing);
 void G_SecretExitLevel (int position);
@@ -603,6 +605,16 @@ struct FSkillInfo
 extern TArray<FSkillInfo> AllSkills;
 extern int DefaultSkill;
 
+struct FEpisode
+{
+	FString mEpisodeName;
+	FString mEpisodeMap;
+	FString mPicName;
+	char mShortcut;
+	bool mNoSkill;
+};
+
+extern TArray<FEpisode> AllEpisodes;
 
 
 #endif //__G_LEVEL_H__

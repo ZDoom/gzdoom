@@ -72,6 +72,7 @@
 #include "doomstat.h"
 #include "m_argv.h"
 #include "po_man.h"
+#include "menu/menu.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -298,6 +299,7 @@ static void MarkRoot()
 	Mark(Args);
 	Mark(screen);
 	Mark(StatusBar);
+	Mark(DMenu::CurrentMenu);
 	DThinker::MarkRoots();
 	FCanvasTextureInfo::Mark();
 	Mark(DACSThinker::ActiveThinker);

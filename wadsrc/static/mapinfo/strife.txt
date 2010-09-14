@@ -43,6 +43,15 @@ gameinfo
 	endoom = "ENDSTRF"
 	player5start = 5
 	pickupcolor = "d6 ba 45"
+	quitmessages = "$QUITMSG", "$QUITMSG15", "$QUITMSG16", "$QUITMSG17", "$QUITMSG18", "$QUITMSG19", "$QUITMSG20", "$QUITMSG21", "$QUITMSG22"
+	menufontcolor_title = "UNTRANSLATED"
+	menufontcolor_label = "UNTRANSLATED"
+	menufontcolor_value = "GRAY"
+	menufontcolor_action = "GRAY"
+	menufontcolor_header = "RED"
+	menufontcolor_highlight = "GREEN"
+	menufontcolor_selection = "GOLD"
+	menubackbutton = "M_BACK_S"
 }
 
 skill baby

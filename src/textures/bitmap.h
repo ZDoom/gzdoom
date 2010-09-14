@@ -100,6 +100,7 @@ public:
 		Width = w;
 		Height = h;
 		data = new BYTE[4*w*h];
+		memset(data, 0, 4*w*h);
 		FreeBuffer = true;
 		ClipRect.x = ClipRect.y = 0;
 		ClipRect.width = w;

@@ -5,7 +5,7 @@
 
 #include "templates.h"
 #include "v_text.h"
-#include "m_menu.h"
+#include "menu/menu.h"
 
 static DWORD	nummididevices;
 static bool		nummididevicesset;
@@ -71,50 +71,43 @@ void I_ShutdownMusicWin32 ()
 	}
 }
 
-void I_BuildMIDIMenuList (struct value_t **outValues, float *numValues)
-{
-	if (*outValues == NULL)
-	{
-		int count = 4 + nummididevices;
-		value_t *values;
-		UINT id;
-		int p = 0;
-
-		*outValues = values = new value_t[count];
-
 #ifdef HAVE_FLUIDSYNTH
-		values[p].name = "FluidSynth";
-		values[p].value = -5.0;
-		++p;
+#define NUM_DEF_DEVICES 4
+#else
+#define NUM_DEF_DEVICES 3
 #endif
-		values[p].name = "OPL Synth Emulation";
-		values[p].value = -3.0;
-		++p;
-		values[p].name = "TiMidity++";
-		values[p].value = -2.0;
-		++p;
-		values[p].name = "FMOD";
-		values[p].value = -1.0;
-		++p;
-		for (id = 0; id < nummididevices; ++id)
+void I_BuildMIDIMenuList (FOptionValues *opt)
+{
+	int p;
+	FOptionValues::Pair *pair = &opt->mValues[opt->mValues.Reserve(NUM_DEF_DEVICES)];
+#ifdef HAVE_FLUIDSYNTH
+	pair[0].Text = "FluidSynth";
+	pair[0].Value = -5.0;
+	p = 1;
+#else
+	p = 0;
+#endif
+	pair[p].Text = "OPL Synth Emulation";
+	pair[p].Value = -3.0;
+	pair[p+1].Text = "TiMidity++";
+	pair[p+1].Value = -2.0;
+	pair[p+2].Text = "FMOD";
+	pair[p+2].Value = -1.0;
+
+
+	for (DWORD id = 0; id < nummididevices; ++id)
+	{
+		MIDIOUTCAPS caps;
+		MMRESULT res;
+
+		res = midiOutGetDevCaps (id, &caps, sizeof(caps));
+		assert(res == MMSYSERR_NOERROR);
+		if (res == MMSYSERR_NOERROR)
 		{
-			MIDIOUTCAPS caps;
-			MMRESULT res;
-
-			res = midiOutGetDevCaps (id, &caps, sizeof(caps));
-			assert(res == MMSYSERR_NOERROR);
-			if (res == MMSYSERR_NOERROR)
-			{
-				size_t len = strlen (caps.szPname) + 1;
-				char *name = new char[len];
-
-				memcpy (name, caps.szPname, len);
-				values[p].name = name;
-				values[p].value = (float)id;
-				++p;
-			}
+			pair = &opt->mValues[opt->mValues.Reserve(1)];
+			pair->Text = caps.szPname;
+			pair->Value = (float)id;
 		}
-		*numValues = float(p);
 	}
 }
 
@@ -195,31 +188,28 @@ CUSTOM_CVAR(Int, snd_mididevice, -1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 		self = -1;
 }
 
-void I_BuildMIDIMenuList (struct value_t **outValues, float *numValues)
-{
-	if (*outValues == NULL)
-	{
-		value_t *values;
-		int p = 0;
-
-		*outValues = values = new value_t[4];
-
 #ifdef HAVE_FLUIDSYNTH
-		values[p].name = "FluidSynth";
-		values[p].value = -5.0;
-		++p;
+#define NUM_DEF_DEVICES 4
+#else
+#define NUM_DEF_DEVICES 3
 #endif
-		values[p].name = "OPL Synth Emulation";
-		values[p].value = -3.0;
-		++p;
-		values[p].name = "TiMidity++";
-		values[p].value = -2.0;
-		++p;
-		values[p].name = "FMOD";
-		values[p].value = -1.0;
-		++p;
-		*numValues = float(p);
-	}
+void I_BuildMIDIMenuList (FOptionValues *opt)
+{
+	int p;
+	FOptionValues::Pair *pair = &opt->mValues[opt->mValues.Reserve(NUM_DEF_DEVICES)];
+#ifdef HAVE_FLUIDSYNTH
+	pair[0].Text = "FluidSynth";
+	pair[0].Value = -5.0;
+	p = 1;
+#else
+	p = 0;
+#endif
+	pair[p].Text = "OPL Synth Emulation";
+	pair[p].Value = -3.0;
+	pair[p+1].Text = "TiMidity++";
+	pair[p+1].Value = -2.0;
+	pair[p+2].Text = "FMOD";
+	pair[p+2].Value = -1.0;
 }
 
 CCMD (snd_listmididevices)

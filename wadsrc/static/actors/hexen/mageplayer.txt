@@ -25,6 +25,7 @@ ACTOR MagePlayer : PlayerPawn
 	Player.StartItem "MWeapWand"
 	Player.ForwardMove 0.88, 0.92
 	Player.SideMove 0.875, 0.925
+	Player.Portrait "P_MWALK1"
 	Player.WeaponSlot 1, MWeapWand
 	Player.WeaponSlot 2, MWeapFrost
 	Player.WeaponSlot 3, MWeapLightning

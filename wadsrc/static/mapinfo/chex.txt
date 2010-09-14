@@ -43,6 +43,15 @@ gameinfo
 	player5start = 4001
 	drawreadthis = true
 	pickupcolor = "d6 ba 45"
+	quitmessages = "$QUITMSG", "$QUITMSG23", "$QUITMSG24", "$QUITMSG25", "$QUITMSG26", "$QUITMSG27", "$QUITMSG28", "$QUITMSG29"
+	menufontcolor_title = "GREEN"
+	menufontcolor_label = "UNTRANSLATED"
+	menufontcolor_value = "GRAY"
+	menufontcolor_action = "GRAY"
+	menufontcolor_header = "YELLOW"
+	menufontcolor_highlight = "BLUE"
+	menufontcolor_selection = "GOLD"
+	menubackbutton = "M_BACK_H"
 }
 
 skill baby

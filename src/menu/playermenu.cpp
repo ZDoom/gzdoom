@@ -1044,7 +1044,7 @@ bool DPlayerMenu::MenuEvent (int mkey, bool fromcontroller)
 			case NAME_Switch:
 				if (li->GetValue(0, &v))
 				{
-					neverswitchonpickup = !v;
+					neverswitchonpickup = !!v;
 				}
 				break;
 

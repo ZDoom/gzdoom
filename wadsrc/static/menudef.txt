@@ -271,58 +271,6 @@ ListMenu "SaveGameMenu"
 
 //-------------------------------------------------------------------------------------------
 //
-// The player menu
-//
-//-------------------------------------------------------------------------------------------
-
-ListMenu "PlayerMenu"
-{
-	StaticTextCentered 160, 10, "$MNU_PLAYERSETUP"
-	Font "SmallFont"
-	Linespacing 16
-	Position 48, 42
-
-	IfGame (Doom, Strife, Chex)
-	{
-		PlayerNameBox "Name", 0, "Playerbox"
-		Selector "-", -16, -1
-	}
-	IfGame(Heretic, Hexen)
-	{
-		PlayerNameBox "Name", 5, "Playerbox"
-		Selector "-", -16, 1
-	}
-	IfGame(Doom, Heretic, Strife, Chex)
-	{
-		MouseWindow 0, 220
-		PlayerDisplay 220, 80, "20 00 00", "80 00 40", 1, "PlayerDisplay"
-	}
-	IfGame(Hexen)
-	{
-		MouseWindow 0, 220
-		PlayerDisplay 220, 80, "00 07 00", "40 53 40", 1, "PlayerDisplay"
-	}
-	
-	ValueText "Team", "Team"
-	Linespacing 14
-	ValueText "Color", "Color"
-	Linespacing 10
-	Slider "Red", "Red", 0, 255, 16
-	Slider "Green", "Green", 0, 255, 16
-	Linespacing 14
-	Slider "Blue", "Blue", 0, 255, 16
-	Linespacing 16
-	ValueText "Class", "Class"
-	ValueText "Skin", "Skin"
-	ValueText "Gender", "Gender"
-	ValueText	"Always Run", 				"cl_run", "OnOff"
-	ValueText "Autoaim", "Autoaim"
-	ValueText "Switch on pickup", "Switch"
-	Class "PlayerMenu"
-}
-
-//-------------------------------------------------------------------------------------------
-//
 // The option menu
 //
 //-------------------------------------------------------------------------------------------

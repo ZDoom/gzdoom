@@ -22,6 +22,7 @@
 #include "i_system.h"
 #include "cmdlib.h"
 #include "p_local.h"
+#include "po_man.h"
 #include "gi.h"
 #include "templates.h"
 #include "c_dispatch.h"

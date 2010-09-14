@@ -40,6 +40,7 @@
 #include "r_blend.h"
 #include "s_sound.h"
 
+struct subsector_t;
 //
 // NOTES: AActor
 //
@@ -320,6 +321,8 @@ enum
 	MF6_SHATTERING		= 0x00020000,	// marks an ice corpse for forced shattering
 	MF6_KILLED			= 0x00040000,	// Something that was killed (but not necessarily a corpse)
 	MF6_BLOCKEDBYSOLIDACTORS = 0x00080000, // Blocked by solid actors, even if not solid itself
+	MF6_ADDITIVEPOISONDAMAGE	= 0x00100000,
+	MF6_ADDITIVEPOISONDURATION	= 0x00200000,
 
 // --- mobj.renderflags ---
 
@@ -505,7 +508,6 @@ enum
 	AMETA_BloodColor,		// colorized blood
 	AMETA_GibHealth,		// negative health below which this monster dies an extreme death
 	AMETA_WoundHealth,		// health needed to enter wound state
-	AMETA_PoisonDamage,		// Amount of poison damage
 	AMETA_FastSpeed,		// Speed in fast mode
 	AMETA_RDFactor,			// Radius damage factor
 	AMETA_CameraHeight,		// Height of camera when used as such
@@ -721,19 +723,26 @@ public:
 
 	const PClass *GetBloodType(int type = 0) const
 	{
+		const PClass *bloodcls;
 		if (type == 0)
 		{
-			return PClass::FindClass((ENamedName)GetClass()->Meta.GetMetaInt(AMETA_BloodType, NAME_Blood));
+			bloodcls = PClass::FindClass((ENamedName)GetClass()->Meta.GetMetaInt(AMETA_BloodType, NAME_Blood));
 		}
 		else if (type == 1)
 		{
-			return PClass::FindClass((ENamedName)GetClass()->Meta.GetMetaInt(AMETA_BloodType2, NAME_BloodSplatter));
+			bloodcls = PClass::FindClass((ENamedName)GetClass()->Meta.GetMetaInt(AMETA_BloodType2, NAME_BloodSplatter));
 		}
 		else if (type == 2)
 		{
-			return  PClass::FindClass((ENamedName)GetClass()->Meta.GetMetaInt(AMETA_BloodType3, NAME_AxeBlood));
+			bloodcls = PClass::FindClass((ENamedName)GetClass()->Meta.GetMetaInt(AMETA_BloodType3, NAME_AxeBlood));
 		}
 		else return NULL;
+
+		if (bloodcls != NULL)
+		{
+			bloodcls = bloodcls->GetReplacement();
+		}
+		return bloodcls;
 	}
 
 	// Calculate amount of missile damage
@@ -765,6 +774,7 @@ public:
 	fixed_t			pitch, roll;
 	FBlockNode		*BlockNode;			// links in blocks (if needed)
 	struct sector_t	*Sector;
+	subsector_t *		subsector;
 	fixed_t			floorz, ceilingz;	// closest together of contacted secs
 	fixed_t			dropoffz;		// killough 11/98: the lowest floor over all contacted Sectors.
 
@@ -843,6 +853,15 @@ public:
 	AActor			*BlockingMobj;	// Actor that blocked the last move
 	line_t			*BlockingLine;	// Line that blocked the last move
 
+	int PoisonDamage; // Damage received per tic from poison.
+	int PoisonDuration; // Duration left for receiving poison damage.
+	int PoisonPeriod; // How often poison damage is applied. (Every X tics.)
+
+	int PoisonDamageReceived; // Damage received per tic from poison.
+	int PoisonDurationReceived; // Duration left for receiving poison damage.
+	int PoisonPeriodReceived; // How often poison damage is applied. (Every X tics.)
+	TObjPtr<AActor> Poisoner; // Last source of received poison damage.
+
 	// a linked list of sectors where this object appears
 	struct msecnode_t	*touching_sectorlist;				// phares 3/14/98
 
@@ -882,8 +901,9 @@ public:
 	FState *MeleeState;
 	FState *MissileState;
 
-	// [RH] The dialogue to show when this actor is "used."
-	FStrifeDialogueNode *Conversation;
+	
+	int ConversationRoot;				// THe root of the current dialogue
+	FStrifeDialogueNode *Conversation;	// [RH] The dialogue to show when this actor is "used."
 
 	// [RH] Decal(s) this weapon/projectile generates on impact.
 	FDecalBase *DecalGenerator;

@@ -340,6 +340,7 @@ struct FMapThing
 	DWORD		flags;
 	int			special;
 	int			args[5];
+	int			Conversation;
 
 	void Serialize (FArchive &);
 };

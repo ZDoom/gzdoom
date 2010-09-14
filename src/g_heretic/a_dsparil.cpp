@@ -139,7 +139,7 @@ void P_DSparilTeleport (AActor *actor)
 	DSpotState *state = DSpotState::GetSpotState();
 	if (state == NULL) return;
 
-	spot = state->GetSpotWithMinDistance(PClass::FindClass("BossSpot"), actor->x, actor->y, 128*FRACUNIT);
+	spot = state->GetSpotWithMinMaxDistance(PClass::FindClass("BossSpot"), actor->x, actor->y, 128*FRACUNIT, 0);
 	if (spot == NULL) return;
 
 	prevX = actor->x;

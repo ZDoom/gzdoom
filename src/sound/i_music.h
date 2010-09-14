@@ -37,13 +37,14 @@
 #include "doomdef.h"
 
 class FileReader;
+struct FOptionValues;
 
 //
 //	MUSIC I/O
 //
 void I_InitMusic ();
 void I_ShutdownMusic ();
-void I_BuildMIDIMenuList (struct value_t **values, float *numValues);
+void I_BuildMIDIMenuList (FOptionValues *);
 void I_UpdateMusic ();
 
 // Volume.
@@ -98,6 +99,9 @@ public:
 	virtual FString GetStats();
 	virtual MusInfo *GetOPLDumper(const char *filename);
 	virtual MusInfo *GetWaveDumper(const char *filename, int rate);
+	virtual void FluidSettingInt(const char *setting, int value);			// FluidSynth settings
+	virtual void FluidSettingNum(const char *setting, double value);		// "
+	virtual void FluidSettingStr(const char *setting, const char *value);	// "
 
 	enum EState
 	{

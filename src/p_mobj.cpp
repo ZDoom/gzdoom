@@ -172,6 +172,7 @@ IMPLEMENT_POINTY_CLASS (AActor)
  DECLARE_POINTER (Inventory)
  DECLARE_POINTER (LastHeard)
  DECLARE_POINTER (master)
+ DECLARE_POINTER (Poisoner)
 END_POINTERS
 
 AActor::~AActor ()
@@ -346,6 +347,11 @@ void AActor::Serialize (FArchive &arc)
 			WeaveIndexZ = 0;
 		}
 	}
+	if (SaveVersion >= 2450)
+	{
+		arc << PoisonDamageReceived << PoisonDurationReceived << PoisonPeriodReceived << Poisoner;
+		arc << PoisonDamage << PoisonDuration << PoisonPeriod;
+	}
 
 	// Skip past uservar array in old savegames
 	if (SaveVersion < 1933)
@@ -355,65 +361,24 @@ void AActor::Serialize (FArchive &arc)
 			arc << foo;
 	}
 
-	if (arc.IsStoring ())
+	if (SaveVersion > 2560)
 	{
-		int convnum = 0;
-		unsigned int i;
-
-		if (Conversation != NULL)
-		{
-			for (i = 0; i < StrifeDialogues.Size(); ++i)
-			{
-				if (StrifeDialogues[i] == GetDefault()->Conversation)
-				{
-					break;
-				}
-			}
-			for (; i + convnum < StrifeDialogues.Size(); ++convnum)
-			{
-				if (StrifeDialogues[i + convnum] == Conversation)
-				{
-					break;
-				}
-			}
-			if (i + convnum < StrifeDialogues.Size())
-			{
-				convnum++;
-			}
-			else
-			{
-				convnum = 0;
-			}
-		}
-		arc.WriteCount (convnum);
+		arc << ConversationRoot << Conversation;
 	}
-	else
+	else	// old code which uses relative indexing.
 	{
 		int convnum;
-		unsigned int i;
 
 		convnum = arc.ReadCount();
-		if (convnum == 0 || GetDefault()->Conversation == NULL)
+		if (GetConversation(GetClass()->TypeName) == -1)
 		{
 			Conversation = NULL;
+			ConversationRoot = -1;
 		}
 		else
 		{
-			for (i = 0; i < StrifeDialogues.Size(); ++i)
-			{
-				if (StrifeDialogues[i] == GetDefault()->Conversation)
-				{
-					break;
-				}
-			}
-			if (i + convnum <= StrifeDialogues.Size())
-			{
-				Conversation = StrifeDialogues[i + convnum - 1];
-			}
-			else
-			{
-				Conversation = GetDefault()->Conversation;
-			}
+			// This cannot be restored anymore.
+			I_Error("Cannot load old savegames with active dialogues");
 		}
 	}
 
@@ -1046,7 +1011,7 @@ bool AActor::Grind(bool items)
 
 			if (i != NULL)
 			{
-				i = i->ActorInfo->GetReplacement()->Class;
+				i = i->GetReplacement();
 
 				const AActor *defaults = GetDefaultByType (i);
 				if (defaults->SpawnState == NULL ||
@@ -1485,8 +1450,8 @@ bool AActor::CanSeek(AActor *target) const
 	if (target->flags5 & MF5_CANTSEEK) return false;
 	if ((flags2 & MF2_DONTSEEKINVISIBLE) && 
 		((target->flags & MF_SHADOW) || 
-		 target->renderflags & RF_INVISIBLE || 
-		 target->RenderStyle.IsVisible(target->alpha)
+		 (target->renderflags & RF_INVISIBLE) || 
+		 !target->RenderStyle.IsVisible(target->alpha)
 		)
 	   ) return false;
 	return true;
@@ -1560,7 +1525,7 @@ bool P_SeekerMissile (AActor *actor, angle_t thresh, angle_t turnMax, bool preci
 	}
 	else
 	{
-		angle_t pitch;
+		angle_t pitch = 0;
 		if (!(actor->flags3 & (MF3_FLOORHUGGER|MF3_CEILINGHUGGER)))
 		{ // Need to seek vertically
 			double dist = MAX(1.0, FVector2(target->x - actor->x, target->y - actor->y).Length());
@@ -3172,41 +3137,27 @@ void AActor::Tick ()
 			velz <= 0 &&
 			floorz == z)
 		{
-			const secplane_t * floorplane = &floorsector->floorplane;
-			static secplane_t copyplane;
+			secplane_t floorplane = floorsector->floorplane;
 
 #ifdef _3DFLOORS
 			// Check 3D floors as well
-			if (floorsector->e)	// apparently this can be called when the data is already gone-
-			for(unsigned int i=0;i<floorsector->e->XFloor.ffloors.Size();i++)
-			{
-				F3DFloor * rover= floorsector->e->XFloor.ffloors[i];
-				if(!(rover->flags & FF_SOLID) || !(rover->flags & FF_EXISTS)) continue;
-
-				if (rover->top.plane->ZatPoint(x, y) == floorz)
-				{
-					copyplane = *rover->top.plane;
-					if (copyplane.c<0) copyplane.FlipVert();
-					floorplane = &copyplane;
-					break;
-				}
-			}
+			floorplane = P_FindFloorPlane(floorsector, x, y, floorz);
 #endif
 
-			if (floorplane->c < STEEPSLOPE &&
-				floorplane->ZatPoint (x, y) <= floorz)
+			if (floorplane.c < STEEPSLOPE &&
+				floorplane.ZatPoint (x, y) <= floorz)
 			{
 				const msecnode_t *node;
 				bool dopush = true;
 
-				if (floorplane->c > STEEPSLOPE*2/3)
+				if (floorplane.c > STEEPSLOPE*2/3)
 				{
 					for (node = touching_sectorlist; node; node = node->m_tnext)
 					{
 						const sector_t *sec = node->m_sector;
 						if (sec->floorplane.c >= STEEPSLOPE)
 						{
-							if (floorplane->ZatPoint (x, y) >= z - MaxStepHeight)
+							if (floorplane.ZatPoint (x, y) >= z - MaxStepHeight)
 							{
 								dopush = false;
 								break;
@@ -3216,8 +3167,8 @@ void AActor::Tick ()
 				}
 				if (dopush)
 				{
-					velx += floorplane->a;
-					vely += floorplane->b;
+					velx += floorplane.a;
+					vely += floorplane.b;
 				}
 			}
 		}
@@ -3313,6 +3264,18 @@ void AActor::Tick ()
 		if (player && (player->cheats & CF_PREDICTING))
 		{
 			return;
+		}
+
+		// Check for poison damage, but only once per PoisonPeriod tics (or once per second if none).
+		if (PoisonDurationReceived && (level.time % (PoisonPeriodReceived ? PoisonPeriodReceived : TICRATE) == 0))
+		{
+			P_DamageMobj(this, NULL, Poisoner, PoisonDamageReceived, NAME_Poison, 0);
+
+			--PoisonDurationReceived;
+
+			// Must clear damage when duration is done, otherwise it
+			// could be added to with ADDITIVEPOISONDAMAGE.
+			if (!PoisonDurationReceived) PoisonDamageReceived = 0;
 		}
 	}
 
@@ -3478,6 +3441,7 @@ bool AActor::UpdateWaterLevel (fixed_t oldz, bool dosplash)
 	return false;	// we did the splash ourselves
 }
 
+
 //==========================================================================
 //
 // P_SpawnMobj
@@ -3497,12 +3461,23 @@ AActor *AActor::StaticSpawn (const PClass *type, fixed_t ix, fixed_t iy, fixed_t
 	}
 
 	if (allowreplacement)
-		type = type->ActorInfo->GetReplacement()->Class;
+		type = type->GetReplacement();
 
 
 	AActor *actor;
 	
 	actor = static_cast<AActor *>(const_cast<PClass *>(type)->CreateNew ());
+
+	// Set default dialogue
+	actor->ConversationRoot = GetConversation(actor->GetClass()->TypeName);
+	if (actor->ConversationRoot != -1)
+	{
+		actor->Conversation = StrifeDialogues[actor->ConversationRoot];
+	}
+	else
+	{
+		actor->Conversation = NULL;
+	}
 
 	actor->x = actor->PrevX = ix;
 	actor->y = actor->PrevY = iy;
@@ -4322,7 +4297,7 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	{
 		// Handle decorate replacements explicitly here
 		// to check for missing frames in the replacement object.
-		i = i->ActorInfo->GetReplacement()->Class;
+		i = i->GetReplacement();
 
 		const AActor *defaults = GetDefaultByType (i);
 		if (defaults->SpawnState == NULL ||
@@ -4419,6 +4394,19 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	mobj->AddToHash ();
 
 	mobj->PrevAngle = mobj->angle = (DWORD)((mthing->angle * UCONST64(0x100000000)) / 360);
+
+	// Check if this actor's mapthing has a conversation defined
+	if (mthing->Conversation > 0)
+	{
+		// Make sure that this does not partially overwrite the default dialogue settings.
+		int root = GetConversation(mthing->Conversation);
+		if (root != -1)
+		{
+			mobj->ConversationRoot = root;
+			mobj->Conversation = StrifeDialogues[mobj->ConversationRoot];
+		}
+	}
+
 	mobj->BeginPlay ();
 	if (!(mobj->ObjectFlags & OF_EuthanizeMe))
 	{
@@ -4511,7 +4499,7 @@ void P_SpawnBlood (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int damage, AAc
 	if (bloodcls!=NULL && bloodtype <= 1)
 	{
 		z += pr_spawnblood.Random2 () << 10;
-		th = Spawn (bloodcls, x, y, z, ALLOW_REPLACE);
+		th = Spawn (bloodcls, x, y, z, NO_REPLACE); // GetBloodType already performed the replacement
 		th->velz = FRACUNIT*2;
 		th->angle = dir;
 		if (gameinfo.gametype & GAME_DoomChex)
@@ -4574,7 +4562,7 @@ void P_BloodSplatter (fixed_t x, fixed_t y, fixed_t z, AActor *originator)
 	{
 		AActor *mo;
 
-		mo = Spawn(bloodcls, x, y, z, ALLOW_REPLACE);
+		mo = Spawn(bloodcls, x, y, z, NO_REPLACE); // GetBloodType already performed the replacement
 		mo->target = originator;
 		mo->velx = pr_splatter.Random2 () << 10;
 		mo->vely = pr_splatter.Random2 () << 10;
@@ -4615,7 +4603,7 @@ void P_BloodSplatter2 (fixed_t x, fixed_t y, fixed_t z, AActor *originator)
 		x += ((pr_splat()-128)<<11);
 		y += ((pr_splat()-128)<<11);
 
-		mo = Spawn (bloodcls, x, y, z, ALLOW_REPLACE);
+		mo = Spawn (bloodcls, x, y, z, NO_REPLACE); // GetBloodType already performed the replacement
 		mo->target = originator;
 
 		// colorize the blood!
@@ -4654,7 +4642,7 @@ void P_RipperBlood (AActor *mo, AActor *bleeder)
 	if (bloodcls!=NULL && bloodtype <= 1)
 	{
 		AActor *th;
-		th = Spawn (bloodcls, x, y, z, ALLOW_REPLACE);
+		th = Spawn (bloodcls, x, y, z, NO_REPLACE); // GetBloodType already performed the replacement
 		if (gameinfo.gametype == GAME_Heretic)
 			th->flags |= MF_NOGRAVITY;
 		th->velx = mo->velx >> 1;
@@ -4716,6 +4704,20 @@ bool P_HitWater (AActor * thing, sector_t * sec, fixed_t x, fixed_t y, fixed_t z
 	if (z == FIXED_MIN) z = thing->z;
 	// don't splash above the object
 	if (checkabove && z > thing->z + (thing->height >> 1)) return false;
+
+#if 0 // needs some rethinking before activation
+
+	// This avoids spawning splashes on invisible self referencing sectors.
+	// For network consistency do this only in single player though because
+	// it is not guaranteed that all players have GL nodes loaded.
+	if (!multiplayer && thing->subsector->sector != thing->subsector->render_sector)
+	{
+		fixed_t zs = thing->subsector->sector->floorplane.ZatPoint(x, y);
+		fixed_t zr = thing->subsector->render_sector->floorplane.ZatPoint(x, y);
+
+		if (zs > zr && thing->z >= zs) return false;
+	}
+#endif
 
 #ifdef _3DFLOORS
 	for(unsigned int i=0;i<sec->e->XFloor.ffloors.Size();i++)
@@ -4835,7 +4837,7 @@ bool P_HitFloor (AActor *thing)
 	{
 		thing->flags6 &= ~MF6_ARMED; // Disarm
 		P_DamageMobj (thing, NULL, NULL, thing->health, NAME_Crush, DMG_FORCED);  // kill object
-		return true;
+		return false;
 	}
 
 	if (thing->flags2 & MF2_FLOATBOB || thing->flags3 & MF3_DONTSPLASH)
@@ -4961,7 +4963,7 @@ bool P_CheckMissileSpawn (AActor* th)
 		bool MBFGrenade = (!(th->flags & MF_MISSILE) || (th->BounceFlags & BOUNCE_MBF));
 
 		// killough 3/15/98: no dropoff (really = don't care for missiles)
-		if (!(P_TryMove (th, th->x, th->y, false, false, tm)))
+		if (!(P_TryMove (th, th->x, th->y, false, NULL, tm)))
 		{
 			// [RH] Don't explode ripping missiles that spawn inside something
 			if (th->BlockingMobj == NULL || !(th->flags2 & MF2_RIP) || (th->BlockingMobj->flags5 & MF5_DONTRIP))
@@ -5444,10 +5446,10 @@ int AActor::DoSpecialDamage (AActor *target, int damage)
 	{
 		if (target->player)
 		{
-			int poisondamage = GetClass()->Meta.GetMetaInt(AMETA_PoisonDamage);
-			if (poisondamage > 0)
+			// Only do this for old style poison damage.
+			if (PoisonDamage > 0 && PoisonDuration == INT_MIN)
 			{
-				P_PoisonPlayer (target->player, this, this->target, poisondamage);
+				P_PoisonPlayer (target->player, this, this->target, PoisonDamage);
 				damage >>= 1;
 			}
 		}

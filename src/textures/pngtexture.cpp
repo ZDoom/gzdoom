@@ -202,7 +202,7 @@ FPNGTexture::FPNGTexture (FileReader &lump, int lumpnum, const FString &filename
 	{
 		DWORD palette[256];
 		BYTE pngpal[256][3];
-	};
+	} p;
 	BYTE trans[256];
 	bool havetRNS = false;
 	DWORD len, id;
@@ -260,14 +260,14 @@ FPNGTexture::FPNGTexture (FileReader &lump, int lumpnum, const FString &filename
 
 		case MAKE_ID('P','L','T','E'):
 			PaletteSize = MIN<int> (len / 3, 256);
-			lump.Read (pngpal, PaletteSize * 3);
+			lump.Read (p.pngpal, PaletteSize * 3);
 			if (PaletteSize * 3 != (int)len)
 			{
 				lump.Seek (len - PaletteSize * 3, SEEK_CUR);
 			}
 			for (i = PaletteSize - 1; i >= 0; --i)
 			{
-				palette[i] = MAKERGB(pngpal[i][0], pngpal[i][1], pngpal[i][2]);
+				p.palette[i] = MAKERGB(p.pngpal[i][0], p.pngpal[i][1], p.pngpal[i][2]);
 			}
 			break;
 
@@ -314,7 +314,7 @@ FPNGTexture::FPNGTexture (FileReader &lump, int lumpnum, const FString &filename
 
 	case 3:		// Paletted
 		PaletteMap = new BYTE[PaletteSize];
-		GPalette.MakeRemap (palette, PaletteMap, trans, PaletteSize);
+		GPalette.MakeRemap (p.palette, PaletteMap, trans, PaletteSize);
 		for (i = 0; i < PaletteSize; ++i)
 		{
 			if (trans[i] == 0)

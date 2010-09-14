@@ -118,6 +118,7 @@ static FCompatOption Options[] =
 	{ "spritesort",				COMPATF_SPRITESORT, 0 },
 	{ "hitscan",				COMPATF_HITSCAN, 0 },
 	{ "lightlevel",				COMPATF_LIGHT, 0 },
+	{ "polyobj",				COMPATF_POLYOBJ, 0 },
 	{ NULL, 0, 0 }
 };
 
@@ -185,7 +186,7 @@ void ParseCompatibility()
 		} while (!sc.Compare("{"));
 		flags.CompatFlags = 0;
 		flags.BCompatFlags = 0;
-		flags.ExtCommandIndex = -1;
+		flags.ExtCommandIndex = ~0u;
 		while (sc.GetString())
 		{
 			if ((i = sc.MatchString(&Options[0].Name, sizeof(*Options))) >= 0)
@@ -195,7 +196,7 @@ void ParseCompatibility()
 			}
 			else if (sc.Compare("clearlineflags"))
 			{
-				if (flags.ExtCommandIndex == -1) flags.ExtCommandIndex = CompatParams.Size();
+				if (flags.ExtCommandIndex == ~0u) flags.ExtCommandIndex = CompatParams.Size();
 				CompatParams.Push(CP_CLEARFLAGS);
 				sc.MustGetNumber();
 				CompatParams.Push(sc.Number);
@@ -204,7 +205,7 @@ void ParseCompatibility()
 			}
 			else if (sc.Compare("setlineflags"))
 			{
-				if (flags.ExtCommandIndex == -1) flags.ExtCommandIndex = CompatParams.Size();
+				if (flags.ExtCommandIndex == ~0u) flags.ExtCommandIndex = CompatParams.Size();
 				CompatParams.Push(CP_SETFLAGS);
 				sc.MustGetNumber();
 				CompatParams.Push(sc.Number);
@@ -213,7 +214,7 @@ void ParseCompatibility()
 			}
 			else if (sc.Compare("setlinespecial"))
 			{
-				if (flags.ExtCommandIndex == -1) flags.ExtCommandIndex = CompatParams.Size();
+				if (flags.ExtCommandIndex == ~0u) flags.ExtCommandIndex = CompatParams.Size();
 				CompatParams.Push(CP_SETSPECIAL);
 				sc.MustGetNumber();
 				CompatParams.Push(sc.Number);
@@ -232,7 +233,7 @@ void ParseCompatibility()
 				break;
 			}
 		}
-		if (flags.ExtCommandIndex != -1) 
+		if (flags.ExtCommandIndex != ~0u) 
 		{
 			CompatParams.Push(CP_END);
 		}
@@ -266,6 +267,19 @@ void CheckCompatibility(MapData *map)
 		ib_compatflags = 0;
 		ii_compatparams = -1;
 	}
+	else if (Wads.GetLumpFile(map->lumpnum) == 1 && (gameinfo.flags & GI_COMPATPOLY1) && Wads.CheckLumpName(map->lumpnum, "MAP36"))
+	{
+		ii_compatflags = COMPATF_POLYOBJ;
+		ib_compatflags = 0;
+		ii_compatparams = -1;
+	}
+	else if (Wads.GetLumpFile(map->lumpnum) == 2 && (gameinfo.flags & GI_COMPATPOLY2) && Wads.CheckLumpName(map->lumpnum, "MAP47"))
+	{
+		ii_compatflags = COMPATF_POLYOBJ;
+		ib_compatflags = 0;
+		ii_compatparams = -1;
+	}
+
 	else
 	{
 		map->GetChecksum(md5.Bytes);

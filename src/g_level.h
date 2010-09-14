@@ -486,6 +486,8 @@ void G_InitNew (const char *mapname, bool bTitleLevel);
 // A normal game starts at map 1,
 // but a warp test can start elsewhere
 void G_DeferedInitNew (const char *mapname, int skill = -1);
+struct FGameStartup;
+void G_DeferedInitNew (FGameStartup *gs);
 
 void G_ExitLevel (int position, bool keepFacing);
 void G_SecretExitLevel (int position);
@@ -548,7 +550,8 @@ enum ESkillProperty
 	SKILLP_ACSReturn,
 	SKILLP_MonsterHealth,
 	SKILLP_FriendlyHealth,
-	SKILLP_NoPain
+	SKILLP_NoPain,
+	SKILLP_ArmorFactor
 };
 int G_SkillProperty(ESkillProperty prop);
 const char * G_SkillName();
@@ -583,6 +586,7 @@ struct FSkillInfo
 	fixed_t MonsterHealth;
 	fixed_t FriendlyHealth;
 	bool NoPain;
+	fixed_t ArmorFactor;
 
 	FSkillInfo() {}
 	FSkillInfo(const FSkillInfo &other)
@@ -601,6 +605,16 @@ struct FSkillInfo
 extern TArray<FSkillInfo> AllSkills;
 extern int DefaultSkill;
 
+struct FEpisode
+{
+	FString mEpisodeName;
+	FString mEpisodeMap;
+	FString mPicName;
+	char mShortcut;
+	bool mNoSkill;
+};
+
+extern TArray<FEpisode> AllEpisodes;
 
 
 #endif //__G_LEVEL_H__

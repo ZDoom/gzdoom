@@ -115,8 +115,8 @@ CVAR (Bool, snd_waterreverb, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (String, snd_resampler, "Linear", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (String, snd_speakermode, "Auto", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (String, snd_output_format, "PCM-16", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-CVAR (String, snd_midipatchset, "", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool, snd_profile, false, 0)
+CVAR (String, snd_midipatchset, "", CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 
 // Underwater low-pass filter cutoff frequency. Set to 0 to disable the filter.
 CUSTOM_CVAR (Float, snd_waterlp, 250, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
@@ -706,7 +706,8 @@ bool FMODSoundRenderer::Init()
 
 	if (!ShowedBanner)
 	{
-		Printf("FMOD Sound System, copyright © Firelight Technologies Pty, Ltd., 1994-2009.\n");
+		// '\xa9' is the copyright symbol in the Windows-1252 code page.
+		Printf("FMOD Sound System, copyright \xa9 Firelight Technologies Pty, Ltd., 1994-2009.\n");
 		Printf("Loaded FMOD version %x.%02x.%02x\n", version >> 16, (version >> 8) & 255, version & 255);
 		ShowedBanner = true;
 	}
@@ -1330,10 +1331,10 @@ FString FMODSoundRenderer::GatherStats()
 #endif
 
 	out.Format ("%d channels,"TEXTCOLOR_YELLOW"%5.2f"TEXTCOLOR_NORMAL"%% CPU "
-		"(DSP:"TEXTCOLOR_YELLOW"%2.2f"TEXTCOLOR_NORMAL"%%  "
-		"Stream:"TEXTCOLOR_YELLOW"%2.2f"TEXTCOLOR_NORMAL"%%  "
-		"Geometry:"TEXTCOLOR_YELLOW"%2.2f"TEXTCOLOR_NORMAL"%%  "
-		"Update:"TEXTCOLOR_YELLOW"%2.2f"TEXTCOLOR_NORMAL"%%)",
+		"(DSP:"TEXTCOLOR_YELLOW"%5.2f"TEXTCOLOR_NORMAL"%% "
+		"Stream:"TEXTCOLOR_YELLOW"%5.2f"TEXTCOLOR_NORMAL"%% "
+		"Geometry:"TEXTCOLOR_YELLOW"%5.2f"TEXTCOLOR_NORMAL"%% "
+		"Update:"TEXTCOLOR_YELLOW"%5.2f"TEXTCOLOR_NORMAL"%%)",
 		channels, total, dsp, stream, geometry, update);
 	return out;
 }
@@ -1458,6 +1459,88 @@ const char *GetTagData(FMOD::Sound *sound, const char *tag_name)
 
 //==========================================================================
 //
+// SetCustomLoopPts
+//
+// Sets up custom sound loops by checking for these tags:
+//    LOOP_START
+//    LOOP_END
+//    LOOP_BIDI
+//
+//==========================================================================
+
+static void SetCustomLoopPts(FMOD::Sound *sound)
+{
+#if 0
+	FMOD_TAG tag;
+	int numtags;
+	if (FMOD_OK == stream->getNumTags(&numtags, NULL))
+	{
+		for (int i = 0; i < numtags; ++i)
+		{
+			if (FMOD_OK == sound->getTag(NULL, i, &tag))
+			{
+				Printf("Tag %2d. %d %s = %s\n", i, tag.datatype, tag.name, tag.data);
+			}
+		}
+	}
+#endif
+	const char *tag_data;
+	unsigned int looppt[2];
+	bool looppt_as_samples[2], have_looppt[2] = { false };
+	static const char *const loop_tags[2] = { "LOOP_START", "LOOP_END" };
+
+	for (int i = 0; i < 2; ++i)
+	{
+		if (NULL != (tag_data = GetTagData(sound, loop_tags[i])))
+		{
+			if (S_ParseTimeTag(tag_data, &looppt_as_samples[i], &looppt[i]))
+			{
+				have_looppt[i] = true;
+			}
+			else
+			{
+				Printf("Invalid %s tag: '%s'\n", loop_tags[i], tag_data);
+			}
+		}
+	}
+	if (have_looppt[0] && !have_looppt[1])
+	{ // Have a start tag, but not an end tag: End at the end of the song.
+		have_looppt[1] = (FMOD_OK == sound->getLength(&looppt[1], FMOD_TIMEUNIT_PCM));
+		looppt_as_samples[1] = true;
+	}
+	else if (!have_looppt[0] && have_looppt[1])
+	{ // Have an end tag, but no start tag: Start at beginning of the song.
+		looppt[0] = 0;
+		looppt_as_samples[0] = true;
+		have_looppt[0] = true;
+	}
+	if (have_looppt[0] && have_looppt[1])
+	{ // Have both loop points: Try to set the loop.
+		FMOD_RESULT res = sound->setLoopPoints(
+			looppt[0], looppt_as_samples[0] ? FMOD_TIMEUNIT_PCM : FMOD_TIMEUNIT_MS,
+			looppt[1] - 1, looppt_as_samples[1] ? FMOD_TIMEUNIT_PCM : FMOD_TIMEUNIT_MS);
+		if (res != FMOD_OK)
+		{
+			Printf("Setting custom loop points failed. Error %d\n", res);
+		}
+	}
+	// Check for a bi-directional loop.
+	if (NULL != (tag_data = GetTagData(sound, "LOOP_BIDI")) &&
+		(stricmp(tag_data, "on") == 0 ||
+		 stricmp(tag_data, "true") == 0 ||
+		 stricmp(tag_data, "yes") == 0 ||
+		 stricmp(tag_data, "1") == 0))
+	{
+		FMOD_MODE mode;
+		if (FMOD_OK == (sound->getMode(&mode)))
+		{
+			sound->setMode((mode & ~(FMOD_LOOP_OFF | FMOD_LOOP_NORMAL)) | FMOD_LOOP_BIDI);
+		}
+	}
+}
+
+//==========================================================================
+//
 // FMODSoundRenderer :: OpenStream
 //
 // Creates a streaming sound from a file on disk.
@@ -1517,61 +1600,7 @@ SoundStream *FMODSoundRenderer::OpenStream(const char *filename_or_data, int fla
 	}
 	if (result == FMOD_OK)
 	{
-		// Handle custom loop starts by checking for a "loop_start" tag.
-#if 0
-		FMOD_TAG tag;
-		int numtags;
-		if (FMOD_OK == stream->getNumTags(&numtags, NULL))
-		{
-			for (int i = 0; i < numtags; ++i)
-			{
-				if (FMOD_OK == stream->getTag(NULL, i, &tag))
-				{
-					Printf("Tag %2d. %d %s = %s\n", i, tag.datatype, tag.name, tag.data);
-				}
-			}
-		}
-#endif
-		const char *tag_data;
-		unsigned int looppt[2];
-		bool looppt_as_samples[2], have_looppt[2] = { false };
-		static const char *const loop_tags[2] = { "LOOP_START", "LOOP_END" };
-
-		for (int i = 0; i < 2; ++i)
-		{
-			if (NULL != (tag_data = GetTagData(stream, loop_tags[i])))
-			{
-				if (S_ParseTimeTag(tag_data, &looppt_as_samples[i], &looppt[i]))
-				{
-					have_looppt[i] = true;
-				}
-				else
-				{
-					Printf("Invalid %s tag: '%s'\n", loop_tags[i], tag_data);
-				}
-			}
-		}
-		if (have_looppt[0] && !have_looppt[1])
-		{ // Have a start tag, but not an end tag: End at the end of the song.
-			have_looppt[1] = (FMOD_OK == stream->getLength(&looppt[1], FMOD_TIMEUNIT_PCM));
-			looppt_as_samples[1] = true;
-		}
-		else if (!have_looppt[0] && have_looppt[1])
-		{ // Have an end tag, but no start tag: Start at beginning of the song.
-			looppt[0] = 0;
-			looppt_as_samples[0] = true;
-			have_looppt[0] = true;
-		}
-		if (have_looppt[0] && have_looppt[1])
-		{ // Have both loop points: Try to set the loop.
-			FMOD_RESULT res = stream->setLoopPoints(
-				looppt[0], looppt_as_samples[0] ? FMOD_TIMEUNIT_PCM : FMOD_TIMEUNIT_MS,
-				looppt[1] - 1, looppt_as_samples[1] ? FMOD_TIMEUNIT_PCM : FMOD_TIMEUNIT_MS);
-			if (res != FMOD_OK)
-			{
-				Printf("Setting custom song loop points for song failed. Error %d\n", res);
-			}
-		}
+		SetCustomLoopPts(stream);
 		return new FMODStreamCapsule(stream, this, url ? filename_or_data : NULL);
 	}
 	return NULL;
@@ -1613,7 +1642,15 @@ FISoundChannel *FMODSoundRenderer::StartSound(SoundHandle sfx, float vol, int pi
 		mode = (mode & ~FMOD_3D) | FMOD_2D;
 		if (flags & SNDF_LOOP)
 		{
-			mode = (mode & ~FMOD_LOOP_OFF) | FMOD_LOOP_NORMAL;
+			mode &= ~FMOD_LOOP_OFF;
+			if (!(mode & (FMOD_LOOP_NORMAL | FMOD_LOOP_BIDI)))
+			{
+				mode |= FMOD_LOOP_NORMAL;
+			}
+		}
+		else
+		{
+			mode |= FMOD_LOOP_OFF;
 		}
 		chan->setMode(mode);
 		chan->setChannelGroup((flags & SNDF_NOPAUSE) ? SfxGroup : PausableSfx);
@@ -1713,7 +1750,16 @@ FISoundChannel *FMODSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener *
 		}
 		if (flags & SNDF_LOOP)
 		{
-			mode = (mode & ~FMOD_LOOP_OFF) | FMOD_LOOP_NORMAL;
+			mode &= ~FMOD_LOOP_OFF;
+			if (!(mode & (FMOD_LOOP_NORMAL | FMOD_LOOP_BIDI)))
+			{
+				mode |= FMOD_LOOP_NORMAL;
+			}
+		}
+		else
+		{
+			// FMOD_LOOP_OFF overrides FMOD_LOOP_NORMAL and FMOD_LOOP_BIDI
+			mode |= FMOD_LOOP_OFF;
 		}
 		mode = SetChanHeadSettings(listener, chan, pos, !!(flags & SNDF_AREA), mode);
 		chan->setMode(mode);
@@ -1810,13 +1856,14 @@ bool FMODSoundRenderer::HandleChannelDelay(FMOD::Channel *chan, FISoundChannel *
 				// Clamp the position of looping sounds to be within the sound.
 				// If we try to start it several minutes past its normal end,
 				// FMOD doesn't like that.
+				// FIXME: Clamp this right for loops that don't cover the whole sound.
 				if (flags & SNDF_LOOP)
 				{
 					FMOD::Sound *sound;
 					if (FMOD_OK == chan->getCurrentSound(&sound))
 					{
 						unsigned int len;
-						if (FMOD_OK == sound->getLength(&len, FMOD_TIMEUNIT_MS) && len)
+						if (FMOD_OK == sound->getLength(&len, FMOD_TIMEUNIT_MS) && len != 0)
 						{
 							difftime %= len;
 						}
@@ -2358,6 +2405,7 @@ SoundHandle FMODSoundRenderer::LoadSound(BYTE *sfxdata, int length)
 		DPrintf("Failed to allocate sample: Error %d\n", result);
 		return retval;
 	}
+	SetCustomLoopPts(sample);
 	retval.data = sample;
 	return retval;
 }

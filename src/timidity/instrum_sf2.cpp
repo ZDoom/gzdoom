@@ -1035,11 +1035,11 @@ void SFFile::CheckZones(int start, int stop, bool instr)
 		// Check for swapped ranges. (Should we fix them or ignore them?)
 		if (bag[i].KeyRange.Lo > bag[i].KeyRange.Hi)
 		{
-			swap(bag[i].KeyRange.Lo, bag[i].KeyRange.Hi);
+			swapvalues(bag[i].KeyRange.Lo, bag[i].KeyRange.Hi);
 		}
 		if (bag[i].VelRange.Lo > bag[i].VelRange.Hi)
 		{
-			swap(bag[i].VelRange.Lo, bag[i].VelRange.Hi);
+			swapvalues(bag[i].VelRange.Lo, bag[i].VelRange.Hi);
 		}
 	}
 }

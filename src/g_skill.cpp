@@ -80,6 +80,7 @@ void FMapInfoParser::ParseSkill ()
 	skill.MonsterHealth = FRACUNIT;
 	skill.FriendlyHealth = FRACUNIT;
 	skill.NoPain = false;
+	skill.ArmorFactor = FRACUNIT;
 
 	sc.MustGetString();
 	skill.Name = sc.String;
@@ -249,6 +250,12 @@ void FMapInfoParser::ParseSkill ()
 		{
 			skill.NoPain = true;
 		}
+		else if (sc.Compare("ArmorFactor"))
+		{
+			ParseAssign();
+			sc.MustGetFloat();
+			skill.ArmorFactor = FLOAT2FIXED(sc.Float);
+		}
 		else if (sc.Compare("DefaultSkill"))
 		{
 			if (DefaultSkill >= 0)
@@ -357,7 +364,10 @@ int G_SkillProperty(ESkillProperty prop)
 			return AllSkills[gameskill].FriendlyHealth;
 
 		case SKILLP_NoPain:			
-			return AllSkills[gameskill].NoPain;			
+			return AllSkills[gameskill].NoPain;	
+
+		case SKILLP_ArmorFactor:
+			return AllSkills[gameskill].ArmorFactor;
 		}
 	}
 	return 0;
@@ -435,6 +445,7 @@ FSkillInfo &FSkillInfo::operator=(const FSkillInfo &other)
 	MonsterHealth = other.MonsterHealth;
 	FriendlyHealth = other.FriendlyHealth;
 	NoPain = other.NoPain;
+	ArmorFactor = other.ArmorFactor;
 	return *this;
 }
 

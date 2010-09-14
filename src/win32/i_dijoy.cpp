@@ -21,7 +21,6 @@
 #include "doomdef.h"
 #include "doomstat.h"
 #include "win32iface.h"
-#include "m_menu.h"
 #include "templates.h"
 #include "gameconfigfile.h"
 #include "cmdlib.h"
@@ -236,8 +235,6 @@ protected:
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-extern void UpdateJoystickMenu();
-
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
@@ -246,7 +243,6 @@ static void MapAxis(FIntCVar &var, int num);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern menu_t JoystickMenu;
 extern LPDIRECTINPUT8 g_pdi;
 extern HWND Window;
 
@@ -629,7 +625,7 @@ bool FDInputJoystick::ReorderAxisPair(const GUID &xid, const GUID &yid, int pos)
 	}
 	if (x == pos + 1 && y == pos)
 	{ // Xbox 360 Controllers return them in this order.
-		swap(Axes[pos], Axes[pos + 1]);
+		swapvalues(Axes[pos], Axes[pos + 1]);
 	}
 	else if (x != pos || y != pos + 1)
 	{

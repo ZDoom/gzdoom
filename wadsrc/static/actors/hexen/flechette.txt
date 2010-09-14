@@ -105,6 +105,7 @@ ACTOR ArtiPoisonBag : Inventory 8000 native
 	Inventory.Icon "ARTIPSBG"
 	Inventory.PickupSound "misc/p_pkup"
 	Inventory.PickupMessage "$TXT_ARTIPOISONBAG"
+	Tag "$TAG_ARTIPOISONBAG"
 	States
 	{
 	Spawn:
@@ -118,6 +119,7 @@ ACTOR ArtiPoisonBag : Inventory 8000 native
 ACTOR ArtiPoisonBag1 : ArtiPoisonBag native
 {
 	Inventory.Icon "ARTIPSB1"
+	Tag "$TAG_ARTIPOISONBAG1"
 }
 
 // Poison Bag 2 (The Mage's) ------------------------------------------------
@@ -125,6 +127,7 @@ ACTOR ArtiPoisonBag1 : ArtiPoisonBag native
 ACTOR ArtiPoisonBag2 : ArtiPoisonBag native
 {
 	Inventory.Icon "ARTIPSB2"
+	Tag "$TAG_ARTIPOISONBAG2"
 }
 
 // Poison Bag 3 (The Fighter's) ---------------------------------------------
@@ -132,6 +135,7 @@ ACTOR ArtiPoisonBag2 : ArtiPoisonBag native
 ACTOR ArtiPoisonBag3 : ArtiPoisonBag native
 {
 	Inventory.Icon "ARTIPSB3"
+	Tag "$TAG_ARTIPOISONBAG3"
 }
 // Poison Cloud -------------------------------------------------------------
 

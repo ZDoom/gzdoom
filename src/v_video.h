@@ -133,6 +133,7 @@ enum
 class FFont;
 struct FRemapTable;
 class player_t;
+typedef uint32 angle_t;
 
 //
 // VIDEO
@@ -174,6 +175,11 @@ public:
 
 	// Fill an area with a texture
 	virtual void FlatFill (int left, int top, int right, int bottom, FTexture *src, bool local_origin=false);
+
+	// Fill a simple polygon with a texture
+	virtual void FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
+		double originx, double originy, double scalex, double scaley, angle_t rotation,
+		struct FDynamicColormap *colormap, int lightlevel);
 
 	// Set an area to a specified color
 	virtual void Clear (int left, int top, int right, int bottom, int palcolor, uint32 color);
@@ -398,6 +404,7 @@ public:
 	virtual FNativePalette *CreatePalette(FRemapTable *remap);
 
 	// Precaches or unloads a texture
+	virtual void GetHitlist(BYTE *hitlist);
 	virtual void PrecacheTexture(FTexture *tex, int cache);
 
 	// Screen wiping
@@ -405,6 +412,7 @@ public:
 	virtual void WipeEndScreen();
 	virtual bool WipeDo(int ticks);
 	virtual void WipeCleanup();
+	virtual int GetPixelDoubling() const { return 1; }
 
 	uint32 GetLastFPS() const { return LastCount; }
 
@@ -482,6 +490,7 @@ FString V_GetColorStringByName (const char *name);
 
 // Tries to get color by name, then by string
 int V_GetColor (const DWORD *palette, const char *str);
+void V_DrawFrame (int left, int top, int width, int height);
 
 #if defined(X86_ASM) || defined(X64_ASM)
 extern "C" void ASM_PatchPitch (void);

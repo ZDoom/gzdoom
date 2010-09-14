@@ -25,6 +25,7 @@
 #include "doomtype.h"
 
 struct line_t;
+struct node_t;
 
 class FBoundingBox
 {

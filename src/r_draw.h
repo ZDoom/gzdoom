@@ -91,8 +91,11 @@ extern void (*R_DrawShadedColumn)(void);
 //	Green/Red/Blue/Indigo shirts.
 extern void (*R_DrawTranslatedColumn)(void);
 
-// Span drawing for rows, floor/ceiling. No Sepctre effect needed.
+// Span drawing for rows, floor/ceiling. No Spectre effect needed.
 extern void (*R_DrawSpan)(void);
+void R_SetupSpanBits(FTexture *tex);
+void R_SetSpanColormap(BYTE *colormap);
+void R_SetSpanSource(const BYTE *pixels);
 
 // Span drawing for masked textures.
 extern void (*R_DrawSpanMasked)(void);

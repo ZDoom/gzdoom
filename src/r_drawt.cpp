@@ -1132,7 +1132,7 @@ void R_DrawMaskedColumnHoriz (const BYTE *column, const FTexture::Span *span, WO
 
 		if (sprflipvert)
 		{
-			swap (dc_yl, dc_yh);
+			swapvalues (dc_yl, dc_yh);
 		}
 
 		if (dc_yh >= mfloorclip[dc_x])
@@ -1213,8 +1213,8 @@ nextpost:
 		// instead of bottom-to-top.
 		while (front < back)
 		{
-			swap (front[0], back[0]);
-			swap (front[1], back[1]);
+			swapvalues (front[0], back[0]);
+			swapvalues (front[1], back[1]);
 			front += 2;
 			back -= 2;
 		}

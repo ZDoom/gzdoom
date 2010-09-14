@@ -216,6 +216,7 @@ ACTOR CorpseBloodDrip
 	Gravity 0.125
 	+MISSILE
 	+NOICEDEATH
+	DeathSound "Drip"
 	States
 	{
 	Spawn:

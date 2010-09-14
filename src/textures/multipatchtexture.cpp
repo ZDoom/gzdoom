@@ -189,7 +189,7 @@ protected:
 
 private:
 	void CheckForHacks ();
-	void ParsePatch(FScanner &sc, TexPart & part);
+	void ParsePatch(FScanner &sc, TexPart & part, bool silent);
 };
 
 //==========================================================================
@@ -970,7 +970,7 @@ void FTextureManager::AddTexturesLumps (int lump1, int lump2, int patcheslump)
 //
 //==========================================================================
 
-void FMultiPatchTexture::ParsePatch(FScanner &sc, TexPart & part)
+void FMultiPatchTexture::ParsePatch(FScanner &sc, TexPart & part, bool silent)
 {
 	FString patchname;
 	sc.MustGetString();
@@ -1011,7 +1011,7 @@ void FMultiPatchTexture::ParsePatch(FScanner &sc, TexPart & part)
 	}
 	if (part.Texture == NULL)
 	{
-		Printf("Unknown patch '%s' in texture '%s'\n", sc.String, Name);
+		if (!silent) Printf("Unknown patch '%s' in texture '%s'\n", sc.String, Name);
 	}
 	sc.MustGetStringName(",");
 	sc.MustGetNumber();
@@ -1164,6 +1164,14 @@ void FMultiPatchTexture::ParsePatch(FScanner &sc, TexPart & part)
 				bComplex |= (part.op != OP_COPY);
 				bTranslucentPatches = bComplex;
 			}
+			else if (sc.Compare("useoffsets"))
+			{
+				if (part.Texture != NULL)
+				{
+					part.OriginX -= part.Texture->LeftOffset;
+					part.OriginY -= part.Texture->TopOffset;
+				}
+			}
 		}
 	}
 	if (Mirror & 2)
@@ -1187,10 +1195,23 @@ FMultiPatchTexture::FMultiPatchTexture (FScanner &sc, int usetype)
 : Pixels (0), Spans(0), Parts(0), bRedirect(false), bTranslucentPatches(false)
 {
 	TArray<TexPart> parts;
+	bool bSilent = false;
 
 	bMultiPatch = true;
 	sc.SetCMode(true);
 	sc.MustGetString();
+	if (sc.Compare("optional"))
+	{
+		bSilent = true;
+		sc.MustGetString();
+		if (sc.Compare(","))
+		{
+			// this is not right. Apparently a texture named 'optional' is being defined right now...
+			sc.UnGet();
+			sc.String = "optional";
+			bSilent = false;
+		}
+	}
 	uppercopy(Name, sc.String);
 	Name[8] = 0;
 	sc.MustGetStringName(",");
@@ -1231,7 +1252,7 @@ FMultiPatchTexture::FMultiPatchTexture (FScanner &sc, int usetype)
 			else if (sc.Compare("Patch"))
 			{
 				TexPart part;
-				ParsePatch(sc, part);
+				ParsePatch(sc, part, bSilent);
 				if (part.Texture != NULL) parts.Push(part);
 				part.Texture = NULL;
 				part.Translation = NULL;

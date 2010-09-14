@@ -8,6 +8,7 @@ ACTOR PuzzSkull : PuzzleItem 9002
 	PuzzleItem.Number 0
 	Inventory.Icon ARTISKLL
 	Inventory.PickupMessage "$TXT_ARTIPUZZSKULL"
+	Tag "$TAG_ARTIPUZZSKULL"
 	States
 	{
 	Spawn:
@@ -26,6 +27,7 @@ ACTOR PuzzGemBig : PuzzleItem 9003
 	PuzzleItem.Number 1
 	Inventory.Icon ARTIBGEM
 	Inventory.PickupMessage "$TXT_ARTIPUZZGEMBIG"
+	Tag "$TAG_ARTIPUZZGEMBIG"
 	States
 	{
 	Spawn:
@@ -43,6 +45,7 @@ ACTOR PuzzGemRed : PuzzleItem 9004
 	PuzzleItem.Number 2
 	Inventory.Icon ARTIGEMR
 	Inventory.PickupMessage "$TXT_ARTIPUZZGEMRED"
+	Tag "$TAG_ARTIPUZZGEMRED"
 	States
 	{
 	Spawn:
@@ -61,6 +64,7 @@ ACTOR PuzzGemGreen1 : PuzzleItem 9005
 	PuzzleItem.Number 3
 	Inventory.Icon ARTIGEMG
 	Inventory.PickupMessage "$TXT_ARTIPUZZGEMGREEN1"
+	Tag "$TAG_ARTIPUZZGEMGREEN1"
 	States
 	{
 	Spawn:
@@ -79,6 +83,7 @@ ACTOR PuzzGemGreen2 : PuzzleItem 9009
 	PuzzleItem.Number 4
 	Inventory.Icon ARTIGMG2
 	Inventory.PickupMessage "$TXT_ARTIPUZZGEMGREEN2"
+	Tag "$TAG_ARTIPUZZGEMGREEN2"
 	States
 	{
 	Spawn:
@@ -97,6 +102,7 @@ ACTOR PuzzGemBlue1 : PuzzleItem 9006
 	PuzzleItem.Number 5
 	Inventory.Icon ARTIGEMB
 	Inventory.PickupMessage "$TXT_ARTIPUZZGEMBLUE1"
+	Tag "$TAG_ARTIPUZZGEMBLUE1"
 	States
 	{
 	Spawn:
@@ -115,6 +121,7 @@ ACTOR PuzzGemBlue2 : PuzzleItem 9010
 	PuzzleItem.Number 6
 	Inventory.Icon ARTIGMB2
 	Inventory.PickupMessage "$TXT_ARTIPUZZGEMBLUE2"
+	Tag "$TAG_ARTIPUZZGEMBLUE2"
 	States
 	{
 	Spawn:
@@ -133,6 +140,7 @@ ACTOR PuzzBook1 : PuzzleItem 9007
 	PuzzleItem.Number 7
 	Inventory.Icon ARTIBOK1
 	Inventory.PickupMessage "$TXT_ARTIPUZZBOOK1"
+	Tag "$TAG_ARTIPUZZBOOK1"
 	States
 	{
 	Spawn:
@@ -151,6 +159,7 @@ ACTOR PuzzBook2 : PuzzleItem 9008
 	PuzzleItem.Number 8
 	Inventory.Icon ARTIBOK2
 	Inventory.PickupMessage "$TXT_ARTIPUZZBOOK2"
+	Tag "$TAG_ARTIPUZZBOOK2"
 	States
 	{
 	Spawn:
@@ -169,6 +178,7 @@ ACTOR PuzzFlameMask : PuzzleItem 9014
 	PuzzleItem.Number 9
 	Inventory.Icon ARTISKL2
 	Inventory.PickupMessage "$TXT_ARTIPUZZSKULL2"
+	Tag "$TAG_ARTIPUZZSKULL2"
 	States
 	{
 	Spawn:
@@ -185,6 +195,7 @@ ACTOR PuzzFWeapon : PuzzleItem 9015
 	PuzzleItem.Number 10
 	Inventory.Icon ARTIFWEP
 	Inventory.PickupMessage "$TXT_ARTIPUZZFWEAPON"
+	Tag "$TAG_ARTIPUZZFWEAPON"
 	States
 	{
 	Spawn:
@@ -202,6 +213,7 @@ ACTOR PuzzCWeapon : PuzzleItem 9016
 	PuzzleItem.Number 11
 	Inventory.Icon ARTICWEP
 	Inventory.PickupMessage "$TXT_ARTIPUZZCWEAPON"
+	Tag "$TAG_ARTIPUZZCWEAPON"
 	States
 	{
 	Spawn:
@@ -219,6 +231,7 @@ ACTOR PuzzMWeapon : PuzzleItem 9017
 	PuzzleItem.Number 12
 	Inventory.Icon ARTIMWEP
 	Inventory.PickupMessage "$TXT_ARTIPUZZMWEAPON"
+	Tag "$TAG_ARTIPUZZMWEAPON"
 	States
 	{
 	Spawn:
@@ -235,6 +248,7 @@ ACTOR PuzzGear1 : PuzzleItem 9018
 	PuzzleItem.Number 13
 	Inventory.Icon ARTIGEAR
 	Inventory.PickupMessage "$TXT_ARTIPUZZGEAR"
+	Tag "$TAG_ARTIPUZZGEAR1"
 	States
 	{
 	Spawn:
@@ -252,6 +266,7 @@ ACTOR PuzzGear2 : PuzzleItem 9019
 	PuzzleItem.Number 14
 	Inventory.Icon ARTIGER2
 	Inventory.PickupMessage "$TXT_ARTIPUZZGEAR"
+	Tag "$TAG_ARTIPUZZGEAR2"
 	States
 	{
 	Spawn:
@@ -269,6 +284,7 @@ ACTOR PuzzGear3 : PuzzleItem 9020
 	PuzzleItem.Number 15
 	Inventory.Icon ARTIGER3
 	Inventory.PickupMessage "$TXT_ARTIPUZZGEAR"
+	Tag "$TAG_ARTIPUZZGEAR3"
 	States
 	{
 	Spawn:
@@ -286,6 +302,7 @@ ACTOR PuzzGear4 : PuzzleItem 9021
 	PuzzleItem.Number 16
 	Inventory.Icon ARTIGER4
 	Inventory.PickupMessage "$TXT_ARTIPUZZGEAR"
+	Tag "$TAG_ARTIPUZZGEAR4"
 	States
 	{
 	Spawn:

@@ -101,6 +101,85 @@ pic PTN1A0 tics 3
 pic PTN1B0 tics 3
 pic PTN1C0 tics 3
 
+// Hexen's player portraits
+texture optional P_FWALK1
+	pic P_FWALK1 tics 8
+	pic P_FWALK2 tics 8
+	pic P_FWALK3 tics 8
+	pic P_FWALK4 tics 8
+
+texture optional P_CWALK1
+	pic P_CWALK1 tics 8
+	pic P_CWALK2 tics 8
+	pic P_CWALK3 tics 8
+	pic P_CWALK4 tics 8
+
+texture optional P_MWALK1
+	pic P_MWALK1 tics 8
+	pic P_MWALK2 tics 8
+	pic P_MWALK3 tics 8
+	pic P_MWALK4 tics 8
+
+// Heretic's menu skulls
+texture optional M_SKL00
+	pic M_SKL00 tics 3
+	pic M_SKL01 tics 3
+	pic M_SKL02 tics 3
+	pic M_SKL03 tics 3
+	pic M_SKL04 tics 3
+	pic M_SKL05 tics 3
+	pic M_SKL06 tics 3
+	pic M_SKL07 tics 3
+	pic M_SKL08 tics 3
+	pic M_SKL09 tics 3
+	pic M_SKL10 tics 3
+	pic M_SKL11 tics 3
+	pic M_SKL12 tics 3
+	pic M_SKL13 tics 3
+	pic M_SKL14 tics 3
+	pic M_SKL15 tics 3
+	pic M_SKL16 tics 3
+	pic M_SKL17 tics 3
+	
+texture optional M_SKL01
+	pic M_SKL17 tics 3
+	pic M_SKL16 tics 3
+	pic M_SKL15 tics 3
+	pic M_SKL14 tics 3
+	pic M_SKL13 tics 3
+	pic M_SKL12 tics 3
+	pic M_SKL11 tics 3
+	pic M_SKL10 tics 3
+	pic M_SKL09 tics 3
+	pic M_SKL08 tics 3
+	pic M_SKL07 tics 3
+	pic M_SKL06 tics 3
+	pic M_SKL05 tics 3
+	pic M_SKL04 tics 3
+	pic M_SKL03 tics 3
+	pic M_SKL02 tics 3
+	pic M_SKL01 tics 3
+	pic M_SKL00 tics 3
+	
+// Hexen's Fire Bulls
+texture optional FBULA0
+	pic FBULA0 tics 5
+	pic FBULB0 tics 5
+	pic FBULC0 tics 5
+	pic FBULD0 tics 5
+	pic FBULE0 tics 5
+	pic FBULF0 tics 5
+	pic FBULG0 tics 5
+
+texture optional FBULB0
+	pic FBULC0 tics 5
+	pic FBULD0 tics 5
+	pic FBULE0 tics 5
+	pic FBULF0 tics 5
+	pic FBULG0 tics 5
+	pic FBULA0 tics 5
+	pic FBULB0 tics 5
+
 // The Wings of Wrath are not included, because they stop spinning when
 // you stop flying, so they can't be a simple animation.
 

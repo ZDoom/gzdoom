@@ -38,6 +38,7 @@
 #define DIRECTDRAW_VERSION 0x0300
 #define DIRECT3D_VERSION 0x0900
 
+#define _WIN32_WINNT 0x0501
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <ddraw.h>
@@ -51,6 +52,7 @@
 #include <ddraw.h>
 #include <d3d9.h>
 #include <stdio.h>
+#include <ctype.h>
 
 #define USE_WINDOWS_DWORD
 #include "doomtype.h"
@@ -400,14 +402,6 @@ void Win32Video::DumpAdapters()
 		Printf("%s%u. %s%s\n",
 			i == m_Adapter ? TEXTCOLOR_BOLD : "",
 			i + 1, ai.Description, moreinfo);
-	}
-}
-
-CCMD(vid_listadapters)
-{
-	if (Video != NULL)
-	{
-		static_cast<Win32Video *>(Video)->DumpAdapters();
 	}
 }
 

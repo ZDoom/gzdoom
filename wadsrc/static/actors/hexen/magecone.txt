@@ -13,6 +13,8 @@ ACTOR MWeapFrost : MageWeapon 53
 	Weapon.YAdjust 20
 	Weapon.AmmoType1 "Mana1"
 	Inventory.PickupMessage "$TXT_WEAPON_M2"
+	Obituary "$OB_MPMWEAPFROST"
+	Tag "$TAG_MWEAPFROST"
 
 	action native A_FireConePL1();
 
@@ -55,6 +57,7 @@ ACTOR FrostMissile native
 	DamageType "Ice"
 	Projectile
 	DeathSound "MageShardsExplode"
+	Obituary "$OB_MPMWEAPFROST"
 
 	action native A_ShedShard();
 

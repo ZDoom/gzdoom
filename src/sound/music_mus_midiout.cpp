@@ -125,7 +125,7 @@ MUSSong2::MUSSong2 (FILE *file, BYTE *musiccache, int len, EMIDIDevice type)
 
 	// Read the remainder of the song.
 	len = int(len - start);
-	if (len < sizeof(MusHeader))
+	if (len < (int)sizeof(MusHeader))
 	{ // It's too short.
 		return;
 	}
@@ -283,9 +283,9 @@ DWORD *MUSSong2::MakeEvents(DWORD *events, DWORD *max_event_p, DWORD max_time)
 		switch (event & 0x70)
 		{
 		case MUS_NOTEOFF:
-			status |= MIDI_NOTEOFF;
+			status |= MIDI_NOTEON;
 			mid1 = t;
-			mid2 = 64;
+			mid2 = 0;
 			break;
 			
 		case MUS_NOTEON:
@@ -382,7 +382,7 @@ MusInfo *MUSSong2::GetOPLDumper(const char *filename)
 
 MusInfo *MUSSong2::GetWaveDumper(const char *filename, int rate)
 {
-	return new MUSSong2(this, filename, MIDI_Timidity);
+	return new MUSSong2(this, filename, MIDI_GUS);
 }
 
 //==========================================================================

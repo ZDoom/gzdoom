@@ -723,7 +723,7 @@ bool F_CastResponder (event_t* ev)
 	if (ev->type != EV_KeyDown)
 		return false;
 			
-	const char *cmd = C_GetBinding (ev->data1);
+	const char *cmd = Bindings.GetBind (ev->data1);
 
 	if (cmd != NULL && !stricmp (cmd, "toggleconsole"))
 		return false;		

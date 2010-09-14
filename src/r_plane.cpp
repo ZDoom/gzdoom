@@ -782,6 +782,10 @@ inline void R_MakeSpans (int x, int t1, int b1, int t2, int b2, void (*mapfunc)(
 // in the normal convention for patches, but uses color 0 as a transparent
 // color instead.
 //
+// Note that since ZDoom now uses color 0 as transparent for other purposes,
+// you can use normal texture transparency, so the distinction isn't so
+// important anymore, but you should still be aware of it.
+//
 //==========================================================================
 
 static FTexture *frontskytex, *backskytex;
@@ -1049,22 +1053,9 @@ void R_DrawSinglePlane (visplane_t *pl, fixed_t alpha, bool masked)
 		{ // Don't waste time on a masked texture if it isn't really masked.
 			masked = false;
 		}
-		tex->GetWidth ();
-		ds_xbits = tex->WidthBits;
-		ds_ybits = tex->HeightBits;
-		if ((1 << ds_xbits) > tex->GetWidth())
-		{
-			ds_xbits--;
-		}
-		if ((1 << ds_ybits) > tex->GetHeight())
-		{
-			ds_ybits--;
-		}
+		R_SetupSpanBits(tex);
 		pl->xscale = MulScale16 (pl->xscale, tex->xScale);
 		pl->yscale = MulScale16 (pl->yscale, tex->yScale);
-#ifdef X86_ASM
-		R_SetSpanSize_ASM (ds_xbits, ds_ybits);
-#endif
 		ds_source = tex->GetPixels ();
 
 		basecolormap = pl->colormap;

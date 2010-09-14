@@ -1,0 +1,89 @@
+===============================================================================
+ZDoom Strife Dialog Format ZDoom v1.1 - 23.08.2010
+based on Universal Strife Dialog Format v2.0
+
+    Copyright (c) 2010 Christoph Oelckers.
+    Permission is granted to copy, distribute and/or modify this document
+    under the terms of the GNU Free Documentation License, Version 1.2
+    or any later version published by the Free Software Foundation;
+    with no Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts. 
+
+===============================================================================
+
+=======================================
+I. Grammar / Syntax
+=======================================
+
+    No changes. 
+	
+=======================================
+II. Implementation Semantics
+=======================================
+
+No changes. 
+
+=======================================
+III. Changes to USDF spec
+=======================================
+
+ZDoom Strife Dialogue format implements the USDF base specification as described with one important change:
+To take advantage of named actor classes any field specifying an actor type
+by a conversationID takes a class name instead.
+The following fields are affected by this change:
+
+conversation
+{
+    actor = <string>;
+
+    page
+    {
+        drop   = <string>;
+        ifitem
+        {
+            item   = <string>;
+        }
+
+        choice
+        {
+            cost
+            {
+                item   = <string>;
+            }
+
+            giveitem        = <string>;
+        }
+    }
+} 
+
+It should be noted that this change creates an incompatibility with USDF
+so technically speaking the ZDoom format is no longer 'real' USDF.
+To accomodate what is needed here this is unavoidable, unfortunately.
+Any proper USDF implementation not supporting named actor classes should
+either refuse loading dialogues with the 'ZDoom' namespace or if it does not
+outright abort on incompatible namespaces fail with a type mismatch error on
+one of the specified propeties.
+
+ZDoom-format dialogues need to start with the line:
+
+namespace = "ZDoom";
+
+
+---------------------
+III.A : Conversations
+---------------------
+
+This block only lists the newly added fields. Currently ZDoom only adds one
+field to the specification:
+
+conversation // Starts a dialog.
+{
+    id = <int>;	// assigns an ID to a dialogue. IDs are used to dynamically assign
+				// dialogues to actors. For 'Strife' namespace or binary dialogues
+				// the standard conversation ID ('actor' property) is used instead
+				// for this purpose but since 'ZDoom' namespace requires the actor
+				// to be a class name it needs a separate field for this.
+}
+
+===============================================================================
+EOF
+===============================================================================

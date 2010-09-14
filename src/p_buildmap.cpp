@@ -432,6 +432,7 @@ static void LoadSectors (sectortype *bsec)
 		sec->lightlevel = (sec->GetPlaneLight(sector_t::floor) + sec->GetPlaneLight(sector_t::ceiling)) / 2;
 
 		sec->seqType = -1;
+		sec->SeqName = NAME_None;
 		sec->nextsec = -1;
 		sec->prevsec = -1;
 		sec->gravity = 1.f;

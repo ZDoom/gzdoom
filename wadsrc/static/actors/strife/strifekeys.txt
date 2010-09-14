@@ -13,7 +13,7 @@ ACTOR BaseKey : StrifeKey 230
 	Game Strife
 	ConversationID 133, 129, 132
 	Inventory.Icon "I_FUSL"
-	Tag "Base Key"
+	Tag "$TAG_BASEKEY"
 	Inventory.PickupMessage "$TXT_BASEKEY"
 	States
 	{
@@ -31,7 +31,7 @@ ACTOR GovsKey : StrifeKey
 	Game Strife
 	ConversationID 134, 130, 133
 	Inventory.Icon "I_REBL"
-	Tag "Govs Key"	// "Rebel_Key" in the Teaser
+	Tag "$TAG_GOVSKEY"
 	Inventory.PickupMessage "$TXT_GOVSKEY"
 	States
 	{
@@ -49,7 +49,7 @@ ACTOR Passcard : StrifeKey 185
 	Game Strife
 	ConversationID 135, 131, 134
 	Inventory.Icon "I_TPAS"
-	Tag "Passcard"
+	Tag "$TAG_PASSCARD"
 	Inventory.PickupMessage "$TXT_PASSCARD"
 	States
 	{
@@ -67,7 +67,7 @@ ACTOR IDBadge : StrifeKey 184
 	Game Strife
 	ConversationID 136, 132, 135
 	Inventory.Icon "I_CRD1"
-	Tag "ID Badge"
+	Tag "$TAG_IDBADGE"
 	Inventory.PickupMessage "$TXT_IDBADGE"
 	States
 	{
@@ -85,7 +85,7 @@ ACTOR PrisonKey : StrifeKey
 	Game Strife
 	ConversationID 137, 133, 136
 	Inventory.Icon "I_PRIS"
-	Tag "Prison Key"
+	Tag "$TAG_PRISONKEY"
 	Inventory.GiveQuest 11
 	Inventory.PickupMessage "$TXT_PRISONKEY"
 	States
@@ -104,7 +104,7 @@ ACTOR SeveredHand : StrifeKey 91
 	Game Strife
 	ConversationID 138, 134, 137
 	Inventory.Icon "I_HAND"
-	Tag "Severed Hand"
+	Tag "$TAG_SEVEREDHAND"
 	Inventory.GiveQuest 12
 	Inventory.PickupMessage "$TXT_SEVEREDHAND"
 	States
@@ -123,7 +123,7 @@ ACTOR Power1Key : StrifeKey
 	Game Strife
 	ConversationID 139, 135, 138
 	Inventory.Icon "I_PWR1"
-	Tag "Power1 Key"
+	Tag "$TAG_POWER1KEY"
 	Inventory.PickupMessage "$TXT_POWER1KEY"
 	States
 	{
@@ -141,7 +141,7 @@ ACTOR Power2Key : StrifeKey
 	Game Strife
 	ConversationID 140, 136, 139
 	Inventory.Icon "I_PWR2"
-	Tag "Power2 Key"
+	Tag "$TAG_POWER2KEY"
 	Inventory.PickupMessage "$TXT_POWER2KEY"
 	States
 	{
@@ -159,7 +159,7 @@ ACTOR Power3Key : StrifeKey
 	Game Strife
 	ConversationID 141, 137, 140
 	Inventory.Icon "I_PWR3"
-	Tag "Power3 Key"
+	Tag "$TAG_POWER3KEY"
 	Inventory.PickupMessage "$TXT_POWER3KEY"
 	States
 	{
@@ -177,7 +177,7 @@ ACTOR GoldKey : StrifeKey 40
 	Game Strife
 	ConversationID 142, 138, 141
 	Inventory.Icon "I_KY1G"
-	Tag "Gold Key"
+	Tag "$TAG_GOLDKEY"
 	Inventory.PickupMessage "$TXT_GOLDKEY"
 	States
 	{
@@ -195,7 +195,7 @@ ACTOR IDCard : StrifeKey 13
 	Game Strife
 	ConversationID 143, 139, 142
 	Inventory.Icon "I_CRD2"
-	Tag "ID Card"
+	Tag "$TAG_IDCARD"
 	Inventory.PickupMessage "$TXT_IDCARD"
 	States
 	{
@@ -213,7 +213,7 @@ ACTOR SilverKey : StrifeKey 38
 	Game Strife
 	ConversationID 144, 140, 143
 	Inventory.Icon "I_KY2S"
-	Tag "Silver Key"
+	Tag "$TAG_SILVERKEY"
 	Inventory.PickupMessage "$TXT_SILVERKEY"
 	States
 	{
@@ -231,7 +231,7 @@ ACTOR OracleKey : StrifeKey 61
 	Game Strife
 	ConversationID 145, 141, 144
 	Inventory.Icon "I_ORAC"
-	Tag "Oracle Key"
+	Tag "$TAG_ORACLEKEY"
 	Inventory.PickupMessage "$TXT_ORACLEKEY"
 	States
 	{
@@ -249,7 +249,7 @@ ACTOR MilitaryID : StrifeKey
 	Game Strife
 	ConversationID 146, 142, 145
 	Inventory.Icon "I_GYID"
-	Tag "Military ID"
+	Tag "$TAG_MILITARYID"
 	Inventory.PickupMessage "$TXT_MILITARYID"
 	States
 	{
@@ -267,7 +267,7 @@ ACTOR OrderKey : StrifeKey 86
 	Game Strife
 	ConversationID 147, 143, 146
 	Inventory.Icon "I_FUBR"
-	Tag "Order Key"
+	Tag "$TAG_ORDERKEY"
 	Inventory.PickupMessage "$TXT_ORDERKEY"
 	States
 	{
@@ -285,7 +285,7 @@ ACTOR WarehouseKey : StrifeKey 166
 	Game Strife
 	ConversationID 148, 144, 147
 	Inventory.Icon "I_WARE"
-	Tag "Warehouse Key"
+	Tag "$TAG_WAREHOUSEKEY"
 	Inventory.PickupMessage "$TXT_WAREHOUSEKEY"
 	States
 	{
@@ -303,7 +303,7 @@ ACTOR BrassKey : StrifeKey 39
 	Game Strife
 	ConversationID 149, 145, 148
 	Inventory.Icon "I_KY3B"
-	Tag "Brass Key"
+	Tag "$TAG_BRASSKEY"
 	Inventory.PickupMessage "$TXT_BRASSKEY"
 	States
 	{
@@ -321,7 +321,7 @@ ACTOR RedCrystalKey : StrifeKey 192
 	Game Strife
 	ConversationID 150, 146, 149
 	Inventory.Icon "I_RCRY"
-	Tag "Red Crystal Key"
+	Tag "$TAG_REDCRYSTALKEY"
 	Inventory.PickupMessage "$TXT_REDCRYSTAL"
 	States
 	{
@@ -339,7 +339,7 @@ ACTOR BlueCrystalKey : StrifeKey 193
 	Game Strife
 	ConversationID 151, 147, 150
 	Inventory.Icon "I_BCRY"
-	Tag "Blue Crystal Key"
+	Tag "$TAG_BLUECRYSTALKEY"
 	Inventory.PickupMessage "$TXT_BLUECRYSTAL"
 	States
 	{
@@ -357,7 +357,7 @@ ACTOR ChapelKey : StrifeKey 195
 	Game Strife
 	ConversationID 152, 148, 151
 	Inventory.Icon "I_CHAP"
-	Tag "Chapel Key"
+	Tag "$TAG_CHAPELKEY"
 	Inventory.PickupMessage "$TXT_CHAPELKEY"
 	States
 	{
@@ -375,7 +375,7 @@ ACTOR CatacombKey : StrifeKey
 	Game Strife
 	ConversationID 153, 149, 152
 	Inventory.Icon "I_TUNL"
-	Tag "Catacomb Key"	// "Tunnel_Key" in the Teaser
+	Tag "$TAG_CATACOMBKEY"
 	Inventory.GiveQuest 28
 	Inventory.PickupMessage "$TXT_CATACOMBKEY"
 	States
@@ -394,7 +394,7 @@ ACTOR SecurityKey : StrifeKey
 	Game Strife
 	ConversationID 154, 150, 153
 	Inventory.Icon "I_SECK"
-	Tag "Security Key"
+	Tag "$TAG_SECURITYKEY"
 	Inventory.PickupMessage "$TXT_SECURITYKEY"
 	States
 	{
@@ -412,7 +412,7 @@ ACTOR CoreKey : StrifeKey 236
 	Game Strife
 	ConversationID 155, 151, 154
 	Inventory.Icon "I_GOID"
-	Tag "Core Key"	// "New_Key1" in the Teaser
+	Tag "$TAG_COREKEY"
 	Inventory.PickupMessage "$TXT_COREKEY"
 	States
 	{
@@ -430,7 +430,7 @@ ACTOR MaulerKey : StrifeKey 233
 	Game Strife
 	ConversationID 156, 152, 155
 	Inventory.Icon "I_BLTK"
-	Tag "Mauler Key"	// "New_Key2" in the Teaser
+	Tag "$TAG_MAULERKEY"
 	Inventory.PickupMessage "$TXT_MAULERKEY"
 	States
 	{
@@ -448,7 +448,7 @@ ACTOR FactoryKey : StrifeKey 234
 	Game Strife
 	ConversationID 157, 153, 156
 	Inventory.Icon "I_PROC"
-	Tag "Factory Key"	// "New_Key3" in the Teaser
+	Tag "$TAG_FACTORYKEY"
 	Inventory.PickupMessage "$TXT_FACTORYKEY"
 	States
 	{
@@ -465,8 +465,8 @@ ACTOR MineKey : StrifeKey 235
 {
 	Game Strife
 	ConversationID 158, 154, 157
-	Inventory.Icon "I_MINE"	// "New_Key4" in the Teaser
-	Tag "Mine_Key"
+	Inventory.Icon "I_MINE"
+	Tag "$TAG_MINEKEY"
 	Inventory.PickupMessage "$TXT_MINEKEY"
 	States
 	{
@@ -484,7 +484,7 @@ ACTOR NewKey5 : StrifeKey
 	Game Strife
 	ConversationID 159, 155, 158
 	Inventory.Icon "I_BLTK"
-	Tag "New Key5"
+	Tag "$TAG_NEWKEY5"
 	Inventory.PickupMessage "$TXT_NEWKEY5"
 	States
 	{
@@ -505,7 +505,7 @@ ACTOR OraclePass : Inventory
 	Inventory.Icon "I_OTOK"
 	Inventory.GiveQuest 18
 	Inventory.PickupMessage "$TXT_ORACLEPASS"
-	Tag "Oracle Pass"
+	Tag "$TAG_ORACLEPASS"
 	States
 	{
 	Spawn:

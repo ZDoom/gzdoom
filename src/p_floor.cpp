@@ -44,6 +44,10 @@ static void StartFloorSound (sector_t *sec)
 	{
 		SN_StartSequence (sec, CHAN_FLOOR, sec->seqType, SEQ_PLATFORM, 0);
 	}
+	else if (sec->SeqName != NAME_None)
+	{
+		SN_StartSequence (sec, CHAN_FLOOR, sec->SeqName, 0);
+	}
 	else
 	{
 		SN_StartSequence (sec, CHAN_FLOOR, "Floor", 0);
@@ -358,7 +362,7 @@ manual_floor:
 			floor->m_Direction = 1;
 			newheight = sec->FindLowestCeilingSurrounding (&spot);
 			if (floortype == DFloor::floorRaiseAndCrush)
-				floor->m_FloorDestDist -= 8 * FRACUNIT;
+				newheight -= 8 * FRACUNIT;
 			ceilingheight = sec->FindLowestCeilingPoint (&spot2);
 			floor->m_FloorDestDist = sec->floorplane.PointToDist (spot, newheight);
 			if (sec->floorplane.ZatPointDist (spot2, floor->m_FloorDestDist) > ceilingheight)

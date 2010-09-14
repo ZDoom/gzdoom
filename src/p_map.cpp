@@ -655,8 +655,14 @@ bool PIT_CheckLine (line_t *ld, const FBoundingBox &box, FCheckPosition &tm)
 	if (!(tm.thing->flags & MF_DROPOFF) &&
 		!(tm.thing->flags & (MF_NOGRAVITY|MF_NOCLIP)))
 	{
-		if (ld->frontsector->floorplane.c < STEEPSLOPE ||
-			ld->backsector->floorplane.c < STEEPSLOPE)
+		secplane_t frontplane = ld->frontsector->floorplane;
+		secplane_t backplane  = ld->backsector->floorplane;
+#ifdef _3DFLOORS
+		// Check 3D floors as well
+		frontplane = P_FindFloorPlane(ld->frontsector, tm.thing->x, tm.thing->y, tm.thing->floorz);
+		backplane = P_FindFloorPlane(ld->backsector, tm.thing->x, tm.thing->y, tm.thing->floorz);
+#endif
+		if (frontplane.c < STEEPSLOPE || backplane.c < STEEPSLOPE)
 		{
 			const msecnode_t *node = tm.thing->touching_sectorlist;
 			bool allow = false;
@@ -1088,6 +1094,13 @@ bool PIT_CheckThing (AActor *thing, FCheckPosition &tm)
 						P_RipperBlood (tm.thing, thing);
 					}
 					S_Sound (tm.thing, CHAN_BODY, "misc/ripslop", 1, ATTN_IDLE);
+
+					// Do poisoning (if using new style poison)
+					if (tm.thing->PoisonDamage > 0 && tm.thing->PoisonDuration != INT_MIN)
+					{
+						P_PoisonMobj(thing, tm.thing, tm.thing->target, tm.thing->PoisonDamage, tm.thing->PoisonDuration, tm.thing->PoisonPeriod);
+					}
+
 					damage = tm.thing->GetMissileDamage (3, 2);
 					P_DamageMobj (thing, tm.thing, tm.thing->target, damage, tm.thing->DamageType);
 					if (!(tm.thing->flags3 & MF3_BLOODLESSIMPACT))
@@ -1109,6 +1122,13 @@ bool PIT_CheckThing (AActor *thing, FCheckPosition &tm)
 				return true;
 			}
 		}
+
+		// Do poisoning (if using new style poison)
+		if (tm.thing->PoisonDamage > 0 && tm.thing->PoisonDuration != INT_MIN)
+		{
+			P_PoisonMobj(thing, tm.thing, tm.thing->target, tm.thing->PoisonDamage, tm.thing->PoisonDuration, tm.thing->PoisonPeriod);
+		}
+
 		// Do damage
 		damage = tm.thing->GetMissileDamage ((tm.thing->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1);
 		if ((damage > 0) || (tm.thing->flags6 & MF6_FORCEPAIN)) 
@@ -3332,7 +3352,7 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 		(t1->player->ReadyWeapon->flags2 & MF2_THRUGHOST));
 
 	// We need to check the defaults of the replacement here
-	AActor *puffDefaults = GetDefaultByType(pufftype->ActorInfo->GetReplacement()->Class);
+	AActor *puffDefaults = GetDefaultByType(pufftype->GetReplacement());
 
 	// if the puff uses a non-standard damage type this will override default and melee damage type.
 	// All other explicitly passed damage types (currenty only MDK) will be preserved.
@@ -3471,16 +3491,23 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 						trace.Actor, srcangle, srcpitch);
 				}
 			}
+
+			// Allow puffs to inflict poison damage, so that hitscans can poison, too.
+			if (puffDefaults->PoisonDamage > 0 && puffDefaults->PoisonDuration != INT_MIN)
+			{
+				P_PoisonMobj(trace.Actor, puff ? puff : t1, t1, puffDefaults->PoisonDamage, puffDefaults->PoisonDuration, puffDefaults->PoisonPeriod);
+			}
+
 			// [GZ] If MF6_FORCEPAIN is set, we need to call P_DamageMobj even if damage is 0!
 			// Note: The puff may not yet be spawned here so we must check the class defaults, not the actor.
 			if (damage || (puffDefaults->flags6 & MF6_FORCEPAIN))
 			{
-				int flags = DMG_INFLICTOR_IS_PUFF;
+				int dmgflags = DMG_INFLICTOR_IS_PUFF;
 				// Allow MF5_PIERCEARMOR on a weapon as well.
 				if (t1->player != NULL && t1->player->ReadyWeapon != NULL &&
 					t1->player->ReadyWeapon->flags5 & MF5_PIERCEARMOR)
 				{
-					flags |= DMG_NO_ARMOR;
+					dmgflags |= DMG_NO_ARMOR;
 				}
 			
 				if (puff == NULL)
@@ -3490,7 +3517,7 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 					puff = P_SpawnPuff (t1, pufftype, hitx, hity, hitz, angle - ANG180, 2, flags|PF_HITTHING|PF_TEMPORARY);
 					killPuff = true;
 				}
-				P_DamageMobj (trace.Actor, puff ? puff : t1, t1, damage, damageType, flags);
+				P_DamageMobj (trace.Actor, puff ? puff : t1, t1, damage, damageType, dmgflags);
 			}
 			if (victim != NULL)
 			{
@@ -3748,7 +3775,7 @@ static bool ProcessNoPierceRailHit (FTraceResults &res)
 //
 //==========================================================================
 
-void P_RailAttack (AActor *source, int damage, int offset, int color1, int color2, float maxdiff, bool silent, const PClass *puffclass, bool pierce)
+void P_RailAttack (AActor *source, int damage, int offset, int color1, int color2, float maxdiff, bool silent, const PClass *puffclass, bool pierce, angle_t angleoffset, angle_t pitchoffset)
 {
 	fixed_t vx, vy, vz;
 	angle_t angle, pitch;
@@ -3759,8 +3786,8 @@ void P_RailAttack (AActor *source, int damage, int offset, int color1, int color
 
 	if (puffclass == NULL) puffclass = PClass::FindClass(NAME_BulletPuff);
 
-	pitch = (angle_t)(-source->pitch) >> ANGLETOFINESHIFT;
-	angle = source->angle >> ANGLETOFINESHIFT;
+	pitch = ((angle_t)(-source->pitch) + pitchoffset) >> ANGLETOFINESHIFT;
+	angle = (source->angle + angleoffset) >> ANGLETOFINESHIFT;
 
 	vx = FixedMul (finecosine[pitch], finecosine[angle]);
 	vy = FixedMul (finecosine[pitch], finesine[angle]);
@@ -3780,7 +3807,7 @@ void P_RailAttack (AActor *source, int damage, int offset, int color1, int color
 		shootz += 8*FRACUNIT;
 	}
 
-	angle = (source->angle - ANG90) >> ANGLETOFINESHIFT;
+	angle = ((source->angle + angleoffset) - ANG90) >> ANGLETOFINESHIFT;
 	x1 += offset*finecosine[angle];
 	y1 += offset*finesine[angle];
 
@@ -3792,7 +3819,7 @@ void P_RailAttack (AActor *source, int damage, int offset, int color1, int color
 	int flags;
 
 	AActor *puffDefaults = puffclass == NULL? 
-							NULL : GetDefaultByType (puffclass->ActorInfo->GetReplacement()->Class);
+							NULL : GetDefaultByType (puffclass->GetReplacement());
 
 	if (puffDefaults != NULL && puffDefaults->flags6 & MF6_NOTRIGGER) flags = 0;
 	else flags = TRACE_PCross|TRACE_Impact;
@@ -3836,10 +3863,14 @@ void P_RailAttack (AActor *source, int damage, int offset, int color1, int color
 		else
 		{
 			spawnpuff = (puffclass != NULL && puffDefaults->flags3 & MF3_ALWAYSPUFF);
-			P_SpawnBlood (x, y, z, source->angle - ANG180, damage, RailHits[i].HitActor);
+			P_SpawnBlood (x, y, z, (source->angle + angleoffset) - ANG180, damage, RailHits[i].HitActor);
 			P_TraceBleed (damage, x, y, z, RailHits[i].HitActor, source->angle, pitch);
 		}
-		if (spawnpuff) P_SpawnPuff (source, puffclass, x, y, z, source->angle - ANG90, 1, PF_HITTHING);
+		if (spawnpuff) P_SpawnPuff (source, puffclass, x, y, z, (source->angle + angleoffset) - ANG90, 1, PF_HITTHING);
+
+		if (puffDefaults && puffDefaults->PoisonDamage > 0 && puffDefaults->PoisonDuration != INT_MIN)
+			P_PoisonMobj(RailHits[i].HitActor, thepuff ? thepuff : source, source, puffDefaults->PoisonDamage, puffDefaults->PoisonDuration, puffDefaults->PoisonPeriod);
+
 		P_DamageMobj (RailHits[i].HitActor, thepuff? thepuff:source, source, damage, damagetype, DMG_INFLICTOR_IS_PUFF);
 	}
 
@@ -3849,7 +3880,7 @@ void P_RailAttack (AActor *source, int damage, int offset, int color1, int color
 		SpawnShootDecal (source, trace);
 		if (puffclass != NULL && puffDefaults->flags3 & MF3_ALWAYSPUFF) 
 		{
-			P_SpawnPuff (source, puffclass, trace.X, trace.Y, trace.Z, source->angle - ANG90, 1, 0);
+			P_SpawnPuff (source, puffclass, trace.X, trace.Y, trace.Z, (source->angle + angleoffset) - ANG90, 1, 0);
 		}
 
 	}

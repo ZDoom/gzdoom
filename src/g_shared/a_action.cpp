@@ -68,7 +68,7 @@ void A_Unblock(AActor *self, bool drop)
 
 	self->flags &= ~MF_SOLID;
 
-	// If the self has a conversation that sets an item to drop, drop that.
+	// If the actor has a conversation that sets an item to drop, drop that.
 	if (self->Conversation != NULL && self->Conversation->DropType != NULL)
 	{
 		P_DropItem (self, self->Conversation->DropType, -1, 256);

@@ -48,6 +48,8 @@ ACTOR PunchDagger : StrifeWeapon
 	Game Strife
 	Weapon.SelectionOrder 3900
 	+WEAPON.NOALERT
+	Obituary "$OB_MPPUNCHDAGGER"
+	Tag "$TAG_PUNCHDAGGER"
 	
 	action native A_JabDagger ();
 	
@@ -109,6 +111,7 @@ ACTOR ElectricBolt : StrifeZap1
 	SeeSound "misc/swish"
 	ActiveSound "misc/swish"
 	DeathSound "weapons/xbowhit"
+	Obituary "$OB_MPELECTRICBOLT"
 	States
 	{
 	Spawn:
@@ -132,6 +135,7 @@ ACTOR PoisonBolt native
 	MaxStepHeight 4
 	SeeSound "misc/swish"
 	ActiveSound "misc/swish"
+	Obituary "$OB_MPPOISONBOLT"
 	States
 	{
 	Spawn:
@@ -158,8 +162,8 @@ ACTOR StrifeCrossbow : StrifeWeapon 2001
 	Weapon.AmmoType1 "ElectricBolts"
 	Weapon.SisterWeapon "StrifeCrossbow2"
 	Inventory.PickupMessage "$TXT_STRIFECROSSBOW"
+	Tag "$TAG_STRIFECROSSBOW1"
 	Inventory.Icon "CBOWA0"
-	Tag "Crossbow"
 	
 	action native A_ClearFlash ();
 	action native A_ShowElectricFlash ();
@@ -205,6 +209,7 @@ ACTOR StrifeCrossbow2 : StrifeCrossbow
 	Weapon.AmmoGive1 0
 	Weapon.AmmoType1 "PoisonBolts"
 	Weapon.SisterWeapon "StrifeCrossbow"
+	Tag "$TAG_STRIFECROSSBOW2"
 
 	States
 	{
@@ -243,8 +248,9 @@ actor AssaultGun : StrifeWeapon 2002
 	Weapon.AmmoGive1 20
 	Weapon.AmmoType1 "ClipOfBullets"
 	Inventory.Icon "RIFLA0"
-	Tag "Assault Gun"
+	Tag "$TAG_ASSAULTGUN"
 	Inventory.PickupMessage "$TXT_ASSAULTGUN"
+	Obituary "$OB_MPASSAULTGUN"
 	States
 	{
 	Spawn:
@@ -299,7 +305,7 @@ ACTOR MiniMissileLauncher : StrifeWeapon 2003
 	Weapon.AmmoGive1 8
 	Weapon.AmmoType1 "MiniMissiles"
 	Inventory.Icon "MMSLA0"
-	Tag "Mini Missile Launcher"
+	Tag "$TAG_MMLAUNCHER"
 	Inventory.PickupMessage "$TXT_MMLAUNCHER"
 
 	action native A_FireMiniMissile ();
@@ -376,6 +382,7 @@ ACTOR MiniMissile
 	MaxStepHeight 4
 	SeeSound "weapons/minimissile"
 	DeathSound "weapons/minimissilehit"
+	Obituary "$OB_MPMINIMISSILELAUNCHER"
 	States
 	{
 	Spawn:
@@ -407,7 +414,7 @@ ACTOR FlameThrower : StrifeWeapon 2005
 	Weapon.ReadySound "weapons/flameidle"
 	Weapon.AmmoType1 "EnergyPod"
 	Inventory.Icon "FLAMA0"
-	Tag "Flame Thrower"
+	Tag "$TAG_FLAMER"
 	Inventory.PickupMessage "$TXT_FLAMER"
 	
 	action native A_FireFlamer ();
@@ -451,6 +458,7 @@ ACTOR FlameMissile
 	MaxStepHeight 4
 	RenderStyle Add
 	SeeSound "weapons/flamethrower"
+	Obituary "$OB_MPFLAMETHROWER"
 
 	action native A_FlameDie ();
 
@@ -483,8 +491,9 @@ ACTOR Mauler : StrifeWeapon 2004
 	Weapon.AmmoType1 "EnergyPod"
 	Weapon.SisterWeapon "Mauler2"
 	Inventory.Icon "TRPDA0"
-	Tag "Mauler"
+	Tag "$TAG_MAULER1"
 	Inventory.PickupMessage "$TXT_MAULER"
+	Obituary "$OB_MPMAULER1"
 
 	action native A_FireMauler1 ();
 
@@ -525,6 +534,8 @@ ACTOR Mauler2 : Mauler
 	Weapon.AmmoGive1 0
 	Weapon.AmmoType1 "EnergyPod"
 	Weapon.SisterWeapon "Mauler"
+	Obituary "$OB_MPMAULER2"
+	Tag "$TAG_MAULER2"
 
 	action native A_FireMauler2Pre ();
 	action native A_FireMauler2 ();
@@ -586,6 +597,7 @@ ACTOR MaulerTorpedo
 	RenderStyle Add
 	SeeSound "weapons/mauler2fire"
 	DeathSound "weapons/mauler2hit"
+	Obituary "$OB_MPMAULER"
 
 	action native A_MaulerTorpedoWave ();
 
@@ -616,6 +628,7 @@ ACTOR MaulerTorpedoWave
 	+STRIFEDAMAGE
 	MaxStepHeight 4
 	RenderStyle Add
+	Obituary "$OB_MPMAULER"
 	States
 	{
 	Spawn:
@@ -650,6 +663,7 @@ ACTOR HEGrenade
 	BounceCount 2
 	SeeSound "weapons/hegrenadeshoot"
 	DeathSound "weapons/hegrenadebang"
+	Obituary "$OB_MPSTRIFEGRENADE"
 	States
 	{
 	Spawn:
@@ -687,6 +701,7 @@ ACTOR PhosphorousGrenade
 	BounceCount 2
 	SeeSound "weapons/phgrenadeshoot"
 	DeathSound "weapons/phgrenadebang"
+	Obituary "$OB_MPPHOSPHOROUSGRENADE"
 	States
 	{
 	Spawn:
@@ -710,6 +725,7 @@ ACTOR PhosphorousFire native
 	+NODAMAGETHRUST
 	+DONTSPLASH
 	RenderStyle Add
+	Obituary "$OB_MPPHOSPHOROUSGRENADE"
 
 	action native A_Burnarea ();
 	action native A_Burnination ();
@@ -748,7 +764,7 @@ ACTOR StrifeGrenadeLauncher : StrifeWeapon 154
 	Weapon.AmmoType1 "HEGrenadeRounds"
 	Weapon.SisterWeapon "StrifeGrenadeLauncher2"
 	Inventory.Icon "GRNDA0"
-	Tag "Grenade Launcher"
+	Tag "$TAG_GLAUNCHER1"
 	Inventory.PickupMessage "$TXT_GLAUNCHER"
 
 	action native A_FireGrenade (class<Actor> grenadetype, int angleofs, state flash);
@@ -794,6 +810,7 @@ ACTOR StrifeGrenadeLauncher2 : StrifeGrenadeLauncher
 	Weapon.AmmoGive1 0
 	Weapon.AmmoType1 "PhosphorusGrenadeRounds"
 	Weapon.SisterWeapon "StrifeGrenadeLauncher"
+	Tag "$TAG_GLAUNCHER2"
 
 	States
 	{

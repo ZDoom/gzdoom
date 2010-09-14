@@ -1022,7 +1022,7 @@ void R_DrawMaskedColumn (const BYTE *column, const FTexture::Span *span, WORD de
 
 		if (sprflipvert)
 		{
-			swap (dc_yl, dc_yh);
+			swapvalues (dc_yl, dc_yh);
 		}
 
 		if (dc_yh >= mfloorclip[dc_x])

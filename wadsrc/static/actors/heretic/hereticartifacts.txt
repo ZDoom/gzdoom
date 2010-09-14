@@ -33,6 +33,7 @@ ACTOR ArtiInvisibility : PowerupGiver 75
 	Inventory.Icon ARTIINVS
 	Powerup.Type Ghost
 	Inventory.PickupMessage "$TXT_ARTIINVISIBILITY"
+	Tag "$TAG_ARTIINVISIBILITY"
 	States
 	{
 	Spawn:
@@ -54,6 +55,7 @@ ACTOR ArtiTomeOfPower : PowerupGiver 86 native
 	Inventory.Icon "ARTIPWBK"
 	Powerup.Type Weaponlevel2
 	Inventory.PickupMessage "$TXT_ARTITOMEOFPOWER"
+	Tag "$TAG_ARTITOMEOFPOWER"
 	States
 	{
 	Spawn:
@@ -98,6 +100,7 @@ ACTOR ArtiTimeBomb : Inventory 34 native
 	Inventory.Icon "ARTIFBMB"
 	Inventory.PickupSound "misc/p_pkup"
 	Inventory.PickupMessage "$TXT_ARTIFIREBOMB"
+	Tag "$TAG_ARTIFIREBOMB"
 	Inventory.DefMaxAmount
 	States
 	{

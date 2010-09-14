@@ -754,8 +754,8 @@ void cht_Give (player_t *player, const char *name, int amount)
 			// Don't give replaced weapons unless the replacement was done by Dehacked.
 			if (type != RUNTIME_CLASS(AWeapon) &&
 				type->IsDescendantOf (RUNTIME_CLASS(AWeapon)) &&
-				(type->ActorInfo->GetReplacement() == type->ActorInfo ||
-				 type->ActorInfo->GetReplacement()->Class->IsDescendantOf(RUNTIME_CLASS(ADehackedPickup))))
+				(type->GetReplacement() == type ||
+				 type->GetReplacement()->IsDescendantOf(RUNTIME_CLASS(ADehackedPickup))))
 
 			{
 				// Give the weapon only if it belongs to the current game or

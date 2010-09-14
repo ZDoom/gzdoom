@@ -1119,7 +1119,7 @@ void FFlagCVar::DoSet (UCVarValue value, ECVarType type)
 	// exec scripts because all flags will base their changes off of the value of
 	// the "master" cvar at the time the script was run, overriding any changes
 	// another flag might have made to the same cvar earlier in the script.
-	if ((ValueVar.Flags & CVAR_SERVERINFO) && gamestate != GS_STARTUP && !demoplayback)
+	if ((ValueVar.GetFlags() & CVAR_SERVERINFO) && gamestate != GS_STARTUP && !demoplayback)
 	{
 		if (netgame && !players[consoleplayer].settings_controller)
 		{
@@ -1138,6 +1138,114 @@ void FFlagCVar::DoSet (UCVarValue value, ECVarType type)
 		ValueVar = val;
 	}
 }
+
+//
+// Mask cvar implementation
+//
+// Similar to FFlagCVar but can have multiple bits
+//
+
+FMaskCVar::FMaskCVar (const char *name, FIntCVar &realvar, DWORD bitval)
+: FBaseCVar (name, 0, NULL),
+ValueVar (realvar),
+BitVal (bitval)
+{
+	int bit;
+
+	Flags &= ~CVAR_ISDEFAULT;
+
+	assert (bitval != 0);
+
+	bit = 0;
+	while ((bitval & 1) == 0)
+	{
+		++bit;
+		bitval >>= 1;
+	}
+	BitNum = bit;
+}
+
+ECVarType FMaskCVar::GetRealType () const
+{
+	return CVAR_Dummy;
+}
+
+UCVarValue FMaskCVar::GetGenericRep (ECVarType type) const
+{
+	return FromInt ((ValueVar & BitVal) >> BitNum, type);
+}
+
+UCVarValue FMaskCVar::GetFavoriteRep (ECVarType *type) const
+{
+	UCVarValue ret;
+	*type = CVAR_Int;
+	ret.Int = (ValueVar & BitVal) >> BitNum;
+	return ret;
+}
+
+UCVarValue FMaskCVar::GetGenericRepDefault (ECVarType type) const
+{
+	ECVarType dummy;
+	UCVarValue def;
+	def = ValueVar.GetFavoriteRepDefault (&dummy);
+	return FromInt ((def.Int & BitVal) >> BitNum, type);
+}
+
+UCVarValue FMaskCVar::GetFavoriteRepDefault (ECVarType *type) const
+{
+	ECVarType dummy;
+	UCVarValue def;
+	def = ValueVar.GetFavoriteRepDefault (&dummy);
+	def.Int = (def.Int & BitVal) >> BitNum;
+	*type = CVAR_Int;
+	return def;
+}
+
+void FMaskCVar::SetGenericRepDefault (UCVarValue value, ECVarType type)
+{
+	int val = ToInt(value, type) << BitNum;
+	ECVarType dummy;
+	UCVarValue def;
+	def = ValueVar.GetFavoriteRepDefault (&dummy);
+	def.Int &= ~BitVal;
+	def.Int |= val;
+	ValueVar.SetGenericRepDefault (def, CVAR_Int);
+}
+
+void FMaskCVar::DoSet (UCVarValue value, ECVarType type)
+{
+	int val = ToInt(value, type) << BitNum;
+
+	// Server cvars that get changed by this need to use a special message, because
+	// changes are not processed until the next net update. This is a problem with
+	// exec scripts because all flags will base their changes off of the value of
+	// the "master" cvar at the time the script was run, overriding any changes
+	// another flag might have made to the same cvar earlier in the script.
+	if ((ValueVar.GetFlags() & CVAR_SERVERINFO) && gamestate != GS_STARTUP && !demoplayback)
+	{
+		if (netgame && !players[consoleplayer].settings_controller)
+		{
+			Printf ("Only setting controllers can change %s\n", Name);
+			return;
+		}
+		// Ugh...
+		for(int i = 0; i < 32; i++)
+		{
+			if (BitVal & (1<<i))
+			{
+				D_SendServerFlagChange (&ValueVar, i, !!(val & (1<<i)));
+			}
+		}
+	}
+	else
+	{
+		int vval = *ValueVar;
+		vval &= ~BitVal;
+		vval |= val;
+		ValueVar = vval;
+	}
+}
+
 
 ////////////////////////////////////////////////////////////////////////
 static int STACK_ARGS sortcvars (const void *a, const void *b)

@@ -12,6 +12,7 @@ ACTOR CWeapFlame : ClericWeapon 8009
 	Weapon.YAdjust 10
 	Weapon.AmmoType1 "Mana2"
 	Inventory.PickupMessage "$TXT_WEAPON_C3"
+	Tag "$TAG_CWEAPFLAME"
 
 	action native A_CFlameAttack();
 
@@ -126,6 +127,7 @@ ACTOR CircleFlame
 	-ACTIVATEPCROSS
 	RenderStyle Add
 	DeathSound "ClericFlameCircle"
+	Obituary "$OB_MPCWEAPFLAME"
 
 	action native A_CFlameRotate();
 
@@ -166,6 +168,7 @@ ACTOR CFlameMissile : FastProjectile native
 	DamageType "Fire"
 	+INVISIBLE
 	RenderStyle Add
+	Obituary "$OB_MPCWEAPFLAME"
 
 	action native A_CFlamePuff();
 	action native A_CFlameMissile();

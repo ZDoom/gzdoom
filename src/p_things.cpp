@@ -65,7 +65,7 @@ bool P_Thing_Spawn (int tid, AActor *source, int type, angle_t angle, bool fog, 
 		return false;
 
 	// Handle decorate replacements.
-	kind = kind->ActorInfo->GetReplacement()->Class;
+	kind = kind->GetReplacement();
 
 	if ((GetDefaultByType (kind)->flags3 & MF3_ISMONSTER) && 
 		((dmflags & DF_NO_MONSTERS) || (level.flags2 & LEVEL2_NOMONSTERS)))
@@ -200,7 +200,7 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 
 
 	// Handle decorate replacements.
-	kind = kind->ActorInfo->GetReplacement()->Class;
+	kind = kind->GetReplacement();
 
 	defflags3 = GetDefaultByType (kind)->flags3;
 	if ((defflags3 & MF3_ISMONSTER) && 

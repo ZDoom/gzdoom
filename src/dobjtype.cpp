@@ -68,7 +68,7 @@ void PClass::StaticInit ()
 	// MinGW's linker is linking the object files backwards for me now...
 	if (head > tail)
 	{
-		swap (head, tail);
+		swapvalues (head, tail);
 	}
 	qsort (head + 1, tail - head - 1, sizeof(REGINFO), cregcmp);
 
@@ -484,6 +484,11 @@ const PClass *PClass::NativeClass() const
 		cls = cls->ParentClass;
 
 	return cls;
+}
+
+PClass *PClass::GetReplacement() const
+{
+	return ActorInfo->GetReplacement()->Class;
 }
 
 // Symbol tables ------------------------------------------------------------

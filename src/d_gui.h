@@ -43,27 +43,34 @@ enum EGUIEvent
 	EV_GUI_KeyRepeat,		// same
 	EV_GUI_KeyUp,			// same
 	EV_GUI_Char,			// data1: translated character (for user text input), data2: alt down?
-	EV_GUI_MouseMove,
-	EV_GUI_LButtonDown,
-	EV_GUI_LButtonUp,
-	EV_GUI_LButtonDblClick,
-	EV_GUI_MButtonDown,
-	EV_GUI_MButtonUp,
-	EV_GUI_MButtonDblClick,
-	EV_GUI_RButtonDown,
-	EV_GUI_RButtonUp,
-	EV_GUI_RButtonDblClick,
-	EV_GUI_WheelUp,			// data3: shift/ctrl/alt
-	EV_GUI_WheelDown,		// "
-	EV_GUI_WheelRight,		// "
-	EV_GUI_WheelLeft,		// "
+	EV_GUI_FirstMouseEvent,
+		EV_GUI_MouseMove,
+		EV_GUI_LButtonDown,
+		EV_GUI_LButtonUp,
+		EV_GUI_LButtonDblClick,
+		EV_GUI_MButtonDown,
+		EV_GUI_MButtonUp,
+		EV_GUI_MButtonDblClick,
+		EV_GUI_RButtonDown,
+		EV_GUI_RButtonUp,
+		EV_GUI_RButtonDblClick,
+		EV_GUI_WheelUp,			// data3: shift/ctrl/alt
+		EV_GUI_WheelDown,		// "
+		EV_GUI_WheelRight,		// "
+		EV_GUI_WheelLeft,		// "
+		EV_GUI_BackButtonDown,
+		EV_GUI_BackButtonUp,
+		EV_GUI_FwdButtonDown,
+		EV_GUI_FwdButtonUp,
+	EV_GUI_LastMouseEvent,
 };
 
 enum GUIKeyModifiers
 {
 	GKM_SHIFT	= 1,
 	GKM_CTRL	= 2,
-	GKM_ALT		= 4
+	GKM_ALT		= 4,
+	GKM_LBUTTON = 8
 };
 
 // Special codes for some GUI keys, including a few real ASCII codes.
@@ -100,7 +107,7 @@ enum ESpecialGUIKeys
 	GK_ESCAPE	= 27,		// ASCII
 	GK_FREE1	= 28,
 	GK_FREE2	= 29,
-	GK_FREE3	= 30,
+	GK_BACK		= 30,		// browser back key
 	GK_CESCAPE	= 31		// color escape
 };
 

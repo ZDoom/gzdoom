@@ -14,7 +14,7 @@ ACTOR MetalArmor : BasicArmorPickup 2019
 	Inventory.PickupMessage "$TXT_METALARMOR"
 	Armor.SaveAmount 200
 	Armor.SavePercent 50
-	Tag "Metal Armor"
+	Tag "$TAG_METALARMOR"
 	States
 	{
 	Spawn:
@@ -38,7 +38,7 @@ ACTOR LeatherArmor : BasicArmorPickup 2018
 	Inventory.PickupMessage "$TXT_LEATHERARMOR"
 	Armor.SaveAmount 100
 	Armor.SavePercent 33.335
-	Tag "Leather Armor"
+	Tag "$TAG_LEATHER"
 	States
 	{
 	Spawn:

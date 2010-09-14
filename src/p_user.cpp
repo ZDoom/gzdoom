@@ -376,17 +376,17 @@ void player_t::SetLogNumber (int num)
 		data[length]=0;
 		SetLogText (data);
 		delete[] data;
-
-		// Print log text to console
-		AddToConsole(-1, TEXTCOLOR_GOLD);
-		AddToConsole(-1, LogText);
-		AddToConsole(-1, "\n");
 	}
 }
 
 void player_t::SetLogText (const char *text)
 {
 	LogText = text;
+
+	// Print log text to console
+	AddToConsole(-1, TEXTCOLOR_GOLD);
+	AddToConsole(-1, LogText);
+	AddToConsole(-1, "\n");
 }
 
 int player_t::GetSpawnClass()
@@ -426,6 +426,10 @@ void APlayerPawn::Serialize (FArchive &arc)
 		<< MorphWeapon
 		<< DamageFade
 		<< PlayerFlags;
+	if (SaveVersion < 2435)
+	{
+		DamageFade.a = 255;
+	}
 }
 
 //===========================================================================
@@ -499,6 +503,15 @@ void APlayerPawn::Tick()
 void APlayerPawn::PostBeginPlay()
 {
 	SetupWeaponSlots();
+
+	// Voodoo dolls: restore original floorz/ceilingz logic
+	if (player == NULL || player->mo != this)
+	{
+		dropoffz = floorz = Sector->floorplane.ZatPoint(x, y);
+		ceilingz = Sector->ceilingplane.ZatPoint(x, y);
+		P_FindFloorCeiling(this, true);
+		z = floorz;
+	}
 }
 
 //===========================================================================
@@ -1962,7 +1975,7 @@ void P_CrouchMove(player_t * player, int direction)
 
 	// check whether the move is ok
 	player->mo->height = FixedMul(defaultheight, player->crouchfactor);
-	if (!P_TryMove(player->mo, player->mo->x, player->mo->y, false, false))
+	if (!P_TryMove(player->mo, player->mo->x, player->mo->y, false, NULL))
 	{
 		player->mo->height = savedheight;
 		if (direction > 0)

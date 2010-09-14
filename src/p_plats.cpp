@@ -57,9 +57,17 @@ void DPlat::Serialize (FArchive &arc)
 void DPlat::PlayPlatSound (const char *sound)
 {
 	if (m_Sector->seqType >= 0)
+	{
 		SN_StartSequence (m_Sector, CHAN_FLOOR, m_Sector->seqType, SEQ_PLATFORM, 0);
+	}
+	else if (m_Sector->SeqName != NAME_None)
+	{
+		SN_StartSequence (m_Sector, CHAN_FLOOR, m_Sector->SeqName, 0);
+	}
 	else
+	{
 		SN_StartSequence (m_Sector, CHAN_FLOOR, sound, 0);
+	}
 }
 
 //

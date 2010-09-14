@@ -8,6 +8,8 @@ ACTOR CWeapMace : ClericWeapon
 	Weapon.KickBack 150
 	Weapon.YAdjust -8
 	+BLOODSPLATTER
+	Obituary "$OB_MPCWEAPMACE"
+	Tag "$TAG_CWEAPMACE"
 
 	action native A_CMaceAttack();
 

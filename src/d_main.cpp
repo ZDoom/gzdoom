@@ -38,7 +38,7 @@
 #endif
 #include <float.h>
 
-#ifdef unix
+#if defined(unix) || defined(__APPLE__)
 #include <unistd.h>
 #endif
 
@@ -61,7 +61,7 @@
 #include "f_wipe.h"
 #include "m_argv.h"
 #include "m_misc.h"
-#include "m_menu.h"
+#include "menu/menu.h"
 #include "c_console.h"
 #include "c_dispatch.h"
 #include "i_system.h"
@@ -104,6 +104,7 @@
 #include "compatibility.h"
 #include "m_joy.h"
 #include "sc_man.h"
+#include "po_man.h"
 #include "resourcefiles/resourcefile.h"
 
 EXTERN_CVAR(Bool, hud_althud)
@@ -200,6 +201,7 @@ gamestate_t wipegamestate = GS_DEMOSCREEN;	// can be -1 to force a wipe
 bool PageBlank;
 FTexture *Page;
 FTexture *Advisory;
+bool nospriterename;
 
 cycle_t FrameCycles;
 
@@ -390,6 +392,18 @@ CVAR (Flag, sv_nofov,			dmflags, DF_NO_FOV);
 CVAR (Flag, sv_noweaponspawn,	dmflags, DF_NO_COOP_WEAPON_SPAWN);
 CVAR (Flag, sv_nocrouch,		dmflags, DF_NO_CROUCH);
 CVAR (Flag, sv_allowcrouch,		dmflags, DF_YES_CROUCH);
+CVAR (Flag, sv_cooploseinventory,	dmflags, DF_COOP_LOSE_INVENTORY);
+CVAR (Flag, sv_cooplosekeys,	dmflags, DF_COOP_LOSE_KEYS);
+CVAR (Flag, sv_cooploseweapons,	dmflags, DF_COOP_LOSE_WEAPONS);
+CVAR (Flag, sv_cooplosearmor,	dmflags, DF_COOP_LOSE_ARMOR);
+CVAR (Flag, sv_cooplosepowerups,	dmflags, DF_COOP_LOSE_POWERUPS);
+CVAR (Flag, sv_cooploseammo,	dmflags, DF_COOP_LOSE_AMMO);
+CVAR (Flag, sv_coophalveammo,	dmflags, DF_COOP_HALVE_AMMO);
+
+// Some (hopefully cleaner) interface to these settings.
+CVAR (Mask, sv_crouch,			dmflags, DF_NO_CROUCH|DF_YES_CROUCH);
+CVAR (Mask, sv_jump,			dmflags, DF_NO_JUMP|DF_YES_JUMP);
+CVAR (Mask, sv_fallingdamage,	dmflags, DF_FORCE_FALLINGHX|DF_FORCE_FALLINGZD);
 
 //==========================================================================
 //
@@ -460,7 +474,6 @@ CVAR (Flag, sv_disallowsuicide,		dmflags2, DF2_NOSUICIDE);
 CVAR (Flag, sv_noautoaim,			dmflags2, DF2_NOAUTOAIM);
 CVAR (Flag, sv_dontcheckammo,		dmflags2, DF2_DONTCHECKAMMO);
 CVAR (Flag, sv_killbossmonst,		dmflags2, DF2_KILLBOSSMONST);
-
 //==========================================================================
 //
 // CVAR compatflags
@@ -480,7 +493,12 @@ static int GetCompatibility(int mask)
 
 CUSTOM_CVAR (Int, compatflags, 0, CVAR_ARCHIVE|CVAR_SERVERINFO)
 {
+	int old = i_compatflags;
 	i_compatflags = GetCompatibility(self) | ii_compatflags;
+	if ((old ^i_compatflags) & COMPATF_POLYOBJ)
+	{
+		FPolyObj::ClearAllSubsectorLinks();
+	}
 }
 
 CUSTOM_CVAR(Int, compatmode, 0, CVAR_ARCHIVE|CVAR_NOINITCALL)
@@ -559,6 +577,7 @@ CVAR (Flag, compat_noblockfriends,compatflags,COMPATF_NOBLOCKFRIENDS);
 CVAR (Flag, compat_spritesort,	compatflags,COMPATF_SPRITESORT);
 CVAR (Flag, compat_hitscan,		compatflags,COMPATF_HITSCAN);
 CVAR (Flag, compat_light,		compatflags,COMPATF_LIGHT);
+CVAR (Flag, compat_polyobj,		compatflags,COMPATF_POLYOBJ);
 
 //==========================================================================
 //
@@ -879,6 +898,8 @@ void D_DoomLoop ()
 
 	// Clamp the timer to TICRATE until the playloop has been entered.
 	r_NoInterpolate = true;
+
+	I_SetCursor(TexMan["cursor"]);
 
 	for (;;)
 	{
@@ -1671,6 +1692,10 @@ static FString ParseGameInfo(TArray<FString> &pwads, const char *fn, const char 
 			}
 			while (sc.CheckToken(','));
 		}
+		else if (!nextKey.CompareNoCase("NOSPRITERENAME"))
+		{
+			nospriterename = true;
+		}
 	}
 	return iwad;
 }
@@ -2065,6 +2090,7 @@ void D_DoomMain (void)
 	// [GRB] Initialize player class list
 	SetupPlayerClasses ();
 
+
 	// [RH] Load custom key and weapon settings from WADs
 	D_LoadWadSettings ();
 
@@ -2134,7 +2160,7 @@ void D_DoomMain (void)
 	bglobal.spawn_tries = 0;
 	bglobal.wanted_botnum = bglobal.getspawned.Size();
 
-	Printf ("M_Init: Init miscellaneous info.\n");
+	Printf ("M_Init: Init menus.\n");
 	M_Init ();
 
 	Printf ("P_Init: Init Playloop state.\n");
@@ -2287,11 +2313,37 @@ void FStartupScreen::AppendStatusLine(const char *status)
 //
 //==========================================================================
 
+//==========================================================================
+//
+// STAT fps
+//
+// Displays statistics about rendering times
+//
+//==========================================================================
+
 ADD_STAT (fps)
 {
 	FString out;
 	out.Format("frame=%04.1f ms  walls=%04.1f ms  planes=%04.1f ms  masked=%04.1f ms",
 		FrameCycles.TimeMS(), WallCycles.TimeMS(), PlaneCycles.TimeMS(), MaskedCycles.TimeMS());
+	return out;
+}
+
+
+static double f_acc, w_acc,p_acc,m_acc;
+static int acc_c;
+
+ADD_STAT (fps_accumulated)
+{
+	f_acc += FrameCycles.TimeMS();
+	w_acc += WallCycles.TimeMS();
+	p_acc += PlaneCycles.TimeMS();
+	m_acc += MaskedCycles.TimeMS();
+	acc_c++;
+	FString out;
+	out.Format("frame=%04.1f ms  walls=%04.1f ms  planes=%04.1f ms  masked=%04.1f ms  %d counts",
+		f_acc/acc_c, w_acc/acc_c, p_acc/acc_c, m_acc/acc_c, acc_c);
+	Printf(PRINT_LOG, "%s\n", out.GetChars());
 	return out;
 }
 

@@ -81,6 +81,7 @@ ACTOR ArtiBoostMana : CustomInventory 8003
 	Inventory.Icon "ARTIBMAN"
 	Inventory.PickupSound "misc/p_pkup"
 	Inventory.PickupMessage "$TXT_ARTIBOOSTMANA"
+	Tag "$TAG_ARTIBOOSTMANA"
 	States
 	{
 	Spawn:

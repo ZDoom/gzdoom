@@ -230,6 +230,7 @@ enum
 	ACMETA_MeleeDamage,
 	ACMETA_MissileName,
 	ACMETA_MissileHeight,
+	ACMETA_Lump,
 };
 
 

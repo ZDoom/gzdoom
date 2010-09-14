@@ -75,6 +75,11 @@ struct vertex_t
 	{
 		return x == other.x && y == other.y;
 	}
+
+	void clear()
+	{
+		x = y = 0;
+	}
 };
 
 // Forward of LineDefs, for Sectors.
@@ -314,6 +319,7 @@ enum
 	SECF_FORCEDUNDERWATER= 64,	// sector is forced to be underwater
 	SECF_UNDERWATERMASK	= 32+64,
 	SECF_DRAWN			= 128,	// sector has been drawn at least once
+	SECF_HIDDEN			= 256,	// Do not draw on textured automap
 };
 
 enum
@@ -635,6 +641,7 @@ struct sector_t
 
 	int			sky;
 	short		seqType;		// this sector's sound sequence
+	FNameNoInit	SeqName;		// Sound sequence name. Setting seqType non-negative will override this.
 
 	fixed_t		soundorg[2];	// origin for any sounds played by the sector
 	int 		validcount;		// if == validcount, already checked
@@ -854,6 +861,9 @@ struct side_t
 
 	DInterpolation *SetInterpolation(int position);
 	void StopInterpolation(int position);
+
+	vertex_t *V1() const;
+	vertex_t *V2() const;
 };
 
 FArchive &operator<< (FArchive &arc, side_t::part &p);
@@ -916,22 +926,8 @@ struct msecnode_t
 	bool visited;	// killough 4/4/98, 4/7/98: used in search algorithms
 };
 
-//
-// A SubSector.
-// References a Sector.
-// Basically, this is a list of LineSegs indicating the visible walls that
-// define (all or some) sides of a convex BSP leaf.
-//
-struct FPolyObj;
-struct subsector_t
-{
-	sector_t	*sector;
-	DWORD		numlines;
-	DWORD		firstline;
-	FPolyObj	*poly;
-	int			validcount;
-	fixed_t		CenterX, CenterY;
-};
+struct FPolyNode;
+struct FMiniBSP;
 
 //
 // The LineSeg.
@@ -947,52 +943,41 @@ struct seg_t
 	// Sector references. Could be retrieved from linedef, too.
 	sector_t*		frontsector;
 	sector_t*		backsector;		// NULL for one-sided lines
-
-	subsector_t*	Subsector;
-	seg_t*			PartnerSeg;
-
-	BITFIELD		bPolySeg:1;
 };
 
-// ===== Polyobj data =====
-struct FPolyObj
+struct glsegextra_t
 {
-	int			numsegs;
-	seg_t		**segs;
-	int			numlines;
-	line_t		**lines;
-	int			numvertices;
-	vertex_t	**vertices;
-	fixed_t		startSpot[2];
-	vertex_t	*originalPts;	// used as the base for the rotations
-	vertex_t	*prevPts; 		// use to restore the old point values
-	angle_t		angle;
-	int			tag;			// reference tag assigned in HereticEd
-	int			bbox[4];
-	int			validcount;
-	int			crush; 			// should the polyobj attempt to crush mobjs?
-	bool		bHurtOnTouch;	// should the polyobj hurt anything it touches?
-	int			seqType;
-	fixed_t		size;			// polyobj size (area of POLY_AREAUNIT == size of FRACUNIT)
-	DThinker	*specialdata;	// pointer to a thinker, if the poly is moving
-	TObjPtr<DInterpolation> interpolation;
-
-	~FPolyObj();
-	DInterpolation *SetInterpolation();
-	void StopInterpolation();
+	DWORD		 PartnerSeg;
+	subsector_t *Subsector;
 };
-extern FPolyObj *polyobjs;		// list of all poly-objects on the level
 
-inline FArchive &operator<< (FArchive &arc, FPolyObj *&poly)
+//
+// A SubSector.
+// References a Sector.
+// Basically, this is a list of LineSegs indicating the visible walls that
+// define (all or some) sides of a convex BSP leaf.
+//
+
+enum
 {
-	return arc.SerializePointer (polyobjs, (BYTE **)&poly, sizeof(FPolyObj));
-}
+	SSECF_DEGENERATE = 1,
+	SSECF_DRAWN = 2,
+	SSECF_POLYORG = 4,
+};
 
-inline FArchive &operator<< (FArchive &arc, const FPolyObj *&poly)
+struct subsector_t
 {
-	return arc.SerializePointer (polyobjs, (BYTE **)&poly, sizeof(FPolyObj));
-}
+	sector_t	*sector;
+	FPolyNode	*polys;
+	FMiniBSP	*BSP;
+	seg_t		*firstline;
+	sector_t	*render_sector;
+	DWORD		numlines;
+	int			flags;
+};
 
+
+	
 
 //
 // BSP node.
@@ -1005,6 +990,7 @@ struct node_t
 	fixed_t		dx;
 	fixed_t		dy;
 	fixed_t		bbox[2][4];		// Bounding box for each child.
+	float		len;
 	union
 	{
 		void	*children[2];	// If bit 0 is set, it's a subsector.
@@ -1013,11 +999,18 @@ struct node_t
 };
 
 
-struct polyblock_t
+// An entire BSP tree.
+
+struct FMiniBSP
 {
-	FPolyObj *polyobj;
-	struct polyblock_t *prev;
-	struct polyblock_t *next;
+	FMiniBSP();
+
+	bool bDirty;
+
+	TArray<node_t> Nodes;
+	TArray<seg_t> Segs;
+	TArray<subsector_t> Subsectors;
+	TArray<vertex_t> Verts;
 };
 
 

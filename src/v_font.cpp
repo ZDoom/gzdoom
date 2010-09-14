@@ -2043,6 +2043,15 @@ void V_InitFontColors ()
 
 	while ((lump = Wads.FindLump ("TEXTCOLO", &lastlump)) != -1)
 	{
+		if (gameinfo.flags & GI_NOTEXTCOLOR)
+		{
+			// Chex3 contains a bad TEXTCOLO lump, probably to force all text to be green.
+			// This renders the Gray, Gold, Red and Yellow color range inoperable, some of
+			// which are used by the menu. So we have no choice but to skip this lump so that
+			// all colors work properly.
+			// The text colors should be the end user's choice anyway.
+			if (Wads.GetLumpFile(lump) == 1) continue;
+		}
 		FScanner sc(lump);
 		while (sc.GetString())
 		{

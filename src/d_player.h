@@ -54,6 +54,7 @@ enum
 	APMETA_ColorRange,		// skin color range
 	APMETA_InvulMode,
 	APMETA_HealingRadius,
+	APMETA_Portrait,
 	APMETA_Hexenarmor0,
 	APMETA_Hexenarmor1,
 	APMETA_Hexenarmor2,

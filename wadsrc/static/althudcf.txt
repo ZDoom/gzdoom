@@ -1,4 +1,5 @@
 Fist PUNGC0
 PunchDagger PNCHD0
+FWeapFist FPCHC0
 Beak ""
 Snout ""

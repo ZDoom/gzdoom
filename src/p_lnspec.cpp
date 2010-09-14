@@ -121,6 +121,21 @@ FUNC(LS_Polyobj_MoveTimes8)
 	return EV_MovePoly (ln, arg0, SPEED(arg1), BYTEANGLE(arg2), arg3 * FRACUNIT * 8, false);
 }
 
+FUNC(LS_Polyobj_MoveTo)
+// Polyobj_MoveTo (po, speed, x, y)
+{
+	return EV_MovePolyTo (ln, arg0, SPEED(arg1), arg2 << FRACBITS, arg3 << FRACBITS, false);
+}
+
+FUNC(LS_Polyobj_MoveToSpot)
+// Polyobj_MoveToSpot (po, speed, tid)
+{
+	FActorIterator iterator (arg2);
+	AActor *spot = iterator.Next();
+	if (spot == NULL) return false;
+	return EV_MovePolyTo (ln, arg0, SPEED(arg1), spot->x, spot->y, false);
+}
+
 FUNC(LS_Polyobj_DoorSwing)
 // Polyobj_DoorSwing (po, speed, angle, delay)
 {
@@ -155,6 +170,27 @@ FUNC(LS_Polyobj_OR_MoveTimes8)
 // Polyobj_OR_MoveTimes8 (po, speed, angle, distance)
 {
 	return EV_MovePoly (ln, arg0, SPEED(arg1), BYTEANGLE(arg2), arg3 * FRACUNIT * 8, true);
+}
+
+FUNC(LS_Polyobj_OR_MoveTo)
+// Polyobj_OR_MoveTo (po, speed, x, y)
+{
+	return EV_MovePolyTo (ln, arg0, SPEED(arg1), arg2 << FRACBITS, arg3 << FRACBITS, true);
+}
+
+FUNC(LS_Polyobj_OR_MoveToSpot)
+// Polyobj_OR_MoveToSpot (po, speed, tid)
+{
+	FActorIterator iterator (arg2);
+	AActor *spot = iterator.Next();
+	if (spot == NULL) return false;
+	return EV_MovePolyTo (ln, arg0, SPEED(arg1), spot->x, spot->y, true);
+}
+
+FUNC(LS_Polyobj_Stop)
+// Polyobj_Stop (po)
+{
+	return EV_StopPoly (arg0);
 }
 
 FUNC(LS_Door_Close)
@@ -2970,6 +3006,36 @@ FUNC(LS_StartConversation)
 	return false;
 }
 
+FUNC(LS_Thing_SetConversation)
+// Thing_SetConversation (tid, dlg_id)
+{
+	int dlg_index = -1;
+	FStrifeDialogueNode *node = NULL;
+
+	if (arg1 != 0)
+	{
+		dlg_index = GetConversation(arg1);	
+		if (dlg_index == -1) return false;
+		node = StrifeDialogues[dlg_index];
+	}
+
+	if (arg0 != 0)
+	{
+		FActorIterator iterator (arg0);
+		while ((it = iterator.Next()) != NULL)
+		{
+			it->ConversationRoot = dlg_index;
+			it->Conversation = node;
+		}
+	}
+	else if (it)
+	{
+		it->ConversationRoot = dlg_index;
+		it->Conversation = node;
+	}
+	return true;
+}
+
 
 lnSpecFunc LineSpecials[256] =
 {
@@ -3031,8 +3097,8 @@ lnSpecFunc LineSpecials[256] =
 	/*  55 */ LS_Line_SetBlocking,
 	/*  56 */ LS_Line_SetTextureScale,
 	/*  57 */ LS_NOP,		// Sector_SetPortal
-	/*  58 */ LS_NOP,
-	/*  59 */ LS_NOP,
+	/*  58 */ LS_NOP,		// Sector_CopyScroller
+	/*  59 */ LS_Polyobj_OR_MoveToSpot,
 	/*  60 */ LS_Plat_PerpetualRaise,
 	/*  61 */ LS_Plat_Stop,
 	/*  62 */ LS_Plat_DownWaitUpStay,
@@ -3052,17 +3118,17 @@ lnSpecFunc LineSpecials[256] =
 	/*  76 */ LS_TeleportOther,
 	/*  77 */ LS_TeleportGroup,
 	/*  78 */ LS_TeleportInSector,
-	/*  79 */ LS_NOP,
+	/*  79 */ LS_Thing_SetConversation,
 	/*  80 */ LS_ACS_Execute,
 	/*  81 */ LS_ACS_Suspend,
 	/*  82 */ LS_ACS_Terminate,
 	/*  83 */ LS_ACS_LockedExecute,
 	/*  84 */ LS_ACS_ExecuteWithResult,
 	/*  85 */ LS_ACS_LockedExecuteDoor,
-	/*  86 */ LS_NOP,
-	/*  87 */ LS_NOP,
-	/*  88 */ LS_NOP,
-	/*  89 */ LS_NOP,
+	/*  86 */ LS_Polyobj_MoveToSpot,
+	/*  87 */ LS_Polyobj_Stop,
+	/*  88 */ LS_Polyobj_MoveTo,
+	/*  89 */ LS_Polyobj_OR_MoveTo,
 	/*  90 */ LS_Polyobj_OR_RotateLeft,
 	/*  91 */ LS_Polyobj_OR_RotateRight,
 	/*  92 */ LS_Polyobj_OR_Move,

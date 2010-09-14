@@ -136,7 +136,7 @@ class FOptionMenuItemOptionBase : public FOptionMenuItem
 protected:
 	// action is a CVAR
 	FOptionValues *mValues;
-	FBoolCVar *mGrayCheck;
+	FBaseCVar *mGrayCheck;
 	int mCenter;
 public:
 
@@ -158,7 +158,6 @@ public:
 			mValues = NULL;
 		}
 		mGrayCheck = (FBoolCVar*)FindCVar(graycheck, NULL);
-		if (mGrayCheck != NULL && mGrayCheck->GetRealType() != CVAR_Bool) mGrayCheck = NULL;
 		mCenter = center;
 	}
 
@@ -188,7 +187,7 @@ public:
 	//=============================================================================
 	int Draw(FOptionMenuDescriptor *desc, int y, int indent, bool selected)
 	{
-		bool grayed = mGrayCheck != NULL && !(**mGrayCheck);
+		bool grayed = mGrayCheck != NULL && !(mGrayCheck->GetGenericRep(CVAR_Bool).Bool);
 
 		if (mCenter)
 		{
@@ -239,7 +238,7 @@ public:
 
 	bool Selectable()
 	{
-		return !(mGrayCheck != NULL && !(**mGrayCheck));
+		return !(mGrayCheck != NULL && !(mGrayCheck->GetGenericRep(CVAR_Bool).Bool));
 	}
 };
 

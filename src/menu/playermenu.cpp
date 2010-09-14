@@ -53,6 +53,7 @@ EXTERN_CVAR (String, name)
 EXTERN_CVAR (Int, team)
 EXTERN_CVAR (Float, autoaim)
 EXTERN_CVAR(Bool, neverswitchonpickup)
+EXTERN_CVAR (Bool, cl_run)
 
 void R_GetPlayerTranslation (int color, const FPlayerColorSet *colorset, FPlayerSkin *skin, FRemapTable *table);
 
@@ -206,7 +207,7 @@ bool FPlayerNameBox::MenuEvent(int mkey, bool fromcontroller)
 //
 //=============================================================================
 
-FValueTextItem::FValueTextItem(int x, int y, int height, const char *text, FFont *font, EColorRange color, EColorRange valuecolor, FName action)
+FValueTextItem::FValueTextItem(int x, int y, int height, const char *text, FFont *font, EColorRange color, EColorRange valuecolor, FName action, FName values)
 : FListMenuItemSelectable(x, y, height, action)
 {
 	mText = copystring(text);
@@ -214,6 +215,17 @@ FValueTextItem::FValueTextItem(int x, int y, int height, const char *text, FFont
 	mFontColor = color;
 	mFontColor2 = valuecolor;
 	mSelection = 0;
+	if (values != NAME_None)
+	{
+		FOptionValues **opt = OptionValues.CheckKey(values);
+		if (opt != NULL) 
+		{
+			for(unsigned i=0;i<(*opt)->mValues.Size(); i++)
+			{
+				SetString(i, (*opt)->mValues[i].Text);
+			}
+		}
+	}
 }
 
 FValueTextItem::~FValueTextItem()
@@ -520,6 +532,7 @@ void DPlayerMenu::Init(DMenu *parent, FListMenuDescriptor *desc)
 	li = GetItem(NAME_Playerdisplay);
 	if (li != NULL)
 	{
+		li->SetValue(FListMenuItemPlayerDisplay::PDF_ROTATION, 0);
 		li->SetValue(FListMenuItemPlayerDisplay::PDF_MODE, 1);
 		li->SetValue(FListMenuItemPlayerDisplay::PDF_TRANSLATE, 1);
 		li->SetValue(FListMenuItemPlayerDisplay::PDF_CLASS, players[consoleplayer].userinfo.PlayerClass);
@@ -598,23 +611,12 @@ void DPlayerMenu::Init(DMenu *parent, FListMenuDescriptor *desc)
 	li = GetItem(NAME_Gender);
 	if (li != NULL)
 	{
-		li->SetString(0, "male");
-		li->SetString(1, "female");
-		li->SetString(2, "other");
 		li->SetValue(0, players[consoleplayer].userinfo.gender);
 	}
 
 	li = GetItem(NAME_Autoaim);
 	if (li != NULL)
 	{
-		li->SetString(0, "Never");
-		li->SetString(1, "Very Low");
-		li->SetString(2, "Low");
-		li->SetString(3, "Medium");
-		li->SetString(4, "High");
-		li->SetString(5, "Very High");
-		li->SetString(6, "Always");
-
 		int sel = 
 			autoaim == 0 ? 0 :
 			autoaim <= 0.25 ? 1 :
@@ -628,9 +630,13 @@ void DPlayerMenu::Init(DMenu *parent, FListMenuDescriptor *desc)
 	li = GetItem(NAME_Switch);
 	if (li != NULL)
 	{
-		li->SetString(0, "Yes");
-		li->SetString(1, "No");
 		li->SetValue(0, neverswitchonpickup);
+	}
+
+	li = GetItem(NAME_AlwaysRun);
+	if (li != NULL)
+	{
+		li->SetValue(0, cl_run);
 	}
 
 	if (mDesc->mSelectedItem < 0) mDesc->mSelectedItem = 1;
@@ -1039,6 +1045,13 @@ bool DPlayerMenu::MenuEvent (int mkey, bool fromcontroller)
 				if (li->GetValue(0, &v))
 				{
 					neverswitchonpickup = !v;
+				}
+				break;
+
+			case NAME_AlwaysRun:
+				if (li->GetValue(0, &v))
+				{
+					cl_run = !!v;
 				}
 				break;
 

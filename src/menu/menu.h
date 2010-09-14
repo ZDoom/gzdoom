@@ -428,7 +428,7 @@ class FValueTextItem : public FListMenuItemSelectable
 
 public:
 
-	FValueTextItem(int x, int y, int height, const char *text, FFont *font, EColorRange color, EColorRange valuecolor, FName action);
+	FValueTextItem(int x, int y, int height, const char *text, FFont *font, EColorRange color, EColorRange valuecolor, FName action, FName values);
 	~FValueTextItem();
 	bool SetString(int i, const char *s);
 	bool SetValue(int i, int value);

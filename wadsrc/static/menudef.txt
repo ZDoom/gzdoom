@@ -271,7 +271,7 @@ ListMenu "SaveGameMenu"
 
 //-------------------------------------------------------------------------------------------
 //
-// The player menu - remove the test name later!
+// The player menu
 //
 //-------------------------------------------------------------------------------------------
 
@@ -315,6 +315,7 @@ ListMenu "PlayerMenu"
 	ValueText "Class", "Class"
 	ValueText "Skin", "Skin"
 	ValueText "Gender", "Gender"
+	ValueText	"Always Run", 				"cl_run", "OnOff"
 	ValueText "Autoaim", "Autoaim"
 	ValueText "Switch on pickup", "Switch"
 	Class "PlayerMenu"
@@ -377,7 +378,6 @@ OptionMenu "OptionsMenu"
 	Submenu "Customize Controls",		"CustomizeControls"
 	Submenu "Mouse options",			"MouseOptions"
 	Submenu "Joystick options",			"JoystickOptions"
-	Option	"Always Run", 				"cl_run", "OnOff"
 	StaticText " "
 	Submenu "Player Setup",				"PlayerMenu"
 	Submenu "Gameplay Options",			"GameplayOptions"
@@ -390,6 +390,75 @@ OptionMenu "OptionsMenu"
 	SafeCommand "Reset to defaults",	"reset2defaults"
 	SafeCommand	"Reset to last saved",	"reset2saved"
 	Command "Go to console",			"menuconsole"
+}
+
+//-------------------------------------------------------------------------------------------
+//
+// The player menu
+//
+//-------------------------------------------------------------------------------------------
+
+OptionValue "Gender"
+{
+	0, "Male"
+	1, "Female"
+	2, "Other"
+}
+
+OptionValue "Autoaim"
+{
+	0, "Never"
+	1, "Very low"
+	2, "Low"
+	3, "Medium"
+	4, "High"
+	5, "Very high"
+	6, "Always"
+}
+
+
+ListMenu "PlayerMenu"
+{
+	StaticTextCentered 160, 6, "$MNU_PLAYERSETUP"
+	Font "SmallFont"
+	Linespacing 14
+	Position 48, 36
+
+	IfGame (Doom, Strife, Chex)
+	{
+		PlayerNameBox "Name", 0, "Playerbox"
+		Selector "-", -16, -1
+	}
+	IfGame(Heretic, Hexen)
+	{
+		PlayerNameBox "Name", 5, "Playerbox"
+		Selector "-", -16, 1
+	}
+	IfGame(Doom, Heretic, Strife, Chex)
+	{
+		MouseWindow 0, 220
+		PlayerDisplay 220, 80, "20 00 00", "80 00 40", 1, "PlayerDisplay"
+	}
+	IfGame(Hexen)
+	{
+		MouseWindow 0, 220
+		PlayerDisplay 220, 80, "00 07 00", "40 53 40", 1, "PlayerDisplay"
+	}
+	
+	ValueText "Team", "Team"
+	ValueText "Color", "Color"
+	Linespacing 10
+	Slider "Red", "Red", 0, 255, 16
+	Slider "Green", "Green", 0, 255, 16
+	Linespacing 14
+	Slider "Blue", "Blue", 0, 255, 16
+	ValueText "Class", "Class"
+	ValueText "Skin", "Skin"
+	ValueText "Gender", "Gender", "Gender"
+	ValueText "Autoaim", "Autoaim", "Autoaim"
+	ValueText "Switch on pickup", "Switch", "OffOn"
+	ValueText "Always Run", "AlwaysRun", "OnOff"
+	Class "PlayerMenu"
 }
 
 //-------------------------------------------------------------------------------------------
@@ -606,6 +675,32 @@ OptionValue DisplayTagsTypes
 	3.0, "Both"
 }
 
+OptionValue TextColors
+{
+	0.0, "\cabrick"
+	1.0, "\cbtan"
+	2.0, "\ccgray"
+	3.0, "\cdgreen"
+	4.0, "\cebrown"
+	5.0, "\cfgold"
+	6.0, "\cgred"
+	7.0, "\chblue"
+	8.0, "\ciorange"
+	9.0, "\cjwhite"
+	10.0, "\ckyellow"
+	11.0, "\cldefault"
+	12.0, "\cmblack"
+	13.0, "\cnlight blue"
+	14.0, "\cocream"
+	15.0, "\cpolive"
+	16.0, "\cqdark green"
+	17.0, "\crdark red"
+	18.0, "\csdark brown"
+	19.0, "\ctpurple"
+	20.0, "\cudark gray"
+	21.0, "\cvcyan"
+}
+
 OptionValue Crosshairs
 {
 	// will be filled in from the XHAIRS lump
@@ -625,6 +720,7 @@ OptionMenu "VideoOptions"
 	StaticText " "
 	Option "Crosshair",					"crosshair", "Crosshairs"
 	Option "Display nametags",			"displaynametags", "DisplayTagsTypes"
+	Option "Nametag color",				"nametagcolor", "TextColors", "displaynametags"
 	Option "Stretch status bar",		"st_scale", "OnOff"
 	Option "Alternative HUD",			"hud_althud", "OnOff"
 	Option "Screen wipe style",			"wipetype", "Wipes"
@@ -802,32 +898,6 @@ OptionValue ScaleValues
 	0, "Off"
 	1, "On"
 	2, "Double"
-}
-
-OptionValue TextColors
-{
-	0.0, "\cabrick"
-	1.0, "\cbtan"
-	2.0, "\ccgray"
-	3.0, "\cdgreen"
-	4.0, "\cebrown"
-	5.0, "\cfgold"
-	6.0, "\cgred"
-	7.0, "\chblue"
-	8.0, "\ciorange"
-	9.0, "\cjwhite"
-	10.0, "\ckyellow"
-	11.0, "\cldefault"
-	12.0, "\cmblack"
-	13.0, "\cnlight blue"
-	14.0, "\cocream"
-	15.0, "\cpolive"
-	16.0, "\cqdark green"
-	17.0, "\crdark red"
-	18.0, "\csdark brown"
-	19.0, "\ctpurple"
-	20.0, "\cudark gray"
-	21.0, "\cvcyan"
 }
 
 OptionValue MessageLevels

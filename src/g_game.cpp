@@ -128,6 +128,8 @@ CUSTOM_CVAR (Int, displaynametags, 0, CVAR_ARCHIVE)
 	}
 }
 
+CVAR(Int, nametagcolor, CR_GOLD, CVAR_ARCHIVE)
+
 
 gameaction_t	gameaction;
 gamestate_t 	gamestate = GS_STARTUP;
@@ -326,7 +328,7 @@ CCMD (weapnext)
 	if ((displaynametags & 2) && StatusBar && SmallFont && SendItemUse)
 	{
 		StatusBar->AttachMessage(new DHUDMessageFadeOut(SmallFont, SendItemUse->GetTag(),
-			1.5f, 0.90f, 0, 0, CR_GOLD, 2.f, 0.35f), MAKE_ID( 'W', 'E', 'P', 'N' ));
+			1.5f, 0.90f, 0, 0, (EColorRange)*nametagcolor, 2.f, 0.35f), MAKE_ID( 'W', 'E', 'P', 'N' ));
 	}
 }
 
@@ -337,7 +339,7 @@ CCMD (weapprev)
 	if ((displaynametags & 2) && StatusBar && SmallFont && SendItemUse)
 	{
 		StatusBar->AttachMessage(new DHUDMessageFadeOut(SmallFont, SendItemUse->GetTag(),
-			1.5f, 0.90f, 0, 0, CR_GOLD, 2.f, 0.35f), MAKE_ID( 'W', 'E', 'P', 'N' ));
+			1.5f, 0.90f, 0, 0, (EColorRange)*nametagcolor, 2.f, 0.35f), MAKE_ID( 'W', 'E', 'P', 'N' ));
 	}
 }
 
@@ -368,7 +370,7 @@ CCMD (invnext)
 		}
 		if ((displaynametags & 1) && StatusBar && SmallFont && who->InvSel)
 			StatusBar->AttachMessage (new DHUDMessageFadeOut (SmallFont, who->InvSel->GetTag(), 
-			1.5f, 0.80f, 0, 0, CR_GOLD, 2.f, 0.35f), MAKE_ID('S','I','N','V'));
+			1.5f, 0.80f, 0, 0, (EColorRange)*nametagcolor, 2.f, 0.35f), MAKE_ID('S','I','N','V'));
 	}
 	who->player->inventorytics = 5*TICRATE;
 }
@@ -398,7 +400,7 @@ CCMD (invprev)
 		}
 		if ((displaynametags & 1) && StatusBar && SmallFont && who->InvSel)
 			StatusBar->AttachMessage (new DHUDMessageFadeOut (SmallFont, who->InvSel->GetTag(), 
-			1.5f, 0.80f, 0, 0, CR_GOLD, 2.f, 0.35f), MAKE_ID('S','I','N','V'));
+			1.5f, 0.80f, 0, 0, (EColorRange)*nametagcolor, 2.f, 0.35f), MAKE_ID('S','I','N','V'));
 	}
 	who->player->inventorytics = 5*TICRATE;
 }

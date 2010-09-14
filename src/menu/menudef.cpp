@@ -393,7 +393,14 @@ static void ParseListMenuBody(FScanner &sc, FListMenuDescriptor *desc)
 			FString text = sc.String;
 			sc.MustGetStringName(",");
 			sc.MustGetString();
-			FListMenuItem *it = new FValueTextItem(desc->mXpos, desc->mYpos, desc->mLinespacing, text, desc->mFont, desc->mFontColor, desc->mFontColor2, sc.String);
+			FName action = sc.String;
+			FName values;
+			if (sc.CheckString(","))
+			{
+				sc.MustGetString();
+				values = sc.String;
+			}
+			FListMenuItem *it = new FValueTextItem(desc->mXpos, desc->mYpos, desc->mLinespacing, text, desc->mFont, desc->mFontColor, desc->mFontColor2, action, values);
 			desc->mItems.Push(it);
 			desc->mYpos += desc->mLinespacing;
 			if (desc->mSelectedItem == -1) desc->mSelectedItem = desc->mItems.Size()-1;

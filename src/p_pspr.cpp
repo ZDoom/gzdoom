@@ -794,9 +794,15 @@ void P_SetupPsprites(player_t *player)
 	{
 		player->psprites[i].state = NULL;
 	}
+
+
+	// [Spleen] Let P_MovePsprites handle calling P_BringUpWeapon,
+	// instead of P_SetupPsprites, to avoid raising it twice in one tic.
+	/*
 	// Spawn the ready weapon
 	player->PendingWeapon = player->ReadyWeapon;
 	P_BringUpWeapon (player);
+	*/
 }
 
 //------------------------------------------------------------------------

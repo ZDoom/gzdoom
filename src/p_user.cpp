@@ -1103,7 +1103,10 @@ void APlayerPawn::GiveDefaultInventory ()
 			if (item != NULL && item->IsKindOf (RUNTIME_CLASS (AWeapon)) &&
 				static_cast<AWeapon*>(item)->CheckAmmo(AWeapon::EitherFire, false))
 			{
-				player->ReadyWeapon = player->PendingWeapon = static_cast<AWeapon *> (item);
+				// [Spleen] ReadyWeapon will be set when P_MovePsprites calls P_BringUpWeapon
+				player->PendingWeapon = static_cast<AWeapon *> (item);
+				player->ReadyWeapon = NULL;
+				//player->ReadyWeapon = player->PendingWeapon = static_cast<AWeapon *> (item);
 			}
 		}
 		di = di->Next;

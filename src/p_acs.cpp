@@ -5834,15 +5834,22 @@ int DLevelScript::RunScript ()
 		case PCD_GETACTORY:
 		case PCD_GETACTORZ:
 			{
-				AActor *actor = SingleActorFromTID (STACK(1), activator);
-
-				if (actor == NULL)
+				if(STACK(1) == 0)
 				{
-					STACK(1) = 0;
+					STACK(1) = (&activator->x)[pcd - PCD_GETACTORX];
 				}
 				else
 				{
-					STACK(1) = (&actor->x)[pcd - PCD_GETACTORX];
+					AActor *actor = SingleActorFromTID (STACK(1), activator);
+
+					if (actor == NULL)
+					{
+						STACK(1) = 0;
+					}
+					else
+					{
+						STACK(1) = (&actor->x)[pcd - PCD_GETACTORX];
+					}
 				}
 			}
 			break;
@@ -5850,50 +5857,77 @@ int DLevelScript::RunScript ()
 		case PCD_GETACTORFLOORZ:
 		case PCD_GETACTORCEILINGZ:
 			{
-				AActor *actor = SingleActorFromTID (STACK(1), activator);
-
-				if (actor == NULL)
+				if(STACK(1) == 0)
 				{
-					STACK(1) = 0;
-				}
-				else if (pcd == PCD_GETACTORFLOORZ)
-				{
-					STACK(1) = actor->floorz;
+					if (pcd == PCD_GETACTORFLOORZ)
+					{
+						STACK(1) = activator->floorz;
+					}
+					else if(STACK(1) == 0)
+					{
+						STACK(1) = activator->ceilingz;
+					}
 				}
 				else
 				{
-					STACK(1) = actor->ceilingz;
-				}
+					AActor *actor = SingleActorFromTID (STACK(1), activator);
 
+					if (actor == NULL)
+					{
+						STACK(1) = 0;
+					}
+					else if (pcd == PCD_GETACTORFLOORZ)
+					{
+						STACK(1) = actor->floorz;
+					}
+					else
+					{
+						STACK(1) = actor->ceilingz;
+					}
+				}
 			}
 			break;
 
 		case PCD_GETACTORANGLE:
 			{
-				AActor *actor = SingleActorFromTID (STACK(1), activator);
-
-				if (actor == NULL)
+				if(STACK(1) == 0)
 				{
-					STACK(1) = 0;
+					STACK(1) = activator->angle >> 16;
 				}
 				else
 				{
-					STACK(1) = actor->angle >> 16;
+					AActor *actor = SingleActorFromTID (STACK(1), activator);
+
+					if (actor == NULL)
+					{
+						STACK(1) = 0;
+					}
+					else
+					{
+						STACK(1) = actor->angle >> 16;
+					}
 				}
 			}
 			break;
 
 		case PCD_GETACTORPITCH:
 			{
-				AActor *actor = SingleActorFromTID (STACK(1), activator);
-
-				if (actor == NULL)
+				if(STACK(1) == 0)
 				{
-					STACK(1) = 0;
+					STACK(1) = activator->pitch >> 16;
 				}
 				else
 				{
-					STACK(1) = actor->pitch >> 16;
+					AActor *actor = SingleActorFromTID (STACK(1), activator);
+
+					if (actor == NULL)
+					{
+						STACK(1) = 0;
+					}
+					else
+					{
+						STACK(1) = actor->pitch >> 16;
+					}
 				}
 			}
 			break;

@@ -13,6 +13,7 @@ ACTOR ArtiTeleport : Inventory 36 native
 	Inventory.Icon "ARTIATLP"
 	Inventory.PickupSound "misc/p_pkup"
 	Inventory.PickupMessage "$TXT_ARTITELEPORT"
+	Tag "$TAG_ARTITELEPORT"
 	States
 	{
 	Spawn:

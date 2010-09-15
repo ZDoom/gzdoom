@@ -708,7 +708,8 @@ bool FMODSoundRenderer::Init()
 
 	if (!ShowedBanner)
 	{
-		Printf("FMOD Sound System, copyright © Firelight Technologies Pty, Ltd., 1994-2009.\n");
+		// '\xa9' is the copyright symbol in the Windows-1252 code page.
+		Printf("FMOD Sound System, copyright \xa9 Firelight Technologies Pty, Ltd., 1994-2009.\n");
 		Printf("Loaded FMOD version %x.%02x.%02x\n", version >> 16, (version >> 8) & 255, version & 255);
 		ShowedBanner = true;
 	}
@@ -1332,10 +1333,10 @@ FString FMODSoundRenderer::GatherStats()
 #endif
 
 	out.Format ("%d channels,"TEXTCOLOR_YELLOW"%5.2f"TEXTCOLOR_NORMAL"%% CPU "
-		"(DSP:"TEXTCOLOR_YELLOW"%2.2f"TEXTCOLOR_NORMAL"%%  "
-		"Stream:"TEXTCOLOR_YELLOW"%2.2f"TEXTCOLOR_NORMAL"%%  "
-		"Geometry:"TEXTCOLOR_YELLOW"%2.2f"TEXTCOLOR_NORMAL"%%  "
-		"Update:"TEXTCOLOR_YELLOW"%2.2f"TEXTCOLOR_NORMAL"%%)",
+		"(DSP:"TEXTCOLOR_YELLOW"%5.2f"TEXTCOLOR_NORMAL"%% "
+		"Stream:"TEXTCOLOR_YELLOW"%5.2f"TEXTCOLOR_NORMAL"%% "
+		"Geometry:"TEXTCOLOR_YELLOW"%5.2f"TEXTCOLOR_NORMAL"%% "
+		"Update:"TEXTCOLOR_YELLOW"%5.2f"TEXTCOLOR_NORMAL"%%)",
 		channels, total, dsp, stream, geometry, update);
 	return out;
 }

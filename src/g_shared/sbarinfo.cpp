@@ -933,16 +933,16 @@ void Popup::close()
 
 ////////////////////////////////////////////////////////////////////////////////
 
-inline void adjustRelCenter(const SBarInfoCoordinate &x, const SBarInfoCoordinate &y, double &outX, double &outY, const double &xScale, const double &yScale)
+inline void adjustRelCenter(bool relX, bool relY, const double &x, const double &y, double &outX, double &outY, const double &xScale, const double &yScale)
 {
-	if(x.RelCenter())
-		outX = *x + (SCREENWIDTH/(hud_scale ? xScale*2 : 2));
+	if(relX)
+		outX = x + (SCREENWIDTH/(hud_scale ? xScale*2 : 2));
 	else
-		outX = *x;
-	if(y.RelCenter())
-		outY = *y + (SCREENHEIGHT/(hud_scale ? yScale*2 : 2));
+		outX = x;
+	if(relY)
+		outY = y + (SCREENHEIGHT/(hud_scale ? yScale*2 : 2));
 	else
-		outY = *y;
+		outY = y;
 }
 
 class DSBarInfo : public DBaseStatusBar
@@ -1227,7 +1227,7 @@ public:
 			double xScale = !hud_scale ? 1.0 : (double) CleanXfac*320.0/(double) script->resW;//(double) SCREENWIDTH/(double) script->resW;
 			double yScale = !hud_scale ? 1.0 : (double) CleanYfac*200.0/(double) script->resH;//(double) SCREENHEIGHT/(double) script->resH;
 
-			adjustRelCenter(x, y, rx, ry, xScale, yScale);
+			adjustRelCenter(x.RelCenter(), y.RelCenter(), dx, dy, rx, ry, xScale, yScale);
 
 			// We can't use DTA_HUDRules since it forces a width and height.
 			// Translation: No high res.
@@ -1288,7 +1288,7 @@ public:
 			}
 
 			if(clearDontDraw)
-				screen->Clear(static_cast<int>(rcx), static_cast<int>(rcy), static_cast<int>(MIN<double>(rcr, w)), static_cast<int>(MIN<double>(rcb, h)), GPalette.BlackIndex, 0);
+				screen->Clear(static_cast<int>(rcx), static_cast<int>(rcy), static_cast<int>(MIN<double>(rcr, rcx+w)), static_cast<int>(MIN<double>(rcb, rcy+h)), GPalette.BlackIndex, 0);
 			else
 			{
 				if(alphaMap)
@@ -1343,13 +1343,16 @@ public:
 				xScale = (double) CleanXfac*320.0/(double) script->resW;//(double) SCREENWIDTH/(double) script->resW;
 				yScale = (double) CleanYfac*200.0/(double) script->resH;//(double) SCREENWIDTH/(double) script->resW;
 			}
-			adjustRelCenter(x, y, ax, ay, xScale, yScale);
+			adjustRelCenter(x.RelCenter(), y.RelCenter(), *x, *y, ax, ay, xScale, yScale);
 		}
 		while(*str != '\0')
 		{
 			if(*str == ' ')
 			{
-				ax += font->GetSpaceWidth();
+				if(script->spacingCharacter == '\0')
+					ax += font->GetSpaceWidth();
+				else
+					ax += font->GetCharWidth((int) script->spacingCharacter);
 				str++;
 				continue;
 			}

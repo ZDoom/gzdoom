@@ -128,6 +128,8 @@ bool I_WriteIniFailed ();
 unsigned int I_MSTime (void);
 unsigned int I_FPSTime();
 
+class FTexture;
+bool I_SetCursor(FTexture *);
 
 // Directory searching routines
 

@@ -10,7 +10,7 @@ ACTOR Coin : Inventory 93 native
 	+FLOORCLIP
 	Inventory.MaxAmount 0x7fffffff
 	+INVENTORY.INVBAR
-	Tag "coin"
+	Tag "$TAG_COIN"
 	Inventory.Icon "I_COIN"
 	Inventory.PickupMessage "$TXT_COIN"
 	States
@@ -29,7 +29,7 @@ ACTOR Gold10 : Coin 138
 	Game Strife
 	ConversationID 169, 162, 166
 	Inventory.Amount 10
-	Tag "10 gold"
+	Tag "$TAG_10GOLD"
 	Inventory.PickupMessage "$TXT_10GOLD"
 	States
 	{
@@ -46,7 +46,7 @@ ACTOR Gold25 : Coin 139
 	Game Strife
 	ConversationID 170, 163, 167
 	Inventory.Amount 25
-	Tag "25 gold"
+	Tag "$TAG_25GOLD"
 	Inventory.PickupMessage "$TXT_25GOLD"
 	States
 	{
@@ -63,7 +63,7 @@ ACTOR Gold50 : Coin 140
 	Game Strife
 	ConversationID 171, 164, 168
 	Inventory.Amount 50
-	Tag "50 gold"
+	Tag "$TAG_50GOLD"
 	Inventory.PickupMessage "$TXT_50GOLD"
 	States
 	{
@@ -79,7 +79,7 @@ ACTOR Gold300 : Coin
 {
 	ConversationID 172, -1, -1
 	Inventory.Amount 300
-	Tag "300 gold"
+	Tag "$TAG_300GOLD"
 	Inventory.PickupMessage "$TXT_300GOLD"
 	Inventory.GiveQuest 3
 	+INVENTORY.ALWAYSPICKUP

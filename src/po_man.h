@@ -53,6 +53,7 @@ struct FPolyObj
 	FPolyVertex				StartSpot;
 	FPolyVertex				CenterSpot;
 	FBoundingBox			Bounds;	// Bounds in map coordinates 
+	subsector_t				*CenterSubsector;
 
 	angle_t		angle;
 	int			tag;			// reference tag assigned in HereticEd

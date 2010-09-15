@@ -43,6 +43,7 @@ void M_LoadDefaults ();
 bool M_SaveDefaults (const char *filename);
 void M_SaveCustomKeys (FConfigFile *config, char *section, char *subsection, size_t sublen);
 
+
 // Prepends ~/.zdoom to path
 FString GetUserFile (const char *path);
 

@@ -996,6 +996,7 @@ enum FB_Flags
 	FBF_NORANDOM = 2,
 	FBF_EXPLICITANGLE = 4,
 	FBF_NOPITCH = 8,
+	FBF_NOFLASH = 16,
 };
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireBullets)
@@ -1025,7 +1026,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireBullets)
 	
 	if (Range == 0) Range = PLAYERMISSILERANGE;
 
-	static_cast<APlayerPawn *>(self)->PlayAttacking2 ();
+	if (!(Flags & FBF_NOFLASH)) static_cast<APlayerPawn *>(self)->PlayAttacking2 ();
 
 	if (!(Flags & FBF_NOPITCH)) bslope = P_BulletSlope(self);
 	bangle = self->angle;

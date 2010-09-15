@@ -1485,7 +1485,7 @@ void RP_Subsector (subsector_t *sub)
 
 	while (count--)
 	{
-		if (!line->bPolySeg)
+		if (line->sidedef == NULL || !(line->sidedef->Flags & WALLF_POLYOBJ))
 		{
 			RP_AddLine (line);
 		}

@@ -15,6 +15,8 @@ ACTOR Staff : HereticWeapon
 	+WIMPY_WEAPON
 	+MELEEWEAPON
 	Weapon.sisterweapon "StaffPowered"
+	Obituary "$OB_MPSTAFF"
+	Tag "$TAG_STAFF"
 
 	action native A_StaffAttack (int damage, class<Actor> puff);
 
@@ -45,6 +47,8 @@ ACTOR StaffPowered : Staff
 	+WEAPON.POWERED_UP
 	+WEAPON.READYSNDHALF
 	+WEAPON.STAFF2_KICKBACK
+	Obituary "$OB_MPPSTAFF"
+	Tag "$TAG_STAFFP"
 	States
 	{
 	Ready:	
@@ -116,6 +120,8 @@ ACTOR GoldWand : HereticWeapon
 	Weapon.AmmoType "GoldWandAmmo"
 	Weapon.SisterWeapon "GoldWandPowered"
 	Weapon.YAdjust 5
+	Obituary "$OB_MPGOLDWAND"
+	Tag "$TAG_GOLDWAND"
 
 	action native A_FireGoldWandPL1 ();
 	
@@ -145,6 +151,8 @@ ACTOR GoldWandPowered : GoldWand
 	+WEAPON.POWERED_UP
 	Weapon.AmmoGive 0
 	Weapon.SisterWeapon "GoldWand"
+	Obituary "$OB_MPPGOLDWAND"
+	Tag "$TAG_GOLDWANDP"
 
 	action native A_FireGoldWandPL2 ();
 
@@ -173,6 +181,7 @@ ACTOR GoldWandFX1
 	Projectile
 	RenderStyle Add
 	DeathSound "weapons/wandhit"
+	Obituary "$OB_MPPGOLDWAND"
 	States
 	{
 	Spawn:
@@ -209,7 +218,8 @@ ACTOR GoldWandPuff1
 	+NOGRAVITY
 	+PUFFONACTORS
 	RenderStyle Add
-	States	{
+	States
+	{
 	Spawn:
 		PUF2 ABCDE 3 BRIGHT
 		Stop
@@ -243,7 +253,8 @@ ACTOR Crossbow : HereticWeapon 2001
 	Weapon.AmmoType "CrossbowAmmo"
 	Weapon.SisterWeapon "CrossbowPowered"
 	Weapon.YAdjust 15
-	Inventory.PickupMessage "$TxT_WPNCROSSBOW"
+	Inventory.PickupMessage "$TXT_WPNCROSSBOW"
+	Tag "$TAG_CROSSBOW"
 
 	action native A_FireCrossbowPL1 ();
 
@@ -277,6 +288,7 @@ ACTOR CrossbowPowered : Crossbow
 	+WEAPON.POWERED_UP
 	Weapon.AmmoGive 0
 	Weapon.SisterWeapon "Crossbow"
+	Tag "$TAG_CROSSBOWP"
 
 	action native A_FireCrossbowPL2();
 
@@ -310,6 +322,7 @@ ACTOR CrossbowFX1
 	RenderStyle Add
 	SeeSound "weapons/bowshoot"
 	DeathSound "weapons/bowhit"
+	Obituary "$OB_MPCROSSBOW"
 	States
 	{
 	Spawn:
@@ -330,6 +343,7 @@ ACTOR CrossbowFX2 : CrossbowFX1
 	SpawnID 148
 	Speed 32
 	Damage 6
+	Obituary "$OB_MPPCROSSBOW"
 	States
 	{
 	Spawn:
@@ -394,6 +408,8 @@ ACTOR Gauntlets : Weapon 2005
 	Weapon.UpSound "weapons/gauntletsactivate"
 	Weapon.SisterWeapon "GauntletsPowered"
 	Inventory.PickupMessage "$TXT_WPNGAUNTLETS"
+	Tag "$TAG_GAUNTLETS"
+	Obituary "$OB_MPGAUNTLETS"
 
 	action native A_GauntletAttack (int power);
 
@@ -427,6 +443,8 @@ ACTOR GauntletsPowered : Gauntlets
 {
 	Game Heretic
 	+POWERED_UP
+	Tag "$TAG_GAUNTLETSP"
+	Obituary "$OB_MPPGAUNTLETS"
 	Weapon.SisterWeapon "Gauntlets"
 	States
 	{
@@ -469,7 +487,7 @@ ACTOR GauntletPuff1
 	}
 }
 
-// Gauntlett puff 2 ---------------------------------------------------------
+// Gauntlet puff 2 ---------------------------------------------------------
 
 ACTOR GauntletPuff2 : GauntletPuff1
 {
@@ -494,7 +512,8 @@ ACTOR Mace : HereticWeapon
 	Weapon.YAdjust 15
 	Weapon.AmmoType "MaceAmmo"
 	Weapon.SisterWeapon "MacePowered"
-	Inventory.PickupMessage "$TxT_WPNMACE"
+	Inventory.PickupMessage "$TXT_WPNMACE"
+	Tag "$TAG_MACE"
 	
 	action native A_FireMacePL1();
 	
@@ -529,6 +548,7 @@ ACTOR MacePowered : Mace
 	Weapon.AmmoUse 5
 	Weapon.AmmoGive 0
 	Weapon.SisterWeapon "Mace"
+	Tag "$TAG_MACEP"
 	
 	action native A_FireMacePL2();
 	
@@ -558,6 +578,7 @@ ACTOR MaceFX1
 	+THRUGHOST
 	BounceType "HereticCompat"
 	SeeSound "weapons/maceshoot"
+	Obituary "$OB_MPMACE"
 
 	action native A_MacePL1Check();
 	action native A_MaceBallImpact();
@@ -636,6 +657,7 @@ ACTOR MaceFX4 native
 	-NOTELEPORT
 	BounceType "HereticCompat"
 	SeeSound ""
+	Obituary "$OB_MPPMACE"
 
 	action native A_DeathBallImpact();
 
@@ -682,7 +704,9 @@ ACTOR Blaster : HereticWeapon 53
 	Weapon.YAdjust 15
 	Weapon.AmmoType "BlasterAmmo"
 	Weapon.SisterWeapon "BlasterPowered"
-	Inventory.PickupMessage "$TxT_WPNBLASTER"
+	Inventory.PickupMessage "$TXT_WPNBLASTER"
+	Tag "$TAG_BLASTER"
+	Obituary "$OB_MPBLASTER"
 
 	action native A_FireBlasterPL1();
 
@@ -740,6 +764,8 @@ ACTOR BlasterFX1 : FastProjectile native
 	SeeSound "weapons/blastershoot"
 	DeathSound "weapons/blasterhit"
 	+SPAWNSOUNDSOURCE
+	Obituary "$OB_MPPBLASTER"
+	Tag "$TAG_BLASTERP"
 
 	action native A_SpawnRippers();
 
@@ -787,6 +813,7 @@ ACTOR Ripper native
 	Projectile
 	+RIPPER
 	DeathSound "weapons/blasterpowhit"
+	Obituary "$OB_MPPBLASTER"
 	States
 	{
 	Spawn:
@@ -832,7 +859,8 @@ ACTOR SkullRod : HereticWeapon 2004
 	Weapon.YAdjust 15
 	Weapon.AmmoType1 "SkullRodAmmo"
 	Weapon.SisterWeapon "SkullRodPowered"
-	Inventory.PickupMessage "$TxT_WPNSKULLROD"
+	Inventory.PickupMessage "$TXT_WPNSKULLROD"
+	Tag "$TAG_SKULLROD"
 
 	action native A_FireSkullRodPL1();
 
@@ -864,6 +892,7 @@ ACTOR SkullRodPowered : SkullRod
 	Weapon.AmmoUse1 5
 	Weapon.AmmoGive1 0
 	Weapon.SisterWeapon "SkullRod"
+	Tag "$TAG_SKULLRODP"
 
 	action native A_FireSkullRodPL2();
 
@@ -899,6 +928,7 @@ ACTOR HornRodFX1
 	RenderStyle Add
 	SeeSound "weapons/hornrodshoot"
 	DeathSound "weapons/hornrodhit"
+	Obituary "$OB_MPSKULLROD"
 	States
 	{
 	Spawn:
@@ -926,6 +956,7 @@ ACTOR HornRodFX2 native
 	RenderStyle Add
 	SeeSound "weapons/hornrodpowshoot"
 	DeathSound "weapons/hornrodpowhit"
+	Obituary "$OB_MPPSKULLROD"
 
 	action native A_AddPlayerRain();
 	action native A_HideInCeiling();
@@ -963,6 +994,7 @@ ACTOR RainPillar native
 	-ACTIVATEPCROSS
 	-ACTIVATEIMPACT
 	RenderStyle Add
+	Obituary "$OB_MPPSKULLROD"
 
 	action native A_RainImpact();
 
@@ -1003,7 +1035,8 @@ ACTOR PhoenixRod : Weapon 2003 native
 	Weapon.AmmoGive 2
 	Weapon.AmmoType "PhoenixRodAmmo"
 	Weapon.Sisterweapon "PhoenixRodPowered"
-	Inventory.PickupMessage "$TxT_WPNPHOENIxROD"
+	Inventory.PickupMessage "$TXT_WPNPHOENIxROD"
+	Tag "$TAG_PHOENIxROD"
 
 	action native A_FirePhoenixPL1();
 
@@ -1037,6 +1070,7 @@ ACTOR PhoenixRodPowered : PhoenixRod native
 	+WEAPON.MELEEWEAPON
 	Weapon.SisterWeapon "PhoenixRod"
 	Weapon.AmmoGive 0
+	Tag "$TAG_PHOENIxRODP"
 
 	action native A_InitPhoenixPL2();
 	action native A_FirePhoenixPL2();
@@ -1071,6 +1105,7 @@ ACTOR PhoenixFX1 native
 	+SPECIALFIREDAMAGE
 	SeeSound "weapons/phoenixshoot"
 	DeathSound "weapons/phoenixhit"
+	Obituary "$OB_MPPHOENIXROD"
 
 	action native A_PhoenixPuff();
 
@@ -1116,6 +1151,7 @@ ACTOR PhoenixFX2 native
 	DamageType Fire
 	Projectile
 	RenderStyle Add
+	Obituary "$OB_MPPPHOENIXROD"
 
 	action native A_FlameEnd();
 	action native A_FloatPuff();

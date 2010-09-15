@@ -71,7 +71,7 @@ class ARandomSpawner : public AActor
 				cls = PClass::FindClass(di->Name);
 				if (cls != NULL)
 				{
-					const PClass *rep = cls->ActorInfo->GetReplacement()->Class;
+					const PClass *rep = cls->GetReplacement();
 					if (rep != NULL)
 					{
 						cls = rep;

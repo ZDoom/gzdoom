@@ -2136,7 +2136,7 @@ do_count:
 	{
 		// Again, with decorate replacements
 		replacemented = true;
-		PClass *newkind = kind->ActorInfo->GetReplacement()->Class;
+		PClass *newkind = kind->GetReplacement();
 		if (newkind != kind)
 		{
 			kind = newkind;
@@ -2759,6 +2759,7 @@ int DLevelScript::GetActorProperty (int tid, int property)
 							// so pretends it's normal.
 							return STYLE_Normal;
 	case APROP_Gravity:		return actor->gravity;
+	case APROP_Invulnerable:return !!(actor->flags2 & MF2_INVULNERABLE);
 	case APROP_Ambush:		return !!(actor->flags & MF_AMBUSH);
 	case APROP_Dropped:		return !!(actor->flags & MF_DROPPED);
 	case APROP_ChaseGoal:	return !!(actor->flags5 & MF5_CHASEGOAL);
@@ -2820,6 +2821,7 @@ int DLevelScript::CheckActorProperty (int tid, int property, int value)
 
 		// Boolean values need to compare to a binary version of value
 		case APROP_Ambush:
+		case APROP_Invulnerable:
 		case APROP_Dropped:
 		case APROP_ChaseGoal:
 		case APROP_Frightened:
@@ -5097,7 +5099,7 @@ int DLevelScript::RunScript ()
 			{
 				int key1 = 0, key2 = 0;
 
-				C_GetKeysForCommand ((char *)lookup, &key1, &key2);
+				Bindings.GetKeysForCommand ((char *)lookup, &key1, &key2);
 
 				if (key2)
 					work << KeyNames[key1] << " or " << KeyNames[key2];

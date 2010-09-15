@@ -77,6 +77,13 @@ extern side_t*			sides;
 extern int				numzones;
 extern zone_t*			zones;
 
+extern node_t * 		gamenodes;
+extern int 				numgamenodes;
+
+extern subsector_t * 	gamesubsectors;
+extern int 				numgamesubsectors;
+
+
 extern FExtraLight*		ExtraLights;
 extern FLightStack*		LightStacks;
 

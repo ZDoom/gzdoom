@@ -11,8 +11,8 @@
 #pragma once
 #endif
 
-#ifndef _MSC_VER
-#define __forceinline inline
+#if defined(__GNUC__) && !defined(__forceinline)
+#define __forceinline __inline__ __attribute__((always_inline))
 #endif
 
 static __forceinline SDWORD Scale (SDWORD a, SDWORD b, SDWORD c)

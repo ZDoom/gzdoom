@@ -255,13 +255,10 @@ DEFINE_INFO_PROPERTY(conversationid, IiI, Actor)
 		if ((gameinfo.flags & (GI_SHAREWARE|GI_TEASER2)) == (GI_SHAREWARE|GI_TEASER2))
 			convid=id2;
 
-		if (convid==-1) return;
 	}
-	if (convid<0 || convid>1000)
-	{
-		I_Error ("ConversationID must be in the range [0,1000]");
-	}
-	else StrifeTypes[convid] = info->Class;
+
+	if (convid <= 0) return;	// 0 is not usable because the dialogue scripts use it as 'no object'.
+	SetStrifeType(convid, info->Class);
 }
 
 //==========================================================================
@@ -2183,6 +2180,15 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, hexenarmor, FFFFF, PlayerPawn)
 		PROP_FIXED_PARM(val, i);
 		info->Class->Meta.SetMetaFixed (APMETA_Hexenarmor0+i, val);
 	}
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_CLASS_PROPERTY_PREFIX(player, portrait, S, PlayerPawn)
+{
+	PROP_STRING_PARM(val, 0);
+	info->Class->Meta.SetMetaString (APMETA_Portrait, val);
 }
 
 //==========================================================================

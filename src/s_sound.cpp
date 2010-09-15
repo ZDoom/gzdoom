@@ -827,7 +827,7 @@ static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyO
 	FVector3 pos, vel;
 	FRolloffInfo *rolloff;
 
-	if (sound_id <= 0 || volume <= 0)
+	if (sound_id <= 0 || volume <= 0 || nosfx)
 		return NULL;
 
 	int type;

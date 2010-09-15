@@ -361,65 +361,24 @@ void AActor::Serialize (FArchive &arc)
 			arc << foo;
 	}
 
-	if (arc.IsStoring ())
+	if (SaveVersion > 2560)
 	{
-		int convnum = 0;
-		unsigned int i;
-
-		if (Conversation != NULL)
-		{
-			for (i = 0; i < StrifeDialogues.Size(); ++i)
-			{
-				if (StrifeDialogues[i] == GetDefault()->Conversation)
-				{
-					break;
-				}
-			}
-			for (; i + convnum < StrifeDialogues.Size(); ++convnum)
-			{
-				if (StrifeDialogues[i + convnum] == Conversation)
-				{
-					break;
-				}
-			}
-			if (i + convnum < StrifeDialogues.Size())
-			{
-				convnum++;
-			}
-			else
-			{
-				convnum = 0;
-			}
-		}
-		arc.WriteCount (convnum);
+		arc << ConversationRoot << Conversation;
 	}
-	else
+	else	// old code which uses relative indexing.
 	{
 		int convnum;
-		unsigned int i;
 
 		convnum = arc.ReadCount();
-		if (convnum == 0 || GetDefault()->Conversation == NULL)
+		if (GetConversation(GetClass()->TypeName) == -1)
 		{
 			Conversation = NULL;
+			ConversationRoot = -1;
 		}
 		else
 		{
-			for (i = 0; i < StrifeDialogues.Size(); ++i)
-			{
-				if (StrifeDialogues[i] == GetDefault()->Conversation)
-				{
-					break;
-				}
-			}
-			if (i + convnum <= StrifeDialogues.Size())
-			{
-				Conversation = StrifeDialogues[i + convnum - 1];
-			}
-			else
-			{
-				Conversation = GetDefault()->Conversation;
-			}
+			// This cannot be restored anymore.
+			I_Error("Cannot load old savegames with active dialogues");
 		}
 	}
 
@@ -1052,7 +1011,7 @@ bool AActor::Grind(bool items)
 
 			if (i != NULL)
 			{
-				i = i->ActorInfo->GetReplacement()->Class;
+				i = i->GetReplacement();
 
 				const AActor *defaults = GetDefaultByType (i);
 				if (defaults->SpawnState == NULL ||
@@ -3482,6 +3441,7 @@ bool AActor::UpdateWaterLevel (fixed_t oldz, bool dosplash)
 	return false;	// we did the splash ourselves
 }
 
+
 //==========================================================================
 //
 // P_SpawnMobj
@@ -3501,12 +3461,23 @@ AActor *AActor::StaticSpawn (const PClass *type, fixed_t ix, fixed_t iy, fixed_t
 	}
 
 	if (allowreplacement)
-		type = type->ActorInfo->GetReplacement()->Class;
+		type = type->GetReplacement();
 
 
 	AActor *actor;
 	
 	actor = static_cast<AActor *>(const_cast<PClass *>(type)->CreateNew ());
+
+	// Set default dialogue
+	actor->ConversationRoot = GetConversation(actor->GetClass()->TypeName);
+	if (actor->ConversationRoot != -1)
+	{
+		actor->Conversation = StrifeDialogues[actor->ConversationRoot];
+	}
+	else
+	{
+		actor->Conversation = NULL;
+	}
 
 	actor->x = actor->PrevX = ix;
 	actor->y = actor->PrevY = iy;
@@ -4326,7 +4297,7 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	{
 		// Handle decorate replacements explicitly here
 		// to check for missing frames in the replacement object.
-		i = i->ActorInfo->GetReplacement()->Class;
+		i = i->GetReplacement();
 
 		const AActor *defaults = GetDefaultByType (i);
 		if (defaults->SpawnState == NULL ||
@@ -4423,6 +4394,19 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	mobj->AddToHash ();
 
 	mobj->PrevAngle = mobj->angle = (DWORD)((mthing->angle * UCONST64(0x100000000)) / 360);
+
+	// Check if this actor's mapthing has a conversation defined
+	if (mthing->Conversation > 0)
+	{
+		// Make sure that this does not partially overwrite the default dialogue settings.
+		int root = GetConversation(mthing->Conversation);
+		if (root != -1)
+		{
+			mobj->ConversationRoot = root;
+			mobj->Conversation = StrifeDialogues[mobj->ConversationRoot];
+		}
+	}
+
 	mobj->BeginPlay ();
 	if (!(mobj->ObjectFlags & OF_EuthanizeMe))
 	{
@@ -4515,7 +4499,7 @@ void P_SpawnBlood (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int damage, AAc
 	if (bloodcls!=NULL && bloodtype <= 1)
 	{
 		z += pr_spawnblood.Random2 () << 10;
-		th = Spawn (bloodcls, x, y, z, ALLOW_REPLACE);
+		th = Spawn (bloodcls, x, y, z, NO_REPLACE); // GetBloodType already performed the replacement
 		th->velz = FRACUNIT*2;
 		th->angle = dir;
 		if (gameinfo.gametype & GAME_DoomChex)
@@ -4578,7 +4562,7 @@ void P_BloodSplatter (fixed_t x, fixed_t y, fixed_t z, AActor *originator)
 	{
 		AActor *mo;
 
-		mo = Spawn(bloodcls, x, y, z, ALLOW_REPLACE);
+		mo = Spawn(bloodcls, x, y, z, NO_REPLACE); // GetBloodType already performed the replacement
 		mo->target = originator;
 		mo->velx = pr_splatter.Random2 () << 10;
 		mo->vely = pr_splatter.Random2 () << 10;
@@ -4619,7 +4603,7 @@ void P_BloodSplatter2 (fixed_t x, fixed_t y, fixed_t z, AActor *originator)
 		x += ((pr_splat()-128)<<11);
 		y += ((pr_splat()-128)<<11);
 
-		mo = Spawn (bloodcls, x, y, z, ALLOW_REPLACE);
+		mo = Spawn (bloodcls, x, y, z, NO_REPLACE); // GetBloodType already performed the replacement
 		mo->target = originator;
 
 		// colorize the blood!
@@ -4658,7 +4642,7 @@ void P_RipperBlood (AActor *mo, AActor *bleeder)
 	if (bloodcls!=NULL && bloodtype <= 1)
 	{
 		AActor *th;
-		th = Spawn (bloodcls, x, y, z, ALLOW_REPLACE);
+		th = Spawn (bloodcls, x, y, z, NO_REPLACE); // GetBloodType already performed the replacement
 		if (gameinfo.gametype == GAME_Heretic)
 			th->flags |= MF_NOGRAVITY;
 		th->velx = mo->velx >> 1;
@@ -4720,6 +4704,20 @@ bool P_HitWater (AActor * thing, sector_t * sec, fixed_t x, fixed_t y, fixed_t z
 	if (z == FIXED_MIN) z = thing->z;
 	// don't splash above the object
 	if (checkabove && z > thing->z + (thing->height >> 1)) return false;
+
+#if 0 // needs some rethinking before activation
+
+	// This avoids spawning splashes on invisible self referencing sectors.
+	// For network consistency do this only in single player though because
+	// it is not guaranteed that all players have GL nodes loaded.
+	if (!multiplayer && thing->subsector->sector != thing->subsector->render_sector)
+	{
+		fixed_t zs = thing->subsector->sector->floorplane.ZatPoint(x, y);
+		fixed_t zr = thing->subsector->render_sector->floorplane.ZatPoint(x, y);
+
+		if (zs > zr && thing->z >= zs) return false;
+	}
+#endif
 
 #ifdef _3DFLOORS
 	for(unsigned int i=0;i<sec->e->XFloor.ffloors.Size();i++)
@@ -4839,7 +4837,7 @@ bool P_HitFloor (AActor *thing)
 	{
 		thing->flags6 &= ~MF6_ARMED; // Disarm
 		P_DamageMobj (thing, NULL, NULL, thing->health, NAME_Crush, DMG_FORCED);  // kill object
-		return true;
+		return false;
 	}
 
 	if (thing->flags2 & MF2_FLOATBOB || thing->flags3 & MF3_DONTSPLASH)
@@ -4965,7 +4963,7 @@ bool P_CheckMissileSpawn (AActor* th)
 		bool MBFGrenade = (!(th->flags & MF_MISSILE) || (th->BounceFlags & BOUNCE_MBF));
 
 		// killough 3/15/98: no dropoff (really = don't care for missiles)
-		if (!(P_TryMove (th, th->x, th->y, false, false, tm)))
+		if (!(P_TryMove (th, th->x, th->y, false, NULL, tm)))
 		{
 			// [RH] Don't explode ripping missiles that spawn inside something
 			if (th->BlockingMobj == NULL || !(th->flags2 & MF2_RIP) || (th->BlockingMobj->flags5 & MF5_DONTRIP))

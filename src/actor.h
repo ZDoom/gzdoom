@@ -40,6 +40,7 @@
 #include "r_blend.h"
 #include "s_sound.h"
 
+struct subsector_t;
 //
 // NOTES: AActor
 //
@@ -722,19 +723,26 @@ public:
 
 	const PClass *GetBloodType(int type = 0) const
 	{
+		const PClass *bloodcls;
 		if (type == 0)
 		{
-			return PClass::FindClass((ENamedName)GetClass()->Meta.GetMetaInt(AMETA_BloodType, NAME_Blood));
+			bloodcls = PClass::FindClass((ENamedName)GetClass()->Meta.GetMetaInt(AMETA_BloodType, NAME_Blood));
 		}
 		else if (type == 1)
 		{
-			return PClass::FindClass((ENamedName)GetClass()->Meta.GetMetaInt(AMETA_BloodType2, NAME_BloodSplatter));
+			bloodcls = PClass::FindClass((ENamedName)GetClass()->Meta.GetMetaInt(AMETA_BloodType2, NAME_BloodSplatter));
 		}
 		else if (type == 2)
 		{
-			return  PClass::FindClass((ENamedName)GetClass()->Meta.GetMetaInt(AMETA_BloodType3, NAME_AxeBlood));
+			bloodcls = PClass::FindClass((ENamedName)GetClass()->Meta.GetMetaInt(AMETA_BloodType3, NAME_AxeBlood));
 		}
 		else return NULL;
+
+		if (bloodcls != NULL)
+		{
+			bloodcls = bloodcls->GetReplacement();
+		}
+		return bloodcls;
 	}
 
 	// Calculate amount of missile damage
@@ -766,6 +774,7 @@ public:
 	fixed_t			pitch, roll;
 	FBlockNode		*BlockNode;			// links in blocks (if needed)
 	struct sector_t	*Sector;
+	subsector_t *		subsector;
 	fixed_t			floorz, ceilingz;	// closest together of contacted secs
 	fixed_t			dropoffz;		// killough 11/98: the lowest floor over all contacted Sectors.
 
@@ -892,8 +901,9 @@ public:
 	FState *MeleeState;
 	FState *MissileState;
 
-	// [RH] The dialogue to show when this actor is "used."
-	FStrifeDialogueNode *Conversation;
+	
+	int ConversationRoot;				// THe root of the current dialogue
+	FStrifeDialogueNode *Conversation;	// [RH] The dialogue to show when this actor is "used."
 
 	// [RH] Decal(s) this weapon/projectile generates on impact.
 	FDecalBase *DecalGenerator;

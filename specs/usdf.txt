@@ -1,0 +1,158 @@
+===============================================================================
+Universal Strife Dialog Format Specification v2.0 - 08/20/10
+
+Written by Braden "Blzut3" Obrzut - admin@maniacsvault.net
+
+Defined with input from:
+
+CodeImp
+Gez
+Graf Zahl
+Quasar
+et al.
+
+    Copyright (c) 2010 Braden Obrzut.
+    Permission is granted to copy, distribute and/or modify this document
+    under the terms of the GNU Free Documentation License, Version 1.2
+    or any later version published by the Free Software Foundation;
+    with no Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
+
+===============================================================================
+
+=======================================
+I. Grammar / Syntax
+=======================================
+
+The grammar and syntax is similar to that of UDMF.  A compliant UDMF parser 
+should be applyable to the USDF.  However, it will need to be capable of 
+handling sub-blocks.  Unknown sub-blocks should be skipped.
+
+=======================================
+II. Implementation Semantics
+=======================================
+
+------------------------------------
+II.A : Storage and Retrieval of Data
+------------------------------------
+
+This is the same as in UDMF.
+
+-----------------------------------
+II.B : Storage Within Archive Files
+-----------------------------------
+
+There are two options for the USDF lump placement.  This can either be a part 
+of the UDMF lump list or standalone.  If used stand alone the lump name 
+DIALOGXY is used corresponding with MAPXY.  For UDMF the lump shall be called 
+"DIALOGUE".
+
+--------------------------------
+II.C : Implementation Dependence
+--------------------------------
+
+USDF also implements the namespace statement.  This has all the same 
+requirements as UDMF.
+
+=======================================
+III. Standardized Fields
+=======================================
+
+The following are required for all USDF complient implementations.  Like UDMF, 
+any unknown field/function should be ignored and not treated as an error.
+
+NOTE: "mobj" refers to Strife's conversationIDs and not doom editor numbers or 
+      Hexen's spawnids.  A valid mobj value is any positive integer greater
+      than or equal to 1.
+
+---------------------
+III.A : Conversations
+---------------------
+
+Conversations are groups of pages that can be assigned to a particular object.
+Implementors should preserve the IDs to allow for dynamic reassignment through 
+scripting although this is not a requirement.
+
+conversation // Starts a dialog.
+{
+    actor = <integer>; // mobj for this conversation's actor.  If previously 
+                       // used, this will override the previous conversation.
+
+    page // Starts a new page.  Pages are automatically numbered starting at 0.
+    {
+        name   = <string>;  // Name that goes in the upper left hand corner
+        panel  = <string>;  // Name of lump to render as the background.
+        voice  = <string>;  // Narration sound lump.
+        dialog = <string>;  // Dialog of the page.
+        drop   = <integer>; // mobj for the object to drop if the actor is 
+                            // killed.
+        link   = <integer>; // Page to jump to if all ifitem conditions are
+                            // satisified.
+
+        // jumps to the specified page if the player has the specified amount 
+        // or more of item in their inventory.  This can be repeated as many
+        // times as the author wants, all conditions must be met for the
+        // jump to occur.
+        ifitem
+        {
+            item   = <integer>; // mobj of item to check.
+            amount = <integer>; // amount required to be in inventory.
+        }
+
+        // Choices shall be automatically numbered.
+        choice
+        {
+            text            = <string>;  // Name of the choice.
+
+            // The amount of an item needed to successfully pick this option.
+            // This can be repeated, but only the first will be shown (provided 
+            // diaplaycost is true).  All costs must be satisfied for success.
+            cost
+            {
+                item   = <integer>; // Item that is required for this option.
+                amount = <integer>; // Minimum amount of the item needed.
+            }
+
+            displaycost     = <bool>;    // Weather the cost should be
+                                         // displayed with the option.
+                                         // If no cost is specified this should
+                                         // be ignored.
+            yesmessage      = <string>;  // Text to add to console when choice
+                                         // is accepted.
+            nomessage       = <string>;  // Text to add to console when choice
+                                         // is denied.
+
+            log             = <string>;  // LOG entry to use on success.
+            giveitem        = <integer>; // Gives the specified item upon
+                                         // success.
+            // The following are the same as the special for linedefs in UDMF.
+            // They are executed on success.
+            special         = <integer>;
+            arg0            = <integer>;
+            arg1            = <integer>;
+            arg2            = <integer>;
+            arg3            = <integer>;
+            arg4            = <integer>;
+
+            nextpage        = <integer>; // Sets the next page.
+            closedialog     = <bool>;    // Should the dialog be closed upon
+                                         // selecting this choice?
+                                         // Default: false
+        }
+    }
+}
+
+-------------------------------
+III.B : Including Other Dialogs
+-------------------------------
+
+Unlike the original Strife dialog format.  The lump "SCRIPT00" should not be 
+included automatically.  Instead the user must specify this behavior by using 
+the include function, which takes the name of a lump to include.  Include only 
+needs to be available in the global scope and for compatibility reasons, must 
+include the result of the script and not act like a preprocessor statement.
+
+include = <string>;
+
+===============================================================================
+EOF
+===============================================================================

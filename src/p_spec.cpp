@@ -1104,6 +1104,11 @@ void P_SpawnSpecials (void)
 				0, -1, int(sector-sectors), 0);
 			break;
 
+		case Sector_Hidden:
+			sector->MoreFlags |= SECF_HIDDEN;
+			sector->special &= 0xff00;
+			break;
+
 		default:
 			if ((sector->special & 0xff) >= Scroll_North_Slow &&
 				(sector->special & 0xff) <= Scroll_SouthWest_Fast)

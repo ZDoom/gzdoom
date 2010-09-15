@@ -118,6 +118,7 @@ static FCompatOption Options[] =
 	{ "spritesort",				COMPATF_SPRITESORT, 0 },
 	{ "hitscan",				COMPATF_HITSCAN, 0 },
 	{ "lightlevel",				COMPATF_LIGHT, 0 },
+	{ "polyobj",				COMPATF_POLYOBJ, 0 },
 	{ NULL, 0, 0 }
 };
 
@@ -266,6 +267,19 @@ void CheckCompatibility(MapData *map)
 		ib_compatflags = 0;
 		ii_compatparams = -1;
 	}
+	else if (Wads.GetLumpFile(map->lumpnum) == 1 && (gameinfo.flags & GI_COMPATPOLY1) && Wads.CheckLumpName(map->lumpnum, "MAP36"))
+	{
+		ii_compatflags = COMPATF_POLYOBJ;
+		ib_compatflags = 0;
+		ii_compatparams = -1;
+	}
+	else if (Wads.GetLumpFile(map->lumpnum) == 2 && (gameinfo.flags & GI_COMPATPOLY2) && Wads.CheckLumpName(map->lumpnum, "MAP47"))
+	{
+		ii_compatflags = COMPATF_POLYOBJ;
+		ib_compatflags = 0;
+		ii_compatparams = -1;
+	}
+
 	else
 	{
 		map->GetChecksum(md5.Bytes);

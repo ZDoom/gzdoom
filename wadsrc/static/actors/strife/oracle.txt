@@ -15,7 +15,7 @@ ACTOR Oracle 199
 	DamageFactor "Fire", 0.5
 	DamageFactor "SpectralLow", 0
 	MaxDropoffHeight 32
-	Tag "Oracle"
+	Tag "$TAG_ORACLE"
 	DropItem "Meat"
 
 	action native A_WakeOracleSpectre ();

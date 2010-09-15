@@ -147,6 +147,14 @@ static void I_CheckGUICapture ()
 	}
 }
 
+void I_SetMouseCapture()
+{
+}
+
+void I_ReleaseMouseCapture()
+{
+}
+
 static void CenterMouse ()
 {
 	SDL_WarpMouse (screen->GetWidth()/2, screen->GetHeight()/2);

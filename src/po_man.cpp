@@ -1245,6 +1245,7 @@ bool FPolyObj::CheckMobjBlocking (side_t *sd)
 	bool blocked;
 
 	ld = sd->linedef;
+
 	top = (ld->bbox[BOXTOP]-bmaporgy) >> MAPBLOCKSHIFT;
 	bottom = (ld->bbox[BOXBOTTOM]-bmaporgy) >> MAPBLOCKSHIFT;
 	left = (ld->bbox[BOXLEFT]-bmaporgx) >> MAPBLOCKSHIFT;
@@ -1293,6 +1294,17 @@ bool FPolyObj::CheckMobjBlocking (side_t *sd)
 						if (box.BoxOnLineSide(ld) != -1)
 						{
 							continue;
+						}
+						// We have a two-sided linedef so we should only check one side
+						// so that the thrust from both sides doesn't cancel each other out.
+						// Best use the one facing the player and ignore the back side.
+						if (ld->sidedef[1] != NULL)
+						{
+							int side = P_PointOnLineSide(mobj->x, mobj->y, ld);
+							if (ld->sidedef[side] != sd)
+							{
+								continue;
+							}
 						}
 						ThrustMobj (mobj, sd);
 						blocked = true;
@@ -1752,8 +1764,8 @@ static void TranslateToStartSpot (int tag, int originX, int originY)
 		po->OriginalPts[i].y = po->Vertices[i]->y - po->StartSpot.y;
 	}
 	po->CalcCenter();
-	// subsector assignment no longer done here.
-	// Polyobjects will be sorted into the subsectors each frame before rendering them.
+	// For compatibility purposes
+	po->CenterSubsector = R_PointInSubsector(po->CenterSpot.x, po->CenterSpot.y);
 }
 
 //==========================================================================
@@ -1827,12 +1839,6 @@ void PO_Init (void)
 	// [RH] Don't need the seg lists anymore
 	KillSideLists ();
 
-	// We still need to flag the segs of the polyobj's sidedefs so that they are excluded from rendering.
-	for(int i=0;i<numsegs;i++)
-	{
-		segs[i].bPolySeg = (segs[i].sidedef != NULL && segs[i].sidedef->Flags & WALLF_POLYOBJ);
-	}
-
 	for(int i=0;i<numnodes;i++)
 	{
 		node_t *no = &nodes[i];
@@ -1840,6 +1846,23 @@ void PO_Init (void)
 		double fdy = (double)no->dy;
 		no->len = (float)sqrt(fdx * fdx + fdy * fdy);
 	}
+
+	// mark all subsectors which have a seg belonging to a polyobj
+	// These ones should not be rendered on the textured automap.
+	for (int i = 0; i < numsubsectors; i++)
+	{
+		subsector_t *ss = &subsectors[i];
+		for(DWORD j=0;j<ss->numlines; j++)
+		{
+			if (ss->firstline[j].sidedef != NULL &&
+				ss->firstline[j].sidedef->Flags & WALLF_POLYOBJ)
+			{
+				ss->flags |= SSECF_POLYORG;
+				break;
+			}
+		}
+	}
+
 }
 
 //==========================================================================
@@ -2193,7 +2216,29 @@ void FPolyObj::CreateSubsectorLinks()
 		seg->v2 = side->V2();
 		seg->wall = side;
 	}
-	SplitPoly(node, nodes + numnodes - 1, dummybbox);
+	if (!(i_compatflags & COMPATF_POLYOBJ))
+	{
+		SplitPoly(node, nodes + numnodes - 1, dummybbox);
+	}
+	else
+	{
+		subsector_t *sub = CenterSubsector;
+
+		// Link node to subsector
+		node->pnext = sub->polys;
+		if (node->pnext != NULL) 
+		{
+			assert(node->pnext->state == 1337);
+			node->pnext->pprev = node;
+		}
+		node->pprev = NULL;
+		sub->polys = node;
+
+		// link node to polyobject
+		node->snext = node->poly->subsectorlinks;
+		node->poly->subsectorlinks = node;
+		node->subsector = sub;
+	}
 }
 
 //==========================================================================

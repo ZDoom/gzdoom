@@ -10,10 +10,10 @@ ACTOR FlameSmallTemp 10500
 	{
 	Spawn:
 		FFSM AB 3 Bright
-		FFSM C 2 Bright A_CountdownArg(1)
+		FFSM C 2 Bright A_CountdownArg(0)
 		FFSM C 2 Bright
 		FFSM D 3 Bright
-		FFSM E 3 Bright A_CountdownArg(1)
+		FFSM E 3 Bright A_CountdownArg(0)
 		Loop
 	}
 }
@@ -31,21 +31,21 @@ ACTOR FlameLargeTemp 10502
 	{
 	Spawn:
 		FFLG A 4 Bright
-		FFLG B 4 Bright A_CountdownArg(1)
+		FFLG B 4 Bright A_CountdownArg(0)
 		FFLG C 4 Bright
-		FFLG D 4 Bright A_CountdownArg(1)
+		FFLG D 4 Bright A_CountdownArg(0)
 		FFLG E 4 Bright
-		FFLG F 4 Bright A_CountdownArg(1)
+		FFLG F 4 Bright A_CountdownArg(0)
 		FFLG G 4 Bright
-		FFLG H 4 Bright A_CountdownArg(1)
+		FFLG H 4 Bright A_CountdownArg(0)
 		FFLG I 4 Bright
-		FFLG J 4 Bright A_CountdownArg(1)
+		FFLG J 4 Bright A_CountdownArg(0)
 		FFLG K 4 Bright
-		FFLG L 4 Bright A_CountdownArg(1)
+		FFLG L 4 Bright A_CountdownArg(0)
 		FFLG M 4 Bright
-		FFLG N 4 Bright A_CountdownArg(1)
+		FFLG N 4 Bright A_CountdownArg(0)
 		FFLG O 4 Bright
-		FFLG P 4 Bright A_CountdownArg(1)
+		FFLG P 4 Bright A_CountdownArg(0)
 		Goto Spawn+4
 	}
 }

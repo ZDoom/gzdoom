@@ -82,8 +82,8 @@ setupvlinetallasm:
 
 %ifdef M_TARGET_MACHO
 	SECTION .text align=64
-GLOBAL rtext_tmap3_start
-rtext_tmap3_start:
+GLOBAL _rtext_tmap3_start
+_rtext_tmap3_start:
 %else
 	SECTION .rtext	progbits alloc exec write align=64
 %endif
@@ -339,6 +339,6 @@ shift12:	shr	ecx,16
 		ret
 
 %ifdef M_TARGET_MACHO
-GLOBAL rtext_tmap3_end
-rtext_tmap3_end:
+GLOBAL _rtext_tmap3_end
+_rtext_tmap3_end:
 %endif

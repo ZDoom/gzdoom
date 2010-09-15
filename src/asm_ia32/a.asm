@@ -100,8 +100,8 @@ setupvlineasm:
 %endif
 
 %ifdef M_TARGET_MACHO
-GLOBAL rtext_a_start
-rtext_a_start:
+GLOBAL _rtext_a_start
+_rtext_a_start:
 %endif
 
 ;eax = xscale
@@ -334,6 +334,7 @@ setupmvlineasm:
 		mov ecx, dword [esp+4]
 		mov byte [maskmach3a+2], cl
 		mov byte [machmv13+2], cl
+
 		mov byte [machmv14+2], cl
 		mov byte [machmv15+2], cl
 		mov byte [machmv16+2], cl
@@ -549,6 +550,6 @@ mvcase0:	jmp beginmvlineasm4
 align 16
 
 %ifdef M_TARGET_MACHO
-GLOBAL rtext_a_end
-rtext_a_end:
+GLOBAL _rtext_a_end
+_rtext_a_end:
 %endif

@@ -83,6 +83,8 @@ void P_ParseTextMap(MapData *map);
 extern int numinterpolations;
 extern unsigned int R_OldBlend;
 
+EXTERN_CVAR(Bool, am_textured)
+
 CVAR (Bool, genblockmap, false, CVAR_SERVERINFO|CVAR_GLOBALCONFIG);
 CVAR (Bool, gennodes, false, CVAR_SERVERINFO|CVAR_GLOBALCONFIG);
 CVAR (Bool, genglnodes, false, CVAR_SERVERINFO);
@@ -103,6 +105,7 @@ vertex_t*		vertexes;
 
 int 			numsegs;
 seg_t*			segs;
+glsegextra_t*	glsegextras;
 
 int 			numsectors;
 sector_t*		sectors;
@@ -122,6 +125,14 @@ side_t* 		sides;
 int				numzones;
 zone_t*			zones;
 
+node_t * 		gamenodes;
+int 			numgamenodes;
+
+subsector_t * 	gamesubsectors;
+int 			numgamesubsectors;
+
+bool			hasglnodes;
+
 FExtraLight*	ExtraLights;
 FLightStack*	LightStacks;
 
@@ -131,8 +142,6 @@ int sidecount;
 sidei_t *sidetemp;
 
 TArray<int>		linemap;
-
-bool			UsingGLNodes;
 
 // BLOCKMAP
 // Created from axis aligned bounding box
@@ -152,7 +161,6 @@ fixed_t 		bmaporgx;		// origin of block map
 fixed_t 		bmaporgy;
 
 FBlockNode**	blocklinks;		// for thing chains
-			
 
 
 // REJECT
@@ -790,7 +798,6 @@ void P_LoadZSegs (FileReaderBase &data)
 		segs[i].v2 = &vertexes[v2];
 		segs[i].linedef = ldef = &lines[line];
 		segs[i].sidedef = ldef->sidedef[side];
-		segs[i].PartnerSeg = NULL;
 		segs[i].frontsector = ldef->sidedef[side]->sector;
 		if (ldef->flags & ML_TWOSIDED && ldef->sidedef[side^1] != NULL)
 		{
@@ -846,14 +853,7 @@ void P_LoadGLZSegs (FileReaderBase &data, int type)
 			{
 				seg[-1].v2 = seg->v1;
 			}
-			if (partner == 0xFFFFFFFF)
-			{
-				seg->PartnerSeg = NULL;
-			}
-			else
-			{
-				seg->PartnerSeg = &segs[partner];
-			}
+			glsegextras[seg - segs].PartnerSeg = partner;
 			if (line != 0xFFFFFFFF)
 			{
 				line_t *ldef;
@@ -887,7 +887,7 @@ void P_LoadGLZSegs (FileReaderBase &data, int type)
 //
 //===========================================================================
 
-static void LoadZNodes(FileReaderBase &data, int glnodes)
+void LoadZNodes(FileReaderBase &data, int glnodes)
 {
 	// Read extra vertices added during node building
 	DWORD orgVerts, newVerts;
@@ -956,6 +956,7 @@ static void LoadZNodes(FileReaderBase &data, int glnodes)
 	numsegs = numSegs;
 	segs = new seg_t[numsegs];
 	memset (segs, 0, numsegs*sizeof(seg_t));
+	glsegextras = NULL;
 
 	for (i = 0; i < numSubs; ++i)
 	{
@@ -968,6 +969,7 @@ static void LoadZNodes(FileReaderBase &data, int glnodes)
 	}
 	else
 	{
+		glsegextras = new glsegextra_t[numsegs];
 		P_LoadGLZSegs (data, glnodes);
 	}
 
@@ -1014,7 +1016,7 @@ static void LoadZNodes(FileReaderBase &data, int glnodes)
 }
 
 
-static void P_LoadZNodes (FileReader &dalump, DWORD id)
+void P_LoadZNodes (FileReader &dalump, DWORD id)
 {
 	int type;
 	bool compressed;
@@ -1092,6 +1094,14 @@ static bool P_CheckV4Nodes(MapData *map)
 //
 //===========================================================================
 
+struct badseg
+{
+	badseg(int t, int s, int d) : badtype(t), badsegnum(s), baddata(d) {}
+	int badtype;
+	int badsegnum;
+	int baddata;
+};
+
 template<class segtype>
 void P_LoadSegs (MapData * map)
 {
@@ -1157,12 +1167,11 @@ void P_LoadSegs (MapData * map)
 
 			if (vnum1 >= numvertexes || vnum2 >= numvertexes)
 			{
-				throw i * 4;
+				throw badseg(0, i, MAX(vnum1, vnum2));
 			}
 
 			li->v1 = &vertexes[vnum1];
 			li->v2 = &vertexes[vnum2];
-			li->PartnerSeg = NULL;
 
 			segangle = (WORD)LittleShort(ml->angle);
 
@@ -1225,14 +1234,14 @@ void P_LoadSegs (MapData * map)
 			linedef = LittleShort(ml->linedef);
 			if ((unsigned)linedef >= (unsigned)numlines)
 			{
-				throw i * 4 + 1;
+				throw badseg(1, i, linedef);
 			}
 			ldef = &lines[linedef];
 			li->linedef = ldef;
 			side = LittleShort(ml->side);
 			if ((unsigned)(ldef->sidedef[side] - sides) >= (unsigned)numsides)
 			{
-				throw i * 4 + 2;
+				throw badseg(2, i, int(ldef->sidedef[side] - sides));
 			}
 			li->sidedef = ldef->sidedef[side];
 			li->frontsector = ldef->sidedef[side]->sector;
@@ -1249,20 +1258,20 @@ void P_LoadSegs (MapData * map)
 			}
 		}
 	}
-	catch (int foo)
+	catch (badseg bad)
 	{
-		switch (foo & 3)
+		switch (bad.badtype)
 		{
 		case 0:
-			Printf ("Seg %d references a nonexistant vertex.\n", foo >> 2);
+			Printf ("Seg %d references a nonexistant vertex %d (max %d).\n", bad.badsegnum, bad.baddata, numvertexes);
 			break;
 
 		case 1:
-			Printf ("Seg %d references a nonexistant linedef.\n", foo >> 2);
+			Printf ("Seg %d references a nonexistant linedef %d (max %d).\n", bad.badsegnum, bad.baddata, numlines);
 			break;
 
 		case 2:
-			Printf ("The linedef for seg %d references a nonexistant sidedef.\n", foo >> 2);
+			Printf ("The linedef for seg %d references a nonexistant sidedef %d (max %d).\n", bad.badsegnum, bad.baddata, numsides);
 			break;
 		}
 		Printf ("The BSP will be rebuilt.\n");
@@ -1325,8 +1334,8 @@ void P_LoadSubsectors (MapData * map)
 		if ((size_t)subsectors[i].firstline >= maxseg)
 		{
 			Printf ("Subsector %d contains invalid segs %u-%u\n"
-				"The BSP will be rebuilt.\n", i, (unsigned)subsectors[i].firstline,
-				(unsigned)subsectors[i].firstline + subsectors[i].numlines - 1);
+				"The BSP will be rebuilt.\n", i, (unsigned)((size_t)subsectors[i].firstline),
+				(unsigned)((size_t)subsectors[i].firstline) + subsectors[i].numlines - 1);
 			ForceNodeBuild = true;
 			delete[] nodes;
 			delete[] subsectors;
@@ -1336,7 +1345,7 @@ void P_LoadSubsectors (MapData * map)
 		{
 			Printf ("Subsector %d contains invalid segs %u-%u\n"
 				"The BSP will be rebuilt.\n", i, maxseg,
-				(unsigned)subsectors[i].firstline + subsectors[i].numlines - 1);
+				(unsigned)((size_t)subsectors[i].firstline) + subsectors[i].numlines - 1);
 			ForceNodeBuild = true;
 			delete[] nodes;
 			delete[] subsectors;
@@ -2128,14 +2137,15 @@ static void P_AllocateSideDefs (int count)
 // [RH] Group sidedefs into loops so that we can easily determine
 // what walls any particular wall neighbors.
 
-static void P_LoopSidedefs ()
+static void P_LoopSidedefs (bool firstloop)
 {
 	int i;
 
-	if (sidetemp == NULL)
+	if (sidetemp != NULL)
 	{
-		sidetemp = new sidei_t[MAX(numvertexes, numsides)];
+		delete[] sidetemp;
 	}
+	sidetemp = new sidei_t[MAX(numvertexes, numsides)];
 
 	for (i = 0; i < numvertexes; ++i)
 	{
@@ -2193,8 +2203,9 @@ static void P_LoopSidedefs ()
 			right = sidetemp[right].b.first;
 
 			if (right == NO_SIDE)
-			{ // There is no right side!
-				Printf ("Line %d's right edge is unconnected\n", linemap[unsigned(line-lines)]);
+			{ 
+				// There is no right side!
+				if (firstloop) Printf ("Line %d's right edge is unconnected\n", linemap[unsigned(line-lines)]);
 				continue;
 			}
 
@@ -2903,6 +2914,16 @@ static void P_GroupLines (bool buildmap)
 	{
 		subsectors[i].sector = subsectors[i].firstline->sidedef->sector;
 	}
+	if (glsegextras != NULL)
+	{
+		for (i = 0; i < numsubsectors; i++)
+		{
+			for (jj = 0; jj < subsectors[i].numlines; ++jj)
+			{
+				glsegextras[subsectors[i].firstline - segs + jj].Subsector = &subsectors[i];
+			}
+		}
+	}
 	times[0].Unclock();
 
 	// count number of lines in each sector
@@ -3338,12 +3359,25 @@ void P_FreeLevelData ()
 		delete[] segs;
 		segs = NULL;
 	}
+	if (glsegextras != NULL)
+	{
+		delete[] glsegextras;
+		glsegextras = NULL;
+	}
 	if (sectors != NULL)
 	{
 		delete[] sectors[0].e;
 		delete[] sectors;
 		sectors = NULL;
 		numsectors = 0;	// needed for the pointer cleanup code
+	}
+	if (gamenodes != NULL && gamenodes != nodes)
+	{
+		delete[] gamenodes;
+	}
+	if (gamesubsectors != NULL && gamesubsectors != subsectors)
+	{
+		delete[] gamesubsectors;
 	}
 	if (subsectors != NULL)
 	{
@@ -3355,13 +3389,15 @@ void P_FreeLevelData ()
 			}
 		}
 		delete[] subsectors;
-		subsectors = NULL;
 	}
 	if (nodes != NULL)
 	{
 		delete[] nodes;
-		nodes = NULL;
 	}
+	subsectors = gamesubsectors = NULL;
+	numsubsectors = numgamesubsectors = 0;
+	nodes = gamenodes = NULL;
+	numnodes = numgamenodes = 0;
 	if (lines != NULL)
 	{
 		delete[] lines;
@@ -3479,6 +3515,9 @@ void P_SetupLevel (char *lumpname, int position)
 	int i;
 	bool buildmap;
 
+	// This is motivated as follows:
+	bool RequireGLNodes = am_textured;
+
 	for (i = 0; i < (int)countof(times); ++i)
 	{
 		times[i].Reset();
@@ -3536,6 +3575,7 @@ void P_SetupLevel (char *lumpname, int position)
 
 	// find map num
 	level.lumpnum = map->lumpnum;
+	hasglnodes = false;
 
 	// [RH] Support loading Build maps (because I felt like it. :-)
 	buildmap = false;
@@ -3654,7 +3694,7 @@ void P_SetupLevel (char *lumpname, int position)
 		}
 
 		times[6].Clock();
-		P_LoopSidedefs ();
+		P_LoopSidedefs (true);
 		times[6].Unclock();
 
 		linemap.Clear();
@@ -3664,23 +3704,23 @@ void P_SetupLevel (char *lumpname, int position)
 	{
 		ForceNodeBuild = true;
 	}
+	bool reloop = false;
 
-	UsingGLNodes = false;
 	if (!ForceNodeBuild)
 	{
 		// Check for compressed nodes first, then uncompressed nodes
 		FWadLump test;
 		DWORD id = MAKE_ID('X','x','X','x'), idcheck = 0, idcheck2 = 0, idcheck3 = 0, idcheck4 = 0;
 
-		if (map->MapLumps[ML_ZNODES].Size != 0 && !UsingGLNodes)
+		if (map->MapLumps[ML_ZNODES].Size != 0)
 		{
+			// Test normal nodes first
 			map->Seek(ML_ZNODES);
 			idcheck = MAKE_ID('Z','N','O','D');
 			idcheck2 = MAKE_ID('X','N','O','D');
 		}
 		else if (map->MapLumps[ML_GLZNODES].Size != 0)
 		{
-			// If normal nodes are not present but GL nodes are, use them.
 			map->Seek(ML_GLZNODES);
 			idcheck = MAKE_ID('Z','G','L','N');
 			idcheck2 = MAKE_ID('Z','G','L','2');
@@ -3755,10 +3795,25 @@ void P_SetupLevel (char *lumpname, int position)
 			else ForceNodeBuild = true;
 		}
 		else ForceNodeBuild = true;
+
+		// If loading the regular nodes failed try GL nodes before considering a rebuild
+		if (ForceNodeBuild)
+		{
+			if (P_LoadGLNodes(map)) 
+			{
+				ForceNodeBuild=false;
+				reloop = true;
+			}
+		}
 	}
+	else reloop = true;
+
+	unsigned int startTime=0, endTime=0;
+
+	bool BuildGLNodes;
 	if (ForceNodeBuild)
 	{
-		unsigned int startTime, endTime;
+		BuildGLNodes = am_textured || multiplayer || demoplayback || demorecording || genglnodes;
 
 		startTime = I_FPSTime ();
 		TArray<FNodeBuilder::FPolyStart> polyspots, anchors;
@@ -3770,15 +3825,68 @@ void P_SetupLevel (char *lumpname, int position)
 			lines, numlines
 		};
 		leveldata.FindMapBounds ();
-		UsingGLNodes |= genglnodes;
-		FNodeBuilder builder (leveldata, polyspots, anchors, UsingGLNodes);
+		// We need GL nodes if am_textured is on.
+		// In case a sync critical game mode is started, also build GL nodes to avoid problems
+		// if the different machines' am_textured setting differs.
+		FNodeBuilder builder (leveldata, polyspots, anchors, BuildGLNodes);
 		delete[] vertexes;
 		builder.Extract (nodes, numnodes,
-			segs, numsegs,
+			segs, glsegextras, numsegs,
 			subsectors, numsubsectors,
 			vertexes, numvertexes);
 		endTime = I_FPSTime ();
 		DPrintf ("BSP generation took %.3f sec (%d segs)\n", (endTime - startTime) * 0.001, numsegs);
+		reloop = true;
+	}
+	else
+	{
+		BuildGLNodes = false;
+		// Older ZDBSPs had problems with compressed sidedefs and assigned wrong sides to the segs if both sides were the same sidedef.
+		for(i=0;i<numsegs;i++)
+		{
+			seg_t * seg=&segs[i];
+			if (seg->backsector == seg->frontsector && seg->linedef)
+			{
+				fixed_t d1=P_AproxDistance(seg->v1->x-seg->linedef->v1->x,seg->v1->y-seg->linedef->v1->y);
+				fixed_t d2=P_AproxDistance(seg->v2->x-seg->linedef->v1->x,seg->v2->y-seg->linedef->v1->y);
+
+				if (d2<d1)	// backside
+				{
+					seg->sidedef = seg->linedef->sidedef[1];
+				}
+				else	// front side
+				{
+					seg->sidedef = seg->linedef->sidedef[0];
+				}
+			}
+		}
+	}
+
+	// Copy pointers to the old nodes so that R_PointInSubsector can use them
+	if (nodes && subsectors)
+	{
+		gamenodes = nodes;
+		numgamenodes = numnodes;
+		gamesubsectors = subsectors;
+		numgamesubsectors = numsubsectors;
+	}
+	else
+	{
+		gamenodes=NULL;
+	}
+
+	if (RequireGLNodes)
+	{
+		// Build GL nodes if we want a textured automap or GL nodes are forced to be built.
+		// If the original nodes being loaded are not GL nodes they will be kept around for
+		// use in P_PointInSubsector to avoid problems with maps that depend on the specific
+		// nodes they were built with (P:AR E1M3 is a good example for a map where this is the case.)
+		reloop |= P_CheckNodes(map, BuildGLNodes, endTime - startTime);
+		hasglnodes = true;
+	}
+	else
+	{
+		hasglnodes = P_CheckForGLNodes();
 	}
 
 	times[10].Clock();
@@ -3796,6 +3904,11 @@ void P_SetupLevel (char *lumpname, int position)
 	times[13].Clock();
 	P_FloodZones ();
 	times[13].Unclock();
+
+	if (hasglnodes)
+	{
+		P_SetRenderSector();
+	}
 
 	bodyqueslot = 0;
 // phares 8/10/98: Clear body queue so the corpses from previous games are
@@ -3844,9 +3957,7 @@ void P_SetupLevel (char *lumpname, int position)
 	P_SpawnSpecials ();
 
 	times[16].Clock();
-	// The old sidedef looping data is no longer valid if the nodes were rebuilt
-	// and vertexes merged so it has to be redone before setting up the polyobjects.
-	if (ForceNodeBuild) P_LoopSidedefs ();
+	if (reloop) P_LoopSidedefs (false);
 	PO_Init ();	// Initialize the polyobjs
 	times[16].Unclock();
 
@@ -3923,6 +4034,12 @@ void P_SetupLevel (char *lumpname, int position)
 		}
 	}
 	MapThingsConverted.Clear();
+
+	if (glsegextras != NULL)
+	{
+		delete[] glsegextras;
+		glsegextras = NULL;
+	}
 }
 
 

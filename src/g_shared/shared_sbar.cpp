@@ -1504,7 +1504,9 @@ void DBaseStatusBar::BlendView (float blend[4])
 	if (CPlayer->bonuscount)
 	{
 		cnt = CPlayer->bonuscount << 3;
-		AddBlend (0.8431f, 0.7333f, 0.2706f, cnt > 128 ? 0.5f : cnt / 255.f, blend);
+		
+		AddBlend (RPART(gameinfo.pickupcolor)/255.f, GPART(gameinfo.pickupcolor)/255.f, 
+					BPART(gameinfo.pickupcolor)/255.f, cnt > 128 ? 0.5f : cnt / 255.f, blend);
 	}
 
 	if (CPlayer->mo->DamageFade.a != 0)

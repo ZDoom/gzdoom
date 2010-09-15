@@ -656,23 +656,23 @@ FHexenStartupScreen::FHexenStartupScreen(int max_progress, HRESULT &hr)
 	{
 		RGBQUAD color;
 		DWORD	quad;
-	};
+	} c;
 
 	Wads.ReadLump (startup_lump, startup_screen);
 
-	color.rgbReserved = 0;
+	c.color.rgbReserved = 0;
 
 	StartupBitmap = ST_Util_CreateBitmap (640, 480, 4);
 
 	// Initialize the bitmap palette.
 	for (int i = 0; i < 16; ++i)
 	{
-		color.rgbRed = startup_screen[i*3+0];
-		color.rgbGreen = startup_screen[i*3+1];
-		color.rgbBlue = startup_screen[i*3+2];
+		c.color.rgbRed = startup_screen[i*3+0];
+		c.color.rgbGreen = startup_screen[i*3+1];
+		c.color.rgbBlue = startup_screen[i*3+2];
 		// Convert from 6-bit per component to 8-bit per component.
-		quad = (quad << 2) | ((quad >> 4) & 0x03030303);
-		StartupBitmap->bmiColors[i] = color;
+		c.quad = (c.quad << 2) | ((c.quad >> 4) & 0x03030303);
+		StartupBitmap->bmiColors[i] = c.color;
 	}
 
 	// Fill in the bitmap data. Convert to chunky, because I can't figure out

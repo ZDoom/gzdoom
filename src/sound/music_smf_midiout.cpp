@@ -86,10 +86,10 @@ struct MIDISong2::TrackInfo
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static BYTE EventLengths[7] = { 2, 2, 2, 2, 1, 1, 2 };
-static BYTE CommonLengths[15] = { 0, 1, 2, 1, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0 };
-
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
+
+char MIDI_EventLengths[7] = { 2, 2, 2, 2, 1, 1, 2 };
+char MIDI_CommonLengths[15] = { 0, 1, 2, 1, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0 };
 
 // CODE --------------------------------------------------------------------
 
@@ -216,10 +216,8 @@ MIDISong2::~MIDISong2 ()
 //
 //==========================================================================
 
-void MIDISong2::CheckCaps()
+void MIDISong2::CheckCaps(int tech)
 {
-	int tech = MIDI->GetTechnology();
-
 	DesignationMask = 0xFF0F;
 	if (tech == MOD_FMSYNTH)
 	{
@@ -389,10 +387,10 @@ DWORD *MIDISong2::SendCommand (DWORD *events, TrackInfo *track, DWORD delay)
 		// Normal short message
 		if ((event & 0xF0) == 0xF0)
 		{
-			if (CommonLengths[event & 15] > 0)
+			if (MIDI_CommonLengths[event & 15] > 0)
 			{
 				data1 = track->TrackBegin[track->TrackP++];
-				if (CommonLengths[event & 15] > 1)
+				if (MIDI_CommonLengths[event & 15] > 1)
 				{
 					data2 = track->TrackBegin[track->TrackP++];
 				}
@@ -411,7 +409,7 @@ DWORD *MIDISong2::SendCommand (DWORD *events, TrackInfo *track, DWORD delay)
 
 		CHECK_FINISHED
 
-		if (EventLengths[(event&0x70)>>4] == 2)
+		if (MIDI_EventLengths[(event&0x70)>>4] == 2)
 		{
 			data2 = track->TrackBegin[track->TrackP++];
 		}
@@ -500,10 +498,13 @@ DWORD *MIDISong2::SendCommand (DWORD *events, TrackInfo *track, DWORD delay)
 				break;
 
 			case 116:	// EMIDI Loop Begin
-				track->LoopBegin = track->TrackP;
-				track->LoopDelay = 0;
-				track->LoopCount = data2;
-				track->LoopFinished = track->Finished;
+				if (!IgnoreLoops)
+				{
+					track->LoopBegin = track->TrackP;
+					track->LoopDelay = 0;
+					track->LoopCount = data2;
+					track->LoopFinished = track->Finished;
+				}
 				event = MIDI_META;
 				break;
 
@@ -529,12 +530,15 @@ DWORD *MIDISong2::SendCommand (DWORD *events, TrackInfo *track, DWORD delay)
 				break;
 
 			case 118:	// EMIDI Global Loop Begin
-				for (i = 0; i < NumTracks; ++i)
+				if (!IgnoreLoops)
 				{
-					Tracks[i].LoopBegin = Tracks[i].TrackP;
-					Tracks[i].LoopDelay = Tracks[i].Delay;
-					Tracks[i].LoopCount = data2;
-					Tracks[i].LoopFinished = Tracks[i].Finished;
+					for (i = 0; i < NumTracks; ++i)
+					{
+						Tracks[i].LoopBegin = Tracks[i].TrackP;
+						Tracks[i].LoopDelay = Tracks[i].Delay;
+						Tracks[i].LoopCount = data2;
+						Tracks[i].LoopFinished = Tracks[i].Finished;
+					}
 				}
 				event = MIDI_META;
 				break;
@@ -709,7 +713,7 @@ DWORD MIDISong2::TrackInfo::ReadVarLen ()
 
 //==========================================================================
 //
-// MIDISong2 :: TrackInfo :: FindNextDue
+// MIDISong2 :: FindNextDue
 //
 // Scans every track for the next event to play. Returns NULL if all events
 // have been consumed.
@@ -778,135 +782,6 @@ void MIDISong2::SetTempo(int new_tempo)
 
 //==========================================================================
 //
-// MIDISong2 :: Precache
-//
-// Scans each track for program change events on normal channels and note on
-// events on channel 10. Does not care about bank selects, since they're
-// unlikely to appear in a song aimed at Doom.
-//
-//==========================================================================
-
-void MIDISong2::Precache()
-{
-	// This array keeps track of instruments that are used. The first 128
-	// entries are for melodic instruments. The second 128 are for
-	// percussion.
-	BYTE found_instruments[256] = { 0, };
-	BYTE found_banks[256] = { 0, };
-	bool multiple_banks = false;
-	int i, j;
-	
-	DoRestart();
-	found_banks[0] = true;		// Bank 0 is always used.
-	found_banks[128] = true;
-	for (i = 0; i < NumTracks; ++i)
-	{
-		TrackInfo *track = &Tracks[i];
-		BYTE running_status = 0;
-		BYTE ev, data1, data2, command, channel;
-		int len;
-
-		data2 = 0;	// Silence, GCC
-		while (track->TrackP < track->MaxTrackP)
-		{
-			ev = track->TrackBegin[track->TrackP++];
-			command = ev & 0xF0;
-
-			if (ev == MIDI_META)
-			{
-				track->TrackP++;
-				len = track->ReadVarLen();
-				track->TrackP += len;
-			}
-			else if (ev == MIDI_SYSEX || ev == MIDI_SYSEXEND)
-			{
-				len = track->ReadVarLen();
-				track->TrackP += len;
-			}
-			else if (command == 0xF0)
-			{
-				track->TrackP += CommonLengths[ev & 0x0F];
-			}
-			else
-			{
-				if ((ev & 0x80) == 0)
-				{ // Use running status.
-					data1 = ev;
-					ev = running_status;
-				}
-				else
-				{ // Store new running status.
-					running_status = ev;
-					data1 = track->TrackBegin[track->TrackP++];
-				}
-				command = ev & 0x70;
-				channel = ev & 0x0F;
-				if (EventLengths[command >> 4] == 2)
-				{
-					data2 = track->TrackBegin[track->TrackP++];
-				}
-				if (channel != 9 && command == (MIDI_PRGMCHANGE & 0x70))
-				{
-					found_instruments[data1 & 127] = true;
-				}
-				else if (channel == 9 && command == (MIDI_PRGMCHANGE & 0x70) && data1 != 0)
-				{ // On a percussion channel, program change also serves as bank select.
-					multiple_banks = true;
-					found_banks[data1 | 128] = true;
-				}
-				else if (channel == 9 && command == (MIDI_NOTEON & 0x70) && data2 != 0)
-				{
-					found_instruments[data1 | 128] = true;
-				}
-				else if (command == (MIDI_CTRLCHANGE & 0x70) && data1 == 0 && data2 != 0)
-				{
-					multiple_banks = true;
-					if (channel == 9)
-					{
-						found_banks[data2 | 128] = true;
-					}
-					else
-					{
-						found_banks[data2 & 127] = true;
-					}
-				}
-			}
-			track->ReadVarLen();	// Skip delay.
-		}
-	}
-	DoRestart();
-
-	// Now pack everything into a contiguous region for the PrecacheInstruments call().
-	TArray<WORD> packed;
-
-	for (i = 0; i < 256; ++i)
-	{
-		if (found_instruments[i])
-		{
-			WORD packnum = (i & 127) | ((i & 128) << 7);
-			if (!multiple_banks)
-			{
-				packed.Push(packnum);
-			}
-			else
-			{ // In order to avoid having to multiplex tracks in a type 1 file,
-			  // precache every used instrument in every used bank, even if not
-			  // all combinations are actually used.
-				for (j = 0; j < 128; ++j)
-				{
-					if (found_banks[j + (i & 128)])
-					{
-						packed.Push(packnum | (j << 7));
-					}
-				}
-			}
-		}
-	}
-	MIDI->PrecacheInstruments(&packed[0], packed.Size());
-}
-
-//==========================================================================
-//
 // MIDISong2 :: GetOPLDumper
 //
 //==========================================================================
@@ -924,7 +799,7 @@ MusInfo *MIDISong2::GetOPLDumper(const char *filename)
 
 MusInfo *MIDISong2::GetWaveDumper(const char *filename, int rate)
 {
-	return new MIDISong2(this, filename, MIDI_Timidity);
+	return new MIDISong2(this, filename, MIDI_GUS);
 }
 
 //==========================================================================

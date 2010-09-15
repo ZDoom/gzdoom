@@ -90,6 +90,7 @@ CVAR (String, snd_backend, "null", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool, snd_pitched, false, CVAR_ARCHIVE)
 
 SoundRenderer *GSnd;
+bool nosfx;
 
 void I_CloseSound ();
 
@@ -243,7 +244,8 @@ public:
 void I_InitSound ()
 {
 	/* Get command line options: */
-	bool nosound = !!Args->CheckParm ("-nosfx") || !!Args->CheckParm ("-nosound");
+	bool nosound = !!Args->CheckParm ("-nosound");
+	nosfx = !!Args->CheckParm ("-nosfx");
 
 	if (nosound)
 	{

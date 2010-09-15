@@ -356,6 +356,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialPosition)
 			self->z += FloatBobOffsets[(self->FloatBobPhase + level.maptime) & 63];
 		}
 	}
+	self->SetOrigin (self->x, self->y, self->z);
 }
 
 int AInventory::StaticLastMessageTic;
@@ -889,7 +890,7 @@ void AInventory::Touch (AActor *toucher)
 	{
 		const char * message = PickupMessage ();
 
-		if (toucher->CheckLocalView (consoleplayer)
+		if (message != NULL && *message != 0 && toucher->CheckLocalView (consoleplayer)
 			&& (StaticLastMessageTic != gametic || StaticLastMessage != message))
 		{
 			StaticLastMessageTic = gametic;
@@ -959,9 +960,7 @@ void AInventory::DoPickupSpecial (AActor *toucher)
 
 const char *AInventory::PickupMessage ()
 {
-	const char *message = GetClass()->Meta.GetMetaString (AIMETA_PickupMessage);
-
-	return message != NULL? message : "You got a pickup";
+	return GetClass()->Meta.GetMetaString (AIMETA_PickupMessage);
 }
 
 //===========================================================================

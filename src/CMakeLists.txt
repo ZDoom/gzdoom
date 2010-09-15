@@ -19,6 +19,8 @@ if( CMAKE_COMPILER_IS_GNUCXX )
 	endif( APPLE )
 endif( CMAKE_COMPILER_IS_GNUCXX )
 
+option( DYN_FLUIDSYNTH "Dynamically load fluidsynth" )
+
 if( CMAKE_SIZEOF_VOID_P MATCHES "8" )
 	set( X64 64 )
 endif( CMAKE_SIZEOF_VOID_P MATCHES "8" )
@@ -31,6 +33,10 @@ endif( CMAKE_SIZEOF_VOID_P MATCHES "8" )
 #   fmodapi<version>linux[64] -or simply- fmod
 #   jpeg-6b
 #   ...
+# The recommended method is to put it in the zdoom tree, since its
+# headers are unversioned. Especially now that we can't work properly
+# with anything newer than 4.26.xx, you probably don't want to use
+# a system-wide version.
 
 # Construct version numbers for searching for the FMOD library on Linux.
 set( MINOR_VERSIONS "50" "49" "48" "47" "46" "45" "44" "43" "42" "41"
@@ -353,6 +359,10 @@ if( NO_OPENAL )
 	add_definitions( -DNO_OPENAL=1 )
 endif( NO_OPENAL )
 
+# Search for FluidSynth
+
+include( ../FindFluidSynth.cmake )
+
 # Search for NASM
 
 if( NOT NO_ASM )
@@ -416,9 +426,9 @@ if( NOT NO_ASM )
 			if( APPLE )
 				set( ASM_FLAGS -fmacho -DM_TARGET_MACHO )
 			else( APPLE )
-				set( ASM_FLAGS -felf )
+				set( ASM_FLAGS -felf -DM_TARGET_LINUX )
 			endif( APPLE )
-			set( ASM_FLAGS "${ASM_FLAGS}" -DM_TARGET_LINUX -i${CMAKE_CURRENT_SOURCE_DIR}/ )
+			set( ASM_FLAGS "${ASM_FLAGS}" -i${CMAKE_CURRENT_SOURCE_DIR}/ )
 			set( ASM_SOURCE_EXTENSION .asm )
 		endif( X64 )
 	else( UNIX )
@@ -487,7 +497,8 @@ endif( SSE_MATTERS )
 
 if( CMAKE_COMPILER_IS_GNUCXX )
 	if( PROFILE )
-		set( CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -pg" )
+		set( CMAKE_C_FLinclude( FindFluidSynth.cmake )
+AGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -pg" )
 		set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -pg" )
 		set( CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO} -pg" )
 		set( CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -pg" )
@@ -593,8 +604,16 @@ add_custom_target( revision_check ALL
 
 # Libraries ZDoom needs
 
-set( ZDOOM_LIBS ${ZDOOM_LIBS} "${ZLIB_LIBRARIES}" "${JPEG_LIBRARIES}" "${BZIP2_LIBRARIES}" )
-include_directories( "${ZLIB_INCLUDE_DIR}" "${BZIP2_INCLUDE_DIR}" "${LZMA_INCLUDE_DIR}" "${JPEG_INCLUDE_DIR}" )
+message( STATUS "Fluid synth libs: ${FLUIDSYNTH_LIBRARIES}" )
+set( ZDOOM_LIBS ${ZDOOM_LIBS} "${ZLIB_LIBRARIES}" "${JPEG_LIBRARIES}" "${BZIP2_LIBRARIES}" "${FMOD_LIBRARY}" )
+include_directories( "${ZLIB_INCLUDE_DIR}" "${FMOD_INCLUDE_DIR}" "${BZIP2_INCLUDE_DIR}" "${LZMA_INCLUDE_DIR}" "${JPEG_INCLUDE_DIR}" )
+
+if( FLUIDSYNTH_FOUND )
+  if( NOT DYN_FLUIDSYNTH)
+	set( ZDOOM_LIBS ${ZDOOM_LIBS} "${FLUIDSYNTH_LIBRARIES}" )
+	include_directories( "${FLUIDSYNTH_INCLUDE_DIR}" )
+  endif( NOT DYN_FLUIDSYNTH )
+endif( FLUIDSYNTH_FOUND )
 
 # Start defining source files for ZDoom
 
@@ -689,6 +708,11 @@ else( SSE_MATTERS )
 	set( X86_SOURCES )
 endif( SSE_MATTERS )
 
+if( DYN_FLUIDSYNTH )
+	add_definitions( -DHAVE_FLUIDSYNTH -DDYN_FLUIDSYNTH )
+elseif( FLUIDSYNTH_FOUND )
+	add_definitions( -DHAVE_FLUIDSYNTH )
+endif( DYN_FLUIDSYNTH )
 
 add_executable( zdoom WIN32
 	autostart.cpp
@@ -742,19 +766,17 @@ add_executable( zdoom WIN32
 	hu_scores.cpp
 	i_net.cpp
 	info.cpp
+	keysections.cpp
 	lumpconfigfile.cpp
 	m_alloc.cpp
 	m_argv.cpp
 	m_bbox.cpp
 	m_cheat.cpp
 	m_joy.cpp
-	m_menu.cpp
 	m_misc.cpp
-	m_options.cpp
 	m_png.cpp
 	m_random.cpp
 	md5.cpp
-	mus2midi.cpp
 	name.cpp
 	nodebuild.cpp
 	nodebuild_classify_nosse2.cpp
@@ -772,6 +794,7 @@ add_executable( zdoom WIN32
 	p_effect.cpp
 	p_enemy.cpp
 	p_floor.cpp
+	p_glnodes.cpp
 	p_interaction.cpp
 	p_lights.cpp
 	p_linkedsectors.cpp
@@ -796,6 +819,7 @@ add_executable( zdoom WIN32
 	p_tick.cpp
 	p_trace.cpp
 	p_udmf.cpp
+	p_usdf.cpp
 	p_user.cpp
 	p_writemap.cpp
 	p_xlat.cpp
@@ -880,6 +904,19 @@ add_executable( zdoom WIN32
 	g_shared/sbar_mugshot.cpp
 	g_shared/shared_hud.cpp
 	g_shared/shared_sbar.cpp
+	menu/colorpickermenu.cpp
+	menu/joystickmenu.cpp
+	menu/listmenu.cpp
+	menu/loadsavemenu.cpp
+	menu/menu.cpp
+	menu/menudef.cpp
+	menu/menuinput.cpp
+	menu/messagebox.cpp
+	menu/optionmenu.cpp
+	menu/playerdisplay.cpp
+	menu/playermenu.cpp
+	menu/readthis.cpp
+	menu/videomenu.cpp
 	oplsynth/fmopl.cpp
 	oplsynth/mlopl.cpp
 	oplsynth/mlopl_io.cpp
@@ -903,13 +940,16 @@ add_executable( zdoom WIN32
 	sound/music_cd.cpp
 	sound/music_dumb.cpp
 	sound/music_gme.cpp
+	sound/music_mus_midiout.cpp
+	sound/music_smf_midiout.cpp
+	sound/music_hmi_midiout.cpp
 	sound/music_midistream.cpp
 	sound/music_midi_base.cpp
-	sound/music_midi_midiout.cpp
 	sound/music_midi_timidity.cpp
-	sound/music_mus_midiout.cpp
 	sound/music_mus_opl.cpp
 	sound/music_stream.cpp
+	sound/music_fluidsynth_mididevice.cpp
+	sound/music_softsynth_mididevice.cpp
 	sound/music_timidity_mididevice.cpp
 	sound/music_win_mididevice.cpp
 	sound/oalsound.cpp

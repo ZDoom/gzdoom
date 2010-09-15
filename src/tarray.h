@@ -141,6 +141,15 @@ public:
 		::new((void*)&Array[Count]) T(item);
 		return Count++;
 	}
+	bool Pop ()
+	{
+		if (Count > 0)
+		{
+			Array[--Count].~T();
+			return true;
+		}
+		return false;
+	}
 	bool Pop (T &item)
 	{
 		if (Count > 0)

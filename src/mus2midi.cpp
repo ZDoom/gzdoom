@@ -195,9 +195,9 @@ bool ProduceMIDI (const BYTE *musBuf, int len, TArray<BYTE> &outFile)
 		switch (event & 0x70)
 		{
 		case MUS_NOTEOFF:
-			midStatus |= MIDI_NOTEOFF;
+			midStatus |= MIDI_NOTEON;
 			mid1 = t & 127;
-			mid2 = 64;
+			mid2 = 0;
 			break;
 			
 		case MUS_NOTEON:

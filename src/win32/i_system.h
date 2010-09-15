@@ -114,6 +114,10 @@ void STACK_ARGS I_FatalError (const char *error, ...) GCCPRINTF(1,2);
 void atterm (void (*func)(void));
 void popterm ();
 
+// Set the mouse cursor. The texture must be 32x32.
+class FTexture;
+bool I_SetCursor(FTexture *cursor);
+
 // Repaint the pre-game console
 void I_PaintConsole (void);
 

@@ -43,7 +43,10 @@
 #define GI_MENUHACK_EXTENDED	0x00000004	// (Heretic)
 #define GI_TEASER2				0x00000008	// Alternate version of the Strife Teaser
 #define GI_COMPATSHORTTEX		0x00000010	// always force COMPAT_SHORTTEX for IWAD maps.
-#define GI_COMPATSTAIRS			0x00000010	// same for stairbuilding
+#define GI_COMPATSTAIRS			0x00000020	// same for stairbuilding
+#define GI_COMPATPOLY1			0x00000040	// Hexen's MAP36 needs old polyobject drawing
+#define GI_COMPATPOLY2			0x00000080	// so does HEXDD's MAP47
+#define GI_NOTEXTCOLOR			0x00000100
 
 #include "gametype.h"
 
@@ -106,6 +109,16 @@ struct gameinfo_t
 	int defaultrespawntime;
 	int defaultdropstyle;
 	int player5start;
+	DWORD pickupcolor;
+	TArray<FString> quitmessages;
+	FName mTitleColor;
+	FName mFontColor;
+	FName mFontColorValue;
+	FName mFontColorMore;
+	FName mFontColorHeader;
+	FName mFontColorHighlight;
+	FName mFontColorSelection;
+	char mBackButton[9];
 
 	const char *GetFinalePage(unsigned int num) const;
 };

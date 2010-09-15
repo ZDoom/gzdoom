@@ -40,7 +40,7 @@
 #include "f_finale.h"
 #include "m_argv.h"
 #include "m_misc.h"
-#include "m_menu.h"
+#include "menu/menu.h"
 #include "m_random.h"
 #include "m_crc32.h"
 #include "i_system.h"
@@ -116,17 +116,19 @@ EXTERN_CVAR (Float, con_midtime);
 //
 // CVAR displaynametags
 //
-// Selects whether to display name tags or not when changing weapons
+// Selects whether to display name tags or not when changing weapons/items
 //
 //==========================================================================
 
-CUSTOM_CVAR (Bool, displaynametags, 0, CVAR_ARCHIVE)
+CUSTOM_CVAR (Int, displaynametags, 0, CVAR_ARCHIVE)
 {
-	if (self != 0 && self != 1)
+	if (self < 0 || self > 3)
 	{
 		self = 0;
 	}
 }
+
+CVAR(Int, nametagcolor, CR_GOLD, CVAR_ARCHIVE)
 
 
 gameaction_t	gameaction;
@@ -322,11 +324,23 @@ CCMD (turn180)
 CCMD (weapnext)
 {
 	SendItemUse = players[consoleplayer].weapons.PickNextWeapon (&players[consoleplayer]);
+	// [BC] Option to display the name of the weapon being cycled to.
+	if ((displaynametags & 2) && StatusBar && SmallFont && SendItemUse)
+	{
+		StatusBar->AttachMessage(new DHUDMessageFadeOut(SmallFont, SendItemUse->GetTag(),
+			1.5f, 0.90f, 0, 0, (EColorRange)*nametagcolor, 2.f, 0.35f), MAKE_ID( 'W', 'E', 'P', 'N' ));
+	}
 }
 
 CCMD (weapprev)
 {
 	SendItemUse = players[consoleplayer].weapons.PickPrevWeapon (&players[consoleplayer]);
+	// [BC] Option to display the name of the weapon being cycled to.
+	if ((displaynametags & 2) && StatusBar && SmallFont && SendItemUse)
+	{
+		StatusBar->AttachMessage(new DHUDMessageFadeOut(SmallFont, SendItemUse->GetTag(),
+			1.5f, 0.90f, 0, 0, (EColorRange)*nametagcolor, 2.f, 0.35f), MAKE_ID( 'W', 'E', 'P', 'N' ));
+	}
 }
 
 CCMD (invnext)
@@ -354,10 +368,9 @@ CCMD (invnext)
 				who->InvSel = who->Inventory;
 			}
 		}
-		if (displaynametags && StatusBar && SmallFont 
-			&& gamestate == GS_LEVEL && level.time > con_midtime && who->InvSel)
-			StatusBar->AttachMessage (new DHUDMessage (SmallFont, who->InvSel->GetTag(), 
-			2.5f, 0.375f, 0, 0, CR_YELLOW, con_midtime), MAKE_ID('S','I','N','V'));
+		if ((displaynametags & 1) && StatusBar && SmallFont && who->InvSel)
+			StatusBar->AttachMessage (new DHUDMessageFadeOut (SmallFont, who->InvSel->GetTag(), 
+			1.5f, 0.80f, 0, 0, (EColorRange)*nametagcolor, 2.f, 0.35f), MAKE_ID('S','I','N','V'));
 	}
 	who->player->inventorytics = 5*TICRATE;
 }
@@ -385,10 +398,9 @@ CCMD (invprev)
 			}
 			who->InvSel = item;
 		}
-		if (displaynametags && StatusBar && SmallFont 
-			&& gamestate == GS_LEVEL && level.time > con_midtime && who->InvSel)
-			StatusBar->AttachMessage (new DHUDMessage (SmallFont, who->InvSel->GetTag(), 
-			2.5f, 0.375f, 0, 0, CR_YELLOW, con_midtime), MAKE_ID('S','I','N','V'));
+		if ((displaynametags & 1) && StatusBar && SmallFont && who->InvSel)
+			StatusBar->AttachMessage (new DHUDMessageFadeOut (SmallFont, who->InvSel->GetTag(), 
+			1.5f, 0.80f, 0, 0, (EColorRange)*nametagcolor, 2.f, 0.35f), MAKE_ID('S','I','N','V'));
 	}
 	who->player->inventorytics = 5*TICRATE;
 }
@@ -869,7 +881,7 @@ bool G_Responder (event_t *ev)
 	if (gameaction == ga_nothing && 
 		(demoplayback || gamestate == GS_DEMOSCREEN || gamestate == GS_TITLELEVEL))
 	{
-		const char *cmd = C_GetBinding (ev->data1);
+		const char *cmd = Bindings.GetBind (ev->data1);
 
 		if (ev->type == EV_KeyDown)
 		{
@@ -887,16 +899,17 @@ bool G_Responder (event_t *ev)
 				stricmp (cmd, "bumpgamma") &&
 				stricmp (cmd, "screenshot")))
 			{
-				M_StartControlPanel (true, true);
+				M_StartControlPanel(true);
+				M_SetMenu(NAME_Mainmenu, -1);
 				return true;
 			}
 			else
 			{
-				return C_DoKey (ev);
+				return C_DoKey (ev, &Bindings, &DoubleBindings);
 			}
 		}
 		if (cmd && cmd[0] == '+')
-			return C_DoKey (ev);
+			return C_DoKey (ev, &Bindings, &DoubleBindings);
 
 		return false;
 	}
@@ -908,7 +921,7 @@ bool G_Responder (event_t *ev)
 	{
 		if (ST_Responder (ev))
 			return true;		// status window ate it
-		if (!viewactive && AM_Responder (ev))
+		if (!viewactive && AM_Responder (ev, false))
 			return true;		// automap ate it
 	}
 	else if (gamestate == GS_FINALE)
@@ -920,12 +933,12 @@ bool G_Responder (event_t *ev)
 	switch (ev->type)
 	{
 	case EV_KeyDown:
-		if (C_DoKey (ev))
+		if (C_DoKey (ev, &Bindings, &DoubleBindings))
 			return true;
 		break;
 
 	case EV_KeyUp:
-		C_DoKey (ev);
+		C_DoKey (ev, &Bindings, &DoubleBindings);
 		break;
 
 	// [RH] mouse buttons are sent as key up/down events
@@ -939,7 +952,7 @@ bool G_Responder (event_t *ev)
 	// the events *last* so that any bound keys get precedence.
 
 	if (gamestate == GS_LEVEL && viewactive)
-		return AM_Responder (ev);
+		return AM_Responder (ev, true);
 
 	return (ev->type == EV_KeyDown ||
 			ev->type == EV_Mouse);
@@ -2050,10 +2063,10 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 		M_AppendPNGChunk (stdfile, MAKE_ID('s','n','X','t'), &next, 1);
 	}
 
-	M_NotifyNewSave (filename.GetChars(), description, okForQuicksave);
-
 	M_FinishPNG (stdfile);
 	fclose (stdfile);
+
+	M_NotifyNewSave (filename.GetChars(), description, okForQuicksave);
 
 	// Check whether the file is ok.
 	bool success = false;

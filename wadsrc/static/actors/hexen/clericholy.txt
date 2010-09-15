@@ -84,6 +84,7 @@ ACTOR CWeapWraithverge : ClericWeapon native
 	Weapon.AmmoType1 "Mana1"
 	Weapon.AmmoType2 "Mana2"
 	Inventory.PickupMessage "$TXT_WEAPON_C4"
+	Tag "$TAG_CWEAPWRAITHVERGE"
 	Inventory.PickupSound "WeaponBuild"
 
 	action native A_CHolyAttack();
@@ -187,6 +188,7 @@ ACTOR HolySpirit native
 	RenderStyle Translucent
 	Alpha 0.4
 	DeathSound "SpiritDie"
+	Obituary "$OB_MPCWEAPWRAITHVERGE"
 
 	action native A_CHolySeek();
 	action native A_CHolyCheckScream();

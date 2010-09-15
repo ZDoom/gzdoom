@@ -1140,6 +1140,11 @@ OptionString SoundOutputsMac
 	"No sound",			"No sound"
 }
 
+OptionString ALDevices
+{
+	// filled in by the sound code
+}
+
 OptionString OutputFormats
 {
 	"PCM-8",		"8-bit"
@@ -1171,6 +1176,52 @@ OptionString Resamplers
 	"Spline",		"Spline"
 }
 
+
+OptionString SoundBackends
+{
+	"fmod",		"FMOD"
+	"openal",	"OpenAL"
+	"null",		"No Sound"
+}
+
+
+OptionMenu FMODSoundItems
+{
+	Title "FMOD OPTIONS"
+	Slider	"Underwater cutoff",	"snd_waterlp", 0.0, 2000.0, 50.0
+	IfOption(Windows)
+	{
+		Option "Output system",  "snd_output", "SoundOutputsWindows"
+	}
+	IfOption(Unix)
+	{
+		Option "Output system",  "snd_output", "SoundOutputsUnix"
+	}
+	IfOption(Mac)
+	{
+		Option "Output system",  "snd_output", "SoundOutputsMac"
+	}
+	Option "Output format",      "snd_output_format", "OutputFormats"
+	Option "Speaker mode",       "snd_speakermode", "SpeakerModes"
+	Option "Resampler",          "snd_resampler", "Resamplers"
+	Option "HRTF filter",        "snd_hrtf", "OnOff"
+	StaticText " "
+	Option "Buffer size",			"snd_buffersize", "BufferSizes"
+	Option "Buffer count",			"snd_buffercount", "BufferCounts"
+}
+
+
+OptionMenu OpenALSoundItems
+{
+	Title "OPENAL OPTIONS"
+	Option "Playback device",	"snd_aldevice",	"ALDevices"
+	Option "Enable EFX",		"snd_efx",		"OnOff"
+	StaticText	" "
+	StaticText	"Requires EFX", 1
+	Slider	"Underwater absorption",	"snd_waterabsorption", 0.0, 10.0, 0.5
+}
+
+
 OptionValue MidiDevices
 {
 	// filled in by the sound code
@@ -1185,28 +1236,14 @@ OptionMenu SoundOptions
 	Option "MIDI device",		"snd_mididevice", "MidiDevices"
 	StaticText " "
 	Option "Underwater reverb",	"snd_waterreverb", "OnOff"
-	Slider "Underwater cutoff",	"snd_waterlp", 0, 2000, 50
 	Option "Randomize pitches",	"snd_pitched", "OnOff"
 	Slider "Sound channels",	"snd_channels", 8, 256, 8
 	StaticText " "
-	Command "Restart sound",	"snd_reset"
+	Option "Sound backend",		"snd_backend", "SoundBackends"
+	Submenu "FMOD options",		"FMODSoundItems"
+	Submenu "OpenAL options",	"OpenALSoundItems"
 	StaticText " "
-	IfOption(Windows)
-	{
-		Option "Output system",		"snd_output", "SoundOutputsWindows"
-	}
-	IfOption(Unix)
-	{
-		Option "Output system",		"snd_output", "SoundOutputsUnix"
-	}
-	IfOption(Mac)
-	{
-		Option "Output system",		"snd_output", "SoundOutputsMac"
-	}
-	Option "Output format",		"snd_output_format", "OutputFormats"
-	Option "Speaker mode",		"snd_speakermode", "SpeakerModes"
-	Option "Resampler",			"snd_resampler", "Resamplers"
-	Option "HRTF filter",		"snd_hrtf", "OnOff"
+	Command "Restart sound",	"snd_reset"
 
 	StaticText " "
 	Submenu "Advanced options",			"AdvSoundOptions"
@@ -1223,8 +1260,6 @@ OptionMenu AdvSoundOptions
 {
 	Title "ADVANCED SOUND OPTIONS"
 	Option "Sample rate",			"snd_samplerate", "SampleRates"
-	Option "Buffer size",			"snd_buffersize", "BufferSizes"
-	Option "Buffer count",			"snd_buffercount", "BufferCounts"
 	StaticText " "
 	StaticText "OPL Synthesis",	1
 	Option "Only emulate one OPL chip", "opl_onechip", "OnOff"

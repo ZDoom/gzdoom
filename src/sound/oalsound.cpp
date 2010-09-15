@@ -54,7 +54,7 @@
 #include "tempfiles.h"
 
 
-CVAR (String, snd_aldevice, "", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR (String, snd_aldevice, "Default", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool, snd_efx, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CUSTOM_CVAR (Float, snd_waterabsorption, 10.0f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
@@ -64,20 +64,11 @@ CUSTOM_CVAR (Float, snd_waterabsorption, 10.0f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 		self = 10.0f;
 }
 
-int BuildALDeviceList(valueenum_t **menulist)
+void I_BuildALDeviceList(FOptionValues *opt)
 {
-	std::vector<valueenum_t> list;
-	static const char def[] = "";
-
-	valueenum_t val;
-	size_t len = strlen(def)+1;
-
-	char *n = new char[len];
-	memcpy(n, def, len);
-
-	val.value = n;
-	val.name = "Default";
-	list.push_back(val);
+	opt->mValues.Resize(1);
+	opt->mValues[0].TextValue = "Default";
+	opt->mValues[0].Text = "Default";
 
 #ifndef NO_OPENAL
 	const ALCchar *names = (alcIsExtensionPresent(NULL, "ALC_ENUMERATE_ALL_EXT") ?
@@ -87,33 +78,13 @@ int BuildALDeviceList(valueenum_t **menulist)
 		Printf("Failed to get device list: %s\n", alcGetString(NULL, alcGetError(NULL)));
 	else while(*names)
 	{
-		len = strlen(names)+1;
+		unsigned int i = opt->mValues.Reserve(1);
+		opt->mValues[i].TextValue = names;
+		opt->mValues[i].Text = names;
 
-		n = new char[len];
-		memcpy(n, names, len);
-
-		val.value = n;
-		val.name = val.value;
-		list.push_back(val);
-
-		names += len;
+		names += strlen(names)+1;
 	}
 #endif
-
-	static const valueenum_t listend = {NULL,NULL};
-	list.push_back(listend);
-
-	valueenum_t *newlist = new valueenum_t[list.size()];
-	memcpy(&newlist[0], &list[0], list.size()*sizeof(newlist[0]));
-
-	if(*menulist)
-	{
-		for(size_t i = 0;(*menulist)[i].value;i++)
-			delete[] const_cast<char*>((*menulist)[i].value);
-		delete[] *menulist;
-	}
-	*menulist = newlist;
-	return list.size()-1;
 }
 
 #ifndef NO_OPENAL
@@ -213,7 +184,7 @@ static float GetRolloff(const FRolloffInfo *rolloff, float distance)
 #include <gst/app/gstappbuffer.h>
 #include <gst/audio/multichannel.h>
 
-/* Bad GStreamer, using enums for bit fields... (GStreamerMM probably fixes this) */
+/* Bad GStreamer, using enums for bit fields... */
 static GstMessageType operator|(const GstMessageType &a, const GstMessageType &b)
 { return GstMessageType((unsigned)a|(unsigned)b); }
 static GstSeekFlags operator|(const GstSeekFlags &a, const GstSeekFlags &b)
@@ -449,7 +420,7 @@ class OpenALSoundStream : public SoundStream
 		do {
 			g_usleep(10000);
 			alGetSourcei(self->Source, AL_SOURCE_STATE, &state);
-		} while(getALError() == AL_NO_ERROR && state == AL_PLAYING);
+		} while(getALError() == AL_NO_ERROR && state == AL_PLAYING && self->Playing);
 
 		alSourceRewind(self->Source);
 		getALError();
@@ -509,7 +480,7 @@ class OpenALSoundStream : public SoundStream
 				return GST_FLOW_ERROR;
 			}
 			if(processed > 0 || self->SamplesQueued < MaxSamplesQueued ||
-			   state != AL_PLAYING)
+			   state != AL_PLAYING || !self->Playing)
 				break;
 
 			g_usleep(10000);
@@ -585,7 +556,7 @@ class OpenALSoundStream : public SoundStream
 
 		// "read" the data it wants, up to the remaining amount
 		guint8 *data = &self->MemData[self->MemDataPos];
-		size = (std::min)(size, (guint)(self->MemData.size() - self->MemDataPos));
+		size = std::min<guint>(size, self->MemData.size() - self->MemDataPos);
 		self->MemDataPos += size;
 
 		GstBuffer *buffer = gst_buffer_new();
@@ -685,20 +656,20 @@ class OpenALSoundStream : public SoundStream
 		Source = Renderer->FreeSfx.back();
 		Renderer->FreeSfx.pop_back();
 
-		alSource3f(Source, AL_DIRECTION, 0.0f, 0.0f, 0.0f);
-		alSource3f(Source, AL_VELOCITY, 0.0f, 0.0f, 0.0f);
-		alSource3f(Source, AL_POSITION, 0.0f, 0.0f, 0.0f);
-		alSourcef(Source, AL_MAX_GAIN, 1.0f);
-		alSourcef(Source, AL_GAIN, 1.0f);
-		alSourcef(Source, AL_PITCH, 1.0f);
-		alSourcef(Source, AL_ROLLOFF_FACTOR, 0.0f);
-		alSourcef(Source, AL_SEC_OFFSET, 0.0f);
+		alSource3f(Source, AL_DIRECTION, 0.f, 0.f, 0.f);
+		alSource3f(Source, AL_VELOCITY, 0.f, 0.f, 0.f);
+		alSource3f(Source, AL_POSITION, 0.f, 0.f, 0.f);
+		alSourcef(Source, AL_MAX_GAIN, 1.f);
+		alSourcef(Source, AL_GAIN, 1.f);
+		alSourcef(Source, AL_PITCH, 1.f);
+		alSourcef(Source, AL_ROLLOFF_FACTOR, 0.f);
+		alSourcef(Source, AL_SEC_OFFSET, 0.f);
 		alSourcei(Source, AL_SOURCE_RELATIVE, AL_TRUE);
 		alSourcei(Source, AL_LOOPING, AL_FALSE);
 		if(Renderer->EnvSlot)
 		{
-			alSourcef(Source, AL_ROOM_ROLLOFF_FACTOR, 0.0f);
-			alSourcef(Source, AL_AIR_ABSORPTION_FACTOR, 0.0f);
+			alSourcef(Source, AL_ROOM_ROLLOFF_FACTOR, 0.f);
+			alSourcef(Source, AL_AIR_ABSORPTION_FACTOR, 0.f);
 			alSourcei(Source, AL_DIRECT_FILTER, AL_FILTER_NULL);
 			alSource3i(Source, AL_AUXILIARY_SEND_FILTER, 0, 0, AL_FILTER_NULL);
 		}
@@ -810,7 +781,7 @@ class OpenALSoundStream : public SoundStream
 			{
 				if(GST_MESSAGE_TYPE(msg) == GST_MESSAGE_ERROR)
 				{
-					PrintErrMsg("Play Error", msg);
+					PrintErrMsg("Prepare Error", msg);
 					ret = GST_STATE_CHANGE_FAILURE;
 					break;
 				}
@@ -1109,7 +1080,8 @@ public:
 		{
 			if(err)
 			{
-				Printf("Failed to convert "TEXTCOLOR_BOLD"%s"TEXTCOLOR_NORMAL" to URI: %s\n", filename, err->message);
+				Printf("Failed to convert "TEXTCOLOR_BOLD"%s"TEXTCOLOR_NORMAL" to URI: %s\n",
+				       filename, err->message);
 				g_error_free(err);
 			}
 			return false;
@@ -1190,7 +1162,6 @@ class Decoder
 	const guint8 *MemData;
 	size_t MemDataSize;
 	size_t MemDataPos;
-	GstCaps *SrcCaps;
 
 	static void need_memdata(GstAppSrc *appsrc, guint size, gpointer user_data)
 	{
@@ -1235,7 +1206,6 @@ class Decoder
 		};
 		gst_app_src_set_callbacks(appsrc, &callbacks, self, NULL);
 		gst_app_src_set_size(appsrc, self->MemDataSize);
-		gst_app_src_set_caps(appsrc, self->SrcCaps);
 		gst_app_src_set_stream_type(appsrc, GST_APP_STREAM_TYPE_RANDOM_ACCESS);
 
 		gst_object_unref(appsrc);
@@ -1354,16 +1324,12 @@ public:
 	ALuint OutBits;
 
 	Decoder()
-		: gstPipeline(NULL), gstSink(NULL), TagList(NULL), SrcCaps(NULL),
+		: gstPipeline(NULL), gstSink(NULL), TagList(NULL),
 		  OutRate(0), OutChannels(0), OutBits(0)
 	{ LoopPts[0] = LoopPts[1] = 0; }
 
 	virtual ~Decoder()
 	{
-		if(SrcCaps)
-			gst_caps_unref(SrcCaps);
-		SrcCaps = NULL;
-
 		if(gstSink)
 			gst_object_unref(gstSink);
 		gstSink = NULL;
@@ -1378,22 +1344,6 @@ public:
 		if(TagList)
 			gst_tag_list_free(TagList);
 		TagList = NULL;
-	}
-
-	bool DecodeRaw(const void *data, unsigned int datalen, int rawbits, int rawchannels, int rawrate)
-	{
-		GstStructure *structure = gst_structure_new("audio/x-raw-int",
-		    "endianness", G_TYPE_INT, G_BYTE_ORDER,
-		    "width", G_TYPE_INT, rawbits,
-		    "depth", G_TYPE_INT, rawbits,
-		    "signed", G_TYPE_BOOLEAN, ((rawbits==8)?FALSE:TRUE), NULL);
-		gst_structure_set(structure, "channels", G_TYPE_INT, rawchannels, NULL);
-		gst_structure_set(structure, "rate", G_TYPE_INT, rawrate, NULL);
-
-		SrcCaps = gst_caps_new_full(structure, NULL);
-		if(!SrcCaps)
-			return false;
-		return Decode(data, datalen);
 	}
 
 	bool Decode(const void *data, unsigned int datalen, int forcebits=0)
@@ -1544,7 +1494,7 @@ OpenALSoundRenderer::OpenALSoundRenderer()
 		GSTInited = true;
 	}
 
-	if((*snd_aldevice)[0] != 0)
+	if(snd_aldevice != "Default")
 	{
 		Device = alcOpenDevice(*snd_aldevice);
 		if(!Device)
@@ -1823,7 +1773,7 @@ unsigned int OpenALSoundRenderer::GetMSLength(SoundHandle sfx)
 			alGetBufferi(buffer, AL_FREQUENCY, &freq);
 			alGetBufferi(buffer, AL_SIZE, &size);
 			if(getALError() == AL_NO_ERROR)
-				return (unsigned int)(size / (channels*bits/8) * 1000.0 / freq);
+				return (unsigned int)(size / (channels*bits/8) * 1000. / freq);
 		}
 	}
 	return 0;
@@ -1831,14 +1781,14 @@ unsigned int OpenALSoundRenderer::GetMSLength(SoundHandle sfx)
 
 unsigned int OpenALSoundRenderer::GetSampleLength(SoundHandle sfx)
 {
-	if(sfx.data)
-		return getBufferLength(*((ALuint*)sfx.data));
-	return 0;
+	if(!sfx.data)
+		return 0;
+	return getBufferLength(*((ALuint*)sfx.data));
 }
 
 float OpenALSoundRenderer::GetOutputRate()
 {
-	ALCint rate = *snd_samplerate; // Default, just in case
+	ALCint rate = 44100; // Default, just in case
 	alcGetIntegerv(Device, ALC_FREQUENCY, 1, &rate);
 	return (float)rate;
 }
@@ -1870,16 +1820,6 @@ SoundHandle OpenALSoundRenderer::LoadSoundRaw(BYTE *sfxdata, int length, int fre
 		if(channels == 2) format = AL_FORMAT_STEREO8;
 	}
 
-	Decoder decoder;
-	if(format == AL_NONE && decoder.DecodeRaw(sfxdata, length, bits, channels, frequency))
-	{
-		sfxdata = &decoder.OutData[0];
-		length = decoder.OutData.size();
-		frequency = decoder.OutRate;
-		bits = decoder.OutBits;
-		channels = decoder.OutChannels;
-		format = FormatFromDesc(bits, channels);
-	}
 	if(format == AL_NONE || frequency <= 0)
 	{
 		Printf("Unhandled format: %d bit, %d channel, %d hz\n", bits, channels, frequency);
@@ -1912,7 +1852,7 @@ SoundHandle OpenALSoundRenderer::LoadSoundRaw(BYTE *sfxdata, int length, int fre
 	else if(loopstart > 0)
 	{
 		static bool warned = false;
-        if(!warned)
+		if(!warned)
 			Printf("Loop points not supported!\n");
 		warned = true;
 	}
@@ -1952,15 +1892,15 @@ SoundHandle OpenALSoundRenderer::LoadSound(BYTE *sfxdata, int length)
 		return retval;
 	}
 
-	if(LoopPoints && decoder.LoopPts[0] > decoder.LoopPts[1])
+	if(LoopPoints && decoder.LoopPts[1] > decoder.LoopPts[0])
 	{
 		alBufferiv(buffer, AL_LOOP_POINTS, decoder.LoopPts);
 		getALError();
 	}
-	else if(decoder.LoopPts[0] > decoder.LoopPts[1])
+	else if(decoder.LoopPts[1] > decoder.LoopPts[0])
 	{
 		static bool warned = false;
-        if(!warned)
+		if(!warned)
 			Printf("Loop points not supported!\n");
 		warned = true;
 	}
@@ -2006,7 +1946,7 @@ short *OpenALSoundRenderer::DecodeSample(int outlen, const void *coded, int size
 		DPrintf("Failed to decode sample\n");
 		return NULL;
 	}
-	if(decoder.OutBits != 16 || decoder.OutChannels != 1)
+	if(decoder.OutChannels != 1)
 	{
 		DPrintf("Sample is not mono\n");
 		return NULL;
@@ -2086,16 +2026,19 @@ FISoundChannel *OpenALSoundRenderer::StartSound(SoundHandle sfx, float vol, int 
 
 	ALuint buffer = *((ALuint*)sfx.data);
 	ALuint &source = *find(Sources.begin(), Sources.end(), FreeSfx.back());
-	alSource3f(source, AL_POSITION, 0.0f, 0.0f, 0.0f);
-	alSource3f(source, AL_VELOCITY, 0.0f, 0.0f, 0.0f);
-	alSource3f(source, AL_DIRECTION, 0.0f, 0.0f, 0.0f);
+	alSource3f(source, AL_POSITION, 0.f, 0.f, 0.f);
+	alSource3f(source, AL_VELOCITY, 0.f, 0.f, 0.f);
+	alSource3f(source, AL_DIRECTION, 0.f, 0.f, 0.f);
 	alSourcei(source, AL_SOURCE_RELATIVE, AL_TRUE);
-	alSourcei(source, AL_LOOPING, (chanflags&SNDF_LOOP)?AL_TRUE:AL_FALSE);
-	alSourcef(source, AL_REFERENCE_DISTANCE, 1.0f);
-	alSourcef(source, AL_MAX_DISTANCE, 1000.0f);
-	alSourcef(source, AL_ROLLOFF_FACTOR, 0.0f);
+
+	alSourcei(source, AL_LOOPING, (chanflags&SNDF_LOOP) ? AL_TRUE : AL_FALSE);
+
+	alSourcef(source, AL_REFERENCE_DISTANCE, 1.f);
+	alSourcef(source, AL_MAX_DISTANCE, 1000.f);
+	alSourcef(source, AL_ROLLOFF_FACTOR, 0.f);
 	alSourcef(source, AL_MAX_GAIN, SfxVolume);
 	alSourcef(source, AL_GAIN, SfxVolume*vol);
+
 	if(EnvSlot)
 	{
 		if(!(chanflags&SNDF_NOREVERB))
@@ -2108,25 +2051,26 @@ FISoundChannel *OpenALSoundRenderer::StartSound(SoundHandle sfx, float vol, int 
 		{
 			alSourcei(source, AL_DIRECT_FILTER, AL_FILTER_NULL);
 			alSource3i(source, AL_AUXILIARY_SEND_FILTER, 0, 0, AL_FILTER_NULL);
-			alSourcef(source, AL_AIR_ABSORPTION_FACTOR, 0.0f);
+			alSourcef(source, AL_AIR_ABSORPTION_FACTOR, 0.f);
 		}
-		alSourcef(source, AL_ROOM_ROLLOFF_FACTOR, 0.0f);
+		alSourcef(source, AL_ROOM_ROLLOFF_FACTOR, 0.f);
 		alSourcef(source, AL_PITCH, PITCH(pitch));
 	}
-	else if(LastWaterAbsorb > 0.0f && !(chanflags&SNDF_NOREVERB))
+	else if(LastWaterAbsorb > 0.f && !(chanflags&SNDF_NOREVERB))
 		alSourcef(source, AL_PITCH, PITCH(pitch)*PITCH_MULT);
 	else
 		alSourcef(source, AL_PITCH, PITCH(pitch));
+
 	if(!reuse_chan)
-		alSourcef(source, AL_SEC_OFFSET, 0.0f);
+		alSourcef(source, AL_SEC_OFFSET, 0.f);
 	else
 	{
 		if((chanflags&SNDF_ABSTIME))
-			alSourcef(source, AL_SEC_OFFSET, reuse_chan->StartTime.Lo/1000.0f);
+			alSourcef(source, AL_SEC_OFFSET, reuse_chan->StartTime.Lo/1000.f);
 		else
 		{
 			// FIXME: set offset based on the current time and the StartTime
-			alSourcef(source, AL_SEC_OFFSET, 0.0f);
+			alSourcef(source, AL_SEC_OFFSET, 0.f);
 		}
 	}
 	if(getALError() != AL_NO_ERROR)
@@ -2154,10 +2098,10 @@ FISoundChannel *OpenALSoundRenderer::StartSound(SoundHandle sfx, float vol, int 
 	else chan->SysChannel = &source;
 
 	chan->Rolloff.RolloffType = ROLLOFF_Linear;
-	chan->Rolloff.MaxDistance = 2.0f;
-	chan->Rolloff.MinDistance = 1.0f;
-	chan->DistanceScale = 1.0f;
-	chan->DistanceSqr = (2.0f-vol)*(2.0f-vol);
+	chan->Rolloff.MaxDistance = 2.f;
+	chan->Rolloff.MinDistance = 1.f;
+	chan->DistanceScale = 1.f;
+	chan->DistanceSqr = (2.f-vol)*(2.f-vol);
 	chan->ManualGain = true;
 
 	return chan;
@@ -2193,14 +2137,14 @@ FISoundChannel *OpenALSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener
 	ALuint &source = *find(Sources.begin(), Sources.end(), FreeSfx.back());
 	alSource3f(source, AL_POSITION, pos[0], pos[1], -pos[2]);
 	alSource3f(source, AL_VELOCITY, vel[0], vel[1], -vel[2]);
-	alSource3f(source, AL_DIRECTION, 0.0f, 0.0f, 0.0f);
+	alSource3f(source, AL_DIRECTION, 0.f, 0.f, 0.f);
 	alSourcei(source, AL_SOURCE_RELATIVE, AL_FALSE);
 
-	alSourcei(source, AL_LOOPING, (chanflags&SNDF_LOOP)?AL_TRUE:AL_FALSE);
+	alSourcei(source, AL_LOOPING, (chanflags&SNDF_LOOP) ? AL_TRUE : AL_FALSE);
 
 	// Multi-channel sources won't attenuate in OpenAL, and "area sounds" have
 	// special rolloff properties (they have a panning radius of 32 units, but
-	// starts attenuating at MinDistance).
+	// start attenuating at MinDistance).
 	if(channels == 1 && !(chanflags&SNDF_AREA))
 	{
 		if(rolloff->RolloffType == ROLLOFF_Log)
@@ -2208,31 +2152,31 @@ FISoundChannel *OpenALSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener
 			if(SrcDistanceModel)
 				alSourcei(source, AL_DISTANCE_MODEL, AL_INVERSE_DISTANCE);
 			alSourcef(source, AL_REFERENCE_DISTANCE, rolloff->MinDistance/distscale);
-			alSourcef(source, AL_MAX_DISTANCE, (1000.0f+rolloff->MinDistance)/distscale);
+			alSourcef(source, AL_MAX_DISTANCE, (1000.f+rolloff->MinDistance)/distscale);
 			rolloffFactor = rolloff->RolloffFactor;
 			manualGain = false;
-			gain = 1.0f;
+			gain = 1.f;
 		}
 		else if(rolloff->RolloffType == ROLLOFF_Linear && SrcDistanceModel)
 		{
 			alSourcei(source, AL_DISTANCE_MODEL, AL_LINEAR_DISTANCE);
 			alSourcef(source, AL_REFERENCE_DISTANCE, rolloff->MinDistance/distscale);
 			alSourcef(source, AL_MAX_DISTANCE, rolloff->MaxDistance/distscale);
-			rolloffFactor = 1.0f;
+			rolloffFactor = 1.f;
 			manualGain = false;
-			gain = 1.0f;
+			gain = 1.f;
 		}
 	}
 	if(manualGain)
 	{
 		if(SrcDistanceModel)
 			alSourcei(source, AL_DISTANCE_MODEL, AL_NONE);
-		if((chanflags&SNDF_AREA) && rolloff->MinDistance < 32.0f)
-			alSourcef(source, AL_REFERENCE_DISTANCE, 32.0f/distscale);
+		if((chanflags&SNDF_AREA) && rolloff->MinDistance < 32.f)
+			alSourcef(source, AL_REFERENCE_DISTANCE, 32.f/distscale);
 		else
 			alSourcef(source, AL_REFERENCE_DISTANCE, rolloff->MinDistance/distscale);
-		alSourcef(source, AL_MAX_DISTANCE, (1000.0f+rolloff->MinDistance)/distscale);
-		rolloffFactor = 0.0f;
+		alSourcef(source, AL_MAX_DISTANCE, (1000.f+rolloff->MinDistance)/distscale);
+		rolloffFactor = 0.f;
 		gain = GetRolloff(rolloff, sqrt(dist_sqr));
 	}
 	alSourcef(source, AL_ROLLOFF_FACTOR, rolloffFactor);
@@ -2251,25 +2195,26 @@ FISoundChannel *OpenALSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener
 		{
 			alSourcei(source, AL_DIRECT_FILTER, AL_FILTER_NULL);
 			alSource3i(source, AL_AUXILIARY_SEND_FILTER, 0, 0, AL_FILTER_NULL);
-			alSourcef(source, AL_AIR_ABSORPTION_FACTOR, 0.0f);
+			alSourcef(source, AL_AIR_ABSORPTION_FACTOR, 0.f);
 		}
 		alSourcef(source, AL_ROOM_ROLLOFF_FACTOR, rolloffFactor);
 		alSourcef(source, AL_PITCH, PITCH(pitch));
 	}
-	else if(LastWaterAbsorb > 0.0f && !(chanflags&SNDF_NOREVERB))
+	else if(LastWaterAbsorb > 0.f && !(chanflags&SNDF_NOREVERB))
 		alSourcef(source, AL_PITCH, PITCH(pitch)*PITCH_MULT);
 	else
 		alSourcef(source, AL_PITCH, PITCH(pitch));
+
 	if(!reuse_chan)
-		alSourcef(source, AL_SEC_OFFSET, 0.0f);
+		alSourcef(source, AL_SEC_OFFSET, 0.f);
 	else
 	{
 		if((chanflags&SNDF_ABSTIME))
-			alSourcef(source, AL_SEC_OFFSET, reuse_chan->StartTime.Lo/1000.0f);
+			alSourcef(source, AL_SEC_OFFSET, reuse_chan->StartTime.Lo/1000.f);
 		else
 		{
 			// FIXME: set offset based on the current time and the StartTime
-			alSourcef(source, AL_SAMPLE_OFFSET, 0.0f);
+			alSourcef(source, AL_SAMPLE_OFFSET, 0.f);
 		}
 	}
 	if(getALError() != AL_NO_ERROR)
@@ -2443,12 +2388,12 @@ void OpenALSoundRenderer::UpdateListener(SoundListener *listener)
 	ALfloat orient[6];
 	// forward
 	orient[0] = cos(angle);
-	orient[1] = 0.0f;
+	orient[1] = 0.f;
 	orient[2] = -sin(angle);
 	// up
-	orient[3] = 0.0f;
-	orient[4] = 1.0f;
-	orient[5] = 0.0f;
+	orient[3] = 0.f;
+	orient[4] = 1.f;
+	orient[5] = 0.f;
 
 	alListenerfv(AL_ORIENTATION, orient);
 	alListener3f(AL_POSITION, listener->position.X,
@@ -2496,8 +2441,8 @@ void OpenALSoundRenderer::UpdateListener(SoundListener *listener)
 
 				alFilterf(EnvFilters[0], AL_LOWPASS_GAIN, 0.25f);
 				alFilterf(EnvFilters[0], AL_LOWPASS_GAINHF, 0.75f);
-				alFilterf(EnvFilters[1], AL_LOWPASS_GAIN, 1.0f);
-				alFilterf(EnvFilters[1], AL_LOWPASS_GAINHF, 1.0f);
+				alFilterf(EnvFilters[1], AL_LOWPASS_GAIN, 1.f);
+				alFilterf(EnvFilters[1], AL_LOWPASS_GAINHF, 1.f);
 
 				// Apply the updated filters on the sources
 				foreach(ALuint, i, ReverbSfx)
@@ -2517,21 +2462,21 @@ void OpenALSoundRenderer::UpdateListener(SoundListener *listener)
 	}
 	else
 	{
-		if(LastWaterAbsorb > 0.0f)
+		if(LastWaterAbsorb > 0.f)
 		{
-			LastWaterAbsorb = 0.0f;
+			LastWaterAbsorb = 0.f;
 
 			if(EnvSlot != 0)
 			{
 				LoadReverb(env);
 
-				alFilterf(EnvFilters[0], AL_LOWPASS_GAIN, 1.0f);
-				alFilterf(EnvFilters[0], AL_LOWPASS_GAINHF, 1.0f);
-				alFilterf(EnvFilters[1], AL_LOWPASS_GAIN, 1.0f);
-				alFilterf(EnvFilters[1], AL_LOWPASS_GAINHF, 1.0f);
+				alFilterf(EnvFilters[0], AL_LOWPASS_GAIN, 1.f);
+				alFilterf(EnvFilters[0], AL_LOWPASS_GAINHF, 1.f);
+				alFilterf(EnvFilters[1], AL_LOWPASS_GAIN, 1.f);
+				alFilterf(EnvFilters[1], AL_LOWPASS_GAINHF, 1.f);
 				foreach(ALuint, i, ReverbSfx)
 				{
-					alSourcef(*i, AL_AIR_ABSORPTION_FACTOR, 0.0f);
+					alSourcef(*i, AL_AIR_ABSORPTION_FACTOR, 0.f);
 					alSourcei(*i, AL_DIRECT_FILTER, EnvFilters[0]);
 					alSource3i(*i, AL_AUXILIARY_SEND_FILTER, EnvSlot, 0, EnvFilters[1]);
 				}
@@ -2539,7 +2484,7 @@ void OpenALSoundRenderer::UpdateListener(SoundListener *listener)
 			else
 			{
 				foreach(ALuint, i, ReverbSfx)
-					alSourcef(*i, AL_PITCH, 1.0f);
+					alSourcef(*i, AL_PITCH, 1.f);
 			}
 			getALError();
 		}
@@ -2581,10 +2526,10 @@ void OpenALSoundRenderer::MarkStartTime(FISoundChannel *chan)
 float OpenALSoundRenderer::GetAudibility(FISoundChannel *chan)
 {
 	if(chan == NULL || chan->SysChannel == NULL)
-		return 0.0f;
+		return 0.f;
 
 	ALuint source = *((ALuint*)chan->SysChannel);
-	ALfloat volume = 0.0f;
+	ALfloat volume = 0.f;
 
 	if(!chan->ManualGain)
 		volume = SfxVolume * GetRolloff(&chan->Rolloff, sqrt(chan->DistanceSqr));
@@ -2602,7 +2547,7 @@ void OpenALSoundRenderer::PrintStatus()
 	Printf("Output device: "TEXTCOLOR_ORANGE"%s\n", alcGetString(Device, ALC_DEVICE_SPECIFIER));
 	getALCError(Device);
 
-	ALCint frequency=0, major=0, minor=0, mono=0, stereo=0;
+	ALCint frequency, major, minor, mono, stereo;
 	alcGetIntegerv(Device, ALC_FREQUENCY, 1, &frequency);
 	alcGetIntegerv(Device, ALC_MAJOR_VERSION, 1, &major);
 	alcGetIntegerv(Device, ALC_MINOR_VERSION, 1, &minor);
@@ -2663,11 +2608,11 @@ void OpenALSoundRenderer::PrintDriversList()
 		return;
 	}
 
-	Printf("%c%s%d. %s\n", ' ', (!(*snd_aldevice)[0] ? TEXTCOLOR_BOLD : ""), 0,
+	Printf("%c%s%2d. %s\n", ' ', ((snd_aldevice=="Default") ? TEXTCOLOR_BOLD : ""), 0,
 	       "Default");
 	for(int i = 1;*drivers;i++)
 	{
-		Printf("%c%s%d. %s\n", ((strcmp(current, drivers)==0) ? '*' : ' '),
+		Printf("%c%s%2d. %s\n", ((strcmp(current, drivers)==0) ? '*' : ' '),
 		       ((strcmp(*snd_aldevice, drivers)==0) ? TEXTCOLOR_BOLD : ""), i,
 		       drivers);
 		drivers += strlen(drivers)+1;
@@ -2740,7 +2685,7 @@ void OpenALSoundRenderer::LoadReverb(const ReverbContainer *env)
 		ALint type = AL_EFFECT_NULL;
 
 		alGetEffecti(envReverb, AL_EFFECT_TYPE, &type);
-#define mB2Gain(x) ((float)pow(10.0, (x)/2000.0))
+#define mB2Gain(x) ((float)pow(10., (x)/2000.))
 		if(type == AL_EFFECT_EAXREVERB)
 		{
 			ALfloat reflectpan[3] = { props.ReflectionsPan0,
@@ -2750,8 +2695,8 @@ void OpenALSoundRenderer::LoadReverb(const ReverbContainer *env)
 			                       props.ReverbPan2 };
 #undef SETPARAM
 #define SETPARAM(e,t,v) alEffectf((e), AL_EAXREVERB_##t, clamp((v), AL_EAXREVERB_MIN_##t, AL_EAXREVERB_MAX_##t))
-			SETPARAM(envReverb, DENSITY, props.Density/100.0f);
-			SETPARAM(envReverb, DIFFUSION, props.Diffusion/100.0f);
+			SETPARAM(envReverb, DENSITY, props.Density/100.f);
+			SETPARAM(envReverb, DIFFUSION, props.Diffusion/100.f);
 			SETPARAM(envReverb, GAIN, mB2Gain(props.Room));
 			SETPARAM(envReverb, GAINHF, mB2Gain(props.RoomHF));
 			SETPARAM(envReverb, GAINLF, mB2Gain(props.RoomLF));
@@ -2779,8 +2724,8 @@ void OpenALSoundRenderer::LoadReverb(const ReverbContainer *env)
 		else if(type == AL_EFFECT_REVERB)
 		{
 #define SETPARAM(e,t,v) alEffectf((e), AL_REVERB_##t, clamp((v), AL_REVERB_MIN_##t, AL_REVERB_MAX_##t))
-			SETPARAM(envReverb, DENSITY, props.Density/100.0f);
-			SETPARAM(envReverb, DIFFUSION, props.Diffusion/100.0f);
+			SETPARAM(envReverb, DENSITY, props.Density/100.f);
+			SETPARAM(envReverb, DIFFUSION, props.Diffusion/100.f);
 			SETPARAM(envReverb, GAIN, mB2Gain(props.Room));
 			SETPARAM(envReverb, GAINHF, mB2Gain(props.RoomHF));
 			SETPARAM(envReverb, DECAY_TIME, props.DecayTime);

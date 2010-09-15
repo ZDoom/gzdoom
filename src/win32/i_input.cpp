@@ -325,6 +325,7 @@ bool GUIWndProcHook(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESU
 			int shift = screen? screen->GetPixelDoubling() : 0;
 			ev.data1 = LOWORD(lParam) >> shift; 
 			ev.data2 = HIWORD(lParam) >> shift; 
+			if (screen) ev.data2 -= (screen->GetTrueHeight() - screen->GetHeight())/2;
 		}
 
 		if (wParam & MK_SHIFT)				ev.data3 |= GKM_SHIFT;

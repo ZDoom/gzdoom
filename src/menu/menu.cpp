@@ -211,7 +211,8 @@ bool DMenu::MouseEventBack(int type, int x, int y)
 		{
 			if (m_show_backbutton&1) x -= screen->GetWidth() - tex->GetScaledWidth() * CleanXfac;
 			if (m_show_backbutton&2) y -= screen->GetHeight() - tex->GetScaledHeight() * CleanYfac;
-			mBackbuttonSelected = (x >= 0 && x < tex->GetScaledWidth() * CleanXfac && y < tex->GetScaledHeight() * CleanYfac);
+			mBackbuttonSelected = ( x >= 0 && x < tex->GetScaledWidth() * CleanXfac && 
+									y >= 0 && y < tex->GetScaledHeight() * CleanYfac);
 			if (mBackbuttonSelected && type == MOUSE_Release)
 			{
 				if (m_use_mouse == 2) mBackbuttonSelected = false;

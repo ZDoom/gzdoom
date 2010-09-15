@@ -162,6 +162,7 @@ public:
 	void SetVSync (bool vsync);
 	void NewRefreshRate();
 	HRESULT GetHR ();
+	virtual int GetTrueHeight() { return TrueHeight; }
 
 	void Blank ();
 	bool PaintToWindow ();
@@ -265,6 +266,7 @@ public:
 	bool WipeDo(int ticks);
 	void WipeCleanup();
 	HRESULT GetHR ();
+	virtual int GetTrueHeight() { return TrueHeight; }
 
 private:
 	friend class D3DTex;

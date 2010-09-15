@@ -104,12 +104,16 @@ DMenu::DMenu(DMenu *parent)
 	
 bool DMenu::Responder (event_t *ev) 
 { 
+	bool res = false;
 	if (ev->type == EV_GUI_Event)
 	{
 		if (ev->subtype == EV_GUI_LButtonDown)
 		{
-			MouseEventBack(MOUSE_Click, ev->data1, ev->data2);
-			if (MouseEvent(MOUSE_Click, ev->data1, ev->data2))
+			res = MouseEventBack(MOUSE_Click, ev->data1, ev->data2);
+			// make the menu's mouse handler believe that the current coordinate is outside the valid range
+			if (res) ev->data2 = -1;	
+			res |= MouseEvent(MOUSE_Click, ev->data1, ev->data2);
+			if (res)
 			{
 				SetCapture();
 			}
@@ -120,8 +124,9 @@ bool DMenu::Responder (event_t *ev)
 			BackbuttonTime = BACKBUTTON_TIME;
 			if (mMouseCapture || m_use_mouse == 1)
 			{
-				MouseEventBack(MOUSE_Move, ev->data1, ev->data2);
-				return MouseEvent(MOUSE_Move, ev->data1, ev->data2);
+				res = MouseEventBack(MOUSE_Move, ev->data1, ev->data2);
+				if (res) ev->data2 = -1;	
+				res |= MouseEvent(MOUSE_Move, ev->data1, ev->data2);
 			}
 		}
 		else if (ev->subtype == EV_GUI_LButtonUp)
@@ -129,8 +134,9 @@ bool DMenu::Responder (event_t *ev)
 			if (mMouseCapture)
 			{
 				ReleaseCapture();
-				MouseEventBack(MOUSE_Release, ev->data1, ev->data2);
-				return MouseEvent(MOUSE_Release, ev->data1, ev->data2);
+				res = MouseEventBack(MOUSE_Release, ev->data1, ev->data2);
+				if (res) ev->data2 = -1;	
+				res |= MouseEvent(MOUSE_Release, ev->data1, ev->data2);
 			}
 		}
 	}
@@ -211,7 +217,7 @@ bool DMenu::MouseEventBack(int type, int x, int y)
 				if (m_use_mouse == 2) mBackbuttonSelected = false;
 				MenuEvent(MKEY_Back, true);
 			}
-			return true;
+			return mBackbuttonSelected;
 		}
 	}
 	return false;

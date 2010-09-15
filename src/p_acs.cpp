@@ -5040,7 +5040,7 @@ int DLevelScript::RunScript ()
 				}
 				else if (activator)
 				{
-					work += RUNTIME_TYPE(activator)->TypeName.GetChars();
+					work += activator->GetTag();
 				}
 				else
 				{

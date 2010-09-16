@@ -2005,40 +2005,10 @@ IMPLEMENT_CLASS (AAmbientSound)
 void AAmbientSound::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
-	arc << bActive;
-	
-	if (SaveVersion < 1902)
+	arc << bActive << NextCheck;
+	if (SaveVersion < 2798)
 	{
-		arc << NextCheck;
-		NextCheck += gametic;
-		if (NextCheck < 0) NextCheck = INT_MAX;
-	}
-	else if (SaveVersion < 2798)
-	{
-		if (arc.IsStoring())
-		{
-			if (NextCheck != INT_MAX)
-			{
-				int checktime = NextCheck - gametic;
-				arc << checktime;
-			}
-			else
-			{
-				arc << NextCheck;
-			}
-		}
-		else
-		{
-			arc << NextCheck;
-			if (NextCheck != INT_MAX)
-			{
-				NextCheck += gametic;
-			}
-		}
-	}
-	else
-	{
-		arc << NextCheck;
+		NextCheck += level.maptime;
 	}
 }
 

@@ -1011,7 +1011,8 @@ static void BuildPlayerclassMenu()
 				// create a dummy item that auto-chooses the default class.
 				FListMenuItemText *it = new FListMenuItemText(0, 0, 0, 'p', "player", 
 					ld->mFont,ld->mFontColor, NAME_Episodemenu, -1000);
-				ld->mAutoselect = 0;
+				ld->mAutoselect = ld->mItems.Push(it);
+				success = true;
 			}
 			else if (totalheight <= 190)
 			{

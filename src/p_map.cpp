@@ -844,16 +844,23 @@ bool PIT_CheckThing (AActor *thing, FCheckPosition &tm)
 
 	if (tm.FromPMove)
 	{
-		fixed_t newdist = P_AproxDistance(thing->x - tm.x, thing->y - tm.y);
-		fixed_t olddist = P_AproxDistance(thing->x - tm.thing->x, thing->y - tm.thing->y);
-
 		// Both actors already overlap. To prevent them from remaining stuck allow the move if it
-		// takes them further apart.
-		if (newdist > olddist)
+		// takes them further apart or the move does not change the position (when called from P_ChangeSector.)
+		if (tm.x == tm.thing->x && tm.y == tm.thing->y)
 		{
-			// ... but not if they did not overlap in z-direction before but would after the move.
-			unblocking = !((tm.thing->x >= thing->x + thing->height && tm.x < thing->x + thing->height) ||
-							(tm.thing->x + tm.thing->height <= thing->x && tm.x + tm.thing->height > thing->x));
+			unblocking = true;
+		}
+		else
+		{
+			fixed_t newdist = P_AproxDistance(thing->x - tm.x, thing->y - tm.y);
+			fixed_t olddist = P_AproxDistance(thing->x - tm.thing->x, thing->y - tm.thing->y);
+
+			if (newdist > olddist)
+			{
+				// ... but not if they did not overlap in z-direction before but would after the move.
+				unblocking = !((tm.thing->z >= thing->z + thing->height && tm.z < thing->z + thing->height) ||
+								(tm.thing->z + tm.thing->height <= thing->z && tm.z + tm.thing->height > thing->z));
+			}
 		}
 	}
 
@@ -4511,6 +4518,11 @@ bool P_AdjustFloorCeil (AActor *thing, FChangePosition *cpos)
 {
 	int flags2 = thing->flags2 & MF2_PASSMOBJ;
 	FCheckPosition tm;
+
+	if ((thing->flags2 & MF2_PASSMOBJ) && (thing->flags3 & MF3_ISMONSTER))
+	{
+		tm.FromPMove = true;
+	}
 
 	if (cpos->movemidtex)
 	{

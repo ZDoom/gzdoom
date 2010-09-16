@@ -2788,8 +2788,8 @@ int DLevelScript::GetActorProperty (int tid, int property)
 							}
 	case APROP_Score:		return actor->Score;
 	case APROP_MasterTID:	return DoGetMasterTID (actor);
-	case APROP_TargetTID:	return (actor->target != NULL) actor->target->tid : 0;
-	case APROP_TracerTID:	return (actor->tracer != NULL) actor->tracer->tid : 0;
+	case APROP_TargetTID:	return (actor->target != NULL)? actor->target->tid : 0;
+	case APROP_TracerTID:	return (actor->tracer != NULL)? actor->tracer->tid : 0;
 	default:				return 0;
 	}
 }

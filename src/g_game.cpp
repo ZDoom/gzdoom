@@ -1345,10 +1345,7 @@ void G_PlayerReborn (int player)
 	if (gamestate != GS_TITLELEVEL)
 	{
 		actor->GiveDefaultInventory ();
-
-		// [Spleen] ReadyWeapon will be set when P_MovePsprites calls P_BringUpWeapon
-		p->ReadyWeapon = NULL;
-		//p->ReadyWeapon = p->PendingWeapon;
+		p->ReadyWeapon = p->PendingWeapon;
 	}
 
     //Added by MC: Init bot structure.

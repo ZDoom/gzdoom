@@ -657,6 +657,10 @@ void FArchive::AttachToFile (FFile &file)
 	ObjectToArchive.Clear();
 	ArchiveToObject.Clear();
 
+	memset(m_NameHash, 0xFF, sizeof(m_NameHash));
+	m_Names.Clear();
+	m_NameStorage.Clear();
+
 	m_NumSprites = 0;
 	m_SpriteMap = new int[sprites.Size()];
 	for (size_t s = 0; s < sprites.Size(); ++s)

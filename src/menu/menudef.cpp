@@ -749,13 +749,13 @@ static void ParseOptionMenuBody(FScanner &sc, FOptionMenuDescriptor *desc)
 			sc.MustGetStringName(",");
 			sc.MustGetFloat();
 			double step = sc.Float;
-			bool showvalue = true;
+			int showvalue = 1;
 			if (sc.CheckString(","))
 			{
 				sc.MustGetNumber();
-				showvalue = !!sc.Number;
+				showvalue = sc.Number;
 			}
-			FOptionMenuItem *it = new FOptionMenuSliderCVar(text, action, min, max, step, showvalue? 1:-1);
+			FOptionMenuItem *it = new FOptionMenuSliderCVar(text, action, min, max, step, showvalue);
 			desc->mItems.Push(it);
 		}
 		else if (sc.Compare("screenresolution"))

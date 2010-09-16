@@ -350,6 +350,7 @@ void M_SetMenu(FName menu, int param)
 		GameStartupInfo.Skill = -1;
 		GameStartupInfo.Episode = -1;
 		GameStartupInfo.PlayerClass = 
+			param == -1000? NULL :
 			param == -1? "Random" : PlayerClasses[param].Type->Meta.GetMetaString (APMETA_DisplayName);
 		break;
 

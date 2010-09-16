@@ -512,12 +512,12 @@ bool P_Move (AActor *actor)
 	try_ok = true;
 	for(int i=1; i < steps; i++)
 	{
-		try_ok = P_TryMove(actor, origx + Scale(deltax, i, steps), origy + Scale(deltay, i, steps), dropoff, false, tm);
+		try_ok = P_TryMove(actor, origx + Scale(deltax, i, steps), origy + Scale(deltay, i, steps), dropoff, NULL, tm);
 		if (!try_ok) break;
 	}
 
 	// killough 3/15/98: don't jump over dropoffs:
-	if (try_ok) try_ok = P_TryMove (actor, tryx, tryy, dropoff, false, tm);
+	if (try_ok) try_ok = P_TryMove (actor, tryx, tryy, dropoff, NULL, tm);
 
 	// [GrafZahl] Interpolating monster movement as it is done here just looks bad
 	// so make it switchable
@@ -679,7 +679,7 @@ void P_DoNewChaseDir (AActor *actor, fixed_t deltax, fixed_t deltay)
 	{
 		if ((pr_newchasedir() > 200 || abs(deltay) > abs(deltax)))
 		{
-			swap (d[1], d[2]);
+			swapvalues (d[1], d[2]);
 		}
 
 		if (d[1] == turnaround)
@@ -997,7 +997,7 @@ void P_RandomChaseDir (AActor *actor)
 				// try other directions
 				if (pr_newchasedir() > 200 || abs(deltay) > abs(deltax))
 				{
-					swap (d[1], d[2]);
+					swapvalues (d[1], d[2]);
 				}
 
 				if (d[1] == turnaround)
@@ -1556,7 +1556,7 @@ bool P_LookForPlayers (AActor *actor, INTBOOL allaround, FLookExParams *params)
 
 						if (actor->MissileState != NULL)
 						{
-							actor->SetStateNF(actor->SeeState);
+							actor->SetState(actor->SeeState, true);
 							actor->flags &= ~MF_JUSTHIT;
 						}
 
@@ -1978,14 +1978,17 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_LookEx)
 
 	if (self->target && !(self->flags & MF_INCHASE))
 	{
-		if (seestate)
-		{
-			self->SetState (seestate);
-		}
-		else
-		{
-			self->SetState (self->SeeState);
-		}
+        if (!(flags & LOF_NOJUMP))
+        {
+            if (seestate)
+            {
+                self->SetState (seestate);
+            }
+            else
+            {
+                self->SetState (self->SeeState);
+            }
+        }
 	}
 	return 0;
 }
@@ -2688,7 +2691,7 @@ void A_Chase(VMFrameStack *stack, AActor *self)
 // A_FaceTarget
 //
 //=============================================================================
-void A_FaceTarget (AActor *self)
+void A_FaceTarget (AActor *self, angle_t max_turn)
 {
 	if (!self->target)
 		return;
@@ -2700,17 +2703,53 @@ void A_FaceTarget (AActor *self)
 	}
 
 	self->flags &= ~MF_AMBUSH;
-	self->angle = R_PointToAngle2 (self->x, self->y, self->target->x, self->target->y);
-	
-	if (self->target->flags & MF_SHADOW)
+
+	angle_t target_angle = R_PointToAngle2 (self->x, self->y, self->target->x, self->target->y);
+
+	// 0 means no limit. Also, if we turn in a single step anyways, no need to go through the algorithms.
+	// It also means that there is no need to check for going past the target.
+	if (max_turn && (max_turn < (angle_t)abs(self->angle - target_angle)))
+	{
+		if (self->angle > target_angle)
+		{
+			if (self->angle - target_angle < ANGLE_180)
+			{
+				self->angle -= max_turn;
+			}
+			else
+			{
+				self->angle += max_turn;
+			}
+		}
+		else
+		{
+			if (target_angle - self->angle < ANGLE_180)
+			{
+				self->angle += max_turn;
+			}
+			else
+			{
+				self->angle -= max_turn;
+			}
+		}
+	}
+	else
+	{
+		self->angle = target_angle;
+	}
+
+	// This will never work well if the turn angle is limited.
+	if (max_turn == 0 && (self->angle == target_angle) && self->target->flags & MF_SHADOW)
     {
 		self->angle += pr_facetarget.Random2() << 21;
     }
 }
 
-DEFINE_ACTION_FUNCTION(AActor, A_FaceTarget)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceTarget)
 {
 	PARAM_ACTION_PROLOGUE;
+	PARAM_ANGLE_OPT(max_turn)	{ max_turn = 0; }
+
 	A_FaceTarget(self);
 	return 0;
 }
@@ -2810,7 +2849,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ScreamAndUnblock)
 {
 	PARAM_ACTION_PROLOGUE;
 	CALL_ACTION(A_Scream, self);
-	CALL_ACTION(A_NoBlocking, self);
+	A_Unblock(self, true);
 	return 0;
 }
 
@@ -2840,7 +2879,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ActiveAndUnblock)
 {
 	PARAM_ACTION_PROLOGUE;
 	CALL_ACTION(A_ActiveSound, self);
-	CALL_ACTION(A_NoBlocking, self);
+	A_Unblock(self, true);
 	return 0;
 }
 
@@ -3166,6 +3205,10 @@ void A_BossDeath(AActor *self)
 		{
 		case LEVEL_SPECLOWERFLOOR:
 			EV_DoFloor (DFloor::floorLowerToLowest, NULL, 666, FRACUNIT, 0, 0, 0, false);
+			return;
+		
+		case LEVEL_SPECLOWERFLOORTOHIGHEST:
+			EV_DoFloor (DFloor::floorLowerToHighest, NULL, 666, FRACUNIT, 0, 0, 0, false);
 			return;
 		
 		case LEVEL_SPECOPENDOOR:

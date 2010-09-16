@@ -265,17 +265,10 @@ DEFINE_INFO_PROPERTY(conversationid, IiI, Actor)
 		if ((gameinfo.flags & (GI_SHAREWARE|GI_TEASER2)) == (GI_SHAREWARE|GI_TEASER2))
 			convid = id2;
 
-		if (convid == -1)
-			return;
 	}
-	if (convid < 0 || convid > 1000)
-	{
-		I_Error ("ConversationID must be in the range [0,1000]");
-	}
-	else
-	{
-		StrifeTypes[convid] = info;
-	}
+
+	if (convid <= 0) return;	// 0 is not usable because the dialogue scripts use it as 'no object'.
+	SetStrifeType(convid, info);
 }
 
 //==========================================================================
@@ -1024,11 +1017,26 @@ DEFINE_PROPERTY(maxdropoffheight, F, Actor)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_PROPERTY(poisondamage, I, Actor)
+DEFINE_PROPERTY(poisondamage, Iii, Actor)
 {
-	PROP_INT_PARM(i, 0);
-	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
-	static_cast<PClassActor *>(info)->PoisonDamage = i;
+	PROP_INT_PARM(poisondamage, 0);
+	PROP_INT_PARM(poisonduration, 1);
+	PROP_INT_PARM(poisonperiod, 2);
+
+	defaults->PoisonDamage = poisondamage;
+	if (PROP_PARM_COUNT == 1)
+	{
+		defaults->PoisonDuration = INT_MIN;
+	}
+	else
+	{
+		defaults->PoisonDuration = poisonduration;
+
+		if (PROP_PARM_COUNT > 2)
+			defaults->PoisonPeriod = poisonperiod;
+		else
+			defaults->PoisonPeriod = 0;
+	}
 }
 
 //==========================================================================
@@ -1900,7 +1908,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, colorrange, I_I, PlayerPawn)
 	PROP_INT_PARM(end, 1);
 
 	if (start > end)
-		swap (start, end);
+		swapvalues (start, end);
 
 	assert(info->IsKindOf(RUNTIME_CLASS(PClassPlayerPawn)));
 	static_cast<PClassPlayerPawn *>(info)->ColorRangeStart = start;
@@ -2138,10 +2146,19 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, crouchsprite, S, PlayerPawn)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_CLASS_PROPERTY_PREFIX(player, damagescreencolor, C, PlayerPawn)
+DEFINE_CLASS_PROPERTY_PREFIX(player, damagescreencolor, Cf, PlayerPawn)
 {
 	PROP_COLOR_PARM(c, 0);
 	defaults->DamageFade = c;
+	if (PROP_PARM_COUNT < 3)		// Because colors count as 2 parms
+	{
+		defaults->DamageFade.a = 255;
+	}
+	else
+	{
+		PROP_FLOAT_PARM(a, 2);
+		defaults->DamageFade.a = BYTE(255 * clamp(a, 0.f, 1.f));
+	}
 }
 
 //==========================================================================

@@ -10,6 +10,7 @@ ACTOR ArtiBlastRadius : CustomInventory 10110
 	Inventory.Icon "ARTIBLST"
 	Inventory.PickupSound "misc/p_pkup"
 	Inventory.PickupMessage "$TXT_ARTIBLASTRADIUS"
+	Tag "$TAG_ARTIBLASTRADIUS"
 	States
 	{
 	Spawn:

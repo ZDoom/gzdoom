@@ -196,6 +196,7 @@ static void M_ChangeClass (int choice);
 static void M_ChangeGender (int choice);
 static void M_ChangeSkin (int choice);
 static void M_ChangeAutoAim (int choice);
+static void M_ChangeSwitchPickup (int choice);
 static void PickPlayerClass ();
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
@@ -203,6 +204,8 @@ static void PickPlayerClass ();
 EXTERN_CVAR (String, playerclass)
 EXTERN_CVAR (String, name)
 EXTERN_CVAR (Int, team)
+EXTERN_CVAR(Bool, neverswitchonpickup)
+EXTERN_CVAR(Float, snd_menuvolume)
 
 extern bool		sendpause;
 extern int		flagsvar;
@@ -391,7 +394,7 @@ oldmenuitem_t EpisodeMenu[MAX_EPISODES] =
 	{1,0,0, NULL, M_Episode, CR_UNTRANSLATED},
 };
 
-char EpisodeMaps[MAX_EPISODES][8];
+char EpisodeMaps[MAX_EPISODES][9];
 bool EpisodeNoSkill[MAX_EPISODES];
 
 oldmenu_t EpiDef =
@@ -477,9 +480,16 @@ void M_StartupSkillMenu(const char *playerclass)
 	{
 		FSkillInfo &skill = AllSkills[i];
 
-		SkillSelectMenu[i].name = skill.MenuName;
-		SkillSelectMenu[i].fulltext = !skill.MenuNameIsLump;
-		SkillSelectMenu[i].alphaKey = skill.MenuNameIsLump? skill.Shortcut : tolower(SkillSelectMenu[i].name[0]);
+		if (skill.PicName.Len() != 0)
+		{
+			SkillSelectMenu[i].name = skill.PicName;
+			SkillSelectMenu[i].fulltext = false;
+		}
+		else
+		{
+			SkillSelectMenu[i].name = skill.MenuName;
+			SkillSelectMenu[i].fulltext = true;
+		}
 		SkillSelectMenu[i].textcolor = skill.GetTextColor();
 		SkillSelectMenu[i].alphaKey = skill.Shortcut;
 
@@ -538,7 +548,8 @@ static oldmenuitem_t PlayerSetupMenu[] =
 	{ 2,0,'t',NULL,M_ChangeClass, CR_UNTRANSLATED},
 	{ 2,0,'s',NULL,M_ChangeSkin, CR_UNTRANSLATED},
 	{ 2,0,'e',NULL,M_ChangeGender, CR_UNTRANSLATED},
-	{ 2,0,'a',NULL,M_ChangeAutoAim, CR_UNTRANSLATED}
+	{ 2,0,'a',NULL,M_ChangeAutoAim, CR_UNTRANSLATED},
+	{ 2,0,'p',NULL,M_ChangeSwitchPickup, CR_UNTRANSLATED}
 };
 
 enum
@@ -653,28 +664,28 @@ CCMD (menu_help)
 CCMD (quicksave)
 {	// F6
 	//M_StartControlPanel (true);
-	S_Sound (CHAN_VOICE | CHAN_UI, "menu/activate", 1, ATTN_NONE);
+	S_Sound (CHAN_VOICE | CHAN_UI, "menu/activate", snd_menuvolume, ATTN_NONE);
 	M_QuickSave();
 }
 
 CCMD (quickload)
 {	// F9
 	//M_StartControlPanel (true);
-	S_Sound (CHAN_VOICE | CHAN_UI, "menu/activate", 1, ATTN_NONE);
+	S_Sound (CHAN_VOICE | CHAN_UI, "menu/activate", snd_menuvolume, ATTN_NONE);
 	M_QuickLoad();
 }
 
 CCMD (menu_endgame)
 {	// F7
 	//M_StartControlPanel (true);
-	S_Sound (CHAN_VOICE | CHAN_UI, "menu/activate", 1, ATTN_NONE);
+	S_Sound (CHAN_VOICE | CHAN_UI, "menu/activate", snd_menuvolume, ATTN_NONE);
 	M_EndGame(0);
 }
 
 CCMD (menu_quit)
 {	// F10
 	//M_StartControlPanel (true);
-	S_Sound (CHAN_VOICE | CHAN_UI, "menu/activate", 1, ATTN_NONE);
+	S_Sound (CHAN_VOICE | CHAN_UI, "menu/activate", snd_menuvolume, ATTN_NONE);
 	M_QuitGame(0);
 }
 
@@ -1286,6 +1297,9 @@ void M_DrawFrame (int left, int top, int width, int height)
 {
 	FTexture *p;
 	const gameborder_t *border = gameinfo.border;
+	// Sanity check for incomplete gameinfo
+	if (border == NULL)
+		return;
 	int offset = border->offset;
 	int right = left + width;
 	int bottom = top + height;
@@ -1426,7 +1440,7 @@ void M_QuickSaveResponse (int ch)
 	if (ch == 'y')
 	{
 		M_DoSave (quickSaveSlot);
-		S_Sound (CHAN_VOICE | CHAN_UI, "menu/dismiss", 1, ATTN_NONE);
+		S_Sound (CHAN_VOICE | CHAN_UI, "menu/dismiss", snd_menuvolume, ATTN_NONE);
 	}
 }
 
@@ -1434,7 +1448,7 @@ void M_QuickSave ()
 {
 	if (!usergame || (players[consoleplayer].health <= 0 && !multiplayer))
 	{
-		S_Sound (CHAN_VOICE | CHAN_UI, "menu/invalid", 1, ATTN_NONE);
+		S_Sound (CHAN_VOICE | CHAN_UI, "menu/invalid", snd_menuvolume, ATTN_NONE);
 		return;
 	}
 
@@ -1465,7 +1479,7 @@ void M_QuickLoadResponse (int ch)
 	if (ch == 'y')
 	{
 		M_LoadSelect (quickSaveSlot);
-		S_Sound (CHAN_VOICE | CHAN_UI, "menu/dismiss", 1, ATTN_NONE);
+		S_Sound (CHAN_VOICE | CHAN_UI, "menu/dismiss", snd_menuvolume, ATTN_NONE);
 	}
 }
 
@@ -1968,7 +1982,7 @@ void M_EndGame(int choice)
 	choice = 0;
 	if (!usergame)
 	{
-		S_Sound (CHAN_VOICE | CHAN_UI, "menu/invalid", 1, ATTN_NONE);
+		S_Sound (CHAN_VOICE | CHAN_UI, "menu/invalid", snd_menuvolume, ATTN_NONE);
 		return;
 	}
 		
@@ -2029,7 +2043,7 @@ void M_QuitResponse(int ch)
 	{
 		if (gameinfo.quitSound.IsNotEmpty())
 		{
-			S_Sound (CHAN_VOICE | CHAN_UI, gameinfo.quitSound, 1, ATTN_NONE);
+			S_Sound (CHAN_VOICE | CHAN_UI, gameinfo.quitSound, snd_menuvolume, ATTN_NONE);
 			I_WaitVBL (105);
 		}
 	}
@@ -2350,6 +2364,13 @@ static void M_PlayerSetupDrawer ()
 		autoaim <= 2 ? "High" :
 		autoaim <= 3 ? "Very High" : "Always",
 		DTA_Clean, true, TAG_DONE);
+
+	// Draw Switch on Pickup setting
+	x = SmallFont->StringWidth ("Switch on Pickup") + 8 + PSetupDef.x;
+	screen->DrawText (SmallFont, label, PSetupDef.x, PSetupDef.y + LINEHEIGHT*9+yo, "Switch on Pickup", DTA_Clean, true, TAG_DONE);
+	screen->DrawText (SmallFont, value, x, PSetupDef.y + LINEHEIGHT*9+yo,
+		neverswitchonpickup == false ? "Yes" : "No",
+		DTA_Clean, true, TAG_DONE);
 }
 
 // A 32x32 cloud rendered with Photoshop, plus some other filters
@@ -2657,6 +2678,14 @@ static void M_ChangeAutoAim (int choice)
 	autoaim = aim;
 }
 
+static void M_ChangeSwitchPickup (int choice)
+{
+	if (!choice)
+		neverswitchonpickup = (neverswitchonpickup == 1) ? 0 : 1;
+	else
+		neverswitchonpickup = (neverswitchonpickup == 0) ? 1 : 0;
+}
+
 static void M_EditPlayerName (int choice)
 {
 	// we are going to be intercepting all chars
@@ -2850,7 +2879,7 @@ void M_StartMessage (const char *string, void (*routine)(int))
 	if (messageRoutine != NULL)
 	{
 		S_StopSound (CHAN_VOICE);
-		S_Sound (CHAN_VOICE | CHAN_UI, "menu/prompt", 1, ATTN_NONE);
+		S_Sound (CHAN_VOICE | CHAN_UI, "menu/prompt", snd_menuvolume, ATTN_NONE);
 	}
 	return;
 }
@@ -2869,7 +2898,7 @@ void M_EndMessage(int key)
 	}
 	SB_state = screen->GetPageCount();	// refresh the status bar
 	BorderNeedRefresh = screen->GetPageCount();
-	S_Sound(CHAN_VOICE | CHAN_UI, "menu/dismiss", 1, ATTN_NONE);
+	S_Sound(CHAN_VOICE | CHAN_UI, "menu/dismiss", snd_menuvolume, ATTN_NONE);
 }
 
 
@@ -3072,7 +3101,7 @@ bool M_Responder (event_t *ev)
 						if (currentMenu->menuitems[i].alphaKey == ch)
 						{
 							itemOn = i;
-							S_Sound(CHAN_VOICE | CHAN_UI, "menu/cursor", 1, ATTN_NONE);
+							S_Sound(CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
 							return true;
 						}
 					}
@@ -3308,7 +3337,7 @@ void M_ButtonHandler(EMenuKey key, bool repeat)
 			if (itemOn + 1 >= currentMenu->numitems)
 				itemOn = 0;
 			else itemOn++;
-			S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", 1, ATTN_NONE);
+			S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
 		} while (currentMenu->menuitems[itemOn].status == -1);
 		break;
 
@@ -3318,7 +3347,7 @@ void M_ButtonHandler(EMenuKey key, bool repeat)
 			if (itemOn == 0)
 				itemOn = currentMenu->numitems - 1;
 			else itemOn--;
-			S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", 1, ATTN_NONE);
+			S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
 		} while (currentMenu->menuitems[itemOn].status == -1);
 		break;
 
@@ -3326,7 +3355,7 @@ void M_ButtonHandler(EMenuKey key, bool repeat)
 		if (currentMenu->menuitems[itemOn].routine &&
 			currentMenu->menuitems[itemOn].status == 2)
 		{
-			S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
+			S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 			currentMenu->menuitems[itemOn].routine(0);
 		}
 		break;
@@ -3335,7 +3364,7 @@ void M_ButtonHandler(EMenuKey key, bool repeat)
 		if (currentMenu->menuitems[itemOn].routine &&
 			currentMenu->menuitems[itemOn].status == 2)
 		{
-			S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
+			S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 			currentMenu->menuitems[itemOn].routine(1);
 		}
 		break;
@@ -3348,12 +3377,12 @@ void M_ButtonHandler(EMenuKey key, bool repeat)
 			if (currentMenu->menuitems[itemOn].status == 2)
 			{
 				currentMenu->menuitems[itemOn].routine(1);		// right arrow
-				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
+				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 			}
 			else
 			{
 				currentMenu->menuitems[itemOn].routine(itemOn);
-				S_Sound (CHAN_VOICE | CHAN_UI, "menu/choose", 1, ATTN_NONE);
+				S_Sound (CHAN_VOICE | CHAN_UI, "menu/choose", snd_menuvolume, ATTN_NONE);
 			}
 		}
 		break;
@@ -3573,7 +3602,7 @@ void M_StartControlPanel (bool makeSound, bool wantTop)
 
 	if (makeSound)
 	{
-		S_Sound (CHAN_VOICE | CHAN_UI, "menu/activate", 1, ATTN_NONE);
+		S_Sound (CHAN_VOICE | CHAN_UI, "menu/activate", snd_menuvolume, ATTN_NONE);
 	}
 }
 
@@ -3917,12 +3946,12 @@ void M_PopMenuStack (void)
 		}
 		drawSkull = MenuStack[MenuStackDepth].drawSkull;
 		++MenuStackDepth;
-		S_Sound (CHAN_VOICE | CHAN_UI, "menu/backup", 1, ATTN_NONE);
+		S_Sound (CHAN_VOICE | CHAN_UI, "menu/backup", snd_menuvolume, ATTN_NONE);
 	}
 	else
 	{
 		M_ClearMenus ();
-		S_Sound (CHAN_VOICE | CHAN_UI, "menu/clear", 1, ATTN_NONE);
+		S_Sound (CHAN_VOICE | CHAN_UI, "menu/clear", snd_menuvolume, ATTN_NONE);
 	}
 }
 

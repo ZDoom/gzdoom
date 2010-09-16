@@ -237,6 +237,10 @@ void DDoor::DoorSound (bool raise) const
 	{
 		SN_StartSequence (m_Sector, CHAN_CEILING, m_Sector->seqType, SEQ_DOOR, choice);
 	}
+	else if (m_Sector->SeqName != NAME_None)
+	{
+		SN_StartSequence (m_Sector, CHAN_CEILING, m_Sector->SeqName, choice);
+	}
 	else
 	{
 		const char *snd;
@@ -424,7 +428,7 @@ bool EV_DoDoor (DDoor::EVlDoor type, line_t *line, AActor *thing,
 						// Otherwise, just let the current one continue.
 						// FIXME: This should be check if the sound sequence has separate up/down
 						// paths, not if it was manually set.
-						if (sec->seqType == -1 || SN_CheckSequence(sec, CHAN_CEILING) == NULL)
+						if ((sec->seqType < 0 && sec->SeqName == NAME_None) || SN_CheckSequence(sec, CHAN_CEILING) == NULL)
 						{
 							door->DoorSound (false);
 						}
@@ -626,6 +630,17 @@ void DAnimatedDoor::Tick ()
 				MoveCeiling (2048*FRACUNIT, m_BotDist, -1);
 				m_Sector->ceilingdata = NULL;
 				Destroy ();
+				// Unset blocking flags on lines that didn't start with them. Since the
+				// ceiling is down now, we shouldn't need this flag anymore to keep things
+				// from getting through.
+				if (!m_SetBlocking1)
+				{
+					m_Line1->flags &= ~ML_BLOCKING;
+				}
+				if (!m_SetBlocking2)
+				{
+					m_Line2->flags &= ~ML_BLOCKING;
+				}
 				break;
 			}
 			else
@@ -668,6 +683,14 @@ void DAnimatedDoor::Serialize (FArchive &arc)
 		<< m_Speed
 		<< m_Delay
 		<< basetex;
+	if (SaveVersion < 2336)
+	{
+		m_SetBlocking1 = m_SetBlocking2 = true;
+	}
+	else
+	{
+		arc << m_SetBlocking1 << m_SetBlocking2;
+	}
 
 	if (arc.IsLoading())
 	{
@@ -727,6 +750,8 @@ DAnimatedDoor::DAnimatedDoor (sector_t *sec, line_t *line, int speed, int delay)
 	m_Delay = delay;
 	m_Timer = m_Speed;
 	m_Frame = 0;
+	m_SetBlocking1 = !!(m_Line1->flags & ML_BLOCKING);
+	m_SetBlocking2 = !!(m_Line2->flags & ML_BLOCKING);
 	m_Line1->flags |= ML_BLOCKING;
 	m_Line2->flags |= ML_BLOCKING;
 	m_BotDist = m_Sector->ceilingplane.d;

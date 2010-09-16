@@ -147,14 +147,20 @@ struct FSpotList
 	//
 	//----------------------------------------------------------------------------
 
-	ASpecialSpot *GetSpotWithMinDistance(fixed_t x, fixed_t y, fixed_t distance)
+	ASpecialSpot *GetSpotWithMinMaxDistance(fixed_t x, fixed_t y, fixed_t mindist, fixed_t maxdist)
 	{
 		if (Spots.Size() == 0) return NULL;
 		int i = pr_spot() % Spots.Size();
 		int initial = i;
 
-		while (P_AproxDistance(Spots[i]->x - x, Spots[i]->y - y) < distance)
+		fixed_t distance;
+
+		while (true)
 		{
+			distance = P_AproxDistance(Spots[i]->x - x, Spots[i]->y - y);
+
+			if ((distance >= mindist) && ((maxdist == 0) || (distance <= maxdist))) break;
+
 			i = (i+1) % Spots.Size();
 			if (i == initial) return NULL;
 		}
@@ -329,10 +335,10 @@ ASpecialSpot *DSpotState::GetNextInList(const PClass *type, int skipcounter)
 //
 //----------------------------------------------------------------------------
 
-ASpecialSpot *DSpotState::GetSpotWithMinDistance(const PClass *type, fixed_t x, fixed_t y, fixed_t distance)
+ASpecialSpot *DSpotState::GetSpotWithMinMaxDistance(const PClass *type, fixed_t x, fixed_t y, fixed_t mindist, fixed_t maxdist)
 {
 	FSpotList *list = FindSpotList(type);
-	if (list != NULL) return list->GetSpotWithMinDistance(x, y, distance);
+	if (list != NULL) return list->GetSpotWithMinMaxDistance(x, y, mindist, maxdist);
 	return NULL;
 }
 

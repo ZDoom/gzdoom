@@ -17,6 +17,7 @@ ACTOR StrifeBishop 187
 	+FLOORCLIP
 	+INCOMBAT
 	+NOICEDEATH
+	+NEVERRESPAWN
 	DamageFactor "Fire", 0.5
 	MinMissileChance 150
 	MaxDropoffHeight 32

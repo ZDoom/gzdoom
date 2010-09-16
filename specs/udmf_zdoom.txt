@@ -1,5 +1,5 @@
 ===============================================================================
-Universal Doom Map Format ZDoom extensions v1.8 - 16.07.2009
+Universal Doom Map Format ZDoom extensions v1.10 - 25.04.2010
 
 
     Copyright (c) 2008 Christoph Oelckers.
@@ -38,7 +38,8 @@ between the TEXTMAP and ENDMAP lumps:
 
     BEHAVIOR = contains compiled ACS code
     DIALOGUE = contains compiled Strife conversation scripts.
-    ZNODES = Nodes (must be stored as compressed GL nodes)
+    ZNODES = Nodes (must be stored as extended GL nodes. Compression is allowed
+	                but deprecated for portability reasons.)
     BLOCKMAP = blockmap. It is recommended not to include this lump in UDMF maps.
     REJECT = reject table. Recommended use is for special effects only.
     
@@ -88,6 +89,7 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       alpha = <float>;          // Translucency of this line, default is 1.0
       renderstyle = <string>;   // Render style, can be "translucent" or "add",
                                 // default is "translucent".
+      playeruseback = <bool>;   // New SPAC flag, true = player can use from back side.
       anycross = <bool>;        // New SPAC flag, true = any non-projectile 
                                 // crossing will trigger this line
       monsteractivate = <bool>; // Monsters can trigger this line.
@@ -159,6 +161,9 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       nofallingdamage = <bool>;		  // Falling damage is disabled in this sector
       dropactors = <bool>;            // Actors drop with instantly moving floors (*)
 	  norespawn = <bool>;             // Players can not respawn in this sector
+	  soundsequence = <string>;       // The sound sequence to play when this sector moves. Placing a
+	                                  // sound sequence thing in the sector will override this property.
+	  hidden = <bool>;                // if true this sector will not be drawn on the textured automap.
       
       * Note about dropactors
 
@@ -176,6 +181,8 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       class# = <bool>			// Unlike the base spec, # can range from 1-8.
                                 // 8 is the maximum amount of classes the class
                                 // menu can display.
+	  conversation = <int>		// Assigns a conversation dialogue to this thing.
+								// Parameter is the conversation ID, 0 meaning none.
    }
 								
   
@@ -254,6 +261,21 @@ Added sidedef scaling properties and side specific clipmidtex and wrapmidtex.
 1.8 16.07.2009
 Added NoDecals sidedef option
 Fixed conversion specifications for TranslucentLine special.
+
+1.9 17.04.2010
+Changed node specifications to deprecate compression of node lump.
+
+1.10 25.04.2010
+Added 'playeruseback' line trigger flag.
+
+1.11 07.08.2010
+Added 'soundsequnce' sector property.
+
+1.12 22.08.2010
+Added 'conversation' thing property.
+
+1.13 29.08.2010
+Added 'hidden' sector property.
 
 ===============================================================================
 EOF

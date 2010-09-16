@@ -202,7 +202,7 @@ void R_InitPicAnims (void)
 			// [RH] Allow for backward animations as well as forward.
 			if (pic1 > pic2)
 			{
-				swap (pic1, pic2);
+				swapvalues (pic1, pic2);
 				animtype = FAnimDef::ANIM_Backward;
 			}
 
@@ -548,7 +548,7 @@ static void ParseRangeAnim (FScanner &sc, FTextureID picnum, int usetype, bool m
 	{
 		type = FAnimDef::ANIM_Backward;
 		TexMan[framenum]->bNoDecals = TexMan[picnum]->bNoDecals;
-		swap (framenum, picnum);
+		swapvalues (framenum, picnum);
 	}
 	if (sc.GetString())
 	{

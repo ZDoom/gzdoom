@@ -293,7 +293,6 @@ static cheatseq_t SpecialCheats[] =
 };
 
 
-extern bool CheckCheatmode ();
 
 CVAR(Bool, allcheats, false, CVAR_ARCHIVE)
 

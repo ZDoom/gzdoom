@@ -104,6 +104,7 @@ typedef enum {
 	dDamage_LavaWimpy = 82,
 	dDamage_LavaHefty = 83,
 	dScroll_EastLavaDamage = 84,
+	hDamage_Sludge = 85,
 	Sector_Outside = 87,
 
 	// And here are some for Strife
@@ -113,8 +114,9 @@ typedef enum {
 	sDamage_SuperHellslime = 116,
 	Scroll_StrifeCurrent = 118,
 
-	// Caverns of Darkness healing sector
-	Sector_Heal = 196,
+	
+	Sector_Hidden = 195,
+	Sector_Heal = 196, // Caverns of Darkness healing sector
 
 	Light_OutdoorLightning = 197,
 	Light_IndoorLightning1 = 198,

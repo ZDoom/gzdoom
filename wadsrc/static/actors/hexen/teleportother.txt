@@ -14,6 +14,7 @@ ACTOR ArtiTeleportOther : Inventory 10040 native
 	Inventory.Icon "ARTITELO"
 	Inventory.PickupSound "misc/p_pkup"
 	Inventory.PickupMessage "$TXT_ARTITELEPORTOTHER"
+	Tag "$TAG_ARTITELEPORTOTHER"
 	States
 	{
 	Spawn:

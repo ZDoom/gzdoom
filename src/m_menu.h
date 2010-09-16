@@ -116,6 +116,7 @@ typedef enum {
 	joy_slider,
 	joy_map,
 	joy_inverter,
+	mapcontrol,
 } itemtype;
 
 struct IJoystickConfig;
@@ -273,7 +274,7 @@ extern int		CurrentItem;
 
 extern oldmenuitem_t EpisodeMenu[MAX_EPISODES];
 extern bool EpisodeNoSkill[MAX_EPISODES];
-extern char EpisodeMaps[MAX_EPISODES][8];
+extern char EpisodeMaps[MAX_EPISODES][9];
 extern oldmenu_t EpiDef;
 
 #endif

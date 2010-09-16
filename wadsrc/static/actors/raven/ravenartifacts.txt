@@ -13,6 +13,7 @@ ACTOR ArtiHealth : HealthPickup 82
 	Inventory.Icon ARTIPTN2
 	Inventory.PickupSound "misc/p_pkup"
 	Inventory.PickupMessage "$TXT_ARTIHEALTH"
+	Tag "$TAG_ARTIHEALTH"
 	HealthPickup.Autouse 1
 	States
 	{
@@ -36,6 +37,7 @@ ACTOR ArtiSuperHealth : HealthPickup 32
 	Inventory.Icon ARTISPHL
 	Inventory.PickupSound "misc/p_pkup"
 	Inventory.PickupMessage "$TXT_ARTISUPERHEALTH"
+	Tag "$TAG_ARTISUPERHEALTH"
 	HealthPickup.Autouse 2
 	States
 	{
@@ -58,6 +60,7 @@ ACTOR ArtiFly : PowerupGiver 83
 	Inventory.RespawnTics 4230
 	Inventory.Icon ARTISOAR
 	Inventory.PickupMessage "$TXT_ARTIFLY"
+	Tag "$TAG_ARTIFLY"
 	Powerup.Type Flight
 	States
 	{
@@ -79,6 +82,7 @@ ACTOR ArtiInvulnerability : PowerupGiver 84
 	Inventory.RespawnTics 4230
 	Inventory.Icon ARTIINVU
 	Inventory.PickupMessage "$TXT_ARTIINVULNERABILITY"
+	Tag "$TAG_ARTIINVULNERABILITY"
 	Powerup.Type Invulnerable
 	Powerup.Color GoldMap
 	States
@@ -102,6 +106,7 @@ ACTOR ArtiInvulnerability2 : PowerupGiver 84
 	Inventory.Icon ARTIDEFN
 	Inventory.PickupMessage "$TXT_ARTIINVULNERABILITY2"
 	Powerup.Type Invulnerable
+	Tag "$TAG_ARTIDEFENDER"
 	States
 	{
 	Spawn:
@@ -121,6 +126,7 @@ ACTOR ArtiTorch : PowerupGiver 33
 	+INVENTORY.PICKUPFLASH
 	Inventory.Icon ARTITRCH
 	Inventory.PickupMessage "$TXT_ARTITORCH"
+	Tag "$TAG_ARTITORCH"
 	Powerup.Type Torch
 	States
 	{

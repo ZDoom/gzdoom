@@ -290,8 +290,10 @@ enum
 	DF2_NO_AUTOMAP_ALLIES	= 1 << 19,	// Allies can been seen on the automap.
 	DF2_DISALLOW_SPYING		= 1 << 20,	// You can spy on your allies.
 	DF2_CHASECAM			= 1 << 21,	// Players can use the chasecam cheat.
-	DF2_NOSUICIDE			= 1 << 22,	// Players are allowed to suicide.
+	DF2_NOSUICIDE			= 1 << 22,	// Players are not allowed to suicide.
 	DF2_NOAUTOAIM			= 1 << 23,	// Players cannot use autoaim.
+	DF2_DONTCHECKAMMO		= 1 << 24,	// Don't Check ammo when switching weapons.
+	DF2_KILLBOSSMONST		= 1 << 25,	// Kills all monsters spawned by a boss cube when the boss dies
 };
 
 // [RH] Compatibility flags.
@@ -325,6 +327,9 @@ enum
 	COMPATF_CORPSEGIBS		= 1 << 25,	// Crushed monsters are turned into gibs, rather than replaced by gibs.
 	COMPATF_NOBLOCKFRIENDS	= 1 << 26,	// Friendly monsters aren't blocked by monster-blocking lines.
 	COMPATF_SPRITESORT		= 1 << 27,	// Invert sprite sorting order for sprites of equal distance
+	COMPATF_HITSCAN			= 1 << 28,	// Hitscans use original blockmap anf hit check code.
+	COMPATF_LIGHT			= 1 << 29,	// Find neighboring light level like Doom
+	COMPATF_POLYOBJ			= 1 << 30,	// Draw polyobjects the old fashioned way
 };
 
 // Emulate old bugs for select maps. These are not exposed by a cvar
@@ -333,8 +338,7 @@ enum
 {
 	BCOMPATF_SETSLOPEOVERFLOW	= 1 << 0,	// SetSlope things can overflow
 	BCOMPATF_RESETPLAYERSPEED	= 1 << 1,	// Set player speed to 1.0 when changing maps
-	BCOMPATF_SPECHITOVERFLOW	= 1 << 2,	// Emulate spechit overflow (e.g. Strain MAP07)
-	BCOMPATF_VILEGHOSTS			= 1 << 3,	// Monsters' radius and height aren't restored properly when resurrected.
+	BCOMPATF_VILEGHOSTS			= 1 << 2,	// Monsters' radius and height aren't restored properly when resurrected.
 };
 
 // phares 3/20/98:

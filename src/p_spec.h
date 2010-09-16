@@ -640,6 +640,7 @@ protected:
 	};
 	int m_Speed;
 	int m_Delay;
+	bool m_SetBlocking1, m_SetBlocking2;
 
 	friend bool EV_SlidingDoor (line_t *line, AActor *thing, int tag, int speed, int delay);
 private:

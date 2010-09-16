@@ -774,7 +774,7 @@ void DDrawFB::RebuildColorTable ()
 
 		for (i = 0; i < 256; i++)
 		{
-			swap (syspal[i].peRed, syspal[i].peBlue);
+			swapvalues (syspal[i].peRed, syspal[i].peBlue);
 		}
 		for (i = 0; i < 256; i++)
 		{

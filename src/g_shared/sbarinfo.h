@@ -52,6 +52,7 @@ struct Popup
 	{
 		TRANSITION_NONE,
 		TRANSITION_SLIDEINBOTTOM,
+		TRANSITION_PUSHUP,
 		TRANSITION_FADE,
 	};
 
@@ -65,6 +66,8 @@ struct Popup
 	int alpha;
 	int x;
 	int y;
+	int displacementX;
+	int displacementY;
 
 	Popup();
 	void init();
@@ -75,10 +78,19 @@ struct Popup
 	int getXOffset();
 	int getYOffset();
 	int getAlpha(int maxAlpha=FRACUNIT);
+	int getXDisplacement();
+	int getYDisplacement();
 };
 
 struct SBarInfo
 {
+	enum MonospaceAlignment
+	{
+		ALIGN_LEFT,
+		ALIGN_CENTER,
+		ALIGN_RIGHT
+	};
+
 	TArray<FString> Images;
 	SBarInfoMainBlock *huds[NUMHUDS];
 	Popup popups[NUMPOPUPS];
@@ -88,11 +100,14 @@ struct SBarInfo
 	bool completeBorder;
 	bool lowerHealthCap;
 	char spacingCharacter;
+	MonospaceAlignment spacingAlignment;
 	int interpolationSpeed;
 	int armorInterpolationSpeed;
 	int height;
 	int gameType;
 	FMugShot MugShot;
+	int resW;
+	int resH;
 
 	int GetGameType() { return gameType; }
 	void ParseSBarInfo(int lump);

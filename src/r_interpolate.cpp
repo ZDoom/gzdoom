@@ -38,6 +38,8 @@
 #include "stats.h"
 #include "r_interpolate.h"
 #include "p_local.h"
+#include "i_system.h"
+#include "po_man.h"
 
 //==========================================================================
 //
@@ -134,6 +136,8 @@ class DPolyobjInterpolation : public DInterpolation
 
 	FPolyObj *poly;
 	TArray<fixed_t> oldverts, bakverts;
+	fixed_t oldcx, oldcy;
+	fixed_t bakcx, bakcy;
 
 public:
 
@@ -728,8 +732,8 @@ void DWallScrollInterpolation::Serialize(FArchive &arc)
 DPolyobjInterpolation::DPolyobjInterpolation(FPolyObj *po)
 {
 	poly = po;
-	oldverts.Resize(po->numvertices<<1);
-	bakverts.Resize(po->numvertices<<1);
+	oldverts.Resize(po->Vertices.Size() << 1);
+	bakverts.Resize(po->Vertices.Size() << 1);
 	UpdateInterpolation ();
 	interpolator.AddInterpolation(this);
 }
@@ -755,11 +759,13 @@ void DPolyobjInterpolation::Destroy()
 
 void DPolyobjInterpolation::UpdateInterpolation()
 {
-	for(int i = 0; i < poly->numvertices; i++)
+	for(unsigned int i = 0; i < poly->Vertices.Size(); i++)
 	{
-		oldverts[i*2  ] = poly->vertices[i]->x;
-		oldverts[i*2+1] = poly->vertices[i]->y;
+		oldverts[i*2  ] = poly->Vertices[i]->x;
+		oldverts[i*2+1] = poly->Vertices[i]->y;
 	}
+	oldcx = poly->CenterSpot.x;
+	oldcy = poly->CenterSpot.y;
 }
 
 //==========================================================================
@@ -770,12 +776,14 @@ void DPolyobjInterpolation::UpdateInterpolation()
 
 void DPolyobjInterpolation::Restore()
 {
-	for(int i = 0; i < poly->numvertices; i++)
+	for(unsigned int i = 0; i < poly->Vertices.Size(); i++)
 	{
-		poly->vertices[i]->x = bakverts[i*2  ];
-		poly->vertices[i]->y = bakverts[i*2+1];
+		poly->Vertices[i]->x = bakverts[i*2  ];
+		poly->Vertices[i]->y = bakverts[i*2+1];
 	}
-	//poly->Moved();
+	poly->CenterSpot.x = bakcx;
+	poly->CenterSpot.y = bakcy;
+	poly->ClearSubsectorLinks();
 }
 
 //==========================================================================
@@ -786,10 +794,10 @@ void DPolyobjInterpolation::Restore()
 
 void DPolyobjInterpolation::Interpolate(fixed_t smoothratio)
 {
-	for(int i = 0; i < poly->numvertices; i++)
+	for(unsigned int i = 0; i < poly->Vertices.Size(); i++)
 	{
-		fixed_t *px = &poly->vertices[i]->x;
-		fixed_t *py = &poly->vertices[i]->y;
+		fixed_t *px = &poly->Vertices[i]->x;
+		fixed_t *py = &poly->Vertices[i]->y;
 
 		bakverts[i*2  ] = *px;
 		bakverts[i*2+1] = *py;
@@ -797,7 +805,12 @@ void DPolyobjInterpolation::Interpolate(fixed_t smoothratio)
 		*px = oldverts[i*2  ] + FixedMul(bakverts[i*2  ] - oldverts[i*2  ], smoothratio);
 		*py = oldverts[i*2+1] + FixedMul(bakverts[i*2+1] - oldverts[i*2+1], smoothratio);
 	}
-	//poly->Moved();
+	bakcx = poly->CenterSpot.x;
+	bakcy = poly->CenterSpot.y;
+	poly->CenterSpot.x = bakcx + FixedMul(bakcx - oldcx, smoothratio);
+	poly->CenterSpot.y = bakcy + FixedMul(bakcy - oldcy, smoothratio);
+
+	poly->ClearSubsectorLinks();
 }
 
 //==========================================================================
@@ -808,11 +821,21 @@ void DPolyobjInterpolation::Interpolate(fixed_t smoothratio)
 
 void DPolyobjInterpolation::Serialize(FArchive &arc)
 {
-
 	Super::Serialize(arc);
 	int po = int(poly - polyobjs);
 	arc << po << oldverts;
 	poly = polyobjs + po;
+
+	if (SaveVersion >= 2448) 
+	{
+		arc << oldcx << oldcy;
+	}
+	else
+	{
+		// This will glitch if an old savegame is loaded but at least it'll allow loading it.
+		oldcx = poly->CenterSpot.x;
+		oldcy = poly->CenterSpot.y;
+	}
 	if (arc.IsLoading()) bakverts.Resize(oldverts.Size());
 }
 

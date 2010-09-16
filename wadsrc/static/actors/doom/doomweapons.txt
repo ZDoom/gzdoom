@@ -21,6 +21,7 @@ ACTOR Fist : Weapon
 	Weapon.SelectionOrder 3700
 	Weapon.Kickback 100
 	Obituary "$OB_MPFIST"
+	Tag "$FIST"
 	+WEAPON.WIMPY_WEAPON
 	+WEAPON.MELEEWEAPON
 	States
@@ -61,6 +62,7 @@ ACTOR Pistol : DoomWeapon 5010
 	Obituary "$OB_MPPISTOL"
 	+WEAPON.WIMPY_WEAPON
 	Inventory.Pickupmessage "$PICKUP_PISTOL_DROPPED"
+	Tag "$TAG_PISTOL"
 	States
 	{
 	Ready:
@@ -105,6 +107,7 @@ ACTOR Chainsaw : Weapon 2005
 	Weapon.ReadySound "weapons/sawidle"
 	Inventory.PickupMessage "$GOTCHAINSAW"
 	Obituary "$OB_MPCHAINSAW"
+	Tag "$TAG_CHAINSAW"
 	+WEAPON.MELEEWEAPON		
 	States
 	{
@@ -144,6 +147,7 @@ ACTOR Shotgun : DoomWeapon 2001
 	Weapon.AmmoType "Shell"
 	Inventory.PickupMessage "$GOTSHOTGUN"
 	Obituary "$OB_MPSHOTGUN"
+	Tag "$TAG_SHOTGUN"
 	States
 	{
 	Ready:
@@ -190,6 +194,7 @@ ACTOR SuperShotgun : DoomWeapon 82
 	Weapon.AmmoType "Shell"
 	Inventory.PickupMessage "$GOTSHOTGUN2"
 	Obituary "$OB_MPSSHOTGUN"
+	Tag "$TAG_SUPERSHOTGUN"
 	States
 	{
 	Ready:
@@ -243,6 +248,7 @@ ACTOR Chaingun : DoomWeapon 2002
 	Weapon.AmmoType "Clip"
 	Inventory.PickupMessage "$GOTCHAINGUN"
 	Obituary "$OB_MPCHAINGUN"
+	Tag "$TAG_CHAINGUN"
 	States
 	{
 	Ready:
@@ -285,6 +291,7 @@ ACTOR RocketLauncher : DoomWeapon 2003
 	Weapon.AmmoType "RocketAmmo"
 	+WEAPON.NOAUTOFIRE
 	Inventory.PickupMessage "$GOTLAUNCHER"
+	Tag "$TAG_ROCKETLAUNCHER"
 	States
 	{
 	Ready:
@@ -406,6 +413,7 @@ ACTOR PlasmaRifle : DoomWeapon 2004
 	Weapon.AmmoGive 40
 	Weapon.AmmoType "Cell"
 	Inventory.PickupMessage "$GOTPLASMA"
+	Tag "$TAG_PLASMARIFLE"
 	States
 	{
 	Ready:
@@ -511,6 +519,7 @@ ACTOR BFG9000 : DoomWeapon 2006
 	Weapon.AmmoType "Cell"
 	+WEAPON.NOAUTOFIRE
 	Inventory.PickupMessage "$GOTBFG9000"
+	Tag "$TAG_BFG9000"
 	States
 	{
 	Ready:

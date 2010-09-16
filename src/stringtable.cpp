@@ -139,6 +139,7 @@ void FStringTable::LoadStrings (bool enuOnly)
 
 void FStringTable::LoadLanguage (int lumpnum, DWORD code, bool exactMatch, int passnum)
 {
+	static bool errordone = false;
 	const DWORD orMask = exactMatch ? 0 : MAKE_ID(0,0,0xff,0);
 	DWORD inCode = 0;
 	StringEntry *entry, **pentry;
@@ -211,6 +212,15 @@ void FStringTable::LoadLanguage (int lumpnum, DWORD code, bool exactMatch, int p
 		{ // Process string definitions.
 			if (inCode == 0)
 			{
+				// LANGUAGE lump is bad. We need to check if this is an old binary
+				// lump and if so just skip it to allow old WADs to run which contain
+				// such a lump.
+				if (!sc.isText())
+				{
+					if (!errordone) Printf("Skipping binary 'LANGUAGE' lump.\n"); 
+					errordone = true;
+					return;
+				}
 				sc.ScriptError ("Found a string without a language specified.");
 			}
 

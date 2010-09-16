@@ -80,7 +80,13 @@ setupvlinetallasm:
 	selfmod shifter1, shift12+6
 	ret
 
+%ifdef M_TARGET_MACHO
+	SECTION .text align=64
+GLOBAL _rtext_tmap3_start
+_rtext_tmap3_start:
+%else
 	SECTION .rtext	progbits alloc exec write align=64
+%endif
 
 ALIGN 16
 
@@ -331,3 +337,8 @@ shift12:	shr	ecx,16
 		pop	ebx
 		pop	ebp
 		ret
+
+%ifdef M_TARGET_MACHO
+GLOBAL _rtext_tmap3_end
+_rtext_tmap3_end:
+%endif

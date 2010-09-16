@@ -74,25 +74,9 @@
 
 OPLMIDIDevice::OPLMIDIDevice()
 {
-	Stream = NULL;
-	Tempo = 0;
-	Division = 0;
-	Events = NULL;
-	Started = false;
-
 	FWadLump data = Wads.OpenLumpName("GENMIDI");
 	OPLloadBank(data);
-}
-
-//==========================================================================
-//
-// OPLMIDIDevice Destructor
-//
-//==========================================================================
-
-OPLMIDIDevice::~OPLMIDIDevice()
-{
-	Close();
+	SampleRate = (int)OPL_SAMPLE_RATE;
 }
 
 //==========================================================================
@@ -109,25 +93,14 @@ int OPLMIDIDevice::Open(void (*callback)(unsigned int, void *, DWORD, DWORD), vo
 	{
 		return 1;
 	}
-
-	Stream = GSnd->CreateStream(FillStream, int(OPL_SAMPLE_RATE / 14) * 4,
-		SoundStream::Mono | SoundStream::Float, int(OPL_SAMPLE_RATE), this);
-	if (Stream == NULL)
+	int ret = OpenStream(14, SoundStream::Mono, callback, userdata);
+	if (ret == 0)
 	{
-		return 2;
+		OPLstopMusic();
+		OPLplayMusic(100);
+		DEBUGOUT("========= New song started ==========\n", 0, 0, 0);
 	}
-
-	Callback = callback;
-	CallbackData = userdata;
-	Tempo = 500000;
-	Division = 100;
-	CalcTickRate();
-
-	OPLstopMusic();
-	OPLplayMusic(100);
-	DEBUGOUT("========= New song started ==========\n", 0, 0, 0);
-
-	return 0;
+	return ret;
 }
 
 //==========================================================================
@@ -138,24 +111,8 @@ int OPLMIDIDevice::Open(void (*callback)(unsigned int, void *, DWORD, DWORD), vo
 
 void OPLMIDIDevice::Close()
 {
-	if (Stream != NULL)
-	{
-		delete Stream;
-		Stream = NULL;
-	}
+	SoftSynthMIDIDevice::Close();
 	io->OPLdeinit();
-	Started = false;
-}
-
-//==========================================================================
-//
-// OPLMIDIDevice :: IsOpen
-//
-//==========================================================================
-
-bool OPLMIDIDevice::IsOpen() const
-{
-	return Stream != NULL;
 }
 
 //==========================================================================
@@ -171,34 +128,6 @@ int OPLMIDIDevice::GetTechnology() const
 
 //==========================================================================
 //
-// OPLMIDIDevice :: SetTempo
-//
-//==========================================================================
-
-int OPLMIDIDevice::SetTempo(int tempo)
-{
-	Tempo = tempo;
-	CalcTickRate();
-	DEBUGOUT("Tempo changed to %.0f, %.2f samples/tick\n", Tempo, SamplesPerTick, 0);
-	return 0;
-}
-
-//==========================================================================
-//
-// OPLMIDIDevice :: SetTimeDiv
-//
-//==========================================================================
-
-int OPLMIDIDevice::SetTimeDiv(int timediv)
-{
-	Division = timediv;
-	CalcTickRate();
-	DEBUGOUT("Division changed to %.0f, %.2f samples/tick\n", Division, SamplesPerTick, 0);
-	return 0;
-}
-
-//==========================================================================
-//
 // OPLMIDIDevice :: CalcTickRate
 //
 // Tempo is the number of microseconds per quarter note.
@@ -208,219 +137,22 @@ int OPLMIDIDevice::SetTimeDiv(int timediv)
 
 void OPLMIDIDevice::CalcTickRate()
 {
-	SamplesPerTick = OPL_SAMPLE_RATE / (1000000.0 / Tempo) / Division;
-	io->SetClockRate(SamplesPerTick);
-}
-
-//==========================================================================
-//
-// OPLMIDIDevice :: Resume
-//
-//==========================================================================
-
-int OPLMIDIDevice::Resume()
-{
-	if (!Started)
-	{
-		if (Stream->Play(true, 1))
-		{
-			Started = true;
-			return 0;
-		}
-		return 1;
-	}
-	return 0;
-}
-
-//==========================================================================
-//
-// OPLMIDIDevice :: Stop
-//
-//==========================================================================
-
-void OPLMIDIDevice::Stop()
-{
-	if (Started)
-	{
-		Stream->Stop();
-		Started = false;
-	}
-}
-
-//==========================================================================
-//
-// OPLMIDIDevice :: StreamOutSync
-//
-// This version is called from the main game thread and needs to
-// synchronize with the player thread.
-//
-//==========================================================================
-
-int OPLMIDIDevice::StreamOutSync(MIDIHDR *header)
-{
-	ChipAccess.Enter();
-	StreamOut(header);
-	ChipAccess.Leave();
-	return 0;
-}
-
-//==========================================================================
-//
-// OPLMIDIDevice :: StreamOut
-//
-// This version is called from the player thread so does not need to
-// arbitrate for access to the Events pointer.
-//
-//==========================================================================
-
-int OPLMIDIDevice::StreamOut(MIDIHDR *header)
-{
-	header->lpNext = NULL;
-	if (Events == NULL)
-	{
-		Events = header;
-		NextTickIn = SamplesPerTick * *(DWORD *)header->lpData;
-		Position = 0;
-	}
-	else
-	{
-		MIDIHDR **p;
-
-		for (p = &Events; *p != NULL; p = &(*p)->lpNext)
-		{ }
-		*p = header;
-	}
-	return 0;
-}
-
-//==========================================================================
-//
-// OPLMIDIDevice :: PrepareHeader
-//
-//==========================================================================
-
-int OPLMIDIDevice::PrepareHeader(MIDIHDR *header)
-{
-	return 0;
-}
-
-//==========================================================================
-//
-// OPLMIDIDevice :: UnprepareHeader
-//
-//==========================================================================
-
-int OPLMIDIDevice::UnprepareHeader(MIDIHDR *header)
-{
-	return 0;
-}
-
-//==========================================================================
-//
-// OPLMIDIDevice :: FakeVolume
-//
-// Since the OPL output is rendered as a normal stream, its volume is
-// controlled through the GSnd interface, not here.
-//
-//==========================================================================
-
-bool OPLMIDIDevice::FakeVolume()
-{
-	return false;
-}
-
-//==========================================================================
-//
-// OPLMIDIDevice :: NeedThreadedCallabck
-//
-// OPL can service the callback directly rather than using a separate
-// thread.
-//
-//==========================================================================
-
-bool OPLMIDIDevice::NeedThreadedCallback()
-{
-	return false;
-}
-
-//==========================================================================
-//
-// OPLMIDIDevice :: Pause
-//
-//==========================================================================
-
-bool OPLMIDIDevice::Pause(bool paused)
-{
-	if (Stream != NULL)
-	{
-		return Stream->SetPaused(paused);
-	}
-	return true;
+	SoftSynthMIDIDevice::CalcTickRate();
+	io->SetClockRate(OPLmusicBlock::SamplesPerTick = SoftSynthMIDIDevice::SamplesPerTick);
 }
 
 //==========================================================================
 //
 // OPLMIDIDevice :: PlayTick
 //
-// event[0] = delta time
-// event[1] = unused
-// event[2] = event
+// We derive from two base classes that both define PlayTick(), so we need
+// to be unambiguous about which one to use.
 //
 //==========================================================================
 
 int OPLMIDIDevice::PlayTick()
 {
-	DWORD delay = 0;
-
-	while (delay == 0 && Events != NULL)
-	{
-		DWORD *event = (DWORD *)(Events->lpData + Position);
-		if (MEVT_EVENTTYPE(event[2]) == MEVT_TEMPO)
-		{
-			SetTempo(MEVT_EVENTPARM(event[2]));
-		}
-		else if (MEVT_EVENTTYPE(event[2]) == MEVT_LONGMSG)
-		{ // Should I handle master volume changes?
-		}
-		else if (MEVT_EVENTTYPE(event[2]) == 0)
-		{ // Short MIDI event
-			int status = event[2] & 0xff;
-			int parm1 = (event[2] >> 8) & 0x7f;
-			int parm2 = (event[2] >> 16) & 0x7f;
-			HandleEvent(status, parm1, parm2);
-		}
-
-		// Advance to next event.
-		if (event[2] < 0x80000000)
-		{ // Short message
-			Position += 12;
-		}
-		else
-		{ // Long message
-			Position += 12 + ((MEVT_EVENTPARM(event[2]) + 3) & ~3);
-		}
-
-		// Did we use up this buffer?
-		if (Position >= Events->dwBytesRecorded)
-		{
-			Events = Events->lpNext;
-			Position = 0;
-
-			if (Callback != NULL)
-			{
-				Callback(MOM_DONE, CallbackData, 0, 0);
-			}
-		}
-
-		if (Events == NULL)
-		{ // No more events. Just return something to keep the song playing
-		  // while we wait for more to be submitted.
-			return int(Division);
-		}
-
-		delay = *(DWORD *)(Events->lpData + Position);
-	}
-	return delay;
+	return SoftSynthMIDIDevice::PlayTick();
 }
 
 //==========================================================================
@@ -508,14 +240,35 @@ void OPLMIDIDevice::HandleEvent(int status, int parm1, int parm2)
 
 //==========================================================================
 //
-// OPLMIDIDevice :: FillStream										static
+// OPLMIDIDevice :: HandleLongEvent
 //
 //==========================================================================
 
-bool OPLMIDIDevice::FillStream(SoundStream *stream, void *buff, int len, void *userdata)
+void OPLMIDIDevice::HandleLongEvent(const BYTE *data, int len)
 {
-	OPLMIDIDevice *device = (OPLMIDIDevice *)userdata;
-	return device->ServiceStream(buff, len);
+}
+
+//==========================================================================
+//
+// OPLMIDIDevice :: ComputeOutput
+//
+// We override ServiceStream, so this function is never actually called.
+//
+//==========================================================================
+
+void OPLMIDIDevice::ComputeOutput(float *buffer, int len)
+{
+}
+
+//==========================================================================
+//
+// OPLMIDIDevice :: ServiceStream
+//
+//==========================================================================
+
+bool OPLMIDIDevice::ServiceStream(void *buff, int numbytes)
+{
+	return OPLmusicBlock::ServiceStream(buff, numbytes);
 }
 
 //==========================================================================

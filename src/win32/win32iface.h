@@ -75,6 +75,8 @@ class Win32Video : public IVideo
 	bool GoFullscreen (bool yes);
 	void BlankForGDI ();
 
+	void DumpAdapters ();
+
  private:
 	struct ModeInfo
 	{
@@ -97,12 +99,13 @@ class Win32Video : public IVideo
 	int m_IteratorBits;
 	bool m_IteratorFS;
 	bool m_IsFullscreen;
+	UINT m_Adapter;
 
 	void AddMode (int x, int y, int bits, int baseHeight, int doubling);
 	void FreeModes ();
 
 	static HRESULT WINAPI EnumDDModesCB (LPDDSURFACEDESC desc, void *modes);
-	void AddD3DModes (D3DFORMAT format);
+	void AddD3DModes (UINT adapter, D3DFORMAT format);
 	void AddLowResModes ();
 	void AddLetterboxModes ();
 	void ScaleModes (int doubling);
@@ -218,7 +221,7 @@ class D3DFB : public BaseWinFB
 {
 	DECLARE_CLASS(D3DFB, BaseWinFB)
 public:
-	D3DFB (int width, int height, bool fullscreen);
+	D3DFB (UINT adapter, int width, int height, bool fullscreen);
 	~D3DFB ();
 
 	bool IsValid ();
@@ -254,6 +257,9 @@ public:
 	void FlatFill (int left, int top, int right, int bottom, FTexture *src, bool local_origin);
 	void DrawLine(int x0, int y0, int x1, int y1, int palColor, uint32 realcolor);
 	void DrawPixel(int x, int y, int palcolor, uint32 rgbcolor);
+	void FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
+		double originx, double originy, double scalex, double scaley,
+		angle_t rotation, FDynamicColormap *colormap, int lightlevel);
 	bool WipeStartScreen(int type);
 	void WipeEndScreen();
 	bool WipeDo(int ticks);
@@ -275,7 +281,7 @@ private:
 	};
 #define D3DFVF_FBVERTEX (D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_SPECULAR | D3DFVF_TEX1)
 
-	struct BufferedQuad
+	struct BufferedTris
 	{
 		union
 		{
@@ -290,6 +296,8 @@ private:
 		};
 		D3DPal *Palette;
 		IDirect3DTexture9 *Texture;
+		WORD NumVerts;		// Number of _unique_ vertices used by this set.
+		WORD NumTris;		// Number of triangles used by this set.
 	};
 
 	enum
@@ -352,12 +360,12 @@ private:
 	void DrawPackedTextures(int packnum);
 	void DrawLetterbox();
 	void Draw3DPart(bool copy3d);
-	bool SetStyle(D3DTex *tex, DCanvas::DrawParms &parms, D3DCOLOR &color0, D3DCOLOR &color1, BufferedQuad &quad);
+	bool SetStyle(D3DTex *tex, DCanvas::DrawParms &parms, D3DCOLOR &color0, D3DCOLOR &color1, BufferedTris &quad);
 	static D3DBLEND GetStyleAlpha(int type);
 	static void SetColorOverlay(DWORD color, float alpha, D3DCOLOR &color0, D3DCOLOR &color1);
 	void DoWindowedGamma();
 	void AddColorOnlyQuad(int left, int top, int width, int height, D3DCOLOR color);
-	void CheckQuadBatch();
+	void CheckQuadBatch(int numtris=2, int numverts=4);
 	void BeginQuadBatch();
 	void EndQuadBatch();
 	void BeginLineBatch();
@@ -414,7 +422,9 @@ private:
 	D3DPal *Palettes;
 	D3DTex *Textures;
 	PackingTexture *Packs;
+	HRESULT LastHR;
 
+	UINT Adapter;
 	IDirect3DDevice9 *D3DDevice;
 	IDirect3DTexture9 *FBTexture;
 	IDirect3DTexture9 *TempRenderTexture, *RenderTexture[2];
@@ -428,7 +438,7 @@ private:
 	FBVERTEX *VertexData;
 	IDirect3DIndexBuffer9 *IndexBuffer;
 	WORD *IndexData;
-	BufferedQuad *QuadExtra;
+	BufferedTris *QuadExtra;
 	int VertexPos;
 	int IndexPos;
 	int QuadBatchPos;
@@ -494,7 +504,7 @@ enum
 #define LOG4(x,y,z,a,b)	do { if (dbg) { fprintf (dbg, x, y, z, a, b); fflush (dbg); } } while(0)
 #define LOG5(x,y,z,a,b,c) do { if (dbg) { fprintf (dbg, x, y, z, a, b, c); fflush (dbg); } } while(0)
 FILE *dbg;
-#elif _DEBUG
+#elif _DEBUG && 0
 #define STARTLOG
 #define STOPLOG
 #define LOG(x)			{ OutputDebugString(x); }

@@ -39,6 +39,8 @@
 class FConfigFile;
 class APlayerPawn;
 
+extern bool CheckCheatmode (bool printmsg = true);
+
 void C_ExecCmdLineParams ();
 
 // Add commands to the console as if they were typed in. Can handle wait
@@ -144,6 +146,7 @@ struct FButtonStatus
 	bool PressKey (int keynum);		// Returns true if this key caused the button to be pressed.
 	bool ReleaseKey (int keynum);	// Returns true if this key is no longer pressed.
 	void ResetTriggers () { bWentDown = bWentUp = false; }
+	void Reset () { bDown = bWentDown = bWentUp = false; }
 };
 
 extern FButtonStatus Button_Mlook, Button_Klook, Button_Use, Button_AltAttack,
@@ -152,7 +155,9 @@ extern FButtonStatus Button_Mlook, Button_Klook, Button_Use, Button_AltAttack,
 	Button_Forward, Button_Right, Button_Left, Button_MoveDown,
 	Button_MoveUp, Button_Jump, Button_ShowScores, Button_Crouch,
 	Button_Zoom, Button_Reload,
-	Button_User1, Button_User2, Button_User3, Button_User4;
+	Button_User1, Button_User2, Button_User3, Button_User4,
+	Button_AM_PanLeft, Button_AM_PanRight, Button_AM_PanDown, Button_AM_PanUp,
+	Button_AM_ZoomIn, Button_AM_ZoomOut;
 extern bool ParsingKeyConf;
 
 void ResetButtonTriggers ();	// Call ResetTriggers for all buttons

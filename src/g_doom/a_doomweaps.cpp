@@ -54,7 +54,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_Punch)
 
 	angle += pr_punch.Random2() << 18;
 	pitch = P_AimLineAttack (self, angle, MELEERANGE, &linetarget);
-	P_LineAttack (self, angle, MELEERANGE, pitch, damage, NAME_Melee, NAME_BulletPuff, true);
+
+	P_LineAttack (self, angle, MELEERANGE, pitch, damage, NAME_Melee, NAME_BulletPuff, true, &linetarget);
 
 	// turn to face target
 	if (linetarget)
@@ -105,28 +106,36 @@ DEFINE_ACTION_FUNCTION(AActor, A_FirePistol)
 //
 // A_Saw
 //
+enum SAW_Flags
+{
+	SF_NORANDOM = 1,
+	SF_RANDOMLIGHTMISS = 2,
+	SF_RANDOMLIGHTHIT = 4,
+	SF_NOUSEAMMOMISS = 8,
+	SF_NOUSEAMMO = 16,
+};
+
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Saw)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_SOUND_OPT	(fullsound)		 { fullsound = "weapons/sawfull"; }
+	PARAM_SOUND_OPT	(fullsound)			{ fullsound = "weapons/sawfull"; }
 	PARAM_SOUND_OPT	(hitsound)			{ hitsound = "weapons/sawhit"; }
 	PARAM_INT_OPT	(damage)			{ damage = 2; }
 	PARAM_CLASS_OPT	(pufftype, AActor)	{ pufftype = NULL; }
+	PARAM_INT_OPT	(flags)				{ flags = 0; }
+	PARAM_FIXED_OPT	(range)				{ range = 0; }
+	PARAM_ANGLE_OPT	(spread_xy)			{ spread_xy = angle_t(2.8125 * (ANGLE_90 / 90.0)); }
+	PARAM_ANGLE_OPT	(spread_z)			{ spread_z = 0; }
+	PARAM_FIXED_OPT	(lifesteal)			{ lifesteal = 0; }
 
-	angle_t 	angle;
+	angle_t angle;
+	angle_t slope;
 	player_t *player;
 	AActor *linetarget;
 
 	if (NULL == (player = self->player))
 	{
 		return 0;
-	}
-
-	AWeapon *weapon = self->player->ReadyWeapon;
-	if (weapon != NULL)
-	{
-		if (!weapon->DepleteAmmo (weapon->bAltFire))
-			return 0;
 	}
 
 	if (pufftype == NULL)
@@ -137,21 +146,61 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Saw)
 	{
 		damage = 2;
 	}
-	
-	damage *= (pr_saw()%10 + 1);
-	angle = self->angle;
-	angle += pr_saw.Random2() << 18;
-	
-	// use meleerange + 1 so the puff doesn't skip the flash (i.e. plays all states)
-	P_LineAttack (self, angle, MELEERANGE+1,
-				  P_AimLineAttack (self, angle, MELEERANGE+1, &linetarget), damage,
+	if (!(flags & SF_NORANDOM))
+	{
+		damage *= (pr_saw()%10+1);
+	}
+	if (range == 0)
+	{ // use meleerange + 1 so the puff doesn't skip the flash (i.e. plays all states)
+		range = MELEERANGE+1;
+	}
+
+	angle = self->angle + (pr_saw.Random2() * (spread_xy / 255));
+	slope = P_AimLineAttack (self, angle, range, &linetarget) + (pr_saw.Random2() * (spread_z / 255));
+
+	P_LineAttack (self, angle, range,
+				  slope, damage,
 				  NAME_None, pufftype);
+
+	AWeapon *weapon = self->player->ReadyWeapon;
+	if ((weapon != NULL) && !(flags & SF_NOUSEAMMO) && !(!linetarget && (flags & SF_NOUSEAMMOMISS)))
+	{
+		if (!weapon->DepleteAmmo (weapon->bAltFire))
+			return 0;
+	}
 
 	if (!linetarget)
 	{
+		if ((flags & SF_RANDOMLIGHTMISS) && (pr_saw() > 64))
+		{
+			player->extralight = !player->extralight;
+		}
 		S_Sound (self, CHAN_WEAPON, fullsound, 1, ATTN_NORM);
 		return 0;
 	}
+
+	if (flags & SF_RANDOMLIGHTHIT)
+	{
+		int randVal = pr_saw();
+		if (randVal < 64)
+		{
+			player->extralight = 0;
+		}
+		else if (randVal < 160)
+		{
+			player->extralight = 1;
+		}
+		else
+		{
+			player->extralight = 2;
+		}
+	}
+
+	if (lifesteal)
+	{
+		P_GiveBody (self, (damage * lifesteal) >> FRACBITS);
+	}
+
 	S_Sound (self, CHAN_WEAPON, hitsound, 1, ATTN_NORM);
 		
 	// turn to face target

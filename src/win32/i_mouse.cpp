@@ -87,8 +87,6 @@ public:
 	void Ungrab();
 
 protected:
-	void CenterMouse(int x, int y);
-
 	POINT UngrabbedPointerPos;
 	LONG PrevX, PrevY;
 	bool Grabbed;
@@ -112,6 +110,7 @@ static void SetCursorState(bool visible);
 static FMouse *CreateWin32Mouse();
 static FMouse *CreateDInputMouse();
 static FMouse *CreateRawMouse();
+static void CenterMouse(int x, int y, LONG *centx, LONG *centy);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -135,12 +134,12 @@ static FMouse *(*MouseFactory[])() =
 
 FMouse *Mouse;
 
-HCURSOR TheArrowCursor;
-HCURSOR TheInvisibleCursor;
+bool CursorState;
 
-CVAR (Bool,  use_mouse,				true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-CVAR (Bool,  m_noprescale,			false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-CVAR (Bool,	 m_filter,				false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR (Bool, use_mouse,				true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR (Bool, m_noprescale,			false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR (Bool,	m_filter,				false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR (Bool, m_hidepointer,			true, 0)
 
 CUSTOM_CVAR (Int, in_mouse, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOINITCALL)
 {
@@ -183,11 +182,48 @@ CUSTOM_CVAR(Int, mouse_capturemode, 1, CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
 
 static void SetCursorState(bool visible)
 {
-	HCURSOR usingCursor = visible ? TheArrowCursor : TheInvisibleCursor;
-	SetClassLongPtr(Window, GCLP_HCURSOR, (LONG_PTR)usingCursor);
+	CursorState = visible || !m_hidepointer;
 	if (GetForegroundWindow() == Window)
 	{
-		SetCursor(usingCursor);
+		if (CursorState)
+		{
+			SetCursor((HCURSOR)(intptr_t)GetClassLongPtr(Window, GCLP_HCURSOR));
+		}
+		else
+		{
+			SetCursor(NULL);
+		}
+	}
+}
+
+//==========================================================================
+//
+// CenterMouse
+//
+// Moves the mouse to the center of the window, but only if the current
+// position isn't already in the center.
+//
+//==========================================================================
+
+static void CenterMouse(int curx, int cury, LONG *centxp, LONG *centyp)
+{
+	RECT rect;
+
+	GetWindowRect(Window, &rect);
+
+	int centx = (rect.left + rect.right) >> 1;
+	int centy = (rect.top + rect.bottom) >> 1;
+
+	// Reduce the number of WM_MOUSEMOVE messages that get sent
+	// by only calling SetCursorPos when we really need to.
+	if (centx != curx || centy != cury)
+	{
+		if (centxp != NULL)
+		{
+			*centxp = centx;
+			*centyp = centy;
+		}
+		SetCursorPos(centx, centy);
 	}
 }
 
@@ -449,6 +485,7 @@ static FMouse *CreateRawMouse()
 FRawMouse::FRawMouse()
 {
 	Grabbed = false;
+	SetCursorState(true);
 }
 
 //==========================================================================
@@ -512,12 +549,11 @@ void FRawMouse::Grab()
 		{
 			GetCursorPos(&UngrabbedPointerPos);
 			Grabbed = true;
-			while (ShowCursor(FALSE) >= 0)
-			{ }
+			SetCursorState(false);
 			// By setting the cursor position, we force the pointer image
 			// to change right away instead of having it delayed until
 			// some time in the future.
-			SetCursorPos(0, 0);
+			CenterMouse(-1, -1, NULL, NULL);
 		}
 	}
 }
@@ -543,7 +579,7 @@ void FRawMouse::Ungrab()
 			Grabbed = false;
 			ClearButtonState();
 		}
-		ShowCursor(TRUE);
+		SetCursorState(true);
 		SetCursorPos(UngrabbedPointerPos.x, UngrabbedPointerPos.y);
 	}
 }
@@ -586,8 +622,13 @@ bool FRawMouse::ProcessRawInput(RAWINPUT *raw, int code)
 	{
 		WheelMoved(1, (SHORT)raw->data.mouse.usButtonData);
 	}
-	PostMouseMove(m_noprescale ? raw->data.mouse.lLastX : raw->data.mouse.lLastX<<2,
-		-raw->data.mouse.lLastY);
+	int x = m_noprescale ? raw->data.mouse.lLastX : raw->data.mouse.lLastX << 2;
+	int y = -raw->data.mouse.lLastY;
+	PostMouseMove(x, y);
+	if (x | y)
+	{
+		CenterMouse(-1, -1, NULL, NULL);
+	}
 	return true;
 }
 
@@ -638,6 +679,7 @@ FDInputMouse::FDInputMouse()
 {
 	Device = NULL;
 	Grabbed = false;
+	SetCursorState(true);
 }
 
 //==========================================================================
@@ -863,6 +905,7 @@ FWin32Mouse::FWin32Mouse()
 {
 	GetCursorPos(&UngrabbedPointerPos);
 	Grabbed = false;
+	SetCursorState(true);
 }
 
 //==========================================================================
@@ -920,7 +963,7 @@ void FWin32Mouse::ProcessInput()
 	}
 	if (x | y)
 	{
-		CenterMouse(pt.x, pt.y);
+		CenterMouse(pt.x, pt.y, &PrevX, &PrevY);
 	}
 	PostMouseMove(x, y);
 }
@@ -944,13 +987,13 @@ bool FWin32Mouse::WndProcHook(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 	{
 		if (wParam == SIZE_MAXIMIZED || wParam == SIZE_RESTORED)
 		{
-			CenterMouse(-1, -1);
+			CenterMouse(-1, -1, &PrevX, &PrevY);
 			return true;
 		}
 	}
 	else if (message == WM_MOVE)
 	{
-		CenterMouse(-1, -1);
+		CenterMouse(-1, -1, &PrevX, &PrevY);
 		return true;
 	}
 	else if (message == WM_SYSCOMMAND)
@@ -1059,7 +1102,7 @@ void FWin32Mouse::Grab()
 
 	ClipCursor(&rect);
 	SetCursorState(false);
-	CenterMouse(-1, -1);
+	CenterMouse(-1, -1, &PrevX, &PrevY);
 	Grabbed = true;
 }
 
@@ -1083,34 +1126,6 @@ void FWin32Mouse::Ungrab()
 	SetCursorState(true);
 	Grabbed = false;
 	ClearButtonState();
-}
-
-//==========================================================================
-//
-// FWin32Mouse :: CenterMouse
-//
-// Moves the mouse to the center of the window, but only if the current
-// position isn't already in the center.
-//
-//==========================================================================
-
-void FWin32Mouse::CenterMouse(int curx, int cury)
-{
-	RECT rect;
-
-	GetWindowRect (Window, &rect);
-
-	int centx = (rect.left + rect.right) >> 1;
-	int centy = (rect.top + rect.bottom) >> 1;
-
-	// Reduce the number of WM_MOUSEMOVE messages that get sent
-	// by only calling SetCursorPos when we really need to.
-	if (centx != curx || centy != cury)
-	{
-		PrevX = centx;
-		PrevY = centy;
-		SetCursorPos (centx, centy);
-	}
 }
 
 /**************************************************************************/

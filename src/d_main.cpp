@@ -38,7 +38,7 @@
 #endif
 #include <float.h>
 
-#ifdef unix
+#if defined(unix) || defined(__APPLE__)
 #include <unistd.h>
 #endif
 
@@ -104,6 +104,7 @@
 #include "compatibility.h"
 #include "m_joy.h"
 #include "sc_man.h"
+#include "po_man.h"
 #include "resourcefiles/resourcefile.h"
 
 EXTERN_CVAR(Bool, hud_althud)
@@ -120,7 +121,6 @@ extern void M_SetDefaultMode ();
 extern void R_ExecuteSetViewSize ();
 extern void G_NewInit ();
 extern void SetupPlayerClasses ();
-extern bool CheckCheatmode ();
 const IWADInfo *D_FindIWAD(TArray<FString> &wadfiles, const char *iwad, const char *basewad);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -201,6 +201,7 @@ gamestate_t wipegamestate = GS_DEMOSCREEN;	// can be -1 to force a wipe
 bool PageBlank;
 FTexture *Page;
 FTexture *Advisory;
+bool nospriterename;
 
 cycle_t FrameCycles;
 
@@ -459,6 +460,8 @@ CVAR (Flag, sv_disallowspying,		dmflags2, DF2_DISALLOW_SPYING);
 CVAR (Flag, sv_chasecam,			dmflags2, DF2_CHASECAM);
 CVAR (Flag, sv_disallowsuicide,		dmflags2, DF2_NOSUICIDE);
 CVAR (Flag, sv_noautoaim,			dmflags2, DF2_NOAUTOAIM);
+CVAR (Flag, sv_dontcheckammo,		dmflags2, DF2_DONTCHECKAMMO);
+CVAR (Flag, sv_killbossmonst,		dmflags2, DF2_KILLBOSSMONST);
 
 //==========================================================================
 //
@@ -479,7 +482,12 @@ static int GetCompatibility(int mask)
 
 CUSTOM_CVAR (Int, compatflags, 0, CVAR_ARCHIVE|CVAR_SERVERINFO)
 {
+	int old = i_compatflags;
 	i_compatflags = GetCompatibility(self) | ii_compatflags;
+	if ((old ^i_compatflags) & COMPATF_POLYOBJ)
+	{
+		FPolyObj::ClearAllSubsectorLinks();
+	}
 }
 
 CUSTOM_CVAR(Int, compatmode, 0, CVAR_ARCHIVE|CVAR_NOINITCALL)
@@ -495,26 +503,33 @@ CUSTOM_CVAR(Int, compatmode, 0, CVAR_ARCHIVE|CVAR_NOINITCALL)
 
 	case 1:	// Doom2.exe compatible with a few relaxed settings
 		v = COMPATF_SHORTTEX|COMPATF_STAIRINDEX|COMPATF_USEBLOCKING|COMPATF_NODOORLIGHT|COMPATF_SPRITESORT|
-			COMPATF_TRACE|COMPATF_MISSILECLIP|COMPATF_SOUNDTARGET|COMPATF_DEHHEALTH|COMPATF_CROSSDROPOFF;
+			COMPATF_TRACE|COMPATF_MISSILECLIP|COMPATF_SOUNDTARGET|COMPATF_DEHHEALTH|COMPATF_CROSSDROPOFF|
+			COMPATF_LIGHT;
 		break;
 
 	case 2:	// same as 1 but stricter (NO_PASSMOBJ and INVISIBILITY are also set)
 		v = COMPATF_SHORTTEX|COMPATF_STAIRINDEX|COMPATF_USEBLOCKING|COMPATF_NODOORLIGHT|COMPATF_SPRITESORT|
 			COMPATF_TRACE|COMPATF_MISSILECLIP|COMPATF_SOUNDTARGET|COMPATF_NO_PASSMOBJ|COMPATF_LIMITPAIN|
-			COMPATF_DEHHEALTH|COMPATF_INVISIBILITY|COMPATF_CROSSDROPOFF|COMPATF_CORPSEGIBS;
+			COMPATF_DEHHEALTH|COMPATF_INVISIBILITY|COMPATF_CROSSDROPOFF|COMPATF_CORPSEGIBS|COMPATF_HITSCAN|
+			COMPATF_WALLRUN|COMPATF_NOTOSSDROPS|COMPATF_LIGHT;
 		break;
 
 	case 3: // Boom compat mode
-		v = COMPATF_TRACE|COMPATF_SOUNDTARGET|COMPATF_BOOMSCROLL;
+		v = COMPATF_TRACE|COMPATF_SOUNDTARGET|COMPATF_BOOMSCROLL|COMPATF_MISSILECLIP;
 		break;
 
 	case 4: // Old ZDoom compat mode
-		v = COMPATF_SOUNDTARGET;
+		v = COMPATF_SOUNDTARGET|COMPATF_LIGHT;
 		break;
 
 	case 5: // MBF compat mode
-		v = COMPATF_TRACE|COMPATF_SOUNDTARGET|COMPATF_BOOMSCROLL|COMPATF_MUSHROOM|
+		v = COMPATF_TRACE|COMPATF_SOUNDTARGET|COMPATF_BOOMSCROLL|COMPATF_MISSILECLIP|COMPATF_MUSHROOM|
 			COMPATF_MBFMONSTERMOVE|COMPATF_NOBLOCKFRIENDS;
+		break;
+
+	case 6:	// Boom with some added settings to reenable spme 'broken' behavior
+		v = COMPATF_TRACE|COMPATF_SOUNDTARGET|COMPATF_BOOMSCROLL|COMPATF_MISSILECLIP|COMPATF_NO_PASSMOBJ|
+			COMPATF_INVISIBILITY|COMPATF_CORPSEGIBS|COMPATF_HITSCAN|COMPATF_WALLRUN|COMPATF_NOTOSSDROPS;
 		break;
 
 	}
@@ -549,6 +564,9 @@ CVAR (Flag, compat_mbfmonstermove,compatflags, COMPATF_MBFMONSTERMOVE);
 CVAR (Flag, compat_corpsegibs,	compatflags, COMPATF_CORPSEGIBS);
 CVAR (Flag, compat_noblockfriends,compatflags,COMPATF_NOBLOCKFRIENDS);
 CVAR (Flag, compat_spritesort,	compatflags,COMPATF_SPRITESORT);
+CVAR (Flag, compat_hitscan,		compatflags,COMPATF_HITSCAN);
+CVAR (Flag, compat_light,		compatflags,COMPATF_LIGHT);
+CVAR (Flag, compat_polyobj,		compatflags,COMPATF_POLYOBJ);
 
 //==========================================================================
 //
@@ -1199,8 +1217,11 @@ void D_DoAdvanceDemo (void)
 	case 2:
 		pagetic = (int)(gameinfo.pageTime * TICRATE);
 		gamestate = GS_DEMOSCREEN;
-		pagename = gameinfo.creditPages[pagecount];
-		pagecount = (pagecount+1) % gameinfo.creditPages.Size();
+		if (gameinfo.creditPages.Size() > 0)
+		{
+			pagename = gameinfo.creditPages[pagecount];
+			pagecount = (pagecount+1) % gameinfo.creditPages.Size();
+		}
 		demosequence = 1;
 		break;
 	}
@@ -1658,6 +1679,10 @@ static FString ParseGameInfo(TArray<FString> &pwads, const char *fn, const char 
 			}
 			while (sc.CheckToken(','));
 		}
+		else if (!nextKey.CompareNoCase("NOSPRITERENAME"))
+		{
+			nospriterename = true;
+		}
 	}
 	return iwad;
 }
@@ -1754,6 +1779,9 @@ void D_DoomMain (void)
 #endif
 #endif
 
+	// Check response files before coalescing file parameters.
+	M_FindResponseFile ();
+
 	PClass::StaticInit();
 	PType::StaticInit();
 
@@ -1772,7 +1800,6 @@ void D_DoomMain (void)
 
 	rngseed = I_MakeRNGSeed();
 	FRandom::StaticClearRandom ();
-	M_FindResponseFile ();
 
 	Printf ("M_LoadDefaults: Load system defaults.\n");
 	M_LoadDefaults ();			// load before initing other systems
@@ -2274,11 +2301,37 @@ void FStartupScreen::AppendStatusLine(const char *status)
 //
 //==========================================================================
 
+//==========================================================================
+//
+// STAT fps
+//
+// Displays statistics about rendering times
+//
+//==========================================================================
+
 ADD_STAT (fps)
 {
 	FString out;
 	out.Format("frame=%04.1f ms  walls=%04.1f ms  planes=%04.1f ms  masked=%04.1f ms",
 		FrameCycles.TimeMS(), WallCycles.TimeMS(), PlaneCycles.TimeMS(), MaskedCycles.TimeMS());
+	return out;
+}
+
+
+static double f_acc, w_acc,p_acc,m_acc;
+static int acc_c;
+
+ADD_STAT (fps_accumulated)
+{
+	f_acc += FrameCycles.TimeMS();
+	w_acc += WallCycles.TimeMS();
+	p_acc += PlaneCycles.TimeMS();
+	m_acc += MaskedCycles.TimeMS();
+	acc_c++;
+	FString out;
+	out.Format("frame=%04.1f ms  walls=%04.1f ms  planes=%04.1f ms  masked=%04.1f ms  %d counts",
+		f_acc/acc_c, w_acc/acc_c, p_acc/acc_c, m_acc/acc_c, acc_c);
+	Printf(PRINT_LOG, "%s\n", out.GetChars());
 	return out;
 }
 

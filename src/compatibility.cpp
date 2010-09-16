@@ -43,10 +43,13 @@
 #include "sc_man.h"
 #include "cmdlib.h"
 #include "doomdef.h"
+#include "doomdata.h"
 #include "doomstat.h"
 #include "c_dispatch.h"
 #include "gi.h"
 #include "g_level.h"
+#include "p_lnspec.h"
+#include "r_state.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -57,6 +60,14 @@ struct FCompatOption
 	const char *Name;
 	int CompatFlags;
 	int BCompatFlags;
+};
+
+enum
+{
+	CP_END,
+	CP_CLEARFLAGS,
+	CP_SETFLAGS,
+	CP_SETSPECIAL
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -77,7 +88,6 @@ static FCompatOption Options[] =
 {
 	{ "setslopeoverflow",		0, BCOMPATF_SETSLOPEOVERFLOW },
 	{ "resetplayerspeed",		0, BCOMPATF_RESETPLAYERSPEED },
-	{ "spechitoverflow",		0, BCOMPATF_SPECHITOVERFLOW },
 	{ "vileghosts",				0, BCOMPATF_VILEGHOSTS },
 
 	// list copied from g_mapinfo.cpp
@@ -106,8 +116,14 @@ static FCompatOption Options[] =
 	{ "corpsegibs",				COMPATF_CORPSEGIBS, 0 },
 	{ "noblockfriends",			COMPATF_NOBLOCKFRIENDS, 0 },
 	{ "spritesort",				COMPATF_SPRITESORT, 0 },
+	{ "hitscan",				COMPATF_HITSCAN, 0 },
+	{ "lightlevel",				COMPATF_LIGHT, 0 },
+	{ "polyobj",				COMPATF_POLYOBJ, 0 },
 	{ NULL, 0, 0 }
 };
+
+static TArray<int> CompatParams;
+static int ii_compatparams;
 
 // CODE --------------------------------------------------------------------
 
@@ -170,12 +186,57 @@ void ParseCompatibility()
 		} while (!sc.Compare("{"));
 		flags.CompatFlags = 0;
 		flags.BCompatFlags = 0;
-		while (sc.MustGetString(), (i = sc.MatchString(&Options[0].Name, sizeof(*Options))) >= 0)
+		flags.ExtCommandIndex = ~0u;
+		while (sc.GetString())
 		{
-			flags.CompatFlags |= Options[i].CompatFlags;
-			flags.BCompatFlags |= Options[i].BCompatFlags;
+			if ((i = sc.MatchString(&Options[0].Name, sizeof(*Options))) >= 0)
+			{
+				flags.CompatFlags |= Options[i].CompatFlags;
+				flags.BCompatFlags |= Options[i].BCompatFlags;
+			}
+			else if (sc.Compare("clearlineflags"))
+			{
+				if (flags.ExtCommandIndex == ~0u) flags.ExtCommandIndex = CompatParams.Size();
+				CompatParams.Push(CP_CLEARFLAGS);
+				sc.MustGetNumber();
+				CompatParams.Push(sc.Number);
+				sc.MustGetNumber();
+				CompatParams.Push(sc.Number);
+			}
+			else if (sc.Compare("setlineflags"))
+			{
+				if (flags.ExtCommandIndex == ~0u) flags.ExtCommandIndex = CompatParams.Size();
+				CompatParams.Push(CP_SETFLAGS);
+				sc.MustGetNumber();
+				CompatParams.Push(sc.Number);
+				sc.MustGetNumber();
+				CompatParams.Push(sc.Number);
+			}
+			else if (sc.Compare("setlinespecial"))
+			{
+				if (flags.ExtCommandIndex == ~0u) flags.ExtCommandIndex = CompatParams.Size();
+				CompatParams.Push(CP_SETSPECIAL);
+				sc.MustGetNumber();
+				CompatParams.Push(sc.Number);
+
+				sc.MustGetString();
+				CompatParams.Push(P_FindLineSpecial(sc.String, NULL, NULL));
+				for(int i=0;i<5;i++)
+				{
+					sc.MustGetNumber();
+					CompatParams.Push(sc.Number);
+				}
+			}
+			else 
+			{
+				sc.UnGet();
+				break;
+			}
 		}
-		sc.UnGet();
+		if (flags.ExtCommandIndex != ~0u) 
+		{
+			CompatParams.Push(CP_END);
+		}
 		sc.MustGetStringName("}");
 		for (j = 0; j < md5array.Size(); ++j)
 		{
@@ -196,12 +257,29 @@ void CheckCompatibility(MapData *map)
 	FMD5Holder md5;
 	FCompatValues *flags;
 
-	// When playing Doom IWAD levels force COMPAT_SHORTTEX.
+	// When playing Doom IWAD levels force COMPAT_SHORTTEX and COMPATF_LIGHT.
+	// I'm not sure if the IWAD maps actually need COMPATF_LIGHT but it certainly does not hurt.
+	// TNT's MAP31 also needs COMPATF_STAIRINDEX but that only gets activated for TNT.WAD.
 	if (Wads.GetLumpFile(map->lumpnum) == 1 && (gameinfo.flags & GI_COMPATSHORTTEX) && !(level.flags & LEVEL_HEXENFORMAT))
 	{
-		ii_compatflags = COMPATF_SHORTTEX;
+		ii_compatflags = COMPATF_SHORTTEX|COMPATF_LIGHT;
+		if (gameinfo.flags & GI_COMPATSTAIRS) ii_compatflags |= COMPATF_STAIRINDEX;
 		ib_compatflags = 0;
+		ii_compatparams = -1;
 	}
+	else if (Wads.GetLumpFile(map->lumpnum) == 1 && (gameinfo.flags & GI_COMPATPOLY1) && Wads.CheckLumpName(map->lumpnum, "MAP36"))
+	{
+		ii_compatflags = COMPATF_POLYOBJ;
+		ib_compatflags = 0;
+		ii_compatparams = -1;
+	}
+	else if (Wads.GetLumpFile(map->lumpnum) == 2 && (gameinfo.flags & GI_COMPATPOLY2) && Wads.CheckLumpName(map->lumpnum, "MAP47"))
+	{
+		ii_compatflags = COMPATF_POLYOBJ;
+		ib_compatflags = 0;
+		ii_compatparams = -1;
+	}
+
 	else
 	{
 		map->GetChecksum(md5.Bytes);
@@ -223,15 +301,72 @@ void CheckCompatibility(MapData *map)
 		{
 			ii_compatflags = flags->CompatFlags;
 			ib_compatflags = flags->BCompatFlags;
+			ii_compatparams = flags->ExtCommandIndex;
 		}
 		else
 		{
 			ii_compatflags = 0;
 			ib_compatflags = 0;
+			ii_compatparams = -1;
 		}
 	}
 	// Reset i_compatflags
 	compatflags.Callback();
+}
+
+//==========================================================================
+//
+// SetCompatibilityParams
+//
+//==========================================================================
+
+void SetCompatibilityParams()
+{
+	if (ii_compatparams != -1)
+	{
+		unsigned i = ii_compatparams;
+
+		while (CompatParams[i] != CP_END && i < CompatParams.Size())
+		{
+			switch (CompatParams[i])
+			{
+				case CP_CLEARFLAGS:
+				{
+					if (CompatParams[i+1] < numlines)
+					{
+						line_t *line = &lines[CompatParams[i+1]];
+						line->flags &= ~CompatParams[i+2];
+					}
+					i+=3;
+					break;
+				}
+				case CP_SETFLAGS:
+				{
+					if (CompatParams[i+1] < numlines)
+					{
+						line_t *line = &lines[CompatParams[i+1]];
+						line->flags |= CompatParams[i+2];
+					}
+					i+=3;
+					break;
+				}
+				case CP_SETSPECIAL:
+				{
+					if (CompatParams[i+1] < numlines)
+					{
+						line_t *line = &lines[CompatParams[i+1]];
+						line->special = CompatParams[i+2];
+						for(int ii=0;ii<5;ii++)
+						{
+							line->args[ii] = CompatParams[i+ii+3];
+						}
+					}
+					i+=8;
+					break;
+				}
+			}
+		}
+	}
 }
 
 //==========================================================================

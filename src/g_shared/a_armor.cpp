@@ -5,6 +5,7 @@
 #include "r_data.h"
 #include "a_pickups.h"
 #include "templates.h"
+#include "g_level.h"
 
 
 IMPLEMENT_CLASS (AArmor)
@@ -83,6 +84,18 @@ bool ABasicArmor::HandlePickup (AInventory *item)
 	{
 		// You shouldn't be picking up BasicArmor anyway.
 		return true;
+	}
+	if (item->IsKindOf(RUNTIME_CLASS(ABasicArmorBonus)) && !(item->ItemFlags & IF_IGNORESKILL))
+	{
+		ABasicArmorBonus *armor = static_cast<ABasicArmorBonus*>(item);
+
+		armor->SaveAmount = FixedMul(armor->SaveAmount, G_SkillProperty(SKILLP_ArmorFactor));
+	}
+	else if (item->IsKindOf(RUNTIME_CLASS(ABasicArmorPickup)) && !(item->ItemFlags & IF_IGNORESKILL))
+	{
+		ABasicArmorPickup *armor = static_cast<ABasicArmorPickup*>(item);
+
+		armor->SaveAmount = FixedMul(armor->SaveAmount, G_SkillProperty(SKILLP_ArmorFactor));
 	}
 	if (Inventory != NULL)
 	{
@@ -198,10 +211,17 @@ void ABasicArmorPickup::Serialize (FArchive &arc)
 AInventory *ABasicArmorPickup::CreateCopy (AActor *other)
 {
 	ABasicArmorPickup *copy = static_cast<ABasicArmorPickup *> (Super::CreateCopy (other));
+
+	if (!(ItemFlags & IF_IGNORESKILL))
+	{
+		SaveAmount = FixedMul(SaveAmount, G_SkillProperty(SKILLP_ArmorFactor));
+	}
+
 	copy->SavePercent = SavePercent;
 	copy->SaveAmount = SaveAmount;
 	copy->MaxAbsorb = MaxAbsorb;
 	copy->MaxFullAbsorb = MaxFullAbsorb;
+
 	return copy;
 }
 
@@ -272,6 +292,12 @@ void ABasicArmorBonus::Serialize (FArchive &arc)
 AInventory *ABasicArmorBonus::CreateCopy (AActor *other)
 {
 	ABasicArmorBonus *copy = static_cast<ABasicArmorBonus *> (Super::CreateCopy (other));
+
+	if (!(ItemFlags & IF_IGNORESKILL))
+	{
+		SaveAmount = FixedMul(SaveAmount, G_SkillProperty(SKILLP_ArmorFactor));
+	}
+
 	copy->SavePercent = SavePercent;
 	copy->SaveAmount = SaveAmount;
 	copy->MaxSaveAmount = MaxSaveAmount;
@@ -279,6 +305,7 @@ AInventory *ABasicArmorBonus::CreateCopy (AActor *other)
 	copy->BonusMax = BonusMax;
 	copy->MaxAbsorb = MaxAbsorb;
 	copy->MaxFullAbsorb = MaxFullAbsorb;
+
 	return copy;
 }
 

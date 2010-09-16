@@ -93,7 +93,16 @@ setupvlineasm:
 	selfmod premach3a, machvsh8+6
 	ret
 
+%ifdef M_TARGET_MACHO
+	SECTION .text align=64
+%else
 	SECTION .rtext	progbits alloc exec write align=64
+%endif
+
+%ifdef M_TARGET_MACHO
+GLOBAL _rtext_a_start
+_rtext_a_start:
+%endif
 
 ;eax = xscale
 ;ebx = palookupoffse
@@ -325,6 +334,7 @@ setupmvlineasm:
 		mov ecx, dword [esp+4]
 		mov byte [maskmach3a+2], cl
 		mov byte [machmv13+2], cl
+
 		mov byte [machmv14+2], cl
 		mov byte [machmv15+2], cl
 		mov byte [machmv16+2], cl
@@ -538,3 +548,8 @@ ALIGN 16
 mvcase0:	jmp beginmvlineasm4
 
 align 16
+
+%ifdef M_TARGET_MACHO
+GLOBAL _rtext_a_end
+_rtext_a_end:
+%endif

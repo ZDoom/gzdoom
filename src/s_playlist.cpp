@@ -122,7 +122,12 @@ bool FPlayList::ChangeList (const char *path)
 			// Path is relative; append it to the playlist directory.
 			song = playlistdir + song;
 		}
-		Songs.Push(song);
+
+		// Just to make sure
+		if (song.IsNotEmpty())
+		{
+			Songs.Push(song);
+		}
 	}
 	fclose (file);
 
@@ -157,7 +162,7 @@ void FPlayList::Shuffle ()
 
 	for (i = 0; i < numsongs; ++i)
 	{
-		swap (Songs[i], Songs[(rand() % (numsongs - i)) + i]);
+		swapvalues (Songs[i], Songs[(rand() % (numsongs - i)) + i]);
 	}
 	Position = 0;
 }

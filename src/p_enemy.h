@@ -32,6 +32,7 @@ enum LO_Flags
 	LOF_DONTCHASEGOAL = 4,
 	LOF_NOSEESOUND = 8,
 	LOF_FULLVOLSEESOUND = 16,
+    LOF_NOJUMP = 32,
 };
 
 struct FLookExParams
@@ -44,6 +45,7 @@ struct FLookExParams
 	FState *seestate;
 };
 
+void P_DaggerAlert (AActor *target, AActor *emitter);
 void P_RecursiveSound (sector_t *sec, AActor *soundtarget, bool splash, int soundblocks);
 bool P_HitFriend (AActor *self);
 void P_NoiseAlert (AActor *target, AActor *emmiter, bool splash=false);
@@ -55,6 +57,7 @@ AInventory *P_DropItem (AActor *source, PClassActor *type, int special, int chan
 void P_TossItem (AActor *item);
 bool P_LookForPlayers (AActor *actor, INTBOOL allaround, FLookExParams *params);
 void A_Weave(AActor *self, int xyspeed, int zspeed, fixed_t xydist, fixed_t zdist);
+void A_Unblock(AActor *self, bool drop);
 
 DECLARE_ACTION(A_Look)
 DECLARE_ACTION(A_Wander)
@@ -68,7 +71,7 @@ DECLARE_ACTION(A_FreezeDeathChunks)
 void A_BossDeath(AActor *self);
 
 void A_Chase(VMFrameStack *stack, AActor *self);
-void A_FaceTarget (AActor *actor);
+void A_FaceTarget (AActor *actor, angle_t max_turn = 0);
 
 bool A_RaiseMobj (AActor *, fixed_t speed);
 bool A_SinkMobj (AActor *, fixed_t speed);

@@ -9,6 +9,7 @@
 
 static DWORD	nummididevices;
 static bool		nummididevicesset;
+
 #ifdef _WIN32
 	   UINT		mididevice;
 
@@ -19,7 +20,7 @@ CUSTOM_CVAR (Int, snd_mididevice, -1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 	if (!nummididevicesset)
 		return;
 
-	if ((self >= (signed)nummididevices) || (self < -4))
+	if ((self >= (signed)nummididevices) || (self < -5))
 	{
 		Printf ("ID out of range. Using default device.\n");
 		self = 0;
@@ -74,25 +75,34 @@ void I_BuildMIDIMenuList (struct value_t **outValues, float *numValues)
 {
 	if (*outValues == NULL)
 	{
-		int count = 3 + nummididevices;
+		int count = 4 + nummididevices;
 		value_t *values;
 		UINT id;
-		int p;
+		int p = 0;
 
 		*outValues = values = new value_t[count];
 
-		values[0].name = "OPL Synth Emulation";
-		values[0].value = -3.0;
-		values[1].name = "TiMidity++";
-		values[1].value = -2.0;
-		values[2].name = "FMOD";
-		values[2].value = -1.0;
-		for (id = 0, p = 3; id < nummididevices; ++id)
+#ifdef HAVE_FLUIDSYNTH
+		values[p].name = "FluidSynth";
+		values[p].value = -5.0;
+		++p;
+#endif
+		values[p].name = "OPL Synth Emulation";
+		values[p].value = -3.0;
+		++p;
+		values[p].name = "TiMidity++";
+		values[p].value = -2.0;
+		++p;
+		values[p].name = "FMOD";
+		values[p].value = -1.0;
+		++p;
+		for (id = 0; id < nummididevices; ++id)
 		{
 			MIDIOUTCAPS caps;
 			MMRESULT res;
 
 			res = midiOutGetDevCaps (id, &caps, sizeof(caps));
+			assert(res == MMSYSERR_NOERROR);
 			if (res == MMSYSERR_NOERROR)
 			{
 				size_t len = strlen (caps.szPname) + 1;
@@ -104,8 +114,7 @@ void I_BuildMIDIMenuList (struct value_t **outValues, float *numValues)
 				++p;
 			}
 		}
-		assert(p == count);
-		*numValues = float(count);
+		*numValues = float(p);
 	}
 }
 
@@ -151,6 +160,9 @@ CCMD (snd_listmididevices)
 	MIDIOUTCAPS caps;
 	MMRESULT res;
 
+#ifdef HAVE_FLUIDSYNTH
+	PrintMidiDevice (-5, "FluidSynth", MOD_SWSYNTH, 0);
+#endif
 	PrintMidiDevice (-3, "Emulated OPL FM Synth", MOD_FMSYNTH, 0);
 	PrintMidiDevice (-2, "TiMidity++", 0, MOD_SWSYNTH);
 	PrintMidiDevice (-1, "FMOD", 0, MOD_SWSYNTH);
@@ -177,8 +189,8 @@ CCMD (snd_listmididevices)
 
 CUSTOM_CVAR(Int, snd_mididevice, -1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
-	if (self < -3)
-		self = -3;
+	if (self < -5)
+		self = -5;
 	else if (self > -1)
 		self = -1;
 }
@@ -188,21 +200,33 @@ void I_BuildMIDIMenuList (struct value_t **outValues, float *numValues)
 	if (*outValues == NULL)
 	{
 		value_t *values;
+		int p = 0;
 
-		*outValues = values = new value_t[3];
+		*outValues = values = new value_t[4];
 
-		values[0].name = "OPL Synth Emulation";
-		values[0].value = -3.0;
-		values[1].name = "TiMidity++";
-		values[1].value = -2.0;
-		values[2].name = "FMOD";
-		values[2].value = -1.0;
-		*numValues = 3.f;
+#ifdef HAVE_FLUIDSYNTH
+		values[p].name = "FluidSynth";
+		values[p].value = -5.0;
+		++p;
+#endif
+		values[p].name = "OPL Synth Emulation";
+		values[p].value = -3.0;
+		++p;
+		values[p].name = "TiMidity++";
+		values[p].value = -2.0;
+		++p;
+		values[p].name = "FMOD";
+		values[p].value = -1.0;
+		++p;
+		*numValues = float(p);
 	}
 }
 
 CCMD (snd_listmididevices)
 {
+#ifdef HAVE_FLUIDSYNTH
+	Printf("%s-5. FluidSynth\n", -5 == snd_mididevice ? TEXTCOLOR_BOLD : "");
+#endif
 	Printf("%s-3. Emulated OPL FM Synth\n", -3 == snd_mididevice ? TEXTCOLOR_BOLD : "");
 	Printf("%s-2. TiMidity++\n", -2 == snd_mididevice ? TEXTCOLOR_BOLD : "");
 	Printf("%s-1. FMOD\n", -1 == snd_mididevice ? TEXTCOLOR_BOLD : "");

@@ -195,14 +195,14 @@ T clamp (const T in, const T min, const T max)
 
 //==========================================================================
 //
-// swap
+// swapvalues
 //
 // Swaps the values of a and b.
 //==========================================================================
 
 template<class T>
 inline
-void swap (T &a, T &b)
+void swapvalues (T &a, T &b)
 {
 	T temp = a; a = b; b = temp;
 }

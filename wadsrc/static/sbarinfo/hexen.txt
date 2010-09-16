@@ -1,0 +1,259 @@
+/*******************************************************************************
+ *                        DEFAULT HEXEN STATUS BAR
+ *******************************************************************************
+ * If you wish to include this file into a custom status bar please use the 
+ * following command:
+ *
+ *     base Hexen;
+ *
+ * Using #include "sbarinfo/hexen.txt" will not be supported.
+ ******************************************************************************/
+
+height 38;
+monospacefonts true, "0", center;
+
+statusbar fullscreen, fullscreenoffsets
+{
+	//health
+	drawnumber 2147483647, BIGFONT, untranslated, health, drawshadow, interpolate(8), 40, -20, 1;
+
+	//frags
+	gamemode deathmatch
+		drawnumber 2147483647, HUDFONT_RAVEN, untranslated, frags, drawshadow(1, 1), 70, -15, 1;
+
+	inventorybarnotvisible
+	{
+		drawselectedinventory alternateonempty, artiflash, INDEXFONT_RAVEN, -82, -31, -52, -8, untranslated
+		{
+		}
+		else
+		{
+			alpha 0.6
+				drawimage "ARTIBOX", -80, -30;
+		}
+	}
+
+	// Mana
+	weaponammo Mana1 && Mana2
+	{
+		weaponammo Mana1
+			drawimage "MANABRT1", -17, -30;
+		else
+			drawimage "MANADIM1", -17, -30;
+		weaponammo Mana2
+			drawimage "MANABRT2", -17, -15;
+		else
+			drawimage "MANADIM2", -17, -15;
+		drawnumber 2147483647, HUDFONT_RAVEN, untranslated, ammo Mana1, drawshadow(1, 1), -21, -30, 1;
+		drawnumber 2147483647, HUDFONT_RAVEN, untranslated, ammo Mana2, drawshadow(1, 1), -21, -15, 1;
+	}
+}
+
+statusbar Normal
+{
+	drawimage "H2BAR", 0, 135;
+	drawimage "STATBAR", 38, 162;
+
+	drawselectedinventory artiflash, INDEXFONT_RAVEN, 143, 163, 174, 184, untranslated;
+
+	gamemode deathmatch, teamgame
+	{
+		drawimage "KILLS", 38, 163;
+		drawnumber 3, HUDFONT_RAVEN, untranslated, frags, 58, 163, 1;
+	}
+	else
+	{
+		drawimage "ARMCLS", 41, 178;
+		drawnumber 3, HUDFONT_RAVEN, untranslated, health, interpolate(6), 65, 176, 1, red, 25;
+	}
+
+	//mana bars
+	weaponammo Mana1 && Mana2
+	{
+		weaponammo Mana1
+		{
+			drawimage "MANABRT1", 77, 164;
+			drawbar "MANAVL1", "nullimage", ammo Mana1, vertical, 94, 164, 1;
+		}
+		else
+		{
+			drawimage "MANADIM1", 77, 164;
+			drawbar "MANAVL1D", "nullimage", ammo Mana1, vertical, 94, 164, 1;
+		}
+		weaponammo Mana2
+		{
+			drawimage "MANABRT2", 110, 164;
+			drawbar "MANAVL2", "nullimage", ammo Mana2, vertical, 102, 164, 1;
+		}
+		else
+		{
+			drawimage "MANADIM2", 110, 164;
+			drawbar "MANAVL2D", "nullimage", ammo Mana2, vertical, 102, 164, 1;
+		}
+		drawnumber 3, INDEXFONT_RAVEN, untranslated, ammo Mana1, 91, 181;
+		drawnumber 3, INDEXFONT_RAVEN, untranslated, ammo Mana2, 123, 181;
+	}
+	else //Weapon doesn't use ammo draw an alternative
+	{
+		drawimage "HAMOBACK", 77, 164;
+		usessecondaryammo
+		{
+			drawimage ammoicon1, 89, 172, center;
+			drawimage ammoicon2, 113, 172, center;
+			drawnumber 3, INDEXFONT_RAVEN, untranslated, ammo1, 98, 182;
+			drawnumber 3, INDEXFONT_RAVEN, untranslated, ammo2, 122, 182;
+		}
+		else
+		{
+			drawimage ammoicon1, 100, 172, center;
+			drawnumber 3, INDEXFONT_RAVEN, untranslated, ammo1, 109, 182;
+		}
+	}
+
+	//armor
+	drawimage "ARMCLS", 255, 178;
+	drawnumber 2, HUDFONT_RAVEN, untranslated, armorclass, 275, 176, 1;
+
+	playerclass Cleric
+	{
+		drawimage "WPSLOT1", 190, 162;
+		hasweaponpiece CWeapWraithverge, 1
+		{
+			drawimage "WPIECEC1", 190, 162;
+		}
+		hasweaponpiece CWeapWraithverge, 2
+		{
+			drawimage "WPIECEC2", 212, 162;
+		}
+		hasweaponpiece CWeapWraithverge, 3
+		{
+			drawimage "WPIECEC3", 225, 162;
+		}
+		hasweaponpiece CWeapWraithverge, 1
+		{
+			hasweaponpiece CWeapWraithverge, 2
+			{
+				hasweaponpiece CWeapWraithverge, 3
+				{
+					drawimage "WPFULL1", 190, 162;
+				}
+			}
+		}
+
+		gamemode singleplayer
+			drawgem interpolate(6), "CHAIN2", "LIFEGMC2", -23, 49, 15, 30, 193;
+		else
+			drawgem translatable, interpolate(6), "CHAIN2", "LIFEGMC2", -23, 49, 15, 30, 193;
+	}
+	else playerclass Mage
+	{
+		drawimage "WPSLOT2", 190, 162;
+		hasweaponpiece MWeapBloodscourge, 1
+		{
+			drawimage "WPIECEM1", 190, 162;
+		}
+		hasweaponpiece MWeapBloodscourge, 2
+		{
+			drawimage "WPIECEM2", 205, 162;
+		}
+		hasweaponpiece MWeapBloodscourge, 3
+		{
+			drawimage "WPIECEM3", 224, 162;
+		}
+		hasweaponpiece MWeapBloodscourge, 1
+		{
+			hasweaponpiece MWeapBloodscourge, 2
+			{
+				hasweaponpiece MWeapBloodscourge, 3
+				{
+					drawimage "WPFULL2", 190, 162;
+				}
+			}
+		}
+
+		gamemode singleplayer
+			drawgem interpolate(6), "CHAIN3", "LIFEGMM2", -23, 49, 15, 30, 193;
+		else
+			drawgem translatable, interpolate(6), "CHAIN3", "LIFEGMM2", -23, 49, 15, 30, 193;
+	}
+	else
+	{
+		drawimage "WPSLOT0", 190, 162;
+		hasweaponpiece FWeapQuietus, 1
+		{
+			drawimage "WPIECEF1", 190, 162;
+		}
+		hasweaponpiece FWeapQuietus, 2
+		{
+			drawimage "WPIECEF2", 225, 162;
+		}
+		hasweaponpiece FWeapQuietus, 3
+		{
+			drawimage "WPIECEF3", 234, 162;
+		}
+		hasweaponpiece FWeapQuietus, 1
+		{
+			hasweaponpiece FWeapQuietus, 2
+			{
+				hasweaponpiece FWeapQuietus, 3
+				{
+					drawimage "WPFULL0", 190, 162;
+				}
+			}
+		}
+
+		gamemode singleplayer
+			drawgem interpolate(6), "CHAIN", "LIFEGMF2", -23, 49, 15, 30, 193;
+		else
+			drawgem translatable, interpolate(6), "CHAIN", "LIFEGMF2", -23, 49, 15, 30, 193;
+	}
+	drawimage "LFEDGE", 0, 193;
+	drawimage "RTEDGE", 277, 193;
+}
+
+statusbar Automap
+{
+	drawimage "H2BAR", 0, 135;
+	drawimage "KEYBAR", 38, 162;
+	drawkeybar 5, horizontal, 20, 46, 164;
+	drawimage hexenarmor armor, "ARMSLOT1", 150, 164;
+	drawimage hexenarmor shield, "ARMSLOT2", 181, 164;
+	drawimage hexenarmor helm, "ARMSLOT3", 212, 164;
+	drawimage hexenarmor amulet, "ARMSLOT4", 243, 164;
+
+	// Also draw the life gem here
+	playerclass Fighter
+	{
+		gamemode singleplayer
+			drawgem interpolate(6), "CHAIN", "LIFEGMF2", -23, 49, 15, 30, 193;
+		else
+			drawgem translatable, interpolate(6), "CHAIN", "LIFEGMF2", -23, 49, 15, 30, 193;
+	}
+	else playerclass Cleric
+	{
+		gamemode singleplayer
+			drawgem interpolate(6), "CHAIN2", "LIFEGMC2", -23, 49, 15, 30, 193;
+		else
+			drawgem translatable, interpolate(6), "CHAIN2", "LIFEGMC2", -23, 49, 15, 30, 193;
+	}
+	else playerclass Mage
+	{
+		gamemode singleplayer
+			drawgem interpolate(6), "CHAIN3", "LIFEGMM2", -23, 49, 15, 30, 193;
+		else
+			drawgem translatable, interpolate(6), "CHAIN3", "LIFEGMM2", -23, 49, 15, 30, 193;
+	}
+	drawimage "LFEDGE", 0, 193;
+	drawimage "RTEDGE", 277, 193;
+}
+
+statusbar inventory
+{
+	drawimage "INVBAR", 38, 162;
+	drawinventorybar HexenStrict, noartibox, 7, INDEXFONT_RAVEN, 52, 164, 80, 185, untranslated;
+}
+
+statusbar inventoryfullscreen, fullscreenoffsets // ZDoom HUD overlay.
+{
+	drawinventorybar HexenStrict, translucent, 7, INDEXFONT_RAVEN, -106+center, -31, -78+center, -10, untranslated;
+}

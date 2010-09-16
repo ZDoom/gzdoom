@@ -1223,7 +1223,7 @@ ExpEmit FxAddSub::Emit(VMFunctionBuilder *build)
 		// Since addition is commutative, only the second operand may be a constant.
 		if (op1.Konst)
 		{
-			swap(op1, op2);
+			swapvalues(op1, op2);
 		}
 		assert(!op1.Konst);
 		op1.Free(build);
@@ -1404,7 +1404,7 @@ ExpEmit FxMulDiv::Emit(VMFunctionBuilder *build)
 		// Multiplication is commutative, so only the second operand may be constant.
 		if (op1.Konst)
 		{
-			swap(op1, op2);
+			swapvalues(op1, op2);
 		}
 		assert(!op1.Konst);
 		op1.Free(build);
@@ -1709,7 +1709,7 @@ ExpEmit FxCompareEq::Emit(VMFunctionBuilder *build)
 	// Only the second operand may be constant.
 	if (op1.Konst)
 	{
-		swap(op1, op2);
+		swapvalues(op1, op2);
 	}
 	assert(!op1.Konst);
 
@@ -1873,7 +1873,7 @@ ExpEmit FxBinaryInt::Emit(VMFunctionBuilder *build)
 		op2 = right->Emit(build);
 		if (op1.Konst)
 		{
-			swap(op1, op2);
+			swapvalues(op1, op2);
 		}
 		assert(!op1.Konst);
 		rop = op2.RegNum;
@@ -2439,7 +2439,7 @@ ExpVal FxRandom::EvalExpression (AActor *self)
 
 		if (maxval < minval)
 		{
-			swap (maxval, minval);
+			swapvalues (maxval, minval);
 		}
 
 		val.Int = (*rng)(maxval - minval + 1) + minval;
@@ -2469,7 +2469,7 @@ int DecoRandom(VMFrameStack *stack, VMValue *param, int numparam, VMReturn *ret,
 		int min = param[1].i, max = param[2].i;
 		if (max < min)
 		{
-			swap(max, min);
+			swapvalues(max, min);
 		}
 		ret->SetInt((*rng)(max - min + 1) + min);
 	}
@@ -2545,7 +2545,7 @@ ExpVal FxFRandom::EvalExpression (AActor *self)
 
 		if (maxval < minval)
 		{
-			swap (maxval, minval);
+			swapvalues (maxval, minval);
 		}
 
 		val.Float = frandom * (maxval - minval) + minval;
@@ -2570,7 +2570,7 @@ int DecoFRandom(VMFrameStack *stack, VMValue *param, int numparam, VMReturn *ret
 		double min = param[1].f, max = param[2].f;
 		if (max < min)
 		{
-			swap(max, min);
+			swapvalues(max, min);
 		}
 		ret->SetFloat(frandom * (max - min) + min);
 	}

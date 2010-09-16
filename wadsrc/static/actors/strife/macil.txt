@@ -16,13 +16,14 @@ ACTOR Macil1 64
 	+NOICEDEATH
 	+NOSPLASHALERT
 	+NODAMAGE
+	+NEVERRESPAWN
 	DamageFactor "Fire", 0.5
 	MinMissileChance 150
 	SeeSound "macil/sight"
 	PainSound "macil/pain"
 	ActiveSound "macil/active"
 	CrushPainSound "misc/pcrush"
-	Tag "MACIL"
+	Tag "$TAG_MACIL1"
 	Obituary "$OB_MACIL"
 	DropItem "BoxOfBullets"
 	MaxStepHeight 16
@@ -65,6 +66,7 @@ ACTOR Macil2 : Macil1 200
 	+COUNTKILL
 	+SPECTRAL
 	-NODAMAGE
+	Tag "$TAG_MACIL2"
 	DeathSound "macil/slop"
 	DropItem "None"
 	DamageFactor "SpectralLow", 0

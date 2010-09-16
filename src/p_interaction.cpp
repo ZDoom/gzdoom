@@ -1358,6 +1358,34 @@ dopain:
 		target->flags |= MF_JUSTHIT;    // fight back!
 }
 
+void P_PoisonMobj (AActor *target, AActor *inflictor, AActor *source, int damage, int duration, int period)
+{
+	int olddamage = target->PoisonDamageReceived;
+	int oldduration = target->PoisonDurationReceived;
+
+	target->Poisoner = source;
+
+	if (inflictor->flags6 & MF6_ADDITIVEPOISONDAMAGE)
+	{
+		target->PoisonDamageReceived += damage;
+	}
+	else
+	{
+		target->PoisonDamageReceived = damage;
+	}
+
+	if (inflictor->flags6 & MF6_ADDITIVEPOISONDURATION)
+	{
+		target->PoisonDurationReceived += duration;
+	}
+	else
+	{
+		target->PoisonDurationReceived = duration;
+	}
+
+	target->PoisonPeriodReceived = period;
+}
+
 bool AActor::OkayToSwitchTarget (AActor *other)
 {
 	if (other == this)
@@ -1528,7 +1556,6 @@ void P_PoisonDamage (player_t *player, AActor *source, int damage,
 	return;
 }
 
-bool CheckCheatmode ();
 
 CCMD (kill)
 {

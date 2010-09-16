@@ -80,11 +80,11 @@ CCMD (toggleconsole)
 	C_ToggleConsole();
 }
 
-bool CheckCheatmode ()
+bool CheckCheatmode (bool printmsg)
 {
 	if ((G_SkillProperty(SKILLP_DisableCheats) || netgame || deathmatch) && (!sv_cheats))
 	{
-		Printf ("sv_cheats must be true to enable this command.\n");
+		if (printmsg) Printf ("sv_cheats must be true to enable this command.\n");
 		return true;
 	}
 	else

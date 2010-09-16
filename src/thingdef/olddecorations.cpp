@@ -685,7 +685,7 @@ static void ParseSpriteFrames (PClassActor *info, TArray<FState> &states, FScann
 				{
 					sc.ScriptError ("* must come after a frame");
 				}
-				state.Frame |= SF_FULLBRIGHT;
+				state.Fullbright = true;
 			}
 			else if (*token < 'A' || *token > ']')
 			{

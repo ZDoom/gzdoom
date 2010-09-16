@@ -153,11 +153,26 @@ public:
 	{
 		return Array[index];
 	}
+	// Returns a reference to the last element
+	T &Last() const
+	{
+		return Array[Count-1];
+	}
+
 	unsigned int Push (const T &item)
 	{
 		Grow (1);
 		::new((void*)&Array[Count]) T(item);
 		return Count++;
+	}
+	bool Pop ()
+	{
+		if (Count > 0)
+		{
+			Array[--Count].~T();
+			return true;
+		}
+		return false;
 	}
 	bool Pop (T &item)
 	{
@@ -183,10 +198,13 @@ public:
 
 	void Delete (unsigned int index, int deletecount)
 	{
-		if (index + deletecount > Count) deletecount = Count - index;
+		if (index + deletecount > Count)
+		{
+			deletecount = Count - index;
+		}
 		if (deletecount > 0)
 		{
-			for(int i = 0; i < deletecount; i++)
+			for (int i = 0; i < deletecount; i++)
 			{
 				Array[index + i].~T();
 			}

@@ -40,6 +40,7 @@
 #include "r_blend.h"
 #include "s_sound.h"
 
+struct subsector_t;
 class PClassAmmo;
 
 //
@@ -262,7 +263,7 @@ enum
 	MF4_NOEXTREMEDEATH	= 0x10000000,	// this projectile or weapon never gibs its victim
 	MF4_EXTREMEDEATH	= 0x20000000,	// this projectile or weapon always gibs its victim
 	MF4_FRIGHTENED		= 0x40000000,	// Monster runs away from player
-	/*					= 0x80000000,	*/
+	MF4_BOSSSPAWNED		= 0x80000000,	// Spawned by a boss spawn cube
 	
 // --- mobj.flags5 ---
 
@@ -321,6 +322,9 @@ enum
 	MF6_NOTRIGGER		= 0x00010000,	// actor cannot trigger any line actions
 	MF6_SHATTERING		= 0x00020000,	// marks an ice corpse for forced shattering
 	MF6_KILLED			= 0x00040000,	// Something that was killed (but not necessarily a corpse)
+	MF6_BLOCKEDBYSOLIDACTORS = 0x00080000, // Blocked by solid actors, even if not solid itself
+	MF6_ADDITIVEPOISONDAMAGE	= 0x00100000,
+	MF6_ADDITIVEPOISONDURATION	= 0x00200000,
 
 // --- mobj.renderflags ---
 
@@ -616,7 +620,7 @@ public:
 	bool CheckLocalView (int playernum) const;
 
 	// Finds the first item of a particular type.
-	AInventory *FindInventory (PClassActor *type);
+	AInventory *FindInventory (PClassActor *type, bool subclass=false);
 	AInventory *FindInventory (FName type);
 	template<class T> T *FindInventory ()
 	{
@@ -695,22 +699,29 @@ public:
 
 	PClassActor *GetBloodType(int type = 0) const
 	{
+		PClassActor *bloodcls;
 		if (type == 0)
 		{
-			return PClass::FindActor(GetClass()->BloodType);
+			bloodcls = PClass::FindActor(GetClass()->BloodType);
 		}
 		else if (type == 1)
 		{
-			return PClass::FindActor(GetClass()->BloodType2);
+			bloodcls = PClass::FindActor(GetClass()->BloodType2);
 		}
 		else if (type == 2)
 		{
-			return PClass::FindActor(GetClass()->BloodType3);
+			bloodcls = PClass::FindActor(GetClass()->BloodType3);
 		}
 		else
 		{
 			return NULL;
 		}
+
+		if (bloodcls != NULL)
+		{
+			bloodcls = bloodcls->GetReplacement();
+		}
+		return bloodcls;
 	}
 
 	// Calculate amount of missile damage
@@ -742,6 +753,7 @@ public:
 	fixed_t			pitch, roll;
 	FBlockNode		*BlockNode;			// links in blocks (if needed)
 	struct sector_t	*Sector;
+	subsector_t *		subsector;
 	fixed_t			floorz, ceilingz;	// closest together of contacted secs
 	fixed_t			dropoffz;		// killough 11/98: the lowest floor over all contacted Sectors.
 
@@ -820,6 +832,15 @@ public:
 	AActor			*BlockingMobj;	// Actor that blocked the last move
 	line_t			*BlockingLine;	// Line that blocked the last move
 
+	int PoisonDamage; // Damage received per tic from poison.
+	int PoisonDuration; // Duration left for receiving poison damage.
+	int PoisonPeriod; // How often poison damage is applied. (Every X tics.)
+
+	int PoisonDamageReceived; // Damage received per tic from poison.
+	int PoisonDurationReceived; // Duration left for receiving poison damage.
+	int PoisonPeriodReceived; // How often poison damage is applied. (Every X tics.)
+	TObjPtr<AActor> Poisoner; // Last source of received poison damage.
+
 	// a linked list of sectors where this object appears
 	struct msecnode_t	*touching_sectorlist;				// phares 3/14/98
 
@@ -859,8 +880,9 @@ public:
 	FState *MeleeState;
 	FState *MissileState;
 
-	// [RH] The dialogue to show when this actor is "used."
-	FStrifeDialogueNode *Conversation;
+	
+	int ConversationRoot;				// THe root of the current dialogue
+	FStrifeDialogueNode *Conversation;	// [RH] The dialogue to show when this actor is "used."
 
 	// [RH] Decal(s) this weapon/projectile generates on impact.
 	FDecalBase *DecalGenerator;
@@ -890,8 +912,7 @@ public:
 	void SetOrigin (fixed_t x, fixed_t y, fixed_t z);
 	bool InStateSequence(FState * newstate, FState * basestate);
 	int GetTics(FState * newstate);
-	bool SetState (FState *newstate);
-	bool SetStateNF (FState *newstate);
+	bool SetState (FState *newstate, bool nofunction=false);
 	virtual bool UpdateWaterLevel (fixed_t oldz, bool splash=true);
 	bool isFast();
 	void SetIdle();

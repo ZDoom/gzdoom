@@ -14,7 +14,7 @@ ACTOR Rebel : StrifeHumanoid
 	-COUNTKILL
 	+NOSPLASHALERT
 	MinMissileChance 150
-	Tag "Rebel"
+	Tag "$TAG_REBEL"
 	SeeSound "rebel/sight"
 	PainSound "rebel/pain"
 	DeathSound "rebel/death"
@@ -124,7 +124,7 @@ ACTOR TeleporterBeacon : Inventory 10 native
 	+DROPPED
 	+INVENTORY.INVBAR
 	Inventory.Icon "I_BEAC"
-	Tag "Teleporter Beacon"
+	Tag "$TAG_TELEPORTERBEACON"
 	Inventory.PickupMessage "$TXT_BEACON"
 
 	action native A_Beacon ();

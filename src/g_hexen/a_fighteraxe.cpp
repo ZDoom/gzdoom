@@ -242,27 +242,33 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeAttack)
 		slope = P_AimLineAttack (pmo, angle, AXERANGE, &linetarget);
 		if (linetarget)
 		{
-			P_LineAttack (pmo, angle, AXERANGE, slope, damage, NAME_Melee, pufftype, true);
-			if (linetarget->flags3&MF3_ISMONSTER || linetarget->player)
+			P_LineAttack (pmo, angle, AXERANGE, slope, damage, NAME_Melee, pufftype, true, &linetarget);
+			if (linetarget != NULL)
 			{
-				P_ThrustMobj (linetarget, angle, power);
+				if (linetarget->flags3&MF3_ISMONSTER || linetarget->player)
+				{
+					P_ThrustMobj (linetarget, angle, power);
+				}
+				AdjustPlayerAngle (pmo, linetarget);
+				useMana++; 
+				goto axedone;
 			}
-			AdjustPlayerAngle (pmo, linetarget);
-			useMana++; 
-			goto axedone;
 		}
 		angle = pmo->angle-i*(ANG45/16);
 		slope = P_AimLineAttack (pmo, angle, AXERANGE, &linetarget);
 		if (linetarget)
 		{
-			P_LineAttack (pmo, angle, AXERANGE, slope, damage, NAME_Melee, pufftype, true);
-			if (linetarget->flags3&MF3_ISMONSTER)
+			P_LineAttack (pmo, angle, AXERANGE, slope, damage, NAME_Melee, pufftype, true, &linetarget);
+			if (linetarget != NULL)
 			{
-				P_ThrustMobj (linetarget, angle, power);
+				if (linetarget->flags3&MF3_ISMONSTER)
+				{
+					P_ThrustMobj (linetarget, angle, power);
+				}
+				AdjustPlayerAngle (pmo, linetarget);
+				useMana++; 
+				goto axedone;
 			}
-			AdjustPlayerAngle (pmo, linetarget);
-			useMana++; 
-			goto axedone;
 		}
 	}
 	// didn't find any creatures, so try to strike any walls

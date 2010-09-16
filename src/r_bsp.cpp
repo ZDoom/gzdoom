@@ -36,6 +36,7 @@
 
 #include "i_system.h"
 #include "p_lnspec.h"
+#include "p_setup.h"
 
 #include "r_main.h"
 #include "r_plane.h"
@@ -43,6 +44,7 @@
 #include "r_things.h"
 #include "a_sharedglobal.h"
 #include "g_level.h"
+#include "nodebuild.h"
 
 // State.
 #include "doomstat.h"
@@ -50,6 +52,7 @@
 #include "r_bsp.h"
 #include "v_palette.h"
 #include "r_sky.h"
+#include "po_man.h"
 
 int WallMost (short *mostbuf, const secplane_t &plane);
 
@@ -107,6 +110,11 @@ WORD MirrorFlags;
 seg_t *ActiveWallMirror;
 TArray<size_t> WallMirrors;
 
+static FNodeBuilder::FLevel PolyNodeLevel;
+static FNodeBuilder PolyNodeBuilder(PolyNodeLevel);
+
+static subsector_t *InSubsector;
+
 CVAR (Bool, r_drawflat, false, 0)		// [RH] Don't texture segs?
 
 
@@ -162,10 +170,11 @@ static cliprange_t		solidsegs[MAXWIDTH/2+2];
 //
 //==========================================================================
 
-void R_ClipWallSegment (int first, int last, bool solid)
+bool R_ClipWallSegment (int first, int last, bool solid)
 {
 	cliprange_t *next, *start;
 	int i, j;
+	bool res = false;
 
 	// Find the first range that touches the range
 	// (adjacent pixels are touching).
@@ -175,6 +184,7 @@ void R_ClipWallSegment (int first, int last, bool solid)
 
 	if (first < start->first)
 	{
+		res = true;
 		if (last <= start->first)
 		{
 			// Post is entirely visible (above start).
@@ -200,7 +210,7 @@ void R_ClipWallSegment (int first, int last, bool solid)
 					next->last = last;
 				}
 			}
-			return;
+			return true;
 		}
 
 		// There is a fragment above *start.
@@ -215,7 +225,7 @@ void R_ClipWallSegment (int first, int last, bool solid)
 
 	// Bottom contained in start?
 	if (last <= start->last)
-		return;
+		return res;
 
 	next = start;
 	while (last >= (next+1)->first)
@@ -252,6 +262,31 @@ crunch:
 			newend = start+i;
 		}
 	}
+	return true;
+}
+
+bool R_CheckClipWallSegment (int first, int last)
+{
+	cliprange_t *start;
+
+	// Find the first range that touches the range
+	// (adjacent pixels are touching).
+	start = solidsegs;
+	while (start->last < first)
+		start++;
+
+	if (first < start->first)
+	{
+		return true;
+	}
+
+	// Bottom contained in start?
+	if (last > start->last)
+	{
+		return true;
+	}
+
+	return false;
 }
 
 
@@ -573,7 +608,7 @@ void R_AddLine (seg_t *line)
 		int t = 256-WallTX1;
 		WallTX1 = 256-WallTX2;
 		WallTX2 = t;
-		swap (WallTY1, WallTY2);
+		swapvalues (WallTY1, WallTY2);
 	}
 
 	if (WallTX1 >= -WallTY1)
@@ -621,6 +656,10 @@ void R_AddLine (seg_t *line)
 
 	if (line->linedef == NULL)
 	{
+		if (R_CheckClipWallSegment (WallSX1, WallSX2))
+		{
+			InSubsector->flags |= SSECF_DRAWN;
+		}
 		return;
 	}
 
@@ -650,7 +689,7 @@ void R_AddLine (seg_t *line)
 	{ // The seg is only part of the wall.
 		if (line->linedef->sidedef[0] != line->sidedef)
 		{
-			swap (v1, v2);
+			swapvalues (v1, v2);
 		}
 		tx1 = v1->x - viewx;
 		tx2 = v2->x - viewx;
@@ -787,6 +826,16 @@ void R_AddLine (seg_t *line)
 			// Reject empty lines used for triggers and special events.
 			// Identical floor and ceiling on both sides, identical light levels
 			// on both sides, and no middle texture.
+
+			// When using GL nodes, do a clipping test for these lines so we can
+			// mark their subsectors as visible for automap texturing.
+			if (hasglnodes && !(InSubsector->flags & SSECF_DRAWN))
+			{
+				if (R_CheckClipWallSegment(WallSX1, WallSX2))
+				{
+					InSubsector->flags |= SSECF_DRAWN;
+				}
+			}
 			return;
 		}
 	}
@@ -822,7 +871,10 @@ void R_AddLine (seg_t *line)
 #endif
 	}
 
-	R_ClipWallSegment (WallSX1, WallSX2, solid);
+	if (R_ClipWallSegment (WallSX1, WallSX2, solid))
+	{
+		InSubsector->flags |= SSECF_DRAWN;
+	}
 }
 
 
@@ -900,7 +952,7 @@ static bool R_CheckBBox (fixed_t *bspcoord)	// killough 1/28/98: static
 		int t = 256-rx1;
 		rx1 = 256-rx2;
 		rx2 = t;
-		swap (ry1, ry2);
+		swapvalues (ry1, ry2);
 	}
 
 	if (rx1 >= -ry1)
@@ -1006,6 +1058,78 @@ void R_GetExtraLight (int *light, const secplane_t &plane, FExtraLight *el)
 		}
 	}
 }
+
+
+
+
+//==========================================================================
+//
+// FMiniBSP Constructor
+//
+//==========================================================================
+
+FMiniBSP::FMiniBSP()
+{
+	bDirty = false;
+}
+
+//==========================================================================
+//
+// P_BuildPolyBSP
+//
+//==========================================================================
+
+void R_BuildPolyBSP(subsector_t *sub)
+{
+	assert((sub->BSP == NULL || sub->BSP->bDirty) && "BSP computed more than once");
+
+	// Set up level information for the node builder.
+	PolyNodeLevel.Sides = sides;
+	PolyNodeLevel.NumSides = numsides;
+	PolyNodeLevel.Lines = lines;
+	PolyNodeLevel.NumLines = numlines;
+
+	// Feed segs to the nodebuilder and build the nodes.
+	PolyNodeBuilder.Clear();
+	PolyNodeBuilder.AddSegs(sub->firstline, sub->numlines);
+	for (FPolyNode *pn = sub->polys; pn != NULL; pn = pn->pnext)
+	{
+		PolyNodeBuilder.AddPolySegs(&pn->segs[0], (int)pn->segs.Size());
+	}
+	PolyNodeBuilder.BuildMini(false);
+	if (sub->BSP == NULL)
+	{
+		sub->BSP = new FMiniBSP;
+	}
+	else
+	{
+		sub->BSP->bDirty = false;
+	}
+	PolyNodeBuilder.ExtractMini(sub->BSP);
+	for (unsigned int i = 0; i < sub->BSP->Subsectors.Size(); ++i)
+	{
+		sub->BSP->Subsectors[i].sector = sub->sector;
+	}
+}
+
+void R_Subsector (subsector_t *sub);
+static void R_AddPolyobjs(subsector_t *sub)
+{
+	if (sub->BSP == NULL || sub->BSP->bDirty)
+	{
+		R_BuildPolyBSP(sub);
+	}
+	if (sub->BSP->Nodes.Size() == 0)
+	{
+		R_Subsector(&sub->BSP->Subsectors[0]);
+	}
+	else
+	{
+		R_RenderBSPNode(&sub->BSP->Nodes.Last());
+	}
+}
+
+
 //
 // R_Subsector
 // Determine floor/ceiling planes.
@@ -1019,16 +1143,39 @@ void R_Subsector (subsector_t *sub)
 	sector_t     tempsec;				// killough 3/7/98: deep water hack
 	int          floorlightlevel;		// killough 3/16/98: set floor lightlevel
 	int          ceilinglightlevel;		// killough 4/11/98
+	bool		 outersubsector;
+
+	if (InSubsector != NULL)
+	{ // InSubsector is not NULL. This means we are rendering from a mini-BSP.
+		outersubsector = false;
+	}
+	else
+	{
+		outersubsector = true;
+		InSubsector = sub;
+	}
 
 #ifdef RANGECHECK
-	if (sub - subsectors >= (ptrdiff_t)numsubsectors)
+	if (outersubsector && sub - subsectors >= (ptrdiff_t)numsubsectors)
 		I_Error ("R_Subsector: ss %ti with numss = %i", sub - subsectors, numsubsectors);
 #endif
+
+	assert(sub->sector != NULL);
+
+	if (sub->polys)
+	{ // Render the polyobjs in the subsector first
+		R_AddPolyobjs(sub);
+		if (outersubsector)
+		{
+			InSubsector = NULL;
+		}
+		return;
+	}
 
 	frontsector = sub->sector;
 	frontsector->MoreFlags |= SECF_DRAWN;
 	count = sub->numlines;
-	line = &segs[sub->firstline];
+	line = sub->firstline;
 
 	// killough 3/8/98, 4/4/98: Deep water / fake ceiling effect
 	frontsector = R_FakeFlat(frontsector, &tempsec, &floorlightlevel,
@@ -1092,29 +1239,26 @@ void R_Subsector (subsector_t *sub)
 		ceilinglightlevel : floorlightlevel, FakeSide);
 
 	// [RH] Add particles
-	int shade = LIGHT2SHADE((floorlightlevel + ceilinglightlevel)/2 + r_actualextralight);
-	for (WORD i = ParticlesInSubsec[(unsigned int)(sub-subsectors)]; i != NO_PARTICLE; i = Particles[i].snext)
-	{
-		R_ProjectParticle (Particles + i, subsectors[sub-subsectors].sector, shade, FakeSide);
-	}
-
-	if (sub->poly)
-	{ // Render the polyobj in the subsector first
-		int polyCount = sub->poly->numsegs;
-		seg_t **polySeg = sub->poly->segs;
-		while (polyCount--)
+	if ((unsigned int)(sub - subsectors) < (unsigned int)numsubsectors)
+	{ // Only do it for the main BSP.
+		int shade = LIGHT2SHADE((floorlightlevel + ceilinglightlevel)/2 + r_actualextralight);
+		for (WORD i = ParticlesInSubsec[(unsigned int)(sub-subsectors)]; i != NO_PARTICLE; i = Particles[i].snext)
 		{
-			R_AddLine (*polySeg++);
+			R_ProjectParticle (Particles + i, subsectors[sub-subsectors].sector, shade, FakeSide);
 		}
 	}
 
 	while (count--)
 	{
-		if (!line->bPolySeg)
+		if (!outersubsector || line->sidedef == NULL || !(line->sidedef->Flags & WALLF_POLYOBJ))
 		{
 			R_AddLine (line);
 		}
 		line++;
+	}
+	if (outersubsector)
+	{
+		InSubsector = NULL;
 	}
 }
 

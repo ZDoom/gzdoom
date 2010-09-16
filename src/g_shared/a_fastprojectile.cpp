@@ -72,7 +72,7 @@ void AFastProjectile::Tick ()
 					tm.LastRipped = NULL;	// [RH] Do rip damage each step, like Hexen
 				}
 				
-				if (!P_TryMove (this, x + xfrac,y + yfrac, true, false, tm))
+				if (!P_TryMove (this, x + xfrac,y + yfrac, true, NULL, tm))
 				{ // Blocked move
 					if (!(flags3 & MF3_SKYEXPLODE))
 					{
@@ -158,10 +158,13 @@ void AFastProjectile::Effect()
 		if (name != NAME_None)
 		{
 			fixed_t hitz = z-8*FRACUNIT;
+
 			if (hitz < floorz)
 			{
 				hitz = floorz;
 			}
+			// Do not clip this offset to the floor.
+			hitz += GetClass()->MissileHeight;
 		
 			PClassActor *trail = PClass::FindActor(name);
 			if (trail != NULL)

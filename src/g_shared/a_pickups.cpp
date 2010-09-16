@@ -401,6 +401,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialPosition)
 			self->z += FloatBobOffsets[(self->FloatBobPhase + level.maptime) & 63];
 		}
 	}
+	self->SetOrigin (self->x, self->y, self->z);
 	return 0;
 }
 
@@ -935,7 +936,7 @@ void AInventory::Touch (AActor *toucher)
 	{
 		const char * message = PickupMessage ();
 
-		if (toucher->CheckLocalView (consoleplayer)
+		if (message != NULL && *message != 0 && toucher->CheckLocalView (consoleplayer)
 			&& (StaticLastMessageTic != gametic || StaticLastMessage != message))
 		{
 			StaticLastMessageTic = gametic;

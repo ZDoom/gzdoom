@@ -848,15 +848,18 @@ bool FStateDefinitions::SetLoop()
 int FStateDefinitions::AddStates(FState *state, const char *framechars)
 {
 	bool error = false;
+	int frame = 0;
 	int count = 0;
 	while (*framechars)
 	{
-		int frame;
-		
-		if (*framechars == '^') 
-			frame = '\\'-'A';
+		bool noframe = false;
+
+		if (*framechars == '#')
+			noframe = true;
+		else if (*framechars == '^') 
+			frame = '\\' - 'A';
 		else 
-			frame = ((*framechars)&223)-'A';
+			frame = (*framechars & 223) - 'A';
 
 		framechars++;
 		if (frame < 0 || frame > 28)
@@ -865,7 +868,8 @@ int FStateDefinitions::AddStates(FState *state, const char *framechars)
 			error = true;
 		}
 
-		state->Frame = (state->Frame&(SF_FULLBRIGHT)) | frame;
+		state->Frame = frame;
+		state->SameFrame = noframe;
 		StateArray.Push(*state);
 		++count;
 	}

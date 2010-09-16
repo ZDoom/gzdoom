@@ -36,7 +36,7 @@ public:
 	bool RemoveSpot(ASpecialSpot *spot);
 	void Serialize(FArchive &arc);
 	ASpecialSpot *GetNextInList(const PClass *type, int skipcounter);
-	ASpecialSpot *GetSpotWithMinDistance(const PClass *type, fixed_t x, fixed_t y, fixed_t distance);
+	ASpecialSpot *GetSpotWithMinMaxDistance(const PClass *type, fixed_t x, fixed_t y, fixed_t mindist, fixed_t maxdist);
 	ASpecialSpot *GetRandomSpot(const PClass *type, bool onlyonce = false);
 };
 

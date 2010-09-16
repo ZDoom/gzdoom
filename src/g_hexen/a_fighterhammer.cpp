@@ -51,29 +51,35 @@ DEFINE_ACTION_FUNCTION(AActor, A_FHammerAttack)
 	{
 		angle = pmo->angle + i*(ANG45/32);
 		slope = P_AimLineAttack (pmo, angle, HAMMER_RANGE, &linetarget, 0, ALF_CHECK3D);
-		if (linetarget)
+		if (linetarget != NULL)
 		{
-			P_LineAttack (pmo, angle, HAMMER_RANGE, slope, damage, NAME_Melee, hammertime, true);
-			AdjustPlayerAngle(pmo, linetarget);
-			if (linetarget->flags3&MF3_ISMONSTER || linetarget->player)
+			P_LineAttack(pmo, angle, HAMMER_RANGE, slope, damage, NAME_Melee, hammertime, true, &linetarget);
+			if (linetarget != NULL)
 			{
-				P_ThrustMobj (linetarget, angle, power);
+				AdjustPlayerAngle(pmo, linetarget);
+				if (linetarget->flags3 & MF3_ISMONSTER || linetarget->player)
+				{
+					P_ThrustMobj(linetarget, angle, power);
+				}
+				pmo->special1 = false; // Don't throw a hammer
+				goto hammerdone;
 			}
-			pmo->special1 = false; // Don't throw a hammer
-			goto hammerdone;
 		}
 		angle = pmo->angle-i*(ANG45/32);
 		slope = P_AimLineAttack(pmo, angle, HAMMER_RANGE, &linetarget, 0, ALF_CHECK3D);
-		if(linetarget)
+		if (linetarget != NULL)
 		{
-			P_LineAttack(pmo, angle, HAMMER_RANGE, slope, damage, NAME_Melee, hammertime, true);
-			AdjustPlayerAngle(pmo, linetarget);
-			if (linetarget->flags3&MF3_ISMONSTER || linetarget->player)
+			P_LineAttack(pmo, angle, HAMMER_RANGE, slope, damage, NAME_Melee, hammertime, true, &linetarget);
+			if (linetarget != NULL)
 			{
-				P_ThrustMobj(linetarget, angle, power);
+				AdjustPlayerAngle(pmo, linetarget);
+				if (linetarget->flags3 & MF3_ISMONSTER || linetarget->player)
+				{
+					P_ThrustMobj(linetarget, angle, power);
+				}
+				pmo->special1 = false; // Don't throw a hammer
+				goto hammerdone;
 			}
-			pmo->special1 = false; // Don't throw a hammer
-			goto hammerdone;
 		}
 	}
 	// didn't find any targets in meleerange, so set to throw out a hammer

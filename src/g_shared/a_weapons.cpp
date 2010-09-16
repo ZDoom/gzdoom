@@ -771,7 +771,7 @@ int FWeaponSlot::LocateWeapon(PClassWeapon *type)
 //
 //===========================================================================
 
-AWeapon *FWeaponSlot::PickWeapon(player_t *player)
+AWeapon *FWeaponSlot::PickWeapon(player_t *player, bool checkammo)
 {
 	int i, j;
 
@@ -795,9 +795,12 @@ AWeapon *FWeaponSlot::PickWeapon(player_t *player)
 				{
 					AWeapon *weap = static_cast<AWeapon *> (player->mo->FindInventory(Weapons[j].Type));
 
-					if (weap != NULL && weap->IsKindOf(RUNTIME_CLASS(AWeapon)) && weap->CheckAmmo(AWeapon::EitherFire, false))
+					if (weap != NULL && weap->IsKindOf(RUNTIME_CLASS(AWeapon)))
 					{
-						return weap;
+						if (!checkammo || weap->CheckAmmo(AWeapon::EitherFire, false))
+						{
+							return weap;
+						}
 					}
 				}
 			}
@@ -807,9 +810,12 @@ AWeapon *FWeaponSlot::PickWeapon(player_t *player)
 	{
 		AWeapon *weap = static_cast<AWeapon *> (player->mo->FindInventory(Weapons[i].Type));
 
-		if (weap != NULL && weap->IsKindOf(RUNTIME_CLASS(AWeapon)) && weap->CheckAmmo(AWeapon::EitherFire, false))
+		if (weap != NULL && weap->IsKindOf(RUNTIME_CLASS(AWeapon)))
 		{
-			return weap;
+			if (!checkammo || weap->CheckAmmo(AWeapon::EitherFire, false))
+			{
+				return weap;
+			}
 		}
 	}
 	return player->ReadyWeapon;

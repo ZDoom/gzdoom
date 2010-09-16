@@ -70,6 +70,7 @@
 #include "cmdlib.h"
 #include "m_png.h"
 #include "p_setup.h"
+#include "po_man.h"
 
 #include "g_shared/a_pickups.h"
 
@@ -1084,8 +1085,8 @@ FBehavior::FBehavior (int lumpnum, FileReader * fr, int len)
 
 	if (Format == ACS_Old)
 	{
-		StringTable = ((DWORD *)Data)[1];
-		StringTable += ((DWORD *)(Data + StringTable))[0] * 12 + 4;
+		StringTable = LittleLong(((DWORD *)Data)[1]);
+		StringTable += LittleLong(((DWORD *)(Data + StringTable))[0]) * 12 + 4;
 	}
 	else
 	{
@@ -1396,8 +1397,8 @@ void FBehavior::LoadScriptsDirectory ()
 	switch (Format)
 	{
 	case ACS_Old:
-		scripts.dw = (DWORD *)(Data + ((DWORD *)Data)[1]);	// FIXME: Has this been byte-swapped before-hand?
-		NumScripts = scripts.dw[0];
+		scripts.dw = (DWORD *)(Data + LittleLong(((DWORD *)Data)[1]));
+		NumScripts = LittleLong(scripts.dw[0]);
 		if (NumScripts != 0)
 		{
 			scripts.dw++;
@@ -1426,7 +1427,7 @@ void FBehavior::LoadScriptsDirectory ()
 		}
 		else if (*(DWORD *)Data != MAKE_ID('A','C','S',0))
 		{
-			NumScripts = scripts.dw[1] / 12;
+			NumScripts = LittleLong(scripts.dw[1]) / 12;
 			Scripts = new ScriptPtr[NumScripts];
 			scripts.dw += 2;
 
@@ -1443,7 +1444,7 @@ void FBehavior::LoadScriptsDirectory ()
 		}
 		else
 		{
-			NumScripts = scripts.dw[1] / 8;
+			NumScripts = LittleLong(scripts.dw[1]) / 8;
 			Scripts = new ScriptPtr[NumScripts];
 			scripts.dw += 2;
 
@@ -1487,7 +1488,7 @@ void FBehavior::LoadScriptsDirectory ()
 					// Make the closed version the first one.
 					if (Scripts[i+1].Type == SCRIPT_Closed)
 					{
-						swap(Scripts[i], Scripts[i+1]);
+						swapvalues(Scripts[i], Scripts[i+1]);
 					}
 				}
 			}
@@ -1759,7 +1760,7 @@ const char *FBehavior::LookupString (DWORD index) const
 
 		if (index >= list[0])
 			return NULL;	// Out of range for this list;
-		return (const char *)(Data + list[1+index]);
+		return (const char *)(Data + LittleLong(list[1+index]));
 	}
 	else
 	{
@@ -2051,7 +2052,7 @@ int DLevelScript::Random (int min, int max)
 {
 	if (max < min)
 	{
-		swap (max, min);
+		swapvalues (max, min);
 	}
 
 	return min + pr_acs(max - min + 1);
@@ -2430,6 +2431,93 @@ void DLevelScript::DoSetFont (int fontnum)
 	}
 }
 
+int DoSetMaster (AActor *self, AActor *master)
+{
+    AActor *defs;
+    if (self->flags3&MF3_ISMONSTER)
+    {
+        if (master)
+        {
+            if (master->flags3&MF3_ISMONSTER)
+            {
+                self->FriendPlayer = 0;
+                self->master = master;
+                level.total_monsters -= self->CountsAsKill();
+                self->flags = (self->flags & ~MF_FRIENDLY) | (master->flags & MF_FRIENDLY);
+                level.total_monsters += self->CountsAsKill();
+                // Don't attack your new master
+                if (self->target == self->master) self->target = NULL;
+                if (self->lastenemy == self->master) self->lastenemy = NULL;
+                if (self->LastHeard == self->master) self->LastHeard = NULL;
+                return 1;
+            }
+            else if (master->player)
+            {
+                // [KS] Be friendly to this player
+                self->master = NULL;
+                level.total_monsters -= self->CountsAsKill();
+                self->flags|=MF_FRIENDLY;
+                self->FriendPlayer = int(master->player-players+1);
+
+                AActor * attacker=master->player->attacker;
+                if (attacker)
+                {
+                    if (!(attacker->flags&MF_FRIENDLY) || 
+                        (deathmatch && attacker->FriendPlayer!=0 && attacker->FriendPlayer!=self->FriendPlayer))
+                    {
+                        self->LastHeard = self->target = attacker;
+                    }
+                }
+                // And stop attacking him if necessary.
+                if (self->target == master) self->target = NULL;
+                if (self->lastenemy == master) self->lastenemy = NULL;
+                if (self->LastHeard == master) self->LastHeard = NULL;
+                return 1;
+            }
+        }
+        else
+        {
+            self->master = NULL;
+            self->FriendPlayer = 0;
+            // Go back to whatever friendliness we usually have...
+            defs = self->GetDefault();
+            level.total_monsters -= self->CountsAsKill();
+            self->flags = (self->flags & ~MF_FRIENDLY) | (defs->flags & MF_FRIENDLY);
+            level.total_monsters += self->CountsAsKill();
+            // ...And re-side with our friends.
+            if (self->target && !self->IsHostile (self->target)) self->target = NULL;
+            if (self->lastenemy && !self->IsHostile (self->lastenemy)) self->lastenemy = NULL;
+            if (self->LastHeard && !self->IsHostile (self->LastHeard)) self->LastHeard = NULL;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int DoGetMasterTID (AActor *self)
+{
+	if (self->master) return self->master->tid;
+	else if (self->FriendPlayer)
+	{
+		player_t *player = &players[(self->FriendPlayer)-1];
+		return player->mo->tid;
+	}
+	else return 0;
+}
+
+static AActor *SingleActorFromTID (int tid, AActor *defactor)
+{
+	if (tid == 0)
+	{
+		return defactor;
+	}
+	else
+	{
+		FActorIterator iterator (tid);
+		return iterator.Next();
+	}
+}
+
 enum
 {
 	APROP_Health		= 0,
@@ -2457,6 +2545,7 @@ enum
 	APROP_Score			= 22,
 	APROP_Notrigger		= 23,
 	APROP_DamageFactor	= 24,
+	APROP_MasterTID     = 25,
 };	
 
 // These are needed for ACS's APROP_RenderStyle
@@ -2573,9 +2662,15 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 
 	case APROP_Friendly:
 		if (value)
+		{
+			if (actor->CountsAsKill()) level.total_monsters--;
 			actor->flags |= MF_FRIENDLY;
+		}
 		else
+		{
 			actor->flags &= ~MF_FRIENDLY;
+			if (actor->CountsAsKill()) level.total_monsters++;
+		}
 		break;
 
 
@@ -2625,22 +2720,15 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 		actor->DamageFactor = value;
 		break;
 
+	case APROP_MasterTID:
+		AActor *other;
+		other = SingleActorFromTID (value, NULL);
+		DoSetMaster (actor, other);
+		break;
+
 	default:
 		// do nothing.
 		break;
-	}
-}
-
-static AActor *SingleActorFromTID (int tid, AActor *defactor)
-{
-	if (tid == 0)
-	{
-		return defactor;
-	}
-	else
-	{
-		FActorIterator iterator (tid);
-		return iterator.Next();
 	}
 }
 
@@ -2670,6 +2758,7 @@ int DLevelScript::GetActorProperty (int tid, int property)
 							// so pretends it's normal.
 							return STYLE_Normal;
 	case APROP_Gravity:		return actor->gravity;
+	case APROP_Invulnerable:return !!(actor->flags2 & MF2_INVULNERABLE);
 	case APROP_Ambush:		return !!(actor->flags & MF_AMBUSH);
 	case APROP_Dropped:		return !!(actor->flags & MF_DROPPED);
 	case APROP_ChaseGoal:	return !!(actor->flags5 & MF5_CHASEGOAL);
@@ -2695,6 +2784,7 @@ int DLevelScript::GetActorProperty (int tid, int property)
 								return 0;
 							}
 	case APROP_Score:		return actor->Score;
+	case APROP_MasterTID:	return DoGetMasterTID (actor);
 	default:				return 0;
 	}
 }
@@ -2725,10 +2815,12 @@ int DLevelScript::CheckActorProperty (int tid, int property, int value)
 		case APROP_SpawnHealth:
 		case APROP_JumpZ:
 		case APROP_Score:
+		case APROP_MasterTID:
 			return (GetActorProperty(tid, property) == value);
 
 		// Boolean values need to compare to a binary version of value
 		case APROP_Ambush:
+		case APROP_Invulnerable:
 		case APROP_Dropped:
 		case APROP_ChaseGoal:
 		case APROP_Frightened:
@@ -2940,6 +3032,9 @@ enum EACSFunctions
 	ACSF_SoundSequenceOnActor,
 	ACSF_SoundSequenceOnSector,
 	ACSF_SoundSequenceOnPolyobj,
+	ACSF_GetPolyobjX,
+	ACSF_GetPolyobjY,
+    ACSF_CheckSight,
 };
 
 int DLevelScript::SideFromID(int id, int side)
@@ -3339,12 +3434,87 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 			}
 			break;
 
+		case ACSF_GetPolyobjX:
+			{
+				FPolyObj *poly = PO_GetPolyobj(args[0]);
+				if (poly != NULL)
+				{
+					return poly->StartSpot.x;
+				}
+			}
+			return FIXED_MAX;
+
+		case ACSF_GetPolyobjY:
+			{
+				FPolyObj *poly = PO_GetPolyobj(args[0]);
+				if (poly != NULL)
+				{
+					return poly->StartSpot.y;
+				}
+			}
+			return FIXED_MAX;
+        
+        case ACSF_CheckSight:
+        {
+			AActor *source;
+			AActor *dest;
+
+			int flags = SF_IGNOREVISIBILITY;
+
+			if (args[2] & 1) flags |= SF_IGNOREWATERBOUNDARY;
+			if (args[2] & 2) flags |= SF_SEEPASTBLOCKEVERYTHING | SF_SEEPASTSHOOTABLELINES;
+
+			if (args[0] == 0) 
+			{
+				source = (AActor *) activator;
+
+				if (args[1] == 0) return 1; // [KS] I'm sure the activator can see itself.
+
+				TActorIterator<AActor> dstiter (args[1]);
+
+				while ( (dest = dstiter.Next ()) )
+				{
+					if (P_CheckSight(source, dest, flags)) return 1;
+				}
+			}
+			else
+			{
+				TActorIterator<AActor> srciter (args[0]);
+
+				if (args[1] == 0) dest = (AActor *) activator;
+	                
+				while ( (source = srciter.Next ()) )
+				{
+					if (args[1] != 0)
+					{
+						TActorIterator<AActor> dstiter (args[1]);
+						while ( (dest = dstiter.Next ()) )
+						{
+							if (P_CheckSight(source, dest, flags)) return 1;
+						}
+					}
+					else
+					{
+						if (P_CheckSight(source, dest, flags)) return 1;
+					}
+				}
+			}
+            return 0;
+        }
+
 		default:
 			break;
 	}
 
 	return 0;
 }
+
+enum
+{
+	PRINTNAME_LEVELNAME		= -1,
+	PRINTNAME_LEVEL			= -2,
+	PRINTNAME_SKILL			= -3,
+};
 
 
 #define NEXTWORD	(LittleLong(*pc++))
@@ -3366,6 +3536,20 @@ inline int getshort (int *&pc)
 	pc = (int *)((BYTE *)pc+2);
 	return res;
 }
+
+// Read a possibly unaligned four-byte little endian integer.
+#if defined(_M_IX86) || defined(_M_X64) || defined(__i386__) 
+inline int uallong(int &foo)
+{
+	return foo;
+}
+#else
+inline int uallong(int &foo)
+{
+	unsigned char *bar = (unsigned char *)&foo;
+	return bar[0] | (bar[1] << 8) | (bar[2] << 16) | (bar[3] << 24);
+}
+#endif
 
 int DLevelScript::RunScript ()
 {
@@ -3481,7 +3665,8 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_PUSHNUMBER:
-			PushToStack (NEXTWORD);
+			PushToStack (uallong(pc[0]));
+			pc++;
 			break;
 
 		case PCD_PUSHBYTE:
@@ -3538,7 +3723,7 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_SWAP:
-			swap(Stack[sp-2], Stack[sp-1]);
+			swapvalues(Stack[sp-2], Stack[sp-1]);
 			break;
 
 		case PCD_LSPEC1:
@@ -3583,35 +3768,35 @@ int DLevelScript::RunScript ()
 		case PCD_LSPEC1DIRECT:
 			temp = NEXTBYTE;
 			LineSpecials[temp] (activationline, activator, backSide,
-								pc[0], 0, 0, 0, 0);
+								uallong(pc[0]), 0, 0, 0, 0);
 			pc += 1;
 			break;
 
 		case PCD_LSPEC2DIRECT:
 			temp = NEXTBYTE;
 			LineSpecials[temp] (activationline, activator, backSide,
-								pc[0], pc[1], 0, 0, 0);
+								uallong(pc[0]), uallong(pc[1]), 0, 0, 0);
 			pc += 2;
 			break;
 
 		case PCD_LSPEC3DIRECT:
 			temp = NEXTBYTE;
 			LineSpecials[temp] (activationline, activator, backSide,
-								pc[0], pc[1], pc[2], 0, 0);
+								uallong(pc[0]), uallong(pc[1]), uallong(pc[2]), 0, 0);
 			pc += 3;
 			break;
 
 		case PCD_LSPEC4DIRECT:
 			temp = NEXTBYTE;
 			LineSpecials[temp] (activationline, activator, backSide,
-								pc[0], pc[1], pc[2], pc[3], 0);
+								uallong(pc[0]), uallong(pc[1]), uallong(pc[2]), uallong(pc[3]), 0);
 			pc += 4;
 			break;
 
 		case PCD_LSPEC5DIRECT:
 			temp = NEXTBYTE;
 			LineSpecials[temp] (activationline, activator, backSide,
-								pc[0], pc[1], pc[2], pc[3], pc[4]);
+								uallong(pc[0]), uallong(pc[1]), uallong(pc[2]), uallong(pc[3]), uallong(pc[4]));
 			pc += 5;
 			break;
 
@@ -4491,12 +4676,12 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_GOTO:
-			pc = activeBehavior->Ofs2PC (*pc);
+			pc = activeBehavior->Ofs2PC (LittleLong(*pc));
 			break;
 
 		case PCD_IFGOTO:
 			if (STACK(1))
-				pc = activeBehavior->Ofs2PC (*pc);
+				pc = activeBehavior->Ofs2PC (LittleLong(*pc));
 			else
 				pc++;
 			sp--;
@@ -4518,7 +4703,8 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_DELAYDIRECT:
-			statedata = NEXTWORD + (fmt == ACS_Old && gameinfo.gametype == GAME_Hexen);
+			statedata = uallong(pc[0]) + (fmt == ACS_Old && gameinfo.gametype == GAME_Hexen);
+			pc++;
 			if (statedata > 0)
 			{
 				state = SCRIPT_Delayed;
@@ -4540,7 +4726,7 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_RANDOMDIRECT:
-			PushToStack (Random (pc[0], pc[1]));
+			PushToStack (Random (uallong(pc[0]), uallong(pc[1])));
 			pc += 2;
 			break;
 
@@ -4555,7 +4741,7 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_THINGCOUNTDIRECT:
-			PushToStack (ThingCount (pc[0], -1, pc[1], -1));
+			PushToStack (ThingCount (uallong(pc[0]), -1, uallong(pc[1]), -1));
 			pc += 2;
 			break;
 
@@ -4582,7 +4768,8 @@ int DLevelScript::RunScript ()
 
 		case PCD_TAGWAITDIRECT:
 			state = SCRIPT_TagWait;
-			statedata = NEXTWORD;
+			statedata = uallong(pc[0]);
+			pc++;
 			break;
 
 		case PCD_POLYWAIT:
@@ -4593,7 +4780,8 @@ int DLevelScript::RunScript ()
 
 		case PCD_POLYWAITDIRECT:
 			state = SCRIPT_PolyWait;
-			statedata = NEXTWORD;
+			statedata = uallong(pc[0]);
+			pc++;
 			break;
 
 		case PCD_CHANGEFLOOR:
@@ -4602,7 +4790,7 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_CHANGEFLOORDIRECT:
-			ChangeFlat (pc[0], pc[1], 0);
+			ChangeFlat (uallong(pc[0]), uallong(pc[1]), 0);
 			pc += 2;
 			break;
 
@@ -4612,7 +4800,7 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_CHANGECEILINGDIRECT:
-			ChangeFlat (pc[0], pc[1], 1);
+			ChangeFlat (uallong(pc[0]), uallong(pc[1]), 1);
 			pc += 2;
 			break;
 
@@ -4674,7 +4862,7 @@ int DLevelScript::RunScript ()
 
 		case PCD_IFNOTGOTO:
 			if (!STACK(1))
-				pc = activeBehavior->Ofs2PC (*pc);
+				pc = activeBehavior->Ofs2PC (LittleLong(*pc));
 			else
 				pc++;
 			sp--;
@@ -4696,7 +4884,8 @@ int DLevelScript::RunScript ()
 
 		case PCD_SCRIPTWAITDIRECT:
 			state = SCRIPT_ScriptWait;
-			statedata = NEXTWORD;
+			statedata = uallong(pc[0]);
+			pc++;
 			PutLast ();
 			break;
 
@@ -4706,14 +4895,14 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_CASEGOTO:
-			if (STACK(1) == NEXTWORD)
+			if (STACK(1) == uallong(pc[0]))
 			{
-				pc = activeBehavior->Ofs2PC (*pc);
+				pc = activeBehavior->Ofs2PC (uallong(pc[1]));
 				sp--;
 			}
 			else
 			{
-				pc++;
+				pc += 2;
 			}
 			break;
 
@@ -4721,7 +4910,7 @@ int DLevelScript::RunScript ()
 			// The count and jump table are 4-byte aligned
 			pc = (int *)(((size_t)pc + 3) & ~3);
 			{
-				int numcases = NEXTWORD;
+				int numcases = uallong(pc[0]); pc++;
 				int min = 0, max = numcases-1;
 				while (min <= max)
 				{
@@ -4729,7 +4918,7 @@ int DLevelScript::RunScript ()
 					SDWORD caseval = pc[mid*2];
 					if (caseval == STACK(1))
 					{
-						pc = activeBehavior->Ofs2PC (pc[mid*2+1]);
+						pc = activeBehavior->Ofs2PC (LittleLong(pc[mid*2+1]));
 						sp--;
 						break;
 					}
@@ -4799,7 +4988,31 @@ int DLevelScript::RunScript ()
 			{
 				player_t *player = NULL;
 
-				if (STACK(1) == 0 || (unsigned)STACK(1) > MAXPLAYERS)
+				if (STACK(1) < 0)
+				{
+					switch (STACK(1))
+					{
+					case PRINTNAME_LEVELNAME:
+						work += level.LevelName;
+						break;
+
+					case PRINTNAME_LEVEL:
+						work += level.mapname;
+						break;
+
+					case PRINTNAME_SKILL:
+						work += G_SkillName();
+						break;
+
+					default:
+						work += ' ';
+						break;
+					}
+					sp--;
+					break;
+
+				}
+				else if (STACK(1) == 0 || (unsigned)STACK(1) > MAXPLAYERS)
 				{
 					if (activator)
 					{
@@ -4881,7 +5094,7 @@ int DLevelScript::RunScript ()
 			{
 				int key1 = 0, key2 = 0;
 
-				C_GetKeysForCommand ((char *)lookup, &key1, &key2);
+				Bindings.GetKeysForCommand ((char *)lookup, &key1, &key2);
 
 				if (key2)
 					work << KeyNames[key1] << " or " << KeyNames[key2];
@@ -5025,7 +5238,7 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_SETFONTDIRECT:
-			DoSetFont (pc[0]);
+			DoSetFont (uallong(pc[0]));
 			pc++;
 			break;
 
@@ -5314,7 +5527,7 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_SETGRAVITYDIRECT:
-			level.gravity = (float)pc[0] / 65536.f;
+			level.gravity = (float)uallong(pc[0]) / 65536.f;
 			pc++;
 			break;
 
@@ -5325,7 +5538,7 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_SETAIRCONTROLDIRECT:
-			level.aircontrol = pc[0];
+			level.aircontrol = uallong(pc[0]);
 			pc++;
 			G_AirControlChanged ();
 			break;
@@ -5336,7 +5549,7 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_SPAWNDIRECT:
-			PushToStack (DoSpawn (pc[0], pc[1], pc[2], pc[3], pc[4], pc[5], false));
+			PushToStack (DoSpawn (uallong(pc[0]), uallong(pc[1]), uallong(pc[2]), uallong(pc[3]), uallong(pc[4]), uallong(pc[5]), false));
 			pc += 6;
 			break;
 
@@ -5346,7 +5559,7 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_SPAWNSPOTDIRECT:
-			PushToStack (DoSpawnSpot (pc[0], pc[1], pc[2], pc[3], false));
+			PushToStack (DoSpawnSpot (uallong(pc[0]), uallong(pc[1]), uallong(pc[2]), uallong(pc[3]), false));
 			pc += 4;
 			break;
 
@@ -5402,7 +5615,7 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_GIVEINVENTORYDIRECT:
-			GiveInventory (activator, FBehavior::StaticLookupString (pc[0]), pc[1]);
+			GiveInventory (activator, FBehavior::StaticLookupString (uallong(pc[0])), uallong(pc[1]));
 			pc += 2;
 			break;
 
@@ -5432,7 +5645,7 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_TAKEINVENTORYDIRECT:
-			TakeInventory (activator, FBehavior::StaticLookupString (pc[0]), pc[1]);
+			TakeInventory (activator, FBehavior::StaticLookupString (uallong(pc[0])), uallong(pc[1]));
 			pc += 2;
 			break;
 
@@ -5447,7 +5660,7 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_CHECKINVENTORYDIRECT:
-			PushToStack (CheckInventory (activator, FBehavior::StaticLookupString (pc[0])));
+			PushToStack (CheckInventory (activator, FBehavior::StaticLookupString (uallong(pc[0]))));
 			pc += 1;
 			break;
 
@@ -5551,7 +5764,7 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_SETMUSICDIRECT:
-			S_ChangeMusic (FBehavior::StaticLookupString (pc[0]), pc[1]);
+			S_ChangeMusic (FBehavior::StaticLookupString (uallong(pc[0])), uallong(pc[1]));
 			pc += 3;
 			break;
 
@@ -5566,7 +5779,7 @@ int DLevelScript::RunScript ()
 		case PCD_LOCALSETMUSICDIRECT:
 			if (activator == players[consoleplayer].mo)
 			{
-				S_ChangeMusic (FBehavior::StaticLookupString (pc[0]), pc[1]);
+				S_ChangeMusic (FBehavior::StaticLookupString (uallong(pc[0])), uallong(pc[1]));
 			}
 			pc += 3;
 			break;
@@ -6214,12 +6427,7 @@ int DLevelScript::RunScript ()
 
 		case PCD_CHANGELEVEL:
 			{
-				int flags = STACK(2);
-				G_ChangeLevel(FBehavior::StaticLookupString(STACK(4)), STACK(3),
-					!!(flags & CHANGELEVEL_KEEPFACING), STACK(1),
-					!!(flags & CHANGELEVEL_NOINTERMISSION),
-					!!(flags & CHANGELEVEL_RESETINVENTORY),
-					!!(flags & CHANGELEVEL_NOMONSTERS));
+				G_ChangeLevel(FBehavior::StaticLookupString(STACK(4)), STACK(3), STACK(2), STACK(1));
 				sp -= 4;
 			}
 			break;

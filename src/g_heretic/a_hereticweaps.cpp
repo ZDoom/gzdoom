@@ -89,7 +89,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_StaffAttack)
 	angle = self->angle;
 	angle += pr_sap.Random2() << 18;
 	slope = P_AimLineAttack (self, angle, MELEERANGE, &linetarget);
-	P_LineAttack (self, angle, MELEERANGE, slope, damage, NAME_Melee, puff, true);
+	P_LineAttack (self, angle, MELEERANGE, slope, damage, NAME_Melee, puff, true, &linetarget);
 	if (linetarget)
 	{
 		//S_StartSound(player->mo, sfx_stfhit);
@@ -291,7 +291,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GauntletAttack)
 		pufftype = PClass::FindActor("GauntletPuff1");
 	}
 	slope = P_AimLineAttack (self, angle, dist, &linetarget);
-	P_LineAttack (self, angle, dist, slope, damage, NAME_Melee, pufftype);
+	P_LineAttack (self, angle, dist, slope, damage, NAME_Melee, pufftype, false, &linetarget);
 	if (!linetarget)
 	{
 		if (pr_gatk() > 64)

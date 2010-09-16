@@ -75,7 +75,4 @@ typedef struct
 	// WORD UsedInstruments[NumInstruments];
 } MUSHeader;
 
-bool ProduceMIDI (const BYTE *musBuf, TArray<BYTE> &outFile);
-bool ProduceMIDI (const BYTE *musBuf, FILE *outFile);
-
 #endif //__MUS2MIDI_H__

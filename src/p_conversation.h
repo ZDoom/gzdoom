@@ -1,26 +1,28 @@
 #ifndef P_CONVERSATION_H
 #define P_CONVERSATION_H 1
 
-// TODO: Generalize the conversation system to something NWN-like that
-// users can edit as simple text files. Particularly useful would be
-// the ability to call ACS functions to implement AppearsWhen properties
-// and ACS scripts to implement ActionTaken properties.
-// TODO: Make this work in demos.
+#include <tarray.h>
 
 struct FStrifeDialogueReply;
 class FTexture;
 struct FBrokenLines;
+
+struct FStrifeDialogueItemCheck
+{
+	PClassInventory *Item;
+	int Amount;
+};
 
 // FStrifeDialogueNode holds text an NPC says to the player
 struct FStrifeDialogueNode
 {
 	~FStrifeDialogueNode ();
 	PClassActor *DropType;
-	PClassActor *ItemCheck[3];
+	TArray<FStrifeDialogueItemCheck> ItemCheck;
 	int ThisNodeNum;	// location of this node in StrifeDialogues
 	int ItemCheckNode;	// index into StrifeDialogues
 
-	const PClass *SpeakerType;
+	PClassActor *SpeakerType;
 	char *SpeakerName;
 	FSoundID SpeakerVoice;
 	FTextureID Backdrop;
@@ -36,12 +38,14 @@ struct FStrifeDialogueReply
 
 	FStrifeDialogueReply *Next;
 	PClassActor *GiveType;
-	PClassActor *ItemCheck[3];
-	int ItemCheckAmount[3];
+	int ActionSpecial;
+	int Args[5];
+	TArray<FStrifeDialogueItemCheck> ItemCheck;
 	char *Reply;
 	char *QuickYes;
 	int NextNode;	// index into StrifeDialogues
 	int LogNumber;
+	char *LogString;
 	char *QuickNo;
 	bool NeedsGold;
 
@@ -50,13 +54,15 @@ struct FStrifeDialogueReply
 
 extern TArray<FStrifeDialogueNode *> StrifeDialogues;
 
-// There were 344 types in Strife, and Strife conversations refer
-// to their index in the mobjinfo table. This table indexes all
-// the Strife actor types in the order Strife had them and is
-// initialized as part of the actor's setup in infodefaults.cpp.
-extern PClass *StrifeTypes[1001];
-
 struct MapData;
+
+void SetStrifeType(int convid, PClassActor *Class);
+void SetConversation(int convid, PClassActor *Class, int dlgindex);
+PClassActor *GetStrifeType (int typenum);
+int GetConversation(int conv_id);
+int GetConversation(FName classname);
+
+bool LoadScriptFile (const char *name, bool include, int type = 0);
 
 void P_LoadStrifeConversations (MapData *map, const char *mapname);
 void P_FreeStrifeConversations ();
@@ -65,5 +71,9 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 void P_ResumeConversation ();
 
 void P_ConversationCommand (int netcode, int player, BYTE **stream);
+
+class FileReader;
+bool P_ParseUSDF(int lumpnum, FileReader *lump, int lumplen);
+
 
 #endif

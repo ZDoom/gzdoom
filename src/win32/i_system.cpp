@@ -997,7 +997,7 @@ void I_PrintStr(const char *cp)
 				if (edit != NULL)
 				{
 					// GDI uses BGR colors, but color is RGB, so swap the R and the B.
-					swap(color.r, color.b);
+					swapvalues(color.r, color.b);
 					// Change the color.
 					format.cbSize = sizeof(format);
 					format.dwMask = CFM_COLOR;

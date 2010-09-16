@@ -51,6 +51,8 @@
 #include "doomstat.h"
 #include "d_player.h"
 #include "autosegs.h"
+#include "version.h"
+#include "v_text.h"
 
 int FindEndSequence (int type, const char *picname);
 
@@ -1324,6 +1326,7 @@ MapFlagHandlers[] =
 	{ "specialaction_exitlevel",		MITYPE_SCFLAGS,	0, ~LEVEL_SPECACTIONSMASK },
 	{ "specialaction_opendoor",			MITYPE_SCFLAGS,	LEVEL_SPECOPENDOOR, ~LEVEL_SPECACTIONSMASK },
 	{ "specialaction_lowerfloor",		MITYPE_SCFLAGS,	LEVEL_SPECLOWERFLOOR, ~LEVEL_SPECACTIONSMASK },
+	{ "specialaction_lowerfloortohighest",MITYPE_SCFLAGS,LEVEL_SPECLOWERFLOORTOHIGHEST, ~LEVEL_SPECACTIONSMASK },
 	{ "specialaction_killmonsters",		MITYPE_SETFLAG,	LEVEL_SPECKILLMONSTERS, 0 },
 	{ "lightning",						MITYPE_SETFLAG,	LEVEL_STARTLIGHTNING, 0 },
 	{ "smoothlighting",					MITYPE_SETFLAG2,	LEVEL2_SMOOTHLIGHTING, 0 },
@@ -1372,6 +1375,7 @@ MapFlagHandlers[] =
 	{ "grinding_polyobj",				MITYPE_SETFLAG2,	LEVEL2_POLYGRIND, 0 },
 	{ "no_grinding_polyobj",			MITYPE_CLRFLAG2,	LEVEL2_POLYGRIND, 0 },
 	{ "resetinventory",					MITYPE_SETFLAG2,	LEVEL2_RESETINVENTORY, 0 },
+	{ "resethealth",					MITYPE_SETFLAG2,	LEVEL2_RESETHEALTH, 0 },
 	{ "unfreezesingleplayerconversations",MITYPE_SETFLAG2,	LEVEL2_CONV_SINGLE_UNFREEZE, 0 },
 	{ "nobotnodes",						MITYPE_IGNORE,	0, 0 },		// Skulltag option: nobotnodes
 	{ "compat_shorttex",				MITYPE_COMPATFLAG, COMPATF_SHORTTEX},
@@ -1399,6 +1403,8 @@ MapFlagHandlers[] =
 	{ "compat_corpsegibs",				MITYPE_COMPATFLAG, COMPATF_CORPSEGIBS},
 	{ "compat_noblockfriends",			MITYPE_COMPATFLAG, COMPATF_NOBLOCKFRIENDS},
 	{ "compat_spritesort",				MITYPE_COMPATFLAG, COMPATF_SPRITESORT},
+	{ "compat_light",					MITYPE_COMPATFLAG, COMPATF_LIGHT},
+	{ "compat_polyobj",					MITYPE_COMPATFLAG, COMPATF_POLYOBJ},
 	{ "cd_start_track",					MITYPE_EATNEXT,	0, 0 },
 	{ "cd_end1_track",					MITYPE_EATNEXT,	0, 0 },
 	{ "cd_end2_track",					MITYPE_EATNEXT,	0, 0 },
@@ -1799,6 +1805,7 @@ void FMapInfoParser::ParseEpisodeInfo ()
 		EpisodeMenu[i].fulltext = !picisgfx;
 		EpisodeNoSkill[i] = noskill;
 		strncpy (EpisodeMaps[i], map, 8);
+		EpisodeMaps[i][8] = 0;
 	}
 }
 
@@ -1860,6 +1867,15 @@ void FMapInfoParser::ParseMapInfo (int lump, level_info_t &gamedefaults, level_i
 			if (inclump < 0)
 			{
 				sc.ScriptError("include file '%s' not found", sc.String);
+			}
+			if (Wads.GetLumpFile(sc.LumpNum) != Wads.GetLumpFile(inclump))
+			{
+				// Do not allow overriding includes from the default MAPINFO
+				if (Wads.GetLumpFile(sc.LumpNum) == 0)
+				{
+					I_FatalError("File %s is overriding core lump %s.",
+						Wads.GetWadFullName(Wads.GetLumpFile(inclump)), sc.String);
+				}
 			}
 			FScanner saved_sc = sc;
 			ParseMapInfo(inclump, gamedefaults, defaultinfo);
@@ -1952,12 +1968,18 @@ void G_ParseMapInfo (const char *basemapinfo)
 
 	atterm(ClearEpisodes);
 
-	// Parse the default MAPINFO for the current game.
+	// Parse the default MAPINFO for the current game. This lump *MUST* come from zdoom.pk3.
 	if (basemapinfo != NULL)
 	{
 		FMapInfoParser parse;
 		level_info_t defaultinfo;
-		parse.ParseMapInfo(Wads.GetNumForFullName(basemapinfo), gamedefaults, defaultinfo);
+		int baselump = Wads.GetNumForFullName(basemapinfo);
+		if (Wads.GetLumpFile(baselump) > 0)
+		{
+			I_FatalError("File %s is overriding core lump %s.", 
+				Wads.GetWadFullName(Wads.GetLumpFile(baselump)), basemapinfo);
+		}
+		parse.ParseMapInfo(baselump, gamedefaults, defaultinfo);
 	}
 
 	static const char *mapinfonames[] = { "MAPINFO", "ZMAPINFO", NULL };

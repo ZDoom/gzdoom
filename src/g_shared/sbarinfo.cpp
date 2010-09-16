@@ -57,16 +57,8 @@
 #include "g_level.h"
 #include "v_palette.h"
 #include "p_acs.h"
-
-#define ADJUST_RELCENTER(x, y, outX, outY) \
-	if(x.RelCenter()) \
-		outX = *x + SCREENWIDTH/(hud_scale ? CleanXfac*2 : 2); \
-	else \
-		outX = *x; \
-	if(y.RelCenter()) \
-		outY = *y + SCREENHEIGHT/(hud_scale ? CleanYfac*2 : 2); \
-	else \
-		outY = *y;
+#include "gstrings.h"
+#include "version.h"
 
 #define ARTIFLASH_OFFSET (statusBar->invBarOffset+6)
 enum
@@ -189,8 +181,8 @@ class SBarInfoCommand
 				}
 			}
 
-			if(!fullScreenOffsets)
-				y.SetCoord((negative ? -sc.Number : sc.Number) - (200 - script->height));
+			//if(!fullScreenOffsets)
+			//	y.SetCoord((negative ? -sc.Number : sc.Number) - (200 - script->height));
 		}
 		EColorRange	GetTranslation(FScanner &sc)
 		{
@@ -213,60 +205,107 @@ class SBarInfoCommand
 class SBarInfoCommandFlowControl : public SBarInfoCommand
 {
 	public:
-		SBarInfoCommandFlowControl(SBarInfo *script) : SBarInfoCommand(script) {}
+		SBarInfoCommandFlowControl(SBarInfo *script) : SBarInfoCommand(script), truth(false) {}
 		~SBarInfoCommandFlowControl()
 		{
-			for(unsigned int i = 0;i < commands.Size();i++)
-				delete commands[i];
+			for(unsigned int i = 0;i < 2;i++)
+			{
+				for(unsigned int j = 0;j < commands[i].Size();j++)
+					delete commands[i][j];
+			}
 		}
 
 		void	Draw(const SBarInfoMainBlock *block, const DSBarInfo *statusBar)
 		{
-			for(unsigned int i = 0;i < commands.Size();i++)
-				commands[i]->Draw(block, statusBar);
+			for(unsigned int i = 0;i < commands[truth].Size();i++)
+				commands[truth][i]->Draw(block, statusBar);
 		}
-		int		NumCommands() const { return commands.Size(); }
+		int		NumCommands() const { return commands[truth].Size(); }
 		void	Parse(FScanner &sc, bool fullScreenOffsets)
 		{
-			sc.MustGetToken('{');
+			bool elseBlock = false;
 			SBarInfoCommand *cmd = NULL;
-			while((cmd = NextCommand(sc)) != NULL)
+			// Should loop no more than twice.
+			while(true)
 			{
-				cmd->Parse(sc, fullScreenOffsets);
-				commands.Push(cmd);
+				if(sc.CheckToken('{'))
+				{
+					while((cmd = NextCommand(sc)) != NULL)
+					{
+						cmd->Parse(sc, fullScreenOffsets);
+						commands[!elseBlock].Push(cmd);
+					}
+				}
+				else
+				{
+					if((cmd = NextCommand(sc)) != NULL)
+					{
+						cmd->Parse(sc, fullScreenOffsets);
+						commands[!elseBlock].Push(cmd);
+					}
+					else
+						sc.ScriptError("Missing command for flow control statement.");
+				}
+
+				if(!elseBlock && sc.CheckToken(TK_Else))
+				{
+					elseBlock = true;
+					continue;
+				}
+				break;
 			}
 		}
 		void	Reset()
 		{
-			for(unsigned int i = 0;i < commands.Size();i++)
-				commands[i]->Reset();
+			for(unsigned int i = 0;i < 2;i++)
+			{
+				for(unsigned int j = 0;j < commands[i].Size();j++)
+					commands[i][j]->Reset();
+			}
 		}
 		void	Tick(const SBarInfoMainBlock *block, const DSBarInfo *statusBar, bool hudChanged)
 		{
-			for(unsigned int i = 0;i < commands.Size();i++)
-				commands[i]->Tick(block, statusBar, hudChanged);
+			for(unsigned int i = 0;i < commands[truth].Size();i++)
+				commands[truth][i]->Tick(block, statusBar, hudChanged);
+		}
+
+	protected:
+		void	SetTruth(bool truth, const SBarInfoMainBlock *block, const DSBarInfo *statusBar)
+		{
+			// If there is no change we don't need to do anything.  Do note
+			// that this should not change more than once per tick.  If it does
+			// there may be cosmetic problems.
+			if(this->truth == truth)
+				return;
+
+			this->truth = truth;
+			if(block != NULL)
+				Tick(block, statusBar, true);
 		}
 
 	private:
 		SBarInfoCommand	*NextCommand(FScanner &sc);
 
-		TArray<SBarInfoCommand *>	commands;
+		bool						truth;
+		TArray<SBarInfoCommand *>	commands[2];
 };
 
 class SBarInfoMainBlock : public SBarInfoCommandFlowControl
 {
 	public:
 		SBarInfoMainBlock(SBarInfo *script) : SBarInfoCommandFlowControl(script),
-			alpha(FRACUNIT), forceScaled(false), fullScreenOffsets(false)
+			alpha(FRACUNIT), currentAlpha(FRACUNIT), forceScaled(false),
+			fullScreenOffsets(false)
 		{
+			SetTruth(true, NULL, NULL);
 		}
 
-		int		Alpha() const { return alpha; }
+		int		Alpha() const { return currentAlpha; }
 		void	Draw(const SBarInfoMainBlock *block, const DSBarInfo *statusBar, int xOffset, int yOffset, int alpha)
 		{
 			this->xOffset = xOffset;
 			this->yOffset = yOffset;
-			this->alpha = alpha;
+			this->currentAlpha = fixed_t((((double) this->alpha / (double) FRACUNIT) * ((double) alpha / (double) FRACUNIT)) * FRACUNIT);
 			SBarInfoCommandFlowControl::Draw(this, statusBar);
 		}
 		bool	ForceScaled() const { return forceScaled; }
@@ -299,8 +338,9 @@ class SBarInfoMainBlock : public SBarInfoCommandFlowControl
 		int		XOffset() const { return xOffset; }
 		int		YOffset() const { return yOffset; }
 
-	private:
+	protected:
 		int		alpha;
+		int		currentAlpha;
 		bool	forceScaled;
 		bool	fullScreenOffsets;
 		int		xOffset;
@@ -320,6 +360,7 @@ enum //Key words
 	SBARINFO_COMPLETEBORDER,
 	SBARINFO_MONOSPACEFONTS,
 	SBARINFO_LOWERHEALTHCAP,
+	SBARINFO_RESOLUTION,
 	SBARINFO_STATUSBAR,
 	SBARINFO_MUGSHOT,
 	SBARINFO_CREATEPOPUP,
@@ -347,6 +388,7 @@ static const char *SBarInfoTopLevel[] =
 	"completeborder",
 	"monospacefonts",
 	"lowerhealthcap",
+	"resolution",
 	"statusbar",
 	"mugshot",
 	"createpopup",
@@ -428,6 +470,7 @@ void SBarInfo::ParseSBarInfo(int lump)
 			ParseSBarInfo(lump);
 			continue;
 		}
+		int baselump = -2;
 		switch(sc.MustMatchString(SBarInfoTopLevel))
 		{
 			case SBARINFO_BASE:
@@ -436,21 +479,36 @@ void SBarInfo::ParseSBarInfo(int lump)
 					sc.MustGetToken(TK_Identifier);
 				if(sc.Compare("Doom"))
 				{
-					int lump = Wads.CheckNumForFullName("sbarinfo/doom.txt", true);
-					if(lump == -1)
-						sc.ScriptError("Standard Doom Status Bar not found.");
-					ParseSBarInfo(lump);
+					baselump = Wads.CheckNumForFullName("sbarinfo/doom.txt", true);
 				}
 				else if(sc.Compare("Heretic"))
-					gameType = GAME_Heretic;
+				{
+					baselump = Wads.CheckNumForFullName("sbarinfo/heretic.txt", true);
+				}
 				else if(sc.Compare("Hexen"))
-					gameType = GAME_Hexen;
+				{
+					baselump = Wads.CheckNumForFullName("sbarinfo/hexen.txt", true);
+				}
 				else if(sc.Compare("Strife"))
 					gameType = GAME_Strife;
 				else if(sc.Compare("None"))
 					gameType = GAME_Any;
 				else
 					sc.ScriptError("Bad game name: %s", sc.String);
+				// If one of the standard status bar should be loaded, baselump has been set to a different value.
+				if (baselump != -2)
+				{
+					if(baselump == -1)
+					{
+						sc.ScriptError("Standard %s status bar not found.", sc.String);
+					}
+					else if (Wads.GetLumpFile(baselump) > 0)
+					{
+						I_FatalError("File %s is overriding core lump sbarinfo/%s.txt.",
+							Wads.GetWadFullName(Wads.GetLumpFile(baselump)), sc.String);
+					}
+					ParseSBarInfo(baselump);
+				}
 				sc.MustGetToken(';');
 				break;
 			case SBARINFO_HEIGHT:
@@ -518,6 +576,19 @@ void SBarInfo::ParseSBarInfo(int lump)
 					sc.MustGetToken(',');
 					sc.MustGetToken(TK_StringConst); //Don't tell anyone we're just ignoring this ;)
 				}
+				if(sc.CheckToken(','))
+				{
+					// Character alignment
+					sc.MustGetToken(TK_Identifier);
+					if(sc.Compare("left"))
+						spacingAlignment = ALIGN_LEFT;
+					else if(sc.Compare("center"))
+						spacingAlignment = ALIGN_CENTER;
+					else if(sc.Compare("right"))
+						spacingAlignment = ALIGN_RIGHT;
+					else
+						sc.ScriptError("Unknown alignment '%s'.", sc.String);
+				}
 				sc.MustGetToken(';');
 				break;
 			case SBARINFO_LOWERHEALTHCAP:
@@ -530,6 +601,14 @@ void SBarInfo::ParseSBarInfo(int lump)
 					sc.MustGetToken(TK_True);
 					lowerHealthCap = true;
 				}
+				sc.MustGetToken(';');
+				break;
+			case SBARINFO_RESOLUTION:
+				sc.MustGetToken(TK_IntConst);
+				resW = sc.Number;
+				sc.MustGetToken(',');
+				sc.MustGetToken(TK_IntConst);
+				resH = sc.Number;
 				sc.MustGetToken(';');
 				break;
 			case SBARINFO_STATUSBAR:
@@ -611,6 +690,13 @@ void SBarInfo::ParseSBarInfo(int lump)
 					if(sc.Compare("slideinbottom"))
 					{
 						popup.transition = Popup::TRANSITION_SLIDEINBOTTOM;
+						sc.MustGetToken(',');
+						sc.MustGetToken(TK_IntConst);
+						popup.speed = sc.Number;
+					}
+					else if(sc.Compare("pushup"))
+					{
+						popup.transition = Popup::TRANSITION_PUSHUP;
 						sc.MustGetToken(',');
 						sc.MustGetToken(TK_IntConst);
 						popup.speed = sc.Number;
@@ -707,6 +793,9 @@ void SBarInfo::Init()
 	armorInterpolationSpeed = 8;
 	height = 0;
 	spacingCharacter = '\0';
+	spacingAlignment = ALIGN_CENTER;
+	resW = 320;
+	resH = 200;
 
 	for(unsigned int i = 0;i < NUMHUDS;i++)
 		huds[i] = new SBarInfoMainBlock(this);
@@ -722,78 +811,79 @@ SBarInfo::~SBarInfo()
 }
 
 //Popup
-Popup::Popup()
+Popup::Popup() : transition(TRANSITION_NONE), opened(false), moving(false),
+	height(320), width(200), speed(0), speed2(0), alpha(FRACUNIT), x(320),
+	y(200), displacementX(0), displacementY(0)
 {
-	transition = TRANSITION_NONE;
-	height = 320;
-	width = 200;
-	speed = 0;
-	x = 320;
-	y = 200;
-	alpha = FRACUNIT;
-	opened = false;
-	moving = false;
 }
 
 void Popup::init()
 {
 	x = width;
 	y = height;
-	if(transition == TRANSITION_SLIDEINBOTTOM)
+	switch(transition)
 	{
-		x = 0;
-	}
-	else if(transition == TRANSITION_FADE)
-	{
-		alpha = 0;
-		x = 0;
-		y = 0;
+		case TRANSITION_SLIDEINBOTTOM:
+		case TRANSITION_PUSHUP:
+			x = 0;
+			break;
+		case TRANSITION_FADE:
+			alpha = 0;
+			x = 0;
+			y = 0;
+			break;
+		default:
+			break;
 	}
 }
 
 void Popup::tick()
 {
-	if(transition == TRANSITION_SLIDEINBOTTOM)
+	switch(transition)
 	{
-		if(moving)
-		{
-			if(opened)
-				y -= clamp(height + (y - height), 1, speed);
+		case TRANSITION_SLIDEINBOTTOM:
+		case TRANSITION_PUSHUP:
+			if(moving)
+			{
+				int oldY = y;
+				if(opened)
+					y -= clamp(height + (y - height), 1, speed);
+				else
+					y += clamp(height - y, 1, speed);
+				if(transition == TRANSITION_PUSHUP)
+					displacementY += y - oldY;
+			}
+			if(y != 0 && y != height)
+				moving = true;
 			else
-				y += clamp(height - y, 1, speed);
-		}
-		if(y != 0 && y != height)
-			moving = true;
-		else
-			moving = false;
-	}
-	else if(transition == TRANSITION_FADE)
-	{
-		if(moving)
-		{
-			if(opened)
-				alpha = clamp(alpha + speed, 0, FRACUNIT);
+				moving = false;
+			break;
+		case TRANSITION_FADE:
+			if(moving)
+			{
+				if(opened)
+					alpha = clamp(alpha + speed, 0, FRACUNIT);
+				else
+					alpha = clamp(alpha - speed2, 0, FRACUNIT);
+			}
+			if(alpha == 0 || alpha == FRACUNIT)
+				moving = false;
 			else
-				alpha = clamp(alpha - speed2, 0, FRACUNIT);
-		}
-		if(alpha == 0 || alpha == FRACUNIT)
+				moving = true;
+			break;
+		default:
+			if(opened)
+			{
+				y = 0;
+				x = 0;
+			}
+			else
+			{
+				y = height;
+				x = width;
+			}
 			moving = false;
-		else
-			moving = true;
-	}
-	else
-	{
-		if(opened)
-		{
-			y = 0;
-			x = 0;
-		}
-		else
-		{
-			y = height;
-			x = width;
-		}
-		moving = false;
+			break;
 	}
 }
 
@@ -819,6 +909,16 @@ int Popup::getAlpha(int maxAlpha)
 	return fixed_t((a * b) * FRACUNIT);
 }
 
+int Popup::getXDisplacement()
+{
+	return displacementX;
+}
+
+int Popup::getYDisplacement()
+{
+	return displacementY;
+}
+
 void Popup::open()
 {
 	opened = true;
@@ -833,11 +933,23 @@ void Popup::close()
 
 ////////////////////////////////////////////////////////////////////////////////
 
+inline void adjustRelCenter(bool relX, bool relY, const double &x, const double &y, double &outX, double &outY, const double &xScale, const double &yScale)
+{
+	if(relX)
+		outX = x + (SCREENWIDTH/(hud_scale ? xScale*2 : 2));
+	else
+		outX = x;
+	if(relY)
+		outY = y + (SCREENHEIGHT/(hud_scale ? yScale*2 : 2));
+	else
+		outY = y;
+}
+
 class DSBarInfo : public DBaseStatusBar
 {
 	DECLARE_CLASS(DSBarInfo, DBaseStatusBar)
 public:
-	DSBarInfo (SBarInfo *script=NULL) : DBaseStatusBar(script->height),
+	DSBarInfo (SBarInfo *script=NULL) : DBaseStatusBar(script->height, script->resW, script->resH),
 		ammo1(NULL), ammo2(NULL), ammocount1(0), ammocount2(0), armor(NULL),
 		pendingPopup(POP_None), currentPopup(POP_None), lastHud(-1),
 		lastInventoryBar(NULL), lastPopup(NULL)
@@ -860,10 +972,6 @@ public:
 		for(i = 0;i < 10;i++)
 		{
 			patchnames[i+script->Images.Size()] = InventoryBarLumps[i];
-		}
-		for (i = 0;i < numskins;i++)
-		{
-			AddFaceToImageCollection (&skins[i], &Images);
 		}
 		invBarOffset = script->Images.Size();
 		Images.Init(&patchnames[0], patchnames.Size());
@@ -918,8 +1026,13 @@ public:
 		armor = CPlayer->mo->FindInventory<ABasicArmor>();
 		if(hud != lastHud)
 			script->huds[hud]->Tick(NULL, this, true);
-		script->huds[hud]->Draw(NULL, this, 0, 0, FRACUNIT);
+
+		if(currentPopup != POP_None && !script->huds[hud]->FullScreenOffsets())
+			script->huds[hud]->Draw(NULL, this, script->popups[currentPopup-1].getXDisplacement(), script->popups[currentPopup-1].getYDisplacement(), FRACUNIT);
+		else
+			script->huds[hud]->Draw(NULL, this, 0, 0, FRACUNIT);
 		lastHud = hud;
+
 		if(CPlayer->inventorytics > 0 && !(level.flags & LEVEL_NOINVENTORYBAR) && (state == HUD_StatusBar || state == HUD_Fullscreen))
 		{
 			SBarInfoMainBlock *inventoryBar = state == HUD_StatusBar ? script->huds[STBAR_INVENTORY] : script->huds[STBAR_INVENTORYFULLSCREEN];
@@ -1030,53 +1143,58 @@ public:
 		if (texture == NULL)
 			return;
 
+		double dx = *x;
+		double dy = *y;
+
 		if((offsetflags & SBarInfoCommand::CENTER) == SBarInfoCommand::CENTER)
 		{
-			x -= (texture->GetScaledWidth()/2)-texture->LeftOffset;
-			y -= (texture->GetScaledHeight()/2)-texture->TopOffset;
+			dx -= (texture->GetScaledWidthDouble()/2.0)-texture->LeftOffset;
+			dy -= (texture->GetScaledHeightDouble()/2.0)-texture->TopOffset;
 		}
 
-		x += xOffset;
-		y += yOffset;
-		int w, h;
+		dx += xOffset;
+		dy += yOffset;
+		double w, h;
 		if(!fullScreenOffsets)
 		{
-			fixed_t tmp = 0;
-			// I'll handle the conversion from fixed to int myself for more control
-			fixed_t fx = (x + ST_X).Coordinate() << FRACBITS;
-			fixed_t fy = (y + ST_Y).Coordinate() << FRACBITS;
-			fixed_t fw = (forceWidth <= -1 ? texture->GetScaledWidth() : forceWidth) << FRACBITS;
-			fixed_t fh = (forceHeight <= -1 ? texture->GetScaledHeight() : forceHeight) << FRACBITS;
-			fixed_t fcx = cx == 0 ? 0 : fx + cx - (texture->GetScaledLeftOffset() << FRACBITS);
-			fixed_t fcy = cy == 0 ? 0 : fy + cy - (texture->GetScaledTopOffset() << FRACBITS);
-			fixed_t fcr = fx + fw - cr;
-			fixed_t fcb = fy + fh - cb;
+			double tmp = 0;
+			dx += ST_X;
+			dy += ST_Y - (Scaled ? script->resH : 200) + script->height;
+			w = forceWidth < 0 ? texture->GetScaledWidthDouble() : forceWidth;
+			h = forceHeight < 0 ? texture->GetScaledHeightDouble() : forceHeight;
+			double dcx = cx == 0 ? 0 : dx + ((double) cx / FRACUNIT) - texture->GetScaledLeftOffsetDouble();
+			double dcy = cy == 0 ? 0 : dy + ((double) cy / FRACUNIT) - texture->GetScaledTopOffsetDouble();
+			double dcr = cr == 0 ? INT_MAX : dx + w - ((double) cr / FRACUNIT);
+			double dcb = cb == 0 ? INT_MAX : dy + h - ((double) cb / FRACUNIT);
+
 			if(Scaled)
 			{
 				if(cx != 0 || cy != 0)
-					screen->VirtualToRealCoordsFixed(fcx, fcy, tmp, tmp, 320, 200, true);
+					screen->VirtualToRealCoords(dcx, dcy, tmp, tmp, script->resW, script->resH, true);
 				if(cr != 0 || cb != 0 || clearDontDraw)
-					screen->VirtualToRealCoordsFixed(fcr, fcb, tmp, tmp, 320, 200, true);
-				screen->VirtualToRealCoordsFixed(fx, fy, fw, fh, 320, 200, true);
+					screen->VirtualToRealCoords(dcr, dcb, tmp, tmp, script->resW, script->resH, true);
+				screen->VirtualToRealCoords(dx, dy, w, h, script->resW, script->resH, true);
 			}
-			// Round to nearest
-			w = (fw + (FRACUNIT>>1)) >> FRACBITS;
-			h = (fh + (FRACUNIT>>1)) >> FRACBITS;
-			cr = cr != 0 ? fcr >> FRACBITS : INT_MAX;
-			cb = cb != 0 ? fcb >> FRACBITS : INT_MAX;
+			else
+			{
+				dy += 200 - script->resH;
+				dcy += 200 - script->resH;
+				dcb += 200 - script->resH;
+			}
+
 			if(clearDontDraw)
-				screen->Clear(MAX<fixed_t>(fx, fcx)>>FRACBITS, MAX<fixed_t>(fy, fcy)>>FRACBITS, fcr>>FRACBITS, fcb>>FRACBITS, GPalette.BlackIndex, 0);
+				screen->Clear(static_cast<int>(MAX<double>(dx, dcx)), static_cast<int>(MAX<double>(dy, dcy)), static_cast<int>(dcr), static_cast<int>(dcb), GPalette.BlackIndex, 0);
 			else
 			{
 				if(alphaMap)
 				{
-					screen->DrawTexture(texture, (fx >> FRACBITS), (fy >> FRACBITS),
-						DTA_DestWidth, w,
-						DTA_DestHeight, h,
-						DTA_ClipLeft, fcx>>FRACBITS,
-						DTA_ClipTop, fcy>>FRACBITS,
-						DTA_ClipRight, cr,
-						DTA_ClipBottom, cb,
+					screen->DrawTexture(texture, dx, dy,
+						DTA_DestWidthF, w,
+						DTA_DestHeightF, h,
+						DTA_ClipLeft, static_cast<int>(dcx),
+						DTA_ClipTop, static_cast<int>(dcy),
+						DTA_ClipRight, static_cast<int>(MIN<double>(INT_MAX, dcr)),
+						DTA_ClipBottom, static_cast<int>(MIN<double>(INT_MAX, dcb)),
 						DTA_Translation, translate ? GetTranslation() : 0,
 						DTA_ColorOverlay, dim ? DIM_OVERLAY : 0,
 						DTA_CenterBottomOffset, (offsetflags & SBarInfoCommand::CENTER_BOTTOM) == SBarInfoCommand::CENTER_BOTTOM,
@@ -1087,13 +1205,13 @@ public:
 				}
 				else
 				{
-					screen->DrawTexture(texture, (fx >> FRACBITS), (fy >> FRACBITS),
-						DTA_DestWidth, w,
-						DTA_DestHeight, h,
-						DTA_ClipLeft, fcx>>FRACBITS,
-						DTA_ClipTop, fcy>>FRACBITS,
-						DTA_ClipRight, cr,
-						DTA_ClipBottom, cb,
+					screen->DrawTexture(texture, dx, dy,
+						DTA_DestWidthF, w,
+						DTA_DestHeightF, h,
+						DTA_ClipLeft, static_cast<int>(dcx),
+						DTA_ClipTop, static_cast<int>(dcy),
+						DTA_ClipRight, static_cast<int>(MIN<double>(INT_MAX, dcr)),
+						DTA_ClipBottom, static_cast<int>(MIN<double>(INT_MAX, dcb)),
 						DTA_Translation, translate ? GetTranslation() : 0,
 						DTA_ColorOverlay, dim ? DIM_OVERLAY : 0,
 						DTA_CenterBottomOffset, (offsetflags & SBarInfoCommand::CENTER_BOTTOM) == SBarInfoCommand::CENTER_BOTTOM,
@@ -1104,69 +1222,87 @@ public:
 		}
 		else
 		{
-			int rx, ry, rcx=0, rcy=0, rcr=INT_MAX, rcb=INT_MAX;
-			ADJUST_RELCENTER(x,y,rx,ry)
+			double rx, ry, rcx=0, rcy=0, rcr=INT_MAX, rcb=INT_MAX;
 
-			w = (forceWidth <= -1 ? texture->GetScaledWidth() : forceWidth);
-			h = (forceHeight <= -1 ? texture->GetScaledHeight() : forceHeight);
+			double xScale = !hud_scale ? 1.0 : (double) CleanXfac*320.0/(double) script->resW;//(double) SCREENWIDTH/(double) script->resW;
+			double yScale = !hud_scale ? 1.0 : (double) CleanYfac*200.0/(double) script->resH;//(double) SCREENHEIGHT/(double) script->resH;
+
+			adjustRelCenter(x.RelCenter(), y.RelCenter(), dx, dy, rx, ry, xScale, yScale);
+
+			// We can't use DTA_HUDRules since it forces a width and height.
+			// Translation: No high res.
+			bool xright = rx < 0;
+			bool ybot = ry < 0;
+
+			w = (forceWidth < 0 ? texture->GetScaledWidthDouble() : forceWidth);
+			h = (forceHeight < 0 ? texture->GetScaledHeightDouble() : forceHeight);
 			if(vid_fps && rx < 0 && ry >= 0)
 				ry += 10;
+			if(hud_scale)
+			{
+				rx *= xScale;
+				ry *= yScale;
+				w *= xScale;
+				h *= yScale;
+			}
+			if(xright)
+				rx = SCREENWIDTH + rx;
+			if(ybot)
+				ry = SCREENHEIGHT + ry;
 
 			// Check for clipping
 			if(cx != 0 || cy != 0 || cr != 0 || cb != 0)
 			{
-				rcx = cx == 0 ? 0 : rx+(cx>>FRACBITS);
-				rcy = cy == 0 ? 0 : ry+(cy>>FRACBITS);
-				rcr = cr == 0 ? INT_MAX : rx+w-(cr>>FRACBITS);
-				rcb = cb == 0 ? INT_MAX : ry+h-(cb>>FRACBITS);
+				rcx = cx == 0 ? 0 : rx+(((double) cx/FRACUNIT)*xScale);
+				rcy = cy == 0 ? 0 : ry+(((double) cy/FRACUNIT)*yScale);
+				rcr = cr == 0 ? INT_MAX : rx+w-(((double) cr/FRACUNIT)*xScale);
+				rcb = cb == 0 ? INT_MAX : ry+h-(((double) cb/FRACUNIT)*yScale);
+
 				// Fix the clipping for fullscreenoffsets.
-				if(ry < 0)
+				/*if(ry < 0)
 				{
 					if(rcy != 0)
-						rcy = hud_scale ? SCREENHEIGHT + (rcy*CleanYfac) : SCREENHEIGHT + rcy;
+						rcy = hud_scale ? SCREENHEIGHT + (int) (rcy*CleanYfac*200.0/script->resH) : SCREENHEIGHT + rcy;
 					if(rcb != INT_MAX)
-						rcb = hud_scale ? SCREENHEIGHT + (rcb*CleanYfac) : SCREENHEIGHT + rcb;
+						rcb = hud_scale ? SCREENHEIGHT + (int) (rcb*CleanYfac*200.0/script->resH) : SCREENHEIGHT + rcb;
 				}
 				else if(hud_scale)
 				{
-					rcy *= CleanYfac;
+					rcy *= (int) (CleanYfac*200.0/script->resH);
 					if(rcb != INT_MAX)
-						rcb *= CleanYfac;
+						rcb *= (int) (CleanYfac*200.0/script->resH);
 				}
 				if(rx < 0)
 				{
 					if(rcx != 0)
-						rcx = hud_scale ? SCREENWIDTH + (rcx*CleanXfac) : SCREENWIDTH + rcx;
+						rcx = hud_scale ? SCREENWIDTH + (int) (rcx*CleanXfac*320.0/script->resW) : SCREENWIDTH + rcx;
 					if(rcr != INT_MAX)
-						rcr = hud_scale ? SCREENWIDTH + (rcr*CleanXfac) : SCREENWIDTH + rcr;
+						rcr = hud_scale ? SCREENWIDTH + (int) (rcr*CleanXfac*320.0/script->resW) : SCREENWIDTH + rcr;
 				}
 				else if(hud_scale)
 				{
-					rcx *= CleanXfac;
+					rcx *= (int) (CleanXfac*320.0/script->resW);
 					if(rcr != INT_MAX)
-						rcr *= CleanXfac;
-				}
+						rcr *= (int) (CleanXfac*320.0/script->resW);
+				}*/
 			}
 
 			if(clearDontDraw)
-			{
-				screen->Clear(rcx, rcy, MIN<int>(rcr, w*(hud_scale ? CleanXfac : 1)), MIN<int>(rcb, h*(hud_scale ? CleanYfac : 1)), GPalette.BlackIndex, 0);
-			}
+				screen->Clear(static_cast<int>(rcx), static_cast<int>(rcy), static_cast<int>(MIN<double>(rcr, rcx+w)), static_cast<int>(MIN<double>(rcb, rcy+h)), GPalette.BlackIndex, 0);
 			else
 			{
 				if(alphaMap)
 				{
 					screen->DrawTexture(texture, rx, ry,
-						DTA_DestWidth, w,
-						DTA_DestHeight, h,
-						DTA_ClipLeft, rcx,
-						DTA_ClipTop, rcy,
-						DTA_ClipRight, rcr,
-						DTA_ClipBottom, rcb,
+						DTA_DestWidthF, w,
+						DTA_DestHeightF, h,
+						DTA_ClipLeft, static_cast<int>(rcx),
+						DTA_ClipTop, static_cast<int>(rcy),
+						DTA_ClipRight, static_cast<int>(rcr),
+						DTA_ClipBottom, static_cast<int>(rcb),
 						DTA_Translation, translate ? GetTranslation() : 0,
 						DTA_ColorOverlay, dim ? DIM_OVERLAY : 0,
 						DTA_CenterBottomOffset, (offsetflags & SBarInfoCommand::CENTER_BOTTOM) == SBarInfoCommand::CENTER_BOTTOM,
-						DTA_HUDRules, HUD_Normal,
 						DTA_Alpha, alpha,
 						DTA_AlphaChannel, alphaMap,
 						DTA_FillColor, 0,
@@ -1175,16 +1311,15 @@ public:
 				else
 				{
 					screen->DrawTexture(texture, rx, ry,
-						DTA_DestWidth, w,
-						DTA_DestHeight, h,
-						DTA_ClipLeft, rcx,
-						DTA_ClipTop, rcy,
-						DTA_ClipRight, rcr,
-						DTA_ClipBottom, rcb,
+						DTA_DestWidthF, w,
+						DTA_DestHeightF, h,
+						DTA_ClipLeft, static_cast<int>(rcx),
+						DTA_ClipTop, static_cast<int>(rcy),
+						DTA_ClipRight, static_cast<int>(rcr),
+						DTA_ClipBottom, static_cast<int>(rcb),
 						DTA_Translation, translate ? GetTranslation() : 0,
 						DTA_ColorOverlay, dim ? DIM_OVERLAY : 0,
 						DTA_CenterBottomOffset, (offsetflags & SBarInfoCommand::CENTER_BOTTOM) == SBarInfoCommand::CENTER_BOTTOM,
-						DTA_HUDRules, HUD_Normal,
 						DTA_Alpha, alpha,
 						TAG_DONE);
 				}
@@ -1192,20 +1327,32 @@ public:
 		}
 	}
 
-	void DrawString(FFont *font, const char* str, SBarInfoCoordinate x, SBarInfoCoordinate y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets, EColorRange translation, int spacing=0, bool drawshadow=false) const
+	void DrawString(FFont *font, const char* str, SBarInfoCoordinate x, SBarInfoCoordinate y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets, EColorRange translation, int spacing=0, bool drawshadow=false, int shadowX=2, int shadowY=2) const
 	{
 		x += spacing;
-		int ax = *x;
-		int ay = *y;
+		double ax = *x;
+		double ay = *y;
+
+		double xScale = 1.0;
+		double yScale = 1.0;
+
 		if(fullScreenOffsets)
 		{
-			ADJUST_RELCENTER(x,y,ax,ay)
+			if(hud_scale)
+			{
+				xScale = (double) CleanXfac*320.0/(double) script->resW;//(double) SCREENWIDTH/(double) script->resW;
+				yScale = (double) CleanYfac*200.0/(double) script->resH;//(double) SCREENWIDTH/(double) script->resW;
+			}
+			adjustRelCenter(x.RelCenter(), y.RelCenter(), *x, *y, ax, ay, xScale, yScale);
 		}
 		while(*str != '\0')
 		{
 			if(*str == ' ')
 			{
-				ax += font->GetSpaceWidth();
+				if(script->spacingCharacter == '\0')
+					ax += font->GetSpaceWidth();
+				else
+					ax += font->GetCharWidth((int) script->spacingCharacter);
 				str++;
 				continue;
 			}
@@ -1223,65 +1370,77 @@ public:
 			if(script->spacingCharacter == '\0') //If we are monospaced lets use the offset
 				ax += (character->LeftOffset+1); //ignore x offsets since we adapt to character size
 
-			int rx, ry, rw, rh;
+			double rx, ry, rw, rh;
 			rx = ax + xOffset;
 			ry = ay + yOffset;
-			rw = character->GetScaledWidth();
-			rh = character->GetScaledHeight();
+			rw = character->GetScaledWidthDouble();
+			rh = character->GetScaledHeightDouble();
+
+			if(script->spacingCharacter != '\0')
+			{
+				double spacingSize = font->GetCharWidth((int) script->spacingCharacter);
+				switch(script->spacingAlignment)
+				{
+					default:
+						break;
+					case SBarInfo::ALIGN_CENTER:
+						rx += (spacingSize/2)-(rw/2);
+						break;
+					case SBarInfo::ALIGN_RIGHT:
+						rx += spacingSize-rw;
+						break;
+				}
+			}
+
 			if(!fullScreenOffsets)
 			{
 				rx += ST_X;
-				ry += ST_Y;
+				ry += ST_Y - (Scaled ? script->resH : 200) + script->height;
 				if(Scaled)
-					screen->VirtualToRealCoordsInt(rx, ry, rw, rh, 320, 200, true);
+					screen->VirtualToRealCoords(rx, ry, rw, rh, script->resW, script->resH, true);
+				else
+				{
+					ry += (200 - script->resH);
+				}
 			}
 			else
 			{
 				if(vid_fps && ax < 0 && ay >= 0)
 					ry += 10;
+
+				bool xright = rx < 0;
+				bool ybot = ry < 0;
+
+				if(hud_scale)
+				{
+					rx *= xScale;
+					ry *= yScale;
+					rw *= xScale;
+					rh *= yScale;
+				}
+				if(xright)
+					rx = SCREENWIDTH + rx;
+				if(ybot)
+					ry = SCREENHEIGHT + ry;
 			}
 			if(drawshadow)
 			{
 				int salpha = fixed_t(((double) alpha / (double) FRACUNIT) * ((double) HR_SHADOW / (double) FRACUNIT) * FRACUNIT);
-				if(!fullScreenOffsets)
-				{
-					screen->DrawTexture(character, rx+2, ry+2,
-						DTA_DestWidth, rw,
-						DTA_DestHeight, rh,
-						DTA_Alpha, salpha,
-						DTA_FillColor, 0,
-						TAG_DONE);
-				}
-				else
-				{
-					screen->DrawTexture(character, rx+2, ry+2,
-						DTA_DestWidth, rw,
-						DTA_DestHeight, rh,
-						DTA_Alpha, salpha,
-						DTA_HUDRules, HUD_Normal,
-						DTA_FillColor, 0,
-						TAG_DONE);
-				}
-			}
-			if(!fullScreenOffsets)
-			{
-				screen->DrawTexture(character, rx, ry,
-					DTA_DestWidth, rw,
-					DTA_DestHeight, rh,
-					DTA_Translation, font->GetColorTranslation(translation),
-					DTA_Alpha, alpha,
+				double srx = rx + (shadowX*xScale);
+				double sry = ry + (shadowY*yScale);
+				screen->DrawTexture(character, srx, sry,
+					DTA_DestWidthF, rw,
+					DTA_DestHeightF, rh,
+					DTA_Alpha, salpha,
+					DTA_FillColor, 0,
 					TAG_DONE);
 			}
-			else
-			{
-				screen->DrawTexture(character, rx, ry,
-					DTA_DestWidth, rw,
-					DTA_DestHeight, rh,
-					DTA_Translation, font->GetColorTranslation(translation),
-					DTA_Alpha, alpha,
-					DTA_HUDRules, HUD_Normal,
-					TAG_DONE);
-			}
+			screen->DrawTexture(character, rx, ry,
+				DTA_DestWidthF, rw,
+				DTA_DestHeightF, rh,
+				DTA_Translation, font->GetColorTranslation(translation),
+				DTA_Alpha, alpha,
+				TAG_DONE);
 			if(script->spacingCharacter == '\0')
 				ax += width + spacing - (character->LeftOffset+1);
 			else //width gets changed at the call to GetChar()

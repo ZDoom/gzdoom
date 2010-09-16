@@ -93,13 +93,14 @@ EXTERN_CVAR(Int, showendoom)
 EXTERN_CVAR(Bool, hud_althud)
 EXTERN_CVAR(Int, compatmode)
 EXTERN_CVAR (Bool, vid_vsync)
-EXTERN_CVAR(Bool, displaynametags)
+EXTERN_CVAR(Int, displaynametags)
 EXTERN_CVAR (Int, snd_channels)
 
 //
 // defaulted values
 //
 CVAR (Float, mouse_sensitivity, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR (Float, snd_menuvolume, 0.6f, CVAR_ARCHIVE)
 
 // Show messages has default, 0 = off, 1 = on
 CVAR (Bool, show_messages, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
@@ -112,6 +113,7 @@ EXTERN_CVAR (Int, crosshair)
 EXTERN_CVAR (Bool, freelook)
 EXTERN_CVAR (Int, sv_smartaim)
 EXTERN_CVAR (Int, am_colorset)
+EXTERN_CVAR (Bool, am_showkeys)
 EXTERN_CVAR (Int, vid_aspect)
 
 static void CalcIndent (menu_t *menu);
@@ -149,13 +151,14 @@ value_t OffOn[2] = {
 	{ 1.0, "Off" }
 };
 
-value_t CompatModes[6] = {
+value_t CompatModes[] = {
 	{ 0.0, "Default" },
 	{ 1.0, "Doom" },
 	{ 2.0, "Doom (strict)" },
 	{ 3.0, "Boom" },
-	{ 4.0, "ZDoom 2.0.63" },
+	{ 6.0, "Boom (strict)" },
 	{ 5.0, "MBF" },
+	{ 4.0, "ZDoom 2.0.63" },
 };
 
 menu_t  *CurrentMenu;
@@ -201,6 +204,7 @@ static menu_t ConfirmMenu = {
  *
  *=======================================*/
 
+static void StartAutomapMenu (void);
 static void CustomizeControls (void);
 static void GameplayOptions (void);
 static void CompatibilityOptions (void);
@@ -225,6 +229,7 @@ static menuitem_t OptionItems[] =
 	{ more,		"Player Setup",			{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)M_PlayerSetup} },
 	{ more,		"Gameplay Options",		{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)GameplayOptions} },
 	{ more,		"Compatibility Options",{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)CompatibilityOptions} },
+	{ more,		"Automap Options",		{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)StartAutomapMenu} },
 	{ more,		"Sound Options",		{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)SoundOptions} },
 	{ more,		"Display Options",		{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)VideoOptions} },
 	{ more,		"Set video mode",		{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)SetVidMode} },
@@ -416,13 +421,13 @@ menu_t ControlsMenu =
 	2,
 };
 
+
 /*=======================================
  *
  * Display Options Menu
  *
  *=======================================*/
 static void StartMessagesMenu (void);
-static void StartAutomapMenu (void);
 static void StartScoreboardMenu (void);
 static void InitCrosshairsList();
 
@@ -437,6 +442,7 @@ EXTERN_CVAR (Int,  wipetype)
 EXTERN_CVAR (Bool, vid_palettehack)
 EXTERN_CVAR (Bool, vid_attachedsurfaces)
 EXTERN_CVAR (Int,  screenblocks)
+EXTERN_CVAR (Int, r_fakecontrast)
 
 static TArray<valuestring_t> Crosshairs;
 
@@ -476,9 +482,21 @@ static value_t Endoom[] = {
 	{ 2.0, "Only modified" }
 };
 
+static value_t Contrast[] = {
+	{ 0.0, "Off" },
+	{ 1.0, "On" },
+	{ 2.0, "Smooth" }
+};
+
+static value_t DisplayTagsTypes[] = {
+	{ 0.0, "None" },
+	{ 1.0, "Items" },
+	{ 2.0, "Weapons" },
+	{ 3.0, "Both" }
+};
+
 static menuitem_t VideoItems[] = {
 	{ more,		"Message Options",		{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)StartMessagesMenu} },
-	{ more,		"Automap Options",		{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)StartAutomapMenu} },
 	{ more,		"Scoreboard Options",	{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)StartScoreboardMenu} },
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
 	{ slider,	"Screen size",			{&screenblocks},	   	{3.0}, {12.0},	{1.0}, {NULL} },
@@ -497,13 +515,14 @@ static menuitem_t VideoItems[] = {
 #endif
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
 	{ discrete, "Use fuzz effect",		{&r_drawfuzz},			{2.0}, {0.0},	{0.0}, {YesNo} },
+	{ discrete, "Use fake contrast",	{&r_fakecontrast},		{3.0}, {0.0},	{0.0}, {Contrast} },
 	{ discrete, "Rocket Trails",		{&cl_rockettrails},		{4.0}, {0.0},	{0.0}, {RocketTrailTypes} },
 	{ discrete, "Blood Type",			{&cl_bloodtype},	   	{3.0}, {0.0},	{0.0}, {BloodTypes} },
 	{ discrete, "Bullet Puff Type",		{&cl_pufftype},			{2.0}, {0.0},	{0.0}, {PuffTypes} },
-	{ discrete, "Display nametags",		{&displaynametags},		{2.0}, {0.0},	{0.0}, {YesNo} },
+	{ discrete, "Display nametags",		{&displaynametags},		{4.0}, {0.0},	{0.0}, {DisplayTagsTypes} },
 };
 
-#define CROSSHAIR_INDEX 7
+#define CROSSHAIR_INDEX 6
 
 menu_t VideoMenu =
 {
@@ -520,6 +539,7 @@ menu_t VideoMenu =
  *
  *=======================================*/
 static void StartMapColorsMenu (void);
+static void StartMapControlsMenu (void);
 
 EXTERN_CVAR (Int, am_rotate)
 EXTERN_CVAR (Int, am_overlay)
@@ -530,6 +550,7 @@ EXTERN_CVAR (Bool, am_showtime)
 EXTERN_CVAR (Int, am_map_secrets)
 EXTERN_CVAR (Bool, am_showtotaltime)
 EXTERN_CVAR (Bool, am_drawmapback)
+EXTERN_CVAR (Bool, am_textured)
 
 static value_t MapColorTypes[] = {
 	{ 0, "Custom" },
@@ -559,9 +580,11 @@ static value_t OverlayTypes[] = {
 static menuitem_t AutomapItems[] = {
 	{ discrete, "Map color set",		{&am_colorset},			{4.0}, {0.0},	{0.0}, {MapColorTypes} },
 	{ more,		"Set custom colors",	{NULL},					{0.0}, {0.0},	{0.0}, {(value_t*)StartMapColorsMenu} },
+	{ more,		"Customize map controls",	{NULL},					{0.0}, {0.0},	{0.0}, {(value_t*)StartMapControlsMenu} },
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
 	{ discrete, "Rotate automap",		{&am_rotate},		   	{3.0}, {0.0},	{0.0}, {RotateTypes} },
 	{ discrete, "Overlay automap",		{&am_overlay},			{3.0}, {0.0},	{0.0}, {OverlayTypes} },
+	{ discrete, "Enable textured display",		{&am_textured},			{3.0}, {0.0},	{0.0}, {OnOff} },
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
 	{ discrete, "Show item counts",		{&am_showitems},		{2.0}, {0.0},	{0.0}, {OnOff} },
 	{ discrete, "Show monster counts",	{&am_showmonsters},		{2.0}, {0.0},	{0.0}, {OnOff} },
@@ -570,6 +593,7 @@ static menuitem_t AutomapItems[] = {
 	{ discrete, "Show total time elapsed",	{&am_showtotaltime},	{2.0}, {0.0},	{0.0}, {OnOff} },
 	{ discrete, "Show secrets on map",		{&am_map_secrets},		{3.0}, {0.0},	{0.0}, {SecretTypes} },
 	{ discrete, "Draw map background",	{&am_drawmapback},		{2.0}, {0.0},	{0.0}, {OnOff} },
+	{ discrete, "Show keys (cheat)",	{&am_showkeys},			{2.0}, {0.0},	{0.0}, {OnOff} },
 };
 
 menu_t AutomapMenu =
@@ -580,6 +604,37 @@ menu_t AutomapMenu =
 	0,
 	AutomapItems,
 };
+
+menuitem_t MapControlsItems[] =
+{
+	{ redtext,"ENTER to change, BACKSPACE to clear", {NULL}, {0.0}, {0.0}, {0.0}, {NULL} },
+	{ redtext,	" ",					{NULL},	{0.0}, {0.0}, {0.0}, {NULL} },
+	{ whitetext,"Map Controls",				{NULL},	{0.0}, {0.0}, {0.0}, {NULL} },
+	{ mapcontrol,	"Pan left",					{NULL}, {0.0}, {0.0}, {0.0}, {(value_t *)"+am_panleft"} },
+	{ mapcontrol,	"Pan right",				{NULL}, {0.0}, {0.0}, {0.0}, {(value_t *)"+am_panright"} },
+	{ mapcontrol,	"Pan up",					{NULL}, {0.0}, {0.0}, {0.0}, {(value_t *)"+am_panup"} },
+	{ mapcontrol,	"Pan down",					{NULL}, {0.0}, {0.0}, {0.0}, {(value_t *)"+am_pandown"} },
+	{ mapcontrol,	"Zoom in",					{NULL}, {0.0}, {0.0}, {0.0}, {(value_t *)"+am_zoomin"} },
+	{ mapcontrol,	"Zoom out",					{NULL}, {0.0}, {0.0}, {0.0}, {(value_t *)"+am_zoomout"} },
+	{ mapcontrol,	"Toggle zoom",				{NULL}, {0.0}, {0.0}, {0.0}, {(value_t *)"am_gobig"} },
+	{ mapcontrol,	"Toggle follow",			{NULL}, {0.0}, {0.0}, {0.0}, {(value_t *)"am_togglefollow"} },
+	{ mapcontrol,	"Toggle grid",				{NULL}, {0.0}, {0.0}, {0.0}, {(value_t *)"am_togglegrid"} },
+	{ mapcontrol,	"Toggle texture",			{NULL}, {0.0}, {0.0}, {0.0}, {(value_t *)"am_toggletexture"} },
+	{ mapcontrol,	"Set mark",					{NULL}, {0.0}, {0.0}, {0.0}, {(value_t *)"am_setmark"} },
+	{ mapcontrol,	"Clear mark",				{NULL}, {0.0}, {0.0}, {0.0}, {(value_t *)"am_clearmarks"} },
+};
+
+menu_t MapControlsMenu =
+{
+	"CUSTOMIZE MAP CONTROLS",
+	3,
+	countof(MapControlsItems),
+	0,
+	MapControlsItems,
+	2,
+};
+
+
 
 /*=======================================
  *
@@ -613,9 +668,11 @@ EXTERN_CVAR (Color, am_ovsecretsectorcolor)
 EXTERN_CVAR (Color, am_thingcolor_friend)
 EXTERN_CVAR (Color, am_thingcolor_monster)
 EXTERN_CVAR (Color, am_thingcolor_item)
+EXTERN_CVAR (Color, am_thingcolor_citem)
 EXTERN_CVAR (Color, am_ovthingcolor_friend)
 EXTERN_CVAR (Color, am_ovthingcolor_monster)
 EXTERN_CVAR (Color, am_ovthingcolor_item)
+EXTERN_CVAR (Color, am_ovthingcolor_citem)
 
 static menuitem_t MapColorsItems[] = {
 	{ rsafemore,   "Restore default custom colors",				{NULL},					{0}, {0}, {0}, {(value_t*)DefaultCustomColors} },
@@ -639,6 +696,7 @@ static menuitem_t MapColorsItems[] = {
 	{ colorpicker, "Monsters (for cheat)",						{&am_thingcolor_monster},		{0}, {0}, {0}, {0} },
 	{ colorpicker, "Friends (for cheat)",						{&am_thingcolor_friend},		{0}, {0}, {0}, {0} },
 	{ colorpicker, "Items (for cheat)",							{&am_thingcolor_item},			{0}, {0}, {0}, {0} },
+	{ colorpicker, "Count Items (for cheat)",					{&am_thingcolor_citem},			{0}, {0}, {0}, {0} },
 	{ redtext,		" ",										{NULL},					{0}, {0}, {0}, {0} },
 	{ colorpicker, "You (overlay)",								{&am_ovyourcolor},		{0}, {0}, {0}, {0} },
 	{ colorpicker, "1-sided walls (overlay)",					{&am_ovwallcolor},		{0}, {0}, {0}, {0} },
@@ -650,6 +708,7 @@ static menuitem_t MapColorsItems[] = {
 	{ colorpicker, "Monsters (overlay) (for cheat)",			{&am_ovthingcolor_monster},		{0}, {0}, {0}, {0} },
 	{ colorpicker, "Friends (overlay) (for cheat)",				{&am_ovthingcolor_friend},		{0}, {0}, {0}, {0} },
 	{ colorpicker, "Items (overlay) (for cheat)",				{&am_ovthingcolor_item},		{0}, {0}, {0}, {0} },
+	{ colorpicker, "Count Items (overlay) (for cheat)",			{&am_ovthingcolor_citem},		{0}, {0}, {0}, {0} },
 };
 
 menu_t MapColorsMenu =
@@ -1028,7 +1087,7 @@ static menuitem_t DMFlagsItems[] = {
 	{ bitflag,	"Fast monsters",		{&dmflags},		{0}, {0}, {0}, {(value_t *)DF_FAST_MONSTERS} },
 	{ bitflag,	"Degeneration",			{&dmflags2},	{0}, {0}, {0}, {(value_t *)DF2_YES_DEGENERATION} },
 	{ bitflag,	"Allow Autoaim",		{&dmflags2},	{1}, {0}, {0}, {(value_t *)DF2_NOAUTOAIM} },
-	{ bitflag,	"Disallow Suicide",		{&dmflags2},	{1}, {0}, {0}, {(value_t *)DF2_NOSUICIDE} },
+	{ bitflag,	"Allow Suicide",		{&dmflags2},	{1}, {0}, {0}, {(value_t *)DF2_NOSUICIDE} },
 	{ bitmask,	"Allow jump",			{&dmflags},		{3.0}, {DF_NO_JUMP|DF_YES_JUMP}, {0}, {DF_Jump} },
 	{ bitmask,	"Allow crouch",			{&dmflags},		{3.0}, {DF_NO_CROUCH|DF_YES_CROUCH}, {0}, {DF_Crouch} },
 	{ bitflag,	"Allow freelook",		{&dmflags},		{1}, {0}, {0}, {(value_t *)DF_NO_FREELOOK} },
@@ -1038,6 +1097,8 @@ static menuitem_t DMFlagsItems[] = {
 	{ bitflag,	"Automap allies",		{&dmflags2},	{1}, {0}, {0}, {(value_t *)DF2_NO_AUTOMAP_ALLIES} },
 	{ bitflag,	"Allow spying",			{&dmflags2},	{1}, {0}, {0}, {(value_t *)DF2_DISALLOW_SPYING} },
 	{ bitflag,	"Chasecam cheat",		{&dmflags2},	{0}, {0}, {0}, {(value_t *)DF2_CHASECAM} },
+	{ bitflag,	"Check ammo for weapon switch",	{&dmflags2},	{1}, {0}, {0}, {(value_t *)DF2_DONTCHECKAMMO} },
+	{ bitflag,	"Killing Romero kills all his spawns",	{&dmflags2},	{0}, {0}, {0}, {(value_t *)DF2_KILLBOSSMONST} },
 
 	{ redtext,	" ",					{NULL},			{0}, {0}, {0}, {NULL} },
 	{ whitetext,"Deathmatch Settings",	{NULL},			{0}, {0}, {0}, {NULL} },
@@ -1073,7 +1134,7 @@ static menu_t DMFlagsMenu =
 	"GAMEPLAY OPTIONS",
 	0,
 	countof(DMFlagsItems),
-	0,
+	222,
 	DMFlagsItems,
 };
 
@@ -1084,14 +1145,14 @@ static menu_t DMFlagsMenu =
  *=======================================*/
 
 static menuitem_t CompatibilityItems[] = {
-	{ discrete, "Compatibility mode",						{&compatmode},	{6.0}, {1.0},	{0.0}, {CompatModes} },
+	{ discrete, "Compatibility mode",						{&compatmode},	{7.0}, {1.0},	{0.0}, {CompatModes} },
 	{ redtext,	" ",					{NULL},			{0.0}, {0.0}, {0.0}, {NULL} },
 	{ bitflag,	"Find shortest textures like Doom",			{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_SHORTTEX} },
 	{ bitflag,	"Use buggier stair building",				{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_STAIRINDEX} },
+	{ bitflag,	"Find neighboring light like Doom",			{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_LIGHT} },
 	{ bitflag,	"Limit Pain Elementals' Lost Souls",		{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_LIMITPAIN} },
 	{ bitflag,	"Don't let others hear your pickups",		{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_SILENTPICKUP} },
 	{ bitflag,	"Actors are infinitely tall",				{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_NO_PASSMOBJ} },
-	{ bitflag,	"Cripple sound for silent BFG trick",		{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_MAGICSILENCE} },
 	{ bitflag,	"Enable wall running",						{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_WALLRUN} },
 	{ bitflag,	"Spawn item drops on the floor",			{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_NOTOSSDROPS} },
 	{ bitflag,  "All special lines can block <use>",		{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_USEBLOCKING} },
@@ -1114,6 +1175,9 @@ static menuitem_t CompatibilityItems[] = {
 	{ bitflag,	"Crushed monsters can be resurrected",		{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_CORPSEGIBS} },
 	{ bitflag,	"Friendly monsters aren't blocked",			{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_NOBLOCKFRIENDS} },
 	{ bitflag,	"Invert sprite sorting",					{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_SPRITESORT} },
+	{ bitflag,	"Use Doom code for hitscan checks",			{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_HITSCAN} },
+	{ bitflag,	"Cripple sound for silent BFG trick",		{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_MAGICSILENCE} },
+	{ bitflag,	"Draw polyobjects like Hexen",				{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_POLYOBJ} },
 	
 	{ discrete, "Interpolate monster movement",	{&nomonsterinterpolation},		{2.0}, {0.0},	{0.0}, {NoYes} },
 };
@@ -1247,6 +1311,7 @@ static valueenum_t Resamplers[] =
 static menuitem_t SoundItems[] =
 {
 	{ slider,	"Sounds volume",		{&snd_sfxvolume},		{0.0}, {1.0},	{0.05f}, {NULL} },
+	{ slider,	"Menu volume",			{&snd_menuvolume},		{0.0}, {1.0},	{0.05f}, {NULL} },
 	{ slider,	"Music volume",			{&snd_musicvolume},		{0.0}, {1.0},	{0.05f}, {NULL} },
 	{ discrete, "MIDI device",			{&snd_mididevice},		{0.0}, {0.0},	{0.0}, {NULL} },
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
@@ -1277,7 +1342,7 @@ static menu_t SoundMenu =
 	SoundItems,
 };
 
-#define MIDI_DEVICE_ITEM 2
+#define MIDI_DEVICE_ITEM 3
 
 /*=======================================
  *
@@ -1479,13 +1544,13 @@ void M_SizeDisplay (int diff)
 CCMD (sizedown)
 {
 	M_SizeDisplay (-1);
-	S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
+	S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 }
 
 CCMD (sizeup)
 {
 	M_SizeDisplay (1);
-	S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
+	S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 }
 
 // Draws a string in the console font, scaled to the 8x8 cells
@@ -1507,7 +1572,9 @@ void M_BuildKeyList (menuitem_t *item, int numitems)
 	for (i = 0; i < numitems; i++, item++)
 	{
 		if (item->type == control)
-			C_GetKeysForCommand (item->e.command, &item->b.key1, &item->c.key2);
+			Bindings.GetKeysForCommand (item->e.command, &item->b.key1, &item->c.key2);
+		else if (item->type == mapcontrol)
+			AutomapBindings.GetKeysForCommand (item->e.command, &item->b.key1, &item->c.key2);
 	}
 }
 
@@ -1796,7 +1863,7 @@ void M_OptDrawer ()
 
 			default:
 				x = indent - width;
-				color = (item->type == control && menuactive == MENU_WaitKey && i == CurrentItem)
+				color = ((item->type == control || item->type == mapcontrol) && menuactive == MENU_WaitKey && i == CurrentItem)
 					? CR_YELLOW : LabelColor;
 				break;
 			}
@@ -1954,6 +2021,7 @@ void M_OptDrawer ()
 				break;
 
 			case control:
+			case mapcontrol:
 			{
 				char description[64];
 
@@ -2136,7 +2204,14 @@ void M_OptResponder(event_t *ev)
 	{
 		if (ev->data1 != KEY_ESCAPE)
 		{
-			C_ChangeBinding(item->e.command, ev->data1);
+			if (item->type == control)
+			{
+				Bindings.SetBind(ev->data1, item->e.command);
+			}
+			else if (item->type == mapcontrol)
+			{
+				AutomapBindings.SetBind(ev->data1, item->e.command);
+			}
 			M_BuildKeyList(CurrentMenu->items, CurrentMenu->numitems);
 		}
 		menuactive = MENU_On;
@@ -2159,7 +2234,7 @@ void M_OptResponder(event_t *ev)
 			NewBits = BitTranslate[DummyDepthCvar];
 			setmodeneeded = true;
 			testingmode = I_GetTime(false) + 5 * TICRATE;
-			S_Sound (CHAN_VOICE | CHAN_UI, "menu/choose", 1, ATTN_NONE);
+			S_Sound (CHAN_VOICE | CHAN_UI, "menu/choose", snd_menuvolume, ATTN_NONE);
 			SetModesMenu (NewWidth, NewHeight, NewBits);
 		}
 		else if (ev->data1 >= '0' && ev->data1 <= '9')
@@ -2264,7 +2339,7 @@ void M_OptButtonHandler(EMenuKey key, bool repeat)
 				CurrentMenu->items[CurrentItem].a.selmode = modecol;
 			}
 
-			S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", 1, ATTN_NONE);
+			S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
 		}
 		break;
 
@@ -2319,7 +2394,7 @@ void M_OptButtonHandler(EMenuKey key, bool repeat)
 					}
 					ytop *= CleanYfac_1;
 					rowheight *= CleanYfac_1;
-					maxitems = (screen->GetHeight() - SmallFont->GetHeight() - ytop) / rowheight + 1;
+					maxitems = (screen->GetHeight() - rowheight - ytop) / rowheight + 1;
 
 					CurrentMenu->scrollpos = MAX (0,CurrentMenu->numitems - maxitems + CurrentMenu->scrolltop);
 					CurrentItem = CurrentMenu->numitems - 1;
@@ -2334,7 +2409,7 @@ void M_OptButtonHandler(EMenuKey key, bool repeat)
 			if (CurrentMenu->items[CurrentItem].type == screenres)
 				CurrentMenu->items[CurrentItem].a.selmode = modecol;
 
-			S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", 1, ATTN_NONE);
+			S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
 		}
 		break;
 
@@ -2356,7 +2431,7 @@ void M_OptButtonHandler(EMenuKey key, bool repeat)
 			{
 				++CurrentItem;
 			}
-			S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", 1, ATTN_NONE);
+			S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
 		}
 		break;
 
@@ -2379,7 +2454,7 @@ void M_OptButtonHandler(EMenuKey key, bool repeat)
 			{
 				++CurrentItem;
 			}
-			S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", 1, ATTN_NONE);
+			S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
 		}
 		break;
 
@@ -2417,7 +2492,7 @@ void M_OptButtonHandler(EMenuKey key, bool repeat)
 					else
 						item->a.cvar->SetGenericRep (newval, CVAR_Float);
 				}
-				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
+				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 				break;
 
 			case joy_sens:
@@ -2425,7 +2500,7 @@ void M_OptButtonHandler(EMenuKey key, bool repeat)
 				if (value.Float < item->b.min)
 					value.Float = item->b.min;
 				SELECTED_JOYSTICK->SetSensitivity(value.Float);
-				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
+				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 				break;
 
 			case joy_slider:
@@ -2458,12 +2533,12 @@ void M_OptButtonHandler(EMenuKey key, bool repeat)
 				{
 					SELECTED_JOYSTICK->SetAxisDeadZone(item->a.joyselection, value.Float);
 				}
-				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
+				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 				break;
 
 			case palettegrid:
 				SelColorIndex = (SelColorIndex - 1) & 15;
-				S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", 1, ATTN_NONE);
+				S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
 				break;
 
 			case discretes:
@@ -2508,14 +2583,14 @@ void M_OptButtonHandler(EMenuKey key, bool repeat)
 					if (item->e.values == Depths)
 						BuildModesList (SCREENWIDTH, SCREENHEIGHT, DisplayBits);
 				}
-				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
+				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 				break;
 
 			case ediscrete:
 				value = item->a.cvar->GetGenericRep(CVAR_String);
 				value.String = const_cast<char *>(M_FindPrevVal(value.String, item->e.enumvalues, (int)item->b.numvalues));
 				item->a.cvar->SetGenericRep(value, CVAR_String);
-				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
+				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 				break;
 
 			case bitmask:
@@ -2534,21 +2609,21 @@ void M_OptButtonHandler(EMenuKey key, bool repeat)
 					value.Int = (value.Int & ~bmask) | int(item->e.values[cur].value);
 					item->a.cvar->SetGenericRep (value, CVAR_Int);
 				}
-				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
+				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 				break;
 
 			case inverter:
 				value = item->a.cvar->GetGenericRep (CVAR_Float);
 				value.Float = -value.Float;
 				item->a.cvar->SetGenericRep (value, CVAR_Float);
-				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
+				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 				break;
 
 			case joy_inverter:
 				assert(item->e.joyslidernum == 0);
 				value.Float = SELECTED_JOYSTICK->GetAxisScale(item->a.joyselection);
 				SELECTED_JOYSTICK->SetAxisScale(item->a.joyselection, -value.Float);
-				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
+				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 				break;
 
 			case screenres:
@@ -2572,7 +2647,7 @@ void M_OptButtonHandler(EMenuKey key, bool repeat)
 						item->a.selmode = col;
 					}
 				}
-				S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", 1, ATTN_NONE);
+				S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
 				break;
 
 			default:
@@ -2614,7 +2689,7 @@ void M_OptButtonHandler(EMenuKey key, bool repeat)
 					else
 						item->a.cvar->SetGenericRep (newval, CVAR_Float);
 				}
-				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
+				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 				break;
 
 			case joy_sens:
@@ -2622,7 +2697,7 @@ void M_OptButtonHandler(EMenuKey key, bool repeat)
 				if (value.Float > item->c.max)
 					value.Float = item->c.max;
 				SELECTED_JOYSTICK->SetSensitivity(value.Float);
-				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
+				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 				break;
 
 			case joy_slider:
@@ -2655,12 +2730,12 @@ void M_OptButtonHandler(EMenuKey key, bool repeat)
 				{
 					SELECTED_JOYSTICK->SetAxisDeadZone(item->a.joyselection, value.Float);
 				}
-				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
+				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 				break;
 
 			case palettegrid:
 				SelColorIndex = (SelColorIndex + 1) & 15;
-				S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", 1, ATTN_NONE);
+				S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
 				break;
 
 			case discretes:
@@ -2705,14 +2780,14 @@ void M_OptButtonHandler(EMenuKey key, bool repeat)
 					if (item->e.values == Depths)
 						BuildModesList (SCREENWIDTH, SCREENHEIGHT, DisplayBits);
 				}
-				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
+				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 				break;
 
 			case ediscrete:
 				value = item->a.cvar->GetGenericRep(CVAR_String);
 				value.String = const_cast<char *>(M_FindNextVal(value.String, item->e.enumvalues, (int)item->b.numvalues));
 				item->a.cvar->SetGenericRep(value, CVAR_String);
-				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
+				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 				break;
 
 			case bitmask:
@@ -2731,21 +2806,21 @@ void M_OptButtonHandler(EMenuKey key, bool repeat)
 					value.Int = (value.Int & ~bmask) | int(item->e.values[cur].value);
 					item->a.cvar->SetGenericRep (value, CVAR_Int);
 				}
-				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
+				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 				break;
 
 			case inverter:
 				value = item->a.cvar->GetGenericRep (CVAR_Float);
 				value.Float = -value.Float;
 				item->a.cvar->SetGenericRep (value, CVAR_Float);
-				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
+				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 				break;
 
 			case joy_inverter:
 				assert(item->e.joyslidernum == 0);
 				value.Float = SELECTED_JOYSTICK->GetAxisScale(item->a.joyselection);
 				SELECTED_JOYSTICK->SetAxisScale(item->a.joyselection, -value.Float);
-				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
+				S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 				break;
 
 			case screenres:
@@ -2772,7 +2847,7 @@ void M_OptButtonHandler(EMenuKey key, bool repeat)
 						item->a.selmode = col;
 					}
 				}
-				S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", 1, ATTN_NONE);
+				S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
 				break;
 
 			default:
@@ -2783,7 +2858,12 @@ void M_OptButtonHandler(EMenuKey key, bool repeat)
 	case MKEY_Clear:
 		if (item->type == control)
 		{
-			C_UnbindACommand (item->e.command);
+			Bindings.UnbindACommand (item->e.command);
+			item->b.key1 = item->c.key2 = 0;
+		}
+		else if (item->type == mapcontrol)
+		{
+			AutomapBindings.UnbindACommand (item->e.command);
 			item->b.key1 = item->c.key2 = 0;
 		}
 		break;
@@ -2802,7 +2882,7 @@ void M_OptButtonHandler(EMenuKey key, bool repeat)
 				setmodeneeded = true;
 				NewBits = BitTranslate[DummyDepthCvar];
 			}
-			S_Sound (CHAN_VOICE | CHAN_UI, "menu/choose", 1, ATTN_NONE);
+			S_Sound (CHAN_VOICE | CHAN_UI, "menu/choose", snd_menuvolume, ATTN_NONE);
 			SetModesMenu (NewWidth, NewHeight, NewBits);
 		}
 		else if ((item->type == more ||
@@ -2814,7 +2894,7 @@ void M_OptButtonHandler(EMenuKey key, bool repeat)
 				 && item->e.mfunc)
 		{
 			CurrentMenu->lastOn = CurrentItem;
-			S_Sound (CHAN_VOICE | CHAN_UI, "menu/choose", 1, ATTN_NONE);
+			S_Sound (CHAN_VOICE | CHAN_UI, "menu/choose", snd_menuvolume, ATTN_NONE);
 			if (item->type == safemore || item->type == rsafemore)
 			{
 				ActivateConfirm (item->label, item->e.mfunc);
@@ -2849,9 +2929,9 @@ void M_OptButtonHandler(EMenuKey key, bool repeat)
 			if (item->e.values == Depths)
 				BuildModesList (SCREENWIDTH, SCREENHEIGHT, DisplayBits);
 
-			S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
+			S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 		}
-		else if (item->type == control)
+		else if (item->type == control || item->type == mapcontrol)
 		{
 			menuactive = MENU_WaitKey;
 			OldMessage = CurrentMenu->items[0].label;
@@ -2862,7 +2942,7 @@ void M_OptButtonHandler(EMenuKey key, bool repeat)
 		else if (item->type == listelement)
 		{
 			CurrentMenu->lastOn = CurrentItem;
-			S_Sound (CHAN_VOICE | CHAN_UI, "menu/choose", 1, ATTN_NONE);
+			S_Sound (CHAN_VOICE | CHAN_UI, "menu/choose", snd_menuvolume, ATTN_NONE);
 			item->e.lfunc (CurrentItem);
 		}
 		else if (item->type == inverter)
@@ -2870,14 +2950,14 @@ void M_OptButtonHandler(EMenuKey key, bool repeat)
 			value = item->a.cvar->GetGenericRep (CVAR_Float);
 			value.Float = -value.Float;
 			item->a.cvar->SetGenericRep (value, CVAR_Float);
-			S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
+			S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 		}
 		else if (item->type == joy_inverter)
 		{
 			assert(item->e.joyslidernum == 0);
 			value.Float = SELECTED_JOYSTICK->GetAxisScale(item->a.joyselection);
 			SELECTED_JOYSTICK->SetAxisScale(item->a.joyselection, -value.Float);
-			S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", 1, ATTN_NONE);
+			S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 		}
 		else if (item->type == screenres)
 		{
@@ -2885,7 +2965,7 @@ void M_OptButtonHandler(EMenuKey key, bool repeat)
 		else if (item->type == colorpicker)
 		{
 			CurrentMenu->lastOn = CurrentItem;
-			S_Sound (CHAN_VOICE | CHAN_UI, "menu/choose", 1, ATTN_NONE);
+			S_Sound (CHAN_VOICE | CHAN_UI, "menu/choose", snd_menuvolume, ATTN_NONE);
 			StartColorPickerMenu (item->label, item->a.colorcvar);
 		}
 		else if (item->type == palettegrid)
@@ -2969,6 +3049,12 @@ CCMD (menu_scoreboard)
 static void StartMapColorsMenu (void)
 {
 	M_SwitchMenu (&MapColorsMenu);
+}
+
+static void StartMapControlsMenu (void)
+{
+	M_BuildKeyList (MapControlsMenu.items, MapControlsMenu.numitems);
+	M_SwitchMenu (&MapControlsMenu);
 }
 
 CCMD (menu_mapcolors)
@@ -3615,12 +3701,14 @@ void M_LoadKeys (const char *modname, bool dbl)
 
 	mysnprintf (section, countof(section), "%s.%s%sBindings", GameNames[gameinfo.gametype], modname,
 		dbl ? ".Double" : ".");
+
+	FKeyBindings *bindings = dbl? &DoubleBindings : &Bindings;
 	if (GameConfig->SetSection (section))
 	{
 		const char *key, *value;
 		while (GameConfig->NextInSection (key, value))
 		{
-			C_DoBind (key, value, dbl);
+			bindings->DoBind (key, value);
 		}
 	}
 }
@@ -3631,12 +3719,13 @@ int M_DoSaveKeys (FConfigFile *config, char *section, int i, bool dbl)
 
 	config->SetSection (section, true);
 	config->ClearCurrentSection ();
+	FKeyBindings *bindings = dbl? &DoubleBindings : &Bindings;
 	for (++i; i < most; ++i)
 	{
 		menuitem_t *item = &CustomControlsItems[i];
 		if (item->type == control)
 		{
-			C_ArchiveBindings (config, dbl, item->e.command);
+			bindings->ArchiveBindings (config, item->e.command);
 			continue;
 		}
 		break;
@@ -3682,7 +3771,7 @@ void FreeKeySections()
 	for (i = numStdControls; i < CustomControlsItems.Size(); ++i)
 	{
 		menuitem_t *item = &CustomControlsItems[i];
-		if (item->type == whitetext || item->type == control)
+		if (item->type == whitetext || item->type == control || item->type == mapcontrol)
 		{
 			if (item->label != NULL)
 			{

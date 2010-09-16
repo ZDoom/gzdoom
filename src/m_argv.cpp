@@ -304,6 +304,19 @@ void DArgs::AppendArgs(int argc, const FString *argv)
 
 //===========================================================================
 //
+// DArgs :: RemoveArg
+//
+// Removes a single argument from argv.
+//
+//===========================================================================
+
+void DArgs::RemoveArg(int argindex)
+{
+	Argv.Delete(argindex);
+}
+
+//===========================================================================
+//
 // DArgs :: CollectFiles
 //
 // Takes all arguments after any instance of -param and any arguments before

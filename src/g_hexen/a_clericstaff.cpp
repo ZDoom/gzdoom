@@ -56,6 +56,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CStaffCheck)
 	int i;
 	player_t *player;
 	AActor *linetarget;
+	PClassActor *puff;
 
 	if (NULL == (player = self->player))
 	{
@@ -66,13 +67,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_CStaffCheck)
 	pmo = player->mo;
 	damage = 20+(pr_staffcheck()&15);
 	max = pmo->GetMaxHealth();
+	puff = PClass::FindActor("CStaffPuff");
 	for (i = 0; i < 3; i++)
 	{
 		angle = pmo->angle+i*(ANG45/16);
 		slope = P_AimLineAttack (pmo, angle, fixed_t(1.5*MELEERANGE), &linetarget, 0, ALF_CHECK3D);
 		if (linetarget)
 		{
-			P_LineAttack (pmo, angle, fixed_t(1.5*MELEERANGE), slope, damage, NAME_Melee, PClass::FindActor("CStaffPuff"));
+			P_LineAttack (pmo, angle, fixed_t(1.5*MELEERANGE), slope, damage, NAME_Melee, puff, false, &linetarget);
 			pmo->angle = R_PointToAngle2 (pmo->x, pmo->y, 
 				linetarget->x, linetarget->y);
 			if (((linetarget->player && (!linetarget->IsTeammate (pmo) || level.teamdamage != 0))|| linetarget->flags3&MF3_ISMONSTER)
@@ -96,7 +98,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CStaffCheck)
 		slope = P_AimLineAttack (player->mo, angle, fixed_t(1.5*MELEERANGE), &linetarget, 0, ALF_CHECK3D);
 		if (linetarget)
 		{
-			P_LineAttack (pmo, angle, fixed_t(1.5*MELEERANGE), slope, damage, NAME_Melee, PClass::FindActor("CStaffPuff"));
+			P_LineAttack (pmo, angle, fixed_t(1.5*MELEERANGE), slope, damage, NAME_Melee, puff, false, &linetarget);
 			pmo->angle = R_PointToAngle2 (pmo->x, pmo->y, 
 				linetarget->x, linetarget->y);
 			if ((linetarget->player && (!linetarget->IsTeammate (pmo) || level.teamdamage != 0)) || linetarget->flags3&MF3_ISMONSTER)

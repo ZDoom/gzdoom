@@ -165,7 +165,7 @@ struct FMugShotFrame
 
 	FMugShotFrame();
 	~FMugShotFrame();
-	FTexture *GetTexture(const char *default_face, FPlayerSkin *skin, int random, int level=0,
+	FTexture *GetTexture(const char *default_face, const char *skin_face, int random, int level=0,
 		int direction=0, bool usesLevels=false, bool health2=false, bool healthspecial=false,
 		bool directional=false);
 };
@@ -189,9 +189,9 @@ struct FMugShotState
 	void Tick();
 	void Reset();
 	FMugShotFrame &GetCurrentFrame() { return Frames[Position]; }
-	FTexture *GetCurrentFrameTexture(const char *default_face, FPlayerSkin *skin, int level=0, int direction=0)
+	FTexture *GetCurrentFrameTexture(const char *default_face, const char *skin_face, int level=0, int direction=0)
 	{
-		return GetCurrentFrame().GetTexture(default_face, skin, Random, level, direction, bUsesLevels, bHealth2, bHealthSpecial, bDirectional);
+		return GetCurrentFrame().GetTexture(default_face, skin_face, Random, level, direction, bUsesLevels, bHealth2, bHealthSpecial, bDirectional);
 	}
 private:
 	FMugShotState();
@@ -215,6 +215,7 @@ class FMugShot
 
 		FMugShot();
 		void Grin(bool grin=true) { bEvilGrin = grin; }
+		void Reset();
 		void Tick(player_t *player);
 		bool SetState(const char *state_name, bool wait_till_done=false, bool reset=false);
 		int UpdateState(player_t *player, StateFlags stateflags=STANDARD);
@@ -275,7 +276,7 @@ public:
 		ST_DEADFACE			= ST_GODFACE + 1
 	};
 
-	DBaseStatusBar (int reltop);
+	DBaseStatusBar (int reltop, int hres=320, int vres=200);
 	void Destroy ();
 
 	void SetScaled (bool scale, bool force=false);
@@ -300,8 +301,6 @@ public:
 	virtual void AttachToPlayer (player_t *player);
 	virtual void FlashCrosshair ();
 	virtual void BlendView (float blend[4]);
-	virtual void SetFace (void *skn);												// Takes a FPlayerSkin as input
-	virtual void AddFaceToImageCollection (void *skn, FImageCollection *images);	// Takes a FPlayerSkin as input
 	virtual void NewGame ();
 	virtual void ScreenSizeChanged ();
 	virtual void MultiplayerChanged ();
@@ -334,14 +333,13 @@ protected:
 
 	void GetCurrentAmmo (AAmmo *&ammo1, AAmmo *&ammo2, int &ammocount1, int &ammocount2) const;
 
-	void AddFaceToImageCollectionActual (void *skn, FImageCollection *images, bool isDoom);
-
 public:
 	AInventory *ValidateInvFirst (int numVisible) const;
 	void DrawCrosshair ();
 
 	int ST_X, ST_Y;
 	int RelTop;
+	int HorizontalResolution, VirticalResolution;
 	bool Scaled;
 	bool Centering;
 	bool FixedOrigin;
@@ -378,8 +376,6 @@ extern DBaseStatusBar *StatusBar;
 
 // Status bar factories -----------------------------------------------------
 
-DBaseStatusBar *CreateHereticStatusBar();
-DBaseStatusBar *CreateHexenStatusBar();
 DBaseStatusBar *CreateStrifeStatusBar();
 DBaseStatusBar *CreateCustomStatusBar(int script=0);
 

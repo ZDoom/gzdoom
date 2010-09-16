@@ -1000,6 +1000,77 @@ const BYTE*				ds_source;
 
 // just for profiling
 int 					dscount;
+
+#ifdef X86_ASM
+extern "C" void R_SetSpanSource_ASM (const BYTE *flat);
+extern "C" void STACK_ARGS R_SetSpanSize_ASM (int xbits, int ybits);
+extern "C" void R_SetSpanColormap_ASM (BYTE *colormap);
+extern "C" BYTE *ds_curcolormap, *ds_cursource, *ds_curtiltedsource;
+#endif
+}
+
+//==========================================================================
+//
+// R_SetSpanSource
+//
+// Sets the source bitmap for the span drawing routines.
+//
+//==========================================================================
+
+void R_SetSpanSource(const BYTE *pixels)
+{
+	ds_source = pixels;
+#ifdef X86_ASM
+	if (ds_cursource != ds_source)
+	{
+		R_SetSpanSource_ASM(pixels);
+	}
+#endif
+}
+
+//==========================================================================
+//
+// R_SetSpanColormap
+//
+// Sets the colormap for the span drawing routines.
+//
+//==========================================================================
+
+void R_SetSpanColormap(BYTE *colormap)
+{
+	ds_colormap = colormap;
+#ifdef X86_ASM
+	if (ds_colormap != ds_curcolormap)
+	{
+		R_SetSpanColormap_ASM (ds_colormap);
+	}
+#endif
+}
+
+//==========================================================================
+//
+// R_SetupSpanBits
+//
+// Sets the texture size for the span drawing routines.
+//
+//==========================================================================
+
+void R_SetupSpanBits(FTexture *tex)
+{
+	tex->GetWidth ();
+	ds_xbits = tex->WidthBits;
+	ds_ybits = tex->HeightBits;
+	if ((1 << ds_xbits) > tex->GetWidth())
+	{
+		ds_xbits--;
+	}
+	if ((1 << ds_ybits) > tex->GetHeight())
+	{
+		ds_ybits--;
+	}
+#ifdef X86_ASM
+	R_SetSpanSize_ASM (ds_xbits, ds_ybits);
+#endif
 }
 
 //

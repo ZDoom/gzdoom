@@ -134,6 +134,10 @@ void PClassActor::StaticInit()
 		// Sprite 1 is always ----
 		memcpy (temp.name, "----", 5);
 		sprites.Push (temp);
+
+		// Sprite 2 is always ####
+		memcpy (temp.name, "####", 5);
+		sprites.Push (temp);
 	}
 
 	Printf ("LoadActors: Load actor definitions.\n");
@@ -625,7 +629,6 @@ CCMD (dumpmapthings)
 	FDoomEdMap::DumpMapThings ();
 }
 
-bool CheckCheatmode ();
 
 static void SummonActor (int command, int command2, FCommandLine argv)
 {

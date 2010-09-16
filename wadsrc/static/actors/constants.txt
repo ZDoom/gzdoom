@@ -1,9 +1,30 @@
 
+// Flags for A_Saw
+const int SF_NORANDOM = 1;
+const int SF_RANDOMLIGHTMISS = 2;
+const int SF_RANDOMLIGHTHIT = 4;
+const int SF_RANDOMLIGHTBOTH = 6;
+const int SF_NOUSEAMMOMISS = 8;
+const int SF_NOUSEAMMO = 16;
+
 // Flags for A_CustomMissile
 const int CMF_AIMOFFSET = 1;
 const int CMF_AIMDIRECTION = 2;
 const int CMF_TRACKOWNER = 4;
 const int CMF_CHECKTARGETDEAD = 8;
+
+// Flags for A_CustomBulletAttack
+const int CBAF_AIMFACING = 1;
+const int CBAF_NORANDOM = 2;
+const int CBAF_EXPLICITANGLE = 4;
+const int CBAF_NOPITCH = 8;
+
+// Flags for A_FireBullets
+const int FBF_USEAMMO = 1;
+const int FBF_NORANDOM = 2;
+const int FBF_EXPLICITANGLE = 4;
+const int FBF_NOPITCH = 8;
+const int FBF_NOFLASH = 16;
 
 // Flags for A_SpawnItemEx
 const int SXF_TRANSFERTRANSLATION=1;
@@ -38,6 +59,15 @@ const int RSF_FOG = 1;
 const int RSF_KEEPTARGET = 2;
 const int RSF_TELEFRAG = 4;
 
+// Flags for A_JumpIfTargetInLOS and A_JumpIfInTargetLOS
+const int JLOSF_PROJECTILE = 1;
+const int JLOSF_NOSIGHT = 2;
+const int JLOSF_CLOSENOFOV = 4;
+const int JLOSF_CLOSENOSIGHT = 8;
+const int JLOSF_CLOSENOJUMP = 16;
+const int JLOSF_DEADNOJUMP = 32;
+const int JLOSF_CHECKMASTER = 64;
+
 // Flags for A_ChangeVelocity
 const int CVF_RELATIVE = 1;
 const int CVF_REPLACE = 2;
@@ -66,6 +96,7 @@ const int MRF_UNDOBYDEATHSAVES = 2048;
 // Flags for A_RailAttack and A_CustomRailgun
 const int RGF_SILENT = 1;
 const int RGF_NOPIERCING = 2;
+const int RGF_EXPLICITANGLE = 4;
 
 // Flags for A_Mushroom
 const int MSF_Standard = 0;
@@ -79,6 +110,16 @@ const int BF_AFFECTBOSSES = 4;
 
 // Flags for A_SeekerMissile
 const int SMF_LOOK = 1;
+const int SMF_PRECISE = 2;
+
+// Flags for A_CustomPunch
+const int CPF_USEAMMO = 1;
+const int CPF_DAGGER = 2;
+const int CPF_PULLIN = 4;
+
+// Flags for A_Teleport
+const int TF_TELEFRAG = 1;
+const int TF_RANDOMDECIDE = 2;
 
 // Activation flags
 enum
@@ -103,6 +144,9 @@ const int AF_MissileTrigger = 16;
 const int AF_ClearSpecial = 32;
 const int AF_NoDeathSpecial = 64;
 const int AF_TriggerActs = 128;
+
+// Flags for A_TakeInventory and A_TakeFromTarget
+const int TIF_NOTAKEINFINITE = 1;
 
 // constants for A_PlaySound
 enum

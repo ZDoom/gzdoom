@@ -366,12 +366,12 @@ void FTexture::FlipSquareBlock (BYTE *block, int x, int y)
 		if (count & 1)
 		{
 			count--;
-			swap<BYTE> (corner[count], corner[count*x]);
+			swapvalues<BYTE> (corner[count], corner[count*x]);
 		}
 		for (j = 0; j < count; j += 2)
 		{
-			swap<BYTE> (corner[j], corner[j*x]);
-			swap<BYTE> (corner[j+1], corner[(j+1)*x]);
+			swapvalues<BYTE> (corner[j], corner[j*x]);
+			swapvalues<BYTE> (corner[j+1], corner[(j+1)*x]);
 		}
 	}
 }
@@ -549,8 +549,8 @@ FTexture *FTexture::GetRedirect(bool wantwarped)
 
 void FTexture::SetScaledSize(int fitwidth, int fitheight)
 {
-	xScale = DivScale16(Width, fitwidth);
-	yScale = DivScale16(Height,fitheight);
+	xScale = FLOAT2FIXED(float(Width) / fitwidth);
+	yScale = FLOAT2FIXED(float(Height) / fitheight);
 	// compensate for roundoff errors
 	if (MulScale16(xScale, fitwidth) != Width) xScale++;
 	if (MulScale16(yScale, fitheight) != Height) yScale++;

@@ -44,6 +44,7 @@ void P_SerializePlayers (FArchive &arc, bool fakeload);
 void P_SerializeWorld (FArchive &arc);
 void P_SerializeThinkers (FArchive &arc, bool);
 void P_SerializePolyobjs (FArchive &arc);
+void P_SerializeSubsectors(FArchive &arc);
 void P_SerializeSounds (FArchive &arc);
 
 void P_ReadACSDefereds (PNGHandle *png);

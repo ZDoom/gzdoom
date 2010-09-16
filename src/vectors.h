@@ -242,12 +242,14 @@ struct TVector2
 		return *this * len;
 	}
 
-	// Scales this vector into a unit vector
-	void MakeUnit()
+	// Scales this vector into a unit vector. Returns the old length
+	double MakeUnit()
 	{
-		double len = Length();
-		if (len != 0) len = 1 / len;
-		*this *= len;
+		double len, ilen;
+		len = ilen = Length();
+		if (ilen != 0) ilen = 1 / ilen;
+		*this *= ilen;
+		return len;
 	}
 
 	// Dot product

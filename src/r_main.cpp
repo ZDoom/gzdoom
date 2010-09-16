@@ -50,6 +50,7 @@
 #include "r_bsp.h"
 #include "r_plane.h"
 #include "v_palette.h"
+#include "po_man.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -99,6 +100,7 @@ static float CurrentVisibility = 8.f;
 static fixed_t MaxVisForWall;
 static fixed_t MaxVisForFloor;
 static FRandom pr_torchflicker ("TorchFlicker");
+static FRandom pr_hom;
 static TArray<InterpolationViewer> PastViewers;
 static int centerxwide;
 static bool polyclipped;
@@ -110,6 +112,7 @@ bool r_dontmaplines;
 CVAR (String, r_viewsize, "", CVAR_NOSET)
 CVAR (Int, r_polymost, 0, 0)
 CVAR (Bool, r_deathcamera, false, CVAR_ARCHIVE)
+CVAR (Int, r_clearbuffer, 0, 0)
 
 fixed_t			r_BaseVisibility;
 fixed_t			r_WallVisibility;
@@ -376,7 +379,7 @@ fixed_t R_PointToDist2 (fixed_t dx, fixed_t dy)
 
 	if (dy > dx)
 	{
-		swap (dx, dy);
+		swapvalues (dx, dy);
 	}
 
 	return FixedDiv (dx, finecosine[tantoangle[FixedDiv (dy, dx) >> DBITS] >> ANGLETOFINESHIFT]);
@@ -471,7 +474,7 @@ void R_InitTextureMapping ()
 	}
 	for (i = 0; i < centerx; i++)
 	{
-		xtoviewangle[i] = (angle_t)(-(signed)xtoviewangle[viewwidth-i-1]);
+		xtoviewangle[i] = (angle_t)(-(signed)xtoviewangle[viewwidth-i]);
 	}
 }
 
@@ -1054,7 +1057,7 @@ void R_SetupFrame (AActor *actor)
 		((player->cheats & CF_CHASECAM) || (r_deathcamera && camera->health <= 0)) &&
 		(camera->RenderStyle.BlendOp != STYLEOP_None) &&
 		!(camera->renderflags & RF_INVISIBLE) &&
-		camera->sprite != 0)	// Sprite 0 is always TNT1
+		camera->sprite != SPR_TNT1)
 	{
 		// [RH] Use chasecam view
 		P_AimCamera (camera, iview->nviewx, iview->nviewy, iview->nviewz, viewsector);
@@ -1268,6 +1271,34 @@ void R_SetupFrame (AActor *actor)
 	if (r_polymost)
 	{
 		polyclipped = RP_SetupFrame (false);
+	}
+
+	if (RenderTarget == screen && r_clearbuffer != 0)
+	{
+		int color;
+		int hom = r_clearbuffer;
+
+		if (hom == 3)
+		{
+			hom = ((I_FPSTime() / 128) & 1) + 1;
+		}
+		if (hom == 1)
+		{
+			color = GPalette.BlackIndex;
+		}
+		else if (hom == 2)
+		{
+			color = GPalette.WhiteIndex;
+		}
+		else if (hom == 4)
+		{
+			color = (I_FPSTime() / 32) & 255;
+		}
+		else
+		{
+			color = pr_hom();
+		}
+		memset(RenderTarget->GetBuffer(), color, RenderTarget->GetPitch() * RenderTarget->GetHeight());
 	}
 }
 
@@ -1488,6 +1519,8 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 	{
 		camera->renderflags |= RF_INVISIBLE;
 	}
+	// Link the polyobjects right before drawing the scene to reduce the amounts of calls to this function
+	PO_LinkToSubsectors();
 	if (r_polymost < 2)
 	{
 		R_RenderBSPNode (nodes + numnodes - 1);	// The head node is the last node output.

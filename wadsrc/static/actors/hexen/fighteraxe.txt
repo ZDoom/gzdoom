@@ -13,6 +13,8 @@ ACTOR FWeapAxe : FighterWeapon 8010 native
 	Weapon.YAdjust -12
 	Weapon.AmmoType1 "Mana1"
 	Inventory.PickupMessage "$TXT_WEAPON_F2"
+	Obituary "$OB_MPFWEAPAXE"
+	Tag "$TAG_FWEAPAXE"
 
 	action native A_FAxeCheckUp();
 	action native A_FAxeCheckReady();

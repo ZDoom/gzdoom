@@ -7,6 +7,7 @@ ACTOR MWeapWand : MageWeapon
 	Weapon.SelectionOrder 3600
 	Weapon.KickBack 0
 	Weapon.YAdjust 9
+	Tag "$TAG_MWEAPWAND"
 
 	States
 	{
@@ -56,6 +57,7 @@ ACTOR MageWandMissile : FastProjectile
 	+SPAWNSOUNDSOURCE
 	MissileType "MageWandSmoke"
 	SeeSound "MageWandFire"
+	Obituary "$OB_MPMWEAPWAND"
 	States
 	{
 	Spawn:

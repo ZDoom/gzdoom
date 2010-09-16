@@ -73,3 +73,9 @@ ACTOR SecActHitFakeFloor : SectorAction 9989 native
 {
 }
 
+// Music changer ----------------------------------
+
+ACTOR MusicChanger : SectorAction 14165 native
+{
+}
+

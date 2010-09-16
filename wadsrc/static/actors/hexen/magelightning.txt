@@ -12,6 +12,7 @@ ACTOR MWeapLightning : MageWeapon 8040
 	Weapon.YAdjust 20
 	Weapon.AmmoType1 "Mana2"
 	Inventory.PickupMessage "$TXT_WEAPON_M3"
+	Tag "$TAG_MWEAPLIGHTNING"
 
 	action native A_LightningReady();
 	action native A_MLightningAttack(class<Actor> floor = "LightningFloor", class<Actor> ceiling = "LightningCeiling");
@@ -56,6 +57,7 @@ ACTOR Lightning native
 	MissileType "LightningZap"
 	AttackSound "MageLightningZap"
 	ActiveSound "MageLightningContinuous"
+	Obituary "$OB_MPMWEAPLIGHTNING"
 }
 
 ACTOR LightningCeiling : Lightning
@@ -137,6 +139,7 @@ ACTOR LightningZap native
 	-ACTIVATEIMPACT
 	-ACTIVATEPCROSS
 	RenderStyle Add
+	Obituary "$OB_MPMWEAPLIGHTNING"
 
 	action native A_ZapMimic();
 

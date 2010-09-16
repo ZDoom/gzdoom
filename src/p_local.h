@@ -94,7 +94,7 @@ APlayerPawn *P_SpawnPlayer (FMapThing *mthing, bool tempplayer=false);
 
 void P_ThrustMobj (AActor *mo, angle_t angle, fixed_t move);
 int P_FaceMobj (AActor *source, AActor *target, angle_t *delta);
-bool P_SeekerMissile (AActor *actor, angle_t thresh, angle_t turnMax);
+bool P_SeekerMissile (AActor *actor, angle_t thresh, angle_t turnMax, bool precise = false);
 
 enum EPuffFlags
 {
@@ -241,6 +241,7 @@ struct FLineOpening
 void	P_LineOpening (FLineOpening &open, AActor *thing, const line_t *linedef, fixed_t x, fixed_t y, fixed_t refx=FIXED_MIN, fixed_t refy=0);
 
 class FBoundingBox;
+struct polyblock_t;
 
 class FBlockLinesIterator
 {
@@ -296,7 +297,7 @@ class FBlockThingsIterator
 public:
 	FBlockThingsIterator(int minx, int miny, int maxx, int maxy);
 	FBlockThingsIterator(const FBoundingBox &box);
-	AActor *Next();
+	AActor *Next(bool centeronly = false);
 	void Reset() { StartBlock(minx, miny); }
 };
 
@@ -311,7 +312,7 @@ class FPathTraverse
 	unsigned int count;
 
 	void AddLineIntercepts(int bx, int by);
-	void AddThingIntercepts(int bx, int by, FBlockThingsIterator &it);
+	void AddThingIntercepts(int bx, int by, FBlockThingsIterator &it, bool compatible);
 public:
 
 	intercept_t *Next();
@@ -324,6 +325,7 @@ public:
 
 #define PT_ADDLINES 	1
 #define PT_ADDTHINGS	2
+#define PT_COMPATIBLE	4
 
 AActor *P_BlockmapSearch (AActor *mo, int distance, AActor *(*check)(AActor*, int, void *), void *params = NULL);
 AActor *P_RoughMonsterSearch (AActor *mo, int distance);
@@ -421,13 +423,13 @@ enum
 	ALF_CHECKCONVERSATION = 8,
 };
 
-AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance, int pitch, int damage, FName damageType, PClassActor *pufftype, bool ismelee = false);
-AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance, int pitch, int damage, FName damageType, FName pufftype, bool ismelee = false);
+AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance, int pitch, int damage, FName damageType, PClassActor *pufftype, bool ismelee = false, AActor **victim = NULL);
+AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance, int pitch, int damage, FName damageType, FName pufftype, bool ismelee = false, AActor **victim = NULL);
 void	P_TraceBleed (int damage, fixed_t x, fixed_t y, fixed_t z, AActor *target, angle_t angle, int pitch);
 void	P_TraceBleed (int damage, AActor *target, angle_t angle, int pitch);
 void	P_TraceBleed (int damage, AActor *target, AActor *missile);		// missile version
 void	P_TraceBleed (int damage, AActor *target);		// random direction version
-void	P_RailAttack (AActor *source, int damage, int offset, int color1 = 0, int color2 = 0, float maxdiff = 0, bool silent = false, PClassActor *puff = NULL, bool pierce = true);	// [RH] Shoot a railgun
+void	P_RailAttack (AActor *source, int damage, int offset, int color1 = 0, int color2 = 0, float maxdiff = 0, bool silent = false, PClassActor *puff = NULL, bool pierce = true, angle_t angleoffset = 0, angle_t pitchoffset = 0);	// [RH] Shoot a railgun
 bool	P_HitFloor (AActor *thing);
 bool	P_HitWater (AActor *thing, sector_t *sec, fixed_t splashx = FIXED_MIN, fixed_t splashy = FIXED_MIN, fixed_t splashz=FIXED_MIN, bool checkabove = false, bool alert = true);
 void	P_CheckSplash(AActor *self, fixed_t distance);
@@ -458,9 +460,10 @@ const secplane_t * P_CheckSlopeWalk (AActor *actor, fixed_t &xmove, fixed_t &ymo
 // (For ZDoom itself this doesn't make any difference here but for GZDoom it does.)
 //
 //----------------------------------------------------------------------------------
+subsector_t *P_PointInSubsector (fixed_t x, fixed_t y);
 inline sector_t *P_PointInSector(fixed_t x, fixed_t y)
 {
-	return R_PointInSubsector(x,y)->sector;
+	return P_PointInSubsector(x,y)->sector;
 }
 
 //
@@ -482,6 +485,7 @@ extern FBlockNode**		blocklinks; 	// for thing chains
 //
 void P_TouchSpecialThing (AActor *special, AActor *toucher);
 void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage, FName mod, int flags=0);
+void P_PoisonMobj (AActor *target, AActor *inflictor, AActor *source, int damage, int duration, int period);
 bool P_GiveBody (AActor *actor, int num);
 bool P_PoisonPlayer (player_t *player, AActor *poisoner, AActor *source, int poison);
 void P_PoisonDamage (player_t *player, AActor *source, int damage, bool playPainSound);
@@ -507,8 +511,9 @@ typedef enum
 
 bool EV_RotatePoly (line_t *line, int polyNum, int speed, int byteAngle, int direction, bool overRide);
 bool EV_MovePoly (line_t *line, int polyNum, int speed, angle_t angle, fixed_t dist, bool overRide);
+bool EV_MovePolyTo (line_t *line, int polyNum, int speed, fixed_t x, fixed_t y, bool overRide);
 bool EV_OpenPolyDoor (line_t *line, int polyNum, int speed, angle_t angle, int delay, int distance, podoortype_t type);
-
+bool EV_StopPoly (int polyNum);
 
 
 // [RH] Data structure for P_SpawnMapThing() to keep track
@@ -539,12 +544,9 @@ extern int po_NumPolyobjs;
 extern polyspawns_t *polyspawns;	// [RH] list of polyobject things to spawn
 
 
-bool PO_MovePolyobj (int num, int x, int y, bool force=false);
-bool PO_RotatePolyobj (int num, angle_t angle);
 void PO_Init ();
 bool PO_Busy (int polyobj);
-void PO_ClosestPoint(const FPolyObj *poly, fixed_t ox, fixed_t oy, fixed_t &x, fixed_t &y, seg_t **seg);
-struct FPolyObj *PO_GetPolyobj(int polyNum);
+FPolyObj *PO_GetPolyobj(int polyNum);
 
 //
 // P_SPEC

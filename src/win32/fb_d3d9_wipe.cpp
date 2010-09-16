@@ -231,7 +231,7 @@ void D3DFB::WipeEndScreen()
 	// waste time copying from TempRenderTexture to FinalWipeScreen.
 	if (FinalWipeScreen != TempRenderTexture)
 	{
-		swap(RenderTexture[CurrRenderTexture], FinalWipeScreen);
+		swapvalues(RenderTexture[CurrRenderTexture], FinalWipeScreen);
 		TempRenderTexture = RenderTexture[CurrRenderTexture];
 	}
 
@@ -466,7 +466,7 @@ bool D3DFB::Wiper_Melt::Run(int ticks, D3DFB *fb)
 				{
 					fb->CheckQuadBatch();
 
-					BufferedQuad *quad = &fb->QuadExtra[fb->QuadBatchPos];
+					BufferedTris *quad = &fb->QuadExtra[fb->QuadBatchPos];
 					FBVERTEX *vert = &fb->VertexData[fb->VertexPos];
 					WORD *index = &fb->IndexData[fb->IndexPos];
 
@@ -475,6 +475,8 @@ bool D3DFB::Wiper_Melt::Run(int ticks, D3DFB *fb)
 					quad->ShaderNum = BQS_Plain;
 					quad->Palette = NULL;
 					quad->Texture = fb->InitialWipeScreen;
+					quad->NumVerts = 4;
+					quad->NumTris = 2;
 
 					// Fill the vertex buffer.
 					float u0 = rect.left / float(fb->FBWidth);

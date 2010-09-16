@@ -20,9 +20,10 @@ ACTOR Loremaster 12
 	+INCOMBAT
 	+LOOKALLAROUND
 	+NOICEDEATH
+	+NEVERRESPAWN
 	DamageFactor "Fire", 0.5
 	MinMissileChance 150
-	Tag "PRIEST"
+	Tag "$TAG_PRIEST"
 	SeeSound "loremaster/sight"
 	AttackSound "loremaster/attack"
 	PainSound "loremaster/pain"

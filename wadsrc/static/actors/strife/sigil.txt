@@ -11,7 +11,7 @@ ACTOR Sigil : Weapon native
 	+FLOORCLIP
 	+WEAPON.CHEATNOTWEAPON
 	Inventory.PickupSound "weapons/sigilcharge"
-	Tag "SIGIL"
+	Tag "$TAG_SIGIL"
 	Inventory.Icon "I_SGL1"
 	Inventory.PickupMessage "$TXT_SIGIL"
 	

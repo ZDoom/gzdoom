@@ -13,6 +13,7 @@ ACTOR ArtiHealingRadius : Inventory 10120 native
 	Inventory.Icon "ARTIHRAD"
 	Inventory.PickupSound "misc/p_pkup"
 	Inventory.PickupMessage "$TXT_ARTIHEALINGRADIUS"
+	Tag "$TAG_ARTIHEALINGRADIUS"
 	States
 	{
 	Spawn:

@@ -8,7 +8,7 @@ ACTOR MedPatch : HealthPickup 2011
 	+FLOORCLIP
 	+INVENTORY.INVBAR
 	Inventory.MaxAmount 20
-	Tag "Med patch"
+	Tag "$TAG_MEDPATCH"
 	Inventory.Icon "I_STMP"
 	Inventory.PickupMessage "$TXT_MEDPATCH"
 	HealthPickup.Autouse 3
@@ -31,7 +31,7 @@ ACTOR MedicalKit : HealthPickup 2012
 	+FLOORCLIP
 	+INVENTORY.INVBAR
 	Inventory.MaxAmount 15
-	Tag "Medical kit"
+	Tag "$TAG_MEDICALKIT"
 	Inventory.Icon "I_MDKT"
 	Inventory.PickupMessage "$TXT_MEDICALKIT"
 	HealthPickup.Autouse 3
@@ -54,7 +54,7 @@ ACTOR SurgeryKit : HealthPickup 83
 	+INVENTORY.INVBAR
 	Health -100
 	Inventory.MaxAmount 5
-	Tag "Surgery Kit"	// "full_health" in the Teaser
+	Tag "$TAG_SURGERYKIT"
 	Inventory.Icon "I_FULL"
 	Inventory.PickupMessage "$TXT_SURGERYKIT"
 	States
@@ -75,7 +75,7 @@ ACTOR StrifeMap : MapRevealer 2026
 	ConversationID 164, 160, 163
 	+FLOORCLIP
 	Inventory.PickupSound "misc/p_pkup"
-	Inventory.PickupMessage "$TXT_STRIFEMAP"	
+	Inventory.PickupMessage "$TXT_STRIFEMAP"
 	States
 	{
 	Spawn:
@@ -94,7 +94,7 @@ ACTOR BeldinsRing : Inventory
 	+FLOORCLIP
 	+INVENTORY.INVBAR
 	ConversationID 173, 165, 169
-	Tag "Ring"
+	Tag "$TAG_BELDINSRING"
 	Inventory.Icon "I_RING"
 	Inventory.GiveQuest 1
 	Inventory.PickupMessage "$TXT_BELDINSRING"
@@ -118,7 +118,7 @@ ACTOR OfferingChalice : Inventory 205
 	ConversationID 174, 166, 170
 	Radius 10
 	Height 16
-	Tag "Offering Chalice"
+	Tag "$TAG_OFFERINGCHALICE"
 	Inventory.Icon "I_RELC"
 	Inventory.PickupMessage "$TXT_OFFERINGCHALICE"
 	Inventory.GiveQuest 2
@@ -139,7 +139,7 @@ ACTOR Ear : Inventory
 	+FLOORCLIP
 	+INVENTORY.INVBAR
 	ConversationID 175, 167, 171
-	Tag "Ear"
+	Tag "$TAG_EAR"
 	Inventory.Icon "I_EARS"
 	Inventory.PickupMessage "$TXT_EAR"
 	Inventory.GiveQuest 9
@@ -164,7 +164,7 @@ ACTOR BrokenPowerCoupling : Inventory 226
 	+INVENTORY.INVBAR
 	Radius 16
 	Height 16
-	Tag "Broken Power Coupling"
+	Tag "$TAG_BROKENCOUPLING"
 	Inventory.MaxAmount 1
 	Inventory.Icon "I_COUP"
 	Inventory.PickupMessage "$TXT_BROKENCOUPLING"
@@ -190,7 +190,7 @@ ACTOR ShadowArmor : PowerupGiver 2024
 	+INVENTORY.INVBAR
 	-INVENTORY.FANCYPICKUPSOUND
 	RenderStyle Translucent
-	Tag "Shadow Armor"
+	Tag "$TAG_SHADOWARMOR"
 	Inventory.MaxAmount 2
 	Powerup.Type "Shadow"
 	Inventory.Icon "I_SHD1"
@@ -217,7 +217,7 @@ ACTOR EnvironmentalSuit : PowerupGiver 2025
 	-INVENTORY.FANCYPICKUPSOUND
 	Inventory.MaxAmount 5
 	Powerup.Type "Mask"
-	Tag "Environmental Suit"
+	Tag "$TAG_ENVSUIT"
 	Inventory.Icon "I_MASK"
 	Inventory.PickupSound "misc/i_pkup"
 	Inventory.PickupMessage "$TXT_ENVSUIT"
@@ -238,7 +238,7 @@ ACTOR GuardUniform : Inventory 90
 	ConversationID 162, 158, 161
 	+FLOORCLIP
 	+INVENTORY.INVBAR
-	Tag "Guard Uniform"
+	Tag "$TAG_GUARDUNIFORM"
 	Inventory.Icon "I_UNIF"
 	Inventory.PickupMessage "$TXT_GUARDUNIFORM"
 	Inventory.GiveQuest 15
@@ -259,7 +259,7 @@ ACTOR OfficersUniform : Inventory 52
 	ConversationID 163, 159, 162
 	+FLOORCLIP
 	+INVENTORY.INVBAR
-	Tag "Officer's Uniform"
+	Tag "$TAG_OFFICERSUNIFORM"
 	Inventory.Icon "I_OFIC"
 	Inventory.PickupMessage "$TXT_OFFICERSUNIFORM"
 	States
@@ -280,7 +280,7 @@ ACTOR FlameThrowerParts : Inventory
 	+FLOORCLIP
 	+INVENTORY.INVBAR
 	Inventory.Icon "I_BFLM"
-	Tag "Flame Thrower Parts"
+	Tag "$TAG_FTHROWERPARTS"
 	Inventory.PickupMessage "$TXT_FTHROWERPARTS"
 	States
 	{
@@ -300,7 +300,7 @@ ACTOR InterrogatorReport : Inventory
 	Game Strife
 	ConversationID 308, 289, 306
 	+FLOORCLIP
-	Tag "Report"
+	Tag "$TAG_REPORT"
 	Inventory.PickupMessage "$TXT_REPORT"
 	States
 	{
@@ -319,7 +319,7 @@ ACTOR Info : Inventory
 	ConversationID 300, 282, 299
 	+FLOORCLIP
 	+INVENTORY.INVBAR
-	Tag "Info"
+	Tag "$TAG_INFO"
 	Inventory.Icon "I_TOKN"
 	Inventory.PickupMessage "$TXT_INFO"
 	States
@@ -340,7 +340,7 @@ ACTOR Targeter : PowerupGiver 207
 	+FLOORCLIP
 	+INVENTORY.INVBAR
 	-INVENTORY.FANCYPICKUPSOUND
-	Tag "Targeter"
+	Tag "$TAG_TARGETER"
 	Powerup.Type "Targeter"
 	Inventory.MaxAmount 5
 	Inventory.Icon "I_TARG"
@@ -361,7 +361,7 @@ ACTOR Communicator : Inventory 206
 	Game Strife
 	ConversationID 176, 168, 172
 	+NOTDMATCH
-	Tag "Communicator"
+	Tag "$TAG_COMMUNICATOR"
 	Inventory.Icon "I_COMM"
 	Inventory.PickupSound  "misc/p_pkup"
 	Inventory.PickupMessage "$TXT_COMMUNICATOR"
@@ -389,7 +389,7 @@ ACTOR DegninOre : Inventory 59 native
 	+FLOORCLIP
 	+INCOMBAT
 	+INVENTORY.INVBAR
-	Tag "Degnin Ore"
+	Tag "$TAG_DEGNINORE"
 	DeathSound "ore/explode"
 	Inventory.Icon "I_XPRK"
 	Inventory.PickupMessage "$TXT_DEGNINORE"
@@ -418,7 +418,7 @@ ACTOR GunTraining : Inventory
 	+INVENTORY.INVBAR
 	+INVENTORY.UNDROPPABLE
 	Inventory.MaxAmount 100
-	Tag "Accuracy"
+	Tag "$TAG_GUNTRAINING"
 	Inventory.Icon "I_GUNT"
 	States
 	{
@@ -438,7 +438,7 @@ ACTOR HealthTraining : Inventory native
 	+INVENTORY.INVBAR
 	+INVENTORY.UNDROPPABLE
 	Inventory.MaxAmount 100
-	Tag "Toughness"
+	Tag "$TAG_HEALTHTRAINING"
 	Inventory.Icon "I_HELT"
 	States
 	{
@@ -459,7 +459,7 @@ ACTOR Scanner : PowerupGiver 2027 native
 	+FLOORCLIP
 	+INVENTORY.FANCYPICKUPSOUND
 	Inventory.MaxAmount 1
-	Tag "Scanner"
+	Tag "$TAG_SCANNER"
 	Inventory.Icon "I_PMUP"
 	Powerup.Type "Scanner"
 	Inventory.PickupSound "misc/i_pkup"
@@ -479,8 +479,8 @@ ACTOR PrisonPass : Key native
 	Game Strife
 	ConversationID 304, 286, 303
 	Inventory.Icon "I_TOKN"
-	Tag "Prison Pass"
-	Inventory.PickupMessage "TXT_PRISONPASS"
+	Tag "$TAG_PRISONPASS"
+	Inventory.PickupMessage "$TXT_PRISONPASS"
 	States
 	{
 	Spawn:
@@ -509,7 +509,7 @@ ACTOR DummyStrifeItem : Inventory native
 ACTOR RaiseAlarm : DummyStrifeItem native
 {	
 	ConversationID 301, 283, 300
-	Tag "Alarm"
+	Tag "$TAG_ALARM"
 }
 
 // Open door tag 222 --------------------------------------------------------
@@ -538,7 +538,7 @@ ACTOR OpenDoor224 : DummyStrifeItem native
 ACTOR AmmoFillup : DummyStrifeItem native
 {
 	ConversationID 298,280,297
-	Tag "Ammo"
+	Tag "$TAG_AMMOFILLUP"
 }
 
 // Health -------------------------------------------------------------------
@@ -546,7 +546,7 @@ ACTOR AmmoFillup : DummyStrifeItem native
 ACTOR HealthFillup : DummyStrifeItem native
 {
 	ConversationID 299,281,298
-	Tag "Health"
+	Tag "$TAG_HEALTHFILLUP"
 }
 
 // Upgrade Stamina ----------------------------------------------------------

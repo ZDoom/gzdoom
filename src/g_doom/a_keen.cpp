@@ -17,9 +17,9 @@
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_KeenDie)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_INT(doortag);
+	PARAM_INT_OPT(doortag)		{ doortag = 666; }
 
-	CALL_ACTION(A_NoBlocking, self);
+	A_Unblock(self, false);
 	
 	// scan the remaining thinkers to see if all Keens are dead
 	AActor *other;

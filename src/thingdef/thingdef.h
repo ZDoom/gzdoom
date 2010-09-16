@@ -231,13 +231,6 @@ enum
 	DEPF_INTERHUBSTRIP,
 };
 
-enum
-{
-	ACMETA_BASE				= 0x83000,
-	ACMETA_DropItems,		// Int (index into DropItemList)
-};
-
-
 // Types of old style decorations
 enum EDefinitionType
 {

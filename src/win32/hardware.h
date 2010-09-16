@@ -52,6 +52,7 @@ class IVideo
 
 	virtual bool SetResolution (int width, int height, int bits);
 
+	virtual void DumpAdapters();
 };
 
 void I_InitGraphics ();

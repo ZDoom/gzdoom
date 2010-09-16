@@ -114,6 +114,7 @@ extern HWND Window;
 extern LPDIRECTINPUT8 g_pdi;
 extern LPDIRECTINPUT g_pdi3;
 extern bool GUICapture;
+extern int BlockMouseMove; 
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -283,6 +284,7 @@ void I_CheckNativeMouse(bool preferNative)
 			NativeMouse = want_native;
 			if (want_native)
 			{
+				BlockMouseMove = 3;
 				Mouse->Ungrab();
 			}
 			else

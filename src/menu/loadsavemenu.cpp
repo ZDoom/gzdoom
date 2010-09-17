@@ -57,9 +57,10 @@ class DLoadSaveMenu : public DListMenu
 
 protected:
 	static TDeletingArray<FSaveGameNode*> SaveGames;
-	static int TopItem;
 	static int LastSaved;
-	static int Selected;
+
+	int Selected;
+	int TopItem;
 
 
 	int savepicLeft;
@@ -71,7 +72,7 @@ protected:
 	int listboxLeft;
 	int listboxTop;
 	int listboxWidth;
-	int listboxHeight1;
+	
 	int listboxRows;
 	int listboxHeight;
 	int listboxRight;
@@ -85,23 +86,19 @@ protected:
 	int commentBottom;
 
 
-	friend void M_NotifyNewSave (const char *file, const char *title, bool okForQuicksave);
-
-	static int RemoveSaveSlot (int index);
 	static int InsertSaveNode (FSaveGameNode *node);
 	static void ReadSaveStrings ();
-	static void NotifyNewSave (const char *file, const char *title, bool okForQuicksave);
 
 
 	FTexture *SavePic;
 	FBrokenLines *SaveComment;
 	bool mEntering;
 	char savegamestring[SAVESTRINGSIZE];
-	bool mWheelScrolled;
 
 	DLoadSaveMenu(DMenu *parent = NULL, FListMenuDescriptor *desc = NULL);
 	void Destroy();
 
+	int RemoveSaveSlot (int index);
 	void UnloadSaveData ();
 	void ClearSaveStuff ();
 	void ExtractSaveData (int index);
@@ -110,14 +107,15 @@ protected:
 	bool MouseEvent(int type, int x, int y);
 	bool Responder(event_t *ev);
 
+public:
+	static void NotifyNewSave (const char *file, const char *title, bool okForQuicksave);
+
 };
 
 IMPLEMENT_CLASS(DLoadSaveMenu)
 
 TDeletingArray<FSaveGameNode*> DLoadSaveMenu::SaveGames;
-int DLoadSaveMenu::TopItem;
 int DLoadSaveMenu::LastSaved = -1;
-int DLoadSaveMenu::Selected;
 
 FSaveGameNode *quickSaveSlot;
 
@@ -305,7 +303,6 @@ void DLoadSaveMenu::ReadSaveStrings ()
 			I_FindClose (filefirst);
 		}
 	}
-	Selected = 0;
 }
 
 
@@ -352,7 +349,6 @@ void DLoadSaveMenu::NotifyNewSave (const char *file, const char *title, bool okF
 	node->bOldVersion = false;
 	node->bMissingWads = false;
 	int index = InsertSaveNode (node);
-	Selected = index;
 
 	if (okForQuicksave)
 	{
@@ -376,7 +372,6 @@ DLoadSaveMenu::DLoadSaveMenu(DMenu *parent, FListMenuDescriptor *desc)
 : DListMenu(parent, desc)
 {
 	ReadSaveStrings();
-	mWheelScrolled = false;
 
 	savepicLeft = 10;
 	savepicTop = 54*CleanYfac;
@@ -387,7 +382,7 @@ DLoadSaveMenu::DLoadSaveMenu(DMenu *parent, FListMenuDescriptor *desc)
 	listboxLeft = savepicLeft + savepicWidth + 14;
 	listboxTop = savepicTop;
 	listboxWidth = screen->GetWidth() - listboxLeft - 10;
-	listboxHeight1 = screen->GetHeight() - listboxTop - 10;
+	int listboxHeight1 = screen->GetHeight() - listboxTop - 10;
 	listboxRows = (listboxHeight1 - 1) / rowHeight;
 	listboxHeight = listboxRows * rowHeight + 1;
 	listboxRight = listboxLeft + listboxWidth;

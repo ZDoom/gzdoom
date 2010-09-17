@@ -56,17 +56,39 @@ class DLoadSaveMenu : public DListMenu
 	DECLARE_CLASS(DLoadSaveMenu, DListMenu)
 
 protected:
-	static List SaveGames;
-	static FSaveGameNode *TopSaveGame;
-	static FSaveGameNode *lastSaveSlot;
-	static FSaveGameNode *SelSaveGame;
+	static TDeletingArray<FSaveGameNode*> SaveGames;
+	static int TopItem;
+	static int LastSaved;
+	static int Selected;
+
+
+	int savepicLeft;
+	int savepicTop;
+	int savepicWidth;
+	int savepicHeight;
+
+	int rowHeight;
+	int listboxLeft;
+	int listboxTop;
+	int listboxWidth;
+	int listboxHeight1;
+	int listboxRows;
+	int listboxHeight;
+	int listboxRight;
+	int listboxBottom;
+
+	int commentLeft;
+	int commentTop;
+	int commentWidth;
+	int commentHeight;
+	int commentRight;
+	int commentBottom;
 
 
 	friend void M_NotifyNewSave (const char *file, const char *title, bool okForQuicksave);
 
-	static FSaveGameNode *RemoveSaveSlot (FSaveGameNode *file);
-	static void UnloadSaveStrings();
-	static void InsertSaveNode (FSaveGameNode *node);
+	static int RemoveSaveSlot (int index);
+	static int InsertSaveNode (FSaveGameNode *node);
 	static void ReadSaveStrings ();
 	static void NotifyNewSave (const char *file, const char *title, bool okForQuicksave);
 
@@ -82,7 +104,7 @@ protected:
 
 	void UnloadSaveData ();
 	void ClearSaveStuff ();
-	void ExtractSaveData (const FSaveGameNode *node);
+	void ExtractSaveData (int index);
 	void Drawer ();
 	bool MenuEvent (int mkey, bool fromcontroller);
 	bool MouseEvent(int type, int x, int y);
@@ -92,10 +114,10 @@ protected:
 
 IMPLEMENT_CLASS(DLoadSaveMenu)
 
-List DLoadSaveMenu::SaveGames;
-FSaveGameNode *DLoadSaveMenu::TopSaveGame;
-FSaveGameNode *DLoadSaveMenu::lastSaveSlot;
-FSaveGameNode *DLoadSaveMenu::SelSaveGame;
+TDeletingArray<FSaveGameNode*> DLoadSaveMenu::SaveGames;
+int DLoadSaveMenu::TopItem;
+int DLoadSaveMenu::LastSaved = -1;
+int DLoadSaveMenu::Selected;
 
 FSaveGameNode *quickSaveSlot;
 
@@ -105,78 +127,54 @@ FSaveGameNode *quickSaveSlot;
 //
 //=============================================================================
 
-FSaveGameNode *DLoadSaveMenu::RemoveSaveSlot (FSaveGameNode *file)
+int DLoadSaveMenu::RemoveSaveSlot (int index)
 {
-	FSaveGameNode *next = static_cast<FSaveGameNode *>(file->Succ);
+	FSaveGameNode *file = SaveGames[index];
 
-	if (file == TopSaveGame)
-	{
-		TopSaveGame = next;
-	}
-	if (quickSaveSlot == file)
+	if (quickSaveSlot == SaveGames[index])
 	{
 		quickSaveSlot = NULL;
 	}
-	if (lastSaveSlot == file)
+	if (Selected == index)
 	{
-		lastSaveSlot = NULL;
+		Selected = -1;
 	}
-	file->Remove ();
 	if (!file->bNoDelete) delete file;
-	return next;
+	SaveGames.Delete(index);
+	if ((unsigned)index >= SaveGames.Size()) index--;
+	return index;
 }
 
-
 //=============================================================================
 //
 //
 //
 //=============================================================================
 
-void DLoadSaveMenu::UnloadSaveStrings()
+int DLoadSaveMenu::InsertSaveNode (FSaveGameNode *node)
 {
-	while (!SaveGames.IsEmpty())
+	if (SaveGames.Size() == 0)
 	{
-		RemoveSaveSlot (static_cast<FSaveGameNode *>(SaveGames.Head));
-	}
-}
-
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-void DLoadSaveMenu::InsertSaveNode (FSaveGameNode *node)
-{
-	FSaveGameNode *probe;
-
-	if (SaveGames.IsEmpty ())
-	{
-		SaveGames.AddHead (node);
-		return;
+		return SaveGames.Push(node);
 	}
 
 	if (node->bOldVersion)
 	{ // Add node at bottom of list
-		probe = static_cast<FSaveGameNode *>(SaveGames.TailPred);
-		while (probe->Pred != NULL && probe->bOldVersion &&
-			stricmp (node->Title, probe->Title) < 0)
-		{
-			probe = static_cast<FSaveGameNode *>(probe->Pred);
-		}
-		node->Insert (probe);
+		return SaveGames.Push(node);
 	}
 	else
-	{ // Add node at top of list
-		probe = static_cast<FSaveGameNode *>(SaveGames.Head);
-		while (probe->Succ != NULL && !probe->bOldVersion &&
-			stricmp (node->Title, probe->Title) > 0)
+	{	// Add node at top of list
+		unsigned int i;
+		for(i = 0; i < SaveGames.Size(); i++)
 		{
-			probe = static_cast<FSaveGameNode *>(probe->Succ);
+			if (SaveGames[i]->bOldVersion ||
+				stricmp (node->Title, SaveGames[i]->Title) <= 0)
+			{
+				break;
+			}
 		}
-		node->InsertBefore (probe);
+		SaveGames.Insert(i, node);
+		return i;
 	}
 }
 
@@ -191,13 +189,11 @@ void DLoadSaveMenu::InsertSaveNode (FSaveGameNode *node)
 
 void DLoadSaveMenu::ReadSaveStrings ()
 {
-	if (SaveGames.IsEmpty ())
+	if (SaveGames.Size() == 0)
 	{
 		void *filefirst;
 		findstate_t c_file;
 		FString filter;
-
-		atterm (UnloadSaveStrings);
 
 		filter = G_BuildSaveName ("*.zds", -1);
 		filefirst = I_FindFirst (filter.GetChars(), &c_file);
@@ -309,10 +305,7 @@ void DLoadSaveMenu::ReadSaveStrings ()
 			I_FindClose (filefirst);
 		}
 	}
-	if (SelSaveGame == NULL || SelSaveGame->Succ == NULL)
-	{
-		SelSaveGame = static_cast<FSaveGameNode *>(SaveGames.Head);
-	}
+	Selected = 0;
 }
 
 
@@ -332,10 +325,9 @@ void DLoadSaveMenu::NotifyNewSave (const char *file, const char *title, bool okF
 	ReadSaveStrings ();
 
 	// See if the file is already in our list
-	for (node = static_cast<FSaveGameNode *>(SaveGames.Head);
-		 node->Succ != NULL;
-		 node = static_cast<FSaveGameNode *>(node->Succ))
+	for (unsigned i=0; i<SaveGames.Size(); i++)
 	{
+		FSaveGameNode *node = SaveGames[i];
 #ifdef unix
 		if (node->Filename.Compare (file) == 0)
 #else
@@ -345,25 +337,27 @@ void DLoadSaveMenu::NotifyNewSave (const char *file, const char *title, bool okF
 			strcpy (node->Title, title);
 			node->bOldVersion = false;
 			node->bMissingWads = false;
-			break;
+			if (okForQuicksave)
+			{
+				if (quickSaveSlot == NULL) quickSaveSlot = node;
+				LastSaved = i;
+			}
+			return;
 		}
 	}
 
-	if (node->Succ == NULL)
-	{
-		node = new FSaveGameNode;
-		strcpy (node->Title, title);
-		node->Filename = file;
-		node->bOldVersion = false;
-		node->bMissingWads = false;
-		InsertSaveNode (node);
-		SelSaveGame = node;
-	}
+	node = new FSaveGameNode;
+	strcpy (node->Title, title);
+	node->Filename = file;
+	node->bOldVersion = false;
+	node->bMissingWads = false;
+	int index = InsertSaveNode (node);
+	Selected = index;
 
 	if (okForQuicksave)
 	{
 		if (quickSaveSlot == NULL) quickSaveSlot = node;
-		lastSaveSlot = node;
+		LastSaved = index;
 	}
 }
 
@@ -383,6 +377,28 @@ DLoadSaveMenu::DLoadSaveMenu(DMenu *parent, FListMenuDescriptor *desc)
 {
 	ReadSaveStrings();
 	mWheelScrolled = false;
+
+	savepicLeft = 10;
+	savepicTop = 54*CleanYfac;
+	savepicWidth = 216*screen->GetWidth()/640;
+	savepicHeight = 135*screen->GetHeight()/400;
+
+	rowHeight = (SmallFont->GetHeight() + 1) * CleanYfac;
+	listboxLeft = savepicLeft + savepicWidth + 14;
+	listboxTop = savepicTop;
+	listboxWidth = screen->GetWidth() - listboxLeft - 10;
+	listboxHeight1 = screen->GetHeight() - listboxTop - 10;
+	listboxRows = (listboxHeight1 - 1) / rowHeight;
+	listboxHeight = listboxRows * rowHeight + 1;
+	listboxRight = listboxLeft + listboxWidth;
+	listboxBottom = listboxTop + listboxHeight;
+
+	commentLeft = savepicLeft;
+	commentTop = savepicTop + savepicHeight + 16;
+	commentWidth = savepicWidth;
+	commentHeight = (51+(screen->GetHeight()>200?10:0))*CleanYfac;
+	commentRight = commentLeft + commentWidth;
+	commentBottom = commentTop + commentHeight;
 }
 
 void DLoadSaveMenu::Destroy()
@@ -420,7 +436,7 @@ void DLoadSaveMenu::UnloadSaveData ()
 void DLoadSaveMenu::ClearSaveStuff ()
 {
 	UnloadSaveData();
-	if (quickSaveSlot == (FSaveGameNode *)1)
+	if (quickSaveSlot == (FSaveGameNode*)1)
 	{
 		quickSaveSlot = NULL;
 	}
@@ -432,15 +448,16 @@ void DLoadSaveMenu::ClearSaveStuff ()
 //
 //=============================================================================
 
-void DLoadSaveMenu::ExtractSaveData (const FSaveGameNode *node)
+void DLoadSaveMenu::ExtractSaveData (int index)
 {
 	FILE *file;
 	PNGHandle *png;
+	FSaveGameNode *node;
 
 	UnloadSaveData ();
 
-	if (node != NULL &&
-		node->Succ != NULL &&
+	if ((unsigned)index < SaveGames.Size() &&
+		(node = SaveGames[index]) &&
 		!node->Filename.IsEmpty() &&
 		!node->bOldVersion &&
 		(file = fopen (node->Filename.GetChars(), "rb")) != NULL)
@@ -512,30 +529,9 @@ void DLoadSaveMenu::Drawer ()
 {
 	Super::Drawer();
 
-	const int savepicLeft = 10;
-	const int savepicTop = 54*CleanYfac;
-	const int savepicWidth = 216*screen->GetWidth()/640;
-	const int savepicHeight = 135*screen->GetHeight()/400;
-
-	const int rowHeight = (SmallFont->GetHeight() + 1) * CleanYfac;
-	const int listboxLeft = savepicLeft + savepicWidth + 14;
-	const int listboxTop = savepicTop;
-	const int listboxWidth = screen->GetWidth() - listboxLeft - 10;
-	const int listboxHeight1 = screen->GetHeight() - listboxTop - 10;
-	const int listboxRows = (listboxHeight1 - 1) / rowHeight;
-	const int listboxHeight = listboxRows * rowHeight + 1;
-	const int listboxRight = listboxLeft + listboxWidth;
-	const int listboxBottom = listboxTop + listboxHeight;
-
-	const int commentLeft = savepicLeft;
-	const int commentTop = savepicTop + savepicHeight + 16;
-	const int commentWidth = savepicWidth;
-	const int commentHeight = (51+(screen->GetHeight()>200?10:0))*CleanYfac;
-	const int commentRight = commentLeft + commentWidth;
-	const int commentBottom = commentTop + commentHeight;
-
 	FSaveGameNode *node;
 	int i;
+	unsigned j;
 	bool didSeeSelected = false;
 
 	// Draw picture area
@@ -558,10 +554,10 @@ void DLoadSaveMenu::Drawer ()
 		screen->Clear (savepicLeft, savepicTop,
 			savepicLeft+savepicWidth, savepicTop+savepicHeight, 0, 0);
 
-		if (!SaveGames.IsEmpty ())
+		if (SaveGames.Size() > 0)
 		{
 			const char *text =
-				(SelSaveGame == NULL || !SelSaveGame->bOldVersion)
+				(Selected == -1 || SaveGames[Selected]->bOldVersion)
 				? GStrings("MNU_NOPICTURE") : GStrings("MNU_DIFFVERSION");
 			const int textlen = SmallFont->StringWidth (text)*CleanXfac;
 
@@ -588,110 +584,73 @@ void DLoadSaveMenu::Drawer ()
 	}
 
 	// Draw file area
-	do
+	V_DrawFrame (listboxLeft, listboxTop, listboxWidth, listboxHeight);
+	screen->Clear (listboxLeft, listboxTop, listboxRight, listboxBottom, 0, 0);
+
+	if (SaveGames.Size() == 0)
 	{
-		V_DrawFrame (listboxLeft, listboxTop, listboxWidth, listboxHeight);
-		screen->Clear (listboxLeft, listboxTop, listboxRight, listboxBottom, 0, 0);
+		const char * text = GStrings("MNU_NOFILES");
+		const int textlen = SmallFont->StringWidth (text)*CleanXfac;
 
-		if (SaveGames.IsEmpty ())
+		screen->DrawText (SmallFont, CR_GOLD, listboxLeft+(listboxWidth-textlen)/2,
+			listboxTop+(listboxHeight-rowHeight)/2, text,
+			DTA_CleanNoMove, true, TAG_DONE);
+		return;
+	}
+
+	for (i = 0, j = TopItem; i < listboxRows && j < SaveGames.Size(); i++,j++)
+	{
+		int color;
+		node = SaveGames[j];
+		if (node->bOldVersion)
 		{
-			const char * text = GStrings("MNU_NOFILES");
-			const int textlen = SmallFont->StringWidth (text)*CleanXfac;
-
-			screen->DrawText (SmallFont, CR_GOLD, listboxLeft+(listboxWidth-textlen)/2,
-				listboxTop+(listboxHeight-rowHeight)/2, text,
-				DTA_CleanNoMove, true, TAG_DONE);
-			return;
+			color = CR_BLUE;
 		}
-
-		for (i = 0, node = TopSaveGame;
-			 i < listboxRows && node->Succ != NULL;
-			 ++i, node = static_cast<FSaveGameNode *>(node->Succ))
+		else if (node->bMissingWads)
 		{
-			int color;
-			if (node->bOldVersion)
-			{
-				color = CR_BLUE;
-			}
-			else if (node->bMissingWads)
-			{
-				color = CR_ORANGE;
-			}
-			else if (node == SelSaveGame)
-			{
-				color = CR_WHITE;
-			}
-			else
-			{
-				color = CR_TAN;
-			}
-			if (node == SelSaveGame)
-			{
-				screen->Clear (listboxLeft, listboxTop+rowHeight*i,
-					listboxRight, listboxTop+rowHeight*(i+1), -1,
-					mEntering ? MAKEARGB(255,255,0,0) : MAKEARGB(255,0,0,255));
-				didSeeSelected = true;
-				if (!mEntering)
-				{
-					screen->DrawText (SmallFont, color,
-						listboxLeft+1, listboxTop+rowHeight*i+CleanYfac, node->Title,
-						DTA_CleanNoMove, true, TAG_DONE);
-				}
-				else
-				{
-					screen->DrawText (SmallFont, CR_WHITE,
-						listboxLeft+1, listboxTop+rowHeight*i+CleanYfac, savegamestring,
-						DTA_CleanNoMove, true, TAG_DONE);
-
-					screen->DrawText (SmallFont, CR_WHITE,
-						listboxLeft+1+SmallFont->StringWidth (savegamestring)*CleanXfac,
-						listboxTop+rowHeight*i+CleanYfac, 
-						(gameinfo.gametype & (GAME_DoomStrifeChex)) ? "_" : "[",
-						DTA_CleanNoMove, true, TAG_DONE);
-				}
-			}
-			else
+			color = CR_ORANGE;
+		}
+		else if (j == Selected)
+		{
+			color = CR_WHITE;
+		}
+		else
+		{
+			color = CR_TAN;
+		}
+		if (j == Selected)
+		{
+			screen->Clear (listboxLeft, listboxTop+rowHeight*i,
+				listboxRight, listboxTop+rowHeight*(i+1), -1,
+				mEntering ? MAKEARGB(255,255,0,0) : MAKEARGB(255,0,0,255));
+			didSeeSelected = true;
+			if (!mEntering)
 			{
 				screen->DrawText (SmallFont, color,
 					listboxLeft+1, listboxTop+rowHeight*i+CleanYfac, node->Title,
 					DTA_CleanNoMove, true, TAG_DONE);
 			}
-		}
-
-		// This is dumb: If the selected node was not visible,
-		// scroll down and redraw. M_SaveLoadResponder()
-		// guarantees that if the node is not visible, it will
-		// always be below the visible list instead of above it.
-		// This should not really be done here, but I don't care.
-
-		if (!didSeeSelected)
-		{
-			// no, this shouldn't be here - and that's why there's now another hack in here
-			// so that the mouse scrolling does not get screwed by this code...
-			if (mWheelScrolled)
-			{
-				didSeeSelected = true;
-				SelSaveGame = NULL;
-				mWheelScrolled = false;
-			}
-			for (i = 1; node->Succ != NULL && node != SelSaveGame; ++i)
-			{
-				node = static_cast<FSaveGameNode *>(node->Succ);
-			}
-			if (node->Succ == NULL)
-			{ // SelSaveGame is invalid
-				didSeeSelected = true;
-			}
 			else
 			{
-				do
-				{
-					TopSaveGame = static_cast<FSaveGameNode *>(TopSaveGame->Succ);
-				} while (--i);
+				screen->DrawText (SmallFont, CR_WHITE,
+					listboxLeft+1, listboxTop+rowHeight*i+CleanYfac, savegamestring,
+					DTA_CleanNoMove, true, TAG_DONE);
+
+				screen->DrawText (SmallFont, CR_WHITE,
+					listboxLeft+1+SmallFont->StringWidth (savegamestring)*CleanXfac,
+					listboxTop+rowHeight*i+CleanYfac, 
+					(gameinfo.gametype & (GAME_DoomStrifeChex)) ? "_" : "[",
+					DTA_CleanNoMove, true, TAG_DONE);
 			}
 		}
-	} while (!didSeeSelected);
-}
+		else
+		{
+			screen->DrawText (SmallFont, color,
+				listboxLeft+1, listboxTop+rowHeight*i+CleanYfac, node->Title,
+				DTA_CleanNoMove, true, TAG_DONE);
+		}
+	}
+} 
 
 //=============================================================================
 //
@@ -704,47 +663,24 @@ bool DLoadSaveMenu::MenuEvent (int mkey, bool fromcontroller)
 	switch (mkey)
 	{
 	case MKEY_Up:
-		if (SelSaveGame == NULL) 
+		if (SaveGames.Size() > 1)
 		{
-			SelSaveGame = TopSaveGame;
-		}
-		else if (SelSaveGame->Succ != NULL)
-		{
-			if (SelSaveGame != SaveGames.Head)
-			{
-				if (SelSaveGame == TopSaveGame)
-				{
-					TopSaveGame = static_cast<FSaveGameNode *>(TopSaveGame->Pred);
-				}
-				SelSaveGame = static_cast<FSaveGameNode *>(SelSaveGame->Pred);
-			}
-			else
-			{
-				SelSaveGame = static_cast<FSaveGameNode *>(SaveGames.TailPred);
-			}
+			if (--Selected < 0) Selected = SaveGames.Size()-1;
+			if (Selected < TopItem) TopItem = Selected;
+			else if (Selected >= TopItem + listboxRows) TopItem = MAX(0, Selected - listboxRows);
 			UnloadSaveData ();
-			ExtractSaveData (SelSaveGame);
+			ExtractSaveData (Selected);
 		}
 		return true;
 
 	case MKEY_Down:
-		if (SelSaveGame == NULL) 
+		if (SaveGames.Size() > 1)
 		{
-			SelSaveGame = TopSaveGame;
-		}
-		else if (SelSaveGame->Succ != NULL)
-		{
-			if (SelSaveGame != SaveGames.TailPred)
-			{
-				SelSaveGame = static_cast<FSaveGameNode *>(SelSaveGame->Succ);
-			}
-			else
-			{
-				SelSaveGame = TopSaveGame =
-					static_cast<FSaveGameNode *>(SaveGames.Head);
-			}
+			if (unsigned(++Selected) >= SaveGames.Size()) Selected = 0;
+			if (Selected < TopItem) TopItem = Selected;
+			else TopItem = MAX(0, Selected - listboxRows);
 			UnloadSaveData ();
-			ExtractSaveData (SelSaveGame);
+			ExtractSaveData (Selected);
 		}
 		return true;
 
@@ -753,22 +689,12 @@ bool DLoadSaveMenu::MenuEvent (int mkey, bool fromcontroller)
 
 	case MKEY_MBYes:
 	{
-		if (SelSaveGame != NULL && SelSaveGame->Succ != NULL)
+		if (Selected != -1)
 		{
-			FSaveGameNode *next = static_cast<FSaveGameNode *>(SelSaveGame->Succ);
-			if (next->Succ == NULL)
-			{
-				next = static_cast<FSaveGameNode *>(SelSaveGame->Pred);
-				if (next->Pred == NULL)
-				{
-					next = NULL;
-				}
-			}
-
-			remove (SelSaveGame->Filename.GetChars());
+			remove (SaveGames[Selected]->Filename.GetChars());
 			UnloadSaveData ();
-			SelSaveGame = RemoveSaveSlot (SelSaveGame);
-			ExtractSaveData (SelSaveGame);
+			Selected = RemoveSaveSlot (Selected);
+			ExtractSaveData (Selected);
 		}
 		return true;
 	}
@@ -786,39 +712,16 @@ bool DLoadSaveMenu::MenuEvent (int mkey, bool fromcontroller)
 
 bool DLoadSaveMenu::MouseEvent(int type, int x, int y)
 {
-	const int savepicLeft = 10;
-	const int savepicTop = 54*CleanYfac;
-	const int savepicWidth = 216*screen->GetWidth()/640;
-
-	const int rowHeight = (SmallFont->GetHeight() + 1) * CleanYfac;
-	const int listboxLeft = savepicLeft + savepicWidth + 14;
-	const int listboxTop = savepicTop;
-	const int listboxWidth = screen->GetWidth() - listboxLeft - 10;
-	const int listboxHeight1 = screen->GetHeight() - listboxTop - 10;
-	const int listboxRows = (listboxHeight1 - 1) / rowHeight;
-	const int listboxHeight = listboxRows * rowHeight + 1;
-	const int listboxRight = listboxLeft + listboxWidth;
-	const int listboxBottom = listboxTop + listboxHeight;
-
 	if (x >= listboxLeft && x < listboxLeft + listboxWidth && 
 		y >= listboxTop && y < listboxTop + listboxHeight)
 	{
 		int lineno = (y - listboxTop) / rowHeight;
-		FSaveGameNode *top = TopSaveGame;
-		while (lineno > 0 && top->Succ != NULL)
+
+		if (TopItem + lineno < (int)SaveGames.Size())
 		{
-			lineno--;
-			top = (FSaveGameNode *)top->Succ;
-		}
-		if (lineno == 0)
-		{
-			if (SelSaveGame != top)
-			{
-				SelSaveGame = top;
-				UnloadSaveData ();
-				ExtractSaveData (SelSaveGame);
-				// Sound?
-			}
+			Selected = TopItem + lineno;
+			UnloadSaveData ();
+			ExtractSaveData (Selected);
 			if (type == MOUSE_Release)
 			{
 				if (MenuEvent(MKEY_Enter, true))
@@ -827,12 +730,10 @@ bool DLoadSaveMenu::MouseEvent(int type, int x, int y)
 				}
 			}
 		}
-		else SelSaveGame = NULL;
+		else Selected = -1;
 	}
-	else
-	{
-		SelSaveGame = NULL;
-	}
+	else Selected = -1;
+
 	return Super::MouseEvent(type, x, y);
 }
 
@@ -848,16 +749,16 @@ bool DLoadSaveMenu::Responder (event_t *ev)
 	{
 		if (ev->subtype == EV_GUI_KeyDown)
 		{
-			if (SelSaveGame != NULL && SelSaveGame->Succ != NULL)
+			if (Selected != -1)
 			{
 				switch (ev->data1)
 				{
 				case GK_F1:
-					if (!SelSaveGame->Filename.IsEmpty())
+					if (!SaveGames[Selected]->Filename.IsEmpty())
 					{
 						char workbuf[512];
 
-						mysnprintf (workbuf, countof(workbuf), "File on disk:\n%s", SelSaveGame->Filename.GetChars());
+						mysnprintf (workbuf, countof(workbuf), "File on disk:\n%s", SaveGames[Selected]->Filename.GetChars());
 						if (SaveComment != NULL)
 						{
 							V_FreeBrokenLines (SaveComment);
@@ -871,7 +772,7 @@ bool DLoadSaveMenu::Responder (event_t *ev)
 					{
 						FString EndString;
 						EndString.Format("%s" TEXTCOLOR_WHITE "%s" TEXTCOLOR_NORMAL "?\n\n%s",
-							GStrings("MNU_DELETESG"), SelSaveGame->Title, GStrings("PRESSYN"));
+							GStrings("MNU_DELETESG"), SaveGames[Selected]->Title, GStrings("PRESSYN"));
 						M_StartMessage (EndString, 0);
 					}
 					return true;
@@ -880,36 +781,13 @@ bool DLoadSaveMenu::Responder (event_t *ev)
 		}
 		else if (ev->subtype == EV_GUI_WheelUp)
 		{
-			if (TopSaveGame != SaveGames.Head && TopSaveGame != NULL)
-			{
-				TopSaveGame = static_cast<FSaveGameNode *>(TopSaveGame->Pred);
-				mWheelScrolled = true;
-			}
+			if (TopItem > 0) TopItem--;
 			return true;
 		}
 		else if (ev->subtype == EV_GUI_WheelDown)
 		{
-			const int savepicTop = 54*CleanYfac;
-			const int listboxTop = savepicTop;
-			const int rowHeight = (SmallFont->GetHeight() + 1) * CleanYfac;
-			const int listboxHeight1 = screen->GetHeight() - listboxTop - 10;
-			const int listboxRows = (listboxHeight1 - 1) / rowHeight;
-
-			FSaveGameNode *node = TopSaveGame;
-			if (node != NULL)
-			{
-				int count = 1;
-				while (node != NULL && node != SaveGames.TailPred)
-				{
-					node = (FSaveGameNode*)node->Succ;
-					count++;
-				}
-				if (count > listboxRows)
-				{
-					TopSaveGame = (FSaveGameNode*)TopSaveGame->Succ;
-					mWheelScrolled = true;
-				}
-			}
+			if (TopItem < (int)SaveGames.Size() - listboxRows) TopItem++;
+			return true;
 		}
 	}
 	return Super::Responder(ev);
@@ -952,17 +830,17 @@ DSaveMenu::DSaveMenu(DMenu *parent, FListMenuDescriptor *desc)
 {
 	strcpy (NewSaveNode.Title, "<New Save Game>");
 	NewSaveNode.bNoDelete = true;
-	SaveGames.AddHead (&NewSaveNode);
-	TopSaveGame = static_cast<FSaveGameNode *>(SaveGames.Head);
-	if (lastSaveSlot == NULL)
+	SaveGames.Insert(0, &NewSaveNode);
+	TopItem = 0;
+	if (LastSaved == -1)
 	{
-		SelSaveGame = &NewSaveNode;
+		Selected = 0;
 	}
 	else
 	{
-		SelSaveGame = lastSaveSlot;
+		Selected = LastSaved + 1;
 	}
-	ExtractSaveData (SelSaveGame);
+	ExtractSaveData (Selected);
 }
 
 //=============================================================================
@@ -973,17 +851,11 @@ DSaveMenu::DSaveMenu(DMenu *parent, FListMenuDescriptor *desc)
 
 void DSaveMenu::Destroy()
 {
-	if (SaveGames.Head == &NewSaveNode)
+	if (SaveGames[0] == &NewSaveNode)
 	{
-		SaveGames.RemHead ();
-		if (SelSaveGame == &NewSaveNode)
-		{
-			SelSaveGame = static_cast<FSaveGameNode *>(SaveGames.Head);
-		}
-		if (TopSaveGame == &NewSaveNode)
-		{
-			TopSaveGame = static_cast<FSaveGameNode *>(SaveGames.Head);
-		}
+		SaveGames.Delete(0);
+		if (Selected == 0) Selected = -1;
+		else Selected--;
 	}
 }
 
@@ -1034,16 +906,16 @@ bool DSaveMenu::MenuEvent (int mkey, bool fromcontroller)
 	{
 		return true;
 	}
-	if (SelSaveGame == NULL || SelSaveGame->Succ == NULL)
+	if (Selected == -1)
 	{
 		return false;
 	}
 
 	if (mkey == MKEY_Enter)
 	{
-		if (SelSaveGame != &NewSaveNode)
+		if (Selected != 0)
 		{
-			strcpy (savegamestring, SelSaveGame->Title);
+			strcpy (savegamestring, SaveGames[Selected]->Title);
 		}
 		else
 		{
@@ -1056,7 +928,7 @@ bool DSaveMenu::MenuEvent (int mkey, bool fromcontroller)
 	else if (mkey == MKEY_Input)
 	{
 		mEntering = false;
-		DoSave(SelSaveGame);
+		DoSave(SaveGames[Selected]);
 	}
 	else if (mkey == MKEY_Abort)
 	{
@@ -1075,18 +947,18 @@ bool DSaveMenu::Responder (event_t *ev)
 {
 	if (ev->subtype == EV_GUI_KeyDown)
 	{
-		if (SelSaveGame != NULL && SelSaveGame->Succ != NULL)
+		if (Selected != -1)
 		{
 			switch (ev->data1)
 			{
 			case GK_DEL:
 			case '\b':
 				// cannot delete 'new save game' item
-				if (SelSaveGame == &NewSaveNode) return true;
+				if (Selected == 0) return true;
 				break;
 
 			case 'N':
-				SelSaveGame = TopSaveGame = &NewSaveNode;
+				Selected = TopItem = 0;
 				UnloadSaveData ();
 				return true;
 			}
@@ -1124,8 +996,9 @@ IMPLEMENT_CLASS(DLoadMenu)
 DLoadMenu::DLoadMenu(DMenu *parent, FListMenuDescriptor *desc)
 : DLoadSaveMenu(parent, desc)
 {
-	TopSaveGame = static_cast<FSaveGameNode *>(SaveGames.Head);
-	ExtractSaveData (SelSaveGame);
+	TopItem = 0;
+	ExtractSaveData (Selected);
+
 }
 
 //=============================================================================
@@ -1140,21 +1013,21 @@ bool DLoadMenu::MenuEvent (int mkey, bool fromcontroller)
 	{
 		return true;
 	}
-	if (SelSaveGame == NULL || SelSaveGame->Succ == NULL)
+	if (Selected == -1)
 	{
 		return false;
 	}
 
 	if (mkey == MKEY_Enter)
 	{
-		G_LoadGame (SelSaveGame->Filename.GetChars());
+		G_LoadGame (SaveGames[Selected]->Filename.GetChars());
 		if (gamestate == GS_FULLCONSOLE)
 		{
 			gamestate = GS_HIDECONSOLE;
 		}
-		if (quickSaveSlot == (FSaveGameNode *)1)
+		if (quickSaveSlot == (FSaveGameNode*)1)
 		{
-			quickSaveSlot = SelSaveGame;
+			quickSaveSlot = SaveGames[Selected];
 		}
 		M_ClearMenus();
 		BorderNeedRefresh = screen->GetPageCount ();

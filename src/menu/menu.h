@@ -56,7 +56,7 @@ struct FGameStartup
 
 extern FGameStartup GameStartupInfo;
 
-struct FSaveGameNode : public Node
+struct FSaveGameNode
 {
 	char Title[SAVESTRINGSIZE];
 	FString Filename;

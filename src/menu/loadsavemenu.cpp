@@ -35,7 +35,6 @@
 
 #include "menu/menu.h"
 #include "i_system.h"
-#include "lists.h"
 #include "version.h"
 #include "g_game.h"
 #include "m_png.h"

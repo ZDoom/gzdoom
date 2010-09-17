@@ -5,7 +5,6 @@
 
 
 #include "dobject.h"
-#include "lists.h"
 #include "d_player.h"
 #include "r_translate.h"
 #include "c_cvars.h"

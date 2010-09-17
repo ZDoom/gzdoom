@@ -667,7 +667,7 @@ bool DLoadSaveMenu::MenuEvent (int mkey, bool fromcontroller)
 		{
 			if (--Selected < 0) Selected = SaveGames.Size()-1;
 			if (Selected < TopItem) TopItem = Selected;
-			else if (Selected >= TopItem + listboxRows) TopItem = MAX(0, Selected - listboxRows);
+			else if (Selected >= TopItem + listboxRows) TopItem = MAX(0, Selected - listboxRows + 1);
 			UnloadSaveData ();
 			ExtractSaveData (Selected);
 		}
@@ -678,7 +678,7 @@ bool DLoadSaveMenu::MenuEvent (int mkey, bool fromcontroller)
 		{
 			if (unsigned(++Selected) >= SaveGames.Size()) Selected = 0;
 			if (Selected < TopItem) TopItem = Selected;
-			else TopItem = MAX(0, Selected - listboxRows);
+			else if (Selected >= TopItem + listboxRows) TopItem = MAX(0, Selected - listboxRows + 1);
 			UnloadSaveData ();
 			ExtractSaveData (Selected);
 		}

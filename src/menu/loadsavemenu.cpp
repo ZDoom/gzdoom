@@ -665,9 +665,13 @@ bool DLoadSaveMenu::MenuEvent (int mkey, bool fromcontroller)
 	case MKEY_Up:
 		if (SaveGames.Size() > 1)
 		{
-			if (--Selected < 0) Selected = SaveGames.Size()-1;
-			if (Selected < TopItem) TopItem = Selected;
-			else if (Selected >= TopItem + listboxRows) TopItem = MAX(0, Selected - listboxRows + 1);
+			if (Selected == -1) Selected = TopItem;
+			else
+			{
+				if (--Selected < 0) Selected = SaveGames.Size()-1;
+				if (Selected < TopItem) TopItem = Selected;
+				else if (Selected >= TopItem + listboxRows) TopItem = MAX(0, Selected - listboxRows + 1);
+			}
 			UnloadSaveData ();
 			ExtractSaveData (Selected);
 		}
@@ -676,9 +680,49 @@ bool DLoadSaveMenu::MenuEvent (int mkey, bool fromcontroller)
 	case MKEY_Down:
 		if (SaveGames.Size() > 1)
 		{
-			if (unsigned(++Selected) >= SaveGames.Size()) Selected = 0;
-			if (Selected < TopItem) TopItem = Selected;
-			else if (Selected >= TopItem + listboxRows) TopItem = MAX(0, Selected - listboxRows + 1);
+			if (Selected == -1) Selected = TopItem;
+			else
+			{
+				if (unsigned(++Selected) >= SaveGames.Size()) Selected = 0;
+				if (Selected < TopItem) TopItem = Selected;
+				else if (Selected >= TopItem + listboxRows) TopItem = MAX(0, Selected - listboxRows + 1);
+			}
+			UnloadSaveData ();
+			ExtractSaveData (Selected);
+		}
+		return true;
+
+	case MKEY_PageDown:
+		if (SaveGames.Size() > 1)
+		{
+			if (TopItem >= (int)SaveGames.Size() - listboxRows)
+			{
+				TopItem = 0;
+				if (Selected != -1) Selected = 0;
+			}
+			else
+			{
+				TopItem = MIN<int>(TopItem + listboxRows, SaveGames.Size() - listboxRows);
+				if (TopItem > Selected && Selected != -1) Selected = TopItem;
+			}
+			UnloadSaveData ();
+			ExtractSaveData (Selected);
+		}
+		return true;
+
+	case MKEY_PageUp:
+		if (SaveGames.Size() > 1)
+		{
+			if (TopItem == 0)
+			{
+				TopItem = SaveGames.Size() - listboxRows;
+				if (Selected != -1) Selected = TopItem;
+			}
+			else
+			{
+				TopItem = MAX(TopItem - listboxRows, 0);
+				if (Selected >= TopItem + listboxRows) Selected = TopItem;
+			}
 			UnloadSaveData ();
 			ExtractSaveData (Selected);
 		}

@@ -899,11 +899,11 @@ void DPlayerMenu::ClassChanged (FListMenuItem *li)
 	if (li->GetValue(0, &sel))
 	{
 		players[consoleplayer].userinfo.PlayerClass = sel-1;
+		PickPlayerClass();
 
 		cvar_set ("playerclass", 
 			sel == 0 ? "Random" : PlayerClass->Type->Meta.GetMetaString (APMETA_DisplayName));
 
-		PickPlayerClass();
 		UpdateSkins();
 		UpdateColorsets();
 		UpdateTranslation();

@@ -138,7 +138,6 @@ int DLoadSaveMenu::RemoveSaveSlot (int index)
 		Selected = -1;
 	}
 	if (!file->bNoDelete) delete file;
-	delete SaveGames[index];
 	SaveGames.Delete(index);
 	if ((unsigned)index >= SaveGames.Size()) index--;
 	return index;

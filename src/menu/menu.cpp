@@ -673,29 +673,30 @@ void M_Ticker (void)
 {
 	DMenu::MenuTime++;
 	if (DMenu::CurrentMenu != NULL && menuactive != MENU_Off) 
+	{
 		DMenu::CurrentMenu->Ticker();
 
-	for (int i = 0; i < NUM_MKEYS; ++i)
-	{
-		if (MenuButtons[i].bDown)
+		for (int i = 0; i < NUM_MKEYS; ++i)
 		{
-			if (MenuButtonTickers[i] > 0 &&	--MenuButtonTickers[i] <= 0)
+			if (MenuButtons[i].bDown)
 			{
-				MenuButtonTickers[i] = KEY_REPEAT_RATE;
-				DMenu::CurrentMenu->MenuEvent(i, MenuButtonOrigin[i]);
+				if (MenuButtonTickers[i] > 0 &&	--MenuButtonTickers[i] <= 0)
+				{
+					MenuButtonTickers[i] = KEY_REPEAT_RATE;
+					DMenu::CurrentMenu->MenuEvent(i, MenuButtonOrigin[i]);
+				}
 			}
 		}
-	}
-
-	if (BackbuttonTime > 0)
-	{
-		if (BackbuttonAlpha < FRACUNIT) BackbuttonAlpha += FRACUNIT/10;
-		BackbuttonTime--;
-	}
-	else
-	{
-		if (BackbuttonAlpha > 0) BackbuttonAlpha -= FRACUNIT/10;
-		if (BackbuttonAlpha < 0) BackbuttonAlpha = 0;
+		if (BackbuttonTime > 0)
+		{
+			if (BackbuttonAlpha < FRACUNIT) BackbuttonAlpha += FRACUNIT/10;
+			BackbuttonTime--;
+		}
+		else
+		{
+			if (BackbuttonAlpha > 0) BackbuttonAlpha -= FRACUNIT/10;
+			if (BackbuttonAlpha < 0) BackbuttonAlpha = 0;
+		}
 	}
 }
 

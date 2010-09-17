@@ -2005,36 +2005,10 @@ IMPLEMENT_CLASS (AAmbientSound)
 void AAmbientSound::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
-	arc << bActive;
-	
-	if (SaveVersion < 1902)
+	arc << bActive << NextCheck;
+	if (SaveVersion < 2798)
 	{
-		arc << NextCheck;
-		NextCheck += gametic;
-		if (NextCheck < 0) NextCheck = INT_MAX;
-	}
-	else
-	{
-		if (arc.IsStoring())
-		{
-			if (NextCheck != INT_MAX)
-			{
-				int checktime = NextCheck - gametic;
-				arc << checktime;
-			}
-			else
-			{
-				arc << NextCheck;
-			}
-		}
-		else
-		{
-			arc << NextCheck;
-			if (NextCheck != INT_MAX)
-			{
-				NextCheck += gametic;
-			}
-		}
+		NextCheck += level.maptime;
 	}
 }
 
@@ -2048,7 +2022,7 @@ void AAmbientSound::Tick ()
 {
 	Super::Tick ();
 
-	if (!bActive || gametic < NextCheck)
+	if (!bActive || level.maptime < NextCheck)
 		return;
 
 	FAmbientSound *ambient;
@@ -2176,7 +2150,7 @@ void AAmbientSound::Activate (AActor *activator)
 			amb->periodmin = Scale(S_GetMSLength(sndnum), TICRATE, 1000);
 		}
 
-		NextCheck = gametic;
+		NextCheck = level.maptime;
 		if (amb->type & (RANDOM|PERIODIC))
 			SetTicker (amb);
 

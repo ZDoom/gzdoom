@@ -657,7 +657,6 @@ add_executable( zdoom WIN32
 	m_cheat.cpp
 	m_joy.cpp
 	m_misc.cpp
-	m_options.cpp
 	m_png.cpp
 	m_random.cpp
 	md5.cpp

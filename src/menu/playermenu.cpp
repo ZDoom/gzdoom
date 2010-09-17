@@ -162,6 +162,7 @@ void FPlayerNameBox::Drawer(bool selected)
 	{
 		size_t l = strlen(mEditName);
 		mEditName[l] = (gameinfo.gametype & (GAME_DoomStrifeChex)) ? '_' : '[';
+		mEditName[l+1] = 0;
 
 		screen->DrawText (SmallFont, CR_UNTRANSLATED, x + mFrameSize, mYpos, mEditName,
 			DTA_Clean, true, TAG_DONE);
@@ -297,7 +298,7 @@ bool FValueTextItem::MenuEvent (int mkey, bool fromcontroller)
 			return true;
 		}
 	}
-	return false;
+	return (mkey == MKEY_Enter);	// needs to eat enter keys so that Activate won't get called
 }
 
 //=============================================================================
@@ -898,11 +899,11 @@ void DPlayerMenu::ClassChanged (FListMenuItem *li)
 	if (li->GetValue(0, &sel))
 	{
 		players[consoleplayer].userinfo.PlayerClass = sel-1;
+		PickPlayerClass();
 
 		cvar_set ("playerclass", 
 			sel == 0 ? "Random" : PlayerClass->Type->Meta.GetMetaString (APMETA_DisplayName));
 
-		PickPlayerClass();
 		UpdateSkins();
 		UpdateColorsets();
 		UpdateTranslation();

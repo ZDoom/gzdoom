@@ -34,7 +34,6 @@
 
 
 void M_DrawConText (int color, int x, int y, const char *str);
-void M_DrawSlider (int x, int y, double min, double max, double cur,int fracdigits);
 void M_SetVideoMode();
 
 
@@ -551,6 +550,8 @@ class FOptionMenuSliderBase : public FOptionMenuItem
 	double mMin, mMax, mStep;
 	int mShowValue;
 	int mDrawX;
+	int mSliderShort;
+
 public:
 	FOptionMenuSliderBase(const char *label, double min, double max, double step, int showval)
 		: FOptionMenuItem(label, NAME_None)
@@ -560,17 +561,63 @@ public:
 		mStep = step;
 		mShowValue = showval;
 		mDrawX = 0;
+		mSliderShort = 0;
 	}
 
 	virtual double GetValue() = 0;
 	virtual void SetValue(double val) = 0;
 
 	//=============================================================================
+	//
+	// Draw a slider. Set fracdigits negative to not display the current value numerically.
+	//
+	//=============================================================================
+
+	void DrawSlider (int x, int y, double min, double max, double cur,int fracdigits, int indent)
+	{
+		char textbuf[16];
+		double range;
+		int maxlen = 0;
+		int right = x + (12*8 + 4) * CleanXfac_1;
+
+		range = max - min;
+		double ccur = clamp(cur, min, max) - min;
+
+		if (fracdigits >= 0)
+		{
+			mysnprintf(textbuf, countof(textbuf), "%.*f", fracdigits, max);
+			maxlen = SmallFont->StringWidth(textbuf) * CleanXfac_1;
+		}
+
+		mSliderShort = right + maxlen > screen->GetWidth();
+
+		if (!mSliderShort)
+		{
+			M_DrawConText(CR_WHITE, x, y, "\x10\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x12");
+			M_DrawConText(CR_ORANGE, x + int((5 + ((ccur * 78) / range)) * CleanXfac_1), y, "\x13");
+		}
+		else
+		{
+			// On 320x200 we need a shorter slider
+			M_DrawConText(CR_WHITE, x, y, "\x10\x11\x11\x11\x11\x11\x12");
+			M_DrawConText(CR_ORANGE, x + int((5 + ((ccur * 38) / range)) * CleanXfac_1), y, "\x13");
+			right -= 5*8*CleanXfac_1;
+		}
+
+		if (fracdigits >= 0 && right + maxlen <= screen->GetWidth())
+		{
+			mysnprintf(textbuf, countof(textbuf), "%.*f", fracdigits, cur);
+			screen->DrawText(SmallFont, CR_DARKGRAY, right, y, textbuf, DTA_CleanNoMove_1, true, TAG_DONE);
+		}
+	}
+
+
+	//=============================================================================
 	int Draw(FOptionMenuDescriptor *desc, int y, int indent, bool selected)
 	{
 		drawLabel(indent, y, selected? OptionSettings.mFontColorSelection : OptionSettings.mFontColor);
 		mDrawX = indent + CURSORSPACE;
-		M_DrawSlider (mDrawX, y + OptionSettings.mLabelOffset, mMin, mMax, GetValue(), mShowValue);
+		DrawSlider (mDrawX, y + OptionSettings.mLabelOffset, mMin, mMax, GetValue(), mShowValue, indent);
 		return indent;
 	}
 
@@ -609,7 +656,7 @@ public:
 		}
 
 		int slide_left = mDrawX+8*CleanXfac_1;
-		int slide_right = slide_left + 10*8*CleanXfac_1;	// 12 char cells with 8 pixels each.
+		int slide_right = slide_left + (10*8*CleanXfac_1 >> mSliderShort);	// 12 char cells with 8 pixels each.
 
 		if (type == DMenu::MOUSE_Click)
 		{

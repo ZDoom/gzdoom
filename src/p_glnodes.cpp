@@ -851,6 +851,48 @@ static int FindGLNodesInFile(FileReader * f, const char * label)
 
 bool P_LoadGLNodes(MapData * map)
 {
+
+	if (map->MapLumps[ML_GLZNODES].Size != 0)
+	{
+		const int idcheck = MAKE_ID('Z','G','L','N');
+		const int idcheck2 = MAKE_ID('Z','G','L','2');
+		const int idcheck3 = MAKE_ID('X','G','L','N');
+		const int idcheck4 = MAKE_ID('X','G','L','2');
+		int id;
+
+		map->Seek(ML_GLZNODES);
+		map->file->Read (&id, 4);
+		if (id == idcheck || id == idcheck2 || id == idcheck3 || id == idcheck4)
+		{
+			try
+			{
+				subsectors = NULL;
+				segs = NULL;
+				nodes = NULL;
+				P_LoadZNodes (*map->file, id);
+				return true;
+			}
+			catch (CRecoverableError &)
+			{
+				if (subsectors != NULL)
+				{
+					delete[] subsectors;
+					subsectors = NULL;
+				}
+				if (segs != NULL)
+				{
+					delete[] segs;
+					segs = NULL;
+				}
+				if (nodes != NULL)
+				{
+					delete[] nodes;
+					nodes = NULL;
+				}
+			}
+		}
+	}
+
 	if (!CheckCachedNodes(map))
 	{
 		wadlump_t gwalumps[4];

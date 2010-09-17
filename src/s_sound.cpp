@@ -2618,15 +2618,27 @@ CCMD (idmus)
 
 CCMD (changemus)
 {
-	if (argv.argc() > 1)
-	{
-		if (PlayList)
-		{
-			delete PlayList;
-			PlayList = NULL;
-		}
-		S_ChangeMusic (argv[1], argv.argc() > 2 ? atoi (argv[2]) : 0);
-	}
+   if (argv.argc() > 1)
+   {
+      if (PlayList)
+      {
+         delete PlayList;
+         PlayList = NULL;
+      }
+      S_ChangeMusic (argv[1], argv.argc() > 2 ? atoi (argv[2]) : 0);
+   }
+   else
+   {
+      const char *currentmus = mus_playing.name.GetChars();
+      if(currentmus != NULL && *currentmus != 0)
+      {
+         Printf ("currently playing %s\n", currentmus);
+      }
+      else
+      {
+         Printf ("no music playing\n");
+      }
+   }
 }
 
 //==========================================================================

@@ -331,6 +331,8 @@ OptionMenu "OptionsMenu"
 	Submenu "Gameplay Options",			"GameplayOptions"
 	Submenu "Compatibility Options",	"CompatibilityOptions"
 	Submenu "Automap Options",			"AutomapOptions"
+	Submenu "HUD Options",				"HUDOptions"
+	Submenu "Miscellaneous Options",	"MiscOptions"
 	Submenu "Sound Options",			"SoundOptions"
 	Submenu "Display Options",			"VideoOptions"
 	Submenu "Set video mode",			"VideoModeMenu"
@@ -615,6 +617,48 @@ OptionValue Contrast
 	2.0, "Smooth"
 }
 
+OptionMenu "VideoOptions"
+{
+	Title "DISPLAY OPTIONS"
+	
+	Submenu "Message Options", 			"MessageOptions"
+	Submenu "Scoreboard Options", 		"ScoreboardOptions"
+	StaticText " "
+	Slider "Screen size",				"screenblocks", 3.0, 12.0, 1.0, 0
+	Slider "Brightness",				"Gamma", 1.0, 3.0, 0.1
+	Option "Vertical Sync",				"vid_vsync", "OnOff"
+	Option "Column render mode",		"r_columnmethod", "ColumnMethods"
+
+	StaticText " "
+	Option "Screen wipe style",			"wipetype", "Wipes"
+
+	IfOption(Windows)
+	{
+		Option	"Show ENDOOM screen",	"showendoom", "Endoom"
+		//Option "DirectDraw palette hack", "vid_palettehack", "OnOff"
+		//Option "Use attached surfaces", "vid_attachedsurfaces", "OnOff"
+	}
+	
+	Option "Stretch short skies",		"r_stretchsky", "OnOff"
+	Option "Use fuzz effect",			"r_drawfuzz", "YesNo"
+	Slider "Lost Soul translucency",	"transsouls", 0.25, 1.0, 0.05, 2
+	Option "Use fake contrast",			"r_fakecontrast", "Contrast"
+	Option "Rocket Trails",				"cl_rockettrails", "RocketTrailTypes"
+	Option "Blood Type",				"cl_bloodtype", "BloodTypes"
+	Option "Bullet Puff Type",			"cl_pufftype", "PuffTypes"
+	Slider "Number of particles",		"r_maxparticles", 100, 10000, 100, 0
+	Option "Show player sprites",		"r_drawplayersprites", "OnOff"
+	Option "Death camera",				"r_deathcamera", "OnOff"
+	Option "Teleporter zoom",			"telezoom", "OnOff"
+	Option "Interpolate monster movement",	"nomonsterinterpolation", "NoYes"
+}
+
+//-------------------------------------------------------------------------------------------
+//
+// HUD menu
+//
+//-------------------------------------------------------------------------------------------
+
 OptionValue DisplayTagsTypes 
 {
 	0.0, "None"
@@ -654,40 +698,89 @@ OptionValue Crosshairs
 	// will be filled in from the XHAIRS lump
 }
 
-OptionMenu "VideoOptions"
+OptionMenu "HUDOptions"
 {
-	Title "DISPLAY OPTIONS"
-	Submenu "Message Options", 			"MessageOptions"
-	Submenu "Scoreboard Options", 		"ScoreboardOptions"
+	Title "HUD Options"
+	Submenu "Alternative HUD",			"AltHudOptions"
 	StaticText " "
-	Slider "Screen size",				"screenblocks", 3.0, 12.0, 1.0
-	Slider "Brightness",				"Gamma", 1.0, 3.0, 0.1
-	Option "Vertical Sync",				"vid_vsync", "OnOff"
-	Option "Column render mode",		"r_columnmethod", "ColumnMethods"
-
+	Option "Default Crosshair",			"crosshair", "Crosshairs"
+	Option "Force default crosshair",	"crosshairforce", "OnOff"
+	Option "Grow crosshair when picking up items",	"crosshairgrow", "OnOff"
+	ColorPicker "Crosshair color", 		"crosshaircolor"
+	Option "Crosshair shows health",	"crosshairhealth", "OnOff"
+	Option "Scale crosshair",			"crosshairscale", "OnOff"
 	StaticText " "
-	Option "Crosshair",					"crosshair", "Crosshairs"
 	Option "Display nametags",			"displaynametags", "DisplayTagsTypes"
 	Option "Nametag color",				"nametagcolor", "TextColors", "displaynametags"
 	Option "Stretch status bar",		"st_scale", "OnOff"
-	Option "Alternative HUD",			"hud_althud", "OnOff"
-	Option "Screen wipe style",			"wipetype", "Wipes"
+}
+	
+//-------------------------------------------------------------------------------------------
+//
+// Alternative HUD
+//
+//-------------------------------------------------------------------------------------------
 
+OptionValue "AMCoordinates"
+{
+	0, "Player"
+	1, "Map"
+}
+
+OptionMenu "AltHUDOptions"
+{
+	Title "Alternative HUD"
+	//Indent 220
+	Option "Enable alternative HUD",				"hud_althud", "OnOff"
+	Option "Show secret count",						"hud_showsecrets", "OnOff"
+	Option "Show monster count",					"hud_showmonsters", "OnOff"
+	Option "Show item count",						"hud_showitems", "OnOff"
+	Option "Show stamina and accuracy",				"hud_showstats", "OnOff"
+	Slider "Red ammo display below %",				"hud_ammo_red", 0, 100, 1, 0
+	Slider "Yellow ammo display below %",			"hud_ammo_yellow", 0, 100, 1, 0
+	Slider "Red health display below",				"hud_health_red", 0, 100, 1, 0
+	Slider "Yellow health display below",			"hud_health_yellow", 0, 100, 1, 0
+	Slider "Green health display below",			"hud_health_green", 0, 100, 1, 0
+	Slider "Red armor display below",				"hud_armor_red", 0, 100, 1, 0
+	Slider "Yellow armor display below",			"hud_armor_yellow", 0, 100, 1, 0
+	Slider "Green armor display below",				"hud_armor_green", 0, 100, 1, 0
+	StaticText " "
+	StaticText "Alternative Automap HUD", 1
+	option "Map title color",						"hudcolor_titl", "TextColors"
+	option "Hub time color",						"hudcolor_time", "TextColors"
+	option "Map time color",						"hudcolor_ltim", "TextColors"
+	option "Total title color",						"hudcolor_ttim", "TextColors"
+	option "Coordinate color",						"hudcolor_xyco", "TextColors"
+	option "Coordinate mode",						"map_point_coordinates", "AMCoordinates"
+	option "Map title color",						"hudcolor_titl", "TextColors"
+	option "Statistics name color",					"hudcolor_statnames", "TextColors"
+	option "Statistics color",						"hudcolor_stats", "TextColors"
+}
+
+//-------------------------------------------------------------------------------------------
+//
+// Misc menu
+//
+//-------------------------------------------------------------------------------------------
+
+OptionMenu "MiscOptions"
+{
+	Title "Miscellaneous Options"
+	//Indent 220
 	IfOption(Windows)
 	{
-		Option	"Show ENDOOM screen",	"showendoom", "Endoom"
-		//Option "DirectDraw palette hack", "vid_palettehack", "OnOff"
-		//Option "Use attached surfaces", "vid_attachedsurfaces", "OnOff"
+		Option "Merge left+right Alt/Ctrl/Shift", 		"k_mergekeys", "OnOff"
+		Option "Alt-Enter toggles fullscreen",			"k_allowfullscreentoggle", "OnOff"
+		Option "Show IWAD selection dialog",			"queryiwad", "OnOff"
+		StaticText " "
 	}
-	
+	Option "Enable cheats from all games",			"allcheats", "OnOff"
+	Option "Enable autosaves",						"disableautosave", "OffOn"
+	Slider "Number of autosaves",					"autosavecount", 1, 32, 1, 0
 	StaticText " "
-	Option "Stretch short skies",		"r_stretchsky", "OnOff"
-	Option "Use fuzz effect",			"r_drawfuzz", "YesNo"
-	Option "Use fake contrast",			"r_fakecontrast", "Contrast"
-	Option "Rocket Trails",				"cl_rockettrails", "RocketTrailTypes"
-	Option "Blood Type",				"cl_bloodtype", "BloodTypes"
-	Option "Bullet Puff Type",			"cl_pufftype", "PuffTypes"
-	Option "Interpolate monster movement",	"nomonsterinterpolation", "NoYes"
+	Option "Cache nodes",							"gl_cachenodes", "OnOff"
+	Slider "Time threshold for node caching",		"gl_cachetime", 0.0, 2.0, 0.1
+	SafeCommand "Clear node cache",					"clearnodecache"
 }
 
 //-------------------------------------------------------------------------------------------
@@ -941,7 +1034,7 @@ OptionValue  JumpCrouch
 OptionMenu GameplayOptions
 {
 	Title 	"GAMEPLAY OPTIONS"
-	Indent 222
+	//Indent 222
 	Option "Teamplay",				"teamplay",	"OnOff"
 	Slider	"Team damage scalar",	"teamdamage", 0, 1, 0.05
 	StaticText " "
@@ -1185,9 +1278,9 @@ OptionMenu SoundOptions
 	Option "MIDI device",		"snd_mididevice", "MidiDevices"
 	StaticText " "
 	Option "Underwater reverb",	"snd_waterreverb", "OnOff"
-	Slider "Underwater cutoff",	"snd_waterlp", 0, 2000, 50
+	Slider "Underwater cutoff",	"snd_waterlp", 0, 2000, 50, 0
 	Option "Randomize pitches",	"snd_pitched", "OnOff"
-	Slider "Sound channels",	"snd_channels", 8, 256, 8
+	Slider "Sound channels",	"snd_channels", 8, 256, 8, 0
 	StaticText " "
 	Command "Restart sound",	"snd_reset"
 	StaticText " "

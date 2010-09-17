@@ -2547,6 +2547,8 @@ enum
 	APROP_Notrigger		= 23,
 	APROP_DamageFactor	= 24,
 	APROP_MasterTID     = 25,
+	APROP_TargetTID		= 26,
+	APROP_TracerTID		= 27
 };	
 
 // These are needed for ACS's APROP_RenderStyle
@@ -2786,6 +2788,8 @@ int DLevelScript::GetActorProperty (int tid, int property)
 							}
 	case APROP_Score:		return actor->Score;
 	case APROP_MasterTID:	return DoGetMasterTID (actor);
+	case APROP_TargetTID:	return (actor->target != NULL)? actor->target->tid : 0;
+	case APROP_TracerTID:	return (actor->tracer != NULL)? actor->tracer->tid : 0;
 	default:				return 0;
 	}
 }
@@ -2817,6 +2821,8 @@ int DLevelScript::CheckActorProperty (int tid, int property, int value)
 		case APROP_JumpZ:
 		case APROP_Score:
 		case APROP_MasterTID:
+		case APROP_TargetTID:
+		case APROP_TracerTID:
 			return (GetActorProperty(tid, property) == value);
 
 		// Boolean values need to compare to a binary version of value
@@ -5040,7 +5046,7 @@ int DLevelScript::RunScript ()
 				}
 				else if (activator)
 				{
-					work += RUNTIME_TYPE(activator)->TypeName.GetChars();
+					work += activator->GetTag();
 				}
 				else
 				{
@@ -5834,15 +5840,22 @@ int DLevelScript::RunScript ()
 		case PCD_GETACTORY:
 		case PCD_GETACTORZ:
 			{
-				AActor *actor = SingleActorFromTID (STACK(1), activator);
-
-				if (actor == NULL)
+				if(STACK(1) == 0)
 				{
-					STACK(1) = 0;
+					STACK(1) = (&activator->x)[pcd - PCD_GETACTORX];
 				}
 				else
 				{
-					STACK(1) = (&actor->x)[pcd - PCD_GETACTORX];
+					AActor *actor = SingleActorFromTID (STACK(1), activator);
+
+					if (actor == NULL)
+					{
+						STACK(1) = 0;
+					}
+					else
+					{
+						STACK(1) = (&actor->x)[pcd - PCD_GETACTORX];
+					}
 				}
 			}
 			break;
@@ -5850,50 +5863,77 @@ int DLevelScript::RunScript ()
 		case PCD_GETACTORFLOORZ:
 		case PCD_GETACTORCEILINGZ:
 			{
-				AActor *actor = SingleActorFromTID (STACK(1), activator);
-
-				if (actor == NULL)
+				if(STACK(1) == 0)
 				{
-					STACK(1) = 0;
-				}
-				else if (pcd == PCD_GETACTORFLOORZ)
-				{
-					STACK(1) = actor->floorz;
+					if (pcd == PCD_GETACTORFLOORZ)
+					{
+						STACK(1) = activator->floorz;
+					}
+					else if(STACK(1) == 0)
+					{
+						STACK(1) = activator->ceilingz;
+					}
 				}
 				else
 				{
-					STACK(1) = actor->ceilingz;
-				}
+					AActor *actor = SingleActorFromTID (STACK(1), activator);
 
+					if (actor == NULL)
+					{
+						STACK(1) = 0;
+					}
+					else if (pcd == PCD_GETACTORFLOORZ)
+					{
+						STACK(1) = actor->floorz;
+					}
+					else
+					{
+						STACK(1) = actor->ceilingz;
+					}
+				}
 			}
 			break;
 
 		case PCD_GETACTORANGLE:
 			{
-				AActor *actor = SingleActorFromTID (STACK(1), activator);
-
-				if (actor == NULL)
+				if(STACK(1) == 0)
 				{
-					STACK(1) = 0;
+					STACK(1) = activator->angle >> 16;
 				}
 				else
 				{
-					STACK(1) = actor->angle >> 16;
+					AActor *actor = SingleActorFromTID (STACK(1), activator);
+
+					if (actor == NULL)
+					{
+						STACK(1) = 0;
+					}
+					else
+					{
+						STACK(1) = actor->angle >> 16;
+					}
 				}
 			}
 			break;
 
 		case PCD_GETACTORPITCH:
 			{
-				AActor *actor = SingleActorFromTID (STACK(1), activator);
-
-				if (actor == NULL)
+				if(STACK(1) == 0)
 				{
-					STACK(1) = 0;
+					STACK(1) = activator->pitch >> 16;
 				}
 				else
 				{
-					STACK(1) = actor->pitch >> 16;
+					AActor *actor = SingleActorFromTID (STACK(1), activator);
+
+					if (actor == NULL)
+					{
+						STACK(1) = 0;
+					}
+					else
+					{
+						STACK(1) = actor->pitch >> 16;
+					}
 				}
 			}
 			break;

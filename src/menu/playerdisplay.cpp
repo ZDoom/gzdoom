@@ -424,14 +424,18 @@ void FListMenuItemPlayerDisplay::SetPlayerClass(int classnum, bool force)
 
 bool FListMenuItemPlayerDisplay::UpdatePlayerClass()
 {
-	int classnum;
-	FName seltype = mOwner->mItems[mOwner->mSelectedItem]->GetAction(&classnum);
+	if (mOwner->mSelectedItem >= 0)
+	{
+		int classnum;
+		FName seltype = mOwner->mItems[mOwner->mSelectedItem]->GetAction(&classnum);
 
-	if (seltype != NAME_Episodemenu) return false;
-	if (PlayerClasses.Size() == 0) return false;
+		if (seltype != NAME_Episodemenu) return false;
+		if (PlayerClasses.Size() == 0) return false;
 
-	SetPlayerClass(classnum);
-	return true;
+		SetPlayerClass(classnum);
+		return true;
+	}
+	return false;
 }
 
 //=============================================================================

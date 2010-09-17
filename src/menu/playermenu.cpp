@@ -298,7 +298,7 @@ bool FValueTextItem::MenuEvent (int mkey, bool fromcontroller)
 			return true;
 		}
 	}
-	return false;
+	return (mkey == MKEY_Enter);	// needs to eat enter keys so that Activate won't get called
 }
 
 //=============================================================================

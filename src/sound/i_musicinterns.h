@@ -287,7 +287,7 @@ protected:
 	fluid_synth_t *FluidSynth;
 
 #ifdef DYN_FLUIDSYNTH
-	enum { FLUID_FAILED = 1, FLUID_OK = 0 };
+	enum { FLUID_FAILED = -1, FLUID_OK = 0 };
 	fluid_settings_t *(STACK_ARGS *new_fluid_settings)();
 	fluid_synth_t *(STACK_ARGS *new_fluid_synth)(fluid_settings_t *);
 	int (STACK_ARGS *delete_fluid_synth)(fluid_synth_t *);

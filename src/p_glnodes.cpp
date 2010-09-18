@@ -1077,7 +1077,7 @@ static FString GetCachePath()
 	FSRef folder;
 
 	if (noErr == FSFindFolder(kLocalDomain, kApplicationSupportFolderType, kCreateFolder, &folder) &&
-		noErr == FSRefMakePath(&folder, (UInt8*)cpath, PATH_MAX))
+		noErr == FSRefMakePath(&folder, (UInt8*)path.GetChars(), PATH_MAX))
 	{
 		path = pathstr;
 	}

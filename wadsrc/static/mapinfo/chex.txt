@@ -109,6 +109,7 @@ clearepisodes
 episode e1m1
 {
 	picname = "M_EPI1"
+	name = "Chex Quest"
 	key = "k"
 }
 

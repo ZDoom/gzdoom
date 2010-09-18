@@ -590,7 +590,7 @@ void P_SerializeSubsectors(FArchive &arc)
 				by = 0;
 				for(int j=0;j<8;j++)
 				{
-					if ((subsectors[i+j].flags & SSECF_DRAWN) && i+j<numsubsectors)
+					if (i+j<numsubsectors && (subsectors[i+j].flags & SSECF_DRAWN))
 					{
 						by |= (1<<j);
 					}

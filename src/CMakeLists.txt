@@ -728,8 +728,10 @@ add_executable( zdoom WIN32
 	s_sound.cpp
 	sc_man.cpp
 	st_stuff.cpp
+	statistics.cpp
 	stats.cpp
 	stringtable.cpp
+	strnatcmp.c
 	tables.cpp
 	teaminfo.cpp
 	tempfiles.cpp

@@ -427,20 +427,14 @@ bool P_Move (AActor *actor)
 		return false;
 	}
 
-	// [RH] Instead of yanking non-floating monsters to the ground,
-	// let gravity drop them down, unless they're moving down a step.
+	// [RH] Walking actors that are not on the ground cannot walk. We don't
+	// want to yank them to the ground here as Doom did, since that makes
+	// it difficult ot thrust them vertically in a reasonable manner.
 	// [GZ] Let jumping actors jump.
 	if (!((actor->flags & MF_NOGRAVITY) || (actor->flags6 & MF6_CANJUMP))
 		&& actor->z > actor->floorz && !(actor->flags2 & MF2_ONMOBJ))
 	{
-		if (actor->z > actor->floorz + actor->MaxStepHeight)
-		{
-			return false;
-		}
-		else
-		{
-			actor->z = actor->floorz;
-		}
+		return false;
 	}
 
 	if ((unsigned)actor->movedir >= 8)
@@ -535,6 +529,26 @@ bool P_Move (AActor *actor)
 		movefactor *= FRACUNIT / ORIG_FRICTION_FACTOR / 4;
 		actor->velx += FixedMul (deltax, movefactor);
 		actor->vely += FixedMul (deltay, movefactor);
+	}
+
+	// [RH] If a walking monster is no longer on the floor, move it down
+	// to the floor if it is within MaxStepHeight, presuming that it is
+	// actually walking down a step.
+	if (try_ok &&
+		!((actor->flags & MF_NOGRAVITY) || (actor->flags6 & MF6_CANJUMP))
+		&& actor->z > actor->floorz && !(actor->flags2 & MF2_ONMOBJ))
+	{
+		if (actor->z <= actor->floorz + actor->MaxStepHeight)
+		{
+			fixed_t savedz = actor->z;
+			actor->z = actor->floorz;
+			// Make sure that there isn't some other actor between us and
+			// the floor we could get stuck in. The old code did not do this.
+			if (!P_TestMobjZ(actor))
+			{
+				actor->z = savedz;
+			}
+		}
 	}
 
 	if (!try_ok)

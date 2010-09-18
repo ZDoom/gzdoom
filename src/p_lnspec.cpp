@@ -1210,22 +1210,36 @@ FUNC(LS_Thing_Remove)
 }
 
 FUNC(LS_Thing_Destroy)
-// Thing_Destroy (tid, extreme)
+// Thing_Destroy (tid, extreme, tag)
 {
-	if (arg0 == 0)
+	AActor *actor;
+
+	if (arg0 == 0 && arg2 == 0)
 	{
 		P_Massacre ();
+	}
+	else if (arg0 == 0)
+	{
+		TThinkerIterator<AActor> iterator;
+		
+		actor = iterator.Next ();
+		while (actor)
+		{
+			AActor *temp = iterator.Next ();
+			if (actor->flags & MF_SHOOTABLE && actor->Sector->tag == arg2)
+				P_DamageMobj (actor, NULL, it, arg1 ? TELEFRAG_DAMAGE : actor->health, NAME_None);
+			actor = temp;
+		}
 	}
 	else
 	{
 		FActorIterator iterator (arg0);
-		AActor *actor;
 
 		actor = iterator.Next ();
 		while (actor)
 		{
 			AActor *temp = iterator.Next ();
-			if (actor->flags & MF_SHOOTABLE)
+			if (actor->flags & MF_SHOOTABLE && (arg2 == 0 || actor->Sector->tag == arg2))
 				P_DamageMobj (actor, NULL, it, arg1 ? TELEFRAG_DAMAGE : actor->health, NAME_None);
 			actor = temp;
 		}

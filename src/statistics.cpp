@@ -55,7 +55,7 @@
 #include "p_local.h"
 #include "m_png.h"
 #include "p_setup.h"
-#include "s_Sound.h"
+#include "s_sound.h"
 #include "wi_stuff.h"
 #include "sc_man.h"
 #include "cmdlib.h"

@@ -400,6 +400,8 @@ static void StoreLevelStats()
 {
 	unsigned int i;
 
+	if (gamestate != GS_LEVEL) return;
+
 	if (!(level.flags2&LEVEL2_NOSTATISTICS))	// don't consider maps that were excluded from statistics
 	{
 		for(i=0;i<LevelData.Size();i++)
@@ -592,7 +594,7 @@ FString GetStatString()
 
 CCMD(printstats)
 {
-	StoreLevelStats();	// Get the current level's current results.
+	StoreLevelStats();	// Refresh the current level's results.
 	Printf("%s", GetStatString());
 }
 
@@ -604,3 +606,8 @@ CCMD(finishgame)
 	G_ExitLevel (0, false);
 }
 
+ADD_STAT(statistics)
+{
+	StoreLevelStats();	// Refresh the current level's results.
+	return GetStatString();
+}

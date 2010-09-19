@@ -1402,11 +1402,7 @@ static void DoGiveInventory(AActor * receiver, DECLARE_PARAMINFO)
 			item->Amount = amount;
 		}
 		item->flags |= MF_DROPPED;
-		if (item->flags & MF_COUNTITEM)
-		{
-			item->flags&=~MF_COUNTITEM;
-			level.total_items--;
-		}
+		item->ClearCounters();
 		if (!item->CallTryPickup (receiver))
 		{
 			item->Destroy ();
@@ -1541,7 +1537,7 @@ static bool InitSpawnedItem(AActor *self, AActor *mo, int flags)
 			if (!(flags&SIXF_NOCHECKPOSITION) && !P_TestMobjLocation(mo))
 			{
 				// The monster is blocked so don't spawn it at all!
-				if (mo->CountsAsKill()) level.total_monsters--;
+				mo->ClearCounters();
 				mo->Destroy();
 				return false;
 			}
@@ -2925,9 +2921,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ChangeFlag)
 	{
 		bool kill_before, kill_after;
 		INTBOOL item_before, item_after;
+		INTBOOL secret_before, secret_after;
 
 		kill_before = self->CountsAsKill();
 		item_before = self->flags & MF_COUNTITEM;
+		secret_before = self->flags5 & MF5_COUNTSECRET;
 
 		if (fd->structoffset == -1)
 		{
@@ -2953,6 +2951,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ChangeFlag)
 		}
 		kill_after = self->CountsAsKill();
 		item_after = self->flags & MF_COUNTITEM;
+		secret_after = self->flags5 & MF5_COUNTSECRET;
 		// Was this monster previously worth a kill but no longer is?
 		// Or vice versa?
 		if (kill_before != kill_after)
@@ -2976,6 +2975,18 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ChangeFlag)
 			else
 			{ // It no longer counts as an item
 				level.total_items--;
+			}
+		}
+		// and secretd
+		if (secret_before != secret_after)
+		{
+			if (secret_after)
+			{ // It counts as an secret now.
+				level.total_secrets++;
+			}
+			else
+			{ // It no longer counts as an secret
+				level.total_secrets--;
 			}
 		}
 	}

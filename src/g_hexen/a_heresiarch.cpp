@@ -859,8 +859,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnBishop)
 	{
 		if (!P_TestMobjLocation(mo))
 		{
+			mo->ClearCounters();
 			mo->Destroy ();
-			level.total_monsters--;
 		}
 		else if (self->target != NULL)
 		{ // [RH] Make the new bishops inherit the Heriarch's target

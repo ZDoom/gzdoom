@@ -183,6 +183,7 @@ Note: All <bool> fields default to false unless mentioned otherwise.
                                 // menu can display.
 	  conversation = <int>		// Assigns a conversation dialogue to this thing.
 								// Parameter is the conversation ID, 0 meaning none.
+	  countsecret = <bool>;     // Picking up this actor counts as a secret.
    }
 								
   
@@ -269,13 +270,16 @@ Changed node specifications to deprecate compression of node lump.
 Added 'playeruseback' line trigger flag.
 
 1.11 07.08.2010
-Added 'soundsequnce' sector property.
+Added 'soundsequence' sector property.
 
 1.12 22.08.2010
 Added 'conversation' thing property.
 
 1.13 29.08.2010
 Added 'hidden' sector property.
+
+1.14 19.09.2010
+Added 'countsecret' actor property.
 
 ===============================================================================
 EOF

@@ -258,8 +258,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_GenWizard)
 		mo->z -= mo->GetDefault()->height/2;
 		if (!P_TestMobjLocation (mo))
 		{ // Didn't fit
+			mo->ClearCounters();
 			mo->Destroy ();
-			level.total_monsters--;
 		}
 		else
 		{ // [RH] Make the new wizards inherit D'Sparil's target

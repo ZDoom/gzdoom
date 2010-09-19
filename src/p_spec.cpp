@@ -256,7 +256,7 @@ bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType)
 // end of changed code
 	if (developer && buttonSuccess)
 	{
-		Printf ("Line special %d activated\n", special);
+		Printf ("Line special %d activated on line %i\n", special, line - lines);
 	}
 	return true;
 }
@@ -561,15 +561,33 @@ void P_PlayerInSpecialSector (player_t *player, sector_t * sector)
 
 	if (sector->special & SECRET_MASK)
 	{
-		player->secretcount++;
-		level.found_secrets++;
 		sector->special &= ~SECRET_MASK;
-		if (player->mo->CheckLocalView (consoleplayer))
+		P_GiveSecret(player->mo, true, true);
+	}
+}
+
+
+//============================================================================
+//
+// P_GiveSecret
+//
+//============================================================================
+
+void P_GiveSecret(AActor *actor, bool printmessage, bool playsound)
+{
+	if (actor != NULL)
+	{
+		if (actor->player != NULL)
 		{
-			C_MidPrint (SmallFont, secretmessage);
-			S_Sound (CHAN_AUTO, "misc/secret", 1, ATTN_NORM);
+			actor->player->secretcount++;
+		}
+		if (actor->CheckLocalView (consoleplayer))
+		{
+			if (printmessage) C_MidPrint (SmallFont, secretmessage);
+			if (playsound) S_Sound (CHAN_AUTO, "misc/secret", 1, ATTN_NORM);
 		}
 	}
+	level.found_secrets++;
 }
 
 //============================================================================
@@ -1922,6 +1940,15 @@ DPusher::DPusher (DPusher::EPusher type, line_t *l, int magnitude, int angle,
 	}
 	m_Affectee = affectee;
 }
+
+int DPusher::CheckForSectorMatch (EPusher type, int tag)
+{
+	if (m_Type == type && sectors[m_Affectee].tag == tag)
+		return m_Affectee;
+	else
+		return -1;
+}
+
 
 /////////////////////////////
 //

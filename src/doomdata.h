@@ -380,6 +380,8 @@ enum EMapThingFlags
 	MTF_STANDSTILL		= 0x4000,
 	MTF_STRIFESOMETHING	= 0x8000,
 
+	MTF_SECRET			= 0x080000,	// Secret pickup
+	MTF_NOINFIGHTING	= 0x100000,
 	// BOOM and DOOM compatible versions of some of the above
 
 	BTF_NOTSINGLE		= 0x0010,	// (TF_COOPERATIVE|TF_DEATHMATCH)

@@ -599,6 +599,11 @@ public:
 				Flag(th->flags, MTF_STANDSTILL, key); 
 				break;
 
+			case NAME_Countsecret:
+				CHECK_N(Zd | Zdt | Va)
+				Flag(th->flags, MTF_SECRET, key); 
+				break;
+
 			default:
 				if (!strnicmp("user_", key.GetChars(), 5))
 				{

@@ -434,11 +434,7 @@ static void DoGiveInv (AActor *actor, const PClass *info, int amount)
 	AInventory *item = static_cast<AInventory *>(Spawn (info, 0,0,0, NO_REPLACE));
 
 	// This shouldn't count for the item statistics!
-	if (item->flags & MF_COUNTITEM)
-	{
-		level.total_items--;
-		item->flags &= ~MF_COUNTITEM;
-	}
+	item->ClearCounters();
 	if (info->IsDescendantOf (RUNTIME_CLASS(ABasicArmorPickup)))
 	{
 		if (static_cast<ABasicArmorPickup*>(item)->SaveAmount != 0)
@@ -2286,15 +2282,7 @@ int DLevelScript::DoSpawn (int type, fixed_t x, fixed_t y, fixed_t z, int tid, i
 			{
 				// If this is a monster, subtract it from the total monster
 				// count, because it already added to it during spawning.
-				if (actor->CountsAsKill())
-				{
-					level.total_monsters--;
-				}
-				// Same, for items
-				if (actor->flags & MF_COUNTITEM)
-				{
-					level.total_items--;
-				}
+				actor->ClearCounters();
 				actor->Destroy ();
 				actor = NULL;
 			}

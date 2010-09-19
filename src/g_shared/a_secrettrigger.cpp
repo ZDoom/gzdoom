@@ -40,6 +40,8 @@
 #include "d_player.h"
 #include "doomstat.h"
 #include "v_font.h"
+#include "r_data.h"
+#include "p_spec.h"
 
 EXTERN_CVAR(String, secretmessage)
 
@@ -61,22 +63,7 @@ void ASecretTrigger::PostBeginPlay ()
 
 void ASecretTrigger::Activate (AActor *activator)
 {
-	if (activator != NULL)
-	{
-		if (activator->CheckLocalView (consoleplayer))
-		{
-			if (args[0] <= 1)
-			{
-				C_MidPrint (SmallFont, secretmessage);
-			}
-			if (args[0] == 0 || args[0] == 2)
-			{
-				S_Sound (activator, CHAN_AUTO, "misc/secret", 1, ATTN_NORM);
-			}
-		}
-		if (activator->player) activator->player->secretcount++;
-	}
-	level.found_secrets++;
+	P_GiveSecret(activator, args[0] <= 1, (args[0] == 0 || args[0] == 2));
 	Destroy ();
 }
 

@@ -2626,8 +2626,12 @@ bool AActor::Slam (AActor *thing)
 			int dam = GetMissileDamage (7, 1);
 			P_DamageMobj (thing, this, this, dam, NAME_Melee);
 			P_TraceBleed (dam, thing, this);
-			if (SeeState != NULL) SetState (SeeState);
-			else SetIdle();
+			// The charging monster may have died by the target's actions here.
+			if (health > 0)
+			{
+				if (SeeState != NULL) SetState (SeeState);
+				else SetIdle();
+			}
 		}
 		else
 		{

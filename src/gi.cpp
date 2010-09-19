@@ -250,6 +250,7 @@ void FMapInfoParser::ParseGameInfo()
 		// Insert valid keys here.
 		GAMEINFOKEY_CSTRING(titlePage, "titlePage", 8)
 		GAMEINFOKEY_STRINGARRAY(creditPages, "creditPage", 8)
+		GAMEINFOKEY_STRINGARRAY(PlayerClasses, "playerclasses", 0)
 		GAMEINFOKEY_STRING(titleMusic, "titleMusic")
 		GAMEINFOKEY_FLOAT(titleTime, "titleTime")
 		GAMEINFOKEY_FLOAT(advisoryTime, "advisoryTime")

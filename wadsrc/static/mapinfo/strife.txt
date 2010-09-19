@@ -52,6 +52,7 @@ gameinfo
 	menufontcolor_highlight = "GREEN"
 	menufontcolor_selection = "GOLD"
 	menubackbutton = "M_BACK_S"
+	PlayerClasses = "StrifePlayer"
 }
 
 skill baby

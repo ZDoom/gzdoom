@@ -95,40 +95,43 @@ bool FPlayerClass::CheckSkin (int skin)
 	return false;
 }
 
+bool ValidatePlayerClass(const PClass *ti, const char *name)
+{
+	if (!ti)
+	{
+		Printf ("Unknown player class '%s'\n", name);
+		return false;
+	}
+	else if (!ti->IsDescendantOf (RUNTIME_CLASS (APlayerPawn)))
+	{
+		Printf ("Invalid player class '%s'\n", name);
+		return false;
+	}
+	else if (ti->Meta.GetMetaString (APMETA_DisplayName) == NULL)
+	{
+		Printf ("Missing displayname for player class '%s'\n", name);
+		return false;
+	}
+	return true;
+}
+
 void SetupPlayerClasses ()
 {
 	FPlayerClass newclass;
 
-	newclass.Flags = 0;
+	for (unsigned i=0; i<gameinfo.PlayerClasses.Size(); i++)
+	{
+		newclass.Flags = 0;
+		newclass.Type = PClass::FindClass(gameinfo.PlayerClasses[i]);
 
-	if (gameinfo.gametype == GAME_Doom)
-	{
-		newclass.Type = PClass::FindClass (NAME_DoomPlayer);
-		PlayerClasses.Push (newclass);
-	}
-	else if (gameinfo.gametype == GAME_Heretic)
-	{
-		newclass.Type = PClass::FindClass (NAME_HereticPlayer);
-		PlayerClasses.Push (newclass);
-	}
-	else if (gameinfo.gametype == GAME_Hexen)
-	{
-		newclass.Type = PClass::FindClass (NAME_FighterPlayer);
-		PlayerClasses.Push (newclass);
-		newclass.Type = PClass::FindClass (NAME_ClericPlayer);
-		PlayerClasses.Push (newclass);
-		newclass.Type = PClass::FindClass (NAME_MagePlayer);
-		PlayerClasses.Push (newclass);
-	}
-	else if (gameinfo.gametype == GAME_Strife)
-	{
-		newclass.Type = PClass::FindClass (NAME_StrifePlayer);
-		PlayerClasses.Push (newclass);
-	}
-	else if (gameinfo.gametype == GAME_Chex)
-	{
-		newclass.Type = PClass::FindClass (NAME_ChexPlayer);
-		PlayerClasses.Push (newclass);
+		if (ValidatePlayerClass(newclass.Type, gameinfo.PlayerClasses[i]))
+		{
+			if ((GetDefaultByType(newclass.Type)->flags6 & MF6_NOMENU))
+			{
+				newclass.Flags |= PCF_NOMENU;
+			}
+			PlayerClasses.Push (newclass);
+		}
 	}
 }
 
@@ -146,19 +149,7 @@ CCMD (addplayerclass)
 	{
 		const PClass *ti = PClass::FindClass (argv[1]);
 
-		if (!ti)
-		{
-			Printf ("Unknown player class '%s'\n", argv[1]);
-		}
-		else if (!ti->IsDescendantOf (RUNTIME_CLASS (APlayerPawn)))
-		{
-			Printf ("Invalid player class '%s'\n", argv[1]);
-		}
-		else if (ti->Meta.GetMetaString (APMETA_DisplayName) == NULL)
-		{
-			Printf ("Missing displayname for player class '%s'\n", argv[1]);
-		}
-		else
+		if (ValidatePlayerClass(ti, argv[1]))
 		{
 			FPlayerClass newclass;
 
@@ -189,7 +180,8 @@ CCMD (playerclasses)
 {
 	for (unsigned int i = 0; i < PlayerClasses.Size (); i++)
 	{
-		Printf ("% 3d %s\n", i,
+		Printf ("%3d: Class = %s, Name = %s\n", i,
+			PlayerClasses[i].Type->TypeName.GetChars(),
 			PlayerClasses[i].Type->Meta.GetMetaString (APMETA_DisplayName));
 	}
 }

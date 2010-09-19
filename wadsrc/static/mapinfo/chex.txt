@@ -52,6 +52,7 @@ gameinfo
 	menufontcolor_highlight = "BLUE"
 	menufontcolor_selection = "GOLD"
 	menubackbutton = "M_BACK_H"
+	playerclasses = "ChexPlayer"
 }
 
 skill baby

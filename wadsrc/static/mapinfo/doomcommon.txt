@@ -52,6 +52,7 @@ gameinfo
 	menufontcolor_highlight = "YELLOW"
 	menufontcolor_selection = "BRICK"
 	menubackbutton = "M_BACK_D"
+	playerclasses = "DoomPlayer"
 }
 
 skill baby

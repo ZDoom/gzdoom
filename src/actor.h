@@ -323,6 +323,7 @@ enum
 	MF6_BLOCKEDBYSOLIDACTORS = 0x00080000, // Blocked by solid actors, even if not solid itself
 	MF6_ADDITIVEPOISONDAMAGE	= 0x00100000,
 	MF6_ADDITIVEPOISONDURATION	= 0x00200000,
+	MF6_NOMENU			= 0x00400000,	// Player class should not appear in the class selection menu.
 
 // --- mobj.renderflags ---
 

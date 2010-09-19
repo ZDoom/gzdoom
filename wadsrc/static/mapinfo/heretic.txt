@@ -51,6 +51,7 @@ gameinfo
 	menufontcolor_highlight = "YELLOW"
 	menufontcolor_selection = "DARKGREEN"
 	menubackbutton = "M_BACK_H"
+	playerclasses = "HereticPlayer"
 }
 
 skill baby

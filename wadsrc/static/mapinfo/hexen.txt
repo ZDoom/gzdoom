@@ -50,6 +50,9 @@ gameinfo
 	menufontcolor_selection = "BRICK"
 	menubackbutton = "M_BACK_X"
 	PlayerClasses = "FighterPlayer", "ClericPlayer", "MagePlayer"
+	nightmarefast = true
+	pausesign = "PAUSED"
+	gibfactor = 0.5
 }
 
 skill baby

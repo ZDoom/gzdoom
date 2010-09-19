@@ -53,6 +53,8 @@ gameinfo
 	menufontcolor_selection = "BRICK"
 	menubackbutton = "M_BACK_D"
 	playerclasses = "DoomPlayer"
+	pausesign = "M_PAUSE"
+	gibfactor = 1
 }
 
 skill baby

@@ -53,6 +53,8 @@ gameinfo
 	menufontcolor_selection = "GOLD"
 	menubackbutton = "M_BACK_H"
 	playerclasses = "ChexPlayer"
+	pausesign = "M_PAUSE"
+	gibfactor = 1
 }
 
 skill baby

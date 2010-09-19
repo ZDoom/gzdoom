@@ -424,10 +424,10 @@ bool P_CheckKeys (AActor *owner, int keynum, bool remote)
 
 	if (!locks[keynum]) 
 	{
-		if (keynum == 103 && gameinfo.gametype == GAME_Strife)
-			failtext = "THIS AREA IS ONLY AVAILABLE IN THE RETAIL VERSION OF STRIFE";
+		if (keynum == 103 && (gameinfo.flags & GI_SHAREWARE))
+			failtext = "$TXT_RETAIL_ONLY";
 		else
-			failtext = "That doesn't seem to work";
+			failtext = "$TXT_DOES_NOT_WORK";
 
 		failsound = failage;
 		numfailsounds = countof(failage);

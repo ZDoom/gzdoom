@@ -5509,6 +5509,11 @@ int AActor::TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, FN
 	return (death == NULL) ? -1 : damage;
 }
 
+int AActor::GibHealth()
+{
+	return -abs(GetClass()->Meta.GetMetaInt (AMETA_GibHealth, FixedMul(SpawnHealth(), gameinfo.gibfactor)));
+}
+
 void AActor::Crash()
 {
 	if (((flags & MF_CORPSE) || (flags6 & MF6_KILLED)) &&
@@ -5523,10 +5528,7 @@ void AActor::Crash()
 		}
 		if (crashstate == NULL)
 		{
-			int gibhealth = -abs(GetClass()->Meta.GetMetaInt (AMETA_GibHealth,
-				gameinfo.gametype & GAME_DoomChex ? -SpawnHealth() : -SpawnHealth()/2));
-
-			if (health < gibhealth)
+			if (health < GibHealth())
 			{ // Extreme death
 				crashstate = FindState (NAME_Crash, NAME_Extreme);
 			}

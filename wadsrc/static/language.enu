@@ -1328,6 +1328,8 @@ TXT_NEED_SILVERKEY = "You need the Silver Key";
 TXT_NEED_BRASSKEY = "You need the Brass Key";
 TXT_NEED_REDCRYSTAL = "You need the Red Crystal";
 TXT_NEED_BLUECRYSTAL = "You need the Blue Crystal";
+TXT_RETAIL_ONLY = "THIS AREA IS ONLY AVAILABLE IN THE RETAIL VERSION OF STRIFE";
+TXT_DOES_NOT_WORK = "That doesn't seem to work";
 
 // Strife Quest messages
 

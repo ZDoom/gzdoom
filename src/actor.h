@@ -704,6 +704,7 @@ public:
 
 	// Return starting health adjusted by skill level
 	int SpawnHealth();
+	int GibHealth();
 
 	// Check for monsters that count as kill but excludes all friendlies.
 	bool CountsAsKill() const

@@ -1359,11 +1359,11 @@ OptionMenu ModReplayerOptions
 	Title "MODULE REPLAYER OPTIONS"
 	Option "Replayer engine",		"mod_dumb", "ModReplayers"
 	StaticText " "
-	Option "Sample rate",			"mod_samplerate", "SampleRates"
-	Option "Interpolation",			"mod_interp", "ModInterpolations"
-	Option "Volume ramping",		"mod_volramp", "ModVolumeRamps"
+	Option "Sample rate",			"mod_samplerate", "SampleRates", "mod_dumb"
+	Option "Interpolation",			"mod_interp", "ModInterpolations", "mod_dumb"
+	Option "Volume ramping",		"mod_volramp", "ModVolumeRamps", "mod_dumb"
 	StaticText " "
-	Option "Chip-o-matic",			"mod_autochip", "OnOff"
+	Option "Chip-o-matic",			"mod_autochip", "OnOff", "mod_dumb"
 	// TODO if the menu system is ever rewritten: Provide a decent
 	// mechanism to edit the chip-o-matic settings like you can with
 	// the foo_dumb preferences in foobar2000.

@@ -890,15 +890,14 @@ $playeralias	mage	male	*usefail	PlayerMageFailedUse
 $playeralias	mage	male	*puzzfail	PuzzleFailMage
 $playersound	mage	male	*jump		mgjump
 
-$playeralias	pig		male	*usefail	PigActive1
-$PlayerAlias   	Pig     Male   	*UseFail   	PigActive1
-$playeralias   	Pig     Male   	*PuzzFail   PigActive2
-$PlayerAlias   	Pig     Male   	*Grunt   	PigActive1
-$PlayerAlias   	Pig     Male   	*Land      	PigActive2
-$PlayerAlias   	Pig     Male   	*Jump      	PigActive1
-$PlayerAlias   	Pig     Male   	*Poison   	PigActive2
-$PlayerAlias   	Pig     Male   	*Falling   	PigPain
-$PlayerAlias   	Pig     Male   	*Splat   	PigDeath
+$playeralias   	pig     male   	*usefail   	PigActive1
+$playeralias   	pig     male   	*puzzfail   PigActive2
+$playeralias   	pig     male   	*grunt   	PigActive1
+$playeralias   	pig     male   	*land      	PigActive2
+$playeralias   	pig     male   	*jump      	PigActive1
+$playeralias   	pig     male   	*poison   	PigActive2
+$playeralias   	pig     male   	*falling   	PigPain
+$playeralias   	pig     male   	*splat   	PigDeath
 
 $alias world/drip		Ambient10
 $alias world/watersplash	WaterSplash

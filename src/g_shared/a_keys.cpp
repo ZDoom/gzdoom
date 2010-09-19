@@ -45,9 +45,9 @@ struct Keygroup
 struct Lock
 {
 	TArray<Keygroup *> keylist;
+	TArray<FSoundID> locksound;
 	FString Message;
 	FString RemoteMsg;
-	FSoundID locksound;
 	int	rgb;
 
 	Lock()
@@ -230,7 +230,8 @@ static void ParseLock(FScanner &sc)
 			delete locks[keynum];
 		}
 		locks[keynum] = lock;
-		locks[keynum]->locksound = "misc/keytry";
+		locks[keynum]->locksound.Push("*keytry");
+		locks[keynum]->locksound.Push("misc/keytry");
 		ignorekey=false;
 	}
 	else if (keynum != -1)
@@ -273,8 +274,21 @@ static void ParseLock(FScanner &sc)
 			break;
 
 		case 4:	// locksound
-			sc.MustGetString();
-			lock->locksound = sc.String;
+			lock->locksound.Clear();
+			for (;;)
+			{
+				sc.MustGetString();
+				lock->locksound.Push(sc.String);
+				if (!sc.GetString())
+				{
+					break;
+				}
+				if (!sc.Compare(","))
+				{
+					sc.UnGet();
+					break;
+				}
+			}
 			break;
 
 		default:
@@ -398,27 +412,32 @@ void P_DeinitKeyMessages()
 bool P_CheckKeys (AActor *owner, int keynum, bool remote)
 {
 	const char *failtext = NULL;
-	FSoundID failsound;
+	FSoundID *failsound;
+	int numfailsounds;
 
 	if (owner == NULL) return false;
 	if (keynum<=0 || keynum>255) return true;
 	// Just a safety precaution. The messages should have been initialized upon game start.
 	if (!keysdone) P_InitKeyMessages();
 
+	FSoundID failage[2] = { "*keytry", "misc/keytry" };
+
 	if (!locks[keynum]) 
 	{
-		if (keynum==103 && gameinfo.gametype == GAME_Strife)
+		if (keynum == 103 && gameinfo.gametype == GAME_Strife)
 			failtext = "THIS AREA IS ONLY AVAILABLE IN THE RETAIL VERSION OF STRIFE";
 		else
 			failtext = "That doesn't seem to work";
 
-		failsound = "misc/keytry";
+		failsound = failage;
+		numfailsounds = countof(failage);
 	}
 	else
 	{
 		if (locks[keynum]->check(owner)) return true;
 		failtext = remote? locks[keynum]->RemoteMsg : locks[keynum]->Message;
-		failsound = locks[keynum]->locksound;
+		failsound = &locks[keynum]->locksound[0];
+		numfailsounds = locks[keynum]->locksound.Size();
 	}
 
 	// If we get here, that means the actor isn't holding an appropriate key.
@@ -426,7 +445,16 @@ bool P_CheckKeys (AActor *owner, int keynum, bool remote)
 	if (owner == players[consoleplayer].camera)
 	{
 		PrintMessage(failtext);
-		S_Sound (owner, CHAN_VOICE, failsound, 1, ATTN_NORM);
+
+		// Play the first defined key sound.
+		for (int i = 0; i < numfailsounds; ++i)
+		{
+			if (failsound[i] != 0)
+			{
+				S_Sound (owner, CHAN_VOICE, failsound[i], 1, ATTN_NORM);
+				break;
+			}
+		}
 	}
 
 	return false;

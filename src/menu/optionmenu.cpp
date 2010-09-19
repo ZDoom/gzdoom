@@ -146,9 +146,16 @@ bool DOptionMenu::Responder (event_t *ev)
 		{
 			if (CanScrollDown)
 			{
-				mDesc->mScrollPos += 2;
-				VisBottom += 2;
-				VisBottom++;
+				if (VisBottom < (int)(mDesc->mItems.Size()-2))
+				{
+					mDesc->mScrollPos += 2;
+					VisBottom += 2;
+				}
+				else
+				{
+					mDesc->mScrollPos++;
+					VisBottom++;
+				}
 			}
 			return true;
 		}

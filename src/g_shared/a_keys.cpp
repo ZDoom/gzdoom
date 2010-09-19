@@ -451,8 +451,12 @@ bool P_CheckKeys (AActor *owner, int keynum, bool remote)
 		{
 			if (failsound[i] != 0)
 			{
-				S_Sound (owner, CHAN_VOICE, failsound[i], 1, ATTN_NORM);
-				break;
+				int snd = S_FindSkinnedSound(owner, failsound[i]);
+				if (snd != 0)
+				{
+					S_Sound (owner, CHAN_VOICE, snd, 1, ATTN_NORM);
+					break;
+				}
 			}
 		}
 	}

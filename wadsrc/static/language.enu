@@ -799,7 +799,7 @@ TAG_SHOTGUN = "Shotgun";
 TAG_SUPERSHOTGUN = "Super Shotgun";
 TAG_CHAINGUN = "Chaingun";
 TAG_ROCKETLAUNCHER = "Rocket Launcher";
-TAG_PLASMARIFLE = "Plama Rifle";
+TAG_PLASMARIFLE = "Plasma Rifle";
 TAG_BFG9000 = "BFG 9000";
 
 // Item tags: Heretic weapons

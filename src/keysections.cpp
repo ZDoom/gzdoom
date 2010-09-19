@@ -105,7 +105,7 @@ CCMD (addkeysection)
 
 		for (unsigned i = 0; i < KeySections.Size(); i++)
 		{
-			if (KeySections[i].mTitle.CompareNoCase(argv[2] == 0))
+			if (KeySections[i].mTitle.CompareNoCase(argv[2]) == 0)
 			{
 				CurrentKeySection = i;
 				return;

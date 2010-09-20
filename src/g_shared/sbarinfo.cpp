@@ -1352,16 +1352,16 @@ public:
 				if(script->spacingCharacter == '\0')
 					ax += font->GetSpaceWidth();
 				else
-					ax += font->GetCharWidth((int) script->spacingCharacter);
+					ax += font->GetCharWidth((unsigned char) script->spacingCharacter);
 				str++;
 				continue;
 			}
 			int width;
 			if(script->spacingCharacter == '\0') //No monospace?
-				width = font->GetCharWidth((int) *str);
+				width = font->GetCharWidth((unsigned char) *str);
 			else
-				width = font->GetCharWidth((int) script->spacingCharacter);
-			FTexture* character = font->GetChar((int) *str, &width);
+				width = font->GetCharWidth((unsigned char) script->spacingCharacter);
+			FTexture* character = font->GetChar((unsigned char) *str, &width);
 			if(character == NULL) //missing character.
 			{
 				str++;
@@ -1378,7 +1378,7 @@ public:
 
 			if(script->spacingCharacter != '\0')
 			{
-				double spacingSize = font->GetCharWidth((int) script->spacingCharacter);
+				double spacingSize = font->GetCharWidth((unsigned char) script->spacingCharacter);
 				switch(script->spacingAlignment)
 				{
 					default:
@@ -1444,7 +1444,7 @@ public:
 			if(script->spacingCharacter == '\0')
 				ax += width + spacing - (character->LeftOffset+1);
 			else //width gets changed at the call to GetChar()
-				ax += font->GetCharWidth((int) script->spacingCharacter) + spacing;
+				ax += font->GetCharWidth((unsigned char) script->spacingCharacter) + spacing;
 			str++;
 		}
 	}

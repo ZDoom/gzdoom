@@ -745,13 +745,13 @@ class CommandDrawString : public SBarInfoCommand
 				if(script->spacingCharacter == '\0')
 					x -= static_cast<int> (font->StringWidth(str)+(spacing * str.Len()));
 				else //monospaced, so just multiplay the character size
-					x -= static_cast<int> ((font->GetCharWidth((int) script->spacingCharacter) + spacing) * str.Len());
+					x -= static_cast<int> ((font->GetCharWidth((unsigned char) script->spacingCharacter) + spacing) * str.Len());
 				break;
 			case ALIGN_CENTER:
 				if(script->spacingCharacter == '\0')
 					x -= static_cast<int> (font->StringWidth(str)+(spacing * str.Len()) / 2);
 				else
-					x -= static_cast<int> ((font->GetCharWidth((int) script->spacingCharacter) + spacing) * str.Len() / 2);
+					x -= static_cast<int> ((font->GetCharWidth((unsigned char) script->spacingCharacter) + spacing) * str.Len() / 2);
 				break;
 			}
 		}

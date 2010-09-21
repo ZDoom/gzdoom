@@ -204,7 +204,8 @@ ListMenu "SkillMenu"
 	IfGame (Hexen)
 	{
 		StaticText 74, 16, "$MNU_CHOOSESKILL"
-		Position 38, 44
+		Position 160, 44
+		centermenu
 	}
 }
 

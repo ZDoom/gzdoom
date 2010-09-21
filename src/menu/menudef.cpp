@@ -238,6 +238,10 @@ static void ParseListMenuBody(FScanner &sc, FListMenuDescriptor *desc)
 			sc.MustGetNumber();
 			desc->mYpos = sc.Number;
 		}
+		else if (sc.Compare("Centermenu"))
+		{
+			desc->mCenter = true;
+		}
 		else if (sc.Compare("MouseWindow"))
 		{
 			sc.MustGetNumber();
@@ -463,6 +467,7 @@ static void ParseListMenu(FScanner &sc)
 	desc->mRedirect = NULL;
 	desc->mWLeft = 0;
 	desc->mWRight = 0;
+	desc->mCenter = false;
 
 	FMenuDescriptor **pOld = MenuDescriptors.CheckKey(desc->mMenuName);
 	if (pOld != NULL && *pOld != NULL) delete *pOld;
@@ -1228,16 +1233,6 @@ void M_StartupSkillMenu(FGameStartup *gs)
 			FListMenuDescriptor *ld = static_cast<FListMenuDescriptor*>(*desc);
 			int x = ld->mXpos;
 			int y = ld->mYpos;
-			if (gameinfo.gametype == GAME_Hexen)
-			{
-				// THere really needs to be a better way to do this... :(
-				if (gs->PlayerClass != NULL)
-				{
-					if (!stricmp(gs->PlayerClass, "fighter")) x = 120;
-					else if (!stricmp(gs->PlayerClass, "cleric")) x = 116;
-					else if (!stricmp(gs->PlayerClass, "mage")) x = 112;
-				}
-			}
 
 			// Delete previous contents
 			for(unsigned i=0; i<ld->mItems.Size(); i++)

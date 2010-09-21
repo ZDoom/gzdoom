@@ -110,6 +110,7 @@ struct FListMenuDescriptor : public FMenuDescriptor
 	EColorRange mFontColor2;
 	const PClass *mClass;
 	FMenuDescriptor *mRedirect;	// used to redirect overlong skill and episode menus to option menu based alternatives
+	bool mCenter;
 };
 
 struct FOptionMenuSettings
@@ -262,9 +263,12 @@ public:
 	virtual bool MenuEvent (int mkey, bool fromcontroller);
 	virtual bool MouseEvent(int type, int x, int y);
 	virtual bool CheckHotkey(int c);
+	virtual int GetWidth();
 	void DrawSelector(int xofs, int yofs, FTextureID tex);
 	void OffsetPositionY(int ydelta) { mYpos += ydelta; }
 	int GetY() { return mYpos; }
+	int GetX() { return mXpos; }
+	void SetX(int x) { mXpos = x; }
 };	
 
 class FListMenuItemStaticPatch : public FListMenuItem
@@ -370,6 +374,7 @@ public:
 	FListMenuItemText(int x, int y, int height, int hotkey, const char *text, FFont *font, EColorRange color, FName child, int param = 0);
 	~FListMenuItemText();
 	void Drawer(bool selected);
+	int GetWidth();
 };
 
 class FListMenuItemPatch : public FListMenuItemSelectable
@@ -378,6 +383,7 @@ class FListMenuItemPatch : public FListMenuItemSelectable
 public:
 	FListMenuItemPatch(int x, int y, int height, int hotkey, FTextureID patch, FName child, int param = 0);
 	void Drawer(bool selected);
+	int GetWidth();
 };
 
 //=============================================================================

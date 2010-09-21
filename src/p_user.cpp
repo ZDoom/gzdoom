@@ -52,6 +52,7 @@
 #include "thingdef/thingdef.h"
 #include "g_level.h"
 #include "d_net.h"
+#include "gstrings.h"
 
 static FRandom pr_skullpop ("SkullPop");
 
@@ -93,6 +94,19 @@ bool FPlayerClass::CheckSkin (int skin)
 	}
 
 	return false;
+}
+
+//===========================================================================
+//
+// GetDisplayName
+//
+//===========================================================================
+
+const char *GetPrintableDisplayName(const PClass *cls)
+{ 
+	// Fixme; This needs a decent way to access the string table without creating a mess.
+	const char *name = cls->Meta.GetMetaString(APMETA_DisplayName);
+	return name;
 }
 
 bool ValidatePlayerClass(const PClass *ti, const char *name)

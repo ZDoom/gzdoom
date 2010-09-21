@@ -995,7 +995,7 @@ static void BuildPlayerclassMenu()
 			{
 				if (!(PlayerClasses[i].Flags & PCF_NOMENU))
 				{
-					const char *pname = PlayerClasses[i].Type->Meta.GetMetaString (APMETA_DisplayName);
+					const char *pname = GetPrintableDisplayName(PlayerClasses[i].Type);
 					if (pname != NULL)
 					{
 						numclassitems++;
@@ -1032,7 +1032,7 @@ static void BuildPlayerclassMenu()
 				{
 					if (!(PlayerClasses[i].Flags & PCF_NOMENU))
 					{
-						const char *pname = PlayerClasses[i].Type->Meta.GetMetaString (APMETA_DisplayName);
+						const char *pname = GetPrintableDisplayName(PlayerClasses[i].Type);
 						if (pname != NULL)
 						{
 							FListMenuItemText *it = new FListMenuItemText(ld->mXpos, ld->mYpos, ld->mLinespacing, *pname,
@@ -1051,7 +1051,7 @@ static void BuildPlayerclassMenu()
 				}
 				if (n == 0)
 				{
-					const char *pname = PlayerClasses[0].Type->Meta.GetMetaString (APMETA_DisplayName);
+					const char *pname = GetPrintableDisplayName(PlayerClasses[0].Type);
 					if (pname != NULL)
 					{
 						FListMenuItemText *it = new FListMenuItemText(ld->mXpos, ld->mYpos, ld->mLinespacing, *pname,
@@ -1086,7 +1086,7 @@ static void BuildPlayerclassMenu()
 		{
 			if (!(PlayerClasses[i].Flags & PCF_NOMENU))
 			{
-				const char *pname = PlayerClasses[i].Type->Meta.GetMetaString (APMETA_DisplayName);
+				const char *pname = GetPrintableDisplayName(PlayerClasses[i].Type);
 				if (pname != NULL)
 				{
 					FOptionMenuItemSubmenu *it = new FOptionMenuItemSubmenu(pname, "Episodemenu", i);

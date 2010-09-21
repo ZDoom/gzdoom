@@ -684,7 +684,7 @@ class CommandDrawString : public SBarInfoCommand
 					if(statusBar->CPlayer->userinfo.PlayerClass != cache)
 					{
 						cache = statusBar->CPlayer->userinfo.PlayerClass;
-						str = statusBar->CPlayer->cls->Meta.GetMetaString(APMETA_DisplayName);
+						str = GetPrintableDisplayName(statusBar->CPlayer->cls);
 						RealignString();
 					}
 					break;

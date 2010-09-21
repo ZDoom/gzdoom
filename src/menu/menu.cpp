@@ -351,7 +351,7 @@ void M_SetMenu(FName menu, int param)
 		GameStartupInfo.Episode = -1;
 		GameStartupInfo.PlayerClass = 
 			param == -1000? NULL :
-			param == -1? "Random" : PlayerClasses[param].Type->Meta.GetMetaString (APMETA_DisplayName);
+			param == -1? "Random" : GetPrintableDisplayName(PlayerClasses[param].Type);
 		break;
 
 	case NAME_Skillmenu:

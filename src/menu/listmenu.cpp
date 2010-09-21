@@ -218,7 +218,7 @@ bool DListMenu::MouseEvent(int type, int x, int y)
 			{
 				if (mDesc->mItems[i]->CheckCoordinate(x, y))
 				{
-					if (i != mDesc->mSelectedItem)
+					if (i != static_cast<unsigned int> (mDesc->mSelectedItem))
 					{
 						//S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
 					}
@@ -258,7 +258,7 @@ void DListMenu::Drawer ()
 {
 	for(unsigned i=0;i<mDesc->mItems.Size(); i++)
 	{
-		if (mDesc->mItems[i]->mEnabled) mDesc->mItems[i]->Drawer(mDesc->mSelectedItem == i);
+		if (mDesc->mItems[i]->mEnabled) mDesc->mItems[i]->Drawer(static_cast<unsigned int> (mDesc->mSelectedItem) == i);
 	}
 	if (mDesc->mSelectedItem >= 0 && mDesc->mSelectedItem < (int)mDesc->mItems.Size())
 		mDesc->mItems[mDesc->mSelectedItem]->DrawSelector(mDesc->mSelectOfsX, mDesc->mSelectOfsY, mDesc->mSelector);

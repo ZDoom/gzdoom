@@ -1031,7 +1031,7 @@ public:
 
 			screen->DrawText (SmallFont, CR_GREEN, x, y, mResponseLines[i], DTA_Clean, true, TAG_DONE);
 
-			if (i == mResponses[response])
+			if (static_cast<unsigned int> (i) == mResponses[response])
 			{
 				char tbuf[16];
 

@@ -802,7 +802,7 @@ void DPlayerMenu::UpdateSkins()
 				{
 					int j = PlayerSkins.Push(i);
 					li->SetString(j, skins[i].name);
-					if (players[consoleplayer].userinfo.skin == i)
+					if (static_cast<unsigned int> (players[consoleplayer].userinfo.skin) == i)
 					{
 						sel = j;
 					}

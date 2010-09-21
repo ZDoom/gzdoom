@@ -392,13 +392,13 @@ void DOptionMenu::Drawer ()
 	for (i = 0; i < mDesc->mItems.Size() && y <= lastrow; i++, y += fontheight)
 	{
 		// Don't scroll the uppermost items
-		if (i == mDesc->mScrollTop)
+		if (i == static_cast<unsigned int> (mDesc->mScrollTop))
 		{
 			i += mDesc->mScrollPos;
 			if (i >= mDesc->mItems.Size()) break;	// skipped beyond end of menu 
 		}
-		int cur_indent = mDesc->mItems[i]->Draw(mDesc, y, indent, mDesc->mSelectedItem == i);
-		if (cur_indent >= 0 && mDesc->mSelectedItem == i && mDesc->mItems[i]->Selectable())
+		int cur_indent = mDesc->mItems[i]->Draw(mDesc, y, indent, static_cast<unsigned int> (mDesc->mSelectedItem) == i);
+		if (cur_indent >= 0 && static_cast<unsigned int> (mDesc->mSelectedItem) == i && mDesc->mItems[i]->Selectable())
 		{
 			if (((DMenu::MenuTime%8) < 6) || DMenu::CurrentMenu != this)
 			{

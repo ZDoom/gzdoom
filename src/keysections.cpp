@@ -80,9 +80,9 @@ void M_SaveCustomKeys (FConfigFile *config, char *section, char *subsection, siz
 {
 	for (unsigned i=0; i<KeySections.Size(); i++)
 	{
-		mysnprintf (subsection, sublen, "%s.Bindings", KeySections[i].mSection);
+		mysnprintf (subsection, sublen, "%s.Bindings", KeySections[i].mSection.GetChars());
 		DoSaveKeys (config, section, &KeySections[i], false);
-		mysnprintf (subsection, sublen, "%s.DoubleBindings", KeySections[i].mSection);
+		mysnprintf (subsection, sublen, "%s.DoubleBindings", KeySections[i].mSection.GetChars());
 		DoSaveKeys (config, section, &KeySections[i], true);
 	}
 }

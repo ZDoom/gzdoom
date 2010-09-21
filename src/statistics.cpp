@@ -595,7 +595,7 @@ FString GetStatString()
 CCMD(printstats)
 {
 	StoreLevelStats();	// Refresh the current level's results.
-	Printf("%s", GetStatString());
+	Printf("%s", GetStatString().GetChars());
 }
 
 

@@ -1200,6 +1200,7 @@ FMultiPatchTexture::FMultiPatchTexture (FScanner &sc, int usetype)
 	bMultiPatch = true;
 	sc.SetCMode(true);
 	sc.MustGetString();
+	const char* textureName = NULL;
 	if (sc.Compare("optional"))
 	{
 		bSilent = true;
@@ -1208,11 +1209,11 @@ FMultiPatchTexture::FMultiPatchTexture (FScanner &sc, int usetype)
 		{
 			// this is not right. Apparently a texture named 'optional' is being defined right now...
 			sc.UnGet();
-			sc.String = "optional";
+			textureName = "optional";
 			bSilent = false;
 		}
 	}
-	uppercopy(Name, sc.String);
+	uppercopy(Name, !textureName ? sc.String : textureName);
 	Name[8] = 0;
 	sc.MustGetStringName(",");
 	sc.MustGetNumber();

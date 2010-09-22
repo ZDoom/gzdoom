@@ -929,7 +929,7 @@ public:
 	void Drawer()
 	{
 		const char *speakerName;
-		int i, x, y, linesize;
+		int x, y, linesize;
 		int width, fontheight;
 		int labelofs;
 
@@ -973,6 +973,7 @@ public:
 		// Dim the screen behind the dialogue (but only if there is no backdrop).
 		if (!CurNode->Backdrop.isValid())
 		{
+			int i;
 			for (i = 0; mDialogueLines[i].Width >= 0; ++i)
 			{ }
 			screen->Dim (0, 0.45f, 14 * screen->GetWidth() / 320, 13 * screen->GetHeight() / 200,
@@ -995,7 +996,7 @@ public:
 			y += linesize * 3 / 2;
 		}
 		x = 24 * screen->GetWidth() / 320;
-		for (i = 0; mDialogueLines[i].Width >= 0; ++i)
+		for (int i = 0; mDialogueLines[i].Width >= 0; ++i)
 		{
 			screen->DrawText (SmallFont, CR_UNTRANSLATED, x, y, mDialogueLines[i].Text,
 				DTA_CleanNoMove, true, TAG_DONE);
@@ -1024,14 +1025,14 @@ public:
 		fontheight = OptionSettings.mLinespacing;
 
 		int response = 0;
-		for (i = 0; i < (int)mResponseLines.Size(); i++, y += fontheight)
+		for (unsigned i = 0; i < mResponseLines.Size(); i++, y += fontheight)
 		{
 			width = SmallFont->StringWidth(mResponseLines[i]);
 			x = 64;
 
 			screen->DrawText (SmallFont, CR_GREEN, x, y, mResponseLines[i], DTA_Clean, true, TAG_DONE);
 
-			if (static_cast<unsigned int> (i) == mResponses[response])
+			if (i == mResponses[response])
 			{
 				char tbuf[16];
 

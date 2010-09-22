@@ -796,13 +796,13 @@ void DPlayerMenu::UpdateSkins()
 		else
 		{
 			PlayerSkins.Clear();
-			for(unsigned i=0;i<(unsigned)numskins; i++)
+			for(int i=0;i<(int)numskins; i++)
 			{
 				if (PlayerClass->CheckSkin(i))
 				{
 					int j = PlayerSkins.Push(i);
 					li->SetString(j, skins[i].name);
-					if (static_cast<unsigned int> (players[consoleplayer].userinfo.skin) == i)
+					if (players[consoleplayer].userinfo.skin == i)
 					{
 						sel = j;
 					}

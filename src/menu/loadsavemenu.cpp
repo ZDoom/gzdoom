@@ -604,7 +604,7 @@ void DLoadSaveMenu::Drawer ()
 		{
 			color = CR_ORANGE;
 		}
-		else if (j == static_cast<unsigned int> (Selected))
+		else if ((int)j == Selected)
 		{
 			color = CR_WHITE;
 		}
@@ -612,7 +612,8 @@ void DLoadSaveMenu::Drawer ()
 		{
 			color = CR_TAN;
 		}
-		if (j == static_cast<unsigned int> (Selected))
+
+		if ((int)j == Selected)
 		{
 			screen->Clear (listboxLeft, listboxTop+rowHeight*i,
 				listboxRight, listboxTop+rowHeight*(i+1), -1,

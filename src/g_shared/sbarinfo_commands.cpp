@@ -361,7 +361,7 @@ class CommandDrawSwitchableImage : public CommandDrawImage
 				}
 			}
 			// [BL] I have word that MSVC++ wants this static_cast ;)  Shut up MSVC!
-			for(unsigned int i = 0;i < static_cast<unsigned int> (conditionAnd ? 3 : 1);i++)
+			for(unsigned int i = 0;i < (conditionAnd ? 3u : 1u);i++)
 			{
 				sc.MustGetToken(',');
 				sc.MustGetToken(TK_StringConst);

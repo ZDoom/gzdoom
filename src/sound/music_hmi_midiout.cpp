@@ -41,7 +41,7 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define SONG_MAGIC		"HMI-MIDISONG"
+#define SONG_MAGIC		"HMI-MIDISONG061595"
 #define TRACK_MAGIC		"HMI-MIDITRACK"
 
 // Used by SendCommand to check for unexpected end-of-track conditions.
@@ -53,6 +53,7 @@
 	}
 
 // In song header
+#define DIVISION_OFFSET				0xD2
 #define TRACK_COUNT_OFFSET			0xE4
 #define TRACK_DIR_PTR_OFFSET		0xE8
 
@@ -164,7 +165,7 @@ HMISong::HMISong (FILE *file, BYTE *musiccache, int len, EMIDIDevice type)
 	}
 
 	// Do some validation of the MIDI file
-	if (memcmp(MusHeader, SONG_MAGIC, 12) != 0)
+	if (memcmp(MusHeader, SONG_MAGIC, sizeof(SONG_MAGIC)) != 0)
 		return;
 
 	NumTracks = GetShort(MusHeader + TRACK_COUNT_OFFSET);
@@ -174,7 +175,8 @@ HMISong::HMISong (FILE *file, BYTE *musiccache, int len, EMIDIDevice type)
 	}
 
 	// The division is the number of pulses per quarter note (PPQN).
-	Division = 60;
+	Division = GetShort(MusHeader + DIVISION_OFFSET);
+	InitialTempo = 4000000;
 
 	Tracks = new TrackInfo[NumTracks + 1];
 	int track_dir = GetInt(MusHeader + TRACK_DIR_PTR_OFFSET);

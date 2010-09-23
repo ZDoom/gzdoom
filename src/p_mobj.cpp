@@ -547,7 +547,7 @@ bool AActor::SetState (FState *newstate, bool nofunction)
 				// for Dehacked, I would move sprite changing out of the states
 				// altogether, since actors rarely change their sprites after
 				// spawning.
-					if (player != NULL)
+					if (player != NULL && skins != NULL)
 					{
 						sprite = skins[player->userinfo.skin].sprite;
 					}

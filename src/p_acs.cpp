@@ -5828,106 +5828,41 @@ int DLevelScript::RunScript ()
 		case PCD_GETACTORY:
 		case PCD_GETACTORZ:
 			{
-				if(STACK(1) == 0)
-				{
-					STACK(1) = (&activator->x)[pcd - PCD_GETACTORX];
-				}
-				else
-				{
-					AActor *actor = SingleActorFromTID (STACK(1), activator);
-
-					if (actor == NULL)
-					{
-						STACK(1) = 0;
-					}
-					else
-					{
-						STACK(1) = (&actor->x)[pcd - PCD_GETACTORX];
-					}
-				}
+				AActor *actor = SingleActorFromTID(STACK(1), activator);
+				STACK(1) = actor == NULL ? 0 : (&actor->x)[pcd - PCD_GETACTORX];
 			}
 			break;
 
 		case PCD_GETACTORFLOORZ:
+			{
+				AActor *actor = SingleActorFromTID(STACK(1), activator);
+				STACK(1) = actor == NULL ? 0 : actor->floorz;
+			}
+			break;
+
 		case PCD_GETACTORCEILINGZ:
 			{
-				if(STACK(1) == 0)
-				{
-					if (pcd == PCD_GETACTORFLOORZ)
-					{
-						STACK(1) = activator->floorz;
-					}
-					else if(STACK(1) == 0)
-					{
-						STACK(1) = activator->ceilingz;
-					}
-				}
-				else
-				{
-					AActor *actor = SingleActorFromTID (STACK(1), activator);
-
-					if (actor == NULL)
-					{
-						STACK(1) = 0;
-					}
-					else if (pcd == PCD_GETACTORFLOORZ)
-					{
-						STACK(1) = actor->floorz;
-					}
-					else
-					{
-						STACK(1) = actor->ceilingz;
-					}
-				}
+				AActor *actor = SingleActorFromTID(STACK(1), activator);
+				STACK(1) = actor == NULL ? 0 : actor->ceilingz;
 			}
 			break;
 
 		case PCD_GETACTORANGLE:
 			{
-				if(STACK(1) == 0)
-				{
-					STACK(1) = activator->angle >> 16;
-				}
-				else
-				{
-					AActor *actor = SingleActorFromTID (STACK(1), activator);
-
-					if (actor == NULL)
-					{
-						STACK(1) = 0;
-					}
-					else
-					{
-						STACK(1) = actor->angle >> 16;
-					}
-				}
+				AActor *actor = SingleActorFromTID(STACK(1), activator);
+				STACK(1) = actor == NULL ? 0 : actor->angle >> 16;
 			}
 			break;
 
 		case PCD_GETACTORPITCH:
 			{
-				if(STACK(1) == 0)
-				{
-					STACK(1) = activator->pitch >> 16;
-				}
-				else
-				{
-					AActor *actor = SingleActorFromTID (STACK(1), activator);
-
-					if (actor == NULL)
-					{
-						STACK(1) = 0;
-					}
-					else
-					{
-						STACK(1) = actor->pitch >> 16;
-					}
-				}
+				AActor *actor = SingleActorFromTID(STACK(1), activator);
+				STACK(1) = actor == NULL ? 0 : actor->pitch >> 16;
 			}
 			break;
 
 		case PCD_GETLINEROWOFFSET:
-			if (activationline)
+			if (activationline != NULL)
 			{
 				PushToStack (activationline->sidedef[0]->GetTextureYOffset(side_t::mid) >> FRACBITS);
 			}

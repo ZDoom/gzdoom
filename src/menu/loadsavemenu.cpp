@@ -506,8 +506,12 @@ void DLoadSaveMenu::ExtractSaveData (int index)
 
 			// Extract pic
 			SavePic = PNGTexture_CreateFromFile(png, node->Filename);
-
 			delete png;
+			if (SavePic->GetWidth() == 1 && SavePic->GetHeight() == 1)
+			{
+				delete SavePic;
+				SavePic = NULL;
+			}
 		}
 		fclose (file);
 	}
@@ -551,7 +555,7 @@ void DLoadSaveMenu::Drawer ()
 		if (SaveGames.Size() > 0)
 		{
 			const char *text =
-				(Selected == -1 || SaveGames[Selected]->bOldVersion)
+				(Selected == -1 || !SaveGames[Selected]->bOldVersion)
 				? GStrings("MNU_NOPICTURE") : GStrings("MNU_DIFFVERSION");
 			const int textlen = SmallFont->StringWidth (text)*CleanXfac;
 

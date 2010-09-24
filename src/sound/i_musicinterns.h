@@ -500,6 +500,8 @@ public:
 protected:
 	HMISong(const HMISong *original, const char *filename, EMIDIDevice type);	// file dump constructor
 
+	void SetupForHMI(int len);
+	void SetupForHMP(int len);
 	void CheckCaps(int tech);
 	void DoInitialSetup();
 	void DoRestart();
@@ -513,6 +515,9 @@ protected:
 	DWORD *SendCommand (DWORD *event, TrackInfo *track, DWORD delay);
 	TrackInfo *FindNextDue ();
 	void SetTempo(int new_tempo);
+
+	static DWORD ReadVarLenHMI(TrackInfo *);
+	static DWORD ReadVarLenHMP(TrackInfo *);
 
 	struct AutoNoteOff
 	{
@@ -541,6 +546,7 @@ protected:
 	TrackInfo *Tracks;
 	TrackInfo *TrackDue;
 	TrackInfo *FakeTrack;
+	DWORD (*ReadVarLen)(TrackInfo *);
 	NoteOffQueue NoteOffs;
 };
 

@@ -463,6 +463,13 @@ MusInfo *I_RegisterSong (const char *filename, BYTE *musiccache, int offset, int
 	{
 		miditype = MIDI_HMI;
 	}
+	// Check for HMP format
+	else
+	if (id[0] == MAKE_ID('H','M','I','M') &&
+		id[1] == MAKE_ID('I','D','I','P'))
+	{
+		miditype = MIDI_HMI;
+	}
 	// Check for MIDI format
 	else if (id[0] == MAKE_ID('M','T','h','d'))
 	{

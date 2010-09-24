@@ -2250,6 +2250,8 @@ static void P_LoopSidedefs (bool firstloop)
 				right = bestright;
 			}
 		}
+		assert((unsigned)i<(unsigned)numsides);
+		assert(right<(unsigned)numsides);
 		sides[i].RightSide = right;
 		sides[right].LeftSide = i;
 	}

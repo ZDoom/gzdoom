@@ -106,6 +106,15 @@ struct IWADInfo
 	int flags;
 };
 
+struct FStartupInfo
+{
+	FString Name;
+	DWORD FgColor;			// Foreground color for title banner
+	DWORD BkColor;			// Background color for title banner
+};
+
+extern FStartupInfo DoomStartupInfo;
+
 extern const IWADInfo IWADInfos[NUM_IWAD_TYPES];
 extern EIWADType gameiwad;
 

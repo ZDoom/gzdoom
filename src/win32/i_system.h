@@ -138,9 +138,6 @@ bool I_WriteIniFailed ();
 unsigned int I_MSTime (void);
 unsigned int I_FPSTime();
 
-// [RH] Title banner to display during startup
-extern const IWADInfo *DoomStartupInfo;
-
 // [RH] Used by the display code to set the normal window procedure
 void I_SetWndProc();
 

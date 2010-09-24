@@ -668,6 +668,12 @@ const IWADInfo *D_FindIWAD(TArray<FString> &wadfiles, const char *iwad, const ch
 	EIWADType iwadType = IdentifyVersion(wadfiles, iwad, basewad);
 	gameiwad = iwadType;
 	const IWADInfo *iwad_info = &IWADInfos[iwadType];
+	if (DoomStartupInfo.Name.IsEmpty()) DoomStartupInfo.Name = iwad_info->Name;
+	if (DoomStartupInfo.BkColor == 0 && DoomStartupInfo.FgColor == 0)
+	{
+		DoomStartupInfo.BkColor = iwad_info->BkColor;
+		DoomStartupInfo.FgColor = iwad_info->FgColor;
+	}
 	I_SetIWADInfo(iwad_info);
 	return iwad_info;
 }

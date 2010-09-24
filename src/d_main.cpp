@@ -203,6 +203,7 @@ bool PageBlank;
 FTexture *Page;
 FTexture *Advisory;
 bool nospriterename;
+FStartupInfo DoomStartupInfo;
 
 cycle_t FrameCycles;
 
@@ -1696,6 +1697,19 @@ static FString ParseGameInfo(TArray<FString> &pwads, const char *fn, const char 
 		else if (!nextKey.CompareNoCase("NOSPRITERENAME"))
 		{
 			nospriterename = true;
+		}
+		else if (!nextKey.CompareNoCase("STARTUPTITLE"))
+		{
+			sc.MustGetString();
+			DoomStartupInfo.Name = sc.String;
+		}
+		else if (!nextKey.CompareNoCase("STARTUPCOLORS"))
+		{
+			sc.MustGetString();
+			DoomStartupInfo.FgColor = V_GetColor(NULL, sc.String);
+			sc.MustGetStringName(",");
+			sc.MustGetString();
+			DoomStartupInfo.BkColor = V_GetColor(NULL, sc.String);
 		}
 	}
 	return iwad;

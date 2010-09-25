@@ -382,14 +382,15 @@ void M_SetMenu(FName menu, int param)
 
 		const char *msg = AllSkills[param].MustConfirmText;
 		if (*msg==0) msg = GStrings("NIGHTMARE");
-		M_StartMessage (msg, 0, NAME_Startgame);
+		M_StartMessage (msg, 0, NAME_StartgameConfirmed);
 		return;
 	}
 
 	case NAME_Startgame:
 		// sent either from skill menu or confirmation screen. Skill gets only set if sent from skill menu
 		// Now we can finally start the game. Ugh...
-		if (GameStartupInfo.Skill == -1) GameStartupInfo.Skill = param;
+		GameStartupInfo.Skill = param;
+	case NAME_StartgameConfirmed:
 
 		G_DeferedInitNew (&GameStartupInfo);
 		if (gamestate == GS_FULLCONSOLE)

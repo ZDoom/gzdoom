@@ -55,6 +55,7 @@ gameinfo
 	playerclasses = "ChexPlayer"
 	pausesign = "M_PAUSE"
 	gibfactor = 1
+	cursorpic = "chexcurs"
 }
 
 skill baby

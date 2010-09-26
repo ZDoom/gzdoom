@@ -184,6 +184,23 @@ CUSTOM_CVAR (Int, fraglimit, 0, CVAR_SERVERINFO)
 CVAR (Float, timelimit, 0.f, CVAR_SERVERINFO);
 CVAR (Int, wipetype, 1, CVAR_ARCHIVE);
 CVAR (Int, snd_drawoutput, 0, 0);
+CUSTOM_CVAR (String, vid_cursor, "None", CVAR_ARCHIVE | CVAR_NOINITCALL)
+{
+	bool res = false;
+
+	if (!stricmp(self, "None" ) && gameinfo.CursorPic.IsNotEmpty())
+	{
+		res = I_SetCursor(TexMan[gameinfo.CursorPic]);
+	}
+	else
+	{
+		res = I_SetCursor(TexMan[self]);
+	}
+	if (!res)
+	{
+		I_SetCursor(TexMan["cursor"]);
+	}
+}
 
 bool DrawFSHUD;				// [RH] Draw fullscreen HUD?
 TArray<FString> allwads;
@@ -901,10 +918,7 @@ void D_DoomLoop ()
 	// Clamp the timer to TICRATE until the playloop has been entered.
 	r_NoInterpolate = true;
 
-	if (gameinfo.CursorPic.IsEmpty() || !I_SetCursor(TexMan[gameinfo.CursorPic]))
-	{
-		I_SetCursor(TexMan["cursor"]);
-	}
+	vid_cursor.Callback();
 
 	for (;;)
 	{

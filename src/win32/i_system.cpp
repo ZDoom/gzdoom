@@ -1186,28 +1186,33 @@ bool I_SetCursor(FTexture *cursorpic)
 {
 	HCURSOR cursor;
 
-	// Must be no larger than 32x32.
-	if (cursorpic->GetWidth() > 32 || cursorpic->GetHeight() > 32)
+	if (cursorpic != NULL && cursorpic->UseType != FTexture::TEX_Null)
 	{
-		return false;
-	}
+		// Must be no larger than 32x32.
+		if (cursorpic->GetWidth() > 32 || cursorpic->GetHeight() > 32)
+		{
+			return false;
+		}
 
-	cursor = CreateAlphaCursor(cursorpic);
-	if (cursor == NULL)
-	{
-		cursor = CreateCompatibleCursor(cursorpic);
+		cursor = CreateAlphaCursor(cursorpic);
+		if (cursor == NULL)
+		{
+			cursor = CreateCompatibleCursor(cursorpic);
+		}
+		if (cursor == NULL)
+		{
+			return false;
+		}
+		// Replace the existing cursor with the new one.
+		DestroyCustomCursor();
+		CustomCursor = cursor;
+		atterm(DestroyCustomCursor);
 	}
-	if (cursor == NULL)
+	else
 	{
-		return false;
+		DestroyCustomCursor();
+		cursor = LoadCursor(NULL, IDC_ARROW);
 	}
-	// Replace the existing cursor with the new one.
-	if (CustomCursor != NULL)
-	{
-		DestroyCursor(CustomCursor);
-	}
-	CustomCursor = cursor;
-	atterm(DestroyCustomCursor);
 	SetClassLongPtr(Window, GCLP_HCURSOR, (LONG_PTR)cursor);
 	return true;
 }

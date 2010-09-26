@@ -510,6 +510,18 @@ OptionValue "MenuMouse"
 	2, "Touchscreen-like"
 }
 
+OptionString "Cursors"
+{
+	"None", "Default"
+	"cursor", "Simple arrow"
+	"doomcurs", "Doom"
+	"herecurs", "Heretic"
+	"hexncurs", "Hexen"
+	"strfcurs", "Strife"
+	"chexcurs", "Chex"
+	"-", "System cursor"
+}
+
 OptionMenu "MouseOptions"
 {
 	Title "MOUSE OPTIONS"
@@ -518,6 +530,7 @@ OptionMenu "MouseOptions"
 	{
 		Option "Enable mouse in menus",	"m_use_mouse", "MenuMouse", "use_mouse"
 		Option "Show back button",		"m_show_backbutton", "Corners", "use_mouse"
+		Option "Cursor",				"vid_cursor", "Cursors"
 	}
 	StaticText 	""
 	Slider "Overall sensitivity",		"mouse_sensitivity", 0.5, 2.5, 0.1

@@ -55,6 +55,7 @@ gameinfo
 	PlayerClasses = "StrifePlayer"
 	pausesign = "PAUSED"
 	gibfactor = 0.5
+	cursorpic = "strfcurs"
 }
 
 skill baby

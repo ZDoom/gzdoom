@@ -106,6 +106,7 @@ struct gameinfo_t
 	FString backpacktype;
 	FString statusbar;
 	FString intermissionMusic;
+	FString CursorPic;
 	DWORD dimcolor;
 	float dimamount;
 	int definventorymaxamount;

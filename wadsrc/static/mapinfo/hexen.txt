@@ -53,6 +53,7 @@ gameinfo
 	nightmarefast = true
 	pausesign = "PAUSED"
 	gibfactor = 0.5
+	cursorpic = "hexncurs"
 }
 
 skill baby

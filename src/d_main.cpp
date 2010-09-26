@@ -901,7 +901,10 @@ void D_DoomLoop ()
 	// Clamp the timer to TICRATE until the playloop has been entered.
 	r_NoInterpolate = true;
 
-	I_SetCursor(TexMan["cursor"]);
+	if (gameinfo.CursorPic.IsEmpty() || !I_SetCursor(TexMan[gameinfo.CursorPic]))
+	{
+		I_SetCursor(TexMan["cursor"]);
+	}
 
 	for (;;)
 	{

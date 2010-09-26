@@ -55,6 +55,7 @@ gameinfo
 	playerclasses = "DoomPlayer"
 	pausesign = "M_PAUSE"
 	gibfactor = 1
+	cursorpic = "doomcurs"
 }
 
 skill baby

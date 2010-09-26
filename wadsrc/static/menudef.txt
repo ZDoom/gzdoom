@@ -69,9 +69,18 @@ LISTMENU "MainMenu"
 	IfGame(Doom, Strife, Chex)
 	{
 		PatchItem "M_NGAME", "n", "PlayerclassMenu"
-		PatchItem "M_LOADG", "l", "LoadGameMenu"
-		PatchItem "M_SAVEG", "s", "SaveGameMenu"
-		PatchItem "M_OPTION","o", "OptionsMenu"
+		ifOption(SwapMenu)
+		{
+			PatchItem "M_LOADG", "l", "LoadGameMenu"
+			PatchItem "M_SAVEG", "s", "SaveGameMenu"
+			PatchItem "M_OPTION","o", "OptionsMenu"
+		}
+		else
+		{
+			PatchItem "M_OPTION","o", "OptionsMenu"
+			PatchItem "M_LOADG", "l", "LoadGameMenu"
+			PatchItem "M_SAVEG", "s", "SaveGameMenu"
+		}
 		ifOption(ReadThis)
 		{
 			PatchItem "M_RDTHIS","r", "ReadThisMenu"

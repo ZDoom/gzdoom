@@ -76,6 +76,7 @@ struct gameinfo_t
 	bool noloopfinalemusic;
 	bool intermissioncounter;
 	bool nightmarefast;
+	bool swapmenu;
 	TArray<FName> creditPages;
 	TArray<FName> finalePages;
 	TArray<FName> infoPages;

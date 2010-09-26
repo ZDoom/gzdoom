@@ -147,6 +147,7 @@ static bool CheckSkipOptionBlock(FScanner &sc)
 	{
 		sc.MustGetString();
 		if (sc.Compare("ReadThis")) filter |= gameinfo.drawreadthis;
+		else if (sc.Compare("Swapmenu")) filter |= gameinfo.swapmenu;
 		else if (sc.Compare("Windows"))
 		{
 			#ifdef _WIN32
@@ -171,7 +172,7 @@ static bool CheckSkipOptionBlock(FScanner &sc)
 	if (!filter)
 	{
 		SkipSubBlock(sc);
-		return true;
+		return !sc.CheckString("else");
 	}
 	return false;
 }
@@ -188,7 +189,11 @@ static void ParseListMenuBody(FScanner &sc, FListMenuDescriptor *desc)
 	while (!sc.CheckString("}"))
 	{
 		sc.MustGetString();
-		if (sc.Compare("ifgame"))
+		if (sc.Compare("else"))
+		{
+			SkipSubBlock(sc);
+		}
+		else if (sc.Compare("ifgame"))
 		{
 			if (!CheckSkipGameBlock(sc))
 			{

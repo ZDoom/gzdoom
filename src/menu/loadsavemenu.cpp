@@ -1056,7 +1056,7 @@ bool DLoadMenu::MenuEvent (int mkey, bool fromcontroller)
 	{
 		return true;
 	}
-	if (Selected == -1)
+	if (Selected == -1 || SaveGames.Size() == 0)
 	{
 		return false;
 	}

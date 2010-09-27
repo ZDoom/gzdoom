@@ -170,6 +170,34 @@ const float ATTN_NORM = 1;
 const float ATTN_IDLE = 1.001;
 const float ATTN_STATIC = 3;
 
+// For SetPlayerProprty action special
+Const Int PROP_FROZEN = 0;
+Const Int PROP_NOTARGET = 1;
+Const Int PROP_INSTANTWEAPONSWITCH = 2;
+Const Int PROP_FLY = 3;
+Const Int PROP_TOTALLYFROZEN = 4;
+Const Int PROP_INVULNERABILITY  = 5; // (Deprecated)
+Const Int PROP_STRENGTH = 6; // (Deprecated)
+Const Int PROP_INVISIBILITY = 7; // (Deprecated)
+Const Int PROP_RADIATIONSUIT = 8; // (Deprecated)
+Const Int PROP_ALLMAP = 9; // (Deprecated)
+Const Int PROP_INFRARED = 10; // (Deprecated)
+Const Int PROP_WEAPONLEVEL2 = 11; // (Deprecated)
+Const Int PROP_FLIGHT = 12; // (Deprecated)
+Const Int PROP_SPEED = 15; // (Deprecated)
+Const Int PROP_BUDDHA = 16;
+
+// Line_SetBlocking
+Const Int BLOCKF_CREATURES = 1;
+Const Int BLOCKF_MONSTERS = 2;
+Const Int BLOCKF_PLAYERS = 4;
+Const Int BLOCKF_FLOATERS = 8;
+Const Int BLOCKF_PROJECTILES = 16;
+Const Int BLOCKF_EVERYTHING = 32;
+Const Int BLOCKF_RAILING = 64;
+Const Int BLOCKF_USE = 128;
+
+
 
 // This is only here to provide one global variable for testing.
 native int testglobalvar;

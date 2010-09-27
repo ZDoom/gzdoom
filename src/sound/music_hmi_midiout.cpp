@@ -423,7 +423,7 @@ void HMISong::CheckCaps(int tech)
 	{
 		Tracks[i].Enabled = false;
 		// Track designations are stored in a 0-terminated array.
-		for (int j = 0; j < countof(Tracks[i].Designation) && Tracks[i].Designation[j] != 0; ++j)
+		for (unsigned int j = 0; j < countof(Tracks[i].Designation) && Tracks[i].Designation[j] != 0; ++j)
 		{
 			if (Tracks[i].Designation[j] == tech)
 			{

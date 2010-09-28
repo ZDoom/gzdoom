@@ -96,18 +96,30 @@ void DOptionMenu::Init(DMenu *parent, FOptionMenuDescriptor *desc)
 	mParentMenu = parent;
 	GC::WriteBarrier(this, parent);
 	mDesc = desc;
+	if (mDesc != NULL) mDesc->mSelectedItem = FirstSelectable();
+
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+int DOptionMenu::FirstSelectable()
+{
 	if (mDesc != NULL && mDesc->mSelectedItem < 0)
 	{
 		// Go down to the first selectable item
 		int i = -1;
-		mDesc->mSelectedItem = -1;
 		do
 		{
 			i++;
 		}
-		while (!mDesc->mItems[i]->Selectable() && i < (int)mDesc->mItems.Size());
-		if (i>=0) mDesc->mSelectedItem = i;
+		while (i < (int)mDesc->mItems.Size() && !mDesc->mItems[i]->Selectable());
+		if (i>=0 && i < (int)mDesc->mItems.Size()) return i;
 	}
+	return -1;
 }
 
 //=============================================================================
@@ -176,6 +188,11 @@ bool DOptionMenu::MenuEvent (int mkey, bool fromcontroller)
 	switch (mkey)
 	{
 	case MKEY_Up:
+		if (mDesc->mSelectedItem == -1)
+		{
+			mDesc->mSelectedItem = FirstSelectable();
+			break;
+		}
 		do
 		{
 			--mDesc->mSelectedItem;
@@ -214,6 +231,11 @@ bool DOptionMenu::MenuEvent (int mkey, bool fromcontroller)
 		break;
 
 	case MKEY_Down:
+		if (mDesc->mSelectedItem == -1)
+		{
+			mDesc->mSelectedItem = FirstSelectable();
+			break;
+		}
 		do
 		{
 			++mDesc->mSelectedItem;
@@ -225,8 +247,17 @@ bool DOptionMenu::MenuEvent (int mkey, bool fromcontroller)
 			}
 			if (mDesc->mSelectedItem >= (int)mDesc->mItems.Size()) 
 			{
-				mDesc->mSelectedItem = 0;
-				mDesc->mScrollPos = 0;
+				if (startedAt == -1)
+				{
+					mDesc->mSelectedItem = -1;
+					mDesc->mScrollPos = -1;
+					break;
+				}
+				else
+				{
+					mDesc->mSelectedItem = 0;
+					mDesc->mScrollPos = 0;
+				}
 			}
 		}
 		while (!mDesc->mItems[mDesc->mSelectedItem]->Selectable() && mDesc->mSelectedItem != startedAt);
@@ -240,10 +271,13 @@ bool DOptionMenu::MenuEvent (int mkey, bool fromcontroller)
 			{
 				mDesc->mScrollPos = 0;
 			}
-			mDesc->mSelectedItem = mDesc->mScrollTop + mDesc->mScrollPos + 1;
-			while (!mDesc->mItems[mDesc->mSelectedItem]->Selectable())
+			if (mDesc->mSelectedItem != -1)
 			{
-				++mDesc->mSelectedItem;
+				mDesc->mSelectedItem = mDesc->mScrollTop + mDesc->mScrollPos + 1;
+				while (!mDesc->mItems[mDesc->mSelectedItem]->Selectable())
+				{
+					++mDesc->mSelectedItem;
+				}
 			}
 		}
 		break;
@@ -257,10 +291,13 @@ bool DOptionMenu::MenuEvent (int mkey, bool fromcontroller)
 			{
 				mDesc->mScrollPos = mDesc->mItems.Size() - mDesc->mScrollTop - pagesize;
 			}
-			mDesc->mSelectedItem = mDesc->mScrollTop + mDesc->mScrollPos;
-			while (!mDesc->mItems[mDesc->mSelectedItem]->Selectable())
+			if (mDesc->mSelectedItem != -1)
 			{
-				++mDesc->mSelectedItem;
+				mDesc->mSelectedItem = mDesc->mScrollTop + mDesc->mScrollPos;
+				while (!mDesc->mItems[mDesc->mSelectedItem]->Selectable())
+				{
+					++mDesc->mSelectedItem;
+				}
 			}
 		}
 		break;

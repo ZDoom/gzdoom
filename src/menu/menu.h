@@ -580,6 +580,7 @@ public:
 	FOptionMenuItem *GetItem(FName name);
 	DOptionMenu(DMenu *parent = NULL, FOptionMenuDescriptor *desc = NULL);
 	virtual void Init(DMenu *parent = NULL, FOptionMenuDescriptor *desc = NULL);
+	int FirstSelectable();
 	bool Responder (event_t *ev);
 	bool MenuEvent (int mkey, bool fromcontroller);
 	bool MouseEvent(int type, int x, int y);

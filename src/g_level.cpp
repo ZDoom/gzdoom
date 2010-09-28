@@ -941,6 +941,7 @@ void G_DoLoadLevel (int position, bool autosave)
 		level.flags2 &= ~LEVEL2_NOMONSTERS;
 	}
 
+	level.maptime = 0;
 	P_SetupLevel (level.mapname, position);
 
 	AM_LevelInit();
@@ -982,7 +983,6 @@ void G_DoLoadLevel (int position, bool autosave)
 	}
 
 	level.starttime = gametic;
-	level.maptime = 0;
 	G_UnSnapshotLevel (!savegamerestore);	// [RH] Restore the state of the level.
 	G_FinishTravel ();
 	if (players[consoleplayer].camera == NULL ||

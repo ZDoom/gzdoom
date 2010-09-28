@@ -357,6 +357,7 @@ public:
 	bool IsPlaying();
 	bool IsMIDI() const;
 	bool IsValid() const;
+	bool SetSubsong(int subsong);
 	void Update();
 	FString GetStats();
 	void FluidSettingInt(const char *setting, int value);
@@ -380,6 +381,7 @@ protected:
 	virtual void DoRestart() = 0;
 	virtual bool CheckDone() = 0;
 	virtual void Precache();
+	virtual bool SetMIDISubsong(int subsong);
 	virtual DWORD *MakeEvents(DWORD *events, DWORD *max_event_p, DWORD max_time) = 0;
 
 	enum
@@ -488,6 +490,27 @@ protected:
 
 // HMI file played with a MIDI stream ---------------------------------------
 
+struct AutoNoteOff
+{
+	DWORD Delay;
+	BYTE Channel, Key;
+};
+// Sorry, std::priority_queue, but I want to be able to modify the contents of the heap.
+class NoteOffQueue : public TArray<AutoNoteOff>
+{
+public:
+	void AddNoteOff(DWORD delay, BYTE channel, BYTE key);
+	void AdvanceTime(DWORD time);
+	bool Pop(AutoNoteOff &item);
+
+protected:
+	void Heapify();
+
+	unsigned int Parent(unsigned int i) { return (i + 1u) / 2u - 1u; }
+	unsigned int Left(unsigned int i) { return (i + 1u) * 2u - 1u; }
+	unsigned int Right(unsigned int i) { return (i + 1u) * 2u; }
+};
+
 class HMISong : public MIDIStreamer
 {
 public:
@@ -519,27 +542,6 @@ protected:
 	static DWORD ReadVarLenHMI(TrackInfo *);
 	static DWORD ReadVarLenHMP(TrackInfo *);
 
-	struct AutoNoteOff
-	{
-		DWORD Delay;
-		BYTE Channel, Key;
-	};
-	// Sorry, std::priority_queue, but I want to be able to modify the contents of the heap.
-	class NoteOffQueue : public TArray<AutoNoteOff>
-	{
-	public:
-		void AddNoteOff(DWORD delay, BYTE channel, BYTE key);
-		void AdvanceTime(DWORD time);
-		bool Pop(AutoNoteOff &item);
-
-	protected:
-		void Heapify();
-
-		unsigned int Parent(unsigned int i) { return (i + 1u) / 2u - 1u; }
-		unsigned int Left(unsigned int i) { return (i + 1u) * 2u - 1u; }
-		unsigned int Right(unsigned int i) { return (i + 1u) * 2u; }
-	};
-
 	BYTE *MusHeader;
 	int SongLen;
 	int NumTracks;
@@ -548,6 +550,46 @@ protected:
 	TrackInfo *FakeTrack;
 	DWORD (*ReadVarLen)(TrackInfo *);
 	NoteOffQueue NoteOffs;
+};
+
+// XMI file played with a MIDI stream ---------------------------------------
+
+class XMISong : public MIDIStreamer
+{
+public:
+	XMISong(FILE *file, BYTE *musiccache, int length, EMIDIDevice type);
+	~XMISong();
+
+	MusInfo *GetOPLDumper(const char *filename);
+	MusInfo *GetWaveDumper(const char *filename, int rate);
+
+protected:
+	struct TrackInfo;
+	enum EventSource { EVENT_None, EVENT_Real, EVENT_Fake };
+
+	XMISong(const XMISong *original, const char *filename, EMIDIDevice type);	// file dump constructor
+
+	int FindXMIDforms(const BYTE *chunk, int len, TrackInfo *songs) const;
+	void FoundXMID(const BYTE *chunk, int len, TrackInfo *song) const;
+	bool SetMIDISubsong(int subsong);
+	void DoInitialSetup();
+	void DoRestart();
+	bool CheckDone();
+	DWORD *MakeEvents(DWORD *events, DWORD *max_events_p, DWORD max_time);
+	void AdvanceSong(DWORD time);
+
+	void ProcessInitialMetaEvents();
+	DWORD *SendCommand (DWORD *event, EventSource track, DWORD delay);
+	EventSource FindNextDue();
+	void SetTempo(int new_tempo);
+
+	BYTE *MusHeader;
+	int SongLen;		// length of the entire file
+	int NumSongs;
+	TrackInfo *Songs;
+	TrackInfo *CurrSong;
+	NoteOffQueue NoteOffs;
+	EventSource EventDue;
 };
 
 // Anything supported by FMOD out of the box --------------------------------

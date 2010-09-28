@@ -348,7 +348,7 @@ DWORD *MIDISong2::MakeEvents(DWORD *events, DWORD *max_event_p, DWORD max_time)
 //
 // MIDISong2 :: AdvanceTracks
 //
-// Advaces time for all tracks by the specified amount.
+// Advances time for all tracks by the specified amount.
 //
 //==========================================================================
 
@@ -726,6 +726,7 @@ MIDISong2::TrackInfo *MIDISong2::FindNextDue ()
 	DWORD best;
 	int i;
 
+	// Give precedence to whichever track last had events taken from it.
 	if (!TrackDue->Finished && TrackDue->Delay == 0)
 	{
 		return TrackDue;

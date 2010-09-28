@@ -89,6 +89,7 @@ enum EMIDIType
 	MIDI_NOTMIDI,
 	MIDI_MIDI,
 	MIDI_HMI,
+	MIDI_XMI,
 	MIDI_MUS
 };
 
@@ -344,6 +345,10 @@ static MusInfo *CreateMIDISong(FILE *file, const char *filename, BYTE *musiccach
 	{
 		return new HMISong(file, musiccache, len, devtype);
 	}
+	else if (miditype == MIDI_XMI)
+	{
+		return new XMISong(file, musiccache, len, devtype);
+	}
 	return NULL;
 }
 
@@ -469,6 +474,15 @@ MusInfo *I_RegisterSong (const char *filename, BYTE *musiccache, int offset, int
 		id[1] == MAKE_ID('I','D','I','P'))
 	{
 		miditype = MIDI_HMI;
+	}
+	// Check for XMI format
+	else
+	if ((id[0] == MAKE_ID('F','O','R','M') &&
+		 id[2] == MAKE_ID('X','D','I','R')) ||
+		((id[0] == MAKE_ID('C','A','T',' ') || id[0] == MAKE_ID('F','O','R','M')) &&
+		 id[2] == MAKE_ID('X','M','I','D')))
+	{
+		miditype = MIDI_XMI;
 	}
 	// Check for MIDI format
 	else if (id[0] == MAKE_ID('M','T','h','d'))

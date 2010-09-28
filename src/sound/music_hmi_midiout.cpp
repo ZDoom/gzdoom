@@ -84,28 +84,6 @@
 #define HMI_DEV_OPL3				0xA009	// SoundBlaster 16, Microsoft Sound System, Pro Audio Spectrum 16
 #define HMI_DEV_GUS					0xA00A	// Gravis UltraSound, Gravis UltraSound Max/Ace
 
-
-// Data accessors, since this data is highly likely to be unaligned.
-#if defined(_M_IX86) || defined(_M_X64) || defined(__i386__) 
-inline int GetShort(const BYTE *foo)
-{
-	return *(const short *)foo;
-}
-inline int GetInt(const BYTE *foo)
-{
-	return *(const int *)foo;
-}
-#else
-inline int GetShort(const BYTE *foo)
-{
-	return short(foo[0] | (foo[1] << 8));
-}
-inline int GetInt(const BYTE *foo)
-{
-	return int(foo[0] | (foo[1] << 8) | (foo[2] << 16) | (foo[3] << 24));
-}
-#endif
-
 // TYPES -------------------------------------------------------------------
 
 struct HMISong::TrackInfo
@@ -567,7 +545,7 @@ DWORD *HMISong::MakeEvents(DWORD *events, DWORD *max_event_p, DWORD max_time)
 //
 // HMISong :: AdvanceTracks
 //
-// Advaces time for all tracks by the specified amount.
+// Advances time for all tracks by the specified amount.
 //
 //==========================================================================
 
@@ -868,11 +846,11 @@ DWORD HMISong::TrackInfo::ReadVarLenHMP()
 
 //==========================================================================
 //
-// HMISong :: NoteOffQueue :: AddNoteOff
+// NoteOffQueue :: AddNoteOff
 //
 //==========================================================================
 
-void HMISong::NoteOffQueue::AddNoteOff(DWORD delay, BYTE channel, BYTE key)
+void NoteOffQueue::AddNoteOff(DWORD delay, BYTE channel, BYTE key)
 {
 	unsigned int i = Reserve(1);
 	while (i > 0 && (*this)[Parent(i)].Delay > delay)
@@ -887,11 +865,11 @@ void HMISong::NoteOffQueue::AddNoteOff(DWORD delay, BYTE channel, BYTE key)
 
 //==========================================================================
 //
-// HMISong :: NoteOffQueue :: Pop
+// NoteOffQueue :: Pop
 //
 //==========================================================================
 
-bool HMISong::NoteOffQueue::Pop(AutoNoteOff &item)
+bool NoteOffQueue::Pop(AutoNoteOff &item)
 {
 	item = (*this)[0];
 	if (TArray<AutoNoteOff>::Pop((*this)[0]))
@@ -904,11 +882,11 @@ bool HMISong::NoteOffQueue::Pop(AutoNoteOff &item)
 
 //==========================================================================
 //
-// HMISong :: NoteOffQueue :: AdvanceTime
+// NoteOffQueue :: AdvanceTime
 //
 //==========================================================================
 
-void HMISong::NoteOffQueue::AdvanceTime(DWORD time)
+void NoteOffQueue::AdvanceTime(DWORD time)
 {
 	// Because the time is decreasing by the same amount for every entry,
 	// the heap property is maintained.
@@ -921,11 +899,11 @@ void HMISong::NoteOffQueue::AdvanceTime(DWORD time)
 
 //==========================================================================
 //
-// HMISong :: NoteOffQueue :: Heapify
+// NoteOffQueue :: Heapify
 //
 //==========================================================================
 
-void HMISong::NoteOffQueue::Heapify()
+void NoteOffQueue::Heapify()
 {
 	unsigned int i = 0;
 	for (;;)
@@ -965,9 +943,15 @@ HMISong::TrackInfo *HMISong::FindNextDue ()
 	DWORD best;
 	int i;
 
+	// Give precedence to whichever track last had events taken from it.
 	if (TrackDue != FakeTrack && !TrackDue->Finished && TrackDue->Delay == 0)
 	{
 		return TrackDue;
+	}
+	if (TrackDue == FakeTrack && NoteOffs.Size() != 0 && NoteOffs[0].Delay == 0)
+	{
+		FakeTrack->Delay = 0;
+		return FakeTrack;
 	}
 
 	// Check regular tracks.

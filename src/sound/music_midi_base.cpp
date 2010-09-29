@@ -10,6 +10,34 @@
 static DWORD	nummididevices;
 static bool		nummididevicesset;
 
+#ifdef HAVE_FLUIDSYNTH
+#define NUM_DEF_DEVICES 5
+#else
+#define NUM_DEF_DEVICES 4
+#endif
+
+static void AddDefaultMidiDevices(FOptionValues *opt)
+{
+	int p;
+	FOptionValues::Pair *pair = &opt->mValues[opt->mValues.Reserve(NUM_DEF_DEVICES)];
+#ifdef HAVE_FLUIDSYNTH
+	pair[0].Text = "FluidSynth";
+	pair[0].Value = -5.0;
+	p = 1;
+#else
+	p = 0;
+#endif
+	pair[p].Text = "GUS";
+	pair[p].Value = -4.0;
+	pair[p+1].Text = "OPL Synth Emulation";
+	pair[p+1].Value = -3.0;
+	pair[p+2].Text = "TiMidity++";
+	pair[p+2].Value = -2.0;
+	pair[p+3].Text = "FMOD";
+	pair[p+3].Value = -1.0;
+
+}
+
 #ifdef _WIN32
 	   UINT		mididevice;
 
@@ -71,29 +99,9 @@ void I_ShutdownMusicWin32 ()
 	}
 }
 
-#ifdef HAVE_FLUIDSYNTH
-#define NUM_DEF_DEVICES 4
-#else
-#define NUM_DEF_DEVICES 3
-#endif
 void I_BuildMIDIMenuList (FOptionValues *opt)
 {
-	int p;
-	FOptionValues::Pair *pair = &opt->mValues[opt->mValues.Reserve(NUM_DEF_DEVICES)];
-#ifdef HAVE_FLUIDSYNTH
-	pair[0].Text = "FluidSynth";
-	pair[0].Value = -5.0;
-	p = 1;
-#else
-	p = 0;
-#endif
-	pair[p].Text = "OPL Synth Emulation";
-	pair[p].Value = -3.0;
-	pair[p+1].Text = "TiMidity++";
-	pair[p+1].Value = -2.0;
-	pair[p+2].Text = "FMOD";
-	pair[p+2].Value = -1.0;
-
+	AddDefaultMidiDevices(opt);
 
 	for (DWORD id = 0; id < nummididevices; ++id)
 	{
@@ -104,7 +112,7 @@ void I_BuildMIDIMenuList (FOptionValues *opt)
 		assert(res == MMSYSERR_NOERROR);
 		if (res == MMSYSERR_NOERROR)
 		{
-			pair = &opt->mValues[opt->mValues.Reserve(1)];
+			FOptionValues::Pair *pair = &opt->mValues[opt->mValues.Reserve(1)];
 			pair->Text = caps.szPname;
 			pair->Value = (float)id;
 		}
@@ -156,6 +164,7 @@ CCMD (snd_listmididevices)
 #ifdef HAVE_FLUIDSYNTH
 	PrintMidiDevice (-5, "FluidSynth", MOD_SWSYNTH, 0);
 #endif
+	PrintMidiDevice (-4, "GUS", 0, MOD_SWSYNTH);
 	PrintMidiDevice (-3, "Emulated OPL FM Synth", MOD_FMSYNTH, 0);
 	PrintMidiDevice (-2, "TiMidity++", 0, MOD_SWSYNTH);
 	PrintMidiDevice (-1, "FMOD", 0, MOD_SWSYNTH);
@@ -188,28 +197,9 @@ CUSTOM_CVAR(Int, snd_mididevice, -1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 		self = -1;
 }
 
-#ifdef HAVE_FLUIDSYNTH
-#define NUM_DEF_DEVICES 4
-#else
-#define NUM_DEF_DEVICES 3
-#endif
 void I_BuildMIDIMenuList (FOptionValues *opt)
 {
-	int p;
-	FOptionValues::Pair *pair = &opt->mValues[opt->mValues.Reserve(NUM_DEF_DEVICES)];
-#ifdef HAVE_FLUIDSYNTH
-	pair[0].Text = "FluidSynth";
-	pair[0].Value = -5.0;
-	p = 1;
-#else
-	p = 0;
-#endif
-	pair[p].Text = "OPL Synth Emulation";
-	pair[p].Value = -3.0;
-	pair[p+1].Text = "TiMidity++";
-	pair[p+1].Value = -2.0;
-	pair[p+2].Text = "FMOD";
-	pair[p+2].Value = -1.0;
+	AddDefaultMidiDevices(opt);
 }
 
 CCMD (snd_listmididevices)
@@ -217,6 +207,7 @@ CCMD (snd_listmididevices)
 #ifdef HAVE_FLUIDSYNTH
 	Printf("%s-5. FluidSynth\n", -5 == snd_mididevice ? TEXTCOLOR_BOLD : "");
 #endif
+	Printf("%s-4. GUS\n", -4 == snd_mididevice ? TEXTCOLOR_BOLD : "");
 	Printf("%s-3. Emulated OPL FM Synth\n", -3 == snd_mididevice ? TEXTCOLOR_BOLD : "");
 	Printf("%s-2. TiMidity++\n", -2 == snd_mididevice ? TEXTCOLOR_BOLD : "");
 	Printf("%s-1. FMOD\n", -1 == snd_mididevice ? TEXTCOLOR_BOLD : "");

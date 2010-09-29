@@ -1688,7 +1688,7 @@ void S_PauseSound (bool notmusic, bool notsfx)
 {
 	if (!notmusic && mus_playing.handle && !MusicPaused)
 	{
-		I_PauseSong (mus_playing.handle);
+		mus_playing.handle->Pause();
 		MusicPaused = true;
 	}
 	if (!notsfx)
@@ -1709,7 +1709,7 @@ void S_ResumeSound (bool notsfx)
 {
 	if (mus_playing.handle && MusicPaused)
 	{
-		I_ResumeSong (mus_playing.handle);
+		mus_playing.handle->Resume();
 		MusicPaused = false;
 	}
 	if (!notsfx)
@@ -1868,11 +1868,11 @@ void S_UpdateSounds (AActor *listenactor)
 
 	I_UpdateMusic();
 
-	// [RH] Update music and/or playlist. I_QrySongPlaying() must be called
+	// [RH] Update music and/or playlist. IsPlaying() must be called
 	// to attempt to reconnect to broken net streams and to advance the
 	// playlist when the current song finishes.
 	if (mus_playing.handle != NULL &&
-		!I_QrySongPlaying(mus_playing.handle) &&
+		!mus_playing.handle->IsPlaying() &&
 		PlayList)
 	{
 		PlayList->Advance();
@@ -2479,7 +2479,7 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 
 	if (mus_playing.handle != 0)
 	{ // play it
-		I_PlaySong (mus_playing.handle, looping, S_GetMusicVolume (musicname), order);
+		mus_playing.handle->Start(looping, S_GetMusicVolume (musicname), order);
 		mus_playing.baseorder = order;
 		return true;
 	}
@@ -2537,15 +2537,17 @@ void S_StopMusic (bool force)
 	// [RH] Don't stop if a playlist is active.
 	if ((force || PlayList == NULL) && !mus_playing.name.IsEmpty())
 	{
-		if (MusicPaused)
-			I_ResumeSong(mus_playing.handle);
+		if (mus_playing.handle != NULL)
+		{
+			if (MusicPaused)
+				mus_playing.handle->Resume();
 
-		I_StopSong(mus_playing.handle);
-		I_UnRegisterSong(mus_playing.handle);
-
+			mus_playing.handle->Stop();
+			delete mus_playing.handle;
+			mus_playing.handle = NULL;
+		}
 		LastSong = mus_playing.name;
 		mus_playing.name = "";
-		mus_playing.handle = 0;
 	}
 }
 

@@ -66,11 +66,12 @@ CUSTOM_CVAR (Int, snd_mididevice, -1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 	// If a song is playing, move it to the new device.
 	if (oldmididev != mididevice && currSong != NULL && currSong->IsMIDI())
 	{
+		// Does this even work, except for Windows system devices?
 		MusInfo *song = currSong;
 		if (song->m_Status == MusInfo::STATE_Playing)
 		{
-			I_StopSong (song);
-			I_PlaySong (song, song->m_Looping);
+			song->Stop();
+			song->Start(song->m_Looping);
 		}
 	}
 }

@@ -50,32 +50,11 @@ void I_UpdateMusic ();
 // Volume.
 void I_SetMusicVolume (float volume);
 
-// PAUSE game handling.
-void I_PauseSong (void *handle);
-void I_ResumeSong (void *handle);
-
 // Registers a song handle to song data.
 class MusInfo;
 MusInfo *I_RegisterSong (const char *file, BYTE *musiccache, int offset, int length, int device);
 MusInfo *I_RegisterCDSong (int track, int cdid = 0);
 MusInfo *I_RegisterURLSong (const char *url);
-
-// Called by anything that wishes to start music.
-//	Plays a song, and when the song is done,
-//	starts playing it again in an endless loop.
-void I_PlaySong (void *handle, int looping, float relative_vol=1.f, int subsong=0);
-
-// Stops a song.
-void I_StopSong (void *handle);
-
-// See above (register), then think backwards
-void I_UnRegisterSong (void *handle);
-
-// Set the current order (position) for a MOD
-bool I_SetSongPosition (void *handle, int order);
-
-// Is the song still playing?
-bool I_QrySongPlaying (void *handle);
 
 // The base music class. Everything is derived from this --------------------
 
@@ -102,6 +81,8 @@ public:
 	virtual void FluidSettingInt(const char *setting, int value);			// FluidSynth settings
 	virtual void FluidSettingNum(const char *setting, double value);		// "
 	virtual void FluidSettingStr(const char *setting, const char *value);	// "
+
+	void Start(bool loop, float rel_vol = -1.f, int subsong = 0);
 
 	enum EState
 	{

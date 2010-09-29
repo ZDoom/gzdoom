@@ -30,9 +30,6 @@
 ** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **---------------------------------------------------------------------------
 **
-** This file also supports the Apogee Sound System's EMIDI files. That
-** basically means you can play the Duke3D songs without any editing and
-** have them sound right.
 */
 
 // HEADER FILES ------------------------------------------------------------

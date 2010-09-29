@@ -57,6 +57,7 @@ class DLoadSaveMenu : public DListMenu
 protected:
 	static TDeletingArray<FSaveGameNode*> SaveGames;
 	static int LastSaved;
+	static int LastAccessed;
 
 	int Selected;
 	int TopItem;
@@ -115,6 +116,7 @@ IMPLEMENT_CLASS(DLoadSaveMenu)
 
 TDeletingArray<FSaveGameNode*> DLoadSaveMenu::SaveGames;
 int DLoadSaveMenu::LastSaved = -1;
+int DLoadSaveMenu::LastAccessed = -1;
 
 FSaveGameNode *quickSaveSlot;
 
@@ -336,7 +338,7 @@ void DLoadSaveMenu::NotifyNewSave (const char *file, const char *title, bool okF
 			if (okForQuicksave)
 			{
 				if (quickSaveSlot == NULL) quickSaveSlot = node;
-				LastSaved = i;
+				LastAccessed = LastSaved = i;
 			}
 			return;
 		}
@@ -352,7 +354,7 @@ void DLoadSaveMenu::NotifyNewSave (const char *file, const char *title, bool okF
 	if (okForQuicksave)
 	{
 		if (quickSaveSlot == NULL) quickSaveSlot = node;
-		LastSaved = index;
+		LastAccessed = LastSaved = index;
 	}
 }
 
@@ -734,10 +736,16 @@ bool DLoadSaveMenu::MenuEvent (int mkey, bool fromcontroller)
 	{
 		if (Selected != -1)
 		{
+			int listindex = SaveGames[0]->bNoDelete? Selected-1 : Selected;
 			remove (SaveGames[Selected]->Filename.GetChars());
 			UnloadSaveData ();
 			Selected = RemoveSaveSlot (Selected);
 			ExtractSaveData (Selected);
+
+			if (LastSaved == listindex) LastSaved = -1;
+			else if (LastSaved > listindex) LastSaved--;
+			if (LastAccessed == listindex) LastAccessed = -1;
+			else if (LastAccessed > listindex) LastAccessed--;
 		}
 		return true;
 	}
@@ -1040,6 +1048,10 @@ DLoadMenu::DLoadMenu(DMenu *parent, FListMenuDescriptor *desc)
 : DLoadSaveMenu(parent, desc)
 {
 	TopItem = 0;
+	if (LastAccessed != -1)
+	{
+		Selected = LastAccessed;
+	}
 	ExtractSaveData (Selected);
 
 }
@@ -1074,6 +1086,7 @@ bool DLoadMenu::MenuEvent (int mkey, bool fromcontroller)
 		}
 		M_ClearMenus();
 		BorderNeedRefresh = screen->GetPageCount ();
+		LastAccessed = Selected;
 		return true;
 	}
 	return false;

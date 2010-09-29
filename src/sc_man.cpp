@@ -606,7 +606,7 @@ bool FScanner::GetNumber ()
 				ScriptError ("SC_GetNumber: Bad numeric constant \"%s\".", String);
 			}
 		}
-		Float = (float)Number;
+		Float = Number;
 		return true;
 	}
 	else
@@ -662,7 +662,7 @@ bool FScanner::CheckNumber ()
 				return false;
 			}
 		}
-		Float = (float)Number;
+		Float = Number;
 		return true;
 	}
 	else
@@ -719,7 +719,7 @@ bool FScanner::GetFloat ()
 	CheckOpen ();
 	if (GetString())
 	{
-		Float = (float)strtod (String, &stopper);
+		Float = strtod (String, &stopper);
 		if (*stopper != 0)
 		{
 			ScriptError ("SC_GetFloat: Bad numeric constant \"%s\".", String);

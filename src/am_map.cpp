@@ -868,18 +868,6 @@ void AM_initVariables ()
 	old_m_h = m_h;
 }
 
-/*
-static void GetComponents (int color, DWORD *palette, float &r, float &g, float &b)
-{
-	if (palette)
-		color = palette[color];
-
-	r = (float)RPART(color);
-	g = (float)GPART(color);
-	b = (float)BPART(color);
-}
-*/
-
 //=============================================================================
 //
 //

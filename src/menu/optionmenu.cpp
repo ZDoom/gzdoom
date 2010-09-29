@@ -96,7 +96,7 @@ void DOptionMenu::Init(DMenu *parent, FOptionMenuDescriptor *desc)
 	mParentMenu = parent;
 	GC::WriteBarrier(this, parent);
 	mDesc = desc;
-	if (mDesc != NULL) mDesc->mSelectedItem = FirstSelectable();
+	if (mDesc != NULL && mDesc->mSelectedItem == -1) mDesc->mSelectedItem = FirstSelectable();
 
 }
 
@@ -108,7 +108,7 @@ void DOptionMenu::Init(DMenu *parent, FOptionMenuDescriptor *desc)
 
 int DOptionMenu::FirstSelectable()
 {
-	if (mDesc != NULL && mDesc->mSelectedItem < 0)
+	if (mDesc != NULL)
 	{
 		// Go down to the first selectable item
 		int i = -1;

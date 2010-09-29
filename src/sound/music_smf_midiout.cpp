@@ -63,7 +63,6 @@ struct MIDISong2::TrackInfo
 	DWORD PlayedTime;
 	bool Finished;
 	BYTE RunningStatus;
-	SBYTE LoopCount;
 	bool Designated;
 	bool EProgramChange;
 	bool EVolume;
@@ -71,6 +70,7 @@ struct MIDISong2::TrackInfo
 
 	size_t LoopBegin;
 	DWORD LoopDelay;
+	int LoopCount;
 	bool LoopFinished;
     
 	DWORD ReadVarLen ();
@@ -498,12 +498,18 @@ DWORD *MIDISong2::SendCommand (DWORD *events, TrackInfo *track, DWORD delay)
 				break;
 
 			case 116:	// EMIDI Loop Begin
-				if (!IgnoreLoops)
 				{
-					track->LoopBegin = track->TrackP;
-					track->LoopDelay = 0;
-					track->LoopCount = data2;
-					track->LoopFinished = track->Finished;
+					// We convert the loop count to XMIDI conventions before clamping.
+					// Then we convert it back to EMIDI conventions after clamping.
+					// (XMIDI can create "loops" that don't loop. EMIDI cannot.)
+					int loopcount = ClampLoopCount(data2 == 0 ? 0 : data2 + 1);
+					if (loopcount != 1)
+					{
+						track->LoopBegin = track->TrackP;
+						track->LoopDelay = 0;
+						track->LoopCount = loopcount == 0 ? 0 : loopcount - 1;
+						track->LoopFinished = track->Finished;
+					}
 				}
 				event = MIDI_META;
 				break;
@@ -530,14 +536,17 @@ DWORD *MIDISong2::SendCommand (DWORD *events, TrackInfo *track, DWORD delay)
 				break;
 
 			case 118:	// EMIDI Global Loop Begin
-				if (!IgnoreLoops)
 				{
-					for (i = 0; i < NumTracks; ++i)
+					int loopcount = ClampLoopCount(data2 == 0 ? 0 : data2 + 1);
+					if (loopcount != 1)
 					{
-						Tracks[i].LoopBegin = Tracks[i].TrackP;
-						Tracks[i].LoopDelay = Tracks[i].Delay;
-						Tracks[i].LoopCount = data2;
-						Tracks[i].LoopFinished = Tracks[i].Finished;
+						for (i = 0; i < NumTracks; ++i)
+						{
+							Tracks[i].LoopBegin = Tracks[i].TrackP;
+							Tracks[i].LoopDelay = Tracks[i].Delay;
+							Tracks[i].LoopCount = loopcount == 0 ? 0 : loopcount - 1;
+							Tracks[i].LoopFinished = Tracks[i].Finished;
+						}
 					}
 				}
 				event = MIDI_META;
@@ -579,7 +588,7 @@ DWORD *MIDISong2::SendCommand (DWORD *events, TrackInfo *track, DWORD delay)
 		}
 		else
 		{
-			events[2] = MEVT_NOP;
+			events[2] = MEVT_NOP << 24;
 		}
 		events += 3;
 	}
@@ -764,22 +773,6 @@ MIDISong2::TrackInfo *MIDISong2::FindNextDue ()
 	return NULL;
 }
 
-
-//==========================================================================
-//
-// MIDISong2 :: SetTempo
-//
-// Sets the tempo from a track's initial meta events.
-//
-//==========================================================================
-
-void MIDISong2::SetTempo(int new_tempo)
-{
-	if (0 == MIDI->SetTempo(new_tempo))
-	{
-		Tempo = new_tempo;
-	}
-}
 
 //==========================================================================
 //

@@ -61,7 +61,7 @@
 struct LoopInfo
 {
 	size_t LoopBegin;
-	SBYTE LoopCount;
+	int LoopCount;
 	bool LoopFinished;
 };
 
@@ -452,10 +452,10 @@ DWORD *XMISong::SendCommand (DWORD *events, EventSource due, DWORD delay)
 				break;
 
 			case 116:	// XMI for loop controller
-				if (!IgnoreLoops && track->ForDepth < MAX_FOR_DEPTH)
+				if (track->ForDepth < MAX_FOR_DEPTH)
 				{
 					track->ForLoops[track->ForDepth].LoopBegin = track->EventP;
-					track->ForLoops[track->ForDepth].LoopCount = data2;
+					track->ForLoops[track->ForDepth].LoopCount = ClampLoopCount(data2);
 					track->ForLoops[track->ForDepth].LoopFinished = track->Finished;
 				}
 				track->ForDepth++;
@@ -500,7 +500,7 @@ DWORD *XMISong::SendCommand (DWORD *events, EventSource due, DWORD delay)
 		}
 		else
 		{
-			events[2] = MEVT_NOP;
+			events[2] = MEVT_NOP << 24;
 		}
 		events += 3;
 
@@ -677,22 +677,6 @@ XMISong::EventSource XMISong::FindNextDue()
 	return (fake_delay <= real_delay) ? EVENT_Fake : EVENT_Real;
 }
 
-
-//==========================================================================
-//
-// XMISong :: SetTempo
-//
-// Sets the tempo from a track's initial meta events.
-//
-//==========================================================================
-
-void XMISong::SetTempo(int new_tempo)
-{
-	if (0 == MIDI->SetTempo(new_tempo))
-	{
-		Tempo = new_tempo;
-	}
-}
 
 //==========================================================================
 //

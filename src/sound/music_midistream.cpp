@@ -43,6 +43,9 @@
 
 #define MAX_TIME	(1000000/10)	// Send out 1/10 of a sec of events at a time.
 
+#define EXPORT_LOOP_LIMIT	30		// Maximum number of times to loop when exporting a MIDI file.
+									// (for songs with loop controller events)
+
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -262,7 +265,7 @@ void MIDIStreamer::Play(bool looping, int subsong)
 	SetMIDISubsong(subsong);
 	CheckCaps(MIDI->GetTechnology());
 	Precache();
-	IgnoreLoops = false;
+	LoopLimit = 0;
 
 	// Set time division and tempo.
 	if (0 != MIDI->SetTimeDiv(Division) ||
@@ -535,7 +538,9 @@ void MIDIStreamer::OutputVolume (DWORD volume)
 int MIDIStreamer::VolumeControllerChange(int channel, int volume)
 {
 	ChannelVolumes[channel] = volume;
-	return IgnoreLoops ? volume : ((volume + 1) * Volume) >> 16;
+	// If loops are limited, we can assume we're exporting this MIDI file,
+	// so we should not adjust the volume level.
+	return LoopLimit != 0 ? volume : ((volume + 1) * Volume) >> 16;
 }
 
 //==========================================================================
@@ -867,7 +872,7 @@ void MIDIStreamer::Precache()
 	BYTE found_banks[256] = { 0, };
 	bool multiple_banks = false;
 
-	IgnoreLoops = true;
+	LoopLimit = 1;
 	DoRestart();
 	found_banks[0] = true;		// Bank 0 is always used.
 	found_banks[128] = true;
@@ -968,7 +973,7 @@ void MIDIStreamer::CreateSMF(TArray<BYTE> &file)
 
 	// Always create songs aimed at GM devices.
 	CheckCaps(MOD_MIDIPORT);
-	IgnoreLoops = true;
+	LoopLimit = EXPORT_LOOP_LIMIT;
 	DoRestart();
 	Tempo = InitialTempo;
 
@@ -1053,7 +1058,7 @@ void MIDIStreamer::CreateSMF(TArray<BYTE> &file)
 	file[20] = BYTE(len >> 8);
 	file[21] = BYTE(len & 255);
 
-	IgnoreLoops = false;
+	LoopLimit = 0;
 }
 
 //==========================================================================
@@ -1084,6 +1089,61 @@ static void WriteVarLen (TArray<BYTE> &file, DWORD value)
 		   break;
 	   }
    }
+}
+
+//==========================================================================
+//
+// MIDIStreamer :: SetTempo
+//
+// Sets the tempo from a track's initial meta events. Later tempo changes
+// create MEVT_TEMPO events instead.
+//
+//==========================================================================
+
+void MIDIStreamer::SetTempo(int new_tempo)
+{
+	if (NULL == MIDI)
+	{
+		InitialTempo = new_tempo;
+	}
+	else if (0 == MIDI->SetTempo(new_tempo))
+	{
+		Tempo = new_tempo;
+	}
+}
+
+
+//==========================================================================
+//
+// MIDIStreamer :: ClampLoopCount
+//
+// We use the XMIDI interpretation of loop count here, where 1 means it
+// plays that section once (in other words, no loop) rather than the EMIDI
+// interpretation where 1 means to loop it once.
+//
+// If LoopLimit is 1, we limit all loops, since this pass over the song is
+// used to determine instruments for precaching.
+//
+// If LoopLimit is higher, we only limit infinite loops, since this song is
+// being exported.
+//
+//==========================================================================
+
+int MIDIStreamer::ClampLoopCount(int loopcount)
+{
+	if (LoopLimit == 0)
+	{
+		return loopcount;
+	}
+	if (LoopLimit == 1)
+	{
+		return 1;
+	}
+	if (loopcount == 0)
+	{
+		return LoopLimit;
+	}
+	return loopcount;
 }
 
 //==========================================================================

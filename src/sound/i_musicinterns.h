@@ -372,6 +372,8 @@ protected:
 	int FillBuffer(int buffer_num, int max_events, DWORD max_time);
 	int ServiceEvent();
 	int VolumeControllerChange(int channel, int volume);
+	int ClampLoopCount(int loopcount);
+	void SetTempo(int new_tempo);
 	
 	static void Callback(unsigned int uMsg, void *userdata, DWORD dwParam1, DWORD dwParam2);
 
@@ -421,7 +423,7 @@ protected:
 	DWORD Volume;
 	EMIDIDevice DeviceType;
 	bool CallbackIsThreaded;
-	bool IgnoreLoops;
+	int LoopLimit;
 	FString DumpFilename;
 };
 
@@ -477,7 +479,6 @@ protected:
 	void ProcessInitialMetaEvents ();
 	DWORD *SendCommand (DWORD *event, TrackInfo *track, DWORD delay);
 	TrackInfo *FindNextDue ();
-	void SetTempo(int new_tempo);
 
 	BYTE *MusHeader;
 	int SongLen;
@@ -537,7 +538,6 @@ protected:
 	void ProcessInitialMetaEvents ();
 	DWORD *SendCommand (DWORD *event, TrackInfo *track, DWORD delay);
 	TrackInfo *FindNextDue ();
-	void SetTempo(int new_tempo);
 
 	static DWORD ReadVarLenHMI(TrackInfo *);
 	static DWORD ReadVarLenHMP(TrackInfo *);
@@ -581,7 +581,6 @@ protected:
 	void ProcessInitialMetaEvents();
 	DWORD *SendCommand (DWORD *event, EventSource track, DWORD delay);
 	EventSource FindNextDue();
-	void SetTempo(int new_tempo);
 
 	BYTE *MusHeader;
 	int SongLen;		// length of the entire file

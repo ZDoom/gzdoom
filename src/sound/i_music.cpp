@@ -545,12 +545,16 @@ MusInfo *I_RegisterSong (const char *filename, BYTE *musiccache, int offset, int
 #endif
 
 retry_as_fmod:
-		if (miditype != MIDI_MIDI && devtype >= MIDI_Null)
+		if (devtype >= MIDI_Null)
 		{
 			// Convert to standard MIDI for external sequencers.
 			MIDIStreamer *streamer;
 
-			if (miditype == MIDI_MUS)
+			if (miditype == MIDI_MIDI)
+			{
+				streamer = new MIDISong2(file, musiccache, len, MIDI_Null);
+			}
+			else if (miditype == MIDI_MUS)
 			{
 				streamer = new MUSSong2(file, musiccache, len, MIDI_Null);
 			}

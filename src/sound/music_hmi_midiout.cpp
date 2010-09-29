@@ -636,7 +636,7 @@ DWORD *HMISong::SendCommand (DWORD *events, TrackInfo *track, DWORD delay)
 		}
 		else
 		{
-			events[2] = MEVT_NOP;
+			events[2] = MEVT_NOP << 24;
 		}
 		events += 3;
 
@@ -974,22 +974,6 @@ HMISong::TrackInfo *HMISong::FindNextDue ()
 	return track;
 }
 
-
-//==========================================================================
-//
-// HMISong :: SetTempo
-//
-// Sets the tempo from a track's initial meta events.
-//
-//==========================================================================
-
-void HMISong::SetTempo(int new_tempo)
-{
-	if (0 == MIDI->SetTempo(new_tempo))
-	{
-		Tempo = new_tempo;
-	}
-}
 
 //==========================================================================
 //

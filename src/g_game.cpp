@@ -37,7 +37,7 @@
 #include "doomstat.h"
 #include "d_protocol.h"
 #include "d_netinf.h"
-#include "f_finale.h"
+#include "intermission/intermission.h"
 #include "m_argv.h"
 #include "m_misc.h"
 #include "menu/menu.h"
@@ -1031,7 +1031,8 @@ void G_Ticker ()
 			G_DoCompleted ();
 			break;
 		case ga_slideshow:
-			F_StartSlideshow ();
+#pragma message("disabled for finale rewrite")
+			//F_StartSlideshow ();
 			break;
 		case ga_worlddone:
 			G_DoWorldDone ();
@@ -1061,10 +1062,6 @@ void G_Ticker ()
 		{
 			Page->Unload();
 			Page = NULL;
-		}
-		else if (oldgamestate == GS_FINALE)
-		{
-			F_EndFinale ();
 		}
 	}
 

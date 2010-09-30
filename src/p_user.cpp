@@ -44,7 +44,7 @@
 #include "w_wad.h"
 #include "cmdlib.h"
 #include "sbar.h"
-#include "f_finale.h"
+#include "intermission/intermission.h"
 #include "c_console.h"
 #include "doomdef.h"
 #include "c_dispatch.h"
@@ -1217,7 +1217,8 @@ void APlayerPawn::Die (AActor *source, AActor *inflictor)
 		}
 		if (!multiplayer && (level.flags2 & LEVEL2_DEATHSLIDESHOW))
 		{
-			F_StartSlideshow ();
+#pragma message("disabled for finale rewrite")
+			//F_StartSlideshow ();
 		}
 	}
 }

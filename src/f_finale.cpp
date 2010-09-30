@@ -182,12 +182,6 @@ void F_StartFinale (const char *music, int musicorder, int cdtrack, unsigned int
 	}
 }
 
-void F_EndFinale ()
-{
-	FinaleText = NULL;
-	FinaleTextLen = 0;
-}
-
 bool F_Responder (event_t *event)
 {
 	if (FinaleStage == 3)

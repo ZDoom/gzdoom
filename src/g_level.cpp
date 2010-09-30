@@ -51,7 +51,7 @@
 #include "p_local.h"
 #include "r_sky.h"
 #include "c_console.h"
-#include "f_finale.h"
+#include "intermission/intermission.h"
 #include "gstrings.h"
 #include "v_video.h"
 #include "st_stuff.h"
@@ -1024,7 +1024,11 @@ void G_WorldDone (void)
 
 	thiscluster = FindClusterInfo (level.cluster);
 
-	if (strncmp (nextlevel, "enDSeQ", 6) == 0)
+	if (level.info->Intermission != NAME_None)
+	{
+		// todo start intermission
+	}
+	else if (strncmp (nextlevel, "enDSeQ", 6) == 0)
 	{
 		F_StartFinale (thiscluster->MessageMusic, thiscluster->musicorder,
 			thiscluster->cdtrack, thiscluster->cdid,

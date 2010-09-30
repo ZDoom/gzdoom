@@ -32,22 +32,6 @@ struct event_t;
 // FINALE
 //
 
-// Called by main loop.
-bool F_Responder (event_t* ev);
-
-// Called by main loop.
-void F_Ticker ();
-
-// Called by main loop.
-void F_Drawer ();
-
-
-void F_StartFinale (const char *music, int musicorder, int cdtrack, unsigned int cdid, const char *flat, 
-					const char *text, INTBOOL textInLump, INTBOOL finalePic, INTBOOL lookupText, 
-					bool ending, int endsequence = 0);
-
 void F_StartSlideshow ();
-
-void F_EndFinale ();
 
 #endif

@@ -57,7 +57,7 @@
 #include "w_wad.h"
 #include "s_sound.h"
 #include "v_video.h"
-#include "f_finale.h"
+#include "intermission/intermission.h"
 #include "f_wipe.h"
 #include "m_argv.h"
 #include "m_misc.h"

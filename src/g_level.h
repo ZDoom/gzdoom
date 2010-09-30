@@ -286,6 +286,7 @@ struct level_info_t
 	DWORD		compatmask;
 	FString		Translator;	// for converting Doom-format linedef and sector types.
 	int			DefaultEnvironment;	// Default sound environment for the map.
+	FName		Intermission;
 
 	// Redirection: If any player is carrying the specified item, then
 	// you go to the RedirectMap instead of this one.

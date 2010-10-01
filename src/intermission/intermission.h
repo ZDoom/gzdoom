@@ -8,6 +8,11 @@
 
 struct event_t;
 
+#define DECLARE_SUPER_CLASS(cls,parent) \
+private: \
+	typedef parent Super; \
+	typedef cls ThisClass;
+
 struct FIntermissionPatch
 {
 	FString mName;
@@ -36,7 +41,7 @@ struct FICastSound
 
 //==========================================================================
 
-struct FIntermissionDescriptor
+struct FIntermissionAction
 {
 	int mSize;
 	const PClass *mClass;
@@ -49,37 +54,61 @@ struct FIntermissionDescriptor
 	FString mSound;
 	bool mFlatfill;
 	TArray<FIntermissionPatch> mOverlays;
-	FIntermissionDescriptor *mLink;
+	FName mLink;
+
+	FIntermissionAction();
+	virtual bool ParseKey(FScanner &sc);
 };
 
-struct FIntermissionDescriptorFader : public FIntermissionDescriptor
+struct FIntermissionActionFader : public FIntermissionAction
 {
+	typedef FIntermissionAction Super;
+
 	int FadeTime;
 	int FadeType;
+
+	virtual bool ParseKey(FScanner &sc);
 };
 
-struct FIntermissionDescriptorTextscreen : public FIntermissionDescriptor
+struct FIntermissionActionTextscreen : public FIntermissionAction
 {
+	typedef FIntermissionAction Super;
+
 	FString mText;
 	int mTextSpeed;
 	int mTextX, mTextY;
+
+	virtual bool ParseKey(FScanner &sc);
 };
 
-struct FIntermissionDescriptorCast : public FIntermissionDescriptor
+struct FIntermissionActionCast : public FIntermissionAction
 {
+	typedef FIntermissionAction Super;
+
 	FString mWalking;
 	FString mAttacking1;
 	FString mAttacking2;
 	FString mDying;
 	TArray<FCastSound> mCastSounds;
+
+	virtual bool ParseKey(FScanner &sc);
 };
 
-struct FIntermissionDescriptorScroller : public FIntermissionDescriptor
+struct FIntermissionActionScroller : public FIntermissionAction
 {
+	typedef FIntermissionAction Super;
+
 	FString mSecondPic;
 	int mScrollDelay;
 	int mScrollTime;
 	int mScrollDir;
+
+	virtual bool ParseKey(FScanner &sc);
+};
+
+struct FIntermissionDescriptor
+{
+	TArray<FIntermissionAction *> mActions;
 };
 
 typedef TMap<FName, FIntermissionDescriptor*> FIntermissionDescriptorList;
@@ -165,6 +194,23 @@ public:
 	virtual void Drawer ();
 };
 
+class DIntermissionScreenScroller : public DIntermissionScreen
+{
+	DECLARE_CLASS (DIntermissionScreenScroller, DIntermissionScreen)
+
+	FTextureID mSecondPic;
+	int mScrollDelay;
+	int mScrollTime;
+	int mScrollDir;
+
+public:
+
+	DIntermissionScreenScroller() {}
+	virtual void Init(FIntermissionDescriptor *desc);
+	virtual bool Responder (event_t *ev);
+	virtual void Ticker ();
+	virtual void Drawer ();
+};
 
 
 class DIntermissionController : public DObject

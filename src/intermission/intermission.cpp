@@ -37,6 +37,100 @@
 #include "w_wad.h"
 #include "intermission/intermission.h"
 
+IMPLEMENT_CLASS(DIntermissionScreen)
+IMPLEMENT_CLASS(DIntermissionScreenFader)
+IMPLEMENT_CLASS(DIntermissionScreenText)
+IMPLEMENT_CLASS(DIntermissionScreenCast)
+IMPLEMENT_CLASS(DIntermissionController)
+
+void DIntermissionScreen::Init(FIntermissionDescriptor *desc)
+{
+}
+
+bool DIntermissionScreen::Responder (event_t *ev)
+{
+	return false;
+}
+
+void DIntermissionScreen::Ticker ()
+{
+}
+
+void DIntermissionScreen::Drawer ()
+{
+}
+
+void DIntermissionScreenFader::Init(FIntermissionDescriptor *desc)
+{
+}
+
+bool DIntermissionScreenFader::Responder (event_t *ev)
+{
+	return false;
+}
+
+void DIntermissionScreenFader::Ticker ()
+{
+}
+
+void DIntermissionScreenFader::Drawer ()
+{
+}
+
+void DIntermissionScreenText::Init(FIntermissionDescriptor *desc)
+{
+}
+
+bool DIntermissionScreenText::Responder (event_t *ev)
+{
+	return false;
+}
+
+void DIntermissionScreenText::Ticker ()
+{
+}
+
+void DIntermissionScreenText::Drawer ()
+{
+}
+
+void DIntermissionScreenCast::Init(FIntermissionDescriptor *desc)
+{
+}
+
+bool DIntermissionScreenCast::Responder (event_t *ev)
+{
+	return false;
+}
+
+void DIntermissionScreenCast::Ticker ()
+{
+}
+
+void DIntermissionScreenCast::Drawer ()
+{
+}
+
+void DIntermissionScreenScroller::Init(FIntermissionDescriptor *desc)
+{
+}
+
+bool DIntermissionScreenScroller::Responder (event_t *ev)
+{
+	return false;
+}
+
+void DIntermissionScreenScroller::Ticker ()
+{
+}
+
+void DIntermissionScreenScroller::Drawer ()
+{
+}
+
+
+
+
 static FIntermissionDescriptor DefaultIntermission;
 
 

@@ -37,6 +37,151 @@
 #include "intermission/intermission.h"
 #include "g_level.h"
 
+//==========================================================================
+//
+// FIntermissionAction 
+//
+//==========================================================================
+
+FIntermissionAction::FIntermissionAction()
+{
+	mSize = sizeof(FIntermissionAction);
+	mClass = RUNTIME_CLASS(DIntermissionScreen);
+	mMusicOrder =
+	mCdId = 
+	mCdTrack = 
+	mDuration = 0;
+	mFlatfill = false;
+}
+
+bool FIntermissionAction::ParseKey(FScanner &sc)
+{
+	if (sc.Compare("music"))
+	{
+		sc.MustGetToken('=');
+		sc.MustGetToken(TK_StringConst);
+		mMusic = sc.String;
+		mMusicOrder = 0;
+		if (sc.CheckToken(','))
+		{
+			sc.MustGetToken(TK_IntConst);
+			mMusicOrder = sc.Number;
+		}
+		return true;
+	}
+	else if (sc.Compare("cdmusic"))
+	{
+		sc.MustGetToken('=');
+		sc.MustGetToken(TK_IntConst);
+		mCdTrack = sc.Number;
+		mCdId = 0;
+		if (sc.CheckToken(','))
+		{
+			sc.MustGetToken(TK_IntConst);
+			mCdId = sc.Number;
+		}
+		return true;
+	}
+	else if (sc.Compare("Time"))
+	{
+		sc.MustGetToken('=');
+		if (!sc.CheckToken('-'))
+		{
+			sc.MustGetToken(TK_FloatConst);
+			mDuration = xs_RoundToInt(sc.Float*TICRATE);
+		}
+		else
+		{
+			sc.MustGetToken(TK_IntConst);
+			mDuration = sc.Number;
+		}
+		return true;
+	}
+	else if (sc.Compare("Background"))
+	{
+		sc.MustGetToken('=');
+		sc.MustGetToken(TK_StringConst);
+		mBackground = sc.String;
+		mFlatfill = 0;
+		if (sc.CheckToken(','))
+		{
+			sc.MustGetToken(TK_IntConst);
+			mFlatfill = !!sc.Number;
+		}
+		return true;
+	}
+	else if (sc.Compare("Sound"))
+	{
+		sc.MustGetToken('=');
+		sc.MustGetToken(TK_StringConst);
+		mSound = sc.String;
+		return true;
+	}
+	else if (sc.Compare("Draw"))
+	{
+		FIntermissionPatch *pat = &mOverlays[mOverlays.Reserve(1)];
+		sc.MustGetToken('=');
+		sc.MustGetToken(TK_StringConst);
+		pat->mName = sc.String;
+		sc.MustGetToken(',');
+		sc.MustGetToken(TK_IntConst);
+		pat->x = sc.Number;
+		sc.MustGetToken(',');
+		sc.MustGetToken(TK_IntConst);
+		pat->y = sc.Number;
+		return true;
+	}
+	else if (sc.Compare("Limk"))
+	{
+		sc.MustGetToken('=');
+		sc.MustGetToken(TK_Identifier);
+		mLink = sc.String;
+		return true;
+	}
+	else return false;
+}
+
+
+void FMapInfoParser::ParseIntermission()
+{
+	FIntermissionDescriptor *desc;
+
+	while (!sc.CheckString("}"))
+	{
+		sc.MustGetString();
+		if (sc.Compare("image"))
+		{
+		}
+		else if (sc.Compare("scroller"))
+		{
+		}
+		else if (sc.Compare("cast"))
+		{
+		}
+		else if (sc.Compare("Fader"))
+		{
+		}
+		else if (sc.Compare("Crossfader"))
+		{
+		}
+		else if (sc.Compare("Wiper"))
+		{
+		}
+		else if (sc.Compare("TextScreen"))
+		{
+		}
+		else if (sc.Compare("GotoTitle"))
+		{
+		}
+		else
+		{
+			sc.ScriptMessage("Unknown intermission type '%s'", sc.String);
+		}
+	}
+
+}
+
+
 struct EndSequence
 {
 	SBYTE EndType;
@@ -55,8 +200,7 @@ enum EndTypes
 	END_Demon
 };
 
-
-FName FMapInfoParser::ParseEndGame(FScanner &sc)
+FName FMapInfoParser::ParseEndGame()
 {
 	EndSequence newSeq;
 	static int generated = 0;
@@ -138,7 +282,7 @@ FName FMapInfoParser::ParseEndGame(FScanner &sc)
 	return FName(seq);
 }
 
-FName FMapInfoParser::CheckEndSequence(FScanner &sc)
+FName FMapInfoParser::CheckEndSequence()
 {
 	const char *seqname = NULL;
 
@@ -150,7 +294,7 @@ FName FMapInfoParser::CheckEndSequence(FScanner &sc)
 			sc.UnGet();
 			goto standard_endgame;
 		}
-		return ParseEndGame(sc);
+		return ParseEndGame();
 	}
 	else if (strnicmp (sc.String, "EndGame", 7) == 0)
 	{

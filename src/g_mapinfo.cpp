@@ -771,7 +771,7 @@ void FMapInfoParser::ParseNextMap(char *mapname)
 		sc.MustGetString();
 		strncpy (mapname, sc.String, 8);
 		mapname[8] = 0;
-		CheckEndSequence(sc);
+		CheckEndSequence();
 	}
 }
 
@@ -1747,6 +1747,18 @@ void FMapInfoParser::ParseMapInfo (int lump, level_info_t &gamedefaults, level_i
 			else
 			{
 				sc.ScriptError("gameinfo definitions not supported with old MAPINFO syntax");
+			}
+		}
+		else if (sc.Compare("intermission"))
+		{
+			if (format_type != FMT_Old)
+			{
+				format_type = FMT_New;
+				ParseIntermission();
+			}
+			else
+			{
+				sc.ScriptError("intermission definitions not supported with old MAPINFO syntax");
 			}
 		}
 		else

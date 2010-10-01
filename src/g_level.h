@@ -99,8 +99,9 @@ struct FMapInfoParser
 	void SkipToNext();
 	void CheckEndOfFile(const char *block);
 
-	FName CheckEndSequence(FScanner &sc);
-	FName ParseEndGame(FScanner &sc);
+	void ParseIntermission();
+	FName CheckEndSequence();
+	FName ParseEndGame();
 };
 
 #define DEFINE_MAP_OPTION(name, old) \

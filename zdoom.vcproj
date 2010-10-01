@@ -2288,6 +2288,10 @@
 				RelativePath=".\src\intermission\intermission.h"
 				>
 			</File>
+			<File
+				RelativePath=".\src\intermission\intermission_parse.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Render Core"

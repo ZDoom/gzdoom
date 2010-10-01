@@ -1,4 +1,5 @@
 // A bare-bones MAPINFO for Hexen.
+#include "mapinfo/common.txt"
 
 // Most of the MAPINFO is still in hexen.wad.
 
@@ -117,7 +118,7 @@ skill nightmare
 clearepisodes
 episode "&wt@01"
 {
-	name = "Hexen"
+	name = "Hexen - Beyond Heretic"
 	key = "h"
 }
 

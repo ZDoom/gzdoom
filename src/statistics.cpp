@@ -453,7 +453,6 @@ void STAT_ChangeLevel(const char *newl)
 		level_info_t *l = FindLevelInfo (newl);
 		nextinfo = l->CheckLevelRedirect ();
 		if (nextinfo == NULL) nextinfo = l;
-
 	}
 
 	if (savestatistics == 1)
@@ -602,8 +601,7 @@ CCMD(printstats)
 CCMD(finishgame)
 {
 	// This CCMD simulates an end-of-game action and exists to end mods that never exit their last level.
-	G_SetForEndGame (level.nextmap);
-	G_ExitLevel (0, false);
+	G_ChangeLevel(NULL, 0, 0);
 }
 
 ADD_STAT(statistics)

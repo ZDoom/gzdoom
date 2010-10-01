@@ -1,0 +1,470 @@
+
+Intermission Inter_Pic1
+{
+	Image
+	{
+		Background = "@1"	// index into finalepic in gameinfo block
+	}
+}
+
+Intermission Inter_Pic2
+{
+	Image
+	{
+		Background = "@2"
+	}
+}
+
+Intermission Inter_Pic3
+{
+	Image
+	{
+		Background = "@3"
+	}
+}
+
+Intermission Inter_Bunny
+{
+	Scroller
+	{
+		Direction = Right
+		Background = "PFUB1"
+		Background2 = "PFUB2"
+		Music = "$MUSIC_BUNNY"
+		InitialDelay = -230
+		Scrolltime = -640
+		Time = -1130
+		Link = TheEnd
+	}
+}
+
+Intermission TheEnd
+{
+	// no backgrounds are set here so this will reuse the previous one.
+	Image
+	{
+		Draw = "END0", 108, 68
+		Time = -50
+	}
+	Image
+	{
+		Draw = "END0", 108, 68
+		Draw = "END1", 108, 68
+		Time = -5
+		Sound = "weapons/pistol"
+	}
+	Image
+	{
+		Draw = "END0", 108, 68
+		Draw = "END2", 108, 68
+		Time = -5
+		Sound = "weapons/pistol"
+	}
+	Image
+	{
+		Draw = "END0", 108, 68
+		Draw = "END3", 108, 68
+		Time = -5
+		Sound = "weapons/pistol"
+	}
+	Image
+	{
+		Draw = "END0", 108, 68
+		Draw = "END4", 108, 68
+		Time = -5
+		Sound = "weapons/pistol"
+	}
+	Image
+	{
+		Draw = "END0", 108, 68
+		Draw = "END5", 108, 68
+		Time = -5
+		Sound = "weapons/pistol"
+	}
+	Image
+	{
+		Draw = "END0", 108, 68
+		Draw = "END6", 108, 68
+		Time = -5
+		Sound = "weapons/pistol"
+	}
+}
+
+Intermission Inter_Underwater
+{
+	Image
+	{
+		Background = "E2END"
+		Palette = "E2PAL"
+		Time = 10000000	// advance only manually
+	}
+	GotoTitle
+	{
+	}
+}
+
+Intermission Inter_Demonscroll
+{
+	Scroller
+	{
+		Direction = Up
+		Background = "FINAL1"
+		Background2 = "FINAL2"
+		InitialDelay = 2
+		Scrolltime = -600
+	}
+}
+
+Intermission Inter_BuyStrife
+{
+	Scroller
+	{
+		Direction = Right
+		Background = "CREDIT"
+		Background2 = "VELLOGO"
+		InitialDelay = -230
+		Scrolltime = -640
+	}
+}
+
+Intermission Inter_Cast
+{
+	Image
+	{
+		// This is only here to initialize the background
+		Background = "$bgcastcall"
+		Time = -1
+		Music = "$MUSIC_EVIL"
+		Link = Doom2Cast
+	}
+
+Intermission Doom2Cast
+{
+	Cast
+	{
+		Class = "Zombieman"
+		Name = "$CC_ZOMBIE"
+		Sound = "Missile", 1, "grunt/attack"
+	}
+	Cast
+	{
+		Class = "ShotgunGuy"
+		Name = "$CC_SHOTGUN"
+		Sound = "Missile", 1, "shotguy/attack"
+	}
+	Cast
+	{
+		Class = "ChaingunGuy"
+		Name = "$CC_HEAVY"
+		Sound = "Missile", 1, "chainguy/attack"
+		Sound = "Missile", 2, "chainguy/attack"
+		Sound = "Missile", 3, "chainguy/attack"
+	}
+	Cast
+	{
+		Class = "DoomImp"
+		Name = "$CC_IMP"
+		Sound = "Missile", 2, "imp/attack"
+	}
+	Cast
+	{
+		Class = "Demon"
+		Name = "$CC_DEMON"
+		Sound = "Melee", 1, "demon/melee"
+	}
+	Cast
+	{
+		Class = "LostSoul"
+		Name = "$CC_LOST"
+		Sound = "Missile", 1, "grunt/attack"
+	}
+	Cast
+	{
+		Class = "Cacodemon"
+		Name = "$CC_CACO"
+		Sound = "Missile", 1, "caco/attack"
+	}
+	Cast
+	{
+		Class = "HellKnight"
+		Name = "$CC_HELL"
+		Sound = "Missile", 1, "baron/attack"
+	}
+	Cast
+	{
+		Class = "BaronOfHell"
+		Name = "$CC_BARON"
+		Sound = "Missile", 1, "baron/attack"
+	}
+	Cast
+	{
+		Class = "Arachnotron"
+		Name = "$CC_ARACH"
+		Sound = "Missile", 1, "baby/attack"
+	}
+	Cast
+	{
+		Class = "PainElemental"
+		Name = "$CC_PAIN"
+		Sound = "Missile", 2, "skull/melee"
+	}
+	Cast
+	{
+		Class = "Revenant"
+		Name = "$CC_REVEN"
+		Sound = "Missile", 1, "skeleton/attack"
+		Sound = "Melee", 1, "skeleton/swing"
+		Sound = "Melee", 3, "skeleton/melee"
+	}
+	Cast
+	{
+		Class = "Fatso"
+		Name = "$CC_FATSO"
+		Sound = "Missile", 1, "fatso/attack"
+		Sound = "Missile", 4, "fatso/attack"
+		Sound = "Missile", 7, "fatso/attack"
+	}
+	Cast
+	{
+		Class = "Archvile"
+		Name = "$CC_ARCH"
+		Sound = "Missile", 1, "vile/start"
+	}
+	Cast
+	{
+		Class = "SpiderMastermind"
+		Name = "$CC_SPIDER"
+		Sound = "Missile", 1, "spider/attack"
+		Sound = "Missile", 2, "spider/attack"
+	}
+	Cast
+	{
+		Class = "Cyberdemon"
+		Name = "$CC_CYBER"
+		Sound = "Missile", 1, "weapons/rocklf"
+		Sound = "Missile", 3, "weapons/rocklf"
+		Sound = "Missile", 5, "weapons/rocklf"
+	}
+	Cast
+	{
+		Class = "DoomPlayer"
+		Name = "$CC_HERO"
+		Sound = "Missile", 0, "weapons/sshotf"
+		Link = Doom2Cast	// restart cast call
+	}
+}
+
+Intermission Inter_Chess
+{
+	Fader
+	{
+		Music = "Hall"
+		Background = "FINALE1"
+		Time = 2
+		Direction = 1
+	}
+	TextScreen
+	{
+		Background = "FINALE1"
+		TextSpeed = 3
+		TextLump = "win1msg"
+	}
+	TextScreen
+	{
+		Music = "Orb"
+		Background = "FINALE2"
+		TextSpeed = 3
+		TextLump = "win2msg"
+	}
+	Fader
+	{
+		Background = "FINALE2"
+		Time = 2
+		Direction = -1
+	}
+	Fader
+	{
+		Music = "Chess"
+		Background = "FINALE3"
+		Time = 2
+		Direction = 1
+	}
+	TextScreen
+	{
+		Background = "FINALE3"
+		/* 
+		IfMultiplayer
+		{
+			Draw = 20, 0, "CHESSALL"
+		}
+		IfPlayer(cleric)
+		{
+			Draw = 60, 0, "CHESSC"
+		}
+		IfPlayer(mage)
+		{
+			Draw = 60, 0, "CHESSM"
+		}
+		*/
+		TextSpeed = 3
+		TextLump = "win3msg"
+		Position = 5, 135
+	}
+}
+
+Intermission Inter_Strife_Good
+{
+	Image
+	{
+		Music = "D_HAPPY"
+		Background = "SS4F1"
+		Sound = "svox/rie01"
+		Time = 13
+	}
+	Image
+	{
+		Background = "SS4F2"
+		Sound = "svox/bbx01"
+		Time = 11
+	}
+	Image
+	{
+		Background = "SS4F3"
+		Sound = "svox/bbx02"
+		Time = 14
+	}
+	Image
+	{
+		Background = "SS4F4"
+		Time = 28
+	}
+	Crossfader
+	{
+		Background = "CREDIT"
+		Music = "D_FAST"
+		Time = 2
+	}
+}
+
+
+Intermission Inter_Strife_Sad
+{
+	Image
+	{
+		Music = "D_SAD"
+		Background = "SS6F1"
+		Sound = "svox/ss601a"
+		Time = 8
+	}
+	Image
+	{
+		Background = "SS6F2"
+		Sound = "svox/ss602a"
+		Time = 8
+	}
+	Image
+	{
+		Background = "SS6F3"
+		Sound = "svox/ss603a"
+		Time = 9
+	}
+	Crossfader
+	{
+		Background = "CREDIT"
+		Music = "D_FAST"
+		Time = 2
+	}
+}
+
+Intermission Inter_Strife_Lose
+{
+	Image
+	{
+		Music = "D_SAD"
+		Background = "SS5F1"
+		Sound = "svox/ss501b"
+		Time = 11
+	}
+	Image
+	{
+		Background = "SS5F2"
+		Sound = "svox/ss502b"
+		Time = 16
+	}
+	Image
+	{
+		Background = "SS5F3"
+		Sound = "svox/ss503b"
+		Time = 11
+	}
+	Crossfader
+	{
+		Background = "CREDIT"
+		Music = "D_FAST"
+		Time = 2
+	}
+}
+
+/* later
+Intermission Inter_Strife_Intro
+{
+}
+*/
+
+Intermission Inter_Strife_MAP03
+{
+	Image
+	{
+		Music = "D_FAST"
+		Background = "SS2F1"
+		Sound = "svox/mac10"
+		Time = 9
+	}
+	Image
+	{
+		Background = "SS2F2"
+		Sound = "svox/mac11"
+		Time = 10
+	}
+	Image
+	{
+		Background = "SS2F3"
+		Sound = "svox/mac12"
+		Time = 12
+	}
+	Image
+	{
+		Background = "SS2F4"
+		Sound = "svox/mac13"
+		Time = 17
+	}
+}
+
+Intermission Inter_Strife_MAP10
+{
+	Image
+	{
+		Music = "D_FAST"
+		Background = "SS3F1"
+		Sound = "svox/mac16"
+		Time = 10
+	}
+	Image
+	{
+		Background = "SS3F2"
+		Sound = "svox/mac17"
+		Time = 12
+	}
+	Image
+	{
+		Background = "SS3F3"
+		Sound = "svox/mac18"
+		Time = 12
+	}
+	Image
+	{
+		Background = "SS3F4"
+		Sound = "svox/mac19"
+		Time = 11
+	}
+}

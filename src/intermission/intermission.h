@@ -2,71 +2,170 @@
 #define __INTERMISSION_H
 
 #include "dobject.h"
+#include "m_fixed.h"
+#include "textures/textures.h"
+#include "s_sound.h"
 
 struct event_t;
 
-enum
+struct FIntermissionPatch
 {
-	// For all tags the format is:
-
-	// 1 DWORD: tag value
-	// 1 DWORD: size of this tag including all parameters
-	// n DWORDs: parameters. Strings are DWORD aligned
-
-	// common
-	ITAG_Class,						// parameter: 1 name describing the type of screen
-	ITAG_Done,						// parameter: 1 string describing the next level. If empty the screen will stay.
-	ITAG_Music,						// parameter: 1 string + 1 int describing the music (+order) to be played
-	ITAG_Cdmusic,					// parameter: 1 int cdtrack + 1 int cdid
-	ITAG_DrawImage,					// parameter: 1 texture ID, x and y coordinates
-
-	// text screens
-	ITAG_Textscreen_Text,			// parameter: 1 string
-	ITAG_Textscreen_Textlump,		// parameter: 1 int (lump index) Only used when Text not defined.
-
-	// slide show slide
-	ITAG_Slide_Sound,				// parameter: 1 sound ID of sound to be played when starting the screen
-	ITAG_Slide_Delay,				// parameter: 1 int (seconds this screen remains, cannot be skipped. -1 means to wait for the sound to end.
-
-	// scroller
-	ITAG_Scroll_Direction,			// parameter: 1 int (0=up, 1 = down, 2 = left, 3 = right)
-	ITAG_Scroll_Speed,				// parameter: 1 int (scroll speed in tics per frame
-
-	// cast call
-	ITAG_Cast_NewActor,				// parameter: 1 FName
-	ITAG_Cast_State,				// parameter: 0-terminated list of FNames describing the state label
-	ITAG_Cast_Sound,				// parameter: 1 sound ID
+	FString mName;
+	double x, y;
 };
 
-class FIntermissionDescriptor
+struct FIIntermissionPatch
 {
-	TArray<DWORD> mTaglist;
-	int mReadPosition;
+	FTextureID mPic;
+	double x, y;
+};
 
-public:
-	void Reset();
-	bool Advance();
-	int GetTag();
-	int GetTagValue();
-	double GetTagFloat();
-	const char *GetTagString();
+struct FCastSound
+{
+	BYTE mSequence;
+	BYTE mIndex;
+	FString mSound;
+};
+
+struct FICastSound
+{
+	BYTE mSequence;
+	BYTE mIndex;
+	FSoundID mSound;
+};
+
+//==========================================================================
+
+struct FIntermissionDescriptor
+{
+	int mSize;
+	const PClass *mClass;
+	FString mMusic;
+	int mMusicOrder;
+	int mCdTrack;
+	int mCdId;
+	int mDuration;
+	FString mBackground;
+	FString mSound;
+	bool mFlatfill;
+	TArray<FIntermissionPatch> mOverlays;
+	FIntermissionDescriptor *mLink;
+};
+
+struct FIntermissionDescriptorFader : public FIntermissionDescriptor
+{
+	int FadeTime;
+	int FadeType;
+};
+
+struct FIntermissionDescriptorTextscreen : public FIntermissionDescriptor
+{
+	FString mText;
+	int mTextSpeed;
+	int mTextX, mTextY;
+};
+
+struct FIntermissionDescriptorCast : public FIntermissionDescriptor
+{
+	FString mWalking;
+	FString mAttacking1;
+	FString mAttacking2;
+	FString mDying;
+	TArray<FCastSound> mCastSounds;
+};
+
+struct FIntermissionDescriptorScroller : public FIntermissionDescriptor
+{
+	FString mSecondPic;
+	int mScrollDelay;
+	int mScrollTime;
+	int mScrollDir;
 };
 
 typedef TMap<FName, FIntermissionDescriptor*> FIntermissionDescriptorList;
 
 extern FIntermissionDescriptorList IntermissionDescriptors;
 
+//==========================================================================
+
 class DIntermissionScreen : public DObject
 {
 	DECLARE_CLASS (DIntermissionScreen, DObject)
 
+	FString mMusic;
+	int mMusicOrder;
+	int mCdTrack;
+	int mCdId;
+	int mDuration;
+	FTextureID mBackground;
+	bool mFlatfill;
+	TArray<FIIntermissionPatch> mOverlays;
+
 public:
 
 	DIntermissionScreen() {}
+	virtual void Init(FIntermissionDescriptor *desc);
 	virtual bool Responder (event_t *ev);
 	virtual void Ticker ();
-	virtual void Drawer () =0;
+	virtual void Drawer ();
 };
+
+class DIntermissionScreenFader : public DIntermissionScreen
+{
+	DECLARE_CLASS (DIntermissionScreenFader, DIntermissionScreen)
+
+	int mTotalTime;
+	int mCounter;
+	int mType;
+
+public:
+
+	DIntermissionScreenFader() {}
+	virtual void Init(FIntermissionDescriptor *desc);
+	virtual bool Responder (event_t *ev);
+	virtual void Ticker ();
+	virtual void Drawer ();
+};
+
+class DIntermissionScreenText : public DIntermissionScreen
+{
+	DECLARE_CLASS (DIntermissionScreenText, DIntermissionScreen)
+
+	FString mText;
+	int mTextSpeed;
+	int mTextX, mTextY;
+	int mTextCounter;
+	int mTextDelay;
+
+public:
+
+	DIntermissionScreenText() {}
+	virtual void Init(FIntermissionDescriptor *desc);
+	virtual bool Responder (event_t *ev);
+	virtual void Ticker ();
+	virtual void Drawer ();
+};
+
+class DIntermissionScreenCast : public DIntermissionScreen
+{
+	DECLARE_CLASS (DIntermissionScreenCast, DIntermissionScreen)
+
+	FState *mWalking;
+	FState *mAttacking1;
+	FState *mAttacking2;
+	FState *mDying;
+	TArray<FICastSound> mCastSounds;
+
+public:
+
+	DIntermissionScreenCast() {}
+	virtual void Init(FIntermissionDescriptor *desc);
+	virtual bool Responder (event_t *ev);
+	virtual void Ticker ();
+	virtual void Drawer ();
+};
+
+
 
 class DIntermissionController : public DObject
 {

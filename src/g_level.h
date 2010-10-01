@@ -98,6 +98,9 @@ struct FMapInfoParser
 	bool CheckFloat();
 	void SkipToNext();
 	void CheckEndOfFile(const char *block);
+
+	FName CheckEndSequence(FScanner &sc);
+	FName ParseEndGame(FScanner &sc);
 };
 
 #define DEFINE_MAP_OPTION(name, old) \
@@ -251,7 +254,7 @@ struct level_info_t
 	
 	char		mapname[9];
 	char		pname[9];
-	char		nextmap[11];	// The endsequence string is 10 chars so we need more space here
+	char		nextmap[11];
 	char		secretmap[11];
 	char		skypic1[9];
 	char		skypic2[9];
@@ -416,36 +419,6 @@ struct FLevelLocals
 	bool		IsFreelookAllowed() const;
 };
 
-enum EndTypes
-{
-	END_Pic,
-	END_Pic1,
-	END_Pic2,
-	END_Pic3,
-	END_Bunny,
-	END_Cast,
-	END_Demon,
-	END_Underwater,
-	END_Chess,
-	END_Strife,
-	END_BuyStrife,
-	END_TitleScreen
-};
-
-struct EndSequence
-{
-	BYTE EndType;
-	bool Advanced;
-	bool MusicLooping;
-	bool PlayTheEnd;
-	FString PicName;
-	FString PicName2;
-	FString Music;
-
-	EndSequence();
-};
-
-extern TArray<EndSequence> EndSequences;
 
 struct cluster_info_t
 {
@@ -509,8 +482,6 @@ enum
 };
 
 void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill=-1);
-
-void G_SetForEndGame (char *nextmap);
 
 void G_StartTravel ();
 void G_FinishTravel ();

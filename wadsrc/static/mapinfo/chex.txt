@@ -1,4 +1,5 @@
 // MAPINFO for Chex Quest
+#include "mapinfo/common.txt"
 
 gameinfo
 {

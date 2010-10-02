@@ -35,6 +35,9 @@
 #include "doomtype.h"
 #include "d_event.h"
 #include "w_wad.h"
+#include "gi.h"
+#include "v_video.h"
+#include "v_palette.h"
 #include "intermission/intermission.h"
 
 FIntermissionDescriptorList IntermissionDescriptors;
@@ -46,9 +49,58 @@ IMPLEMENT_CLASS(DIntermissionScreenCast)
 IMPLEMENT_CLASS(DIntermissionScreenScroller)
 IMPLEMENT_CLASS(DIntermissionController)
 
-void DIntermissionScreen::Init(FIntermissionDescriptor *desc)
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void DIntermissionScreen::Init(FIntermissionAction *desc, bool first)
 {
+	int lumpnum;
+
+	if (desc->mCdTrack == 0 || !S_ChangeCDMusic (desc->mCdTrack, desc->mCdId))
+	{
+		if (desc->mMusic.IsEmpty())
+		{
+			// only start the default music if this is the first action in an intermission
+			if (first) S_ChangeMusic (gameinfo.finaleMusic, 0, desc->mMusicLooping);
+		}
+		else
+		{
+			S_ChangeMusic (desc->mMusic, desc->mMusicOrder, desc->mMusicLooping);
+		}
+	}
+	mDuration = desc->mDuration;
+	mBackground = TexMan.CheckForTexture(desc->mBackground, FTexture::TEX_MiscPatch);
+	mFlatfill = desc->mFlatfill;
+	S_Sound (CHAN_VOICE | CHAN_UI, desc->mSound, 1.0f, ATTN_NONE);
+	if (desc->mPalette.IsNotEmpty() && (lumpnum = Wads.CheckNumForFullName(desc->mPalette, true)) > 0)
+	{
+		PalEntry *palette;
+		const BYTE *orgpal;
+		FMemLump lump;
+		int i;
+
+		lump = Wads.ReadLump (lumpnum);
+		orgpal = (BYTE *)lump.GetMem();
+		palette = screen->GetPalette ();
+		for (i = 256; i > 0; i--, orgpal += 3)
+		{
+			*palette++ = PalEntry (orgpal[0], orgpal[1], orgpal[2]);
+		}
+		screen->UpdatePalette ();
+		mPaletteChanged = true;
+	}
+	mOverlays.Resize(desc->mOverlays.Size());
+	for (unsigned i=0; i < mOverlays.Size(); i++)
+	{
+		mOverlays[i].x = desc->mOverlays[i].x;
+		mOverlays[i].y = desc->mOverlays[i].y;
+		mOverlays[i].mPic = TexMan.CheckForTexture(desc->mOverlays[i].mName, FTexture::TEX_MiscPatch);
+	}
 }
+
 
 bool DIntermissionScreen::Responder (event_t *ev)
 {
@@ -63,8 +115,32 @@ void DIntermissionScreen::Drawer ()
 {
 }
 
-void DIntermissionScreenFader::Init(FIntermissionDescriptor *desc)
+void DIntermissionScreen::Destroy()
 {
+	if (mPaletteChanged)
+	{
+		PalEntry *palette;
+		int i;
+
+		palette = screen->GetPalette ();
+		for (i = 0; i < 256; ++i)
+		{
+			palette[i] = GPalette.BaseColors[i];
+		}
+		screen->UpdatePalette ();
+	}
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void DIntermissionScreenFader::Init(FIntermissionAction *desc, bool first)
+{
+	Super::Init(desc, first);
+	mType = static_cast<FIntermissionActionFader*>(desc)->mFadeType;
 }
 
 bool DIntermissionScreenFader::Responder (event_t *ev)
@@ -80,8 +156,19 @@ void DIntermissionScreenFader::Drawer ()
 {
 }
 
-void DIntermissionScreenText::Init(FIntermissionDescriptor *desc)
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void DIntermissionScreenText::Init(FIntermissionAction *desc, bool first)
 {
+	Super::Init(desc, first);
+	mText = static_cast<FIntermissionActionTextscreen*>(desc)->mText;
+	mTextSpeed = static_cast<FIntermissionActionTextscreen*>(desc)->mTextSpeed;
+	mTextX = static_cast<FIntermissionActionTextscreen*>(desc)->mTextX;
+	mTextY = static_cast<FIntermissionActionTextscreen*>(desc)->mTextY;
 }
 
 bool DIntermissionScreenText::Responder (event_t *ev)
@@ -97,8 +184,25 @@ void DIntermissionScreenText::Drawer ()
 {
 }
 
-void DIntermissionScreenCast::Init(FIntermissionDescriptor *desc)
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void DIntermissionScreenCast::Init(FIntermissionAction *desc, bool first)
 {
+	Super::Init(desc, first);
+	mName = static_cast<FIntermissionActionCast*>(desc)->mName;
+	mClass = PClass::FindClass(static_cast<FIntermissionActionCast*>(desc)->mCastClass);
+
+	mCastSounds.Resize(static_cast<FIntermissionActionCast*>(desc)->mCastSounds.Size());
+	for (unsigned i=0; i < mCastSounds.Size(); i++)
+	{
+		mCastSounds[i].mSequence = static_cast<FIntermissionActionCast*>(desc)->mCastSounds[i].mSequence;
+		mCastSounds[i].mIndex = static_cast<FIntermissionActionCast*>(desc)->mCastSounds[i].mIndex;
+		mCastSounds[i].mSound = static_cast<FIntermissionActionCast*>(desc)->mCastSounds[i].mSound;
+	}
 }
 
 bool DIntermissionScreenCast::Responder (event_t *ev)
@@ -114,8 +218,19 @@ void DIntermissionScreenCast::Drawer ()
 {
 }
 
-void DIntermissionScreenScroller::Init(FIntermissionDescriptor *desc)
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void DIntermissionScreenScroller::Init(FIntermissionAction *desc, bool first)
 {
+	Super::Init(desc, first);
+	mSecondPic = TexMan.CheckForTexture(static_cast<FIntermissionActionScroller*>(desc)->mSecondPic, FTexture::TEX_MiscPatch);
+	mScrollDelay = static_cast<FIntermissionActionScroller*>(desc)->mScrollDelay;
+	mScrollTime = static_cast<FIntermissionActionScroller*>(desc)->mScrollTime;
+	mScrollDir = static_cast<FIntermissionActionScroller*>(desc)->mScrollDir;
 }
 
 bool DIntermissionScreenScroller::Responder (event_t *ev)
@@ -150,105 +265,6 @@ void F_Drawer () {}
 
 
 #if 0
-//==========================================================================
-//
-// GetFinaleText
-//
-//==========================================================================
-
-static FString GetFinaleText (const char *msgLumpName)
-{
-	int msgLump = Wads.CheckNumForFullName(msgLumpName, true);
-	if (msgLump != -1)
-	{
-		return Wads.ReadLump(msgLump).GetString();
-	}
-	else
-	{
-		return FString("Unknown message ") + msgLumpName;
-	}
-}
-
-// starts a cluster transition. This will create a proper intermission object from the passed data
-static void CreateTextScreenDescriptor (const char *music, int musicorder, int cdtrack, unsigned int cdid, 
-										const char *flat, INTBOOL finalePic, 
-										const char *text, INTBOOL textInLump, INTBOOL lookupText)
-{
-	FIntermissionDescriptor *desc = &DefaultIntermission;
-	desc->Reset();
-	desc->mTagList.Clear();
-
-	desc->mTagList.Push(ITAG_Class);
-	desc->mTagList.Push(1);
-	desc->mTagList.Push(DWORD(FName)("IntermissionTextScreen");
-
-
-	const char *FinaleFlat = (flat != NULL && *flat != 0) ? flat : gameinfo.finaleFlat;
-	if (FinaleFlat != NULL)
-	{
-		if (FinaleFlat[0] == '$')
-		{
-			FinaleFlat = GStrings(FinaleFlat + 1);
-		}
-		FTextureID texid = TexMan.CheckForTexture(FinaleFlat, FTexture::TEX_MiscPatch);
-		desc->mTagList.Push(finalePic? ITAG_DrawImage : ITAG_FillFlat);
-		desc->mTagList.Push(1);
-		desc->mTagList.Push(texid.GetIndex);
-	}
-
-	if (cdtrack != 0)
-	{
-		desc->mTagList.Push(ITAG_Cdmusic);
-		desc->mTagList.Push(2);
-		desc->mTagList.Push(cdtrack);
-		desc->mTagList.Push(cdid);
-	}
-	if (music == NULL) 
-	{
-		music = gameinfo.finaleMusic;
-		musicorder = 0;
-	}
-	int taglen = 2 + strlen(music)/4;
-	int pos = mTagList.Reserve(taglen+2);
-	mTagList[pos] = ITAG_Music;
-	mTagList[pos+1] = taglen;
-	mTagList[pos+2] = musicorder;
-	strcpy(char*)&mTagList[pos+3], music);
-
-	FString FinaleText;
-	if (textInLump)
-	{
-		FinaleText = GetFinaleText (text);
-	}
-	else
-	{
-		const char *from = (text != NULL) ? text : "Empty message";
-		FinaleText = from;
-		if (lookupText)
-		{
-			FinaleText.Insert(0, "$");
-		}
-	}
-
-	taglen = 2 + FinaleText.Len()/4;
-	pos = mTagList.Reserve(taglen+2);
-	mTagList[pos] = ITAG_Textscreen_Text;
-	mTagList[pos+1] = taglen;
-	mTagList[pos+2] = musicorder;
-	strcpy(char*)&mTagList[pos+3], FinaleText.GetChars());
-
-	desc->mTagList.Push(ITAG_Done);
-	desc->mTagList.Push(0);
-	if (ending)
-	{
-		// todo: copy the endsequence screens
-	}
-	else
-	{
-	}
-
-
-}
 
 void F_StartFinale (const char *music, int musicorder, int cdtrack, unsigned int cdid, const char *flat, 
 					const char *text, INTBOOL textInLump, INTBOOL finalePic, INTBOOL lookupText, 
@@ -267,17 +283,6 @@ void F_StartFinale (const char *music, int musicorder, int cdtrack, unsigned int
 	//  FinaleFlat, FinaleText, and music are now determined in G_WorldDone() based on
 	//	data in a level_info_t and a cluster_info_t.
 
-	if (cdtrack == 0 || !S_ChangeCDMusic (cdtrack, cdid))
-	{
-		if (music == NULL)
-		{
-			S_ChangeMusic (gameinfo.finaleMusic, 0, loopmusic);
-		}
-		else
-		{
- 			S_ChangeMusic (music, musicorder, loopmusic);
-		}
-	}
 
 
 

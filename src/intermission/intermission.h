@@ -160,22 +160,20 @@ class DIntermissionScreen : public DObject
 {
 	DECLARE_CLASS (DIntermissionScreen, DObject)
 
-	FString mMusic;
-	int mMusicOrder;
-	int mCdTrack;
-	int mCdId;
 	int mDuration;
 	FTextureID mBackground;
 	bool mFlatfill;
+	bool mPaletteChanged;
 	TArray<FIIntermissionPatch> mOverlays;
 
 public:
 
 	DIntermissionScreen() {}
-	virtual void Init(FIntermissionDescriptor *desc);
+	virtual void Init(FIntermissionAction *desc, bool first);
 	virtual bool Responder (event_t *ev);
 	virtual void Ticker ();
 	virtual void Drawer ();
+	void Destroy();
 };
 
 class DIntermissionScreenFader : public DIntermissionScreen
@@ -189,7 +187,7 @@ class DIntermissionScreenFader : public DIntermissionScreen
 public:
 
 	DIntermissionScreenFader() {}
-	virtual void Init(FIntermissionDescriptor *desc);
+	virtual void Init(FIntermissionAction *desc, bool first);
 	virtual bool Responder (event_t *ev);
 	virtual void Ticker ();
 	virtual void Drawer ();
@@ -208,7 +206,7 @@ class DIntermissionScreenText : public DIntermissionScreen
 public:
 
 	DIntermissionScreenText() {}
-	virtual void Init(FIntermissionDescriptor *desc);
+	virtual void Init(FIntermissionAction *desc, bool first);
 	virtual bool Responder (event_t *ev);
 	virtual void Ticker ();
 	virtual void Drawer ();
@@ -219,12 +217,13 @@ class DIntermissionScreenCast : public DIntermissionScreen
 	DECLARE_CLASS (DIntermissionScreenCast, DIntermissionScreen)
 
 	FString mName;
+	const PClass *mClass;
 	TArray<FICastSound> mCastSounds;
 
 public:
 
 	DIntermissionScreenCast() {}
-	virtual void Init(FIntermissionDescriptor *desc);
+	virtual void Init(FIntermissionAction *desc, bool first);
 	virtual bool Responder (event_t *ev);
 	virtual void Ticker ();
 	virtual void Drawer ();
@@ -242,7 +241,7 @@ class DIntermissionScreenScroller : public DIntermissionScreen
 public:
 
 	DIntermissionScreenScroller() {}
-	virtual void Init(FIntermissionDescriptor *desc);
+	virtual void Init(FIntermissionAction *desc, bool first);
 	virtual bool Responder (event_t *ev);
 	virtual void Ticker ();
 	virtual void Drawer ();

@@ -664,6 +664,7 @@ public:
 		ceilRaiseInstant,
 		ceilCrushAndRaise,
 		ceilLowerAndCrush,
+		ceilLowerAndCrushDist,
 		ceilCrushRaiseAndStay,
 		ceilRaiseToNearest,
 		ceilLowerToLowest,

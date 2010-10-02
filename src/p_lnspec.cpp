@@ -547,6 +547,12 @@ FUNC(LS_Ceiling_LowerAndCrush)
 	return EV_DoCeiling (DCeiling::ceilLowerAndCrush, ln, arg0, SPEED(arg1), SPEED(arg1), 0, arg2, 0, 0, CRUSHTYPE(arg3));
 }
 
+FUNC(LS_Ceiling_LowerAndCrushDist)
+// Ceiling_LowerAndCrush (tag, speed, crush, dist, crushtype)
+{
+	return EV_DoCeiling (DCeiling::ceilLowerAndCrushDist, ln, arg0, SPEED(arg1), SPEED(arg1), arg3*FRACUNIT, arg2, 0, 0, CRUSHTYPE(arg4));
+}
+
 FUNC(LS_Ceiling_CrushStop)
 // Ceiling_CrushStop (tag)
 {
@@ -3150,7 +3156,7 @@ lnSpecFunc LineSpecials[256] =
 	/*  94 */ LS_Pillar_BuildAndCrush,
 	/*  95 */ LS_FloorAndCeiling_LowerByValue,
 	/*  96 */ LS_FloorAndCeiling_RaiseByValue,
-	/*  97 */ LS_NOP,
+	/*  97 */ LS_Ceiling_LowerAndCrushDist,
 	/*  98 */ LS_NOP,
 	/*  99 */ LS_NOP,
 	/* 100 */ LS_NOP,		// Scroll_Texture_Left

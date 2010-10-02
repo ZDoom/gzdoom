@@ -162,6 +162,7 @@ void DCeiling::Tick ()
 				{
 				case ceilCrushAndRaise:
 				case ceilLowerAndCrush:
+				case ceilLowerAndCrushDist:
 					if (m_Speed1 == FRACUNIT && m_Speed2 == FRACUNIT)
 						m_Speed = FRACUNIT / 8;
 						break;
@@ -255,10 +256,15 @@ manual_ceiling:
 		case DCeiling::ceilCrushRaiseAndStay:
 			ceiling->m_TopHeight = sec->ceilingplane.d;
 		case DCeiling::ceilLowerAndCrush:
+		case DCeiling::ceilLowerAndCrushDist:
 			targheight = sec->FindHighestFloorPoint (&spot);
-			if (type != DCeiling::ceilLowerAndCrush || gameinfo.gametype != GAME_Strife)
+			if (type == DCeiling::ceilLowerAndCrush)
 			{
 				targheight += 8*FRACUNIT;
+			}
+			else if (type == DCeiling::ceilLowerAndCrushDist)
+			{
+				targheight += height;
 			}
 			ceiling->m_BottomHeight = sec->ceilingplane.PointToDist (spot, targheight);
 			ceiling->m_Direction = -1;

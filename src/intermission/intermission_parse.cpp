@@ -36,6 +36,8 @@
 
 #include "intermission/intermission.h"
 #include "g_level.h"
+#include "w_wad.h"
+#include "gi.h"
 
 //==========================================================================
 //
@@ -131,7 +133,7 @@ bool FIntermissionAction::ParseKey(FScanner &sc)
 		pat->y = sc.Number;
 		return true;
 	}
-	else if (sc.Compare("Limk"))
+	else if (sc.Compare("Link"))
 	{
 		sc.MustGetToken('=');
 		sc.MustGetToken(TK_Identifier);
@@ -141,16 +143,119 @@ bool FIntermissionAction::ParseKey(FScanner &sc)
 	else return false;
 }
 
+//==========================================================================
+//
+// FIntermissionActionFader
+//
+//==========================================================================
+
+FIntermissionActionFader::FIntermissionActionFader()
+{
+	mFadeType = FADE_Cross;
+}
+
+bool FIntermissionActionFader::ParseKey(FScanner &sc)
+{
+	struct FadeType
+	{
+		const char *Name;
+		EFadeType Type;
+	}
+	const FT[] = {
+		{ "FadeIn", FADE_In },
+		{ "FadeOut", FADE_Out },
+		{ "Crossfade", FADE_Cross },
+		{ "Melt", FADE_Melt },
+		{ "Burn", FADE_Burn },
+		{ "Wipe", FADE_Wipe },
+		{ NULL, FADE_In }
+	};
+
+	if (sc.Compare("FadeType"))
+	{
+		sc.MustGetToken('=');
+		sc.MustGetToken(TK_Identifier);
+		int v = sc.MustMatchString(&FT[0].Name, sizeof(FT[0]));
+		if (v != -1) mFadeType = FT[v].Type;
+		return true;
+	}
+	else return Super::ParseKey(sc);
+}
+
+//==========================================================================
+//
+// FIntermissionActionFader
+//
+//==========================================================================
+
+FIntermissionActionTextscreen::FIntermissionActionTextscreen()
+{
+	mTextSpeed = 2;
+	mTextX = -1;	// use gameinfo defaults
+	mTextY = -1;
+}
+
+bool FIntermissionActionTextscreen::ParseKey(FScanner &sc)
+{
+	if (sc.Compare("Position"))
+	{
+		sc.MustGetToken('=');
+		sc.MustGetToken(TK_IntConst);
+		mTextX = sc.Number;
+		sc.MustGetToken(',');
+		sc.MustGetToken(TK_IntConst);
+		mTextY = sc.Number;
+		return true;
+	}
+	else if (sc.Compare("TextLump"))
+	{
+		sc.MustGetToken('=');
+		sc.MustGetToken(TK_StringConst);
+		int lump = Wads.CheckNumForFullName(sc.String, true);
+		if (lump > 0)
+		{
+			mText = Wads.ReadLump(lump).GetString();
+		}
+		else
+		{
+			sc.ScriptMessage("Unknown text lump '%s'", sc.String);
+			mText = "(no message)";
+		}
+		return true;
+	}
+	else if (sc.Compare("Text"))
+	{
+		sc.MustGetToken('=');
+		do
+		{
+			sc.MustGetToken(TK_StringConst);
+			mText << sc.String << '\n';
+		}
+		while (sc.CheckToken(','));
+		return true;
+	}
+	else if (sc.Compare("textspeed"))
+	{
+		sc.MustGetToken('=');
+		sc.MustGetToken(TK_IntConst);
+		mTextSpeed = sc.Number;
+		return true;
+	}
+	else return Super::ParseKey(sc);
+}
+
+
 
 void FMapInfoParser::ParseIntermission()
 {
-	FIntermissionDescriptor *desc;
+	FIntermissionAction *desc;
 
 	while (!sc.CheckString("}"))
 	{
 		sc.MustGetString();
 		if (sc.Compare("image"))
 		{
+			desc = new FIntermissionAction;
 		}
 		else if (sc.Compare("scroller"))
 		{
@@ -160,15 +265,11 @@ void FMapInfoParser::ParseIntermission()
 		}
 		else if (sc.Compare("Fader"))
 		{
-		}
-		else if (sc.Compare("Crossfader"))
-		{
-		}
-		else if (sc.Compare("Wiper"))
-		{
+			desc = new FIntermissionActionFader;
 		}
 		else if (sc.Compare("TextScreen"))
 		{
+			desc = new FIntermissionActionTextscreen;
 		}
 		else if (sc.Compare("GotoTitle"))
 		{

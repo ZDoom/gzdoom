@@ -62,11 +62,21 @@ struct FIntermissionAction
 
 struct FIntermissionActionFader : public FIntermissionAction
 {
+	enum EFadeType
+	{
+		FADE_In,
+		FADE_Out,
+		FADE_Cross,
+		FADE_Melt,
+		FADE_Burn,
+		FADE_Wipe
+	};
+
 	typedef FIntermissionAction Super;
 
-	int FadeTime;
-	int FadeType;
+	EFadeType mFadeType;
 
+	FIntermissionActionFader();
 	virtual bool ParseKey(FScanner &sc);
 };
 
@@ -78,6 +88,7 @@ struct FIntermissionActionTextscreen : public FIntermissionAction
 	int mTextSpeed;
 	int mTextX, mTextY;
 
+	FIntermissionActionTextscreen();
 	virtual bool ParseKey(FScanner &sc);
 };
 
@@ -91,6 +102,7 @@ struct FIntermissionActionCast : public FIntermissionAction
 	FString mDying;
 	TArray<FCastSound> mCastSounds;
 
+	FIntermissionActionCast();
 	virtual bool ParseKey(FScanner &sc);
 };
 
@@ -103,6 +115,7 @@ struct FIntermissionActionScroller : public FIntermissionAction
 	int mScrollTime;
 	int mScrollDir;
 
+	FIntermissionActionScroller();
 	virtual bool ParseKey(FScanner &sc);
 };
 

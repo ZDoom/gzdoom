@@ -55,6 +55,8 @@ gameinfo
 	pausesign = "PAUSED"
 	gibfactor = 0.5
 	cursorpic = "hexncurs"
+	textscreenx = 10
+	textscreeny = 5
 }
 
 skill baby

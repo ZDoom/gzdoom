@@ -125,6 +125,8 @@ struct gameinfo_t
 	FName mFontColorSelection;
 	char mBackButton[9];
 	fixed_t gibfactor;
+	int TextScreenX;
+	int TextScreenY;
 
 	const char *GetFinalePage(unsigned int num) const;
 };

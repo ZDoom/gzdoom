@@ -3,7 +3,7 @@ Intermission Inter_Pic1
 {
 	Image
 	{
-		Background = "@1"	// index into finalepic in gameinfo block
+		Background = "@1"	// index into finalepic FadeIn gameinfo block
 	}
 }
 
@@ -27,7 +27,7 @@ Intermission Inter_Bunny
 {
 	Scroller
 	{
-		Direction = Right
+		FadeType = Right
 		Background = "PFUB1"
 		Background2 = "PFUB2"
 		Music = "$MUSIC_BUNNY"
@@ -107,7 +107,7 @@ Intermission Inter_Demonscroll
 {
 	Scroller
 	{
-		Direction = Up
+		FadeType = Up
 		Background = "FINAL1"
 		Background2 = "FINAL2"
 		InitialDelay = 2
@@ -119,7 +119,7 @@ Intermission Inter_BuyStrife
 {
 	Scroller
 	{
-		Direction = Right
+		FadeType = Right
 		Background = "CREDIT"
 		Background2 = "VELLOGO"
 		InitialDelay = -230
@@ -261,7 +261,7 @@ Intermission Inter_Chess
 		Music = "Hall"
 		Background = "FINALE1"
 		Time = 2
-		Direction = 1
+		FadeType = FadeIn
 	}
 	TextScreen
 	{
@@ -280,14 +280,14 @@ Intermission Inter_Chess
 	{
 		Background = "FINALE2"
 		Time = 2
-		Direction = -1
+		FadeType = FadeOut
 	}
 	Fader
 	{
 		Music = "Chess"
 		Background = "FINALE3"
 		Time = 2
-		Direction = 1
+		FadeType = FadeIn
 	}
 	TextScreen
 	{
@@ -338,11 +338,12 @@ Intermission Inter_Strife_Good
 		Background = "SS4F4"
 		Time = 28
 	}
-	Crossfader
+	Fader
 	{
 		Background = "CREDIT"
 		Music = "D_FAST"
 		Time = 2
+		FadeType = Crossfade
 	}
 }
 
@@ -368,11 +369,12 @@ Intermission Inter_Strife_Sad
 		Sound = "svox/ss603a"
 		Time = 9
 	}
-	Crossfader
+	Fader
 	{
 		Background = "CREDIT"
 		Music = "D_FAST"
 		Time = 2
+		FadeType = Crossfade
 	}
 }
 
@@ -397,11 +399,12 @@ Intermission Inter_Strife_Lose
 		Sound = "svox/ss503b"
 		Time = 11
 	}
-	Crossfader
+	Fader
 	{
 		Background = "CREDIT"
 		Music = "D_FAST"
 		Time = 2
+		FadeType = Crossfade
 	}
 }
 

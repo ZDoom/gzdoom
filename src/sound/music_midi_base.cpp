@@ -165,10 +165,10 @@ CCMD (snd_listmididevices)
 #ifdef HAVE_FLUIDSYNTH
 	PrintMidiDevice (-5, "FluidSynth", MOD_SWSYNTH, 0);
 #endif
-	PrintMidiDevice (-4, "GUS", 0, MOD_SWSYNTH);
+	PrintMidiDevice (-4, "Gravis Ultrasound Emulation", MOD_SWSYNTH, 0);
 	PrintMidiDevice (-3, "Emulated OPL FM Synth", MOD_FMSYNTH, 0);
-	PrintMidiDevice (-2, "TiMidity++", 0, MOD_SWSYNTH);
-	PrintMidiDevice (-1, "FMOD", 0, MOD_SWSYNTH);
+	PrintMidiDevice (-2, "TiMidity++", MOD_SWSYNTH, 0);
+	PrintMidiDevice (-1, "FMOD", MOD_SWSYNTH, 0);
 	if (nummididevices != 0)
 	{
 		for (id = 0; id < nummididevices; ++id)
@@ -208,7 +208,7 @@ CCMD (snd_listmididevices)
 #ifdef HAVE_FLUIDSYNTH
 	Printf("%s-5. FluidSynth\n", -5 == snd_mididevice ? TEXTCOLOR_BOLD : "");
 #endif
-	Printf("%s-4. GUS\n", -4 == snd_mididevice ? TEXTCOLOR_BOLD : "");
+	Printf("%s-4. Gravis Ultrasound Emulation\n", -4 == snd_mididevice ? TEXTCOLOR_BOLD : "");
 	Printf("%s-3. Emulated OPL FM Synth\n", -3 == snd_mididevice ? TEXTCOLOR_BOLD : "");
 	Printf("%s-2. TiMidity++\n", -2 == snd_mididevice ? TEXTCOLOR_BOLD : "");
 	Printf("%s-1. FMOD\n", -1 == snd_mididevice ? TEXTCOLOR_BOLD : "");

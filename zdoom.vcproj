@@ -5498,7 +5498,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\sound\music_psuedo_mididevice.cpp"
+				RelativePath=".\src\sound\music_pseudo_mididevice.cpp"
 				>
 			</File>
 			<File

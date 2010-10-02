@@ -143,13 +143,13 @@ protected:
 };
 #endif
 
-// Base class for psuedo-MIDI devices ---------------------------------------
+// Base class for pseudo-MIDI devices ---------------------------------------
 
-class PsuedoMIDIDevice : public MIDIDevice
+class PseudoMIDIDevice : public MIDIDevice
 {
 public:
-	PsuedoMIDIDevice();
-	~PsuedoMIDIDevice();
+	PseudoMIDIDevice();
+	~PseudoMIDIDevice();
 
 	void Close();
 	bool IsOpen() const;
@@ -169,9 +169,9 @@ protected:
 	bool bLooping;
 };
 
-// FMOD psuedo-MIDI device --------------------------------------------------
+// FMOD pseudo-MIDI device --------------------------------------------------
 
-class FMODMIDIDevice : public PsuedoMIDIDevice
+class FMODMIDIDevice : public PseudoMIDIDevice
 {
 public:
 	int Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata);
@@ -180,7 +180,7 @@ public:
 
 // MIDI file played with TiMidity++ and possibly streamed through FMOD ------
 
-class TimidityPPMIDIDevice : public PsuedoMIDIDevice
+class TimidityPPMIDIDevice : public PseudoMIDIDevice
 {
 public:
 	TimidityPPMIDIDevice();

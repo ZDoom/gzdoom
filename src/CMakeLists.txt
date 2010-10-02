@@ -838,7 +838,7 @@ add_executable( zdoom WIN32
 	sound/music_softsynth_mididevice.cpp
 	sound/music_timidity_mididevice.cpp
 	sound/music_win_mididevice.cpp
-	sound/music_psuedo_mididevice.cpp
+	sound/music_pseudo_mididevice.cpp
 	textures/automaptexture.cpp
 	textures/bitmap.cpp
 	textures/buildtexture.cpp

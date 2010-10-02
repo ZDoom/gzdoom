@@ -1,4 +1,12 @@
 
+Intermission Inter_Titlescreen
+{
+	GotoTitle
+	{
+	}
+}
+
+
 Intermission Inter_Pic1
 {
 	Image

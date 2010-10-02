@@ -463,7 +463,6 @@ static bool		unloading;
 //
 //==========================================================================
 
-
 void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill)
 {
 	level_info_t *nextinfo = NULL;
@@ -476,7 +475,16 @@ void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill
 
 	if (levelname == NULL || *levelname == 0)
 	{
-		// todo: play the default end sequence here
+		// end the game
+		levelname = NULL;
+		if (!strncmp(level.nextmap, "enDSeQ",6))
+		{
+			levelname = level.nextmap;	// If there is already an end sequence please leave it alone!
+		}
+		else 
+		{
+			nextlevel.Format("enDSeQ%04x", int(gameinfo.DefaultEndSequence));
+		}
 	}
 	else if (strncmp(levelname, "enDSeQ", 6) != 0)
 	{
@@ -492,7 +500,7 @@ void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill
 		}
 	}
 
-	nextlevel = levelname;
+	if (levelname != NULL) nextlevel = levelname;
 
 	if (nextSkill != -1)
 		NextSkill = nextSkill;
@@ -950,12 +958,7 @@ void G_WorldDone (void)
 
 	thiscluster = FindClusterInfo (level.cluster);
 
-	/*
-	if (level.info->Intermission != NAME_None)
-	{
-		// todo start intermission
-	}
-	else if (strncmp (nextlevel, "enDSeQ", 6) == 0)
+	if (strncmp (nextlevel, "enDSeQ", 6) == 0)
 	{
 		F_StartFinale (thiscluster->MessageMusic, thiscluster->musicorder,
 			thiscluster->cdtrack, thiscluster->cdid,
@@ -963,7 +966,7 @@ void G_WorldDone (void)
 			thiscluster->flags & CLUSTER_EXITTEXTINLUMP,
 			thiscluster->flags & CLUSTER_FINALEPIC,
 			thiscluster->flags & CLUSTER_LOOKUPEXITTEXT,
-			true, strtol(nextlevel.GetChars()+6, NULL, 16));
+			true, ENamedName(strtol(nextlevel.GetChars()+6, NULL, 16)));
 	}
 	else
 	{
@@ -995,7 +998,6 @@ void G_WorldDone (void)
 			}
 		}
 	}
-	*/
 } 
  
 //==========================================================================

@@ -59,6 +59,7 @@ gameinfo
 	cursorpic = "strfcurs"
 	textscreenx = 10
 	textscreeny = 10
+	defaultendsequence = "Inter_Strife"
 }
 
 skill baby

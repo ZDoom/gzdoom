@@ -60,6 +60,7 @@ gameinfo
 	cursorpic = "doomcurs"
 	textscreenx = 10
 	textscreeny = 10
+	defaultendsequence = "Inter_Cast"
 }
 
 skill baby

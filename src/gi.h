@@ -127,6 +127,7 @@ struct gameinfo_t
 	fixed_t gibfactor;
 	int TextScreenX;
 	int TextScreenY;
+	FName DefaultEndSequence;
 
 	const char *GetFinalePage(unsigned int num) const;
 };

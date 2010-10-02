@@ -269,11 +269,12 @@ public:
 bool F_Responder (event_t* ev);
 void F_Ticker ();
 void F_Drawer ();
+void F_StartIntermission(FIntermissionDescriptor *desc, bool deleteme);
 
 // Create an intermission from old cluster data
 void F_StartFinale (const char *music, int musicorder, int cdtrack, unsigned int cdid, const char *flat, 
 					const char *text, INTBOOL textInLump, INTBOOL finalePic, INTBOOL lookupText, 
-					bool ending, int endsequence = 0);
+					bool ending, FName endsequence = NAME_None);
 
 
 

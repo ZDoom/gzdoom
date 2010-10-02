@@ -57,6 +57,7 @@ gameinfo
 	cursorpic = "hexncurs"
 	textscreenx = 10
 	textscreeny = 5
+	defaultendsequence = "Inter_Chess"
 }
 
 skill baby

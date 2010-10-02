@@ -299,6 +299,7 @@ void FMapInfoParser::ParseGameInfo()
 		GAMEINFOKEY_CSTRING(mBackButton, "menubackbutton", 8)
 		GAMEINFOKEY_INT(TextScreenX, "textscreenx")
 		GAMEINFOKEY_INT(TextScreenY, "textscreeny")
+		GAMEINFOKEY_STRING(DefaultEndSequence, "defaultendsequence")
 
 		else
 		{

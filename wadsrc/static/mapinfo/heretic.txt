@@ -59,6 +59,7 @@ gameinfo
 	cursorpic = "herecurs"
 	textscreenx = 20
 	textscreeny = 5
+	defaultendsequence = "Inter_Pic1"
 }
 
 skill baby

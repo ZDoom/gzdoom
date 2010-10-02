@@ -734,3 +734,65 @@ FName FMapInfoParser::CheckEndSequence()
 	}
 	return NAME_None;
 }
+
+
+//==========================================================================
+//
+// Creates an intermission from the cluster's finale info
+//
+//==========================================================================
+
+void F_StartFinale (const char *music, int musicorder, int cdtrack, unsigned int cdid, const char *flat, 
+					const char *text, INTBOOL textInLump, INTBOOL finalePic, INTBOOL lookupText, 
+					bool ending, FName endsequence)
+{
+	if (text != NULL && *text != 0)
+	{
+		FIntermissionActionTextscreen *textscreen = new FIntermissionActionTextscreen;
+		if (textInLump)
+		{
+			int lump = Wads.CheckNumForFullName(text, true);
+			if (lump > 0)
+			{
+				textscreen->mText = Wads.ReadLump(lump).GetString();
+			}
+			else
+			{
+				textscreen->mText.Format("Unknown text lump '%s'", text);
+			}
+		}
+		else if (!lookupText)
+		{
+			textscreen->mText = text;
+		}
+		else
+		{
+			textscreen->mText << '$' << text;
+		}
+		textscreen->mBackground = flat;
+		textscreen->mFlatfill = !finalePic;
+
+		if (music != NULL && *music != 0) 
+		{
+			textscreen->mMusic = music;
+			textscreen->mMusicOrder = musicorder;
+		}
+		if (cdtrack > 0)
+		{
+			textscreen->mCdTrack = cdtrack;
+			textscreen->mCdId = cdid;
+		}
+		textscreen->mLink = ending? endsequence : NAME_None;
+		FIntermissionDescriptor *desc = new FIntermissionDescriptor;
+		desc->mActions.Push(textscreen);
+		F_StartIntermission(desc, true);
+	}
+	else if (ending)
+	{
+		FIntermissionDescriptor **pdesc = IntermissionDescriptors.CheckKey(endsequence);
+		if (pdesc != NULL)
+		{
+			F_StartIntermission(*pdesc, false);
+		}
+	}
+}

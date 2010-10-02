@@ -1,6 +1,7 @@
 #ifndef __INTERMISSION_H
 #define __INTERMISSION_H
 
+#include "doomdef.h"
 #include "dobject.h"
 #include "m_fixed.h"
 #include "textures/textures.h"
@@ -43,14 +44,6 @@ enum EFadeType
 {
 	FADE_In,
 	FADE_Out,
-};
-
-enum EWipeType
-{
-	WIPE_Default,
-	WIPE_Cross,
-	WIPE_Melt,
-	WIPE_Burn
 };
 
 enum EScrollDir
@@ -102,7 +95,7 @@ struct FIntermissionActionWiper : public FIntermissionAction
 {
 	typedef FIntermissionAction Super;
 
-	EWipeType mWipeType;
+	gamestate_t mWipeType;
 
 	FIntermissionActionWiper();
 	virtual bool ParseKey(FScanner &sc);
@@ -252,15 +245,21 @@ class DIntermissionController : public DObject
 {
 	DECLARE_CLASS (DIntermissionController, DObject)
 
+	FIntermissionDescriptor *mDesc;
+	bool mDeleteDesc;
+	int mIndex;
+	int mCounter;
+
+	bool NextPage();
 
 public:
 	static DIntermissionController *CurrentIntermission;
 
-	DIntermissionController() {}
+	DIntermissionController(FIntermissionDescriptor *mDesc = NULL, bool mDeleteDesc = false);
 	bool Responder (event_t *ev);
 	void Ticker ();
 	void Drawer ();
-	void Close();
+	void Destroy();
 };
 
 

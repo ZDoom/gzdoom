@@ -677,13 +677,23 @@ void D_Display ()
 	else if (gamestate != wipegamestate && gamestate != GS_FULLCONSOLE && gamestate != GS_TITLELEVEL)
 	{ // save the current screen if about to wipe
 		BorderNeedRefresh = screen->GetPageCount ();
-		if (wipegamestate != GS_FORCEWIPEFADE)
+		switch (wipegamestate)
 		{
+		default:
 			wipe = screen->WipeStartScreen (wipetype);
-		}
-		else
-		{
+			break;
+
+		case GS_FORCEWIPEFADE:
 			wipe = screen->WipeStartScreen (wipe_Fade);
+			break;
+
+		case GS_FORCEWIPEBURN:
+			wipe = screen->WipeStartScreen (wipe_Burn);
+			break;
+
+		case GS_FORCEWIPEMELT:
+			wipe = screen->WipeStartScreen (wipe_Melt);
+			break;
 		}
 		wipegamestate = gamestate;
 	}

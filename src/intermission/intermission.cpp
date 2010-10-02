@@ -38,6 +38,7 @@
 #include "gi.h"
 #include "v_video.h"
 #include "v_palette.h"
+#include "d_main.h"
 #include "intermission/intermission.h"
 
 FIntermissionDescriptorList IntermissionDescriptors;
@@ -49,6 +50,7 @@ IMPLEMENT_CLASS(DIntermissionScreenCast)
 IMPLEMENT_CLASS(DIntermissionScreenScroller)
 IMPLEMENT_CLASS(DIntermissionController)
 
+extern int		NoWipe;
 //==========================================================================
 //
 //
@@ -91,6 +93,7 @@ void DIntermissionScreen::Init(FIntermissionAction *desc, bool first)
 		}
 		screen->UpdatePalette ();
 		mPaletteChanged = true;
+		NoWipe = 1;
 	}
 	mOverlays.Resize(desc->mOverlays.Size());
 	for (unsigned i=0; i < mOverlays.Size(); i++)
@@ -128,6 +131,7 @@ void DIntermissionScreen::Destroy()
 			palette[i] = GPalette.BaseColors[i];
 		}
 		screen->UpdatePalette ();
+		NoWipe = 0;
 	}
 }
 
@@ -247,9 +251,65 @@ void DIntermissionScreenScroller::Drawer ()
 }
 
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+DIntermissionController::DIntermissionController(FIntermissionDescriptor *Desc, bool DeleteDesc)
+{
+	mDesc = Desc;
+	mDeleteDesc = DeleteDesc;
+	mIndex = 0;
+	mCounter = -1;	// NextPage during next tick
+}
+
+bool DIntermissionController::NextPage ()
+{
+	while ((unsigned)mIndex < mDesc->mActions.Size())
+	{
+		FIntermissionAction *action = mDesc->mActions[mIndex++];
+		if (action->mClass == WIPER_ID)
+		{
+			wipegamestate = static_cast<FIntermissionActionWiper*>(action)->mWipeType;
+		}
+		else if (action->mClass == TITLE_ID)
+		{
+			Destroy();
+			D_StartTitle ();
+			return false;
+		}
+		else
+		{
+			// create page here
+		}
+	}
+	return false;
+}
+
+bool DIntermissionController::Responder (event_t *ev)
+{
+	return false;
+}
+
+void DIntermissionController::Ticker ()
+{
+}
+
+void DIntermissionController::Drawer ()
+{
+}
+
+void DIntermissionController::Destroy ()
+{
+	if (mDeleteDesc) delete mDesc;
+	mDesc = NULL;
+}
 
 
-static FIntermissionDescriptor DefaultIntermission;
+
+
 
 
 // Called by main loop.

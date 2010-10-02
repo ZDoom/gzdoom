@@ -76,7 +76,9 @@ typedef enum
 	GS_TITLELEVEL,		// [RH] A combination of GS_LEVEL and GS_DEMOSCREEN
 
 	GS_FORCEWIPE = -1,
-	GS_FORCEWIPEFADE = -2
+	GS_FORCEWIPEFADE = -2,
+	GS_FORCEWIPEBURN = -3,
+	GS_FORCEWIPEMELT = -4
 } gamestate_t;
 
 extern	gamestate_t 	gamestate;

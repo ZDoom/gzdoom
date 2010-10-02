@@ -204,7 +204,7 @@ FIntermissionActionWiper::FIntermissionActionWiper()
 {
 	mSize = sizeof(FIntermissionActionWiper);
 	mClass = WIPER_ID;
-	mWipeType = WIPE_Default;
+	mWipeType = GS_FORCEWIPE;
 }
 
 bool FIntermissionActionWiper::ParseKey(FScanner &sc)
@@ -212,14 +212,14 @@ bool FIntermissionActionWiper::ParseKey(FScanner &sc)
 	struct WipeType
 	{
 		const char *Name;
-		EWipeType Type;
+		gamestate_t Type;
 	}
 	const FT[] = {
-		{ "Crossfade", WIPE_Cross },
-		{ "Melt", WIPE_Melt },
-		{ "Burn", WIPE_Burn },
-		{ "Default", WIPE_Default },
-		{ NULL, WIPE_Default }
+		{ "Crossfade", GS_FORCEWIPEFADE },
+		{ "Melt", GS_FORCEWIPEMELT },
+		{ "Burn", GS_FORCEWIPEBURN },
+		{ "Default", GS_FORCEWIPE },
+		{ NULL, GS_FORCEWIPE }
 	};
 
 	if (sc.Compare("WipeType"))
@@ -785,6 +785,10 @@ void F_StartFinale (const char *music, int musicorder, int cdtrack, unsigned int
 		textscreen->mLink = ending? endsequence : NAME_None;
 		FIntermissionDescriptor *desc = new FIntermissionDescriptor;
 		desc->mActions.Push(textscreen);
+
+		FIntermissionActionWiper *wiper = new FIntermissionActionWiper;
+		desc->mActions.Push(wiper);
+
 		F_StartIntermission(desc, true);
 	}
 	else if (ending)

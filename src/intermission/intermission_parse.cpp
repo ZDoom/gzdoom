@@ -39,6 +39,14 @@
 #include "w_wad.h"
 #include "gi.h"
 
+
+static void ReplaceIntermission(FName intname,FIntermissionDescriptor *desc)
+{
+	FIntermissionDescriptor ** pDesc = IntermissionDescriptors.CheckKey(intname);
+	if (pDesc != NULL && *pDesc != NULL) delete *pDesc;
+	IntermissionDescriptors[intname] = desc;
+}
+
 //==========================================================================
 //
 // FIntermissionAction 
@@ -54,6 +62,7 @@ FIntermissionAction::FIntermissionAction()
 	mCdTrack = 
 	mDuration = 0;
 	mFlatfill = false;
+	mMusicLooping = true;
 }
 
 bool FIntermissionAction::ParseKey(FScanner &sc)
@@ -490,13 +499,9 @@ void FMapInfoParser::ParseIntermission()
 {
 	sc.MustGetString();
 	FName intname = sc.String;
-
-	FIntermissionDescriptor ** pDesc = IntermissionDescriptors.CheckKey(intname);
-	if (pDesc != NULL && *pDesc != NULL) delete *pDesc;
-
 	FIntermissionDescriptor *desc = new FIntermissionDescriptor();
-	IntermissionDescriptors[intname] = desc;
 
+	ReplaceIntermission(intname, desc);
 	sc.MustGetToken('{');
 	while (!sc.CheckToken('}'))
 	{
@@ -598,16 +603,53 @@ FName FMapInfoParser::ParseEndGame()
 
 		}
 	}
+	FIntermissionDescriptor *desc = new FIntermissionDescriptor;
+	FIntermissionAction *action;
+
 	switch (newSeq.EndType)
 	{
 	case END_Pic:
+		action = new FIntermissionAction;
+		break;
+
 	case END_Bunny:
-	case END_Cast:
-	case END_Demon:
-		;
+	{
+		FIntermissionActionScroller *bunny = new FIntermissionActionScroller;
+		bunny->mSecondPic = newSeq.PicName2;
+		bunny->mScrollDir = SCROLL_Right;
+		bunny->mScrollDelay = 230;
+		bunny->mScrollTime = 640;
+		bunny->mDuration = 1130;
+		action = bunny;
+		if (newSeq.PlayTheEnd) action->mLink = "TheEnd";
+		break;
 	}
+
+	case END_Demon:
+	{
+		FIntermissionActionScroller *demon = new FIntermissionActionScroller;
+		demon->mSecondPic = newSeq.PicName2;
+		demon->mScrollDir = SCROLL_Up;
+		demon->mScrollDelay = 70;
+		demon->mScrollTime = 600;
+		action = demon;
+		break;
+	}
+
+	case END_Cast:
+		action = new FIntermissionAction;
+		action->mDuration = 1;
+		action->mLink = "Doom2Cast";
+		break;
+	}
+
+	action->mBackground = newSeq.PicName;
+	action->mMusic = newSeq.Music;
+	action->mMusicLooping = newSeq.MusicLooping;
+
 	FString seq;
-	seq.Format("EndSequence_%d_", generated++);
+	seq.Format("@EndSequence_%d_", generated++);
+	ReplaceIntermission(seq, desc);
 	return FName(seq);
 }
 
@@ -650,8 +692,11 @@ FName FMapInfoParser::CheckEndSequence()
 		ParseComma();
 		sc.MustGetString ();
 		FString seqname;
-		seqname << "EndPic_" << sc.String;
-		// create sequence here
+		seqname << "@EndPic_" << sc.String;
+		FIntermissionDescriptor *desc = new FIntermissionDescriptor;
+		FIntermissionAction *action = new FIntermissionAction;
+		action->mBackground = sc.String;
+		ReplaceIntermission(seqname, desc);
 		return FName(seqname);
 	}
 	else if (sc.Compare("endbunny"))

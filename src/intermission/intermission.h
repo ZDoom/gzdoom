@@ -80,6 +80,7 @@ struct FIntermissionAction
 	FString mPalette;
 	FString mSound;
 	bool mFlatfill;
+	bool mMusicLooping;
 	TArray<FIntermissionPatch> mOverlays;
 	FName mLink;
 

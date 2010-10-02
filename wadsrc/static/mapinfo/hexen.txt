@@ -1,5 +1,5 @@
 // A bare-bones MAPINFO for Hexen.
-#include "mapinfo/common.txt"
+include "mapinfo/common.txt"
 
 // Most of the MAPINFO is still in hexen.wad.
 

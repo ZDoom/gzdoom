@@ -89,7 +89,7 @@ bool FIntermissionAction::ParseKey(FScanner &sc)
 		sc.MustGetToken('=');
 		if (!sc.CheckToken('-'))
 		{
-			sc.MustGetToken(TK_FloatConst);
+			sc.MustGetFloat();
 			mDuration = xs_RoundToInt(sc.Float*TICRATE);
 		}
 		else
@@ -109,6 +109,11 @@ bool FIntermissionAction::ParseKey(FScanner &sc)
 		{
 			sc.MustGetToken(TK_IntConst);
 			mFlatfill = !!sc.Number;
+			if (sc.CheckToken(','))
+			{
+				sc.MustGetToken(TK_StringConst);
+				mPalette = sc.String;
+			}
 		}
 		return true;
 	}
@@ -151,7 +156,9 @@ bool FIntermissionAction::ParseKey(FScanner &sc)
 
 FIntermissionActionFader::FIntermissionActionFader()
 {
-	mFadeType = FADE_Cross;
+	mSize = sizeof(FIntermissionActionFader);
+	mClass = RUNTIME_CLASS(DIntermissionScreenFader);
+	mFadeType = FADE_In;
 }
 
 bool FIntermissionActionFader::ParseKey(FScanner &sc)
@@ -164,10 +171,6 @@ bool FIntermissionActionFader::ParseKey(FScanner &sc)
 	const FT[] = {
 		{ "FadeIn", FADE_In },
 		{ "FadeOut", FADE_Out },
-		{ "Crossfade", FADE_Cross },
-		{ "Melt", FADE_Melt },
-		{ "Burn", FADE_Burn },
-		{ "Wipe", FADE_Wipe },
 		{ NULL, FADE_In }
 	};
 
@@ -175,8 +178,47 @@ bool FIntermissionActionFader::ParseKey(FScanner &sc)
 	{
 		sc.MustGetToken('=');
 		sc.MustGetToken(TK_Identifier);
-		int v = sc.MustMatchString(&FT[0].Name, sizeof(FT[0]));
+		int v = sc.MatchString(&FT[0].Name, sizeof(FT[0]));
 		if (v != -1) mFadeType = FT[v].Type;
+		return true;
+	}
+	else return Super::ParseKey(sc);
+}
+
+//==========================================================================
+//
+// FIntermissionActionWiper
+//
+//==========================================================================
+
+FIntermissionActionWiper::FIntermissionActionWiper()
+{
+	mSize = sizeof(FIntermissionActionWiper);
+	mClass = WIPER_ID;
+	mWipeType = WIPE_Default;
+}
+
+bool FIntermissionActionWiper::ParseKey(FScanner &sc)
+{
+	struct WipeType
+	{
+		const char *Name;
+		EWipeType Type;
+	}
+	const FT[] = {
+		{ "Crossfade", WIPE_Cross },
+		{ "Melt", WIPE_Melt },
+		{ "Burn", WIPE_Burn },
+		{ "Default", WIPE_Default },
+		{ NULL, WIPE_Default }
+	};
+
+	if (sc.Compare("WipeType"))
+	{
+		sc.MustGetToken('=');
+		sc.MustGetToken(TK_Identifier);
+		int v = sc.MatchString(&FT[0].Name, sizeof(FT[0]));
+		if (v != -1) mWipeType = FT[v].Type;
 		return true;
 	}
 	else return Super::ParseKey(sc);
@@ -190,6 +232,8 @@ bool FIntermissionActionFader::ParseKey(FScanner &sc)
 
 FIntermissionActionTextscreen::FIntermissionActionTextscreen()
 {
+	mSize = sizeof(FIntermissionActionTextscreen);
+	mClass = RUNTIME_CLASS(DIntermissionScreenText);
 	mTextSpeed = 2;
 	mTextX = -1;	// use gameinfo defaults
 	mTextY = -1;
@@ -218,8 +262,10 @@ bool FIntermissionActionTextscreen::ParseKey(FScanner &sc)
 		}
 		else
 		{
-			sc.ScriptMessage("Unknown text lump '%s'", sc.String);
-			mText = "(no message)";
+			// only print an error if coming from a PWAD
+			if (Wads.GetLumpFile(sc.LumpNum) > 1)
+				sc.ScriptMessage("Unknown text lump '%s'", sc.String);
+			mText.Format("Unknown text lump '%s'", sc.String);
 		}
 		return true;
 	}
@@ -244,44 +290,226 @@ bool FIntermissionActionTextscreen::ParseKey(FScanner &sc)
 	else return Super::ParseKey(sc);
 }
 
+//==========================================================================
+//
+// FIntermissionAction
+//
+//==========================================================================
 
-
-void FMapInfoParser::ParseIntermission()
+FIntermissionActionCast::FIntermissionActionCast()
 {
-	FIntermissionAction *desc;
+	mSize = sizeof(FIntermissionActionCast);
+	mClass = RUNTIME_CLASS(DIntermissionScreenCast);
+}
 
-	while (!sc.CheckString("}"))
+bool FIntermissionActionCast::ParseKey(FScanner &sc)
+{
+	if (sc.Compare("CastName"))
 	{
-		sc.MustGetString();
-		if (sc.Compare("image"))
+		sc.MustGetToken('=');
+		sc.MustGetToken(TK_StringConst);
+		mName = sc.String;
+		return true;
+	}
+	else if (sc.Compare("CastClass"))
+	{
+		sc.MustGetToken('=');
+		sc.MustGetToken(TK_StringConst);
+		mCastClass = sc.String;
+		return true;
+	}
+	else if (sc.Compare("AttackSound"))
+	{
+		static const char *const seqs[] = {"Missile", "Melee", NULL};
+		FCastSound *cs = &mCastSounds[mCastSounds.Reserve(1)];
+		sc.MustGetToken('=');
+		sc.MustGetToken(TK_StringConst);
+		cs->mSequence = (BYTE)sc.MatchString(seqs);
+		sc.MustGetToken(',');
+		sc.MustGetToken(TK_IntConst);
+		cs->mIndex = (BYTE)sc.Number;
+		sc.MustGetToken(',');
+		sc.MustGetToken(TK_StringConst);
+		cs->mSound = sc.String;
+		return true;
+	}
+	else return Super::ParseKey(sc);
+}
+
+//==========================================================================
+//
+// FIntermissionActionScroller
+//
+//==========================================================================
+
+FIntermissionActionScroller::FIntermissionActionScroller()
+{
+	mSize = sizeof(FIntermissionActionScroller);
+	mClass = RUNTIME_CLASS(DIntermissionScreenScroller);
+	mScrollDelay = 0;
+	mScrollTime = 640;
+	mScrollDir = SCROLL_Right;
+}
+
+bool FIntermissionActionScroller::ParseKey(FScanner &sc)
+{
+	struct ScrollType
+	{
+		const char *Name;
+		EScrollDir Type;
+	}
+	const ST[] = {
+		{ "Left", SCROLL_Left },
+		{ "Right", SCROLL_Right },
+		{ "Up", SCROLL_Up },
+		{ "Down", SCROLL_Down },
+		{ NULL, SCROLL_Left }
+	};
+
+	if (sc.Compare("ScrollDirection"))
+	{
+		sc.MustGetToken('=');
+		sc.MustGetToken(TK_Identifier);
+		int v = sc.MatchString(&ST[0].Name, sizeof(ST[0]));
+		if (v != -1) mScrollDir = ST[v].Type;
+		return true;
+	}
+	else if (sc.Compare("InitialDelay"))
+	{
+		sc.MustGetToken('=');
+		if (!sc.CheckToken('-'))
 		{
-			desc = new FIntermissionAction;
-		}
-		else if (sc.Compare("scroller"))
-		{
-		}
-		else if (sc.Compare("cast"))
-		{
-		}
-		else if (sc.Compare("Fader"))
-		{
-			desc = new FIntermissionActionFader;
-		}
-		else if (sc.Compare("TextScreen"))
-		{
-			desc = new FIntermissionActionTextscreen;
-		}
-		else if (sc.Compare("GotoTitle"))
-		{
+			sc.MustGetFloat();
+			mScrollDelay = xs_RoundToInt(sc.Float*TICRATE);
 		}
 		else
 		{
-			sc.ScriptMessage("Unknown intermission type '%s'", sc.String);
+			sc.MustGetToken(TK_IntConst);
+			mScrollDelay = sc.Number;
 		}
+		return true;
 	}
-
+	else if (sc.Compare("ScrollTime"))
+	{
+		sc.MustGetToken('=');
+		if (!sc.CheckToken('-'))
+		{
+			sc.MustGetFloat();
+			mScrollTime = xs_RoundToInt(sc.Float*TICRATE);
+		}
+		else
+		{
+			sc.MustGetToken(TK_IntConst);
+			mScrollTime = sc.Number;
+		}
+		return true;
+	}
+	else if (sc.Compare("Background2"))
+	{
+		sc.MustGetToken('=');
+		sc.MustGetToken(TK_StringConst);
+		mSecondPic = sc.String;
+		return true;
+	}
+	else return Super::ParseKey(sc);
 }
 
+//==========================================================================
+//
+// ParseIntermission
+//
+//==========================================================================
+
+FIntermissionAction *FMapInfoParser::ParseIntermissionAction()
+{
+	FIntermissionAction *desc = NULL;
+
+	sc.MustGetToken(TK_Identifier);
+	if (sc.Compare("image"))
+	{
+		desc = new FIntermissionAction;
+	}
+	else if (sc.Compare("scroller"))
+	{
+		desc = new FIntermissionActionScroller;
+	}
+	else if (sc.Compare("cast"))
+	{
+		desc = new FIntermissionActionCast;
+	}
+	else if (sc.Compare("Fader"))
+	{
+		desc = new FIntermissionActionFader;
+	}
+	else if (sc.Compare("Wiper"))
+	{
+		desc = new FIntermissionActionWiper;
+	}
+	else if (sc.Compare("TextScreen"))
+	{
+		desc = new FIntermissionActionTextscreen;
+	}
+	else if (sc.Compare("GotoTitle"))
+	{
+		desc = new FIntermissionAction;
+		desc->mClass = TITLE_ID;
+	}
+	else
+	{
+		sc.ScriptMessage("Unknown intermission type '%s'", sc.String);
+	}
+
+	sc.MustGetToken('{');
+	while (!sc.CheckToken('}'))
+	{
+		bool success = false;
+		if (!sc.CheckToken(TK_Sound))
+		{
+			sc.MustGetToken(TK_Identifier);
+		}
+		if (desc != NULL)
+		{
+			success = desc->ParseKey(sc);
+			if (!success)
+			{
+				sc.ScriptMessage("Unknown key name '%s'\n", sc.String);
+			}
+		}
+		if (!success) SkipToNext();
+	}
+	return desc;
+}
+
+//==========================================================================
+//
+// ParseIntermission
+//
+//==========================================================================
+
+void FMapInfoParser::ParseIntermission()
+{
+	sc.MustGetString();
+	FName intname = sc.String;
+
+	FIntermissionDescriptor ** pDesc = IntermissionDescriptors.CheckKey(intname);
+	if (pDesc != NULL && *pDesc != NULL) delete *pDesc;
+
+	FIntermissionDescriptor *desc = new FIntermissionDescriptor();
+	IntermissionDescriptors[intname] = desc;
+
+	sc.MustGetToken('{');
+	while (!sc.CheckToken('}'))
+	{
+		FIntermissionAction *ac = ParseIntermissionAction();
+		if (ac != NULL) desc->mActions.Push(ac);
+	}
+}
+
+//==========================================================================
+//
+// Parse old style endsequence
+//
+//==========================================================================
 
 struct EndSequence
 {
@@ -382,6 +610,12 @@ FName FMapInfoParser::ParseEndGame()
 	seq.Format("EndSequence_%d_", generated++);
 	return FName(seq);
 }
+
+//==========================================================================
+//
+// Checks map name for end sequence
+//
+//==========================================================================
 
 FName FMapInfoParser::CheckEndSequence()
 {

@@ -39,6 +39,32 @@ struct FICastSound
 	FSoundID mSound;
 };
 
+enum EFadeType
+{
+	FADE_In,
+	FADE_Out,
+};
+
+enum EWipeType
+{
+	WIPE_Default,
+	WIPE_Cross,
+	WIPE_Melt,
+	WIPE_Burn
+};
+
+enum EScrollDir
+{
+	SCROLL_Left,
+	SCROLL_Right,
+	SCROLL_Up,
+	SCROLL_Down,
+};
+
+// actions that don't create objects
+#define WIPER_ID ((const PClass*)intptr_t(-1))
+#define TITLE_ID ((const PClass*)intptr_t(-2))
+
 //==========================================================================
 
 struct FIntermissionAction
@@ -51,6 +77,7 @@ struct FIntermissionAction
 	int mCdId;
 	int mDuration;
 	FString mBackground;
+	FString mPalette;
 	FString mSound;
 	bool mFlatfill;
 	TArray<FIntermissionPatch> mOverlays;
@@ -62,21 +89,21 @@ struct FIntermissionAction
 
 struct FIntermissionActionFader : public FIntermissionAction
 {
-	enum EFadeType
-	{
-		FADE_In,
-		FADE_Out,
-		FADE_Cross,
-		FADE_Melt,
-		FADE_Burn,
-		FADE_Wipe
-	};
-
 	typedef FIntermissionAction Super;
 
 	EFadeType mFadeType;
 
 	FIntermissionActionFader();
+	virtual bool ParseKey(FScanner &sc);
+};
+
+struct FIntermissionActionWiper : public FIntermissionAction
+{
+	typedef FIntermissionAction Super;
+
+	EWipeType mWipeType;
+
+	FIntermissionActionWiper();
 	virtual bool ParseKey(FScanner &sc);
 };
 
@@ -96,10 +123,8 @@ struct FIntermissionActionCast : public FIntermissionAction
 {
 	typedef FIntermissionAction Super;
 
-	FString mWalking;
-	FString mAttacking1;
-	FString mAttacking2;
-	FString mDying;
+	FString mName;
+	FName mCastClass;
 	TArray<FCastSound> mCastSounds;
 
 	FIntermissionActionCast();
@@ -158,7 +183,7 @@ class DIntermissionScreenFader : public DIntermissionScreen
 
 	int mTotalTime;
 	int mCounter;
-	int mType;
+	EFadeType mType;
 
 public:
 
@@ -192,10 +217,7 @@ class DIntermissionScreenCast : public DIntermissionScreen
 {
 	DECLARE_CLASS (DIntermissionScreenCast, DIntermissionScreen)
 
-	FState *mWalking;
-	FState *mAttacking1;
-	FState *mAttacking2;
-	FState *mDying;
+	FString mName;
 	TArray<FICastSound> mCastSounds;
 
 public:

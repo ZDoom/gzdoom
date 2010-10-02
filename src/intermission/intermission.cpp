@@ -37,10 +37,13 @@
 #include "w_wad.h"
 #include "intermission/intermission.h"
 
+FIntermissionDescriptorList IntermissionDescriptors;
+
 IMPLEMENT_CLASS(DIntermissionScreen)
 IMPLEMENT_CLASS(DIntermissionScreenFader)
 IMPLEMENT_CLASS(DIntermissionScreenText)
 IMPLEMENT_CLASS(DIntermissionScreenCast)
+IMPLEMENT_CLASS(DIntermissionScreenScroller)
 IMPLEMENT_CLASS(DIntermissionController)
 
 void DIntermissionScreen::Init(FIntermissionDescriptor *desc)

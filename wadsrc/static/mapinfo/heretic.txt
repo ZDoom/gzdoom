@@ -1,5 +1,5 @@
 // MAPINFO for Heretic (Shareware and Retail)
-#include "mapinfo/common.txt"
+include "mapinfo/common.txt"
 
 gameinfo
 {

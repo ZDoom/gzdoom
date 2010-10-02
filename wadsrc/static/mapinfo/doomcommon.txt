@@ -1,4 +1,4 @@
-#include "mapinfo/common.txt"
+include "mapinfo/common.txt"
 
 gameinfo
 {

@@ -1,5 +1,5 @@
 // MAPINFO for Strife (full version and teaser)
-#include "mapinfo/common.txt"
+include "mapinfo/common.txt"
 
 gameinfo
 {

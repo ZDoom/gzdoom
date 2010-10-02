@@ -54,6 +54,7 @@ class FScanner;
 #define GCC_YSEG __attribute__((section(SECTION_YREG)))
 #endif
 
+struct FIntermissionAction;
 
 struct FMapInfoParser
 {
@@ -99,6 +100,7 @@ struct FMapInfoParser
 	void SkipToNext();
 	void CheckEndOfFile(const char *block);
 
+	FIntermissionAction *ParseIntermissionAction();
 	void ParseIntermission();
 	FName CheckEndSequence();
 	FName ParseEndGame();

@@ -5498,6 +5498,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\sound\music_psuedo_mididevice.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\src\sound\music_smf_midiout.cpp"
 				>
 			</File>

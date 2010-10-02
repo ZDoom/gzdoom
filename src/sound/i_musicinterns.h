@@ -72,6 +72,8 @@ typedef BYTE *LPSTR;
 #endif
 #endif
 
+class MIDIStreamer;
+
 class MIDIDevice
 {
 public:
@@ -88,16 +90,17 @@ public:
 	virtual int StreamOutSync(MIDIHDR *data) = 0;
 	virtual int Resume() = 0;
 	virtual void Stop() = 0;
-	virtual int PrepareHeader(MIDIHDR *data) = 0;
-	virtual int UnprepareHeader(MIDIHDR *data) = 0;
-	virtual bool FakeVolume() = 0;
+	virtual int PrepareHeader(MIDIHDR *data);
+	virtual int UnprepareHeader(MIDIHDR *data);
+	virtual bool FakeVolume();
 	virtual bool Pause(bool paused) = 0;
-	virtual bool NeedThreadedCallback() = 0;
+	virtual bool NeedThreadedCallback();
 	virtual void PrecacheInstruments(const WORD *instruments, int count);
 	virtual void TimidityVolumeChanged();
 	virtual void FluidSettingInt(const char *setting, int value);
 	virtual void FluidSettingNum(const char *setting, double value);
 	virtual void FluidSettingStr(const char *setting, const char *value);
+	virtual bool Preprocess(MIDIStreamer *song);
 	virtual FString GetStats();
 };
 
@@ -139,6 +142,42 @@ protected:
 };
 #endif
 
+// Base class for psuedo-MIDI devices ---------------------------------------
+
+class PsuedoMIDIDevice : public MIDIDevice
+{
+public:
+	PsuedoMIDIDevice();
+	~PsuedoMIDIDevice();
+
+	void Close();
+	bool IsOpen() const;
+	int GetTechnology() const;
+	bool Pause(bool paused);
+	int Resume();
+	void Stop();
+	int StreamOut(MIDIHDR *data);
+	int StreamOutSync(MIDIHDR *data);
+	int SetTempo(int tempo);
+	int SetTimeDiv(int timediv);
+	FString GetStats();
+
+protected:
+	SoundStream *Stream;
+	bool Started;
+	int SampleRate;
+
+};
+
+// FMOD psuedo-MIDI device --------------------------------------------------
+
+class FMODMIDIDevice : public PsuedoMIDIDevice
+{
+public:
+	int Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata);
+	bool Preprocess(MIDIStreamer *song);
+};
+
 // Base class for software synthesizer MIDI output devices ------------------
 
 class SoftSynthMIDIDevice : public MIDIDevice
@@ -156,10 +195,6 @@ public:
 	int StreamOutSync(MIDIHDR *data);
 	int Resume();
 	void Stop();
-	int PrepareHeader(MIDIHDR *data);
-	int UnprepareHeader(MIDIHDR *data);
-	bool FakeVolume();
-	bool NeedThreadedCallback();
 	bool Pause(bool paused);
 
 protected:
@@ -335,10 +370,10 @@ enum EMIDIDevice
 	MIDI_OPL,
 	MIDI_GUS,
 	MIDI_Fluid,
+	MIDI_FMOD,
 
 	// only used by I_RegisterSong 
 	MIDI_Null,
-	MIDI_FMOD,
 	MIDI_Timidity
 };
 
@@ -378,6 +413,7 @@ protected:
 	static void Callback(unsigned int uMsg, void *userdata, DWORD dwParam1, DWORD dwParam2);
 
 	// Virtuals for subclasses to override
+	virtual void StartPlayback();
 	virtual void CheckCaps(int tech);
 	virtual void DoInitialSetup() = 0;
 	virtual void DoRestart() = 0;

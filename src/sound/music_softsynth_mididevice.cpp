@@ -1,6 +1,6 @@
 /*
 ** music_softsynth_mididevice.cpp
-** Common base clase for software synthesis MIDI devices.
+** Common base class for software synthesis MIDI devices.
 **
 **---------------------------------------------------------------------------
 ** Copyright 2008-2010 Randy Heit
@@ -267,56 +267,6 @@ int SoftSynthMIDIDevice::StreamOut(MIDIHDR *header)
 		*p = header;
 	}
 	return 0;
-}
-
-//==========================================================================
-//
-// SoftSynthMIDIDevice :: PrepareHeader
-//
-//==========================================================================
-
-int SoftSynthMIDIDevice::PrepareHeader(MIDIHDR *header)
-{
-	return 0;
-}
-
-//==========================================================================
-//
-// SoftSynthMIDIDevice :: UnprepareHeader
-//
-//==========================================================================
-
-int SoftSynthMIDIDevice::UnprepareHeader(MIDIHDR *header)
-{
-	return 0;
-}
-
-//==========================================================================
-//
-// SoftSynthMIDIDevice :: FakeVolume
-//
-// Since the softsynth output is rendered as a normal stream, its volume is
-// controlled through the GSnd interface, not here.
-//
-//==========================================================================
-
-bool SoftSynthMIDIDevice::FakeVolume()
-{
-	return false;
-}
-
-//==========================================================================
-//
-// SoftSynthMIDIDevice :: NeedThreadedCallabck
-//
-// We can service the callback directly rather than using a separate
-// thread.
-//
-//==========================================================================
-
-bool SoftSynthMIDIDevice::NeedThreadedCallback()
-{
-	return false;
 }
 
 //==========================================================================

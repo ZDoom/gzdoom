@@ -239,6 +239,10 @@ void MIDIStreamer::Play(bool looping, int subsong)
 		break;
 #endif
 
+	case MIDI_FMOD:
+		MIDI = new FMODMIDIDevice;
+		break;
+
 	case MIDI_GUS:
 		MIDI = new TimidityMIDIDevice;
 		break;
@@ -264,6 +268,49 @@ void MIDIStreamer::Play(bool looping, int subsong)
 
 	SetMIDISubsong(subsong);
 	CheckCaps(MIDI->GetTechnology());
+
+	if (MIDI->Preprocess(this))
+	{
+		StartPlayback();
+	}
+
+	if (0 != MIDI->Resume())
+	{
+		Printf ("Starting MIDI playback failed\n");
+		Stop();
+	}
+	else
+	{
+#ifdef _WIN32
+		if (MIDI->NeedThreadedCallback())
+		{
+			PlayerThread = CreateThread(NULL, 0, PlayerProc, this, 0, &tid);
+			if (PlayerThread == NULL)
+			{
+				Printf ("Creating MIDI thread failed\n");
+				Stop();
+			}
+			else
+			{
+				m_Status = STATE_Playing;
+			}
+		}
+		else
+#endif
+		{
+			m_Status = STATE_Playing;
+		}
+	}
+}
+
+//==========================================================================
+//
+// MIDIStreamer :: StartPlayback
+//
+//==========================================================================
+
+void MIDIStreamer::StartPlayback()
+{
 	Precache();
 	LoopLimit = 0;
 
@@ -312,34 +359,6 @@ void MIDIStreamer::Play(bool looping, int subsong)
 		}
 	}
 	while (BufferNum != 0);
-
-	if (0 != MIDI->Resume())
-	{
-		Printf ("Starting MIDI playback failed\n");
-		Stop();
-	}
-	else
-	{
-#ifdef _WIN32
-		if (MIDI->NeedThreadedCallback())
-		{
-			PlayerThread = CreateThread(NULL, 0, PlayerProc, this, 0, &tid);
-			if (PlayerThread == NULL)
-			{
-				Printf ("Creating MIDI thread failed\n");
-				Stop();
-			}
-			else
-			{
-				m_Status = STATE_Playing;
-			}
-		}
-		else
-#endif
-		{
-			m_Status = STATE_Playing;
-		}
-	}
 }
 
 //==========================================================================
@@ -456,6 +475,12 @@ void MIDIStreamer::MusicVolumeChanged()
 		OutputVolume(Volume);
 	}
 }
+
+//==========================================================================
+//
+// MIDIStreamer :: TimidityVolumeChanged
+//
+//==========================================================================
 
 void MIDIStreamer::TimidityVolumeChanged()
 {
@@ -1102,11 +1127,8 @@ static void WriteVarLen (TArray<BYTE> &file, DWORD value)
 
 void MIDIStreamer::SetTempo(int new_tempo)
 {
-	if (NULL == MIDI)
-	{
-		InitialTempo = new_tempo;
-	}
-	else if (0 == MIDI->SetTempo(new_tempo))
+	InitialTempo = new_tempo;
+	if (NULL != MIDI && 0 == MIDI->SetTempo(new_tempo))
 	{
 		Tempo = new_tempo;
 	}
@@ -1225,6 +1247,75 @@ MIDIDevice::~MIDIDevice()
 
 void MIDIDevice::PrecacheInstruments(const WORD *instruments, int count)
 {
+}
+
+//==========================================================================
+//
+// MIDIDevice :: Preprocess
+//
+// Gives the MIDI device a chance to do some processing with the song before
+// it starts playing it. Returns true if MIDIStreamer should perform its
+// standard playback startup sequence.
+//
+//==========================================================================
+
+bool MIDIDevice::Preprocess(MIDIStreamer *song)
+{
+	return true;
+}
+
+//==========================================================================
+//
+// MIDIDevice :: PrepareHeader
+//
+// Wrapper for MCI's midiOutPrepareHeader.
+//
+//==========================================================================
+
+int MIDIDevice::PrepareHeader(MIDIHDR *header)
+{
+	return 0;
+}
+
+//==========================================================================
+//
+// MIDIDevice :: UnprepareHeader
+//
+// Wrapper for MCI's midiOutUnprepareHeader.
+//
+//==========================================================================
+
+int MIDIDevice::UnprepareHeader(MIDIHDR *header)
+{
+	return 0;
+}
+
+//==========================================================================
+//
+// MIDIDevice :: FakeVolume
+//
+// Since most implementations render as a normal stream, their volume is
+// controlled through the GSnd interface, not here.
+//
+//==========================================================================
+
+bool MIDIDevice::FakeVolume()
+{
+	return false;
+}
+
+//==========================================================================
+//
+// MIDIDevice :: NeedThreadedCallabck
+//
+// Most implementations can service the callback directly rather than using
+// a separate thread.
+//
+//==========================================================================
+
+bool MIDIDevice::NeedThreadedCallback()
+{
+	return false;
 }
 
 //==========================================================================

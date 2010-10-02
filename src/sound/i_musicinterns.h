@@ -100,7 +100,7 @@ public:
 	virtual void FluidSettingInt(const char *setting, int value);
 	virtual void FluidSettingNum(const char *setting, double value);
 	virtual void FluidSettingStr(const char *setting, const char *value);
-	virtual bool Preprocess(MIDIStreamer *song);
+	virtual bool Preprocess(MIDIStreamer *song, bool looping);
 	virtual FString GetStats();
 };
 
@@ -165,8 +165,7 @@ public:
 protected:
 	SoundStream *Stream;
 	bool Started;
-	int SampleRate;
-
+	bool bLooping;
 };
 
 // FMOD psuedo-MIDI device --------------------------------------------------
@@ -175,8 +174,50 @@ class FMODMIDIDevice : public PsuedoMIDIDevice
 {
 public:
 	int Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata);
-	bool Preprocess(MIDIStreamer *song);
+	bool Preprocess(MIDIStreamer *song, bool looping);
 };
+
+// MIDI file played with TiMidity++ and possibly streamed through FMOD ------
+
+class TimidityPPMIDIDevice : public PsuedoMIDIDevice
+{
+public:
+	TimidityPPMIDIDevice();
+	~TimidityPPMIDIDevice();
+
+	int Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata);
+	bool Preprocess(MIDIStreamer *song, bool looping);
+	bool IsOpen() const;
+	int Resume();
+
+	void Stop();
+	bool IsOpen();
+	void TimidityVolumeChanged();
+
+protected:
+	bool LaunchTimidity();
+
+	FTempFileName DiskName;
+#ifdef _WIN32
+	HANDLE ReadWavePipe;
+	HANDLE WriteWavePipe;
+	HANDLE KillerEvent;
+	HANDLE ChildProcess;
+	bool Validated;
+	bool ValidateTimidity();
+#else // _WIN32
+	int WavePipe[2];
+	pid_t ChildProcess;
+#endif
+	FString CommandLine;
+	size_t LoopPos;
+
+	static bool FillStream(SoundStream *stream, void *buff, int len, void *userdata);
+#ifdef _WIN32
+	static const char EventName[];
+#endif
+};
+
 
 // Base class for software synthesizer MIDI output devices ------------------
 
@@ -371,10 +412,10 @@ enum EMIDIDevice
 	MIDI_GUS,
 	MIDI_Fluid,
 	MIDI_FMOD,
+	MIDI_Timidity,
 
 	// only used by I_RegisterSong 
 	MIDI_Null,
-	MIDI_Timidity
 };
 
 class MIDIStreamer : public MusInfo
@@ -649,44 +690,6 @@ protected:
 	StreamSong () : m_Stream(NULL) {}
 
 	SoundStream *m_Stream;
-};
-
-// MIDI file played with Timidity and possibly streamed through FMOD --------
-
-class TimiditySong : public StreamSong
-{
-public:
-	TimiditySong (FILE *file, BYTE *musiccache, int length);
-	~TimiditySong ();
-	void Play (bool looping, int subsong);
-	void Stop ();
-	bool IsPlaying ();
-	bool IsValid () const { return CommandLine.Len() > 0; }
-	void TimidityVolumeChanged();
-
-protected:
-	void PrepTimidity ();
-	bool LaunchTimidity ();
-
-	FTempFileName DiskName;
-#ifdef _WIN32
-	HANDLE ReadWavePipe;
-	HANDLE WriteWavePipe;
-	HANDLE KillerEvent;
-	HANDLE ChildProcess;
-	bool Validated;
-	bool ValidateTimidity ();
-#else // _WIN32
-	int WavePipe[2];
-	pid_t ChildProcess;
-#endif
-	FString CommandLine;
-	size_t LoopPos;
-
-	static bool FillStream (SoundStream *stream, void *buff, int len, void *userdata);
-#ifdef _WIN32
-	static const char EventName[];
-#endif
 };
 
 // MUS file played by a software OPL2 synth and streamed through FMOD -------

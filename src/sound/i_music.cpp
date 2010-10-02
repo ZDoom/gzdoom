@@ -326,12 +326,7 @@ static MIDIStreamer *CreateMIDIStreamer(FILE *file, BYTE *musiccache, int len, E
 
 static MusInfo *CreateMIDISong(FILE *file, const char *filename, BYTE *musiccache, int offset, int len, EMIDIDevice devtype, EMIDIType miditype)
 {
-	if (devtype == MIDI_Timidity)
-	{
-		assert(miditype == MIDI_MIDI);
-		return new TimiditySong(file, musiccache, len);
-	}
-	else if (devtype >= MIDI_Null)
+	if (devtype >= MIDI_Null)
 	{
 		assert(miditype == MIDI_MIDI);
 		if (musiccache != NULL)

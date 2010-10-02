@@ -3,31 +3,6 @@
 #include "cmdlib.h"
 #include "templates.h"
 
-#if !defined(_WIN32) && 0
-// Under Linux, buffer output from Timidity to try to avoid "bubbles"
-// in the sound output.
-class FPipeBuffer
-{
-public:
-	FPipeBuffer::FPipeBuffer (int fragSize, int nFrags, int pipe);
-	~FPipeBuffer ();
-
-	int ReadFrag (BYTE *Buf);
-
-private:
-	int PipeHandle;
-	int FragSize;
-	int BuffSize;
-	int WritePos, ReadPos;
-	BYTE *Buffer;
-	bool GotFull;
-	SDL_mutex *BufferMutex;
-	SDL_thread *Reader;
-
-	static int ThreadProc (void *data);
-};
-#endif
-
 #ifndef _WIN32
 #include <unistd.h>
 
@@ -45,7 +20,7 @@ void ChildSigHandler (int signum)
 #endif
 
 #ifdef _WIN32
-const char TimiditySong::EventName[] = "TiMidity Killer";
+const char TimidityPPMIDIDevice::EventName[] = "TiMidity Killer";
 static char TimidityTitle[] = "TiMidity (ZDoom Launched)";
 
 CVAR (String, timidity_exe, "timidity.exe", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
@@ -58,6 +33,7 @@ CVAR (String, timidity_reverb, "0", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool, timidity_stereo, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool, timidity_8bit, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool, timidity_byteswap, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+
 // added because Timidity's output is rather loud.
 CUSTOM_CVAR (Float, timidity_mastervolume, 1.0f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
@@ -69,8 +45,7 @@ CUSTOM_CVAR (Float, timidity_mastervolume, 1.0f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 		currSong->TimidityVolumeChanged();
 }
 
-
-CUSTOM_CVAR (Int, timidity_pipe, 60, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CUSTOM_CVAR (Int, timidity_pipe, 90, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 { // pipe size in ms
 	if (timidity_pipe < 0)
 	{ // a negative size makes no sense
@@ -86,64 +61,42 @@ CUSTOM_CVAR (Int, timidity_frequency, 22050, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 		self = 65000;
 }
 
-void TimiditySong::Play (bool looping, int subsong)
-{
-	m_Status = STATE_Stopped;
-	m_Looping = looping;
+//==========================================================================
+//
+// TimidityPPMIDIDevice Constructor
+//
+//==========================================================================
 
-	if (LaunchTimidity ())
-	{
-		if (m_Stream != NULL)
-		{
-			if (m_Stream->Play (true, timidity_mastervolume))
-			{
-				m_Status = STATE_Playing;
-			}
-		}
-		else
-		{ // Assume success if not mixing with FMOD
-			m_Status = STATE_Playing;
-		}
-	}
-}
-
-void TimiditySong::Stop ()
-{
-	if (m_Status != STATE_Stopped)
-	{
-		if (m_Stream != NULL)
-		{
-			m_Stream->Stop ();
-		}
+TimidityPPMIDIDevice::TimidityPPMIDIDevice()
+	: DiskName("zmid"),
 #ifdef _WIN32
-		if (ChildProcess != INVALID_HANDLE_VALUE)
-		{
-			SetEvent (KillerEvent);
-			if (WaitForSingleObject (ChildProcess, 500) != WAIT_OBJECT_0)
-			{
-				TerminateProcess (ChildProcess, 666);
-			}
-			CloseHandle (ChildProcess);
-			ChildProcess = INVALID_HANDLE_VALUE;
-		}
+	  ReadWavePipe(INVALID_HANDLE_VALUE), WriteWavePipe(INVALID_HANDLE_VALUE),
+	  KillerEvent(INVALID_HANDLE_VALUE),
+	  ChildProcess(INVALID_HANDLE_VALUE),
+	  Validated(false)
 #else
-		if (ChildProcess != -1)
-		{
-			if (kill (ChildProcess, SIGTERM) != 0)
-			{
-				kill (ChildProcess, SIGKILL);
-			}
-			waitpid (ChildProcess, NULL, 0);
-			ChildProcess = -1;
-		}
+	  ChildProcess(-1)
 #endif
+{
+#ifndef _WIN32
+	WavePipe[0] = WavePipe[1] = -1;
+#endif
+	
+	if (DiskName == NULL)
+	{
+		Printf(PRINT_BOLD, "Could not create temp music file\n");
+		return;
 	}
-	m_Status = STATE_Stopped;
 }
 
-TimiditySong::~TimiditySong ()
+//==========================================================================
+//
+// TimidityPPMIDIDevice Destructor
+//
+//==========================================================================
+
+TimidityPPMIDIDevice::~TimidityPPMIDIDevice ()
 {
-	Stop ();
 #if _WIN32
 	if (WriteWavePipe != INVALID_HANDLE_VALUE)
 	{
@@ -174,68 +127,53 @@ TimiditySong::~TimiditySong ()
 #endif
 }
 
-TimiditySong::TimiditySong (FILE *file, BYTE *musiccache, int len)
-	: DiskName ("zmid"),
-#ifdef _WIN32
-	  ReadWavePipe (INVALID_HANDLE_VALUE), WriteWavePipe (INVALID_HANDLE_VALUE),
-	  KillerEvent (INVALID_HANDLE_VALUE),
-	  ChildProcess (INVALID_HANDLE_VALUE),
-	  Validated (false)
-#else
-	  ChildProcess (-1)
-#endif
+//==========================================================================
+//
+// TimidityPPMIDIDevice :: Preprocess
+//
+//==========================================================================
+
+bool TimidityPPMIDIDevice::Preprocess(MIDIStreamer *song, bool looping)
 {
+	TArray<BYTE> midi;
 	bool success;
 	FILE *f;
 
-#ifndef _WIN32
-	WavePipe[0] = WavePipe[1] = -1;
-#endif
-	
-	if (DiskName == NULL)
+	if (CommandLine.IsEmpty())
 	{
-		Printf (PRINT_BOLD, "Could not create temp music file\n");
-		return;
+		return false;
 	}
 
-	f = fopen (DiskName, "wb");
+	// Tell TiMidity++ whether it should loop or not
+	CommandLine.LockBuffer()[LoopPos] = looping ? 'l' : ' ';
+	CommandLine.UnlockBuffer();
+
+	// Write MIDI song to temporary file
+	song->CreateSMF(midi);
+
+	f = fopen(DiskName, "wb");
 	if (f == NULL)
 	{
-		Printf (PRINT_BOLD, "Could not open temp music file\n");
-		return;
+		Printf(PRINT_BOLD, "Could not open temp music file\n");
+		return false;
 	}
-
-	BYTE *buf;
-	
-	if (file != NULL) 
-	{
-		buf = new BYTE[len];
-		fread (buf, 1, len, file);
-	}
-	else
-	{
-		buf = musiccache;
-	}
-
-	// Write to temporary file
-	success = (fwrite (buf, 1, len, f) == (size_t)len);
+	success = (fwrite(&midi[0], 1, midi.Size(), f) == (size_t)midi.Size());
 	fclose (f);
-	if (file != NULL) 
-	{
-		delete[] buf;
-	}
 
-	if (success)
+	if (!success)
 	{
-		PrepTimidity ();
+		Printf(PRINT_BOLD, "Could not write temp music file\n");
 	}
-	else
-	{
-		Printf (PRINT_BOLD, "Could not write temp music file\n");
-	}
+	return false;
 }
 
-void TimiditySong::PrepTimidity ()
+//==========================================================================
+//
+// TimidityPPMIDIDevice :: Open
+//
+//==========================================================================
+
+int TimidityPPMIDIDevice::Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata)
 {
 	int pipeSize;
 
@@ -244,19 +182,19 @@ void TimiditySong::PrepTimidity ()
 	
 	if (!Validated && !ValidateTimidity ())
 	{
-		return;
+		return 101;
 	}
 
 	Validated = true;
-	KillerEvent = CreateEvent (NULL, FALSE, FALSE, EventName);
+	KillerEvent = CreateEvent(NULL, FALSE, FALSE, EventName);
 	if (KillerEvent == INVALID_HANDLE_VALUE)
 	{
-		Printf (PRINT_BOLD, "Could not create TiMidity++ kill event.\n");
-		return;
+		Printf(PRINT_BOLD, "Could not create TiMidity++ kill event.\n");
+		return 102;
 	}
 #endif // WIN32
 
-	CommandLine.Format ("%s %s -EFchorus=%s -EFreverb=%s -s%d ",
+	CommandLine.Format("%s %s -EFchorus=%s -EFreverb=%s -s%d ",
 		*timidity_exe, *timidity_extargs,
 		*timidity_chorus, *timidity_reverb, *timidity_frequency);
 
@@ -274,31 +212,31 @@ void TimiditySong::PrepTimidity ()
 			bitmask <<= 1;
 		pipeSize = bitmask;
 
-		if (!CreatePipe (&ReadWavePipe, &WriteWavePipe, &inheritable, pipeSize))
+		if (!CreatePipe(&ReadWavePipe, &WriteWavePipe, &inheritable, pipeSize))
 #else // WIN32
 		if (pipe (WavePipe) == -1)
 #endif
 		{
-			Printf (PRINT_BOLD, "Could not create a data pipe for TiMidity++.\n");
+			Printf(PRINT_BOLD, "Could not create a data pipe for TiMidity++.\n");
 			pipeSize = 0;
 		}
 		else
 		{
-			m_Stream = GSnd->CreateStream (FillStream, pipeSize,
+			Stream = GSnd->CreateStream(FillStream, pipeSize,
 				(timidity_stereo ? 0 : SoundStream::Mono) |
 				(timidity_8bit ? SoundStream::Bits8 : 0),
 				timidity_frequency, this);
-			if (m_Stream == NULL)
+			if (Stream == NULL)
 			{
-				Printf (PRINT_BOLD, "Could not create music stream.\n");
+				Printf(PRINT_BOLD, "Could not create music stream.\n");
 				pipeSize = 0;
 #ifdef _WIN32
-				CloseHandle (WriteWavePipe);
-				CloseHandle (ReadWavePipe);
+				CloseHandle(WriteWavePipe);
+				CloseHandle(ReadWavePipe);
 				ReadWavePipe = WriteWavePipe = INVALID_HANDLE_VALUE;
 #else
-				close (WavePipe[1]);
-				close (WavePipe[0]);
+				close(WavePipe[1]);
+				close(WavePipe[0]);
 				WavePipe[0] = WavePipe[1] = -1;
 #endif
 			}
@@ -306,7 +244,7 @@ void TimiditySong::PrepTimidity ()
 		
 		if (pipeSize == 0)
 		{
-			Printf (PRINT_BOLD, "If your soundcard cannot play more than one\n"
+			Printf(PRINT_BOLD, "If your soundcard cannot play more than one\n"
 								"wave at a time, you will hear no music.\n");
 		}
 		else
@@ -331,14 +269,22 @@ void TimiditySong::PrepTimidity ()
 
 	CommandLine += " -idl ";
 	CommandLine += DiskName.GetName();
+	return 0;
 }
 
-#ifdef _WIN32
+//==========================================================================
+//
+// TimidityPPMIDIDevice :: ValidateTimidity
+//
 // Check that this TiMidity++ knows about the TiMidity Killer event.
 // If not, then we can't use it, because Win32 provides no other way
 // to conveniently signal it to quit. The check is done by simply
 // searching for the event's name somewhere in the executable.
-bool TimiditySong::ValidateTimidity ()
+//
+//==========================================================================
+
+#ifdef _WIN32
+bool TimidityPPMIDIDevice::ValidateTimidity()
 {
 	char foundPath[MAX_PATH];
 	char *filePart;
@@ -354,12 +300,12 @@ bool TimiditySong::ValidateTimidity ()
 	pathLen = SearchPath (NULL, timidity_exe, NULL, MAX_PATH, foundPath, &filePart);
 	if (pathLen == 0)
 	{
-		Printf (PRINT_BOLD, "Please set the timidity_exe cvar to the location of TiMidity++\n");
+		Printf(PRINT_BOLD, "Please set the timidity_exe cvar to the location of TiMidity++\n");
 		return false;
 	}
 	if (pathLen > MAX_PATH)
 	{
-		Printf (PRINT_BOLD, "The path to TiMidity++ is too long\n");
+		Printf(PRINT_BOLD, "The path to TiMidity++ is too long\n");
 		return false;
 	}
 
@@ -367,21 +313,21 @@ bool TimiditySong::ValidateTimidity ()
 		OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, NULL);
 	if (diskFile == INVALID_HANDLE_VALUE)
 	{
-		Printf (PRINT_BOLD, "Could not access %s\n", foundPath);
+		Printf(PRINT_BOLD, "Could not access %s\n", foundPath);
 		return false;
 	}
 	fileLen = GetFileSize (diskFile, NULL);
 	mapping = CreateFileMapping (diskFile, NULL, PAGE_READONLY, 0, 0, NULL);
 	if (mapping == NULL)
 	{
-		Printf (PRINT_BOLD, "Could not create mapping for %s\n", foundPath);
+		Printf(PRINT_BOLD, "Could not create mapping for %s\n", foundPath);
 		CloseHandle (diskFile);
 		return false;
 	}
 	exeBase = (const BYTE *)MapViewOfFile (mapping, FILE_MAP_READ, 0, 0, 0);
 	if (exeBase == NULL)
 	{
-		Printf (PRINT_BOLD, "Could not map %s\n", foundPath);
+		Printf(PRINT_BOLD, "Could not map %s\n", foundPath);
 		CloseHandle (mapping);
 		CloseHandle (diskFile);
 		return false;
@@ -392,12 +338,12 @@ bool TimiditySong::ValidateTimidity ()
 	{
 		for (exe = exeBase, exeEnd = exeBase+fileLen; exe < exeEnd; )
 		{
-			const char *tSpot = (const char *)memchr (exe, 'T', exeEnd - exe);
+			const char *tSpot = (const char *)memchr(exe, 'T', exeEnd - exe);
 			if (tSpot == NULL)
 			{
 				break;
 			}
-			if (memcmp (tSpot+1, EventName+1, sizeof(EventName)-1) == 0)
+			if (memcmp(tSpot+1, EventName+1, sizeof(EventName)-1) == 0)
 			{
 				good = true;
 				break;
@@ -407,32 +353,35 @@ bool TimiditySong::ValidateTimidity ()
 	}
 	catch (...)
 	{
-		Printf (PRINT_BOLD, "Error reading %s\n", foundPath);
+		Printf(PRINT_BOLD, "Error reading %s\n", foundPath);
 	}
 	if (!good)
 	{
-		Printf (PRINT_BOLD, "ZDoom requires a special version of TiMidity++\n");
+		Printf(PRINT_BOLD, "ZDoom requires a special version of TiMidity++\n");
 	}
 
-	UnmapViewOfFile ((LPVOID)exeBase);
-	CloseHandle (mapping);
-	CloseHandle (diskFile);
+	UnmapViewOfFile((LPVOID)exeBase);
+	CloseHandle(mapping);
+	CloseHandle(diskFile);
 
 	return good;
 }
 #endif // _WIN32
 
-bool TimiditySong::LaunchTimidity ()
+//==========================================================================
+//
+// TimidityPPMIDIDevice :: LaunchTimidity
+//
+//==========================================================================
+
+bool TimidityPPMIDIDevice::LaunchTimidity ()
 {
 	if (CommandLine.IsEmpty())
 	{
 		return false;
 	}
 
-	// Tell Timidity whether it should loop or not
-	char *cmdline = CommandLine.LockBuffer();
-	cmdline[LoopPos] = m_Looping ? 'l' : ' ';
-	DPrintf ("cmd: \x1cG%s\n", cmdline);
+	DPrintf ("cmd: \x1cG%s\n", CommandLine.GetChars());
 
 #ifdef _WIN32
 	STARTUPINFO startup = { sizeof(startup), };
@@ -448,7 +397,7 @@ bool TimiditySong::LaunchTimidity ()
 	startup.lpTitle = TimidityTitle;
 	startup.wShowWindow = SW_SHOWMINNOACTIVE;
 
-	if (CreateProcess (NULL, cmdline, NULL, NULL, TRUE,
+	if (CreateProcess(NULL, CommandLine.LockBuffer(), NULL, NULL, TRUE,
 		/*HIGH_PRIORITY_CLASS|*/DETACHED_PROCESS, NULL, NULL, &startup, &procInfo))
 	{
 		ChildProcess = procInfo.hProcess;
@@ -461,18 +410,18 @@ bool TimiditySong::LaunchTimidity ()
 
 	char hres[9];
 	LPTSTR msgBuf;
-	HRESULT err = GetLastError ();
+	HRESULT err = GetLastError();
 
 	if (!FormatMessage (FORMAT_MESSAGE_ALLOCATE_BUFFER |
 						FORMAT_MESSAGE_FROM_SYSTEM |
 						FORMAT_MESSAGE_IGNORE_INSERTS,
 						NULL, err, 0, (LPTSTR)&msgBuf, 0, NULL))
 	{
-		mysnprintf (hres, countof(hres), "%08lx", err);
+		mysnprintf(hres, countof(hres), "%08lx", err);
 		msgBuf = hres;
 	}
 
-	Printf (PRINT_BOLD, "Could not run timidity with the command line:\n%s\n"
+	Printf(PRINT_BOLD, "Could not run timidity with the command line:\n%s\n"
 						"Reason: %s\n", CommandLine.GetChars(), msgBuf);
 	if (msgBuf != hres)
 	{
@@ -543,14 +492,20 @@ bool TimiditySong::LaunchTimidity ()
 #endif // _WIN32
 }
 
-bool TimiditySong::FillStream (SoundStream *stream, void *buff, int len, void *userdata)
+//==========================================================================
+//
+// TimidityPPMIDIDevice :: FillStream
+//
+//==========================================================================
+
+bool TimidityPPMIDIDevice::FillStream(SoundStream *stream, void *buff, int len, void *userdata)
 {
-	TimiditySong *song = (TimiditySong *)userdata;
+	TimidityPPMIDIDevice *song = (TimidityPPMIDIDevice *)userdata;
 	
 #ifdef _WIN32
 	DWORD avail, got, didget;
 
-	if (!PeekNamedPipe (song->ReadWavePipe, NULL, 0, NULL, &avail, NULL) || avail == 0)
+	if (!PeekNamedPipe(song->ReadWavePipe, NULL, 0, NULL, &avail, NULL) || avail == 0)
 	{ // If nothing is available from the pipe, play silence.
 		memset (buff, 0, len);
 	}
@@ -559,14 +514,14 @@ bool TimiditySong::FillStream (SoundStream *stream, void *buff, int len, void *u
 		didget = 0;
 		for (;;)
 		{
-			ReadFile (song->ReadWavePipe, (BYTE *)buff+didget, len-didget, &got, NULL);
+			ReadFile(song->ReadWavePipe, (BYTE *)buff+didget, len-didget, &got, NULL);
 			didget += got;
 			if (didget >= (DWORD)len)
 				break;
 
-			// Give TiMidity a chance to output something more to the pipe
+			// Give TiMidity++ a chance to output something more to the pipe
 			Sleep (10);
-			if (!PeekNamedPipe (song->ReadWavePipe, NULL, 0, NULL, &avail, NULL) || avail == 0)
+			if (!PeekNamedPipe(song->ReadWavePipe, NULL, 0, NULL, &avail, NULL) || avail == 0)
 			{
 				memset ((BYTE *)buff+didget, 0, len-didget);
 				break;
@@ -581,7 +536,7 @@ bool TimiditySong::FillStream (SoundStream *stream, void *buff, int len, void *u
 	if (ChildQuit == song->ChildProcess)
 	{
 		ChildQuit = 0;
-		fprintf (stderr, "child gone\n");
+		fprintf(stderr, "child gone\n");
 		song->ChildProcess = -1;
 		return false;
 	}
@@ -599,32 +554,44 @@ bool TimiditySong::FillStream (SoundStream *stream, void *buff, int len, void *u
 	}
 //	fprintf(stderr,"something\n");
 
-	got = read (song->WavePipe[0], (BYTE *)buff, len);
+	got = read(song->WavePipe[0], (BYTE *)buff, len);
 	if (got < len)
 	{
-		memset ((BYTE *)buff+got, 0, len-got);
+		memset((BYTE *)buff+got, 0, len-got);
 	}
 #endif
 	return true;
 }
 
-void TimiditySong::TimidityVolumeChanged()
+//==========================================================================
+//
+// TimidityPPMIDIDevice :: TimidityVolumeChanged
+//
+//==========================================================================
+
+void TimidityPPMIDIDevice::TimidityVolumeChanged()
 {
-	if (m_Stream != NULL)
+	if (Stream != NULL)
 	{
-		m_Stream->SetVolume(timidity_mastervolume);
+		Stream->SetVolume(timidity_mastervolume);
 	}
 }
 
-bool TimiditySong::IsPlaying ()
+//==========================================================================
+//
+// TimidityPPMIDIDevice :: IsOpen
+//
+//==========================================================================
+
+bool TimidityPPMIDIDevice::IsOpen() const
 {
 #ifdef _WIN32
 	if (ChildProcess != INVALID_HANDLE_VALUE)
 	{
-		if (WaitForSingleObject (ChildProcess, 0) != WAIT_TIMEOUT)
-		{ // Timidity has quit
-			CloseHandle (ChildProcess);
-			ChildProcess = INVALID_HANDLE_VALUE;
+		if (WaitForSingleObject(ChildProcess, 0) != WAIT_TIMEOUT)
+		{ // Timidity++ has quit
+			CloseHandle(ChildProcess);
+			const_cast<TimidityPPMIDIDevice *>(this)->ChildProcess = INVALID_HANDLE_VALUE;
 #else
 	if (ChildProcess != -1)
 	{
@@ -632,15 +599,6 @@ bool TimiditySong::IsPlaying ()
 		{
 			ChildProcess = -1;
 #endif
-			if (m_Looping)
-			{
-				if (!LaunchTimidity ())
-				{
-					Stop ();
-					return false;
-				}
-				return true;
-			}
 			return false;
 		}
 		return true;
@@ -648,86 +606,66 @@ bool TimiditySong::IsPlaying ()
 	return false;
 }
 
-#if !defined(_WIN32) && 0
-FPipeBuffer::FPipeBuffer (int fragSize, int nFrags, int pipe)
-	: PipeHandle (pipe),
-	  FragSize (fragSize),
-	  BuffSize (fragSize * nFrags),
-	  WritePos (0), ReadPos (0), GotFull (false),
-	  Reader (0), PleaseExit (0)
+//==========================================================================
+//
+// TimidityPPMIDIDevice :: Resume
+//
+//==========================================================================
+
+int TimidityPPMIDIDevice::Resume()
 {
-	Buffer = new BYTE[BuffSize];
-	if (Buffer != NULL)
+	if (!Started)
 	{
-		BufferMutex = SDL_CreateMutex ();
-		if (BufferMutex == NULL)
+		if (LaunchTimidity())
 		{
-			Reader = SDL_CreateThread (ThreadProc, (void *)this);
+			// Assume success if not mixing with FMOD
+			if (Stream == NULL || Stream->Play(true, timidity_mastervolume))
+			{
+				Started = true;
+				return 0;
+			}
 		}
+		return 1;
 	}
+	return 0;
 }
 
-FPipeBuffer::~FPipeBuffer ()
-{
-	if (Reader != NULL)
-	{ // I like the Win32 IPC facilities better than SDL's
-	  // Fortunately, this is a simple thread, so I can cheat
-	  // like this.
-		SDL_KillThread (ThreadProc);
-	}
-	if (BufferMutex != NULL)
-	{
-		SDL_DestroyMutex (BufferMutex);
-	}
-	if (Buffer != NULL)
-	{
-		delete[] Buffer;
-	}
-}
+//==========================================================================
+//
+// TimidityPPMIDIDevice :: Stop
+//
+//==========================================================================
 
-int FPipeBuffer::ReadFrag (BYTE *buf)
+void TimidityPPMIDIDevice::Stop ()
 {
-	int startavvail;
-	int avail;
-	int pos;
-	int opos;
-	
-	if (SDL_mutexP (BufferMutex) == -1)
-		return 0;
-	
-	if (WritePos > ReadPos)
+	if (Started)
 	{
-		avail = WritePos - ReadPos;
-	}
-	else
-	{
-		avail = BuffSize - ReadPos + WritePos;
-	}
-	if (avail > FragSize)
-		avail = FragSize;
-	
-	startavail = avali;
-	pos = ReadPos;
-	opos = 0;
-	
-	while (avail != 0)
-	{
-		int thistime;
-		
-		thistime = (pos + avail > BuffSize) ? BuffSize - pos : avail;
-		memcpy (buf + opos, Buffer + pos, thistime);
-		if (thistime != avail)
+		if (Stream != NULL)
 		{
-			pos = 0;
-			avail -= thistime;
+			Stream->Stop();
 		}
-		opos += thistime;
+#ifdef _WIN32
+		if (ChildProcess != INVALID_HANDLE_VALUE)
+		{
+			SetEvent(KillerEvent);
+			if (WaitForSingleObject(ChildProcess, 500) != WAIT_OBJECT_0)
+			{
+				TerminateProcess(ChildProcess, 666);
+			}
+			CloseHandle(ChildProcess);
+			ChildProcess = INVALID_HANDLE_VALUE;
+		}
+#else
+		if (ChildProcess != -1)
+		{
+			if (kill(ChildProcess, SIGTERM) != 0)
+			{
+				kill(ChildProcess, SIGKILL);
+			}
+			waitpid(ChildProcess, NULL, 0);
+			ChildProcess = -1;
+		}
+#endif
 	}
-
-	ReadPos = pos;
-	
-	SDL_mutexV (BufferMutex);
-	
-	return startavail;
+	Started = false;
 }
-#endif	// !_WIN32

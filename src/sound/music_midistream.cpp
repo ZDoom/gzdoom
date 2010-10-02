@@ -251,6 +251,10 @@ void MIDIStreamer::Play(bool looping, int subsong)
 		MIDI = new OPLMIDIDevice;
 		break;
 
+	case MIDI_Timidity:
+		MIDI = new TimidityPPMIDIDevice;
+		break;
+
 	default:
 		MIDI = NULL;
 		break;
@@ -269,7 +273,7 @@ void MIDIStreamer::Play(bool looping, int subsong)
 	SetMIDISubsong(subsong);
 	CheckCaps(MIDI->GetTechnology());
 
-	if (MIDI->Preprocess(this))
+	if (MIDI->Preprocess(this, looping))
 	{
 		StartPlayback();
 	}
@@ -1259,7 +1263,7 @@ void MIDIDevice::PrecacheInstruments(const WORD *instruments, int count)
 //
 //==========================================================================
 
-bool MIDIDevice::Preprocess(MIDIStreamer *song)
+bool MIDIDevice::Preprocess(MIDIStreamer *song, bool looping)
 {
 	return true;
 }

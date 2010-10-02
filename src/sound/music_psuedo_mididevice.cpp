@@ -67,7 +67,7 @@ PsuedoMIDIDevice::PsuedoMIDIDevice()
 {
 	Stream = NULL;
 	Started = false;
-	SampleRate = GSnd != NULL ? (int)GSnd->GetOutputRate() : 44100;
+	bLooping = true;
 }
 
 //==========================================================================
@@ -129,7 +129,7 @@ int PsuedoMIDIDevice::Resume()
 {
 	if (!Started)
 	{
-		if (Stream->Play(true, 1))
+		if (Stream->Play(bLooping, 1))
 		{
 			Started = true;
 			return 0;
@@ -250,11 +250,11 @@ int FMODMIDIDevice::Open(void (*callback)(unsigned int, void *, DWORD, DWORD), v
 //
 //==========================================================================
 
-bool FMODMIDIDevice::Preprocess(MIDIStreamer *song)
+bool FMODMIDIDevice::Preprocess(MIDIStreamer *song, bool looping)
 {
 	TArray<BYTE> midi;
 
 	song->CreateSMF(midi);
-	Stream = GSnd->OpenStream((char *)&midi[0], SoundStream::Loop, -1, midi.Size());
+	Stream = GSnd->OpenStream((char *)&midi[0], looping ? SoundStream::Loop : 0, -1, midi.Size());
 	return false;
 }

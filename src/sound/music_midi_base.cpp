@@ -38,13 +38,28 @@ static void AddDefaultMidiDevices(FOptionValues *opt)
 
 }
 
+static void MIDIDeviceChanged(int newdev)
+{
+	static int oldmididev = INT_MIN;
+
+	// If a song is playing, move it to the new device.
+	if (oldmididev != newdev && currSong != NULL && currSong->IsMIDI())
+	{
+		MusInfo *song = currSong;
+		if (song->m_Status == MusInfo::STATE_Playing)
+		{
+			song->Stop();
+			song->Start(song->m_Looping);
+		}
+	}
+	oldmididev = newdev;
+}
+
 #ifdef _WIN32
-	   UINT		mididevice;
+UINT mididevice;
 
 CUSTOM_CVAR (Int, snd_mididevice, -1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
-	UINT oldmididev = mididevice;
-
 	if (!nummididevicesset)
 		return;
 
@@ -54,26 +69,8 @@ CUSTOM_CVAR (Int, snd_mididevice, -1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 		self = 0;
 		return;
 	}
-	else if (self < 0)
-	{
-		mididevice = 0;
-	}
-	else
-	{
-		mididevice = self;
-	}
-
-	// If a song is playing, move it to the new device.
-	if (oldmididev != mididevice && currSong != NULL && currSong->IsMIDI())
-	{
-		// Does this even work, except for Windows system devices?
-		MusInfo *song = currSong;
-		if (song->m_Status == MusInfo::STATE_Playing)
-		{
-			song->Stop();
-			song->Start(song->m_Looping);
-		}
-	}
+	mididevice = MAX<UINT>(0, self);
+	MIDIDeviceChanged(self);
 }
 
 void I_InitMusicWin32 ()
@@ -196,6 +193,8 @@ CUSTOM_CVAR(Int, snd_mididevice, -1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 		self = -5;
 	else if (self > -1)
 		self = -1;
+	else
+		MIDIDeviceChanged(self);
 }
 
 void I_BuildMIDIMenuList (FOptionValues *opt)

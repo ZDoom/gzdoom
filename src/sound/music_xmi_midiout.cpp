@@ -107,7 +107,7 @@ extern char MIDI_CommonLengths[15];
 //
 //==========================================================================
 
-XMISong::XMISong (FILE *file, BYTE *musiccache, int len, EMIDIDevice type)
+XMISong::XMISong (FILE *file, BYTE *musiccache, int len, EMidiDevice type)
 : MIDIStreamer(type), MusHeader(0), Songs(0)
 {
 #ifdef _WIN32
@@ -683,7 +683,7 @@ XMISong::EventSource XMISong::FindNextDue()
 
 MusInfo *XMISong::GetOPLDumper(const char *filename)
 {
-	return new XMISong(this, filename, MIDI_OPL);
+	return new XMISong(this, filename, MDEV_OPL);
 }
 
 //==========================================================================
@@ -694,7 +694,7 @@ MusInfo *XMISong::GetOPLDumper(const char *filename)
 
 MusInfo *XMISong::GetWaveDumper(const char *filename, int rate)
 {
-	return new XMISong(this, filename, MIDI_GUS);
+	return new XMISong(this, filename, MDEV_GUS);
 }
 
 //==========================================================================
@@ -703,7 +703,7 @@ MusInfo *XMISong::GetWaveDumper(const char *filename, int rate)
 //
 //==========================================================================
 
-XMISong::XMISong(const XMISong *original, const char *filename, EMIDIDevice type)
+XMISong::XMISong(const XMISong *original, const char *filename, EMidiDevice type)
 : MIDIStreamer(filename, type)
 {
 	SongLen = original->SongLen;

@@ -91,7 +91,7 @@ static const BYTE CtrlTranslate[15] =
 //
 //==========================================================================
 
-MUSSong2::MUSSong2 (FILE *file, BYTE *musiccache, int len, EMIDIDevice type)
+MUSSong2::MUSSong2 (FILE *file, BYTE *musiccache, int len, EMidiDevice type)
 : MIDIStreamer(type), MusHeader(0), MusBuffer(0)
 {
 #ifdef _WIN32
@@ -371,7 +371,7 @@ end:
 
 MusInfo *MUSSong2::GetOPLDumper(const char *filename)
 {
-	return new MUSSong2(this, filename, MIDI_OPL);
+	return new MUSSong2(this, filename, MDEV_OPL);
 }
 
 //==========================================================================
@@ -382,7 +382,7 @@ MusInfo *MUSSong2::GetOPLDumper(const char *filename)
 
 MusInfo *MUSSong2::GetWaveDumper(const char *filename, int rate)
 {
-	return new MUSSong2(this, filename, MIDI_GUS);
+	return new MUSSong2(this, filename, MDEV_GUS);
 }
 
 //==========================================================================
@@ -391,7 +391,7 @@ MusInfo *MUSSong2::GetWaveDumper(const char *filename, int rate)
 //
 //==========================================================================
 
-MUSSong2::MUSSong2(const MUSSong2 *original, const char *filename, EMIDIDevice type)
+MUSSong2::MUSSong2(const MUSSong2 *original, const char *filename, EMidiDevice type)
 : MIDIStreamer(filename, type)
 {
 	int songstart = LittleShort(original->MusHeader->SongStart);

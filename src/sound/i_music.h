@@ -70,7 +70,7 @@ public:
 	virtual void Resume () = 0;
 	virtual void Stop () = 0;
 	virtual bool IsPlaying () = 0;
-	virtual bool IsMIDI () const = 0;
+	virtual bool IsMIDI () const;
 	virtual bool IsValid () const = 0;
 	virtual bool SetPosition (unsigned int ms);
 	virtual bool SetSubsong (int subsong);

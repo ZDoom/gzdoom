@@ -247,6 +247,11 @@ bool MusInfo::SetPosition (unsigned int ms)
 	return false;
 }
 
+bool MusInfo::IsMIDI() const
+{
+	return false;
+}
+
 bool MusInfo::SetSubsong (int subsong)
 {
 	return false;
@@ -297,7 +302,7 @@ MusInfo *MusInfo::GetWaveDumper(const char *filename, int rate)
 //
 //==========================================================================
 
-static MIDIStreamer *CreateMIDIStreamer(FILE *file, BYTE *musiccache, int len, EMIDIDevice devtype, EMIDIType miditype)
+static MIDIStreamer *CreateMIDIStreamer(FILE *file, BYTE *musiccache, int len, EMidiDevice devtype, EMIDIType miditype)
 {
 	switch (miditype)
 	{
@@ -316,29 +321,6 @@ static MIDIStreamer *CreateMIDIStreamer(FILE *file, BYTE *musiccache, int len, E
 	default:
 		return NULL;
 	}
-}
-
-//==========================================================================
-//
-// create a MIDI player
-//
-//==========================================================================
-
-static MusInfo *CreateMIDISong(FILE *file, const char *filename, BYTE *musiccache, int offset, int len, EMIDIDevice devtype, EMIDIType miditype)
-{
-	if (devtype >= MIDI_Null)
-	{
-		assert(miditype == MIDI_MIDI);
-		if (musiccache != NULL)
-		{
-			return new StreamSong((char *)musiccache, -1, len);
-		}
-		else
-		{
-			return new StreamSong(filename, offset, len);
-		}
-	}
-	else return CreateMIDIStreamer(file, musiccache, len, devtype, miditype);
 }
 
 //==========================================================================
@@ -389,66 +371,6 @@ static EMIDIType IdentifyMIDIType(DWORD *id, int size)
 		return MIDI_NOTMIDI;
 	}
 }
-
-//==========================================================================
-//
-// select the MIDI device to play on
-//
-//==========================================================================
-
-static EMIDIDevice SelectMIDIDevice(int device)
-{
-	/* MIDI are played as:
-		- OPL: 
-			- if explicitly selected by $mididevice 
-			- when snd_mididevice  is -3 and no midi device is set for the song
-
-		- Timidity: 
-			- if explicitly selected by $mididevice 
-			- when snd_mididevice  is -2 and no midi device is set for the song
-
-		- FMod:
-			- if explicitly selected by $mididevice 
-			- when snd_mididevice  is -1 and no midi device is set for the song
-			- as fallback when both OPL and Timidity failed unless snd_mididevice is >= 0
-
-		- MMAPI (Win32 only):
-			- if explicitly selected by $mididevice (non-Win32 redirects this to FMOD)
-			- when snd_mididevice  is >= 0 and no midi device is set for the song
-			- as fallback when both OPL and Timidity failed and snd_mididevice is >= 0
-	*/
-	EMIDIDevice devtype = MIDI_Null;
-
-	// Choose the type of MIDI device we want.
-	if (device == MDEV_FMOD || (snd_mididevice == -1 && device == MDEV_DEFAULT))
-	{
-		return MIDI_FMOD;
-	}
-	else if (device == MDEV_TIMIDITY || (snd_mididevice == -2 && device == MDEV_DEFAULT))
-	{
-		return MIDI_Timidity;
-	}
-	else if (device == MDEV_OPL || (snd_mididevice == -3 && device == MDEV_DEFAULT))
-	{
-		return MIDI_OPL;
-	}
-	else if (device == MDEV_GUS || (snd_mididevice == -4 && device == MDEV_DEFAULT))
-	{
-		return MIDI_GUS;
-	}
-	#ifdef HAVE_FLUIDSYNTH
-	else if (device == MDEV_FLUIDSYNTH || (snd_mididevice == -5 && device == MDEV_DEFAULT))
-	{
-		return MIDI_Fluid;
-	}
-	#endif
-	#ifdef _WIN32
-		return MIDI_Win;
-	#else
-		return MIDI_Null;
-	#endif
-}
-
 
 //==========================================================================
 //
@@ -557,45 +479,24 @@ MusInfo *I_RegisterSong (const char *filename, BYTE *musiccache, int offset, int
 	{
 		TArray<BYTE> midi;
 
-		EMIDIDevice devtype = SelectMIDIDevice(device);
+		EMidiDevice devtype = (EMidiDevice)device;
 
 retry_as_fmod:
-		if (devtype >= MIDI_Null)
-		{
-			// Convert to standard MIDI for external sequencers.
-			MIDIStreamer *streamer = CreateMIDIStreamer(file, musiccache, len, MIDI_Null, miditype);
-			if (streamer != NULL)
-			{
-				if (streamer->IsValid())
-				{
-					streamer->CreateSMF(midi);
-					miditype = MIDI_MIDI;
-					musiccache = &midi[0];
-					len = midi.Size();
-					if (file != NULL)
-					{
-						fclose(file);
-						file = NULL;
-					}
-				}
-				delete streamer;
-			}
-		}
-		info = CreateMIDISong(file, filename, musiccache, offset, len, devtype, miditype);
+		info = CreateMIDIStreamer(file, musiccache, len, devtype, miditype);
 		if (info != NULL && !info->IsValid())
 		{
 			delete info;
 			info = NULL;
 		}
-		if (info == NULL && devtype != MIDI_FMOD && snd_mididevice < 0)
+		if (info == NULL && devtype != MDEV_FMOD && snd_mididevice < 0)
 		{
-			devtype = MIDI_FMOD;
+			devtype = MDEV_FMOD;
 			goto retry_as_fmod;
 		}
 #ifdef _WIN32
-		if (info == NULL && devtype != MIDI_Win && snd_mididevice >= 0)
+		if (info == NULL && devtype != MDEV_MMAPI && snd_mididevice >= 0)
 		{
-			info = CreateMIDISong(file, filename, musiccache, offset, len, MIDI_Win, miditype);
+			info = CreateMIDIStreamer(file, musiccache, len, MDEV_MMAPI, miditype);
 		}
 #endif
 	}

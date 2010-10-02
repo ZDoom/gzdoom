@@ -23,6 +23,7 @@
 #include "mus2midi.h"
 #include "i_sound.h"
 #include "i_music.h"
+#include "s_sound.h"
 
 void I_InitMusicWin32 ();
 void I_ShutdownMusicWin32 ();
@@ -404,24 +405,10 @@ protected:
 
 // Base class for streaming MUS and MIDI files ------------------------------
 
-// MIDI device selection.
-enum EMIDIDevice
-{
-	MIDI_Win,
-	MIDI_OPL,
-	MIDI_GUS,
-	MIDI_Fluid,
-	MIDI_FMOD,
-	MIDI_Timidity,
-
-	// only used by I_RegisterSong 
-	MIDI_Null,
-};
-
 class MIDIStreamer : public MusInfo
 {
 public:
-	MIDIStreamer(EMIDIDevice type);
+	MIDIStreamer(EMidiDevice type);
 	~MIDIStreamer();
 
 	void MusicVolumeChanged();
@@ -442,7 +429,7 @@ public:
 	void CreateSMF(TArray<BYTE> &file);
 
 protected:
-	MIDIStreamer(const char *dumpname, EMIDIDevice type);
+	MIDIStreamer(const char *dumpname, EMidiDevice type);
 
 	void OutputVolume (DWORD volume);
 	int FillBuffer(int buffer_num, int max_events, DWORD max_time);
@@ -450,7 +437,9 @@ protected:
 	int VolumeControllerChange(int channel, int volume);
 	int ClampLoopCount(int loopcount);
 	void SetTempo(int new_tempo);
-	
+	static EMidiDevice SelectMIDIDevice(EMidiDevice devtype);
+	MIDIDevice *CreateMIDIDevice(EMidiDevice devtype) const;
+
 	static void Callback(unsigned int uMsg, void *userdata, DWORD dwParam1, DWORD dwParam2);
 
 	// Virtuals for subclasses to override
@@ -498,7 +487,7 @@ protected:
 	int InitialTempo;
 	BYTE ChannelVolumes[16];
 	DWORD Volume;
-	EMIDIDevice DeviceType;
+	EMidiDevice DeviceType;
 	bool CallbackIsThreaded;
 	int LoopLimit;
 	FString DumpFilename;
@@ -509,14 +498,14 @@ protected:
 class MUSSong2 : public MIDIStreamer
 {
 public:
-	MUSSong2(FILE *file, BYTE *musiccache, int length, EMIDIDevice type);
+	MUSSong2(FILE *file, BYTE *musiccache, int length, EMidiDevice type);
 	~MUSSong2();
 
 	MusInfo *GetOPLDumper(const char *filename);
 	MusInfo *GetWaveDumper(const char *filename, int rate);
 
 protected:
-	MUSSong2(const MUSSong2 *original, const char *filename, EMIDIDevice type);	// file dump constructor
+	MUSSong2(const MUSSong2 *original, const char *filename, EMidiDevice type);	// file dump constructor
 
 	void DoInitialSetup();
 	void DoRestart();
@@ -535,14 +524,14 @@ protected:
 class MIDISong2 : public MIDIStreamer
 {
 public:
-	MIDISong2(FILE *file, BYTE *musiccache, int length, EMIDIDevice type);
+	MIDISong2(FILE *file, BYTE *musiccache, int length, EMidiDevice type);
 	~MIDISong2();
 
 	MusInfo *GetOPLDumper(const char *filename);
 	MusInfo *GetWaveDumper(const char *filename, int rate);
 
 protected:
-	MIDISong2(const MIDISong2 *original, const char *filename, EMIDIDevice type);	// file dump constructor
+	MIDISong2(const MIDISong2 *original, const char *filename, EMidiDevice type);	// file dump constructor
 
 	void CheckCaps(int tech);
 	void DoInitialSetup();
@@ -592,14 +581,14 @@ protected:
 class HMISong : public MIDIStreamer
 {
 public:
-	HMISong(FILE *file, BYTE *musiccache, int length, EMIDIDevice type);
+	HMISong(FILE *file, BYTE *musiccache, int length, EMidiDevice type);
 	~HMISong();
 
 	MusInfo *GetOPLDumper(const char *filename);
 	MusInfo *GetWaveDumper(const char *filename, int rate);
 
 protected:
-	HMISong(const HMISong *original, const char *filename, EMIDIDevice type);	// file dump constructor
+	HMISong(const HMISong *original, const char *filename, EMidiDevice type);	// file dump constructor
 
 	void SetupForHMI(int len);
 	void SetupForHMP(int len);
@@ -634,7 +623,7 @@ protected:
 class XMISong : public MIDIStreamer
 {
 public:
-	XMISong(FILE *file, BYTE *musiccache, int length, EMIDIDevice type);
+	XMISong(FILE *file, BYTE *musiccache, int length, EMidiDevice type);
 	~XMISong();
 
 	MusInfo *GetOPLDumper(const char *filename);
@@ -644,7 +633,7 @@ protected:
 	struct TrackInfo;
 	enum EventSource { EVENT_None, EVENT_Real, EVENT_Fake };
 
-	XMISong(const XMISong *original, const char *filename, EMIDIDevice type);	// file dump constructor
+	XMISong(const XMISong *original, const char *filename, EMidiDevice type);	// file dump constructor
 
 	int FindXMIDforms(const BYTE *chunk, int len, TrackInfo *songs) const;
 	void FoundXMID(const BYTE *chunk, int len, TrackInfo *song) const;
@@ -680,7 +669,6 @@ public:
 	void Resume ();
 	void Stop ();
 	bool IsPlaying ();
-	bool IsMIDI () const { return false; }
 	bool IsValid () const { return m_Stream != NULL; }
 	bool SetPosition (unsigned int pos);
 	bool SetSubsong (int subsong);
@@ -732,7 +720,6 @@ public:
 	void Resume ();
 	void Stop ();
 	bool IsPlaying ();
-	bool IsMIDI () const { return false; }
 	bool IsValid () const { return m_Inited; }
 
 protected:

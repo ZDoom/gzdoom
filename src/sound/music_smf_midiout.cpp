@@ -101,7 +101,7 @@ char MIDI_CommonLengths[15] = { 0, 1, 2, 1, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0 };
 //
 //==========================================================================
 
-MIDISong2::MIDISong2 (FILE *file, BYTE *musiccache, int len, EMIDIDevice type)
+MIDISong2::MIDISong2 (FILE *file, BYTE *musiccache, int len, EMidiDevice type)
 : MIDIStreamer(type), MusHeader(0), Tracks(0)
 {
 	int p;
@@ -782,7 +782,7 @@ MIDISong2::TrackInfo *MIDISong2::FindNextDue ()
 
 MusInfo *MIDISong2::GetOPLDumper(const char *filename)
 {
-	return new MIDISong2(this, filename, MIDI_OPL);
+	return new MIDISong2(this, filename, MDEV_OPL);
 }
 
 //==========================================================================
@@ -793,7 +793,7 @@ MusInfo *MIDISong2::GetOPLDumper(const char *filename)
 
 MusInfo *MIDISong2::GetWaveDumper(const char *filename, int rate)
 {
-	return new MIDISong2(this, filename, MIDI_GUS);
+	return new MIDISong2(this, filename, MDEV_GUS);
 }
 
 //==========================================================================
@@ -802,7 +802,7 @@ MusInfo *MIDISong2::GetWaveDumper(const char *filename, int rate)
 //
 //==========================================================================
 
-MIDISong2::MIDISong2(const MIDISong2 *original, const char *filename, EMIDIDevice type)
+MIDISong2::MIDISong2(const MIDISong2 *original, const char *filename, EMidiDevice type)
 : MIDIStreamer(filename, type)
 {
 	SongLen = original->SongLen;

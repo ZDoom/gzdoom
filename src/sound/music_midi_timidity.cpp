@@ -429,7 +429,7 @@ bool TimidityPPMIDIDevice::LaunchTimidity ()
 	}
 	return false;
 #else
-	if (WavePipe[0] != -1 && WavePipe[1] == -1 && m_Stream != NULL)
+	if (WavePipe[0] != -1 && WavePipe[1] == -1 && Stream != NULL)
 	{
 		// Timidity was previously launched, so the write end of the pipe
 		// is closed, and the read end is still open. Close the pipe
@@ -437,9 +437,9 @@ bool TimidityPPMIDIDevice::LaunchTimidity ()
 		
 		close (WavePipe[0]);
 		WavePipe[0] = -1;
-		delete m_Stream;
-		m_Stream = NULL;
-		PrepTimidity ();
+		delete Stream;
+		Stream = NULL;
+		Open (NULL, NULL);
 	}
 	
 	int forkres;
@@ -597,7 +597,7 @@ bool TimidityPPMIDIDevice::IsOpen() const
 	{
 		if (waitpid (ChildProcess, NULL, WNOHANG) == ChildProcess)
 		{
-			ChildProcess = -1;
+			const_cast<TimidityPPMIDIDevice *>(this)->ChildProcess = -1;
 #endif
 			return false;
 		}

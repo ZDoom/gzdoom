@@ -147,13 +147,6 @@ bool FIntermissionAction::ParseKey(FScanner &sc)
 		pat->y = sc.Number;
 		return true;
 	}
-	else if (sc.Compare("Link"))
-	{
-		sc.MustGetToken('=');
-		sc.MustGetToken(TK_Identifier);
-		mLink = sc.String;
-		return true;
-	}
 	else return false;
 }
 
@@ -452,39 +445,46 @@ bool FIntermissionActionScroller::ParseKey(FScanner &sc)
 //
 //==========================================================================
 
-FIntermissionAction *FMapInfoParser::ParseIntermissionAction()
+void FMapInfoParser::ParseIntermissionAction(FIntermissionDescriptor *desc)
 {
-	FIntermissionAction *desc = NULL;
+	FIntermissionAction *ac = NULL;
 
 	sc.MustGetToken(TK_Identifier);
 	if (sc.Compare("image"))
 	{
-		desc = new FIntermissionAction;
+		ac = new FIntermissionAction;
 	}
 	else if (sc.Compare("scroller"))
 	{
-		desc = new FIntermissionActionScroller;
+		ac = new FIntermissionActionScroller;
 	}
 	else if (sc.Compare("cast"))
 	{
-		desc = new FIntermissionActionCast;
+		ac = new FIntermissionActionCast;
 	}
 	else if (sc.Compare("Fader"))
 	{
-		desc = new FIntermissionActionFader;
+		ac = new FIntermissionActionFader;
 	}
 	else if (sc.Compare("Wiper"))
 	{
-		desc = new FIntermissionActionWiper;
+		ac = new FIntermissionActionWiper;
 	}
 	else if (sc.Compare("TextScreen"))
 	{
-		desc = new FIntermissionActionTextscreen;
+		ac = new FIntermissionActionTextscreen;
 	}
 	else if (sc.Compare("GotoTitle"))
 	{
-		desc = new FIntermissionAction;
-		desc->mClass = TITLE_ID;
+		ac = new FIntermissionAction;
+		ac->mClass = TITLE_ID;
+	}
+	else if (sc.Compare("Link"))
+	{
+		sc.MustGetToken('=');
+		sc.MustGetToken(TK_Identifier);
+		desc->mLink = sc.String;
+		return;
 	}
 	else
 	{
@@ -499,9 +499,9 @@ FIntermissionAction *FMapInfoParser::ParseIntermissionAction()
 		{
 			sc.MustGetToken(TK_Identifier);
 		}
-		if (desc != NULL)
+		if (ac != NULL)
 		{
-			success = desc->ParseKey(sc);
+			success = ac->ParseKey(sc);
 			if (!success)
 			{
 				sc.ScriptMessage("Unknown key name '%s'\n", sc.String);
@@ -509,7 +509,7 @@ FIntermissionAction *FMapInfoParser::ParseIntermissionAction()
 		}
 		if (!success) SkipToNext();
 	}
-	return desc;
+	if (ac != NULL) desc->mActions.Push(ac);
 }
 
 //==========================================================================
@@ -528,8 +528,7 @@ void FMapInfoParser::ParseIntermission()
 	sc.MustGetToken('{');
 	while (!sc.CheckToken('}'))
 	{
-		FIntermissionAction *ac = ParseIntermissionAction();
-		if (ac != NULL) desc->mActions.Push(ac);
+		ParseIntermissionAction(desc);
 	}
 }
 
@@ -644,7 +643,7 @@ FName FMapInfoParser::ParseEndGame()
 		bunny->mScrollTime = 640;
 		bunny->mDuration = 1130;
 		action = bunny;
-		if (newSeq.PlayTheEnd) action->mLink = "TheEnd";
+		if (newSeq.PlayTheEnd) desc->mLink = "TheEnd";
 		break;
 	}
 
@@ -662,7 +661,7 @@ FName FMapInfoParser::ParseEndGame()
 	case END_Cast:
 		action = new FIntermissionAction;
 		action->mDuration = 1;
-		action->mLink = "Doom2Cast";
+		desc->mLink = "Doom2Cast";
 		break;
 	}
 
@@ -806,8 +805,8 @@ void F_StartFinale (const char *music, int musicorder, int cdtrack, unsigned int
 			textscreen->mCdTrack = cdtrack;
 			textscreen->mCdId = cdid;
 		}
-		textscreen->mLink = ending? endsequence : NAME_None;
 		FIntermissionDescriptor *desc = new FIntermissionDescriptor;
+		desc->mLink = ending? endsequence : NAME_None;
 		desc->mActions.Push(textscreen);
 
 		FIntermissionActionWiper *wiper = new FIntermissionActionWiper;

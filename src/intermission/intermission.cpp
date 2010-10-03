@@ -40,6 +40,7 @@
 #include "v_video.h"
 #include "v_palette.h"
 #include "d_main.h"
+#include "gstrings.h"
 #include "intermission/intermission.h"
 
 FIntermissionDescriptorList IntermissionDescriptors;
@@ -78,8 +79,27 @@ void DIntermissionScreen::Init(FIntermissionAction *desc, bool first)
 		}
 	}
 	mDuration = desc->mDuration;
-	mBackground = TexMan.CheckForTexture(desc->mBackground, FTexture::TEX_MiscPatch);
-	mFlatfill = desc->mFlatfill;
+
+	const char *texname = desc->mBackground;
+	if (*texname == '@')
+	{
+		char *pp;
+		unsigned int v = strtoul(texname+1, &pp, 10) - 1;
+		if (*pp == 0 && v < gameinfo.finalePages.Size())
+		{
+			texname = gameinfo.finalePages[v].GetChars();
+		}
+	}
+	else if (*texname == '$')
+	{
+		texname = GStrings[texname+1];
+	}
+	FTextureID tex = TexMan.CheckForTexture(texname, FTexture::TEX_MiscPatch);
+	if (tex.isValid())
+	{
+		mBackground = tex;
+		mFlatfill = desc->mFlatfill;
+	}
 	S_Sound (CHAN_VOICE | CHAN_UI, desc->mSound, 1.0f, ATTN_NONE);
 	if (desc->mPalette.IsNotEmpty() && (lumpnum = Wads.CheckNumForFullName(desc->mPalette, true)) > 0)
 	{
@@ -117,7 +137,7 @@ int DIntermissionScreen::Responder (event_t *ev)
 
 int DIntermissionScreen::Ticker ()
 {
-	mTicker++;
+	if (++mTicker >= mDuration && mDuration > 0) return -1;
 	return 0;
 }
 
@@ -138,6 +158,10 @@ void DIntermissionScreen::Drawer ()
 	else
 	{
 		screen->Clear (0, 0, SCREENWIDTH, SCREENHEIGHT, 0, 0);
+	}
+	for (unsigned i=0; i < mOverlays.Size(); i++)
+	{
+		screen->DrawTexture (TexMan[mOverlays[i].mPic], mOverlays[i].x, mOverlays[i].y, DTA_320x200, true, TAG_DONE);
 	}
 }
 
@@ -195,16 +219,26 @@ void DIntermissionScreenText::Init(FIntermissionAction *desc, bool first)
 {
 	Super::Init(desc, first);
 	mText = static_cast<FIntermissionActionTextscreen*>(desc)->mText;
+	if (mText[0] == '$') mText = GStrings[&mText[1]];
 	mTextSpeed = static_cast<FIntermissionActionTextscreen*>(desc)->mTextSpeed;
 	mTextX = static_cast<FIntermissionActionTextscreen*>(desc)->mTextX;
+	if (mTextX < 0) mTextX =gameinfo.TextScreenX;
 	mTextY = static_cast<FIntermissionActionTextscreen*>(desc)->mTextY;
-	mTextLen = (int)mText.Len();
+	if (mTextY < 0) mTextY =gameinfo.TextScreenY;
+	mTextLen = (int)strlen(mText);
 	mTextDelay = static_cast<FIntermissionActionTextscreen*>(desc)->mTextDelay;
 	mTextColor = static_cast<FIntermissionActionTextscreen*>(desc)->mTextColor;
 }
 
 int DIntermissionScreenText::Responder (event_t *ev)
 {
+	if (ev->type == EV_KeyDown)
+	{
+		if (mTicker < (mTextDelay + mTextLen) * mTextSpeed)
+		{
+			mTicker = (mTextDelay + mTextLen) * mTextSpeed;
+		}
+	}
 	return Super::Responder(ev);
 }
 
@@ -215,6 +249,7 @@ int DIntermissionScreenText::Ticker ()
 
 void DIntermissionScreenText::Drawer ()
 {
+	Super::Drawer();
 	if (mTicker >= mTextDelay)
 	{
 		FTexture *pic;
@@ -229,12 +264,12 @@ void DIntermissionScreenText::Drawer ()
 
 		int cx = mTextX;
 		int cy = mTextY;
-		const char *ch = mText.GetChars();
+		const char *ch = mText;
 			
-		count = (mTicker - mTextDelay - 10) / mTextSpeed;
+		count = (mTicker - mTextDelay) / mTextSpeed;
 		range = SmallFont->GetColorTranslation (mTextColor);
 
-		for ( ; count ; count-- )
+		for ( ; count > 0 ; count-- )
 		{
 			c = *ch++;
 			if (!c)
@@ -254,8 +289,8 @@ void DIntermissionScreenText::Drawer ()
 				if (scale)
 				{
 					screen->DrawTexture (pic,
-						cx + 320 / 2,
-						cy + 200 / 2,
+						cx,// + 320 / 2,
+						cy,// + 200 / 2,
 						DTA_Translation, range,
 						DTA_Clean, true,
 						TAG_DONE);
@@ -263,8 +298,8 @@ void DIntermissionScreenText::Drawer ()
 				else
 				{
 					screen->DrawTexture (pic,
-						cx + 320 / 2,
-						cy + 200 / 2,
+						cx,// + 320 / 2,
+						cy,// + 200 / 2,
 						DTA_Translation, range,
 						TAG_DONE);
 				}
@@ -272,7 +307,6 @@ void DIntermissionScreenText::Drawer ()
 			cx += w;
 		}
 	}
-	Super::Drawer();
 }
 
 //==========================================================================
@@ -363,7 +397,14 @@ DIntermissionController::DIntermissionController(FIntermissionDescriptor *Desc, 
 
 bool DIntermissionController::NextPage ()
 {
-	if (mScreen != NULL) mScreen->Destroy();
+	FTextureID bg;
+	bool fill = false;
+	if (mScreen != NULL) 
+	{
+		bg = mScreen->GetBackground(&fill);
+		mScreen->Destroy();
+	}
+again:
 	while ((unsigned)mIndex < mDesc->mActions.Size())
 	{
 		FIntermissionAction *action = mDesc->mActions[mIndex++];
@@ -381,8 +422,21 @@ bool DIntermissionController::NextPage ()
 		{
 			// create page here
 			mScreen = (DIntermissionScreen*)action->mClass->CreateNew();
+			mScreen->SetBackground(bg, fill);	// copy last screen's background before initializing
 			mScreen->Init(action, mFirst);
 			mFirst = false;
+			return true;
+		}
+	}
+	if (mDesc->mLink != NAME_None)
+	{
+		FIntermissionDescriptor **pDesc = IntermissionDescriptors.CheckKey(mDesc->mLink);
+		if (pDesc != NULL)
+		{
+			if (mDeleteDesc) delete mDesc;
+			mDeleteDesc = false;
+			mIndex = 0;
+			goto again;
 		}
 	}
 	return false;
@@ -403,7 +457,7 @@ void DIntermissionController::Ticker ()
 {
 	if (mScreen != NULL)
 	{
-		mAdvance = (mScreen->Ticker() == -1);
+		mAdvance |= (mScreen->Ticker() == -1);
 	}
 	if (mAdvance)
 	{
@@ -421,10 +475,15 @@ void DIntermissionController::Ticker ()
 
 void DIntermissionController::Drawer ()
 {
+	if (mScreen != NULL)
+	{
+		mScreen->Drawer();
+	}
 }
 
 void DIntermissionController::Destroy ()
 {
+	Super::Destroy();
 	if (mDeleteDesc) delete mDesc;
 	mDesc = NULL;
 }
@@ -464,6 +523,7 @@ bool F_Responder (event_t* ev)
 	{
 		return DIntermissionController::CurrentIntermission->Responder(ev); 
 	}
+	return false;
 }
 
 //==========================================================================

@@ -76,7 +76,6 @@ struct FIntermissionAction
 	bool mFlatfill;
 	bool mMusicLooping;
 	TArray<FIntermissionPatch> mOverlays;
-	FName mLink;
 
 	FIntermissionAction();
 	virtual bool ParseKey(FScanner &sc);
@@ -143,6 +142,7 @@ struct FIntermissionActionScroller : public FIntermissionAction
 
 struct FIntermissionDescriptor
 {
+	FName mLink;
 	TArray<FIntermissionAction *> mActions;
 };
 
@@ -172,6 +172,16 @@ public:
 	virtual int Ticker ();
 	virtual void Drawer ();
 	void Destroy();
+	FTextureID GetBackground(bool *fill)
+	{
+		*fill = mFlatfill;
+		return mBackground;
+	}
+	void SetBackground(FTextureID tex, bool fill)
+	{
+		mBackground = tex;
+		mFlatfill = fill;
+	}
 };
 
 class DIntermissionScreenFader : public DIntermissionScreen
@@ -195,7 +205,7 @@ class DIntermissionScreenText : public DIntermissionScreen
 {
 	DECLARE_CLASS (DIntermissionScreenText, DIntermissionScreen)
 
-	FString mText;
+	const char *mText;
 	int mTextSpeed;
 	int mTextX, mTextY;
 	int mTextCounter;

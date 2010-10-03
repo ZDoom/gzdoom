@@ -42,8 +42,8 @@ Intermission Inter_Bunny
 		InitialDelay = -230
 		Scrolltime = -640
 		Time = -1130
-		Link = TheEnd
 	}
+	Link = TheEnd
 }
 
 Intermission TheEnd
@@ -103,7 +103,6 @@ Intermission Inter_Underwater
 	Image
 	{
 		Background = "E2END", 0, "E2PAL"
-		Time = 10000000	// advance only manually
 	}
 	GotoTitle
 	{
@@ -142,8 +141,8 @@ Intermission Inter_Cast
 		Background = "$bgcastcall"
 		Time = -1
 		Music = "$MUSIC_EVIL"
-		Link = Doom2Cast
 	}
+	Link = Doom2Cast
 }
 
 Intermission Doom2Cast
@@ -258,8 +257,8 @@ Intermission Doom2Cast
 		CastClass = "DoomPlayer"
 		CastName = "$CC_HERO"
 		AttackSound = "Missile", 0, "weapons/sshotf"
-		Link = Doom2Cast	// restart cast call
 	}
+	Link = Doom2Cast	// restart cast call
 }
 
 Intermission Inter_Chess

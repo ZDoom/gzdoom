@@ -188,8 +188,6 @@ class DIntermissionScreenFader : public DIntermissionScreen
 {
 	DECLARE_CLASS (DIntermissionScreenFader, DIntermissionScreen)
 
-	int mTotalTime;
-	int mCounter;
 	EFadeType mType;
 
 public:

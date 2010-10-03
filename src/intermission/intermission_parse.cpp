@@ -240,6 +240,7 @@ FIntermissionActionTextscreen::FIntermissionActionTextscreen()
 	mTextX = -1;	// use gameinfo defaults
 	mTextY = -1;
 	mTextColor = CR_UNTRANSLATED;
+	mTextDelay = 10;
 }
 
 bool FIntermissionActionTextscreen::ParseKey(FScanner &sc)

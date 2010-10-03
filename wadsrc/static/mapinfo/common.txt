@@ -269,6 +269,7 @@ Intermission Inter_Chess
 		Background = "FINALE1"
 		TextSpeed = 3
 		TextLump = "win1msg"
+		Time = -250
 	}
 	TextScreen
 	{
@@ -276,6 +277,7 @@ Intermission Inter_Chess
 		Background = "FINALE2"
 		TextSpeed = 3
 		TextLump = "win2msg"
+		Time = -250
 	}
 	Fader
 	{
@@ -287,6 +289,11 @@ Intermission Inter_Chess
 	{
 		Music = "Chess"
 		Background = "FINALE3"
+		/* 
+		DrawConditional = "Multiplayer", 20, 0, "CHESSALL"
+		DrawConditional = "cleric", 60, 0, "CHESSC"
+		DrawConditional = "mage", 60, 0, "CHESSM"
+		*/
 		Time = 2
 		FadeType = FadeIn
 	}
@@ -294,18 +301,9 @@ Intermission Inter_Chess
 	{
 		Background = "FINALE3"
 		/* 
-		IfMultiplayer
-		{
-			Draw = 20, 0, "CHESSALL"
-		}
-		IfPlayer(cleric)
-		{
-			Draw = 60, 0, "CHESSC"
-		}
-		IfPlayer(mage)
-		{
-			Draw = 60, 0, "CHESSM"
-		}
+		DrawConditional = "Multiplayer", 20, 0, "CHESSALL"
+		DrawConditional = "cleric", 60, 0, "CHESSC"
+		DrawConditional = "mage", 60, 0, "CHESSM"
 		*/
 		TextSpeed = 3
 		TextLump = "win3msg"

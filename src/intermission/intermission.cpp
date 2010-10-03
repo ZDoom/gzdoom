@@ -157,7 +157,6 @@ void DIntermissionScreen::Drawer ()
 		if (!mFlatfill)
 		{
 			screen->DrawTexture (TexMan[mBackground], 0, 0, DTA_Fullscreen, true, TAG_DONE);
-			screen->FillBorder (NULL);
 		}
 		else
 		{
@@ -172,6 +171,7 @@ void DIntermissionScreen::Drawer ()
 	{
 		screen->DrawTexture (TexMan[mOverlays[i].mPic], mOverlays[i].x, mOverlays[i].y, DTA_320x200, true, TAG_DONE);
 	}
+	if (!mFlatfill) screen->FillBorder (NULL);
 }
 
 void DIntermissionScreen::Destroy()
@@ -205,19 +205,51 @@ void DIntermissionScreenFader::Init(FIntermissionAction *desc, bool first)
 	mType = static_cast<FIntermissionActionFader*>(desc)->mFadeType;
 }
 
+//===========================================================================
+//
+// FadePic
+//
+//===========================================================================
+
 int DIntermissionScreenFader::Responder (event_t *ev)
 {
+	if (ev->type == EV_KeyDown)
+	{
+		V_SetBlend(0,0,0,0);
+		return -1;
+	}
 	return Super::Responder(ev);
 }
 
 int DIntermissionScreenFader::Ticker ()
 {
+	if (mFlatfill || !mBackground.isValid()) return -1;
 	return Super::Ticker();
 }
 
 void DIntermissionScreenFader::Drawer ()
 {
-	Super::Drawer();
+	if (!mFlatfill && mBackground.isValid())
+	{
+		double factor = clamp(double(mTicker) / mDuration, 0., 1.);
+		if (mType == FADE_In) factor = 1.0 - factor;
+		int color = MAKEARGB(xs_RoundToInt(factor*255), 0,0,0);
+
+		if (screen->Begin2D(false))
+		{
+			screen->DrawTexture (TexMan[mBackground], 0, 0, DTA_Fullscreen, true, DTA_ColorOverlay, color, TAG_DONE);
+			for (unsigned i=0; i < mOverlays.Size(); i++)
+			{
+				screen->DrawTexture (TexMan[mOverlays[i].mPic], mOverlays[i].x, mOverlays[i].y, DTA_320x200, true, DTA_ColorOverlay, color, TAG_DONE);
+			}
+			screen->FillBorder (NULL);
+		}
+		else
+		{
+			V_SetBlend (0,0,0,int(256*factor));
+			Super::Drawer();
+		}
+	}
 }
 
 //==========================================================================
@@ -239,15 +271,17 @@ void DIntermissionScreenText::Init(FIntermissionAction *desc, bool first)
 	mTextLen = (int)strlen(mText);
 	mTextDelay = static_cast<FIntermissionActionTextscreen*>(desc)->mTextDelay;
 	mTextColor = static_cast<FIntermissionActionTextscreen*>(desc)->mTextColor;
+	// For text screens, the duration only counts when the text is complete.
+	if (mDuration > 0) mDuration += mTextDelay + mTextSpeed * mTextLen;
 }
 
 int DIntermissionScreenText::Responder (event_t *ev)
 {
 	if (ev->type == EV_KeyDown)
 	{
-		if (mTicker < (mTextDelay + mTextLen) * mTextSpeed)
+		if (mTicker < mTextDelay + (mTextLen * mTextSpeed))
 		{
-			mTicker = (mTextDelay + mTextLen) * mTextSpeed;
+			mTicker = mTextDelay + (mTextLen * mTextSpeed);
 			return 1;
 		}
 	}

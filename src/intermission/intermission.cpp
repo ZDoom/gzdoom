@@ -132,6 +132,10 @@ void DIntermissionScreen::Init(FIntermissionAction *desc, bool first)
 
 int DIntermissionScreen::Responder (event_t *ev)
 {
+	if (ev->type == EV_KeyDown)
+	{
+		return -1;
+	}
 	return 0;
 }
 
@@ -237,6 +241,7 @@ int DIntermissionScreenText::Responder (event_t *ev)
 		if (mTicker < (mTextDelay + mTextLen) * mTextSpeed)
 		{
 			mTicker = (mTextDelay + mTextLen) * mTextSpeed;
+			return 1;
 		}
 	}
 	return Super::Responder(ev);
@@ -389,16 +394,24 @@ DIntermissionController::DIntermissionController(FIntermissionDescriptor *Desc, 
 	mDesc = Desc;
 	mDeleteDesc = DeleteDesc;
 	mIndex = 0;
-	mAdvance = true;
+	mAdvance = false;
 	mScreen = NULL;
 	mFirst = true;
 	mEndingGame = endinggame;
+	NextPage();
 }
 
 bool DIntermissionController::NextPage ()
 {
 	FTextureID bg;
 	bool fill = false;
+
+	if (mIndex == (int)mDesc->mActions.Size()-1 && mDesc->mLink == NAME_None)
+	{
+		// last page
+		return false;
+	}
+
 	if (mScreen != NULL) 
 	{
 		bg = mScreen->GetBackground(&fill);
@@ -436,6 +449,7 @@ again:
 			if (mDeleteDesc) delete mDesc;
 			mDeleteDesc = false;
 			mIndex = 0;
+			mDesc = *pDesc;
 			goto again;
 		}
 	}
@@ -467,8 +481,8 @@ void DIntermissionController::Ticker ()
 			if (!mEndingGame)
 			{
 				gameaction = ga_worlddone;
+				Destroy();
 			}
-			Destroy();
 		}
 	}
 }

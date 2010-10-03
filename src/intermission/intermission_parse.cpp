@@ -718,6 +718,7 @@ FName FMapInfoParser::CheckEndSequence()
 		FIntermissionDescriptor *desc = new FIntermissionDescriptor;
 		FIntermissionAction *action = new FIntermissionAction;
 		action->mBackground = sc.String;
+		desc->mActions.Push(action);
 		ReplaceIntermission(seqname, desc);
 		return FName(seqname);
 	}

@@ -771,7 +771,11 @@ void FMapInfoParser::ParseNextMap(char *mapname)
 		sc.MustGetString();
 		strncpy (mapname, sc.String, 8);
 		mapname[8] = 0;
-		CheckEndSequence();
+		FName seq = CheckEndSequence();
+		if (seq != NAME_None)
+		{
+			mysnprintf(mapname, 11, "enDSeQ%04x", int(seq));
+		}
 	}
 }
 

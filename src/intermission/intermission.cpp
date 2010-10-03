@@ -247,11 +247,6 @@ int DIntermissionScreenText::Responder (event_t *ev)
 	return Super::Responder(ev);
 }
 
-int DIntermissionScreenText::Ticker ()
-{
-	return Super::Ticker();
-}
-
 void DIntermissionScreenText::Drawer ()
 {
 	Super::Drawer();
@@ -359,25 +354,67 @@ void DIntermissionScreenCast::Drawer ()
 void DIntermissionScreenScroller::Init(FIntermissionAction *desc, bool first)
 {
 	Super::Init(desc, first);
+	mFirstPic = mBackground;
 	mSecondPic = TexMan.CheckForTexture(static_cast<FIntermissionActionScroller*>(desc)->mSecondPic, FTexture::TEX_MiscPatch);
 	mScrollDelay = static_cast<FIntermissionActionScroller*>(desc)->mScrollDelay;
 	mScrollTime = static_cast<FIntermissionActionScroller*>(desc)->mScrollTime;
 	mScrollDir = static_cast<FIntermissionActionScroller*>(desc)->mScrollDir;
 }
 
-int DIntermissionScreenScroller::Responder (event_t *ev)
-{
-	return Super::Responder(ev);
-}
-
-int DIntermissionScreenScroller::Ticker ()
-{
-	return Super::Ticker();
-}
-
 void DIntermissionScreenScroller::Drawer ()
 {
-	Super::Drawer();
+	FTexture *tex = TexMan[mFirstPic];
+	FTexture *tex2 = TexMan[mSecondPic];
+	if (mTicker >= mScrollDelay && mTicker < mScrollDelay + mScrollTime && tex != NULL && tex2 != NULL)
+	{
+
+		int fwidth = tex->GetScaledWidth();
+		int fheight = tex->GetScaledHeight();
+
+		double xpos1 = 0, ypos1 = 0, xpos2 = 0, ypos2 = 0;
+
+		switch (mScrollDir)
+		{
+		case SCROLL_Up:
+			ypos1 = double(mTicker - mScrollDelay) * fheight / mScrollTime;
+			ypos2 = ypos1 - fheight;
+			break;
+
+		case SCROLL_Down:
+			ypos1 = -double(mTicker - mScrollDelay) * fheight / mScrollTime;
+			ypos2 = ypos1 + fheight;
+			break;
+
+		case SCROLL_Left:
+		default:
+			xpos1 = double(mTicker - mScrollDelay) * fwidth / mScrollTime;
+			xpos2 = xpos1 - fwidth;
+			break;
+
+		case SCROLL_Right:
+			xpos1 = -double(mTicker - mScrollDelay) * fwidth / mScrollTime;
+			xpos2 = xpos1 + fwidth;
+			break;
+		}
+
+		screen->DrawTexture (tex, xpos1, ypos1,
+			DTA_VirtualWidth, fwidth,
+			DTA_VirtualHeight, fheight,
+			DTA_Masked, false,
+			TAG_DONE);
+		screen->DrawTexture (tex2, xpos2, ypos2,
+			DTA_VirtualWidth, fwidth,
+			DTA_VirtualHeight, fheight,
+			DTA_Masked, false,
+			TAG_DONE);
+
+		screen->FillBorder (NULL);
+		mBackground = mSecondPic;
+	}
+	else 
+	{
+		Super::Drawer();
+	}
 }
 
 

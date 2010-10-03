@@ -35,7 +35,7 @@ Intermission Inter_Bunny
 {
 	Scroller
 	{
-		ScrollDirection = Right
+		ScrollDirection = Left
 		Background = "PFUB1"
 		Background2 = "PFUB2"
 		Music = "$MUSIC_BUNNY"
@@ -56,42 +56,36 @@ Intermission TheEnd
 	}
 	Image
 	{
-		Draw = "END0", 108, 68
 		Draw = "END1", 108, 68
 		Time = -5
 		Sound = "weapons/pistol"
 	}
 	Image
 	{
-		Draw = "END0", 108, 68
 		Draw = "END2", 108, 68
 		Time = -5
 		Sound = "weapons/pistol"
 	}
 	Image
 	{
-		Draw = "END0", 108, 68
 		Draw = "END3", 108, 68
 		Time = -5
 		Sound = "weapons/pistol"
 	}
 	Image
 	{
-		Draw = "END0", 108, 68
 		Draw = "END4", 108, 68
 		Time = -5
 		Sound = "weapons/pistol"
 	}
 	Image
 	{
-		Draw = "END0", 108, 68
 		Draw = "END5", 108, 68
 		Time = -5
 		Sound = "weapons/pistol"
 	}
 	Image
 	{
-		Draw = "END0", 108, 68
 		Draw = "END6", 108, 68
 		Time = -5
 		Sound = "weapons/pistol"

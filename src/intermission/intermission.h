@@ -218,7 +218,6 @@ public:
 	DIntermissionScreenText() {}
 	virtual void Init(FIntermissionAction *desc, bool first);
 	virtual int Responder (event_t *ev);
-	virtual int Ticker ();
 	virtual void Drawer ();
 };
 
@@ -243,6 +242,7 @@ class DIntermissionScreenScroller : public DIntermissionScreen
 {
 	DECLARE_CLASS (DIntermissionScreenScroller, DIntermissionScreen)
 
+	FTextureID mFirstPic;
 	FTextureID mSecondPic;
 	int mScrollDelay;
 	int mScrollTime;
@@ -252,8 +252,6 @@ public:
 
 	DIntermissionScreenScroller() {}
 	virtual void Init(FIntermissionAction *desc, bool first);
-	virtual int Responder (event_t *ev);
-	virtual int Ticker ();
 	virtual void Drawer ();
 };
 

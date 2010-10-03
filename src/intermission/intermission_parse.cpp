@@ -638,7 +638,7 @@ FName FMapInfoParser::ParseEndGame()
 	{
 		FIntermissionActionScroller *bunny = new FIntermissionActionScroller;
 		bunny->mSecondPic = newSeq.PicName2;
-		bunny->mScrollDir = SCROLL_Right;
+		bunny->mScrollDir = SCROLL_Left;
 		bunny->mScrollDelay = 230;
 		bunny->mScrollTime = 640;
 		bunny->mDuration = 1130;

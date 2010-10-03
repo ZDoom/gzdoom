@@ -644,7 +644,6 @@ OptionMenu "VideoOptions"
 {
 	Title "DISPLAY OPTIONS"
 	
-	Submenu "Message Options", 			"MessageOptions"
 	Submenu "Scoreboard Options", 		"ScoreboardOptions"
 	StaticText " "
 	Slider "Screen size",				"screenblocks", 3.0, 12.0, 1.0, 0
@@ -725,6 +724,7 @@ OptionMenu "HUDOptions"
 {
 	Title "HUD Options"
 	Submenu "Alternative HUD",			"AltHudOptions"
+	Submenu "Message Options", 			"MessageOptions"
 	StaticText " "
 	Option "Default Crosshair",			"crosshair", "Crosshairs"
 	Option "Force default crosshair",	"crosshairforce", "OnOff"

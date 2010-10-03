@@ -246,6 +246,7 @@ FIntermissionActionTextscreen::FIntermissionActionTextscreen()
 	mTextSpeed = 2;
 	mTextX = -1;	// use gameinfo defaults
 	mTextY = -1;
+	mTextColor = CR_UNTRANSLATED;
 }
 
 bool FIntermissionActionTextscreen::ParseKey(FScanner &sc)
@@ -287,6 +288,28 @@ bool FIntermissionActionTextscreen::ParseKey(FScanner &sc)
 			mText << sc.String << '\n';
 		}
 		while (sc.CheckToken(','));
+		return true;
+	}
+	else if (sc.Compare("TextColor"))
+	{
+		sc.MustGetToken('=');
+		sc.MustGetToken(TK_StringConst);
+		mTextColor = V_FindFontColor(sc.String);
+		return true;
+	}
+	else if (sc.Compare("TextDelay"))
+	{
+		sc.MustGetToken('=');
+		if (!sc.CheckToken('-'))
+		{
+			sc.MustGetFloat();
+			mTextDelay = xs_RoundToInt(sc.Float*TICRATE);
+		}
+		else
+		{
+			sc.MustGetToken(TK_IntConst);
+			mTextDelay = sc.Number;
+		}
 		return true;
 	}
 	else if (sc.Compare("textspeed"))
@@ -769,6 +792,7 @@ void F_StartFinale (const char *music, int musicorder, int cdtrack, unsigned int
 		{
 			textscreen->mText << '$' << text;
 		}
+		textscreen->mTextDelay = 10;
 		textscreen->mBackground = flat;
 		textscreen->mFlatfill = !finalePic;
 
@@ -789,14 +813,14 @@ void F_StartFinale (const char *music, int musicorder, int cdtrack, unsigned int
 		FIntermissionActionWiper *wiper = new FIntermissionActionWiper;
 		desc->mActions.Push(wiper);
 
-		F_StartIntermission(desc, true);
+		F_StartIntermission(desc, true, ending);
 	}
 	else if (ending)
 	{
 		FIntermissionDescriptor **pdesc = IntermissionDescriptors.CheckKey(endsequence);
 		if (pdesc != NULL)
 		{
-			F_StartIntermission(*pdesc, false);
+			F_StartIntermission(*pdesc, false, ending);
 		}
 	}
 }

@@ -73,6 +73,7 @@
 #include "m_argv.h"
 #include "po_man.h"
 #include "menu/menu.h"
+#include "intermission/intermission.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -300,6 +301,7 @@ static void MarkRoot()
 	Mark(screen);
 	Mark(StatusBar);
 	Mark(DMenu::CurrentMenu);
+	Mark(DIntermissionController::CurrentIntermission);
 	DThinker::MarkRoots();
 	FCanvasTextureInfo::Mark();
 	Mark(DACSThinker::ActiveThinker);

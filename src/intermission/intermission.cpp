@@ -33,6 +33,7 @@
 */
 
 #include "doomtype.h"
+#include "doomstat.h"
 #include "d_event.h"
 #include "w_wad.h"
 #include "gi.h"
@@ -48,9 +49,12 @@ IMPLEMENT_CLASS(DIntermissionScreenFader)
 IMPLEMENT_CLASS(DIntermissionScreenText)
 IMPLEMENT_CLASS(DIntermissionScreenCast)
 IMPLEMENT_CLASS(DIntermissionScreenScroller)
-IMPLEMENT_CLASS(DIntermissionController)
+IMPLEMENT_POINTY_CLASS(DIntermissionController)
+	DECLARE_POINTER(mScreen)
+END_POINTERS
 
 extern int		NoWipe;
+
 //==========================================================================
 //
 //
@@ -102,20 +106,39 @@ void DIntermissionScreen::Init(FIntermissionAction *desc, bool first)
 		mOverlays[i].y = desc->mOverlays[i].y;
 		mOverlays[i].mPic = TexMan.CheckForTexture(desc->mOverlays[i].mName, FTexture::TEX_MiscPatch);
 	}
+	mTicker = 0;
 }
 
 
-bool DIntermissionScreen::Responder (event_t *ev)
+int DIntermissionScreen::Responder (event_t *ev)
 {
-	return false;
+	return 0;
 }
 
-void DIntermissionScreen::Ticker ()
+int DIntermissionScreen::Ticker ()
 {
+	mTicker++;
+	return 0;
 }
 
 void DIntermissionScreen::Drawer ()
 {
+	if (mBackground.isValid())
+	{
+		if (!mFlatfill)
+		{
+			screen->DrawTexture (TexMan[mBackground], 0, 0, DTA_Fullscreen, true, TAG_DONE);
+			screen->FillBorder (NULL);
+		}
+		else
+		{
+			screen->FlatFill (0,0, SCREENWIDTH, SCREENHEIGHT, TexMan[mBackground]);
+		}
+	}
+	else
+	{
+		screen->Clear (0, 0, SCREENWIDTH, SCREENHEIGHT, 0, 0);
+	}
 }
 
 void DIntermissionScreen::Destroy()
@@ -147,17 +170,19 @@ void DIntermissionScreenFader::Init(FIntermissionAction *desc, bool first)
 	mType = static_cast<FIntermissionActionFader*>(desc)->mFadeType;
 }
 
-bool DIntermissionScreenFader::Responder (event_t *ev)
+int DIntermissionScreenFader::Responder (event_t *ev)
 {
-	return false;
+	return Super::Responder(ev);
 }
 
-void DIntermissionScreenFader::Ticker ()
+int DIntermissionScreenFader::Ticker ()
 {
+	return Super::Ticker();
 }
 
 void DIntermissionScreenFader::Drawer ()
 {
+	Super::Drawer();
 }
 
 //==========================================================================
@@ -173,19 +198,81 @@ void DIntermissionScreenText::Init(FIntermissionAction *desc, bool first)
 	mTextSpeed = static_cast<FIntermissionActionTextscreen*>(desc)->mTextSpeed;
 	mTextX = static_cast<FIntermissionActionTextscreen*>(desc)->mTextX;
 	mTextY = static_cast<FIntermissionActionTextscreen*>(desc)->mTextY;
+	mTextLen = (int)mText.Len();
+	mTextDelay = static_cast<FIntermissionActionTextscreen*>(desc)->mTextDelay;
+	mTextColor = static_cast<FIntermissionActionTextscreen*>(desc)->mTextColor;
 }
 
-bool DIntermissionScreenText::Responder (event_t *ev)
+int DIntermissionScreenText::Responder (event_t *ev)
 {
-	return false;
+	return Super::Responder(ev);
 }
 
-void DIntermissionScreenText::Ticker ()
+int DIntermissionScreenText::Ticker ()
 {
+	return Super::Ticker();
 }
 
 void DIntermissionScreenText::Drawer ()
 {
+	if (mTicker >= mTextDelay)
+	{
+		FTexture *pic;
+		int w;
+		size_t count;
+		int c;
+		const FRemapTable *range;
+		
+		// draw some of the text onto the screen
+		int rowheight = SmallFont->GetHeight () + (gameinfo.gametype & (GAME_DoomStrifeChex) ? 3 : -1);
+		bool scale = (CleanXfac != 1 || CleanYfac != 1);
+
+		int cx = mTextX;
+		int cy = mTextY;
+		const char *ch = mText.GetChars();
+			
+		count = (mTicker - mTextDelay - 10) / mTextSpeed;
+		range = SmallFont->GetColorTranslation (mTextColor);
+
+		for ( ; count ; count-- )
+		{
+			c = *ch++;
+			if (!c)
+				break;
+			if (c == '\n')
+			{
+				cx = mTextX;
+				cy += rowheight;
+				continue;
+			}
+
+			pic = SmallFont->GetChar (c, &w);
+			if (cx+w > SCREENWIDTH)
+				continue;
+			if (pic != NULL)
+			{
+				if (scale)
+				{
+					screen->DrawTexture (pic,
+						cx + 320 / 2,
+						cy + 200 / 2,
+						DTA_Translation, range,
+						DTA_Clean, true,
+						TAG_DONE);
+				}
+				else
+				{
+					screen->DrawTexture (pic,
+						cx + 320 / 2,
+						cy + 200 / 2,
+						DTA_Translation, range,
+						TAG_DONE);
+				}
+			}
+			cx += w;
+		}
+	}
+	Super::Drawer();
 }
 
 //==========================================================================
@@ -209,17 +296,19 @@ void DIntermissionScreenCast::Init(FIntermissionAction *desc, bool first)
 	}
 }
 
-bool DIntermissionScreenCast::Responder (event_t *ev)
+int DIntermissionScreenCast::Responder (event_t *ev)
 {
-	return false;
+	return Super::Responder(ev);
 }
 
-void DIntermissionScreenCast::Ticker ()
+int DIntermissionScreenCast::Ticker ()
 {
+	return Super::Ticker();
 }
 
 void DIntermissionScreenCast::Drawer ()
 {
+	Super::Drawer();
 }
 
 //==========================================================================
@@ -237,17 +326,19 @@ void DIntermissionScreenScroller::Init(FIntermissionAction *desc, bool first)
 	mScrollDir = static_cast<FIntermissionActionScroller*>(desc)->mScrollDir;
 }
 
-bool DIntermissionScreenScroller::Responder (event_t *ev)
+int DIntermissionScreenScroller::Responder (event_t *ev)
 {
-	return false;
+	return Super::Responder(ev);
 }
 
-void DIntermissionScreenScroller::Ticker ()
+int DIntermissionScreenScroller::Ticker ()
 {
+	return Super::Ticker();
 }
 
 void DIntermissionScreenScroller::Drawer ()
 {
+	Super::Drawer();
 }
 
 
@@ -257,16 +348,22 @@ void DIntermissionScreenScroller::Drawer ()
 //
 //==========================================================================
 
-DIntermissionController::DIntermissionController(FIntermissionDescriptor *Desc, bool DeleteDesc)
+DIntermissionController *DIntermissionController::CurrentIntermission;
+
+DIntermissionController::DIntermissionController(FIntermissionDescriptor *Desc, bool DeleteDesc, bool endinggame)
 {
 	mDesc = Desc;
 	mDeleteDesc = DeleteDesc;
 	mIndex = 0;
-	mCounter = -1;	// NextPage during next tick
+	mAdvance = true;
+	mScreen = NULL;
+	mFirst = true;
+	mEndingGame = endinggame;
 }
 
 bool DIntermissionController::NextPage ()
 {
+	if (mScreen != NULL) mScreen->Destroy();
 	while ((unsigned)mIndex < mDesc->mActions.Size())
 	{
 		FIntermissionAction *action = mDesc->mActions[mIndex++];
@@ -283,6 +380,9 @@ bool DIntermissionController::NextPage ()
 		else
 		{
 			// create page here
+			mScreen = (DIntermissionScreen*)action->mClass->CreateNew();
+			mScreen->Init(action, mFirst);
+			mFirst = false;
 		}
 	}
 	return false;
@@ -290,11 +390,33 @@ bool DIntermissionController::NextPage ()
 
 bool DIntermissionController::Responder (event_t *ev)
 {
+	if (mScreen != NULL)
+	{
+		int res = mScreen->Responder(ev);
+		mAdvance = (res == -1);
+		return !!res;
+	}
 	return false;
 }
 
 void DIntermissionController::Ticker ()
 {
+	if (mScreen != NULL)
+	{
+		mAdvance = (mScreen->Ticker() == -1);
+	}
+	if (mAdvance)
+	{
+		mAdvance = false;
+		if (!NextPage())
+		{
+			if (!mEndingGame)
+			{
+				gameaction = ga_worlddone;
+			}
+			Destroy();
+		}
+	}
 }
 
 void DIntermissionController::Drawer ()
@@ -308,86 +430,83 @@ void DIntermissionController::Destroy ()
 }
 
 
+//==========================================================================
+//
+// starts a new intermission
+//
+//==========================================================================
+
+void F_StartIntermission(FIntermissionDescriptor *desc, bool deleteme, bool endinggame)
+{
+	if (DIntermissionController::CurrentIntermission != NULL)
+	{
+		DIntermissionController::CurrentIntermission->Destroy();
+	}
+	V_SetBlend (0,0,0,0);
+	S_StopAllChannels ();
+	gameaction = ga_nothing;
+	gamestate = GS_FINALE;
+	viewactive = false;
+	automapactive = false;
+	DIntermissionController::CurrentIntermission = new DIntermissionController(desc, deleteme, endinggame);
+}
 
 
-
-
+//==========================================================================
+//
 // Called by main loop.
-bool F_Responder (event_t* ev) { return true; }
+//
+//==========================================================================
 
-// Called by main loop.
-void F_Ticker () {}
+bool F_Responder (event_t* ev) 
+{ 
+	if (DIntermissionController::CurrentIntermission != NULL)
+	{
+		return DIntermissionController::CurrentIntermission->Responder(ev); 
+	}
+}
 
+//==========================================================================
+//
 // Called by main loop.
-void F_Drawer () {}
+//
+//==========================================================================
+
+void F_Ticker () 
+{
+	if (DIntermissionController::CurrentIntermission != NULL)
+	{
+		DIntermissionController::CurrentIntermission->Ticker(); 
+	}
+}
+
+//==========================================================================
+//
+// Called by main loop.
+//
+//==========================================================================
+
+void F_Drawer ()
+{
+	if (DIntermissionController::CurrentIntermission != NULL)
+	{
+		DIntermissionController::CurrentIntermission->Drawer(); 
+	}
+}
+
 
 
 
 
 #if 0
-
-void F_StartFinale (const char *music, int musicorder, int cdtrack, unsigned int cdid, const char *flat, 
-					const char *text, INTBOOL textInLump, INTBOOL finalePic, INTBOOL lookupText, 
-					bool ending, int endsequence)
+if (players[0].mo->FindInventory (QuestItemClasses[24]) ||
+	players[0].mo->FindInventory (QuestItemClasses[27]))
 {
-	bool loopmusic = ending ? !gameinfo.noloopfinalemusic : true;
-	gameaction = ga_nothing;
-	gamestate = GS_FINALE;
-	viewactive = false;
-	automapactive = false;
-
-	// Okay - IWAD dependend stuff.
-	// This has been changed severely, and some stuff might have changed in the process.
-	//
-	// [RH] More flexible now (even more severe changes)
-	//  FinaleFlat, FinaleText, and music are now determined in G_WorldDone() based on
-	//	data in a level_info_t and a cluster_info_t.
-
-
-
-
-	FinaleStage = 0;
-	V_SetBlend (0,0,0,0);
-	TEXTSPEED = 2;
-
-	FinaleHasPic = !!finalePic;
-	FinaleCount = 0;
-	FinaleEndCount = 70;
-	FadeDir = -1;
-	FinaleEnding = ending;
-	FinaleSequence = endsequence;
-
-	S_StopAllChannels ();
-
-	if (ending)
-	{
-		if (EndSequences[FinaleSequence].EndType == END_Chess)
-		{
-			TEXTSPEED = 3;	// Slow the text to its original rate to match the music.
-			S_ChangeMusic ("hall", 0, loopmusic);
-			FinaleStage = 10;
-			GetFinaleText ("win1msg");
-			V_SetBlend (0,0,0,256);
-		}
-		else if (EndSequences[FinaleSequence].EndType == END_Strife)
-		{
-			if (players[0].mo->FindInventory (QuestItemClasses[24]) ||
-				players[0].mo->FindInventory (QuestItemClasses[27]))
-			{
-				FinalePart = 10;
-			}
-			else
-			{
-				FinalePart = 17;
-			}
-			FinaleStage = 5;
-			FinaleEndCount = 0;
-		}
-	}
+	FinalePart = good;
+}
+else
+{
+	FinalePart = ok;
 }
 #endif
-
-void F_StartIntermission(FIntermissionDescriptor *desc, bool deleteme)
-{
-}
 

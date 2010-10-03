@@ -6,6 +6,7 @@
 #include "m_fixed.h"
 #include "textures/textures.h"
 #include "s_sound.h"
+#include "v_font.h"
 
 struct event_t;
 
@@ -106,8 +107,10 @@ struct FIntermissionActionTextscreen : public FIntermissionAction
 	typedef FIntermissionAction Super;
 
 	FString mText;
+	int mTextDelay;
 	int mTextSpeed;
 	int mTextX, mTextY;
+	EColorRange mTextColor;
 
 	FIntermissionActionTextscreen();
 	virtual bool ParseKey(FScanner &sc);
@@ -153,7 +156,9 @@ class DIntermissionScreen : public DObject
 {
 	DECLARE_CLASS (DIntermissionScreen, DObject)
 
+protected:
 	int mDuration;
+	int mTicker;
 	FTextureID mBackground;
 	bool mFlatfill;
 	bool mPaletteChanged;
@@ -163,8 +168,8 @@ public:
 
 	DIntermissionScreen() {}
 	virtual void Init(FIntermissionAction *desc, bool first);
-	virtual bool Responder (event_t *ev);
-	virtual void Ticker ();
+	virtual int Responder (event_t *ev);
+	virtual int Ticker ();
 	virtual void Drawer ();
 	void Destroy();
 };
@@ -181,8 +186,8 @@ public:
 
 	DIntermissionScreenFader() {}
 	virtual void Init(FIntermissionAction *desc, bool first);
-	virtual bool Responder (event_t *ev);
-	virtual void Ticker ();
+	virtual int Responder (event_t *ev);
+	virtual int Ticker ();
 	virtual void Drawer ();
 };
 
@@ -195,13 +200,15 @@ class DIntermissionScreenText : public DIntermissionScreen
 	int mTextX, mTextY;
 	int mTextCounter;
 	int mTextDelay;
+	int mTextLen;
+	EColorRange mTextColor;
 
 public:
 
 	DIntermissionScreenText() {}
 	virtual void Init(FIntermissionAction *desc, bool first);
-	virtual bool Responder (event_t *ev);
-	virtual void Ticker ();
+	virtual int Responder (event_t *ev);
+	virtual int Ticker ();
 	virtual void Drawer ();
 };
 
@@ -217,8 +224,8 @@ public:
 
 	DIntermissionScreenCast() {}
 	virtual void Init(FIntermissionAction *desc, bool first);
-	virtual bool Responder (event_t *ev);
-	virtual void Ticker ();
+	virtual int Responder (event_t *ev);
+	virtual int Ticker ();
 	virtual void Drawer ();
 };
 
@@ -235,8 +242,8 @@ public:
 
 	DIntermissionScreenScroller() {}
 	virtual void Init(FIntermissionAction *desc, bool first);
-	virtual bool Responder (event_t *ev);
-	virtual void Ticker ();
+	virtual int Responder (event_t *ev);
+	virtual int Ticker ();
 	virtual void Drawer ();
 };
 
@@ -244,18 +251,22 @@ public:
 class DIntermissionController : public DObject
 {
 	DECLARE_CLASS (DIntermissionController, DObject)
+	HAS_OBJECT_POINTERS
 
 	FIntermissionDescriptor *mDesc;
+	TObjPtr<DIntermissionScreen> mScreen;
 	bool mDeleteDesc;
+	bool mFirst;
+	bool mAdvance;
+	bool mEndingGame;
 	int mIndex;
-	int mCounter;
 
 	bool NextPage();
 
 public:
 	static DIntermissionController *CurrentIntermission;
 
-	DIntermissionController(FIntermissionDescriptor *mDesc = NULL, bool mDeleteDesc = false);
+	DIntermissionController(FIntermissionDescriptor *mDesc = NULL, bool mDeleteDesc = false, bool endinggame = false);
 	bool Responder (event_t *ev);
 	void Ticker ();
 	void Drawer ();
@@ -267,7 +278,7 @@ public:
 bool F_Responder (event_t* ev);
 void F_Ticker ();
 void F_Drawer ();
-void F_StartIntermission(FIntermissionDescriptor *desc, bool deleteme);
+void F_StartIntermission(FIntermissionDescriptor *desc, bool deleteme, bool endinggame);
 
 // Create an intermission from old cluster data
 void F_StartFinale (const char *music, int musicorder, int cdtrack, unsigned int cdid, const char *flat, 

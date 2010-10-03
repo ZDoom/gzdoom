@@ -42,6 +42,11 @@
 #include "d_main.h"
 #include "gstrings.h"
 #include "intermission/intermission.h"
+#include "actor.h"
+#include "d_player.h"
+#include "r_state.h"
+#include "r_translate.h"
+#include "c_bind.h"
 
 FIntermissionDescriptorList IntermissionDescriptors;
 
@@ -322,6 +327,8 @@ void DIntermissionScreenCast::Init(FIntermissionAction *desc, bool first)
 	Super::Init(desc, first);
 	mName = static_cast<FIntermissionActionCast*>(desc)->mName;
 	mClass = PClass::FindClass(static_cast<FIntermissionActionCast*>(desc)->mCastClass);
+	if (mClass != NULL) mDefaults = GetDefaultByType(mClass);
+	else mDefaults = NULL;
 
 	mCastSounds.Resize(static_cast<FIntermissionActionCast*>(desc)->mCastSounds.Size());
 	for (unsigned i=0; i < mCastSounds.Size(); i++)
@@ -330,21 +337,163 @@ void DIntermissionScreenCast::Init(FIntermissionAction *desc, bool first)
 		mCastSounds[i].mIndex = static_cast<FIntermissionActionCast*>(desc)->mCastSounds[i].mIndex;
 		mCastSounds[i].mSound = static_cast<FIntermissionActionCast*>(desc)->mCastSounds[i].mSound;
 	}
+	caststate = mDefaults->SeeState;
+	if (mClass->IsDescendantOf(RUNTIME_CLASS(APlayerPawn)))
+	{
+		advplayerstate = mDefaults->MissileState;
+		castsprite = skins[players[consoleplayer].userinfo.skin].sprite;
+		casttranslation = translationtables[TRANSLATION_Players][consoleplayer];
+	}
+	else
+	{
+		advplayerstate = NULL;
+		if (caststate != NULL) castsprite = caststate->sprite;
+		else castsprite = -1;
+		casttranslation = NULL;
+	}
+	castdeath = false;
+	castframes = 0;
+	castonmelee = 0;
+	castattacking = false;
+	if (mDefaults->SeeSound)
+	{
+		S_Sound (CHAN_VOICE | CHAN_UI, mDefaults->SeeSound, 1, ATTN_NONE);
+	}
 }
 
 int DIntermissionScreenCast::Responder (event_t *ev)
 {
-	return Super::Responder(ev);
+	if (ev->type == EV_KeyDown)
+	{
+		const char *cmd = Bindings.GetBind (ev->data1);
+
+		if (cmd != NULL && !stricmp (cmd, "toggleconsole"))
+			return 0;		
+	}
+	if (castdeath)
+		return 1;					// already in dying frames
+
+	castdeath = true;
+	caststate = mClass->ActorInfo->FindState(NAME_Death);
+	if (caststate == NULL) return -1;
+
+	casttics = caststate->GetTics();
+	castframes = 0;
+	castattacking = false;
+
+	if (mClass->IsDescendantOf(RUNTIME_CLASS(APlayerPawn)))
+	{
+		int snd = S_FindSkinnedSound(players[consoleplayer].mo, "*death");
+		if (snd != 0) S_Sound (CHAN_VOICE | CHAN_UI, snd, 1, ATTN_NONE);
+	}
+	else if (mDefaults->DeathSound)
+	{
+		S_Sound (CHAN_VOICE | CHAN_UI, mDefaults->DeathSound, 1, ATTN_NONE);
+	}
+	return true;
 }
 
 int DIntermissionScreenCast::Ticker ()
 {
-	return Super::Ticker();
+	Super::Ticker();
+
+	if (--casttics > 0 && caststate != NULL)
+		return 0; 				// not time to change state yet
+				
+	if (caststate == NULL || caststate->GetTics() == -1 || caststate->GetNextState() == NULL)
+	{
+		return -1;
+	}
+	else
+	{
+		// sound hacks....
+		if (caststate != NULL && castattacking)
+		{
+			for (unsigned i = 0; i < mCastSounds.Size(); i++)
+			{
+				if ((!!mCastSounds[i].mSequence) == (basestate != mDefaults->MissileState) &&
+					(caststate == basestate + mCastSounds[i].mIndex - 1))
+				{
+					S_StopAllChannels ();
+					S_Sound (CHAN_WEAPON | CHAN_UI, mCastSounds[i].mSound, 1, ATTN_NONE);
+					break;
+				}
+			}
+		}
+
+		// just advance to next state in animation
+		if (caststate == advplayerstate)
+			goto stopattack;	// Oh, gross hack!
+
+		caststate = caststate->GetNextState();
+		castframes++;
+	}
+		
+	if (castframes == 12)
+	{
+		// go into attack frame
+		castattacking = true;
+		if (castonmelee)
+			basestate = caststate = mDefaults->MeleeState;
+		else
+			basestate = caststate = mDefaults->MissileState;
+		castonmelee ^= 1;
+		if (caststate == NULL)
+		{
+			if (castonmelee)
+				basestate = caststate = mDefaults->MeleeState;
+			else
+				basestate = caststate = mDefaults->MissileState;
+		}
+	}
+		
+	if (castattacking)
+	{
+		if (castframes == 24 || caststate == mDefaults->SeeState )
+		{
+		  stopattack:
+			castattacking = false;
+			castframes = 0;
+			caststate = mDefaults->SeeState;
+		}
+	}
+		
+	casttics = caststate->GetTics();
+	if (casttics == -1)
+		casttics = 15;
+	return 0;
 }
 
 void DIntermissionScreenCast::Drawer ()
 {
+	spriteframe_t*		sprframe;
+	FTexture*			pic;
+	
 	Super::Drawer();
+
+	const char *name = mName;
+	if (name != NULL)
+	{
+		if (*name == '$') name = GStrings(name+1);
+		screen->DrawText (SmallFont, CR_UNTRANSLATED,
+			(SCREENWIDTH - SmallFont->StringWidth (name) * CleanXfac)/2,
+			(SCREENHEIGHT * 180) / 200,
+			name,
+			DTA_CleanNoMove, true, TAG_DONE);
+	}
+	
+	// draw the current frame in the middle of the screen
+	if (caststate != NULL)
+	{
+		sprframe = &SpriteFrames[sprites[castsprite].spriteframes + caststate->GetFrame()];
+		pic = TexMan(sprframe->Texture[0]);
+
+		screen->DrawTexture (pic, 160, 170,
+			DTA_320x200, true,
+			DTA_FlipX, sprframe->Flip & 1,
+			DTA_Translation, casttranslation,
+			TAG_DONE);
+	}
 }
 
 //==========================================================================
@@ -499,6 +648,7 @@ bool DIntermissionController::Responder (event_t *ev)
 {
 	if (mScreen != NULL)
 	{
+		if (mScreen->mTicker < 2) return false;	// prevent some leftover events from auto-advancing
 		int res = mScreen->Responder(ev);
 		mAdvance = (res == -1);
 		return !!res;

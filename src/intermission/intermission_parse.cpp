@@ -807,11 +807,14 @@ void F_StartFinale (const char *music, int musicorder, int cdtrack, unsigned int
 			textscreen->mCdId = cdid;
 		}
 		FIntermissionDescriptor *desc = new FIntermissionDescriptor;
-		desc->mLink = ending? endsequence : NAME_None;
 		desc->mActions.Push(textscreen);
 
-		FIntermissionActionWiper *wiper = new FIntermissionActionWiper;
-		desc->mActions.Push(wiper);
+		if (ending)
+		{
+			desc->mLink = endsequence;
+			FIntermissionActionWiper *wiper = new FIntermissionActionWiper;
+			desc->mActions.Push(wiper);
+		}
 
 		F_StartIntermission(desc, true, ending);
 	}

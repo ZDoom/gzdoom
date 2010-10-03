@@ -220,7 +220,7 @@ Intermission Doom2Cast
 	Cast
 	{
 		CastClass = "Fatso"
-		CastName = "$CC_FATSO"
+		CastName = "$CC_MANCU"
 		AttackSound = "Missile", 1, "fatso/attack"
 		AttackSound = "Missile", 4, "fatso/attack"
 		AttackSound = "Missile", 7, "fatso/attack"

@@ -158,13 +158,13 @@ class DIntermissionScreen : public DObject
 
 protected:
 	int mDuration;
-	int mTicker;
 	FTextureID mBackground;
 	bool mFlatfill;
 	bool mPaletteChanged;
 	TArray<FIIntermissionPatch> mOverlays;
 
 public:
+	int mTicker;
 
 	DIntermissionScreen() {}
 	virtual void Init(FIntermissionAction *desc, bool first);
@@ -225,9 +225,21 @@ class DIntermissionScreenCast : public DIntermissionScreen
 {
 	DECLARE_CLASS (DIntermissionScreenCast, DIntermissionScreen)
 
-	FString mName;
+	const char *mName;
 	const PClass *mClass;
+	AActor *mDefaults;
 	TArray<FICastSound> mCastSounds;
+
+	int 			casttics;
+	int				castsprite;			// [RH] For overriding the player sprite with a skin
+	const FRemapTable *casttranslation;	// [RH] Draw "our hero" with their chosen suit color
+	FState*			caststate;
+	FState*			basestate;
+	FState*			advplayerstate;
+	bool	 		castdeath;
+	bool	 		castattacking;
+	int 			castframes;
+	int 			castonmelee;
 
 public:
 

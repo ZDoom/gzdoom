@@ -182,8 +182,10 @@ void DIntermissionScreen::Destroy()
 			palette[i] = GPalette.BaseColors[i];
 		}
 		screen->UpdatePalette ();
-		NoWipe = 0;
+		NoWipe = 5;
+		mPaletteChanged = false;
 	}
+	Super::Destroy();
 }
 
 //==========================================================================
@@ -443,7 +445,7 @@ bool DIntermissionController::NextPage ()
 	FTextureID bg;
 	bool fill = false;
 
-	if (mIndex == (int)mDesc->mActions.Size()-1 && mDesc->mLink == NAME_None)
+	if (mIndex == (int)mDesc->mActions.Size() && mDesc->mLink == NAME_None)
 	{
 		// last page
 		return false;
@@ -537,6 +539,7 @@ void DIntermissionController::Destroy ()
 	Super::Destroy();
 	if (mDeleteDesc) delete mDesc;
 	mDesc = NULL;
+	if (CurrentIntermission == this) CurrentIntermission = NULL;
 }
 
 

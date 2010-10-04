@@ -145,6 +145,24 @@ bool FIntermissionAction::ParseKey(FScanner &sc)
 		sc.MustGetToken(',');
 		sc.MustGetToken(TK_IntConst);
 		pat->y = sc.Number;
+		pat->mCondition = NAME_None;
+		return true;
+	}
+	else if (sc.Compare("DrawConditional"))
+	{
+		FIntermissionPatch *pat = &mOverlays[mOverlays.Reserve(1)];
+		sc.MustGetToken('=');
+		sc.MustGetToken(TK_StringConst);
+		pat->mCondition = sc.String;
+		sc.MustGetToken(',');
+		sc.MustGetToken(TK_StringConst);
+		pat->mName = sc.String;
+		sc.MustGetToken(',');
+		sc.MustGetToken(TK_IntConst);
+		pat->x = sc.Number;
+		sc.MustGetToken(',');
+		sc.MustGetToken(TK_IntConst);
+		pat->y = sc.Number;
 		return true;
 	}
 	else return false;

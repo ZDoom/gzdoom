@@ -131,6 +131,7 @@ void DIntermissionScreen::Init(FIntermissionAction *desc, bool first)
 	{
 		mOverlays[i].x = desc->mOverlays[i].x;
 		mOverlays[i].y = desc->mOverlays[i].y;
+		mOverlays[i].mCondition = desc->mOverlays[i].mCondition;
 		mOverlays[i].mPic = TexMan.CheckForTexture(desc->mOverlays[i].mName, FTexture::TEX_MiscPatch);
 	}
 	mTicker = 0;
@@ -152,6 +153,19 @@ int DIntermissionScreen::Ticker ()
 	return 0;
 }
 
+bool DIntermissionScreen::CheckOverlay(int i)
+{
+	if (mOverlays[i].mCondition == NAME_Multiplayer && !multiplayer) return false;
+	else if (mOverlays[i].mCondition != NAME_None)
+	{
+		if (multiplayer || players[0].mo == NULL) return false;
+		const PClass *cls = PClass::FindClass(mOverlays[i].mCondition);
+		if (cls == NULL) return false;
+		if (!players[0].mo->IsKindOf(cls)) return false;
+	}
+	return true;
+}
+
 void DIntermissionScreen::Drawer ()
 {
 	if (mBackground.isValid())
@@ -171,7 +185,8 @@ void DIntermissionScreen::Drawer ()
 	}
 	for (unsigned i=0; i < mOverlays.Size(); i++)
 	{
-		screen->DrawTexture (TexMan[mOverlays[i].mPic], mOverlays[i].x, mOverlays[i].y, DTA_320x200, true, TAG_DONE);
+		if (CheckOverlay(i))
+			screen->DrawTexture (TexMan[mOverlays[i].mPic], mOverlays[i].x, mOverlays[i].y, DTA_320x200, true, TAG_DONE);
 	}
 	if (!mFlatfill) screen->FillBorder (NULL);
 }
@@ -242,7 +257,8 @@ void DIntermissionScreenFader::Drawer ()
 			screen->DrawTexture (TexMan[mBackground], 0, 0, DTA_Fullscreen, true, DTA_ColorOverlay, color, TAG_DONE);
 			for (unsigned i=0; i < mOverlays.Size(); i++)
 			{
-				screen->DrawTexture (TexMan[mOverlays[i].mPic], mOverlays[i].x, mOverlays[i].y, DTA_320x200, true, DTA_ColorOverlay, color, TAG_DONE);
+				if (CheckOverlay(i))
+					screen->DrawTexture (TexMan[mOverlays[i].mPic], mOverlays[i].x, mOverlays[i].y, DTA_320x200, true, DTA_ColorOverlay, color, TAG_DONE);
 			}
 			screen->FillBorder (NULL);
 		}

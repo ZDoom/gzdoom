@@ -289,22 +289,18 @@ Intermission Inter_Chess
 	{
 		Music = "Chess"
 		Background = "FINALE3"
-		/* 
-		DrawConditional = "Multiplayer", 20, 0, "CHESSALL"
-		DrawConditional = "cleric", 60, 0, "CHESSC"
-		DrawConditional = "mage", 60, 0, "CHESSM"
-		*/
+		DrawConditional = "Multiplayer", "CHESSALL", 20, 0
+		DrawConditional = "ClericPlayer", "CHESSC", 60, 0
+		DrawConditional = "MagePlayer", "CHESSM", 60, 0
 		Time = 2
 		FadeType = FadeIn
 	}
 	TextScreen
 	{
 		Background = "FINALE3"
-		/* 
-		DrawConditional = "Multiplayer", 20, 0, "CHESSALL"
-		DrawConditional = "cleric", 60, 0, "CHESSC"
-		DrawConditional = "mage", 60, 0, "CHESSM"
-		*/
+		DrawConditional = "Multiplayer", "CHESSALL", 20, 0
+		DrawConditional = "ClericPlayer", "CHESSC", 60, 0
+		DrawConditional = "MagePlayer", "CHESSM", 60, 0
 		TextSpeed = 3
 		TextLump = "win3msg"
 		Position = 5, 135

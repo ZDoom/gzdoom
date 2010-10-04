@@ -17,12 +17,14 @@ private: \
 
 struct FIntermissionPatch
 {
+	FName mCondition;
 	FString mName;
 	double x, y;
 };
 
 struct FIIntermissionPatch
 {
+	FName mCondition;
 	FTextureID mPic;
 	double x, y;
 };
@@ -161,6 +163,8 @@ protected:
 	FTextureID mBackground;
 	bool mFlatfill;
 	TArray<FIIntermissionPatch> mOverlays;
+
+	bool CheckOverlay(int i);
 
 public:
 	int mTicker;

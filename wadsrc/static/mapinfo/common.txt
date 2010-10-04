@@ -119,7 +119,7 @@ Intermission Inter_BuyStrife
 {
 	Scroller
 	{
-		ScrollDirection = Right
+		ScrollDirection = Left
 		Background = "CREDIT"
 		Background2 = "VELLOGO"
 		InitialDelay = -230

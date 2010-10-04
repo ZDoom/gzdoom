@@ -817,14 +817,14 @@ void F_StartFinale (const char *music, int musicorder, int cdtrack, unsigned int
 			desc->mActions.Push(wiper);
 		}
 
-		F_StartIntermission(desc, true, ending);
+		F_StartIntermission(desc, true, ending? FSTATE_EndingGame : FSTATE_ChangingLevel);
 	}
 	else if (ending)
 	{
 		FIntermissionDescriptor **pdesc = IntermissionDescriptors.CheckKey(endsequence);
 		if (pdesc != NULL)
 		{
-			F_StartIntermission(*pdesc, false, ending);
+			F_StartIntermission(*pdesc, false, ending? FSTATE_EndingGame : FSTATE_ChangingLevel);
 		}
 	}
 }

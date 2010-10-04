@@ -170,7 +170,7 @@ enum ELevelFlags
 	LEVEL_VISITED				= 0x80000000,	// Used for intermission map
 
 	// The flags QWORD is now split into 2 DWORDs 
-	LEVEL2_DEATHSLIDESHOW		= 0x00000001,	// Slideshow on death
+	//LEVEL2_DEATHSLIDESHOW		= 0x00000001,	// Slideshow on death
 	LEVEL2_ALLMAP				= 0x00000002,	// The player picked up a map on this level
 
 	LEVEL2_LAXMONSTERACTIVATION	= 0x00000004,	// Monsters can open doors depending on the door speed
@@ -294,6 +294,7 @@ struct level_info_t
 	FString		Translator;	// for converting Doom-format linedef and sector types.
 	int			DefaultEnvironment;	// Default sound environment for the map.
 	FName		Intermission;
+	FName		deathsequence;
 
 	// Redirection: If any player is carrying the specified item, then
 	// you go to the RedirectMap instead of this one.

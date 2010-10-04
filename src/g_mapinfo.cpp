@@ -1074,6 +1074,13 @@ DEFINE_MAP_OPTION(translator, true)
 	info->Translator = parse.sc.String;
 }
 
+DEFINE_MAP_OPTION(deathsequence, false)
+{
+	parse.ParseAssign();
+	parse.sc.MustGetString();
+	info->deathsequence = parse.sc.String;
+}
+
 DEFINE_MAP_OPTION(bordertexture, true)
 {
 	parse.ParseAssign();
@@ -1196,7 +1203,7 @@ MapFlagHandlers[] =
 	{ "missilesactivateimpactlines",	MITYPE_SETFLAG2,	LEVEL2_MISSILESACTIVATEIMPACT, 0 },
 	{ "missileshootersactivetimpactlines",MITYPE_CLRFLAG2,	LEVEL2_MISSILESACTIVATEIMPACT, 0 },
 	{ "noinventorybar",					MITYPE_SETFLAG,	LEVEL_NOINVENTORYBAR, 0 },
-	{ "deathslideshow",					MITYPE_SETFLAG2,	LEVEL2_DEATHSLIDESHOW, 0 },
+	{ "deathslideshow",					MITYPE_SETFLAG2,	0, 0 },
 	{ "strictmonsteractivation",		MITYPE_CLRFLAG2,	LEVEL2_LAXMONSTERACTIVATION, LEVEL2_LAXACTIVATIONMAPINFO },
 	{ "laxmonsteractivation",			MITYPE_SETFLAG2,	LEVEL2_LAXMONSTERACTIVATION, LEVEL2_LAXACTIVATIONMAPINFO },
 	{ "additive_scrollers",				MITYPE_COMPATFLAG, COMPATF_BOOMSCROLL},

@@ -1215,10 +1215,9 @@ void APlayerPawn::Die (AActor *source, AActor *inflictor)
 				}
 			}
 		}
-		if (!multiplayer && (level.flags2 & LEVEL2_DEATHSLIDESHOW))
+		if (!multiplayer && level.info->deathsequence != NAME_None)
 		{
-#pragma message("disabled for finale rewrite")
-			//F_StartSlideshow ();
+			F_StartIntermission(level.info->deathsequence, FSTATE_EndingGame);
 		}
 	}
 }

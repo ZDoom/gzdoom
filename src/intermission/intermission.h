@@ -265,6 +265,12 @@ public:
 	virtual void Drawer ();
 };
 
+enum
+{
+	FSTATE_EndingGame = 0,
+	FSTATE_ChangingLevel = 1,
+	FSTATE_InLevel = 2
+};
 
 class DIntermissionController : public DObject
 {
@@ -276,7 +282,7 @@ class DIntermissionController : public DObject
 	bool mDeleteDesc;
 	bool mFirst;
 	bool mAdvance;
-	bool mEndingGame;
+	BYTE mGameState;
 	int mIndex;
 
 	bool NextPage();
@@ -284,7 +290,7 @@ class DIntermissionController : public DObject
 public:
 	static DIntermissionController *CurrentIntermission;
 
-	DIntermissionController(FIntermissionDescriptor *mDesc = NULL, bool mDeleteDesc = false, bool endinggame = false);
+	DIntermissionController(FIntermissionDescriptor *mDesc = NULL, bool mDeleteDesc = false, BYTE state = FSTATE_ChangingLevel);
 	bool Responder (event_t *ev);
 	void Ticker ();
 	void Drawer ();
@@ -296,7 +302,8 @@ public:
 bool F_Responder (event_t* ev);
 void F_Ticker ();
 void F_Drawer ();
-void F_StartIntermission(FIntermissionDescriptor *desc, bool deleteme, bool endinggame);
+void F_StartIntermission(FIntermissionDescriptor *desc, bool deleteme, BYTE state);
+void F_StartIntermission(FName desc, BYTE state);
 
 // Create an intermission from old cluster data
 void F_StartFinale (const char *music, int musicorder, int cdtrack, unsigned int cdid, const char *flat, 

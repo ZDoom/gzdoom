@@ -47,6 +47,8 @@
 #include "r_state.h"
 #include "r_translate.h"
 #include "c_bind.h"
+#include "g_level.h"
+#include "p_conversation.h"
 
 FIntermissionDescriptorList IntermissionDescriptors;
 
@@ -611,7 +613,7 @@ void DIntermissionScreenScroller::Drawer ()
 
 DIntermissionController *DIntermissionController::CurrentIntermission;
 
-DIntermissionController::DIntermissionController(FIntermissionDescriptor *Desc, bool DeleteDesc, bool endinggame)
+DIntermissionController::DIntermissionController(FIntermissionDescriptor *Desc, bool DeleteDesc, BYTE state)
 {
 	mDesc = Desc;
 	mDeleteDesc = DeleteDesc;
@@ -619,7 +621,7 @@ DIntermissionController::DIntermissionController(FIntermissionDescriptor *Desc, 
 	mAdvance = false;
 	mScreen = NULL;
 	mFirst = true;
-	mEndingGame = endinggame;
+	mGameState = state;
 	NextPage();
 }
 
@@ -701,10 +703,24 @@ void DIntermissionController::Ticker ()
 		mAdvance = false;
 		if (!NextPage())
 		{
-			if (!mEndingGame)
+			switch (mGameState)
 			{
+			case FSTATE_InLevel:
+				if (level.cdtrack == 0 || !S_ChangeCDMusic (level.cdtrack, level.cdid))
+					S_ChangeMusic (level.Music, level.musicorder);
+				gamestate = GS_LEVEL;
+				wipegamestate = GS_LEVEL;
+				P_ResumeConversation ();
+				viewactive = true;
+				break;
+
+			case FSTATE_ChangingLevel:
 				gameaction = ga_worlddone;
 				Destroy();
+				break;
+
+			default:
+				break;
 			}
 		}
 	}
@@ -733,7 +749,7 @@ void DIntermissionController::Destroy ()
 //
 //==========================================================================
 
-void F_StartIntermission(FIntermissionDescriptor *desc, bool deleteme, bool endinggame)
+void F_StartIntermission(FIntermissionDescriptor *desc, bool deleteme, BYTE state)
 {
 	if (DIntermissionController::CurrentIntermission != NULL)
 	{
@@ -745,7 +761,23 @@ void F_StartIntermission(FIntermissionDescriptor *desc, bool deleteme, bool endi
 	gamestate = GS_FINALE;
 	viewactive = false;
 	automapactive = false;
-	DIntermissionController::CurrentIntermission = new DIntermissionController(desc, deleteme, endinggame);
+	DIntermissionController::CurrentIntermission = new DIntermissionController(desc, deleteme, state);
+}
+
+
+//==========================================================================
+//
+// starts a new intermission
+//
+//==========================================================================
+
+void F_StartIntermission(FName seq, BYTE state)
+{
+	FIntermissionDescriptor **pdesc = IntermissionDescriptors.CheckKey(seq);
+	if (pdesc != NULL)
+	{
+		F_StartIntermission(*pdesc, false, state);
+	}
 }
 
 
@@ -792,19 +824,4 @@ void F_Drawer ()
 	}
 }
 
-
-
-
-
-#if 0
-if (players[0].mo->FindInventory (QuestItemClasses[24]) ||
-	players[0].mo->FindInventory (QuestItemClasses[27]))
-{
-	FinalePart = good;
-}
-else
-{
-	FinalePart = ok;
-}
-#endif
 

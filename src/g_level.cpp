@@ -78,6 +78,7 @@
 #include "d_netinf.h"
 #include "v_palette.h"
 #include "menu/menu.h"
+#include "a_strifeglobal.h"
 
 #include "gi.h"
 
@@ -960,13 +961,28 @@ void G_WorldDone (void)
 
 	if (strncmp (nextlevel, "enDSeQ", 6) == 0)
 	{
+		FName endsequence = ENamedName(strtol(nextlevel.GetChars()+6, NULL, 16));
+		// Strife needs a special case here to choose between good and sad ending. Bad is handled elsewherw.
+		if (endsequence == NAME_Inter_Strife)
+		{
+			if (players[0].mo->FindInventory (QuestItemClasses[24]) ||
+				players[0].mo->FindInventory (QuestItemClasses[27]))
+			{
+				endsequence = NAME_Inter_Strife_Good;
+			}
+			else
+			{
+				endsequence = NAME_Inter_Strife_Sad;
+			}
+		}
+
 		F_StartFinale (thiscluster->MessageMusic, thiscluster->musicorder,
 			thiscluster->cdtrack, thiscluster->cdid,
 			thiscluster->FinaleFlat, thiscluster->ExitText,
 			thiscluster->flags & CLUSTER_EXITTEXTINLUMP,
 			thiscluster->flags & CLUSTER_FINALEPIC,
 			thiscluster->flags & CLUSTER_LOOKUPEXITTEXT,
-			true, ENamedName(strtol(nextlevel.GetChars()+6, NULL, 16)));
+			true, endsequence);
 	}
 	else
 	{

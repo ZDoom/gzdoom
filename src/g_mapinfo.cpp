@@ -1081,6 +1081,13 @@ DEFINE_MAP_OPTION(deathsequence, false)
 	info->deathsequence = parse.sc.String;
 }
 
+DEFINE_MAP_OPTION(slideshow, false)
+{
+	parse.ParseAssign();
+	parse.sc.MustGetString();
+	info->slideshow = parse.sc.String;
+}
+
 DEFINE_MAP_OPTION(bordertexture, true)
 {
 	parse.ParseAssign();

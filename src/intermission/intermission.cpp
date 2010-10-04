@@ -760,6 +760,7 @@ void F_StartIntermission(FIntermissionDescriptor *desc, bool deleteme, BYTE stat
 	S_StopAllChannels ();
 	gameaction = ga_nothing;
 	gamestate = GS_FINALE;
+	if (state == FSTATE_InLevel) wipegamestate = GS_FINALE;	// don't wipe when within a level.
 	viewactive = false;
 	automapactive = false;
 	DIntermissionController::CurrentIntermission = new DIntermissionController(desc, deleteme, state);
@@ -826,3 +827,17 @@ void F_Drawer ()
 }
 
 
+//==========================================================================
+//
+// Called by main loop.
+//
+//==========================================================================
+
+void F_EndFinale ()
+{
+	if (DIntermissionController::CurrentIntermission != NULL)
+	{
+		DIntermissionController::CurrentIntermission->Destroy(); 
+		DIntermissionController::CurrentIntermission = NULL;
+	}
+}

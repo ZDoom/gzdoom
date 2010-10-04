@@ -1031,8 +1031,7 @@ void G_Ticker ()
 			G_DoCompleted ();
 			break;
 		case ga_slideshow:
-#pragma message("disabled for finale rewrite")
-			//F_StartSlideshow ();
+			if (gamestate == GS_LEVEL) F_StartIntermission(level.info->slideshow, FSTATE_InLevel);
 			break;
 		case ga_worlddone:
 			G_DoWorldDone ();
@@ -1062,6 +1061,10 @@ void G_Ticker ()
 		{
 			Page->Unload();
 			Page = NULL;
+		}
+		else if (oldgamestate == GS_FINALE)
+		{
+			F_EndFinale ();
 		}
 	}
 

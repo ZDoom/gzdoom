@@ -304,6 +304,7 @@ void F_Ticker ();
 void F_Drawer ();
 void F_StartIntermission(FIntermissionDescriptor *desc, bool deleteme, BYTE state);
 void F_StartIntermission(FName desc, BYTE state);
+void F_EndFinale ();
 
 // Create an intermission from old cluster data
 void F_StartFinale (const char *music, int musicorder, int cdtrack, unsigned int cdid, const char *flat, 

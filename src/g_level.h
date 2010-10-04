@@ -295,6 +295,7 @@ struct level_info_t
 	int			DefaultEnvironment;	// Default sound environment for the map.
 	FName		Intermission;
 	FName		deathsequence;
+	FName		slideshow;
 
 	// Redirection: If any player is carrying the specified item, then
 	// you go to the RedirectMap instead of this one.

@@ -399,13 +399,6 @@ void DIntermissionScreenCast::Init(FIntermissionAction *desc, bool first)
 
 int DIntermissionScreenCast::Responder (event_t *ev)
 {
-	if (ev->type == EV_KeyDown)
-	{
-		const char *cmd = Bindings.GetBind (ev->data1);
-
-		if (cmd != NULL && !stricmp (cmd, "toggleconsole"))
-			return 0;		
-	}
 	if (castdeath)
 		return 1;					// already in dying frames
 
@@ -684,6 +677,14 @@ bool DIntermissionController::Responder (event_t *ev)
 {
 	if (mScreen != NULL)
 	{
+		if (!mScreen->mPaletteChanged)
+		{
+			const char *cmd = Bindings.GetBind (ev->data1);
+
+			if (cmd != NULL && !stricmp (cmd, "toggleconsole"))
+				return false;		
+		}
+
 		if (mScreen->mTicker < 2) return false;	// prevent some leftover events from auto-advancing
 		int res = mScreen->Responder(ev);
 		mAdvance = (res == -1);

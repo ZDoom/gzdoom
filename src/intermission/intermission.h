@@ -160,11 +160,11 @@ protected:
 	int mDuration;
 	FTextureID mBackground;
 	bool mFlatfill;
-	bool mPaletteChanged;
 	TArray<FIIntermissionPatch> mOverlays;
 
 public:
 	int mTicker;
+	bool mPaletteChanged;
 
 	DIntermissionScreen() {}
 	virtual void Init(FIntermissionAction *desc, bool first);

@@ -79,6 +79,7 @@ int				MenuButtonTickers[NUM_MKEYS];
 bool			MenuButtonOrigin[NUM_MKEYS];
 int				BackbuttonTime;
 fixed_t			BackbuttonAlpha;
+static bool		MenuEnabled = true;
 
 
 #define KEY_REPEAT_DELAY	(TICRATE*5/12)
@@ -633,7 +634,7 @@ bool M_Responder (event_t *ev)
 		}
 		return DMenu::CurrentMenu->Responder(ev) || !keyup;
 	}
-	else
+	else if (MenuEnabled)
 	{
 		if (ev->type == EV_KeyDown)
 		{
@@ -758,6 +759,18 @@ void M_Init (void)
 {
 	M_ParseMenuDefs();
 	M_CreateMenus();
+}
+
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+void M_EnableMenu (bool on) 
+{
+	MenuEnabled = on;
 }
 
 

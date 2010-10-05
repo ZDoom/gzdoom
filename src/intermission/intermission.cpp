@@ -49,6 +49,7 @@
 #include "c_bind.h"
 #include "g_level.h"
 #include "p_conversation.h"
+#include "menu/menu.h"
 
 FIntermissionDescriptorList IntermissionDescriptors;
 
@@ -96,6 +97,14 @@ void DIntermissionScreen::Init(FIntermissionAction *desc, bool first)
 		{
 			texname = gameinfo.finalePages[v].GetChars();
 		}
+		else if (gameinfo.finalePages.Size() > 0)
+		{
+			texname = gameinfo.finalePages[0].GetChars();
+		}
+		else
+		{
+			texname = gameinfo.titlePage;
+		}
 	}
 	else if (*texname == '$')
 	{
@@ -125,6 +134,7 @@ void DIntermissionScreen::Init(FIntermissionAction *desc, bool first)
 		screen->UpdatePalette ();
 		mPaletteChanged = true;
 		NoWipe = 1;
+		M_EnableMenu(false);
 	}
 	mOverlays.Resize(desc->mOverlays.Size());
 	for (unsigned i=0; i < mOverlays.Size(); i++)
@@ -206,6 +216,7 @@ void DIntermissionScreen::Destroy()
 		screen->UpdatePalette ();
 		NoWipe = 5;
 		mPaletteChanged = false;
+		M_EnableMenu(true);
 	}
 	Super::Destroy();
 }

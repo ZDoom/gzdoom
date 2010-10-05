@@ -218,6 +218,7 @@ void DIntermissionScreen::Destroy()
 		mPaletteChanged = false;
 		M_EnableMenu(true);
 	}
+	S_StopSound(CHAN_VOICE);
 	Super::Destroy();
 }
 
@@ -740,6 +741,7 @@ void DIntermissionController::Ticker ()
 				wipegamestate = GS_LEVEL;
 				P_ResumeConversation ();
 				viewactive = true;
+				Destroy();
 				break;
 
 			case FSTATE_ChangingLevel:
@@ -765,6 +767,7 @@ void DIntermissionController::Drawer ()
 void DIntermissionController::Destroy ()
 {
 	Super::Destroy();
+	if (mScreen != NULL) mScreen->Destroy();
 	if (mDeleteDesc) delete mDesc;
 	mDesc = NULL;
 	if (CurrentIntermission == this) CurrentIntermission = NULL;

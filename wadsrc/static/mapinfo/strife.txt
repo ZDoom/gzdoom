@@ -174,7 +174,7 @@ Intermission Inter_Strife_MAP03
 {
 	Image
 	{
-		Music = "D_FAST"
+		Music = "D_DARK"
 		Background = "SS2F1"
 		Sound = "svox/mac10"
 		Time = 9
@@ -203,7 +203,7 @@ Intermission Inter_Strife_MAP10
 {
 	Image
 	{
-		Music = "D_FAST"
+		Music = "D_DARK"
 		Background = "SS3F1"
 		Sound = "svox/mac16"
 		Time = 10

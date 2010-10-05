@@ -827,7 +827,7 @@ static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyO
 	FVector3 pos, vel;
 	FRolloffInfo *rolloff;
 
-	if (sound_id <= 0 || volume <= 0 || nosfx)
+	if (sound_id <= 0 || volume <= 0 || nosfx || nosound )
 		return NULL;
 
 	int type;
@@ -2582,37 +2582,40 @@ CCMD (idmus)
 	FString map;
 	int l;
 
-	if (argv.argc() > 1)
+	if (!nomusic)
 	{
-		if (gameinfo.flags & GI_MAPxx)
+		if (argv.argc() > 1)
 		{
-			l = atoi (argv[1]);
-			if (l <= 99)
+			if (gameinfo.flags & GI_MAPxx)
 			{
-				map = CalcMapName (0, l);
+				l = atoi (argv[1]);
+			if (l <= 99)
+				{
+					map = CalcMapName (0, l);
+				}
+				else
+				{
+					Printf ("%s\n", GStrings("STSTR_NOMUS"));
+					return;
+				}
+			}
+			else
+			{
+				map = CalcMapName (argv[1][0] - '0', argv[1][1] - '0');
+			}
+
+			if ( (info = FindLevelInfo (map)) )
+			{
+				if (info->Music.IsNotEmpty())
+				{
+					S_ChangeMusic (info->Music, info->musicorder);
+					Printf ("%s\n", GStrings("STSTR_MUS"));
+				}
 			}
 			else
 			{
 				Printf ("%s\n", GStrings("STSTR_NOMUS"));
-				return;
 			}
-		}
-		else
-		{
-			map = CalcMapName (argv[1][0] - '0', argv[1][1] - '0');
-		}
-
-		if ( (info = FindLevelInfo (map)) )
-		{
-			if (info->Music.IsNotEmpty())
-			{
-				S_ChangeMusic (info->Music, info->musicorder);
-				Printf ("%s\n", GStrings("STSTR_MUS"));
-			}
-		}
-		else
-		{
-			Printf ("%s\n", GStrings("STSTR_NOMUS"));
 		}
 	}
 }
@@ -2625,27 +2628,30 @@ CCMD (idmus)
 
 CCMD (changemus)
 {
-   if (argv.argc() > 1)
-   {
-      if (PlayList)
-      {
-         delete PlayList;
-         PlayList = NULL;
-      }
-      S_ChangeMusic (argv[1], argv.argc() > 2 ? atoi (argv[2]) : 0);
-   }
-   else
-   {
-      const char *currentmus = mus_playing.name.GetChars();
-      if(currentmus != NULL && *currentmus != 0)
-      {
-         Printf ("currently playing %s\n", currentmus);
-      }
-      else
-      {
-         Printf ("no music playing\n");
-      }
-   }
+	if (!nomusic)
+	{
+		if (argv.argc() > 1)
+		{
+			if (PlayList)
+			{
+				delete PlayList;
+				PlayList = NULL;
+			}
+		S_ChangeMusic (argv[1], argv.argc() > 2 ? atoi (argv[2]) : 0);
+		}
+		else
+		{
+			const char *currentmus = mus_playing.name.GetChars();
+			if(currentmus != NULL && *currentmus != 0)
+			{
+				Printf ("currently playing %s\n", currentmus);
+			}
+			else
+			{
+				Printf ("no music playing\n");
+			}
+		}
+	}
 }
 
 //==========================================================================

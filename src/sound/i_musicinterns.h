@@ -593,6 +593,7 @@ protected:
 	void SetupForHMI(int len);
 	void SetupForHMP(int len);
 	void CheckCaps(int tech);
+
 	void DoInitialSetup();
 	void DoRestart();
 	bool CheckDone();
@@ -749,6 +750,5 @@ MusInfo *GME_OpenSong(FILE *file, BYTE *musiccache, int len, const char *fmt);
 // --------------------------------------------------------------------------
 
 extern MusInfo *currSong;
-extern int		nomusic;
 
 EXTERN_CVAR (Float, snd_musicvolume)

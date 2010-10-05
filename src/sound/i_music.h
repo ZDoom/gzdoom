@@ -93,6 +93,6 @@ public:
 	bool m_Looping;
 	bool m_NotStartedYet;	// Song has been created but not yet played
 };
-
+extern int nomusic;
 
 #endif //__I_MUSIC_H__

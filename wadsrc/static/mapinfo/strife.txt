@@ -53,7 +53,7 @@ gameinfo
 	menufontcolor_selection = "GOLD"
 	menubackbutton = "M_BACK_S"
 	PlayerClasses = "StrifePlayer"
-	pausesign = "PAUSED"
+	pausesign = "M_PAUSE"
 	gibfactor = 0.5
 	cursorpic = "strfcurs"
 }

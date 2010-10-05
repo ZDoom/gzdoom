@@ -1307,10 +1307,15 @@ sfxinfo_t *S_LoadSound(sfxinfo_t *sfx)
 			wlump.Read(sfxdata, size);
 			SDWORD len = LittleLong(((SDWORD *)sfxdata)[1]);
 
+			// If the sound is voc, use the custom loader.
+			if (strncmp ((const char *)sfxstart, "Creative Voice File", 19) == 0)
+			{
+				sfx->data = GSnd->LoadSoundVoc(sfxstart, len);
+			}
 			// If the sound is raw, just load it as such.
 			// Otherwise, try the sound as DMX format.
 			// If that fails, let FMOD try and figure it out.
-			if (sfx->bLoadRAW ||
+			else if (sfx->bLoadRAW ||
 				(((BYTE *)sfxdata)[0] == 3 && ((BYTE *)sfxdata)[1] == 0 && len <= size - 8))
 			{
 				int frequency;

@@ -2316,7 +2316,7 @@ void FMODSoundRenderer::UpdateSounds()
 //
 //==========================================================================
 
-SoundHandle FMODSoundRenderer::LoadSoundRaw(BYTE *sfxdata, int length, int frequency, int channels, int bits, int loopstart)
+SoundHandle FMODSoundRenderer::LoadSoundRaw(BYTE *sfxdata, int length, int frequency, int channels, int bits, int loopstart, int loopend)
 {
 	FMOD_CREATESOUNDEXINFO exinfo;
 	SoundHandle retval = { NULL };
@@ -2372,7 +2372,9 @@ SoundHandle FMODSoundRenderer::LoadSoundRaw(BYTE *sfxdata, int length, int frequ
 
 	if (loopstart >= 0)
 	{
-		sample->setLoopPoints(loopstart, FMOD_TIMEUNIT_PCM, numsamples - 1, FMOD_TIMEUNIT_PCM);
+		if (loopend == -1)
+			loopend = numsamples - 1;
+		sample->setLoopPoints(loopstart, FMOD_TIMEUNIT_PCM, loopend, FMOD_TIMEUNIT_PCM);
 	}
 
 	retval.data = sample;

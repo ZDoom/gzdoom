@@ -3244,8 +3244,8 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 
 		case ACSF_SetSkyScrollSpeed:
 		{
-			if (args[0] == 1) level.skyspeed1 = FIXED2FLOAT(args[1]);
-			else if (args[0] == 2) level.skyspeed2 = FIXED2FLOAT(args[1]);
+			if (args[0] == 1) level.skyspeed1 = float(FIXED2FLOAT(args[1]));
+			else if (args[0] == 2) level.skyspeed2 = float(FIXED2FLOAT(args[1]));
 			return 1;
 		}
 
@@ -5163,9 +5163,9 @@ int DLevelScript::RunScript ()
 					int type = Stack[optstart-6];
 					int id = Stack[optstart-5];
 					EColorRange color;
-					float x = FIXED2FLOAT(Stack[optstart-3]);
-					float y = FIXED2FLOAT(Stack[optstart-2]);
-					float holdTime = FIXED2FLOAT(Stack[optstart-1]);
+					double x = FIXED2FLOAT(Stack[optstart-3]);
+					double y = FIXED2FLOAT(Stack[optstart-2]);
+					double holdTime = FIXED2FLOAT(Stack[optstart-1]);
 					DHUDMessage *msg;
 
 					if (type & HUDMSG_COLORSTRING)

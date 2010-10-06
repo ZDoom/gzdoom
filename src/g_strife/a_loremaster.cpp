@@ -25,9 +25,9 @@ int ALoreShot::DoSpecialDamage (AActor *target, int damage)
 	
 	if (this->target != NULL)
 	{
-		thrust.X = float(this->target->x - target->x);
-		thrust.Y = float(this->target->y - target->y);
-		thrust.Z = float(this->target->z - target->z);
+		thrust.X = double(this->target->x - target->x);
+		thrust.Y = double(this->target->y - target->y);
+		thrust.Z = double(this->target->z - target->z);
 	
 		thrust.MakeUnit();
 		thrust *= float((255*50*FRACUNIT) / (target->Mass ? target->Mass : 1));

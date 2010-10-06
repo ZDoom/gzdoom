@@ -105,7 +105,7 @@ static bool S_IsChannelUsed(AActor *actor, int channel, int *seen);
 static void S_ActivatePlayList(bool goBack);
 static void CalcPosVel(FSoundChan *chan, FVector3 *pos, FVector3 *vel);
 static void CalcPosVel(int type, const AActor *actor, const sector_t *sector, const FPolyObj *poly,
-	const float pt[3], int channel, int chanflags, FVector3 *pos, FVector3 *vel);
+	const double pt[3], int channel, int chanflags, FVector3 *pos, FVector3 *vel);
 static void CalcSectorSoundOrg(const sector_t *sec, int channum, fixed_t *x, fixed_t *y, fixed_t *z);
 static void CalcPolyobjSoundOrg(const FPolyObj *poly, fixed_t *x, fixed_t *y, fixed_t *z);
 static FSoundChan *S_StartSound(AActor *mover, const sector_t *sec, const FPolyObj *poly,
@@ -647,7 +647,7 @@ static void CalcPosVel(FSoundChan *chan, FVector3 *pos, FVector3 *vel)
 //=========================================================================
 
 static void CalcPosVel(int type, const AActor *actor, const sector_t *sector,
-	const FPolyObj *poly, const float pt[3], int channum, int chanflags, FVector3 *pos, FVector3 *vel)
+	const FPolyObj *poly, const double pt[3], int channum, int chanflags, FVector3 *pos, FVector3 *vel)
 {
 	if (pos != NULL)
 	{

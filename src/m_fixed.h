@@ -138,6 +138,6 @@ inline SDWORD ModDiv (SDWORD num, SDWORD den, SDWORD *dmval)
 
 
 #define FLOAT2FIXED(f)		xs_Fix<16>::ToFix(f)
-#define FIXED2FLOAT(f)		((f) / float(65536))
+#define FIXED2FLOAT(f)		((f) / double(65536))
 
 #endif

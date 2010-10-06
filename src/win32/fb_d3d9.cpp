@@ -3242,12 +3242,12 @@ void D3DFB::FillSimplePoly(FTexture *texture, FVector2 *points, int npoints,
 	BufferedTris *quad;
 	FBVERTEX *verts;
 	D3DTex *tex;
-	float yoffs, uscale, vscale;
+	double yoffs, uscale, vscale;
 	int i, ipos;
 	D3DCOLOR color0, color1;
-	float ox, oy;
-	float cosrot, sinrot;
-	float rot = float(rotation * M_PI / float(1u << 31));
+	double ox, oy;
+	double cosrot, sinrot;
+	double rot = double(rotation * M_PI / double(1u << 31));
 	bool dorotate = rot != 0;
 
 	if (npoints < 3)
@@ -3311,10 +3311,10 @@ void D3DFB::FillSimplePoly(FTexture *texture, FVector2 *points, int npoints,
 	quad->NumTris = npoints - 2;
 
 	yoffs = GatheringWipeScreen ? 0 : LBOffset;
-	uscale = float(1.f / (texture->GetScaledWidth() * scalex));
-	vscale = float(1.f / (texture->GetScaledHeight() * scaley));
-	ox = float(originx);
-	oy = float(originy);
+	uscale = double(1. / (texture->GetScaledWidth() * scalex));
+	vscale = double(1. / (texture->GetScaledHeight() * scaley));
+	ox = double(originx);
+	oy = double(originy);
 
 	for (i = 0; i < npoints; ++i)
 	{
@@ -3324,16 +3324,16 @@ void D3DFB::FillSimplePoly(FTexture *texture, FVector2 *points, int npoints,
 		verts[i].rhw = 1;
 		verts[i].color0 = color0;
 		verts[i].color1 = color1;
-		float u = points[i].X - 0.5f - ox;
-		float v = points[i].Y - 0.5f - oy;
+		double u = points[i].X - 0.5 - ox;
+		double v = points[i].Y - 0.5 - oy;
 		if (dorotate)
 		{
 			float t = u;
 			u = t * cosrot - v * sinrot;
 			v = v * cosrot + t * sinrot;
 		}
-		verts[i].tu = u * uscale;
-		verts[i].tv = v * vscale;
+		verts[i].tu = float(u * uscale);
+		verts[i].tv = float(v * vscale);
 	}
 	for (ipos = IndexPos, i = 2; i < npoints; ++i, ipos += 3)
 	{

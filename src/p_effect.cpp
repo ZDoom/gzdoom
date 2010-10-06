@@ -474,7 +474,7 @@ void P_DrawRailTrail (AActor *source, const FVector3 &start, const FVector3 &end
 			AActor *mo = players[consoleplayer].camera;
 			FVector3 point;
 			double r;
-			float dirz;
+			double dirz;
 
 			if (abs(mo->x - FLOAT2FIXED(start.X)) < 20 * FRACUNIT
 				&& (mo->y - FLOAT2FIXED(start.Y)) < 20 * FRACUNIT)
@@ -601,11 +601,11 @@ void P_DrawRailTrail (AActor *source, const FVector3 &start, const FVector3 &end
 			{
 				int rnd = M_Random ();
 				if (rnd & 1)
-					diff.X = clamp<float> (diff.X + ((rnd & 8) ? 1 : -1), -maxdiff, maxdiff);
+					diff.X = clamp<double> (diff.X + ((rnd & 8) ? 1 : -1), -maxdiff, maxdiff);
 				if (rnd & 2)
-					diff.Y = clamp<float> (diff.Y + ((rnd & 16) ? 1 : -1), -maxdiff, maxdiff);
+					diff.Y = clamp<double> (diff.Y + ((rnd & 16) ? 1 : -1), -maxdiff, maxdiff);
 				if (rnd & 4)
-					diff.Z = clamp<float> (diff.Z + ((rnd & 32) ? 1 : -1), -maxdiff, maxdiff);
+					diff.Z = clamp<double> (diff.Z + ((rnd & 32) ? 1 : -1), -maxdiff, maxdiff);
 			}
 
 			FVector3 postmp = pos + diff;

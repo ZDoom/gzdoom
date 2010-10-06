@@ -1226,10 +1226,18 @@ inline TMatrix3x3<T>::TMatrix3x3(const TVector3<T> &axis, TAngle<T> degrees)
 }
 
 
+/*
 typedef TVector2<float>		FVector2;
 typedef TVector3<float>		FVector3;
 typedef TRotator<float>		FRotator;
 typedef TMatrix3x3<float>	FMatrix3x3;
 typedef TAngle<float>		FAngle;
+*/
+
+typedef TVector2<double>	FVector2;
+typedef TVector3<double>	FVector3;
+typedef TRotator<double>	FRotator;
+typedef TMatrix3x3<double>	FMatrix3x3;
+typedef TAngle<double>		FAngle;
 
 #endif

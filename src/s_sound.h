@@ -186,7 +186,7 @@ struct FSoundChan : public FISoundChannel
 		AActor			*Actor;		// Used for position and velocity.
 		const sector_t	*Sector;	// Sector for area sounds.
 		const FPolyObj	*Poly;		// Polyobject sound source.
-		float			 Point[3];	// Sound is not attached to any source.
+		double			 Point[3];	// Sound is not attached to any source.
 	};
 };
 extern FSoundChan *Channels;

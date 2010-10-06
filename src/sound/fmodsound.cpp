@@ -2119,12 +2119,12 @@ void FMODSoundRenderer::UpdateListener(SoundListener *listener)
 
 	// Set velocity to 0 to prevent crazy doppler shifts just from running.
 
-	vel.x = listener->velocity.X;
-	vel.y = listener->velocity.Y;
-	vel.z = listener->velocity.Z;
-	pos.x = listener->position.X;
-	pos.y = listener->position.Y;
-	pos.z = listener->position.Z;
+	vel.x = float(listener->velocity.X);
+	vel.y = float(listener->velocity.Y);
+	vel.z = float(listener->velocity.Z);
+	pos.x = float(listener->position.X);
+	pos.y = float(listener->position.Y);
+	pos.z = float(listener->position.Z);
 
 	float angle = listener->angle;
 	forward.x = cos(angle);

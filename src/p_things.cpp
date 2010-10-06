@@ -252,7 +252,7 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 					if (targ != NULL)
 					{
 						fixed_t spot[3] = { targ->x, targ->y, targ->z+targ->height/2 };
-						FVector3 aim(float(spot[0] - mobj->x), float(spot[1] - mobj->y), float(spot[2] - mobj->z));
+						FVector3 aim(double(spot[0] - mobj->x), double(spot[1] - mobj->y), double(spot[2] - mobj->z));
 
 						if (leadTarget && speed > 0 && (targ->velx | targ->vely | targ->velz))
 						{

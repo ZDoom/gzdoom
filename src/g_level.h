@@ -393,8 +393,8 @@ struct FLevelLocals
 	char		skypic1[9];
 	char		skypic2[9];
 
-	float		skyspeed1;				// Scrolling speed of sky textures, in pixels per ms
-	float		skyspeed2;
+	float		skyspeed1;//flt-ok				// Scrolling speed of sky textures, in pixels per ms
+	float		skyspeed2;//flt-ok
 
 	int			total_secrets;
 	int			found_secrets;

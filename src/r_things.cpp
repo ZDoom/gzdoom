@@ -101,6 +101,8 @@ short			screenheightarray[MAXWIDTH];
 
 CVAR (Bool, r_drawplayersprites, true, 0)	// [RH] Draw player sprites?
 
+CVAR (Bool, r_drawvoxels, true, 0)
+
 //
 // INITIALIZATION FUNCTIONS
 //
@@ -2108,11 +2110,16 @@ void R_DrawSprite (vissprite_t *spr)
 		return;
 	}
 
-	x1 = spr->x1;
-	x2 = spr->x2;
-
-	x1 = 0;
-	x2 = viewwidth - 1;
+	if (!r_drawvoxels)
+	{
+		x1 = spr->x1;
+		x2 = spr->x2;
+	}
+	else
+	{
+		x1 = 0;
+		x2 = viewwidth - 1;
+	}
 
 	// [RH] Quickly reject sprites with bad x ranges.
 	if (x1 > x2)
@@ -2301,26 +2308,31 @@ void R_DrawSprite (vissprite_t *spr)
 
 	// all clipping has been performed, so draw the sprite
 
-	mfloorclip = clipbot;
-	mceilingclip = cliptop;
-	//R_DrawVisSprite (spr);
-
-	// If it completely clipped away, don't bother drawing it.
-	if (cliptop[x2] >= clipbot[x2])
+	if (!r_drawvoxels)
 	{
-		for (i = x1; i < x2; ++i)
+		mfloorclip = clipbot;
+		mceilingclip = cliptop;
+		R_DrawVisSprite (spr);
+	}
+	else
+	{
+		// If it is completely clipped away, don't bother drawing it.
+		if (cliptop[x2] >= clipbot[x2])
 		{
-			if (cliptop[i] < clipbot[i])
+			for (i = x1; i < x2; ++i)
 			{
-				break;
+				if (cliptop[i] < clipbot[i])
+				{
+					break;
+				}
+			}
+			if (i == x2)
+			{
+				return;
 			}
 		}
-		if (i == x2)
-		{
-			return;
-		}
+		R_DrawVoxel(spr->gx, spr->gy, spr->gz, spr->angle, FRACUNIT, FRACUNIT, MyVox, spr->colormap, cliptop, clipbot);
 	}
-	R_DrawVoxel(spr->gx, spr->gy, spr->gz, spr->angle, FRACUNIT, FRACUNIT, MyVox, NormalLight.Maps, cliptop, clipbot);
 }
 
 //

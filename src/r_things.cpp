@@ -349,7 +349,7 @@ void R_InitSpriteDefs ()
 	DWORD intname;
 
 
-	FILE *f = fopen("g:/dosgames/blood/blood-barfed/kvx/tombstn1.kvx", "rb");
+	FILE *f = fopen("g:/dosgames/blood/blood-barfed/kvx/chair1.kvx", "rb");
 	size_t len = Q_filelength(f);
 	BYTE *voxd = new BYTE[len];
 	fread(voxd, 1, len, f);
@@ -2297,7 +2297,7 @@ void R_DrawSprite (vissprite_t *spr)
 	mfloorclip = clipbot;
 	mceilingclip = cliptop;
 	//R_DrawVisSprite (spr);
-	R_DrawVoxel(spr->gx, spr->gy, spr->gz, spr->angle, FRACUNIT, FRACUNIT, MyVox, NormalLight.Maps, cliptop, clipbot);
+	R_DrawVoxel(spr->gx, spr->gy, spr->gz, spr->angle, FRACUNIT, FRACUNIT, MyVox, NormalLight.Maps, zeroarray, screenheightarray);
 }
 
 //
@@ -2658,8 +2658,8 @@ void R_DrawVoxel(fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t daspran
 	kvxslab_t *voxptr, *voxend;
 	FVoxelMipLevel *mip;
 
-	const int nytooclose = viewwidth * 2100, nytoofar = 16384*16384 - 1048576;
-	const int xdimenscale = Scale(viewwidth, yaspectmul, 320);
+	const int nytooclose = centerxwide * 2100, nytoofar = 16384*16384 - 1048576;
+	const int xdimenscale = Scale(centerxwide, yaspectmul, 160);
 	const fixed_t viewingrangerecip = 65536;
 	const fixed_t globalposx =  viewx >> 12;
 	const fixed_t globalposy = -viewy >> 12;
@@ -2694,8 +2694,8 @@ void R_DrawVoxel(fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t daspran
 	daxscale <<= (i+8); dayscale <<= (i+8);
 	odayscale = dayscale;
 	daxscale = FixedDiv(daxscale, yaspectmul);
-	daxscale = Scale(daxscale, xdimenscale, viewwidth << 8);
-	dayscale = Scale(dayscale, FixedMul(xdimenscale, viewingrangerecip), viewwidth << 8);
+	daxscale = Scale(daxscale, xdimenscale, centerxwide << 9);
+	dayscale = Scale(dayscale, FixedMul(xdimenscale, viewingrangerecip), centerxwide << 9);
 
 	daxscalerecip = (1<<30) / daxscale;
 	dayscalerecip = (1<<30) / dayscale;
@@ -2807,15 +2807,15 @@ void R_DrawVoxel(fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t daspran
 				voxend = (kvxslab_t *)(slabxoffs + xyoffs[y+1]);
 				if (voxptr >= voxend) continue;
 
-				lx = MulScale32(nx >> 3, DivScale20(viewwidth, (ny+y1)>>14)) + centerx;
+				lx = MulScale32(nx >> 3, DivScale21(centerxwide, (ny+y1)>>14)) + centerx;
 				if (lx < 0) lx = 0;
-				rx = MulScale32((nx + nxoff) >> 3, DivScale20(viewwidth, (ny+y2)>>14)) + centerx;
+				rx = MulScale32((nx + nxoff) >> 3, DivScale21(centerxwide, (ny+y2)>>14)) + centerx;
 				if (rx > viewwidth) rx = viewwidth;
 				if (rx <= lx) continue;
 				rx -= lx;
 
-				fixed_t l1 = DivScale20(viewwidth, (ny-yoff)>>14);
-				fixed_t l2 = DivScale20(viewwidth, (ny+yoff)>>14);
+				fixed_t l1 = DivScale21(centerxwide, (ny-yoff)>>14);
+				fixed_t l2 = DivScale21(centerxwide, (ny+yoff)>>14);
 				for (; voxptr < voxend; voxptr = (kvxslab_t *)((BYTE *)voxptr + voxptr->zleng + 3))
 				{
 					fixed_t z1, z2;

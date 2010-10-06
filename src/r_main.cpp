@@ -102,7 +102,6 @@ static fixed_t MaxVisForFloor;
 static FRandom pr_torchflicker ("TorchFlicker");
 static FRandom pr_hom;
 static TArray<InterpolationViewer> PastViewers;
-static int centerxwide;
 static bool polyclipped;
 static bool r_showviewer;
 bool r_dontmaplines;
@@ -150,6 +149,8 @@ float			WallTMapScale2;
 extern "C" {
 int 			centerx;
 int				centery;
+int				centerxwide;
+
 }
 
 DCanvas			*RenderTarget;		// [RH] canvas to render to

@@ -62,7 +62,7 @@ extern int				viewwindowy;
 
 
 
-extern "C" int			centerx;
+extern "C" int			centerx, centerxwide;
 extern "C" int			centery;
 
 extern fixed_t			centerxfrac;

@@ -2096,6 +2096,7 @@ void R_DrawSprite (vissprite_t *spr)
 	static short cliptop[MAXWIDTH];
 	drawseg_t *ds;
 	int i;
+	int x1, x2;
 	int r1, r2;
 	short topclip, botclip;
 	short *clip1, *clip2;
@@ -2107,8 +2108,14 @@ void R_DrawSprite (vissprite_t *spr)
 		return;
 	}
 
+	x1 = spr->x1;
+	x2 = spr->x2;
+
+	x1 = 0;
+	x2 = viewwidth - 1;
+
 	// [RH] Quickly reject sprites with bad x ranges.
-	if (spr->x1 > spr->x2)
+	if (x1 > x2)
 		return;
 
 	// [RH] Sprites split behind a one-sided line can also be discarded.
@@ -2206,9 +2213,9 @@ void R_DrawSprite (vissprite_t *spr)
 	}
 #endif
 
-	i = spr->x2 - spr->x1 + 1;
-	clip1 = clipbot + spr->x1;
-	clip2 = cliptop + spr->x1;
+	i = x2 - x1 + 1;
+	clip1 = clipbot + x1;
+	clip2 = cliptop + x1;
 	do
 	{
 		*clip1++ = botclip;
@@ -2227,7 +2234,7 @@ void R_DrawSprite (vissprite_t *spr)
 	for (ds = ds_p; ds-- > firstdrawseg; )  // new -- killough
 	{
 		// determine if the drawseg obscures the sprite
-		if (ds->x1 > spr->x2 || ds->x2 < spr->x1 ||
+		if (ds->x1 > x2 || ds->x2 < x1 ||
 			(!(ds->silhouette & SIL_BOTH) && ds->maskedtexturecol == -1 &&
 			 !ds->bFogBoundary) )
 		{
@@ -2235,8 +2242,8 @@ void R_DrawSprite (vissprite_t *spr)
 			continue;
 		}
 
-		r1 = MAX<int> (ds->x1, spr->x1);
-		r2 = MIN<int> (ds->x2, spr->x2);
+		r1 = MAX<int> (ds->x1, x1);
+		r2 = MIN<int> (ds->x2, x2);
 
 		fixed_t neardepth, fardepth;
 		if (ds->sz1 < ds->sz2)
@@ -2297,7 +2304,23 @@ void R_DrawSprite (vissprite_t *spr)
 	mfloorclip = clipbot;
 	mceilingclip = cliptop;
 	//R_DrawVisSprite (spr);
-	R_DrawVoxel(spr->gx, spr->gy, spr->gz, spr->angle, FRACUNIT, FRACUNIT, MyVox, NormalLight.Maps, zeroarray, screenheightarray);
+
+	// If it completely clipped away, don't bother drawing it.
+	if (cliptop[x2] >= clipbot[x2])
+	{
+		for (i = x1; i < x2; ++i)
+		{
+			if (cliptop[i] < clipbot[i])
+			{
+				break;
+			}
+		}
+		if (i == x2)
+		{
+			return;
+		}
+	}
+	R_DrawVoxel(spr->gx, spr->gy, spr->gz, spr->angle, FRACUNIT, FRACUNIT, MyVox, NormalLight.Maps, cliptop, clipbot);
 }
 
 //

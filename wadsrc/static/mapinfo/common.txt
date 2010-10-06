@@ -177,7 +177,7 @@ Intermission Doom2Cast
 	{
 		CastClass = "LostSoul"
 		CastName = "$CC_LOST"
-		AttackSound = "Missile", 1, "grunt/attack"
+		AttackSound = "Missile", 1, "skull/melee"
 	}
 	Cast
 	{

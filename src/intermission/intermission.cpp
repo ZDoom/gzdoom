@@ -452,6 +452,25 @@ int DIntermissionScreenCast::Responder (event_t *ev)
 	return true;
 }
 
+void DIntermissionScreenCast::PlayAttackSound()
+{
+	// sound hacks....
+	if (caststate != NULL && castattacking)
+	{
+		for (unsigned i = 0; i < mCastSounds.Size(); i++)
+		{
+			if ((!!mCastSounds[i].mSequence) == (basestate != mDefaults->MissileState) &&
+				(caststate == basestate + mCastSounds[i].mIndex))
+			{
+				S_StopAllChannels ();
+				S_Sound (CHAN_WEAPON | CHAN_UI, mCastSounds[i].mSound, 1, ATTN_NONE);
+				return;
+			}
+		}
+	}
+
+}
+
 int DIntermissionScreenCast::Ticker ()
 {
 	Super::Ticker();
@@ -465,26 +484,13 @@ int DIntermissionScreenCast::Ticker ()
 	}
 	else
 	{
-		// sound hacks....
-		if (caststate != NULL && castattacking)
-		{
-			for (unsigned i = 0; i < mCastSounds.Size(); i++)
-			{
-				if ((!!mCastSounds[i].mSequence) == (basestate != mDefaults->MissileState) &&
-					(caststate == basestate + mCastSounds[i].mIndex - 1))
-				{
-					S_StopAllChannels ();
-					S_Sound (CHAN_WEAPON | CHAN_UI, mCastSounds[i].mSound, 1, ATTN_NONE);
-					break;
-				}
-			}
-		}
-
 		// just advance to next state in animation
 		if (caststate == advplayerstate)
 			goto stopattack;	// Oh, gross hack!
 
 		caststate = caststate->GetNextState();
+
+		PlayAttackSound();
 		castframes++;
 	}
 		
@@ -492,18 +498,27 @@ int DIntermissionScreenCast::Ticker ()
 	{
 		// go into attack frame
 		castattacking = true;
-		if (castonmelee)
-			basestate = caststate = mDefaults->MeleeState;
-		else
-			basestate = caststate = mDefaults->MissileState;
-		castonmelee ^= 1;
-		if (caststate == NULL)
+		if (!mClass->IsDescendantOf(RUNTIME_CLASS(APlayerPawn)))
 		{
 			if (castonmelee)
 				basestate = caststate = mDefaults->MeleeState;
 			else
 				basestate = caststate = mDefaults->MissileState;
+			castonmelee ^= 1;
+			if (caststate == NULL)
+			{
+				if (castonmelee)
+					basestate = caststate = mDefaults->MeleeState;
+				else
+					basestate = caststate = mDefaults->MissileState;
+			}
 		}
+		else
+		{
+			// The players use the melee state differently so it can't be used here
+			basestate = caststate = mDefaults->MissileState;
+		}
+		PlayAttackSound();
 	}
 		
 	if (castattacking)

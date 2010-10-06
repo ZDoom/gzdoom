@@ -243,6 +243,8 @@ class DIntermissionScreenCast : public DIntermissionScreen
 	int 			castframes;
 	int 			castonmelee;
 
+	void PlayAttackSound();
+
 public:
 
 	DIntermissionScreenCast() {}

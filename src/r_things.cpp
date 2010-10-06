@@ -19,6 +19,12 @@
 // DESCRIPTION:
 //		Refresh of things, i.e. objects represented by sprites.
 //
+// This file contains some code from the Build Engine.
+//
+// "Build Engine & Tools" Copyright (c) 1993-1997 Ken Silverman
+// Ken Silverman's official web site: "http://www.advsys.net/ken"
+// See the included license file "BUILDLIC.TXT" for license info.
+//
 //-----------------------------------------------------------------------------
 
 #include <stdio.h>
@@ -53,6 +59,7 @@
 #include "v_palette.h"
 #include "r_translate.h"
 
+FVoxel *MyVox;
 
 extern fixed_t globaluclip, globaldclip;
 
@@ -340,6 +347,15 @@ void R_InitSpriteDefs ()
 	} *hashes;
 	unsigned int i, max;
 	DWORD intname;
+
+
+	FILE *f = fopen("g:/dosgames/blood/blood-barfed/kvx/tombstn1.kvx", "rb");
+	size_t len = Q_filelength(f);
+	BYTE *voxd = new BYTE[len];
+	fread(voxd, 1, len, f);
+	fclose(f);
+	MyVox = R_LoadKVX(voxd, (int)len);
+	delete[] voxd;
 
 	// Create a hash table to speed up the process
 	max = TexMan.NumTextures();
@@ -1395,7 +1411,9 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 	vis->cx = tx2;									// signed math makes it 13.19
 	vis->gx = fx;
 	vis->gy = fy;
-	vis->gz = gzb;		// [RH] use gzb, not thing->z
+	vis->gz = fz;
+	vis->angle = thing->angle;
+	vis->gzb = gzb;		// [RH] use gzb, not thing->z
 	vis->gzt = gzt;		// killough 3/27/98
 	vis->floorclip = FixedDiv (thing->floorclip, yscale);
 	vis->texturemid = (tex->TopOffset << FRACBITS) - 
@@ -2278,7 +2296,8 @@ void R_DrawSprite (vissprite_t *spr)
 
 	mfloorclip = clipbot;
 	mceilingclip = cliptop;
-	R_DrawVisSprite (spr);
+	//R_DrawVisSprite (spr);
+	R_DrawVoxel(spr->gx, spr->gy, spr->gz, spr->angle, FRACUNIT, FRACUNIT, MyVox, NormalLight.Maps, cliptop, clipbot);
 }
 
 //
@@ -2534,7 +2553,7 @@ void R_ProjectParticle (particle_t *particle, const sector_t *sector, int shade,
 	vis->cx = tx;
 	vis->gx = particle->x;
 	vis->gy = particle->y;
-	vis->gz = y1;
+	vis->gzb = y1;
 	vis->gzt = y2;
 	vis->x1 = x1;
 	vis->x2 = x2;
@@ -2591,7 +2610,7 @@ void R_DrawParticle (vissprite_t *vis)
 	BYTE *dest;
 	DWORD fg;
 	BYTE color = vis->colormap[vis->startfrac];
-	int yl = vis->gz;
+	int yl = vis->gzb;
 	int ycount = vis->gzt - yl + 1;
 	int x1 = vis->x1;
 	int countbase = vis->x2 - x1 + 1;
@@ -2624,4 +2643,223 @@ void R_DrawParticle (vissprite_t *vis)
 		} while (--count);
 		dest += spacing;
 	} while (--ycount);
+}
+
+void R_DrawVoxel(fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t dasprang,
+	fixed_t daxscale, fixed_t dayscale, FVoxel *voxobj,
+	lighttable_t *colormap, short *daumost, short *dadmost)
+{
+	int i, j, k, x, y, syoff, ggxstart, ggystart, nxoff;
+	fixed_t cosang, sinang, sprcosang, sprsinang;
+	int backx, backy, gxinc, gyinc;
+	int daxscalerecip, dayscalerecip, cnt, gxstart, gystart, odayscale;
+	int lx, rx, nx, ny, x1=0, y1=0, x2=0, y2=0, yplc, yinc=0;
+	int yoff, xs=0, ys=0, xe, ye, xi=0, yi=0, cbackx, cbacky, dagxinc, dagyinc;
+	kvxslab_t *voxptr, *voxend;
+	FVoxelMipLevel *mip;
+
+	const int nytooclose = viewwidth * 2100, nytoofar = 16384*16384 - 1048576;
+	const int xdimenscale = Scale(viewwidth, yaspectmul, 320);
+	const fixed_t viewingrangerecip = 65536;
+	const fixed_t globalposx =  viewx >> 12;
+	const fixed_t globalposy = -viewy >> 12;
+	const fixed_t globalposz = -viewz >> 8;
+
+	dasprx =  dasprx >> 12;
+	daspry = -daspry >> 12;
+	dasprz = -dasprz >> 8;
+	daxscale >>= 10;
+	dayscale >>= 10;
+
+	cosang = viewcos >> 2;
+	sinang = -viewsin >> 2;
+	sprcosang = finecosine[dasprang >> ANGLETOFINESHIFT] >> 2;
+	sprsinang = -finesine[dasprang >> ANGLETOFINESHIFT] >> 2;
+
+	i = abs(DMulScale6(dasprx - globalposx, cosang, daspry - globalposy, sinang));
+	dc_colormap = colormap;
+	//j = (long)(getpalookup((long)mulscale21(globvis,i),(long)dashade)<<8);
+	//setupdrawslab(ylookup[1],(long)FP_OFF(palookup[dapal])+j);
+	j = 1310720;
+	j *= MIN(daxscale, dayscale); j >>= 6;  /* New hacks (for sized-down voxels) */
+	for (k = 0; k < voxobj->NumMips; ++k)
+	{
+		if (i < j) { i = k; break; }
+		j <<= 1;
+	}
+	if (k >= voxobj->NumMips) i = voxobj->NumMips - 1;
+
+	mip = &voxobj->Mips[i];		if (mip->SlabData == NULL) return;
+
+	daxscale <<= (i+8); dayscale <<= (i+8);
+	odayscale = dayscale;
+	daxscale = FixedDiv(daxscale, yaspectmul);
+	daxscale = Scale(daxscale, xdimenscale, viewwidth << 8);
+	dayscale = Scale(dayscale, FixedMul(xdimenscale, viewingrangerecip), viewwidth << 8);
+
+	daxscalerecip = (1<<30) / daxscale;
+	dayscalerecip = (1<<30) / dayscale;
+
+	x = FixedMul(globalposx - dasprx, daxscalerecip);
+	y = FixedMul(globalposy - daspry, daxscalerecip);
+	backx = (DMulScale10(x, sprcosang, y,  sprsinang) + mip->PivotX) >> 8;
+	backy = (DMulScale10(y, sprcosang, x, -sprsinang) + mip->PivotY) >> 8;
+	cbackx = clamp(backx, 0, mip->SizeX - 1);
+	cbacky = clamp(backy, 0, mip->SizeY - 1);
+
+	sprcosang = MulScale14(daxscale, sprcosang);
+	sprsinang = MulScale14(daxscale, sprsinang);
+
+	x = (dasprx - globalposx) - DMulScale18(mip->PivotX, sprcosang, mip->PivotY, -sprsinang);
+	y = (daspry - globalposy) - DMulScale18(mip->PivotY, sprcosang, mip->PivotX,  sprsinang);
+
+	cosang = FixedMul(cosang, dayscalerecip);
+	sinang = FixedMul(sinang, dayscalerecip);
+
+	gxstart = y*cosang - x*sinang;
+	gystart = x*cosang + y*sinang;
+	gxinc = DMulScale10(sprsinang, cosang, sprcosang, -sinang);
+	gyinc = DMulScale10(sprcosang, cosang, sprsinang,  sinang);
+	if ((abs(globalposz - dasprz) >> 10) >= abs(odayscale)) return;
+
+	x = 0; y = 0; j = MAX(mip->SizeX, mip->SizeY);
+	fixed_t *ggxinc = (fixed_t *)alloca((j + 1) * sizeof(fixed_t) * 2);
+	fixed_t *ggyinc = ggxinc + (j + 1);
+	for (i = 0; i <= j; i++)
+	{
+		ggxinc[i] = x; x += gxinc;
+		ggyinc[i] = y; y += gyinc;
+	}
+
+	syoff = DivScale21(globalposz - dasprz, odayscale) + (mip->PivotZ << 7);
+	yoff = (abs(gxinc) + abs(gyinc)) >> 1;
+
+	for (cnt = 0; cnt < 8; cnt++)
+	{
+		switch (cnt)
+		{
+			case 0: xs = 0;				ys = 0;				xi =  1; yi =  1; break;
+			case 1: xs = mip->SizeX-1;	ys = 0;				xi = -1; yi =  1; break;
+			case 2: xs = 0;				ys = mip->SizeY-1;	xi =  1; yi = -1; break;
+			case 3: xs = mip->SizeX-1;	ys = mip->SizeY-1;	xi = -1; yi = -1; break;
+			case 4: xs = 0;				ys = cbacky;		xi =  1; yi =  2; break;
+			case 5: xs = mip->SizeX-1;	ys = cbacky;		xi = -1; yi =  2; break;
+			case 6: xs = cbackx;		ys = 0;				xi =  2; yi =  1; break;
+			case 7: xs = cbackx;		ys = mip->SizeY-1;	xi =  2; yi = -1; break;
+		}
+		xe = cbackx; ye = cbacky;
+		if (cnt < 4)
+		{
+			if ((xi < 0) && (xe >= xs)) continue;
+			if ((xi > 0) && (xe <= xs)) continue;
+			if ((yi < 0) && (ye >= ys)) continue;
+			if ((yi > 0) && (ye <= ys)) continue;
+		}
+		else
+		{
+			if ((xi < 0) && (xe > xs)) continue;
+			if ((xi > 0) && (xe < xs)) continue;
+			if ((yi < 0) && (ye > ys)) continue;
+			if ((yi > 0) && (ye < ys)) continue;
+			xe += xi; ye += yi;
+		}
+
+		i = ksgn(ys-backy)+ksgn(xs-backx)*3+4;
+		switch(i)
+		{
+			case 6: case 7: x1 = 0;				y1 = 0;				break;
+			case 8: case 5: x1 = gxinc;			y1 = gyinc;			break;
+			case 0: case 3: x1 = gyinc;			y1 = -gxinc;		break;
+			case 2: case 1: x1 = gxinc+gyinc;	y1 = gyinc-gxinc;	break;
+		}
+		switch(i)
+		{
+			case 2: case 5: x2 = 0;				y2 = 0;				break;
+			case 0: case 1: x2 = gxinc;			y2 = gyinc;			break;
+			case 8: case 7: x2 = gyinc;			y2 = -gxinc;		break;
+			case 6: case 3: x2 = gxinc+gyinc;	y2 = gyinc-gxinc;	break;
+		}
+		BYTE oand = (1 << int(xs<backx)) + (1 << (int(ys<backy)+2));
+		BYTE oand16 = oand + 16;
+		BYTE oand32 = oand + 32;
+
+		if (yi > 0) { dagxinc =  gxinc; dagyinc =  FixedMul(gyinc, viewingrangerecip); }
+			   else { dagxinc = -gxinc; dagyinc = -FixedMul(gyinc, viewingrangerecip); }
+
+			/* Fix for non 90 degree viewing ranges */
+		nxoff = FixedMul(x2 - x1, viewingrangerecip);
+		x1 = FixedMul(x1, viewingrangerecip);
+
+		ggxstart = gxstart + ggyinc[ys];
+		ggystart = gystart - ggxinc[ys];
+
+		for (x = xs; x != xe; x += xi)
+		{
+			BYTE *slabxoffs = &mip->SlabData[mip->OffsetX[x]];
+			short *xyoffs = &mip->OffsetXY[x * (mip->SizeY + 1)];
+
+			nx = FixedMul(ggxstart + ggxinc[x], viewingrangerecip) + x1;
+			ny = ggystart + ggyinc[x];
+			for (y = ys; y != ye; y += yi, nx += dagyinc, ny -= dagxinc)
+			{
+				if ((ny <= nytooclose) || (ny >= nytoofar)) continue;
+				voxptr = (kvxslab_t *)(slabxoffs + xyoffs[y]);
+				voxend = (kvxslab_t *)(slabxoffs + xyoffs[y+1]);
+				if (voxptr >= voxend) continue;
+
+				lx = MulScale32(nx >> 3, DivScale20(viewwidth, (ny+y1)>>14)) + centerx;
+				if (lx < 0) lx = 0;
+				rx = MulScale32((nx + nxoff) >> 3, DivScale20(viewwidth, (ny+y2)>>14)) + centerx;
+				if (rx > viewwidth) rx = viewwidth;
+				if (rx <= lx) continue;
+				rx -= lx;
+
+				fixed_t l1 = DivScale20(viewwidth, (ny-yoff)>>14);
+				fixed_t l2 = DivScale20(viewwidth, (ny+yoff)>>14);
+				for (; voxptr < voxend; voxptr = (kvxslab_t *)((BYTE *)voxptr + voxptr->zleng + 3))
+				{
+					fixed_t z1, z2;
+
+					j = (voxptr->ztop << 15) - syoff;
+					if (j < 0)
+					{
+						k = j + (voxptr->zleng << 15);
+						if (k < 0)
+						{
+							if ((voxptr->backfacecull & oand32) == 0) continue;
+							z2 = MulScale32(l2, k) + centery;					/* Below slab */
+						}
+						else
+						{
+							if ((voxptr->backfacecull & oand) == 0) continue;	/* Middle of slab */
+							z2 = MulScale32(l1, k) + centery;
+						}
+						z1 = MulScale32(l1, j) + centery;
+					}
+					else
+					{
+						if ((voxptr->backfacecull & oand16) == 0) continue;
+						z1 = MulScale32(l2, j) + centery;						/* Above slab */
+						z2 = MulScale32(l1, j + (voxptr->zleng << 15)) + centery;
+					}
+
+					if (voxptr->zleng == 1)
+					{
+						yplc = 0; yinc = 0;
+						if (z1 < daumost[lx]) z1 = daumost[lx];
+					}
+					else
+					{
+						if (z2-z1 >= 1024) yinc = FixedDiv(voxptr->zleng, z2 - z1);
+						else if (z2 > z1) yinc = (((1 << 24) - 1) / (z2 - z1)) * voxptr->zleng >> 8;
+						if (z1 < daumost[lx]) { yplc = yinc*(daumost[lx]-z1); z1 = daumost[lx]; } else yplc = 0;
+					}
+					if (z2 > dadmost[lx]) z2 = dadmost[lx];
+					z2 -= z1; if (z2 <= 0) continue;
+
+					R_DrawSlab(rx, yplc, z2, yinc, voxptr->col, ylookup[z1] + lx + dc_destorg);
+				}
+			}
+		}
+	}
 }

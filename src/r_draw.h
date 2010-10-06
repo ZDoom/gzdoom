@@ -216,6 +216,8 @@ void	R_FillColumnP (void);
 void	R_FillColumnHorizP (void);
 void	R_FillSpan (void);
 
+void	R_DrawSlab(int dx, fixed_t v, int dy, fixed_t vi, const BYTE *vptr, BYTE *p);
+
 extern "C" int				ds_y;
 extern "C" int				ds_x1;
 extern "C" int				ds_x2;

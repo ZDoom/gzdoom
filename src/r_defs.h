@@ -1038,8 +1038,9 @@ struct vissprite_t
 {
 	short			x1, x2;
 	fixed_t			cx;				// for line side calculation
-	fixed_t			gx, gy;			// for fake floor clipping
-	fixed_t			gz, gzt;		// global bottom / top for silhouette clipping
+	fixed_t			gx, gy, gz;		// origin in world coordinates
+	angle_t			angle;
+	fixed_t			gzb, gzt;		// global bottom / top for silhouette clipping
 	fixed_t			startfrac;		// horizontal position of x1
 	fixed_t			xscale, yscale;
 	fixed_t			xiscale;		// negative if flipped
@@ -1117,6 +1118,41 @@ public:
 	int			sprite;
 	int			crouchsprite;
 	int			namespc;	// namespace for this skin
+};
+
+
+// [RH] Voxels from Build
+
+#define MAXVOXMIPS 5
+
+struct kvxslab_t
+{
+	BYTE		ztop;			// starting z coordinate of top of slab
+	BYTE		zleng;			// # of bytes in the color array - slab height
+	BYTE		backfacecull;	// low 6 bits tell which of 6 faces are exposed
+	BYTE		col[1/*zleng*/];// color data from top to bottom
+};
+
+struct FVoxelMipLevel
+{
+	FVoxelMipLevel();
+	~FVoxelMipLevel();
+
+	int			SizeX;
+	int			SizeY;
+	int			SizeZ;
+	fixed_t		PivotX;		// 24.8 fixed point
+	fixed_t		PivotY;		// ""
+	fixed_t		PivotZ;		// ""
+	int			*OffsetX;
+	short		*OffsetXY;
+	BYTE		*SlabData;
+};
+
+struct FVoxel
+{
+	int NumMips;
+	FVoxelMipLevel Mips[MAXVOXMIPS];
 };
 
 #endif

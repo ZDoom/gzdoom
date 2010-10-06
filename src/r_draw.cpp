@@ -1350,6 +1350,32 @@ void R_FillSpan (void)
 	memset (ylookup[ds_y] + ds_x1 + dc_destorg, ds_color, ds_x2 - ds_x1 + 1);
 }
 
+// Draw a voxel slab
+//
+// "Build Engine & Tools" Copyright (c) 1993-1997 Ken Silverman
+// Ken Silverman's official web site: "http://www.advsys.net/ken"
+// See the included license file "BUILDLIC.TXT" for license info.
+
+void R_DrawSlab(int dx, fixed_t v, int dy, fixed_t vi, const BYTE *vptr, BYTE *p)
+{
+	int x;
+	const BYTE *colormap = dc_colormap;
+	int pitch = dc_pitch;
+	
+	while (dy > 0)
+	{
+		BYTE color = colormap[vptr[v >> FRACBITS]];
+		for (x = 0; x < dx; x++)
+		{
+			p[x] = color;
+		}
+		p += pitch;
+		v += vi;
+		dy--;
+	}
+}
+
+
 /****************************************************/
 /****************************************************/
 

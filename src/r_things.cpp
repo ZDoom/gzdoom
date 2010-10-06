@@ -351,7 +351,7 @@ void R_InitSpriteDefs ()
 	DWORD intname;
 
 
-	FILE *f = fopen("g:/dosgames/blood/blood-barfed/kvx/chair1.kvx", "rb");
+	FILE *f = fopen("g:/dosgames/blood/blood-barfed/kvx/medbag.kvx", "rb");
 	size_t len = Q_filelength(f);
 	BYTE *voxd = new BYTE[len];
 	fread(voxd, 1, len, f);
@@ -2687,7 +2687,7 @@ void R_DrawVoxel(fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t daspran
 	int i, j, k, x, y, syoff, ggxstart, ggystart, nxoff;
 	fixed_t cosang, sinang, sprcosang, sprsinang;
 	int backx, backy, gxinc, gyinc;
-	int daxscalerecip, dayscalerecip, cnt, gxstart, gystart, odayscale;
+	int daxscalerecip, dayscalerecip, cnt, gxstart, gystart, dazscale;
 	int lx, rx, nx, ny, x1=0, y1=0, x2=0, y2=0, yplc, yinc=0;
 	int yoff, xs=0, ys=0, xe, ye, xi=0, yi=0, cbackx, cbacky, dagxinc, dagyinc;
 	kvxslab_t *voxptr, *voxend;
@@ -2727,7 +2727,7 @@ void R_DrawVoxel(fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t daspran
 	mip = &voxobj->Mips[i];		if (mip->SlabData == NULL) return;
 
 	daxscale <<= (i+8); dayscale <<= (i+8);
-	odayscale = dayscale;
+	dazscale = FixedDiv(dayscale, yaspectmul);
 	daxscale = FixedDiv(daxscale, yaspectmul);
 	daxscale = Scale(daxscale, xdimenscale, centerxwide << 9);
 	dayscale = Scale(dayscale, FixedMul(xdimenscale, viewingrangerecip), centerxwide << 9);
@@ -2755,7 +2755,7 @@ void R_DrawVoxel(fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t daspran
 	gystart = x*cosang + y*sinang;
 	gxinc = DMulScale10(sprsinang, cosang, sprcosang, -sinang);
 	gyinc = DMulScale10(sprcosang, cosang, sprsinang,  sinang);
-	if ((abs(globalposz - dasprz) >> 10) >= abs(odayscale)) return;
+	if ((abs(globalposz - dasprz) >> 10) >= abs(dazscale)) return;
 
 	x = 0; y = 0; j = MAX(mip->SizeX, mip->SizeY);
 	fixed_t *ggxinc = (fixed_t *)alloca((j + 1) * sizeof(fixed_t) * 2);
@@ -2766,7 +2766,7 @@ void R_DrawVoxel(fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t daspran
 		ggyinc[i] = y; y += gyinc;
 	}
 
-	syoff = DivScale21(globalposz - dasprz, odayscale) + (mip->PivotZ << 7);
+	syoff = DivScale21(globalposz - dasprz, dazscale) + (/*mip->PivotZ << 7*/mip->SizeZ << 15);
 	yoff = (abs(gxinc) + abs(gyinc)) >> 1;
 
 	for (cnt = 0; cnt < 8; cnt++)

@@ -637,6 +637,7 @@ public:
 
 
 struct event_t;
+void M_EnableMenu (bool on) ;
 bool M_Responder (event_t *ev);
 void M_Ticker (void);
 void M_Drawer (void);

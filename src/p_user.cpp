@@ -44,7 +44,7 @@
 #include "w_wad.h"
 #include "cmdlib.h"
 #include "sbar.h"
-#include "f_finale.h"
+#include "intermission/intermission.h"
 #include "c_console.h"
 #include "doomdef.h"
 #include "c_dispatch.h"
@@ -1215,9 +1215,9 @@ void APlayerPawn::Die (AActor *source, AActor *inflictor)
 				}
 			}
 		}
-		if (!multiplayer && (level.flags2 & LEVEL2_DEATHSLIDESHOW))
+		if (!multiplayer && level.info->deathsequence != NAME_None)
 		{
-			F_StartSlideshow ();
+			F_StartIntermission(level.info->deathsequence, FSTATE_EndingGame);
 		}
 	}
 }

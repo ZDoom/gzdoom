@@ -895,8 +895,7 @@ FUNC(LS_Teleport_EndGame)
 {
 	if (!backSide && CheckIfExitIsGood (it, NULL))
 	{
-		G_SetForEndGame (level.nextmap);
-		G_ExitLevel (0, false);
+		G_ChangeLevel(NULL, 0, 0);
 		return true;
 	}
 	return false;

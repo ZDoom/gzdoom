@@ -61,7 +61,7 @@ const IWADInfo IWADInfos[NUM_IWAD_TYPES] =
 	{ "Final Doom: TNT - Evilution",			"TNT",		MAKERGB(168,0,0),		MAKERGB(168,168,168),	GAME_Doom,		"mapinfo/tnt.txt",		GI_MAPxx | GI_COMPATSHORTTEX | GI_COMPATSTAIRS },
 	{ "Final Doom: Plutonia Experiment",		"Plutonia",	MAKERGB(168,0,0),		MAKERGB(168,168,168),	GAME_Doom,		"mapinfo/plutonia.txt",	GI_MAPxx | GI_COMPATSHORTTEX },
 	{ "Hexen: Beyond Heretic",					NULL,		MAKERGB(240,240,240),	MAKERGB(107,44,24),		GAME_Hexen,		"mapinfo/hexen.txt",	GI_MAPxx | GI_COMPATPOLY1 },
-	{ "Hexen: Deathkings of the Dark Citadel",	"HexenDK",	MAKERGB(240,240,240),	MAKERGB(139,68,9),		GAME_Hexen,		"mapinfo/hexen.txt",	GI_MAPxx | GI_COMPATPOLY1 | GI_COMPATPOLY2 },
+	{ "Hexen: Deathkings of the Dark Citadel",	"HexenDK",	MAKERGB(240,240,240),	MAKERGB(139,68,9),		GAME_Hexen,		"mapinfo/hexdd.txt",	GI_MAPxx | GI_COMPATPOLY1 | GI_COMPATPOLY2 },
 	{ "Hexen: Demo Version",					"HexenDemo",MAKERGB(240,240,240),	MAKERGB(107,44,24),		GAME_Hexen,		"mapinfo/hexen.txt",	GI_MAPxx | GI_SHAREWARE },
 	{ "DOOM 2: Hell on Earth",					"Doom2",	MAKERGB(168,0,0),		MAKERGB(168,168,168),	GAME_Doom,		"mapinfo/doom2.txt",	GI_MAPxx | GI_COMPATSHORTTEX },
 	{ "Heretic Shareware",						NULL,		MAKERGB(252,252,0),		MAKERGB(168,0,0),		GAME_Heretic,	"mapinfo/hereticsw.txt",GI_SHAREWARE },

@@ -1,4 +1,5 @@
 // MAPINFO for Strife (full version and teaser)
+include "mapinfo/common.txt"
 
 gameinfo
 {
@@ -56,6 +57,175 @@ gameinfo
 	pausesign = "M_PAUSE"
 	gibfactor = 0.5
 	cursorpic = "strfcurs"
+	textscreenx = 10
+	textscreeny = 10
+	defaultendsequence = "Inter_Strife"
+}
+
+Intermission Inter_Strife_Good
+{
+	Image
+	{
+		Music = "D_HAPPY"
+		Background = "SS4F1"
+		Sound = "svox/rie01"
+		Time = 13
+	}
+	Image
+	{
+		Background = "SS4F2"
+		Sound = "svox/bbx01"
+		Time = 11
+	}
+	Image
+	{
+		Background = "SS4F3"
+		Sound = "svox/bbx02"
+		Time = 14
+	}
+	Image
+	{
+		Background = "SS4F4"
+		Time = 28
+	}
+	Wiper
+	{
+		WipeType = Crossfade
+	}
+	Image
+	{
+		Music = "D_FAST"
+		Background = "CREDIT"
+	}
+}
+
+
+Intermission Inter_Strife_Sad
+{
+	Image
+	{
+		Music = "D_SAD"
+		Background = "SS6F1"
+		Sound = "svox/ss601a"
+		Time = 8
+	}
+	Image
+	{
+		Background = "SS6F2"
+		Sound = "svox/ss602a"
+		Time = 8
+	}
+	Image
+	{
+		Background = "SS6F3"
+		Sound = "svox/ss603a"
+		Time = 9
+	}
+	Wiper
+	{
+		WipeType = Crossfade
+	}
+	Image
+	{
+		Music = "D_FAST"
+		Background = "CREDIT"
+	}
+}
+
+Intermission Inter_Strife_Lose
+{
+	Image
+	{
+		Music = "D_SAD"
+		Background = "SS5F1"
+		Sound = "svox/ss501b"
+		Time = 11
+	}
+	Image
+	{
+		Background = "SS5F2"
+		Sound = "svox/ss502b"
+		Time = 10
+	}
+	Image
+	{
+		Background = "SS5F3"
+		Sound = "svox/ss503b"
+		Time = 11
+	}
+	Wiper
+	{
+		WipeType = Crossfade
+	}
+	Image
+	{
+		Music = "D_FAST"
+		Background = "CREDIT"
+	}
+}
+
+/* later
+Intermission Inter_Strife_Intro
+{
+}
+*/
+
+Intermission Inter_Strife_MAP03
+{
+	Image
+	{
+		Music = "D_DARK"
+		Background = "SS2F1"
+		Sound = "svox/mac10"
+		Time = 9
+	}
+	Image
+	{
+		Background = "SS2F2"
+		Sound = "svox/mac11"
+		Time = 10
+	}
+	Image
+	{
+		Background = "SS2F3"
+		Sound = "svox/mac12"
+		Time = 12
+	}
+	Image
+	{
+		Background = "SS2F4"
+		Sound = "svox/mac13"
+		Time = 17
+	}
+}
+
+Intermission Inter_Strife_MAP10
+{
+	Image
+	{
+		Music = "D_DARK"
+		Background = "SS3F1"
+		Sound = "svox/mac16"
+		Time = 10
+	}
+	Image
+	{
+		Background = "SS3F2"
+		Sound = "svox/mac17"
+		Time = 12
+	}
+	Image
+	{
+		Background = "SS3F3"
+		Sound = "svox/mac18"
+		Time = 12
+	}
+	Image
+	{
+		Background = "SS3F4"
+		Sound = "svox/mac19"
+		Time = 11
+	}
 }
 
 skill baby
@@ -140,6 +310,7 @@ map MAP03 "AREA 3: front base"
 	cluster = 1
 	noallies
 	redirect = "Sigil", "map30"
+	slideshow = "Inter_Strife_MAP03"
 }
 
 map MAP04 "AREA 4: power station"
@@ -212,6 +383,7 @@ map MAP10 "AREA 10: New Front Base"
 	sky1 = "SKYMNT01"
 	music = "D_MARCH"
 	cluster = 1
+	slideshow = "Inter_Strife_MAP10"
 }
 
 map MAP11 "AREA 11: Borderlands"
@@ -364,7 +536,7 @@ map MAP29 "AREA 29: Entity's Lair"
 	sky1 = "SKYMNT01"
 	music = "D_INSTRY"
 	cluster = 1
-	deathslideshow
+	deathsequence = "Inter_Strife_Lose"
 }
 
 map MAP30 "AREA 30: Abandoned Front Base"

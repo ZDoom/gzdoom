@@ -1,3 +1,5 @@
+include "mapinfo/common.txt"
+
 gameinfo
 {
 	titlepage = "TITLEPIC"
@@ -56,6 +58,9 @@ gameinfo
 	pausesign = "M_PAUSE"
 	gibfactor = 1
 	cursorpic = "doomcurs"
+	textscreenx = 10
+	textscreeny = 10
+	defaultendsequence = "Inter_Cast"
 }
 
 skill baby

@@ -53,9 +53,6 @@
 #include "version.h"
 #include "v_text.h"
 
-int FindEndSequence (int type, const char *picname);
-
-
 TArray<cluster_info_t> wadclusterinfos;
 TArray<level_info_t> wadlevelinfos;
 
@@ -757,9 +754,6 @@ void FMapInfoParser::ParseCluster()
 
 void FMapInfoParser::ParseNextMap(char *mapname)
 {
-	EndSequence newSeq;
-	bool useseq = false;
-
 	if (sc.CheckNumber())
 	{
 		if (HexenHack)
@@ -773,163 +767,14 @@ void FMapInfoParser::ParseNextMap(char *mapname)
 	}
 	else
 	{
-
+		*mapname = 0;
 		sc.MustGetString();
-		if (sc.Compare("endgame"))
+		strncpy (mapname, sc.String, 8);
+		mapname[8] = 0;
+		FName seq = CheckEndSequence();
+		if (seq != NAME_None)
 		{
-			if (!sc.CheckString("{"))
-			{
-				// Make Demon Eclipse work again
-				sc.UnGet();
-				goto standard_endgame;
-			}
-			newSeq.Advanced = true;
-			newSeq.EndType = END_Pic1;
-			newSeq.PlayTheEnd = false;
-			newSeq.MusicLooping = true;
-			while (!sc.CheckString("}"))
-			{
-				sc.MustGetString();
-				if (sc.Compare("pic"))
-				{
-					ParseAssign();
-					sc.MustGetString();
-					newSeq.EndType = END_Pic;
-					newSeq.PicName = sc.String;
-				}
-				else if (sc.Compare("hscroll"))
-				{
-					ParseAssign();
-					newSeq.EndType = END_Bunny;
-					sc.MustGetString();
-					newSeq.PicName = sc.String;
-					ParseComma();
-					sc.MustGetString();
-					newSeq.PicName2 = sc.String;
-					if (CheckNumber())
-						newSeq.PlayTheEnd = !!sc.Number;
-				}
-				else if (sc.Compare("vscroll"))
-				{
-					ParseAssign();
-					newSeq.EndType = END_Demon;
-					sc.MustGetString();
-					newSeq.PicName = sc.String;
-					ParseComma();
-					sc.MustGetString();
-					newSeq.PicName2 = sc.String;
-				}
-				else if (sc.Compare("cast"))
-				{
-					newSeq.EndType = END_Cast;
-				}
-				else if (sc.Compare("music"))
-				{
-					ParseAssign();
-					sc.MustGetString();
-					newSeq.Music = sc.String;
-					if (CheckNumber())
-					{
-						newSeq.MusicLooping = !!sc.Number;
-					}
-				}
-				else
-				{
-					if (format_type == FMT_New)
-					{
-						// Unknown
-						sc.ScriptMessage("Unknown property '%s' found in endgame definition\n", sc.String);
-						SkipToNext();
-					}
-					else
-					{
-						sc.ScriptError("Unknown property '%s' found in endgame definition\n", sc.String);
-					}
-
-				}
-			}
-			useseq = true;
-		}
-		else if (strnicmp (sc.String, "EndGame", 7) == 0)
-		{
-			int type;
-			switch (sc.String[7])
-			{
-			case '1':	type = END_Pic1;		break;
-			case '2':	type = END_Pic2;		break;
-			case '3':	type = END_Bunny;		break;
-			case 'C':	type = END_Cast;		break;
-			case 'W':	type = END_Underwater;	break;
-			case 'S':	type = END_Strife;		break;
-		standard_endgame:
-			default:	type = END_Pic3;		break;
-			}
-			newSeq.EndType = type;
-			useseq = true;
-		}
-		else if (sc.Compare("endpic"))
-		{
-			ParseComma();
-			sc.MustGetString ();
-			newSeq.EndType = END_Pic;
-			newSeq.PicName = sc.String;
-			useseq = true;
-		}
-		else if (sc.Compare("endbunny"))
-		{
-			newSeq.EndType = END_Bunny;
-			useseq = true;
-		}
-		else if (sc.Compare("endcast"))
-		{
-			newSeq.EndType = END_Cast;
-			useseq = true;
-		}
-		else if (sc.Compare("enddemon"))
-		{
-			newSeq.EndType = END_Demon;
-			useseq = true;
-		}
-		else if (sc.Compare("endchess"))
-		{
-			newSeq.EndType = END_Chess;
-			useseq = true;
-		}
-		else if (sc.Compare("endunderwater"))
-		{
-			newSeq.EndType = END_Underwater;
-			useseq = true;
-		}
-		else if (sc.Compare("endbuystrife"))
-		{
-			newSeq.EndType = END_BuyStrife;
-			useseq = true;
-		}
-		else if (sc.Compare("endtitle"))
-		{
-			newSeq.EndType = END_TitleScreen;
-			useseq = true;
-		}
-		else
-		{
-			strncpy (mapname, sc.String, 8);
-			mapname[8] = 0;
-		}
-		if (useseq)
-		{
-			int seqnum = -1;
-
-			if (!newSeq.Advanced)
-			{
-				seqnum = FindEndSequence (newSeq.EndType, newSeq.PicName);
-			}
-
-			if (seqnum == -1)
-			{
-				seqnum = (int)EndSequences.Push (newSeq);
-			}
-			// mapname can point to nextmap and secretmap which are both 12 characters long
-			mysnprintf(mapname, 11, "enDSeQ%04x", (WORD)seqnum);
+			mysnprintf(mapname, 11, "enDSeQ%04x", int(seq));
 		}
 	}
 }
@@ -1229,6 +1074,20 @@ DEFINE_MAP_OPTION(translator, true)
 	info->Translator = parse.sc.String;
 }
 
+DEFINE_MAP_OPTION(deathsequence, false)
+{
+	parse.ParseAssign();
+	parse.sc.MustGetString();
+	info->deathsequence = parse.sc.String;
+}
+
+DEFINE_MAP_OPTION(slideshow, false)
+{
+	parse.ParseAssign();
+	parse.sc.MustGetString();
+	info->slideshow = parse.sc.String;
+}
+
 DEFINE_MAP_OPTION(bordertexture, true)
 {
 	parse.ParseAssign();
@@ -1351,7 +1210,7 @@ MapFlagHandlers[] =
 	{ "missilesactivateimpactlines",	MITYPE_SETFLAG2,	LEVEL2_MISSILESACTIVATEIMPACT, 0 },
 	{ "missileshootersactivetimpactlines",MITYPE_CLRFLAG2,	LEVEL2_MISSILESACTIVATEIMPACT, 0 },
 	{ "noinventorybar",					MITYPE_SETFLAG,	LEVEL_NOINVENTORYBAR, 0 },
-	{ "deathslideshow",					MITYPE_SETFLAG2,	LEVEL2_DEATHSLIDESHOW, 0 },
+	{ "deathslideshow",					MITYPE_SETFLAG2,	0, 0 },
 	{ "strictmonsteractivation",		MITYPE_CLRFLAG2,	LEVEL2_LAXMONSTERACTIVATION, LEVEL2_LAXACTIVATIONMAPINFO },
 	{ "laxmonsteractivation",			MITYPE_SETFLAG2,	LEVEL2_LAXMONSTERACTIVATION, LEVEL2_LAXACTIVATIONMAPINFO },
 	{ "additive_scrollers",				MITYPE_COMPATFLAG, COMPATF_BOOMSCROLL},
@@ -1908,6 +1767,18 @@ void FMapInfoParser::ParseMapInfo (int lump, level_info_t &gamedefaults, level_i
 				sc.ScriptError("gameinfo definitions not supported with old MAPINFO syntax");
 			}
 		}
+		else if (sc.Compare("intermission"))
+		{
+			if (format_type != FMT_Old)
+			{
+				format_type = FMT_New;
+				ParseIntermission();
+			}
+			else
+			{
+				sc.ScriptError("intermission definitions not supported with old MAPINFO syntax");
+			}
+		}
 		else
 		{
 			sc.ScriptError("%s: Unknown top level keyword", sc.String);
@@ -1965,7 +1836,6 @@ void G_ParseMapInfo (const char *basemapinfo)
 		level_info_t defaultinfo;
 		parse.ParseMapInfo(lump, gamedefaults, defaultinfo);
 	}
-	EndSequences.ShrinkToFit ();
 
 	if (AllEpisodes.Size() == 0)
 	{

@@ -1,4 +1,5 @@
 // MAPINFO for Chex Quest
+include "mapinfo/common.txt"
 
 gameinfo
 {
@@ -56,6 +57,9 @@ gameinfo
 	pausesign = "M_PAUSE"
 	gibfactor = 1
 	cursorpic = "chexcurs"
+	textscreenx = 10
+	textscreeny = 10
+	defaultendsequence = "Inter_Pic1"
 }
 
 skill baby

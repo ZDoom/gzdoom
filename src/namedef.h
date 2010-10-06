@@ -528,3 +528,13 @@ xx(res_7)
 xx(res_8)
 xx(res_9)
 xx(AlwaysRun)
+
+// end sequences
+xx(Inter_Strife)
+xx(Inter_Strife_Good)
+xx(Inter_Strife_Sad)
+xx(Inter_Strife_Bad)
+xx(Inter_Strife_Lose)
+xx(Inter_Strife_MAP03)
+xx(Inter_Strife_MAP10)
+xx(Multiplayer)

@@ -51,7 +51,7 @@
 #include "p_local.h"
 #include "r_sky.h"
 #include "c_console.h"
-#include "f_finale.h"
+#include "intermission/intermission.h"
 #include "gstrings.h"
 #include "v_video.h"
 #include "st_stuff.h"
@@ -78,6 +78,7 @@
 #include "d_netinf.h"
 #include "v_palette.h"
 #include "menu/menu.h"
+#include "a_strifeglobal.h"
 
 #include "gi.h"
 
@@ -99,21 +100,10 @@ EXTERN_CVAR (String, playerclass)
 #define RCLS_ID			MAKE_ID('r','c','L','s')
 #define PCLS_ID			MAKE_ID('p','c','L','s')
 
-static void SetEndSequence (char *nextmap, int type);
 void G_VerifySkill();
 
 
 static FRandom pr_classchoice ("RandomPlayerClassChoice");
-
-TArray<EndSequence> EndSequences;
-
-EndSequence::EndSequence()
-{
-	EndType = END_Pic;
-	Advanced = false;
-	MusicLooping = false;
-	PlayTheEnd = false;
-}
 
 extern level_info_t TheDefaultLevelInfo;
 extern bool timingdemo;
@@ -135,73 +125,6 @@ void *statcopy;					// for statistics driver
 
 FLevelLocals level;			// info about current level
 
-//==========================================================================
-//
-//
-//==========================================================================
-
-int FindEndSequence (int type, const char *picname)
-{
-	unsigned int i, num;
-
-	num = EndSequences.Size ();
-	for (i = 0; i < num; i++)
-	{
-		if (EndSequences[i].EndType == type && !EndSequences[i].Advanced &&
-			(type != END_Pic || stricmp (EndSequences[i].PicName, picname) == 0))
-		{
-			return (int)i;
-		}
-	}
-	return -1;
-}
-
-//==========================================================================
-//
-//
-//==========================================================================
-
-static void SetEndSequence (char *nextmap, int type)
-{
-	int seqnum;
-
-	seqnum = FindEndSequence (type, NULL);
-	if (seqnum == -1)
-	{
-		EndSequence newseq;
-		newseq.EndType = type;
-		seqnum = (int)EndSequences.Push (newseq);
-	}
-	mysnprintf(nextmap, 11, "enDSeQ%04x", (WORD)seqnum);
-}
-
-//==========================================================================
-//
-//
-//==========================================================================
-
-void G_SetForEndGame (char *nextmap)
-{
-	if (!strncmp(nextmap, "enDSeQ",6)) return;	// If there is already an end sequence please leave it alone!!!
-
-	if (gameinfo.gametype == GAME_Strife)
-	{
-		SetEndSequence (nextmap, gameinfo.flags & GI_SHAREWARE ? END_BuyStrife : END_Strife);
-	}
-	else if (gameinfo.gametype == GAME_Hexen)
-	{
-		SetEndSequence (nextmap, END_Chess);
-	}
-	else if (gameinfo.gametype == GAME_Doom && (gameinfo.flags & GI_MAPxx))
-	{
-		SetEndSequence (nextmap, END_Cast);
-	}
-	else
-	{ // The ExMx games actually have different ends based on the episode,
-	  // but I want to keep this simple.
-		SetEndSequence (nextmap, END_Pic1);
-	}
-}
 
 //==========================================================================
 //
@@ -541,7 +464,6 @@ static bool		unloading;
 //
 //==========================================================================
 
-
 void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill)
 {
 	level_info_t *nextinfo = NULL;
@@ -552,7 +474,20 @@ void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill
 		return;
 	}
 
-	if (strncmp(levelname, "enDSeQ", 6) != 0)
+	if (levelname == NULL || *levelname == 0)
+	{
+		// end the game
+		levelname = NULL;
+		if (!strncmp(level.nextmap, "enDSeQ",6))
+		{
+			levelname = level.nextmap;	// If there is already an end sequence please leave it alone!
+		}
+		else 
+		{
+			nextlevel.Format("enDSeQ%04x", int(gameinfo.DefaultEndSequence));
+		}
+	}
+	else if (strncmp(levelname, "enDSeQ", 6) != 0)
 	{
 		nextinfo = FindLevelInfo (levelname);
 		if (nextinfo != NULL)
@@ -566,7 +501,7 @@ void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill
 		}
 	}
 
-	nextlevel = levelname;
+	if (levelname != NULL) nextlevel = levelname;
 
 	if (nextSkill != -1)
 		NextSkill = nextSkill;
@@ -1026,13 +961,28 @@ void G_WorldDone (void)
 
 	if (strncmp (nextlevel, "enDSeQ", 6) == 0)
 	{
+		FName endsequence = ENamedName(strtol(nextlevel.GetChars()+6, NULL, 16));
+		// Strife needs a special case here to choose between good and sad ending. Bad is handled elsewherw.
+		if (endsequence == NAME_Inter_Strife)
+		{
+			if (players[0].mo->FindInventory (QuestItemClasses[24]) ||
+				players[0].mo->FindInventory (QuestItemClasses[27]))
+			{
+				endsequence = NAME_Inter_Strife_Good;
+			}
+			else
+			{
+				endsequence = NAME_Inter_Strife_Sad;
+			}
+		}
+
 		F_StartFinale (thiscluster->MessageMusic, thiscluster->musicorder,
 			thiscluster->cdtrack, thiscluster->cdid,
 			thiscluster->FinaleFlat, thiscluster->ExitText,
 			thiscluster->flags & CLUSTER_EXITTEXTINLUMP,
 			thiscluster->flags & CLUSTER_FINALEPIC,
 			thiscluster->flags & CLUSTER_LOOKUPEXITTEXT,
-			true, strtol(nextlevel.GetChars()+6, NULL, 16));
+			true, endsequence);
 	}
 	else
 	{

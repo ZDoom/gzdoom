@@ -54,6 +54,8 @@ class FScanner;
 #define GCC_YSEG __attribute__((section(SECTION_YREG)))
 #endif
 
+struct FIntermissionDescriptor;
+struct FIntermissionAction;
 
 struct FMapInfoParser
 {
@@ -98,6 +100,11 @@ struct FMapInfoParser
 	bool CheckFloat();
 	void SkipToNext();
 	void CheckEndOfFile(const char *block);
+
+	void ParseIntermissionAction(FIntermissionDescriptor *Desc);
+	void ParseIntermission();
+	FName CheckEndSequence();
+	FName ParseEndGame();
 };
 
 #define DEFINE_MAP_OPTION(name, old) \
@@ -163,7 +170,7 @@ enum ELevelFlags
 	LEVEL_VISITED				= 0x80000000,	// Used for intermission map
 
 	// The flags QWORD is now split into 2 DWORDs 
-	LEVEL2_DEATHSLIDESHOW		= 0x00000001,	// Slideshow on death
+	//LEVEL2_DEATHSLIDESHOW		= 0x00000001,	// Slideshow on death
 	LEVEL2_ALLMAP				= 0x00000002,	// The player picked up a map on this level
 
 	LEVEL2_LAXMONSTERACTIVATION	= 0x00000004,	// Monsters can open doors depending on the door speed
@@ -251,7 +258,7 @@ struct level_info_t
 	
 	char		mapname[9];
 	char		pname[9];
-	char		nextmap[11];	// The endsequence string is 10 chars so we need more space here
+	char		nextmap[11];
 	char		secretmap[11];
 	char		skypic1[9];
 	char		skypic2[9];
@@ -286,6 +293,9 @@ struct level_info_t
 	DWORD		compatmask;
 	FString		Translator;	// for converting Doom-format linedef and sector types.
 	int			DefaultEnvironment;	// Default sound environment for the map.
+	FName		Intermission;
+	FName		deathsequence;
+	FName		slideshow;
 
 	// Redirection: If any player is carrying the specified item, then
 	// you go to the RedirectMap instead of this one.
@@ -415,36 +425,6 @@ struct FLevelLocals
 	bool		IsFreelookAllowed() const;
 };
 
-enum EndTypes
-{
-	END_Pic,
-	END_Pic1,
-	END_Pic2,
-	END_Pic3,
-	END_Bunny,
-	END_Cast,
-	END_Demon,
-	END_Underwater,
-	END_Chess,
-	END_Strife,
-	END_BuyStrife,
-	END_TitleScreen
-};
-
-struct EndSequence
-{
-	BYTE EndType;
-	bool Advanced;
-	bool MusicLooping;
-	bool PlayTheEnd;
-	FString PicName;
-	FString PicName2;
-	FString Music;
-
-	EndSequence();
-};
-
-extern TArray<EndSequence> EndSequences;
 
 struct cluster_info_t
 {
@@ -508,8 +488,6 @@ enum
 };
 
 void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill=-1);
-
-void G_SetForEndGame (char *nextmap);
 
 void G_StartTravel ();
 void G_FinishTravel ();

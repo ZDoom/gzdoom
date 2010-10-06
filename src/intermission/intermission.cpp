@@ -427,6 +427,8 @@ void DIntermissionScreenCast::Init(FIntermissionAction *desc, bool first)
 
 int DIntermissionScreenCast::Responder (event_t *ev)
 {
+	if (ev->type != EV_KeyDown) return 0;
+
 	if (castdeath)
 		return 1;					// already in dying frames
 
@@ -705,7 +707,7 @@ bool DIntermissionController::Responder (event_t *ev)
 {
 	if (mScreen != NULL)
 	{
-		if (!mScreen->mPaletteChanged)
+		if (!mScreen->mPaletteChanged && ev->type == EV_KeyDown)
 		{
 			const char *cmd = Bindings.GetBind (ev->data1);
 

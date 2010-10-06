@@ -475,6 +475,11 @@ void M_SetMenu(FName menu, int param)
 
 bool M_Responder (event_t *ev) 
 { 
+		if (ev->type == EV_KeyDown && menuactive != MENU_Off) 
+		{
+			__asm nop
+		}
+
 	int ch = 0;
 	bool keyup = false;
 	int mkey = NUM_MKEYS;

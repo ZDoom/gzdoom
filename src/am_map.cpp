@@ -413,7 +413,7 @@ static int	amclock;
 
 static mpoint_t	m_paninc;		// how far the window pans each tic (map coords)
 static fixed_t	mtof_zoommul;	// how far the window zooms in each tic (map coords)
-static float	am_zoomdir;
+static double	am_zoomdir;
 
 static fixed_t	m_x, m_y;		// LL x,y where the window is on the map (map coords)
 static fixed_t	m_x2, m_y2;		// UR x,y where the window is on the map (map coords)
@@ -1279,7 +1279,7 @@ CCMD(am_zoom)
 {
 	if (argv.argc() >= 2)
 	{
-		am_zoomdir = (float)atof(argv[1]);
+		am_zoomdir = atof(argv[1]);
 	}
 }
 
@@ -1549,7 +1549,7 @@ void AM_drawGrid (const AMColor &color)
 
 	// [RH] Calculate a minimum for how long the grid lines should be so that
 	// they cover the screen at any rotation.
-	minlen = (fixed_t)sqrtf ((float)m_w*(float)m_w + (float)m_h*(float)m_h);
+	minlen = (fixed_t)sqrt ((double)m_w*(double)m_w + (double)m_h*(double)m_h);
 	extx = (minlen - m_w) / 2;
 	exty = (minlen - m_h) / 2;
 
@@ -1610,7 +1610,7 @@ void AM_drawGrid (const AMColor &color)
 void AM_drawSubsectors()
 {
 	static TArray<FVector2> points;
-	float scale = float(scale_mtof);
+	double scale = double(scale_mtof);
 	angle_t rotation;
 	sector_t tempsec;
 	int floorlight, ceilinglight;

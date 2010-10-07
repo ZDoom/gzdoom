@@ -164,8 +164,8 @@ public:
 	void Activate (AActor *activator);
 	void Deactivate (AActor *activator);
 protected:
-	float Splerp (float p1, float p2, float p3, float p4);
-	float Lerp (float p1, float p2);
+	double Splerp (double p1, double p2, double p3, double p4);
+	double Lerp (double p1, double p2);
 	virtual bool Interpolate ();
 	virtual void NewNode ();
 
@@ -190,10 +190,10 @@ void APathFollower::Serialize (FArchive &arc)
 
 // Interpolate between p2 and p3 along a Catmull-Rom spline
 // http://research.microsoft.com/~hollasch/cgindex/curves/catmull-rom.html
-float APathFollower::Splerp (float p1, float p2, float p3, float p4)
+double APathFollower::Splerp (double p1, double p2, double p3, double p4)
 {
-	float t = Time;
-	float res = 2*p2;
+	double t = Time;
+	double res = 2*p2;
 	res += (p3 - p1) * Time;
 	t *= Time;
 	res += (2*p1 - 5*p2 + 4*p3 - p4) * t;
@@ -203,7 +203,7 @@ float APathFollower::Splerp (float p1, float p2, float p3, float p4)
 }
 
 // Linearly interpolate between p1 and p2
-float APathFollower::Lerp (float p1, float p2)
+double APathFollower::Lerp (double p1, double p2)
 {
 	return p1 + Time * (p2 - p1);
 }
@@ -326,7 +326,7 @@ void APathFollower::Tick ()
 
 	if (Interpolate ())
 	{
-		Time += 8.f / ((float)CurrNode->args[1] * (float)TICRATE);
+		Time += float(8.f / ((double)CurrNode->args[1] * (double)TICRATE));
 		if (Time > 1.f)
 		{
 			Time -= 1.f;
@@ -428,11 +428,11 @@ bool APathFollower::Interpolate ()
 			}
 			if (args[2] & 4)
 			{ // adjust pitch; use floats for precision
-				float fdx = FIXED2FLOAT(dx);
-				float fdy = FIXED2FLOAT(dy);
-				float fdz = FIXED2FLOAT(-dz);
-				float dist = (float)sqrt (fdx*fdx + fdy*fdy);
-				float ang = dist != 0.f ? (float)atan2 (fdz, dist) : 0;
+				double fdx = FIXED2FLOAT(dx);
+				double fdy = FIXED2FLOAT(dy);
+				double fdz = FIXED2FLOAT(-dz);
+				double dist = (double)sqrt (fdx*fdx + fdy*fdy);
+				double ang = dist != 0.f ? (double)atan2 (fdz, dist) : 0;
 				pitch = (angle_t)(ang * 2147483648.f / PI);
 			}
 		}
@@ -440,11 +440,11 @@ bool APathFollower::Interpolate ()
 		{
 			if (args[2] & 2)
 			{ // interpolate angle
-				float angle1 = (float)CurrNode->angle;
-				float angle2 = (float)CurrNode->Next->angle;
+				double angle1 = (double)CurrNode->angle;
+				double angle2 = (double)CurrNode->Next->angle;
 				if (angle2 - angle1 <= -2147483648.f)
 				{
-					float lerped = Lerp (angle1, angle2 + 4294967296.f);
+					double lerped = Lerp (angle1, angle2 + 4294967296.f);
 					if (lerped >= 4294967296.f)
 					{
 						angle = (angle_t)(lerped - 4294967296.f);
@@ -456,7 +456,7 @@ bool APathFollower::Interpolate ()
 				}
 				else if (angle2 - angle1 >= 2147483648.f)
 				{
-					float lerped = Lerp (angle1, angle2 - 4294967296.f);
+					double lerped = Lerp (angle1, angle2 - 4294967296.f);
 					if (lerped < 0.f)
 					{
 						angle = (angle_t)(lerped + 4294967296.f);
@@ -670,11 +670,11 @@ bool AMovingCamera::Interpolate ()
 
 		if (args[2] & 4)
 		{ // Also aim camera's pitch; use floats for precision
-			float dx = FIXED2FLOAT(x - tracer->x);
-			float dy = FIXED2FLOAT(y - tracer->y);
-			float dz = FIXED2FLOAT(z - tracer->z - tracer->height/2);
-			float dist = (float)sqrt (dx*dx + dy*dy);
-			float ang = dist != 0.f ? (float)atan2 (dz, dist) : 0;
+			double dx = FIXED2FLOAT(x - tracer->x);
+			double dy = FIXED2FLOAT(y - tracer->y);
+			double dz = FIXED2FLOAT(z - tracer->z - tracer->height/2);
+			double dist = (double)sqrt (dx*dx + dy*dy);
+			double ang = dist != 0.f ? (double)atan2 (dz, dist) : 0;
 			pitch = (angle_t)(ang * 2147483648.f / PI);
 		}
 

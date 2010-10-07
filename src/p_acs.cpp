@@ -5184,21 +5184,21 @@ int DLevelScript::RunScript ()
 						break;
 					case 1:		// fade out
 						{
-							float fadeTime = (optstart < sp) ? FIXED2FLOAT(Stack[optstart]) : 0.5f;
+							double fadeTime = (optstart < sp) ? FIXED2FLOAT(Stack[optstart]) : 0.5f;
 							msg = new DHUDMessageFadeOut (activefont, work, x, y, hudwidth, hudheight, color, holdTime, fadeTime);
 						}
 						break;
 					case 2:		// type on, then fade out
 						{
-							float typeTime = (optstart < sp) ? FIXED2FLOAT(Stack[optstart]) : 0.05f;
-							float fadeTime = (optstart < sp-1) ? FIXED2FLOAT(Stack[optstart+1]) : 0.5f;
+							double typeTime = (optstart < sp) ? FIXED2FLOAT(Stack[optstart]) : 0.05f;
+							double fadeTime = (optstart < sp-1) ? FIXED2FLOAT(Stack[optstart+1]) : 0.5f;
 							msg = new DHUDMessageTypeOnFadeOut (activefont, work, x, y, hudwidth, hudheight, color, typeTime, holdTime, fadeTime);
 						}
 						break;
 					case 3:		// fade in, then fade out
 						{
-							float inTime = (optstart < sp) ? FIXED2FLOAT(Stack[optstart]) : 0.5f;
-							float outTime = (optstart < sp-1) ? FIXED2FLOAT(Stack[optstart+1]) : 0.5f;
+							double inTime = (optstart < sp) ? FIXED2FLOAT(Stack[optstart]) : 0.5f;
+							double outTime = (optstart < sp-1) ? FIXED2FLOAT(Stack[optstart+1]) : 0.5f;
 							msg = new DHUDMessageFadeInOut (activefont, work, x, y, hudwidth, hudheight, color, holdTime, inTime, outTime);
 						}
 						break;

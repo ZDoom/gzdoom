@@ -86,7 +86,7 @@ void ASecurityCamera::PostBeginPlay ()
 		pitch = -ANGLE_90 + ANGLE_1;
 	else if (pitch >= ANGLE_90)
 		pitch = ANGLE_90 - ANGLE_1;
-	Range = (angle_t)((float)args[1] * 536870912.f / 45.f);
+	Range = (angle_t)((double)args[1] * 536870912.f / 45.f);
 }
 
 void ASecurityCamera::Tick ()
@@ -136,7 +136,7 @@ void AAimingCamera::PostBeginPlay ()
 
 	args[2] = 0;
 	Super::PostBeginPlay ();
-	MaxPitchChange = (int)((float)changepitch * 536870912.f / 45.f / (float)TICRATE);
+	MaxPitchChange = (int)((double)changepitch * 536870912.f / 45.f / (double)TICRATE);
 	Range /= TICRATE;
 
 	TActorIterator<AActor> iterator (args[3]);
@@ -167,11 +167,11 @@ void AAimingCamera::Tick ()
 		}
 		if (MaxPitchChange)
 		{ // Aim camera's pitch; use floats for precision
-			float dx = FIXED2FLOAT(x - tracer->x);
-			float dy = FIXED2FLOAT(y - tracer->y);
-			float dz = FIXED2FLOAT(z - tracer->z - tracer->height/2);
-			float dist = (float)sqrt (dx*dx + dy*dy);
-			float ang = dist != 0.f ? (float)atan2 (dz, dist) : 0;
+			double dx = FIXED2FLOAT(x - tracer->x);
+			double dy = FIXED2FLOAT(y - tracer->y);
+			double dz = FIXED2FLOAT(z - tracer->z - tracer->height/2);
+			double dist = sqrt (dx*dx + dy*dy);
+			double ang = dist != 0.f ? atan2 (dz, dist) : 0;
 			int desiredpitch = (angle_t)(ang * 2147483648.f / PI);
 			if (abs (desiredpitch - pitch) < MaxPitchChange)
 			{

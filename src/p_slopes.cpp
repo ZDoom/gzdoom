@@ -185,15 +185,15 @@ void P_SetSlope (secplane_t *plane, bool setCeil, int xyangi, int zangi,
 
 	if (ib_compatflags & BCOMPATF_SETSLOPEOVERFLOW)
 	{
-		norm[0] = float(finecosine[zang] * finecosine[xyang]);
-		norm[1] = float(finecosine[zang] * finesine[xyang]);
+		norm[0] = double(finecosine[zang] * finecosine[xyang]);
+		norm[1] = double(finecosine[zang] * finesine[xyang]);
 	}
 	else
 	{
-		norm[0] = float(finecosine[zang]) * float(finecosine[xyang]);
-		norm[1] = float(finecosine[zang]) * float(finesine[xyang]);
+		norm[0] = double(finecosine[zang]) * double(finecosine[xyang]);
+		norm[1] = double(finecosine[zang]) * double(finesine[xyang]);
 	}
-	norm[2] = float(finesine[zang]) * 65536.f;
+	norm[2] = double(finesine[zang]) * 65536.f;
 	norm.MakeUnit();
 	plane->a = (int)(norm[0] * 65536.f);
 	plane->b = (int)(norm[1] * 65536.f);

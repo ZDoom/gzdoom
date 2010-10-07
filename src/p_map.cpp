@@ -117,10 +117,10 @@ static bool PIT_FindFloorCeiling (line_t *ld, const FBoundingBox &box, FCheckPos
 	else
 	{ // Find the point on the line closest to the actor's center, and use
 	  // that to calculate openings
-		float dx = (float)ld->dx;
-		float dy = (float)ld->dy;
-		fixed_t r = (fixed_t)(((float)(tmf.x - ld->v1->x) * dx +
-				 			   (float)(tmf.y - ld->v1->y) * dy) /
+		double dx = (double)ld->dx;
+		double dy = (double)ld->dy;
+		fixed_t r = (fixed_t)(((double)(tmf.x - ld->v1->x) * dx +
+				 			   (double)(tmf.y - ld->v1->y) * dy) /
 							  (dx*dx + dy*dy) * 16777216.f);
 		if (r <= 0)
 		{
@@ -699,10 +699,10 @@ bool PIT_CheckLine (line_t *ld, const FBoundingBox &box, FCheckPosition &tm)
 	else
 	{ // Find the point on the line closest to the actor's center, and use
 	  // that to calculate openings
-		float dx = (float)ld->dx;
-		float dy = (float)ld->dy;
-		fixed_t r = (fixed_t)(((float)(tm.x - ld->v1->x) * dx +
-				 			   (float)(tm.y - ld->v1->y) * dy) /
+		double dx = (double)ld->dx;
+		double dy = (double)ld->dy;
+		fixed_t r = (fixed_t)(((double)(tm.x - ld->v1->x) * dx +
+				 			   (double)(tm.y - ld->v1->y) * dy) /
 							  (dx*dx + dy*dy) * 16777216.f);
 /*		Printf ("%d:%d: %d  (%d %d %d %d)  (%d %d %d %d)\n", level.time, ld-lines, r,
 			ld->frontsector->floorplane.a,
@@ -1556,7 +1556,7 @@ void P_FakeZMovement (AActor *mo)
 //
 	mo->z += mo->velz;
 	if ((mo->flags&MF_FLOAT) && mo->target)
-	{ // float down towards target if too close
+	{ // Float down towards target if too close
 		if (!(mo->flags & MF_SKULLFLY) && !(mo->flags & MF_INFLOAT))
 		{
 			fixed_t dist = P_AproxDistance (mo->x - mo->target->x, mo->y - mo->target->y);

@@ -117,7 +117,7 @@ loop:
 		yylval->val = (int)strtol(sourcep, &endp, 10);
 		if (*endp == '.')
 		{
-			// It's a float
+			// It's a Float
 			yylval->fval = strtod(sourcep, &sourcep);
 			return TokenTrans[FLOATVAL];
 		}

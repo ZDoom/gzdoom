@@ -736,7 +736,7 @@ AInventory *AActor::DropInventory (AInventory *item)
 	drop->velx = velx + 5 * finecosine[an];
 	drop->vely = vely + 5 * finesine[an];
 	drop->velz = velz + FRACUNIT;
-	drop->flags &= ~MF_NOGRAVITY;	// Don't float
+	drop->flags &= ~MF_NOGRAVITY;	// Don't Float
 	drop->ClearCounters();	// do not count for statistics again
 	return drop;
 }
@@ -2154,7 +2154,7 @@ void P_ZMovement (AActor *mo, fixed_t oldfloorz)
 // adjust height
 //
 	if ((mo->flags & MF_FLOAT) && !(mo->flags2 & MF2_DORMANT) && mo->target)
-	{	// float down towards target if too close
+	{	// Float down towards target if too close
 		if (!(mo->flags & (MF_SKULLFLY | MF_INFLOAT)))
 		{
 			dist = P_AproxDistance (mo->x - mo->target->x, mo->y - mo->target->y);
@@ -5098,7 +5098,7 @@ AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z,
 	if (owner)	th->target = owner;
 	else		th->target = source;
 
-	float speed = (float)(th->Speed);
+	double speed = (double)(th->Speed);
 
 	// [RH]
 	// Hexen calculates the missile velocity based on the source's location.

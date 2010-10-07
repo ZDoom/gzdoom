@@ -83,6 +83,7 @@ extern fixed_t			finetangent[FINEANGLES/2];
 #define ANGLE_MAX		(0xffffffff)
 #define ANGLE_1			(ANGLE_45/45)
 #define ANGLE_60		(ANGLE_180/3)
+#define FLOATANGLE_1	(ANGLE_45/45.)
 
 
 #define SLOPERANGE		2048

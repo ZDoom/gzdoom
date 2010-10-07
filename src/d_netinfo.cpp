@@ -397,7 +397,7 @@ void D_SetupUserInfo ()
 	}
 	else
 	{
-		coninfo->aimdist = abs ((int)(autoaim * (float)ANGLE_1));
+		coninfo->aimdist = abs ((int)(autoaim * FLOATANGLE_1));
 	}
 	coninfo->color = color;
 	coninfo->colorset = colorset;
@@ -596,7 +596,7 @@ void D_WriteUserInfoStrings (int i, BYTE **stream, bool compact)
 					 "\\playerclass\\%s"
 					 ,
 					 D_EscapeUserInfo(info->netname).GetChars(),
-					 (double)info->aimdist / (float)ANGLE_1,
+					 (double)info->aimdist / FLOATANGLE_1,
 					 info->colorset,
 					 RPART(info->color), GPART(info->color), BPART(info->color),
 					 D_EscapeUserInfo(skins[info->skin].name).GetChars(),
@@ -604,8 +604,8 @@ void D_WriteUserInfoStrings (int i, BYTE **stream, bool compact)
 					 info->gender == GENDER_FEMALE ? "female" :
 						info->gender == GENDER_NEUTER ? "other" : "male",
 					 info->neverswitch,
-					 (float)(info->MoveBob) / 65536.f,
-					 (float)(info->StillBob) / 65536.f,
+					 (double)(info->MoveBob) / 65536.f,
+					 (double)(info->StillBob) / 65536.f,
 					 info->PlayerClass == -1 ? "Random" :
 						D_EscapeUserInfo(type->Meta.GetMetaString (APMETA_DisplayName)).GetChars()
 					);
@@ -627,15 +627,15 @@ void D_WriteUserInfoStrings (int i, BYTE **stream, bool compact)
 				"\\%d"			// colorset
 				,
 				D_EscapeUserInfo(info->netname).GetChars(),
-				(double)info->aimdist / (float)ANGLE_1,
+				(double)info->aimdist / FLOATANGLE_1,
 				RPART(info->color), GPART(info->color), BPART(info->color),
 				D_EscapeUserInfo(skins[info->skin].name).GetChars(),
 				info->team,
 				info->gender == GENDER_FEMALE ? "female" :
 					info->gender == GENDER_NEUTER ? "other" : "male",
 				info->neverswitch,
-				(float)(info->MoveBob) / 65536.f,
-				(float)(info->StillBob) / 65536.f,
+				(double)(info->MoveBob) / 65536.f,
+				(double)(info->StillBob) / 65536.f,
 				info->PlayerClass == -1 ? "Random" :
 					D_EscapeUserInfo(type->Meta.GetMetaString (APMETA_DisplayName)).GetChars(),
 				info->colorset
@@ -706,19 +706,20 @@ void D_ReadUserInfoStrings (int i, BYTE **stream, bool update)
 			}
 			switch (infotype)
 			{
-			case INFO_Autoaim: {
-				double angles;
+			case INFO_Autoaim: 
+				{
+					double angles;
 
-				angles = atof (value);
-				if (angles > 35.f || angles < 0.f)
-				{
-						info->aimdist = ANGLE_1*35;
+					angles = atof (value);
+					if (angles > 35.f || angles < 0.f)
+					{
+							info->aimdist = ANGLE_1*35;
+					}
+					else
+					{
+							info->aimdist = abs ((int)(angles * FLOATANGLE_1));
+					}
 				}
-				else
-				{
-						info->aimdist = abs ((int)(angles * (float)ANGLE_1));
-				}
-								}
 				break;
 
 			case INFO_Name:

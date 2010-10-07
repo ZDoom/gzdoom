@@ -1117,7 +1117,7 @@ void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 {
 	// Use an equation similar to player sprites to determine shade
 	fixed_t shade = LIGHT2SHADE(lightlevel) - 12*FRACUNIT;
-	float topy, boty, leftx, rightx;
+	double topy, boty, leftx, rightx;
 	int toppt, botpt, pt1, pt2;
 	int i;
 	int y1, y2, y;

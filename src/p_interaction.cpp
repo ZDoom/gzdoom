@@ -1040,7 +1040,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 			ang = R_PointToAngle2 (origin->x, origin->y,
 				target->x, target->y);
 
-			// Calculate this as float to avoid overflows so that the
+			// Calculate this as double to avoid overflows so that the
 			// clamping that had to be done here can be removed.
             double fltthrust;
 
@@ -1121,7 +1121,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 				FriendlyFire = true;
 				if (damage < TELEFRAG_DAMAGE)
 				{ // Still allow telefragging :-(
-					damage = (int)((float)damage * level.teamdamage);
+					damage = (int)((double)damage * level.teamdamage);
 					if (damage <= 0)
 						return;
 				}
@@ -1456,7 +1456,7 @@ bool P_PoisonPlayer (player_t *player, AActor *poisoner, AActor *source, int poi
 	}
 	if (source != NULL && source->player != player && player->mo->IsTeammate (source))
 	{
-		poison = (int)((float)poison * level.teamdamage);
+		poison = (int)((double)poison * level.teamdamage);
 	}
 	if (poison > 0)
 	{

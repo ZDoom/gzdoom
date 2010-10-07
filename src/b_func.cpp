@@ -478,7 +478,7 @@ fixed_t FCajunMaster::FakeFire (AActor *source, AActor *dest, ticcmd_t *cmd)
 	
 	th->target = source;		// where it came from
 
-	float speed = (float)th->Speed;
+	double speed = (double)th->Speed;
 
 	FVector3 velocity;
 	velocity[0] = FIXED2FLOAT(dest->x - source->x);

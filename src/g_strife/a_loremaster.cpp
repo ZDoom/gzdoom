@@ -30,7 +30,7 @@ int ALoreShot::DoSpecialDamage (AActor *target, int damage)
 		thrust.Z = double(this->target->z - target->z);
 	
 		thrust.MakeUnit();
-		thrust *= float((255*50*FRACUNIT) / (target->Mass ? target->Mass : 1));
+		thrust *= double((255*50*FRACUNIT) / (target->Mass ? target->Mass : 1));
 	
 		target->velx += fixed_t(thrust.X);
 		target->vely += fixed_t(thrust.Y);

@@ -635,7 +635,6 @@ add_executable( zdoom WIN32
 	doomstat.cpp
 	dsectoreffect.cpp
 	dthinker.cpp
-	f_finale.cpp
 	f_wipe.cpp
 	farchive.cpp
 	files.cpp
@@ -789,6 +788,8 @@ add_executable( zdoom WIN32
 	g_shared/sbar_mugshot.cpp
 	g_shared/shared_hud.cpp
 	g_shared/shared_sbar.cpp
+	intermission/intermission.cpp
+	intermission/intermission_parse.cpp
 	menu/colorpickermenu.cpp
 	menu/joystickmenu.cpp
 	menu/listmenu.cpp

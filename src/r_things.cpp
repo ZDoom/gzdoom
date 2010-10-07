@@ -2712,6 +2712,12 @@ void R_DrawParticle (vissprite_t *vis)
 	} while (--ycount);
 }
 
+static fixed_t distrecip(fixed_t y)
+{
+	y >>= 3;
+	return y == 0 ? 0 : DivScale32(centerxwide, y);
+}
+
 void R_DrawVoxel(fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t dasprang,
 	fixed_t daxscale, fixed_t dayscale, FVoxel *voxobj,
 	lighttable_t *colormap, short *daumost, short *dadmost)
@@ -2873,15 +2879,15 @@ void R_DrawVoxel(fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t daspran
 				voxend = (kvxslab_t *)(slabxoffs + xyoffs[y+1]);
 				if (voxptr >= voxend) continue;
 
-				lx = MulScale32(nx >> 3, DivScale21(centerxwide, (ny+y1)>>14)) + centerx;
+				lx = MulScale32(nx >> 3, distrecip(ny+y1)) + centerx;
 				if (lx < 0) lx = 0;
-				rx = MulScale32((nx + nxoff) >> 3, DivScale21(centerxwide, (ny+y2)>>14)) + centerx;
+				rx = MulScale32((nx + nxoff) >> 3, distrecip(ny+y2)) + centerx;
 				if (rx > viewwidth) rx = viewwidth;
 				if (rx <= lx) continue;
 				rx -= lx;
 
-				fixed_t l1 = DivScale21(centerxwide, (ny-yoff)>>14);
-				fixed_t l2 = DivScale21(centerxwide, (ny+yoff)>>14);
+				fixed_t l1 = distrecip(ny-yoff);
+				fixed_t l2 = distrecip(ny+yoff);
 				for (; voxptr < voxend; voxptr = (kvxslab_t *)((BYTE *)voxptr + voxptr->zleng + 3))
 				{
 					fixed_t z1, z2;

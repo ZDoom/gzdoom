@@ -1030,6 +1030,7 @@ struct column_t
 
 typedef BYTE lighttable_t;	// This could be wider for >8 bit display.
 
+struct FVoxel;
 
 // A vissprite_t is a thing
 //	that will be drawn during a refresh.
@@ -1053,12 +1054,17 @@ struct vissprite_t
 	sector_t		*sector;		// [RH] sector this sprite is in
 	fixed_t			alpha;
 	fixed_t			floorclip;
-	FTexture		*pic;
+	union
+	{
+		FTexture	*pic;
+		FVoxel		*voxel;
+	};
+	BYTE			bIsVoxel:1;		// [RH] Use voxel instead of pic
+	BYTE			bSplitSprite:1;	// [RH] Sprite was split by a drawseg
+	BYTE			FakeFlatStat;	// [RH] which side of fake/floor ceiling sprite is on
 	short 			renderflags;
 	DWORD			Translation;	// [RH] for color translation
 	FRenderStyle	RenderStyle;
-	BYTE			FakeFlatStat;	// [RH] which side of fake/floor ceiling sprite is on
-	BYTE			bSplitSprite;	// [RH] Sprite was split by a drawseg
 };
 
 enum

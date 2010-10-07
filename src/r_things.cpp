@@ -351,7 +351,7 @@ void R_InitSpriteDefs ()
 	DWORD intname;
 
 
-	FILE *f = fopen("g:/dosgames/blood/blood-barfed/kvx/medbag.kvx", "rb");
+	FILE *f = fopen("g:/dosgames/blood/blood-barfed/kvx/slicer.kvx", "rb");
 	size_t len = Q_filelength(f);
 	BYTE *voxd = new BYTE[len];
 	fread(voxd, 1, len, f);
@@ -1208,6 +1208,7 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 
 	FTextureID			picnum;
 	FTexture			*tex;
+	FVoxel				*voxel;
 	
 	WORD 				flip;
 	
@@ -1236,26 +1237,8 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 
 	tz = DMulScale20 (tr_x, viewtancos, tr_y, viewtansin);
 
-	// thing is behind view plane?
-	if (tz < MINZ)
-		return;
-
-	tx = DMulScale16 (tr_x, viewsin, -tr_y, viewcos);
-
-	// [RH] Flip for mirrors
-	if (MirrorFlags & RF_XFLIP)
-	{
-		tx = -tx;
-	}
-	tx2 = tx >> 4;
-
-	// too far off the side?
-	if ((abs (tx) >> 6) > tz)
-	{
-		return;
-	}
-
-	xscale = DivScale12 (centerxfrac, tz);
+	tex = NULL;
+	voxel = NULL;
 
 	if (thing->picnum.isValid())
 	{
@@ -1322,124 +1305,181 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 			flip = sprframe->Flip & (1 << rot);
 			tex = TexMan[picnum];	// Do not animate the rotation
 		}
-	}
-	if (tex == NULL || tex->UseType == FTexture::TEX_Null)
-	{
-		return;
-	}
-
-	// [RH] Added scaling
-	int scaled_to = tex->GetScaledTopOffset();
-	int scaled_bo = scaled_to - tex->GetScaledHeight();
-	gzt = fz + thing->scaleY * scaled_to;
-	gzb = fz + thing->scaleY * scaled_bo;
-
-	// [RH] Reject sprites that are off the top or bottom of the screen
-	if (MulScale12 (globaluclip, tz) > viewz - gzb ||
-		MulScale12 (globaldclip, tz) < viewz - gzt)
-	{
-		return;
-	}
-
-	// [RH] Flip for mirrors and renderflags
-	if ((MirrorFlags ^ thing->renderflags) & RF_XFLIP)
-	{
-		flip = !flip;
-	}
-
-	// calculate edges of the shape
-	const fixed_t thingxscalemul = DivScale16(thing->scaleX, tex->xScale);
-
-	tx -= (flip ? (tex->GetWidth() - tex->LeftOffset - 1) : tex->LeftOffset) * thingxscalemul;
-	x1 = centerx + MulScale32 (tx, xscale);
-
-	// off the right side?
-	if (x1 > WindowRight)
-		return;
-
-	tx += tex->GetWidth() * thingxscalemul;
-	x2 = centerx + MulScale32 (tx, xscale);
-
-	// off the left side or too small?
-	if (x2 < WindowLeft || x2 <= x1)
-		return;
-
-	xscale = FixedDiv(FixedMul(thing->scaleX, xscale), tex->xScale);
-	iscale = (tex->GetWidth() << FRACBITS) / (x2 - x1);
-	x2--;
-
-	// killough 3/27/98: exclude things totally separated
-	// from the viewer, by either water or fake ceilings
-	// killough 4/11/98: improve sprite clipping for underwater/fake ceilings
-
-	heightsec = thing->Sector->GetHeightSec();
-
-	if (heightsec != NULL)	// only clip things which are in special sectors
-	{
-		if (fakeside == FAKED_AboveCeiling)
+		if (r_drawvoxels)
 		{
-			if (gzt < heightsec->ceilingplane.ZatPoint (fx, fy))
-				return;
+			voxel = MyVox;
 		}
-		else if (fakeside == FAKED_BelowFloor)
+	}
+	if (voxel == NULL && (tex == NULL || tex->UseType == FTexture::TEX_Null))
+	{
+		return;
+	}
+
+	// thing is behind view plane?
+	if (voxel == NULL && tz < MINZ)
+		return;
+	if (voxel != NULL && tz < MINZ/2)
+		return;
+
+	tx = DMulScale16 (tr_x, viewsin, -tr_y, viewcos);
+
+	// [RH] Flip for mirrors
+	if (MirrorFlags & RF_XFLIP)
+	{
+		tx = -tx;
+	}
+	tx2 = tx >> 4;
+
+	// too far off the side?
+	if ((abs(tx) >> 6) > tz)
+	{
+		return;
+	}
+
+	if (voxel == NULL)
+	{
+		xscale = DivScale12 (centerxfrac, tz);
+
+		// [RH] Added scaling
+		int scaled_to = tex->GetScaledTopOffset();
+		int scaled_bo = scaled_to - tex->GetScaledHeight();
+		gzt = fz + thing->scaleY * scaled_to;
+		gzb = fz + thing->scaleY * scaled_bo;
+
+		// [RH] Reject sprites that are off the top or bottom of the screen
+		if (MulScale12 (globaluclip, tz) > viewz - gzb ||
+			MulScale12 (globaldclip, tz) < viewz - gzt)
 		{
-			if (gzb >= heightsec->floorplane.ZatPoint (fx, fy))
-				return;
+			return;
+		}
+
+		// [RH] Flip for mirrors and renderflags
+		if ((MirrorFlags ^ thing->renderflags) & RF_XFLIP)
+		{
+			flip = !flip;
+		}
+
+		// calculate edges of the shape
+		const fixed_t thingxscalemul = DivScale16(thing->scaleX, tex->xScale);
+
+		tx -= (flip ? (tex->GetWidth() - tex->LeftOffset - 1) : tex->LeftOffset) * thingxscalemul;
+		x1 = centerx + MulScale32 (tx, xscale);
+
+		// off the right side?
+		if (voxel == NULL && x1 > WindowRight)
+			return;
+
+		tx += tex->GetWidth() * thingxscalemul;
+		x2 = centerx + MulScale32 (tx, xscale);
+
+		// off the left side or too small?
+		if (voxel == NULL && (x2 < WindowLeft || x2 <= x1))
+			return;
+
+		xscale = FixedDiv(FixedMul(thing->scaleX, xscale), tex->xScale);
+		iscale = (tex->GetWidth() << FRACBITS) / (x2 - x1);
+		x2--;
+
+		// killough 3/27/98: exclude things totally separated
+		// from the viewer, by either water or fake ceilings
+		// killough 4/11/98: improve sprite clipping for underwater/fake ceilings
+
+		heightsec = thing->Sector->GetHeightSec();
+
+		if (heightsec != NULL)	// only clip things which are in special sectors
+		{
+			if (fakeside == FAKED_AboveCeiling)
+			{
+				if (gzt < heightsec->ceilingplane.ZatPoint (fx, fy))
+					return;
+			}
+			else if (fakeside == FAKED_BelowFloor)
+			{
+				if (gzb >= heightsec->floorplane.ZatPoint (fx, fy))
+					return;
+			}
+			else
+			{
+				if (gzt < heightsec->floorplane.ZatPoint (fx, fy))
+					return;
+				if (gzb >= heightsec->ceilingplane.ZatPoint (fx, fy))
+					return;
+			}
+		}
+
+		fixed_t yscale = SafeDivScale16(thing->scaleY, tex->yScale);
+
+		// store information in a vissprite
+		vis = R_NewVisSprite();
+
+		vis->xscale = xscale;
+		vis->yscale = Scale(InvZtoScale, yscale, tz << 4);
+		vis->idepth = (unsigned)DivScale32(1, tz) >> 1;	// tz is 20.12, so idepth ought to be 12.20, but signed math makes it 13.19
+		vis->gzb = gzb;		// [RH] use gzb, not thing->z
+		vis->gzt = gzt;		// killough 3/27/98
+		vis->floorclip = FixedDiv (thing->floorclip, yscale);
+		vis->texturemid = (tex->TopOffset << FRACBITS) - FixedDiv (viewz - fz + thing->floorclip, yscale);
+		vis->x1 = x1 < WindowLeft ? WindowLeft : x1;
+		vis->x2 = x2 > WindowRight ? WindowRight : x2;
+
+		if (flip)
+		{
+			vis->startfrac = (tex->GetWidth() << FRACBITS) - 1;
+			vis->xiscale = -iscale;
 		}
 		else
 		{
-			if (gzt < heightsec->floorplane.ZatPoint (fx, fy))
-				return;
-			if (gzb >= heightsec->ceilingplane.ZatPoint (fx, fy))
-				return;
+			vis->startfrac = 0;
+			vis->xiscale = iscale;
 		}
-	}
 
-	// store information in a vissprite
-	vis = R_NewVisSprite ();
+		if (vis->x1 > x1)
+			vis->startfrac += vis->xiscale * (vis->x1 - x1);
+	}
+	else
+	{
+		vis = R_NewVisSprite();
+
+		vis->xscale = thing->scaleX;
+		vis->yscale = thing->scaleY;
+		vis->x1 = WindowLeft;
+		vis->x2 = WindowRight;
+		vis->idepth = (unsigned)SafeDivScale32(1, tz) >> 1;
+
+		// These are irrelevant for voxels.
+		vis->gzb =		  0x1CEDBEEF;
+		vis->gzt =		  0x1CEDBEEF;
+		vis->floorclip =  0x1CEDBEEF;
+		vis->texturemid = 0x1CEDBEEF;
+	}
 
 	// killough 3/27/98: save sector for special clipping later
 	vis->heightsec = heightsec;
 	vis->sector = thing->Sector;
 
-	fixed_t yscale = DivScale16(thing->scaleY, tex->yScale);
-	vis->renderflags = thing->renderflags;
-	vis->RenderStyle = thing->RenderStyle;
-	vis->FillColor = thing->fillcolor;
-	vis->xscale = xscale;
-	vis->yscale = Scale (InvZtoScale, yscale, tz << 4);
-	vis->depth = tz;
-	vis->idepth = (DWORD)DivScale32 (1, tz) >> 1;	// tz is 20.12, so idepth ought to be 12.20, but
-	vis->cx = tx2;									// signed math makes it 13.19
+	vis->cx = tx2;
 	vis->gx = fx;
 	vis->gy = fy;
 	vis->gz = fz;
+	vis->depth = tz;
+	vis->renderflags = thing->renderflags;
+	vis->RenderStyle = thing->RenderStyle;
+	vis->FillColor = thing->fillcolor;
 	vis->angle = thing->angle;
-	vis->gzb = gzb;		// [RH] use gzb, not thing->z
-	vis->gzt = gzt;		// killough 3/27/98
-	vis->floorclip = FixedDiv (thing->floorclip, yscale);
-	vis->texturemid = (tex->TopOffset << FRACBITS) - 
-		FixedDiv (viewz-fz+thing->floorclip, yscale);
-	vis->x1 = x1 < WindowLeft ? WindowLeft : x1;
-	vis->x2 = x2 > WindowRight ? WindowRight : x2;
 	vis->Translation = thing->Translation;		// [RH] thing translation table
 	vis->FakeFlatStat = fakeside;
 	vis->alpha = thing->alpha;
-	vis->pic = tex;
 
-	if (flip)
+	if (voxel != NULL)
 	{
-		vis->startfrac = (tex->GetWidth() << FRACBITS) - 1;
-		vis->xiscale = -iscale;
+		vis->voxel = voxel;
+		vis->bIsVoxel = true;
 	}
 	else
 	{
-		vis->startfrac = 0;
-		vis->xiscale = iscale;
+		vis->pic = tex;
+		vis->bIsVoxel = false;
 	}
-
-	if (vis->x1 > x1)
-		vis->startfrac += vis->xiscale*(vis->x1-x1);
 
 	// The software renderer cannot invert the source without inverting the overlay
 	// too. That means if the source is inverted, we need to do the reverse of what
@@ -1494,7 +1534,7 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 		else
 		{ // diminished light
 			vis->colormap = mybasecolormap->Maps + (GETPALOOKUP (
-				(fixed_t)DivScale12 (r_SpriteVisibility, tz), spriteshade) << COLORMAPSHIFT);
+				(fixed_t)DivScale12 (r_SpriteVisibility, MAX(tz, MINZ)), spriteshade) << COLORMAPSHIFT);
 		}
 	}
 }
@@ -2104,22 +2144,14 @@ void R_DrawSprite (vissprite_t *spr)
 	short *clip1, *clip2;
 
 	// [RH] Check for particles
-	if (spr->pic == NULL)
+	if (!spr->bIsVoxel && spr->pic == NULL)
 	{
 		R_DrawParticle (spr);
 		return;
 	}
 
-	if (!r_drawvoxels)
-	{
-		x1 = spr->x1;
-		x2 = spr->x2;
-	}
-	else
-	{
-		x1 = 0;
-		x2 = viewwidth - 1;
-	}
+	x1 = spr->x1;
+	x2 = spr->x2;
 
 	// [RH] Quickly reject sprites with bad x ranges.
 	if (x1 > x2)
@@ -2141,8 +2173,7 @@ void R_DrawSprite (vissprite_t *spr)
 
 	fixed_t scale = MulScale19 (InvZtoScale, spr->idepth);
 
-	if (spr->heightsec &&
-		!(spr->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC))
+	if (spr->heightsec && !(spr->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC))
 	{ // only things in specially marked sectors
 		if (spr->FakeFlatStat != FAKED_AboveCeiling)
 		{
@@ -2187,7 +2218,7 @@ void R_DrawSprite (vissprite_t *spr)
 		}
 	}
 	// killough 3/27/98: end special clipping for deep water / fake ceilings
-	else if (spr->floorclip)
+	else if (!spr->bIsVoxel && spr->floorclip)
 	{ // [RH] Move floorclip stuff from R_DrawVisSprite to here
 		int clip = ((centeryfrac - FixedMul (spr->texturemid -
 			(spr->pic->GetHeight() << FRACBITS) +
@@ -2308,7 +2339,7 @@ void R_DrawSprite (vissprite_t *spr)
 
 	// all clipping has been performed, so draw the sprite
 
-	if (!r_drawvoxels)
+	if (!spr->bIsVoxel)
 	{
 		mfloorclip = clipbot;
 		mceilingclip = cliptop;
@@ -2331,7 +2362,7 @@ void R_DrawSprite (vissprite_t *spr)
 				return;
 			}
 		}
-		R_DrawVoxel(spr->gx, spr->gy, spr->gz, spr->angle, FRACUNIT, FRACUNIT, MyVox, spr->colormap, cliptop, clipbot);
+		R_DrawVoxel(spr->gx, spr->gy, spr->gz, spr->angle, spr->xscale, spr->yscale, spr->voxel, spr->colormap, cliptop, clipbot);
 	}
 }
 
@@ -2595,6 +2626,7 @@ void R_ProjectParticle (particle_t *particle, const sector_t *sector, int shade,
 	vis->Translation = 0;
 	vis->startfrac = particle->color;
 	vis->pic = NULL;
+	vis->bIsVoxel = false;
 	vis->renderflags = particle->trans;
 	vis->FakeFlatStat = fakeside;
 	vis->floorclip = 0;

@@ -351,7 +351,7 @@ void R_InitSpriteDefs ()
 	DWORD intname;
 
 
-	FILE *f = fopen("g:/dosgames/blood/blood-barfed/kvx/slicer.kvx", "rb");
+	FILE *f = fopen("g:/dosgames/blood/blood-barfed/kvx/sidebarl.kvx", "rb");
 	size_t len = Q_filelength(f);
 	BYTE *voxd = new BYTE[len];
 	fread(voxd, 1, len, f);
@@ -2748,10 +2748,8 @@ void R_DrawVoxel(fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t daspran
 	sprcosang = finecosine[dasprang >> ANGLETOFINESHIFT] >> 2;
 	sprsinang = -finesine[dasprang >> ANGLETOFINESHIFT] >> 2;
 
+	R_SetupDrawSlab(colormap);
 	i = abs(DMulScale6(dasprx - globalposx, cosang, daspry - globalposy, sinang));
-	dc_colormap = colormap;
-	//j = (long)(getpalookup((long)mulscale21(globvis,i),(long)dashade)<<8);
-	//setupdrawslab(ylookup[1],(long)FP_OFF(palookup[dapal])+j);
 	j = 1310720;
 	j *= MIN(daxscale, dayscale); j >>= 6;  /* New hacks (for sized-down voxels) */
 	for (k = 0; k < voxobj->NumMips; ++k)

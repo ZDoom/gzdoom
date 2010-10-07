@@ -1356,15 +1356,79 @@ void R_FillSpan (void)
 // Ken Silverman's official web site: "http://www.advsys.net/ken"
 // See the included license file "BUILDLIC.TXT" for license info.
 
-void R_DrawSlab(int dx, fixed_t v, int dy, fixed_t vi, const BYTE *vptr, BYTE *p)
+// Actually, this is just R_DrawColumn with an extra width parameter.
+
+#ifndef X86_ASM
+static const BYTE *slabcolormap;
+
+extern "C" void R_SetupDrawSlab(const BYTE *colormap)
+{
+	slabcolormap = colormap;
+}
+
+extern "C" void STACK_ARGS R_DrawSlab(int dx, fixed_t v, int dy, fixed_t vi, const BYTE *vptr, BYTE *p)
 {
 	int x;
-	const BYTE *colormap = dc_colormap;
+	const BYTE *colormap = slabcolormap;
 	int pitch = dc_pitch;
-	
-	while (dy > 0)
+
+	assert(dx > 0);
+
+	if (dx == 1)
+	{
+		while (dy > 0)
+		{
+			*p = colormap[vptr[v >> FRACBITS]];
+			p += pitch;
+			v += vi;
+			dy--;
+		}
+	}
+	else if (dx == 2)
+	{
+		while (dy > 0)
+		{
+			BYTE color = colormap[vptr[v >> FRACBITS]];
+			p[0] = color;
+			p[1] = color;
+			p += pitch;
+			v += vi;
+			dy--;
+		}
+	}
+	else if (dx == 3)
+	{
+		while (dy > 0)
+		{
+			BYTE color = colormap[vptr[v >> FRACBITS]];
+			p[0] = color;
+			p[1] = color;
+			p[2] = color;
+			p += pitch;
+			v += vi;
+			dy--;
+		}
+	}
+	else if (dx == 4)
+	{
+		while (dy > 0)
+		{
+			BYTE color = colormap[vptr[v >> FRACBITS]];
+			p[0] = color;
+			p[1] = color;
+			p[2] = color;
+			p[3] = color;
+			p += pitch;
+			v += vi;
+			dy--;
+		}
+	}
+	else while (dy > 0)
 	{
 		BYTE color = colormap[vptr[v >> FRACBITS]];
+		// The optimizer will probably turn this into a memset call.
+		// Since dx is not likely to be large, I'm not sure that's a good thing,
+		// hence the alternatives above.
 		for (x = 0; x < dx; x++)
 		{
 			p[x] = color;
@@ -1374,6 +1438,7 @@ void R_DrawSlab(int dx, fixed_t v, int dy, fixed_t vi, const BYTE *vptr, BYTE *p
 		dy--;
 	}
 }
+#endif
 
 
 /****************************************************/

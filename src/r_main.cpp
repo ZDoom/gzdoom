@@ -133,6 +133,7 @@ float			LastFOV;
 int				WidescreenRatio;
 
 fixed_t			GlobVis;
+fixed_t			viewingrangerecip;
 fixed_t			FocalTangent;
 fixed_t			FocalLengthX;
 fixed_t			FocalLengthY;
@@ -457,6 +458,9 @@ void R_InitTextureMapping ()
 	FocalLengthX = FixedDiv (centerxfrac, hitan);
 	FocalLengthY = Scale (centerxfrac, yaspectmul, hitan);
 	FocalLengthXfloat = (float)FocalLengthX / 65536.f;
+
+	// This is 1/FocalTangent before the widescreen extension of FOV.
+	viewingrangerecip = DivScale32(1, finetangent[FINEANGLES/4+(FieldOfView/2)]);
 
 	// Now generate xtoviewangle for sky texture mapping.
 	// [RH] Do not generate viewangletox, because texture mapping is no

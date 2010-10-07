@@ -43,6 +43,7 @@ extern fixed_t			viewsin;
 extern fixed_t			viewtancos;
 extern fixed_t			viewtansin;
 extern fixed_t			FocalTangent;
+extern fixed_t			viewingrangerecip;
 extern fixed_t			FocalLengthX, FocalLengthY;
 extern float			FocalLengthXfloat;
 extern fixed_t			InvZtoScale;

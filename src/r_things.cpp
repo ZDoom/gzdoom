@@ -1366,14 +1366,14 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 		x1 = centerx + MulScale32 (tx, xscale);
 
 		// off the right side?
-		if (voxel == NULL && x1 > WindowRight)
+		if (x1 > WindowRight)
 			return;
 
 		tx += tex->GetWidth() * thingxscalemul;
 		x2 = centerx + MulScale32 (tx, xscale);
 
 		// off the left side or too small?
-		if (voxel == NULL && (x2 < WindowLeft || x2 <= x1))
+		if ((x2 < WindowLeft || x2 <= x1))
 			return;
 
 		xscale = FixedDiv(FixedMul(thing->scaleX, xscale), tex->xScale);
@@ -2727,7 +2727,6 @@ void R_DrawVoxel(fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t daspran
 
 	const int nytooclose = centerxwide * 2100, nytoofar = 16384*16384 - 1048576;
 	const int xdimenscale = Scale(centerxwide, yaspectmul, 160);
-	const fixed_t viewingrangerecip = 65536;
 	const fixed_t globalposx =  viewx >> 12;
 	const fixed_t globalposy = -viewy >> 12;
 	const fixed_t globalposz = -viewz >> 8;

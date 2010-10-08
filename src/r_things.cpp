@@ -59,8 +59,6 @@
 #include "v_palette.h"
 #include "r_translate.h"
 
-FVoxel *MyVox;
-
 extern fixed_t globaluclip, globaldclip;
 
 
@@ -112,6 +110,8 @@ CVAR (Bool, r_drawvoxels, true, 0)
 TArray<spritedef_t> sprites;
 TArray<spriteframe_t> SpriteFrames;
 DWORD			NumStdSprites;		// The first x sprites that don't belong to skins.
+
+TDeletingArray<FVoxel *> Voxels;	// used only to auto-delete voxels on exit.
 
 struct spriteframewithrotate : public spriteframe_t
 {
@@ -299,7 +299,9 @@ static void R_InstallSprite (int num)
 	{
 		if (sprtemp[frame].rotate == -1)
 		{
-			memset (&sprtemp[frame], 0, sizeof(sprtemp[0]));
+			memset (&sprtemp[frame].Texture, 0, sizeof(sprtemp[0].Texture));
+			sprtemp[frame].Flip = 0;
+			sprtemp[frame].rotate = 0;
 		}
 	}
 	
@@ -310,6 +312,8 @@ static void R_InstallSprite (int num)
 	{
 		memcpy (SpriteFrames[framestart+frame].Texture, sprtemp[frame].Texture, sizeof(sprtemp[frame].Texture));
 		SpriteFrames[framestart+frame].Flip = sprtemp[frame].Flip;
+		SpriteFrames[framestart+frame].Voxel = sprtemp[frame].Voxel;
+		SpriteFrames[framestart+frame].VoxelSpin = sprtemp[frame].VoxelSpin;
 	}
 
 	// Let the textures know about the rotations
@@ -347,33 +351,50 @@ void R_InitSpriteDefs ()
 	{
 		int Head, Next;
 	} *hashes;
-	unsigned int i, max;
+	struct VHasher
+	{
+		int Head, Next, Name, Spin;
+		char Frame;
+	} *vhashes;
+	unsigned int i, j, smax, vmax;
 	DWORD intname;
 
-
-	FILE *f = fopen("g:/dosgames/blood/blood-barfed/kvx/sidebarl.kvx", "rb");
-	size_t len = Q_filelength(f);
-	BYTE *voxd = new BYTE[len];
-	fread(voxd, 1, len, f);
-	fclose(f);
-	MyVox = R_LoadKVX(voxd, (int)len);
-	delete[] voxd;
-
 	// Create a hash table to speed up the process
-	max = TexMan.NumTextures();
-	hashes = (Hasher *)alloca (sizeof(Hasher) * max);
-	for (i = 0; i < max; ++i)
-	{
-		hashes[i].Head = -1;
-	}
-	for (i = 0; i < max; ++i)
+	smax = TexMan.NumTextures();
+	hashes = new Hasher[smax];
+	clearbuf(hashes, sizeof(Hasher)*smax/4, -1);
+	for (i = 0; i < smax; ++i)
 	{
 		FTexture *tex = TexMan.ByIndex(i);
 		if (tex->UseType == FTexture::TEX_Sprite && strlen(tex->Name) >= 6)
 		{
-			DWORD bucket = tex->dwName % max;
+			size_t bucket = tex->dwName % smax;
 			hashes[i].Next = hashes[bucket].Head;
 			hashes[bucket].Head = i;
+		}
+	}
+
+	// Repeat, for voxels
+	vmax = Wads.GetNumLumps();
+	vhashes = new VHasher[vmax];
+	clearbuf(vhashes, sizeof(VHasher)*vmax/4, -1);
+	for (i = 0; i < vmax; ++i)
+	{
+		if (Wads.GetLumpNamespace(i) == ns_voxels)
+		{
+			char name[9];
+			Wads.GetLumpName(name, i);
+			name[8] = 0;
+			if (strlen(name) >= 4 &&
+				(name[4] == ' ' || name[4] == '\0' || (name[4] >= 'A' && name[4] < 'A' + MAX_SPRITE_FRAMES)))
+			{
+				memcpy(&vhashes[i].Name, name, 4);
+				vhashes[i].Frame = name[4];
+				vhashes[i].Spin = atoi(name+5);
+				size_t bucket = vhashes[i].Name % vmax;
+				vhashes[i].Next = vhashes[bucket].Head;
+				vhashes[bucket].Head = i;
+			}
 		}
 	}
 
@@ -381,16 +402,18 @@ void R_InitSpriteDefs ()
 	for (i = 0; i < sprites.Size(); ++i)
 	{
 		memset (sprtemp, 0xFF, sizeof(sprtemp));
-		for (int j = 0; j < MAX_SPRITE_FRAMES; ++j)
+		for (j = 0; j < MAX_SPRITE_FRAMES; ++j)
 		{
 			sprtemp[j].Flip = 0;
+			sprtemp[j].Voxel = NULL;
+			sprtemp[j].VoxelSpin = 0;
 		}
 				
 		maxframe = -1;
 		intname = sprites[i].dwName;
 
 		// scan the lumps, filling in the frames for whatever is found
-		int hash = hashes[intname % max].Head;
+		int hash = hashes[intname % smax].Head;
 		while (hash != -1)
 		{
 			FTexture *tex = TexMan[hash];
@@ -402,6 +425,46 @@ void R_InitSpriteDefs ()
 					R_InstallSpriteLump (FTextureID(hash), tex->Name[6] - 'A', tex->Name[7], true);
 			}
 			hash = hashes[hash].Next;
+		}
+
+		// repeat, for voxels
+		hash = vhashes[intname % vmax].Head;
+		while (hash != -1)
+		{
+			VHasher *vh = &vhashes[hash];
+			if (vh->Name == intname)
+			{
+				FMemLump lump = Wads.ReadLump(hash);	// FMemLump adds an extra 0 byte to the end.
+				FVoxel *vox = R_LoadKVX((BYTE *)lump.GetMem(), (int)(lump.GetSize()-1));
+				if (vox == NULL)
+				{
+					Printf("%s is not a valid voxel file\n", Wads.GetLumpFullName(hash));
+				}
+				else
+				{
+					Voxels.Push(vox);
+					if (vh->Frame == ' ' || vh->Frame == '\0')
+					{ // voxel applies to every sprite frame
+						for (j = 0; j < MAX_SPRITE_FRAMES; ++j)
+						{
+							if (sprtemp[j].Voxel == NULL)
+							{
+								sprtemp[j].Voxel = vox;
+								sprtemp[j].VoxelSpin = vh->Spin;
+							}
+						}
+						maxframe = MAX_SPRITE_FRAMES-1;
+					}
+					else
+					{ // voxel applies to a specific frame
+						j = vh->Frame - 'A';
+						sprtemp[j].Voxel = vox;
+						sprtemp[j].VoxelSpin = vh->Spin;
+						maxframe = MAX<int>(maxframe, j);
+					}
+				}
+			}
+			hash = vh->Next;
 		}
 		
 		R_InstallSprite ((int)i);
@@ -1209,6 +1272,7 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 	FTextureID			picnum;
 	FTexture			*tex;
 	FVoxel				*voxel;
+	int					voxelspin;
 	
 	WORD 				flip;
 	
@@ -1304,10 +1368,11 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 			picnum = sprframe->Texture[rot];
 			flip = sprframe->Flip & (1 << rot);
 			tex = TexMan[picnum];	// Do not animate the rotation
-		}
-		if (r_drawvoxels)
-		{
-			voxel = MyVox;
+			if (r_drawvoxels)
+			{
+				voxel = sprframe->Voxel;
+				voxelspin = sprframe->VoxelSpin;
+			}
 		}
 	}
 	if (voxel == NULL && (tex == NULL || tex->UseType == FTexture::TEX_Null))
@@ -1421,6 +1486,7 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 		vis->texturemid = (tex->TopOffset << FRACBITS) - FixedDiv (viewz - fz + thing->floorclip, yscale);
 		vis->x1 = x1 < WindowLeft ? WindowLeft : x1;
 		vis->x2 = x2 > WindowRight ? WindowRight : x2;
+		vis->angle = thing->angle;
 
 		if (flip)
 		{
@@ -1446,6 +1512,16 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 		vis->x2 = WindowRight;
 		vis->idepth = (unsigned)SafeDivScale32(1, tz) >> 1;
 
+		if (voxelspin == 0)
+		{
+			vis->angle = thing->angle;
+		}
+		else
+		{
+			double ang = double(I_FPSTime()) * voxelspin / 500;
+			vis->angle = angle_t(ang * (4294967296.f / 360));
+		}
+
 		// These are irrelevant for voxels.
 		vis->gzb =		  0x1CEDBEEF;
 		vis->gzt =		  0x1CEDBEEF;
@@ -1465,7 +1541,6 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 	vis->renderflags = thing->renderflags;
 	vis->RenderStyle = thing->RenderStyle;
 	vis->FillColor = thing->fillcolor;
-	vis->angle = thing->angle;
 	vis->Translation = thing->Translation;		// [RH] thing translation table
 	vis->FakeFlatStat = fakeside;
 	vis->alpha = thing->alpha;

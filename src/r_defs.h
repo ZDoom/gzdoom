@@ -1086,14 +1086,17 @@ enum
 //
 struct spriteframe_t
 {
+	FVoxel *Voxel;			// voxel to use for this frame
 	FTextureID Texture[16];	// texture to use for view angles 0-15
-	WORD Flip;			// flip (1 = flip) to use for view angles 0-15.
+	WORD Flip;				// flip (1 = flip) to use for view angles 0-15.
+	SWORD VoxelSpin;		// degrees/halfsec to spin voxel
 };
 
 //
 // A sprite definition:
 //	a number of animation frames.
 //
+
 struct spritedef_t
 {
 	union

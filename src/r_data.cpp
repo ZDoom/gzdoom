@@ -606,7 +606,7 @@ FVoxel *R_LoadKVX(const BYTE *rawvoxel, int voxelsize)
 				int yoff = mipl->OffsetXY[(mipl->SizeY + 1) * i + j];
 				if (unsigned(xoff + yoff) > unsigned(voxdatasize))
 				{
-					break;
+					goto bad;
 				}
 			}
 		}
@@ -622,7 +622,7 @@ FVoxel *R_LoadKVX(const BYTE *rawvoxel, int voxelsize)
 	// enough room for the palette after it?
 	if (mip == 0 || rawmip != rawvoxel + voxelsize - 768)
 	{
-		delete voxel;
+bad:	delete voxel;
 		return NULL;
 	}
 	voxel->NumMips = mip;

@@ -62,6 +62,7 @@ typedef enum {
 	ns_bloodmisc,
 	ns_strifevoices,
 	ns_hires,
+	ns_voxels,
 
 	// These namespaces are only used to mark lumps in special subdirectories
 	// so that their contents doesn't interfere with the global namespace.

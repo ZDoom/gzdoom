@@ -893,8 +893,16 @@ class CommandDrawNumber : public CommandDrawString
 					value = TOTALSECRETS;
 				else if(sc.Compare("armorclass"))
 					value = ARMORCLASS;
+				else if(sc.Compare("savepercent"))
+					value = SAVEPERCENT;
 				else if(sc.Compare("airtime"))
 					value = AIRTIME;
+				else if(sc.Compare("accuracy"))
+					value = ACCURACY;
+				else if(sc.Compare("stamina"))
+					value = STAMINA;
+				else if(sc.Compare("keys"))
+					value = KEYS;
 				else if(sc.Compare("globalvar"))
 				{
 					value = GLOBALVAR;
@@ -1090,6 +1098,7 @@ class CommandDrawNumber : public CommandDrawString
 					num = level.total_secrets;
 					break;
 				case ARMORCLASS:
+				case SAVEPERCENT:
 				{
 					AHexenArmor *harmor = statusBar->CPlayer->mo->FindInventory<AHexenArmor>();
 					if(harmor != NULL)
@@ -1100,9 +1109,12 @@ class CommandDrawNumber : public CommandDrawString
 					//Hexen counts basic armor also so we should too.
 					if(statusBar->armor != NULL)
 					{
-						num += statusBar->armor->SavePercent;
+						num += FixedMul(statusBar->armor->SavePercent, 100*FRACUNIT);
 					}
-					num /= (5*FRACUNIT);
+					if(value == ARMORCLASS)
+						num /= (5*FRACUNIT);
+					else
+						num >>= FRACBITS;
 					break;
 				}
 				case GLOBALVAR:
@@ -1140,6 +1152,20 @@ class CommandDrawNumber : public CommandDrawString
 				case SELECTEDINVENTORY:
 					if(statusBar->CPlayer->mo->InvSel != NULL)
 						num = statusBar->CPlayer->mo->InvSel->Amount;
+					break;
+				case ACCURACY:
+					num = statusBar->CPlayer->accuracy;
+					break;
+				case STAMINA:
+					num = statusBar->CPlayer->stamina;
+					break;
+				case KEYS:
+					num = 0;
+					for(AInventory *item = statusBar->CPlayer->mo->Inventory;item != NULL;item = item->Inventory)
+					{
+						if(item->IsKindOf(RUNTIME_CLASS(AKey)))
+							num++;
+					}
 					break;
 				default: break;
 			}
@@ -1210,6 +1236,10 @@ class CommandDrawNumber : public CommandDrawString
 			AIRTIME,
 			SELECTEDINVENTORY,
 			SCORE,
+			SAVEPERCENT,
+			ACCURACY,
+			STAMINA,
+			KEYS,
 
 			CONSTANT
 		};
@@ -2183,6 +2213,8 @@ class CommandDrawBar : public SBarInfoCommand
 				type = SECRETS;
 			else if(sc.Compare("airtime"))
 				type = AIRTIME;
+			else if(sc.Compare("savepercent"))
+				type = SAVEPERCENT;
 			else if(sc.Compare("poweruptime"))
 			{
 				type = POWERUPTIME;
@@ -2363,6 +2395,23 @@ class CommandDrawBar : public SBarInfoCommand
 					}
 					break;
 				}
+				case SAVEPERCENT:
+				{
+					AHexenArmor *harmor = statusBar->CPlayer->mo->FindInventory<AHexenArmor>();
+					if(harmor != NULL)
+					{
+						value = harmor->Slots[0] + harmor->Slots[1] +
+							harmor->Slots[2] + harmor->Slots[3] + harmor->Slots[4];
+					}
+					//Hexen counts basic armor also so we should too.
+					if(statusBar->armor != NULL)
+					{
+						value += FixedMul(statusBar->armor->SavePercent, 100*FRACUNIT);
+					}
+					value >>= FRACBITS;
+					max = 100;
+					break;
+				}
 				default: return;
 			}
 
@@ -2399,7 +2448,8 @@ class CommandDrawBar : public SBarInfoCommand
 			SECRETS,
 			ARMORCLASS,
 			POWERUPTIME,
-			AIRTIME
+			AIRTIME,
+			SAVEPERCENT
 		};
 
 		unsigned int		border;

@@ -1069,7 +1069,7 @@ vissprite_t *R_NewVisSprite (void)
 			*p = new vissprite_t;
 		}
 	}
-	
+
 	vissprite_p++;
 	return *(vissprite_p-1);
 }
@@ -1403,13 +1403,48 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 
 	if (voxel == NULL)
 	{
-		xscale = DivScale12 (centerxfrac, tz);
-
 		// [RH] Added scaling
 		int scaled_to = tex->GetScaledTopOffset();
 		int scaled_bo = scaled_to - tex->GetScaledHeight();
 		gzt = fz + thing->scaleY * scaled_to;
 		gzb = fz + thing->scaleY * scaled_bo;
+	}
+	else
+	{
+		gzt = fz + MulScale8(thing->scaleY, voxel->Mips[0].PivotZ);
+		gzb = fz + MulScale8(thing->scaleY, voxel->Mips[0].PivotZ - (voxel->Mips[0].SizeZ << 8));
+	}
+
+	// killough 3/27/98: exclude things totally separated
+	// from the viewer, by either water or fake ceilings
+	// killough 4/11/98: improve sprite clipping for underwater/fake ceilings
+
+	heightsec = thing->Sector->GetHeightSec();
+
+	if (heightsec != NULL)	// only clip things which are in special sectors
+	{
+		if (fakeside == FAKED_AboveCeiling)
+		{
+			if (gzt < heightsec->ceilingplane.ZatPoint (fx, fy))
+				return;
+		}
+		else if (fakeside == FAKED_BelowFloor)
+		{
+			if (gzb >= heightsec->floorplane.ZatPoint (fx, fy))
+				return;
+		}
+		else
+		{
+			if (gzt < heightsec->floorplane.ZatPoint (fx, fy))
+				return;
+			if (gzb >= heightsec->ceilingplane.ZatPoint (fx, fy))
+				return;
+		}
+	}
+
+	if (voxel == NULL)
+	{
+		xscale = DivScale12 (centerxfrac, tz);
 
 		// [RH] Reject sprites that are off the top or bottom of the screen
 		if (MulScale12 (globaluclip, tz) > viewz - gzb ||
@@ -1445,33 +1480,6 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 		iscale = (tex->GetWidth() << FRACBITS) / (x2 - x1);
 		x2--;
 
-		// killough 3/27/98: exclude things totally separated
-		// from the viewer, by either water or fake ceilings
-		// killough 4/11/98: improve sprite clipping for underwater/fake ceilings
-
-		heightsec = thing->Sector->GetHeightSec();
-
-		if (heightsec != NULL)	// only clip things which are in special sectors
-		{
-			if (fakeside == FAKED_AboveCeiling)
-			{
-				if (gzt < heightsec->ceilingplane.ZatPoint (fx, fy))
-					return;
-			}
-			else if (fakeside == FAKED_BelowFloor)
-			{
-				if (gzb >= heightsec->floorplane.ZatPoint (fx, fy))
-					return;
-			}
-			else
-			{
-				if (gzt < heightsec->floorplane.ZatPoint (fx, fy))
-					return;
-				if (gzb >= heightsec->ceilingplane.ZatPoint (fx, fy))
-					return;
-			}
-		}
-
 		fixed_t yscale = SafeDivScale16(thing->scaleY, tex->yScale);
 
 		// store information in a vissprite
@@ -1480,8 +1488,6 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 		vis->xscale = xscale;
 		vis->yscale = Scale(InvZtoScale, yscale, tz << 4);
 		vis->idepth = (unsigned)DivScale32(1, tz) >> 1;	// tz is 20.12, so idepth ought to be 12.20, but signed math makes it 13.19
-		vis->gzb = gzb;		// [RH] use gzb, not thing->z
-		vis->gzt = gzt;		// killough 3/27/98
 		vis->floorclip = FixedDiv (thing->floorclip, yscale);
 		vis->texturemid = (tex->TopOffset << FRACBITS) - FixedDiv (viewz - fz + thing->floorclip, yscale);
 		vis->x1 = x1 < WindowLeft ? WindowLeft : x1;
@@ -1523,10 +1529,10 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 		}
 
 		// These are irrelevant for voxels.
-		vis->gzb =		  0x1CEDBEEF;
-		vis->gzt =		  0x1CEDBEEF;
-		vis->floorclip =  0x1CEDBEEF;
+		vis->floorclip	= 0x1CEDBEEF;
 		vis->texturemid = 0x1CEDBEEF;
+		vis->startfrac	= 0x1CEDBEEF;
+		vis->xiscale	= 0x1CEDBEEF;
 	}
 
 	// killough 3/27/98: save sector for special clipping later
@@ -1534,10 +1540,12 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 	vis->sector = thing->Sector;
 
 	vis->cx = tx2;
+	vis->depth = tz;
 	vis->gx = fx;
 	vis->gy = fy;
 	vis->gz = fz;
-	vis->depth = tz;
+	vis->gzb = gzb;		// [RH] use gzb, not thing->z
+	vis->gzt = gzt;		// killough 3/27/98
 	vis->renderflags = thing->renderflags;
 	vis->RenderStyle = thing->RenderStyle;
 	vis->FillColor = thing->fillcolor;
@@ -2247,14 +2255,15 @@ void R_DrawSprite (vissprite_t *spr)
 	// [RH] rewrote this to be based on which part of the sector is really visible
 
 	fixed_t scale = MulScale19 (InvZtoScale, spr->idepth);
+	fixed_t hzb = FIXED_MIN, hzt = FIXED_MAX;
 
 	if (spr->heightsec && !(spr->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC))
 	{ // only things in specially marked sectors
 		if (spr->FakeFlatStat != FAKED_AboveCeiling)
 		{
-			fixed_t h = spr->heightsec->floorplane.ZatPoint (spr->gx, spr->gy);
+			fixed_t hz = spr->heightsec->floorplane.ZatPoint (spr->gx, spr->gy);
 			//h = (centeryfrac - FixedMul (h-viewz, spr->yscale)) >> FRACBITS;
-			h = (centeryfrac - FixedMul (h-viewz, scale)) >> FRACBITS;
+			fixed_t h = (centeryfrac - FixedMul (hz-viewz, scale)) >> FRACBITS;
 
 			if (spr->FakeFlatStat == FAKED_BelowFloor)
 			{ // seen below floor: clip top
@@ -2262,6 +2271,7 @@ void R_DrawSprite (vissprite_t *spr)
 				{
 					topclip = MIN<short> (h, viewheight);
 				}
+				hzt = MIN(hzt, hz);
 			}
 			else
 			{ // seen in the middle: clip bottom
@@ -2269,12 +2279,13 @@ void R_DrawSprite (vissprite_t *spr)
 				{
 					botclip = MAX<short> (0, h);
 				}
+				hzb = MAX(hzb, hz);
 			}
 		}
 		if (spr->FakeFlatStat != FAKED_BelowFloor)
 		{
-			fixed_t h = spr->heightsec->ceilingplane.ZatPoint (spr->gx, spr->gy);
-			h = (centeryfrac - FixedMul (h-viewz, scale)) >> FRACBITS;
+			fixed_t hz = spr->heightsec->ceilingplane.ZatPoint (spr->gx, spr->gy);
+			fixed_t h = (centeryfrac - FixedMul (hz-viewz, scale)) >> FRACBITS;
 
 			if (spr->FakeFlatStat == FAKED_AboveCeiling)
 			{ // seen above ceiling: clip bottom
@@ -2282,6 +2293,7 @@ void R_DrawSprite (vissprite_t *spr)
 				{
 					botclip = MAX<short> (0, h);
 				}
+				hzb = MAX(hzb, hz);
 			}
 			else
 			{ // seen in the middle: clip top
@@ -2289,6 +2301,7 @@ void R_DrawSprite (vissprite_t *spr)
 				{
 					topclip = MIN<short> (h, viewheight);
 				}
+				hzt = MIN(hzt, hz);
 			}
 		}
 	}
@@ -2325,6 +2338,16 @@ void R_DrawSprite (vissprite_t *spr)
 		}
 	}
 #endif
+
+	if (topclip >= botclip)
+	{
+		return;
+	}
+	if (spr->bIsVoxel)
+	{
+		topclip = 0;
+		botclip = viewheight;
+	}
 
 	i = x2 - x1 + 1;
 	clip1 = clipbot + x1;
@@ -2437,7 +2460,10 @@ void R_DrawSprite (vissprite_t *spr)
 				return;
 			}
 		}
-		R_DrawVoxel(spr->gx, spr->gy, spr->gz, spr->angle, spr->xscale, spr->yscale, spr->voxel, spr->colormap, cliptop, clipbot);
+		int minvoxely = spr->gzt <= hzt ? 0 : (spr->gzt - hzt) / spr->yscale;
+		int maxvoxely = spr->gzb >= hzb ? INT_MAX : (spr->gzt - hzb) / spr->yscale;
+		R_DrawVoxel(spr->gx, spr->gy, spr->gz, spr->angle, spr->xscale, spr->yscale, spr->voxel, spr->colormap, cliptop, clipbot,
+			minvoxely, maxvoxely);
 	}
 }
 
@@ -2795,7 +2821,7 @@ static fixed_t distrecip(fixed_t y)
 
 void R_DrawVoxel(fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t dasprang,
 	fixed_t daxscale, fixed_t dayscale, FVoxel *voxobj,
-	lighttable_t *colormap, short *daumost, short *dadmost)
+	lighttable_t *colormap, short *daumost, short *dadmost, int minslabz, int maxslabz)
 {
 	int i, j, k, x, y, syoff, ggxstart, ggystart, nxoff;
 	fixed_t cosang, sinang, sprcosang, sprsinang;
@@ -2835,6 +2861,9 @@ void R_DrawVoxel(fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t daspran
 	if (k >= voxobj->NumMips) i = voxobj->NumMips - 1;
 
 	mip = &voxobj->Mips[i];		if (mip->SlabData == NULL) return;
+
+	minslabz >>= i;
+	maxslabz >>= i;
 
 	daxscale <<= (i+8); dayscale <<= (i+8);
 	dazscale = FixedDiv(dayscale, yaspectmul);
@@ -2876,7 +2905,7 @@ void R_DrawVoxel(fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t daspran
 		ggyinc[i] = y; y += gyinc;
 	}
 
-	syoff = DivScale21(globalposz - dasprz, dazscale) + (/*mip->PivotZ << 7*/mip->SizeZ << 15);
+	syoff = DivScale21(globalposz - dasprz, dazscale) + (mip->PivotZ << 7);
 	yoff = (abs(gxinc) + abs(gyinc)) >> 1;
 
 	for (cnt = 0; cnt < 8; cnt++)
@@ -2963,12 +2992,29 @@ void R_DrawVoxel(fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t daspran
 				fixed_t l2 = distrecip(ny+yoff);
 				for (; voxptr < voxend; voxptr = (kvxslab_t *)((BYTE *)voxptr + voxptr->zleng + 3))
 				{
+					const BYTE *col = voxptr->col;
+					int zleng = voxptr->zleng;
+					int ztop = voxptr->ztop;
 					fixed_t z1, z2;
 
-					j = (voxptr->ztop << 15) - syoff;
+					if (ztop < minslabz)
+					{
+						int diff = minslabz - ztop;
+						ztop = minslabz;
+						col += diff;
+						zleng -= diff;
+					}
+					if (ztop + zleng > maxslabz)
+					{
+						int diff = ztop + zleng - maxslabz;
+						zleng -= diff;
+					}
+					if (zleng <= 0) continue;
+
+					j = (ztop << 15) - syoff;
 					if (j < 0)
 					{
-						k = j + (voxptr->zleng << 15);
+						k = j + (zleng << 15);
 						if (k < 0)
 						{
 							if ((voxptr->backfacecull & oand32) == 0) continue;
@@ -2985,24 +3031,24 @@ void R_DrawVoxel(fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t daspran
 					{
 						if ((voxptr->backfacecull & oand16) == 0) continue;
 						z1 = MulScale32(l2, j) + centery;						/* Above slab */
-						z2 = MulScale32(l1, j + (voxptr->zleng << 15)) + centery;
+						z2 = MulScale32(l1, j + (zleng << 15)) + centery;
 					}
 
-					if (voxptr->zleng == 1)
+					if (zleng == 1)
 					{
 						yplc = 0; yinc = 0;
 						if (z1 < daumost[lx]) z1 = daumost[lx];
 					}
 					else
 					{
-						if (z2-z1 >= 1024) yinc = FixedDiv(voxptr->zleng, z2 - z1);
-						else if (z2 > z1) yinc = (((1 << 24) - 1) / (z2 - z1)) * voxptr->zleng >> 8;
+						if (z2-z1 >= 1024) yinc = FixedDiv(zleng, z2 - z1);
+						else if (z2 > z1) yinc = (((1 << 24) - 1) / (z2 - z1)) * zleng >> 8;
 						if (z1 < daumost[lx]) { yplc = yinc*(daumost[lx]-z1); z1 = daumost[lx]; } else yplc = 0;
 					}
 					if (z2 > dadmost[lx]) z2 = dadmost[lx];
 					z2 -= z1; if (z2 <= 0) continue;
 
-					R_DrawSlab(rx, yplc, z2, yinc, voxptr->col, ylookup[z1] + lx + dc_destorg);
+					R_DrawSlab(rx, yplc, z2, yinc, col, ylookup[z1] + lx + dc_destorg);
 				}
 			}
 		}

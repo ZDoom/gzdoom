@@ -1080,6 +1080,11 @@ public:
 		}
 	}
 
+	bool MustDrawLog (EHudState state)
+	{
+		return script->huds[STBAR_POPUPLOG]->NumCommands() == 0;
+	}
+
 	void SetMugShotState (const char *state_name, bool wait_till_done, bool reset)
 	{
 		script->MugShot.SetState(state_name, wait_till_done, reset);

@@ -520,15 +520,25 @@ class CommandDrawString : public SBarInfoCommand
 {
 	public:
 		CommandDrawString(SBarInfo *script) : SBarInfoCommand(script),
-			shadow(false), shadowX(2), shadowY(2), spacing(0), font(NULL),
-			translation(CR_UNTRANSLATED), cache(-1), strValue(CONSTANT),
-			valueArgument(0), alignment (ALIGN_RIGHT)
+			lineBreaks(false), breakWidth(320), shadow(false), shadowX(2),
+			shadowY(2), spacing(0), font(NULL), translation(CR_UNTRANSLATED),
+			cache(-1), strValue(CONSTANT), valueArgument(0), alignment(ALIGN_RIGHT)
 		{
 		}
 
 		void	Draw(const SBarInfoMainBlock *block, const DSBarInfo *statusBar)
 		{
-			statusBar->DrawString(font, str.GetChars(), x, y, block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets(), translation, spacing, shadow, shadowX, shadowY);
+			if(lineBreaks)
+			{
+				FBrokenLines *lines = V_BreakLines(font, breakWidth, str.GetChars());
+				for(int i = 0;lines[i].Width >= 0;i++)
+				{
+					statusBar->DrawString(font, lines[i].Text, x, y+i*(font->GetHeight()+4), block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets(), translation, spacing, shadow, shadowX, shadowY);
+				}
+				V_FreeBrokenLines(lines);
+			}
+			else
+				statusBar->DrawString(font, str.GetChars(), x, y, block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets(), translation, spacing, shadow, shadowX, shadowY);
 		}
 		void	Parse(FScanner &sc, bool fullScreenOffsets)
 		{
@@ -562,6 +572,10 @@ class CommandDrawString : public SBarInfoCommand
 					strValue = WEAPONTAG;
 				else if(sc.Compare("inventorytag"))
 					strValue = INVENTORYTAG;
+				else if(sc.Compare("time"))
+					strValue = TIME;
+				else if(sc.Compare("logtext"))
+					strValue = LOGTEXT;
 				else if(sc.Compare("globalvar"))
 				{
 					strValue = GLOBALVAR;
@@ -626,6 +640,14 @@ class CommandDrawString : public SBarInfoCommand
 								sc.MustGetToken(')');
 							}
 							shadow = true;
+						}
+						else if(sc.Compare("linebreaks"))
+						{
+							sc.MustGetToken('(');
+							sc.MustGetToken(TK_IntConst);
+							breakWidth = sc.Number;
+							sc.MustGetToken(')');
+							lineBreaks = true;
 						}
 						else
 							sc.ScriptError("Unknown flag '%s'.", sc.String);
@@ -722,6 +744,12 @@ class CommandDrawString : public SBarInfoCommand
 						RealignString();
 					}
 					break;
+				case TIME:
+					str.Format("%02d:%02d:%02d", (level.time/TICRATE)/3600, ((level.time/TICRATE)%3600)/60, (level.time/TICRATE)%60);
+					break;
+				case LOGTEXT:
+					str = statusBar->CPlayer->LogText;
+					break;
 				default:
 					break;
 			}
@@ -769,10 +797,14 @@ class CommandDrawString : public SBarInfoCommand
 			INVENTORYTAG,
 			GLOBALVAR,
 			GLOBALARRAY,
+			TIME,
+			LOGTEXT,
 
 			CONSTANT
 		};
 
+		bool				lineBreaks;
+		int					breakWidth;
 		bool				shadow;
 		int					shadowX;
 		int					shadowY;
@@ -1338,6 +1370,7 @@ class CommandDrawSelectedInventory : public SBarInfoCommandFlowControl, private 
 			CommandDrawImage(script), CommandDrawNumber(script), alternateOnEmpty(false),
 			artiflash(false), alwaysShowCounter(false)
 		{
+			length = INT_MAX; // Counter size
 		}
 
 		void	Draw(const SBarInfoMainBlock *block, const DSBarInfo *statusBar)
@@ -1353,7 +1386,15 @@ class CommandDrawSelectedInventory : public SBarInfoCommandFlowControl, private 
 						translatable, false, offset);
 				}
 				else
+				{
+					if(itemflash && itemflashFade)
+					{
+						fixed_t flashAlpha = fixed_t(((double) block->Alpha() / (double) FRACUNIT) * ((double) itemflashFade / (double) OPAQUE) * FRACUNIT);
+						statusBar->DrawGraphic(statusBar->Images[statusBar->invBarOffset + imgCURSOR], imgx-4, imgy+2, block->XOffset(), block->YOffset(), flashAlpha, block->FullScreenOffsets(),
+							translatable, false, offset);
+					}
 					CommandDrawImage::Draw(block, statusBar);
+				}
 				if(alwaysShowCounter || statusBar->CPlayer->mo->InvSel->Amount != 1)
 					CommandDrawNumber::Draw(block, statusBar);
 			}
@@ -1371,6 +1412,8 @@ class CommandDrawSelectedInventory : public SBarInfoCommandFlowControl, private 
 					artiflash = true;
 				else if(sc.Compare("alwaysshowcounter"))
 					alwaysShowCounter = true;
+				else if(sc.Compare("itemflash"))
+					itemflash = true;
 				else if(sc.Compare("center"))
 					offset = CENTER;
 				else if(sc.Compare("centerbottom"))
@@ -1430,6 +1473,12 @@ class CommandDrawSelectedInventory : public SBarInfoCommandFlowControl, private 
 
 			if(artiflashTick > 0)
 				artiflashTick--;
+			if(itemflashFade > 0)
+			{
+				itemflashFade -= FRACUNIT/14;
+				if(itemflashFade < 0)
+					itemflashFade = 0;
+			}
 
 			SetTruth(statusBar->CPlayer->mo->InvSel == NULL || (level.flags & LEVEL_NOINVENTORYBAR), block, statusBar);
 
@@ -1437,15 +1486,18 @@ class CommandDrawSelectedInventory : public SBarInfoCommandFlowControl, private 
 			CommandDrawNumber::Tick(block, statusBar, hudChanged);
 		}
 
-		static void	Flash() { artiflashTick = 4; }
+		static void	Flash() { artiflashTick = 4; itemflashFade = FRACUNIT*3/4; }
 	protected:
 		bool	alternateOnEmpty;
 		bool	artiflash;
 		bool	alwaysShowCounter;
+		bool	itemflash;
 
-		static int	artiflashTick;
+		static int		artiflashTick;
+		static fixed_t	itemflashFade;
 };
 int CommandDrawSelectedInventory::artiflashTick = 4;
+int CommandDrawSelectedInventory::itemflashFade = FRACUNIT*3/4;
 
 void DSBarInfo::FlashItem(const PClass *itemtype)
 {
@@ -1754,7 +1806,8 @@ class CommandDrawInventoryBar : public SBarInfoCommand
 		CommandDrawInventoryBar(SBarInfo *script) : SBarInfoCommand(script),
 			style(STYLE_Doom), size(7), alwaysShow(false), noArtibox(false),
 			noArrows(false), alwaysShowCounter(false), translucent(false),
-			vertical(false), counters(NULL), font(NULL), translation(CR_GOLD),
+			vertical(false), shadow(false), shadowX(2), shadowY(2),
+			counters(NULL), font(NULL), translation(CR_GOLD),
 			fontSpacing(0)
 		{
 		}
@@ -1858,6 +1911,19 @@ class CommandDrawInventoryBar : public SBarInfoCommand
 			{
 				if(sc.Compare("alwaysshow"))
 					alwaysShow = true;
+				else if(sc.Compare("drawshadow"))
+				{
+					if(sc.CheckToken('('))
+					{
+						sc.MustGetToken(TK_IntConst);
+						shadowX = sc.Number;
+						sc.MustGetToken(',');
+						sc.MustGetToken(TK_IntConst);
+						shadowY = sc.Number;
+						sc.MustGetToken(')');
+					}
+					shadow = true;
+				}
 				else if(sc.Compare("noartibox"))
 					noArtibox = true;
 				else if(sc.Compare("noarrows"))
@@ -1926,7 +1992,10 @@ class CommandDrawInventoryBar : public SBarInfoCommand
 					counters[i]->spacing = fontSpacing;
 					counters[i]->whenNotZero = !alwaysShowCounter;
 					counters[i]->drawValue = counters[i]->value = CommandDrawNumber::CONSTANT;
-					counters[i]->length = 3;
+					counters[i]->length = INT_MAX;
+					counters[i]->shadow = shadow;
+					counters[i]->shadowX = shadowX;
+					counters[i]->shadowY = shadowY;
 				}
 			}
 		
@@ -1951,6 +2020,9 @@ class CommandDrawInventoryBar : public SBarInfoCommand
 		bool				alwaysShowCounter;
 		bool				translucent;
 		bool				vertical;
+		bool				shadow;
+		int					shadowX;
+		int					shadowY;
 		SBarInfoCoordinate	x;
 		SBarInfoCoordinate	y;
 		CommandDrawNumber*	*counters;

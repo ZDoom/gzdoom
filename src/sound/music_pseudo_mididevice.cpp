@@ -129,7 +129,7 @@ int PseudoMIDIDevice::Resume()
 {
 	if (!Started)
 	{
-		if (Stream->Play(bLooping, 1))
+		if (Stream && Stream->Play(bLooping, 1))
 		{
 			Started = true;
 			return 0;
@@ -149,7 +149,8 @@ void PseudoMIDIDevice::Stop()
 {
 	if (Started)
 	{
-		Stream->Stop();
+		if (Stream)
+			Stream->Stop();
 		Started = false;
 	}
 }

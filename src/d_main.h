@@ -82,6 +82,7 @@ enum EIWADType
 	IWAD_ChexQuest3,
 	IWAD_ActionDoom2,
 	IWAD_Harmony,
+	IWAD_Hacx,
 	IWAD_Custom,
 
 	NUM_IWAD_TYPES

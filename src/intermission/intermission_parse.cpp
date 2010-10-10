@@ -771,6 +771,12 @@ FName FMapInfoParser::CheckEndSequence()
 	{
 		seqname = "Inter_Titlescreen";
 	}
+	else if (sc.Compare("endsequence"))
+	{
+		ParseComma();
+		sc.MustGetString();
+		seqname = sc.String;
+	}
 
 	if (seqname != NULL)
 	{

@@ -1628,17 +1628,17 @@ CE3TEXT = "Wonderful Job!";
 CE4TEXT = "Fantastic";
 
 CLOADNET = "you can't do load while in a net quest!\n\npress a key.";
-CQSPROMPT = "quicksave over your quest named\n\n'%s'?\n\npress y or n.";
-CQLOADNET = "you can't quickload during a netquest!\n\npress a key.";
-CQLPROMPT = "do you want to quickload the quest named\n\n'%s'?\n\npress y or n.";
+$ifgame(chex) QSPROMPT = "quicksave over your quest named\n\n'%s'?\n\npress y or n.";
+$ifgame(chex) QLOADNET = "you can't quickload during a netquest!\n\npress a key.";
+$ifgame(chex) QLPROMPT = "do you want to quickload the quest named\n\n'%s'?\n\npress y or n.";
 CNEWGAME = "you can't start a new quest\nwhile in a network quest.\n\npress a key.";
 
 CNIGHTMARE = "Careful, this will be tough.\nDo you wish to continue?\n\npress y or n.";
 
 CSWSTRING = "this is Chex(R) Quest. look for\n\nfuture levels at www.chexquest.com.\n\npress a key.";
 
-CNETEND = "you can't end a netquest!\n\npress a key.";
-CENDGAME = "are you sure you want to end the quest?\n\npress y or n.";
+$ifgame(chex) NETEND = "you can't end a netquest!\n\npress a key.";
+$ifgame(chex) ENDGAME = "are you sure you want to end the quest?\n\npress y or n.";
 
 GOTCHEXARMOR = "Picked up the Chex(R) Armor.";
 GOTSUPERCHEXARMOR = "Picked up the Super Chex(R) Armor!";
@@ -1673,11 +1673,11 @@ GOTLARGEZORCHER = "You got the Large Zorcher!";
 GOTSUPERLARGEZORCHER = "You got the Mega Zorcher!";
 GOTMINIZORCHER = "Picked up a Mini Zorcher.";
 
-STSTR_CDQDON = "Invincible Mode ON";
-STSTR_CDQDOFF = "Invincible Mode OFF";
-STSTR_CFAADDED = "Zorch Added";
-STSTR_CKFAADDED = "Super Zorch Added";
-STSTR_CCHOPPERS = "... Eat Chex(R)!";
+$ifgame(chex) STSTR_DQDON = "Invincible Mode ON";
+$ifgame(chex) STSTR_DQDOFF = "Invincible Mode OFF";
+$ifgame(chex) STSTR_FAADDED = "Zorch Added";
+$ifgame(chex) STSTR_KFAADDED = "Super Zorch Added";
+$ifgame(chex) STSTR_CHOPPERS = "... Eat Chex(R)!";
 
 OB_COMMONUS = "%o was slimed by a flemoid.";
 OB_BIPEDICUS = "%o was slimed by a bipedicus.";

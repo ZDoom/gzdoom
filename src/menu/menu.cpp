@@ -361,14 +361,7 @@ void M_SetMenu(FName menu, int param)
 		if ((gameinfo.flags & GI_SHAREWARE) && param > 0)
 		{
 			// Only Doom and Heretic have multi-episode shareware versions.
-			if (gameinfo.gametype == GAME_Doom)
-			{
-				M_StartMessage(GStrings("SWSTRING"), 1);
-			}
-			else
-			{
-				M_StartMessage(GStrings("MNU_ONLYREGISTERED"), 1);
-			}
+			M_StartMessage(GStrings("SWSTRING"), 1);
 			return;
 		}
 

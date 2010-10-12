@@ -1383,8 +1383,6 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 	// thing is behind view plane?
 	if (voxel == NULL && tz < MINZ)
 		return;
-	if (voxel != NULL && tz < MINZ/2)
-		return;
 
 	tx = DMulScale16 (tr_x, viewsin, -tr_y, viewcos);
 
@@ -1396,7 +1394,7 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 	tx2 = tx >> 4;
 
 	// too far off the side?
-	if ((abs(tx) >> 6) > tz)
+	if ((abs(tx) >> 6) > abs(tz))
 	{
 		return;
 	}
@@ -1516,7 +1514,7 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 		vis->yscale = thing->scaleY;
 		vis->x1 = WindowLeft;
 		vis->x2 = WindowRight;
-		vis->idepth = (unsigned)SafeDivScale32(1, tz) >> 1;
+		vis->idepth = (unsigned)DivScale32(1, MAX(tz, MINZ)) >> 1;
 
 		if (voxelspin == 0)
 		{
@@ -2832,7 +2830,7 @@ void R_DrawVoxel(fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t daspran
 	kvxslab_t *voxptr, *voxend;
 	FVoxelMipLevel *mip;
 
-	const int nytooclose = centerxwide * 2100, nytoofar = 16384*16384 - 1048576;
+	const int nytooclose = centerxwide * 2100, nytoofar = 32768*32768 - 1048576;
 	const int xdimenscale = Scale(centerxwide, yaspectmul, 160);
 	const fixed_t globalposx =  viewx >> 12;
 	const fixed_t globalposy = -viewy >> 12;
@@ -2850,22 +2848,24 @@ void R_DrawVoxel(fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t daspran
 	sprsinang = -finesine[dasprang >> ANGLETOFINESHIFT] >> 2;
 
 	R_SetupDrawSlab(colormap);
-	i = abs(DMulScale6(dasprx - globalposx, cosang, daspry - globalposy, sinang));
-	j = 1310720;
-	j *= MIN(daxscale, dayscale); j >>= 6;  /* New hacks (for sized-down voxels) */
+
+	// Select mip level
+	i = abs(DMulScale8(dasprx - globalposx, viewcos, daspry - globalposy, -viewsin));
+	i = DivScale6(i, MIN(daxscale, dayscale));
+	j = FocalLengthX >> 3;
 	for (k = 0; k < voxobj->NumMips; ++k)
 	{
-		if (i < j) { i = k; break; }
-		j <<= 1;
+		if (i < j) { break; }
+		i >>= 1;
 	}
-	if (k >= voxobj->NumMips) i = voxobj->NumMips - 1;
+	if (k >= voxobj->NumMips) k = voxobj->NumMips - 1;
 
-	mip = &voxobj->Mips[i];		if (mip->SlabData == NULL) return;
+	mip = &voxobj->Mips[k];		if (mip->SlabData == NULL) return;
 
-	minslabz >>= i;
-	maxslabz >>= i;
+	minslabz >>= k;
+	maxslabz >>= k;
 
-	daxscale <<= (i+8); dayscale <<= (i+8);
+	daxscale <<= (k+8); dayscale <<= (k+8);
 	dazscale = FixedDiv(dayscale, yaspectmul);
 	daxscale = FixedDiv(daxscale, yaspectmul);
 	daxscale = Scale(daxscale, xdimenscale, centerxwide << 9);

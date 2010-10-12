@@ -1409,8 +1409,10 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 	}
 	else
 	{
-		gzt = fz + MulScale8(thing->scaleY, voxel->Mips[0].PivotZ);
+		gzt = fz + MulScale8(thing->scaleY, voxel->Mips[0].PivotZ) - thing->floorclip;
 		gzb = fz + MulScale8(thing->scaleY, voxel->Mips[0].PivotZ - (voxel->Mips[0].SizeZ << 8));
+		if (gzt <= gzb)
+			return;
 	}
 
 	// killough 3/27/98: exclude things totally separated
@@ -1515,6 +1517,9 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 		vis->x1 = WindowLeft;
 		vis->x2 = WindowRight;
 		vis->idepth = (unsigned)DivScale32(1, MAX(tz, MINZ)) >> 1;
+		vis->floorclip = thing->floorclip;
+
+		fz -= thing->floorclip;
 
 		if (voxelspin == 0)
 		{
@@ -1527,7 +1532,6 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 		}
 
 		// These are irrelevant for voxels.
-		vis->floorclip	= 0x1CEDBEEF;
 		vis->texturemid = 0x1CEDBEEF;
 		vis->startfrac	= 0x1CEDBEEF;
 		vis->xiscale	= 0x1CEDBEEF;
@@ -2255,17 +2259,21 @@ void R_DrawSprite (vissprite_t *spr)
 	fixed_t scale = MulScale19 (InvZtoScale, spr->idepth);
 	fixed_t hzb = FIXED_MIN, hzt = FIXED_MAX;
 
+	if (spr->bIsVoxel && spr->floorclip != 0)
+	{
+		hzb = spr->gzb;
+	}
+
 	if (spr->heightsec && !(spr->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC))
 	{ // only things in specially marked sectors
 		if (spr->FakeFlatStat != FAKED_AboveCeiling)
 		{
 			fixed_t hz = spr->heightsec->floorplane.ZatPoint (spr->gx, spr->gy);
-			//h = (centeryfrac - FixedMul (h-viewz, spr->yscale)) >> FRACBITS;
 			fixed_t h = (centeryfrac - FixedMul (hz-viewz, scale)) >> FRACBITS;
 
 			if (spr->FakeFlatStat == FAKED_BelowFloor)
 			{ // seen below floor: clip top
-				if (h > topclip)
+				if (!spr->bIsVoxel && h > topclip)
 				{
 					topclip = MIN<short> (h, viewheight);
 				}
@@ -2273,7 +2281,7 @@ void R_DrawSprite (vissprite_t *spr)
 			}
 			else
 			{ // seen in the middle: clip bottom
-				if (h < botclip)
+				if (!spr->bIsVoxel && h < botclip)
 				{
 					botclip = MAX<short> (0, h);
 				}
@@ -2287,7 +2295,7 @@ void R_DrawSprite (vissprite_t *spr)
 
 			if (spr->FakeFlatStat == FAKED_AboveCeiling)
 			{ // seen above ceiling: clip bottom
-				if (h < botclip)
+				if (!spr->bIsVoxel && h < botclip)
 				{
 					botclip = MAX<short> (0, h);
 				}
@@ -2295,7 +2303,7 @@ void R_DrawSprite (vissprite_t *spr)
 			}
 			else
 			{ // seen in the middle: clip top
-				if (h > topclip)
+				if (!spr->bIsVoxel && h > topclip)
 				{
 					topclip = MIN<short> (h, viewheight);
 				}
@@ -2340,11 +2348,6 @@ void R_DrawSprite (vissprite_t *spr)
 	if (topclip >= botclip)
 	{
 		return;
-	}
-	if (spr->bIsVoxel)
-	{
-		topclip = 0;
-		botclip = viewheight;
 	}
 
 	i = x2 - x1 + 1;
@@ -2459,7 +2462,7 @@ void R_DrawSprite (vissprite_t *spr)
 			}
 		}
 		int minvoxely = spr->gzt <= hzt ? 0 : (spr->gzt - hzt) / spr->yscale;
-		int maxvoxely = spr->gzb >= hzb ? INT_MAX : (spr->gzt - hzb) / spr->yscale;
+		int maxvoxely = spr->gzb > hzb ? INT_MAX : (spr->gzt - hzb) / spr->yscale;
 		R_DrawVoxel(spr->gx, spr->gy, spr->gz, spr->angle, spr->xscale, spr->yscale, spr->voxel, spr->colormap, cliptop, clipbot,
 			minvoxely, maxvoxely);
 	}

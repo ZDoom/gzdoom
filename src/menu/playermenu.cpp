@@ -161,7 +161,7 @@ void FPlayerNameBox::Drawer(bool selected)
 	else
 	{
 		size_t l = strlen(mEditName);
-		mEditName[l] = (gameinfo.gametype & (GAME_DoomStrifeChex)) ? '_' : '[';
+		mEditName[l] = SmallFont->GetCursor();
 		mEditName[l+1] = 0;
 
 		screen->DrawText (SmallFont, CR_UNTRANSLATED, x + mFrameSize, mYpos, mEditName,

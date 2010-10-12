@@ -637,10 +637,11 @@ void DLoadSaveMenu::Drawer ()
 					listboxLeft+1, listboxTop+rowHeight*i+CleanYfac, savegamestring,
 					DTA_CleanNoMove, true, TAG_DONE);
 
+				char curs[2] = { SmallFont->GetCursor(), 0 };
 				screen->DrawText (SmallFont, CR_WHITE,
 					listboxLeft+1+SmallFont->StringWidth (savegamestring)*CleanXfac,
 					listboxTop+rowHeight*i+CleanYfac, 
-					(gameinfo.gametype & (GAME_DoomStrifeChex)) ? "_" : "[",
+					curs,
 					DTA_CleanNoMove, true, TAG_DONE);
 			}
 		}

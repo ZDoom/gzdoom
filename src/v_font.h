@@ -95,6 +95,8 @@ public:
 	inline int StringWidth (const char *str) const { return StringWidth ((const BYTE *)str); }
 
 	int GetCharCode(int code, bool needpic) const;
+	char GetCursor() const { return Cursor; }
+	void SetCursor(char c) { Cursor = c; }
 
 protected:
 	FFont ();
@@ -110,6 +112,7 @@ protected:
 	int SpaceWidth;
 	int FontHeight;
 	int GlobalKerning;
+	char Cursor;
 	struct CharData
 	{
 		FTexture *Pic;

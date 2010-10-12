@@ -364,6 +364,9 @@ public:
 	// Set the rect defining the area affected by blending.
 	virtual void SetBlendingRect (int x1, int y1, int x2, int y2);
 
+	// Remap voxel palette
+	virtual void RemapVoxels();
+
 	// render 3D view
 	virtual void RenderView(player_t *player);
 

@@ -434,8 +434,7 @@ void R_InitSpriteDefs ()
 			VHasher *vh = &vhashes[hash];
 			if (vh->Name == intname)
 			{
-				FMemLump lump = Wads.ReadLump(hash);	// FMemLump adds an extra 0 byte to the end.
-				FVoxel *vox = R_LoadKVX((BYTE *)lump.GetMem(), (int)(lump.GetSize()-1));
+				FVoxel *vox = R_LoadKVX(hash);
 				if (vox == NULL)
 				{
 					Printf("%s is not a valid voxel file\n", Wads.GetLumpFullName(hash));

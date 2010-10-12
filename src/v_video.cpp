@@ -1313,6 +1313,21 @@ void DFrameBuffer::RenderView(player_t *player)
 	FCanvasTextureInfo::UpdateAll ();
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+extern TDeletingArray<FVoxel *> Voxels;
+
+void DFrameBuffer::RemapVoxels()
+{
+	for (unsigned i=0; i<Voxels.Size(); i++)
+	{
+		Voxels[i]->Remap();
+	}
+}
+
 //===========================================================================
 //
 // Render the view to a savegame picture
@@ -1676,6 +1691,7 @@ void V_Init2()
 		Printf ("Resolution: %d x %d\n", SCREENWIDTH, SCREENHEIGHT);
 
 	screen->SetGamma (gamma);
+	screen->RemapVoxels();
 	FBaseCVar::ResetColors ();
 	C_NewModeAdjust();
 	M_InitVideoModesMenu();

@@ -485,13 +485,13 @@ static BYTE *GetVoxelRemap(const BYTE *pal)
 
 //==========================================================================
 //
-// RemapVoxelSlabs
+// CopyVoxelSlabs
 //
-// Remaps all the slabs in a block of slabs.
+// Copy all the slabs in a block of slabs.
 //
 //==========================================================================
 
-static bool RemapVoxelSlabs(kvxslab_t *dest, const kvxslab_t *src, int size, const BYTE *remap)
+static bool CopyVoxelSlabs(kvxslab_t *dest, const kvxslab_t *src, int size)
 {
 	while (size >= 3)
 	{
@@ -508,7 +508,7 @@ static bool RemapVoxelSlabs(kvxslab_t *dest, const kvxslab_t *src, int size, con
 
 		for (int j = 0; j < slabzleng; ++j)
 		{
-			dest->col[j] = remap[src->col[j]];
+			dest->col[j] = src->col[j];
 		}
 		slabzleng += 3;
 		src = (kvxslab_t *)((BYTE *)src + slabzleng);
@@ -520,11 +520,35 @@ static bool RemapVoxelSlabs(kvxslab_t *dest, const kvxslab_t *src, int size, con
 
 //==========================================================================
 //
+// RemapVoxelSlabs
+//
+// Remaps all the slabs in a block of slabs.
+//
+//==========================================================================
+
+static void RemapVoxelSlabs(kvxslab_t *dest, int size, const BYTE *remap)
+{
+	while (size >= 3)
+	{
+		int slabzleng = dest->zleng;
+
+		for (int j = 0; j < slabzleng; ++j)
+		{
+			dest->col[j] = remap[dest->col[j]];
+		}
+		slabzleng += 3;
+		dest = (kvxslab_t *)((BYTE *)dest + slabzleng);
+		size -= slabzleng;
+	}
+}
+
+//==========================================================================
+//
 // R_LoadKVX
 //
 //==========================================================================
 
-FVoxel *R_LoadKVX(const BYTE *rawvoxel, int voxelsize, bool doremap)
+FVoxel *R_LoadKVX(int lumpnum)
 {
 	const kvxslab_t *slabs[MAXVOXMIPS];
 	FVoxel *voxel = new FVoxel;
@@ -532,10 +556,15 @@ FVoxel *R_LoadKVX(const BYTE *rawvoxel, int voxelsize, bool doremap)
 	int mip, maxmipsize;
 	int i, j, n;
 
+	FMemLump lump = Wads.ReadLump(lumpnum);	// FMemLump adds an extra 0 byte to the end.
+	BYTE *rawvoxel = (BYTE *)lump.GetMem();
+	int voxelsize = (int)(lump.GetSize()-1);
+
 	// Oh, KVX, why couldn't you have a proper header? We'll just go through
 	// and collect each MIP level, doing lots of range checking, and if the
 	// last one doesn't end exactly 768 bytes before the end of the file,
 	// we'll reject it.
+
 	for (mip = 0, rawmip = rawvoxel, maxmipsize = voxelsize - 768 - 4;
 		 mip < MAXVOXMIPS;
 		 mip++)
@@ -627,19 +656,18 @@ bad:	delete voxel;
 	}
 	voxel->NumMips = mip;
 
-	if (doremap)
+	for (i = 0; i < mip; ++i)
 	{
-		// Copy and remap all the slabs to the loaded game palette.
-		BYTE *remap = GetVoxelRemap(rawmip);
-		for (i = 0; i < mip; ++i)
-		{
-			if (!RemapVoxelSlabs((kvxslab_t *)voxel->Mips[i].SlabData, slabs[i], voxel->Mips[i].OffsetX[voxel->Mips[i].SizeX], remap))
-			{ // Invalid slabs encountered. Reject this voxel.
-				delete voxel;
-				return NULL;
-			}
+		if (!CopyVoxelSlabs((kvxslab_t *)voxel->Mips[i].SlabData, slabs[i], voxel->Mips[i].OffsetX[voxel->Mips[i].SizeX]))
+		{ // Invalid slabs encountered. Reject this voxel.
+			delete voxel;
+			return NULL;
 		}
 	}
+
+	voxel->Palette = new BYTE[768];
+	memcpy(voxel->Palette, rawvoxel + voxelsize - 768, 768);
+
 	return voxel;
 }
 
@@ -669,6 +697,42 @@ FVoxelMipLevel::~FVoxelMipLevel()
 	if (OffsetX != NULL)
 	{
 		delete[] OffsetX;
+	}
+}
+
+//==========================================================================
+//
+// FVoxel Constructor
+//
+//==========================================================================
+
+FVoxel::FVoxel()
+{
+	Palette = NULL;
+}
+
+FVoxel::~FVoxel()
+{
+	if (Palette != NULL) delete [] Palette;
+}
+
+//==========================================================================
+//
+// Remap the voxel to the game palette
+//
+//==========================================================================
+
+void FVoxel::Remap()
+{
+	if (Palette != NULL)
+	{
+		BYTE *remap = GetVoxelRemap(Palette);
+		for (int i = 0; i < NumMips; ++i)
+		{
+			RemapVoxelSlabs((kvxslab_t *)Mips[i].SlabData, Mips[i].OffsetX[Mips[i].SizeX], remap);
+		}
+		delete [] Palette;
+		Palette = NULL;
 	}
 }
 

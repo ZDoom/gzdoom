@@ -524,7 +524,7 @@ static bool RemapVoxelSlabs(kvxslab_t *dest, const kvxslab_t *src, int size, con
 //
 //==========================================================================
 
-FVoxel *R_LoadKVX(const BYTE *rawvoxel, int voxelsize)
+FVoxel *R_LoadKVX(const BYTE *rawvoxel, int voxelsize, bool doremap)
 {
 	const kvxslab_t *slabs[MAXVOXMIPS];
 	FVoxel *voxel = new FVoxel;
@@ -627,17 +627,19 @@ bad:	delete voxel;
 	}
 	voxel->NumMips = mip;
 
-	// Copy and remap all the slabs to the loaded game palette.
-	BYTE *remap = GetVoxelRemap(rawmip);
-	for (i = 0; i < mip; ++i)
+	if (doremap)
 	{
-		if (!RemapVoxelSlabs((kvxslab_t *)voxel->Mips[i].SlabData, slabs[i], voxel->Mips[i].OffsetX[voxel->Mips[i].SizeX], remap))
-		{ // Invalid slabs encountered. Reject this voxel.
-			delete voxel;
-			return NULL;
+		// Copy and remap all the slabs to the loaded game palette.
+		BYTE *remap = GetVoxelRemap(rawmip);
+		for (i = 0; i < mip; ++i)
+		{
+			if (!RemapVoxelSlabs((kvxslab_t *)voxel->Mips[i].SlabData, slabs[i], voxel->Mips[i].OffsetX[voxel->Mips[i].SizeX], remap))
+			{ // Invalid slabs encountered. Reject this voxel.
+				delete voxel;
+				return NULL;
+			}
 		}
 	}
-
 	return voxel;
 }
 

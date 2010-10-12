@@ -199,27 +199,11 @@ static void ParseLock(FScanner &sc)
 	keynum = sc.Number;
 
 	sc.MustGetString();
-	if (sc.Compare("DOOM"))
+	if (!sc.Compare("{"))
 	{
-		if (gameinfo.gametype != GAME_Doom) keynum=-1;
+		if (!CheckGame(sc.String, false)) keynum = -1;
+		sc.MustGetStringName("{");
 	}
-	else if (sc.Compare("HERETIC"))
-	{
-		if (gameinfo.gametype != GAME_Heretic) keynum=-1;
-	}
-	else if (sc.Compare("HEXEN"))
-	{
-		if (gameinfo.gametype != GAME_Hexen) keynum=-1;
-	}
-	else if (sc.Compare("STRIFE"))
-	{
-		if (gameinfo.gametype != GAME_Strife) keynum=-1;
-	}
-	else if (sc.Compare("CHEX"))
-	{
-		if (gameinfo.gametype != GAME_Chex) keynum=-1;
-	}
-	else sc.UnGet();
 
 	ignorekey = true;
 	if (keynum > 0 && keynum < 255) 
@@ -239,7 +223,6 @@ static void ParseLock(FScanner &sc)
 		sc.ScriptError("Lock index %d out of range", keynum);
 	}
 
-	sc.MustGetStringName("{");
 	while (!sc.CheckString("}"))
 	{
 		sc.MustGetString();

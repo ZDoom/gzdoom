@@ -1877,7 +1877,7 @@ void D_DoomMain (void)
 	gameinfo.gametype = iwad_info->gametype;
 	gameinfo.flags = iwad_info->flags;
 
-	GameConfig->DoGameSetup (GameNames[gameinfo.gametype]);
+	GameConfig->DoGameSetup (GameName());
 
 	if (!(gameinfo.flags & GI_SHAREWARE) && !Args->CheckParm("-noautoload"))
 	{
@@ -1910,7 +1910,7 @@ void D_DoomMain (void)
 		D_AddConfigWads (allwads, "Global.Autoload");
 
 		// Add game-specific wads
-		file = GameNames[gameinfo.gametype];
+		file = GameName();
 		file += ".Autoload";
 		D_AddConfigWads (allwads, file);
 
@@ -1925,7 +1925,7 @@ void D_DoomMain (void)
 
 	// Run automatically executed files
 	execFiles = new DArgs;
-	GameConfig->AddAutoexec (execFiles, GameNames[gameinfo.gametype]);
+	GameConfig->AddAutoexec (execFiles, GameName());
 	D_MultiExec (execFiles, true);
 
 	// Run .cfg files at the start of the command line.
@@ -2145,7 +2145,7 @@ void D_DoomMain (void)
 
 	StartScreen->Progress ();
 
-	Printf ("R_Init: Init %s refresh subsystem.\n", GameNames[gameinfo.gametype]);
+	Printf ("R_Init: Init %s refresh subsystem.\n", GameName());
 	StartScreen->LoadingStatus ("Loading graphics", 0x3f);
 	R_Init ();
 

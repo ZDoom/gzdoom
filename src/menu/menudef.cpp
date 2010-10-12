@@ -112,20 +112,16 @@ static void SkipSubBlock(FScanner &sc)
 
 static bool CheckSkipGameBlock(FScanner &sc)
 {
-	int filter = 0;
+	bool filter = false;
 	sc.MustGetStringName("(");
 	do
 	{
 		sc.MustGetString();
-		if (sc.Compare("Doom")) filter |= GAME_Doom;
-		if (sc.Compare("Heretic")) filter |= GAME_Heretic;
-		if (sc.Compare("Hexen")) filter |= GAME_Hexen;
-		if (sc.Compare("Strife")) filter |= GAME_Strife;
-		if (sc.Compare("Chex")) filter |= GAME_Chex;
+		filter |= CheckGame(sc.String, false);
 	}
 	while (sc.CheckString(","));
 	sc.MustGetStringName(")");
-	if (!(gameinfo.gametype & filter))
+	if (!filter)
 	{
 		SkipSubBlock(sc);
 		return true;

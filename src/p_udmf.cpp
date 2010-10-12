@@ -1449,7 +1449,7 @@ public:
 				floordrop = true;
 				break;
 			default:
-				Printf("Unknown namespace %s. Using defaults for %s\n", sc.String, GameNames[gameinfo.gametype]);
+				Printf("Unknown namespace %s. Using defaults for %s\n", sc.String, GameName());
 				switch (gameinfo.gametype)
 				{
 				default:			// Shh, GCC

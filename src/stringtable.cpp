@@ -231,7 +231,7 @@ void FStringTable::LoadLanguage (int lumpnum, DWORD code, bool exactMatch, int p
 				sc.MustGetStringName("ifgame");
 				sc.MustGetStringName("(");
 				sc.MustGetString();
-				skip |= !sc.Compare(GameNames[gameinfo.gametype]);
+				skip |= !sc.Compare(GameName());
 				sc.MustGetStringName(")");
 				sc.MustGetString();
 

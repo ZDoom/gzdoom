@@ -1301,31 +1301,10 @@ static void S_AddSNDINFO (int lump)
 				break;
 
 			case SI_IfDoom: //also Chex
-				if (!(gameinfo.gametype & GAME_DoomChex))
-				{
-					skipToEndIf = true;
-				}
-				break;
-
 			case SI_IfStrife:
-				if (gameinfo.gametype != GAME_Strife)
-				{
-					skipToEndIf = true;
-				}
-				break;
-
 			case SI_IfHeretic:
-				if (gameinfo.gametype != GAME_Heretic)
-				{
-					skipToEndIf = true;
-				}
-				break;
-
 			case SI_IfHexen:
-				if (gameinfo.gametype != GAME_Hexen)
-				{
-					skipToEndIf = true;
-				}
+				skipToEndIf = !CheckGame(sc.String+3, true);
 				break;
 			}
 		}

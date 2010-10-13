@@ -245,6 +245,9 @@ static void unprotect_rtext()
 }
 #endif
 
+void I_StartupJoysticks();
+void I_ShutdownJoysticks();
+
 int main (int argc, char **argv)
 {
 	printf(GAMENAME" v%s - SVN revision %s - SDL version\nCompiled on %s\n\n",
@@ -268,7 +271,7 @@ int main (int argc, char **argv)
 	
 	setlocale (LC_ALL, "C");
 
-	if (SDL_Init (SDL_INIT_VIDEO|SDL_INIT_TIMER|SDL_INIT_NOPARACHUTE) == -1)
+	if (SDL_Init (SDL_INIT_VIDEO|SDL_INIT_TIMER|SDL_INIT_NOPARACHUTE|SDL_INIT_JOYSTICK) == -1)
 	{
 		fprintf (stderr, "Could not initialize SDL:\n%s\n", SDL_GetError());
 		return -1;
@@ -316,11 +319,13 @@ int main (int argc, char **argv)
 			progdir = "./";
 		}
 
+		I_StartupJoysticks();
 		C_InitConsole (80*8, 25*8, false);
 		D_DoomMain ();
     }
     catch (class CDoomError &error)
     {
+		I_ShutdownJoysticks();
 		if (error.GetMessage ())
 			fprintf (stderr, "%s\n", error.GetMessage ());
 		exit (-1);

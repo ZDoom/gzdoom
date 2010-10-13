@@ -17,7 +17,6 @@
 #include "dikeys.h"
 #include "templates.h"
 #include "s_sound.h"
-#include "m_joy.h"
 
 static void I_CheckGUICapture ();
 static void I_CheckNativeMouse ();
@@ -437,6 +436,18 @@ void MessagePump (const SDL_Event &sev)
 				D_PostEvent (&event);
 			}
 		}
+		break;
+
+	case SDL_JOYBUTTONDOWN:
+	case SDL_JOYBUTTONUP:
+		if (!GUICapture)
+		{
+			event.type = sev.type == SDL_JOYBUTTONDOWN ? EV_KeyDown : EV_KeyUp;
+			event.data1 = KEY_FIRSTJOYBUTTON + sev.jbutton.button;
+			if(event.data1 != 0)
+				D_PostEvent(&event);
+		}
+		break;
 	}
 }
 
@@ -467,22 +478,4 @@ void I_StartFrame ()
 	{
 		InitKeySymMap ();
 	}
-}
-
-void I_GetJoysticks(TArray<IJoystickConfig *> &sticks)
-{
-	sticks.Clear();
-}
-
-void I_GetAxes(float axes[NUM_JOYAXIS])
-{
-	for (int i = 0; i < NUM_JOYAXIS; ++i)
-	{
-		axes[i] = 0;
-	}
-}
-
-IJoystickConfig *I_UpdateDeviceList()
-{
-	return NULL;
 }

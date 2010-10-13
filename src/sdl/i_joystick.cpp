@@ -117,7 +117,8 @@ public:
 		// Add to game axes.
 		for (int i = 0; i < GetNumAxes(); ++i)
 		{
-			axes[Axes[i].GameAxis] -= float(((double)SDL_JoystickGetAxis(Device, i)/32768.0) * Multiplier * Axes[i].Multiplier);
+			if(Axes[i].GameAxis != JOYAXIS_None)
+				axes[Axes[i].GameAxis] -= float(((double)SDL_JoystickGetAxis(Device, i)/32768.0) * Multiplier * Axes[i].Multiplier);
 		}
 	}
 

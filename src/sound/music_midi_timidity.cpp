@@ -650,6 +650,7 @@ void TimidityPPMIDIDevice::Stop ()
 			SetEvent(KillerEvent);
 			if (WaitForSingleObject(ChildProcess, 500) != WAIT_OBJECT_0)
 			{
+				ResetEvent(KillerEvent);
 				TerminateProcess(ChildProcess, 666);
 			}
 			CloseHandle(ChildProcess);

@@ -414,7 +414,7 @@ void STACK_ARGS I_Error (const char *error, ...)
     throw CRecoverableError (errortext);
 }
 
-void I_SetIWADInfo (const IWADInfo *info)
+void I_SetIWADInfo ()
 {
 }
 
@@ -511,7 +511,7 @@ int I_PickIWad_Gtk (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 		gtk_list_store_append (store, &iter);
 		gtk_list_store_set (store, &iter,
 			0, filepart,
-			1, IWADInfos[wads[i].Type].Name,
+			1, wads[i].Name,
 			2, i,
 			-1);
 		if (i == defaultiwad)
@@ -625,7 +625,7 @@ int I_PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 			filepart = wads[i].Path;
 		else
 			filepart++;
-		printf ("%d. %s (%s)\n", i+1, IWADInfos[wads[i].Type].Name, filepart);
+		printf ("%d. %s (%s)\n", i+1, wads[i].Name, filepart);
 	}
 	printf ("Which one? ");
 	scanf ("%d", &i);

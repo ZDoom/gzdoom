@@ -122,7 +122,7 @@ extern void M_SetDefaultMode ();
 extern void R_ExecuteSetViewSize ();
 extern void G_NewInit ();
 extern void SetupPlayerClasses ();
-const IWADInfo *D_FindIWAD(TArray<FString> &wadfiles, const char *iwad, const char *basewad);
+const FIWADInfo *D_FindIWAD(TArray<FString> &wadfiles, const char *iwad, const char *basewad);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -1873,11 +1873,13 @@ void D_DoomMain (void)
 	GetCmdLineFiles(pwads);
 	FString iwad = CheckGameInfo(pwads);
 
-	const IWADInfo *iwad_info = D_FindIWAD(allwads, iwad, basewad);
+	FIWadManager *iwad_man = new FIWadManager;
+	const FIWADInfo *iwad_info = iwad_man->FindIWAD(allwads, iwad, basewad);
 	gameinfo.gametype = iwad_info->gametype;
 	gameinfo.flags = iwad_info->flags;
+	gameinfo.ConfigName = iwad_info->Configname;
 
-	GameConfig->DoGameSetup (GameName());
+	GameConfig->DoGameSetup (gameinfo.ConfigName);
 
 	if (!(gameinfo.flags & GI_SHAREWARE) && !Args->CheckParm("-noautoload"))
 	{
@@ -1910,7 +1912,7 @@ void D_DoomMain (void)
 		D_AddConfigWads (allwads, "Global.Autoload");
 
 		// Add game-specific wads
-		file = GameName();
+		file = gameinfo.ConfigName;
 		file += ".Autoload";
 		D_AddConfigWads (allwads, file);
 
@@ -1925,7 +1927,7 @@ void D_DoomMain (void)
 
 	// Run automatically executed files
 	execFiles = new DArgs;
-	GameConfig->AddAutoexec (execFiles, GameName());
+	GameConfig->AddAutoexec (execFiles, gameinfo.ConfigName);
 	D_MultiExec (execFiles, true);
 
 	// Run .cfg files at the start of the command line.
@@ -2145,7 +2147,7 @@ void D_DoomMain (void)
 
 	StartScreen->Progress ();
 
-	Printf ("R_Init: Init %s refresh subsystem.\n", GameName());
+	Printf ("R_Init: Init %s refresh subsystem.\n", gameinfo.ConfigName.GetChars());
 	StartScreen->LoadingStatus ("Loading graphics", 0x3f);
 	R_Init ();
 
@@ -2222,6 +2224,8 @@ void D_DoomMain (void)
 	// [RH] Lock any cvars that should be locked now that we're
 	// about to begin the game.
 	FBaseCVar::EnableNoSet ();
+
+	delete iwad_man;	// now we won't need this anymore
 
 	// [RH] Run any saved commands from the command line or autoexec.cfg now.
 	gamestate = GS_FULLCONSOLE;

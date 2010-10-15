@@ -125,8 +125,7 @@ void I_PaintConsole (void);
 void I_PrintStr (const char *cp);
 
 // Set the title string of the startup window
-struct IWADInfo;
-void I_SetIWADInfo (const IWADInfo *title);
+void I_SetIWADInfo ();
 
 // Pick from multiple IWADs to use
 int I_PickIWad (WadStuff *wads, int numwads, bool queryiwad, int defaultiwad);

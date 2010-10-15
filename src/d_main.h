@@ -56,55 +56,31 @@ bool D_AddFile (TArray<FString> &wadfiles, const char *file, bool check = true, 
 extern const char *D_DrawIcon;
 
 
-enum EIWADType
-{
-	IWAD_Doom2TNT,
-	IWAD_Doom2Plutonia,
-	IWAD_Hexen,
-	IWAD_HexenDK,
-	IWAD_HexenDemo,
-	IWAD_Doom2,
-	IWAD_HereticShareware,
-	IWAD_HereticExtended,
-	IWAD_Heretic,
-	IWAD_DoomShareware,
-	IWAD_UltimateDoom,
-	IWAD_DoomRegistered,
-	IWAD_Strife,
-	IWAD_StrifeTeaser,
-	IWAD_StrifeTeaser2,
-	IWAD_FreeDoom,
-	IWAD_FreeDoomU,
-	IWAD_FreeDoom1,
-	IWAD_FreeDM,
-	IWAD_Blasphemer,
-	IWAD_ChexQuest,
-	IWAD_ChexQuest3,
-	IWAD_ActionDoom2,
-	IWAD_Harmony,
-	IWAD_Hacx,
-	IWAD_Custom,
-
-	NUM_IWAD_TYPES
-};
-
 struct WadStuff
 {
-	WadStuff() : Type(IWAD_Doom2TNT) {}
+	WadStuff() : Type(0) {}
 
 	FString Path;
-	EIWADType Type;
+	FString Name;
+	int Type;
 };
 
-struct IWADInfo
+struct FIWADInfo
 {
-	const char *Name;		// Title banner text for this IWAD
-	const char *Autoname;	// Name of autoload ini section for this IWAD
+	FString Name;			// Title banner text for this IWAD
+	FString Autoname;		// Name of autoload ini section for this IWAD
+	FString Configname;		// Name of config section for this IWAD
+	FString Required;		// Requires another IWAD
 	DWORD FgColor;			// Foreground color for title banner
 	DWORD BkColor;			// Background color for title banner
 	EGameType gametype;		// which game are we playing?
-	const char *MapInfo;	// Base mapinfo to load
+	FString MapInfo;		// Base mapinfo to load
+	TArray<FString> Load;	// Wads to be loaded with this one.
+	TArray<FString> Lumps;	// Lump names for identification
 	int flags;
+	int preload;
+
+	FIWADInfo() { flags = 0; preload = -1; FgColor = 0; BkColor= 0xc0c0c0; gametype = GAME_Doom; }
 };
 
 struct FStartupInfo
@@ -116,7 +92,30 @@ struct FStartupInfo
 
 extern FStartupInfo DoomStartupInfo;
 
-extern const IWADInfo IWADInfos[NUM_IWAD_TYPES];
-extern EIWADType gameiwad;
+//==========================================================================
+//
+// IWAD identifier class
+//
+//==========================================================================
+
+struct FIWadManager
+{
+private:
+	TArray<FIWADInfo> mIWads;
+	TArray<FString> mIWadNames;
+	TArray<int> mLumpsFound;
+
+	void ParseIWadInfo(const char *fn, const char *data, int datasize);
+	void ParseIWadInfos(const char *fn);
+	void ClearChecks();
+	void CheckLumpName(const char *name);
+	int GetIWadInfo();
+	int ScanIWAD (const char *iwad);
+	int CheckIWAD (const char *doomwaddir, WadStuff *wads);
+	int IdentifyVersion (TArray<FString> &wadfiles, const char *iwad, const char *zdoom_wad);
+public:
+	const FIWADInfo *FindIWAD(TArray<FString> &wadfiles, const char *iwad, const char *basewad);
+};
+
 
 #endif

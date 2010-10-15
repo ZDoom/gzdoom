@@ -115,8 +115,7 @@ void popterm ();
 void I_PrintStr (const char *str);
 
 // Set the title string of the startup window
-struct IWADInfo;
-void I_SetIWADInfo (const IWADInfo *info);
+void I_SetIWADInfo ();
 
 // Pick from multiple IWADs to use
 int I_PickIWad (WadStuff *wads, int numwads, bool queryiwad, int defaultiwad);

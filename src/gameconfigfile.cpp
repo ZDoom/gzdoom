@@ -62,6 +62,7 @@ extern HWND Window;
 #include "a_pickups.h"
 #include "doomstat.h"
 #include "i_system.h"
+#include "gi.h"
 
 EXTERN_CVAR (Bool, con_centernotify)
 EXTERN_CVAR (Int, msg0color)
@@ -347,18 +348,6 @@ void FGameConfigFile::DoGameSetup (const char *gamename)
 {
 	const char *key;
 	const char *value;
-	enum { Doom, Heretic, Hexen, Strife, Chex } game;
-
-	if (strcmp (gamename, "Heretic") == 0)
-		game = Heretic;
-	else if (strcmp (gamename, "Hexen") == 0)
-		game = Hexen;
-	else if (strcmp (gamename, "Strife") == 0)
-		game = Strife;
-	else if (strcmp (gamename, "Chex") == 0)
-		game = Chex;
-	else
-		game = Doom;
 
 	if (bMigrating)
 	{
@@ -380,9 +369,9 @@ void FGameConfigFile::DoGameSetup (const char *gamename)
 		ReadCVars (0);
 	}
 
-	if (game == Heretic || game == Hexen)
+	if (gameinfo.gametype & GAME_Raven)
 	{
-		SetRavenDefaults (game == Hexen);
+		SetRavenDefaults (gameinfo.gametype == GAME_Hexen);
 	}
 
 	// The NetServerInfo section will be read when it's determined that

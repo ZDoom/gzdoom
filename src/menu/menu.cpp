@@ -960,6 +960,6 @@ CCMD(reset2defaults)
 CCMD(reset2saved)
 {
 	GameConfig->DoGlobalSetup ();
-	GameConfig->DoGameSetup (GameName());
+	GameConfig->DoGameSetup (gameinfo.ConfigName);
 	R_SetViewSize (screenblocks);
 }

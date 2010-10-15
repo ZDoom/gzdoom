@@ -375,9 +375,9 @@ bool M_SaveDefaults (const char *filename)
 		GameConfig->ChangePathName (filename);
 	}
 	GameConfig->ArchiveGlobalData ();
-	if (GameName() != NULL)
+	if (gameinfo.ConfigName.IsNotEmpty())
 	{
-		GameConfig->ArchiveGameData (GameName());
+		GameConfig->ArchiveGameData (gameinfo.ConfigName);
 	}
 	success = GameConfig->WriteConfigFile ();
 	if (filename != NULL)
@@ -619,7 +619,7 @@ static bool FindFreeName (FString &fullname, const char *extension)
 
 	for (i = 0; i <= 9999; i++)
 	{
-		const char *gamename = GameName();
+		const char *gamename = gameinfo.ConfigName;
 
 		time_t now;
 		tm *tm;

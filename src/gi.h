@@ -70,6 +70,7 @@ struct gameinfo_t
 {
 	int flags;
 	EGameType gametype;
+	FString ConfigName;
 
 	char titlePage[9];
 	bool drawreadthis;
@@ -135,7 +136,7 @@ struct gameinfo_t
 
 extern gameinfo_t gameinfo;
 
-inline const char *GameName()
+inline const char *GameTypeName()
 {
 	return GameNames[gameinfo.gametype];
 }

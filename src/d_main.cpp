@@ -1803,6 +1803,21 @@ static FString CheckGameInfo(TArray<FString> & pwads)
 
 //==========================================================================
 //
+// Checks the IWAD for MAP01 and if found sets GI_MAPxx
+//
+//==========================================================================
+
+static void SetMapxxFlag()
+{
+	int lump_name = Wads.CheckNumForName("MAP01", FWadCollection::IWAD_FILENUM);
+	int lump_wad = Wads.CheckNumForFullName("maps/map01.wad", FWadCollection::IWAD_FILENUM);
+	int lump_map = Wads.CheckNumForFullName("maps/map01.map", FWadCollection::IWAD_FILENUM);
+
+	if (lump_name >= 0 || lump_wad >= 0 || lump_map >= 0) gameinfo.flags |= GI_MAPxx;
+}
+
+//==========================================================================
+//
 // D_DoomMain
 //
 //==========================================================================
@@ -1946,7 +1961,8 @@ void D_DoomMain (void)
 	Wads.InitMultipleFiles (allwads);
 	allwads.Clear();
 	allwads.ShrinkToFit();
-
+	SetMapxxFlag();
+	
 	// [RH] Initialize localizable strings.
 	GStrings.LoadStrings (false);
 

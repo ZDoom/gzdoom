@@ -233,7 +233,8 @@ void FIWadManager::ParseIWadInfo(const char *fn, const char *data, int datasize)
 				// check for lowercase, uppercased first letter and full uppercase on Linux etc.
 				wadname.ToLower();
 				mIWadNames.Push(wadname);
-				wadname[0] = toupper(wadname[0]);
+				wadname.LockBuffer()[0] = toupper(wadname[0]);
+				wadname.UnlockBuffer();
 				mIWadNames.Push(wadname);
 				wadname.ToUpper();
 				mIWadNames.Push(wadname);
@@ -331,7 +332,7 @@ int FIWadManager::CheckIWAD (const char *doomwaddir, WadStuff *wads)
 		{
 			FString iwad;
 			
-			iwad.Format ("%s%s%s", doomwaddir, slash, mIWadNames[i]);
+			iwad.Format ("%s%s%s", doomwaddir, slash, mIWadNames[i].GetChars());
 			FixPathSeperator (iwad);
 			if (FileExists (iwad))
 			{

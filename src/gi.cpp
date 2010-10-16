@@ -247,6 +247,17 @@ void FMapInfoParser::ParseGameInfo()
 				gameinfo.ArmorIcon2[8] = 0;
 			}
 		}
+		else if(nextKey.CompareNoCase("maparrow") == 0)
+		{
+			sc.MustGetToken(TK_StringConst);
+			gameinfo.mMapArrow = sc.String;
+			if (sc.CheckToken(','))
+			{
+				sc.MustGetToken(TK_StringConst);
+				gameinfo.mCheatMapArrow = sc.String;
+			}
+			else gameinfo.mCheatMapArrow = "";
+		}
 		// Insert valid keys here.
 		GAMEINFOKEY_CSTRING(titlePage, "titlePage", 8)
 		GAMEINFOKEY_STRINGARRAY(creditPages, "creditPage", 8)

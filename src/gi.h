@@ -129,6 +129,7 @@ struct gameinfo_t
 	int TextScreenX;
 	int TextScreenY;
 	FName DefaultEndSequence;
+	FString mMapArrow, mCheatMapArrow;
 
 	const char *GetFinalePage(unsigned int num) const;
 };

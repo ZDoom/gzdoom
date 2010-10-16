@@ -60,6 +60,7 @@ gameinfo
 	textscreenx = 20
 	textscreeny = 5
 	defaultendsequence = "Inter_Pic1"
+	maparrow = "maparrows/dagger.txt"
 }
 
 skill baby

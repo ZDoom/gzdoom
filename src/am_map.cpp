@@ -287,53 +287,9 @@ struct islope_t
 //  A line drawing of the player pointing right,
 //   starting from the middle.
 //
-#define R ((8*PLAYERRADIUS)/7)
-mline_t player_arrow[] = {
-	{ { -R+R/8, 0 }, { R, 0 } }, // -----
-	{ { R, 0 }, { R-R/2, R/4 } },  // ----->
-	{ { R, 0 }, { R-R/2, -R/4 } },
-	{ { -R+R/8, 0 }, { -R-R/8, R/4 } }, // >---->
-	{ { -R+R/8, 0 }, { -R-R/8, -R/4 } },
-	{ { -R+3*R/8, 0 }, { -R+R/8, R/4 } }, // >>--->
-	{ { -R+3*R/8, 0 }, { -R+R/8, -R/4 } }
-};
-#define NUMPLYRLINES (sizeof(player_arrow)/sizeof(mline_t))
-
-mline_t player_arrow_raven[] = {
-	{ { -R+R/4, 0 }, { 0, 0} }, // center line.
-	{ { -R+R/4, R/8 }, { R, 0} }, // blade
-	{ { -R+R/4, -R/8 }, { R, 0 } },
-	{ { -R+R/4, -R/4 }, { -R+R/4, R/4 } }, // crosspiece
-	{ { -R+R/8, -R/4 }, { -R+R/8, R/4 } },
-	{ { -R+R/8, -R/4 }, { -R+R/4, -R/4} }, //crosspiece connectors
-	{ { -R+R/8, R/4 }, { -R+R/4, R/4} },
-	{ { -R-R/4, R/8 }, { -R-R/4, -R/8 } }, //pommel
-	{ { -R-R/4, R/8 }, { -R+R/8, R/8 } },
-	{ { -R-R/4, -R/8}, { -R+R/8, -R/8 } }
-};
-#define NUMPLYRLINES_RAVEN (sizeof(player_arrow_raven)/sizeof(mline_t))
-
-mline_t cheat_player_arrow[] = {
-	{ { -R+R/8, 0 }, { R, 0 } }, // -----
-	{ { R, 0 }, { R-R/2, R/6 } },  // ----->
-	{ { R, 0 }, { R-R/2, -R/6 } },
-	{ { -R+R/8, 0 }, { -R-R/8, R/6 } }, // >----->
-	{ { -R+R/8, 0 }, { -R-R/8, -R/6 } },
-	{ { -R+3*R/8, 0 }, { -R+R/8, R/6 } }, // >>----->
-	{ { -R+3*R/8, 0 }, { -R+R/8, -R/6 } },
-	{ { -R/2, 0 }, { -R/2, -R/6 } }, // >>-d--->
-	{ { -R/2, -R/6 }, { -R/2+R/6, -R/6 } },
-	{ { -R/2+R/6, -R/6 }, { -R/2+R/6, R/4 } },
-	{ { -R/6, 0 }, { -R/6, -R/6 } }, // >>-dd-->
-	{ { -R/6, -R/6 }, { 0, -R/6 } },
-	{ { 0, -R/6 }, { 0, R/4 } },
-	{ { R/6, R/4 }, { R/6, -R/7 } }, // >>-ddt->
-	{ { R/6, -R/7 }, { R/6+R/32, -R/7-R/32 } },
-	{ { R/6+R/32, -R/7-R/32 }, { R/6+R/10, -R/7 } }
-};
-#define NUMCHEATPLYRLINES (sizeof(cheat_player_arrow)/sizeof(mline_t))
-
-#undef R
+TArray<mline_t> MapArrow;
+TArray<mline_t> CheatMapArrow;
+TArray<mline_t> CheatKey;
 
 #define R (MAPUNIT)
 // [RH] Avoid lots of warnings without compiler-specific #pragmas
@@ -360,26 +316,6 @@ mline_t square_guy[] = {
 };
 #define NUMSQUAREGUYLINES (sizeof(square_guy)/sizeof(mline_t))
 
-#undef R
-#define R (MAPUNIT)
-
-mline_t key_guy[] = {
-	L (-2, 0, -1.7, -0.5),
-	L (-1.7, -0.5, -1.5, -0.7),
-	L (-1.5, -0.7, -0.8, -0.5),
-	L (-0.8, -0.5, -0.6, 0),
-	L (-0.6, 0, -0.8, 0.5),
-	L (-1.5, 0.7, -0.8, 0.5),
-	L (-1.7, 0.5, -1.5, 0.7),
-	L (-2, 0, -1.7, 0.5),
-	L (-0.6, 0, 2, 0),
-	L (1.7, 0, 1.7, -1),
-	L (1.5, 0, 1.5, -1),
-	L (1.3, 0, 1.3, -1)
-};
-#define NUMKEYGUYLINES (sizeof(key_guy)/sizeof(mline_t))
-
-#undef L
 #undef R
 
 
@@ -544,6 +480,51 @@ void AM_getIslope (mline_t *ml, islope_t *is)
 		else is->slp = FixedDiv(dy, dx);
 }
 */
+
+
+void AM_ParseArrow(TArray<mline_t> &Arrow, const char *lumpname)
+{
+	const int R = ((8*PLAYERRADIUS)/7);
+	FScanner sc;
+	int lump = Wads.CheckNumForFullName(lumpname, true);
+	if (lump >= 0)
+	{
+		sc.OpenLumpNum(lump);
+		sc.SetCMode(true);
+		while (sc.GetToken())
+		{
+			mline_t line;
+			sc.TokenMustBe('(');
+			sc.MustGetFloat();
+			line.a.x = xs_RoundToInt(sc.Float*R);
+			sc.MustGetToken(',');
+			sc.MustGetFloat();
+			line.a.y = xs_RoundToInt(sc.Float*R);
+			sc.MustGetToken(')');
+			sc.MustGetToken(',');
+			sc.MustGetToken('(');
+			sc.MustGetFloat();
+			line.b.x = xs_RoundToInt(sc.Float*R);
+			sc.MustGetToken(',');
+			sc.MustGetFloat();
+			line.b.y = xs_RoundToInt(sc.Float*R);
+			sc.MustGetToken(')');
+			Arrow.Push(line);
+		}
+	}
+}
+
+void AM_InitArrows()
+{
+
+	MapArrow.Clear();
+	CheatMapArrow.Clear();
+
+	if (gameinfo.mMapArrow.IsNotEmpty()) AM_ParseArrow(MapArrow, gameinfo.mMapArrow);
+	if (gameinfo.mCheatMapArrow.IsNotEmpty()) AM_ParseArrow(CheatMapArrow, gameinfo.mCheatMapArrow);
+	AM_ParseArrow(CheatKey, "maparrows/key.txt");
+	if (MapArrow.Size() == 0) I_FatalError("No automap arrow defined");
+}
 
 //=============================================================================
 //
@@ -1066,6 +1047,8 @@ bool AM_clearMarks ()
 
 void AM_LevelInit ()
 {
+	if (MapArrow.Size() == 0) AM_InitArrows();
+
 	leveljuststarted = 0;
 
 	AM_clearMarks();
@@ -2047,20 +2030,15 @@ void AM_drawPlayers ()
 			angle = players[consoleplayer].camera->angle;
 		}
 		
-		if (gameinfo.gametype & GAME_Raven)
+		if (am_cheat != 0 && CheatMapArrow.Size() > 0)
 		{
-			arrow = player_arrow_raven;
-			numarrowlines = NUMPLYRLINES_RAVEN;
-		}
-		else if (am_cheat != 0)
-		{
-			arrow = cheat_player_arrow;
-			numarrowlines =  NUMCHEATPLYRLINES;
+			arrow = &CheatMapArrow[0];
+			numarrowlines = CheatMapArrow.Size();
 		}
 		else
 		{
-			arrow = player_arrow;
-			numarrowlines = NUMPLYRLINES;
+			arrow = &MapArrow[0];
+			numarrowlines = MapArrow.Size();
 		}
 		AM_drawLineCharacter(arrow, numarrowlines, 0, angle, YourColor, pt.x, pt.y);
 		return;
@@ -2113,9 +2091,7 @@ void AM_drawPlayers ()
 				angle -= players[consoleplayer].camera->angle - ANG90;
 			}
 
-			AM_drawLineCharacter
-				(player_arrow, NUMPLYRLINES, 0, angle,
-				color, pt.x, pt.y);
+			AM_drawLineCharacter(&MapArrow[0], MapArrow.Size(), 0, angle, color, pt.x, pt.y);
 		}
     }
 }
@@ -2171,7 +2147,7 @@ void AM_drawThings ()
 
 						if (c >= 0)	color.FromRGB(RPART(c), GPART(c), BPART(c));
 						else color = ThingColor_CountItem;
-						AM_drawLineCharacter(key_guy, NUMKEYGUYLINES, 16<<MAPBITS, 0, color, p.x, p.y);
+						AM_drawLineCharacter(&CheatKey[0], CheatKey.Size(), 0, 0, color, p.x, p.y);
 						color.Index = -1;
 					}
 					else

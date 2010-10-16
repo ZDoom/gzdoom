@@ -124,16 +124,16 @@ void SetHUDIcon(PClass *cls, FTextureID tex)
 //---------------------------------------------------------------------------
 static void DrawImageToBox(FTexture * tex, int x, int y, int w, int h, int trans=0xc000)
 {
-	float scale1, scale2;
+	double scale1, scale2;
 
 	if (tex)
 	{
 		int texwidth=tex->GetWidth();
 		int texheight=tex->GetHeight();
 
-		if (w<texwidth) scale1=(float)w/texwidth;
+		if (w<texwidth) scale1=(double)w/texwidth;
 		else scale1=1.0f;
-		if (h<texheight) scale2=(float)h/texheight;
+		if (h<texheight) scale2=(double)h/texheight;
 		else scale2=1.0f;
 		if (scale2<scale1) scale1=scale2;
 
@@ -170,11 +170,14 @@ static void DrawHudText(FFont *font, int color, char * text, int x, int y, int t
 		FTexture *texc = font->GetChar(text[i], &width);
 		if (texc != NULL)
 		{
-			int offset = texc->TopOffset - tex_zero->TopOffset + tex_zero->GetHeight();
+			double offset = texc->GetScaledTopOffsetDouble() 
+				- tex_zero->GetScaledTopOffsetDouble() 
+				+ tex_zero->GetScaledHeightDouble();
+
 			screen->DrawChar(font, color, x, y, text[i],
 				DTA_KeepRatio, true,
 				DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, trans, 
-				DTA_LeftOffset, width/2, DTA_TopOffset, offset,
+				DTA_LeftOffset, width/2, DTA_TopOffsetF, offset,
 				/*DTA_CenterBottomOffset, 1,*/ TAG_DONE);
 		}
 		x += zerowidth;

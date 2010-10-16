@@ -1809,7 +1809,7 @@ static FString CheckGameInfo(TArray<FString> & pwads)
 
 static void SetMapxxFlag()
 {
-	int lump_name = Wads.CheckNumForName("MAP01", FWadCollection::IWAD_FILENUM);
+	int lump_name = Wads.CheckNumForName("MAP01", ns_global, FWadCollection::IWAD_FILENUM);
 	int lump_wad = Wads.CheckNumForFullName("maps/map01.wad", FWadCollection::IWAD_FILENUM);
 	int lump_map = Wads.CheckNumForFullName("maps/map01.map", FWadCollection::IWAD_FILENUM);
 

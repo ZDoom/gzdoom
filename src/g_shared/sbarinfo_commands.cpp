@@ -2730,7 +2730,7 @@ class CommandDrawGem : public SBarInfoCommand
 			SBarInfoCoordinate drawY = y;
 			if(wiggle && drawValue != goalValue) // Should only wiggle when the value doesn't equal what is being drawn.
 				drawY += chainWiggle;
-			int chainWidth = chainImg->GetWidth();
+			int chainWidth = chainImg->GetScaledWidth();
 			int offset = (int) (((double) (chainWidth-leftPadding-rightPadding)/100)*drawValue);
 			statusBar->DrawGraphic(chainImg, x+(offset%chainSize), drawY, block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets());
 			if(gemImg != NULL)

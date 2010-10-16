@@ -511,7 +511,7 @@ int I_PickIWad_Gtk (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 		gtk_list_store_append (store, &iter);
 		gtk_list_store_set (store, &iter,
 			0, filepart,
-			1, wads[i].Name,
+			1, wads[i].Name.GetChars(),
 			2, i,
 			-1);
 		if (i == defaultiwad)
@@ -625,7 +625,7 @@ int I_PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 			filepart = wads[i].Path;
 		else
 			filepart++;
-		printf ("%d. %s (%s)\n", i+1, wads[i].Name, filepart);
+		printf ("%d. %s (%s)\n", i+1, wads[i].Name.GetChars(), filepart);
 	}
 	printf ("Which one? ");
 	scanf ("%d", &i);

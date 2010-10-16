@@ -1153,8 +1153,8 @@ public:
 
 		if((offsetflags & SBarInfoCommand::CENTER) == SBarInfoCommand::CENTER)
 		{
-			dx -= (texture->GetScaledWidthDouble()/2.0)-texture->LeftOffset;
-			dy -= (texture->GetScaledHeightDouble()/2.0)-texture->TopOffset;
+			dx -= (texture->GetScaledWidthDouble()/2.0)-texture->GetScaledLeftOffsetDouble();
+			dy -= (texture->GetScaledHeightDouble()/2.0)-texture->GetScaledTopOffsetDouble();
 		}
 
 		dx += xOffset;

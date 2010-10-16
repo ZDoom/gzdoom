@@ -48,7 +48,7 @@ static void LoadKeys (const char *modname, bool dbl)
 {
 	char section[64];
 
-	mysnprintf (section, countof(section), "%s.%s%sBindings", gameinfo.ConfigName, modname,
+	mysnprintf (section, countof(section), "%s.%s%sBindings", gameinfo.ConfigName.GetChars(), modname,
 		dbl ? ".Double" : ".");
 
 	FKeyBindings *bindings = dbl? &DoubleBindings : &Bindings;

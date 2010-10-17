@@ -481,7 +481,7 @@ int DIntermissionScreenCast::Ticker ()
 		return 0; 				// not time to change state yet
 				
 	if (caststate == NULL || caststate->GetTics() == -1 || caststate->GetNextState() == NULL ||
-		caststate->GetNextState() == caststate)
+		(caststate->GetNextState() == caststate && castdeath))
 	{
 		return -1;
 	}

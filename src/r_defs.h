@@ -25,6 +25,7 @@
 
 #include "doomdef.h"
 #include "templates.h"
+#include "memarena.h"
 
 // Some more or less basic data types
 // we depend on.
@@ -1167,6 +1168,29 @@ struct FVoxel
 	FVoxel();
 	~FVoxel();
 	void Remap();
+};
+
+// [RH] A c-buffer. Used for keeping track of offscreen voxel spans.
+
+struct FCoverageBuffer
+{
+	struct Span
+	{
+		Span *NextSpan;
+		short Start, Stop;
+	};
+
+	FCoverageBuffer(int size);
+	~FCoverageBuffer();
+
+	void Clear();
+	void InsertSpan(int listnum, int start, int stop);
+	Span *AllocSpan();
+
+	FMemArena SpanArena;
+	Span **Spans;	// [0..NumLists-1] span lists
+	Span *FreeSpans;
+	unsigned int NumLists;
 };
 
 #endif

@@ -178,7 +178,7 @@ extern void (STACK_ARGS *rt_map4cols)(int sx, int yl, int yh);
 void rt_draw4cols (int sx);
 
 // [RH] Preps the temporary horizontal buffer.
-void rt_initcols (void);
+void rt_initcols (BYTE *buffer=NULL);
 
 void R_DrawFogBoundary (int x1, int x2, short *uclip, short *dclip);
 

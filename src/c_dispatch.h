@@ -165,5 +165,6 @@ void ResetButtonStates ();		// Same as above, but also clear bDown
 
 extern unsigned int MakeKey (const char *s);
 extern unsigned int MakeKey (const char *s, size_t len);
+extern unsigned int SuperFastHash (const char *data, size_t len);
 
 #endif //__C_DISPATCH_H__

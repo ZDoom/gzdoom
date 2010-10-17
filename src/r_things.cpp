@@ -113,6 +113,10 @@ DWORD			NumStdSprites;		// The first x sprites that don't belong to skins.
 
 TDeletingArray<FVoxel *> Voxels;	// used only to auto-delete voxels on exit.
 
+int OffscreenBufferWidth, OffscreenBufferHeight;
+BYTE *OffscreenColorBuffer;
+FCoverageBuffer *OffscreenCoverageBuffer;
+
 struct spriteframewithrotate : public spriteframe_t
 {
 	int rotate;
@@ -1033,6 +1037,19 @@ void R_DeinitSprites()
 		spritesortersize = 0;
 		spritesorter = NULL;
 	}
+
+	// Free offscreen buffer
+	if (OffscreenColorBuffer != NULL)
+	{
+		delete[] OffscreenColorBuffer;
+		OffscreenColorBuffer = NULL;
+	}
+	if (OffscreenCoverageBuffer != NULL)
+	{
+		delete OffscreenCoverageBuffer;
+		OffscreenCoverageBuffer = NULL;
+	}
+	OffscreenBufferHeight = OffscreenBufferWidth = 0;
 }
 
 //
@@ -1246,6 +1263,75 @@ void R_DrawVisSprite (vissprite_t *vis)
 	R_FinishSetPatchStyle ();
 
 	NetUpdate ();
+}
+
+void R_DrawVisVoxel(vissprite_t *spr, int minslabz, int maxslabz, short *cliptop, short *clipbot)
+{
+	ESPSResult mode;
+	int flags = 0;
+
+	// Do setup for blending.
+	dc_colormap = spr->colormap;
+	mode = R_SetPatchStyle(spr->RenderStyle, spr->alpha, spr->Translation, spr->FillColor);
+
+	if (mode == DontDraw)
+	{
+		return;
+	}
+	if (colfunc == fuzzcolfunc || colfunc == R_FillColumnP)
+	{
+		flags = DVF_OFFSCREEN | DVF_SPANSONLY;
+	}
+	else if (colfunc != basecolfunc)
+	{
+		flags = DVF_OFFSCREEN;
+	}
+	if (flags != 0)
+	{
+		R_CheckOffscreenBuffer(RenderTarget->GetWidth(), RenderTarget->GetHeight(), !!(flags & DVF_SPANSONLY));
+	}
+
+	// Render the voxel, either directly to the screen or offscreen.
+	R_DrawVoxel(spr->gx, spr->gy, spr->gz, spr->angle, spr->xscale, spr->yscale, spr->voxel, spr->colormap, cliptop, clipbot,
+		minslabz, maxslabz, flags);
+
+	// Blend the voxel, if that's what we need to do.
+	if (flags != 0)
+	{
+		for (int x = 0; x < viewwidth; ++x)
+		{
+			if (!(flags & DVF_SPANSONLY) && (x & 3) == 0)
+			{
+				rt_initcols(OffscreenColorBuffer + x * OffscreenBufferHeight);
+			}
+			for (FCoverageBuffer::Span *span = OffscreenCoverageBuffer->Spans[x]; span != NULL; span = span->NextSpan)
+			{
+				if (flags & DVF_SPANSONLY)
+				{
+					dc_x = x;
+					dc_yl = span->Start;
+					dc_yh = span->Stop - 1;
+					dc_count = span->Stop - span->Start;
+					dc_dest = ylookup[span->Start] + x + dc_destorg;
+					colfunc();
+				}
+				else
+				{
+					unsigned int **tspan = &dc_ctspan[x & 3];
+					(*tspan)[0] = span->Start;
+					(*tspan)[1] = span->Stop - 1;
+					*tspan += 2;
+				}
+			}
+			if (!(flags & DVF_SPANSONLY) && (x & 3) == 3)
+			{
+				rt_draw4cols(x - 3);
+			}
+		}
+	}
+
+	R_FinishSetPatchStyle();
+	NetUpdate();
 }
 
 //
@@ -2462,8 +2548,7 @@ void R_DrawSprite (vissprite_t *spr)
 		}
 		int minvoxely = spr->gzt <= hzt ? 0 : (spr->gzt - hzt) / spr->yscale;
 		int maxvoxely = spr->gzb > hzb ? INT_MAX : (spr->gzt - hzb) / spr->yscale;
-		R_DrawVoxel(spr->gx, spr->gy, spr->gz, spr->angle, spr->xscale, spr->yscale, spr->voxel, spr->colormap, cliptop, clipbot,
-			minvoxely, maxvoxely);
+		R_DrawVisVoxel(spr, minvoxely, maxvoxely, cliptop, clipbot);
 	}
 }
 
@@ -2816,12 +2901,12 @@ void R_DrawParticle (vissprite_t *vis)
 static fixed_t distrecip(fixed_t y)
 {
 	y >>= 3;
-	return y == 0 ? 0 : DivScale32(centerxwide, y);
+	return y == 0 ? 0 : SafeDivScale32(centerxwide, y);
 }
 
 void R_DrawVoxel(fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t dasprang,
 	fixed_t daxscale, fixed_t dayscale, FVoxel *voxobj,
-	lighttable_t *colormap, short *daumost, short *dadmost, int minslabz, int maxslabz)
+	lighttable_t *colormap, short *daumost, short *dadmost, int minslabz, int maxslabz, int flags)
 {
 	int i, j, k, x, y, syoff, ggxstart, ggystart, nxoff;
 	fixed_t cosang, sinang, sprcosang, sprsinang;
@@ -3050,9 +3135,240 @@ void R_DrawVoxel(fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t daspran
 					if (z2 > dadmost[lx]) z2 = dadmost[lx];
 					z2 -= z1; if (z2 <= 0) continue;
 
-					R_DrawSlab(rx, yplc, z2, yinc, col, ylookup[z1] + lx + dc_destorg);
+					if (!(flags & DVF_OFFSCREEN))
+					{
+						// Draw directly to the screen.
+						R_DrawSlab(rx, yplc, z2, yinc, col, ylookup[z1] + lx + dc_destorg);
+					}
+					else
+					{
+						// Record the area covered and possibly draw to an offscreen buffer.
+						dc_yl = z1;
+						dc_yh = z1 + z2 - 1;
+						dc_count = z2;
+						dc_iscale = yinc;
+						for (int x = 0; x < rx; ++x)
+						{
+							OffscreenCoverageBuffer->InsertSpan(lx + x, z1, z1 + z2);
+							if (!(flags & DVF_SPANSONLY))
+							{
+								dc_x = lx + x;
+								rt_initcols(OffscreenColorBuffer + (dc_x & ~3) * OffscreenBufferHeight);
+								dc_source = col;
+								dc_texturefrac = yplc;
+								hcolfunc_pre();
+							}
+						}
+					}
 				}
 			}
 		}
 	}
 }
+
+//==========================================================================
+//
+// FCoverageBuffer Constructor
+//
+//==========================================================================
+
+FCoverageBuffer::FCoverageBuffer(int lists)
+	: Spans(NULL), FreeSpans(NULL)
+{
+	NumLists = lists;
+	Spans = new Span *[lists];
+	memset(Spans, 0, sizeof(Span*)*lists);
+}
+
+//==========================================================================
+//
+// FCoverageBuffer Destructor
+//
+//==========================================================================
+
+FCoverageBuffer::~FCoverageBuffer()
+{
+	if (Spans != NULL)
+	{
+		delete[] Spans;
+	}
+}
+
+//==========================================================================
+//
+// FCoverageBuffer :: Clear
+//
+//==========================================================================
+
+void FCoverageBuffer::Clear()
+{
+	SpanArena.FreeAll();
+	memset(Spans, 0, sizeof(Span*)*NumLists);
+	FreeSpans = NULL;
+}
+
+//==========================================================================
+//
+// FCoverageBuffer :: InsertSpan
+//
+// start is inclusive.
+// stop is exclusive.
+//
+//==========================================================================
+
+void FCoverageBuffer::InsertSpan(int listnum, int start, int stop)
+{
+	assert(unsigned(listnum) < NumLists);
+	assert(start < stop);
+
+	Span **span_p = &Spans[listnum];
+	Span *span;
+
+	if (*span_p == NULL || (*span_p)->Start > stop)
+	{ // This list is empty or the first entry is after this one, so we can just insert the span.
+		goto addspan;
+	}
+
+	// Insert the new span in order, merging with existing ones.
+	while (*span_p != NULL)
+	{
+		if ((*span_p)->Stop < start)							// =====		(existing span)
+		{ // Span ends before this one starts.					//		  ++++	(new span)
+			span_p = &(*span_p)->NextSpan;
+			continue;
+		}
+
+		// Does the new span overlap or abut the existing one?
+		if ((*span_p)->Start <= start)
+		{
+			if ((*span_p)->Stop >= stop)						// =============
+			{ // The existing span completely covers this one.	//     +++++
+				return;
+			}
+			// Extend the existing span with the new one.		// ======
+			span = *span_p;										//     +++++++
+			span->Stop = stop;									// (or)  +++++
+
+			// Free up any spans we just covered up.
+			span_p = &(*span_p)->NextSpan;
+			while (*span_p != NULL && (*span_p)->Start <= stop && (*span_p)->Stop <= stop)
+			{
+				Span *span = *span_p;							// ======  ======
+				*span_p = span->NextSpan;						//     +++++++++++++
+				span->NextSpan = FreeSpans;
+				FreeSpans = span;
+			}
+			if (*span_p != NULL && (*span_p)->Start <= stop)	// =======         ========
+			{ // Our new span connects two existing spans.		//     ++++++++++++++
+			  // They should all be collapsed into a single span.
+				span->Stop = (*span_p)->Stop;
+				span = *span_p;
+				*span_p = span->NextSpan;
+				span->NextSpan = FreeSpans;
+				FreeSpans = span;
+			}
+			goto check;
+		}
+		else if ((*span_p)->Start <= stop)						//        =====
+		{ // The new span extends the existing span from		//    ++++
+		  // the beginning.										// (or) ++++
+			(*span_p)->Start = start;
+			goto check;
+		}
+		else													//         ======
+		{ // No overlap, so insert a new span.					// +++++
+			goto addspan;
+		}
+	}
+	// Append a new span to the end of the list.
+addspan:
+	span = AllocSpan();
+	span->NextSpan = *span_p;
+	span->Start = start;
+	span->Stop = stop;
+	*span_p = span;
+check:
+#ifdef _DEBUG
+	// Validate the span list: Spans must be in order, and there must be
+	// at least one pixel between spans.
+	for (span = Spans[listnum]; span != NULL; span = span->NextSpan)
+	{
+		assert(span->Start < span->Stop);
+		if (span->NextSpan != NULL)
+		{
+			assert(span->Stop < span->NextSpan->Start);
+		}
+	}
+#endif
+}
+
+//==========================================================================
+//
+// FCoverageBuffer :: AllocSpan
+//
+//==========================================================================
+
+FCoverageBuffer::Span *FCoverageBuffer::AllocSpan()
+{
+	Span *span;
+
+	if (FreeSpans != NULL)
+	{
+		span = FreeSpans;
+		FreeSpans = span->NextSpan;
+	}
+	else
+	{
+		span = (Span *)SpanArena.Alloc(sizeof(Span));
+	}
+	return span;
+}
+
+//==========================================================================
+//
+// R_CheckOffscreenBuffer
+//
+// Allocates the offscreen coverage buffer and optionally the offscreen
+// color buffer. If they already exist but are the wrong size, they will
+// be reallocated.
+//
+//==========================================================================
+
+void R_CheckOffscreenBuffer(int width, int height, bool spansonly)
+{
+	if (OffscreenCoverageBuffer == NULL)
+	{
+		assert(OffscreenColorBuffer == NULL && "The color buffer cannot exist without the coverage buffer");
+		OffscreenCoverageBuffer = new FCoverageBuffer(width);
+	}
+	else if (OffscreenCoverageBuffer->NumLists != width)
+	{
+		delete OffscreenCoverageBuffer;
+		OffscreenCoverageBuffer = new FCoverageBuffer(width);
+		if (OffscreenColorBuffer != NULL)
+		{
+			delete[] OffscreenColorBuffer;
+			OffscreenColorBuffer = NULL;
+		}
+	}
+	else
+	{
+		OffscreenCoverageBuffer->Clear();
+	}
+
+	if (!spansonly)
+	{
+		if (OffscreenColorBuffer == NULL)
+		{
+			OffscreenColorBuffer = new BYTE[width * height];
+		}
+		else if (OffscreenBufferWidth != width || OffscreenBufferHeight != height)
+		{
+			delete[] OffscreenColorBuffer;
+			OffscreenColorBuffer = new BYTE[width * height];
+		}
+	}
+	OffscreenBufferWidth = width;
+	OffscreenBufferHeight = height;
+}
+

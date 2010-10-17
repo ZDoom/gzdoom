@@ -1002,11 +1002,11 @@ void rt_draw4cols (int sx)
 
 // Before each pass through a rendering loop that uses these routines,
 // call this function to set up the span pointers.
-void rt_initcols (void)
+void rt_initcols (BYTE *buff)
 {
 	int y;
 
-	dc_temp = dc_tempbuff;
+	dc_temp = buff == NULL ? dc_tempbuff : buff;
 	for (y = 3; y >= 0; y--)
 		horizspan[y] = dc_ctspan[y] = &dc_tspans[y][0];
 }

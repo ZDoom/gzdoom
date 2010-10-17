@@ -80,6 +80,7 @@ struct FIntermissionAction
 	TArray<FIntermissionPatch> mOverlays;
 
 	FIntermissionAction();
+	virtual ~FIntermissionAction() {}
 	virtual bool ParseKey(FScanner &sc);
 };
 
@@ -145,7 +146,7 @@ struct FIntermissionActionScroller : public FIntermissionAction
 struct FIntermissionDescriptor
 {
 	FName mLink;
-	TArray<FIntermissionAction *> mActions;
+	TDeletingArray<FIntermissionAction *> mActions;
 };
 
 typedef TMap<FName, FIntermissionDescriptor*> FIntermissionDescriptorList;

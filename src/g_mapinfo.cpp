@@ -1789,6 +1789,20 @@ void FMapInfoParser::ParseMapInfo (int lump, level_info_t &gamedefaults, level_i
 
 //==========================================================================
 //
+//
+//
+//==========================================================================
+
+void DeinitIntermissions();
+
+static void ClearMapinfo()
+{
+	ClearEpisodes();
+	DeinitIntermissions();
+}
+
+//==========================================================================
+//
 // G_ParseMapInfo
 // Parses the MAPINFO lumps of all loaded WADs and generates
 // data for wadlevelinfos and wadclusterinfos.
@@ -1800,7 +1814,7 @@ void G_ParseMapInfo (const char *basemapinfo)
 	int lump, lastlump = 0;
 	level_info_t gamedefaults;
 
-	atterm(ClearEpisodes);
+	atterm(ClearMapinfo);
 
 	// Parse the default MAPINFO for the current game. This lump *MUST* come from zdoom.pk3.
 	if (basemapinfo != NULL)

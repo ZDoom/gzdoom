@@ -47,6 +47,19 @@ static void ReplaceIntermission(FName intname,FIntermissionDescriptor *desc)
 	IntermissionDescriptors[intname] = desc;
 }
 
+void DeinitIntermissions()
+{
+	FIntermissionDescriptorList::Iterator it(IntermissionDescriptors);
+
+	FIntermissionDescriptorList::Pair *pair;
+
+	while (it.NextPair(pair))
+	{
+		delete pair->Value;
+		pair->Value = NULL;
+	}
+}
+
 //==========================================================================
 //
 // FIntermissionAction 

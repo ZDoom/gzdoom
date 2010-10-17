@@ -115,23 +115,34 @@ bool FPlayerNameBox::GetString(int i, char *s, int len)
 
 void FPlayerNameBox::DrawBorder (int x, int y, int len)
 {
-	if (gameinfo.gametype & (GAME_DoomStrifeChex))
+	FTexture *left = TexMan[TexMan.CheckForTexture("M_LSLEFT", FTexture::TEX_MiscPatch)];
+	FTexture *mid = TexMan[TexMan.CheckForTexture("M_LSCNTR", FTexture::TEX_MiscPatch)];
+	FTexture *right = TexMan[TexMan.CheckForTexture("M_LSRGHT", FTexture::TEX_MiscPatch)];
+	if (left != NULL && right != NULL && mid != NULL)
 	{
 		int i;
 
-		screen->DrawTexture (TexMan["M_LSLEFT"], x-8, y+7, DTA_Clean, true, TAG_DONE);
+		screen->DrawTexture (left, x-8, y+7, DTA_Clean, true, TAG_DONE);
 
 		for (i = 0; i < len; i++)
 		{
-			screen->DrawTexture (TexMan["M_LSCNTR"], x, y+7, DTA_Clean, true, TAG_DONE);
+			screen->DrawTexture (mid, x, y+7, DTA_Clean, true, TAG_DONE);
 			x += 8;
 		}
 
-		screen->DrawTexture (TexMan["M_LSRGHT"], x, y+7, DTA_Clean, true, TAG_DONE);
+		screen->DrawTexture (right, x, y+7, DTA_Clean, true, TAG_DONE);
 	}
 	else
 	{
-		screen->DrawTexture (TexMan["M_FSLOT"], x, y+1, DTA_Clean, true, TAG_DONE);
+		FTexture *slot = TexMan[TexMan.CheckForTexture("M_FSLOT", FTexture::TEX_MiscPatch)];
+		if (slot != NULL)
+		{
+			screen->DrawTexture (slot, x, y+1, DTA_Clean, true, TAG_DONE);
+		}
+		else
+		{
+			screen->Clear(x, y, x + len, y + SmallFont->GetHeight() * 3/2, -1, 0);
+		}
 	}
 }
 

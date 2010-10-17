@@ -105,12 +105,6 @@ xx(ArtiPoisonBag3)
 // Strife quests
 xx(QuestItem)
 
-// Auto-usable health items
-xx(ArtiHealth)
-xx(ArtiSuperHealth)
-xx(MedicalKit)
-xx(MedPatch)
-
 // Armor
 xx(BasicArmor)
 
@@ -186,7 +180,6 @@ xx(Greetings)
 xx(Idle)
 xx(GenericFreezeDeath)
 xx(GenericCrush)
-xx(Cast)
 
 // Compatible death names for the decorate parser.
 xx(XDeath)
@@ -252,6 +245,7 @@ xx(PoisonCloud)	// makes monsters howl.
 // a damage type if you wanted to force an extreme death.
 xx(Extreme)
 xx(MDK)
+xx(Cast) // 'damage type' for the cast call
 
 // Special names for thingdef_exp.cpp
 xx(Random)

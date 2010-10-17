@@ -91,7 +91,7 @@ IWad
 	Name = "Hexen: Beyond Heretic"
 	Game = "Hexen"
 	Config = "Hexen"
-	Mapinfo = "mapinfo/doom2.txt"
+	Mapinfo = "mapinfo/hexen.txt"
 	Compatibility = "Poly1"
 	MustContain = "TITLE", "MAP01", "MAP40", "WINNOWR"
 	BannerColors = "f0 f0 f0", "6b 3c 18"

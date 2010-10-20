@@ -387,18 +387,50 @@ void R_InitSpriteDefs ()
 		if (Wads.GetLumpNamespace(i) == ns_voxels)
 		{
 			char name[9];
+			size_t namelen;
+			int spin;
+			int sign;
+
 			Wads.GetLumpName(name, i);
 			name[8] = 0;
-			if (strlen(name) >= 4 &&
-				(name[4] == ' ' || name[4] == '\0' || (name[4] >= 'A' && name[4] < 'A' + MAX_SPRITE_FRAMES)))
-			{
-				memcpy(&vhashes[i].Name, name, 4);
-				vhashes[i].Frame = name[4];
-				vhashes[i].Spin = atoi(name+5) * 2;	// convert from deg/halfsec to deg/sec
-				size_t bucket = vhashes[i].Name % vmax;
-				vhashes[i].Next = vhashes[bucket].Head;
-				vhashes[bucket].Head = i;
+			namelen = strlen(name);
+			if (namelen < 4)
+			{ // name is too short
+				continue;
 			}
+			if (name[4] != '\0' && name[4] != ' ' && (name[4] < 'A' || name[4] >= 'A' + MAX_SPRITE_FRAMES))
+			{ // frame char is invalid
+				continue;
+			}
+			spin = 0;
+			sign = 2;	// 2 to convert from deg/halfsec to deg/sec
+			j = 5;
+			if (j < namelen && name[j] == '-')
+			{ // a minus sign is okay, but only before any digits
+				j++;
+				sign = -2;
+			}
+			for (; j < namelen; ++j)
+			{ // the remainder to the end of the name must be digits
+				if (name[j] >= '0' && name[j] <= '9')
+				{
+					spin = spin * 10 + name[j] - '0';
+				}
+				else
+				{
+					break;
+				}
+			}
+			if (j < namelen)
+			{ // the spin part is invalid
+				continue;
+			}
+			memcpy(&vhashes[i].Name, name, 4);
+			vhashes[i].Frame = name[4];
+			vhashes[i].Spin = spin * sign;
+			size_t bucket = vhashes[i].Name % vmax;
+			vhashes[i].Next = vhashes[bucket].Head;
+			vhashes[bucket].Head = i;
 		}
 	}
 

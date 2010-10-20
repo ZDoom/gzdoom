@@ -182,7 +182,7 @@ FMemArena::Block *FMemArena::AddBlock(size_t size)
 	// Search for a free block to use
 	for (last = &FreeBlocks, mem = FreeBlocks; mem != NULL; last = &mem->NextBlock, mem = mem->NextBlock)
 	{
-		if ((BYTE *)mem->Limit - (BYTE *)mem >= size)
+		if ((BYTE *)mem->Limit - (BYTE *)mem >= (ptrdiff_t)size)
 		{
 			*last = mem->NextBlock;
 			break;

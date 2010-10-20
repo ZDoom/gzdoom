@@ -237,7 +237,6 @@ void AddTiles (void *tiles)
 			rot.Texture[9] = texnum.GetIndex() + 4;
 			rot.Flip = 0x00FC;
 			rot.Voxel = NULL;
-			rot.VoxelSpin = 0;
 			tex->Rotations = SpriteFrames.Push (rot);
 		}
 		else if (rotType == 2)
@@ -252,7 +251,6 @@ void AddTiles (void *tiles)
 			}
 			rot.Flip = 0;
 			rot.Voxel = NULL;
-			rot.VoxelSpin = 0;
 			tex->Rotations = SpriteFrames.Push (rot);
 		}
 	}

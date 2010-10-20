@@ -112,6 +112,7 @@ TArray<spriteframe_t> SpriteFrames;
 DWORD			NumStdSprites;		// The first x sprites that don't belong to skins.
 
 TDeletingArray<FVoxel *> Voxels;	// used only to auto-delete voxels on exit.
+TDeletingArray<FVoxelDef *> VoxelDefs;
 
 int OffscreenBufferWidth, OffscreenBufferHeight;
 BYTE *OffscreenColorBuffer;
@@ -317,7 +318,6 @@ static void R_InstallSprite (int num)
 		memcpy (SpriteFrames[framestart+frame].Texture, sprtemp[frame].Texture, sizeof(sprtemp[frame].Texture));
 		SpriteFrames[framestart+frame].Flip = sprtemp[frame].Flip;
 		SpriteFrames[framestart+frame].Voxel = sprtemp[frame].Voxel;
-		SpriteFrames[framestart+frame].VoxelSpin = sprtemp[frame].VoxelSpin;
 	}
 
 	// Let the textures know about the rotations
@@ -394,7 +394,7 @@ void R_InitSpriteDefs ()
 			{
 				memcpy(&vhashes[i].Name, name, 4);
 				vhashes[i].Frame = name[4];
-				vhashes[i].Spin = atoi(name+5);
+				vhashes[i].Spin = atoi(name+5) * 2;	// convert from deg/halfsec to deg/sec
 				size_t bucket = vhashes[i].Name % vmax;
 				vhashes[i].Next = vhashes[bucket].Head;
 				vhashes[bucket].Head = i;
@@ -410,7 +410,6 @@ void R_InitSpriteDefs ()
 		{
 			sprtemp[j].Flip = 0;
 			sprtemp[j].Voxel = NULL;
-			sprtemp[j].VoxelSpin = 0;
 		}
 				
 		maxframe = -1;
@@ -445,15 +444,22 @@ void R_InitSpriteDefs ()
 				}
 				else
 				{
+					FVoxelDef *voxdef = new FVoxelDef;
+
+					voxdef->Voxel = vox;
+					voxdef->Scale = FRACUNIT;
+					voxdef->DroppedSpin = voxdef->PlacedSpin = vh->Spin;
+
 					Voxels.Push(vox);
+					VoxelDefs.Push(voxdef);
+
 					if (vh->Frame == ' ' || vh->Frame == '\0')
 					{ // voxel applies to every sprite frame
 						for (j = 0; j < MAX_SPRITE_FRAMES; ++j)
 						{
 							if (sprtemp[j].Voxel == NULL)
 							{
-								sprtemp[j].Voxel = vox;
-								sprtemp[j].VoxelSpin = vh->Spin;
+								sprtemp[j].Voxel = voxdef;
 							}
 						}
 						maxframe = MAX_SPRITE_FRAMES-1;
@@ -461,8 +467,7 @@ void R_InitSpriteDefs ()
 					else
 					{ // voxel applies to a specific frame
 						j = vh->Frame - 'A';
-						sprtemp[j].Voxel = vox;
-						sprtemp[j].VoxelSpin = vh->Spin;
+						sprtemp[j].Voxel = voxdef;
 						maxframe = MAX<int>(maxframe, j);
 					}
 				}
@@ -1349,15 +1354,14 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 	fixed_t 			tx, tx2;
 	fixed_t 			tz;
 
-	fixed_t 			xscale;
+	fixed_t 			xscale, yscale;
 	
 	int 				x1;
 	int 				x2;
 
 	FTextureID			picnum;
 	FTexture			*tex;
-	FVoxel				*voxel;
-	int					voxelspin;
+	FVoxelDef			*voxel;
 	
 	WORD 				flip;
 	
@@ -1456,7 +1460,6 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 			if (r_drawvoxels)
 			{
 				voxel = sprframe->Voxel;
-				voxelspin = sprframe->VoxelSpin;
 			}
 		}
 	}
@@ -1494,8 +1497,10 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 	}
 	else
 	{
-		gzt = fz + MulScale8(thing->scaleY, voxel->Mips[0].PivotZ) - thing->floorclip;
-		gzb = fz + MulScale8(thing->scaleY, voxel->Mips[0].PivotZ - (voxel->Mips[0].SizeZ << 8));
+		xscale = FixedMul(thing->scaleX, voxel->Scale);
+		yscale = FixedMul(thing->scaleY, voxel->Scale);
+		gzt = fz + MulScale8(yscale, voxel->Voxel->Mips[0].PivotZ) - thing->floorclip;
+		gzb = fz + MulScale8(yscale, voxel->Voxel->Mips[0].PivotZ - (voxel->Voxel->Mips[0].SizeZ << 8));
 		if (gzt <= gzb)
 			return;
 	}
@@ -1597,8 +1602,8 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 	{
 		vis = R_NewVisSprite();
 
-		vis->xscale = thing->scaleX;
-		vis->yscale = thing->scaleY;
+		vis->xscale = xscale;
+		vis->yscale = yscale;
 		vis->x1 = WindowLeft;
 		vis->x2 = WindowRight;
 		vis->idepth = (unsigned)DivScale32(1, MAX(tz, MINZ)) >> 1;
@@ -1606,14 +1611,13 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 
 		fz -= thing->floorclip;
 
-		if (voxelspin == 0)
+		vis->angle = thing->angle;
+
+		int voxelspin = (thing->flags & MF_DROPPED) ? voxel->DroppedSpin : voxel->PlacedSpin;
+		if (voxelspin != 0)
 		{
-			vis->angle = thing->angle;
-		}
-		else
-		{
-			double ang = double(I_FPSTime()) * voxelspin / 500;
-			vis->angle = angle_t(ang * (4294967296.f / 360));
+			double ang = double(I_FPSTime()) * voxelspin / 1000;
+			vis->angle += angle_t(ang * (4294967296.f / 360));
 		}
 
 		// These are irrelevant for voxels.
@@ -1642,7 +1646,7 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 
 	if (voxel != NULL)
 	{
-		vis->voxel = voxel;
+		vis->voxel = voxel->Voxel;
 		vis->bIsVoxel = true;
 	}
 	else

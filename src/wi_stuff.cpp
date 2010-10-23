@@ -79,7 +79,7 @@ void WI_unloadData ();
 
 // NET GAME STUFF
 #define NG_STATSY				50
-#define NG_STATSX				(32 + star->GetWidth()/2 + 32*!dofrags)
+#define NG_STATSX				(32 + star->GetScaledWidth()/2 + 32*!dofrags)
 
 #define NG_SPACINGX 			64
 
@@ -606,8 +606,8 @@ void WI_drawBackground()
 			// scale all animations below to fit the size of the base pic
 			// The base pic is always scaled to fit the screen so this allows
 			// placing the animations precisely where they belong on the base pic
-			animwidth = background->GetScaledWidth();
-			animheight = background->GetScaledHeight();
+			animwidth = background->GetScaledWidthDouble();
+			animheight = background->GetScaledHeightDouble();
 			screen->FillBorder (NULL);
 			screen->DrawTexture(background, 0, 0, DTA_Fullscreen, true, TAG_DONE);
 		}
@@ -746,8 +746,8 @@ int WI_drawLF ()
 	// draw <LevelName> 
 	if (tex)
 	{
-		screen->DrawTexture(tex, midx - tex->GetWidth()*CleanXfac/2, y, DTA_CleanNoMove, true, TAG_DONE);
-		y += (tex->GetHeight() + BigFont->GetHeight()/4) * CleanYfac;
+		screen->DrawTexture(tex, midx - tex->GetScaledWidth()*CleanXfac/2, y, DTA_CleanNoMove, true, TAG_DONE);
+		y += (tex->GetScaledHeight() + BigFont->GetHeight()/4) * CleanYfac;
 	}
 	else 
 	{
@@ -761,8 +761,8 @@ int WI_drawLF ()
 		// don't draw 'finished' if the level name is too high!
 		if (gameinfo.gametype & GAME_DoomChex) 
 		{
-			screen->DrawTexture(finished, midx - finished->GetWidth()*CleanXfac/2, y, DTA_CleanNoMove, true, TAG_DONE);
-			return y + finished->GetHeight() * CleanYfac;
+			screen->DrawTexture(finished, midx - finished->GetScaledWidth()*CleanXfac/2, y, DTA_CleanNoMove, true, TAG_DONE);
+			return y + finished->GetScaledHeight() * CleanYfac;
 		}
 		else 
 		{
@@ -793,8 +793,8 @@ void WI_drawEL ()
 	// be careful with the added height so that it works for oversized 'entering' patches!
 	if (gameinfo.gametype & GAME_DoomChex)
 	{
-		screen->DrawTexture(entering, (SCREENWIDTH - entering->GetWidth() * CleanXfac) / 2, y, DTA_CleanNoMove, true, TAG_DONE);
-		y += (entering->GetHeight() + font->GetHeight()/4) * CleanYfac;
+		screen->DrawTexture(entering, (SCREENWIDTH - entering->GetScaledWidth() * CleanXfac) / 2, y, DTA_CleanNoMove, true, TAG_DONE);
+		y += (entering->GetScaledHeight() + font->GetHeight()/4) * CleanYfac;
 	}
 	else
 	{
@@ -808,7 +808,7 @@ void WI_drawEL ()
 	FTexture *tex = wbs->LName1;
 	if (tex)
 	{
-		screen->DrawTexture(tex, (SCREENWIDTH - tex->GetWidth() * CleanXfac) / 2, y, DTA_CleanNoMove, true, TAG_DONE);
+		screen->DrawTexture(tex, (SCREENWIDTH - tex->GetScaledWidth() * CleanXfac) / 2, y, DTA_CleanNoMove, true, TAG_DONE);
 	}
 	else
 	{
@@ -853,10 +853,10 @@ void WI_drawOnLnode( int   n, FTexture * c[] ,int numc)
 		int            bottom;
 
 
-		right = c[i]->GetWidth();
-		bottom = c[i]->GetHeight();
-		left = lnodes[n].x - c[i]->LeftOffset;
-		top = lnodes[n].y - c[i]->TopOffset;
+		right = c[i]->GetScaledWidth();
+		bottom = c[i]->GetScaledHeight();
+		left = lnodes[n].x - c[i]->GetScaledLeftOffset();
+		top = lnodes[n].y - c[i]->GetScaledTopOffset();
 		right += left;
 		bottom += top;
 		
@@ -980,7 +980,7 @@ void WI_drawTime (int x, int y, int t, bool no_sucks=false)
 	{ // "sucks"
 		if (sucks != NULL)
 		{
-			screen->DrawTexture (sucks, x - sucks->GetWidth(), y - IntermissionFont->GetHeight() - 2,
+			screen->DrawTexture (sucks, x - sucks->GetScaledWidth(), y - IntermissionFont->GetHeight() - 2,
 				DTA_Clean, true, TAG_DONE); 
 		}
 		else

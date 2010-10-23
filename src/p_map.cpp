@@ -4325,7 +4325,7 @@ void P_RadiusAttack (AActor *bombspot, AActor *bombsource, int bombdamage, int b
 		if (thing->flags3 & MF3_NORADIUSDMG && !(bombspot->flags4 & MF4_FORCERADIUSDMG))
 			continue;
 
-		if (!DamageSource && thing == bombsource)
+		if (!DamageSource && (thing == bombsource || thing == bombspot))
 		{ // don't damage the source of the explosion
 			continue;
 		}

@@ -833,10 +833,9 @@ void DrawHUD()
 	}
 	else
 	{
+		FString mapname;
 		char printstr[256];
 		int seconds;
-		cluster_info_t *thiscluster = FindClusterInfo (level.cluster);
-		bool hub = !!(thiscluster->flags&CLUSTER_HUB);
 		int length=8*SmallFont->GetCharWidth('0');
 		int fonth=SmallFont->GetHeight()+1;
 		int bottom=hudheight-1;
@@ -865,8 +864,8 @@ void DrawHUD()
 			}
 		}
 
-		mysnprintf(printstr, countof(printstr), "%s: %s", level.mapname, level.LevelName.GetChars());
-		screen->DrawText(SmallFont, hudcolor_titl, 1, hudheight-fonth-1, printstr,
+		ST_FormatMapName(mapname);
+		screen->DrawText(SmallFont, hudcolor_titl, 1, hudheight-fonth-1, mapname,
 			DTA_KeepRatio, true,
 			DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, TAG_DONE);
 

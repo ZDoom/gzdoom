@@ -381,6 +381,7 @@ DBaseStatusBar *CreateCustomStatusBar(int script=0);
 
 // Crosshair stuff ----------------------------------------------------------
 
+void ST_FormatMapName(FString &mapname, const char *mapnamecolor = "");
 void ST_LoadCrosshair(bool alwaysload=false);
 extern FTexture *CrosshairImage;
 

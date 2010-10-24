@@ -841,6 +841,13 @@ OptionValue OverlayTypes
 	2, "Overlay Only"
 }
 
+OptionValue MaplabelTypes
+{
+	0, "Never"
+	1, "Always"
+	2, "Not for hubs"
+}
+
 OptionMenu AutomapOptions
 {
 	Title "AUTOMAP OPTIONS"
@@ -858,6 +865,7 @@ OptionMenu AutomapOptions
 	Option "Show time elapsed",			"am_showtime", "OnOff"
 	Option "Show total time elapsed",	"am_showtotaltime", "OnOff"
 	Option "Show secrets on map",		"am_map_secrets", "SecretTypes"
+	Option "Show map label",			"am_showmaplabel", "MaplabelTypes"
 	Option "Draw map background",		"am_drawmapback", "OnOff"
 	Option "Show keys (cheat)",			"am_showkeys", "OnOff"
 }

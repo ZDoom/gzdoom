@@ -858,6 +858,7 @@ OptionMenu AutomapOptions
 	Option "Rotate automap",			"am_rotate", "RotateTypes"
 	Option "Overlay automap",			"am_overlay", "OverlayTypes"
 	Option "Enable textured display",	"am_textured", "OnOff"
+	Option "Follow player",				"am_followplayer", "OnOff"
 	StaticText " "
 	Option "Show item counts",			"am_showitems", "OnOff"
 	Option "Show monster counts",		"am_showmonsters", "OnOff"

@@ -385,8 +385,6 @@ static FTextureID marknums[10]; // numbers used for marking by the automap
 static mpoint_t markpoints[AM_NUMMARKPOINTS]; // where the points are
 static int markpointnum = 0; // next point to be assigned
 
-static int followplayer = 1; // specifies whether to follow the player around
-
 static FTextureID mapback;	// the automap background
 static fixed_t mapystart=0; // y-value for the start of the map bitmap...used in the parallax stuff.
 static fixed_t mapxstart=0; //x-value for the bitmap.
@@ -412,11 +410,14 @@ void AM_restoreScaleAndLoc ();
 void AM_minOutWindowScale ();
 
 
+CVAR(Bool, am_followplayer, true, CVAR_ARCHIVE)
+
+
 CCMD(am_togglefollow)
 {
-	followplayer = !followplayer;
+	am_followplayer = !am_followplayer;
 	f_oldloc.x = FIXED_MAX;
-	Printf ("%s\n", GStrings(followplayer ? "AMSTR_FOLLOWON" : "AMSTR_FOLLOWOFF"));
+	Printf ("%s\n", GStrings(am_followplayer ? "AMSTR_FOLLOWON" : "AMSTR_FOLLOWOFF"));
 }
 
 CCMD(am_togglegrid)
@@ -580,7 +581,7 @@ void AM_restoreScaleAndLoc ()
 {
 	m_w = old_m_w;
 	m_h = old_m_h;
-	if (!followplayer)
+	if (!am_followplayer)
 	{
 		m_x = old_m_x;
 		m_y = old_m_y;
@@ -777,7 +778,7 @@ void AM_changeWindowLoc ()
 {
 	if (0 != (m_paninc.x | m_paninc.y))
 	{
-		followplayer = 0;
+		am_followplayer = false;
 		f_oldloc.x = FIXED_MAX;
 	}
 
@@ -1199,7 +1200,7 @@ bool AM_Responder (event_t *ev, bool last)
 {
 	if (automapactive && (ev->type == EV_KeyDown || ev->type == EV_KeyUp))
 	{
-		if (followplayer)
+		if (am_followplayer)
 		{
 			// check for am_pan* and ignore in follow mode
 			const char *defbind = AutomapBindings.GetBind(ev->data1);
@@ -1312,7 +1313,7 @@ void AM_Ticker ()
 
 	amclock++;
 
-	if (followplayer)
+	if (am_followplayer)
 	{
 		AM_doFollowPlayer();
 	}

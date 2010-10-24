@@ -665,6 +665,7 @@ bad:	delete voxel;
 		}
 	}
 
+	voxel->LumpNum = lumpnum;
 	voxel->Palette = new BYTE[768];
 	memcpy(voxel->Palette, rawvoxel + voxelsize - 768, 768);
 

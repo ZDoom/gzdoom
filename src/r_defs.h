@@ -1158,6 +1158,7 @@ struct FVoxelMipLevel
 
 struct FVoxel
 {
+	int LumpNum;
 	int NumMips;
 	BYTE *Palette;
 	FVoxelMipLevel Mips[MAXVOXMIPS];

@@ -392,7 +392,12 @@ void DIntermissionScreenCast::Init(FIntermissionAction *desc, bool first)
 	mName = static_cast<FIntermissionActionCast*>(desc)->mName;
 	mClass = PClass::FindClass(static_cast<FIntermissionActionCast*>(desc)->mCastClass);
 	if (mClass != NULL) mDefaults = GetDefaultByType(mClass);
-	else mDefaults = NULL;
+	else 
+	{
+		mDefaults = NULL;
+		caststate = NULL;
+		return;
+	}
 
 	mCastSounds.Resize(static_cast<FIntermissionActionCast*>(desc)->mCastSounds.Size());
 	for (unsigned i=0; i < mCastSounds.Size(); i++)
@@ -405,15 +410,17 @@ void DIntermissionScreenCast::Init(FIntermissionAction *desc, bool first)
 	if (mClass->IsDescendantOf(RUNTIME_CLASS(APlayerPawn)))
 	{
 		advplayerstate = mDefaults->MissileState;
-		castsprite = skins[players[consoleplayer].userinfo.skin].sprite;
 		casttranslation = translationtables[TRANSLATION_Players][consoleplayer];
 	}
 	else
 	{
 		advplayerstate = NULL;
-		if (caststate != NULL) castsprite = caststate->sprite;
-		else castsprite = -1;
 		casttranslation = NULL;
+		if (mDefaults->Translation != 0)
+		{
+			casttranslation = translationtables[GetTranslationType(mDefaults->Translation)]
+												[GetTranslationIndex(mDefaults->Translation)];
+		}
 	}
 	castdeath = false;
 	castframes = 0;
@@ -434,22 +441,25 @@ int DIntermissionScreenCast::Responder (event_t *ev)
 
 	castdeath = true;
 
-	FName label[] = {NAME_Death, NAME_Cast};
-	caststate = mClass->ActorInfo->FindState(2, label);
-	if (caststate == NULL) return -1;
-
-	casttics = caststate->GetTics();
-	castframes = 0;
-	castattacking = false;
-
-	if (mClass->IsDescendantOf(RUNTIME_CLASS(APlayerPawn)))
+	if (mClass != NULL)
 	{
-		int snd = S_FindSkinnedSound(players[consoleplayer].mo, "*death");
-		if (snd != 0) S_Sound (CHAN_VOICE | CHAN_UI, snd, 1, ATTN_NONE);
-	}
-	else if (mDefaults->DeathSound)
-	{
-		S_Sound (CHAN_VOICE | CHAN_UI, mDefaults->DeathSound, 1, ATTN_NONE);
+		FName label[] = {NAME_Death, NAME_Cast};
+		caststate = mClass->ActorInfo->FindState(2, label);
+		if (caststate == NULL) return -1;
+
+		casttics = caststate->GetTics();
+		castframes = 0;
+		castattacking = false;
+
+		if (mClass->IsDescendantOf(RUNTIME_CLASS(APlayerPawn)))
+		{
+			int snd = S_FindSkinnedSound(players[consoleplayer].mo, "*death");
+			if (snd != 0) S_Sound (CHAN_VOICE | CHAN_UI, snd, 1, ATTN_NONE);
+		}
+		else if (mDefaults->DeathSound)
+		{
+			S_Sound (CHAN_VOICE | CHAN_UI, mDefaults->DeathSound, 1, ATTN_NONE);
+		}
 	}
 	return true;
 }
@@ -562,6 +572,20 @@ void DIntermissionScreenCast::Drawer ()
 	// draw the current frame in the middle of the screen
 	if (caststate != NULL)
 	{
+		int castsprite;
+
+		if (!(mDefaults->flags4 & MF4_NOSKIN) && 
+			mDefaults->SpawnState != NULL && caststate->sprite == mDefaults->SpawnState->sprite &&
+			mClass->IsDescendantOf(RUNTIME_CLASS(APlayerPawn)) &&
+			skins != NULL)
+		{
+			castsprite = skins[players[consoleplayer].userinfo.skin].sprite;
+		}
+		else
+		{
+			castsprite = caststate->sprite;
+		}
+
 		sprframe = &SpriteFrames[sprites[castsprite].spriteframes + caststate->GetFrame()];
 		pic = TexMan(sprframe->Texture[0]);
 

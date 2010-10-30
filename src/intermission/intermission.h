@@ -234,7 +234,6 @@ class DIntermissionScreenCast : public DIntermissionScreen
 	TArray<FICastSound> mCastSounds;
 
 	int 			casttics;
-	int				castsprite;			// [RH] For overriding the player sprite with a skin
 	const FRemapTable *casttranslation;	// [RH] Draw "our hero" with their chosen suit color
 	FState*			caststate;
 	FState*			basestate;

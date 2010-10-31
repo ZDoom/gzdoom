@@ -6470,6 +6470,10 @@
 			Name="ZScript"
 			>
 			<File
+				RelativePath=".\src\zscript\ast.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\src\zscript\vm.h"
 				>
 			</File>

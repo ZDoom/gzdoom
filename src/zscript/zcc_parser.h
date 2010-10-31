@@ -95,6 +95,8 @@ enum EZCCTreeNodeType
 	AST_Declarator,
 	AST_VarDeclarator,
 	AST_FuncDeclarator,
+
+	NUM_AST_NODE_TYPES
 };
 
 enum EZCCBuiltinType
@@ -117,6 +119,8 @@ enum EZCCBuiltinType
 	ZCC_Vector4,
 	ZCC_Name,
 	ZCC_UserType,
+
+	ZCC_NUM_BUILT_IN_TYPES
 };
 
 enum EZCCExprType
@@ -176,7 +180,9 @@ enum EZCCExprType
 
 	PEX_Scope,
 
-	PEX_Trinary
+	PEX_Trinary,
+
+	PEX_COUNT_OF
 };
 
 struct ZCC_TreeNode
@@ -487,3 +493,5 @@ struct ZCC_FuncDeclarator : ZCC_Declarator
 	ZCC_FuncParamDecl *Params;
 	ENamedName Name;
 };
+
+FString ZCC_PrintAST(ZCC_TreeNode *root);

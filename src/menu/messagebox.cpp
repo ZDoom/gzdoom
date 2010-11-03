@@ -679,7 +679,7 @@ CCMD (quickload)
 
 	if (netgame)
 	{
-		M_StartMessage (GStrings("QLOADNET"), NULL);
+		M_StartMessage (GStrings("QLOADNET"), 1);
 		return;
 	}
 		

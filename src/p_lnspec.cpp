@@ -1897,7 +1897,7 @@ void AdjustPusher (int tag, int magnitude, int angle, DPusher::EPusher type)
 		unsigned int i;
 		for (i = 0; i < numcollected; i++)
 		{
-			if (Collection[i].RefNum == sectors[secnum].tag)
+			if (Collection[i].RefNum == sectors[secnum].sectornum)
 				break;
 		}
 		if (i == numcollected)

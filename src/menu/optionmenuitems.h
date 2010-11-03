@@ -891,13 +891,13 @@ public:
 		if (mkey == MKEY_Left)
 		{
 			if (--mSelection < 0) mSelection = mMaxValid;
-			S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
+			S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
 			return true;
 		}
 		else if (mkey == MKEY_Right)
 		{
 			if (++mSelection > mMaxValid) mSelection = 0;
-			S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
+			S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
 			return true;
 		}
 		else 

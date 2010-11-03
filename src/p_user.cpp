@@ -2156,7 +2156,7 @@ void P_PlayerThink (player_t *player)
 		P_DeathThink (player);
 		return;
 	}
-	if (player->jumpTics)
+	if (player->jumpTics > 0)
 	{
 		player->jumpTics--;
 	}
@@ -2217,7 +2217,7 @@ void P_PlayerThink (player_t *player)
 		// [RH] check for jump
 		if (cmd->ucmd.buttons & BT_JUMP)
 		{
-			if (player->crouchoffset!=0)
+			if (player->crouchoffset != 0)
 			{
 				// Jumping while crouching will force an un-crouch but not jump
 				player->crouching = 1;
@@ -2231,7 +2231,7 @@ void P_PlayerThink (player_t *player)
 			{
 				player->mo->velz = 3*FRACUNIT;
 			}
-			else if (level.IsJumpingAllowed() && onground && !player->jumpTics)
+			else if (level.IsJumpingAllowed() && onground && player->jumpTics == 0)
 			{
 				fixed_t jumpvelz = player->mo->JumpZ * 35 / TICRATE;
 
@@ -2241,7 +2241,7 @@ void P_PlayerThink (player_t *player)
 				player->mo->velz += jumpvelz;
 				S_Sound (player->mo, CHAN_BODY, "*jump", 1, ATTN_NORM);
 				player->mo->flags2 &= ~MF2_ONMOBJ;
-				player->jumpTics = 18*TICRATE/35;
+				player->jumpTics = -1;
 			}
 		}
 

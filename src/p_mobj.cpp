@@ -2253,7 +2253,7 @@ void P_ZMovement (AActor *mo, fixed_t oldfloorz)
 				mo->HitFloor ();
 				if (mo->player)
 				{
-					if (mo->player->jumpTics != 0 && mo->velz < -grav*4)
+					if (mo->player->jumpTics < 0 || mo->velz < minvel)
 					{ // delay any jumping for a short while
 						mo->player->jumpTics = 7;
 					}

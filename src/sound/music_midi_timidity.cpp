@@ -20,8 +20,10 @@ void ChildSigHandler (int signum)
 #endif
 
 #ifdef _WIN32
-const char TimidityPPMIDIDevice::EventName[] = "TiMidity Killer";
+BOOL SafeTerminateProcess(HANDLE hProcess, UINT uExitCode);
+
 static char TimidityTitle[] = "TiMidity (ZDoom Launched)";
+const char TimidityPPMIDIDevice::EventName[] = "TiMidity Killer";
 
 CVAR (String, timidity_exe, "timidity.exe", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 #else
@@ -71,7 +73,6 @@ TimidityPPMIDIDevice::TimidityPPMIDIDevice()
 	: DiskName("zmid"),
 #ifdef _WIN32
 	  ReadWavePipe(INVALID_HANDLE_VALUE), WriteWavePipe(INVALID_HANDLE_VALUE),
-	  KillerEvent(INVALID_HANDLE_VALUE),
 	  ChildProcess(INVALID_HANDLE_VALUE),
 	  Validated(false)
 #else
@@ -107,11 +108,6 @@ TimidityPPMIDIDevice::~TimidityPPMIDIDevice ()
 	{
 		CloseHandle (ReadWavePipe);
 		ReadWavePipe = INVALID_HANDLE_VALUE;
-	}
-	if (KillerEvent != INVALID_HANDLE_VALUE)
-	{
-		CloseHandle (KillerEvent);
-		KillerEvent = INVALID_HANDLE_VALUE;
 	}
 #else
 	if (WavePipe[1] != -1)
@@ -186,12 +182,6 @@ int TimidityPPMIDIDevice::Open(void (*callback)(unsigned int, void *, DWORD, DWO
 	}
 
 	Validated = true;
-	KillerEvent = CreateEvent(NULL, FALSE, FALSE, EventName);
-	if (KillerEvent == INVALID_HANDLE_VALUE)
-	{
-		Printf(PRINT_BOLD, "Could not create TiMidity++ kill event.\n");
-		return 102;
-	}
 #endif // WIN32
 
 	CommandLine.Format("%s %s -EFchorus=%s -EFreverb=%s -s%d ",
@@ -398,11 +388,11 @@ bool TimidityPPMIDIDevice::LaunchTimidity ()
 	startup.wShowWindow = SW_SHOWMINNOACTIVE;
 
 	if (CreateProcess(NULL, CommandLine.LockBuffer(), NULL, NULL, TRUE,
-		/*HIGH_PRIORITY_CLASS|*/DETACHED_PROCESS, NULL, NULL, &startup, &procInfo))
+		DETACHED_PROCESS, NULL, NULL, &startup, &procInfo))
 	{
 		ChildProcess = procInfo.hProcess;
 		//SetThreadPriority (procInfo.hThread, THREAD_PRIORITY_HIGHEST);
-		CloseHandle (procInfo.hThread);		// Don't care about the created thread
+		CloseHandle(procInfo.hThread);		// Don't care about the created thread
 		CommandLine.UnlockBuffer();
 		return true;
 	}
@@ -647,10 +637,8 @@ void TimidityPPMIDIDevice::Stop ()
 #ifdef _WIN32
 		if (ChildProcess != INVALID_HANDLE_VALUE)
 		{
-			SetEvent(KillerEvent);
-			if (WaitForSingleObject(ChildProcess, 500) != WAIT_OBJECT_0)
+			if (!SafeTerminateProcess(ChildProcess, 666) && GetLastError() != ERROR_PROCESS_ABORTED)
 			{
-				ResetEvent(KillerEvent);
 				TerminateProcess(ChildProcess, 666);
 			}
 			CloseHandle(ChildProcess);
@@ -670,3 +658,68 @@ void TimidityPPMIDIDevice::Stop ()
 	}
 	Started = false;
 }
+
+#ifdef _WIN32
+/*
+	Safely terminate a process by creating a remote thread
+	in the process that calls ExitProcess
+
+	Source is a Dr Dobbs article circa 1999.
+*/
+typedef HANDLE (WINAPI *CreateRemoteThreadProto)(HANDLE,LPSECURITY_ATTRIBUTES,SIZE_T,LPTHREAD_START_ROUTINE,LPVOID,DWORD,LPDWORD);
+
+BOOL SafeTerminateProcess(HANDLE hProcess, UINT uExitCode)
+{
+	DWORD dwTID, dwCode;
+	HRESULT dwErr = 0;
+	HANDLE hRT = NULL;
+	HINSTANCE hKernel = GetModuleHandle("Kernel32");
+	BOOL bSuccess = FALSE;
+
+	// Detect the special case where the process is already dead...
+	if ( GetExitCodeProcess(hProcess, &dwCode) && (dwCode == STILL_ACTIVE) )
+	{
+		FARPROC pfnExitProc;
+		CreateRemoteThreadProto pfCreateRemoteThread;
+
+		pfnExitProc = GetProcAddress(hKernel, "ExitProcess");
+
+		// CreateRemoteThread does not exist on 9x systems.
+		pfCreateRemoteThread = (CreateRemoteThreadProto)GetProcAddress(hKernel, "CreateRemoteThread");
+
+		if (pfCreateRemoteThread == NULL)
+		{
+			dwErr = ERROR_INVALID_FUNCTION;
+		}
+		else
+		{
+			hRT = pfCreateRemoteThread(hProcess,
+										NULL,
+										0,
+										(LPTHREAD_START_ROUTINE)pfnExitProc,
+										(PVOID)(UINT_PTR)uExitCode, 0, &dwTID);
+
+			if ( hRT == NULL )
+				dwErr = GetLastError();
+		}
+	}
+	else
+	{
+		dwErr = ERROR_PROCESS_ABORTED;
+	}
+
+	if ( hRT )
+	{
+		// Must wait process to terminate to guarantee that it has exited...
+		WaitForSingleObject(hProcess, INFINITE);
+
+		CloseHandle(hRT);
+		bSuccess = TRUE;
+	}
+
+	if ( !bSuccess )
+		SetLastError(dwErr);
+
+	return bSuccess;
+}
+#endif

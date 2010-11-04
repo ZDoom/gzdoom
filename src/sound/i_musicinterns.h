@@ -202,7 +202,6 @@ protected:
 #ifdef _WIN32
 	HANDLE ReadWavePipe;
 	HANDLE WriteWavePipe;
-	HANDLE KillerEvent;
 	HANDLE ChildProcess;
 	bool Validated;
 	bool ValidateTimidity();

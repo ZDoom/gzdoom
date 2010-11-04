@@ -2156,9 +2156,13 @@ void P_PlayerThink (player_t *player)
 		P_DeathThink (player);
 		return;
 	}
-	if (player->jumpTics > 0)
+	if (player->jumpTics != 0)
 	{
 		player->jumpTics--;
+		if (onground && player->jumpTics < -18)
+		{
+			player->jumpTics = 0;
+		}
 	}
 	if (player->morphTics && !(player->cheats & CF_PREDICTING))
 	{

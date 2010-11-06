@@ -1563,6 +1563,9 @@ $ifgame(heretic) SWSTRING = "ONLY AVAILABLE IN THE REGISTERED VERSION";
 
 MNU_EPISODE			= "Select Episode";
 
+WI_FINISHED			= "finished";
+WI_ENTERING			= "Now entering:";
+
 // Bloodbath announcer
 
 BBA_BONED = "%k boned %o like a fish";

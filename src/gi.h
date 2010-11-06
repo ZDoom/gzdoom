@@ -66,6 +66,12 @@ struct gameborder_t
 	char br[8];
 };
 
+struct FGIFont
+{
+	FName fontname;
+	FName color;
+};
+
 struct gameinfo_t
 {
 	int flags;
@@ -130,6 +136,9 @@ struct gameinfo_t
 	int TextScreenY;
 	FName DefaultEndSequence;
 	FString mMapArrow, mCheatMapArrow;
+	FGIFont mStatscreenMapNameFont;
+	FGIFont mStatscreenFinishedFont;
+	FGIFont mStatscreenEnteringFont;
 
 	const char *GetFinalePage(unsigned int num) const;
 };

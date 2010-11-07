@@ -477,8 +477,6 @@ MusInfo *I_RegisterSong (const char *filename, BYTE *musiccache, int offset, int
 	EMIDIType miditype = IdentifyMIDIType(id, sizeof(id));
 	if (miditype != MIDI_NOTMIDI)
 	{
-		TArray<BYTE> midi;
-
 		EMidiDevice devtype = (EMidiDevice)device;
 
 retry_as_fmod:

@@ -69,7 +69,12 @@ void ASkyViewpoint::BeginPlay ()
 void ASkyViewpoint::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
-	arc << bInSkybox << bAlways << Mate << PlaneAlpha;
+	arc << bInSkybox << bAlways << Mate;
+	if (SaveVersion < 2992)
+	{
+		fixed_t eatme;
+		arc << eatme;
+	}
 }
 
 void ASkyViewpoint::Destroy ()

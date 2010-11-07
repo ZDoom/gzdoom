@@ -1295,6 +1295,7 @@ void R_NewWall (bool needlights)
 				// killough 3/7/98: Add checks for (x,y) offsets
 				|| backsector->GetXOffset(sector_t::floor) != frontsector->GetXOffset(sector_t::floor)
 				|| backsector->GetYOffset(sector_t::floor) != frontsector->GetYOffset(sector_t::floor)
+				|| backsector->GetAlpha(sector_t::floor) != frontsector->GetAlpha(sector_t::floor)
 
 				// killough 4/15/98: prevent 2s normals
 				// from bleeding through deep water
@@ -1326,6 +1327,7 @@ void R_NewWall (bool needlights)
 				// killough 3/7/98: Add checks for (x,y) offsets
 				|| backsector->GetXOffset(sector_t::ceiling) != frontsector->GetXOffset(sector_t::ceiling)
 				|| backsector->GetYOffset(sector_t::ceiling) != frontsector->GetYOffset(sector_t::ceiling)
+				|| backsector->GetAlpha(sector_t::ceiling) != frontsector->GetAlpha(sector_t::ceiling)
 
 				// killough 4/15/98: prevent 2s normals
 				// from bleeding through fake ceilings

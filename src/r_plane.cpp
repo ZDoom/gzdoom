@@ -561,6 +561,7 @@ visplane_t *R_FindPlane (const secplane_t &height, FTextureID picnum, int lightl
 		plane = height;
 		isskybox = false;
 		sky = 0;	// not skyflatnum so it can't be a sky
+		skybox = NULL;
 		alpha = FRACUNIT;
 	}
 		
@@ -728,6 +729,7 @@ visplane_t *R_CheckPlane (visplane_t *pl, int start, int stop)
 		new_pl->viewz = pl->viewz;
 		new_pl->viewangle = pl->viewangle;
 		new_pl->sky = pl->sky;
+		new_pl->alpha = pl->alpha;
 		pl = new_pl;
 		pl->minx = start;
 		pl->maxx = stop;
@@ -1178,7 +1180,6 @@ void R_DrawSkyBoxes ()
 		viewxStack.Push (viewx);
 		viewyStack.Push (viewy);
 		viewzStack.Push (viewz);
-		pl->alpha = sky->PlaneAlpha;
 		visplaneStack.Push (pl);
 
 		R_RenderBSPNode (nodes + numnodes - 1);

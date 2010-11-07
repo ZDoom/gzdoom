@@ -870,7 +870,7 @@ static void SetupFloorPortal (AStackPoint *point)
 	if (Sector->FloorSkyBox != NULL)
 	{
 		Sector->FloorSkyBox->Mate = point;
-		Sector->FloorSkyBox->PlaneAlpha = Scale (point->args[0], OPAQUE, 255);
+		Sector->SetAlpha(sector_t::floor, Scale (point->args[0], OPAQUE, 255));
 	}
 }
 
@@ -882,7 +882,7 @@ static void SetupCeilingPortal (AStackPoint *point)
 	if (Sector->CeilingSkyBox != NULL)
 	{
 		Sector->CeilingSkyBox->Mate = point;
-		Sector->CeilingSkyBox->PlaneAlpha = Scale (point->args[0], OPAQUE, 255);
+		Sector->SetAlpha(sector_t::ceiling, Scale (point->args[0], OPAQUE, 255));
 	}
 }
 
@@ -919,6 +919,7 @@ void P_SetupPortals()
 					fixed_t deltay1 = points[i]->Mate->y - points[i]->y;
 					fixed_t deltax2 = points[j]->Mate->x - points[j]->x;
 					fixed_t deltay2 = points[j]->Mate->y - points[j]->y;
+
 					if (deltax1 == deltax2 && deltay1 == deltay2)
 					{
 						if (points[j]->Sector->FloorSkyBox == points[j]->Mate)

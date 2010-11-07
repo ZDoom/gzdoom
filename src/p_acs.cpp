@@ -2536,7 +2536,8 @@ enum
 	APROP_DamageFactor	= 24,
 	APROP_MasterTID     = 25,
 	APROP_TargetTID		= 26,
-	APROP_TracerTID		= 27
+	APROP_TracerTID		= 27,
+	APROP_WaterLevel	= 28
 };	
 
 // These are needed for ACS's APROP_RenderStyle
@@ -2778,6 +2779,7 @@ int DLevelScript::GetActorProperty (int tid, int property)
 	case APROP_MasterTID:	return DoGetMasterTID (actor);
 	case APROP_TargetTID:	return (actor->target != NULL)? actor->target->tid : 0;
 	case APROP_TracerTID:	return (actor->tracer != NULL)? actor->tracer->tid : 0;
+	case APROP_WaterLevel:	return actor->waterlevel;
 	default:				return 0;
 	}
 }

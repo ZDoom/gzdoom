@@ -4526,6 +4526,8 @@ void P_SpawnBlood (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int damage, AAc
 		th = Spawn (bloodcls, x, y, z, NO_REPLACE); // GetBloodType already performed the replacement
 		th->velz = FRACUNIT*2;
 		th->angle = dir;
+		// [NG] Applying PUFFGETSOWNER to the blood will make it target the owner
+		if (th->flags5 & MF5_PUFFGETSOWNER) th->target = originator;
 		if (gameinfo.gametype & GAME_DoomChex)
 		{
 			th->tics -= pr_spawnblood() & 3;
@@ -4667,6 +4669,8 @@ void P_RipperBlood (AActor *mo, AActor *bleeder)
 	{
 		AActor *th;
 		th = Spawn (bloodcls, x, y, z, NO_REPLACE); // GetBloodType already performed the replacement
+		// [NG] Applying PUFFGETSOWNER to the blood will make it target the owner
+		if (th->flags5 & MF5_PUFFGETSOWNER) th->target = bleeder;
 		if (gameinfo.gametype == GAME_Heretic)
 			th->flags |= MF_NOGRAVITY;
 		th->velx = mo->velx >> 1;

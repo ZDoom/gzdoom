@@ -1832,8 +1832,8 @@ void P_FinishLoadingLineDef(line_t *ld, int alpha)
 
 	ld->frontsector = ld->sidedef[0] != NULL ? ld->sidedef[0]->sector : NULL;
 	ld->backsector  = ld->sidedef[1] != NULL ? ld->sidedef[1]->sector : NULL;
-	float dx = FIXED2FLOAT(ld->v2->x - ld->v1->x);
-	float dy = FIXED2FLOAT(ld->v2->y - ld->v1->y);
+	double dx = FIXED2DBL(ld->v2->x - ld->v1->x);
+	double dy = FIXED2DBL(ld->v2->y - ld->v1->y);
 	int linenum = int(ld-lines);
 
 	if (ld->frontsector == NULL)
@@ -1842,7 +1842,7 @@ void P_FinishLoadingLineDef(line_t *ld, int alpha)
 	}
 
 	// [RH] Set some new sidedef properties
-	int len = (int)(sqrtf (dx*dx + dy*dy) + 0.5f);
+	int len = (int)(sqrt (dx*dx + dy*dy) + 0.5f);
 
 	if (ld->sidedef[0] != NULL)
 	{

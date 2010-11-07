@@ -1533,7 +1533,7 @@ void AM_drawGrid (const AMColor &color)
 
 	// [RH] Calculate a minimum for how long the grid lines should be so that
 	// they cover the screen at any rotation.
-	minlen = (fixed_t)sqrtf ((float)m_w*(float)m_w + (float)m_h*(float)m_h);
+	minlen = (fixed_t)sqrt ((double)m_w*(double)m_w + (double)m_h*(double)m_h);
 	extx = (minlen - m_w) / 2;
 	exty = (minlen - m_h) / 2;
 

@@ -4305,8 +4305,8 @@ void P_RadiusAttack (AActor *bombspot, AActor *bombsource, int bombdamage, int b
 		return;
 	fulldamagedistance = clamp<int>(fulldamagedistance, 0, bombdistance-1);
 
-	float bombdistancefloat = 1.f / (float)(bombdistance - fulldamagedistance);
-	float bombdamagefloat = (float)bombdamage;
+	double bombdistancefloat = 1.f / (double)(bombdistance - fulldamagedistance);
+	double bombdamagefloat = (double)bombdamage;
 
 	FVector3 bombvec(FIXED2FLOAT(bombspot->x), FIXED2FLOAT(bombspot->y), FIXED2FLOAT(bombspot->z));
 
@@ -4349,29 +4349,29 @@ void P_RadiusAttack (AActor *bombspot, AActor *bombsource, int bombdamage, int b
 		{
 			// [RH] New code. The bounding box only covers the
 			// height of the thing and not the height of the map.
-			float points;
-			float len;
+			double points;
+			double len;
 			fixed_t dx, dy;
-			float boxradius;
+			double boxradius;
 
 			dx = abs (thing->x - bombspot->x);
 			dy = abs (thing->y - bombspot->y);
-			boxradius = float (thing->radius);
+			boxradius = double (thing->radius);
 
 			// The damage pattern is square, not circular.
-			len = float (dx > dy ? dx : dy);
+			len = double (dx > dy ? dx : dy);
 
 			if (bombspot->z < thing->z || bombspot->z >= thing->z + thing->height)
 			{
-				float dz;
+				double dz;
 
 				if (bombspot->z > thing->z)
 				{
-					dz = float (bombspot->z - thing->z - thing->height);
+					dz = double (bombspot->z - thing->z - thing->height);
 				}
 				else
 				{
-					dz = float (thing->z - bombspot->z);
+					dz = double (thing->z - bombspot->z);
 				}
 				if (len <= boxradius)
 				{
@@ -4380,7 +4380,7 @@ void P_RadiusAttack (AActor *bombspot, AActor *bombsource, int bombdamage, int b
 				else
 				{
 					len -= boxradius;
-					len = sqrtf (len*len + dz*dz);
+					len = sqrt (len*len + dz*dz);
 				}
 			}
 			else
@@ -4390,18 +4390,18 @@ void P_RadiusAttack (AActor *bombspot, AActor *bombsource, int bombdamage, int b
 					len = 0.f;
 			}
 			len /= FRACUNIT;
-			len = clamp<float>(len - (float)fulldamagedistance, 0, len);
+			len = clamp<double>(len - (double)fulldamagedistance, 0, len);
 			points = bombdamagefloat * (1.f - len * bombdistancefloat);
 			if (thing == bombsource)
 			{
 				points = points * splashfactor;
 			}
-			points *= thing->GetClass()->Meta.GetMetaFixed(AMETA_RDFactor, FRACUNIT)/(float)FRACUNIT;
+			points *= thing->GetClass()->Meta.GetMetaFixed(AMETA_RDFactor, FRACUNIT)/(double)FRACUNIT;
 
 			if (points > 0.f && P_CheckSight (thing, bombspot, SF_IGNOREVISIBILITY|SF_IGNOREWATERBOUNDARY))
 			{ // OK to damage; target is in direct path
-				float velz;
-				float thrust;
+				double velz;
+				double thrust;
 				int damage = (int)points;
 
 				if (bombdodamage) P_DamageMobj (thing, bombspot, bombsource, damage, bombmod);
@@ -4415,12 +4415,12 @@ void P_RadiusAttack (AActor *bombspot, AActor *bombsource, int bombdamage, int b
 					{
 						if (bombsource == NULL  || !(bombsource->flags2 & MF2_NODMGTHRUST))
 						{
-							thrust = points * 0.5f / (float)thing->Mass;
+							thrust = points * 0.5f / (double)thing->Mass;
 							if (bombsource == thing)
 							{
 								thrust *= selfthrustscale;
 							}
-							velz = (float)(thing->z + (thing->height>>1) - bombspot->z) * thrust;
+							velz = (double)(thing->z + (thing->height>>1) - bombspot->z) * thrust;
 							if (bombsource != thing)
 							{
 								velz *= 0.5f;
@@ -4460,7 +4460,7 @@ void P_RadiusAttack (AActor *bombspot, AActor *bombsource, int bombdamage, int b
 			{ // OK to damage; target is in direct path
 				dist = clamp<int>(dist - fulldamagedistance, 0, dist);
 				int damage = Scale (bombdamage, bombdistance-dist, bombdistance);
-				damage = (int)((float)damage * splashfactor);
+				damage = (int)((double)damage * splashfactor);
 
 				damage = Scale(damage, thing->GetClass()->Meta.GetMetaFixed(AMETA_RDFactor, FRACUNIT), FRACUNIT);
 				if (damage > 0)

@@ -167,11 +167,15 @@ if( WIN32 )
 			message( STATUS "Looking for al.h - not found" )
 		endif( OPENAL_INCLUDE_DIR )
 
-		if( NOT OPENAL_INCLUDE_DIR OR NOT GLIB_INCLUDE_DIR OR NOT GST_INCLUDE_DIR )
+		if( NOT OPENAL_INCLUDE_DIR )
 			set( NO_OPENAL ON )
-		else( NOT OPENAL_INCLUDE_DIR OR NOT GLIB_INCLUDE_DIR OR NOT GST_INCLUDE_DIR )
-			include_directories( ${OPENAL_INCLUDE_DIR} ${GLIB_INCLUDE_DIR} ${GST_INCLUDE_DIR} )
-		endif( NOT OPENAL_INCLUDE_DIR OR NOT GLIB_INCLUDE_DIR OR NOT GST_INCLUDE_DIR )
+		else( NOT OPENAL_INCLUDE_DIR )
+			include_directories( ${OPENAL_INCLUDE_DIR} )
+			if( GLIB_INCLUDE_DIR AND GST_INCLUDE_DIR )
+				include_directories( ${OPENAL_INCLUDE_DIR} ${GLIB_INCLUDE_DIR} ${GST_INCLUDE_DIR} )
+				set( WITH_GSTREAMER ON )
+			endif( GLIB_INCLUDE_DIR AND GST_INCLUDE_DIR )
+		endif( NOT OPENAL_INCLUDE_DIR )
 	endif( NOT NO_OPENAL )
 
 
@@ -191,38 +195,51 @@ if( WIN32 )
 		oleaut32 )
 
 	if( NOT NO_OPENAL )
-		message( STATUS "Looking for GST libraries" )
+		message( STATUS "Looking for OpenAL library" )
 		find_library( OPENAL_LIBRARY NAMES OpenAL32
 			PATHS ${OPENAL_SEARCH_PATHS}
 			PATH_SUFFIXES lib )
-		find_library( GST_LIBRARY1 NAMES gstapp-0.10
-			PATHS ${GST_SEARCH_PATHS}
-			PATH_SUFFIXES lib )
-		find_library( GST_LIBRARY2 NAMES gstaudio-0.10
-			PATHS ${GST_SEARCH_PATHS}
-			PATH_SUFFIXES lib )
-		find_library( GST_LIBRARY3 NAMES gstreamer-0.10
-			PATHS ${GST_SEARCH_PATHS}
-			PATH_SUFFIXES lib )
-		find_library( GST_LIBRARY4 NAMES gthread-2.0
-			PATHS ${GST_SEARCH_PATHS}
-			PATH_SUFFIXES lib )
-		find_library( GST_LIBRARY5 NAMES gmodule-2.0
-			PATHS ${GST_SEARCH_PATHS}
-			PATH_SUFFIXES lib )
-		find_library( GST_LIBRARY6 NAMES gobject-2.0
-			PATHS ${GST_SEARCH_PATHS}
-			PATH_SUFFIXES lib )
-		find_library( GST_LIBRARY7 NAMES glib-2.0
-			PATHS ${GST_SEARCH_PATHS}
-			PATH_SUFFIXES lib )
-		if( OPENAL_LIBRARY AND GST_LIBRARY1 AND GST_LIBRARY2 AND GST_LIBRARY3 AND GST_LIBRARY4 AND GST_LIBRARY5 AND GST_LIBRARY6 AND GST_LIBRARY7 )
-			set( ZDOOM_LIBS ${ZDOOM_LIBS} "${OPENAL_LIBRARY}" "${GST_LIBRARY1}" "${GST_LIBRARY2}" "${GST_LIBRARY3}" "${GST_LIBRARY4}" "${GST_LIBRARY5}" "${GST_LIBRARY6}" "${GST_LIBRARY7}" )
-			message( STATUS "Looking for GST libraries - found" )
-		else( OPENAL_LIBRARY AND GST_LIBRARY1 AND GST_LIBRARY2 AND GST_LIBRARY3 AND GST_LIBRARY4 AND GST_LIBRARY5 AND GST_LIBRARY6 AND GST_LIBRARY7 )
+
+		if( NOT OPENAL_LIBRARY )
 			set( NO_OPENAL ON )
-			message( STATUS "Looking for GST libraries - not found" )
-		endif( OPENAL_LIBRARY AND GST_LIBRARY1 AND GST_LIBRARY2 AND GST_LIBRARY3 AND GST_LIBRARY4 AND GST_LIBRARY5 AND GST_LIBRARY6 AND GST_LIBRARY7 )
+			message( STATUS "Looking for OpenAL library - not found" )
+		else( NOT OPENAL_LIBRARY )
+			set( ZDOOM_LIBS ${ZDOOM_LIBS} "${OPENAL_LIBRARY}" )
+			message( STATUS "Looking for OpenAL library - found" )
+		endif( NOT OPENAL_LIBRARY )
+
+		if( WITH_GSTREAMER AND NOT NO_OPENAL )
+			message( STATUS "Looking for GST libraries" )
+			find_library( GST_LIBRARY1 NAMES gstapp-0.10
+				PATHS ${GST_SEARCH_PATHS}
+				PATH_SUFFIXES lib )
+			find_library( GST_LIBRARY2 NAMES gstaudio-0.10
+				PATHS ${GST_SEARCH_PATHS}
+				PATH_SUFFIXES lib )
+			find_library( GST_LIBRARY3 NAMES gstreamer-0.10
+				PATHS ${GST_SEARCH_PATHS}
+				PATH_SUFFIXES lib )
+			find_library( GST_LIBRARY4 NAMES gthread-2.0
+				PATHS ${GST_SEARCH_PATHS}
+				PATH_SUFFIXES lib )
+			find_library( GST_LIBRARY5 NAMES gmodule-2.0
+				PATHS ${GST_SEARCH_PATHS}
+				PATH_SUFFIXES lib )
+			find_library( GST_LIBRARY6 NAMES gobject-2.0
+				PATHS ${GST_SEARCH_PATHS}
+				PATH_SUFFIXES lib )
+			find_library( GST_LIBRARY7 NAMES glib-2.0
+				PATHS ${GST_SEARCH_PATHS}
+				PATH_SUFFIXES lib )
+
+			if( GST_LIBRARY1 AND GST_LIBRARY2 AND GST_LIBRARY3 AND GST_LIBRARY4 AND GST_LIBRARY5 AND GST_LIBRARY6 AND GST_LIBRARY7 )
+				set( ZDOOM_LIBS ${ZDOOM_LIBS} "${GST_LIBRARY1}" "${GST_LIBRARY2}" "${GST_LIBRARY3}" "${GST_LIBRARY4}" "${GST_LIBRARY5}" "${GST_LIBRARY6}" "${GST_LIBRARY7}" )
+				message( STATUS "Looking for GST libraries - found" )
+			else( GST_LIBRARY1 AND GST_LIBRARY2 AND GST_LIBRARY3 AND GST_LIBRARY4 AND GST_LIBRARY5 AND GST_LIBRARY6 AND GST_LIBRARY7 )
+				set( WITH_GSTREAMER OFF )
+				message( STATUS "Looking for GST libraries - not found" )
+			endif( GST_LIBRARY1 AND GST_LIBRARY2 AND GST_LIBRARY3 AND GST_LIBRARY4 AND GST_LIBRARY5 AND GST_LIBRARY6 AND GST_LIBRARY7 )
+		endif( WITH_GSTREAMER AND NOT NO_OPENAL )
 	endif( NOT NO_OPENAL )
 else( WIN32 )
 	if( APPLE )
@@ -232,12 +249,13 @@ else( WIN32 )
 		set( NO_GTK ON )
 
 		if( NOT NO_OPENAL )
+			set( ZDOOM_LIBS ${ZDOOM_LIBS} "-framework OpenAL")
+
 			check_library_exists( gstapp-0.10 gst_app_src_set_callbacks "" HAS_GSTAPP )
 			check_library_exists( gstaudio-0.10 gst_audio_set_channel_positions "" HAS_GSTAUDIO )
 			if( HAS_GSTAPP AND HAS_GSTAUDIO )
 				set( ZDOOM_LIBS ${ZDOOM_LIBS} gstapp-0.10 gst-audio-0.10 "-framework OpenAL")
-			else( HAS_GSTAPP AND HAS_GSTAUDIO )
-				set( NO_OPENAL ON )
+				set( WITH_GSTREAMER ON )
 			endif( HAS_GSTAPP AND HAS_GSTAUDIO )
 		endif( NOT NO_OPENAL )
 	else( APPLE )
@@ -266,13 +284,20 @@ else( WIN32 )
 			endif( GTK2_FOUND )
 		endif( NOT NO_GTK )
 
-		pkg_check_modules( OPENAL openal gstreamer-app-0.10>=0.10.23 gstreamer-audio-0.10 )
-		if( OPENAL_FOUND )
+		pkg_check_modules( OPENAL openal )
+		if( NOT OPENAL_FOUND )
+			set( NO_OPENAL ON )
+		else( NOT OPENAL_FOUND )
 			set( ZDOOM_LIBS ${ZDOOM_LIBS} ${OPENAL_LIBRARIES} )
 			include_directories( ${OPENAL_INCLUDE_DIRS} )
-		else( OPENAL_FOUND )
-			set( NO_OPENAL ON )
-		endif( OPENAL_FOUND )
+
+			pkg_check_modules( GSTREAMER gstreamer-app-0.10>=0.10.23 gstreamer-audio-0.10 )
+			if( GSTREAMER_FOUND )
+				set( ZDOOM_LIBS ${ZDOOM_LIBS} ${GSTREAMER_LIBRARIES} )
+				include_directories( ${GSTREAMER_INCLUDE_DIRS} )
+				set( WITH_GSTREAMER ON )
+			endif( GSTREAMER_FOUND )
+		endif( NOT OPENAL_FOUND )
 	endif( APPLE )
 	set( NASM_NAMES nasm )
 	
@@ -357,6 +382,8 @@ if( NO_FMOD )
 endif( NO_FMOD )
 if( NO_OPENAL )
 	add_definitions( -DNO_OPENAL=1 )
+elseif( WITH_GSTREAMER )
+	add_definitions( -DWITH_GSTREAMER=1 )
 endif( NO_OPENAL )
 
 # Search for FluidSynth

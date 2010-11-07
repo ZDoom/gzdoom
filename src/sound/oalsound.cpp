@@ -177,7 +177,40 @@ static float GetRolloff(const FRolloffInfo *rolloff, float distance)
 }
 
 
-/*** GStreamer start ***/
+static ALenum FormatFromDesc(int bits, int channels)
+{
+	if(bits == 8)
+	{
+		if(channels == 1) return AL_FORMAT_MONO8;
+		if(channels == 2) return AL_FORMAT_STEREO8;
+		if(channels == 4) return AL_FORMAT_QUAD8;
+		if(channels == 6) return AL_FORMAT_51CHN8;
+		if(channels == 7) return AL_FORMAT_61CHN8;
+		if(channels == 8) return AL_FORMAT_71CHN8;
+	}
+	if(bits == 16)
+	{
+		if(channels == 1) return AL_FORMAT_MONO16;
+		if(channels == 2) return AL_FORMAT_STEREO16;
+		if(channels == 4) return AL_FORMAT_QUAD16;
+		if(channels == 6) return AL_FORMAT_51CHN16;
+		if(channels == 7) return AL_FORMAT_61CHN16;
+		if(channels == 8) return AL_FORMAT_71CHN16;
+	}
+	if(bits == 32)
+	{
+		if(channels == 1) return AL_FORMAT_MONO_FLOAT32;
+		if(channels == 2) return AL_FORMAT_STEREO_FLOAT32;
+		if(channels == 4) return AL_FORMAT_QUAD32;
+		if(channels == 6) return AL_FORMAT_51CHN32;
+		if(channels == 7) return AL_FORMAT_61CHN32;
+		if(channels == 8) return AL_FORMAT_71CHN32;
+	}
+	return AL_NONE;
+}
+
+
+#ifdef WITH_GSTREAMER
 #include <gst/gst.h>
 #include <gst/app/gstappsrc.h>
 #include <gst/app/gstappsink.h>
@@ -356,38 +389,6 @@ static GstCaps *SupportedBufferFormatCaps(int forcebits=0)
 		}
 	}
 	return caps;
-}
-
-static ALenum FormatFromDesc(int bits, int channels)
-{
-	if(bits == 8)
-	{
-		if(channels == 1) return AL_FORMAT_MONO8;
-		if(channels == 2) return AL_FORMAT_STEREO8;
-		if(channels == 4) return AL_FORMAT_QUAD8;
-		if(channels == 6) return AL_FORMAT_51CHN8;
-		if(channels == 7) return AL_FORMAT_61CHN8;
-		if(channels == 8) return AL_FORMAT_71CHN8;
-	}
-	if(bits == 16)
-	{
-		if(channels == 1) return AL_FORMAT_MONO16;
-		if(channels == 2) return AL_FORMAT_STEREO16;
-		if(channels == 4) return AL_FORMAT_QUAD16;
-		if(channels == 6) return AL_FORMAT_51CHN16;
-		if(channels == 7) return AL_FORMAT_61CHN16;
-		if(channels == 8) return AL_FORMAT_71CHN16;
-	}
-	if(bits == 32)
-	{
-		if(channels == 1) return AL_FORMAT_MONO_FLOAT32;
-		if(channels == 2) return AL_FORMAT_STEREO_FLOAT32;
-		if(channels == 4) return AL_FORMAT_QUAD32;
-		if(channels == 6) return AL_FORMAT_51CHN32;
-		if(channels == 7) return AL_FORMAT_61CHN32;
-		if(channels == 8) return AL_FORMAT_71CHN32;
-	}
-	return AL_NONE;
 }
 
 class OpenALSoundStream : public SoundStream
@@ -783,18 +784,21 @@ class OpenALSoundStream : public SoundStream
 				{
 					PrintErrMsg("Prepare Error", msg);
 					ret = GST_STATE_CHANGE_FAILURE;
+					gst_message_unref(msg);
 					break;
 				}
-				else if(GST_MESSAGE_TYPE(msg) == GST_MESSAGE_TAG)
+				else if(GST_MESSAGE_TYPE(msg) != GST_MESSAGE_TAG)
 				{
-					GstTagList *tags = NULL;
-					gst_message_parse_tag(msg, &tags);
-
-					gst_tag_list_insert(TagList, tags, GST_TAG_MERGE_KEEP);
-
-					gst_tag_list_free(tags);
+					gst_message_unref(msg);
+					break;
 				}
-				else break;
+
+				GstTagList *tags = NULL;
+				gst_message_parse_tag(msg, &tags);
+
+				gst_tag_list_insert(TagList, tags, GST_TAG_MERGE_KEEP);
+
+				gst_tag_list_free(tags);
 				gst_message_unref(msg);
 			}
 		}
@@ -1403,22 +1407,22 @@ public:
 				if(GST_MESSAGE_TYPE(msg) == GST_MESSAGE_EOS)
 				{
 					err = false;
+					gst_message_unref(msg);
 					break;
 				}
-				else if(GST_MESSAGE_TYPE(msg) == GST_MESSAGE_TAG)
-				{
-					GstTagList *tags = NULL;
-					gst_message_parse_tag(msg, &tags);
-
-					gst_tag_list_insert(TagList, tags, GST_TAG_MERGE_KEEP);
-
-					gst_tag_list_free(tags);
-				}
-				else if(GST_MESSAGE_TYPE(msg) == GST_MESSAGE_ERROR)
+				if(GST_MESSAGE_TYPE(msg) != GST_MESSAGE_TAG)
 				{
 					PrintErrMsg("Decoder Error", msg);
+					gst_message_unref(msg);
 					break;
 				}
+
+				GstTagList *tags = NULL;
+				gst_message_parse_tag(msg, &tags);
+
+				gst_tag_list_insert(TagList, tags, GST_TAG_MERGE_KEEP);
+
+				gst_tag_list_free(tags);
 				gst_message_unref(msg);
 			}
 		}
@@ -1437,8 +1441,8 @@ public:
 			unsigned int looppt[2] = { 0, 0 };
 			bool looppt_is_samples[2] = { true, true };
 			bool has_looppt[2] = { false, false };
-			HandleLoopTags(looppt, looppt_is_samples, has_looppt);
 
+			HandleLoopTags(looppt, looppt_is_samples, has_looppt);
 			if(has_looppt[0] || has_looppt[1])
 			{
 				if(!has_looppt[0])
@@ -1467,7 +1471,73 @@ public:
 		return !err;
 	}
 };
-/*** GStreamer end ***/
+#else /* WITH_GSTREAMER */
+class OpenALSoundStream : public SoundStream
+{
+	OpenALSoundRenderer *Renderer;
+
+public:
+	FTempFileName tmpfile;
+	ALfloat Volume;
+
+	OpenALSoundStream(OpenALSoundRenderer *renderer)
+	  : Renderer(renderer), Volume(1.0f)
+	{ Renderer->Streams.push_back(this); }
+
+	virtual ~OpenALSoundStream()
+	{
+		Renderer->Streams.erase(find(Renderer->Streams.begin(),
+		                             Renderer->Streams.end(), this));
+		Renderer = NULL;
+	}
+
+
+	virtual bool Play(bool, float)
+	{ return false; }
+
+	virtual void Stop()
+	{ }
+
+	virtual void SetVolume(float vol)
+	{ Volume = vol; }
+
+	virtual bool SetPaused(bool)
+	{ return false; }
+
+	virtual unsigned int GetPosition()
+	{ return 0; }
+
+	virtual bool IsEnded()
+	{ return true; }
+
+	bool Init(const char*)
+	{ return false; }
+
+	bool Init(const BYTE*, unsigned int)
+	{ return false; }
+
+	bool Init(SoundStreamCallback, int, int, int, void*)
+	{ return false; }
+};
+
+class Decoder
+{
+public:
+	std::vector<BYTE> OutData;
+	ALint LoopPts[2];
+	ALsizei OutRate;
+	ALuint OutChannels;
+	ALuint OutBits;
+
+	Decoder()
+	  : OutRate(0), OutChannels(0), OutBits(0)
+	{ LoopPts[0] = LoopPts[1] = 0; }
+
+	bool Decode(const void*, unsigned int, int=0)
+	{ return false; }
+};
+#endif /* WITH_GSTREAMER */
+
 
 template<typename T>
 static void LoadALFunc(const char *name, T *x)
@@ -1481,6 +1551,7 @@ OpenALSoundRenderer::OpenALSoundRenderer()
 
 	Printf("I_InitSound: Initializing OpenAL\n");
 
+#ifdef WITH_GSTREAMER
 	static bool GSTInited = false;
 	if(!GSTInited)
 	{
@@ -1493,6 +1564,7 @@ OpenALSoundRenderer::OpenALSoundRenderer()
 		}
 		GSTInited = true;
 	}
+#endif
 
 	if(snd_aldevice != "Default")
 	{

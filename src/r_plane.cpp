@@ -522,7 +522,7 @@ static visplane_t *new_visplane (unsigned hash)
 // killough 2/28/98: Add offsets
 //==========================================================================
 
-visplane_t *R_FindPlane (const secplane_t &height, FTextureID picnum, int lightlevel,
+visplane_t *R_FindPlane (const secplane_t &height, FTextureID picnum, int lightlevel, fixed_t alpha,
 						 fixed_t xoffs, fixed_t yoffs,
 						 fixed_t xscale, fixed_t yscale, angle_t angle,
 						 int sky, ASkyViewpoint *skybox)
@@ -540,6 +540,7 @@ visplane_t *R_FindPlane (const secplane_t &height, FTextureID picnum, int lightl
 		xscale = 0;
 		yscale = 0;
 		angle = 0;
+		alpha = 0;
 		plane.a = plane.b = plane.d = 0;
 		// [RH] Map floor skies and ceiling skies to separate visplanes. This isn't
 		// always necessary, but it is needed if a floor and ceiling sky are in the
@@ -560,6 +561,7 @@ visplane_t *R_FindPlane (const secplane_t &height, FTextureID picnum, int lightl
 		plane = height;
 		isskybox = false;
 		sky = 0;	// not skyflatnum so it can't be a sky
+		alpha = FRACUNIT;
 	}
 		
 	// New visplane algorithm uses hash table -- killough
@@ -579,6 +581,19 @@ visplane_t *R_FindPlane (const secplane_t &height, FTextureID picnum, int lightl
 						check->viewx == stacked_viewx &&
 						check->viewy == stacked_viewy &&
 						check->viewz == stacked_viewz &&
+						check->alpha == alpha &&
+						(alpha == 0 ||	// if alpha is > 0 everything needs to be checked
+							(plane == check->height &&
+							 picnum == check->picnum &&
+							 lightlevel == check->lightlevel &&
+							 xoffs == check->xoffs &&	// killough 2/28/98: Add offset checks
+							 yoffs == check->yoffs &&
+							 basecolormap == check->colormap &&	// [RH] Add more checks
+							 xscale == check->xscale &&
+							 yscale == check->yscale &&
+							 angle == check->angle
+							)
+						) &&
 						check->viewangle == stacked_angle)
 					{
 						return check;
@@ -628,6 +643,7 @@ visplane_t *R_FindPlane (const secplane_t &height, FTextureID picnum, int lightl
 	check->viewy = stacked_viewy;
 	check->viewz = stacked_viewz;
 	check->viewangle = stacked_angle;
+	check->alpha = alpha;
 
 	clearbufshort (check->top, viewwidth, 0x7fff);
 

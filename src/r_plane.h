@@ -93,6 +93,7 @@ visplane_t *R_FindPlane
 ( const secplane_t &height,
   FTextureID	picnum,
   int			lightlevel,
+  fixed_t		alpha,
   fixed_t		xoffs,		// killough 2/28/98: add x-y offsets
   fixed_t		yoffs,
   fixed_t		xscale,

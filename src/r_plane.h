@@ -54,6 +54,7 @@ struct visplane_s
 	float		visibility;
 	fixed_t		viewx, viewy, viewz;
 	angle_t		viewangle;
+	fixed_t		alpha;
 
 	unsigned short *bottom;			// [RH] bottom and top arrays are dynamically
 	unsigned short pad;				//		allocated immediately after the

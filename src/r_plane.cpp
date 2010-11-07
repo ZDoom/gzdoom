@@ -1034,26 +1034,19 @@ void R_DrawSinglePlane (visplane_t *pl, fixed_t alpha, bool masked)
 CVAR (Bool, r_skyboxes, true, 0)
 static int numskyboxes;
 
-struct VisplaneAndAlpha
-{
-	visplane_t *Visplane;
-	fixed_t Alpha;
-};
-
 void R_DrawSkyBoxes ()
 {
 	static TArray<size_t> interestingStack;
 	static TArray<ptrdiff_t> drawsegStack;
 	static TArray<ptrdiff_t> visspriteStack;
 	static TArray<fixed_t> viewxStack, viewyStack, viewzStack;
-	static TArray<VisplaneAndAlpha> visplaneStack;
+	static TArray<visplane_t *> visplaneStack;
 
 	numskyboxes = 0;
 
 	if (visplanes[MAXVISPLANES] == NULL)
 		return;
 
-	VisplaneAndAlpha vaAdder = { 0 };
 	int savedextralight = extralight;
 	fixed_t savedx = viewx;
 	fixed_t savedy = viewy;
@@ -1169,9 +1162,8 @@ void R_DrawSkyBoxes ()
 		viewxStack.Push (viewx);
 		viewyStack.Push (viewy);
 		viewzStack.Push (viewz);
-		vaAdder.Visplane = pl;
-		vaAdder.Alpha = sky->PlaneAlpha;
-		visplaneStack.Push (vaAdder);
+		pl->alpha = sky->PlaneAlpha;
+		visplaneStack.Push (pl);
 
 		R_RenderBSPNode (nodes + numnodes - 1);
 		R_DrawPlanes ();
@@ -1200,13 +1192,13 @@ void R_DrawSkyBoxes ()
 		ds_p = firstdrawseg;
 		vissprite_p = firstvissprite;
 
-		visplaneStack.Pop (vaAdder);
-		if (vaAdder.Alpha > 0)
+		visplaneStack.Pop (pl);
+		if (pl->alpha > 0)
 		{
-			R_DrawSinglePlane (vaAdder.Visplane, vaAdder.Alpha, true);
+			R_DrawSinglePlane (pl, pl->alpha, true);
 		}
-		*freehead = vaAdder.Visplane;
-		freehead = &vaAdder.Visplane->next;
+		*freehead = pl;
+		freehead = &pl->next;
 	}
 	firstvissprite = vissprites;
 	vissprite_p = vissprites + savedvissprite_p;

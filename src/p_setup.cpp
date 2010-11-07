@@ -1420,7 +1420,8 @@ void P_LoadSectors (MapData * map)
 		ss->nextsec = -1;	//jff 2/26/98 add fields to support locking out
 		ss->prevsec = -1;	// stair retriggering until build completes
 
-		// killough 3/7/98:
+		ss->SetAlpha(sector_t::ceiling, FRACUNIT);
+		ss->SetAlpha(sector_t::ceiling, FRACUNIT);
 		ss->SetXScale(sector_t::floor, FRACUNIT);	// [RH] floor and ceiling scaling
 		ss->SetYScale(sector_t::floor, FRACUNIT);
 		ss->SetXScale(sector_t::ceiling, FRACUNIT);

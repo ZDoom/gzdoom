@@ -1197,7 +1197,7 @@ void R_Subsector (subsector_t *sub)
 		R_FindPlane(frontsector->ceilingplane,		// killough 3/8/98
 					frontsector->GetTexture(sector_t::ceiling),
 					ceilinglightlevel + r_actualextralight,				// killough 4/11/98
-					FRACUNIT,
+					frontsector->GetAlpha(sector_t::ceiling),
 					frontsector->GetXOffset(sector_t::ceiling),		// killough 3/7/98
 					frontsector->GetYOffset(sector_t::ceiling),		// killough 3/7/98
 					frontsector->GetXScale(sector_t::ceiling),
@@ -1222,7 +1222,7 @@ void R_Subsector (subsector_t *sub)
 		R_FindPlane(frontsector->floorplane,
 					frontsector->GetTexture(sector_t::floor),
 					floorlightlevel + r_actualextralight,				// killough 3/16/98
-					FRACUNIT,
+					frontsector->GetAlpha(sector_t::floor),
 					frontsector->GetXOffset(sector_t::floor),		// killough 3/7/98
 					frontsector->GetYOffset(sector_t::floor),		// killough 3/7/98
 					frontsector->GetXScale(sector_t::floor),

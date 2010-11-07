@@ -445,6 +445,14 @@ FArchive &operator<< (FArchive &arc, sector_t::splane &p)
 	arc << p.xform.xoffs << p.xform.yoffs << p.xform.xscale << p.xform.yscale 
 		<< p.xform.angle << p.xform.base_yoffs << p.xform.base_angle
 		<< p.Flags << p.Light << p.Texture << p.TexZ;
+	if (SaveVersion >= 2992)
+	{
+		arc << p.alpha;
+	}
+	else
+	{
+		p.alpha = FRACUNIT;
+	}
 	return arc;
 }
 

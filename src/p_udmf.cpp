@@ -1074,6 +1074,8 @@ public:
 		sec->SetYScale(sector_t::floor, FRACUNIT);
 		sec->SetXScale(sector_t::ceiling, FRACUNIT);
 		sec->SetYScale(sector_t::ceiling, FRACUNIT);
+		sec->SetAlpha(sector_t::floor, FRACUNIT);
+		sec->SetAlpha(sector_t::ceiling, FRACUNIT);
 		sec->thinglist = NULL;
 		sec->touching_thinglist = NULL;		// phares 3/14/98
 		sec->seqType = (level.flags & LEVEL_SNDSEQTOTALCTRL) ? 0 : -1;
@@ -1183,6 +1185,14 @@ public:
 
 				case NAME_Lightceiling:
 					sec->SetPlaneLight(sector_t::ceiling, CheckInt(key));
+					continue;
+
+				case NAME_Alphafloor:
+					sec->SetAlpha(sector_t::floor, CheckFixed(key));
+					continue;
+
+				case NAME_Alphaceiling:
+					sec->SetAlpha(sector_t::ceiling, CheckFixed(key));
 					continue;
 
 				case NAME_Lightfloorabsolute:

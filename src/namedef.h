@@ -419,6 +419,8 @@ xx(Silent)
 xx(Nofallingdamage)
 xx(Dropactors)
 xx(NoRespawn)
+xx(Alphafloor)
+xx(Alphaceiling)
 
 xx(offsetx_top)
 xx(offsety_top)

@@ -870,7 +870,8 @@ static void SetupFloorPortal (AStackPoint *point)
 	if (Sector->FloorSkyBox != NULL)
 	{
 		Sector->FloorSkyBox->Mate = point;
-		Sector->SetAlpha(sector_t::floor, Scale (point->args[0], OPAQUE, 255));
+		if (Sector->GetAlpha(sector_t::floor) == OPAQUE)
+			Sector->SetAlpha(sector_t::floor, Scale (point->args[0], OPAQUE, 255));
 	}
 }
 
@@ -882,7 +883,8 @@ static void SetupCeilingPortal (AStackPoint *point)
 	if (Sector->CeilingSkyBox != NULL)
 	{
 		Sector->CeilingSkyBox->Mate = point;
-		Sector->SetAlpha(sector_t::ceiling, Scale (point->args[0], OPAQUE, 255));
+		if (Sector->GetAlpha(sector_t::ceiling) == OPAQUE)
+			Sector->SetAlpha(sector_t::ceiling, Scale (point->args[0], OPAQUE, 255));
 	}
 }
 

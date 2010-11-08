@@ -2386,8 +2386,16 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 		int offset = 0, length = 0;
 		int device = MDEV_DEFAULT;
 		MusInfo *handle = NULL;
+		FName musicasname = musicname;
 
-		int *devp = MidiDevices.CheckKey(FName(musicname));
+		FName *aliasp = MusicAliases.CheckKey(musicasname);
+		if (aliasp != NULL) 
+		{
+			musicname = (musicasname = *aliasp).GetChars();
+			if (musicasname == NAME_None) return true;
+		}
+
+		int *devp = MidiDevices.CheckKey(musicasname);
 		if (devp != NULL) device = *devp;
 
 		// Strip off any leading file:// component.

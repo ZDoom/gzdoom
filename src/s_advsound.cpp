@@ -149,6 +149,7 @@ enum SICommands
 	SI_IfStrife,
 	SI_Rolloff,
 	SI_Volume,
+	SI_MusicAlias,
 };
 
 // Blood was a cool game. If Monolith ever releases the source for it,
@@ -183,6 +184,7 @@ struct FSavedPlayerSoundInfo
 };
 
 // This specifies whether Timidity or Windows playback is preferred for a certain song (only useful for Windows.)
+MusicAliasMap MusicAliases;
 MidiDeviceMap MidiDevices;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -241,6 +243,7 @@ static const char *SICommandStrings[] =
 	"$ifstrife",
 	"$rolloff",
 	"$volume",
+	"$musicalias",
 	NULL
 };
 
@@ -253,6 +256,7 @@ static bool PlayerClassesIsSorted;
 
 static TArray<FPlayerClassLookup> PlayerClassLookups;
 static TArray<FPlayerSoundHashTable> PlayerSounds;
+
 
 static FString DefPlayerClassName;
 static int DefPlayerClass;
@@ -1282,6 +1286,32 @@ static void S_AddSNDINFO (int lump)
 				strcpy (mv->MusicName, musname);
 				mv->Next = MusicVolumes;
 				MusicVolumes = mv;
+				}
+				break;
+
+			case SI_MusicAlias: {
+				sc.MustGetString();
+				int lump = Wads.CheckNumForName(sc.String, ns_music);
+				if (lump >= 0)
+				{
+					// do not set the alias if a later WAD defines its own music of this name
+					int file = Wads.GetLumpFile(lump);
+					int sndifile = Wads.GetLumpFile(sc.LumpNum);
+					if (file > sndifile)
+					{
+						sc.MustGetString();
+						continue;
+					}
+				}
+				FName alias = sc.String;
+				sc.MustGetString();
+				FName mapped = sc.String;
+
+				// only set the alias if the lump it maps to exists.
+				if (mapped == NAME_None || Wads.CheckNumForName(sc.String, ns_music) >= 0)
+				{
+					MusicAliases[alias] = mapped;
+				}
 				}
 				break;
 

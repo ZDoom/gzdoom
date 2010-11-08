@@ -312,6 +312,7 @@ static void ReadArrayVars (PNGHandle *png, FWorldGlobalArray *vars, size_t count
 			{
 				SDWORD key, val;
 				key = arc.ReadCount();
+
 				val = arc.ReadCount();
 				vars[i].Insert (key, val);
 			}
@@ -2537,8 +2538,10 @@ enum
 	APROP_MasterTID     = 25,
 	APROP_TargetTID		= 26,
 	APROP_TracerTID		= 27,
-	APROP_WaterLevel	= 28
-};	
+	APROP_WaterLevel	= 28,
+	APROP_ScaleX        = 29,
+	APROP_ScaleY        = 30,
+};
 
 // These are needed for ACS's APROP_RenderStyle
 static const int LegacyRenderStyleIndices[] =
@@ -2718,6 +2721,14 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 		DoSetMaster (actor, other);
 		break;
 
+	case APROP_ScaleX:
+		actor->scaleX = value;
+		break;
+
+	case APROP_ScaleY:
+		actor->scaleY = value;
+		break;
+
 	default:
 		// do nothing.
 		break;
@@ -2780,6 +2791,9 @@ int DLevelScript::GetActorProperty (int tid, int property)
 	case APROP_TargetTID:	return (actor->target != NULL)? actor->target->tid : 0;
 	case APROP_TracerTID:	return (actor->tracer != NULL)? actor->tracer->tid : 0;
 	case APROP_WaterLevel:	return actor->waterlevel;
+	case APROP_ScaleX: 		return actor->scaleX;
+	case APROP_ScaleY: 		return actor->scaleY;
+
 	default:				return 0;
 	}
 }

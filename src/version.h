@@ -80,7 +80,7 @@
 #if SVN_REVISION_NUMBER < MINSAVEVER
 // If we don't know the current revision write something very high to ensure that
 // the reesulting executable can read its own savegames but no regular engine can.
-#define SAVEVER			9999
+#define SAVEVER			999999
 #define SAVESIG			MakeSaveSig()
 static inline const char *MakeSaveSig()
 {

@@ -737,7 +737,7 @@ OB_MPCROSSBOW = "%o was pegged by %k's ethereal crossbow.";
 OB_MPBLASTER = "%o was blasted a new one by %k's dragon claw.";
 OB_MPSKULLROD = "%o got sent down under by %k's hellstaff.";
 OB_MPPHOENIXROD = "%o was scorched to cinders by %k's phoenix rod.";
-OB_MPMACE = "%o was bounced by $k's firemace.";
+OB_MPMACE = "%o was bounced by %k's firemace.";
 
 OB_MPPSTAFF = "%o got clapped by %k's charged staff.";
 OB_MPPGAUNTLETS = "%o was bled dry by %k's gauntlets.";

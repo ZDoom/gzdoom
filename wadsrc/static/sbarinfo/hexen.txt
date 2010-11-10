@@ -59,7 +59,7 @@ statusbar Normal
 	gamemode deathmatch, teamgame
 	{
 		drawimage "KILLS", 38, 163;
-		drawnumber 3, HUDFONT_RAVEN, untranslated, frags, 58, 163, 1;
+		drawnumber 3, HUDFONT_RAVEN, untranslated, frags, 65, 176, 1;
 	}
 	else
 	{

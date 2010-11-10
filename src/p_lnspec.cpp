@@ -1683,10 +1683,18 @@ FUNC(LS_FloorAndCeiling_RaiseByValue)
 }
 
 FUNC(LS_FloorAndCeiling_LowerRaise)
-// FloorAndCeiling_LowerRaise (tag, fspeed, cspeed)
+// FloorAndCeiling_LowerRaise (tag, fspeed, cspeed, boomemu)
 {
-	return EV_DoCeiling (DCeiling::ceilRaiseToHighest, ln, arg0, SPEED(arg2), 0, 0, 0, 0, 0, false) |
-		   EV_DoFloor     (DFloor::floorLowerToLowest, ln, arg0, SPEED(arg1), 0, 0, 0, false);
+	bool res = EV_DoCeiling (DCeiling::ceilRaiseToHighest, ln, arg0, SPEED(arg2), 0, 0, 0, 0, 0, false);
+	// The switch based Boom equivalents of FloorandCeiling_LowerRaise do incorrect checks
+	// which cause the floor only to move when the ceiling fails to do so.
+	// To avoid problems with maps that have incorrect args this only uses a 
+	// more or less unintuitive value for the fourth arg to trigger Boom's broken behavior
+	if (arg3 != 1998 || !res)	// (1998 for the year in which Boom was released... :P)
+	{
+		res |= EV_DoFloor (DFloor::floorLowerToLowest, ln, arg0, SPEED(arg1), 0, 0, 0, false);
+	}
+	return res;
 }
 
 FUNC(LS_Elevator_MoveToFloor)

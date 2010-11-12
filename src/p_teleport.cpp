@@ -228,6 +228,9 @@ static AActor *SelectTeleDest (int tid, int tag)
 	// behavior is used instead (return the first teleport dest found in a tagged
 	// sector).
 
+	// Compatibility hack for some maps that fell victim to a bug in the teleport code in 2.0.9x
+	if (ib_compatflags & BCOMPATF_BADTELEPORTERS) tag = 0;
+
 	if (tid != 0)
 	{
 		NActorIterator iterator (NAME_TeleportDest, tid);

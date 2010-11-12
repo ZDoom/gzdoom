@@ -135,3 +135,7 @@ DCE862393CAAA6FF1294FB7056B53057 // UAC Ultra map07: Contains a scroller dependi
 	setlinespecial 391 Sector_CopyScroller 99 6 0 0 0
 }
 
+1D9E43988940CCD3555724E15DD8B1AB // Happy Time Circus map01 has bad teleporters
+{
+	ignoreteleporttags
+}

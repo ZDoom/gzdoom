@@ -89,6 +89,7 @@ static FCompatOption Options[] =
 	{ "setslopeoverflow",		0, BCOMPATF_SETSLOPEOVERFLOW },
 	{ "resetplayerspeed",		0, BCOMPATF_RESETPLAYERSPEED },
 	{ "vileghosts",				0, BCOMPATF_VILEGHOSTS },
+	{ "ignoreteleporttags",		0, BCOMPATF_BADTELEPORTERS },
 
 	// list copied from g_mapinfo.cpp
 	{ "shorttex",				COMPATF_SHORTTEX, 0 },

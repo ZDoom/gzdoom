@@ -1049,7 +1049,7 @@ struct vissprite_t
 {
 	short			x1, x2;
 	fixed_t			cx;				// for line side calculation
-	fixed_t			gx, gy;			// for fake floor clipping
+	fixed_t			gx, gy;			// for drawseg and fake floor clipping
 	fixed_t			gz, gzt;		// global bottom / top for silhouette clipping
 	fixed_t			startfrac;		// horizontal position of x1
 	fixed_t			xscale, yscale;

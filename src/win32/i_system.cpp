@@ -131,6 +131,7 @@ extern HANDLE StdOut;
 extern bool FancyStdOut;
 extern HINSTANCE g_hInst;
 extern FILE *Logfile;
+extern bool NativeMouse;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -1214,6 +1215,23 @@ bool I_SetCursor(FTexture *cursorpic)
 		cursor = LoadCursor(NULL, IDC_ARROW);
 	}
 	SetClassLongPtr(Window, GCLP_HCURSOR, (LONG_PTR)cursor);
+	if (NativeMouse)
+	{
+		POINT pt;
+		RECT client;
+
+		// If the mouse pointer is within the window's client rect, set it now.
+		if (GetCursorPos(&pt) && GetClientRect(Window, &client) &&
+			ClientToScreen(Window, (LPPOINT)&client.left) &&
+			ClientToScreen(Window, (LPPOINT)&client.right))
+		{
+			if (pt.x >= client.left && pt.x < client.right &&
+				pt.y >= client.top && pt.y < client.bottom)
+			{
+				SetCursor(cursor);
+			}
+		}
+	}
 	return true;
 }
 

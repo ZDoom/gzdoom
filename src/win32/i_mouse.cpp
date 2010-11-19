@@ -118,7 +118,6 @@ extern int BlockMouseMove;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static bool NativeMouse;
 static EMouseMode MouseMode = MM_None;
 static FMouse *(*MouseFactory[])() =
 {
@@ -130,6 +129,7 @@ static FMouse *(*MouseFactory[])() =
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 FMouse *Mouse;
+bool NativeMouse;
 
 bool CursorState;
 

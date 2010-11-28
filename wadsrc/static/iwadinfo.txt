@@ -25,7 +25,7 @@ IWad
 	Name = "Action Doom 2: Urban Brawl"
 	Game = "Doom"
 	Config = "UrbanBrawl"
-	Mapinfo = "mapinfo/doom2.txt"
+	Mapinfo = "mapinfo/urbanbrawl.txt"
 	MustContain = "MAP01", "AD2LIB"
 	BannerColors = "a8 a8 00", "a8 00 00"
 }

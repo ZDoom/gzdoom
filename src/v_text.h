@@ -67,6 +67,7 @@ struct FBrokenLines
 #define TEXTCOLOR_DARKBROWN		"\034S"
 #define TEXTCOLOR_PURPLE		"\034T"
 #define TEXTCOLOR_DARKGRAY		"\034U"
+#define TEXTCOLOR_CYAN			"\034V"
 
 #define TEXTCOLOR_NORMAL		"\034-"
 #define TEXTCOLOR_BOLD			"\034+"

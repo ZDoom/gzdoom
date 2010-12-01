@@ -838,6 +838,7 @@ void F_StartIntermission(FIntermissionDescriptor *desc, bool deleteme, BYTE stat
 	viewactive = false;
 	automapactive = false;
 	DIntermissionController::CurrentIntermission = new DIntermissionController(desc, deleteme, state);
+	GC::WriteBarrier(DIntermissionController::CurrentIntermission);
 }
 
 

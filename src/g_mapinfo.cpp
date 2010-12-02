@@ -1626,7 +1626,13 @@ void FMapInfoParser::ParseEpisodeInfo ()
 	}
 	else
 	{
-		FEpisode *epi = &AllEpisodes[AllEpisodes.Reserve(1)];
+		// Only allocate a new entry if this doesn't replace an existing episode.
+		if (i >= AllEpisodes.Size())
+		{
+			i = AllEpisodes.Reserve(1);
+		}
+
+		FEpisode *epi = &AllEpisodes[i];
 
 		epi->mEpisodeMap = map;
 		epi->mEpisodeName = name;

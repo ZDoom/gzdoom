@@ -1327,7 +1327,7 @@ void M_StartupSkillMenu(FGameStartup *gs)
 			}
 			if (AllEpisodes[gs->Episode].mNoSkill || AllSkills.Size() == 1)
 			{
-				ld->mAutoselect = firstitem + MIN(2u, AllEpisodes.Size()-1);
+				ld->mAutoselect = firstitem + MIN(2u, AllSkills.Size()-1);
 			}
 			else
 			{

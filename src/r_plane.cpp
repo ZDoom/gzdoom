@@ -75,7 +75,7 @@ planefunction_t 		ceilingfunc;
 #define MAXVISPLANES 128    /* must be a power of 2 */
 
 // Avoid infinite recursion with stacked sectors by limiting them.
-#define MAX_SKYBOX_PLANES 100
+#define MAX_SKYBOX_PLANES 1000
 
 // [RH] Allocate one extra for sky box planes.
 static visplane_t		*visplanes[MAXVISPLANES+1];	// killough

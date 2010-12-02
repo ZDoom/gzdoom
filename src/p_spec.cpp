@@ -975,6 +975,9 @@ void P_SetupPortals()
 		points.Push(pt);
 	}
 
+	// Maps using undefined portal hacks may not benefit from portal optimizations.
+	if (ib_compatflags & BCOMPATF_BADPORTALS) return;
+
 	for(unsigned i=0;i<points.Size(); i++)
 	{
 		if (points[i]->special1 == 0 && points[i]->Mate != NULL)

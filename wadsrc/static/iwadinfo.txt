@@ -26,6 +26,7 @@ IWad
 	Game = "Doom"
 	Config = "UrbanBrawl"
 	Mapinfo = "mapinfo/urbanbrawl.txt"
+	Compatibility = "Portals"
 	MustContain = "MAP01", "AD2LIB"
 	BannerColors = "a8 a8 00", "a8 00 00"
 }

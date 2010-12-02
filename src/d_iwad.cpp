@@ -174,6 +174,7 @@ void FIWadManager::ParseIWadInfo(const char *fn, const char *data, int datasize)
 						else if(sc.Compare("Extended")) iwad->flags |= GI_MENUHACK_EXTENDED;
 						else if(sc.Compare("Shorttex")) iwad->flags |= GI_COMPATSHORTTEX;
 						else if(sc.Compare("Stairs")) iwad->flags |= GI_COMPATSTAIRS;
+						else if(sc.Compare("Portals")) iwad->flags |= GI_BADPORTALS;
 						else sc.ScriptError(NULL);
 					}
 					while (sc.CheckString(","));

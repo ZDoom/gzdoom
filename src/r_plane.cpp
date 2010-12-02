@@ -582,20 +582,27 @@ visplane_t *R_FindPlane (const secplane_t &height, FTextureID picnum, int lightl
 						check->viewx == stacked_viewx &&
 						check->viewy == stacked_viewy &&
 						check->viewz == stacked_viewz &&
-						check->alpha == alpha &&
-						(alpha == 0 ||	// if alpha is > 0 everything needs to be checked
-							(plane == check->height &&
-							 picnum == check->picnum &&
-							 lightlevel == check->lightlevel &&
-							 xoffs == check->xoffs &&	// killough 2/28/98: Add offset checks
-							 yoffs == check->yoffs &&
-							 basecolormap == check->colormap &&	// [RH] Add more checks
-							 xscale == check->xscale &&
-							 yscale == check->yscale &&
-							 angle == check->angle
+						(
+							// headache inducing logic... :(
+							(ib_compatflags & BCOMPATF_BADPORTALS) ||
+							(
+								check->alpha == alpha &&
+								(alpha == 0 ||	// if alpha is > 0 everything needs to be checked
+									(plane == check->height &&
+									 picnum == check->picnum &&
+									 lightlevel == check->lightlevel &&
+									 xoffs == check->xoffs &&	// killough 2/28/98: Add offset checks
+									 yoffs == check->yoffs &&
+									 basecolormap == check->colormap &&	// [RH] Add more checks
+									 xscale == check->xscale &&
+									 yscale == check->yscale &&
+									 angle == check->angle
+									)
+								) &&
+								check->viewangle == stacked_angle
 							)
-						) &&
-						check->viewangle == stacked_angle)
+						)
+					   )
 					{
 						return check;
 					}

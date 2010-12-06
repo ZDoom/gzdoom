@@ -5630,7 +5630,7 @@ const char *AActor::GetTag(const char *def) const
 
 void AActor::ClearCounters()
 {
-	if (CountsAsKill())
+	if (CountsAsKill() && health > 0)
 	{
 		level.total_monsters--;
 		flags &= ~MF_COUNTKILL;

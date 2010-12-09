@@ -1030,10 +1030,10 @@ CCMD(secret)
 				{
 					FString levelname;
 					level_info_t *info = FindLevelInfo(mapname);
-					levelname.Format("%s - %s\n", mapname, info->LevelName);
+					levelname.Format("%s - %s\n", mapname, info->LevelName.GetChars());
 					size_t llen = levelname.Len() - 1;
 					for(size_t ii=0; ii<llen; ii++) levelname += '-';
-					Printf(TEXTCOLOR_YELLOW"%s\n", levelname);
+					Printf(TEXTCOLOR_YELLOW"%s\n", levelname.GetChars());
 					foundsome = true;
 				}
 			}

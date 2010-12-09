@@ -867,7 +867,7 @@ static void SetupFloorPortal (AStackPoint *point)
 	NActorIterator it (NAME_LowerStackLookOnly, point->tid);
 	sector_t *Sector = point->Sector;
 	Sector->FloorSkyBox = static_cast<ASkyViewpoint*>(it.Next());
-	if (Sector->FloorSkyBox != NULL || !Sector->FloorSkyBox->bAlways)
+	if (Sector->FloorSkyBox != NULL && Sector->FloorSkyBox->bAlways)
 	{
 		Sector->FloorSkyBox->Mate = point;
 		if (Sector->GetAlpha(sector_t::floor) == OPAQUE)
@@ -880,7 +880,7 @@ static void SetupCeilingPortal (AStackPoint *point)
 	NActorIterator it (NAME_UpperStackLookOnly, point->tid);
 	sector_t *Sector = point->Sector;
 	Sector->CeilingSkyBox = static_cast<ASkyViewpoint*>(it.Next());
-	if (Sector->CeilingSkyBox != NULL || !Sector->CeilingSkyBox->bAlways)
+	if (Sector->CeilingSkyBox != NULL && Sector->CeilingSkyBox->bAlways)
 	{
 		Sector->CeilingSkyBox->Mate = point;
 		if (Sector->GetAlpha(sector_t::ceiling) == OPAQUE)

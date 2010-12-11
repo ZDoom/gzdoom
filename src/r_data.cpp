@@ -288,103 +288,6 @@ void R_InitData ()
 
 //===========================================================================
 //
-// R_GuesstimateNumTextures
-//
-// Returns an estimate of the number of textures R_InitData will have to
-// process. Used by D_DoomMain() when it calls ST_Init().
-//
-//===========================================================================
-
-int R_GuesstimateNumTextures ()
-{
-	int numtex = 0;
-	
-	for(int i = Wads.GetNumLumps()-1; i>=0; i--)
-	{
-		int space = Wads.GetLumpNamespace(i);
-		switch(space)
-		{
-		case ns_flats:
-		case ns_sprites:
-		case ns_newtextures:
-		case ns_hires:
-		case ns_patches:
-		case ns_graphics:
-			numtex++;
-			break;
-
-		default:
-			if (Wads.GetLumpFlags(i) & LUMPF_MAYBEFLAT) numtex++;
-
-			break;
-		}
-	}
-
-	numtex += R_CountBuildTiles ();
-	numtex += R_CountTexturesX ();
-	return numtex;
-}
-
-//===========================================================================
-//
-// R_CountTexturesX
-//
-// See R_InitTextures() for the logic in deciding what lumps to check.
-//
-//===========================================================================
-
-static int R_CountTexturesX ()
-{
-	int count = 0;
-	int wadcount = Wads.GetNumWads();
-	for (int wadnum = 0; wadnum < wadcount; wadnum++)
-	{
-		// Use the most recent PNAMES for this WAD.
-		// Multiple PNAMES in a WAD will be ignored.
-		int pnames = Wads.CheckNumForName("PNAMES", ns_global, wadnum, false);
-
-		// should never happen except for zdoom.pk3
-		if (pnames < 0) continue;
-
-		// Only count the patches if the PNAMES come from the current file
-		// Otherwise they have already been counted.
-		if (Wads.GetLumpFile(pnames) == wadnum) 
-		{
-			count += R_CountLumpTextures (pnames);
-		}
-
-		int texlump1 = Wads.CheckNumForName ("TEXTURE1", ns_global, wadnum);
-		int texlump2 = Wads.CheckNumForName ("TEXTURE2", ns_global, wadnum);
-
-		count += R_CountLumpTextures (texlump1) - 1;
-		count += R_CountLumpTextures (texlump2) - 1;
-	}
-	return count;
-}
-
-//===========================================================================
-//
-// R_CountLumpTextures
-//
-// Returns the number of patches in a PNAMES/TEXTURE1/TEXTURE2 lump.
-//
-//===========================================================================
-
-static int R_CountLumpTextures (int lumpnum)
-{
-	if (lumpnum >= 0)
-	{
-		FWadLump file = Wads.OpenLumpNum (lumpnum); 
-		DWORD numtex;
-
-		file >> numtex;
-		return numtex >= 0 ? numtex : 0;
-	}
-	return 0;
-}
-
-//===========================================================================
-//
 // R_DeinitData
 //
 //===========================================================================
@@ -392,7 +295,6 @@ static int R_CountLumpTextures (int lumpnum)
 void R_DeinitData ()
 {
 	R_DeinitColormaps ();
-	R_DeinitBuildTiles();
 	FCanvasTextureInfo::EmptyList();
 
 	// Free openings

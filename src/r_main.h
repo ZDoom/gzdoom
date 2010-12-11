@@ -189,7 +189,6 @@ void R_RenderViewToCanvas (AActor *actor, DCanvas *canvas, int x, int y, int wid
 void R_ResetViewInterpolation ();
 
 // Called by startup code.
-int R_GuesstimateNumTextures ();
 void R_Init (void);
 void R_ExecuteSetViewSize (void);
 

@@ -49,69 +49,91 @@
 
 // TYPES -------------------------------------------------------------------
 
-//
-// Animating textures and planes
-//
-// [RH] Expanded to work with a Hexen ANIMDEFS lump
-//
-
-struct FAnimDef
-{
-	FTextureID 	BasePic;
-	WORD	NumFrames;
-	WORD	CurFrame;
-	BYTE	AnimType;
-	DWORD	SwitchTime;			// Time to advance to next frame
-	struct FAnimFrame
-	{
-		DWORD	SpeedMin;		// Speeds are in ms, not tics
-		DWORD	SpeedRange;
-		FTextureID	FramePic;
-	} Frames[1];
-	enum
-	{
-		ANIM_Forward,
-		ANIM_Backward,
-		ANIM_OscillateUp,
-		ANIM_OscillateDown,
-		ANIM_DiscreteFrames
-	};
-
-	void SetSwitchTime (DWORD mstime);
-};
-
-// This is an array of pointers to animation definitions.
-// When it is destroyed, it deletes any animations it points to as well.
-class AnimArray : public TArray<FAnimDef *>
-{
-public:
-	~AnimArray();
-	void AddAnim (FAnimDef *anim);
-	void FixAnimations ();
-};
-
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-static void R_InitAnimDefs ();
-static void R_AddComplexAnim (FTextureID picnum, const TArray<FAnimDef::FAnimFrame> &frames);
-static void ParseAnim (FScanner &sc, bool istex);
-static void ParseRangeAnim (FScanner &sc, FTextureID picnum, int usetype, bool missing);
-static void ParsePicAnim (FScanner &sc, FTextureID picnum, int usetype, bool missing, TArray<FAnimDef::FAnimFrame> &frames);
-static FTextureID  ParseFramenum (FScanner &sc, FTextureID basepicnum, int usetype, bool allowMissing);
-static void ParseTime (FScanner &sc, DWORD &min, DWORD &max);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static AnimArray Anims;
 static FRandom pr_animatepictures ("AnimatePics");
 
 // CODE --------------------------------------------------------------------
 
 //==========================================================================
 //
-// R_InitPicAnims
+// FTextureManager :: AddAnim
+//
+// Adds a new animation to the array. If one with the same basepic as the
+// new one already exists, it is replaced.
+//
+//==========================================================================
+
+void FTextureManager::AddAnim (FAnimDef *anim)
+{
+	// Search for existing duplicate.
+	for (unsigned int i = 0; i < mAnimations.Size(); ++i)
+	{
+		if (mAnimations[i]->BasePic == anim->BasePic)
+		{
+			// Found one!
+			free (mAnimations[i]);
+			mAnimations[i] = anim;
+			return;
+		}
+	}
+	// Didn't find one, so add it at the end.
+	mAnimations.Push (anim);
+}
+
+//==========================================================================
+//
+// FTextureManager :: AddSimpleAnim
+//
+// Creates an animation with simple characteristics. This is used for
+// original Doom (non-ANIMDEFS-style) animations and Build animations.
+//
+//==========================================================================
+
+void FTextureManager::AddSimpleAnim (FTextureID picnum, int animcount, int animtype, DWORD speedmin, DWORD speedrange)
+{
+	if (AreTexturesCompatible(picnum, picnum + (animcount - 1)))
+	{
+		FAnimDef *anim = (FAnimDef *)M_Malloc (sizeof(FAnimDef));
+		anim->CurFrame = 0;
+		anim->BasePic = picnum;
+		anim->NumFrames = animcount;
+		anim->AnimType = animtype;
+		anim->SwitchTime = 0;
+		anim->Frames[0].SpeedMin = speedmin;
+		anim->Frames[0].SpeedRange = speedrange;
+		anim->Frames[0].FramePic = anim->BasePic;
+		AddAnim (anim);
+	}
+}
+
+//==========================================================================
+//
+// FTextureManager :: AddComplexAnim
+//
+// Creates an animation with individually defined frames.
+//
+//==========================================================================
+
+void FTextureManager::AddComplexAnim (FTextureID picnum, const TArray<FAnimDef::FAnimFrame> &frames)
+{
+	FAnimDef *anim = (FAnimDef *)M_Malloc (sizeof(FAnimDef) + (frames.Size()-1) * sizeof(frames[0]));
+	anim->BasePic = picnum;
+	anim->NumFrames = frames.Size();
+	anim->CurFrame = 0;
+	anim->AnimType = FAnimDef::ANIM_DiscreteFrames;
+	anim->SwitchTime = 0;
+	memcpy (&anim->Frames[0], &frames[0], frames.Size() * sizeof(frames[0]));
+	AddAnim (anim);
+}
+
+//==========================================================================
+//
+// FTextureManager :: Initanimated
 //
 // [description copied from BOOM]
 // Load the table of animation definitions, checking for existence of
@@ -139,9 +161,9 @@ static FRandom pr_animatepictures ("AnimatePics");
 
 CVAR(Bool, debuganimated, false, 0)
 
-void R_InitPicAnims (void)
+void FTextureManager::InitAnimated (void)
 {
-	const BITFIELD texflags = FTextureManager::TEXMAN_Overridable;
+	const BITFIELD texflags = TEXMAN_Overridable;
 		// I think better not! This is only for old ANIMATED definition that
 		// don't know about ZDoom's more flexible texture system.
 		// | FTextureManager::TEXMAN_TryAny;
@@ -163,17 +185,17 @@ void R_InitPicAnims (void)
 			if (*anim_p /* .istexture */ & 1)
 			{
 				// different episode ?
-				if (!(pic1 = TexMan.CheckForTexture (anim_p + 10 /* .startname */, FTexture::TEX_Wall, texflags)).Exists() ||
-					!(pic2 = TexMan.CheckForTexture (anim_p + 1 /* .endname */, FTexture::TEX_Wall, texflags)).Exists())
+				if (!(pic1 = CheckForTexture (anim_p + 10 /* .startname */, FTexture::TEX_Wall, texflags)).Exists() ||
+					!(pic2 = CheckForTexture (anim_p + 1 /* .endname */, FTexture::TEX_Wall, texflags)).Exists())
 					continue;		
 
 				// [RH] Bit 1 set means allow decals on walls with this texture
-				TexMan[pic2]->bNoDecals = TexMan[pic1]->bNoDecals = !(*anim_p & 2);
+				Texture(pic2)->bNoDecals = Texture(pic1)->bNoDecals = !(*anim_p & 2);
 			}
 			else
 			{
-				if (!(pic1 = TexMan.CheckForTexture (anim_p + 10 /* .startname */, FTexture::TEX_Flat, texflags)).Exists() ||
-					!(pic2 = TexMan.CheckForTexture (anim_p + 1 /* .startname */, FTexture::TEX_Flat, texflags)).Exists())
+				if (!(pic1 = CheckForTexture (anim_p + 10 /* .startname */, FTexture::TEX_Flat, texflags)).Exists() ||
+					!(pic2 = CheckForTexture (anim_p + 1 /* .startname */, FTexture::TEX_Flat, texflags)).Exists())
 					continue;
 			}
 			if (pic1 == pic2)
@@ -183,8 +205,8 @@ void R_InitPicAnims (void)
 				continue;
 			}
 
-			FTexture *tex1 = TexMan[pic1];
-			FTexture *tex2 = TexMan[pic2];
+			FTexture *tex1 = Texture(pic1);
+			FTexture *tex2 = Texture(pic2);
 
 			if (tex1->UseType != tex2->UseType)
 			{
@@ -213,71 +235,22 @@ void R_InitPicAnims (void)
 					   (BYTE(anim_p[21]) << 16) |
 					   (BYTE(anim_p[22]) << 24), 1000, 35);
 
-			R_AddSimpleAnim (pic1, pic2 - pic1 + 1, animtype, animspeed);
+			AddSimpleAnim (pic1, pic2 - pic1 + 1, animtype, animspeed);
 		}
 	}
-	// [RH] Load any ANIMDEFS lumps
-	R_InitAnimDefs ();
-	Anims.FixAnimations ();
 }
 
 //==========================================================================
 //
-// R_AddSimpleAnim
-//
-// Creates an animation with simple characteristics. This is used for
-// original Doom (non-ANIMDEFS-style) animations and Build animations.
-//
-//==========================================================================
-
-void R_AddSimpleAnim (FTextureID picnum, int animcount, int animtype, DWORD speedmin, DWORD speedrange)
-{
-	if (TexMan.AreTexturesCompatible(picnum, picnum + (animcount - 1)))
-	{
-		FAnimDef *anim = (FAnimDef *)M_Malloc (sizeof(FAnimDef));
-		anim->CurFrame = 0;
-		anim->BasePic = picnum;
-		anim->NumFrames = animcount;
-		anim->AnimType = animtype;
-		anim->SwitchTime = 0;
-		anim->Frames[0].SpeedMin = speedmin;
-		anim->Frames[0].SpeedRange = speedrange;
-		anim->Frames[0].FramePic = anim->BasePic;
-		Anims.AddAnim (anim);
-	}
-}
-
-//==========================================================================
-//
-// R_AddComplexAnim
-//
-// Creates an animation with individually defined frames.
-//
-//==========================================================================
-
-static void R_AddComplexAnim (FTextureID picnum, const TArray<FAnimDef::FAnimFrame> &frames)
-{
-	FAnimDef *anim = (FAnimDef *)M_Malloc (sizeof(FAnimDef) + (frames.Size()-1) * sizeof(frames[0]));
-	anim->BasePic = picnum;
-	anim->NumFrames = frames.Size();
-	anim->CurFrame = 0;
-	anim->AnimType = FAnimDef::ANIM_DiscreteFrames;
-	anim->SwitchTime = 0;
-	memcpy (&anim->Frames[0], &frames[0], frames.Size() * sizeof(frames[0]));
-	Anims.AddAnim (anim);
-}
-
-//==========================================================================
-//
-// R_InitAnimDefs
+// FTextureManager :: InitAnimDefs
 //
 // This uses a Hexen ANIMDEFS lump to define the animation sequences
 //
 //==========================================================================
 
-static void R_InitAnimDefs ()
+void FTextureManager::InitAnimDefs ()
 {
-	const BITFIELD texflags = FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_TryAny;
+	const BITFIELD texflags = TEXMAN_Overridable | TEXMAN_TryAny;
 	int lump, lastlump = 0;
 	
 	while ((lump = Wads.FindLump ("ANIMDEFS", &lastlump)) != -1)
@@ -288,11 +261,11 @@ static void R_InitAnimDefs ()
 		{
 			if (sc.Compare ("flat"))
 			{
-				ParseAnim (sc, false);
+				ParseAnim (sc, FTexture::TEX_Flat);
 			}
 			else if (sc.Compare ("texture"))
 			{
-				ParseAnim (sc, true);
+				ParseAnim (sc, FTexture::TEX_Wall);
 			}
 			else if (sc.Compare ("switch"))
 			{
@@ -301,105 +274,11 @@ static void R_InitAnimDefs ()
 			// [GRB] Added warping type 2
 			else if (sc.Compare ("warp") || sc.Compare ("warp2"))
 			{
-				bool isflat = false;
-				bool type2 = sc.Compare ("warp2");	// [GRB]
-				sc.MustGetString ();
-				if (sc.Compare ("flat"))
-				{
-					isflat = true;
-					sc.MustGetString ();
-				}
-				else if (sc.Compare ("texture"))
-				{
-					isflat = false;
-					sc.MustGetString ();
-				}
-				else
-				{
-					sc.ScriptError (NULL);
-				}
-				FTextureID picnum = TexMan.CheckForTexture (sc.String, isflat ? FTexture::TEX_Flat : FTexture::TEX_Wall, texflags);
-				if (picnum.isValid())
-				{
-					FTexture * warper = TexMan[picnum];
-
-					// don't warp a texture more than once
-					if (!warper->bWarped)
-					{
-						if (type2)	// [GRB]
-							warper = new FWarp2Texture (warper);
-						else
-							warper = new FWarpTexture (warper);
-						TexMan.ReplaceTexture (picnum, warper, false);
-					}
-
-					if (sc.CheckFloat())
-					{
-						static_cast<FWarpTexture*>(warper)->SetSpeed(float(sc.Float));
-					}
-
-					// No decals on warping textures, by default.
-					// Warping information is taken from the last warp 
-					// definition for this texture.
-					warper->bNoDecals = true;
-					if (sc.GetString ())
-					{
-						if (sc.Compare ("allowdecals"))
-						{
-							warper->bNoDecals = false;
-						}
-						else
-						{
-							sc.UnGet ();
-						}
-					}
-				}
+				ParseWarp(sc);
 			}
 			else if (sc.Compare ("cameratexture"))
 			{
-				int width, height;
-				int fitwidth, fitheight;
-				FString picname;
-
-				sc.MustGetString ();
-				picname = sc.String;
-				sc.MustGetNumber ();
-				width = sc.Number;
-				sc.MustGetNumber ();
-				height = sc.Number;
-				FTextureID picnum = TexMan.CheckForTexture (picname, FTexture::TEX_Flat, texflags);
-				FTexture *viewer = new FCanvasTexture (picname, width, height);
-				if (picnum.Exists())
-				{
-					FTexture *oldtex = TexMan[picnum];
-					fitwidth = oldtex->GetScaledWidth ();
-					fitheight = oldtex->GetScaledHeight ();
-					viewer->UseType = oldtex->UseType;
-					TexMan.ReplaceTexture (picnum, viewer, true);
-				}
-				else
-				{
-					fitwidth = width;
-					fitheight = height;
-					// [GRB] No need for oldtex
-					viewer->UseType = FTexture::TEX_Wall;
-					TexMan.AddTexture (viewer);
-				}
-				if (sc.GetString())
-				{
-					if (sc.Compare ("fit"))
-					{
-						sc.MustGetNumber ();
-						fitwidth = sc.Number;
-						sc.MustGetNumber ();
-						fitheight = sc.Number;
-					}
-					else
-					{
-						sc.UnGet ();
-					}
-				}
-				viewer->SetScaledSize(fitwidth, fitheight);
+				ParseCameraTexture(sc);
 			}
 			else if (sc.Compare ("animatedDoor"))
 			{
@@ -408,12 +287,11 @@ static void R_InitAnimDefs ()
 			else if (sc.Compare("skyoffset"))
 			{
 				sc.MustGetString ();
-				FTextureID picnum = TexMan.CheckForTexture (sc.String, FTexture::TEX_Wall, texflags);
+				FTextureID picnum = CheckForTexture (sc.String, FTexture::TEX_Wall, texflags);
 				sc.MustGetNumber();
 				if (picnum.Exists())
 				{
-					FTexture *tex = TexMan[picnum];
-					tex->SkyOffset = sc.Number;
+					Texture(picnum)->SkyOffset = sc.Number;
 				}
 			}
 			else
@@ -426,23 +304,20 @@ static void R_InitAnimDefs ()
 
 //==========================================================================
 //
-// ParseAnim
+// FTextureManager :: ParseAnim
 //
 // Parse a single animation definition out of an ANIMDEFS lump and
 // create the corresponding animation structure.
 //
 //==========================================================================
 
-static void ParseAnim (FScanner &sc, bool istex)
+void FTextureManager::ParseAnim (FScanner &sc, int usetype)
 {
-	const BITFIELD texflags = FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_TryAny;
+	const BITFIELD texflags = TEXMAN_Overridable | TEXMAN_TryAny;
 	TArray<FAnimDef::FAnimFrame> frames (32);
 	FTextureID picnum;
-	int usetype;
 	int defined = 0;
 	bool optional = false, missing = false;
-
-	usetype = istex ? FTexture::TEX_Wall : FTexture::TEX_Flat;
 
 	sc.MustGetString ();
 	if (sc.Compare ("optional"))
@@ -450,7 +325,7 @@ static void ParseAnim (FScanner &sc, bool istex)
 		optional = true;
 		sc.MustGetString ();
 	}
-	picnum = TexMan.CheckForTexture (sc.String, usetype, texflags);
+	picnum = CheckForTexture (sc.String, usetype, texflags);
 
 	if (!picnum.Exists())
 	{
@@ -467,7 +342,7 @@ static void ParseAnim (FScanner &sc, bool istex)
 	// no decals on animating textures, by default
 	if (picnum.isValid())
 	{
-		TexMan[picnum]->bNoDecals = true;
+		Texture(picnum)->bNoDecals = true;
 	}
 
 	while (sc.GetString ())
@@ -476,7 +351,7 @@ static void ParseAnim (FScanner &sc, bool istex)
 		{
 			if (picnum.isValid())
 			{
-				TexMan[picnum]->bNoDecals = false;
+				Texture(picnum)->bNoDecals = false;
 			}
 			continue;
 		}
@@ -517,20 +392,20 @@ static void ParseAnim (FScanner &sc, bool istex)
 		{
 			sc.ScriptError ("Animation needs at least 2 frames");
 		}
-		R_AddComplexAnim (picnum, frames);
+		AddComplexAnim (picnum, frames);
 	}
 }
 
 //==========================================================================
 //
-// ParseRangeAnim
+// FTextureManager :: ParseRangeAnim
 //
 // Parse an animation defined using "range". Not that one range entry is
 // enough to define a complete animation, unlike "pic".
 //
 //==========================================================================
 
-static void ParseRangeAnim (FScanner &sc, FTextureID picnum, int usetype, bool missing)
+void FTextureManager::ParseRangeAnim (FScanner &sc, FTextureID picnum, int usetype, bool missing)
 {
 	int type;
 	FTextureID framenum;
@@ -547,7 +422,7 @@ static void ParseRangeAnim (FScanner &sc, FTextureID picnum, int usetype, bool m
 	if (framenum < picnum)
 	{
 		type = FAnimDef::ANIM_Backward;
-		TexMan[framenum]->bNoDecals = TexMan[picnum]->bNoDecals;
+		Texture(framenum)->bNoDecals = Texture(picnum)->bNoDecals;
 		swapvalues (framenum, picnum);
 	}
 	if (sc.GetString())
@@ -561,18 +436,18 @@ static void ParseRangeAnim (FScanner &sc, FTextureID picnum, int usetype, bool m
 			sc.UnGet ();
 		}
 	}
-	R_AddSimpleAnim (picnum, framenum - picnum + 1, type, min, max - min);
+	AddSimpleAnim (picnum, framenum - picnum + 1, type, min, max - min);
 }
 
 //==========================================================================
 //
-// ParsePicAnim
+// FTextureManager :: ParsePicAnim
 //
 // Parse a single frame from ANIMDEFS defined using "pic".
 //
 //==========================================================================
 
-static void ParsePicAnim (FScanner &sc, FTextureID picnum, int usetype, bool missing, TArray<FAnimDef::FAnimFrame> &frames)
+void FTextureManager::ParsePicAnim (FScanner &sc, FTextureID picnum, int usetype, bool missing, TArray<FAnimDef::FAnimFrame> &frames)
 {
 	FTextureID framenum;
 	DWORD min, max;
@@ -593,16 +468,16 @@ static void ParsePicAnim (FScanner &sc, FTextureID picnum, int usetype, bool mis
 
 //==========================================================================
 //
-// ParseFramenum
+// FTextureManager :: ParseFramenum
 //
 // Reads a frame's texture from ANIMDEFS. It can either be an integral
 // offset from basepicnum or a specific texture name.
 //
 //==========================================================================
 
-static FTextureID ParseFramenum (FScanner &sc, FTextureID basepicnum, int usetype, bool allowMissing)
+FTextureID FTextureManager::ParseFramenum (FScanner &sc, FTextureID basepicnum, int usetype, bool allowMissing)
 {
-	const BITFIELD texflags = FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_TryAny;
+	const BITFIELD texflags = TEXMAN_Overridable | TEXMAN_TryAny;
 	FTextureID framenum;
 
 	sc.MustGetString ();
@@ -612,7 +487,7 @@ static FTextureID ParseFramenum (FScanner &sc, FTextureID basepicnum, int usetyp
 	}
 	else
 	{
-		framenum = TexMan.CheckForTexture (sc.String, usetype, texflags);
+		framenum = CheckForTexture (sc.String, usetype, texflags);
 		if (!framenum.Exists() && !allowMissing)
 		{
 			sc.ScriptError ("Unknown texture %s", sc.String);
@@ -623,13 +498,13 @@ static FTextureID ParseFramenum (FScanner &sc, FTextureID basepicnum, int usetyp
 
 //==========================================================================
 //
-// ParseTime
+// FTextureManager :: ParseTime
 //
 // Reads a tics or rand time definition from ANIMDEFS.
 //
 //==========================================================================
 
-static void ParseTime (FScanner &sc, DWORD &min, DWORD &max)
+void FTextureManager::ParseTime (FScanner &sc, DWORD &min, DWORD &max)
 {
 	sc.MustGetString ();
 	if (sc.Compare ("tics"))
@@ -652,53 +527,128 @@ static void ParseTime (FScanner &sc, DWORD &min, DWORD &max)
 
 //==========================================================================
 //
-// AnimArray :: ~AnimArray
+// FTextureManager :: ParseWarp
 //
-// Frees all animations held in this array before freeing the array.
+// Parses a warping texture definition
 //
 //==========================================================================
 
-AnimArray::~AnimArray()
+void FTextureManager::ParseWarp(FScanner &sc)
 {
-	for (unsigned i = 0; i < Size(); i++)
+	const BITFIELD texflags = TEXMAN_Overridable | TEXMAN_TryAny;
+	bool isflat = false;
+	bool type2 = sc.Compare ("warp2");	// [GRB]
+	sc.MustGetString ();
+	if (sc.Compare ("flat"))
 	{
-		if ((*this)[i] != NULL)
+		isflat = true;
+		sc.MustGetString ();
+	}
+	else if (sc.Compare ("texture"))
+	{
+		isflat = false;
+		sc.MustGetString ();
+	}
+	else
+	{
+		sc.ScriptError (NULL);
+	}
+	FTextureID picnum = CheckForTexture (sc.String, isflat ? FTexture::TEX_Flat : FTexture::TEX_Wall, texflags);
+	if (picnum.isValid())
+	{
+		FTexture *warper = Texture(picnum);
+
+		// don't warp a texture more than once
+		if (!warper->bWarped)
 		{
-			M_Free ((*this)[i]);
-			(*this)[i] = NULL;
+			if (type2) warper = new FWarp2Texture (warper);
+			else warper = new FWarpTexture (warper);
+
+			ReplaceTexture (picnum, warper, false);
+		}
+
+		if (sc.CheckFloat())
+		{
+			static_cast<FWarpTexture*>(warper)->SetSpeed(float(sc.Float));
+		}
+
+		// No decals on warping textures, by default.
+		// Warping information is taken from the last warp 
+		// definition for this texture.
+		warper->bNoDecals = true;
+		if (sc.GetString ())
+		{
+			if (sc.Compare ("allowdecals"))
+			{
+				warper->bNoDecals = false;
+			}
+			else
+			{
+				sc.UnGet ();
+			}
 		}
 	}
 }
 
 //==========================================================================
 //
-// AnimArray :: AddAnim
+// ParseCameraTexture
 //
-// Adds a new animation to the array. If one with the same basepic as the
-// new one already exists, it is replaced.
+// Parses a camera texture definition
 //
 //==========================================================================
 
-void AnimArray::AddAnim (FAnimDef *anim)
+void FTextureManager::ParseCameraTexture(FScanner &sc)
 {
-	// Search for existing duplicate.
-	for (unsigned int i = 0; i < Anims.Size(); ++i)
+	const BITFIELD texflags = TEXMAN_Overridable | TEXMAN_TryAny;
+	int width, height;
+	int fitwidth, fitheight;
+	FString picname;
+
+	sc.MustGetString ();
+	picname = sc.String;
+	sc.MustGetNumber ();
+	width = sc.Number;
+	sc.MustGetNumber ();
+	height = sc.Number;
+	FTextureID picnum = CheckForTexture (picname, FTexture::TEX_Flat, texflags);
+	FTexture *viewer = new FCanvasTexture (picname, width, height);
+	if (picnum.Exists())
 	{
-		if ((*this)[i]->BasePic == anim->BasePic)
+		FTexture *oldtex = Texture(picnum);
+		fitwidth = oldtex->GetScaledWidth ();
+		fitheight = oldtex->GetScaledHeight ();
+		viewer->UseType = oldtex->UseType;
+		ReplaceTexture (picnum, viewer, true);
+	}
+	else
+	{
+		fitwidth = width;
+		fitheight = height;
+		// [GRB] No need for oldtex
+		viewer->UseType = FTexture::TEX_Wall;
+		AddTexture (viewer);
+	}
+	if (sc.GetString())
+	{
+		if (sc.Compare ("fit"))
 		{
-			// Found one!
-			free ((*this)[i]);
-			(*this)[i] = anim;
-			return;
+			sc.MustGetNumber ();
+			fitwidth = sc.Number;
+			sc.MustGetNumber ();
+			fitheight = sc.Number;
+		}
+		else
+		{
+			sc.UnGet ();
 		}
 	}
-	// Didn't find one, so add it at the end.
-	Push (anim);
+	viewer->SetScaledSize(fitwidth, fitheight);
 }
 
 //==========================================================================
 //
-// AnimArray :: FixAnimations
+// FTextureManager :: FixAnimations
 //
 // Copy the "front sky" flag from an animated texture to the rest
 // of the textures in the animation, and make every texture in an
@@ -706,21 +656,21 @@ void AnimArray::AddAnim (FAnimDef *anim)
 //
 //==========================================================================
 
-void AnimArray::FixAnimations ()
+void FTextureManager::FixAnimations ()
 {
 	unsigned int i;
 	int j;
 
-	for (i = 0; i < Size(); ++i)
+	for (i = 0; i < mAnimations.Size(); ++i)
 	{
-		FAnimDef *anim = operator[] (i);
+		FAnimDef *anim = mAnimations[i];
 		if (anim->AnimType == FAnimDef::ANIM_DiscreteFrames)
 		{
-			if (TexMan[anim->BasePic]->bNoRemap0)
+			if (Texture(anim->BasePic)->bNoRemap0)
 			{
 				for (j = 0; j < anim->NumFrames; ++j)
 				{
-					TexMan[anim->Frames[j].FramePic]->SetFrontSkyLayer ();
+					Texture(anim->Frames[j].FramePic)->SetFrontSkyLayer ();
 				}
 			}
 		}
@@ -730,11 +680,11 @@ void AnimArray::FixAnimations ()
 			bool noremap = false;
 			const char *name;
 
-			name = TexMan[anim->BasePic]->Name;
-			nodecals = TexMan[anim->BasePic]->bNoDecals;
+			name = Texture(anim->BasePic)->Name;
+			nodecals = Texture(anim->BasePic)->bNoDecals;
 			for (j = 0; j < anim->NumFrames; ++j)
 			{
-				FTexture *tex = TexMan[anim->BasePic + j];
+				FTexture *tex = Texture(anim->BasePic + j);
 				noremap |= tex->bNoRemap0;
 				tex->bNoDecals = nodecals;
 			}
@@ -742,7 +692,7 @@ void AnimArray::FixAnimations ()
 			{
 				for (j = 0; j < anim->NumFrames; ++j)
 				{
-					TexMan[anim->BasePic + j]->SetFrontSkyLayer ();
+					Texture(anim->BasePic + j)->SetFrontSkyLayer ();
 				}
 			}
 		}
@@ -768,19 +718,41 @@ void FAnimDef::SetSwitchTime (DWORD mstime)
 	}
 }
 
+
 //==========================================================================
 //
-// R_UpdateAnimations
+// FTextureManager :: SetTranslation
+//
+// Sets animation translation for a texture
+//
+//==========================================================================
+
+void FTextureManager::SetTranslation (FTextureID fromtexnum, FTextureID totexnum)
+{
+	if ((size_t)fromtexnum.texnum < Translation.Size())
+	{
+		if ((size_t)totexnum.texnum >= Textures.Size())
+		{
+			totexnum.texnum = fromtexnum.texnum;
+		}
+		Translation[fromtexnum.texnum] = totexnum.texnum;
+	}
+}
+
+
+//==========================================================================
+//
+// FTextureManager :: UpdateAnimations
 //
 // Updates texture translations for each animation and scrolls the skies.
 //
 //==========================================================================
 
-void R_UpdateAnimations (DWORD mstime)
+void FTextureManager::UpdateAnimations (DWORD mstime)
 {
-	for (unsigned int j = 0; j < Anims.Size(); ++j)
+	for (unsigned int j = 0; j < mAnimations.Size(); ++j)
 	{
-		FAnimDef *anim = Anims[j];
+		FAnimDef *anim = mAnimations[j];
 
 		// If this is the first time through R_UpdateAnimations, just
 		// initialize the anim's switch time without actually animating.
@@ -832,19 +804,14 @@ void R_UpdateAnimations (DWORD mstime)
 
 		if (anim->AnimType == FAnimDef::ANIM_DiscreteFrames)
 		{
-			TexMan.SetTranslation (anim->BasePic, anim->Frames[anim->CurFrame].FramePic);
+			SetTranslation (anim->BasePic, anim->Frames[anim->CurFrame].FramePic);
 		}
 		else
 		{
 			for (unsigned int i = 0; i < anim->NumFrames; i++)
 			{
-				TexMan.SetTranslation (anim->BasePic + i, anim->BasePic + (i + anim->CurFrame) % anim->NumFrames);
+				SetTranslation (anim->BasePic + i, anim->BasePic + (i + anim->CurFrame) % anim->NumFrames);
 			}
 		}
 	}
-
-	// Scroll the sky
-	double ms = (double)mstime * FRACUNIT;
-	sky1pos = ms * level.skyspeed1;
-	sky2pos = ms * level.skyspeed2;
 }

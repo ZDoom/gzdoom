@@ -39,12 +39,6 @@
 #include "r_things.h"
 #include "r_draw.h"
 
-// r_anim.cpp
-
-void R_InitPicAnims ();
-void R_AddSimpleAnim (FTextureID picnum, int animcount, int animtype, DWORD animspeed /* in ms */, DWORD speedrange=0);
-void R_UpdateAnimations (DWORD mstime);
-
 bool R_AlignFlat (int linenum, int side, int fc);
 
 #endif // __R_LOCAL_H__

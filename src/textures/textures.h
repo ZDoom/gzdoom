@@ -41,8 +41,6 @@ protected:
 	FTextureID(int num) { texnum = num; }
 private:
 	int texnum;
-
-	friend void AddTiles (void *tiles);
 };
 
 class FNullTextureID : public FTextureID
@@ -52,6 +50,37 @@ public:
 };
 
 FArchive &operator<< (FArchive &arc, FTextureID &tex);
+
+//
+// Animating textures and planes
+//
+// [RH] Expanded to work with a Hexen ANIMDEFS lump
+//
+
+struct FAnimDef
+{
+	FTextureID 	BasePic;
+	WORD	NumFrames;
+	WORD	CurFrame;
+	BYTE	AnimType;
+	DWORD	SwitchTime;			// Time to advance to next frame
+	struct FAnimFrame
+	{
+		DWORD	SpeedMin;		// Speeds are in ms, not tics
+		DWORD	SpeedRange;
+		FTextureID	FramePic;
+	} Frames[1];
+	enum
+	{
+		ANIM_Forward,
+		ANIM_Backward,
+		ANIM_OscillateUp,
+		ANIM_OscillateDown,
+		ANIM_DiscreteFrames
+	};
+
+	void SetSwitchTime (DWORD mstime);
+};
 
 
 // Patches.
@@ -294,18 +323,6 @@ public:
 		return Textures[Translation[i]].Texture;
 	}
 
-	void SetTranslation (FTextureID fromtexnum, FTextureID totexnum)
-	{
-		if ((size_t)fromtexnum.texnum < Translation.Size())
-		{
-			if ((size_t)totexnum.texnum >= Textures.Size())
-			{
-				totexnum.texnum = fromtexnum.texnum;
-			}
-			Translation[fromtexnum.texnum] = totexnum.texnum;
-		}
-	}
-
 	enum
 	{
 		TEXMAN_TryAny = 1,
@@ -322,7 +339,6 @@ public:
 	void AddTexturesLumps (int lump1, int lump2, int patcheslump);
 	void AddGroup(int wadnum, int ns, int usetype);
 	void AddPatches (int lumpnum);
-	void AddTiles (void *tileFile);
 	void AddHiresTextures (int wadnum);
 	void LoadTextureDefs(int wadnum, const char *lumpname);
 	void ParseXTexture(FScanner &sc, int usetype);
@@ -336,6 +352,7 @@ public:
 	void LoadTextureX(int wadnum);
 	void AddTexturesForWad(int wadnum);
 	void Init();
+	void DeleteAll();
 
 	// Replaces one texture with another. The new texture will be assigned
 	// the same name, slot, and use type as the texture it is replacing.
@@ -353,8 +370,38 @@ public:
 	void WriteTexture (FArchive &arc, int picnum);
 	int ReadTexture (FArchive &arc);
 
+	void UpdateAnimations (DWORD mstime);
+	int GuesstimateNumTextures ();
 
 private:
+
+	// texture counting
+	int CountTexturesX ();
+	int CountLumpTextures (int lumpnum);
+
+	// Build tiles
+	void AddTiles (void *tiles);
+	int CountTiles (void *tiles);
+	int CountBuildTiles ();
+	void InitBuildTiles ();
+
+	// Animation stuff
+	void AddAnim (FAnimDef *anim);
+	void FixAnimations ();
+	void InitAnimated ();
+	void InitAnimDefs ();
+	void AddSimpleAnim (FTextureID picnum, int animcount, int animtype, DWORD speedmin, DWORD speedrange=0);
+	void AddComplexAnim (FTextureID picnum, const TArray<FAnimDef::FAnimFrame> &frames);
+	void ParseAnim (FScanner &sc, int usetype);
+	void ParseRangeAnim (FScanner &sc, FTextureID picnum, int usetype, bool missing);
+	void ParsePicAnim (FScanner &sc, FTextureID picnum, int usetype, bool missing, TArray<FAnimDef::FAnimFrame> &frames);
+	void ParseWarp(FScanner &sc);
+	void ParseCameraTexture(FScanner &sc);
+	FTextureID ParseFramenum (FScanner &sc, FTextureID basepicnum, int usetype, bool allowMissing);
+	void ParseTime (FScanner &sc, DWORD &min, DWORD &max);
+	FTexture *Texture(FTextureID id) { return Textures[id.GetIndex()].Texture; }
+	void SetTranslation (FTextureID fromtexnum, FTextureID totexnum);
+
 	struct TextureHash
 	{
 		FTexture *Texture;
@@ -366,6 +413,9 @@ private:
 	int HashFirst[HASH_SIZE];
 	FTextureID DefaultTexture;
 	TArray<int> FirstTextureForFile;
+
+	TArray<FAnimDef *> mAnimations;
+	TArray<BYTE *> BuildTileFiles;
 };
 
 extern FTextureManager TexMan;

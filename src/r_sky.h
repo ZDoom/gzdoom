@@ -38,5 +38,6 @@ extern bool		skystretch;
 
 // Called whenever the sky changes.
 void R_InitSkyMap		();
+void R_UpdateSky (DWORD mstime);
 
 #endif //__R_SKY_H__

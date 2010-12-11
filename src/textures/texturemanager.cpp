@@ -62,8 +62,6 @@ FTextureManager TexMan;
 FTextureManager::FTextureManager ()
 {
 	memset (HashFirst, -1, sizeof(HashFirst));
-	// Texture 0 is a dummy texture used to indicate "no texture"
-	AddTexture (new FDummyTexture);
 
 }
 
@@ -75,10 +73,42 @@ FTextureManager::FTextureManager ()
 
 FTextureManager::~FTextureManager ()
 {
+	DeleteAll();
+}
+
+//==========================================================================
+//
+// FTextureManager :: DeleteAll
+//
+//==========================================================================
+
+void FTextureManager::DeleteAll()
+{
 	for (unsigned int i = 0; i < Textures.Size(); ++i)
 	{
 		delete Textures[i].Texture;
 	}
+	Textures.Clear();
+	Translation.Clear();
+	FirstTextureForFile.Clear();
+	memset (HashFirst, -1, sizeof(HashFirst));
+	DefaultTexture.SetInvalid();
+
+	for (unsigned i = 0; i < mAnimations.Size(); i++)
+	{
+		if (mAnimations[i] != NULL)
+		{
+			M_Free (mAnimations[i]);
+			mAnimations[i] = NULL;
+		}
+	}
+	mAnimations.Clear();
+
+	for (unsigned int i = 0; i < BuildTileFiles.Size(); ++i)
+	{
+		delete[] BuildTileFiles[i];
+	}
+	BuildTileFiles.Clear();
 }
 
 //==========================================================================
@@ -896,7 +926,13 @@ void FTextureManager::SortTexturesByType(int start, int end)
 
 void FTextureManager::Init()
 {
+	DeleteAll();
+	// Init Build Tile data if it hasn't been done already
+	if (BuildTileFiles.Size() == 0) CountBuildTiles ();
 	FTexture::InitGrayMap();
+
+	// Texture 0 is a dummy texture used to indicate "no texture"
+	AddTexture (new FDummyTexture);
 
 	int wadcnt = Wads.GetNumWads();
 	for(int i = 0; i< wadcnt; i++)
@@ -907,7 +943,7 @@ void FTextureManager::Init()
 	// Add one marker so that the last WAD is easier to handle and treat
 	// Build tiles as a completely separate block.
 	FirstTextureForFile.Push(Textures.Size());
-	R_InitBuildTiles ();
+	InitBuildTiles ();
 	FirstTextureForFile.Push(Textures.Size());
 
 	DefaultTexture = CheckForTexture ("-NOFLAT-", FTexture::TEX_Override, 0);
@@ -938,6 +974,10 @@ void FTextureManager::Init()
 			}
 		}
 	}
+
+	InitAnimated();
+	InitAnimDefs();
+	FixAnimations();
 }
 
 //==========================================================================
@@ -987,6 +1027,104 @@ int FTextureManager::ReadTexture (FArchive &arc)
 	}
 	else return -1;
 }
+
+//===========================================================================
+//
+// R_GuesstimateNumTextures
+//
+// Returns an estimate of the number of textures R_InitData will have to
+// process. Used by D_DoomMain() when it calls ST_Init().
+//
+//===========================================================================
+
+int FTextureManager::GuesstimateNumTextures ()
+{
+	int numtex = 0;
+	
+	for(int i = Wads.GetNumLumps()-1; i>=0; i--)
+	{
+		int space = Wads.GetLumpNamespace(i);
+		switch(space)
+		{
+		case ns_flats:
+		case ns_sprites:
+		case ns_newtextures:
+		case ns_hires:
+		case ns_patches:
+		case ns_graphics:
+			numtex++;
+			break;
+
+		default:
+			if (Wads.GetLumpFlags(i) & LUMPF_MAYBEFLAT) numtex++;
+
+			break;
+		}
+	}
+
+	numtex += CountBuildTiles ();
+	numtex += CountTexturesX ();
+	return numtex;
+}
+
+//===========================================================================
+//
+// R_CountTexturesX
+//
+// See R_InitTextures() for the logic in deciding what lumps to check.
+//
+//===========================================================================
+
+int FTextureManager::CountTexturesX ()
+{
+	int count = 0;
+	int wadcount = Wads.GetNumWads();
+	for (int wadnum = 0; wadnum < wadcount; wadnum++)
+	{
+		// Use the most recent PNAMES for this WAD.
+		// Multiple PNAMES in a WAD will be ignored.
+		int pnames = Wads.CheckNumForName("PNAMES", ns_global, wadnum, false);
+
+		// should never happen except for zdoom.pk3
+		if (pnames < 0) continue;
+
+		// Only count the patches if the PNAMES come from the current file
+		// Otherwise they have already been counted.
+		if (Wads.GetLumpFile(pnames) == wadnum) 
+		{
+			count += CountLumpTextures (pnames);
+		}
+
+		int texlump1 = Wads.CheckNumForName ("TEXTURE1", ns_global, wadnum);
+		int texlump2 = Wads.CheckNumForName ("TEXTURE2", ns_global, wadnum);
+
+		count += CountLumpTextures (texlump1) - 1;
+		count += CountLumpTextures (texlump2) - 1;
+	}
+	return count;
+}
+
+//===========================================================================
+//
+// R_CountLumpTextures
+//
+// Returns the number of patches in a PNAMES/TEXTURE1/TEXTURE2 lump.
+//
+//===========================================================================
+
+int FTextureManager::CountLumpTextures (int lumpnum)
+{
+	if (lumpnum >= 0)
+	{
+		FWadLump file = Wads.OpenLumpNum (lumpnum); 
+		DWORD numtex;
+
+		file >> numtex;
+		return numtex >= 0 ? numtex : 0;
+	}
+	return 0;
+}
+
 
 //==========================================================================
 //

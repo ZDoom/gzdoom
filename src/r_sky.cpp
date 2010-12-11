@@ -137,3 +137,20 @@ void R_InitSkyMap ()
 	sky2cyl = MAX(skytex2->GetWidth(), skytex2->xScale >> (16 - 10));
 }
 
+
+//==========================================================================
+//
+// R_UpdateSky
+//
+// Performs sky scrolling
+//
+//==========================================================================
+
+void R_UpdateSky (DWORD mstime)
+{
+	// Scroll the sky
+	double ms = (double)mstime * FRACUNIT;
+	sky1pos = ms * level.skyspeed1;
+	sky2pos = ms * level.skyspeed2;
+}
+

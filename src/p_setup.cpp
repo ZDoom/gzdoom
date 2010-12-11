@@ -4055,7 +4055,6 @@ void P_Init ()
 	atterm (P_Shutdown);
 
 	P_InitEffects ();		// [RH]
-	P_InitSwitchList ();
 	P_InitTerrainTypes ();
 	P_InitKeyMessages ();
 	R_InitSprites ();

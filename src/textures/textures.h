@@ -82,6 +82,20 @@ struct FAnimDef
 	void SetSwitchTime (DWORD mstime);
 };
 
+struct FSwitchDef
+{
+	FTextureID PreTexture;		// texture to switch from
+	WORD PairIndex;		// switch def to use to return to PreTexture
+	WORD NumFrames;		// # of animation frames
+	int Sound;			// sound to play at start of animation. Changed to int to avoiud having to include s_sound here.
+	bool QuestPanel;	// Special texture for Strife mission
+	struct frame		// Array of times followed by array of textures
+	{					//   actual length of each array is <NumFrames>
+		DWORD Time;
+		FTextureID Texture;
+	} u[1];
+};
+
 
 // Patches.
 // A patch holds one or more columns.
@@ -373,6 +387,13 @@ public:
 	void UpdateAnimations (DWORD mstime);
 	int GuesstimateNumTextures ();
 
+	int FindSwitch (FTextureID texture);
+	FSwitchDef *GetSwitch (unsigned int index)
+	{
+		if (index < mSwitchDefs.Size()) return mSwitchDefs[index];
+		else return NULL;
+	}
+
 private:
 
 	// texture counting
@@ -402,6 +423,13 @@ private:
 	FTexture *Texture(FTextureID id) { return Textures[id.GetIndex()].Texture; }
 	void SetTranslation (FTextureID fromtexnum, FTextureID totexnum);
 
+	// Switches
+
+	void InitSwitchList ();
+	void ProcessSwitchDef (FScanner &sc);
+	FSwitchDef *ParseSwitchDef (FScanner &sc, bool ignoreBad);
+	WORD AddSwitchDef (FSwitchDef *def);
+
 	struct TextureHash
 	{
 		FTexture *Texture;
@@ -415,6 +443,7 @@ private:
 	TArray<int> FirstTextureForFile;
 
 	TArray<FAnimDef *> mAnimations;
+	TArray<FSwitchDef *> mSwitchDefs;
 	TArray<BYTE *> BuildTileFiles;
 };
 

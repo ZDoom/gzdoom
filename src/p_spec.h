@@ -396,9 +396,6 @@ void	EV_StartLightFading (int tag, int value, int tics);
 bool	P_ChangeSwitchTexture (side_t *side, int useAgain, BYTE special, bool *quest=NULL);
 bool	P_CheckSwitchRange(AActor *user, line_t *line, int sideno);
 
-void	P_InitSwitchList ();
-void	P_ProcessSwitchDef (FScanner &sc);
-
 //
 // P_PLATS
 //

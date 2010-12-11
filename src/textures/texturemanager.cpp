@@ -104,6 +104,17 @@ void FTextureManager::DeleteAll()
 	}
 	mAnimations.Clear();
 
+	for (unsigned i = 0; i < mSwitchDefs.Size(); i++)
+	{
+		if (mSwitchDefs[i] != NULL)
+		{
+			M_Free (mSwitchDefs[i]);
+			mSwitchDefs[i] = NULL;
+		}
+	}
+	mSwitchDefs.Clear();
+
+
 	for (unsigned int i = 0; i < BuildTileFiles.Size(); ++i)
 	{
 		delete[] BuildTileFiles[i];
@@ -978,6 +989,7 @@ void FTextureManager::Init()
 	InitAnimated();
 	InitAnimDefs();
 	FixAnimations();
+	InitSwitchList();
 }
 
 //==========================================================================

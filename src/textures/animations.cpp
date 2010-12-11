@@ -269,7 +269,7 @@ void FTextureManager::InitAnimDefs ()
 			}
 			else if (sc.Compare ("switch"))
 			{
-				P_ProcessSwitchDef (sc);
+				ProcessSwitchDef (sc);
 			}
 			// [GRB] Added warping type 2
 			else if (sc.Compare ("warp") || sc.Compare ("warp2"))

@@ -2420,6 +2420,10 @@
 				Name="Textures"
 				>
 				<File
+					RelativePath=".\src\textures\anim_switches.cpp"
+					>
+				</File>
+				<File
 					RelativePath=".\src\textures\animations.cpp"
 					>
 				</File>

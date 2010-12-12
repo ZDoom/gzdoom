@@ -63,8 +63,6 @@ Everything that is changed is marked (maybe commented) with "Added by MC"
 
 static FRandom pr_botspawn ("BotSpawn");
 
-void InitBotStuff();
-
 //Externs
 FCajunMaster bglobal;
 
@@ -321,7 +319,6 @@ bool FCajunMaster::SpawnBot (const char *name, int color)
 
 	waitingforspawn[playernumber] = true;
 
-	InitBotStuff();
 	Net_WriteByte (DEM_ADDBOT);
 	Net_WriteByte (playernumber);
 	{

@@ -52,6 +52,7 @@
 #include "g_level.h"
 
 extern void LoadActors ();
+extern void InitBotStuff();
 
 
 //==========================================================================
@@ -121,6 +122,7 @@ void FActorInfo::StaticInit ()
 
 	Printf ("LoadActors: Load actor definitions.\n");
 	LoadActors ();
+	InitBotStuff();
 }
 
 //==========================================================================

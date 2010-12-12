@@ -105,11 +105,6 @@ FArchive &operator<< (FArchive &arc, botskill_t &skill)
 // This is intentionally not in the weapon definition anymore.
 void InitBotStuff()
 {
-	static bool done = false;
-	
-	if (done) return;
-	done = true;
-
 	static struct BotInit
 	{
 		const char *type;
